@@ -55,13 +55,15 @@ If you are using Fedora Core Linux, do `yum install SDL SDL-devel`.
 If you are using Ubuntu, install `libsdl-dev1.2` package.
 
 To build in "emulation mode", you need to run make like this:
-	make clean cleanthirdparty
-	EMULATE_READER=1 make thirdparty koreader-base
-
-By default emulation will provide a resolution of 824x1200. It can be
-specified at compile time, this is example for 600x800:
 
 ```
-EMULATE_READER_W=600 EMULATE_READER_H=800 EMULATE_READER=1 make thirdparty koreaderbase
+make clean cleanthirdparty
+EMULATE_READER=1 make thirdparty koreader-base
 ```
 
+By default emulator will provide a resolution of 800x600. It can be
+changed at runtime by changing environment variables:
+
+```
+EMULATE_READER_W=746 EMULATE_READER_H=1024 koreader-base
+```
