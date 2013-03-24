@@ -117,6 +117,3 @@ LUALIB := $(LIBDIR)/libluajit-5.1.so.2
 POPENNSLIB := $(POPENNSDIR)/libpopen_noshell.a
 
 K2PDFOPTLIB := $(LIBDIR)/libk2pdfopt.so.1
-
-VERSION?=$(shell git describe HEAD)
-
