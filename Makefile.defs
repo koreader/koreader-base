@@ -118,7 +118,5 @@ POPENNSLIB := $(POPENNSDIR)/libpopen_noshell.a
 
 K2PDFOPTLIB := $(LIBDIR)/libk2pdfopt.so.1
 
-all: koreader-base extr
-
 VERSION?=$(shell git describe HEAD)
 
