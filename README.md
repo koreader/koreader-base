@@ -5,8 +5,8 @@ This is the base framework for creating document readers like Koreader,
 an e-ink device oriented reader application for various document formats.
 
 It's using the muPDF library (see http://mupdf.com/), djvulibre library,
-CREngine library and it is scripted using Lua (see http://www.lua.org/).
-To gain good speed at that, it uses the LuaJIT compiler.
+CREngine library, libk2pdfopt library and it is scripted using Lua (see
+http://www.lua.org/). To gain good speed at that, it uses the LuaJIT compiler.
 
 It all started as the KindlePDFviewer application, which has since been
 greatly enhanced and now reflects this in having a new name, Koreader.
@@ -28,6 +28,7 @@ Follow these steps:
 		* install CREngine sources into subfolder "kpvcrlib/crengine"
 		* install LuaJit sources into subfolder "luajit-2.0"
 		* install popen_noshell sources into subfolder "popen-noshell"
+		* install libk2pdfopt sources into subfolder "libk2pdfopt"
 
 	* automatically fetch thirdparty sources with Makefile:
 		* make sure you have patch, wget, unzip, git and svn installed
@@ -36,7 +37,7 @@ Follow these steps:
 * adapt Makefile to your needs
 
 * run `make thirdparty`. This will build MuPDF (plus the libraries it depends
-  on), libDjvuLibre, CREngine and LuaJIT.
+  on), libDjvuLibre, CREngine, libk2pdfopt and LuaJIT.
 
 * run `make`. This will build the koreaderbase application which is a Lua
   interpreter offering the koreader-base API to Lua scripts.
@@ -61,6 +62,6 @@ By default emulation will provide a resolution of 824x1200. It can be
 specified at compile time, this is example for 600x800:
 
 ```
-EMULATE_READER_W=600 EMULATE_READER_H=800 EMULATE_READER=1 make kpdfview
+EMULATE_READER_W=600 EMULATE_READER_H=800 EMULATE_READER=1 make thirdparty koreaderbase
 ```
 
