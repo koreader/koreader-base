@@ -24,8 +24,9 @@
 #include "einkfb.h"
 
 #ifdef EMULATE_READER
-int emu_w = EMULATE_READER_W;
-int emu_h = EMULATE_READER_H;
+int emu_disp_w = 600;
+int emu_disp_h = 800;
+int emu_w, emu_h;
 #else
 static void (*einkUpdateFunc)(FBInfo *fb, lua_State *L) = NULL;
 
@@ -152,6 +153,7 @@ static int openFrameBuffer(lua_State *L) {
 	const char *fb_device = luaL_checkstring(L, 1);
 	FBInfo *fb = (FBInfo*) lua_newuserdata(L, sizeof(FBInfo));
 	uint8_t *fb_map_address = NULL;
+	const char *config_value = NULL;
 
 	luaL_getmetatable(L, "einkfb");
 
@@ -257,6 +259,14 @@ static int openFrameBuffer(lua_State *L) {
 		fb->buf->allocated = 0;
 	}
 #else
+	/* read display size configuration from environment variables */
+	if(NULL != (config_value = getenv("EMULATE_READER_W")))
+		emu_disp_w = atoi(config_value);
+	if(NULL != (config_value = getenv("EMULATE_READER_H")))
+		emu_disp_h = atoi(config_value);
+	emu_w = emu_disp_w;
+	emu_h = emu_disp_h;
+
 	if(SDL_Init(SDL_INIT_VIDEO) < 0) {
 		return luaL_error(L, "cannot initialize SDL.");
 	}
@@ -401,12 +411,12 @@ static int einkSetOrientation(lua_State *L) {
 	ioctl(fb->fd, FBIO_EINK_SET_DISPLAY_ORIENTATION, mode);
 #else
 	if (mode == 0 || mode == 2) {
-		emu_w = EMULATE_READER_W;
-		emu_h = EMULATE_READER_H;
+		emu_w = emu_disp_w;
+		emu_h = emu_disp_h;
 	}	
 	else if (mode == 1 || mode == 3) {
-		emu_w = EMULATE_READER_H;
-		emu_h = EMULATE_READER_W;
+		emu_w = emu_disp_h;
+		emu_h = emu_disp_w;
 	}
 #endif
 	return 0;
@@ -426,7 +436,7 @@ static int einkGetOrientation(lua_State *L) {
 	else if (mode == 1)
 		mode = 2;
 #else
-	if (emu_w == EMULATE_READER_H || emu_h == EMULATE_READER_W)
+	if (emu_w == emu_disp_h || emu_h == emu_disp_w)
 		mode = 1;
 #endif
 	lua_pushinteger(L, mode);
