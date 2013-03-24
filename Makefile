@@ -84,12 +84,12 @@ else
 endif
 
 # standard includes
-KPDFREADER_CFLAGS=$(CFLAGS) -I$(LUADIR)/src -I$(MUPDFDIR)/
+KOREADER_BASE_CFLAGS=$(CFLAGS) -I$(LUADIR)/src -I$(MUPDFDIR)/
 K2PDFOPT_CFLAGS=-I$(K2PDFOPTLIBDIR)/willuslib -I$(K2PDFOPTLIBDIR)/k2pdfoptlib -I$(K2PDFOPTLIBDIR)/
 
 # enable tracing output:
 
-#KPDFREADER_CFLAGS+= -DMUPDF_TRACE
+#KOREADER_BASE_CFLAGS+= -DMUPDF_TRACE
 
 # for now, all dependencies except for the libc are compiled into the final binary:
 
@@ -118,14 +118,14 @@ POPENNSLIB := $(POPENNSDIR)/libpopen_noshell.a
 
 K2PDFOPTLIB := $(LIBDIR)/libk2pdfopt.so.1
 
-all: kpdfview extr
+all: koreader-base extr
 
 VERSION?=$(shell git describe HEAD)
-kpdfview: kpdfview.o einkfb.o pdf.o blitbuffer.o drawcontext.o koptcontext.o input.o $(POPENNSLIB) util.o ft.o lfs.o mupdfimg.o $(MUPDFLIBS) $(THIRDPARTYLIBS) $(LUALIB) djvu.o $(DJVULIBS) cre.o $(CRELIB) $(CRE_3RD_LIBS) pic.o pic_jpeg.o $(K2PDFOPTLIB)
+koreader-base: koreader-base.o einkfb.o pdf.o blitbuffer.o drawcontext.o koptcontext.o input.o $(POPENNSLIB) util.o ft.o lfs.o mupdfimg.o $(MUPDFLIBS) $(THIRDPARTYLIBS) $(LUALIB) djvu.o $(DJVULIBS) cre.o $(CRELIB) $(CRE_3RD_LIBS) pic.o pic_jpeg.o $(K2PDFOPTLIB)
 	echo $(VERSION) > git-rev
 	$(CC) \
 		$(CFLAGS) \
-		kpdfview.o \
+		koreader-base.o \
 		einkfb.o \
 		pdf.o \
 		blitbuffer.o \
@@ -166,22 +166,22 @@ slider_watcher: slider_watcher.o $(POPENNSLIB)
 	$(CC) $(CFLAGS) slider_watcher.o $(POPENNSLIB) -o $@
 
 ft.o: %.o: %.c $(THIRDPARTYLIBS)
-	$(CC) -c $(KPDFREADER_CFLAGS) -I$(FREETYPEDIR)/include -I$(MUPDFDIR)/fitz $< -o $@
+	$(CC) -c $(KOREADER_BASE_CFLAGS) -I$(FREETYPEDIR)/include -I$(MUPDFDIR)/fitz $< -o $@
 
 blitbuffer.o util.o drawcontext.o einkfb.o input.o mupdfimg.o: %.o: %.c
-	$(CC) -c $(KPDFREADER_CFLAGS) $(EMU_CFLAGS) -I$(LFSDIR)/src $< -o $@
+	$(CC) -c $(KOREADER_BASE_CFLAGS) $(EMU_CFLAGS) -I$(LFSDIR)/src $< -o $@
 
-kpdfview.o koptcontext.o pdf.o: %.o: %.c
-	$(CC) -c $(KPDFREADER_CFLAGS) $(K2PDFOPT_CFLAGS) $(EMU_CFLAGS) -I$(LFSDIR)/src $< -o $@
+koreader-base.o koptcontext.o pdf.o: %.o: %.c
+	$(CC) -c $(KOREADER_BASE_CFLAGS) $(K2PDFOPT_CFLAGS) $(EMU_CFLAGS) -I$(LFSDIR)/src $< -o $@
 
 djvu.o: %.o: %.c
-	$(CC) -c $(KPDFREADER_CFLAGS) $(K2PDFOPT_CFLAGS) -I$(DJVUDIR)/ $< -o $@
+	$(CC) -c $(KOREADER_BASE_CFLAGS) $(K2PDFOPT_CFLAGS) -I$(DJVUDIR)/ $< -o $@
 
 pic.o: %.o: %.c
-	$(CC) -c $(KPDFREADER_CFLAGS) $< -o $@
+	$(CC) -c $(KOREADER_BASE_CFLAGS) $< -o $@
 
 pic_jpeg.o: %.o: %.c
-	$(CC) -c $(KPDFREADER_CFLAGS) -I$(JPEGDIR)/ -I$(MUPDFDIR)/scripts/ $< -o $@
+	$(CC) -c $(KOREADER_BASE_CFLAGS) -I$(JPEGDIR)/ -I$(MUPDFDIR)/scripts/ $< -o $@
 
 cre.o: %.o: %.cpp
 	$(CC) -c $(CFLAGS) -I$(CRENGINEDIR)/crengine/include/ -I$(LUADIR)/src $< -o $@
@@ -215,7 +215,7 @@ fetchthirdparty:
 	cd popen-noshell && test -f Makefile || patch -N -p0 < popen_noshell-buildfix.patch
 
 clean:
-	rm -f *.o kpdfview slider_watcher extr emu_event
+	rm -f *.o koreader-base slider_watcher extr emu_event
 
 cleanthirdparty:
 	rm -rf $(LIBDIR) ; mkdir $(LIBDIR)
@@ -278,29 +278,3 @@ $(K2PDFOPTLIB):
 	cp -a $(K2PDFOPTLIBDIR)/libk2pdfopt.so* $(LIBDIR)
 
 thirdparty: $(MUPDFLIBS) $(THIRDPARTYLIBS) $(LUALIB) $(DJVULIBS) $(CRELIB) $(CRE_3RD_LIBS) $(POPENNSLIB) $(K2PDFOPTLIB)
-
-INSTALL_DIR=kindlepdfviewer
-
-LUA_FILES=reader.lua
-
-customupdate: all
-	# ensure that the binaries were built for ARM
-	file kpdfview | grep ARM || exit 1
-	file extr | grep ARM || exit 1
-	$(STRIP) --strip-unneeded kpdfview extr
-	rm -f kindlepdfviewer-$(VERSION).zip
-	rm -rf $(INSTALL_DIR)
-	mkdir -p $(INSTALL_DIR)/{history,screenshots,clipboard,libs}
-	cp -p README.md COPYING kpdfview extr kpdf.sh $(LUA_FILES) $(INSTALL_DIR)
-	mkdir $(INSTALL_DIR)/data
-	cp -L $(DJVULIB) $(CRELIB) $(LUALIB) $(K2PDFOPTLIB) $(INSTALL_DIR)/libs
-	$(STRIP) --strip-unneeded $(INSTALL_DIR)/libs/*
-	cp -rpL data/*.css $(INSTALL_DIR)/data
-	cp -rpL fonts $(INSTALL_DIR)
-	rm $(INSTALL_DIR)/fonts/droid/DroidSansFallbackFull.ttf
-	cp -r git-rev resources $(INSTALL_DIR)
-	cp -rpL frontend $(INSTALL_DIR)
-	mkdir $(INSTALL_DIR)/fonts/host
-	zip -9 -r kindlepdfviewer-$(VERSION).zip $(INSTALL_DIR) launchpad/ extensions/
-	rm -rf $(INSTALL_DIR)
-	@echo "copy kindlepdfviewer-$(VERSION).zip to /mnt/us/customupdates and install with shift+shift+I"

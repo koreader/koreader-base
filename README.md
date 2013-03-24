@@ -1,17 +1,21 @@
-KindlePDFViewer
-===============
+Koreader-base
+=============
 
-This is a PDF viewer application, created for usage on the Kindle e-ink reader.
-It currently supports Kindle 2, DXG, 3 and 4, but not Touch. It's using the
-muPDF library (see http://mupdf.com/), djvulibre library, CREngine library and
-its UI is scripted using Lua (see http://www.lua.org/).
+This is the base framework for creating document readers like Koreader,
+an e-ink device oriented reader application for various document formats.
+
+It's using the muPDF library (see http://mupdf.com/), djvulibre library,
+CREngine library and it is scripted using Lua (see http://www.lua.org/).
+To gain good speed at that, it uses the LuaJIT compiler.
+
+It all started as the KindlePDFviewer application, which has since been
+greatly enhanced and now reflects this in having a new name, Koreader.
 
 The application is licensed under the GPLv3 (see COPYING file).
 
 
 Building
 ========
-
 
 Follow these steps:
 
@@ -32,25 +36,10 @@ Follow these steps:
 * adapt Makefile to your needs
 
 * run `make thirdparty`. This will build MuPDF (plus the libraries it depends
-  on), libDjvuLibre, CREngine and Lua.
+  on), libDjvuLibre, CREngine and LuaJIT.
 
-* run `make`. This will build the kpdfview application
-
-
-Running
-=======
-
-The user interface (or what's there yet) is scripted in Lua. See "reader.lua".
-It uses the Linux feature to run scripts by using a corresponding line at its
-start.
-
-So you might just call that script. Note that the script and the kpdfview
-binary currently must be in the same directory.
-
-You would then just call reader.lua, giving the document file path, or any
-directory path, as its first argument. Run reader.lua without arguments to see
-usage notes.  The reader.lua script can also show a file chooser: it will do
-this when you call it with a directory (instead of a file) as first argument.
+* run `make`. This will build the koreaderbase application which is a Lua
+  interpreter offering the koreader-base API to Lua scripts.
 
 
 Device emulation
@@ -66,20 +55,10 @@ If you are using Ubuntu, install `libsdl-dev1.2` package.
 
 To build in "emulation mode", you need to run make like this:
 	make clean cleanthirdparty
-	EMULATE_READER=1 make thirdparty kpdfview
+	EMULATE_READER=1 make thirdparty koreader-base
 
-And run the emulator like this:
-```
-./reader.lua /PATH/TO/PDF.pdf
-```
-
-or:
-```
-./reader.lua /ANY/PATH
-```
-
-By default emulation will provide DXG resolution of 824*1200. It can be
-specified at compile time, this is example for Kindle 3:
+By default emulation will provide a resolution of 824x1200. It can be
+specified at compile time, this is example for 600x800:
 
 ```
 EMULATE_READER_W=600 EMULATE_READER_H=800 EMULATE_READER=1 make kpdfview
