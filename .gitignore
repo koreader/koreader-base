@@ -5,7 +5,6 @@ libs-emu
 *.orig
 lua
 lua-*
-.reader.kpdfview.lua
 mupdf-thirdparty.zip
 djvulibre*
 crash.log
@@ -16,18 +15,18 @@ slider_watcher
 *.o
 tags
 
-kindlepdfviewer-*.zip
 
 /.cproject
 /.project
-/.reader.kpdfview
-/settings.reader.lua
 
 fonts
 data
 history
 screenshots
 cr3cache
+extr
+libs
+koreader-base
 
 kpvcrlib/CMakeCache.txt
 kpvcrlib/CMakeFiles/
