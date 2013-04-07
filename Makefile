@@ -2,7 +2,7 @@ include Makefile.defs
 
 all: koreader-base extr
 
-koreader-base: koreader-base.o einkfb.o pdf.o blitbuffer.o drawcontext.o koptcontext.o input.o $(POPENNSLIB) util.o ft.o lfs.o mupdfimg.o $(MUPDFLIBS) $(THIRDPARTYLIBS) $(LUALIB) djvu.o $(DJVULIBS) cre.o $(CRELIB) $(CRE_3RD_LIBS) pic.o pic_jpeg.o $(K2PDFOPTLIB)
+koreader-base: koreader-base.o einkfb.o pdf.o blitbuffer.o drawcontext.o koptcontext.o input.o $(POPENNSLIB) util.o ft.o lfs.o mupdfimg.o $(MUPDFLIBS) $(THIRDPARTYLIBS) $(LUALIB) djvu.o $(DJVULIBS) cre.o $(CRELIB) $(CRE_3RD_LIBS) pic.o lua_gettext.o pic_jpeg.o $(K2PDFOPTLIB)
 	$(CC) \
 		$(CFLAGS) \
 		koreader-base.o \
@@ -23,6 +23,7 @@ koreader-base: koreader-base.o einkfb.o pdf.o blitbuffer.o drawcontext.o koptcon
 		$(THIRDPARTYLIBS) \
 		djvu.o \
 		cre.o \
+		lua_gettext.o \
 		$(STATICLIBSTDCPP) \
 		$(LDFLAGS) \
 		-Wl,-rpath=$(LIBDIR)/ \
@@ -57,7 +58,7 @@ koreader-base.o koptcontext.o pdf.o: %.o: %.c
 djvu.o: %.o: %.c
 	$(CC) -c $(KOREADER_BASE_CFLAGS) $(K2PDFOPT_CFLAGS) -I$(DJVUDIR)/ $< -o $@
 
-pic.o: %.o: %.c
+pic.o lua_gettext.o: %.o: %.c
 	$(CC) -c $(KOREADER_BASE_CFLAGS) $< -o $@
 
 pic_jpeg.o: %.o: %.c
