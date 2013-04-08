@@ -35,6 +35,7 @@
 #include "input.h"
 #include "ft.h"
 #include "util.h"
+#include "lua_gettext.h"
 
 #include "lfs.h"
 
@@ -105,6 +106,7 @@ int main(int argc, char **argv) {
 		luaopen_util(L);
 		luaopen_ft(L);
 		luaopen_mupdfimg(L);
+		luaopen_luagettext(L);
 
 		luaopen_lfs(L);
 
