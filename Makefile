@@ -1,5 +1,7 @@
 include Makefile.defs
 
+PROCESSORS:=$(shell grep processor /proc/cpuinfo|wc -l)
+
 all: koreader-base extr
 
 koreader-base: koreader-base.o einkfb.o pdf.o blitbuffer.o drawcontext.o koptcontext.o input.o $(POPENNSLIB) util.o ft.o lfs.o mupdfimg.o $(MUPDFLIBS) $(THIRDPARTYLIBS) $(LUALIB) djvu.o $(DJVULIBS) cre.o $(CRELIB) $(CRE_3RD_LIBS) pic.o lua_gettext.o pic_jpeg.o $(K2PDFOPTLIB)
@@ -114,11 +116,11 @@ cleanthirdparty:
 $(MUPDFLIBS) $(THIRDPARTYLIBS):
 	# build only thirdparty libs, libfitz and pdf utils, which will care for libmupdf.a being built
 ifdef EMULATE_READER
-	$(MAKE) -C mupdf XCFLAGS="$(CFLAGS) -DNOBUILTINFONT" build="release" CC="$(CC)" MUPDF= MU_APPS= BUSY_APP= XPS_APPS= verbose=1 NOX11=yes
+	$(MAKE) -j$(PROCESSORS) -C mupdf XCFLAGS="$(CFLAGS) -DNOBUILTINFONT" build="release" CC="$(CC)" MUPDF= MU_APPS= BUSY_APP= XPS_APPS= verbose=1 NOX11=yes
 else
 	# generate data headers
-	$(MAKE) -C mupdf generate build="release"
-	$(MAKE) -C mupdf XCFLAGS="$(CFLAGS) -DNOBUILTINFONT" build="release" CC="$(CC)" MUPDF= MU_APPS= BUSY_APP= XPS_APPS= verbose=1 NOX11=yes CROSSCOMPILE=yes OS=Kindle
+	$(MAKE) -j$(PROCESSORS) -C mupdf generate build="release"
+	$(MAKE) -j$(PROCESSORS) -C mupdf XCFLAGS="$(CFLAGS) -DNOBUILTINFONT" build="release" CC="$(CC)" MUPDF= MU_APPS= BUSY_APP= XPS_APPS= verbose=1 NOX11=yes CROSSCOMPILE=yes OS=Kindle
 endif
 
 $(DJVULIBS):
@@ -128,33 +130,33 @@ ifdef EMULATE_READER
 else
 	cd $(DJVUDIR)/build && CC="$(CC)" CXX="$(CXX)" CFLAGS="$(CFLAGS)" CXXFLAGS="$(CXXFLAGS)" LDFLAGS="$(LDFLAGS)" ../configure --disable-desktopfiles --disable-static --enable-shared --host=$(CHOST) --disable-xmltools --disable-largefile
 endif
-	$(MAKE) -C $(DJVUDIR)/build
+	$(MAKE) -j$(PROCESSORS) -C $(DJVUDIR)/build
 	test -d $(LIBDIR) || mkdir $(LIBDIR)
 	cp -a $(DJVULIBDIR)/libdjvulibre.so* $(LIBDIR)
 
 $(CRE_3RD_LIBS) $(CRELIB):
 	cd $(KPVCRLIBDIR) && rm -rf CMakeCache.txt CMakeFiles && \
 		CFLAGS="$(CFLAGS)" CXXFLAGS="$(CXXFLAGS)" CC="$(CC)" CXX="$(CXX)" LDFLAGS="$(LDFLAGS)" cmake -D CMAKE_BUILD_TYPE=Release . && \
-		$(MAKE) VERBOSE=1
+		$(MAKE) -j$(PROCESSORS) VERBOSE=1
 	test -d $(LIBDIR) || mkdir $(LIBDIR)
 	cp -a $(KPVCRLIBDIR)/libcrengine.so $(CRELIB)
 
 $(LUALIB):
 ifdef EMULATE_READER
-	$(MAKE) -C $(LUADIR) BUILDMODE=shared
+	$(MAKE) -j$(PROCESSORS) -C $(LUADIR) BUILDMODE=shared
 else
 	# To recap: build its TARGET_CC from CROSS+CC, so we need HOSTCC in CC. Build its HOST/TARGET_CFLAGS based on CFLAGS, so we need a neutral CFLAGS without arch
-	$(MAKE) -C $(LUADIR) BUILDMODE=shared CC="$(HOSTCC)" HOST_CC="$(HOSTCC) -m32" CFLAGS="$(BASE_CFLAGS)" HOST_CFLAGS="$(HOSTCFLAGS)" TARGET_CFLAGS="$(CFLAGS)" CROSS="$(CHOST)-" TARGET_FLAGS="-DLUAJIT_NO_LOG2 -DLUAJIT_NO_EXP2"
+	$(MAKE) -j$(PROCESSORS) -C $(LUADIR) BUILDMODE=shared CC="$(HOSTCC)" HOST_CC="$(HOSTCC) -m32" CFLAGS="$(BASE_CFLAGS)" HOST_CFLAGS="$(HOSTCFLAGS)" TARGET_CFLAGS="$(CFLAGS)" CROSS="$(CCACHE) $(CHOST)-" TARGET_FLAGS="-DLUAJIT_NO_LOG2 -DLUAJIT_NO_EXP2"
 endif
 	test -d $(LIBDIR) || mkdir $(LIBDIR)
 	cp -a $(LUADIR)/src/libluajit.so* $(LUALIB)
 	ln -s libluajit-5.1.so.2 $(LIBDIR)/libluajit-5.1.so
 
 $(POPENNSLIB):
-	$(MAKE) -C $(POPENNSDIR) CC="$(CC)" AR="$(AR)"
+	$(MAKE) -j$(PROCESSORS) -C $(POPENNSDIR) CC="$(CC)" AR="$(AR)"
 
 $(K2PDFOPTLIB):
-	$(MAKE) -C $(K2PDFOPTLIBDIR) BUILDMODE=shared CC="$(CC)" CFLAGS="$(CFLAGS) -O3" AR="$(AR)" all
+	$(MAKE) -j$(PROCESSORS) -C $(K2PDFOPTLIBDIR) BUILDMODE=shared CC="$(CC)" CFLAGS="$(CFLAGS) -O3" AR="$(AR)" all
 	test -d $(LIBDIR) || mkdir $(LIBDIR)
 	cp -a $(K2PDFOPTLIBDIR)/libk2pdfopt.so* $(LIBDIR)
 
