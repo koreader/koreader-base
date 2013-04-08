@@ -42,6 +42,26 @@ Follow these steps:
 * run `make`. This will build the koreaderbase application which is a Lua
   interpreter offering the koreader-base API to Lua scripts.
 
+Use ccache
+==========
+
+Ccache can speed up recompilation by caching previous compilations and detecting
+when the same compilation is being done again. In other words, it will decrease
+build time when the source have been built. Ccache support has been added to
+KOReader's build system. Before using it, you need to install a ccache in your
+system.
+
+* in ubuntu use:`sudo apt-get install ccache`
+* in fedora use:`sudo yum install ccache`
+* install from source:
+  * get latest ccache source from http://ccache.samba.org/download.html
+  * unarchieve the source package in a directory
+  * cd to that directory and use:`./configure && make && sudo make install`
+* after using ccache, make a clean build will only take 15sec. Enjoy!
+* to disable ccache, use `export USE_NO_CCACHE=1` before make.
+* for more detail about ccache. visit:
+
+http://ccache.samba.org
 
 Device emulation
 ================
