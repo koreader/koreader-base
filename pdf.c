@@ -572,21 +572,19 @@ static int reflowPage(lua_State *L) {
 	bounds.x1 = kctx->bbox.x1;
 	bounds.y1 = kctx->bbox.y1;
 
-	double dpp,zoom;
-	zoom = kctx->zoom;
-	double dpi = 250*zoom*kctx->quality;
-
-	do {
-		dpp = dpi / 72.;
-		ctm = fz_scale(dpp, dpp);
-		//    ctm=fz_concat(ctm,fz_rotate(rotation));
-		bounds2 = fz_transform_rect(ctm, bounds);
-		bbox = fz_round_rect(bounds2);
-		printf("reading page:%d,%d,%d,%d zoom:%.2f dpi:%.0f\n",bbox.x0,bbox.y0,bbox.x1,bbox.y1,zoom,dpi);
-		kctx->zoom = zoom;
-		zoom *= kctx->shrink_factor;
-		dpi *= kctx->shrink_factor;
-	} while (bbox.x1 > kctx->read_max_width | bbox.y1 > kctx->read_max_height);
+	// probe scale
+	double zoom = kctx->zoom*kctx->quality;
+	float scale = 1.0;
+	ctm = fz_scale(scale, scale);
+	bounds2 = fz_transform_rect(ctm, bounds);
+	bbox = fz_round_rect(bounds2);
+	scale /= ((double)bbox.x1 / (2*zoom*kctx->dev_width) + \
+			  (double)bbox.y1 / (2*zoom*kctx->dev_height))/2;
+	// do real scale
+	ctm = fz_scale(scale, scale);
+	bounds2 = fz_transform_rect(ctm, bounds);
+	bbox = fz_round_rect(bounds2);
+	printf("reading page:%d,%d,%d,%d scale:%.2f\n",bbox.x0,bbox.y0,bbox.x1,bbox.y1,scale);
 
 	pix = fz_new_pixmap_with_bbox(page->doc->context, fz_device_gray, bbox);
 	fz_clear_pixmap_with_value(page->doc->context, pix, 0xff);
