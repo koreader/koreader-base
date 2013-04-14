@@ -26,6 +26,8 @@
 #include "drawcontext.h"
 #include "koptcontext.h"
 #include "k2pdfopt.h"
+#include "koptreflow.h"
+#include "koptcrop.h"
 #include "djvu.h"
 
 #define MIN(a, b)      ((a) < (b) ? (a) : (b))
@@ -473,6 +475,46 @@ static int closePage(lua_State *L) {
 	return 0;
 }
 
+static int getAutoBBox(lua_State *L) {
+	DjvuPage *page = (DjvuPage*) luaL_checkudata(L, 1, "djvupage");
+	KOPTContext *kctx = (KOPTContext*) luaL_checkudata(L, 2, "koptcontext");
+	ddjvu_rect_t prect;
+	ddjvu_rect_t rrect;
+	int px, py, pw, ph, rx, ry, rw, rh, status;
+
+	prect.x = 0;
+	prect.y = 0;
+	prect.w = ddjvu_page_get_width(page->page_ref);
+	prect.h = ddjvu_page_get_height(page->page_ref);
+	rrect = prect;
+
+	WILLUSBITMAP *src = malloc(sizeof(WILLUSBITMAP));
+	bmp_init(src);
+	src->width = rrect.w;
+	src->height = rrect.h;
+	src->bpp = 8;
+	bmp_alloc(src);
+	if (src->bpp == 8) {
+		int ii;
+		for (ii = 0; ii < 256; ii++)
+		src->red[ii] = src->blue[ii] = src->green[ii] = ii;
+	}
+
+	ddjvu_format_set_row_order(page->doc->pixelformat, 1);
+	ddjvu_page_render(page->page_ref, 0, &prect, &rrect, page->doc->pixelformat,
+		bmp_bytewidth(src), (char *) src->data);
+
+	kctx->src = src;
+	k2pdfopt_crop_bmp(kctx);
+
+	lua_pushnumber(L, ((double)kctx->bbox.x0));
+	lua_pushnumber(L, ((double)kctx->bbox.y0));
+	lua_pushnumber(L, ((double)kctx->bbox.x1));
+	lua_pushnumber(L, ((double)kctx->bbox.y1));
+
+	return 4;
+}
+
 static int reflowPage(lua_State *L) {
 	DjvuPage *page = (DjvuPage*) luaL_checkudata(L, 1, "djvupage");
 	KOPTContext *kctx = (KOPTContext*) luaL_checkudata(L, 2, "koptcontext");
@@ -480,15 +522,12 @@ static int reflowPage(lua_State *L) {
 	ddjvu_rect_t prect;
 	ddjvu_rect_t rrect;
 
-	int px, py, pw, ph, rx, ry, rw, rh, idpi, status;
-	double zoom = kctx->zoom;
-	double dpi = 250*zoom;
+	int px, py, pw, ph, rx, ry, rw, rh, status;
 
 	px = 0;
 	py = 0;
 	pw = ddjvu_page_get_width(page->page_ref);
 	ph = ddjvu_page_get_height(page->page_ref);
-	idpi = ddjvu_page_get_resolution(page->page_ref);
 	prect.x = px;
 	prect.y = py;
 
@@ -497,18 +536,17 @@ static int reflowPage(lua_State *L) {
 	rw = (int)(kctx->bbox.x1 - kctx->bbox.x0);
 	rh = (int)(kctx->bbox.y1 - kctx->bbox.y0);
 
-	do {
-		prect.w = pw * dpi / idpi;
-		prect.h = ph * dpi / idpi;
-		rrect.x = rx * dpi / idpi;
-		rrect.y = ry * dpi / idpi;
-		rrect.w = rw * dpi / idpi;
-		rrect.h = rh * dpi / idpi;
-		printf("rendering page:%d,%d,%d,%d dpi:%.0f idpi:%.0d\n",rrect.x,rrect.y,rrect.w,rrect.h,dpi,idpi);
-		kctx->zoom = zoom;
-		zoom *= kctx->shrink_factor;
-		dpi *= kctx->shrink_factor;
-	} while (rrect.w > kctx->read_max_width | rrect.h > kctx->read_max_height);
+	double zoom = kctx->zoom*kctx->quality;
+	float scale = ((2*zoom*kctx->dev_width) / (double)pw + \
+			 	   (2*zoom*kctx->dev_height) / (double)ph) / 2;
+	prect.w = pw * scale;
+	prect.h = ph * scale;
+	rrect.x = rx * scale;
+	rrect.y = ry * scale;
+	rrect.w = rw * scale;
+	rrect.h = rh * scale;
+	printf("rendering page:%d,%d,%d,%d\n",rrect.x,rrect.y,rrect.w,rrect.h);
+	kctx->zoom = scale;
 
 	WILLUSBITMAP *src = malloc(sizeof(WILLUSBITMAP));
 	bmp_init(src);
@@ -694,6 +732,7 @@ static const struct luaL_Reg djvudocument_meth[] = {
 static const struct luaL_Reg djvupage_meth[] = {
 	{"getSize", getPageSize},
 	{"getUsedBBox", getUsedBBox},
+	{"getAutoBBox", getAutoBBox},
 	{"close", closePage},
 	{"__gc", closePage},
 	{"reflow", reflowPage},
