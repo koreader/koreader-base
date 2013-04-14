@@ -26,6 +26,8 @@
 #include "drawcontext.h"
 #include "koptcontext.h"
 #include "k2pdfopt.h"
+#include "koptreflow.h"
+#include "koptcrop.h"
 #include "pdf.h"
 
 typedef struct PdfDocument {
@@ -556,6 +558,52 @@ static int bmpmupdf_pixmap_to_bmp(WILLUSBITMAP *bmp, fz_context *ctx, fz_pixmap 
 	return (0);
 }
 
+static int getAutoBBox(lua_State *L) {
+	PdfPage *page = (PdfPage*) luaL_checkudata(L, 1, "pdfpage");
+	KOPTContext *kctx = (KOPTContext*) luaL_checkudata(L, 2, "koptcontext");
+	fz_device *dev;
+	fz_pixmap *pix = NULL;
+	fz_rect bounds,bounds2;
+	fz_matrix ctm;
+	fz_bbox bbox;
+
+	fz_var(pix);
+
+	bounds = fz_bound_page(page->doc->xref, page->page);
+	bounds2 = fz_transform_rect(fz_identity, bounds);
+	bbox = fz_round_rect(bounds2);
+
+	fz_try(page->doc->context) {
+		pix = fz_new_pixmap_with_bbox(page->doc->context, fz_device_gray, bbox);
+		fz_clear_pixmap_with_value(page->doc->context, pix, 0xff);
+		dev = fz_new_draw_device(page->doc->context, pix);
+		fz_run_page(page->doc->xref, page->page, dev, fz_identity, NULL);
+	}
+	fz_always(page->doc->context) {
+		fz_free_device(dev);
+	}
+	fz_catch(page->doc->context) {
+		return luaL_error(L, "cannot calculate bbox for page");
+	}
+
+	WILLUSBITMAP *src = malloc(sizeof(WILLUSBITMAP));
+	bmp_init(src);
+
+	bmpmupdf_pixmap_to_bmp(src, page->doc->context, pix);
+	fz_drop_pixmap(page->doc->context, pix);
+
+	kctx->src = src;
+
+	k2pdfopt_crop_bmp(kctx);
+
+	lua_pushnumber(L, ((double)kctx->bbox.x0));
+	lua_pushnumber(L, ((double)kctx->bbox.y0));
+	lua_pushnumber(L, ((double)kctx->bbox.x1));
+	lua_pushnumber(L, ((double)kctx->bbox.y1));
+
+	return 4;
+}
+
 static int reflowPage(lua_State *L) {
 	PdfPage *page = (PdfPage*) luaL_checkudata(L, 1, "pdfpage");
 	KOPTContext *kctx = (KOPTContext*) luaL_checkudata(L, 2, "koptcontext");
@@ -795,6 +843,7 @@ static const struct luaL_Reg pdfdocument_meth[] = {
 static const struct luaL_Reg pdfpage_meth[] = {
 	{"getSize", getPageSize},
 	{"getUsedBBox", getUsedBBox},
+	{"getAutoBBox", getAutoBBox},
 	{"getPageText", getPageText},
 	{"getPageLinks", getPageLinks},
 	{"close", closePage},
