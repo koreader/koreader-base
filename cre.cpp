@@ -79,6 +79,28 @@ static int setGammaIndex(lua_State *L) {
 	return 0;
 }
 
+static int getHyphDictList(lua_State *L) {
+	lua_newtable(L);
+	HyphDictionaryList *list = HyphMan::getDictList();
+	for(int i = 0; i < list->length(); i++) {
+		lua_pushnumber(L, i+1);
+		lua_pushstring(L, UnicodeToLocal(list->get(i)->getId()).c_str());
+		lua_settable(L, -3);
+	}
+	return 1;
+}
+
+static int getSelectedHyphDict(lua_State *L) {
+	lua_pushstring(L, UnicodeToLocal(HyphMan::getSelectedDictionary()->getId()).c_str());
+	return 1;
+}
+
+static int setHyphDictionary(lua_State *L) {
+	const char *id = luaL_checkstring(L, 1);
+	HyphMan::getDictList()->activate((lString16)id);
+	return 0;
+}
+
 static int loadDocument(lua_State *L) {
 	CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
 	const char *file_name = luaL_checkstring(L, 2);
@@ -657,6 +679,9 @@ static const struct luaL_Reg cre_func[] = {
 	{"getGammaIndex", getGammaIndex},
 	{"setGammaIndex", setGammaIndex},
 	{"registerFont", registerFont},
+	{"getHyphDictList", getHyphDictList},
+	{"getSelectedHyphDict", getSelectedHyphDict},
+	{"setHyphDictionary", setHyphDictionary},
 	{NULL, NULL}
 };
 
