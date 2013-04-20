@@ -19,13 +19,10 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-
+#include <locale.h>
 #include "lua_gettext.h"
 
-
 extern int _nl_msg_cat_cntr;
-
-
 
 static int lua_gettext_init(lua_State *L) {
 	const char* locale_dir = luaL_checkstring(L, 1);
