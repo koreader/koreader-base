@@ -20,6 +20,7 @@
 #include <math.h>
 #include <stddef.h>
 #include <pthread.h>
+#include <assert.h>
 #include <fitz/fitz-internal.h>
 
 #include "blitbuffer.h"
@@ -586,13 +587,11 @@ static int getAutoBBox(lua_State *L) {
 		return luaL_error(L, "cannot calculate bbox for page");
 	}
 
-	WILLUSBITMAP *src = malloc(sizeof(WILLUSBITMAP));
+	WILLUSBITMAP *src = &kctx->src;
 	bmp_init(src);
 
 	bmpmupdf_pixmap_to_bmp(src, page->doc->context, pix);
 	fz_drop_pixmap(page->doc->context, pix);
-
-	kctx->src = src;
 
 	k2pdfopt_crop_bmp(kctx);
 
@@ -652,13 +651,12 @@ static int reflowPage(lua_State *L) {
 	fz_run_page(page->doc->xref, page->page, dev, ctm, NULL);
 	fz_free_device(dev);
 
-	WILLUSBITMAP *src = malloc(sizeof(WILLUSBITMAP));
+	WILLUSBITMAP *src = &kctx->src;
 	bmp_init(src);
 
 	int status = bmpmupdf_pixmap_to_bmp(src, page->doc->context, pix);
 	fz_drop_pixmap(page->doc->context, pix);
 
-	kctx->src = src;
 	if (kctx->precache) {
 		pthread_t rf_thread;
 		pthread_attr_t attr;
@@ -678,7 +676,11 @@ static int drawReflowedPage(lua_State *L) {
 	KOPTContext *kc = (KOPTContext*) luaL_checkudata(L, 2, "koptcontext");
 	BlitBuffer *bb = (BlitBuffer*) luaL_checkudata(L, 3, "blitbuffer");
 
-	uint8_t *koptr = kc->data;
+	assert(kc->dst.data != NULL);
+	assert(kc->dst.width >= bb->w);
+	assert(kc->dst.height >= bb->h);
+
+	uint8_t *koptr = kc->dst.data;
 	uint8_t *bbptr = bb->data;
 
 	int x_offset = 0;
