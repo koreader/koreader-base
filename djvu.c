@@ -15,10 +15,12 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
+
 #include <math.h>
 #include <string.h>
 #include <errno.h>
 #include <pthread.h>
+#include <assert.h>
 #include <libdjvu/miniexp.h>
 #include <libdjvu/ddjvuapi.h>
 
@@ -488,7 +490,7 @@ static int getAutoBBox(lua_State *L) {
 	prect.h = ddjvu_page_get_height(page->page_ref);
 	rrect = prect;
 
-	WILLUSBITMAP *src = malloc(sizeof(WILLUSBITMAP));
+	WILLUSBITMAP *src = &kctx->src;
 	bmp_init(src);
 	src->width = rrect.w;
 	src->height = rrect.h;
@@ -504,7 +506,6 @@ static int getAutoBBox(lua_State *L) {
 	ddjvu_page_render(page->page_ref, 0, &prect, &rrect, page->doc->pixelformat,
 		bmp_bytewidth(src), (char *) src->data);
 
-	kctx->src = src;
 	k2pdfopt_crop_bmp(kctx);
 
 	lua_pushnumber(L, ((double)kctx->bbox.x0));
@@ -548,7 +549,7 @@ static int reflowPage(lua_State *L) {
 	printf("rendering page:%d,%d,%d,%d\n",rrect.x,rrect.y,rrect.w,rrect.h);
 	kctx->zoom = scale;
 
-	WILLUSBITMAP *src = malloc(sizeof(WILLUSBITMAP));
+	WILLUSBITMAP *src = &kctx->src;
 	bmp_init(src);
 	src->width = rrect.w;
 	src->height = rrect.h;
@@ -566,7 +567,6 @@ static int reflowPage(lua_State *L) {
 	status = ddjvu_page_render(page->page_ref, mode, &prect, &rrect, page->doc->pixelformat,
 			bmp_bytewidth(src), (char *) src->data);
 
-	kctx->src = src;
 	if (kctx->precache) {
 		pthread_t rf_thread;
 		pthread_attr_t attr;
@@ -586,7 +586,11 @@ static int drawReflowedPage(lua_State *L) {
 	KOPTContext *kc = (KOPTContext*) luaL_checkudata(L, 2, "koptcontext");
 	BlitBuffer *bb = (BlitBuffer*) luaL_checkudata(L, 3, "blitbuffer");
 
-	uint8_t *koptr = kc->data;
+	assert(kc->dst.data != NULL);
+	assert(kc->dst.width >= bb->w);
+	assert(kc->dst.height >= bb->h);
+
+	uint8_t *koptr = kc->dst.data;
 	uint8_t *bbptr = bb->data;
 
 	int x_offset = 0;
