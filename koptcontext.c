@@ -45,9 +45,7 @@ static int newKOPTContext(lua_State *L) {
 	double word_spacing = 1.375;
 	double shrink_factor = 0.9;
 
-	uint8_t *data = NULL;
 	BBox bbox = {0, 0, 0, 0};
-	WILLUSBITMAP *src;
 	int precache = 0;
 
 	KOPTContext *kc = (KOPTContext*) lua_newuserdata(L, sizeof(KOPTContext));
@@ -78,15 +76,26 @@ static int newKOPTContext(lua_State *L) {
 	kc->word_spacing = word_spacing;
 	kc->shrink_factor = shrink_factor;
 
-	kc->data = data;
 	kc->bbox = bbox;
-	kc->src = src;
 	kc->precache = precache;
+
+	bmp_init(&kc->src);
+	bmp_init(&kc->dst);
 
 	luaL_getmetatable(L, "koptcontext");
 	lua_setmetatable(L, -2);
 
 	return 1;
+}
+
+static int freeContext(lua_State *L) {
+	KOPTContext *kc = (KOPTContext*) luaL_checkudata(L, 1, "koptcontext");
+	/* Don't worry about the src bitmap in context. It's freed as soon as it's
+	 * been used in either reflow or autocrop. But we should take care of dst
+	 * bitmap since the usage of dst bitmap is delayed most of the times.
+	 */
+	bmp_free(&kc->dst);
+	return 0;
 }
 
 static int kcSetBBox(lua_State *L) {
@@ -267,6 +276,9 @@ static const struct luaL_Reg koptcontext_meth[] = {
 
 	{"setPreCache", kcSetPreCache},
 	{"isPreCache", kcIsPreCache},
+
+	{"free", freeContext},
+	{"__gc", freeContext},
 	{NULL, NULL}
 };
 
