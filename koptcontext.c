@@ -358,16 +358,17 @@ static int kcGetOCRWord(lua_State *L) {
 	KOPTContext *kc = (KOPTContext*) luaL_checkudata(L, 1, "koptcontext");
 	const char *datadir = luaL_checkstring(L, 2);
 	const char *lang = luaL_checkstring(L, 3);
-	int x = luaL_checkint(L, 4);
-	int y = luaL_checkint(L, 5);
-	int w = luaL_checkint(L, 6);
-	int h = luaL_checkint(L, 7);
+	int ocr_type = luaL_checkint(L, 4);
+	int x = luaL_checkint(L, 5);
+	int y = luaL_checkint(L, 6);
+	int w = luaL_checkint(L, 7);
+	int h = luaL_checkint(L, 8);
 	char word[256];
 
-	ocrtess_init(datadir, lang, 3, NULL);
+	ocrtess_init(datadir, lang, 0, NULL);
 	ocrtess_single_word_from_bmp8(
 			word, 255, &kc->dst,
-			x, y, x + w, y + h, 3, 0, 1, NULL);
+			x, y, x + w, y + h, ocr_type, 0, 1, NULL);
 	ocrtess_end();
 
 	lua_pushstring(L, word);
