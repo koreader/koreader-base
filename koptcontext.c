@@ -16,6 +16,7 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include <assert.h>
 #include "koptcontext.h"
 
 static int newKOPTContext(lua_State *L) {
@@ -47,6 +48,7 @@ static int newKOPTContext(lua_State *L) {
 
 	BBox bbox = {0, 0, 0, 0};
 	int precache = 0;
+	int debug = 0;
 
 	KOPTContext *kc = (KOPTContext*) lua_newuserdata(L, sizeof(KOPTContext));
 
@@ -78,6 +80,10 @@ static int newKOPTContext(lua_State *L) {
 
 	kc->bbox = bbox;
 	kc->precache = precache;
+	kc->debug = debug;
+
+	kc->boxa = NULL;
+	kc->nai = NULL;
 
 	bmp_init(&kc->src);
 	bmp_init(&kc->dst);
@@ -95,6 +101,8 @@ static int freeContext(lua_State *L) {
 	 * bitmap since the usage of dst bitmap is delayed most of the times.
 	 */
 	bmp_free(&kc->dst);
+	boxaDestroy(&kc->boxa);
+	numaDestroy(&kc->nai);
 	return 0;
 }
 
@@ -249,6 +257,123 @@ static int kcIsPreCache(lua_State *L) {
 	return 1;
 }
 
+static int kcSetDebug(lua_State *L) {
+	KOPTContext *kc = (KOPTContext*) luaL_checkudata(L, 1, "koptcontext");
+	kc->debug = 1;
+	return 0;
+}
+
+static int kcGetWordBoxes(lua_State *L) {
+	KOPTContext *kc = (KOPTContext*) luaL_checkudata(L, 1, "koptcontext");
+	int x = luaL_checkint(L, 2);
+	int y = luaL_checkint(L, 3);
+	int w = luaL_checkint(L, 4);
+	int h = luaL_checkint(L, 5);
+	BOX *box;
+	l_float32 max_val;
+	int nr_line, last_index, nr_word, current_line;
+	int counter_l, counter_w, counter_cw;
+	int l_x0, l_y0, l_x1, l_y1;
+
+	k2pdfopt_get_word_boxes(kc, &kc->dst, x, y, w, h, 1, 10, 10, 300, 100);
+	/* get number of lines in this area */
+	numaGetMax(kc->nai, &max_val, &last_index);
+	nr_line = (int) max_val;
+	/* get number of lines in this area */
+	nr_word = boxaGetCount(kc->boxa);
+	assert(nr_word == numaGetCount(kc->nai));
+	/* table that contains all the words */
+	lua_newtable(L);
+	lua_pushstring(L, "box_only");
+	lua_pushnumber(L, 1);
+	lua_settable(L, -3);
+	for (counter_w = 0; counter_w < nr_word; counter_w++) {
+		numaGetIValue(kc->nai, counter_w, &counter_l);
+		current_line = counter_l;
+		/* subtable that contains words in a line */
+		lua_pushnumber(L, counter_l+1);
+		lua_newtable(L);
+		counter_cw = 0;
+		l_y0 = l_x0 = 9999;
+		l_x1 = l_y1 = 0;
+		while (current_line == counter_l && counter_w < nr_word) {
+			box = boxaGetBox(kc->boxa, counter_w, L_CLONE);
+			/* create table that contains box for a word */
+			lua_pushnumber(L, counter_cw+1);
+			lua_newtable(L);
+			counter_w++;
+			counter_cw++;
+
+			/* update line box */
+			l_x0 = box->x < l_x0 ? box->x : l_x0;
+			l_y0 = box->y < l_y0 ? box->y : l_y0;
+			l_x1 = box->x + box->w > l_x1 ? box->x + box->w : l_x1;
+			l_y1 = box->y + box->h > l_y1 ? box->y + box->h : l_y1;
+
+			/* set word box */
+			lua_pushstring(L, "x0");
+			lua_pushnumber(L, box->x);
+			lua_settable(L, -3);
+
+			lua_pushstring(L, "y0");
+			lua_pushnumber(L, box->y);
+			lua_settable(L, -3);
+
+			lua_pushstring(L, "x1");
+			lua_pushnumber(L, box->x + box->w);
+			lua_settable(L, -3);
+
+			lua_pushstring(L, "y1");
+			lua_pushnumber(L, box->y + box->h);
+			lua_settable(L, -3);
+
+			//printf("box %d:%d,%d,%d,%d\n",counter_w,box->x,box->y,box->w,box->h);
+			/* set word entry to line subtable */
+			lua_settable(L, -3);
+			if (counter_w < nr_word)
+				numaGetIValue(kc->nai, counter_w, &counter_l);
+		} /* end of while */
+		if (current_line != counter_l) counter_w--;
+		/* box for a whole line */
+		lua_pushstring(L, "x0");
+		lua_pushnumber(L, l_x0);
+		lua_settable(L, -3);
+		lua_pushstring(L, "y0");
+		lua_pushnumber(L, l_y0);
+		lua_settable(L, -3);
+		lua_pushstring(L, "x1");
+		lua_pushnumber(L, l_x1);
+		lua_settable(L, -3);
+		lua_pushstring(L, "y1");
+		lua_pushnumber(L, l_y1);
+		lua_settable(L, -3);
+		/* set line entry to box table */
+		lua_settable(L, -3);
+	} /* end of for */
+
+	return 1;
+}
+
+static int kcGetOCRWord(lua_State *L) {
+	KOPTContext *kc = (KOPTContext*) luaL_checkudata(L, 1, "koptcontext");
+	const char *datadir = luaL_checkstring(L, 2);
+	const char *lang = luaL_checkstring(L, 3);
+	int x = luaL_checkint(L, 4);
+	int y = luaL_checkint(L, 5);
+	int w = luaL_checkint(L, 6);
+	int h = luaL_checkint(L, 7);
+	char word[256];
+
+	ocrtess_init(datadir, lang, 3, NULL);
+	ocrtess_single_word_from_bmp8(
+			word, 255, &kc->dst,
+			x, y, x + w, y + h, 3, 0, 1, NULL);
+	ocrtess_end();
+
+	lua_pushstring(L, word);
+	return 1;
+}
+
 static const struct luaL_Reg koptcontext_meth[] = {
 	{"setBBox", kcSetBBox},
 	{"setTrim", kcSetTrim},
@@ -276,6 +401,10 @@ static const struct luaL_Reg koptcontext_meth[] = {
 
 	{"setPreCache", kcSetPreCache},
 	{"isPreCache", kcIsPreCache},
+	{"setDebug", kcSetDebug},
+
+	{"getWordBoxes", kcGetWordBoxes},
+	{"getOCRWord", kcGetOCRWord},
 
 	{"free", freeContext},
 	{"__gc", freeContext},

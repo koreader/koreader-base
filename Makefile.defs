@@ -93,7 +93,8 @@ endif
 
 # standard includes
 KOREADER_BASE_CFLAGS=$(CFLAGS) -I$(LUADIR)/src -I$(MUPDFDIR)/
-K2PDFOPT_CFLAGS=-I$(K2PDFOPTLIBDIR)/willuslib -I$(K2PDFOPTLIBDIR)/k2pdfoptlib -I$(K2PDFOPTLIBDIR)/
+K2PDFOPT_CFLAGS=-I$(K2PDFOPTLIBDIR)/willuslib -I$(K2PDFOPTLIBDIR)/k2pdfoptlib \
+	-I$(K2PDFOPTLIBDIR)/ -I$(K2PDFOPTLIBDIR)/include_mod
 
 # enable tracing output:
 
@@ -123,5 +124,9 @@ THIRDPARTYLIBS := $(MUPDFLIBDIR)/libfreetype.a \
 LUALIB := $(LIBDIR)/libluajit-5.1.so.2
 
 POPENNSLIB := $(POPENNSDIR)/libpopen_noshell.a
+
+LEPTONICALIB := $(LIBDIR)/liblept.so.3
+
+TESSERACTLIB := $(LIBDIR)/libtesseract.so.3
 
 K2PDFOPTLIB := $(LIBDIR)/libk2pdfopt.so.1
