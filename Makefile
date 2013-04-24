@@ -162,7 +162,17 @@ $(POPENNSLIB):
 	$(MAKE) -j$(PROCESSORS) -C $(POPENNSDIR) CC="$(CC)" AR="$(AR)"
 
 $(K2PDFOPTLIB):
-	$(MAKE) -j$(PROCESSORS) -C $(K2PDFOPTLIBDIR) BUILDMODE=shared CC="$(CC)" CFLAGS="$(CFLAGS) -O3" AR="$(AR)" all
+ifdef EMULATE_READER
+	$(MAKE) -j$(PROCESSORS) -C $(K2PDFOPTLIBDIR) BUILDMODE=shared \
+		CC="$(HOSTCC)" CFLAGS="$(HOSTCFLAGS) -O3" \
+		CXX="$(HOSTCXX)" CXXFLAGS="$(HOSTCFLAGS)" \
+		AR="$(AR)" EMULATE_READER=1 all
+else
+	$(MAKE) -j$(PROCESSORS) -C $(K2PDFOPTLIBDIR) BUILDMODE=shared HOST="$(CHOST)" \
+		CC="$(CC)" CFLAGS="$(CFLAGS) -O3" \
+		CXX="$(CXX)" CXXFLAGS="$(CXXFLAGS)" \
+		AR="$(AR)" all
+endif
 	test -d $(LIBDIR) || mkdir $(LIBDIR)
 	cp -a $(K2PDFOPTLIBDIR)/libk2pdfopt.so* $(LIBDIR)
 	cp -a $(K2PDFOPTLIBDIR)/liblept.so* $(LIBDIR)
