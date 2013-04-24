@@ -30,7 +30,8 @@ koreader-base: koreader-base.o einkfb.o pdf.o blitbuffer.o drawcontext.o koptcon
 		$(LDFLAGS) \
 		-Wl,-rpath=$(LIBDIR)/ \
 		-o $@ \
-		-lm -ldl -lpthread -lk2pdfopt -ldjvulibre -lluajit-5.1 -lcrengine \
+		-lm -ldl -lpthread -lk2pdfopt -llept -ltesseract \
+		-ldjvulibre -lluajit-5.1 -lcrengine \
 		-L$(MUPDFLIBDIR) -L$(LIBDIR) \
 		$(CRE_3RD_LIBS) \
 		$(EMU_LDFLAGS) \
@@ -96,6 +97,11 @@ fetchthirdparty:
 	test -f popen-noshell/popen_noshell.c || svn co http://popen-noshell.googlecode.com/svn/trunk/ popen-noshell
 	# popen_noshell patch: Make it build on recent TCs, and implement a simple Makefile for building it as a static lib
 	cd popen-noshell && test -f Makefile || patch -N -p0 < popen_noshell-buildfix.patch
+	# download leptonica and tesseract-ocr src for libk2pdfopt
+	cd $(K2PDFOPTLIBDIR) && wget http://leptonica.com/source/leptonica-1.69.tar.gz \
+		&& tar zxf leptonica-1.69.tar.gz
+	cd $(K2PDFOPTLIBDIR) && wget http://tesseract-ocr.googlecode.com/files/tesseract-ocr-3.02.02.tar.gz \
+		&& tar zxf tesseract-ocr-3.02.02.tar.gz
 
 clean:
 	rm -f *.o koreader-base slider_watcher extr emu_event
@@ -156,8 +162,20 @@ $(POPENNSLIB):
 	$(MAKE) -j$(PROCESSORS) -C $(POPENNSDIR) CC="$(CC)" AR="$(AR)"
 
 $(K2PDFOPTLIB):
-	$(MAKE) -j$(PROCESSORS) -C $(K2PDFOPTLIBDIR) BUILDMODE=shared CC="$(CC)" CFLAGS="$(CFLAGS) -O3" AR="$(AR)" all
+ifdef EMULATE_READER
+	$(MAKE) -j$(PROCESSORS) -C $(K2PDFOPTLIBDIR) BUILDMODE=shared \
+		CC="$(HOSTCC)" CFLAGS="$(HOSTCFLAGS) -O3" \
+		CXX="$(HOSTCXX)" CXXFLAGS="$(HOSTCFLAGS)" \
+		AR="$(AR)" EMULATE_READER=1 all
+else
+	$(MAKE) -j$(PROCESSORS) -C $(K2PDFOPTLIBDIR) BUILDMODE=shared HOST="$(CHOST)" \
+		CC="$(CC)" CFLAGS="$(CFLAGS) -O3" \
+		CXX="$(CXX)" CXXFLAGS="$(CXXFLAGS)" \
+		AR="$(AR)" all
+endif
 	test -d $(LIBDIR) || mkdir $(LIBDIR)
 	cp -a $(K2PDFOPTLIBDIR)/libk2pdfopt.so* $(LIBDIR)
+	cp -a $(K2PDFOPTLIBDIR)/liblept.so* $(LIBDIR)
+	cp -a $(K2PDFOPTLIBDIR)/libtesseract.so* $(LIBDIR)
 
 thirdparty: $(MUPDFLIBS) $(THIRDPARTYLIBS) $(LUALIB) $(DJVULIBS) $(CRELIB) $(CRE_3RD_LIBS) $(POPENNSLIB) $(K2PDFOPTLIB)

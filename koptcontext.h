@@ -22,6 +22,7 @@
 #include <lualib.h>
 #include <lauxlib.h>
 #include "context.h"
+#include "koptocr.h"
 
 int luaopen_koptcontext(lua_State *L);
 #endif
