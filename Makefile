@@ -98,10 +98,17 @@ fetchthirdparty:
 	# popen_noshell patch: Make it build on recent TCs, and implement a simple Makefile for building it as a static lib
 	cd popen-noshell && test -f Makefile || patch -N -p0 < popen_noshell-buildfix.patch
 	# download leptonica and tesseract-ocr src for libk2pdfopt
-	cd $(K2PDFOPTLIBDIR) && wget http://leptonica.com/source/leptonica-1.69.tar.gz \
-		&& tar zxf leptonica-1.69.tar.gz
-	cd $(K2PDFOPTLIBDIR) && wget http://tesseract-ocr.googlecode.com/files/tesseract-ocr-3.02.02.tar.gz \
-		&& tar zxf tesseract-ocr-3.02.02.tar.gz
+	[ ! -f $(K2PDFOPTLIBDIR)/leptonica-1.69.tar.gz ] \
+		&& cd $(K2PDFOPTLIBDIR) && wget http://leptonica.com/source/leptonica-1.69.tar.gz || true
+	[ `md5sum $(K2PDFOPTLIBDIR)/leptonica-1.69.tar.gz|cut -d\  -f1` != d4085c302cbcab7f9af9d3d6f004ab22 ] \
+		&& cd $(K2PDFOPTLIBDIR) && rm leptonica-1.69.tar.gz && wget http://leptonica.com/source/leptonica-1.69.tar.gz || true
+	cd $(K2PDFOPTLIBDIR) && tar zxf leptonica-1.69.tar.gz
+	[ ! -f $(K2PDFOPTLIBDIR)/tesseract-ocr-3.02.02.tar.gz ] \
+		&& cd $(K2PDFOPTLIBDIR) && wget http://tesseract-ocr.googlecode.com/files/tesseract-ocr-3.02.02.tar.gz || true
+	[ `md5sum $(K2PDFOPTLIBDIR)/tesseract-ocr-3.02.02.tar.gz|cut -d\  -f1` != 26adc8154f0e815053816825dde246e6 ] \
+		&& cd $(K2PDFOPTLIBDIR) && rm tesseract-ocr-3.02.02.tar.gz && wget http://tesseract-ocr.googlecode.com/files/tesseract-ocr-3.02.02.tar.gz || true
+	cd $(K2PDFOPTLIBDIR) && tar zxf tesseract-ocr-3.02.02.tar.gz
+	sed -i "s/AM_CONFIG_HEADER/AC_CONFIG_HEADERS/g" $(K2PDFOPTLIBDIR)/tesseract-ocr/configure.ac
 
 clean:
 	rm -f *.o koreader-base slider_watcher extr emu_event
