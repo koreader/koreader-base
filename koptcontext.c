@@ -354,22 +354,23 @@ static int kcGetWordBoxes(lua_State *L) {
 	return 1;
 }
 
-static int kcGetOCRWord(lua_State *L) {
+static int kcGetTOCRWord(lua_State *L) {
 	KOPTContext *kc = (KOPTContext*) luaL_checkudata(L, 1, "koptcontext");
-	const char *datadir = luaL_checkstring(L, 2);
-	const char *lang = luaL_checkstring(L, 3);
-	int ocr_type = luaL_checkint(L, 4);
-	int x = luaL_checkint(L, 5);
-	int y = luaL_checkint(L, 6);
-	int w = luaL_checkint(L, 7);
-	int h = luaL_checkint(L, 8);
+	int x = luaL_checkint(L, 2);
+	int y = luaL_checkint(L, 3);
+	int w = luaL_checkint(L, 4);
+	int h = luaL_checkint(L, 5);
+	const char *datadir = luaL_checkstring(L, 6);
+	const char *lang = luaL_checkstring(L, 7);
+	const int ocr_type = luaL_checkint(L, 8);
+	const int allow_spaces = luaL_checkint(L, 9);
+	const int std_proc = luaL_checkint(L, 10);
 	char word[256];
 
-	ocrtess_init(datadir, lang, 0, NULL);
-	ocrtess_single_word_from_bmp8(
-			word, 255, &kc->dst,
-			x, y, x + w, y + h, ocr_type, 0, 1, NULL);
-	ocrtess_end();
+	k2pdfopt_tocr_single_word(&kc->dst,
+		x, y, w, h,
+		word, 255,
+		datadir, lang, ocr_type, allow_spaces, std_proc);
 
 	lua_pushstring(L, word);
 	return 1;
@@ -405,7 +406,7 @@ static const struct luaL_Reg koptcontext_meth[] = {
 	{"setDebug", kcSetDebug},
 
 	{"getWordBoxes", kcGetWordBoxes},
-	{"getOCRWord", kcGetOCRWord},
+	{"getTOCRWord", kcGetTOCRWord},
 
 	{"free", freeContext},
 	{"__gc", freeContext},
