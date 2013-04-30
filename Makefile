@@ -45,15 +45,21 @@ ifdef EMULATE_READER
 ifeq ("$(shell arch)","x86_64")
 	# quick fix for x86_64 (zeus)
 	cd $(SDCVDIR) && sed -i 's|guint32 page_size|guint64 page_size|' src/lib/lib.cpp
-	cd $(SDCVDIR) && ./configure && make
+	cd $(SDCVDIR) && ./configure \
+		CXXFLAGS=-I$(CURDIR)/$(MUPDFDIR)/thirdparty/zlib \
+		&& AM_CXXFLAGS=-static-libstdc++ make
 	# restore to original source
 	cd $(SDCVDIR) && sed -i 's|guint64 page_size|guint32 page_size|' src/lib/lib.cpp
 else
-	cd $(SDCVDIR) && ./configure && make
+	cd $(SDCVDIR) && ./configure \
+		CXXFLAGS=-I$(CURDIR)/$(MUPDFDIR)/thirdparty/zlib \
+		&& AM_CXXFLAGS=-static-libstdc++ make
 endif
 else
 	cd $(SDCVDIR) && ./configure \
-		--host=$(CHOST) LDFLAGS=-L$(CURDIR)/$(SDCVDIR)/thirdparty \
+		--host=$(CHOST) \
+		CXXFLAGS=-I$(CURDIR)/$(MUPDFDIR)/thirdparty/zlib \
+		LDFLAGS=-L$(CURDIR)/$(SDCVDIR)/thirdparty \
 		&& AM_CXXFLAGS=-static-libstdc++ make
 endif
 	cp $(SDCVDIR)/src/sdcv ./
