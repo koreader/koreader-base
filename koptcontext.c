@@ -94,7 +94,7 @@ static int newKOPTContext(lua_State *L) {
 	return 1;
 }
 
-static int freeContext(lua_State *L) {
+static int kcFreeContext(lua_State *L) {
 	KOPTContext *kc = (KOPTContext*) luaL_checkudata(L, 1, "koptcontext");
 	/* Don't worry about the src bitmap in context. It's freed as soon as it's
 	 * been used in either reflow or autocrop. But we should take care of dst
@@ -103,6 +103,12 @@ static int freeContext(lua_State *L) {
 	bmp_free(&kc->dst);
 	boxaDestroy(&kc->boxa);
 	numaDestroy(&kc->nai);
+	return 0;
+}
+
+static int kcFreeOCREngine(lua_State *L) {
+	KOPTContext *kc = (KOPTContext*) luaL_checkudata(L, 1, "koptcontext");
+	k2pdfopt_tocr_end();
 	return 0;
 }
 
@@ -408,8 +414,9 @@ static const struct luaL_Reg koptcontext_meth[] = {
 	{"getWordBoxes", kcGetWordBoxes},
 	{"getTOCRWord", kcGetTOCRWord},
 
-	{"free", freeContext},
-	{"__gc", freeContext},
+	{"freeOCR", kcFreeOCREngine},
+	{"free", kcFreeContext},
+	{"__gc", kcFreeContext},
 	{NULL, NULL}
 };
 
