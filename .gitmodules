@@ -16,3 +16,6 @@
 [submodule "libk2pdfopt"]
 	path = libk2pdfopt
 	url = git://github.com/chrox/libk2pdfopt.git
+[submodule "sdcv-0.4.2"]
+	path = sdcv-0.4.2
+	url = git://github.com/koreader/sdcv.git

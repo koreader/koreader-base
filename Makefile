@@ -2,7 +2,7 @@ include Makefile.defs
 
 PROCESSORS:=$(shell grep processor /proc/cpuinfo|wc -l)
 
-all: koreader-base extr
+all: koreader-base extr sdcv
 
 koreader-base: koreader-base.o einkfb.o pdf.o blitbuffer.o drawcontext.o koptcontext.o input.o $(POPENNSLIB) util.o ft.o lfs.o mupdfimg.o $(MUPDFLIBS) $(THIRDPARTYLIBS) $(LUALIB) djvu.o $(DJVULIBS) cre.o $(CRELIB) $(CRE_3RD_LIBS) pic.o lua_gettext.o pic_jpeg.o $(K2PDFOPTLIB)
 	$(CC) \
@@ -36,9 +36,27 @@ koreader-base: koreader-base.o einkfb.o pdf.o blitbuffer.o drawcontext.o koptcon
 		$(CRE_3RD_LIBS) \
 		$(EMU_LDFLAGS) \
 		$(DYNAMICLIBSTDCPP)
-
+		
 extr:	extr.o $(MUPDFLIBS) $(THIRDPARTYLIBS)
 	$(CC) $(CFLAGS) extr.o $(MUPDFLIBS) $(THIRDPARTYLIBS) -lm -o extr
+
+sdcv:
+ifdef EMULATE_READER
+ifeq ("$(shell arch)","x86_64")
+	# quick fix for x86_64 (zeus)
+	cd $(SDCVDIR) && sed -i 's|guint32 page_size|guint64 page_size|' src/lib/lib.cpp
+	cd $(SDCVDIR) && ./configure && make
+	# restore to original source
+	cd $(SDCVDIR) && sed -i 's|guint64 page_size|guint32 page_size|' src/lib/lib.cpp
+else
+	cd $(SDCVDIR) && ./configure && make
+endif
+else
+	cd $(SDCVDIR) && ./configure \
+		--host=$(CHOST) LDFLAGS=-L$(CURDIR)/$(SDCVDIR)/thirdparty \
+		&& AM_CXXFLAGS=-static-libstdc++ make
+endif
+	cp $(SDCVDIR)/src/sdcv ./
 
 extr.o:	%.o: %.c
 	$(CC) -c -I$(MUPDFDIR)/pdf -I$(MUPDFDIR)/fitz $< -o $@
@@ -104,7 +122,8 @@ fetchthirdparty:
 		&& tar zxf tesseract-ocr-3.02.02.tar.gz
 
 clean:
-	rm -f *.o koreader-base slider_watcher extr emu_event
+	rm -f *.o koreader-base slider_watcher extr emu_event sdcv
+	$(MAKE) -C $(SDCVDIR) clean
 
 cleanthirdparty:
 	rm -rf $(LIBDIR) ; mkdir $(LIBDIR)
