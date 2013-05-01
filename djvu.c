@@ -516,6 +516,38 @@ static int getAutoBBox(lua_State *L) {
 	return 4;
 }
 
+static int getPagePix(lua_State *L) {
+	DjvuPage *page = (DjvuPage*) luaL_checkudata(L, 1, "djvupage");
+	KOPTContext *kctx = (KOPTContext*) luaL_checkudata(L, 2, "koptcontext");
+	ddjvu_rect_t prect;
+	ddjvu_rect_t rrect;
+	int px, py, pw, ph, rx, ry, rw, rh, status;
+
+	prect.x = 0;
+	prect.y = 0;
+	prect.w = ddjvu_page_get_width(page->page_ref);
+	prect.h = ddjvu_page_get_height(page->page_ref);
+	rrect = prect;
+
+	WILLUSBITMAP *dst = &kctx->dst;
+	bmp_init(dst);
+	dst->width = rrect.w;
+	dst->height = rrect.h;
+	dst->bpp = 8;
+	bmp_alloc(dst);
+	if (dst->bpp == 8) {
+		int ii;
+		for (ii = 0; ii < 256; ii++)
+		dst->red[ii] = dst->blue[ii] = dst->green[ii] = ii;
+	}
+
+	ddjvu_format_set_row_order(page->doc->pixelformat, 1);
+	ddjvu_page_render(page->page_ref, 0, &prect, &rrect, page->doc->pixelformat,
+		bmp_bytewidth(dst), (char *) dst->data);
+
+	return 0;
+}
+
 static int reflowPage(lua_State *L) {
 	DjvuPage *page = (DjvuPage*) luaL_checkudata(L, 1, "djvupage");
 	KOPTContext *kctx = (KOPTContext*) luaL_checkudata(L, 2, "koptcontext");
@@ -737,6 +769,7 @@ static const struct luaL_Reg djvupage_meth[] = {
 	{"getSize", getPageSize},
 	{"getUsedBBox", getUsedBBox},
 	{"getAutoBBox", getAutoBBox},
+	{"getPagePix", getPagePix},
 	{"close", closePage},
 	{"__gc", closePage},
 	{"reflow", reflowPage},
