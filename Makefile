@@ -4,9 +4,12 @@ PROCESSORS:=$(shell grep processor /proc/cpuinfo|wc -l)
 
 all: koreader-base extr sdcv
 
-koreader-base: koreader-base.o einkfb.o pdf.o blitbuffer.o drawcontext.o koptcontext.o input.o $(POPENNSLIB) util.o ft.o lfs.o mupdfimg.o $(MUPDFLIBS) $(THIRDPARTYLIBS) $(LUALIB) djvu.o $(DJVULIBS) cre.o $(CRELIB) $(CRE_3RD_LIBS) pic.o lua_gettext.o pic_jpeg.o $(K2PDFOPTLIB)
-	$(CC) \
-		$(CFLAGS) \
+koreader-base: koreader-base.o einkfb.o pdf.o blitbuffer.o drawcontext.o \
+	koptcontext.o input.o $(POPENNSLIB) util.o ft.o lfs.o mupdfimg.o \
+	$(MUPDFLIBS) $(THIRDPARTYLIBS) $(LUALIB) djvu.o $(DJVULIBS) cre.o \
+	$(CRELIB) $(CRE_3RD_LIBS) pic.o lua_gettext.o pic_jpeg.o $(K2PDFOPTLIB) \
+	$(LEPTONICALIB) $(TESSERACTLIB)
+	$(CC) $(CFLAGS) \
 		koreader-base.o \
 		einkfb.o \
 		pdf.o \
@@ -143,10 +146,18 @@ cleanthirdparty:
 	$(MAKE) -C $(LUADIR) CC="$(HOSTCC)" CFLAGS="$(BASE_CFLAGS)" clean
 	$(MAKE) -C $(MUPDFDIR) build="release" clean
 	$(MAKE) -C $(CRENGINEDIR)/thirdparty/antiword clean
-	test -d $(CRENGINEDIR)/thirdparty/chmlib && $(MAKE) -C $(CRENGINEDIR)/thirdparty/chmlib clean || echo warn: chmlib folder not found
-	test -d $(CRENGINEDIR)/thirdparty/libpng && ($(MAKE) -C $(CRENGINEDIR)/thirdparty/libpng clean) || echo warn: chmlib folder not found
-	test -d $(CRENGINEDIR)/crengine && ($(MAKE) -C $(CRENGINEDIR)/crengine clean) || echo warn: chmlib folder not found
-	test -d $(KPVCRLIBDIR) && ($(MAKE) -C $(KPVCRLIBDIR) clean) || echo warn: chmlib folder not found
+	test -d $(CRENGINEDIR)/thirdparty/chmlib \
+		&& $(MAKE) -C $(CRENGINEDIR)/thirdparty/chmlib clean \
+		|| echo warn: chmlib folder not found
+	test -d $(CRENGINEDIR)/thirdparty/libpng \
+		&& ($(MAKE) -C $(CRENGINEDIR)/thirdparty/libpng clean) \
+		|| echo warn: chmlib folder not found
+	test -d $(CRENGINEDIR)/crengine \
+		&& ($(MAKE) -C $(CRENGINEDIR)/crengine clean) \
+		|| echo warn: chmlib folder not found
+	test -d $(KPVCRLIBDIR) \
+		&& ($(MAKE) -C $(KPVCRLIBDIR) clean) \
+		|| echo warn: chmlib folder not found
 	rm -rf $(DJVUDIR)/build
 	$(MAKE) -C $(POPENNSDIR) clean
 	$(MAKE) -C $(K2PDFOPTLIBDIR) clean
@@ -193,7 +204,7 @@ endif
 $(POPENNSLIB):
 	$(MAKE) -j$(PROCESSORS) -C $(POPENNSDIR) CC="$(CC)" AR="$(AR)"
 
-$(K2PDFOPTLIB):
+$(K2PDFOPTLIB) $(LEPTONICALIB) $(TESSERACTLIB):
 ifdef EMULATE_READER
 	$(MAKE) -j$(PROCESSORS) -C $(K2PDFOPTLIBDIR) BUILDMODE=shared \
 		CC="$(HOSTCC)" CFLAGS="$(HOSTCFLAGS)" \
@@ -210,4 +221,5 @@ endif
 	cp -a $(K2PDFOPTLIBDIR)/liblept.so* $(LIBDIR)
 	cp -a $(K2PDFOPTLIBDIR)/libtesseract.so* $(LIBDIR)
 
-thirdparty: $(MUPDFLIBS) $(THIRDPARTYLIBS) $(LUALIB) $(DJVULIBS) $(CRELIB) $(CRE_3RD_LIBS) $(POPENNSLIB) $(K2PDFOPTLIB)
+thirdparty: $(MUPDFLIBS) $(THIRDPARTYLIBS) $(LUALIB) $(DJVULIBS) $(CRELIB) \
+	$(CRE_3RD_LIBS) $(POPENNSLIB) $(K2PDFOPTLIB)
