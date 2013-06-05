@@ -105,13 +105,17 @@ inline void fillMxcfbUpdateData(mxcfb_update_data *myarea, FBInfo *fb, lua_State
 	myarea->update_region.height = luaL_optint(L, 6, fb->vinfo.yres);
 	myarea->waveform_mode = 257;
 	myarea->update_marker = 1;
+#ifndef KOBO_PLATFORM
 	myarea->hist_bw_waveform_mode = 0;
 	myarea->hist_gray_waveform_mode = 0;
+#endif
 	myarea->temp = 0x1001;
 	/*@TODO make the flag configurable from UI,
 	 * this flag invert all the pixels on display  09.01 2013 (houqp)*/
 	myarea->flags = 0;
-	/*myarea->alt_buffer_data.virt_addr = NULL;*/
+#ifdef KOBO_PLATFORM
+	myarea->alt_buffer_data.virt_addr = NULL;
+#endif
 	myarea->alt_buffer_data.phys_addr = NULL;
 	myarea->alt_buffer_data.width = 0;
 	myarea->alt_buffer_data.height = 0;
@@ -217,8 +221,16 @@ static int openFrameBuffer(lua_State *L) {
 	}
 
 	/* mmap the framebuffer */
+#ifndef KOBO_PLATFORM
 	fb_map_address = mmap(0, fb->finfo.smem_len,
 			PROT_READ | PROT_WRITE, MAP_SHARED, fb->fd, 0);
+#else
+	/* it seems that fb->finfo.smem_len is unreliable on kobo */
+	// Figure out the size of the screen in bytes
+	fb->fb_size = (fb->vinfo.xres_virtual * fb->vinfo.yres_virtual * fb->vinfo.bits_per_pixel / 8);
+	fb_map_address = mmap(0, fb->fb_size,
+       PROT_READ | PROT_WRITE, MAP_SHARED, fb->fd, 0);
+#endif
 	if(fb_map_address == MAP_FAILED) {
 		return luaL_error(L, "cannot mmap framebuffer");
 	}
@@ -308,12 +320,22 @@ static int closeFrameBuffer(lua_State *L) {
 	// should be save if called twice
 	if(fb->buf != NULL && fb->buf->data != NULL) {
 #ifndef EMULATE_READER
+#ifndef KOBO_PLATFORM
 		if (fb->vinfo.bits_per_pixel != 4) {
 			munmap(fb->real_buf->data, fb->finfo.smem_len);
 			free(fb->buf->data);
 		} else {
 			munmap(fb->buf->data, fb->finfo.smem_len);
 		}
+#else
+		if (fb->vinfo.bits_per_pixel != 4) {
+			munmap(fb->real_buf->data, fb->fb_size);
+			free(fb->buf->data);
+		} else {
+			munmap(fb->buf->data, fb->fb_size);
+		}
+#endif
+
 		close(fb->fd);
 #else
 		free(fb->buf->data);
