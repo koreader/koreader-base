@@ -105,13 +105,17 @@ inline void fillMxcfbUpdateData(mxcfb_update_data *myarea, FBInfo *fb, lua_State
 	myarea->update_region.height = luaL_optint(L, 6, fb->vinfo.yres);
 	myarea->waveform_mode = 257;
 	myarea->update_marker = 1;
+#ifndef KOBO_PLATFORM
 	myarea->hist_bw_waveform_mode = 0;
 	myarea->hist_gray_waveform_mode = 0;
+#endif
 	myarea->temp = 0x1001;
 	/*@TODO make the flag configurable from UI,
 	 * this flag invert all the pixels on display  09.01 2013 (houqp)*/
 	myarea->flags = 0;
-	/*myarea->alt_buffer_data.virt_addr = NULL;*/
+#ifdef KOBO_PLATFORM
+	myarea->alt_buffer_data.virt_addr = NULL;
+#endif
 	myarea->alt_buffer_data.phys_addr = NULL;
 	myarea->alt_buffer_data.width = 0;
 	myarea->alt_buffer_data.height = 0;
@@ -147,7 +151,7 @@ void kindle51einkUpdate(FBInfo *fb, lua_State *L) {
 
 	ioctl(fb->fd, MXCFB_SEND_UPDATE, &myarea);
 }
-#endif	
+#endif
 
 static int openFrameBuffer(lua_State *L) {
 	const char *fb_device = luaL_checkstring(L, 1);
@@ -217,12 +221,20 @@ static int openFrameBuffer(lua_State *L) {
 	}
 
 	/* mmap the framebuffer */
+#ifndef KOBO_PLATFORM
 	fb_map_address = mmap(0, fb->finfo.smem_len,
 			PROT_READ | PROT_WRITE, MAP_SHARED, fb->fd, 0);
+#else
+	/* it seems that fb->finfo.smem_len is unreliable on kobo */
+	// Figure out the size of the screen in bytes
+	fb->fb_size = (fb->vinfo.xres_virtual * fb->vinfo.yres_virtual * fb->vinfo.bits_per_pixel / 8);
+	fb_map_address = mmap(0, fb->fb_size,
+       PROT_READ | PROT_WRITE, MAP_SHARED, fb->fd, 0);
+#endif
 	if(fb_map_address == MAP_FAILED) {
 		return luaL_error(L, "cannot mmap framebuffer");
 	}
-	
+
 	if (fb->vinfo.bits_per_pixel == 8) {
 		/* for 8bpp K4, PaperWhite, we create a shadow 4bpp blitbuffer.
 		 * These models use 16 scale 8bpp framebuffer, so they are
@@ -308,12 +320,22 @@ static int closeFrameBuffer(lua_State *L) {
 	// should be save if called twice
 	if(fb->buf != NULL && fb->buf->data != NULL) {
 #ifndef EMULATE_READER
+#ifndef KOBO_PLATFORM
 		if (fb->vinfo.bits_per_pixel != 4) {
 			munmap(fb->real_buf->data, fb->finfo.smem_len);
 			free(fb->buf->data);
 		} else {
 			munmap(fb->buf->data, fb->finfo.smem_len);
 		}
+#else
+		if (fb->vinfo.bits_per_pixel != 4) {
+			munmap(fb->real_buf->data, fb->fb_size);
+			free(fb->buf->data);
+		} else {
+			munmap(fb->buf->data, fb->fb_size);
+		}
+#endif
+
 		close(fb->fd);
 #else
 		free(fb->buf->data);
@@ -391,8 +413,8 @@ static int einkSetOrientation(lua_State *L) {
 	 *	   | +----------+ |
 	 *	   | |          | |
 	 *	   | | Freedom! | |
-	 *	   | |          | |  
-	 *	   | |          | |  
+	 *	   | |          | |
+	 *	   | |          | |
 	 *	 3 | |          | | 2
 	 *	   | |          | |
 	 *	   | |          | |
@@ -403,7 +425,7 @@ static int einkSetOrientation(lua_State *L) {
 	 *	          0
 	 * */
 #ifndef EMULATE_READER
-	if (mode == 1) 
+	if (mode == 1)
 		mode = 2;
 	else if (mode == 2)
 		mode = 1;
@@ -413,7 +435,7 @@ static int einkSetOrientation(lua_State *L) {
 	if (mode == 0 || mode == 2) {
 		emu_w = emu_disp_w;
 		emu_h = emu_disp_h;
-	}	
+	}
 	else if (mode == 1 || mode == 3) {
 		emu_w = emu_disp_h;
 		emu_h = emu_disp_w;
@@ -429,7 +451,7 @@ static int einkGetOrientation(lua_State *L) {
 
 	ioctl(fb->fd, FBIO_EINK_GET_DISPLAY_ORIENTATION, &mode);
 
-	/* adjust ioctl's rotate mode definition to KPV's 
+	/* adjust ioctl's rotate mode definition to KPV's
 	 * refer to screen.lua */
 	if (mode == 2)
 		mode = 1;

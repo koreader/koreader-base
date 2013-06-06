@@ -99,8 +99,10 @@ struct mxcfb_rect {
 #define FB_TEMP_AUTO_UPDATE_DISABLE     -1
 
 struct mxcfb_alt_buffer_data {
+#ifdef KOBO_PLATFORM
 	/* virt_addr is not included in amazon's source */
-	/* void *virt_addr; */
+	void *virt_addr;
+#endif
 	__u32 phys_addr;
 	__u32 width;	/* width of entire buffer */
 	__u32 height;	/* height of entire buffer */
@@ -112,8 +114,11 @@ struct mxcfb_update_data {
 	__u32 waveform_mode;
 	__u32 update_mode;
 	__u32 update_marker;
+#ifndef KOBO_PLATFORM
+	/* these two fields have been added by amazon */
 	__u32 hist_bw_waveform_mode;
 	__u32 hist_gray_waveform_mode;
+#endif
 	int temp;
 	uint flags;
 	struct mxcfb_alt_buffer_data alt_buffer_data;

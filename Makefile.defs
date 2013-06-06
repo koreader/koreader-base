@@ -68,6 +68,10 @@ endif
 # the application won't use the framebuffer (and the special e-ink ioctls)
 # in that case.
 
+ifeq ($(TARGET_DEVICE), KOBO)
+	CFLAGS+= -DKOBO_PLATFORM
+endif
+
 ifdef EMULATE_READER
 	HOSTCC:=$(strip $(CCACHE) $(HOSTCC))
 	HOSTCXX:=$(strip $(CCACHE) $(HOSTCXX))
