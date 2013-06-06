@@ -46,6 +46,9 @@ typedef struct FBInfo {
 	struct fb_fix_screeninfo finfo;
 #endif
 	struct fb_var_screeninfo vinfo;
+#ifdef KOBO_PLATFORM
+	size_t fb_size;
+#endif
 } FBInfo;
 
 int luaopen_einkfb(lua_State *L);

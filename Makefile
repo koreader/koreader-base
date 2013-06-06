@@ -4,6 +4,9 @@ PROCESSORS:=$(shell grep processor /proc/cpuinfo|wc -l)
 
 all: koreader-base extr sdcv
 
+kobo:
+	TARGET_DEVICE=KOBO make
+
 koreader-base: koreader-base.o einkfb.o pdf.o blitbuffer.o drawcontext.o \
 	koptcontext.o input.o $(POPENNSLIB) util.o ft.o lfs.o mupdfimg.o \
 	$(MUPDFLIBS) $(THIRDPARTYLIBS) $(LUALIB) djvu.o $(DJVULIBS) cre.o \
