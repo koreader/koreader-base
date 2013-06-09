@@ -44,28 +44,6 @@ Index: popen_noshell.c
 ===================================================================
 --- popen_noshell.c	(revision 8)
 +++ popen_noshell.c	(working copy)
-@@ -16,6 +16,10 @@
-  * along with this program.  If not, see <http://www.gnu.org/licenses>.
-  */
- 
-+#ifndef _GNU_SOURCE
-+#define _GNU_SOURCE
-+#endif
-+
- #include "popen_noshell.h"
- #include <errno.h>
- #include <unistd.h>
-@@ -28,10 +32,6 @@
- #include <sys/wait.h>
- #include <stdlib.h>
- #include <inttypes.h>
--
--#ifndef _GNU_SOURCE
--#define _GNU_SOURCE
--#endif
- #include <sched.h>
- 
- /*
 @@ -249,7 +249,7 @@
  		 * The above malloc() + align implementation is taken from:
  		 * 	http://stackoverflow.com/questions/227897/solve-the-memory-alignment-in-c-interview-question-that-stumped-me
