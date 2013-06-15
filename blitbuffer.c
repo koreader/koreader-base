@@ -666,6 +666,85 @@ static int dimRect(lua_State *L) {
 	return 0;
 }
 
+static int lightenRect(lua_State *L) {
+	BlitBuffer *dst = (BlitBuffer*) luaL_checkudata(L, 1, "blitbuffer");
+	int x = luaL_checkint(L, 2);
+	int y = luaL_checkint(L, 3);
+	int w = luaL_checkint(L, 4);
+	int h = luaL_checkint(L, 5);
+	int low = 0x0F * luaL_checknumber(L, 6);
+	int high = low << 4;
+	uint8_t *dstptr;
+
+	int cy, cx;
+
+	if (x < 0) {
+		if ( x + w > 0 ) {
+			w = w + x;
+			x = 0;
+		} else {
+			return 0;
+		}
+	}
+
+	if (y < 0) {
+		if ( y + h > 0 ) {
+			h = h + y;
+			y = 0;
+		} else {
+			return 0;
+		}
+	}
+
+	if(w <= 0 || h <= 0 || x >= dst->w || y >= dst->h) {
+		return 0;
+	}
+	if(x + w > dst->w) {
+		w = dst->w - x;
+	}
+	if(y + h > dst->h) {
+		h = dst->h - y;
+	}
+
+	if(x & 1) {
+		dstptr = (uint8_t*)(dst->data +
+				y * dst->pitch +
+				x / 2);
+		for(cy = 0; cy < h; cy++) {
+			ASSERT_BLITBUFFER_BOUNDARIES(dst, dstptr);
+			int px = *dstptr & 0x0F;
+			*dstptr &= 0xF0 | (px < low ? low : px);
+			dstptr += dst->pitch;
+		}
+		x++;
+		w--;
+	}
+	dstptr = (uint8_t*)(dst->data +
+			y * dst->pitch +
+			x / 2);
+	for(cy = 0; cy < h; cy++) {
+		for(cx = 0; cx < w/2; cx++) {
+			ASSERT_BLITBUFFER_BOUNDARIES(dst, (dstptr+cx));
+			int v1 = *(dstptr+cx) & 0xF0;
+			int v2 = *(dstptr+cx) & 0x0F;
+			*(dstptr+cx) = (v1 < high ? high : v1) | (v2 < low ? low : v2);
+		}
+		dstptr += dst->pitch;
+	}
+	if(w & 1) {
+		dstptr = (uint8_t*)(dst->data +
+				y * dst->pitch +
+				(x + w) / 2);
+		for(cy = 0; cy < h; cy++) {
+			ASSERT_BLITBUFFER_BOUNDARIES(dst, dstptr);
+			int px = *dstptr & 0xF0;
+			*dstptr &= 0x0F | ( px < high ? high : px);
+			dstptr += dst->pitch;
+		}
+	}
+	return 0;
+}
+
 /*
  * @r: radius
  * @c: color of the line to draw
@@ -849,6 +928,7 @@ static const struct luaL_Reg blitbuffer_meth[] = {
 	{"paintRoundedCorner", paintRoundedCorner},
 	{"invertRect", invertRect},
 	{"dimRect", dimRect},
+	{"lightenRect", lightenRect},
 	{"free", freeBlitBuffer},
 	{"__gc", freeBlitBuffer},
 	{NULL, NULL}
