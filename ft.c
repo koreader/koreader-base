@@ -64,6 +64,18 @@ static int newFace(lua_State *L) {
 	return 1;
 }
 
+static int checkGlyph(lua_State *L) {
+	KPVFace *face = (KPVFace*) luaL_checkudata(L, 1, "ft_face");
+	int ch = luaL_checkint(L, 2);
+	FT_UInt glyph_index = FT_Get_Char_Index(face->face, ch);
+	if(glyph_index == 0) {
+		lua_pushinteger(L, 0);
+	} else {
+		lua_pushinteger(L, 1);
+	}
+	return 1;
+}
+
 static int renderGlyph(lua_State *L) {
 	KPVFace *face = (KPVFace*) luaL_checkudata(L, 1, "ft_face");
 	int ch = luaL_checkint(L, 2);
@@ -172,6 +184,7 @@ static int doneFace(lua_State *L) {
 }
 
 static const struct luaL_Reg ft_face_meth[] = {
+	{"checkGlyph", checkGlyph},
 	{"renderGlyph", renderGlyph},
 	{"hasKerning", hasKerning},
 	{"getKerning", getKerning},
