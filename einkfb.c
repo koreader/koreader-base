@@ -211,6 +211,26 @@ static int openFrameBuffer(lua_State *L) {
 		return luaL_error(L, "cannot get variable screen info");
 	}
 
+	if (fb->vinfo.bits_per_pixel == 16) {
+		/* Only (known) platform using this is Kobo;
+		 * since we can change the mode to 8bpp, at this time
+		 * driving directly the screen at 16bpp is not supported.
+		 * */
+		fb->vinfo.bits_per_pixel = 8;
+		fb->vinfo.grayscale = 1;
+		fb->vinfo.rotate = 3; // 0 is landscape right handed, 3 is portrait
+		if (ioctl(fb->fd, FBIOPUT_VSCREENINFO, &fb->vinfo)) {
+			return luaL_error(L, "cannot change screen bpp");
+		}
+		/* at this point fb->finfo should be changed */
+		if (ioctl(fb->fd, FBIOGET_FSCREENINFO, &fb->finfo)) {
+			return luaL_error(L, "cannot get screen info");
+		}
+		if (fb->vinfo.bits_per_pixel == 16) {
+			return luaL_error(L, "cannot change screen bpp");
+		}
+	}
+
 	if (!fb->vinfo.grayscale) {
 		return luaL_error(L, "only grayscale is supported but framebuffer says it isn't");
 	}
@@ -343,7 +363,7 @@ static int closeFrameBuffer(lua_State *L) {
 		fb->buf->data = NULL;
 		// the blitbuffer in fb->buf should be freed
 		// by the Lua GC when our object is garbage
-		// collected sice it is visible as an entry
+		// collected since it is visible as an entry
 		// in the fb table
 	}
 	return 0;
