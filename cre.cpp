@@ -437,6 +437,44 @@ static int setStyleSheet(lua_State *L) {
 	return 0;
 }
 
+/// ------- Page Margins -------
+
+static int setPageMargins(lua_State *L) {
+	CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
+	lvRect rc;
+	rc.left = luaL_checkint(L, 2);
+	rc.top = luaL_checkint(L, 3);
+	rc.right = luaL_checkint(L, 4);
+	rc.bottom = luaL_checkint(L, 5);
+	doc->text_view->setPageMargins(rc);
+	return 0;
+}
+
+static int getPageMargins(lua_State *L) {
+	CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
+	lvRect rc = doc->text_view->getPageMargins();
+	
+	lua_newtable(L);
+
+	lua_pushstring(L, "left");
+	lua_pushnumber(L, rc.left);
+	lua_settable(L, -3);
+
+	lua_pushstring(L, "top");
+	lua_pushnumber(L, rc.top);
+	lua_settable(L, -3);
+
+	lua_pushstring(L, "right");
+	lua_pushnumber(L, rc.right);
+	lua_settable(L, -3);
+
+	lua_pushstring(L, "bottom");
+	lua_pushnumber(L, rc.bottom);
+	lua_settable(L, -3);
+		
+	return 1;
+}
+
 static int setEmbeddedStyleSheet(lua_State *L) {
 	CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
 
@@ -698,6 +736,7 @@ static const struct luaL_Reg credocument_meth[] = {
 	{"getFullHeight", getFullHeight},
 	{"getFontSize", getFontSize},
 	{"getFontFace", getFontFace},
+	{"getPageMargins", getPageMargins},
 	{"getToc", getTableOfContent},
 	/*--- set methods ---*/
 	{"setViewMode", setViewMode},
@@ -708,6 +747,7 @@ static const struct luaL_Reg credocument_meth[] = {
 	{"setDefaultInterlineSpace", setDefaultInterlineSpace},
 	{"setStyleSheet", setStyleSheet},
 	{"setEmbeddedStyleSheet", setEmbeddedStyleSheet},
+	{"setPageMargins", setPageMargins},
 	/* --- control methods ---*/
 	{"gotoPage", gotoPage},
 	{"gotoPercent", gotoPercent},
