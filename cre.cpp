@@ -62,7 +62,24 @@ static int newDocView(lua_State *L) {
 	doc->text_view->Resize(width, height);
 	doc->text_view->setPageHeaderInfo(PGHDR_AUTHOR|PGHDR_TITLE|PGHDR_PAGE_NUMBER|PGHDR_PAGE_COUNT|PGHDR_CHAPTER_MARKS|PGHDR_CLOCK);
 
+	// it will overwrite all settings by values found in ./data/cr3.ini
+	CRPropRef props = doc->text_view->propsGetCurrent();
+	LVStreamRef stream = LVOpenFileStream("data/cr3.ini", LVOM_READ);
+	if ( !stream.isNull() && props->loadFromStream(stream.get()) ) {
+		doc->text_view->propsApply(props);
+	} else {
+		stream = LVOpenFileStream("data/cr3.ini", LVOM_WRITE);
+		props->saveToStream(stream.get());
+		}
+	
 	return 1;
+}
+
+static int saveDefaults(lua_State *L) {
+	CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
+	CRPropRef props = doc->text_view->propsGetCurrent();
+	LVStreamRef stream = LVOpenFileStream("data/cr3.ini", LVOM_WRITE);
+	return props->saveToStream(stream.get());
 }
 
 static int getGammaIndex(lua_State *L) {
@@ -762,6 +779,7 @@ static const struct luaL_Reg credocument_meth[] = {
 	{"getPageLinks", getPageLinks},
 	{"gotoLink", gotoLink},
 	{"clearSelection", clearSelection},
+	{"saveDefaults", saveDefaults},
 	{"close", closeDocument},
 	{"__gc", closeDocument},
 	{NULL, NULL}
