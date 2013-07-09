@@ -570,7 +570,13 @@ static int getAutoBBox(lua_State *L) {
 
 	fz_var(pix);
 
-	bounds = fz_bound_page(page->doc->xref, page->page);
+	//bounds = fz_bound_page(page->doc->xref, page->page);
+	// use manual bbox in context for semi-automatic bbox finding
+	bounds.x0 = kctx->bbox.x0;
+	bounds.y0 = kctx->bbox.y0;
+	bounds.x1 = kctx->bbox.x1;
+	bounds.y1 = kctx->bbox.y1;
+
 	bounds2 = fz_transform_rect(fz_identity, bounds);
 	bbox = fz_round_rect(bounds2);
 
