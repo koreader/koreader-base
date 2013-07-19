@@ -49,6 +49,7 @@ static int newKOPTContext(lua_State *L) {
 	BBox bbox = {0, 0, 0, 0};
 	int precache = 0;
 	int debug = 0;
+	int cjkchar = 0;
 
 	KOPTContext *kc = (KOPTContext*) lua_newuserdata(L, sizeof(KOPTContext));
 
@@ -81,9 +82,11 @@ static int newKOPTContext(lua_State *L) {
 	kc->bbox = bbox;
 	kc->precache = precache;
 	kc->debug = debug;
+	kc->cjkchar = cjkchar;
 
 	kc->boxa = NULL;
 	kc->nai = NULL;
+	kc->language = NULL;
 
 	bmp_init(&kc->src);
 	bmp_init(&kc->dst);
@@ -269,6 +272,24 @@ static int kcSetDebug(lua_State *L) {
 	return 0;
 }
 
+static int kcSetCJKChar(lua_State *L) {
+	KOPTContext *kc = (KOPTContext*) luaL_checkudata(L, 1, "koptcontext");
+	kc->cjkchar = 1;
+	return 0;
+}
+
+static int kcSetLanguage(lua_State *L) {
+	KOPTContext *kc = (KOPTContext*) luaL_checkudata(L, 1, "koptcontext");
+	kc->language = luaL_checkstring(L, 2);
+	return 0;
+}
+
+static int kcGetLanguage(lua_State *L) {
+	KOPTContext *kc = (KOPTContext*) luaL_checkudata(L, 1, "koptcontext");
+	lua_pushstring(L, k2pdfopt_tocr_get_language());
+	return 1;
+}
+
 static int kcGetWordBoxes(lua_State *L) {
 	KOPTContext *kc = (KOPTContext*) luaL_checkudata(L, 1, "koptcontext");
 	int x = luaL_checkint(L, 2);
@@ -281,7 +302,7 @@ static int kcGetWordBoxes(lua_State *L) {
 	int counter_l, counter_w, counter_cw;
 	int l_x0, l_y0, l_x1, l_y1;
 
-	k2pdfopt_get_word_boxes(kc, &kc->dst, x, y, w, h, 1, 10, 10, 300, 100);
+	k2pdfopt_get_word_boxes(kc, &kc->dst, x, y, w, h);
 	/* get number of lines in this area */
 	numaGetMax(kc->nai, &max_val, &last_index);
 	nr_line = (int) max_val;
@@ -410,6 +431,9 @@ static const struct luaL_Reg koptcontext_meth[] = {
 	{"setPreCache", kcSetPreCache},
 	{"isPreCache", kcIsPreCache},
 	{"setDebug", kcSetDebug},
+	{"setCJKChar", kcSetCJKChar},
+	{"setLanguage",kcSetLanguage},
+	{"getLanguage", kcGetLanguage},
 
 	{"getWordBoxes", kcGetWordBoxes},
 	{"getTOCRWord", kcGetTOCRWord},
