@@ -384,6 +384,18 @@ static void load_lua_text_page(lua_State *L, fz_text_page *page)
 						}
 						bbox = fz_union_rect(bbox, span->text[i].bbox);
 						linebbox = fz_union_rect(linebbox, span->text[i].bbox);
+						/* check for punctuations and CJK characters */
+						if ((span->text[i].c >= 0x4e00 && span->text[i].c <= 0x9FFF) || // CJK Unified Ideographs
+							(span->text[i].c >= 0x2000 && span->text[i].c <= 0x206F) || // General Punctuation
+							(span->text[i].c >= 0x3000 && span->text[i].c <= 0x303F) || // CJK Symbols and Punctuation
+							(span->text[i].c >= 0x3400 && span->text[i].c <= 0x4DBF) || // CJK Unified Ideographs Extension A
+							(span->text[i].c >= 0xF900 && span->text[i].c <= 0xFAFF) || // CJK Compatibility Ideographs
+							(span->text[i].c >= 0xFF01 && span->text[i].c <= 0xFFEE) || // Halfwidth and Fullwidth Forms
+							(span->text[i].c >= 0x20000 && span->text[i].c <= 0x2A6DF)  // CJK Unified Ideographs Extension B
+							) {
+							i++;
+							break;
+						}
 					}
 					lua_pushstring(L, "word");
 					luaL_pushresult(&textbuf);
