@@ -99,17 +99,17 @@ inline void fillUpdateAreaT(update_area_t *myarea, FBInfo *fb, lua_State *L) {
 
 inline void fillMxcfbUpdateData(mxcfb_update_data *myarea, FBInfo *fb, lua_State *L) {
 	myarea->update_mode = ((luaL_optint(L, 2, 0) == 0)? 1:0);
-	myarea->update_region.top = luaL_optint(L, 3, 0);
-	myarea->update_region.left = luaL_optint(L, 4, 0);
-	myarea->update_region.width = luaL_optint(L, 5, fb->vinfo.xres);
-	myarea->update_region.height = luaL_optint(L, 6, fb->vinfo.yres);
-	myarea->waveform_mode = 257;
+	myarea->waveform_mode = luaL_optint(L, 3, 2);
+	myarea->update_region.top = luaL_optint(L, 4, 0);
+	myarea->update_region.left = luaL_optint(L, 5, 0);
+	myarea->update_region.width = luaL_optint(L, 6, fb->vinfo.xres);
+	myarea->update_region.height = luaL_optint(L, 7, fb->vinfo.yres);
 	myarea->update_marker = 1;
 #ifndef KOBO_PLATFORM
 	myarea->hist_bw_waveform_mode = 0;
 	myarea->hist_gray_waveform_mode = 0;
 #endif
-	myarea->temp = 0x1001;
+	myarea->temp = 0x1000;
 	/*@TODO make the flag configurable from UI,
 	 * this flag invert all the pixels on display  09.01 2013 (houqp)*/
 	myarea->flags = 0;
@@ -376,13 +376,18 @@ static int einkUpdate(lua_State *L) {
 	einkUpdateFunc(fb, L);
 #else
 	int fxtype = luaL_optint(L, 2, 0);
+	int x1 = luaL_optint(L, 4, 0);
+	int y1 = luaL_optint(L, 5, 0);
+	int w = luaL_optint(L, 6, fb->vinfo.xres);
+	int h = luaL_optint(L, 7, fb->vinfo.yres);
 	// for now, we only do fullscreen blits in emulation mode
 	if (fxtype == 0) {
 		// simmulate a full screen update in eink screen
 		if(SDL_MUSTLOCK(fb->screen) && (SDL_LockSurface(fb->screen) < 0)) {
 			return luaL_error(L, "can't lock surface.");
 		}
-		SDL_FillRect(fb->screen, NULL, 0x000000);
+		SDL_Rect rect = {x1, y1, w, h};
+		SDL_FillRect(fb->screen, &rect, 0x000000);
 		if(SDL_MUSTLOCK(fb->screen)) SDL_UnlockSurface(fb->screen);
 		SDL_Flip(fb->screen);
 	}
@@ -390,10 +395,7 @@ static int einkUpdate(lua_State *L) {
 	if(SDL_MUSTLOCK(fb->screen) && (SDL_LockSurface(fb->screen) < 0)) {
 		return luaL_error(L, "can't lock surface.");
 	}
-	int x1 = luaL_optint(L, 3, 0);
-	int y1 = luaL_optint(L, 4, 0);
-	int w = luaL_optint(L, 5, fb->vinfo.xres);
-	int h = luaL_optint(L, 6, fb->vinfo.yres);
+
 
 	int x, y;
 
