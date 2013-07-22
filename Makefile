@@ -7,8 +7,8 @@ all: koreader-base extr sdcv
 kobo:
 	TARGET_DEVICE=KOBO make
 
-koreader-base: koreader-base.o einkfb.o pdf.o blitbuffer.o drawcontext.o \
-	koptcontext.o input.o $(POPENNSLIB) util.o ft.o lfs.o mupdfimg.o \
+koreader-base: koreader-base.o einkfb.o kobolight.o pdf.o blitbuffer.o\
+	drawcontext.o koptcontext.o input.o $(POPENNSLIB) util.o ft.o lfs.o mupdfimg.o \
 	$(MUPDFLIBS) $(THIRDPARTYLIBS) $(LUALIB) djvu.o $(DJVULIBS) cre.o \
 	$(CRELIB) $(CRE_3RD_LIBS) pic.o lua_gettext.o pic_jpeg.o $(K2PDFOPTLIB) \
 	$(LEPTONICALIB) $(TESSERACTLIB)
@@ -82,7 +82,7 @@ slider_watcher: slider_watcher.o $(POPENNSLIB)
 ft.o: %.o: %.c $(THIRDPARTYLIBS)
 	$(CC) -c $(KOREADER_BASE_CFLAGS) -I$(FREETYPEDIR)/include -I$(MUPDFDIR)/fitz $< -o $@
 
-blitbuffer.o util.o drawcontext.o einkfb.o input.o mupdfimg.o: %.o: %.c
+blitbuffer.o util.o drawcontext.o einkfb.o kobolight.o input.o mupdfimg.o: %.o: %.c
 	$(CC) -c $(KOREADER_BASE_CFLAGS) $(EMU_CFLAGS) -I$(LFSDIR)/src $< -o $@
 
 koreader-base.o koptcontext.o pdf.o: %.o: %.c
