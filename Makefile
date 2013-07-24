@@ -108,6 +108,7 @@ fetchthirdparty:
 	test -d mupdf && (cd mupdf; git checkout .)  || echo warn: mupdf folder not found
 	test -d $(LUADIR) && (cd $(LUADIR); git checkout .)  || echo warn: $(LUADIR) folder not found
 	git submodule init
+	git submodule sync
 	git submodule update
 	cd mupdf && (git submodule init; git submodule update)
 	ln -sf kpvcrlib/crengine/cr3gui/data data
