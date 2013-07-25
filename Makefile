@@ -123,9 +123,9 @@ fetchthirdparty:
 		|| echo "USE_FONTCONFIG already disabled"
 	# CREngine patch: change child nodes' type face
 	# @TODO replace this dirty hack  24.04 2012 (houqp)
-	cd kpvcrlib/crengine/crengine/src && \
-		patch -N -p0 < ../../../lvrend_node_type_face.patch && \
-		patch -N -p3 < ../../../lvdocview-getCurrentPageLinks.patch || true
+	cd kpvcrlib/crengine && \
+		git apply ../lvrend_node_type_face.patch && \
+		git apply ../lvdocview-getCurrentPageLinks.patch || true
 	# MuPDF patch: use external fonts
 	cd mupdf && patch -N -p1 < ../mupdf.patch
 	test -f popen-noshell/popen_noshell.c \
