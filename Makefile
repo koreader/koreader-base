@@ -116,16 +116,16 @@ fetchthirdparty:
 	test -d fonts || ln -sf $(TTF_FONTS_DIR) fonts
 	test -d history || mkdir history
 	test -d clipboard || mkdir clipboard
+	# CREngine patch: change child nodes' type face
+	# @TODO replace this dirty hack  24.04 2012 (houqp)
+	cd $(CRENGINEDIR) && git stash && \
+		git apply ../lvrend-setNodeStyle.patch && \
+		git apply ../lvdocview-getCurrentPageLinks.patch
 	# CREngine patch: disable fontconfig
 	grep USE_FONTCONFIG $(CRENGINEDIR)/crengine/include/crsetup.h \
 		&& grep -v USE_FONTCONFIG $(CRENGINEDIR)/crengine/include/crsetup.h > /tmp/new \
 		&& mv /tmp/new $(CRENGINEDIR)/crengine/include/crsetup.h \
 		|| echo "USE_FONTCONFIG already disabled"
-	# CREngine patch: change child nodes' type face
-	# @TODO replace this dirty hack  24.04 2012 (houqp)
-	cd kpvcrlib/crengine/crengine/src && \
-		patch -N -p0 < ../../../lvrend_node_type_face.patch && \
-		patch -N -p3 < ../../../lvdocview-getCurrentPageLinks.patch || true
 	# MuPDF patch: use external fonts
 	cd mupdf && patch -N -p1 < ../mupdf.patch
 	test -f popen-noshell/popen_noshell.c \
