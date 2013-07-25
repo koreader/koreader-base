@@ -71,7 +71,7 @@ static int newDocView(lua_State *L) {
 		stream = LVOpenFileStream("data/cr3.ini", LVOM_WRITE);
 		props->saveToStream(stream.get());
 		}
-	
+
 	return 1;
 }
 
@@ -250,7 +250,7 @@ static int walkTableOfContent(lua_State *L, LVTocItem *toc, int *count) {
 		/* set subtable, Toc entry */
 		lua_newtable(L);
 		lua_pushstring(L, "page");
-		lua_pushnumber(L, toc_tmp->getPage()+1); 
+		lua_pushnumber(L, toc_tmp->getPage()+1);
 		lua_settable(L, -3);
 
 		lua_pushstring(L, "xpointer");
@@ -260,7 +260,7 @@ static int walkTableOfContent(lua_State *L, LVTocItem *toc, int *count) {
 		lua_settable(L, -3);
 
 		lua_pushstring(L, "depth");
-		lua_pushnumber(L, toc_tmp->getLevel()); 
+		lua_pushnumber(L, toc_tmp->getLevel());
 		lua_settable(L, -3);
 
 		lua_pushstring(L, "title");
@@ -282,15 +282,15 @@ static int walkTableOfContent(lua_State *L, LVTocItem *toc, int *count) {
  * Return a table like this:
  * {
  *    {
- *       page=12, 
+ *       page=12,
  *       xpointer = "/body/DocFragment[11].0",
- *       depth=1, 
+ *       depth=1,
  *       title="chapter1"
  *    },
  *    {
- *       page=54, 
+ *       page=54,
  *       xpointer = "/body/DocFragment[13].0",
- *       depth=1, 
+ *       depth=1,
  *       title="chapter2"
  *    },
  * }
@@ -298,7 +298,7 @@ static int walkTableOfContent(lua_State *L, LVTocItem *toc, int *count) {
  */
 static int getTableOfContent(lua_State *L) {
 	CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
-	
+
 	LVTocItem * toc = doc->text_view->getToc();
 	int count = 1;
 
@@ -467,10 +467,18 @@ static int setPageMargins(lua_State *L) {
 	return 0;
 }
 
+static int setVisiblePageCount(lua_State *L) {
+	CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
+
+	doc->text_view->setVisiblePageCount(luaL_checkint(L, 2));
+
+	return 0;
+}
+
 static int getPageMargins(lua_State *L) {
 	CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
 	lvRect rc = doc->text_view->getPageMargins();
-	
+
 	lua_newtable(L);
 
 	lua_pushstring(L, "left");
@@ -488,7 +496,7 @@ static int getPageMargins(lua_State *L) {
 	lua_pushstring(L, "bottom");
 	lua_pushnumber(L, rc.bottom);
 	lua_settable(L, -3);
-		
+
 	return 1;
 }
 
@@ -517,12 +525,12 @@ static int cursorRight(lua_State *L) {
 	//lString16 s = p.getText();
 	//lString16 s = p.toString();
 	//printf("~~~~~~~~~~%s\n", UnicodeToLocal(s).c_str());
-		
+
 	//tv->selectRange(*(tv->selectFirstPageLink()));
 	//ldomXRange *r = tv->selectNextPageLink(true);
 	//lString16 s = r->getRangeText();
 	//printf("------%s\n", UnicodeToLocal(s).c_str());
-	
+
 	//tv->selectRange(*r);
 	//tv->updateSelections();
 
@@ -631,7 +639,7 @@ static int drawCurrentPage(lua_State *L) {
 	doc->text_view->Resize(w, h);
 	doc->text_view->Render();
 	doc->text_view->Draw(drawBuf);
-	
+
 	uint8_t *bbptr = (uint8_t*)bb->data;
 	uint8_t *pmptr = (uint8_t*)drawBuf.GetScanLine(0);
 	int i,x;
@@ -765,6 +773,7 @@ static const struct luaL_Reg credocument_meth[] = {
 	{"setStyleSheet", setStyleSheet},
 	{"setEmbeddedStyleSheet", setEmbeddedStyleSheet},
 	{"setPageMargins", setPageMargins},
+	{"setVisiblePageCount", setVisiblePageCount},
 	/* --- control methods ---*/
 	{"gotoPage", gotoPage},
 	{"gotoPercent", gotoPercent},
