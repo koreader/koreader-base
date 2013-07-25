@@ -98,6 +98,7 @@ int main(int argc, char **argv) {
 		luaopen_drawcontext(L);
 		luaopen_koptcontext(L);
 		luaopen_einkfb(L);
+		luaopen_kobolight(L);
 		luaopen_pdf(L);
 		luaopen_djvu(L);
 		luaopen_pic(L);

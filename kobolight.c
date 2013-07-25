@@ -28,8 +28,8 @@ typedef struct {
 
 static int openLightDevice(lua_State *L) {
 	LightInfo *light = (LightInfo*) lua_newuserdata(L, sizeof(LightInfo));
-	luaL_getmetatable(L, "lightdev");
-	
+	luaL_getmetatable(L, "kobolight");
+	lua_setmetatable(L, -2);
 	light->ld = open("/dev/ntx_io", O_RDWR);
 	printf("opening file\n");
 	if (light->ld == -1) {
@@ -45,7 +45,7 @@ static int closeLightDevice(lua_State *L) {
 }
 
 static int setBrightness(lua_State *L) {
-	LightInfo *light = (LightInfo*) luaL_checkudata(L, 1, "lightdev");
+	LightInfo *light = (LightInfo*) luaL_checkudata(L, 1, "kobolight");
 	int brightness = luaL_optint(L, 2, 0)*100/24;
 
 	if (brightness < 0 || brightness > 100) {
@@ -60,7 +60,7 @@ static int setBrightness(lua_State *L) {
 }
 
 static int toggleLight(lua_State *L) {
-	LightInfo *light = (LightInfo*) luaL_checkudata(L, 1, "lightdev");
+	LightInfo *light = (LightInfo*) luaL_checkudata(L, 1, "kobolight");
 	
 	if (light->isOn) {
 		if (ioctl(light->ld, 241, 0)) {
