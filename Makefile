@@ -5,7 +5,7 @@ PROCESSORS:=$(shell grep processor /proc/cpuinfo|wc -l)
 all: koreader-base extr sdcv
 
 kobo:
-	TARGET_DEVICE=KOBO make
+	TARGET_DEVICE=KOBO CHOST=arm-linux-gnueabihf make
 
 koreader-base: koreader-base.o einkfb.o kobolight.o pdf.o blitbuffer.o\
 	drawcontext.o koptcontext.o input.o $(POPENNSLIB) util.o ft.o lfs.o mupdfimg.o \
@@ -15,6 +15,7 @@ koreader-base: koreader-base.o einkfb.o kobolight.o pdf.o blitbuffer.o\
 	$(CC) $(CFLAGS) \
 		koreader-base.o \
 		einkfb.o \
+		kobolight.o \
 		pdf.o \
 		blitbuffer.o \
 		drawcontext.o \
