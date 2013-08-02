@@ -31,10 +31,14 @@ static int openLightDevice(lua_State *L) {
 	luaL_getmetatable(L, "kobolight");
 	lua_setmetatable(L, -2);
 	light->ld = open("/dev/ntx_io", O_RDWR);
-	printf("opening file\n");
 	if (light->ld == -1) {
 		return luaL_error(L, "cannot open light device");
 	}
+	light->brightness = 20;
+	if (ioctl(light->ld, 241, light->brightness)) {
+		return luaL_error(L, "cannot turn on the light");
+	}
+	light->isOn = 1;
 	return 1;
 }
 
