@@ -118,7 +118,6 @@ CRENGINE_THIRDPARTY_LIBS=$(CRENGINE_DIR)/thirdparty/chmlib/libchmlib.a \
 			$(CRENGINE_DIR)/thirdparty/antiword/libantiword.a
 
 LUA_DIR=luajit-2.0
-LUA_LIB=$(OUTPUT_DIR)/libluajit-5.1.so.2
 LUAJIT=$(OUTPUT_DIR)/luajit
 
 POPEN_NOSHELL_DIR=popen-noshell

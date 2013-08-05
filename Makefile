@@ -117,7 +117,7 @@ $(CRENGINE_THIRDPARTY_LIBS) $(CRENGINE_LIB):
 
 
 # LuaJIT, fetched via GIT as a submodule
-$(LUA_LIB) $(LUAJIT):
+$(LUAJIT):
 ifdef EMULATE_READER
 	$(MAKE) -j$(PROCESSORS) -C $(LUA_DIR)
 else
@@ -133,7 +133,6 @@ else
 endif
 	# special case: LuaJIT compiles a libluajit.so, which must be named
 	# differently when installing
-	cp -fL $(LUA_DIR)/src/libluajit.so* $(LUA_LIB)
 	cp -fL $(LUA_DIR)/src/$(notdir $(LUAJIT)) $(LUAJIT)
 
 
@@ -183,71 +182,59 @@ libs: \
 	$(OUTPUT_DIR)/libkoreader-cre.so \
 	$(OUTPUT_DIR)/libkoreader-mupdfimg.so
 
-$(OUTPUT_DIR)/libkoreader-util.so: util.c \
-				$(LUA_LIB)
+$(OUTPUT_DIR)/libkoreader-util.so: util.c
 	$(CC) $(DYNLIB_CFLAGS) $(EMU_CFLAGS) $(EMU_LDFLAGS) \
 		-o $@ $<
 
-$(OUTPUT_DIR)/libkoreader-kobolight.so: kobolight.c \
-				$(LUA_LIB)
+$(OUTPUT_DIR)/libkoreader-kobolight.so: kobolight.c
 	$(CC) $(DYNLIB_CFLAGS) $(EMU_CFLAGS) $(EMU_LDFLAGS) \
 		-o $@ $<
 
 $(OUTPUT_DIR)/libkoreader-input.so: input.c \
-				$(POPEN_NOSHELL_LIB) \
-				$(LUA_LIB)
+				$(POPEN_NOSHELL_LIB)
 	$(CC) $(DYNLIB_CFLAGS) $(EMU_CFLAGS) $(EMU_LDFLAGS) \
 		-o $@ $< $(POPEN_NOSHELL_LIB)
 
-$(OUTPUT_DIR)/libkoreader-einkfb.so: einkfb.c \
-				$(LUA_LIB)
+$(OUTPUT_DIR)/libkoreader-einkfb.so: einkfb.c
 	$(CC) -Iinclude/ $(DYNLIB_CFLAGS) $(EMU_CFLAGS) $(EMU_LDFLAGS) \
 		-o $@ $<
 
-$(OUTPUT_DIR)/libkoreader-drawcontext.so: drawcontext.c \
-				$(LUA_LIB)
+$(OUTPUT_DIR)/libkoreader-drawcontext.so: drawcontext.c
 	$(CC) $(DYNLIB_CFLAGS) -o $@ $<
 
-$(OUTPUT_DIR)/libkoreader-blitbuffer.so: blitbuffer.c \
-				$(LUA_LIB)
+$(OUTPUT_DIR)/libkoreader-blitbuffer.so: blitbuffer.c
 	$(CC) $(DYNLIB_CFLAGS) -o $@ $<
 
-$(OUTPUT_DIR)/libkoreader-lfs.so: luafilesystem/src/lfs.c \
-				$(LUA_LIB)
+$(OUTPUT_DIR)/libkoreader-lfs.so: luafilesystem/src/lfs.c
 	$(CC) $(DYNLIB_CFLAGS) -o $@ $<
 
 $(OUTPUT_DIR)/libkoreader-koptcontext.so: koptcontext.c \
 				$(K2PDFOPT_LIB) \
 				$(LEPTONICA_LIB) \
-				$(TESSERACT_LIB) \
-				$(LUA_LIB)
+				$(TESSERACT_LIB)
 	$(CC) $(K2PDFOPT_CFLAGS) $(DYNLIB_CFLAGS) \
 		$(K2PDFOPT_LIB) $(LEPTONICA_LIB) $(TESSERACT_LIB) \
 		-o $@ $<
 
 $(OUTPUT_DIR)/libkoreader-pic.so: pic.c pic_jpeg.c \
-				$(JPEG_LIB) \
-				$(LUA_LIB)
+				$(JPEG_LIB)
 	$(CC) -I$(JPEG_DIR) $(DYNLIB_CFLAGS) $(JPEG_LIB) \
 		-o $@ $< pic_jpeg.c
 
 $(OUTPUT_DIR)/libkoreader-ft.so: ft.c \
-				$(MUPDF_THIRDPARTY_LIBS) \
-				$(LUA_LIB)
+				$(MUPDF_THIRDPARTY_LIBS)
 	$(CC) -I$(FREETYPE_DIR)/include $(DYNLIB_CFLAGS) $(FREETYPE_LIB) \
 		-lkoreader-blitbuffer -o $@ $<
 
 $(OUTPUT_DIR)/libkoreader-pdf.so: pdf.c \
 				$(MUPDF_LIB) \
-				$(K2PDFOPT_LIB) \
-				$(LUA_LIB)
+				$(K2PDFOPT_LIB)
 	$(CC) -I$(MUPDF_DIR) $(K2PDFOPT_CFLAGS) $(DYNLIB_CFLAGS) \
 		$(K2PDFOPT_LIB) $(LEPTONICA_LIB) $(TESSERACT_LIB) \
 		$(MUPDF_LIB) -lpthread -o $@ $<
 
 $(OUTPUT_DIR)/libkoreader-djvu.so: djvu.c \
-				$(DJVULIBRE_LIB) \
-				$(LUA_LIB)
+				$(DJVULIBRE_LIB)
 	$(CC) -I$(DJVULIBRE_DIR)/ $(K2PDFOPT_CFLAGS) \
 		$(DYNLIB_CFLAGS) $(DJVULIBRE_LIB) \
 		$(K2PDFOPT_LIB) $(LEPTONICA_LIB) $(TESSERACT_LIB) \
@@ -256,8 +243,7 @@ $(OUTPUT_DIR)/libkoreader-djvu.so: djvu.c \
 $(OUTPUT_DIR)/libkoreader-cre.so: cre.cpp \
 				$(CRENGINE_LIB) \
 				$(CRENGINE_THIRDPARTY_LIBS) \
-				$(MUPDF_LIB_DIR)/libz.a \
-				$(LUA_LIB)
+				$(MUPDF_LIB_DIR)/libz.a
 	$(CC) -I$(CRENGINE_DIR)/crengine/include/ $(DYNLIB_CFLAGS) \
 		$(CRENGINE_LIB) $(JPEG_LIB) $(FREETYPE_LIB) \
 		$(DYNAMICLIBSTDCPP) -o $@ $< \
@@ -266,8 +252,7 @@ $(OUTPUT_DIR)/libkoreader-cre.so: cre.cpp \
 
 $(OUTPUT_DIR)/libkoreader-mupdfimg.so: mupdfimg.c \
 				$(JPEG_LIB) \
-				$(FREETYPE_LIB) \
-				$(LUA_LIB)
+				$(FREETYPE_LIB)
 	$(CC) -I$(MUPDF_DIR) $(DYNLIB_CFLAGS) $(MUPDF_LIB) \
 		-lkoreader-blitbuffer -o $@ $<
 
