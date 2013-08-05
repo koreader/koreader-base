@@ -220,7 +220,7 @@ $(OUTPUT_DIR)/libkoreader-koptcontext.so: koptcontext.c \
 				$(LEPTONICA_LIB) \
 				$(TESSERACT_LIB) \
 				$(LUA_LIB)
-	$(CC) $(K2PDFOPT_CFLAGS) $(DYNLIB_CFLAGS)
+	$(CC) $(K2PDFOPT_CFLAGS) $(DYNLIB_CFLAGS) \
 		$(K2PDFOPT_LIB) $(LEPTONICA_LIB) $(TESSERACT_LIB) \
 		-o $@ $<
 
