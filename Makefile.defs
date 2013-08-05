@@ -2,6 +2,12 @@
 
 SHELL:=/bin/bash
 CHOST?=arm-none-linux-gnueabi
+# Use ccache in build system by default. Define USE_NO_CCACHE=1 to force disable it.
+ifeq ($(USE_NO_CCACHE), 1)
+	CCACHE:=
+else
+	CCACHE?=$(shell which ccache)
+endif
 CC:=$(CHOST)-gcc
 CXX:=$(CHOST)-g++
 STRIP:=$(CHOST)-strip
@@ -52,6 +58,9 @@ endif
 # in that case.
 
 ifdef EMULATE_READER
+	HOSTCC:=$(strip $(CCACHE) $(HOSTCC))
+	HOSTCXX:=$(strip $(CCACHE) $(HOSTCXX))
+	HOSTAR:=$(strip $(CCACHE) $(HOSTAR))
 	CC:=$(HOSTCC) -g
 	CXX:=$(HOSTCXX)
 	AR:=$(HOSTAR)
@@ -64,6 +73,9 @@ ifdef EMULATE_READER
 	CFLAGS+= $(HOST_ARCH)
 	CXXFLAGS+= $(HOST_ARCH)
 else
+	CC:=$(strip $(CCACHE) $(CC))
+	CXX:=$(strip $(CCACHE) $(CXX))
+	AR:=$(strip $(CCACHE) $(AR))
 	CFLAGS+= $(ARM_ARCH) $(ARM_BACKWARD_COMPAT_CFLAGS)
 	CXXFLAGS+= $(ARM_ARCH) $(ARM_BACKWARD_COMPAT_CFLAGS) \
 			$(ARM_BACKWARD_COMPAT_CXXFLAGS)

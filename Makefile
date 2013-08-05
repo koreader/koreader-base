@@ -128,7 +128,7 @@ else
 		CFLAGS="$(BASE_CFLAGS)" HOST_CFLAGS="$(HOSTCFLAGS)" \
 		TARGET_CFLAGS="$(CFLAGS)" \
 		TARGET_FLAGS="-DLUAJIT_NO_LOG2 -DLUAJIT_NO_EXP2" \
-		CROSS="$(CHOST)-"
+		CROSS="$(strip $(CCACHE) $(CHOST))-"
 endif
 	# special case: LuaJIT compiles a libluajit.so, which must be named
 	# differently when installing
