@@ -20,6 +20,9 @@ HOSTCC:=gcc
 HOSTCXX:=g++
 HOSTAR:=ar
 
+# try to find number of CPUs for build machine
+PROCESSORS:=$(shell grep processor /proc/cpuinfo|wc -l)
+
 # Base CFLAGS, without arch. We'll need it for luajit, because its
 # Makefiles do some tricky stuff to differentiate HOST/TARGET
 BASE_CFLAGS:=-O2 -ffast-math -pipe -fomit-frame-pointer

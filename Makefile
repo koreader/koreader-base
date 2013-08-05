@@ -43,7 +43,7 @@ $(FREETYPE_LIB):
 				--without-zlib --without-bzip2 \
 				--without-png \
 				--host=$(CHOST)
-	$(MAKE) -C $(FREETYPE_DIR)/build
+	$(MAKE) -j$(PROCESSORS) -C $(FREETYPE_DIR)/build
 	cp -fL $(FREETYPE_DIR)/build/.libs/$(notdir $(FREETYPE_LIB)) $@
 
 
@@ -54,16 +54,16 @@ $(JPEG_LIB):
 		CXXFLAGS="$(CFLAGS)" LDFLAGS="$(LDFLAGS)" \
 			./configure --disable-static --enable-shared \
 				--host=$(CHOST)
-	$(MAKE) -C $(JPEG_DIR)
+	$(MAKE) -j$(PROCESSORS) -C $(JPEG_DIR)
 	cp -fL $(JPEG_DIR)/.libs/$(notdir $(JPEG_LIB)) $@
 
 
 # mupdf, fetched via GIT as a submodule
 # by default, mupdf compiles to a static library:
 $(MUPDF_LIB_STATIC) $(MUPDF_THIRDPARTY_LIBS): $(JPEG_LIB) $(FREETYPE_LIB)
-	$(MAKE) -C mupdf generate build="release" CC="$(HOSTCC)" \
+	$(MAKE) -j$(PROCESSORS) -C mupdf generate build="release" CC="$(HOSTCC)" \
 		OS="Other" verbose=1
-	$(MAKE) -C mupdf \
+	$(MAKE) -j$(PROCESSORS) -C mupdf \
 		LDFLAGS="-L../$(OUTPUT_DIR)" \
 		XCFLAGS="$(CFLAGS) -DNOBUILTINFONT -fPIC -I../jpeg" \
 		CC="$(CC)" \
@@ -97,7 +97,7 @@ $(DJVULIBRE_LIB):
 			--disable-static --enable-shared \
 			--disable-xmltools --disable-largefile \
 			$(if $(EMULATE_READER),,-host=$(CHOST)) )
-	$(MAKE) -C $(DJVULIBRE_DIR)/build SUBDIRS_FIRST=libdjvu
+	$(MAKE) -j$(PROCESSORS) -C $(DJVULIBRE_DIR)/build SUBDIRS_FIRST=libdjvu
 	cp -fL $(DJVULIBRE_LIB_DIR)/$(notdir $(DJVULIBRE_LIB)) \
 		$(DJVULIBRE_LIB)
 
@@ -118,12 +118,12 @@ $(CRENGINE_THIRDPARTY_LIBS) $(CRENGINE_LIB):
 # LuaJIT, fetched via GIT as a submodule
 $(LUA_LIB) $(LUAJIT):
 ifdef EMULATE_READER
-	$(MAKE) -C $(LUA_DIR)
+	$(MAKE) -j$(PROCESSORS) -C $(LUA_DIR)
 else
 	# To recap: build its TARGET_CC from CROSS+CC, so we need HOSTCC in CC.
 	# Build its HOST/TARGET_CFLAGS based on CFLAGS, so we need
 	# a neutral CFLAGS without arch
-	$(MAKE) -C $(LUA_DIR) \
+	$(MAKE) -j$(PROCESSORS) -C $(LUA_DIR) \
 		CC="$(HOSTCC)" HOST_CC="$(HOSTCC) -m32" \
 		CFLAGS="$(BASE_CFLAGS)" HOST_CFLAGS="$(HOSTCFLAGS)" \
 		TARGET_CFLAGS="$(CFLAGS)" \
@@ -138,7 +138,7 @@ endif
 
 # popen-noshell, fetched via SVN
 $(POPEN_NOSHELL_LIB):
-	$(MAKE) -C $(POPEN_NOSHELL_DIR) \
+	$(MAKE) -j$(PROCESSORS) -C $(POPEN_NOSHELL_DIR) \
 		CC="$(CC)" AR="$(AR)" CFLAGS="$(CFLAGS) -fPIC"
 
 
@@ -150,7 +150,8 @@ ifdef EMULATE_READER
 		CXX="$(HOSTCXX)" CXXFLAGS="$(HOSTCFLAGS)" \
 		AR="$(AR)" EMULATE_READER=1 all
 else
-	$(MAKE) -j$(PROCESSORS) -C $(K2PDFOPT_DIR) BUILDMODE=shared HOST="$(CHOST)" \
+	$(MAKE) -j$(PROCESSORS) -C $(K2PDFOPT_DIR) BUILDMODE=shared \
+		HOST="$(CHOST)" \
 		CC="$(CC)" CFLAGS="$(CFLAGS) -O3" \
 		CXX="$(CXX)" CXXFLAGS="$(CXXFLAGS)" \
 		AR="$(AR)" all
@@ -288,20 +289,20 @@ ifeq ("$(shell gcc -dumpmachine | sed s/-.*//)","x86_64")
 	cd $(SDCV_DIR) && sed -i 's|guint32 page_size|guint64 page_size|' src/lib/lib.cpp
 	cd $(SDCV_DIR) && ./configure \
 		CXXFLAGS=-I$(CURDIR)/$(MUPDF_DIR)/thirdparty/zlib \
-		&& AM_CXXFLAGS=-static-libstdc++ make
+		&& AM_CXXFLAGS=-static-libstdc++ $(MAKE) -j$(PROCESSORS)
 	# restore to original source
 	cd $(SDCV_DIR) && sed -i 's|guint64 page_size|guint32 page_size|' src/lib/lib.cpp
 else
 	cd $(SDCV_DIR) && ./configure \
 		CXXFLAGS=-I$(CURDIR)/$(MUPDF_DIR)/thirdparty/zlib \
-		&& AM_CXXFLAGS=-static-libstdc++ make
+		&& AM_CXXFLAGS=-static-libstdc++ $(MAKE) -j$(PROCESSORS)
 endif
 else
 	cd $(SDCV_DIR) && ./configure \
 		--host=$(CHOST) \
 		CXXFLAGS=-I$(CURDIR)/$(MUPDF_DIR)/thirdparty/zlib \
 		LDFLAGS=-L$(CURDIR)/$(SDCV_DIR)/thirdparty \
-		&& AM_CXXFLAGS=-static-libstdc++ make
+		&& AM_CXXFLAGS=-static-libstdc++ $(MAKE) -j$(PROCESSORS)
 endif
 	cp $(SDCV_DIR)/src/sdcv $(OUTPUT_DIR)/
 
