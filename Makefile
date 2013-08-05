@@ -231,13 +231,15 @@ $(OUTPUT_DIR)/libkoreader-pdf.so: pdf.c \
 				$(K2PDFOPT_LIB) \
 				$(LUA_LIB)
 	$(CC) -I$(MUPDF_DIR) $(K2PDFOPT_CFLAGS) $(DYNLIB_CFLAGS) \
-		$(K2PDFOPT_LIB) $(MUPDF_LIB) -lpthread -o $@ $<
+		$(K2PDFOPT_LIB) $(LEPTONICA_LIB) $(TESSERACT_LIB) \
+		$(MUPDF_LIB) -lpthread -o $@ $<
 
 $(OUTPUT_DIR)/libkoreader-djvu.so: djvu.c \
 				$(DJVULIBRE_LIB) \
 				$(LUA_LIB)
 	$(CC) -I$(DJVULIBRE_DIR)/ $(K2PDFOPT_CFLAGS) \
-		$(DYNLIB_CFLAGS) $(DJVULIBRE_LIB) $(K2PDFOPT_LIB) \
+		$(DYNLIB_CFLAGS) $(DJVULIBRE_LIB) \
+		$(K2PDFOPT_LIB) $(LEPTONICA_LIB) $(TESSERACT_LIB) \
 		-o $@ $<
 
 $(OUTPUT_DIR)/libkoreader-cre.so: cre.cpp \
