@@ -69,6 +69,12 @@ else
 			$(ARM_BACKWARD_COMPAT_CXXFLAGS)
 endif
 
+# set a flag that C code can differenciate on for Kobo code
+# currently used for framebuffer related code in einkfb.c
+ifeq ($(TARGET_DEVICE), KOBO)
+	CFLAGS+= -DKOBO_PLATFORM
+endif
+
 # this will create a path named build/arm-none-linux-gnueabi or similar
 OUTPUT_DIR=build/$(shell $(CC) -dumpmachine)
 

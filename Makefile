@@ -20,6 +20,10 @@ endif
 	test -e $(OUTPUT_DIR)/koreader-base || \
 		ln -sf ../../koreader-base $(OUTPUT_DIR)/
 
+# convenience target with preconfigured Kobo toolchain settings
+kobo:
+	TARGET_DEVICE=KOBO CHOST=arm-linux-gnueabihf make
+
 $(OUTPUT_DIR):
 	mkdir -p $(OUTPUT_DIR)
 
