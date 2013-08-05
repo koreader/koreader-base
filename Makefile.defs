@@ -119,7 +119,7 @@ SDCV_DIR=sdcv-0.4.2
 
 LEPTONICA_LIB := $(OUTPUT_DIR)/liblept.so.3
 
-TESSERACT_LIB := $(OUTPUT_DIOUTPUT_DIR)/libtesseract.so.3
+TESSERACT_LIB := $(OUTPUT_DIR)/libtesseract.so.3
 
 # must point to directory with *.ttf fonts for crengine
 TTF_FONTS_DIR=$(MUPDF_DIR)/fonts
