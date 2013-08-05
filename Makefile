@@ -216,8 +216,13 @@ $(OUTPUT_DIR)/libkoreader-lfs.so: luafilesystem/src/lfs.c \
 	$(CC) $(DYNLIB_CFLAGS) -o $@ $<
 
 $(OUTPUT_DIR)/libkoreader-koptcontext.so: koptcontext.c \
-				$(K2PDFOPT_LIB) $(LUA_LIB)
-	$(CC) $(K2PDFOPT_CFLAGS) $(DYNLIB_CFLAGS) -o $@ $<
+				$(K2PDFOPT_LIB) \
+				$(LEPTONICA_LIB) \
+				$(TESSERACT_LIB) \
+				$(LUA_LIB)
+	$(CC) $(K2PDFOPT_CFLAGS) $(DYNLIB_CFLAGS)
+		$(K2PDFOPT_LIB) $(LEPTONICA_LIB) $(TESSERACT_LIB) \
+		-o $@ $<
 
 $(OUTPUT_DIR)/libkoreader-pic.so: pic.c pic_jpeg.c \
 				$(JPEG_LIB) \
