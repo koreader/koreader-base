@@ -82,6 +82,7 @@ $(MUPDF_LIB): $(MUPDF_LIB_STATIC) \
 	$(CC) $(DYNLIB_CFLAGS) -fPIC -shared \
 		-Wl,--whole-archive $(MUPDF_LIB_STATIC) \
 		-Wl,--no-whole-archive $(MUPDF_THIRDPARTY_LIBS) \
+		-Wl,-soname=$(notdir $(MUPDF_LIB)) \
 		$(JPEG_LIB) $(FREETYPE_LIB) \
 		-o $(MUPDF_LIB)
 
