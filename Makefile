@@ -156,9 +156,9 @@ else
 		CXX="$(CXX)" CXXFLAGS="$(CXXFLAGS)" \
 		AR="$(AR)" all
 endif
-	cp -a $(K2PDFOPT_DIR)/libk2pdfopt.so* $(OUTPUT_DIR)/
-	cp -a $(K2PDFOPT_DIR)/liblept.so* $(OUTPUT_DIR)/
-	cp -a $(K2PDFOPT_DIR)/libtesseract.so* $(OUTPUT_DIR)/
+	cp -fL $(K2PDFOPT_DIR)/$(notdir $(K2PDFOPT_LIB)) $(OUTPUT_DIR)/
+	cp -fL $(K2PDFOPT_DIR)/$(notdir $(LEPTONICA_LIB)) $(OUTPUT_DIR)/
+	cp -fL $(K2PDFOPT_DIR)/$(notdir $(TESSERACT_LIB)) $(OUTPUT_DIR)/
 
 
 # end of third-party code
