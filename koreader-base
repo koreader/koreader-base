@@ -1,0 +1,32 @@
+#!./luajit
+--[[
+compatibility wrapper
+
+this replaces the former standalone binary which invoked the Lua interpreter/compiler.
+now, we use the "default" interpreter/compiler
+]]--
+
+require "libkoreader-blitbuffer"
+require "libkoreader-cre"
+require "libkoreader-djvu"
+require "libkoreader-drawcontext"
+require "libkoreader-einkfb"
+require "libkoreader-ft"
+require "libkoreader-input"
+require "libkoreader-koptcontext"
+require "libkoreader-lfs"
+require "libkoreader-mupdfimg"
+require "libkoreader-pdf"
+require "libkoreader-pic"
+require "libkoreader-util"
+require "libkoreader-kobolight"
+
+if not arg[1] then
+	error("you must give the name of the main lua executable as the first argument")
+end
+local file = arg[1]
+table.remove(arg, 1)
+
+ARGV=arg
+
+loadfile(file)
