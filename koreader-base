@@ -19,6 +19,7 @@ require "libkoreader-mupdfimg"
 require "libkoreader-pdf"
 require "libkoreader-pic"
 require "libkoreader-util"
+require "libkoreader-luagettext"
 require "libkoreader-kobolight"
 
 if not arg[1] then

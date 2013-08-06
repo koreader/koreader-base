@@ -168,6 +168,7 @@ endif
 
 libs: \
 	$(OUTPUT_DIR)/libkoreader-util.so \
+	$(OUTPUT_DIR)/libkoreader-luagettext.so \
 	$(OUTPUT_DIR)/libkoreader-kobolight.so \
 	$(OUTPUT_DIR)/libkoreader-input.so \
 	$(OUTPUT_DIR)/libkoreader-einkfb.so \
@@ -183,6 +184,10 @@ libs: \
 	$(OUTPUT_DIR)/libkoreader-mupdfimg.so
 
 $(OUTPUT_DIR)/libkoreader-util.so: util.c
+	$(CC) $(DYNLIB_CFLAGS) $(EMU_CFLAGS) $(EMU_LDFLAGS) \
+		-o $@ $<
+
+$(OUTPUT_DIR)/libkoreader-luagettext.so: lua_gettext.c
 	$(CC) $(DYNLIB_CFLAGS) $(EMU_CFLAGS) $(EMU_LDFLAGS) \
 		-o $@ $<
 
