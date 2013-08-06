@@ -97,7 +97,7 @@ ifdef USE_FIXED_POINT
 endif
 
 # this will create a path named build/arm-none-linux-gnueabi or similar
-OUTPUT_DIR=build/$(shell $(CC) -dumpmachine)
+OUTPUT_DIR?=build/$(CHOST)
 
 # you can probably leave these settings alone:
 
