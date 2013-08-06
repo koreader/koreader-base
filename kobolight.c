@@ -34,11 +34,6 @@ static int openLightDevice(lua_State *L) {
 	if (light->ld == -1) {
 		return luaL_error(L, "cannot open light device");
 	}
-	light->brightness = 20;
-	if (ioctl(light->ld, 241, light->brightness)) {
-		return luaL_error(L, "cannot turn on the light");
-	}
-	light->isOn = 1;
 	return 1;
 }
 
@@ -50,7 +45,7 @@ static int closeLightDevice(lua_State *L) {
 
 static int setBrightness(lua_State *L) {
 	LightInfo *light = (LightInfo*) luaL_checkudata(L, 1, "kobolight");
-	int brightness = luaL_optint(L, 2, 0)*100/24;
+	int brightness = luaL_optint(L, 2, 0);
 
 	if (brightness < 0 || brightness > 100) {
 		return luaL_error(L, "Wrong brightness value %d given!", brightness);
@@ -60,6 +55,7 @@ static int setBrightness(lua_State *L) {
 		return luaL_error(L, "cannot change brightess value");
 	}
 	light->brightness = brightness;
+	light->isOn = 1;
 	return 0;
 }
 
