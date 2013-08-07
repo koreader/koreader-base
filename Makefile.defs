@@ -113,13 +113,13 @@ MUPDF_LIB_STATIC=$(MUPDF_LIB_DIR)/libfitz.a
 MUPDF_THIRDPARTY_LIBS=$(MUPDF_LIB_DIR)/libopenjpeg.a \
 			$(MUPDF_LIB_DIR)/libjbig2dec.a \
 			$(MUPDF_LIB_DIR)/libz.a
-MUPDF_LIB=$(OUTPUT_DIR)/libfitz.so
+MUPDF_LIB=$(OUTPUT_DIR)/lib/libfitz.so
 
 DJVULIBRE_DIR=djvulibre
-DJVULIBRE_LIB=$(OUTPUT_DIR)/libdjvulibre.so.21
+DJVULIBRE_LIB=$(OUTPUT_DIR)/lib/libdjvulibre.so.21
 DJVULIBRE_LIB_DIR=$(DJVULIBRE_DIR)/build/libdjvu/.libs/
 
-CRENGINE_LIB=$(OUTPUT_DIR)/libcrengine.so
+CRENGINE_LIB=$(OUTPUT_DIR)/lib/libcrengine.so
 CRENGINE_THIRDPARTY_LIBS=$(CRENGINE_DIR)/thirdparty/chmlib/libchmlib.a \
 			$(CRENGINE_DIR)/thirdparty/libpng/libpng.a \
 			$(CRENGINE_DIR)/thirdparty/antiword/libantiword.a
@@ -131,24 +131,22 @@ POPEN_NOSHELL_DIR=popen-noshell
 POPEN_NOSHELL_LIB=$(POPEN_NOSHELL_DIR)/libpopen_noshell.a
 
 K2PDFOPT_DIR=libk2pdfopt
-K2PDFOPT_LIB=$(OUTPUT_DIR)/libk2pdfopt.so.1
+K2PDFOPT_LIB=$(OUTPUT_DIR)/lib/libk2pdfopt.so.1
 K2PDFOPT_CFLAGS=-I$(K2PDFOPT_DIR)/willuslib \
 		-I$(K2PDFOPT_DIR)/k2pdfoptlib -I$(K2PDFOPT_DIR) \
 		-I$(K2PDFOPT_DIR)/include_mod
 
-FREETYPE_LIB=$(OUTPUT_DIR)/libfreetype.so.6
+FREETYPE_LIB=$(OUTPUT_DIR)/lib/libfreetype.so.6
 FREETYPE_DIR=freetype2/
 
-JPEG_LIB=$(OUTPUT_DIR)/libjpeg.so.9
-# needed for libtool:
-JPEG_LIB_PLAIN_SO=$(OUTPUT_DIR)/libjpeg.so
+JPEG_LIB=$(OUTPUT_DIR)/lib/libjpeg.so.9
 JPEG_DIR=jpeg/
 
 SDCV_DIR=sdcv-0.4.2
 
-LEPTONICA_LIB := $(OUTPUT_DIR)/liblept.so.3
+LEPTONICA_LIB := $(OUTPUT_DIR)/lib/liblept.so.3
 
-TESSERACT_LIB := $(OUTPUT_DIR)/libtesseract.so.3
+TESSERACT_LIB := $(OUTPUT_DIR)/lib/libtesseract.so.3
 
 # must point to directory with *.ttf fonts for crengine
 TTF_FONTS_DIR=$(MUPDF_DIR)/fonts
@@ -161,7 +159,7 @@ TTF_FONTS_DIR=$(MUPDF_DIR)/fonts
 #
 # also, dynamic libraries must be compiled with "-shared" and "-fPIC".
 # having all symbols included (-E) won't hurt, too.
-DYNLIB_CFLAGS=-L$(OUTPUT_DIR) $(CFLAGS) \
+DYNLIB_CFLAGS=-L$(OUTPUT_DIR)/lib $(CFLAGS) \
 		-I$(LUA_DIR)/src \
 		-shared -fPIC -Wl,-E -Wl,-rpath,'$$ORIGIN'
 

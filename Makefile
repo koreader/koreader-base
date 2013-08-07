@@ -1,13 +1,13 @@
 include Makefile.defs
 
 # main target
-all: $(OUTPUT_DIR) $(LUAJIT) $(OUTPUT_DIR)/extr $(OUTPUT_DIR)/sdcv libs
+all: $(OUTPUT_DIR)/lib $(LUAJIT) $(OUTPUT_DIR)/extr $(OUTPUT_DIR)/sdcv libs
 ifndef EMULATE_READER
 	$(STRIP) --strip-unneeded \
 		$(OUTPUT_DIR)/extr \
 		$(OUTPUT_DIR)/sdcv \
 		$(LUAJIT) \
-		$(OUTPUT_DIR)/*.so*
+		$(OUTPUT_DIR)/lib/*.so*
 endif
 	# set up some needed paths and links
 	test -e $(OUTPUT_DIR)/data || \
@@ -26,8 +26,8 @@ endif
 kobo:
 	TARGET_DEVICE=KOBO CHOST=arm-linux-gnueabihf make
 
-$(OUTPUT_DIR):
-	mkdir -p $(OUTPUT_DIR)
+$(OUTPUT_DIR)/lib:
+	mkdir -p $(OUTPUT_DIR)/lib
 
 # ===========================================================================
 
@@ -81,7 +81,9 @@ $(MUPDF_LIB): $(MUPDF_LIB_STATIC) \
 			$(MUPDF_THIRDPARTY_LIBS) \
 			$(JPEG_LIB) \
 			$(FREETYPE_LIB)
-	$(CC) $(DYNLIB_CFLAGS) -fPIC -shared \
+	$(CC) -fPIC -shared \
+		$(CFLAGS) \
+		-Wl,-E -Wl,-rpath,'$$ORIGIN' \
 		-Wl,--whole-archive $(MUPDF_LIB_STATIC) \
 		-Wl,--no-whole-archive $(MUPDF_THIRDPARTY_LIBS) \
 		-Wl,-soname=$(notdir $(MUPDF_LIB)) \
@@ -91,23 +93,17 @@ $(MUPDF_LIB): $(MUPDF_LIB_STATIC) \
 # djvulibre, fetched via GIT as a submodule
 $(DJVULIBRE_LIB): $(JPEG_LIB)
 	mkdir -p $(DJVULIBRE_DIR)/build
-	# libtool will search for a plain .so, not .so.N:
-	ln -s $(notdir $(JPEG_LIB)) $(JPEG_LIB_PLAIN_SO)
-	# note that djvulibre uses libtool & configure which honor
-	# the LDFLAGS drifferently, so we set rpath via JPEG_LIBS
-	# (it's for retrieving the right jpeg library anyway)
 	test -e $(DJVULIBRE_DIR)/build/Makefile \
 		|| ( cd $(DJVULIBRE_DIR)/build \
 		&& CC="$(CC)" CXX="$(CXX)" CFLAGS="$(CFLAGS) -fPIC" \
 		CXXFLAGS="$(CXXFLAGS) -fPIC" \
-		JPEG_LIBS='-L$(abspath $(OUTPUT_DIR)) -ljpeg -Wl,-rpath,\$$$$ORIGIN' \
 		LDFLAGS="$(LDFLAGS)" \
 		../configure --disable-desktopfiles \
 			--disable-static --enable-shared \
 			--disable-xmltools --disable-largefile \
+			--without-jpeg --without-tiff \
 			$(if $(EMULATE_READER),,-host=$(CHOST)) )
 	$(MAKE) -j$(PROCESSORS) -C $(DJVULIBRE_DIR)/build SUBDIRS_FIRST=libdjvu
-	rm $(JPEG_LIB_PLAIN_SO)
 	cp -fL $(DJVULIBRE_LIB_DIR)/$(notdir $(DJVULIBRE_LIB)) \
 		$(DJVULIBRE_LIB)
 
@@ -165,9 +161,9 @@ else
 		CXX="$(CXX)" CXXFLAGS="$(CXXFLAGS)" \
 		AR="$(AR)" all
 endif
-	cp -fL $(K2PDFOPT_DIR)/$(notdir $(K2PDFOPT_LIB)) $(OUTPUT_DIR)/
-	cp -fL $(K2PDFOPT_DIR)/$(notdir $(LEPTONICA_LIB)) $(OUTPUT_DIR)/
-	cp -fL $(K2PDFOPT_DIR)/$(notdir $(TESSERACT_LIB)) $(OUTPUT_DIR)/
+	cp -fL $(K2PDFOPT_DIR)/$(notdir $(K2PDFOPT_LIB)) $(K2PDFOPT_LIB)
+	cp -fL $(K2PDFOPT_DIR)/$(notdir $(LEPTONICA_LIB)) $(LEPTONICA_LIB)
+	cp -fL $(K2PDFOPT_DIR)/$(notdir $(TESSERACT_LIB)) $(TESSERACT_LIB)
 
 
 # end of third-party code
@@ -176,53 +172,53 @@ endif
 # our own Lua/C/C++ interfacing:
 
 libs: \
-	$(OUTPUT_DIR)/libkoreader-util.so \
-	$(OUTPUT_DIR)/libkoreader-luagettext.so \
-	$(OUTPUT_DIR)/libkoreader-kobolight.so \
-	$(OUTPUT_DIR)/libkoreader-input.so \
-	$(OUTPUT_DIR)/libkoreader-einkfb.so \
-	$(OUTPUT_DIR)/libkoreader-drawcontext.so \
-	$(OUTPUT_DIR)/libkoreader-blitbuffer.so \
-	$(OUTPUT_DIR)/libkoreader-lfs.so \
-	$(OUTPUT_DIR)/libkoreader-koptcontext.so \
-	$(OUTPUT_DIR)/libkoreader-pic.so \
-	$(OUTPUT_DIR)/libkoreader-ft.so \
-	$(OUTPUT_DIR)/libkoreader-pdf.so \
-	$(OUTPUT_DIR)/libkoreader-djvu.so \
-	$(OUTPUT_DIR)/libkoreader-cre.so \
-	$(OUTPUT_DIR)/libkoreader-mupdfimg.so
+	$(OUTPUT_DIR)/lib/libkoreader-util.so \
+	$(OUTPUT_DIR)/lib/libkoreader-luagettext.so \
+	$(OUTPUT_DIR)/lib/libkoreader-kobolight.so \
+	$(OUTPUT_DIR)/lib/libkoreader-input.so \
+	$(OUTPUT_DIR)/lib/libkoreader-einkfb.so \
+	$(OUTPUT_DIR)/lib/libkoreader-drawcontext.so \
+	$(OUTPUT_DIR)/lib/libkoreader-blitbuffer.so \
+	$(OUTPUT_DIR)/lib/libkoreader-lfs.so \
+	$(OUTPUT_DIR)/lib/libkoreader-koptcontext.so \
+	$(OUTPUT_DIR)/lib/libkoreader-pic.so \
+	$(OUTPUT_DIR)/lib/libkoreader-ft.so \
+	$(OUTPUT_DIR)/lib/libkoreader-pdf.so \
+	$(OUTPUT_DIR)/lib/libkoreader-djvu.so \
+	$(OUTPUT_DIR)/lib/libkoreader-cre.so \
+	$(OUTPUT_DIR)/lib/libkoreader-mupdfimg.so
 
-$(OUTPUT_DIR)/libkoreader-util.so: util.c
+$(OUTPUT_DIR)/lib/libkoreader-util.so: util.c
 	$(CC) $(DYNLIB_CFLAGS) $(EMU_CFLAGS) $(EMU_LDFLAGS) \
 		-o $@ $<
 
-$(OUTPUT_DIR)/libkoreader-luagettext.so: lua_gettext.c
+$(OUTPUT_DIR)/lib/libkoreader-luagettext.so: lua_gettext.c
 	$(CC) $(DYNLIB_CFLAGS) $(EMU_CFLAGS) $(EMU_LDFLAGS) \
 		-o $@ $<
 
-$(OUTPUT_DIR)/libkoreader-kobolight.so: kobolight.c
+$(OUTPUT_DIR)/lib/libkoreader-kobolight.so: kobolight.c
 	$(CC) $(DYNLIB_CFLAGS) $(EMU_CFLAGS) $(EMU_LDFLAGS) \
 		-o $@ $<
 
-$(OUTPUT_DIR)/libkoreader-input.so: input.c \
+$(OUTPUT_DIR)/lib/libkoreader-input.so: input.c \
 				$(POPEN_NOSHELL_LIB)
 	$(CC) $(DYNLIB_CFLAGS) $(EMU_CFLAGS) $(EMU_LDFLAGS) \
 		-o $@ $< $(POPEN_NOSHELL_LIB)
 
-$(OUTPUT_DIR)/libkoreader-einkfb.so: einkfb.c
+$(OUTPUT_DIR)/lib/libkoreader-einkfb.so: einkfb.c
 	$(CC) -Iinclude/ $(DYNLIB_CFLAGS) $(EMU_CFLAGS) $(EMU_LDFLAGS) \
 		-o $@ $<
 
-$(OUTPUT_DIR)/libkoreader-drawcontext.so: drawcontext.c
+$(OUTPUT_DIR)/lib/libkoreader-drawcontext.so: drawcontext.c
 	$(CC) $(DYNLIB_CFLAGS) -o $@ $<
 
-$(OUTPUT_DIR)/libkoreader-blitbuffer.so: blitbuffer.c
+$(OUTPUT_DIR)/lib/libkoreader-blitbuffer.so: blitbuffer.c
 	$(CC) $(DYNLIB_CFLAGS) -o $@ $<
 
-$(OUTPUT_DIR)/libkoreader-lfs.so: luafilesystem/src/lfs.c
+$(OUTPUT_DIR)/lib/libkoreader-lfs.so: luafilesystem/src/lfs.c
 	$(CC) $(DYNLIB_CFLAGS) -o $@ $<
 
-$(OUTPUT_DIR)/libkoreader-koptcontext.so: koptcontext.c \
+$(OUTPUT_DIR)/lib/libkoreader-koptcontext.so: koptcontext.c \
 				$(K2PDFOPT_LIB) \
 				$(LEPTONICA_LIB) \
 				$(TESSERACT_LIB)
@@ -230,31 +226,31 @@ $(OUTPUT_DIR)/libkoreader-koptcontext.so: koptcontext.c \
 		$(K2PDFOPT_LIB) $(LEPTONICA_LIB) $(TESSERACT_LIB) \
 		-o $@ $<
 
-$(OUTPUT_DIR)/libkoreader-pic.so: pic.c pic_jpeg.c \
+$(OUTPUT_DIR)/lib/libkoreader-pic.so: pic.c pic_jpeg.c \
 				$(JPEG_LIB)
 	$(CC) -I$(JPEG_DIR) $(DYNLIB_CFLAGS) $(JPEG_LIB) \
 		-o $@ $< pic_jpeg.c
 
-$(OUTPUT_DIR)/libkoreader-ft.so: ft.c \
+$(OUTPUT_DIR)/lib/libkoreader-ft.so: ft.c \
 				$(MUPDF_THIRDPARTY_LIBS)
 	$(CC) -I$(FREETYPE_DIR)/include $(DYNLIB_CFLAGS) $(FREETYPE_LIB) \
 		-lkoreader-blitbuffer -o $@ $<
 
-$(OUTPUT_DIR)/libkoreader-pdf.so: pdf.c \
+$(OUTPUT_DIR)/lib/libkoreader-pdf.so: pdf.c \
 				$(MUPDF_LIB) \
 				$(K2PDFOPT_LIB)
 	$(CC) -I$(MUPDF_DIR) $(K2PDFOPT_CFLAGS) $(DYNLIB_CFLAGS) \
 		$(K2PDFOPT_LIB) $(LEPTONICA_LIB) $(TESSERACT_LIB) \
 		$(MUPDF_LIB) -lpthread -o $@ $<
 
-$(OUTPUT_DIR)/libkoreader-djvu.so: djvu.c \
+$(OUTPUT_DIR)/lib/libkoreader-djvu.so: djvu.c \
 				$(DJVULIBRE_LIB)
 	$(CC) -I$(DJVULIBRE_DIR)/ $(K2PDFOPT_CFLAGS) \
 		$(DYNLIB_CFLAGS) $(DJVULIBRE_LIB) \
 		$(K2PDFOPT_LIB) $(LEPTONICA_LIB) $(TESSERACT_LIB) \
 		-o $@ $<
 
-$(OUTPUT_DIR)/libkoreader-cre.so: cre.cpp \
+$(OUTPUT_DIR)/lib/libkoreader-cre.so: cre.cpp \
 				$(CRENGINE_LIB) \
 				$(CRENGINE_THIRDPARTY_LIBS) \
 				$(MUPDF_LIB_DIR)/libz.a
@@ -264,7 +260,7 @@ $(OUTPUT_DIR)/libkoreader-cre.so: cre.cpp \
 		$(CRENGINE_THIRDPARTY_LIBS) $(MUPDF_LIB_DIR)/libz.a \
 		$(STATICLIBSTDCPP)
 
-$(OUTPUT_DIR)/libkoreader-mupdfimg.so: mupdfimg.c \
+$(OUTPUT_DIR)/lib/libkoreader-mupdfimg.so: mupdfimg.c \
 				$(JPEG_LIB) \
 				$(FREETYPE_LIB)
 	$(CC) -I$(MUPDF_DIR) $(DYNLIB_CFLAGS) $(MUPDF_LIB) \
@@ -340,6 +336,8 @@ fetchthirdparty:
 		|| echo "USE_FONTCONFIG already disabled"
 	# MuPDF patch: use external fonts
 	cd mupdf && patch -N -p1 < ../mupdf.patch
+	# libk2pdfopt patch for build configuration
+	cd libk2pdfopt && patch -N -p1 < ../libk2pdfopt.patch
 	# Download popen-noshell
 	test -f popen-noshell/popen_noshell.c \
 		|| svn co http://popen-noshell.googlecode.com/svn/trunk/ \
