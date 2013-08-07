@@ -97,7 +97,8 @@ ifdef USE_FIXED_POINT
 endif
 
 # this will create a path named build/arm-none-linux-gnueabi or similar
-OUTPUT_DIR?=build/$(shell $(CC) -dumpmachine)
+MACHINE?=$(shell $(CC) -dumpmachine)
+OUTPUT_DIR?=build/$(MACHINE)
 
 # you can probably leave these settings alone:
 
@@ -115,7 +116,7 @@ MUPDF_THIRDPARTY_LIBS=$(MUPDF_LIB_DIR)/libopenjpeg.a \
 MUPDF_LIB=$(OUTPUT_DIR)/libfitz.so
 
 DJVULIBRE_DIR=djvulibre
-DJVULIBRE_LIB=$(OUTPUT_DIR)/libdjvulibre.so
+DJVULIBRE_LIB=$(OUTPUT_DIR)/libdjvulibre.so.21
 DJVULIBRE_LIB_DIR=$(DJVULIBRE_DIR)/build/libdjvu/.libs/
 
 CRENGINE_LIB=$(OUTPUT_DIR)/libcrengine.so
@@ -139,6 +140,8 @@ FREETYPE_LIB=$(OUTPUT_DIR)/libfreetype.so.6
 FREETYPE_DIR=freetype2/
 
 JPEG_LIB=$(OUTPUT_DIR)/libjpeg.so.9
+# needed for libtool:
+JPEG_LIB_PLAIN_SO=$(OUTPUT_DIR)/libjpeg.so
 JPEG_DIR=jpeg/
 
 SDCV_DIR=sdcv-0.4.2

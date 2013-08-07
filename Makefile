@@ -10,11 +10,13 @@ ifndef EMULATE_READER
 		$(OUTPUT_DIR)/*.so*
 endif
 	# set up some needed paths and links
-	ln -sf ../../kpvcrlib/crengine/cr3gui/data $(OUTPUT_DIR)/data
+	test -e $(OUTPUT_DIR)/data || \
+		ln -sf ../../kpvcrlib/crengine/cr3gui/data $(OUTPUT_DIR)/data
 	test -d $(OUTPUT_DIR)/history || mkdir $(OUTPUT_DIR)/history
 	test -d $(OUTPUT_DIR)/clipboard || mkdir $(OUTPUT_DIR)/clipboard
+	# why does this need four times ../ ?
 	test -e $(OUTPUT_DIR)/data/cr3.css || \
-		ln -sf ../../kpvcrlib/cr3.css $(OUTPUT_DIR)/data/
+		ln -sf ../../../../kpvcrlib/cr3.css $(OUTPUT_DIR)/data/
 	test -d $(OUTPUT_DIR)/fonts || \
 		ln -sf ../../$(TTF_FONTS_DIR) $(OUTPUT_DIR)/fonts
 	test -e $(OUTPUT_DIR)/koreader-base || \
@@ -86,19 +88,26 @@ $(MUPDF_LIB): $(MUPDF_LIB_STATIC) \
 		$(JPEG_LIB) $(FREETYPE_LIB) \
 		-o $(MUPDF_LIB)
 
-
 # djvulibre, fetched via GIT as a submodule
-$(DJVULIBRE_LIB):
+$(DJVULIBRE_LIB): $(JPEG_LIB)
 	mkdir -p $(DJVULIBRE_DIR)/build
+	# libtool will search for a plain .so, not .so.N:
+	ln -s $(notdir $(JPEG_LIB)) $(JPEG_LIB_PLAIN_SO)
+	# note that djvulibre uses libtool & configure which honor
+	# the LDFLAGS drifferently, so we set rpath via JPEG_LIBS
+	# (it's for retrieving the right jpeg library anyway)
 	test -e $(DJVULIBRE_DIR)/build/Makefile \
 		|| ( cd $(DJVULIBRE_DIR)/build \
 		&& CC="$(CC)" CXX="$(CXX)" CFLAGS="$(CFLAGS) -fPIC" \
-		CXXFLAGS="$(CXXFLAGS) -fPIC" LDFLAGS="$(LDFLAGS)" \
+		CXXFLAGS="$(CXXFLAGS) -fPIC" \
+		JPEG_LIBS='-L$(abspath $(OUTPUT_DIR)) -ljpeg -Wl,-rpath,\$$$$ORIGIN' \
+		LDFLAGS="$(LDFLAGS)" \
 		../configure --disable-desktopfiles \
 			--disable-static --enable-shared \
 			--disable-xmltools --disable-largefile \
 			$(if $(EMULATE_READER),,-host=$(CHOST)) )
 	$(MAKE) -j$(PROCESSORS) -C $(DJVULIBRE_DIR)/build SUBDIRS_FIRST=libdjvu
+	rm $(JPEG_LIB_PLAIN_SO)
 	cp -fL $(DJVULIBRE_LIB_DIR)/$(notdir $(DJVULIBRE_LIB)) \
 		$(DJVULIBRE_LIB)
 
