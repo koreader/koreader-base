@@ -6,21 +6,21 @@ this replaces the former standalone binary which invoked the Lua interpreter/com
 now, we use the "default" interpreter/compiler
 ]]--
 
-require "lib/libkoreader-blitbuffer"
-require "lib/libkoreader-cre"
-require "lib/libkoreader-djvu"
-require "lib/libkoreader-drawcontext"
-require "lib/libkoreader-einkfb"
-require "lib/libkoreader-ft"
-require "lib/libkoreader-input"
-require "lib/libkoreader-koptcontext"
-require "lib/libkoreader-lfs"
-require "lib/libkoreader-mupdfimg"
-require "lib/libkoreader-pdf"
-require "lib/libkoreader-pic"
-require "lib/libkoreader-util"
-require "lib/libkoreader-luagettext"
-require "lib/libkoreader-kobolight"
+require "libs/libkoreader-blitbuffer"
+require "libs/libkoreader-cre"
+require "libs/libkoreader-djvu"
+require "libs/libkoreader-drawcontext"
+require "libs/libkoreader-einkfb"
+require "libs/libkoreader-ft"
+require "libs/libkoreader-input"
+require "libs/libkoreader-koptcontext"
+require "libs/libkoreader-lfs"
+require "libs/libkoreader-mupdfimg"
+require "libs/libkoreader-pdf"
+require "libs/libkoreader-pic"
+require "libs/libkoreader-util"
+require "libs/libkoreader-luagettext"
+require "libs/libkoreader-kobolight"
 
 if not arg[1] then
 	error("you must give the name of the main lua executable as the first argument")
