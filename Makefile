@@ -320,6 +320,7 @@ fetchthirdparty:
 		&& (cd $(LUA_DIR); git checkout .) \
 		|| echo warn: $(LUA_DIR) folder not found
 	git submodule init
+	git submodule sync
 	git submodule update
 	cd mupdf && (git submodule init; git submodule update)
 	# CREngine patch: change child nodes' type face
