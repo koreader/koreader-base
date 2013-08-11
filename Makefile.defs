@@ -137,10 +137,10 @@ K2PDFOPT_CFLAGS=-I$(K2PDFOPT_DIR)/willuslib \
 		-I$(K2PDFOPT_DIR)/include_mod
 
 FREETYPE_LIB=$(OUTPUT_DIR)/libs/libfreetype.so.6
-FREETYPE_DIR=freetype2/
+FREETYPE_DIR=freetype2
 
 JPEG_LIB=$(OUTPUT_DIR)/libs/libjpeg.so.9
-JPEG_DIR=jpeg/
+JPEG_DIR=jpeg
 
 SDCV_DIR=sdcv-0.4.2
 
