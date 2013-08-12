@@ -14,9 +14,10 @@ endif
 		ln -sf ../../kpvcrlib/crengine/cr3gui/data $(OUTPUT_DIR)/data
 	test -d $(OUTPUT_DIR)/history || mkdir $(OUTPUT_DIR)/history
 	test -d $(OUTPUT_DIR)/clipboard || mkdir $(OUTPUT_DIR)/clipboard
-	# why does this need four times ../ ?
+	# /$(OUTPUT_DIR)/data is a soft link to /kpvcrlib/crengine/cr3gui/data
+	# while cr3.css is in /kpvcrlib, so we need three ".."
 	test -e $(OUTPUT_DIR)/data/cr3.css || \
-		ln -sf ../../../../kpvcrlib/cr3.css $(OUTPUT_DIR)/data/
+		ln -sf ../../../cr3.css $(OUTPUT_DIR)/data/
 	test -d $(OUTPUT_DIR)/fonts || \
 		ln -sf ../../$(TTF_FONTS_DIR) $(OUTPUT_DIR)/fonts
 	test -e $(OUTPUT_DIR)/koreader-base || \
@@ -202,12 +203,12 @@ $(OUTPUT_DIR)/libs/libkoreader-kobolight.so: kobolight.c
 
 $(OUTPUT_DIR)/libs/libkoreader-input.so: input.c \
 				$(POPEN_NOSHELL_LIB)
-	$(CC) $(DYNLIB_CFLAGS) $(EMU_CFLAGS) $(EMU_LDFLAGS) \
-		-o $@ $< $(POPEN_NOSHELL_LIB)
+	$(CC) $(DYNLIB_CFLAGS) $(EMU_CFLAGS) \
+		-o $@ $< $(POPEN_NOSHELL_LIB) $(EMU_LDFLAGS)
 
 $(OUTPUT_DIR)/libs/libkoreader-einkfb.so: einkfb.c
-	$(CC) -Iinclude/ $(DYNLIB_CFLAGS) $(EMU_CFLAGS) $(EMU_LDFLAGS) \
-		-o $@ $<
+	$(CC) -Iinclude/ $(DYNLIB_CFLAGS) $(EMU_CFLAGS)\
+		-o $@ $<  $(EMU_LDFLAGS)
 
 $(OUTPUT_DIR)/libs/libkoreader-drawcontext.so: drawcontext.c
 	$(CC) $(DYNLIB_CFLAGS) -o $@ $<
@@ -223,48 +224,52 @@ $(OUTPUT_DIR)/libs/libkoreader-koptcontext.so: koptcontext.c \
 				$(LEPTONICA_LIB) \
 				$(TESSERACT_LIB)
 	$(CC) $(K2PDFOPT_CFLAGS) $(DYNLIB_CFLAGS) \
-		$(K2PDFOPT_LIB) $(LEPTONICA_LIB) $(TESSERACT_LIB) \
-		-o $@ $<
+		-o $@ $< \
+		$(K2PDFOPT_LIB) $(LEPTONICA_LIB) $(TESSERACT_LIB)
 
 $(OUTPUT_DIR)/libs/libkoreader-pic.so: pic.c pic_jpeg.c \
 				$(JPEG_LIB)
-	$(CC) -I$(JPEG_DIR) $(DYNLIB_CFLAGS) $(JPEG_LIB) \
-		-o $@ $< pic_jpeg.c
+	$(CC) -I$(JPEG_DIR) $(DYNLIB_CFLAGS) \
+		-o $@ $< pic_jpeg.c $(JPEG_LIB)
 
 $(OUTPUT_DIR)/libs/libkoreader-ft.so: ft.c \
+				$(OUTPUT_DIR)/libs/libkoreader-blitbuffer.so \
 				$(MUPDF_THIRDPARTY_LIBS)
-	$(CC) -I$(FREETYPE_DIR)/include $(DYNLIB_CFLAGS) $(FREETYPE_LIB) \
-		-lkoreader-blitbuffer -o $@ $<
+	$(CC) -I$(FREETYPE_DIR)/include $(DYNLIB_CFLAGS) \
+		-o $@ $< $(FREETYPE_LIB) -lkoreader-blitbuffer
 
+# put all the libs to the end of compile command to make ubuntu's tool chain
+# happy
 $(OUTPUT_DIR)/libs/libkoreader-pdf.so: pdf.c \
 				$(MUPDF_LIB) \
 				$(K2PDFOPT_LIB)
 	$(CC) -I$(MUPDF_DIR) $(K2PDFOPT_CFLAGS) $(DYNLIB_CFLAGS) \
-		$(K2PDFOPT_LIB) $(LEPTONICA_LIB) $(TESSERACT_LIB) \
-		$(MUPDF_LIB) -lpthread -o $@ $<
+		-lpthread -o $@ $< \
+		$(MUPDF_LIB) $(K2PDFOPT_LIB) $(LEPTONICA_LIB) $(TESSERACT_LIB)
 
 $(OUTPUT_DIR)/libs/libkoreader-djvu.so: djvu.c \
 				$(DJVULIBRE_LIB)
-	$(CC) -I$(DJVULIBRE_DIR)/ $(K2PDFOPT_CFLAGS) \
-		$(DYNLIB_CFLAGS) $(DJVULIBRE_LIB) \
-		$(K2PDFOPT_LIB) $(LEPTONICA_LIB) $(TESSERACT_LIB) \
-		-o $@ $<
+	$(CC) -I$(DJVULIBRE_DIR)/ $(K2PDFOPT_CFLAGS) $(DYNLIB_CFLAGS) \
+		-o $@ $< \
+		$(DJVULIBRE_LIB) $(K2PDFOPT_LIB) $(LEPTONICA_LIB) $(TESSERACT_LIB)
 
 $(OUTPUT_DIR)/libs/libkoreader-cre.so: cre.cpp \
 				$(CRENGINE_LIB) \
 				$(CRENGINE_THIRDPARTY_LIBS) \
 				$(MUPDF_LIB_DIR)/libz.a
 	$(CC) -I$(CRENGINE_DIR)/crengine/include/ $(DYNLIB_CFLAGS) \
-		$(CRENGINE_LIB) $(JPEG_LIB) $(FREETYPE_LIB) \
 		$(DYNAMICLIBSTDCPP) -o $@ $< \
-		$(CRENGINE_THIRDPARTY_LIBS) $(MUPDF_LIB_DIR)/libz.a \
+		$(MUPDF_LIB_DIR)/libz.a \
+		$(CRENGINE_LIB) $(CRENGINE_THIRDPARTY_LIBS) \
+		$(Z_LIB) $(JPEG_LIB) $(FREETYPE_LIB) \
 		$(STATICLIBSTDCPP)
 
 $(OUTPUT_DIR)/libs/libkoreader-mupdfimg.so: mupdfimg.c \
+				$(OUTPUT_DIR)/libs/libkoreader-blitbuffer.so \
 				$(JPEG_LIB) \
 				$(FREETYPE_LIB)
-	$(CC) -I$(MUPDF_DIR) $(DYNLIB_CFLAGS) $(MUPDF_LIB) \
-		-lkoreader-blitbuffer -o $@ $<
+	$(CC) -I$(MUPDF_DIR) $(DYNLIB_CFLAGS) \
+		-o $@ $< $(MUPDF_LIB) -lkoreader-blitbuffer
 
 # ===========================================================================
 
@@ -276,8 +281,8 @@ $(OUTPUT_DIR)/extr: extr.c \
 				$(FREETYPE_LIB)
 	$(CC) -I$(MUPDF_DIR) -I$(MUPDF_DIR)/pdf -I$(MUPDF_DIR)/fitz \
 		$(CFLAGS) -Wl,-rpath,'$$ORIGIN' \
-		$(MUPDF_LIB) $(JPEG_LIB) $(FREETYPE_LIB) -lm \
-		-o $@ $<
+		-o $@ $< \
+		$(MUPDF_LIB) $(JPEG_LIB) $(FREETYPE_LIB) -lm
 
 # ===========================================================================
 
