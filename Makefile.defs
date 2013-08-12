@@ -108,11 +108,12 @@ CRENGINE_DIR=$(CRENGINE_WRAPPER_DIR)/crengine
 LUAFILESYSTEM_DIR=luafilesystem
 
 MUPDF_DIR=mupdf
+Z_LIB=$(MUPDF_LIB_DIR)/libz.a
 MUPDF_LIB_DIR=$(MUPDF_DIR)/build/release
 MUPDF_LIB_STATIC=$(MUPDF_LIB_DIR)/libfitz.a
 MUPDF_THIRDPARTY_LIBS=$(MUPDF_LIB_DIR)/libopenjpeg.a \
 			$(MUPDF_LIB_DIR)/libjbig2dec.a \
-			$(MUPDF_LIB_DIR)/libz.a
+			$(Z_LIB)
 MUPDF_LIB=$(OUTPUT_DIR)/libs/libfitz.so
 
 DJVULIBRE_DIR=djvulibre
@@ -137,10 +138,10 @@ K2PDFOPT_CFLAGS=-I$(K2PDFOPT_DIR)/willuslib \
 		-I$(K2PDFOPT_DIR)/include_mod
 
 FREETYPE_LIB=$(OUTPUT_DIR)/libs/libfreetype.so.6
-FREETYPE_DIR=freetype2/
+FREETYPE_DIR=freetype2
 
 JPEG_LIB=$(OUTPUT_DIR)/libs/libjpeg.so.9
-JPEG_DIR=jpeg/
+JPEG_DIR=jpeg
 
 SDCV_DIR=sdcv-0.4.2
 
