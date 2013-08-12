@@ -22,6 +22,8 @@ endif
 		ln -sf ../../$(TTF_FONTS_DIR) $(OUTPUT_DIR)/fonts
 	test -e $(OUTPUT_DIR)/koreader-base || \
 		ln -sf ../../koreader-base $(OUTPUT_DIR)/
+	test -e $(OUTPUT_DIR)/ffi || \
+		ln -sf ../../ffi $(OUTPUT_DIR)/
 
 # convenience target with preconfigured Kobo toolchain settings
 kobo:
