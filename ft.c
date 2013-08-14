@@ -22,9 +22,6 @@
 #include FT_FREETYPE_H
 #include "blitbuffer.h"
 
-/* for font access: */
-#include <pdf/mupdf-internal.h>
-
 #include "ft.h"
 
 FT_Library freetypelib;
