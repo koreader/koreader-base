@@ -482,12 +482,14 @@ static int getAutoBBox(lua_State *L) {
 	KOPTContext *kctx = (KOPTContext*) luaL_checkudata(L, 2, "koptcontext");
 	ddjvu_rect_t prect;
 	ddjvu_rect_t rrect;
-	int px, py, pw, ph, rx, ry, rw, rh, status;
+
+	double wfactor = (double)ddjvu_page_get_width(page->page_ref) / kctx->dev_width;
+	double hfactor = (double)ddjvu_page_get_height(page->page_ref) / kctx->dev_height;
 
 	prect.x = 0;
 	prect.y = 0;
-	prect.w = ddjvu_page_get_width(page->page_ref);
-	prect.h = ddjvu_page_get_height(page->page_ref);
+	prect.w = kctx->dev_width;
+	prect.h = kctx->dev_height;
 	rrect = prect;
 
 	WILLUSBITMAP *src = &kctx->src;
@@ -508,10 +510,10 @@ static int getAutoBBox(lua_State *L) {
 
 	k2pdfopt_crop_bmp(kctx);
 
-	lua_pushnumber(L, ((double)kctx->bbox.x0));
-	lua_pushnumber(L, ((double)kctx->bbox.y0));
-	lua_pushnumber(L, ((double)kctx->bbox.x1));
-	lua_pushnumber(L, ((double)kctx->bbox.y1));
+	lua_pushnumber(L, floor(wfactor*kctx->bbox.x0));
+	lua_pushnumber(L, floor(hfactor*kctx->bbox.y0));
+	lua_pushnumber(L, ceil (wfactor*kctx->bbox.x1));
+	lua_pushnumber(L, ceil (hfactor*kctx->bbox.y1));
 
 	return 4;
 }
