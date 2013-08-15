@@ -342,8 +342,6 @@ fetchthirdparty:
 		|| echo "USE_FONTCONFIG already disabled"
 	# MuPDF patch: use external fonts
 	cd mupdf && patch -N -p1 < ../mupdf.patch
-	# libk2pdfopt patch for build configuration
-	-cd libk2pdfopt && patch -N -p1 < ../libk2pdfopt.patch
 	# Download popen-noshell
 	test -f popen-noshell/popen_noshell.c \
 		|| svn co http://popen-noshell.googlecode.com/svn/trunk/ \
