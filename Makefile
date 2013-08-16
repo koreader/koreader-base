@@ -175,7 +175,6 @@ endif
 # our own Lua/C/C++ interfacing:
 
 libs: \
-	$(OUTPUT_DIR)/libs/libkoreader-util.so \
 	$(OUTPUT_DIR)/libs/libkoreader-luagettext.so \
 	$(OUTPUT_DIR)/libs/libkoreader-kobolight.so \
 	$(OUTPUT_DIR)/libs/libkoreader-input.so \
@@ -190,10 +189,6 @@ libs: \
 	$(OUTPUT_DIR)/libs/libkoreader-djvu.so \
 	$(OUTPUT_DIR)/libs/libkoreader-cre.so \
 	$(OUTPUT_DIR)/libs/libkoreader-mupdfimg.so
-
-$(OUTPUT_DIR)/libs/libkoreader-util.so: util.c
-	$(CC) $(DYNLIB_CFLAGS) $(EMU_CFLAGS) $(EMU_LDFLAGS) \
-		-o $@ $<
 
 $(OUTPUT_DIR)/libs/libkoreader-luagettext.so: lua_gettext.c
 	$(CC) $(DYNLIB_CFLAGS) $(EMU_CFLAGS) $(EMU_LDFLAGS) \
