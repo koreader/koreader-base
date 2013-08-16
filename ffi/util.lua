@@ -1,5 +1,5 @@
 --[[
-Module for various utility funcitons
+Module for various utility functions
 ]]
 
 local ffi = require "ffi"
