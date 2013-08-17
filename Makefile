@@ -25,7 +25,7 @@ endif
 
 # convenience target with preconfigured Kobo toolchain settings
 kobo:
-	TARGET_DEVICE=KOBO CHOST=arm-linux-gnueabihf make
+	make TARGET_DEVICE=KOBO
 
 $(OUTPUT_DIR)/libs:
 	mkdir -p $(OUTPUT_DIR)/libs

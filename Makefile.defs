@@ -1,7 +1,11 @@
 # set this to your ARM cross compiler:
 
 SHELL:=/bin/bash
-CHOST?=arm-none-linux-gnueabi
+ifeq ($(TARGET_DEVICE), KOBO)
+	CHOST?=arm-linux-gnueabihf
+else
+	CHOST?=arm-none-linux-gnueabi
+endif
 # Use ccache in build system by default. Define USE_NO_CCACHE=1 to force disable it.
 ifeq ($(USE_NO_CCACHE), 1)
 	CCACHE:=
@@ -39,7 +43,13 @@ BASE_CFLAGS:=-O2 -ffast-math -pipe -fomit-frame-pointer
 # That said, MG 2012.03 is still using GCC 4.6.3, so we're good ;).
 ARM_BACKWARD_COMPAT_CFLAGS:=-fno-stack-protector -U_FORTIFY_SOURCE -D_GNU_SOURCE -fno-finite-math-only
 ARM_BACKWARD_COMPAT_CXXFLAGS:=-fno-use-cxa-atexit
-ARM_ARCH:=-march=armv6j -mtune=arm1136jf-s -mfpu=vfp -mfloat-abi=softfp -marm
+ARM_ARCH:=-march=armv6j -mtune=arm1136jf-s -mfpu=vfp -marm
+
+ifeq ($(TARGET_DEVICE), KOBO)
+	ARM_ARCH += -mfloat-abi=hard
+else
+	ARM_ARCH += -mfloat-abi=softfp
+endif
 
 HOST_ARCH:=-march=native
 HOSTCFLAGS:=$(HOST_ARCH) $(BASE_CFLAGS)
@@ -97,7 +107,7 @@ ifdef USE_FIXED_POINT
 endif
 
 # this will create a path named build/arm-none-linux-gnueabi or similar
-MACHINE?=$(shell $(CC) -dumpmachine)
+MACHINE?=$(shell $(CC) -dumpmachine 2>/dev/null)
 OUTPUT_DIR?=build/$(MACHINE)
 
 # you can probably leave these settings alone:
