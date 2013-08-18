@@ -18,9 +18,11 @@ require "libs/libkoreader-lfs"
 require "libs/libkoreader-mupdfimg"
 require "libs/libkoreader-pdf"
 require "libs/libkoreader-pic"
-require "libs/libkoreader-util"
 require "libs/libkoreader-luagettext"
 require "libs/libkoreader-kobolight"
+
+-- libraries converted to FFI:
+util = require("ffi/util")
 
 if not arg[1] then
 	error("you must give the name of the main lua executable as the first argument")
