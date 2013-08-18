@@ -133,6 +133,7 @@ DJVULIBRE_LIB_DIR=$(DJVULIBRE_DIR)/build/libdjvu/.libs/
 CRENGINE_LIB=$(OUTPUT_DIR)/libs/libcrengine.so
 CRENGINE_THIRDPARTY_LIBS=$(CRENGINE_DIR)/thirdparty/chmlib/libchmlib.a \
 			$(CRENGINE_DIR)/thirdparty/libpng/libpng.a \
+            $(CRENGINE_DIR)/thirdparty/libjpeg/libjpeg.a \
 			$(CRENGINE_DIR)/thirdparty/antiword/libantiword.a
 
 LUA_DIR=luajit-2.0
