@@ -258,7 +258,7 @@ $(OUTPUT_DIR)/libs/libkoreader-cre.so: cre.cpp \
 		$(DYNAMICLIBSTDCPP) -o $@ $< \
 		$(MUPDF_LIB_DIR)/libz.a \
 		$(CRENGINE_LIB) $(CRENGINE_THIRDPARTY_LIBS) \
-		$(Z_LIB) $(JPEG_LIB) $(FREETYPE_LIB) \
+		$(Z_LIB) $(FREETYPE_LIB) \
 		$(STATICLIBSTDCPP)
 
 $(OUTPUT_DIR)/libs/libkoreader-mupdfimg.so: mupdfimg.c \
