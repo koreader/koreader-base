@@ -174,6 +174,6 @@ function dump(self, file)
 <td class="code"><code class="prettyprint">%s</code></td></tr>]],
 l, d[1], d[2]/1000, files[d[3]][ln]))
    end
-   f:write('</tbody></table></body></html')
+   f:write('</tbody></table></body></html>')
    f:close()
 end
