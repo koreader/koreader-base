@@ -6,6 +6,7 @@ this replaces the former standalone binary which invoked the Lua interpreter/com
 now, we use the "default" interpreter/compiler
 ]]--
 
+-- can't remove yet until all buffers are converted:
 require "libs/libkoreader-blitbuffer"
 require "libs/libkoreader-cre"
 require "libs/libkoreader-djvu"
@@ -23,6 +24,7 @@ require "libs/libkoreader-kobolight"
 
 -- libraries converted to FFI:
 util = require("ffi/util")
+util = require("ffi/blitbuffer")
 
 if not arg[1] then
 	error("you must give the name of the main lua executable as the first argument")
