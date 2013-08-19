@@ -10,33 +10,33 @@ struct timeval {
 	long int tv_sec;
 	long int tv_usec;
 };
-int gettimeofday(struct timeval *tp, void *tzp);
+int gettimeofday(struct timeval *restrict, struct timezone *restrict) __attribute__((__nothrow__, __leaf__));
 
-unsigned int sleep(unsigned int seconds);
-int usleep(unsigned int usec);
+unsigned int sleep(unsigned int);
+int usleep(unsigned int);
 
-struct statvfs
-{
-	unsigned long int f_bsize;
-	unsigned long int f_frsize;
-	unsigned long int f_blocks;
-	unsigned long int f_bfree;
-	unsigned long int f_bavail;
-	unsigned long int f_files;
-	unsigned long int f_ffree;
-	unsigned long int f_favail;
-	unsigned long int f_fsid;
-	unsigned long int f_flag;
-	unsigned long int f_namemax;
+struct statvfs {
+	long unsigned int f_bsize;
+	long unsigned int f_frsize;
+	long unsigned int f_blocks;
+	long unsigned int f_bfree;
+	long unsigned int f_bavail;
+	long unsigned int f_files;
+	long unsigned int f_ffree;
+	long unsigned int f_favail;
+	long unsigned int f_fsid;
+	int __f_unused;
+	long unsigned int f_flag;
+	long unsigned int f_namemax;
 	int __f_spare[6];
 };
-int statvfs(const char *path, struct statvfs *buf);
+int statvfs(const char *restrict, struct statvfs *restrict) __attribute__((__nothrow__, __leaf__));
 ]]
 
 local util = {}
 
+local timeval = ffi.new("struct timeval")
 function util.gettime()
-	local timeval = ffi.new("struct timeval")
 	ffi.C.gettimeofday(timeval, nil)
 	return tonumber(timeval.tv_sec),
 		tonumber(timeval.tv_usec)
@@ -45,8 +45,8 @@ end
 util.sleep=ffi.C.sleep
 util.usleep=ffi.C.usleep
 
+local statvfs = ffi.new("struct statvfs")
 function util.df(path)
-	local statvfs = ffi.new("struct statvfs")
 	ffi.C.statvfs(path, statvfs)
 	return tonumber(statvfs.f_blocks * statvfs.f_bsize),
 		tonumber(statvfs.f_bfree * statvfs.f_bsize)
