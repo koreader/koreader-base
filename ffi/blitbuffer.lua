@@ -4,6 +4,9 @@ Generic blitbuffer/GFX stuff that works on memory buffers
 
 local ffi = require("ffi")
 
+-- we will use this extensively
+local floor = math.floor
+
 ffi.cdef[[
 typedef struct BlitBuffer {
         int w; 
@@ -50,7 +53,7 @@ get a color value for a certain pixel
 @param y Y coordinate
 --]]
 function BB_mt.__index:getPixel(x, y)
-	local value = self.data[y*self.pitch + bit.rshift(x, 1)]
+	local value = self.data[floor(y)*self.pitch + bit.rshift(x, 1)]
 	if x % 2 == 1 then
 		value = bit.band(value, 0x0F)
 	else
@@ -67,7 +70,7 @@ set a color value for a certain pixel
 @param value color value (currently 0-15 for 4bpp BlitBuffers)
 --]]
 function BB_mt.__index:setPixel(x, y, value)
-	local pos = y * self.pitch + bit.rshift(x, 1)
+	local pos = floor(y) * self.pitch + bit.rshift(x, 1)
 	if x % 2 == 1 then
 		self.data[pos] = bit.bor(bit.band(self.data[pos], 0xF0), value)
 	else
@@ -115,6 +118,8 @@ Blits a given source buffer onto this buffer
 @param height height of source rectangle
 --]]
 function BB_mt.__index:blitFrom(source, dest_x, dest_y, offs_x, offs_y, width, height)
+	dest_x, dest_y, offs_x, offs_y, width, height =
+		floor(dest_x), floor(dest_y), floor(offs_x), floor(offs_y), floor(width), floor(height)
 	source = ffi.cast(BBtype, source)
 	width, dest_x, offs_x = BB.checkBounds(width, dest_x, offs_x, self.w, source.w)
 	height, dest_y, offs_y = BB.checkBounds(height, dest_y, offs_y, self.h, source.h)
@@ -190,6 +195,8 @@ Blits a given source buffer onto this buffer retaining some degree of the previo
 @param intensity factor (0..1) that the blitted buffer gets multiplied with
 --]]
 function BB_mt.__index:addblitFrom(source, dest_x, dest_y, offs_x, offs_y, width, height, intensity)
+	dest_x, dest_y, offs_x, offs_y, width, height =
+		floor(dest_x), floor(dest_y), floor(offs_x), floor(offs_y), floor(width), floor(height)
 	source = ffi.cast(BBtype, source)
 	width, dest_x, offs_x = BB.checkBounds(width, dest_x, offs_x, self.w, source.w)
 	height, dest_y, offs_y = BB.checkBounds(height, dest_y, offs_y, self.h, source.h)
@@ -209,8 +216,6 @@ do a 1:1 blit
 --]]
 function BB_mt.__index:blitFullFrom(source)
 	source = ffi.cast(BBtype, source)
-self:blitFrom(source, 0, 0, 0, 0, source.w, source.h)
---[[
 	if self.w ~= source.w
 	or self.h ~= source.h
 	or self.pitch ~= source.pitch
@@ -218,7 +223,6 @@ self:blitFrom(source, 0, 0, 0, 0, source.w, source.h)
 		error("buffers do not have identical layout!")
 	end
 	ffi.C.memcpy(self.data, source.data, self.pitch * self.h)
-]]
 end
 
 --[[
@@ -411,27 +415,54 @@ function BB_mt.__index:modifyRect(x1, y1, w, h, modification, parameter)
 	end
 end
 
+
 local function modifyInvert(value)
 	return 15 - value
 end
 
+--[[
+invert color values in rectangular area
+
+@param x1 X coordinate
+@param y1 Y coordinate
+@param w width
+@param h height
+--]]
 function BB_mt.__index:invertRect(x1, y1, w, h)
 	self:modifyRect(x1, y1, w, h, modifyInvert)
 end
+
 
 local function modifyDim(value)
 	return bit.rshift(value, 1)
 end
 
+--[[
+dim color values in rectangular area
+
+@param x1 X coordinate
+@param y1 Y coordinate
+@param w width
+@param h height
+--]]
 function BB_mt.__index:dimRect(x1, y1, w, h)
 	self:modifyRect(x1, y1, w, h, modifyDim)
 end
+
 
 local function modifyLighten(value, low)
 	if value < low then return low end
 	return value
 end
 
+--[[
+lighten color values in rectangular area
+
+@param x1 X coordinate
+@param y1 Y coordinate
+@param w width
+@param h height
+--]]
 function BB_mt.__index:lightenRect(x1, y1, w, h, low)
 	self:modifyRect(x1, y1, w, h, mofifyLighten, low * 0x0F)
 end

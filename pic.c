@@ -145,7 +145,7 @@ static void scaleImage(uint8_t *result, uint8_t *image, int width, int height, i
 static int drawPage(lua_State *L) {
 	PicPage *page = (PicPage*) luaL_checkudata(L, 1, "picpage");
 	DrawContext *dc = (DrawContext*) luaL_checkudata(L, 2, "drawcontext");
-	BlitBuffer *bb = (BlitBuffer*) luaL_checkudata(L, 3, "blitbuffer");
+	BlitBuffer *bb = (BlitBuffer*) lua_topointer(L, 3);
 	int x_offset = MAX(0, dc->offset_x);
 	int y_offset = MAX(0, dc->offset_y);
 	int x, y;
