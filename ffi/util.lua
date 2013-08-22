@@ -69,10 +69,7 @@ function util.utf8charcode(charstring)
 end
 
 function util.isEmulated()
-	if ffi.arch == "arm" then
-		return 0
-	end
-	return 1
+	return (ffi.arch ~= "arm")
 end
 
 return util
