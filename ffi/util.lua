@@ -31,6 +31,9 @@ struct statvfs {
 	int __f_spare[6];
 };
 int statvfs(const char *restrict, struct statvfs *restrict) __attribute__((__nothrow__, __leaf__));
+char *realpath(const char *restrict, char *restrict) __attribute__((__nothrow__));
+void *malloc(unsigned int) __attribute__((malloc, leaf, nothrow));
+void free(void *) __attribute__((nothrow));
 ]]
 
 local util = {}
@@ -50,6 +53,16 @@ function util.df(path)
 	ffi.C.statvfs(path, statvfs)
 	return tonumber(statvfs.f_blocks * statvfs.f_bsize),
 		tonumber(statvfs.f_bfree * statvfs.f_bsize)
+end
+
+function util.realpath(path)
+	local path_ptr = ffi.C.realpath(path, nil)
+	if path_ptr == nil then
+		return nil
+	end
+	path = ffi.string(path_ptr)
+	ffi.C.free(path_ptr)
+	return path
 end
 
 function util.utf8charcode(charstring)
