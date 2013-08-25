@@ -6,6 +6,10 @@ local ffi = require("ffi")
 
 -- we will use this extensively
 local floor = math.floor
+local rshift = bit.rshift
+local lshift = bit.lshift
+local band = bit.band
+local bor = bit.bor
 
 ffi.cdef[[
 typedef struct BlitBuffer {
@@ -18,7 +22,6 @@ typedef struct BlitBuffer {
 
 void *malloc(int size);
 void free(void *ptr);
-void *memcpy(void *dest, const void *src, int n);
 void *memset(void *s, int c, int n);
 ]]
 
@@ -53,11 +56,11 @@ get a color value for a certain pixel
 @param y Y coordinate
 --]]
 function BB_mt.__index:getPixel(x, y)
-	local value = self.data[floor(y)*self.pitch + bit.rshift(x, 1)]
+	local value = self.data[floor(y)*self.pitch + rshift(x, 1)]
 	if x % 2 == 1 then
-		value = bit.band(value, 0x0F)
+		value = band(value, 0x0F)
 	else
-		value = bit.rshift(value, 4)
+		value = rshift(value, 4)
 	end
 	return value
 end
@@ -70,9 +73,9 @@ set a color value for a certain pixel
 @param value color value (currently 0-15 for 4bpp BlitBuffers)
 --]]
 function BB_mt.__index:setPixel(x, y, value)
-	local pos = floor(y) * self.pitch + bit.rshift(x, 1)
+	local pos = floor(y) * self.pitch + rshift(x, 1)
 	if x % 2 == 1 then
-		self.data[pos] = bit.bor(bit.band(self.data[pos], 0xF0), value)
+		self.data[pos] = bor(band(self.data[pos], 0xF0), value)
 	else
 		self.data[pos] = bit.bor(bit.band(self.data[pos], 0x0F), bit.lshift(value, 4))
 	end
@@ -222,7 +225,7 @@ function BB_mt.__index:blitFullFrom(source)
 	then
 		error("buffers do not have identical layout!")
 	end
-	ffi.C.memcpy(self.data, source.data, self.pitch * self.h)
+	ffi.copy(self.data, source.data, self.pitch * self.h)
 end
 
 --[[
@@ -598,7 +601,7 @@ function BB.new(width, height, pitch, buffer)
 		if buffer == nil then
 			error("cannot allocate buffer")
 		end
-		ffi.C.memset(buffer, 0, pitch * height)
+		ffi.fill(buffer, pitch * height)
 		allocated = 1
 	end
 	return BlitBuffer(width, height, pitch, buffer, allocated)
