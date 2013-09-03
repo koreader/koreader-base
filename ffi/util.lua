@@ -31,6 +31,9 @@ struct statvfs {
 	int __f_spare[6];
 };
 int statvfs(const char *restrict, struct statvfs *restrict) __attribute__((__nothrow__, __leaf__));
+char *realpath(const char *restrict, char *restrict) __attribute__((__nothrow__));
+void *malloc(unsigned int) __attribute__((malloc, leaf, nothrow));
+void free(void *) __attribute__((nothrow));
 ]]
 
 local util = {}
@@ -52,6 +55,16 @@ function util.df(path)
 		tonumber(statvfs.f_bfree * statvfs.f_bsize)
 end
 
+function util.realpath(path)
+	local path_ptr = ffi.C.realpath(path, nil)
+	if path_ptr == nil then
+		return nil
+	end
+	path = ffi.string(path_ptr)
+	ffi.C.free(path_ptr)
+	return path
+end
+
 function util.utf8charcode(charstring)
 	local ptr = ffi.cast("uint8_t *", charstring)
 	local len = #charstring
@@ -69,10 +82,7 @@ function util.utf8charcode(charstring)
 end
 
 function util.isEmulated()
-	if ffi.arch == "arm" then
-		return 0
-	end
-	return 1
+	return (ffi.arch ~= "arm")
 end
 
 return util

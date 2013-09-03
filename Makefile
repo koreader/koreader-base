@@ -322,7 +322,10 @@ fetchthirdparty:
 	# @TODO replace this dirty hack  24.04 2012 (houqp)
 	cd $(CRENGINE_DIR) && git stash && \
 		git apply ../lvrend-setNodeStyle.patch && \
-		git apply ../lvdocview-getCurrentPageLinks.patch
+		git apply ../lvdocview-getCurrentPageLinks.patch && \
+		git apply ../lvfntman-RegisterExternalFont.patch && \
+		git apply ../lvtinydom-registerEmbeddedFonts.patch && \
+		git apply ../epubfmt-EmbeddedFontStyleParser.patch
 	# CREngine patch: disable fontconfig
 	grep USE_FONTCONFIG $(CRENGINE_DIR)/crengine/include/crsetup.h \
 		&& grep -v USE_FONTCONFIG \
