@@ -629,7 +629,7 @@ static int clearSelection(lua_State *L) {
 
 static int drawCurrentPage(lua_State *L) {
 	CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
-	BlitBuffer *bb = (BlitBuffer*) luaL_checkudata(L, 2, "blitbuffer");
+	BlitBuffer *bb = (BlitBuffer*) lua_topointer(L, 2);
 
 	int w = bb->w,
 		h = bb->h;

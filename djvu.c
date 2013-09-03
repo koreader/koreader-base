@@ -618,7 +618,7 @@ static int reflowPage(lua_State *L) {
 static int drawReflowedPage(lua_State *L) {
 	DjvuPage *page = (DjvuPage*) luaL_checkudata(L, 1, "djvupage");
 	KOPTContext *kc = (KOPTContext*) luaL_checkudata(L, 2, "koptcontext");
-	BlitBuffer *bb = (BlitBuffer*) luaL_checkudata(L, 3, "blitbuffer");
+	BlitBuffer *bb = (BlitBuffer*) lua_topointer(L, 3);
 
 	assert(kc->dst.data != NULL);
 	assert(kc->dst.width >= bb->w);
@@ -650,7 +650,7 @@ static int drawReflowedPage(lua_State *L) {
 static int drawPage(lua_State *L) {
 	DjvuPage *page = (DjvuPage*) luaL_checkudata(L, 1, "djvupage");
 	DrawContext *dc = (DrawContext*) luaL_checkudata(L, 2, "drawcontext");
-	BlitBuffer *bb = (BlitBuffer*) luaL_checkudata(L, 3, "blitbuffer");
+	BlitBuffer *bb = (BlitBuffer*) lua_topointer(L, 3);
 	ddjvu_render_mode_t djvu_render_mode = (int) luaL_checkint(L, 6);
 	unsigned char adjusted_low[16], adjusted_high[16];
 	int i, adjust_pixels = 0;

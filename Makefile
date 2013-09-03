@@ -184,7 +184,6 @@ libs: \
 	$(OUTPUT_DIR)/libs/libkoreader-lfs.so \
 	$(OUTPUT_DIR)/libs/libkoreader-koptcontext.so \
 	$(OUTPUT_DIR)/libs/libkoreader-pic.so \
-	$(OUTPUT_DIR)/libs/libkoreader-ft.so \
 	$(OUTPUT_DIR)/libs/libkoreader-pdf.so \
 	$(OUTPUT_DIR)/libs/libkoreader-djvu.so \
 	$(OUTPUT_DIR)/libs/libkoreader-cre.so \
@@ -228,12 +227,6 @@ $(OUTPUT_DIR)/libs/libkoreader-pic.so: pic.c pic_jpeg.c \
 				$(JPEG_LIB)
 	$(CC) -I$(JPEG_DIR) $(DYNLIB_CFLAGS) \
 		-o $@ $< pic_jpeg.c $(JPEG_LIB)
-
-$(OUTPUT_DIR)/libs/libkoreader-ft.so: ft.c \
-				$(OUTPUT_DIR)/libs/libkoreader-blitbuffer.so \
-				$(MUPDF_THIRDPARTY_LIBS)
-	$(CC) -I$(FREETYPE_DIR)/include $(DYNLIB_CFLAGS) \
-		-o $@ $< $(FREETYPE_LIB) -lkoreader-blitbuffer
 
 # put all the libs to the end of compile command to make ubuntu's tool chain
 # happy

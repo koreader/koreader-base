@@ -733,7 +733,7 @@ static int reflowPage(lua_State *L) {
 static int drawReflowedPage(lua_State *L) {
 	PdfPage *page = (PdfPage*) luaL_checkudata(L, 1, "pdfpage");
 	KOPTContext *kc = (KOPTContext*) luaL_checkudata(L, 2, "koptcontext");
-	BlitBuffer *bb = (BlitBuffer*) luaL_checkudata(L, 3, "blitbuffer");
+	BlitBuffer *bb = (BlitBuffer*) lua_topointer(L, 3);
 
 	assert(kc->dst.data != NULL);
 	assert(kc->dst.width >= bb->w);
@@ -770,7 +770,7 @@ static int drawPage(lua_State *L) {
 
 	PdfPage *page = (PdfPage*) luaL_checkudata(L, 1, "pdfpage");
 	DrawContext *dc = (DrawContext*) luaL_checkudata(L, 2, "drawcontext");
-	BlitBuffer *bb = (BlitBuffer*) luaL_checkudata(L, 3, "blitbuffer");
+	BlitBuffer *bb = (BlitBuffer*) lua_topointer(L, 3);
 	bbox.x0 = luaL_checkint(L, 4);
 	bbox.y0 = luaL_checkint(L, 5);
 	bbox.x1 = bbox.x0 + bb->w;

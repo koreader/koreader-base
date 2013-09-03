@@ -85,13 +85,13 @@ static int newBlitBuffer(lua_State *L) {
 }
 
 static int getWidth(lua_State *L) {
-	BlitBuffer *bb = (BlitBuffer*) luaL_checkudata(L, 1, "blitbuffer");
+	BlitBuffer *bb = (BlitBuffer*) lua_topointer(L, 1);
 	lua_pushinteger(L, bb->w);
 	return 1;
 }
 
 static int getHeight(lua_State *L) {
-	BlitBuffer *bb = (BlitBuffer*) luaL_checkudata(L, 1, "blitbuffer");
+	BlitBuffer *bb = (BlitBuffer*) lua_topointer(L, 1);
 	lua_pushinteger(L, bb->h);
 	return 1;
 }
@@ -108,8 +108,8 @@ static int freeBlitBuffer(lua_State *L) {
 }
 
 static int blitFullToBuffer(lua_State *L) {
-	BlitBuffer *dst = (BlitBuffer*) luaL_checkudata(L, 1, "blitbuffer");
-	BlitBuffer *src = (BlitBuffer*) luaL_checkudata(L, 2, "blitbuffer");
+	BlitBuffer *dst = (BlitBuffer*) lua_topointer(L, 1);
+	BlitBuffer *src = (BlitBuffer*) lua_topointer(L, 2);
 
 	if(src->w != dst->w || src->h != dst->h || src->pitch != dst->pitch) {
 		return luaL_error(L, "dst and src blitbuffer size not match!");
@@ -177,8 +177,8 @@ int fitBlitBufferBoundaries(BlitBuffer* src, BlitBuffer* dst, int* xdest, int* y
 }
 
 static int blitToBuffer(lua_State *L) {
-	BlitBuffer *dst = (BlitBuffer*) luaL_checkudata(L, 1, "blitbuffer");
-	BlitBuffer *src = (BlitBuffer*) luaL_checkudata(L, 2, "blitbuffer");
+	BlitBuffer *dst = (BlitBuffer*) lua_topointer(L, 1);
+	BlitBuffer *src = (BlitBuffer*) lua_topointer(L, 2);
 	int xdest = luaL_checkint(L, 3);
 	int ydest = luaL_checkint(L, 4);
 	int xoffs = luaL_checkint(L, 5);
@@ -274,8 +274,8 @@ static int rotate_table[3][2] = {
  *  Currently, only support rotation of 90, 180, 270 degree.
  * */
 static int blitToBufferRotate(lua_State *L) {
-	BlitBuffer *dst = (BlitBuffer*) luaL_checkudata(L, 1, "blitbuffer");
-	BlitBuffer *src = (BlitBuffer*) luaL_checkudata(L, 2, "blitbuffer");
+	BlitBuffer *dst = (BlitBuffer*) lua_topointer(L, 1);
+	BlitBuffer *src = (BlitBuffer*) lua_topointer(L, 2);
 	int degree = luaL_checkint(L, 3);
 	int i, j, x, y, /* src and dst coordinate */
 		x_adj = 0, y_adj = 0; /* value for translation after rotatation */
@@ -321,8 +321,8 @@ static int blitToBufferRotate(lua_State *L) {
 }
 
 static int addblitToBuffer(lua_State *L) {
-	BlitBuffer *dst = (BlitBuffer*) luaL_checkudata(L, 1, "blitbuffer");
-	BlitBuffer *src = (BlitBuffer*) luaL_checkudata(L, 2, "blitbuffer");
+	BlitBuffer *dst = (BlitBuffer*) lua_topointer(L, 1);
+	BlitBuffer *src = (BlitBuffer*) lua_topointer(L, 2);
 	int xdest = luaL_checkint(L, 3);
 	int ydest = luaL_checkint(L, 4);
 	int xoffs = luaL_checkint(L, 5);
@@ -418,7 +418,7 @@ static int addblitToBuffer(lua_State *L) {
 }
 
 static int paintRect(lua_State *L) {
-	BlitBuffer *dst = (BlitBuffer*) luaL_checkudata(L, 1, "blitbuffer");
+	BlitBuffer *dst = (BlitBuffer*) lua_topointer(L, 1);
 	int x = luaL_checkint(L, 2);
 	int y = luaL_checkint(L, 3);
 	int w = luaL_checkint(L, 4);
@@ -499,7 +499,7 @@ static int paintRect(lua_State *L) {
 }
 
 static int invertRect(lua_State *L) {
-	BlitBuffer *dst = (BlitBuffer*) luaL_checkudata(L, 1, "blitbuffer");
+	BlitBuffer *dst = (BlitBuffer*) lua_topointer(L, 1);
 	int x = luaL_checkint(L, 2);
 	int y = luaL_checkint(L, 3);
 	int w = luaL_checkint(L, 4);
@@ -582,7 +582,7 @@ static int invertRect(lua_State *L) {
 }
 
 static int dimRect(lua_State *L) {
-	BlitBuffer *dst = (BlitBuffer*) luaL_checkudata(L, 1, "blitbuffer");
+	BlitBuffer *dst = (BlitBuffer*) lua_topointer(L, 1);
 	int x = luaL_checkint(L, 2);
 	int y = luaL_checkint(L, 3);
 	int w = luaL_checkint(L, 4);
@@ -667,7 +667,7 @@ static int dimRect(lua_State *L) {
 }
 
 static int lightenRect(lua_State *L) {
-	BlitBuffer *dst = (BlitBuffer*) luaL_checkudata(L, 1, "blitbuffer");
+	BlitBuffer *dst = (BlitBuffer*) lua_topointer(L, 1);
 	int x = luaL_checkint(L, 2);
 	int y = luaL_checkint(L, 3);
 	int w = luaL_checkint(L, 4);
@@ -751,7 +751,7 @@ static int lightenRect(lua_State *L) {
  * @w: width of the line to draw
  */
 static int paintCircle(lua_State *L) {
-	BlitBuffer *dst = (BlitBuffer*) luaL_checkudata(L, 1, "blitbuffer");
+	BlitBuffer *dst = (BlitBuffer*) lua_topointer(L, 1);
 	int center_x = luaL_checkint(L, 2);
 	int center_y = luaL_checkint(L, 3);
 	int r = luaL_checkint(L, 4);
@@ -830,7 +830,7 @@ static int paintCircle(lua_State *L) {
 }
 
 static int paintRoundedCorner(lua_State *L) {
-	BlitBuffer *dst = (BlitBuffer*) luaL_checkudata(L, 1, "blitbuffer");
+	BlitBuffer *dst = (BlitBuffer*) lua_topointer(L, 1);
 	int off_x = luaL_checkint(L, 2);
 	int off_y = luaL_checkint(L, 3);
 	int w = luaL_checkint(L, 4);
