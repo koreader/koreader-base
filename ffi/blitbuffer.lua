@@ -10,6 +10,7 @@ local rshift = bit.rshift
 local lshift = bit.lshift
 local band = bit.band
 local bor = bit.bor
+local int = ffi.typeof("int32_t")
 
 ffi.cdef[[
 typedef struct BlitBuffer {
@@ -56,7 +57,7 @@ get a color value for a certain pixel
 @param y Y coordinate
 --]]
 function BB_mt.__index:getPixel(x, y)
-	local value = self.data[floor(y)*self.pitch + rshift(x, 1)]
+	local value = self.data[y*self.pitch + rshift(x, 1)]
 	if x % 2 == 1 then
 		value = band(value, 0x0F)
 	else
@@ -73,7 +74,7 @@ set a color value for a certain pixel
 @param value color value (currently 0-15 for 4bpp BlitBuffers)
 --]]
 function BB_mt.__index:setPixel(x, y, value)
-	local pos = floor(y) * self.pitch + rshift(x, 1)
+	local pos = y * self.pitch + rshift(x, 1)
 	if x % 2 == 1 then
 		self.data[pos] = bor(band(self.data[pos], 0xF0), value)
 	else
@@ -105,8 +106,28 @@ function BB.checkBounds(length, target_offset, source_offset, target_size, sourc
 		target_offset = target_offset - source_offset
 		source_offset = 0
 	end
-	length = math.min(length, target_size - target_offset, source_size - source_offset)
-	return length, target_offset, source_offset
+	local target_left = target_size - target_offset
+	local source_left = source_size - source_offset
+	if length <= target_left and length <= source_left then
+		return length, target_offset, source_offset
+	elseif target_left < length and target_left < source_left then
+		return target_left, target_offset, source_offset
+	else
+		return source_left, target_offset, source_offset
+	end
+end
+
+-- standard writers for blitting
+local function write_lower_default(dest_ptr, value)
+	dest_ptr[0] = band(dest_ptr[0], 0xF0)
+	dest_ptr[0] = bor(dest_ptr[0], value)
+end
+local function write_upper_default(dest_ptr, value)
+	dest_ptr[0] = band(dest_ptr[0], 0x0F)
+	dest_ptr[0] = bor(dest_ptr[0], value)
+end
+local function write_full_default(dest_ptr, value)
+	dest_ptr[0] = value
 end
 
 --[[
@@ -119,19 +140,104 @@ Blits a given source buffer onto this buffer
 @param offs_y Y coordinate of source rectangle in source buffer
 @param width width of source rectangle
 @param height height of source rectangle
+@param write_full function(ptr, value, param) that writes value to ptr[0], potentially modifying it according to param
+@param write_upper function(ptr, value, param) that writes value to upper nibble of ptr[0], potentially modifying it according to param
+@param write_lower function(ptr, value, param) that writes value to lower nibble of ptr[0], potentially modifying it according to param
+@param blit_param param for write functions, *must* be set if alternative write functions are to be used
 --]]
-function BB_mt.__index:blitFrom(source, dest_x, dest_y, offs_x, offs_y, width, height)
+function BB_mt.__index:blit4From4(source, dest_x, dest_y, offs_x, offs_y, width, height,
+	write_full, write_upper, write_lower, blit_param)
+
 	dest_x, dest_y, offs_x, offs_y, width, height =
-		floor(dest_x), floor(dest_y), floor(offs_x), floor(offs_y), floor(width), floor(height)
+		tonumber(ffi.cast(int, dest_x or 0)),
+		tonumber(ffi.cast(int, dest_y or 0)),
+		tonumber(ffi.cast(int, offs_x or 0)),
+		tonumber(ffi.cast(int, offs_y or 0)),
+		tonumber(ffi.cast(int, width or source:getWidth())),
+		tonumber(ffi.cast(int, height or source:getHeight()))
+
+	if not blit_param then
+		write_full = write_full_default
+		write_upper = write_upper_default
+		write_lower = write_lower_default
+	end
+
 	source = ffi.cast(BBtype, source)
+
 	width, dest_x, offs_x = BB.checkBounds(width, dest_x, offs_x, self.w, source.w)
 	height, dest_y, offs_y = BB.checkBounds(height, dest_y, offs_y, self.h, source.h)
-	for y = 0, height-1 do
-		for x = 0, width-1 do
-			self:setPixel(dest_x+x, dest_y+y, source:getPixel(offs_x+x, offs_y+y))
+
+	local dest_pitch = self.pitch
+	local dest_ptr = self.data + dest_y * dest_pitch + rshift(dest_x, 1)
+	local src_pitch = source.pitch
+	local src_ptr = source.data + offs_y * src_pitch + rshift(offs_x, 1)
+	if band(dest_x, 1) == 1 then
+		-- this will render the leftmost column when we have
+		-- an odd target coordinate (update lower nibble)
+		if band(offs_x, 1) == 1 then
+			-- odd source coordinate: take lower nibble
+			for y = 1, height do
+				write_lower(dest_ptr, band(src_ptr[0], 0x0F), blit_param)
+				dest_ptr = dest_ptr + dest_pitch
+				src_ptr = src_ptr + src_pitch
+			end
+		else
+			-- even source coordinate: take upper nibble
+			for y = 1, height do
+				write_lower(dest_ptr, rshift(src_ptr[0], 4), blit_param)
+				dest_ptr = dest_ptr + dest_pitch
+				src_ptr = src_ptr + src_pitch
+			end
+		end
+		-- update the parameters
+		dest_x = dest_x + 1;
+		offs_x = offs_x + 1;
+		width = width - 1;
+		dest_ptr = self.data + dest_y * dest_pitch + rshift(dest_x, 1)
+		src_ptr = source.data + offs_y * src_pitch + rshift(offs_x, 1)
+	end
+	-- at this point, the target X coordinate is even
+
+	-- cache length of full-byte (2 pixel) copies
+	local l = rshift(width, 1)
+
+	if band(offs_x, 1) == 1 then
+		-- odd source coordinate:
+		-- take lower nibble of source byte, make it upper nibble of target byte
+		-- take upper nibble of following source byte, make it lower nibble of target byte
+		for y = 1, height do
+			for x = 0, l - 1 do
+				write_full(dest_ptr + x, bor(lshift(src_ptr[x], 4), rshift(src_ptr[x+1], 4)), blit_param)
+			end
+			-- check for odd width, leaving one pixel to process:
+			if band(width, 1) == 1 then
+				write_upper(dest_ptr + l, lshift(src_ptr[l], 4), blit_param)
+				dest_ptr[l] = band(dest_ptr[l], 0x0F)
+				dest_ptr[l] = bor(dest_ptr[l], lshift(src_ptr[l], 4))
+			end
+			dest_ptr = dest_ptr + dest_pitch
+			src_ptr = src_ptr + src_pitch
+		end
+	else
+		-- simple case: even source coordinate, we can do a 1:1 byte copy
+		for y = 1, height do
+			if blit_param == nil then
+				ffi.copy(dest_ptr, src_ptr, l)
+			else
+				for x = 0, l-1 do write_full(dest_ptr + x, src_ptr[x], blit_param) end
+			end
+			-- check for odd width, leaving one pixel to process
+			if band(width, 1) == 1 then
+				write_upper(dest_ptr + l, band(src_ptr[l], 0xF0), blit_param)
+			end
+			dest_ptr = dest_ptr + dest_pitch
+			src_ptr = src_ptr + src_pitch
 		end
 	end
 end
+-- blitting 4 bits to 4 bits is the standard procedure
+-- this can be made a function adapting to different depths
+BB_mt.__index.blitFrom = BB_mt.__index.blit4From4
 
 --[[
 we use this as a transformation matrix
@@ -185,6 +291,22 @@ function BB_mt.__index:blitFromRotate(source, degree)
 	end
 end
 
+-- writers for blitting with retaining original value
+local function write_lower_add(dest_ptr, value, intensity)
+	value = value * intensity + band(dest_ptr[0], 0x0F) * (1-intensity)
+	dest_ptr[0] = band(dest_ptr[0], 0xF0)
+	dest_ptr[0] = bor(dest_ptr[0], value)
+end
+local function write_upper_add(dest_ptr, value, intensity)
+	value = value * intensity + band(dest_ptr[0], 0xF0) * (1-intensity)
+	dest_ptr[0] = band(dest_ptr[0], 0x0F)
+	dest_ptr[0] = bor(dest_ptr[0], band(value, 0xF0))
+end
+local function write_full_add(dest_ptr, value, intensity)
+	local value_low = band(value, 0x0F) * intensity + band(dest_ptr[0], 0x0F) * (1-intensity)
+	local value_high = band(value, 0xF0) * intensity + band(dest_ptr[0], 0xF0) * (1-intensity)
+	dest_ptr[0] = bor(band(value_low, 0x0F), band(value_high, 0xF0))
+end
 --[[
 Blits a given source buffer onto this buffer retaining some degree of the previous
 
@@ -198,18 +320,8 @@ Blits a given source buffer onto this buffer retaining some degree of the previo
 @param intensity factor (0..1) that the blitted buffer gets multiplied with
 --]]
 function BB_mt.__index:addblitFrom(source, dest_x, dest_y, offs_x, offs_y, width, height, intensity)
-	dest_x, dest_y, offs_x, offs_y, width, height =
-		floor(dest_x), floor(dest_y), floor(offs_x), floor(offs_y), floor(width), floor(height)
-	source = ffi.cast(BBtype, source)
-	width, dest_x, offs_x = BB.checkBounds(width, dest_x, offs_x, self.w, source.w)
-	height, dest_y, offs_y = BB.checkBounds(height, dest_y, offs_y, self.h, source.h)
-	for y = 0, height-1 do
-		for x = 0, width-1 do
-			self:setPixel(dest_x+x, dest_y+y,
-				self:getPixel(dest_x+x, dest_y+y) * (1-intensity) +
-				source:getPixel(offs_x+x, offs_y+y) * intensity)
-		end
-	end
+	self:blitFrom(source, dest_x, dest_y, offs_x, offs_y, width, height,
+		write_full_add, write_upper_add, write_lower_add, intensity)
 end
 
 --[[
