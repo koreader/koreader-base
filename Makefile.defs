@@ -143,7 +143,7 @@ POPEN_NOSHELL_DIR=popen-noshell
 POPEN_NOSHELL_LIB=$(POPEN_NOSHELL_DIR)/libpopen_noshell.a
 
 K2PDFOPT_DIR=libk2pdfopt
-K2PDFOPT_LIB=$(OUTPUT_DIR)/libs/libk2pdfopt.so.1
+K2PDFOPT_LIB=$(OUTPUT_DIR)/libs/libk2pdfopt.so.2
 K2PDFOPT_CFLAGS=-I$(K2PDFOPT_DIR)/willuslib \
 		-I$(K2PDFOPT_DIR)/k2pdfoptlib -I$(K2PDFOPT_DIR) \
 		-I$(K2PDFOPT_DIR)/include_mod
