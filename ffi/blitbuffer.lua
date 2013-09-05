@@ -74,6 +74,8 @@ set a color value for a certain pixel
 @param value color value (currently 0-15 for 4bpp BlitBuffers)
 --]]
 function BB_mt.__index:setPixel(x, y, value)
+	-- do nothing if not in our range:
+	if x < 0 or x >= self.w or y < 0 or y >= self.h then return end
 	local pos = y * self.pitch + rshift(x, 1)
 	if x % 2 == 1 then
 		self.data[pos] = bor(band(self.data[pos], 0xF0), value)
