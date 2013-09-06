@@ -6,7 +6,7 @@
 	url = git://github.com/keplerproject/luafilesystem.git
 [submodule "djvulibre"]
 	path = djvulibre
-	url = git://djvu.git.sourceforge.net/gitroot/djvu/djvulibre.git
+	url = git://git.code.sf.net/p/djvu/djvulibre-git
 [submodule "kpvcrlib/crengine"]
 	path = kpvcrlib/crengine
 	url = git://git.code.sf.net/p/crengine/crengine
