@@ -590,7 +590,7 @@ explicit unset
 will free immediately
 --]]
 function BB_mt.__index:free()
-	if self.allocated then
+	if self.allocated ~= 0 then
 		ffi.C.free(self.data)
 		self.allocated = 0
 	end
