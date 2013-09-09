@@ -78,6 +78,29 @@ static int toggleLight(lua_State *L) {
 	}
 }
 
+static int sleepLight(lua_State *L) {
+	LightInfo *light = (LightInfo*) luaL_checkudata(L, 1, "kobolight");
+
+	if (light->isOn) {
+		if (ioctl(light->ld, 241, 0)) {
+			return luaL_error(L, "cannot turn off the light");
+		}
+		// leave light->isOn == 1
+	}
+	return 0;
+}
+
+static int restoreLight(lua_State *L) {
+	LightInfo *light = (LightInfo*) luaL_checkudata(L, 1, "kobolight");
+
+	if (light->isOn) {
+		if (ioctl(light->ld, 241, light->brightness)) {
+			return luaL_error(L, "cannot turn on the light");
+		}
+	}
+	return 1;
+}
+
 static const struct luaL_Reg kobolight_func[] = {
 	{"open", openLightDevice},
 	{NULL, NULL}
@@ -87,6 +110,8 @@ static const struct luaL_Reg kobolight_meth[] = {
 	{"close", closeLightDevice},
 	{"__gc", closeLightDevice},
 	{"toggle", toggleLight},
+	{"sleep", sleepLight},
+	{"restore", restoreLight},
 	{"setBrightness", setBrightness},
 	{NULL, NULL}
 };
