@@ -581,7 +581,7 @@ lighten color values in rectangular area
 @param h height
 --]]
 function BB_mt.__index:lightenRect(x1, y1, w, h, low)
-	self:modifyRect(x1, y1, w, h, mofifyLighten, low * 0x0F)
+	self:modifyRect(x1, y1, w, h, modifyLighten, low * 0x0F)
 end
 
 --[[
