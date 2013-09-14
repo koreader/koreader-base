@@ -27,7 +27,7 @@ function FTFace_mt.__index:checkGlyph(char)
 	end
 end
 
-function FTFace_mt.__index:renderGlyph(char, background, foreground)
+function FTFace_mt.__index:renderGlyph(char, bgcolor, fgcolor)
 	assert(ft2.FT_Load_Char(self, char, ft2.FT_LOAD_RENDER) == 0, "freetype error")
 
 	local bitmap = self.glyph.bitmap
@@ -42,8 +42,9 @@ function FTFace_mt.__index:renderGlyph(char, background, foreground)
 
 	for y = 0, bitmap.rows-1 do
 		for x = 0, bitmap.width-1 do
+			local pix = bitmap.buffer[y * bitmap.pitch + x]
 			glyph.bb:setPixel(x, y,
-				bit.rshift(bitmap.buffer[y * bitmap.pitch + x], 4))
+				bit.rshift(0xFF * bgcolor - pix * (bgcolor - fgcolor), 4))
 		end
 	end
 
