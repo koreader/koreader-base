@@ -15,7 +15,7 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#include <fitz/fitz-internal.h>
+#include <mupdf/pdf.h>
 
 #include "blitbuffer.h"
 #include "mupdfimg.h"
@@ -56,19 +56,6 @@ static int loadPNGData(lua_State *L) {
 	return 0;
 }
 
-static int loadJPEGData(lua_State *L) {
-	Image *img = (Image*) luaL_checkudata(L, 1, "image");
-	size_t length;
-	unsigned char *data = luaL_checklstring(L, 2, &length);
-	fz_try(img->context) {
-		img->pixmap = fz_load_jpeg(img->context, data, length);
-	}
-	fz_catch(img->context) {
-		return luaL_error(L, "cannot open JPEG data");
-	}
-	return 0;
-}
-
 static int toBlitBuffer(lua_State *L) {
 	Image *img = (Image*) luaL_checkudata(L, 1, "image");
 	BlitBuffer *bb;
@@ -85,7 +72,7 @@ static int toBlitBuffer(lua_State *L) {
 		pix = img->pixmap;
 	} else {
 		fz_try(img->context) {
-			pix = fz_new_pixmap(img->context, fz_device_gray, img->pixmap->w, img->pixmap->h);
+			pix = fz_new_pixmap(img->context, fz_device_gray(img->context), img->pixmap->w, img->pixmap->h);
 			fz_convert_pixmap(img->context, pix, img->pixmap);
 		}
 		fz_catch(img->context) {
@@ -144,7 +131,6 @@ static const struct luaL_Reg mupdfimg_func[] = {
 
 static const struct luaL_Reg image_meth[] = {
 	{"loadPNGData", loadPNGData},
-	{"loadJPEGData", loadJPEGData},
 	{"toBlitBuffer", toBlitBuffer},
 	{"free", freeImage},
 	{"__gc", freeImage},
