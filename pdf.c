@@ -21,7 +21,7 @@
 #include <stddef.h>
 #include <pthread.h>
 #include <assert.h>
-#include <fitz/fitz-internal.h>
+#include <mupdf/fitz.h>
 
 #include "blitbuffer.h"
 #include "drawcontext.h"
@@ -322,15 +322,163 @@ static int openPage(lua_State *L) {
 	return 1;
 }
 
+static inline int is_unicode_wspace(int c)
+{
+	return (c == 9 || /* TAB */
+		c == 0x0a || /* HT */
+		c == 0x0b || /* LF */
+		c == 0x0c || /* VT */
+		c == 0x0d || /* FF */
+		c == 0x20 || /* CR */
+		c == 0x85 || /* NEL */
+		c == 0xA0 || /* No break space */
+		c == 0x1680 || /* Ogham space mark */
+		c == 0x180E || /* Mongolian Vowel Separator */
+		c == 0x2000 || /* En quad */
+		c == 0x2001 || /* Em quad */
+		c == 0x2002 || /* En space */
+		c == 0x2003 || /* Em space */
+		c == 0x2004 || /* Three-per-Em space */
+		c == 0x2005 || /* Four-per-Em space */
+		c == 0x2006 || /* Five-per-Em space */
+		c == 0x2007 || /* Figure space */
+		c == 0x2008 || /* Punctuation space */
+		c == 0x2009 || /* Thin space */
+		c == 0x200A || /* Hair space */
+		c == 0x2028 || /* Line separator */
+		c == 0x2029 || /* Paragraph separator */
+		c == 0x202F || /* Narrow no-break space */
+		c == 0x205F || /* Medium mathematical space */
+		c == 0x3000); /* Ideographic space */
+}
+
+static inline int
+is_unicode_bullet(int c)
+{
+	/* The last 2 aren't strictly bullets, but will do for our usage here */
+	return (c == 0x2022 || /* Bullet */
+		c == 0x2023 || /* Triangular bullet */
+		c == 0x25e6 || /* White bullet */
+		c == 0x2043 || /* Hyphen bullet */
+		c == 0x2219 || /* Bullet operator */
+		c == 149 || /* Ascii bullet */
+		c == '*');
+}
+
+static inline int
+is_number(int c)
+{
+	return ((c >= '0' && c <= '9') ||
+		(c == '.'));
+}
+
+static inline int
+is_latin_char(int c)
+{
+	return ((c >= 'A' && c <= 'Z') ||
+		(c >= 'a' && c <= 'z'));
+}
+
+static inline int
+is_roman(int c)
+{
+	return (c == 'i' || c == 'I' ||
+		c == 'v' || c == 'V' ||
+		c == 'x' || c == 'X' ||
+		c == 'l' || c == 'L' ||
+		c == 'c' || c == 'C' ||
+		c == 'm' || c == 'M');
+}
+
+static int
+is_list_entry(fz_text_line *line, fz_text_span *span, int *char_num_ptr)
+{
+	int char_num;
+	fz_text_char *chr;
+
+	/* First, skip over any whitespace */
+	for (char_num = 0; char_num < span->len; char_num++)
+	{
+		chr = &span->text[char_num];
+		if (!is_unicode_wspace(chr->c))
+			break;
+	}
+	*char_num_ptr = char_num;
+
+	if (span != line->first_span || char_num >= span->len)
+		return 0;
+
+	/* Now we check for various special cases, which we consider to mean
+	 * that this is probably a list entry and therefore should always count
+	 * as a separate paragraph (and hence not be entered in the line height
+	 * table). */
+	chr = &span->text[char_num];
+
+	/* Is the first char on the line, a bullet point? */
+	if (is_unicode_bullet(chr->c))
+		return 1;
+
+#ifdef SPOT_LINE_NUMBERS
+	/* Is the entire first span a number? Or does it start with a number
+	 * followed by ) or : ? Allow to involve single latin chars too. */
+	if (is_number(chr->c) || is_latin_char(chr->c))
+	{
+		int cn = char_num;
+		int met_char = is_latin_char(chr->c);
+		for (cn = char_num+1; cn < span->len; cn++)
+		{
+			fz_text_char *chr2 = &span->text[cn];
+
+			if (is_latin_char(chr2->c) && !met_char)
+			{
+				met_char = 1;
+				continue;
+			}
+			met_char = 0;
+			if (!is_number(chr2->c) && !is_unicode_wspace(chr2->c))
+				break;
+			else if (chr2->c == ')' || chr2->c == ':')
+			{
+				cn = span->len;
+				break;
+			}
+		}
+		if (cn == span->len)
+			return 1;
+	}
+
+	/* Is the entire first span a roman numeral? Or does it start with
+	 * a roman numeral followed by ) or : ? */
+	if (is_roman(chr->c))
+	{
+		int cn = char_num;
+		for (cn = char_num+1; cn < span->len; cn++)
+		{
+			fz_text_char *chr2 = &span->text[cn];
+
+			if (!is_roman(chr2->c) && !is_unicode_wspace(chr2->c))
+				break;
+			else if (chr2->c == ')' || chr2->c == ':')
+			{
+				cn = span->len;
+				break;
+			}
+		}
+		if (cn == span->len)
+			return 1;
+	}
+#endif
+	return 0;
+}
+
 static void load_lua_text_page(lua_State *L, fz_text_page *page)
 {
-	fz_text_block *block;
 	fz_text_line *aline;
 	fz_text_span *span;
 
-	fz_rect bbox, linebbox;
+	fz_rect bbox, linebbox, tmpbox;
 	int i;
-	int word, line;
+	int word, line, block_num;
 	int len, c;
 	int start;
 	char chars[4]; // max length of UTF-8 encoded rune
@@ -341,8 +489,14 @@ static void load_lua_text_page(lua_State *L, fz_text_page *page)
 
 	line = 1;
 
-	for (block = page->blocks; block < page->blocks + page->len; block++)
+	for (block_num = 0; block_num < page->len; block_num++)
 	{
+		fz_text_block *block;
+
+		if (page->blocks[block_num].type != FZ_PAGE_BLOCK_TEXT)
+			continue;
+		block = page->blocks[block_num].u.text;
+
 		for (aline = block->lines; aline < block->lines + block->len; aline++)
 		{
 			linebbox = fz_empty_rect;
@@ -351,29 +505,21 @@ static void load_lua_text_page(lua_State *L, fz_text_page *page)
 
 			word = 1;
 
-			for (span = aline->spans; span < aline->spans + aline->len; span++)
+			for (span = aline->first_span; span; span = span->next)
 			{
-				for(i = 0; i < span->len; ) {
+				if (is_list_entry(aline, span, &i))
+					continue;
+
+				for(i = 0; i < span->len; )
+				{
 					/* will hold information about a word: */
 					lua_newtable(L);
 
 					luaL_buffinit(L, &textbuf);
-					bbox = span->text[i].bbox; // start with sensible default
+					fz_text_char_bbox(&bbox, span, i); // start with sensible default
 					for(; i < span->len; i++) {
 						/* check for space characters */
-						if(span->text[i].c == ' ' ||
-							span->text[i].c == '\t' ||
-							span->text[i].c == '\n' ||
-							span->text[i].c == '\v' ||
-							span->text[i].c == '\f' ||
-							span->text[i].c == '\r' ||
-							span->text[i].c == 0xA0 ||
-							span->text[i].c == 0x1680 ||
-							span->text[i].c == 0x180E ||
-							(span->text[i].c >= 0x2000 && span->text[i].c <= 0x200A) ||
-							span->text[i].c == 0x202F ||
-							span->text[i].c == 0x205F ||
-							span->text[i].c == 0x3000) {
+						if (is_unicode_wspace(span->text[i].c)) {
 							// ignore and end word
 							i++;
 							break;
@@ -382,8 +528,8 @@ static void load_lua_text_page(lua_State *L, fz_text_page *page)
 						for(c = 0; c < len; c++) {
 							luaL_addchar(&textbuf, chars[c]);
 						}
-						bbox = fz_union_rect(bbox, span->text[i].bbox);
-						linebbox = fz_union_rect(linebbox, span->text[i].bbox);
+						fz_union_rect(&bbox, fz_text_char_bbox(&tmpbox, span, i));
+						fz_union_rect(&linebbox, fz_text_char_bbox(&tmpbox, span, i));
 						/* check for punctuations and CJK characters */
 						if ((span->text[i].c >= 0x4e00 && span->text[i].c <= 0x9FFF) || // CJK Unified Ideographs
 							(span->text[i].c >= 0x2000 && span->text[i].c <= 0x206F) || // General Punctuation
@@ -459,10 +605,10 @@ static int getPageText(lua_State *L) {
 
 	PdfPage *page = (PdfPage*) luaL_checkudata(L, 1, "pdfpage");
 
-	text_page = fz_new_text_page(page->doc->context, fz_bound_page(page->doc->xref, page->page));
+	text_page = fz_new_text_page(page->doc->context);
 	text_sheet = fz_new_text_sheet(page->doc->context);
 	tdev = fz_new_text_device(page->doc->context, text_sheet, text_page);
-	fz_run_page(page->doc->xref, page->page, tdev, fz_identity, NULL);
+	fz_run_page(page->doc->xref, page->page, tdev, &fz_identity, NULL);
 	fz_free_device(tdev);
 	tdev = NULL;
 
@@ -475,16 +621,17 @@ static int getPageText(lua_State *L) {
 }
 
 static int getPageSize(lua_State *L) {
-	fz_matrix ctm;
+	fz_matrix ctm, tmp1, tmp2;
 	fz_rect bounds;
-	fz_rect bbox;
+	fz_irect bbox;
 	PdfPage *page = (PdfPage*) luaL_checkudata(L, 1, "pdfpage");
 	DrawContext *dc = (DrawContext*) luaL_checkudata(L, 2, "drawcontext");
 
-	bounds = fz_bound_page(page->doc->xref, page->page);
-	ctm = fz_scale(dc->zoom, dc->zoom) ;
-	ctm = fz_concat(ctm, fz_rotate(dc->rotate));
-	bbox = fz_transform_rect(ctm, bounds);
+	fz_bound_page(page->doc->xref, page->page, &bounds);
+	fz_scale(&tmp1, dc->zoom, dc->zoom);
+	fz_concat(&ctm, &tmp1, fz_rotate(&tmp2, dc->rotate));
+	fz_transform_rect(&bounds, &ctm);
+	fz_round_rect(&bbox, &bounds);
 
 	lua_pushnumber(L, bbox.x1-bbox.x0);
 	lua_pushnumber(L, bbox.y1-bbox.y0);
@@ -493,17 +640,17 @@ static int getPageSize(lua_State *L) {
 }
 
 static int getUsedBBox(lua_State *L) {
-	fz_bbox result;
+	fz_rect result;
 	fz_matrix ctm;
 	fz_device *dev;
 	PdfPage *page = (PdfPage*) luaL_checkudata(L, 1, "pdfpage");
 
 	/* returned BBox is in centi-point (n * 0.01 pt) */
-	ctm = fz_scale(100, 100);
+	fz_scale(&ctm, 1.0, 1.0);
 
 	fz_try(page->doc->context) {
 		dev = fz_new_bbox_device(page->doc->context, &result);
-		fz_run_page(page->doc->xref, page->page, dev, ctm, NULL);
+		fz_run_page(page->doc->xref, page->page, dev, &ctm, NULL);
 	}
 	fz_always(page->doc->context) {
 		fz_free_device(dev);
@@ -512,10 +659,10 @@ static int getUsedBBox(lua_State *L) {
 		return luaL_error(L, "cannot calculate bbox for page");
 	}
 
-	lua_pushnumber(L, ((double)result.x0)/100);
-	lua_pushnumber(L, ((double)result.y0)/100);
-	lua_pushnumber(L, ((double)result.x1)/100);
-	lua_pushnumber(L, ((double)result.y1)/100);
+	lua_pushnumber(L, result.x0);
+	lua_pushnumber(L, result.y0);
+	lua_pushnumber(L, result.x1);
+	lua_pushnumber(L, result.y1);
 
 	return 4;
 }
@@ -577,26 +724,26 @@ static int getAutoBBox(lua_State *L) {
 	fz_device *dev;
 	fz_pixmap *pix = NULL;
 	fz_rect bounds,bounds2;
+	fz_irect bbox;
 	fz_matrix ctm;
-	fz_bbox bbox;
 
 	fz_var(pix);
 
-	//bounds = fz_bound_page(page->doc->xref, page->page);
+	//fz_bound_page(page->doc->xref, page->page, &bounds);
 	// use manual bbox in context for semi-automatic bbox finding
 	bounds.x0 = kctx->bbox.x0;
 	bounds.y0 = kctx->bbox.y0;
 	bounds.x1 = kctx->bbox.x1;
 	bounds.y1 = kctx->bbox.y1;
 
-	bounds2 = fz_transform_rect(fz_identity, bounds);
-	bbox = fz_round_rect(bounds2);
+	fz_transform_rect(&bounds, &fz_identity);
+	fz_round_rect(&bbox, &bounds);
 
 	fz_try(page->doc->context) {
-		pix = fz_new_pixmap_with_bbox(page->doc->context, fz_device_gray, bbox);
+		pix = fz_new_pixmap_with_bbox(page->doc->context, fz_device_gray(page->doc->context), &bbox);
 		fz_clear_pixmap_with_value(page->doc->context, pix, 0xff);
 		dev = fz_new_draw_device(page->doc->context, pix);
-		fz_run_page(page->doc->xref, page->page, dev, fz_identity, NULL);
+		fz_run_page(page->doc->xref, page->page, dev, &fz_identity, NULL);
 	}
 	fz_always(page->doc->context) {
 		fz_free_device(dev);
@@ -626,21 +773,21 @@ static int getPagePix(lua_State *L) {
 	KOPTContext *kctx = (KOPTContext*) luaL_checkudata(L, 2, "koptcontext");
 	fz_device *dev;
 	fz_pixmap *pix = NULL;
-	fz_rect bounds,bounds2;
 	fz_matrix ctm;
-	fz_bbox bbox;
+	fz_rect bounds;
+	fz_irect bbox;
 
 	fz_var(pix);
 
-	bounds = fz_bound_page(page->doc->xref, page->page);
-	bounds2 = fz_transform_rect(fz_identity, bounds);
-	bbox = fz_round_rect(bounds2);
+	fz_bound_page(page->doc->xref, page->page, &bounds);
+	fz_transform_rect(&bounds, &fz_identity);
+	fz_round_rect(&bbox, &bounds);
 
 	fz_try(page->doc->context) {
-		pix = fz_new_pixmap_with_bbox(page->doc->context, fz_device_gray, bbox);
+		pix = fz_new_pixmap_with_bbox(page->doc->context, fz_device_gray(page->doc->context), &bbox);
 		fz_clear_pixmap_with_value(page->doc->context, pix, 0xff);
 		dev = fz_new_draw_device(page->doc->context, pix);
-		fz_run_page(page->doc->xref, page->page, dev, fz_identity, NULL);
+		fz_run_page(page->doc->xref, page->page, dev, &fz_identity, NULL);
 	}
 	fz_always(page->doc->context) {
 		fz_free_device(dev);
@@ -667,9 +814,9 @@ static int reflowPage(lua_State *L) {
 	KOPTContext *kctx = (KOPTContext*) luaL_checkudata(L, 2, "koptcontext");
 	fz_device *dev;
 	fz_pixmap *pix;
-	fz_rect bounds,bounds2;
 	fz_matrix ctm;
-	fz_bbox bbox;
+	fz_rect bounds;
+	fz_irect bbox;
 
 	pix = NULL;
 	fz_var(pix);
@@ -681,18 +828,18 @@ static int reflowPage(lua_State *L) {
 	// probe scale
 	double zoom = kctx->zoom*kctx->quality;
 	float scale = 1.0;
-	ctm = fz_scale(scale, scale);
-	bounds2 = fz_transform_rect(ctm, bounds);
-	bbox = fz_round_rect(bounds2);
+	fz_scale(&ctm, scale, scale);
+	fz_transform_rect(&bounds, &ctm);
+	fz_round_rect(&bbox, &bounds);
 	scale /= ((double)bbox.x1 / (2*zoom*kctx->dev_width) + \
 			  (double)bbox.y1 / (2*zoom*kctx->dev_height))/2;
 	// do real scale
-	ctm = fz_scale(scale, scale);
-	bounds2 = fz_transform_rect(ctm, bounds);
-	bbox = fz_round_rect(bounds2);
+	fz_scale(&ctm, scale, scale);
+	fz_transform_rect(&bounds, &ctm);
+	fz_round_rect(&bbox, &bounds);
 	printf("reading page:%d,%d,%d,%d scale:%.2f\n",bbox.x0,bbox.y0,bbox.x1,bbox.y1,scale);
 
-	pix = fz_new_pixmap_with_bbox(page->doc->context, fz_device_gray, bbox);
+	pix = fz_new_pixmap_with_bbox(page->doc->context, fz_device_gray(page->doc->context), &bbox);
 	fz_clear_pixmap_with_value(page->doc->context, pix, 0xff);
 	dev = fz_new_draw_device(page->doc->context, pix);
 
@@ -700,14 +847,14 @@ static int reflowPage(lua_State *L) {
 	fz_device *tdev;
 	fz_try(page->doc->context) {
 		tdev = fz_new_trace_device(page->doc->context);
-		fz_run_page(page->doc->xref, page->page, tdev, ctm, NULL);
+		fz_run_page(page->doc->xref, page->page, tdev, &ctm, NULL);
 	}
 	fz_always(page->doc->context) {
 		fz_free_device(tdev);
 	}
 #endif
 
-	fz_run_page(page->doc->xref, page->page, dev, ctm, NULL);
+	fz_run_page(page->doc->xref, page->page, dev, &ctm, NULL);
 	fz_free_device(dev);
 
 	WILLUSBITMAP *src = &kctx->src;
@@ -765,8 +912,8 @@ static int drawReflowedPage(lua_State *L) {
 static int drawPage(lua_State *L) {
 	fz_pixmap *pix;
 	fz_device *dev;
-	fz_matrix ctm;
-	fz_bbox bbox;
+	fz_matrix ctm, tmp1, tmp2, tmp3;
+	fz_irect bbox;
 
 	PdfPage *page = (PdfPage*) luaL_checkudata(L, 1, "pdfpage");
 	DrawContext *dc = (DrawContext*) luaL_checkudata(L, 2, "drawcontext");
@@ -775,24 +922,24 @@ static int drawPage(lua_State *L) {
 	bbox.y0 = luaL_checkint(L, 5);
 	bbox.x1 = bbox.x0 + bb->w;
 	bbox.y1 = bbox.y0 + bb->h;
-	pix = fz_new_pixmap_with_bbox(page->doc->context, fz_device_gray, bbox);
+	pix = fz_new_pixmap_with_bbox(page->doc->context, fz_device_gray(page->doc->context), &bbox);
 	fz_clear_pixmap_with_value(page->doc->context, pix, 0xff);
 
-	ctm = fz_scale(dc->zoom, dc->zoom);
-	ctm = fz_concat(ctm, fz_rotate(dc->rotate));
-	ctm = fz_concat(ctm, fz_translate(dc->offset_x, dc->offset_y));
+	fz_scale(&tmp1, dc->zoom, dc->zoom);
+	fz_concat(&tmp3, &tmp1, fz_rotate(&tmp2, dc->rotate));
+	fz_concat(&ctm, &tmp3, fz_translate(&tmp1, dc->offset_x, dc->offset_y));
 	dev = fz_new_draw_device(page->doc->context, pix);
 #ifdef MUPDF_TRACE
 	fz_device *tdev;
 	fz_try(page->doc->context) {
 		tdev = fz_new_trace_device(page->doc->context);
-		fz_run_page(page->doc->xref, page->page, tdev, ctm, NULL);
+		fz_run_page(page->doc->xref, page->page, tdev, &ctm, NULL);
 	}
 	fz_always(page->doc->context) {
 		fz_free_device(tdev);
 	}
 #endif
-	fz_run_page(page->doc->xref, page->page, dev, ctm, NULL);
+	fz_run_page(page->doc->xref, page->page, dev, &ctm, NULL);
 	fz_free_device(dev);
 
 	if(dc->gamma >= 0.0) {
