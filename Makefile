@@ -70,14 +70,14 @@ $(MUPDF_LIB_STATIC) $(MUPDF_THIRDPARTY_LIBS): $(JPEG_LIB) $(FREETYPE_LIB)
 		OS="Other" verbose=1
 	$(MAKE) -j$(PROCESSORS) -C mupdf \
 		LDFLAGS="-L../$(OUTPUT_DIR)" \
-		XCFLAGS="$(CFLAGS) -DNOBUILTINFONT -fPIC -I../jpeg" \
+		XCFLAGS="$(CFLAGS) -DNOBUILTINFONT -fPIC -I../jpeg -I../$(FREETYPE_DIR)/include" \
 		CC="$(CC)" \
 		build="release" MUDRAW= MUTOOL= NOX11=yes \
 		OS="Other" verbose=1 \
 		FREETYPE_DIR=nonexisting \
-		SYS_FREETYPE_INC="-I../$(FREETYPE_DIR)/include" \
 		JPEG_DIR=nonexisting \
-		CROSSCOMPILE=yes
+		CROSSCOMPILE=yes \
+		third libs
 
 # we generate a dynamic library from the static library:
 $(MUPDF_LIB): $(MUPDF_LIB_STATIC) \
@@ -88,6 +88,7 @@ $(MUPDF_LIB): $(MUPDF_LIB_STATIC) \
 		$(CFLAGS) \
 		-Wl,-E -Wl,-rpath,'$$ORIGIN' \
 		-Wl,--whole-archive $(MUPDF_LIB_STATIC) \
+		-Wl,--whole-archive $(MUPDF_JS_LIB_STATIC) \
 		-Wl,--no-whole-archive $(MUPDF_THIRDPARTY_LIBS) \
 		-Wl,-soname=$(notdir $(MUPDF_LIB)) \
 		$(JPEG_LIB) $(FREETYPE_LIB) \
@@ -154,15 +155,15 @@ $(POPEN_NOSHELL_LIB):
 $(K2PDFOPT_LIB) $(LEPTONICA_LIB) $(TESSERACT_LIB):
 ifdef EMULATE_READER
 	$(MAKE) -j$(PROCESSORS) -C $(K2PDFOPT_DIR) BUILDMODE=shared \
-		CC="$(HOSTCC)" CFLAGS="$(HOSTCFLAGS)" \
-		CXX="$(HOSTCXX)" CXXFLAGS="$(HOSTCFLAGS)" \
-		AR="$(AR)" EMULATE_READER=1 all
+		CC="$(HOSTCC)" CFLAGS="$(HOSTCFLAGS) -I../$(MUPDF_DIR)/include" \
+		CXX="$(HOSTCXX)" CXXFLAGS="$(HOSTCFLAGS) -I../$(MUPDF_DIR)/include" \
+		AR="$(AR)" EMULATE_READER=1 MUPDF_LIB=../$(MUPDF_LIB) all
 else
 	$(MAKE) -j$(PROCESSORS) -C $(K2PDFOPT_DIR) BUILDMODE=shared \
 		HOST="$(CHOST)" \
-		CC="$(CC)" CFLAGS="$(CFLAGS) -O3" \
-		CXX="$(CXX)" CXXFLAGS="$(CXXFLAGS)" \
-		AR="$(AR)" all
+		CC="$(CC)" CFLAGS="$(CFLAGS) -O3 -I../$(MUPDF_DIR)/include" \
+		CXX="$(CXX)" CXXFLAGS="$(CXXFLAGS) -I../$(MUPDF_DIR)/include" \
+		AR="$(AR)" MUPDF_LIB=../$(MUPDF_LIB) all
 endif
 	cp -fL $(K2PDFOPT_DIR)/$(notdir $(K2PDFOPT_LIB)) $(K2PDFOPT_LIB)
 	cp -fL $(K2PDFOPT_DIR)/$(notdir $(LEPTONICA_LIB)) $(LEPTONICA_LIB)
@@ -233,13 +234,13 @@ $(OUTPUT_DIR)/libs/libkoreader-pic.so: pic.c pic_jpeg.c \
 $(OUTPUT_DIR)/libs/libkoreader-pdf.so: pdf.c \
 				$(MUPDF_LIB) \
 				$(K2PDFOPT_LIB)
-	$(CC) -I$(MUPDF_DIR) $(K2PDFOPT_CFLAGS) $(DYNLIB_CFLAGS) \
+	$(CC) -I$(MUPDF_DIR)/include $(K2PDFOPT_CFLAGS) $(DYNLIB_CFLAGS) \
 		-lpthread -o $@ $< \
 		$(MUPDF_LIB) $(K2PDFOPT_LIB) $(LEPTONICA_LIB) $(TESSERACT_LIB)
 
 $(OUTPUT_DIR)/libs/libkoreader-djvu.so: djvu.c \
 				$(DJVULIBRE_LIB)
-	$(CC) -I$(DJVULIBRE_DIR)/ $(K2PDFOPT_CFLAGS) $(DYNLIB_CFLAGS) \
+	$(CC) -I$(DJVULIBRE_DIR)/ -I$(MUPDF_DIR)/include $(K2PDFOPT_CFLAGS) $(DYNLIB_CFLAGS) \
 		-o $@ $< \
 		$(DJVULIBRE_LIB) $(K2PDFOPT_LIB) $(LEPTONICA_LIB) $(TESSERACT_LIB)
 
@@ -258,7 +259,7 @@ $(OUTPUT_DIR)/libs/libkoreader-mupdfimg.so: mupdfimg.c \
 				$(OUTPUT_DIR)/libs/libkoreader-blitbuffer.so \
 				$(JPEG_LIB) \
 				$(FREETYPE_LIB)
-	$(CC) -I$(MUPDF_DIR) $(DYNLIB_CFLAGS) \
+	$(CC) -I$(MUPDF_DIR)/include $(DYNLIB_CFLAGS) \
 		-o $@ $< $(MUPDF_LIB) -lkoreader-blitbuffer
 
 # ===========================================================================
@@ -269,7 +270,7 @@ $(OUTPUT_DIR)/extr: extr.c \
 				$(MUPDF_LIB) \
 				$(JPEG_LIB) \
 				$(FREETYPE_LIB)
-	$(CC) -I$(MUPDF_DIR) -I$(MUPDF_DIR)/pdf -I$(MUPDF_DIR)/fitz \
+	$(CC) -I$(MUPDF_DIR) -I$(MUPDF_DIR)/include \
 		$(CFLAGS) -Wl,-rpath,'$$ORIGIN' \
 		-o $@ $< \
 		$(MUPDF_LIB) $(JPEG_LIB) $(FREETYPE_LIB) -lm

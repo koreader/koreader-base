@@ -120,11 +120,12 @@ LUAFILESYSTEM_DIR=luafilesystem
 MUPDF_DIR=mupdf
 Z_LIB=$(MUPDF_LIB_DIR)/libz.a
 MUPDF_LIB_DIR=$(MUPDF_DIR)/build/release
-MUPDF_LIB_STATIC=$(MUPDF_LIB_DIR)/libfitz.a
+MUPDF_LIB_STATIC=$(MUPDF_LIB_DIR)/libmupdf.a
+MUPDF_JS_LIB_STATIC=$(MUPDF_LIB_DIR)/libmupdf-js-none.a
 MUPDF_THIRDPARTY_LIBS=$(MUPDF_LIB_DIR)/libopenjpeg.a \
 			$(MUPDF_LIB_DIR)/libjbig2dec.a \
 			$(Z_LIB)
-MUPDF_LIB=$(OUTPUT_DIR)/libs/libfitz.so
+MUPDF_LIB=$(OUTPUT_DIR)/libs/libmupdf.so
 
 DJVULIBRE_DIR=djvulibre
 DJVULIBRE_LIB=$(OUTPUT_DIR)/libs/libdjvulibre.so.21
@@ -161,7 +162,7 @@ LEPTONICA_LIB := $(OUTPUT_DIR)/libs/liblept.so.3
 TESSERACT_LIB := $(OUTPUT_DIR)/libs/libtesseract.so.3
 
 # must point to directory with *.ttf fonts for crengine
-TTF_FONTS_DIR=$(MUPDF_DIR)/fonts
+TTF_FONTS_DIR=$(MUPDF_DIR)/resources/fonts
 
 # CFLAGS for the Lua/C/C++ modules:
 #

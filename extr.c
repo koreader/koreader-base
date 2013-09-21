@@ -22,7 +22,7 @@
 	along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "mupdf-internal.h"
+#include <mupdf/pdf.h>
 #include <libgen.h>
 
 static pdf_document *doc;
