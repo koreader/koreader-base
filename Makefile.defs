@@ -100,12 +100,6 @@ ifeq ($(TARGET_DEVICE), KOBO)
 	CFLAGS+= -DKOBO_PLATFORM
 endif
 
-# allow fixed point arithmetics?
-ifdef USE_FIXED_POINT
-	HOSTCFLAGS+= -DUSE_FIXED_POINT
-	CFLAGS+= -DUSE_FIXED_POINT
-endif
-
 # this will create a path named build/arm-none-linux-gnueabi or similar
 MACHINE?=$(shell $(CC) -dumpmachine 2>/dev/null)
 OUTPUT_DIR?=build/$(MACHINE)
