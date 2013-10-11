@@ -833,6 +833,8 @@ static int reflowPage(lua_State *L) {
 	fz_round_rect(&bbox, &bounds);
 	scale /= ((double)bbox.x1 / (2*zoom*kctx->dev_width) + \
 			  (double)bbox.y1 / (2*zoom*kctx->dev_height))/2;
+	// store zoom
+	kctx->zoom = scale;
 	// do real scale
 	fz_scale(&ctm, scale, scale);
 	fz_transform_rect(&bounds, &ctm);
