@@ -84,12 +84,16 @@ static int newKOPTContext(lua_State *L) {
 	kc->debug = debug;
 	kc->cjkchar = cjkchar;
 
-	kc->boxa = NULL;
-	kc->nai = NULL;
+	kc->rboxa = NULL;
+	kc->rnai = NULL;
+	kc->nboxa = NULL;
+	kc->nnai = NULL;
+
 	kc->language = NULL;
 
 	bmp_init(&kc->src);
 	bmp_init(&kc->dst);
+	wrectmaps_init(&kc->rectmaps);
 
 	luaL_getmetatable(L, "koptcontext");
 	lua_setmetatable(L, -2);
@@ -104,8 +108,11 @@ static int kcFreeContext(lua_State *L) {
 	 * bitmap since the usage of dst bitmap is delayed most of the times.
 	 */
 	bmp_free(&kc->dst);
-	boxaDestroy(&kc->boxa);
-	numaDestroy(&kc->nai);
+	boxaDestroy(&kc->rboxa);
+	numaDestroy(&kc->rnai);
+	boxaDestroy(&kc->nboxa);
+	numaDestroy(&kc->nnai);
+	wrectmaps_free(&kc->rectmaps);
 	return 0;
 }
 
@@ -290,32 +297,43 @@ static int kcGetLanguage(lua_State *L) {
 	return 1;
 }
 
-static int kcGetWordBoxes(lua_State *L) {
+int kcGetWordBoxes(lua_State *L, int box_type) {
 	KOPTContext *kc = (KOPTContext*) luaL_checkudata(L, 1, "koptcontext");
 	int x = luaL_checkint(L, 2);
 	int y = luaL_checkint(L, 3);
 	int w = luaL_checkint(L, 4);
 	int h = luaL_checkint(L, 5);
 	BOX *box;
+	BOXA *boxa;
+	NUMA *nai;
 	l_float32 max_val;
 	int nr_line, last_index, nr_word, current_line;
 	int counter_l, counter_w, counter_cw;
 	int l_x0, l_y0, l_x1, l_y1;
 
-	k2pdfopt_get_word_boxes(kc, &kc->dst, x, y, w, h);
+	if (box_type == 0) {
+	    k2pdfopt_get_reflowed_word_boxes(kc, &kc->dst, x, y, w, h);
+	    boxa = kc->rboxa;
+	    nai = kc->rnai;
+	} else if (box_type == 1) {
+	    k2pdfopt_get_native_word_boxes(kc, &kc->dst, x, y, w, h);
+	    boxa = kc->nboxa;
+	    nai = kc->nnai;
+	}
+
 	/* get number of lines in this area */
-	numaGetMax(kc->nai, &max_val, &last_index);
+	numaGetMax(nai, &max_val, &last_index);
 	nr_line = (int) max_val;
 	/* get number of lines in this area */
-	nr_word = boxaGetCount(kc->boxa);
-	assert(nr_word == numaGetCount(kc->nai));
+	nr_word = boxaGetCount(boxa);
+	assert(nr_word == numaGetCount(nai));
 	/* table that contains all the words */
 	lua_newtable(L);
 	lua_pushstring(L, "box_only");
 	lua_pushnumber(L, 1);
 	lua_settable(L, -3);
 	for (counter_w = 0; counter_w < nr_word; counter_w++) {
-		numaGetIValue(kc->nai, counter_w, &counter_l);
+		numaGetIValue(nai, counter_w, &counter_l);
 		current_line = counter_l;
 		/* subtable that contains words in a line */
 		lua_pushnumber(L, counter_l+1);
@@ -324,7 +342,7 @@ static int kcGetWordBoxes(lua_State *L) {
 		l_y0 = l_x0 = 9999;
 		l_x1 = l_y1 = 0;
 		while (current_line == counter_l && counter_w < nr_word) {
-			box = boxaGetBox(kc->boxa, counter_w, L_CLONE);
+			box = boxaGetBox(boxa, counter_w, L_CLONE);
 			/* create table that contains box for a word */
 			lua_pushnumber(L, counter_cw+1);
 			lua_newtable(L);
@@ -358,7 +376,7 @@ static int kcGetWordBoxes(lua_State *L) {
 			/* set word entry to line subtable */
 			lua_settable(L, -3);
 			if (counter_w < nr_word)
-				numaGetIValue(kc->nai, counter_w, &counter_l);
+				numaGetIValue(nai, counter_w, &counter_l);
 		} /* end of while */
 		if (current_line != counter_l) counter_w--;
 		/* box for a whole line */
@@ -379,6 +397,32 @@ static int kcGetWordBoxes(lua_State *L) {
 	} /* end of for */
 
 	return 1;
+}
+
+static int kcGetReflowedWordBoxes(lua_State *L) {
+    return kcGetWordBoxes(L, 0);
+}
+
+static int kcGetNativeWordBoxes(lua_State *L) {
+    return kcGetWordBoxes(L, 1);
+}
+
+static int kcReflowToNativePosTransform(lua_State *L) {
+    KOPTContext *kc = (KOPTContext*) luaL_checkudata(L, 1, "koptcontext");
+    int x = luaL_checknumber(L, 2);
+    int y = luaL_checknumber(L, 3);
+    int i, x0, y0;
+    for (i = 0; i < kc->rectmaps.n; i++) {
+        WRECTMAP * rectmap = &kc->rectmaps.wrectmap[i];
+        if (wrectmap_inside(rectmap, x, y)) {
+            x0 = (rectmap->coords[0].x + rectmap->coords[2].x/2)/kc->zoom + kc->bbox.x0;
+            y0 = (rectmap->coords[0].y + rectmap->coords[2].y/2)/kc->zoom + kc->bbox.y0;
+            lua_pushinteger(L, x0);
+            lua_pushinteger(L, y0);
+            return 2;
+        }
+    }
+    return 0;
 }
 
 static int kcGetTOCRWord(lua_State *L) {
@@ -435,7 +479,9 @@ static const struct luaL_Reg koptcontext_meth[] = {
 	{"setLanguage",kcSetLanguage},
 	{"getLanguage", kcGetLanguage},
 
-	{"getWordBoxes", kcGetWordBoxes},
+	{"getReflowedWordBoxes", kcGetReflowedWordBoxes},
+	{"getNativeWordBoxes", kcGetNativeWordBoxes},
+	{"reflowToNativePosTransform", kcReflowToNativePosTransform},
 	{"getTOCRWord", kcGetTOCRWord},
 
 	{"freeOCR", kcFreeOCREngine},
