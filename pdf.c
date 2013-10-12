@@ -772,22 +772,27 @@ static int getPagePix(lua_State *L) {
 	PdfPage *page = (PdfPage*) luaL_checkudata(L, 1, "pdfpage");
 	KOPTContext *kctx = (KOPTContext*) luaL_checkudata(L, 2, "koptcontext");
 	fz_device *dev;
-	fz_pixmap *pix = NULL;
+	fz_pixmap *pix;
 	fz_matrix ctm;
 	fz_rect bounds;
 	fz_irect bbox;
 
+	pix = NULL;
 	fz_var(pix);
+	bounds.x0 = kctx->bbox.x0;
+    bounds.y0 = kctx->bbox.y0;
+    bounds.x1 = kctx->bbox.x1;
+    bounds.y1 = kctx->bbox.y1;
 
-	fz_bound_page(page->doc->xref, page->page, &bounds);
-	fz_transform_rect(&bounds, &fz_identity);
-	fz_round_rect(&bbox, &bounds);
+    fz_scale(&ctm, kctx->zoom, kctx->zoom);
+    fz_transform_rect(&bounds, &ctm);
+    fz_round_rect(&bbox, &bounds);
 
 	fz_try(page->doc->context) {
 		pix = fz_new_pixmap_with_bbox(page->doc->context, fz_device_gray(page->doc->context), &bbox);
 		fz_clear_pixmap_with_value(page->doc->context, pix, 0xff);
 		dev = fz_new_draw_device(page->doc->context, pix);
-		fz_run_page(page->doc->xref, page->page, dev, &fz_identity, NULL);
+		fz_run_page(page->doc->xref, page->page, dev, &ctm, NULL);
 	}
 	fz_always(page->doc->context) {
 		fz_free_device(dev);
