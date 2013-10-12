@@ -525,11 +525,27 @@ static int getPagePix(lua_State *L) {
 	ddjvu_rect_t rrect;
 	int px, py, pw, ph, rx, ry, rw, rh, status;
 
-	prect.x = 0;
-	prect.y = 0;
-	prect.w = ddjvu_page_get_width(page->page_ref);
-	prect.h = ddjvu_page_get_height(page->page_ref);
-	rrect = prect;
+	px = 0;
+    py = 0;
+    pw = ddjvu_page_get_width(page->page_ref);
+    ph = ddjvu_page_get_height(page->page_ref);
+    prect.x = px;
+    prect.y = py;
+
+	rx = (int)kctx->bbox.x0;
+    ry = (int)kctx->bbox.y0;
+    rw = (int)(kctx->bbox.x1 - kctx->bbox.x0);
+    rh = (int)(kctx->bbox.y1 - kctx->bbox.y0);
+
+    float scale = kctx->zoom;
+
+    prect.w = pw * scale;
+    prect.h = ph * scale;
+    rrect.x = rx * scale;
+    rrect.y = ry * scale;
+    rrect.w = rw * scale;
+    rrect.h = rh * scale;
+    printf("rendering page:%d,%d,%d,%d\n",rrect.x,rrect.y,rrect.w,rrect.h);
 
 	WILLUSBITMAP *dst = &kctx->dst;
 	bmp_init(dst);

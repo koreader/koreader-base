@@ -411,12 +411,40 @@ static int kcReflowToNativePosTransform(lua_State *L) {
     KOPTContext *kc = (KOPTContext*) luaL_checkudata(L, 1, "koptcontext");
     int x = luaL_checknumber(L, 2);
     int y = luaL_checknumber(L, 3);
-    int i, x0, y0;
+    int i, x0, y0, w0, h0;
     for (i = 0; i < kc->rectmaps.n; i++) {
         WRECTMAP * rectmap = &kc->rectmaps.wrectmap[i];
         if (wrectmap_inside(rectmap, x, y)) {
-            x0 = (rectmap->coords[0].x + rectmap->coords[2].x/2)/kc->zoom + kc->bbox.x0;
-            y0 = (rectmap->coords[0].y + rectmap->coords[2].y/2)/kc->zoom + kc->bbox.y0;
+            w0 = rectmap->coords[2].x*rectmap->srcdpiw/kc->dev_dpi;
+            h0 = rectmap->coords[2].y*rectmap->srcdpih/kc->dev_dpi;
+            x0 = (rectmap->coords[0].x + w0/2)/kc->zoom + kc->bbox.x0;
+            y0 = (rectmap->coords[0].y + h0/2)/kc->zoom + kc->bbox.y0;
+            lua_pushinteger(L, x0);
+            lua_pushinteger(L, y0);
+            return 2;
+        }
+    }
+    return 0;
+}
+
+int wrectmap_native_inside(WRECTMAP *wrmap, int xc, int yc) {
+    return(wrmap->coords[0].x <= xc && wrmap->coords[0].y <= yc
+            && wrmap->coords[0].x + wrmap->coords[2].x >= xc
+            && wrmap->coords[0].y + wrmap->coords[2].y >= yc);
+}
+
+static int kcNativeToReflowPosTransform(lua_State *L) {
+    KOPTContext *kc = (KOPTContext*) luaL_checkudata(L, 1, "koptcontext");
+    int x = luaL_checknumber(L, 2);
+    int y = luaL_checknumber(L, 3);
+    int i, x0, y0;
+    x = (x - kc->bbox.x0) * kc->zoom;
+    y = (y - kc->bbox.y0) * kc->zoom;
+    for (i = 0; i < kc->rectmaps.n; i++) {
+        WRECTMAP * rectmap = &kc->rectmaps.wrectmap[i];
+        if (wrectmap_native_inside(rectmap, x, y)) {
+            x0 = rectmap->coords[1].x + rectmap->coords[2].x/2;
+            y0 = rectmap->coords[1].y + rectmap->coords[2].y/2;
             lua_pushinteger(L, x0);
             lua_pushinteger(L, y0);
             return 2;
@@ -482,6 +510,7 @@ static const struct luaL_Reg koptcontext_meth[] = {
 	{"getReflowedWordBoxes", kcGetReflowedWordBoxes},
 	{"getNativeWordBoxes", kcGetNativeWordBoxes},
 	{"reflowToNativePosTransform", kcReflowToNativePosTransform},
+	{"nativeToReflowPosTransform", kcNativeToReflowPosTransform},
 	{"getTOCRWord", kcGetTOCRWord},
 
 	{"freeOCR", kcFreeOCREngine},
