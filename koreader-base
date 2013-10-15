@@ -20,7 +20,7 @@ require "libs/libkoreader-luagettext"
 require "libs/libkoreader-kobolight"
 
 -- libraries converted to FFI:
---Blitbuffer = require("ffi/blitbuffer")
+Blitbuffer = require("ffi/blitbuffer")
 freetype = require("ffi/freetype")
 Image = require("ffi/mupdfimg")
 util = require("ffi/util")
