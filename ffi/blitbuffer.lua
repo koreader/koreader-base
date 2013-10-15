@@ -98,6 +98,9 @@ generic boundary check for copy operations
 @return adapted source offset, guaranteed within range 0..(source_size-1)
 --]]
 function BB.checkBounds(length, target_offset, source_offset, target_size, source_size)
+	length, target_size = math.ceil(length), math.ceil(target_size)
+	target_offset = math.ceil(target_offset)
+	source_offset = math.ceil(source_offset)
 	if target_offset < 0 then
 		length = length + target_offset
 		source_offset = source_offset - target_offset

@@ -42,6 +42,8 @@ inline int getPixel(BlitBuffer *bb, int x, int y) {
 }
 
 inline void setPixel(BlitBuffer *bb, int x, int y, int c) {
+    // do nothing if not in our range:
+    if (x < 0 || x >= bb->w || y < 0 || y >= bb->h) return;
 	uint8_t *dstptr = (uint8_t*)(bb->data) + (y * bb->pitch) + (x / 2);
 	ASSERT_BLITBUFFER_BOUNDARIES(bb, dstptr);
 
