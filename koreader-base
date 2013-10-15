@@ -14,16 +14,16 @@ require "libs/libkoreader-einkfb"
 require "libs/libkoreader-input"
 require "libs/libkoreader-koptcontext"
 require "libs/libkoreader-lfs"
-require "libs/libkoreader-mupdfimg"
 require "libs/libkoreader-pdf"
 require "libs/libkoreader-pic"
 require "libs/libkoreader-luagettext"
 require "libs/libkoreader-kobolight"
 
 -- libraries converted to FFI:
---Blitbuffer = require("ffi/blitbuffer")
-util = require("ffi/util")
+Blitbuffer = require("ffi/blitbuffer")
 freetype = require("ffi/freetype")
+Image = require("ffi/mupdfimg")
+util = require("ffi/util")
 
 if not arg[1] then
 	error("you must give the name of the main lua executable as the first argument")

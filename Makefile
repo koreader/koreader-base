@@ -187,8 +187,7 @@ libs: \
 	$(OUTPUT_DIR)/libs/libkoreader-pic.so \
 	$(OUTPUT_DIR)/libs/libkoreader-pdf.so \
 	$(OUTPUT_DIR)/libs/libkoreader-djvu.so \
-	$(OUTPUT_DIR)/libs/libkoreader-cre.so \
-	$(OUTPUT_DIR)/libs/libkoreader-mupdfimg.so
+	$(OUTPUT_DIR)/libs/libkoreader-cre.so 
 
 $(OUTPUT_DIR)/libs/libkoreader-luagettext.so: lua_gettext.c
 	$(CC) $(DYNLIB_CFLAGS) $(EMU_CFLAGS) $(EMU_LDFLAGS) \
@@ -254,13 +253,6 @@ $(OUTPUT_DIR)/libs/libkoreader-cre.so: cre.cpp \
 		$(CRENGINE_LIB) $(CRENGINE_THIRDPARTY_LIBS) \
 		$(Z_LIB) $(FREETYPE_LIB) \
 		$(STATICLIBSTDCPP)
-
-$(OUTPUT_DIR)/libs/libkoreader-mupdfimg.so: mupdfimg.c \
-				$(OUTPUT_DIR)/libs/libkoreader-blitbuffer.so \
-				$(JPEG_LIB) \
-				$(FREETYPE_LIB)
-	$(CC) -I$(MUPDF_DIR)/include $(DYNLIB_CFLAGS) \
-		-o $@ $< $(MUPDF_LIB) -lkoreader-blitbuffer
 
 # ===========================================================================
 
