@@ -82,6 +82,26 @@ static int saveDefaults(lua_State *L) {
 	return props->saveToStream(stream.get());
 }
 
+static int setIntProperty(lua_State *L) {
+    CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
+    const char *propName = luaL_checkstring(L, 2);
+    int value = luaL_checkint(L, 3);
+    CRPropRef props = doc->text_view->propsGetCurrent();
+    props->setInt(propName, value);
+    doc->text_view->propsApply(props);
+    return 0;
+}
+
+static int setStringProperty(lua_State *L) {
+    CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
+    const char *propName = luaL_checkstring(L, 2);
+    const char *value = luaL_checkstring(L, 3);
+    CRPropRef props = doc->text_view->propsGetCurrent();
+    props->setString(propName, value);
+    doc->text_view->propsApply(props);
+    return 0;
+}
+
 static int getGammaIndex(lua_State *L) {
 	lua_pushinteger(L, fontMan->GetGammaIndex());
 
@@ -464,7 +484,12 @@ static int setPageMargins(lua_State *L) {
 	rc.right = luaL_checkint(L, 4);
 	rc.bottom = luaL_checkint(L, 5);
 	doc->text_view->setPageMargins(rc);
-	return 0;
+	CRPropRef props = doc->text_view->propsGetCurrent();
+    props->setInt(PROP_PAGE_MARGIN_LEFT, rc.left);
+    props->setInt(PROP_PAGE_MARGIN_TOP, rc.top);
+    props->setInt(PROP_PAGE_MARGIN_RIGHT, rc.right);
+    props->setInt(PROP_PAGE_MARGIN_BOTTOM, rc.bottom);
+    return 0;
 }
 
 static int setVisiblePageCount(lua_State *L) {
@@ -786,6 +811,8 @@ static const struct luaL_Reg credocument_meth[] = {
 	{"getPageMargins", getPageMargins},
 	{"getToc", getTableOfContent},
 	/*--- set methods ---*/
+	{"setIntProperty", setIntProperty},
+	{"setStringProperty", setStringProperty},
 	{"setViewMode", setViewMode},
 	{"setHeaderInfo", setHeaderInfo},
 	{"setHeaderFont", setHeaderFont},
