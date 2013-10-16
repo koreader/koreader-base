@@ -484,11 +484,6 @@ static int setPageMargins(lua_State *L) {
 	rc.right = luaL_checkint(L, 4);
 	rc.bottom = luaL_checkint(L, 5);
 	doc->text_view->setPageMargins(rc);
-	CRPropRef props = doc->text_view->propsGetCurrent();
-    props->setInt(PROP_PAGE_MARGIN_LEFT, rc.left);
-    props->setInt(PROP_PAGE_MARGIN_TOP, rc.top);
-    props->setInt(PROP_PAGE_MARGIN_RIGHT, rc.right);
-    props->setInt(PROP_PAGE_MARGIN_BOTTOM, rc.bottom);
     return 0;
 }
 
