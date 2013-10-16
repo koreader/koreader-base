@@ -475,6 +475,28 @@ static int setVisiblePageCount(lua_State *L) {
 	return 0;
 }
 
+static int adjustFontSizes(lua_State *L) {
+    CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
+    int dpi = luaL_checkint(L, 2);
+    if (dpi < 170) {
+        static int fontSizes[] = {16, 18, 20, 22, 24, 26, 28, 30, 33, 36, 40, 44};
+        LVArray<int> sizes( fontSizes, sizeof(fontSizes)/sizeof(int) );
+        doc->text_view->setFontSizes(sizes, false); // text
+        doc->text_view->setStatusFontSize(20);      // header
+    } else if (dpi > 250) {
+        static int fontSizes[] = {28, 30, 33, 36, 40, 44, 48, 52, 56, 60, 64, 68};
+        LVArray<int> sizes( fontSizes, sizeof(fontSizes)/sizeof(int) );
+        doc->text_view->setFontSizes(sizes, false);
+        doc->text_view->setStatusFontSize(28);
+    } else {
+        static int fontSizes[] = {20, 22, 24, 26, 28, 30, 33, 36, 40, 44, 48, 52};
+        LVArray<int> sizes( fontSizes, sizeof(fontSizes)/sizeof(int) );
+        doc->text_view->setFontSizes(sizes, false);
+        doc->text_view->setStatusFontSize(24);
+    }
+    return 0;
+}
+
 static int getPageMargins(lua_State *L) {
 	CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
 	lvRect rc = doc->text_view->getPageMargins();
@@ -774,6 +796,7 @@ static const struct luaL_Reg credocument_meth[] = {
 	{"setEmbeddedStyleSheet", setEmbeddedStyleSheet},
 	{"setPageMargins", setPageMargins},
 	{"setVisiblePageCount", setVisiblePageCount},
+	{"adjustFontSizes", adjustFontSizes},
 	/* --- control methods ---*/
 	{"gotoPage", gotoPage},
 	{"gotoPercent", gotoPercent},
