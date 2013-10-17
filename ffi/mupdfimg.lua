@@ -6,37 +6,7 @@ local ffi = require("ffi")
 local Blitbuffer = require("ffi/blitbuffer")
 local mupdf = ffi.load("libs/libmupdf.so")
 
-ffi.cdef[[
-typedef struct fz_alloc_context_s fz_alloc_context;
-typedef struct fz_locks_context_s fz_locks_context;
-typedef struct fz_colorspace_s fz_colorspace;
-typedef struct fz_context_s fz_context;
-
-typedef struct fz_storable_s fz_storable;
-typedef void (fz_store_free_fn)(fz_context *, fz_storable *);
-typedef struct fz_storable_s {
-	int refs;
-	fz_store_free_fn *free;
-} fz_storable;
-
-typedef struct fz_pixmap_s {
-	fz_storable storable;
-	int x, y, w, h, n;
-	int interpolate;
-	int xres, yres;
-	fz_colorspace *colorspace;
-	unsigned char *samples;
-	int free_samples;
-} fz_pixmap;
-
-fz_context *fz_new_context_imp(fz_alloc_context *alloc, fz_locks_context *locks, unsigned int max_store, const char *version);
-fz_pixmap *fz_new_pixmap(fz_context *ctx, fz_colorspace *cs, int w, int h);
-fz_pixmap *fz_load_png(fz_context *ctx, const char *data, int size);
-void fz_convert_pixmap(fz_context *ctx, fz_pixmap *dst, fz_pixmap *src);
-void fz_drop_pixmap(fz_context *ctx, fz_pixmap *pix);
-fz_colorspace *fz_device_gray(fz_context *ctx);
-void fz_free_context(fz_context *ctx);
-]]
+require("ffi/mupdf_h")
 
 local Image = {}
 
