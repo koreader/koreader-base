@@ -1,11 +1,12 @@
 include Makefile.defs
 
 # main target
-all: $(OUTPUT_DIR)/libs $(LUAJIT) $(OUTPUT_DIR)/extr $(OUTPUT_DIR)/sdcv libs
+all: $(OUTPUT_DIR)/libs $(LUAJIT) $(OUTPUT_DIR)/extr sdcv translate libs
 ifndef EMULATE_READER
 	$(STRIP) --strip-unneeded \
 		$(OUTPUT_DIR)/extr \
 		$(OUTPUT_DIR)/sdcv \
+		$(OUTPUT_DIR)/gawk \
 		$(LUAJIT) \
 		$(OUTPUT_DIR)/libs/*.so*
 endif
@@ -271,7 +272,7 @@ $(OUTPUT_DIR)/extr: extr.c \
 
 # StarDict tool
 
-$(OUTPUT_DIR)/sdcv:
+sdcv:
 ifdef EMULATE_READER
 ifeq ("$(shell gcc -dumpmachine | sed s/-.*//)","x86_64")
 	# quick fix for x86_64 (zeus)
@@ -294,6 +295,25 @@ else
 		&& AM_CXXFLAGS=-static-libstdc++ $(MAKE) -j$(PROCESSORS)
 endif
 	cp $(SDCV_DIR)/src/sdcv $(OUTPUT_DIR)/
+
+# ===========================================================================
+
+# Google translate
+
+translate: gawk
+	cp $(GTRS_DIR)/translate.awk $(OUTPUT_DIR)/
+
+# ===========================================================================
+
+# GNU awk
+
+gawk:
+ifdef EMULATE_READER
+	cd $(GAWK_DIR) && ./configure && $(MAKE) -j$(PROCESSORS) gawk
+else
+	cd $(GAWK_DIR) && ./configure --host=$(CHOST) && $(MAKE) -j$(PROCESSORS) gawk
+endif
+	cp $(GAWK_DIR)/gawk $(OUTPUT_DIR)/
 
 # ===========================================================================
 
@@ -353,6 +373,12 @@ fetchthirdparty:
 		&& wget http://tesseract-ocr.googlecode.com/files/tesseract-ocr-3.02.02.tar.gz || true
 	cd $(K2PDFOPT_DIR) && tar zxf tesseract-ocr-3.02.02.tar.gz
 	sed -i "s/AM_CONFIG_HEADER/AC_CONFIG_HEADERS/g" $(K2PDFOPT_DIR)/tesseract-ocr/configure.ac
+	# download GNU awk for google-translate-cli
+	[ ! -f gawk-4.1.0.tar.gz ] \
+		&& wget http://ftp.gnu.org/gnu/gawk/gawk-4.1.0.tar.gz || true
+	[ `md5sum gawk-4.1.0.tar.gz |cut -d\  -f1` != 13e02513105417818a31ef375f9f9f42 ] \
+		&& rm gawk-4.1.0.tar.gz && wget http://ftp.gnu.org/gnu/gawk/gawk-4.1.0.tar.gz || true
+	tar zxf gawk-4.1.0.tar.gz
 
 # ===========================================================================
 
@@ -379,5 +405,6 @@ clean:
 	-$(MAKE) -C $(K2PDFOPT_DIR) clean
 	-$(MAKE) -C $(JPEG_DIR) clean
 	-$(MAKE) -C $(SDCV_DIR) clean
+	-$(MAKE) -C $(GAWK_DIR) clean
 	-rm -rf $(FREETYPE_DIR)/build
 	-rm -rf $(OUTPUT_DIR)/*

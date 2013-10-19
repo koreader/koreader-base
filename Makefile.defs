@@ -150,6 +150,8 @@ JPEG_LIB=$(OUTPUT_DIR)/libs/libjpeg.so.9
 JPEG_DIR=jpeg
 
 SDCV_DIR=sdcv-0.4.2
+GAWK_DIR=gawk-4.1.0
+GTRS_DIR=google-translate-cli
 
 LEPTONICA_LIB := $(OUTPUT_DIR)/libs/liblept.so.3
 

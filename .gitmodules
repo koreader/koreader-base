@@ -25,3 +25,6 @@
 [submodule "jpeg"]
 	path = jpeg
 	url = git://git.ghostscript.com/thirdparty/jpeg.git
+[submodule "google-translate-cli"]
+	path = google-translate-cli
+	url = git://github.com/koreader/google-translate-cli.git
