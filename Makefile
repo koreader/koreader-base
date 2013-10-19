@@ -1,7 +1,7 @@
 include Makefile.defs
 
 # main target
-all: $(OUTPUT_DIR)/libs $(LUAJIT) $(OUTPUT_DIR)/extr sdcv translate libs
+all: $(OUTPUT_DIR)/libs $(LUAJIT) $(OUTPUT_DIR)/extr $(OUTPUT_DIR)/sdcv translate libs
 ifndef EMULATE_READER
 	$(STRIP) --strip-unneeded \
 		$(OUTPUT_DIR)/extr \
@@ -272,7 +272,7 @@ $(OUTPUT_DIR)/extr: extr.c \
 
 # StarDict tool
 
-sdcv:
+$(OUTPUT_DIR)/sdcv:
 ifdef EMULATE_READER
 ifeq ("$(shell gcc -dumpmachine | sed s/-.*//)","x86_64")
 	# quick fix for x86_64 (zeus)
@@ -300,14 +300,14 @@ endif
 
 # Google translate
 
-translate: gawk
+translate: $(OUTPUT_DIR)/gawk
 	cp $(GTRS_DIR)/translate.awk $(OUTPUT_DIR)/
 
 # ===========================================================================
 
 # GNU awk
 
-gawk:
+$(OUTPUT_DIR)/gawk:
 ifdef EMULATE_READER
 	cd $(GAWK_DIR) && ./configure && $(MAKE) -j$(PROCESSORS) gawk
 else
