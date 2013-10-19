@@ -22,7 +22,7 @@ function Image:_getFileData(filename)
 end
 
 function Image:loadPNGData(data)
-	self.pixmap = mupdf.fz_load_png(self.context, data, #data)
+	self.pixmap = mupdf.fz_load_png(self.context, ffi.cast("unsigned char*", data), #data)
 end
 
 function Image:toBlitBuffer()
