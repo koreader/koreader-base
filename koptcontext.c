@@ -297,6 +297,13 @@ static int kcGetLanguage(lua_State *L) {
 	return 1;
 }
 
+static int kcCopyDestBMP(lua_State *L) {
+    KOPTContext *kc_dst = (KOPTContext*) luaL_checkudata(L, 1, "koptcontext");
+    KOPTContext *kc_src = (KOPTContext*) luaL_checkudata(L, 2, "koptcontext");
+    bmp_copy(&kc_dst->dst, &kc_src->dst);
+    return 0;
+}
+
 int kcGetWordBoxes(lua_State *L, int box_type) {
 	KOPTContext *kc = (KOPTContext*) luaL_checkudata(L, 1, "koptcontext");
 	int x = luaL_checkint(L, 2);
@@ -507,6 +514,7 @@ static const struct luaL_Reg koptcontext_meth[] = {
 	{"setLanguage",kcSetLanguage},
 	{"getLanguage", kcGetLanguage},
 
+	{"copyDestBMP", kcCopyDestBMP},
 	{"getReflowedWordBoxes", kcGetReflowedWordBoxes},
 	{"getNativeWordBoxes", kcGetNativeWordBoxes},
 	{"reflowToNativePosTransform", kcReflowToNativePosTransform},
