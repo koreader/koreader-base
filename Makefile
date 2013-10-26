@@ -277,18 +277,16 @@ ifdef EMULATE_READER
 	cd $(GLIB_DIR) && ./configure --prefix=$(CURDIR)/$(GLIB_DIR) \
 		&& $(MAKE) -j$(PROCESSORS) && $(MAKE) install
 else
-	cd $(GLIB_DIR) && ./configure --host=$(CHOST) --prefix=$(CURDIR)/$(GLIB_DIR) \
+	echo -e "glib_cv_stack_grows=no\nglib_cv_uscore=no\nac_cv_func_posix_getpwuid_r=no" > \
+		$(GLIB_DIR)/arm_cache.conf
+	cd $(GLIB_DIR) && ./configure --host=$(CHOST) --cache-file=arm_cache.conf \
+		--prefix=$(CURDIR)/$(GLIB_DIR) \
 		&& $(MAKE) -j$(PROCESSORS) && $(MAKE) install
 endif
 
 $(ZLIB):
-ifdef EMULATE_READER
-	cd $(ZLIB_DIR) && ./configure --prefix=$(CURDIR)/$(ZLIB_DIR) \
-		&& $(MAKE) -j$(PROCESSORS) && $(MAKE) install
-else
-	cd $(ZLIB_DIR) && ./configure --host=$(CHOST) --prefix=$(CURDIR)/$(ZLIB_DIR) \
-		&& $(MAKE) -j$(PROCESSORS) && $(MAKE) install
-endif
+	cd $(ZLIB_DIR) && CC="$(CC)" ./configure --prefix=$(CURDIR)/$(ZLIB_DIR) \
+		&& $(MAKE) -j$(PROCESSORS) shared && $(MAKE) install
 
 # ===========================================================================
 
@@ -314,8 +312,6 @@ else
 		&& AM_CXXFLAGS=-static-libstdc++ $(MAKE) -j$(PROCESSORS)
 endif
 else
-	cd glib-2.6.6 && ./configure --host=$(CHOST) \
-		&& $(MAKE) -j$(PROCESSORS)
 	cd $(SDCV_DIR) && ./configure \
 		--host=$(CHOST) \
 		PKG_CONFIG_PATH=../$(GLIB_DIR)/lib/pkgconfig \
