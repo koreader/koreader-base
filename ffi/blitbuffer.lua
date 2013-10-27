@@ -760,7 +760,7 @@ paint a circle onto this buffer
 --]]
 function BB_mt.__index:paintCircle(center_x, center_y, r, c, w)
 	-- compatibility:
-	if type(c) == "number" then value = Color4L(c) end
+	if type(c) == "number" then c = Color4L(c) end
 	if r == 0 then return end
 	if w == nil then w = r end
 	if w > r then w = r end
@@ -829,7 +829,7 @@ end
 
 function BB_mt.__index:paintRoundedCorner(off_x, off_y, w, h, bw, r, c)
 	-- compatibility:
-	if type(c) == "number" then value = Color4L(c) end
+	if type(c) == "number" then c = Color4L(c) end
 	if 2*r > h
 	or 2*r > w
 	or r == 0
