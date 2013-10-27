@@ -191,11 +191,11 @@ function BB_mt.__index:getPixel(x, y) return self:getPixelP(x, y)[0] end
 
 function BB_rotated_mt.__index:getPixelP(x, y)
 	if self.degree == 90 then
-		return self.bb:getPixelP(self.y, self.x)
+		return self.bb:getPixelP(self.h - y - 1, x)
 	elseif self.degree == 180 then
 		return self.bb:getPixelP(self.w - x - 1, self.h - y - 1)
 	elseif self.degree == 270 then
-		return self.bb:getPixelP(self.h - y - 1, self.w - x - 1)
+		return self.bb:getPixelP(y, self.w - x - 1)
 	end
 end
 
@@ -681,7 +681,7 @@ end
 compatibility method for a "rotated blitting"
 ..]]
 function BB_mt.__index:blitFromRotate(source, degree)
-	rotated_bb:blitFrom(source:rotateBy(degree))
+	self:blitFrom(source:rotateBy(-degree))
 end
 
 --[[
