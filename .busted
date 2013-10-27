@@ -1,0 +1,7 @@
+return {
+	default = {
+		lua = "luajit",
+		verbose = true
+		ROOT = "spec/unit",
+	},
+}
