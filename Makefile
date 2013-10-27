@@ -264,34 +264,61 @@ $(OUTPUT_DIR)/extr: extr.c \
 				$(JPEG_LIB) \
 				$(FREETYPE_LIB)
 	$(CC) -I$(MUPDF_DIR) -I$(MUPDF_DIR)/include \
-		$(CFLAGS) -Wl,-rpath,'$$ORIGIN' \
+		$(CFLAGS) -Wl,-rpath,'libs' \
 		-o $@ $< \
 		$(MUPDF_LIB) $(JPEG_LIB) $(FREETYPE_LIB) -lm
 
 # ===========================================================================
 
-# StarDict tool
+# sdcv dependencies: glib-2.0 and zlib
 
-$(OUTPUT_DIR)/sdcv:
+$(GLIB):
+ifdef EMULATE_READER
+	cd $(GLIB_DIR) && ./configure --prefix=$(CURDIR)/$(GLIB_DIR) \
+		&& $(MAKE) -j$(PROCESSORS) && $(MAKE) install
+else
+	echo -e "glib_cv_stack_grows=no\nglib_cv_uscore=no\nac_cv_func_posix_getpwuid_r=no" > \
+		$(GLIB_DIR)/arm_cache.conf
+	cd $(GLIB_DIR) && ./configure --host=$(CHOST) --cache-file=arm_cache.conf \
+		--prefix=$(CURDIR)/$(GLIB_DIR) \
+		&& $(MAKE) -j$(PROCESSORS) && $(MAKE) install
+endif
+	cp -fL $(GLIB_DIR)/lib/$(notdir $(GLIB)) $(GLIB)
+
+$(ZLIB):
+	cd $(ZLIB_DIR) && CC="$(CC)" ./configure --prefix=$(CURDIR)/$(ZLIB_DIR) \
+		&& $(MAKE) -j$(PROCESSORS) shared && $(MAKE) install
+	cp -fL $(ZLIB_DIR)/lib/$(notdir $(ZLIB)) $(ZLIB)
+
+# ===========================================================================
+
+# console version of StarDict(sdcv)
+
+$(OUTPUT_DIR)/sdcv: $(GLIB) $(ZLIB)
 ifdef EMULATE_READER
 ifeq ("$(shell gcc -dumpmachine | sed s/-.*//)","x86_64")
 	# quick fix for x86_64 (zeus)
 	cd $(SDCV_DIR) && sed -i 's|guint32 page_size|guint64 page_size|' src/lib/lib.cpp
 	cd $(SDCV_DIR) && ./configure \
-		CXXFLAGS=-I$(CURDIR)/$(MUPDF_DIR)/thirdparty/zlib \
+		PKG_CONFIG_PATH=../$(GLIB_DIR)/lib/pkgconfig \
+		CXXFLAGS=-I$(CURDIR)/$(ZLIB_DIR)/include \
+		LDFLAGS="-Wl,-rpath,'libs' -L$(CURDIR)/$(ZLIB_DIR)/lib" \
 		&& AM_CXXFLAGS=-static-libstdc++ $(MAKE) -j$(PROCESSORS)
 	# restore to original source
 	cd $(SDCV_DIR) && sed -i 's|guint64 page_size|guint32 page_size|' src/lib/lib.cpp
 else
 	cd $(SDCV_DIR) && ./configure \
-		CXXFLAGS=-I$(CURDIR)/$(MUPDF_DIR)/thirdparty/zlib \
+		PKG_CONFIG_PATH=../$(GLIB_DIR)/lib/pkgconfig \
+		CXXFLAGS=-I$(CURDIR)/$(ZLIB_DIR)/include \
+		LDFLAGS="-Wl,-rpath,'libs' -L$(CURDIR)/$(ZLIB_DIR)/lib" \
 		&& AM_CXXFLAGS=-static-libstdc++ $(MAKE) -j$(PROCESSORS)
 endif
 else
 	cd $(SDCV_DIR) && ./configure \
 		--host=$(CHOST) \
-		CXXFLAGS=-I$(CURDIR)/$(MUPDF_DIR)/thirdparty/zlib \
-		LDFLAGS=-L$(CURDIR)/$(SDCV_DIR)/thirdparty \
+		PKG_CONFIG_PATH=../$(GLIB_DIR)/lib/pkgconfig \
+		CXXFLAGS=-I$(CURDIR)/$(ZLIB_DIR)/include \
+		LDFLAGS="-Wl,-rpath,'libs' -L$(CURDIR)/$(ZLIB_DIR)/lib" \
 		&& AM_CXXFLAGS=-static-libstdc++ $(MAKE) -j$(PROCESSORS)
 endif
 	cp $(SDCV_DIR)/src/sdcv $(OUTPUT_DIR)/
@@ -379,6 +406,12 @@ fetchthirdparty:
 	[ `md5sum gawk-4.1.0.tar.gz |cut -d\  -f1` != 13e02513105417818a31ef375f9f9f42 ] \
 		&& rm gawk-4.1.0.tar.gz && wget http://ftp.gnu.org/gnu/gawk/gawk-4.1.0.tar.gz || true
 	tar zxf gawk-4.1.0.tar.gz
+	# download glib-2.6.6 for sdcv
+	[ ! -f glib-2.6.6.tar.gz ] \
+		&& wget http://ftp.gnome.org/pub/gnome/sources/glib/2.6/glib-2.6.6.tar.gz || true
+	[ `md5sum glib-2.6.6.tar.gz |cut -d\  -f1` != dba15cceeaea39c5a61b6844d2b7b920 ] \
+		&& rm glib-2.6.6.tar.gz && wget http://ftp.gnome.org/pub/gnome/sources/glib/2.6/glib-2.6.6.tar.gz || true
+	tar zxf glib-2.6.6.tar.gz
 
 # ===========================================================================
 
@@ -406,5 +439,7 @@ clean:
 	-$(MAKE) -C $(JPEG_DIR) clean
 	-$(MAKE) -C $(SDCV_DIR) clean
 	-$(MAKE) -C $(GAWK_DIR) clean
+	-$(MAKE) -C $(GLIB_DIR) clean uninstall
+	-$(MAKE) -C $(ZLIB_DIR) clean uninstall
 	-rm -rf $(FREETYPE_DIR)/build
 	-rm -rf $(OUTPUT_DIR)/*
