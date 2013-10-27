@@ -264,7 +264,7 @@ $(OUTPUT_DIR)/extr: extr.c \
 				$(JPEG_LIB) \
 				$(FREETYPE_LIB)
 	$(CC) -I$(MUPDF_DIR) -I$(MUPDF_DIR)/include \
-		$(CFLAGS) -Wl,-rpath,'$$ORIGIN' \
+		$(CFLAGS) -Wl,-rpath,'libs' \
 		-o $@ $< \
 		$(MUPDF_LIB) $(JPEG_LIB) $(FREETYPE_LIB) -lm
 
@@ -283,10 +283,12 @@ else
 		--prefix=$(CURDIR)/$(GLIB_DIR) \
 		&& $(MAKE) -j$(PROCESSORS) && $(MAKE) install
 endif
+	cp -fL $(GLIB_DIR)/lib/$(notdir $(GLIB)) $(GLIB)
 
 $(ZLIB):
 	cd $(ZLIB_DIR) && CC="$(CC)" ./configure --prefix=$(CURDIR)/$(ZLIB_DIR) \
 		&& $(MAKE) -j$(PROCESSORS) shared && $(MAKE) install
+	cp -fL $(ZLIB_DIR)/lib/$(notdir $(ZLIB)) $(ZLIB)
 
 # ===========================================================================
 
@@ -300,7 +302,7 @@ ifeq ("$(shell gcc -dumpmachine | sed s/-.*//)","x86_64")
 	cd $(SDCV_DIR) && ./configure \
 		PKG_CONFIG_PATH=../$(GLIB_DIR)/lib/pkgconfig \
 		CXXFLAGS=-I$(CURDIR)/$(ZLIB_DIR)/include \
-		LDFLAGS=-L$(CURDIR)/$(ZLIB_DIR)/lib \
+		LDFLAGS="-Wl,-rpath,'libs' -L$(CURDIR)/$(ZLIB_DIR)/lib" \
 		&& AM_CXXFLAGS=-static-libstdc++ $(MAKE) -j$(PROCESSORS)
 	# restore to original source
 	cd $(SDCV_DIR) && sed -i 's|guint64 page_size|guint32 page_size|' src/lib/lib.cpp
@@ -308,7 +310,7 @@ else
 	cd $(SDCV_DIR) && ./configure \
 		PKG_CONFIG_PATH=../$(GLIB_DIR)/lib/pkgconfig \
 		CXXFLAGS=-I$(CURDIR)/$(ZLIB_DIR)/include \
-		LDFLAGS=-L$(CURDIR)/$(ZLIB_DIR)/lib \
+		LDFLAGS="-Wl,-rpath,'libs' -L$(CURDIR)/$(ZLIB_DIR)/lib" \
 		&& AM_CXXFLAGS=-static-libstdc++ $(MAKE) -j$(PROCESSORS)
 endif
 else
@@ -316,7 +318,7 @@ else
 		--host=$(CHOST) \
 		PKG_CONFIG_PATH=../$(GLIB_DIR)/lib/pkgconfig \
 		CXXFLAGS=-I$(CURDIR)/$(ZLIB_DIR)/include \
-		LDFLAGS=-L$(CURDIR)/$(ZLIB_DIR)/lib \
+		LDFLAGS="-Wl,-rpath,'libs' -L$(CURDIR)/$(ZLIB_DIR)/lib" \
 		&& AM_CXXFLAGS=-static-libstdc++ $(MAKE) -j$(PROCESSORS)
 endif
 	cp $(SDCV_DIR)/src/sdcv $(OUTPUT_DIR)/

@@ -155,8 +155,8 @@ GLIB_DIR=glib-2.6.6
 GTRS_DIR=google-translate-cli
 ZLIB_DIR=$(MUPDF_DIR)/thirdparty/zlib
 
-GLIB=$(GLIB_DIR)/lib/libglib-2.0.so
-ZLIB=$(MUPDF_DIR)/thirdparty/zlib/lib/libz.so
+GLIB=$(OUTPUT_DIR)/libs/libglib-2.0.so.0
+ZLIB=$(OUTPUT_DIR)/libs/libz.so.1
 
 LEPTONICA_LIB=$(OUTPUT_DIR)/libs/liblept.so.3
 TESSERACT_LIB=$(OUTPUT_DIR)/libs/libtesseract.so.3
