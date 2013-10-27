@@ -1,4 +1,5 @@
-Blitbuffer = require("ffi/blitbuffer")
+local Blitbuffer = require("ffi/blitbuffer")
+local ffi = require("ffi")
 
 describe("Blitbuffer unit tests", function()
 	describe("Color conversion", function()
@@ -44,9 +45,10 @@ describe("Blitbuffer unit tests", function()
 		it("should set pixel correctly", function()
 			local test_x = 15
 			local test_y = 20
-			local c = bb:getPixel(test_x, test_y)
-			bb:setPixel(test_x, test_y, Blitbuffer.Color4(2))
-			assert.are.equals(bb:getPixel(test_x, test_y), Blitbuffer.Color4(2))
+			local new_c = Blitbuffer.Color4(2)
+			assert.are_not.equals(bb:getPixel(test_x, test_y)['a'], new_c['a'])
+			bb:setPixel(test_x, test_y, new_c)
+			assert.are.equals(bb:getPixel(test_x, test_y)['a'], new_c['a'])
 		end)
 	end)
 end)
