@@ -38,7 +38,7 @@ function Image:toBlitBuffer()
 	for y = 0, self.pixmap.h - 1 do
 		for x = 0, self.pixmap.w - 1 do
 			local pix = self.pixmap.samples[(x + y*self.pixmap.w)*2]
-			self.bb:setPixel(x, y, bit.rshift(0xFF - pix, 4))
+			self.bb:setPixel(x, y, Blitbuffer.Color4(bit.rshift(0xFF - pix, 4)))
 		end
 	end
 end
