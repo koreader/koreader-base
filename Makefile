@@ -1,7 +1,8 @@
 include Makefile.defs
 
 # main target
-all: $(OUTPUT_DIR)/libs $(LUAJIT) $(OUTPUT_DIR)/extr $(OUTPUT_DIR)/sdcv translate libs
+all: $(OUTPUT_DIR)/libs $(LUAJIT) $(OUTPUT_DIR)/extr $(OUTPUT_DIR)/sdcv \
+	translate libs $(OUTPUT_DIR)/spec
 ifndef EMULATE_READER
 	$(STRIP) --strip-unneeded \
 		$(OUTPUT_DIR)/extr \
@@ -186,9 +187,10 @@ libs: \
 	$(OUTPUT_DIR)/libs/libkoreader-lfs.so \
 	$(OUTPUT_DIR)/libs/libkoreader-koptcontext.so \
 	$(OUTPUT_DIR)/libs/libkoreader-pic.so \
+	$(OUTPUT_DIR)/libs/libpic_jpeg.so \
 	$(OUTPUT_DIR)/libs/libkoreader-pdf.so \
 	$(OUTPUT_DIR)/libs/libkoreader-djvu.so \
-	$(OUTPUT_DIR)/libs/libkoreader-cre.so 
+	$(OUTPUT_DIR)/libs/libkoreader-cre.so
 
 $(OUTPUT_DIR)/libs/libkoreader-luagettext.so: lua_gettext.c
 	$(CC) $(DYNLIB_CFLAGS) $(EMU_CFLAGS) $(EMU_LDFLAGS) \
@@ -228,6 +230,9 @@ $(OUTPUT_DIR)/libs/libkoreader-pic.so: pic.c pic_jpeg.c \
 				$(JPEG_LIB)
 	$(CC) -I$(JPEG_DIR) $(DYNLIB_CFLAGS) \
 		-o $@ $< pic_jpeg.c $(JPEG_LIB)
+
+$(OUTPUT_DIR)/libs/libpic_jpeg.so: pic_jpeg.c $(JPEG_LIB)
+	$(CC) -I$(JPEG_DIR) $(DYNLIB_CFLAGS) -o $@ $^
 
 # put all the libs to the end of compile command to make ubuntu's tool chain
 # happy
@@ -443,3 +448,22 @@ clean:
 	-$(MAKE) -C $(ZLIB_DIR) clean uninstall
 	-rm -rf $(FREETYPE_DIR)/build
 	-rm -rf $(OUTPUT_DIR)/*
+
+
+# ===========================================================================
+# start of unit tests section
+# ===========================================================================
+
+$(OUTPUT_DIR)/.busted:
+	test -e $(OUTPUT_DIR)/.busted || \
+		ln -sf ../../.busted $(OUTPUT_DIR)/
+
+$(OUTPUT_DIR)/spec:
+	test -e $(OUTPUT_DIR)/spec || \
+		ln -sf ../../spec $(OUTPUT_DIR)/
+
+test: $(OUTPUT_DIR)/spec $(OUTPUT_DIR)/.busted
+	cd $(OUTPUT_DIR) && busted
+
+PHONY: test
+
