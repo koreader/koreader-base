@@ -214,7 +214,7 @@ function Color4U_mt.__index:getColor4L() return Color4L(rshift(self.a, 4)) end
 function Color8_mt.__index:getColor4L() return Color4L(rshift(self.a, 4)) end
 function Color16_mt.__index:getColor4L() return Color4L(rshift(self.a, 12)) end
 function ColorRGB16_mt.__index:getColor4L()
-	return Color4L(rshift(self:getR() + lshift(self:getG(), 1) + self:getB(), 6))
+	return Color4L(rshift(4897*self:getR() + 9617*self:getG() + 1868*self:getB(), 18))
 end
 ColorRGB24_mt.__index.getColor4L = ColorRGB16_mt.__index.getColor4L
 ColorRGB32_mt.__index.getColor4L = ColorRGB16_mt.__index.getColor4L
@@ -225,7 +225,7 @@ function Color4U_mt.__index:getColor4U() return Color4U(band(self.a, 0xF0)) end
 function Color8_mt.__index:getColor4U() return Color4U(band(self.a, 0xF0)) end
 function Color16_mt.__index:getColor4U() return Color4U(band(rshift(self.a,8),0xF0)) end
 function ColorRGB16_mt.__index:getColor4U()
-	return Color4U(band(rshift(self:getR() + lshift(self:getG(), 1) + self:getB(), 2), 0xF0))
+	return Color4U(band(rshift(4897*self:getR() + 9617*self:getG() + 1868*self:getB(), 14), 0xF0))
 end
 ColorRGB24_mt.__index.getColor4U = ColorRGB16_mt.__index.getColor4U
 ColorRGB32_mt.__index.getColor4U = ColorRGB16_mt.__index.getColor4U
@@ -233,7 +233,7 @@ ColorRGB32_mt.__index.getColor4U = ColorRGB16_mt.__index.getColor4U
 -- to Color8:
 function Color4L_mt.__index:getColor8()
 	local v = band(self.a, 0x0F)
-	return Color8(bor(lshift(v, 4), v))
+	return Color8(v*0x11)
 end
 function Color4U_mt.__index:getColor8()
 	local v = band(self.a, 0xF0)
@@ -242,12 +242,10 @@ end
 function Color8_mt.__index:getColor8() return self end
 function Color16_mt.__index:getColor8() return Color8(self.a) end
 function ColorRGB16_mt.__index:getColor8()
-	return Color8(rshift(self:getR() + lshift(self:getG(), 1) + self:getB(), 2))
+	return Color8(rshift(4897*self:getR() + 9617*self:getG() + 1868*self:getB(), 14))
 end
-function ColorRGB24_mt.__index:getColor8()
-	return Color8(rshift(self.r + lshift(self.g, 1) + self.b, 2))
-end
-ColorRGB32_mt.__index.getColor8 = ColorRGB24_mt.__index.getColor8
+ColorRGB24_mt.__index.getColor8 = ColorRGB16_mt.__index.getColor8
+ColorRGB32_mt.__index.getColor8 = ColorRGB16_mt.__index.getColor8
 
 -- to Color16:
 function Color4L_mt.__index:getColor16()
