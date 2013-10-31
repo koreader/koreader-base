@@ -213,6 +213,12 @@ function Color4L_mt.__index:getColor4L() return Color4L(band(self.a, 0x0F)) end
 function Color4U_mt.__index:getColor4L() return Color4L(rshift(self.a, 4)) end
 function Color8_mt.__index:getColor4L() return Color4L(rshift(self.a, 4)) end
 function Color16_mt.__index:getColor4L() return Color4L(rshift(self.a, 12)) end
+--[[
+Uses luminance match for approximating the human perception of colour, as per
+http://en.wikipedia.org/wiki/Grayscale#Converting_color_to_grayscale
+
+L = 0.299*Red + 0.587*Green + 0.114*Blue
+--]]
 function ColorRGB16_mt.__index:getColor4L()
 	return Color4L(rshift(4897*self:getR() + 9617*self:getG() + 1868*self:getB(), 18))
 end

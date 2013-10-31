@@ -33,8 +33,8 @@ function S.open()
 
 	-- set up screen (window)
 	S.screen = SDL.SDL_SetVideoMode(
-		os.getenv("EMULATE_READER_W") or 600,
-		os.getenv("EMULATE_READER_H") or 800,
+		tonumber(os.getenv("EMULATE_READER_W")) or 600,
+		tonumber(os.getenv("EMULATE_READER_H")) or 800,
 		32, SDL.SDL_HWSURFACE)
 
 	-- init keyboard delay/repeat rate
