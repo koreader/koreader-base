@@ -369,10 +369,10 @@ function BB4_mt.__index:setPixel(x, y, color)
 	end
 end
 function BB8_mt.__index:setPixel(x, y, color)
-	self:getPixelP(x, y)[0].a = color:getColor8()
+	self:getPixelP(x, y)[0] = color:getColor8()
 end
 function BB16_mt.__index:setPixel(x, y, color)
-	self:getPixelP(x, y)[0].a = color:getColor16()
+	self:getPixelP(x, y)[0] = color:getColor16()
 end
 function BBRGB24_mt.__index:setPixel(x, y, color)
 	self:getPixelP(x, y)[0] = color:getColorRGB24()
