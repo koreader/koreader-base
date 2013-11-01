@@ -5,36 +5,7 @@ Module for various utility functions
 local ffi = require "ffi"
 local bit = require "bit"
 
-ffi.cdef[[
-struct timeval {
-	long int tv_sec;
-	long int tv_usec;
-};
-int gettimeofday(struct timeval *restrict, struct timezone *restrict) __attribute__((__nothrow__, __leaf__));
-
-unsigned int sleep(unsigned int);
-int usleep(unsigned int);
-
-struct statvfs {
-	long unsigned int f_bsize;
-	long unsigned int f_frsize;
-	long unsigned int f_blocks;
-	long unsigned int f_bfree;
-	long unsigned int f_bavail;
-	long unsigned int f_files;
-	long unsigned int f_ffree;
-	long unsigned int f_favail;
-	long unsigned int f_fsid;
-	int __f_unused;
-	long unsigned int f_flag;
-	long unsigned int f_namemax;
-	int __f_spare[6];
-};
-int statvfs(const char *restrict, struct statvfs *restrict) __attribute__((__nothrow__, __leaf__));
-char *realpath(const char *restrict, char *restrict) __attribute__((__nothrow__));
-void *malloc(unsigned int) __attribute__((malloc, leaf, nothrow));
-void free(void *) __attribute__((nothrow));
-]]
+require("ffi/posix_h")
 
 local util = {}
 

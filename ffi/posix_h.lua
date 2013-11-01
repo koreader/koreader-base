@@ -1,0 +1,72 @@
+local ffi = require("ffi")
+ffi.cdef[[
+typedef long unsigned int size_t;
+typedef long int off_t;
+struct timeval {
+  long int tv_sec;
+  long int tv_usec;
+};
+struct statvfs {
+  long unsigned int f_bsize;
+  long unsigned int f_frsize;
+  long unsigned int f_blocks;
+  long unsigned int f_bfree;
+  long unsigned int f_bavail;
+  long unsigned int f_files;
+  long unsigned int f_ffree;
+  long unsigned int f_favail;
+  long unsigned int f_fsid;
+  long unsigned int f_flag;
+  long unsigned int f_namemax;
+  int __f_spare[6];
+};
+int pipe(int *) __attribute__((__nothrow__, __leaf__));
+int fork(void) __attribute__((nothrow));
+int dup(int) __attribute__((__nothrow__, __leaf__));
+int dup2(int, int) __attribute__((__nothrow__, __leaf__));
+static const int O_RDWR = 2;
+static const int O_RDONLY = 0;
+static const int O_NONBLOCK = 2048;
+int open(const char *, int, ...);
+int close(int);
+int fcntl(int, int, ...);
+int execl(const char *, const char *, ...) __attribute__((__nothrow__, __leaf__));
+int execlp(const char *, const char *, ...) __attribute__((__nothrow__, __leaf__));
+int execv(const char *, char *const *) __attribute__((__nothrow__, __leaf__));
+int execvp(const char *, char *const *) __attribute__((__nothrow__, __leaf__));
+long int write(int, const void *, long unsigned int);
+long int read(int, void *, long unsigned int);
+int kill(int, int) __attribute__((__nothrow__, __leaf__));
+int waitpid(int, int *, int);
+struct pollfd {
+  int fd;
+  short int events;
+  short int revents;
+};
+static const int POLLIN = 1;
+static const int POLLOUT = 4;
+static const int POLLERR = 8;
+static const int POLLHUP = 16;
+int poll(struct pollfd *, long unsigned int, int);
+static const int PROT_READ = 1;
+static const int PROT_WRITE = 2;
+static const int MAP_SHARED = 1;
+static const int MAP_FAILED = -1;
+void *mmap(void *, long unsigned int, int, int, int, long int) __attribute__((__nothrow__, __leaf__));
+int ioctl(int, long unsigned int, ...) __attribute__((__nothrow__, __leaf__));
+unsigned int sleep(unsigned int);
+int usleep(unsigned int);
+int statvfs(const char *restrict, struct statvfs *restrict) __attribute__((__nothrow__, __leaf__));
+int gettimeofday(struct timeval *restrict, struct timezone *restrict) __attribute__((__nothrow__, __leaf__));
+char *realpath(const char *restrict, char *restrict) __attribute__((__nothrow__, __leaf__));
+void *malloc(long unsigned int) __attribute__((malloc, leaf, nothrow));
+void free(void *) __attribute__((__nothrow__, __leaf__));
+char *strdup(const char *) __attribute__((malloc, leaf, nothrow));
+char *strndup(const char *, long unsigned int) __attribute__((malloc, leaf, nothrow));
+struct _IO_FILE *fopen(const char *restrict, const char *restrict);
+int fclose(struct _IO_FILE *);
+int printf(const char *, ...);
+int sprintf(char *, const char *, ...) __attribute__((nothrow));
+int fprintf(struct _IO_FILE *restrict, const char *restrict, ...);
+int fputc(int, struct _IO_FILE *);
+]]
