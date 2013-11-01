@@ -9,27 +9,27 @@ describe("Blitbuffer unit tests", function()
 
 		it("should convert RGB32 to gray16", function()
 			local c16_32 = cRGB32:getColor16()
-			assert.are.equals(c16_32.a, 0xAAAA)
+			assert.are.equals(0xB9B9, c16_32.a)
 		end)
 
 		it("should convert RGB32 to RGB16", function()
 			local cRGB16_32 = cRGB32:getColorRGB16()
-			assert.are.equals(cRGB16_32.v, 0x7EAA)
+			assert.are.equals(0x7EAA, cRGB16_32.v)
 		end)
 
 		it("should convert RGB32 to gray8", function()
 			local c8_32 = cRGB32:getColor8()
-			assert.are.equals(c8_32.a, 0xAA)
+			assert.are.equals(0xB9, c8_32.a)
 		end)
 
 		it("should convert RGB32 to gray4 (lower nibble)", function()
 			local c4l_32 = cRGB32:getColor4L()
-			assert.are.equals(c4l_32.a, 0x0A)
+			assert.are.equals(0x0B, c4l_32.a)
 		end)
 
 		it("should convert RGB32 to gray4 (upper nibble)", function()
 			local c4u_32 = cRGB32:getColor4U()
-			assert.are.equals(c4u_32.a, 0xA0)
+			assert.are.equals(0xB0, c4u_32.a)
 		end)
 	end)
 
