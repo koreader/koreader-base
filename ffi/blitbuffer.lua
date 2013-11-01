@@ -96,6 +96,15 @@ local Color16 = ffi.typeof("Color16")
 local ColorRGB24 = ffi.typeof("ColorRGB24")
 local ColorRGB32 = ffi.typeof("ColorRGB32")
 
+-- color value pointer types
+local P_Color4U = ffi.typeof("Color4U*")
+local P_Color4L = ffi.typeof("Color4L*")
+local P_Color8 = ffi.typeof("Color8*")
+local P_Color16 = ffi.typeof("Color16*")
+local P_ColorRGB16 = ffi.typeof("ColorRGB16*")
+local P_ColorRGB24 = ffi.typeof("ColorRGB24*")
+local P_ColorRGB32 = ffi.typeof("ColorRGB32*")
+
 -- metatables for BlitBuffer objects:
 local BB4_mt = {__index={}}
 local BB8_mt = {__index={}}
