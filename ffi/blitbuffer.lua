@@ -101,7 +101,6 @@ local P_Color4U = ffi.typeof("Color4U*")
 local P_Color4L = ffi.typeof("Color4L*")
 local P_Color8 = ffi.typeof("Color8*")
 local P_Color16 = ffi.typeof("Color16*")
-local P_ColorRGB16 = ffi.typeof("ColorRGB16*")
 local P_ColorRGB24 = ffi.typeof("ColorRGB24*")
 local P_ColorRGB32 = ffi.typeof("ColorRGB32*")
 
