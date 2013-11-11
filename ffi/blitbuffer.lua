@@ -13,6 +13,8 @@ local bor = bit.bor
 local bxor = bit.bxor
 
 local intt = ffi.typeof("int")
+local uint32pt = ffi.typeof("uint32_t*")
+local posix = require("ffi/posix_h")
 
 -- the following definitions are redundant.
 -- they need to be since only this way we can set
@@ -32,6 +34,13 @@ typedef struct BlitBuffer8 {
         uint8_t *data;
         uint8_t allocated;
 } BlitBuffer8;
+typedef struct BlitBufferA8 {
+        int w; 
+        int h; 
+        int pitch;
+        uint8_t *data;
+        uint8_t allocated;
+} BlitBufferA8;
 typedef struct BlitBuffer16 {
         int w; 
         int h; 
@@ -63,6 +72,10 @@ typedef struct Color4U {
 typedef struct Color8 {
 	uint8_t a;
 } Color8;
+typedef struct ColorA8 {
+	uint8_t a;
+	uint8_t dummy; // only support pre-multiplied for now
+} ColorA8;
 typedef struct Color16 {
 	uint16_t a;
 } Color16;
@@ -92,6 +105,7 @@ local BBtype = ffi.typeof("BlitBuffer4*")
 local Color4U = ffi.typeof("Color4U")
 local Color4L = ffi.typeof("Color4L")
 local Color8 = ffi.typeof("Color8")
+local ColorA8 = ffi.typeof("ColorA8")
 local Color16 = ffi.typeof("Color16")
 local ColorRGB24 = ffi.typeof("ColorRGB24")
 local ColorRGB32 = ffi.typeof("ColorRGB32")
@@ -100,6 +114,7 @@ local ColorRGB32 = ffi.typeof("ColorRGB32")
 local P_Color4U = ffi.typeof("Color4U*")
 local P_Color4L = ffi.typeof("Color4L*")
 local P_Color8 = ffi.typeof("Color8*")
+local P_ColorA8 = ffi.typeof("ColorA8*")
 local P_Color16 = ffi.typeof("Color16*")
 local P_ColorRGB24 = ffi.typeof("ColorRGB24*")
 local P_ColorRGB32 = ffi.typeof("ColorRGB32*")
@@ -107,12 +122,14 @@ local P_ColorRGB32 = ffi.typeof("ColorRGB32*")
 -- metatables for BlitBuffer objects:
 local BB4_mt = {__index={}}
 local BB8_mt = {__index={}}
+local BBA8_mt = {__index={}}
 local BB16_mt = {__index={}}
 local BBRGB24_mt = {__index={}}
 local BBRGB32_mt = {__index={}}
 
 -- virtual blitbuffers:
 local BB_rotated_mt = {__index={}}
+local BB4_rotated_mt = {__index={}}
 local BB_inverted_mt = {__index={}}
 local BB_masked_mt = {__index={}}
 
@@ -128,13 +145,14 @@ local BB_mt = {__index={}}
 local Color4L_mt = {__index={}}
 local Color4U_mt = {__index={}}
 local Color8_mt = {__index={}}
+local ColorA8_mt = {__index={}}
 local Color16_mt = {__index={}}
 local ColorRGB24_mt = {__index={}}
 local ColorRGB32_mt = {__index={}}
 
 -- getPixelP (pointer) routines
 function BB4_mt.__index:getPixelP(x, y)
-	self:checkCoordinates(x, y)
+	--self:checkCoordinates(x, y)
 	local p = self.data + self.pitch*y + rshift(x, 1)
 	if band(x, 1) == 0 then 
 		return ffi.cast(P_Color4U, p)
@@ -143,21 +161,35 @@ function BB4_mt.__index:getPixelP(x, y)
 	end
 end
 function BB8_mt.__index:getPixelP(x, y)
-	self:checkCoordinates(x, y)
+	--self:checkCoordinates(x, y)
 	return ffi.cast(P_Color8, self.data + self.pitch*y + x)
 end
+function BBA8_mt.__index:getPixelP(x, y)
+	--self:checkCoordinates(x, y)
+	return ffi.cast(P_ColorA8, self.data + self.pitch*y + lshift(x,1))
+end
 function BB16_mt.__index:getPixelP(x, y)
-	self:checkCoordinates(x, y)
+	--self:checkCoordinates(x, y)
 	return ffi.cast(P_Color16, self.data + self.pitch*y + lshift(x,1))
 end
 function BBRGB24_mt.__index:getPixelP(x, y)
-	self:checkCoordinates(x, y)
+	--self:checkCoordinates(x, y)
 	return ffi.cast(P_ColorRGB24, self.data + self.pitch*y + x*3)
 end
 function BBRGB32_mt.__index:getPixelP(x, y)
-	self:checkCoordinates(x, y)
+	--self:checkCoordinates(x, y)
 	return ffi.cast(P_ColorRGB32, self.data + self.pitch*y + lshift(x,2))
 end
+function BB_rotated_mt.__index:getPixelP(x, y)
+	if self.degree == 90 then 
+		return self.bb:getPixelP(self.bb.w - y - 1, x)
+	elseif self.degree == 180 then
+		return self.bb:getPixelP(self.bb.w - x - 1, self.bb.h - y - 1)
+	elseif self.degree == 270 then
+		return self.bb:getPixelP(y, self.bb.h - x - 1)
+	end
+end
+BB4_rotated_mt.__index.getPixelP = BB_rotated_mt.__index.getPixelP
 
 -- coordinate checking
 --function BB_mt.__index:checkCoordinates(x, y) end
@@ -168,32 +200,15 @@ function BB_mt.__index:checkCoordinates(x, y)
 	assert(y < self.h, "y coordinate < height")
 end
 
--- getPixel routines
 function BB_mt.__index:getPixel(x, y) return self:getPixelP(x, y)[0] end
-
-function BB_rotated_mt.__index:getPixelP(x, y)
-	if self.degree == 90 then
-		return self.bb:getPixelP(self.h - y - 1, x)
-	elseif self.degree == 180 then
-		return self.bb:getPixelP(self.w - x - 1, self.h - y - 1)
-	elseif self.degree == 270 then
-		return self.bb:getPixelP(y, self.w - x - 1)
-	end
-end
-
-function BB_inverted_mt.__index:getPixel(x, y)
-	return self.bb:getPixel(x, y):invert()
-end
-
-function BB_masked_mt.__index:getPixel(x, y)
-	return self.bb:getPixel(x, y):mask(self.fg, self.bg)
-end
+function BB_inverted_mt.__index:getPixel(x, y) return self:getPixelP(x, y)[0]:invert() end
 
 -- color conversions:
 -- to Color4L:
 function Color4L_mt.__index:getColor4L() return Color4L(band(self.a, 0x0F)) end
 function Color4U_mt.__index:getColor4L() return Color4L(rshift(self.a, 4)) end
 function Color8_mt.__index:getColor4L() return Color4L(rshift(self.a, 4)) end
+function ColorA8_mt.__index:getColor4L() return Color4L(rshift(self.a, 4)) end
 function Color16_mt.__index:getColor4L() return Color4L(rshift(self.a, 12)) end
 --[[
 Uses luminance match for approximating the human perception of colour, as per
@@ -210,6 +225,7 @@ ColorRGB32_mt.__index.getColor4L = ColorRGB24_mt.__index.getColor4L
 function Color4L_mt.__index:getColor4U() return Color4U(lshift(self.a, 4)) end
 function Color4U_mt.__index:getColor4U() return Color4U(band(self.a, 0xF0)) end
 function Color8_mt.__index:getColor4U() return Color4U(band(self.a, 0xF0)) end
+function ColorA8_mt.__index:getColor4U() return Color4U(band(self.a, 0xF0)) end
 function Color16_mt.__index:getColor4U() return Color4U(band(rshift(self.a,8),0xF0)) end
 function ColorRGB24_mt.__index:getColor4U()
 	return Color4U(band(rshift(4897*self.r + 9617*self.g + 1868*self.b, 14), 0xF0))
@@ -226,11 +242,29 @@ function Color4U_mt.__index:getColor8()
 	return Color8(bor(rshift(v, 4), v))
 end
 function Color8_mt.__index:getColor8() return self end
+function ColorA8_mt.__index:getColor8() return Color8(self.a) end
 function Color16_mt.__index:getColor8() return Color8(self.a) end
 function ColorRGB24_mt.__index:getColor8()
 	return Color8(rshift(4897*self:getR() + 9617*self:getG() + 1868*self:getB(), 14))
 end
 ColorRGB32_mt.__index.getColor8 = ColorRGB24_mt.__index.getColor8
+
+-- to ColorA8:
+function Color4L_mt.__index:getColorA8()
+	local v = band(self.a, 0x0F)
+	return ColorA8(v*0x11)
+end
+function Color4U_mt.__index:getColorA8()
+	local v = band(self.a, 0xF0)
+	return ColorA8(bor(rshift(v, 4), v))
+end
+function Color8_mt.__index:getColorA8() return ColorA8(self.a) end
+function ColorA8_mt.__index:getColorA8() return self end
+function Color16_mt.__index:getColorA8() return ColorA8(self.a) end
+function ColorRGB24_mt.__index:getColorA8()
+	return ColorA8(rshift(4897*self:getR() + 9617*self:getG() + 1868*self:getB(), 14))
+end
+ColorRGB32_mt.__index.getColorA8 = ColorRGB24_mt.__index.getColorA8
 
 -- to Color16:
 function Color4L_mt.__index:getColor16()
@@ -239,6 +273,7 @@ function Color4L_mt.__index:getColor16()
 end
 Color4U_mt.__index.getColor16 = Color4L_mt.__index.getColor16
 Color8_mt.__index.getColor16 = Color4L_mt.__index.getColor16
+ColorA8_mt.__index.getColor16 = Color4L_mt.__index.getColor16
 function Color16_mt.__index.getColor16() return self end
 ColorRGB24_mt.__index.getColor16 = Color4L_mt.__index.getColor16
 ColorRGB32_mt.__index.getColor16 = Color4L_mt.__index.getColor16
@@ -250,6 +285,7 @@ function Color4L_mt.__index:getColorRGB24()
 end
 Color4U_mt.__index.getColorRGB24 = Color4L_mt.__index.getColorRGB24
 Color8_mt.__index.getColorRGB24 = Color4L_mt.__index.getColorRGB24
+ColorA8_mt.__index.getColorRGB24 = Color4L_mt.__index.getColorRGB24
 Color16_mt.__index.getColorRGB24 = Color4L_mt.__index.getColorRGB24
 function ColorRGB24_mt.__index:getColorRGB24() return self end
 function ColorRGB32_mt.__index:getColorRGB24() return ColorRGB24(self.r, self.g, self.b) end
@@ -261,6 +297,7 @@ function Color4L_mt.__index:getColorRGB32()
 end
 Color4U_mt.__index.getColorRGB32 = Color4L_mt.__index.getColorRGB32
 Color8_mt.__index.getColorRGB32 = Color4L_mt.__index.getColorRGB32
+ColorA8_mt.__index.getColorRGB32 = Color4L_mt.__index.getColorRGB32
 Color16_mt.__index.getColorRGB32 = Color4L_mt.__index.getColorRGB32
 function ColorRGB24_mt.__index:getColorRGB32() return ColorRGB32(self.r, self.g, self.b) end
 function ColorRGB32_mt.__index:getColorRGB32() return self end
@@ -275,6 +312,9 @@ Color4U_mt.__index.getB = Color4U_mt.__index.getColor8
 Color8_mt.__index.getR = Color8_mt.__index.getColor8
 Color8_mt.__index.getG = Color8_mt.__index.getColor8
 Color8_mt.__index.getB = Color8_mt.__index.getColor8
+ColorA8_mt.__index.getR = ColorA8_mt.__index.getColor8
+ColorA8_mt.__index.getG = ColorA8_mt.__index.getColor8
+ColorA8_mt.__index.getB = ColorA8_mt.__index.getColor8
 Color16_mt.__index.getR = Color16_mt.__index.getColor8
 Color16_mt.__index.getG = Color16_mt.__index.getColor8
 Color16_mt.__index.getB = Color16_mt.__index.getColor8
@@ -290,11 +330,14 @@ ColorRGB32_mt.__index.getB = ColorRGB24_mt.__index.getB
 function Color4L_mt.__index:invert() return Color4L(bxor(self.a, 0x0F)) end
 function Color4U_mt.__index:invert() return Color4U(bxor(self.a, 0xF0)) end
 function Color8_mt.__index:invert() return Color8(bxor(self.a, 0xFF)) end
+function ColorA8_mt.__index:invert() return ColorA8(bxor(self.a, 0xFF)) end
 function Color16_mt.__index:invert() return Color16(bxor(self.a, 0xFFFF)) end
 function ColorRGB24_mt.__index:invert()
 	return ColorRGB24(bxor(self.r, 0xFF), bxor(self.g, 0xFF), bxor(self.b, 0xFF))
 end
-ColorRGB32_mt.__index.invert = ColorRGB24_mt.__index.invert
+function ColorRGB32_mt.__index:invert()
+	return ColorRGB32(bxor(self.r, 0xFF), bxor(self.g, 0xFF), bxor(self.b, 0xFF))
+end
 -- adding two colors:
 function Color4L_mt.__index:add(color, intensity)
 	local value = tonumber(self.a) * intensity + tonumber(color:getColor4L().a) * (1-intensity)
@@ -302,14 +345,19 @@ function Color4L_mt.__index:add(color, intensity)
 	return Color4L(value)
 end
 function Color4U_mt.__index:add(color, intensity)
-	local value = tonumber(self.a) * intensity + tonumber(color:getColor4U().a) * (1-intensity)
+	local orig = band(self.a, 0xF0)
+	local value = tonumber(orig) * intensity + tonumber(color:getColor4U().a) * (1-intensity)
 	if value > 0xF0 then value = 0xF0 end
-	return Color4U(band(ffi.cast("uint8_t", value), 0xF0))
+	--return Color4U(band(ffi.cast("uint8_t", value), 0xF0))
+	return Color4U(band(value, 0xF0))
 end
 function Color8_mt.__index:add(color, intensity)
 	local value = tonumber(self.a) * intensity + tonumber(color:getColor8().a) * (1-intensity)
 	if value > 0xFF then value = 0xFF end
 	return Color8(value)
+end
+function ColorA8_mt.__index:add(color, intensity)
+	return self:getColor8():add(color, intensity):getColorA8()
 end
 function Color16_mt.__index:add(color, intensity)
 	local value = tonumber(self.a) * intensity + tonumber(color:getColor16().a) * (1-intensity)
@@ -334,6 +382,7 @@ function Color4L_mt.__index:dim()
 end
 Color4U_mt.__index.dim = Color4L_mt.__index.dim
 Color8_mt.__index.dim = Color4L_mt.__index.dim
+ColorA8_mt.__index.dim = Color4L_mt.__index.dim
 Color16_mt.__index.dim = Color4L_mt.__index.dim
 ColorRGB24_mt.__index.dim = Color4L_mt.__index.dim
 ColorRGB32_mt.__index.dim = Color4L_mt.__index.dim
@@ -346,6 +395,7 @@ function Color4L_mt.__index:lighten(low)
 end
 Color4U_mt.__index.lighten = Color4L_mt.__index.lighten
 Color8_mt.__index.lighten = Color4L_mt.__index.lighten
+ColorA8_mt.__index.lighten = Color4L_mt.__index.lighten
 Color16_mt.__index.lighten = Color4L_mt.__index.lighten
 ColorRGB24_mt.__index.lighten = Color4L_mt.__index.lighten
 ColorRGB32_mt.__index.lighten = Color4L_mt.__index.lighten
@@ -355,55 +405,156 @@ function Color4L_mt.__index:mask(fg, bg)
 end
 Color4U_mt.__index.mask = Color4L_mt.__index.mask
 Color8_mt.__index.mask = Color4L_mt.__index.mask
+ColorA8_mt.__index.mask = Color4L_mt.__index.mask
 Color16_mt.__index.mask = Color4L_mt.__index.mask
 ColorRGB24_mt.__index.mask = Color4L_mt.__index.mask
 ColorRGB32_mt.__index.mask = Color4L_mt.__index.mask
 
--- set pixel values
-function BB4_mt.__index:setPixel(x, y, color)
-	local p = self:getPixelP(x, y)
-	if band(x, 1) == 0 then
-		p[0].a = bor(band(p[0].a, 0x0F), color:getColor4U().a)
+function BB4_mt.__index.getMyColor(color) return color:getColor4L() end
+function BB8_mt.__index.getMyColor(color) return color:getColor8() end
+function BBA8_mt.__index.getMyColor(color) return color:getColorA8() end
+function BB16_mt.__index.getMyColor(color) return color:getColor16() end
+function BBRGB24_mt.__index.getMyColor(color) return color:getColorRGB24() end
+function BBRGB32_mt.__index.getMyColor(color) return color:getColorRGB32() end
+
+function BB_mt.__index:isInverted() return false end
+function BB_inverted_mt.__index:isInverted() return true end
+function BB_mt.__index:invert()
+	if self:isInverted() then return self.bb end
+	local bb = {
+		bb = self,
+		w = self.w,
+		h = self.h,
+		pitch = self.pitch,
+		data = self.data,
+		blitfunc = self.blitfunc,
+		getMyColor = self.getMyColor,
+		getPixelP = self.getPixelP
+	}
+	setmetatable(bb, BB_inverted_mt)
+	return bb
+end
+function BB_mt.__index:isRotated() return false end
+function BB_rotated_mt.__index:isRotated() return true end
+function BB_mt.__index:rotate(degree)
+	local backing_bb = self
+	if self:isRotated() then
+		-- combine rotations
+		degree = (degree + self.degree) % 360
+		if degree == 0 then return self.bb end
+		backing_bb = self.bb
+	end
+	local bb = {
+		bb = backing_bb,
+		w = self.w,
+		h = self.h,
+		degree = degree,
+		pitch = self.pitch,
+		data = self.data,
+		blitfunc = self.blitfunc,
+		getMyColor = self.getMyColor
+	}
+	if degree == 90 or degree == 270 then
+		bb.w = self.h
+		bb.h = self.w
+	end
+	if self:getBpp() == 4 then
+		setmetatable(bb, BB4_rotated_mt)
 	else
-		p[0].a = bor(band(p[0].a, 0xF0), color:getColor4L().a)
+		setmetatable(bb, BB_rotated_mt)
+	end
+	return bb
+end
+function BB_mt.__index:getBpp() return self.bb:getBpp() end
+function BB_mt.__index:isRGB() return self.bb:isRGB() end
+
+-- set pixel values
+function BB_mt.__index:setPixel(x, p, color)
+	if x then p = self:getPixelP(x, p) end
+	p[0] = self.getMyColor(color)
+end
+-- two-pixel setting for 4bpp mode
+function BB4_mt.__index:setPixel(x, p, color, dummy, color2)
+	if x then
+		p = self:getPixelP(x, p)
+		if band(x, 1) == 1 then
+			color2 = color
+			color = nil
+		end
+	end
+	if color and color2 then
+		p[0].a = bor(color:getColor4U().a, color2:getColor4L().a)
+	elseif color2 then
+		p[0].a = bor(band(p[0].a, 0xF0), color2:getColor4L().a)
+	else
+		p[0].a = bor(band(p[0].a, 0x0F), color:getColor4U().a)
 	end
 end
-function BB8_mt.__index:setPixel(x, y, color)
-	self:getPixelP(x, y)[0] = color:getColor8()
-end
-function BB16_mt.__index:setPixel(x, y, color)
-	self:getPixelP(x, y)[0] = color:getColor16()
-end
-function BBRGB24_mt.__index:setPixel(x, y, color)
-	self:getPixelP(x, y)[0] = color:getColorRGB24()
-end
-function BBRGB32_mt.__index:setPixel(x, y, color)
-	self:getPixelP(x, y)[0] = color:getColorRGB32()
-end
--- special case for 4bpp blitbuffers:
-function BB4_mt.__index:setPixel2(x, y, color1, color2)
-	local p = self:getPixelP(x, y)
-	p[0].a = bor(color1:getColor4U().a, color2:getColor4L().a)
+BB4_rotated_mt.__index.setPixel = BB4_mt.__index.setPixel
+function BB_inverted_mt.__index:setPixel(x, p, color, dummy, color2)
+	-- this will work for both 4bpp and other modes
+	self.bb:setPixelInverted(x, p, color, dummy, color2)
 end
 
--- virtual Blitbuffer pixel setting:
-function BB_rotated_mt.__index:setPixel(x, y, color)
-	if self.degree == 90 then
-		return self.bb:setPixel(self.y, self.x, color)
-	elseif self.degree == 180 then
-		return self.bb:setPixel(self.w - x - 1, self.h - y - 1, color)
-	elseif self.degree == 270 then
-		return self.bb:setPixel(self.h - y - 1, self.w - x - 1, color)
+function BB_mt.__index:setPixelInverted(x, p, color)
+	if x then p = self:getPixelP(x, p) end
+	p[0] = self.getMyColor(color):invert()
+end
+function BB4_mt.__index:setPixelInverted(x, p, color, dummy, color2)
+	if x then
+		p = self:getPixelP(x, p)
+		if band(x, 1) == 1 then
+			color2 = color
+			color = nil
+		end
+	end
+	if color and color2 then
+		p[0].a = bxor(bor(color:getColor4U().a, color2:getColor4L().a), 0xFF)
+	elseif color2 then
+		p[0].a = bor(band(p[0].a, 0xF0), bxor(color2:getColor4L().a, 0x0F))
+	else
+		p[0].a = bor(band(p[0].a, 0x0F), bxor(color:getColor4U().a, 0xF0))
 	end
 end
-
-function BB_inverted_mt.__index:setPixel(x, y, color)
-	self.bb:setPixel(x, y, color:invert())
+function BB_inverted_mt.__index:setPixelInverted(x, p, color, dummy, color2)
+	-- this will work for both 4bpp and other modes
+	self.bb:setPixel(x, p, color, dummy, color2)
 end
 
-function BB_masked_mt.__index:setPixel(x, y, color)
-	-- just pass it through, masking only on read
-	self.bb:setPixel(x, y, color)
+function BB_mt.__index:setPixelAdd(x, p, color, intensity)
+	if x then p = self:getPixelP(x, p) end
+	p[0] = self.getMyColor(color):add(p[0], intensity)
+end
+function BB4_mt.__index:setPixelAdd(x, p, color, intensity, color2)
+	if x then
+		p = self:getPixelP(x, p)
+		if band(x, 1) == 1 then
+			color2 = color
+			color = nil
+		end
+	end
+	local v1 = band(p[0].a, 0xF0)
+	local v2 = band(p[0].a, 0x0F)
+	if color then
+		v1 = tonumber(v1) * (1-intensity) + tonumber(color:getColor4U().a) * intensity
+		if v1 > 0xF0 then v1 = 0xF0 end
+		v1 = band(v1, 0xF0)
+	end
+	if color2 then
+		v2 = tonumber(v2) * (1-intensity) + tonumber(color2:getColor4L().a) * intensity
+		if v2 > 0x0F then v2 = 0x0F end
+	end
+	p[0].a = bor(v1, v2)
+end
+
+function BB_mt.__index:setPixelDim(x, p, color, dummy, color2)
+	-- this will work for both 4bpp and other modes
+	self:setPixel(x, p, color and color:dim(), dummy, color2 and color2:dim())
+end
+
+function BB_mt.__index:setPixelLighten(x, p, color, low, color2)
+	-- this will work for both 4bpp and other modes
+	self:setPixel(x, p, color and color:lighten(low), dummy, color2 and color2:lighten(low))
 end
 
 -- checked Pixel setting:
@@ -415,25 +566,29 @@ end
 
 function BB4_mt.__index:getBpp() return 4 end
 function BB8_mt.__index:getBpp() return 8 end
+function BBA8_mt.__index:getBpp() return 16 end
 function BB16_mt.__index:getBpp() return 16 end
 function BBRGB24_mt.__index:getBpp() return 24 end
 function BBRGB32_mt.__index:getBpp() return 32 end
-function BB_rotated_mt.__index:getBpp() return self.bb:getBpp() end
-function BB_inverted_mt.__index:getBpp() return self.bb:getBpp() end
-function BB_masked_mt.__index:getBpp() return self.bb:getBpp() end
 
 function BB4_mt.__index:isRGB() return false end
 function BB8_mt.__index:isRGB() return false end
+function BBA8_mt.__index:isRGB() return false end
 function BB16_mt.__index:isRGB() return false end
 function BBRGB24_mt.__index:isRGB() return true end
 function BBRGB32_mt.__index:isRGB() return true end
-function BB_rotated_mt.__index:isRGB() return self.bb:isRGB() end
-function BB_inverted_mt.__index:isRGB() return self.bb:isRGB() end
-function BB_masked_mt.__index:isRGB() return self.bb:isRGB() end
 
 -- compatibility functions for accessing dimensions
 function BB_mt.__index:getWidth() return self.w end
 function BB_mt.__index:getHeight() return self.h end
+
+-- names of optimized blitting routines
+BB4_mt.__index.blitfunc = "blitTo4"
+BB8_mt.__index.blitfunc = "blitTo8"
+BBA8_mt.__index.blitfunc = "blitToA8"
+BB16_mt.__index.blitfunc = "blitTo16"
+BBRGB24_mt.__index.blitfunc = "blitToRGB24"
+BBRGB32_mt.__index.blitfunc = "blitToRGB32"
 
 --[[
 generic boundary check for copy operations
@@ -478,25 +633,39 @@ local function checkBounds(length, target_offset, source_offset, target_size, so
 	end
 end
 
+-- no optimized blitting by default:
+function BB_mt.__index:blitTo4() return false end
+BB_mt.__index.blitTo8 = BB_mt.__index.blitTo4
+BB_mt.__index.blitToA8 = BB_mt.__index.blitTo4
+BB_mt.__index.blitTo16 = BB_mt.__index.blitTo4
+BB_mt.__index.blitToRGB24 = BB_mt.__index.blitTo4
+BB_mt.__index.blitToRGB32 = BB_mt.__index.blitTo4
 
-function BB_mt.__index:blitFromChecked(source, dest_x, dest_y, offs_x, offs_y, width, height, colormod, mod_param)
+function BB_mt.__index:blitFromChecked(source, dest_x, dest_y, offs_x, offs_y, width, height, setter, set_param)
+	-- test if an optimized version exists/succeeds:
+	if source[self.blitfunc](source, self, dest_x, dest_y, offs_x, offs_y, width, height, setter, set_param) then
+		return
+	end
+	-- slow default variant:
+	local dest = self
 	local o_y = offs_y
 	for y = dest_y, dest_y+height-1 do
 		local o_x = offs_x
 		for x = dest_x, dest_x+width-1 do
-			self:setPixel(x, y, colormod(source:getPixel(o_x, o_y), mod_param, self, x, y))
+			setter(dest, x, y, source:getPixel(o_x, o_y), set_param)
 			o_x = o_x + 1
 		end
 		o_y = o_y + 1
 	end
 end
 
-function BB4_mt.__index:blitFromChecked(source, dest_x, dest_y, offs_x, offs_y, width, height, colormod, mod_param)
+-- slightly optimized default routine for blitting to 4bpp buffers
+function BB_mt.__index:blitTo4(dest, dest_x, dest_y, offs_x, offs_y, width, height, setter, set_param)
 	local o_y = offs_y
 	if band(dest_x, 1) == 1 then
 		-- one "odd" column to process first
 		for y = dest_y, dest_y+height-1 do
-			self:setPixel(dest_x, y, colormod(source:getPixel(offs_x, o_y), mod_param, self, dest_x, y))
+			setter(dest, dest_x, y, self:getPixel(offs_x, o_y), set_param)
 			o_y = o_y + 1
 		end
 		dest_x = dest_x + 1
@@ -509,7 +678,7 @@ function BB4_mt.__index:blitFromChecked(source, dest_x, dest_y, offs_x, offs_y, 
 		local x = dest_x + width - 1
 		local o_x = offs_x + width - 1
 		for y = dest_y, dest_y+height-1 do
-			self:setPixel(x, y, colormod(source:getPixel(o_x, o_y), mod_param, self, x, y))
+			setter(dest, x, y, self:getPixel(o_x, o_y), set_param)
 			o_y = o_y + 1
 		end
 		width = width - 1
@@ -520,106 +689,150 @@ function BB4_mt.__index:blitFromChecked(source, dest_x, dest_y, offs_x, offs_y, 
 	for y = dest_y, dest_y+height-1 do
 		local o_x = offs_x
 		for x = dest_x, dest_x+width-2, 2 do
-			self:setPixel2(x, y,
-				colormod(source:getPixel(o_x, o_y), mod_param, self, x, y),
-				colormod(source:getPixel(o_x+1, o_y), mod_param, self, x+1, y))
+			setter(dest, x, y, self:getPixel(o_x, o_y), set_param, self:getPixel(o_x+1, o_y))
 			o_x = o_x + 2
 		end
 		o_y = o_y + 1
 	end
+	return true
 end
 
-local function no_color_mod(value) return value end
-
-function BB.modInvert(value)
-	return value:invert()
+-- optimized 4bpp to 4bpp blitting
+function BB4_mt.__index:blitTo4(dest, dest_x, dest_y, offs_x, offs_y, width, height, setter, set_param)
+	local o_y = offs_y
+	for y = dest_y, dest_y+height-1 do
+		local w = width
+		local dest_p = dest:getPixelP(dest_x, y)
+		local source_p = self:getPixelP(offs_x, o_y)
+		if band(offs_x, 1) == 1 then
+			-- odd source x coordinate
+			local nv = source_p[0]
+			source_p = source_p + 1
+			if band(dest_x, 1) == 1 then
+				-- ... and odd destination x coordinate
+				setter(dest, nil, dest_p, nil, set_param, nv)
+				dest_p = dest_p + 1
+				w = w - 1
+				while w > 1 do
+					nv = source_p[0]
+					setter(dest, nil, dest_p, Color4U(nv.a), set_param, nv)
+					source_p = source_p + 1
+					dest_p = dest_p + 1
+					w = w - 2
+				end
+				if w > 0 then
+					setter(dest, nil, dest_p, Color4U(source_p[0].a), set_param, nil)
+				end
+			else
+				-- even destination coordinate
+				while w > 1 do
+					local v = source_p[0]
+					setter(dest, nil, dest_p, Color4L(nv.a), set_param, Color4U(v.a))
+					nv = v
+					source_p = source_p + 1
+					dest_p = dest_p + 1
+					w = w - 2
+				end
+				if w > 0 then
+					setter(dest, nil, dest_p, Color4L(nv.a), set_param, nil)
+				end
+			end
+		else
+			-- even source x coordinate
+			if band(dest_x, 1) == 1 then
+				-- ..but odd destination x coordinate
+				local nv = source_p[0]
+				source_p = source_p + 1
+				setter(dest, nil, dest_p, nil, set_param, nv)
+				dest_p = dest_p + 1
+				w = w - 1
+				while w > 1 do
+					local v = source_p[0]
+					setter(dest, nil, dest_p, Color4L(nv.a), set_param, v)
+					nv = v
+					source_p = source_p + 1
+					dest_p = dest_p + 1
+					w = w - 2
+				end
+				if w > 0 then
+					setter(dest, nil, dest_p, Color4L(nv.a), set_param, nil)
+				end
+			else
+				-- even destination x coordinate
+				while w > 1 do
+					local v = source_p[0]
+					setter(dest, nil, dest_p, v, set_param, Color4L(v.a))
+					source_p = source_p + 1
+					dest_p = dest_p + 1
+					w = w - 2
+				end
+				if w > 0 then
+					setter(dest, nil, dest_p, source_p[0], set_param, nil)
+				end
+			end
+		end
+		o_y = o_y + 1
+	end
+	return true
 end
 
-function BB.modAddBlit(value, intensity, orig, x, y)
-	return value:add(orig:getPixel(x, y), intensity)
+function BB4_mt.__index:blitTo8(dest, dest_x, dest_y, offs_x, offs_y, width, height, setter, set_param)
+	local o_y = offs_y
+	for y = dest_y, dest_y+height-1 do
+		local w = width
+		local dest_p = dest:getPixelP(dest_x, y)
+		local source_p = self:getPixelP(offs_x, o_y)
+		if band(offs_x, 1) == 1 then
+			local v = source_p[0].a
+			local l = band(v, 0x0F)
+			setter(dest, nil, dest_p, Color8(bor(l, lshift(l, 4))), set_param)
+			dest_p = dest_p + 1
+			source_p = source_p + 1
+			w = w - 1
+		end
+		while w > 1 do
+			local v = source_p[0].a
+			local u = band(v, 0xF0)
+			local l = band(v, 0x0F)
+			setter(dest, nil, dest_p, Color8(bor(u, rshift(u, 4))), set_param)
+			dest_p = dest_p + 1
+			setter(dest, nil, dest_p, Color8(bor(l, lshift(l, 4))), set_param)
+			dest_p = dest_p + 1
+			source_p = source_p + 1
+			w = w - 2
+		end
+		if w > 0 then
+			local v = source_p[0].a
+			local u = band(v, 0xF0)
+			setter(dest, nil, dest_p, Color8(bor(u, rshift(u, 4))), set_param)
+		end
+		o_y = o_y + 1
+	end
+	return true
 end
+BB4_mt.__index.blitToA8 = BB4_mt.__index.blitTo8
+BB4_mt.__index.blitTo16 = BB4_mt.__index.blitTo8
+BB4_mt.__index.blitToRGB24 = BB4_mt.__index.blitTo8
+BB4_mt.__index.blitToRGB32 = BB4_mt.__index.blitTo8
 
-function BB.modDim(value)
-	return value:dim()
-end
-
-function BB.modLighten(value, low)
-	return value:lighten(low)
-end
-
-function BB_mt.__index:blitFrom(source, dest_x, dest_y, offs_x, offs_y, width, height, colormod, mod_param)
+function BB_mt.__index:blitFrom(source, dest_x, dest_y, offs_x, offs_y, width, height, setter, set_param)
 	width, height = width or source.w, height or source.h
-	if not colormod then colormod = no_color_mod end
 	width, dest_x, offs_x = checkBounds(width, dest_x or 0, offs_x or 0, self.w, source.w)
 	height, dest_y, offs_y = checkBounds(height, dest_y or 0, offs_y or 0, self.h, source.h)
+	if not setter then setter = self.setPixel end
 
 	if width <= 0 or height <= 0 then return end
 
-	return self:blitFromChecked(source, dest_x, dest_y, offs_x, offs_y, width, height, colormod, mod_param)
+	return self:blitFromChecked(source, dest_x, dest_y, offs_x, offs_y, width, height, setter, set_param)
 end
 BB_mt.__index.blitFullFrom = BB_mt.__index.blitFrom
 
 function BB_mt.__index:addblitFrom(source, dest_x, dest_y, offs_x, offs_y, width, height, intensity)
-	self:blitFrom(source, dest_x, dest_y, offs_x, offs_y, width, height, BB.modAdd, intensity)
+	self:blitFrom(source, dest_x, dest_y, offs_x, offs_y, width, height, self.setPixelAdd, intensity)
 end
 
---[[
-rotation via virtual blitbuffer
---]]
-function BB_mt.__index:rotateBy(degree)
-	if degree % 360 == 0 then return self end
-	while degree < 0 do degree = degree + 360 end
-	degree = degree % 360
-	assert(degree % 90 == 0, "rotation only by multiples of 90°")
-	local BB_rotated = {
-		degree = degree,
-		bb = self,
-		w = self.h,
-		h = self.w
-	}
-	if degree % 180 == 0 then
-		-- "upside down" - width and height stay the same
-		BB_rotated.w = self.w
-		BB_rotated.h = self.h
-	end
-	setmetatable(BB_rotated, BB_rotated_mt)
-	return BB_rotated
-end
-function BB_rotated_mt.__index:rotateBy(degree)
-	-- just do a new rotateBy() on our original Blitbuffer
-	return self.bb:rotateBy(self.degree + degree)
-end
-
-function BB_mt.__index:invert()
-	local BB_inverted = {
-		bb = self,
-		w = self.w,
-		h = self.h
-	}
-	setmetatable(BB_inverted, BB_inverted_mt)
-	return BB_inverted
-end
-function BB_inverted_mt.__index:invert()
-	return self.bb
-end
-
-function BB_mt.__index:mask(fg, bg)
-	local BB_masked = {
-		bb = self,
-		w = self.w,
-		h = self.h,
-		fg = fg,
-		bg = bg
-	}
-	setmetatable(BB_masked, BB_masked_mt)
-	return BB_masked
-end
-
---[[
-compatibility method for a "rotated blitting"
-..]]
 function BB_mt.__index:blitFromRotate(source, degree)
-	self:blitFrom(source:rotateBy(-degree))
+	self:rotate(degree):blitFrom(source, dest_x, dest_y, offs_x, offs_y, width, height, self.setPixel, intensity)
 end
 
 --[[
@@ -634,13 +847,6 @@ function BB_mt.__index:free()
 		ffi.C.free(self.data)
 	end
 end
-
--- a NOP for virtual blitbuffers
--- note that we can *not* free resources of the underlying
--- blitbuffer as that might be referenced elsewhere!
-function BB_rotated_mt.__index:free() return end
-BB_inverted_mt.__index.free = BB_rotated_mt.__index.free
-BB_masked_mt.__index.free = BB_rotated_mt.__index.free
 
 --[[
 memory management
@@ -661,7 +867,7 @@ invert a rectangle within the buffer
 @param h height
 --]]
 function BB_mt.__index:invertRect(x, y, w, h)
-	self:blitFrom(self, x, y, x, y, w, h, BB.modInvert)
+	self:blitFrom(self, x, y, x, y, w, h, self.setPixelInverted)
 end
 
 --[[
@@ -918,7 +1124,7 @@ dim color values in rectangular area
 @param h height
 --]]
 function BB_mt.__index:dimRect(x, y, w, h)
-	self:blitFrom(self, x, y, x, y, w, h, BB.modDim)
+	self:blitFrom(self, x, y, x, y, w, h, self.setPixelDim)
 end
 
 --[[
@@ -930,26 +1136,16 @@ lighten color values in rectangular area
 @param h height
 --]]
 function BB_mt.__index:lightenRect(x, y, w, h, low)
-	self:blitFrom(self, x, y, x, y, w, h, BB.modLighten, low)
+	self:blitFrom(self, x, y, x, y, w, h, self.setPixelLighten, low)
 end
 
 function BB_mt.__index:copy()
-	local copy = BB.new(self.w, self.h, self.pitch, nil, self:getBpp(), self:isRGB())
-	ffi.copy(copy.data, self.data, self.pitch * self.h)
-	return copy
+	local mytype = ffi.typeof(self)
+	local buffer = ffi.C.malloc(self.pitch * self.h)
+	assert(buffer, "cannot allocate buffer")
+	ffi.copy(buffer, self.data, self.pitch * self.h)
+	return mytype(self.w, self.h, self.pitch, buffer, 1)
 end
-
-function BB_rotated_mt.__index:copy()
-	return self.bb:copy():rotateBy(self.degree)
-end
-
-function BB_inverted_mt.__index:copy()
-	return self.bb:copy():invert()
-end
-function BB_inverted_mt.__index:copy()
-	return self.bb:copy():mask(self.fg, self.bg)
-end
-
 
 -- if no special case in BB???_mt exists, use function from BB_mt
 -- (we do not use BB_mt as metatable for BB???_mt since this causes
@@ -957,10 +1153,12 @@ end
 for name, func in pairs(BB_mt.__index) do
 	if not BB4_mt.__index[name] then BB4_mt.__index[name] = func end
 	if not BB8_mt.__index[name] then BB8_mt.__index[name] = func end
+	if not BBA8_mt.__index[name] then BBA8_mt.__index[name] = func end
 	if not BB16_mt.__index[name] then BB16_mt.__index[name] = func end
 	if not BBRGB24_mt.__index[name] then BBRGB24_mt.__index[name] = func end
 	if not BBRGB32_mt.__index[name] then BBRGB32_mt.__index[name] = func end
 	if not BB_rotated_mt.__index[name] then BB_rotated_mt.__index[name] = func end
+	if not BB4_rotated_mt.__index[name] then BB4_rotated_mt.__index[name] = func end
 	if not BB_inverted_mt.__index[name] then BB_inverted_mt.__index[name] = func end
 	if not BB_masked_mt.__index[name] then BB_masked_mt.__index[name] = func end
 end
@@ -968,6 +1166,7 @@ end
 -- set metatables for the BlitBuffer types
 local BlitBuffer4 = ffi.metatype("BlitBuffer4", BB4_mt)
 local BlitBuffer8 = ffi.metatype("BlitBuffer8", BB8_mt)
+local BlitBufferA8 = ffi.metatype("BlitBufferA8", BBA8_mt)
 local BlitBuffer16 = ffi.metatype("BlitBuffer16", BB16_mt)
 local BlitBufferRGB24 = ffi.metatype("BlitBufferRGB24", BBRGB24_mt)
 local BlitBufferRGB32 = ffi.metatype("BlitBufferRGB32", BBRGB32_mt)
@@ -976,6 +1175,7 @@ local BlitBufferRGB32 = ffi.metatype("BlitBufferRGB32", BBRGB32_mt)
 ffi.metatype("Color4L", Color4L_mt)
 ffi.metatype("Color4U", Color4U_mt)
 ffi.metatype("Color8", Color8_mt)
+ffi.metatype("ColorA8", ColorA8_mt)
 ffi.metatype("Color16", Color16_mt)
 ffi.metatype("ColorRGB24", ColorRGB24_mt)
 ffi.metatype("ColorRGB32", ColorRGB32_mt)
@@ -1029,6 +1229,7 @@ BB.ColorRGB32 = ColorRGB32
 -- accessors for Blitbuffer types
 BB.BlitBuffer4 = BlitBuffer4
 BB.BlitBuffer8 = BlitBuffer8
+BB.BlitBufferA8 = BlitBufferA8
 BB.BlitBuffer16 = BlitBuffer16
 BB.BlitBufferRGB24 = BlitBufferRGB24
 BB.BlitBufferRGB32 = BlitBufferRGB32
