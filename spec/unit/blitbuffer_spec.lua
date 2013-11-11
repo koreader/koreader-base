@@ -12,11 +12,6 @@ describe("Blitbuffer unit tests", function()
 			assert.are.equals(0xB9B9, c16_32.a)
 		end)
 
-		it("should convert RGB32 to RGB16", function()
-			local cRGB16_32 = cRGB32:getColorRGB16()
-			assert.are.equals(0x7EAA, cRGB16_32.v)
-		end)
-
 		it("should convert RGB32 to gray8", function()
 			local c8_32 = cRGB32:getColor8()
 			assert.are.equals(0xB9, c8_32.a)
