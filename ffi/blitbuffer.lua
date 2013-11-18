@@ -129,7 +129,6 @@ local BBRGB32_mt = {__index={}}
 
 -- virtual blitbuffers:
 local BB_rotated_mt = {__index={}}
-local BB4_rotated_mt = {__index={}}
 local BB_inverted_mt = {__index={}}
 local BB_masked_mt = {__index={}}
 
@@ -155,9 +154,9 @@ function BB4_mt.__index:getPixelP(x, y)
 	--self:checkCoordinates(x, y)
 	local p = self.data + self.pitch*y + rshift(x, 1)
 	if band(x, 1) == 0 then 
-		return ffi.cast(P_Color4U, p)
+		return ffi.cast(P_Color4U, p), true
 	else
-		return ffi.cast(P_Color4L, p)
+		return ffi.cast(P_Color4L, p), false
 	end
 end
 function BB8_mt.__index:getPixelP(x, y)
@@ -188,8 +187,11 @@ function BB_rotated_mt.__index:getPixelP(x, y)
 	elseif self.degree == 270 then
 		return self.bb:getPixelP(y, self.bb.h - x - 1)
 	end
+	error("could not get pixel pointer for this rotation")
 end
-BB4_rotated_mt.__index.getPixelP = BB_rotated_mt.__index.getPixelP
+function BB_inverted_mt.__index:getPixelP(x, y)
+	return self.bb:getPixelP(x, y)
+end
 
 -- coordinate checking
 --function BB_mt.__index:checkCoordinates(x, y) end
@@ -428,8 +430,7 @@ function BB_mt.__index:invert()
 		pitch = self.pitch,
 		data = self.data,
 		blitfunc = self.blitfunc,
-		getMyColor = self.getMyColor,
-		getPixelP = self.getPixelP
+		getMyColor = self.getMyColor
 	}
 	setmetatable(bb, BB_inverted_mt)
 	return bb
@@ -440,30 +441,36 @@ function BB_mt.__index:rotate(degree)
 	local backing_bb = self
 	if self:isRotated() then
 		-- combine rotations
-		degree = (degree + self.degree) % 360
-		if degree == 0 then return self.bb end
+		degree = (degree + self.degree)
 		backing_bb = self.bb
 	end
+	degree = degree % 360
+	if degree == 0 then return self.bb end
 	local bb = {
 		bb = backing_bb,
 		w = self.w,
 		h = self.h,
 		degree = degree,
-		pitch = self.pitch,
-		data = self.data,
-		blitfunc = self.blitfunc,
-		getMyColor = self.getMyColor
+		pitch = backing_bb.pitch,
+		data = backing_bb.data,
+		getMyColor = backing_bb.getMyColor,
+		select_y_upper = 2,
+		select_x_upper = 2
 	}
 	if degree == 90 or degree == 270 then
-		bb.w = self.h
-		bb.h = self.w
+		bb.w = backing_bb.h
+		bb.h = backing_bb.w
 	end
-	if self:getBpp() == 4 then
-		setmetatable(bb, BB4_rotated_mt)
-	else
-		setmetatable(bb, BB_rotated_mt)
+	if degree == 90 then bb.select_y_upper = 1
+	elseif degree == 180 then bb.select_x_upper = 1
+	elseif degree == 270 then bb.select_y_upper = 0
 	end
+	setmetatable(bb, BB_rotated_mt)
 	return bb
+end
+BB_mt.__index.rotateAbsolute = BB_mt.__index.rotate
+function BB_rotated_mt.__index:rotateAbsolute(degree)
+	return self:rotate(degree - self.degree)
 end
 function BB_mt.__index:getBpp() return self.bb:getBpp() end
 function BB_mt.__index:isRGB() return self.bb:isRGB() end
@@ -474,47 +481,33 @@ function BB_mt.__index:setPixel(x, p, color)
 	p[0] = self.getMyColor(color)
 end
 -- two-pixel setting for 4bpp mode
-function BB4_mt.__index:setPixel(x, p, color, dummy, color2)
+function BB4_mt.__index:setPixel(x, y, color, dummy, color2)
 	if x then
-		p = self:getPixelP(x, p)
-		if band(x, 1) == 1 then
-			color2 = color
-			color = nil
+		local p, is_upper = self:getPixelP(x, y)
+		if is_upper then
+			p[0].a = bor(band(p[0].a, 0x0F), color:getColor4U().a)
+		else
+			p[0].a = bor(band(p[0].a, 0xF0), color:getColor4L().a)
 		end
-	end
-	if color and color2 then
-		p[0].a = bor(color:getColor4U().a, color2:getColor4L().a)
-	elseif color2 then
-		p[0].a = bor(band(p[0].a, 0xF0), color2:getColor4L().a)
 	else
-		p[0].a = bor(band(p[0].a, 0x0F), color:getColor4U().a)
+		local p = y
+		p[0].a = bor(
+				(color and color:getColor4U().a) or band(p[0].a, 0xF0),
+				(color2 and color2:getColor4L().a) or band(p[0].a, 0x0F)
+			)
 	end
 end
-BB4_rotated_mt.__index.setPixel = BB4_mt.__index.setPixel
+
 function BB_inverted_mt.__index:setPixel(x, p, color, dummy, color2)
 	-- this will work for both 4bpp and other modes
 	self.bb:setPixelInverted(x, p, color, dummy, color2)
 end
 
 function BB_mt.__index:setPixelInverted(x, p, color)
-	if x then p = self:getPixelP(x, p) end
-	p[0] = self.getMyColor(color):invert()
+	self:setPixel(x, p, color:invert())
 end
 function BB4_mt.__index:setPixelInverted(x, p, color, dummy, color2)
-	if x then
-		p = self:getPixelP(x, p)
-		if band(x, 1) == 1 then
-			color2 = color
-			color = nil
-		end
-	end
-	if color and color2 then
-		p[0].a = bxor(bor(color:getColor4U().a, color2:getColor4L().a), 0xFF)
-	elseif color2 then
-		p[0].a = bor(band(p[0].a, 0xF0), bxor(color2:getColor4L().a, 0x0F))
-	else
-		p[0].a = bor(band(p[0].a, 0x0F), bxor(color:getColor4U().a, 0xF0))
-	end
+	self:setPixel(x, p, color and color:invert(), dummy, color2 and color2:invert())
 end
 function BB_inverted_mt.__index:setPixelInverted(x, p, color, dummy, color2)
 	-- this will work for both 4bpp and other modes
@@ -583,6 +576,7 @@ function BB_mt.__index:getWidth() return self.w end
 function BB_mt.__index:getHeight() return self.h end
 
 -- names of optimized blitting routines
+BB_mt.__index.blitfunc = "blitDefault" -- not optimized
 BB4_mt.__index.blitfunc = "blitTo4"
 BB8_mt.__index.blitfunc = "blitTo8"
 BBA8_mt.__index.blitfunc = "blitToA8"
@@ -633,31 +627,25 @@ local function checkBounds(length, target_offset, source_offset, target_size, so
 	end
 end
 
--- no optimized blitting by default:
-function BB_mt.__index:blitTo4() return false end
-BB_mt.__index.blitTo8 = BB_mt.__index.blitTo4
-BB_mt.__index.blitToA8 = BB_mt.__index.blitTo4
-BB_mt.__index.blitTo16 = BB_mt.__index.blitTo4
-BB_mt.__index.blitToRGB24 = BB_mt.__index.blitTo4
-BB_mt.__index.blitToRGB32 = BB_mt.__index.blitTo4
-
-function BB_mt.__index:blitFromChecked(source, dest_x, dest_y, offs_x, offs_y, width, height, setter, set_param)
-	-- test if an optimized version exists/succeeds:
-	if source[self.blitfunc](source, self, dest_x, dest_y, offs_x, offs_y, width, height, setter, set_param) then
-		return
-	end
+function BB_mt.__index:blitDefault(dest, dest_x, dest_y, offs_x, offs_y, width, height, setter, set_param)
 	-- slow default variant:
-	local dest = self
 	local o_y = offs_y
 	for y = dest_y, dest_y+height-1 do
 		local o_x = offs_x
 		for x = dest_x, dest_x+width-1 do
-			setter(dest, x, y, source:getPixel(o_x, o_y), set_param)
+			setter(dest, x, y, self:getPixel(o_x, o_y), set_param)
 			o_x = o_x + 1
 		end
 		o_y = o_y + 1
 	end
 end
+-- no optimized blitting by default:
+BB_mt.__index.blitTo4 = BB_mt.__index.blitDefault
+BB_mt.__index.blitTo8 = BB_mt.__index.blitDefault
+BB_mt.__index.blitToA8 = BB_mt.__index.blitDefault
+BB_mt.__index.blitTo16 = BB_mt.__index.blitDefault
+BB_mt.__index.blitToRGB24 = BB_mt.__index.blitDefault
+BB_mt.__index.blitToRGB32 = BB_mt.__index.blitDefault
 
 -- slightly optimized default routine for blitting to 4bpp buffers
 function BB_mt.__index:blitTo4(dest, dest_x, dest_y, offs_x, offs_y, width, height, setter, set_param)
@@ -688,8 +676,10 @@ function BB_mt.__index:blitTo4(dest, dest_x, dest_y, offs_x, offs_y, width, heig
 	-- now do the "doubles" in between
 	for y = dest_y, dest_y+height-1 do
 		local o_x = offs_x
-		for x = dest_x, dest_x+width-2, 2 do
-			setter(dest, x, y, self:getPixel(o_x, o_y), set_param, self:getPixel(o_x+1, o_y))
+		local p = dest:getPixelP(dest_x, y)
+		for x = 0, width-2, 2 do
+			setter(dest, nil, p, self:getPixel(o_x, o_y), set_param, self:getPixel(o_x+1, o_y))
+			p = p + 1
 			o_x = o_x + 2
 		end
 		o_y = o_y + 1
@@ -822,8 +812,7 @@ function BB_mt.__index:blitFrom(source, dest_x, dest_y, offs_x, offs_y, width, h
 	if not setter then setter = self.setPixel end
 
 	if width <= 0 or height <= 0 then return end
-
-	return self:blitFromChecked(source, dest_x, dest_y, offs_x, offs_y, width, height, setter, set_param)
+	return source[self.blitfunc](source, self, dest_x, dest_y, offs_x, offs_y, width, height, setter, set_param)
 end
 BB_mt.__index.blitFullFrom = BB_mt.__index.blitFrom
 
@@ -1158,7 +1147,6 @@ for name, func in pairs(BB_mt.__index) do
 	if not BBRGB24_mt.__index[name] then BBRGB24_mt.__index[name] = func end
 	if not BBRGB32_mt.__index[name] then BBRGB32_mt.__index[name] = func end
 	if not BB_rotated_mt.__index[name] then BB_rotated_mt.__index[name] = func end
-	if not BB4_rotated_mt.__index[name] then BB4_rotated_mt.__index[name] = func end
 	if not BB_inverted_mt.__index[name] then BB_inverted_mt.__index[name] = func end
 	if not BB_masked_mt.__index[name] then BB_masked_mt.__index[name] = func end
 end
