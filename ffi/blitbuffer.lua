@@ -1222,41 +1222,4 @@ BB.BlitBuffer16 = BlitBuffer16
 BB.BlitBufferRGB24 = BlitBufferRGB24
 BB.BlitBufferRGB32 = BlitBufferRGB32
 
-
--- tests:
--- (run as "luajit -e 'require("blitbuffer").test()'"
-
-function BB.test()
-	local function print_bits(value)
-		local function print_iter(value)
-			if value > 0 then
-				print_iter(rshift(value, 1))
-				if band(value, 1) == 1 then io.stdout:write("1") else io.stdout:write("0") end
-			else
-				io.stdout:write("0b0")
-			end
-		end
-		print_iter(value)
-		io.stdout:write("\n")
-	end
-
-	local cRGB32 = ColorRGB32(0xFF, 0xAA, 0x55, 0)
-	local cRGB24 = ColorRGB24(0xFF, 0xAA, 0x55)
-
-	local cRGB24_32 = cRGB32:getColorRGB24()
-	local c16_32 = cRGB32:getColor16()
-	local c8_32 = cRGB32:getColor8()
-	local c4l_32 = cRGB32:getColor4L()
-	local c4u_32 = cRGB32:getColor4U()
-
-	assert(c16_32.a == 0xAAAA, "conversion failure RGB32 -> gray16")
-	assert(c8_32.a == 0xAA, "conversion failure RGB32 -> gray8")
-	assert(c4l_32.a == 0x0A, "conversion failure RGB32 -> gray4 (lower nibble)")
-	assert(c4u_32.a == 0xA0, "conversion failure RGB32 -> gray4 (upper nibble)")
-
-	-- more tests to be done
-
-	print("test: OK!")
-end
-
 return BB
