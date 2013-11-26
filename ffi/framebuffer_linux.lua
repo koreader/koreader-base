@@ -58,7 +58,7 @@ local function k51_update(fb, refreshtype, waveform_mode, x, y, w, h)
 end
 
 local function kobo_update(fb, refreshtype, waveform_mode, x, y, w, h)
-	local refarea = ffi.new("struct mxcfb_update_data_kobo[1]")
+	local refarea = ffi.new("struct mxcfb_update_data[1]")
 	-- only for Kobo driver:
 	refarea[0].alt_buffer_data.virt_addr = nil
 
@@ -90,7 +90,8 @@ function framebuffer.open(device)
 	assert(fb.finfo.type == ffi.C.FB_TYPE_PACKED_PIXELS,
 		"video type not supported")
 
-	assert(fb.vinfo.grayscale ~= 0, "only grayscale is supported but framebuffer says it isn't")
+	--Kindle Paperwhite doesn't set this properly?
+	--assert(fb.vinfo.grayscale == 0, "only grayscale is supported but framebuffer says it isn't")
 	assert(fb.vinfo.xres_virtual > 0 and fb.vinfo.yres_virtual > 0, "invalid framebuffer resolution")
 
 	-- it seems that fb.finfo.smem_len is unreliable on kobo
@@ -101,20 +102,24 @@ function framebuffer.open(device)
 	assert(fb.data ~= ffi.C.MAP_FAILED, "can not mmap() framebuffer")
 
 	if ffi.string(fb.finfo.id, 11) == "mxc_epdc_fb" then
-		-- TODO: check for Kobo
-		-- Kindle PaperWhite and KT with 5.1 or later firmware
-		fb.einkUpdateFunc = k51_update
-
+		-- TODO: implement a better check for Kobo
 		if fb.vinfo.bits_per_pixel == 16 then
+			-- this ought to be a Kobo
+			local dummy = require("ffi/mxcfb_kobo_h")
+			fb.einkUpdateFunc = kobo_update
 			fb.bb = BB.new(fb.vinfo.xres, fb.vinfo.yres, BB.TYPE_BB16, fb.data, fb.finfo.line_length)
 			fb.bb:invert()
 		elseif fb.vinfo.bits_per_pixel == 8 then
+			-- Kindle PaperWhite and KT with 5.1 or later firmware
+			local dummy = require("ffi/mxcfb_kindle_h")
+			fb.einkUpdateFunc = k51_update
 			fb.bb = BB.new(fb.vinfo.xres, fb.vinfo.yres, BB.TYPE_BB8, fb.data, fb.finfo.line_length)
 			fb.bb:invert()
 		else
 			error("unknown bpp value for the mxc eink driver")
 		end
 	elseif ffi.string(fb.finfo.id, 7) == "eink_fb" then
+		local dummy = require("ffi/einkfb_h")
 		fb.einkUpdateFunc = einkfb_update
 
 		if fb.vinfo.bits_per_pixel == 8 then

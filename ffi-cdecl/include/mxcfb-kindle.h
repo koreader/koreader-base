@@ -8,9 +8,9 @@
  * - Modified mxcfb_alt_buffer_data struct according to include/linux/mxcfb.h
  *   from Kindle 5.3.0 firmware. Thanks to eureka@mobileread.
  *   http://www.mobileread.com/forums/showpost.php?p=2337118&postcount=818
- *
- * - Modified so that Kobo specifics are now in separately named structs
- *
+ */
+
+/*
  * The code contained herein is licensed under the GNU Lesser General
  * Public License.  You may obtain a copy of the GNU Lesser General
  * Public License Version 2.1 or later at the following locations:
@@ -19,7 +19,6 @@
  * http://www.gnu.org/copyleft/lgpl.html
  */
 
-
 /*
  * @file arch-mxc/   mxcfb.h
  *
@@ -27,7 +26,6 @@
  *
  * @ingroup Framebuffer
  */
-
 #ifndef __ASM_ARCH_MXCFB_H__
 #define __ASM_ARCH_MXCFB_H__
 
@@ -114,14 +112,6 @@ struct mxcfb_alt_buffer_data {
 	__u32 height;	/* height of entire buffer */
 	struct mxcfb_rect alt_update_region;	/* region within buffer to update */
 };
-struct mxcfb_alt_buffer_data_kobo {
-	/* virt_addr is not included in amazon's source */
-	void *virt_addr;
-	__u32 phys_addr;
-	__u32 width;	/* width of entire buffer */
-	__u32 height;	/* height of entire buffer */
-	struct mxcfb_rect alt_update_region;	/* region within buffer to update */
-};
 
 struct mxcfb_update_data {
 	struct mxcfb_rect update_region;
@@ -136,16 +126,6 @@ struct mxcfb_update_data {
 	struct mxcfb_alt_buffer_data alt_buffer_data;
 };
 typedef struct mxcfb_update_data mxcfb_update_data;
-struct mxcfb_update_data_kobo {
-	struct mxcfb_rect update_region;
-	__u32 waveform_mode;
-	__u32 update_mode;
-	__u32 update_marker;
-	int temp;
-	uint flags;
-	struct mxcfb_alt_buffer_data_kobo alt_buffer_data;
-};
-typedef struct mxcfb_update_data mxcfb_update_data_kobo;
 
 /* this is only used in kindle firmware 5.0, later version (5.1) has changed
  * the struct to mxcfb_update_data (see above) */
