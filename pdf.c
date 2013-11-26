@@ -625,7 +625,7 @@ static int getPageSize(lua_State *L) {
 	fz_rect bounds;
 	fz_irect bbox;
 	PdfPage *page = (PdfPage*) luaL_checkudata(L, 1, "pdfpage");
-	DrawContext *dc = (DrawContext*) luaL_checkudata(L, 2, "drawcontext");
+	DrawContext *dc = (DrawContext*) lua_topointer(L, 2);
 
 	fz_bound_page(page->doc->xref, page->page, &bounds);
 	fz_scale(&tmp1, dc->zoom, dc->zoom);
@@ -923,7 +923,7 @@ static int drawPage(lua_State *L) {
 	fz_irect bbox;
 
 	PdfPage *page = (PdfPage*) luaL_checkudata(L, 1, "pdfpage");
-	DrawContext *dc = (DrawContext*) luaL_checkudata(L, 2, "drawcontext");
+	DrawContext *dc = (DrawContext*) lua_topointer(L, 2);
 	BlitBuffer *bb = (BlitBuffer*) lua_topointer(L, 3);
 	bbox.x0 = luaL_checkint(L, 4);
 	bbox.y0 = luaL_checkint(L, 5);
