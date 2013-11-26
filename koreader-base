@@ -6,10 +6,8 @@ this replaces the former standalone binary which invoked the Lua interpreter/com
 now, we use the "default" interpreter/compiler
 ]]--
 
-require "libs/libkoreader-blitbuffer"
 require "libs/libkoreader-cre"
 require "libs/libkoreader-djvu"
-require "libs/libkoreader-drawcontext"
 require "libs/libkoreader-input"
 require "libs/libkoreader-koptcontext"
 require "libs/libkoreader-lfs"
@@ -19,17 +17,12 @@ require "libs/libkoreader-luagettext"
 require "libs/libkoreader-kobolight"
 
 -- libraries converted to FFI:
+DrawContext = require("ffi/drawcontext")
 Blitbuffer = require("ffi/blitbuffer")
 freetype = require("ffi/freetype")
 Image = require("ffi/mupdfimg")
 util = require("ffi/util")
-
--- transition modules
-if util.isEmulated() then
-	einkfb = require("ffi/framebuffer_SDL")
-else
-	require "libs/libkoreader-einkfb"
-end
+einkfb = require("ffi/framebuffer")
 
 if not arg[1] then
 	error("you must give the name of the main lua executable as the first argument")
