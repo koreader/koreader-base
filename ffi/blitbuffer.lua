@@ -284,7 +284,7 @@ end
 Color4U_mt.__index.getColor16 = Color4L_mt.__index.getColor16
 Color8_mt.__index.getColor16 = Color4L_mt.__index.getColor16
 Color8A_mt.__index.getColor16 = Color4L_mt.__index.getColor16
-function Color16_mt.__index.getColor16() return self end
+function Color16_mt.__index:getColor16() return self end
 ColorRGB24_mt.__index.getColor16 = Color4L_mt.__index.getColor16
 ColorRGB32_mt.__index.getColor16 = Color4L_mt.__index.getColor16
 
