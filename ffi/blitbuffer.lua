@@ -185,9 +185,10 @@ function ColorRGB24_mt.__index:add(color, intensity)
 	self:set(ColorRGB24(r, g, b))
 end
 ColorRGB32_mt.__index.add = ColorRGB24_mt.__index.add
+
 -- dimming
 function Color4L_mt.__index:dim()
-	self:set(Color8(rshift(self:getColor8().a, 1)))
+	return Color8(rshift(self:getColor8().a, 1))
 end
 Color4U_mt.__index.dim = Color4L_mt.__index.dim
 Color8_mt.__index.dim = Color4L_mt.__index.dim
@@ -199,7 +200,11 @@ ColorRGB32_mt.__index.dim = Color4L_mt.__index.dim
 function Color4L_mt.__index:lighten(low)
 	local value = self:getColor4L().a
 	low = low * 0x0F
-	if value < low then self:set(Color4L(low)) end
+	if value < low then
+		return Color4L(low)
+	else
+		return self
+	end
 end
 Color4U_mt.__index.lighten = Color4L_mt.__index.lighten
 Color8_mt.__index.lighten = Color4L_mt.__index.lighten
@@ -911,10 +916,9 @@ function BB_mt.__index:dimRect(x, y, w, h)
 	if w <= 0 or h <= 0 then return end
 	w, x = BB.checkBounds(w, x, 0, self:getWidth(), 0xFFFF)
 	h, y = BB.checkBounds(h, y, 0, self:getHeight(), 0xFFFF)
-	x, y, w, h = self:getPhysicalRect(x, y, w, h)
 	for y = y, y+h-1 do
 		for x = x, x+w-1 do
-			self:getPixelP(x, y)[0]:dim()
+			self:setPixel(x, y, self:getPixel(x, y):dim())
 		end
 	end
 end
@@ -934,7 +938,7 @@ function BB_mt.__index:lightenRect(x, y, w, h, low)
 	x, y, w, h = self:getPhysicalRect(x, y, w, h)
 	for y = y, y+h-1 do
 		for x = x, x+w-1 do
-			self:getPixelP(x, y)[0]:lighten(low)
+			self:setPixel(x, y, self:getPixel(x, y):lighten(low))
 		end
 	end
 end
