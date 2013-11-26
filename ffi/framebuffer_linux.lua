@@ -13,8 +13,8 @@ local function einkfb_update(fb, refreshtype, waveform_mode, x, y, w, h)
 
 	refarea[0].x1 = x or 0
 	refarea[0].y1 = y or 0
-	refarea[0].x2 = x + (w or fb.vinfo.xres)
-	refarea[0].y2 = y + (h or fb.vinfo.yres)
+	refarea[0].x2 = x + (w or (fb.vinfo.xres-x))
+	refarea[0].y2 = y + (h or (fb.vinfo.yres-y))
 	refarea[0].buffer = nil
 	if refreshtype == 1 then
 		refarea[0].which_fx = ffi.C.fx_update_partial
@@ -91,7 +91,7 @@ function framebuffer.open(device)
 		"video type not supported")
 
 	assert(fb.vinfo.grayscale ~= 0, "only grayscale is supported but framebuffer says it isn't")
-	assert(fb.vinfo.xres > 0 and fb.vinfo.yres > 0, "invalid framebuffer resolution")
+	assert(fb.vinfo.xres_virtual > 0 and fb.vinfo.yres_virtual > 0, "invalid framebuffer resolution")
 
 	-- it seems that fb.finfo.smem_len is unreliable on kobo
 	-- Figure out the size of the screen in bytes
@@ -106,9 +106,11 @@ function framebuffer.open(device)
 		fb.einkUpdateFunc = k51_update
 
 		if fb.vinfo.bits_per_pixel == 16 then
-			fb.bb = BB.new(fb.vinfo.xres_virtual, fb.vinfo.yres_virtual, fb.vinfo.xres_virtual*2, fb.data, 16, false):invert()
+			fb.bb = BB.new(fb.vinfo.xres, fb.vinfo.yres, BB.TYPE_BB16, fb.data, fb.finfo.line_length)
+			fb.bb:invert()
 		elseif fb.vinfo.bits_per_pixel == 8 then
-			fb.bb = BB.new(fb.vinfo.xres_virtual, fb.vinfo.yres_virtual, fb.vinfo.xres_virtual, fb.data, 8, false):invert()
+			fb.bb = BB.new(fb.vinfo.xres, fb.vinfo.yres, BB.TYPE_BB8, fb.data, fb.finfo.line_length)
+			fb.bb:invert()
 		else
 			error("unknown bpp value for the mxc eink driver")
 		end
@@ -116,9 +118,9 @@ function framebuffer.open(device)
 		fb.einkUpdateFunc = einkfb_update
 
 		if fb.vinfo.bits_per_pixel == 8 then
-			fb.bb = BB.new(fb.vinfo.xres_virtual, fb.vinfo.yres_virtual, fb.vinfo.xres_virtual, fb.data, 8, false)
+			fb.bb = BB.new(fb.vinfo.xres, fb.vinfo.yres, BB.TYPE_BB8, fb.data, fb.finfo.line_length)
 		elseif fb.vinfo.bits_per_pixel == 4 then
-			fb.bb = BB.new(fb.vinfo.xres_virtual, fb.vinfo.yres_virtual, fb.vinfo.xres_virtual/2, fb.data, 4, false)
+			fb.bb = BB.new(fb.vinfo.xres, fb.vinfo.yres, BB.TYPE_BB4, fb.data, fb.finfo.line_length)
 		else
 			error("unknown bpp value for the classic eink driver")
 		end
@@ -177,11 +179,14 @@ function framebuffer_mt:setOrientation(mode)
 end
 
 function framebuffer_mt.__index:refresh(refreshtype, waveform_mode, x, y, w, h)
-	self:einkUpdateFunc(refreshtype, waveform_mode, x, y, w, h)
+        w, x = BB.checkBounds(w or self.bb:getWidth(), x or 0, 0, self.bb:getWidth(), 0xFFFF)
+        h, y = BB.checkBounds(h or self.bb:getHeight(), y or 0, 0, self.bb:getHeight(), 0xFFFF)
+	local px, py = self.bb:getPhysicalRect(x, y, w, h)
+	self:einkUpdateFunc(refreshtype, waveform_mode, px, py, w, h)
 end
 
 function framebuffer_mt.__index:getSize()
-	return self.bb.w, self.bb.h
+	return self.bb:getWidth(), self.bb:getHeight()
 end
 
 function framebuffer_mt.__index:getPitch()
