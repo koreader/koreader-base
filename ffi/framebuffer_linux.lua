@@ -90,7 +90,8 @@ function framebuffer.open(device)
 	assert(fb.finfo.type == ffi.C.FB_TYPE_PACKED_PIXELS,
 		"video type not supported")
 
-	assert(fb.vinfo.grayscale ~= 0, "only grayscale is supported but framebuffer says it isn't")
+	--Kindle Paperwhite doesn't set this properly?
+	--assert(fb.vinfo.grayscale == 0, "only grayscale is supported but framebuffer says it isn't")
 	assert(fb.vinfo.xres_virtual > 0 and fb.vinfo.yres_virtual > 0, "invalid framebuffer resolution")
 
 	-- it seems that fb.finfo.smem_len is unreliable on kobo
