@@ -238,7 +238,7 @@ static int openPage(lua_State *L) {
 /* get page size after zoomed */
 static int getPageSize(lua_State *L) {
 	DjvuPage *page = (DjvuPage*) luaL_checkudata(L, 1, "djvupage");
-	DrawContext *dc = (DrawContext*) luaL_checkudata(L, 2, "drawcontext");
+	DrawContext *dc = (DrawContext*) lua_topointer(L, 2);
 	
 	lua_pushnumber(L, dc->zoom * page->info.width);
 	lua_pushnumber(L, dc->zoom * page->info.height);
@@ -665,7 +665,7 @@ static int drawReflowedPage(lua_State *L) {
 
 static int drawPage(lua_State *L) {
 	DjvuPage *page = (DjvuPage*) luaL_checkudata(L, 1, "djvupage");
-	DrawContext *dc = (DrawContext*) luaL_checkudata(L, 2, "drawcontext");
+	DrawContext *dc = (DrawContext*) lua_topointer(L, 2);
 	BlitBuffer *bb = (BlitBuffer*) lua_topointer(L, 3);
 	ddjvu_render_mode_t djvu_render_mode = (int) luaL_checkint(L, 6);
 	unsigned char adjusted_low[16], adjusted_high[16];

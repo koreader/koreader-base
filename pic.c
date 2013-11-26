@@ -144,7 +144,7 @@ static void scaleImage(uint8_t *result, uint8_t *image, int width, int height, i
 
 static int drawPage(lua_State *L) {
 	PicPage *page = (PicPage*) luaL_checkudata(L, 1, "picpage");
-	DrawContext *dc = (DrawContext*) luaL_checkudata(L, 2, "drawcontext");
+	DrawContext *dc = (DrawContext*) lua_topointer(L, 2);
 	BlitBuffer *bb = (BlitBuffer*) lua_topointer(L, 3);
 	int x_offset = MAX(0, dc->offset_x);
 	int y_offset = MAX(0, dc->offset_y);
@@ -205,7 +205,7 @@ static int cleanCache(lua_State *L) {
 
 static int getPageSize(lua_State *L) {
 	PicPage *page = (PicPage*) luaL_checkudata(L, 1, "picpage");
-	DrawContext *dc = (DrawContext*) luaL_checkudata(L, 2, "drawcontext");
+	DrawContext *dc = (DrawContext*) lua_topointer(L, 2);
 	
 	lua_pushnumber(L, dc->zoom * page->width);
 	lua_pushnumber(L, dc->zoom * page->height);

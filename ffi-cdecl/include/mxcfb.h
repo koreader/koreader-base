@@ -9,6 +9,7 @@
  *   from Kindle 5.3.0 firmware. Thanks to eureka@mobileread.
  *   http://www.mobileread.com/forums/showpost.php?p=2337118&postcount=818
  *
+ * - Modified so that Kobo specifics are now in separately named structs
  *
  * The code contained herein is licensed under the GNU Lesser General
  * Public License.  You may obtain a copy of the GNU Lesser General
@@ -108,10 +109,14 @@ struct mxcfb_rect {
 #define FB_TEMP_AUTO_UPDATE_DISABLE     -1
 
 struct mxcfb_alt_buffer_data {
-#ifdef KOBO_PLATFORM
+	__u32 phys_addr;
+	__u32 width;	/* width of entire buffer */
+	__u32 height;	/* height of entire buffer */
+	struct mxcfb_rect alt_update_region;	/* region within buffer to update */
+};
+struct mxcfb_alt_buffer_data_kobo {
 	/* virt_addr is not included in amazon's source */
 	void *virt_addr;
-#endif
 	__u32 phys_addr;
 	__u32 width;	/* width of entire buffer */
 	__u32 height;	/* height of entire buffer */
@@ -123,16 +128,24 @@ struct mxcfb_update_data {
 	__u32 waveform_mode;
 	__u32 update_mode;
 	__u32 update_marker;
-#ifndef KOBO_PLATFORM
 	/* these two fields have been added by amazon */
 	__u32 hist_bw_waveform_mode;
 	__u32 hist_gray_waveform_mode;
-#endif
 	int temp;
 	uint flags;
 	struct mxcfb_alt_buffer_data alt_buffer_data;
 };
 typedef struct mxcfb_update_data mxcfb_update_data;
+struct mxcfb_update_data_kobo {
+	struct mxcfb_rect update_region;
+	__u32 waveform_mode;
+	__u32 update_mode;
+	__u32 update_marker;
+	int temp;
+	uint flags;
+	struct mxcfb_alt_buffer_data_kobo alt_buffer_data;
+};
+typedef struct mxcfb_update_data mxcfb_update_data_kobo;
 
 /* this is only used in kindle firmware 5.0, later version (5.1) has changed
  * the struct to mxcfb_update_data (see above) */

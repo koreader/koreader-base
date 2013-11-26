@@ -181,9 +181,6 @@ libs: \
 	$(OUTPUT_DIR)/libs/libkoreader-luagettext.so \
 	$(OUTPUT_DIR)/libs/libkoreader-kobolight.so \
 	$(OUTPUT_DIR)/libs/libkoreader-input.so \
-	$(OUTPUT_DIR)/libs/libkoreader-einkfb.so \
-	$(OUTPUT_DIR)/libs/libkoreader-drawcontext.so \
-	$(OUTPUT_DIR)/libs/libkoreader-blitbuffer.so \
 	$(OUTPUT_DIR)/libs/libkoreader-lfs.so \
 	$(OUTPUT_DIR)/libs/libkoreader-koptcontext.so \
 	$(OUTPUT_DIR)/libs/libkoreader-pic.so \
@@ -204,16 +201,6 @@ $(OUTPUT_DIR)/libs/libkoreader-input.so: input.c \
 				$(POPEN_NOSHELL_LIB)
 	$(CC) $(DYNLIB_CFLAGS) $(EMU_CFLAGS) \
 		-o $@ $< $(POPEN_NOSHELL_LIB) $(EMU_LDFLAGS)
-
-$(OUTPUT_DIR)/libs/libkoreader-einkfb.so: einkfb.c
-	$(CC) -Iinclude/ $(DYNLIB_CFLAGS) $(EMU_CFLAGS)\
-		-o $@ $<  $(EMU_LDFLAGS)
-
-$(OUTPUT_DIR)/libs/libkoreader-drawcontext.so: drawcontext.c
-	$(CC) $(DYNLIB_CFLAGS) -o $@ $<
-
-$(OUTPUT_DIR)/libs/libkoreader-blitbuffer.so: blitbuffer.c
-	$(CC) $(DYNLIB_CFLAGS) -o $@ $<
 
 $(OUTPUT_DIR)/libs/libkoreader-lfs.so: luafilesystem/src/lfs.c
 	$(CC) $(DYNLIB_CFLAGS) -o $@ $<

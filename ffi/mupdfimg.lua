@@ -34,13 +34,9 @@ function Image:toBlitBuffer()
 		mupdf.fz_convert_pixmap(self.context, self.pixmap, pixmap);
 		mupdf.fz_drop_pixmap(self.context, pixmap);
 	end
-	self.bb = Blitbuffer.new(self.pixmap.w, self.pixmap.h)
-	for y = 0, self.pixmap.h - 1 do
-		for x = 0, self.pixmap.w - 1 do
-			local pix = self.pixmap.samples[(x + y*self.pixmap.w)*2]
-			self.bb:setPixel(x, y, Blitbuffer.Color4(bit.rshift(0xFF - pix, 4)))
-		end
-	end
+	self.bb = Blitbuffer.new(self.pixmap.w, self.pixmap.h, Blitbuffer.TYPE_BB8A, self.pixmap.samples)
+	self.bb:invert() -- our blitbuffers have reversed b->w scale
+	self.bb = self.bb:copy() -- we make a copy so mupdf can drop the memory
 end
 
 function Image:freeContext()

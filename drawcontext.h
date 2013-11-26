@@ -18,10 +18,6 @@
 #ifndef _DRAWCONTEXT_H
 #define _DRAWCONTEXT_H
 
-#include <lua.h>
-#include <lualib.h>
-#include <lauxlib.h>
-
 typedef struct DrawContext {
 	int rotate;
 	double zoom;
@@ -30,6 +26,5 @@ typedef struct DrawContext {
 	int offset_y;
 } DrawContext;
 
-int luaopen_drawcontext(lua_State *L);
 #endif
 
