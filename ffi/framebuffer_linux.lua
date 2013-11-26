@@ -58,7 +58,7 @@ local function k51_update(fb, refreshtype, waveform_mode, x, y, w, h)
 end
 
 local function kobo_update(fb, refreshtype, waveform_mode, x, y, w, h)
-	local refarea = ffi.new("struct mxcfb_update_data_kobo[1]")
+	local refarea = ffi.new("struct mxcfb_update_data[1]")
 	-- only for Kobo driver:
 	refarea[0].alt_buffer_data.virt_addr = nil
 
@@ -105,11 +105,13 @@ function framebuffer.open(device)
 		-- TODO: implement a better check for Kobo
 		if fb.vinfo.bits_per_pixel == 16 then
 			-- this ought to be a Kobo
+			local dummy = require("ffi/mxcfb_kobo_h")
 			fb.einkUpdateFunc = kobo_update
 			fb.bb = BB.new(fb.vinfo.xres, fb.vinfo.yres, BB.TYPE_BB16, fb.data, fb.finfo.line_length)
 			fb.bb:invert()
 		elseif fb.vinfo.bits_per_pixel == 8 then
 			-- Kindle PaperWhite and KT with 5.1 or later firmware
+			local dummy = require("ffi/mxcfb_kindle_h")
 			fb.einkUpdateFunc = k51_update
 			fb.bb = BB.new(fb.vinfo.xres, fb.vinfo.yres, BB.TYPE_BB8, fb.data, fb.finfo.line_length)
 			fb.bb:invert()
@@ -117,6 +119,7 @@ function framebuffer.open(device)
 			error("unknown bpp value for the mxc eink driver")
 		end
 	elseif ffi.string(fb.finfo.id, 7) == "eink_fb" then
+		local dummy = require("ffi/einkfb_h")
 		fb.einkUpdateFunc = einkfb_update
 
 		if fb.vinfo.bits_per_pixel == 8 then
