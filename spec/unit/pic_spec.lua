@@ -1,4 +1,4 @@
-require "libs/libkoreader-drawcontext"
+local DrawContext = require("ffi/drawcontext")
 
 --require "libs/libkoreader-pic"
 --local Pic = pic
