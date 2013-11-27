@@ -453,6 +453,7 @@ end
 function BB_mt.__index:getPhysicalRect(x, y, w, h)
 	local px1, py1 = self:getPhysicalCoordinates(x, y)
 	local px2, py2 = self:getPhysicalCoordinates(x+w-1, y+h-1)
+	if self:getRotation() % 2 == 1 then w, h = h, w end
 	return math.min(px1, px2), math.min(py1, py2), w, h
 end
 
