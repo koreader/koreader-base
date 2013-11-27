@@ -186,7 +186,7 @@ end
 function framebuffer_mt.__index:refresh(refreshtype, waveform_mode, x, y, w, h)
         w, x = BB.checkBounds(w or self.bb:getWidth(), x or 0, 0, self.bb:getWidth(), 0xFFFF)
         h, y = BB.checkBounds(h or self.bb:getHeight(), y or 0, 0, self.bb:getHeight(), 0xFFFF)
-	local px, py = self.bb:getPhysicalRect(x, y, w, h)
+	local px, py, w, h = self.bb:getPhysicalRect(x, y, w, h)
 	self:einkUpdateFunc(refreshtype, waveform_mode, px, py, w, h)
 end
 
