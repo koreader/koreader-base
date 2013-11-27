@@ -14,7 +14,6 @@ require "libs/libkoreader-lfs"
 require "libs/libkoreader-pdf"
 require "libs/libkoreader-pic"
 require "libs/libkoreader-luagettext"
-require "libs/libkoreader-kobolight"
 
 -- libraries converted to FFI:
 DrawContext = require("ffi/drawcontext")
@@ -23,6 +22,7 @@ freetype = require("ffi/freetype")
 Image = require("ffi/mupdfimg")
 util = require("ffi/util")
 einkfb = require("ffi/framebuffer")
+kobolight = require("ffi/kobolight")
 
 if not arg[1] then
 	error("you must give the name of the main lua executable as the first argument")
