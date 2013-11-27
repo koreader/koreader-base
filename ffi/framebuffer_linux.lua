@@ -44,7 +44,6 @@ local function mxc_update(fb, refarea, refreshtype, waveform_mode, x, y, w, h)
 	refarea[0].alt_buffer_data.alt_update_region.left = 0
 	refarea[0].alt_buffer_data.alt_update_region.width = 0
 	refarea[0].alt_buffer_data.alt_update_region.height = 0
-
 	ffi.C.ioctl(fb.fd, ffi.C.MXCFB_SEND_UPDATE, refarea)
 end
 
@@ -109,6 +108,10 @@ function framebuffer.open(device)
 			fb.einkUpdateFunc = kobo_update
 			fb.bb = BB.new(fb.vinfo.xres, fb.vinfo.yres, BB.TYPE_BB16, fb.data, fb.finfo.line_length)
 			fb.bb:invert()
+			if fb.vinfo.xres > fb.vinfo.yres then
+				-- Kobo framebuffers need to be rotated counter-clockwise (they start in landscape mode)
+				fb.bb:rotate(-90)
+			end
 		elseif fb.vinfo.bits_per_pixel == 8 then
 			-- Kindle PaperWhite and KT with 5.1 or later firmware
 			local dummy = require("ffi/mxcfb_kindle_h")
@@ -186,8 +189,8 @@ end
 function framebuffer_mt.__index:refresh(refreshtype, waveform_mode, x, y, w, h)
         w, x = BB.checkBounds(w or self.bb:getWidth(), x or 0, 0, self.bb:getWidth(), 0xFFFF)
         h, y = BB.checkBounds(h or self.bb:getHeight(), y or 0, 0, self.bb:getHeight(), 0xFFFF)
-	local px, py = self.bb:getPhysicalRect(x, y, w, h)
-	self:einkUpdateFunc(refreshtype, waveform_mode, px, py, w, h)
+	x, y, w, h = self.bb:getPhysicalRect(x, y, w, h)
+	self:einkUpdateFunc(refreshtype, waveform_mode, x, y, w, h)
 end
 
 function framebuffer_mt.__index:getSize()
