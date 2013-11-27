@@ -16,7 +16,7 @@ local function einkfb_update(fb, refreshtype, waveform_mode, x, y, w, h)
 	refarea[0].x2 = x + (w or (fb.vinfo.xres-x))
 	refarea[0].y2 = y + (h or (fb.vinfo.yres-y))
 	refarea[0].buffer = nil
-	if refreshtype == 1 then
+	if refreshtype == 0 then
 		refarea[0].which_fx = ffi.C.fx_update_partial
 	else
 		refarea[0].which_fx = ffi.C.fx_update_full
@@ -26,7 +26,7 @@ local function einkfb_update(fb, refreshtype, waveform_mode, x, y, w, h)
 end
 
 local function mxc_update(fb, refarea, refreshtype, waveform_mode, x, y, w, h)
-	refarea[0].update_mode = refreshtype or 1
+	refarea[0].update_mode = refreshtype or 0
 	refarea[0].waveform_mode = waveform_mode or 2
 	refarea[0].update_region.left = x or 0
 	refarea[0].update_region.top = y or 0
