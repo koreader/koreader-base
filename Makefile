@@ -94,7 +94,7 @@ $(MUPDF_LIB): $(MUPDF_LIB_STATIC) \
 		-Wl,--no-whole-archive $(MUPDF_THIRDPARTY_LIBS) \
 		-Wl,-soname=$(notdir $(MUPDF_LIB)) \
 		$(JPEG_LIB) $(FREETYPE_LIB) \
-		-o $(MUPDF_LIB)
+		-o $(MUPDF_LIB) -lm
 
 # djvulibre, fetched via GIT as a submodule
 $(DJVULIBRE_LIB): $(JPEG_LIB)
