@@ -416,18 +416,21 @@ static int kcGetNativeWordBoxes(lua_State *L) {
 
 static int kcReflowToNativePosTransform(lua_State *L) {
     KOPTContext *kc = (KOPTContext*) luaL_checkudata(L, 1, "koptcontext");
-    int x = luaL_checknumber(L, 2);
-    int y = luaL_checknumber(L, 3);
-    int i, x0, y0, w0, h0;
+    int xc = luaL_checknumber(L, 2);
+    int yc = luaL_checknumber(L, 3);
+    float wr = luaL_checknumber(L, 4);
+    float hr = luaL_checknumber(L, 5);
+    int i;
+    float x, y, w, h;
     for (i = 0; i < kc->rectmaps.n; i++) {
         WRECTMAP * rectmap = &kc->rectmaps.wrectmap[i];
-        if (wrectmap_inside(rectmap, x, y)) {
-            w0 = rectmap->coords[2].x*rectmap->srcdpiw/kc->dev_dpi;
-            h0 = rectmap->coords[2].y*rectmap->srcdpih/kc->dev_dpi;
-            x0 = (rectmap->coords[0].x + w0/2)/kc->zoom + kc->bbox.x0;
-            y0 = (rectmap->coords[0].y + h0/2)/kc->zoom + kc->bbox.y0;
-            lua_pushinteger(L, x0);
-            lua_pushinteger(L, y0);
+        if (wrectmap_inside(rectmap, xc, yc)) {
+            x = rectmap->coords[0].x*kc->dev_dpi*kc->quality/rectmap->srcdpiw;
+            y = rectmap->coords[0].y*kc->dev_dpi*kc->quality/rectmap->srcdpih;
+            w = rectmap->coords[2].x*kc->dev_dpi*kc->quality/rectmap->srcdpiw;
+            h = rectmap->coords[2].y*kc->dev_dpi*kc->quality/rectmap->srcdpih;
+            lua_pushnumber(L, (x + w*wr)/kc->zoom + kc->bbox.x0);
+            lua_pushnumber(L, (y + h*hr)/kc->zoom + kc->bbox.y0);
             return 2;
         }
     }
