@@ -1,0 +1,17 @@
+# Travis-CI Build for koreader-base
+# see travis-ci.org for details
+
+language: c
+
+compiler:
+    - gcc
+
+env:
+    - EMULATE_READER=1 USE_NO_CCACHE=1
+
+install:
+    - sudo apt-get install cmake libsdl1.2-dev
+
+script:
+    - make fetchthirdparty
+    - make
