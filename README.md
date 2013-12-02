@@ -1,5 +1,4 @@
-Koreader-base
-=============
+## Koreader-base
 
 This is the base framework for creating document readers like Koreader,
 an e-ink device oriented reader application for various document formats.
@@ -13,9 +12,11 @@ greatly enhanced and now reflects this in having a new name, Koreader.
 
 The application is licensed under the GPLv3 (see COPYING file).
 
+## TRAVIS CI STATUS
 
-Building
-========
+[![Build Status](https://travis-ci.org/koreader/koreader-base.png?branch=master)](https://travis-ci.org/koreader/koreader-base)
+
+## Building
 
 Follow these steps:
 
@@ -42,8 +43,7 @@ Follow these steps:
 * run `make`. This will build the koreaderbase application which is a Lua
   interpreter offering the koreader-base API to Lua scripts.
 
-Use ccache
-==========
+## Use ccache
 
 Ccache can speed up recompilation by caching previous compilations and detecting
 when the same compilation is being done again. In other words, it will decrease
