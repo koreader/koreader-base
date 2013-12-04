@@ -19,5 +19,6 @@ script:
     - sudo cp luajit-2.0/src/luajit /usr/bin/luajit
     - wget https://tesseract-ocr.googlecode.com/files/tesseract-ocr-3.02.eng.tar.gz
     - tar zxf tesseract-ocr-3.02.eng.tar.gz
-    - cd build/* && mv ../../tesseract-ocr/tessdata/* data/tessdata/ && cd ../../
+    - cd build/* && mkdir -p data/tessdata 
+    - mv ../../tesseract-ocr/tessdata/* data/tessdata/ && cd ../../
     - make test
