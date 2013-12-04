@@ -179,7 +179,6 @@ endif
 
 libs: \
 	$(OUTPUT_DIR)/libs/libkoreader-luagettext.so \
-	$(OUTPUT_DIR)/libs/libkoreader-kobolight.so \
 	$(OUTPUT_DIR)/libs/libkoreader-input.so \
 	$(OUTPUT_DIR)/libs/libkoreader-lfs.so \
 	$(OUTPUT_DIR)/libs/libkoreader-koptcontext.so \
@@ -190,10 +189,6 @@ libs: \
 	$(OUTPUT_DIR)/libs/libkoreader-cre.so
 
 $(OUTPUT_DIR)/libs/libkoreader-luagettext.so: lua_gettext.c
-	$(CC) $(DYNLIB_CFLAGS) $(EMU_CFLAGS) $(EMU_LDFLAGS) \
-		-o $@ $<
-
-$(OUTPUT_DIR)/libs/libkoreader-kobolight.so: kobolight.c
 	$(CC) $(DYNLIB_CFLAGS) $(EMU_CFLAGS) $(EMU_LDFLAGS) \
 		-o $@ $<
 
