@@ -720,7 +720,7 @@ static int bmpmupdf_pixmap_to_bmp(WILLUSBITMAP *bmp, fz_context *ctx, fz_pixmap 
 
 static int getAutoBBox(lua_State *L) {
 	PdfPage *page = (PdfPage*) luaL_checkudata(L, 1, "pdfpage");
-	KOPTContext *kctx = (KOPTContext*) luaL_checkudata(L, 2, "koptcontext");
+	KOPTContext *kctx = (KOPTContext*) lua_topointer(L, 2);
 	fz_device *dev;
 	fz_pixmap *pix = NULL;
 	fz_rect bounds,bounds2;
@@ -770,7 +770,7 @@ static int getAutoBBox(lua_State *L) {
 
 static int getPagePix(lua_State *L) {
 	PdfPage *page = (PdfPage*) luaL_checkudata(L, 1, "pdfpage");
-	KOPTContext *kctx = (KOPTContext*) luaL_checkudata(L, 2, "koptcontext");
+	KOPTContext *kctx = (KOPTContext*) lua_topointer(L, 2);
 	fz_device *dev;
 	fz_pixmap *pix;
 	fz_matrix ctm;
@@ -816,7 +816,7 @@ static int getPagePix(lua_State *L) {
 
 static int reflowPage(lua_State *L) {
 	PdfPage *page = (PdfPage*) luaL_checkudata(L, 1, "pdfpage");
-	KOPTContext *kctx = (KOPTContext*) luaL_checkudata(L, 2, "koptcontext");
+	KOPTContext *kctx = (KOPTContext*) lua_topointer(L, 2);
 	fz_device *dev;
 	fz_pixmap *pix;
 	fz_matrix ctm;
@@ -886,7 +886,7 @@ static int reflowPage(lua_State *L) {
 
 static int drawReflowedPage(lua_State *L) {
 	PdfPage *page = (PdfPage*) luaL_checkudata(L, 1, "pdfpage");
-	KOPTContext *kc = (KOPTContext*) luaL_checkudata(L, 2, "koptcontext");
+	KOPTContext *kc = (KOPTContext*) lua_topointer(L, 2);
 	BlitBuffer *bb = (BlitBuffer*) lua_topointer(L, 3);
 
 	assert(kc->dst.data != NULL);
