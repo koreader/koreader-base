@@ -17,4 +17,7 @@ script:
     - make fetchthirdparty
     - make
     - sudo cp luajit-2.0/src/luajit /usr/bin/luajit
+    - wget https://tesseract-ocr.googlecode.com/files/tesseract-ocr-3.02.eng.tar.gz
+    - tar zxf tesseract-ocr-3.02.eng.tar.gz
+    - mv tesseract-ocr/tessdata/* data/tessdata/
     - make test
