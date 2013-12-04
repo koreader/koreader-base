@@ -9,13 +9,13 @@ now, we use the "default" interpreter/compiler
 require "libs/libkoreader-cre"
 require "libs/libkoreader-djvu"
 require "libs/libkoreader-input"
-require "libs/libkoreader-koptcontext"
 require "libs/libkoreader-lfs"
 require "libs/libkoreader-pdf"
 require "libs/libkoreader-pic"
 require "libs/libkoreader-luagettext"
 
 -- libraries converted to FFI:
+KOPTContext = require("ffi/koptcontext")
 DrawContext = require("ffi/drawcontext")
 Blitbuffer = require("ffi/blitbuffer")
 freetype = require("ffi/freetype")

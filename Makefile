@@ -181,7 +181,6 @@ libs: \
 	$(OUTPUT_DIR)/libs/libkoreader-luagettext.so \
 	$(OUTPUT_DIR)/libs/libkoreader-input.so \
 	$(OUTPUT_DIR)/libs/libkoreader-lfs.so \
-	$(OUTPUT_DIR)/libs/libkoreader-koptcontext.so \
 	$(OUTPUT_DIR)/libs/libkoreader-pic.so \
 	$(OUTPUT_DIR)/libs/libpic_jpeg.so \
 	$(OUTPUT_DIR)/libs/libkoreader-pdf.so \
@@ -199,14 +198,6 @@ $(OUTPUT_DIR)/libs/libkoreader-input.so: input.c \
 
 $(OUTPUT_DIR)/libs/libkoreader-lfs.so: luafilesystem/src/lfs.c
 	$(CC) $(DYNLIB_CFLAGS) -o $@ $<
-
-$(OUTPUT_DIR)/libs/libkoreader-koptcontext.so: koptcontext.c \
-				$(K2PDFOPT_LIB) \
-				$(LEPTONICA_LIB) \
-				$(TESSERACT_LIB)
-	$(CC) $(K2PDFOPT_CFLAGS) $(DYNLIB_CFLAGS) \
-		-o $@ $< \
-		$(K2PDFOPT_LIB) $(LEPTONICA_LIB) $(TESSERACT_LIB)
 
 $(OUTPUT_DIR)/libs/libkoreader-pic.so: pic.c pic_jpeg.c \
 				$(JPEG_LIB)
