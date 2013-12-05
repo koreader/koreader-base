@@ -46,5 +46,37 @@ describe("Blitbuffer unit tests", function()
 			assert.are.equals(bb:getPixel(test_x, test_y)['a'], new_c['a'])
 		end)
 	end)
+	
+	describe("BB rotation functionality", function()	
+		it("should get physical rect in all rotation modes", function()
+			local bb = Blitbuffer.new(600, 800)
+			bb:setRotation(0)
+			assert.are_same({50, 100, 150, 200}, {bb:getPhysicalRect(50, 100, 150, 200)})
+			bb:setRotation(1)
+			assert.are_same({50, 100, 150, 200}, {bb:getPhysicalRect(100, 400, 200, 150)})
+			bb:setRotation(2)
+			assert.are_same({50, 100, 150, 200}, {bb:getPhysicalRect(400, 500, 150, 200)})
+			bb:setRotation(3)
+			assert.are_same({50, 100, 150, 200}, {bb:getPhysicalRect(500, 50, 200, 150)})
+		end)
+		
+		it("should set pixel in all rotation modes", function()
+			local width, height = 100, 200
+			for rotation = 0, 3 do
+				local bb = Blitbuffer.new(width, height)
+				bb:setRotation(rotation)
+				local w = rotation%2 == 1 and height or width
+				local h = rotation%2 == 1 and width or height
+				for i = 0, (h - 1) do
+					for j = 0, (w - 1) do
+						local color = Blitbuffer.Color4(2)
+						assert.are_not_same(color.a, bb:getPixel(j, i):getColor4L().a)
+						bb:setPixel(j, i, color)
+						assert.are_same(color.a, bb:getPixel(j, i):getColor4L().a)
+					end
+				end
+			end
+		end)
+	end)
 end)
 
