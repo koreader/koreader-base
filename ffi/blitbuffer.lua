@@ -936,7 +936,6 @@ function BB_mt.__index:lightenRect(x, y, w, h, low)
 	if w <= 0 or h <= 0 then return end
 	w, x = BB.checkBounds(w, x, 0, self:getWidth(), 0xFFFF)
 	h, y = BB.checkBounds(h, y, 0, self:getHeight(), 0xFFFF)
-	x, y, w, h = self:getPhysicalRect(x, y, w, h)
 	for y = y, y+h-1 do
 		for x = x, x+w-1 do
 			self:setPixel(x, y, self:getPixel(x, y):lighten(low))
