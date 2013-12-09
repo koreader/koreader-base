@@ -6,7 +6,7 @@ import struct
 import argparse
 
 EV_LOG = "ev_double.log"
-EV_PIPE = "emu_event"
+EV_PIPE = "/tmp/emu_event"
 
 def gen_ev_from_log_entry(line):
     values = line.split("|")
