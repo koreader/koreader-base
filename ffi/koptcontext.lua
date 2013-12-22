@@ -17,6 +17,7 @@ function KOPTContext_mt.__index:setDeviceDim(w, h) self.dev_width, self.dev_heig
 function KOPTContext_mt.__index:setDeviceDPI(dpi) self.dev_dpi = dpi end
 function KOPTContext_mt.__index:setStraighten(straighten) self.straighten = straighten end
 function KOPTContext_mt.__index:setJustification(justification) self.justification = justification end
+function KOPTContext_mt.__index:setWritingDirection(direction) self.writing_direction = direction end
 function KOPTContext_mt.__index:setMargin(margin) self.margin = margin end
 function KOPTContext_mt.__index:setZoom(zoom) self.zoom = zoom end
 function KOPTContext_mt.__index:setQuality(quality) self.quality = quality end
@@ -231,6 +232,7 @@ function KOPTContext.new()
 	kc.justification = -1
 	kc.read_max_width = 3000
 	kc.read_max_height = 4000
+	kc.writing_direction = 0
 	-- number values
 	kc.zoom = 1.0
 	kc.margin = 0.06
