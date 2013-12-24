@@ -584,6 +584,47 @@ static int cursorRight(lua_State *L) {
 	return 0;
 }
 
+static int getWordFromPos(lua_State *L) {
+	CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
+	int x = luaL_checkint(L, 2);
+	int y = luaL_checkint(L, 3);
+
+	LVDocView *tv = doc->text_view;
+	lvRect margin = tv->getPageMargins();
+	int x_offset = margin.left;
+	int y_offset = tv->GetPos() - tv->getPageHeaderHeight() - margin.top;
+	x = x - x_offset;
+	y = y + y_offset;
+
+	LVPageWordSelector sel(tv);
+	sel.selectWord(x, y);
+
+	ldomWordEx * word = sel.getSelectedWord();
+	lua_newtable(L); // new link
+	if (word) {
+		lvRect rect;
+		ldomXRange range = word->getRange();
+		if (range.getRect(rect)) {
+			lua_pushstring(L, "word");
+			lua_pushstring(L, UnicodeToLocal(word->getText()).c_str());
+			lua_settable(L, -3);
+			lua_pushstring(L, "x0");
+			lua_pushinteger(L, rect.left + x_offset);
+			lua_settable(L, -3);
+			lua_pushstring(L, "y0");
+			lua_pushinteger(L, rect.top - y_offset);
+			lua_settable(L, -3);
+			lua_pushstring(L, "x1");
+			lua_pushinteger(L, rect.right + x_offset);
+			lua_settable(L, -3);
+			lua_pushstring(L, "y1");
+			lua_pushinteger(L, rect.bottom - y_offset);
+			lua_settable(L, -3);
+		}
+	}
+	return 1;
+}
+
 static int getPageLinks(lua_State *L) {
 	CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
 
@@ -830,6 +871,7 @@ static const struct luaL_Reg credocument_meth[] = {
 	//{"cursorRight", cursorRight},
 	{"drawCurrentPage", drawCurrentPage},
 	{"findText", findText},
+	{"getWordFromPos", getWordFromPos},
 	{"getPageLinks", getPageLinks},
 	{"gotoLink", gotoLink},
 	{"clearSelection", clearSelection},
