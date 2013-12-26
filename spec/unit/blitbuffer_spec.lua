@@ -7,9 +7,9 @@ describe("Blitbuffer unit tests", function()
 		local cRGB24 = Blitbuffer.ColorRGB24(0xFF, 0xAA, 0x55)
 		local cRGB24_32 = cRGB32:getColorRGB24()
 
-		it("should convert RGB32 to gray16", function()
-			local c16_32 = cRGB32:getColor16()
-			assert.are.equals(0xB9B9, c16_32.a)
+		it("should convert RGB32 to RGB16", function()
+			local c16_32 = cRGB32:getColorRGB16()
+			assert.are.equals(0xFD4A, c16_32.v)
 		end)
 
 		it("should convert RGB32 to gray8", function()
