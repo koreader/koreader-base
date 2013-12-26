@@ -106,7 +106,7 @@ function framebuffer.open(device)
 			-- this ought to be a Kobo
 			local dummy = require("ffi/mxcfb_kobo_h")
 			fb.einkUpdateFunc = kobo_update
-			fb.bb = BB.new(fb.vinfo.xres, fb.vinfo.yres, BB.TYPE_BB16, fb.data, fb.finfo.line_length)
+			fb.bb = BB.new(fb.vinfo.xres, fb.vinfo.yres, BB.TYPE_BBRGB16, fb.data, fb.finfo.line_length)
 			fb.bb:invert()
 			if fb.vinfo.xres > fb.vinfo.yres then
 				-- Kobo framebuffers need to be rotated counter-clockwise (they start in landscape mode)
