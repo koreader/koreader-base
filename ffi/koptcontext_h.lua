@@ -96,6 +96,7 @@ typedef struct KOPTContext {
 	int justification;
 	int read_max_width;
 	int read_max_height;
+	int writing_direction;
 
 	double zoom;
 	double margin;
