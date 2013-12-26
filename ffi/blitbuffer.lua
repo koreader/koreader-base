@@ -953,6 +953,66 @@ function BB_mt.__index:copy()
 	return copy
 end
 
+--[[
+write blitbuffer contents to a PAM file
+
+see http://netpbm.sourceforge.net/doc/pam.html for PAM file specs.
+
+@param filename the name of the file to be created
+--]]
+function BB_mt.__index:writePAM(filename)
+	local f = io.open(filename, "w")
+	f:write("P7\n")
+	f:write("# written by blitbuffer.lua\n")
+	f:write("WIDTH ", self:getWidth(), "\n")
+	f:write("HEIGHT ", self:getHeight(), "\n")
+	local bb_type = self:getType()
+	if bb_type == TYPE_BB4 then
+		f:write("DEPTH 1\n", "MAXVAL 15\n", "TUPLTYPE GRAYSCALE\n")
+	elseif bb_type == TYPE_BB8 then
+		f:write("DEPTH 1\n", "MAXVAL 255\n", "TUPLTYPE GRAYSCALE\n")
+	elseif bb_type == TYPE_BB8A then
+		f:write("DEPTH 2\n", "MAXVAL 255\n", "TUPLTYPE GRAYSCALE_ALPHA\n")
+	elseif bb_type == TYPE_BB16 then
+		f:write("DEPTH 1\n", "MAXVAL 65535\n", "TUPLTYPE GRAYSCALE\n")
+	elseif bb_type == TYPE_BBRGB24 then
+		f:write("DEPTH 3\n", "MAXVAL 256\n", "TUPLTYPE RGB\n")
+	elseif bb_type == TYPE_BBRGB32 then
+		f:write("DEPTH 4\n", "MAXVAL 256\n", "TUPLTYPE RGB_ALPHA\n")
+	end
+	f:write("ENDHDR\n")
+	for y = 0, self:getHeight()-1 do
+		for x = 0, self:getWidth()-1 do
+			local v = self:getPixel(x, y)
+			if bb_type == TYPE_BB4 or bb_type == TYPE_BB8 then
+				ffi.C.fputc(v.a, f)
+			elseif bb_type == TYPE_BB8A then
+				ffi.C.fputc(v.a, f)
+				-- note that other functions do not support
+				-- alpha values for now
+				-- TODO: use correct alpha value of struct here
+				ffi.C.fputc(255, f)
+			elseif bb_type == TYPE_BB16 then
+				ffi.C.fputc(rshift(v.a, 8), f)
+				ffi.C.fputc(band(v.a, 0xFF), f)
+			elseif bb_type == TYPE_BBRGB24 then
+				ffi.C.fputc(v.r, f)
+				ffi.C.fputc(v.g, f)
+				ffi.C.fputc(v.b, f)
+			elseif bb_type == TYPE_BBRGB32 then
+				ffi.C.fputc(v.r, f)
+				ffi.C.fputc(v.g, f)
+				ffi.C.fputc(v.b, f)
+				-- note that other functions do not support
+				-- alpha values for now
+				-- TODO: use correct alpha value of struct here
+				ffi.C.fputc(255, f)
+			end
+		end
+	end
+	f:close()
+end
+
 -- if no special case in BB???_mt exists, use function from BB_mt
 -- (we do not use BB_mt as metatable for BB???_mt since this causes
 --  a major slowdown and would not get properly JIT-compiled)
