@@ -139,7 +139,7 @@ function Color4U_mt.__index:set(color)
 end
 function Color8_mt.__index:set(color) self.a = color:getColor8().a end
 function Color8A_mt.__index:set(color) self.a = color:getColor8A().a end
-function ColorRGB16_mt.__index:set(color) self.v = color:getColor16().v end
+function ColorRGB16_mt.__index:set(color) self.v = color:getColorRGB16().v end
 function ColorRGB24_mt.__index:set(color)
 	local c = color:getColorRGB24()
 	self.r = c.r
