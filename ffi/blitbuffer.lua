@@ -94,7 +94,6 @@ typedef struct BlitBufferRGB32 {
 
 void *malloc(int size);
 void free(void *ptr);
-void *memset(void *s, int c, int n);
 ]]
 
 -- color value types
