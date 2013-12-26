@@ -106,12 +106,6 @@ local ColorRGB16 = ffi.typeof("ColorRGB16")
 local ColorRGB24 = ffi.typeof("ColorRGB24")
 local ColorRGB32 = ffi.typeof("ColorRGB32")
 
--- metatables for color pointers
-local P_Color4U_mt = {__index={}}
-
-function P_Color4U_mt.__index:set(color)
-end
-
 -- color value pointer types
 local P_Color4U = ffi.typeof("Color4U*")
 local P_Color4L = ffi.typeof("Color4L*")
