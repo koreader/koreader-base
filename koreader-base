@@ -23,7 +23,11 @@ util = require("ffi/util")
 einkfb = require("ffi/framebuffer")
 kobolight = require("ffi/kobolight")
 if util.isEmulated() then
-	input = require("ffi/input_SDL2_0")
+	if util.haveSDL2() then
+		input = require("ffi/input_SDL2_0")
+	else
+		input = require("ffi/input_SDL1_2")
+	end
 else
 	require "libs/libkoreader-input"
 end
