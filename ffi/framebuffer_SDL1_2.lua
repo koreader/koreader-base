@@ -1,7 +1,7 @@
 local ffi = require("ffi")
 local bit = require("bit")
 -- load common SDL input/video library
-local SDL = require("ffi/SDL")
+local SDL = require("ffi/SDL1_2")
 
 local BB = require("ffi/blitbuffer")
 
