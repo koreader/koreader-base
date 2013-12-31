@@ -8,7 +8,6 @@ now, we use the "default" interpreter/compiler
 
 require "libs/libkoreader-cre"
 require "libs/libkoreader-djvu"
-require "libs/libkoreader-input"
 require "libs/libkoreader-lfs"
 require "libs/libkoreader-pdf"
 require "libs/libkoreader-pic"
@@ -23,6 +22,11 @@ Image = require("ffi/mupdfimg")
 util = require("ffi/util")
 einkfb = require("ffi/framebuffer")
 kobolight = require("ffi/kobolight")
+if util.isEmulated() then
+	input = require("ffi/input_SDL1_2")
+else
+	require "libs/libkoreader-input"
+end
 
 if not arg[1] then
 	error("you must give the name of the main lua executable as the first argument")
