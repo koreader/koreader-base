@@ -49,10 +49,10 @@ local ev_time = ffi.new("struct timeval")
 local function genEmuEvent(evtype, code, value)
 	ffi.C.gettimeofday(ev_time, nil)
 	local ev = {
-		type = evtype,
-		code = code,
-		value = value,
-		time = { sec = ev_time.tv_sec, usec = ev_time.tv_usec }
+		type = tonumber(evtype),
+		code = tonumber(code),
+		value = tonumber(value),
+		time = { sec = tonumber(ev_time.tv_sec), usec = tonumber(ev_time.tv_usec) }
 	}
 	table.insert(inputQueue, ev)
 end
