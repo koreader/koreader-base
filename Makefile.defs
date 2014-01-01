@@ -162,7 +162,7 @@ LEPTONICA_LIB=$(OUTPUT_DIR)/libs/liblept.so.3
 TESSERACT_LIB=$(OUTPUT_DIR)/libs/libtesseract.so.3
 
 # must point to directory with *.ttf fonts for crengine
-TTF_FONTS_DIR=$(MUPDF_DIR)/resources/fonts
+MUPDF_TTF_FONTS_DIR=$(MUPDF_DIR)/resources/fonts
 
 # CFLAGS for the Lua/C/C++ modules:
 #

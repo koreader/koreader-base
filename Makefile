@@ -20,8 +20,11 @@ endif
 	# while cr3.css is in /kpvcrlib, so we need three ".."
 	test -e $(OUTPUT_DIR)/data/cr3.css || \
 		ln -sf ../../../cr3.css $(OUTPUT_DIR)/data/
-	test -d $(OUTPUT_DIR)/fonts || \
-		ln -sf ../../$(TTF_FONTS_DIR) $(OUTPUT_DIR)/fonts
+	test -d $(OUTPUT_DIR)/fonts || ( \
+			mkdir $(OUTPUT_DIR)/fonts && \
+			cd $(OUTPUT_DIR)/fonts && \
+			ln -sf ../../../$(MUPDF_TTF_FONTS_DIR)/* . \
+		)
 	test -e $(OUTPUT_DIR)/koreader-base || \
 		ln -sf ../../koreader-base $(OUTPUT_DIR)/
 	test -e $(OUTPUT_DIR)/ffi || \
