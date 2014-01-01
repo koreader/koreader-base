@@ -56,4 +56,13 @@ function util.isEmulated()
 	return (ffi.arch ~= "arm")
 end
 
+local haveSDL2 = nil
+
+function util.haveSDL2()
+	if haveSDL2 == nil then
+		haveSDL2 = pcall(ffi.load, "SDL2")
+	end
+	return haveSDL2
+end
+
 return util

@@ -94,7 +94,6 @@ typedef struct BlitBufferRGB32 {
 
 void *malloc(int size);
 void free(void *ptr);
-void *memset(void *s, int c, int n);
 ]]
 
 -- color value types
@@ -105,12 +104,6 @@ local Color8A = ffi.typeof("Color8A")
 local ColorRGB16 = ffi.typeof("ColorRGB16")
 local ColorRGB24 = ffi.typeof("ColorRGB24")
 local ColorRGB32 = ffi.typeof("ColorRGB32")
-
--- metatables for color pointers
-local P_Color4U_mt = {__index={}}
-
-function P_Color4U_mt.__index:set(color)
-end
 
 -- color value pointer types
 local P_Color4U = ffi.typeof("Color4U*")

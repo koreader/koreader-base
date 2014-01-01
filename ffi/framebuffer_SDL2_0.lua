@@ -1,7 +1,7 @@
 local ffi = require("ffi")
 local bit = require("bit")
 -- load common SDL input/video library
-local SDL = require("ffi/SDL")
+local SDL = require("ffi/SDL2_0")
 
 local BB = require("ffi/blitbuffer")
 
@@ -11,11 +11,8 @@ function fb.open()
 	SDL.open()
 
 	-- we present this buffer to the outside
-	fb.bb = BB.new(SDL.screen.w, SDL.screen.h)
-
-	fb.real_bb = BB.new(SDL.screen.w, SDL.screen.h, BB.TYPE_BBRGB32,
-		SDL.screen.pixels, SDL.screen.pitch)
-	fb.real_bb:invert()
+	fb.bb = BB.new(SDL.w, SDL.h, BB.TYPE_BBRGB32)
+	fb.bb:invert()
 
 	fb:refresh()
 
@@ -39,7 +36,7 @@ function fb:setOrientation(mode)
 end
 
 function fb:getOrientation()
-	if SDL.screen.w > SDL.screen.h then
+	if SDL.w > SDL.h then
 		return 1
 	else
 		return 0
@@ -49,17 +46,13 @@ end
 function fb:refresh(refreshtype, waveform_mode, x1, y1, w, h)
 	if x1 == nil then x1 = 0 end
 	if y1 == nil then y1 = 0 end
+	if w == nil then w = SDL.w end
+	if h == nil then h = SDL.h end
 
-	-- adapt to possible rotation changes
-	self.real_bb:setRotation(self.bb:getRotation())
-	
-	if SDL.SDL.SDL_LockSurface(SDL.screen) < 0 then
-		error("Locking screen surface")
-	end
-	self.real_bb:blitFrom(self.bb, x1, y1, x1, y1, w, h)
-
-	SDL.SDL.SDL_UnlockSurface(SDL.screen)
-	SDL.SDL.SDL_Flip(SDL.screen)
+	SDL.SDL.SDL_UpdateTexture(SDL.texture, nil, self.bb.data, self.bb.pitch)
+	SDL.SDL.SDL_RenderClear(SDL.renderer)
+	SDL.SDL.SDL_RenderCopy(SDL.renderer, SDL.texture, nil, nil)
+	SDL.SDL.SDL_RenderPresent(SDL.renderer)
 end
 
 function fb:close()
