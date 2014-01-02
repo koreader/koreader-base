@@ -3,6 +3,7 @@ local KOPTContext = require("ffi/koptcontext")
 local k2pdfopt = ffi.load("libs/libk2pdfopt.so.2")
 
 local sample_pdf = "spec/unit/data/Alice.pdf"
+local paper_pdf = "spec/unit/data/Paper.pdf"
 
 describe("KOPTContext module", function()
 	it("should be created", function()
@@ -130,5 +131,15 @@ describe("KOPTContext module", function()
 		assert(kc.dst.size_allocated ~= 0)
 		kc:free()
 		assert(kc.dst.size_allocated == 0)
+	end)
+	it("should get list of page regions", function()
+		local kc = KOPTContext.new()
+		k2pdfopt.bmpmupdf_pdffile_to_bmp(kc.dst, ffi.cast("char*", paper_pdf), 1, 300, 8)
+		kc.page_width, kc.page_height = kc.dst.width, kc.dst.height
+		local regions = kc:getPageRegions()
+		for i = 1, #regions do
+			assert(regions[i].x1 - regions[i].x0 <= 1)
+			assert(regions[i].y1 - regions[i].y0 <= 1)
+		end
 	end)
 end)
