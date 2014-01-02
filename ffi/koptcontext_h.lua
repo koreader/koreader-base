@@ -79,6 +79,64 @@ typedef struct {
     int     type;  /* See defines above for WILLUSBITMAP_TYPE_... */
 } WILLUSBITMAP;
 
+typedef struct {
+    int ch;    /* Hyphen starting point -- < 0 for no hyphen */
+    int c2;    /* End of end region if hyphen is erased */
+    int r1;    /* Top of hyphen */
+    int r2;    /* Bottom of hyphen */
+} HYPHENINFO;
+
+typedef struct {
+    int c1,c2;   /* Left and right columns */
+    int r1,r2;   /* Top and bottom of region in pixels */
+    int rowbase; /* Baseline of row */
+    int gap;     /* Gap between next region and this region's rowbase. */
+    int gapblank;  /* Actual blank area between next region and this region. */
+    int rowheight; /* text + gap (delta between rowbases) */
+    int capheight;
+    int h5050;
+    int lcheight;
+    int type;    /* See region type #defines above */
+    double rat;  /* If found with find_doubles, this is > 0 (the figure of merit) */
+    HYPHENINFO hyphen;
+} TEXTROW;
+
+typedef struct {
+    TEXTROW *textrow;
+    int n,na;
+} TEXTROWS;
+
+typedef struct {
+    int r1,r2;      /* row position from top of bmp, inclusive */
+    int c1,c2;      /* column positions, inclusive */
+    TEXTROWS textrows; /* If nrows>0, top and bottom (if nrows>11) text row of region */
+    TEXTROW bbox;   /* Bounding box of region.  type==REGION_TYPE_UNDETERMINED if not calced yet */
+    WRECTMAPS *wrectmaps; /* If region consists of multiple, separated source rectangles
+                          ** (like from wrapbmp structure), then this is non-null and maps
+                          ** the bitmap region to the source page.
+                          */
+    int bgcolor;    /* Background color of region, 0 - 255 */
+    int dpi;        /* dpi of bitmap */
+    int pageno;     /* Source page number, -1 if unknown */
+    int rotdeg;     /* Source rotation, degrees, counterclockwise */
+    int *colcount;  /* Always check for NULL before using */
+    int *rowcount;  /* Always check for NULL before using */
+    WILLUSBITMAP *bmp;
+    WILLUSBITMAP *bmp8;
+    WILLUSBITMAP *marked;
+} BMPREGION;
+
+typedef struct {
+    BMPREGION bmpregion;
+    int fullspan;
+    int level;
+} PAGEREGION;
+    
+typedef struct {
+    PAGEREGION *pageregion;
+    int n,na;
+} PAGEREGIONS;
+
 typedef struct KOPTContext {
 	int trim;
 	int wrap;
@@ -115,6 +173,7 @@ typedef struct KOPTContext {
 	BOXA *nboxa;    // word boxes in native page
 	NUMA *nnai;     // word boxes indices in native page
 	WRECTMAPS rectmaps; // rect maps between reflowed and native pages
+	PAGEREGIONS pageregions; // sorted region list by display order
 	BBox bbox;
 	char *language;
 	WILLUSBITMAP dst;
@@ -156,4 +215,7 @@ void k2pdfopt_tocr_single_word(WILLUSBITMAP *src,
 int bmpmupdf_pdffile_to_bmp(WILLUSBITMAP *bmp,char *filename,int pageno,double dpi,int bpp);
 void k2pdfopt_reflow_bmp(KOPTContext *kctx);
 void k2pdfopt_tocr_end();
+void pageregions_init(PAGEREGIONS *regions);
+void pageregions_free(PAGEREGIONS *regions);
+void k2pdfopt_part_bmp(KOPTContext *kctx);
 ]]
