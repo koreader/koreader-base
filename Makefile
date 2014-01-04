@@ -229,7 +229,7 @@ $(OUTPUT_DIR)/libs/libkoreader-cre.so: cre.cpp \
 				$(CRENGINE_LIB) \
 				$(CRENGINE_THIRDPARTY_LIBS) \
 				$(MUPDF_LIB_DIR)/libz.a
-	$(CC) -I$(CRENGINE_DIR)/crengine/include/ $(DYNLIB_CFLAGS) \
+	$(CC) -I$(CRENGINE_DIR)/crengine/include/ $(DYNLIB_CFLAGS) -DLDOM_USE_OWN_MEM_MAN=1 \
 		$(DYNAMICLIBSTDCPP) -o $@ $< \
 		$(MUPDF_LIB_DIR)/libz.a \
 		$(CRENGINE_LIB) $(CRENGINE_THIRDPARTY_LIBS) \
