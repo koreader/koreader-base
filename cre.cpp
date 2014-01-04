@@ -29,6 +29,264 @@ extern "C" {
 
 #include "crengine.h"
 
+static void replaceColor( char * str, lUInt32 color ) {
+	// in line like "0 c #80000000",
+	// replace value of color
+	for ( int i=0; i<8; i++ ) {
+			str[i+5] = toHexDigit((color>>28) & 0xF);
+			color <<= 4;
+	}
+}
+
+/// set list of battery icons to display battery state
+static LVRefVec<LVImageSource> getBatteryIcons(lUInt32 color) {
+	CRLog::debug("Making list of Battery icon bitmats");
+
+    lUInt32 cl1 = 0x00000000|(color&0xFFFFFF);
+    lUInt32 cl2 = 0x40000000|(color&0xFFFFFF);
+    lUInt32 cl3 = 0x80000000|(color&0xFFFFFF);
+    lUInt32 cl4 = 0xF0000000|(color&0xFFFFFF);
+
+    static char color1[] = "0 c #80000000";
+    static char color2[] = "X c #80000000";
+    static char color3[] = "o c #80AAAAAA";
+    static char color4[] = ". c #80FFFFFF";
+	#define BATTERY_HEADER \
+			"28 15 5 1", \
+			color1, \
+			color2, \
+			color3, \
+			color4, \
+			"  c None",
+
+    static const char * battery8[] = {
+        BATTERY_HEADER
+        "   .........................",
+        "   .00000000000000000000000.",
+        "   .0.....................0.",
+        "....0.XXXX.XXXX.XXXX.XXXX.0.",
+        ".0000.XXXX.XXXX.XXXX.XXXX.0.",
+        ".0..0.XXXX.XXXX.XXXX.XXXX.0.",
+        ".0..0.XXXX.XXXX.XXXX.XXXX.0.",
+        ".0..0.XXXX.XXXX.XXXX.XXXX.0.",
+        ".0..0.XXXX.XXXX.XXXX.XXXX.0.",
+        ".0..0.XXXX.XXXX.XXXX.XXXX.0.",
+        ".0000.XXXX.XXXX.XXXX.XXXX.0.",
+        "....0.XXXX.XXXX.XXXX.XXXX.0.",
+        "   .0.....................0.",
+        "   .00000000000000000000000.",
+        "   .........................",
+    };
+    static const char * battery7[] = {
+        BATTERY_HEADER
+        "   .........................",
+        "   .00000000000000000000000.",
+        "   .0.....................0.",
+        "....0.oooo.XXXX.XXXX.XXXX.0.",
+        ".0000.oooo.XXXX.XXXX.XXXX.0.",
+        ".0..0.oooo.XXXX.XXXX.XXXX.0.",
+        ".0..0.oooo.XXXX.XXXX.XXXX.0.",
+        ".0..0.oooo.XXXX.XXXX.XXXX.0.",
+        ".0..0.oooo.XXXX.XXXX.XXXX.0.",
+        ".0..0.oooo.XXXX.XXXX.XXXX.0.",
+        ".0000.oooo.XXXX.XXXX.XXXX.0.",
+        "....0.oooo.XXXX.XXXX.XXXX.0.",
+        "   .0.....................0.",
+        "   .00000000000000000000000.",
+        "   .........................",
+    };
+    static const char * battery6[] = {
+        BATTERY_HEADER
+        "   .........................",
+        "   .00000000000000000000000.",
+        "   .0.....................0.",
+        "....0......XXXX.XXXX.XXXX.0.",
+        ".0000......XXXX.XXXX.XXXX.0.",
+        ".0..0......XXXX.XXXX.XXXX.0.",
+        ".0..0......XXXX.XXXX.XXXX.0.",
+        ".0..0......XXXX.XXXX.XXXX.0.",
+        ".0..0......XXXX.XXXX.XXXX.0.",
+        ".0..0......XXXX.XXXX.XXXX.0.",
+        ".0000......XXXX.XXXX.XXXX.0.",
+        "....0......XXXX.XXXX.XXXX.0.",
+        "   .0.....................0.",
+        "   .00000000000000000000000.",
+        "   .........................",
+    };
+    static const char * battery5[] = {
+        BATTERY_HEADER
+        "   .........................",
+        "   .00000000000000000000000.",
+        "   .0.....................0.",
+        "....0......oooo.XXXX.XXXX.0.",
+        ".0000......oooo.XXXX.XXXX.0.",
+        ".0..0......oooo.XXXX.XXXX.0.",
+        ".0..0......oooo.XXXX.XXXX.0.",
+        ".0..0......oooo.XXXX.XXXX.0.",
+        ".0..0......oooo.XXXX.XXXX.0.",
+        ".0..0......oooo.XXXX.XXXX.0.",
+        ".0000......oooo.XXXX.XXXX.0.",
+        "....0......oooo.XXXX.XXXX.0.",
+        "   .0.....................0.",
+        "   .00000000000000000000000.",
+        "   .........................",
+    };
+    static const char * battery4[] = {
+        BATTERY_HEADER
+        "   .........................",
+        "   .00000000000000000000000.",
+        "   .0.....................0.",
+        "....0...........XXXX.XXXX.0.",
+        ".0000...........XXXX.XXXX.0.",
+        ".0..0...........XXXX.XXXX.0.",
+        ".0..0...........XXXX.XXXX.0.",
+        ".0..0...........XXXX.XXXX.0.",
+        ".0..0...........XXXX.XXXX.0.",
+        ".0..0...........XXXX.XXXX.0.",
+        ".0000...........XXXX.XXXX.0.",
+        "....0...........XXXX.XXXX.0.",
+        "   .0.....................0.",
+        "   .00000000000000000000000.",
+        "   .........................",
+    };
+    static const char * battery3[] = {
+        BATTERY_HEADER
+        "   .........................",
+        "   .00000000000000000000000.",
+        "   .0.....................0.",
+        "....0...........oooo.XXXX.0.",
+        ".0000...........oooo.XXXX.0.",
+        ".0..0...........oooo.XXXX.0.",
+        ".0..0...........oooo.XXXX.0.",
+        ".0..0...........oooo.XXXX.0.",
+        ".0..0...........oooo.XXXX.0.",
+        ".0..0...........oooo.XXXX.0.",
+        ".0000...........oooo.XXXX.0.",
+        "....0...........oooo.XXXX.0.",
+        "   .0.....................0.",
+        "   .00000000000000000000000.",
+        "   .........................",
+    };
+    static const char * battery2[] = {
+        BATTERY_HEADER
+        "   .........................",
+        "   .00000000000000000000000.",
+        "   .0.....................0.",
+        "....0................XXXX.0.",
+        ".0000................XXXX.0.",
+        ".0..0................XXXX.0.",
+        ".0..0................XXXX.0.",
+        ".0..0................XXXX.0.",
+        ".0..0................XXXX.0.",
+        ".0..0................XXXX.0.",
+        ".0000................XXXX.0.",
+        "....0................XXXX.0.",
+        "   .0.....................0.",
+        "   .00000000000000000000000.",
+        "   .........................",
+    };
+    static const char * battery1[] = {
+        BATTERY_HEADER
+        "   .........................",
+        "   .00000000000000000000000.",
+        "   .0.....................0.",
+        "   .0................oooo.0.",
+        ".0000................oooo.0.",
+        ".0..0................oooo.0.",
+        ".0..0................oooo.0.",
+        ".0..0................oooo.0.",
+        ".0..0................oooo.0.",
+        ".0..0................oooo.0.",
+        ".0000................oooo.0.",
+        "   .0................oooo.0.",
+        "   .0.....................0.",
+        "   .00000000000000000000000.",
+        "   .........................",
+    };
+    static const char * battery0[] = {
+        BATTERY_HEADER
+        "   .........................",
+        "   .00000000000000000000000.",
+        "   .0.....................0.",
+        "   .0.....................0.",
+        ".0000.....................0.",
+        ".0..0.....................0.",
+        ".0..0.....................0.",
+        ".0..0.....................0.",
+        ".0..0.....................0.",
+        ".0..0.....................0.",
+        ".0000.....................0.",
+        "....0.....................0.",
+        "   .0.....................0.",
+        "   .00000000000000000000000.",
+        "   .........................",
+    };
+//#endif
+
+    static const char * battery_charge[] = {
+        BATTERY_HEADER
+        "   .........................",
+        "   .00000000000000000000000.",
+        "   .0.....................0.",
+        "....0.....................0.",
+        ".0000............XX.......0.",
+        ".0..0...........XXXX......0.",
+        ".0..0..XX......XXXXXX.....0.",
+        ".0..0...XXX...XXXX..XX....0.",
+        ".0..0....XXX..XXXX...XX...0.",
+        ".0..0.....XXXXXXX.....XX..0.",
+        ".0000.......XXXX..........0.",
+        "....0........XX...........0.",
+        "   .0.....................0.",
+        "   .00000000000000000000000.",
+        "   .........................",
+    };
+    static const char * battery_frame[] = {
+        BATTERY_HEADER
+        "   .........................",
+        "   .00000000000000000000000.",
+        "   .0.....................0.",
+        "....0.....................0.",
+        ".0000.....................0.",
+        ".0..0.....................0.",
+        ".0..0.....................0.",
+        ".0..0.....................0.",
+        ".0..0.....................0.",
+        ".0..0.....................0.",
+        ".0000.....................0.",
+        "....0.....................0.",
+        "   .0.....................0.",
+        "   .00000000000000000000000.",
+        "   .........................",
+    };
+
+    const char * * icon_bpm[] = {
+		battery_charge,
+		battery0,
+		battery1,
+		battery2,
+		battery3,
+		battery4,
+		battery5,
+		battery6,
+		battery7,
+		battery8,
+		battery_frame,
+		NULL
+    };
+
+	replaceColor( color1, cl1 );
+	replaceColor( color2, cl2 );
+	replaceColor( color3, cl3 );
+	replaceColor( color4, cl4 );
+
+	LVRefVec<LVImageSource> icons;
+	for ( int i=0; icon_bpm[i]; i++ ) {
+		icons.add(LVCreateXPMImageSource( icon_bpm[i] ));
+	}
+
+	return icons;
+}
 
 typedef struct CreDocument {
 	LVDocView *text_view;
@@ -70,7 +328,9 @@ static int newDocView(lua_State *L) {
 	} else {
 		stream = LVOpenFileStream("data/cr3.ini", LVOM_WRITE);
 		props->saveToStream(stream.get());
-		}
+	}
+
+	doc->text_view->setBatteryIcons(getBatteryIcons(0x000000));
 
 	return 1;
 }
@@ -818,6 +1078,13 @@ static int findText(lua_State *L) {
     return 0;
 }
 
+static int setBatteryState(lua_State *L) {
+	CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
+	int state = luaL_checkint(L, 2);
+	doc->text_view->setBatteryState(state);
+	return 0;
+}
+
 static const struct luaL_Reg cre_func[] = {
 	{"initCache", initCache},
 	{"newDocView", newDocView},
@@ -860,6 +1127,7 @@ static const struct luaL_Reg credocument_meth[] = {
 	{"setPageMargins", setPageMargins},
 	{"setVisiblePageCount", setVisiblePageCount},
 	{"adjustFontSizes", adjustFontSizes},
+	{"setBatteryState", setBatteryState},
 	/* --- control methods ---*/
 	{"gotoPage", gotoPage},
 	{"gotoPercent", gotoPercent},
