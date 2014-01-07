@@ -1,74 +1,17 @@
-diff --git a/crengine/include/lvfnt.h b/crengine/include/lvfnt.h
-index a9fb055..c4bdb55 100644
---- a/crengine/include/lvfnt.h
-+++ b/crengine/include/lvfnt.h
-@@ -222,6 +222,7 @@ lUInt16 lvfontMeasureText( const lvfont_handle pfont,
- #define LCHAR_IS_EOL               16 ///< flag: this char is CR or LF
- #define LCHAR_IS_OBJECT            32 ///< flag: this char is object or image
- #define LCHAR_MANDATORY_NEWLINE    64 ///< flag: this char must start with new line
-+#define LCHAR_IS_CJK_IDEOGRAPH    128 ///< flag: this char is a CJK ideograph
- 
- /** \brief returns true if character is unicode space 
-     \param code is character
-diff --git a/crengine/include/lvstring.h b/crengine/include/lvstring.h
-index 6985cd6..3cda92e 100644
---- a/crengine/include/lvstring.h
-+++ b/crengine/include/lvstring.h
-@@ -25,6 +25,14 @@
- #define UNICODE_NO_BREAK_SPACE   0x00a0
- #define UNICODE_HYPHEN   0x2010
- #define UNICODE_NB_HYPHEN   0x2011
-+#define UNICODE_CJK_IDEOGRAPHS_BEGIN 0x4e00
-+#define UNICODE_CJK_IDEOGRAPHS_END 0x9FFF
-+#define UNICODE_CJK_PUNCTUATION_BEGIN 0x3000
-+#define UNICODE_CJK_PUNCTUATION_END 0x303F
-+#define UNICODE_GENERAL_PUNCTUATION_BEGIN 0x2000
-+#define UNICODE_GENERAL_PUNCTUATION_END 0x206F
-+#define UNICODE_CJK_PUNCTUATION_HALF_AND_FULL_WIDTH_BEGIN 0xFF01
-+#define UNICODE_CJK_PUNCTUATION_HALF_AND_FULL_WIDTH_END 0xFFEE
- 
- 
- 
-diff --git a/crengine/src/lvfntman.cpp b/crengine/src/lvfntman.cpp
-index 49125a7..023ce08 100644
---- a/crengine/src/lvfntman.cpp
-+++ b/crengine/src/lvfntman.cpp
-@@ -682,7 +682,8 @@ static lUInt16 char_flags[] = {
-      (ch<48?char_flags[ch]: \
-         (ch==UNICODE_SOFT_HYPHEN_CODE?LCHAR_ALLOW_WRAP_AFTER: \
-         (ch==UNICODE_NO_BREAK_SPACE?LCHAR_DEPRECATED_WRAP_AFTER|LCHAR_IS_SPACE: \
--        (ch==UNICODE_HYPHEN?LCHAR_DEPRECATED_WRAP_AFTER:0))))
-+        (ch==UNICODE_HYPHEN?LCHAR_DEPRECATED_WRAP_AFTER: \
-+        (((ch>=UNICODE_CJK_IDEOGRAPHS_BEGIN) && (ch<=UNICODE_CJK_IDEOGRAPHS_END))?LCHAR_IS_CJK_IDEOGRAPH:0)))))
- 
- class LVFreeTypeFace : public LVFont
- {
 diff --git a/crengine/src/lvtextfm.cpp b/crengine/src/lvtextfm.cpp
-index 57bbf3b..10507c8 100755
+index 57bbf3b..aa8aff8 100755
 --- a/crengine/src/lvtextfm.cpp
 +++ b/crengine/src/lvtextfm.cpp
-@@ -702,6 +702,7 @@ public:
-         bool isSpace = false;
-         //bool nextIsSpace = false;
-         bool space = false;
-+        bool cjk_char = false;
-         for ( int i=start; i<=end; i++ ) {
-             src_text_fragment_t * newSrc = i<end ? m_srcs[i] : NULL;
-             if ( i<end ) {
-@@ -709,10 +710,11 @@ public:
-                 isSpace = (m_flags[i] & LCHAR_IS_SPACE)!=0;
-                 //nextIsSpace = i<end-1 && (m_flags[i+1] & LCHAR_IS_SPACE);
-                 space = splitBySpaces && lastIsSpace && !isSpace && i<lastnonspace;
-+                cjk_char = (m_flags[i] == LCHAR_IS_CJK_IDEOGRAPH);
+@@ -712,7 +712,7 @@ public:
              } else {
                  lastWord = true;
              }
 -            if ( i>wstart && (newSrc!=lastSrc || space || lastWord) ) {
-+            if ( i>wstart && (newSrc!=lastSrc || space || lastWord || cjk_char) ) {
++            if ( i>wstart && (newSrc!=lastSrc || space || lastWord || isCJKIdeograph(m_flags[i])) ) {
                  // create and add new word
                  formatted_word_t * word = lvtextAddFormattedWord(frmline);
                  int b;
-@@ -811,7 +813,8 @@ public:
+@@ -811,7 +811,8 @@ public:
                          }
                          if ( word->flags & LTEXT_WORD_CAN_HYPH_BREAK_LINE_AFTER ) {
                              word->width -= font->getHyphenWidth(); // TODO: strange fix - need some other solution
@@ -78,54 +21,81 @@ index 57bbf3b..10507c8 100755
                              int w = font->getCharWidth(lastc);
                              TR("floating: %c w=%d", lastc, w);
                              word->width -= w;
-@@ -869,6 +872,16 @@ public:
+@@ -869,6 +870,29 @@ public:
          return 0;
      }
  
-+    bool isPunctuation(lChar16 c) {
++#define UNICODE_CJK_IDEOGRAPHS_BEGIN 0x4e00
++#define UNICODE_CJK_IDEOGRAPHS_END 0x9FFF
++#define UNICODE_CJK_PUNCTUATION_BEGIN 0x3000
++#define UNICODE_CJK_PUNCTUATION_END 0x303F
++#define UNICODE_GENERAL_PUNCTUATION_BEGIN 0x2000
++#define UNICODE_GENERAL_PUNCTUATION_END 0x206F
++#define UNICODE_CJK_PUNCTUATION_HALF_AND_FULL_WIDTH_BEGIN 0xFF01
++#define UNICODE_CJK_PUNCTUATION_HALF_AND_FULL_WIDTH_END 0xFFEE
++
++    bool isCJKIdeograph(lChar16 c) {
++       return c >= UNICODE_CJK_IDEOGRAPHS_BEGIN && c <= UNICODE_CJK_IDEOGRAPHS_END;
++    }
++
++    bool isCJKPunctuation(lChar16 c) {
 +       return (c >= UNICODE_CJK_PUNCTUATION_BEGIN && c <= UNICODE_CJK_PUNCTUATION_END) || \
 +       (c >= UNICODE_GENERAL_PUNCTUATION_BEGIN && c <= UNICODE_GENERAL_PUNCTUATION_END) || \
 +       (c >= UNICODE_CJK_PUNCTUATION_HALF_AND_FULL_WIDTH_BEGIN && c <= UNICODE_CJK_PUNCTUATION_HALF_AND_FULL_WIDTH_END);
 +    }
 +
-+    bool isLeftPunctuation(lChar16 c) {
-+       return c==L'‘' || c==L'“' || c==L'《' || c==L'〈' || c==L'（' || c==L'【' || c==L'『';
++    bool isCJKLeftPunctuation(lChar16 c) {
++       return c==L'“' || c==L'‘' || c==L'「' || c==L'『' || c==L'《' || c==L'〈' || c==L'（' || c==L'【';
 +    }
 +
      /// Split paragraph into lines
      void processParagraph( int start, int end )
      {
-@@ -952,7 +965,7 @@ public:
+@@ -927,7 +951,6 @@ public:
+                     }
+                 }
+             }
+-            maxWidth -= visialAlignmentWidth;
+         }
+ #endif
+ 
+@@ -944,6 +967,8 @@ public:
+             int lastMandatoryWrap = -1;
+             int spaceReduceWidth = 0; // max total line width which can be reduced by narrowing of spaces
+             int firstCharMargin = getAdditionalCharWidthOnLeft(pos); // for first italic char with elements below baseline
++            spaceReduceWidth -= visialAlignmentWidth/2;
++            firstCharMargin += visialAlignmentWidth/2;
+             for ( i=pos; i<m_length; i++ ) {
+                 if ( x + m_widths[i]-w0 > maxWidth + spaceReduceWidth - firstCharMargin)
+                     break;
+@@ -952,7 +977,7 @@ public:
                      lastMandatoryWrap = i;
                      break;
                  }
 -                if ( flags & LCHAR_ALLOW_WRAP_AFTER || i==m_length-1)
-+                if ((flags & LCHAR_ALLOW_WRAP_AFTER) || i==m_length-1 || (flags & LCHAR_IS_CJK_IDEOGRAPH) || isPunctuation(m_text[i]))
++                if ((flags & LCHAR_ALLOW_WRAP_AFTER) || i==m_length-1 || isCJKIdeograph(m_text[i]) || isCJKPunctuation(m_text[i]))
                      lastNormalWrap = i;
                  else if ( flags & LCHAR_DEPRECATED_WRAP_AFTER )
                      lastDeprecatedWrap = i;
-@@ -1029,6 +1042,36 @@ public:
+@@ -1029,6 +1054,32 @@ public:
              }
              bool needReduceSpace = true; // todo: calculate whether space reducing required
              int endp = wrapPos+(lastMandatoryWrap<0 ? 1 : 0);
-+
 +            int downSkipCount = 0;
 +            int upSkipCount = 0;
-+            if (endp > 1 && isLeftPunctuation(*(m_text + endp))) {
++            if (endp > 1 && isCJKLeftPunctuation(*(m_text + endp))) {
 +				CRLog::trace("skip skip punctuation %s, at index %d", LCSTR(lString16(m_text+endp, 1)), endp);
-+            } else if (endp > 1 && isLeftPunctuation(*(m_text + endp -1))) {
-+               endp--;
-+               wrapPos--;
++            } else if (endp > 1 && isCJKLeftPunctuation(*(m_text + endp -1))) {
++               endp--; wrapPos--;
 +               CRLog::trace("up skip left punctuation %s, at index %d", LCSTR(lString16(m_text+endp, 1)), endp);
-+            }
-+            else if (endp > 1 && (isPunctuation(*(m_text + endp)))) {
++            } else if (endp > 1 && (isCJKPunctuation(*(m_text + endp)))) {
 +                for (int epos = endp; epos>=start; epos++, downSkipCount++) {
-+                   if ( !isPunctuation(*(m_text + epos)) ) break;
++                   if ( !isCJKPunctuation(*(m_text + epos)) ) break;
 +                   CRLog::trace("down skip punctuation %s, at index %d", LCSTR(lString16(m_text + epos, 1)), epos);
 +                }
 +                for (int epos = endp; epos>=start; epos--, upSkipCount++) {
-+					if ( !isPunctuation(*(m_text + epos)) ) break;
-+					CRLog::trace("up skip punctuation %s, at index %d", LCSTR(lString16(m_text + epos, 1)), epos);
++                   if ( !isCJKPunctuation(*(m_text + epos)) ) break;
++                   CRLog::trace("up skip punctuation %s, at index %d", LCSTR(lString16(m_text + epos, 1)), epos);
 +				}
 +                if (downSkipCount <= upSkipCount && visualAlignmentEnabled) {
 +                   endp += downSkipCount;
@@ -136,8 +106,7 @@ index 57bbf3b..10507c8 100755
 +                   wrapPos -= upSkipCount;
 +                   CRLog::trace("finally up skip punctuations %d", upSkipCount);
 +                }
-+			}
-+
++            }
              int lastnonspace = endp-1;
              for ( int k=endp-1; k>=start; k-- ) {
                  if ( !((m_flags[k] & LCHAR_IS_SPACE) && !(m_flags[k] & LCHAR_IS_OBJECT)) ) {
