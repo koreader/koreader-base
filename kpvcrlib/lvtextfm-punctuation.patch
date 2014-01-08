@@ -59,7 +59,7 @@ index 57bbf3b..e6f5913 100755
 +    }
 +
 +    bool isCJKLeftPunctuation(lChar16 c) {
-+       return c==L'“' || c==L'‘' /*|| c==L'「' || c==L'『' */|| c==L'《' || c==L'〈' || c==L'（' || c==L'【';
++       return c==L'“' || c==L'‘' || c==L'「' || c==L'『' || c==L'《' || c==L'〈' || c==L'（' || c==L'【';
 +    }
 +
      /// Split paragraph into lines
@@ -99,7 +99,7 @@ index 57bbf3b..e6f5913 100755
 +            int upSkipCount = 0;
 +            if (endp > 1 && isCJKLeftPunctuation(*(m_text + endp))) {
 +				CRLog::trace("skip skip punctuation %s, at index %d", LCSTR(lString16(m_text+endp, 1)), endp);
-+            } else if (endp > 1 && isCJKLeftPunctuation(*(m_text + endp - 1))) {
++            } else if (endp > 1 && endp < m_length && isCJKLeftPunctuation(*(m_text + endp - 1))) {
 +               endp--; wrapPos--;
 +               CRLog::trace("up skip left punctuation %s, at index %d", LCSTR(lString16(m_text+endp, 1)), endp);
 +            } else if (endp > 1 && isCJKPunctuation(*(m_text + endp))) {
