@@ -310,7 +310,7 @@ Color8_mt.__index.getColorRGB24 = Color4L_mt.__index.getColorRGB24
 Color8A_mt.__index.getColorRGB24 = Color4L_mt.__index.getColorRGB24
 function ColorRGB16_mt.__index:getColorRGB24()
 	local r = rshift(self.v, 11)
-	local g = band(rshift(self.v, 5, 0x3F))
+	local g = band(rshift(self.v, 5), 0x3F)
 	local b = band(self.v, 0x001F)
 	return ColorRGB24(lshift(r, 3) + rshift(r, 2), lshift(g, 2) + rshift(g, 4), lshift(b, 3) + rshift(b, 2))
 end
@@ -327,7 +327,7 @@ Color8_mt.__index.getColorRGB32 = Color4L_mt.__index.getColorRGB32
 Color8A_mt.__index.getColorRGB32 = Color4L_mt.__index.getColorRGB32
 function ColorRGB16_mt.__index:getColorRGB32()
 	local r = rshift(self.v, 11)
-	local g = band(rshift(self.v, 5, 0x3F))
+	local g = band(rshift(self.v, 5), 0x3F)
 	local b = band(self.v, 0x001F)
 	return ColorRGB32(lshift(r, 3) + rshift(r, 2), lshift(g, 2) + rshift(g, 4), lshift(b, 3) + rshift(b, 2), 0)
 end
@@ -1007,11 +1007,11 @@ function BB_mt.__index:writePAM(filename)
 	elseif bb_type == TYPE_BBRGB16 then
 		-- this is not supported by PAM since the tuple consists of different bit widths
 		-- so we convert to RGB24 in this case
-		f:write("DEPTH 3\n", "MAXVAL 256\n", "TUPLTYPE RGB\n")
+		f:write("DEPTH 3\n", "MAXVAL 255\n", "TUPLTYPE RGB\n")
 	elseif bb_type == TYPE_BBRGB24 then
-		f:write("DEPTH 3\n", "MAXVAL 256\n", "TUPLTYPE RGB\n")
+		f:write("DEPTH 3\n", "MAXVAL 255\n", "TUPLTYPE RGB\n")
 	elseif bb_type == TYPE_BBRGB32 then
-		f:write("DEPTH 4\n", "MAXVAL 256\n", "TUPLTYPE RGB_ALPHA\n")
+		f:write("DEPTH 4\n", "MAXVAL 255\n", "TUPLTYPE RGB_ALPHA\n")
 	end
 	f:write("ENDHDR\n")
 	for y = 0, self:getHeight()-1 do
