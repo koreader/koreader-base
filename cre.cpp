@@ -897,6 +897,9 @@ static int getPageLinks(lua_State *L) {
 	int linkCount = links.length();
 	if ( linkCount ) {
 		sel.clear();
+		lvRect margin = doc->text_view->getPageMargins();
+		int x_offset = margin.left;
+		int y_offset = doc->text_view->GetPos() - doc->text_view->getPageHeaderHeight() - margin.top;
 		for ( int i=0; i<linkCount; i++ ) {
 			lString16 txt = links[i]->getRangeText();
 			lString8 txt8 = UnicodeToLocal( txt );
@@ -918,16 +921,16 @@ static int getPageLinks(lua_State *L) {
 			lua_newtable(L); // new link
 
 			lua_pushstring(L, "start_x");
-			lua_pushinteger(L, start_pt.x);
+			lua_pushinteger(L, start_pt.x + x_offset);
 			lua_settable(L, -3);
 			lua_pushstring(L, "start_y");
-			lua_pushinteger(L, start_pt.y);
+			lua_pushinteger(L, start_pt.y - y_offset);
 			lua_settable(L, -3);
 			lua_pushstring(L, "end_x");
-			lua_pushinteger(L, end_pt.x);
+			lua_pushinteger(L, end_pt.x + x_offset);
 			lua_settable(L, -3);
 			lua_pushstring(L, "end_y");
-			lua_pushinteger(L, end_pt.y);
+			lua_pushinteger(L, end_pt.y - y_offset);
 			lua_settable(L, -3);
 
 			const char * link_to = link8.c_str();
@@ -958,6 +961,22 @@ static int gotoLink(lua_State *L) {
 	const char *pos = luaL_checkstring(L, 2);
 
 	doc->text_view->goLink(lString16(pos), true);
+
+	return 0;
+}
+
+static int goBack(lua_State *L) {
+	CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
+
+	doc->text_view->goBack();
+
+	return 0;
+}
+
+static int goForward(lua_State *L) {
+	CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
+
+	doc->text_view->goForward();
 
 	return 0;
 }
@@ -1142,6 +1161,8 @@ static const struct luaL_Reg credocument_meth[] = {
 	{"getWordFromPos", getWordFromPos},
 	{"getPageLinks", getPageLinks},
 	{"gotoLink", gotoLink},
+	{"goBack", goBack},
+	{"goForward", goForward},
 	{"clearSelection", clearSelection},
 	{"saveDefaults", saveDefaults},
 	{"close", closeDocument},
