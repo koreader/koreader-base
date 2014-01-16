@@ -1,0 +1,15 @@
+diff --git a/crengine/src/lvtinydom.cpp b/crengine/src/lvtinydom.cpp
+index fe2b879..df50386 100755
+--- a/crengine/src/lvtinydom.cpp
++++ b/crengine/src/lvtinydom.cpp
+@@ -6874,6 +6874,10 @@ public:
+                 _list.add( ldomWord( node, beginOfWord, i ) );
+                 beginOfWord = -1;
+             }
++            if (lGetCharProps(text[i]) == CH_PROP_CJK) {
++                _list.add( ldomWord( node, i, i+1 ) );
++                beginOfWord = -1;
++            }
+         }
+     }
+     /// called for each found node in range
