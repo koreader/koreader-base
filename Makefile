@@ -347,7 +347,8 @@ fetchthirdparty:
 		git apply ../lvfntman-RegisterExternalFont.patch && \
 		git apply ../lvtinydom-registerEmbeddedFonts.patch && \
 		git apply ../epubfmt-EmbeddedFontStyleParser.patch && \
-		git apply ../lvtextfm-punctuation.patch
+		git apply ../lvtextfm-punctuation.patch && \
+		git apply ../lvtinydom-CJK-word.patch
 	# CREngine patch: disable fontconfig
 	grep USE_FONTCONFIG $(CRENGINE_DIR)/crengine/include/crsetup.h \
 		&& grep -v USE_FONTCONFIG \
