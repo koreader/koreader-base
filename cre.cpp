@@ -758,20 +758,15 @@ static int setVisiblePageCount(lua_State *L) {
 static int adjustFontSizes(lua_State *L) {
     CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
     int dpi = luaL_checkint(L, 2);
+    static int fontSizes[] = {	12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30,
+    							31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 42, 44, 48, 52, 56, 60, 64, 68, 72};
+    LVArray<int> sizes( fontSizes, sizeof(fontSizes)/sizeof(int) );
+    doc->text_view->setFontSizes(sizes, false); // text
     if (dpi < 170) {
-        static int fontSizes[] = {16, 18, 20, 22, 24, 26, 28, 30, 33, 36, 40, 44};
-        LVArray<int> sizes( fontSizes, sizeof(fontSizes)/sizeof(int) );
-        doc->text_view->setFontSizes(sizes, false); // text
-        doc->text_view->setStatusFontSize(20);      // header
+        doc->text_view->setStatusFontSize(20);  // header
     } else if (dpi > 250) {
-        static int fontSizes[] = {28, 30, 33, 36, 40, 44, 48, 52, 56, 60, 64, 68};
-        LVArray<int> sizes( fontSizes, sizeof(fontSizes)/sizeof(int) );
-        doc->text_view->setFontSizes(sizes, false);
         doc->text_view->setStatusFontSize(28);
     } else {
-        static int fontSizes[] = {20, 22, 24, 26, 28, 30, 33, 36, 40, 44, 48, 52};
-        LVArray<int> sizes( fontSizes, sizeof(fontSizes)/sizeof(int) );
-        doc->text_view->setFontSizes(sizes, false);
         doc->text_view->setStatusFontSize(24);
     }
     return 0;
