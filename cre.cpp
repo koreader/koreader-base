@@ -844,7 +844,7 @@ static int cursorRight(lua_State *L) {
 	return 0;
 }
 
-static int getWordFromPos(lua_State *L) {
+static int getWordFromPosition(lua_State *L) {
 	CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
 	int x = luaL_checkint(L, 2);
 	int y = luaL_checkint(L, 3);
@@ -853,14 +853,12 @@ static int getWordFromPos(lua_State *L) {
 	lvRect margin = tv->getPageMargins();
 	int x_offset = margin.left;
 	int y_offset = tv->GetPos() - tv->getPageHeaderHeight() - margin.top;
-	x = x - x_offset;
-	y = y + y_offset;
 
 	LVPageWordSelector sel(tv);
-	sel.selectWord(x, y);
+	sel.selectWord(x - x_offset, y + y_offset);
 
 	ldomWordEx * word = sel.getSelectedWord();
-	lua_newtable(L); // new link
+	lua_newtable(L); // new word box
 	if (word) {
 		lvRect rect;
 		ldomXRange range = word->getRange();
@@ -881,6 +879,151 @@ static int getWordFromPos(lua_State *L) {
 			lua_pushinteger(L, rect.bottom - y_offset);
 			lua_settable(L, -3);
 		}
+	}
+	return 1;
+}
+
+static int getTextFromPositions(lua_State *L) {
+	CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
+	int x0 = luaL_checkint(L, 2);
+	int y0 = luaL_checkint(L, 3);
+	int x1 = luaL_checkint(L, 4);
+	int y1 = luaL_checkint(L, 5);
+
+	LVDocView *tv = doc->text_view;
+	lvRect margin = tv->getPageMargins();
+	int x_offset = margin.left;
+	int y_offset = tv->GetPos() - tv->getPageHeaderHeight() - margin.top;
+
+	lvPoint startpt(x0, y0);
+	lvPoint endpt(x1, y1);
+	ldomXPointer startp = tv->getNodeByPoint(startpt);
+	ldomXPointer endp = tv->getNodeByPoint(endpt);
+	lua_newtable(L); // new text boxes
+	if (!startp.isNull() && !endp.isNull()) {
+		ldomXRange r(startp, endp);
+		if (r.getStart().isNull() || r.getEnd().isNull())
+			return 0;
+		r.sort();
+		if (!r.getStart().isVisibleWordStart())
+			r.getStart().prevVisibleWordStart();
+		if (!r.getEnd().isVisibleWordEnd())
+			r.getEnd().nextVisibleWordEnd();
+		if (r.isNull())
+			return 0;
+
+		r.setFlags(1);
+		//tv->selectRange(r);  // we don't need native highlight of selection
+
+		int page = tv->getBookmarkPage(startp);
+		int pages = tv->getPageCount();
+		lString16 titleText;
+		lString16 posText;
+		tv->getBookmarkPosText(startp, titleText, posText);
+		lString16 selText = r.getRangeText( '\n', 8192 );
+
+		lua_pushstring(L, "text");
+		lua_pushstring(L, UnicodeToLocal(selText).c_str());
+		lua_settable(L, -3);
+		lua_pushstring(L, "pos0");
+		lua_pushstring(L, UnicodeToLocal(r.getStart().toString()).c_str());
+		lua_settable(L, -3);
+		lua_pushstring(L, "pos1");
+		lua_pushstring(L, UnicodeToLocal(r.getEnd().toString()).c_str());
+		lua_settable(L, -3);
+		lua_pushstring(L, "title");
+		lua_pushstring(L, UnicodeToLocal(titleText).c_str());
+		lua_settable(L, -3);
+		lua_pushstring(L, "context");
+		lua_pushstring(L, UnicodeToLocal(posText).c_str());
+		lua_settable(L, -3);
+		lua_pushstring(L, "percent");
+		lua_pushnumber(L, 1.0*page/(pages-1));
+		lua_settable(L, -3);
+	}
+	return 1;
+}
+
+void lua_pushLineRect(lua_State *L, int left, int top, int right, int bottom, int lcount) {
+	lua_pushstring(L, "x0");
+	lua_pushinteger(L, left);
+	lua_settable(L, -3);
+	lua_pushstring(L, "y0");
+	lua_pushinteger(L, top);
+	lua_settable(L, -3);
+	lua_pushstring(L, "x1");
+	lua_pushinteger(L, right);
+	lua_settable(L, -3);
+	lua_pushstring(L, "y1");
+	lua_pushinteger(L, bottom);
+	lua_settable(L, -3);
+	lua_rawseti(L, -2, lcount);
+}
+
+static int getWordBoxesFromPositions(lua_State *L) {
+	CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
+	const char* pos0 = luaL_checkstring(L, 2);
+	const char* pos1 = luaL_checkstring(L, 3);
+
+	LVDocView *tv = doc->text_view;
+	ldomDocument *dv = doc->dom_doc;
+	lvRect margin = tv->getPageMargins();
+	int x_offset = margin.left;
+	int y_offset = tv->GetPos() - tv->getPageHeaderHeight() - margin.top;
+
+	ldomXPointer startp = dv->createXPointer(lString16(pos0));
+	ldomXPointer endp = dv->createXPointer(lString16(pos1));
+	lua_newtable(L); // new word boxes
+	if (!startp.isNull() && !endp.isNull()) {
+		ldomXRange r(startp, endp);
+		if (r.getStart().isNull() || r.getEnd().isNull())
+			return 0;
+		r.sort();
+		if (!r.getStart().isVisibleWordStart())
+			r.getStart().prevVisibleWordStart();
+		if (!r.getEnd().isVisibleWordEnd())
+			r.getEnd().nextVisibleWordEnd();
+		if (r.isNull())
+			return 0;
+
+		r.setFlags(1);
+		//tv->selectRange(r);  // we don't need native highlight of selection
+
+		/*  accumulate text lines */
+		LVArray<ldomWord> words;
+		r.getRangeWords(words);
+		lvRect charRect, wordRect, lineRect;
+		int lcount = 1;
+		int lastx = -1;
+		lua_newtable(L); // first line box
+		for (int i=0; i<words.length(); i++) {
+			if (ldomXRange(words[i]).getRect(wordRect)) {
+				if (wordRect.left < lastx) {
+					lua_pushLineRect(L, lineRect.left + x_offset, lineRect.top - y_offset,
+										lineRect.right + x_offset, lineRect.bottom - y_offset, lcount++);
+					lua_newtable(L); // new line box
+					lineRect.clear();
+				}
+				lineRect.extend(wordRect);
+				lastx = wordRect.left;
+			} else {  // word is hyphenated
+				ldomWord word = words[i];
+				for (int j=word.getStart(); j < word.getEnd(); j++) {
+					if (ldomXPointer(word.getNode(), j).getRect(charRect)) {
+						if (charRect.left < lastx) {
+							lua_pushLineRect(L, lineRect.left + x_offset, lineRect.top - y_offset,
+												lineRect.right + x_offset, lineRect.bottom - y_offset, lcount++);
+							lua_newtable(L); // new line box
+							lineRect.clear();
+						}
+						lineRect.extend(charRect);
+						lastx = charRect.left;
+					}
+				}
+			}
+		}
+		lua_pushLineRect(L, lineRect.left + x_offset, lineRect.top - y_offset,
+							lineRect.right + x_offset, lineRect.bottom - y_offset, lcount);
 	}
 	return 1;
 }
@@ -1158,7 +1301,9 @@ static const struct luaL_Reg credocument_meth[] = {
 	//{"cursorRight", cursorRight},
 	{"drawCurrentPage", drawCurrentPage},
 	{"findText", findText},
-	{"getWordFromPos", getWordFromPos},
+	{"getWordFromPosition", getWordFromPosition},
+	{"getTextFromPositions", getTextFromPositions},
+	{"getWordBoxesFromPositions", getWordBoxesFromPositions},
 	{"getPageLinks", getPageLinks},
 	{"gotoLink", gotoLink},
 	{"goBack", goBack},
@@ -1184,7 +1329,7 @@ int luaopen_cre(lua_State *L) {
 
 #if DEBUG_CRENGINE
 	CRLog::setStdoutLogger();
-	CRLog::setLogLevel(CRLog::LL_DEBUG);
+	CRLog::setLogLevel(CRLog::LL_TRACE);
 #endif
 
 	return 1;
