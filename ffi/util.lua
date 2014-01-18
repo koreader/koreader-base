@@ -40,7 +40,7 @@ function util.execute(...)
 	local pid = ffi.C.fork()
 	if pid == 0 then
 		local args = {...}
-		ffi.C.execl(args[1], unpack(args, 1, #args+1))
+		os.exit(ffi.C.execl(args[1], unpack(args, 1, #args+1)))
 	end
 	local status = ffi.new('int[1]')
 	ffi.C.waitpid(pid, status, 0)
