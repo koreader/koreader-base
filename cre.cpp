@@ -847,7 +847,7 @@ static int getWordFromPosition(lua_State *L) {
 	LVDocView *tv = doc->text_view;
 	lvRect margin = tv->getPageMargins();
 	int x_offset = margin.left;
-	int y_offset = tv->GetPos() - tv->getPageHeaderHeight() - margin.top;
+	int y_offset = tv->GetPos() - (tv->getPageHeaderHeight() + margin.top) * (tv->getViewMode()==DVM_PAGES);
 
 	LVPageWordSelector sel(tv);
 	sel.selectWord(x - x_offset, y + y_offset);
@@ -887,8 +887,6 @@ static int getTextFromPositions(lua_State *L) {
 
 	LVDocView *tv = doc->text_view;
 	lvRect margin = tv->getPageMargins();
-	int x_offset = margin.left;
-	int y_offset = tv->GetPos() - tv->getPageHeaderHeight() - margin.top;
 
 	lvPoint startpt(x0, y0);
 	lvPoint endpt(x1, y1);
@@ -964,7 +962,7 @@ static int getWordBoxesFromPositions(lua_State *L) {
 	ldomDocument *dv = doc->dom_doc;
 	lvRect margin = tv->getPageMargins();
 	int x_offset = margin.left;
-	int y_offset = tv->GetPos() - tv->getPageHeaderHeight() - margin.top;
+	int y_offset = tv->GetPos() - (tv->getPageHeaderHeight() + margin.top) * (tv->getViewMode()==DVM_PAGES);
 
 	ldomXPointer startp = dv->createXPointer(lString16(pos0));
 	ldomXPointer endp = dv->createXPointer(lString16(pos1));
@@ -1242,6 +1240,19 @@ static int setBatteryState(lua_State *L) {
 	return 0;
 }
 
+static int isXPointerInCurrentPage(lua_State *L) {
+	CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
+	const char *xpointer = luaL_checkstring(L, 2);
+
+	lvRect page_rect, xp_rect;
+	doc->text_view->GetPos(page_rect);
+	doc->dom_doc->createXPointer(lString16(xpointer)).getRect(xp_rect);
+	//CRLog::trace("page range: %d,%d - %d,%d", page_rect.left, page_rect.top, page_rect.right, page_rect.bottom);
+	//CRLog::trace("xp range: %d,%d - %d,%d", xp_rect.left, xp_rect.top, xp_rect.right, xp_rect.bottom);
+	lua_pushboolean(L, page_rect.isRectInside(xp_rect));
+	return 1;
+}
+
 static const struct luaL_Reg cre_func[] = {
 	{"initCache", initCache},
 	{"newDocView", newDocView},
@@ -1296,6 +1307,7 @@ static const struct luaL_Reg credocument_meth[] = {
 	//{"cursorRight", cursorRight},
 	{"drawCurrentPage", drawCurrentPage},
 	{"findText", findText},
+	{"isXPointerInCurrentPage", isXPointerInCurrentPage},
 	{"getWordFromPosition", getWordFromPosition},
 	{"getTextFromPositions", getTextFromPositions},
 	{"getWordBoxesFromPositions", getWordBoxesFromPositions},
