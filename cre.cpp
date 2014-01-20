@@ -839,6 +839,18 @@ static int cursorRight(lua_State *L) {
 	return 0;
 }
 
+static int getLinkFromPosition(lua_State *L) {
+	CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
+	int x = luaL_checkint(L, 2);
+	int y = luaL_checkint(L, 3);
+
+	lvPoint pt(x, y);
+	ldomXPointer p = doc->text_view->getNodeByPoint(pt);
+	lString16 href = p.getHRef();
+	lua_pushstring(L, UnicodeToLocal(href).c_str());
+	return 1;
+}
+
 static int getWordFromPosition(lua_State *L) {
 	CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
 	int x = luaL_checkint(L, 2);
@@ -1308,6 +1320,7 @@ static const struct luaL_Reg credocument_meth[] = {
 	{"drawCurrentPage", drawCurrentPage},
 	{"findText", findText},
 	{"isXPointerInCurrentPage", isXPointerInCurrentPage},
+	{"getLinkFromPosition", getLinkFromPosition},
 	{"getWordFromPosition", getWordFromPosition},
 	{"getTextFromPositions", getTextFromPositions},
 	{"getWordBoxesFromPositions", getWordBoxesFromPositions},
