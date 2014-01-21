@@ -7,7 +7,7 @@ index 49125a7..2fd9f6a 100644
  {
      if ( _visual_alignment_width==-1 ) {
 -        lChar16 chars[] = { getHyphChar(), ',', '.', '!', ':', ';', 0 };
-+        lChar16 chars[] = { getHyphChar(), ',', '.', '!', ':', ';', L'，', L'。', L'！', 0 };
++        lChar16 chars[] = { getHyphChar(), ',', '.', '!', '?', ':', ';', L'，', L'。', L'！', 0 };
          int maxw = 0;
          for ( int i=0; chars[i]; i++ ) {
              int w = getCharWidth( chars[i] );
@@ -96,7 +96,7 @@ index 57bbf3b..5239f9a 100755
 -                        } else if ( lastc=='.' || lastc==',' || lastc=='!' || lastc==':'   || lastc==';' ) {
 +                        } else if ( lastc=='.' || lastc==',' || lastc=='!' || lastc==':'   || lastc==';' ||
 +                            lastc==L'。' || lastc==L'，' || lastc==L'！' || lastc==L'：' || lastc==L'；' ||
-+                            lastc==L'”' || lastc==L'’' || lastc==L'」' || lastc==L'』' ) {
++                            lastc==L'”' || lastc==L'’' || lastc==L'」' || lastc==L'』' || lastc=='?' ) {
                              int w = font->getCharWidth(lastc);
                              TR("floating: %c w=%d", lastc, w);
                              word->width -= w;
