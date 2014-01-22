@@ -910,6 +910,7 @@ static int getTextFromPositions(lua_State *L) {
 		if (r.getStart().isNull() || r.getEnd().isNull())
 			return 0;
 		r.sort();
+
 		if (!r.getStart().isVisibleWordStart())
 			r.getStart().prevVisibleWordStart();
 		if (!r.getEnd().isVisibleWordEnd())
@@ -917,8 +918,17 @@ static int getTextFromPositions(lua_State *L) {
 		if (r.isNull())
 			return 0;
 
+		if (r.getStart() == r.getEnd()) { // for single CJK character
+			ldomNode * node = r.getStart().getNode();
+			lString16 text = node->getText();
+			int textLen = text.length();
+			int offset = r.getEnd().getOffset();
+			if (offset < textLen - 1)
+				r.getEnd().setOffset(offset + 1);
+		}
+
 		r.setFlags(1);
-		//tv->selectRange(r);  // we don't need native highlight of selection
+		tv->selectRange(r);  // we don't need native highlight of selection
 
 		int page = tv->getBookmarkPage(startp);
 		int pages = tv->getPageCount();
@@ -984,6 +994,7 @@ static int getWordBoxesFromPositions(lua_State *L) {
 		if (r.getStart().isNull() || r.getEnd().isNull())
 			return 0;
 		r.sort();
+
 		if (!r.getStart().isVisibleWordStart())
 			r.getStart().prevVisibleWordStart();
 		if (!r.getEnd().isVisibleWordEnd())
