@@ -229,4 +229,5 @@ int FT_Get_Kerning(struct FT_FaceRec_ *, unsigned int, unsigned int, unsigned in
 static const int FT_LOAD_RENDER = 4;
 static const int FT_FACE_FLAG_KERNING = 64;
 static const int FT_KERNING_DEFAULT = 0;
+void FT_GlyphSlot_Embolden(FT_GlyphSlot slot);
 ]]

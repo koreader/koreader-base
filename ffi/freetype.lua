@@ -27,9 +27,10 @@ function FTFace_mt.__index:checkGlyph(char)
 	end
 end
 
-function FTFace_mt.__index:renderGlyph(char, bgcolor, fgcolor)
+function FTFace_mt.__index:renderGlyph(char, bgcolor, fgcolor, bold)
 	assert(ft2.FT_Load_Char(self, char, ft2.FT_LOAD_RENDER) == 0, "freetype error")
 
+	if bold then ft2.FT_GlyphSlot_Embolden(self.glyph) end
 	local bitmap = self.glyph.bitmap
 	local glyph = {
 		bb = Blitbuffer.new(bitmap.width, bitmap.rows),
