@@ -138,12 +138,14 @@ function KOPTContext_mt.__index:reflowToNativePosTransform(xc, yc, wr, hr)
     		m = i
     	end
     end
-    local rectmap = self.rectmaps.wrectmap + m
-    local x = rectmap.coords[0].x*self.dev_dpi*self.quality/rectmap.srcdpiw
-	local y = rectmap.coords[0].y*self.dev_dpi*self.quality/rectmap.srcdpih
-    local w = rectmap.coords[2].x*self.dev_dpi*self.quality/rectmap.srcdpiw
-    local h = rectmap.coords[2].y*self.dev_dpi*self.quality/rectmap.srcdpih
-    return (x+w*wr)/self.zoom+self.bbox.x0, (y+h*hr)/self.zoom+self.bbox.y0
+    if self.rectmaps.n > m then
+	    local rectmap = self.rectmaps.wrectmap + m
+	    local x = rectmap.coords[0].x*self.dev_dpi*self.quality/rectmap.srcdpiw
+		local y = rectmap.coords[0].y*self.dev_dpi*self.quality/rectmap.srcdpih
+	    local w = rectmap.coords[2].x*self.dev_dpi*self.quality/rectmap.srcdpiw
+	    local h = rectmap.coords[2].y*self.dev_dpi*self.quality/rectmap.srcdpih
+	    return (x+w*wr)/self.zoom+self.bbox.x0, (y+h*hr)/self.zoom+self.bbox.y0
+	end
 end
 
 function KOPTContext_mt.__index:nativeToReflowPosTransform(xc, yc)
