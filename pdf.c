@@ -22,6 +22,7 @@
 #include <pthread.h>
 #include <assert.h>
 #include <mupdf/fitz.h>
+#include <mupdf/pdf.h>
 
 #include "blitbuffer.h"
 #include "drawcontext.h"
@@ -792,7 +793,7 @@ static int getPagePix(lua_State *L) {
 		pix = fz_new_pixmap_with_bbox(page->doc->context, fz_device_gray(page->doc->context), &bbox);
 		fz_clear_pixmap_with_value(page->doc->context, pix, 0xff);
 		dev = fz_new_draw_device(page->doc->context, pix);
-		fz_run_page(page->doc->xref, page->page, dev, &ctm, NULL);
+		fz_run_page_contents(page->doc->xref, page->page, dev, &ctm, NULL);
 	}
 	fz_always(page->doc->context) {
 		fz_free_device(dev);
@@ -861,7 +862,7 @@ static int reflowPage(lua_State *L) {
 	}
 #endif
 
-	fz_run_page(page->doc->xref, page->page, dev, &ctm, NULL);
+	fz_run_page_contents(page->doc->xref, page->page, dev, &ctm, NULL);
 	fz_free_device(dev);
 
 	WILLUSBITMAP *src = &kctx->src;
@@ -1037,6 +1038,71 @@ static int getPageLinks(lua_State *L) {
 	return 1;
 }
 
+#define STRIKE_HEIGHT (0.375f)
+#define UNDERLINE_HEIGHT (0.075f)
+#define LINE_THICKNESS (0.07f)
+
+static int addMarkupAnnotation(lua_State *L) {
+	PdfPage *page = (PdfPage*) luaL_checkudata(L, 1, "pdfpage");
+	fz_point *pts = (fz_point*) lua_topointer(L, 2);
+	int n = luaL_checkint(L, 3);
+	fz_annot_type type = luaL_checkint(L, 4);
+
+	float color[3];
+	float alpha;
+	float line_height;
+	float line_thickness;
+	switch (type) {
+		case FZ_ANNOT_HIGHLIGHT:
+			color[0] = 1.0;
+			color[1] = 1.0;
+			color[2] = 0.0;
+			alpha = 0.5;
+			line_thickness = 1.0;
+			line_height = 0.5;
+			break;
+		case FZ_ANNOT_UNDERLINE:
+			color[0] = 0.0;
+			color[1] = 0.0;
+			color[2] = 1.0;
+			alpha = 1.0;
+			line_thickness = LINE_THICKNESS;
+			line_height = UNDERLINE_HEIGHT;
+			break;
+		case FZ_ANNOT_STRIKEOUT:
+			color[0] = 1.0;
+			color[1] = 0.0;
+			color[2] = 0.0;
+			alpha = 1.0;
+			line_thickness = LINE_THICKNESS;
+			line_height = STRIKE_HEIGHT;
+			break;
+		default:
+			return 0;
+	}
+
+	pdf_document * doc = pdf_specifics(page->doc->xref);
+	fz_annot *annot = pdf_create_annot(doc, (pdf_page *)page->page, type);
+	pdf_set_markup_annot_quadpoints(doc, annot, pts, n);
+	pdf_set_markup_appearance(doc, annot, color, alpha, line_thickness, line_height);
+
+	return 1;
+}
+
+static int writeDocument(lua_State *L) {
+	PdfDocument *doc = (PdfDocument*) luaL_checkudata(L, 1, "pdfdocument");
+	char *file = luaL_checkstring(L, 2);
+	fz_write_options opts;
+	opts.do_incremental = 1;
+	opts.do_ascii = 0;
+	opts.do_expand = 0;
+	opts.do_garbage = 0;
+	opts.do_linear = 0;
+	fz_write_document(doc->xref, file, &opts);
+
+	return 1;
+}
+
 static const struct luaL_Reg pdf_func[] = {
 	{"openDocument", openDocument},
 	{NULL, NULL}
@@ -1051,6 +1117,7 @@ static const struct luaL_Reg pdfdocument_meth[] = {
 	{"close", closeDocument},
 	{"getCacheSize", getCacheSize},
 	{"cleanCache", cleanCache},
+	{"writeDocument", writeDocument},
 	{"__gc", closeDocument},
 	{NULL, NULL}
 };
@@ -1062,6 +1129,7 @@ static const struct luaL_Reg pdfpage_meth[] = {
 	{"getPagePix", getPagePix},
 	{"getPageText", getPageText},
 	{"getPageLinks", getPageLinks},
+	{"addMarkupAnnotation", addMarkupAnnotation},
 	{"close", closePage},
 	{"__gc", closePage},
 	{"reflow", reflowPage},

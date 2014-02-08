@@ -2,9 +2,9 @@
 PROJECT(kpvcrlib)
 cmake_minimum_required(VERSION 2.6)
 
-SET(MUPDF_DIR ../mupdf)
+SET(MUPDF_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../mupdf)
 SET(MUPDF_3RDPARTY_DIR ${MUPDF_DIR}/thirdparty)
-SET(CR_3RDPARTY_DIR crengine/thirdparty)
+SET(CR_3RDPARTY_DIR ${CMAKE_CURRENT_SOURCE_DIR}/crengine/thirdparty)
 SET(CRE_DIR crengine/crengine)
 
 SET(CR3_PNG 1)
@@ -13,7 +13,7 @@ SET(CR3_PNG 1)
 SET(FREETYPE_INCLUDE_DIRS ${MUPDF_3RDPARTY_DIR}/freetype/include)
 #SET(FREETYPE_INCLUDE_DIRS ${CR_3RDPARTY_DIR}/freetype/include)
 SET(ANTIWORD_INCLUDE_DIR ${CR_3RDPARTY_DIR}/antiword)
-SET(CHM_INCLUDE_DIRS ${CR_3RDPARTY_DIR}/chmlib)
+SET(CHM_INCLUDE_DIRS ${CR_3RDPARTY_DIR}/chmlib/src)
 SET(PNG_INCLUDE_DIR ${CR_3RDPARTY_DIR}/libpng)
 SET(ZLIB_INCLUDE_DIR ${MUPDF_3RDPARTY_DIR}/zlib)
 #SET(ZLIB_INCLUDE_DIR ${CR_3RDPARTY_DIR}/zlib)
@@ -41,6 +41,7 @@ ADD_DEFINITIONS(-DCHM_SUPPORT_ENABLED=1)
 ADD_SUBDIRECTORY(${CR_3RDPARTY_DIR}/chmlib)
 
 message("Will build patched LIBPNG library")
+SET(PNG_TESTS OFF CACHE BOOL "Disable LIBPNG tests")
 ADD_SUBDIRECTORY(${CR_3RDPARTY_DIR}/libpng)
 
 message("Will build patched JPEGLIB library")
@@ -91,6 +92,7 @@ SET (CRENGINE_SOURCES
 	${CRE_DIR}/src/wolutil.cpp
 	${CRE_DIR}/src/hist.cpp
 	${CRE_DIR}/src/cri18n.cpp
+	${CRE_DIR}/src/crconcurrent.cpp
 )
 ADD_LIBRARY(crengine SHARED ${CRENGINE_SOURCES})
 

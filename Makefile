@@ -119,12 +119,11 @@ $(DJVULIBRE_LIB): $(JPEG_LIB)
 
 # crengine, fetched via GIT as a submodule
 $(CRENGINE_THIRDPARTY_LIBS) $(CRENGINE_LIB):
-	test -e $(CRENGINE_WRAPPER_DIR)/CMakeFiles \
-	|| ( cd $(CRENGINE_WRAPPER_DIR) \
+	cd $(CRENGINE_WRAPPER_DIR) \
 	&& CFLAGS="$(CFLAGS) -fPIC" \
 		CXXFLAGS="$(CXXFLAGS) -fPIC" CC="$(CC)" \
 		CXX="$(CXX)" LDFLAGS="$(LDFLAGS)" \
-		cmake -D CMAKE_BUILD_TYPE=Release . )
+		cmake -D CMAKE_BUILD_TYPE=Release .
 	cd $(CRENGINE_WRAPPER_DIR) &&  $(MAKE) VERBOSE=1
 	cp -fL $(CRENGINE_WRAPPER_DIR)/$(notdir $(CRENGINE_LIB)) \
 		$(CRENGINE_LIB)
@@ -341,21 +340,7 @@ fetchthirdparty:
 	cd mupdf && (git submodule init; git submodule update)
 	# CREngine patch: change child nodes' type face
 	# @TODO replace this dirty hack  24.04 2012 (houqp)
-	cd $(CRENGINE_DIR) && git stash && \
-		git apply ../lvrend-setNodeStyle.patch && \
-		git apply ../lvdocview-getCurrentPageLinks.patch && \
-		git apply ../lvfntman-RegisterExternalFont.patch && \
-		git apply ../lvtinydom-registerEmbeddedFonts.patch && \
-		git apply ../epubfmt-EmbeddedFontStyleParser.patch && \
-		git apply ../lvtextfm-punctuation.patch && \
-		git apply ../lvtinydom-CJK-word.patch
-	# CREngine patch: disable fontconfig
-	grep USE_FONTCONFIG $(CRENGINE_DIR)/crengine/include/crsetup.h \
-		&& grep -v USE_FONTCONFIG \
-			$(CRENGINE_DIR)/crengine/include/crsetup.h \
-			> /tmp/new \
-		&& mv /tmp/new $(CRENGINE_DIR)/crengine/include/crsetup.h \
-		|| echo "USE_FONTCONFIG already disabled"
+	cd $(CRENGINE_DIR) && git stash
 	# MuPDF patch: use external fonts
 	cd mupdf && patch -N -p1 < ../mupdf.patch
 	# Download popen-noshell
