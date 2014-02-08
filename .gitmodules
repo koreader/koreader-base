@@ -9,7 +9,7 @@
 	url = git://git.code.sf.net/p/djvu/djvulibre-git
 [submodule "kpvcrlib/crengine"]
 	path = kpvcrlib/crengine
-	url = git://git.code.sf.net/p/crengine/crengine
+	url = git://github.com/koreader/crengine.git
 [submodule "luajit-2.0"]
 	path = luajit-2.0
 	url = http://luajit.org/git/luajit-2.0.git
