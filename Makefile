@@ -328,6 +328,7 @@ endif
 
 fetchthirdparty:
 	rm -rf mupdf/thirdparty
+	rm -rf kpvcrlib/crengine/thirdparty
 	test -d mupdf \
 		&& (cd mupdf; git checkout .) \
 		|| echo warn: mupdf folder not found
