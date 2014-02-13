@@ -332,6 +332,9 @@ fetchthirdparty:
 	test -d mupdf \
 		&& (cd mupdf; git checkout .) \
 		|| echo warn: mupdf folder not found
+	test -d kpvcrlib/crengine \
+		&& (cd kpvcrlib/crengine; git checkout .) \
+		|| echo warn: crengine folder not found
 	test -d $(LUA_DIR) \
 		&& (cd $(LUA_DIR); git checkout .) \
 		|| echo warn: $(LUA_DIR) folder not found
@@ -339,9 +342,6 @@ fetchthirdparty:
 	git submodule sync
 	git submodule update
 	cd mupdf && (git submodule init; git submodule update)
-	# CREngine patch: change child nodes' type face
-	# @TODO replace this dirty hack  24.04 2012 (houqp)
-	cd $(CRENGINE_DIR) && git stash
 	# MuPDF patch: use external fonts
 	cd mupdf && patch -N -p1 < ../mupdf.patch
 	# Download popen-noshell
