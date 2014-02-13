@@ -4,7 +4,7 @@ SHELL:=/bin/bash
 ifeq ($(TARGET_DEVICE), KOBO)
 	CHOST?=arm-linux-gnueabihf
 else
-	CHOST?=arm-none-linux-gnueabi
+	CHOST?=arm-linux-gnueabi
 endif
 # Use ccache in build system by default. Define USE_NO_CCACHE=1 to force disable it.
 ifeq ($(USE_NO_CCACHE), 1)
