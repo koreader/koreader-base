@@ -2,12 +2,11 @@ include Makefile.defs
 
 # main target
 all: $(OUTPUT_DIR)/libs $(LUAJIT) $(OUTPUT_DIR)/extr $(OUTPUT_DIR)/sdcv \
-	translate libs $(OUTPUT_DIR)/spec
+	libs $(OUTPUT_DIR)/spec
 ifndef EMULATE_READER
 	$(STRIP) --strip-unneeded \
 		$(OUTPUT_DIR)/extr \
 		$(OUTPUT_DIR)/sdcv \
-		$(OUTPUT_DIR)/gawk \
 		$(LUAJIT) \
 		$(OUTPUT_DIR)/libs/*.so*
 endif
@@ -66,6 +65,10 @@ $(JPEG_LIB):
 				--host=$(CHOST)
 	$(MAKE) -j$(PROCESSORS) -C $(JPEG_DIR)
 	cp -fL $(JPEG_DIR)/.libs/$(notdir $(JPEG_LIB)) $@
+
+# libpng, use thirdparty libpng in crengine
+$(PNG_LIB): $(CRENGINE_THIRDPARTY_LIBS)
+	cp -fL $(CRENGINE_WRAPPER_DIR)/crengine/thirdparty/libpng/$(notdir $(PNG_LIB)) $@
 
 
 # mupdf, fetched via GIT as a submodule
@@ -227,12 +230,11 @@ $(OUTPUT_DIR)/libs/libkoreader-djvu.so: djvu.c \
 $(OUTPUT_DIR)/libs/libkoreader-cre.so: cre.cpp \
 				$(CRENGINE_LIB) \
 				$(CRENGINE_THIRDPARTY_LIBS) \
-				$(MUPDF_LIB_DIR)/libz.a
+				$(PNG_LIB) $(ZLIB)
 	$(CC) -I$(CRENGINE_DIR)/crengine/include/ $(DYNLIB_CFLAGS) -DLDOM_USE_OWN_MEM_MAN=1 \
-		$(DYNAMICLIBSTDCPP) -o $@ $< \
-		$(MUPDF_LIB_DIR)/libz.a \
+		$(DYNAMICLIBSTDCPP) -Wl,-rpath,'libs' -o $@ $< \
 		$(CRENGINE_LIB) $(CRENGINE_THIRDPARTY_LIBS) \
-		$(Z_LIB) $(FREETYPE_LIB) \
+		$(PNG_LIB) $(ZLIB) $(FREETYPE_LIB) \
 		$(STATICLIBSTDCPP)
 
 # ===========================================================================
@@ -263,7 +265,6 @@ else
 		--prefix=$(CURDIR)/$(GLIB_DIR) \
 		&& $(MAKE) -j$(PROCESSORS) && $(MAKE) install
 endif
-	cp -fL $(GLIB_DIR)/lib/$(notdir $(GLIB)) $(GLIB)
 
 $(ZLIB):
 	cd $(ZLIB_DIR) && CC="$(CC)" ./configure --prefix=$(CURDIR)/$(ZLIB_DIR) \
@@ -282,7 +283,7 @@ ifeq ("$(shell gcc -dumpmachine | sed s/-.*//)","x86_64")
 	cd $(SDCV_DIR) && ./configure \
 		PKG_CONFIG_PATH=../$(GLIB_DIR)/lib/pkgconfig \
 		CXXFLAGS=-I$(CURDIR)/$(ZLIB_DIR)/include \
-		LDFLAGS="-Wl,-rpath,'libs' -L$(CURDIR)/$(ZLIB_DIR)/lib" \
+		LDFLAGS=-L$(CURDIR)/$(ZLIB_DIR)/lib \
 		&& AM_CXXFLAGS=-static-libstdc++ $(MAKE) -j$(PROCESSORS)
 	# restore to original source
 	cd $(SDCV_DIR) && sed -i 's|guint64 page_size|guint32 page_size|' src/lib/lib.cpp
@@ -290,7 +291,7 @@ else
 	cd $(SDCV_DIR) && ./configure \
 		PKG_CONFIG_PATH=../$(GLIB_DIR)/lib/pkgconfig \
 		CXXFLAGS=-I$(CURDIR)/$(ZLIB_DIR)/include \
-		LDFLAGS="-Wl,-rpath,'libs' -L$(CURDIR)/$(ZLIB_DIR)/lib" \
+		LDFLAGS=-L$(CURDIR)/$(ZLIB_DIR)/lib \
 		&& AM_CXXFLAGS=-static-libstdc++ $(MAKE) -j$(PROCESSORS)
 endif
 else
@@ -298,29 +299,10 @@ else
 		--host=$(CHOST) \
 		PKG_CONFIG_PATH=../$(GLIB_DIR)/lib/pkgconfig \
 		CXXFLAGS=-I$(CURDIR)/$(ZLIB_DIR)/include \
-		LDFLAGS="-Wl,-rpath,'libs' -L$(CURDIR)/$(ZLIB_DIR)/lib" \
+		LDFLAGS=-L$(CURDIR)/$(ZLIB_DIR)/lib \
 		&& AM_CXXFLAGS=-static-libstdc++ $(MAKE) -j$(PROCESSORS)
 endif
 	cp $(SDCV_DIR)/src/sdcv $(OUTPUT_DIR)/
-
-# ===========================================================================
-
-# Google translate
-
-translate: $(OUTPUT_DIR)/gawk
-	cp $(GTRS_DIR)/translate.awk $(OUTPUT_DIR)/
-
-# ===========================================================================
-
-# GNU awk
-
-$(OUTPUT_DIR)/gawk:
-ifdef EMULATE_READER
-	cd $(GAWK_DIR) && ./configure && $(MAKE) -j$(PROCESSORS) gawk
-else
-	cd $(GAWK_DIR) && ./configure --host=$(CHOST) && $(MAKE) -j$(PROCESSORS) gawk
-endif
-	cp $(GAWK_DIR)/gawk $(OUTPUT_DIR)/
 
 # ===========================================================================
 
@@ -369,12 +351,6 @@ fetchthirdparty:
 		&& wget http://tesseract-ocr.googlecode.com/files/tesseract-ocr-3.02.02.tar.gz || true
 	cd $(K2PDFOPT_DIR) && tar zxf tesseract-ocr-3.02.02.tar.gz
 	sed -i "s/AM_CONFIG_HEADER/AC_CONFIG_HEADERS/g" $(K2PDFOPT_DIR)/tesseract-ocr/configure.ac
-	# download GNU awk for google-translate-cli
-	[ ! -f gawk-4.1.0.tar.gz ] \
-		&& wget http://ftp.gnu.org/gnu/gawk/gawk-4.1.0.tar.gz || true
-	[ `md5sum gawk-4.1.0.tar.gz |cut -d\  -f1` != 13e02513105417818a31ef375f9f9f42 ] \
-		&& rm gawk-4.1.0.tar.gz && wget http://ftp.gnu.org/gnu/gawk/gawk-4.1.0.tar.gz || true
-	tar zxf gawk-4.1.0.tar.gz
 	# download glib-2.6.6 for sdcv
 	[ ! -f glib-2.6.6.tar.gz ] \
 		&& wget http://ftp.gnome.org/pub/gnome/sources/glib/2.6/glib-2.6.6.tar.gz || true
@@ -407,7 +383,6 @@ clean:
 	-$(MAKE) -C $(K2PDFOPT_DIR) clean
 	-$(MAKE) -C $(JPEG_DIR) clean
 	-$(MAKE) -C $(SDCV_DIR) clean
-	-$(MAKE) -C $(GAWK_DIR) clean
 	-$(MAKE) -C $(GLIB_DIR) clean uninstall
 	-$(MAKE) -C $(ZLIB_DIR) clean uninstall
 	-rm -rf $(FREETYPE_DIR)/build
