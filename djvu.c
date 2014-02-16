@@ -482,15 +482,28 @@ static int getAutoBBox(lua_State *L) {
 	KOPTContext *kctx = (KOPTContext*) lua_topointer(L, 2);
 	ddjvu_rect_t prect;
 	ddjvu_rect_t rrect;
+	int px, py, pw, ph, rx, ry, rw, rh, status;
 
-	double wfactor = (double)ddjvu_page_get_width(page->page_ref) / kctx->dev_width;
-	double hfactor = (double)ddjvu_page_get_height(page->page_ref) / kctx->dev_height;
+	px = 0;
+	py = 0;
+	pw = ddjvu_page_get_width(page->page_ref);
+	ph = ddjvu_page_get_height(page->page_ref);
+	prect.x = px;
+	prect.y = py;
 
-	prect.x = 0;
-	prect.y = 0;
-	prect.w = kctx->dev_width;
-	prect.h = kctx->dev_height;
-	rrect = prect;
+	rx = (int)kctx->bbox.x0;
+	ry = (int)kctx->bbox.y0;
+	rw = (int)(kctx->bbox.x1 - kctx->bbox.x0);
+	rh = (int)(kctx->bbox.y1 - kctx->bbox.y0);
+
+	float scale = 0.5;
+
+	prect.w = pw * scale;
+	prect.h = ph * scale;
+	rrect.x = rx * scale;
+	rrect.y = ry * scale;
+	rrect.w = rw * scale;
+	rrect.h = rh * scale;
 
 	WILLUSBITMAP *src = &kctx->src;
 	bmp_init(src);
@@ -510,10 +523,10 @@ static int getAutoBBox(lua_State *L) {
 
 	k2pdfopt_crop_bmp(kctx);
 
-	lua_pushnumber(L, floor(wfactor*kctx->bbox.x0));
-	lua_pushnumber(L, floor(hfactor*kctx->bbox.y0));
-	lua_pushnumber(L, ceil (wfactor*kctx->bbox.x1));
-	lua_pushnumber(L, ceil (hfactor*kctx->bbox.y1));
+	lua_pushnumber(L, floor(kctx->bbox.x0/scale));
+	lua_pushnumber(L, floor(kctx->bbox.y0/scale));
+	lua_pushnumber(L, ceil (kctx->bbox.x1/scale));
+	lua_pushnumber(L, ceil (kctx->bbox.y1/scale));
 
 	return 4;
 }
