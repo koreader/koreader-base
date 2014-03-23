@@ -1,4 +1,4 @@
-## Koreader-base
+## Koreader-base [![Build Status][travis-icon]][travis-link]
 
 This is the base framework for creating document readers like Koreader,
 an e-ink device oriented reader application for various document formats.
@@ -10,11 +10,7 @@ http://www.lua.org/). To gain good speed at that, it uses the LuaJIT compiler.
 It all started as the KindlePDFviewer application, which has since been
 greatly enhanced and now reflects this in having a new name, Koreader.
 
-The application is licensed under the GPLv3 (see COPYING file).
-
-## TRAVIS CI STATUS
-
-[![Build Status](https://travis-ci.org/koreader/koreader-base.png?branch=master)](https://travis-ci.org/koreader/koreader-base)
+The application is distributed under the GNU AGPL v3 license (read the [COPYING](COPYING) file).
 
 ## Building
 
@@ -87,3 +83,7 @@ changed at runtime by changing environment variables:
 ```
 EMULATE_READER_W=746 EMULATE_READER_H=1024 koreader-base
 ```
+
+[travis-icon]:https://travis-ci.org/koreader/koreader-base.png?branch=master
+[travis-link]:https://travis-ci.org/koreader/koreader-base
+
