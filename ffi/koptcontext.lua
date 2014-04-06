@@ -1,13 +1,16 @@
 local ffi = require("ffi")
 
 local dummy = require("ffi/koptcontext_h")
+local Blitbuffer = require("ffi/blitbuffer")
 local leptonica = ffi.load("libs/liblept.so.3")
 local k2pdfopt = ffi.load("libs/libk2pdfopt.so.2")
 
 local KOPTContext = {}
 local KOPTContext_mt = {__index={}}
 
-function KOPTContext_mt.__index:setBBox(x0, y0, x1, y1) self.bbox.x0, self.bbox.y0, self.bbox.x1, self.bbox.y1 = x0, y0, x1, y1 end
+function KOPTContext_mt.__index:setBBox(x0, y0, x1, y1)
+    self.bbox.x0, self.bbox.y0, self.bbox.x1, self.bbox.y1 = x0, y0, x1, y1
+end
 function KOPTContext_mt.__index:setTrim(trim) self.trim = trim end
 function KOPTContext_mt.__index:setWrap(wrap) self.wrap = wrap end
 function KOPTContext_mt.__index:setIndent(indent) self.indent = indent end
@@ -45,6 +48,20 @@ function KOPTContext_mt.__index:copyDestBMP(src)
 	end
 end
 
+function KOPTContext_mt.__index:dstToBlitBuffer()
+	if self.dst.bpp == 8 then
+	    local bb = Blitbuffer.new(self.dst.width, self.dst.height)
+        for y = 0, self.dst.height - 1 do
+            for x = 0, self.dst.width - 1 do
+                local val = bit.rshift(self.dst.data[y*self.dst.width + x], 4)
+                bb:setPixel(x, y, Blitbuffer.Color4(val))
+            end
+        end
+        bb:invert()
+        return bb
+	end
+end
+
 function KOPTContext_mt.__index:getWordBoxes(x, y, w, h, box_type)
 	local box = ffi.new("BOX[1]")
 	local boxa = ffi.new("BOXA[1]")
@@ -67,7 +84,7 @@ function KOPTContext_mt.__index:getWordBoxes(x, y, w, h, box_type)
 	    boxa = self.nboxa
 	    nai = self.nnai
 	end
-	
+
 	if boxa == nil or nai == nil then return end
 
 	--get number of lines in this area
@@ -76,7 +93,7 @@ function KOPTContext_mt.__index:getWordBoxes(x, y, w, h, box_type)
 	--get number of lines in this area
 	local nr_word = leptonica.boxaGetCount(boxa)
 	assert(nr_word == leptonica.numaGetCount(nai))
-	
+
 	local boxes = {}
 	counter_w = 0
 	while counter_w < nr_word do
@@ -130,10 +147,10 @@ function KOPTContext_mt.__index:reflowToNativePosTransform(xc, yc, wr, hr)
 			return (x0 - x1)*(x0 - x1) + (y0 - y1)*(y0 - y1)
 		end
 	end
-	
+
     local m = 0
     for i = 0, self.rectmaps.n - 1 do
-    	if wrectmap_reflow_distance(self.rectmaps.wrectmap + m, xc, yc) > 
+    	if wrectmap_reflow_distance(self.rectmaps.wrectmap + m, xc, yc) >
     		wrectmap_reflow_distance(self.rectmaps.wrectmap + i, xc, yc) then
     		m = i
     	end
@@ -166,11 +183,11 @@ function KOPTContext_mt.__index:nativeToReflowPosTransform(xc, yc)
 			return (x0 - x1)*(x0 - x1) + (y0 - y1)*(y0 - y1)
 		end
 	end
-	
+
 	local m = 0
     local x0, y0 = (xc - self.bbox.x0) * self.zoom, (yc - self.bbox.y0) * self.zoom
     for i = 0, self.rectmaps.n - 1 do
-    	if wrectmap_native_distance(self.rectmaps.wrectmap + m, x0, y0) > 
+    	if wrectmap_native_distance(self.rectmaps.wrectmap + m, x0, y0) >
     		wrectmap_native_distance(self.rectmaps.wrectmap + i, x0, y0) then
     		m = i
     	end
@@ -181,11 +198,20 @@ end
 
 function KOPTContext_mt.__index:getTOCRWord(x, y, w, h, datadir, lang, ocr_type, allow_spaces, std_proc)
 	local word = ffi.new("char[256]")
-	k2pdfopt.k2pdfopt_tocr_single_word(self.dst,
+	k2pdfopt.k2pdfopt_tocr_single_word(self.src,
 		ffi.new("int", x), ffi.new("int", y), ffi.new("int", w), ffi.new("int", h),
 		word, 255, ffi.cast("char*", datadir), ffi.cast("char*", lang),
 		ocr_type, allow_spaces, std_proc)
 	return ffi.string(word)
+end
+
+function KOPTContext_mt.__index:getAutoBBox()
+    k2pdfopt.k2pdfopt_crop_bmp(self)
+    local x0 = self.bbox.x0/self.zoom
+    local y0 = self.bbox.y0/self.zoom
+    local x1 = self.bbox.x1/self.zoom
+    local y1 = self.bbox.y1/self.zoom
+    return x0, y0, x1, y1
 end
 
 function KOPTContext_mt.__index:getPageRegions()
@@ -201,6 +227,10 @@ function KOPTContext_mt.__index:getPageRegions()
 	return regions
 end
 
+function KOPTContext_mt.__index:optimizePage()
+	k2pdfopt.k2pdfopt_optimize_bmp(self)
+end
+
 function KOPTContext_mt.__index:free()
 	--[[ Don't worry about the src bitmap in context. It's freed as soon as it's
 	     been used in either reflow or autocrop. But we should take care of dst
@@ -214,7 +244,7 @@ function KOPTContext_mt.__index:free()
 	nnai[0] = self.nnai
 	rboxa[0] = self.rboxa
 	nboxa[0] = self.nboxa
-	
+
 	leptonica.numaDestroy(rnai)
 	leptonica.numaDestroy(nnai)
 	leptonica.boxaDestroy(rboxa)
@@ -270,12 +300,12 @@ function KOPTContext.new()
 	kc.nboxa = nil
 	kc.nnai = nil
 	kc.language = nil
-	
+
 	k2pdfopt.bmp_init(kc.src)
 	k2pdfopt.bmp_init(kc.dst)
 	k2pdfopt.wrectmaps_init(kc.rectmaps)
 	k2pdfopt.pageregions_init(kc.pageregions)
-	
+
 	return kc
 end
 

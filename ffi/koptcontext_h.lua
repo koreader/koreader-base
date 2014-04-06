@@ -131,7 +131,7 @@ typedef struct {
     int fullspan;
     int level;
 } PAGEREGION;
-    
+
 typedef struct {
     PAGEREGION *pageregion;
     int n,na;
@@ -217,5 +217,7 @@ void k2pdfopt_reflow_bmp(KOPTContext *kctx);
 void k2pdfopt_tocr_end();
 void pageregions_init(PAGEREGIONS *regions);
 void pageregions_free(PAGEREGIONS *regions);
+void k2pdfopt_crop_bmp(KOPTContext *kctx);
 void k2pdfopt_part_bmp(KOPTContext *kctx);
+void k2pdfopt_optimize_bmp(KOPTContext *kctx);
 ]]
