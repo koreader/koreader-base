@@ -62,7 +62,7 @@ function KOPTContext_mt.__index:dstToBlitBuffer()
 	end
 end
 
-function KOPTContext_mt.__index:getWordBoxes(x, y, w, h, box_type)
+function KOPTContext_mt.__index:getWordBoxes(bmp, x, y, w, h, box_type)
 	local box = ffi.new("BOX[1]")
 	local boxa = ffi.new("BOXA[1]")
 	local nai = ffi.new("NUMA[1]")
@@ -74,12 +74,12 @@ function KOPTContext_mt.__index:getWordBoxes(x, y, w, h, box_type)
 	local l_x0, l_y0, l_x1, l_y1
 
 	if box_type == 0 then
-	    k2pdfopt.k2pdfopt_get_reflowed_word_boxes(self, self.dst,
+	    k2pdfopt.k2pdfopt_get_reflowed_word_boxes(self, bmp == "src" and self.src or self.dst,
 	    	ffi.new("int", x), ffi.new("int", y), ffi.new("int", w), ffi.new("int", h))
 	    boxa = self.rboxa
 	    nai = self.rnai
 	elseif box_type == 1 then
-	    k2pdfopt.k2pdfopt_get_native_word_boxes(self, self.dst,
+	    k2pdfopt.k2pdfopt_get_native_word_boxes(self, bmp == "src" and self.src or self.dst,
 	    	ffi.new("int", x), ffi.new("int", y), ffi.new("int", w), ffi.new("int", h))
 	    boxa = self.nboxa
 	    nai = self.nnai
@@ -130,8 +130,13 @@ function KOPTContext_mt.__index:getWordBoxes(x, y, w, h, box_type)
 	return boxes
 end
 
-function KOPTContext_mt.__index:getReflowedWordBoxes(x, y, w, h) return self:getWordBoxes(x, y, w, h, 0) end
-function KOPTContext_mt.__index:getNativeWordBoxes(x, y, w, h) return self:getWordBoxes(x, y, w, h, 1) end
+function KOPTContext_mt.__index:getReflowedWordBoxes(bmp, x, y, w, h)
+    return self:getWordBoxes(bmp, x, y, w, h, 0)
+end
+
+function KOPTContext_mt.__index:getNativeWordBoxes(bmp, x, y, w, h)
+    return self:getWordBoxes(bmp, x, y, w, h, 1)
+end
 
 function KOPTContext_mt.__index:reflowToNativePosTransform(xc, yc, wr, hr)
 	local function wrectmap_reflow_distance(wrmap, x, y)

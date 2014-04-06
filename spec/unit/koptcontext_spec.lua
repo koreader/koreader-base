@@ -74,7 +74,7 @@ describe("KOPTContext module", function()
 		local kc = KOPTContext.new()
 		k2pdfopt.bmpmupdf_pdffile_to_bmp(kc.src, ffi.cast("char*", sample_pdf), 3, 300, 8)
 		k2pdfopt.k2pdfopt_reflow_bmp(kc)
-		local boxes = kc:getReflowedWordBoxes(0, 0, kc.dst.width, kc.dst.height)
+		local boxes = kc:getReflowedWordBoxes("dst", 0, 0, kc.dst.width, kc.dst.height)
 		for i = 1, #boxes do
 			for j = 1, #boxes[i] do
 				local box = boxes[i][j]
@@ -86,7 +86,7 @@ describe("KOPTContext module", function()
 		local kc = KOPTContext.new()
 		k2pdfopt.bmpmupdf_pdffile_to_bmp(kc.src, ffi.cast("char*", sample_pdf), 4, 300, 8)
 		k2pdfopt.k2pdfopt_reflow_bmp(kc)
-		local boxes = kc:getNativeWordBoxes(0, 0, kc.dst.width, kc.dst.height)
+		local boxes = kc:getNativeWordBoxes("dst", 0, 0, kc.dst.width, kc.dst.height)
 		for i = 1, #boxes do
 			for j = 1, #boxes[i] do
 				local box = boxes[i][j]
