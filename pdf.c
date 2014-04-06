@@ -719,56 +719,7 @@ static int bmpmupdf_pixmap_to_bmp(WILLUSBITMAP *bmp, fz_context *ctx, fz_pixmap 
 	return (0);
 }
 
-static int getAutoBBox(lua_State *L) {
-	PdfPage *page = (PdfPage*) luaL_checkudata(L, 1, "pdfpage");
-	KOPTContext *kctx = (KOPTContext*) lua_topointer(L, 2);
-	fz_device *dev;
-	fz_pixmap *pix = NULL;
-	fz_rect bounds,bounds2;
-	fz_irect bbox;
-	fz_matrix ctm;
-
-	fz_var(pix);
-
-	//fz_bound_page(page->doc->xref, page->page, &bounds);
-	// use manual bbox in context for semi-automatic bbox finding
-	bounds.x0 = kctx->bbox.x0;
-	bounds.y0 = kctx->bbox.y0;
-	bounds.x1 = kctx->bbox.x1;
-	bounds.y1 = kctx->bbox.y1;
-
-	fz_transform_rect(&bounds, &fz_identity);
-	fz_round_rect(&bbox, &bounds);
-
-	fz_try(page->doc->context) {
-		pix = fz_new_pixmap_with_bbox(page->doc->context, fz_device_gray(page->doc->context), &bbox);
-		fz_clear_pixmap_with_value(page->doc->context, pix, 0xff);
-		dev = fz_new_draw_device(page->doc->context, pix);
-		fz_run_page(page->doc->xref, page->page, dev, &fz_identity, NULL);
-	}
-	fz_always(page->doc->context) {
-		fz_free_device(dev);
-	}
-	fz_catch(page->doc->context) {
-		return luaL_error(L, "cannot calculate bbox for page");
-	}
-
-	WILLUSBITMAP *src = &kctx->src;
-	bmp_init(src);
-
-	bmpmupdf_pixmap_to_bmp(src, page->doc->context, pix);
-	fz_drop_pixmap(page->doc->context, pix);
-
-	k2pdfopt_crop_bmp(kctx);
-
-	lua_pushnumber(L, ((double)kctx->bbox.x0));
-	lua_pushnumber(L, ((double)kctx->bbox.y0));
-	lua_pushnumber(L, ((double)kctx->bbox.x1));
-	lua_pushnumber(L, ((double)kctx->bbox.y1));
-
-	return 4;
-}
-
+// store page pix in src bmp in koptcontext for later processing
 static int getPagePix(lua_State *L) {
 	PdfPage *page = (PdfPage*) luaL_checkudata(L, 1, "pdfpage");
 	KOPTContext *kctx = (KOPTContext*) lua_topointer(L, 2);
@@ -802,7 +753,7 @@ static int getPagePix(lua_State *L) {
 		return luaL_error(L, "cannot calculate bbox for page");
 	}
 
-	WILLUSBITMAP *dst = &kctx->dst;
+	WILLUSBITMAP *dst = &kctx->src;
 	bmp_init(dst);
 
 	bmpmupdf_pixmap_to_bmp(dst, page->doc->context, pix);
@@ -880,38 +831,6 @@ static int reflowPage(lua_State *L) {
 		pthread_attr_destroy(&attr);
 	} else {
 		k2pdfopt_reflow_bmp(kctx);
-	}
-
-	return 0;
-}
-
-static int drawReflowedPage(lua_State *L) {
-	PdfPage *page = (PdfPage*) luaL_checkudata(L, 1, "pdfpage");
-	KOPTContext *kc = (KOPTContext*) lua_topointer(L, 2);
-	BlitBuffer *bb = (BlitBuffer*) lua_topointer(L, 3);
-
-	assert(kc->dst.data != NULL);
-	assert(kc->dst.width >= bb->w);
-	assert(kc->dst.height >= bb->h);
-
-	uint8_t *koptr = kc->dst.data;
-	uint8_t *bbptr = bb->data;
-
-	int x_offset = 0;
-	int y_offset = 0;
-
-	bbptr += bb->pitch * y_offset;
-	int x, y;
-	for(y = y_offset; y < bb->h; y++) {
-		for(x = x_offset/2; x < (bb->w/2); x++) {
-			int p = x*2 - x_offset;
-			bbptr[x] = (((koptr[p + 1] & 0xF0) >> 4) | (koptr[p] & 0xF0)) ^ 0xFF;
-		}
-		bbptr += bb->pitch;
-		koptr += bb->w;
-		if (bb->w & 1) {
-			bbptr[x] = 255 - (koptr[x*2] & 0xF0);
-		}
 	}
 
 	return 0;
@@ -1125,7 +1044,6 @@ static const struct luaL_Reg pdfdocument_meth[] = {
 static const struct luaL_Reg pdfpage_meth[] = {
 	{"getSize", getPageSize},
 	{"getUsedBBox", getUsedBBox},
-	{"getAutoBBox", getAutoBBox},
 	{"getPagePix", getPagePix},
 	{"getPageText", getPageText},
 	{"getPageLinks", getPageLinks},
@@ -1133,7 +1051,6 @@ static const struct luaL_Reg pdfpage_meth[] = {
 	{"close", closePage},
 	{"__gc", closePage},
 	{"reflow", reflowPage},
-	{"rfdraw", drawReflowedPage},
 	{"draw", drawPage},
 	{NULL, NULL}
 };
