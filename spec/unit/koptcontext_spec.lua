@@ -64,7 +64,7 @@ describe("KOPTContext module", function()
 	it("should get larger reflowed page with larger original page", function()
 		local kc1 = KOPTContext.new()
 		local kc2 = KOPTContext.new()
-		k2pdfopt.bmpmupdf_pdffile_to_bmp(kc1.src, ffi.cast("char*", sample_pdf), 2, 167, 8)		
+		k2pdfopt.bmpmupdf_pdffile_to_bmp(kc1.src, ffi.cast("char*", sample_pdf), 2, 167, 8)
 		k2pdfopt.bmpmupdf_pdffile_to_bmp(kc2.src, ffi.cast("char*", sample_pdf), 2, 300, 8)
 		k2pdfopt.k2pdfopt_reflow_bmp(kc1)
 		k2pdfopt.k2pdfopt_reflow_bmp(kc2)
@@ -74,7 +74,7 @@ describe("KOPTContext module", function()
 		local kc = KOPTContext.new()
 		k2pdfopt.bmpmupdf_pdffile_to_bmp(kc.src, ffi.cast("char*", sample_pdf), 3, 300, 8)
 		k2pdfopt.k2pdfopt_reflow_bmp(kc)
-		local boxes = kc:getReflowedWordBoxes(0, 0, kc.dst.width, kc.dst.height)
+		local boxes = kc:getReflowedWordBoxes("dst", 0, 0, kc.dst.width, kc.dst.height)
 		for i = 1, #boxes do
 			for j = 1, #boxes[i] do
 				local box = boxes[i][j]
@@ -86,7 +86,7 @@ describe("KOPTContext module", function()
 		local kc = KOPTContext.new()
 		k2pdfopt.bmpmupdf_pdffile_to_bmp(kc.src, ffi.cast("char*", sample_pdf), 4, 300, 8)
 		k2pdfopt.k2pdfopt_reflow_bmp(kc)
-		local boxes = kc:getNativeWordBoxes(0, 0, kc.dst.width, kc.dst.height)
+		local boxes = kc:getNativeWordBoxes("dst", 0, 0, kc.dst.width, kc.dst.height)
 		for i = 1, #boxes do
 			for j = 1, #boxes[i] do
 				local box = boxes[i][j]
@@ -120,7 +120,7 @@ describe("KOPTContext module", function()
 		local kc = KOPTContext.new()
 		k2pdfopt.bmpmupdf_pdffile_to_bmp(kc.src, ffi.cast("char*", sample_pdf), 5, 300, 8)
 		k2pdfopt.k2pdfopt_reflow_bmp(kc)
-		local word = kc:getTOCRWord(280, 40, 100, 40, "data", "eng", 3, 0, 0)
+		local word = kc:getTOCRWord("dst", 280, 40, 100, 40, "data", "eng", 3, 0, 0)
 		assert.are_same(word, "Alice")
 		kc:freeOCR()
 	end)
@@ -134,8 +134,8 @@ describe("KOPTContext module", function()
 	end)
 	it("should get list of page regions", function()
 		local kc = KOPTContext.new()
-		k2pdfopt.bmpmupdf_pdffile_to_bmp(kc.dst, ffi.cast("char*", paper_pdf), 1, 300, 8)
-		kc.page_width, kc.page_height = kc.dst.width, kc.dst.height
+		k2pdfopt.bmpmupdf_pdffile_to_bmp(kc.src, ffi.cast("char*", paper_pdf), 1, 300, 8)
+		kc.page_width, kc.page_height = kc.src.width, kc.src.height
 		local regions = kc:getPageRegions()
 		for i = 1, #regions do
 			assert(regions[i].x1 - regions[i].x0 <= 1)

@@ -239,7 +239,7 @@ static int openPage(lua_State *L) {
 static int getPageSize(lua_State *L) {
 	DjvuPage *page = (DjvuPage*) luaL_checkudata(L, 1, "djvupage");
 	DrawContext *dc = (DrawContext*) lua_topointer(L, 2);
-	
+
 	lua_pushnumber(L, dc->zoom * page->info.width);
 	lua_pushnumber(L, dc->zoom * page->info.height);
 
@@ -369,7 +369,7 @@ static int getPageText(lua_State *L) {
 	int i = 1, j = 1, counter_l = 1, counter_w=1,
 		nr_line = 0, nr_word = 0;
 	const char *word = NULL;
-	
+
 	while ((sexp = ddjvu_document_get_pagetext(doc->doc_ref, pageno-1, "word"))
 				== miniexp_dummy) {
 		handle(L, doc->context, True);
@@ -477,60 +477,6 @@ static int closePage(lua_State *L) {
 	return 0;
 }
 
-static int getAutoBBox(lua_State *L) {
-	DjvuPage *page = (DjvuPage*) luaL_checkudata(L, 1, "djvupage");
-	KOPTContext *kctx = (KOPTContext*) lua_topointer(L, 2);
-	ddjvu_rect_t prect;
-	ddjvu_rect_t rrect;
-	int px, py, pw, ph, rx, ry, rw, rh, status;
-
-	px = 0;
-	py = 0;
-	pw = ddjvu_page_get_width(page->page_ref);
-	ph = ddjvu_page_get_height(page->page_ref);
-	prect.x = px;
-	prect.y = py;
-
-	rx = (int)kctx->bbox.x0;
-	ry = (int)kctx->bbox.y0;
-	rw = (int)(kctx->bbox.x1 - kctx->bbox.x0);
-	rh = (int)(kctx->bbox.y1 - kctx->bbox.y0);
-
-	float scale = 0.5;
-
-	prect.w = pw * scale;
-	prect.h = ph * scale;
-	rrect.x = rx * scale;
-	rrect.y = ry * scale;
-	rrect.w = rw * scale;
-	rrect.h = rh * scale;
-
-	WILLUSBITMAP *src = &kctx->src;
-	bmp_init(src);
-	src->width = rrect.w;
-	src->height = rrect.h;
-	src->bpp = 8;
-	bmp_alloc(src);
-	if (src->bpp == 8) {
-		int ii;
-		for (ii = 0; ii < 256; ii++)
-		src->red[ii] = src->blue[ii] = src->green[ii] = ii;
-	}
-
-	ddjvu_format_set_row_order(page->doc->pixelformat, 1);
-	ddjvu_page_render(page->page_ref, 0, &prect, &rrect, page->doc->pixelformat,
-		bmp_bytewidth(src), (char *) src->data);
-
-	k2pdfopt_crop_bmp(kctx);
-
-	lua_pushnumber(L, floor(kctx->bbox.x0/scale));
-	lua_pushnumber(L, floor(kctx->bbox.y0/scale));
-	lua_pushnumber(L, ceil (kctx->bbox.x1/scale));
-	lua_pushnumber(L, ceil (kctx->bbox.y1/scale));
-
-	return 4;
-}
-
 static int getPagePix(lua_State *L) {
 	DjvuPage *page = (DjvuPage*) luaL_checkudata(L, 1, "djvupage");
 	KOPTContext *kctx = (KOPTContext*) lua_topointer(L, 2);
@@ -560,7 +506,7 @@ static int getPagePix(lua_State *L) {
     rrect.h = rh * scale;
     printf("rendering page:%d,%d,%d,%d\n",rrect.x,rrect.y,rrect.w,rrect.h);
 
-	WILLUSBITMAP *dst = &kctx->dst;
+	WILLUSBITMAP *dst = &kctx->src;
 	bmp_init(dst);
 	dst->width = rrect.w;
 	dst->height = rrect.h;
@@ -639,38 +585,6 @@ static int reflowPage(lua_State *L) {
 		pthread_attr_destroy(&attr);
 	} else {
 		k2pdfopt_reflow_bmp(kctx);
-	}
-
-	return 0;
-}
-
-static int drawReflowedPage(lua_State *L) {
-	DjvuPage *page = (DjvuPage*) luaL_checkudata(L, 1, "djvupage");
-	KOPTContext *kc = (KOPTContext*) lua_topointer(L, 2);
-	BlitBuffer *bb = (BlitBuffer*) lua_topointer(L, 3);
-
-	assert(kc->dst.data != NULL);
-	assert(kc->dst.width >= bb->w);
-	assert(kc->dst.height >= bb->h);
-
-	uint8_t *koptr = kc->dst.data;
-	uint8_t *bbptr = bb->data;
-
-	int x_offset = 0;
-	int y_offset = 0;
-
-	bbptr += bb->pitch * y_offset;
-	int x, y;
-	for(y = y_offset; y < bb->h; y++) {
-		for(x = x_offset/2; x < (bb->w/2); x++) {
-			int p = x*2 - x_offset;
-			bbptr[x] = (((koptr[p + 1] & 0xF0) >> 4) | (koptr[p] & 0xF0)) ^ 0xFF;
-		}
-		bbptr += bb->pitch;
-		koptr += bb->w;
-		if (bb->w & 1) {
-			bbptr[x] = 255 - (koptr[x*2] & 0xF0);
-		}
 	}
 
 	return 0;
@@ -799,12 +713,10 @@ static const struct luaL_Reg djvudocument_meth[] = {
 static const struct luaL_Reg djvupage_meth[] = {
 	{"getSize", getPageSize},
 	{"getUsedBBox", getUsedBBox},
-	{"getAutoBBox", getAutoBBox},
 	{"getPagePix", getPagePix},
 	{"close", closePage},
 	{"__gc", closePage},
 	{"reflow", reflowPage},
-	{"rfdraw", drawReflowedPage},
 	{"draw", drawPage},
 	{NULL, NULL}
 };
