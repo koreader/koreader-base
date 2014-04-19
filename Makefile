@@ -402,7 +402,7 @@ $(OUTPUT_DIR)/spec:
 		ln -sf ../../spec $(OUTPUT_DIR)/
 
 test: $(OUTPUT_DIR)/spec $(OUTPUT_DIR)/.busted
-	cd $(OUTPUT_DIR) && busted
+	cd $(OUTPUT_DIR) && busted -l luajit
 
 PHONY: test
 
