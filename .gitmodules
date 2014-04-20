@@ -25,6 +25,12 @@
 [submodule "jpeg"]
 	path = jpeg
 	url = git://git.ghostscript.com/thirdparty/jpeg.git
-[submodule "google-translate-cli"]
-	path = google-translate-cli
-	url = git://github.com/koreader/google-translate-cli.git
+[submodule "luasocket"]
+	path = luasocket
+	url = https://github.com/diegonehab/luasocket
+[submodule "luasec"]
+	path = luasec
+	url = https://github.com/brunoos/luasec
+[submodule "plugins/evernote-sdk-lua"]
+	path = plugins/evernote-sdk-lua
+	url = https://github.com/koreader/evernote-sdk-lua

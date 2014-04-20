@@ -11,14 +11,14 @@ env:
 
 install:
     - sudo apt-get install libsdl1.2-dev luarocks
-    - sudo luarocks install busted
+    - git clone https://github.com/Olivine-Labs/busted/
+    - cd busted && git checkout v1.10.0 && sudo luarocks make && cd ..
 
 script:
     - make fetchthirdparty
     - make
-    - sudo cp luajit-2.0/src/luajit /usr/bin/luajit
     - wget https://tesseract-ocr.googlecode.com/files/tesseract-ocr-3.02.eng.tar.gz
     - tar zxf tesseract-ocr-3.02.eng.tar.gz
-    - cd build/* && export TESSDATA_PREFIX=`pwd`/data && mkdir -p data/tessdata 
+    - cd build/* && export TESSDATA_PREFIX=`pwd`/data && mkdir -p data/tessdata
     - mv ../../tesseract-ocr/tessdata/* data/tessdata/ && cd ../../
     - make test

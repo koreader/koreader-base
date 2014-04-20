@@ -2,7 +2,8 @@ include Makefile.defs
 
 # main target
 all: $(OUTPUT_DIR)/libs $(LUAJIT) $(OUTPUT_DIR)/extr $(OUTPUT_DIR)/sdcv \
-	libs $(OUTPUT_DIR)/spec
+	libs $(OUTPUT_DIR)/spec $(OUTPUT_DIR)/common $(OUTPUT_DIR)/plugins \
+	$(LUASOCKET) $(LUASEC) $(EVERNOTE_LIB)
 ifndef EMULATE_READER
 	$(STRIP) --strip-unneeded \
 		$(OUTPUT_DIR)/extr \
@@ -36,6 +37,12 @@ kobo:
 $(OUTPUT_DIR)/libs:
 	mkdir -p $(OUTPUT_DIR)/libs
 
+$(OUTPUT_DIR)/common:
+	mkdir -p $(OUTPUT_DIR)/common
+
+$(OUTPUT_DIR)/plugins:
+	mkdir -p $(OUTPUT_DIR)/plugins
+
 # ===========================================================================
 
 # third party libraries:
@@ -48,7 +55,7 @@ $(FREETYPE_LIB):
 	cd $(FREETYPE_DIR)/build && \
 		CC="$(CC)" CXX="$(CXX)" CFLAGS="$(CFLAGS)" \
 		CXXFLAGS="$(CFLAGS)" LDFLAGS="$(LDFLAGS)" \
-			../configure --disable-static --enable-shared \
+			../configure -q --disable-static --enable-shared \
 				--without-zlib --without-bzip2 \
 				--without-png \
 				--host=$(CHOST)
@@ -61,7 +68,7 @@ $(JPEG_LIB):
 	cd $(JPEG_DIR) && \
 		CC="$(CC)" CXX="$(CXX)" CFLAGS="$(CFLAGS)" \
 		CXXFLAGS="$(CFLAGS)" LDFLAGS="$(LDFLAGS)" \
-			./configure --disable-static --enable-shared \
+			./configure -q --disable-static --enable-shared \
 				--host=$(CHOST)
 	$(MAKE) -j$(PROCESSORS) -C $(JPEG_DIR)
 	cp -fL $(JPEG_DIR)/.libs/$(notdir $(JPEG_LIB)) $@
@@ -110,7 +117,7 @@ $(DJVULIBRE_LIB): $(JPEG_LIB)
 		&& CC="$(CC)" CXX="$(CXX)" CFLAGS="$(CFLAGS) -fPIC" \
 		CXXFLAGS="$(CXXFLAGS) -fPIC" \
 		LDFLAGS="$(LDFLAGS)" \
-		../configure --disable-desktopfiles \
+		../configure -q --disable-desktopfiles \
 			--disable-static --enable-shared \
 			--disable-xmltools --disable-largefile \
 			--without-jpeg --without-tiff \
@@ -127,7 +134,7 @@ $(CRENGINE_THIRDPARTY_LIBS) $(CRENGINE_LIB):
 		CXXFLAGS="$(CXXFLAGS) -fPIC" CC="$(CC)" \
 		CXX="$(CXX)" LDFLAGS="$(LDFLAGS)" \
 		cmake -DCMAKE_BUILD_TYPE=Release .
-	cd $(CRENGINE_WRAPPER_DIR) &&  $(MAKE) VERBOSE=1
+	cd $(CRENGINE_WRAPPER_DIR) &&  $(MAKE)
 	cp -fL $(CRENGINE_WRAPPER_DIR)/$(notdir $(CRENGINE_LIB)) \
 		$(CRENGINE_LIB)
 
@@ -164,13 +171,15 @@ ifdef EMULATE_READER
 	$(MAKE) -j$(PROCESSORS) -C $(K2PDFOPT_DIR) BUILDMODE=shared \
 		CC="$(HOSTCC)" CFLAGS="$(HOSTCFLAGS) -I../$(MUPDF_DIR)/include" \
 		CXX="$(HOSTCXX)" CXXFLAGS="$(HOSTCFLAGS) -I../$(MUPDF_DIR)/include" \
-		AR="$(AR)" EMULATE_READER=1 MUPDF_LIB=../$(MUPDF_LIB) all
+		AR="$(AR)" EMULATE_READER=1 MUPDF_LIB=../$(MUPDF_LIB) \
+		all
 else
 	$(MAKE) -j$(PROCESSORS) -C $(K2PDFOPT_DIR) BUILDMODE=shared \
 		HOST="$(CHOST)" \
 		CC="$(CC)" CFLAGS="$(CFLAGS) -O3 -I../$(MUPDF_DIR)/include" \
 		CXX="$(CXX)" CXXFLAGS="$(CXXFLAGS) -I../$(MUPDF_DIR)/include" \
-		AR="$(AR)" MUPDF_LIB=../$(MUPDF_LIB) all
+		AR="$(AR)" MUPDF_LIB=../$(MUPDF_LIB) \
+		all
 endif
 	cp -fL $(K2PDFOPT_DIR)/$(notdir $(K2PDFOPT_LIB)) $(K2PDFOPT_LIB)
 	cp -fL $(K2PDFOPT_DIR)/$(notdir $(LEPTONICA_LIB)) $(LEPTONICA_LIB)
@@ -256,12 +265,12 @@ $(OUTPUT_DIR)/extr: extr.c \
 
 $(GLIB):
 ifdef EMULATE_READER
-	cd $(GLIB_DIR) && ./configure --prefix=$(CURDIR)/$(GLIB_DIR) \
+	cd $(GLIB_DIR) && ./configure -q --prefix=$(CURDIR)/$(GLIB_DIR) \
 		&& $(MAKE) -j$(PROCESSORS) && $(MAKE) install
 else
 	echo -e "glib_cv_stack_grows=no\nglib_cv_uscore=no\nac_cv_func_posix_getpwuid_r=no" > \
 		$(GLIB_DIR)/arm_cache.conf
-	cd $(GLIB_DIR) && ./configure --host=$(CHOST) --cache-file=arm_cache.conf \
+	cd $(GLIB_DIR) && ./configure -q --host=$(CHOST) --cache-file=arm_cache.conf \
 		--prefix=$(CURDIR)/$(GLIB_DIR) \
 		&& $(MAKE) -j$(PROCESSORS) && $(MAKE) install
 endif
@@ -280,7 +289,7 @@ ifdef EMULATE_READER
 ifeq ("$(shell gcc -dumpmachine | sed s/-.*//)","x86_64")
 	# quick fix for x86_64 (zeus)
 	cd $(SDCV_DIR) && sed -i 's|guint32 page_size|guint64 page_size|' src/lib/lib.cpp
-	cd $(SDCV_DIR) && ./configure \
+	cd $(SDCV_DIR) && ./configure -q \
 		PKG_CONFIG_PATH=../$(GLIB_DIR)/lib/pkgconfig \
 		CXXFLAGS=-I$(CURDIR)/$(ZLIB_DIR)/include \
 		LDFLAGS=-L$(CURDIR)/$(ZLIB_DIR)/lib \
@@ -288,14 +297,14 @@ ifeq ("$(shell gcc -dumpmachine | sed s/-.*//)","x86_64")
 	# restore to original source
 	cd $(SDCV_DIR) && sed -i 's|guint64 page_size|guint32 page_size|' src/lib/lib.cpp
 else
-	cd $(SDCV_DIR) && ./configure \
+	cd $(SDCV_DIR) && ./configure -q \
 		PKG_CONFIG_PATH=../$(GLIB_DIR)/lib/pkgconfig \
 		CXXFLAGS=-I$(CURDIR)/$(ZLIB_DIR)/include \
 		LDFLAGS=-L$(CURDIR)/$(ZLIB_DIR)/lib \
 		&& AM_CXXFLAGS=-static-libstdc++ $(MAKE) -j$(PROCESSORS)
 endif
 else
-	cd $(SDCV_DIR) && ./configure \
+	cd $(SDCV_DIR) && ./configure -q \
 		--host=$(CHOST) \
 		PKG_CONFIG_PATH=../$(GLIB_DIR)/lib/pkgconfig \
 		CXXFLAGS=-I$(CURDIR)/$(ZLIB_DIR)/include \
@@ -303,6 +312,44 @@ else
 		&& AM_CXXFLAGS=-static-libstdc++ $(MAKE) -j$(PROCESSORS)
 endif
 	cp $(SDCV_DIR)/src/sdcv $(OUTPUT_DIR)/
+
+# ===========================================================================
+
+# common lua library for networking
+$(LUASOCKET):
+	$(MAKE) -C $(LUA_SOCKET_DIR) PLAT=linux \
+		CC="$(CC) $(CFLAGS)" LD="$(CC)" \
+		LUAINC="$(CURDIR)/$(LUA_DIR)/src" \
+		INSTALL_TOP_LDIR="$(CURDIR)/$(OUTPUT_DIR)/common" \
+		INSTALL_TOP_CDIR="$(CURDIR)/$(OUTPUT_DIR)/common" \
+		all install
+
+$(OPENSSL_LIB):
+ifdef EMULATE_READER
+	cd $(OPENSSL_DIR) && ./config shared \
+		&& $(MAKE) -j$(PROCESSORS) CC="$(CC) $(CFLAGS)" \
+		build_crypto build_ssl
+else
+	cd $(OPENSSL_DIR) && ./Configure linux-generic32 shared no-asm \
+		&& $(MAKE) -j$(PROCESSORS) CC="$(CC) $(CFLAGS)" \
+		LD=$(LD) RANLIB=$(RANLIB) \
+		build_crypto build_ssl
+endif
+
+$(LUASEC): $(OPENSSL_LIB)
+	$(MAKE) -C $(LUA_SEC_DIR) CC="$(CC) $(CFLAGS)" LD=$(LD) \
+		INC_PATH="-I$(CURDIR)/$(LUA_DIR)/src -I$(CURDIR)/$(OPENSSL_DIR)/include" \
+		LIB_PATH="-L$(CURDIR)/$(OPENSSL_DIR)" \
+		LUAPATH="$(CURDIR)/$(OUTPUT_DIR)/common" \
+		LUACPATH="$(CURDIR)/$(OUTPUT_DIR)/common" \
+		linux install
+
+$(EVERNOTE_LIB):
+	$(MAKE) -C $(EVERNOTE_SDK_DIR)/thrift CC="$(CC) $(CFLAGS)" \
+		OUTPUT_DIR=$(CURDIR)/$(EVERNOTE_PLUGIN_DIR)/lib
+	mkdir -p $(CURDIR)/$(EVERNOTE_THRIFT_DIR)
+	cd $(EVERNOTE_SDK_DIR) && cp -r *.lua evernote $(CURDIR)/$(EVERNOTE_PLUGIN_DIR) \
+		&& cp thrift/*.lua $(CURDIR)/$(EVERNOTE_THRIFT_DIR)
 
 # ===========================================================================
 
@@ -326,6 +373,8 @@ fetchthirdparty:
 	cd mupdf && (git submodule init; git submodule update)
 	# MuPDF patch: use external fonts
 	cd mupdf && patch -N -p1 < ../mupdf.patch
+	# update submodules in plugins
+	cd plugins/evernote-sdk-lua && (git submodule init; git submodule update)
 	# Download popen-noshell
 	test -f popen-noshell/popen_noshell.c \
 		|| svn co http://popen-noshell.googlecode.com/svn/trunk/ \
@@ -357,6 +406,13 @@ fetchthirdparty:
 	[ `md5sum glib-2.6.6.tar.gz |cut -d\  -f1` != dba15cceeaea39c5a61b6844d2b7b920 ] \
 		&& rm glib-2.6.6.tar.gz && wget http://ftp.gnome.org/pub/gnome/sources/glib/2.6/glib-2.6.6.tar.gz || true
 	tar zxf glib-2.6.6.tar.gz
+	# download openssl-1.0.0 for luasec
+	[ ! -f openssl-1.0.1g.tar.gz ] \
+		&& wget http://www.openssl.org/source/openssl-1.0.1g.tar.gz || true
+	[ `md5sum openssl-1.0.1g.tar.gz |cut -d\  -f1` != de62b43dfcd858e66a74bee1c834e959 ] \
+		&& rm openssl-1.0.1g.tar.gz && wget http://www.openssl.org/source/openssl-1.0.1g.tar.gz || true
+	tar zxf openssl-1.0.1g.tar.gz
+
 
 # ===========================================================================
 
@@ -387,6 +443,9 @@ clean:
 	-$(MAKE) -C $(ZLIB_DIR) clean uninstall
 	-rm -rf $(FREETYPE_DIR)/build
 	-rm -rf $(OUTPUT_DIR)/*
+	-$(MAKE) -C $(LUA_SOCKET_DIR) clean
+	-$(MAKE) -C $(LUA_SEC_DIR) clean
+	-$(MAKE) -C $(OPENSSL_DIR) clean
 
 
 # ===========================================================================
@@ -402,7 +461,7 @@ $(OUTPUT_DIR)/spec:
 		ln -sf ../../spec $(OUTPUT_DIR)/
 
 test: $(OUTPUT_DIR)/spec $(OUTPUT_DIR)/.busted
-	cd $(OUTPUT_DIR) && busted
+	cd $(OUTPUT_DIR) && busted -l ./luajit
 
 PHONY: test
 

@@ -29,6 +29,8 @@ cr3cache
 extr
 build
 sdcv
+glib-2.6.6
+openssl-1.0.1g
 
 kpvcrlib/CMakeCache.txt
 kpvcrlib/CMakeFiles/
