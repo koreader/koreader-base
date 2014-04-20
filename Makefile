@@ -2,7 +2,7 @@ include Makefile.defs
 
 # main target
 all: $(OUTPUT_DIR)/libs $(LUAJIT) $(OUTPUT_DIR)/extr $(OUTPUT_DIR)/sdcv \
-	libs $(OUTPUT_DIR)/spec
+	libs $(OUTPUT_DIR)/spec $(OUTPUT_DIR)/common $(LUASOCKET) $(LUASEC)
 ifndef EMULATE_READER
 	$(STRIP) --strip-unneeded \
 		$(OUTPUT_DIR)/extr \
@@ -35,6 +35,9 @@ kobo:
 
 $(OUTPUT_DIR)/libs:
 	mkdir -p $(OUTPUT_DIR)/libs
+
+$(OUTPUT_DIR)/common:
+	mkdir -p $(OUTPUT_DIR)/common
 
 # ===========================================================================
 
@@ -306,6 +309,37 @@ endif
 
 # ===========================================================================
 
+# common lua library for networking
+$(LUASOCKET):
+	$(MAKE) -C $(LUA_SOCKET_DIR) PLAT=linux \
+		CC="$(CC) $(CFLAGS)" LD="$(CC)" \
+		LUAINC="$(CURDIR)/$(LUA_DIR)/src" \
+		INSTALL_TOP_LDIR="$(CURDIR)/$(OUTPUT_DIR)/common" \
+		INSTALL_TOP_CDIR="$(CURDIR)/$(OUTPUT_DIR)/common" \
+		all install
+
+$(OPENSSL_LIB):
+ifdef EMULATE_READER
+	cd $(OPENSSL_DIR) && ./config shared \
+		&& $(MAKE) -j$(PROCESSORS) CC="$(CC) $(CFLAGS)" \
+		build_crypto build_ssl
+else
+	cd $(OPENSSL_DIR) && ./Configure linux-generic32 shared no-asm \
+		&& $(MAKE) -j$(PROCESSORS) CC="$(CC) $(CFLAGS)" \
+		LD=$(LD) RANLIB=$(RANLIB) \
+		build_crypto build_ssl
+endif
+
+$(LUASEC): $(OPENSSL_LIB)
+	$(MAKE) -C $(LUA_SEC_DIR) CC="$(CC) $(CFLAGS)" LD=$(LD) \
+		INC_PATH="-I$(CURDIR)/$(LUA_DIR)/src -I$(CURDIR)/$(OPENSSL_DIR)/include" \
+		LIB_PATH="-L$(CURDIR)/$(OPENSSL_DIR)" \
+		LUAPATH="$(CURDIR)/$(OUTPUT_DIR)/common" \
+		LUACPATH="$(CURDIR)/$(OUTPUT_DIR)/common" \
+		linux install
+
+# ===========================================================================
+
 # helper target for initializing third-party code
 
 fetchthirdparty:
@@ -357,6 +391,13 @@ fetchthirdparty:
 	[ `md5sum glib-2.6.6.tar.gz |cut -d\  -f1` != dba15cceeaea39c5a61b6844d2b7b920 ] \
 		&& rm glib-2.6.6.tar.gz && wget http://ftp.gnome.org/pub/gnome/sources/glib/2.6/glib-2.6.6.tar.gz || true
 	tar zxf glib-2.6.6.tar.gz
+	# download openssl-1.0.0 for luasec
+	[ ! -f openssl-1.0.1g.tar.gz ] \
+		&& wget http://www.openssl.org/source/openssl-1.0.1g.tar.gz || true
+	[ `md5sum openssl-1.0.1g.tar.gz |cut -d\  -f1` != de62b43dfcd858e66a74bee1c834e959 ] \
+		&& rm openssl-1.0.1g.tar.gz && wget http://www.openssl.org/source/openssl-1.0.1g.tar.gz || true
+	tar zxf openssl-1.0.1g.tar.gz
+
 
 # ===========================================================================
 
@@ -387,6 +428,9 @@ clean:
 	-$(MAKE) -C $(ZLIB_DIR) clean uninstall
 	-rm -rf $(FREETYPE_DIR)/build
 	-rm -rf $(OUTPUT_DIR)/*
+	-$(MAKE) -C $(LUA_SOCKET_DIR) clean
+	-$(MAKE) -C $(LUA_SEC_DIR) clean
+	-$(MAKE) -C $(OPENSSL_DIR) clean
 
 
 # ===========================================================================

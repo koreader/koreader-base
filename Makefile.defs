@@ -16,6 +16,8 @@ CC:=$(CHOST)-gcc
 CXX:=$(CHOST)-g++
 STRIP:=$(CHOST)-strip
 AR:=$(CHOST)-ar
+LD:=$(CHOST)-ld
+RANLIB:=$(CHOST)-ranlib
 ifdef SBOX_UNAME_MACHINE
 	CC:=gcc
 	CXX:=g++
@@ -23,6 +25,8 @@ endif
 HOSTCC:=gcc
 HOSTCXX:=g++
 HOSTAR:=ar
+HOSTLD:=ld
+HOSTRANLIB:=ranlib
 
 # try to find number of CPUs for build machine
 PROCESSORS:=$(shell grep processor /proc/cpuinfo|wc -l)
@@ -77,6 +81,8 @@ ifdef EMULATE_READER
 	CC:=$(HOSTCC) -g
 	CXX:=$(HOSTCXX)
 	AR:=$(HOSTAR)
+	LD:=$(HOSTLD)
+	RANLIB:=$(HOSTRANLIB)
 	EMU_CFLAGS?=$(shell sdl-config --cflags)
 	EMU_CFLAGS+= -DEMULATE_READER
 	EMU_LDFLAGS?=$(shell sdl-config --libs)
@@ -161,6 +167,14 @@ ZLIB=$(OUTPUT_DIR)/libs/libz.so.1
 
 LEPTONICA_LIB=$(OUTPUT_DIR)/libs/liblept.so.3
 TESSERACT_LIB=$(OUTPUT_DIR)/libs/libtesseract.so.3
+
+OPENSSL_DIR=openssl-1.0.1g
+OPENSSL_LIB=$(OPENSSL_DIR)/libssl.so
+
+LUA_SOCKET_DIR=luasocket
+LUA_SEC_DIR=luasec
+LUASOCKET=$(OUTPUT_DIR)/common/socket
+LUASEC=$(OUTPUT_DIR)/common/ssl
 
 # must point to directory with *.ttf fonts for crengine
 MUPDF_TTF_FONTS_DIR=$(MUPDF_DIR)/resources/fonts
