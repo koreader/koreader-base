@@ -31,3 +31,6 @@
 [submodule "luasec"]
 	path = luasec
 	url = https://github.com/brunoos/luasec
+[submodule "plugins/evernote-sdk-lua"]
+	path = plugins/evernote-sdk-lua
+	url = https://github.com/koreader/evernote-sdk-lua

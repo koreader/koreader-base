@@ -2,7 +2,8 @@ include Makefile.defs
 
 # main target
 all: $(OUTPUT_DIR)/libs $(LUAJIT) $(OUTPUT_DIR)/extr $(OUTPUT_DIR)/sdcv \
-	libs $(OUTPUT_DIR)/spec $(OUTPUT_DIR)/common $(LUASOCKET) $(LUASEC)
+	libs $(OUTPUT_DIR)/spec $(OUTPUT_DIR)/common $(OUTPUT_DIR)/plugins \
+	$(LUASOCKET) $(LUASEC) $(EVERNOTE_LIB)
 ifndef EMULATE_READER
 	$(STRIP) --strip-unneeded \
 		$(OUTPUT_DIR)/extr \
@@ -38,6 +39,9 @@ $(OUTPUT_DIR)/libs:
 
 $(OUTPUT_DIR)/common:
 	mkdir -p $(OUTPUT_DIR)/common
+
+$(OUTPUT_DIR)/plugins:
+	mkdir -p $(OUTPUT_DIR)/plugins
 
 # ===========================================================================
 
@@ -340,6 +344,13 @@ $(LUASEC): $(OPENSSL_LIB)
 		LUACPATH="$(CURDIR)/$(OUTPUT_DIR)/common" \
 		linux install
 
+$(EVERNOTE_LIB):
+	$(MAKE) -C $(EVERNOTE_SDK_DIR)/thrift CC="$(CC) $(CFLAGS)" \
+		OUTPUT_DIR=$(CURDIR)/$(EVERNOTE_PLUGIN_DIR)/lib
+	mkdir -p $(CURDIR)/$(EVERNOTE_THRIFT_DIR)
+	cd $(EVERNOTE_SDK_DIR) && cp -r *.lua evernote $(CURDIR)/$(EVERNOTE_PLUGIN_DIR) \
+		&& cp thrift/*.lua $(CURDIR)/$(EVERNOTE_THRIFT_DIR)
+
 # ===========================================================================
 
 # helper target for initializing third-party code
@@ -362,6 +373,8 @@ fetchthirdparty:
 	cd mupdf && (git submodule init; git submodule update)
 	# MuPDF patch: use external fonts
 	cd mupdf && patch -N -p1 < ../mupdf.patch
+	# update submodules in plugins
+	cd plugins/evernote-sdk-lua && (git submodule init; git submodule update)
 	# Download popen-noshell
 	test -f popen-noshell/popen_noshell.c \
 		|| svn co http://popen-noshell.googlecode.com/svn/trunk/ \

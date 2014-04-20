@@ -176,6 +176,11 @@ LUA_SEC_DIR=luasec
 LUASOCKET=$(OUTPUT_DIR)/common/socket
 LUASEC=$(OUTPUT_DIR)/common/ssl
 
+EVERNOTE_SDK_DIR=plugins/evernote-sdk-lua
+EVERNOTE_PLUGIN_DIR=$(OUTPUT_DIR)/plugins/evernote.koplugin
+EVERNOTE_THRIFT_DIR=$(EVERNOTE_PLUGIN_DIR)/thrift
+EVERNOTE_LIB=$(EVERNOTE_PLUGIN_DIR)/lib/libluasocket.so
+
 # must point to directory with *.ttf fonts for crengine
 MUPDF_TTF_FONTS_DIR=$(MUPDF_DIR)/resources/fonts
 
