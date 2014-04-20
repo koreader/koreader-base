@@ -51,7 +51,7 @@ $(FREETYPE_LIB):
 	cd $(FREETYPE_DIR)/build && \
 		CC="$(CC)" CXX="$(CXX)" CFLAGS="$(CFLAGS)" \
 		CXXFLAGS="$(CFLAGS)" LDFLAGS="$(LDFLAGS)" \
-			../configure --disable-static --enable-shared \
+			../configure -q --disable-static --enable-shared \
 				--without-zlib --without-bzip2 \
 				--without-png \
 				--host=$(CHOST)
@@ -64,7 +64,7 @@ $(JPEG_LIB):
 	cd $(JPEG_DIR) && \
 		CC="$(CC)" CXX="$(CXX)" CFLAGS="$(CFLAGS)" \
 		CXXFLAGS="$(CFLAGS)" LDFLAGS="$(LDFLAGS)" \
-			./configure --disable-static --enable-shared \
+			./configure -q --disable-static --enable-shared \
 				--host=$(CHOST)
 	$(MAKE) -j$(PROCESSORS) -C $(JPEG_DIR)
 	cp -fL $(JPEG_DIR)/.libs/$(notdir $(JPEG_LIB)) $@
@@ -113,7 +113,7 @@ $(DJVULIBRE_LIB): $(JPEG_LIB)
 		&& CC="$(CC)" CXX="$(CXX)" CFLAGS="$(CFLAGS) -fPIC" \
 		CXXFLAGS="$(CXXFLAGS) -fPIC" \
 		LDFLAGS="$(LDFLAGS)" \
-		../configure --disable-desktopfiles \
+		../configure -q --disable-desktopfiles \
 			--disable-static --enable-shared \
 			--disable-xmltools --disable-largefile \
 			--without-jpeg --without-tiff \
@@ -167,13 +167,15 @@ ifdef EMULATE_READER
 	$(MAKE) -j$(PROCESSORS) -C $(K2PDFOPT_DIR) BUILDMODE=shared \
 		CC="$(HOSTCC)" CFLAGS="$(HOSTCFLAGS) -I../$(MUPDF_DIR)/include" \
 		CXX="$(HOSTCXX)" CXXFLAGS="$(HOSTCFLAGS) -I../$(MUPDF_DIR)/include" \
-		AR="$(AR)" EMULATE_READER=1 MUPDF_LIB=../$(MUPDF_LIB) all
+		AR="$(AR)" EMULATE_READER=1 MUPDF_LIB=../$(MUPDF_LIB) \
+		all
 else
 	$(MAKE) -j$(PROCESSORS) -C $(K2PDFOPT_DIR) BUILDMODE=shared \
 		HOST="$(CHOST)" \
 		CC="$(CC)" CFLAGS="$(CFLAGS) -O3 -I../$(MUPDF_DIR)/include" \
 		CXX="$(CXX)" CXXFLAGS="$(CXXFLAGS) -I../$(MUPDF_DIR)/include" \
-		AR="$(AR)" MUPDF_LIB=../$(MUPDF_LIB) all
+		AR="$(AR)" MUPDF_LIB=../$(MUPDF_LIB) \
+		all
 endif
 	cp -fL $(K2PDFOPT_DIR)/$(notdir $(K2PDFOPT_LIB)) $(K2PDFOPT_LIB)
 	cp -fL $(K2PDFOPT_DIR)/$(notdir $(LEPTONICA_LIB)) $(LEPTONICA_LIB)
@@ -259,12 +261,12 @@ $(OUTPUT_DIR)/extr: extr.c \
 
 $(GLIB):
 ifdef EMULATE_READER
-	cd $(GLIB_DIR) && ./configure --prefix=$(CURDIR)/$(GLIB_DIR) \
+	cd $(GLIB_DIR) && ./configure -q --prefix=$(CURDIR)/$(GLIB_DIR) \
 		&& $(MAKE) -j$(PROCESSORS) && $(MAKE) install
 else
 	echo -e "glib_cv_stack_grows=no\nglib_cv_uscore=no\nac_cv_func_posix_getpwuid_r=no" > \
 		$(GLIB_DIR)/arm_cache.conf
-	cd $(GLIB_DIR) && ./configure --host=$(CHOST) --cache-file=arm_cache.conf \
+	cd $(GLIB_DIR) && ./configure -q --host=$(CHOST) --cache-file=arm_cache.conf \
 		--prefix=$(CURDIR)/$(GLIB_DIR) \
 		&& $(MAKE) -j$(PROCESSORS) && $(MAKE) install
 endif
@@ -283,7 +285,7 @@ ifdef EMULATE_READER
 ifeq ("$(shell gcc -dumpmachine | sed s/-.*//)","x86_64")
 	# quick fix for x86_64 (zeus)
 	cd $(SDCV_DIR) && sed -i 's|guint32 page_size|guint64 page_size|' src/lib/lib.cpp
-	cd $(SDCV_DIR) && ./configure \
+	cd $(SDCV_DIR) && ./configure -q \
 		PKG_CONFIG_PATH=../$(GLIB_DIR)/lib/pkgconfig \
 		CXXFLAGS=-I$(CURDIR)/$(ZLIB_DIR)/include \
 		LDFLAGS=-L$(CURDIR)/$(ZLIB_DIR)/lib \
@@ -291,14 +293,14 @@ ifeq ("$(shell gcc -dumpmachine | sed s/-.*//)","x86_64")
 	# restore to original source
 	cd $(SDCV_DIR) && sed -i 's|guint64 page_size|guint32 page_size|' src/lib/lib.cpp
 else
-	cd $(SDCV_DIR) && ./configure \
+	cd $(SDCV_DIR) && ./configure -q \
 		PKG_CONFIG_PATH=../$(GLIB_DIR)/lib/pkgconfig \
 		CXXFLAGS=-I$(CURDIR)/$(ZLIB_DIR)/include \
 		LDFLAGS=-L$(CURDIR)/$(ZLIB_DIR)/lib \
 		&& AM_CXXFLAGS=-static-libstdc++ $(MAKE) -j$(PROCESSORS)
 endif
 else
-	cd $(SDCV_DIR) && ./configure \
+	cd $(SDCV_DIR) && ./configure -q \
 		--host=$(CHOST) \
 		PKG_CONFIG_PATH=../$(GLIB_DIR)/lib/pkgconfig \
 		CXXFLAGS=-I$(CURDIR)/$(ZLIB_DIR)/include \
