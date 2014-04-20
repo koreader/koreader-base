@@ -130,7 +130,7 @@ $(CRENGINE_THIRDPARTY_LIBS) $(CRENGINE_LIB):
 		CXXFLAGS="$(CXXFLAGS) -fPIC" CC="$(CC)" \
 		CXX="$(CXX)" LDFLAGS="$(LDFLAGS)" \
 		cmake -DCMAKE_BUILD_TYPE=Release .
-	cd $(CRENGINE_WRAPPER_DIR) &&  $(MAKE) VERBOSE=1
+	cd $(CRENGINE_WRAPPER_DIR) &&  $(MAKE)
 	cp -fL $(CRENGINE_WRAPPER_DIR)/$(notdir $(CRENGINE_LIB)) \
 		$(CRENGINE_LIB)
 
@@ -446,7 +446,7 @@ $(OUTPUT_DIR)/spec:
 		ln -sf ../../spec $(OUTPUT_DIR)/
 
 test: $(OUTPUT_DIR)/spec $(OUTPUT_DIR)/.busted
-	cd $(OUTPUT_DIR) && busted -l luajit
+	cd $(OUTPUT_DIR) && busted -l ./luajit
 
 PHONY: test
 
