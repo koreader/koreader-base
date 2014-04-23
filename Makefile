@@ -1,12 +1,11 @@
 include Makefile.defs
 
 # main target
-all: $(OUTPUT_DIR)/libs $(LUAJIT) $(OUTPUT_DIR)/extr $(OUTPUT_DIR)/sdcv \
-	libs $(OUTPUT_DIR)/spec $(OUTPUT_DIR)/common $(OUTPUT_DIR)/plugins \
-	$(LUASOCKET) $(LUASEC) $(EVERNOTE_LIB)
+all: $(OUTPUT_DIR)/libs $(LUAJIT) $(OUTPUT_DIR)/sdcv \
+	libs $(OUTPUT_DIR)/spec $(OUTPUT_DIR)/common \
+	$(OUTPUT_DIR)/plugins $(LUASOCKET) $(LUASEC) $(EVERNOTE_LIB)
 ifndef EMULATE_READER
 	$(STRIP) --strip-unneeded \
-		$(OUTPUT_DIR)/extr \
 		$(OUTPUT_DIR)/sdcv \
 		$(LUAJIT) \
 		$(OUTPUT_DIR)/libs/*.so*
