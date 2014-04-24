@@ -9,6 +9,7 @@ ifndef EMULATE_READER
 		$(OUTPUT_DIR)/sdcv \
 		$(LUAJIT) \
 		$(OUTPUT_DIR)/libs/*.so*
+	find $(OUTPUT_DIR)/common -name "*.so*" | xargs $(STRIP) --strip-unneeded
 endif
 	# set up some needed paths and links
 	test -e $(OUTPUT_DIR)/data || \
