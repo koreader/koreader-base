@@ -294,12 +294,20 @@ typedef struct CreDocument {
 } CreDocument;
 
 static int initCache(lua_State *L) {
-	int cache_size = luaL_optint(L, 1, (2 << 20) * 64); // 64Mb on disk cache for DOM
+    const char *cache_path = luaL_checkstring(L, 1);
+    int cache_size = luaL_checkint(L, 2);
 
-	ldomDocCache::init(lString16("./cr3cache"), cache_size);
-	HyphMan::initDictionaries(lString16("data/hyph/"));
+    ldomDocCache::init(lString16(cache_path), cache_size);
 
-	return 0;
+    return 0;
+}
+
+static int initHyphDict(lua_State *L) {
+    const char *dict_path = luaL_checkstring(L, 1);
+
+    HyphMan::initDictionaries(lString16(dict_path));
+
+    return 0;
 }
 
 static int newDocView(lua_State *L) {
@@ -1278,6 +1286,7 @@ static int isXPointerInCurrentPage(lua_State *L) {
 
 static const struct luaL_Reg cre_func[] = {
 	{"initCache", initCache},
+	{"initHyphDict", initHyphDict},
 	{"newDocView", newDocView},
 	{"getFontFaces", getFontFaces},
 	{"getGammaIndex", getGammaIndex},
