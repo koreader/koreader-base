@@ -34,3 +34,6 @@
 [submodule "plugins/evernote-sdk-lua"]
 	path = plugins/evernote-sdk-lua
 	url = https://github.com/koreader/evernote-sdk-lua
+[submodule "lua-serialize"]
+	path = lua-serialize
+	url = https://github.com/chrox/lua-serialize

@@ -181,6 +181,9 @@ EVERNOTE_PLUGIN_DIR=$(OUTPUT_DIR)/plugins/evernote.koplugin
 EVERNOTE_THRIFT_DIR=$(EVERNOTE_PLUGIN_DIR)/thrift
 EVERNOTE_LIB=$(EVERNOTE_PLUGIN_DIR)/lib/libluasocket.so
 
+LUASERIAL_DIR=lua-serialize
+LUASERIAL_LIB=$(OUTPUT_DIR)/common/libserialize.so
+
 # must point to directory with *.ttf fonts for crengine
 MUPDF_TTF_FONTS_DIR=$(MUPDF_DIR)/resources/fonts
 

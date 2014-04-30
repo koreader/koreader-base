@@ -1112,6 +1112,16 @@ function BB.compat(oldbuffer)
 	return ffi.cast("BlitBuffer4*", oldbuffer)[0]
 end
 
+function BB.fromstring(width, height, buffertype, str, pitch)
+	local dataptr = ffi.C.malloc(#str)
+	ffi.copy(dataptr, str)
+	return BB.new(width, height, buffertype, dataptr, pitch)
+end
+
+function BB.tostring(bb)
+	return ffi.string(bb.data, bb.pitch * bb.h)
+end
+
 -- accessors for color types:
 BB.Color4 = Color4L
 BB.Color4L = Color4L
