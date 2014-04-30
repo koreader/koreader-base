@@ -6,7 +6,6 @@ cscope.*
 libs-emu
 *.orig
 lua
-lua-*
 mupdf-thirdparty.zip
 djvulibre*
 crash.log

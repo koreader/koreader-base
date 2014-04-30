@@ -8,6 +8,8 @@ local k2pdfopt = ffi.load("libs/libk2pdfopt.so.2")
 local KOPTContext = {}
 local KOPTContext_mt = {__index={}}
 
+local __VERSION__ = "1.0.0"
+
 function KOPTContext_mt.__index:setBBox(x0, y0, x1, y1)
     self.bbox.x0, self.bbox.y0, self.bbox.x1, self.bbox.y1 = x0, y0, x1, y1
 end
@@ -29,7 +31,9 @@ function KOPTContext_mt.__index:setContrast(contrast) self.contrast = contrast e
 function KOPTContext_mt.__index:setDefectSize(defect_size) self.defect_size = defect_size end
 function KOPTContext_mt.__index:setLineSpacing(line_spacing) self.line_spacing = line_spacing end
 function KOPTContext_mt.__index:setWordSpacing(word_spacing) self.word_spacing = word_spacing end
-function KOPTContext_mt.__index:setLanguage(language) self.language = ffi.cast("char*", language) end
+function KOPTContext_mt.__index:setLanguage(language)
+    self.language = ffi.new("char[?]", #language, language)
+end
 
 function KOPTContext_mt.__index:setDebug() self.debug = 1 end
 function KOPTContext_mt.__index:setCJKChar() self.cjkchar = 1 end
@@ -311,6 +315,211 @@ function KOPTContext.new()
     k2pdfopt.bmp_init(kc.src)
     k2pdfopt.bmp_init(kc.dst)
     k2pdfopt.wrectmaps_init(kc.rectmaps)
+    k2pdfopt.pageregions_init(kc.pageregions)
+
+    return kc
+end
+
+function KOPTContext.totable(kc)
+    local context = {}
+    -- version
+    context.__version__ = __VERSION__
+    -- integer values
+    context.trim = kc.trim
+    context.wrap = kc.wrap
+    context.white = kc.white
+    context.indent = kc.indent
+    context.rotate = kc.rotate
+    context.columns = kc.columns
+    context.offset_x = kc.offset_x
+    context.offset_y = kc.offset_y
+    context.dev_dpi = kc.dev_dpi
+    context.dev_width = kc.dev_width
+    context.dev_height = kc.dev_height
+    context.page_width = kc.page_width
+    context.page_height = kc.page_height
+    context.straighten = kc.straighten
+    context.justification = kc.justification
+    context.read_max_width = kc.read_max_width
+    context.read_max_height = kc.read_max_height
+    context.writing_direction = kc.writing_direction
+    -- number values
+    context.zoom = kc.zoom
+    context.margin = kc.margin
+    context.quality = kc.quality
+    context.contrast = kc.contrast
+    context.defect_size = kc.defect_size
+    context.line_spacing = kc.line_spacing
+    context.word_spacing = kc.word_spacing
+    context.shrink_factor = kc.shrink_factor
+    -- states
+    context.precache = kc.precache
+    context.debug = kc.debug
+    context.cjkchar = kc.cjkchar
+    -- struct
+    context.bbox = ffi.string(kc.bbox, ffi.sizeof(kc.bbox))
+    -- pointers
+    if kc.rboxa ~= nil then
+        context.rboxa = {
+            n = kc.rboxa.n,
+            box = {}
+        }
+        for i=0, kc.rboxa.n - 1 do
+            table.insert(context.rboxa.box,
+                    ffi.string(kc.rboxa.box[i], ffi.sizeof("BOX")))
+        end
+    end
+    if kc.rnai ~= nil then
+        context.rnai = {
+            n = kc.rnai.n,
+            array = ffi.string(kc.rnai.array, ffi.sizeof("float")*kc.rnai.n)
+        }
+    end
+    if kc.nboxa ~= nil then
+        context.nboxa = {
+            n = kc.nboxa.n,
+            box = {}
+        }
+        for i=0, kc.nboxa.n - 1 do
+            table.insert(context.nboxa.box,
+                    ffi.string(kc.nboxa.box[i], ffi.sizeof("BOX")))
+        end
+    end
+    if kc.nnai ~= nil then
+        context.nnai = {
+            n = kc.nnai.n,
+            array = ffi.string(kc.nnai.array, ffi.sizeof("float")*kc.nnai.n)
+        }
+    end
+    if kc.language ~= nil then
+        context.language = ffi.string(kc.language)
+    end
+    -- bmp structs
+    context.src = ffi.string(kc.src, ffi.sizeof(kc.src))
+    if kc.src.size_allocated > 0 then
+        context.src_data = ffi.string(kc.src.data, kc.src.size_allocated)
+    else
+        context.src_data = ""
+    end
+    context.dst = ffi.string(kc.dst, ffi.sizeof(kc.dst))
+    if kc.dst.size_allocated > 0 then
+        context.dst_data = ffi.string(kc.dst.data, kc.dst.size_allocated)
+    else
+        context.dst_data = ""
+    end
+    -- rectmaps struct
+    context.rectmaps = {
+        n = kc.rectmaps.n,
+        na = kc.rectmaps.n,
+        wrectmap = ffi.string(kc.rectmaps.wrectmap,
+                ffi.sizeof("WRECTMAP")*kc.rectmaps.n)
+    }
+
+    return context
+end
+
+function KOPTContext.fromtable(context)
+    -- check version first
+    if __VERSION__ ~= context.__version__ then
+        error("mismatched versions")
+    end
+    local kc = kctype()
+    -- integer values
+    kc.trim = context.trim
+    kc.wrap = context.wrap
+    kc.white = context.white
+    kc.indent = context.indent
+    kc.rotate = context.rotate
+    kc.columns = context.columns
+    kc.offset_x = context.offset_x
+    kc.offset_y = context.offset_y
+    kc.dev_dpi = context.dev_dpi
+    kc.dev_width = context.dev_width
+    kc.dev_height = context.dev_height
+    kc.page_width = context.page_width
+    kc.page_height = context.page_height
+    kc.straighten = context.straighten
+    kc.justification = context.justification
+    kc.read_max_width = context.read_max_width
+    kc.read_max_height = context.read_max_height
+    kc.writing_direction = context.writing_direction
+    -- number values
+    kc.zoom = context.zoom
+    kc.margin = context.margin
+    kc.quality = context.quality
+    kc.contrast = context.contrast
+    kc.defect_size = context.defect_size
+    kc.line_spacing = context.line_spacing
+    kc.word_spacing = context.word_spacing
+    kc.shrink_factor = context.shrink_factor
+    -- states
+    kc.precache = context.precache
+    kc.debug = context.debug
+    kc.cjkchar = context.cjkchar
+    -- struct
+    if context.bbox ~= "" then
+        ffi.copy(kc.bbox, context.bbox, ffi.sizeof(kc.bbox))
+    end
+    -- pointers
+    if context.rboxa then
+        kc.rboxa = leptonica.boxaCreate(context.rboxa.n)
+        for i=0, context.rboxa.n - 1 do
+            leptonica.boxaAddBox(kc.rboxa, ffi.new("BOX[1]"), ffi.C.L_COPY)
+            ffi.copy(kc.rboxa.box[i], context.rboxa.box[i+1], ffi.sizeof("BOX"))
+        end
+    else
+        kc.rboxa = nil
+    end
+    if context.rnai then
+        kc.rnai = leptonica.numaCreateFromFArray(ffi.cast("float*",
+                context.rnai.array), context.rnai.n, ffi.C.L_COPY)
+    end
+    if context.nboxa then
+        kc.nboxa = leptonica.boxaCreate(context.nboxa.n)
+        for i=0, context.nboxa.n - 1 do
+            leptonica.boxaAddBox(kc.nboxa, ffi.new("BOX[1]"), ffi.C.L_COPY)
+            ffi.copy(kc.nboxa.box[i], context.nboxa.box[i+1], ffi.sizeof("BOX"))
+        end
+    else
+        kc.nboxa = nil
+    end
+    if context.nnai then
+        kc.nnai = leptonica.numaCreateFromFArray(ffi.cast("float*",
+                context.nnai.array), context.nnai.n, ffi.C.L_COPY)
+    end
+    if context.language then
+        local lang = context.language
+        kc.language = ffi.new("char[?]", #lang, lang)
+    end
+
+    k2pdfopt.bmp_init(kc.src)
+    ffi.copy(kc.src, context.src, ffi.sizeof(kc.src))
+    if context.src_data ~= "" then
+        kc.src.data = ffi.C.malloc(#context.src_data)
+        ffi.copy(kc.src.data, context.src_data, #context.src_data)
+    else
+        kc.src.data = nil
+    end
+    k2pdfopt.bmp_init(kc.dst)
+    ffi.copy(kc.dst, context.dst, ffi.sizeof(kc.dst))
+    if context.dst_data ~= "" then
+        kc.dst.data = ffi.C.malloc(#context.dst_data)
+        ffi.copy(kc.dst.data, context.dst_data, #context.dst_data)
+    else
+        kc.dst.data = nil
+    end
+    k2pdfopt.wrectmaps_init(kc.rectmaps)
+    kc.rectmaps.n = context.rectmaps.n
+    kc.rectmaps.na = context.rectmaps.n
+    if context.rectmaps.wrectmap ~= "" then
+        kc.rectmaps.wrectmap = ffi.C.malloc(#context.rectmaps.wrectmap)
+        ffi.copy(kc.rectmaps.wrectmap,
+                context.rectmaps.wrectmap, #context.rectmaps.wrectmap)
+    else
+        kc.rectmaps.wrectmap = nil
+    end
+
+    -- for now we don't serilize pageregions
     k2pdfopt.pageregions_init(kc.pageregions)
 
     return kc

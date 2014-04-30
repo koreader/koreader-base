@@ -190,13 +190,17 @@ enum {
                       /* of each object in the array(s)               */
 };
 
-BOX * boxaGetBox ( BOXA *boxa, l_int32 index, l_int32 accessflag );
-l_int32 numaGetMax ( NUMA *na, l_float32 *pmaxval, l_int32 *pimaxloc );
-l_int32 numaGetIValue ( NUMA *na, l_int32 index, l_int32 *pival );
-l_int32 boxaGetCount ( BOXA *boxa );
-l_int32 numaGetCount ( NUMA *na );
-void boxaDestroy ( BOXA **pboxa );
-void numaDestroy ( NUMA **pna );
+BOXA * boxaCreate(l_int32 n);
+BOX * boxaGetBox (BOXA *boxa, l_int32 index, l_int32 accessflag);
+NUMA * numaCreate(l_int32 n);
+NUMA * numaCreateFromFArray(l_float32 *farray, l_int32 size, l_int32 copyflag);
+l_int32 boxaAddBox(BOXA *boxa, BOX *box, l_int32 copyflag);
+l_int32 numaGetMax (NUMA *na, l_float32 *pmaxval, l_int32 *pimaxloc);
+l_int32 numaGetIValue (NUMA *na, l_int32 index, l_int32 *pival);
+l_int32 boxaGetCount (BOXA *boxa);
+l_int32 numaGetCount (NUMA *na);
+void boxaDestroy (BOXA **pboxa);
+void numaDestroy (NUMA **pna);
 
 void bmp_init(WILLUSBITMAP *bmap);
 void bmp_free(WILLUSBITMAP *bmap);

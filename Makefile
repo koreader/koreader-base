@@ -3,7 +3,8 @@ include Makefile.defs
 # main target
 all: $(OUTPUT_DIR)/libs $(LUAJIT) $(OUTPUT_DIR)/sdcv \
 	libs $(OUTPUT_DIR)/spec $(OUTPUT_DIR)/common \
-	$(OUTPUT_DIR)/plugins $(LUASOCKET) $(LUASEC) $(EVERNOTE_LIB)
+	$(OUTPUT_DIR)/plugins $(LUASOCKET) $(LUASEC) \
+	$(EVERNOTE_LIB) $(LUASERIAL_LIB)
 ifndef EMULATE_READER
 	$(STRIP) --strip-unneeded \
 		$(OUTPUT_DIR)/sdcv \
@@ -14,6 +15,7 @@ endif
 	# set up some needed paths and links
 	test -e $(OUTPUT_DIR)/data || \
 		ln -sf ../../kpvcrlib/crengine/cr3gui/data $(OUTPUT_DIR)/data
+	test -d $(OUTPUT_DIR)/cache || mkdir $(OUTPUT_DIR)/cache
 	test -d $(OUTPUT_DIR)/history || mkdir $(OUTPUT_DIR)/history
 	test -d $(OUTPUT_DIR)/clipboard || mkdir $(OUTPUT_DIR)/clipboard
 	# /$(OUTPUT_DIR)/data is a soft link to /kpvcrlib/crengine/cr3gui/data
@@ -351,6 +353,10 @@ $(EVERNOTE_LIB):
 	cd $(EVERNOTE_SDK_DIR) && cp -r *.lua evernote $(CURDIR)/$(EVERNOTE_PLUGIN_DIR) \
 		&& cp thrift/*.lua $(CURDIR)/$(EVERNOTE_THRIFT_DIR)
 
+$(LUASERIAL_LIB):
+	$(MAKE) -C $(LUASERIAL_DIR) CC="$(CC) $(CFLAGS)" \
+		OUTPUT_DIR=$(CURDIR)/$(OUTPUT_DIR)/common
+
 # ===========================================================================
 
 # helper target for initializing third-party code
@@ -375,6 +381,8 @@ fetchthirdparty:
 	cd mupdf && patch -N -p1 < ../mupdf.patch
 	# update submodules in plugins
 	cd plugins/evernote-sdk-lua && (git submodule init; git submodule update)
+	# update submodules in lua-serialize
+	cd lua-serialize && (git submodule init; git submodule update)
 	# Download popen-noshell
 	test -f popen-noshell/popen_noshell.c \
 		|| svn co http://popen-noshell.googlecode.com/svn/trunk/ \
