@@ -1,7 +1,7 @@
 include Makefile.defs
 
 # main target
-all: $(OUTPUT_DIR)/libs $(LUAJIT) $(OUTPUT_DIR)/sdcv \
+all: $(OUTPUT_DIR)/libs $(LUAJIT) $(LUAJIT_JIT) $(OUTPUT_DIR)/sdcv \
 	libs $(OUTPUT_DIR)/spec $(OUTPUT_DIR)/common \
 	$(OUTPUT_DIR)/plugins $(LUASOCKET) $(LUASEC) \
 	$(EVERNOTE_LIB) $(LUASERIAL_LIB)
@@ -160,6 +160,8 @@ endif
 	# differently when installing
 	cp -fL $(LUA_DIR)/src/$(notdir $(LUAJIT)) $(LUAJIT)
 
+$(LUAJIT_JIT): $(LUAJIT)
+	cp -rfL $(LUA_DIR)/src/jit $(OUTPUT_DIR)
 
 # popen-noshell, fetched via SVN
 $(POPEN_NOSHELL_LIB):

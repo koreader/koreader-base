@@ -138,6 +138,7 @@ CRENGINE_THIRDPARTY_LIBS=$(CRENGINE_DIR)/thirdparty/chmlib/libchmlib.a \
 
 LUA_DIR=luajit-2.0
 LUAJIT=$(OUTPUT_DIR)/luajit
+LUAJIT_JIT=$(OUTPUT_DIR)/jit
 
 POPEN_NOSHELL_DIR=popen-noshell
 POPEN_NOSHELL_LIB=$(POPEN_NOSHELL_DIR)/libpopen_noshell.a
