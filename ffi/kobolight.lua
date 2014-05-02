@@ -1,5 +1,4 @@
 local ffi = require("ffi")
-
 -- for closing on garbage collection, we need a pointer or aggregate
 -- cdata object (not a plain "int"). So we encapsulate in a struct.
 ffi.cdef[[
@@ -57,6 +56,11 @@ function kobolight_mt.__index:setBrightness(brightness)
 	else
 		self.isOn = false
 	end
+end
+
+function kobolight_mt.__index:restoreBrightness(brightness)
+	self.brightness = brightness
+	self.savedBrightness = brightness
 end
 
 function kobolight.open(device)
