@@ -4,7 +4,7 @@ local DrawContext = require("ffi/drawcontext")
 --local Pic = pic
 local Pic = require("ffi/pic")
 
-local SAMPLE_JPG = "spec/unit/data/sample.jpg"
+local SAMPLE_JPG = "spec/base/unit/data/sample.jpg"
 
 describe("Pic module", function()
 	it("should load jpg file", function()

@@ -2,8 +2,8 @@ local ffi = require("ffi")
 local KOPTContext = require("ffi/koptcontext")
 local k2pdfopt = ffi.load("libs/libk2pdfopt.so.2")
 
-local sample_pdf = "spec/unit/data/Alice.pdf"
-local paper_pdf = "spec/unit/data/Paper.pdf"
+local sample_pdf = "spec/base/unit/data/Alice.pdf"
+local paper_pdf = "spec/base/unit/data/Paper.pdf"
 
 describe("KOPTContext module", function()
 	it("should be created", function()
