@@ -1,6 +1,6 @@
 return {
 	default = {
-		verbose = true
-		ROOT = "spec/unit",
+		verbose = true,
+		ROOT = "spec/base/unit",
 	},
 }

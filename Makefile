@@ -2,7 +2,7 @@ include Makefile.defs
 
 # main target
 all: $(OUTPUT_DIR)/libs $(LUAJIT) $(LUAJIT_JIT) $(OUTPUT_DIR)/sdcv \
-	libs $(OUTPUT_DIR)/spec $(OUTPUT_DIR)/common \
+	libs $(OUTPUT_DIR)/spec/base $(OUTPUT_DIR)/common \
 	$(OUTPUT_DIR)/plugins $(LUASOCKET) $(LUASEC) \
 	$(EVERNOTE_LIB) $(LUASERIAL_LIB)
 ifndef EMULATE_READER
@@ -473,9 +473,10 @@ $(OUTPUT_DIR)/.busted:
 	test -e $(OUTPUT_DIR)/.busted || \
 		ln -sf ../../.busted $(OUTPUT_DIR)/
 
-$(OUTPUT_DIR)/spec:
-	test -e $(OUTPUT_DIR)/spec || \
-		ln -sf ../../spec $(OUTPUT_DIR)/
+$(OUTPUT_DIR)/spec/base:
+	mkdir -p $(OUTPUT_DIR)/spec
+	test -e $(OUTPUT_DIR)/spec/base || \
+		ln -sf ../../../spec $(OUTPUT_DIR)/spec/base
 
 test: $(OUTPUT_DIR)/spec $(OUTPUT_DIR)/.busted
 	cd $(OUTPUT_DIR) && busted -l ./luajit
