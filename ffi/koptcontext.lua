@@ -237,28 +237,67 @@ function KOPTContext_mt.__index:getPageRegions()
     return regions
 end
 
+--[[
+-- draw highlights into pix and return leptonica pixmap
+--]]
+function KOPTContext_mt.__index:getSrcPix(pboxes, drawer)
+    if self.src ~= nil then
+        local pix1 = k2pdfopt.bitmap2pix(self.src,
+            ffi.new("int", 0), ffi.new("int", 0),
+            ffi.new("int", self.src.width), ffi.new("int", self.src.height))
+        if pboxes and drawer == "lighten" then
+            local color = 0xFFFF0000
+            local bbox = self.bbox
+            local pix2 = leptonica.pixConvertTo32(pix1)
+            leptonica.pixDestroy(ffi.new('PIX *[1]', pix1))
+            for _, pbox in ipairs(pboxes) do
+                local box = ffi.new("BOX[1]")
+                box[0].x = pbox.x - bbox.x0
+                box[0].y = pbox.y - bbox.y0
+                box[0].w, box[0].h = pbox.w, pbox.h
+                leptonica.pixMultiplyByColor(pix2, pix2, box,
+                        ffi.new("uint32_t", color))
+            end
+            return pix2
+        else
+            return pix1
+        end
+    end
+end
+
+function KOPTContext_mt.__index:exportSrcPNGFile(pboxes, drawer, filename)
+    local pix = self:getSrcPix(pboxes, drawer)
+    if pix ~= nil then
+        leptonica.pixWritePng(ffi.cast("char*", filename), pix, ffi.new("float", 0.0))
+        leptonica.pixDestroy(ffi.new('PIX *[1]', pix))
+    end
+end
+
+function KOPTContext_mt.__index:exportSrcPNGString(pboxes, drawer)
+    local pix = self:getSrcPix(pboxes, drawer)
+    if pix ~= nil then
+        local pdata = ffi.new("char *[1]")
+        local psize = ffi.new("size_t[1]")
+        leptonica.pixWriteMemPng(pdata, psize, pix, ffi.new("float", 0.0))
+        leptonica.pixDestroy(ffi.new('PIX *[1]', pix))
+        if pdata[0] ~= nil then
+           local pngstr = ffi.string(pdata[0], psize[0])
+           ffi.C.free(pdata[0])
+           return pngstr
+       end
+    end
+end
+
 function KOPTContext_mt.__index:optimizePage()
     k2pdfopt.k2pdfopt_optimize_bmp(self)
 end
 
 function KOPTContext_mt.__index:free()
-    --[[ Don't worry about the src bitmap in context. It's freed as soon as it's
-         been used in either reflow or autocrop. But we should take care of dst
-         bitmap since the usage of dst bitmap is delayed most of the times.
-    --]]
-    local rnai = ffi.new('NUMA *[1]')
-    local nnai = ffi.new('NUMA *[1]')
-    local rboxa = ffi.new('BOXA *[1]')
-    local nboxa = ffi.new('BOXA *[1]')
-    rnai[0] = self.rnai
-    nnai[0] = self.nnai
-    rboxa[0] = self.rboxa
-    nboxa[0] = self.nboxa
-
-    leptonica.numaDestroy(rnai)
-    leptonica.numaDestroy(nnai)
-    leptonica.boxaDestroy(rboxa)
-    leptonica.boxaDestroy(nboxa)
+    leptonica.numaDestroy(ffi.new('NUMA *[1]', self.rnai))
+    leptonica.numaDestroy(ffi.new('NUMA *[1]', self.nnai))
+    leptonica.boxaDestroy(ffi.new('BOXA *[1]', self.rboxa))
+    leptonica.boxaDestroy(ffi.new('BOXA *[1]', self.nboxa))
+    k2pdfopt.bmp_free(self.src)
     k2pdfopt.bmp_free(self.dst)
     k2pdfopt.wrectmaps_free(self.rectmaps)
     k2pdfopt.pageregions_free(self.pageregions)

@@ -12,8 +12,8 @@ local Blitbuffer = require("ffi/blitbuffer")
 describe("Common modules", function()
     it("should get response from HTTP request", function()
         local urls = {
-            "http://www.google.com",
-            "https://www.google.com",
+            "http://www.example.com",
+            "https://www.example.com",
         }
         for i=1, #urls do
             local http_scheme = url.parse(urls[i]).scheme == "http"

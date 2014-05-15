@@ -31,6 +31,10 @@ endif
 		ln -sf ../../koreader-base $(OUTPUT_DIR)/
 	test -e $(OUTPUT_DIR)/ffi || \
 		ln -sf ../../ffi $(OUTPUT_DIR)/
+	# setup Evernote SDK
+	mkdir -p $(CURDIR)/$(EVERNOTE_THRIFT_DIR)
+	cd $(EVERNOTE_SDK_DIR) && cp -r *.lua evernote $(CURDIR)/$(EVERNOTE_PLUGIN_DIR) \
+		&& cp thrift/*.lua $(CURDIR)/$(EVERNOTE_THRIFT_DIR)
 
 # convenience target with preconfigured Kobo toolchain settings
 kobo:
@@ -358,9 +362,6 @@ $(LUASEC): $(OPENSSL_LIB)
 $(EVERNOTE_LIB):
 	$(MAKE) -C $(EVERNOTE_SDK_DIR)/thrift CC="$(CC) $(CFLAGS)" \
 		OUTPUT_DIR=$(CURDIR)/$(EVERNOTE_PLUGIN_DIR)/lib
-	mkdir -p $(CURDIR)/$(EVERNOTE_THRIFT_DIR)
-	cd $(EVERNOTE_SDK_DIR) && cp -r *.lua evernote $(CURDIR)/$(EVERNOTE_PLUGIN_DIR) \
-		&& cp thrift/*.lua $(CURDIR)/$(EVERNOTE_THRIFT_DIR)
 
 $(LUASERIAL_LIB):
 	$(MAKE) -C $(LUASERIAL_DIR) CC="$(CC) $(CFLAGS)" \

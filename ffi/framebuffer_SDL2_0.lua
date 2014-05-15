@@ -8,7 +8,9 @@ local BB = require("ffi/blitbuffer")
 local fb = {}
 
 function fb.open()
-	SDL.open()
+    if not fb.dummy then
+		SDL.open()
+    end
 
 	-- we present this buffer to the outside
 	fb.bb = BB.new(SDL.w, SDL.h, BB.TYPE_BBRGB32)

@@ -190,6 +190,24 @@ enum {
                       /* of each object in the array(s)               */
 };
 
+struct Pix {
+    l_uint32             w;           /* width in pixels                   */
+    l_uint32             h;           /* height in pixels                  */
+    l_uint32             d;           /* depth in bits                     */
+    l_uint32             wpl;         /* 32-bit words/line                 */
+    l_uint32             refcount;    /* reference count (1 if no clones)  */
+    l_int32              xres;        /* image res (ppi) in x direction    */
+                                      /* (use 0 if unknown)                */
+    l_int32              yres;        /* image res (ppi) in y direction    */
+                                      /* (use 0 if unknown)                */
+    l_int32              informat;    /* input file format, IFF_*          */
+    char                *text;        /* text string associated with pix   */
+    struct PixColormap  *colormap;    /* colormap (may be null)            */
+    l_uint32            *data;        /* the image data                    */
+};
+typedef struct Pix PIX;
+
+/* Leptonica */
 BOXA * boxaCreate(l_int32 n);
 BOX * boxaGetBox (BOXA *boxa, l_int32 index, l_int32 accessflag);
 NUMA * numaCreate(l_int32 n);
@@ -201,7 +219,14 @@ l_int32 boxaGetCount (BOXA *boxa);
 l_int32 numaGetCount (NUMA *na);
 void boxaDestroy (BOXA **pboxa);
 void numaDestroy (NUMA **pna);
+void pixDestroy (PIX **ppix);
+l_int32 pixWritePng(char *filename, PIX *pix, l_float32 gamma);
+l_int32 pixWriteMemPng(l_uint8 **pdata, size_t *psize, PIX *pix, l_float32 gamma);
+PIX * pixConvertTo32(PIX *pixs);
+PIX * pixMultiplyByColor(PIX *pixd, PIX *pixs, BOX *box, l_uint32 color);
+PIX * pixBlendBackgroundToColor(PIX *pixd, PIX *pixs, BOX *box, l_uint32 color, l_float32 gamma, l_int32 minval, l_int32 maxval);
 
+/* K2pdfopt */
 void bmp_init(WILLUSBITMAP *bmap);
 void bmp_free(WILLUSBITMAP *bmap);
 int  bmp_copy(WILLUSBITMAP *dest,WILLUSBITMAP *src);
@@ -225,4 +250,5 @@ void pageregions_free(PAGEREGIONS *regions);
 void k2pdfopt_crop_bmp(KOPTContext *kctx);
 void k2pdfopt_part_bmp(KOPTContext *kctx);
 void k2pdfopt_optimize_bmp(KOPTContext *kctx);
+PIX* bitmap2pix(WILLUSBITMAP *src, int x, int y, int w, int h);
 ]]
