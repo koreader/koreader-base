@@ -1,7 +1,9 @@
 #!/bin/bash
 
 GETTEXT_TAR="gettext-0.18.3.2.tar.gz"
-GETTEXT_TAR_URL="http://ftp.gnu.org/pub/gnu/gettext/$GETTEXT_TAR"
+#GETTEXT_TAR_URL="http://ftp.gnu.org/pub/gnu/gettext/$GETTEXT_TAR"
+#GETTEXT_TAR_URL="http://mirrors.kernel.org/gnu/gettext/$GETTEXT_TAR"
+GETTEXT_TAR_URL="ftp://aeneas.mit.edu/pub/gnu/gettext/$GETTEXT_TAR"
 GETTEXT_TAR_GOOD_SUM=d1a4e452d60eb407ab0305976529a45c18124bd518d976971ac6dc7aa8b4c5d7
 
 function download() {
