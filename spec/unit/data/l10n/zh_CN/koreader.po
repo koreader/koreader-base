@@ -1,0 +1,3 @@
+#: gettext_spec.lua:14
+msgid "freedom"
+msgstr "自由"
