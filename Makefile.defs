@@ -78,13 +78,13 @@ ifdef EMULATE_READER
 	HOSTCC:=$(strip $(CCACHE) $(HOSTCC))
 	HOSTCXX:=$(strip $(CCACHE) $(HOSTCXX))
 	HOSTAR:=$(strip $(CCACHE) $(HOSTAR))
-	CC:=$(HOSTCC) -g
+	CC:=$(HOSTCC)
 	CXX:=$(HOSTCXX)
 	AR:=$(HOSTAR)
 	LD:=$(HOSTLD)
 	RANLIB:=$(HOSTRANLIB)
 	EMU_CFLAGS?=$(shell sdl-config --cflags)
-	EMU_CFLAGS+= -DEMULATE_READER
+	EMU_CFLAGS+= -DEMULATE_READER -g
 	EMU_LDFLAGS?=$(shell sdl-config --libs)
 	ifeq "$(shell uname -s -m)" "Darwin x86_64"
 		EMU_LDFLAGS += -pagezero_size 10000 -image_base 100000000
@@ -112,8 +112,12 @@ OUTPUT_DIR?=build/$(MACHINE)
 
 # you can probably leave these settings alone:
 
+THIRD_PARTY_DIR=thirdparty
+
 CRENGINE_WRAPPER_DIR=kpvcrlib
+CRENGINE_WRAPPER_BUILD_DIR=$(CRENGINE_WRAPPER_DIR)/build
 CRENGINE_DIR=$(CRENGINE_WRAPPER_DIR)/crengine
+CRENGINE_BUILD_DIR=$(CRENGINE_WRAPPER_BUILD_DIR)/crengine
 
 LUAFILESYSTEM_DIR=luafilesystem
 
@@ -132,9 +136,9 @@ DJVULIBRE_LIB=$(OUTPUT_DIR)/libs/libdjvulibre.so.21
 DJVULIBRE_LIB_DIR=$(DJVULIBRE_DIR)/build/libdjvu/.libs/
 
 CRENGINE_LIB=$(OUTPUT_DIR)/libs/libcrengine.so
-CRENGINE_THIRDPARTY_LIBS=$(CRENGINE_DIR)/thirdparty/chmlib/libchmlib.a \
-			$(CRENGINE_DIR)/thirdparty/antiword/libantiword.a \
-			$(CRENGINE_DIR)/thirdparty/libjpeg/libjpeg.a
+CRENGINE_THIRDPARTY_LIBS=$(CRENGINE_BUILD_DIR)/thirdparty/chmlib/libchmlib.a \
+			$(CRENGINE_BUILD_DIR)/thirdparty/antiword/libantiword.a \
+			$(CRENGINE_BUILD_DIR)/thirdparty/libjpeg/libjpeg.a
 
 LUA_DIR=luajit-2.0
 LUAJIT=$(OUTPUT_DIR)/luajit
@@ -156,7 +160,7 @@ JPEG_LIB=$(OUTPUT_DIR)/libs/libjpeg.so.9
 JPEG_DIR=jpeg
 
 PNG_LIB=$(OUTPUT_DIR)/libs/libpng16.so.16
-PNG_DIR=$(CRENGINE_DIR)/thirdparty/libpng
+PNG_DIR=$(CRENGINE_BUILD_DIR)/thirdparty/libpng
 
 SDCV_DIR=sdcv-0.4.2
 GAWK_DIR=gawk-4.1.0
@@ -185,6 +189,9 @@ EVERNOTE_LIB=$(EVERNOTE_PLUGIN_DIR)/lib/libluasocket.so
 
 LUASERIAL_DIR=lua-serialize
 LUASERIAL_LIB=$(OUTPUT_DIR)/common/libserialize.so
+
+GNUGETTEXT_DIR=$(THIRD_PARTY_DIR)/gettext/gettext-0.18.3.2
+GNUGETTEXT_LIB=$(OUTPUT_DIR)/libs/libgnuintl.so.8.1.2
 
 # must point to directory with *.ttf fonts for crengine
 MUPDF_TTF_FONTS_DIR=$(MUPDF_DIR)/resources/fonts
