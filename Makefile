@@ -179,10 +179,9 @@ ifdef EMULATE_READER
 		CXX="$(HOSTCXX)" CXXFLAGS="$(HOSTCFLAGS) -I../$(MUPDF_DIR)/include" \
 		AR="$(AR)" EMULATE_READER=1 MUPDF_LIB=../$(MUPDF_LIB) \
 		LEPT_CFLAGS="$(CFLAGS) -I$(CURDIR)/$(ZLIB_DIR)/include -I$(CURDIR)/$(PNG_DIR)" \
-		LEPT_LDFLAGS="-L$(CURDIR)/$(ZLIB_DIR)/lib -L$(CURDIR)/$(PNG_DIR)" \
-		LEPT_PNG_DIR="$(CURDIR)/$(PNG_DIR)" \
+		LEPT_LDFLAGS="-L$(CURDIR)/$(ZLIB_DIR)/lib -L$(CURDIR)/$(PNG_BUILD_DIR)" \
+		LEPT_PNG_DIR="$(CURDIR)/$(PNG_BUILD_DIR)" \
 		all
-
 else
 	$(MAKE) -j$(PROCESSORS) -C $(K2PDFOPT_DIR) BUILDMODE=shared \
 		HOST="$(CHOST)" \
@@ -190,8 +189,8 @@ else
 		CXX="$(CXX)" CXXFLAGS="$(CXXFLAGS) -I../$(MUPDF_DIR)/include" \
 		AR="$(AR)" MUPDF_LIB=../$(MUPDF_LIB) \
 		LEPT_CFLAGS="$(CFLAGS) -I$(CURDIR)/$(ZLIB_DIR)/include -I$(CURDIR)/$(PNG_DIR)" \
-		LEPT_LDFLAGS="-L$(CURDIR)/$(ZLIB_DIR)/lib -L$(CURDIR)/$(PNG_DIR)" \
-		LEPT_PNG_DIR="$(CURDIR)/$(PNG_DIR)" \
+		LEPT_LDFLAGS="-L$(CURDIR)/$(ZLIB_DIR)/lib -L$(CURDIR)/$(PNG_BUILD_DIR)" \
+		LEPT_PNG_DIR="$(CURDIR)/$(PNG_BUILD_DIR)" \
 		all
 endif
 	cp -fL $(K2PDFOPT_DIR)/$(notdir $(K2PDFOPT_LIB)) $(K2PDFOPT_LIB)
@@ -371,7 +370,7 @@ $(LUASERIAL_LIB):
 
 $(GNUGETTEXT_LIB):
 	cd $(GNUGETTEXT_DIR) && \
-		./configure --disable-java --disable-native-java && \
+		./configure --host=$(CHOST) --disable-java --disable-native-java && \
 		$(MAKE) -j$(PROCESSORS)
 	cp -fL $(GNUGETTEXT_DIR)/gettext-runtime/intl/.libs/libgnuintl.so.8.1.2 $@
 
@@ -461,6 +460,8 @@ clean:
 	-$(MAKE) -C $(LUA_SOCKET_DIR) clean
 	-$(MAKE) -C $(LUA_SEC_DIR) clean
 	-$(MAKE) -C $(OPENSSL_DIR) clean
+	-$(MAKE) -C $(GNUGETTEXT_DIR) clean
+
 
 
 # ===========================================================================

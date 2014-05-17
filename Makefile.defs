@@ -160,7 +160,8 @@ JPEG_LIB=$(OUTPUT_DIR)/libs/libjpeg.so.9
 JPEG_DIR=jpeg
 
 PNG_LIB=$(OUTPUT_DIR)/libs/libpng16.so.16
-PNG_DIR=$(CRENGINE_BUILD_DIR)/thirdparty/libpng
+PNG_DIR=$(CRENGINE_DIR)/thirdparty/libpng
+PNG_BUILD_DIR=$(CRENGINE_BUILD_DIR)/thirdparty/libpng
 
 SDCV_DIR=sdcv-0.4.2
 GAWK_DIR=gawk-4.1.0
