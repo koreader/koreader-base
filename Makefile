@@ -2,9 +2,9 @@ include Makefile.defs
 
 # main target
 all: $(OUTPUT_DIR)/libs $(LUAJIT) $(LUAJIT_JIT) $(OUTPUT_DIR)/sdcv \
-	libs $(OUTPUT_DIR)/spec/base $(OUTPUT_DIR)/common \
-	$(OUTPUT_DIR)/plugins $(LUASOCKET) $(LUASEC) \
-	$(EVERNOTE_LIB) $(LUASERIAL_LIB)
+		libs $(OUTPUT_DIR)/spec/base $(OUTPUT_DIR)/common \
+		$(OUTPUT_DIR)/plugins $(LUASOCKET) $(LUASEC) \
+		$(EVERNOTE_LIB) $(LUASERIAL_LIB) $(GNUGETTEXT_LIB)
 ifndef EMULATE_READER
 	$(STRIP) --strip-unneeded \
 		$(OUTPUT_DIR)/sdcv \
@@ -81,7 +81,7 @@ $(JPEG_LIB):
 
 # libpng, use thirdparty libpng in crengine
 $(PNG_LIB): $(CRENGINE_THIRDPARTY_LIBS)
-	cp -fL $(CRENGINE_WRAPPER_DIR)/crengine/thirdparty/libpng/$(notdir $(PNG_LIB)) $@
+	cp -fL $(CRENGINE_BUILD_DIR)/thirdparty/libpng/$(notdir $(PNG_LIB)) $@
 
 
 # mupdf, fetched via GIT as a submodule
@@ -135,13 +135,15 @@ $(DJVULIBRE_LIB): $(JPEG_LIB)
 
 # crengine, fetched via GIT as a submodule
 $(CRENGINE_THIRDPARTY_LIBS) $(CRENGINE_LIB):
-	cd $(CRENGINE_WRAPPER_DIR) \
+	test -e $(CRENGINE_WRAPPER_DIR)/build \
+	|| mkdir $(CRENGINE_WRAPPER_DIR)/build
+	cd $(CRENGINE_WRAPPER_DIR)/build \
 	&& CFLAGS="$(CFLAGS) -fPIC" \
 		CXXFLAGS="$(CXXFLAGS) -fPIC" CC="$(CC)" \
 		CXX="$(CXX)" LDFLAGS="$(LDFLAGS)" \
-		cmake -DCMAKE_BUILD_TYPE=Release .
-	cd $(CRENGINE_WRAPPER_DIR) &&  $(MAKE)
-	cp -fL $(CRENGINE_WRAPPER_DIR)/$(notdir $(CRENGINE_LIB)) \
+		cmake -DCMAKE_BUILD_TYPE=Release ..
+	cd $(CRENGINE_WRAPPER_DIR)/build &&  $(MAKE)
+	cp -fL $(CRENGINE_WRAPPER_DIR)/build/$(notdir $(CRENGINE_LIB)) \
 		$(CRENGINE_LIB)
 
 
@@ -181,10 +183,9 @@ ifdef EMULATE_READER
 		CXX="$(HOSTCXX)" CXXFLAGS="$(HOSTCFLAGS) -I../$(MUPDF_DIR)/include" \
 		AR="$(AR)" EMULATE_READER=1 MUPDF_LIB=../$(MUPDF_LIB) \
 		LEPT_CFLAGS="$(CFLAGS) -I$(CURDIR)/$(ZLIB_DIR)/include -I$(CURDIR)/$(PNG_DIR)" \
-		LEPT_LDFLAGS="-L$(CURDIR)/$(ZLIB_DIR)/lib -L$(CURDIR)/$(PNG_DIR)" \
-		LEPT_PNG_DIR="$(CURDIR)/$(PNG_DIR)" \
+		LEPT_LDFLAGS="-L$(CURDIR)/$(ZLIB_DIR)/lib -L$(CURDIR)/$(PNG_BUILD_DIR)" \
+		LEPT_PNG_DIR="$(CURDIR)/$(PNG_BUILD_DIR)" \
 		all
-
 else
 	$(MAKE) -j$(PROCESSORS) -C $(K2PDFOPT_DIR) BUILDMODE=shared \
 		HOST="$(CHOST)" \
@@ -192,8 +193,8 @@ else
 		CXX="$(CXX)" CXXFLAGS="$(CXXFLAGS) -I../$(MUPDF_DIR)/include" \
 		AR="$(AR)" MUPDF_LIB=../$(MUPDF_LIB) \
 		LEPT_CFLAGS="$(CFLAGS) -I$(CURDIR)/$(ZLIB_DIR)/include -I$(CURDIR)/$(PNG_DIR)" \
-		LEPT_LDFLAGS="-L$(CURDIR)/$(ZLIB_DIR)/lib -L$(CURDIR)/$(PNG_DIR)" \
-		LEPT_PNG_DIR="$(CURDIR)/$(PNG_DIR)" \
+		LEPT_LDFLAGS="-L$(CURDIR)/$(ZLIB_DIR)/lib -L$(CURDIR)/$(PNG_BUILD_DIR)" \
+		LEPT_PNG_DIR="$(CURDIR)/$(PNG_BUILD_DIR)" \
 		all
 endif
 	cp -fL $(K2PDFOPT_DIR)/$(notdir $(K2PDFOPT_LIB)) $(K2PDFOPT_LIB)
@@ -207,7 +208,6 @@ endif
 # our own Lua/C/C++ interfacing:
 
 libs: \
-	$(OUTPUT_DIR)/libs/libkoreader-luagettext.so \
 	$(OUTPUT_DIR)/libs/libkoreader-input.so \
 	$(OUTPUT_DIR)/libs/libkoreader-lfs.so \
 	$(OUTPUT_DIR)/libs/libkoreader-pic.so \
@@ -216,6 +216,7 @@ libs: \
 	$(OUTPUT_DIR)/libs/libkoreader-djvu.so \
 	$(OUTPUT_DIR)/libs/libkoreader-cre.so
 
+# TODO: remove this target when ffi gettext becomes stable
 $(OUTPUT_DIR)/libs/libkoreader-luagettext.so: lua_gettext.c
 	$(CC) $(DYNLIB_CFLAGS) $(EMU_CFLAGS) $(EMU_LDFLAGS) \
 		-o $@ $<
@@ -255,7 +256,8 @@ $(OUTPUT_DIR)/libs/libkoreader-cre.so: cre.cpp \
 				$(CRENGINE_LIB) \
 				$(CRENGINE_THIRDPARTY_LIBS) \
 				$(PNG_LIB) $(ZLIB)
-	$(CC) -I$(CRENGINE_DIR)/crengine/include/ $(DYNLIB_CFLAGS) -DLDOM_USE_OWN_MEM_MAN=1 \
+	$(CC) -I$(CRENGINE_DIR)/crengine/include/ $(DYNLIB_CFLAGS) \
+		-DLDOM_USE_OWN_MEM_MAN=1 \
 		$(DYNAMICLIBSTDCPP) -Wl,-rpath,'libs' -o $@ $< \
 		$(CRENGINE_LIB) $(CRENGINE_THIRDPARTY_LIBS) \
 		$(PNG_LIB) $(ZLIB) $(FREETYPE_LIB) \
@@ -367,6 +369,12 @@ $(LUASERIAL_LIB):
 	$(MAKE) -C $(LUASERIAL_DIR) CC="$(CC) $(CFLAGS)" \
 		OUTPUT_DIR=$(CURDIR)/$(OUTPUT_DIR)/common
 
+$(GNUGETTEXT_LIB):
+	cd $(GNUGETTEXT_DIR) && \
+		./configure --host=$(CHOST) --disable-java --disable-native-java && \
+		$(MAKE) -j$(PROCESSORS)
+	cp -fL $(GNUGETTEXT_DIR)/gettext-runtime/intl/.libs/libgnuintl.so.8.1.2 $@
+
 # ===========================================================================
 
 # helper target for initializing third-party code
@@ -430,6 +438,9 @@ fetchthirdparty:
 	[ `md5sum openssl-1.0.1g.tar.gz |cut -d\  -f1` != de62b43dfcd858e66a74bee1c834e959 ] \
 		&& rm openssl-1.0.1g.tar.gz && wget http://www.openssl.org/source/openssl-1.0.1g.tar.gz || true
 	tar zxf openssl-1.0.1g.tar.gz
+	# download gettext
+	cd thirdparty/gettext && ./fetch.sh
+
 
 
 # ===========================================================================
@@ -437,21 +448,7 @@ fetchthirdparty:
 clean:
 	-$(MAKE) -C $(LUA_DIR) CC="$(HOSTCC)" CFLAGS="$(BASE_CFLAGS)" clean
 	-$(MAKE) -C $(MUPDF_DIR) build="release" clean
-	-$(MAKE) -C $(CRENGINE_DIR)/thirdparty/antiword clean
-	-test -d $(CRENGINE_DIR)/thirdparty/chmlib \
-		&& $(MAKE) -C $(CRENGINE_DIR)/thirdparty/chmlib clean \
-		|| echo warn: chmlib folder not found
-	-test -d $(CRENGINE_DIR)/thirdparty/libpng \
-		&& ($(MAKE) -C $(CRENGINE_DIR)/thirdparty/libpng clean) \
-		|| echo warn: chmlib folder not found
-	-test -d $(CRENGINE_DIR)/crengine \
-		&& ($(MAKE) -C $(CRENGINE_DIR)/crengine clean) \
-		|| echo warn: chmlib folder not found
-	-test -d $(CRENGINE_WRAPPER_DIR) \
-		&& ($(MAKE) -C $(CRENGINE_WRAPPER_DIR) clean) \
-		|| echo warn: chmlib folder not found
-	-rm -rf $(CRENGINE_WRAPPER_DIR)/CMakeCache.txt
-	-rm -rf $(CRENGINE_WRAPPER_DIR)/CMakeFiles
+	-rm -rf $(CRENGINE_WRAPPER_BUILD_DIR)
 	-rm -rf $(DJVULIBRE_DIR)/build
 	-$(MAKE) -C $(POPEN_NOSHELL_DIR) clean
 	-$(MAKE) -C $(K2PDFOPT_DIR) clean
@@ -464,6 +461,8 @@ clean:
 	-$(MAKE) -C $(LUA_SOCKET_DIR) clean
 	-$(MAKE) -C $(LUA_SEC_DIR) clean
 	-$(MAKE) -C $(OPENSSL_DIR) clean
+	-$(MAKE) -C $(GNUGETTEXT_DIR) clean
+
 
 
 # ===========================================================================

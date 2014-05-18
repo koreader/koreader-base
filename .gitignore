@@ -1,4 +1,3 @@
-*.sh
 *.gz
 *.swp
 *.swo
@@ -21,7 +20,7 @@ tags
 /.project
 
 fonts
-data
+/data
 history
 screenshots
 cr3cache
@@ -30,11 +29,9 @@ build
 sdcv
 glib-2.6.6
 openssl-1.0.1g
+thirdparty/gettext/gettext-0.*.*
 
-kpvcrlib/CMakeCache.txt
-kpvcrlib/CMakeFiles/
-kpvcrlib/cmake_install.cmake
-kpvcrlib/Makefile
+kpvcrlib/build
 
 popen-noshell/libpopen_noshell.a
 popen-noshell/*.o
@@ -49,4 +46,3 @@ popen-noshell/popen_noshell_examples.c
 popen-noshell/popen_noshell_tests.c
 popen-noshell/popen_noshell_tests.cpp
 
-kpvcrlib/libcrengine.so
