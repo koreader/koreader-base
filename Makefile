@@ -370,9 +370,15 @@ $(LUASERIAL_LIB):
 		OUTPUT_DIR=$(CURDIR)/$(OUTPUT_DIR)/common
 
 $(GNUGETTEXT_LIB):
+ifdef EMULATE_READER
+	cd $(GNUGETTEXT_DIR) && \
+		./configure --disable-java --disable-native-java && \
+		$(MAKE) -j$(PROCESSORS)
+else
 	cd $(GNUGETTEXT_DIR) && \
 		./configure --host=$(CHOST) --disable-java --disable-native-java && \
 		$(MAKE) -j$(PROCESSORS)
+endif
 	cp -fL $(GNUGETTEXT_DIR)/gettext-runtime/intl/.libs/libgnuintl.so.8.1.2 $@
 
 # ===========================================================================

@@ -10,7 +10,8 @@ function download() {
 	wget $GETTEXT_TAR_URL
 }
 
-if [ ! -f openssl-1.0.1g.tar.gz ]; then
+if [ ! -f $GETTEXT_TAR ]; then
+    echo "No download file"
 	download
 else
 	GETTEXT_TAR_SUM=`sha256sum gettext-0.18.3.2.tar.gz  | awk '{print $1}'`
