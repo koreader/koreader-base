@@ -1,16 +1,34 @@
 # set this to your ARM cross compiler:
 
 SHELL:=/bin/bash
-ifeq ($(TARGET_DEVICE), KOBO)
-	CHOST?=arm-linux-gnueabihf
-else
-	CHOST?=arm-linux-gnueabi
-endif
+
 # Use ccache in build system by default. Define USE_NO_CCACHE=1 to force disable it.
 ifeq ($(USE_NO_CCACHE), 1)
 	CCACHE:=
 else
 	CCACHE?=$(shell which ccache)
+endif
+
+# android toolchain
+ANDROID_TOOLCHAIN=toolchain/android-toolchain
+
+# if TARGET is not defined we will build an emulator on current machine
+ifdef TARGET
+    export EMULATE_READER=
+else
+    export EMULATE_READER=1
+endif
+
+# set CC CXX AR LD RANLIB
+ifeq ($(TARGET), kindle)
+	CHOST?=arm-linux-gnueabi
+else ifeq ($(TARGET), kobo)
+	CHOST?=arm-linux-gnueabihf
+else ifeq ($(TARGET), android)
+    export ANDROID=1
+    PATH:=$(CURDIR)/$(ANDROID_TOOLCHAIN)/bin:$(PATH)
+    SYSROOT=$(NDK)/platforms/android-9/arch-arm
+	CHOST?=arm-linux-androideabi
 endif
 CC:=$(CHOST)-gcc
 CXX:=$(CHOST)-g++
@@ -18,10 +36,14 @@ STRIP:=$(CHOST)-strip
 AR:=$(CHOST)-ar
 LD:=$(CHOST)-ld
 RANLIB:=$(CHOST)-ranlib
+
+# unknown device
 ifdef SBOX_UNAME_MACHINE
 	CC:=gcc
 	CXX:=g++
 endif
+
+# set host CC CXX AR LD RANLIB
 HOSTCC:=gcc
 HOSTCXX:=g++
 HOSTAR:=ar
@@ -49,7 +71,7 @@ ARM_BACKWARD_COMPAT_CFLAGS:=-fno-stack-protector -U_FORTIFY_SOURCE -D_GNU_SOURCE
 ARM_BACKWARD_COMPAT_CXXFLAGS:=-fno-use-cxa-atexit
 ARM_ARCH:=-march=armv6j -mtune=arm1136jf-s -mfpu=vfp -marm
 
-ifeq ($(TARGET_DEVICE), KOBO)
+ifeq ($(TARGET), kobo)
 	ARM_ARCH += -mfloat-abi=hard
 else
 	ARM_ARCH += -mfloat-abi=softfp
@@ -102,12 +124,12 @@ endif
 
 # set a flag that C code can differenciate on for Kobo code
 # currently used for framebuffer related code in einkfb.c
-ifeq ($(TARGET_DEVICE), KOBO)
+ifeq ($(TARGET), kobo)
 	CFLAGS+= -DKOBO_PLATFORM
 endif
 
 # this will create a path named build/arm-none-linux-gnueabi or similar
-MACHINE?=$(shell $(CC) -dumpmachine 2>/dev/null)
+MACHINE?=$(shell PATH=$(PATH) $(CC) -dumpmachine 2>/dev/null)
 OUTPUT_DIR?=build/$(MACHINE)
 
 # you can probably leave these settings alone:
@@ -193,6 +215,7 @@ LUASERIAL_LIB=$(OUTPUT_DIR)/common/libserialize.so
 
 GNUGETTEXT_DIR=$(THIRD_PARTY_DIR)/gettext/gettext-0.18.3.2
 GNUGETTEXT_LIB=$(OUTPUT_DIR)/libs/libgnuintl.so.8.1.2
+LIBINTL_DIR=$(GNUGETTEXT_DIR)/gettext-runtime/intl
 
 # must point to directory with *.ttf fonts for crengine
 MUPDF_TTF_FONTS_DIR=$(MUPDF_DIR)/resources/fonts

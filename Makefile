@@ -1,14 +1,15 @@
 include Makefile.defs
 
 # main target
-all: $(OUTPUT_DIR)/libs $(LUAJIT) $(LUAJIT_JIT) $(OUTPUT_DIR)/sdcv \
+all: $(OUTPUT_DIR)/libs $(if $(ANDROID),,$(LUAJIT) $(LUAJIT_JIT)) \
+		$(if $(ANDROID),,$(OUTPUT_DIR)/sdcv) \
 		libs $(OUTPUT_DIR)/spec/base $(OUTPUT_DIR)/common \
 		$(OUTPUT_DIR)/plugins $(LUASOCKET) $(LUASEC) \
 		$(EVERNOTE_LIB) $(LUASERIAL_LIB) $(GNUGETTEXT_LIB)
 ifndef EMULATE_READER
 	$(STRIP) --strip-unneeded \
-		$(OUTPUT_DIR)/sdcv \
-		$(LUAJIT) \
+		$(if $(ANDROID),,$(OUTPUT_DIR)/sdcv) \
+		$(if $(ANDROID),,$(LUAJIT)) \
 		$(OUTPUT_DIR)/libs/*.so*
 	find $(OUTPUT_DIR)/common -name "*.so*" | xargs $(STRIP) --strip-unneeded
 endif
@@ -38,7 +39,7 @@ endif
 
 # convenience target with preconfigured Kobo toolchain settings
 kobo:
-	make TARGET_DEVICE=KOBO
+	make TARGET=kobo
 
 $(OUTPUT_DIR)/libs:
 	mkdir -p $(OUTPUT_DIR)/libs
@@ -68,7 +69,6 @@ $(FREETYPE_LIB):
 	$(MAKE) -j$(PROCESSORS) -C $(FREETYPE_DIR)/build
 	cp -fL $(FREETYPE_DIR)/build/.libs/$(notdir $(FREETYPE_LIB)) $@
 
-
 # libjpeg, fetched via GIT as a submodule
 $(JPEG_LIB):
 	cd $(JPEG_DIR) && \
@@ -82,7 +82,6 @@ $(JPEG_LIB):
 # libpng, use thirdparty libpng in crengine
 $(PNG_LIB): $(CRENGINE_THIRDPARTY_LIBS)
 	cp -fL $(CRENGINE_BUILD_DIR)/thirdparty/libpng/$(notdir $(PNG_LIB)) $@
-
 
 # mupdf, fetched via GIT as a submodule
 # by default, mupdf compiles to a static library:
@@ -132,20 +131,19 @@ $(DJVULIBRE_LIB): $(JPEG_LIB)
 	cp -fL $(DJVULIBRE_LIB_DIR)/$(notdir $(DJVULIBRE_LIB)) \
 		$(DJVULIBRE_LIB)
 
-
 # crengine, fetched via GIT as a submodule
-$(CRENGINE_THIRDPARTY_LIBS) $(CRENGINE_LIB):
+# need libintl.h from GNU gettext lib for Android
+$(CRENGINE_THIRDPARTY_LIBS) $(CRENGINE_LIB): $(if $(ANDROID),$(GNUGETTEXT_LIB),)
 	test -e $(CRENGINE_WRAPPER_DIR)/build \
 	|| mkdir $(CRENGINE_WRAPPER_DIR)/build
 	cd $(CRENGINE_WRAPPER_DIR)/build \
 	&& CFLAGS="$(CFLAGS) -fPIC" \
-		CXXFLAGS="$(CXXFLAGS) -fPIC" CC="$(CC)" \
-		CXX="$(CXX)" LDFLAGS="$(LDFLAGS)" \
+		CXXFLAGS="$(CXXFLAGS) -fPIC -I$(CURDIR)/$(LIBINTL_DIR)" \
+		CC="$(CC)" CXX="$(CXX)" LDFLAGS="$(LDFLAGS)" \
 		cmake -DCMAKE_BUILD_TYPE=Release ..
 	cd $(CRENGINE_WRAPPER_DIR)/build &&  $(MAKE)
 	cp -fL $(CRENGINE_WRAPPER_DIR)/build/$(notdir $(CRENGINE_LIB)) \
 		$(CRENGINE_LIB)
-
 
 # LuaJIT, fetched via GIT as a submodule
 $(LUAJIT):
@@ -172,23 +170,13 @@ $(LUAJIT_JIT): $(LUAJIT)
 # popen-noshell, fetched via SVN
 $(POPEN_NOSHELL_LIB):
 	$(MAKE) -j$(PROCESSORS) -C $(POPEN_NOSHELL_DIR) \
-		CC="$(CC)" AR="$(AR)" CFLAGS="$(CFLAGS) -fPIC"
-
+		CC="$(CC)" AR="$(AR)" \
+		CFLAGS="$(CFLAGS) $(if $(ANDROID),--sysroot=$(SYSROOT),) -fPIC"
 
 # k2pdfopt, fetched via GIT as a submodule
 $(K2PDFOPT_LIB) $(LEPTONICA_LIB) $(TESSERACT_LIB): $(PNG_LIB) $(ZLIB)
-ifdef EMULATE_READER
 	$(MAKE) -j$(PROCESSORS) -C $(K2PDFOPT_DIR) BUILDMODE=shared \
-		CC="$(HOSTCC)" CFLAGS="$(HOSTCFLAGS) -I../$(MUPDF_DIR)/include" \
-		CXX="$(HOSTCXX)" CXXFLAGS="$(HOSTCFLAGS) -I../$(MUPDF_DIR)/include" \
-		AR="$(AR)" EMULATE_READER=1 MUPDF_LIB=../$(MUPDF_LIB) \
-		LEPT_CFLAGS="$(CFLAGS) -I$(CURDIR)/$(ZLIB_DIR)/include -I$(CURDIR)/$(PNG_DIR)" \
-		LEPT_LDFLAGS="-L$(CURDIR)/$(ZLIB_DIR)/lib -L$(CURDIR)/$(PNG_BUILD_DIR)" \
-		LEPT_PNG_DIR="$(CURDIR)/$(PNG_BUILD_DIR)" \
-		all
-else
-	$(MAKE) -j$(PROCESSORS) -C $(K2PDFOPT_DIR) BUILDMODE=shared \
-		HOST="$(CHOST)" \
+		$(if $(EMULATE_READER),,HOST="arm-linux") \
 		CC="$(CC)" CFLAGS="$(CFLAGS) -O3 -I../$(MUPDF_DIR)/include" \
 		CXX="$(CXX)" CXXFLAGS="$(CXXFLAGS) -I../$(MUPDF_DIR)/include" \
 		AR="$(AR)" MUPDF_LIB=../$(MUPDF_LIB) \
@@ -196,11 +184,9 @@ else
 		LEPT_LDFLAGS="-L$(CURDIR)/$(ZLIB_DIR)/lib -L$(CURDIR)/$(PNG_BUILD_DIR)" \
 		LEPT_PNG_DIR="$(CURDIR)/$(PNG_BUILD_DIR)" \
 		all
-endif
 	cp -fL $(K2PDFOPT_DIR)/$(notdir $(K2PDFOPT_LIB)) $(K2PDFOPT_LIB)
 	cp -fL $(K2PDFOPT_DIR)/$(notdir $(LEPTONICA_LIB)) $(LEPTONICA_LIB)
 	cp -fL $(K2PDFOPT_DIR)/$(notdir $(TESSERACT_LIB)) $(TESSERACT_LIB)
-
 
 # end of third-party code
 # ===========================================================================
@@ -213,7 +199,7 @@ libs: \
 	$(OUTPUT_DIR)/libs/libkoreader-pic.so \
 	$(OUTPUT_DIR)/libs/libpic_jpeg.so \
 	$(OUTPUT_DIR)/libs/libkoreader-pdf.so \
-	$(OUTPUT_DIR)/libs/libkoreader-djvu.so \
+	$(if $(ANDROID),,$(OUTPUT_DIR)/libs/libkoreader-djvu.so) \
 	$(OUTPUT_DIR)/libs/libkoreader-cre.so
 
 # TODO: remove this target when ffi gettext becomes stable
@@ -242,8 +228,10 @@ $(OUTPUT_DIR)/libs/libpic_jpeg.so: pic_jpeg.c $(JPEG_LIB)
 $(OUTPUT_DIR)/libs/libkoreader-pdf.so: pdf.c \
 				$(MUPDF_LIB) \
 				$(K2PDFOPT_LIB)
+	# Bionic's C library comes with its own pthread implementation
+	# So we need not to load pthread library for Android build
 	$(CC) -I$(MUPDF_DIR)/include $(K2PDFOPT_CFLAGS) $(DYNLIB_CFLAGS) \
-		-lpthread -o $@ $< \
+		$(if $(ANDROID),,-lpthread) -o $@ $< \
 		$(MUPDF_LIB) $(K2PDFOPT_LIB) $(LEPTONICA_LIB) $(TESSERACT_LIB)
 
 $(OUTPUT_DIR)/libs/libkoreader-djvu.so: djvu.c \
@@ -264,7 +252,6 @@ $(OUTPUT_DIR)/libs/libkoreader-cre.so: cre.cpp \
 		$(STATICLIBSTDCPP)
 
 # ===========================================================================
-
 # the attachment extraction tool:
 
 $(OUTPUT_DIR)/extr: extr.c \
@@ -277,20 +264,14 @@ $(OUTPUT_DIR)/extr: extr.c \
 		$(MUPDF_LIB) $(JPEG_LIB) $(FREETYPE_LIB) -lm
 
 # ===========================================================================
-
 # sdcv dependencies: glib-2.0 and zlib
 
 $(GLIB):
-ifdef EMULATE_READER
-	cd $(GLIB_DIR) && ./configure -q --prefix=$(CURDIR)/$(GLIB_DIR) \
-		&& $(MAKE) -j$(PROCESSORS) && $(MAKE) install
-else
 	echo -e "glib_cv_stack_grows=no\nglib_cv_uscore=no\nac_cv_func_posix_getpwuid_r=no" > \
 		$(GLIB_DIR)/arm_cache.conf
-	cd $(GLIB_DIR) && ./configure -q --host=$(CHOST) --cache-file=arm_cache.conf \
-		--prefix=$(CURDIR)/$(GLIB_DIR) \
+	cd $(GLIB_DIR) && ./configure --with-libiconv=no --prefix=$(CURDIR)/$(GLIB_DIR) \
+		$(if $(EMULATE_READER),,--host=$(CHOST) --cache-file=arm_cache.conf) \
 		&& $(MAKE) -j$(PROCESSORS) && $(MAKE) install
-endif
 
 $(ZLIB):
 	cd $(ZLIB_DIR) && CC="$(CC)" ./configure --prefix=$(CURDIR)/$(ZLIB_DIR) \
@@ -298,40 +279,24 @@ $(ZLIB):
 	cp -fL $(ZLIB_DIR)/lib/$(notdir $(ZLIB)) $(ZLIB)
 
 # ===========================================================================
-
 # console version of StarDict(sdcv)
 
 $(OUTPUT_DIR)/sdcv: $(GLIB) $(ZLIB)
-ifdef EMULATE_READER
-ifeq ("$(shell gcc -dumpmachine | sed s/-.*//)","x86_64")
+ifeq ("$(shell $(CC) -dumpmachine | sed s/-.*//)","x86_64")
 	# quick fix for x86_64 (zeus)
 	cd $(SDCV_DIR) && sed -i 's|guint32 page_size|guint64 page_size|' src/lib/lib.cpp
+endif
 	cd $(SDCV_DIR) && ./configure -q \
+		$(if $(EMULATE_READER),,--host=$(CHOST)) \
 		PKG_CONFIG_PATH=../$(GLIB_DIR)/lib/pkgconfig \
 		CXXFLAGS=-I$(CURDIR)/$(ZLIB_DIR)/include \
 		LDFLAGS=-L$(CURDIR)/$(ZLIB_DIR)/lib \
 		&& AM_CXXFLAGS=-static-libstdc++ $(MAKE) -j$(PROCESSORS)
 	# restore to original source
 	cd $(SDCV_DIR) && sed -i 's|guint64 page_size|guint32 page_size|' src/lib/lib.cpp
-else
-	cd $(SDCV_DIR) && ./configure -q \
-		PKG_CONFIG_PATH=../$(GLIB_DIR)/lib/pkgconfig \
-		CXXFLAGS=-I$(CURDIR)/$(ZLIB_DIR)/include \
-		LDFLAGS=-L$(CURDIR)/$(ZLIB_DIR)/lib \
-		&& AM_CXXFLAGS=-static-libstdc++ $(MAKE) -j$(PROCESSORS)
-endif
-else
-	cd $(SDCV_DIR) && ./configure -q \
-		--host=$(CHOST) \
-		PKG_CONFIG_PATH=../$(GLIB_DIR)/lib/pkgconfig \
-		CXXFLAGS=-I$(CURDIR)/$(ZLIB_DIR)/include \
-		LDFLAGS=-L$(CURDIR)/$(ZLIB_DIR)/lib \
-		&& AM_CXXFLAGS=-static-libstdc++ $(MAKE) -j$(PROCESSORS)
-endif
 	cp $(SDCV_DIR)/src/sdcv $(OUTPUT_DIR)/
 
 # ===========================================================================
-
 # common lua library for networking
 $(LUASOCKET):
 	$(MAKE) -C $(LUA_SOCKET_DIR) PLAT=linux \
@@ -342,24 +307,22 @@ $(LUASOCKET):
 		all install
 
 $(OPENSSL_LIB):
-ifdef EMULATE_READER
-	cd $(OPENSSL_DIR) && ./config shared \
-		&& $(MAKE) -j$(PROCESSORS) CC="$(CC) $(CFLAGS)" \
-		build_crypto build_ssl
-else
-	cd $(OPENSSL_DIR) && ./Configure linux-generic32 shared no-asm \
-		&& $(MAKE) -j$(PROCESSORS) CC="$(CC) $(CFLAGS)" \
+	cd $(OPENSSL_DIR) && \
+		$(if $(EMULATE_READER),./config,./Configure linux-generic32) \
+		shared no-asm && $(MAKE) -j$(PROCESSORS) CC="$(CC) $(CFLAGS)" \
 		LD=$(LD) RANLIB=$(RANLIB) \
 		build_crypto build_ssl
-endif
 
 $(LUASEC): $(OPENSSL_LIB)
+	# -O -fPIC will break compiling for Android toolchain
+	cd $(LUA_SEC_DIR) && sed -i 's|LNX_LDFLAGS=-O -fPIC |LNX_LDFLAGS=|' src/Makefile
 	$(MAKE) -C $(LUA_SEC_DIR) CC="$(CC) $(CFLAGS)" LD=$(LD) \
 		INC_PATH="-I$(CURDIR)/$(LUA_DIR)/src -I$(CURDIR)/$(OPENSSL_DIR)/include" \
 		LIB_PATH="-L$(CURDIR)/$(OPENSSL_DIR)" \
 		LUAPATH="$(CURDIR)/$(OUTPUT_DIR)/common" \
 		LUACPATH="$(CURDIR)/$(OUTPUT_DIR)/common" \
 		linux install
+	cd $(LUA_SEC_DIR) && sed -i 's|LNX_LDFLAGS=|LNX_LDFLAGS=-O -fPIC |' src/Makefile
 
 $(EVERNOTE_LIB):
 	$(MAKE) -C $(EVERNOTE_SDK_DIR)/thrift CC="$(CC) $(CFLAGS)" \
@@ -370,19 +333,23 @@ $(LUASERIAL_LIB):
 		OUTPUT_DIR=$(CURDIR)/$(OUTPUT_DIR)/common
 
 $(GNUGETTEXT_LIB):
-ifdef EMULATE_READER
 	cd $(GNUGETTEXT_DIR) && \
-		./configure --disable-java --disable-native-java && \
-		$(MAKE) -j$(PROCESSORS)
-else
-	cd $(GNUGETTEXT_DIR) && \
-		./configure --host=$(CHOST) --disable-java --disable-native-java && \
-		$(MAKE) -j$(PROCESSORS)
-endif
-	cp -fL $(GNUGETTEXT_DIR)/gettext-runtime/intl/.libs/libgnuintl.so.8.1.2 $@
+		./configure CFLAGS='$(CFLAGS)' $(if $(EMULATE_READER),,--host=$(CHOST)) \
+		--disable-java --disable-native-java \
+		&& $(MAKE) -j$(PROCESSORS) -C gettext-runtime/intl/
+	cp -fL $(LIBINTL_DIR)/.libs/lib$(if $(ANDROID),,gnu)intl.so.8.1.2 $@
 
 # ===========================================================================
+# helper target for creating standalone android toolchain from NDK
+# NDK variable should be set in your environment and it should point to
+# the root directory of the NDK
 
+android-toolchain:
+	mkdir -p $(ANDROID_TOOLCHAIN)
+	$(NDK)/build/tools/make-standalone-toolchain.sh --platform=android-5 \
+		--install-dir=$(ANDROID_TOOLCHAIN)
+
+# ===========================================================================
 # helper target for initializing third-party code
 
 fetchthirdparty:
@@ -450,7 +417,6 @@ fetchthirdparty:
 
 
 # ===========================================================================
-
 clean:
 	-$(MAKE) -C $(LUA_DIR) CC="$(HOSTCC)" CFLAGS="$(BASE_CFLAGS)" clean
 	-$(MAKE) -C $(MUPDF_DIR) build="release" clean
@@ -468,8 +434,6 @@ clean:
 	-$(MAKE) -C $(LUA_SEC_DIR) clean
 	-$(MAKE) -C $(OPENSSL_DIR) clean
 	-$(MAKE) -C $(GNUGETTEXT_DIR) clean
-
-
 
 # ===========================================================================
 # start of unit tests section
