@@ -16,28 +16,15 @@ The application is distributed under the GNU AGPL v3 license (read the [COPYING]
 
 Follow these steps:
 
-* fetch thirdparty sources
-	* manually fetch all the thirdparty sources:
-		* install muPDF sources into subfolder "mupdf"
-		* install muPDF third-party sources (see muPDF homepage) into a new
-		subfolder "mupdf/thirdparty"
-		* install libDjvuLibre sources into subfolder "djvulibre"
-		* install CREngine sources into subfolder "kpvcrlib/crengine"
-		* install LuaJit sources into subfolder "luajit-2.0"
-		* install popen_noshell sources into subfolder "popen-noshell"
-		* install libk2pdfopt sources into subfolder "libk2pdfopt"
-
-	* automatically fetch thirdparty sources with Makefile:
+* automatically fetch thirdparty sources with Makefile:
 		* make sure you have patch, wget, unzip, git and svn installed
 		* run `make fetchthirdparty`.
 
-* adapt Makefile to your needs
+* run `make TARGET=kindle` for Kindle devices. 
 
-* run `make thirdparty`. This will build MuPDF (plus the libraries it depends
-  on), libDjvuLibre, CREngine, libk2pdfopt and LuaJIT.
+* or run `make TARGET=kobo` for Kobo devices. 
 
-* run `make`. This will build the koreaderbase application which is a Lua
-  interpreter offering the koreader-base API to Lua scripts.
+* or run `make TARGET=android` for Android devices. 
 
 ## Use ccache
 
