@@ -1,7 +1,7 @@
 include Makefile.defs
 
 # main target
-all: $(OUTPUT_DIR)/libs $(if $(ANDROID),,$(LUAJIT) $(LUAJIT_JIT)) \
+all: $(OUTPUT_DIR)/libs $(LUAJIT) $(LUAJIT_JIT) \
 		$(if $(ANDROID),,$(OUTPUT_DIR)/sdcv) \
 		libs $(OUTPUT_DIR)/spec/base $(OUTPUT_DIR)/common \
 		$(OUTPUT_DIR)/plugins $(LUASOCKET) $(LUASEC) \
@@ -62,12 +62,14 @@ $(FREETYPE_LIB):
 	cd $(FREETYPE_DIR)/build && \
 		CC="$(CC)" CXX="$(CXX)" CFLAGS="$(CFLAGS)" \
 		CXXFLAGS="$(CFLAGS)" LDFLAGS="$(LDFLAGS)" \
-			../configure -q --disable-static --enable-shared \
+			../configure -q --prefix=$(CURDIR)/$(FREETYPE_DIR)/build \
+				--disable-static --enable-shared \
 				--without-zlib --without-bzip2 \
 				--without-png \
 				--host=$(CHOST)
 	$(MAKE) -j$(PROCESSORS) -C $(FREETYPE_DIR)/build
-	cp -fL $(FREETYPE_DIR)/build/.libs/$(notdir $(FREETYPE_LIB)) $@
+	-$(MAKE) -C $(FREETYPE_DIR)/build install
+	cp -fL $(FREETYPE_DIR)/build/lib/$(notdir $(FREETYPE_LIB)) $@
 
 # libjpeg, fetched via GIT as a submodule
 $(JPEG_LIB):
@@ -139,14 +141,14 @@ $(CRENGINE_LIB): $(ZLIB) $(FREETYPE_LIB)
 	cd $(CRENGINE_WRAPPER_DIR)/build \
 	&& CFLAGS="$(CFLAGS) -fPIC" \
 		CXXFLAGS="$(CXXFLAGS) -fPIC" CC="$(CC)" CXX="$(CXX)" \
-		LDFLAGS="$(LDFLAGS) $(CURDIR)/$(FREETYPE_LIB) -L$(CURDIR)/$(ZLIB_DIR)/lib" \
+		LDFLAGS="$(LDFLAGS) -L$(CURDIR)/$(FREETYPE_DIR)/build/lib -L$(CURDIR)/$(ZLIB_DIR)/lib" \
 		cmake -DCMAKE_BUILD_TYPE=Release ..
 	cd $(CRENGINE_WRAPPER_DIR)/build &&  $(MAKE)
 	cp -fL $(CRENGINE_WRAPPER_DIR)/build/$(notdir $(CRENGINE_LIB)) \
 		$(CRENGINE_LIB)
 
 # LuaJIT, fetched via GIT as a submodule
-$(LUAJIT):
+$(LUAJIT) $(LUAJIT_LIB):
 ifdef EMULATE_READER
 	$(MAKE) -j$(PROCESSORS) -C $(LUA_DIR)
 else
@@ -156,13 +158,16 @@ else
 	$(MAKE) -j$(PROCESSORS) -C $(LUA_DIR) \
 		CC="$(HOSTCC)" HOST_CC="$(HOSTCC) -m32" \
 		CFLAGS="$(BASE_CFLAGS)" HOST_CFLAGS="$(HOSTCFLAGS)" \
+		TARGET_SONAME=$(notdir $(LUAJIT_LIB)) \
 		TARGET_CFLAGS="$(CFLAGS)" \
 		TARGET_FLAGS="-DLUAJIT_NO_LOG2 -DLUAJIT_NO_EXP2" \
 		CROSS="$(strip $(CCACHE) $(CHOST))-" amalg
 endif
-	# special case: LuaJIT compiles a libluajit.so, which must be named
-	# differently when installing
+ifdef ANDROID
+	cp -fL $(LUA_DIR)/src/$(notdir $(LUAJIT_LIB)) $(LUAJIT_LIB)
+else
 	cp -fL $(LUA_DIR)/src/$(notdir $(LUAJIT)) $(LUAJIT)
+endif
 
 $(LUAJIT_JIT): $(LUAJIT)
 	cp -rfL $(LUA_DIR)/src/jit $(OUTPUT_DIR)
@@ -207,13 +212,16 @@ $(OUTPUT_DIR)/libs/libkoreader-input.so: input.c \
 	$(CC) $(DYNLIB_CFLAGS) $(EMU_CFLAGS) \
 		-o $@ $< $(POPEN_NOSHELL_LIB) $(EMU_LDFLAGS)
 
-$(OUTPUT_DIR)/libs/libkoreader-lfs.so: luafilesystem/src/lfs.c
-	$(CC) $(DYNLIB_CFLAGS) -o $@ $<
+$(OUTPUT_DIR)/libs/libkoreader-lfs.so: \
+				$(if $(ANDROID),$(LUAJIT_LIB),) \
+				luafilesystem/src/lfs.c
+	$(CC) $(DYNLIB_CFLAGS) -o $@ $< $(if $(ANDROID),$(LUAJIT_LIB),)
 
 $(OUTPUT_DIR)/libs/libkoreader-pic.so: pic.c pic_jpeg.c \
+				$(if $(ANDROID),$(LUAJIT_LIB),) \
 				$(JPEG_LIB)
 	$(CC) -I$(JPEG_DIR) $(DYNLIB_CFLAGS) \
-		-o $@ $< pic_jpeg.c $(JPEG_LIB)
+		-o $@ $< pic_jpeg.c $(JPEG_LIB) $(if $(ANDROID),$(LUAJIT_LIB),)
 
 $(OUTPUT_DIR)/libs/libpic_jpeg.so: pic_jpeg.c $(JPEG_LIB)
 	$(CC) -I$(JPEG_DIR) $(DYNLIB_CFLAGS) -o $@ $^
@@ -221,25 +229,28 @@ $(OUTPUT_DIR)/libs/libpic_jpeg.so: pic_jpeg.c $(JPEG_LIB)
 # put all the libs to the end of compile command to make ubuntu's tool chain
 # happy
 $(OUTPUT_DIR)/libs/libkoreader-pdf.so: pdf.c \
-				$(MUPDF_LIB) \
-				$(K2PDFOPT_LIB)
+				$(if $(ANDROID),$(LUAJIT_LIB),) \
+				$(MUPDF_LIB) $(K2PDFOPT_LIB)
 	# Bionic's C library comes with its own pthread implementation
 	# So we need not to load pthread library for Android build
 	$(CC) -I$(MUPDF_DIR)/include $(K2PDFOPT_CFLAGS) $(DYNLIB_CFLAGS) \
 		$(if $(ANDROID),,-lpthread) -o $@ $< \
-		$(MUPDF_LIB) $(K2PDFOPT_LIB) $(LEPTONICA_LIB) $(TESSERACT_LIB)
+		$(MUPDF_LIB) $(K2PDFOPT_LIB) $(if $(ANDROID),$(LUAJIT_LIB),)
 
 $(OUTPUT_DIR)/libs/libkoreader-djvu.so: djvu.c \
+				$(if $(ANDROID),$(LUAJIT_LIB),) \
 				$(DJVULIBRE_LIB)
 	$(CC) -I$(DJVULIBRE_DIR)/ -I$(MUPDF_DIR)/include $(K2PDFOPT_CFLAGS) $(DYNLIB_CFLAGS) \
 		-o $@ $< \
-		$(DJVULIBRE_LIB) $(K2PDFOPT_LIB) $(LEPTONICA_LIB) $(TESSERACT_LIB)
+		$(DJVULIBRE_LIB) $(K2PDFOPT_LIB) $(if $(ANDROID),$(LUAJIT_LIB),)
 
-$(OUTPUT_DIR)/libs/libkoreader-cre.so: cre.cpp $(CRENGINE_LIB)
-	$(CC) -I$(CRENGINE_DIR)/crengine/include/ $(DYNLIB_CFLAGS) \
+$(OUTPUT_DIR)/libs/libkoreader-cre.so: cre.cpp \
+				$(if $(ANDROID),$(LUAJIT_LIB),) \
+				$(CRENGINE_LIB)
+	$(CXX) -I$(CRENGINE_DIR)/crengine/include/ $(DYNLIB_CFLAGS) \
 		-DLDOM_USE_OWN_MEM_MAN=1 \
 		$(DYNAMICLIBSTDCPP) -Wl,-rpath,'libs' -o $@ $< \
-		$(CRENGINE_LIB) $(STATICLIBSTDCPP)
+		$(CRENGINE_LIB) $(STATICLIBSTDCPP) $(if $(ANDROID),$(LUAJIT_LIB),)
 
 # ===========================================================================
 # the attachment extraction tool:
@@ -408,18 +419,18 @@ fetchthirdparty:
 
 # ===========================================================================
 clean:
-	-$(MAKE) -C $(LUA_DIR) CC="$(HOSTCC)" CFLAGS="$(BASE_CFLAGS)" clean
-	-$(MAKE) -C $(MUPDF_DIR) build="release" clean
+	-rm -rf $(OUTPUT_DIR)/*
 	-rm -rf $(CRENGINE_WRAPPER_BUILD_DIR)
 	-rm -rf $(DJVULIBRE_DIR)/build
+	-$(MAKE) -C $(LUA_DIR) CC="$(HOSTCC)" CFLAGS="$(BASE_CFLAGS)" clean
+	-$(MAKE) -C $(MUPDF_DIR) build="release" clean
 	-$(MAKE) -C $(POPEN_NOSHELL_DIR) clean
 	-$(MAKE) -C $(K2PDFOPT_DIR) clean
 	-$(MAKE) -C $(JPEG_DIR) clean
 	-$(MAKE) -C $(SDCV_DIR) clean
 	-$(MAKE) -C $(GLIB_DIR) clean uninstall
 	-$(MAKE) -C $(ZLIB_DIR) clean uninstall
-	-rm -rf $(FREETYPE_DIR)/build
-	-rm -rf $(OUTPUT_DIR)/*
+	-$(MAKE) -C $(FREETYPE_DIR)/build clean uninstall
 	-$(MAKE) -C $(LUA_SOCKET_DIR) clean
 	-$(MAKE) -C $(LUA_SEC_DIR) clean
 	-$(MAKE) -C $(OPENSSL_DIR) clean

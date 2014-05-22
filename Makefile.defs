@@ -162,6 +162,7 @@ CRENGINE_LIB=$(OUTPUT_DIR)/libs/libcrengine.so
 LUA_DIR=luajit-2.0
 LUAJIT=$(OUTPUT_DIR)/luajit
 LUAJIT_JIT=$(OUTPUT_DIR)/jit
+LUAJIT_LIB=$(OUTPUT_DIR)/libs/libluajit.so
 
 POPEN_NOSHELL_DIR=popen-noshell
 POPEN_NOSHELL_LIB=$(POPEN_NOSHELL_DIR)/libpopen_noshell.a

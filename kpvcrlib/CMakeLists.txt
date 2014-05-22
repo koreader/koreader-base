@@ -100,5 +100,5 @@ SET (CRENGINE_SOURCES
 )
 ADD_LIBRARY(crengine SHARED ${CRENGINE_SOURCES})
 
-target_link_libraries(crengine z png16 jpeg chmlib antiword)
+target_link_libraries(crengine z png16 freetype jpeg chmlib antiword)
 
