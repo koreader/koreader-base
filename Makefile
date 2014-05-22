@@ -80,7 +80,7 @@ $(JPEG_LIB):
 	cp -fL $(JPEG_DIR)/.libs/$(notdir $(JPEG_LIB)) $@
 
 # libpng, use thirdparty libpng in crengine
-$(PNG_LIB): $(CRENGINE_THIRDPARTY_LIBS)
+$(PNG_LIB): $(CRENGINE_LIB)
 	cp -fL $(CRENGINE_BUILD_DIR)/thirdparty/libpng/$(notdir $(PNG_LIB)) $@
 
 # mupdf, fetched via GIT as a submodule
@@ -112,7 +112,7 @@ $(MUPDF_LIB): $(MUPDF_LIB_STATIC) \
 		-Wl,--no-whole-archive $(MUPDF_THIRDPARTY_LIBS) \
 		-Wl,-soname=$(notdir $(MUPDF_LIB)) \
 		$(JPEG_LIB) $(FREETYPE_LIB) \
-		-o $(MUPDF_LIB) -lm
+		-o $(MUPDF_LIB) -lm $(if $(ANDROID),-llog,)
 
 # djvulibre, fetched via GIT as a submodule
 $(DJVULIBRE_LIB): $(JPEG_LIB)
@@ -133,13 +133,13 @@ $(DJVULIBRE_LIB): $(JPEG_LIB)
 
 # crengine, fetched via GIT as a submodule
 # need libintl.h from GNU gettext lib for Android
-$(CRENGINE_THIRDPARTY_LIBS) $(CRENGINE_LIB): $(if $(ANDROID),$(GNUGETTEXT_LIB),)
+$(CRENGINE_LIB): $(ZLIB) $(FREETYPE_LIB)
 	test -e $(CRENGINE_WRAPPER_DIR)/build \
 	|| mkdir $(CRENGINE_WRAPPER_DIR)/build
 	cd $(CRENGINE_WRAPPER_DIR)/build \
 	&& CFLAGS="$(CFLAGS) -fPIC" \
-		CXXFLAGS="$(CXXFLAGS) -fPIC -I$(CURDIR)/$(LIBINTL_DIR)" \
-		CC="$(CC)" CXX="$(CXX)" LDFLAGS="$(LDFLAGS)" \
+		CXXFLAGS="$(CXXFLAGS) -fPIC" CC="$(CC)" CXX="$(CXX)" \
+		LDFLAGS="$(LDFLAGS) $(CURDIR)/$(FREETYPE_LIB) -L$(CURDIR)/$(ZLIB_DIR)/lib" \
 		cmake -DCMAKE_BUILD_TYPE=Release ..
 	cd $(CRENGINE_WRAPPER_DIR)/build &&  $(MAKE)
 	cp -fL $(CRENGINE_WRAPPER_DIR)/build/$(notdir $(CRENGINE_LIB)) \
@@ -235,16 +235,11 @@ $(OUTPUT_DIR)/libs/libkoreader-djvu.so: djvu.c \
 		-o $@ $< \
 		$(DJVULIBRE_LIB) $(K2PDFOPT_LIB) $(LEPTONICA_LIB) $(TESSERACT_LIB)
 
-$(OUTPUT_DIR)/libs/libkoreader-cre.so: cre.cpp \
-				$(CRENGINE_LIB) \
-				$(CRENGINE_THIRDPARTY_LIBS) \
-				$(PNG_LIB) $(ZLIB)
+$(OUTPUT_DIR)/libs/libkoreader-cre.so: cre.cpp $(CRENGINE_LIB)
 	$(CC) -I$(CRENGINE_DIR)/crengine/include/ $(DYNLIB_CFLAGS) \
 		-DLDOM_USE_OWN_MEM_MAN=1 \
 		$(DYNAMICLIBSTDCPP) -Wl,-rpath,'libs' -o $@ $< \
-		$(CRENGINE_LIB) $(CRENGINE_THIRDPARTY_LIBS) \
-		$(PNG_LIB) $(ZLIB) $(FREETYPE_LIB) \
-		$(STATICLIBSTDCPP)
+		$(CRENGINE_LIB) $(STATICLIBSTDCPP)
 
 # ===========================================================================
 # the attachment extraction tool:
