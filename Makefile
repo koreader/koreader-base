@@ -194,18 +194,13 @@ $(K2PDFOPT_LIB) $(LEPTONICA_LIB) $(TESSERACT_LIB): $(PNG_LIB) $(ZLIB)
 # our own Lua/C/C++ interfacing:
 
 libs: \
-	$(OUTPUT_DIR)/libs/libkoreader-input.so \
+	$(if $(EMULATE_READER),,$(OUTPUT_DIR)/libs/libkoreader-input.so) \
 	$(OUTPUT_DIR)/libs/libkoreader-lfs.so \
 	$(OUTPUT_DIR)/libs/libkoreader-pic.so \
 	$(OUTPUT_DIR)/libs/libpic_jpeg.so \
 	$(OUTPUT_DIR)/libs/libkoreader-pdf.so \
 	$(if $(ANDROID),,$(OUTPUT_DIR)/libs/libkoreader-djvu.so) \
 	$(OUTPUT_DIR)/libs/libkoreader-cre.so
-
-# TODO: remove this target when ffi gettext becomes stable
-$(OUTPUT_DIR)/libs/libkoreader-luagettext.so: lua_gettext.c
-	$(CC) $(DYNLIB_CFLAGS) $(EMU_CFLAGS) $(EMU_LDFLAGS) \
-		-o $@ $<
 
 $(OUTPUT_DIR)/libs/libkoreader-input.so: input.c \
 				$(POPEN_NOSHELL_LIB)

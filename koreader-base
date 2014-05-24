@@ -15,7 +15,6 @@ Image = require("ffi/mupdfimg")
 util = require("ffi/util")
 einkfb = require("ffi/framebuffer")
 kobolight = require("ffi/kobolight")
-lua_gettext =  require("ffi/gettext")
 if util.isEmulated() then
 	if util.haveSDL2() then
 		input = require("ffi/input_SDL2_0")
