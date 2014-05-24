@@ -1,7 +1,9 @@
 include Makefile.defs
 
 # main target
-all: $(OUTPUT_DIR)/libs $(LUAJIT) $(LUAJIT_JIT) \
+all: $(OUTPUT_DIR)/libs $(if $(ANDROID),,$(LUAJIT)) \
+		$(if $(ANDROID),$(LUAJIT_LIB),) \
+		$(LUAJIT_JIT) \
 		$(if $(ANDROID),,$(OUTPUT_DIR)/sdcv) \
 		libs $(OUTPUT_DIR)/spec/base $(OUTPUT_DIR)/common \
 		$(OUTPUT_DIR)/plugins $(LUASOCKET) $(LUASEC) \
@@ -36,10 +38,6 @@ endif
 	mkdir -p $(CURDIR)/$(EVERNOTE_THRIFT_DIR)
 	cd $(EVERNOTE_SDK_DIR) && cp -r *.lua evernote $(CURDIR)/$(EVERNOTE_PLUGIN_DIR) \
 		&& cp thrift/*.lua $(CURDIR)/$(EVERNOTE_THRIFT_DIR)
-
-# convenience target with preconfigured Kobo toolchain settings
-kobo:
-	make TARGET=kobo
 
 $(OUTPUT_DIR)/libs:
 	mkdir -p $(OUTPUT_DIR)/libs
@@ -87,7 +85,8 @@ $(PNG_LIB): $(CRENGINE_LIB)
 
 # mupdf, fetched via GIT as a submodule
 # by default, mupdf compiles to a static library:
-$(MUPDF_LIB_STATIC) $(MUPDF_THIRDPARTY_LIBS): $(JPEG_LIB) $(FREETYPE_LIB)
+# we generate a dynamic library from the static library:
+$(MUPDF_LIB): $(JPEG_LIB) $(FREETYPE_LIB)
 	$(MAKE) -j$(PROCESSORS) -C mupdf generate build="release" CC="$(HOSTCC)" \
 		OS="Other" verbose=1
 	$(MAKE) -j$(PROCESSORS) -C mupdf \
@@ -100,12 +99,6 @@ $(MUPDF_LIB_STATIC) $(MUPDF_THIRDPARTY_LIBS): $(JPEG_LIB) $(FREETYPE_LIB)
 		JPEG_DIR=nonexisting \
 		CROSSCOMPILE=yes \
 		third libs
-
-# we generate a dynamic library from the static library:
-$(MUPDF_LIB): $(MUPDF_LIB_STATIC) \
-			$(MUPDF_THIRDPARTY_LIBS) \
-			$(JPEG_LIB) \
-			$(FREETYPE_LIB)
 	$(CC) -fPIC -shared \
 		$(CFLAGS) \
 		-Wl,-E -Wl,-rpath,'$$ORIGIN' \
@@ -169,7 +162,7 @@ else
 	cp -fL $(LUA_DIR)/src/$(notdir $(LUAJIT)) $(LUAJIT)
 endif
 
-$(LUAJIT_JIT): $(LUAJIT)
+$(LUAJIT_JIT): $(if $(ANDROID),$(LUAJIT_LIB),$(LUAJIT))
 	cp -rfL $(LUA_DIR)/src/jit $(OUTPUT_DIR)
 
 # popen-noshell, fetched via SVN
@@ -212,45 +205,31 @@ $(OUTPUT_DIR)/libs/libkoreader-input.so: input.c \
 	$(CC) $(DYNLIB_CFLAGS) $(EMU_CFLAGS) \
 		-o $@ $< $(POPEN_NOSHELL_LIB) $(EMU_LDFLAGS)
 
-$(OUTPUT_DIR)/libs/libkoreader-lfs.so: \
-				$(if $(ANDROID),$(LUAJIT_LIB),) \
-				luafilesystem/src/lfs.c
-	$(CC) $(DYNLIB_CFLAGS) -o $@ $< $(if $(ANDROID),$(LUAJIT_LIB),)
+$(OUTPUT_DIR)/libs/libkoreader-lfs.so: luafilesystem/src/lfs.c
+	$(CC) $(DYNLIB_CFLAGS) -o $@ $^
 
-$(OUTPUT_DIR)/libs/libkoreader-pic.so: pic.c pic_jpeg.c \
-				$(if $(ANDROID),$(LUAJIT_LIB),) \
-				$(JPEG_LIB)
-	$(CC) -I$(JPEG_DIR) $(DYNLIB_CFLAGS) \
-		-o $@ $< pic_jpeg.c $(JPEG_LIB) $(if $(ANDROID),$(LUAJIT_LIB),)
+$(OUTPUT_DIR)/libs/libkoreader-pic.so: pic.c pic_jpeg.c $(JPEG_LIB)
+	$(CC) -I$(JPEG_DIR) $(DYNLIB_CFLAGS) -o $@ $^
 
 $(OUTPUT_DIR)/libs/libpic_jpeg.so: pic_jpeg.c $(JPEG_LIB)
 	$(CC) -I$(JPEG_DIR) $(DYNLIB_CFLAGS) -o $@ $^
 
 # put all the libs to the end of compile command to make ubuntu's tool chain
 # happy
-$(OUTPUT_DIR)/libs/libkoreader-pdf.so: pdf.c \
-				$(if $(ANDROID),$(LUAJIT_LIB),) \
-				$(MUPDF_LIB) $(K2PDFOPT_LIB)
+$(OUTPUT_DIR)/libs/libkoreader-pdf.so: pdf.c $(MUPDF_LIB) $(K2PDFOPT_LIB)
 	# Bionic's C library comes with its own pthread implementation
 	# So we need not to load pthread library for Android build
 	$(CC) -I$(MUPDF_DIR)/include $(K2PDFOPT_CFLAGS) $(DYNLIB_CFLAGS) \
-		$(if $(ANDROID),,-lpthread) -o $@ $< \
-		$(MUPDF_LIB) $(K2PDFOPT_LIB) $(if $(ANDROID),$(LUAJIT_LIB),)
+		$(if $(ANDROID),,-lpthread) -o $@ $^
 
-$(OUTPUT_DIR)/libs/libkoreader-djvu.so: djvu.c \
-				$(if $(ANDROID),$(LUAJIT_LIB),) \
-				$(DJVULIBRE_LIB)
-	$(CC) -I$(DJVULIBRE_DIR)/ -I$(MUPDF_DIR)/include $(K2PDFOPT_CFLAGS) $(DYNLIB_CFLAGS) \
-		-o $@ $< \
-		$(DJVULIBRE_LIB) $(K2PDFOPT_LIB) $(if $(ANDROID),$(LUAJIT_LIB),)
+$(OUTPUT_DIR)/libs/libkoreader-djvu.so: djvu.c $(DJVULIBRE_LIB) $(K2PDFOPT_LIB)
+	$(CC) -I$(DJVULIBRE_DIR)/ -I$(MUPDF_DIR)/include \
+		$(K2PDFOPT_CFLAGS) $(DYNLIB_CFLAGS) -o $@ $^
 
-$(OUTPUT_DIR)/libs/libkoreader-cre.so: cre.cpp \
-				$(if $(ANDROID),$(LUAJIT_LIB),) \
-				$(CRENGINE_LIB)
+$(OUTPUT_DIR)/libs/libkoreader-cre.so: cre.cpp $(CRENGINE_LIB)
 	$(CXX) -I$(CRENGINE_DIR)/crengine/include/ $(DYNLIB_CFLAGS) \
 		-DLDOM_USE_OWN_MEM_MAN=1 \
-		$(DYNAMICLIBSTDCPP) -Wl,-rpath,'libs' -o $@ $< \
-		$(CRENGINE_LIB) $(STATICLIBSTDCPP) $(if $(ANDROID),$(LUAJIT_LIB),)
+		-Wl,-rpath,'libs' -o $@ $^ $(STATICLIBSTDCPP)
 
 # ===========================================================================
 # the attachment extraction tool:
@@ -260,9 +239,7 @@ $(OUTPUT_DIR)/extr: extr.c \
 				$(JPEG_LIB) \
 				$(FREETYPE_LIB)
 	$(CC) -I$(MUPDF_DIR) -I$(MUPDF_DIR)/include \
-		$(CFLAGS) -Wl,-rpath,'libs' \
-		-o $@ $< \
-		$(MUPDF_LIB) $(JPEG_LIB) $(FREETYPE_LIB) -lm
+		$(CFLAGS) -Wl,-rpath,'libs' -o $@ $^
 
 # ===========================================================================
 # sdcv dependencies: glib-2.0 and zlib
