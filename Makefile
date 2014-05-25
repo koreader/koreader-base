@@ -1,7 +1,9 @@
 include Makefile.defs
 
 # main target
-all: $(OUTPUT_DIR)/libs $(if $(ANDROID),,$(LUAJIT) $(LUAJIT_JIT)) \
+all: $(OUTPUT_DIR)/libs $(if $(ANDROID),,$(LUAJIT)) \
+		$(if $(ANDROID),$(LUAJIT_LIB),) \
+		$(LUAJIT_JIT) \
 		$(if $(ANDROID),,$(OUTPUT_DIR)/sdcv) \
 		libs $(OUTPUT_DIR)/spec/base $(OUTPUT_DIR)/common \
 		$(OUTPUT_DIR)/plugins $(LUASOCKET) $(LUASEC) \
@@ -37,10 +39,6 @@ endif
 	cd $(EVERNOTE_SDK_DIR) && cp -r *.lua evernote $(CURDIR)/$(EVERNOTE_PLUGIN_DIR) \
 		&& cp thrift/*.lua $(CURDIR)/$(EVERNOTE_THRIFT_DIR)
 
-# convenience target with preconfigured Kobo toolchain settings
-kobo:
-	make TARGET=kobo
-
 $(OUTPUT_DIR)/libs:
 	mkdir -p $(OUTPUT_DIR)/libs
 
@@ -62,12 +60,14 @@ $(FREETYPE_LIB):
 	cd $(FREETYPE_DIR)/build && \
 		CC="$(CC)" CXX="$(CXX)" CFLAGS="$(CFLAGS)" \
 		CXXFLAGS="$(CFLAGS)" LDFLAGS="$(LDFLAGS)" \
-			../configure -q --disable-static --enable-shared \
+			../configure -q --prefix=$(CURDIR)/$(FREETYPE_DIR)/build \
+				--disable-static --enable-shared \
 				--without-zlib --without-bzip2 \
 				--without-png \
 				--host=$(CHOST)
 	$(MAKE) -j$(PROCESSORS) -C $(FREETYPE_DIR)/build
-	cp -fL $(FREETYPE_DIR)/build/.libs/$(notdir $(FREETYPE_LIB)) $@
+	-$(MAKE) -C $(FREETYPE_DIR)/build install
+	cp -fL $(FREETYPE_DIR)/build/lib/$(notdir $(FREETYPE_LIB)) $@
 
 # libjpeg, fetched via GIT as a submodule
 $(JPEG_LIB):
@@ -80,12 +80,13 @@ $(JPEG_LIB):
 	cp -fL $(JPEG_DIR)/.libs/$(notdir $(JPEG_LIB)) $@
 
 # libpng, use thirdparty libpng in crengine
-$(PNG_LIB): $(CRENGINE_THIRDPARTY_LIBS)
+$(PNG_LIB): $(CRENGINE_LIB)
 	cp -fL $(CRENGINE_BUILD_DIR)/thirdparty/libpng/$(notdir $(PNG_LIB)) $@
 
 # mupdf, fetched via GIT as a submodule
 # by default, mupdf compiles to a static library:
-$(MUPDF_LIB_STATIC) $(MUPDF_THIRDPARTY_LIBS): $(JPEG_LIB) $(FREETYPE_LIB)
+# we generate a dynamic library from the static library:
+$(MUPDF_LIB): $(JPEG_LIB) $(FREETYPE_LIB)
 	$(MAKE) -j$(PROCESSORS) -C mupdf generate build="release" CC="$(HOSTCC)" \
 		OS="Other" verbose=1
 	$(MAKE) -j$(PROCESSORS) -C mupdf \
@@ -98,12 +99,6 @@ $(MUPDF_LIB_STATIC) $(MUPDF_THIRDPARTY_LIBS): $(JPEG_LIB) $(FREETYPE_LIB)
 		JPEG_DIR=nonexisting \
 		CROSSCOMPILE=yes \
 		third libs
-
-# we generate a dynamic library from the static library:
-$(MUPDF_LIB): $(MUPDF_LIB_STATIC) \
-			$(MUPDF_THIRDPARTY_LIBS) \
-			$(JPEG_LIB) \
-			$(FREETYPE_LIB)
 	$(CC) -fPIC -shared \
 		$(CFLAGS) \
 		-Wl,-E -Wl,-rpath,'$$ORIGIN' \
@@ -112,7 +107,7 @@ $(MUPDF_LIB): $(MUPDF_LIB_STATIC) \
 		-Wl,--no-whole-archive $(MUPDF_THIRDPARTY_LIBS) \
 		-Wl,-soname=$(notdir $(MUPDF_LIB)) \
 		$(JPEG_LIB) $(FREETYPE_LIB) \
-		-o $(MUPDF_LIB) -lm
+		-o $(MUPDF_LIB) -lm $(if $(ANDROID),-llog,)
 
 # djvulibre, fetched via GIT as a submodule
 $(DJVULIBRE_LIB): $(JPEG_LIB)
@@ -133,20 +128,20 @@ $(DJVULIBRE_LIB): $(JPEG_LIB)
 
 # crengine, fetched via GIT as a submodule
 # need libintl.h from GNU gettext lib for Android
-$(CRENGINE_THIRDPARTY_LIBS) $(CRENGINE_LIB): $(if $(ANDROID),$(GNUGETTEXT_LIB),)
+$(CRENGINE_LIB): $(ZLIB) $(FREETYPE_LIB)
 	test -e $(CRENGINE_WRAPPER_DIR)/build \
 	|| mkdir $(CRENGINE_WRAPPER_DIR)/build
 	cd $(CRENGINE_WRAPPER_DIR)/build \
 	&& CFLAGS="$(CFLAGS) -fPIC" \
-		CXXFLAGS="$(CXXFLAGS) -fPIC -I$(CURDIR)/$(LIBINTL_DIR)" \
-		CC="$(CC)" CXX="$(CXX)" LDFLAGS="$(LDFLAGS)" \
+		CXXFLAGS="$(CXXFLAGS) -fPIC" CC="$(CC)" CXX="$(CXX)" \
+		LDFLAGS="$(LDFLAGS) -L$(CURDIR)/$(FREETYPE_DIR)/build/lib -L$(CURDIR)/$(ZLIB_DIR)/lib" \
 		cmake -DCMAKE_BUILD_TYPE=Release ..
 	cd $(CRENGINE_WRAPPER_DIR)/build &&  $(MAKE)
 	cp -fL $(CRENGINE_WRAPPER_DIR)/build/$(notdir $(CRENGINE_LIB)) \
 		$(CRENGINE_LIB)
 
 # LuaJIT, fetched via GIT as a submodule
-$(LUAJIT):
+$(LUAJIT) $(LUAJIT_LIB):
 ifdef EMULATE_READER
 	$(MAKE) -j$(PROCESSORS) -C $(LUA_DIR)
 else
@@ -156,15 +151,18 @@ else
 	$(MAKE) -j$(PROCESSORS) -C $(LUA_DIR) \
 		CC="$(HOSTCC)" HOST_CC="$(HOSTCC) -m32" \
 		CFLAGS="$(BASE_CFLAGS)" HOST_CFLAGS="$(HOSTCFLAGS)" \
+		TARGET_SONAME=$(notdir $(LUAJIT_LIB)) \
 		TARGET_CFLAGS="$(CFLAGS)" \
 		TARGET_FLAGS="-DLUAJIT_NO_LOG2 -DLUAJIT_NO_EXP2" \
 		CROSS="$(strip $(CCACHE) $(CHOST))-" amalg
 endif
-	# special case: LuaJIT compiles a libluajit.so, which must be named
-	# differently when installing
+ifdef ANDROID
+	cp -fL $(LUA_DIR)/src/$(notdir $(LUAJIT_LIB)) $(LUAJIT_LIB)
+else
 	cp -fL $(LUA_DIR)/src/$(notdir $(LUAJIT)) $(LUAJIT)
+endif
 
-$(LUAJIT_JIT): $(LUAJIT)
+$(LUAJIT_JIT): $(if $(ANDROID),$(LUAJIT_LIB),$(LUAJIT))
 	cp -rfL $(LUA_DIR)/src/jit $(OUTPUT_DIR)
 
 # popen-noshell, fetched via SVN
@@ -208,43 +206,30 @@ $(OUTPUT_DIR)/libs/libkoreader-input.so: input.c \
 		-o $@ $< $(POPEN_NOSHELL_LIB) $(EMU_LDFLAGS)
 
 $(OUTPUT_DIR)/libs/libkoreader-lfs.so: luafilesystem/src/lfs.c
-	$(CC) $(DYNLIB_CFLAGS) -o $@ $<
+	$(CC) $(DYNLIB_CFLAGS) -o $@ $^
 
-$(OUTPUT_DIR)/libs/libkoreader-pic.so: pic.c pic_jpeg.c \
-				$(JPEG_LIB)
-	$(CC) -I$(JPEG_DIR) $(DYNLIB_CFLAGS) \
-		-o $@ $< pic_jpeg.c $(JPEG_LIB)
+$(OUTPUT_DIR)/libs/libkoreader-pic.so: pic.c pic_jpeg.c $(JPEG_LIB)
+	$(CC) -I$(JPEG_DIR) $(DYNLIB_CFLAGS) -o $@ $^
 
 $(OUTPUT_DIR)/libs/libpic_jpeg.so: pic_jpeg.c $(JPEG_LIB)
 	$(CC) -I$(JPEG_DIR) $(DYNLIB_CFLAGS) -o $@ $^
 
 # put all the libs to the end of compile command to make ubuntu's tool chain
 # happy
-$(OUTPUT_DIR)/libs/libkoreader-pdf.so: pdf.c \
-				$(MUPDF_LIB) \
-				$(K2PDFOPT_LIB)
+$(OUTPUT_DIR)/libs/libkoreader-pdf.so: pdf.c $(MUPDF_LIB) $(K2PDFOPT_LIB)
 	# Bionic's C library comes with its own pthread implementation
 	# So we need not to load pthread library for Android build
 	$(CC) -I$(MUPDF_DIR)/include $(K2PDFOPT_CFLAGS) $(DYNLIB_CFLAGS) \
-		$(if $(ANDROID),,-lpthread) -o $@ $< \
-		$(MUPDF_LIB) $(K2PDFOPT_LIB) $(LEPTONICA_LIB) $(TESSERACT_LIB)
+		$(if $(ANDROID),,-lpthread) -o $@ $^
 
-$(OUTPUT_DIR)/libs/libkoreader-djvu.so: djvu.c \
-				$(DJVULIBRE_LIB)
-	$(CC) -I$(DJVULIBRE_DIR)/ -I$(MUPDF_DIR)/include $(K2PDFOPT_CFLAGS) $(DYNLIB_CFLAGS) \
-		-o $@ $< \
-		$(DJVULIBRE_LIB) $(K2PDFOPT_LIB) $(LEPTONICA_LIB) $(TESSERACT_LIB)
+$(OUTPUT_DIR)/libs/libkoreader-djvu.so: djvu.c $(DJVULIBRE_LIB) $(K2PDFOPT_LIB)
+	$(CC) -I$(DJVULIBRE_DIR)/ -I$(MUPDF_DIR)/include \
+		$(K2PDFOPT_CFLAGS) $(DYNLIB_CFLAGS) -o $@ $^
 
-$(OUTPUT_DIR)/libs/libkoreader-cre.so: cre.cpp \
-				$(CRENGINE_LIB) \
-				$(CRENGINE_THIRDPARTY_LIBS) \
-				$(PNG_LIB) $(ZLIB)
-	$(CC) -I$(CRENGINE_DIR)/crengine/include/ $(DYNLIB_CFLAGS) \
+$(OUTPUT_DIR)/libs/libkoreader-cre.so: cre.cpp $(CRENGINE_LIB)
+	$(CXX) -I$(CRENGINE_DIR)/crengine/include/ $(DYNLIB_CFLAGS) \
 		-DLDOM_USE_OWN_MEM_MAN=1 \
-		$(DYNAMICLIBSTDCPP) -Wl,-rpath,'libs' -o $@ $< \
-		$(CRENGINE_LIB) $(CRENGINE_THIRDPARTY_LIBS) \
-		$(PNG_LIB) $(ZLIB) $(FREETYPE_LIB) \
-		$(STATICLIBSTDCPP)
+		-Wl,-rpath,'libs' -o $@ $^ $(STATICLIBSTDCPP)
 
 # ===========================================================================
 # the attachment extraction tool:
@@ -254,9 +239,7 @@ $(OUTPUT_DIR)/extr: extr.c \
 				$(JPEG_LIB) \
 				$(FREETYPE_LIB)
 	$(CC) -I$(MUPDF_DIR) -I$(MUPDF_DIR)/include \
-		$(CFLAGS) -Wl,-rpath,'libs' \
-		-o $@ $< \
-		$(MUPDF_LIB) $(JPEG_LIB) $(FREETYPE_LIB) -lm
+		$(CFLAGS) -Wl,-rpath,'libs' -o $@ $^
 
 # ===========================================================================
 # sdcv dependencies: glib-2.0 and zlib
@@ -413,18 +396,18 @@ fetchthirdparty:
 
 # ===========================================================================
 clean:
-	-$(MAKE) -C $(LUA_DIR) CC="$(HOSTCC)" CFLAGS="$(BASE_CFLAGS)" clean
-	-$(MAKE) -C $(MUPDF_DIR) build="release" clean
+	-rm -rf $(OUTPUT_DIR)/*
 	-rm -rf $(CRENGINE_WRAPPER_BUILD_DIR)
 	-rm -rf $(DJVULIBRE_DIR)/build
+	-$(MAKE) -C $(LUA_DIR) CC="$(HOSTCC)" CFLAGS="$(BASE_CFLAGS)" clean
+	-$(MAKE) -C $(MUPDF_DIR) build="release" clean
 	-$(MAKE) -C $(POPEN_NOSHELL_DIR) clean
 	-$(MAKE) -C $(K2PDFOPT_DIR) clean
 	-$(MAKE) -C $(JPEG_DIR) clean
 	-$(MAKE) -C $(SDCV_DIR) clean
 	-$(MAKE) -C $(GLIB_DIR) clean uninstall
 	-$(MAKE) -C $(ZLIB_DIR) clean uninstall
-	-rm -rf $(FREETYPE_DIR)/build
-	-rm -rf $(OUTPUT_DIR)/*
+	-$(MAKE) -C $(FREETYPE_DIR)/build clean uninstall
 	-$(MAKE) -C $(LUA_SOCKET_DIR) clean
 	-$(MAKE) -C $(LUA_SEC_DIR) clean
 	-$(MAKE) -C $(OPENSSL_DIR) clean

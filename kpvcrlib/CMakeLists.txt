@@ -37,21 +37,20 @@ INCLUDE_DIRECTORIES(
 
 ADD_DEFINITIONS(-DLINUX=1 -D_LINUX=1 -DUSE_FONTCONFIG=0 -DUSE_FREETYPE=1 -DCR3_PATCH=1 -DNDEBUG=1)
 
-
-message("Will build patched LIBCHM library")
+message("Will build LIBCHM library")
 ADD_DEFINITIONS(-DCHM_SUPPORT_ENABLED=1)
 ADD_SUBDIRECTORY(${CR_3RDPARTY_DIR}/chmlib)
 
-message("Will build patched LIBPNG library")
+message("Will build LIBPNG library")
 SET(M_LIBRARY "m")
-SET(ZLIB_LIBRARIES "")
+SET(ZLIB_LIBRARY "z")
 SET(PNG_TESTS OFF CACHE BOOL "Disable LIBPNG tests")
 ADD_SUBDIRECTORY(${CR_3RDPARTY_DIR}/libpng)
 
-message("Will build patched JPEGLIB library")
+message("Will build JPEGLIB library")
 ADD_SUBDIRECTORY(${CR_3RDPARTY_DIR}/libjpeg)
 
-message("Will build patched ANTIWORD library")
+message("Will build ANTIWORD library")
 ADD_DEFINITIONS(-DENABLE_ANTIWORD=1)
 ADD_DEFINITIONS(-DCR3_ANTIWORD_PATCH=1)
 ADD_SUBDIRECTORY(${CR_3RDPARTY_DIR}/antiword)
@@ -62,6 +61,7 @@ message("Will build crengine library")
 
 ADD_DEFINITIONS(-DHAVE_PROTOTYPES)
 ADD_DEFINITIONS(-DHAVE_UNSIGNED_CHAR)
+ADD_DEFINITIONS(-DCR_EMULATE_GETTEXT)
 ADD_DEFINITIONS(-Dmain=xxxmain)
 SET (CRENGINE_SOURCES
 	${CRE_DIR}/src/cp_stats.cpp
@@ -99,4 +99,6 @@ SET (CRENGINE_SOURCES
 	${CRE_DIR}/src/crconcurrent.cpp
 )
 ADD_LIBRARY(crengine SHARED ${CRENGINE_SOURCES})
+
+target_link_libraries(crengine z png16 freetype jpeg chmlib antiword)
 
