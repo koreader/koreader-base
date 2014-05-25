@@ -6,6 +6,8 @@ if util.isEmulated() then
 	else
 		return require("ffi/framebuffer_SDL1_2")
 	end
+elseif util.isAndroid() then
+	return require("ffi/framebuffer_android")
 else
 	return require("ffi/framebuffer_linux")
 end
