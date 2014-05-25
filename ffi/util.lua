@@ -67,6 +67,15 @@ function util.isEmulated()
 	return (ffi.arch ~= "arm")
 end
 
+-- for now, we just check if the "android" module can be loaded
+local isAndroid = nil
+function util.isAndroid()
+	if isAndroid == nil then
+		isAndroid = pcall(require("android"))
+	end
+	return isAndroid
+end
+
 local haveSDL2 = nil
 
 function util.haveSDL2()
