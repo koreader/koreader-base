@@ -192,7 +192,7 @@ $(K2PDFOPT_LIB) $(LEPTONICA_LIB) $(TESSERACT_LIB): $(PNG_LIB) $(ZLIB)
 # our own Lua/C/C++ interfacing:
 
 libs: \
-	$(if $(EMULATE_READER),,$(OUTPUT_DIR)/libs/libkoreader-input.so) \
+	$(if $(or $(EMULATE_READER),$(ANDROID)),,$(OUTPUT_DIR)/libs/libkoreader-input.so) \
 	$(OUTPUT_DIR)/libs/libkoreader-lfs.so \
 	$(OUTPUT_DIR)/libs/libkoreader-pic.so \
 	$(OUTPUT_DIR)/libs/libpic_jpeg.so \
@@ -324,7 +324,7 @@ $(GNUGETTEXT_LIB):
 
 android-toolchain:
 	mkdir -p $(ANDROID_TOOLCHAIN)
-	$(NDK)/build/tools/make-standalone-toolchain.sh --platform=android-5 \
+	$(NDK)/build/tools/make-standalone-toolchain.sh --platform=android-9 \
 		--install-dir=$(ANDROID_TOOLCHAIN)
 
 # ===========================================================================
