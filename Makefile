@@ -7,7 +7,8 @@ all: $(OUTPUT_DIR)/libs $(if $(ANDROID),,$(LUAJIT)) \
 		$(if $(ANDROID),,$(OUTPUT_DIR)/sdcv) \
 		libs $(OUTPUT_DIR)/spec/base $(OUTPUT_DIR)/common \
 		$(OUTPUT_DIR)/plugins $(LUASOCKET) $(LUASEC) \
-		$(EVERNOTE_LIB) $(LUASERIAL_LIB) $(GNUGETTEXT_LIB)
+		$(if $(ANDROID),luacompat52,) \
+		$(EVERNOTE_LIB) $(LUASERIAL_LIB)
 ifndef EMULATE_READER
 	$(STRIP) --strip-unneeded \
 		$(if $(ANDROID),,$(OUTPUT_DIR)/sdcv) \
@@ -127,7 +128,6 @@ $(DJVULIBRE_LIB): $(JPEG_LIB)
 		$(DJVULIBRE_LIB)
 
 # crengine, fetched via GIT as a submodule
-# need libintl.h from GNU gettext lib for Android
 $(CRENGINE_LIB): $(ZLIB) $(FREETYPE_LIB)
 	test -e $(CRENGINE_WRAPPER_DIR)/build \
 	|| mkdir $(CRENGINE_WRAPPER_DIR)/build
@@ -205,10 +205,14 @@ $(OUTPUT_DIR)/libs/libkoreader-input.so: input.c \
 	$(CC) $(DYNLIB_CFLAGS) $(EMU_CFLAGS) \
 		-o $@ $< $(POPEN_NOSHELL_LIB) $(EMU_LDFLAGS)
 
-$(OUTPUT_DIR)/libs/libkoreader-lfs.so: luafilesystem/src/lfs.c
+$(OUTPUT_DIR)/libs/libkoreader-lfs.so: \
+					$(if $(ANDROID),$(LUAJIT_LIB),) \
+					luafilesystem/src/lfs.c
 	$(CC) $(DYNLIB_CFLAGS) -o $@ $^
 
-$(OUTPUT_DIR)/libs/libkoreader-pic.so: pic.c pic_jpeg.c $(JPEG_LIB)
+$(OUTPUT_DIR)/libs/libkoreader-pic.so: pic.c pic_jpeg.c \
+					$(if $(ANDROID),$(LUAJIT_LIB),) \
+					$(JPEG_LIB)
 	$(CC) -I$(JPEG_DIR) $(DYNLIB_CFLAGS) -o $@ $^
 
 $(OUTPUT_DIR)/libs/libpic_jpeg.so: pic_jpeg.c $(JPEG_LIB)
@@ -216,17 +220,23 @@ $(OUTPUT_DIR)/libs/libpic_jpeg.so: pic_jpeg.c $(JPEG_LIB)
 
 # put all the libs to the end of compile command to make ubuntu's tool chain
 # happy
-$(OUTPUT_DIR)/libs/libkoreader-pdf.so: pdf.c $(MUPDF_LIB) $(K2PDFOPT_LIB)
+$(OUTPUT_DIR)/libs/libkoreader-pdf.so: pdf.c \
+					$(if $(ANDROID),$(LUAJIT_LIB),) \
+					$(MUPDF_LIB) $(K2PDFOPT_LIB)
 	# Bionic's C library comes with its own pthread implementation
 	# So we need not to load pthread library for Android build
 	$(CC) -I$(MUPDF_DIR)/include $(K2PDFOPT_CFLAGS) $(DYNLIB_CFLAGS) \
 		$(if $(ANDROID),,-lpthread) -o $@ $^
 
-$(OUTPUT_DIR)/libs/libkoreader-djvu.so: djvu.c $(DJVULIBRE_LIB) $(K2PDFOPT_LIB)
+$(OUTPUT_DIR)/libs/libkoreader-djvu.so: djvu.c \
+					$(if $(ANDROID),$(LUAJIT_LIB),) \
+					$(DJVULIBRE_LIB) $(K2PDFOPT_LIB)
 	$(CC) -I$(DJVULIBRE_DIR)/ -I$(MUPDF_DIR)/include \
 		$(K2PDFOPT_CFLAGS) $(DYNLIB_CFLAGS) -o $@ $^
 
-$(OUTPUT_DIR)/libs/libkoreader-cre.so: cre.cpp $(CRENGINE_LIB)
+$(OUTPUT_DIR)/libs/libkoreader-cre.so: cre.cpp \
+					$(if $(ANDROID),$(LUAJIT_LIB),) \
+					$(CRENGINE_LIB)
 	$(CXX) -I$(CRENGINE_DIR)/crengine/include/ $(DYNLIB_CFLAGS) \
 		-DLDOM_USE_OWN_MEM_MAN=1 \
 		-Wl,-rpath,'libs' -o $@ $^ $(STATICLIBSTDCPP)
@@ -308,14 +318,12 @@ $(EVERNOTE_LIB):
 
 $(LUASERIAL_LIB):
 	$(MAKE) -C $(LUASERIAL_DIR) CC="$(CC) $(CFLAGS)" \
+		$(if $(ANDROID),LDFLAGS=$(CURDIR)/$(LUAJIT_LIB),) \
 		OUTPUT_DIR=$(CURDIR)/$(OUTPUT_DIR)/common
 
-$(GNUGETTEXT_LIB):
-	cd $(GNUGETTEXT_DIR) && \
-		./configure CFLAGS='$(CFLAGS)' $(if $(EMULATE_READER),,--host=$(CHOST)) \
-		--disable-java --disable-native-java \
-		&& $(MAKE) -j$(PROCESSORS) -C gettext-runtime/intl/
-	cp -fL $(LIBINTL_DIR)/.libs/lib$(if $(ANDROID),,gnu)intl.so.8.1.2 $@
+luacompat52: $(LUASERIAL_LIB)
+	mv $(CURDIR)/$(OUTPUT_DIR)/common/libluacompat52.so \
+		$(CURDIR)/$(OUTPUT_DIR)/libs
 
 # ===========================================================================
 # helper target for creating standalone android toolchain from NDK
@@ -389,9 +397,6 @@ fetchthirdparty:
 	[ `md5sum openssl-1.0.1g.tar.gz |cut -d\  -f1` != de62b43dfcd858e66a74bee1c834e959 ] \
 		&& rm openssl-1.0.1g.tar.gz && wget http://www.openssl.org/source/openssl-1.0.1g.tar.gz || true
 	tar zxf openssl-1.0.1g.tar.gz
-	# download gettext
-	cd thirdparty/gettext && ./fetch.sh
-
 
 
 # ===========================================================================
@@ -411,7 +416,6 @@ clean:
 	-$(MAKE) -C $(LUA_SOCKET_DIR) clean
 	-$(MAKE) -C $(LUA_SEC_DIR) clean
 	-$(MAKE) -C $(OPENSSL_DIR) clean
-	-$(MAKE) -C $(GNUGETTEXT_DIR) clean
 
 # ===========================================================================
 # start of unit tests section

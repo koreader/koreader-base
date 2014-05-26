@@ -53,7 +53,7 @@ function util.utf8charcode(charstring)
 	local result = 0
 	if len == 1 then
 		return bit.band(ptr[0], 0x7F)
-	elseif len == 2 then 
+	elseif len == 2 then
 		return bit.lshift(bit.band(ptr[0], 0x1F), 6) +
 			bit.band(ptr[1], 0x3F)
 	elseif len == 3 then
@@ -71,7 +71,7 @@ end
 local isAndroid = nil
 function util.isAndroid()
 	if isAndroid == nil then
-		isAndroid = pcall(require("android"))
+		isAndroid = pcall(require, "android")
 	end
 	return isAndroid
 end
