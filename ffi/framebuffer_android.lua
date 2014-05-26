@@ -8,7 +8,9 @@ local fb = {}
 
 function fb.open()
 	-- we present this buffer to the outside
-	fb.bb = BB.new(SDL.screen.w, SDL.screen.h)
+    -- TODO: must init after the APP_CMD_INIT_WINDOW cmd
+    -- otherwise the android.app.window will be nil
+	fb.bb = BB.new(600, 800)
 
 	fb:refresh()
 
@@ -46,15 +48,15 @@ function fb:refresh(refreshtype, waveform_mode, x1, y1, w, h)
 	if x1 == nil then x1 = 0 end
 	if y1 == nil then y1 = 0 end
 
-	
+
 	if android.app.window == nil then
-		android.LOGW("cannot blit: no window");
+		android.LOGW("cannot blit: no window")
 		return
 	end
 
 	local buffer = ffi.new("ANativeWindow_Buffer[1]")
 	if ffi.C.ANativeWindow_lock(android.app.window, buffer, nil) < 0 then
-		android.LOGW("Unable to lock window buffer");
+		android.LOGW("Unable to lock window buffer")
 		return
 	end
 
@@ -72,7 +74,7 @@ function fb:refresh(refreshtype, waveform_mode, x1, y1, w, h)
 	if bb then
 		-- adapt to possible rotation changes
 		bb:setRotation(self.bb:getRotation())
-		
+
 		bb:blitFrom(self.bb, x1, y1, x1, y1, w, h)
 	end
 
