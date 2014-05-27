@@ -3,6 +3,9 @@ local ffi = require("ffi")
 local android = require("android")
 local dummy = require("ffi/linux_input_h")
 
+-- to trigger refreshes for certain Android framework events:
+local fb = require("ffi/framebuffer_android").open()
+
 local input = {}
 
 function input.open()
@@ -41,11 +44,12 @@ function input.waitForEvent(timeout)
 					ffi.C.android_app_pre_exec_cmd(android.app, cmd)
 					android.LOGI("got command: " .. tonumber(cmd))
 					if cmd == ffi.C.APP_CMD_INIT_WINDOW then
-						draw_frame()
+						fb:refresh()
 					elseif cmd == ffi.C.APP_CMD_TERM_WINDOW then
 						-- do nothing for now
 					elseif cmd == ffi.C.APP_CMD_LOST_FOCUS then
-						draw_frame()
+						-- do we need this here?
+						fb:refresh()
 					end
 					ffi.C.android_app_post_exec_cmd(android.app, cmd)
 				elseif source[0].id == ffi.C.LOOPER_ID_INPUT then

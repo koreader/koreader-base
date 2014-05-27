@@ -7,13 +7,12 @@ local android = require("android")
 local fb = {}
 
 function fb.open()
-	-- we present this buffer to the outside
-    -- TODO: must init after the APP_CMD_INIT_WINDOW cmd
-    -- otherwise the android.app.window will be nil
-	fb.bb = BB.new(600, 800)
+	if not fb.bb then
+		-- we present this buffer to the outside
+		fb.bb = BB.new(600, 800)
 
-	fb:refresh()
-
+		fb:refresh()
+	end
 	return fb
 end
 
