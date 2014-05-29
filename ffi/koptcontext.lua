@@ -216,6 +216,8 @@ function KOPTContext_mt.__index:getTOCRWord(bmp, x, y, w, h, datadir, lang, ocr_
 end
 
 function KOPTContext_mt.__index:getAutoBBox()
+    -- fall back to default writing direction when detecting bbox
+    self:setWritingDirection(0)
     k2pdfopt.k2pdfopt_crop_bmp(self)
     local x0 = self.bbox.x0/self.zoom
     local y0 = self.bbox.y0/self.zoom
