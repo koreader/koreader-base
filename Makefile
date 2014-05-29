@@ -7,7 +7,7 @@ all: $(OUTPUT_DIR)/libs $(if $(ANDROID),,$(LUAJIT)) \
 		$(if $(ANDROID),,$(OUTPUT_DIR)/sdcv) \
 		libs $(OUTPUT_DIR)/spec/base $(OUTPUT_DIR)/common \
 		$(OUTPUT_DIR)/plugins $(LUASOCKET) $(LUASEC) \
-		$(if $(ANDROID),luacompat52,) \
+		$(if $(ANDROID),luacompat52 lualongnumber,) \
 		$(EVERNOTE_LIB) $(LUASERIAL_LIB)
 ifndef EMULATE_READER
 	$(STRIP) --strip-unneeded \
@@ -287,8 +287,15 @@ endif
 # ===========================================================================
 # common lua library for networking
 $(LUASOCKET):
+	cd $(LUA_SOCKET_DIR) && sed -i 's|socket\.core|socket\.score|' src/*
+	cd $(LUA_SOCKET_DIR) && sed -i 's|socket_core|socket_score|' src/*
+	cd $(LUA_SOCKET_DIR) && sed -i 's|mime\.core|mime\.mcore|' src/*
+	cd $(LUA_SOCKET_DIR) && sed -i 's|mime_core|mime_mcore|' src/*
+	cd $(LUA_SOCKET_DIR) && sed -i 's|SOCKET_CDIR)/core|SOCKET_CDIR)/score|' src/*
+	cd $(LUA_SOCKET_DIR) && sed -i 's|MIME_CDIR)/core|MIME_CDIR)/mcore|' src/*
 	$(MAKE) -C $(LUA_SOCKET_DIR) PLAT=linux \
 		CC="$(CC) $(CFLAGS)" LD="$(CC)" \
+		$(if $(ANDROID),MYLDFLAGS=$(CURDIR)/$(LUAJIT_LIB),) \
 		LUAINC="$(CURDIR)/$(LUA_DIR)/src" \
 		INSTALL_TOP_LDIR="$(CURDIR)/$(OUTPUT_DIR)/common" \
 		INSTALL_TOP_CDIR="$(CURDIR)/$(OUTPUT_DIR)/common" \
@@ -298,22 +305,21 @@ $(OPENSSL_LIB):
 	cd $(OPENSSL_DIR) && \
 		$(if $(EMULATE_READER),./config,./Configure linux-generic32) \
 		shared no-asm && $(MAKE) -j$(PROCESSORS) CC="$(CC) $(CFLAGS)" \
-		LD=$(LD) RANLIB=$(RANLIB) \
+		LD=$(LD) RANLIB=$(RANLIB) SHLIB_EXT=.so LIBVERSION="" \
 		build_crypto build_ssl
 
 $(LUASEC): $(OPENSSL_LIB)
-	# -O -fPIC will break compiling for Android toolchain
-	cd $(LUA_SEC_DIR) && sed -i 's|LNX_LDFLAGS=-O -fPIC |LNX_LDFLAGS=|' src/Makefile
-	$(MAKE) -C $(LUA_SEC_DIR) CC="$(CC) $(CFLAGS)" LD=$(LD) \
+	$(MAKE) -C $(LUA_SEC_DIR) CC="$(CC) $(CFLAGS)" LD="$(CC)" \
+		$(if $(ANDROID),LIBS="-lssl -lcrypto -lluasocket $(CURDIR)/$(LUAJIT_LIB)",) \
 		INC_PATH="-I$(CURDIR)/$(LUA_DIR)/src -I$(CURDIR)/$(OPENSSL_DIR)/include" \
 		LIB_PATH="-L$(CURDIR)/$(OPENSSL_DIR)" \
 		LUAPATH="$(CURDIR)/$(OUTPUT_DIR)/common" \
 		LUACPATH="$(CURDIR)/$(OUTPUT_DIR)/common" \
 		linux install
-	cd $(LUA_SEC_DIR) && sed -i 's|LNX_LDFLAGS=|LNX_LDFLAGS=-O -fPIC |' src/Makefile
 
 $(EVERNOTE_LIB):
 	$(MAKE) -C $(EVERNOTE_SDK_DIR)/thrift CC="$(CC) $(CFLAGS)" \
+		$(if $(ANDROID),LDFLAGS="-lm $(CURDIR)/$(LUAJIT_LIB)",) \
 		OUTPUT_DIR=$(CURDIR)/$(EVERNOTE_PLUGIN_DIR)/lib
 
 $(LUASERIAL_LIB):
@@ -322,8 +328,13 @@ $(LUASERIAL_LIB):
 		OUTPUT_DIR=$(CURDIR)/$(OUTPUT_DIR)/common
 
 luacompat52: $(LUASERIAL_LIB)
-	mv $(CURDIR)/$(OUTPUT_DIR)/common/libluacompat52.so \
+	cp $(CURDIR)/$(OUTPUT_DIR)/common/libluacompat52.so \
 		$(CURDIR)/$(OUTPUT_DIR)/libs
+
+lualongnumber: $(EVERNOTE_LIB)
+	cp $(CURDIR)/$(EVERNOTE_PLUGIN_DIR)/lib/liblualongnumber.so \
+		$(CURDIR)/$(OUTPUT_DIR)/libs
+
 
 # ===========================================================================
 # helper target for creating standalone android toolchain from NDK
