@@ -10,10 +10,12 @@ local fb = {}
 function fb.open()
     if not fb.dummy then
 		SDL.open()
+		-- we present this buffer to the outside
+		fb.bb = BB.new(SDL.screen.w, SDL.screen.h)
+	else
+		fb.bb = BB.new(600, 800)
     end
 
-	-- we present this buffer to the outside
-	fb.bb = BB.new(SDL.w, SDL.h, BB.TYPE_BBRGB32)
 	fb.bb:invert()
 
 	fb:refresh()

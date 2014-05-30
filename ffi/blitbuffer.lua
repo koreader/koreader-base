@@ -50,43 +50,43 @@ typedef struct ColorRGB32 {
 } ColorRGB32;
 
 typedef struct BlitBuffer4 {
-        int w; 
-        int h; 
+        int w;
+        int h;
         int pitch;
         uint8_t *data;
         uint8_t config;
 } BlitBuffer4;
 typedef struct BlitBuffer8 {
-        int w; 
-        int h; 
+        int w;
+        int h;
         int pitch;
         Color8 *data;
         uint8_t config;
 } BlitBuffer8;
 typedef struct BlitBuffer8A {
-        int w; 
-        int h; 
+        int w;
+        int h;
         int pitch;
         Color8A *data;
         uint8_t config;
 } BlitBuffer8A;
 typedef struct BlitBufferRGB16 {
-        int w; 
-        int h; 
+        int w;
+        int h;
         int pitch;
         ColorRGB16 *data;
         uint8_t config;
 } BlitBufferRGB16;
 typedef struct BlitBufferRGB24 {
-        int w; 
-        int h; 
+        int w;
+        int h;
         int pitch;
         ColorRGB24 *data;
         uint8_t config;
 } BlitBufferRGB24;
 typedef struct BlitBufferRGB32 {
-        int w; 
-        int h; 
+        int w;
+        int h;
         int pitch;
         ColorRGB32 *data;
         uint8_t config;
@@ -459,7 +459,7 @@ function BBRGB24_mt.__index:getBpp() return 24 end
 function BBRGB32_mt.__index:getBpp() return 32 end
 function BB_mt.__index:isRGB()
 	local bb_type = self:getType()
-	if bb_type == TYPE_BBRGB16 
+	if bb_type == TYPE_BBRGB16
 	or bb_type == TYPE_BBRGB24
 	or bb_type == TYPE_BBRGB32 then
 		return true
@@ -504,7 +504,7 @@ end
 function BB4_mt.__index:getPixelP(x, y)
 	--self:checkCoordinates(x, y)
 	local p = self.data + self.pitch*y + rshift(x, 1)
-	if band(x, 1) == 0 then 
+	if band(x, 1) == 0 then
 		return ffi.cast(P_Color4U, p)
 	else
 		return ffi.cast(P_Color4L, p)
@@ -1114,7 +1114,7 @@ end
 
 function BB.fromstring(width, height, buffertype, str, pitch)
 	local dataptr = ffi.C.malloc(#str)
-	ffi.copy(dataptr, str)
+	ffi.copy(dataptr, str, #str)
 	return BB.new(width, height, buffertype, dataptr, pitch)
 end
 
