@@ -86,9 +86,9 @@ function fb:refresh(refreshtype, waveform_mode, x1, y1, w, h)
     if buffer[0].format == ffi.C.WINDOW_FORMAT_RGBA_8888
     or buffer[0].format == ffi.C.WINDOW_FORMAT_RGBX_8888
     then
-        bb = Blitbuffer.new(buffer[0].width, buffer[0].height, Blitbuffer.TYPE_BBRGB32, buffer[0].bits, buffer[0].stride*4)
+        bb = BB.new(buffer[0].width, buffer[0].height, BB.TYPE_BBRGB32, buffer[0].bits, buffer[0].stride*4)
     elseif buffer[0].format == ffi.C.WINDOW_FORMAT_RGB_565 then
-        bb = Blitbuffer.new(buffer[0].width, buffer[0].height, Blitbuffer.TYPE_BBRGB16, buffer[0].bits, buffer[0].stride*2)
+        bb = BB.new(buffer[0].width, buffer[0].height, BB.TYPE_BBRGB16, buffer[0].bits, buffer[0].stride*2)
     else
         android.LOGE("unsupported window format!")
     end
