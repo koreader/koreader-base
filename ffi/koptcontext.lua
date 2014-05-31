@@ -400,7 +400,7 @@ function KOPTContext.totable(kc)
     -- struct
     context.bbox = ffi.string(kc.bbox, ffi.sizeof(kc.bbox))
     -- pointers
-    if kc.rboxa ~= nil then
+    if kc.rboxa ~= nil and kc.rboxa.n > 0 then
         context.rboxa = {
             n = kc.rboxa.n,
             box = {}
@@ -410,13 +410,13 @@ function KOPTContext.totable(kc)
                     ffi.string(kc.rboxa.box[i], ffi.sizeof("BOX")))
         end
     end
-    if kc.rnai ~= nil then
+    if kc.rnai ~= nil and kc.rnai.n > 0 then
         context.rnai = {
             n = kc.rnai.n,
             array = ffi.string(kc.rnai.array, ffi.sizeof("float")*kc.rnai.n)
         }
     end
-    if kc.nboxa ~= nil then
+    if kc.nboxa ~= nil and kc.nboxa.n > 0 then
         context.nboxa = {
             n = kc.nboxa.n,
             box = {}
@@ -426,7 +426,7 @@ function KOPTContext.totable(kc)
                     ffi.string(kc.nboxa.box[i], ffi.sizeof("BOX")))
         end
     end
-    if kc.nnai ~= nil then
+    if kc.nnai ~= nil and kc.nnai.n > 0 then
         context.nnai = {
             n = kc.nnai.n,
             array = ffi.string(kc.nnai.array, ffi.sizeof("float")*kc.nnai.n)
@@ -502,7 +502,7 @@ function KOPTContext.fromtable(context)
         ffi.copy(kc.bbox, context.bbox, ffi.sizeof(kc.bbox))
     end
     -- pointers
-    if context.rboxa then
+    if context.rboxa and context.rboxa.n > 0 then
         kc.rboxa = leptonica.boxaCreate(context.rboxa.n)
         for i=0, context.rboxa.n - 1 do
             leptonica.boxaAddBox(kc.rboxa, ffi.new("BOX[1]"), ffi.C.L_COPY)
@@ -511,11 +511,11 @@ function KOPTContext.fromtable(context)
     else
         kc.rboxa = nil
     end
-    if context.rnai then
+    if context.rnai and context.rnai.n > 0 then
         kc.rnai = leptonica.numaCreateFromFArray(ffi.cast("float*",
                 context.rnai.array), context.rnai.n, ffi.C.L_COPY)
     end
-    if context.nboxa then
+    if context.nboxa and context.nboxa.n > 0 then
         kc.nboxa = leptonica.boxaCreate(context.nboxa.n)
         for i=0, context.nboxa.n - 1 do
             leptonica.boxaAddBox(kc.nboxa, ffi.new("BOX[1]"), ffi.C.L_COPY)
@@ -524,7 +524,7 @@ function KOPTContext.fromtable(context)
     else
         kc.nboxa = nil
     end
-    if context.nnai then
+    if context.nnai and context.nnai.n > 0 then
         kc.nnai = leptonica.numaCreateFromFArray(ffi.cast("float*",
                 context.nnai.array), context.nnai.n, ffi.C.L_COPY)
     end
@@ -560,7 +560,7 @@ function KOPTContext.fromtable(context)
         kc.rectmaps.wrectmap = nil
     end
 
-    -- for now we don't serilize pageregions
+    -- for now we don't serialize pageregions
     k2pdfopt.pageregions_init(kc.pageregions)
 
     return kc
