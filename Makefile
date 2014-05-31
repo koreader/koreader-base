@@ -305,7 +305,7 @@ $(OPENSSL_LIB):
 	cd $(OPENSSL_DIR) && \
 		$(if $(EMULATE_READER),./config,./Configure linux-generic32) \
 		shared no-asm && $(MAKE) -j$(PROCESSORS) CC="$(CC) $(CFLAGS)" \
-		LD=$(LD) RANLIB=$(RANLIB) SHLIB_EXT=.so LIBVERSION="" \
+		LD=$(LD) RANLIB=$(RANLIB) LIBVERSION="" \
 		build_crypto build_ssl
 
 $(LUASEC): $(OPENSSL_LIB)
