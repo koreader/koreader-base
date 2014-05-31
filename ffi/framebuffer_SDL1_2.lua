@@ -8,16 +8,17 @@ local BB = require("ffi/blitbuffer")
 local fb = {}
 
 function fb.open()
-    if not fb.dummy then
+	if not fb.dummy then
 		SDL.open()
 		-- we present this buffer to the outside
 		fb.bb = BB.new(SDL.screen.w, SDL.screen.h)
+		fb.real_bb = BB.new(SDL.screen.w, SDL.screen.h, BB.TYPE_BBRGB32,
+			SDL.screen.pixels, SDL.screen.pitch)
 	else
 		fb.bb = BB.new(600, 800)
-    end
+		fb.real_bb = BB.new(600, 800)
+	end
 
-	fb.real_bb = BB.new(SDL.screen.w, SDL.screen.h, BB.TYPE_BBRGB32,
-		SDL.screen.pixels, SDL.screen.pitch)
 	fb.real_bb:invert()
 
 	fb:refresh()
