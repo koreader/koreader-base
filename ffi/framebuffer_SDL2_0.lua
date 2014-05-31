@@ -11,7 +11,7 @@ function fb.open()
     if not fb.dummy then
 		SDL.open()
 		-- we present this buffer to the outside
-		fb.bb = BB.new(SDL.screen.w, SDL.screen.h)
+		fb.bb = BB.new(SDL.w, SDL.h, BB.TYPE_BBRGB32)
 	else
 		fb.bb = BB.new(600, 800)
     end
