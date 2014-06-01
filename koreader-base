@@ -6,24 +6,10 @@ this replaces the former standalone binary which invoked the Lua interpreter/com
 now, we use the "default" interpreter/compiler
 ]]--
 
-require "libs/libkoreader-lfs"
 
 -- libraries converted to FFI:
-Blitbuffer = require("ffi/blitbuffer")
-freetype = require("ffi/freetype")
-Image = require("ffi/mupdfimg")
-util = require("ffi/util")
-einkfb = require("ffi/framebuffer")
+
 kobolight = require("ffi/kobolight")
-if util.isEmulated() then
-	if util.haveSDL2() then
-		input = require("ffi/input_SDL2_0")
-	else
-		input = require("ffi/input_SDL1_2")
-	end
-else
-	require "libs/libkoreader-input"
-end
 
 if not arg[1] then
 	error("you must give the name of the main lua executable as the first argument")
