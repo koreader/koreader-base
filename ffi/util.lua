@@ -27,13 +27,9 @@ function util.df(path)
 end
 
 function util.realpath(path)
-	local path_ptr = ffi.C.realpath(path, nil)
-	if path_ptr == nil then
-		return nil
-	end
-	path = ffi.string(path_ptr)
-	ffi.C.free(path_ptr)
-	return path
+	local path_ptr = ffi.C.realpath(path, ffi.new("char[?]", ffi.C.PATH_MAX))
+	if path_ptr == nil then return nil end
+	return ffi.string(path_ptr)
 end
 
 function util.execute(...)
