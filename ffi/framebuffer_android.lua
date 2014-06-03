@@ -6,32 +6,11 @@ local android = require("android")
 
 local fb = {}
 
-local function waitForInitWindowCMD()
-    while true do
-        local events = ffi.new("int[1]")
-        local source = ffi.new("struct android_poll_source*[1]")
-        if ffi.C.ALooper_pollAll(1000, nil, events, ffi.cast("void**", source)) >= 0 then
-            if source[0] ~= nil and source[0].id == ffi.C.LOOPER_ID_MAIN then
-                local cmd = ffi.C.android_app_read_cmd(android.app)
-                ffi.C.android_app_pre_exec_cmd(android.app, cmd)
-                ffi.C.android_app_post_exec_cmd(android.app, cmd)
-                if cmd == ffi.C.APP_CMD_INIT_WINDOW then return end
-            end
-        end
-    end
-end
-
 function fb.open()
     if not fb.bb then
-        waitForInitWindowCMD()
-        local window = android.app.window
-        if window ~= nil then
-            local width = ffi.C.ANativeWindow_getWidth(window)
-            local height = ffi.C.ANativeWindow_getHeight(window)
-            -- we present this buffer to the outside
-            fb.bb = BB.new(width, height)
-            fb:refresh()
-        end
+        -- we present this buffer to the outside
+        fb.bb = BB.new(android.screen.width, android.screen.height)
+        fb:refresh()
     end
     return fb
 end
