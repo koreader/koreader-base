@@ -46,9 +46,9 @@ local function genTouchUpEvent(event, id)
     genEmuEvent(ffi.C.EV_SYN, ffi.C.SYN_REPORT, 0)
 end
 
-local function genTouchMoveEvent(event, id)
-    local x = ffi.C.AMotionEvent_getX(event, id)
-    local y = ffi.C.AMotionEvent_getY(event, id)
+local function genTouchMoveEvent(event, id, index)
+    local x = ffi.C.AMotionEvent_getX(event, index)
+    local y = ffi.C.AMotionEvent_getY(event, index)
     genEmuEvent(ffi.C.EV_ABS, ffi.C.ABS_MT_SLOT, id)
     genEmuEvent(ffi.C.EV_ABS, ffi.C.ABS_MT_POSITION_X, x)
     genEmuEvent(ffi.C.EV_ABS, ffi.C.ABS_MT_POSITION_Y, y)
@@ -78,7 +78,10 @@ local function motionEventHandler(motion_event)
         genTouchUpEvent(motion_event, id)
     elseif flags == ffi.C.AMOTION_EVENT_ACTION_MOVE then
         if is_in_touch then
-            genTouchMoveEvent(motion_event, id)
+            for index = 0, pointer_count - 1 do
+                id = ffi.C.AMotionEvent_getPointerId(motion_event, index)
+                genTouchMoveEvent(motion_event, id, index)
+            end
         end
     end
 end
