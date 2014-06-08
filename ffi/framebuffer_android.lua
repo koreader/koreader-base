@@ -10,6 +10,7 @@ function fb.open()
     if not fb.bb then
         -- we present this buffer to the outside
         fb.bb = BB.new(android.screen.width, android.screen.height)
+        fb.bb:invert()
         fb:refresh()
     end
     return fb
@@ -73,7 +74,7 @@ function fb:refresh(refreshtype, waveform_mode, x1, y1, w, h)
     end
 
     if bb then
-        bb:invert()
+        bb:setInverse(self.bb:getInverse())
         -- adapt to possible rotation changes
         bb:setRotation(self.bb:getRotation())
 
