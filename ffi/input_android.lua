@@ -86,6 +86,20 @@ local function motionEventHandler(motion_event)
     end
 end
 
+local function keyEventHandler(key_event)
+    local code = ffi.C.AKeyEvent_getKeyCode(key_event)
+    local action = ffi.C.AKeyEvent_getAction(key_event)
+    if action == ffi.C.AKEY_EVENT_ACTION_DOWN then
+        genEmuEvent(ffi.C.EV_KEY, code, 1)
+    elseif action == ffi.C.AKEY_EVENT_ACTION_UP then
+        genEmuEvent(ffi.C.EV_KEY, code, 0)
+    end
+end
+
+local function commandHandler(code, value)
+    genEmuEvent(ffi.C.EV_MSC, code, value)
+end
+
 function input.waitForEvent(usecs)
     local timeout = math.ceil(usecs and usecs/1000 or -1)
     while true do
@@ -104,6 +118,7 @@ function input.waitForEvent(usecs)
                     local cmd = ffi.C.android_app_read_cmd(android.app)
                     ffi.C.android_app_pre_exec_cmd(android.app, cmd)
                     android.LOGI("got command: " .. tonumber(cmd))
+                    commandHandler(cmd, 1)
                     if cmd == ffi.C.APP_CMD_INIT_WINDOW then
                         fb:refresh()
                     elseif cmd == ffi.C.APP_CMD_TERM_WINDOW then
@@ -117,8 +132,11 @@ function input.waitForEvent(usecs)
                     local event = ffi.new("AInputEvent*[1]")
                     while ffi.C.AInputQueue_getEvent(android.app.inputQueue, event) >= 0 do
                         if ffi.C.AInputQueue_preDispatchEvent(android.app.inputQueue, event[0]) == 0 then
-                            if ffi.C.AInputEvent_getType(event[0]) == ffi.C.AINPUT_EVENT_TYPE_MOTION then
+                            local event_type = ffi.C.AInputEvent_getType(event[0])
+                            if event_type == ffi.C.AINPUT_EVENT_TYPE_MOTION then
                                 motionEventHandler(event[0])
+                            elseif event_type == ffi.C.AINPUT_EVENT_TYPE_KEY then
+                                keyEventHandler(event[0])
                             end
                             ffi.C.AInputQueue_finishEvent(android.app.inputQueue, event[0], 1)
                         end
