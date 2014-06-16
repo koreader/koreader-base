@@ -81,4 +81,8 @@ function util.haveSDL2()
 	return haveSDL2
 end
 
+function util.idiv(a, b)
+    return (a - math.fmod(a, b)) / b
+end
+
 return util
