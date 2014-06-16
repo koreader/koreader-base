@@ -366,6 +366,7 @@ function ColorRGB24_mt.__index:getB() return self.b end
 ColorRGB32_mt.__index.getR = ColorRGB24_mt.__index.getR
 ColorRGB32_mt.__index.getG = ColorRGB24_mt.__index.getG
 ColorRGB32_mt.__index.getB = ColorRGB24_mt.__index.getB
+function ColorRGB32_mt.__index:getAlpha() return self.a end
 
 -- modifications:
 -- inversion:
@@ -381,8 +382,25 @@ function ColorRGB32_mt.__index:invert()
 	return ColorRGB32(bxor(self.r, 0xFF), bxor(self.g, 0xFF), bxor(self.b, 0xFF))
 end
 
-
-
+-- comparison:
+function Color4L_mt.__index:isEqual(c)
+    return self:getR() == c:getR()
+end
+Color4U_mt.__index.isEqual = Color4L_mt.__index.isEqual
+Color8_mt.__index.isEqual = Color4L_mt.__index.isEqual
+Color8A_mt.__index.isEqual = Color4L_mt.__index.isEqual
+function ColorRGB24_mt.__index:isEqual(c)
+    return (self:getR() == c:getR())
+        and (self:getG() == c:getG())
+        and (self:getB() == c:getB())
+end
+ColorRGB16_mt.__index.isEqual = ColorRGB24_mt.__index.isEqual
+function ColorRGB32_mt.__index:isEqual(c)
+    return (self:getR() == c:getR())
+        and (self:getG() == c:getG())
+        and (self:getB() == c:getB())
+        and (self:getAlpha() == c:getAlpha())
+end
 
 local MASK_ALLOCATED = 0x01
 local SHIFT_ALLOCATED = 0
