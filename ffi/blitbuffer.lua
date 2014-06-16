@@ -676,10 +676,12 @@ function BB_mt.__index:blitFromRotate(source, degree)
 	self:rotate(-degree)
 end
 
--- uses very simple nearest neighbour scaling
+-- scale method does not modify the original blitbuffer, instead, it allocates
+-- and returns a new scaled blitbuffer.
 function BB_mt.__index:scale(new_width, new_height)
     local self_w, self_h = self:getWidth(), self:getHeight()
     local scaled_bb = BB.new(new_width, new_height, self:getType())
+    -- uses very simple nearest neighbour scaling
     for y=0, new_height-1 do
         for x=0, new_width-1 do
             scaled_bb:setPixel(x, y,
