@@ -3,6 +3,7 @@ Generic blitbuffer/GFX stuff that works on memory buffers
 --]]
 
 local ffi = require("ffi")
+local util = require("ffi/util")
 
 -- we will use this extensively
 local floor = math.floor
@@ -657,6 +658,20 @@ function BB_mt.__index:blitFromRotate(source, degree)
 	self:rotate(-degree)
 end
 
+-- uses very simple nearest neighbour scaling
+function BB_mt.__index:scale(new_width, new_height)
+    local self_w, self_h = self:getWidth(), self:getHeight()
+    local scaled_bb = BB.new(new_width, new_height, self:getType())
+    for y=0, new_height-1 do
+        for x=0, new_width-1 do
+            scaled_bb:setPixel(x, y,
+                self:getPixel(util.idiv(x*self_w, new_width),
+                              util.idiv(y*self_h, new_height)))
+        end
+    end
+    return scaled_bb
+end
+
 --[[
 explicit unset
 
@@ -1099,7 +1114,7 @@ function BB.new(width, height, buffertype, dataptr, pitch)
 	end
 	bb:setType(buffertype)
 	if dataptr == nil then
-		dataptr = ffi.C.malloc(pitch * height)
+		dataptr = ffi.C.malloc(pitch*height)
 		assert(dataptr, "cannot allocate memory for blitbuffer")
 		ffi.fill(dataptr, pitch*height)
 		bb:setAllocated(1)
