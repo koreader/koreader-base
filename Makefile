@@ -194,7 +194,6 @@ $(K2PDFOPT_LIB) $(LEPTONICA_LIB) $(TESSERACT_LIB): $(PNG_LIB) $(ZLIB)
 libs: \
 	$(if $(or $(EMULATE_READER),$(ANDROID)),,$(OUTPUT_DIR)/libs/libkoreader-input.so) \
 	$(OUTPUT_DIR)/libs/libkoreader-lfs.so \
-	$(OUTPUT_DIR)/libs/libkoreader-pic.so \
 	$(OUTPUT_DIR)/libs/libpic_jpeg.so \
 	$(OUTPUT_DIR)/libs/libkoreader-pdf.so \
 	$(if $(ANDROID),,$(OUTPUT_DIR)/libs/libkoreader-djvu.so) \
@@ -209,11 +208,6 @@ $(OUTPUT_DIR)/libs/libkoreader-lfs.so: \
 					$(if $(ANDROID),$(LUAJIT_LIB),) \
 					luafilesystem/src/lfs.c
 	$(CC) $(DYNLIB_CFLAGS) -o $@ $^
-
-$(OUTPUT_DIR)/libs/libkoreader-pic.so: pic.c pic_jpeg.c \
-					$(if $(ANDROID),$(LUAJIT_LIB),) \
-					$(JPEG_LIB)
-	$(CC) -I$(JPEG_DIR) $(DYNLIB_CFLAGS) -o $@ $^
 
 $(OUTPUT_DIR)/libs/libpic_jpeg.so: pic_jpeg.c $(JPEG_LIB)
 	$(CC) -I$(JPEG_DIR) $(DYNLIB_CFLAGS) -o $@ $^
