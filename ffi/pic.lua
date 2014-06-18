@@ -98,11 +98,7 @@ end
 
 PicDocument.__gc = PicDocument.close
 
-
---[[
-start of pic module API
---]]
-function Pic.openDocument(filename)
+function Pic.openJPGDocument(filename)
     local doc = PicDocument:new{}
     local w_p = ffi.new("int[1]")
     local h_p = ffi.new("int[1]")
@@ -129,6 +125,18 @@ function Pic.openDocument(filename)
     doc.components = comp_p[0]
 
     return doc
+end
+
+--[[
+start of pic module API
+--]]
+function Pic.openDocument(filename)
+    local extension = string.lower(string.match(filename, ".+%.([^.]+)") or "")
+    if extension == "jpg" or extension == "jpeg" then
+        return Pic.openJPGDocument(filename)
+    else
+        error("Unsupported image format")
+    end
 end
 
 return Pic

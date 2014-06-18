@@ -82,7 +82,8 @@ function util.haveSDL2()
 end
 
 function util.idiv(a, b)
-    return (a - math.fmod(a, b)) / b
+    q = a/b
+    return (q > 0) and math.floor(q) or math.ceil(q)
 end
 
 return util
