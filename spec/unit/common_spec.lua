@@ -1,4 +1,3 @@
-
 package.path = "common/?.lua;" .. package.path
 package.cpath = "common/?.so;" .. package.cpath
 
@@ -27,7 +26,7 @@ describe("Common modules", function()
     end)
     it("should serialize blitbuffer", function()
         local w, h = 600, 800
-	    local bb = Blitbuffer.new(w, h)
+        local bb = Blitbuffer.new(w, h)
         local random = math.random
         for i = 0, h -1 do
             for j = 0, w - 1 do

@@ -686,7 +686,7 @@ function BB_mt.__index:scale(new_width, new_height)
         for x=0, new_width-1 do
             scaled_bb:setPixel(x, y,
             self:getPixel(util.idiv(x*self_w, new_width),
-            util.idiv(y*self_h, new_height)))
+                          util.idiv(y*self_h, new_height)))
         end
     end
     return scaled_bb
