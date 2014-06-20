@@ -396,12 +396,12 @@ fetchthirdparty:
 	[ `md5sum glib-2.6.6.tar.gz |cut -d\  -f1` != dba15cceeaea39c5a61b6844d2b7b920 ] \
 		&& rm glib-2.6.6.tar.gz && wget http://ftp.gnome.org/pub/gnome/sources/glib/2.6/glib-2.6.6.tar.gz || true
 	tar zxf glib-2.6.6.tar.gz
-	# download openssl-1.0.0 for luasec
-	[ ! -f openssl-1.0.1g.tar.gz ] \
-		&& wget http://www.openssl.org/source/openssl-1.0.1g.tar.gz || true
-	[ `md5sum openssl-1.0.1g.tar.gz |cut -d\  -f1` != de62b43dfcd858e66a74bee1c834e959 ] \
-		&& rm openssl-1.0.1g.tar.gz && wget http://www.openssl.org/source/openssl-1.0.1g.tar.gz || true
-	tar zxf openssl-1.0.1g.tar.gz
+	# download openssl-1.0.1 for luasec
+	[ ! -f openssl-1.0.1h.tar.gz ] \
+		&& wget http://www.openssl.org/source/openssl-1.0.1h.tar.gz || true
+	[ `md5sum openssl-1.0.1h.tar.gz |cut -d\  -f1` != 8d6d684a9430d5cc98a62a5d8fbda8cf ] \
+		&& rm openssl-1.0.1h.tar.gz && wget http://www.openssl.org/source/openssl-1.0.1h.tar.gz || true
+	tar zxf openssl-1.0.1h.tar.gz
 
 
 # ===========================================================================
