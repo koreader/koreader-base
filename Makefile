@@ -8,7 +8,8 @@ all: $(OUTPUT_DIR)/libs $(if $(ANDROID),,$(LUAJIT)) \
 		libs $(OUTPUT_DIR)/spec/base $(OUTPUT_DIR)/common \
 		$(OUTPUT_DIR)/plugins $(LUASOCKET) $(LUASEC) \
 		$(if $(ANDROID),luacompat52 lualongnumber,) \
-		$(EVERNOTE_LIB) $(LUASERIAL_LIB)
+		$(EVERNOTE_LIB) $(LUASERIAL_LIB) \
+		$(ZMQ_LIB) $(CZMQ_LIB) $(FILEMQ_LIB) $(ZYRE_LIB)
 ifndef EMULATE_READER
 	$(STRIP) --strip-unneeded \
 		$(if $(ANDROID),,$(OUTPUT_DIR)/sdcv) \
@@ -60,7 +61,7 @@ $(FREETYPE_LIB):
 	cd $(FREETYPE_DIR) && sh autogen.sh
 	cd $(FREETYPE_DIR)/build && \
 		CC="$(CC)" CXX="$(CXX)" CFLAGS="$(CFLAGS)" \
-		CXXFLAGS="$(CFLAGS)" LDFLAGS="$(LDFLAGS)" \
+		CXXFLAGS="$(CXXFLAGS)" LDFLAGS="$(LDFLAGS)" \
 			../configure -q --prefix=$(CURDIR)/$(FREETYPE_DIR)/build \
 				--disable-static --enable-shared \
 				--without-zlib --without-bzip2 \
@@ -329,6 +330,78 @@ lualongnumber: $(EVERNOTE_LIB)
 	cp $(CURDIR)/$(EVERNOTE_PLUGIN_DIR)/lib/liblualongnumber.so \
 		$(CURDIR)/$(OUTPUT_DIR)/libs
 
+$(ZMQ_LIB):
+	mkdir -p $(ZMQ_DIR)/build
+	cd $(ZMQ_DIR) && sh autogen.sh
+	cd $(ZMQ_DIR)/src && sed -i 's|libzmq_la_LDFLAGS = -avoid-version|libzmq_la_LDFLAGS =|g' Makefile.am
+	cd $(ZMQ_DIR)/build && \
+		CC="$(CC)" CXX="$(CXX)" CFLAGS="$(CFLAGS)" \
+		CXXFLAGS="$(CXXFLAGS)" LDFLAGS="$(LDFLAGS)" \
+			../configure -q --prefix=$(CURDIR)/$(ZMQ_DIR)/build \
+				--disable-static --enable-shared \
+				--host=$(CHOST)
+	$(MAKE) -j$(PROCESSORS) -C $(ZMQ_DIR)/build
+	-$(MAKE) -j$(PROCESSORS) -C $(ZMQ_DIR)/build install
+	cp -fL $(ZMQ_DIR)/build/lib/$(notdir $(ZMQ_LIB)) $@
+
+$(CZMQ_LIB): $(ZMQ_LIB)
+	mkdir -p $(CZMQ_DIR)/build
+	cd $(CZMQ_DIR) && sh autogen.sh
+	cd $(CZMQ_DIR)/build && \
+		CC="$(CC)" CXX="$(CXX)" \
+		CFLAGS="$(CFLAGS)" CXXFLAGS="$(CXXFLAGS)" \
+		LDFLAGS="$(LDFLAGS) -Wl,-rpath,'libs'" \
+			../configure -q --prefix=$(CURDIR)/$(CZMQ_DIR)/build \
+				--with-gnu-ld \
+				--with-libzmq=$(CURDIR)/$(ZMQ_DIR)/build \
+				--disable-static --enable-shared \
+				--host=$(CHOST)
+	# hack to remove hardcoded rpath
+	cd $(CZMQ_DIR)/build && \
+		sed -i 's|^hardcode_libdir_flag_spec=.*|hardcode_libdir_flag_spec=""|g' libtool && \
+		sed -i 's|^runpath_var=LD_RUN_PATH|runpath_var=DIE_RPATH_DIE|g' libtool
+	$(MAKE) -j$(PROCESSORS) -C $(CZMQ_DIR)/build
+	-$(MAKE) -j$(PROCESSORS) -C $(CZMQ_DIR)/build install
+	cp -fL $(CZMQ_DIR)/build/lib/$(notdir $(CZMQ_LIB)) $@
+
+$(FILEMQ_LIB): $(ZMQ_LIB) $(CZMQ_LIB) $(OPENSSL_LIB)
+	mkdir -p $(FILEMQ_DIR)/build
+	cd $(FILEMQ_DIR) && sh autogen.sh
+	cd $(FILEMQ_DIR)/build && \
+		CC="$(CC)" CXX="$(CXX)" \
+		CFLAGS="$(CFLAGS) -I$(CURDIR)/$(OPENSSL_DIR)/include" \
+		CXXFLAGS="$(CXXFLAGS) -I$(CURDIR)/$(OPENSSL_DIR)/include" \
+		LDFLAGS="$(LDFLAGS) -L$(CURDIR)/$(OPENSSL_DIR) -Wl,-rpath,'libs'" \
+			../configure -q --prefix=$(CURDIR)/$(FILEMQ_DIR)/build \
+				--with-libzmq=$(CURDIR)/$(ZMQ_DIR)/build \
+				--with-libczmq=$(CURDIR)/$(CZMQ_DIR)/build \
+				--disable-static --enable-shared \
+				--host=$(CHOST)
+	cd $(FILEMQ_DIR)/build && \
+		sed -i 's|^hardcode_libdir_flag_spec=.*|hardcode_libdir_flag_spec=""|g' libtool && \
+		sed -i 's|^runpath_var=LD_RUN_PATH|runpath_var=DIE_RPATH_DIE|g' libtool
+	$(MAKE) -j$(PROCESSORS) -C $(FILEMQ_DIR)/build
+	-$(MAKE) -j$(PROCESSORS) -C $(FILEMQ_DIR)/build install
+	cp -fL $(FILEMQ_DIR)/build/lib/$(notdir $(FILEMQ_LIB)) $@
+
+$(ZYRE_LIB): $(ZMQ_LIB) $(CZMQ_LIB)
+	mkdir -p $(ZYRE_DIR)/build
+	cd $(ZYRE_DIR) && sh autogen.sh
+	cd $(ZYRE_DIR)/build && \
+		CC="$(CC)" CXX="$(CXX)" \
+		CFLAGS="$(CFLAGS)" CXXFLAGS="$(CXXFLAGS)" \
+		LDFLAGS="$(LDFLAGS) -Wl,-rpath,'libs'" \
+			../configure -q --prefix=$(CURDIR)/$(ZYRE_DIR)/build \
+				--with-libzmq=$(CURDIR)/$(ZMQ_DIR)/build \
+				--with-libczmq=$(CURDIR)/$(CZMQ_DIR)/build \
+				--disable-static --enable-shared \
+				--host=$(CHOST)
+	cd $(ZYRE_DIR)/build && \
+		sed -i 's|^hardcode_libdir_flag_spec=.*|hardcode_libdir_flag_spec=""|g' libtool && \
+		sed -i 's|^runpath_var=LD_RUN_PATH|runpath_var=DIE_RPATH_DIE|g' libtool
+	$(MAKE) -j$(PROCESSORS) -C $(ZYRE_DIR)/build
+	-$(MAKE) -j$(PROCESSORS) -C $(ZYRE_DIR)/build install
+	cp -fL $(ZYRE_DIR)/build/lib/$(notdir $(ZYRE_LIB)) $@
 
 # ===========================================================================
 # helper target for creating standalone android toolchain from NDK
@@ -421,6 +494,10 @@ clean:
 	-$(MAKE) -C $(LUA_SOCKET_DIR) clean
 	-$(MAKE) -C $(LUA_SEC_DIR) clean
 	-$(MAKE) -C $(OPENSSL_DIR) clean
+	-$(MAKE) -C $(ZMQ_DIR)/build clean uninstall
+	-$(MAKE) -C $(CZMQ_DIR)/build clean uninstall
+	-$(MAKE) -C $(FILEMQ_DIR)/build clean uninstall
+	-$(MAKE) -C $(ZYRE_DIR)/build clean uninstall
 
 # ===========================================================================
 # start of unit tests section

@@ -184,9 +184,7 @@ PNG_DIR=$(CRENGINE_DIR)/thirdparty/libpng
 PNG_BUILD_DIR=$(CRENGINE_BUILD_DIR)/thirdparty/libpng
 
 SDCV_DIR=sdcv-0.4.2
-GAWK_DIR=gawk-4.1.0
 GLIB_DIR=glib-2.6.6
-GTRS_DIR=google-translate-cli
 ZLIB_DIR=$(MUPDF_DIR)/thirdparty/zlib
 
 GLIB=$(GLIB_DIR)/lib/libglib-2.0.so.0
@@ -211,9 +209,14 @@ EVERNOTE_LIB=$(EVERNOTE_PLUGIN_DIR)/lib/libluasocket.so
 LUASERIAL_DIR=lua-serialize
 LUASERIAL_LIB=$(OUTPUT_DIR)/common/libserialize.so
 
-GNUGETTEXT_DIR=$(THIRD_PARTY_DIR)/gettext/gettext-0.18.3.2
-GNUGETTEXT_LIB=$(OUTPUT_DIR)/libs/libgnuintl.so.8.1.2
-LIBINTL_DIR=$(GNUGETTEXT_DIR)/gettext-runtime/intl
+ZMQ_DIR=libzmq
+CZMQ_DIR=czmq
+FILEMQ_DIR=filemq
+ZYRE_DIR=zyre
+ZMQ_LIB=$(OUTPUT_DIR)/libs/libzmq.so.4
+CZMQ_LIB=$(OUTPUT_DIR)/libs/libczmq.so.1
+FILEMQ_LIB=$(OUTPUT_DIR)/libs/libfmq.so.1
+ZYRE_LIB=$(OUTPUT_DIR)/libs/libzyre.so.1
 
 # must point to directory with *.ttf fonts for crengine
 MUPDF_TTF_FONTS_DIR=$(MUPDF_DIR)/resources/fonts
