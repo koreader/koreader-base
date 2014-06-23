@@ -37,3 +37,15 @@
 [submodule "lua-serialize"]
 	path = lua-serialize
 	url = https://github.com/chrox/lua-serialize
+[submodule "libzmq"]
+	path = libzmq
+	url = https://github.com/zeromq/libzmq.git
+[submodule "czmq"]
+	path = czmq
+	url = https://github.com/zeromq/czmq.git
+[submodule "filemq"]
+	path = filemq
+	url = https://github.com/chrox/filemq.git
+[submodule "zyre"]
+	path = zyre
+	url = https://github.com/chrox/zyre.git
