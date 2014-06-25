@@ -45,7 +45,7 @@
 	url = https://github.com/zeromq/czmq.git
 [submodule "filemq"]
 	path = filemq
-	url = https://github.com/chrox/filemq.git
+	url = https://github.com/zeromq/filemq.git
 [submodule "zyre"]
 	path = zyre
-	url = https://github.com/chrox/zyre.git
+	url = https://github.com/zeromq/zyre.git
