@@ -2,7 +2,9 @@ local ffi = require("ffi")
 ffi.cdef[[
 typedef struct _zmsg_t zmsg_t;
 typedef struct _zhash_t zhash_t;
+typedef struct _zsock_t zsock_t;
 typedef struct _zframe_t zframe_t;
+typedef struct _zpoller_t zpoller_t;
 
 typedef struct _zyre_t zyre_t;
 typedef struct _zre_msg_t zre_msg_t;
@@ -32,11 +34,11 @@ void zyre_stop (zyre_t *self);
 int zyre_join (zyre_t *self, const char *group);
 int zyre_leave (zyre_t *self, const char *group);
 zmsg_t * zyre_recv (zyre_t *self);
-zmsg_t * zyre_recv_nowait (zyre_t *self);
 int zyre_whisper (zyre_t *self, const char *peer, zmsg_t **msg_p);
 int zyre_shout (zyre_t *self, const char *group, zmsg_t **msg_p);
 int zyre_whispers (zyre_t *self, const char *peer, const char *format, ...);
 int zyre_shouts (zyre_t *self, const char *group, const char *format, ...);
+zsock_t * zyre_socket (zyre_t *self);
 void zyre_dump (zyre_t *self);
 zyre_event_t * zyre_event_new (zyre_t *self);
 void zyre_event_destroy (zyre_event_t **self_p);
@@ -60,6 +62,13 @@ void zmsg_destroy (zmsg_t **self_p);
 void zhash_destroy (zhash_t **self_p);
 void zframe_destroy (zframe_t **self_p);
 
+zpoller_t * zpoller_new (void *reader, ...);
+void zpoller_destroy (zpoller_t **self_p);
+int zpoller_add (zpoller_t *self, void *reader);
+void * zpoller_wait (zpoller_t *self, int timeout);
+bool zpoller_expired (zpoller_t *self);
+bool zpoller_terminated (zpoller_t *self);
+
 typedef struct _fmq_server_t fmq_server_t;
 typedef struct _fmq_client_t fmq_client_t;
 
@@ -69,7 +78,6 @@ void fmq_server_configure (fmq_server_t *self, const char *config_file);
 void fmq_server_setoption (fmq_server_t *self, const char *path, const char *value);
 int fmq_server_bind (fmq_server_t *self, const char *endpoint);
 zmsg_t * fmq_server_recv (fmq_server_t *self);
-zmsg_t * fmq_server_recv_nowait (fmq_server_t *self);
 void fmq_server_publish (fmq_server_t *self, const char *location, const char *alias);
 void fmq_server_set_anonymous (fmq_server_t *self, long enabled);
 
@@ -79,7 +87,6 @@ void fmq_client_configure (fmq_client_t *self, const char *config_file);
 void fmq_client_setoption (fmq_client_t *self, const char *path, const char *value);
 void fmq_client_connect (fmq_client_t *self, const char *endpoint);
 zmsg_t * fmq_client_recv (fmq_client_t *self);
-zmsg_t * fmq_client_recv_nowait (fmq_client_t *self);
 void * fmq_client_handle (fmq_client_t *self);
 void fmq_client_subscribe (fmq_client_t *self, const char *path);
 void fmq_client_set_inbox (fmq_client_t *self, const char *path);
