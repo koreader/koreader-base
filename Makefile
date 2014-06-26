@@ -360,6 +360,8 @@ $(CZMQ_LIB): $(ZMQ_LIB)
 	cd $(CZMQ_DIR)/build && \
 		sed -i 's|^hardcode_libdir_flag_spec=.*|hardcode_libdir_flag_spec=""|g' libtool && \
 		sed -i 's|^runpath_var=LD_RUN_PATH|runpath_var=DIE_RPATH_DIE|g' libtool
+	# patch: ignore limited broadcast address
+	cd $(CZMQ_DIR) && patch -N -p1 < ../zbeacon.patch
 	$(MAKE) -j$(PROCESSORS) -C $(CZMQ_DIR)/build
 	-$(MAKE) -j$(PROCESSORS) -C $(CZMQ_DIR)/build install
 	cp -fL $(CZMQ_DIR)/build/lib/$(notdir $(CZMQ_LIB)) $@
