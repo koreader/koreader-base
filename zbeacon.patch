@@ -1,0 +1,18 @@
+diff --git a/src/zbeacon.c b/src/zbeacon.c
+index 249c37c..729a7d5 100644
+--- a/src/zbeacon.c
++++ b/src/zbeacon.c
+@@ -471,6 +471,13 @@ s_get_interface (agent_t *self)
+                     self->broadcast.sin_addr.s_addr
+                         |= ~(((inaddr_t *) interface->ifa_netmask)->sin_addr.s_addr);
+ 
++                // If the returned broadcast address is the limited broadcast
++                // address, build the broadcast address from the source
++                // address and netmask.
++                if (self->broadcast.sin_addr.s_addr == INADDR_BROADCAST)
++                    self->broadcast.sin_addr.s_addr = self->address.sin_addr.s_addr
++                        | ~(((inaddr_t *) interface->ifa_netmask)->sin_addr.s_addr);
++
+                 //  Keep track of the number of interfaces on this host
+                 if (self->address.sin_addr.s_addr != ntohl (INADDR_LOOPBACK))
+                     num_interfaces++;
