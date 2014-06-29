@@ -340,8 +340,8 @@ $(ZMQ_LIB):
 			../configure -q --prefix=$(CURDIR)/$(ZMQ_DIR)/build \
 				--disable-static --enable-shared \
 				--host=$(CHOST)
-	$(MAKE) -j$(PROCESSORS) -C $(ZMQ_DIR)/build
-	-$(MAKE) -j$(PROCESSORS) -C $(ZMQ_DIR)/build install
+	-$(MAKE) -j$(PROCESSORS) -C $(ZMQ_DIR)/build uninstall
+	$(MAKE) -j$(PROCESSORS) -C $(ZMQ_DIR)/build install
 	cp -fL $(ZMQ_DIR)/build/lib/$(notdir $(ZMQ_LIB)) $@
 
 $(CZMQ_LIB): $(ZMQ_LIB)
@@ -362,8 +362,9 @@ $(CZMQ_LIB): $(ZMQ_LIB)
 		sed -i 's|^runpath_var=LD_RUN_PATH|runpath_var=DIE_RPATH_DIE|g' libtool
 	# patch: ignore limited broadcast address
 	cd $(CZMQ_DIR) && patch -N -p1 < ../zbeacon.patch
-	$(MAKE) -j$(PROCESSORS) -C $(CZMQ_DIR)/build
-	-$(MAKE) -j$(PROCESSORS) -C $(CZMQ_DIR)/build install
+	-$(MAKE) -j$(PROCESSORS) -C $(CZMQ_DIR)/build uninstall
+	$(MAKE) -j$(PROCESSORS) -C $(CZMQ_DIR)/build install
+	cd $(CZMQ_DIR) && patch -R -p1 < ../zbeacon.patch
 	cp -fL $(CZMQ_DIR)/build/lib/$(notdir $(CZMQ_LIB)) $@
 
 $(FILEMQ_LIB): $(ZMQ_LIB) $(CZMQ_LIB) $(OPENSSL_LIB)
@@ -382,8 +383,8 @@ $(FILEMQ_LIB): $(ZMQ_LIB) $(CZMQ_LIB) $(OPENSSL_LIB)
 	cd $(FILEMQ_DIR)/build && \
 		sed -i 's|^hardcode_libdir_flag_spec=.*|hardcode_libdir_flag_spec=""|g' libtool && \
 		sed -i 's|^runpath_var=LD_RUN_PATH|runpath_var=DIE_RPATH_DIE|g' libtool
-	$(MAKE) -j$(PROCESSORS) -C $(FILEMQ_DIR)/build
-	-$(MAKE) -j$(PROCESSORS) -C $(FILEMQ_DIR)/build install
+	-$(MAKE) -j$(PROCESSORS) -C $(FILEMQ_DIR)/build uninstall
+	$(MAKE) -j$(PROCESSORS) -C $(FILEMQ_DIR)/build install
 	cp -fL $(FILEMQ_DIR)/build/lib/$(notdir $(FILEMQ_LIB)) $@
 
 $(ZYRE_LIB): $(ZMQ_LIB) $(CZMQ_LIB)
@@ -401,8 +402,8 @@ $(ZYRE_LIB): $(ZMQ_LIB) $(CZMQ_LIB)
 	cd $(ZYRE_DIR)/build && \
 		sed -i 's|^hardcode_libdir_flag_spec=.*|hardcode_libdir_flag_spec=""|g' libtool && \
 		sed -i 's|^runpath_var=LD_RUN_PATH|runpath_var=DIE_RPATH_DIE|g' libtool
-	$(MAKE) -j$(PROCESSORS) -C $(ZYRE_DIR)/build
-	-$(MAKE) -j$(PROCESSORS) -C $(ZYRE_DIR)/build install
+	-$(MAKE) -j$(PROCESSORS) -C $(ZYRE_DIR)/build uninstall
+	$(MAKE) -j$(PROCESSORS) -C $(ZYRE_DIR)/build install
 	cp -fL $(ZYRE_DIR)/build/lib/$(notdir $(ZYRE_LIB)) $@
 
 # ===========================================================================
