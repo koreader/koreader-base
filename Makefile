@@ -11,10 +11,12 @@ all: $(OUTPUT_DIR)/libs $(if $(ANDROID),,$(LUAJIT)) \
 		$(EVERNOTE_LIB) $(LUASERIAL_LIB) \
 		$(ZMQ_LIB) $(CZMQ_LIB) $(FILEMQ_LIB) $(ZYRE_LIB)
 ifndef EMULATE_READER
-	$(STRIP) --strip-unneeded \
+	STRIP_FILES="\
 		$(if $(ANDROID),,$(OUTPUT_DIR)/sdcv) \
 		$(if $(ANDROID),,$(LUAJIT)) \
-		$(OUTPUT_DIR)/libs/*.so*
+		$(OUTPUT_DIR)/libs/*.so*" ;\
+	$(STRIP) --strip-unneeded $${STRIP_FILES} ;\
+	touch -r $${STRIP_FILES}  # let all files have the same mtime
 	find $(OUTPUT_DIR)/common -name "*.so*" | xargs $(STRIP) --strip-unneeded
 endif
 	# set up some needed paths and links
@@ -337,6 +339,7 @@ $(ZMQ_LIB):
 	cd $(ZMQ_DIR)/build && \
 		CC="$(CC)" CXX="$(CXX)" CFLAGS="$(CFLAGS)" \
 		CXXFLAGS="$(CXXFLAGS)" LDFLAGS="$(LDFLAGS)" \
+		libzmq_have_xmlto=no libzmq_have_asciidoc=no \
 			../configure -q --prefix=$(CURDIR)/$(ZMQ_DIR)/build \
 				--disable-static --enable-shared \
 				--host=$(CHOST)
@@ -351,6 +354,7 @@ $(CZMQ_LIB): $(ZMQ_LIB)
 		CC="$(CC)" CXX="$(CXX)" \
 		CFLAGS="$(CFLAGS)" CXXFLAGS="$(CXXFLAGS)" \
 		LDFLAGS="$(LDFLAGS) -Wl,-rpath,'libs'" \
+		czmq_have_xmlto=no czmq_have_asciidoc=no \
 			../configure -q --prefix=$(CURDIR)/$(CZMQ_DIR)/build \
 				--with-gnu-ld \
 				--with-libzmq=$(CURDIR)/$(ZMQ_DIR)/build \
@@ -375,6 +379,7 @@ $(FILEMQ_LIB): $(ZMQ_LIB) $(CZMQ_LIB) $(OPENSSL_LIB)
 		CFLAGS="$(CFLAGS) -I$(CURDIR)/$(OPENSSL_DIR)/include" \
 		CXXFLAGS="$(CXXFLAGS) -I$(CURDIR)/$(OPENSSL_DIR)/include" \
 		LDFLAGS="$(LDFLAGS) -L$(CURDIR)/$(OPENSSL_DIR) -Wl,-rpath,'libs'" \
+		fmq_have_xmlto=no fmq_have_asciidoc=no \
 			../configure -q --prefix=$(CURDIR)/$(FILEMQ_DIR)/build \
 				--with-libzmq=$(CURDIR)/$(ZMQ_DIR)/build \
 				--with-libczmq=$(CURDIR)/$(CZMQ_DIR)/build \
@@ -394,6 +399,7 @@ $(ZYRE_LIB): $(ZMQ_LIB) $(CZMQ_LIB)
 		CC="$(CC)" CXX="$(CXX)" \
 		CFLAGS="$(CFLAGS)" CXXFLAGS="$(CXXFLAGS)" \
 		LDFLAGS="$(LDFLAGS) -Wl,-rpath,'libs'" \
+		zyre_have_xmlto=no zyre_have_asciidoc=no \
 			../configure -q --prefix=$(CURDIR)/$(ZYRE_DIR)/build \
 				--with-libzmq=$(CURDIR)/$(ZMQ_DIR)/build \
 				--with-libczmq=$(CURDIR)/$(CZMQ_DIR)/build \
