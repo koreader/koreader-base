@@ -264,7 +264,7 @@ $(ZLIB):
 # ===========================================================================
 # console version of StarDict(sdcv)
 
-$(OUTPUT_DIR)/sdcv: $(GLIB) $(ZLIB)
+$(OUTPUT_DIR)/sdcv: | $(GLIB) $(ZLIB)
 ifeq ("$(shell $(CC) -dumpmachine | sed s/-.*//)","x86_64")
 	# quick fix for x86_64 (zeus)
 	cd $(SDCV_DIR) && sed -i 's|guint32 page_size|guint64 page_size|' src/lib/lib.cpp
@@ -344,7 +344,7 @@ $(ZMQ_LIB):
 	$(MAKE) -j$(PROCESSORS) -C $(ZMQ_DIR)/build install
 	cp -fL $(ZMQ_DIR)/build/lib/$(notdir $(ZMQ_LIB)) $@
 
-$(CZMQ_LIB): $(ZMQ_LIB)
+$(CZMQ_LIB): | $(ZMQ_LIB)
 	mkdir -p $(CZMQ_DIR)/build
 	cd $(CZMQ_DIR) && sh autogen.sh
 	cd $(CZMQ_DIR)/build && \
@@ -367,7 +367,7 @@ $(CZMQ_LIB): $(ZMQ_LIB)
 	cd $(CZMQ_DIR) && patch -R -p1 < ../zbeacon.patch
 	cp -fL $(CZMQ_DIR)/build/lib/$(notdir $(CZMQ_LIB)) $@
 
-$(FILEMQ_LIB): $(ZMQ_LIB) $(CZMQ_LIB) $(OPENSSL_LIB)
+$(FILEMQ_LIB): | $(ZMQ_LIB) $(CZMQ_LIB) $(OPENSSL_LIB)
 	mkdir -p $(FILEMQ_DIR)/build
 	cd $(FILEMQ_DIR) && sh autogen.sh
 	cd $(FILEMQ_DIR)/build && \
@@ -387,7 +387,7 @@ $(FILEMQ_LIB): $(ZMQ_LIB) $(CZMQ_LIB) $(OPENSSL_LIB)
 	$(MAKE) -j$(PROCESSORS) -C $(FILEMQ_DIR)/build install
 	cp -fL $(FILEMQ_DIR)/build/lib/$(notdir $(FILEMQ_LIB)) $@
 
-$(ZYRE_LIB): $(ZMQ_LIB) $(CZMQ_LIB)
+$(ZYRE_LIB): | $(ZMQ_LIB) $(CZMQ_LIB)
 	mkdir -p $(ZYRE_DIR)/build
 	cd $(ZYRE_DIR) && sh autogen.sh
 	cd $(ZYRE_DIR)/build && \
