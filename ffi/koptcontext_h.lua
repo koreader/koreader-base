@@ -229,7 +229,9 @@ PIX * pixBlendBackgroundToColor(PIX *pixd, PIX *pixs, BOX *box, l_uint32 color, 
 /* K2pdfopt */
 void bmp_init(WILLUSBITMAP *bmap);
 void bmp_free(WILLUSBITMAP *bmap);
+int  bmp_alloc(WILLUSBITMAP *bmap);
 int  bmp_copy(WILLUSBITMAP *dest,WILLUSBITMAP *src);
+unsigned char *bmp_rowptr_from_top(WILLUSBITMAP *bmp,int row);
 void wrectmaps_init(WRECTMAPS *wrectmaps);
 void wrectmaps_free(WRECTMAPS *wrectmaps);
 int  wrectmap_inside(WRECTMAP *wrmap,int xc,int yc);
@@ -242,7 +244,6 @@ void k2pdfopt_tocr_single_word(WILLUSBITMAP *src,
         char *word, int max_length,
         char *datadir, char *lang, int ocr_type,
         int allow_spaces, int std_proc);
-int bmpmupdf_pdffile_to_bmp(WILLUSBITMAP *bmp,char *filename,int pageno,double dpi,int bpp);
 void k2pdfopt_reflow_bmp(KOPTContext *kctx);
 void k2pdfopt_tocr_end();
 void pageregions_init(PAGEREGIONS *regions);
