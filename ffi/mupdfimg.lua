@@ -11,7 +11,7 @@ require("ffi/mupdf_h")
 local Image = {}
 
 function Image:initContext(cache_size)
-	self.context = mupdf.fz_new_context_imp(nil, nil, cache_size or bit.lshift(8, 20), "1.3")
+	self.context = mupdf.fz_new_context_imp(nil, nil, cache_size or bit.lshift(8, 20), "1.4")
 end
 
 function Image:_getFileData(filename)
@@ -29,7 +29,7 @@ function Image:toBlitBuffer()
 	local pixmap = ffi.new("fz_pixmap[1]")
 	pixmap = self.pixmap
 	if self.pixmap.n ~= 2 then
-		self.pixmap = mupdf.fz_new_pixmap(self.context, mupdf.fz_device_gray(self.context), 
+		self.pixmap = mupdf.fz_new_pixmap(self.context, mupdf.fz_device_gray(self.context),
 										  pixmap.w, pixmap.h);
 		mupdf.fz_convert_pixmap(self.context, self.pixmap, pixmap);
 		mupdf.fz_drop_pixmap(self.context, pixmap);
