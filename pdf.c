@@ -184,6 +184,8 @@ static int openDocument(lua_State *L) {
 
 	doc->context = fz_new_context(&my_alloc_default, NULL, cache_size);
 
+	fz_register_document_handlers(doc->context);
+
 	fz_try(doc->context) {
 		doc->xref = fz_open_document(doc->context, filename);
 	}
