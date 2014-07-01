@@ -107,6 +107,7 @@ $(MUPDF_LIB): $(JPEG_LIB) $(FREETYPE_LIB)
 		$(CFLAGS) \
 		-Wl,-E -Wl,-rpath,'$$ORIGIN' \
 		-Wl,--whole-archive $(MUPDF_LIB_STATIC) \
+		-Wl,--whole-archive $(MUPDF_JS_LIB_STATIC) \
 		-Wl,--no-whole-archive $(MUPDF_THIRDPARTY_LIBS) \
 		-Wl,-soname=$(notdir $(MUPDF_LIB)) \
 		$(JPEG_LIB) $(FREETYPE_LIB) \

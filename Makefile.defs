@@ -147,7 +147,7 @@ MUPDF_DIR=mupdf
 Z_LIB=$(MUPDF_LIB_DIR)/libz.a
 MUPDF_LIB_DIR=$(MUPDF_DIR)/build/release
 MUPDF_LIB_STATIC=$(MUPDF_LIB_DIR)/libmupdf.a
-MUPDF_JS_LIB_STATIC=$(MUPDF_LIB_DIR)/libmupdf-js-none.a
+MUPDF_JS_LIB_STATIC=$(MUPDF_LIB_DIR)/libmujs.a
 MUPDF_THIRDPARTY_LIBS=$(MUPDF_LIB_DIR)/libopenjpeg.a \
 			$(MUPDF_LIB_DIR)/libjbig2dec.a \
 			$(Z_LIB)
