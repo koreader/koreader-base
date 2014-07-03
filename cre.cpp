@@ -755,6 +755,14 @@ static int setPageMargins(lua_State *L) {
     return 0;
 }
 
+static int getVisiblePageCount(lua_State *L) {
+	CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
+
+	lua_pushinteger(L, doc->text_view->getVisiblePageCount());
+
+	return 1;
+}
+
 static int setVisiblePageCount(lua_State *L) {
 	CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
 
@@ -1313,6 +1321,7 @@ static const struct luaL_Reg credocument_meth[] = {
 	{"getFontFace", getFontFace},
 	{"getPageMargins", getPageMargins},
 	{"getToc", getTableOfContent},
+	{"getVisiblePageCount", getVisiblePageCount},
 	/*--- set methods ---*/
 	{"setIntProperty", setIntProperty},
 	{"setStringProperty", setStringProperty},
