@@ -91,6 +91,7 @@ ANDROID_ARCH:=-march=armv6 -mtune=generic-armv6
 
 # Use target-specific CFLAGS
 ifeq ($(TARGET), kobo)
+	# FIXME: I *think* all the Kobos we care about at least run on an A8...
 	ARM_ARCH:=$(ARMV7_A8_ARCH)
 	ARM_ARCH+=-mfloat-abi=hard
 else ifeq ($(TARGET), kindle)
