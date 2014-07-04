@@ -91,8 +91,8 @@ $(PNG_LIB): $(CRENGINE_LIB)
 # by default, mupdf compiles to a static library:
 # we generate a dynamic library from the static library:
 $(MUPDF_LIB): $(JPEG_LIB) $(FREETYPE_LIB)
-	$(MAKE) -j$(PROCESSORS) -C mupdf generate build="release" CC="$(HOSTCC)" \
-		XCFLAGS="$(HOSTCFLAGS)" \
+	env CFLAGS="$(HOSTCFLAGS)" \
+		$(MAKE) -j$(PROCESSORS) -C mupdf generate build="release" CC="$(HOSTCC)" \
 		OS="Other" verbose=1
 	$(MAKE) -j$(PROCESSORS) -C mupdf \
 		LDFLAGS="-L../$(OUTPUT_DIR)" \
