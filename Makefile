@@ -92,6 +92,7 @@ $(PNG_LIB): $(CRENGINE_LIB)
 # we generate a dynamic library from the static library:
 $(MUPDF_LIB): $(JPEG_LIB) $(FREETYPE_LIB)
 	$(MAKE) -j$(PROCESSORS) -C mupdf generate build="release" CC="$(HOSTCC)" \
+		CFLAGS="$(HOSTCFLAGS)" \
 		OS="Other" verbose=1
 	$(MAKE) -j$(PROCESSORS) -C mupdf \
 		LDFLAGS="-L../$(OUTPUT_DIR)" \
