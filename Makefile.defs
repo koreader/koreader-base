@@ -82,7 +82,7 @@ ARMV6_1136_ARCH:=-march=armv6j -mtune=arm1136jf-s -mfpu=vfp -marm
 
 # Generic armv6
 ARMV6_GENERIC_ARCH:=march=armv6 -mtune=generic-armv6
-# Cortex A8 (Kindle Touch, PW1, Most Kobos)
+# Cortex A8 (Kindle Touch, PW1, Kobos since the Touch)
 ARMV7_A8_ARCH:=-march=armv7-a -mtune=cortex-a8 -mfpu=neon -mthumb
 # Cortex A9 (Kindle PW2)
 ARMV7_A9_ARCH:=-march=armv7-a -mtune=cortex-a9 -mfpu=neon -mthumb
@@ -91,7 +91,7 @@ ANDROID_ARCH:=-march=armv6 -mtune=generic-armv6
 
 # Use target-specific CFLAGS
 ifeq ($(TARGET), kobo)
-	# FIXME: I *think* all the Kobos we care about at least run on an A8...
+	# NOTE: If we only care about Kobos w/ a Touch screen, we're good.
 	ARM_ARCH:=$(ARMV7_A8_ARCH)
 	ARM_ARCH+=-mfloat-abi=hard
 else ifeq ($(TARGET), kindle)
