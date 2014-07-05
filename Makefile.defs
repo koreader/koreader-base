@@ -81,13 +81,15 @@ KINDLE_LEGACY_COMPAT_CXXFLAGS:=-fno-use-cxa-atexit
 ARMV6_1136_ARCH:=-march=armv6j -mtune=arm1136jf-s -mfpu=vfp -marm
 
 # Generic armv6
-ARMV6_GENERIC_ARCH:=march=armv6 -mtune=generic-armv6
+ARMV6_GENERIC_ARCH:=march=armv6 -mtune=generic-armv6 -marm
 # Cortex A8 (Kindle Touch, PW1, Kobos since the Touch)
 ARMV7_A8_ARCH:=-march=armv7-a -mtune=cortex-a8 -mfpu=neon -mthumb
 # Cortex A9 (Kindle PW2)
 ARMV7_A9_ARCH:=-march=armv7-a -mtune=cortex-a9 -mfpu=neon -mthumb
-# Android. FIXME: What do we want here? armv6? armv7? ARM? THUMB? Which FPU?
-ANDROID_ARCH:=-march=armv6 -mtune=generic-armv6
+# Android.
+# FIXME: What do we want here? armv6? armv7? ARM? THUMB? Which FPU? Note that Thumb1 generally sucks, so stay w/ -marm unless >= armv7
+# According to https://github.com/android/platform_build/blob/master/core/combo/TARGET_linux-arm.mk, defaults seem to be armv5te
+ANDROID_ARCH:=-march=armv6 -mtune=generic-armv6 -marm
 
 # Use target-specific CFLAGS
 ifeq ($(TARGET), kobo)
@@ -95,7 +97,7 @@ ifeq ($(TARGET), kobo)
 	ARM_ARCH:=$(ARMV7_A8_ARCH)
 	ARM_ARCH+=-mfloat-abi=hard
 else ifeq ($(TARGET), kindle)
-	# FIXME: Will possibly need compat flags, depending on how far away from an actual Kindle the TC used by the buildbot is...
+	# FIXME: Will possibly need compat flags, depending on how far away from an actual Kindle the TC used by the nightlies is...
 	ARM_ARCH:=$(ARMV7_A8_ARCH)
 	ARM_ARCH+=-mfloat-abi=softfp
 else ifeq ($(TARGET), kindle5)
@@ -109,7 +111,7 @@ else ifeq ($(TARGET), kindle-legacy)
 	ARM_ARCH+=-mfloat-abi=softfp
 else ifeq ($(TARGET), android)
 	ARM_ARCH:=$(ANDROID_ARCH)
-	# FIXME: is this accurate on Android?
+	# NOTE: That *looks* sane on Android, but who knows...
 	ARM_ARCH+=-mfloat-abi=softfp
 else
 	# Defaults to generic crap
