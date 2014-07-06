@@ -36,7 +36,7 @@ local function mxc_update(fb, refarea, refreshtype, waveform_mode, x, y, w, h)
 	refarea[0].temp = 0x1000
 	-- NOTE: lab126 uses 0x1001, Papyrus on Touch, Auto on PW2
 	-- TODO make the flag configurable from UI,
-	-- f.g., the EPDC_FLAG_ENABLE_INVERSION flag inverts all the pixels on display  09.01 2013 (houqp)
+	-- e.g., the EPDC_FLAG_ENABLE_INVERSION flag inverts all the pixels on display  09.01 2013 (houqp)
 	refarea[0].flags = 0
 	-- NOTE: related to EPDC_FLAG_USE_ALT_BUFFER?
 	refarea[0].alt_buffer_data.phys_addr = 0
