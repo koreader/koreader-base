@@ -189,10 +189,9 @@ function framebuffer_mt:setOrientation(mode)
 end
 
 function framebuffer_mt.__index:refresh(refreshtype, waveform_mode, x, y, w, h)
-        w, x = BB.checkBounds(w or self.bb:getWidth(), x or 0, 0, self.bb:getWidth(), 0xFFFF)
-        h, y = BB.checkBounds(h or self.bb:getHeight(), y or 0, 0, self.bb:getHeight(), 0xFFFF)
+	w, x = BB.checkBounds(w or self.bb:getWidth(), x or 0, 0, self.bb:getWidth(), 0xFFFF)
+	h, y = BB.checkBounds(h or self.bb:getHeight(), y or 0, 0, self.bb:getHeight(), 0xFFFF)
 	x, y, w, h = self.bb:getPhysicalRect(x, y, w, h)
-	print("# fb.refresh(): mode="..refreshtype.." wvf="..waveform_mode.." x="..x.." y="..y.." w="..w.." h="..h)
 	self:einkUpdateFunc(refreshtype, waveform_mode, x, y, w, h)
 end
 
