@@ -33,8 +33,6 @@ local function mxc_update(fb, refarea, refreshtype, waveform_mode, x, y, w, h)
 	refarea[0].update_region.width = w or fb.vinfo.xres
 	refarea[0].update_region.height = h or fb.vinfo.yres
 	refarea[0].update_marker = 1
-	refarea[0].temp = 0x1000
-	-- NOTE: lab126 uses 0x1001, Papyrus on Touch, Auto on PW2
 	-- TODO make the flag configurable from UI,
 	-- e.g., the EPDC_FLAG_ENABLE_INVERSION flag inverts all the pixels on display  09.01 2013 (houqp)
 	refarea[0].flags = 0
@@ -54,14 +52,18 @@ local function k51_update(fb, refreshtype, waveform_mode, x, y, w, h)
 	-- only for Amazon's driver (NOTE: related to debugPaint prefbw & prefgray?):
 	refarea[0].hist_bw_waveform_mode = 0
 	refarea[0].hist_gray_waveform_mode = 0
+	-- TEMP_USE_PAPYRUS on Touch/PW1, TEMP_USE_AUTO on PW2
+	refarea[0].temp = 0x1001
 
 	return mxc_update(fb, refarea, refreshtype, waveform_mode, x, y, w, h)
 end
 
 local function kobo_update(fb, refreshtype, waveform_mode, x, y, w, h)
 	local refarea = ffi.new("struct mxcfb_update_data[1]")
-	-- only for Kobo driver:
+	-- only for Kobo's driver:
 	refarea[0].alt_buffer_data.virt_addr = nil
+	-- TEMP_USE_AMBIENT
+	refarea[0].temp = 0x1000
 
 	return mxc_update(fb, refarea, refreshtype, waveform_mode, x, y, w, h)
 end
