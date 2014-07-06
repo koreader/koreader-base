@@ -128,7 +128,8 @@ struct mxcfb_update_data {
 typedef struct mxcfb_update_data mxcfb_update_data;
 
 /* this is only used in kindle firmware 5.0, later version (5.1) has changed
- * the struct to mxcfb_update_data (see above) */
+ * the struct to mxcfb_update_data (see above).
+ * We don't actually support this, it's just kept here for shit'n giggle ;) */
 struct mxcfb_update_data_50x {
 	struct mxcfb_rect update_region;
 	__u32 waveform_mode;

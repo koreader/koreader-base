@@ -10,9 +10,7 @@ typedef unsigned int uint;
 
 cdecl_struct(mxcfb_rect)
 cdecl_struct(mxcfb_alt_buffer_data)
-cdecl_struct(mxcfb_alt_buffer_data_kobo)
 cdecl_struct(mxcfb_update_data)
-cdecl_struct(mxcfb_update_data_kobo)
 
 cdecl_const(MXCFB_SEND_UPDATE)
 
