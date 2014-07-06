@@ -8,6 +8,8 @@
  * - Modified mxcfb_alt_buffer_data struct according to include/linux/mxcfb.h
  *   from Kindle 5.3.0 firmware. Thanks to eureka@mobileread.
  *   http://www.mobileread.com/forums/showpost.php?p=2337118&postcount=818
+ *
+ * - Frankensteined w/ PW2 stuff -- NiLuJe
  */
 
 /*
@@ -78,6 +80,8 @@ struct mxcfb_rect {
 
 #define AUTO_UPDATE_MODE_REGION_MODE		0
 #define AUTO_UPDATE_MODE_AUTOMATIC_MODE		1
+#define AUTO_UPDATE_MODE_AUTOMATIC_MODE_FULL	AUTO_UPDATE_MODE_AUTOMATIC_MODE /* Lab126 */
+#define AUTO_UPDATE_MODE_AUTOMATIC_MODE_PART	2 /* Lab126 */
 
 #define UPDATE_SCHEME_SNAPSHOT			0
 #define UPDATE_SCHEME_QUEUE			1
@@ -86,25 +90,29 @@ struct mxcfb_rect {
 #define UPDATE_MODE_PARTIAL			0x0
 #define UPDATE_MODE_FULL			0x1
 
-#define WAVEFORM_MODE_INIT			0x0	/* Screen goes to white (clears) */
-#define WAVEFORM_MODE_DU			0x1	/* Grey->white/grey->black */
-#define WAVEFORM_MODE_GC16			0x2	/* High fidelity (flashing) */
-#define WAVEFORM_MODE_GC4			WAVEFORM_MODE_GC16 /* For compatibility */
-#define WAVEFORM_MODE_GC16_FAST		0x3	/* Medium fidelity */
-#define WAVEFORM_MODE_A2			0x4	/* Faster but even lower fidelity */
-#define WAVEFORM_MODE_GL16			0x5	/* High fidelity from white transition */
-#define WAVEFORM_MODE_GL16_FAST		0x6	/* Medium fidelity from white transition */
+#define WAVEFORM_MODE_INIT	0x0	/* Screen goes to white (clears) */
+#define WAVEFORM_MODE_DU	0x1	/* Grey->white/grey->black */
+#define WAVEFORM_MODE_GC16	0x2	/* High fidelity (flashing) */
+#define WAVEFORM_MODE_GC4	WAVEFORM_MODE_GC16 /* For compatibility */
+#define WAVEFORM_MODE_GC16_FAST	0x3	/* Medium fidelity */
+#define WAVEFORM_MODE_A2	0x4	/* Faster but even lower fidelity */
+#define WAVEFORM_MODE_GL16	0x5	/* High fidelity from white transition */
+#define WAVEFORM_MODE_GL16_FAST	0x6	/* Medium fidelity from white transition */
+/* FW >= 5.3 */
+#define WAVEFORM_MODE_DU4	0x7	/* Medium fidelity 4 level of gray direct update */
+
 
 #define WAVEFORM_MODE_AUTO			257
 
 #define TEMP_USE_AMBIENT			0x1000
+#define TEMP_USE_PAPYRUS			0X1001
 
 #define EPDC_FLAG_ENABLE_INVERSION		0x01
 #define EPDC_FLAG_FORCE_MONOCHROME		0x02
+#define EPDC_FLAG_USE_CMAP				0x04
 #define EPDC_FLAG_USE_ALT_BUFFER		0x100
 
 #define FB_POWERDOWN_DISABLE			-1
-#define FB_TEMP_AUTO_UPDATE_DISABLE     -1
 
 struct mxcfb_alt_buffer_data {
 	__u32 phys_addr;
@@ -118,18 +126,16 @@ struct mxcfb_update_data {
 	__u32 waveform_mode;
 	__u32 update_mode;
 	__u32 update_marker;
-	/* these two fields have been added by amazon */
-	__u32 hist_bw_waveform_mode;
-	__u32 hist_gray_waveform_mode;
+	__u32 hist_bw_waveform_mode;    /*Lab126: Def bw waveform for hist analysis*/
+	__u32 hist_gray_waveform_mode;  /*Lab126: Def gray waveform for hist analysis*/
 	int temp;
 	uint flags;
 	struct mxcfb_alt_buffer_data alt_buffer_data;
 };
-typedef struct mxcfb_update_data mxcfb_update_data;
 
-/* this is only used in kindle firmware 5.0, later version (5.1) has changed
+/* This is only used in kindle firmware 5.0, later version (5.1) has changed
  * the struct to mxcfb_update_data (see above).
- * We don't actually support this, it's just kept here for shit'n giggle ;) */
+ * We don't actually support this, it's just kept here for shit'n giggles ;) */
 struct mxcfb_update_data_50x {
 	struct mxcfb_rect update_region;
 	__u32 waveform_mode;
@@ -150,7 +156,13 @@ struct mxcfb_waveform_modes {
 	int mode_gc4;
 	int mode_gc8;
 	int mode_gc16;
+	int mode_gc16_fast;
 	int mode_gc32;
+	int mode_gl16;
+	int mode_gl16_fast;
+	int mode_a2;
+	/* FW >= 5.3 */
+	int mode_du4;
 };
 
 #define MXCFB_WAIT_FOR_VSYNC	_IOW('F', 0x20, u_int32_t)
@@ -170,20 +182,21 @@ struct mxcfb_waveform_modes {
 #define MXCFB_SET_WAVEFORM_MODES	_IOW('F', 0x2B, struct mxcfb_waveform_modes)
 #define MXCFB_SET_TEMPERATURE		_IOW('F', 0x2C, int32_t)
 #define MXCFB_SET_AUTO_UPDATE_MODE	_IOW('F', 0x2D, __u32)
-#define MXCFB_SEND_UPDATE_50X		_IOW('F', 0x2E, struct mxcfb_update_data_50x)
+#define MXCFB_SEND_UPDATE		_IOW('F', 0x2E, struct mxcfb_update_data)
 #define MXCFB_WAIT_FOR_UPDATE_COMPLETE	_IOW('F', 0x2F, __u32)
 #define MXCFB_SET_PWRDOWN_DELAY		_IOW('F', 0x30, int32_t)
 #define MXCFB_GET_PWRDOWN_DELAY		_IOR('F', 0x31, int32_t)
 #define MXCFB_SET_UPDATE_SCHEME		_IOW('F', 0x32, __u32)
-#define MXCFB_GET_PMIC_TEMPERATURE	_IOR('F', 0x32, int32_t)
-#define MXCFB_SET_BORDER_MODE		_IOR('F', 0x33, int32_t)
-#define MXCFB_SET_EPD_PWR0_CTRL		_IOR('F', 0x34, int32_t)
-#define MXCFB_SET_EPD_PWR2_CTRL		_IOR('F', 0x35, int32_t)
-#define MXCFB_SET_TEMP_AUTO_UPDATE_PERIOD     _IOR('F', 0x36, int32_t)
-#define MXCFB_SET_MERGE_ON_WAVEFORM_MISMATCH	_IOW('F', 0x37, int32_t)
+#define MXCFB_SET_PAUSE			_IOW('F', 0x33, __u32)
+#define MXCFB_GET_PAUSE			_IOW('F', 0x34, __u32)
+#define MXCFB_SET_RESUME		_IOW('F', 0x35, __u32)
+#define MXCFB_CLEAR_UPDATE_QUEUE	_IOW('F', 0x36, __u32)
+#define MXCFB_WAIT_FOR_UPDATE_SUBMISSION	_IOW('F', 0x37, __u32)
+/* FW >= 5.3 */
+#define MXCFB_GET_TEMPERATURE   _IOR('F', 0x38, int32_t)
 
-/* IOCTLs for E-ink panel updates, kindle firmware version >= 5.1 */
-#define MXCFB_SEND_UPDATE _IOW('F', 0x2E, struct mxcfb_update_data)
+/* Deprecated IOCTL for E-ink panel updates, kindle firmware version == 5.0 */
+#define MXCFB_SEND_UPDATE_50X _IOW('F', 0x2E, struct mxcfb_update_data_50x)
 
 #ifdef __KERNEL__
 
