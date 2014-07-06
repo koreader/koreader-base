@@ -161,13 +161,14 @@ static int openInputDevice(lua_State *L) {
 			if (status == -1) {
 				err(EXIT_FAILURE, "pclose_noshell()");
 			} else {
-				printf("lipc-wait-event exited with status %d.\n", status);
-
-				if WIFEXITED(status) {
-					printf("lipc-wait-event exited normally with status: %d.\n", WEXITSTATUS(status));
-				}
-				if WIFSIGNALED(status) {
-					printf("lipc-wait-event terminated by signal: %d.\n", WTERMSIG(status));
+				if (WIFEXITED(status)) {
+					printf("lipc-wait-event exited normally with status: %d\n", WEXITSTATUS(status));
+				} else if (WIFSIGNALED(status)) {
+					printf("lipc-wait-event was killed by signal %d\n", WTERMSIG(status));
+				} else if (WIFSTOPPED(status)) {
+					printf("lipc-wait-event was stopped by signal %d\n", WSTOPSIG(status));
+				} else if (WIFCONTINUED(status)) {
+					printf("lipc-wait-event continued\n");
 				}
 			}
 
@@ -192,7 +193,7 @@ static int openInputDevice(lua_State *L) {
 		return luaL_error(L, "cannot initialize SDL.");
 	}
 	SDL_EnableKeyRepeat(SDL_DEFAULT_REPEAT_DELAY, SDL_DEFAULT_REPEAT_INTERVAL);
-	/* we only use inputfds[0] in emu mode, because we only have one 
+	/* we only use inputfds[0] in emu mode, because we only have one
 	 * fake device so far. */
 	inputfds[0] = open(inputdevice, O_RDWR | O_NONBLOCK);
 	if (inputfds < 0) {
