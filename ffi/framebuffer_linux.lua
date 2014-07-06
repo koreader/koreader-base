@@ -34,9 +34,11 @@ local function mxc_update(fb, refarea, refreshtype, waveform_mode, x, y, w, h)
 	refarea[0].update_region.height = h or fb.vinfo.yres
 	refarea[0].update_marker = 1
 	refarea[0].temp = 0x1000
+	-- NOTE: lab126 uses 0x1001, Papyrus on Touch, Auto on PW2
 	-- TODO make the flag configurable from UI,
-	-- this flag invert all the pixels on display  09.01 2013 (houqp)
+	-- f.g., the EPDC_FLAG_ENABLE_INVERSION flag inverts all the pixels on display  09.01 2013 (houqp)
 	refarea[0].flags = 0
+	-- NOTE: related to EPDC_FLAG_USE_ALT_BUFFER?
 	refarea[0].alt_buffer_data.phys_addr = 0
 	refarea[0].alt_buffer_data.width = 0
 	refarea[0].alt_buffer_data.height = 0
@@ -49,7 +51,7 @@ end
 
 local function k51_update(fb, refreshtype, waveform_mode, x, y, w, h)
 	local refarea = ffi.new("struct mxcfb_update_data[1]")
-	-- only for Amazon's driver:
+	-- only for Amazon's driver (NOTE: related to debugPaint prefbw & prefgray?):
 	refarea[0].hist_bw_waveform_mode = 0
 	refarea[0].hist_gray_waveform_mode = 0
 
@@ -176,7 +178,7 @@ function framebuffer_mt:setOrientation(mode)
 	 	   |              |
 	 	   +--------------+
 	 	          0
-	--]] 
+	--]]
 	if mode == 1 then
 		mode = 2
 	elseif mode == 2 then
@@ -190,6 +192,7 @@ function framebuffer_mt.__index:refresh(refreshtype, waveform_mode, x, y, w, h)
         w, x = BB.checkBounds(w or self.bb:getWidth(), x or 0, 0, self.bb:getWidth(), 0xFFFF)
         h, y = BB.checkBounds(h or self.bb:getHeight(), y or 0, 0, self.bb:getHeight(), 0xFFFF)
 	x, y, w, h = self.bb:getPhysicalRect(x, y, w, h)
+	print("# fb.refresh(): mode="..refreshtype.." wvf="..waveform_mode.." x="..x.." y="..y.." w="..w.." h="..h)
 	self:einkUpdateFunc(refreshtype, waveform_mode, x, y, w, h)
 end
 
