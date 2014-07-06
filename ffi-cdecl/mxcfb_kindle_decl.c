@@ -15,7 +15,7 @@ cdecl_struct(mxcfb_update_data)
 cdecl_const(MXCFB_SEND_UPDATE)
 
 /* Needed for REAGL on PW2? */
-//cdecl_struct(mxcfb_update_marker_data)
-//cdecl_const(MXCFB_WAIT_FOR_UPDATE_COMPLETE)
-//cdecl_const(MXCFB_WAIT_FOR_UPDATE_SUBMISSION)
+cdecl_struct(mxcfb_update_marker_data)
+cdecl_const(MXCFB_WAIT_FOR_UPDATE_COMPLETE)
+cdecl_const(MXCFB_WAIT_FOR_UPDATE_SUBMISSION)
 

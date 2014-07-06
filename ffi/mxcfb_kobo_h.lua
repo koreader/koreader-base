@@ -13,7 +13,6 @@ struct mxcfb_alt_buffer_data {
   unsigned int height;
   struct mxcfb_rect alt_update_region;
 };
-struct mxcfb_alt_buffer_data_kobo;
 struct mxcfb_update_data {
   struct mxcfb_rect update_region;
   unsigned int waveform_mode;
@@ -23,6 +22,5 @@ struct mxcfb_update_data {
   unsigned int flags;
   struct mxcfb_alt_buffer_data alt_buffer_data;
 };
-struct mxcfb_update_data_kobo;
-static const int MXCFB_SEND_UPDATE = 0x4044462e;
+static const int MXCFB_SEND_UPDATE = 1078216238;
 ]]
