@@ -89,7 +89,6 @@ struct mxcfb_rect {
 #define EPDC_FLAG_USE_ALT_BUFFER		0x100
 
 #define FB_POWERDOWN_DISABLE			-1
-#define FB_TEMP_AUTO_UPDATE_DISABLE     -1
 
 struct mxcfb_alt_buffer_data {
 	void *virt_addr;
@@ -144,17 +143,17 @@ struct mxcfb_waveform_modes {
 #define MXCFB_SET_PWRDOWN_DELAY		_IOW('F', 0x30, int32_t)
 #define MXCFB_GET_PWRDOWN_DELAY		_IOR('F', 0x31, int32_t)
 #define MXCFB_SET_UPDATE_SCHEME		_IOW('F', 0x32, __u32)
-#define MXCFB_GET_PMIC_TEMPERATURE	_IOR('F', 0x32, int32_t)
-#define MXCFB_SET_BORDER_MODE		_IOR('F', 0x33, int32_t)
-#define MXCFB_SET_EPD_PWR0_CTRL		_IOR('F', 0x34, int32_t)
-#define MXCFB_SET_EPD_PWR2_CTRL		_IOR('F', 0x35, int32_t)
-#define MXCFB_SET_TEMP_AUTO_UPDATE_PERIOD     _IOR('F', 0x36, int32_t)
 #define MXCFB_SET_MERGE_ON_WAVEFORM_MISMATCH	_IOW('F', 0x37, int32_t)
 
 #ifdef __KERNEL__
 
 extern struct fb_videomode mxcfb_modedb[];
 extern int mxcfb_modedb_sz;
+
+enum {
+	MXC_DISP_SPEC_DEV = 0,
+	MXC_DISP_DDC_DEV = 1,
+};
 
 enum {
 	MXCFB_REFRESH_OFF,
@@ -164,6 +163,12 @@ enum {
 
 int mxcfb_set_refresh_mode(struct fb_info *fbi, int mode,
 			   struct mxcfb_rect *update_region);
+void mxcfb_register_mode(int disp_port,
+		const struct fb_videomode *modedb,
+		int num_modes, int dev_mode);
+
+void mxcfb_register_presetup(int disp_port,
+		int (*pre_setup)(struct fb_info *info));
 
 int mxc_elcdif_frame_addr_setup(dma_addr_t phys);
 #endif				/* __KERNEL__ */
