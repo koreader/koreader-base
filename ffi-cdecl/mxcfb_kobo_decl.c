@@ -14,3 +14,11 @@ cdecl_struct(mxcfb_update_data)
 
 cdecl_const(MXCFB_SEND_UPDATE)
 
+/* Might come in handy one day... */
+cdecl_const(MXCFB_WAIT_FOR_UPDATE_COMPLETE)
+
+/* Aura */
+cdecl_struct(mxcfb_update_data_org)
+
+cdecl_const(MXCFB_SEND_UPDATE_ORG)
+
