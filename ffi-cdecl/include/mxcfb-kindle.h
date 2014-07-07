@@ -241,7 +241,7 @@ struct mxcfb_csc_matrix {
 #define MXCFB_SEND_UPDATE		_IOW('F', 0x2E, struct mxcfb_update_data)
 
 /* This evolved on the PW2... */
-#define MXCFB_WAIT_FOR_UPDATE_COMPLETE_TOUCH	_IOW('F', 0x2F, __u32)
+#define MXCFB_WAIT_FOR_UPDATE_COMPLETE_PEARL	_IOW('F', 0x2F, __u32)
 /* PW2 */
 #define MXCFB_WAIT_FOR_UPDATE_COMPLETE	_IOWR('F', 0x2F, struct mxcfb_update_marker_data)
 
