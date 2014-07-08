@@ -77,7 +77,7 @@ $(FREETYPE_LIB):
 $(JPEG_LIB):
 	cd $(JPEG_DIR) && \
 		CC="$(CC)" CXX="$(CXX)" CFLAGS="$(CFLAGS)" \
-		CXXFLAGS="$(CFLAGS)" LDFLAGS="$(LDFLAGS)" \
+		CXXFLAGS="$(CXXFLAGS)" LDFLAGS="$(LDFLAGS)" \
 			./configure -q --disable-static --enable-shared \
 				--host=$(CHOST)
 	$(MAKE) -j$(PROCESSORS) -C $(JPEG_DIR)
