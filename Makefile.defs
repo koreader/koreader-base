@@ -129,7 +129,7 @@ LDFLAGS:=-Wl,-O1 -Wl,--as-needed
 
 # NOTE: Follow the NDK's lead
 ifeq ($(TARGET), android)
-	LDFLAGS+=-Wl,--fix-cortex-a8
+	LDFLAGS+=-march=armv7-a -no-canonical-prefixes -Wl,--fix-cortex-a8
 endif
 
 # in case the libstdc++ is to be linked statically, the location of the static
