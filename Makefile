@@ -95,7 +95,7 @@ $(MUPDF_LIB): $(JPEG_LIB) $(FREETYPE_LIB)
 		$(MAKE) -j$(PROCESSORS) -C mupdf generate build="release" CC="$(HOSTCC)" \
 		OS="Other" verbose=1
 	$(MAKE) -j$(PROCESSORS) -C mupdf \
-		LDFLAGS="-L../$(OUTPUT_DIR)" \
+		LDFLAGS="$(LDFLAGS) -L../$(OUTPUT_DIR)" \
 		XCFLAGS="$(CFLAGS) -DNOBUILTINFONT -fPIC -I../jpeg -I../$(FREETYPE_DIR)/include" \
 		CC="$(CC)" \
 		build="release" MUDRAW= MUTOOL= NOX11=yes \
@@ -183,7 +183,7 @@ $(K2PDFOPT_LIB) $(LEPTONICA_LIB) $(TESSERACT_LIB): $(PNG_LIB) $(ZLIB)
 		CXX="$(CXX)" CXXFLAGS="$(CXXFLAGS) -I../$(MUPDF_DIR)/include" \
 		AR="$(AR)" MUPDF_LIB=../$(MUPDF_LIB) \
 		LEPT_CFLAGS="$(CFLAGS) -I$(CURDIR)/$(ZLIB_DIR)/include -I$(CURDIR)/$(PNG_DIR)" \
-		LEPT_LDFLAGS="-L$(CURDIR)/$(ZLIB_DIR)/lib -L$(CURDIR)/$(PNG_BUILD_DIR)" \
+		LEPT_LDFLAGS="$(LDFLAGS) -L$(CURDIR)/$(ZLIB_DIR)/lib -L$(CURDIR)/$(PNG_BUILD_DIR)" \
 		LEPT_PNG_DIR="$(CURDIR)/$(PNG_BUILD_DIR)" \
 		all
 	cp -fL $(K2PDFOPT_DIR)/$(notdir $(K2PDFOPT_LIB)) $(K2PDFOPT_LIB)
@@ -274,10 +274,10 @@ ifeq ("$(shell $(CC) -dumpmachine | sed s/-.*//)","x86_64")
 endif
 	cd $(SDCV_DIR) && ./configure -q \
 		$(if $(EMULATE_READER),,--host=$(CHOST)) \
-		PKG_CONFIG_PATH=../$(GLIB_DIR)/lib/pkgconfig \
-		CXXFLAGS=-I$(CURDIR)/$(ZLIB_DIR)/include \
-		LDFLAGS=-L$(CURDIR)/$(ZLIB_DIR)/lib \
-		&& AM_CXXFLAGS=-static-libstdc++ $(MAKE) -j$(PROCESSORS)
+		PKG_CONFIG_PATH="../$(GLIB_DIR)/lib/pkgconfig" \
+		CXXFLAGS="$(CXXFLAGS) -I$(CURDIR)/$(ZLIB_DIR)/include" \
+		LDFLAGS="$(LDFLAGS) -L$(CURDIR)/$(ZLIB_DIR)/lib" \
+		&& AM_CXXFLAGS="-static-libstdc++" $(MAKE) -j$(PROCESSORS)
 	# restore to original source
 	cd $(SDCV_DIR) && sed -i 's|guint64 page_size|guint32 page_size|' src/lib/lib.cpp
 	cp $(SDCV_DIR)/src/sdcv $(OUTPUT_DIR)/
@@ -293,7 +293,7 @@ $(LUASOCKET):
 	cd $(LUA_SOCKET_DIR) && sed -i 's|MIME_CDIR)/core|MIME_CDIR)/mcore|' src/*
 	$(MAKE) -C $(LUA_SOCKET_DIR) PLAT=linux \
 		CC="$(CC) $(CFLAGS)" LD="$(CC)" \
-		$(if $(ANDROID),MYLDFLAGS=$(CURDIR)/$(LUAJIT_LIB),) \
+		$(if $(ANDROID),MYLDFLAGS="$(LDFLAGS) $(CURDIR)/$(LUAJIT_LIB)",) \
 		LUAINC="$(CURDIR)/$(LUA_DIR)/src" \
 		INSTALL_TOP_LDIR="$(CURDIR)/$(OUTPUT_DIR)/common" \
 		INSTALL_TOP_CDIR="$(CURDIR)/$(OUTPUT_DIR)/common" \
@@ -317,12 +317,12 @@ $(LUASEC): $(OPENSSL_LIB)
 
 $(EVERNOTE_LIB):
 	$(MAKE) -C $(EVERNOTE_SDK_DIR)/thrift CC="$(CC) $(CFLAGS)" \
-		$(if $(ANDROID),LDFLAGS="-lm $(CURDIR)/$(LUAJIT_LIB)",) \
+		$(if $(ANDROID),LDFLAGS="$(LDFLAGS) -lm $(CURDIR)/$(LUAJIT_LIB)",) \
 		OUTPUT_DIR=$(CURDIR)/$(EVERNOTE_PLUGIN_DIR)/lib
 
 $(LUASERIAL_LIB):
 	$(MAKE) -C $(LUASERIAL_DIR) CC="$(CC) $(CFLAGS)" \
-		$(if $(ANDROID),LDFLAGS=$(CURDIR)/$(LUAJIT_LIB),) \
+		$(if $(ANDROID),LDFLAGS="$(LDFLAGS) $(CURDIR)/$(LUAJIT_LIB)",) \
 		OUTPUT_DIR=$(CURDIR)/$(OUTPUT_DIR)/common
 
 luacompat52: $(LUASERIAL_LIB)
