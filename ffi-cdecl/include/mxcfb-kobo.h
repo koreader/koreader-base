@@ -86,13 +86,27 @@ struct mxcfb_rect {
 
 #define EPDC_FLAG_ENABLE_INVERSION		0x01
 #define EPDC_FLAG_FORCE_MONOCHROME		0x02
+
+/* Aura */
+#define EPDC_FLAG_USE_CMAP			0x04
+
 #define EPDC_FLAG_USE_ALT_BUFFER		0x100
 
+/* Aura */
+#define EPDC_FLAG_USE_AAD			0x1000
+
 #define FB_POWERDOWN_DISABLE			-1
-#define FB_TEMP_AUTO_UPDATE_DISABLE     -1
 
 struct mxcfb_alt_buffer_data {
 	void *virt_addr;
+	__u32 phys_addr;
+	__u32 width;	/* width of entire buffer */
+	__u32 height;	/* height of entire buffer */
+	struct mxcfb_rect alt_update_region;	/* region within buffer to update */
+};
+
+/* Aura */
+struct mxcfb_alt_buffer_data_org {
 	__u32 phys_addr;
 	__u32 width;	/* width of entire buffer */
 	__u32 height;	/* height of entire buffer */
@@ -109,6 +123,17 @@ struct mxcfb_update_data {
 	struct mxcfb_alt_buffer_data alt_buffer_data;
 };
 
+/* Aura */
+struct mxcfb_update_data_org {
+	struct mxcfb_rect update_region;
+	__u32 waveform_mode;
+	__u32 update_mode;
+	__u32 update_marker;
+	int temp;
+	uint flags;
+	struct mxcfb_alt_buffer_data_org alt_buffer_data;
+};
+
 /*
  * Structure used to define waveform modes for driver
  * Needed for driver to perform auto-waveform selection
@@ -120,6 +145,15 @@ struct mxcfb_waveform_modes {
 	int mode_gc8;
 	int mode_gc16;
 	int mode_gc32;
+
+	/* Aura */
+	int mode_a2;
+	int mode_gl16;
+	/*
+	 * reagl_flow
+	 */
+	int mode_aa;
+	int mode_aad;
 };
 
 #define MXCFB_WAIT_FOR_VSYNC	_IOW('F', 0x20, u_int32_t)
@@ -140,21 +174,25 @@ struct mxcfb_waveform_modes {
 #define MXCFB_SET_TEMPERATURE		_IOW('F', 0x2C, int32_t)
 #define MXCFB_SET_AUTO_UPDATE_MODE	_IOW('F', 0x2D, __u32)
 #define MXCFB_SEND_UPDATE		_IOW('F', 0x2E, struct mxcfb_update_data)
+
+/* Aura */
+#define MXCFB_SEND_UPDATE_ORG		_IOW('F', 0x2E, struct mxcfb_update_data_org)
+
 #define MXCFB_WAIT_FOR_UPDATE_COMPLETE	_IOW('F', 0x2F, __u32)
 #define MXCFB_SET_PWRDOWN_DELAY		_IOW('F', 0x30, int32_t)
 #define MXCFB_GET_PWRDOWN_DELAY		_IOR('F', 0x31, int32_t)
 #define MXCFB_SET_UPDATE_SCHEME		_IOW('F', 0x32, __u32)
-#define MXCFB_GET_PMIC_TEMPERATURE	_IOR('F', 0x32, int32_t)
-#define MXCFB_SET_BORDER_MODE		_IOR('F', 0x33, int32_t)
-#define MXCFB_SET_EPD_PWR0_CTRL		_IOR('F', 0x34, int32_t)
-#define MXCFB_SET_EPD_PWR2_CTRL		_IOR('F', 0x35, int32_t)
-#define MXCFB_SET_TEMP_AUTO_UPDATE_PERIOD     _IOR('F', 0x36, int32_t)
 #define MXCFB_SET_MERGE_ON_WAVEFORM_MISMATCH	_IOW('F', 0x37, int32_t)
 
 #ifdef __KERNEL__
 
 extern struct fb_videomode mxcfb_modedb[];
 extern int mxcfb_modedb_sz;
+
+enum {
+	MXC_DISP_SPEC_DEV = 0,
+	MXC_DISP_DDC_DEV = 1,
+};
 
 enum {
 	MXCFB_REFRESH_OFF,
@@ -164,6 +202,12 @@ enum {
 
 int mxcfb_set_refresh_mode(struct fb_info *fbi, int mode,
 			   struct mxcfb_rect *update_region);
+void mxcfb_register_mode(int disp_port,
+		const struct fb_videomode *modedb,
+		int num_modes, int dev_mode);
+
+void mxcfb_register_presetup(int disp_port,
+		int (*pre_setup)(struct fb_info *info));
 
 int mxc_elcdif_frame_addr_setup(dma_addr_t phys);
 #endif				/* __KERNEL__ */
