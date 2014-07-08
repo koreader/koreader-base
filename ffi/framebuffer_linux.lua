@@ -66,7 +66,7 @@ local function mxc_update(fb, refarea, refreshtype, waveform_mode, x, y, w, h)
 	-- TODO make the flag configurable from UI,
 	-- e.g., the EPDC_FLAG_ENABLE_INVERSION flag inverts all the pixels on display  09.01 2013 (houqp)
 	refarea[0].flags = 0
-	-- NOTE: related to EPDC_FLAG_USE_ALT_BUFFER?
+	-- NOTE: We're not using EPDC_FLAG_USE_ALT_BUFFER
 	refarea[0].alt_buffer_data.phys_addr = 0
 	refarea[0].alt_buffer_data.width = 0
 	refarea[0].alt_buffer_data.height = 0
