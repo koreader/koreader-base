@@ -334,6 +334,15 @@ static int newDocView(lua_State *L) {
 	if ( !stream.isNull() && props->loadFromStream(stream.get()) ) {
 		doc->text_view->propsApply(props);
 	} else {
+		// Tweak the default settings to be slightly less random
+		props->setString(PROP_FALLBACK_FONT_FACE, "Droid Sans Fallback");
+		props->setString(PROP_HYPHENATION_DICT, "English_US_hyphen_(Alan).pdb");
+		props->setString(PROP_STATUS_FONT_FACE, "Noto Sans");
+		props->setString(PROP_FONT_FACE, "Noto Serif");
+		props->setInt(PROP_FONT_HINTING, 2);	// autohint, to be conservative (some ttf fonts' bytecode is truly crappy)
+		props->setInt(PROP_FONT_KERNING_ENABLED, 1);
+		props->setString("styles.pre.font-face", "font-family: \"Droid Sans Mono\"");
+
 		stream = LVOpenFileStream("data/cr3.ini", LVOM_WRITE);
 		props->saveToStream(stream.get());
 	}
