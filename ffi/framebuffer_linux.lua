@@ -48,7 +48,7 @@ end
 local function kindle_carta_mxc_wait_for_update_complete(fb)
 	-- Wait for the previous update to be completed
 	local carta_update_marker = ffi.new("struct mxcfb_update_marker_data[1]")
-	carta_update_marker[0].update_marker = update_marker;
+	carta_update_marker[0].update_marker = update_marker[0];
 	-- We're not using EPDC_FLAG_TEST_COLLISION, assume 0 is okay.
 	carta_update_marker[0].collision_test = 0;
 	return ffi.C.ioctl(fb.fd, ffi.C.MXCFB_WAIT_FOR_UPDATE_COMPLETE, carta_update_marker)
