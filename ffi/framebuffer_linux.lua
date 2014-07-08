@@ -7,6 +7,8 @@ local dummy = require("ffi/posix_h")
 
 local framebuffer = {}
 local framebuffer_mt = {__index={}}
+local update_marker = ffi.new("uint32_t[1]", 1)
+local initial_update = true
 
 local function einkfb_update(fb, refreshtype, waveform_mode, x, y, w, h)
 	local refarea = ffi.new("struct update_area_t[1]")
@@ -25,6 +27,33 @@ local function einkfb_update(fb, refreshtype, waveform_mode, x, y, w, h)
 	ioctl(fb.fd, ffi.C.FBIO_EINK_UPDATE_DISPLAY_AREA, refarea);
 end
 
+local function mxc_new_update_marker()
+	-- Simply increment our current marker
+	local new_update_marker = ffi.new("uint32_t[1]", update_marker[0] + 1)
+	-- 1 to 16, strictly clamped.
+	if new_update_marker[0] > 16 or new_update_marker[0] < 1 then
+		new_update_marker[0] = 1
+	end
+	-- Keep track of it, and return it
+	update_marker[0] = new_update_marker[0]
+	return new_update_marker[0]
+end
+
+local function kindle_pearl_mxc_wait_for_update_complete(fb)
+	-- Wait for the previous update to be completed
+	print("# Send MXCFB_WAIT_FOR_UPDATE_COMPLETE_PEARL for marker="..update_marker[0])
+	return ffi.C.ioctl(fb.fd, ffi.C.MXCFB_WAIT_FOR_UPDATE_COMPLETE_PEARL, update_marker)
+end
+
+local function kindle_carta_mxc_wait_for_update_complete(fb)
+	-- Wait for the previous update to be completed
+	local carta_update_marker = ffi.new("struct mxcfb_update_marker_data[1]")
+	carta_update_marker[0].update_marker = update_marker;
+	-- We're not using EPDC_FLAG_TEST_COLLISION, assume 0 is okay.
+	carta_update_marker[0].collision_test = 0;
+	return ffi.C.ioctl(fb.fd, ffi.C.MXCFB_WAIT_FOR_UPDATE_COMPLETE, carta_update_marker)
+end
+
 local function mxc_update(fb, refarea, refreshtype, waveform_mode, x, y, w, h)
 	refarea[0].update_mode = refreshtype or 0
 	refarea[0].waveform_mode = waveform_mode or 2
@@ -32,7 +61,8 @@ local function mxc_update(fb, refarea, refreshtype, waveform_mode, x, y, w, h)
 	refarea[0].update_region.top = y or 0
 	refarea[0].update_region.width = w or fb.vinfo.xres
 	refarea[0].update_region.height = h or fb.vinfo.yres
-	refarea[0].update_marker = 1
+	-- Get a new update marker
+	refarea[0].update_marker = mxc_new_update_marker()
 	-- TODO make the flag configurable from UI,
 	-- e.g., the EPDC_FLAG_ENABLE_INVERSION flag inverts all the pixels on display  09.01 2013 (houqp)
 	refarea[0].flags = 0
@@ -45,6 +75,12 @@ local function mxc_update(fb, refarea, refreshtype, waveform_mode, x, y, w, h)
 	refarea[0].alt_buffer_data.alt_update_region.width = 0
 	refarea[0].alt_buffer_data.alt_update_region.height = 0
 	ffi.C.ioctl(fb.fd, ffi.C.MXCFB_SEND_UPDATE, refarea)
+end
+
+local function kindle_mxc_wait_for_update_submission(fb)
+	-- Wait for the current (the one we just sent) update to be submitted
+	print("# Send MXCFB_WAIT_FOR_UPDATE_SUBMISSION for marker="..update_marker[0])
+	return ffi.C.ioctl(fb.fd, ffi.C.MXCFB_WAIT_FOR_UPDATE_SUBMISSION, update_marker)
 end
 
 local function k51_update(fb, refreshtype, waveform_mode, x, y, w, h)
@@ -74,7 +110,9 @@ function framebuffer.open(device)
 		finfo = ffi.new("struct fb_fix_screeninfo"),
 		vinfo = ffi.new("struct fb_var_screeninfo"),
 		fb_size = -1,
+		einkWaitForCompleteFunc = nil,
 		einkUpdateFunc = nil,
+		einkWaitForSubmissionFunc = nil,
 		bb = nil,
 		data = nil
 	}
@@ -119,7 +157,10 @@ function framebuffer.open(device)
 		elseif fb.vinfo.bits_per_pixel == 8 then
 			-- Kindle PaperWhite and KT with 5.1 or later firmware
 			local dummy = require("ffi/mxcfb_kindle_h")
+			-- FIXME: Differentiate between the PW2 and previous models!!
+			fb.einkWaitForCompleteFunc = kindle_pearl_mxc_wait_for_update_complete
 			fb.einkUpdateFunc = k51_update
+			fb.einkWaitForSubmissionFunc = kindle_mxc_wait_for_update_submission
 			fb.bb = BB.new(fb.vinfo.xres, fb.vinfo.yres, BB.TYPE_BB8, fb.data, fb.finfo.line_length)
 			fb.bb:invert()
 		else
@@ -191,10 +232,28 @@ function framebuffer_mt:setOrientation(mode)
 end
 
 function framebuffer_mt.__index:refresh(refreshtype, waveform_mode, x, y, w, h)
+	-- FIXME: Differentiate between devices that need the WaitFor* stuff only on refreshtype == 1!
+	-- Start by checking that our previous update has completed
+	if self.einkWaitForCompleteFunc then
+		-- Dirty hack to avoid waiting on our first update...
+		if initial_update then
+			initial_update = false
+		else
+			-- TODO: Check return value?
+			self:einkWaitForCompleteFunc()
+		end
+	end
+
 	w, x = BB.checkBounds(w or self.bb:getWidth(), x or 0, 0, self.bb:getWidth(), 0xFFFF)
 	h, y = BB.checkBounds(h or self.bb:getHeight(), y or 0, 0, self.bb:getHeight(), 0xFFFF)
 	x, y, w, h = self.bb:getPhysicalRect(x, y, w, h)
 	self:einkUpdateFunc(refreshtype, waveform_mode, x, y, w, h)
+
+	-- Finish by waiting for our curren tupdate to be submitted
+	if self.einkWaitForSubmissionFunc then
+		-- TODO: Check return value?
+		self:einkWaitForSubmissionFunc()
+	end
 end
 
 function framebuffer_mt.__index:getSize()
