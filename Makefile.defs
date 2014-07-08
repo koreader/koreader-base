@@ -90,7 +90,7 @@ ARMV7_A9_ARCH:=-march=armv7-a -mtune=cortex-a9 -mfpu=neon -mthumb
 # Mirror the NDK's armeabi-v7a APP_ABI (cf. #201)
 ANDROID_ARCH:=--sysroot $(SYSROOT)
 ANDROID_ARCH+=-march=armv7-a -mfpu=vfpv3-d16
-ANDROID_ARCH+=-mthumb -DNDEBUG -fno-strict-aliasing -finline-limit=64
+ANDROID_ARCH+=-mthumb -DNDEBUG
 ANDROID_ARCH+=-ffunction-sections -funwind-tables -fstack-protector -no-canonical-prefixes
 
 # Use target-specific CFLAGS
