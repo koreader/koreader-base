@@ -41,7 +41,7 @@ end
 
 local function kindle_pearl_mxc_wait_for_update_complete(fb)
 	-- Wait for the previous update to be completed
-	print("# ["..os.date("%T.%N").."] Send MXCFB_WAIT_FOR_UPDATE_COMPLETE_PEARL for marker="..update_marker[0])
+	print("# Send MXCFB_WAIT_FOR_UPDATE_COMPLETE_PEARL for marker="..update_marker[0])
 	return ffi.C.ioctl(fb.fd, ffi.C.MXCFB_WAIT_FOR_UPDATE_COMPLETE_PEARL, update_marker)
 end
 
@@ -51,7 +51,7 @@ local function kindle_carta_mxc_wait_for_update_complete(fb)
 	carta_update_marker[0].update_marker = update_marker[0];
 	-- We're not using EPDC_FLAG_TEST_COLLISION, assume 0 is okay.
 	carta_update_marker[0].collision_test = 0;
-	print("# ["..os.date("%T.%N").."] Send MXCFB_WAIT_FOR_UPDATE_COMPLETE for marker="..update_marker[0])
+	print("# Send MXCFB_WAIT_FOR_UPDATE_COMPLETE for marker="..update_marker[0])
 	return ffi.C.ioctl(fb.fd, ffi.C.MXCFB_WAIT_FOR_UPDATE_COMPLETE, carta_update_marker)
 end
 
@@ -75,13 +75,13 @@ local function mxc_update(fb, refarea, refreshtype, waveform_mode, x, y, w, h)
 	refarea[0].alt_buffer_data.alt_update_region.left = 0
 	refarea[0].alt_buffer_data.alt_update_region.width = 0
 	refarea[0].alt_buffer_data.alt_update_region.height = 0
-	print("# ["..os.date("%T.%N").."] Send MXCFB_SEND_UPDATE for marker="..update_marker[0])
+	print("# Send MXCFB_SEND_UPDATE for marker="..update_marker[0])
 	ffi.C.ioctl(fb.fd, ffi.C.MXCFB_SEND_UPDATE, refarea)
 end
 
 local function kindle_mxc_wait_for_update_submission(fb)
 	-- Wait for the current (the one we just sent) update to be submitted
-	print("# ["..os.date("%T.%N").."] Send MXCFB_WAIT_FOR_UPDATE_SUBMISSION for marker="..update_marker[0])
+	print("# Send MXCFB_WAIT_FOR_UPDATE_SUBMISSION for marker="..update_marker[0])
 	return ffi.C.ioctl(fb.fd, ffi.C.MXCFB_WAIT_FOR_UPDATE_SUBMISSION, update_marker)
 end
 
@@ -241,7 +241,7 @@ function framebuffer_mt.__index:refresh(refreshtype, waveform_mode, x, y, w, h)
 		if update_marker[0] ~= 0 then
 			-- TODO: Check return value?
 			self:einkWaitForCompleteFunc()
-			print("# ["..os.date("%T.%N").."] Sent MXCFB_WAIT_FOR_UPDATE_COMPLETE(_PEARL) marker="..update_marker[0])
+			print("# Sent MXCFB_WAIT_FOR_UPDATE_COMPLETE(_PEARL) marker="..update_marker[0])
 		end
 	end
 
@@ -249,13 +249,13 @@ function framebuffer_mt.__index:refresh(refreshtype, waveform_mode, x, y, w, h)
 	h, y = BB.checkBounds(h or self.bb:getHeight(), y or 0, 0, self.bb:getHeight(), 0xFFFF)
 	x, y, w, h = self.bb:getPhysicalRect(x, y, w, h)
 	self:einkUpdateFunc(refreshtype, waveform_mode, x, y, w, h)
-	print("# ["..os.date("%T.%N").."] Sent MXCFB_SEND_UPDATE for marker="..update_marker[0])
+	print("# Sent MXCFB_SEND_UPDATE for marker="..update_marker[0])
 
 	-- Finish by waiting for our curren tupdate to be submitted
 	if self.einkWaitForSubmissionFunc then
 		-- TODO: Check return value?
 		self:einkWaitForSubmissionFunc()
-		print("# ["..os.date("%T.%N").."] Sent MXCFB_WAIT_FOR_UPDATE_SUBMISSION for marker="..update_marker[0])
+		print("# Sent MXCFB_WAIT_FOR_UPDATE_SUBMISSION for marker="..update_marker[0])
 	end
 end
 
