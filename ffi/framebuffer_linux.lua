@@ -7,8 +7,8 @@ local dummy = require("ffi/posix_h")
 
 local framebuffer = {}
 local framebuffer_mt = {__index={}}
-local update_marker = ffi.new("uint32_t[1]", 1)
-local initial_update = true
+-- Init our marker to 0, which happens to be an invalid value, so we can detect our first update
+local update_marker = ffi.new("uint32_t[1]", 0)
 
 local function einkfb_update(fb, refreshtype, waveform_mode, x, y, w, h)
 	local refarea = ffi.new("struct update_area_t[1]")
@@ -235,10 +235,8 @@ function framebuffer_mt.__index:refresh(refreshtype, waveform_mode, x, y, w, h)
 	-- FIXME: Differentiate between devices that need the WaitFor* stuff only on refreshtype == 1!
 	-- Start by checking that our previous update has completed
 	if self.einkWaitForCompleteFunc then
-		-- Dirty hack to avoid waiting on our first update...
-		if initial_update then
-			initial_update = false
-		else
+		-- We have nothing to check on our first refresh() call!
+		if update_marker[0] ~= 0 then
 			-- TODO: Check return value?
 			self:einkWaitForCompleteFunc()
 		end
