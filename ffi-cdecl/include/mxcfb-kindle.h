@@ -240,7 +240,7 @@ struct mxcfb_csc_matrix {
 #define MXCFB_SET_AUTO_UPDATE_MODE	_IOW('F', 0x2D, __u32)
 #define MXCFB_SEND_UPDATE		_IOW('F', 0x2E, struct mxcfb_update_data)
 
-/* This evolved on the PW2... */
+/* This evolved on the PW2... Rename the Touch/PW1 constant to differentiate the two. */
 #define MXCFB_WAIT_FOR_UPDATE_COMPLETE_PEARL	_IOW('F', 0x2F, __u32)
 /* PW2 */
 #define MXCFB_WAIT_FOR_UPDATE_COMPLETE	_IOWR('F', 0x2F, struct mxcfb_update_marker_data)
