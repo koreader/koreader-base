@@ -19,6 +19,7 @@ cdecl_const(MXCFB_SEND_UPDATE)
 cdecl_const(MXCFB_WAIT_FOR_UPDATE_COMPLETE)
 
 /* Aura */
+cdecl_struct(mxcfb_alt_buffer_data_org)
 cdecl_struct(mxcfb_update_data_org)
 
 cdecl_const(MXCFB_SEND_UPDATE_ORG)

@@ -14,6 +14,12 @@ struct mxcfb_alt_buffer_data {
   unsigned int height;
   struct mxcfb_rect alt_update_region;
 };
+struct mxcfb_alt_buffer_data_org {
+  unsigned int phys_addr;
+  unsigned int width;
+  unsigned int height;
+  struct mxcfb_rect alt_update_region;
+};
 struct mxcfb_update_data {
   struct mxcfb_rect update_region;
   unsigned int waveform_mode;
