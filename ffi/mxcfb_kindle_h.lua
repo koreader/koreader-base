@@ -1,4 +1,5 @@
 local ffi = require("ffi")
+
 ffi.cdef[[
 struct mxcfb_rect {
   unsigned int top;
@@ -23,11 +24,11 @@ struct mxcfb_update_data {
   unsigned int flags;
   struct mxcfb_alt_buffer_data alt_buffer_data;
 };
-static const int MXCFB_SEND_UPDATE = 1078478382;
 struct mxcfb_update_marker_data {
   unsigned int update_marker;
   unsigned int collision_test;
 };
+static const int MXCFB_SEND_UPDATE = 1078478382;
 static const int MXCFB_WAIT_FOR_UPDATE_COMPLETE = 3221767727;
 static const int MXCFB_WAIT_FOR_UPDATE_COMPLETE_PEARL = 1074021935;
 static const int MXCFB_WAIT_FOR_UPDATE_SUBMISSION = 1074021943;
