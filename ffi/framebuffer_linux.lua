@@ -64,7 +64,7 @@ local function mxc_update(fb, refarea, refreshtype, waveform_mode, x, y, w, h)
 	refarea[0].update_region.height = h or fb.vinfo.yres
 	-- Get a new update marker
 	refarea[0].update_marker = mxc_new_update_marker()
-	-- TODO make the flag configurable from UI,
+	-- TODO: make the flag configurable from UI,
 	-- e.g., the EPDC_FLAG_ENABLE_INVERSION flag inverts all the pixels on display  09.01 2013 (houqp)
 	refarea[0].flags = 0
 	-- NOTE: We're not using EPDC_FLAG_USE_ALT_BUFFER
@@ -115,6 +115,8 @@ function framebuffer.open(device)
 		einkWaitForCompleteFunc = nil,
 		einkUpdateFunc = nil,
 		einkWaitForSubmissionFunc = nil,
+		wait_for_full_updates = false,
+		wait_for_every_updates = false,
 		bb = nil,
 		data = nil
 	}
@@ -159,8 +161,16 @@ function framebuffer.open(device)
 		elseif fb.vinfo.bits_per_pixel == 8 then
 			-- Kindle PaperWhite and KT with 5.1 or later firmware
 			local dummy = require("ffi/mxcfb_kindle_h")
-			-- FIXME: Differentiate between the PW2 and previous models!!
-			fb.einkWaitForCompleteFunc = kindle_pearl_mxc_wait_for_update_complete
+			-- NOTE: We need to differentiate the PW2 from the Touch/PW1... I hope this check is solid enough... (cf #550)
+			if fb.vinfo.xres == 758 and fb.vinfo.yres == 1024 and fb.vinfo.xres_virtual == 768 and fb.vinfo.yres_virtual == 4096 then
+				-- We're a PW2! Use the correct function, and ask to wait for every update.
+				fb.wait_for_every_updates = true
+				fb.einkWaitForCompleteFunc = kindle_carta_mxc_wait_for_update_complete
+			else
+				-- We're a Touch/PW1
+				fb.wait_for_full_updates = true
+				fb.einkWaitForCompleteFunc = kindle_pearl_mxc_wait_for_update_complete
+			end
 			fb.einkUpdateFunc = k51_update
 			fb.einkWaitForSubmissionFunc = kindle_mxc_wait_for_update_submission
 			fb.bb = BB.new(fb.vinfo.xres, fb.vinfo.yres, BB.TYPE_BB8, fb.data, fb.finfo.line_length)
@@ -234,14 +244,16 @@ function framebuffer_mt:setOrientation(mode)
 end
 
 function framebuffer_mt.__index:refresh(refreshtype, waveform_mode, x, y, w, h)
-	-- FIXME: Differentiate between devices that need the WaitFor* stuff only on refreshtype == 1!
-	-- Start by checking that our previous update has completed
-	if self.einkWaitForCompleteFunc then
-		-- We have nothing to check on our first refresh() call!
-		if update_marker[0] ~= 0 then
-			-- TODO: Check return value?
-			self:einkWaitForCompleteFunc()
-			print("# Sent MXCFB_WAIT_FOR_UPDATE_COMPLETE(_PEARL) marker="..update_marker[0])
+	-- The Touch/PW1 only do this for full updates
+	if refreshtype == 1 and self.wait_for_full_updates or self.wait_for_every_updates then
+		-- Start by checking that our previous update has completed
+		if self.einkWaitForCompleteFunc then
+			-- We have nothing to check on our first refresh() call!
+			if update_marker[0] ~= 0 then
+				-- TODO: Check return value?
+				self:einkWaitForCompleteFunc()
+				print("# Sent MXCFB_WAIT_FOR_UPDATE_COMPLETE(_PEARL) marker="..update_marker[0])
+			end
 		end
 	end
 
@@ -252,10 +264,12 @@ function framebuffer_mt.__index:refresh(refreshtype, waveform_mode, x, y, w, h)
 	print("# Sent MXCFB_SEND_UPDATE for marker="..update_marker[0])
 
 	-- Finish by waiting for our curren tupdate to be submitted
-	if self.einkWaitForSubmissionFunc then
-		-- TODO: Check return value?
-		self:einkWaitForSubmissionFunc()
-		print("# Sent MXCFB_WAIT_FOR_UPDATE_SUBMISSION for marker="..update_marker[0])
+	if refreshtype == 1 and self.wait_for_full_updates or self.wait_for_every_updates then
+		if self.einkWaitForSubmissionFunc then
+			-- TODO: Check return value?
+			self:einkWaitForSubmissionFunc()
+			print("# Sent MXCFB_WAIT_FOR_UPDATE_SUBMISSION for marker="..update_marker[0])
+		end
 	end
 end
 
