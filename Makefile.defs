@@ -87,9 +87,11 @@ ARMV7_A8_ARCH:=-march=armv7-a -mtune=cortex-a8 -mfpu=neon -mthumb
 # Cortex A9 (Kindle PW2)
 ARMV7_A9_ARCH:=-march=armv7-a -mtune=cortex-a9 -mfpu=neon -mthumb
 # Android.
-# FIXME: What do we want here? armv6? armv7? ARM? THUMB? Which FPU? Note that Thumb1 generally sucks, so stay w/ -marm unless >= armv7
-# According to https://github.com/android/platform_build/blob/master/core/combo/TARGET_linux-arm.mk, defaults seem to be armv5te
-ANDROID_ARCH:=-march=armv6 -mtune=generic-armv6 -marm
+# Mirror the NDK's armeabi-v7a APP_ABI (cf. #201)
+ANDROID_ARCH:=--sysroot $(SYSROOT)
+ANDROID_ARCH+=-march=armv7-a -mfpu=vfpv3-d16
+ANDROID_ARCH+=-mthumb -DNDEBUG
+ANDROID_ARCH+=-ffunction-sections -funwind-tables -fstack-protector -no-canonical-prefixes
 
 # Use target-specific CFLAGS
 ifeq ($(TARGET), kobo)
@@ -111,7 +113,6 @@ else ifeq ($(TARGET), kindle-legacy)
 	ARM_ARCH+=-mfloat-abi=softfp
 else ifeq ($(TARGET), android)
 	ARM_ARCH:=$(ANDROID_ARCH)
-	# NOTE: That *looks* sane on Android, but who knows...
 	ARM_ARCH+=-mfloat-abi=softfp
 else
 	# Defaults to generic crap
@@ -125,6 +126,11 @@ HOSTCFLAGS:=$(HOST_ARCH) $(BASE_CFLAGS)
 CFLAGS:=$(BASE_CFLAGS)
 CXXFLAGS:=$(BASE_CFLAGS)
 LDFLAGS:=-Wl,-O1 -Wl,--as-needed
+
+# NOTE: Follow the NDK's lead
+ifeq ($(TARGET), android)
+	LDFLAGS+=-march=armv7-a -no-canonical-prefixes -Wl,--fix-cortex-a8
+endif
 
 # in case the libstdc++ is to be linked statically, the location of the static
 # library can be specified in the STATICLIBSTDCPP variable.
