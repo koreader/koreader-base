@@ -66,8 +66,8 @@ $(FREETYPE_LIB):
 		CXXFLAGS="$(CXXFLAGS)" LDFLAGS="$(LDFLAGS)" \
 			../configure -q --prefix=$(CURDIR)/$(FREETYPE_DIR)/build \
 				--disable-static --enable-shared \
-				--without-zlib --without-bzip2 \
-				--without-png \
+				--with-zlib=no --with-bzip2=no \
+				--with-png=no --with-harfbuzz=no \
 				--host=$(CHOST)
 	$(MAKE) -j$(PROCESSORS) -C $(FREETYPE_DIR)/build
 	-$(MAKE) -C $(FREETYPE_DIR)/build install
