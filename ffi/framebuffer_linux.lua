@@ -39,11 +39,13 @@ local function mxc_new_update_marker()
 	return new_update_marker[0]
 end
 
+-- Kindle's MXCFB_WAIT_FOR_UPDATE_COMPLETE_PEARL == 0x4004462f
 local function kindle_pearl_mxc_wait_for_update_complete(fb)
 	-- Wait for the previous update to be completed
 	return ffi.C.ioctl(fb.fd, ffi.C.MXCFB_WAIT_FOR_UPDATE_COMPLETE_PEARL, update_marker)
 end
 
+-- Kindle's MXCFB_WAIT_FOR_UPDATE_COMPLETE == 0xc008462f
 local function kindle_carta_mxc_wait_for_update_complete(fb)
 	-- Wait for the previous update to be completed
 	local carta_update_marker = ffi.new("struct mxcfb_update_marker_data[1]")
@@ -53,6 +55,9 @@ local function kindle_carta_mxc_wait_for_update_complete(fb)
 	return ffi.C.ioctl(fb.fd, ffi.C.MXCFB_WAIT_FOR_UPDATE_COMPLETE, carta_update_marker)
 end
 
+-- Kobo's MXCFB_WAIT_FOR_UPDATE_COMPLETE == 0x4004462f
+
+-- Kindle's MXCFB_SEND_UPDATE == 0x4048462e | Kobo's MXCFB_SEND_UPDATE == 0x4044462e
 local function mxc_update(fb, refarea, refreshtype, waveform_mode, x, y, w, h)
 	refarea[0].update_mode = refreshtype or 0
 	refarea[0].waveform_mode = waveform_mode or 2
@@ -76,6 +81,7 @@ local function mxc_update(fb, refarea, refreshtype, waveform_mode, x, y, w, h)
 	ffi.C.ioctl(fb.fd, ffi.C.MXCFB_SEND_UPDATE, refarea)
 end
 
+-- Kindle's MXCFB_WAIT_FOR_UPDATE_SUBMISSION == 0x40044637
 local function kindle_mxc_wait_for_update_submission(fb)
 	-- Wait for the current (the one we just sent) update to be submitted
 	return ffi.C.ioctl(fb.fd, ffi.C.MXCFB_WAIT_FOR_UPDATE_SUBMISSION, update_marker)
