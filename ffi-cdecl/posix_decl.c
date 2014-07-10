@@ -10,6 +10,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+#include <linux/limits.h>
 
 #include "ffi-cdecl.h"
 #include "ffi-cdecl-luajit.h"
