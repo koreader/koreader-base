@@ -162,15 +162,16 @@ function framebuffer.open(device)
 			-- Kindle PaperWhite and KT with 5.1 or later firmware
 			local dummy = require("ffi/mxcfb_kindle_h")
 			-- NOTE: We need to differentiate the PW2 from the Touch/PW1... I hope this check is solid enough... (cf #550).
-			-- FIXME: Only accurate w/ rotate == 3 [the default, Portrait]
-			if fb.vinfo.xres == 758 and fb.vinfo.yres == 1024 and fb.vinfo.xres_virtual == 768 and fb.vinfo.yres_virtual == 4096 then
+			if fb.finfo.smem_len == 3145728 then
 				-- We're a PW2! Use the correct function, and ask to wait for every update.
 				fb.wait_for_every_updates = true
 				fb.einkWaitForCompleteFunc = kindle_carta_mxc_wait_for_update_complete
-			else
+			elseif fb.finfo.smem_len == 2179072 or fb.finfo.smem_len == 4718592 then
 				-- We're a Touch/PW1
 				fb.wait_for_full_updates = true
 				fb.einkWaitForCompleteFunc = kindle_pearl_mxc_wait_for_update_complete
+			else
+				error("unknown smem_len value for the Kindle mxc eink driver")
 			end
 			fb.einkUpdateFunc = k51_update
 			fb.einkWaitForSubmissionFunc = kindle_mxc_wait_for_update_submission
