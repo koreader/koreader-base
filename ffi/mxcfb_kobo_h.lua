@@ -24,6 +24,12 @@ struct mxcfb_update_data {
 };
 static const int MXCFB_SEND_UPDATE = 1078216238;
 static const int MXCFB_WAIT_FOR_UPDATE_COMPLETE = 1074021935;
+struct mxcfb_alt_buffer_data_org {
+  unsigned int phys_addr;
+  unsigned int width;
+  unsigned int height;
+  struct mxcfb_rect alt_update_region;
+};
 struct mxcfb_update_data_org {
   struct mxcfb_rect update_region;
   unsigned int waveform_mode;
