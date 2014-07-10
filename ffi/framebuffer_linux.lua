@@ -248,7 +248,6 @@ function framebuffer_mt.__index:refresh(refreshtype, waveform_mode, x, y, w, h)
 		if self.einkWaitForCompleteFunc then
 			-- We have nothing to check on our first refresh() call!
 			if update_marker[0] ~= 0 then
-				-- TODO: Check return value?
 				self:einkWaitForCompleteFunc()
 			end
 		end
@@ -262,7 +261,6 @@ function framebuffer_mt.__index:refresh(refreshtype, waveform_mode, x, y, w, h)
 	-- Finish by waiting for our curren tupdate to be submitted
 	if refreshtype == 1 and self.wait_for_full_updates or self.wait_for_every_updates then
 		if self.einkWaitForSubmissionFunc then
-			-- TODO: Check return value?
 			self:einkWaitForSubmissionFunc()
 		end
 	end
