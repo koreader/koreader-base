@@ -227,6 +227,8 @@ FT_Error FT_Done_Face(FT_Face);
 unsigned int FT_Get_Char_Index(FT_Face, long unsigned int);
 FT_Error FT_Load_Char(FT_Face, long unsigned int, int);
 FT_Error FT_Get_Kerning(FT_Face, unsigned int, unsigned int, unsigned int, FT_Vector *);
+void FT_GlyphSlot_Embolden(FT_GlyphSlot);
+void FT_GlyphSlot_Oblique(FT_GlyphSlot);
 static const int FT_LOAD_RENDER = 4;
 static const int FT_FACE_FLAG_KERNING = 64;
 static const int FT_KERNING_DEFAULT = 0;
