@@ -1,8 +1,10 @@
 #include <ft2build.h>
 
-#include "cdecl.h"
+#include "ffi-cdecl.h"
+#include "ffi-cdecl-luajit.h"
 
 #include FT_FREETYPE_H
+#include FT_SYNTHESIS_H
 
 
 cdecl_type(FT_Error)
@@ -92,6 +94,9 @@ cdecl_func(FT_Get_Char_Index)
 cdecl_func(FT_Load_Char)
 
 cdecl_func(FT_Get_Kerning)
+
+cdecl_func(FT_GlyphSlot_Embolden)
+cdecl_func(FT_GlyphSlot_Oblique)
 
 cdecl_const(FT_LOAD_RENDER)
 cdecl_const(FT_FACE_FLAG_KERNING)

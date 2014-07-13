@@ -1,13 +1,14 @@
 local ffi = require("ffi")
+
 ffi.cdef[[
-typedef unsigned int Uint32;
-typedef int Sint32;
-typedef short unsigned int Uint16;
-typedef short int Sint16;
-typedef unsigned char Uint8;
 typedef signed char Sint8;
+typedef unsigned char Uint8;
+typedef short int Sint16;
+typedef short unsigned int Uint16;
+typedef int Sint32;
+typedef unsigned int Uint32;
 struct SDL_keysym {
-  unsigned char scancode;
+  Uint8 scancode;
   enum {
     SDLK_UNKNOWN = 0,
     SDLK_FIRST = 0,
@@ -259,7 +260,58 @@ struct SDL_keysym {
     KMOD_MODE = 16384,
     KMOD_RESERVED = 32768,
   } mod;
-  short unsigned int unicode;
+  Uint16 unicode;
+};
+struct SDL_Rect {
+  Sint16 x;
+  Sint16 y;
+  Uint16 w;
+  Uint16 h;
+};
+struct SDL_Color {
+  Uint8 r;
+  Uint8 g;
+  Uint8 b;
+  Uint8 unused;
+};
+struct SDL_Palette {
+  int ncolors;
+  struct SDL_Color *colors;
+};
+struct SDL_PixelFormat {
+  struct SDL_Palette *palette;
+  Uint8 BitsPerPixel;
+  Uint8 BytesPerPixel;
+  Uint8 Rloss;
+  Uint8 Gloss;
+  Uint8 Bloss;
+  Uint8 Aloss;
+  Uint8 Rshift;
+  Uint8 Gshift;
+  Uint8 Bshift;
+  Uint8 Ashift;
+  Uint32 Rmask;
+  Uint32 Gmask;
+  Uint32 Bmask;
+  Uint32 Amask;
+  Uint32 colorkey;
+  Uint8 alpha;
+};
+struct SDL_Surface {
+  Uint32 flags;
+  struct SDL_PixelFormat *format;
+  int w;
+  int h;
+  Uint16 pitch;
+  void *pixels;
+  int offset;
+  struct private_hwdata *hwdata;
+  struct SDL_Rect clip_rect;
+  Uint32 unused1;
+  Uint32 locked;
+  struct SDL_BlitMap *map;
+  unsigned int format_version;
+  int refcount;
 };
 typedef enum {
   SDL_NOEVENT = 0,
@@ -310,81 +362,81 @@ typedef enum {
   SDL_SYSWMEVENTMASK = 8192,
 } SDL_EventMask;
 struct SDL_ActiveEvent {
-  unsigned char type;
-  unsigned char gain;
-  unsigned char state;
+  Uint8 type;
+  Uint8 gain;
+  Uint8 state;
 };
 struct SDL_KeyboardEvent {
-  unsigned char type;
-  unsigned char which;
-  unsigned char state;
+  Uint8 type;
+  Uint8 which;
+  Uint8 state;
   struct SDL_keysym keysym;
 };
 struct SDL_MouseMotionEvent {
-  unsigned char type;
-  unsigned char which;
-  unsigned char state;
-  short unsigned int x;
-  short unsigned int y;
-  short int xrel;
-  short int yrel;
+  Uint8 type;
+  Uint8 which;
+  Uint8 state;
+  Uint16 x;
+  Uint16 y;
+  Sint16 xrel;
+  Sint16 yrel;
 };
 struct SDL_MouseButtonEvent {
-  unsigned char type;
-  unsigned char which;
-  unsigned char button;
-  unsigned char state;
-  short unsigned int x;
-  short unsigned int y;
+  Uint8 type;
+  Uint8 which;
+  Uint8 button;
+  Uint8 state;
+  Uint16 x;
+  Uint16 y;
 };
 struct SDL_JoyAxisEvent {
-  unsigned char type;
-  unsigned char which;
-  unsigned char axis;
-  short int value;
+  Uint8 type;
+  Uint8 which;
+  Uint8 axis;
+  Sint16 value;
 };
 struct SDL_JoyBallEvent {
-  unsigned char type;
-  unsigned char which;
-  unsigned char ball;
-  short int xrel;
-  short int yrel;
+  Uint8 type;
+  Uint8 which;
+  Uint8 ball;
+  Sint16 xrel;
+  Sint16 yrel;
 };
 struct SDL_JoyHatEvent {
-  unsigned char type;
-  unsigned char which;
-  unsigned char hat;
-  unsigned char value;
+  Uint8 type;
+  Uint8 which;
+  Uint8 hat;
+  Uint8 value;
 };
 struct SDL_JoyButtonEvent {
-  unsigned char type;
-  unsigned char which;
-  unsigned char button;
-  unsigned char state;
+  Uint8 type;
+  Uint8 which;
+  Uint8 button;
+  Uint8 state;
 };
 struct SDL_ResizeEvent {
-  unsigned char type;
+  Uint8 type;
   int w;
   int h;
 };
 struct SDL_ExposeEvent {
-  unsigned char type;
+  Uint8 type;
 };
 struct SDL_QuitEvent {
-  unsigned char type;
+  Uint8 type;
 };
 struct SDL_UserEvent {
-  unsigned char type;
+  Uint8 type;
   int code;
   void *data1;
   void *data2;
 };
 struct SDL_SysWMEvent {
-  unsigned char type;
+  Uint8 type;
   struct SDL_SysWMmsg *msg;
 };
 union SDL_Event {
-  unsigned char type;
+  Uint8 type;
   struct SDL_ActiveEvent active;
   struct SDL_KeyboardEvent key;
   struct SDL_MouseMotionEvent motion;
@@ -399,71 +451,20 @@ union SDL_Event {
   struct SDL_UserEvent user;
   struct SDL_SysWMEvent syswm;
 };
-struct SDL_Rect {
-  short int x;
-  short int y;
-  short unsigned int w;
-  short unsigned int h;
-};
-struct SDL_Color {
-  unsigned char r;
-  unsigned char g;
-  unsigned char b;
-  unsigned char unused;
-};
-struct SDL_Palette {
-  int ncolors;
-  struct SDL_Color *colors;
-};
-struct SDL_PixelFormat {
-  struct SDL_Palette *palette;
-  unsigned char BitsPerPixel;
-  unsigned char BytesPerPixel;
-  unsigned char Rloss;
-  unsigned char Gloss;
-  unsigned char Bloss;
-  unsigned char Aloss;
-  unsigned char Rshift;
-  unsigned char Gshift;
-  unsigned char Bshift;
-  unsigned char Ashift;
-  unsigned int Rmask;
-  unsigned int Gmask;
-  unsigned int Bmask;
-  unsigned int Amask;
-  unsigned int colorkey;
-  unsigned char alpha;
-};
-struct SDL_Surface {
-  unsigned int flags;
-  struct SDL_PixelFormat *format;
-  int w;
-  int h;
-  short unsigned int pitch;
-  void *pixels;
-  int offset;
-  struct private_hwdata *hwdata;
-  struct SDL_Rect clip_rect;
-  unsigned int unused1;
-  unsigned int locked;
-  struct SDL_BlitMap *map;
-  unsigned int format_version;
-  int refcount;
-};
-int SDL_Init(unsigned int) __attribute__((visibility("default")));
-unsigned int SDL_WasInit(unsigned int) __attribute__((visibility("default")));
+int SDL_Init(Uint32) __attribute__((visibility("default")));
+Uint32 SDL_WasInit(Uint32) __attribute__((visibility("default")));
 void SDL_Quit(void) __attribute__((visibility("default")));
-struct SDL_Surface *SDL_SetVideoMode(int, int, int, unsigned int) __attribute__((visibility("default")));
+struct SDL_Surface *SDL_SetVideoMode(int, int, int, Uint32) __attribute__((visibility("default")));
 int SDL_EnableKeyRepeat(int, int) __attribute__((visibility("default")));
 int SDL_WaitEvent(union SDL_Event *) __attribute__((visibility("default")));
 int SDL_PollEvent(union SDL_Event *) __attribute__((visibility("default")));
-unsigned int SDL_GetTicks(void) __attribute__((visibility("default")));
-void SDL_Delay(unsigned int) __attribute__((visibility("default")));
+Uint32 SDL_GetTicks(void) __attribute__((visibility("default")));
+void SDL_Delay(Uint32) __attribute__((visibility("default")));
 int SDL_LockSurface(struct SDL_Surface *) __attribute__((visibility("default")));
 void SDL_UnlockSurface(struct SDL_Surface *) __attribute__((visibility("default")));
-int SDL_FillRect(struct SDL_Surface *, struct SDL_Rect *, unsigned int) __attribute__((visibility("default")));
+int SDL_FillRect(struct SDL_Surface *, struct SDL_Rect *, Uint32) __attribute__((visibility("default")));
 int SDL_Flip(struct SDL_Surface *) __attribute__((visibility("default")));
-unsigned int SDL_MapRGB(const struct SDL_PixelFormat *const, const unsigned char, const unsigned char, const unsigned char) __attribute__((visibility("default")));
+Uint32 SDL_MapRGB(const struct SDL_PixelFormat *const, const Uint8, const Uint8, const Uint8) __attribute__((visibility("default")));
 static const int SDL_INIT_TIMER = 1;
 static const int SDL_INIT_AUDIO = 16;
 static const int SDL_INIT_VIDEO = 32;

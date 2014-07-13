@@ -3,7 +3,8 @@
 
 #include <linux/ioctl.h>
 
-#include "cdecl.h"
+#include "ffi-cdecl.h"
+#include "ffi-cdecl-luajit.h"
 
 cdecl_const(FBIOGET_FSCREENINFO)
 cdecl_const(FBIOGET_VSCREENINFO)

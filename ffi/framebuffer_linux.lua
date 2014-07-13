@@ -7,6 +7,8 @@ local dummy = require("ffi/posix_h")
 
 local framebuffer = {}
 local framebuffer_mt = {__index={}}
+-- Init our marker to 0, which happens to be an invalid value, so we can detect our first update
+local update_marker = ffi.new("uint32_t[1]", 0)
 
 local function einkfb_update(fb, refreshtype, waveform_mode, x, y, w, h)
 	local refarea = ffi.new("struct update_area_t[1]")
@@ -25,6 +27,37 @@ local function einkfb_update(fb, refreshtype, waveform_mode, x, y, w, h)
 	ioctl(fb.fd, ffi.C.FBIO_EINK_UPDATE_DISPLAY_AREA, refarea);
 end
 
+local function mxc_new_update_marker()
+	-- Simply increment our current marker
+	local new_update_marker = ffi.new("uint32_t[1]", update_marker[0] + 1)
+	-- 1 to 16, strictly clamped.
+	if new_update_marker[0] > 16 or new_update_marker[0] < 1 then
+		new_update_marker[0] = 1
+	end
+	-- Keep track of it, and return it
+	update_marker[0] = new_update_marker[0]
+	return new_update_marker[0]
+end
+
+-- Kindle's MXCFB_WAIT_FOR_UPDATE_COMPLETE_PEARL == 0x4004462f
+local function kindle_pearl_mxc_wait_for_update_complete(fb)
+	-- Wait for the previous update to be completed
+	return ffi.C.ioctl(fb.fd, ffi.C.MXCFB_WAIT_FOR_UPDATE_COMPLETE_PEARL, update_marker)
+end
+
+-- Kindle's MXCFB_WAIT_FOR_UPDATE_COMPLETE == 0xc008462f
+local function kindle_carta_mxc_wait_for_update_complete(fb)
+	-- Wait for the previous update to be completed
+	local carta_update_marker = ffi.new("struct mxcfb_update_marker_data[1]")
+	carta_update_marker[0].update_marker = update_marker[0];
+	-- We're not using EPDC_FLAG_TEST_COLLISION, assume 0 is okay.
+	carta_update_marker[0].collision_test = 0;
+	return ffi.C.ioctl(fb.fd, ffi.C.MXCFB_WAIT_FOR_UPDATE_COMPLETE, carta_update_marker)
+end
+
+-- Kobo's MXCFB_WAIT_FOR_UPDATE_COMPLETE == 0x4004462f
+
+-- Kindle's MXCFB_SEND_UPDATE == 0x4048462e | Kobo's MXCFB_SEND_UPDATE == 0x4044462e
 local function mxc_update(fb, refarea, refreshtype, waveform_mode, x, y, w, h)
 	refarea[0].update_mode = refreshtype or 0
 	refarea[0].waveform_mode = waveform_mode or 2
@@ -32,11 +65,12 @@ local function mxc_update(fb, refarea, refreshtype, waveform_mode, x, y, w, h)
 	refarea[0].update_region.top = y or 0
 	refarea[0].update_region.width = w or fb.vinfo.xres
 	refarea[0].update_region.height = h or fb.vinfo.yres
-	refarea[0].update_marker = 1
-	-- TODO make the flag configurable from UI,
+	-- Get a new update marker
+	refarea[0].update_marker = mxc_new_update_marker()
+	-- TODO: make the flag configurable from UI,
 	-- e.g., the EPDC_FLAG_ENABLE_INVERSION flag inverts all the pixels on display  09.01 2013 (houqp)
 	refarea[0].flags = 0
-	-- NOTE: related to EPDC_FLAG_USE_ALT_BUFFER?
+	-- NOTE: We're not using EPDC_FLAG_USE_ALT_BUFFER
 	refarea[0].alt_buffer_data.phys_addr = 0
 	refarea[0].alt_buffer_data.width = 0
 	refarea[0].alt_buffer_data.height = 0
@@ -45,6 +79,12 @@ local function mxc_update(fb, refarea, refreshtype, waveform_mode, x, y, w, h)
 	refarea[0].alt_buffer_data.alt_update_region.width = 0
 	refarea[0].alt_buffer_data.alt_update_region.height = 0
 	ffi.C.ioctl(fb.fd, ffi.C.MXCFB_SEND_UPDATE, refarea)
+end
+
+-- Kindle's MXCFB_WAIT_FOR_UPDATE_SUBMISSION == 0x40044637
+local function kindle_mxc_wait_for_update_submission(fb)
+	-- Wait for the current (the one we just sent) update to be submitted
+	return ffi.C.ioctl(fb.fd, ffi.C.MXCFB_WAIT_FOR_UPDATE_SUBMISSION, update_marker)
 end
 
 local function k51_update(fb, refreshtype, waveform_mode, x, y, w, h)
@@ -74,7 +114,11 @@ function framebuffer.open(device)
 		finfo = ffi.new("struct fb_fix_screeninfo"),
 		vinfo = ffi.new("struct fb_var_screeninfo"),
 		fb_size = -1,
+		einkWaitForCompleteFunc = nil,
 		einkUpdateFunc = nil,
+		einkWaitForSubmissionFunc = nil,
+		wait_for_full_updates = false,
+		wait_for_every_updates = false,
 		bb = nil,
 		data = nil
 	}
@@ -119,7 +163,20 @@ function framebuffer.open(device)
 		elseif fb.vinfo.bits_per_pixel == 8 then
 			-- Kindle PaperWhite and KT with 5.1 or later firmware
 			local dummy = require("ffi/mxcfb_kindle_h")
+			-- NOTE: We need to differentiate the PW2 from the Touch/PW1... I hope this check is solid enough... (cf #550).
+			if fb.finfo.smem_len == 3145728 then
+				-- We're a PW2! Use the correct function, and ask to wait for every update.
+				fb.wait_for_every_updates = true
+				fb.einkWaitForCompleteFunc = kindle_carta_mxc_wait_for_update_complete
+			elseif fb.finfo.smem_len == 2179072 or fb.finfo.smem_len == 4718592 then
+				-- We're a Touch/PW1
+				fb.wait_for_full_updates = true
+				fb.einkWaitForCompleteFunc = kindle_pearl_mxc_wait_for_update_complete
+			else
+				error("unknown smem_len value for the Kindle mxc eink driver")
+			end
 			fb.einkUpdateFunc = k51_update
+			fb.einkWaitForSubmissionFunc = kindle_mxc_wait_for_update_submission
 			fb.bb = BB.new(fb.vinfo.xres, fb.vinfo.yres, BB.TYPE_BB8, fb.data, fb.finfo.line_length)
 			fb.bb:invert()
 		else
@@ -191,10 +248,28 @@ function framebuffer_mt:setOrientation(mode)
 end
 
 function framebuffer_mt.__index:refresh(refreshtype, waveform_mode, x, y, w, h)
+	-- The Touch/PW1 only do this for full updates
+	if refreshtype == 1 and self.wait_for_full_updates or self.wait_for_every_updates then
+		-- Start by checking that our previous update has completed
+		if self.einkWaitForCompleteFunc then
+			-- We have nothing to check on our first refresh() call!
+			if update_marker[0] ~= 0 then
+				self:einkWaitForCompleteFunc()
+			end
+		end
+	end
+
 	w, x = BB.checkBounds(w or self.bb:getWidth(), x or 0, 0, self.bb:getWidth(), 0xFFFF)
 	h, y = BB.checkBounds(h or self.bb:getHeight(), y or 0, 0, self.bb:getHeight(), 0xFFFF)
 	x, y, w, h = self.bb:getPhysicalRect(x, y, w, h)
 	self:einkUpdateFunc(refreshtype, waveform_mode, x, y, w, h)
+
+	-- Finish by waiting for our curren tupdate to be submitted
+	if refreshtype == 1 and self.wait_for_full_updates or self.wait_for_every_updates then
+		if self.einkWaitForSubmissionFunc then
+			self:einkWaitForSubmissionFunc()
+		end
+	end
 end
 
 function framebuffer_mt.__index:getSize()

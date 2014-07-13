@@ -1,6 +1,7 @@
 #include <sys/inotify.h>
 
-#include "cdecl.h"
+#include "ffi-cdecl.h"
+#include "ffi-cdecl-luajit.h"
 
 cdecl_const(IN_ACCESS)
 cdecl_const(IN_ATTRIB)

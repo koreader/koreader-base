@@ -10,8 +10,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+#include <linux/limits.h>
 
-#include "cdecl.h"
+#include "ffi-cdecl.h"
+#include "ffi-cdecl-luajit.h"
 
 cdecl_type(size_t)
 cdecl_type(off_t)
@@ -50,6 +52,7 @@ cdecl_const(PROT_READ)
 cdecl_const(PROT_WRITE)
 cdecl_const(MAP_SHARED)
 cdecl_const(MAP_FAILED)
+cdecl_const(PATH_MAX)
 cdecl_func(mmap)
 
 cdecl_func(ioctl)

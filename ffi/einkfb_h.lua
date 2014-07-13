@@ -1,4 +1,5 @@
 local ffi = require("ffi")
+
 ffi.cdef[[
 enum fx_type {
   fx_mask = 11,

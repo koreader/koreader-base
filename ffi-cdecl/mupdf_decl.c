@@ -1,6 +1,7 @@
 #include <mupdf/fitz.h>
 
-#include "cdecl.h"
+#include "ffi-cdecl.h"
+#include "ffi-cdecl-luajit.h"
 
 cdecl_type(fz_alloc_context)
 cdecl_type(fz_colorspace)
