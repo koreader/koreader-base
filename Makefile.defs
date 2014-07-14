@@ -76,8 +76,8 @@ BASE_CFLAGS:=-O2 -ffast-math -pipe -fomit-frame-pointer
 # fixup (echo 2 > /proc/cpu/alignment) in the launch script,
 # but that's terribly ugly, and might severly nerf performance...
 # That said, MG 2012.03 is still using GCC 4.6.3, so we're good ;).
-KINDLE_LEGACY_COMPAT_CFLAGS:=-fno-stack-protector -U_FORTIFY_SOURCE -D_GNU_SOURCE -fno-finite-math-only
-KINDLE_LEGACY_COMPAT_CXXFLAGS:=-fno-use-cxa-atexit
+LEGACY_COMPAT_CFLAGS:=-fno-stack-protector -U_FORTIFY_SOURCE -D_GNU_SOURCE -fno-finite-math-only
+LEGACY_COMPAT_CXXFLAGS:=-fno-use-cxa-atexit
 ARMV6_1136_ARCH:=-march=armv6j -mtune=arm1136jf-s -mfpu=vfp -marm
 
 # Generic armv6
@@ -98,10 +98,13 @@ ifeq ($(TARGET), kobo)
 	# NOTE: If we only care about Kobos w/ a Touch screen, we're good.
 	ARM_ARCH:=$(ARMV7_A8_ARCH)
 	ARM_ARCH+=-mfloat-abi=hard
+	COMPAT_CFLAGS:=$(LEGACY_COMPAT_CFLAGS)
+	COMPAT_CXXFLAGS:=$(LEGACY_COMPAT_CXXFLAGS)
 else ifeq ($(TARGET), kindle)
-	# FIXME: Will possibly need compat flags, depending on how far away from an actual Kindle the TC used by the nightlies is...
 	ARM_ARCH:=$(ARMV7_A8_ARCH)
 	ARM_ARCH+=-mfloat-abi=softfp
+	COMPAT_CFLAGS:=$(LEGACY_COMPAT_CFLAGS)
+	COMPAT_CXXFLAGS:=$(LEGACY_COMPAT_CXXFLAGS)
 else ifeq ($(TARGET), kindle5)
 	ARM_ARCH:=$(ARMV7_A8_ARCH)
 	ARM_ARCH+=-mfloat-abi=softfp
@@ -109,8 +112,10 @@ else ifeq ($(TARGET), kindlepw2)
 	ARM_ARCH:=$(ARMV7_A9_ARCH)
 	ARM_ARCH+=-mfloat-abi=softfp
 else ifeq ($(TARGET), kindle-legacy)
-	ARM_ARCH:=$(KINDLE_LEGACY_COMPAT_CFLAGS)  $(KINDLE_LEGACY_COMPAT_CXXFLAGS) $(ARMV6_1136_ARCH)
+	ARM_ARCH:=$(ARMV6_1136_ARCH)
 	ARM_ARCH+=-mfloat-abi=softfp
+	COMPAT_CFLAGS:=$(LEGACY_COMPAT_CFLAGS)
+	COMPAT_CXXFLAGS:=$(LEGACY_COMPAT_CXXFLAGS)
 else ifeq ($(TARGET), android)
 	ARM_ARCH:=$(ANDROID_ARCH)
 	ARM_ARCH+=-mfloat-abi=softfp
@@ -165,8 +170,8 @@ else
 	CC:=$(strip $(CCACHE) $(CC))
 	CXX:=$(strip $(CCACHE) $(CXX))
 	AR:=$(strip $(CCACHE) $(AR))
-	CFLAGS+= $(ARM_ARCH)
-	CXXFLAGS+= $(ARM_ARCH)
+	CFLAGS+= $(ARM_ARCH) $(COMPAT_CFLAGS)
+	CXXFLAGS+= $(ARM_ARCH) $(COMPAT_CFLAGS) $(COMPAT_CXXFLAGS)
 endif
 
 # set a flag that C code can differenciate on for Kobo code
