@@ -1,6 +1,6 @@
 PROJECT(kpvcrlib)
 cmake_minimum_required(VERSION 2.6)
-enable_language(C ASM)
+enable_language(C CXX ASM)
 
 set(CMAKE_ASM_COMPILER ${CMAKE_C_COMPILER})
 set(CMAKE_ASM_COMPILER_ARG1 ${CMAKE_C_COMPILER_ARG1})
