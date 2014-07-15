@@ -83,7 +83,7 @@ MG2K12_COMPAT_CXXFLAGS:=-fno-use-cxa-atexit
 # For ref:
 ## ssp & FORTIFY are for the *_chk private GLIBC symbols
 ## no-finite-maths-only is for the *_finite LM symbols (byproduct of using ffast-maths)
-## GNU_SOURCE is a very heavy-handed way of getting rid of the c99_sscanf stuff
+## GNU_SOURCE is a very heavy-handed way of getting rid of the __isoc99_sscanf stuff
 ## no-use-cxa-atexit is to get rid of cxa_atexit
 UBUNTU_COMPAT_CFLAGS:=-fno-finite-math-only -fno-stack-protector -U_FORTIFY_SOURCE
 
