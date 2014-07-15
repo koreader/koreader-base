@@ -76,13 +76,25 @@ BASE_CFLAGS:=-O2 -ffast-math -pipe -fomit-frame-pointer
 # fixup (echo 2 > /proc/cpu/alignment) in the launch script,
 # but that's terribly ugly, and might severly nerf performance...
 # That said, MG 2012.03 is still using GCC 4.6.3, so we're good ;).
-LEGACY_COMPAT_CFLAGS:=-fno-stack-protector -U_FORTIFY_SOURCE -D_GNU_SOURCE -fno-finite-math-only
-LEGACY_COMPAT_CXXFLAGS:=-fno-use-cxa-atexit
-ARMV6_1136_ARCH:=-march=armv6j -mtune=arm1136jf-s -mfpu=vfp -marm
+#
+# For ref:
+## no-ssp & killing FORTIFY_SOURCE are for the *_chk private GLIBC symbols [@GLIBC_2.11 & @GLIBC_2.15]
+## no-finite-maths-only is for the *_finite LM symbols (byproduct of using ffast-maths) [@GLIBC_2.15]
+## GNU_SOURCE is a very heavy-handed way of getting rid of the __isoc99_sscanf stuff [@GLIBC_2.7]
+## no-use-cxa-atexit is to get rid of cxa_atexit
+#
+# FIXME: If we cared, we'd probably need to do something to convince libzmq not to enable support for eventfd [@GLIBC_2.7]
+MG2K12_COMPAT_CFLAGS:=-fno-stack-protector -U_FORTIFY_SOURCE -D_GNU_SOURCE -fno-finite-math-only
+MG2K12_COMPAT_CXXFLAGS:=-fno-use-cxa-atexit
 
+# Same deal, but when targeting the K5/Kobo & using Ubuntu's Linaro TCs
+UBUNTU_COMPAT_CFLAGS:=-fno-finite-math-only -fno-stack-protector -U_FORTIFY_SOURCE
+
+# ARM 1136JF-S (Legacy Kidle devices [K2/K3/DX/DXG])
+ARMV6_1136_ARCH:=-march=armv6j -mtune=arm1136jf-s -mfpu=vfp -marm
 # Generic armv6
 ARMV6_GENERIC_ARCH:=march=armv6 -mtune=generic-armv6 -marm
-# Cortex A8 (Kindle Touch, PW1, Kobos since the Touch)
+# Cortex A8 (K4, Kindle Touch, PW1, Kobos since the Touch)
 ARMV7_A8_ARCH:=-march=armv7-a -mtune=cortex-a8 -mfpu=neon -mthumb
 # Cortex A9 (Kindle PW2)
 ARMV7_A9_ARCH:=-march=armv7-a -mtune=cortex-a9 -mfpu=neon -mthumb
@@ -98,13 +110,11 @@ ifeq ($(TARGET), kobo)
 	# NOTE: If we only care about Kobos w/ a Touch screen, we're good.
 	ARM_ARCH:=$(ARMV7_A8_ARCH)
 	ARM_ARCH+=-mfloat-abi=hard
-	COMPAT_CFLAGS:=$(LEGACY_COMPAT_CFLAGS)
-	COMPAT_CXXFLAGS:=$(LEGACY_COMPAT_CXXFLAGS)
+	COMPAT_CFLAGS:=$(UBUNTU_COMPAT_CFLAGS)
 else ifeq ($(TARGET), kindle)
 	ARM_ARCH:=$(ARMV7_A8_ARCH)
 	ARM_ARCH+=-mfloat-abi=softfp
-	COMPAT_CFLAGS:=$(LEGACY_COMPAT_CFLAGS)
-	COMPAT_CXXFLAGS:=$(LEGACY_COMPAT_CXXFLAGS)
+	COMPAT_CFLAGS:=$(UBUNTU_COMPAT_CFLAGS)
 else ifeq ($(TARGET), kindle5)
 	ARM_ARCH:=$(ARMV7_A8_ARCH)
 	ARM_ARCH+=-mfloat-abi=softfp
@@ -114,8 +124,8 @@ else ifeq ($(TARGET), kindlepw2)
 else ifeq ($(TARGET), kindle-legacy)
 	ARM_ARCH:=$(ARMV6_1136_ARCH)
 	ARM_ARCH+=-mfloat-abi=softfp
-	COMPAT_CFLAGS:=$(LEGACY_COMPAT_CFLAGS)
-	COMPAT_CXXFLAGS:=$(LEGACY_COMPAT_CXXFLAGS)
+	COMPAT_CFLAGS:=$(MG2K12_COMPAT_CFLAGS)
+	COMPAT_CXXFLAGS:=$(MG2K12_COMPAT_CXXFLAGS)
 else ifeq ($(TARGET), android)
 	ARM_ARCH:=$(ANDROID_ARCH)
 	ARM_ARCH+=-mfloat-abi=softfp
