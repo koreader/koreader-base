@@ -49,3 +49,6 @@
 [submodule "zyre"]
 	path = zyre
 	url = https://github.com/zeromq/zyre.git
+[submodule "zsync"]
+	path = zsync
+	url = http://zsync.moria.org.uk/zsync.git

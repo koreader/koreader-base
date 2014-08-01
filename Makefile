@@ -4,7 +4,9 @@ include Makefile.defs
 all: $(OUTPUT_DIR)/libs $(if $(ANDROID),,$(LUAJIT)) \
 		$(if $(ANDROID),$(LUAJIT_LIB),) \
 		$(LUAJIT_JIT) \
+		$(if $(ANDROID),,$(OUTPUT_DIR)/tar) \
 		$(if $(ANDROID),,$(OUTPUT_DIR)/sdcv) \
+		$(if $(ANDROID),,$(OUTPUT_DIR)/zsync) \
 		libs $(OUTPUT_DIR)/spec/base $(OUTPUT_DIR)/common \
 		$(OUTPUT_DIR)/plugins $(LUASOCKET) $(LUASEC) \
 		$(if $(ANDROID),luacompat52 lualongnumber,) \
@@ -12,7 +14,9 @@ all: $(OUTPUT_DIR)/libs $(if $(ANDROID),,$(LUAJIT)) \
 		$(ZMQ_LIB) $(CZMQ_LIB) $(FILEMQ_LIB) $(ZYRE_LIB)
 ifndef EMULATE_READER
 	STRIP_FILES="\
+		$(if $(ANDROID),,$(OUTPUT_DIR)/tar) \
 		$(if $(ANDROID),,$(OUTPUT_DIR)/sdcv) \
+		$(if $(ANDROID),,$(OUTPUT_DIR)/zsync) \
 		$(if $(ANDROID),,$(LUAJIT)) \
 		$(OUTPUT_DIR)/libs/*.so*" ;\
 	$(STRIP) --strip-unneeded $${STRIP_FILES} ;\
@@ -283,6 +287,25 @@ endif
 	cp $(SDCV_DIR)/src/sdcv $(OUTPUT_DIR)/
 
 # ===========================================================================
+# tar: tar package for zsync
+
+$(OUTPUT_DIR)/tar:
+	cd $(TAR_DIR) && ./configure -q LIBS="-lrt" \
+		$(if $(EMULATE_READER),,--host=$(CHOST)) \
+		&& $(MAKE) -j$(PROCESSORS)
+	cp $(TAR_DIR)/src/tar $(OUTPUT_DIR)/
+
+# ===========================================================================
+# zsync: rsync over HTTP
+
+$(OUTPUT_DIR)/zsync:
+	cd $(ZSYNC_DIR) && aclocal ; autoheader; \
+		automake --force-missing --add-missing ; autoconf && ./configure \
+		$(if $(EMULATE_READER),,--host=$(CHOST)) \
+		&& $(MAKE) -j$(PROCESSORS)
+	cp $(ZSYNC_DIR)/zsync $(OUTPUT_DIR)/
+
+# ===========================================================================
 # common lua library for networking
 $(LUASOCKET):
 	cd $(LUA_SOCKET_DIR) && sed -i 's|socket\.core|socket\.score|' src/*
@@ -485,6 +508,12 @@ fetchthirdparty:
 	[ `md5sum openssl-1.0.1h.tar.gz |cut -d\  -f1` != 8d6d684a9430d5cc98a62a5d8fbda8cf ] \
 		&& rm openssl-1.0.1h.tar.gz && wget http://www.openssl.org/source/openssl-1.0.1h.tar.gz || true
 	tar zxf openssl-1.0.1h.tar.gz
+	# download tar for zsync
+	[ ! -f tar-1.28.tar.gz ] \
+		&& wget http://ftp.gnu.org/gnu/tar/tar-1.28.tar.gz || true
+	[ `md5sum tar-1.28.tar.gz |cut -d\  -f1` != 6ea3dbea1f2b0409b234048e021a9fd7 ] \
+		&& rm tar-1.28.tar.gz && wget http://ftp.gnu.org/gnu/tar/tar-1.28.tar.gz || true
+	tar zxf tar-1.28.tar.gz
 
 
 # ===========================================================================
@@ -500,6 +529,8 @@ clean:
 	-$(MAKE) -C $(SDCV_DIR) clean
 	-$(MAKE) -C $(GLIB_DIR) clean uninstall
 	-$(MAKE) -C $(ZLIB_DIR) clean uninstall
+	-$(MAKE) -C $(ZSYNC_DIR) clean
+	-$(MAKE) -C $(TAR_DIR) clean
 	-$(MAKE) -C $(FREETYPE_DIR)/build clean uninstall
 	-$(MAKE) -C $(LUA_SOCKET_DIR) clean
 	-$(MAKE) -C $(LUA_SEC_DIR) clean
