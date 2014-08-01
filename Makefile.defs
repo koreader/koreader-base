@@ -280,6 +280,9 @@ CZMQ_LIB=$(OUTPUT_DIR)/libs/libczmq.so.1
 FILEMQ_LIB=$(OUTPUT_DIR)/libs/libfmq.so.1
 ZYRE_LIB=$(OUTPUT_DIR)/libs/libzyre.so.1
 
+ZSYNC_DIR=zsync/c
+TAR_DIR=tar-1.28
+
 # must point to directory with *.ttf fonts for crengine
 MUPDF_TTF_FONTS_DIR=$(MUPDF_DIR)/resources/fonts
 
