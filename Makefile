@@ -299,8 +299,7 @@ $(OUTPUT_DIR)/tar:
 # zsync: rsync over HTTP
 
 $(OUTPUT_DIR)/zsync:
-	cd $(ZSYNC_DIR) && aclocal ; autoheader; \
-		automake --force-missing --add-missing ; autoconf && ./configure \
+	cd $(ZSYNC_DIR) && autoreconf -fi && ./configure -q \
 		$(if $(EMULATE_READER),,--host=$(CHOST)) \
 		&& $(MAKE) -j$(PROCESSORS)
 	cp $(ZSYNC_DIR)/zsync $(OUTPUT_DIR)/
