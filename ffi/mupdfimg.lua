@@ -11,7 +11,8 @@ require("ffi/mupdf_h")
 local Image = {}
 
 function Image:initContext(cache_size)
-	self.context = mupdf.fz_new_context_imp(nil, nil, cache_size or bit.lshift(8, 20), "1.4")
+	-- Remember to change library version when upgrading MuPDF!
+	self.context = mupdf.fz_new_context_imp(nil, nil, cache_size or bit.lshift(8, 20), "1.5")
 end
 
 function Image:loadImage(filename, width, height)

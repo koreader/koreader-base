@@ -1,5 +1,5 @@
 diff --git a/source/pdf/pdf-font.c b/source/pdf/pdf-font.c
-index 8454e92..0d3bfea 100644
+index c6dc712..82385a4 100644
 --- a/source/pdf/pdf-font.c
 +++ b/source/pdf/pdf-font.c
 @@ -188,7 +188,12 @@ pdf_load_builtin_font(fz_context *ctx, pdf_font_desc *fontdesc, char *fontname,
@@ -28,12 +28,12 @@ index 8454e92..0d3bfea 100644
  		fontdesc->font->ft_bold = bold && !ft_is_bold(fontdesc->font->ft_face);
  		fontdesc->font->ft_italic = italic && !ft_is_italic(fontdesc->font->ft_face);
  	}
-@@ -234,7 +244,12 @@ pdf_load_substitute_cjk_font(fz_context *ctx, pdf_font_desc *fontdesc, char *fon
- 			fz_throw(ctx, FZ_ERROR_GENERIC, "cannot find builtin CJK font");
+@@ -235,7 +245,12 @@ pdf_load_substitute_cjk_font(fz_context *ctx, pdf_font_desc *fontdesc, char *fon
  
- 		/* a glyph bbox cache is too big for droid sans fallback (51k glyphs!) */
+ 		/* The DroidSansFallback fonts have both H and V variants in the TTC */
+ 		/* A glyph bbox cache is too big for DroidSansFallback (51k glyphs!) */
 +#ifndef NOBUILTINFONT
- 		fontdesc->font = fz_new_font_from_memory(ctx, fontname, data, len, 0, 0);
+ 		fontdesc->font = fz_new_font_from_memory(ctx, fontname, data, len, fontdesc->wmode, 0);
 +#else
 +		fontdesc->font = fz_new_font_from_file(ctx, fontname, data, 0, 1);
 +		free(data);
@@ -42,7 +42,7 @@ index 8454e92..0d3bfea 100644
  
  	fontdesc->font->ft_substitute = 1;
 diff --git a/source/pdf/pdf-fontfile.c b/source/pdf/pdf-fontfile.c
-index 2e33768..a5ab5e0 100644
+index 2e33768..070c331 100644
 --- a/source/pdf/pdf-fontfile.c
 +++ b/source/pdf/pdf-fontfile.c
 @@ -14,6 +14,8 @@
@@ -54,7 +54,7 @@ index 2e33768..a5ab5e0 100644
  #ifdef NOCJK
  #define NOCJKFONT
  #endif
-@@ -151,3 +153,112 @@ pdf_lookup_substitute_cjk_font(int ros, int serif, unsigned int *len)
+@@ -151,3 +153,116 @@ pdf_lookup_substitute_cjk_font(int ros, int serif, unsigned int *len)
  	return NULL;
  #endif
  }
@@ -164,6 +164,10 @@ index 2e33768..a5ab5e0 100644
 +{
 +	*len = 0;
 +	return get_font_file("droid/DroidSansFallback.ttf");
++}
++
++void pdf_install_load_system_font_funcs(fz_context *ctx)
++{
 +}
 +
 +#endif // NOBUILTINFONT
