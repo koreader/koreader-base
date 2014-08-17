@@ -14,15 +14,18 @@ function Image:initContext(cache_size)
 	self.context = mupdf.fz_new_context_imp(nil, nil, cache_size or bit.lshift(8, 20), "1.4")
 end
 
-function Image:_getFileData(filename)
-	local f = io.open(filename)
-	local data = f:read("*a")
-	f:close()
-	return data
-end
-
-function Image:loadPNGData(data)
-	self.pixmap = mupdf.fz_load_png(self.context, ffi.cast("unsigned char*", data), #data)
+function Image:loadImage(filename, width, height)
+	local file = io.open(filename)
+    if file then
+	    local data = file:read("*a")
+	    file:close()
+	    self.image = mupdf.fz_new_image_from_data(self.context,
+                        ffi.cast("unsigned char*", data), #data)
+        if self.image ~= nil then
+            self.pixmap = mupdf.fz_new_pixmap_from_image(self.context,
+                        self.image, width or -1, height or -1)
+        end
+    end
 end
 
 function Image:toBlitBuffer()
@@ -44,15 +47,25 @@ function Image:freeContext()
 		mupdf.fz_drop_pixmap(self.context, self.pixmap)
 		self.pixmap = nil
 	end
+    if self.image ~= nil then
+        mupdf.fz_drop_image(self.context, self.image)
+        self.image = nil
+    end
+
+    --[[ FIXME: segmentation fault when calling fz_free_context if we called
+    -- fz_drop_image first. Although valgrind shows that commenting out
+    -- fz_free_context does not leading to memory leak, it's still a dirty hack
+    -- and need to be fixed by those who knows mupdf better.
 	if self.context ~= nil then
 		mupdf.fz_free_context(self.context)
 		self.context = nil
 	end
+    --]]
 end
 
-function Image:fromPNG(filename)
+function Image:fromFile(filename, width, height)
 	self:initContext()
-	self:loadPNGData(self:_getFileData(filename))
+	self:loadImage(filename, width, height)
 	self:toBlitBuffer()
 	self:freeContext()
 	return self.bb
