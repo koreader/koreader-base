@@ -87,7 +87,7 @@ function fb:refresh(refreshtype, waveform_mode, x1, y1, w, h)
 end
 
 function fb:close()
-    -- for now, we do nothing when in emulator mode
+    -- for now, we do nothing when in Android
 end
 
 return fb

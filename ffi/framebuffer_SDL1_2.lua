@@ -68,7 +68,7 @@ function fb:refresh(refreshtype, waveform_mode, x1, y1, w, h)
 end
 
 function fb:close()
-	-- for now, we do nothing when in emulator mode
+    SDL.SDL.SDL_Quit()
 end
 
 return fb
