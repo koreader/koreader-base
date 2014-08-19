@@ -102,7 +102,7 @@ $(MUPDF_LIB): $(JPEG_LIB) $(FREETYPE_LIB)
 		LDFLAGS="$(LDFLAGS) -L../$(OUTPUT_DIR)" \
 		XCFLAGS="$(CFLAGS) -DNOBUILTINFONT -fPIC -I../jpeg -I../$(FREETYPE_DIR)/include" \
 		CC="$(CC)" \
-		build="release" MUDRAW= MUTOOL= NOX11=yes \
+		build="release" MUDRAW= MUTOOL= CURL_LIB= \
 		OS="Other" verbose=1 \
 		FREETYPE_DIR=nonexisting \
 		JPEG_DIR=nonexisting \
