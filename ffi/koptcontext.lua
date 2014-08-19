@@ -232,9 +232,14 @@ function KOPTContext_mt.__index:getPageRegions()
     local regions = {}
     for i = 0, self.pageregions.n - 1 do
         local bmpregion = (self.pageregions.pageregion + i).bmpregion
-        table.insert(regions, {
-                x0 = bmpregion.c1/w, x1 = bmpregion.c2/w,
-                y0 = bmpregion.r1/h, y1 = bmpregion.r2/h })
+        local c1, c2 = bmpregion.c1, bmpregion.c2
+        local r1, r2 = bmpregion.r1, bmpregion.r2
+        if c2 > 0 and r2 > 0 then
+            table.insert(regions, {
+                x0 = c1/w, x1 = c2/w,
+                y0 = r1/h, y1 = r2/h
+            })
+        end
     end
     return regions
 end

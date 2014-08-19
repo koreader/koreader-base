@@ -39,7 +39,7 @@ function Bitmap:pixmap_to_bmp(bmp, ctx, pixmap)
 end
 
 function Bitmap:pdffile_to_bmp(bmp, filename, pageno, dpi, bpp)
-	local ctx = mupdf.fz_new_context_imp(nil, nil, bit.lshift(8, 20), "1.4")
+	local ctx = mupdf.fz_new_context_imp(nil, nil, bit.lshift(8, 20), "1.5")
     if ctx == nil then return -1 end
     mupdf.fz_register_document_handlers(ctx)
     local colorspace = bpp == 8 and mupdf.fz_device_gray(ctx) or mupdf.fz_device_rgb(ctx)
