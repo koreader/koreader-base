@@ -54,6 +54,7 @@ static const int MAP_SHARED = 1;
 static const int MAP_FAILED = -1;
 static const int PATH_MAX = 4096;
 void *mmap(void *, long unsigned int, int, int, int, long int) __attribute__((__nothrow__, __leaf__));
+int munmap(void *, long unsigned int) __attribute__((__nothrow__, __leaf__));
 int ioctl(int, long unsigned int, ...) __attribute__((__nothrow__, __leaf__));
 unsigned int sleep(unsigned int);
 int usleep(unsigned int);
