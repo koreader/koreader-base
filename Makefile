@@ -324,7 +324,7 @@ $(LUASOCKET):
 $(OPENSSL_LIB):
 	cd $(OPENSSL_DIR) && \
 		$(if $(EMULATE_READER),./config,./Configure linux-generic32) \
-		shared no-asm && $(MAKE) -j$(PROCESSORS) CC="$(CC) $(CFLAGS)" \
+		shared no-asm && $(MAKE) -j$(PROCESSORS) CC="$(CC) -shared $(CFLAGS)" \
 		LD=$(LD) RANLIB=$(RANLIB) LIBVERSION="" \
 		build_crypto build_ssl
 
