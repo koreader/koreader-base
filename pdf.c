@@ -965,6 +965,7 @@ static int getPageLinks(lua_State *L) {
 
 static int addMarkupAnnotation(lua_State *L) {
 	PdfPage *page = (PdfPage*) luaL_checkudata(L, 1, "pdfpage");
+	fz_context *ctx = page->doc->context;
 	fz_point *pts = (fz_point*) lua_topointer(L, 2);
 	int n = luaL_checkint(L, 3);
 	fz_annot_type type = luaL_checkint(L, 4);
@@ -1003,9 +1004,13 @@ static int addMarkupAnnotation(lua_State *L) {
 	}
 
 	pdf_document * doc = pdf_specifics(page->doc->xref);
-	fz_annot *annot = pdf_create_annot(doc, (pdf_page *)page->page, type);
-	pdf_set_markup_annot_quadpoints(doc, annot, pts, n);
-	pdf_set_markup_appearance(doc, annot, color, alpha, line_thickness, line_height);
+	fz_try(ctx) {
+		fz_annot *annot = pdf_create_annot(doc, (pdf_page *)page->page, type);
+		pdf_set_markup_annot_quadpoints(doc, (pdf_annot *)annot, pts, n);
+		pdf_set_markup_appearance(doc, (pdf_annot *)annot, color, alpha, line_thickness, line_height);
+	} fz_catch(ctx) {
+		printf("addMarkupAnnotation: %s failed\n", ctx->error->message);
+	}
 
 	return 1;
 }
@@ -1019,6 +1024,7 @@ static int writeDocument(lua_State *L) {
 	opts.do_expand = 0;
 	opts.do_garbage = 0;
 	opts.do_linear = 0;
+	opts.continue_on_error = 1;
 	fz_write_document(doc->xref, file, &opts);
 
 	return 1;
