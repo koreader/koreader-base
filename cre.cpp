@@ -784,7 +784,7 @@ static int adjustFontSizes(lua_State *L) {
     CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
     int dpi = luaL_checkint(L, 2);
     static int fontSizes[] = {	12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30,
-    							31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 42, 44, 48, 52, 56, 60, 64, 68, 72};
+								31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 42, 44, 48, 52, 56, 60, 64, 68, 72};
     LVArray<int> sizes( fontSizes, sizeof(fontSizes)/sizeof(int) );
     doc->text_view->setFontSizes(sizes, false); // text
     if (dpi < 170) {
@@ -1097,7 +1097,7 @@ static int getPageLinks(lua_State *L) {
 			lvPoint start_pt ( currSel.getStart().toPoint() );
 			lvPoint end_pt ( currSel.getEnd().toPoint() );
 
-    			CRLog::debug("# link %d start %d %d end %d %d '%s' %s\n", i,
+				CRLog::debug("# link %d start %d %d end %d %d '%s' %s\n", i,
 				start_pt.x, start_pt.y, end_pt.x, end_pt.y,
 				txt8.c_str(), link8.c_str()
 			);
@@ -1173,19 +1173,9 @@ static int clearSelection(lua_State *L) {
 	return 0;
 }
 
-static int drawCurrentPage(lua_State *L) {
-	CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
-	BlitBuffer *bb = (BlitBuffer*) lua_topointer(L, 2);
-
+int drawToBlitBuffer(BlitBuffer *bb, LVGrayDrawBuf &drawBuf) {
 	int w = bb->w,
 		h = bb->h;
-	/* Set DrawBuf to 4bpp */
-	LVGrayDrawBuf drawBuf(w, h, 4);
-
-	doc->text_view->Resize(w, h);
-	doc->text_view->Render();
-	doc->text_view->Draw(drawBuf);
-
 	uint8_t *bbptr = (uint8_t*)bb->data;
 	uint8_t *pmptr = (uint8_t*)drawBuf.GetScanLine(0);
 	int i,x;
@@ -1203,6 +1193,66 @@ static int drawCurrentPage(lua_State *L) {
 		pmptr += w;
 	}
 
+	return 0;
+}
+
+static int drawCurrentPage(lua_State *L) {
+	CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
+	BlitBuffer *bb = (BlitBuffer*) lua_topointer(L, 2);
+
+	int w = bb->w,
+		h = bb->h;
+	/* Set DrawBuf to 4bpp */
+	LVGrayDrawBuf drawBuf(w, h, 4);
+
+	doc->text_view->Resize(w, h);
+	doc->text_view->Render();
+	doc->text_view->Draw(drawBuf);
+
+	drawToBlitBuffer(bb, drawBuf);
+
+	return 0;
+}
+
+static int drawCoverPage(lua_State *L) {
+	CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
+	BlitBuffer *bb = (BlitBuffer*) lua_topointer(L, 2);
+
+	int w = bb->w,
+		h = bb->h;
+	/* Set DrawBuf to 4bpp */
+	LVGrayDrawBuf drawBuf(w, h, 4);
+
+	LVImageSourceRef cover = doc->text_view->getCoverPageImage();
+	if (!cover.isNull())
+		printf("cover size:%d,%d\n", cover->GetWidth(), cover->GetHeight());
+	else
+		printf("cover page is null.\n");
+	LVDrawBookCover(drawBuf, cover, lString8("Droid Sans Fallback"),
+			lString16("test"), lString16("test"), lString16("test"), 0);
+
+	drawToBlitBuffer(bb, drawBuf);
+
+	return 0;
+}
+
+static int getCoverPageImageData(lua_State *L) {
+	CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
+
+	LVStreamRef stream = doc->text_view->getCoverPageImageStream();
+	if (!stream.isNull()) {
+		unsigned size = stream->GetSize();
+		lvsize_t read_size = 0;
+		void *buffer = (void *)malloc(size);
+		if (buffer != NULL) {
+			stream->Read(buffer, size, &read_size);
+			if (read_size == size) {
+				lua_pushlightuserdata(L, buffer);
+				lua_pushinteger(L, size);
+				return 2;
+			}
+		}
+	}
 	return 0;
 }
 
@@ -1269,7 +1319,7 @@ static int findText(lua_State *L) {
             if ( ranges->length()>0 ) {
                 int pos = ranges->get(0)->start.y;
                 //doc->text_view->SetPos(pos); // commented out not to mask lua code which does the same
-        		CRLog::debug("# SetPos = %d", pos);
+				CRLog::debug("# SetPos = %d", pos);
 				lua_pushinteger(L, ranges->length()); // results found
 				lua_pushinteger(L, pos);
 				return 2;
@@ -1356,6 +1406,7 @@ static const struct luaL_Reg credocument_meth[] = {
 	//{"cursorLeft", cursorLeft},
 	//{"cursorRight", cursorRight},
 	{"drawCurrentPage", drawCurrentPage},
+	//{"drawCoverPage", drawCoverPage},
 	{"findText", findText},
 	{"isXPointerInCurrentPage", isXPointerInCurrentPage},
 	{"getLinkFromPosition", getLinkFromPosition},
@@ -1363,6 +1414,7 @@ static const struct luaL_Reg credocument_meth[] = {
 	{"getTextFromPositions", getTextFromPositions},
 	{"getWordBoxesFromPositions", getWordBoxesFromPositions},
 	{"getPageLinks", getPageLinks},
+	{"getCoverPageImageData", getCoverPageImageData},
 	{"gotoLink", gotoLink},
 	{"goBack", goBack},
 	{"goForward", goForward},
