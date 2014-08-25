@@ -86,4 +86,71 @@ function util.idiv(a, b)
     return (q > 0) and math.floor(q) or math.ceil(q)
 end
 
+function util.orderedPairs(t)
+    local function __genOrderedIndex( t )
+    -- this function is taken from http://lua-users.org/wiki/SortedIteration
+        local orderedIndex = {}
+        for key in pairs(t) do
+            table.insert( orderedIndex, key )
+        end
+        table.sort( orderedIndex )
+        return orderedIndex
+    end
+
+    local function orderedNext(t, state)
+    -- this function is taken from http://lua-users.org/wiki/SortedIteration
+    
+        -- Equivalent of the next function, but returns the keys in the alphabetic
+        -- order. We use a temporary ordered key table that is stored in the
+        -- table being iterated.
+
+        if state == nil then
+            -- the first time, generate the index
+            t.__orderedIndex = __genOrderedIndex( t )
+            key = t.__orderedIndex[1]
+            return key, t[key]
+        end
+        -- fetch the next value
+        key = nil
+        for i = 1,table.getn(t.__orderedIndex) do
+            if t.__orderedIndex[i] == state then
+                key = t.__orderedIndex[i+1]
+            end
+        end
+
+        if key then
+            return key, t[key]
+        end
+
+        -- no more value to return, cleanup
+        t.__orderedIndex = nil
+        return
+    end
+
+-- this function is taken from http://lua-users.org/wiki/SortedIteration
+    -- Equivalent of the pairs() function on tables. Allows to iterate
+    -- in order
+    return orderedNext, t, nil
+end
+
+function util.unichar (value)
+-- this function is taken from dkjson
+-- http://dkolf.de/src/dkjson-lua.fsl/
+    local floor = math.floor
+    local strchar = string.char
+    if value < 0 then
+        return nil
+    elseif value <= 0x007f then
+        return string.char (value)
+    elseif value <= 0x07ff then
+        return string.char (0xc0 + floor(value/0x40),0x80 + (floor(value) % 0x40))
+    elseif value <= 0xffff then
+        return string.char (0xe0 + floor(value/0x1000), 0x80 + (floor(value/0x40) % 0x40), 0x80 + (floor(value) % 0x40))
+    elseif value <= 0x10ffff then
+        return string.char (0xf0 + floor(value/0x40000), 0x80 + (floor(value/0x1000) % 0x40), 0x80 + (floor(value/0x40) % 0x40), 0x80 + (floor(value) % 0x40))
+    else
+        return nil
+    end
+end
+
 return util
