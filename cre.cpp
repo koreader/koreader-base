@@ -421,6 +421,12 @@ static int loadDocument(lua_State *L) {
 
 	doc->text_view->LoadDocument(file_name);
 	doc->dom_doc = doc->text_view->getDocument();
+
+	return 0;
+}
+
+static int renderDocument(lua_State *L) {
+	CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
 	doc->text_view->Render();
 
 	return 0;
@@ -1367,6 +1373,7 @@ static const struct luaL_Reg cre_func[] = {
 
 static const struct luaL_Reg credocument_meth[] = {
 	{"loadDocument", loadDocument},
+	{"renderDocument", renderDocument},
 	/*--- get methods ---*/
 	{"getPages", getNumberOfPages},
 	{"getCurrentPage", getCurrentPage},
