@@ -1006,6 +1006,15 @@ void lua_pushLineRect(lua_State *L, int left, int top, int right, int bottom, in
 	lua_rawseti(L, -2, lcount);
 }
 
+void docToWindowRect(LVDocView *tv, lvRect &rc) {
+    lvPoint topLeft = rc.topLeft();
+    lvPoint bottomRight = rc.bottomRight();
+    if (tv->docToWindowPoint(topLeft) && tv->docToWindowPoint(bottomRight)) {
+        rc.setTopLeft(topLeft);
+        rc.setBottomRight(bottomRight);
+    }
+}
+
 static int getWordBoxesFromPositions(lua_State *L) {
 	CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
 	const char* pos0 = luaL_checkstring(L, 2);
@@ -1013,9 +1022,6 @@ static int getWordBoxesFromPositions(lua_State *L) {
 
 	LVDocView *tv = doc->text_view;
 	ldomDocument *dv = doc->dom_doc;
-	lvRect margin = tv->getPageMargins();
-	int x_offset = margin.left;
-	int y_offset = tv->GetPos() - (tv->getPageHeaderHeight() + margin.top) * (tv->getViewMode()==DVM_PAGES);
 
 	ldomXPointer startp = dv->createXPointer(lString16(pos0));
 	ldomXPointer endp = dv->createXPointer(lString16(pos1));
@@ -1045,9 +1051,10 @@ static int getWordBoxesFromPositions(lua_State *L) {
 		lua_newtable(L); // first line box
 		for (int i=0; i<words.length(); i++) {
 			if (ldomXRange(words[i]).getRect(wordRect)) {
+				docToWindowRect(tv, wordRect);
 				if (wordRect.left < lastx) {
-					lua_pushLineRect(L, lineRect.left + x_offset, lineRect.top - y_offset,
-										lineRect.right + x_offset, lineRect.bottom - y_offset, lcount++);
+					lua_pushLineRect(L, lineRect.left, lineRect.top,
+									    lineRect.right, lineRect.bottom, lcount++);
 					lua_newtable(L); // new line box
 					lineRect.clear();
 				}
@@ -1057,9 +1064,10 @@ static int getWordBoxesFromPositions(lua_State *L) {
 				ldomWord word = words[i];
 				for (int j=word.getStart(); j < word.getEnd(); j++) {
 					if (ldomXPointer(word.getNode(), j).getRect(charRect)) {
+						docToWindowRect(tv, charRect);
 						if (charRect.left < lastx) {
-							lua_pushLineRect(L, lineRect.left + x_offset, lineRect.top - y_offset,
-												lineRect.right + x_offset, lineRect.bottom - y_offset, lcount++);
+							lua_pushLineRect(L, lineRect.left, lineRect.top,
+												lineRect.right, lineRect.bottom, lcount++);
 							lua_newtable(L); // new line box
 							lineRect.clear();
 						}
@@ -1069,8 +1077,8 @@ static int getWordBoxesFromPositions(lua_State *L) {
 				}
 			}
 		}
-		lua_pushLineRect(L, lineRect.left + x_offset, lineRect.top - y_offset,
-							lineRect.right + x_offset, lineRect.bottom - y_offset, lcount);
+		lua_pushLineRect(L, lineRect.left, lineRect.top,
+							lineRect.right, lineRect.bottom, lcount);
 	}
 	return 1;
 }
