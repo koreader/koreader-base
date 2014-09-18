@@ -1,10 +1,12 @@
 local ffi = require("ffi")
 ffi.cdef[[
+typedef struct _zctx_t zctx_t;
 typedef struct _zmsg_t zmsg_t;
 typedef struct _zhash_t zhash_t;
 typedef struct _zsock_t zsock_t;
 typedef struct _zframe_t zframe_t;
 typedef struct _zpoller_t zpoller_t;
+typedef struct _zsocket_t zsocket_t;
 
 typedef struct _zyre_t zyre_t;
 typedef struct _zre_msg_t zre_msg_t;
@@ -18,6 +20,28 @@ typedef enum {
     ZYRE_EVENT_WHISPER = 5,
     ZYRE_EVENT_SHOUT = 6
 } zyre_event_type_t;
+
+typedef enum {
+    ZMQ_PAIR = 0,
+    ZMQ_PUB = 1,
+    ZMQ_SUB = 2,
+    ZMQ_REQ = 3,
+    ZMQ_REP = 4,
+    ZMQ_DEALER = 5,
+    ZMQ_ROUTER = 6,
+    ZMQ_PULL = 7,
+    ZMQ_PUSH = 8,
+    ZMQ_XPUB = 9,
+    ZMQ_XSUB = 10,
+    ZMQ_STREAM = 11,
+} zmq_socket_type_t;
+
+typedef enum {
+    ZMQ_AFFINITY = 4,
+    ZMQ_IDENTITY = 5,
+    ZMQ_SUBSCRIBE = 6,
+    ZMQ_UNSUBSCRIBE = 7,
+} zmq_socket_option_t;
 
 zyre_t * zyre_new ();
 void zyre_destroy (zyre_t **self_p);
@@ -49,7 +73,23 @@ char * zyre_event_address (zyre_event_t *self);
 char * zyre_event_header (zyre_event_t *self, char *name);
 char * zyre_event_group (zyre_event_t *self);
 
+int zmq_getsockopt (void *socket, int option_name, void *option_value, size_t *option_len);
+
+zctx_t * zctx_new ();
+void zctx_destroy (zctx_t **self_p);
+void * zsocket_new (zctx_t *self, int type);
+int zsocket_connect (void *self, const char *format, ...);
+void zsocket_set_identity (void *zocket, const char * identity);
+char * zsocket_identity (void *zocket);
+void zsocket_destroy (zctx_t *ctx, void *self);
+zframe_t * zframe_recv (void *source);
+size_t zframe_size (zframe_t *self);
+unsigned char * zframe_data (zframe_t *self);
+
+zmsg_t * zmsg_new (void);
 size_t zmsg_size (zmsg_t *self);
+int zmsg_addmem (zmsg_t *self, const void *src, size_t size);
+int zmsg_send (zmsg_t **self_p, void *dest);
 char * zmsg_popstr (zmsg_t *self);
 void zstr_free (char **string_p);
 zframe_t * zmsg_pop (zmsg_t *self);
