@@ -8,7 +8,12 @@ local Blitbuffer = require("ffi/blitbuffer")
 -- the header definitions
 require("ffi/freetype_h")
 
-local ft2 = ffi.load("libs/libfreetype.so.6")
+local ft2 = nil
+if ffi.os == "Windows" then
+	ft2 = ffi.load("libs/libfreetype-6.dll")
+else
+	ft2 = ffi.load("libs/libfreetype.so.6")
+end
 
 local freetypelib = ffi.new("FT_Library[1]")
 assert(ft2.FT_Init_FreeType(freetypelib) == 0, "Couldn't initialize Freetype!")
@@ -66,7 +71,7 @@ function FTFace_mt.__index:getKerning(leftcharcode, rightcharcode)
 		ft2.FT_KERNING_DEFAULT, kerning) == 0,
 		"freetype error when getting kerning.")
 	return tonumber(kerning.x / 64)
-end 
+end
 
 function FTFace_mt.__index:getHeightAndAscender()
 	local y_scale = self.size.metrics.y_ppem / self.units_per_EM

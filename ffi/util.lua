@@ -5,19 +5,86 @@ Module for various utility functions
 local ffi = require "ffi"
 local bit = require "bit"
 
+-- win32 utility
+ffi.cdef[[
+typedef unsigned int UINT;
+typedef unsigned long DWORD;
+typedef char *LPSTR;
+typedef wchar_t *LPWSTR;
+typedef const char *LPCSTR;
+typedef const wchar_t *LPCWSTR;
+typedef bool *LPBOOL;
+
+typedef struct _FILETIME {
+	DWORD dwLowDateTime;
+	DWORD dwHighDateTime;
+} FILETIME, *PFILETIME;
+
+void GetSystemTimeAsFileTime(FILETIME*);
+DWORD GetFullPathNameA(
+    LPCSTR lpFileName,
+    DWORD nBufferLength,
+    LPSTR lpBuffer,
+    LPSTR *lpFilePart
+);
+UINT GetACP(void);
+int MultiByteToWideChar(
+    UINT CodePage,
+    DWORD dwFlags,
+    LPCSTR lpMultiByteStr,
+    int cbMultiByte,
+    LPWSTR lpWideCharStr,
+    int cchWideChar
+);
+int WideCharToMultiByte(
+    UINT CodePage,
+    DWORD dwFlags,
+    LPCWSTR lpWideCharStr,
+    int cchWideChar,
+    LPSTR lpMultiByteStr,
+    int cbMultiByte,
+    LPCSTR lpDefaultChar,
+    LPBOOL lpUsedDefaultChar
+);
+]]
+
 require("ffi/posix_h")
 
 local util = {}
 
 local timeval = ffi.new("struct timeval")
-function util.gettime()
-	ffi.C.gettimeofday(timeval, nil)
-	return tonumber(timeval.tv_sec),
-		tonumber(timeval.tv_usec)
+
+if ffi.os == "Windows" then
+	util.gettime = function()
+		local ft = ffi.new('FILETIME[1]')[0]
+		local tmpres = ffi.new('unsigned long', 0)
+		ffi.C.GetSystemTimeAsFileTime(ft)
+		tmpres = bit.bor(tmpres, ft.dwHighDateTime)
+		tmpres = bit.lshift(tmpres, 32)
+		tmpres = bit.bor(tmpres, ft.dwLowDateTime)
+		-- converting file time to unix epoch
+		tmpres = tmpres - 11644473600000000ULL
+		tmpres = tmpres / 10
+		return tonumber(tmpres / 1000000ULL), tonumber(tmpres % 1000000ULL)
+	end
+else
+	util.gettime = function()
+		ffi.C.gettimeofday(timeval, nil)
+		return tonumber(timeval.tv_sec), tonumber(timeval.tv_usec)
+	end
 end
 
-util.sleep=ffi.C.sleep
-util.usleep=ffi.C.usleep
+if ffi.os == "Windows" then
+	util.sleep = function(sec)
+		ffi.C.Sleep(sec*1000)
+	end
+	util.usleep = function(usec)
+		ffi.C.Sleep(usec/1000)
+	end
+else
+	util.sleep=ffi.C.sleep
+	util.usleep=ffi.C.usleep
+end
 
 local statvfs = ffi.new("struct statvfs")
 function util.df(path)
@@ -27,9 +94,16 @@ function util.df(path)
 end
 
 function util.realpath(path)
-	local path_ptr = ffi.C.realpath(path, ffi.new("char[?]", ffi.C.PATH_MAX))
-	if path_ptr == nil then return nil end
-	return ffi.string(path_ptr)
+	local buffer = ffi.new("char[?]", ffi.C.PATH_MAX)
+	if ffi.os == "Windows" then
+		if ffi.C.GetFullPathNameA(path, ffi.C.PATH_MAX, buffer, nil) ~= 0 then
+			return ffi.string(buffer)
+		end
+	else
+		if ffi.C.realpath(path, buffer) ~= nil then
+			return ffi.string(buffer)
+		end
+	end
 end
 
 function util.execute(...)
@@ -59,8 +133,30 @@ function util.utf8charcode(charstring)
 	end
 end
 
+local CP_UTF8 = 65001
+-- convert multibyte string to utf-8 encoded string on Windows
+function util.multiByteToUTF8(str, codepage)
+    -- if codepage is not provided we will query the system codepage
+    codepage = codepage or ffi.C.GetACP()
+    local size = ffi.C.MultiByteToWideChar(codepage, 0, str, -1, nil, 0)
+    if size > 0 then
+        local wstr = ffi.new("wchar_t[?]", size)
+        ffi.C.MultiByteToWideChar(codepage, 0, str, -1, wstr, size)
+        size = ffi.C.WideCharToMultiByte(CP_UTF8, 0, wstr, -1, nil, 0, nil, nil)
+        if size > 0 then
+            local mstr = ffi.new("char[?]", size)
+            ffi.C.WideCharToMultiByte(CP_UTF8, 0, wstr, -1, mstr, size, nil, nil)
+            return ffi.string(mstr)
+        end
+    end
+end
+
 function util.isEmulated()
 	return (ffi.arch ~= "arm")
+end
+
+function util.isWindows()
+    return ffi.os == "Windows"
 end
 
 -- for now, we just check if the "android" module can be loaded
@@ -98,8 +194,7 @@ function util.orderedPairs(t)
     end
 
     local function orderedNext(t, state)
-    -- this function is taken from http://lua-users.org/wiki/SortedIteration
-    
+        -- this function is taken from http://lua-users.org/wiki/SortedIteration
         -- Equivalent of the next function, but returns the keys in the alphabetic
         -- order. We use a temporary ordered key table that is stored in the
         -- table being iterated.
@@ -141,13 +236,13 @@ function util.unichar (value)
     if value < 0 then
         return nil
     elseif value <= 0x007f then
-        return string.char (value)
+        return strchar(value)
     elseif value <= 0x07ff then
-        return string.char (0xc0 + floor(value/0x40),0x80 + (floor(value) % 0x40))
+        return strchar(0xc0 + floor(value/0x40),0x80 + (floor(value) % 0x40))
     elseif value <= 0xffff then
-        return string.char (0xe0 + floor(value/0x1000), 0x80 + (floor(value/0x40) % 0x40), 0x80 + (floor(value) % 0x40))
+        return strchar(0xe0 + floor(value/0x1000), 0x80 + (floor(value/0x40) % 0x40), 0x80 + (floor(value) % 0x40))
     elseif value <= 0x10ffff then
-        return string.char (0xf0 + floor(value/0x40000), 0x80 + (floor(value/0x1000) % 0x40), 0x80 + (floor(value/0x40) % 0x40), 0x80 + (floor(value) % 0x40))
+        return strchar(0xf0 + floor(value/0x40000), 0x80 + (floor(value/0x1000) % 0x40), 0x80 + (floor(value/0x40) % 0x40), 0x80 + (floor(value) % 0x40))
     else
         return nil
     end

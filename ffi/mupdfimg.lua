@@ -4,7 +4,12 @@ rendering image with mupdf library
 
 local ffi = require("ffi")
 local Blitbuffer = require("ffi/blitbuffer")
-local mupdf = ffi.load("libs/libmupdf.so")
+local mupdf = nil
+if ffi.os == "Windows" then
+	mupdf = ffi.load("libs/libmupdf.dll")
+else
+	mupdf = ffi.load("libs/libmupdf.so")
+end
 
 require("ffi/mupdf_h")
 
@@ -26,7 +31,7 @@ function Image:_loadImage(data, size, width, height)
 end
 
 function Image:loadImageFile(filename, width, height)
-    local file = io.open(filename)
+    local file = io.open(filename, "rb")
     if file then
         local data = file:read("*a")
         file:close()
