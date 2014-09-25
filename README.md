@@ -26,6 +26,8 @@ Follow these steps:
 
 * or run `make TARGET=android` for Android devices. 
 
+* or run `make TARGET=win32` for Windows.
+
 ## Use ccache
 
 Ccache can speed up recompilation by caching previous compilations and detecting
@@ -40,7 +42,6 @@ system.
   * get latest ccache source from http://ccache.samba.org/download.html
   * unarchieve the source package in a directory
   * cd to that directory and use:`./configure && make && sudo make install`
-* after using ccache, make a clean build will only take 15sec. Enjoy!
 * to disable ccache, use `export USE_NO_CCACHE=1` before make.
 * for more detail about ccache. visit:
 
@@ -60,15 +61,15 @@ If you are using Ubuntu, install `libsdl-dev1.2` package.
 To build in "emulation mode", you need to run make like this:
 
 ```
-make clean cleanthirdparty
-EMULATE_READER=1 make thirdparty koreader-base
+make clean
+EMULATE_READER=1 make
 ```
 
 By default emulator will provide a resolution of 800x600. It can be
 changed at runtime by changing environment variables:
 
 ```
-EMULATE_READER_W=746 EMULATE_READER_H=1024 koreader-base
+EMULATE_READER_W=746 EMULATE_READER_H=1024
 ```
 
 [travis-icon]:https://travis-ci.org/koreader/koreader-base.png?branch=master
