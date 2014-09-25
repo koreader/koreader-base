@@ -255,9 +255,8 @@ JPEG_LIB=$(OUTPUT_DIR)/libs/libjpeg$(if $(WIN32),-9.dll,.so.9)
 JPEG_DIR=jpeg
 
 PNG_LIB=$(OUTPUT_DIR)/libs/libpng16$(if $(WIN32),-16.dll,.so.16)
-PNG_DIR=libpng
-#PNG_DIR=$(CRENGINE_DIR)/thirdparty/libpng
-PNG_BUILD_DIR=$(CRENGINE_BUILD_DIR)/thirdparty/libpng
+PNG_DIR=libpng-1.6.12
+PNG_BUILD_DIR=$(PNG_DIR)/lib
 
 SDCV_DIR=sdcv-0.4.2
 GLIB_DIR=glib-2.6.6

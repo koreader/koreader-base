@@ -519,6 +519,8 @@ fetchthirdparty:
 		&& cd $(K2PDFOPT_DIR) && rm leptonica-1.69.tar.gz \
 		&& wget http://leptonica.com/source/leptonica-1.69.tar.gz || true
 	cd $(K2PDFOPT_DIR) && tar zxf leptonica-1.69.tar.gz
+	# patch leptonica for a small typo, it's already fixed in 1.70
+	cd $(K2PDFOPT_DIR)/leptonica-1.69 && sed -i 's|hfind|hFind|g' src/utils.c
 	[ ! -f $(K2PDFOPT_DIR)/tesseract-ocr-3.02.02.tar.gz ] \
 		&& cd $(K2PDFOPT_DIR) \
 		&& wget http://tesseract-ocr.googlecode.com/files/tesseract-ocr-3.02.02.tar.gz || true
@@ -545,6 +547,12 @@ fetchthirdparty:
 	[ `md5sum tar-1.28.tar.gz |cut -d\  -f1` != 6ea3dbea1f2b0409b234048e021a9fd7 ] \
 		&& rm tar-1.28.tar.gz && wget http://ftp.gnu.org/gnu/tar/tar-1.28.tar.gz || true
 	tar zxf tar-1.28.tar.gz
+	# download libpng
+	[ ! -f libpng-1.6.12.tar.gz ] \
+		&& wget http://download.sourceforge.net/libpng/libpng-1.6.12.tar.gz || true
+	[ `md5sum libpng-1.6.12.tar.gz |cut -d\  -f1` != 297388a6746a65a2127ecdeb1c6e5c82 ] \
+		&& rm libpng-1.6.12.tar.gz && wget http://download.sourceforge.net/libpng/libpng-1.6.12.tar.gz || true
+	tar zxf libpng-1.6.12.tar.gz
 
 
 # ===========================================================================
