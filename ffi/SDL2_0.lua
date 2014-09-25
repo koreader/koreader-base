@@ -8,6 +8,7 @@ instead).
 ]]
 
 local ffi = require("ffi")
+local util = require("ffi/util")
 
 local dummy = require("ffi/SDL2_0_h")
 local dummy = require("ffi/linux_input_h")
@@ -57,14 +58,13 @@ end
 -- so this represents a FIFO queue
 local inputQueue = {}
 
-local ev_time = ffi.new("struct timeval")
 local function genEmuEvent(evtype, code, value)
-	ffi.C.gettimeofday(ev_time, nil)
+	local secs, usecs = util.gettime()
 	local ev = {
 		type = tonumber(evtype),
 		code = tonumber(code),
 		value = tonumber(value),
-		time = { sec = tonumber(ev_time.tv_sec), usec = tonumber(ev_time.tv_usec) }
+		time = { sec = secs, usec = usecs },
 	}
 	table.insert(inputQueue, ev)
 end
