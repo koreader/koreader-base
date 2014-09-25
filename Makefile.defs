@@ -35,6 +35,9 @@ else ifeq ($(TARGET), android)
     export PATH:=$(CURDIR)/$(ANDROID_TOOLCHAIN)/bin:$(PATH)
     export SYSROOT=$(NDK)/platforms/android-9/arch-arm
 	CHOST?=arm-linux-androideabi
+else ifeq ($(TARGET), win32)
+    CHOST?=i686-w64-mingw32
+    export WIN32=1
 endif
 CC:=$(CHOST)-gcc
 CXX:=$(CHOST)-g++
@@ -58,6 +61,10 @@ HOSTRANLIB:=ranlib
 
 # try to find number of CPUs for build machine
 PROCESSORS:=$(shell grep processor /proc/cpuinfo|wc -l)
+
+ifeq ($(PROCESSORS), 0)
+    PROCESSORS=1
+endif
 
 # Base CFLAGS, without arch. We'll need it for luajit, because its
 # Makefiles do some tricky stuff to differentiate HOST/TARGET
@@ -129,6 +136,8 @@ else ifeq ($(TARGET), kindle-legacy)
 else ifeq ($(TARGET), android)
 	ARM_ARCH:=$(ANDROID_ARCH)
 	ARM_ARCH+=-mfloat-abi=softfp
+else ifeq ($(TARGET), win32)
+    ARM_ARCH:=
 else
 	# Defaults to generic crap
 	ARM_ARCH:=$(ARMV6_GENERIC_ARCH)
@@ -145,6 +154,10 @@ LDFLAGS:=-Wl,-O1 -Wl,--as-needed
 # NOTE: Follow the NDK's lead
 ifeq ($(TARGET), android)
 	LDFLAGS+=-march=armv7-a -no-canonical-prefixes -Wl,--fix-cortex-a8
+endif
+
+ifeq ($(TARGET), win32)
+    LDFLAGS+=-Wl,--allow-multiple-definition -static-libstdc++ -static-libgcc
 endif
 
 # in case the libstdc++ is to be linked statically, the location of the static
@@ -213,36 +226,37 @@ MUPDF_JS_LIB_STATIC=$(MUPDF_LIB_DIR)/libmujs.a
 MUPDF_THIRDPARTY_LIBS=$(MUPDF_LIB_DIR)/libopenjpeg.a \
 			$(MUPDF_LIB_DIR)/libjbig2dec.a \
 			$(Z_LIB)
-MUPDF_LIB=$(OUTPUT_DIR)/libs/libmupdf.so
+MUPDF_LIB=$(OUTPUT_DIR)/libs/$(if $(WIN32),libmupdf.dll,libmupdf.so)
 
 DJVULIBRE_DIR=djvulibre
-DJVULIBRE_LIB=$(OUTPUT_DIR)/libs/libdjvulibre.so.21
+DJVULIBRE_LIB=$(OUTPUT_DIR)/libs/libdjvulibre$(if $(WIN32),-21.dll,.so.21)
 DJVULIBRE_LIB_DIR=$(DJVULIBRE_DIR)/build/libdjvu/.libs/
 
 CRENGINE_LIB=$(OUTPUT_DIR)/libs/libcrengine.so
 
 LUA_DIR=luajit-2.0
-LUAJIT=$(OUTPUT_DIR)/luajit
+LUAJIT=$(OUTPUT_DIR)/$(if $(WIN32),luajit.exe,luajit)
 LUAJIT_JIT=$(OUTPUT_DIR)/jit
-LUAJIT_LIB=$(OUTPUT_DIR)/libs/libluajit.so
+LUAJIT_LIB=$(OUTPUT_DIR)/$(if $(WIN32),lua51.dll,libs/libluajit.so)
 
 POPEN_NOSHELL_DIR=popen-noshell
 POPEN_NOSHELL_LIB=$(POPEN_NOSHELL_DIR)/libpopen_noshell.a
 
 K2PDFOPT_DIR=libk2pdfopt
-K2PDFOPT_LIB=$(OUTPUT_DIR)/libs/libk2pdfopt.so.2
+K2PDFOPT_LIB=$(OUTPUT_DIR)/libs/libk2pdfopt$(if $(WIN32),-2.dll,.so.2)
 K2PDFOPT_CFLAGS=-I$(K2PDFOPT_DIR)/willuslib \
 		-I$(K2PDFOPT_DIR)/k2pdfoptlib -I$(K2PDFOPT_DIR) \
 		-I$(K2PDFOPT_DIR)/include_mod
 
-FREETYPE_LIB=$(OUTPUT_DIR)/libs/libfreetype.so.6
+FREETYPE_LIB=$(OUTPUT_DIR)/libs/libfreetype$(if $(WIN32),-6.dll,.so.6)
 FREETYPE_DIR=freetype2
 
-JPEG_LIB=$(OUTPUT_DIR)/libs/libjpeg.so.9
+JPEG_LIB=$(OUTPUT_DIR)/libs/libjpeg$(if $(WIN32),-9.dll,.so.9)
 JPEG_DIR=jpeg
 
-PNG_LIB=$(OUTPUT_DIR)/libs/libpng16.so.16
-PNG_DIR=$(CRENGINE_DIR)/thirdparty/libpng
+PNG_LIB=$(OUTPUT_DIR)/libs/libpng16$(if $(WIN32),-16.dll,.so.16)
+PNG_DIR=libpng
+#PNG_DIR=$(CRENGINE_DIR)/thirdparty/libpng
 PNG_BUILD_DIR=$(CRENGINE_BUILD_DIR)/thirdparty/libpng
 
 SDCV_DIR=sdcv-0.4.2
@@ -250,13 +264,13 @@ GLIB_DIR=glib-2.6.6
 ZLIB_DIR=$(MUPDF_DIR)/thirdparty/zlib
 
 GLIB=$(GLIB_DIR)/lib/libglib-2.0.so.0
-ZLIB=$(OUTPUT_DIR)/libs/libz.so.1
+ZLIB=$(OUTPUT_DIR)/libs/$(if $(WIN32),zlib1.dll,libz.so.1)
 
-LEPTONICA_LIB=$(OUTPUT_DIR)/libs/liblept.so.3
-TESSERACT_LIB=$(OUTPUT_DIR)/libs/libtesseract.so.3
+LEPTONICA_LIB=$(OUTPUT_DIR)/libs/liblept$(if $(WIN32),-3.dll,.so.3)
+TESSERACT_LIB=$(OUTPUT_DIR)/libs/libtesseract$(if $(WIN32),-3.dll,.so.3)
 
 OPENSSL_DIR=openssl-1.0.1h
-OPENSSL_LIB=$(OPENSSL_DIR)/libssl.so
+OPENSSL_LIB=$(OPENSSL_DIR)/libssl.$(if $(WIN32),a,so)
 
 LUA_SOCKET_DIR=luasocket
 LUA_SEC_DIR=luasec
@@ -275,10 +289,10 @@ ZMQ_DIR=libzmq
 CZMQ_DIR=czmq
 FILEMQ_DIR=filemq
 ZYRE_DIR=zyre
-ZMQ_LIB=$(OUTPUT_DIR)/libs/libzmq.so.4
-CZMQ_LIB=$(OUTPUT_DIR)/libs/libczmq.so.1
-FILEMQ_LIB=$(OUTPUT_DIR)/libs/libfmq.so.1
-ZYRE_LIB=$(OUTPUT_DIR)/libs/libzyre.so.1
+ZMQ_LIB=$(OUTPUT_DIR)/libs/libzmq.$(if $(WIN32),dll,so.4)
+CZMQ_LIB=$(OUTPUT_DIR)/libs/libczmq.$(if $(WIN32),dll,so.1)
+FILEMQ_LIB=$(OUTPUT_DIR)/libs/libfmq.$(if $(WIN32),dll,so.1)
+ZYRE_LIB=$(OUTPUT_DIR)/libs/libzyre.$(if $(WIN32),dll,so.1)
 
 ZSYNC_DIR=zsync/c
 TAR_DIR=tar-1.28
@@ -296,5 +310,5 @@ MUPDF_TTF_FONTS_DIR=$(MUPDF_DIR)/resources/fonts
 # having all symbols included (-E) won't hurt, too.
 DYNLIB_CFLAGS=-L$(OUTPUT_DIR)/libs $(CFLAGS) \
 		-I$(LUA_DIR)/src \
-		-shared -fPIC -Wl,-E -Wl,-rpath,'$$ORIGIN'
+		-shared $(if $(WIN32),,-fPIC) -Wl,-E -Wl,-rpath,'$$ORIGIN'
 

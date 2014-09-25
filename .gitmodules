@@ -52,3 +52,6 @@
 [submodule "zsync"]
 	path = zsync
 	url = http://zsync.moria.org.uk/zsync.git
+[submodule "libpng"]
+	path = libpng
+	url = git://git.code.sf.net/p/libpng/code
