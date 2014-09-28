@@ -148,15 +148,14 @@ function ColorRGB32_mt.__index:set(color)
 end
 -- adding two colors:
 function Color4L_mt.__index:add(color, intensity)
-    local value = tonumber(self.a) * (1-intensity) + tonumber(color:getColor4L().a) * intensity
+    local value = tonumber(band(self.a, 0x0F)) * (1-intensity) + tonumber(color:getColor4L().a) * intensity
     if value > 0x0F then value = 0x0F end
     self:set(Color4L(value))
 end
 function Color4U_mt.__index:add(color, intensity)
-    local orig = band(self.a, 0xF0)
-    local value = tonumber(orig) * (1-intensity) + tonumber(color:getColor4U().a) * intensity
+    local value = tonumber(band(self.a, 0xF0)) * (1-intensity) + tonumber(color:getColor4U().a) * intensity
     if value > 0xF0 then value = 0xF0 end
-    self:set(Color4U(band(0xF0, value)))
+    self:set(Color4U(value))
 end
 function Color8_mt.__index:add(color, intensity)
     local value = tonumber(self.a) * (1-intensity) + tonumber(color:getColor8().a) * intensity
