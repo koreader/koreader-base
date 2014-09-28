@@ -158,6 +158,11 @@ else
 	ARM_ARCH+=-mfloat-abi=softfp
 endif
 
+# Clang 3.4 on Travis however doesn't define macro '__extern_always_inline'
+ifdef CLANG
+    BASE_CFLAGS+= -D__extern_always_inline=inline
+endif
+
 HOST_ARCH:=-march=native
 HOSTCFLAGS:=$(HOST_ARCH) $(BASE_CFLAGS) $(QFLAGS)
 
