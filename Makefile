@@ -429,9 +429,12 @@ $(CZMQ_LIB): $(ZMQ_LIB)
 		sed -i 's|^runpath_var=LD_RUN_PATH|runpath_var=DIE_RPATH_DIE|g' libtool
 	# patch: ignore limited broadcast address
 	-cd $(CZMQ_DIR) && patch -N -p1 < ../zbeacon.patch
+	# patch: add _DEFAULT_SOURCE define for glibc starting at version 2.20
+	-cd $(CZMQ_DIR) && patch -N -p1 < ../czmq_default_source_define.patch
 	-$(MAKE) -j$(PROCESSORS) -C $(CZMQ_DIR)/build --silent uninstall
 	$(MAKE) -j$(PROCESSORS) -C $(CZMQ_DIR)/build --silent install
 	-cd $(CZMQ_DIR) && patch -R -p1 < ../zbeacon.patch
+	-cd $(CZMQ_DIR) && patch -R -p1 < ../czmq_default_source_define.patch
 	cp -fL $(CZMQ_DIR)/build/$(if $(WIN32),bin,lib)/$(notdir $(CZMQ_LIB)) $@
 
 $(FILEMQ_LIB): $(ZMQ_LIB) $(CZMQ_LIB) $(OPENSSL_LIB)
