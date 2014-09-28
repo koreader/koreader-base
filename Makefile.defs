@@ -39,12 +39,6 @@ else ifeq ($(TARGET), win32)
     CHOST?=i686-w64-mingw32
     export WIN32=1
 endif
-CC:=$(CHOST)-gcc
-CXX:=$(CHOST)-g++
-STRIP:=$(CHOST)-strip
-AR:=$(CHOST)-ar
-LD:=$(CHOST)-ld
-RANLIB:=$(CHOST)-ranlib
 
 # unknown device
 ifdef SBOX_UNAME_MACHINE
@@ -52,16 +46,36 @@ ifdef SBOX_UNAME_MACHINE
 	CXX:=g++
 endif
 
-# set host CC CXX AR LD RANLIB
-HOSTCC:=gcc
-HOSTCXX:=g++
+# set cross-compiler/host CC and CXX
+ifeq ($(CC), clang)
+    CC:=$(CHOST)-clang
+    CXX:=$(CHOST)-clang++
+    HOSTCC:=clang
+    HOSTCXX:=clang++
+	# quiet flag
+    QFLAGS:=-Qunused-arguments
+    export CLANG=1
+else
+    CC:=$(CHOST)-gcc
+    CXX:=$(CHOST)-g++
+    HOSTCC:=gcc
+    HOSTCXX:=g++
+    QFLAGS:=
+endif
+
+# set cross-compiler/host AR LD RANLIB
+STRIP:=$(CHOST)-strip
+AR:=$(CHOST)-ar
+LD:=$(CHOST)-ld
+RANLIB:=$(CHOST)-ranlib
+
 HOSTAR:=ar
 HOSTLD:=ld
 HOSTRANLIB:=ranlib
 
 # try to find number of CPUs for build machine
 PROCESSORS:=$(shell grep processor /proc/cpuinfo|wc -l)
-
+# incase we build on system that has no /proc/cpuinfo file
 ifeq ($(PROCESSORS), 0)
     PROCESSORS=1
 endif
@@ -144,11 +158,16 @@ else
 	ARM_ARCH+=-mfloat-abi=softfp
 endif
 
-HOST_ARCH:=-march=native
-HOSTCFLAGS:=$(HOST_ARCH) $(BASE_CFLAGS)
+# Clang 3.4 on Travis however doesn't define macro '__extern_always_inline'
+ifdef CLANG
+    BASE_CFLAGS+= -D__extern_always_inline=inline
+endif
 
-CFLAGS:=$(BASE_CFLAGS)
-CXXFLAGS:=$(BASE_CFLAGS)
+HOST_ARCH:=-march=native
+HOSTCFLAGS:=$(HOST_ARCH) $(BASE_CFLAGS) $(QFLAGS)
+
+CFLAGS:=$(BASE_CFLAGS) $(QFLAGS)
+CXXFLAGS:=$(BASE_CFLAGS) $(QFLAGS)
 LDFLAGS:=-Wl,-O1 -Wl,--as-needed
 
 # NOTE: Follow the NDK's lead
@@ -185,7 +204,7 @@ ifdef EMULATE_READER
 	EMU_CFLAGS+= -DEMULATE_READER -g
 	EMU_LDFLAGS?=$(shell sdl-config --libs)
 	ifeq "$(shell uname -s -m)" "Darwin x86_64"
-		EMU_LDFLAGS += -pagezero_size 10000 -image_base 100000000
+		EMU_LDFLAGS+= -pagezero_size 10000 -image_base 100000000
 	endif
 	CFLAGS+= $(HOST_ARCH)
 	CXXFLAGS+= $(HOST_ARCH)
@@ -195,6 +214,12 @@ else
 	AR:=$(strip $(CCACHE) $(AR))
 	CFLAGS+= $(ARM_ARCH) $(COMPAT_CFLAGS)
 	CXXFLAGS+= $(ARM_ARCH) $(COMPAT_CFLAGS) $(COMPAT_CXXFLAGS)
+endif
+
+# not necessary to use PIC flag for win32 which has relocation table in dll
+ifneq ($(TARGET), win32)
+    CFLAGS+= -fPIC
+    CXXFLAGS+= -fPIC
 endif
 
 # set a flag that C code can differenciate on for Kobo code
@@ -308,6 +333,5 @@ MUPDF_TTF_FONTS_DIR=$(MUPDF_DIR)/resources/fonts
 # also, dynamic libraries must be compiled with "-shared" and "-fPIC".
 # having all symbols included (-E) won't hurt, too.
 DYNLIB_CFLAGS=-L$(OUTPUT_DIR)/libs $(CFLAGS) \
-		-I$(LUA_DIR)/src \
-		-shared $(if $(WIN32),,-fPIC) -Wl,-E -Wl,-rpath,'$$ORIGIN'
+		-I$(LUA_DIR)/src -shared -Wl,-E -Wl,-rpath,'$$ORIGIN'
 

@@ -5,6 +5,7 @@ language: c
 
 compiler:
     - gcc
+    - clang
 
 env:
     - EMULATE_READER=1 USE_NO_CCACHE=1

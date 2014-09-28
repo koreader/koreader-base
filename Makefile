@@ -4,15 +4,15 @@ include Makefile.defs
 all: $(OUTPUT_DIR)/libs $(if $(ANDROID),,$(LUAJIT)) \
 		$(if $(or $(ANDROID),$(WIN32)),$(LUAJIT_LIB),) \
 		$(LUAJIT_JIT) \
-		$(if $(or $(ANDROID),$(WIN32)),,$(OUTPUT_DIR)/tar) \
-		$(if $(or $(ANDROID),$(WIN32)),,$(OUTPUT_DIR)/sdcv) \
-		$(if $(or $(ANDROID),$(WIN32)),,$(OUTPUT_DIR)/zsync) \
 		libs $(OUTPUT_DIR)/spec/base $(OUTPUT_DIR)/common \
 		$(OUTPUT_DIR)/plugins $(LUASOCKET) \
 		$(if $(WIN32),,$(LUASEC)) \
 		$(if $(ANDROID),luacompat52 lualongnumber,) \
 		$(if $(WIN32),,$(EVERNOTE_LIB)) \
 		$(LUASERIAL_LIB) \
+		$(if $(or $(ANDROID),$(WIN32)),,$(OUTPUT_DIR)/tar) \
+		$(if $(or $(ANDROID),$(WIN32)),,$(OUTPUT_DIR)/sdcv) \
+		$(if $(or $(ANDROID),$(WIN32)),,$(OUTPUT_DIR)/zsync) \
 		$(if $(WIN32), ,$(ZMQ_LIB) $(CZMQ_LIB) $(FILEMQ_LIB) $(ZYRE_LIB))
 ifndef EMULATE_READER
 	STRIP_FILES="\
@@ -20,7 +20,7 @@ ifndef EMULATE_READER
 		$(if $(or $(ANDROID),$(WIN32)),,$(OUTPUT_DIR)/sdcv) \
 		$(if $(or $(ANDROID),$(WIN32)),,$(OUTPUT_DIR)/zsync) \
 		$(if $(ANDROID),,$(LUAJIT)) \
-		$(OUTPUT_DIR)/libs/$(if WIN32,*.dll,*.so*)" ;\
+		$(OUTPUT_DIR)/libs/$(if $(WIN32),*.dll,*.so*)" ;\
 	$(STRIP) --strip-unneeded $${STRIP_FILES} ;\
 	touch -r $${STRIP_FILES}  # let all files have the same mtime
 	find $(OUTPUT_DIR)/common -name "$(if $(WIN32),*.dll,*.so*)" | \
@@ -77,7 +77,7 @@ $(FREETYPE_LIB):
 				--with-png=no --with-harfbuzz=no \
 				--host=$(CHOST)
 	$(MAKE) -j$(PROCESSORS) -C $(FREETYPE_DIR)/build
-	-$(MAKE) -C $(FREETYPE_DIR)/build install
+	-$(MAKE) -C $(FREETYPE_DIR)/build --silent install
 	cp -fL $(FREETYPE_DIR)/build/$(if $(WIN32),bin,lib)/$(notdir $(FREETYPE_LIB)) $@
 
 # libjpeg, fetched via GIT as a submodule
@@ -85,9 +85,9 @@ $(JPEG_LIB):
 	cd $(JPEG_DIR) && \
 		CC="$(CC)" CXX="$(CXX)" CFLAGS="$(CFLAGS)" \
 		CXXFLAGS="$(CXXFLAGS)" LDFLAGS="$(LDFLAGS)" \
-		./configure --disable-static --enable-shared \
+		./configure -q --disable-static --enable-shared \
 			--host=$(CHOST)
-	$(MAKE) -j$(PROCESSORS) -C $(JPEG_DIR)
+	$(MAKE) -j$(PROCESSORS) -C $(JPEG_DIR) --silent
 	cp -fL $(JPEG_DIR)/.libs/$(notdir $(JPEG_LIB)) $@
 
 # libpng, fetched via GIT as a submodule
@@ -97,9 +97,9 @@ $(PNG_LIB): $(ZLIB)
 		CC="$(CC)" CXX="$(CXX)" \
 		CPPFLAGS="$(CFLAGS) -I$(CURDIR)/$(ZLIB_DIR)" \
 		LDFLAGS="$(LDFLAGS) -L$(CURDIR)/$(ZLIB_DIR)" \
-		./configure --prefix=$(CURDIR)/$(PNG_DIR) \
+		./configure -q --prefix=$(CURDIR)/$(PNG_DIR) \
 			--disable-static --enable-shared --host=$(CHOST)
-	$(MAKE) -j$(PROCESSORS) -C $(PNG_DIR) install
+	$(MAKE) -j$(PROCESSORS) -C $(PNG_DIR) --silent install
 	cp -fL $(PNG_DIR)/.libs/$(notdir $(PNG_LIB)) $@
 
 # mupdf, fetched via GIT as a submodule
@@ -111,7 +111,7 @@ $(MUPDF_LIB): $(JPEG_LIB) $(FREETYPE_LIB)
 		OS=$(if $(WIN32),,Other) verbose=1
 	$(MAKE) -j$(PROCESSORS) -C mupdf \
 		LDFLAGS="$(LDFLAGS) -L../$(OUTPUT_DIR)" \
-		XCFLAGS="$(CFLAGS) -DNOBUILTINFONT -fPIC -I../jpeg -I../$(FREETYPE_DIR)/include" \
+		XCFLAGS="$(CFLAGS) -DNOBUILTINFONT -I../jpeg -I../$(FREETYPE_DIR)/include" \
 		CC="$(CC)" \
 		build="release" MUDRAW= MUTOOL= CURL_LIB= \
 		OS=$(if $(WIN32),,Other) verbose=1 \
@@ -119,8 +119,7 @@ $(MUPDF_LIB): $(JPEG_LIB) $(FREETYPE_LIB)
 		JPEG_DIR=nonexisting \
 		CROSSCOMPILE=yes \
 		third libs
-	$(CC) -fPIC -shared \
-		$(CFLAGS) \
+	$(CC) -shared $(CFLAGS) \
 		-Wl,-E -Wl,-rpath,'$$ORIGIN' \
 		-Wl,--whole-archive $(MUPDF_LIB_STATIC) \
 		-Wl,--whole-archive $(MUPDF_JS_LIB_STATIC) \
@@ -134,15 +133,15 @@ $(DJVULIBRE_LIB): $(JPEG_LIB)
 	mkdir -p $(DJVULIBRE_DIR)/build
 	test -e $(DJVULIBRE_DIR)/build/Makefile \
 		|| ( cd $(DJVULIBRE_DIR)/build \
-		&& CC="$(CC)" CXX="$(CXX)" CFLAGS="$(CFLAGS) -fPIC" \
-		CXXFLAGS="$(CXXFLAGS) -fPIC" \
-		LDFLAGS="$(LDFLAGS)" \
+		&& CC="$(CC)" CXX="$(CXX)" CFLAGS="$(CFLAGS)" \
+		CXXFLAGS="$(CXXFLAGS)" LDFLAGS="$(LDFLAGS)" \
 		../configure -q --disable-desktopfiles \
 			--disable-static --enable-shared \
 			--disable-xmltools --disable-largefile \
 			--without-jpeg --without-tiff \
 			$(if $(EMULATE_READER),,-host=$(CHOST)) )
-	$(MAKE) -j$(PROCESSORS) -C $(DJVULIBRE_DIR)/build SUBDIRS_FIRST=libdjvu
+	$(MAKE) -j$(PROCESSORS) -C $(DJVULIBRE_DIR)/build \
+		SUBDIRS_FIRST=libdjvu --silent
 	cp -fL $(DJVULIBRE_LIB_DIR)/$(notdir $(DJVULIBRE_LIB)) \
 		$(DJVULIBRE_LIB)
 
@@ -151,8 +150,7 @@ $(CRENGINE_LIB): $(ZLIB) $(PNG_LIB) $(FREETYPE_LIB)
 	test -e $(CRENGINE_WRAPPER_DIR)/build \
 	|| mkdir $(CRENGINE_WRAPPER_DIR)/build
 	cd $(CRENGINE_WRAPPER_DIR)/build \
-	&& CFLAGS="$(CFLAGS) -fPIC" \
-		CXXFLAGS="$(CXXFLAGS) -fPIC" CC="$(CC)" CXX="$(CXX)" \
+	&& CC="$(CC)" CXX="$(CXX)" CFLAGS="$(CFLAGS)" CXXFLAGS="$(CXXFLAGS)" \
 		LDFLAGS="$(LDFLAGS) -L$(CURDIR)/$(FREETYPE_DIR)/build/lib -L$(CURDIR)/$(ZLIB_DIR) -L$(CURDIR)/$(PNG_DIR)/lib" \
 		cmake -DCMAKE_BUILD_TYPE=Release ..
 	cd $(CRENGINE_WRAPPER_DIR)/build &&  $(MAKE)
@@ -170,11 +168,11 @@ else
 	$(MAKE) -j$(PROCESSORS) -C $(LUA_DIR) \
 		CC="$(HOSTCC)" HOST_CC="$(HOSTCC) -m32" \
 		CFLAGS="$(BASE_CFLAGS)" HOST_CFLAGS="$(HOSTCFLAGS)" \
-		LDFLAGS="$(LDFLAGS)" \
+		$(if $(WIN32),LDFLAGS="$(LDFLAGS)",) \
+		$(if $(WIN32),TARGET_SYS=Windows,) \
 		TARGET_SONAME=$(notdir $(LUAJIT_LIB)) \
 		TARGET_CFLAGS="$(CFLAGS)" \
 		TARGET_FLAGS="-DLUAJIT_NO_LOG2 -DLUAJIT_NO_EXP2" \
-		TARGET_SYS=$(if $(WIN32),Windows,) \
 		CROSS="$(strip $(CCACHE) $(CHOST))-" amalg
 endif
 ifdef WIN32
@@ -193,18 +191,19 @@ $(LUAJIT_JIT): $(if $(ANDROID),$(LUAJIT_LIB),$(LUAJIT))
 $(POPEN_NOSHELL_LIB):
 	$(MAKE) -j$(PROCESSORS) -C $(POPEN_NOSHELL_DIR) \
 		CC="$(CC)" AR="$(AR)" \
-		CFLAGS="$(CFLAGS) $(if $(ANDROID),--sysroot=$(SYSROOT),) -fPIC"
+		CFLAGS="$(CFLAGS) $(if $(ANDROID),--sysroot=$(SYSROOT),)"
 
 # k2pdfopt, fetched via GIT as a submodule
 $(K2PDFOPT_LIB) $(LEPTONICA_LIB) $(TESSERACT_LIB): $(PNG_LIB) $(ZLIB)
 	$(MAKE) -j$(PROCESSORS) -C $(K2PDFOPT_DIR) BUILDMODE=shared \
-		$(if $(EMULATE_READER),,HOST="$(CHOST)") \
+		$(if $(EMULATE_READER),,HOST=$(if $(ANDROID),"arm-linux",$(CHOST))) \
 		CC="$(CC)" CFLAGS="$(CFLAGS) -O3 -I../$(MUPDF_DIR)/include" \
 		CXX="$(CXX)" CXXFLAGS="$(CXXFLAGS) -I../$(MUPDF_DIR)/include" \
 		AR="$(AR)" ZLIB=../$(ZLIB) MUPDF_LIB=../$(MUPDF_LIB) \
 		LEPT_CFLAGS="$(CFLAGS) -I$(CURDIR)/$(ZLIB_DIR) -I$(CURDIR)/$(PNG_DIR)" \
 		LEPT_LDFLAGS="$(LDFLAGS) -L$(CURDIR)/$(ZLIB_DIR) -L$(CURDIR)/$(PNG_DIR)/lib" \
-		LEPT_PNG_DIR="$(CURDIR)/$(PNG_BUILD_DIR)" \
+		ZLIB_LDFLAGS="-Wl,-rpath-link,$(CURDIR)/$(ZLIB_DIR)" \
+		PNG_LDFLAGS="-Wl,-rpath-link,$(CURDIR)/$(PNG_DIR)/lib" \
 		all
 	cp -fL $(K2PDFOPT_DIR)/$(notdir $(K2PDFOPT_LIB)) $(K2PDFOPT_LIB)
 	cp -fL $(K2PDFOPT_DIR)/$(notdir $(LEPTONICA_LIB)) $(LEPTONICA_LIB)
@@ -276,9 +275,10 @@ $(OUTPUT_DIR)/extr: extr.c \
 $(GLIB):
 	echo -e "glib_cv_stack_grows=no\nglib_cv_uscore=no\nac_cv_func_posix_getpwuid_r=no" > \
 		$(GLIB_DIR)/arm_cache.conf
-	cd $(GLIB_DIR) && ./configure --with-libiconv=no --prefix=$(CURDIR)/$(GLIB_DIR) \
+	cd $(GLIB_DIR) && CC="$(CC) -std=gnu89" ./configure -q \
+		--with-libiconv=no --with-threads=none --prefix=$(CURDIR)/$(GLIB_DIR) \
 		$(if $(EMULATE_READER),,--host=$(CHOST) --cache-file=arm_cache.conf) \
-		&& $(MAKE) -j$(PROCESSORS) && $(MAKE) install
+		&& $(MAKE) -j$(PROCESSORS) install
 
 $(ZLIB):
 ifdef WIN32
@@ -291,7 +291,7 @@ ifdef WIN32
 else
 	cd $(ZLIB_DIR) && CC="$(CC)" ./configure \
 		--prefix=$(CURDIR)/$(ZLIB_DIR) \
-		&& $(MAKE) -j$(PROCESSORS) shared && $(MAKE) install
+		&& $(MAKE) -j$(PROCESSORS) --silent shared install
 	cp -fL $(ZLIB_DIR)/lib/$(notdir $(ZLIB)) $(ZLIB)
 endif
 
@@ -303,12 +303,14 @@ ifeq ("$(shell $(CC) -dumpmachine | sed s/-.*//)","x86_64")
 	# quick fix for x86_64 (zeus)
 	cd $(SDCV_DIR) && sed -i 's|guint32 page_size|guint64 page_size|' src/lib/lib.cpp
 endif
-	cd $(SDCV_DIR) && ./configure -q \
+	cd $(SDCV_DIR) && ./configure \
 		$(if $(EMULATE_READER),,--host=$(CHOST)) \
 		PKG_CONFIG_PATH="../$(GLIB_DIR)/lib/pkgconfig" \
+		CXX="$(CXX)" \
 		CXXFLAGS="$(CXXFLAGS) -I$(CURDIR)/$(ZLIB_DIR)" \
 		LDFLAGS="$(LDFLAGS) -L$(CURDIR)/$(ZLIB_DIR)" \
-		&& AM_CXXFLAGS="-static-libstdc++" $(MAKE) -j$(PROCESSORS)
+		AM_CXXFLAGS="-static-libstdc++" \
+		&& $(MAKE) -j$(PROCESSORS) --silent
 	# restore to original source
 	cd $(SDCV_DIR) && sed -i 's|guint64 page_size|guint32 page_size|' src/lib/lib.cpp
 	cp $(SDCV_DIR)/src/sdcv $(OUTPUT_DIR)/
@@ -317,9 +319,9 @@ endif
 # tar: tar package for zsync
 
 $(OUTPUT_DIR)/tar:
-	cd $(TAR_DIR) && ./configure LIBS=$(if $(WIN32),,-lrt) \
+	cd $(TAR_DIR) && ./configure -q LIBS=$(if $(WIN32),,-lrt) \
 		$(if $(EMULATE_READER),,--host=$(CHOST)) \
-		&& $(MAKE) -j$(PROCESSORS)
+		&& $(MAKE) -j$(PROCESSORS) --silent
 	cp $(TAR_DIR)/src/tar $(OUTPUT_DIR)/
 
 # ===========================================================================
@@ -328,7 +330,7 @@ $(OUTPUT_DIR)/tar:
 $(OUTPUT_DIR)/zsync:
 	cd $(ZSYNC_DIR) && autoreconf -fi && ./configure -q \
 		$(if $(EMULATE_READER),,--host=$(CHOST)) \
-		&& $(MAKE) -j$(PROCESSORS)
+		&& $(MAKE) -j$(PROCESSORS) --silent
 	cp $(ZSYNC_DIR)/zsync $(OUTPUT_DIR)/
 
 # ===========================================================================
@@ -347,7 +349,7 @@ $(LUASOCKET):
 		LUAINC="$(CURDIR)/$(LUA_DIR)/src" \
 		INSTALL_TOP_LDIR="$(CURDIR)/$(OUTPUT_DIR)/common" \
 		INSTALL_TOP_CDIR="$(CURDIR)/$(OUTPUT_DIR)/common" \
-		all install
+		--silent all install
 
 $(OPENSSL_LIB):
 	cd $(OPENSSL_DIR) && \
@@ -357,7 +359,7 @@ $(OPENSSL_LIB):
 		$(if $(WIN32),no-,)shared no-asm no-idea no-mdc2 no-rc5 \
 		&& $(MAKE) CC="$(CC) $(CFLAGS)" \
 		LD=$(LD) RANLIB=$(RANLIB) LIBVERSION="" \
-		build_crypto build_ssl
+		--silent build_crypto build_ssl
 
 $(LUASEC): $(OPENSSL_LIB)
 	$(MAKE) -C $(LUA_SEC_DIR) CC="$(CC) $(CFLAGS)" LD="$(CC)" \
@@ -366,7 +368,7 @@ $(LUASEC): $(OPENSSL_LIB)
 		LIB_PATH="-L$(CURDIR)/$(OPENSSL_DIR)" \
 		LUAPATH="$(CURDIR)/$(OUTPUT_DIR)/common" \
 		LUACPATH="$(CURDIR)/$(OUTPUT_DIR)/common" \
-		linux install
+		--silent linux install
 
 $(EVERNOTE_LIB):
 	$(MAKE) -C $(EVERNOTE_SDK_DIR)/thrift CC="$(CC) $(CFLAGS)" \
@@ -388,27 +390,33 @@ lualongnumber: $(EVERNOTE_LIB)
 	cp $(CURDIR)/$(EVERNOTE_PLUGIN_DIR)/lib/liblualongnumber.so \
 		$(CURDIR)/$(OUTPUT_DIR)/libs
 
+# zeromq should be compiled without optimization in clang 3.4
+# which otherwise may throw a warning saying "array index is past the end
+# of the array" for strcmp comparing a string with exactly 2 chars.
+# More details about this bug:
+# https://gcc.gnu.org/ml/gcc-help/2009-10/msg00191.html
 $(ZMQ_LIB):
 	mkdir -p $(ZMQ_DIR)/build
 	cd $(ZMQ_DIR) && sh autogen.sh
 	cd $(ZMQ_DIR)/src && sed -i 's|libzmq_la_LDFLAGS = -avoid-version|libzmq_la_LDFLAGS =|g' Makefile.am
 	cd $(ZMQ_DIR)/build && \
-		CC="$(CC)" CXX="$(CXX)" CFLAGS="$(CFLAGS)" \
-		CXXFLAGS="$(CXXFLAGS)" LDFLAGS="$(LDFLAGS)" \
+		CC="$(CC)" CFLAGS="$(CFLAGS) $(if $(CLANG),-O0,)" \
+		LDFLAGS="$(LDFLAGS)" \
 		libzmq_have_xmlto=no libzmq_have_asciidoc=no \
 			../configure -q --prefix=$(CURDIR)/$(ZMQ_DIR)/build \
 				--disable-static --enable-shared \
 				--host=$(CHOST)
-	-$(MAKE) -j$(PROCESSORS) -C $(ZMQ_DIR)/build uninstall
-	$(MAKE) -j$(PROCESSORS) -C $(ZMQ_DIR)/build install
+	-$(MAKE) -j$(PROCESSORS) -C $(ZMQ_DIR)/build --silent uninstall
+	$(MAKE) -j$(PROCESSORS) -C $(ZMQ_DIR)/build --silent install
 	cp -fL $(ZMQ_DIR)/build/$(if $(WIN32),bin,lib)/$(notdir $(ZMQ_LIB)) $@
 
 $(CZMQ_LIB): $(ZMQ_LIB)
 	mkdir -p $(CZMQ_DIR)/build
 	cd $(CZMQ_DIR) && sh autogen.sh
 	cd $(CZMQ_DIR)/build && \
-		CC="$(CC)" CFLAGS="$(CFLAGS) -DLIBCZMQ_EXPORTS" \
+		CC="$(CC)" \
 		LDFLAGS="$(LDFLAGS) -Wl,-rpath,'libs'" \
+		CFLAGS="$(CFLAGS) $(if $(CLANG),-O0,) $(if $(WIN32),-DLIBCZMQ_EXPORTS)" \
 		czmq_have_xmlto=no czmq_have_asciidoc=no \
 			../configure -q --prefix=$(CURDIR)/$(CZMQ_DIR)/build \
 				--with-gnu-ld \
@@ -421,8 +429,8 @@ $(CZMQ_LIB): $(ZMQ_LIB)
 		sed -i 's|^runpath_var=LD_RUN_PATH|runpath_var=DIE_RPATH_DIE|g' libtool
 	# patch: ignore limited broadcast address
 	-cd $(CZMQ_DIR) && patch -N -p1 < ../zbeacon.patch
-	-$(MAKE) -j$(PROCESSORS) -C $(CZMQ_DIR)/build uninstall
-	$(MAKE) -j$(PROCESSORS) -C $(CZMQ_DIR)/build install
+	-$(MAKE) -j$(PROCESSORS) -C $(CZMQ_DIR)/build --silent uninstall
+	$(MAKE) -j$(PROCESSORS) -C $(CZMQ_DIR)/build --silent install
 	-cd $(CZMQ_DIR) && patch -R -p1 < ../zbeacon.patch
 	cp -fL $(CZMQ_DIR)/build/$(if $(WIN32),bin,lib)/$(notdir $(CZMQ_LIB)) $@
 
@@ -430,9 +438,8 @@ $(FILEMQ_LIB): $(ZMQ_LIB) $(CZMQ_LIB) $(OPENSSL_LIB)
 	mkdir -p $(FILEMQ_DIR)/build
 	cd $(FILEMQ_DIR) && sh autogen.sh
 	cd $(FILEMQ_DIR)/build && \
-		CC="$(CC)" CXX="$(CXX)" \
-		CFLAGS="$(CFLAGS) -I$(CURDIR)/$(OPENSSL_DIR)/include" \
-		CXXFLAGS="$(CXXFLAGS) -I$(CURDIR)/$(OPENSSL_DIR)/include" \
+		CC="$(CC)" \
+		CFLAGS="$(CFLAGS) $(if $(CLANG),-O0,) -I$(CURDIR)/$(OPENSSL_DIR)/include" \
 		LDFLAGS="$(LDFLAGS) -L$(CURDIR)/$(OPENSSL_DIR) -Wl,-rpath,'libs'" \
 		fmq_have_xmlto=no fmq_have_asciidoc=no \
 			../configure -q --prefix=$(CURDIR)/$(FILEMQ_DIR)/build \
@@ -443,16 +450,16 @@ $(FILEMQ_LIB): $(ZMQ_LIB) $(CZMQ_LIB) $(OPENSSL_LIB)
 	cd $(FILEMQ_DIR)/build && \
 		sed -i 's|^hardcode_libdir_flag_spec=.*|hardcode_libdir_flag_spec=""|g' libtool && \
 		sed -i 's|^runpath_var=LD_RUN_PATH|runpath_var=DIE_RPATH_DIE|g' libtool
-	-$(MAKE) -j$(PROCESSORS) -C $(FILEMQ_DIR)/build uninstall
-	$(MAKE) -j$(PROCESSORS) -C $(FILEMQ_DIR)/build install
+	-$(MAKE) -j$(PROCESSORS) -C $(FILEMQ_DIR)/build --silent uninstall
+	$(MAKE) -j$(PROCESSORS) -C $(FILEMQ_DIR)/build --silent install
 	cp -fL $(FILEMQ_DIR)/build/$(if $(WIN32),bin,lib)/$(notdir $(FILEMQ_LIB)) $@
 
 $(ZYRE_LIB): $(ZMQ_LIB) $(CZMQ_LIB)
 	mkdir -p $(ZYRE_DIR)/build
 	cd $(ZYRE_DIR) && sh autogen.sh
 	cd $(ZYRE_DIR)/build && \
-		CC="$(CC)" CXX="$(CXX)" \
-		CFLAGS="$(CFLAGS)" CXXFLAGS="$(CXXFLAGS)" \
+		CC="$(CC)" \
+		CFLAGS="$(CFLAGS) $(if $(CLANG),-O0,)" CXXFLAGS="$(CXXFLAGS)" \
 		LDFLAGS="$(LDFLAGS) -Wl,-rpath,'libs'" \
 		zyre_have_xmlto=no zyre_have_asciidoc=no \
 			../configure -q --prefix=$(CURDIR)/$(ZYRE_DIR)/build \
@@ -463,8 +470,8 @@ $(ZYRE_LIB): $(ZMQ_LIB) $(CZMQ_LIB)
 	cd $(ZYRE_DIR)/build && \
 		sed -i 's|^hardcode_libdir_flag_spec=.*|hardcode_libdir_flag_spec=""|g' libtool && \
 		sed -i 's|^runpath_var=LD_RUN_PATH|runpath_var=DIE_RPATH_DIE|g' libtool
-	-$(MAKE) -j$(PROCESSORS) -C $(ZYRE_DIR)/build uninstall
-	$(MAKE) -j$(PROCESSORS) -C $(ZYRE_DIR)/build install
+	-$(MAKE) -j$(PROCESSORS) -C $(ZYRE_DIR)/build --silent uninstall
+	$(MAKE) -j$(PROCESSORS) -C $(ZYRE_DIR)/build --silent install
 	cp -fL $(ZYRE_DIR)/build/$(if $(WIN32),bin,lib)/$(notdir $(ZYRE_LIB)) $@
 
 # ===========================================================================
