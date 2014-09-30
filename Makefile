@@ -308,8 +308,7 @@ endif
 		PKG_CONFIG_PATH="../$(GLIB_DIR)/lib/pkgconfig" \
 		CXX="$(CXX)" \
 		CXXFLAGS="$(CXXFLAGS) -I$(CURDIR)/$(ZLIB_DIR)" \
-		LDFLAGS="$(LDFLAGS) -L$(CURDIR)/$(ZLIB_DIR)" \
-		AM_CXXFLAGS="-static-libstdc++" \
+		LDFLAGS="$(LDFLAGS) -L$(CURDIR)/$(ZLIB_DIR) -static-libstdc++" \
 		&& $(MAKE) -j$(PROCESSORS) --silent
 	# restore to original source
 	cd $(SDCV_DIR) && sed -i 's|guint64 page_size|guint32 page_size|' src/lib/lib.cpp
