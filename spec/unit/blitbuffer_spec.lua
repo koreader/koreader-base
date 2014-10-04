@@ -47,18 +47,30 @@ describe("Blitbuffer unit tests", function()
         end)
 
         it("should do color comparison correctly", function()
-            assert.True(Blitbuffer.Color4(122):isEqual(
-                        Blitbuffer.Color4(122)))
-            assert.True(Blitbuffer.Color4L(122):isEqual(
-                        Blitbuffer.Color4L(122)))
-            assert.True(Blitbuffer.Color4U(123):isEqual(
-                        Blitbuffer.Color4U(123)))
-            assert.True(Blitbuffer.Color8(127):isEqual(
-                        Blitbuffer.Color8(127)))
-            assert.True(Blitbuffer.ColorRGB24(128, 125, 123):isEqual(
-                        Blitbuffer.ColorRGB24(128, 125, 123)))
-            assert.True(Blitbuffer.ColorRGB32(128, 120, 123, 1):isEqual(
-                        Blitbuffer.ColorRGB32(128, 120, 123, 1)))
+            assert.True(Blitbuffer.Color4(122) == Blitbuffer.Color4(122))
+            assert.True(Blitbuffer.Color4L(122) == Blitbuffer.Color4L(122))
+            assert.True(Blitbuffer.Color4U(123) == Blitbuffer.Color4U(123))
+            assert.True(Blitbuffer.Color8(127) == Blitbuffer.Color8(127))
+            assert.True(Blitbuffer.ColorRGB24(128, 125, 123) ==
+                        Blitbuffer.ColorRGB24(128, 125, 123))
+            assert.True(Blitbuffer.ColorRGB32(128, 120, 123, 1) ==
+                        Blitbuffer.ColorRGB32(128, 120, 123, 1))
+        end)
+
+        it("should do color comparison with conversion correctly", function()
+            assert.True(Blitbuffer.Color8(127) ==
+                        Blitbuffer.ColorRGB24(127, 127, 127))
+            assert.True(Blitbuffer.Color8A(127, 100) ==
+                        Blitbuffer.ColorRGB32(127, 127, 127, 100))
+        end)
+
+        it("should do color blending correctly", function()
+            -- opaque
+            local c = Blitbuffer.Color8(100):blend(Blitbuffer.Color8(200)
+            assert.True(c == Blitbuffer.Color8(200))
+            -- alpha
+            local c = Blitbuffer.Color8(100):blend(Blitbuffer.Color8A(200, 127)
+            assert.True(c == Blitbuffer.Color8(149))
         end)
 
         it("should scale blitbuffer correctly", function()
@@ -73,22 +85,22 @@ describe("Blitbuffer unit tests", function()
             local scaled_bb = bb:scale(200, 200)
             assert.are.equals(scaled_bb:getWidth(), 200)
             assert.are.equals(scaled_bb:getHeight(), 200)
-            assert.True(test_c1:isEqual(scaled_bb:getPixel(0, 0)))
-            assert.True(test_c1:isEqual(scaled_bb:getPixel(0, 1)))
-            assert.True(test_c1:isEqual(scaled_bb:getPixel(1, 0)))
-            assert.True(test_c1:isEqual(scaled_bb:getPixel(1, 1)))
+            assert.True(test_c1 == scaled_bb:getPixel(0, 0))
+            assert.True(test_c1 == scaled_bb:getPixel(0, 1))
+            assert.True(test_c1 == scaled_bb:getPixel(1, 0))
+            assert.True(test_c1 == scaled_bb:getPixel(1, 1))
 
-            assert.True(test_c2:isEqual(scaled_bb:getPixel(2, 0)))
-            assert.True(test_c2:isEqual(scaled_bb:getPixel(3, 0)))
-            assert.True(test_c2:isEqual(scaled_bb:getPixel(2, 1)))
-            assert.True(test_c2:isEqual(scaled_bb:getPixel(3, 1)))
+            assert.True(test_c2 == scaled_bb:getPixel(2, 0))
+            assert.True(test_c2 == scaled_bb:getPixel(3, 0))
+            assert.True(test_c2 == scaled_bb:getPixel(2, 1))
+            assert.True(test_c2 == scaled_bb:getPixel(3, 1))
 
             scaled_bb = bb:scale(50, 50)
             assert.are.equals(scaled_bb:getWidth(), 50)
             assert.are.equals(scaled_bb:getHeight(), 50)
 
-            assert.True(test_c1:isEqual(scaled_bb:getPixel(0, 0)))
-            assert.True(test_c3:isEqual(scaled_bb:getPixel(1, 0)))
+            assert.True(test_c1 == scaled_bb:getPixel(0, 0))
+            assert.True(test_c3 == scaled_bb:getPixel(1, 0))
         end)
     end)
 
