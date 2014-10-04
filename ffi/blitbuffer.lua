@@ -33,7 +33,7 @@ typedef struct Color8 {
 } Color8;
 typedef struct Color8A {
     uint8_t a;
-    uint8_t dummy; // only support pre-multiplied for now
+    uint8_t alpha;
 } Color8A;
 typedef struct ColorRGB16 {
     uint16_t v;
@@ -47,7 +47,7 @@ typedef struct ColorRGB32 {
     uint8_t r;
     uint8_t g;
     uint8_t b;
-    uint8_t a;
+    uint8_t alpha;
 } ColorRGB32;
 
 typedef struct BlitBuffer4 {
@@ -132,7 +132,11 @@ function Color4U_mt.__index:set(color)
     self.a = bor(band(0x0F, self.a), color:getColor4U().a)
 end
 function Color8_mt.__index:set(color) self.a = color:getColor8().a end
-function Color8A_mt.__index:set(color) self.a = color:getColor8A().a end
+function Color8A_mt.__index:set(color)
+    local c = color:getColor8A()
+    self.a = c.a
+    self.alpha = c.alpha
+end
 function ColorRGB16_mt.__index:set(color) self.v = color:getColorRGB16().v end
 function ColorRGB24_mt.__index:set(color)
     local c = color:getColorRGB24()
@@ -145,35 +149,58 @@ function ColorRGB32_mt.__index:set(color)
     self.r = c.r
     self.g = c.g
     self.b = c.b
+    self.alpha = c.alpha
 end
--- adding two colors:
-function Color4L_mt.__index:add(color, intensity)
-    local value = tonumber(band(self.a, 0x0F)) * (1-intensity) + tonumber(color:getColor4L().a) * intensity
-    if value > 0x0F then value = 0x0F end
+
+-- alpha blending (8bit alpha value):
+local function div255(value)
+    return rshift(value + intt(1) + rshift(value, 8), 8)
+end
+local function div4080(value)
+    return rshift(value + intt(1) + rshift(value, 8), 12)
+end
+function Color4L_mt.__index:blend(color)
+    local alpha = color:getAlpha()
+    -- simplified: we expect a 8bit grayscale "color" as parameter
+    local value = div4080(band(self.a, 0x0F) * intt(0x11) * (intt(0xFF) - alpha) + color:getR() * alpha)
     self:set(Color4L(value))
 end
-function Color4U_mt.__index:add(color, intensity)
-    local value = tonumber(band(self.a, 0xF0)) * (1-intensity) + tonumber(color:getColor4U().a) * intensity
-    if value > 0xF0 then value = 0xF0 end
+function Color4U_mt.__index:blend(color)
+    local alpha = color:getAlpha()
+    local orig = band(self.a, 0xF0)
+    -- simplified: we expect a 8bit grayscale "color" as parameter
+    local value = div255((orig + rshift(orig, 4)) * (intt(0xFF) - alpha) + color:getR() * alpha)
     self:set(Color4U(value))
 end
-function Color8_mt.__index:add(color, intensity)
-    local value = tonumber(self.a) * (1-intensity) + tonumber(color:getColor8().a) * intensity
-    if value > 0xFF then value = 0xFF end
+function Color8_mt.__index:blend(color)
+    local alpha = color:getAlpha()
+    -- simplified: we expect a 8bit grayscale "color" as parameter
+    local value = div255(self.a * (intt(0xFF) - alpha) + color:getR() * alpha)
     self:set(Color8(value))
 end
-Color8A_mt.__index.add = Color8_mt.__index.add
-function ColorRGB16_mt.__index:add(color, intensity)
-    local r = tonumber(self:getR()) * (1-intensity) + tonumber(color:getR()) * intensity
-    if r > 255 then r = 255 end
-    local g = tonumber(self:getG()) * (1-intensity) + tonumber(color:getG()) * intensity
-    if g > 255 then g = 255 end
-    local b = tonumber(self:getB()) * (1-intensity) + tonumber(color:getB()) * intensity
-    if b > 255 then b = 255 end
+function Color8A_mt.__index:blend(color)
+    local alpha = color:getAlpha()
+    -- simplified: we expect a 8bit grayscale "color" as parameter
+    local value = div255(self.a * (intt(0xFF) - alpha) + color:getR() * alpha)
+    self:set(Color8A(value, self:getAlpha()))
+end
+function ColorRGB16_mt.__index:blend(color)
+    local alpha = color:getAlpha()
+    local ainv = intt(0xFF) - alpha
+    local r = div255(self:getR() * ainv + color:getR() * alpha)
+    local g = div255(self:getG() * ainv + color:getG() * alpha)
+    local b = div255(self:getB() * ainv + color:getB() * alpha)
     self:set(ColorRGB24(r, g, b))
 end
-ColorRGB24_mt.__index.add = ColorRGB16_mt.__index.add
-ColorRGB32_mt.__index.add = ColorRGB16_mt.__index.add
+ColorRGB24_mt.__index.blend = ColorRGB16_mt.__index.blend
+function ColorRGB32_mt.__index:blend(color)
+    local alpha = color:getAlpha()
+    local ainv = intt(0xFF) - alpha
+    local r = div255(self:getR() * ainv + color:getR() * alpha)
+    local g = div255(self:getG() * ainv + color:getG() * alpha)
+    local b = div255(self:getB() * ainv + color:getB() * alpha)
+    self:set(ColorRGB32(r, g, b, self:getAlpha()))
+end
 
 -- dimming
 function Color4L_mt.__index:dim()
@@ -266,24 +293,26 @@ ColorRGB32_mt.__index.getColor8 = ColorRGB24_mt.__index.getColor8
 -- to Color8A:
 function Color4L_mt.__index:getColor8A()
     local v = band(0x0F, self.a)
-    return Color8A(v*0x11)
+    return Color8A(v*0x11, 0)
 end
 function Color4U_mt.__index:getColor8A()
     local v = band(0xF0, self.a)
-    return Color8A(bor(rshift(v, 4), v))
+    return Color8A(bor(rshift(v, 4), v), 0)
 end
-function Color8_mt.__index:getColor8A() return Color8A(self.a) end
+function Color8_mt.__index:getColor8A() return Color8A(self.a, 0) end
 function Color8A_mt.__index:getColor8A() return self end
 function ColorRGB16_mt.__index:getColor8A()
     local r = rshift(self.v, 11)
     local g = band(rshift(self.v, 5, 0x3F))
     local b = band(self.v, 0x001F)
-    return Color8A(rshift(39190*r + 38469*g + 14942*b, 14))
+    return Color8A(rshift(39190*r + 38469*g + 14942*b, 14), 0)
 end
 function ColorRGB24_mt.__index:getColor8A()
-    return Color8A(rshift(4897*self:getR() + 9617*self:getG() + 1868*self:getB(), 14))
+    return Color8A(rshift(4897*self:getR() + 9617*self:getG() + 1868*self:getB(), 14), 0)
 end
-ColorRGB32_mt.__index.getColor8A = ColorRGB24_mt.__index.getColor8A
+function ColorRGB32_mt.__index:getColor8A()
+    return Color8A(rshift(4897*self:getR() + 9617*self:getG() + 1868*self:getB(), 14), self:getAlpha())
+end
 
 -- to ColorRGB16:
 function Color4L_mt.__index:getColorRGB16()
@@ -331,22 +360,26 @@ function ColorRGB16_mt.__index:getColorRGB32()
     local b = band(self.v, 0x001F)
     return ColorRGB32(lshift(r, 3) + rshift(r, 2), lshift(g, 2) + rshift(g, 4), lshift(b, 3) + rshift(b, 2), 0)
 end
-function ColorRGB24_mt.__index:getColorRGB32() return ColorRGB32(self.r, self.g, self.b) end
+function ColorRGB24_mt.__index:getColorRGB32() return ColorRGB32(self.r, self.g, self.b, 0) end
 function ColorRGB32_mt.__index:getColorRGB32() return self end
 
 -- RGB getters (special case for 4bpp mode)
 function Color4L_mt.__index:getR() return self:getColor8().a end
 Color4L_mt.__index.getG = Color4L_mt.__index.getR
 Color4L_mt.__index.getB = Color4L_mt.__index.getR
+function Color4L_mt.__index:getAlpha() return intt(0xFF) end
 Color4U_mt.__index.getR = Color4L_mt.__index.getR
 Color4U_mt.__index.getG = Color4L_mt.__index.getR
 Color4U_mt.__index.getB = Color4L_mt.__index.getR
+Color4U_mt.__index.getAlpha = Color4L_mt.__index.getAlpha
 Color8_mt.__index.getR = Color4L_mt.__index.getR
 Color8_mt.__index.getG = Color4L_mt.__index.getR
 Color8_mt.__index.getB = Color4L_mt.__index.getR
+Color8_mt.__index.getAlpha = Color4L_mt.__index.getAlpha
 Color8A_mt.__index.getR = Color4L_mt.__index.getR
 Color8A_mt.__index.getG = Color4L_mt.__index.getR
 Color8A_mt.__index.getB = Color4L_mt.__index.getR
+function Color8A_mt.__index:getAlpha() return self.alpha end
 function ColorRGB16_mt.__index:getR()
     local r = rshift(self.v, 11)
     return lshift(r, 3) + rshift(r, 2)
@@ -359,46 +392,66 @@ function ColorRGB16_mt.__index:getB()
     local b = band(self.v, 0x001F)
     return lshift(b, 3) + rshift(b, 2)
 end
+ColorRGB16_mt.__index.getAlpha = Color4L_mt.__index.getAlpha
 function ColorRGB24_mt.__index:getR() return self.r end
 function ColorRGB24_mt.__index:getG() return self.g end
 function ColorRGB24_mt.__index:getB() return self.b end
+ColorRGB24_mt.__index.getAlpha = Color4L_mt.__index.getAlpha
 ColorRGB32_mt.__index.getR = ColorRGB24_mt.__index.getR
 ColorRGB32_mt.__index.getG = ColorRGB24_mt.__index.getG
 ColorRGB32_mt.__index.getB = ColorRGB24_mt.__index.getB
-function ColorRGB32_mt.__index:getAlpha() return self.a end
+function ColorRGB32_mt.__index:getAlpha() return self.alpha end
 
 -- modifications:
 -- inversion:
 function Color4L_mt.__index:invert() return Color4L(bxor(self.a, 0x0F)) end
 function Color4U_mt.__index:invert() return Color4U(bxor(self.a, 0xF0)) end
 function Color8_mt.__index:invert() return Color8(bxor(self.a, 0xFF)) end
-function Color8A_mt.__index:invert() return Color8A(bxor(self.a, 0xFF)) end
+function Color8A_mt.__index:invert() return Color8A(bxor(self.a, 0xFF), self.alpha) end
 function ColorRGB16_mt.__index:invert() return ColorRGB16(bxor(self.v, 0xFFFF)) end
 function ColorRGB24_mt.__index:invert()
     return ColorRGB24(bxor(self.r, 0xFF), bxor(self.g, 0xFF), bxor(self.b, 0xFF))
 end
 function ColorRGB32_mt.__index:invert()
-    return ColorRGB32(bxor(self.r, 0xFF), bxor(self.g, 0xFF), bxor(self.b, 0xFF))
+    return ColorRGB32(bxor(self.r, 0xFF), bxor(self.g, 0xFF), bxor(self.b, 0xFF), self.alpha)
 end
 
 -- comparison:
-function Color4L_mt.__index:isEqual(c)
-    return self:getR() == c:getR()
-end
-Color4U_mt.__index.isEqual = Color4L_mt.__index.isEqual
-Color8_mt.__index.isEqual = Color4L_mt.__index.isEqual
-Color8A_mt.__index.isEqual = Color4L_mt.__index.isEqual
-function ColorRGB24_mt.__index:isEqual(c)
-    return (self:getR() == c:getR())
-    and (self:getG() == c:getG())
-    and (self:getB() == c:getB())
-end
-ColorRGB16_mt.__index.isEqual = ColorRGB24_mt.__index.isEqual
-function ColorRGB32_mt.__index:isEqual(c)
+function ColorRGB32_mt:__eq(c)
+    c = c:getColorRGB32()
     return (self:getR() == c:getR())
     and (self:getG() == c:getG())
     and (self:getB() == c:getB())
     and (self:getAlpha() == c:getAlpha())
+end
+Color4L_mt.__eq = ColorRGB32_mt.__eq
+Color4U_mt.__eq = ColorRGB32_mt.__eq
+Color8_mt.__eq = ColorRGB32_mt.__eq
+Color8A_mt.__eq = ColorRGB32_mt.__eq
+ColorRGB16_mt.__eq = ColorRGB32_mt.__eq
+ColorRGB24_mt.__eq = ColorRGB32_mt.__eq
+
+-- pretty printing
+function Color4L_mt:__tostring()
+    return "Color4L("..band(self.a, 0x0F)..")"
+end
+function Color4U_mt:__tostring()
+    return "Color4U("..rshift(band(self.a, 0xF0),4)..")"
+end
+function Color8_mt:__tostring()
+    return "Color8("..self.a..")"
+end
+function Color8A_mt:__tostring()
+    return "Color8A("..self.a ..", "..self.alpha..")"
+end
+function ColorRGB16_mt:__tostring()
+    return "ColorRGB16("..self:getR()..", "..self:getG()..", "..self:getB()..")"
+end
+function ColorRGB24_mt:__tostring()
+    return "ColorRGB24("..self:getR()..", "..self:getG()..", "..self:getB()..")"
+end
+function ColorRGB32_mt:__tostring()
+    return "ColorRGB32("..self:getR()..", "..self:getG()..", "..self:getB()..", "..self:getAlpha()..")"
 end
 
 local MASK_ALLOCATED = 0x01
@@ -550,10 +603,49 @@ function BB_mt.__index:setPixel(x, y, color)
     if self:getInverse() == 1 then color = color:invert() end
     self:getPixelP(px, py)[0]:set(color)
 end
-function BB_mt.__index:setPixelAdd(x, y, color, intensity)
+function BB_mt.__index:setPixelAdd(x, y, color, alpha)
+    -- fast path:
+    if alpha == 0 then return
+    elseif alpha == 0xFF then return self:setPixel(x, y, color)
+    end
+    -- this method works with a grayscale value
+    local px, py = self:getPhysicalCoordinates(x, y)
+    color = color:getColor8A()
+    if self:getInverse() == 1 then color = color:invert() end
+    color.alpha = alpha
+    self:getPixelP(px, py)[0]:blend(color)
+end
+function BBRGB16_mt.__index:setPixelAdd(x, y, color, alpha)
+    -- fast path:
+    if alpha == 0 then return
+    elseif alpha == 0xFF then return self:setPixel(x, y, color)
+    end
+    -- this method uses a RGB color value
     local px, py = self:getPhysicalCoordinates(x, y)
     if self:getInverse() == 1 then color = color:invert() end
-    self:getPixelP(px, py)[0]:add(color, intensity)
+    color = color:getColorRGB32()
+    color.alpha = alpha
+    self:getPixelP(px, py)[0]:blend(color)
+end
+BBRGB24_mt.__index.setPixelAdd = BBRGB16_mt.__index.setPixelAdd
+BBRGB32_mt.__index.setPixelAdd = BBRGB16_mt.__index.setPixelAdd
+function BB_mt.__index:setPixelBlend(x, y, color)
+    local px, py = self:getPhysicalCoordinates(x, y)
+    if self:getInverse() == 1 then color = color:invert() end
+    self:getPixelP(px, py)[0]:blend(color)
+end
+function BB_mt.__index:setPixelColorize(x, y, mask, color)
+    -- use 8bit grayscale pixel value as alpha for blitting
+    local alpha = mask:getColor8().a
+    -- fast path:
+    if alpha == 0 then return end
+    local px, py = self:getPhysicalCoordinates(x, y)
+    if alpha == 0xFF then
+        self:getPixelP(px, py)[0]:set(color)
+    else
+        color.alpha = alpha
+        self:getPixelP(px, py)[0]:blend(color)
+    end
 end
 function BB_mt.__index:setPixelInverted(x, y, color)
     self:setPixel(x, y, color:invert())
@@ -665,8 +757,24 @@ function BB_mt.__index:blitFrom(source, dest_x, dest_y, offs_x, offs_y, width, h
 end
 BB_mt.__index.blitFullFrom = BB_mt.__index.blitFrom
 
+-- blitting with a per-blit alpha value
 function BB_mt.__index:addblitFrom(source, dest_x, dest_y, offs_x, offs_y, width, height, intensity)
-    self:blitFrom(source, dest_x, dest_y, offs_x, offs_y, width, height, self.setPixelAdd, intensity)
+    self:blitFrom(source, dest_x, dest_y, offs_x, offs_y, width, height, self.setPixelAdd, intt(intensity*0xFF))
+end
+
+-- alpha-pane aware blitting
+function BB_mt.__index:alphablitFrom(source, dest_x, dest_y, offs_x, offs_y, width, height)
+    self:blitFrom(source, dest_x, dest_y, offs_x, offs_y, width, height, self.setPixelBlend)
+end
+
+-- colorize area using source blitbuffer as a alpha-map
+function BB_mt.__index:colorblitFrom(source, dest_x, dest_y, offs_x, offs_y, width, height, color)
+    -- compatibility
+    if type(color) == "number" then color = Color4L(color) end
+    -- we need color with alpha later:
+    color = color:getColorRGB32()
+    if self:getInverse() == 1 then color = color:invert() end
+    self:blitFrom(source, dest_x, dest_y, offs_x, offs_y, width, height, self.setPixelColorize, color)
 end
 
 function BB_mt.__index:blitFromRotate(source, degree)
