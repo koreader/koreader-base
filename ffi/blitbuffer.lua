@@ -349,7 +349,7 @@ function ColorRGB32_mt.__index:getColorRGB24() return ColorRGB24(self.r, self.g,
 -- to ColorRGB32:
 function Color4L_mt.__index:getColorRGB32()
     local v = self:getColor8()
-    return ColorRGB32(v.a, v.a, v.a, 0)
+    return ColorRGB32(v.a, v.a, v.a, 0xFF)
 end
 Color4U_mt.__index.getColorRGB32 = Color4L_mt.__index.getColorRGB32
 Color8_mt.__index.getColorRGB32 = Color4L_mt.__index.getColorRGB32
@@ -358,9 +358,9 @@ function ColorRGB16_mt.__index:getColorRGB32()
     local r = rshift(self.v, 11)
     local g = band(rshift(self.v, 5), 0x3F)
     local b = band(self.v, 0x001F)
-    return ColorRGB32(lshift(r, 3) + rshift(r, 2), lshift(g, 2) + rshift(g, 4), lshift(b, 3) + rshift(b, 2), 0)
+    return ColorRGB32(lshift(r, 3) + rshift(r, 2), lshift(g, 2) + rshift(g, 4), lshift(b, 3) + rshift(b, 2), 0xFF)
 end
-function ColorRGB24_mt.__index:getColorRGB32() return ColorRGB32(self.r, self.g, self.b, 0) end
+function ColorRGB24_mt.__index:getColorRGB32() return ColorRGB32(self.r, self.g, self.b, 0xFF) end
 function ColorRGB32_mt.__index:getColorRGB32() return self end
 
 -- RGB getters (special case for 4bpp mode)
@@ -1269,6 +1269,7 @@ function BB_mt.__index:paintRoundedCorner(off_x, off_y, w, h, bw, r, c)
     BB.Color4L = Color4L
     BB.Color4U = Color4U
     BB.Color8 = Color8
+    BB.Color8A = Color8A
     BB.ColorRGB16 = ColorRGB16
     BB.ColorRGB24 = ColorRGB24
     BB.ColorRGB32 = ColorRGB32
