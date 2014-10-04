@@ -367,7 +367,7 @@ function ColorRGB32_mt.__index:getColorRGB32() return self end
 function Color4L_mt.__index:getR() return self:getColor8().a end
 Color4L_mt.__index.getG = Color4L_mt.__index.getR
 Color4L_mt.__index.getB = Color4L_mt.__index.getR
-function Color4L_mt.__index:getAlpha() return intt(0) end
+function Color4L_mt.__index:getAlpha() return intt(0xFF) end
 Color4U_mt.__index.getR = Color4L_mt.__index.getR
 Color4U_mt.__index.getG = Color4L_mt.__index.getR
 Color4U_mt.__index.getB = Color4L_mt.__index.getR
@@ -604,6 +604,10 @@ function BB_mt.__index:setPixel(x, y, color)
     self:getPixelP(px, py)[0]:set(color)
 end
 function BB_mt.__index:setPixelAdd(x, y, color, alpha)
+    -- fast path:
+    if alpha == 0 then return
+    elseif alpha == 0xFF then return self:setPixel(x, y, color)
+    end
     -- this method works with a grayscale value
     local px, py = self:getPhysicalCoordinates(x, y)
     color = color:getColor8A()
@@ -612,10 +616,14 @@ function BB_mt.__index:setPixelAdd(x, y, color, alpha)
     self:getPixelP(px, py)[0]:blend(color)
 end
 function BBRGB16_mt.__index:setPixelAdd(x, y, color, alpha)
+    -- fast path:
+    if alpha == 0 then return
+    elseif alpha == 0xFF then return self:setPixel(x, y, color)
+    end
     -- this method uses a RGB color value
     local px, py = self:getPhysicalCoordinates(x, y)
-    color = color:getColorRGB32()
     if self:getInverse() == 1 then color = color:invert() end
+    color = color:getColorRGB32()
     color.alpha = alpha
     self:getPixelP(px, py)[0]:blend(color)
 end
@@ -627,10 +635,17 @@ function BB_mt.__index:setPixelBlend(x, y, color)
     self:getPixelP(px, py)[0]:blend(color)
 end
 function BB_mt.__index:setPixelColorize(x, y, mask, color)
-    local px, py = self:getPhysicalCoordinates(x, y)
     -- use 8bit grayscale pixel value as alpha for blitting
-    color.alpha = mask:getColor8().a
-    self:getPixelP(px, py)[0]:blend(color)
+    local alpha = mask:getColor8().a
+    -- fast path:
+    if alpha == 0 then return end
+    local px, py = self:getPhysicalCoordinates(x, y)
+    if alpha == 0xFF then
+        self:getPixelP(px, py)[0]:set(color)
+    else
+        color.alpha = alpha
+        self:getPixelP(px, py)[0]:blend(color)
+    end
 end
 function BB_mt.__index:setPixelInverted(x, y, color)
     self:setPixel(x, y, color:invert())
