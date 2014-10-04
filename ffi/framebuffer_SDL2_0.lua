@@ -49,10 +49,6 @@ end
 
 function fb:refresh(refreshtype, waveform_mode, x1, y1, w, h)
 	if self.dummy then return end
-	if x1 == nil then x1 = 0 end
-	if y1 == nil then y1 = 0 end
-	if w == nil then w = SDL.w end
-	if h == nil then h = SDL.h end
 
 	SDL.SDL.SDL_UpdateTexture(SDL.texture, nil, self.bb.data, self.bb.pitch)
 	SDL.SDL.SDL_RenderClear(SDL.renderer)
