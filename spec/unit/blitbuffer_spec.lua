@@ -66,10 +66,12 @@ describe("Blitbuffer unit tests", function()
 
         it("should do color blending correctly", function()
             -- opaque
-            local c = Blitbuffer.Color8(100):blend(Blitbuffer.Color8(200)
+            local c = Blitbuffer.Color8(100)
+            c:blend(Blitbuffer.Color8(200))
             assert.True(c == Blitbuffer.Color8(200))
             -- alpha
-            local c = Blitbuffer.Color8(100):blend(Blitbuffer.Color8A(200, 127)
+            local c = Blitbuffer.Color8(100)
+            c:blend(Blitbuffer.Color8A(200, 127))
             assert.True(c == Blitbuffer.Color8(149))
         end)
 
