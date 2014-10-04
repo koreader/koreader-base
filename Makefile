@@ -41,8 +41,6 @@ endif
 			cd $(OUTPUT_DIR)/fonts && \
 			ln -sf ../../../$(MUPDF_TTF_FONTS_DIR)/* . \
 		)
-	test -e $(OUTPUT_DIR)/koreader-base || \
-		ln -sf ../../koreader-base $(OUTPUT_DIR)/
 	test -e $(OUTPUT_DIR)/ffi || \
 		ln -sf ../../ffi $(OUTPUT_DIR)/
 	# setup Evernote SDK
