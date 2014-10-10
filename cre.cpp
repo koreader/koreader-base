@@ -646,6 +646,17 @@ static int setViewMode(lua_State *L) {
 	return 0;
 }
 
+static int setViewDimen(lua_State *L) {
+	CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
+	int w = luaL_checkint(L, 2);
+	int h = luaL_checkint(L, 3);
+
+	doc->text_view->Resize(w, h);
+	doc->text_view->Render();
+
+	return 0;
+}
+
 static int setHeaderInfo(lua_State *L) {
 	CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
 	int info = luaL_checkint(L, 2);
@@ -1400,6 +1411,7 @@ static const struct luaL_Reg credocument_meth[] = {
 	{"setIntProperty", setIntProperty},
 	{"setStringProperty", setStringProperty},
 	{"setViewMode", setViewMode},
+	{"setViewDimen", setViewDimen},
 	{"setHeaderInfo", setHeaderInfo},
 	{"setHeaderFont", setHeaderFont},
 	{"setFontFace", setFontFace},
