@@ -41,13 +41,26 @@ function Image:loadImageFile(filename, width, height)
     end
 end
 
+-- simple validate function that only validates magic number of image formats
+local function img_validated(img_data)
+    local data = ffi.cast("unsigned char*", img_data)
+    if data[0] == 0xFF and data[1] == 0xD8 or -- jpeg
+            ffi.C.memcmp(data, "\137PNG\r\n\26\n", 8) == 0 or -- png
+            (ffi.C.memcmp(data, "II", 2) == 0 and data[2] == 0xBC) or -- jxr
+            ffi.C.memcmp(data, "MM", 2) == 0 or -- tiff
+            ffi.C.memcmp(data, "II", 2) == 0 then -- tiff
+        return true
+    end
+end
+
 function Image:loadImageData(data, size, width, height)
-    if data and size then
+    if data and size and img_validated(data) then
         self:_loadImage(data, size, width, height)
     end
 end
 
 function Image:toBlitBuffer()
+    self.bb = nil
     if self.pixmap == nil then return end
     local pixmap = ffi.new("fz_pixmap*[1]", self.pixmap)[0]
     if self.pixmap.n ~= 2 then
