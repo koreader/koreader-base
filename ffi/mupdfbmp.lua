@@ -5,7 +5,7 @@ converting pdf page to willus bmp
 local ffi = require("ffi")
 local dummy = require("ffi/mupdf_h")
 local dummy = require("ffi/koptcontext_h")
-local mupdf = ffi.load("libs/libmupdf.so")
+local mupdf = ffi.load("libs/libwrap-mupdf.so")
 local k2pdfopt = ffi.load("libs/libk2pdfopt.so.2")
 
 local Bitmap = {}
@@ -43,11 +43,11 @@ function Bitmap:pdffile_to_bmp(bmp, filename, pageno, dpi, bpp)
     if ctx == nil then return -1 end
     mupdf.fz_register_document_handlers(ctx)
     local colorspace = bpp == 8 and mupdf.fz_device_gray(ctx) or mupdf.fz_device_rgb(ctx)
-    local doc = mupdf.fz_open_document(ctx, filename)
-    if mupdf.fz_count_pages(doc) < pageno or pageno < 1 then
+    local doc = mupdf.mupdf_open_document(ctx, filename)
+    if mupdf.mupdf_count_pages(ctx, doc) < pageno or pageno < 1 then
         return -1
     end
-    local page = mupdf.fz_load_page(doc, pageno-1)
+    local page = mupdf.mupdf_load_page(ctx, doc, pageno-1)
     local ctm = ffi.new("fz_matrix[1]")[0]
     local bbox = ffi.new("fz_irect[1]")[0]
     local bounds = ffi.new("fz_rect[1]")[0]
@@ -55,10 +55,10 @@ function Bitmap:pdffile_to_bmp(bmp, filename, pageno, dpi, bpp)
     mupdf.fz_scale(ctm, dpi/72, dpi/72)
     mupdf.fz_transform_rect(bounds, ctm)
     mupdf.fz_round_rect(bbox, bounds)
-    local pix = mupdf.fz_new_pixmap_with_bbox(ctx, colorspace, bbox)
+    local pix = mupdf.mupdf_new_pixmap_with_bbox(ctx, colorspace, bbox)
     mupdf.fz_clear_pixmap_with_value(ctx, pix, 0xFF)
-    local dev = mupdf.fz_new_draw_device(ctx, pix)
-    mupdf.fz_run_page(doc, page, dev, ctm, nil)
+    local dev = mupdf.mupdf_new_draw_device(ctx, pix)
+    mupdf.mupdf_run_page(ctx, doc, page, dev, ctm, nil)
     mupdf.fz_free_device(dev)
     if self:pixmap_to_bmp(bmp, ctx, pix) ~= 0 then return -1 end
     mupdf.fz_drop_pixmap(ctx, pix)
