@@ -11,7 +11,9 @@ else
 	k2pdfopt = ffi.load("libs/libk2pdfopt.so.2")
 end
 
-local KOPTContext = {}
+local KOPTContext = {
+    k2pdfopt = k2pdfopt -- offer the libraries' functions to other users
+}
 local KOPTContext_mt = {__index={}}
 
 local __VERSION__ = "1.0.0"

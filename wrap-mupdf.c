@@ -19,7 +19,7 @@
 #include <stdio.h>
 #include <math.h>
 #include <stddef.h>
-#include "pdf.h"
+#include "wrap-mupdf.h"
 
 static double LOG_TRESHOLD_PERC = 0.05; // 5%
 
@@ -149,5 +149,5 @@ extern char* mupdf_error_message(fz_context *ctx) {
 /* wrappers for functions that throw exceptions mupdf-style (setjmp/longjmp) */
 
 #define MUPDF_DO_WRAP
-#include "pdf.h"
+#include "wrap-mupdf.h"
 
