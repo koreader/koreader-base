@@ -1012,7 +1012,7 @@ static int addMarkupAnnotation(lua_State *L) {
 		printf("addMarkupAnnotation: %s failed\n", ctx->error->message);
 	}
 
-	return 1;
+	return 0;
 }
 
 static int writeDocument(lua_State *L) {
@@ -1027,7 +1027,7 @@ static int writeDocument(lua_State *L) {
 	opts.continue_on_error = 1;
 	fz_write_document(doc->xref, file, &opts);
 
-	return 1;
+	return 0;
 }
 
 static const struct luaL_Reg pdf_func[] = {
