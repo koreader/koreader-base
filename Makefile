@@ -216,7 +216,6 @@ libs: \
 	$(if $(or $(EMULATE_READER),$(ANDROID),$(WIN32)),,$(OUTPUT_DIR)/libs/libkoreader-input.so) \
 	$(OUTPUT_DIR)/libs/libkoreader-lfs.so \
 	$(OUTPUT_DIR)/libs/libpic_jpeg.so \
-	$(OUTPUT_DIR)/libs/libkoreader-pdf.so \
 	$(if $(ANDROID),,$(OUTPUT_DIR)/libs/libkoreader-djvu.so) \
 	$(OUTPUT_DIR)/libs/libkoreader-cre.so \
 	$(OUTPUT_DIR)/libs/libwrap-mupdf.so
@@ -236,14 +235,6 @@ $(OUTPUT_DIR)/libs/libpic_jpeg.so: pic_jpeg.c $(JPEG_LIB)
 
 # put all the libs to the end of compile command to make ubuntu's tool chain
 # happy
-$(OUTPUT_DIR)/libs/libkoreader-pdf.so: pdf.c \
-			$(if $(or $(ANDROID),$(WIN32)),$(LUAJIT_LIB),) \
-			$(MUPDF_LIB) $(K2PDFOPT_LIB)
-	# Bionic's C library comes with its own pthread implementation
-	# So we need not to load pthread library for Android build
-	$(CC) -I$(MUPDF_DIR)/include $(K2PDFOPT_CFLAGS) $(DYNLIB_CFLAGS) \
-		-o $@ $^ $(if $(ANDROID),,-lpthread)
-
 $(OUTPUT_DIR)/libs/libkoreader-djvu.so: djvu.c \
 			$(if $(or $(ANDROID),$(WIN32)),$(LUAJIT_LIB),) \
 			$(DJVULIBRE_LIB) $(K2PDFOPT_LIB)
