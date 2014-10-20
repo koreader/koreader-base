@@ -24,7 +24,7 @@ local function einkfb_update(fb, refreshtype, waveform_mode, x, y, w, h)
 		refarea[0].which_fx = ffi.C.fx_update_full
 	end
 
-	ioctl(fb.fd, ffi.C.FBIO_EINK_UPDATE_DISPLAY_AREA, refarea);
+	ffi.C.ioctl(fb.fd, ffi.C.FBIO_EINK_UPDATE_DISPLAY_AREA, refarea);
 end
 
 local function mxc_new_update_marker()
