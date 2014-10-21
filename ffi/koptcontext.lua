@@ -11,7 +11,9 @@ else
 	k2pdfopt = ffi.load("libs/libk2pdfopt.so.2")
 end
 
-local KOPTContext = {}
+local KOPTContext = {
+    k2pdfopt = k2pdfopt -- offer the libraries' functions to other users
+}
 local KOPTContext_mt = {__index={}}
 
 local __VERSION__ = "1.0.0"
@@ -60,17 +62,14 @@ function KOPTContext_mt.__index:copyDestBMP(src)
 end
 
 function KOPTContext_mt.__index:dstToBlitBuffer()
+    local bb
     if self.dst.bpp == 8 then
-        local bb = Blitbuffer.new(self.dst.width, self.dst.height)
-        for y = 0, self.dst.height - 1 do
-            for x = 0, self.dst.width - 1 do
-                local val = bit.rshift(self.dst.data[y*self.dst.width + x], 4)
-                bb:setPixel(x, y, Blitbuffer.Color4(val))
-            end
-        end
+        bb = Blitbuffer.new(self.dst.width, self.dst.height, Blitbuffer.TYPE_BB8, self.dst.data):copy()
         bb:invert()
-        return bb
+    elseif self.dst.bpp == 24 then
+        bb = Blitbuffer.new(self.dst.width, self.dst.height, Blitbuffer.TYPE_BBRGB24, self.dst.data):copy()
     end
+    return bb
 end
 
 function KOPTContext_mt.__index:getWordBoxes(bmp, x, y, w, h, box_type)
