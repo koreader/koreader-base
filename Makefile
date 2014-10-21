@@ -249,8 +249,8 @@ $(OUTPUT_DIR)/libs/libkoreader-cre.so: cre.cpp \
 		$(if $(WIN32),-DQT_GL=1) \
 		-Wl,-rpath,'libs' -o $@ $^ $(STATICLIBSTDCPP)
 
-$(OUTPUT_DIR)/libs/libwrap-mupdf.so: wrap-mupdf.c wrap-mupdf.h \
-			$(MUPDF_LIB) $(K2PDFOPT_LIB)
+$(OUTPUT_DIR)/libs/libwrap-mupdf.so: wrap-mupdf.c \
+			$(MUPDF_LIB)
 	$(CC) -I$(MUPDF_DIR)/include $(DYNLIB_CFLAGS) \
 		-o $@ $^
 
