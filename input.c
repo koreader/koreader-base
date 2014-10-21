@@ -26,9 +26,6 @@
 #include <stdlib.h>
 
 #include <linux/input.h>
-#ifdef EMULATE_READER
-#include <SDL.h>
-#endif
 
 #include "input.h"
 #include <sys/types.h>
@@ -43,7 +40,6 @@
 
 #define NUM_FDS 4
 int inputfds[4] = { -1, -1, -1, -1 };
-#ifndef EMULATE_READER
 pid_t slider_pid = -1;
 struct popen_noshell_pass_to_pclose pclose_arg;
 
@@ -55,24 +51,6 @@ void slider_handler(int sig)
 		kill(pclose_arg.pid, SIGINT);
 	}
 }
-#else
-int is_in_touch = 0;
-
-static inline void genEmuEvent(lua_State *L, int fd, int type, int code, int value) {
-	struct input_event input;
-
-	input.type = type;
-	input.code = code;
-	input.value = value;
-
-	gettimeofday(&input.time, NULL);
-	if(write(fd, &input, sizeof(struct input_event)) == -1) {
-		luaL_error(L, "Failed to generate emu event.\n");
-	}
-
-	return;
-}
-#endif
 
 int findFreeFdSlot() {
 	int i;
@@ -86,7 +64,6 @@ int findFreeFdSlot() {
 
 static int openInputDevice(lua_State *L) {
 	const char* inputdevice = luaL_checkstring(L, 1);
-#ifndef EMULATE_READER
 	int fd;
 	int childpid;
 	fd = findFreeFdSlot();
@@ -188,18 +165,6 @@ static int openInputDevice(lua_State *L) {
 			return luaL_error(L, "error opening input device <%s>: %d", inputdevice, errno);
 		}
 	}
-#else
-	if(SDL_Init(SDL_INIT_VIDEO) < 0) {
-		return luaL_error(L, "cannot initialize SDL.");
-	}
-	SDL_EnableKeyRepeat(SDL_DEFAULT_REPEAT_DELAY, SDL_DEFAULT_REPEAT_INTERVAL);
-	/* we only use inputfds[0] in emu mode, because we only have one
-	 * fake device so far. */
-	inputfds[0] = open(inputdevice, O_RDWR | O_NONBLOCK);
-	if (inputfds < 0) {
-		return luaL_error(L, "error opening input device <%s>: %d", inputdevice, errno);
-	}
-#endif
 	return 0;
 }
 
@@ -211,22 +176,15 @@ static int closeInputDevices(lua_State *L) {
 			close(inputfds[i]);
 		}
 	}
-#ifndef EMULATE_READER
 	if(slider_pid != -1) {
 		/* kill and wait for child process */
 		kill(slider_pid, SIGTERM);
 		waitpid(-1, NULL, 0);
 	}
 	return 0;
-#else
-	close(inputfds[0]);
-	SDL_Quit();
-	return 0;
-#endif
 }
 
 static int fakeTapInput(lua_State *L) {
-#ifndef EMULATE_READER
 	const char* inputdevice = luaL_checkstring(L, 1);
 	int x = luaL_checkint(L, 2);
 	int y = luaL_checkint(L, 3);
@@ -292,9 +250,6 @@ static int fakeTapInput(lua_State *L) {
 	ioctl(inputfd, EVIOCGRAB, 0);
 	close(inputfd);
 	return 0;
-#else
-	return 0;
-#endif
 }
 
 static inline void set_event_table(lua_State *L, struct input_event input) {
@@ -324,7 +279,6 @@ static int waitForInput(lua_State *L) {
 	struct input_event input;
 	int n;
 	int usecs = luaL_optint(L, 1, -1); // we check for <0 later
-#ifndef EMULATE_READER
 	fd_set fds;
 	struct timeval timeout;
 	int i, num, nfds;
@@ -362,65 +316,6 @@ static int waitForInput(lua_State *L) {
 			}
 		}
 	}
-#else
-	SDL_Event event;
-
-	while(1) {
-		/* so far we only use inputfds[0] in emu mode */
-		n = read(inputfds[0], &input, sizeof(struct input_event));
-		if(n == sizeof(struct input_event)) {
-			set_event_table(L, input);
-			return 1;
-		}
-
-		int ticks = SDL_GetTicks();
-		if (usecs < 0) {
-			SDL_WaitEvent(&event);
-		}
-		else {
-			while (SDL_GetTicks()-ticks <= usecs/1000) {
-				if (SDL_PollEvent(&event)) break;
-				SDL_Delay(10);
-			}
-			if (SDL_GetTicks()-ticks > usecs/1000)
-				return luaL_error(L, "Waiting for input failed: timeout\n");
-		}
-		switch(event.type) {
-			case SDL_KEYDOWN:
-				genEmuEvent(L, inputfds[0], EV_KEY, event.key.keysym.scancode, 1);
-				break;
-			case SDL_KEYUP:
-				genEmuEvent(L, inputfds[0], EV_KEY, event.key.keysym.scancode, 0);
-				break;
-			case SDL_MOUSEMOTION:
-				if (is_in_touch) {
-					if (event.motion.xrel != 0)
-						genEmuEvent(L, inputfds[0], EV_ABS, ABS_MT_POSITION_X, event.button.x);
-					if (event.motion.yrel != 0)
-						genEmuEvent(L, inputfds[0], EV_ABS, ABS_MT_POSITION_Y, event.button.y);
-					genEmuEvent(L, inputfds[0], EV_SYN, SYN_REPORT, 0);
-				}
-				break;
-			case SDL_MOUSEBUTTONUP:
-				is_in_touch = 0;
-				genEmuEvent(L, inputfds[0], EV_ABS, ABS_MT_TRACKING_ID, -1);
-				genEmuEvent(L, inputfds[0], EV_SYN, SYN_REPORT, 0);
-				break;
-			case SDL_MOUSEBUTTONDOWN:
-				/* use mouse click to simulate single tap */
-				is_in_touch = 1;
-				genEmuEvent(L, inputfds[0], EV_ABS, ABS_MT_TRACKING_ID, 0);
-				genEmuEvent(L, inputfds[0], EV_ABS, ABS_MT_POSITION_X, event.button.x);
-				genEmuEvent(L, inputfds[0], EV_ABS, ABS_MT_POSITION_Y, event.button.y);
-				genEmuEvent(L, inputfds[0], EV_SYN, SYN_REPORT, 0);
-				/*printf("Mouse button %d pressed at (%d,%d)\n",*/
-					   /*event.button.button, event.button.x, event.button.y);*/
-				break;
-			case SDL_QUIT:
-				return luaL_error(L, "application forced to quit");
-		}
-	}
-#endif
 	return 0;
 }
 

@@ -222,8 +222,8 @@ libs: \
 
 $(OUTPUT_DIR)/libs/libkoreader-input.so: input.c \
 			$(POPEN_NOSHELL_LIB)
-	$(CC) $(DYNLIB_CFLAGS) $(EMU_CFLAGS) \
-		-o $@ $< $(POPEN_NOSHELL_LIB) $(EMU_LDFLAGS)
+	$(CC) $(DYNLIB_CFLAGS) \
+		-o $@ $< $(POPEN_NOSHELL_LIB)
 
 $(OUTPUT_DIR)/libs/libkoreader-lfs.so: \
 			$(if $(or $(ANDROID),$(WIN32)),$(LUAJIT_LIB),) \
