@@ -251,8 +251,10 @@ $(OUTPUT_DIR)/libs/libkoreader-cre.so: cre.cpp \
 
 $(OUTPUT_DIR)/libs/libwrap-mupdf.so: wrap-mupdf.c \
 			$(MUPDF_LIB)
+	# Bionic's C library comes with its own pthread implementation
+	# So we need not to load pthread library for Android build
 	$(CC) -I$(MUPDF_DIR)/include $(DYNLIB_CFLAGS) \
-		-o $@ $^
+		-o $@ $^ $(if $(ANDROID),,-lpthread)
 
 # ===========================================================================
 # the attachment extraction tool:
