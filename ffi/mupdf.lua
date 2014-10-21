@@ -10,6 +10,7 @@ LuaJIT's FFI.
 
 local ffi = require("ffi")
 require("ffi/mupdf_h")
+require("ffi/pthread_h")
 
 local BlitBuffer = require("ffi/blitbuffer")
 
@@ -646,25 +647,6 @@ local function get_k2pdfopt()
     return k2pdfopt
 end
 
--- lazily load libpthread
-local pthread
-local function get_pthread()
-    if pthread then return pthread end
-
-    local util = require("ffi/util")
-
-    require("ffi/pthread_h")
-
-    if ffi.os == "Windows" then
-        -- TODO: what to load on Windows?
-    elseif util.isAndroid() then
-        -- pthread directives are in the default namespace on Android
-        return ffi.C
-    else
-        return ffi.load("pthread")
-    end
-end
-
 --[[
 the following function is a reimplementation of what can be found
 in libk2pdfopt/willuslib/bmpmupdf.c
@@ -764,13 +746,12 @@ function page_mt.__index:reflow(kopt_context)
     render_for_kopt(kopt_context.src, self, scale, bounds)
 
 	if kopt_context.precache ~= 0 then
-        local pthread = get_pthread()
 		local rf_thread = ffi.new("pthread_t[1]")
         local attr = ffi.new("pthread_attr_t")
-        pthread.pthread_attr_init(attr)
-        pthread.pthread_attr_setdetachstate(attr, pthread.PTHREAD_CREATE_DETACHED)
-        pthread.pthread_create(rf_thread, attr, k2pdfopt.k2pdfopt_reflow_bmp, ffi.cast("void*", kopt_context))
-        pthread.pthread_attr_destroy(attr)
+        M.pthread_attr_init(attr)
+        M.pthread_attr_setdetachstate(attr, M.PTHREAD_CREATE_DETACHED)
+        M.pthread_create(rf_thread, attr, k2pdfopt.k2pdfopt_reflow_bmp, ffi.cast("void*", kopt_context))
+        M.pthread_attr_destroy(attr)
 	else
 		k2pdfopt.k2pdfopt_reflow_bmp(kopt_context)
 	end
