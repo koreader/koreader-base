@@ -270,8 +270,8 @@ K2PDFOPT_CFLAGS=-I$(K2PDFOPT_DIR)/willuslib \
 FREETYPE_LIB=$(OUTPUT_DIR)/libs/libfreetype$(if $(WIN32),-6.dll,.so.6)
 FREETYPE_DIR=freetype2
 
-JPEG_LIB=$(OUTPUT_DIR)/libs/libjpeg$(if $(WIN32),-9.dll,.so.9)
-JPEG_DIR=jpeg
+JPEG_LIB=$(OUTPUT_DIR)/libs/libjpeg$(if $(WIN32),-8.dll,.so.8)
+JPEG_DIR=libjpeg-turbo-1.3.1
 
 PNG_LIB=$(OUTPUT_DIR)/libs/libpng16$(if $(WIN32),-16.dll,.so.16)
 PNG_DIR=libpng-1.6.12
