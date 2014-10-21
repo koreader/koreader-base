@@ -108,7 +108,7 @@ $(MUPDF_LIB): $(JPEG_LIB) $(FREETYPE_LIB)
 		OS=$(if $(WIN32),,Other) verbose=1
 	$(MAKE) -j$(PROCESSORS) -C mupdf \
 		LDFLAGS="$(LDFLAGS) -L../$(OUTPUT_DIR)" \
-		XCFLAGS="$(CFLAGS) -DNOBUILTINFONT -I$(JPEG_DIR)/include -I../$(FREETYPE_DIR)/include" \
+		XCFLAGS="$(CFLAGS) -DNOBUILTINFONT -I../$(JPEG_DIR)/include -I../$(FREETYPE_DIR)/include" \
 		CC="$(CC)" \
 		build="release" MUDRAW= MUTOOL= CURL_LIB= \
 		OS=$(if $(WIN32),,Other) verbose=1 \
