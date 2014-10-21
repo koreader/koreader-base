@@ -200,12 +200,6 @@ ifdef EMULATE_READER
 	AR:=$(HOSTAR)
 	LD:=$(HOSTLD)
 	RANLIB:=$(HOSTRANLIB)
-	EMU_CFLAGS?=$(shell sdl-config --cflags)
-	EMU_CFLAGS+= -DEMULATE_READER -g
-	EMU_LDFLAGS?=$(shell sdl-config --libs)
-	ifeq "$(shell uname -s -m)" "Darwin x86_64"
-		EMU_LDFLAGS+= -pagezero_size 10000 -image_base 100000000
-	endif
 	CFLAGS+= $(HOST_ARCH)
 	CXXFLAGS+= $(HOST_ARCH)
 else
