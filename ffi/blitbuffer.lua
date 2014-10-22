@@ -769,8 +769,6 @@ end
 
 -- colorize area using source blitbuffer as a alpha-map
 function BB_mt.__index:colorblitFrom(source, dest_x, dest_y, offs_x, offs_y, width, height, color)
-    -- compatibility
-    if type(color) == "number" then color = Color4L(color) end
     -- we need color with alpha later:
     color = color:getColorRGB32()
     if self:getInverse() == 1 then color = color:invert() end
@@ -844,8 +842,6 @@ paint a rectangle onto this buffer
 @param value color value
 --]]
 function BB_mt.__index:paintRect(x, y, w, h, value)
-    -- compatibility:
-    if type(value) == "number" then value = Color4L(value) end
     if w <= 0 or h <= 0 then return end
     w, x = BB.checkBounds(w, x, 0, self:getWidth(), 0xFFFF)
     h, y = BB.checkBounds(h, y, 0, self:getHeight(), 0xFFFF)
@@ -866,8 +862,6 @@ paint a circle onto this buffer
 @param w width of line (defaults to radius)
 --]]
 function BB_mt.__index:paintCircle(center_x, center_y, r, c, w)
-    -- compatibility:
-    if type(c) == "number" then c = Color4L(c) end
     if r == 0 then return end
     if w == nil then w = r end
     if w > r then w = r end
@@ -935,8 +929,6 @@ function BB_mt.__index:paintCircle(center_x, center_y, r, c, w)
 end
 
 function BB_mt.__index:paintRoundedCorner(off_x, off_y, w, h, bw, r, c)
-    -- compatibility:
-    if type(c) == "number" then c = Color4L(c) end
     if 2*r > h or 2*r > w or r == 0 then
         -- no operation
         return
