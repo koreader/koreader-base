@@ -65,7 +65,6 @@ function KOPTContext_mt.__index:dstToBlitBuffer()
     local bb
     if self.dst.bpp == 8 then
         bb = Blitbuffer.new(self.dst.width, self.dst.height, Blitbuffer.TYPE_BB8, self.dst.data):copy()
-        bb:invert()
     elseif self.dst.bpp == 24 then
         bb = Blitbuffer.new(self.dst.width, self.dst.height, Blitbuffer.TYPE_BBRGB24, self.dst.data):copy()
     end

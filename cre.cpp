@@ -1209,10 +1209,10 @@ int drawToBlitBuffer(BlitBuffer *bb, LVGrayDrawBuf &drawBuf) {
 		for (x = 0; x < (bb->w / 2); x++) {
 			/* When DrawBuf is set to 4bpp mode, CREngine still put every
 			 * four bits in one byte, but left the last 4 bits zero*/
-			bbptr[x] =  ~(pmptr[x*2] | (pmptr[x*2+1] >> 4));
+			bbptr[x] = pmptr[x*2] | (pmptr[x*2+1] >> 4);
 		}
 		if(bb->w & 1) {
-			bbptr[x] = 255 - (pmptr[x*2] & 0xF0);
+			bbptr[x] = pmptr[x*2] & 0xF0;
 		}
 		bbptr += bb->pitch;
 		pmptr += w;

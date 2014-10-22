@@ -526,8 +526,6 @@ function page_mt.__index:draw_new(draw_context, width, height, offset_x, offset_
     bbox[0].y1 = offset_y + height
 
     local bb = BlitBuffer.new(width, height, mupdf.color and BlitBuffer.TYPE_RGB32 or BlitBuffer.TYPE_BB8A)
-    -- TODO: our handling is still working on inverted blitbuffers. fix that.
-    bb:invert()
 
     local colorspace = mupdf.color and M.fz_device_rgb(context())
         or M.fz_device_gray(context())
@@ -616,15 +614,10 @@ function mupdf.renderImage(data, size, width, height)
     else error("unsupported number of color components")
     end
     local p = M.fz_pixmap_samples(context(), pixmap)
-    local bb = BlitBuffer.new(p_width, p_height, bbtype, p)
-    -- TODO: remove the following inversion
-    -- this inversion is due to our graphics being inverted in general,
-    -- due to the data layout of early eink devices
-    bb:invert()
-    local ret = bb:copy()
+    local bb = BlitBuffer.new(p_width, p_height, bbtype, p):copy()
     -- does this pin pixmap to this point? hopefully so.
     pixmap = nil
-    return ret
+    return bb
 end
 
 function mupdf.renderImageFile(filename, width, height)
