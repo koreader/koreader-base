@@ -83,7 +83,8 @@ $(JPEG_LIB):
 	cd $(JPEG_DIR) && \
 		CC="$(CC)" CXX="$(CXX)" CPPFLAGS="$(CFLAGS)" LDFLAGS="$(LDFLAGS)" \
 		./configure -q --prefix=$(CURDIR)/$(JPEG_DIR) \
-			--disable-static --enable-shared --host=$(CHOST) --with-jpeg8
+			--host=$(if $(ANDROID),"arm-linux",$(CHOST)) \
+			--disable-static --enable-shared --with-jpeg8
 	$(MAKE) -j$(PROCESSORS) -C $(JPEG_DIR) --silent install
 	cp -fL $(JPEG_DIR)/.libs/$(notdir $(JPEG_LIB)) $@
 
