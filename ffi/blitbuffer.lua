@@ -1262,6 +1262,10 @@ function BB.gray(level)
     return Color8(0xFF - floor(0xFF * level))
 end
 
+-- some generic color values:
+BB.COLOR_BLACK = Color8(0)
+BB.COLOR_WHITE = Color8(0xFF)
+
 -- accessors for color types:
 BB.Color4 = Color4L
 BB.Color4L = Color4L
