@@ -22,9 +22,6 @@
 [submodule "freetype2"]
 	path = freetype2
 	url = git://git.sv.gnu.org/freetype/freetype2.git
-[submodule "jpeg"]
-	path = jpeg
-	url = git://git.ghostscript.com/thirdparty/jpeg.git
 [submodule "luasocket"]
 	path = luasocket
 	url = https://github.com/diegonehab/luasocket

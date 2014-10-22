@@ -78,14 +78,14 @@ $(FREETYPE_LIB):
 	-$(MAKE) -C $(FREETYPE_DIR)/build --silent install
 	cp -fL $(FREETYPE_DIR)/build/$(if $(WIN32),bin,lib)/$(notdir $(FREETYPE_LIB)) $@
 
-# libjpeg, fetched via GIT as a submodule
+# libjpeg-turbo, fetched via subversion
 $(JPEG_LIB):
 	cd $(JPEG_DIR) && \
-		CC="$(CC)" CXX="$(CXX)" CFLAGS="$(CFLAGS)" \
-		CXXFLAGS="$(CXXFLAGS)" LDFLAGS="$(LDFLAGS)" \
-		./configure -q --disable-static --enable-shared \
-			--host=$(CHOST)
-	$(MAKE) -j$(PROCESSORS) -C $(JPEG_DIR) --silent
+		CC="$(CC)" CXX="$(CXX)" CPPFLAGS="$(CFLAGS)" LDFLAGS="$(LDFLAGS)" \
+		./configure -q --prefix=$(CURDIR)/$(JPEG_DIR) \
+			--host=$(if $(ANDROID),"arm-linux",$(CHOST)) \
+			--disable-static --enable-shared --with-jpeg8
+	$(MAKE) -j$(PROCESSORS) -C $(JPEG_DIR) --silent install
 	cp -fL $(JPEG_DIR)/.libs/$(notdir $(JPEG_LIB)) $@
 
 # libpng, fetched via GIT as a submodule
@@ -109,7 +109,7 @@ $(MUPDF_LIB): $(JPEG_LIB) $(FREETYPE_LIB)
 		OS=$(if $(WIN32),,Other) verbose=1
 	$(MAKE) -j$(PROCESSORS) -C mupdf \
 		LDFLAGS="$(LDFLAGS) -L../$(OUTPUT_DIR)" \
-		XCFLAGS="$(CFLAGS) -DNOBUILTINFONT -I../jpeg -I../$(FREETYPE_DIR)/include" \
+		XCFLAGS="$(CFLAGS) -DNOBUILTINFONT -I../$(JPEG_DIR)/include -I../$(FREETYPE_DIR)/include" \
 		CC="$(CC)" \
 		build="release" MUDRAW= MUTOOL= CURL_LIB= \
 		OS=$(if $(WIN32),,Other) verbose=1 \
@@ -144,13 +144,19 @@ $(DJVULIBRE_LIB): $(JPEG_LIB)
 		$(DJVULIBRE_LIB)
 
 # crengine, fetched via GIT as a submodule
-$(CRENGINE_LIB): $(ZLIB) $(PNG_LIB) $(FREETYPE_LIB)
+$(CRENGINE_LIB): $(ZLIB) $(PNG_LIB) $(FREETYPE_LIB) $(JPEG_LIB)
 	test -e $(CRENGINE_WRAPPER_DIR)/build \
 	|| mkdir $(CRENGINE_WRAPPER_DIR)/build
 	cd $(CRENGINE_WRAPPER_DIR)/build \
-	&& CC="$(CC)" CXX="$(CXX)" CFLAGS="$(CFLAGS)" CXXFLAGS="$(CXXFLAGS)" \
-		LDFLAGS="$(LDFLAGS) -L$(CURDIR)/$(FREETYPE_DIR)/build/lib -L$(CURDIR)/$(ZLIB_DIR) -L$(CURDIR)/$(PNG_DIR)/lib" \
-		cmake -DCMAKE_BUILD_TYPE=Release ..
+	&& CC="$(CC)" CXX="$(CXX)" RC="$(RC)" \
+		CFLAGS="$(CFLAGS)" CXXFLAGS="$(CXXFLAGS)" \
+		JPEG_LIB="$(CURDIR)/$(JPEG_LIB)" \
+		PNG_LIB="$(CURDIR)/$(PNG_LIB)" \
+		FREETYPE_LIB="$(CURDIR)/$(FREETYPE_LIB)" \
+		ZLIB="$(CURDIR)/$(ZLIB)" \
+		LIBS_DIR="$(CURDIR)/$(OUTPUT_DIR)/libs" \
+		cmake -DCMAKE_BUILD_TYPE=Release \
+		$(if $(WIN32),-DCMAKE_SYSTEM_NAME=Windows,) ..
 	cd $(CRENGINE_WRAPPER_DIR)/build &&  $(MAKE)
 	cp -fL $(CRENGINE_WRAPPER_DIR)/build/$(notdir $(CRENGINE_LIB)) \
 		$(CRENGINE_LIB)
@@ -251,10 +257,8 @@ $(OUTPUT_DIR)/libs/libkoreader-cre.so: cre.cpp \
 
 $(OUTPUT_DIR)/libs/libwrap-mupdf.so: wrap-mupdf.c \
 			$(MUPDF_LIB)
-	# Bionic's C library comes with its own pthread implementation
-	# So we need not to load pthread library for Android build
 	$(CC) -I$(MUPDF_DIR)/include $(DYNLIB_CFLAGS) \
-		-o $@ $^ $(if $(ANDROID),,-lpthread)
+		-o $@ $^
 
 # ===========================================================================
 # the attachment extraction tool:
@@ -559,7 +563,11 @@ fetchthirdparty:
 	[ `md5sum libpng-1.6.12.tar.gz |cut -d\  -f1` != 297388a6746a65a2127ecdeb1c6e5c82 ] \
 		&& rm libpng-1.6.12.tar.gz && wget http://download.sourceforge.net/libpng/libpng-1.6.12.tar.gz || true
 	tar zxf libpng-1.6.12.tar.gz
-
+	# download libjpeg-turbo
+	[ ! -f libjpeg-turbo-1.3.1.tar.gz ] \
+		&& wget http://download.sourceforge.net/libjpeg-turbo/libjpeg-turbo-1.3.1.tar.gz || true
+	[ `md5sum libjpeg-turbo-1.3.1.tar.gz |cut -d\  -f1` != 2c3a68129dac443a72815ff5bb374b05 ] \
+		&& rm libpng-1.6.12.tar.gz && false || tar zxf libjpeg-turbo-1.3.1.tar.gz
 
 # ===========================================================================
 clean:
@@ -570,7 +578,7 @@ clean:
 	-$(MAKE) -C $(MUPDF_DIR) build="release" clean
 	-$(MAKE) -C $(POPEN_NOSHELL_DIR) clean
 	-$(MAKE) -C $(K2PDFOPT_DIR) clean
-	-$(MAKE) -C $(JPEG_DIR) distclean
+	-$(MAKE) -C $(JPEG_DIR) clean uninstall
 	-$(MAKE) -C $(SDCV_DIR) clean
 	-$(MAKE) -C $(PNG_DIR) clean uninstall
 	-$(MAKE) -C $(GLIB_DIR) clean uninstall

@@ -10,16 +10,16 @@ LuaJIT's FFI.
 
 local ffi = require("ffi")
 require("ffi/mupdf_h")
-require("ffi/pthread_h")
 
 local BlitBuffer = require("ffi/blitbuffer")
 
 local M
 if ffi.os == "Windows" then
-    M = ffi.load("libs/libwrap-mupdf.dll")
+    M = ffi.load("libs/libmupdf.dll")
 else
-    M = ffi.load("libs/libwrap-mupdf.so")
+    M = ffi.load("libs/libmupdf.so")
 end
+local W = ffi.load("libs/libwrap-mupdf.so")
 
 local mupdf = {
     debug_memory = false,
@@ -44,8 +44,8 @@ mupdf.debug = print_debug
 local function merror(message)
     if ctx ~= nil then
         error(string.format("%s: %s (%d)", message,
-            ffi.string(M.mupdf_error_message(context())),
-            M.mupdf_error_code(context())))
+            ffi.string(W.mupdf_error_message(context())),
+            W.mupdf_error_code(context())))
     else
         error(message)
     end
@@ -57,7 +57,7 @@ local function context()
     if save_ctx ~= nil then return save_ctx end
 
     local context = M.fz_new_context_imp(
-        mupdf.debug_memory and M.mupdf_get_my_alloc_context() or nil,
+        mupdf.debug_memory and W.mupdf_get_my_alloc_context() or nil,
         nil,
         mupdf.cache_size, FZ_VERSION)
 
@@ -83,7 +83,7 @@ function mupdf.openDocument(filename, cache_size)
     M.fz_register_document_handlers(context())
 
     local mupdf_doc = {
-        doc = M.mupdf_open_document(context(), filename),
+        doc = W.mupdf_open_document(context(), filename),
         filename = filename,
     }
 
@@ -136,7 +136,7 @@ function document_mt.__index:getPages()
     -- cache number of pages
     if self.number_of_pages then return self.number_of_pages end
 
-    local pages = M.mupdf_count_pages(context(), self.doc)
+    local pages = W.mupdf_count_pages(context(), self.doc)
     if pages == -1 then
 	    merror("cannot access page tree")
     end
@@ -176,7 +176,7 @@ Returns an empty table when there is no ToC
 --]]
 function document_mt.__index:getToc()
     local toc = {}
-    local outline = M.mupdf_load_outline(context(), self.doc)
+    local outline = W.mupdf_load_outline(context(), self.doc)
     if outline ~= nil then
         ffi.gc(outline, wrap_free_outline)
         toc_walker(toc, outline, 1)
@@ -189,7 +189,7 @@ open a page, return page object
 --]]
 function document_mt.__index:openPage(number)
     local mupdf_page = {
-        page = M.mupdf_load_page(context(), self.doc, number-1),
+        page = W.mupdf_load_page(context(), self.doc, number-1),
         number = number,
         doc = self,
     }
@@ -207,7 +207,7 @@ This will return sensible values only when the debug_memory flag is set
 --]]
 function document_mt.__index:getCacheSize()
     if mupdf.debug_memory then
-        return M.mupdf_get_cache_size()
+        return W.mupdf_get_cache_size()
     else
         return 0
     end
@@ -228,7 +228,7 @@ function document_mt.__index:writeDocument(filename)
 	opts[0].do_garbage = 0
 	opts[0].do_linear = 0
 	opts[0].continue_on_error = 1
-	local ok = M.mupdf_write_document(self.doc, filename, opts)
+	local ok = W.mupdf_write_document(self.doc, filename, opts)
     if ok == nil then merror("could not write document") end
 end
 
@@ -272,10 +272,10 @@ check which part of the page actually contains content
 function page_mt.__index:getUsedBBox()
     local result = ffi.new("fz_rect[1]")
 
-    local dev = M.mupdf_new_bbox_device(context(), result)
+    local dev = W.mupdf_new_bbox_device(context(), result)
     if dev == nil then merror("cannot allocate bbox_device") end
     ffi.gc(dev, M.fz_free_device)
-	local ok = M.mupdf_run_page(context(), self.doc.doc, self.page, dev, M.fz_identity, nil)
+	local ok = W.mupdf_run_page(context(), self.doc.doc, self.page, dev, M.fz_identity, nil)
     if ok == nil then merror("cannot calculate bbox for page") end
 
     return result[0].x0, result[0].y0, result[0].x1, result[0].y1
@@ -365,17 +365,17 @@ will return an empty table if we have no text
 --]]
 function page_mt.__index:getPageText()
     -- first, we run the page through a special device, the text_device
-    local text_page = M.mupdf_new_text_page(context())
+    local text_page = W.mupdf_new_text_page(context())
     if text_page == nil then merror("cannot alloc text_page") end
     ffi.gc(text_page, wrap_free_text_page)
-    local text_sheet = M.mupdf_new_text_sheet(context())
+    local text_sheet = W.mupdf_new_text_sheet(context())
     if text_sheet == nil then merror("cannot alloc text_sheet") end
     ffi.gc(text_sheet, wrap_free_text_sheet)
-    local tdev = M.mupdf_new_text_device(context(), text_sheet, text_page)
+    local tdev = W.mupdf_new_text_device(context(), text_sheet, text_page)
     if tdev == nil then merror("cannot alloc text device") end
     ffi.gc(tdev, M.fz_free_device)
 
-    if M.mupdf_run_page(context(), self.doc.doc, self.page, tdev, M.fz_identity, nil) == nil then
+    if W.mupdf_run_page(context(), self.doc.doc, self.page, tdev, M.fz_identity, nil) == nil then
         merror("cannot run page through text device")
     end
 
@@ -457,7 +457,7 @@ end
 Get a list of the Hyperlinks on a page
 --]]
 function page_mt.__index:getPageLinks()
-	local page_links = M.mupdf_load_links(context(), self.doc.doc, self.page)
+	local page_links = W.mupdf_load_links(context(), self.doc.doc, self.page)
     -- do not error out when page_links == NULL, since there might
     -- simply be no links present.
 
@@ -491,11 +491,11 @@ end
 local function run_page(page, pixmap, ctm)
 	M.fz_clear_pixmap_with_value(context(), pixmap, 0xff)
 
-	local dev = M.mupdf_new_draw_device(context(), pixmap)
+	local dev = W.mupdf_new_draw_device(context(), pixmap)
     if dev == nil then merror("cannot create draw device") end
     ffi.gc(dev, M.fz_free_device)
 
-	local ok = M.mupdf_run_page(context(), page.doc.doc, page.page, dev, ctm, nil)
+	local ok = W.mupdf_run_page(context(), page.doc.doc, page.page, dev, ctm, nil)
     if ok == nil then merror("could not run page") end
 end
 --[[
@@ -531,7 +531,7 @@ function page_mt.__index:draw_new(draw_context, width, height, offset_x, offset_
 
     local colorspace = mupdf.color and M.fz_device_rgb(context())
         or M.fz_device_gray(context())
-	local pix = M.mupdf_new_pixmap_with_bbox_and_data(
+	local pix = W.mupdf_new_pixmap_with_bbox_and_data(
         context(), colorspace, bbox, ffi.cast("unsigned char*", bb.data))
     if pix == nil then merror("cannot allocate pixmap") end
     ffi.gc(pix, wrap_drop_pixmap)
@@ -578,12 +578,12 @@ function page_mt.__index:addMarkupAnnotation(points, n, type)
 	local doc = M.pdf_specifics(self.doc.doc)
     if doc == nil then merror("could not get pdf_specifics") end
 
-    local annot = M.mupdf_pdf_create_annot(context(), self.doc.doc, self.page, type)
+    local annot = W.mupdf_pdf_create_annot(context(), self.doc.doc, self.page, type)
     if annot == nil then merror("could not create annotation") end
 
-    local ok = M.mupdf_pdf_set_markup_annot_quadpoints(context(), self.doc.doc, annot, pts, n)
+    local ok = W.mupdf_pdf_set_markup_annot_quadpoints(context(), self.doc.doc, annot, pts, n)
     if ok == nil then merror("could not set markup annot quadpoints") end
-    local ok = M.mupdf_pdf_set_markup_appearance(context(), self.doc.doc, annot, color, alpha, line_thickness, line_height)
+    local ok = W.mupdf_pdf_set_markup_appearance(context(), self.doc.doc, annot, color, alpha, line_thickness, line_height)
     if ok == nil then merror("could not set markup appearance") end
 end
 
@@ -597,12 +597,12 @@ end
 render image data
 --]]
 function mupdf.renderImage(data, size, width, height)
-    local image = M.mupdf_new_image_from_data(context(),
+    local image = W.mupdf_new_image_from_data(context(),
                     ffi.cast("unsigned char*", data), size)
     if image == nil then merror("could not load image data") end
     M.fz_keep_image(context(), image)
     ffi.gc(image, wrap_drop_image)
-    local pixmap = M.mupdf_new_pixmap_from_image(context(),
+    local pixmap = W.mupdf_new_pixmap_from_image(context(),
                     image, width or -1, height or -1)
     if pixmap == nil then merror("could not create pixmap from image") end
     ffi.gc(pixmap, wrap_drop_pixmap)
@@ -645,6 +645,25 @@ local function get_k2pdfopt()
     local koptcontext = require("ffi/koptcontext")
     k2pdfopt = koptcontext.k2pdfopt
     return k2pdfopt
+end
+
+-- lazily load libpthread
+local pthread
+local function get_pthread()
+    if pthread then return pthread end
+
+    local util = require("ffi/util")
+
+    require("ffi/pthread_h")
+
+    if ffi.os == "Windows" then
+        return ffi.load("libwinpthread-1.dll")
+    elseif util.isAndroid() then
+        -- pthread directives are in the default namespace on Android
+        return ffi.C
+    else
+        return ffi.load("pthread")
+    end
 end
 
 --[[
@@ -713,7 +732,7 @@ local function render_for_kopt(bmp, page, scale, bounds)
 
     local colorspace = mupdf.color and M.fz_device_rgb(context())
         or M.fz_device_gray(context())
-	local pix = M.mupdf_new_pixmap_with_bbox(context(), colorspace, bbox)
+	local pix = W.mupdf_new_pixmap_with_bbox(context(), colorspace, bbox)
     if pix == nil then merror("could not allocate pixmap") end
     ffi.gc(pix, wrap_drop_pixmap)
 
@@ -746,12 +765,13 @@ function page_mt.__index:reflow(kopt_context)
     render_for_kopt(kopt_context.src, self, scale, bounds)
 
 	if kopt_context.precache ~= 0 then
-		local rf_thread = ffi.new("pthread_t[1]")
+        local pthread = get_pthread()
+        local rf_thread = ffi.new("pthread_t[1]")
         local attr = ffi.new("pthread_attr_t")
-        M.pthread_attr_init(attr)
-        M.pthread_attr_setdetachstate(attr, M.PTHREAD_CREATE_DETACHED)
-        M.pthread_create(rf_thread, attr, k2pdfopt.k2pdfopt_reflow_bmp, ffi.cast("void*", kopt_context))
-        M.pthread_attr_destroy(attr)
+        pthread.pthread_attr_init(attr)
+        pthread.pthread_attr_setdetachstate(attr, pthread.PTHREAD_CREATE_DETACHED)
+        pthread.pthread_create(rf_thread, attr, k2pdfopt.k2pdfopt_reflow_bmp, ffi.cast("void*", kopt_context))
+        pthread.pthread_attr_destroy(attr)
 	else
 		k2pdfopt.k2pdfopt_reflow_bmp(kopt_context)
 	end
