@@ -19,8 +19,9 @@ install:
     - cd busted && git checkout v1.10.0 && sudo luarocks make && cd ..
 
 script:
-    - make fetchthirdparty
-    - make
+    - make fetchthirdparty all
+
+after_success:
     - wget https://tesseract-ocr.googlecode.com/files/tesseract-ocr-3.02.eng.tar.gz
     - tar zxf tesseract-ocr-3.02.eng.tar.gz
     - cd build/* && export TESSDATA_PREFIX=`pwd`/data && mkdir -p data/tessdata
