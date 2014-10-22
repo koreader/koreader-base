@@ -67,6 +67,7 @@ endif
 STRIP:=$(CHOST)-strip
 AR:=$(CHOST)-ar
 LD:=$(CHOST)-ld
+RC:=$(CHOST)-windres
 RANLIB:=$(CHOST)-ranlib
 
 HOSTAR:=ar
@@ -245,13 +246,13 @@ MUPDF_JS_LIB_STATIC=$(MUPDF_LIB_DIR)/libmujs.a
 MUPDF_THIRDPARTY_LIBS=$(MUPDF_LIB_DIR)/libopenjpeg.a \
 			$(MUPDF_LIB_DIR)/libjbig2dec.a \
 			$(Z_LIB)
-MUPDF_LIB=$(OUTPUT_DIR)/libs/$(if $(WIN32),libmupdf.dll,libmupdf.so)
+MUPDF_LIB=$(OUTPUT_DIR)/libs/libmupdf.$(if $(WIN32),dll,so)
 
 DJVULIBRE_DIR=djvulibre
 DJVULIBRE_LIB=$(OUTPUT_DIR)/libs/libdjvulibre$(if $(WIN32),-21.dll,.so.21)
 DJVULIBRE_LIB_DIR=$(DJVULIBRE_DIR)/build/libdjvu/.libs/
 
-CRENGINE_LIB=$(OUTPUT_DIR)/libs/libcrengine.so
+CRENGINE_LIB=$(OUTPUT_DIR)/libs/libcrengine.$(if $(WIN32),dll,so)
 
 LUA_DIR=luajit-2.0
 LUAJIT=$(OUTPUT_DIR)/$(if $(WIN32),luajit.exe,luajit)

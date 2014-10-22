@@ -85,7 +85,7 @@ $(JPEG_LIB):
 		./configure -q --prefix=$(CURDIR)/$(JPEG_DIR) \
 			--disable-static --enable-shared --host=$(CHOST) --with-jpeg8
 	$(MAKE) -j$(PROCESSORS) -C $(JPEG_DIR) --silent install
-	cp -fL $(JPEG_DIR)/lib/$(notdir $(JPEG_LIB)) $@
+	cp -fL $(JPEG_DIR)/.libs/$(notdir $(JPEG_LIB)) $@
 
 # libpng, fetched via GIT as a submodule
 $(PNG_LIB): $(ZLIB)
@@ -147,12 +147,15 @@ $(CRENGINE_LIB): $(ZLIB) $(PNG_LIB) $(FREETYPE_LIB) $(JPEG_LIB)
 	test -e $(CRENGINE_WRAPPER_DIR)/build \
 	|| mkdir $(CRENGINE_WRAPPER_DIR)/build
 	cd $(CRENGINE_WRAPPER_DIR)/build \
-	&& CC="$(CC)" CXX="$(CXX)" CFLAGS="$(CFLAGS)" CXXFLAGS="$(CXXFLAGS)" \
+	&& CC="$(CC)" CXX="$(CXX)" RC="$(RC)" \
+		CFLAGS="$(CFLAGS)" CXXFLAGS="$(CXXFLAGS)" \
 		JPEG_LIB="$(CURDIR)/$(JPEG_LIB)" \
 		PNG_LIB="$(CURDIR)/$(PNG_LIB)" \
 		FREETYPE_LIB="$(CURDIR)/$(FREETYPE_LIB)" \
 		ZLIB="$(CURDIR)/$(ZLIB)" \
-		cmake -DCMAKE_BUILD_TYPE=Release ..
+		LIBS_DIR="$(CURDIR)/$(OUTPUT_DIR)/libs" \
+		cmake -DCMAKE_BUILD_TYPE=Release \
+		$(if $(WIN32),-DCMAKE_SYSTEM_NAME=Windows,) ..
 	cd $(CRENGINE_WRAPPER_DIR)/build &&  $(MAKE)
 	cp -fL $(CRENGINE_WRAPPER_DIR)/build/$(notdir $(CRENGINE_LIB)) \
 		$(CRENGINE_LIB)
@@ -253,10 +256,8 @@ $(OUTPUT_DIR)/libs/libkoreader-cre.so: cre.cpp \
 
 $(OUTPUT_DIR)/libs/libwrap-mupdf.so: wrap-mupdf.c \
 			$(MUPDF_LIB)
-	# Bionic's C library comes with its own pthread implementation
-	# So we need not to load pthread library for Android build
 	$(CC) -I$(MUPDF_DIR)/include $(DYNLIB_CFLAGS) \
-		-o $@ $^ $(if $(ANDROID),,-lpthread)
+		-o $@ $^
 
 # ===========================================================================
 # the attachment extraction tool:
