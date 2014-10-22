@@ -937,355 +937,352 @@ end
 function BB_mt.__index:paintRoundedCorner(off_x, off_y, w, h, bw, r, c)
     -- compatibility:
     if type(c) == "number" then c = Color4L(c) end
-    if 2*r > h
-        or 2*r > w
-        or r == 0
-        then
-            -- no operation
-            return
-        end
-
-        r = math.min(r, h, w)
-        if bw > r then
-            bw = r
-        end
-
-        -- for outer circle
-        local x = 0
-        local y = r
-        local delta = 5/4 - r
-
-        -- for inner circle
-        local r2 = r - bw
-        local x2 = 0
-        local y2 = r2
-        local delta2 = 5/4 - r
-
-        while x < y do
-            -- decrease y if we are out of circle
-            x = x + 1
-            if delta > 0 then
-                y = y - 1
-                delta = delta + 2*x - 2*y + 2
-            else
-                delta = delta + 2*x + 1
-            end
-
-            -- inner circle finished drawing, increase y linearly for filling
-            if x2 > y2 then
-                y2 = y2 + 1
-                x2 = x2 + 1
-            else
-                x2 = x2 + 1
-                if delta2 > 0 then
-                    y2 = y2 - 1
-                    delta2 = delta2 + 2*x2 - 2*y2 + 2
-                else
-                    delta2 = delta2 + 2*x2 + 1
-                end
-            end
-
-            for tmp_y = y, y2+1, -1 do
-                self:setPixelClamped((w-r)+off_x+x-1, (h-r)+off_y+tmp_y-1, c)
-                self:setPixelClamped((w-r)+off_x+tmp_y-1, (h-r)+off_y+x-1, c)
-
-                self:setPixelClamped((w-r)+off_x+tmp_y-1, (r)+off_y-x, c)
-                self:setPixelClamped((w-r)+off_x+x-1, (r)+off_y-tmp_y, c)
-
-                self:setPixelClamped((r)+off_x-x, (r)+off_y-tmp_y, c)
-                self:setPixelClamped((r)+off_x-tmp_y, (r)+off_y-x, c)
-
-                self:setPixelClamped((r)+off_x-tmp_y, (h-r)+off_y+x-1, c)
-                self:setPixelClamped((r)+off_x-x, (h-r)+off_y+tmp_y-1, c)
-            end
-        end
+    if 2*r > h or 2*r > w or r == 0 then
+        -- no operation
+        return
     end
 
-    --[[
-    Draw a border
+    r = math.min(r, h, w)
+    if bw > r then
+        bw = r
+    end
 
-    @x:  start position in x axis
-    @y:  start position in y axis
-    @w:  width of the border
-    @h:  height of the border
-    @bw: line width of the border
-    @c:  color for loading bar
-    @r:  radius of for border's corner (nil or 0 means right corner border)
-    --]]
-    function BB_mt.__index:paintBorder(x, y, w, h, bw, c, r)
-        x, y = math.ceil(x), math.ceil(y)
-        h, w = math.ceil(h), math.ceil(w)
-        if not r or r == 0 then
-            self:paintRect(x, y, w, bw, c)
-            self:paintRect(x, y+h-bw, w, bw, c)
-            self:paintRect(x, y+bw, bw, h - 2*bw, c)
-            self:paintRect(x+w-bw, y+bw, bw, h - 2*bw, c)
+    -- for outer circle
+    local x = 0
+    local y = r
+    local delta = 5/4 - r
+
+    -- for inner circle
+    local r2 = r - bw
+    local x2 = 0
+    local y2 = r2
+    local delta2 = 5/4 - r
+
+    while x < y do
+        -- decrease y if we are out of circle
+        x = x + 1
+        if delta > 0 then
+            y = y - 1
+            delta = delta + 2*x - 2*y + 2
         else
-            if h < 2*r then r = math.floor(h/2) end
-            if w < 2*r then r = math.floor(w/2) end
-            self:paintRoundedCorner(x, y, w, h, bw, r, c)
-            self:paintRect(r+x, y, w-2*r, bw, c)
-            self:paintRect(r+x, y+h-bw, w-2*r, bw, c)
-            self:paintRect(x, r+y, bw, h-2*r, c)
-            self:paintRect(x+w-bw, r+y, bw, h-2*r, c)
+            delta = delta + 2*x + 1
         end
-    end
 
-
-    --[[
-    Fill a rounded corner rectangular area
-
-    @x:  start position in x axis
-    @y:  start position in y axis
-    @w:  width of the area
-    @h:  height of the area
-    @c:  color used to fill the area
-    @r:  radius of for four corners
-    --]]
-    function BB_mt.__index:paintRoundedRect(x, y, w, h, c, r)
-        x, y = math.ceil(x), math.ceil(y)
-        h, w = math.ceil(h), math.ceil(w)
-        if not r or r == 0 then
-            self:paintRect(x, y, w, h, c)
+        -- inner circle finished drawing, increase y linearly for filling
+        if x2 > y2 then
+            y2 = y2 + 1
+            x2 = x2 + 1
         else
-            if h < 2*r then r = math.floor(h/2) end
-            if w < 2*r then r = math.floor(w/2) end
-            self:paintBorder(x, y, w, h, r, c, r)
-            self:paintRect(x+r, y+r, w-2*r, h-2*r, c)
+            x2 = x2 + 1
+            if delta2 > 0 then
+                y2 = y2 - 1
+                delta2 = delta2 + 2*x2 - 2*y2 + 2
+            else
+                delta2 = delta2 + 2*x2 + 1
+            end
+        end
+
+        for tmp_y = y, y2+1, -1 do
+            self:setPixelClamped((w-r)+off_x+x-1, (h-r)+off_y+tmp_y-1, c)
+            self:setPixelClamped((w-r)+off_x+tmp_y-1, (h-r)+off_y+x-1, c)
+
+            self:setPixelClamped((w-r)+off_x+tmp_y-1, (r)+off_y-x, c)
+            self:setPixelClamped((w-r)+off_x+x-1, (r)+off_y-tmp_y, c)
+
+            self:setPixelClamped((r)+off_x-x, (r)+off_y-tmp_y, c)
+            self:setPixelClamped((r)+off_x-tmp_y, (r)+off_y-x, c)
+
+            self:setPixelClamped((r)+off_x-tmp_y, (h-r)+off_y+x-1, c)
+            self:setPixelClamped((r)+off_x-x, (h-r)+off_y+tmp_y-1, c)
         end
     end
+end
 
+--[[
+Draw a border
 
-    --[[
-    Draw a progress bar according to following args:
-
-    @x:  start position in x axis
-    @y:  start position in y axis
-    @w:  width for progress bar
-    @h:  height for progress bar
-    @load_m_w: width margin for loading bar
-    @load_m_h: height margin for loading bar
-    @load_percent: progress in percent
-    @c:  color for loading bar
-    --]]
-    function BB_mt.__index:progressBar(x, y, w, h, load_m_w, load_m_h, load_percent, c)
-        if load_m_h*2 > h then
-            load_m_h = h/2
-        end
-        self:paintBorder(x, y, w, h, 2, 15)
-        self:paintRect(x+load_m_w, y+load_m_h,
-        (w-2*load_m_w)*load_percent, (h-2*load_m_h), c)
+@x:  start position in x axis
+@y:  start position in y axis
+@w:  width of the border
+@h:  height of the border
+@bw: line width of the border
+@c:  color for loading bar
+@r:  radius of for border's corner (nil or 0 means right corner border)
+--]]
+function BB_mt.__index:paintBorder(x, y, w, h, bw, c, r)
+    x, y = math.ceil(x), math.ceil(y)
+    h, w = math.ceil(h), math.ceil(w)
+    if not r or r == 0 then
+        self:paintRect(x, y, w, bw, c)
+        self:paintRect(x, y+h-bw, w, bw, c)
+        self:paintRect(x, y+bw, bw, h - 2*bw, c)
+        self:paintRect(x+w-bw, y+bw, bw, h - 2*bw, c)
+    else
+        if h < 2*r then r = math.floor(h/2) end
+        if w < 2*r then r = math.floor(w/2) end
+        self:paintRoundedCorner(x, y, w, h, bw, r, c)
+        self:paintRect(r+x, y, w-2*r, bw, c)
+        self:paintRect(r+x, y+h-bw, w-2*r, bw, c)
+        self:paintRect(x, r+y, bw, h-2*r, c)
+        self:paintRect(x+w-bw, r+y, bw, h-2*r, c)
     end
+end
 
 
-    --[[
-    dim color values in rectangular area
+--[[
+Fill a rounded corner rectangular area
 
-    @param x X coordinate
-    @param y Y coordinate
-    @param w width
-    @param h height
-    --]]
-    function BB_mt.__index:dimRect(x, y, w, h)
-        if w <= 0 or h <= 0 then return end
-        w, x = BB.checkBounds(w, x, 0, self:getWidth(), 0xFFFF)
-        h, y = BB.checkBounds(h, y, 0, self:getHeight(), 0xFFFF)
-        for y = y, y+h-1 do
-            for x = x, x+w-1 do
-                self:setPixel(x, y, self:getPixel(x, y):dim())
+@x:  start position in x axis
+@y:  start position in y axis
+@w:  width of the area
+@h:  height of the area
+@c:  color used to fill the area
+@r:  radius of for four corners
+--]]
+function BB_mt.__index:paintRoundedRect(x, y, w, h, c, r)
+    x, y = math.ceil(x), math.ceil(y)
+    h, w = math.ceil(h), math.ceil(w)
+    if not r or r == 0 then
+        self:paintRect(x, y, w, h, c)
+    else
+        if h < 2*r then r = math.floor(h/2) end
+        if w < 2*r then r = math.floor(w/2) end
+        self:paintBorder(x, y, w, h, r, c, r)
+        self:paintRect(x+r, y+r, w-2*r, h-2*r, c)
+    end
+end
+
+
+--[[
+Draw a progress bar according to following args:
+
+@x:  start position in x axis
+@y:  start position in y axis
+@w:  width for progress bar
+@h:  height for progress bar
+@load_m_w: width margin for loading bar
+@load_m_h: height margin for loading bar
+@load_percent: progress in percent
+@c:  color for loading bar
+--]]
+function BB_mt.__index:progressBar(x, y, w, h, load_m_w, load_m_h, load_percent, c)
+    if load_m_h*2 > h then
+        load_m_h = h/2
+    end
+    self:paintBorder(x, y, w, h, 2, 15)
+    self:paintRect(x+load_m_w, y+load_m_h,
+    (w-2*load_m_w)*load_percent, (h-2*load_m_h), c)
+end
+
+
+--[[
+dim color values in rectangular area
+
+@param x X coordinate
+@param y Y coordinate
+@param w width
+@param h height
+--]]
+function BB_mt.__index:dimRect(x, y, w, h)
+    if w <= 0 or h <= 0 then return end
+    w, x = BB.checkBounds(w, x, 0, self:getWidth(), 0xFFFF)
+    h, y = BB.checkBounds(h, y, 0, self:getHeight(), 0xFFFF)
+    for y = y, y+h-1 do
+        for x = x, x+w-1 do
+            self:setPixel(x, y, self:getPixel(x, y):dim())
+        end
+    end
+end
+
+--[[
+lighten color values in rectangular area
+
+@param x X coordinate
+@param y Y coordinate
+@param w width
+@param h height
+--]]
+function BB_mt.__index:lightenRect(x, y, w, h, low)
+    if w <= 0 or h <= 0 then return end
+    w, x = BB.checkBounds(w, x, 0, self:getWidth(), 0xFFFF)
+    h, y = BB.checkBounds(h, y, 0, self:getHeight(), 0xFFFF)
+    for y = y, y+h-1 do
+        for x = x, x+w-1 do
+            self:setPixel(x, y, self:getPixel(x, y):lighten(low))
+        end
+    end
+end
+
+function BB_mt.__index:copy()
+    local mytype = ffi.typeof(self)
+    local buffer = ffi.C.malloc(self.pitch * self.h)
+    assert(buffer, "cannot allocate buffer")
+    ffi.copy(buffer, self.data, self.pitch * self.h)
+    local copy = mytype(self.w, self.h, self.pitch, buffer, self.config)
+    copy:setAllocated(1)
+    return copy
+end
+
+--[[
+write blitbuffer contents to a PAM file
+
+see http://netpbm.sourceforge.net/doc/pam.html for PAM file specs.
+
+@param filename the name of the file to be created
+--]]
+function BB_mt.__index:writePAM(filename)
+    local f = io.open(filename, "w")
+    f:write("P7\n")
+    f:write("# written by blitbuffer.lua\n")
+    f:write("WIDTH ", self:getWidth(), "\n")
+    f:write("HEIGHT ", self:getHeight(), "\n")
+    local bb_type = self:getType()
+    if bb_type == TYPE_BB4 then
+        f:write("DEPTH 1\n", "MAXVAL 15\n", "TUPLTYPE GRAYSCALE\n")
+    elseif bb_type == TYPE_BB8 then
+        f:write("DEPTH 1\n", "MAXVAL 255\n", "TUPLTYPE GRAYSCALE\n")
+    elseif bb_type == TYPE_BB8A then
+        f:write("DEPTH 2\n", "MAXVAL 255\n", "TUPLTYPE GRAYSCALE_ALPHA\n")
+    elseif bb_type == TYPE_BBRGB16 then
+        -- this is not supported by PAM since the tuple consists of different bit widths
+        -- so we convert to RGB24 in this case
+        f:write("DEPTH 3\n", "MAXVAL 255\n", "TUPLTYPE RGB\n")
+    elseif bb_type == TYPE_BBRGB24 then
+        f:write("DEPTH 3\n", "MAXVAL 255\n", "TUPLTYPE RGB\n")
+    elseif bb_type == TYPE_BBRGB32 then
+        f:write("DEPTH 4\n", "MAXVAL 255\n", "TUPLTYPE RGB_ALPHA\n")
+    end
+    f:write("ENDHDR\n")
+    for y = 0, self:getHeight()-1 do
+        for x = 0, self:getWidth()-1 do
+            local v = self:getPixel(x, y)
+            if bb_type == TYPE_BB4 or bb_type == TYPE_BB8 then
+                ffi.C.fputc(v.a, f)
+            elseif bb_type == TYPE_BB8A then
+                ffi.C.fputc(v.a, f)
+                -- note that other functions do not support
+                -- alpha values for now
+                -- TODO: use correct alpha value of struct here
+                ffi.C.fputc(255, f)
+            elseif bb_type == TYPE_BBRGB16 then
+                v = v:getColorRGB24()
+                ffi.C.fputc(v.r, f)
+                ffi.C.fputc(v.g, f)
+                ffi.C.fputc(v.b, f)
+            elseif bb_type == TYPE_BBRGB24 then
+                ffi.C.fputc(v.r, f)
+                ffi.C.fputc(v.g, f)
+                ffi.C.fputc(v.b, f)
+            elseif bb_type == TYPE_BBRGB32 then
+                ffi.C.fputc(v.r, f)
+                ffi.C.fputc(v.g, f)
+                ffi.C.fputc(v.b, f)
+                -- note that other functions do not support
+                -- alpha values for now
+                -- TODO: use correct alpha value of struct here
+                ffi.C.fputc(255, f)
             end
         end
     end
+    f:close()
+end
 
-    --[[
-    lighten color values in rectangular area
+-- if no special case in BB???_mt exists, use function from BB_mt
+-- (we do not use BB_mt as metatable for BB???_mt since this causes
+--  a major slowdown and would not get properly JIT-compiled)
+for name, func in pairs(BB_mt.__index) do
+    if not BB4_mt.__index[name] then BB4_mt.__index[name] = func end
+    if not BB8_mt.__index[name] then BB8_mt.__index[name] = func end
+    if not BB8A_mt.__index[name] then BB8A_mt.__index[name] = func end
+    if not BBRGB16_mt.__index[name] then BBRGB16_mt.__index[name] = func end
+    if not BBRGB24_mt.__index[name] then BBRGB24_mt.__index[name] = func end
+    if not BBRGB32_mt.__index[name] then BBRGB32_mt.__index[name] = func end
+end
 
-    @param x X coordinate
-    @param y Y coordinate
-    @param w width
-    @param h height
-    --]]
-    function BB_mt.__index:lightenRect(x, y, w, h, low)
-        if w <= 0 or h <= 0 then return end
-        w, x = BB.checkBounds(w, x, 0, self:getWidth(), 0xFFFF)
-        h, y = BB.checkBounds(h, y, 0, self:getHeight(), 0xFFFF)
-        for y = y, y+h-1 do
-            for x = x, x+w-1 do
-                self:setPixel(x, y, self:getPixel(x, y):lighten(low))
-            end
+-- set metatables for the BlitBuffer types
+local BlitBuffer4 = ffi.metatype("BlitBuffer4", BB4_mt)
+local BlitBuffer8 = ffi.metatype("BlitBuffer8", BB8_mt)
+local BlitBuffer8A = ffi.metatype("BlitBuffer8A", BB8A_mt)
+local BlitBufferRGB16 = ffi.metatype("BlitBufferRGB16", BBRGB16_mt)
+local BlitBufferRGB24 = ffi.metatype("BlitBufferRGB24", BBRGB24_mt)
+local BlitBufferRGB32 = ffi.metatype("BlitBufferRGB32", BBRGB32_mt)
+
+-- set metatables for the Color types
+ffi.metatype("Color4L", Color4L_mt)
+ffi.metatype("Color4U", Color4U_mt)
+ffi.metatype("Color8", Color8_mt)
+ffi.metatype("Color8A", Color8A_mt)
+ffi.metatype("ColorRGB16", ColorRGB16_mt)
+ffi.metatype("ColorRGB24", ColorRGB24_mt)
+ffi.metatype("ColorRGB32", ColorRGB32_mt)
+
+function BB.new(width, height, buffertype, dataptr, pitch)
+    local bb = nil
+    buffertype = buffertype or TYPE_BB4
+    if pitch == nil then
+        if buffertype == TYPE_BB4 then pitch = band(1, width) + rshift(width, 1)
+        elseif buffertype == TYPE_BB8 then pitch = width
+        elseif buffertype == TYPE_BB8A then pitch = lshift(width, 1)
+        elseif buffertype == TYPE_BBRGB16 then pitch = lshift(width, 1)
+        elseif buffertype == TYPE_BBRGB24 then pitch = width * 3
+        elseif buffertype == TYPE_BBRGB32 then pitch = lshift(width, 2)
         end
     end
-
-    function BB_mt.__index:copy()
-        local mytype = ffi.typeof(self)
-        local buffer = ffi.C.malloc(self.pitch * self.h)
-        assert(buffer, "cannot allocate buffer")
-        ffi.copy(buffer, self.data, self.pitch * self.h)
-        local copy = mytype(self.w, self.h, self.pitch, buffer, self.config)
-        copy:setAllocated(1)
-        return copy
+    if buffertype == TYPE_BB4 then bb = BlitBuffer4(width, height, pitch, nil, 0)
+    elseif buffertype == TYPE_BB8 then bb = BlitBuffer8(width, height, pitch, nil, 0)
+    elseif buffertype == TYPE_BB8A then bb = BlitBuffer8A(width, height, pitch, nil, 0)
+    elseif buffertype == TYPE_BBRGB16 then bb = BlitBufferRGB16(width, height, pitch, nil, 0)
+    elseif buffertype == TYPE_BBRGB24 then bb = BlitBufferRGB24(width, height, pitch, nil, 0)
+    elseif buffertype == TYPE_BBRGB32 then bb = BlitBufferRGB32(width, height, pitch, nil, 0)
+    else error("unknown blitbuffer type")
     end
-
-    --[[
-    write blitbuffer contents to a PAM file
-
-    see http://netpbm.sourceforge.net/doc/pam.html for PAM file specs.
-
-    @param filename the name of the file to be created
-    --]]
-    function BB_mt.__index:writePAM(filename)
-        local f = io.open(filename, "w")
-        f:write("P7\n")
-        f:write("# written by blitbuffer.lua\n")
-        f:write("WIDTH ", self:getWidth(), "\n")
-        f:write("HEIGHT ", self:getHeight(), "\n")
-        local bb_type = self:getType()
-        if bb_type == TYPE_BB4 then
-            f:write("DEPTH 1\n", "MAXVAL 15\n", "TUPLTYPE GRAYSCALE\n")
-        elseif bb_type == TYPE_BB8 then
-            f:write("DEPTH 1\n", "MAXVAL 255\n", "TUPLTYPE GRAYSCALE\n")
-        elseif bb_type == TYPE_BB8A then
-            f:write("DEPTH 2\n", "MAXVAL 255\n", "TUPLTYPE GRAYSCALE_ALPHA\n")
-        elseif bb_type == TYPE_BBRGB16 then
-            -- this is not supported by PAM since the tuple consists of different bit widths
-            -- so we convert to RGB24 in this case
-            f:write("DEPTH 3\n", "MAXVAL 255\n", "TUPLTYPE RGB\n")
-        elseif bb_type == TYPE_BBRGB24 then
-            f:write("DEPTH 3\n", "MAXVAL 255\n", "TUPLTYPE RGB\n")
-        elseif bb_type == TYPE_BBRGB32 then
-            f:write("DEPTH 4\n", "MAXVAL 255\n", "TUPLTYPE RGB_ALPHA\n")
-        end
-        f:write("ENDHDR\n")
-        for y = 0, self:getHeight()-1 do
-            for x = 0, self:getWidth()-1 do
-                local v = self:getPixel(x, y)
-                if bb_type == TYPE_BB4 or bb_type == TYPE_BB8 then
-                    ffi.C.fputc(v.a, f)
-                elseif bb_type == TYPE_BB8A then
-                    ffi.C.fputc(v.a, f)
-                    -- note that other functions do not support
-                    -- alpha values for now
-                    -- TODO: use correct alpha value of struct here
-                    ffi.C.fputc(255, f)
-                elseif bb_type == TYPE_BBRGB16 then
-                    v = v:getColorRGB24()
-                    ffi.C.fputc(v.r, f)
-                    ffi.C.fputc(v.g, f)
-                    ffi.C.fputc(v.b, f)
-                elseif bb_type == TYPE_BBRGB24 then
-                    ffi.C.fputc(v.r, f)
-                    ffi.C.fputc(v.g, f)
-                    ffi.C.fputc(v.b, f)
-                elseif bb_type == TYPE_BBRGB32 then
-                    ffi.C.fputc(v.r, f)
-                    ffi.C.fputc(v.g, f)
-                    ffi.C.fputc(v.b, f)
-                    -- note that other functions do not support
-                    -- alpha values for now
-                    -- TODO: use correct alpha value of struct here
-                    ffi.C.fputc(255, f)
-                end
-            end
-        end
-        f:close()
+    bb:setType(buffertype)
+    if dataptr == nil then
+        dataptr = ffi.C.malloc(pitch*height)
+        assert(dataptr, "cannot allocate memory for blitbuffer")
+        ffi.fill(dataptr, pitch*height)
+        bb:setAllocated(1)
     end
+    bb.data = ffi.cast(bb.data, dataptr)
+    return bb
+end
 
-    -- if no special case in BB???_mt exists, use function from BB_mt
-    -- (we do not use BB_mt as metatable for BB???_mt since this causes
-    --  a major slowdown and would not get properly JIT-compiled)
-    for name, func in pairs(BB_mt.__index) do
-        if not BB4_mt.__index[name] then BB4_mt.__index[name] = func end
-        if not BB8_mt.__index[name] then BB8_mt.__index[name] = func end
-        if not BB8A_mt.__index[name] then BB8A_mt.__index[name] = func end
-        if not BBRGB16_mt.__index[name] then BBRGB16_mt.__index[name] = func end
-        if not BBRGB24_mt.__index[name] then BBRGB24_mt.__index[name] = func end
-        if not BBRGB32_mt.__index[name] then BBRGB32_mt.__index[name] = func end
-    end
+function BB.compat(oldbuffer)
+    return ffi.cast("BlitBuffer4*", oldbuffer)[0]
+end
 
-    -- set metatables for the BlitBuffer types
-    local BlitBuffer4 = ffi.metatype("BlitBuffer4", BB4_mt)
-    local BlitBuffer8 = ffi.metatype("BlitBuffer8", BB8_mt)
-    local BlitBuffer8A = ffi.metatype("BlitBuffer8A", BB8A_mt)
-    local BlitBufferRGB16 = ffi.metatype("BlitBufferRGB16", BBRGB16_mt)
-    local BlitBufferRGB24 = ffi.metatype("BlitBufferRGB24", BBRGB24_mt)
-    local BlitBufferRGB32 = ffi.metatype("BlitBufferRGB32", BBRGB32_mt)
+function BB.fromstring(width, height, buffertype, str, pitch)
+    local dataptr = ffi.C.malloc(#str)
+    ffi.copy(dataptr, str, #str)
+    return BB.new(width, height, buffertype, dataptr, pitch)
+end
 
-    -- set metatables for the Color types
-    ffi.metatype("Color4L", Color4L_mt)
-    ffi.metatype("Color4U", Color4U_mt)
-    ffi.metatype("Color8", Color8_mt)
-    ffi.metatype("Color8A", Color8A_mt)
-    ffi.metatype("ColorRGB16", ColorRGB16_mt)
-    ffi.metatype("ColorRGB24", ColorRGB24_mt)
-    ffi.metatype("ColorRGB32", ColorRGB32_mt)
+function BB.tostring(bb)
+    return ffi.string(bb.data, bb.pitch * bb.h)
+end
 
-    function BB.new(width, height, buffertype, dataptr, pitch)
-        local bb = nil
-        buffertype = buffertype or TYPE_BB4
-        if pitch == nil then
-            if buffertype == TYPE_BB4 then pitch = band(1, width) + rshift(width, 1)
-            elseif buffertype == TYPE_BB8 then pitch = width
-            elseif buffertype == TYPE_BB8A then pitch = lshift(width, 1)
-            elseif buffertype == TYPE_BBRGB16 then pitch = lshift(width, 1)
-            elseif buffertype == TYPE_BBRGB24 then pitch = width * 3
-            elseif buffertype == TYPE_BBRGB32 then pitch = lshift(width, 2)
-            end
-        end
-        if buffertype == TYPE_BB4 then bb = BlitBuffer4(width, height, pitch, nil, 0)
-        elseif buffertype == TYPE_BB8 then bb = BlitBuffer8(width, height, pitch, nil, 0)
-        elseif buffertype == TYPE_BB8A then bb = BlitBuffer8A(width, height, pitch, nil, 0)
-        elseif buffertype == TYPE_BBRGB16 then bb = BlitBufferRGB16(width, height, pitch, nil, 0)
-        elseif buffertype == TYPE_BBRGB24 then bb = BlitBufferRGB24(width, height, pitch, nil, 0)
-        elseif buffertype == TYPE_BBRGB32 then bb = BlitBufferRGB32(width, height, pitch, nil, 0)
-        else error("unknown blitbuffer type")
-        end
-        bb:setType(buffertype)
-        if dataptr == nil then
-            dataptr = ffi.C.malloc(pitch*height)
-            assert(dataptr, "cannot allocate memory for blitbuffer")
-            ffi.fill(dataptr, pitch*height)
-            bb:setAllocated(1)
-        end
-        bb.data = ffi.cast(bb.data, dataptr)
-        return bb
-    end
+-- accessors for color types:
+BB.Color4 = Color4L
+BB.Color4L = Color4L
+BB.Color4U = Color4U
+BB.Color8 = Color8
+BB.Color8A = Color8A
+BB.ColorRGB16 = ColorRGB16
+BB.ColorRGB24 = ColorRGB24
+BB.ColorRGB32 = ColorRGB32
 
-    function BB.compat(oldbuffer)
-        return ffi.cast("BlitBuffer4*", oldbuffer)[0]
-    end
+-- accessors for Blitbuffer types
+BB.BlitBuffer4 = BlitBuffer4
+BB.BlitBuffer8 = BlitBuffer8
+BB.BlitBuffer8A = BlitBuffer8A
+BB.BlitBufferRGB16 = BlitBufferRGB16
+BB.BlitBufferRGB24 = BlitBufferRGB24
+BB.BlitBufferRGB32 = BlitBufferRGB32
+BB.TYPE_BB4 = TYPE_BB4
+BB.TYPE_BB8 = TYPE_BB8
+BB.TYPE_BB8A = TYPE_BB8A
+BB.TYPE_BBRGB16 = TYPE_BBRGB16
+BB.TYPE_BBRGB24 = TYPE_BBRGB24
+BB.TYPE_BBRGB32 = TYPE_BBRGB32
 
-    function BB.fromstring(width, height, buffertype, str, pitch)
-        local dataptr = ffi.C.malloc(#str)
-        ffi.copy(dataptr, str, #str)
-        return BB.new(width, height, buffertype, dataptr, pitch)
-    end
-
-    function BB.tostring(bb)
-        return ffi.string(bb.data, bb.pitch * bb.h)
-    end
-
-    -- accessors for color types:
-    BB.Color4 = Color4L
-    BB.Color4L = Color4L
-    BB.Color4U = Color4U
-    BB.Color8 = Color8
-    BB.Color8A = Color8A
-    BB.ColorRGB16 = ColorRGB16
-    BB.ColorRGB24 = ColorRGB24
-    BB.ColorRGB32 = ColorRGB32
-
-    -- accessors for Blitbuffer types
-    BB.BlitBuffer4 = BlitBuffer4
-    BB.BlitBuffer8 = BlitBuffer8
-    BB.BlitBuffer8A = BlitBuffer8A
-    BB.BlitBufferRGB16 = BlitBufferRGB16
-    BB.BlitBufferRGB24 = BlitBufferRGB24
-    BB.BlitBufferRGB32 = BlitBufferRGB32
-    BB.TYPE_BB4 = TYPE_BB4
-    BB.TYPE_BB8 = TYPE_BB8
-    BB.TYPE_BB8A = TYPE_BB8A
-    BB.TYPE_BBRGB16 = TYPE_BBRGB16
-    BB.TYPE_BBRGB24 = TYPE_BBRGB24
-    BB.TYPE_BBRGB32 = TYPE_BBRGB32
-
-    return BB
+return BB
