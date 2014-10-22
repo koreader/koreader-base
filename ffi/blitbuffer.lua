@@ -1261,6 +1261,15 @@ function BB.tostring(bb)
     return ffi.string(bb.data, bb.pitch * bb.h)
 end
 
+--[[
+return a Color value resembling a given level of blackness/gray
+
+0 is white, 1.0 is black
+--]]
+function BB.gray(level)
+    return Color8(0xFF - floor(0xFF * level))
+end
+
 -- accessors for color types:
 BB.Color4 = Color4L
 BB.Color4L = Color4L
