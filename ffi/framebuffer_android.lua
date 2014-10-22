@@ -10,6 +10,7 @@ function fb.open()
     if not fb.bb then
         -- we present this buffer to the outside
         fb.bb = BB.new(android.screen.width, android.screen.height)
+        fb.bb:fill(BB.COLOR_WHITE)
         fb:refresh()
     end
     return fb

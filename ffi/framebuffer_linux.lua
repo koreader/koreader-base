@@ -197,6 +197,7 @@ function framebuffer.open(device)
 		error("eink model not supported");
 	end
 
+    fb.bb:fill(BB.COLOR_WHITE)
 	return fb
 end
 
