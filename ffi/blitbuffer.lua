@@ -842,6 +842,7 @@ paint a rectangle onto this buffer
 @param value color value
 --]]
 function BB_mt.__index:paintRect(x, y, w, h, value)
+    value = value or Color8(0)
     if w <= 0 or h <= 0 then return end
     w, x = BB.checkBounds(w, x, 0, self:getWidth(), 0xFFFF)
     h, y = BB.checkBounds(h, y, 0, self:getHeight(), 0xFFFF)
@@ -862,6 +863,7 @@ paint a circle onto this buffer
 @param w width of line (defaults to radius)
 --]]
 function BB_mt.__index:paintCircle(center_x, center_y, r, c, w)
+    c = c or Color8(0)
     if r == 0 then return end
     if w == nil then w = r end
     if w > r then w = r end
