@@ -155,7 +155,6 @@ function framebuffer.open(device)
 			local dummy = require("ffi/mxcfb_kobo_h")
 			fb.einkUpdateFunc = kobo_update
 			fb.bb = BB.new(fb.vinfo.xres, fb.vinfo.yres, BB.TYPE_BBRGB16, fb.data, fb.finfo.line_length)
-			fb.bb:invert()
 			if fb.vinfo.xres > fb.vinfo.yres then
 				-- Kobo framebuffers need to be rotated counter-clockwise (they start in landscape mode)
 				fb.bb:rotate(-90)
@@ -178,7 +177,6 @@ function framebuffer.open(device)
 			fb.einkUpdateFunc = k51_update
 			fb.einkWaitForSubmissionFunc = kindle_mxc_wait_for_update_submission
 			fb.bb = BB.new(fb.vinfo.xres, fb.vinfo.yres, BB.TYPE_BB8, fb.data, fb.finfo.line_length)
-			fb.bb:invert()
 		else
 			error("unknown bpp value for the mxc eink driver")
 		end
@@ -193,6 +191,8 @@ function framebuffer.open(device)
 		else
 			error("unknown bpp value for the classic eink driver")
 		end
+        -- classic eink framebuffer driver has grayscale values inverted (i.e. 0xF = black, 0 = white)
+        fb.bb:invert()
 	else
 		error("eink model not supported");
 	end

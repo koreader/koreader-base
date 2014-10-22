@@ -17,8 +17,6 @@ function fb.open()
 		fb.bb = BB.new(600, 800)
 	end
 
-	fb.bb:invert()
-
 	fb:refresh()
 
 	return fb
