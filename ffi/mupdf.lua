@@ -662,7 +662,12 @@ local function get_pthread()
         -- pthread directives are in the default namespace on Android
         return ffi.C
     else
-        return ffi.load("pthread")
+        -- Kobo devices strangely have no libpthread.so in LD_LIBRARY_PATH
+        -- so we hardcode the libpthread.so.0 here just for Kobo.
+        for _, libname in ipairs({"libpthread.so", "libpthread.so.0"}) do
+            local ok, pthread = pcall(ffi.load, libname)
+            if ok then return pthread end
+        end
     end
 end
 
