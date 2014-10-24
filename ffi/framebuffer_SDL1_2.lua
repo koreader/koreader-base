@@ -17,8 +17,7 @@ function fb.open()
 		fb.bb = BB.new(600, 800)
 	end
 
-	fb.bb:invert()
-
+    fb.bb:fill(BB.COLOR_WHITE)
 	fb:refresh()
 
 	return fb

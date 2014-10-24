@@ -657,15 +657,15 @@ static int drawPage(lua_State *L) {
 		/* bbptr's line width is half of pmptr's */
 		for(x = x_offset/2; x < (bb->w / 2); x++) {
 			int p = x*2 - x_offset;
-			unsigned char low = 15 - (pmptr[p + 1] >> 4);
-			unsigned char high = 15 - (pmptr[p] >> 4);
+			unsigned char low = pmptr[p + 1] >> 4;
+			unsigned char high = pmptr[p] >> 4;
 			if (adjust_pixels)
 				bbptr[x] = adjusted_high[high] | adjusted_low[low];
 			else
 				bbptr[x] = (high << 4) | low;
 		}
 		if (bb->w & 1) {
-			bbptr[x] = 255 - (pmptr[x*2] & 0xF0);
+			bbptr[x] = pmptr[x*2] & 0xF0;
 		}
 		/* go to next line */
 		bbptr += bb->pitch;

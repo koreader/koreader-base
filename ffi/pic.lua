@@ -40,7 +40,6 @@ PicPage.__gc = PicPage.close
 
 function PicPage:draw(dc, bb)
     local scaled_bb = self.image_bb:scale(bb:getWidth(), bb:getHeight())
-    scaled_bb:invert()
     bb:blitFullFrom(scaled_bb, 0, 0)
 end
 
