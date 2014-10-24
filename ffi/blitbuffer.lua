@@ -202,33 +202,6 @@ function ColorRGB32_mt.__index:blend(color)
     self:set(ColorRGB32(r, g, b, self:getAlpha()))
 end
 
--- dimming
-function Color4L_mt.__index:dim()
-    return Color8(rshift(self:getColor8().a, 1))
-end
-Color4U_mt.__index.dim = Color4L_mt.__index.dim
-Color8_mt.__index.dim = Color4L_mt.__index.dim
-Color8A_mt.__index.dim = Color4L_mt.__index.dim
-ColorRGB16_mt.__index.dim = Color4L_mt.__index.dim
-ColorRGB24_mt.__index.dim = Color4L_mt.__index.dim
-ColorRGB32_mt.__index.dim = Color4L_mt.__index.dim
--- lighten up
-function Color4L_mt.__index:lighten(low)
-    local value = self:getColor4L().a
-    low = low * 0x0F
-    if value < low then
-        return Color4L(low)
-    else
-        return self
-    end
-end
-Color4U_mt.__index.lighten = Color4L_mt.__index.lighten
-Color8_mt.__index.lighten = Color4L_mt.__index.lighten
-Color8A_mt.__index.lighten = Color4L_mt.__index.lighten
-ColorRGB16_mt.__index.lighten = Color4L_mt.__index.lighten
-ColorRGB24_mt.__index.lighten = Color4L_mt.__index.lighten
-ColorRGB32_mt.__index.lighten = Color4L_mt.__index.lighten
-
 -- color conversions:
 -- to Color4L:
 function Color4L_mt.__index:getColor4L() return Color4L(band(0x0F, self.a)) end
@@ -861,15 +834,17 @@ paint a rectangle onto this buffer
 @param w width
 @param h height
 @param value color value
+@param setter function used to set pixels (defaults to normal setPixel)
 --]]
-function BB_mt.__index:paintRect(x, y, w, h, value)
+function BB_mt.__index:paintRect(x, y, w, h, value, setter)
+    setter = setter or self.setPixel
     value = value or Color8(0)
     if w <= 0 or h <= 0 then return end
     w, x = BB.checkBounds(w, x, 0, self:getWidth(), 0xFFFF)
     h, y = BB.checkBounds(h, y, 0, self:getHeight(), 0xFFFF)
     for y = y, y+h-1 do
         for x = x, x+w-1 do
-            self:setPixel(x, y, value)
+            setter(self, x, y, value)
         end
     end
 end
@@ -1089,7 +1064,6 @@ function BB_mt.__index:progressBar(x, y, w, h, load_m_w, load_m_h, load_percent,
     (w-2*load_m_w)*load_percent, (h-2*load_m_h), c)
 end
 
-
 --[[
 dim color values in rectangular area
 
@@ -1097,16 +1071,12 @@ dim color values in rectangular area
 @param y Y coordinate
 @param w width
 @param h height
+@param by dim by this factor (default: 0.5)
 --]]
-function BB_mt.__index:dimRect(x, y, w, h)
-    if w <= 0 or h <= 0 then return end
-    w, x = BB.checkBounds(w, x, 0, self:getWidth(), 0xFFFF)
-    h, y = BB.checkBounds(h, y, 0, self:getHeight(), 0xFFFF)
-    for y = y, y+h-1 do
-        for x = x, x+w-1 do
-            self:setPixel(x, y, self:getPixel(x, y):dim())
-        end
-    end
+function BB_mt.__index:dimRect(x, y, w, h, by)
+    return self:paintRect(x, y, w, h,
+        Color8A(255, 255*(by or 0.5)),
+        self.setPixelBlend)
 end
 
 --[[
@@ -1116,16 +1086,12 @@ lighten color values in rectangular area
 @param y Y coordinate
 @param w width
 @param h height
+@param by lighten by this factor (default: 0.5)
 --]]
-function BB_mt.__index:lightenRect(x, y, w, h, low)
-    if w <= 0 or h <= 0 then return end
-    w, x = BB.checkBounds(w, x, 0, self:getWidth(), 0xFFFF)
-    h, y = BB.checkBounds(h, y, 0, self:getHeight(), 0xFFFF)
-    for y = y, y+h-1 do
-        for x = x, x+w-1 do
-            self:setPixel(x, y, self:getPixel(x, y):lighten(low))
-        end
-    end
+function BB_mt.__index:lightenRect(x, y, w, h, by)
+    return self:paintRect(x, y, w, h,
+        Color8A(0, 255*(by or 0.5)),
+        self.setPixelBlend)
 end
 
 function BB_mt.__index:copy()
