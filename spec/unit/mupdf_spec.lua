@@ -1,6 +1,9 @@
 local sample_pdf = "spec/base/unit/data/Alice.pdf"
 local paper_pdf = "spec/base/unit/data/Paper.pdf"
 local password_pdf = "spec/base/unit/data/testdocument.pdf"
+local simple_pdf = "spec/base/unit/data/simple.pdf"
+local simple_pdf_out = "/tmp/simple-out.pdf"
+local simple_pdf_compare = "spec/base/unit/data/simple-out.pdf"
 local test_img = "spec/base/unit/data/sample.jpg"
 
 describe("mupdf module", function()
@@ -62,6 +65,28 @@ describe("mupdf module", function()
             for i = 1,1000 do
                 assert.is_not_nil(doc3:openPage(1))
             end
+        end)
+        it("should open a page, add an annotation and write a new document", function()
+            local ffi = require("ffi")
+            local doc = M.openDocument(simple_pdf)
+            assert.is_not_nil(doc)
+            local page = doc:openPage(1)
+            assert.is_not_nil(page)
+            page:addMarkupAnnotation(ffi.new("fz_point[4]", {
+                { x =  70, y = 930 },
+                { x = 510, y = 930 },
+                { x = 510, y = 970 },
+                { x =  70, y = 970 }}),
+                4, ffi.C.FZ_ANNOT_HIGHLIGHT)
+            page:close()
+            doc:writeDocument(simple_pdf_out)
+            local out_f = io.open(simple_pdf_out, "r")
+            local out_data = out_f:read("*a")
+            out_f:close()
+            local test_f = io.open(simple_pdf_compare, "r")
+            local test_data = test_f:read("*a")
+            test_f:close()
+            assert.equals(out_data, test_data)
         end)
 
     	describe("PDF page API", function()

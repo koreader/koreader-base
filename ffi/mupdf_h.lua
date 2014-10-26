@@ -233,6 +233,7 @@ struct fz_write_options_s {
 typedef struct pdf_document_s pdf_document;
 typedef struct pdf_lexbuf_s pdf_lexbuf;
 typedef struct pdf_lexbuf_large_s pdf_lexbuf_large;
+typedef struct pdf_page_s pdf_page;
 typedef struct pdf_annot_s pdf_annot;
 typedef struct pdf_hotspot_s pdf_hotspot;
 struct pdf_lexbuf_s {
@@ -310,7 +311,7 @@ struct pdf_document_s {
   struct fz_font_s **type3_fonts;
 };
 struct pdf_annot_s {
-  struct pdf_page_s *page;
+  pdf_page *page;
   struct pdf_obj_s *obj;
   fz_rect rect;
   fz_rect pagerect;
@@ -392,7 +393,7 @@ struct fz_device_s *mupdf_new_bbox_device(fz_context *, fz_rect *);
 void *mupdf_run_page(fz_context *, fz_document *, fz_page *, struct fz_device_s *, const fz_matrix *, struct fz_cookie_s *);
 void fz_free_device(struct fz_device_s *);
 pdf_document *pdf_specifics(fz_document *);
-pdf_annot *mupdf_pdf_create_annot(fz_context *, pdf_document *, struct pdf_page_s *, enum {
+pdf_annot *mupdf_pdf_create_annot(fz_context *, pdf_document *, pdf_page *, enum {
   FZ_ANNOT_TEXT = 0,
   FZ_ANNOT_LINK = 1,
   FZ_ANNOT_FREETEXT = 2,
