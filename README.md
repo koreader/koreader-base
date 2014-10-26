@@ -20,13 +20,19 @@ Follow these steps:
 		* make sure you have patch, wget, unzip, git and svn installed
 		* run `make fetchthirdparty`.
 
-* run `make TARGET=kindle` for Kindle devices. 
+* run `make TARGET=kindle` for touch based Kindle devices.
 
-* or run `make TARGET=kobo` for Kobo devices. 
+* run `make TARGET=kindle-legacy` for Kindle DXG/2/3/4 devices.
 
-* or run `make TARGET=android` for Android devices. 
+* or run `make TARGET=kobo` for Kobo devices.
+
+* or run `make TARGET=android` for Android devices.
 
 * or run `make TARGET=win32` for Windows.
+
+* or run `make TARGET=generic-arm` for generic ARM devices.
+
+* or run `make` for emulator on Linux.
 
 ## Use ccache
 
