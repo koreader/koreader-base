@@ -10,6 +10,7 @@ LuaJIT's FFI.
 
 local ffi = require("ffi")
 require("ffi/mupdf_h")
+require("ffi/posix_h") -- for malloc
 
 local BlitBuffer = require("ffi/blitbuffer")
 
@@ -221,14 +222,20 @@ end
 write the document to a new file
 --]]
 function document_mt.__index:writeDocument(filename)
+    -- the API takes a char*, not a const char*,
+    -- so we claim memory - and never free it. Too bad.
+    -- TODO: free on closing document?
+    local filename_str = ffi.C.malloc(#filename + 1)
+    if filename == nil then error("could not allocate memory for filename") end
+    ffi.copy(filename_str, filename)
 	local opts = ffi.new("fz_write_options[1]")
-	opts[0].do_incremental = 1
+	opts[0].do_incremental = (filename == self.filename ) and 1 or 0
 	opts[0].do_ascii = 0
 	opts[0].do_expand = 0
 	opts[0].do_garbage = 0
 	opts[0].do_linear = 0
 	opts[0].continue_on_error = 1
-	local ok = W.mupdf_write_document(self.doc, filename, opts)
+	local ok = W.mupdf_write_document(context(), self.doc, filename_str, opts)
     if ok == nil then merror("could not write document") end
 end
 
@@ -576,12 +583,13 @@ function page_mt.__index:addMarkupAnnotation(points, n, type)
 	local doc = M.pdf_specifics(self.doc.doc)
     if doc == nil then merror("could not get pdf_specifics") end
 
-    local annot = W.mupdf_pdf_create_annot(context(), self.doc.doc, self.page, type)
+    local annot = W.mupdf_pdf_create_annot(context(), doc, ffi.cast("pdf_page*", self.page), type)
     if annot == nil then merror("could not create annotation") end
 
-    local ok = W.mupdf_pdf_set_markup_annot_quadpoints(context(), self.doc.doc, annot, pts, n)
+    local ok = W.mupdf_pdf_set_markup_annot_quadpoints(context(), doc, annot, points, n)
     if ok == nil then merror("could not set markup annot quadpoints") end
-    local ok = W.mupdf_pdf_set_markup_appearance(context(), self.doc.doc, annot, color, alpha, line_thickness, line_height)
+
+    local ok = W.mupdf_pdf_set_markup_appearance(context(), doc, annot, color, alpha, line_thickness, line_height)
     if ok == nil then merror("could not set markup appearance") end
 end
 
