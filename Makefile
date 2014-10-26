@@ -84,6 +84,7 @@ $(JPEG_LIB):
 		CC="$(CC)" CXX="$(CXX)" CPPFLAGS="$(CFLAGS)" LDFLAGS="$(LDFLAGS)" \
 		./configure -q --prefix=$(CURDIR)/$(JPEG_DIR) \
 			--host=$(if $(ANDROID),"arm-linux",$(CHOST)) \
+			$(if $(findstring armv6, $(ARM_ARCH)),--without-simd,) \
 			--disable-static --enable-shared --with-jpeg8
 	$(MAKE) -j$(PROCESSORS) -C $(JPEG_DIR) --silent install
 	cp -fL $(JPEG_DIR)/.libs/$(notdir $(JPEG_LIB)) $@
@@ -610,5 +611,4 @@ $(OUTPUT_DIR)/spec/base:
 test: $(OUTPUT_DIR)/spec $(OUTPUT_DIR)/.busted
 	cd $(OUTPUT_DIR) && busted -l ./luajit
 
-PHONY: test
-
+.PHONY: test

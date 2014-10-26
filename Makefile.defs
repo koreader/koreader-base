@@ -20,7 +20,7 @@ else
 endif
 
 # set CC CXX AR LD RANLIB
-ifeq ($(TARGET), kindle)
+ifneq (,$(filter $(TARGET), kindle, arm-generic))
 	CHOST?=arm-linux-gnueabi
 else ifeq ($(TARGET), kindle5)
 	CHOST?=arm-kindle5-linux-gnueabi
@@ -151,12 +151,13 @@ else ifeq ($(TARGET), kindle-legacy)
 else ifeq ($(TARGET), android)
 	ARM_ARCH:=$(ANDROID_ARCH)
 	ARM_ARCH+=-mfloat-abi=softfp
-else ifeq ($(TARGET), win32)
-    ARM_ARCH:=
-else
+else ifeq ($(TARGET), arm-generic)
 	# Defaults to generic crap
 	ARM_ARCH:=$(ARMV6_GENERIC_ARCH)
 	ARM_ARCH+=-mfloat-abi=softfp
+else
+    # else, we are compiling emulator on x86
+    ARM_ARCH:=
 endif
 
 # Clang 3.4 on Travis however doesn't define macro '__extern_always_inline'
