@@ -358,7 +358,7 @@ function ColorRGB16_mt.__index:getR()
     return lshift(r, 3) + rshift(r, 2)
 end
 function ColorRGB16_mt.__index:getG()
-    local g = band(rshift(self.v, 5, 0x3F))
+    local g = band(rshift(self.v, 5), 0x3F)
     return lshift(g, 2) + rshift(g, 4)
 end
 function ColorRGB16_mt.__index:getB()
