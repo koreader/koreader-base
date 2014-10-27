@@ -1199,7 +1199,7 @@ ffi.metatype("ColorRGB32", ColorRGB32_mt)
 
 function BB.new(width, height, buffertype, dataptr, pitch)
     local bb = nil
-    buffertype = buffertype or TYPE_BB4
+    buffertype = buffertype or TYPE_BB8
     if pitch == nil then
         if buffertype == TYPE_BB4 then pitch = band(1, width) + rshift(width, 1)
         elseif buffertype == TYPE_BB8 then pitch = width

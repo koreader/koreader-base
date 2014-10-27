@@ -595,11 +595,9 @@ static int drawPage(lua_State *L) {
 	DrawContext *dc = (DrawContext*) lua_topointer(L, 2);
 	BlitBuffer *bb = (BlitBuffer*) lua_topointer(L, 3);
 	ddjvu_render_mode_t djvu_render_mode = (int) luaL_checkint(L, 6);
-	unsigned char adjusted_low[16], adjusted_high[16];
-	int i, adjust_pixels = 0;
 	ddjvu_rect_t pagerect, renderrect;
-	int bbsize = (bb->w)*(bb->h)+1;
-	uint8_t *imagebuffer = malloc(bbsize);
+	int bbsize = (bb->w)*(bb->h);
+	uint8_t *imagebuffer = bb->data;
 
 	/*printf("@page %d, @@zoom:%f, offset: (%d, %d)\n", page->num, dc->zoom, dc->offset_x, dc->offset_y);*/
 
@@ -636,43 +634,23 @@ static int drawPage(lua_State *L) {
 	if (!ddjvu_page_render(page->page_ref, djvu_render_mode, &pagerect, &renderrect, page->doc->pixelformat, bb->w, imagebuffer))
 		memset(imagebuffer, 0xFF, bbsize);
 
-	uint8_t *bbptr = bb->data;
-	uint8_t *pmptr = imagebuffer;
-	int x, y;
-	/* if offset is positive, we are moving towards up and left. */
-	int x_offset = MAX(0, dc->offset_x);
-	int y_offset = MAX(0, dc->offset_y);
+	/* Gamma correction of the blitbuffer, do we need to build this into BlitBuffer? */
+	unsigned char gamma_map[256];
+	unsigned char *s = imagebuffer;
+	int k, x, y;
 
-	/* prepare the tables for adjusting the intensity of pixels */
 	if (dc->gamma != -1.0) {
-		for (i=0; i<16; i++) {
-			adjusted_low[i] = MIN(15, (unsigned char)floorf(dc->gamma * (float)i));
-			adjusted_high[i] = adjusted_low[i] << 4;
+		for (k = 0; k < 256; k++)
+			gamma_map[k] = pow(k / 255.0f, dc->gamma) * 255;
+
+		for (y = 0; y < bb->h; y++) {
+			for (x = 0; x < bb->w; x++) {
+				k = y*bb->pitch + x;
+				s[k] = gamma_map[s[k]];
+			}
 		}
-		adjust_pixels = 1;
 	}
 
-	bbptr += bb->pitch * y_offset;
-	for(y = y_offset; y < bb->h; y++) {
-		/* bbptr's line width is half of pmptr's */
-		for(x = x_offset/2; x < (bb->w / 2); x++) {
-			int p = x*2 - x_offset;
-			unsigned char low = pmptr[p + 1] >> 4;
-			unsigned char high = pmptr[p] >> 4;
-			if (adjust_pixels)
-				bbptr[x] = adjusted_high[high] | adjusted_low[low];
-			else
-				bbptr[x] = (high << 4) | low;
-		}
-		if (bb->w & 1) {
-			bbptr[x] = pmptr[x*2] & 0xF0;
-		}
-		/* go to next line */
-		bbptr += bb->pitch;
-		pmptr += bb->w;
-	}
-
-	free(imagebuffer);
 	return 0;
 }
 

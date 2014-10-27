@@ -1198,43 +1198,18 @@ static int clearSelection(lua_State *L) {
 	return 0;
 }
 
-int drawToBlitBuffer(BlitBuffer *bb, LVGrayDrawBuf &drawBuf) {
-	int w = bb->w,
-		h = bb->h;
-	uint8_t *bbptr = (uint8_t*)bb->data;
-	uint8_t *pmptr = (uint8_t*)drawBuf.GetScanLine(0);
-	int i,x;
-
-	for (i = 0; i < h; i++) {
-		for (x = 0; x < (bb->w / 2); x++) {
-			/* When DrawBuf is set to 4bpp mode, CREngine still put every
-			 * four bits in one byte, but left the last 4 bits zero*/
-			bbptr[x] = pmptr[x*2] | (pmptr[x*2+1] >> 4);
-		}
-		if(bb->w & 1) {
-			bbptr[x] = pmptr[x*2] & 0xF0;
-		}
-		bbptr += bb->pitch;
-		pmptr += w;
-	}
-
-	return 0;
-}
-
 static int drawCurrentPage(lua_State *L) {
 	CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
 	BlitBuffer *bb = (BlitBuffer*) lua_topointer(L, 2);
 
 	int w = bb->w,
 		h = bb->h;
-	/* Set DrawBuf to 4bpp */
-	LVGrayDrawBuf drawBuf(w, h, 4);
+	/* Set DrawBuf to 8bpp */
+	LVGrayDrawBuf drawBuf(w, h, 8, bb->data);
 
 	doc->text_view->Resize(w, h);
 	doc->text_view->Render();
-	doc->text_view->Draw(drawBuf);
-
-	drawToBlitBuffer(bb, drawBuf);
+	doc->text_view->Draw(drawBuf, false);
 
 	return 0;
 }
@@ -1245,8 +1220,8 @@ static int drawCoverPage(lua_State *L) {
 
 	int w = bb->w,
 		h = bb->h;
-	/* Set DrawBuf to 4bpp */
-	LVGrayDrawBuf drawBuf(w, h, 4);
+	/* Set DrawBuf to 8bpp */
+	LVGrayDrawBuf drawBuf(w, h, 8, bb->data);
 
 	LVImageSourceRef cover = doc->text_view->getCoverPageImage();
 	if (!cover.isNull())
@@ -1255,8 +1230,6 @@ static int drawCoverPage(lua_State *L) {
 		printf("cover page is null.\n");
 	LVDrawBookCover(drawBuf, cover, lString8("Droid Sans Fallback"),
 			lString16("test"), lString16("test"), lString16("test"), 0);
-
-	drawToBlitBuffer(bb, drawBuf);
 
 	return 0;
 }
