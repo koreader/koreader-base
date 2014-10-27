@@ -3,6 +3,9 @@ local ffi = require("ffi")
 
 describe("Blitbuffer unit tests", function()
     describe("Color conversion", function()
+        -- 0xFF = 0b11111111
+        -- 0xAA = 0b10101010
+        -- 0x55 = 0b01010101
         local cRGB32 = Blitbuffer.ColorRGB32(0xFF, 0xAA, 0x55, 0)
         local cRGB24 = Blitbuffer.ColorRGB24(0xFF, 0xAA, 0x55)
         local cRGB24_32 = cRGB32:getColorRGB24()
@@ -10,6 +13,9 @@ describe("Blitbuffer unit tests", function()
         it("should convert RGB32 to RGB16", function()
             local c16_32 = cRGB32:getColorRGB16()
             assert.are.equals(0xFD4A, c16_32.v)
+            assert.are.equal(c16_32:getR(), 0xFF) -- 0b11111 111
+            assert.are.equal(c16_32:getG(), 0xAA) -- 0b101010 10
+            assert.are.equal(c16_32:getB(), 0x52) -- 0b01010 010
         end)
 
         it("should convert RGB32 to gray8", function()
