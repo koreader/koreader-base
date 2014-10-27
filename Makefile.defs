@@ -20,7 +20,7 @@ else
 endif
 
 # set CC CXX AR LD RANLIB
-ifneq (,$(filter $(TARGET), kindle, arm-generic))
+ifneq (,$(filter $(TARGET), kindle arm-generic))
 	CHOST?=arm-linux-gnueabi
 else ifeq ($(TARGET), kindle5)
 	CHOST?=arm-kindle5-linux-gnueabi
