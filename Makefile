@@ -4,7 +4,8 @@ include Makefile.defs
 all: $(OUTPUT_DIR)/libs $(if $(ANDROID),,$(LUAJIT)) \
 		$(if $(or $(ANDROID),$(WIN32)),$(LUAJIT_LIB),) \
 		$(LUAJIT_JIT) \
-		libs $(OUTPUT_DIR)/spec/base $(OUTPUT_DIR)/common \
+		libs $(K2PDFOPT_LIB) \
+		$(OUTPUT_DIR)/spec/base $(OUTPUT_DIR)/common \
 		$(OUTPUT_DIR)/plugins $(LUASOCKET) \
 		$(if $(WIN32),,$(LUASEC)) \
 		$(if $(ANDROID),luacompat52 lualongnumber,) \
