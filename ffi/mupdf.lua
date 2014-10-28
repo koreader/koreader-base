@@ -511,7 +511,9 @@ render page to blitbuffer
 old interface: expects a blitbuffer to render to
 --]]
 function page_mt.__index:draw(draw_context, blitbuffer, offset_x, offset_y)
-    blitbuffer:blitFrom(self:draw_new(draw_context, blitbuffer:getWidth(), blitbuffer:getHeight(), offset_x, offset_y))
+    local buffer = self:draw_new(draw_context, blitbuffer:getWidth(), blitbuffer:getHeight(), offset_x, offset_y)
+    blitbuffer:blitFrom(buffer)
+    buffer:free()
 end
 --[[
 render page to blitbuffer
