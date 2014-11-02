@@ -1094,6 +1094,9 @@ function BB_mt.__index:lightenRect(x, y, w, h, by)
         self.setPixelBlend)
 end
 
+--[[
+make a full copy of the current buffer, with its own memory
+--]]
 function BB_mt.__index:copy()
     local mytype = ffi.typeof(self)
     local buffer = ffi.C.malloc(self.pitch * self.h)
@@ -1102,6 +1105,22 @@ function BB_mt.__index:copy()
     local copy = mytype(self.w, self.h, self.pitch, buffer, self.config)
     copy:setAllocated(1)
     return copy
+end
+
+--[[
+return a new Blitbuffer object that works on a rectangular
+subset of the current Blitbuffer
+
+Note that the caller has to make sure that the underlying memory
+(of the Blitbuffer this method is called on) stays in place. In other
+words, a viewport does not create a new buffer with memory.
+--]]
+function BB_mt.__index:viewport(x, y, w, h)
+    x, y, w, h = self:getPhysicalRect(x, y, w, h)
+    local viewport = BB.new(w, h, self:getType(), self:getPixelP(x, y), self.pitch)
+    viewport:setRotation(self:getRotation())
+    viewport:setInverse(self:getInverse())
+    return viewport
 end
 
 --[[
