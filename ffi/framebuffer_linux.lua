@@ -89,9 +89,15 @@ end
 
 local function k51_update(fb, refreshtype, waveform_mode, x, y, w, h)
 	local refarea = ffi.new("struct mxcfb_update_data[1]")
-	-- only for Amazon's driver (NOTE: related to debugPaint prefbw & prefgray?):
-	refarea[0].hist_bw_waveform_mode = 0
-	refarea[0].hist_gray_waveform_mode = 0
+	-- only for Amazon's driver, try to mostly follow what the stock reader does...
+	if waveform_mode == 0x8 then
+		-- If we're requesting WAVEFORM_MODE_REAGL, it's regal all around!
+		refarea[0].hist_bw_waveform_mode = waveform_mode
+	else
+		refarea[0].hist_bw_waveform_mode = 0x1	-- WAVEFORM_MODE_DU
+	end
+	-- Same as our requested waveform_mode
+	refarea[0].hist_gray_waveform_mode = waveform_mode
 	-- TEMP_USE_PAPYRUS on Touch/PW1, TEMP_USE_AUTO on PW2
 	refarea[0].temp = 0x1001
 
@@ -265,7 +271,7 @@ function framebuffer_mt.__index:refresh(refreshtype, waveform_mode, x, y, w, h)
 	x, y, w, h = self.bb:getPhysicalRect(x, y, w, h)
 	self:einkUpdateFunc(refreshtype, waveform_mode, x, y, w, h)
 
-	-- Finish by waiting for our curren tupdate to be submitted
+	-- Finish by waiting for our current update to be submitted
 	if refreshtype == 1 and self.wait_for_full_updates or self.wait_for_every_updates then
 		if self.einkWaitForSubmissionFunc then
 			self:einkWaitForSubmissionFunc()
