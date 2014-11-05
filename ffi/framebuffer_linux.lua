@@ -10,7 +10,7 @@ local framebuffer_mt = {__index={}}
 -- Init our marker to 0, which happens to be an invalid value, so we can detect our first update
 local update_marker = ffi.new("uint32_t[1]", 0)
 
--- cf. ffi-cdecl/include/mxcfb-kindle.h (UPDATE_MODE_* applies to Kobo, too)
+-- cf. ffi-cdecl/include/mxcfb-kindle.h (UPDATE_MODE_* applies to Kobo, too) [FIXME: Add this to our ffi-cdecl and use those instead?]
 local UPDATE_MODE_PARTIAL       = 0x0
 local UPDATE_MODE_FULL          = 0x1
 
