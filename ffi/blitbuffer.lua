@@ -1187,6 +1187,32 @@ function BB_mt.__index:writePAM(filename)
     f:close()
 end
 
+--[[
+write blitbuffer contents to a PNG file
+
+@param filename the name of the file to be created
+--]]
+function BB_mt.__index:writePNG(filename)
+    require("ffi/leptonica_h")
+    local lept = nil
+    if ffi.os == "Windows" then
+        lept = ffi.load("libs/liblept-3.dll")
+    else
+        lept = ffi.load("libs/liblept.so.3")
+    end
+    local w, h = self:getWidth(), self:getHeight()
+    local pix = lept.pixCreate(w, h, 8)
+    if pix ~= nil then
+        for j = 1, h do
+            for i = 1, w do
+                lept.pixSetPixel(pix, i-1, j-1, self:getPixel(i, j):getColor8().a)
+            end
+        end
+        lept.pixWritePng(ffi.cast("char*", filename), pix, ffi.new("float", 0.0))
+        lept.pixDestroy(ffi.new('PIX *[1]', pix))
+    end
+end
+
 -- if no special case in BB???_mt exists, use function from BB_mt
 -- (we do not use BB_mt as metatable for BB???_mt since this causes
 --  a major slowdown and would not get properly JIT-compiled)
