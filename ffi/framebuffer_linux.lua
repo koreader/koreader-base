@@ -14,14 +14,14 @@ local update_marker = ffi.new("uint32_t[1]", 0)
 local UPDATE_MODE_PARTIAL       = 0x0
 local UPDATE_MODE_FULL          = 0x1
 
--- NOTE: Those have been confirmed on Kindle devices. Might be completely different on Kobo (except for AUTO)!
+-- NOTE: Those have been confirmed on Kindle devices. Might be completely different on Kobo. Slimmed down to the only values we need here.
 local WAVEFORM_MODE_DU          = 0x1    -- Grey->white/grey->black
 local WAVEFORM_MODE_GC16        = 0x2    -- High fidelity (flashing)
 -- Kindle PW2
 local WAVEFORM_MODE_REAGL       = 0x8    -- Ghost compensation waveform
 
 -- NOTE: Kobo's side!
-local EPDC_FLAG_USE_AAD         = 0x1000
+local EPDC_FLAG_USE_AAD         = 0x1000 -- FWIW, is EPDC_FLAG_USE_REAGLD in Kindle-land (with the D standing for dithering?)
 -- Kobo's headers suck, so invent something to avoid magic numbers...
 local WAVEFORM_MODE_KOBO_REGAL  = 0x7
 
