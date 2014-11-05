@@ -10,6 +10,16 @@ local framebuffer_mt = {__index={}}
 -- Init our marker to 0, which happens to be an invalid value, so we can detect our first update
 local update_marker = ffi.new("uint32_t[1]", 0)
 
+-- cf. ffi-cdecl/include/mxcfb-kindle.h
+local UPDATE_MODE_PARTIAL       = 0x0
+local UPDATE_MODE_FULL          = 0x1
+
+-- NOTE: Those have been confirmed on Kindle devices. Might be completely different on Kobo (except for AUTO)!
+local WAVEFORM_MODE_DU          = 0x1    -- Grey->white/grey->black
+local WAVEFORM_MODE_GC16        = 0x2    -- High fidelity (flashing)
+-- Kindle PW2
+local WAVEFORM_MODE_REAGL       = 0x8    -- Ghost compensation waveform
+
 local function einkfb_update(fb, refreshtype, waveform_mode, x, y, w, h)
 	local refarea = ffi.new("struct update_area_t[1]")
 
@@ -18,7 +28,7 @@ local function einkfb_update(fb, refreshtype, waveform_mode, x, y, w, h)
 	refarea[0].x2 = x + (w or (fb.vinfo.xres-x))
 	refarea[0].y2 = y + (h or (fb.vinfo.yres-y))
 	refarea[0].buffer = nil
-	if refreshtype == 0 then
+	if refreshtype == UPDATE_MODE_PARTIAL then
 		refarea[0].which_fx = ffi.C.fx_update_partial
 	else
 		refarea[0].which_fx = ffi.C.fx_update_full
@@ -59,8 +69,8 @@ end
 
 -- Kindle's MXCFB_SEND_UPDATE == 0x4048462e | Kobo's MXCFB_SEND_UPDATE == 0x4044462e
 local function mxc_update(fb, refarea, refreshtype, waveform_mode, x, y, w, h)
-	refarea[0].update_mode = refreshtype or 0
-	refarea[0].waveform_mode = waveform_mode or 2
+	refarea[0].update_mode = refreshtype or UPDATE_MODE_PARTIAL
+	refarea[0].waveform_mode = waveform_mode or WAVEFORM_MODE_GC16
 	refarea[0].update_region.left = x or 0
 	refarea[0].update_region.top = y or 0
 	refarea[0].update_region.width = w or fb.vinfo.xres
@@ -90,11 +100,11 @@ end
 local function k51_update(fb, refreshtype, waveform_mode, x, y, w, h)
 	local refarea = ffi.new("struct mxcfb_update_data[1]")
 	-- only for Amazon's driver, try to mostly follow what the stock reader does...
-	if waveform_mode == 0x8 then
+	if waveform_mode == WAVEFORM_MODE_REAGL then
 		-- If we're requesting WAVEFORM_MODE_REAGL, it's regal all around!
 		refarea[0].hist_bw_waveform_mode = waveform_mode
 	else
-		refarea[0].hist_bw_waveform_mode = 0x1	-- WAVEFORM_MODE_DU
+		refarea[0].hist_bw_waveform_mode = WAVEFORM_MODE_DU
 	end
 	-- Same as our requested waveform_mode
 	refarea[0].hist_gray_waveform_mode = waveform_mode
@@ -256,7 +266,7 @@ end
 
 function framebuffer_mt.__index:refresh(refreshtype, waveform_mode, x, y, w, h)
 	-- The Touch/PW1 only do this for full updates
-	if refreshtype == 1 and self.wait_for_full_updates or self.wait_for_every_updates then
+	if refreshtype == UPDATE_MODE_FULL and self.wait_for_full_updates or self.wait_for_every_updates then
 		-- Start by checking that our previous update has completed
 		if self.einkWaitForCompleteFunc then
 			-- We have nothing to check on our first refresh() call!
@@ -272,7 +282,7 @@ function framebuffer_mt.__index:refresh(refreshtype, waveform_mode, x, y, w, h)
 	self:einkUpdateFunc(refreshtype, waveform_mode, x, y, w, h)
 
 	-- Finish by waiting for our current update to be submitted
-	if refreshtype == 1 and self.wait_for_full_updates or self.wait_for_every_updates then
+	if refreshtype == UPDATE_MODE_FULL and self.wait_for_full_updates or self.wait_for_every_updates then
 		if self.einkWaitForSubmissionFunc then
 			self:einkWaitForSubmissionFunc()
 		end
