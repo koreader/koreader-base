@@ -10,7 +10,7 @@ local framebuffer_mt = {__index={}}
 -- Init our marker to 0, which happens to be an invalid value, so we can detect our first update
 local update_marker = ffi.new("uint32_t[1]", 0)
 
--- cf. ffi-cdecl/include/mxcfb-kindle.h
+-- cf. ffi-cdecl/include/mxcfb-kindle.h (UPDATE_MODE_* applies to Kobo, too)
 local UPDATE_MODE_PARTIAL       = 0x0
 local UPDATE_MODE_FULL          = 0x1
 
@@ -19,6 +19,11 @@ local WAVEFORM_MODE_DU          = 0x1    -- Grey->white/grey->black
 local WAVEFORM_MODE_GC16        = 0x2    -- High fidelity (flashing)
 -- Kindle PW2
 local WAVEFORM_MODE_REAGL       = 0x8    -- Ghost compensation waveform
+
+-- NOTE: Kobo's side!
+local EPDC_FLAG_USE_AAD         = 0x1000
+-- Kobo's headers suck, so invent something to avoid magic numbers...
+local WAVEFORM_MODE_KOBO_REGAL  = 0x7
 
 local function einkfb_update(fb, refreshtype, waveform_mode, x, y, w, h)
 	local refarea = ffi.new("struct update_area_t[1]")
@@ -49,8 +54,8 @@ local function mxc_new_update_marker()
 	return new_update_marker[0]
 end
 
--- Kindle's MXCFB_WAIT_FOR_UPDATE_COMPLETE_PEARL == 0x4004462f
-local function kindle_pearl_mxc_wait_for_update_complete(fb)
+-- Kindle's MXCFB_WAIT_FOR_UPDATE_COMPLETE_PEARL == 0x4004462f | Kobo's MXCFB_WAIT_FOR_UPDATE_COMPLETE == 0x4004462f
+local function kobo_and_kindle_pearl_mxc_wait_for_update_complete(fb)
 	-- Wait for the previous update to be completed
 	return ffi.C.ioctl(fb.fd, ffi.C.MXCFB_WAIT_FOR_UPDATE_COMPLETE_PEARL, update_marker)
 end
@@ -65,8 +70,6 @@ local function kindle_carta_mxc_wait_for_update_complete(fb)
 	return ffi.C.ioctl(fb.fd, ffi.C.MXCFB_WAIT_FOR_UPDATE_COMPLETE, carta_update_marker)
 end
 
--- Kobo's MXCFB_WAIT_FOR_UPDATE_COMPLETE == 0x4004462f
-
 -- Kindle's MXCFB_SEND_UPDATE == 0x4048462e | Kobo's MXCFB_SEND_UPDATE == 0x4044462e
 local function mxc_update(fb, refarea, refreshtype, waveform_mode, x, y, w, h)
 	refarea[0].update_mode = refreshtype or UPDATE_MODE_PARTIAL
@@ -77,9 +80,6 @@ local function mxc_update(fb, refarea, refreshtype, waveform_mode, x, y, w, h)
 	refarea[0].update_region.height = h or fb.vinfo.yres
 	-- Get a new update marker
 	refarea[0].update_marker = mxc_new_update_marker()
-	-- TODO: make the flag configurable from UI,
-	-- e.g., the EPDC_FLAG_ENABLE_INVERSION flag inverts all the pixels on display  09.01 2013 (houqp)
-	refarea[0].flags = 0
 	-- NOTE: We're not using EPDC_FLAG_USE_ALT_BUFFER
 	refarea[0].alt_buffer_data.phys_addr = 0
 	refarea[0].alt_buffer_data.width = 0
@@ -110,6 +110,9 @@ local function k51_update(fb, refreshtype, waveform_mode, x, y, w, h)
 	refarea[0].hist_gray_waveform_mode = waveform_mode
 	-- TEMP_USE_PAPYRUS on Touch/PW1, TEMP_USE_AUTO on PW2
 	refarea[0].temp = 0x1001
+	-- NOTE: We never use any flags on Kindle. Got rid of an old TODO mentioning making it configurable from the UI,
+	-- e.g., the EPDC_FLAG_ENABLE_INVERSION flag inverts all the pixels on display  09.01 2013 (houqp)
+	refarea[0].flags = 0
 
 	return mxc_update(fb, refarea, refreshtype, waveform_mode, x, y, w, h)
 end
@@ -120,6 +123,12 @@ local function kobo_update(fb, refreshtype, waveform_mode, x, y, w, h)
 	refarea[0].alt_buffer_data.virt_addr = nil
 	-- TEMP_USE_AMBIENT
 	refarea[0].temp = 0x1000
+	-- Enable the appropriate flag when requesting a regal waveform (Kobo)
+	if waveform_mode == WAVEFORM_MODE_KOBO_REGAL then
+		refarea[0].flags = EPDC_FLAG_USE_AAD
+	else
+		refarea[0].flags = 0
+	end
 
 	return mxc_update(fb, refarea, refreshtype, waveform_mode, x, y, w, h)
 end
@@ -134,7 +143,7 @@ function framebuffer.open(device)
 		einkUpdateFunc = nil,
 		einkWaitForSubmissionFunc = nil,
 		wait_for_full_updates = false,
-		wait_for_every_updates = false,
+		wait_for_every_update = false,
 		bb = nil,
 		data = nil
 	}
@@ -175,18 +184,24 @@ function framebuffer.open(device)
 				-- Kobo framebuffers need to be rotated counter-clockwise (they start in landscape mode)
 				fb.bb:rotate(-90)
 			end
+			-- NOTE: I'm assuming this won't blow up on older Kobo devices...
+			fb.einkWaitForCompleteFunc = kobo_and_kindle_pearl_mxc_wait_for_update_complete
+			-- FIXME: We definitely need a better check here (I don't really feel like changing the signature of refresh() everywhere just to move that check to uimanager...),
+			-- this should only apply to REAGL-capable device (Aura, H20 [NOT the AuraHD]).
+			fb.wait_for_every_update = true
+			--fb.wait_for_full_updates = true
 		elseif fb.vinfo.bits_per_pixel == 8 then
 			-- Kindle PaperWhite and KT with 5.1 or later firmware
 			local dummy = require("ffi/mxcfb_kindle_h")
 			-- NOTE: We need to differentiate the PW2 from the Touch/PW1... I hope this check is solid enough... (cf #550).
 			if fb.finfo.smem_len == 3145728 then
 				-- We're a PW2! Use the correct function, and ask to wait for every update.
-				fb.wait_for_every_updates = true
+				fb.wait_for_every_update = true
 				fb.einkWaitForCompleteFunc = kindle_carta_mxc_wait_for_update_complete
 			elseif fb.finfo.smem_len == 2179072 or fb.finfo.smem_len == 4718592 then
 				-- We're a Touch/PW1
 				fb.wait_for_full_updates = true
-				fb.einkWaitForCompleteFunc = kindle_pearl_mxc_wait_for_update_complete
+				fb.einkWaitForCompleteFunc = kobo_and_kindle_pearl_mxc_wait_for_update_complete
 			else
 				error("unknown smem_len value for the Kindle mxc eink driver")
 			end
@@ -266,7 +281,7 @@ end
 
 function framebuffer_mt.__index:refresh(refreshtype, waveform_mode, x, y, w, h)
 	-- The Touch/PW1 only do this for full updates
-	if refreshtype == UPDATE_MODE_FULL and self.wait_for_full_updates or self.wait_for_every_updates then
+	if refreshtype == UPDATE_MODE_FULL and self.wait_for_full_updates or self.wait_for_every_update then
 		-- Start by checking that our previous update has completed
 		if self.einkWaitForCompleteFunc then
 			-- We have nothing to check on our first refresh() call!
@@ -282,7 +297,7 @@ function framebuffer_mt.__index:refresh(refreshtype, waveform_mode, x, y, w, h)
 	self:einkUpdateFunc(refreshtype, waveform_mode, x, y, w, h)
 
 	-- Finish by waiting for our current update to be submitted
-	if refreshtype == UPDATE_MODE_FULL and self.wait_for_full_updates or self.wait_for_every_updates then
+	if refreshtype == UPDATE_MODE_FULL and self.wait_for_full_updates or self.wait_for_every_update then
 		if self.einkWaitForSubmissionFunc then
 			self:einkWaitForSubmissionFunc()
 		end
