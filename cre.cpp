@@ -1282,28 +1282,28 @@ static int findText(lua_State *L) {
     int start = -1;
     int end = -1;
     if ( reverse ) {
-        // reverse
+        // backward
         if ( origin == 0 ) {
-            // from end current page to first page
+            // from end of current page to first page
             end = rc.bottom;
         } else if ( origin == -1 ) {
-            // from last page to end of current page
-            start = rc.bottom;
+            // from the last page to end of current page
+            start = rc.bottom + 1;
         } else { // origin == 1
-            // from prev page to first page
-            end = rc.top;
+            // from prev page to the first page
+            end = rc.top - 1;
         }
     } else {
         // forward
         if ( origin == 0 ) {
-            // from current page to last page
+            // from current page to the last page
             start = rc.top;
         } else if ( origin == -1 ) {
-            // from first page to current page
-            end = rc.top;
+            // from the first page to current page
+            end = rc.top - 1;
         } else { // origin == 1
-            // from next page to last
-            start = rc.bottom;
+            // from next page to the last page
+            start = rc.bottom + 1;
         }
     }
     CRLog::debug("CRViewDialog::findText: Current page: %d .. %d", rc.top, rc.bottom);
@@ -1313,17 +1313,21 @@ static int findText(lua_State *L) {
         doc->text_view->clearSelection();
         doc->text_view->selectWords( words );
         ldomMarkedRangeList * ranges = doc->text_view->getMarkedRanges();
-        if ( ranges ) {
-            if ( ranges->length()>0 ) {
-                int pos = ranges->get(0)->start.y;
-                //doc->text_view->SetPos(pos); // commented out not to mask lua code which does the same
-				CRLog::debug("# SetPos = %d", pos);
-				lua_pushinteger(L, ranges->length()); // results found
-				lua_pushinteger(L, pos);
-				return 2;
+        if ( ranges && ranges->length() > 0 ) {
+            lua_newtable(L); // hold all words
+            for (int i = 0; i < words.length(); i++) {
+                ldomWord word = words[i];
+                lua_newtable(L); // new word
+                lua_pushstring(L, "start");
+                lua_pushstring(L, UnicodeToLocal(word.getStartXPointer().toString()).c_str());
+                lua_settable(L, -3);
+                lua_pushstring(L, "end");
+                lua_pushstring(L, UnicodeToLocal(word.getEndXPointer().toString()).c_str());
+                lua_settable(L, -3);
+                lua_rawseti(L, -2, i + 1);
             }
+            return 1;
         }
-        return 0;
     }
     CRLog::debug("CRViewDialog::findText: pattern not found");
     return 0;
