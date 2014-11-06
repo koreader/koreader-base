@@ -54,10 +54,16 @@ local function mxc_new_update_marker()
 	return new_update_marker[0]
 end
 
--- Kindle's MXCFB_WAIT_FOR_UPDATE_COMPLETE_PEARL == 0x4004462f | Kobo's MXCFB_WAIT_FOR_UPDATE_COMPLETE == 0x4004462f
-local function kobo_and_kindle_pearl_mxc_wait_for_update_complete(fb)
+-- Kindle's MXCFB_WAIT_FOR_UPDATE_COMPLETE_PEARL == 0x4004462f
+local function kindle_pearl_mxc_wait_for_update_complete(fb)
 	-- Wait for the previous update to be completed
 	return ffi.C.ioctl(fb.fd, ffi.C.MXCFB_WAIT_FOR_UPDATE_COMPLETE_PEARL, update_marker)
+end
+
+-- Kobo's MXCFB_WAIT_FOR_UPDATE_COMPLETE == 0x4004462f
+local function kobo_mxc_wait_for_update_complete(fb)
+	-- Wait for the previous update to be completed
+	return ffi.C.ioctl(fb.fd, ffi.C.MXCFB_WAIT_FOR_UPDATE_COMPLETE, update_marker)
 end
 
 -- Kindle's MXCFB_WAIT_FOR_UPDATE_COMPLETE == 0xc008462f
@@ -185,7 +191,7 @@ function framebuffer.open(device)
 				fb.bb:rotate(-90)
 			end
 			-- NOTE: I'm assuming this won't blow up on older Kobo devices...
-			fb.einkWaitForCompleteFunc = kobo_and_kindle_pearl_mxc_wait_for_update_complete
+			fb.einkWaitForCompleteFunc = kobo_mxc_wait_for_update_complete
 			-- FIXME: We definitely need a better check here (I don't really feel like changing the signature of refresh() everywhere just to move that check to uimanager...),
 			-- this should only apply to REAGL-capable device (Aura, H20 [NOT the AuraHD]).
 			fb.wait_for_every_update = true
@@ -201,7 +207,7 @@ function framebuffer.open(device)
 			elseif fb.finfo.smem_len == 2179072 or fb.finfo.smem_len == 4718592 then
 				-- We're a Touch/PW1
 				fb.wait_for_full_updates = true
-				fb.einkWaitForCompleteFunc = kobo_and_kindle_pearl_mxc_wait_for_update_complete
+				fb.einkWaitForCompleteFunc = kindle_pearl_mxc_wait_for_update_complete
 			else
 				error("unknown smem_len value for the Kindle mxc eink driver")
 			end
