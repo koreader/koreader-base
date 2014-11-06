@@ -481,7 +481,7 @@ function page_mt.__index:getPageLinks()
         elseif link.dest.kind == M.FZ_LINK_GOTO then
             data.page = link.dest.ld.gotor.page -- FIXME page+1?
         else
-            mupdf.debug(string.format("ERROR: unknown link kind %x", link.dest.kind))
+            mupdf.debug(string.format("ERROR: unknown link kind 0x%x", tonumber(link.dest.kind)))
         end
         table.insert(links, data)
         link = link.next
