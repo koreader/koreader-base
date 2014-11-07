@@ -200,11 +200,12 @@ function framebuffer.open(device)
 			-- Kindle PaperWhite and KT with 5.1 or later firmware
 			local dummy = require("ffi/mxcfb_kindle_h")
 			-- NOTE: We need to differentiate the REAGL-aware devices from the rest... I hope this check is solid enough... (cf #550).
+			-- FIXME: The KT2 needs to go here!
+			-- I'm not sure it'll actually handle REAGL (although the kernel seems to indicate it does), since it's not using a Carta screen, but it is still a Wario device ;).
 			if fb.finfo.smem_len == 3145728 or fb.finfo.smem_len == 6782976 then
 				-- We're a PW2 or a KV! Use the correct function, and ask to wait for every update.
 				fb.wait_for_every_update = true
 				fb.einkWaitForCompleteFunc = kindle_carta_mxc_wait_for_update_complete
-			-- FIXME: Check if this is sane for a KT2...
 			elseif fb.finfo.smem_len == 2179072 or fb.finfo.smem_len == 4718592 then
 				-- We're a Touch/PW1
 				fb.wait_for_full_updates = true
