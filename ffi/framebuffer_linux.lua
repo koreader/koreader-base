@@ -148,8 +148,6 @@ function framebuffer.open(device)
 		einkWaitForCompleteFunc = nil,
 		einkUpdateFunc = nil,
 		einkWaitForSubmissionFunc = nil,
-		wait_for_full_updates = false,
-		wait_for_every_update = false,
 		bb = nil,
 		data = nil
 	}
@@ -192,10 +190,6 @@ function framebuffer.open(device)
 			end
 			-- NOTE: I'm assuming this won't blow up on older Kobo devices...
 			fb.einkWaitForCompleteFunc = kobo_mxc_wait_for_update_complete
-			-- FIXME: We definitely need a better check here (I don't really feel like changing the signature of refresh() everywhere just to move that check to uimanager...),
-			-- this should only apply to REAGL-capable device (Aura, H20 [NOT the AuraHD]).
-			fb.wait_for_every_update = true
-			--fb.wait_for_full_updates = true
 		elseif fb.vinfo.bits_per_pixel == 8 then
 			-- Kindle PaperWhite and KT with 5.1 or later firmware
 			local dummy = require("ffi/mxcfb_kindle_h")
@@ -203,12 +197,10 @@ function framebuffer.open(device)
 			-- FIXME: The KT2 needs to go here!
 			-- I'm not sure it'll actually handle REAGL (although the kernel seems to indicate it does), since it's not using a Carta screen, but it is still a Wario device ;).
 			if fb.finfo.smem_len == 3145728 or fb.finfo.smem_len == 6782976 then
-				-- We're a PW2 or a KV! Use the correct function, and ask to wait for every update.
-				fb.wait_for_every_update = true
+				-- We're a PW2/KT2/KV! Use the correct function.
 				fb.einkWaitForCompleteFunc = kindle_carta_mxc_wait_for_update_complete
 			elseif fb.finfo.smem_len == 2179072 or fb.finfo.smem_len == 4718592 then
 				-- We're a Touch/PW1
-				fb.wait_for_full_updates = true
 				fb.einkWaitForCompleteFunc = kindle_pearl_mxc_wait_for_update_complete
 			else
 				error("unknown smem_len value for the Kindle mxc eink driver")
@@ -287,9 +279,9 @@ function framebuffer_mt:setOrientation(mode)
 	ffi.C.ioctl(self.fd, ffi.C.FBIO_EINK_SET_DISPLAY_ORIENTATION, mode)
 end
 
-function framebuffer_mt.__index:refresh(refreshtype, waveform_mode, x, y, w, h)
-	-- The Touch/PW1 only do this for full updates
-	if refreshtype == UPDATE_MODE_FULL and self.wait_for_full_updates or self.wait_for_every_update then
+function framebuffer_mt.__index:refresh(refreshtype, waveform_mode, wait_for_marker, x, y, w, h)
+	-- Do we need to wait for the previous update marker?
+	if wait_for_marker then
 		-- Start by checking that our previous update has completed
 		if self.einkWaitForCompleteFunc then
 			-- We have nothing to check on our first refresh() call!
@@ -305,7 +297,7 @@ function framebuffer_mt.__index:refresh(refreshtype, waveform_mode, x, y, w, h)
 	self:einkUpdateFunc(refreshtype, waveform_mode, x, y, w, h)
 
 	-- Finish by waiting for our current update to be submitted
-	if refreshtype == UPDATE_MODE_FULL and self.wait_for_full_updates or self.wait_for_every_update then
+	if wait_for_marker then
 		if self.einkWaitForSubmissionFunc then
 			self:einkWaitForSubmissionFunc()
 		end
