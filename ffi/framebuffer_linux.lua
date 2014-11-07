@@ -281,7 +281,7 @@ end
 
 function framebuffer_mt.__index:refresh(refreshtype, waveform_mode, wait_for_marker, x, y, w, h)
 	-- Always wait for the previous update when queuing a FULL update. Mostly matters for REAGL updates, which are always FULL anyway :).
-	if waveform_mode == UPDATE_MODE_FULL then
+	if refreshtype == UPDATE_MODE_FULL then
 		-- Start by checking that our previous update has completed
 		if self.einkWaitForCompleteFunc then
 			-- We have nothing to check on our first refresh() call!
