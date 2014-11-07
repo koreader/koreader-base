@@ -280,8 +280,8 @@ function framebuffer_mt:setOrientation(mode)
 end
 
 function framebuffer_mt.__index:refresh(refreshtype, waveform_mode, wait_for_marker, x, y, w, h)
-	-- Do we need to wait for the previous update marker?
-	if wait_for_marker then
+	-- Always wait for the previous update when queuing a FULL update. Mostly matters for REAGL updates, which are always FULL anyway :).
+	if waveform_mode == UPDATE_MODE_FULL then
 		-- Start by checking that our previous update has completed
 		if self.einkWaitForCompleteFunc then
 			-- We have nothing to check on our first refresh() call!
@@ -296,7 +296,7 @@ function framebuffer_mt.__index:refresh(refreshtype, waveform_mode, wait_for_mar
 	x, y, w, h = self.bb:getPhysicalRect(x, y, w, h)
 	self:einkUpdateFunc(refreshtype, waveform_mode, x, y, w, h)
 
-	-- Finish by waiting for our current update to be submitted
+	-- If needed, finish by waiting for our current update to be submitted
 	if wait_for_marker then
 		if self.einkWaitForSubmissionFunc then
 			self:einkWaitForSubmissionFunc()
