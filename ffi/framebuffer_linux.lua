@@ -10,20 +10,6 @@ local framebuffer_mt = {__index={}}
 -- Init our marker to 0, which happens to be an invalid value, so we can detect our first update
 local update_marker = ffi.new("uint32_t[1]", 0)
 
--- cf. ffi-cdecl/include/mxcfb-kindle.h (UPDATE_MODE_* applies to Kobo, too) [FIXME: Add this to our ffi-cdecl and use those instead?]
-local UPDATE_MODE_PARTIAL       = 0x0
-local UPDATE_MODE_FULL          = 0x1
-
--- NOTE: Those have been confirmed on Kindle devices. Might be completely different on Kobo. Slimmed down to the only values we need here.
-local WAVEFORM_MODE_DU          = 0x1    -- Grey->white/grey->black
-local WAVEFORM_MODE_GC16        = 0x2    -- High fidelity (flashing)
--- Kindle PW2
-local WAVEFORM_MODE_REAGL       = 0x8    -- Ghost compensation waveform
-
--- NOTE: Kobo's side!
-local EPDC_FLAG_USE_AAD         = 0x1000 -- FWIW, is EPDC_FLAG_USE_REAGLD in Kindle-land (with the D standing for dithering?)
--- Kobo's headers suck, so invent something to avoid magic numbers...
-local WAVEFORM_MODE_KOBO_REGAL  = 0x7
 
 local function einkfb_update(fb, refreshtype, waveform_mode, x, y, w, h)
 	local refarea = ffi.new("struct update_area_t[1]")
@@ -33,7 +19,7 @@ local function einkfb_update(fb, refreshtype, waveform_mode, x, y, w, h)
 	refarea[0].x2 = x + (w or (fb.vinfo.xres-x))
 	refarea[0].y2 = y + (h or (fb.vinfo.yres-y))
 	refarea[0].buffer = nil
-	if refreshtype == UPDATE_MODE_PARTIAL then
+	if refreshtype == ffi.C.UPDATE_MODE_PARTIAL then
 		refarea[0].which_fx = ffi.C.fx_update_partial
 	else
 		refarea[0].which_fx = ffi.C.fx_update_full
@@ -78,8 +64,8 @@ end
 
 -- Kindle's MXCFB_SEND_UPDATE == 0x4048462e | Kobo's MXCFB_SEND_UPDATE == 0x4044462e
 local function mxc_update(fb, refarea, refreshtype, waveform_mode, x, y, w, h)
-	refarea[0].update_mode = refreshtype or UPDATE_MODE_PARTIAL
-	refarea[0].waveform_mode = waveform_mode or WAVEFORM_MODE_GC16
+	refarea[0].update_mode = refreshtype or ffi.C.UPDATE_MODE_PARTIAL
+	refarea[0].waveform_mode = waveform_mode or ffi.C.WAVEFORM_MODE_GC16
 	refarea[0].update_region.left = x or 0
 	refarea[0].update_region.top = y or 0
 	refarea[0].update_region.width = w or fb.vinfo.xres
@@ -106,16 +92,16 @@ end
 local function k51_update(fb, refreshtype, waveform_mode, x, y, w, h)
 	local refarea = ffi.new("struct mxcfb_update_data[1]")
 	-- only for Amazon's driver, try to mostly follow what the stock reader does...
-	if waveform_mode == WAVEFORM_MODE_REAGL then
+	if waveform_mode == ffi.C.WAVEFORM_MODE_REAGL then
 		-- If we're requesting WAVEFORM_MODE_REAGL, it's regal all around!
 		refarea[0].hist_bw_waveform_mode = waveform_mode
 	else
-		refarea[0].hist_bw_waveform_mode = WAVEFORM_MODE_DU
+		refarea[0].hist_bw_waveform_mode = ffi.C.WAVEFORM_MODE_DU
 	end
 	-- Same as our requested waveform_mode
 	refarea[0].hist_gray_waveform_mode = waveform_mode
-	-- TEMP_USE_PAPYRUS on Touch/PW1, TEMP_USE_AUTO on PW2
-	refarea[0].temp = 0x1001
+	-- TEMP_USE_PAPYRUS on Touch/PW1, TEMP_USE_AUTO on PW2 (same value in both cases, 0x1001)
+	refarea[0].temp = ffi.C.TEMP_USE_AUTO
 	-- NOTE: We never use any flags on Kindle. Got rid of an old TODO mentioning making it configurable from the UI,
 	-- e.g., the EPDC_FLAG_ENABLE_INVERSION flag inverts all the pixels on display  09.01 2013 (houqp)
 	refarea[0].flags = 0
@@ -130,8 +116,8 @@ local function kobo_update(fb, refreshtype, waveform_mode, x, y, w, h)
 	-- TEMP_USE_AMBIENT
 	refarea[0].temp = 0x1000
 	-- Enable the appropriate flag when requesting a regal waveform (Kobo)
-	if waveform_mode == WAVEFORM_MODE_KOBO_REGAL then
-		refarea[0].flags = EPDC_FLAG_USE_AAD
+	if waveform_mode == ffi.C.WAVEFORM_MODE_KOBO_REGAL then
+		refarea[0].flags = ffi.C.EPDC_FLAG_USE_AAD
 	else
 		refarea[0].flags = 0
 	end
@@ -281,7 +267,7 @@ end
 
 function framebuffer_mt.__index:refresh(refreshtype, waveform_mode, wait_for_marker, x, y, w, h)
 	-- Always wait for the previous update when queuing a FULL update. Mostly matters for REAGL updates, which are always FULL anyway :).
-	if refreshtype == UPDATE_MODE_FULL then
+	if refreshtype == ffi.C.UPDATE_MODE_FULL then
 		-- Start by checking that our previous update has completed
 		if self.einkWaitForCompleteFunc then
 			-- We have nothing to check on our first refresh() call!
