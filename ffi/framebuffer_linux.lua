@@ -282,9 +282,9 @@ function framebuffer_mt.__index:refresh(refreshtype, waveform_mode, wait_for_mar
 	self:einkUpdateFunc(refreshtype, waveform_mode, x, y, w, h)
 
 	-- If needed, finish by waiting for our current update to be submitted
-	-- NOTE: Get rid of wait_for_marker and just check for UPDATE_MODE_FULL if it's too annoying.
-	-- I'm thinking of the virtual keyboard, for instance...
-	-- The stock reader handles that issue partly by using WAVEFORM_MODE_DU & EPDC_FLAG_FORCE_MONOCHROME for very fast refreshes (without any wait).
+	-- NOTE: Getting rid of wait_for_marker by testing for UPDATE_MODE_FULL instead doesn't gain us much speed, so keep doing it the safe way ;).
+	-- In the specific case of the vritual keyboard, it would probably need more than this to make it blazing fast: besides not waiting for any marker,
+	-- the stock reader handles that issue by partly using WAVEFORM_MODE_DU & EPDC_FLAG_FORCE_MONOCHROME for very fast refreshes.
 	if wait_for_marker then
 		if self.einkWaitForSubmissionFunc then
 			self:einkWaitForSubmissionFunc()
