@@ -46,7 +46,7 @@ function fb:getOrientation()
     end
 end
 
-function fb:refresh(refreshtype, waveform_mode, x1, y1, w, h)
+function fb:refresh(refreshtype, waveform_mode, wait_for_marker, x1, y1, w, h)
     -- reginal update is only useful for E-ink screen
     x1, y1, w, h = nil, nil, nil, nil
     if x1 == nil then x1 = 0 end

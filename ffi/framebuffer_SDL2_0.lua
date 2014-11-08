@@ -46,7 +46,7 @@ function fb:getOrientation()
 	end
 end
 
-function fb:refresh(refreshtype, waveform_mode, x1, y1, w, h)
+function fb:refresh(refreshtype, waveform_mode, wait_for_marker, x1, y1, w, h)
 	if self.dummy then return end
 
 	SDL.SDL.SDL_UpdateTexture(SDL.texture, nil, self.bb.data, self.bb.pitch)

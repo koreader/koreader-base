@@ -10,6 +10,8 @@
  *   http://www.mobileread.com/forums/showpost.php?p=2337118&postcount=818
  *
  * - Frankensteined w/ PW2 stuff -- NiLuJe
+ *
+ * - Frankensteined w/ KT2 & KV stuff -- NiLuJe
  */
 
 /*
@@ -82,8 +84,8 @@ struct mxcfb_rect {
 #define GRAYSCALE_8BIT_INVERTED			0x2
 
 /* PW2 */
-#define GRAYSCALE_4BIT                          0x3
-#define GRAYSCALE_4BIT_INVERTED                 0x4
+#define GRAYSCALE_4BIT				0x3
+#define GRAYSCALE_4BIT_INVERTED			0x4
 
 #define AUTO_UPDATE_MODE_REGION_MODE		0
 #define AUTO_UPDATE_MODE_AUTOMATIC_MODE		1
@@ -99,50 +101,61 @@ struct mxcfb_rect {
 #define UPDATE_MODE_PARTIAL			0x0
 #define UPDATE_MODE_FULL			0x1
 
-#define WAVEFORM_MODE_INIT	0x0	/* Screen goes to white (clears) */
-#define WAVEFORM_MODE_DU	0x1	/* Grey->white/grey->black */
-#define WAVEFORM_MODE_GC16	0x2	/* High fidelity (flashing) */
-#define WAVEFORM_MODE_GC4	WAVEFORM_MODE_GC16 /* For compatibility */
-#define WAVEFORM_MODE_GC16_FAST	0x3	/* Medium fidelity */
-#define WAVEFORM_MODE_A2	0x4	/* Faster but even lower fidelity */
-#define WAVEFORM_MODE_GL16	0x5	/* High fidelity from white transition */
-#define WAVEFORM_MODE_GL16_FAST	0x6	/* Medium fidelity from white transition */
+/* Supported waveform modes */
+#define WAVEFORM_MODE_INIT			0x0	/* Screen goes to white (clears) */
+#define WAVEFORM_MODE_DU			0x1	/* Grey->white/grey->black */
+#define WAVEFORM_MODE_GC16			0x2	/* High fidelity (flashing) */
+#define WAVEFORM_MODE_GC4			WAVEFORM_MODE_GC16 /* For compatibility */
+#define WAVEFORM_MODE_GC16_FAST			0x3	/* Medium fidelity */
+#define WAVEFORM_MODE_A2			0x4	/* Faster but even lower fidelity */
+#define WAVEFORM_MODE_GL16			0x5	/* High fidelity from white transition */
+#define WAVEFORM_MODE_GL16_FAST			0x6	/* Medium fidelity from white transition */
 
 /* FW >= 5.3 */
-#define WAVEFORM_MODE_DU4	0x7	/* Medium fidelity 4 level of gray direct update */
+#define WAVEFORM_MODE_DU4			0x7	/* Medium fidelity 4 level of gray direct update */
 
-/* PW2 */
-#define WAVEFORM_MODE_REAGL 	0x8	/* Ghost compensation waveform */
-#define WAVEFORM_MODE_REAGLD    0x9     /* Ghost compensation waveform with dithering */
+/* PW2/KT2/KV */
+#define WAVEFORM_MODE_REAGL			0x8	/* Ghost compensation waveform */
+#define WAVEFORM_MODE_REAGLD			0x9	/* Ghost compensation waveform with dithering */
 
+/* KT2/KV */
+#define WAVEFORM_MODE_GL4			0xA	/* 2-bit from white transition */
+#define WAVEFORM_MODE_GL16_INV			0xB	/* High fidelity for black transition */
 
 #define WAVEFORM_MODE_AUTO			257
 
+/* Display temperature */
 #define TEMP_USE_AMBIENT			0x1000
 #define TEMP_USE_PAPYRUS			0X1001
 
 /* PW2 */
-#define TEMP_USE_AUTO			0x1001
+#define TEMP_USE_AUTO				0x1001
 
-#define EPDC_FLAG_ENABLE_INVERSION    0x01
-#define EPDC_FLAG_FORCE_MONOCHROME    0x02
-#define EPDC_FLAG_USE_CMAP            0x04
-#define EPDC_FLAG_USE_ALT_BUFFER      0x100
+/* PXP Operations */
+#define EPDC_FLAG_ENABLE_INVERSION		0x01
+#define EPDC_FLAG_FORCE_MONOCHROME		0x02
+#define EPDC_FLAG_USE_CMAP			0x04
+#define EPDC_FLAG_USE_ALT_BUFFER		0x100
 
 /* PW2 */
-#define EPDC_FLAG_TEST_COLLISION      0x200
-#define EPDC_FLAG_GROUP_UPDATE        0x400
-#define EPDC_FLAG_FORCE_Y2            0x800
-#define EPDC_FLAG_USE_REAGLD          0x1000
-#define EPDC_FLAG_USE_DITHERING_Y1    0x2000
-#define EPDC_FLAG_USE_DITHERING_Y2    0x4000
-#define EPDC_FLAG_USE_DITHERING_Y4    0x8000
+#define EPDC_FLAG_TEST_COLLISION		0x200
+#define EPDC_FLAG_GROUP_UPDATE			0x400
+#define EPDC_FLAG_FORCE_Y2			0x800
+#define EPDC_FLAG_USE_REAGLD			0x1000
+#define EPDC_FLAG_USE_DITHERING_Y1		0x2000
+#define EPDC_FLAG_USE_DITHERING_Y2		0x4000
+#define EPDC_FLAG_USE_DITHERING_Y4		0x8000
 
 /* PW2 */
 /* Waveform type as return by MXCFB_GET_WAVEFORM_TYPE ioctl */
 /* This indicates to user-space what is supported by the waveform */
-#define WAVEFORM_TYPE_4BIT 0x1
-#define WAVEFORM_TYPE_5BIT (WAVEFORM_TYPE_4BIT << 1)
+#define WAVEFORM_TYPE_4BIT			0x1
+#define WAVEFORM_TYPE_5BIT			(WAVEFORM_TYPE_4BIT << 1)
+
+/* KT2/KV */
+/* Display material */
+#define EPD_MATERIAL_V220			0x00
+#define EPD_MATERIAL_V320			0x01
 
 #define FB_POWERDOWN_DISABLE			-1
 
@@ -208,6 +221,10 @@ struct mxcfb_waveform_modes {
 	 */
 	int mode_reagl;
 	int mode_reagld;
+
+	/* KT2/KV */
+	int mode_gl16_inv;
+	int mode_gl4;
 };
 
 /* PW2 */
@@ -219,43 +236,43 @@ struct mxcfb_csc_matrix {
 	int param[5][3];
 };
 
-#define MXCFB_WAIT_FOR_VSYNC	_IOW('F', 0x20, u_int32_t)
-#define MXCFB_SET_GBL_ALPHA     _IOW('F', 0x21, struct mxcfb_gbl_alpha)
-#define MXCFB_SET_CLR_KEY       _IOW('F', 0x22, struct mxcfb_color_key)
-#define MXCFB_SET_OVERLAY_POS   _IOWR('F', 0x24, struct mxcfb_pos)
-#define MXCFB_GET_FB_IPU_CHAN 	_IOR('F', 0x25, u_int32_t)
-#define MXCFB_SET_LOC_ALPHA     _IOWR('F', 0x26, struct mxcfb_loc_alpha)
-#define MXCFB_SET_LOC_ALP_BUF    _IOW('F', 0x27, unsigned long)
-#define MXCFB_SET_GAMMA	       _IOW('F', 0x28, struct mxcfb_gamma)
-#define MXCFB_GET_FB_IPU_DI 	_IOR('F', 0x29, u_int32_t)
-#define MXCFB_GET_DIFMT	       _IOR('F', 0x2A, u_int32_t)
-#define MXCFB_GET_FB_BLANK     _IOR('F', 0x2B, u_int32_t)
-#define MXCFB_SET_DIFMT		_IOW('F', 0x2C, u_int32_t)
+#define MXCFB_WAIT_FOR_VSYNC			_IOW('F', 0x20, u_int32_t)
+#define MXCFB_SET_GBL_ALPHA			_IOW('F', 0x21, struct mxcfb_gbl_alpha)
+#define MXCFB_SET_CLR_KEY			_IOW('F', 0x22, struct mxcfb_color_key)
+#define MXCFB_SET_OVERLAY_POS			_IOWR('F', 0x24, struct mxcfb_pos)
+#define MXCFB_GET_FB_IPU_CHAN			_IOR('F', 0x25, u_int32_t)
+#define MXCFB_SET_LOC_ALPHA			_IOWR('F', 0x26, struct mxcfb_loc_alpha)
+#define MXCFB_SET_LOC_ALP_BUF			_IOW('F', 0x27, unsigned long)
+#define MXCFB_SET_GAMMA				_IOW('F', 0x28, struct mxcfb_gamma)
+#define MXCFB_GET_FB_IPU_DI			_IOR('F', 0x29, u_int32_t)
+#define MXCFB_GET_DIFMT				_IOR('F', 0x2A, u_int32_t)
+#define MXCFB_GET_FB_BLANK			_IOR('F', 0x2B, u_int32_t)
+#define MXCFB_SET_DIFMT				_IOW('F', 0x2C, u_int32_t)
 /* PW2 */
-#define MXCFB_CSC_UPDATE	_IOW('F', 0x2D, struct mxcfb_csc_matrix)
+#define MXCFB_CSC_UPDATE			_IOW('F', 0x2D, struct mxcfb_csc_matrix)
 
 /* IOCTLs for E-ink panel updates */
-#define MXCFB_SET_WAVEFORM_MODES	_IOW('F', 0x2B, struct mxcfb_waveform_modes)
-#define MXCFB_SET_TEMPERATURE		_IOW('F', 0x2C, int32_t)
-#define MXCFB_SET_AUTO_UPDATE_MODE	_IOW('F', 0x2D, __u32)
-#define MXCFB_SEND_UPDATE		_IOW('F', 0x2E, struct mxcfb_update_data)
+#define MXCFB_SET_WAVEFORM_MODES		_IOW('F', 0x2B, struct mxcfb_waveform_modes)
+#define MXCFB_SET_TEMPERATURE			_IOW('F', 0x2C, int32_t)
+#define MXCFB_SET_AUTO_UPDATE_MODE		_IOW('F', 0x2D, __u32)
+#define MXCFB_SEND_UPDATE			_IOW('F', 0x2E, struct mxcfb_update_data)
 
 /* This evolved on the PW2... Rename the Touch/PW1 constant to differentiate the two. */
 #define MXCFB_WAIT_FOR_UPDATE_COMPLETE_PEARL	_IOW('F', 0x2F, __u32)
 /* PW2 */
-#define MXCFB_WAIT_FOR_UPDATE_COMPLETE	_IOWR('F', 0x2F, struct mxcfb_update_marker_data)
+#define MXCFB_WAIT_FOR_UPDATE_COMPLETE		_IOWR('F', 0x2F, struct mxcfb_update_marker_data)
 
-#define MXCFB_SET_PWRDOWN_DELAY		_IOW('F', 0x30, int32_t)
-#define MXCFB_GET_PWRDOWN_DELAY		_IOR('F', 0x31, int32_t)
-#define MXCFB_SET_UPDATE_SCHEME		_IOW('F', 0x32, __u32)
-#define MXCFB_SET_PAUSE			_IOW('F', 0x33, __u32)
-#define MXCFB_GET_PAUSE			_IOW('F', 0x34, __u32)
-#define MXCFB_SET_RESUME		_IOW('F', 0x35, __u32)
+#define MXCFB_SET_PWRDOWN_DELAY			_IOW('F', 0x30, int32_t)
+#define MXCFB_GET_PWRDOWN_DELAY			_IOR('F', 0x31, int32_t)
+#define MXCFB_SET_UPDATE_SCHEME			_IOW('F', 0x32, __u32)
+#define MXCFB_SET_PAUSE				_IOW('F', 0x33, __u32)
+#define MXCFB_GET_PAUSE				_IOW('F', 0x34, __u32)
+#define MXCFB_SET_RESUME			_IOW('F', 0x35, __u32)
 
 /* Touch/PW1 */
-#define MXCFB_CLEAR_UPDATE_QUEUE	_IOW('F', 0x36, __u32)
+#define MXCFB_CLEAR_UPDATE_QUEUE		_IOW('F', 0x36, __u32)
 /* PW2 */
-#define MXCFB_GET_WORK_BUFFER		_IOWR('F', 0x36, unsigned long)
+#define MXCFB_GET_WORK_BUFFER			_IOWR('F', 0x36, unsigned long)
 
 #define MXCFB_WAIT_FOR_UPDATE_SUBMISSION	_IOW('F', 0x37, __u32)
 
@@ -263,24 +280,32 @@ struct mxcfb_csc_matrix {
 #define MXCFB_GET_TEMPERATURE			_IOR('F', 0x38, int32_t)
 
 /* PW2 */
-#define MXCFB_GET_WAVEFORM_TYPE		_IOR('F', 0x39, __u32)
+#define MXCFB_GET_WAVEFORM_TYPE			_IOR('F', 0x39, __u32)
+
+/* KT2/KV */
+#define MXCFB_GET_MATERIAL_TYPE			_IOR('F', 0x3A, __u32)
 
 /* Deprecated IOCTL for E-ink panel updates, kindle firmware version == 5.0 */
-#define MXCFB_SEND_UPDATE_50X _IOW('F', 0x2E, struct mxcfb_update_data_50x)
+#define MXCFB_SEND_UPDATE_50X			_IOW('F', 0x2E, struct mxcfb_update_data_50x)
 
 #ifdef __KERNEL__
 
 /* PW2 */
-#define EHWFAULT   901
+#define EHWFAULT 901
 
 extern struct fb_videomode mxcfb_modedb[];
 extern int mxcfb_modedb_sz;
 
 /* PW2 */
 enum panel_modes {
-	PANEL_MODE_E60_CELESTE = 0,
+	PANEL_MODE_E60_PINOT = 0,	// NOTE: Was PANEL_MODE_E60_CELESTE in PW2 kernels, appropriately switched to PINOT in 5.6.0.1
 	PANEL_MODE_EN060OC1_3CE_225,
 	PANEL_MODE_ED060TC1_3CE,
+
+	/* KT2/KV */
+	PANEL_MODE_ED060SCN,
+	PANEL_MODE_ED060SCP,
+
 	PANEL_MODE_COUNT,
 };
 

@@ -80,6 +80,9 @@ struct mxcfb_rect {
 #define UPDATE_MODE_PARTIAL			0x0
 #define UPDATE_MODE_FULL			0x1
 
+/* Kobo's headers suck, so invent something to avoid magic numbers... */
+#define WAVEFORM_MODE_KOBO_REGAL		0x7
+
 #define WAVEFORM_MODE_AUTO			257
 
 #define TEMP_USE_AMBIENT			0x1000
