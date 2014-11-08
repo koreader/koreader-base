@@ -65,7 +65,7 @@ end
 -- Kindle's MXCFB_SEND_UPDATE == 0x4048462e | Kobo's MXCFB_SEND_UPDATE == 0x4044462e
 local function mxc_update(fb, refarea, refreshtype, waveform_mode, x, y, w, h)
 	refarea[0].update_mode = refreshtype or ffi.C.UPDATE_MODE_PARTIAL
-	refarea[0].waveform_mode = waveform_mode or ffi.C.WAVEFORM_MODE_GC16
+	refarea[0].waveform_mode = waveform_mode or 0x2
 	refarea[0].update_region.left = x or 0
 	refarea[0].update_region.top = y or 0
 	refarea[0].update_region.width = w or fb.vinfo.xres
