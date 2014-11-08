@@ -10,7 +10,6 @@ local framebuffer_mt = {__index={}}
 -- Init our marker to 0, which happens to be an invalid value, so we can detect our first update
 local update_marker = ffi.new("uint32_t[1]", 0)
 
-
 local function einkfb_update(fb, refreshtype, waveform_mode, x, y, w, h)
 	local refarea = ffi.new("struct update_area_t[1]")
 
@@ -102,8 +101,8 @@ local function k51_update(fb, refreshtype, waveform_mode, x, y, w, h)
 	refarea[0].hist_gray_waveform_mode = waveform_mode
 	-- TEMP_USE_PAPYRUS on Touch/PW1, TEMP_USE_AUTO on PW2 (same value in both cases, 0x1001)
 	refarea[0].temp = ffi.C.TEMP_USE_AUTO
-	-- NOTE: We never use any flags on Kindle. Got rid of an old TODO mentioning making it configurable from the UI,
-	-- e.g., the EPDC_FLAG_ENABLE_INVERSION flag inverts all the pixels on display  09.01 2013 (houqp)
+	-- NOTE: We never use any flags on Kindle.
+	-- TODO: EPDC_FLAG_ENABLE_INVERSION & EPDC_FLAG_FORCE_MONOCHROME might be of use, though...
 	refarea[0].flags = 0
 
 	return mxc_update(fb, refarea, refreshtype, waveform_mode, x, y, w, h)
