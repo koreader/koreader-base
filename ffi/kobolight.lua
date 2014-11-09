@@ -36,6 +36,11 @@ function kobolight_mt.__index:sleep()
 		self:toggle()
 	else
 		self.sleepLight = false
+		-- Because the brightness value cannot be read, the front light
+		-- could be on even is isOn is false. This can happen if the light
+		-- was enabled in e.g. KSM or Nickel before starting KOReader.
+		-- Therefore, always set brightness to 0 just in case.
+		self:setBrightness(0)
 	end
 end
 
