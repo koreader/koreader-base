@@ -34,6 +34,8 @@ function kobolight_mt.__index:sleep()
 	if self.isOn then
 		self.sleepLight = true
 		self:toggle()
+	else
+		self.sleepLight = false
 	end
 end
 
