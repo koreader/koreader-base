@@ -80,8 +80,36 @@ struct mxcfb_rect {
 #define UPDATE_MODE_PARTIAL			0x0
 #define UPDATE_MODE_FULL			0x1
 
-/* Kobo's headers suck, so invent something to avoid magic numbers... */
-#define WAVEFORM_MODE_KOBO_REGAL		0x7
+/* Those are sneaked in in drivers/video/mxc/mxc_epdc_fb.c ... */
+#define NTX_WFM_MODE_INIT			0
+#define NTX_WFM_MODE_DU				1
+#define NTX_WFM_MODE_GC16			2
+#define NTX_WFM_MODE_GC4			3
+#define NTX_WFM_MODE_A2				4
+#define NTX_WFM_MODE_GL16			5
+#define NTX_WFM_MODE_GLR16			6
+#define NTX_WFM_MODE_GLD16			7
+#define NTX_WFM_MODE_TOTAL			8
+/* Match 'em to the Kindle ones, for sanity's sake... */
+#define WAVEFORM_MODE_INIT			NTX_WFM_MODE_INIT
+#define WAVEFORM_MODE_DU			NTX_WFM_MODE_DU
+#define WAVEFORM_MODE_GC16			NTX_WFM_MODE_GC16
+#define WAVEFORM_MODE_GC4			NTX_WFM_MODE_GC4
+/*
+#define WAVEFORM_MODE_GC16_FAST			0xFFFF
+*/
+#define WAVEFORM_MODE_A2			NTX_WFM_MODE_A2
+#define WAVEFORM_MODE_GL16			NTX_WFM_MODE_GL16
+/*
+#define WAVEFORM_MODE_GL16_FAST			0xFFFF
+#define WAVEFORM_MODE_DU4			0xFFFF
+*/
+#define WAVEFORM_MODE_REAGL			NTX_WFM_MODE_GLR16
+#define WAVEFORM_MODE_REAGLD			NTX_WFM_MODE_GLD16
+/*
+#define WAVEFORM_MODE_GL4			0xFFFF
+#define WAVEFORM_MODE_GL16_INV			0xFFFF
+*/
 
 #define WAVEFORM_MODE_AUTO			257
 

@@ -64,7 +64,7 @@ end
 -- Kindle's MXCFB_SEND_UPDATE == 0x4048462e | Kobo's MXCFB_SEND_UPDATE == 0x4044462e
 local function mxc_update(fb, refarea, refreshtype, waveform_mode, x, y, w, h)
 	refarea[0].update_mode = refreshtype or ffi.C.UPDATE_MODE_PARTIAL
-	refarea[0].waveform_mode = waveform_mode or 0x2
+	refarea[0].waveform_mode = waveform_mode or ffi.C.WAVEFORM_MODE_GC16
 	refarea[0].update_region.left = x or 0
 	refarea[0].update_region.top = y or 0
 	refarea[0].update_region.width = w or fb.vinfo.xres
@@ -92,7 +92,7 @@ local function k51_update(fb, refreshtype, waveform_mode, x, y, w, h)
 	local refarea = ffi.new("struct mxcfb_update_data[1]")
 	-- only for Amazon's driver, try to mostly follow what the stock reader does...
 	if waveform_mode == ffi.C.WAVEFORM_MODE_REAGL then
-		-- If we're requesting WAVEFORM_MODE_REAGL, it's regal all around!
+		-- If we're requesting WAVEFORM_MODE_REAGL, it's REAGL all around!
 		refarea[0].hist_bw_waveform_mode = waveform_mode
 	else
 		refarea[0].hist_bw_waveform_mode = ffi.C.WAVEFORM_MODE_DU
@@ -114,8 +114,8 @@ local function kobo_update(fb, refreshtype, waveform_mode, x, y, w, h)
 	refarea[0].alt_buffer_data.virt_addr = nil
 	-- TEMP_USE_AMBIENT
 	refarea[0].temp = 0x1000
-	-- Enable the appropriate flag when requesting a regal waveform (Kobo)
-	if waveform_mode == ffi.C.WAVEFORM_MODE_KOBO_REGAL then
+	-- Enable the appropriate flag when requesting a REAGLD waveform (NTX_WFM_MODE_GLD16)
+	if waveform_mode == ffi.C.WAVEFORM_MODE_REAGLD then
 		refarea[0].flags = ffi.C.EPDC_FLAG_USE_AAD
 	else
 		refarea[0].flags = 0
