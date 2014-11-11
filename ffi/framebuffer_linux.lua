@@ -92,7 +92,7 @@ local function k51_update(fb, refreshtype, waveform_mode, x, y, w, h)
 	local refarea = ffi.new("struct mxcfb_update_data[1]")
 	-- only for Amazon's driver, try to mostly follow what the stock reader does...
 	if waveform_mode == ffi.C.WAVEFORM_MODE_REAGL then
-		-- If we're requesting WAVEFORM_MODE_REAGL, it's regal all around!
+		-- If we're requesting WAVEFORM_MODE_REAGL, it's REAGL all around!
 		refarea[0].hist_bw_waveform_mode = waveform_mode
 	else
 		refarea[0].hist_bw_waveform_mode = ffi.C.WAVEFORM_MODE_DU
