@@ -98,7 +98,7 @@ local function k51_update(fb, refreshtype, waveform_mode, x, y, w, h)
 		refarea[0].hist_bw_waveform_mode = ffi.C.WAVEFORM_MODE_DU
 	end
 	-- Same as our requested waveform_mode
-	refarea[0].hist_gray_waveform_mode = waveform_mode
+	refarea[0].hist_gray_waveform_mode = waveform_mode or ffi.C.WAVEFORM_MODE_GC16
 	-- TEMP_USE_PAPYRUS on Touch/PW1, TEMP_USE_AUTO on PW2 (same value in both cases, 0x1001)
 	refarea[0].temp = ffi.C.TEMP_USE_AUTO
 	-- NOTE: We never use any flags on Kindle.
