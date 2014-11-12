@@ -11,6 +11,7 @@ all: $(OUTPUT_DIR)/libs $(if $(ANDROID),,$(LUAJIT)) \
 		$(if $(ANDROID),luacompat52 lualongnumber,) \
 		$(if $(WIN32),,$(EVERNOTE_LIB)) \
 		$(LUASERIAL_LIB) \
+		$(TURBOJPEG_LIB) \
 		$(if $(or $(ANDROID),$(WIN32)),,$(OUTPUT_DIR)/tar) \
 		$(if $(or $(ANDROID),$(WIN32)),,$(OUTPUT_DIR)/sdcv) \
 		$(if $(or $(ANDROID),$(WIN32)),,$(OUTPUT_DIR)/zsync) \
@@ -89,6 +90,9 @@ $(JPEG_LIB):
 			--disable-static --enable-shared --with-jpeg8
 	$(MAKE) -j$(PROCESSORS) -C $(JPEG_DIR) --silent install
 	cp -fL $(JPEG_DIR)/.libs/$(notdir $(JPEG_LIB)) $@
+
+$(TURBOJPEG_LIB): $(JPEG_LIB)
+	cp -fL $(JPEG_DIR)/.libs/$(notdir $(TURBOJPEG_LIB)) $@
 
 # libpng, fetched via GIT as a submodule
 $(PNG_LIB): $(ZLIB)
@@ -223,7 +227,6 @@ $(K2PDFOPT_LIB) $(LEPTONICA_LIB) $(TESSERACT_LIB): $(PNG_LIB) $(ZLIB) $(MUPDF_LI
 libs: \
 	$(if $(or $(EMULATE_READER),$(ANDROID),$(WIN32)),,$(OUTPUT_DIR)/libs/libkoreader-input.so) \
 	$(OUTPUT_DIR)/libs/libkoreader-lfs.so \
-	$(OUTPUT_DIR)/libs/libpic_jpeg.so \
 	$(if $(ANDROID),,$(OUTPUT_DIR)/libs/libkoreader-djvu.so) \
 	$(OUTPUT_DIR)/libs/libkoreader-cre.so \
 	$(OUTPUT_DIR)/libs/libwrap-mupdf.so
@@ -237,9 +240,6 @@ $(OUTPUT_DIR)/libs/libkoreader-lfs.so: \
 			$(if $(or $(ANDROID),$(WIN32)),$(LUAJIT_LIB),) \
 			luafilesystem/src/lfs.c
 	$(CC) $(DYNLIB_CFLAGS) -o $@ $^
-
-$(OUTPUT_DIR)/libs/libpic_jpeg.so: pic_jpeg.c $(JPEG_LIB)
-	$(CC) -I$(JPEG_DIR) $(DYNLIB_CFLAGS) -o $@ $^
 
 # put all the libs to the end of compile command to make ubuntu's tool chain
 # happy

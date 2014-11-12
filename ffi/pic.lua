@@ -1,14 +1,13 @@
 local ffi = require("ffi")
 local BB = require("ffi/blitbuffer")
-local pic_jpeg = ffi.load("libs/libpic_jpeg.so")
 
-ffi.cdef[[
-uint8_t *jpegLoadFile(const char *fname, int *width, int *height, int *components);
-
-void *malloc(int size);
-void free(void *ptr);
-void *memset(void *s, int c, int n);
-]]
+local dummy = require("ffi/turbojpeg_h")
+local turbojpeg
+if ffi.os == "Windows" then
+    turbojpeg = ffi.load("libs/libturbojpeg.dll")
+else
+    turbojpeg = ffi.load("libs/libturbojpeg.so")
+end
 
 local Pic = {}
 
@@ -90,38 +89,44 @@ function PicDocument:close()
         self.image_bb:free()
         self.image_bb = nil
     end
-    if self.raw_img then
-        ffi.C.free(raw_img)
-    end
 end
 
 PicDocument.__gc = PicDocument.close
 
 function Pic.openJPGDocument(filename)
-    local doc = PicDocument:new{}
-    local w_p = ffi.new("int[1]")
-    local h_p = ffi.new("int[1]")
-    local comp_p = ffi.new("int[1]")
+    local fh = io.open(filename, "r")
+    assert(fh, "couldn't open file")
+    local data = fh:read("*a")
+    fh:close()
 
-    local raw_img = pic_jpeg.jpegLoadFile(filename, w_p, h_p, comp_p)
-    if raw_img == nil then
-        error("Cannot open jpeg file")
-    end
+    local handle = turbojpeg.tjInitDecompress()
+    assert(handle, "no TurboJPEG API decompressor handle")
 
-    doc.width = w_p[0]
-    doc.height = h_p[0]
+    local width = ffi.new("int[1]")
+    local height = ffi.new("int[1]")
+    local jpegsubsamp = ffi.new("int[1]")
+    turbojpeg.tjDecompressHeader2(handle, ffi.cast("unsigned char*", data), #data, width, height, jpegsubsamp)
+    assert(width[0] > 0 and height[0] > 0, "image dimensions")
 
-    if comp_p[0] == 1 then
-        doc.image_bb = BB.new(doc.width, doc.height, BB.TYPE_BB8, raw_img)
-    elseif comp_p[0] == 3 then
-        doc.image_bb = BB.new(doc.width, doc.height, BB.TYPE_BBRGB24, raw_img)
+    local doc = PicDocument:new{width=width[0], height=height[0]}
+    local format
+    if Pic.color then
+        doc.image_bb = BB.new(width[0], height[0], BB.TYPE_BBRGB24)
+        doc.components = 3
+        format = turbojpeg.TJPF_RGB
     else
-        ffi.C.free(raw_img)
-        error("Unsupported image format")
+        doc.image_bb = BB.new(width[0], height[0], BB.TYPE_BB8)
+        doc.components = 1
+        format = turbojpeg.TJPF_GRAY
     end
 
-    doc.raw_img = raw_img
-    doc.components = comp_p[0]
+    if turbojpeg.tjDecompress2(handle, ffi.cast("unsigned char*", data), #data,
+        ffi.cast("unsigned char*", doc.image_bb.data),
+        width[0], doc.image_bb.pitch, height[0], format, 0) == -1 then
+        error("decoding JPEG file")
+    end
+
+    turbojpeg.tjDestroy(handle)
 
     return doc
 end
