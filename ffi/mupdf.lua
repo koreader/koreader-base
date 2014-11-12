@@ -161,9 +161,6 @@ local function toc_walker(toc, outline, depth)
     end
 end
 
-local function wrap_free_outline(outline)
-    return M.fz_free_outline(context(), outline)
-end
 --[[
 read table of contents (ToC)
 
@@ -179,8 +176,8 @@ function document_mt.__index:getToc()
     local toc = {}
     local outline = W.mupdf_load_outline(context(), self.doc)
     if outline ~= nil then
-        ffi.gc(outline, wrap_free_outline)
         toc_walker(toc, outline, 1)
+        M.fz_free_outline(context(), outline)
     end
     return toc
 end
@@ -281,8 +278,8 @@ function page_mt.__index:getUsedBBox()
 
     local dev = W.mupdf_new_bbox_device(context(), result)
     if dev == nil then merror("cannot allocate bbox_device") end
-    ffi.gc(dev, M.fz_free_device)
 	local ok = W.mupdf_run_page(context(), self.doc.doc, self.page, dev, M.fz_identity, nil)
+    M.fz_free_device(dev)
     if ok == nil then merror("cannot calculate bbox for page") end
 
     return result[0].x0, result[0].y0, result[0].x1, result[0].y1
@@ -348,12 +345,6 @@ local function is_list_entry(span)
     end
 end
 
-local function wrap_free_text_page(page)
-    return M.fz_free_text_page(context(), page)
-end
-local function wrap_free_text_sheet(sheet)
-    return M.fz_free_text_sheet(context(), sheet)
-end
 --[[
 get the text of the given page
 
@@ -374,15 +365,22 @@ function page_mt.__index:getPageText()
     -- first, we run the page through a special device, the text_device
     local text_page = W.mupdf_new_text_page(context())
     if text_page == nil then merror("cannot alloc text_page") end
-    ffi.gc(text_page, wrap_free_text_page)
     local text_sheet = W.mupdf_new_text_sheet(context())
-    if text_sheet == nil then merror("cannot alloc text_sheet") end
-    ffi.gc(text_sheet, wrap_free_text_sheet)
+    if text_sheet == nil then
+        M.fz_free_text_page(context(), text_page)
+        merror("cannot alloc text_sheet")
+    end
     local tdev = W.mupdf_new_text_device(context(), text_sheet, text_page)
-    if tdev == nil then merror("cannot alloc text device") end
-    ffi.gc(tdev, M.fz_free_device)
+    if tdev == nil then
+        M.fz_free_text_page(context(), text_page)
+        M.fz_free_text_sheet(context(), text_sheet)
+        merror("cannot alloc text device")
+    end
 
     if W.mupdf_run_page(context(), self.doc.doc, self.page, tdev, M.fz_identity, nil) == nil then
+        M.fz_free_text_page(context(), text_page)
+        M.fz_free_text_sheet(context(), text_sheet)
+        M.fz_free_device(tdev)
         merror("cannot run page through text device")
     end
 
@@ -457,6 +455,10 @@ function page_mt.__index:getPageText()
         end
     end
 
+    M.fz_free_device(tdev)
+    M.fz_free_text_sheet(context(), text_sheet)
+    M.fz_free_text_page(context(), text_page)
+
     return lines
 end
 
@@ -492,17 +494,14 @@ function page_mt.__index:getPageLinks()
     return links
 end
 
-local function wrap_drop_pixmap(pixmap)
-    return M.fz_drop_pixmap(context(), pixmap)
-end
 local function run_page(page, pixmap, ctm)
 	M.fz_clear_pixmap_with_value(context(), pixmap, 0xff)
 
 	local dev = W.mupdf_new_draw_device(context(), pixmap)
     if dev == nil then merror("cannot create draw device") end
-    ffi.gc(dev, M.fz_free_device)
 
 	local ok = W.mupdf_run_page(context(), page.doc.doc, page.page, dev, ctm, nil)
+    M.fz_free_device(dev)
     if ok == nil then merror("could not run page") end
 end
 --[[
@@ -541,13 +540,14 @@ function page_mt.__index:draw_new(draw_context, width, height, offset_x, offset_
 	local pix = W.mupdf_new_pixmap_with_bbox_and_data(
         context(), colorspace, bbox, ffi.cast("unsigned char*", bb.data))
     if pix == nil then merror("cannot allocate pixmap") end
-    ffi.gc(pix, wrap_drop_pixmap)
 
     run_page(self, pix, ctm)
 
 	if draw_context.gamma >= 0.0 then
 		M.fz_gamma_pixmap(context(), pix, draw_context.gamma)
 	end
+
+    M.fz_drop_pixmap(context(), pixmap)
 
     return bb
 end
@@ -598,9 +598,6 @@ end
 
 -- image loading via MuPDF:
 
-local function wrap_drop_image(image)
-    return M.fz_drop_image(context(), image)
-end
 --[[
 render image data
 --]]
@@ -609,11 +606,12 @@ function mupdf.renderImage(data, size, width, height)
                     ffi.cast("unsigned char*", data), size)
     if image == nil then merror("could not load image data") end
     M.fz_keep_image(context(), image)
-    ffi.gc(image, wrap_drop_image)
     local pixmap = W.mupdf_new_pixmap_from_image(context(),
                     image, width or -1, height or -1)
-    if pixmap == nil then merror("could not create pixmap from image") end
-    ffi.gc(pixmap, wrap_drop_pixmap)
+    if pixmap == nil then
+        M.fz_drop_image(context(), image)
+        merror("could not create pixmap from image")
+    end
 
     local p_width = M.fz_pixmap_width(context(), pixmap)
     local p_height = M.fz_pixmap_height(context(), pixmap)
@@ -625,8 +623,8 @@ function mupdf.renderImage(data, size, width, height)
     end
     local p = M.fz_pixmap_samples(context(), pixmap)
     local bb = BlitBuffer.new(p_width, p_height, bbtype, p):copy()
-    -- does this pin pixmap to this point? hopefully so.
-    pixmap = nil
+    M.fz_drop_pixmap(context(), pixmap)
+    M.fz_drop_image(context(), image)
     return bb
 end
 
@@ -742,13 +740,14 @@ local function render_for_kopt(bmp, page, scale, bounds)
         or M.fz_device_gray(context())
 	local pix = W.mupdf_new_pixmap_with_bbox(context(), colorspace, bbox)
     if pix == nil then merror("could not allocate pixmap") end
-    ffi.gc(pix, wrap_drop_pixmap)
 
     run_page(page, pix, ctm)
 
 	k2pdfopt.bmp_init(bmp)
 
 	bmpmupdf_pixmap_to_bmp(bmp, pix)
+
+    M.fz_drop_pixmap(context(), pix)
 end
 
 function page_mt.__index:reflow(kopt_context)
