@@ -254,7 +254,7 @@ function Color8_mt.__index:getColor8() return self end
 function Color8A_mt.__index:getColor8() return Color8(self.a) end
 function ColorRGB16_mt.__index:getColor8()
     local r = rshift(self.v, 11)
-    local g = band(rshift(self.v, 5, 0x3F))
+    local g = band(rshift(self.v, 5), 0x3F)
     local b = band(self.v, 0x001F)
     return Color8(rshift(39190*r + 38469*g + 14942*b, 14))
 end
@@ -276,7 +276,7 @@ function Color8_mt.__index:getColor8A() return Color8A(self.a, 0) end
 function Color8A_mt.__index:getColor8A() return self end
 function ColorRGB16_mt.__index:getColor8A()
     local r = rshift(self.v, 11)
-    local g = band(rshift(self.v, 5, 0x3F))
+    local g = band(rshift(self.v, 5), 0x3F)
     local b = band(self.v, 0x001F)
     return Color8A(rshift(39190*r + 38469*g + 14942*b, 14), 0)
 end
@@ -1203,9 +1203,9 @@ function BB_mt.__index:writePNG(filename)
     local w, h = self:getWidth(), self:getHeight()
     local pix = lept.pixCreate(w, h, 8)
     if pix ~= nil then
-        for j = 1, h do
-            for i = 1, w do
-                lept.pixSetPixel(pix, i-1, j-1, self:getPixel(i, j):getColor8().a)
+        for y = 0, h-1 do
+            for x = 0, w-1 do
+                lept.pixSetPixel(pix, x, y, self:getPixel(x, y):getColor8().a)
             end
         end
         lept.pixWritePng(ffi.cast("char*", filename), pix, ffi.new("float", 0.0))
