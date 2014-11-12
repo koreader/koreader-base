@@ -12,6 +12,7 @@ all: $(OUTPUT_DIR)/libs $(if $(ANDROID),,$(LUAJIT)) \
 		$(if $(WIN32),,$(EVERNOTE_LIB)) \
 		$(LUASERIAL_LIB) \
 		$(TURBOJPEG_LIB) \
+		$(LODEPNG_LIB) \
 		$(if $(or $(ANDROID),$(WIN32)),,$(OUTPUT_DIR)/tar) \
 		$(if $(or $(ANDROID),$(WIN32)),,$(OUTPUT_DIR)/sdcv) \
 		$(if $(or $(ANDROID),$(WIN32)),,$(OUTPUT_DIR)/zsync) \
@@ -131,6 +132,14 @@ $(MUPDF_LIB): $(JPEG_LIB) $(FREETYPE_LIB)
 		-Wl,-soname=$(notdir $(MUPDF_LIB)) \
 		$(JPEG_LIB) $(FREETYPE_LIB) \
 		-o $(MUPDF_LIB) -lm $(if $(ANDROID),-llog,)
+
+$(LODEPNG_LIB): $(LODEPNG_DIR)/lodepng.cpp $(LODEPNG_DIR)/lodepng.h
+	cp $(LODEPNG_DIR)/lodepng.cpp $(LODEPNG_DIR)/lodepng.c
+	$(CC) -shared $(CFLAGS) \
+		-Wl,-E -Wl,-rpath,'$$ORIGIN' \
+		-Wl,-soname=$(notdir $(LODEPNG_LIB)) \
+		$(LODEPNG_DIR)/lodepng.c \
+		-o $(LODEPNG_LIB)
 
 # djvulibre, fetched via GIT as a submodule
 $(DJVULIBRE_LIB): $(JPEG_LIB)

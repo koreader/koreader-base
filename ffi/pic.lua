@@ -2,11 +2,14 @@ local ffi = require("ffi")
 local BB = require("ffi/blitbuffer")
 
 local dummy = require("ffi/turbojpeg_h")
-local turbojpeg
+local dummy = require("ffi/lodepng_h")
+local turbojpeg, lodepng
 if ffi.os == "Windows" then
     turbojpeg = ffi.load("libs/libturbojpeg.dll")
+    lodepng = ffi.load("libs/liblodepng.dll")
 else
     turbojpeg = ffi.load("libs/libturbojpeg.so")
+    lodepng = ffi.load("libs/liblodepng.so")
 end
 
 local Pic = {}
@@ -93,6 +96,22 @@ end
 
 PicDocument.__gc = PicDocument.close
 
+function Pic.openPNGDocument(filename)
+    local width = ffi.new("int[1]")
+    local height = ffi.new("int[1]")
+    local ptr = ffi.new("unsigned char*[1]")
+    local error = lodepng.lodepng_decode32_file(ptr, width, height, filename)
+    if error ~= 0 then
+        error("decoding PNG file")
+    end
+    local doc = PicDocument:new{width=width[0], height=height[0]}
+    doc.image_bb = BB.new(width[0], height[0], BB.TYPE_BBRGB32, ptr[0])
+    -- mark buffer for freeing when Blitbuffer is freed:
+    doc.image_bb:setAllocated(1)
+    doc.components = 4
+    return doc
+end
+
 function Pic.openJPGDocument(filename)
     local fh = io.open(filename, "r")
     assert(fh, "couldn't open file")
@@ -138,6 +157,8 @@ function Pic.openDocument(filename)
     local extension = string.lower(string.match(filename, ".+%.([^.]+)") or "")
     if extension == "jpg" or extension == "jpeg" then
         return Pic.openJPGDocument(filename)
+    elseif extension == "png" then
+        return Pic.openPNGDocument(filename)
     else
         error("Unsupported image format")
     end
