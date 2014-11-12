@@ -1203,9 +1203,9 @@ function BB_mt.__index:writePNG(filename)
     local w, h = self:getWidth(), self:getHeight()
     local pix = lept.pixCreate(w, h, 8)
     if pix ~= nil then
-        for j = 1, h do
-            for i = 1, w do
-                lept.pixSetPixel(pix, i-1, j-1, self:getPixel(i, j):getColor8().a)
+        for y = 0, h-1 do
+            for x = 0, w-1 do
+                lept.pixSetPixel(pix, x, y, self:getPixel(x, y):getColor8().a)
             end
         end
         lept.pixWritePng(ffi.cast("char*", filename), pix, ffi.new("float", 0.0))
