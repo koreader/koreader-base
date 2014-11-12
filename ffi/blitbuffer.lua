@@ -254,7 +254,7 @@ function Color8_mt.__index:getColor8() return self end
 function Color8A_mt.__index:getColor8() return Color8(self.a) end
 function ColorRGB16_mt.__index:getColor8()
     local r = rshift(self.v, 11)
-    local g = band(rshift(self.v, 5, 0x3F))
+    local g = band(rshift(self.v, 5), 0x3F)
     local b = band(self.v, 0x001F)
     return Color8(rshift(39190*r + 38469*g + 14942*b, 14))
 end
@@ -276,7 +276,7 @@ function Color8_mt.__index:getColor8A() return Color8A(self.a, 0) end
 function Color8A_mt.__index:getColor8A() return self end
 function ColorRGB16_mt.__index:getColor8A()
     local r = rshift(self.v, 11)
-    local g = band(rshift(self.v, 5, 0x3F))
+    local g = band(rshift(self.v, 5), 0x3F)
     local b = band(self.v, 0x001F)
     return Color8A(rshift(39190*r + 38469*g + 14942*b, 14), 0)
 end
