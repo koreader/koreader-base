@@ -363,7 +363,7 @@ static int setIntProperty(lua_State *L) {
     CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
     const char *propName = luaL_checkstring(L, 2);
     int value = luaL_checkint(L, 3);
-    CRPropRef props = doc->text_view->propsGetCurrent();
+    CRPropRef props = LVCreatePropsContainer();
     props->setInt(propName, value);
     doc->text_view->propsApply(props);
     return 0;
@@ -373,7 +373,7 @@ static int setStringProperty(lua_State *L) {
     CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
     const char *propName = luaL_checkstring(L, 2);
     const char *value = luaL_checkstring(L, 3);
-    CRPropRef props = doc->text_view->propsGetCurrent();
+    CRPropRef props = LVCreatePropsContainer();
     props->setString(propName, value);
     doc->text_view->propsApply(props);
     return 0;
