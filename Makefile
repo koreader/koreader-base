@@ -588,7 +588,7 @@ fetchthirdparty:
 	[ ! -f libjpeg-turbo-1.3.1.tar.gz ] \
 		&& wget http://download.sourceforge.net/libjpeg-turbo/libjpeg-turbo-1.3.1.tar.gz || true
 	[ `md5sum libjpeg-turbo-1.3.1.tar.gz |cut -d\  -f1` != 2c3a68129dac443a72815ff5bb374b05 ] \
-		&& rm libpng-1.6.12.tar.gz && false || tar zxf libjpeg-turbo-1.3.1.tar.gz
+		&& rm libjpeg-turbo-1.3.1.tar.gz && false || tar zxf libjpeg-turbo-1.3.1.tar.gz
 	# download giflib
 	[ ! -f giflib-5.1.0.tar.gz ] \
 		&& wget http://download.sourceforge.net/giflib/giflib-5.1.0.tar.gz || true
