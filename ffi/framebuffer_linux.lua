@@ -265,8 +265,8 @@ function framebuffer_mt:setOrientation(mode)
 end
 
 function framebuffer_mt.__index:refresh(refreshtype, waveform_mode, wait_for_marker, x, y, w, h)
-	-- Always wait for the previous update when queuing a FULL update. Mostly matters for REAGL updates, which are always FULL anyway :).
-	if refreshtype == ffi.C.UPDATE_MODE_FULL then
+	-- Always wait for the previous update when queuing a FULL update. Mostly matters for REAGL updates, which are always FULL anyway :). Also matters for the Kobo timing workarounds.
+	if wait_for_marker or refreshtype == ffi.C.UPDATE_MODE_FULL then
 		-- Start by checking that our previous update has completed
 		if self.einkWaitForCompleteFunc then
 			-- We have nothing to check on our first refresh() call!
@@ -283,9 +283,9 @@ function framebuffer_mt.__index:refresh(refreshtype, waveform_mode, wait_for_mar
 
 	-- If needed, finish by waiting for our current update to be submitted
 	-- NOTE: Getting rid of wait_for_marker by testing for UPDATE_MODE_FULL instead doesn't gain us much speed, so keep doing it the safe way ;).
-	-- In the specific case of the vritual keyboard, it would probably need more than this to make it blazing fast: besides not waiting for any marker,
+	-- In the specific case of the virtual keyboard, it would probably need more than this to make it blazing fast: besides not waiting for any marker,
 	-- the stock reader handles that issue by partly using WAVEFORM_MODE_DU & EPDC_FLAG_FORCE_MONOCHROME for very fast refreshes.
-	if wait_for_marker then
+	if wait_for_marker or refreshtype == ffi.C.UPDATE_MODE_FULL then
 		if self.einkWaitForSubmissionFunc then
 			self:einkWaitForSubmissionFunc()
 		end
