@@ -12,6 +12,8 @@ all: $(OUTPUT_DIR)/libs $(if $(ANDROID),,$(LUAJIT)) \
 		$(if $(WIN32),,$(EVERNOTE_LIB)) \
 		$(LUASERIAL_LIB) \
 		$(TURBOJPEG_LIB) \
+		$(LODEPNG_LIB) \
+		$(GIF_LIB) \
 		$(if $(or $(ANDROID),$(WIN32)),,$(OUTPUT_DIR)/tar) \
 		$(if $(or $(ANDROID),$(WIN32)),,$(OUTPUT_DIR)/sdcv) \
 		$(if $(or $(ANDROID),$(WIN32)),,$(OUTPUT_DIR)/zsync) \
@@ -131,6 +133,23 @@ $(MUPDF_LIB): $(JPEG_LIB) $(FREETYPE_LIB)
 		-Wl,-soname=$(notdir $(MUPDF_LIB)) \
 		$(JPEG_LIB) $(FREETYPE_LIB) \
 		-o $(MUPDF_LIB) -lm $(if $(ANDROID),-llog,)
+
+$(LODEPNG_LIB): $(LODEPNG_DIR)/lodepng.cpp $(LODEPNG_DIR)/lodepng.h
+	cp $(LODEPNG_DIR)/lodepng.cpp $(LODEPNG_DIR)/lodepng.c
+	$(CC) -shared $(CFLAGS) \
+		-Wl,-E -Wl,-rpath,'$$ORIGIN' \
+		-Wl,-soname=$(notdir $(LODEPNG_LIB)) \
+		$(LODEPNG_DIR)/lodepng.c \
+		-o $(LODEPNG_LIB)
+
+# giflib
+$(GIF_LIB):
+	cd $(GIF_DIR) && \
+		CC="$(CC)" CFLAGS="$(CFLAGS)" LDFLAGS="$(LDFLAGS)" \
+		./configure -q --prefix=$(CURDIR)/$(GIF_DIR) \
+			--disable-static --enable-shared --host=$(CHOST)
+	$(MAKE) -j$(PROCESSORS) -C $(GIF_DIR) --silent install
+	cp -fL $(GIF_DIR)/lib/$(notdir $(GIF_LIB)) $@
 
 # djvulibre, fetched via GIT as a submodule
 $(DJVULIBRE_LIB): $(JPEG_LIB)
@@ -569,7 +588,12 @@ fetchthirdparty:
 	[ ! -f libjpeg-turbo-1.3.1.tar.gz ] \
 		&& wget http://download.sourceforge.net/libjpeg-turbo/libjpeg-turbo-1.3.1.tar.gz || true
 	[ `md5sum libjpeg-turbo-1.3.1.tar.gz |cut -d\  -f1` != 2c3a68129dac443a72815ff5bb374b05 ] \
-		&& rm libpng-1.6.12.tar.gz && false || tar zxf libjpeg-turbo-1.3.1.tar.gz
+		&& rm libjpeg-turbo-1.3.1.tar.gz && false || tar zxf libjpeg-turbo-1.3.1.tar.gz
+	# download giflib
+	[ ! -f giflib-5.1.0.tar.gz ] \
+		&& wget http://download.sourceforge.net/giflib/giflib-5.1.0.tar.gz || true
+	[ `md5sum giflib-5.1.0.tar.gz |cut -d\  -f1` != 40248cb52f525dc82981761628dbd853 ] \
+		&& rm giflib-5.1.0.tar.gz && false || tar zxf giflib-5.1.0.tar.gz
 
 # ===========================================================================
 clean:
@@ -583,6 +607,7 @@ clean:
 	-$(MAKE) -C $(JPEG_DIR) clean uninstall
 	-$(MAKE) -C $(SDCV_DIR) clean
 	-$(MAKE) -C $(PNG_DIR) clean uninstall
+	-$(MAKE) -C $(GIF_DIR) clean uninstall
 	-$(MAKE) -C $(GLIB_DIR) clean uninstall
 	-$(MAKE) -C $(ZLIB_DIR) clean uninstall
 	-$(MAKE) -C $(ZSYNC_DIR) clean

@@ -2,11 +2,17 @@ local ffi = require("ffi")
 local BB = require("ffi/blitbuffer")
 
 local dummy = require("ffi/turbojpeg_h")
-local turbojpeg
+local dummy = require("ffi/lodepng_h")
+local dummy = require("ffi/giflib_h")
+local turbojpeg, lodepng, giflib
 if ffi.os == "Windows" then
     turbojpeg = ffi.load("libs/libturbojpeg.dll")
+    lodepng = ffi.load("libs/liblodepng.dll")
+    giflib = ffi.load("libs/libgif-7.dll")
 else
     turbojpeg = ffi.load("libs/libturbojpeg.so")
+    lodepng = ffi.load("libs/liblodepng.so")
+    giflib = ffi.load("libs/libgif.so.7")
 end
 
 local Pic = {}
@@ -93,6 +99,95 @@ end
 
 PicDocument.__gc = PicDocument.close
 
+
+local GifPage = PicPage:new()
+function GifPage:close()
+    -- with Gifs, the blitbuffers are per page
+    if self.image_bb ~= nil then
+        self.image_bb:free()
+        self.image_bb = nil
+    end
+end
+
+local GifDocument = PicDocument:new{
+    giffile = nil,
+}
+function GifDocument:getPages()
+    return self.giffile.ImageCount
+end
+function GifDocument:getOriginalPageSize(number)
+    local i = self.giffile.SavedImages[number-1]
+    return i.ImageDesc.Width, i.ImageDesc.Height, 4 -- components
+end
+function GifDocument:openPage(number)
+    local i = self.giffile.SavedImages[number-1]
+    local width = i.ImageDesc.Width
+    local height = i.ImageDesc.Height
+    local bb = BB.new(width, height, BB.TYPE_BBRGB32)
+
+    local cmap = i.ImageDesc.ColorMap ~= nil and i.ImageDesc.ColorMap or self.giffile.SColorMap
+    local palette={}
+    -- TODO: transparency from Graphics Control Extension
+    for c=0, cmap.ColorCount-1 do
+        local color = cmap.Colors[c]
+        palette[c] = BB.ColorRGB32(color.Red, color.Green, color.Blue, 0)
+    end
+    local p = i.RasterBits
+    for y = 0, height-1 do
+        for x = 0, width-1 do
+            bb:setPixel(x, y, palette[p[0]])
+            p = p + 1
+        end
+    end
+
+    local page = GifPage:new{
+        width = i.ImageDesc.Width,
+        height = i.ImageDesc.Height,
+        image_bb = bb,
+        doc = self,
+    }
+
+    return page
+end
+function GifDocument:close()
+    if giflib.DGifCloseFile(self.giffile, err) ~= giflib.GIF_OK then
+        error(string.format("error closing/deallocating GIF: %s",
+            ffi.string(giflib.GifErrorString(err[0]))))
+    end
+    self.giffile = nil
+end
+
+function Pic.openGIFDocument(filename)
+    local err = ffi.new("int[1]")
+    local giffile = giflib.DGifOpenFileName(filename, err)
+    if giffile == nil then
+        error(string.format("Cannot read GIF file: %s",
+            ffi.string(giflib.GifErrorString(err[0]))))
+    end
+    if giflib.DGifSlurp(giffile) ~= giflib.GIF_OK then
+        giflib.DGifCloseFile(giffile, err)
+        error(string.format("Cannot parse GIF file: %s",
+            ffi.string(giflib.GifErrorString(giffile.Error))))
+    end
+    return GifDocument:new{giffile = giffile}
+end
+
+function Pic.openPNGDocument(filename)
+    local width = ffi.new("int[1]")
+    local height = ffi.new("int[1]")
+    local ptr = ffi.new("unsigned char*[1]")
+    local err = lodepng.lodepng_decode32_file(ptr, width, height, filename)
+    if err ~= 0 then
+        error("decoding PNG file")
+    end
+    local doc = PicDocument:new{width=width[0], height=height[0]}
+    doc.image_bb = BB.new(width[0], height[0], BB.TYPE_BBRGB32, ptr[0])
+    -- mark buffer for freeing when Blitbuffer is freed:
+    doc.image_bb:setAllocated(1)
+    doc.components = 4
+    return doc
+end
+
 function Pic.openJPGDocument(filename)
     local fh = io.open(filename, "r")
     assert(fh, "couldn't open file")
@@ -138,6 +233,10 @@ function Pic.openDocument(filename)
     local extension = string.lower(string.match(filename, ".+%.([^.]+)") or "")
     if extension == "jpg" or extension == "jpeg" then
         return Pic.openJPGDocument(filename)
+    elseif extension == "png" then
+        return Pic.openPNGDocument(filename)
+    elseif extension == "gif" then
+        return Pic.openGIFDocument(filename)
     else
         error("Unsupported image format")
     end

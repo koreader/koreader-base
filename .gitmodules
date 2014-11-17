@@ -49,3 +49,6 @@
 [submodule "zsync"]
 	path = zsync
 	url = http://zsync.moria.org.uk/zsync.git
+[submodule "lodepng"]
+	path = lodepng
+	url = https://github.com/lvandeve/lodepng.git
