@@ -145,7 +145,8 @@ $(LODEPNG_LIB): $(LODEPNG_DIR)/lodepng.cpp $(LODEPNG_DIR)/lodepng.h
 # giflib
 $(GIF_LIB):
 	cd $(GIF_DIR) && \
-		CC="$(CC)" CFLAGS="$(CFLAGS)" LDFLAGS="$(LDFLAGS)" \
+		CC="$(CC) $(if $(ANDROID),-DS_IREAD=S_IRUSR -DS_IWRITE=S_IWUSR,)" \
+		CFLAGS="$(CFLAGS)" LDFLAGS="$(LDFLAGS)" \
 		./configure -q --prefix=$(CURDIR)/$(GIF_DIR) \
 			--disable-static --enable-shared --host=$(CHOST)
 	$(MAKE) -j$(PROCESSORS) -C $(GIF_DIR) --silent install
