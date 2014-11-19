@@ -234,29 +234,24 @@ dynamic positioning of place markers. The range of place markers
 runs from %1 to %99, but normally no more than two or three should
 be required. There are no provisions for escaping place markers.
 
-output = util.template{
+output = util.template(
     _("Hello %1, welcome to %2."),
     name,
     company
-}
+)
 
 This function was inspired by Qt:
 http://qt-project.org/doc/qt-4.8/internationalization.html#use-qstring-arg-for-dynamic-text
 --]]
-function util.template(str, vars)
-    -- Adapted from MarkEdgar's solution on http://lua-users.org/wiki/StringInterpolation
-    -- Allow util.template{str, vars} as well as util.template(str, {vars})
-    if not vars then
-        vars = str
-        str = vars[1]
-    end
-    return (string.gsub(str, "%%[1-9][0-9]?", -- not regular expressions http://www.lua.org/pil/20.2.html
-      function(i)
-          if i ~= nil then
-              i = string.sub(i, 2) + 1
-              return vars[i]
-          end
-      end))
+function util.template(str, ...)
+    local params = {...}
+    -- shortcut:
+    if #params == 0 then return str end
+    local result = string.gsub(str, "%%([1-9][0-9]?)",
+        function(i)
+            return params[tonumber(i)]
+        end)
+    return result
 end
 
 function util.unichar (value)
