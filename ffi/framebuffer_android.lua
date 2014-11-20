@@ -1,58 +1,22 @@
 local ffi = require("ffi")
-local bit = require("bit")
-
-local BB = require("ffi/blitbuffer")
 local android = require("android")
+local BB = require("ffi/blitbuffer")
 
-local fb = {}
+local framebuffer = {}
 
-function fb.open()
-    if not fb.bb then
-        -- we present this buffer to the outside
-        fb.bb = BB.new(android.screen.width, android.screen.height)
-        fb.bb:fill(BB.COLOR_WHITE)
-        fb:refresh()
-    end
-    return fb
+function framebuffer:init()
+    -- we present this buffer to the outside
+    self.bb = BB.new(android.screen.width, android.screen.height)
+    -- TODO: should we better use these?
+    -- ffi.C.ANativeWindow_getWidth(window)
+    -- ffi.C.ANativeWindow_getHeight(window)
+    self.bb:fill(BB.COLOR_WHITE)
+	self:refreshFull()
+
+    framebuffer.parent.init(self)
 end
 
-function fb:getSize()
-    local window = android.app.window
-    if window ~= nil then
-        local width = ffi.C.ANativeWindow_getWidth(window)
-        local height = ffi.C.ANativeWindow_getHeight(window)
-        return tonumber(width), tonumber(height)
-    end
-end
-
-function fb:getPitch()
-    error("not implemented")
-end
-
-function fb:setOrientation(mode)
-    if mode == 1 or mode == 3 then
-        -- TODO: landscape setting
-    else
-        -- TODO: flip back to portrait
-    end
-end
-
-function fb:getOrientation()
-    local w, h = self:getSize()
-    if w > h then
-        return 1
-    else
-        return 0
-    end
-end
-
-function fb:refresh(refreshtype, waveform_mode, wait_for_marker, x1, y1, w, h)
-    -- reginal update is only useful for E-ink screen
-    x1, y1, w, h = nil, nil, nil, nil
-    if x1 == nil then x1 = 0 end
-    if y1 == nil then y1 = 0 end
-
-
+function framebuffer:refreshFullImp()
     if android.app.window == nil then
         android.LOGW("cannot blit: no window")
         return
@@ -80,14 +44,10 @@ function fb:refresh(refreshtype, waveform_mode, wait_for_marker, x1, y1, w, h)
         -- adapt to possible rotation changes
         bb:setRotation(self.bb:getRotation())
 
-        bb:blitFrom(self.bb, x1, y1, x1, y1, w, h)
+        bb:blitFrom(self.bb)
     end
 
     ffi.C.ANativeWindow_unlockAndPost(android.app.window);
 end
 
-function fb:close()
-    -- for now, we do nothing when in Android
-end
-
-return fb
+return require("ffi/framebuffer"):extend(framebuffer)
