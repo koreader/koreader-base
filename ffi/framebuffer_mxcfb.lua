@@ -255,8 +255,12 @@ function framebuffer:init()
             self.wait_for_marker_fast = false
         end
 
-        -- Kobo framebuffers need to be rotated counter-clockwise (they start in landscape mode)
-        self.bb:rotate(-90)
+        -- some Kobo framebuffers need to be rotated counter-clockwise (they start in landscape mode)
+        if self.bb:getWidth() > self.bb:getHeight() then
+            self.bb:rotate(-90)
+            self.native_rotation_mode = self.ORIENTATION_PORTRAIT
+            self.cur_rotation_mode = self.native_rotation_mode
+        end
     else
         error("unknown device type")
     end
