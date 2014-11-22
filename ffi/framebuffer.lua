@@ -6,6 +6,7 @@ This will be extended by implementations of this API.
 
 local fb = {
     device = nil, -- points to a device object
+    debug = function(...) --[[ NOP ]] end,
 
     bb = nil, -- should be set by implementations
     viewport = nil,

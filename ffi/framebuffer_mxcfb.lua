@@ -62,8 +62,9 @@ end
 -- Kindle's MXCFB_SEND_UPDATE == 0x4048462e | Kobo's MXCFB_SEND_UPDATE == 0x4044462e
 local function mxc_update(fb, refarea, refreshtype, waveform_mode, wait, x, y, w, h)
     -- if we have a lingering update marker that we should wait for, we do so now:
-    if fb.mech_wait_for_update and fb.wait_update_marker[0] ~= 0 then
-        fb.mech_wait_for_update(fb, fb.wait_update_marker)
+    if fb.mech_wait_update_complete and fb.wait_update_marker[0] ~= 0 then
+        fb.debug("refresh: wait for update", fb.wait_update_marker[0])
+        fb.mech_wait_update_complete(fb, fb.wait_update_marker[0])
         fb.wait_update_marker[0] = 0
     end
     -- if we should wait (later) for the update we're doing now, we need to register a new
@@ -71,6 +72,7 @@ local function mxc_update(fb, refarea, refreshtype, waveform_mode, wait, x, y, w
     if wait then
         fb.calc_update_marker = (fb.calc_update_marker % 16 ) + 1
         fb.wait_update_marker[0] = fb.calc_update_marker
+        fb.debug("refresh: next update has marker", fb.wait_update_marker[0])
     end
 
 	w, x = BB.checkBounds(w or fb.bb:getWidth(), x or 0, 0, fb.bb:getWidth(), 0xFFFF)
@@ -95,8 +97,9 @@ local function mxc_update(fb, refarea, refreshtype, waveform_mode, wait, x, y, w
 	refarea[0].alt_buffer_data.alt_update_region.height = 0
 	ffi.C.ioctl(fb.fd, ffi.C.MXCFB_SEND_UPDATE, refarea)
 
-    if fb.mech_wait_for_submission and wait then
-        fb.mech_wait_for_submission(fb, fb.wait_update_marker)
+    if fb.mech_wait_update_submission and wait then
+        fb.debug("refresh: wait for submission")
+        fb.mech_wait_update_submission(fb, fb.wait_update_marker)
     end
 end
 
@@ -139,14 +142,17 @@ end
 --[[ framebuffer API ]]--
 
 function framebuffer:refreshPartialImp(x, y, w, h)
+    self.debug("refresh: partial", x, y, w, h)
     self:mech_refresh(self.update_mode_partial, self.waveform_partial, self.wait_for_marker_partial, x, y, w, h)
 end
 
 function framebuffer:refreshFullImp(x, y, w, h)
+    self.debug("refresh: full", x, y, w, h)
     self:mech_refresh(self.update_mode_full, self.waveform_full, self.wait_for_marker_full, x, y, w, h)
 end
 
 function framebuffer:refreshFastImp(x, y, w, h)
+    self.debug("refresh: fast", x, y, w, h)
     self:mech_refresh(self.update_mode_fast, self.waveform_fast, self.wait_for_marker_fast, x, y, w, h)
 end
 
