@@ -264,6 +264,7 @@ function framebuffer:init()
         -- some Kobo framebuffers need to be rotated counter-clockwise (they start in landscape mode)
         if self.bb:getWidth() > self.bb:getHeight() then
             self.bb:rotate(-90)
+            self.blitbuffer_rotation_mode = self.bb:getRotation()
             self.native_rotation_mode = self.ORIENTATION_PORTRAIT
             self.cur_rotation_mode = self.native_rotation_mode
         end
