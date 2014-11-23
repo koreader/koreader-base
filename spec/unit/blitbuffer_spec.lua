@@ -42,7 +42,7 @@ describe("Blitbuffer unit tests", function()
             assert.are.equals(bb:getHeight(), 200)
         end)
 
-        local bb = Blitbuffer.new(800, 600)
+        local bb = Blitbuffer.new(800, 600, Blitbuffer.TYPE_BB4)
         it("should set pixel correctly", function()
             local test_x = 15
             local test_y = 20
