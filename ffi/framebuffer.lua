@@ -82,6 +82,10 @@ function fb:refreshPartialImp(x, y, w, h)
     -- default is fallback
     return self:refreshFullImp(x, y, w, h)
 end
+function fb:refreshUIImp(x, y, w, h)
+    -- default is fallback
+    return self:refreshPartialImp(x, y, w, h)
+end
 function fb:refreshFastImp(x, y, w, h)
     -- default is fallback
     return self:refreshPartialImp(x, y, w, h)
@@ -95,6 +99,10 @@ end
 function fb:refreshPartial(x, y, w, h)
     x, y = self:calculateRealCoordinates(x, y)
     return self:refreshPartialImp(x, y, w, h)
+end
+function fb:refreshUI(x, y, w, h)
+    x, y = self:calculateRealCoordinates(x, y)
+    return self:refreshUIImp(x, y, w, h)
 end
 function fb:refreshFast(x, y, w, h)
     x, y = self:calculateRealCoordinates(x, y)
