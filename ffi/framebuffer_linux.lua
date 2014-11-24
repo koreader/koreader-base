@@ -1,6 +1,5 @@
 local ffi = require("ffi")
 local bit = require("bit")
-local fb_api = require("ffi/framebuffer")
 local BB = require("ffi/blitbuffer")
 
 local dummy = require("ffi/linux_fb_h")

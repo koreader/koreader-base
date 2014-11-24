@@ -9,14 +9,17 @@ local framebuffer = {
 
     mech_wait_update_complete = nil,
     mech_wait_update_submission = nil,
-    wait_for_marker_full = true,
     wait_for_marker_partial = false,
+    wait_for_marker_ui = false,
+    wait_for_marker_full = true,
     wait_for_marker_fast = false,
     waveform_partial = nil,
-    update_mode_partial = nil,
+    waveform_ui = nil,
     waveform_full = nil,
-    update_mode_full = nil,
     waveform_fast = nil,
+    update_mode_partial = nil,
+    update_mode_ui = nil,
+    update_mode_full = nil,
     update_mode_fast = nil,
     mech_refresh = nil,
 
@@ -146,6 +149,11 @@ function framebuffer:refreshPartialImp(x, y, w, h)
     self:mech_refresh(self.update_mode_partial, self.waveform_partial, self.wait_for_marker_partial, x, y, w, h)
 end
 
+function framebuffer:refreshUIImp(x, y, w, h)
+    self.debug("refresh: ui-mode", x, y, w, h)
+    self:mech_refresh(self.update_mode_ui, self.waveform_ui, self.wait_for_marker_ui, x, y, w, h)
+end
+
 function framebuffer:refreshFullImp(x, y, w, h)
     self.debug("refresh: full", x, y, w, h)
     self:mech_refresh(self.update_mode_full, self.waveform_full, self.wait_for_marker_full, x, y, w, h)
@@ -158,104 +166,100 @@ end
 
 function framebuffer:init()
     framebuffer.parent.init(self)
+
     if self.device:isKindle() then
         require("ffi/mxcfb_kindle_h")
+
         self.mech_refresh = refresh_k51
         self.mech_wait_update_complete = kindle_pearl_mxc_wait_for_update_complete
         self.mech_wait_update_submission = kindle_mxc_wait_for_update_submission
+
         self.update_mode_partial = ffi.C.UPDATE_MODE_PARTIAL
         self.update_mode_full = ffi.C.UPDATE_MODE_FULL
         self.update_mode_fast = ffi.C.UPDATE_MODE_PARTIAL
+        self.update_mode_ui = ffi.C.UPDATE_MODE_PARTIAL
+
+        self.waveform_fast = ffi.C.WAVEFORM_MODE_A2
+        self.waveform_ui = ffi.C.WAVEFORM_MODE_GC16_FAST
+        self.waveform_full = ffi.C.WAVEFORM_MODE_GC16
 
         if self.device.model == "KindleTouch" then
-            self.waveform_full = ffi.C.WAVEFORM_MODE_GC16
             self.waveform_partial = ffi.C.WAVEFORM_MODE_GL16_FAST
-            self.waveform_fast = ffi.C.WAVEFORM_MODE_A2
             self.wait_for_marker_full = true
             self.wait_for_marker_partial = false
             self.wait_for_marker_fast = false
+            self.wait_for_marker_ui = false
         elseif self.device.model == "KindlePaperWhite" then
-            self.waveform_full = ffi.C.WAVEFORM_MODE_GC16
             self.waveform_partial = ffi.C.WAVEFORM_MODE_GL16_FAST
-            self.waveform_fast = ffi.C.WAVEFORM_MODE_A2
             self.wait_for_marker_full = true
             self.wait_for_marker_partial = false
             self.wait_for_marker_fast = false
+            self.wait_for_marker_ui = false
         elseif self.device.model == "KindlePaperWhite2" then
             self.mech_wait_update_complete = kindle_carta_mxc_wait_for_update_complete
-            self.waveform_full = ffi.C.WAVEFORM_MODE_GC16
             self.waveform_partial = ffi.C.WAVEFORM_MODE_REAGL
             self.update_mode_partial = ffi.C.UPDATE_MODE_FULL -- REAGL get upgraded to full
-            self.waveform_fast = ffi.C.WAVEFORM_MODE_A2
             self.wait_for_marker_full = true
             self.wait_for_marker_partial = true
             self.wait_for_marker_fast = true
+            self.wait_for_marker_ui = true
         elseif self.device.model == "KindleBasic" then
             self.mech_wait_update_complete = kindle_carta_mxc_wait_for_update_complete
-            self.waveform_full = ffi.C.WAVEFORM_MODE_GC16
             self.waveform_partial = ffi.C.WAVEFORM_MODE_REAGL
             self.update_mode_partial = ffi.C.UPDATE_MODE_FULL -- REAGL get upgraded to full
-            self.waveform_fast = ffi.C.WAVEFORM_MODE_A2
             self.wait_for_marker_full = true
             self.wait_for_marker_partial = true
             self.wait_for_marker_fast = true
+            self.wait_for_marker_ui = true
         elseif self.device.model == "KindleVoyage" then
             self.mech_wait_update_complete = kindle_carta_mxc_wait_for_update_complete
-            self.waveform_full = ffi.C.WAVEFORM_MODE_GC16
             self.waveform_partial = ffi.C.WAVEFORM_MODE_REAGL
             self.update_mode_partial = ffi.C.UPDATE_MODE_FULL -- REAGL get upgraded to full
-            self.waveform_fast = ffi.C.WAVEFORM_MODE_A2
             self.wait_for_marker_full = true
             self.wait_for_marker_partial = true
             self.wait_for_marker_fast = true
+            self.wait_for_marker_ui = true
         end
     elseif self.device:isKobo() then
         require("ffi/mxcfb_kobo_h")
+
         self.mech_refresh = refresh_kobo
         self.mech_wait_update_complete = kobo_mxc_wait_for_update_complete
+
         self.update_mode_partial = ffi.C.UPDATE_MODE_PARTIAL
         self.update_mode_full = ffi.C.UPDATE_MODE_FULL
         self.update_mode_fast = ffi.C.UPDATE_MODE_PARTIAL
+        self.update_mode_ui = ffi.C.UPDATE_MODE_PARTIAL
+
+        self.waveform_fast = ffi.C.WAVEFORM_MODE_A2
+        self.waveform_ui = ffi.C.WAVEFORM_MODE_AUTO
+        self.waveform_full = ffi.C.NTX_WFM_MODE_GC16
+        self.waveform_partial = ffi.C.WAVEFORM_MODE_AUTO
+
+        self.wait_for_marker_ui = false
 
         if self.device.model == "Kobo_phoenix" then
-            self.waveform_full = ffi.C.NTX_WFM_MODE_GC16
             self.waveform_partial = ffi.C.NTX_WFM_MODE_GLD16
-            self.waveform_fast = ffi.C.WAVEFORM_MODE_A2
             self.wait_for_marker_full = true
             self.wait_for_marker_partial = true
             self.wait_for_marker_fast = true
         elseif self.device.model == "Kobo_dahlia" then
-            self.waveform_full = ffi.C.NTX_WFM_MODE_GC16
-            self.waveform_partial = ffi.C.WAVEFORM_MODE_AUTO
-            self.waveform_fast = ffi.C.WAVEFORM_MODE_A2
             self.wait_for_marker_full = true
             self.wait_for_marker_partial = true
             self.wait_for_marker_fast = true
         elseif self.device.model == "Kobo_pixie" then
-            self.waveform_full = ffi.C.NTX_WFM_MODE_GC16
-            self.waveform_partial = ffi.C.WAVEFORM_MODE_AUTO
-            self.waveform_fast = ffi.C.WAVEFORM_MODE_A2
             self.wait_for_marker_full = true
             self.wait_for_marker_partial = false
             self.wait_for_marker_fast = false
         elseif self.device.model == "Kobo_trilogy" then
-            self.waveform_full = ffi.C.NTX_WFM_MODE_GC16
-            self.waveform_partial = ffi.C.WAVEFORM_MODE_AUTO
-            self.waveform_fast = ffi.C.WAVEFORM_MODE_A2
             self.wait_for_marker_full = true
             self.wait_for_marker_partial = false
             self.wait_for_marker_fast = false
         elseif self.device.model == "Kobo_dragon" then
-            self.waveform_full = ffi.C.NTX_WFM_MODE_GC16
-            self.waveform_partial = ffi.C.WAVEFORM_MODE_AUTO
-            self.waveform_fast = ffi.C.WAVEFORM_MODE_A2
             self.wait_for_marker_full = true
             self.wait_for_marker_partial = false
             self.wait_for_marker_fast = false
         elseif self.device.model == "Kobo_kraken" then
-            self.waveform_full = ffi.C.NTX_WFM_MODE_GC16
-            self.waveform_partial = ffi.C.WAVEFORM_MODE_AUTO
-            self.waveform_fast = ffi.C.WAVEFORM_MODE_A2
             self.wait_for_marker_full = true
             self.wait_for_marker_partial = false
             self.wait_for_marker_fast = false

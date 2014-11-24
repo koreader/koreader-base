@@ -4,10 +4,10 @@ local bit = require("bit")
 local android = require("android")
 local dummy = require("ffi/linux_input_h")
 
+local input = {
 -- to trigger refreshes for certain Android framework events:
-local fb = require("ffi/framebuffer_android").open()
-
-local input = {}
+    device = nil,
+}
 
 function input.open()
 end
@@ -120,12 +120,16 @@ function input.waitForEvent(usecs)
                     android.LOGI("got command: " .. tonumber(cmd))
                     commandHandler(cmd, 1)
                     if cmd == ffi.C.APP_CMD_INIT_WINDOW then
-                        fb:refresh()
+                        if self.device and self.device.screen then
+                            self.device.screen:refreshFull()
+                        end
                     elseif cmd == ffi.C.APP_CMD_TERM_WINDOW then
                         -- do nothing for now
                     elseif cmd == ffi.C.APP_CMD_LOST_FOCUS then
                         -- do we need this here?
-                        fb:refresh()
+                        if self.device and self.device.screen then
+                            self.device.screen:refreshFull()
+                        end
                     end
                     ffi.C.android_app_post_exec_cmd(android.app, cmd)
                 elseif source[0].id == ffi.C.LOOPER_ID_INPUT then
