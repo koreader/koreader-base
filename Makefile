@@ -380,7 +380,7 @@ $(OPENSSL_LIB):
 		$(if $(WIN32),mingw,linux-generic32)) \
 		$(if $(WIN32),no-,)shared no-asm no-idea no-mdc2 no-rc5 \
 		&& $(MAKE) CC="$(CC) $(CFLAGS)" \
-		LD=$(LD) RANLIB=$(RANLIB) LIBVERSION="" \
+		LD=$(LD) RANLIB=$(RANLIB) \
 		--silent build_crypto build_ssl
 ifdef ANDROID
 	cp -fL $(OPENSSL_DIR)/$(notdir $(SSL_LIB)) $(SSL_LIB)
