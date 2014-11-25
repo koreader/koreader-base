@@ -117,20 +117,7 @@ function input.waitForEvent(usecs)
                 if source[0].id == ffi.C.LOOPER_ID_MAIN then
                     local cmd = ffi.C.android_app_read_cmd(android.app)
                     ffi.C.android_app_pre_exec_cmd(android.app, cmd)
-                    android.LOGI("got command: " .. tonumber(cmd))
                     commandHandler(cmd, 1)
-                    if cmd == ffi.C.APP_CMD_INIT_WINDOW then
-                        if self.device and self.device.screen then
-                            self.device.screen:refreshFull()
-                        end
-                    elseif cmd == ffi.C.APP_CMD_TERM_WINDOW then
-                        -- do nothing for now
-                    elseif cmd == ffi.C.APP_CMD_LOST_FOCUS then
-                        -- do we need this here?
-                        if self.device and self.device.screen then
-                            self.device.screen:refreshFull()
-                        end
-                    end
                     ffi.C.android_app_post_exec_cmd(android.app, cmd)
                 elseif source[0].id == ffi.C.LOOPER_ID_INPUT then
                     local event = ffi.new("AInputEvent*[1]")
