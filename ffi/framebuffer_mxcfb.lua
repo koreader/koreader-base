@@ -67,7 +67,7 @@ local function mxc_update(fb, refarea, refreshtype, waveform_mode, wait, x, y, w
     -- if we have a lingering update marker that we should wait for, we do so now:
     if fb.mech_wait_update_complete and fb.wait_update_marker[0] ~= 0 then
         fb.debug("refresh: wait for update", fb.wait_update_marker[0])
-        fb.mech_wait_update_complete(fb, fb.wait_update_marker[0])
+        fb.mech_wait_update_complete(fb, fb.wait_update_marker)
         fb.wait_update_marker[0] = 0
     end
     -- if we should wait (later) for the update we're doing now, we need to register a new
