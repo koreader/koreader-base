@@ -1116,8 +1116,6 @@ Note that the caller has to make sure that the underlying memory
 words, a viewport does not create a new buffer with memory.
 --]]
 function BB_mt.__index:viewport(x, y, w, h)
-    w, x = BB.checkBounds(w, x, 0, self:getWidth(), 0xFFFF)
-    h, y = BB.checkBounds(h, y, 0, self:getHeight(), 0xFFFF)
     x, y, w, h = self:getPhysicalRect(x, y, w, h)
     local viewport = BB.new(w, h, self:getType(), self:getPixelP(x, y), self.pitch)
     viewport:setRotation(self:getRotation())
