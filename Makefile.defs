@@ -298,6 +298,8 @@ TESSERACT_LIB=$(OUTPUT_DIR)/libs/libtesseract$(if $(WIN32),-3.dll,.so.3)
 
 OPENSSL_DIR=openssl-1.0.1h
 OPENSSL_LIB=$(OPENSSL_DIR)/libssl.$(if $(WIN32),a,so)
+SSL_LIB=$(OUTPUT_DIR)/libs/libssl$(if $(WIN32),-1.dll,.so.1.0.0)
+CRYPTO_LIB=$(OUTPUT_DIR)/libs/libcrypto$(if $(WIN32),-1.dll,.so.1.0.0)
 
 LUA_SOCKET_DIR=luasocket
 LUA_SEC_DIR=luasec

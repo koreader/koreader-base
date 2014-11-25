@@ -382,6 +382,10 @@ $(OPENSSL_LIB):
 		&& $(MAKE) CC="$(CC) $(CFLAGS)" \
 		LD=$(LD) RANLIB=$(RANLIB) LIBVERSION="" \
 		--silent build_crypto build_ssl
+ifdef ANDROID
+	cp -fL $(OPENSSL_DIR)/$(notdir $(SSL_LIB)) $(SSL_LIB)
+	cp -fL $(OPENSSL_DIR)/$(notdir $(CRYPTO_LIB)) $(CRYPTO_LIB)
+endif
 
 $(LUASEC): $(OPENSSL_LIB)
 	$(MAKE) -C $(LUA_SEC_DIR) CC="$(CC) $(CFLAGS)" LD="$(CC)" \
