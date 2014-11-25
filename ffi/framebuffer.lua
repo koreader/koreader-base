@@ -119,6 +119,13 @@ end
 set a rectangle that represents the area of the screen we are working on
 --]]
 function fb:setViewport(viewport)
+    if viewport.x < 0 or viewport.x >= self.screen_size.w
+    or viewport.y < 0 or viewport.y >= self.screen_size.h
+    or viewport.w < 0 or viewport.x+viewport.w >= self.screen_size.w
+    or viewport.h < 0 or viewport.y+viewport.h >= self.screen_size.h
+    then
+        error("bad viewport")
+    end
     self.bb = self.bb:viewport(
         self.viewport.x, self.viewport.y,
         self.viewport.w, self.viewport.h)
