@@ -4,11 +4,14 @@ Framebuffer API
 This will be extended by implementations of this API.
 --]]
 
+local Blitbuffer = require("ffi/blitbuffer")
+
 local fb = {
     device = nil, -- points to a device object
     debug = function(...) --[[ NOP ]] end,
 
     bb = nil, -- should be set by implementations
+    full_bb = nil, -- will hold a saved reference when a viewport is set
     viewport = nil,
     screen_size = nil,
     native_rotation_mode = nil,
@@ -126,6 +129,7 @@ function fb:setViewport(viewport)
     then
         error("bad viewport")
     end
+    self.full_bb = self.bb
     self.bb = self.bb:viewport(
         viewport.x, viewport.y,
         viewport.w, viewport.h)
@@ -134,7 +138,7 @@ end
 
 function fb:calculateRealCoordinates(x, y)
 
-    if not (x or y) then return end
+    if not (x and y) then return end
     if not self.viewport then return x, y end
 
     --[[
@@ -280,8 +284,8 @@ function fb:toggleNightMode()
     self.bb:invert()
     if self.viewport then
         -- invert and blank out the full framebuffer when we are working on a viewport
-        self.bb:invert()
-        self.bb:fill(Blitbuffer.COLOR_WHITE)
+        self.full_bb:invert()
+        self.full_bb:fill(Blitbuffer.COLOR_WHITE)
     end
 end
 

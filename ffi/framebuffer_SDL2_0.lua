@@ -1,6 +1,7 @@
 -- load common SDL input/video library
 local SDL = require("ffi/SDL2_0")
 local BB = require("ffi/blitbuffer")
+local util = require("ffi/util")
 
 local framebuffer = {}
 
@@ -19,13 +20,35 @@ function framebuffer:init()
     framebuffer.parent.init(self)
 end
 
-function framebuffer:refreshFullImp()
-	if self.dummy then return end
-
-	SDL.SDL.SDL_UpdateTexture(SDL.texture, nil, self.bb.data, self.bb.pitch)
+local function render(bb)
+	SDL.SDL.SDL_UpdateTexture(SDL.texture, nil, bb.data, bb.pitch)
 	SDL.SDL.SDL_RenderClear(SDL.renderer)
 	SDL.SDL.SDL_RenderCopy(SDL.renderer, SDL.texture, nil, nil)
 	SDL.SDL.SDL_RenderPresent(SDL.renderer)
+end
+
+function framebuffer:refreshFullImp()
+	if self.dummy then return end
+
+    local bb = self.full_bb or self.bb
+
+    if not (x and y and w and h) then
+        x = 0
+        y = 0
+        w = bb:getWidth()
+        h = bb:getHeight()
+    end
+
+    self.debug("refresh on physical rectangle", x, y, w, h)
+
+    local flash = os.getenv("EMULATE_READER_FLASH")
+    if flash then
+        bb:invertRect(x, y, w, h)
+        render(bb)
+        util.usleep(tonumber(flash)*1000)
+        bb:invertRect(x, y, w, h)
+    end
+    render(bb)
 end
 
 function framebuffer:close()

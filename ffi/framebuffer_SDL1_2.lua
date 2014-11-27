@@ -1,6 +1,7 @@
 -- load common SDL input/video library
 local SDL = require("ffi/SDL1_2")
 local BB = require("ffi/blitbuffer")
+local util = require("ffi/util")
 
 local framebuffer = {}
 
@@ -20,18 +21,38 @@ function framebuffer:init()
     framebuffer.parent.init(self)
 end
 
-function framebuffer:refreshFullImp()
-	if self.dummy then return end
-
-	-- adapt to possible rotation changes
-	self.bb:setRotation(self.bb:getRotation())
-
+local function flip()
 	if SDL.SDL.SDL_LockSurface(SDL.screen) < 0 then
 		error("Locking screen surface")
 	end
 
 	SDL.SDL.SDL_UnlockSurface(SDL.screen)
 	SDL.SDL.SDL_Flip(SDL.screen)
+end
+
+function framebuffer:refreshFullImp(x, y, w, h)
+	if self.dummy then return end
+
+    local bb = self.full_bb or self.bb
+
+    if not (x and y and w and h) then
+        x = 0
+        y = 0
+        w = bb:getWidth()
+        h = bb:getHeight()
+    end
+
+    self.debug("refresh on physical rectangle", x, y, w, h)
+
+    local flash = os.getenv("EMULATE_READER_FLASH")
+    if flash then
+        bb:invertRect(x, y, w, h)
+        flip()
+        util.usleep(tonumber(flash)*1000)
+        bb:invertRect(x, y, w, h)
+    end
+
+    flip()
 end
 
 function framebuffer:close()
