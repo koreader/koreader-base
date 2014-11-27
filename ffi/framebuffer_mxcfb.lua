@@ -78,9 +78,10 @@ local function mxc_update(fb, refarea, refreshtype, waveform_mode, wait, x, y, w
         fb.debug("refresh: next update has marker", fb.wait_update_marker[0])
     end
 
-	w, x = BB.checkBounds(w or fb.bb:getWidth(), x or 0, 0, fb.bb:getWidth(), 0xFFFF)
-	h, y = BB.checkBounds(h or fb.bb:getHeight(), y or 0, 0, fb.bb:getHeight(), 0xFFFF)
-	x, y, w, h = fb.bb:getPhysicalRect(x, y, w, h)
+    local bb = fb.full_bb or fb.bb
+    w, x = BB.checkBounds(w or bb:getWidth(), x or 0, 0, bb:getWidth(), 0xFFFF)
+    h, y = BB.checkBounds(h or bb:getHeight(), y or 0, 0, bb:getHeight(), 0xFFFF)
+    x, y, w, h = bb:getPhysicalRect(x, y, w, h)
 
 	refarea[0].update_mode = refreshtype or ffi.C.UPDATE_MODE_PARTIAL
 	refarea[0].waveform_mode = waveform_mode or ffi.C.WAVEFORM_MODE_GC16
@@ -263,14 +264,6 @@ function framebuffer:init()
             self.wait_for_marker_full = true
             self.wait_for_marker_partial = false
             self.wait_for_marker_fast = false
-        end
-
-        -- some Kobo framebuffers need to be rotated counter-clockwise (they start in landscape mode)
-        if self.bb:getWidth() > self.bb:getHeight() then
-            self.bb:rotate(-90)
-            self.blitbuffer_rotation_mode = self.bb:getRotation()
-            self.native_rotation_mode = self.ORIENTATION_PORTRAIT
-            self.cur_rotation_mode = self.native_rotation_mode
         end
     else
         error("unknown device type")
