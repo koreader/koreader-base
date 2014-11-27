@@ -256,7 +256,7 @@ end
 function fb:setRotationMode(mode)
     self.bb:rotateAbsolute(-90 * (mode - self.native_rotation_mode - self.blitbuffer_rotation_mode))
     if self.viewport then
-        self.bb:setRotation(self.bb:getRotation())
+        self.full_bb:setRotation(self.bb:getRotation())
     end
     self.cur_rotation_mode = mode
 end
