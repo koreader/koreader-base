@@ -138,7 +138,7 @@ end
 
 function fb:calculateRealCoordinates(x, y)
 
-    if not (x or y) then return end
+    if not (x and y) then return end
     if not self.viewport then return x, y end
 
     --[[
