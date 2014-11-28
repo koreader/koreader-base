@@ -47,7 +47,9 @@ td, th { text-indent: 0px; padding: 3px }
 th {  font-weight: bold; /* background-color: #DDD */ }
 table > caption { text-indent: 0px; padding: 4px; /* background-color: #EEE */ }
 
-code, pre { display: block; white-space: pre; text-align: left; 
+pre { display: block; white-space: pre; text-align: left;
+     font-family: "Droid Sans Mono", monospace; text-align: left }
+code { display: inline; white-space: pre;
      font-family: "Droid Sans Mono", monospace; text-align: left }
 
 body[name="notes"] { font-size: 70%; }
