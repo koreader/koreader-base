@@ -1,5 +1,6 @@
 local ffi = require("ffi")
 local BB = require("ffi/blitbuffer")
+local util = require("ffi/util")
 
 local dummy = require("ffi/posix_h")
 
@@ -23,31 +24,125 @@ local framebuffer = {
     update_mode_fast = nil,
     mech_refresh = nil,
 
-    calc_update_marker = 0,
-    wait_update_marker = ffi.new("uint32_t[1]"),
-
-    marker_waiting = nil,
+    -- we will use this to keep book on the refreshes we
+    -- triggered and care to wait for:
+    refresh_list = nil,
+    -- for now we use up to 10 markers in order to
+    -- leave a bit of room for non-tagged updates
+    max_marker = 10,
 }
+
+--[[ refresh list management: --]]
+
+--[[
+helper function: checks if two rectangles overlap
+--]]
+local function overlaps(rect_a, rect_b)
+    -- TODO: use geometry.lua from main koreader repo
+    if (rect_a.x >= (rect_b.x + rect_b.w))
+    or (rect_a.y >= (rect_b.y + rect_b.h))
+    or (rect_b.x >= (rect_a.x + rect_a.w))
+    or (rect_b.y >= (rect_a.y + rect_a.h)) then
+        return false
+    end
+    return true
+end
+
+--[[
+This just waits for a given marker, identified by the place in our
+tracking list - which is also the marker number we issue.
+--]]
+function framebuffer:_wait_marker(index)
+    if self.mech_wait_update_complete then
+        self.debug("waiting for completion of update", index)
+        local duration = self:mech_wait_update_complete(index)
+        self.debug("duration:", duration)
+    end
+    self.refresh_list[index] = nil
+end
+
+--[[
+check if we have requests to be waited for that cover regions that overlap
+the rectangle we are asking for:
+--]]
+function framebuffer:_wait_for_conflicting(rect)
+    for i = 1, self.max_marker do
+        if self.refresh_list[i] and overlaps(self.refresh_list[i].rect, rect) then
+            self.debug("update area conflicts with active update", i)
+            self:_wait_marker(i)
+        end
+    end
+end
+
+--[[
+does a scan through our tracking list and waits for the oldest refresh we're still
+tracking, waiting for it and then returning its (then available) number
+--]]
+function framebuffer:_wait_for_next()
+    local oldest
+    for i = 1, self.max_marker do
+        if self.refresh_list[i] then
+            if not oldest or self.refresh_list[i].time < self.refresh_list[oldest].time then
+                oldest = i
+            end
+        end
+    end
+    if oldest then
+        self.debug("waiting for a free marker, oldest update is", i)
+        self:_wait_marker(oldest)
+        return oldest
+    end
+    error("instructed to wait for a marker, but there are none to be waited for")
+end
+
+--[[
+scans our tracking list for available markers
+--]]
+function framebuffer:_find_free_marker()
+    for i = 1, self.max_marker do
+        if self.refresh_list[i] == nil then
+            return i
+        end
+    end
+end
+
+--[[
+registers a refresh in our tracking list and returns a valid
+marker number for the kernel call
+--]]
+function framebuffer:_get_marker(rect, refreshtype, waveform_mode)
+    local marker = self:_find_free_marker() or self:_wait_for_next()
+    local time_s, time_us = util.gettime()
+    local refresh = {
+        rect = rect,
+        refreshtype = refreshtype,
+        waveform_mode = waveform_mode,
+        time = time_s * 1000 + time_us / 1000,
+    }
+    self.debug("assigned marker", marker, "to update:", refresh)
+    self.refresh_list[marker] = refresh
+    return marker
+end
 
 --[[ handlers for the wait API of the eink driver --]]
 
 -- Kindle's MXCFB_WAIT_FOR_UPDATE_COMPLETE_PEARL == 0x4004462f
 local function kindle_pearl_mxc_wait_for_update_complete(fb, marker)
     -- Wait for the previous update to be completed
-    return ffi.C.ioctl(fb.fd, ffi.C.MXCFB_WAIT_FOR_UPDATE_COMPLETE_PEARL, marker)
+    return ffi.C.ioctl(fb.fd, ffi.C.MXCFB_WAIT_FOR_UPDATE_COMPLETE_PEARL, ffi.new("uint32_t[1]", marker))
 end
 
 -- Kobo's MXCFB_WAIT_FOR_UPDATE_COMPLETE == 0x4004462f
 local function kobo_mxc_wait_for_update_complete(fb, marker)
     -- Wait for the previous update to be completed
-    return ffi.C.ioctl(fb.fd, ffi.C.MXCFB_WAIT_FOR_UPDATE_COMPLETE, marker)
+    return ffi.C.ioctl(fb.fd, ffi.C.MXCFB_WAIT_FOR_UPDATE_COMPLETE, ffi.new("uint32_t[1]", marker))
 end
 
 -- Kindle's MXCFB_WAIT_FOR_UPDATE_COMPLETE == 0xc008462f
 local function kindle_carta_mxc_wait_for_update_complete(fb, marker)
     -- Wait for the previous update to be completed
     local carta_update_marker = ffi.new("struct mxcfb_update_marker_data[1]")
-    carta_update_marker[0].update_marker = marker[0]
+    carta_update_marker[0].update_marker = marker
     -- We're not using EPDC_FLAG_TEST_COLLISION, assume 0 is okay.
     carta_update_marker[0].collision_test = 0
     return ffi.C.ioctl(fb.fd, ffi.C.MXCFB_WAIT_FOR_UPDATE_COMPLETE, carta_update_marker)
@@ -56,7 +151,7 @@ end
 -- Kindle's MXCFB_WAIT_FOR_UPDATE_SUBMISSION == 0x40044637
 local function kindle_mxc_wait_for_update_submission(fb, marker)
     -- Wait for the current (the one we just sent) update to be submitted
-    return ffi.C.ioctl(fb.fd, ffi.C.MXCFB_WAIT_FOR_UPDATE_SUBMISSION, marker)
+    return ffi.C.ioctl(fb.fd, ffi.C.MXCFB_WAIT_FOR_UPDATE_SUBMISSION, ffi.new("uint32_t[1]", marker))
 end
 
 
@@ -64,24 +159,14 @@ end
 
 -- Kindle's MXCFB_SEND_UPDATE == 0x4048462e | Kobo's MXCFB_SEND_UPDATE == 0x4044462e
 local function mxc_update(fb, refarea, refreshtype, waveform_mode, wait, x, y, w, h)
-    -- if we have a lingering update marker that we should wait for, we do so now:
-    if fb.mech_wait_update_complete and fb.wait_update_marker[0] ~= 0 then
-        fb.debug("refresh: wait for update", fb.wait_update_marker[0])
-        fb.mech_wait_update_complete(fb, fb.wait_update_marker)
-        fb.wait_update_marker[0] = 0
-    end
-    -- if we should wait (later) for the update we're doing now, we need to register a new
-    -- update marker:
-    if wait then
-        fb.calc_update_marker = (fb.calc_update_marker % 16 ) + 1
-        fb.wait_update_marker[0] = fb.calc_update_marker
-        fb.debug("refresh: next update has marker", fb.wait_update_marker[0])
-    end
-
     local bb = fb.full_bb or fb.bb
     w, x = BB.checkBounds(w or bb:getWidth(), x or 0, 0, bb:getWidth(), 0xFFFF)
     h, y = BB.checkBounds(h or bb:getHeight(), y or 0, 0, bb:getHeight(), 0xFFFF)
     x, y, w, h = bb:getPhysicalRect(x, y, w, h)
+
+    local rect = { x=x, y=y, w=w, h=h }
+    -- always wait for conflicts:
+    fb:_wait_for_conflicting(rect)
 
 	refarea[0].update_mode = refreshtype or ffi.C.UPDATE_MODE_PARTIAL
 	refarea[0].waveform_mode = waveform_mode or ffi.C.WAVEFORM_MODE_GC16
@@ -89,8 +174,13 @@ local function mxc_update(fb, refarea, refreshtype, waveform_mode, wait, x, y, w
 	refarea[0].update_region.top = y
 	refarea[0].update_region.width = w
 	refarea[0].update_region.height = h
-	-- Update marker - either set above (when wait==true), or 0
-	refarea[0].update_marker = fb.wait_update_marker[0]
+	-- send an update marker when wait==true, or 0 otherwise
+    local submit_marker
+    if wait then
+        submit_marker = fb:_get_marker(rect, refreshtype, waveform_mode)
+    else
+        refarea[0].update_marker = 0
+    end
 	-- NOTE: We're not using EPDC_FLAG_USE_ALT_BUFFER
 	refarea[0].alt_buffer_data.phys_addr = 0
 	refarea[0].alt_buffer_data.width = 0
@@ -99,11 +189,12 @@ local function mxc_update(fb, refarea, refreshtype, waveform_mode, wait, x, y, w
 	refarea[0].alt_buffer_data.alt_update_region.left = 0
 	refarea[0].alt_buffer_data.alt_update_region.width = 0
 	refarea[0].alt_buffer_data.alt_update_region.height = 0
+
 	ffi.C.ioctl(fb.fd, ffi.C.MXCFB_SEND_UPDATE, refarea)
 
-    if fb.mech_wait_update_submission and wait then
+    if submit_marker and fb.mech_wait_update_submission then
         fb.debug("refresh: wait for submission")
-        fb.mech_wait_update_submission(fb, fb.wait_update_marker)
+        fb.mech_wait_update_submission(fb, submit_marker)
     end
 end
 
@@ -167,6 +258,8 @@ end
 
 function framebuffer:init()
     framebuffer.parent.init(self)
+
+    self.refresh_list = {}
 
     if self.device:isKindle() then
         require("ffi/mxcfb_kindle_h")
