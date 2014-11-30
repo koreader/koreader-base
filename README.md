@@ -64,6 +64,8 @@ on your view.
 If you are using Fedora Core Linux, do `yum install SDL SDL-devel`.
 If you are using Ubuntu, install `libsdl-dev1.2` package.
 
+Alternatively, SDL2 is supported, too.
+
 To build in "emulation mode", you need to run make like this:
 
 ```
@@ -76,6 +78,23 @@ changed at runtime by changing environment variables:
 
 ```
 EMULATE_READER_W=746 EMULATE_READER_H=1024
+```
+
+Koreader supports "viewports", i.e. displaying only in a rectangular
+excerpt of the screen. This is useful on devices where the framebuffer
+is larger than the area that is actually visible. In order to simulate
+such a viewport using the emulator, specify a specially crafted environment
+variable:
+```
+EMULATE_READER_VIEWPORT="{x=50,w=600,y=10,h=680}"
+```
+
+You can also simulate e-ink refresh with the emulator. When active, only
+refreshed areas of the screen are actually updated and you also get a visual
+inverse flash feedback. In order to activate that mode, set an environment
+variable to the number of milliseconds you want the flash to endure:
+```
+EMULATE_READER_FLASH=100
 ```
 
 [travis-icon]:https://travis-ci.org/koreader/koreader-base.png?branch=master
