@@ -279,7 +279,7 @@ end
 function KOPTContext_mt.__index:exportSrcPNGFile(pboxes, drawer, filename)
     local pix = self:getSrcPix(pboxes, drawer)
     if pix ~= nil then
-        leptonica.pixWritePng(ffi.cast("char*", filename), pix, ffi.new("float", 0.0))
+        leptonica.pixWritePng(filename, pix, ffi.new("float", 0.0))
         leptonica.pixDestroy(ffi.new('PIX *[1]', pix))
     end
 end

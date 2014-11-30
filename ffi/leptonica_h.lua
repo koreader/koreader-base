@@ -78,7 +78,7 @@ l_int32 numaGetCount (NUMA *na);
 void boxaDestroy (BOXA **pboxa);
 void numaDestroy (NUMA **pna);
 void pixDestroy (PIX **ppix);
-l_int32 pixWritePng(char *filename, PIX *pix, l_float32 gamma);
+l_int32 pixWritePng(const char *filename, PIX *pix, l_float32 gamma);
 l_int32 pixWriteMemPng(l_uint8 **pdata, size_t *psize, PIX *pix, l_float32 gamma);
 l_uint32 * pixGetData(PIX *pix);
 l_int32 pixGetWpl(PIX *pix);

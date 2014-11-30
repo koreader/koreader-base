@@ -1208,7 +1208,7 @@ function BB_mt.__index:writePNG(filename)
                 lept.pixSetPixel(pix, x, y, self:getPixel(x, y):getColor8().a)
             end
         end
-        lept.pixWritePng(ffi.cast("char*", filename), pix, ffi.new("float", 0.0))
+        lept.pixWritePng(filename, pix, ffi.new("float", 0.0))
         lept.pixDestroy(ffi.new('PIX *[1]', pix))
     end
 end
