@@ -3,13 +3,25 @@ local SDL = require("ffi/SDL2_0")
 local BB = require("ffi/blitbuffer")
 local util = require("ffi/util")
 
-local framebuffer = {}
+local framebuffer = {
+    -- this blitbuffer will be used when we use refresh emulation
+    sdl_bb = nil,
+}
 
 function framebuffer:init()
     if not self.dummy then
 		SDL.open()
 		-- we present this buffer to the outside
-		self.bb = BB.new(SDL.w, SDL.h, BB.TYPE_BBRGB32)
+		local bb = BB.new(SDL.w, SDL.h, BB.TYPE_BBRGB32)
+        local flash = os.getenv("EMULATE_READER_FLASH")
+        if flash then
+            -- in refresh emulation mode, we use a shadow blitbuffer
+            -- and blit refresh areas from it.
+            self.sdl_bb = bb
+            self.bb = BB.new(SDL.w, SDL.h, BB.TYPE_BBRGB32)
+        else
+            self.bb = bb
+        end
 	else
 		self.bb = BB.new(600, 800)
     end
@@ -43,10 +55,12 @@ function framebuffer:refreshFullImp()
 
     local flash = os.getenv("EMULATE_READER_FLASH")
     if flash then
-        bb:invertRect(x, y, w, h)
+        self.sdl_bb:invertRect(x, y, w, h)
         render(bb)
         util.usleep(tonumber(flash)*1000)
-        bb:invertRect(x, y, w, h)
+        self.sdl_bb:setRotation(bb:getRotation())
+        self.sdl_bb:setInverse(bb:getInverse())
+        self.sdl_bb:blitFrom(bb, x, y, x, y, w, h)
     end
     render(bb)
 end
