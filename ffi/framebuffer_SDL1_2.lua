@@ -6,6 +6,7 @@ local util = require("ffi/util")
 local framebuffer = {
     -- this blitbuffer will be used when we use refresh emulation
     sdl_bb = nil,
+    flash_duration = nil,
 }
 
 function framebuffer:init()
@@ -13,8 +14,8 @@ function framebuffer:init()
 		SDL.open()
 		local bb = BB.new(SDL.screen.w, SDL.screen.h, BB.TYPE_BBRGB32,
 			SDL.screen.pixels, SDL.screen.pitch)
-        local flash = os.getenv("EMULATE_READER_FLASH")
-        if flash then
+        self.flash_duration = tonumber(os.getenv("EMULATE_READER_FLASH"))
+        if self.flash_duration then
             -- in refresh emulation mode, we use a shadow blitbuffer
             -- and blit refresh areas from it.
             self.sdl_bb = bb
@@ -41,7 +42,7 @@ local function flip()
 	SDL.SDL.SDL_Flip(SDL.screen)
 end
 
-function framebuffer:refreshFullImp(x, y, w, h)
+function framebuffer:_refresh(x, y, w, h, flash)
 	if self.dummy then return end
 
     local bb = self.full_bb or self.bb
@@ -53,19 +54,44 @@ function framebuffer:refreshFullImp(x, y, w, h)
         h = bb:getHeight()
     end
 
-    self.debug("refresh on physical rectangle", x, y, w, h)
-
-    local flash = os.getenv("EMULATE_READER_FLASH")
     if flash then
-        self.sdl_bb:invertRect(x, y, w, h)
-        flip()
-        util.usleep(tonumber(flash)*1000)
+        if flash > 0 then
+            self.sdl_bb:invertRect(x, y, w, h)
+            flip()
+            util.usleep(flash*1000)
+        end
         self.sdl_bb:setRotation(bb:getRotation())
         self.sdl_bb:setInverse(bb:getInverse())
         self.sdl_bb:blitFrom(bb, x, y, x, y, w, h)
     end
 
     flip()
+end
+
+function framebuffer:refreshFullImp(x, y, w, h)
+    self.debug("full refresh on physical rectangle", x, y, w, h)
+    self:_refresh(x, y, w, h, self.flash_duration)
+end
+
+function framebuffer:refreshPartialImp(x, y, w, h)
+    self.debug("partial refresh on physical rectangle", x, y, w, h)
+    -- make partial refresh duration 0.5 times of full refresh,
+    -- and adapt speed to size of the area being updated
+    self:_refresh(x, y, w, h,
+        self.flash_duration and
+        (self.flash_duration * 0.5 * w*h / (self.bb:getWidth()*self.bb:getHeight())))
+end
+
+function framebuffer:refreshUIImp(x, y, w, h)
+    self.debug("UI refresh on physical rectangle", x, y, w, h)
+    self:_refresh(x, y, w, h,
+        self.flash_duration and
+        (self.flash_duration * 0.25 * w*h / (self.bb:getWidth()*self.bb:getHeight())))
+end
+
+function framebuffer:refreshFastImp(x, y, w, h)
+    self.debug("fast refresh on physical rectangle", x, y, w, h)
+    self:_refresh(x, y, w, h, self.flash_duration and 0)
 end
 
 function framebuffer:close()
