@@ -35,11 +35,7 @@ local document_mt = { __index = {} }
 local page_mt = { __index = {} }
 local mupdf_mt = {}
 
-local function print_debug(...)
-    print(...)
-end
-
-mupdf.debug = print_debug
+mupdf.debug = function() --[[ no debugging by default ]] end
 
 -- a wrapper for mupdf exception error messages
 local function merror(message)
