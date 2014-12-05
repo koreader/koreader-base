@@ -164,6 +164,11 @@ local function mxc_update(fb, refarea, refreshtype, waveform_mode, wait, x, y, w
     h, y = BB.checkBounds(h or bb:getHeight(), y or 0, 0, bb:getHeight(), 0xFFFF)
     x, y, w, h = bb:getPhysicalRect(x, y, w, h)
 
+    if w == 0 or h == 0 then
+        fb.debug("got a 0 size (height and/or width) refresh request, ignoring it.")
+        return
+    end
+
     local rect = { x=x, y=y, w=w, h=h }
     -- always wait for conflicts:
     fb:_wait_for_conflicting(rect)
