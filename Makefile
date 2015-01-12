@@ -253,8 +253,8 @@ libs: \
 
 $(OUTPUT_DIR)/libs/libkoreader-input.so: input.c \
 			$(POPEN_NOSHELL_LIB)
-	$(CC) $(DYNLIB_CFLAGS) \
-		-o $@ $< $(POPEN_NOSHELL_LIB)
+	$(CC) $(DYNLIB_CFLAGS) $(if $(POCKETBOOK),-DPOCKETBOOK,) \
+		-o $@ $^ $(if $(POCKETBOOK),-linkview,) \
 
 $(OUTPUT_DIR)/libs/libkoreader-lfs.so: \
 			$(if $(or $(ANDROID),$(WIN32)),$(LUAJIT_LIB),) \
@@ -458,7 +458,7 @@ $(CZMQ_LIB): $(ZMQ_LIB)
 	# patch: add _DEFAULT_SOURCE define for glibc starting at version 2.20
 	-cd $(CZMQ_DIR) && patch -N -p1 < ../czmq_default_source_define.patch
 	-$(MAKE) -j$(PROCESSORS) -C $(CZMQ_DIR)/build --silent uninstall
-	$(MAKE) -j$(PROCESSORS) -C $(CZMQ_DIR)/build --silent install
+	-$(MAKE) -j$(PROCESSORS) -C $(CZMQ_DIR)/build --silent install
 	-cd $(CZMQ_DIR) && patch -R -p1 < ../zbeacon.patch
 	-cd $(CZMQ_DIR) && patch -R -p1 < ../czmq_default_source_define.patch
 	cp -fL $(CZMQ_DIR)/build/$(if $(WIN32),bin,lib)/$(notdir $(CZMQ_LIB)) $@
@@ -480,7 +480,7 @@ $(FILEMQ_LIB): $(ZMQ_LIB) $(CZMQ_LIB) $(OPENSSL_LIB)
 		sed -i 's|^hardcode_libdir_flag_spec=.*|hardcode_libdir_flag_spec=""|g' libtool && \
 		sed -i 's|^runpath_var=LD_RUN_PATH|runpath_var=DIE_RPATH_DIE|g' libtool
 	-$(MAKE) -j$(PROCESSORS) -C $(FILEMQ_DIR)/build --silent uninstall
-	$(MAKE) -j$(PROCESSORS) -C $(FILEMQ_DIR)/build --silent install
+	-$(MAKE) -j$(PROCESSORS) -C $(FILEMQ_DIR)/build --silent install
 	cp -fL $(FILEMQ_DIR)/build/$(if $(WIN32),bin,lib)/$(notdir $(FILEMQ_LIB)) $@
 
 $(ZYRE_LIB): $(ZMQ_LIB) $(CZMQ_LIB)
@@ -500,7 +500,7 @@ $(ZYRE_LIB): $(ZMQ_LIB) $(CZMQ_LIB)
 		sed -i 's|^hardcode_libdir_flag_spec=.*|hardcode_libdir_flag_spec=""|g' libtool && \
 		sed -i 's|^runpath_var=LD_RUN_PATH|runpath_var=DIE_RPATH_DIE|g' libtool
 	-$(MAKE) -j$(PROCESSORS) -C $(ZYRE_DIR)/build --silent uninstall
-	$(MAKE) -j$(PROCESSORS) -C $(ZYRE_DIR)/build --silent install
+	-$(MAKE) -j$(PROCESSORS) -C $(ZYRE_DIR)/build --silent install
 	cp -fL $(ZYRE_DIR)/build/$(if $(WIN32),bin,lib)/$(notdir $(ZYRE_LIB)) $@
 
 # ===========================================================================
@@ -512,6 +512,14 @@ android-toolchain:
 	mkdir -p $(ANDROID_TOOLCHAIN)
 	$(NDK)/build/tools/make-standalone-toolchain.sh --platform=android-9 \
 		--install-dir=$(ANDROID_TOOLCHAIN)
+
+# ===========================================================================
+# helper target for creating standalone pocket toolchain from
+# pocketbook-free SDK: https://github.com/pocketbook-free/SDK_481
+
+pocketbook-toolchain:
+	cd toolchain && \
+		git clone https://github.com/pocketbook-free/SDK_481 pocketbook-toolchain
 
 # ===========================================================================
 # helper target for initializing third-party code

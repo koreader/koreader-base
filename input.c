@@ -17,6 +17,11 @@
 */
 
 #include "popen-noshell/popen_noshell.h"
+
+#ifdef POCKETBOOK
+#include "inkview.h"
+#endif
+
 #include <err.h>
 #include <stdio.h>
 #include <signal.h>
@@ -62,14 +67,75 @@ int findFreeFdSlot() {
 	return -1;
 }
 
+#ifdef POCKETBOOK
+int is_in_touch = 0;
+static inline void genEmuEvent(int fd, int type, int code, int value) {
+	struct input_event input;
+
+	input.type = type;
+	input.code = code;
+	input.value = value;
+
+	gettimeofday(&input.time, NULL);
+	if(write(fd, &input, sizeof(struct input_event)) == -1) {
+		printf("Failed to generate emu event.\n");
+	}
+
+	return;
+}
+
+int pb_event_handler(int type, int par1, int par2) {
+	//printf("ev:%d %d %d\n", type, par1, par2);
+    //fflush(stdout);
+    if (type == EVT_POINTERDOWN) {
+		is_in_touch = 1;
+		genEmuEvent(inputfds[0], EV_ABS, ABS_MT_TRACKING_ID, 0);
+		genEmuEvent(inputfds[0], EV_ABS, ABS_MT_POSITION_X, par1);
+		genEmuEvent(inputfds[0], EV_ABS, ABS_MT_POSITION_Y, par2);
+    } else if (type == EVT_MTSYNC) {
+		genEmuEvent(inputfds[0], EV_SYN, SYN_REPORT, 0);
+    } else if (type == EVT_POINTERMOVE) {
+		if (is_in_touch) {
+			genEmuEvent(inputfds[0], EV_ABS, ABS_MT_POSITION_X, par1);
+			genEmuEvent(inputfds[0], EV_ABS, ABS_MT_POSITION_Y, par2);
+		}
+    } else if (type == EVT_POINTERUP) {
+		is_in_touch = 0;
+		genEmuEvent(inputfds[0], EV_ABS, ABS_MT_TRACKING_ID, -1);
+    }
+	return 0;
+}
+#endif
+
 static int openInputDevice(lua_State *L) {
 	const char* inputdevice = luaL_checkstring(L, 1);
+#ifdef POCKETBOOK
+	int inkview_events = luaL_checkint(L, 2);
+#endif
 	int fd;
 	int childpid;
 	fd = findFreeFdSlot();
 	if(fd == -1) {
 		return luaL_error(L, "no free slot for new input device <%s>", inputdevice);
 	}
+
+#ifdef POCKETBOOK
+	if(inkview_events == 1) {
+		if ((childpid = fork()) == -1) {
+			return luaL_error(L, "cannot fork() emu event listener");
+		}
+		if(childpid == 0) {
+			/* we only use inputfds[0] in emu mode, because we only have one
+			* fake device so far. */
+			inputfds[0] = open(inputdevice, O_RDWR | O_NONBLOCK);
+			if (inputfds < 0) {
+				return luaL_error(L, "error opening input device <%s>: %d", inputdevice, errno);
+			}
+			InkViewMain(pb_event_handler);
+		}
+	}
+#endif
+
 	if(!strcmp("fake_events", inputdevice)) {
 		/* special case: the power slider */
 		int pipefd[2];
@@ -192,9 +258,6 @@ static int fakeTapInput(lua_State *L) {
 	int inputfd = -1;
 	struct input_event ev;
 	inputfd = open(inputdevice, O_WRONLY | O_NDELAY);
-	if (inputfd == NULL) {
-		return luaL_error(L, "cannot open input device <%s>", inputdevice);
-	}
 	if(inputfd != -1) {
 		gettimeofday(&ev.time, NULL);
 		ev.type = 3;
@@ -246,6 +309,8 @@ static int fakeTapInput(lua_State *L) {
 		ev.code = 0;
 		ev.value = 0;
 		write(inputfd, &ev, sizeof(ev));
+	} else {
+		return luaL_error(L, "cannot open input device <%s>", inputdevice);
 	}
 	ioctl(inputfd, EVIOCGRAB, 0);
 	close(inputfd);
