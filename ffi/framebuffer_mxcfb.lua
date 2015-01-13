@@ -157,7 +157,9 @@ end
 
 --[[ refresh functions ]]--
 
--- Kindle's MXCFB_SEND_UPDATE == 0x4048462e | Kobo's MXCFB_SEND_UPDATE == 0x4044462e
+-- Kindle's MXCFB_SEND_UPDATE == 0x4048462e
+-- Kobo's MXCFB_SEND_UPDATE == 0x4044462e
+-- Pocketbook's MXCFB_SEND_UPDATE == 0x4040462e
 local function mxc_update(fb, refarea, refreshtype, waveform_mode, wait, x, y, w, h)
     local bb = fb.full_bb or fb.bb
     w, x = BB.checkBounds(w or bb:getWidth(), x or 0, 0, bb:getWidth(), 0xFFFF)
@@ -235,6 +237,14 @@ local function refresh_kobo(fb, refreshtype, waveform_mode, wait, x, y, w, h)
 	else
 		refarea[0].flags = 0
 	end
+
+	return mxc_update(fb, refarea, refreshtype, waveform_mode, wait, x, y, w, h)
+end
+
+local function refresh_pocketbook(fb, refreshtype, waveform_mode, wait, x, y, w, h)
+	local refarea = ffi.new("struct mxcfb_update_data[1]")
+	-- TEMP_USE_AMBIENT
+	refarea[0].temp = 0x1000
 
 	return mxc_update(fb, refarea, refreshtype, waveform_mode, wait, x, y, w, h)
 end
@@ -362,6 +372,29 @@ function framebuffer:init()
             self.wait_for_marker_full = true
             self.wait_for_marker_partial = false
             self.wait_for_marker_fast = false
+        end
+    elseif self.device:isPocketBook() then
+        require("ffi/mxcfb_pocketbook_h")
+
+        self.mech_refresh = refresh_pocketbook
+        self.mech_wait_update_complete = kindle_pearl_mxc_wait_for_update_complete
+        self.mech_wait_update_submission = kindle_mxc_wait_for_update_submission
+
+        self.update_mode_partial = ffi.C.UPDATE_MODE_PARTIAL
+        self.update_mode_full = ffi.C.UPDATE_MODE_FULL
+        self.update_mode_fast = ffi.C.UPDATE_MODE_PARTIAL
+        self.update_mode_ui = ffi.C.UPDATE_MODE_PARTIAL
+
+        self.waveform_fast = ffi.C.WAVEFORM_MODE_A2
+        self.waveform_ui = ffi.C.WAVEFORM_MODE_GC16
+        self.waveform_full = ffi.C.WAVEFORM_MODE_GC16
+
+        if self.device.model == "PocketBook" then
+            self.waveform_partial = ffi.C.WAVEFORM_MODE_GC16
+            self.wait_for_marker_full = true
+            self.wait_for_marker_partial = false
+            self.wait_for_marker_fast = false
+            self.wait_for_marker_ui = false
         end
     else
         error("unknown device type")

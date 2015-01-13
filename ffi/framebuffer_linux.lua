@@ -56,6 +56,15 @@ function framebuffer:init()
         end
         -- classic eink framebuffer driver has grayscale values inverted (i.e. 0xF = black, 0 = white)
         self.bb:invert()
+    -- pocketbook 840 seems have no finfo.id
+    elseif string.byte(ffi.string(finfo.id, 16), 1, 1) == 0 then
+        if vinfo.bits_per_pixel == 16 then
+            self.bb = BB.new(vinfo.xres, vinfo.yres, BB.TYPE_BBRGB16, self.data, finfo.line_length)
+        elseif vinfo.bits_per_pixel == 8 then
+            self.bb = BB.new(vinfo.xres, vinfo.yres, BB.TYPE_BB8, self.data, finfo.line_length)
+        else
+            error("unknown bpp value for the mxc eink driver")
+        end
     else
         error("framebuffer model not supported");
     end
