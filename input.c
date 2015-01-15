@@ -85,8 +85,13 @@ static inline void genEmuEvent(int fd, int type, int code, int value) {
 }
 
 int pb_event_handler(int type, int par1, int par2) {
-	//printf("ev:%d %d %d\n", type, par1, par2);
-    //fflush(stdout);
+	printf("ev:%d %d %d\n", type, par1, par2);
+	fflush(stdout);
+	// general settings in only possible in forked process
+	if (type == EVT_INIT) {
+		SetPanelType(PANEL_DISABLED);
+	}
+
     if (type == EVT_POINTERDOWN) {
 		is_in_touch = 1;
 		genEmuEvent(inputfds[0], EV_ABS, ABS_MT_TRACKING_ID, 0);
@@ -102,6 +107,8 @@ int pb_event_handler(int type, int par1, int par2) {
     } else if (type == EVT_POINTERUP) {
 		is_in_touch = 0;
 		genEmuEvent(inputfds[0], EV_ABS, ABS_MT_TRACKING_ID, -1);
+    } else {
+		genEmuEvent(inputfds[0], type, par1, par2);
     }
 	return 0;
 }

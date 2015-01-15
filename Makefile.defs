@@ -44,6 +44,7 @@ else ifeq ($(TARGET), win32)
 else ifeq ($(TARGET), pocketbook)
     CHOST?=arm-obreey-linux-gnueabi
     export POCKETBOOK=1
+    export PATH:=$(CURDIR)/$(POCKETBOOK_TOOLCHAIN)/bin:$(PATH)
     export SYSROOT=$(CURDIR)/$(POCKETBOOK_TOOLCHAIN)/arm-obreey-linux-gnueabi/sysroot
 endif
 
