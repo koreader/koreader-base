@@ -435,6 +435,15 @@ $(ZMQ_LIB):
 	-$(MAKE) -j$(PROCESSORS) -C $(ZMQ_DIR)/build --silent uninstall
 	$(MAKE) -j$(PROCESSORS) -C $(ZMQ_DIR)/build --silent install
 	cp -fL $(ZMQ_DIR)/build/$(if $(WIN32),bin,lib)/$(notdir $(ZMQ_LIB)) $@
+ifdef POCKETBOOK
+	# when cross compiling libtool would find libstdc++.la in wrong location
+	# accoding to the GCC configuration
+	sed -i 's|^dependency_libs=.*|dependency_libs=" -lrt -lpthread -lstdc++"|g' \
+		$(ZMQ_DIR)/build/lib/libzmq.la
+	# and the libuuid.so is also missing in the PocketBook SDK, but libuuid.la
+	# may let the build system assume that libuuid is installed
+	rm -f $(CURDIR)/$(POCKETBOOK_TOOLCHAIN)/arm-obreey-linux-gnueabi/sysroot/usr/lib/libuuid*
+endif
 
 $(CZMQ_LIB): $(ZMQ_LIB)
 	mkdir -p $(CZMQ_DIR)/build
@@ -458,7 +467,7 @@ $(CZMQ_LIB): $(ZMQ_LIB)
 	# patch: add _DEFAULT_SOURCE define for glibc starting at version 2.20
 	-cd $(CZMQ_DIR) && patch -N -p1 < ../czmq_default_source_define.patch
 	-$(MAKE) -j$(PROCESSORS) -C $(CZMQ_DIR)/build --silent uninstall
-	-$(MAKE) -j$(PROCESSORS) -C $(CZMQ_DIR)/build --silent install
+	$(MAKE) -j$(PROCESSORS) -C $(CZMQ_DIR)/build --silent install
 	-cd $(CZMQ_DIR) && patch -R -p1 < ../zbeacon.patch
 	-cd $(CZMQ_DIR) && patch -R -p1 < ../czmq_default_source_define.patch
 	cp -fL $(CZMQ_DIR)/build/$(if $(WIN32),bin,lib)/$(notdir $(CZMQ_LIB)) $@
@@ -480,7 +489,7 @@ $(FILEMQ_LIB): $(ZMQ_LIB) $(CZMQ_LIB) $(OPENSSL_LIB)
 		sed -i 's|^hardcode_libdir_flag_spec=.*|hardcode_libdir_flag_spec=""|g' libtool && \
 		sed -i 's|^runpath_var=LD_RUN_PATH|runpath_var=DIE_RPATH_DIE|g' libtool
 	-$(MAKE) -j$(PROCESSORS) -C $(FILEMQ_DIR)/build --silent uninstall
-	-$(MAKE) -j$(PROCESSORS) -C $(FILEMQ_DIR)/build --silent install
+	$(MAKE) -j$(PROCESSORS) -C $(FILEMQ_DIR)/build --silent install
 	cp -fL $(FILEMQ_DIR)/build/$(if $(WIN32),bin,lib)/$(notdir $(FILEMQ_LIB)) $@
 
 $(ZYRE_LIB): $(ZMQ_LIB) $(CZMQ_LIB)
@@ -500,7 +509,7 @@ $(ZYRE_LIB): $(ZMQ_LIB) $(CZMQ_LIB)
 		sed -i 's|^hardcode_libdir_flag_spec=.*|hardcode_libdir_flag_spec=""|g' libtool && \
 		sed -i 's|^runpath_var=LD_RUN_PATH|runpath_var=DIE_RPATH_DIE|g' libtool
 	-$(MAKE) -j$(PROCESSORS) -C $(ZYRE_DIR)/build --silent uninstall
-	-$(MAKE) -j$(PROCESSORS) -C $(ZYRE_DIR)/build --silent install
+	$(MAKE) -j$(PROCESSORS) -C $(ZYRE_DIR)/build --silent install
 	cp -fL $(ZYRE_DIR)/build/$(if $(WIN32),bin,lib)/$(notdir $(ZYRE_LIB)) $@
 
 # ===========================================================================
@@ -518,6 +527,7 @@ android-toolchain:
 # pocketbook-free SDK: https://github.com/pocketbook-free/SDK_481
 
 pocketbook-toolchain:
+	mkdir -p toolchain
 	cd toolchain && \
 		git clone https://github.com/pocketbook-free/SDK_481 pocketbook-toolchain
 
