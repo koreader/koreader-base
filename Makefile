@@ -430,6 +430,7 @@ $(ZMQ_LIB):
 		LDFLAGS="$(LDFLAGS)" \
 		libzmq_have_xmlto=no libzmq_have_asciidoc=no \
 			../configure -q --prefix=$(CURDIR)/$(ZMQ_DIR)/build \
+				$(if $(POCKETBOOK),--disable-eventfd,) \
 				--disable-static --enable-shared \
 				--host=$(CHOST)
 	-$(MAKE) -j$(PROCESSORS) -C $(ZMQ_DIR)/build --silent uninstall
