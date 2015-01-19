@@ -163,22 +163,19 @@ int pb_event_handler(int type, int par1, int par2) {
 				genEmuEvent(inputfds[0], EV_ABS, ABS_MT_TRACKING_ID, -1);
 				genEmuEvent(inputfds[0], EV_SYN, SYN_REPORT, 0);
 			}
+		} else {
+			genEmuEvent(inputfds[0], EV_SYN, SYN_REPORT, 0);
 		}
     } else if (type == EVT_POINTERMOVE) {
 		// multi touch POINTERMOVE will be reported in EVT_MTSYNC
 		// this will handle single touch POINTERMOVE only
 		if (touch_pointers == 1) {
-			genEmuEvent(inputfds[0], EV_ABS, ABS_MT_TRACKING_ID, 0);
 			genEmuEvent(inputfds[0], EV_ABS, ABS_MT_POSITION_X, par1);
 			genEmuEvent(inputfds[0], EV_ABS, ABS_MT_POSITION_Y, par2);
-			genEmuEvent(inputfds[0], EV_SYN, SYN_REPORT, 0);
 		}
     } else if (type == EVT_POINTERUP) {
 		if (touch_pointers == 1) {
 			genEmuEvent(inputfds[0], EV_ABS, ABS_MT_TRACKING_ID, -1);
-			genEmuEvent(inputfds[0], EV_ABS, ABS_MT_POSITION_X, par1);
-			genEmuEvent(inputfds[0], EV_ABS, ABS_MT_POSITION_Y, par2);
-			genEmuEvent(inputfds[0], EV_SYN, SYN_REPORT, 0);
 		}
 		touch_pointers = 0;
     } else {
