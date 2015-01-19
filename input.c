@@ -20,6 +20,7 @@
 
 #ifdef POCKETBOOK
 #include "inkview.h"
+#include <dlfcn.h>
 #endif
 
 #include <err.h>
@@ -68,7 +69,26 @@ int findFreeFdSlot() {
 }
 
 #ifdef POCKETBOOK
-int is_in_touch = 0;
+#define ABS_MT_SLOT		0x2f
+
+typedef struct real_iv_mtinfo_s {
+	int active;
+	int x;
+	int y;
+	int pressure;
+	int rsv_1;
+	int rsv_2;
+	int rsv_3; // iv_mtinfo from SDK 481 misses this field
+	int rsv_4; // iv_mtinfo from SDK 481 misses this field
+} real_iv_mtinfo;
+
+// Since SDK 481 provides a wrong iv_mtinfo that has 8 bytes less in length
+// when indexing iv_mtinfo in the second slot the x and y will be wrong
+// we currently fix this by making a real iv_mtinfo struct, this is dirty hack
+// because of the lame API design of GetTouchInfo. It could be better to pass
+// the slot paramter to GetTouchInfo which returns only one iv_mtinfo for that slot.
+#define iv_mtinfo real_iv_mtinfo
+
 static inline void genEmuEvent(int fd, int type, int code, int value) {
 	struct input_event input;
 
@@ -84,29 +104,80 @@ static inline void genEmuEvent(int fd, int type, int code, int value) {
 	return;
 }
 
+iv_mtinfo* (*gti)(void); /* Pointer to GetTouchInfo() function. */
+void get_gti_pointer() {
+	/* This gets the pointer to the GetTouchInfo() function if it is available. */
+	void *handle;
+
+	if ((handle = dlopen("libinkview.so", RTLD_LAZY))) {
+		*(void **) (&gti) = dlsym(handle, "GetTouchInfo");
+		dlclose(handle);
+	} else
+		gti = NULL;
+}
+
+void debug_mtinfo(iv_mtinfo *mti) {
+	int i;
+	for (i = 0; i < 32; i++) {
+		if (i > 0) printf(":");
+		printf("%02X", ((char*)mti)[i]);
+	}
+	printf("\n");
+}
+
+int touch_pointers = 0;
 int pb_event_handler(int type, int par1, int par2) {
-	printf("ev:%d %d %d\n", type, par1, par2);
-	fflush(stdout);
+	//printf("ev:%d %d %d\n", type, par1, par2);
+	//fflush(stdout);
+	int i;
+	iv_mtinfo *mti;
 	// general settings in only possible in forked process
 	if (type == EVT_INIT) {
 		SetPanelType(PANEL_DISABLED);
+		get_gti_pointer();
 	}
 
     if (type == EVT_POINTERDOWN) {
-		is_in_touch = 1;
+		touch_pointers = 1;
 		genEmuEvent(inputfds[0], EV_ABS, ABS_MT_TRACKING_ID, 0);
 		genEmuEvent(inputfds[0], EV_ABS, ABS_MT_POSITION_X, par1);
 		genEmuEvent(inputfds[0], EV_ABS, ABS_MT_POSITION_Y, par2);
+		//printf("****init slot0:%d %d\n", par1, par2);
     } else if (type == EVT_MTSYNC) {
-		genEmuEvent(inputfds[0], EV_SYN, SYN_REPORT, 0);
+		if (touch_pointers && (par2 == 2)) {
+			if (gti && (mti = (*gti)())) {
+				touch_pointers = par2;
+				for (i = 0; i < touch_pointers; i++) {
+					//printf("****sync slot%d:%d %d\n", i, mti[i].x, mti[i].y);
+					//debug_mtinfo(&mti[i]);
+					genEmuEvent(inputfds[0], EV_ABS, ABS_MT_SLOT, i);
+					genEmuEvent(inputfds[0], EV_ABS, ABS_MT_TRACKING_ID, i);
+					genEmuEvent(inputfds[0], EV_ABS, ABS_MT_POSITION_X, mti[i].x);
+					genEmuEvent(inputfds[0], EV_ABS, ABS_MT_POSITION_Y, mti[i].y);
+					genEmuEvent(inputfds[0], EV_SYN, SYN_REPORT, 0);
+				}
+			}
+		} else if (par2 == 0) {
+			for (i = 0; i < 2; i++) {
+				genEmuEvent(inputfds[0], EV_ABS, ABS_MT_SLOT, i);
+				genEmuEvent(inputfds[0], EV_ABS, ABS_MT_TRACKING_ID, -1);
+				genEmuEvent(inputfds[0], EV_SYN, SYN_REPORT, 0);
+			}
+		} else {
+			genEmuEvent(inputfds[0], EV_SYN, SYN_REPORT, 0);
+		}
     } else if (type == EVT_POINTERMOVE) {
-		if (is_in_touch) {
+		// multi touch POINTERMOVE will be reported in EVT_MTSYNC
+		// this will handle single touch POINTERMOVE only
+		if (touch_pointers == 1) {
 			genEmuEvent(inputfds[0], EV_ABS, ABS_MT_POSITION_X, par1);
 			genEmuEvent(inputfds[0], EV_ABS, ABS_MT_POSITION_Y, par2);
 		}
     } else if (type == EVT_POINTERUP) {
-		is_in_touch = 0;
-		genEmuEvent(inputfds[0], EV_ABS, ABS_MT_TRACKING_ID, -1);
+		if (touch_pointers == 1) {
+			genEmuEvent(inputfds[0], EV_ABS, ABS_MT_TRACKING_ID, -1);
+		}
+		touch_pointers = 0;
     } else {
 		genEmuEvent(inputfds[0], type, par1, par2);
     }

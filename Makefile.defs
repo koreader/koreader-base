@@ -141,14 +141,17 @@ ifeq ($(TARGET), kobo)
 	ARM_ARCH:=$(ARMV7_A8_ARCH)
 	ARM_ARCH+=-mfloat-abi=hard
 	COMPAT_CFLAGS:=$(UBUNTU_COMPAT_CFLAGS)
+	COMPAT_CXXFLAGS:=$(UBUNTU_COMPAT_CFLAGS)
 else ifeq ($(TARGET), kindle)
 	ARM_ARCH:=$(ARMV7_A8_ARCH)
 	ARM_ARCH+=-mfloat-abi=softfp
 	COMPAT_CFLAGS:=$(UBUNTU_COMPAT_CFLAGS)
+	COMPAT_CXXFLAGS:=$(UBUNTU_COMPAT_CFLAGS)
 else ifeq ($(TARGET), pocketbook)
 	ARM_ARCH:=$(ARMV7_A8_ARCH)
 	ARM_ARCH+=-mfloat-abi=softfp
-	COMPAT_CFLAGS:=$(UBUNTU_COMPAT_CFLAGS) -std=gnu99 --sysroot $(SYSROOT)
+	COMPAT_CFLAGS:=$(MG2K12_COMPAT_CFLAGS) -std=gnu99 --sysroot $(SYSROOT)
+	COMPAT_CXXFLAGS:=$(MG2K12_COMPAT_CXXFLAGS) --sysroot $(SYSROOT)
 else ifeq ($(TARGET), kindle5)
 	ARM_ARCH:=$(ARMV7_A8_ARCH)
 	ARM_ARCH+=-mfloat-abi=softfp
@@ -221,7 +224,7 @@ else
 	CXX:=$(strip $(CCACHE) $(CXX))
 	AR:=$(strip $(CCACHE) $(AR))
 	CFLAGS+= $(ARM_ARCH) $(COMPAT_CFLAGS)
-	CXXFLAGS+= $(ARM_ARCH) $(COMPAT_CFLAGS) $(COMPAT_CXXFLAGS)
+	CXXFLAGS+= $(ARM_ARCH) $(COMPAT_CXXFLAGS)
 endif
 
 # not necessary to use PIC flag for win32 which has relocation table in dll
