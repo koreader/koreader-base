@@ -80,12 +80,12 @@ function framebuffer:close()
         self.bb = nil
     end
     if self.data then
-	    ffi.C.munmap(self.data, self.fb_size)
+        ffi.C.munmap(self.data, self.fb_size)
         self.data = nil
     end
     if self.fd ~= -1 then
-	    ffi.C.close(self.fd)
-	    self.fd = -1
+        ffi.C.close(self.fd)
+        self.fd = -1
     end
 end
 
