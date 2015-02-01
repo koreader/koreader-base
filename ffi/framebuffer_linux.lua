@@ -31,42 +31,38 @@ function framebuffer:init()
 
     assert(vinfo.xres_virtual > 0 and vinfo.yres_virtual > 0, "invalid framebuffer resolution")
 
-    -- it seems that finfo.smem_len is unreliable on kobo
-    -- Figure out the size of the screen in bytes
-    self.fb_size = vinfo.xres_virtual * vinfo.yres_virtual * vinfo.bits_per_pixel / 8
+    -- Classic eink framebuffer (Kindle 2, 3, DXG, 4)
+    if ffi.string(finfo.id, 7) == "eink_fb" then
+        self.fb_size = vinfo.xres_virtual * vinfo.yres_virtual * vinfo.bits_per_pixel / 8
+    -- Newer eink framebuffer (Kindle Touch, Paperwhite, Kobo)
+    elseif ffi.string(finfo.id, 11) == "mxc_epdc_fb" then
+        -- it seems that finfo.smem_len is unreliable on kobo
+        -- Figure out the size of the screen in bytes
+        self.fb_size = vinfo.xres_virtual * vinfo.yres_virtual * vinfo.bits_per_pixel / 8
+    -- PocketBook eink framebuffer seems to have no finfo.id
+    elseif string.byte(ffi.string(finfo.id, 16), 1, 1) == 0 then
+        -- finfo.line_length needs to be 16-bytes aligned
+        finfo.line_length = bit.band(finfo.line_length * vinfo.bits_per_pixel / 8 + 15, bit.bnot(15))
+        self.fb_size = finfo.line_length * vinfo.yres_virtual
+    else
+        error("framebuffer model not supported");
+    end
 
     self.data = ffi.C.mmap(nil, self.fb_size, bit.bor(ffi.C.PROT_READ, ffi.C.PROT_WRITE), ffi.C.MAP_SHARED, self.fd, 0)
     assert(self.data ~= ffi.C.MAP_FAILED, "can not mmap() framebuffer")
+    if vinfo.bits_per_pixel == 16 then
+        self.bb = BB.new(vinfo.xres, vinfo.yres, BB.TYPE_BBRGB16, self.data, finfo.line_length)
+    elseif vinfo.bits_per_pixel == 8 then
+        self.bb = BB.new(vinfo.xres, vinfo.yres, BB.TYPE_BB8, self.data, finfo.line_length)
+    elseif vinfo.bits_per_pixel == 4 then
+        self.bb = BB.new(vinfo.xres, vinfo.yres, BB.TYPE_BB4, self.data, finfo.line_length)
+    else
+        error("unknown bpp value for the eink driver")
+    end
 
-    if ffi.string(finfo.id, 11) == "mxc_epdc_fb" then
-        if vinfo.bits_per_pixel == 16 then
-            self.bb = BB.new(vinfo.xres, vinfo.yres, BB.TYPE_BBRGB16, self.data, finfo.line_length)
-        elseif vinfo.bits_per_pixel == 8 then
-            self.bb = BB.new(vinfo.xres, vinfo.yres, BB.TYPE_BB8, self.data, finfo.line_length)
-        else
-            error("unknown bpp value for the mxc eink driver")
-        end
-    elseif ffi.string(finfo.id, 7) == "eink_fb" then
-        if vinfo.bits_per_pixel == 8 then
-            self.bb = BB.new(vinfo.xres, vinfo.yres, BB.TYPE_BB8, self.data, finfo.line_length)
-        elseif vinfo.bits_per_pixel == 4 then
-            self.bb = BB.new(vinfo.xres, vinfo.yres, BB.TYPE_BB4, self.data, finfo.line_length)
-        else
-            error("unknown bpp value for the classic eink driver")
-        end
+    if ffi.string(finfo.id, 7) == "eink_fb" then
         -- classic eink framebuffer driver has grayscale values inverted (i.e. 0xF = black, 0 = white)
         self.bb:invert()
-    -- pocketbook 840 seems have no finfo.id
-    elseif string.byte(ffi.string(finfo.id, 16), 1, 1) == 0 then
-        if vinfo.bits_per_pixel == 16 then
-            self.bb = BB.new(vinfo.xres, vinfo.yres, BB.TYPE_BBRGB16, self.data, finfo.line_length)
-        elseif vinfo.bits_per_pixel == 8 then
-            self.bb = BB.new(vinfo.xres, vinfo.yres, BB.TYPE_BB8, self.data, finfo.line_length)
-        else
-            error("unknown bpp value for the mxc eink driver")
-        end
-    else
-        error("framebuffer model not supported");
     end
 
     self.bb:fill(BB.COLOR_WHITE)

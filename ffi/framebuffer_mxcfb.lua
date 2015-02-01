@@ -138,6 +138,12 @@ local function kobo_mxc_wait_for_update_complete(fb, marker)
     return ffi.C.ioctl(fb.fd, ffi.C.MXCFB_WAIT_FOR_UPDATE_COMPLETE, ffi.new("uint32_t[1]", marker))
 end
 
+-- Kindle's MXCFB_WAIT_FOR_UPDATE_COMPLETE == 0x4004462f
+local function pocketbook_mxc_wait_for_update_complete(fb, marker)
+    -- Wait for the previous update to be completed
+    return ffi.C.ioctl(fb.fd, ffi.C.MXCFB_WAIT_FOR_UPDATE_COMPLETE, ffi.new("uint32_t[1]", marker))
+end
+
 -- Kindle's MXCFB_WAIT_FOR_UPDATE_COMPLETE == 0xc008462f
 local function kindle_carta_mxc_wait_for_update_complete(fb, marker)
     -- Wait for the previous update to be completed
@@ -377,8 +383,7 @@ function framebuffer:init()
         require("ffi/mxcfb_pocketbook_h")
 
         self.mech_refresh = refresh_pocketbook
-        self.mech_wait_update_complete = kindle_pearl_mxc_wait_for_update_complete
-        self.mech_wait_update_submission = kindle_mxc_wait_for_update_submission
+        self.mech_wait_update_complete = pocketbook_mxc_wait_for_update_complete
 
         self.update_mode_partial = ffi.C.UPDATE_MODE_PARTIAL
         self.update_mode_full = ffi.C.UPDATE_MODE_FULL
