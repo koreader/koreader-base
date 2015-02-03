@@ -224,12 +224,12 @@ $(POPEN_NOSHELL_LIB):
 		CFLAGS="$(CFLAGS) $(if $(ANDROID),--sysroot=$(SYSROOT),)"
 
 # k2pdfopt, fetched via GIT as a submodule
-$(K2PDFOPT_LIB) $(LEPTONICA_LIB) $(TESSERACT_LIB): $(PNG_LIB) $(ZLIB) $(MUPDF_LIB)
+$(K2PDFOPT_LIB) $(LEPTONICA_LIB) $(TESSERACT_LIB): $(PNG_LIB) $(ZLIB)
 	$(MAKE) -j$(PROCESSORS) -C $(K2PDFOPT_DIR) BUILDMODE=shared \
 		$(if $(EMULATE_READER),,HOST=$(if $(ANDROID),"arm-linux",$(CHOST))) \
-		CC="$(CC)" CFLAGS="$(CFLAGS) -O3 -I../$(MUPDF_DIR)/include" \
-		CXX="$(CXX)" CXXFLAGS="$(CXXFLAGS) -I../$(MUPDF_DIR)/include" \
-		AR="$(AR)" ZLIB=../$(ZLIB) MUPDF_LIB=../$(MUPDF_LIB) \
+		CC="$(CC)" CFLAGS="$(CFLAGS) -O3" \
+		CXX="$(CXX)" CXXFLAGS="$(CXXFLAGS) -O3" \
+		AR="$(AR)" ZLIB=../$(ZLIB) \
 		LEPT_CFLAGS="$(CFLAGS) -I$(CURDIR)/$(ZLIB_DIR) -I$(CURDIR)/$(PNG_DIR)" \
 		LEPT_LDFLAGS="$(LDFLAGS) -L$(CURDIR)/$(ZLIB_DIR) -L$(CURDIR)/$(PNG_DIR)/lib" \
 		ZLIB_LDFLAGS="-Wl,-rpath-link,$(CURDIR)/$(ZLIB_DIR)" \
