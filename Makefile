@@ -302,6 +302,9 @@ $(GLIB):
 		--with-libiconv=no --with-threads=none --prefix=$(CURDIR)/$(GLIB_DIR) \
 		$(if $(EMULATE_READER),,--host=$(CHOST) --cache-file=arm_cache.conf) \
 		&& $(MAKE) -j$(PROCESSORS) install
+ifdef POCKETBOOK
+	cp -fL $(GLIB_DIR)/lib/$(notdir $(GLIB)) $(OUTPUT_DIR)/libs/$(notdir $(GLIB))
+endif
 
 $(ZLIB):
 ifdef WIN32
@@ -382,7 +385,7 @@ $(OPENSSL_LIB):
 		&& $(MAKE) CC="$(CC) $(CFLAGS)" \
 		LD=$(LD) RANLIB=$(RANLIB) \
 		--silent build_crypto build_ssl
-ifdef ANDROID
+ifneq (,$(filter $(TARGET), android pocketbook))
 	cp -fL $(OPENSSL_DIR)/$(notdir $(SSL_LIB)) $(SSL_LIB)
 	cp -fL $(OPENSSL_DIR)/$(notdir $(CRYPTO_LIB)) $(CRYPTO_LIB)
 endif
