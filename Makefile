@@ -14,6 +14,7 @@ all: $(OUTPUT_DIR)/libs $(if $(ANDROID),,$(LUAJIT)) \
 		$(TURBOJPEG_LIB) \
 		$(LODEPNG_LIB) \
 		$(GIF_LIB) \
+		$(TURBO_FFI_WRAP_LIB) \
 		$(if $(or $(ANDROID),$(WIN32)),,$(OUTPUT_DIR)/tar) \
 		$(if $(or $(ANDROID),$(WIN32)),,$(OUTPUT_DIR)/sdcv) \
 		$(if $(or $(ANDROID),$(WIN32)),,$(OUTPUT_DIR)/zsync) \
@@ -516,6 +517,19 @@ $(ZYRE_LIB): $(ZMQ_LIB) $(CZMQ_LIB)
 	$(MAKE) -j$(PROCESSORS) -C $(ZYRE_DIR)/build --silent install
 	cp -fL $(ZYRE_DIR)/build/$(if $(WIN32),bin,lib)/$(notdir $(ZYRE_LIB)) $@
 
+$(TURBO_FFI_WRAP_LIB): $(OPENSSL_LIB)
+	-cd $(TURBO_DIR) && patch -N -p1 < ../turbo.patch
+	$(MAKE) -C $(TURBO_DIR) \
+		CC="$(CC) $(CFLAGS) -I$(CURDIR)/$(OPENSSL_DIR)/include" \
+		LDFLAGS="$(LDFLAGS) -lcrypto -lssl \
+		$(if $(ANDROID),$(CURDIR)/$(LUAJIT_LIB),) \
+		$(if $(WIN32),$(CURDIR)/$(LUAJIT_LIB),) \
+		-L$(CURDIR)/$(OPENSSL_DIR) -Wl,-rpath,'libs'" all
+	cp -fL $(TURBO_DIR)/$(notdir $(TURBO_FFI_WRAP_LIB)) $@
+	cp -r $(TURBO_DIR)/turbo $(OUTPUT_DIR)/common
+	cp -r $(TURBO_DIR)/turbo.lua $(OUTPUT_DIR)/common
+	cp -r $(TURBO_DIR)/turbovisor.lua $(OUTPUT_DIR)/common
+
 # ===========================================================================
 # helper target for creating standalone android toolchain from NDK
 # NDK variable should be set in your environment and it should point to
@@ -643,6 +657,7 @@ clean:
 	-$(MAKE) -C $(LUA_SOCKET_DIR) clean
 	-$(MAKE) -C $(LUA_SEC_DIR) clean
 	-$(MAKE) -C $(OPENSSL_DIR) clean
+	-$(MAKE) -C $(TURBO_DIR) clean
 	-$(MAKE) -C $(ZMQ_DIR)/build clean uninstall
 	-$(MAKE) -C $(CZMQ_DIR)/build clean uninstall
 	-$(MAKE) -C $(FILEMQ_DIR)/build clean uninstall

@@ -343,6 +343,9 @@ ZYRE_LIB=$(OUTPUT_DIR)/libs/libzyre.$(if $(WIN32),dll,so.1)
 ZSYNC_DIR=zsync/c
 TAR_DIR=tar-1.28
 
+TURBO_DIR=turbo
+TURBO_FFI_WRAP_LIB=$(OUTPUT_DIR)/common/libtffi_wrap.so
+
 # must point to directory with *.ttf fonts for crengine
 MUPDF_TTF_FONTS_DIR=$(MUPDF_DIR)/resources/fonts
 

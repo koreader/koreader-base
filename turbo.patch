@@ -1,0 +1,97 @@
+diff --git a/turbo/cdef.lua b/turbo/cdef.lua
+index 608fb05..c4ac253 100644
+--- a/turbo/cdef.lua
++++ b/turbo/cdef.lua
+@@ -155,7 +155,7 @@ if p.__UNIX__ then
+     --- ******* Signals *******
+     ffi.cdef(string.format([[
+         typedef void(*sighandler_t)(int);
+-        sighandler_t signal(int signum, sighandler_t handler);
++        sighandler_t sysv_signal(int signum, sighandler_t handler);
+         int kill(pid_t pid, int sig);
+         typedef struct {
+             unsigned long int __val[%d];
+@@ -195,10 +195,12 @@ if p.__UNIX__ then
+     ffi.cdef([[
+         typedef long suseconds_t;
+         typedef long time_t;
++        /*
+         struct timeval{
+             time_t tv_sec;
+             suseconds_t tv_usec;
+         };
++        */
+         struct timezone{
+             int tz_minuteswest;
+             int tz_dsttime;
+diff --git a/turbo/crypto.lua b/turbo/crypto.lua
+index 47c990f..a4620f6 100644
+--- a/turbo/crypto.lua
++++ b/turbo/crypto.lua
+@@ -380,7 +380,8 @@ if _G.TURBO_AXTLS then
+     end
+ else
+     lssl = ffi.load("ssl")
+-    local libtffi_loaded, libtffi = pcall(ffi.load, "tffi_wrap")
++    local lcrypto = ffi.load("crypto")
++    local libtffi_loaded, libtffi = pcall(ffi.load, "common/libtffi_wrap.so")
+     if not libtffi_loaded then
+         libtffi_loaded, libtffi =
+             pcall(ffi.load, "/usr/local/lib/libtffi_wrap.so")
+@@ -419,7 +420,7 @@ else
+         ["Error"] = 4
+     }
+ 
+-    crypto.ERR_get_error = lssl.ERR_get_error
++    crypto.ERR_get_error = lcrypto.ERR_get_error
+     crypto.SSL_get_error = lssl.SSL_get_error
+     crypto.lib = lssl
+ 
+@@ -440,7 +441,7 @@ else
+            _TURBO_SSL_INITED = true
+             lssl.SSL_load_error_strings()
+             lssl.SSL_library_init()
+-            lssl.OPENSSL_add_all_algorithms_noconf()
++            lcrypto.OPENSSL_add_all_algorithms_noconf()
+         end
+     end
+     if _G.TURBO_SSL then
+diff --git a/turbo/httputil.lua b/turbo/httputil.lua
+index e84a9f5..6c33b94 100644
+--- a/turbo/httputil.lua
++++ b/turbo/httputil.lua
+@@ -32,7 +32,7 @@ local buffer =      require "turbo.structs.buffer"
+ local escape =      require "turbo.escape"
+ local util =        require "turbo.util"
+ local ffi =         require "ffi"
+-local ltp_loaded, libturbo_parser = pcall(ffi.load, "tffi_wrap")
++local ltp_loaded, libturbo_parser = pcall(ffi.load, "common/libtffi_wrap.so")
+ if not ltp_loaded then
+     -- Check /usr/local/lib explicitly also.
+     ltp_loaded, libturbo_parser =
+diff --git a/turbo/signal.lua b/turbo/signal.lua
+index 2ad04a4..b3b043b 100644
+--- a/turbo/signal.lua
++++ b/turbo/signal.lua
+@@ -24,7 +24,7 @@ local ffi = require "ffi"
+ require "turbo.cdef"
+ 
+ return {    
+-    signal = ffi.C.signal
++    signal = ffi.C.sysv_signal
+     -- For sigprocmask(2)
+     , SIG_BLOCK   = 0
+     , SIG_UNBLOCK = 1
+diff --git a/turbo/websocket.lua b/turbo/websocket.lua
+index 91ed96a..fb3d262 100644
+--- a/turbo/websocket.lua
++++ b/turbo/websocket.lua
+@@ -40,7 +40,7 @@ local web =             require "turbo.web"
+ local async =           require "turbo.async"
+ local buffer =          require "turbo.structs.buffer"
+ require('turbo.3rdparty.middleclass')
+-local ltp_loaded, libturbo_parser = pcall(ffi.load, "tffi_wrap")
++local ltp_loaded, libturbo_parser = pcall(ffi.load, "common/libtffi_wrap.so")
+ if not ltp_loaded then
+     -- Check /usr/local/lib explicitly also.
+     ltp_loaded, libturbo_parser =

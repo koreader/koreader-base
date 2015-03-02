@@ -52,3 +52,6 @@
 [submodule "lodepng"]
 	path = lodepng
 	url = https://github.com/lvandeve/lodepng.git
+[submodule "turbo"]
+	path = turbo
+	url = https://github.com/kernelsauce/turbo
