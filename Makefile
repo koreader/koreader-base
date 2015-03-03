@@ -385,7 +385,7 @@ $(OPENSSL_LIB):
 		$(if $(WIN32),no-,)shared no-asm no-idea no-mdc2 no-rc5 \
 		&& $(MAKE) CC="$(CC) $(CFLAGS)" \
 		LD=$(LD) RANLIB=$(RANLIB) \
-		--silent build_crypto build_ssl
+		--silent depend build_crypto build_ssl
 ifneq (,$(filter $(TARGET), android pocketbook))
 	cp -fL $(OPENSSL_DIR)/$(notdir $(SSL_LIB)) $(SSL_LIB)
 	cp -fL $(OPENSSL_DIR)/$(notdir $(CRYPTO_LIB)) $(CRYPTO_LIB)
@@ -607,12 +607,6 @@ fetchthirdparty:
 	[ `md5sum glib-2.6.6.tar.gz |cut -d\  -f1` != dba15cceeaea39c5a61b6844d2b7b920 ] \
 		&& rm glib-2.6.6.tar.gz && wget http://ftp.gnome.org/pub/gnome/sources/glib/2.6/glib-2.6.6.tar.gz || true
 	tar zxf glib-2.6.6.tar.gz
-	# download openssl-1.0.1 for luasec
-	[ ! -f openssl-1.0.1h.tar.gz ] \
-		&& wget http://www.openssl.org/source/openssl-1.0.1h.tar.gz || true
-	[ `md5sum openssl-1.0.1h.tar.gz |cut -d\  -f1` != 8d6d684a9430d5cc98a62a5d8fbda8cf ] \
-		&& rm openssl-1.0.1h.tar.gz && wget http://www.openssl.org/source/openssl-1.0.1h.tar.gz || true
-	tar zxf openssl-1.0.1h.tar.gz
 	# download tar for zsync
 	[ ! -f tar-1.28.tar.gz ] \
 		&& wget http://ftp.gnu.org/gnu/tar/tar-1.28.tar.gz || true

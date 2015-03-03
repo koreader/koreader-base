@@ -55,3 +55,6 @@
 [submodule "turbo"]
 	path = turbo
 	url = https://github.com/kernelsauce/turbo
+[submodule "openssl"]
+	path = openssl
+	url = https://github.com/openssl/openssl.git
