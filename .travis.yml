@@ -14,7 +14,7 @@ before_install:
     - sudo apt-get update
 
 install:
-    - sudo apt-get install libsdl1.2-dev luarocks nasm
+    - sudo apt-get install libsdl1.2-dev luarocks nasm xutils-dev
     - git clone https://github.com/Olivine-Labs/busted/
     - cd busted && git checkout v1.10.0 && sudo luarocks make && cd ..
 
