@@ -19,8 +19,8 @@ install:
 
 script:
     - make fetchthirdparty all
-
-after_success:
+    - sudo cp build/*/luajit /usr/bin/
+    - sudo ln -sf /usr/bin/luajit /usr/bin/lua
     - wget https://tesseract-ocr.googlecode.com/files/tesseract-ocr-3.02.eng.tar.gz
     - tar zxf tesseract-ocr-3.02.eng.tar.gz
     - cd build/* && export TESSDATA_PREFIX=`pwd`/data && mkdir -p data/tessdata
