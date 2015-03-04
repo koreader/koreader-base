@@ -313,7 +313,7 @@ ZLIB=$(OUTPUT_DIR)/libs/$(if $(WIN32),zlib1.dll,libz.so.1)
 LEPTONICA_LIB=$(OUTPUT_DIR)/libs/liblept$(if $(WIN32),-3.dll,.so.3)
 TESSERACT_LIB=$(OUTPUT_DIR)/libs/libtesseract$(if $(WIN32),-3.dll,.so.3)
 
-OPENSSL_DIR=openssl-1.0.1h
+OPENSSL_DIR=openssl
 OPENSSL_LIB=$(OPENSSL_DIR)/libssl.$(if $(WIN32),a,so)
 SSL_LIB=$(OUTPUT_DIR)/libs/libssl$(if $(WIN32),-1.dll,.so.1.0.0)
 CRYPTO_LIB=$(OUTPUT_DIR)/libs/libcrypto$(if $(WIN32),-1.dll,.so.1.0.0)
@@ -342,6 +342,9 @@ ZYRE_LIB=$(OUTPUT_DIR)/libs/libzyre.$(if $(WIN32),dll,so.1)
 
 ZSYNC_DIR=zsync/c
 TAR_DIR=tar-1.28
+
+TURBO_DIR=turbo
+TURBO_FFI_WRAP_LIB=$(OUTPUT_DIR)/common/libtffi_wrap.so
 
 # must point to directory with *.ttf fonts for crengine
 MUPDF_TTF_FONTS_DIR=$(MUPDF_DIR)/resources/fonts

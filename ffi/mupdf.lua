@@ -37,17 +37,6 @@ local mupdf_mt = {}
 
 mupdf.debug = function() --[[ no debugging by default ]] end
 
--- a wrapper for mupdf exception error messages
-local function merror(message)
-    if ctx ~= nil then
-        error(string.format("%s: %s (%d)", message,
-            ffi.string(W.mupdf_error_message(context())),
-            W.mupdf_error_code(context())))
-    else
-        error(message)
-    end
-end
-
 local save_ctx = nil
 -- provides an fz_context for mupdf
 local function context()
@@ -64,6 +53,17 @@ local function context()
 
     save_ctx = context
     return context
+end
+
+-- a wrapper for mupdf exception error messages
+local function merror(message)
+    if context() ~= nil then
+        error(string.format("%s: %s (%d)", message,
+            ffi.string(W.mupdf_error_message(context())),
+            W.mupdf_error_code(context())))
+    else
+        error(message)
+    end
 end
 
 function mupdf_mt.__gc()

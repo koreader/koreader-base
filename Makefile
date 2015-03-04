@@ -14,6 +14,7 @@ all: $(OUTPUT_DIR)/libs $(if $(ANDROID),,$(LUAJIT)) \
 		$(TURBOJPEG_LIB) \
 		$(LODEPNG_LIB) \
 		$(GIF_LIB) \
+		$(TURBO_FFI_WRAP_LIB) \
 		$(if $(or $(ANDROID),$(WIN32)),,$(OUTPUT_DIR)/tar) \
 		$(if $(or $(ANDROID),$(WIN32)),,$(OUTPUT_DIR)/sdcv) \
 		$(if $(or $(ANDROID),$(WIN32)),,$(OUTPUT_DIR)/zsync) \
@@ -384,7 +385,7 @@ $(OPENSSL_LIB):
 		$(if $(WIN32),no-,)shared no-asm no-idea no-mdc2 no-rc5 \
 		&& $(MAKE) CC="$(CC) $(CFLAGS)" \
 		LD=$(LD) RANLIB=$(RANLIB) \
-		--silent build_crypto build_ssl
+		--silent depend build_crypto build_ssl
 ifneq (,$(filter $(TARGET), android pocketbook))
 	cp -fL $(OPENSSL_DIR)/$(notdir $(SSL_LIB)) $(SSL_LIB)
 	cp -fL $(OPENSSL_DIR)/$(notdir $(CRYPTO_LIB)) $(CRYPTO_LIB)
@@ -516,6 +517,19 @@ $(ZYRE_LIB): $(ZMQ_LIB) $(CZMQ_LIB)
 	$(MAKE) -j$(PROCESSORS) -C $(ZYRE_DIR)/build --silent install
 	cp -fL $(ZYRE_DIR)/build/$(if $(WIN32),bin,lib)/$(notdir $(ZYRE_LIB)) $@
 
+$(TURBO_FFI_WRAP_LIB): $(OPENSSL_LIB)
+	-cd $(TURBO_DIR) && patch -N -p1 < ../turbo.patch
+	$(MAKE) -C $(TURBO_DIR) \
+		CC="$(CC) $(CFLAGS) -I$(CURDIR)/$(OPENSSL_DIR)/include" \
+		LDFLAGS="$(LDFLAGS) -lcrypto -lssl \
+		$(if $(ANDROID),$(CURDIR)/$(LUAJIT_LIB),) \
+		$(if $(WIN32),$(CURDIR)/$(LUAJIT_LIB),) \
+		-L$(CURDIR)/$(OPENSSL_DIR) -Wl,-rpath,'libs'" all
+	cp -fL $(TURBO_DIR)/$(notdir $(TURBO_FFI_WRAP_LIB)) $@
+	cp -r $(TURBO_DIR)/turbo $(OUTPUT_DIR)/common
+	cp -r $(TURBO_DIR)/turbo.lua $(OUTPUT_DIR)/common
+	cp -r $(TURBO_DIR)/turbovisor.lua $(OUTPUT_DIR)/common
+
 # ===========================================================================
 # helper target for creating standalone android toolchain from NDK
 # NDK variable should be set in your environment and it should point to
@@ -593,12 +607,6 @@ fetchthirdparty:
 	[ `md5sum glib-2.6.6.tar.gz |cut -d\  -f1` != dba15cceeaea39c5a61b6844d2b7b920 ] \
 		&& rm glib-2.6.6.tar.gz && wget http://ftp.gnome.org/pub/gnome/sources/glib/2.6/glib-2.6.6.tar.gz || true
 	tar zxf glib-2.6.6.tar.gz
-	# download openssl-1.0.1 for luasec
-	[ ! -f openssl-1.0.1h.tar.gz ] \
-		&& wget http://www.openssl.org/source/openssl-1.0.1h.tar.gz || true
-	[ `md5sum openssl-1.0.1h.tar.gz |cut -d\  -f1` != 8d6d684a9430d5cc98a62a5d8fbda8cf ] \
-		&& rm openssl-1.0.1h.tar.gz && wget http://www.openssl.org/source/openssl-1.0.1h.tar.gz || true
-	tar zxf openssl-1.0.1h.tar.gz
 	# download tar for zsync
 	[ ! -f tar-1.28.tar.gz ] \
 		&& wget http://ftp.gnu.org/gnu/tar/tar-1.28.tar.gz || true
@@ -643,6 +651,7 @@ clean:
 	-$(MAKE) -C $(LUA_SOCKET_DIR) clean
 	-$(MAKE) -C $(LUA_SEC_DIR) clean
 	-$(MAKE) -C $(OPENSSL_DIR) clean
+	-$(MAKE) -C $(TURBO_DIR) clean
 	-$(MAKE) -C $(ZMQ_DIR)/build clean uninstall
 	-$(MAKE) -C $(CZMQ_DIR)/build clean uninstall
 	-$(MAKE) -C $(FILEMQ_DIR)/build clean uninstall
@@ -662,6 +671,6 @@ $(OUTPUT_DIR)/spec/base:
 		ln -sf ../../../spec $(OUTPUT_DIR)/spec/base
 
 test: $(OUTPUT_DIR)/spec $(OUTPUT_DIR)/.busted
-	cd $(OUTPUT_DIR) && busted -l ./luajit
+	cd $(OUTPUT_DIR) && busted --exclude-tags=notest
 
 .PHONY: test
