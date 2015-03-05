@@ -14,15 +14,20 @@ before_install:
     - sudo apt-get update
 
 install:
+    # nasm for building libpng, xutils-dev for building openssl with clang
     - sudo apt-get install libsdl1.2-dev luarocks nasm xutils-dev
-    - sudo luarocks install busted
+    # install an older version of lua_cliargs for busted v1.10.0
+    - sudo luarocks install lua_cliargs 2.1-2
+    # recent versions of busted may cause some weird segmentation faults
+    - git clone https://github.com/Olivine-Labs/busted/
+    - cd busted && git checkout v1.10.0 && sudo luarocks make && cd ..
 
 script:
     - make fetchthirdparty all
-    - sudo cp build/*/luajit /usr/bin/
-    - sudo ln -sf /usr/bin/luajit /usr/bin/lua
+    # install tesseract trained language data for testing OCR functionality
     - wget https://tesseract-ocr.googlecode.com/files/tesseract-ocr-3.02.eng.tar.gz
     - tar zxf tesseract-ocr-3.02.eng.tar.gz
     - cd build/* && export TESSDATA_PREFIX=`pwd`/data && mkdir -p data/tessdata
     - mv ../../tesseract-ocr/tessdata/* data/tessdata/ && cd ../../
+    # finally make test
     - make test

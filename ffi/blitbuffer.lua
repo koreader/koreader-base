@@ -17,6 +17,7 @@ local intt = ffi.typeof("int")
 local uint32pt = ffi.typeof("uint32_t*")
 local uint8pt = ffi.typeof("uint8_t*")
 local posix = require("ffi/posix_h")
+local debug = debug
 
 -- the following definitions are redundant.
 -- they need to be since only this way we can set
@@ -701,6 +702,8 @@ end
 
 function BB_mt.__index:blitDefault(dest, dest_x, dest_y, offs_x, offs_y, width, height, setter, set_param)
     -- slow default variant:
+    local hook, mask, count = debug.gethook()
+    debug.sethook()
     local o_y = offs_y
     for y = dest_y, dest_y+height-1 do
         local o_x = offs_x
@@ -710,6 +713,7 @@ function BB_mt.__index:blitDefault(dest, dest_x, dest_y, offs_x, offs_y, width, 
         end
         o_y = o_y + 1
     end
+    debug.sethook(hook, mask)
 end
 -- no optimized blitting by default:
 BB_mt.__index.blitTo4 = BB_mt.__index.blitDefault
@@ -797,6 +801,8 @@ PAINTING
 fill the whole blitbuffer with a given color value
 --]]
 function BB_mt.__index:fill(value)
+    local hook, mask, count = debug.gethook()
+    debug.sethook()
     local w = self:getWidth()
     local h = self:getHeight()
     for y = 0, h-1 do
@@ -804,6 +810,7 @@ function BB_mt.__index:fill(value)
             self:setPixel(x, y, value)
         end
     end
+    debug.sethook(hook, mask)
 end
 function BB4_mt.__index:fill(value)
     local v = value:getColor4L().a
@@ -837,6 +844,8 @@ paint a rectangle onto this buffer
 @param setter function used to set pixels (defaults to normal setPixel)
 --]]
 function BB_mt.__index:paintRect(x, y, w, h, value, setter)
+    local hook, mask, count = debug.gethook()
+    debug.sethook()
     setter = setter or self.setPixel
     value = value or Color8(0)
     if w <= 0 or h <= 0 then return end
@@ -847,6 +856,7 @@ function BB_mt.__index:paintRect(x, y, w, h, value, setter)
             setter(self, x, y, value)
         end
     end
+    debug.sethook(hook, mask)
 end
 
 --[[
@@ -1131,6 +1141,8 @@ see http://netpbm.sourceforge.net/doc/pam.html for PAM file specs.
 @param filename the name of the file to be created
 --]]
 function BB_mt.__index:writePAM(filename)
+    local hook, mask, count = debug.gethook()
+    debug.sethook()
     local f = io.open(filename, "w")
     f:write("P7\n")
     f:write("# written by blitbuffer.lua\n")
@@ -1185,6 +1197,7 @@ function BB_mt.__index:writePAM(filename)
         end
     end
     f:close()
+    debug.sethook(hook, mask)
 end
 
 --[[
@@ -1193,6 +1206,8 @@ write blitbuffer contents to a PNG file
 @param filename the name of the file to be created
 --]]
 function BB_mt.__index:writePNG(filename)
+    local hook, mask, count = debug.gethook()
+    debug.sethook()
     require("ffi/leptonica_h")
     local lept = nil
     if ffi.os == "Windows" then
@@ -1211,6 +1226,7 @@ function BB_mt.__index:writePNG(filename)
         lept.pixWritePng(filename, pix, ffi.new("float", 0.0))
         lept.pixDestroy(ffi.new('PIX *[1]', pix))
     end
+    debug.sethook(hook, mask)
 end
 
 -- if no special case in BB???_mt exists, use function from BB_mt

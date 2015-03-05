@@ -676,6 +676,8 @@ only 8bit+8bit alpha or 24bit+8bit alpha pixmaps. So we need to convert
 what we get from mupdf.
 --]]
 local function bmpmupdf_pixmap_to_bmp(bmp, pixmap)
+    local hook, mask, count = debug.gethook()
+    debug.sethook()
     local k2pdfopt = get_k2pdfopt()
 
     bmp.width = M.fz_pixmap_width(context(), pixmap)
@@ -719,8 +721,10 @@ local function bmpmupdf_pixmap_to_bmp(bmp, pixmap)
             end
         end
     else
+        debug.sethook(hook, mask)
         error("unsupported pixmap format for conversion to bmp")
     end
+    debug.sethook(hook, mask)
 end
 
 local function render_for_kopt(bmp, page, scale, bounds)
