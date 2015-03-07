@@ -5,7 +5,7 @@ all: $(OUTPUT_DIR)/libs $(if $(ANDROID),,$(LUAJIT)) \
 		$(if $(or $(ANDROID),$(WIN32)),$(LUAJIT_LIB),) \
 		$(LUAJIT_JIT) \
 		libs $(K2PDFOPT_LIB) \
-		$(OUTPUT_DIR)/spec/base $(OUTPUT_DIR)/common \
+		$(OUTPUT_DIR)/spec/base $(OUTPUT_DIR)/common $(OUTPUT_DIR)/rocks \
 		$(OUTPUT_DIR)/plugins $(LUASOCKET) \
 		$(if $(WIN32),,$(LUASEC)) \
 		$(if $(ANDROID),luacompat52 lualongnumber,) \
@@ -15,6 +15,7 @@ all: $(OUTPUT_DIR)/libs $(if $(ANDROID),,$(LUAJIT)) \
 		$(LODEPNG_LIB) \
 		$(GIF_LIB) \
 		$(TURBO_FFI_WRAP_LIB) \
+		$(LUA_SPORE_ROCK) \
 		$(if $(or $(ANDROID),$(WIN32)),,$(OUTPUT_DIR)/tar) \
 		$(if $(or $(ANDROID),$(WIN32)),,$(OUTPUT_DIR)/sdcv) \
 		$(if $(or $(ANDROID),$(WIN32)),,$(OUTPUT_DIR)/zsync) \
@@ -58,6 +59,9 @@ $(OUTPUT_DIR)/libs:
 
 $(OUTPUT_DIR)/common:
 	mkdir -p $(OUTPUT_DIR)/common
+
+$(OUTPUT_DIR)/rocks:
+	mkdir -p $(OUTPUT_DIR)/rocks
 
 $(OUTPUT_DIR)/plugins:
 	mkdir -p $(OUTPUT_DIR)/plugins
@@ -530,6 +534,15 @@ $(TURBO_FFI_WRAP_LIB): $(OPENSSL_LIB)
 	cp -r $(TURBO_DIR)/turbo.lua $(OUTPUT_DIR)/common
 	cp -r $(TURBO_DIR)/turbovisor.lua $(OUTPUT_DIR)/common
 
+$(LUA_SPORE_ROCK):
+	-cd $(LUA_SPORE_DIR) && patch -N -p1 < ../lua-Spore.patch
+	cd $(LUA_SPORE_DIR) && \
+		sed -i "s| 'luasocket|--'luasocket|g" $(LUA_SPORE_ROCKSPEC) \
+		&& luarocks make $(LUA_SPORE_ROCKSPEC) \
+		--to=$(CURDIR)/$(OUTPUT_DIR)/rocks \
+		$(if $(ANDROID),LDFLAGS="$(LDFLAGS) $(CURDIR)/$(LUAJIT_LIB)",) \
+		CC="$(CC)" CFLAGS="$(CFLAGS)" LD="$(LD)"
+
 # ===========================================================================
 # helper target for creating standalone android toolchain from NDK
 # NDK variable should be set in your environment and it should point to
@@ -671,6 +684,6 @@ $(OUTPUT_DIR)/spec/base:
 		ln -sf ../../../spec $(OUTPUT_DIR)/spec/base
 
 test: $(OUTPUT_DIR)/spec $(OUTPUT_DIR)/.busted
-	cd $(OUTPUT_DIR) && busted -l ./luajit
+	cd $(OUTPUT_DIR) && busted -l ./luajit --exclude-tags=notest
 
 .PHONY: test

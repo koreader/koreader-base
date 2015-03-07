@@ -1,0 +1,18 @@
+diff --git a/src/Spore/Core.lua b/src/Spore/Core.lua
+index 6f2ea65..b6f32aa 100644
+--- a/src/Spore/Core.lua
++++ b/src/Spore/Core.lua
+@@ -20,7 +20,12 @@ local function _enable_if (self, cond, mw, args)
+     local m = require(mw)
+     assert(type(m.call) == 'function', mw .. " without a function call")
+     local f = function (req)
+-        return m.call(args, req)
++        local res = m.call(args, req)
++        if type(res) == 'thread' then
++            coroutine.yield()
++            res = select(2, coroutine.resume(res))
++        end
++        return res
+     end
+     local t = self.middlewares; t[#t+1] = { cond = cond, code = f }
+ end
