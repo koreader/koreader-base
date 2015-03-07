@@ -25,7 +25,7 @@ index 608fb05..c4ac253 100644
              int tz_minuteswest;
              int tz_dsttime;
 diff --git a/turbo/crypto.lua b/turbo/crypto.lua
-index 47c990f..a4620f6 100644
+index 47c990f..685a6a4 100644
 --- a/turbo/crypto.lua
 +++ b/turbo/crypto.lua
 @@ -380,7 +380,8 @@ if _G.TURBO_AXTLS then
@@ -56,6 +56,15 @@ index 47c990f..a4620f6 100644
          end
      end
      if _G.TURBO_SSL then
+@@ -651,7 +652,7 @@ else
+                     err))
+             end
+         else
+-            if client and SSLIOStream._ssl_verify then
++            if client and SSLIOStream._ssl_verify == true then
+                 rc = libtffi.validate_hostname(SSLIOStream._ssl_hostname, ssl)
+                 if rc ~= crypto.validate.MatchFound then
+                     error("SSL certficate hostname validation failed, rc " ..
 diff --git a/turbo/httputil.lua b/turbo/httputil.lua
 index e84a9f5..6c33b94 100644
 --- a/turbo/httputil.lua
