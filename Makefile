@@ -391,12 +391,12 @@ $(OPENSSL_LIB):
 		&& $(MAKE) CC="$(CC) $(CFLAGS)" \
 		LD=$(LD) RANLIB=$(RANLIB) \
 		--silent depend build_crypto build_ssl
-ifneq (,$(filter $(TARGET), android pocketbook))
+
+$(SSL_LIB): $(OPENSSL_LIB)
 	cp -fL $(OPENSSL_DIR)/$(notdir $(SSL_LIB)) $(SSL_LIB)
 	cp -fL $(OPENSSL_DIR)/$(notdir $(CRYPTO_LIB)) $(CRYPTO_LIB)
-endif
 
-$(LUASEC): $(OPENSSL_LIB)
+$(LUASEC): $(SSL_LIB)
 	$(MAKE) -C $(LUA_SEC_DIR) CC="$(CC) $(CFLAGS)" LD="$(CC)" \
 		$(if $(ANDROID),LIBS="-lssl -lcrypto -lluasocket $(CURDIR)/$(LUAJIT_LIB)",) \
 		INC_PATH="-I$(CURDIR)/$(LUA_DIR)/src -I$(CURDIR)/$(OPENSSL_DIR)/include" \
@@ -482,7 +482,7 @@ $(CZMQ_LIB): $(ZMQ_LIB)
 	-cd $(CZMQ_DIR) && patch -R -p1 < ../czmq_default_source_define.patch
 	cp -fL $(CZMQ_DIR)/build/$(if $(WIN32),bin,lib)/$(notdir $(CZMQ_LIB)) $@
 
-$(FILEMQ_LIB): $(ZMQ_LIB) $(CZMQ_LIB) $(OPENSSL_LIB)
+$(FILEMQ_LIB): $(ZMQ_LIB) $(CZMQ_LIB) $(SSL_LIB)
 	mkdir -p $(FILEMQ_DIR)/build
 	cd $(FILEMQ_DIR) && sh autogen.sh
 	cd $(FILEMQ_DIR)/build && \
@@ -522,7 +522,7 @@ $(ZYRE_LIB): $(ZMQ_LIB) $(CZMQ_LIB)
 	$(MAKE) -j$(PROCESSORS) -C $(ZYRE_DIR)/build --silent install
 	cp -fL $(ZYRE_DIR)/build/$(if $(WIN32),bin,lib)/$(notdir $(ZYRE_LIB)) $@
 
-$(TURBO_FFI_WRAP_LIB): $(OPENSSL_LIB)
+$(TURBO_FFI_WRAP_LIB): $(SSL_LIB)
 	-cd $(TURBO_DIR) && patch -N -p1 < ../turbo.patch
 	$(MAKE) -C $(TURBO_DIR) \
 		CC="$(CC) $(CFLAGS) -I$(CURDIR)/$(OPENSSL_DIR)/include" \
