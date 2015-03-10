@@ -16,6 +16,7 @@ all: $(OUTPUT_DIR)/libs $(if $(ANDROID),,$(LUAJIT)) \
 		$(GIF_LIB) \
 		$(TURBO_FFI_WRAP_LIB) \
 		$(LUA_SPORE_ROCK) \
+		$(if $(ANDROID),lpeg,) \
 		$(if $(or $(ANDROID),$(WIN32)),,$(OUTPUT_DIR)/tar) \
 		$(if $(or $(ANDROID),$(WIN32)),,$(OUTPUT_DIR)/sdcv) \
 		$(if $(or $(ANDROID),$(WIN32)),,$(OUTPUT_DIR)/zsync) \
@@ -542,6 +543,17 @@ $(LUA_SPORE_ROCK):
 		--to=$(CURDIR)/$(OUTPUT_DIR)/rocks \
 		$(if $(ANDROID),LDFLAGS="$(LDFLAGS) $(CURDIR)/$(LUAJIT_LIB)",) \
 		CC="$(CC)" CFLAGS="$(CFLAGS) -I$(CURDIR)/$(LUA_DIR)/src" LD="$(LD)"
+
+# override lpeg built by luarocks, this is only necessary for Android
+lpeg:
+	mkdir -p $(OUTPUT_DIR)/rocks/lib/lua/5.1
+	mkdir -p $(OUTPUT_DIR)/rocks/share/lua/5.1
+	rm -rf lpeg* && luarocks download lpeg && luarocks unpack lpeg*.rock
+	cd lpeg*/lpeg* && $(CC) $(DYNLIB_CFLAGS) -I$(CURDIR)/$(LUA_DIR)/src \
+		$(CURDIR)/$(LUAJIT_LIB) \
+		-o lpeg.so lpcap.c lpcode.c lpprint.c lptree.c lpvm.c \
+		&& cp -rf lpeg.so $(CURDIR)/$(OUTPUT_DIR)/rocks/lib/lua/5.1 \
+		&& cp -rf re.lua $(CURDIR)/$(OUTPUT_DIR)/rocks/share/lua/5.1
 
 # ===========================================================================
 # helper target for creating standalone android toolchain from NDK

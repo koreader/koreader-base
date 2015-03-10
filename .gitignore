@@ -37,6 +37,7 @@ thirdparty/gettext/gettext-0.*.*
 giflib-5.1.0
 libjpeg-turbo-1.3.1
 jpeg
+lpeg*
 
 kpvcrlib/build
 
