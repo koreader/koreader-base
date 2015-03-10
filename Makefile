@@ -541,7 +541,7 @@ $(LUA_SPORE_ROCK):
 		&& luarocks make $(LUA_SPORE_ROCKSPEC) \
 		--to=$(CURDIR)/$(OUTPUT_DIR)/rocks \
 		$(if $(ANDROID),LDFLAGS="$(LDFLAGS) $(CURDIR)/$(LUAJIT_LIB)",) \
-		CC="$(CC)" CFLAGS="$(CFLAGS)" LD="$(LD)"
+		CC="$(CC)" CFLAGS="$(CFLAGS) -I$(CURDIR)/$(LUA_DIR)/src" LD="$(LD)"
 
 # ===========================================================================
 # helper target for creating standalone android toolchain from NDK
