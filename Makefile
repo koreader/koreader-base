@@ -397,7 +397,7 @@ $(SSL_LIB): $(OPENSSL_LIB)
 	cp -fL $(OPENSSL_DIR)/$(notdir $(CRYPTO_LIB)) $(CRYPTO_LIB)
 
 $(LUASEC): $(SSL_LIB)
-	$(MAKE) -C $(LUA_SEC_DIR) CC="$(CC) $(CFLAGS)" LD="$(CC)" \
+	$(MAKE) -C $(LUA_SEC_DIR) CC="$(CC) $(CFLAGS)" LD="$(CC) -Wl,-rpath,'libs'" \
 		$(if $(ANDROID),LIBS="-lssl -lcrypto -lluasocket $(CURDIR)/$(LUAJIT_LIB)",) \
 		INC_PATH="-I$(CURDIR)/$(LUA_DIR)/src -I$(CURDIR)/$(OPENSSL_DIR)/include" \
 		LIB_PATH="-L$(CURDIR)/$(OPENSSL_DIR)" \
