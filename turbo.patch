@@ -106,3 +106,16 @@ index 91ed96a..fb3d262 100644
  if not ltp_loaded then
      -- Check /usr/local/lib explicitly also.
      ltp_loaded, libturbo_parser =
+diff --git a/turbo/hash.lua b/turbo/hash.lua
+index a56fb40..f88f780 100644
+--- a/turbo/hash.lua
++++ b/turbo/hash.lua
+@@ -35,7 +35,7 @@ local lssl
+ if _G.TURBO_AXTLS then
+ lssl = ffi.load"axtls"
+ else
+-lssl = ffi.load"ssl"
++lssl = ffi.load("libs/libssl.so.1.0.0")
+ end
+ 
+ -- Buffers
