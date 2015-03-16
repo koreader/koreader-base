@@ -58,3 +58,6 @@
 [submodule "openssl"]
 	path = openssl
 	url = https://github.com/openssl/openssl.git
+[submodule "lua-Spore"]
+	path = lua-Spore
+	url = https://github.com/fperrad/lua-Spore

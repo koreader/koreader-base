@@ -5,7 +5,7 @@ all: $(OUTPUT_DIR)/libs $(if $(ANDROID),,$(LUAJIT)) \
 		$(if $(or $(ANDROID),$(WIN32)),$(LUAJIT_LIB),) \
 		$(LUAJIT_JIT) \
 		libs $(K2PDFOPT_LIB) \
-		$(OUTPUT_DIR)/spec/base $(OUTPUT_DIR)/common \
+		$(OUTPUT_DIR)/spec/base $(OUTPUT_DIR)/common $(OUTPUT_DIR)/rocks \
 		$(OUTPUT_DIR)/plugins $(LUASOCKET) \
 		$(if $(WIN32),,$(LUASEC)) \
 		$(if $(ANDROID),luacompat52 lualongnumber,) \
@@ -15,6 +15,8 @@ all: $(OUTPUT_DIR)/libs $(if $(ANDROID),,$(LUAJIT)) \
 		$(LODEPNG_LIB) \
 		$(GIF_LIB) \
 		$(TURBO_FFI_WRAP_LIB) \
+		$(LUA_SPORE_ROCK) \
+		$(if $(ANDROID),lpeg,) \
 		$(if $(or $(ANDROID),$(WIN32)),,$(OUTPUT_DIR)/tar) \
 		$(if $(or $(ANDROID),$(WIN32)),,$(OUTPUT_DIR)/sdcv) \
 		$(if $(or $(ANDROID),$(WIN32)),,$(OUTPUT_DIR)/zsync) \
@@ -58,6 +60,9 @@ $(OUTPUT_DIR)/libs:
 
 $(OUTPUT_DIR)/common:
 	mkdir -p $(OUTPUT_DIR)/common
+
+$(OUTPUT_DIR)/rocks:
+	mkdir -p $(OUTPUT_DIR)/rocks
 
 $(OUTPUT_DIR)/plugins:
 	mkdir -p $(OUTPUT_DIR)/plugins
@@ -386,13 +391,13 @@ $(OPENSSL_LIB):
 		&& $(MAKE) CC="$(CC) $(CFLAGS)" \
 		LD=$(LD) RANLIB=$(RANLIB) \
 		--silent depend build_crypto build_ssl
-ifneq (,$(filter $(TARGET), android pocketbook))
+
+$(SSL_LIB): $(OPENSSL_LIB)
 	cp -fL $(OPENSSL_DIR)/$(notdir $(SSL_LIB)) $(SSL_LIB)
 	cp -fL $(OPENSSL_DIR)/$(notdir $(CRYPTO_LIB)) $(CRYPTO_LIB)
-endif
 
-$(LUASEC): $(OPENSSL_LIB)
-	$(MAKE) -C $(LUA_SEC_DIR) CC="$(CC) $(CFLAGS)" LD="$(CC)" \
+$(LUASEC): $(SSL_LIB)
+	$(MAKE) -C $(LUA_SEC_DIR) CC="$(CC) $(CFLAGS)" LD="$(CC) -Wl,-rpath,'libs'" \
 		$(if $(ANDROID),LIBS="-lssl -lcrypto -lluasocket $(CURDIR)/$(LUAJIT_LIB)",) \
 		INC_PATH="-I$(CURDIR)/$(LUA_DIR)/src -I$(CURDIR)/$(OPENSSL_DIR)/include" \
 		LIB_PATH="-L$(CURDIR)/$(OPENSSL_DIR)" \
@@ -477,7 +482,7 @@ $(CZMQ_LIB): $(ZMQ_LIB)
 	-cd $(CZMQ_DIR) && patch -R -p1 < ../czmq_default_source_define.patch
 	cp -fL $(CZMQ_DIR)/build/$(if $(WIN32),bin,lib)/$(notdir $(CZMQ_LIB)) $@
 
-$(FILEMQ_LIB): $(ZMQ_LIB) $(CZMQ_LIB) $(OPENSSL_LIB)
+$(FILEMQ_LIB): $(ZMQ_LIB) $(CZMQ_LIB) $(SSL_LIB)
 	mkdir -p $(FILEMQ_DIR)/build
 	cd $(FILEMQ_DIR) && sh autogen.sh
 	cd $(FILEMQ_DIR)/build && \
@@ -517,7 +522,7 @@ $(ZYRE_LIB): $(ZMQ_LIB) $(CZMQ_LIB)
 	$(MAKE) -j$(PROCESSORS) -C $(ZYRE_DIR)/build --silent install
 	cp -fL $(ZYRE_DIR)/build/$(if $(WIN32),bin,lib)/$(notdir $(ZYRE_LIB)) $@
 
-$(TURBO_FFI_WRAP_LIB): $(OPENSSL_LIB)
+$(TURBO_FFI_WRAP_LIB): $(SSL_LIB)
 	-cd $(TURBO_DIR) && patch -N -p1 < ../turbo.patch
 	$(MAKE) -C $(TURBO_DIR) \
 		CC="$(CC) $(CFLAGS) -I$(CURDIR)/$(OPENSSL_DIR)/include" \
@@ -529,6 +534,26 @@ $(TURBO_FFI_WRAP_LIB): $(OPENSSL_LIB)
 	cp -r $(TURBO_DIR)/turbo $(OUTPUT_DIR)/common
 	cp -r $(TURBO_DIR)/turbo.lua $(OUTPUT_DIR)/common
 	cp -r $(TURBO_DIR)/turbovisor.lua $(OUTPUT_DIR)/common
+
+$(LUA_SPORE_ROCK):
+	-cd $(LUA_SPORE_DIR) && patch -N -p1 < ../lua-Spore.patch
+	cd $(LUA_SPORE_DIR) && \
+		sed -i "s| 'luasocket|--'luasocket|g" $(LUA_SPORE_ROCKSPEC) \
+		&& luarocks make $(LUA_SPORE_ROCKSPEC) \
+		--to=$(CURDIR)/$(OUTPUT_DIR)/rocks \
+		$(if $(ANDROID),LDFLAGS="$(LDFLAGS) $(CURDIR)/$(LUAJIT_LIB)",) \
+		CC="$(CC)" CFLAGS="$(CFLAGS) -I$(CURDIR)/$(LUA_DIR)/src" LD="$(LD)"
+
+# override lpeg built by luarocks, this is only necessary for Android
+lpeg:
+	mkdir -p $(OUTPUT_DIR)/rocks/lib/lua/5.1
+	mkdir -p $(OUTPUT_DIR)/rocks/share/lua/5.1
+	rm -rf lpeg* && luarocks download lpeg && luarocks unpack lpeg*.rock
+	cd lpeg*/lpeg* && $(CC) $(DYNLIB_CFLAGS) -I$(CURDIR)/$(LUA_DIR)/src \
+		$(CURDIR)/$(LUAJIT_LIB) \
+		-o lpeg.so lpcap.c lpcode.c lpprint.c lptree.c lpvm.c \
+		&& cp -rf lpeg.so $(CURDIR)/$(OUTPUT_DIR)/rocks/lib/lua/5.1 \
+		&& cp -rf re.lua $(CURDIR)/$(OUTPUT_DIR)/rocks/share/lua/5.1
 
 # ===========================================================================
 # helper target for creating standalone android toolchain from NDK
@@ -671,6 +696,6 @@ $(OUTPUT_DIR)/spec/base:
 		ln -sf ../../../spec $(OUTPUT_DIR)/spec/base
 
 test: $(OUTPUT_DIR)/spec $(OUTPUT_DIR)/.busted
-	cd $(OUTPUT_DIR) && busted -l ./luajit
+	cd $(OUTPUT_DIR) && busted -l ./luajit --exclude-tags=notest
 
 .PHONY: test

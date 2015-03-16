@@ -133,7 +133,7 @@ describe("KOPTContext module", function()
 		kc:free()
 		assert(kc.dst.size_allocated == 0)
 	end)
-	it("should get list of page regions", function()
+	it("should get list of page regions #notest", function()
 		local kc = KOPTContext.new()
         mupdf.openDocument(sample_pdf):openPage(1):toBmp(kc.src, 300)
 		kc.page_width, kc.page_height = kc.src.width, kc.src.height

@@ -346,6 +346,15 @@ TAR_DIR=tar-1.28
 TURBO_DIR=turbo
 TURBO_FFI_WRAP_LIB=$(OUTPUT_DIR)/common/libtffi_wrap.so
 
+LUAROCKS_DIR=$(OUTPUT_DIR)/rocks/lib/luarocks/rocks
+
+LUA_SPORE_DIR=lua-Spore
+LUA_SPORE=lua-spore
+SPORE_VER=0.3.1-1
+LUA_SPORE_VER=$(LUA_SPORE)-$(SPORE_VER)
+LUA_SPORE_ROCKSPEC=rockspec/$(LUA_SPORE_VER).rockspec
+LUA_SPORE_ROCK=$(LUAROCKS_DIR)/lua-spore/$(SPORE_VER)/$(LUA_SPORE_VER).rockspec
+
 # must point to directory with *.ttf fonts for crengine
 MUPDF_TTF_FONTS_DIR=$(MUPDF_DIR)/resources/fonts
 

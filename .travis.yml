@@ -24,6 +24,7 @@ install:
 
 script:
     - make fetchthirdparty all
+    - sudo cp build/*/luajit /usr/bin/
     # install tesseract trained language data for testing OCR functionality
     - wget https://tesseract-ocr.googlecode.com/files/tesseract-ocr-3.02.eng.tar.gz
     - tar zxf tesseract-ocr-3.02.eng.tar.gz
