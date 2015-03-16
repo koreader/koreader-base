@@ -523,7 +523,8 @@ $(ZYRE_LIB): $(ZMQ_LIB) $(CZMQ_LIB)
 	cp -fL $(ZYRE_DIR)/build/$(if $(WIN32),bin,lib)/$(notdir $(ZYRE_LIB)) $@
 
 $(TURBO_FFI_WRAP_LIB): $(SSL_LIB)
-	-cd $(TURBO_DIR) && patch -N -p1 < ../turbo.patch
+	# patch turbo to specify path of libssl and libcrypto
+	cd $(TURBO_DIR) && git checkout . && patch -N -p1 < ../turbo.patch
 	$(MAKE) -C $(TURBO_DIR) \
 		CC="$(CC) $(CFLAGS) -I$(CURDIR)/$(OPENSSL_DIR)/include" \
 		LDFLAGS="$(LDFLAGS) -lcrypto -lssl \
@@ -536,7 +537,8 @@ $(TURBO_FFI_WRAP_LIB): $(SSL_LIB)
 	cp -r $(TURBO_DIR)/turbovisor.lua $(OUTPUT_DIR)/common
 
 $(LUA_SPORE_ROCK):
-	-cd $(LUA_SPORE_DIR) && patch -N -p1 < ../lua-Spore.patch
+	# patch lua-Spore to support async http request
+	cd $(LUA_SPORE_DIR) && git checkout . && patch -N -p1 < ../lua-Spore.patch
 	cd $(LUA_SPORE_DIR) && \
 		sed -i "s| 'luasocket|--'luasocket|g" $(LUA_SPORE_ROCKSPEC) \
 		&& luarocks make $(LUA_SPORE_ROCKSPEC) \
