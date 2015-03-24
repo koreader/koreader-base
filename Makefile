@@ -389,6 +389,7 @@ $(OPENSSL_LIB):
 		$(if $(WIN32),mingw,linux-generic32)) \
 		$(if $(WIN32),no-,)shared no-asm no-idea no-mdc2 no-rc5 \
 		&& $(MAKE) CC="$(CC) $(CFLAGS)" \
+		SHARED_LDFLAGS="$(LDFLAGS) -Wl,-rpath,'libs'" \
 		LD=$(LD) RANLIB=$(RANLIB) \
 		--silent depend build_crypto build_ssl
 
