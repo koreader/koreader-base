@@ -192,8 +192,9 @@ local function mxc_update(fb, refarea, refreshtype, waveform_mode, wait, x, y, w
     if wait then
         submit_marker = fb:_get_marker(rect, refreshtype, waveform_mode)
     else
-        refarea[0].update_marker = 0
+        submit_marker = 0
     end
+    refarea[0].update_marker = submit_marker
 	-- NOTE: We're not using EPDC_FLAG_USE_ALT_BUFFER
 	refarea[0].alt_buffer_data.phys_addr = 0
 	refarea[0].alt_buffer_data.width = 0
