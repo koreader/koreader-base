@@ -1020,9 +1020,17 @@ void lua_pushLineRect(lua_State *L, int left, int top, int right, int bottom, in
 void docToWindowRect(LVDocView *tv, lvRect &rc) {
     lvPoint topLeft = rc.topLeft();
     lvPoint bottomRight = rc.bottomRight();
-    if (tv->docToWindowPoint(topLeft) && tv->docToWindowPoint(bottomRight)) {
+    if (tv->docToWindowPoint(topLeft)) {
         rc.setTopLeft(topLeft);
+    }
+    if (tv->docToWindowPoint(bottomRight)) {
         rc.setBottomRight(bottomRight);
+    } else {
+        // workaround to a bug in docToWindowPoint that has one pixel overflow
+        bottomRight.x -= 2;
+        if (tv->docToWindowPoint(bottomRight)) {
+            rc.setBottomRight(bottomRight);
+        }
     }
 }
 
