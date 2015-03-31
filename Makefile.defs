@@ -82,6 +82,9 @@ HOSTAR:=ar
 HOSTLD:=ld
 HOSTRANLIB:=ranlib
 
+# static libstdc++
+STATIC_LIBSTDCPP=$(shell $(CC) -print-file-name=libstdc++.a)
+
 # try to find number of CPUs for build machine
 PROCESSORS:=$(shell grep processor /proc/cpuinfo|wc -l)
 # incase we build on system that has no /proc/cpuinfo file
@@ -187,7 +190,7 @@ HOSTCFLAGS:=$(HOST_ARCH) $(BASE_CFLAGS) $(QFLAGS)
 
 CFLAGS:=$(BASE_CFLAGS) $(QFLAGS)
 CXXFLAGS:=$(BASE_CFLAGS) $(QFLAGS)
-LDFLAGS:=-Wl,-O1 -Wl,--as-needed
+LDFLAGS:=-Wl,-O1 -Wl,--as-needed -static-libstdc++
 
 # NOTE: Follow the NDK's lead
 ifeq ($(TARGET), android)
@@ -195,7 +198,7 @@ ifeq ($(TARGET), android)
 endif
 
 ifeq ($(TARGET), win32)
-    LDFLAGS+=-Wl,--allow-multiple-definition -static-libstdc++ -static-libgcc
+    LDFLAGS+=-Wl,--allow-multiple-definition -static-libgcc
 endif
 
 # in case the libstdc++ is to be linked statically, the location of the static
