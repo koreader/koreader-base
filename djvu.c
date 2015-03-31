@@ -522,6 +522,9 @@ static int getPagePix(lua_State *L) {
 	ddjvu_page_render(page->page_ref, 0, &prect, &rrect, page->doc->pixelformat,
 		bmp_bytewidth(dst), (char *) dst->data);
 
+	kctx->page_width = dst->width;
+	kctx->page_height = dst->height;
+
 	return 0;
 }
 
