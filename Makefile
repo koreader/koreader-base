@@ -165,11 +165,13 @@ $(DJVULIBRE_LIB): $(JPEG_LIB)
 		|| ( cd $(DJVULIBRE_DIR)/build \
 		&& CC="$(CC)" CXX="$(CXX)" CFLAGS="$(CFLAGS)" \
 		CXXFLAGS="$(CXXFLAGS)" LDFLAGS="$(LDFLAGS)" \
+		LIBS="$(STATIC_LIBSTDCPP)" \
 		../configure -q --disable-desktopfiles \
 			--disable-static --enable-shared \
 			--disable-xmltools --disable-largefile \
 			--without-jpeg --without-tiff \
 			$(if $(EMULATE_READER),,-host=$(CHOST)) )
+	cd $(DJVULIBRE_DIR)/build && sed -i 's|-lstdc++||g' libtool
 	$(MAKE) -j$(PROCESSORS) -C $(DJVULIBRE_DIR)/build \
 		SUBDIRS_FIRST=libdjvu --silent
 	cp -fL $(DJVULIBRE_LIB_DIR)/$(notdir $(DJVULIBRE_LIB)) \
@@ -177,11 +179,12 @@ $(DJVULIBRE_LIB): $(JPEG_LIB)
 
 # crengine, fetched via GIT as a submodule
 $(CRENGINE_LIB): $(ZLIB) $(PNG_LIB) $(FREETYPE_LIB) $(JPEG_LIB)
-	test -e $(CRENGINE_WRAPPER_DIR)/build \
-	|| mkdir $(CRENGINE_WRAPPER_DIR)/build
+	# make clean build of crengine
+	rm -rf $(CRENGINE_WRAPPER_DIR)/build
+	mkdir -p $(CRENGINE_WRAPPER_DIR)/build
 	cd $(CRENGINE_WRAPPER_DIR)/build \
 	&& CC="$(CC)" CXX="$(CXX)" RC="$(RC)" \
-		CFLAGS="$(CFLAGS)" CXXFLAGS="$(CXXFLAGS)" \
+		CFLAGS="$(CFLAGS)" CXXFLAGS="$(CXXFLAGS) -static-libstdc++" \
 		JPEG_LIB="$(CURDIR)/$(JPEG_LIB)" \
 		PNG_LIB="$(CURDIR)/$(PNG_LIB)" \
 		FREETYPE_LIB="$(CURDIR)/$(FREETYPE_LIB)" \
@@ -238,6 +241,7 @@ $(K2PDFOPT_LIB) $(LEPTONICA_LIB) $(TESSERACT_LIB): $(PNG_LIB) $(ZLIB)
 		AR="$(AR)" ZLIB=../$(ZLIB) \
 		LEPT_CFLAGS="$(CFLAGS) -I$(CURDIR)/$(ZLIB_DIR) -I$(CURDIR)/$(PNG_DIR)" \
 		LEPT_LDFLAGS="$(LDFLAGS) -L$(CURDIR)/$(ZLIB_DIR) -L$(CURDIR)/$(PNG_DIR)/lib" \
+		STDCPPLIB="$(STATIC_LIBSTDCPP)" \
 		ZLIB_LDFLAGS="-Wl,-rpath-link,$(CURDIR)/$(ZLIB_DIR)" \
 		PNG_LDFLAGS="-Wl,-rpath-link,$(CURDIR)/$(PNG_DIR)/lib" \
 		all
@@ -281,7 +285,7 @@ $(OUTPUT_DIR)/libs/libkoreader-cre.so: cre.cpp \
 	$(CXX) -I$(CRENGINE_DIR)/crengine/include/ $(DYNLIB_CFLAGS) \
 		-DLDOM_USE_OWN_MEM_MAN=$(if $(WIN32),0,1) \
 		$(if $(WIN32),-DQT_GL=1) \
-		-Wl,-rpath,'libs' -o $@ $^ $(STATICLIBSTDCPP)
+		-Wl,-rpath,'libs' -static-libstdc++ -o $@ $^
 
 $(OUTPUT_DIR)/libs/libwrap-mupdf.so: wrap-mupdf.c \
 			$(MUPDF_LIB)
@@ -434,15 +438,17 @@ lualongnumber: $(EVERNOTE_LIB)
 $(ZMQ_LIB):
 	mkdir -p $(ZMQ_DIR)/build
 	cd $(ZMQ_DIR) && sh autogen.sh
-	cd $(ZMQ_DIR)/src && sed -i 's|libzmq_la_LDFLAGS = -avoid-version|libzmq_la_LDFLAGS =|g' Makefile.am
+	cd $(ZMQ_DIR)/src && sed -i 's|-avoid-version||g' Makefile.am
 	cd $(ZMQ_DIR)/build && \
 		CC="$(CC)" CFLAGS="$(CFLAGS) $(if $(CLANG),-O0,)" \
 		LDFLAGS="$(LDFLAGS)" \
+		LIBS="$(STATIC_LIBSTDCPP)" \
 		libzmq_have_xmlto=no libzmq_have_asciidoc=no \
 			../configure -q --prefix=$(CURDIR)/$(ZMQ_DIR)/build \
 				$(if $(POCKETBOOK),--disable-eventfd,) \
 				--disable-static --enable-shared \
 				--host=$(CHOST)
+	cd $(ZMQ_DIR)/build && sed -i 's|-lstdc++||g' libtool
 	-$(MAKE) -j$(PROCESSORS) -C $(ZMQ_DIR)/build --silent uninstall
 	$(MAKE) -j$(PROCESSORS) -C $(ZMQ_DIR)/build --silent install
 	cp -fL $(ZMQ_DIR)/build/$(if $(WIN32),bin,lib)/$(notdir $(ZMQ_LIB)) $@
