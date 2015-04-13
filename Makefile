@@ -544,8 +544,6 @@ $(TURBO_FFI_WRAP_LIB): $(SSL_LIB)
 	cp -r $(TURBO_DIR)/turbovisor.lua $(OUTPUT_DIR)/common
 
 $(LUA_SPORE_ROCK):
-	# patch lua-Spore to support async http request
-	cd $(LUA_SPORE_DIR) && git checkout . && patch -N -p1 < ../lua-Spore.patch
 	cd $(LUA_SPORE_DIR) && \
 		sed -i "s| 'luasocket|--'luasocket|g" $(LUA_SPORE_ROCKSPEC) \
 		&& luarocks make $(LUA_SPORE_ROCKSPEC) \
