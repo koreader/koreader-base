@@ -177,6 +177,13 @@ local function mxc_update(fb, refarea, refreshtype, waveform_mode, wait, x, y, w
         return
     end
 
+    if w == 1 and h == 1 then
+        -- avoid system freeze when updating 1x1 pixel block on KPW2 and KV,
+        -- see koreader/koreader#1299 and koreader/koreader#1486
+        fb.debug("got a 1x1 pixel refresh request, ignoring it.")
+        return
+    end
+
     local rect = { x=x, y=y, w=w, h=h }
     -- always wait for conflicts:
     fb:_wait_for_conflicting(rect)
