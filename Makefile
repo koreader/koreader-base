@@ -367,7 +367,7 @@ endif
 		LDFLAGS="$(LDFLAGS) -L$(CURDIR)/$(ZLIB_DIR) $(if $(ANDROID), \
 			-L$(CURDIR)/$(LIBICONV_DIR)/lib -L$(CURDIR)/$(GETTEXT_DIR)/lib,)" \
 		LIBS="$(CURDIR)/$(GLIB) $(CURDIR)/$(ZLIB_STATIC) \
-			$(if $(ANDROID),,-lpthread) -static-libgcc -static-libstdc++" \
+			$(if $(ANDROID),,-lpthread -lrt) -static-libgcc -static-libstdc++" \
 		&& $(MAKE) -j$(PROCESSORS)
 	# restore to original source
 	cd $(SDCV_DIR) && sed -i 's|guint64 page_size|guint32 page_size|' src/lib/lib.cpp
