@@ -30,6 +30,8 @@ build
 sdcv
 tar-1.28
 glib-2.6.6
+libiconv-1.14
+gettext-0.19
 openssl-1.0.1g
 openssl-1.0.1h
 libpng-1.6.12

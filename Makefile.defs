@@ -307,11 +307,16 @@ GIF_LIB=$(OUTPUT_DIR)/libs/libgif$(if $(WIN32),-7.dll,.so.7)
 GIF_DIR=giflib-5.1.0
 
 SDCV_DIR=sdcv-0.4.2
-GLIB_DIR=glib-2.6.6
+GLIB_DIR=glib
+LIBICONV_DIR=libiconv-1.14
+GETTEXT_DIR=gettext-0.19
 ZLIB_DIR=$(MUPDF_DIR)/thirdparty/zlib
 
-GLIB=$(GLIB_DIR)/lib/libglib-2.0.so.0
+LIBICONV=$(LIBICONV_DIR)/lib/libiconv.a
+LIBGETTEXT=$(GETTEXT_DIR)/lib/libintl.a
+GLIB=$(GLIB_DIR)/lib/libglib-2.0.a
 ZLIB=$(OUTPUT_DIR)/libs/$(if $(WIN32),zlib1.dll,libz.so.1)
+ZLIB_STATIC=$(ZLIB_DIR)/libz.a
 
 LEPTONICA_LIB=$(OUTPUT_DIR)/libs/liblept$(if $(WIN32),-3.dll,.so.3)
 TESSERACT_LIB=$(OUTPUT_DIR)/libs/libtesseract$(if $(WIN32),-3.dll,.so.3)
