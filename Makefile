@@ -324,8 +324,8 @@ $(GLIB): $(if $(ANDROID),$(LIBICONV) $(LIBGETTEXT),)
 		ac_cv_func_posix_getpwuid_r=no\nac_cv_func_posix_getgrgid_r=no\n" > \
 		$(GLIB_DIR)/arm_cache.conf
 	cd $(GLIB_DIR) && NOCONFIGURE=1 ./autogen.sh && CC="$(CC) -std=gnu89" ./configure \
-		--with-libiconv=gnu --with-threads=posix --prefix=$(CURDIR)/$(GLIB_DIR) \
-		--without-included-gettext \
+		--with-libiconv=$(if $(ANDROID),gnu,no) --with-threads=posix \
+		--prefix=$(CURDIR)/$(GLIB_DIR) --without-included-gettext \
 		--with-gettext=no --enable-shared=false --enable-static=true \
 		CFLAGS="$(CFLAGS) $(if $(ANDROID), \
 			-I$(CURDIR)/$(LIBICONV_DIR)/include -I$(CURDIR)/$(GETTEXT_DIR)/include,)" \
@@ -359,14 +359,15 @@ ifeq ("$(shell $(CC) -dumpmachine | sed s/-.*//)","x86_64")
 endif
 	cd $(SDCV_DIR) && sed -i 's|-lz||' configure.ac
 	cd $(SDCV_DIR) && ./configure \
-		$(if $(EMULATE_READER),,--host=$(if $(ANDROID),"arm-linux-androideabi",$(CHOST))) \
+		$(if $(EMULATE_READER),,--host=$(CHOST)) \
 		PKG_CONFIG_PATH="../$(GLIB_DIR)/lib/pkgconfig" \
 		CXX="$(CXX) $(if $(ANDROID),-D_GETOPT_DEFINED,)" \
 		CXXFLAGS="$(CXXFLAGS) -I$(CURDIR)/$(ZLIB_DIR) $(if $(ANDROID), \
 			-I$(CURDIR)/$(LIBICONV_DIR)/include -I$(CURDIR)/$(GETTEXT_DIR)/include,)" \
 		LDFLAGS="$(LDFLAGS) -L$(CURDIR)/$(ZLIB_DIR) $(if $(ANDROID), \
 			-L$(CURDIR)/$(LIBICONV_DIR)/lib -L$(CURDIR)/$(GETTEXT_DIR)/lib,)" \
-		LIBS="$(CURDIR)/$(GLIB) $(CURDIR)/$(ZLIB_STATIC) -static-libgcc -static-libstdc++" \
+		LIBS="$(CURDIR)/$(GLIB) $(CURDIR)/$(ZLIB_STATIC) \
+			$(if $(ANDROID),,-lpthread) -static-libgcc -static-libstdc++" \
 		&& $(MAKE) -j$(PROCESSORS)
 	# restore to original source
 	cd $(SDCV_DIR) && sed -i 's|guint64 page_size|guint32 page_size|' src/lib/lib.cpp
