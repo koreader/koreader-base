@@ -17,14 +17,14 @@ all: $(OUTPUT_DIR)/libs $(if $(ANDROID),,$(LUAJIT)) \
 		$(TURBO_FFI_WRAP_LIB) \
 		$(LUA_SPORE_ROCK) \
 		$(if $(ANDROID),lpeg,) \
+		$(if $(WIN32),,$(OUTPUT_DIR)/sdcv) \
 		$(if $(or $(ANDROID),$(WIN32)),,$(OUTPUT_DIR)/tar) \
-		$(if $(or $(ANDROID),$(WIN32)),,$(OUTPUT_DIR)/sdcv) \
 		$(if $(or $(ANDROID),$(WIN32)),,$(OUTPUT_DIR)/zsync) \
 		$(if $(WIN32), ,$(ZMQ_LIB) $(CZMQ_LIB) $(FILEMQ_LIB) $(ZYRE_LIB))
 ifndef EMULATE_READER
 	STRIP_FILES="\
+		$(if $(WIN32),,$(OUTPUT_DIR)/sdcv) \
 		$(if $(or $(ANDROID),$(WIN32)),,$(OUTPUT_DIR)/tar) \
-		$(if $(or $(ANDROID),$(WIN32)),,$(OUTPUT_DIR)/sdcv) \
 		$(if $(or $(ANDROID),$(WIN32)),,$(OUTPUT_DIR)/zsync) \
 		$(if $(ANDROID),,$(LUAJIT)) \
 		$(OUTPUT_DIR)/libs/$(if $(WIN32),*.dll,*.so*)" ;\
@@ -304,19 +304,37 @@ $(OUTPUT_DIR)/extr: extr.c \
 
 # ===========================================================================
 # sdcv dependencies: glib-2.0 and zlib
-
-$(GLIB):
-	echo -e "glib_cv_stack_grows=no\nglib_cv_uscore=no\nac_cv_func_posix_getpwuid_r=no" > \
-		$(GLIB_DIR)/arm_cache.conf
-	cd $(GLIB_DIR) && CC="$(CC) -std=gnu89" ./configure -q \
-		--with-libiconv=no --with-threads=none --prefix=$(CURDIR)/$(GLIB_DIR) \
-		$(if $(EMULATE_READER),,--host=$(CHOST) --cache-file=arm_cache.conf) \
+$(LIBICONV):
+	cd $(LIBICONV_DIR) && CC="$(CC) -std=gnu89" ./configure \
+		--with-threads=none --prefix=$(CURDIR)/$(LIBICONV_DIR) \
+		--enable-shared=false --enable-static=true \
+		$(if $(EMULATE_READER),,--host=$(if $(ANDROID),"arm-linux",$(CHOST))) \
 		&& $(MAKE) -j$(PROCESSORS) install
-ifdef POCKETBOOK
-	cp -fL $(GLIB_DIR)/lib/$(notdir $(GLIB)) $(OUTPUT_DIR)/libs/$(notdir $(GLIB))
-endif
 
-$(ZLIB):
+$(LIBGETTEXT): $(LIBICONV)
+	cd $(GETTEXT_DIR) && CC="$(CC) -std=gnu89" ./configure \
+		--with-threads=none --prefix=$(CURDIR)/$(GETTEXT_DIR) \
+		--with-libiconv-prefix=$(CURDIR)/$(LIBICONV_DIR) \
+		--enable-shared=false --enable-static=true \
+		$(if $(EMULATE_READER),,--host=$(if $(ANDROID),"arm-linux",$(CHOST)))
+	-cd $(GETTEXT_DIR) && $(MAKE) -j$(PROCESSORS) install
+
+$(GLIB): $(if $(ANDROID),$(LIBICONV) $(LIBGETTEXT),)
+	echo -e "glib_cv_stack_grows=no\nglib_cv_uscore=no\n \
+		ac_cv_func_posix_getpwuid_r=no\nac_cv_func_posix_getgrgid_r=no\n" > \
+		$(GLIB_DIR)/arm_cache.conf
+	cd $(GLIB_DIR) && NOCONFIGURE=1 ./autogen.sh && CC="$(CC) -std=gnu89" ./configure \
+		--with-libiconv=gnu --with-threads=posix --prefix=$(CURDIR)/$(GLIB_DIR) \
+		--without-included-gettext \
+		--with-gettext=no --enable-shared=false --enable-static=true \
+		CFLAGS="$(CFLAGS) $(if $(ANDROID), \
+			-I$(CURDIR)/$(LIBICONV_DIR)/include -I$(CURDIR)/$(GETTEXT_DIR)/include,)" \
+		LDFLAGS="$(LDFLAGS) $(if $(ANDROID), \
+			-L$(CURDIR)/$(LIBICONV_DIR)/lib -L$(CURDIR)/$(GETTEXT_DIR)/lib,)" \
+		$(if $(EMULATE_READER),,--host=$(CHOST) --cache-file=arm_cache.conf)
+	-cd $(GLIB_DIR) && $(MAKE) -j$(PROCESSORS) install
+
+$(ZLIB) $(ZLIB_STATIC):
 ifdef WIN32
 	cd $(ZLIB_DIR) && DESTDIR=$(CURDIR)/$(ZLIB_DIR)/ INCLUDE_PATH=include \
 		LIBRARY_PATH=lib BIN_PATH=bin \
@@ -327,25 +345,29 @@ ifdef WIN32
 else
 	cd $(ZLIB_DIR) && CC="$(CC)" ./configure \
 		--prefix=$(CURDIR)/$(ZLIB_DIR) \
-		&& $(MAKE) -j$(PROCESSORS) --silent shared install
+		&& $(MAKE) -j$(PROCESSORS) --silent shared static install
 	cp -fL $(ZLIB_DIR)/lib/$(notdir $(ZLIB)) $(ZLIB)
 endif
 
 # ===========================================================================
 # console version of StarDict(sdcv)
 
-$(OUTPUT_DIR)/sdcv: $(GLIB) $(ZLIB)
+$(OUTPUT_DIR)/sdcv: $(GLIB) $(ZLIB_STATIC)
 ifeq ("$(shell $(CC) -dumpmachine | sed s/-.*//)","x86_64")
 	# quick fix for x86_64 (zeus)
 	cd $(SDCV_DIR) && sed -i 's|guint32 page_size|guint64 page_size|' src/lib/lib.cpp
 endif
+	cd $(SDCV_DIR) && sed -i 's|-lz||' configure.ac
 	cd $(SDCV_DIR) && ./configure \
-		$(if $(EMULATE_READER),,--host=$(CHOST)) \
+		$(if $(EMULATE_READER),,--host=$(if $(ANDROID),"arm-linux-androideabi",$(CHOST))) \
 		PKG_CONFIG_PATH="../$(GLIB_DIR)/lib/pkgconfig" \
-		CXX="$(CXX)" \
-		CXXFLAGS="$(CXXFLAGS) -I$(CURDIR)/$(ZLIB_DIR)" \
-		LDFLAGS="$(LDFLAGS) -L$(CURDIR)/$(ZLIB_DIR) -static-libstdc++" \
-		&& $(MAKE) -j$(PROCESSORS) --silent
+		CXX="$(CXX) $(if $(ANDROID),-D_GETOPT_DEFINED,)" \
+		CXXFLAGS="$(CXXFLAGS) -I$(CURDIR)/$(ZLIB_DIR) $(if $(ANDROID), \
+			-I$(CURDIR)/$(LIBICONV_DIR)/include -I$(CURDIR)/$(GETTEXT_DIR)/include,)" \
+		LDFLAGS="$(LDFLAGS) -L$(CURDIR)/$(ZLIB_DIR) $(if $(ANDROID), \
+			-L$(CURDIR)/$(LIBICONV_DIR)/lib -L$(CURDIR)/$(GETTEXT_DIR)/lib,)" \
+		LIBS="$(CURDIR)/$(GLIB) $(CURDIR)/$(ZLIB_STATIC) -static-libgcc -static-libstdc++" \
+		&& $(MAKE) -j$(PROCESSORS)
 	# restore to original source
 	cd $(SDCV_DIR) && sed -i 's|guint64 page_size|guint32 page_size|' src/lib/lib.cpp
 	cp $(SDCV_DIR)/src/sdcv $(OUTPUT_DIR)/
@@ -633,12 +655,17 @@ fetchthirdparty:
 		&& wget http://tesseract-ocr.googlecode.com/files/tesseract-ocr-3.02.02.tar.gz || true
 	cd $(K2PDFOPT_DIR) && tar zxf tesseract-ocr-3.02.02.tar.gz
 	sed -i "s/AM_CONFIG_HEADER/AC_CONFIG_HEADERS/g" $(K2PDFOPT_DIR)/tesseract-ocr/configure.ac
-	# download glib-2.6.6 for sdcv
-	[ ! -f glib-2.6.6.tar.gz ] \
-		&& wget http://ftp.gnome.org/pub/gnome/sources/glib/2.6/glib-2.6.6.tar.gz || true
-	[ `md5sum glib-2.6.6.tar.gz |cut -d\  -f1` != dba15cceeaea39c5a61b6844d2b7b920 ] \
-		&& rm glib-2.6.6.tar.gz && wget http://ftp.gnome.org/pub/gnome/sources/glib/2.6/glib-2.6.6.tar.gz || true
-	tar zxf glib-2.6.6.tar.gz
+	# download libiconv and gettext for sdcv
+	[ ! -f libiconv-1.14.tar.gz ] \
+		&& wget http://ftp.gnu.org/pub/gnu/libiconv/libiconv-1.14.tar.gz || true
+	[ `md5sum libiconv-1.14.tar.gz |cut -d\  -f1` != e34509b1623cec449dfeb73d7ce9c6c6 ] \
+		&& rm libiconv-1.14.tar.gz && wget http://ftp.gnu.org/pub/gnu/libiconv/libiconv-1.14.tar.gz || true
+	tar zxf libiconv-1.14.tar.gz
+	[ ! -f gettext-0.19.tar.gz ] \
+		&& wget http://ftp.gnu.org/pub/gnu/gettext/gettext-0.19.tar.gz || true
+	[ `md5sum gettext-0.19.tar.gz |cut -d\  -f1` != eae24a623e02b33e3e1024adff9a5a08 ] \
+		&& rm gettext-0.19.tar.gz && wget http://ftp.gnu.org/pub/gnu/gettext/gettext-0.19.tar.gz || true
+	tar zxf gettext-0.19.tar.gz
 	# download tar for zsync
 	[ ! -f tar-1.28.tar.gz ] \
 		&& wget http://ftp.gnu.org/gnu/tar/tar-1.28.tar.gz || true
@@ -675,6 +702,8 @@ clean:
 	-$(MAKE) -C $(SDCV_DIR) clean
 	-$(MAKE) -C $(PNG_DIR) clean uninstall
 	-$(MAKE) -C $(GIF_DIR) clean uninstall
+	-$(MAKE) -C $(LIBICONV_DIR) clean uninstall
+	-$(MAKE) -C $(GETTEXT_DIR) clean uninstall
 	-$(MAKE) -C $(GLIB_DIR) clean uninstall
 	-$(MAKE) -C $(ZLIB_DIR) clean uninstall
 	-$(MAKE) -C $(ZSYNC_DIR) clean

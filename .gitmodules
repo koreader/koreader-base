@@ -61,3 +61,6 @@
 [submodule "lua-Spore"]
 	path = lua-Spore
 	url = https://github.com/fperrad/lua-Spore
+[submodule "glib"]
+	path = glib
+	url = https://git.gnome.org/browse/glib
