@@ -107,14 +107,19 @@ function util.realpath(path)
 end
 
 function util.execute(...)
-	local pid = ffi.C.fork()
-	if pid == 0 then
-		local args = {...}
-		os.exit(ffi.C.execl(args[1], unpack(args, 1, #args+1)))
-	end
-	local status = ffi.new('int[1]')
-	ffi.C.waitpid(pid, status, 0)
-	return status[0]
+    if util.isAndroid() then
+        local A = require("android")
+        return A.execute(...)
+    else
+        local pid = ffi.C.fork()
+        if pid == 0 then
+            local args = {...}
+            os.exit(ffi.C.execl(args[1], unpack(args, 1, #args+1)))
+        end
+        local status = ffi.new('int[1]')
+        ffi.C.waitpid(pid, status, 0)
+        return status[0]
+    end
 end
 
 function util.utf8charcode(charstring)
