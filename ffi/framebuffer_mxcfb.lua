@@ -368,8 +368,8 @@ function framebuffer:init()
             self.wait_for_marker_fast = true
         elseif self.device.model == "Kobo_dahlia" then
             self.wait_for_marker_full = true
-            self.wait_for_marker_partial = true
-            self.wait_for_marker_fast = true
+            self.wait_for_marker_partial = false
+            self.wait_for_marker_fast = false
         elseif self.device.model == "Kobo_pixie" then
             self.wait_for_marker_full = true
             self.wait_for_marker_partial = false

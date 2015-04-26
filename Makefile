@@ -674,16 +674,16 @@ fetchthirdparty:
 		&& rm tar-1.28.tar.gz && wget http://ftp.gnu.org/gnu/tar/tar-1.28.tar.gz || true
 	tar zxf tar-1.28.tar.gz
 	# download libpng
-	[ ! -f libpng-1.6.12.tar.gz ] \
-		&& wget http://download.sourceforge.net/libpng/libpng-1.6.12.tar.gz || true
-	[ `md5sum libpng-1.6.12.tar.gz |cut -d\  -f1` != 297388a6746a65a2127ecdeb1c6e5c82 ] \
-		&& rm libpng-1.6.12.tar.gz && wget http://download.sourceforge.net/libpng/libpng-1.6.12.tar.gz || true
-	tar zxf libpng-1.6.12.tar.gz
+	[ ! -f libpng-1.6.17.tar.gz ] \
+		&& wget http://download.sourceforge.net/libpng/libpng-1.6.17.tar.gz || true
+	[ `md5sum libpng-1.6.17.tar.gz |cut -d\  -f1` != 134282f1752dcf4cd81a37b8ff421cef ] \
+		&& rm libpng-1.6.17.tar.gz && wget http://download.sourceforge.net/libpng/libpng-1.6.17.tar.gz || true
+	tar zxf libpng-1.6.17.tar.gz
 	# download libjpeg-turbo
-	[ ! -f libjpeg-turbo-1.3.1.tar.gz ] \
-		&& wget http://download.sourceforge.net/libjpeg-turbo/libjpeg-turbo-1.3.1.tar.gz || true
-	[ `md5sum libjpeg-turbo-1.3.1.tar.gz |cut -d\  -f1` != 2c3a68129dac443a72815ff5bb374b05 ] \
-		&& rm libjpeg-turbo-1.3.1.tar.gz && false || tar zxf libjpeg-turbo-1.3.1.tar.gz
+	[ ! -f libjpeg-turbo-1.4.0.tar.gz ] \
+		&& wget http://download.sourceforge.net/libjpeg-turbo/libjpeg-turbo-1.4.0.tar.gz || true
+	[ `md5sum libjpeg-turbo-1.4.0.tar.gz |cut -d\  -f1` != 039153dabe61e1ac8d9323b5522b56b0 ] \
+		&& rm libjpeg-turbo-1.4.0.tar.gz && false || tar zxf libjpeg-turbo-1.4.0.tar.gz
 	# download giflib
 	[ ! -f giflib-5.1.0.tar.gz ] \
 		&& wget http://download.sourceforge.net/giflib/giflib-5.1.0.tar.gz || true
