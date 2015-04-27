@@ -166,7 +166,7 @@ $(DJVULIBRE_LIB): $(JPEG_LIB)
 		&& CC="$(CC)" CXX="$(CXX)" CFLAGS="$(CFLAGS)" \
 		CXXFLAGS="$(CXXFLAGS)" LDFLAGS="$(LDFLAGS)" \
 		LIBS="$(STATIC_LIBSTDCPP)" \
-		../configure -q --disable-desktopfiles \
+		../autogen.sh -q --disable-desktopfiles \
 			--disable-static --enable-shared \
 			--disable-xmltools --disable-largefile \
 			--without-jpeg --without-tiff \
