@@ -44,9 +44,7 @@ endif
 	test -e $(OUTPUT_DIR)/data/cr3.css || \
 		ln -sf ../../../cr3.css $(OUTPUT_DIR)/data/
 	test -d $(OUTPUT_DIR)/fonts || ( \
-			mkdir $(OUTPUT_DIR)/fonts && \
-			cd $(OUTPUT_DIR)/fonts && \
-			ln -sf ../../../$(MUPDF_TTF_FONTS_DIR)/* . \
+			mkdir $(OUTPUT_DIR)/fonts \
 		)
 	test -e $(OUTPUT_DIR)/ffi || \
 		ln -sf ../../ffi $(OUTPUT_DIR)/

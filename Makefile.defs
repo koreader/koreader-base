@@ -363,9 +363,6 @@ LUA_SPORE_VER=$(LUA_SPORE)-$(SPORE_VER)
 LUA_SPORE_ROCKSPEC=rockspec/$(LUA_SPORE_VER).rockspec
 LUA_SPORE_ROCK=$(LUAROCKS_DIR)/lua-spore/$(SPORE_VER)/$(LUA_SPORE_VER).rockspec
 
-# must point to directory with *.ttf fonts for crengine
-MUPDF_TTF_FONTS_DIR=$(MUPDF_DIR)/resources/fonts
-
 # CFLAGS for the Lua/C/C++ modules:
 #
 # setting the rpath to '$ORIGIN' will make the dynamic linker search
