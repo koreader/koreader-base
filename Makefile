@@ -566,7 +566,7 @@ $(TURBO_FFI_WRAP_LIB): $(SSL_LIB)
 	cp -r $(TURBO_DIR)/turbovisor.lua $(OUTPUT_DIR)/common
 
 $(LUA_SPORE_ROCK):
-	cd $(LUA_SPORE_DIR) && \
+	cd $(LUA_SPORE_DIR) && mkdir -p doc && \
 		sed -i "s| 'luasocket|--'luasocket|g" $(LUA_SPORE_ROCKSPEC) \
 		&& luarocks make $(LUA_SPORE_ROCKSPEC) \
 		--to=$(CURDIR)/$(OUTPUT_DIR)/rocks \
