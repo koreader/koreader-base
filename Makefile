@@ -160,13 +160,14 @@ $(GIF_LIB):
 
 # djvulibre, fetched via GIT as a submodule
 $(DJVULIBRE_LIB): $(JPEG_LIB)
+	cd $(DJVULIBRE_DIR) && NOCONFIGURE=1 ./autogen.sh
 	mkdir -p $(DJVULIBRE_DIR)/build
 	test -e $(DJVULIBRE_DIR)/build/Makefile \
 		|| ( cd $(DJVULIBRE_DIR)/build \
 		&& CC="$(CC)" CXX="$(CXX)" CFLAGS="$(CFLAGS)" \
 		CXXFLAGS="$(CXXFLAGS)" LDFLAGS="$(LDFLAGS)" \
 		LIBS="$(STATIC_LIBSTDCPP)" \
-		../autogen.sh -q --disable-desktopfiles \
+		../configure -q --disable-desktopfiles \
 			--disable-static --enable-shared \
 			--disable-xmltools --disable-largefile \
 			--without-jpeg --without-tiff \
