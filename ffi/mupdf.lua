@@ -417,7 +417,7 @@ function page_mt.__index:getPageText()
                                 break
                             end
 						    textlen = textlen + M.fz_runetochar(textbuf + textlen, span.text[i].c)
-						    M.fz_union_rect(word_bbox, M.fz_text_char_bbox(char_bbox, span, i))
+						    M.fz_union_rect(word_bbox, M.fz_text_char_bbox(context(), char_bbox, span, i))
 						    M.fz_union_rect(line_bbox, char_bbox)
 						    if span.text[i].c >= 0x4e00 and span.text[i].c <= 0x9FFF or -- CJK Unified Ideographs
 							    span.text[i].c >= 0x2000 and span.text[i].c <= 0x206F or -- General Punctuation
