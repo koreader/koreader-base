@@ -274,7 +274,7 @@ function page_mt.__index:getUsedBBox()
 
     local dev = W.mupdf_new_bbox_device(context(), result)
     if dev == nil then merror("cannot allocate bbox_device") end
-	local ok = W.mupdf_run_page(context(), self.doc.doc, self.page, dev, M.fz_identity, nil)
+	local ok = W.mupdf_run_page(context(), self.page, dev, M.fz_identity, nil)
     M.fz_free_device(dev)
     if ok == nil then merror("cannot calculate bbox for page") end
 
@@ -373,7 +373,7 @@ function page_mt.__index:getPageText()
         merror("cannot alloc text device")
     end
 
-    if W.mupdf_run_page(context(), self.doc.doc, self.page, tdev, M.fz_identity, nil) == nil then
+    if W.mupdf_run_page(context(), self.page, tdev, M.fz_identity, nil) == nil then
         M.fz_free_text_page(context(), text_page)
         M.fz_free_text_sheet(context(), text_sheet)
         M.fz_free_device(tdev)
@@ -462,7 +462,7 @@ end
 Get a list of the Hyperlinks on a page
 --]]
 function page_mt.__index:getPageLinks()
-	local page_links = W.mupdf_load_links(context(), self.doc.doc, self.page)
+	local page_links = W.mupdf_load_links(context(), self.page)
     -- do not error out when page_links == NULL, since there might
     -- simply be no links present.
 
@@ -496,7 +496,7 @@ local function run_page(page, pixmap, ctm)
 	local dev = W.mupdf_new_draw_device(context(), pixmap)
     if dev == nil then merror("cannot create draw device") end
 
-	local ok = W.mupdf_run_page(context(), page.doc.doc, page.page, dev, ctm, nil)
+	local ok = W.mupdf_run_page(context(), page.page, dev, ctm, nil)
     M.fz_free_device(dev)
     if ok == nil then merror("could not run page") end
 end

@@ -83,8 +83,8 @@ MUPDF_WRAP(mupdf_new_draw_device, fz_device*, NULL,
     ret = fz_new_draw_device(ctx, dest),
     fz_pixmap *dest)
 MUPDF_WRAP(mupdf_run_page, void*, NULL,
-    { fz_run_page(ctx, doc, page, dev, transform, cookie); ret = (void*) -1; },
-    fz_document *doc, fz_page *page, fz_device *dev, const fz_matrix *transform, fz_cookie *cookie)
+    { fz_run_page(ctx, page, dev, transform, cookie); ret = (void*) -1; },
+    fz_page *page, fz_device *dev, const fz_matrix *transform, fz_cookie *cookie)
 MUPDF_WRAP(mupdf_write_document, void*, NULL,
     { fz_write_document(ctx, doc, filename, opts); ret = (void*) -1; },
     fz_document *doc, char* filename, fz_write_options *opts)
@@ -101,8 +101,8 @@ MUPDF_WRAP(mupdf_new_pixmap_with_bbox_and_data, fz_pixmap*, NULL,
     ret = fz_new_pixmap_with_bbox_and_data(ctx, cs, rect, samples),
     fz_colorspace *cs, const fz_irect *rect, unsigned char *samples)
 MUPDF_WRAP(mupdf_load_links, fz_link*, NULL,
-    ret = fz_load_links(ctx, doc, page),
-    fz_document *doc, fz_page *page)
+    ret = fz_load_links(ctx, page),
+    fz_page *page)
 MUPDF_WRAP(mupdf_pdf_create_annot, pdf_annot*, NULL,
     ret = pdf_create_annot(ctx, doc, page, type),
     pdf_document *doc, pdf_page *page, fz_annot_type type)
