@@ -113,14 +113,14 @@ document_mt.__index.__gc = document_mt.__index.close
 check if the document needs a password for access
 --]]
 function document_mt.__index:needsPassword()
-    return M.fz_needs_password(self.doc) ~= 0
+    return M.fz_needs_password(context(), self.doc) ~= 0
 end
 
 --[[
 try to authenticate with a password
 --]]
 function document_mt.__index:authenticatePassword(password)
-    if M.fz_authenticate_password(self.doc, password) == 0 then
+    if M.fz_authenticate_password(context(), self.doc, password) == 0 then
         return false
     end
     return true
@@ -259,7 +259,7 @@ function page_mt.__index:getSize(draw_context)
 	M.fz_scale(ctm, draw_context.zoom, draw_context.zoom)
 	M.fz_pre_rotate(ctm, draw_context.rotate)
 
-	M.fz_bound_page(self.doc.doc, self.page, bounds)
+	M.fz_bound_page(context(), self.page, bounds)
 	M.fz_transform_rect(bounds, ctm)
 	M.fz_round_rect(bbox, bounds)
 
@@ -578,7 +578,7 @@ function page_mt.__index:addMarkupAnnotation(points, n, type)
         return
     end
 
-	local doc = M.pdf_specifics(self.doc.doc)
+	local doc = M.pdf_specifics(context(), self.doc.doc)
     if doc == nil then merror("could not get pdf_specifics") end
 
     local annot = W.mupdf_pdf_create_annot(context(), doc, ffi.cast("pdf_page*", self.page), type)
@@ -802,7 +802,7 @@ function page_mt.__index:toBmp(bmp, dpi, color)
     mupdf.color = color and true or false
 
     local bounds = ffi.new("fz_rect[1]")
-	M.fz_bound_page(self.doc.doc, self.page, bounds)
+	M.fz_bound_page(context(), self.page, bounds)
 
     render_for_kopt(bmp, self, dpi/72, bounds)
 
