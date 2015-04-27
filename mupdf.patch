@@ -42,7 +42,7 @@ index 35e61f9..8c5ad86 100644
  
  	fontdesc->font->ft_substitute = 1;
 diff --git a/source/pdf/pdf-fontfile.c b/source/pdf/pdf-fontfile.c
-index 86b6682..fd4b0c3 100644
+index 86b6682..cb6d5bc 100644
 --- a/source/pdf/pdf-fontfile.c
 +++ b/source/pdf/pdf-fontfile.c
 @@ -11,6 +11,8 @@
@@ -81,7 +81,7 @@ index 86b6682..fd4b0c3 100644
 +}
 +
 +unsigned char *
-+pdf_lookup_builtin_font(const char *name, unsigned int *len)
++pdf_lookup_builtin_font(fz_context *ctx, const char *name, unsigned int *len)
 +{
 +	*len = 0;
 +	if (!strcmp("Courier", name)) {
@@ -130,37 +130,37 @@ index 86b6682..fd4b0c3 100644
 +}
 +
 +unsigned char *
-+pdf_lookup_substitute_font(int mono, int serif, int bold, int italic, unsigned int *len)
++pdf_lookup_substitute_font(fz_context *ctx, int mono, int serif, int bold, int italic, unsigned int *len)
 +{
 +	if (mono) {
 +		if (bold) {
-+			if (italic) return pdf_lookup_builtin_font("Courier-BoldOblique", len);
-+			else return pdf_lookup_builtin_font("Courier-Bold", len);
++			if (italic) return pdf_lookup_builtin_font(ctx, "Courier-BoldOblique", len);
++			else return pdf_lookup_builtin_font(ctx, "Courier-Bold", len);
 +		} else {
-+			if (italic) return pdf_lookup_builtin_font("Courier-Oblique", len);
-+			else return pdf_lookup_builtin_font("Courier", len);
++			if (italic) return pdf_lookup_builtin_font(ctx, "Courier-Oblique", len);
++			else return pdf_lookup_builtin_font(ctx, "Courier", len);
 +		}
 +	} else if (serif) {
 +		if (bold) {
-+			if (italic) return pdf_lookup_builtin_font("Times-BoldItalic", len);
-+			else return pdf_lookup_builtin_font("Times-Bold", len);
++			if (italic) return pdf_lookup_builtin_font(ctx, "Times-BoldItalic", len);
++			else return pdf_lookup_builtin_font(ctx, "Times-Bold", len);
 +		} else {
-+			if (italic) return pdf_lookup_builtin_font("Times-Italic", len);
-+			else return pdf_lookup_builtin_font("Times-Roman", len);
++			if (italic) return pdf_lookup_builtin_font(ctx, "Times-Italic", len);
++			else return pdf_lookup_builtin_font(ctx, "Times-Roman", len);
 +		}
 +	} else {
 +		if (bold) {
-+			if (italic) return pdf_lookup_builtin_font("Helvetica-BoldOblique", len);
-+			else return pdf_lookup_builtin_font("Helvetica-Bold", len);
++			if (italic) return pdf_lookup_builtin_font(ctx, "Helvetica-BoldOblique", len);
++			else return pdf_lookup_builtin_font(ctx, "Helvetica-Bold", len);
 +		} else {
-+			if (italic) return pdf_lookup_builtin_font("Helvetica-Oblique", len);
-+			else return pdf_lookup_builtin_font("Helvetica", len);
++			if (italic) return pdf_lookup_builtin_font(ctx, "Helvetica-Oblique", len);
++			else return pdf_lookup_builtin_font(ctx, "Helvetica", len);
 +		}
 +	}
 +}
 +
 +unsigned char *
-+pdf_lookup_substitute_cjk_font(int ros, int serif, int wmode, unsigned int *len, int *index)
++pdf_lookup_substitute_cjk_font(fz_context *ctx, int ros, int serif, int wmode, unsigned int *len, int *index)
 +{
 +	*len = 0;
 +	return get_font_file("droid/DroidSansFallback.ttc");
