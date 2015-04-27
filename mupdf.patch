@@ -1,5 +1,5 @@
 diff --git a/source/pdf/pdf-font.c b/source/pdf/pdf-font.c
-index 5ac722f..84222b3 100644
+index 35e61f9..8c5ad86 100644
 --- a/source/pdf/pdf-font.c
 +++ b/source/pdf/pdf-font.c
 @@ -188,7 +188,12 @@ pdf_load_builtin_font(fz_context *ctx, pdf_font_desc *fontdesc, char *fontname,
@@ -42,11 +42,11 @@ index 5ac722f..84222b3 100644
  
  	fontdesc->font->ft_substitute = 1;
 diff --git a/source/pdf/pdf-fontfile.c b/source/pdf/pdf-fontfile.c
-index f0787bc..45ceedf 100644
+index 86b6682..fd4b0c3 100644
 --- a/source/pdf/pdf-fontfile.c
 +++ b/source/pdf/pdf-fontfile.c
-@@ -14,6 +14,8 @@
- 	Set NODROIDFONT to use the base 14 fonts as substitute fonts.
+@@ -11,6 +11,8 @@
+ 	Set NOCJKFULL to embed a smaller CJK font without CJK Extension A support.
  */
  
 +#ifndef NOBUILTINFONT
@@ -54,7 +54,7 @@ index f0787bc..45ceedf 100644
  #ifdef NOCJK
  #define NOCJKFONT
  #endif
-@@ -153,3 +155,116 @@ pdf_lookup_substitute_cjk_font(int ros, int serif, int wmode, unsigned int *len,
+@@ -136,3 +138,116 @@ pdf_lookup_substitute_cjk_font(fz_context *ctx, int ros, int serif, int wmode, u
  	return NULL;
  #endif
  }
