@@ -49,7 +49,7 @@ cdecl_struct(fz_storable_s)
 cdecl_type(fz_alloc_context)
 cdecl_type(fz_colorspace)
 cdecl_func(fz_new_context_imp)
-cdecl_func(fz_drop_context) // FIXME: libk2pdfopt uses old fz_free_context symbol
+cdecl_func(fz_drop_context) // NOTE: libk2pdfopt uses old fz_free_context symbol
 cdecl_func(fz_register_document_handlers)
 
 /* images */
@@ -83,13 +83,13 @@ cdecl_struct(fz_page_s)
 cdecl_func(mupdf_open_document)
 cdecl_func(fz_needs_password)
 cdecl_func(fz_authenticate_password)
-cdecl_func(fz_drop_document) // FIXME: libk2pdfopt uses old fz_free_document symbol
+cdecl_func(fz_drop_document) // NOTE: libk2pdfopt uses old fz_free_document symbol
 cdecl_func(mupdf_count_pages)
 
 /* page */
 cdecl_func(mupdf_load_page)
 cdecl_func(fz_bound_page)
-cdecl_func(fz_drop_page) // FIXME: libk2pdfopt uses old fz_free_page symbol
+cdecl_func(fz_drop_page) // NOTE: libk2pdfopt uses old fz_free_page symbol
 
 /* links */
 cdecl_struct(fz_link_s)
@@ -98,7 +98,7 @@ cdecl_func(fz_drop_link)
 
 /* outline */
 cdecl_func(mupdf_load_outline)
-cdecl_func(fz_drop_outline) // FIXME: libk2pdfopt uses old fz_free_outline symbol
+cdecl_func(fz_drop_outline) // NOTE: libk2pdfopt uses old fz_free_outline symbol
 
 /* structured text */
 cdecl_type(fz_text_style)
@@ -116,13 +116,13 @@ cdecl_struct(fz_text_line_s)
 cdecl_type(fz_text_sheet)
 cdecl_struct(fz_text_sheet_s)
 cdecl_func(mupdf_new_text_sheet)
-cdecl_func(fz_drop_text_sheet) // FIXME: libk2pdfopt uses old fz_free_text_sheet symbol
+cdecl_func(fz_drop_text_sheet) // NOTE: libk2pdfopt uses old fz_free_text_sheet symbol
 
 cdecl_type(fz_text_page)
 cdecl_type(fz_page_block)
 cdecl_struct(fz_text_page_s)
 cdecl_func(mupdf_new_text_page)
-cdecl_func(fz_drop_text_page) // FIXME: libk2pdfopt uses old fz_free_text_page symbol
+cdecl_func(fz_drop_text_page) // NOTE: libk2pdfopt uses old fz_free_text_page symbol
 cdecl_type(fz_text_block)
 cdecl_struct(fz_page_block_s)
 cdecl_struct(fz_text_block_s)
@@ -153,7 +153,7 @@ cdecl_func(mupdf_new_draw_device)
 cdecl_func(mupdf_new_text_device)
 cdecl_func(mupdf_new_bbox_device)
 cdecl_func(mupdf_run_page)
-cdecl_func(fz_drop_device) // FIXME: libk2pdfopt uses old fz_free_device symbol
+cdecl_func(fz_drop_device) // NOTE: libk2pdfopt uses old fz_free_device symbol
 
 /* pdf specifics */
 cdecl_type(pdf_hotspot)
