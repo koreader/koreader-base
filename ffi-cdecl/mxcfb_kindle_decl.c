@@ -7,7 +7,6 @@ typedef unsigned int uint;
 #include "include/mxcfb-kindle.h"
 
 #include "ffi-cdecl.h"
-#include "ffi-cdecl-luajit.h"
 
 cdecl_const(UPDATE_MODE_PARTIAL)
 cdecl_const(UPDATE_MODE_FULL)
