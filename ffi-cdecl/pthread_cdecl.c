@@ -1,7 +1,6 @@
 #include <pthread.h>
 
 #include "ffi-cdecl.h"
-#include "ffi-cdecl-luajit.h"
 
 cdecl_type(pthread_t)
 

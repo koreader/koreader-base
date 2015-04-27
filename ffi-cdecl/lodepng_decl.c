@@ -1,7 +1,6 @@
 #include <lodepng.h>
 
 #include "ffi-cdecl.h"
-#include "ffi-cdecl-luajit.h"
 
 cdecl_type(LodePNGColorType)
 cdecl_enum(LodePNGColorType)

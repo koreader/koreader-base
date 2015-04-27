@@ -2,7 +2,6 @@
 #include "wrap-mupdf.h"
 
 #include "ffi-cdecl.h"
-#include "ffi-cdecl-luajit.h"
 
 cdecl_const(FZ_PAGE_BLOCK_TEXT)
 

@@ -13,7 +13,6 @@
 #include <linux/limits.h>
 
 #include "ffi-cdecl.h"
-#include "ffi-cdecl-luajit.h"
 
 cdecl_type(size_t)
 cdecl_type(off_t)

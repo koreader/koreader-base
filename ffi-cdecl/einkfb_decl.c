@@ -8,7 +8,6 @@ typedef unsigned long u_long;
 #include "include/einkfb.h"
 
 #include "ffi-cdecl.h"
-#include "ffi-cdecl-luajit.h"
 
 cdecl_enum(fx_type)
 cdecl_struct(update_area_t)
