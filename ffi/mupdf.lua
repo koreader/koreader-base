@@ -68,7 +68,7 @@ end
 
 function mupdf_mt.__gc()
     if save_ctx ~= nil then
-        M.fz_free_context(save_ctx)
+        M.fz_drop_context(save_ctx)
         save_ctx = nil
     end
 end
@@ -103,7 +103,7 @@ triggered explicitly
 --]]
 function document_mt.__index:close()
     if self.doc ~= nil then
-        M.fz_close_document(self.doc)
+        M.fz_drop_document(context(), self.doc)
         self.doc = nil
     end
 end
@@ -173,7 +173,7 @@ function document_mt.__index:getToc()
     local outline = W.mupdf_load_outline(context(), self.doc)
     if outline ~= nil then
         toc_walker(toc, outline, 1)
-        M.fz_free_outline(context(), outline)
+        M.fz_drop_outline(context(), outline)
     end
     return toc
 end
@@ -242,7 +242,7 @@ this is done implicitly by garbage collection, too.
 --]]
 function page_mt.__index:close()
     if self.page ~= nil then
-        M.fz_free_page(self.doc.doc, self.page)
+        M.fz_drop_page(context(), self.page)
         self.page = nil
     end
 end
@@ -275,7 +275,7 @@ function page_mt.__index:getUsedBBox()
     local dev = W.mupdf_new_bbox_device(context(), result)
     if dev == nil then merror("cannot allocate bbox_device") end
 	local ok = W.mupdf_run_page(context(), self.page, dev, M.fz_identity, nil)
-    M.fz_free_device(dev)
+    M.fz_drop_device(context(), dev)
     if ok == nil then merror("cannot calculate bbox for page") end
 
     return result[0].x0, result[0].y0, result[0].x1, result[0].y1
@@ -363,20 +363,20 @@ function page_mt.__index:getPageText()
     if text_page == nil then merror("cannot alloc text_page") end
     local text_sheet = W.mupdf_new_text_sheet(context())
     if text_sheet == nil then
-        M.fz_free_text_page(context(), text_page)
+        M.fz_drop_text_page(context(), text_page)
         merror("cannot alloc text_sheet")
     end
     local tdev = W.mupdf_new_text_device(context(), text_sheet, text_page)
     if tdev == nil then
-        M.fz_free_text_page(context(), text_page)
-        M.fz_free_text_sheet(context(), text_sheet)
+        M.fz_drop_text_page(context(), text_page)
+        M.fz_drop_text_sheet(context(), text_sheet)
         merror("cannot alloc text device")
     end
 
     if W.mupdf_run_page(context(), self.page, tdev, M.fz_identity, nil) == nil then
-        M.fz_free_text_page(context(), text_page)
-        M.fz_free_text_sheet(context(), text_sheet)
-        M.fz_free_device(tdev)
+        M.fz_drop_text_page(context(), text_page)
+        M.fz_drop_text_sheet(context(), text_sheet)
+        M.fz_drop_device(context(), tdev)
         merror("cannot run page through text device")
     end
 
@@ -451,9 +451,9 @@ function page_mt.__index:getPageText()
         end
     end
 
-    M.fz_free_device(tdev)
-    M.fz_free_text_sheet(context(), text_sheet)
-    M.fz_free_text_page(context(), text_page)
+    M.fz_drop_device(context(), tdev)
+    M.fz_drop_text_sheet(context(), text_sheet)
+    M.fz_drop_text_page(context(), text_page)
 
     return lines
 end
@@ -497,7 +497,7 @@ local function run_page(page, pixmap, ctm)
     if dev == nil then merror("cannot create draw device") end
 
 	local ok = W.mupdf_run_page(context(), page.page, dev, ctm, nil)
-    M.fz_free_device(dev)
+    M.fz_drop_device(context(), dev)
     if ok == nil then merror("could not run page") end
 end
 --[[
