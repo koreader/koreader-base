@@ -685,10 +685,10 @@ fetchthirdparty:
 	[ `md5sum libjpeg-turbo-1.4.0.tar.gz |cut -d\  -f1` != 039153dabe61e1ac8d9323b5522b56b0 ] \
 		&& rm libjpeg-turbo-1.4.0.tar.gz && false || tar zxf libjpeg-turbo-1.4.0.tar.gz
 	# download giflib
-	[ ! -f giflib-5.1.0.tar.gz ] \
-		&& wget http://download.sourceforge.net/giflib/giflib-5.1.0.tar.gz || true
-	[ `md5sum giflib-5.1.0.tar.gz |cut -d\  -f1` != 40248cb52f525dc82981761628dbd853 ] \
-		&& rm giflib-5.1.0.tar.gz && false || tar zxf giflib-5.1.0.tar.gz
+	[ ! -f giflib-5.1.1.tar.gz ] \
+		&& wget http://download.sourceforge.net/giflib/giflib-5.1.1.tar.gz || true
+	[ `md5sum giflib-5.1.1.tar.gz |cut -d\  -f1` != 801fffd6fcfbac9ee99d3ea929828688 ] \
+		&& rm giflib-5.1.1.tar.gz && false || tar zxf giflib-5.1.1.tar.gz
 
 # ===========================================================================
 clean:

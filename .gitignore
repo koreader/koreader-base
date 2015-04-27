@@ -36,7 +36,7 @@ openssl-1.0.1g
 openssl-1.0.1h
 libpng-1.6.17
 thirdparty/gettext/gettext-0.*.*
-giflib-5.1.0
+giflib-5.1.1
 libjpeg-turbo-1.4.0
 jpeg
 lpeg*

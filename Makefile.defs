@@ -304,7 +304,7 @@ LODEPNG_LIB=$(OUTPUT_DIR)/libs/liblodepng$(if $(WIN32),.dll,.so)
 LODEPNG_DIR=lodepng
 
 GIF_LIB=$(OUTPUT_DIR)/libs/libgif$(if $(WIN32),-7.dll,.so.7)
-GIF_DIR=giflib-5.1.0
+GIF_DIR=giflib-5.1.1
 
 SDCV_DIR=sdcv-0.4.2
 GLIB_DIR=glib
