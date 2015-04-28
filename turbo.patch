@@ -1,8 +1,8 @@
 diff --git a/turbo/cdef.lua b/turbo/cdef.lua
-index 608fb05..c4ac253 100644
+index c9c83a0..ba60723 100644
 --- a/turbo/cdef.lua
 +++ b/turbo/cdef.lua
-@@ -155,7 +155,7 @@ if p.__UNIX__ then
+@@ -163,7 +163,7 @@ end
      --- ******* Signals *******
      ffi.cdef(string.format([[
          typedef void(*sighandler_t)(int);
@@ -11,7 +11,7 @@ index 608fb05..c4ac253 100644
          int kill(pid_t pid, int sig);
          typedef struct {
              unsigned long int __val[%d];
-@@ -195,10 +195,12 @@ if p.__UNIX__ then
+@@ -203,10 +203,12 @@ end
      ffi.cdef([[
          typedef long suseconds_t;
          typedef long time_t;
@@ -24,98 +24,49 @@ index 608fb05..c4ac253 100644
          struct timezone{
              int tz_minuteswest;
              int tz_dsttime;
-diff --git a/turbo/crypto.lua b/turbo/crypto.lua
-index 47c990f..ce10fb1 100644
---- a/turbo/crypto.lua
-+++ b/turbo/crypto.lua
-@@ -379,8 +379,9 @@ if _G.TURBO_AXTLS then
-         return rc
-     end
- else
--    lssl = ffi.load("ssl")
--    local libtffi_loaded, libtffi = pcall(ffi.load, "tffi_wrap")
-+    lssl = ffi.load("libs/libssl.so.1.0.0")
-+    local lcrypto = ffi.load("libs/libcrypto.so.1.0.0")
-+    local libtffi_loaded, libtffi = pcall(ffi.load, "common/libtffi_wrap.so")
-     if not libtffi_loaded then
-         libtffi_loaded, libtffi =
-             pcall(ffi.load, "/usr/local/lib/libtffi_wrap.so")
-@@ -419,7 +420,7 @@ else
-         ["Error"] = 4
-     }
- 
--    crypto.ERR_get_error = lssl.ERR_get_error
-+    crypto.ERR_get_error = lcrypto.ERR_get_error
-     crypto.SSL_get_error = lssl.SSL_get_error
-     crypto.lib = lssl
- 
-@@ -440,7 +441,7 @@ else
-            _TURBO_SSL_INITED = true
-             lssl.SSL_load_error_strings()
-             lssl.SSL_library_init()
--            lssl.OPENSSL_add_all_algorithms_noconf()
-+            lcrypto.OPENSSL_add_all_algorithms_noconf()
-         end
-     end
-     if _G.TURBO_SSL then
-@@ -651,7 +652,7 @@ else
-                     err))
-             end
-         else
--            if client and SSLIOStream._ssl_verify then
-+            if client and SSLIOStream._ssl_verify == true then
-                 rc = libtffi.validate_hostname(SSLIOStream._ssl_hostname, ssl)
-                 if rc ~= crypto.validate.MatchFound then
-                     error("SSL certficate hostname validation failed, rc " ..
-diff --git a/turbo/httputil.lua b/turbo/httputil.lua
-index e84a9f5..6c33b94 100644
---- a/turbo/httputil.lua
-+++ b/turbo/httputil.lua
-@@ -32,7 +32,7 @@ local buffer =      require "turbo.structs.buffer"
- local escape =      require "turbo.escape"
- local util =        require "turbo.util"
- local ffi =         require "ffi"
--local ltp_loaded, libturbo_parser = pcall(ffi.load, "tffi_wrap")
-+local ltp_loaded, libturbo_parser = pcall(ffi.load, "common/libtffi_wrap.so")
- if not ltp_loaded then
-     -- Check /usr/local/lib explicitly also.
-     ltp_loaded, libturbo_parser =
 diff --git a/turbo/signal.lua b/turbo/signal.lua
-index 2ad04a4..b3b043b 100644
+index 97e82ee..2de54c5 100644
 --- a/turbo/signal.lua
 +++ b/turbo/signal.lua
-@@ -24,7 +24,7 @@ local ffi = require "ffi"
- require "turbo.cdef"
- 
- return {    
--    signal = ffi.C.signal
-+    signal = ffi.C.sysv_signal
-     -- For sigprocmask(2)
-     , SIG_BLOCK   = 0
-     , SIG_UNBLOCK = 1
-diff --git a/turbo/websocket.lua b/turbo/websocket.lua
-index 91ed96a..fb3d262 100644
---- a/turbo/websocket.lua
-+++ b/turbo/websocket.lua
-@@ -40,7 +40,7 @@ local web =             require "turbo.web"
- local async =           require "turbo.async"
- local buffer =          require "turbo.structs.buffer"
- require('turbo.3rdparty.middleclass')
--local ltp_loaded, libturbo_parser = pcall(ffi.load, "tffi_wrap")
-+local ltp_loaded, libturbo_parser = pcall(ffi.load, "common/libtffi_wrap.so")
- if not ltp_loaded then
-     -- Check /usr/local/lib explicitly also.
-     ltp_loaded, libturbo_parser =
-diff --git a/turbo/hash.lua b/turbo/hash.lua
-index a56fb40..f88f780 100644
---- a/turbo/hash.lua
-+++ b/turbo/hash.lua
-@@ -35,7 +35,7 @@ local lssl
- if _G.TURBO_AXTLS then
- lssl = ffi.load"axtls"
- else
--lssl = ffi.load"ssl"
-+lssl = ffi.load("libs/libssl.so.1.0.0")
- end
- 
- -- Buffers
+@@ -27,7 +27,7 @@ local platform = require "turbo.platform"
+ -- For Linux and LuaJIT only.
+ if platform.__LINUX__ and jit then
+     return {
+-        signal = ffi.C.signal
++        signal = ffi.C.sysv_signal
+         -- For sigprocmask(2)
+         , SIG_BLOCK   = 0
+         , SIG_UNBLOCK = 1
+@@ -74,4 +74,4 @@ if platform.__LINUX__ and jit then
+         ,   SIGUNUSED = 31
+         ,   _NSIG   =   65  --[[ Biggest signal number + 1 (including real-time signals).  ]]
+     }
+-end
+\ No newline at end of file
++end
+diff --git a/turbo/util.lua b/turbo/util.lua
+index b52fa94..b37f2fa 100644
+--- a/turbo/util.lua
++++ b/turbo/util.lua
+@@ -345,7 +345,7 @@ end
+ --- Loads dynamic library with helper functions or bails out with error.
+ -- @param name Custom library name or path
+ function util.load_libtffi(name)
+-    name = name or os.getenv("TURBO_LIBTFFI") or "libtffi_wrap"
++    name = name or os.getenv("TURBO_LIBTFFI") or "common/libtffi_wrap.so"
+     local ok, lib = pcall(ffi.load, name)
+     if not ok then
+         error("Could not load " .. name .. " \
+diff --git a/turbo/crypto_luasec.lua b/turbo/crypto_luasec.lua
+index 356b100..ce19192 100644
+--- a/turbo/crypto_luasec.lua
++++ b/turbo/crypto_luasec.lua
+@@ -43,7 +43,7 @@ function crypto.ssl_create_client_context(
+         protocol = "sslv23",
+         key = prv_file,
+         certificate = cert_file,
+-        cafile = ca_cert_path or "/etc/ssl/certs/ca-certificates.crt",
++        cafile = ca_cert_path,
+         verify = verify and {"peer", "fail_if_no_peer_cert"} or nil,
+         options = {"all"},
+     }
