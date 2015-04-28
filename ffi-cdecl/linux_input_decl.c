@@ -1,7 +1,6 @@
 #include <linux/input.h>
 
 #include "ffi-cdecl.h"
-#include "ffi-cdecl-luajit.h"
 
 cdecl_const(EVIOCGRAB)
 

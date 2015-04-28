@@ -194,12 +194,13 @@ local function mxc_update(fb, refarea, refreshtype, waveform_mode, wait, x, y, w
 	refarea[0].update_region.top = y
 	refarea[0].update_region.width = w
 	refarea[0].update_region.height = h
-	-- send an update marker when wait==true, or 0 otherwise
+	-- send a tracked update marker when wait==true, or 42 otherwise
     local submit_marker
     if wait then
         submit_marker = fb:_get_marker(rect, refreshtype, waveform_mode)
     else
-        submit_marker = 0
+        -- NOTE: 0 is an invalid marker id! Use something randomly fun instead, but > self.max_marker to avoid wreaking havoc.
+        submit_marker = 42
     end
     refarea[0].update_marker = submit_marker
 	-- NOTE: We're not using EPDC_FLAG_USE_ALT_BUFFER
@@ -325,7 +326,7 @@ function framebuffer:init()
             self.wait_for_marker_full = true
             self.wait_for_marker_partial = true
             self.wait_for_marker_fast = true
-            self.wait_for_marker_ui = true
+            self.wait_for_marker_ui = false
         elseif self.device.model == "KindleBasic" then
             self.mech_wait_update_complete = kindle_carta_mxc_wait_for_update_complete
             self.waveform_partial = ffi.C.WAVEFORM_MODE_REAGL
@@ -333,7 +334,7 @@ function framebuffer:init()
             self.wait_for_marker_full = true
             self.wait_for_marker_partial = true
             self.wait_for_marker_fast = true
-            self.wait_for_marker_ui = true
+            self.wait_for_marker_ui = false
         elseif self.device.model == "KindleVoyage" then
             self.mech_wait_update_complete = kindle_carta_mxc_wait_for_update_complete
             self.waveform_partial = ffi.C.WAVEFORM_MODE_REAGL
@@ -341,7 +342,7 @@ function framebuffer:init()
             self.wait_for_marker_full = true
             self.wait_for_marker_partial = true
             self.wait_for_marker_fast = true
-            self.wait_for_marker_ui = true
+            self.wait_for_marker_ui = false
         end
     elseif self.device:isKobo() then
         require("ffi/mxcfb_kobo_h")

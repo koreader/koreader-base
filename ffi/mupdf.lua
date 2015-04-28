@@ -29,7 +29,7 @@ local mupdf = {
 }
 -- this cannot get adapted by the cdecl file because it is a
 -- string constant. Must match the actual mupdf API:
-local FZ_VERSION = "1.6"
+local FZ_VERSION = "1.7"
 
 local document_mt = { __index = {} }
 local page_mt = { __index = {} }
@@ -68,7 +68,7 @@ end
 
 function mupdf_mt.__gc()
     if save_ctx ~= nil then
-        M.fz_free_context(save_ctx)
+        M.fz_drop_context(save_ctx)
         save_ctx = nil
     end
 end
@@ -103,7 +103,7 @@ triggered explicitly
 --]]
 function document_mt.__index:close()
     if self.doc ~= nil then
-        M.fz_close_document(self.doc)
+        M.fz_drop_document(context(), self.doc)
         self.doc = nil
     end
 end
@@ -113,14 +113,14 @@ document_mt.__index.__gc = document_mt.__index.close
 check if the document needs a password for access
 --]]
 function document_mt.__index:needsPassword()
-    return M.fz_needs_password(self.doc) ~= 0
+    return M.fz_needs_password(context(), self.doc) ~= 0
 end
 
 --[[
 try to authenticate with a password
 --]]
 function document_mt.__index:authenticatePassword(password)
-    if M.fz_authenticate_password(self.doc, password) == 0 then
+    if M.fz_authenticate_password(context(), self.doc, password) == 0 then
         return false
     end
     return true
@@ -173,7 +173,7 @@ function document_mt.__index:getToc()
     local outline = W.mupdf_load_outline(context(), self.doc)
     if outline ~= nil then
         toc_walker(toc, outline, 1)
-        M.fz_free_outline(context(), outline)
+        M.fz_drop_outline(context(), outline)
     end
     return toc
 end
@@ -242,7 +242,7 @@ this is done implicitly by garbage collection, too.
 --]]
 function page_mt.__index:close()
     if self.page ~= nil then
-        M.fz_free_page(self.doc.doc, self.page)
+        M.fz_drop_page(context(), self.page)
         self.page = nil
     end
 end
@@ -259,7 +259,7 @@ function page_mt.__index:getSize(draw_context)
 	M.fz_scale(ctm, draw_context.zoom, draw_context.zoom)
 	M.fz_pre_rotate(ctm, draw_context.rotate)
 
-	M.fz_bound_page(self.doc.doc, self.page, bounds)
+	M.fz_bound_page(context(), self.page, bounds)
 	M.fz_transform_rect(bounds, ctm)
 	M.fz_round_rect(bbox, bounds)
 
@@ -274,8 +274,8 @@ function page_mt.__index:getUsedBBox()
 
     local dev = W.mupdf_new_bbox_device(context(), result)
     if dev == nil then merror("cannot allocate bbox_device") end
-	local ok = W.mupdf_run_page(context(), self.doc.doc, self.page, dev, M.fz_identity, nil)
-    M.fz_free_device(dev)
+	local ok = W.mupdf_run_page(context(), self.page, dev, M.fz_identity, nil)
+    M.fz_drop_device(context(), dev)
     if ok == nil then merror("cannot calculate bbox for page") end
 
     return result[0].x0, result[0].y0, result[0].x1, result[0].y1
@@ -363,20 +363,20 @@ function page_mt.__index:getPageText()
     if text_page == nil then merror("cannot alloc text_page") end
     local text_sheet = W.mupdf_new_text_sheet(context())
     if text_sheet == nil then
-        M.fz_free_text_page(context(), text_page)
+        M.fz_drop_text_page(context(), text_page)
         merror("cannot alloc text_sheet")
     end
     local tdev = W.mupdf_new_text_device(context(), text_sheet, text_page)
     if tdev == nil then
-        M.fz_free_text_page(context(), text_page)
-        M.fz_free_text_sheet(context(), text_sheet)
+        M.fz_drop_text_page(context(), text_page)
+        M.fz_drop_text_sheet(context(), text_sheet)
         merror("cannot alloc text device")
     end
 
-    if W.mupdf_run_page(context(), self.doc.doc, self.page, tdev, M.fz_identity, nil) == nil then
-        M.fz_free_text_page(context(), text_page)
-        M.fz_free_text_sheet(context(), text_sheet)
-        M.fz_free_device(tdev)
+    if W.mupdf_run_page(context(), self.page, tdev, M.fz_identity, nil) == nil then
+        M.fz_drop_text_page(context(), text_page)
+        M.fz_drop_text_sheet(context(), text_sheet)
+        M.fz_drop_device(context(), tdev)
         merror("cannot run page through text device")
     end
 
@@ -417,7 +417,7 @@ function page_mt.__index:getPageText()
                                 break
                             end
 						    textlen = textlen + M.fz_runetochar(textbuf + textlen, span.text[i].c)
-						    M.fz_union_rect(word_bbox, M.fz_text_char_bbox(char_bbox, span, i))
+						    M.fz_union_rect(word_bbox, M.fz_text_char_bbox(context(), char_bbox, span, i))
 						    M.fz_union_rect(line_bbox, char_bbox)
 						    if span.text[i].c >= 0x4e00 and span.text[i].c <= 0x9FFF or -- CJK Unified Ideographs
 							    span.text[i].c >= 0x2000 and span.text[i].c <= 0x206F or -- General Punctuation
@@ -451,9 +451,9 @@ function page_mt.__index:getPageText()
         end
     end
 
-    M.fz_free_device(tdev)
-    M.fz_free_text_sheet(context(), text_sheet)
-    M.fz_free_text_page(context(), text_page)
+    M.fz_drop_device(context(), tdev)
+    M.fz_drop_text_sheet(context(), text_sheet)
+    M.fz_drop_text_page(context(), text_page)
 
     return lines
 end
@@ -462,7 +462,7 @@ end
 Get a list of the Hyperlinks on a page
 --]]
 function page_mt.__index:getPageLinks()
-	local page_links = W.mupdf_load_links(context(), self.doc.doc, self.page)
+	local page_links = W.mupdf_load_links(context(), self.page)
     -- do not error out when page_links == NULL, since there might
     -- simply be no links present.
 
@@ -496,8 +496,8 @@ local function run_page(page, pixmap, ctm)
 	local dev = W.mupdf_new_draw_device(context(), pixmap)
     if dev == nil then merror("cannot create draw device") end
 
-	local ok = W.mupdf_run_page(context(), page.doc.doc, page.page, dev, ctm, nil)
-    M.fz_free_device(dev)
+	local ok = W.mupdf_run_page(context(), page.page, dev, ctm, nil)
+    M.fz_drop_device(context(), dev)
     if ok == nil then merror("could not run page") end
 end
 --[[
@@ -578,7 +578,7 @@ function page_mt.__index:addMarkupAnnotation(points, n, type)
         return
     end
 
-	local doc = M.pdf_specifics(self.doc.doc)
+	local doc = M.pdf_specifics(context(), self.doc.doc)
     if doc == nil then merror("could not get pdf_specifics") end
 
     local annot = W.mupdf_pdf_create_annot(context(), doc, ffi.cast("pdf_page*", self.page), type)
@@ -802,7 +802,7 @@ function page_mt.__index:toBmp(bmp, dpi, color)
     mupdf.color = color and true or false
 
     local bounds = ffi.new("fz_rect[1]")
-	M.fz_bound_page(self.doc.doc, self.page, bounds)
+	M.fz_bound_page(context(), self.page, bounds)
 
     render_for_kopt(bmp, self, dpi/72, bounds)
 

@@ -1,7 +1,6 @@
 #include <SDL/SDL.h>
 
 #include "ffi-cdecl.h"
-#include "ffi-cdecl-luajit.h"
 
 cdecl_type(Uint32)
 cdecl_type(Sint32)

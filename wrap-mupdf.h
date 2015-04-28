@@ -61,13 +61,13 @@ MUPDF_WRAP(mupdf_open_document, fz_document*, NULL,
     ret = fz_open_document(ctx, filename),
     const char* filename)
 MUPDF_WRAP(mupdf_count_pages, int, -1,
-    ret = fz_count_pages(doc),
+    ret = fz_count_pages(ctx, doc),
     fz_document *doc)
 MUPDF_WRAP(mupdf_load_outline, fz_outline*, NULL,
-    ret = fz_load_outline(doc),
+    ret = fz_load_outline(ctx, doc),
     fz_document *doc)
 MUPDF_WRAP(mupdf_load_page, fz_page*, NULL,
-    ret = fz_load_page(doc, pageno),
+    ret = fz_load_page(ctx, doc, pageno),
     fz_document *doc, int pageno)
 MUPDF_WRAP(mupdf_new_text_sheet, fz_text_sheet*, NULL,
     ret = fz_new_text_sheet(ctx))
@@ -83,10 +83,10 @@ MUPDF_WRAP(mupdf_new_draw_device, fz_device*, NULL,
     ret = fz_new_draw_device(ctx, dest),
     fz_pixmap *dest)
 MUPDF_WRAP(mupdf_run_page, void*, NULL,
-    { fz_run_page(doc, page, dev, transform, cookie); ret = (void*) -1; },
-    fz_document *doc, fz_page *page, fz_device *dev, const fz_matrix *transform, fz_cookie *cookie)
+    { fz_run_page(ctx, page, dev, transform, cookie); ret = (void*) -1; },
+    fz_page *page, fz_device *dev, const fz_matrix *transform, fz_cookie *cookie)
 MUPDF_WRAP(mupdf_write_document, void*, NULL,
-    { fz_write_document(doc, filename, opts); ret = (void*) -1; },
+    { fz_write_document(ctx, doc, filename, opts); ret = (void*) -1; },
     fz_document *doc, char* filename, fz_write_options *opts)
 MUPDF_WRAP(mupdf_new_pixmap, fz_pixmap*, NULL,
     ret = fz_new_pixmap(ctx, cs, w, h),
@@ -101,16 +101,16 @@ MUPDF_WRAP(mupdf_new_pixmap_with_bbox_and_data, fz_pixmap*, NULL,
     ret = fz_new_pixmap_with_bbox_and_data(ctx, cs, rect, samples),
     fz_colorspace *cs, const fz_irect *rect, unsigned char *samples)
 MUPDF_WRAP(mupdf_load_links, fz_link*, NULL,
-    ret = fz_load_links(doc, page),
-    fz_document *doc, fz_page *page)
+    ret = fz_load_links(ctx, page),
+    fz_page *page)
 MUPDF_WRAP(mupdf_pdf_create_annot, pdf_annot*, NULL,
-    ret = pdf_create_annot(doc, page, type),
+    ret = pdf_create_annot(ctx, doc, page, type),
     pdf_document *doc, pdf_page *page, fz_annot_type type)
 MUPDF_WRAP(mupdf_pdf_set_markup_annot_quadpoints, void*, NULL,
-    { pdf_set_markup_annot_quadpoints(doc, annot, qp, n); ret = (void*) -1; },
+    { pdf_set_markup_annot_quadpoints(ctx, doc, annot, qp, n); ret = (void*) -1; },
     pdf_document *doc, pdf_annot *annot, fz_point *qp, int n)
 MUPDF_WRAP(mupdf_pdf_set_markup_appearance, void*, NULL,
-    { pdf_set_markup_appearance(doc, annot, color, alpha, line_thickness, line_height); ret = (void*) -1; },
+    { pdf_set_markup_appearance(ctx, doc, annot, color, alpha, line_thickness, line_height); ret = (void*) -1; },
     pdf_document *doc, pdf_annot *annot, float color[3], float alpha, float line_thickness, float line_height)
 MUPDF_WRAP(mupdf_new_pixmap_from_image, fz_pixmap*, NULL,
     ret = fz_new_pixmap_from_image(ctx, image, w, h),

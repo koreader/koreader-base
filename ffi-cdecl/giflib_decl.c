@@ -1,7 +1,6 @@
 #include <gif_lib.h>
 
 #include "ffi-cdecl.h"
-#include "ffi-cdecl-luajit.h"
 
 cdecl_const(GIF_OK)
 cdecl_const(GIF_ERROR)

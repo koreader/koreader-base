@@ -304,7 +304,7 @@ LODEPNG_LIB=$(OUTPUT_DIR)/libs/liblodepng$(if $(WIN32),.dll,.so)
 LODEPNG_DIR=lodepng
 
 GIF_LIB=$(OUTPUT_DIR)/libs/libgif$(if $(WIN32),-7.dll,.so.7)
-GIF_DIR=giflib-5.1.0
+GIF_DIR=giflib-5.1.1
 
 SDCV_DIR=sdcv-0.4.2
 GLIB_DIR=glib
@@ -362,9 +362,6 @@ SPORE_VER=0.3.1-1
 LUA_SPORE_VER=$(LUA_SPORE)-$(SPORE_VER)
 LUA_SPORE_ROCKSPEC=rockspec/$(LUA_SPORE_VER).rockspec
 LUA_SPORE_ROCK=$(LUAROCKS_DIR)/lua-spore/$(SPORE_VER)/$(LUA_SPORE_VER).rockspec
-
-# must point to directory with *.ttf fonts for crengine
-MUPDF_TTF_FONTS_DIR=$(MUPDF_DIR)/resources/fonts
 
 # CFLAGS for the Lua/C/C++ modules:
 #

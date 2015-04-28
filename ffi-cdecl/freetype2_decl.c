@@ -1,7 +1,6 @@
 #include <ft2build.h>
 
 #include "ffi-cdecl.h"
-#include "ffi-cdecl-luajit.h"
 
 #include FT_FREETYPE_H
 #include FT_SYNTHESIS_H
