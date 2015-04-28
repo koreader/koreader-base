@@ -5,7 +5,7 @@ index 35e61f9..8c5ad86 100644
 @@ -188,7 +188,12 @@ pdf_load_builtin_font(fz_context *ctx, pdf_font_desc *fontdesc, char *fontname,
  		if (!data)
  			fz_throw(ctx, FZ_ERROR_GENERIC, "cannot find builtin font: '%s'", fontname);
- 
+
 +#ifndef NOBUILTINFONT
  		fontdesc->font = fz_new_font_from_memory(ctx, fontname, data, len, 0, 1);
 +#else
@@ -13,12 +13,12 @@ index 35e61f9..8c5ad86 100644
 +		free(data);
 +#endif
  	}
- 
+
  	if (!strcmp(clean_name, "Symbol") || !strcmp(clean_name, "ZapfDingbats"))
 @@ -212,7 +217,12 @@ pdf_load_substitute_font(fz_context *ctx, pdf_font_desc *fontdesc, char *fontnam
  		if (!data)
  			fz_throw(ctx, FZ_ERROR_GENERIC, "cannot find substitute font");
- 
+
 +#ifndef NOBUILTINFONT
  		fontdesc->font = fz_new_font_from_memory(ctx, fontname, data, len, 0, 1);
 +#else
@@ -30,7 +30,7 @@ index 35e61f9..8c5ad86 100644
  	}
 @@ -235,7 +245,12 @@ pdf_load_substitute_cjk_font(fz_context *ctx, pdf_font_desc *fontdesc, char *fon
  			fz_throw(ctx, FZ_ERROR_GENERIC, "cannot find builtin CJK font");
- 
+
  		/* A glyph bbox cache is too big for CJK fonts. */
 +#ifndef NOBUILTINFONT
  		fontdesc->font = fz_new_font_from_memory(ctx, fontname, data, len, index, 0);
@@ -39,16 +39,16 @@ index 35e61f9..8c5ad86 100644
 +		free(data);
 +#endif
  	}
- 
+
  	fontdesc->font->ft_substitute = 1;
 diff --git a/source/pdf/pdf-fontfile.c b/source/pdf/pdf-fontfile.c
-index 86b6682..cb6d5bc 100644
+index 86b6682..4e062de 100644
 --- a/source/pdf/pdf-fontfile.c
 +++ b/source/pdf/pdf-fontfile.c
 @@ -11,6 +11,8 @@
  	Set NOCJKFULL to embed a smaller CJK font without CJK Extension A support.
  */
- 
+
 +#ifndef NOBUILTINFONT
 +
  #ifdef NOCJK
@@ -85,40 +85,40 @@ index 86b6682..cb6d5bc 100644
 +{
 +	*len = 0;
 +	if (!strcmp("Courier", name)) {
-+		return get_font_file("urw/NimbusMon-Reg.cff");
++		return get_font_file("urw/NimbusMono-Regular.cff");
 +	}
 +	if (!strcmp("Courier-Bold", name)) {
-+		return get_font_file("urw/NimbusMon-Bol.cff");
++		return get_font_file("urw/NimbusMono-Bold.cff");
 +	}
 +	if (!strcmp("Courier-Oblique", name)) {
-+		return get_font_file("urw/NimbusMon-Obl.cff");
++		return get_font_file("urw/NimbusMono-Oblique.cff");
 +	}
 +	if (!strcmp("Courier-BoldOblique", name)) {
-+		return get_font_file("urw/NimbusMon-BolObl.cff");
++		return get_font_file("urw/NimbusMono-BoldOblique.cff");
 +	}
 +	if (!strcmp("Helvetica", name)) {
-+		return get_font_file("urw/NimbusSan-Reg.cff");
++		return get_font_file("urw/NimbusSanL-Reg.cff");
 +	}
 +	if (!strcmp("Helvetica-Bold", name)) {
-+		return get_font_file("urw/NimbusSan-Bol.cff");
++		return get_font_file("urw/NimbusSanL-Bol.cff");
 +	}
 +	if (!strcmp("Helvetica-Oblique", name)) {
-+		return get_font_file("urw/NimbusSan-Ita.cff");
++		return get_font_file("urw/NimbusSanL-RegIta.cff");
 +	}
 +	if (!strcmp("Helvetica-BoldOblique", name)) {
-+		return get_font_file("urw/NimbusSan-BolIta.cff");
++		return get_font_file("urw/NimbusSanL-BolIta.cff");
 +	}
 +	if (!strcmp("Times-Roman", name)) {
-+		return get_font_file("urw/NimbusRom-Reg.cff");
++		return get_font_file("urw/NimbusRomNo9L-Reg.cff");
 +	}
 +	if (!strcmp("Times-Bold", name)) {
-+		return get_font_file("urw/NimbusRom-Med.cff");
++		return get_font_file("urw/NimbusRomNo9L-Med.cff");
 +	}
 +	if (!strcmp("Times-Italic", name)) {
-+		return get_font_file("urw/NimbusRom-Ita.cff");
++		return get_font_file("urw/NimbusRomNo9L-RegIta.cff");
 +	}
 +	if (!strcmp("Times-BoldItalic", name)) {
-+		return get_font_file("urw/NimbusRom-MedIta.cff");
++		return get_font_file("urw/NimbusRomNo9L-MedIta.cff");
 +	}
 +	if (!strcmp("Symbol", name)) {
 +		return get_font_file("urw/StandardSymL.cff");
