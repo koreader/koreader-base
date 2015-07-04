@@ -628,15 +628,11 @@ fetchthirdparty:
 	cd plugins/evernote-sdk-lua && (git submodule init; git submodule update)
 	# update submodules in lua-serialize
 	cd lua-serialize && (git submodule init; git submodule update)
-	# Download popen-noshell
-	test -f popen-noshell/popen_noshell.c \
-		|| svn co http://popen-noshell.googlecode.com/svn/trunk/ \
-			popen-noshell
 	# popen_noshell patch: Make it build on recent TCs, and implement
 	# a simple Makefile for building it as a static lib
 	cd popen-noshell \
 		&& test -f Makefile \
-		|| patch -N -p0 < popen_noshell-buildfix.patch
+		|| patch -N -p0 < ../popen_noshell.patch
 	# download leptonica and tesseract-ocr src for libk2pdfopt
 	[ ! -f $(K2PDFOPT_DIR)/leptonica-1.69.tar.gz ] \
 		&& cd $(K2PDFOPT_DIR) \
