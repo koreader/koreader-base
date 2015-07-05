@@ -64,3 +64,6 @@
 [submodule "glib"]
 	path = glib
 	url = https://git.gnome.org/browse/glib
+[submodule "popen-noshell"]
+	path = popen-noshell
+	url = https://github.com/famzah/popen-noshell.git
