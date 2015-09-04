@@ -235,7 +235,7 @@ else
 	# and without it, we don't get CLOEXEC handling, which is problematic on Kobos, where we spawn stuff that might
 	# survive us, and if they inherit some of our fds pointing to the removable user area, bad things happen when it
 	# gets unmounted for USBMS handling....
-	export export ac_cv_func_mmap_fixed_mapped=yes
+	export ac_cv_func_mmap_fixed_mapped=yes
 endif
 
 # not necessary to use PIC flag for win32 which has relocation table in dll
