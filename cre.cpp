@@ -335,7 +335,7 @@ static int newDocView(lua_State *L) {
 		doc->text_view->propsApply(props);
 	} else {
 		// Tweak the default settings to be slightly less random
-		props->setString(PROP_FALLBACK_FONT_FACE, "Droid Sans Fallback");
+		props->setString(PROP_FALLBACK_FONT_FACE, "Noto Sans CJK SC");
 		props->setString(PROP_HYPHENATION_DICT, "English_US_hyphen_(Alan).pdb");
 		props->setString(PROP_STATUS_FONT_FACE, "Noto Sans");
 		props->setString(PROP_FONT_FACE, "Noto Serif");
