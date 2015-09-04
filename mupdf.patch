@@ -163,7 +163,7 @@ index 86b6682..4e062de 100644
 +pdf_lookup_substitute_cjk_font(fz_context *ctx, int ros, int serif, int wmode, unsigned int *len, int *index)
 +{
 +	*len = 0;
-+	return get_font_file("droid/DroidSansFallback.ttf");
++	return get_font_file("noto/NotoSansCJK-Regular.ttf");
 +}
 +
 +void pdf_install_load_system_font_funcs(fz_context *ctx)
