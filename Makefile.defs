@@ -230,6 +230,12 @@ else
 	AR:=$(strip $(CCACHE) $(AR))
 	CFLAGS+= $(ARM_ARCH) $(COMPAT_CFLAGS)
 	CXXFLAGS+= $(ARM_ARCH) $(COMPAT_CXXFLAGS)
+	# Make sure we always have mmap() support.
+	# This is critical for FreeType, since the usage of platform-specific code depends on this,
+	# and without it, we don't get CLOEXEC handling, which is problematic on Kobos, where we spawn stuff that might
+	# survive us, and if they inherit some of our fds pointing to the removable user area, bad things happen when it
+	# gets unmounted for USBMS handling....
+	export ac_cv_func_mmap_fixed_mapped=yes
 endif
 
 # not necessary to use PIC flag for win32 which has relocation table in dll
