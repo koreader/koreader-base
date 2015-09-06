@@ -31,6 +31,7 @@ else ifeq ($(TARGET), kindlepw2)
 	CHOST?=arm-kindlepw2-linux-gnueabi
 else ifeq ($(TARGET), kindle-legacy)
 	CHOST?=arm-kindle-linux-gnueabi
+	export KINDLE_LEGACY=1
 else ifeq ($(TARGET), kobo)
 	CHOST?=arm-linux-gnueabihf
 else ifeq ($(TARGET), android)
@@ -121,6 +122,8 @@ BASE_CFLAGS:=-O2 -ffast-math -pipe -fomit-frame-pointer
 #
 MG2K12_COMPAT_CFLAGS:=-fno-stack-protector -U_FORTIFY_SOURCE -D_GNU_SOURCE -fno-finite-math-only
 MG2K12_COMPAT_CXXFLAGS:=-fno-use-cxa-atexit
+# My legacy TC is based on glibc 2.9, that should be enough :).
+NILUJE_COMPAT_CFLAGS:=-fno-stack-protector -U_FORTIFY_SOURCE -D_GNU_SOURCE
 
 # Same deal, but when targeting the K5/Kobo & using Ubuntu's Linaro TCs
 UBUNTU_COMPAT_CFLAGS:=-fno-finite-math-only -fno-stack-protector -U_FORTIFY_SOURCE
@@ -168,6 +171,13 @@ else ifeq ($(TARGET), kindle-legacy)
 	ARM_ARCH+=-mfloat-abi=softfp
 	COMPAT_CFLAGS:=$(MG2K12_COMPAT_CFLAGS)
 	COMPAT_CXXFLAGS:=$(MG2K12_COMPAT_CXXFLAGS)
+	#COMPAT_CFLAGS:=$(NILUJE_COMPAT_CFLAGS)
+	# Avoid pulling stuff from GLIBC_2.7 & 2.9 in glib
+	export glib_cv_eventfd=no
+	export ac_cv_func_pipe2=no
+	# Avoid pulling stuff from GLIBC_2.6 in tar
+	export ac_cv_func_utimensat=no
+	export ac_cv_func_futimens=no
 else ifeq ($(TARGET), android)
 	ARM_ARCH:=$(ANDROID_ARCH)
 	ARM_ARCH+=-mfloat-abi=softfp
