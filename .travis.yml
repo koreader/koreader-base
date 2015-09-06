@@ -14,7 +14,7 @@ compiler:
     - clang
 
 env:
-    - EMULATE_READER=1 USE_NO_CCACHE=1
+    - EMULATE_READER=1
 
 addons:
   apt:
