@@ -690,10 +690,10 @@ fetchthirdparty:
 		&& rm libpng-1.6.17.tar.gz && wget http://download.sourceforge.net/libpng/libpng-1.6.17.tar.gz || true
 	tar zxf libpng-1.6.17.tar.gz
 	# download libjpeg-turbo
-	[ ! -f libjpeg-turbo-1.4.0.tar.gz ] \
-		&& wget http://download.sourceforge.net/libjpeg-turbo/libjpeg-turbo-1.4.0.tar.gz || true
-	[ `md5sum libjpeg-turbo-1.4.0.tar.gz |cut -d\  -f1` != 039153dabe61e1ac8d9323b5522b56b0 ] \
-		&& rm libjpeg-turbo-1.4.0.tar.gz && false || tar zxf libjpeg-turbo-1.4.0.tar.gz
+	[ ! -f libjpeg-turbo-1.4.1.tar.gz ] \
+		&& wget http://download.sourceforge.net/libjpeg-turbo/libjpeg-turbo-1.4.1.tar.gz || true
+	[ `md5sum libjpeg-turbo-1.4.1.tar.gz |cut -d\  -f1` != b1f6b84859a16b8ebdcda951fa07c3f2 ] \
+		&& rm libjpeg-turbo-1.4.1.tar.gz && false || tar zxf libjpeg-turbo-1.4.1.tar.gz
 	# download giflib
 	[ ! -f giflib-5.1.1.tar.gz ] \
 		&& wget http://download.sourceforge.net/giflib/giflib-5.1.1.tar.gz || true
