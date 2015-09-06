@@ -227,9 +227,17 @@ $(LUAJIT_JIT): $(if $(ANDROID),$(LUAJIT_LIB),$(LUAJIT))
 
 # popen-noshell, fetched via SVN
 $(POPEN_NOSHELL_LIB):
+ifdef KINDLE_LEGACY
+	# Revert 8d7a98d on legacy devices, pipe2 was introduced in Linux 2.6.27 & glibc 2.9
+	sed -e 's/if (pipe2(pipefd, O_CLOEXEC) != 0) return NULL;/if (pipe(pipefd) != 0) return NULL;/' -i $(POPEN_NOSHELL_DIR)/popen_noshell.c
+endif
 	$(MAKE) -j$(PROCESSORS) -C $(POPEN_NOSHELL_DIR) \
 		CC="$(CC)" AR="$(AR)" \
 		CFLAGS="$(CFLAGS) $(if $(ANDROID),--sysroot=$(SYSROOT),)"
+ifdef KINDLE_LEGACY
+	# Re-apply 8d7a98d if need be
+	sed -e 's/if (pipe(pipefd) != 0) return NULL;/if (pipe2(pipefd, O_CLOEXEC) != 0) return NULL;/' -i $(POPEN_NOSHELL_DIR)/popen_noshell.c
+endif
 
 # k2pdfopt, fetched via GIT as a submodule
 $(K2PDFOPT_LIB) $(LEPTONICA_LIB) $(TESSERACT_LIB): $(PNG_LIB) $(ZLIB)
@@ -379,7 +387,12 @@ $(OUTPUT_DIR)/tar:
 	cd $(TAR_DIR) && patch -N -p1 < ../tar-0001-fix-build-failure.patch
 	cd $(TAR_DIR) && ./configure -q LIBS=$(if $(WIN32),,-lrt) \
 		$(if $(EMULATE_READER),,--host=$(CHOST)) \
-		&& $(MAKE) -j$(PROCESSORS) --silent
+		$(if $(KINDLE_LEGACY),--disable-largefile,)
+	# Forcibly disable FORTIFY on legacy devices...
+ifdef KINDLE_LEGACY
+	sed -e 's/# define _FORTIFY_SOURCE 2/#undef _FORTIFY_SOURCE/' -i $(TAR_DIR)/config.h
+endif
+	cd $(TAR_DIR) && $(MAKE) -j$(PROCESSORS) --silent
 	cp $(TAR_DIR)/src/tar $(OUTPUT_DIR)/
 
 # ===========================================================================
@@ -469,6 +482,7 @@ $(ZMQ_LIB):
 		libzmq_have_xmlto=no libzmq_have_asciidoc=no \
 			../configure -q --prefix=$(CURDIR)/$(ZMQ_DIR)/build \
 				$(if $(POCKETBOOK),--disable-eventfd,) \
+				$(if $(KINDLE_LEGACY),--disable-eventfd,) \
 				--disable-static --enable-shared \
 				--host=$(CHOST)
 	cd $(ZMQ_DIR)/build && sed -i 's|-lstdc++||g' libtool
@@ -676,10 +690,10 @@ fetchthirdparty:
 		&& rm libpng-1.6.17.tar.gz && wget http://download.sourceforge.net/libpng/libpng-1.6.17.tar.gz || true
 	tar zxf libpng-1.6.17.tar.gz
 	# download libjpeg-turbo
-	[ ! -f libjpeg-turbo-1.4.0.tar.gz ] \
-		&& wget http://download.sourceforge.net/libjpeg-turbo/libjpeg-turbo-1.4.0.tar.gz || true
-	[ `md5sum libjpeg-turbo-1.4.0.tar.gz |cut -d\  -f1` != 039153dabe61e1ac8d9323b5522b56b0 ] \
-		&& rm libjpeg-turbo-1.4.0.tar.gz && false || tar zxf libjpeg-turbo-1.4.0.tar.gz
+	[ ! -f libjpeg-turbo-1.4.1.tar.gz ] \
+		&& wget http://download.sourceforge.net/libjpeg-turbo/libjpeg-turbo-1.4.1.tar.gz || true
+	[ `md5sum libjpeg-turbo-1.4.1.tar.gz |cut -d\  -f1` != b1f6b84859a16b8ebdcda951fa07c3f2 ] \
+		&& rm libjpeg-turbo-1.4.1.tar.gz && false || tar zxf libjpeg-turbo-1.4.1.tar.gz
 	# download giflib
 	[ ! -f giflib-5.1.1.tar.gz ] \
 		&& wget http://download.sourceforge.net/giflib/giflib-5.1.1.tar.gz || true
