@@ -1,6 +1,15 @@
 local util = require("ffi/util")
 
 describe("util module", function()
+    describe("util.gettime", function()
+
+        it("should return sec and usec", function()
+            local sec, usec = util.gettime()
+            assert.are_not.equal(sec, nil)
+            assert.are_not.equal(usec, nil)
+        end)
+
+    end)
     describe("util.template", function()
 
         it("should not affect string without arguments", function()
