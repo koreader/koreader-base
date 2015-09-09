@@ -9,7 +9,7 @@ describe("util module", function()
                 ("just a string")
             )
             assert.are.equal(str_regular, str_template)
-            
+
             local str_regular_marker = ("just a string %1")
             local str_template_marker = util.template(
                 ("just a string %1")
