@@ -28,6 +28,7 @@ extern "C" {
 }
 
 #include "crengine.h"
+#include "lvdocview.h"
 
 static void replaceColor( char * str, lUInt32 color ) {
 	// in line like "0 c #80000000",
@@ -443,6 +444,30 @@ static int closeDocument(lua_State *L) {
 
 	return 0;
 }
+
+static int getDocumentProps(lua_State *L) {
+	CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
+
+	lua_newtable(L);
+	lua_pushstring(L, "title");
+	lua_pushstring(L, UnicodeToLocal(doc->text_view->getTitle()).c_str());
+	lua_settable(L, -3);
+
+	lua_pushstring(L, "authors");
+	lua_pushstring(L, UnicodeToLocal(doc->text_view->getAuthors()).c_str());
+	lua_settable(L, -3);
+
+	lua_pushstring(L, "language");
+	lua_pushstring(L, UnicodeToLocal(doc->text_view->getLanguage()).c_str());
+	lua_settable(L, -3);
+
+	lua_pushstring(L, "series");
+	lua_pushstring(L, UnicodeToLocal(doc->text_view->getSeries()).c_str());
+	lua_settable(L, -3);
+
+	return 1;
+}
+
 
 static int getNumberOfPages(lua_State *L) {
 	CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
@@ -1379,6 +1404,7 @@ static const struct luaL_Reg credocument_meth[] = {
 	{"loadDocument", loadDocument},
 	{"renderDocument", renderDocument},
 	/*--- get methods ---*/
+	{"getDocumentProps", getDocumentProps},
 	{"getPages", getNumberOfPages},
 	{"getCurrentPage", getCurrentPage},
 	{"getPageFromXPointer", getPageFromXPointer},
