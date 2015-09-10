@@ -79,26 +79,25 @@ FTFace_mt.__gc = FTFace_mt.__index.done;
 local FTFaceType = ffi.metatype("struct FT_FaceRec_", FTFace_mt)
 
 function FT.newFace(filename, pxsize)
-	if pxsize == nil then pxsize = 16*64 end
+    if pxsize == nil then pxsize = 16*64 end
 
-	local facept = ffi.new("FT_Face[1]")
+    local facept = ffi.new("FT_Face[1]")
 
-	assert(ft2.FT_New_Face(freetypelib, filename, 0, facept) == 0,
-		"freetype error")
+    assert(ft2.FT_New_Face(freetypelib, filename, 0, facept) == 0,
+           "freetype error")
 
-	face = facept[0]
+    local face = facept[0]
 
-	err = ft2.FT_Set_Pixel_Sizes(face, 0, pxsize)
-	if err ~= 0 then
-		FT_Done_Face(face)
-		error("freetype error")
-	end
+    if ft2.FT_Set_Pixel_Sizes(face, 0, pxsize) ~= 0 then
+        ft2.FT_Done_Face(face)
+        error("freetype error")
+    end
 
-	if face.charmap == nil then
-		--TODO
-	end
+    -- if face.charmap == nil then
+        --TODO
+    -- end
 
-	return face;
+    return face
 end
 
 return FT

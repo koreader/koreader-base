@@ -2,8 +2,9 @@
 Module for various utility functions
 ]]
 
-local ffi = require "ffi"
 local bit = require "bit"
+local ffi = require "ffi"
+local C = ffi.C
 
 -- win32 utility
 ffi.cdef[[
@@ -52,13 +53,12 @@ require("ffi/posix_h")
 
 local util = {}
 
-local timeval = ffi.new("struct timeval")
 
 if ffi.os == "Windows" then
 	util.gettime = function()
 		local ft = ffi.new('FILETIME[1]')[0]
 		local tmpres = ffi.new('unsigned long', 0)
-		ffi.C.GetSystemTimeAsFileTime(ft)
+		C.GetSystemTimeAsFileTime(ft)
 		tmpres = bit.bor(tmpres, ft.dwHighDateTime)
 		tmpres = bit.lshift(tmpres, 32)
 		tmpres = bit.bor(tmpres, ft.dwLowDateTime)
@@ -68,39 +68,40 @@ if ffi.os == "Windows" then
 		return tonumber(tmpres / 1000000ULL), tonumber(tmpres % 1000000ULL)
 	end
 else
-	util.gettime = function()
-		ffi.C.gettimeofday(timeval, nil)
-		return tonumber(timeval.tv_sec), tonumber(timeval.tv_usec)
-	end
+    local timeval = ffi.new("struct timeval")
+    util.gettime = function()
+        C.gettimeofday(timeval, nil)
+        return tonumber(timeval.tv_sec), tonumber(timeval.tv_usec)
+    end
 end
 
 if ffi.os == "Windows" then
 	util.sleep = function(sec)
-		ffi.C.Sleep(sec*1000)
+		C.Sleep(sec*1000)
 	end
 	util.usleep = function(usec)
-		ffi.C.Sleep(usec/1000)
+		C.Sleep(usec/1000)
 	end
 else
-	util.sleep=ffi.C.sleep
-	util.usleep=ffi.C.usleep
+	util.sleep = C.sleep
+	util.usleep = C.usleep
 end
 
 local statvfs = ffi.new("struct statvfs")
 function util.df(path)
-	ffi.C.statvfs(path, statvfs)
+	C.statvfs(path, statvfs)
 	return tonumber(statvfs.f_blocks * statvfs.f_bsize),
 		tonumber(statvfs.f_bfree * statvfs.f_bsize)
 end
 
 function util.realpath(path)
-	local buffer = ffi.new("char[?]", ffi.C.PATH_MAX)
+	local buffer = ffi.new("char[?]", C.PATH_MAX)
 	if ffi.os == "Windows" then
-		if ffi.C.GetFullPathNameA(path, ffi.C.PATH_MAX, buffer, nil) ~= 0 then
+		if C.GetFullPathNameA(path, C.PATH_MAX, buffer, nil) ~= 0 then
 			return ffi.string(buffer)
 		end
 	else
-		if ffi.C.realpath(path, buffer) ~= nil then
+		if C.realpath(path, buffer) ~= nil then
 			return ffi.string(buffer)
 		end
 	end
@@ -111,13 +112,13 @@ function util.execute(...)
         local A = require("android")
         return A.execute(...)
     else
-        local pid = ffi.C.fork()
+        local pid = C.fork()
         if pid == 0 then
             local args = {...}
-            os.exit(ffi.C.execl(args[1], unpack(args, 1, #args+1)))
+            os.exit(C.execl(args[1], unpack(args, 1, #args+1)))
         end
         local status = ffi.new('int[1]')
-        ffi.C.waitpid(pid, status, 0)
+        C.waitpid(pid, status, 0)
         return status[0]
     end
 end
@@ -142,15 +143,15 @@ local CP_UTF8 = 65001
 -- convert multibyte string to utf-8 encoded string on Windows
 function util.multiByteToUTF8(str, codepage)
     -- if codepage is not provided we will query the system codepage
-    codepage = codepage or ffi.C.GetACP()
-    local size = ffi.C.MultiByteToWideChar(codepage, 0, str, -1, nil, 0)
+    codepage = codepage or C.GetACP()
+    local size = C.MultiByteToWideChar(codepage, 0, str, -1, nil, 0)
     if size > 0 then
         local wstr = ffi.new("wchar_t[?]", size)
-        ffi.C.MultiByteToWideChar(codepage, 0, str, -1, wstr, size)
-        size = ffi.C.WideCharToMultiByte(CP_UTF8, 0, wstr, -1, nil, 0, nil, nil)
+        C.MultiByteToWideChar(codepage, 0, str, -1, wstr, size)
+        size = C.WideCharToMultiByte(CP_UTF8, 0, wstr, -1, nil, 0, nil, nil)
         if size > 0 then
             local mstr = ffi.new("char[?]", size)
-            ffi.C.WideCharToMultiByte(CP_UTF8, 0, wstr, -1, mstr, size, nil, nil)
+            C.WideCharToMultiByte(CP_UTF8, 0, wstr, -1, mstr, size, nil, nil)
             return ffi.string(mstr)
         end
     end
