@@ -761,10 +761,7 @@ function page_mt.__index:reflow(kopt_context)
 	-- probe scale
 	local zoom = kopt_context.zoom * kopt_context.quality
 	M.fz_transform_rect(bounds, M.fz_identity)
-	local scale = 1.0 / ((
-                bounds[0].x1 / (2 * zoom * kopt_context.dev_width) +
-			    bounds[0].y1 / (2 * zoom * kopt_context.dev_height)
-            ) / 2 )
+	local scale = (1.5 * zoom * kopt_context.dev_width) / bounds[0].x1
 	-- store zoom
 	kopt_context.zoom = scale
 	-- do real scale

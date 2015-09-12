@@ -550,8 +550,7 @@ static int reflowPage(lua_State *L) {
 	rh = (int)(kctx->bbox.y1 - kctx->bbox.y0);
 
 	double zoom = kctx->zoom*kctx->quality;
-	float scale = ((2*zoom*kctx->dev_width) / (double)pw + \
-			 	   (2*zoom*kctx->dev_height) / (double)ph) / 2;
+	float scale = (1.5*zoom*kctx->dev_width) / (double)pw;
 	prect.w = pw * scale;
 	prect.h = ph * scale;
 	rrect.x = rx * scale;
