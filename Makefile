@@ -431,7 +431,7 @@ $(OPENSSL_LIB):
 		&& $(MAKE) CC="$(CC) $(CFLAGS)" \
 		SHARED_LDFLAGS="$(LDFLAGS) -Wl,-rpath,'libs'" \
 		LD=$(LD) RANLIB=$(RANLIB) \
-		--silent depend build_crypto build_ssl
+		--silent depend build_crypto build_ssl >/dev/null 2>&1
 
 $(SSL_LIB): $(OPENSSL_LIB)
 	cp -fL $(OPENSSL_DIR)/$(notdir $(SSL_LIB)) $(SSL_LIB)
@@ -635,6 +635,7 @@ fetchthirdparty:
 		|| echo warn: $(LUA_DIR) folder not found
 	git submodule init
 	git submodule sync
+	git submodule foreach --recursive git reset --hard
 	git submodule update
 	cd mupdf && (git submodule init; git submodule update)
 	# MuPDF patch: use external fonts
