@@ -12,7 +12,7 @@
 	url = git://github.com/koreader/crengine.git
 [submodule "luajit-2.0"]
 	path = luajit-2.0
-	url = git://repo.or.cz/luajit-2.0.git
+	url = https://github.com/LuaJIT/LuaJIT
 [submodule "libk2pdfopt"]
 	path = libk2pdfopt
 	url = git://github.com/koreader/libk2pdfopt.git
