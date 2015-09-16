@@ -384,7 +384,7 @@ endif
 # tar: tar package for zsync
 
 $(OUTPUT_DIR)/tar:
-	cd $(TAR_DIR) && patch -N -p1 < ../tar-0001-fix-build-failure.patch
+	-cd $(TAR_DIR) && patch -N -p1 < ../tar-0001-fix-build-failure.patch
 	cd $(TAR_DIR) && ./configure -q LIBS=$(if $(WIN32),,-lrt) \
 		$(if $(EMULATE_READER),,--host=$(CHOST)) \
 		$(if $(KINDLE_LEGACY),--disable-largefile,)

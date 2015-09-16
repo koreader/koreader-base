@@ -1333,7 +1333,7 @@ static int findText(lua_State *L) {
             start = rc.top;
         } else if ( origin == -1 ) {
             // from the first page to current page
-            end = rc.top - 1;
+            end = rc.top + 1;
         } else { // origin == 1
             // from next page to the last page
             start = rc.bottom + 1;
