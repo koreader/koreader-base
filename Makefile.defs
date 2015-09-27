@@ -330,7 +330,8 @@ ZLIB_DIR=$(MUPDF_DIR)/thirdparty/zlib
 
 LIBICONV=$(LIBICONV_DIR)/lib/libiconv.a
 LIBGETTEXT=$(GETTEXT_DIR)/lib/libintl.a
-GLIB=$(GLIB_DIR)/lib/libglib-2.0.a
+GLIB=$(GLIB_DIR)/lib/libglib-2.0.so.0
+GLIB_STATIC=$(GLIB_DIR)/lib/libglib-2.0.a
 ZLIB=$(OUTPUT_DIR)/libs/$(if $(WIN32),zlib1.dll,libz.so.1)
 ZLIB_STATIC=$(ZLIB_DIR)/libz.a
 

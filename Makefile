@@ -326,12 +326,23 @@ $(LIBGETTEXT): $(LIBICONV)
 		$(if $(EMULATE_READER),,--host=$(if $(ANDROID),"arm-linux",$(CHOST)))
 	-cd $(GETTEXT_DIR) && $(MAKE) -j$(PROCESSORS) install
 
-$(GLIB): $(if $(ANDROID),$(LIBICONV) $(LIBGETTEXT),)
+$(GLIB):
 	echo -e "glib_cv_stack_grows=no\nglib_cv_uscore=no\n \
 		ac_cv_func_posix_getpwuid_r=no\nac_cv_func_posix_getgrgid_r=no\n" > \
 		$(GLIB_DIR)/arm_cache.conf
 	cd $(GLIB_DIR) && NOCONFIGURE=1 ./autogen.sh && CC="$(CC) -std=gnu89" ./configure \
-		--with-libiconv=$(if $(ANDROID),gnu,no) --with-threads=posix \
+		--with-libiconv=no --with-threads=posix \
+		--prefix=$(CURDIR)/$(GLIB_DIR) --without-included-gettext \
+		--with-gettext=no --enable-shared=glib --disable-static \
+		$(if $(EMULATE_READER),,--host=$(CHOST) --cache-file=arm_cache.conf)
+	-cd $(GLIB_DIR) && $(MAKE) -j$(PROCESSORS) install
+ifdef POCKETBOOK
+	cp -fL $(GLIB_DIR)/lib/$(notdir $(GLIB)) $(OUTPUT_DIR)/libs/$(notdir $(GLIB))
+endif
+
+$(GLIB_STATIC): $(LIBICONV) $(LIBGETTEXT)
+	cd $(GLIB_DIR) && NOCONFIGURE=1 ./autogen.sh && CC="$(CC) -std=gnu89" ./configure \
+		--with-libiconv=gnu --with-threads=posix \
 		--prefix=$(CURDIR)/$(GLIB_DIR) --without-included-gettext \
 		--with-gettext=no --enable-shared=false --enable-static=true \
 		CFLAGS="$(CFLAGS) $(if $(ANDROID), \
@@ -359,7 +370,7 @@ endif
 # ===========================================================================
 # console version of StarDict(sdcv)
 
-$(OUTPUT_DIR)/sdcv: $(GLIB) $(ZLIB_STATIC)
+$(OUTPUT_DIR)/sdcv: $(if $(ANDROID),$(GLIB_STATIC),$(GLIB)) $(ZLIB_STATIC)
 ifeq ("$(shell $(CC) -dumpmachine | sed s/-.*//)","x86_64")
 	# quick fix for x86_64 (zeus)
 	cd $(SDCV_DIR) && sed -i 's|guint32 page_size|guint64 page_size|' src/lib/lib.cpp
@@ -373,8 +384,10 @@ endif
 			-I$(CURDIR)/$(LIBICONV_DIR)/include -I$(CURDIR)/$(GETTEXT_DIR)/include,)" \
 		LDFLAGS="$(LDFLAGS) -L$(CURDIR)/$(ZLIB_DIR) $(if $(ANDROID), \
 			-L$(CURDIR)/$(LIBICONV_DIR)/lib -L$(CURDIR)/$(GETTEXT_DIR)/lib,)" \
-		LIBS="$(CURDIR)/$(GLIB) $(CURDIR)/$(ZLIB_STATIC) \
-			$(if $(ANDROID),,-lpthread -lrt) -static-libgcc -static-libstdc++" \
+		LIBS="$(if $(ANDROID),$(CURDIR)/$(GLIB_STATIC),) \
+			$(if $(ANDROID),,-lpthread -lrt) \
+			$(CURDIR)/$(ZLIB_STATIC) \
+			-static-libgcc -static-libstdc++" \
 		&& $(MAKE) -j$(PROCESSORS)
 	# restore to original source
 	cd $(SDCV_DIR) && sed -i 's|guint64 page_size|guint32 page_size|' src/lib/lib.cpp
@@ -716,7 +729,7 @@ clean:
 	-$(MAKE) -C $(GIF_DIR) clean uninstall
 	-$(MAKE) -C $(LIBICONV_DIR) clean uninstall
 	-$(MAKE) -C $(GETTEXT_DIR) clean uninstall
-	-$(MAKE) -C $(GLIB_DIR) clean uninstall
+	-$(MAKE) -C $(GLIB_DIR) clean uninstall distclean
 	-$(MAKE) -C $(ZLIB_DIR) clean uninstall
 	-$(MAKE) -C $(ZSYNC_DIR) clean
 	-$(MAKE) -C $(TAR_DIR) clean
