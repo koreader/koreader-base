@@ -31,7 +31,7 @@ else ifeq ($(TARGET), kindlepw2)
 	CHOST?=arm-kindlepw2-linux-gnueabi
 else ifeq ($(TARGET), kindle-legacy)
 	CHOST?=arm-kindle-linux-gnueabi
-	export KINDLE_LEGACY=1
+	export LEGACY=1
 else ifeq ($(TARGET), kobo)
 	CHOST?=arm-linux-gnueabihf
 else ifeq ($(TARGET), android)
@@ -44,6 +44,7 @@ else ifeq ($(TARGET), win32)
     export WIN32=1
 else ifeq ($(TARGET), pocketbook)
     CHOST?=arm-obreey-linux-gnueabi
+    export LEGACY=1
     export POCKETBOOK=1
     export PATH:=$(CURDIR)/$(POCKETBOOK_TOOLCHAIN)/bin:$(PATH)
     export SYSROOT=$(CURDIR)/$(POCKETBOOK_TOOLCHAIN)/arm-obreey-linux-gnueabi/sysroot
@@ -330,7 +331,8 @@ ZLIB_DIR=$(MUPDF_DIR)/thirdparty/zlib
 
 LIBICONV=$(LIBICONV_DIR)/lib/libiconv.a
 LIBGETTEXT=$(GETTEXT_DIR)/lib/libintl.a
-GLIB=$(GLIB_DIR)/lib/libglib-2.0.a
+GLIB=$(GLIB_DIR)/lib/libglib-2.0.so.0
+GLIB_STATIC=$(GLIB_DIR)/lib/libglib-2.0.a
 ZLIB=$(OUTPUT_DIR)/libs/$(if $(WIN32),zlib1.dll,libz.so.1)
 ZLIB_STATIC=$(ZLIB_DIR)/libz.a
 

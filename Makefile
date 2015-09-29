@@ -227,14 +227,14 @@ $(LUAJIT_JIT): $(if $(ANDROID),$(LUAJIT_LIB),$(LUAJIT))
 
 # popen-noshell, fetched via SVN
 $(POPEN_NOSHELL_LIB):
-ifdef KINDLE_LEGACY
+ifdef LEGACY
 	# Revert 8d7a98d on legacy devices, pipe2 was introduced in Linux 2.6.27 & glibc 2.9
 	sed -e 's/if (pipe2(pipefd, O_CLOEXEC) != 0) return NULL;/if (pipe(pipefd) != 0) return NULL;/' -i $(POPEN_NOSHELL_DIR)/popen_noshell.c
 endif
 	$(MAKE) -j$(PROCESSORS) -C $(POPEN_NOSHELL_DIR) \
 		CC="$(CC)" AR="$(AR)" \
 		CFLAGS="$(CFLAGS) $(if $(ANDROID),--sysroot=$(SYSROOT),)"
-ifdef KINDLE_LEGACY
+ifdef LEGACY
 	# Re-apply 8d7a98d if need be
 	sed -e 's/if (pipe(pipefd) != 0) return NULL;/if (pipe2(pipefd, O_CLOEXEC) != 0) return NULL;/' -i $(POPEN_NOSHELL_DIR)/popen_noshell.c
 endif
@@ -326,12 +326,26 @@ $(LIBGETTEXT): $(LIBICONV)
 		$(if $(EMULATE_READER),,--host=$(if $(ANDROID),"arm-linux",$(CHOST)))
 	-cd $(GETTEXT_DIR) && $(MAKE) -j$(PROCESSORS) install
 
-$(GLIB): $(if $(ANDROID),$(LIBICONV) $(LIBGETTEXT),)
+$(GLIB):
+	# in order to support legacy PocketBook 4.x firmware we should get rid of
+	# eventfd@GLIBC_2.7 and pipe2@GLIB_2.9
 	echo -e "glib_cv_stack_grows=no\nglib_cv_uscore=no\n \
+		glib_cv_eventfd=no\n ac_cv_func_pipe2=no\n \
 		ac_cv_func_posix_getpwuid_r=no\nac_cv_func_posix_getgrgid_r=no\n" > \
 		$(GLIB_DIR)/arm_cache.conf
 	cd $(GLIB_DIR) && NOCONFIGURE=1 ./autogen.sh && CC="$(CC) -std=gnu89" ./configure \
-		--with-libiconv=$(if $(ANDROID),gnu,no) --with-threads=posix \
+		--with-libiconv=no --with-threads=posix \
+		--prefix=$(CURDIR)/$(GLIB_DIR) --without-included-gettext \
+		--with-gettext=no --enable-shared=glib --disable-static \
+		$(if $(EMULATE_READER),,--host=$(CHOST) --cache-file=arm_cache.conf)
+	-cd $(GLIB_DIR) && $(MAKE) -j$(PROCESSORS) install
+ifdef POCKETBOOK
+	cp -fL $(GLIB_DIR)/lib/$(notdir $(GLIB)) $(OUTPUT_DIR)/libs/$(notdir $(GLIB))
+endif
+
+$(GLIB_STATIC): $(LIBICONV) $(LIBGETTEXT)
+	cd $(GLIB_DIR) && NOCONFIGURE=1 ./autogen.sh && CC="$(CC) -std=gnu89" ./configure \
+		--with-libiconv=gnu --with-threads=posix \
 		--prefix=$(CURDIR)/$(GLIB_DIR) --without-included-gettext \
 		--with-gettext=no --enable-shared=false --enable-static=true \
 		CFLAGS="$(CFLAGS) $(if $(ANDROID), \
@@ -359,7 +373,7 @@ endif
 # ===========================================================================
 # console version of StarDict(sdcv)
 
-$(OUTPUT_DIR)/sdcv: $(GLIB) $(ZLIB_STATIC)
+$(OUTPUT_DIR)/sdcv: $(if $(ANDROID),$(GLIB_STATIC),$(GLIB)) $(ZLIB_STATIC)
 ifeq ("$(shell $(CC) -dumpmachine | sed s/-.*//)","x86_64")
 	# quick fix for x86_64 (zeus)
 	cd $(SDCV_DIR) && sed -i 's|guint32 page_size|guint64 page_size|' src/lib/lib.cpp
@@ -373,8 +387,10 @@ endif
 			-I$(CURDIR)/$(LIBICONV_DIR)/include -I$(CURDIR)/$(GETTEXT_DIR)/include,)" \
 		LDFLAGS="$(LDFLAGS) -L$(CURDIR)/$(ZLIB_DIR) $(if $(ANDROID), \
 			-L$(CURDIR)/$(LIBICONV_DIR)/lib -L$(CURDIR)/$(GETTEXT_DIR)/lib,)" \
-		LIBS="$(CURDIR)/$(GLIB) $(CURDIR)/$(ZLIB_STATIC) \
-			$(if $(ANDROID),,-lpthread -lrt) -static-libgcc -static-libstdc++" \
+		LIBS="$(if $(ANDROID),$(CURDIR)/$(GLIB_STATIC),) \
+			$(if $(ANDROID),,-lpthread -lrt) \
+			$(CURDIR)/$(ZLIB_STATIC) \
+			-static-libgcc -static-libstdc++" \
 		&& $(MAKE) -j$(PROCESSORS)
 	# restore to original source
 	cd $(SDCV_DIR) && sed -i 's|guint64 page_size|guint32 page_size|' src/lib/lib.cpp
@@ -387,9 +403,9 @@ $(OUTPUT_DIR)/tar:
 	-cd $(TAR_DIR) && patch -N -p1 < ../tar-0001-fix-build-failure.patch
 	cd $(TAR_DIR) && ./configure -q LIBS=$(if $(WIN32),,-lrt) \
 		$(if $(EMULATE_READER),,--host=$(CHOST)) \
-		$(if $(KINDLE_LEGACY),--disable-largefile,)
+		$(if $(LEGACY),--disable-largefile,)
 	# Forcibly disable FORTIFY on legacy devices...
-ifdef KINDLE_LEGACY
+ifdef LEGACY
 	sed -e 's/# define _FORTIFY_SOURCE 2/#undef _FORTIFY_SOURCE/' -i $(TAR_DIR)/config.h
 endif
 	cd $(TAR_DIR) && $(MAKE) -j$(PROCESSORS) --silent
@@ -481,8 +497,7 @@ $(ZMQ_LIB):
 		LIBS="$(STATIC_LIBSTDCPP)" \
 		libzmq_have_xmlto=no libzmq_have_asciidoc=no \
 			../configure -q --prefix=$(CURDIR)/$(ZMQ_DIR)/build \
-				$(if $(POCKETBOOK),--disable-eventfd,) \
-				$(if $(KINDLE_LEGACY),--disable-eventfd,) \
+				$(if $(LEGACY),--disable-eventfd,) \
 				--disable-static --enable-shared \
 				--host=$(CHOST)
 	cd $(ZMQ_DIR)/build && sed -i 's|-lstdc++||g' libtool
@@ -716,7 +731,7 @@ clean:
 	-$(MAKE) -C $(GIF_DIR) clean uninstall
 	-$(MAKE) -C $(LIBICONV_DIR) clean uninstall
 	-$(MAKE) -C $(GETTEXT_DIR) clean uninstall
-	-$(MAKE) -C $(GLIB_DIR) clean uninstall
+	-$(MAKE) -C $(GLIB_DIR) clean uninstall distclean
 	-$(MAKE) -C $(ZLIB_DIR) clean uninstall
 	-$(MAKE) -C $(ZSYNC_DIR) clean
 	-$(MAKE) -C $(TAR_DIR) clean
