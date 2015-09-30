@@ -337,6 +337,7 @@ $(GLIB):
 		--with-libiconv=no --with-threads=posix \
 		--prefix=$(CURDIR)/$(GLIB_DIR) --without-included-gettext \
 		--with-gettext=no --enable-shared=glib --disable-static \
+		CFLAGS="$(CFLAGS)" LDFLAGS="$(LDFLAGS)" \
 		$(if $(EMULATE_READER),,--host=$(CHOST) --cache-file=arm_cache.conf)
 	-cd $(GLIB_DIR) && $(MAKE) -j$(PROCESSORS) install
 ifdef POCKETBOOK
@@ -344,6 +345,10 @@ ifdef POCKETBOOK
 endif
 
 $(GLIB_STATIC): $(LIBICONV) $(LIBGETTEXT)
+	echo -e "glib_cv_stack_grows=no\nglib_cv_uscore=no\n \
+		glib_cv_eventfd=no\n ac_cv_func_pipe2=no\n \
+		ac_cv_func_posix_getpwuid_r=no\nac_cv_func_posix_getgrgid_r=no\n" > \
+		$(GLIB_DIR)/arm_cache.conf
 	cd $(GLIB_DIR) && NOCONFIGURE=1 ./autogen.sh && CC="$(CC) -std=gnu89" ./configure \
 		--with-libiconv=gnu --with-threads=posix \
 		--prefix=$(CURDIR)/$(GLIB_DIR) --without-included-gettext \
