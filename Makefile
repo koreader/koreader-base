@@ -262,7 +262,7 @@ $(K2PDFOPT_LIB) $(LEPTONICA_LIB) $(TESSERACT_LIB): $(PNG_LIB) $(ZLIB)
 # our own Lua/C/C++ interfacing:
 
 libs: \
-	$(if $(or $(EMULATE_READER),$(ANDROID),$(WIN32)),,$(OUTPUT_DIR)/libs/libkoreader-input.so) \
+	$(if $(or $(SDL),$(ANDROID)),,$(OUTPUT_DIR)/libs/libkoreader-input.so) \
 	$(OUTPUT_DIR)/libs/libkoreader-lfs.so \
 	$(if $(ANDROID),,$(OUTPUT_DIR)/libs/libkoreader-djvu.so) \
 	$(OUTPUT_DIR)/libs/libkoreader-cre.so \

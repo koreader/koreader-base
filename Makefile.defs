@@ -34,20 +34,27 @@ else ifeq ($(TARGET), kindle-legacy)
 	export LEGACY=1
 else ifeq ($(TARGET), kobo)
 	CHOST?=arm-linux-gnueabihf
+else ifeq ($(TARGET), ubuntu-touch)
+	CHOST?=arm-linux-gnueabihf
+	export SDL=1
+	export UBUNTUTOUCH=1
 else ifeq ($(TARGET), android)
-    export ANDROID=1
-    export PATH:=$(CURDIR)/$(ANDROID_TOOLCHAIN)/bin:$(PATH)
-    export SYSROOT=$(NDK)/platforms/android-9/arch-arm
+	export ANDROID=1
+	export PATH:=$(CURDIR)/$(ANDROID_TOOLCHAIN)/bin:$(PATH)
+	export SYSROOT=$(NDK)/platforms/android-9/arch-arm
 	CHOST?=arm-linux-androideabi
 else ifeq ($(TARGET), win32)
-    CHOST?=i686-w64-mingw32
-    export WIN32=1
+	CHOST?=i686-w64-mingw32
+	export WIN32=1
+	export SDL=1
 else ifeq ($(TARGET), pocketbook)
-    CHOST?=arm-obreey-linux-gnueabi
-    export LEGACY=1
-    export POCKETBOOK=1
-    export PATH:=$(CURDIR)/$(POCKETBOOK_TOOLCHAIN)/bin:$(PATH)
-    export SYSROOT=$(CURDIR)/$(POCKETBOOK_TOOLCHAIN)/arm-obreey-linux-gnueabi/sysroot
+	CHOST?=arm-obreey-linux-gnueabi
+	export LEGACY=1
+	export POCKETBOOK=1
+	export PATH:=$(CURDIR)/$(POCKETBOOK_TOOLCHAIN)/bin:$(PATH)
+	export SYSROOT=$(CURDIR)/$(POCKETBOOK_TOOLCHAIN)/arm-obreey-linux-gnueabi/sysroot
+else
+	export SDL=1
 endif
 
 # unknown device
@@ -147,6 +154,11 @@ ANDROID_ARCH+=-ffunction-sections -funwind-tables -fstack-protector -no-canonica
 # Use target-specific CFLAGS
 ifeq ($(TARGET), kobo)
 	# NOTE: If we only care about Kobos w/ a Touch screen, we're good.
+	ARM_ARCH:=$(ARMV7_A8_ARCH)
+	ARM_ARCH+=-mfloat-abi=hard
+	COMPAT_CFLAGS:=$(UBUNTU_COMPAT_CFLAGS)
+	COMPAT_CXXFLAGS:=$(UBUNTU_COMPAT_CFLAGS)
+else ifeq ($(TARGET), ubuntu-touch)
 	ARM_ARCH:=$(ARMV7_A8_ARCH)
 	ARM_ARCH+=-mfloat-abi=hard
 	COMPAT_CFLAGS:=$(UBUNTU_COMPAT_CFLAGS)
