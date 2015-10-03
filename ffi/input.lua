@@ -1,6 +1,6 @@
 local util = require("ffi/util")
 
-if util.isEmulated() then
+if util.isSDL() then
 	if util.haveSDL2() then
 		return require("ffi/input_SDL2_0")
 	else

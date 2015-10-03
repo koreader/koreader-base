@@ -6,6 +6,7 @@ typedef short unsigned int Uint16;
 typedef short int Sint16;
 typedef unsigned char Uint8;
 typedef signed char Sint8;
+typedef int64_t Sint64;
 struct SDL_Keysym {
   enum {
     SDL_SCANCODE_UNKNOWN = 0,
@@ -450,6 +451,13 @@ struct SDL_UserEvent {
   void *data1;
   void *data2;
 };
+struct SDL_DisplayMode {
+  unsigned int format;
+  int w;
+  int h;
+  int refresh_rate;
+  void *data;
+};
 struct SDL_SysWMEvent {
   unsigned int type;
   unsigned int timestamp;
@@ -458,8 +466,8 @@ struct SDL_SysWMEvent {
 struct SDL_TouchFingerEvent {
   unsigned int type;
   unsigned int timestamp;
-  long int touchId;
-  long int fingerId;
+  Sint64 touchId;
+  Sint64 fingerId;
   float x;
   float y;
   float dx;
@@ -469,7 +477,7 @@ struct SDL_TouchFingerEvent {
 struct SDL_MultiGestureEvent {
   unsigned int type;
   unsigned int timestamp;
-  long int touchId;
+  Sint64 touchId;
   float dTheta;
   float dDist;
   float x;
@@ -480,8 +488,8 @@ struct SDL_MultiGestureEvent {
 struct SDL_DollarGestureEvent {
   unsigned int type;
   unsigned int timestamp;
-  long int touchId;
-  long int gestureId;
+  Sint64 touchId;
+  Sint64 gestureId;
   unsigned int numFingers;
   float error;
   float x;
@@ -541,6 +549,7 @@ int SDL_WaitEventTimeout(union SDL_Event *, int) __attribute__((visibility("defa
 int SDL_PollEvent(union SDL_Event *) __attribute__((visibility("default")));
 unsigned int SDL_GetTicks(void) __attribute__((visibility("default")));
 void SDL_Delay(unsigned int) __attribute__((visibility("default")));
+int SDL_GetCurrentDisplayMode(int, struct SDL_DisplayMode*) __attribute__((visibility("default")));
 struct SDL_Window *SDL_CreateWindow(const char *, int, int, int, int, unsigned int) __attribute__((visibility("default")));
 struct SDL_Renderer *SDL_CreateRenderer(struct SDL_Window *, int, unsigned int) __attribute__((visibility("default")));
 int SDL_CreateWindowAndRenderer(int, int, unsigned int, struct SDL_Window **, struct SDL_Renderer **) __attribute__((visibility("default")));

@@ -157,10 +157,6 @@ function util.multiByteToUTF8(str, codepage)
     end
 end
 
-function util.isEmulated()
-	return (ffi.arch ~= "arm")
-end
-
 function util.isWindows()
     return ffi.os == "Windows"
 end
@@ -170,17 +166,35 @@ local isAndroid = nil
 function util.isAndroid()
 	if isAndroid == nil then
 		isAndroid = pcall(require, "android")
+	else
+		isAndroid = false
 	end
 	return isAndroid
 end
 
+local haveSDL1 = nil
 local haveSDL2 = nil
+
+function util.haveSDL1()
+	if haveSDL1 == nil then
+		haveSDL1 = pcall(ffi.load, "SDL")
+	end
+	return haveSDL1
+end
 
 function util.haveSDL2()
 	if haveSDL2 == nil then
 		haveSDL2 = pcall(ffi.load, "SDL2")
 	end
 	return haveSDL2
+end
+
+local isSDL = nil
+function util.isSDL()
+	if isSDL == nil then
+		isSDL = util.haveSDL2() or util.haveSDL1()
+	end
+	return isSDL
 end
 
 function util.idiv(a, b)
