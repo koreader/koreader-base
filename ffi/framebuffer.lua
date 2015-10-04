@@ -59,7 +59,7 @@ function fb:new(o)
     if o.init then o:init() end
     return o
 end
- 
+
 -- you can do the setup here, but remember to call this from
 -- implementations!
 function fb:init()
@@ -244,8 +244,15 @@ end
 function fb:scaleBySize(px)
     -- larger screen needs larger scale
     local size_scale = math.min(self:getWidth(), self:getHeight())/600
+    -- if users custom screen dpi, also scale by dpi
+    local dpi_scale = size_scale
+
+    local custom_dpi = G_reader_settings:readSetting("screen_dpi")
+    if custom_dpi and self.device and self.device.display_dpi ~= self.dpi then
+        dpi_scale = self.dpi / 167
+    end
     -- scaled positive px should also be positive
-    return math.ceil(px * size_scale)
+    return math.ceil(px * (size_scale + dpi_scale) / 2)
 end
 
 function fb:getRotationMode()
