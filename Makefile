@@ -740,6 +740,7 @@ clean:
 	-rm -rf $(OUTPUT_DIR)/*
 	-rm -rf $(CRENGINE_WRAPPER_BUILD_DIR)
 	-rm -rf $(DJVULIBRE_DIR)/build
+	-rm -rf $(AES_LIB)
 	-$(MAKE) -C $(LUA_DIR) CC="$(HOSTCC)" CFLAGS="$(BASE_CFLAGS)" clean
 	-$(MAKE) -C $(MUPDF_DIR) build="release" clean
 	-$(MAKE) -C $(POPEN_NOSHELL_DIR) clean
@@ -752,6 +753,7 @@ clean:
 	-$(MAKE) -C $(GETTEXT_DIR) clean uninstall
 	-$(MAKE) -C $(GLIB_DIR) clean uninstall distclean
 	-$(MAKE) -C $(ZLIB_DIR) clean uninstall
+	-$(MAKE) -C $(AES_LIB_DIR) clean
 	-$(MAKE) -C $(ZSYNC_DIR) clean
 	-$(MAKE) -C $(TAR_DIR) clean
 	-$(MAKE) -C $(FREETYPE_DIR)/build clean uninstall distclean
