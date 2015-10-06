@@ -288,14 +288,20 @@ CRENGINE_BUILD_DIR=$(CRENGINE_WRAPPER_BUILD_DIR)/crengine
 
 LUAFILESYSTEM_DIR=luafilesystem
 
+ZLIB_DIR=zlib-1.2.8
+ZLIB_STATIC=$(ZLIB_DIR)/libz.a
+
+MINIZIP_DIR=minizip
+AES_LIB_DIR=$(MINIZIP_DIR)/aes
+AES_LIB=$(MINIZIP_DIR)/libaes.a
+
 MUPDF_DIR=mupdf
-Z_LIB=$(MUPDF_LIB_DIR)/libz.a
 MUPDF_LIB_DIR=$(MUPDF_DIR)/build/release
 MUPDF_LIB_STATIC=$(MUPDF_LIB_DIR)/libmupdf.a
 MUPDF_JS_LIB_STATIC=$(MUPDF_LIB_DIR)/libmujs.a
 MUPDF_THIRDPARTY_LIBS=$(MUPDF_LIB_DIR)/libopenjpeg.a \
 			$(MUPDF_LIB_DIR)/libjbig2dec.a \
-			$(Z_LIB)
+			$(AES_LIB)
 MUPDF_LIB=$(OUTPUT_DIR)/libs/libmupdf.$(if $(WIN32),dll,so)
 
 DJVULIBRE_DIR=djvulibre
@@ -339,14 +345,12 @@ SDCV_DIR=sdcv-0.4.2
 GLIB_DIR=glib
 LIBICONV_DIR=libiconv-1.14
 GETTEXT_DIR=gettext-0.19
-ZLIB_DIR=$(MUPDF_DIR)/thirdparty/zlib
 
 LIBICONV=$(LIBICONV_DIR)/lib/libiconv.a
 LIBGETTEXT=$(GETTEXT_DIR)/lib/libintl.a
 GLIB=$(GLIB_DIR)/lib/libglib-2.0.so.0
 GLIB_STATIC=$(GLIB_DIR)/lib/libglib-2.0.a
 ZLIB=$(OUTPUT_DIR)/libs/$(if $(WIN32),zlib1.dll,libz.so.1)
-ZLIB_STATIC=$(ZLIB_DIR)/libz.a
 
 LEPTONICA_LIB=$(OUTPUT_DIR)/libs/liblept$(if $(WIN32),-3.dll,.so.3)
 TESSERACT_LIB=$(OUTPUT_DIR)/libs/libtesseract$(if $(WIN32),-3.dll,.so.3)

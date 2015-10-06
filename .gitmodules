@@ -67,3 +67,6 @@
 [submodule "popen-noshell"]
 	path = popen-noshell
 	url = https://github.com/famzah/popen-noshell.git
+[submodule "minizip"]
+	path = minizip
+	url = https://github.com/nmoinvaz/minizip

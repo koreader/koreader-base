@@ -112,21 +112,29 @@ $(PNG_LIB): $(ZLIB)
 	$(MAKE) -j$(PROCESSORS) -C $(PNG_DIR) --silent install
 	cp -fL $(PNG_DIR)/.libs/$(notdir $(PNG_LIB)) $@
 
+$(AES_LIB):
+	sed -i 's|^CC=|#CC=|g' $(AES_LIB_DIR)/Makefile
+	sed -i 's|^CFLAGS=|#CFLAGS=|g' $(AES_LIB_DIR)/Makefile
+	$(MAKE) -j$(PROCESSORS) -C $(AES_LIB_DIR) \
+		CC="$(CC) $(CFLAGS)" LDFLAGS="$(LDFLAGS)" AR="$(AR)" \
+		RANLIB="$(RANLIB)"
+
 # mupdf, fetched via GIT as a submodule
 # by default, mupdf compiles to a static library:
 # we generate a dynamic library from the static library:
-$(MUPDF_LIB): $(JPEG_LIB) $(FREETYPE_LIB)
+$(MUPDF_LIB): $(JPEG_LIB) $(FREETYPE_LIB) $(ZLIB) $(AES_LIB)
 	env CFLAGS="$(HOSTCFLAGS)" \
 		$(MAKE) -j$(PROCESSORS) -C mupdf generate build="release" CC="$(HOSTCC)" \
 		OS=$(if $(WIN32),,Other) verbose=1
 	$(MAKE) -j$(PROCESSORS) -C mupdf \
 		LDFLAGS="$(LDFLAGS) -L../$(OUTPUT_DIR)" \
-		XCFLAGS="$(CFLAGS) -DNOBUILTINFONT -I../$(JPEG_DIR)/include -I../$(FREETYPE_DIR)/include" \
+		XCFLAGS="$(CFLAGS) -DNOBUILTINFONT -I../$(JPEG_DIR)/include -I../$(FREETYPE_DIR)/include -I../$(ZLIB_DIR) -I../$(MINIZIP_DIR)" \
 		CC="$(CC)" \
 		build="release" MUDRAW= MUTOOL= CURL_LIB= \
 		OS=$(if $(WIN32),,Other) verbose=1 \
 		FREETYPE_DIR=nonexisting \
 		JPEG_DIR=nonexisting \
+		ZLIB_DIR=nonexisting \
 		CROSSCOMPILE=yes \
 		third libs
 	$(CC) -shared $(CFLAGS) \
@@ -135,7 +143,7 @@ $(MUPDF_LIB): $(JPEG_LIB) $(FREETYPE_LIB)
 		-Wl,--whole-archive $(MUPDF_JS_LIB_STATIC) \
 		-Wl,--no-whole-archive $(MUPDF_THIRDPARTY_LIBS) \
 		-Wl,-soname=$(notdir $(MUPDF_LIB)) \
-		$(JPEG_LIB) $(FREETYPE_LIB) \
+		$(ZLIB) $(JPEG_LIB) $(FREETYPE_LIB) \
 		-o $(MUPDF_LIB) -lm $(if $(ANDROID),-llog,)
 
 $(LODEPNG_LIB): $(LODEPNG_DIR)/lodepng.cpp $(LODEPNG_DIR)/lodepng.h
@@ -720,6 +728,12 @@ fetchthirdparty:
 		&& wget http://download.sourceforge.net/giflib/giflib-5.1.1.tar.gz || true
 	[ `md5sum giflib-5.1.1.tar.gz |cut -d\  -f1` != 801fffd6fcfbac9ee99d3ea929828688 ] \
 		&& rm giflib-5.1.1.tar.gz && false || tar zxf giflib-5.1.1.tar.gz
+	# download zlib
+	[ ! -f zlib-1.2.8.tar.gz ] \
+		&& wget http://zlib.net/zlib-1.2.8.tar.gz || true
+	[ `md5sum zlib-1.2.8.tar.gz |cut -d\  -f1` != 44d667c142d7cda120332623eab69f40 ] \
+		&& rm zlib-1.2.8.tar.gz && false || tar zxf zlib-1.2.8.tar.gz
+
 
 # ===========================================================================
 clean:
