@@ -63,7 +63,7 @@
 	url = https://github.com/fperrad/lua-Spore
 [submodule "glib"]
 	path = glib
-	url = https://git.gnome.org/browse/glib
+	url = https://github.com/GNOME/glib.git
 [submodule "popen-noshell"]
 	path = popen-noshell
 	url = https://github.com/famzah/popen-noshell.git
