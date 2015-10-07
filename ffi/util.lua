@@ -166,8 +166,6 @@ local isAndroid = nil
 function util.isAndroid()
 	if isAndroid == nil then
 		isAndroid = pcall(require, "android")
-	else
-		isAndroid = false
 	end
 	return isAndroid
 end
