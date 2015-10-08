@@ -38,6 +38,7 @@ giflib-5.1.1
 libjpeg-turbo-1.4.1
 jpeg
 lpeg*
+zlib-1.2.8
 
 kpvcrlib/build
 

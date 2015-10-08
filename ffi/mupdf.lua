@@ -656,8 +656,9 @@ local function get_pthread()
     if ffi.os == "Windows" then
         return ffi.load("libwinpthread-1.dll")
     elseif util.isAndroid() then
-        -- pthread directives are in the default namespace on Android
-        return ffi.C
+        -- pthread directives are in Bionic library on Android
+        local ok, pthread = pcall(ffi.load, "libc.so")
+        if ok then return pthread end
     else
         -- Kobo devices strangely have no libpthread.so in LD_LIBRARY_PATH
         -- so we hardcode the libpthread.so.0 here just for Kobo.
