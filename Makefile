@@ -86,7 +86,7 @@ $(FREETYPE_LIB):
 	-$(MAKE) -C $(FREETYPE_DIR)/build --silent install
 	cp -fL $(FREETYPE_DIR)/build/$(if $(WIN32),bin,lib)/$(notdir $(FREETYPE_LIB)) $@
 
-# libjpeg-turbo, fetched via subversion
+# libjpeg-turbo
 $(JPEG_LIB):
 	cd $(JPEG_DIR) && \
 		CC="$(CC)" CXX="$(CXX)" CPPFLAGS="$(CFLAGS)" LDFLAGS="$(LDFLAGS)" \
@@ -713,16 +713,16 @@ fetchthirdparty:
 		&& rm tar-1.28.tar.gz && wget http://ftp.gnu.org/gnu/tar/tar-1.28.tar.gz || true
 	tar zxf tar-1.28.tar.gz
 	# download libpng
-	[ ! -f libpng-1.6.17.tar.gz ] \
-		&& wget http://download.sourceforge.net/libpng/libpng-1.6.17.tar.gz || true
-	[ `md5sum libpng-1.6.17.tar.gz |cut -d\  -f1` != 134282f1752dcf4cd81a37b8ff421cef ] \
-		&& rm libpng-1.6.17.tar.gz && wget http://download.sourceforge.net/libpng/libpng-1.6.17.tar.gz || true
-	tar zxf libpng-1.6.17.tar.gz
+	[ ! -f libpng-1.6.18.tar.gz ] \
+		&& wget http://download.sourceforge.net/libpng/libpng-1.6.18.tar.gz || true
+	[ `md5sum libpng-1.6.18.tar.gz |cut -d\  -f1` != 685ce2ebbf4ad9a03992fb5f10c38df1 ] \
+		&& rm libpng-1.6.18.tar.gz && wget http://download.sourceforge.net/libpng/libpng-1.6.18.tar.gz || true
+	tar zxf libpng-1.6.18.tar.gz
 	# download libjpeg-turbo
-	[ ! -f libjpeg-turbo-1.4.1.tar.gz ] \
-		&& wget http://download.sourceforge.net/libjpeg-turbo/libjpeg-turbo-1.4.1.tar.gz || true
-	[ `md5sum libjpeg-turbo-1.4.1.tar.gz |cut -d\  -f1` != b1f6b84859a16b8ebdcda951fa07c3f2 ] \
-		&& rm libjpeg-turbo-1.4.1.tar.gz && false || tar zxf libjpeg-turbo-1.4.1.tar.gz
+	[ ! -f libjpeg-turbo-1.4.2.tar.gz ] \
+		&& wget http://download.sourceforge.net/libjpeg-turbo/libjpeg-turbo-1.4.2.tar.gz || true
+	[ `md5sum libjpeg-turbo-1.4.2.tar.gz |cut -d\  -f1` != 86b0d5f7507c2e6c21c00219162c3c44 ] \
+		&& rm libjpeg-turbo-1.4.2.tar.gz && false || tar zxf libjpeg-turbo-1.4.2.tar.gz
 	# download giflib
 	[ ! -f giflib-5.1.1.tar.gz ] \
 		&& wget http://download.sourceforge.net/giflib/giflib-5.1.1.tar.gz || true

@@ -329,10 +329,10 @@ FREETYPE_DIR=freetype2
 
 JPEG_LIB=$(OUTPUT_DIR)/libs/libjpeg$(if $(WIN32),-8.dll,.so.8)
 TURBOJPEG_LIB=$(OUTPUT_DIR)/libs/libturbojpeg$(if $(WIN32),.dll,.so)
-JPEG_DIR=libjpeg-turbo-1.4.1
+JPEG_DIR=libjpeg-turbo-1.4.2
 
 PNG_LIB=$(OUTPUT_DIR)/libs/libpng16$(if $(WIN32),-16.dll,.so$(if $(ANDROID),,.16))
-PNG_DIR=libpng-1.6.17
+PNG_DIR=libpng-1.6.18
 PNG_BUILD_DIR=$(PNG_DIR)/lib
 
 LODEPNG_LIB=$(OUTPUT_DIR)/libs/liblodepng$(if $(WIN32),.dll,.so)
