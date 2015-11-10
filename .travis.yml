@@ -46,11 +46,10 @@ install:
     - mkdir $HOME/.luarocks
     - cp /etc/luarocks/config.lua $HOME/.luarocks/config.lua
     - echo "wrap_bin_scripts = false" >> $HOME/.luarocks/config.lua
-    - travis_retry luarocks --local install lua_cliargs 2.5-0
     # recent versions of busted may cause some weird segmentation faults
     - git clone https://github.com/Olivine-Labs/busted/
     # - cd busted && git checkout v1.10.0 && luarocks --local make busted-1.10.0-0.rockspec && cd ..
-    - cd busted && git checkout v2.0.rc10-0 && luarocks --local make busted-2.0.rc10-0.rockspec && cd ..
+    - cd busted && git checkout v2.0.rc11-0 && luarocks --local make busted-2.0.rc11-0.rockspec && cd ..
     - eval $(luarocks path --bin)
     - export PATH=$PATH:$HOME/.luarocks/bin
 
