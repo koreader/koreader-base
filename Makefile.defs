@@ -326,10 +326,12 @@ K2PDFOPT_CFLAGS=-I$(K2PDFOPT_DIR)/willuslib \
 
 FREETYPE_LIB=$(OUTPUT_DIR)/libs/libfreetype$(if $(WIN32),-6.dll,.so.6)
 FREETYPE_DIR=freetype2
+FREETYPE_ALL=$(FREETYPE_LIB) $(FREETYPE_DIR)/build/include/freetype2/ft2build.h
 
 JPEG_LIB=$(OUTPUT_DIR)/libs/libjpeg$(if $(WIN32),-8.dll,.so.8)
 TURBOJPEG_LIB=$(OUTPUT_DIR)/libs/libturbojpeg$(if $(WIN32),.dll,.so)
-JPEG_DIR=libjpeg-turbo-1.4.2
+TURBOJPEG_DIR=libjpeg-turbo-1.4.2
+JPEG_ALL=$(JPEG_LIB) $(TURBOJPEG_DIR)/include/jconfig.h
 
 PNG_LIB=$(OUTPUT_DIR)/libs/libpng16$(if $(WIN32),-16.dll,.so$(if $(ANDROID),,.16))
 PNG_DIR=libpng-1.6.18

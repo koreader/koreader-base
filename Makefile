@@ -71,7 +71,7 @@ $(OUTPUT_DIR)/plugins:
 # (for directory and file name config, see Makefile.defs)
 
 # freetype, fetched via GIT as a submodule
-$(FREETYPE_LIB):
+build_freetype_lib:
 	mkdir -p $(FREETYPE_DIR)/build
 	cd $(FREETYPE_DIR) && sh autogen.sh
 	cd $(FREETYPE_DIR)/build && \
@@ -84,21 +84,30 @@ $(FREETYPE_LIB):
 				--host=$(CHOST)
 	$(MAKE) -j$(PROCESSORS) -C $(FREETYPE_DIR)/build
 	-$(MAKE) -C $(FREETYPE_DIR)/build --silent install
+
+$(FREETYPE_DIR)/build/include/freetype2/ft2build.h: build_freetype_lib
+
+$(FREETYPE_LIB): build_freetype_lib
 	cp -fL $(FREETYPE_DIR)/build/$(if $(WIN32),bin,lib)/$(notdir $(FREETYPE_LIB)) $@
 
 # libjpeg-turbo
-$(JPEG_LIB):
-	cd $(JPEG_DIR) && \
+build_turbojpeg_lib:
+	cd $(TURBOJPEG_DIR) && \
 		CC="$(CC)" CXX="$(CXX)" CPPFLAGS="$(CFLAGS)" LDFLAGS="$(LDFLAGS)" \
-		./configure -q --prefix=$(CURDIR)/$(JPEG_DIR) \
+		./configure -q --prefix=$(CURDIR)/$(TURBOJPEG_DIR) \
 			--host=$(if $(ANDROID),"arm-linux",$(CHOST)) \
 			$(if $(findstring armv6, $(ARM_ARCH)),--without-simd,) \
 			--disable-static --enable-shared --with-jpeg8
-	$(MAKE) -j$(PROCESSORS) -C $(JPEG_DIR) --silent install
-	cp -fL $(JPEG_DIR)/.libs/$(notdir $(JPEG_LIB)) $@
+	$(MAKE) -j$(PROCESSORS) -C $(TURBOJPEG_DIR) --silent install
+
+
+$(TURBOJPEG_DIR)/include/jconfig.h: build_turbojpeg_lib
+
+$(JPEG_LIB): build_turbojpeg_lib
+	cp -fL $(TURBOJPEG_DIR)/.libs/$(notdir $(JPEG_LIB)) $@
 
 $(TURBOJPEG_LIB): $(JPEG_LIB)
-	cp -fL $(JPEG_DIR)/.libs/$(notdir $(TURBOJPEG_LIB)) $@
+	cp -fL $(TURBOJPEG_DIR)/.libs/$(notdir $(TURBOJPEG_LIB)) $@
 
 # libpng, fetched via GIT as a submodule
 $(PNG_LIB): $(ZLIB)
@@ -122,18 +131,18 @@ $(AES_LIB):
 # mupdf, fetched via GIT as a submodule
 # by default, mupdf compiles to a static library:
 # we generate a dynamic library from the static library:
-$(MUPDF_LIB): $(JPEG_LIB) $(FREETYPE_LIB) $(ZLIB) $(AES_LIB)
+$(MUPDF_LIB): $(TURBOJPEG_LIB) $(FREETYPE_LIB) $(ZLIB) $(AES_LIB)
 	env CFLAGS="$(HOSTCFLAGS)" \
 		$(MAKE) -j$(PROCESSORS) -C mupdf generate build="release" CC="$(HOSTCC)" \
 		OS=$(if $(WIN32),,Other) verbose=1
 	$(MAKE) -j$(PROCESSORS) -C mupdf \
 		LDFLAGS="$(LDFLAGS) -L../$(OUTPUT_DIR)" \
-		XCFLAGS="$(CFLAGS) -DNOBUILTINFONT -I../$(JPEG_DIR)/include -I../$(FREETYPE_DIR)/include -I../$(ZLIB_DIR) -I../$(MINIZIP_DIR)" \
+		XCFLAGS="$(CFLAGS) -DNOBUILTINFONT -I../$(TURBOJPEG_DIR)/include -I../$(FREETYPE_DIR)/include -I../$(ZLIB_DIR) -I../$(MINIZIP_DIR)" \
 		CC="$(CC)" \
 		build="release" MUDRAW= MUTOOL= CURL_LIB= \
 		OS=$(if $(WIN32),,Other) verbose=1 \
 		FREETYPE_DIR=nonexisting \
-		JPEG_DIR=nonexisting \
+		TURBOJPEG_DIR=nonexisting \
 		ZLIB_DIR=nonexisting \
 		CROSSCOMPILE=yes \
 		third libs
@@ -185,7 +194,7 @@ $(DJVULIBRE_LIB): $(JPEG_LIB)
 		$(DJVULIBRE_LIB)
 
 # crengine, fetched via GIT as a submodule
-$(CRENGINE_LIB): $(ZLIB) $(PNG_LIB) $(FREETYPE_LIB) $(JPEG_LIB)
+$(CRENGINE_LIB): $(ZLIB) $(PNG_LIB) $(FREETYPE_ALL) $(JPEG_ALL)
 	# make clean build of crengine
 	rm -rf $(CRENGINE_WRAPPER_DIR)/build
 	mkdir -p $(CRENGINE_WRAPPER_DIR)/build
@@ -500,7 +509,7 @@ lualongnumber: $(EVERNOTE_LIB)
 # of the array" for strcmp comparing a string with exactly 2 chars.
 # More details about this bug:
 # https://gcc.gnu.org/ml/gcc-help/2009-10/msg00191.html
-$(ZMQ_LIB):
+build_zmq_lib:
 	mkdir -p $(ZMQ_DIR)/build
 	cd $(ZMQ_DIR) && sh autogen.sh
 	cd $(ZMQ_DIR)/src && sed -i 's|-avoid-version||g' Makefile.am
@@ -516,7 +525,6 @@ $(ZMQ_LIB):
 	cd $(ZMQ_DIR)/build && sed -i 's|-lstdc++||g' libtool
 	-$(MAKE) -j$(PROCESSORS) -C $(ZMQ_DIR)/build --silent uninstall
 	$(MAKE) -j$(PROCESSORS) -C $(ZMQ_DIR)/build --silent install
-	cp -fL $(ZMQ_DIR)/build/$(if $(WIN32),bin,lib)/$(notdir $(ZMQ_LIB)) $@
 ifdef POCKETBOOK
 	# when cross compiling libtool would find libstdc++.la in wrong location
 	# accoding to the GCC configuration
@@ -526,6 +534,11 @@ ifdef POCKETBOOK
 	# may let the build system assume that libuuid is installed
 	rm -f $(CURDIR)/$(POCKETBOOK_TOOLCHAIN)/arm-obreey-linux-gnueabi/sysroot/usr/lib/libuuid*
 endif
+
+$(ZMQ_DIR)/build/include/zmq.h: build_zmq_lib
+
+$(ZMQ_LIB): build_zmq_lib
+	cp -fL $(ZMQ_DIR)/build/$(if $(WIN32),bin,lib)/$(notdir $(ZMQ_LIB)) $@
 
 $(CZMQ_LIB): $(ZMQ_LIB)
 	mkdir -p $(CZMQ_DIR)/build
@@ -554,7 +567,7 @@ $(CZMQ_LIB): $(ZMQ_LIB)
 	-cd $(CZMQ_DIR) && patch -R -p1 < ../czmq_default_source_define.patch
 	cp -fL $(CZMQ_DIR)/build/$(if $(WIN32),bin,lib)/$(notdir $(CZMQ_LIB)) $@
 
-$(FILEMQ_LIB): $(ZMQ_LIB) $(CZMQ_LIB) $(SSL_LIB)
+$(FILEMQ_LIB): $(ZMQ_ALL) $(CZMQ_LIB) $(SSL_LIB)
 	mkdir -p $(FILEMQ_DIR)/build
 	cd $(FILEMQ_DIR) && sh autogen.sh
 	cd $(FILEMQ_DIR)/build && \
@@ -745,7 +758,7 @@ clean:
 	-$(MAKE) -C $(MUPDF_DIR) build="release" clean
 	-$(MAKE) -C $(POPEN_NOSHELL_DIR) clean
 	-$(MAKE) -C $(K2PDFOPT_DIR) clean
-	-$(MAKE) -C $(JPEG_DIR) clean uninstall
+	-$(MAKE) -C $(TURBOJPEG_DIR) clean uninstall
 	-$(MAKE) -C $(SDCV_DIR) clean
 	-$(MAKE) -C $(PNG_DIR) clean uninstall
 	-$(MAKE) -C $(GIF_DIR) clean uninstall
@@ -782,4 +795,5 @@ $(OUTPUT_DIR)/spec/base:
 test: $(OUTPUT_DIR)/spec $(OUTPUT_DIR)/.busted
 	cd $(OUTPUT_DIR) && busted -l ./luajit --exclude-tags=notest
 
-.PHONY: test
+.PHONY: test clean fetchthirdparty \
+	build_freetype_lib build_zmq_lib build_turbojpeg_lib
