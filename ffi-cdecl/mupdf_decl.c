@@ -85,6 +85,7 @@ cdecl_func(fz_needs_password)
 cdecl_func(fz_authenticate_password)
 cdecl_func(fz_drop_document) // NOTE: libk2pdfopt uses old fz_free_document symbol
 cdecl_func(mupdf_count_pages)
+cdecl_func(fz_lookup_metadata)
 
 /* page */
 cdecl_func(mupdf_load_page)

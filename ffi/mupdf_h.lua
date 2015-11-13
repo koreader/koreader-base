@@ -438,4 +438,5 @@ fz_alloc_context *mupdf_get_my_alloc_context();
 int mupdf_get_cache_size();
 int mupdf_error_code(fz_context *);
 char *mupdf_error_message(fz_context *);
+int fz_lookup_metadata(fz_context *, fz_document *, const char *, char *, int);
 ]]

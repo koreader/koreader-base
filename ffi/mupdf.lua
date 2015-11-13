@@ -194,6 +194,34 @@ function document_mt.__index:openPage(number)
     return mupdf_page
 end
 
+local function getMetadataInfo(doc, info)
+    local buf = ffi.new("char[?]", 255)
+    local res = M.fz_lookup_metadata(context(), doc, info, buf, 255)
+    if res > -1 then
+        return ffi.string(buf, res)
+    end
+    return ""
+end
+
+
+--[[
+Get metadata, return object
+--]]
+function document_mt.__index:getMetadata()
+    local metadata = {
+        title = getMetadataInfo(self.doc, "info:Title"),
+        author = getMetadataInfo(self.doc, "info:Author"),
+        subject = getMetadataInfo(self.doc, "info:Subject"),
+        keywords = getMetadataInfo(self.doc, "info:Keywords"),
+        creator = getMetadataInfo(self.doc, "info:Creator"),
+        producer = getMetadataInfo(self.doc, "info:Producer"),
+        creationDate = getMetadataInfo(self.doc, "info:CreationDate"),
+        modDate = getMetadataInfo(self.doc, "info:ModDate")
+    }
+
+    return metadata
+end
+
 --[[
 return currently claimed memory by MuPDF
 
