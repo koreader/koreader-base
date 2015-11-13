@@ -713,11 +713,11 @@ fetchthirdparty:
 		&& rm tar-1.28.tar.gz && wget http://ftp.gnu.org/gnu/tar/tar-1.28.tar.gz || true
 	tar zxf tar-1.28.tar.gz
 	# download libpng
-	[ ! -f libpng-1.6.18.tar.gz ] \
-		&& wget http://download.sourceforge.net/libpng/libpng-1.6.18.tar.gz || true
-	[ `md5sum libpng-1.6.18.tar.gz |cut -d\  -f1` != 685ce2ebbf4ad9a03992fb5f10c38df1 ] \
-		&& rm libpng-1.6.18.tar.gz && wget http://download.sourceforge.net/libpng/libpng-1.6.18.tar.gz || true
-	tar zxf libpng-1.6.18.tar.gz
+	[ ! -f libpng-1.6.19.tar.gz ] \
+		&& wget http://download.sourceforge.net/libpng/libpng-1.6.19.tar.gz || true
+	[ `md5sum libpng-1.6.19.tar.gz |cut -d\  -f1` != 3121bdc77c365a87e054b9f859f421fe ] \
+		&& rm libpng-1.6.19.tar.gz && wget http://download.sourceforge.net/libpng/libpng-1.6.19.tar.gz || true
+	tar zxf libpng-1.6.19.tar.gz
 	# download libjpeg-turbo
 	[ ! -f libjpeg-turbo-1.4.2.tar.gz ] \
 		&& wget http://download.sourceforge.net/libjpeg-turbo/libjpeg-turbo-1.4.2.tar.gz || true
