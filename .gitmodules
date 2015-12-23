@@ -1,12 +1,6 @@
-[submodule "mupdf"]
-	path = mupdf
-	url = git://git.ghostscript.com/mupdf.git
 [submodule "luafilesystem"]
 	path = luafilesystem
 	url = git://github.com/keplerproject/luafilesystem.git
-[submodule "djvulibre"]
-	path = djvulibre
-	url = git://git.code.sf.net/p/djvu/djvulibre-git
 [submodule "kpvcrlib/crengine"]
 	path = kpvcrlib/crengine
 	url = git://github.com/koreader/crengine.git
@@ -16,27 +10,9 @@
 [submodule "libk2pdfopt"]
 	path = libk2pdfopt
 	url = git://github.com/koreader/libk2pdfopt.git
-[submodule "sdcv-0.4.2"]
-	path = sdcv-0.4.2
-	url = git://github.com/koreader/sdcv.git
-[submodule "freetype2"]
-	path = freetype2
-	url = git://git.sv.gnu.org/freetype/freetype2.git
-[submodule "luasocket"]
-	path = luasocket
-	url = https://github.com/diegonehab/luasocket
-[submodule "luasec"]
-	path = luasec
-	url = https://github.com/brunoos/luasec
 [submodule "plugins/evernote-sdk-lua"]
 	path = plugins/evernote-sdk-lua
 	url = https://github.com/koreader/evernote-sdk-lua
-[submodule "lua-serialize"]
-	path = lua-serialize
-	url = https://github.com/chrox/lua-serialize
-[submodule "libzmq"]
-	path = libzmq
-	url = https://github.com/zeromq/libzmq.git
 [submodule "czmq"]
 	path = czmq
 	url = https://github.com/zeromq/czmq.git
@@ -49,24 +25,9 @@
 [submodule "zsync"]
 	path = zsync
 	url = http://zsync.moria.org.uk/zsync.git
-[submodule "lodepng"]
-	path = lodepng
-	url = https://github.com/lvandeve/lodepng.git
 [submodule "turbo"]
 	path = turbo
 	url = https://github.com/kernelsauce/turbo
-[submodule "openssl"]
-	path = openssl
-	url = https://github.com/openssl/openssl.git
 [submodule "lua-Spore"]
 	path = lua-Spore
 	url = https://github.com/fperrad/lua-Spore
-[submodule "glib"]
-	path = glib
-	url = https://github.com/GNOME/glib.git
-[submodule "popen-noshell"]
-	path = popen-noshell
-	url = https://github.com/famzah/popen-noshell.git
-[submodule "minizip"]
-	path = minizip
-	url = https://github.com/nmoinvaz/minizip

@@ -1,5 +1,3 @@
-# set this to your ARM cross compiler:
-
 SHELL:=/bin/bash
 
 # Use ccache in build system by default. Define USE_NO_CCACHE=1 to force disable it.
@@ -22,6 +20,10 @@ else
     export EMULATE_READER=1
 endif
 
+# CMAKE=cmake --no-warn-unused-cli
+CMAKE=cmake
+
+# set this to your ARM cross compiler:
 # set CC CXX AR LD RANLIB
 ifneq (,$(filter $(TARGET), kindle arm-generic))
 	CHOST?=arm-linux-gnueabi
@@ -279,7 +281,7 @@ OUTPUT_DIR?=build/$(MACHINE)
 
 # you can probably leave these settings alone:
 
-THIRD_PARTY_DIR=thirdparty
+THIRDPARTY_DIR=thirdparty
 
 CRENGINE_WRAPPER_DIR=kpvcrlib
 CRENGINE_WRAPPER_BUILD_DIR=$(CRENGINE_WRAPPER_DIR)/build
@@ -288,14 +290,17 @@ CRENGINE_BUILD_DIR=$(CRENGINE_WRAPPER_BUILD_DIR)/crengine
 
 LUAFILESYSTEM_DIR=luafilesystem
 
-ZLIB_DIR=zlib-1.2.8
+ZLIB_BUILD_DIR=$(THIRDPARTY_DIR)/zlib/build/$(MACHINE)
+ZLIB_DIR=$(CURDIR)/$(ZLIB_BUILD_DIR)/zlib-prefix/src/zlib
 ZLIB_STATIC=$(ZLIB_DIR)/libz.a
 
-MINIZIP_DIR=minizip
+MINIZIP_BUILD_DIR=$(THIRDPARTY_DIR)/minizip/build/$(MACHINE)
+MINIZIP_DIR=$(CURDIR)/$(MINIZIP_BUILD_DIR)/minizip-prefix/src/minizip
 AES_LIB_DIR=$(MINIZIP_DIR)/aes
 AES_LIB=$(MINIZIP_DIR)/libaes.a
 
-MUPDF_DIR=mupdf
+MUPDF_BUILD_DIR=$(CURDIR)/$(THIRDPARTY_DIR)/mupdf/build/$(MACHINE)
+MUPDF_DIR=$(MUPDF_BUILD_DIR)/mupdf-prefix/src/mupdf
 MUPDF_LIB_DIR=$(MUPDF_DIR)/build/release
 MUPDF_LIB_STATIC=$(MUPDF_LIB_DIR)/libmupdf.a
 MUPDF_JS_LIB_STATIC=$(MUPDF_LIB_DIR)/libmujs.a
@@ -304,9 +309,10 @@ MUPDF_THIRDPARTY_LIBS=$(MUPDF_LIB_DIR)/libopenjpeg.a \
 			$(AES_LIB)
 MUPDF_LIB=$(OUTPUT_DIR)/libs/libmupdf.$(if $(WIN32),dll,so)
 
-DJVULIBRE_DIR=djvulibre
+DJVULIBRE_BUILD_DIR=$(THIRDPARTY_DIR)/djvulibre/build/$(MACHINE)
+DJVULIBRE_DIR=$(CURDIR)/$(DJVULIBRE_BUILD_DIR)/djvulibre-prefix/src/djvulibre
 DJVULIBRE_LIB=$(OUTPUT_DIR)/libs/libdjvulibre$(if $(WIN32),-21.dll,.so.21)
-DJVULIBRE_LIB_DIR=$(DJVULIBRE_DIR)/build/libdjvu/.libs/
+DJVULIBRE_LIB_DIR=$(DJVULIBRE_DIR)/libdjvu/.libs
 
 CRENGINE_LIB=$(OUTPUT_DIR)/libs/libcrengine.$(if $(WIN32),dll,so)
 
@@ -315,7 +321,8 @@ LUAJIT=$(OUTPUT_DIR)/$(if $(WIN32),luajit.exe,luajit)
 LUAJIT_JIT=$(OUTPUT_DIR)/jit
 LUAJIT_LIB=$(OUTPUT_DIR)/$(if $(WIN32),lua51.dll,libs/libluajit.so)
 
-POPEN_NOSHELL_DIR=popen-noshell
+POPEN_NOSHELL_BUILD_DIR=$(THIRDPARTY_DIR)/popen-noshell/build/$(MACHINE)
+POPEN_NOSHELL_DIR=$(CURDIR)/$(POPEN_NOSHELL_BUILD_DIR)/popen-noshell-prefix/src/popen-noshell
 POPEN_NOSHELL_LIB=$(POPEN_NOSHELL_DIR)/libpopen_noshell.a
 
 K2PDFOPT_DIR=libk2pdfopt
@@ -325,26 +332,37 @@ K2PDFOPT_CFLAGS=-I$(K2PDFOPT_DIR)/willuslib \
 		-I$(K2PDFOPT_DIR)/include_mod
 
 FREETYPE_LIB=$(OUTPUT_DIR)/libs/libfreetype$(if $(WIN32),-6.dll,.so.6)
-FREETYPE_DIR=freetype2
+FREETYPE_BUILD_DIR=$(THIRDPARTY_DIR)/freetype2/build/$(MACHINE)
+FREETYPE_DIR=$(CURDIR)/$(FREETYPE_BUILD_DIR)/freetype2-prefix/src/freetype2-build
 
 JPEG_LIB=$(OUTPUT_DIR)/libs/libjpeg$(if $(WIN32),-8.dll,.so.8)
 TURBOJPEG_LIB=$(OUTPUT_DIR)/libs/libturbojpeg$(if $(WIN32),.dll,.so)
-JPEG_DIR=libjpeg-turbo-1.4.2
+JPEG_BUILD_DIR=$(THIRDPARTY_DIR)/libjpeg-turbo/build/$(MACHINE)
+JPEG_DIR=$(CURDIR)/$(JPEG_BUILD_DIR)/libjpeg-turbo-prefix/src/libjpeg-turbo-build
 
 PNG_LIB=$(OUTPUT_DIR)/libs/libpng16$(if $(WIN32),-16.dll,.so$(if $(ANDROID),,.16))
-PNG_DIR=libpng-1.6.19
-PNG_BUILD_DIR=$(PNG_DIR)/lib
+PNG_BUILD_DIR=$(THIRDPARTY_DIR)/libpng/build/$(MACHINE)
+PNG_DIR=$(CURDIR)/$(PNG_BUILD_DIR)/libpng-prefix/src/libpng-build
 
 LODEPNG_LIB=$(OUTPUT_DIR)/libs/liblodepng$(if $(WIN32),.dll,.so)
-LODEPNG_DIR=lodepng
+LODEPNG_BUILD_DIR=$(THIRDPARTY_DIR)/lodepng/build/$(MACHINE)
+LODEPNG_DIR=$(CURDIR)/$(LODEPNG_BUILD_DIR)/lodepng-prefix/src/lodepng
 
 GIF_LIB=$(OUTPUT_DIR)/libs/libgif$(if $(WIN32),-7.dll,.so.7)
-GIF_DIR=giflib-5.1.1
+GIF_BUILD_DIR=$(THIRDPARTY_DIR)/giflib/build/$(MACHINE)
+GIF_DIR=$(CURDIR)/$(GIF_BUILD_DIR)/giflib-prefix/src/giflib-build
 
-SDCV_DIR=sdcv-0.4.2
-GLIB_DIR=glib
-LIBICONV_DIR=libiconv-1.14
-GETTEXT_DIR=gettext-0.19
+LIBFFI_BUILD_DIR=$(THIRDPARTY_DIR)/libffi/build/$(MACHINE)
+LIBFFI_DIR=$(CURDIR)/$(LIBFFI_BUILD_DIR)/libffi-prefix/src/libffi-build
+
+SDCV_BUILD_DIR=$(THIRDPARTY_DIR)/sdcv/build/$(MACHINE)
+SDCV_DIR=$(CURDIR)/$(SDCV_BUILD_DIR)/sdcv-prefix/src/sdcv
+GLIB_BUILD_DIR=$(THIRDPARTY_DIR)/glib/build/$(MACHINE)
+GLIB_DIR=$(CURDIR)/$(GLIB_BUILD_DIR)/glib-prefix/src/glib-build
+LIBICONV_BUILD_DIR=$(THIRDPARTY_DIR)/libiconv/build/$(MACHINE)
+LIBICONV_DIR=$(CURDIR)/$(LIBICONV_BUILD_DIR)/libiconv-prefix/src/libiconv-build
+GETTEXT_BUILD_DIR=$(THIRDPARTY_DIR)/gettext/build/$(MACHINE)
+GETTEXT_DIR=$(CURDIR)/$(GETTEXT_BUILD_DIR)/gettext-prefix/src/gettext-build
 
 LIBICONV=$(LIBICONV_DIR)/lib/libiconv.a
 LIBGETTEXT=$(GETTEXT_DIR)/lib/libintl.a
@@ -355,13 +373,16 @@ ZLIB=$(OUTPUT_DIR)/libs/$(if $(WIN32),zlib1.dll,libz.so.1)
 LEPTONICA_LIB=$(OUTPUT_DIR)/libs/liblept$(if $(WIN32),-3.dll,.so.3)
 TESSERACT_LIB=$(OUTPUT_DIR)/libs/libtesseract$(if $(WIN32),-3.dll,.so.3)
 
-OPENSSL_DIR=openssl
+OPENSSL_BUILD_DIR=$(THIRDPARTY_DIR)/openssl/build/$(MACHINE)
+OPENSSL_DIR=$(CURDIR)/$(OPENSSL_BUILD_DIR)/openssl-prefix/src/openssl
 OPENSSL_LIB=$(OPENSSL_DIR)/libssl.$(if $(WIN32),a,so)
 SSL_LIB=$(OUTPUT_DIR)/libs/libssl$(if $(WIN32),-1.dll,.so.1.0.0)
 CRYPTO_LIB=$(OUTPUT_DIR)/libs/libcrypto$(if $(WIN32),-1.dll,.so.1.0.0)
 
-LUA_SOCKET_DIR=luasocket
-LUA_SEC_DIR=luasec
+LUASOCKET_BUILD_DIR=$(THIRDPARTY_DIR)/luasocket/build/$(MACHINE)
+LUASOCKET_DIR=$(CURDIR)/luasocket-prefix/src/luasocket
+LUASEC_BUILD_DIR=$(THIRDPARTY_DIR)/luasec/build/$(MACHINE)
+LUASEC_DIR=$(CURDIR)/$(LUASERIAL_BUILD_DIR)/luasec-prefix/src/luasec
 LUASOCKET=$(OUTPUT_DIR)/common/socket
 LUASEC=$(OUTPUT_DIR)/common/ssl
 
@@ -370,20 +391,23 @@ EVERNOTE_PLUGIN_DIR=$(OUTPUT_DIR)/plugins/evernote.koplugin
 EVERNOTE_THRIFT_DIR=$(EVERNOTE_PLUGIN_DIR)/thrift
 EVERNOTE_LIB=$(EVERNOTE_PLUGIN_DIR)/lib/libluasocket.so
 
-LUASERIAL_DIR=lua-serialize
-LUASERIAL_LIB=$(OUTPUT_DIR)/common/libserialize.so
+LUASERIAL_BUILD_DIR=$(THIRDPARTY_DIR)/lua-serialize/build/$(MACHINE)
+LUASERIAL_DIR=$(CURDIR)/$(LUASERIAL_BUILD_DIR)/lua-serialize-prefix/src/lua-serialize
+LUASERIAL_LIB=$(OUTPUT_DIR)/common/serialize.so
 
-ZMQ_DIR=libzmq
+ZMQ_BUILD_DIR=$(THIRDPARTY_DIR)/libzmq/build/$(MACHINE)
+ZMQ_DIR=$(ZMQ_BUILD_DIR)/libzmq-prefix/src/libzmq-build
+ZMQ_LIB=$(OUTPUT_DIR)/libs/libzmq.$(if $(WIN32),dll,so.4)
 CZMQ_DIR=czmq
 FILEMQ_DIR=filemq
 ZYRE_DIR=zyre
-ZMQ_LIB=$(OUTPUT_DIR)/libs/libzmq.$(if $(WIN32),dll,so.4)
 CZMQ_LIB=$(OUTPUT_DIR)/libs/libczmq.$(if $(WIN32),dll,so.1)
 FILEMQ_LIB=$(OUTPUT_DIR)/libs/libfmq.$(if $(WIN32),dll,so.1)
 ZYRE_LIB=$(OUTPUT_DIR)/libs/libzyre.$(if $(WIN32),dll,so.1)
 
 ZSYNC_DIR=zsync/c
-TAR_DIR=tar-1.28
+TAR_BUILD_DIR=$(THIRDPARTY_DIR)/tar/build/$(MACHINE)
+TAR_DIR=$(TAR_BUILD_DIR)/tar-prefix/src/tar-build
 
 TURBO_DIR=turbo
 TURBO_FFI_WRAP_LIB=$(OUTPUT_DIR)/common/libtffi_wrap.so

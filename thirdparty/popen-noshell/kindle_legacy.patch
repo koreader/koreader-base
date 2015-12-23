@@ -1,0 +1,12 @@
+diff --git a/popen_noshell.c b/popen_noshell.c
+index 61e0eff..8da4145 100644
+--- a/popen_noshell.c
++++ b/popen_noshell.c
+@@ -334,7 +334,7 @@ FILE *popen_noshell(const char *file, const char * const *argv, const char *type
+ 	// issue #7: O_CLOEXEC, so that child processes don't inherit and hold opened the
+ 	// file descriptors of the parent.
+ 	// The child process turns this off for its fd of the pipe.
+-	if (pipe2(pipefd, O_CLOEXEC) != 0) return NULL;
++	if (pipe(pipefd) != 0) return NULL;
+
+ 	if (_popen_noshell_fork_mode) { // use fork()
