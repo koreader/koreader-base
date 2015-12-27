@@ -106,6 +106,7 @@ $(PNG_LIB): $(ZLIB) $(THIRDPARTY_DIR)/libpng/CMakeLists.txt
 
 $(AES_LIB): $(THIRDPARTY_DIR)/minizip/CMakeLists.txt
 	-mkdir -p $(MINIZIP_BUILD_DIR)
+	-rm -f $(MINIZIP_DIR)/../minizip-stamp/minizip-build
 	cd $(MINIZIP_BUILD_DIR) && \
 		$(CMAKE) -DCC="$(CC) $(CFLAGS)" -DLDFLAGS="$(LDFLAGS)" \
 		-DAR="$(AR)" -DRANLIB="$(RANLIB)" -DMACHINE="$(MACHINE)" \
@@ -118,6 +119,7 @@ $(MUPDF_LIB) $(MUPDF_DIR)/include: $(JPEG_LIB) \
 		$(FREETYPE_LIB) $(FREETYPE_DIR)/include \
 		$(ZLIB) $(AES_LIB) $(THIRDPARTY_DIR)/mupdf/CMakeLists.txt
 	-mkdir -p $(MUPDF_BUILD_DIR)
+	-rm -f $(MUPDF_DIR)/../mupdf-stamp/mupdf-build
 	cd $(MUPDF_BUILD_DIR) && \
 		$(CMAKE) -DHOSTCFLAGS="$(HOSTCFLAGS)" -DHOSTCC="$(HOSTCC)" \
 		-DCC="$(CC)" -DCFLAGS="$(CFLAGS)" -DOS="$(if $(WIN32),,Other)" \
@@ -136,6 +138,7 @@ $(MUPDF_LIB) $(MUPDF_DIR)/include: $(JPEG_LIB) \
 
 $(LODEPNG_LIB): $(THIRDPARTY_DIR)/lodepng/CMakeLists.txt
 	-mkdir -p $(LODEPNG_BUILD_DIR)
+	-rm -f $(LODEPNG_DIR)/../lodepng-stamp/lodepng-build
 	cd $(LODEPNG_BUILD_DIR) && \
 		$(CMAKE) -DCC="$(CC)" -DCFLAGS="$(CFLAGS)" \
 		-DSONAME="$(notdir $(LODEPNG_LIB))" -DMACHINE="$(MACHINE)" \
@@ -327,6 +330,7 @@ $(LIBFFI_DIR)/include:
 
 $(GLIB): $(LIBFFI_DIR)/include $(THIRDPARTY_DIR)/glib/CMakeLists.txt
 	-mkdir -p $(GLIB_BUILD_DIR)
+	-rm -f $(GLIB_DIR)/../glib-stamp/glib-install
 	cd $(GLIB_BUILD_DIR) && \
 		$(CMAKE) -DCC="$(CC) -std=gnu89" -DMACHINE="$(MACHINE)" \
 		-DCFLAGS="$(CFLAGS)" -DLDFLAGS="$(LDFLAGS)" \
@@ -341,6 +345,7 @@ endif
 
 $(GLIB_STATIC): $(LIBICONV) $(LIBGETTEXT) $(LIBFFI_DIR)/include $(THIRDPARTY_DIR)/glib/CMakeLists.txt
 	-mkdir -p $(GLIB_BUILD_DIR)
+	-rm -f $(GLIB_DIR)/../glib-stamp/glib-install
 	cd $(GLIB_BUILD_DIR) && \
 		$(CMAKE) -DCC="$(CC) -std=gnu89" -DMACHINE="$(MACHINE)" \
 		-DLDFLAGS="$(LDFLAGS) $(if $(ANDROID), \
@@ -355,6 +360,7 @@ $(GLIB_STATIC): $(LIBICONV) $(LIBGETTEXT) $(LIBFFI_DIR)/include $(THIRDPARTY_DIR
 
 $(ZLIB) $(ZLIB_STATIC): $(THIRDPARTY_DIR)/zlib/CMakeLists.txt
 	-mkdir -p $(ZLIB_BUILD_DIR)
+	-rm -f $(ZLIB_DIR)/../zlib-stamp/zlib-install
 ifdef WIN32
 	cd $(ZLIB_BUILD_DIR) && \
 		$(CMAKE) -DCC="$(CC)" -DCHOST="$(CHOST)" -DMACHINE="$(MACHINE)" \
@@ -431,6 +437,7 @@ $(LUASOCKET): $(THIRDPARTY_DIR)/luasocket/CMakeLists.txt
 
 $(OPENSSL_LIB) $(OPENSSL_DIR): $(THIRDPARTY_DIR)/openssl/CMakeLists.txt
 	-mkdir -p $(OPENSSL_BUILD_DIR)
+	-rm -f $(OPENSSL_DIR)/../openssl-stamp/openssl-build
 	cd $(OPENSSL_BUILD_DIR) && \
 		$(CMAKE) -DCC="$(CC) $(CFLAGS)" \
 		-DSHARED_LDFLAGS="$(LDFLAGS) -Wl,-rpath,'libs'" \
@@ -445,8 +452,8 @@ $(SSL_LIB): $(OPENSSL_LIB)
 	cp -fL $(OPENSSL_DIR)/$(notdir $(CRYPTO_LIB)) $(CRYPTO_LIB)
 
 $(LUASEC): $(OPENSSL_DIR) $(THIRDPARTY_DIR)/luasec/CMakeLists.txt
-	echo $(SSL_LIB) $(LUASEC)
 	-mkdir -p $(LUASEC_BUILD_DIR)
+	-rm -f $(LUASEC_DIR)/../luasec-stamp/luasec-install
 	cd $(LUASEC_BUILD_DIR) && \
 		$(CMAKE) -DCC="$(CC) $(CFLAGS)" -DLD="$(CC) -Wl,-rpath,'libs'" \
 		$(if $(ANDROID),-DLIBS="-lssl -lcrypto -lluasocket $(CURDIR)/$(LUAJIT_LIB)",) \
@@ -464,6 +471,8 @@ $(EVERNOTE_LIB):
 
 $(LUASERIAL_LIB): $(THIRDPARTY_DIR)/lua-serialize/CMakeLists.txt
 	-mkdir -p $(LUASERIAL_BUILD_DIR)
+	-rm -f $(LUASERIAL_DIR)/../lua-serialize-stamp/lua-serialize-build
+	-rm -f $(LUASERIAL_LIB)
 	cd $(LUASERIAL_BUILD_DIR) && \
 		$(CMAKE) -DCC="$(CC) $(CFLAGS)" -DMACHINE="$(MACHINE)" \
 		-DLDFLAGS="$(LDFLAGS)$(if $(or $(ANDROID),$(WIN32)), $(CURDIR)/$(LUAJIT_LIB),)" \
@@ -586,13 +595,18 @@ $(TURBO_FFI_WRAP_LIB): $(SSL_LIB)
 	cp -r $(TURBO_DIR)/turbo.lua $(OUTPUT_DIR)/common
 	cp -r $(TURBO_DIR)/turbovisor.lua $(OUTPUT_DIR)/common
 
-$(LUA_SPORE_ROCK):
-	cd $(LUA_SPORE_DIR) && mkdir -p doc && \
-		sed -i "s| 'luasocket|--'luasocket|g" $(LUA_SPORE_ROCKSPEC) \
-		&& luarocks make $(LUA_SPORE_ROCKSPEC) \
-		--to=$(CURDIR)/$(OUTPUT_DIR)/rocks \
-		$(if $(ANDROID),LDFLAGS="$(LDFLAGS) $(CURDIR)/$(LUAJIT_LIB)",) \
-		CC="$(CC)" CFLAGS="$(CFLAGS) -I$(CURDIR)/$(LUA_DIR)/src" LD="$(LD)"
+$(LUA_SPORE_ROCK): $(THIRDPARTY_DIR)/lua-Spore/CMakeLists.txt
+	-mkdir -p $(LUA_SPORE_BUILD_DIR)
+	-rm -f $(LUA_SPORE_DIR)/../lua-Spore-stamp/lua-Spore-build
+	-rm -f $(LUA_SPORE_ROCK)
+	cd $(LUA_SPORE_BUILD_DIR) && \
+		$(CMAKE) -DOUTPUT_DIR="$(CURDIR)/$(OUTPUT_DIR)/rocks" \
+		-DLUA_SPORE_VER=$(LUA_SPORE_VER) \
+		-DMACHINE="$(MACHINE)" -DLD="$(LD)" \
+		-DCC="$(CC)" -DCFLAGS="$(CFLAGS) -I$(CURDIR)/$(LUA_DIR)/src" \
+		$(if $(ANDROID),-DLDFLAGS="$(LDFLAGS) $(CURDIR)/$(LUAJIT_LIB)",) \
+		$(CURDIR)/$(THIRDPARTY_DIR)/lua-Spore && \
+		$(MAKE)
 
 # override lpeg built by luarocks, this is only necessary for Android
 lpeg:
@@ -661,7 +675,7 @@ fetchthirdparty:
 	sed -i "s/AM_CONFIG_HEADER/AC_CONFIG_HEADERS/g" $(K2PDFOPT_DIR)/tesseract-ocr/configure.ac
 
 # ===========================================================================
-CMAKE_THIRDPARTY_LIBS=sdcv,luasec,luasocket,libffi,lua-serialize,glib,lodepng,minizip,djvulibre,openssl,mupdf,libzmq,freetype2,giflib,libpng,zlib,tar,libiconv,gettext,libjpeg-turbo,popen-noshell
+CMAKE_THIRDPARTY_LIBS=lua-Spore,sdcv,luasec,luasocket,libffi,lua-serialize,glib,lodepng,minizip,djvulibre,openssl,mupdf,libzmq,freetype2,giflib,libpng,zlib,tar,libiconv,gettext,libjpeg-turbo,popen-noshell
 clean:
 	-rm -rf $(OUTPUT_DIR)/*
 	-rm -rf $(CRENGINE_WRAPPER_BUILD_DIR)
