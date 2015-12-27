@@ -28,6 +28,3 @@
 [submodule "turbo"]
 	path = turbo
 	url = https://github.com/kernelsauce/turbo
-[submodule "lua-Spore"]
-	path = lua-Spore
-	url = https://github.com/fperrad/lua-Spore
