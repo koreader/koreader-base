@@ -600,7 +600,7 @@ $(LUA_SPORE_ROCK): $(THIRDPARTY_DIR)/lua-Spore/CMakeLists.txt
 	-rm -f $(LUA_SPORE_DIR)/../lua-Spore-stamp/lua-Spore-build
 	-rm -f $(LUA_SPORE_ROCK)
 	cd $(LUA_SPORE_BUILD_DIR) && \
-		$(CMAKE) -DOUTPUT_DIR="$(CURDIR)/$(OUTPUT_DIR)/rocks" \
+		$(CMAKE) -DOUTPUT_DIR="$(CURDIR)/$(OUTPUT_DIR)" \
 		-DLUA_SPORE_VER=$(LUA_SPORE_VER) \
 		-DMACHINE="$(MACHINE)" -DLD="$(LD)" \
 		-DCC="$(CC)" -DCFLAGS="$(CFLAGS) -I$(CURDIR)/$(LUA_DIR)/src" \
