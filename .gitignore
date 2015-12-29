@@ -11,6 +11,7 @@ git-rev
 slider_watcher
 *.o
 tags
+*.sdr
 
 /.cproject
 /.project
@@ -23,7 +24,6 @@ screenshots
 cr3cache
 extr
 build
-lpeg*
 
 kpvcrlib/build
 thirdparty/*/build
