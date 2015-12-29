@@ -71,17 +71,17 @@ struct fz_image_s {
   int bpc;
   fz_image *mask;
   fz_colorspace *colorspace;
-  fz_pixmap *(*get_pixmap)(fz_context *, fz_image *, int, int);
-  struct fz_compressed_buffer_s *buffer;
+  fz_pixmap *(*get_pixmap)(fz_context *, fz_image *, int, int, int *);
   int colorkey[64];
   float decode[64];
   int imagemask;
   int interpolate;
   int usecolorkey;
-  fz_pixmap *tile;
   int xres;
   int yres;
   int invert_cmyk_jpeg;
+  struct fz_compressed_buffer_s *buffer;
+  fz_pixmap *tile;
 };
 struct fz_pixmap_s {
   fz_storable storable;
@@ -142,6 +142,7 @@ struct fz_link_dest_s {
 };
 typedef struct fz_outline_s fz_outline;
 struct fz_outline_s {
+  int refs;
   char *title;
   fz_link_dest dest;
   fz_outline *next;
@@ -182,12 +183,17 @@ struct fz_page_s {
   fz_rect *(*bound_annot)(fz_context *, fz_page *, struct fz_annot_s *, fz_rect *);
   void (*run_annot)(fz_context *, fz_page *, struct fz_annot_s *, struct fz_device_s *, const fz_matrix *, struct fz_cookie_s *);
   struct fz_transition_s *(*page_presentation)(fz_context *, fz_page *, float *);
+  void (*control_separation)(fz_context *, fz_page *, int, int);
+  int (*separation_disabled)(fz_context *, fz_page *, int);
+  int (*count_separations)(fz_context *, fz_page *);
+  const char *(*get_separation)(fz_context *, fz_page *, int, unsigned int *, unsigned int *);
 };
 fz_document *mupdf_open_document(fz_context *, const char *);
 int fz_needs_password(fz_context *, fz_document *);
 int fz_authenticate_password(fz_context *, fz_document *, const char *);
 void fz_drop_document(fz_context *, fz_document *);
 int mupdf_count_pages(fz_context *, fz_document *);
+int fz_lookup_metadata(fz_context *, fz_document *, const char *, char *, int);
 fz_page *mupdf_load_page(fz_context *, fz_document *, int);
 fz_rect *fz_bound_page(fz_context *, fz_page *, fz_rect *);
 void fz_drop_page(fz_context *, fz_page *);
@@ -348,9 +354,11 @@ struct pdf_document_s {
   pdf_hotspot hotspot;
   int max_xref_len;
   int num_xref_sections;
+  int num_incremental_sections;
+  int xref_base;
+  int disallow_new_increments;
   struct pdf_xref_s *xref_sections;
   int *xref_index;
-  int xref_altered;
   int freeze_updates;
   int has_xref_streams;
   int page_count;
@@ -385,7 +393,6 @@ struct pdf_document_s {
   void (*drop_js)(struct pdf_js_s *);
   int recalculating;
   int dirty;
-  struct pdf_unsaved_sig_s *unsaved_sigs;
   void (*update_appearance)(fz_context *, pdf_document *, pdf_annot *);
   void (*event_cb)(fz_context *, pdf_document *, struct pdf_doc_event_s *, void *);
   void *event_cb_data;
@@ -426,6 +433,7 @@ void *mupdf_pdf_set_markup_appearance(fz_context *, pdf_document *, pdf_annot *,
 struct fz_write_options_s {
   int do_incremental;
   int do_ascii;
+  int do_deflate;
   int do_expand;
   int do_garbage;
   int do_linear;
@@ -438,5 +446,4 @@ fz_alloc_context *mupdf_get_my_alloc_context();
 int mupdf_get_cache_size();
 int mupdf_error_code(fz_context *);
 char *mupdf_error_message(fz_context *);
-int fz_lookup_metadata(fz_context *, fz_document *, const char *, char *, int);
 ]]

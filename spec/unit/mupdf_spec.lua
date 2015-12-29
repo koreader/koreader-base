@@ -5,6 +5,7 @@ local simple_pdf = "spec/base/unit/data/simple.pdf"
 local simple_pdf_out = "/tmp/simple-out.pdf"
 local simple_pdf_compare = "spec/base/unit/data/simple-out.pdf"
 local test_img = "spec/base/unit/data/sample.jpg"
+local jbig2_pdf = "spec/base/unit/data/2col.jbig2.pdf"
 
 describe("mupdf module", function()
     local M
@@ -25,7 +26,16 @@ describe("mupdf module", function()
         end
     end)
 
-	describe("PDF document API", function()
+    it("should render jbig2 PDFs", function()
+        local doc = M.openDocument(jbig2_pdf)
+        assert.is_not_nil(doc)
+        local page = doc:openPage(1)
+        local dc = require("ffi/drawcontext").new()
+        local bb = require("ffi/blitbuffer").new(800, 600)
+        page:draw(dc, bb, 0, 0)
+    end)
+
+    describe("PDF document API", function()
         local doc1, doc2, doc3
         setup(function()
             doc1 = M.openDocument(sample_pdf)
@@ -35,10 +45,10 @@ describe("mupdf module", function()
             doc3 = M.openDocument(password_pdf)
             assert.is_not_nil(doc3)
         end)
-		it("should check password presence", function()
-			assert.equals(doc3:needsPassword(), true)
-			assert.equals(doc2:needsPassword(), false)
-		end)
+        it("should check password presence", function()
+            assert.equals(doc3:needsPassword(), true)
+            assert.equals(doc2:needsPassword(), false)
+        end)
         it("should not accept wrong password", function()
             assert.equals(doc3:authenticatePassword("bad"), false)
         end)
@@ -49,7 +59,7 @@ describe("mupdf module", function()
             assert.equals(doc1:getPages(), 69)
         end)
         it("should read the table of contents (TOC)", function()
-			assert.are.same(doc1:getToc(), {})
+            assert.are.same(doc1:getToc(), {})
             assert.are.same(doc3:getToc(), {
                 { ["page"] = 1, ["title"] = "Part 1", ["depth"] = 1 },
                 { ["page"] = 1, ["title"] = "Subpart 1.1", ["depth"] = 2 },
@@ -89,7 +99,7 @@ describe("mupdf module", function()
             assert.equals(out_data, test_data)
         end)
 
-    	describe("PDF page API", function()
+        describe("PDF page API", function()
             local page
             local dc
             setup(function()
@@ -139,7 +149,7 @@ describe("mupdf module", function()
                 end)
             end)
         end)
-	end)
+    end)
     describe("image API", function()
         it("should render an image", function()
             local img = M.renderImageFile(test_img)

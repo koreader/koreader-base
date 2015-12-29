@@ -289,6 +289,9 @@ $(OUTPUT_DIR)/libs/libwrap-mupdf.so: wrap-mupdf.c \
 	$(CC) -I$(MUPDF_DIR)/include $(DYNLIB_CFLAGS) \
 		-o $@ $^
 
+ffi/mupdf_h.lua: ffi-cdecl/mupdf_decl.c $(MUPDF_DIR)/include
+	CPPFLAGS="$(CFLAGS) -I. -I$(MUPDF_DIR)/include" $(FFI-CDECL) gcc ffi-cdecl/mupdf_decl.c ffi/mupdf_h.lua
+
 # ===========================================================================
 # the attachment extraction tool:
 

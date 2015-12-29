@@ -29,7 +29,7 @@ local mupdf = {
 }
 -- this cannot get adapted by the cdecl file because it is a
 -- string constant. Must match the actual mupdf API:
-local FZ_VERSION = "1.7"
+local FZ_VERSION = "1.8"
 
 local document_mt = { __index = {} }
 local page_mt = { __index = {} }
@@ -561,15 +561,15 @@ function page_mt.__index:draw_new(draw_context, width, height, offset_x, offset_
 
     local colorspace = mupdf.color and M.fz_device_rgb(context())
         or M.fz_device_gray(context())
-	local pix = W.mupdf_new_pixmap_with_bbox_and_data(
+    local pix = W.mupdf_new_pixmap_with_bbox_and_data(
         context(), colorspace, bbox, ffi.cast("unsigned char*", bb.data))
     if pix == nil then merror("cannot allocate pixmap") end
 
     run_page(self, pix, ctm)
 
-	if draw_context.gamma >= 0.0 then
-		M.fz_gamma_pixmap(context(), pix, draw_context.gamma)
-	end
+    if draw_context.gamma >= 0.0 then
+        M.fz_gamma_pixmap(context(), pix, draw_context.gamma)
+    end
 
     M.fz_drop_pixmap(context(), pixmap)
 
