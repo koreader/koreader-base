@@ -36,6 +36,7 @@ set(LINK_OPTS "${LINK_OPTS} -Wl,--whole-archive ${MUPDF_LIB_STATIC}")
 set(LINK_OPTS "${LINK_OPTS} -Wl,--whole-archive ${MUPDF_JS_LIB_STATIC}")
 set(LINK_OPTS "${LINK_OPTS} -Wl,--no-whole-archive ${MUPDF_THIRDPARTY_LIBS}")
 set(LINK_OPTS "${LINK_OPTS} -Wl,-soname=${MUPDF_SONAME}")
+set(LINK_OPTS "${LINK_OPTS} build/release/libopenjpeg.a build/release/libmujs.a build/release/libjbig2dec.a")
 set(SHARED_BUILD_CMD "${CC} -shared ${CFLAGS} ${LINK_OPTS} ${ZLIB} ${JPEG_LIB} ${FREETYPE_LIB} -o ${MUPDF_LIB} -lm")
 if(${ANDROID})
     set(SHARED_BUILD_CMD "${SHARED_BUILD_CMD} -llog")
@@ -46,7 +47,7 @@ ep_get_source_dir(SOURCE_DIR)
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
     git://git.ghostscript.com/mupdf.git
-    0fd24cefd86fb5bb627ee490d3f8127052516c5a
+    c3a0d0fe7615ae201efd882dc961f3815a92a375
     ${SOURCE_DIR}
 )
 
