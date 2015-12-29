@@ -230,19 +230,34 @@ $(POPEN_NOSHELL_LIB): $(THIRDPARTY_DIR)/popen-noshell/CMakeLists.txt
 		$(CURDIR)/$(THIRDPARTY_DIR)/popen-noshell && \
 		$(MAKE)
 
-# k2pdfopt, fetched via GIT as a submodule
-$(K2PDFOPT_LIB) $(LEPTONICA_LIB) $(TESSERACT_LIB): $(PNG_LIB) $(ZLIB)
-	$(MAKE) -j$(PROCESSORS) -C $(K2PDFOPT_DIR) BUILDMODE=shared \
-		$(if $(EMULATE_READER),,HOST=$(if $(ANDROID),"arm-linux",$(CHOST))) \
-		CC="$(CC)" CFLAGS="$(CFLAGS) -O3" \
-		CXX="$(CXX)" CXXFLAGS="$(CXXFLAGS) -O3" \
-		AR="$(AR)" ZLIB=$(CURDIR)/$(ZLIB) \
-		LEPT_CFLAGS="$(CFLAGS) -I$(ZLIB_DIR) -I$(PNG_DIR)/include" \
-		LEPT_LDFLAGS="$(LDFLAGS) -L$(ZLIB_DIR) -L$(PNG_DIR)/lib" \
-		STDCPPLIB="$(if $(ANDROID),$(SYSROOT)/usr/lib/,)$(STATIC_LIBSTDCPP)" \
-		ZLIB_LDFLAGS="-Wl,-rpath-link,$(ZLIB_DIR)" \
-		PNG_LDFLAGS="-Wl,-rpath-link,$(PNG_DIR)/lib" \
-		all
+# k2pdfopt depends on leptonica and tesseract
+$(LEPTONICA_DIR): $(THIRDPARTY_DIR)/leptonica/CMakeLists.txt
+	-mkdir -p $(LEPTONICA_BUILD_DIR)
+	cd $(LEPTONICA_BUILD_DIR) && \
+		$(CMAKE) -DMACHINE="$(MACHINE)" \
+		$(CURDIR)/$(THIRDPARTY_DIR)/leptonica && \
+		$(MAKE)
+
+$(TESSERACT_DIR): $(THIRDPARTY_DIR)/tesseract/CMakeLists.txt
+	-mkdir -p $(TESSERACT_BUILD_DIR)
+	cd $(TESSERACT_BUILD_DIR) && \
+		$(CMAKE) -DMACHINE="$(MACHINE)" \
+		$(CURDIR)/$(THIRDPARTY_DIR)/tesseract && \
+		$(MAKE)
+
+$(K2PDFOPT_LIB) $(LEPTONICA_LIB) $(TESSERACT_LIB): $(PNG_LIB) $(ZLIB) \
+		$(THIRDPARTY_DIR)/libk2pdfopt/CMakeLists.txt \
+		$(TESSERACT_DIR) $(LEPTONICA_DIR)
+	-mkdir -p $(K2PDFOPT_BUILD_DIR)
+	cd $(K2PDFOPT_BUILD_DIR) && \
+		$(CMAKE) $(if $(EMULATE_READER),,-DHOST="$(if $(ANDROID),"arm-linux",$(CHOST))") \
+		-DCC="$(CC)" -DCFLAGS="$(CFLAGS)" -DCXX="$(CXX)" -DCXXFLAGS="$(CXXFLAGS) -O3" \
+		-DAR="$(AR)" -DLDFLAGS="$(LDFLAGS)" -DMACHINE="$(MACHINE)" \
+		-DSTDCPPLIB="$(if $(ANDROID),$(SYSROOT)/usr/lib/,)$(STATIC_LIBSTDCPP)" \
+		-DZLIB_DIR=$(ZLIB_DIR) -DZLIB=$(CURDIR)/$(ZLIB) -DPNG_DIR=$(PNG_DIR) \
+		-DLEPTONICA_DIR=$(LEPTONICA_DIR) -DTESSERACT_DIR=$(TESSERACT_DIR) \
+		$(CURDIR)/$(THIRDPARTY_DIR)/libk2pdfopt && \
+		$(MAKE)
 	cp -fL $(K2PDFOPT_DIR)/$(notdir $(K2PDFOPT_LIB)) $(K2PDFOPT_LIB)
 	cp -fL $(K2PDFOPT_DIR)/$(notdir $(LEPTONICA_LIB)) $(LEPTONICA_LIB)
 	cp -fL $(K2PDFOPT_DIR)/$(notdir $(TESSERACT_LIB)) $(TESSERACT_LIB)
@@ -658,32 +673,13 @@ fetchthirdparty:
 	git submodule update
 	# update submodules in plugins
 	cd plugins/evernote-sdk-lua && (git submodule init; git submodule update)
-	# download leptonica and tesseract-ocr src for libk2pdfopt
-	[ ! -f $(K2PDFOPT_DIR)/leptonica-1.69.tar.gz ] \
-		&& cd $(K2PDFOPT_DIR) \
-		&& wget http://leptonica.com/source/leptonica-1.69.tar.gz || true
-	[ `md5sum $(K2PDFOPT_DIR)/leptonica-1.69.tar.gz|cut -d\  -f1` != d4085c302cbcab7f9af9d3d6f004ab22 ] \
-		&& cd $(K2PDFOPT_DIR) && rm leptonica-1.69.tar.gz \
-		&& wget http://leptonica.com/source/leptonica-1.69.tar.gz || true
-	cd $(K2PDFOPT_DIR) && tar zxf leptonica-1.69.tar.gz
-	# patch leptonica for a small typo, it's already fixed in 1.70
-	cd $(K2PDFOPT_DIR)/leptonica-1.69 && sed -i 's|hfind|hFind|g' src/utils.c
-	[ ! -f $(K2PDFOPT_DIR)/tesseract-ocr-3.02.02.tar.gz ] \
-		&& cd $(K2PDFOPT_DIR) \
-		&& wget http://tesseract-ocr.googlecode.com/files/tesseract-ocr-3.02.02.tar.gz || true
-	[ `md5sum $(K2PDFOPT_DIR)/tesseract-ocr-3.02.02.tar.gz|cut -d\  -f1` != 26adc8154f0e815053816825dde246e6 ] \
-		&& cd $(K2PDFOPT_DIR) && rm tesseract-ocr-3.02.02.tar.gz \
-		&& wget http://tesseract-ocr.googlecode.com/files/tesseract-ocr-3.02.02.tar.gz || true
-	cd $(K2PDFOPT_DIR) && tar zxf tesseract-ocr-3.02.02.tar.gz
-	sed -i "s/AM_CONFIG_HEADER/AC_CONFIG_HEADERS/g" $(K2PDFOPT_DIR)/tesseract-ocr/configure.ac
 
 # ===========================================================================
-CMAKE_THIRDPARTY_LIBS=lua-Spore,sdcv,luasec,luasocket,libffi,lua-serialize,glib,lodepng,minizip,djvulibre,openssl,mupdf,libzmq,freetype2,giflib,libpng,zlib,tar,libiconv,gettext,libjpeg-turbo,popen-noshell
+CMAKE_THIRDPARTY_LIBS=libk2pdfopt,tesseract,leptonica,lua-Spore,sdcv,luasec,luasocket,libffi,lua-serialize,glib,lodepng,minizip,djvulibre,openssl,mupdf,libzmq,freetype2,giflib,libpng,zlib,tar,libiconv,gettext,libjpeg-turbo,popen-noshell
 clean:
 	-rm -rf $(OUTPUT_DIR)/*
 	-rm -rf $(CRENGINE_WRAPPER_BUILD_DIR)
 	-$(MAKE) -C $(LUA_DIR) CC="$(HOSTCC)" CFLAGS="$(BASE_CFLAGS)" clean
-	-$(MAKE) -C $(K2PDFOPT_DIR) clean
 	-$(MAKE) -C $(ZSYNC_DIR) clean
 	-$(MAKE) -C $(TURBO_DIR) clean
 	-$(MAKE) -C $(CZMQ_DIR)/build clean uninstall
