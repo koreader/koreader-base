@@ -553,25 +553,16 @@ $(FILEMQ_LIB): $(ZMQ_LIB) $(CZMQ_LIB) $(SSL_LIB) $(THIRDPARTY_DIR)/filemq/CMakeL
 		$(MAKE)
 	cp -fL $(FILEMQ_DIR)/$(if $(WIN32),bin,lib)/$(notdir $(FILEMQ_LIB)) $@
 
-$(ZYRE_LIB): $(ZMQ_LIB) $(CZMQ_LIB)
-	mkdir -p $(ZYRE_DIR)/build
-	cd $(ZYRE_DIR) && sh autogen.sh
-	cd $(ZYRE_DIR)/build && \
-		CC="$(CC)" \
-		CFLAGS="$(CFLAGS) $(if $(CLANG),-O0,)" CXXFLAGS="$(CXXFLAGS)" \
-		LDFLAGS="$(LDFLAGS) -Wl,-rpath,'libs'" \
-		zyre_have_xmlto=no zyre_have_asciidoc=no \
-			../configure -q --prefix=$(CURDIR)/$(ZYRE_DIR)/build \
-				--with-libzmq=$(ZMQ_DIR) \
-				--with-libczmq=$(CZMQ_DIR) \
-				--disable-static --enable-shared \
-				--host=$(CHOST)
-	cd $(ZYRE_DIR)/build && \
-		sed -i 's|^hardcode_libdir_flag_spec=.*|hardcode_libdir_flag_spec=""|g' libtool && \
-		sed -i 's|^runpath_var=LD_RUN_PATH|runpath_var=DIE_RPATH_DIE|g' libtool
-	-$(MAKE) -j$(PROCESSORS) -C $(ZYRE_DIR)/build --silent uninstall
-	$(MAKE) -j$(PROCESSORS) -C $(ZYRE_DIR)/build --silent install
-	cp -fL $(ZYRE_DIR)/build/$(if $(WIN32),bin,lib)/$(notdir $(ZYRE_LIB)) $@
+$(ZYRE_LIB): $(ZMQ_LIB) $(CZMQ_LIB) $(THIRDPARTY_DIR)/zyre/CMakeLists.txt
+	-mkdir -p $(ZYRE_BUILD_DIR)
+	cd $(ZYRE_BUILD_DIR) && \
+		$(CMAKE) -DCC="$(CC)" -DCFLAGS="$(CFLAGS) $(if $(CLANG),-O0,)" \
+		-DCXXFLAGS="$(CXXFLAGS)" -DLDFLAGS="$(LDFLAGS) -Wl,-rpath,'libs'" \
+		-DZMQ_DIR=$(ZMQ_DIR) -DCZMQ_DIR=$(CZMQ_DIR) \
+		-DHOST=$(CHOST) -DMACHINE="$(MACHINE)" \
+		$(CURDIR)/$(THIRDPARTY_DIR)/zyre && \
+		$(MAKE)
+	cp -fL $(ZYRE_DIR)/$(if $(WIN32),bin,lib)/$(notdir $(ZYRE_LIB)) $@
 
 $(TURBO_FFI_WRAP_LIB): $(SSL_LIB)
 	# patch turbo to specify path of libssl and libcrypto
@@ -649,14 +640,13 @@ fetchthirdparty:
 	cd plugins/evernote-sdk-lua && (git submodule init; git submodule update)
 
 # ===========================================================================
-CMAKE_THIRDPARTY_LIBS=czmq,filemq,libk2pdfopt,tesseract,leptonica,lua-Spore,sdcv,luasec,luasocket,libffi,lua-serialize,glib,lodepng,minizip,djvulibre,openssl,mupdf,libzmq,freetype2,giflib,libpng,zlib,tar,libiconv,gettext,libjpeg-turbo,popen-noshell
+CMAKE_THIRDPARTY_LIBS=zyre,czmq,filemq,libk2pdfopt,tesseract,leptonica,lua-Spore,sdcv,luasec,luasocket,libffi,lua-serialize,glib,lodepng,minizip,djvulibre,openssl,mupdf,libzmq,freetype2,giflib,libpng,zlib,tar,libiconv,gettext,libjpeg-turbo,popen-noshell
 clean:
 	-rm -rf $(OUTPUT_DIR)/*
 	-rm -rf $(CRENGINE_WRAPPER_BUILD_DIR)
 	-$(MAKE) -C $(LUA_DIR) CC="$(HOSTCC)" CFLAGS="$(BASE_CFLAGS)" clean
 	-$(MAKE) -C $(ZSYNC_DIR) clean
 	-$(MAKE) -C $(TURBO_DIR) clean
-	-$(MAKE) -C $(ZYRE_DIR)/build clean uninstall
 	-rm -rf $(THIRDPARTY_DIR)/{$(CMAKE_THIRDPARTY_LIBS)}/build/$(MACHINE)
 
 dist-clean:
