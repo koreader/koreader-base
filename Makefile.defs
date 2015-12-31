@@ -416,11 +416,12 @@ FILEMQ_LIB=$(OUTPUT_DIR)/libs/libfmq.$(if $(WIN32),dll,so.1)
 ZYRE_LIB=$(OUTPUT_DIR)/libs/libzyre.$(if $(WIN32),dll,so.1)
 
 ZSYNC_BUILD_DIR=$(THIRDPARTY_DIR)/zsync/build/$(MACHINE)
-ZSYNC_DIR=$(ZSYNC_BUILD_DIR)/zsync-prefix/src/zsync-build
+ZSYNC_DIR=$(CURDIR)/$(ZSYNC_BUILD_DIR)/zsync-prefix/src/zsync-build
 TAR_BUILD_DIR=$(THIRDPARTY_DIR)/tar/build/$(MACHINE)
-TAR_DIR=$(TAR_BUILD_DIR)/tar-prefix/src/tar-build
+TAR_DIR=$(CURDIR)/$(TAR_BUILD_DIR)/tar-prefix/src/tar-build
 
-TURBO_DIR=turbo
+TURBO_BUILD_DIR=$(THIRDPARTY_DIR)/turbo/build/$(MACHINE)
+TURBO_DIR=$(CURDIR)/$(TURBO_BUILD_DIR)/turbo-prefix/src/turbo
 TURBO_FFI_WRAP_LIB=$(OUTPUT_DIR)/common/libtffi_wrap.so
 
 
