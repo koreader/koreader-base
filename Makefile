@@ -432,10 +432,13 @@ $(OUTPUT_DIR)/tar: $(THIRDPARTY_DIR)/tar/CMakeLists.txt
 # ===========================================================================
 # zsync: rsync over HTTP
 
-$(OUTPUT_DIR)/zsync:
-	cd $(ZSYNC_DIR) && autoreconf -fi && ./configure -q \
-		$(if $(EMULATE_READER),,--host=$(CHOST)) \
-		&& $(MAKE) -j$(PROCESSORS) --silent
+$(OUTPUT_DIR)/zsync: $(THIRDPARTY_DIR)/zsync/CMakeLists.txt
+	-mkdir -p $(ZSYNC_BUILD_DIR)
+	cd $(ZSYNC_BUILD_DIR) && \
+		$(CMAKE) -DHOST="$(if $(EMULATE_READER),,$(CHOST))" \
+		-DCC="$(CC)" -DMACHINE="$(MACHINE)" \
+		$(CURDIR)/$(THIRDPARTY_DIR)/zsync && \
+		$(MAKE) VERBOSE=1
 	cp $(ZSYNC_DIR)/zsync $(OUTPUT_DIR)/
 
 # ===========================================================================
@@ -532,72 +535,37 @@ ifdef POCKETBOOK
 	rm -f $(CURDIR)/$(POCKETBOOK_TOOLCHAIN)/arm-obreey-linux-gnueabi/sysroot/usr/lib/libuuid*
 endif
 
-$(CZMQ_LIB): $(ZMQ_LIB)
-	mkdir -p $(CZMQ_DIR)/build
-	cd $(CZMQ_DIR) && sh autogen.sh
-	cd $(CZMQ_DIR)/build && \
-		CC="$(CC)" \
-		LDFLAGS="$(LDFLAGS) -Wl,-rpath,'libs'" \
-		CFLAGS="$(CFLAGS) $(if $(CLANG),-O0,) $(if $(WIN32),-DLIBCZMQ_EXPORTS)" \
-		czmq_have_xmlto=no czmq_have_asciidoc=no \
-			../configure -q --prefix=$(CURDIR)/$(CZMQ_DIR)/build \
-				--with-gnu-ld \
-				--with-libzmq=$(CURDIR)/$(ZMQ_DIR) \
-				--disable-static --enable-shared \
-				--host=$(CHOST)
-	# hack to remove hardcoded rpath
-	cd $(CZMQ_DIR)/build && \
-		sed -i 's|^hardcode_libdir_flag_spec=.*|hardcode_libdir_flag_spec=""|g' libtool && \
-		sed -i 's|^runpath_var=LD_RUN_PATH|runpath_var=DIE_RPATH_DIE|g' libtool
-	# patch: ignore limited broadcast address
-	-cd $(CZMQ_DIR) && patch -N -p1 < ../zbeacon.patch
-	# patch: add _DEFAULT_SOURCE define for glibc starting at version 2.20
-	-cd $(CZMQ_DIR) && patch -N -p1 < ../czmq_default_source_define.patch
-	-$(MAKE) -j$(PROCESSORS) -C $(CZMQ_DIR)/build --silent uninstall
-	$(MAKE) -j$(PROCESSORS) -C $(CZMQ_DIR)/build --silent install
-	-cd $(CZMQ_DIR) && patch -R -p1 < ../zbeacon.patch
-	-cd $(CZMQ_DIR) && patch -R -p1 < ../czmq_default_source_define.patch
-	cp -fL $(CZMQ_DIR)/build/$(if $(WIN32),bin,lib)/$(notdir $(CZMQ_LIB)) $@
+$(CZMQ_LIB): $(ZMQ_LIB) $(THIRDPARTY_DIR)/czmq/CMakeLists.txt
+	-mkdir -p $(CZMQ_BUILD_DIR)
+	cd $(CZMQ_BUILD_DIR) && \
+		$(CMAKE) -DCC="$(CC)" -DLDFLAGS="$(LDFLAGS) -Wl,-rpath,'libs'" \
+		-DCFLAGS="$(CFLAGS) $(if $(CLANG),-O0,) $(if $(WIN32),-DLIBCZMQ_EXPORTS)" \
+		-DZMQ_DIR=$(ZMQ_DIR) -DHOST=$(CHOST) -DMACHINE="$(MACHINE)" \
+		$(CURDIR)/$(THIRDPARTY_DIR)/czmq && \
+		$(MAKE)
+	cp -fL $(CZMQ_DIR)/$(if $(WIN32),bin,lib)/$(notdir $(CZMQ_LIB)) $@
 
-$(FILEMQ_LIB): $(ZMQ_LIB) $(CZMQ_LIB) $(SSL_LIB)
-	mkdir -p $(FILEMQ_DIR)/build
-	cd $(FILEMQ_DIR) && sh autogen.sh
-	cd $(FILEMQ_DIR)/build && \
-		CC="$(CC)" \
-		CFLAGS="$(CFLAGS) $(if $(CLANG),-O0,) -I$(OPENSSL_DIR)/include" \
-		LDFLAGS="$(LDFLAGS) -L$(OPENSSL_DIR) -Wl,-rpath,'libs'" \
-		fmq_have_xmlto=no fmq_have_asciidoc=no \
-			../configure -q --prefix=$(CURDIR)/$(FILEMQ_DIR)/build \
-				--with-libzmq=$(CURDIR)/$(ZMQ_DIR) \
-				--with-libczmq=$(CURDIR)/$(CZMQ_DIR)/build \
-				--disable-static --enable-shared \
-				--host=$(CHOST)
-	cd $(FILEMQ_DIR)/build && \
-		sed -i 's|^hardcode_libdir_flag_spec=.*|hardcode_libdir_flag_spec=""|g' libtool && \
-		sed -i 's|^runpath_var=LD_RUN_PATH|runpath_var=DIE_RPATH_DIE|g' libtool
-	-$(MAKE) -j$(PROCESSORS) -C $(FILEMQ_DIR)/build --silent uninstall
-	$(MAKE) -j$(PROCESSORS) -C $(FILEMQ_DIR)/build --silent install
-	cp -fL $(FILEMQ_DIR)/build/$(if $(WIN32),bin,lib)/$(notdir $(FILEMQ_LIB)) $@
+$(FILEMQ_LIB): $(ZMQ_LIB) $(CZMQ_LIB) $(SSL_LIB) $(THIRDPARTY_DIR)/filemq/CMakeLists.txt
+	-mkdir -p $(FILEMQ_BUILD_DIR)
+	cd $(FILEMQ_BUILD_DIR) && \
+		$(CMAKE) -DCC="$(CC)" -DCFLAGS="$(CFLAGS) $(if $(CLANG),-O0,) -I$(OPENSSL_DIR)/include" \
+		-DLDFLAGS="$(LDFLAGS) -L$(OPENSSL_DIR) -Wl,-rpath,'libs'" \
+		-DZMQ_DIR=$(ZMQ_DIR) -DCZMQ_DIR=$(CZMQ_DIR) \
+		-DHOST=$(CHOST) -DMACHINE="$(MACHINE)" \
+		$(CURDIR)/$(THIRDPARTY_DIR)/filemq && \
+		$(MAKE)
+	cp -fL $(FILEMQ_DIR)/$(if $(WIN32),bin,lib)/$(notdir $(FILEMQ_LIB)) $@
 
-$(ZYRE_LIB): $(ZMQ_LIB) $(CZMQ_LIB)
-	mkdir -p $(ZYRE_DIR)/build
-	cd $(ZYRE_DIR) && sh autogen.sh
-	cd $(ZYRE_DIR)/build && \
-		CC="$(CC)" \
-		CFLAGS="$(CFLAGS) $(if $(CLANG),-O0,)" CXXFLAGS="$(CXXFLAGS)" \
-		LDFLAGS="$(LDFLAGS) -Wl,-rpath,'libs'" \
-		zyre_have_xmlto=no zyre_have_asciidoc=no \
-			../configure -q --prefix=$(CURDIR)/$(ZYRE_DIR)/build \
-				--with-libzmq=$(CURDIR)/$(ZMQ_DIR) \
-				--with-libczmq=$(CURDIR)/$(CZMQ_DIR)/build \
-				--disable-static --enable-shared \
-				--host=$(CHOST)
-	cd $(ZYRE_DIR)/build && \
-		sed -i 's|^hardcode_libdir_flag_spec=.*|hardcode_libdir_flag_spec=""|g' libtool && \
-		sed -i 's|^runpath_var=LD_RUN_PATH|runpath_var=DIE_RPATH_DIE|g' libtool
-	-$(MAKE) -j$(PROCESSORS) -C $(ZYRE_DIR)/build --silent uninstall
-	$(MAKE) -j$(PROCESSORS) -C $(ZYRE_DIR)/build --silent install
-	cp -fL $(ZYRE_DIR)/build/$(if $(WIN32),bin,lib)/$(notdir $(ZYRE_LIB)) $@
+$(ZYRE_LIB): $(ZMQ_LIB) $(CZMQ_LIB) $(THIRDPARTY_DIR)/zyre/CMakeLists.txt
+	-mkdir -p $(ZYRE_BUILD_DIR)
+	cd $(ZYRE_BUILD_DIR) && \
+		$(CMAKE) -DCC="$(CC)" -DCFLAGS="$(CFLAGS) $(if $(CLANG),-O0,)" \
+		-DCXXFLAGS="$(CXXFLAGS)" -DLDFLAGS="$(LDFLAGS) -Wl,-rpath,'libs'" \
+		-DZMQ_DIR=$(ZMQ_DIR) -DCZMQ_DIR=$(CZMQ_DIR) \
+		-DHOST=$(CHOST) -DMACHINE="$(MACHINE)" \
+		$(CURDIR)/$(THIRDPARTY_DIR)/zyre && \
+		$(MAKE)
+	cp -fL $(ZYRE_DIR)/$(if $(WIN32),bin,lib)/$(notdir $(ZYRE_LIB)) $@
 
 $(TURBO_FFI_WRAP_LIB): $(SSL_LIB)
 	# patch turbo to specify path of libssl and libcrypto
@@ -675,16 +643,12 @@ fetchthirdparty:
 	cd plugins/evernote-sdk-lua && (git submodule init; git submodule update)
 
 # ===========================================================================
-CMAKE_THIRDPARTY_LIBS=libk2pdfopt,tesseract,leptonica,lua-Spore,sdcv,luasec,luasocket,libffi,lua-serialize,glib,lodepng,minizip,djvulibre,openssl,mupdf,libzmq,freetype2,giflib,libpng,zlib,tar,libiconv,gettext,libjpeg-turbo,popen-noshell
+CMAKE_THIRDPARTY_LIBS=zsync,zyre,czmq,filemq,libk2pdfopt,tesseract,leptonica,lua-Spore,sdcv,luasec,luasocket,libffi,lua-serialize,glib,lodepng,minizip,djvulibre,openssl,mupdf,libzmq,freetype2,giflib,libpng,zlib,tar,libiconv,gettext,libjpeg-turbo,popen-noshell
 clean:
 	-rm -rf $(OUTPUT_DIR)/*
 	-rm -rf $(CRENGINE_WRAPPER_BUILD_DIR)
 	-$(MAKE) -C $(LUA_DIR) CC="$(HOSTCC)" CFLAGS="$(BASE_CFLAGS)" clean
-	-$(MAKE) -C $(ZSYNC_DIR) clean
 	-$(MAKE) -C $(TURBO_DIR) clean
-	-$(MAKE) -C $(CZMQ_DIR)/build clean uninstall
-	-$(MAKE) -C $(FILEMQ_DIR)/build clean uninstall
-	-$(MAKE) -C $(ZYRE_DIR)/build clean uninstall
 	-rm -rf $(THIRDPARTY_DIR)/{$(CMAKE_THIRDPARTY_LIBS)}/build/$(MACHINE)
 
 dist-clean:

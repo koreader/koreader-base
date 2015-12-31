@@ -3,6 +3,7 @@ cmake_minimum_required(VERSION 2.8.3)
 
 SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_LIST_DIR}/../cmake_modules")
 include("koreader_thirdparty_common")
+include("koreader_thirdparty_git")
 
 enable_language(C CXX)
 
@@ -16,13 +17,18 @@ if(${WITHOUT_SIMD})
 endif(${WITHOUT_SIMD})
 set(CFG_CMD_STR "${CFG_ENV_VAR} ${SOURCE_DIR}/configure ${CFG_OPTS}")
 
-set(LIBJPEG_TURBO_VER "1.4.2")
+ko_write_gitclone_script(
+    GIT_CLONE_SCRIPT_FILENAME
+    https://github.com/libjpeg-turbo/libjpeg-turbo.git
+    d8da49effe6460d55239c4c009c57f42d8e4a494
+    ${SOURCE_DIR}
+)
+
 include(ExternalProject)
 ExternalProject_Add(
     libjpeg-turbo
-    URL http://download.sourceforge.net/libjpeg-turbo/libjpeg-turbo-${LIBJPEG_TURBO_VER}.tar.gz
-    URL_MD5 86b0d5f7507c2e6c21c00219162c3c44
-    DOWNLOAD_DIR ${KO_DOWNLOAD_DIR}
+    DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
+    PATCH_COMMAND libtoolize COMMAND aclocal COMMAND autoheader COMMAND autoconf COMMAND automake --force-missing --add-missing
     CONFIGURE_COMMAND sh -c ${CFG_CMD_STR}
     BUILD_COMMAND $(MAKE) -j${PROCESSOR_COUNT} --silent
     INSTALL_COMMAND $(MAKE) -j${PROCESSOR_COUNT} --silent install

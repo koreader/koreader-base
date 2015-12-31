@@ -10,18 +10,6 @@
 [submodule "plugins/evernote-sdk-lua"]
 	path = plugins/evernote-sdk-lua
 	url = https://github.com/koreader/evernote-sdk-lua
-[submodule "czmq"]
-	path = czmq
-	url = https://github.com/zeromq/czmq.git
-[submodule "filemq"]
-	path = filemq
-	url = https://github.com/zeromq/filemq.git
-[submodule "zyre"]
-	path = zyre
-	url = https://github.com/zeromq/zyre.git
-[submodule "zsync"]
-	path = zsync
-	url = http://zsync.moria.org.uk/zsync.git
 [submodule "turbo"]
 	path = turbo
 	url = https://github.com/kernelsauce/turbo

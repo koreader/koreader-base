@@ -83,8 +83,10 @@ function FT.newFace(filename, pxsize)
 
     local facept = ffi.new("FT_Face[1]")
 
-    assert(ft2.FT_New_Face(freetypelib, filename, 0, facept) == 0,
-           "freetype error")
+    local err = ft2.FT_New_Face(freetypelib, filename, 0, facept)
+    if err ~= 0 then
+        error("Failed to load font, freetype error code: "..err)
+    end
 
     local face = facept[0]
 
