@@ -403,10 +403,12 @@ LUASERIAL_DIR=$(CURDIR)/$(LUASERIAL_BUILD_DIR)/lua-serialize-prefix/src/lua-seri
 LUASERIAL_LIB=$(OUTPUT_DIR)/common/serialize.so
 
 ZMQ_BUILD_DIR=$(THIRDPARTY_DIR)/libzmq/build/$(MACHINE)
-ZMQ_DIR=$(ZMQ_BUILD_DIR)/libzmq-prefix/src/libzmq-build
+ZMQ_DIR=$(CURDIR)/$(ZMQ_BUILD_DIR)/libzmq-prefix/src/libzmq-build
 ZMQ_LIB=$(OUTPUT_DIR)/libs/libzmq.$(if $(WIN32),dll,so.4)
-CZMQ_DIR=czmq
-FILEMQ_DIR=filemq
+CZMQ_BUILD_DIR=$(THIRDPARTY_DIR)/czmq/build/$(MACHINE)
+CZMQ_DIR=$(CURDIR)/$(CZMQ_BUILD_DIR)/czmq-prefix/src/czmq-build
+FILEMQ_BUILD_DIR=$(THIRDPARTY_DIR)/filemq/build/$(MACHINE)
+FILEMQ_DIR=$(CURDIR)/$(FILEMQ_BUILD_DIR)/filemq-prefix/src/filemq-build
 ZYRE_DIR=zyre
 CZMQ_LIB=$(OUTPUT_DIR)/libs/libczmq.$(if $(WIN32),dll,so.1)
 FILEMQ_LIB=$(OUTPUT_DIR)/libs/libfmq.$(if $(WIN32),dll,so.1)
