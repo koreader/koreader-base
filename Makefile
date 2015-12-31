@@ -432,10 +432,13 @@ $(OUTPUT_DIR)/tar: $(THIRDPARTY_DIR)/tar/CMakeLists.txt
 # ===========================================================================
 # zsync: rsync over HTTP
 
-$(OUTPUT_DIR)/zsync:
-	cd $(ZSYNC_DIR) && autoreconf -fi && ./configure -q \
-		$(if $(EMULATE_READER),,--host=$(CHOST)) \
-		&& $(MAKE) -j$(PROCESSORS) --silent
+$(OUTPUT_DIR)/zsync: $(THIRDPARTY_DIR)/zsync/CMakeLists.txt
+	-mkdir -p $(ZSYNC_BUILD_DIR)
+	cd $(ZSYNC_BUILD_DIR) && \
+		$(CMAKE) -DHOST="$(if $(EMULATE_READER),,$(CHOST))" \
+		-DCC="$(CC)" -DMACHINE="$(MACHINE)" \
+		$(CURDIR)/$(THIRDPARTY_DIR)/zsync && \
+		$(MAKE) VERBOSE=1
 	cp $(ZSYNC_DIR)/zsync $(OUTPUT_DIR)/
 
 # ===========================================================================
@@ -640,12 +643,11 @@ fetchthirdparty:
 	cd plugins/evernote-sdk-lua && (git submodule init; git submodule update)
 
 # ===========================================================================
-CMAKE_THIRDPARTY_LIBS=zyre,czmq,filemq,libk2pdfopt,tesseract,leptonica,lua-Spore,sdcv,luasec,luasocket,libffi,lua-serialize,glib,lodepng,minizip,djvulibre,openssl,mupdf,libzmq,freetype2,giflib,libpng,zlib,tar,libiconv,gettext,libjpeg-turbo,popen-noshell
+CMAKE_THIRDPARTY_LIBS=zsync,zyre,czmq,filemq,libk2pdfopt,tesseract,leptonica,lua-Spore,sdcv,luasec,luasocket,libffi,lua-serialize,glib,lodepng,minizip,djvulibre,openssl,mupdf,libzmq,freetype2,giflib,libpng,zlib,tar,libiconv,gettext,libjpeg-turbo,popen-noshell
 clean:
 	-rm -rf $(OUTPUT_DIR)/*
 	-rm -rf $(CRENGINE_WRAPPER_BUILD_DIR)
 	-$(MAKE) -C $(LUA_DIR) CC="$(HOSTCC)" CFLAGS="$(BASE_CFLAGS)" clean
-	-$(MAKE) -C $(ZSYNC_DIR) clean
 	-$(MAKE) -C $(TURBO_DIR) clean
 	-rm -rf $(THIRDPARTY_DIR)/{$(CMAKE_THIRDPARTY_LIBS)}/build/$(MACHINE)
 

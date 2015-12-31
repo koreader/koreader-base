@@ -415,7 +415,8 @@ CZMQ_LIB=$(OUTPUT_DIR)/libs/libczmq.$(if $(WIN32),dll,so.1)
 FILEMQ_LIB=$(OUTPUT_DIR)/libs/libfmq.$(if $(WIN32),dll,so.1)
 ZYRE_LIB=$(OUTPUT_DIR)/libs/libzyre.$(if $(WIN32),dll,so.1)
 
-ZSYNC_DIR=zsync/c
+ZSYNC_BUILD_DIR=$(THIRDPARTY_DIR)/zsync/build/$(MACHINE)
+ZSYNC_DIR=$(ZSYNC_BUILD_DIR)/zsync-prefix/src/zsync-build
 TAR_BUILD_DIR=$(THIRDPARTY_DIR)/tar/build/$(MACHINE)
 TAR_DIR=$(TAR_BUILD_DIR)/tar-prefix/src/tar-build
 
