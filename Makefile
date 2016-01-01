@@ -16,7 +16,7 @@ all: $(OUTPUT_DIR)/libs $(if $(ANDROID),,$(LUAJIT)) \
 		$(GIF_LIB) \
 		$(TURBO_FFI_WRAP_LIB) \
 		$(LUA_SPORE_ROCK) \
-		$(if $(ANDROID),lpeg,) \
+		$(if $(ANDROID),$(LPEG_DYNLIB) $(LPEG_RE),) \
 		$(if $(WIN32),,$(OUTPUT_DIR)/sdcv) \
 		$(if $(or $(ANDROID),$(WIN32)),,$(OUTPUT_DIR)/tar) \
 		$(if $(or $(ANDROID),$(WIN32)),,$(OUTPUT_DIR)/zsync) \
@@ -596,15 +596,17 @@ $(LUA_SPORE_ROCK): $(THIRDPARTY_DIR)/lua-Spore/CMakeLists.txt
 		$(MAKE)
 
 # override lpeg built by luarocks, this is only necessary for Android
-lpeg:
-	mkdir -p $(OUTPUT_DIR)/rocks/lib/lua/5.1
-	mkdir -p $(OUTPUT_DIR)/rocks/share/lua/5.1
-	rm -rf lpeg* && luarocks download lpeg && luarocks unpack lpeg*.rock
-	cd lpeg*/lpeg* && $(CC) $(DYNLIB_CFLAGS) -I$(CURDIR)/$(LUA_DIR)/src \
-		$(CURDIR)/$(LUAJIT_LIB) \
-		-o lpeg.so lpcap.c lpcode.c lpprint.c lptree.c lpvm.c \
-		&& cp -rf lpeg.so $(CURDIR)/$(OUTPUT_DIR)/rocks/lib/lua/5.1 \
-		&& cp -rf re.lua $(CURDIR)/$(OUTPUT_DIR)/rocks/share/lua/5.1
+$(LPEG_DYNLIB) $(LPEG_RE): $(THIRDPARTY_DIR)/lpeg/CMakeLists.txt
+	-mkdir -p $(OUTPUT_DIR)/rocks/lib/lua/5.1
+	-mkdir -p $(OUTPUT_DIR)/rocks/share/lua/5.1
+	-mkdir -p $(LPEG_BUILD_DIR)
+	cd $(LPEG_BUILD_DIR) && \
+		$(CMAKE) -DCC="$(CC)" -DDYNLIB_CFLAGS="$(DYNLIB_CFLAGS)" \
+		-DLUA_DIR="$(CURDIR)/$(LUA_DIR)" -DLUAJIT_LIB="$(CURDIR)/$(LUAJIT_LIB)" \
+		-DMACHINE="$(MACHINE)" $(CURDIR)/$(THIRDPARTY_DIR)/lpeg && \
+		$(MAKE)
+	cp -rf $(LPEG_DIR)/lpeg.so $(OUTPUT_DIR)/rocks/lib/lua/5.1
+	cp -rf $(LPEG_DIR)/re.lua $(OUTPUT_DIR)/rocks/share/lua/5.1
 
 # ===========================================================================
 # helper target for creating standalone android toolchain from NDK
@@ -644,7 +646,7 @@ fetchthirdparty:
 	cd plugins/evernote-sdk-lua && (git submodule init; git submodule update)
 
 # ===========================================================================
-CMAKE_THIRDPARTY_LIBS=turbo,zsync,zyre,czmq,filemq,libk2pdfopt,tesseract,leptonica,lua-Spore,sdcv,luasec,luasocket,libffi,lua-serialize,glib,lodepng,minizip,djvulibre,openssl,mupdf,libzmq,freetype2,giflib,libpng,zlib,tar,libiconv,gettext,libjpeg-turbo,popen-noshell
+CMAKE_THIRDPARTY_LIBS=lpeg,turbo,zsync,zyre,czmq,filemq,libk2pdfopt,tesseract,leptonica,lua-Spore,sdcv,luasec,luasocket,libffi,lua-serialize,glib,lodepng,minizip,djvulibre,openssl,mupdf,libzmq,freetype2,giflib,libpng,zlib,tar,libiconv,gettext,libjpeg-turbo,popen-noshell
 clean:
 	-rm -rf $(OUTPUT_DIR)/*
 	-rm -rf $(CRENGINE_WRAPPER_BUILD_DIR)

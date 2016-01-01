@@ -16,7 +16,7 @@ set(CFG_CMD_STR "${CFG_ENV_VAR} ${SOURCE_DIR}/configure ${CFG_OPTS}")
 set(GIFLIB_VER "5.1.1")
 include(ExternalProject)
 ExternalProject_Add(
-    giflib
+    ${PROJECT_NAME}
     URL http://download.sourceforge.net/giflib/giflib-${GIFLIB_VER}.tar.gz
     URL_MD5 801fffd6fcfbac9ee99d3ea929828688
     DOWNLOAD_DIR ${KO_DOWNLOAD_DIR}
