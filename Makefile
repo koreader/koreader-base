@@ -191,34 +191,31 @@ $(CRENGINE_LIB): $(ZLIB) $(PNG_LIB) $(FREETYPE_LIB) $(JPEG_LIB)
 		$(CRENGINE_LIB)
 
 # LuaJIT, fetched via GIT as a submodule
-$(LUAJIT) $(LUAJIT_LIB):
-ifdef EMULATE_READER
-	$(MAKE) -j$(PROCESSORS) -C $(LUA_DIR)
-else
-	# To recap: build its TARGET_CC from CROSS+CC, so we need HOSTCC in CC.
-	# Build its HOST/TARGET_CFLAGS based on CFLAGS, so we need
-	# a neutral CFLAGS without arch
-	$(MAKE) -j$(PROCESSORS) -C $(LUA_DIR) \
-		CC="$(HOSTCC)" HOST_CC="$(HOSTCC) -m32" \
-		CFLAGS="$(BASE_CFLAGS)" HOST_CFLAGS="$(HOSTCFLAGS)" \
-		$(if $(WIN32),LDFLAGS="$(LDFLAGS)",) \
-		$(if $(WIN32),TARGET_SYS=Windows,) \
-		TARGET_SONAME=$(notdir $(LUAJIT_LIB)) \
-		TARGET_CFLAGS="$(CFLAGS)" \
-		TARGET_FLAGS="-DLUAJIT_NO_LOG2 -DLUAJIT_NO_EXP2" \
-		CROSS="$(strip $(CCACHE) $(CHOST))-" amalg
-endif
+$(LUAJIT) $(LUAJIT_LIB): $(THIRDPARTY_DIR)/luajit/CMakeLists.txt
+	-mkdir -p $(LUAJIT_BUILD_DIR)
+	cd $(LUAJIT_BUILD_DIR) && \
+		$(CMAKE) -DMACHINE="$(MACHINE)" \
+		-DXCOMPILE:BOOL=$(if $(EMULATE_READER),off,on) \
+		-DCC="$(HOSTCC)" -DHOST_CC="$(HOSTCC)" \
+		-DBASE_CFLAGS="$(BASE_CFLAGS)" -DHOST_CFLAGS="$(HOSTCFLAGS)" \
+		$(if $(WIN32),-DLDFLAGS="$(LDFLAGS)" -DTARGET_SYS=Windows,) \
+		-DTARGET_SONAME=$(notdir $(LUAJIT_LIB)) \
+		-DTARGET_CFLAGS="$(CFLAGS)" \
+		-DCROSS="$(strip $(CCACHE) $(CHOST))-" \
+		$(CURDIR)/$(THIRDPARTY_DIR)/luajit && \
+		$(MAKE)
 ifdef WIN32
-	cp -fL $(LUA_DIR)/src/$(notdir $(LUAJIT_LIB)) $(LUAJIT_LIB)
+	cp -fL $(LUAJIT_DIR)/src/$(notdir $(LUAJIT_LIB)) $(LUAJIT_LIB)
 endif
 ifdef ANDROID
-	cp -fL $(LUA_DIR)/src/$(notdir $(LUAJIT_LIB)) $(LUAJIT_LIB)
+	cp -fL $(LUAJIT_DIR)/src/$(notdir $(LUAJIT_LIB)) $(LUAJIT_LIB)
 else
-	cp -fL $(LUA_DIR)/src/$(notdir $(LUAJIT)) $(LUAJIT)
+	cp -fL $(LUAJIT_DIR)/src/$(notdir $(LUAJIT)) $(LUAJIT)
 endif
 
 $(LUAJIT_JIT): $(if $(ANDROID),$(LUAJIT_LIB),$(LUAJIT))
-	cp -rfL $(LUA_DIR)/src/jit $(OUTPUT_DIR)
+	-rm -rf $(LUAJIT_JIT)
+	cp -rfL $(LUAJIT_DIR)/src/jit $(OUTPUT_DIR)
 
 $(POPEN_NOSHELL_LIB): $(THIRDPARTY_DIR)/popen-noshell/CMakeLists.txt
 	-mkdir -p $(POPEN_NOSHELL_BUILD_DIR)
@@ -451,7 +448,7 @@ $(LUASOCKET): $(THIRDPARTY_DIR)/luasocket/CMakeLists.txt
 		-DCC="$(CC) $(CFLAGS)" -DMACHINE="$(MACHINE)" \
 		$(if $(ANDROID),-DMYLDFLAGS="$(LDFLAGS) $(CURDIR)/$(LUAJIT_LIB)",) \
 		$(if $(WIN32),-DLUALIB_mingw="$(CURDIR)/$(LUAJIT_LIB)",) \
-		-DLUAINC="$(CURDIR)/$(LUA_DIR)/src" \
+		-DLUAINC="$(LUAJIT_DIR)/src" \
 		-DINSTALL_DIR="$(CURDIR)/$(OUTPUT_DIR)/common" \
 		$(CURDIR)/$(THIRDPARTY_DIR)/luasocket && \
 		$(MAKE)
@@ -478,7 +475,7 @@ $(LUASEC): $(OPENSSL_DIR) $(THIRDPARTY_DIR)/luasec/CMakeLists.txt
 	cd $(LUASEC_BUILD_DIR) && \
 		$(CMAKE) -DCC="$(CC) $(CFLAGS)" -DLD="$(CC) -Wl,-rpath,'libs'" \
 		$(if $(ANDROID),-DLIBS="-lssl -lcrypto -lluasocket $(CURDIR)/$(LUAJIT_LIB)",) \
-		-DINC_PATH="-I$(CURDIR)/$(LUA_DIR)/src -I$(OPENSSL_DIR)/include" \
+		-DINC_PATH="-I$(LUAJIT_DIR)/src -I$(OPENSSL_DIR)/include" \
 		-DLIB_PATH="-L$(OPENSSL_DIR)" -DMACHINE="$(MACHINE)" \
 		-DLUAPATH="$(CURDIR)/$(OUTPUT_DIR)/common" \
 		$(CURDIR)/$(THIRDPARTY_DIR)/luasec && \
@@ -590,7 +587,7 @@ $(LUA_SPORE_ROCK): $(THIRDPARTY_DIR)/lua-Spore/CMakeLists.txt
 		$(CMAKE) -DOUTPUT_DIR="$(CURDIR)/$(OUTPUT_DIR)" \
 		-DLUA_SPORE_VER=$(LUA_SPORE_VER) \
 		-DMACHINE="$(MACHINE)" -DLD="$(LD)" \
-		-DCC="$(CC)" -DCFLAGS="$(CFLAGS) -I$(CURDIR)/$(LUA_DIR)/src" \
+		-DCC="$(CC)" -DCFLAGS="$(CFLAGS) -I$(LUAJIT_DIR)/src" \
 		$(if $(ANDROID),-DLDFLAGS="$(LDFLAGS) $(CURDIR)/$(LUAJIT_LIB)",) \
 		$(CURDIR)/$(THIRDPARTY_DIR)/lua-Spore && \
 		$(MAKE)
@@ -602,7 +599,7 @@ $(LPEG_DYNLIB) $(LPEG_RE): $(THIRDPARTY_DIR)/lpeg/CMakeLists.txt
 	-mkdir -p $(LPEG_BUILD_DIR)
 	cd $(LPEG_BUILD_DIR) && \
 		$(CMAKE) -DCC="$(CC)" -DDYNLIB_CFLAGS="$(DYNLIB_CFLAGS)" \
-		-DLUA_DIR="$(CURDIR)/$(LUA_DIR)" -DLUAJIT_LIB="$(CURDIR)/$(LUAJIT_LIB)" \
+		-DLUA_DIR="$(LUAJIT_DIR)" -DLUAJIT_LIB="$(CURDIR)/$(LUAJIT_LIB)" \
 		-DMACHINE="$(MACHINE)" $(CURDIR)/$(THIRDPARTY_DIR)/lpeg && \
 		$(MAKE)
 	cp -rf $(LPEG_DIR)/lpeg.so $(OUTPUT_DIR)/rocks/lib/lua/5.1
@@ -635,9 +632,6 @@ fetchthirdparty:
 	test -d kpvcrlib/crengine \
 		&& (cd kpvcrlib/crengine; git checkout .) \
 		|| echo warn: crengine folder not found
-	test -d $(LUA_DIR) \
-		&& (cd $(LUA_DIR); git checkout .) \
-		|| echo warn: $(LUA_DIR) folder not found
 	git submodule init
 	git submodule sync
 	git submodule foreach --recursive git reset --hard
@@ -646,11 +640,10 @@ fetchthirdparty:
 	cd plugins/evernote-sdk-lua && (git submodule init; git submodule update)
 
 # ===========================================================================
-CMAKE_THIRDPARTY_LIBS=lpeg,turbo,zsync,zyre,czmq,filemq,libk2pdfopt,tesseract,leptonica,lua-Spore,sdcv,luasec,luasocket,libffi,lua-serialize,glib,lodepng,minizip,djvulibre,openssl,mupdf,libzmq,freetype2,giflib,libpng,zlib,tar,libiconv,gettext,libjpeg-turbo,popen-noshell
+CMAKE_THIRDPARTY_LIBS=luajit,lpeg,turbo,zsync,zyre,czmq,filemq,libk2pdfopt,tesseract,leptonica,lua-Spore,sdcv,luasec,luasocket,libffi,lua-serialize,glib,lodepng,minizip,djvulibre,openssl,mupdf,libzmq,freetype2,giflib,libpng,zlib,tar,libiconv,gettext,libjpeg-turbo,popen-noshell
 clean:
 	-rm -rf $(OUTPUT_DIR)/*
 	-rm -rf $(CRENGINE_WRAPPER_BUILD_DIR)
-	-$(MAKE) -C $(LUA_DIR) CC="$(HOSTCC)" CFLAGS="$(BASE_CFLAGS)" clean
 	-rm -rf $(THIRDPARTY_DIR)/{$(CMAKE_THIRDPARTY_LIBS)}/build/$(MACHINE)
 
 dist-clean:

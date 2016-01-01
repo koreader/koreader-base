@@ -4,9 +4,6 @@
 [submodule "kpvcrlib/crengine"]
 	path = kpvcrlib/crengine
 	url = git://github.com/koreader/crengine.git
-[submodule "luajit-2.0"]
-	path = luajit-2.0
-	url = https://github.com/LuaJIT/LuaJIT
 [submodule "plugins/evernote-sdk-lua"]
 	path = plugins/evernote-sdk-lua
 	url = https://github.com/koreader/evernote-sdk-lua
