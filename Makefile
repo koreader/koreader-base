@@ -567,15 +567,16 @@ $(ZYRE_LIB): $(ZMQ_LIB) $(CZMQ_LIB) $(THIRDPARTY_DIR)/zyre/CMakeLists.txt
 		$(MAKE)
 	cp -fL $(ZYRE_DIR)/$(if $(WIN32),bin,lib)/$(notdir $(ZYRE_LIB)) $@
 
-$(TURBO_FFI_WRAP_LIB): $(SSL_LIB)
-	# patch turbo to specify path of libssl and libcrypto
-	cd $(TURBO_DIR) && git checkout . && patch -N -p1 < ../turbo.patch
-	$(MAKE) -C $(TURBO_DIR) \
-		CC="$(CC) $(CFLAGS) -I$(OPENSSL_DIR)/include" \
-		LDFLAGS="$(LDFLAGS) -lcrypto -lssl \
+$(TURBO_FFI_WRAP_LIB): $(SSL_LIB) $(THIRDPARTY_DIR)/turbo/CMakeLists.txt
+	-mkdir -p $(TURBO_BUILD_DIR)
+	cd $(TURBO_BUILD_DIR) && \
+		$(CMAKE) -DCC="$(CC) $(CFLAGS) -I$(OPENSSL_DIR)/include" \
+		-DLDFLAGS="$(LDFLAGS) -lcrypto -lssl \
 		$(if $(ANDROID),$(CURDIR)/$(LUAJIT_LIB),) \
 		$(if $(WIN32),$(CURDIR)/$(LUAJIT_LIB),) \
-		-L$(OPENSSL_DIR) -Wl,-rpath,'libs'" all
+		-L$(OPENSSL_DIR) -Wl,-rpath,'libs'" -DMACHINE="$(MACHINE)" \
+		$(CURDIR)/$(THIRDPARTY_DIR)/turbo && \
+		$(MAKE)
 	cp -fL $(TURBO_DIR)/$(notdir $(TURBO_FFI_WRAP_LIB)) $@
 	cp -r $(TURBO_DIR)/turbo $(OUTPUT_DIR)/common
 	cp -r $(TURBO_DIR)/turbo.lua $(OUTPUT_DIR)/common
@@ -643,12 +644,11 @@ fetchthirdparty:
 	cd plugins/evernote-sdk-lua && (git submodule init; git submodule update)
 
 # ===========================================================================
-CMAKE_THIRDPARTY_LIBS=zsync,zyre,czmq,filemq,libk2pdfopt,tesseract,leptonica,lua-Spore,sdcv,luasec,luasocket,libffi,lua-serialize,glib,lodepng,minizip,djvulibre,openssl,mupdf,libzmq,freetype2,giflib,libpng,zlib,tar,libiconv,gettext,libjpeg-turbo,popen-noshell
+CMAKE_THIRDPARTY_LIBS=turbo,zsync,zyre,czmq,filemq,libk2pdfopt,tesseract,leptonica,lua-Spore,sdcv,luasec,luasocket,libffi,lua-serialize,glib,lodepng,minizip,djvulibre,openssl,mupdf,libzmq,freetype2,giflib,libpng,zlib,tar,libiconv,gettext,libjpeg-turbo,popen-noshell
 clean:
 	-rm -rf $(OUTPUT_DIR)/*
 	-rm -rf $(CRENGINE_WRAPPER_BUILD_DIR)
 	-$(MAKE) -C $(LUA_DIR) CC="$(HOSTCC)" CFLAGS="$(BASE_CFLAGS)" clean
-	-$(MAKE) -C $(TURBO_DIR) clean
 	-rm -rf $(THIRDPARTY_DIR)/{$(CMAKE_THIRDPARTY_LIBS)}/build/$(MACHINE)
 
 dist-clean:
