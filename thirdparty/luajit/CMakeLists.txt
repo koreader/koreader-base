@@ -12,7 +12,7 @@ assert_var_defined(XCOMPILE)
 
 if(${XCOMPILE})
     assert_var_defined(HOST_CFLAGS)
-    assert_var_defined(HOST_CC)
+    assert_var_defined(CC)
     assert_var_defined(BASE_CFLAGS)
     assert_var_defined(HOST_CFLAGS)
     assert_var_defined(TARGET_SONAME)
@@ -22,7 +22,20 @@ if(${XCOMPILE})
     # To recap: build its TARGET_CC from CROSS+CC, so we need HOSTCC in CC.
     # Build its HOST/TARGET_CFLAGS based on CFLAGS, so we need
     # a neutral CFLAGS without arch
-    set(BUILD_CMD_STR "$(MAKE) -j${PROCESSOR_COUNT} CC=\"${HOST_CC}\" HOST_CC=\"${HOST_CC} -m32\" CFLAGS=\"${BASE_CFLAGS}\" HOST_CFLAGS=\"${HOST_CFLAGS}\"")
+    execute_process(
+        COMMAND "${CC}" -dumpmachine
+        OUTPUT_VARIABLE HOST_CC_MACHINE
+    )
+    if(HOST_CC_MACHINE MATCHES "^x86_64*")
+        # Add -m32 when cross compile on 64 bit host for 32bit target, Per:
+        # http://luajit.org/install.html#cross
+        set(HOST_CC "${CC} -m32")
+    else()
+        set(HOST_CC "${CC}")
+    endif()
+
+    set(BUILD_CMD_STR "$(MAKE) -j${PROCESSOR_COUNT} CC=\"${CC}\" HOST_CC=\"${HOST_CC}\"")
+    set(BUILD_CMD_STR "${BUILD_CMD_STR} CFLAGS=\"${BASE_CFLAGS}\" HOST_CFLAGS=\"${HOST_CFLAGS}\"")
     if(DEFINED LDFLAGS)
         set(BUILD_CMD_STR "${BUILD_CMD_STR} LDFLAGS=\"${LDFLAGS}\"")
     endif()
