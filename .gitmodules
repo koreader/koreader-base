@@ -2,5 +2,5 @@
 	path = luafilesystem
 	url = git://github.com/keplerproject/luafilesystem.git
 [submodule "kpvcrlib/crengine"]
-	path = kpvcrlib/crengine
+	path = thirdparty/kpvcrlib/crengine
 	url = git://github.com/koreader/crengine.git

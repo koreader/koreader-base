@@ -34,36 +34,29 @@ ifndef EMULATE_READER
 		xargs $(STRIP) --strip-unneeded
 endif
 	# set up some needed paths and links
+	install -d $(OUTPUT_DIR)/{cache,history,clipboard,fonts}
 	test -e $(OUTPUT_DIR)/data || \
-		ln -sf ../../kpvcrlib/crengine/cr3gui/data $(OUTPUT_DIR)/data
-	test -d $(OUTPUT_DIR)/cache || mkdir $(OUTPUT_DIR)/cache
-	test -d $(OUTPUT_DIR)/history || mkdir $(OUTPUT_DIR)/history
-	test -d $(OUTPUT_DIR)/clipboard || mkdir $(OUTPUT_DIR)/clipboard
-	# /$(OUTPUT_DIR)/data is a soft link to /kpvcrlib/crengine/cr3gui/data
-	# while cr3.css is in /kpvcrlib, so we need three ".."
+		ln -sf $(CRENGINE_SRC_DIR)/cr3gui/data $(OUTPUT_DIR)/data
 	test -e $(OUTPUT_DIR)/data/cr3.css || \
-		ln -sf ../../../cr3.css $(OUTPUT_DIR)/data/
-	test -d $(OUTPUT_DIR)/fonts || ( \
-			mkdir $(OUTPUT_DIR)/fonts \
-		)
+		ln -sf $(CURDIR)/$(THIRDPARTY_DIR)/kpvcrlib/cr3.css $(OUTPUT_DIR)/data/
 	test -e $(OUTPUT_DIR)/ffi || \
 		ln -sf ../../ffi $(OUTPUT_DIR)/
 	# setup Evernote SDK
-	mkdir -p $(CURDIR)/$(EVERNOTE_THRIFT_DIR)
+	install -d $(CURDIR)/$(EVERNOTE_THRIFT_DIR)
 	cd $(EVERNOTE_SDK_DIR) && cp -r *.lua evernote $(CURDIR)/$(EVERNOTE_PLUGIN_DIR) \
 		&& cp thrift/*.lua $(CURDIR)/$(EVERNOTE_THRIFT_DIR)
 
 $(OUTPUT_DIR)/libs:
-	mkdir -p $(OUTPUT_DIR)/libs
+	install -d $(OUTPUT_DIR)/libs
 
 $(OUTPUT_DIR)/common:
-	mkdir -p $(OUTPUT_DIR)/common
+	install -d $(OUTPUT_DIR)/common
 
 $(OUTPUT_DIR)/rocks:
-	mkdir -p $(OUTPUT_DIR)/rocks
+	install -d $(OUTPUT_DIR)/rocks
 
 $(OUTPUT_DIR)/plugins:
-	mkdir -p $(OUTPUT_DIR)/plugins
+	install -d $(OUTPUT_DIR)/plugins
 
 # our own Lua/C/C++ interfacing:
 
@@ -94,7 +87,7 @@ $(OUTPUT_DIR)/libs/libkoreader-djvu.so: djvu.c \
 $(OUTPUT_DIR)/libs/libkoreader-cre.so: cre.cpp \
 			$(if $(or $(ANDROID),$(WIN32)),$(LUAJIT_LIB),) \
 			$(CRENGINE_LIB)
-	$(CXX) -I$(CRENGINE_DIR)/crengine/include/ $(DYNLIB_CFLAGS) \
+	$(CXX) -I$(CRENGINE_SRC_DIR)/crengine/include/ $(DYNLIB_CFLAGS) \
 		-DLDOM_USE_OWN_MEM_MAN=$(if $(WIN32),0,1) \
 		$(if $(WIN32),-DQT_GL=1) \
 		-Wl,-rpath,'libs' -static-libstdc++ -o $@ $^
@@ -123,7 +116,7 @@ $(OUTPUT_DIR)/extr: extr.c $(MUPDF_LIB) $(MUPDF_DIR)/include $(JPEG_LIB) $(FREET
 # the root directory of the NDK
 
 android-toolchain:
-	mkdir -p $(ANDROID_TOOLCHAIN)
+	install -d $(ANDROID_TOOLCHAIN)
 	$(NDK)/build/tools/make-standalone-toolchain.sh --platform=android-9 \
 		--install-dir=$(ANDROID_TOOLCHAIN)
 
@@ -132,7 +125,7 @@ android-toolchain:
 # pocketbook-free SDK: https://github.com/pocketbook-free/SDK_481
 
 pocketbook-toolchain:
-	mkdir -p toolchain
+	install -d toolchain
 	cd toolchain && \
 		git clone https://github.com/pocketbook-free/SDK_481 pocketbook-toolchain
 
@@ -155,7 +148,7 @@ $(OUTPUT_DIR)/.busted:
 		ln -sf ../../.busted $(OUTPUT_DIR)/
 
 $(OUTPUT_DIR)/spec/base:
-	mkdir -p $(OUTPUT_DIR)/spec
+	install -d $(OUTPUT_DIR)/spec
 	test -e $(OUTPUT_DIR)/spec/base || \
 		ln -sf ../../../spec $(OUTPUT_DIR)/spec/base
 
