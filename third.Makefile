@@ -222,7 +222,7 @@ $(LIBGETTEXT): $(LIBICONV) $(THIRDPARTY_DIR)/gettext/CMakeLists.txt
 		$(CURDIR)/thirdparty/gettext && \
 		$(MAKE)
 
-$(LIBFFI_DIR)/include:
+$(LIBFFI_DIR)/include: $(THIRDPARTY_DIR)/libffi/CMakeLists.txt
 	-mkdir -p $(LIBFFI_BUILD_DIR)
 	cd $(LIBFFI_BUILD_DIR) && \
 		$(CMAKE) -DCC="$(CC)" -DMACHINE="$(MACHINE)" -DHOST="$(CHOST)" \
@@ -383,10 +383,6 @@ luacompat52: $(LUASERIAL_LIB)
 	cp $(CURDIR)/$(OUTPUT_DIR)/common/libluacompat52.so \
 		$(CURDIR)/$(OUTPUT_DIR)/libs
 
-lualongnumber: $(EVERNOTE_LIB)
-	cp $(CURDIR)/$(EVERNOTE_PLUGIN_DIR)/lib/liblualongnumber.so \
-		$(CURDIR)/$(OUTPUT_DIR)/libs
-
 # zeromq should be compiled without optimization in clang 3.4
 # which otherwise may throw a warning saying "array index is past the end
 # of the array" for strcmp comparing a string with exactly 2 chars.
@@ -494,3 +490,7 @@ $(EVERNOTE_LIB): $(THIRDPARTY_DIR)/evernote-sdk-lua/CMakeLists.txt
 		-DLDFLAGS="$(LDFLAGS)$(if $(or $(ANDROID),$(WIN32)), -lm $(CURDIR)/$(LUAJIT_LIB))" \
 		$(CURDIR)/$(THIRDPARTY_DIR)/evernote-sdk-lua && \
 		$(MAKE)
+
+lualongnumber: $(EVERNOTE_LIB)
+	cp $(CURDIR)/$(EVERNOTE_PLUGIN_DIR)/lib/liblualongnumber.so \
+		$(CURDIR)/$(OUTPUT_DIR)/libs
