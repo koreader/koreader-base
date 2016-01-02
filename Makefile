@@ -136,7 +136,6 @@ pocketbook-toolchain:
 
 clean:
 	-rm -rf $(OUTPUT_DIR)/*
-	-rm -rf $(CRENGINE_WRAPPER_BUILD_DIR)
 	-rm -rf $(THIRDPARTY_DIR)/{$(CMAKE_THIRDPARTY_LIBS)}/build/$(MACHINE)
 
 dist-clean:
