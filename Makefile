@@ -7,6 +7,7 @@ all: $(OUTPUT_DIR)/libs $(if $(ANDROID),,$(LUAJIT)) \
 		libs $(K2PDFOPT_LIB) \
 		$(OUTPUT_DIR)/spec/base $(OUTPUT_DIR)/common $(OUTPUT_DIR)/rocks \
 		$(OUTPUT_DIR)/plugins $(LUASOCKET) \
+		$(OUTPUT_DIR)/ffi $(OUTPUT_DIR)/data \
 		$(if $(WIN32),,$(LUASEC)) \
 		$(if $(ANDROID),luacompat52 lualongnumber,) \
 		$(if $(WIN32),,$(EVERNOTE_LIB)) \
@@ -34,17 +35,12 @@ ifndef EMULATE_READER
 		xargs $(STRIP) --strip-unneeded
 endif
 	# set up some needed paths and links
-	install -d $(OUTPUT_DIR)/{cache,history,clipboard,fonts}
-	test -e $(OUTPUT_DIR)/data || \
-		ln -sf $(CRENGINE_SRC_DIR)/cr3gui/data $(OUTPUT_DIR)/data
-	test -e $(OUTPUT_DIR)/data/cr3.css || \
-		ln -sf $(CURDIR)/$(THIRDPARTY_DIR)/kpvcrlib/cr3.css $(OUTPUT_DIR)/data/
-	test -e $(OUTPUT_DIR)/ffi || \
-		ln -sf ../../ffi $(OUTPUT_DIR)/
+	install -d $(OUTPUT_DIR)/{cache,history,clipboard,fonts,$(CURDIR)/$(EVERNOTE_THRIFT_DIR)}
+	ln -sf $(CURDIR)/$(THIRDPARTY_DIR)/kpvcrlib/cr3.css $(OUTPUT_DIR)/data/
 	# setup Evernote SDK
-	install -d $(CURDIR)/$(EVERNOTE_THRIFT_DIR)
-	cd $(EVERNOTE_SDK_DIR) && cp -r *.lua evernote $(CURDIR)/$(EVERNOTE_PLUGIN_DIR) \
-		&& cp thrift/*.lua $(CURDIR)/$(EVERNOTE_THRIFT_DIR)
+	cd $(EVERNOTE_SDK_DIR) && \
+		cp -r *.lua evernote $(CURDIR)/$(EVERNOTE_PLUGIN_DIR) && \
+		cp thrift/*.lua $(CURDIR)/$(EVERNOTE_THRIFT_DIR)
 
 $(OUTPUT_DIR)/libs:
 	install -d $(OUTPUT_DIR)/libs
@@ -57,6 +53,12 @@ $(OUTPUT_DIR)/rocks:
 
 $(OUTPUT_DIR)/plugins:
 	install -d $(OUTPUT_DIR)/plugins
+
+$(OUTPUT_DIR)/ffi:
+	ln -sf ../../ffi $(OUTPUT_DIR)/
+
+$(OUTPUT_DIR)/data:
+	ln -sf $(CRENGINE_SRC_DIR)/cr3gui/data $(OUTPUT_DIR)/data
 
 # our own Lua/C/C++ interfacing:
 
