@@ -20,17 +20,21 @@ Follow these steps:
 		* make sure you have patch, wget, unzip, git and svn installed
 		* run `make fetchthirdparty`.
 
-* run `make TARGET=kindle` for touch based Kindle devices.
+* run `make TARGET=kindle5` or `make TARGET=kindlepw2` for touch based Kindle devices.
 
 * run `make TARGET=kindle-legacy` for Kindle DXG/2/3/4 devices.
 
 * or run `make TARGET=kobo` for Kobo devices.
+
+* or run `make TARGET=pocketbook` for pocketbook devices.
 
 * or run `make TARGET=android` for Android devices.
 
 * or run `make TARGET=win32` for Windows.
 
 * or run `make TARGET=generic-arm` for generic ARM devices.
+
+* or run `make TARGET=ubuntu-touch` for Ubuntu Touch.
 
 * or run `make` for emulator on Linux.
 
@@ -66,15 +70,15 @@ If you are using Ubuntu, install `libsdl-dev1.2` package.
 
 Alternatively, SDL2 is supported, too.
 
-To build in "emulation mode", you need to run make like this:
+By default, the build system builds in "emulation mode", so following is all
+you need to build the emulator:
 
 ```
-make clean
-EMULATE_READER=1 make
+make
 ```
 
-By default emulator will provide a resolution of 800x600. It can be
-changed at runtime by changing environment variables:
+The emulator uses 800x600 as the default resolution. It can be
+changed at runtime by changing the following environment variables:
 
 ```
 EMULATE_READER_W=746 EMULATE_READER_H=1024
