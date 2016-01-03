@@ -35,7 +35,7 @@ ifndef EMULATE_READER
 		xargs $(STRIP) --strip-unneeded
 endif
 	# set up some needed paths and links
-	install -d $(OUTPUT_DIR)/{cache,history,clipboard,fonts,$(CURDIR)/$(EVERNOTE_THRIFT_DIR)}
+	install -d $(OUTPUT_DIR)/{cache,history,clipboard,fonts} $(CURDIR)/$(EVERNOTE_THRIFT_DIR)
 	ln -sf $(CURDIR)/$(THIRDPARTY_DIR)/kpvcrlib/cr3.css $(OUTPUT_DIR)/data/
 	# setup Evernote SDK
 	cd $(EVERNOTE_SDK_DIR) && \
