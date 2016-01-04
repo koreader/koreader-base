@@ -25,9 +25,9 @@ set(SED_CMD1_STR "sed -i 's|^hardcode_libdir_flag_spec=.*|hardcode_libdir_flag_s
 set(SED_CMD2_STR "sed -i 's|^runpath_var=LD_RUN_PATH|runpath_var=DIE_RPATH_DIE|g' libtool")
 
 # patch: ignore limited broadcast address
-set(PATCH_CMD1 patch -N -p1 < ${CMAKE_CURRENT_SOURCE_DIR}/zbeacon.patch)
+set(PATCH_CMD1 sh -c "patch -N -p1 < ${CMAKE_CURRENT_SOURCE_DIR}/zbeacon.patch || true")
 # patch: add _DEFAULT_SOURCE define for glibc starting at version 2.20
-set(PATCH_CMD2 patch -N -p1 < ${CMAKE_CURRENT_SOURCE_DIR}/czmq_default_source_define.patch)
+set(PATCH_CMD2 sh -c "patch -N -p1 < ${CMAKE_CURRENT_SOURCE_DIR}/czmq_default_source_define.patch || true")
 
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
@@ -43,5 +43,5 @@ ExternalProject_Add(
     PATCH_COMMAND ./autogen.sh COMMAND ${PATCH_CMD1} COMMAND ${PATCH_CMD2}
     CONFIGURE_COMMAND sh -c ${CFG_CMD_STR} COMMAND sh -c ${SED_CMD1_STR} COMMAND sh -c ${SED_CMD2_STR}
     BUILD_COMMAND $(MAKE) -j${PROCESSOR_COUNT} --silent
-    INSTALL_COMMAND $(MAKE) -j${PROCESSOR_COUNT} --silent install
+    INSTALL_COMMAND $(MAKE) -j${PROCESSOR_COUNT} --silent uninstall install
 )
