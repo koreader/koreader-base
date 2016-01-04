@@ -43,5 +43,5 @@ ExternalProject_Add(
     PATCH_COMMAND ./autogen.sh COMMAND ${PATCH_CMD1} COMMAND ${PATCH_CMD2}
     CONFIGURE_COMMAND sh -c ${CFG_CMD_STR} COMMAND sh -c ${SED_CMD1_STR} COMMAND sh -c ${SED_CMD2_STR}
     BUILD_COMMAND $(MAKE) -j${PROCESSOR_COUNT} --silent
-    INSTALL_COMMAND $(MAKE) -j${PROCESSOR_COUNT} --silent uninstall install
+    INSTALL_COMMAND $(MAKE) --silent installdirs uninstall install
 )
