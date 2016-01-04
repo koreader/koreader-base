@@ -10,7 +10,7 @@ ep_get_source_dir(SOURCE_DIR)
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
     https://github.com/tesseract-ocr/tesseract.git
-    add1ed1067531d6cccafd279d5a03f7462c0bb50
+    be09fec7a20db58da4a0c694491c1f7783969769
     ${SOURCE_DIR}
 )
 
