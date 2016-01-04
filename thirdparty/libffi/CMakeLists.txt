@@ -25,5 +25,5 @@ ExternalProject_Add(
     CONFIGURE_COMMAND sh -c ${CFG_CMD_STR}
     # skip the rest, we only need the header for glib
     BUILD_COMMAND $(MAKE) -j${PROCESSORS}
-    INSTALL_COMMAND $(MAKE) -j${PROCESSORS} install
+    INSTALL_COMMAND $(MAKE) -j${PROCESSORS} uninstall install
 )

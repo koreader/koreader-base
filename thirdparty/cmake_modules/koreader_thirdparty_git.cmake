@@ -134,14 +134,23 @@ function(ko_write_gitclone_script script_filename git_repository git_tag build_s
     set(stamp_dir ${work_dir}/stamp)
     set(git_submodules ${ARGV4})
 
-    set(${script_filename} ${tmp_dir}/${PROJECT_NAME}-gitclone.cmake)
+    set(${script_filename} ${tmp_dir}/${PROJECT_NAME}-gitclone-${git_tag}.cmake)
     set(${script_filename} ${${script_filename}} PARENT_SCOPE)
+    set(gitinfo_file ${stamp_dir}/${PROJECT_NAME}-gitinfo-${git_tag}.txt)
 
+    if(NOT EXISTS ${gitinfo_file})
+        # it's a new commit checkout, remove all previous script and gitinfo
+        # files to force a rebuild
+        file(REMOVE_RECURSE ${stamp_dir} ${tmp_dir})
+    endif()
+
+    # create new gitinfo file if needed
     configure_file(
       "${CMAKE_ROOT}/Modules/RepositoryInfo.txt.in"
-      "${stamp_dir}/${PROJECT_NAME}-gitinfo.txt"
+      "${gitinfo_file}"
       @ONLY
     )
+
     _ko_write_gitclone_script(
         ${${script_filename}}
         ${GIT_EXECUTABLE}
@@ -151,7 +160,7 @@ function(ko_write_gitclone_script script_filename git_repository git_tag build_s
         ${PROJECT_NAME}
         ${clone_dir}
         ${build_source_dir}
-        ${stamp_dir}/${PROJECT_NAME}-gitinfo.txt
+        ${gitinfo_file}
         ${stamp_dir}/${PROJECT_NAME}-gitclone-lastrun.txt
     )
 endfunction()
