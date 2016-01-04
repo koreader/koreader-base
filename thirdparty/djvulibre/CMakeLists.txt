@@ -24,7 +24,7 @@ set(CFG_CMD_STR "${CFG_ENV_VAR} ${SOURCE_DIR}/configure ${CFG_OPTS}")
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
     git://git.code.sf.net/p/djvu/djvulibre-git
-    4e04145b823ed77a5435fa3dd25e44165a1c7a3c
+    070fef721a8e8fdf68c4b0e3fcf0a179c804d818
     ${SOURCE_DIR}
 )
 
