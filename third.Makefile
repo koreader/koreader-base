@@ -379,7 +379,7 @@ $(LUASERIAL_LIB): $(THIRDPARTY_DIR)/lua-serialize/CMakeLists.txt
 		$(CURDIR)/$(THIRDPARTY_DIR)/lua-serialize && \
 		$(MAKE)
 
-luacompat52: $(LUASERIAL_LIB)
+$(LUACOMPAT52): $(THIRDPARTY_DIR)/lua-serialize/CMakeLists.txt
 	cp $(CURDIR)/$(OUTPUT_DIR)/common/libluacompat52.so \
 		$(CURDIR)/$(OUTPUT_DIR)/libs
 
@@ -481,6 +481,7 @@ $(LPEG_DYNLIB) $(LPEG_RE): $(THIRDPARTY_DIR)/lpeg/CMakeLists.txt
 		$(MAKE)
 	cp -rf $(LPEG_DIR)/lpeg.so $(OUTPUT_DIR)/rocks/lib/lua/5.1
 	cp -rf $(LPEG_DIR)/re.lua $(OUTPUT_DIR)/rocks/share/lua/5.1
+	chmod 664 $(OUTPUT_DIR)/rocks/share/lua/5.1/re.lua
 
 $(EVERNOTE_LIB): $(THIRDPARTY_DIR)/evernote-sdk-lua/CMakeLists.txt
 	install -d $(EVERNOTE_SDK_BUILD_DIR)
@@ -492,6 +493,6 @@ $(EVERNOTE_LIB): $(THIRDPARTY_DIR)/evernote-sdk-lua/CMakeLists.txt
 		$(CURDIR)/$(THIRDPARTY_DIR)/evernote-sdk-lua && \
 		$(MAKE)
 
-lualongnumber: $(EVERNOTE_LIB)
+$(LUALONGNUMBER): $(THIRDPARTY_DIR)/evernote-sdk-lua/CMakeLists.txt
 	cp $(CURDIR)/$(EVERNOTE_PLUGIN_DIR)/lib/liblualongnumber.so \
 		$(CURDIR)/$(OUTPUT_DIR)/libs

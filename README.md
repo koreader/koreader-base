@@ -1,16 +1,16 @@
-## Koreader-base [![Build Status][travis-icon]][travis-link]
+## koreader-base [![Build Status][travis-icon]][travis-link]
 
-This is the base framework for creating document readers like Koreader,
+This is the base framework for creating document readers like KOReader,
 an e-ink device oriented reader application for various document formats.
 
-It's using the muPDF library (see http://mupdf.com/), djvulibre library,
+It's using the MuPDF library (see http://mupdf.com/), djvulibre library,
 CREngine library, libk2pdfopt library and it is scripted using Lua (see
 http://www.lua.org/). To gain good speed at that, it uses the LuaJIT compiler.
 
 It all started as the KindlePDFviewer application, which has since been
-greatly enhanced and now reflects this in having a new name, Koreader.
+greatly enhanced and now reflects this in having a new name, KOReader.
 
-The application is distributed under the GNU AGPL v3 license (read the [COPYING](COPYING) file).
+The code is distributed under the GNU AGPL v3 license (read the [COPYING](COPYING) file).
 
 ## Building
 
@@ -84,7 +84,7 @@ changed at runtime by changing the following environment variables:
 EMULATE_READER_W=746 EMULATE_READER_H=1024
 ```
 
-Koreader supports "viewports", i.e. displaying only in a rectangular
+KOReader supports "viewports", i.e. displaying only in a rectangular
 excerpt of the screen. This is useful on devices where the framebuffer
 is larger than the area that is actually visible. In order to simulate
 such a viewport using the emulator, specify a specially crafted environment
