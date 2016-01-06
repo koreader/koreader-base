@@ -379,7 +379,7 @@ $(LUASERIAL_LIB): $(THIRDPARTY_DIR)/lua-serialize/CMakeLists.txt
 		$(CURDIR)/$(THIRDPARTY_DIR)/lua-serialize && \
 		$(MAKE)
 
-luacompat52: $(LUASERIAL_LIB)
+$(LUACOMPAT52): $(THIRDPARTY_DIR)/lua-serialize/CMakeLists.txt
 	cp $(CURDIR)/$(OUTPUT_DIR)/common/libluacompat52.so \
 		$(CURDIR)/$(OUTPUT_DIR)/libs
 
@@ -492,6 +492,6 @@ $(EVERNOTE_LIB): $(THIRDPARTY_DIR)/evernote-sdk-lua/CMakeLists.txt
 		$(CURDIR)/$(THIRDPARTY_DIR)/evernote-sdk-lua && \
 		$(MAKE)
 
-lualongnumber: $(EVERNOTE_LIB)
+$(LUALONGNUMBER): $(THIRDPARTY_DIR)/evernote-sdk-lua/CMakeLists.txt
 	cp $(CURDIR)/$(EVERNOTE_PLUGIN_DIR)/lib/liblualongnumber.so \
 		$(CURDIR)/$(OUTPUT_DIR)/libs

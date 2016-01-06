@@ -397,10 +397,12 @@ EVERNOTE_SDK_DIR=$(CURDIR)/$(EVERNOTE_SDK_BUILD_DIR)/evernote-sdk-lua-prefix/src
 EVERNOTE_PLUGIN_DIR=$(OUTPUT_DIR)/plugins/evernote.koplugin
 EVERNOTE_THRIFT_DIR=$(EVERNOTE_PLUGIN_DIR)/thrift
 EVERNOTE_LIB=$(EVERNOTE_PLUGIN_DIR)/lib/libluasocket.so
+LUALONGNUMBER=$(CURDIR)/$(OUTPUT_DIR)/libs/liblualongnumber.so
 
 LUASERIAL_BUILD_DIR=$(THIRDPARTY_DIR)/lua-serialize/build/$(MACHINE)
 LUASERIAL_DIR=$(CURDIR)/$(LUASERIAL_BUILD_DIR)/lua-serialize-prefix/src/lua-serialize
 LUASERIAL_LIB=$(OUTPUT_DIR)/common/serialize.so
+LUACOMPAT52=$(CURDIR)/$(OUTPUT_DIR)/libs/libluacompat52.so
 
 ZMQ_BUILD_DIR=$(THIRDPARTY_DIR)/libzmq/build/$(MACHINE)
 ZMQ_DIR=$(CURDIR)/$(ZMQ_BUILD_DIR)/libzmq-prefix/src/libzmq-build
@@ -423,7 +425,6 @@ TAR_DIR=$(CURDIR)/$(TAR_BUILD_DIR)/tar-prefix/src/tar-build
 TURBO_BUILD_DIR=$(THIRDPARTY_DIR)/turbo/build/$(MACHINE)
 TURBO_DIR=$(CURDIR)/$(TURBO_BUILD_DIR)/turbo-prefix/src/turbo
 TURBO_FFI_WRAP_LIB=$(OUTPUT_DIR)/common/libtffi_wrap.so
-
 
 LUA_SPORE_BUILD_DIR=$(THIRDPARTY_DIR)/lua-Spore/build/$(MACHINE)
 LUA_SPORE_DIR=$(CURDIR)/$(LUA_SPORE_BUILD_DIR)/lua-Spore-prefix/src/lua-Spore
