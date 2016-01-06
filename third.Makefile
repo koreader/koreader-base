@@ -481,6 +481,7 @@ $(LPEG_DYNLIB) $(LPEG_RE): $(THIRDPARTY_DIR)/lpeg/CMakeLists.txt
 		$(MAKE)
 	cp -rf $(LPEG_DIR)/lpeg.so $(OUTPUT_DIR)/rocks/lib/lua/5.1
 	cp -rf $(LPEG_DIR)/re.lua $(OUTPUT_DIR)/rocks/share/lua/5.1
+	chmod 664 $(OUTPUT_DIR)/rocks/share/lua/5.1/re.lua
 
 $(EVERNOTE_LIB): $(THIRDPARTY_DIR)/evernote-sdk-lua/CMakeLists.txt
 	install -d $(EVERNOTE_SDK_BUILD_DIR)

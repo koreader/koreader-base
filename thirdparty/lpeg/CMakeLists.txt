@@ -17,6 +17,7 @@ set(LPEG_VER "1.0.0")
 include(ExternalProject)
 ExternalProject_Add(
     ${PROJECT_NAME}
+    DOWNLOAD_DIR ${KO_DOWNLOAD_DIR}
     URL http://www.inf.puc-rio.br/~roberto/lpeg/lpeg-${LPEG_VER}.tar.gz
     URL_MD5 0aec64ccd13996202ad0c099e2877ece
     BUILD_IN_SOURCE 1
