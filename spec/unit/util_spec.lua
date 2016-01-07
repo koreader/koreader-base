@@ -1,4 +1,5 @@
 local util = require("ffi/util")
+local lfs = require("libs/libkoreader-lfs")
 
 describe("util module", function()
     describe("util.gettime", function()
@@ -10,6 +11,7 @@ describe("util module", function()
         end)
 
     end)
+
     describe("util.template", function()
 
         it("should not affect string without arguments", function()
@@ -104,5 +106,58 @@ describe("util module", function()
             assert.are.equal(str_regular, str_template)
         end)
 
+    end)
+
+    describe("util.copyFile", function()
+        local sample_pdf = "spec/base/unit/data/simple.pdf"
+        local output_pdf = "spec/base/unit/data/test_util_copy.pdf"
+
+        it("should copy properly", function()
+            local from_f = io.open(sample_pdf, "r")
+            local from_data = from_f:read("*a")
+            util.copyFile(sample_pdf, output_pdf)
+            local to_f = io.open(output_pdf, "r")
+            local to_data = to_f:read("*a")
+            assert.equals(from_data, to_data)
+            from_f:close()
+            to_f:close()
+            os.remove(output_pdf)
+        end)
+
+        it("fail at non-exists files", function()
+            local err = util.copyFile("/tmp/abc/123/foo/bar/baz/777.pkg", output_pdf)
+            assert.is_not_nil(err)
+        end)
+    end)
+
+    describe("util.joinPath", function()
+        it("should join path properly", function()
+            assert.equals(util.joinPath("/abc/123", "foo"), "/abc/123/foo")
+            assert.equals(util.joinPath("/abc/123/", "bar"), "/abc/123/bar")
+            assert.equals(util.joinPath("/123/", "/bar"), "/bar")
+            assert.equals(util.joinPath("/tmp", "bar.pdf"), "/tmp/bar.pdf")
+        end)
+    end)
+
+    describe("util.purgeDir", function()
+        it("should error out on non-exists directory", function()
+            ok, err = util.purgeDir('/tmp/123/abc/567/foobar')
+            assert.is_nil(ok)
+            assert.is_not_nil(err)
+        end)
+
+        it("should delete non-empty directory", function()
+            local tmp_dir = "spec/base/unit/data/test_purge_dir"
+            local tmp_subdir = util.joinPath(tmp_dir, "morestuff")
+            lfs.mkdir(tmp_dir)
+            lfs.mkdir(tmp_subdir)
+            assert.equals(lfs.attributes(tmp_dir).mode, "directory")
+            assert.equals(lfs.attributes(tmp_subdir).mode, "directory")
+            util.purgeDir(tmp_dir)
+            local w, err = lfs.attributes(tmp_dir)
+            assert.is_not_nil(err)
+            _, err = lfs.attributes(tmp_subdir)
+            assert.is_not_nil(err)
+        end)
     end)
 end)
