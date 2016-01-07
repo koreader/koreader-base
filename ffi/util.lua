@@ -107,6 +107,60 @@ function util.realpath(path)
 	end
 end
 
+function util.copyFile(from, to)
+    local ffp, err = io.open(from, "rb")
+    if err ~= nil then
+        return err
+    end
+    local tfp = io.open(to, "wb")
+    while true do
+        local bytes = ffp:read(8192)
+        if not bytes then
+            ffp:close()
+            break
+        end
+        tfp:write(bytes)
+    end
+    tfp:close()
+end
+
+--[[
+NOTE: If path2 is an absolute path, then ignore path1 and return path2 directly
+--]]
+function util.joinPath(path1, path2)
+    if string.sub(path2, 1, 1) == "/" then
+        return path2
+    end
+    if string.sub(path1, -1, -1) ~= "/" then
+        path1 = path1 .. "/"
+    end
+    return path1 .. path2
+end
+
+function util.purgeDir(dir)
+    local ok, err
+    ok, err = lfs.attributes(dir)
+    if err ~= nil then
+        return nil, err
+    end
+    for f in lfs.dir(dir) do
+        if f ~= "." and f ~= ".." then
+            local fullpath = util.joinPath(dir, f)
+            local attributes = lfs.attributes(fullpath)
+            if attributes.mode == "directory" then
+                ok, err = util.purgeDir(fullpath)
+            else
+                ok, err = os.remove(fullpath)
+            end
+            if not ok or err ~= nil then
+                return ok, err
+            end
+        end
+    end
+    ok, err = os.remove(dir)
+    return ok, err
+end
+
 function util.execute(...)
     if util.isAndroid() then
         local A = require("android")
