@@ -29,7 +29,7 @@ ExternalProject_Add(
     DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
     PATCH_COMMAND sh -c "cd c && autoreconf -fi"
     CONFIGURE_COMMAND sh -c ${CFG_CMD_STR}
-    BUILD_COMMAND $(MAKE) -j${PROCESSOR_COUNT} --silent
+    BUILD_COMMAND $(MAKE) -j${PARALLEL_JOBS} --silent
     # skip install
     INSTALL_COMMAND ""
 )

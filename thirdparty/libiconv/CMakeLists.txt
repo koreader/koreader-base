@@ -23,6 +23,6 @@ ExternalProject_Add(
     URL_MD5 e34509b1623cec449dfeb73d7ce9c6c6
     DOWNLOAD_DIR ${KO_DOWNLOAD_DIR}
     CONFIGURE_COMMAND sh -c ${CFG_CMD_STR}
-    BUILD_COMMAND $(MAKE) -j${PROCESSOR_COUNT} --silent
-    INSTALL_COMMAND $(MAKE) -j${PROCESSOR_COUNT} --silent install
+    BUILD_COMMAND $(MAKE) -j${PARALLEL_JOBS} --silent
+    INSTALL_COMMAND $(MAKE) -j${PARALLEL_JOBS} --silent install
 )

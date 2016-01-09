@@ -25,6 +25,6 @@ ExternalProject_Add(
     DOWNLOAD_DIR ${KO_DOWNLOAD_DIR}
     # PATCH_COMMAND sh autogen.sh
     CONFIGURE_COMMAND sh -c ${CFG_CMD_STR}
-    BUILD_COMMAND $(MAKE) -j${PROCESSOR_COUNT} --silent
-    INSTALL_COMMAND $(MAKE) -j${PROCESSOR_COUNT} --silent install
+    BUILD_COMMAND $(MAKE) -j${PARALLEL_JOBS} --silent
+    INSTALL_COMMAND $(MAKE) -j${PARALLEL_JOBS} --silent install
 )

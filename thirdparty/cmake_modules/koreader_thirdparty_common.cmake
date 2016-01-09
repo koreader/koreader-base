@@ -25,6 +25,10 @@ if(NOT DEFINED PROCESSOR_COUNT)
   endif()
 endif()
 
+if(NOT DEFINED PARALLEL_JOBS)
+    math(EXPR PARALLEL_JOBS "${PROCESSOR_COUNT}+1")
+endif()
+
 macro(assert_var_defined varName)
     if(NOT DEFINED ${varName})
         message(FATAL_ERROR "${varName} variable not defined!")

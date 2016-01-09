@@ -30,6 +30,6 @@ ExternalProject_Add(
     DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
     PATCH_COMMAND libtoolize COMMAND aclocal COMMAND autoheader COMMAND autoconf COMMAND automake --force-missing --add-missing
     CONFIGURE_COMMAND sh -c ${CFG_CMD_STR}
-    BUILD_COMMAND $(MAKE) -j${PROCESSOR_COUNT} --silent
-    INSTALL_COMMAND $(MAKE) -j${PROCESSOR_COUNT} --silent install
+    BUILD_COMMAND $(MAKE) -j${PARALLEL_JOBS} --silent
+    INSTALL_COMMAND $(MAKE) -j${PARALLEL_JOBS} --silent install
 )
