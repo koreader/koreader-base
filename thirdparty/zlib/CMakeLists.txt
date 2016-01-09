@@ -22,7 +22,7 @@ else()
     # configure
     set(optional_cfg_cmd CONFIGURE_COMMAND sh -c "CC=\"${CC}\" ./configure --prefix=${SOURCE_DIR}")
     # build
-    set(BUILD_CMD $(MAKE) -j${PROCESSOR_COUNT} --silent shared static)
+    set(BUILD_CMD $(MAKE) -j${PARALLEL_JOBS} --silent shared static)
     # install
     set(INSTALL_CMD $(MAKE) install)
 endif()

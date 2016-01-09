@@ -35,7 +35,7 @@ ExternalProject_Add(
     PATCH_COMMAND NOCONFIGURE=1 ./autogen.sh
     BUILD_IN_SOURCE 1
     CONFIGURE_COMMAND sh -c ${CFG_CMD_STR} COMMAND sed -i "s|-lstdc++||g" libtool
-    BUILD_COMMAND $(MAKE) -j${PROCESSOR_COUNT} SUBDIRS_FIRST=libdjvu --silent
+    BUILD_COMMAND $(MAKE) -j${PARALLEL_JOBS} SUBDIRS_FIRST=libdjvu --silent
     # skip install
     INSTALL_COMMAND ""
 )

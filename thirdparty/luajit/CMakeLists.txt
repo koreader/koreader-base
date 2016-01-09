@@ -34,7 +34,7 @@ if(${XCOMPILE})
         set(HOST_CC "${CC}")
     endif()
 
-    set(BUILD_CMD_STR "$(MAKE) -j${PROCESSOR_COUNT} CC=\"${CC}\" HOST_CC=\"${HOST_CC}\"")
+    set(BUILD_CMD_STR "$(MAKE) -j${PARALLEL_JOBS} CC=\"${CC}\" HOST_CC=\"${HOST_CC}\"")
     set(BUILD_CMD_STR "${BUILD_CMD_STR} CFLAGS=\"${BASE_CFLAGS}\" HOST_CFLAGS=\"${HOST_CFLAGS}\"")
     if(DEFINED LDFLAGS)
         set(BUILD_CMD_STR "${BUILD_CMD_STR} LDFLAGS=\"${LDFLAGS}\"")
@@ -45,7 +45,7 @@ if(${XCOMPILE})
     set(BUILD_CMD_STR "${BUILD_CMD_STR} TARGET_SONAME=\"${TARGET_SONAME}\" TARGET_CFLAGS=\"${TARGET_CFLAGS}\" TARGET_FLAGS=\"-DLUAJIT_NO_LOG2 -DLUAJIT_NO_EXP2\" CROSS=\"${CROSS}\" amalg")
     set(BUILD_CMD sh -c ${BUILD_CMD_STR})
 else()
-    set(BUILD_CMD $(MAKE) -j${PROCESSOR_COUNT})
+    set(BUILD_CMD $(MAKE) -j${PARALLEL_JOBS})
 endif()
 
 

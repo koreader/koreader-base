@@ -17,7 +17,7 @@ endif(${LEGACY})
 
 assert_var_defined(AR)
 set(MAKE_ENV_VAR "CC=\"${CC}\" AR=\"${AR}\" CFLAGS=\"${CFLAGS}\"")
-set(BUILD_CMD_STR "$(MAKE) -j${PROCESSOR_COUNT} ${MAKE_ENV_VAR}")
+set(BUILD_CMD_STR "$(MAKE) -j${PARALLEL_JOBS} ${MAKE_ENV_VAR}")
 
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME

@@ -12,7 +12,7 @@ assert_var_defined(OUTPUT_DIR)
 
 ep_get_source_dir(SOURCE_DIR)
 
-set(BUILD_CMD_STR "$(MAKE) -j${PROCESSOR_COUNT} CC=\"${CC}\" LDFLAGS=\"${LDFLAGS}\" OUTPUT_DIR=${OUTPUT_DIR}")
+set(BUILD_CMD_STR "$(MAKE) -j${PARALLEL_JOBS} CC=\"${CC}\" LDFLAGS=\"${LDFLAGS}\" OUTPUT_DIR=${OUTPUT_DIR}")
 
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME

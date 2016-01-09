@@ -32,7 +32,7 @@ ExternalProject_Add(
     DOWNLOAD_DIR ${KO_DOWNLOAD_DIR}
     PATCH_COMMAND patch -N -p1 < ${CMAKE_CURRENT_SOURCE_DIR}/tar-0001-fix-build-failure.patch
     CONFIGURE_COMMAND sh -c ${CFG_CMD_STR}
-    BUILD_COMMAND $(MAKE) -j${PROCESSOR_COUNT} --silent
+    BUILD_COMMAND $(MAKE) -j${PARALLEL_JOBS} --silent
     # skip install for tar
     # NOTE: we always update binary timestamp to notify Make for a fresh build
     INSTALL_COMMAND ${CMAKE_COMMAND} -E touch ${BINARY_DIR}/tar

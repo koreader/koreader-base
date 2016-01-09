@@ -39,7 +39,7 @@ ExternalProject_Add(
     BUILD_IN_SOURCE 1
     PATCH_COMMAND sh -c ${PATCH_CMD_STR}
     CONFIGURE_COMMAND sh -c ${CFG_CMD_STR}
-    BUILD_COMMAND $(MAKE) -j${PROCESSOR_COUNT}
+    BUILD_COMMAND $(MAKE) -j${PARALLEL_JOBS}
     # skip install
     INSTALL_COMMAND ""
 )

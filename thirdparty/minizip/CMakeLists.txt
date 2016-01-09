@@ -16,7 +16,7 @@ assert_var_defined(RANLIB)
 ep_get_source_dir(SOURCE_DIR)
 
 set(PATCH_CMD_STR "sed -i 's|^CC=|#CC=|g' aes/Makefile && sed -i 's|^CFLAGS=|#CFLAGS=|g' aes/Makefile")
-set(BUILD_CMD_STR "$(MAKE) -j${PROCESSOR_COUNT} -C aes CC=\"${CC}\" LDFLAGS=\"${LDFLAGS}\" AR=\"${AR}\" RANLIB=\"${RANLIB}\"")
+set(BUILD_CMD_STR "$(MAKE) -j${PARALLEL_JOBS} -C aes CC=\"${CC}\" LDFLAGS=\"${LDFLAGS}\" AR=\"${AR}\" RANLIB=\"${RANLIB}\"")
 
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
