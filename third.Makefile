@@ -368,7 +368,7 @@ $(LUASEC): $(OPENSSL_DIR) $(THIRDPARTY_DIR)/luasec/CMakeLists.txt
 		$(CURDIR)/$(THIRDPARTY_DIR)/luasec && \
 		$(MAKE)
 
-$(LUASERIAL_LIB): $(THIRDPARTY_DIR)/lua-serialize/CMakeLists.txt
+$(LUASERIAL_LIB) $(LUACOMPAT52): $(THIRDPARTY_DIR)/lua-serialize/CMakeLists.txt
 	install -d $(LUASERIAL_BUILD_DIR)
 	-rm -f $(LUASERIAL_DIR)/../lua-serialize-stamp/lua-serialize-build
 	-rm -f $(LUASERIAL_LIB)
@@ -378,10 +378,7 @@ $(LUASERIAL_LIB): $(THIRDPARTY_DIR)/lua-serialize/CMakeLists.txt
 		-DOUTPUT_DIR=$(CURDIR)/$(OUTPUT_DIR)/common \
 		$(CURDIR)/$(THIRDPARTY_DIR)/lua-serialize && \
 		$(MAKE)
-
-$(LUACOMPAT52): $(THIRDPARTY_DIR)/lua-serialize/CMakeLists.txt
-	cp $(CURDIR)/$(OUTPUT_DIR)/common/libluacompat52.so \
-		$(CURDIR)/$(OUTPUT_DIR)/libs
+	cp $(OUTPUT_DIR)/common/libluacompat52.so $(OUTPUT_DIR)/libs
 
 # zeromq should be compiled without optimization in clang 3.4
 # which otherwise may throw a warning saying "array index is past the end
