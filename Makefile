@@ -41,6 +41,7 @@ endif
 	cd $(EVERNOTE_SDK_DIR) && \
 		cp -r *.lua evernote $(CURDIR)/$(EVERNOTE_PLUGIN_DIR) && \
 		cp thrift/*.lua $(CURDIR)/$(EVERNOTE_THRIFT_DIR)
+	test -e $(LPEG_RE) && chmod 664 $(LPEG_RE)  # hot fix re.lua permission
 
 $(OUTPUT_DIR)/libs:
 	install -d $(OUTPUT_DIR)/libs

@@ -103,7 +103,7 @@ $(DJVULIBRE_LIB): $(JPEG_LIB) $(THIRDPARTY_DIR)/djvulibre/CMakeLists.txt
 	cd $(DJVULIBRE_BUILD_DIR) && \
 		$(CMAKE) -DCC="$(CC)" -DCXX="$(CXX)" -DCFLAGS="$(CFLAGS)" \
 		-DCXXFLAGS="$(CXXFLAGS)" -DLDFLAGS="$(LDFLAGS)" \
-		-DLIBS="$(if $(ANDROID),$(SYSROOT)/usr/lib/,)$(STATIC_LIBSTDCPP)" \
+		-DLIBS="$(STATIC_LIBSTDCPP)" \
 		-DCHOST="$(if $(EMULATE_READER),,$(CHOST))" -DMACHINE="$(MACHINE)" \
 		$(CURDIR)/$(THIRDPARTY_DIR)/djvulibre && \
 		$(MAKE)
@@ -188,7 +188,7 @@ $(K2PDFOPT_LIB) $(LEPTONICA_LIB) $(TESSERACT_LIB): $(PNG_LIB) $(ZLIB) \
 		$(CMAKE) $(if $(EMULATE_READER),,-DHOST="$(if $(ANDROID),"arm-linux",$(CHOST))") \
 		-DCC="$(CC)" -DCFLAGS="$(CFLAGS)" -DCXX="$(CXX)" -DCXXFLAGS="$(CXXFLAGS) -O3" \
 		-DAR="$(AR)" -DLDFLAGS="$(LDFLAGS)" -DMACHINE="$(MACHINE)" \
-		-DSTDCPPLIB="$(if $(ANDROID),$(SYSROOT)/usr/lib/,)$(STATIC_LIBSTDCPP)" \
+		-DSTDCPPLIB="$(STATIC_LIBSTDCPP)" \
 		-DZLIB_DIR=$(ZLIB_DIR) -DZLIB=$(CURDIR)/$(ZLIB) -DPNG_DIR=$(PNG_DIR) \
 		-DLEPTONICA_DIR=$(LEPTONICA_DIR) -DTESSERACT_DIR=$(TESSERACT_DIR) \
 		$(CURDIR)/$(THIRDPARTY_DIR)/libk2pdfopt && \
@@ -322,7 +322,7 @@ $(OUTPUT_DIR)/zsync: $(THIRDPARTY_DIR)/zsync/CMakeLists.txt
 		$(CMAKE) -DHOST="$(if $(EMULATE_READER),,$(CHOST))" \
 		-DCC="$(CC)" -DMACHINE="$(MACHINE)" \
 		$(CURDIR)/$(THIRDPARTY_DIR)/zsync && \
-		$(MAKE) VERBOSE=1
+		$(MAKE)
 	cp $(ZSYNC_DIR)/zsync $(OUTPUT_DIR)/
 
 # ===========================================================================
@@ -379,9 +379,8 @@ $(LUASERIAL_LIB): $(THIRDPARTY_DIR)/lua-serialize/CMakeLists.txt
 		$(CURDIR)/$(THIRDPARTY_DIR)/lua-serialize && \
 		$(MAKE)
 
-$(LUACOMPAT52): $(THIRDPARTY_DIR)/lua-serialize/CMakeLists.txt
-	cp $(CURDIR)/$(OUTPUT_DIR)/common/libluacompat52.so \
-		$(CURDIR)/$(OUTPUT_DIR)/libs
+$(LUACOMPAT52): $(LUASERIAL_LIB) $(THIRDPARTY_DIR)/lua-serialize/CMakeLists.txt
+	cp $(OUTPUT_DIR)/common/libluacompat52.so $(OUTPUT_DIR)/libs
 
 # zeromq should be compiled without optimization in clang 3.4
 # which otherwise may throw a warning saying "array index is past the end
@@ -393,7 +392,7 @@ $(ZMQ_LIB): $(THIRDPARTY_DIR)/libzmq/CMakeLists.txt
 	cd $(ZMQ_BUILD_DIR) && \
 		$(CMAKE) -DCC="$(CC)" -DCFLAGS="$(CFLAGS) $(if $(CLANG),-O0,)" \
 		-DLDFLAGS="$(LDFLAGS)" \
-		-DSTATIC_LIBSTDCPP="$(if $(ANDROID),$(SYSROOT)/usr/lib/,)$(STATIC_LIBSTDCPP)" \
+		-DSTATIC_LIBSTDCPP="$(STATIC_LIBSTDCPP)" \
 		$(if $(LEGACY),-DLEGACY:BOOL=ON,) \
 		-DCHOST=$(CHOST) -DMACHINE=$(MACHINE) \
 		$(CURDIR)/$(THIRDPARTY_DIR)/libzmq && \
@@ -481,7 +480,6 @@ $(LPEG_DYNLIB) $(LPEG_RE): $(THIRDPARTY_DIR)/lpeg/CMakeLists.txt
 		$(MAKE)
 	cp -rf $(LPEG_DIR)/lpeg.so $(OUTPUT_DIR)/rocks/lib/lua/5.1
 	cp -rf $(LPEG_DIR)/re.lua $(OUTPUT_DIR)/rocks/share/lua/5.1
-	chmod 664 $(OUTPUT_DIR)/rocks/share/lua/5.1/re.lua
 
 $(EVERNOTE_LIB): $(THIRDPARTY_DIR)/evernote-sdk-lua/CMakeLists.txt
 	install -d $(EVERNOTE_SDK_BUILD_DIR)
@@ -493,6 +491,6 @@ $(EVERNOTE_LIB): $(THIRDPARTY_DIR)/evernote-sdk-lua/CMakeLists.txt
 		$(CURDIR)/$(THIRDPARTY_DIR)/evernote-sdk-lua && \
 		$(MAKE)
 
-$(LUALONGNUMBER): $(THIRDPARTY_DIR)/evernote-sdk-lua/CMakeLists.txt
+$(LUALONGNUMBER): $(EVERNOTE_LIB) $(THIRDPARTY_DIR)/evernote-sdk-lua/CMakeLists.txt
 	cp $(CURDIR)/$(EVERNOTE_PLUGIN_DIR)/lib/liblualongnumber.so \
 		$(CURDIR)/$(OUTPUT_DIR)/libs
