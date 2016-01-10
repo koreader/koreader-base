@@ -103,7 +103,7 @@ $(DJVULIBRE_LIB): $(JPEG_LIB) $(THIRDPARTY_DIR)/djvulibre/CMakeLists.txt
 	cd $(DJVULIBRE_BUILD_DIR) && \
 		$(CMAKE) -DCC="$(CC)" -DCXX="$(CXX)" -DCFLAGS="$(CFLAGS)" \
 		-DCXXFLAGS="$(CXXFLAGS)" -DLDFLAGS="$(LDFLAGS)" \
-		-DLIBS="$(if $(ANDROID),$(SYSROOT)/usr/lib/,)$(STATIC_LIBSTDCPP)" \
+		-DLIBS="$(STATIC_LIBSTDCPP)" \
 		-DCHOST="$(if $(EMULATE_READER),,$(CHOST))" -DMACHINE="$(MACHINE)" \
 		$(CURDIR)/$(THIRDPARTY_DIR)/djvulibre && \
 		$(MAKE)
@@ -188,7 +188,7 @@ $(K2PDFOPT_LIB) $(LEPTONICA_LIB) $(TESSERACT_LIB): $(PNG_LIB) $(ZLIB) \
 		$(CMAKE) $(if $(EMULATE_READER),,-DHOST="$(if $(ANDROID),"arm-linux",$(CHOST))") \
 		-DCC="$(CC)" -DCFLAGS="$(CFLAGS)" -DCXX="$(CXX)" -DCXXFLAGS="$(CXXFLAGS) -O3" \
 		-DAR="$(AR)" -DLDFLAGS="$(LDFLAGS)" -DMACHINE="$(MACHINE)" \
-		-DSTDCPPLIB="$(if $(ANDROID),$(SYSROOT)/usr/lib/,)$(STATIC_LIBSTDCPP)" \
+		-DSTDCPPLIB="$(STATIC_LIBSTDCPP)" \
 		-DZLIB_DIR=$(ZLIB_DIR) -DZLIB=$(CURDIR)/$(ZLIB) -DPNG_DIR=$(PNG_DIR) \
 		-DLEPTONICA_DIR=$(LEPTONICA_DIR) -DTESSERACT_DIR=$(TESSERACT_DIR) \
 		$(CURDIR)/$(THIRDPARTY_DIR)/libk2pdfopt && \
@@ -368,7 +368,7 @@ $(LUASEC): $(OPENSSL_DIR) $(THIRDPARTY_DIR)/luasec/CMakeLists.txt
 		$(CURDIR)/$(THIRDPARTY_DIR)/luasec && \
 		$(MAKE)
 
-$(LUASERIAL_LIB) $(LUACOMPAT52): $(THIRDPARTY_DIR)/lua-serialize/CMakeLists.txt
+$(LUASERIAL_LIB): $(THIRDPARTY_DIR)/lua-serialize/CMakeLists.txt
 	install -d $(LUASERIAL_BUILD_DIR)
 	-rm -f $(LUASERIAL_DIR)/../lua-serialize-stamp/lua-serialize-build
 	-rm -f $(LUASERIAL_LIB)
@@ -378,6 +378,8 @@ $(LUASERIAL_LIB) $(LUACOMPAT52): $(THIRDPARTY_DIR)/lua-serialize/CMakeLists.txt
 		-DOUTPUT_DIR=$(CURDIR)/$(OUTPUT_DIR)/common \
 		$(CURDIR)/$(THIRDPARTY_DIR)/lua-serialize && \
 		$(MAKE)
+
+$(LUACOMPAT52): $(LUASERIAL_LIB) $(THIRDPARTY_DIR)/lua-serialize/CMakeLists.txt
 	cp $(OUTPUT_DIR)/common/libluacompat52.so $(OUTPUT_DIR)/libs
 
 # zeromq should be compiled without optimization in clang 3.4
@@ -390,7 +392,7 @@ $(ZMQ_LIB): $(THIRDPARTY_DIR)/libzmq/CMakeLists.txt
 	cd $(ZMQ_BUILD_DIR) && \
 		$(CMAKE) -DCC="$(CC)" -DCFLAGS="$(CFLAGS) $(if $(CLANG),-O0,)" \
 		-DLDFLAGS="$(LDFLAGS)" \
-		-DSTATIC_LIBSTDCPP="$(if $(ANDROID),$(SYSROOT)/usr/lib/,)$(STATIC_LIBSTDCPP)" \
+		-DSTATIC_LIBSTDCPP="$(STATIC_LIBSTDCPP)" \
 		$(if $(LEGACY),-DLEGACY:BOOL=ON,) \
 		-DCHOST=$(CHOST) -DMACHINE=$(MACHINE) \
 		$(CURDIR)/$(THIRDPARTY_DIR)/libzmq && \
@@ -489,6 +491,6 @@ $(EVERNOTE_LIB): $(THIRDPARTY_DIR)/evernote-sdk-lua/CMakeLists.txt
 		$(CURDIR)/$(THIRDPARTY_DIR)/evernote-sdk-lua && \
 		$(MAKE)
 
-$(LUALONGNUMBER): $(THIRDPARTY_DIR)/evernote-sdk-lua/CMakeLists.txt
+$(LUALONGNUMBER): $(EVERNOTE_LIB) $(THIRDPARTY_DIR)/evernote-sdk-lua/CMakeLists.txt
 	cp $(CURDIR)/$(EVERNOTE_PLUGIN_DIR)/lib/liblualongnumber.so \
 		$(CURDIR)/$(OUTPUT_DIR)/libs
