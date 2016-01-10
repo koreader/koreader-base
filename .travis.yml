@@ -16,6 +16,15 @@ compiler:
 
 env:
     - EMULATE_READER=1
+    - TARGET=kobo
+    # - TARGET=kindle
+
+matrix:
+  exclude:
+    - compiler: clang
+      env: TARGET=kobo
+    - compiler: clang
+      env: TARGET=kindle
 
 addons:
   apt:
@@ -30,10 +39,21 @@ addons:
       - nasm
       # OpenSSL likes this (package contains makedepend)
       - xutils-dev
+      # kobo toolchain
+      - gcc-mulitilib
+      - gcc-arm-linux-gnueabihf
+      - g++-arm-linux-gnueabihf
+      - libc6-dev-armhf-cross
+      # kobo luajit deps
+      - lib32gcc-4.8-dev
+      # kindle toolchain
+      # - gcc-arm-linux-gnueabi
+      # - g++-arm-linux-gnueabi
+      # - libc6-dev-armel-cross
 
 before_install:
     # don't do this for clang
-    - if [ "$CXX" = "g++" ]; then export CXX="g++-4.8" CC="gcc-4.8"; fi
+    - if [ "${CXX}" = "g++" ]; then export CXX="g++-4.8" CC="gcc-4.8"; fi
     # in case anything ignores the environment variables, override through PATH
     - mkdir bin
     - ln -s $(which gcc-4.8) bin/cc
@@ -61,5 +81,6 @@ script:
     - tar zxf tesseract-ocr-3.02.eng.tar.gz
     - cd build/* && export TESSDATA_PREFIX=`pwd`/data && mkdir -p data/tessdata
     - mv ../../tesseract-ocr/tessdata/* data/tessdata/ && cd ../../
+    - make TARGET=${TARGET}
     # finally make test
-    - make test
+    - if [ "${EMULATE_READER}" = "1" ]; then make test; fi
