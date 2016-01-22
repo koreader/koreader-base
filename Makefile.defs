@@ -2,9 +2,9 @@ SHELL:=/bin/bash
 
 # Use ccache in build system by default. Define USE_NO_CCACHE=1 to force disable it.
 ifeq ($(USE_NO_CCACHE), 1)
-	CCACHE:=
+    CCACHE:=
 else
-	CCACHE?=$(shell which ccache)
+    CCACHE?=$(shell which ccache)
 endif
 
 # android toolchain
@@ -13,56 +13,53 @@ ANDROID_TOOLCHAIN=toolchain/android-toolchain
 # pocketbook toolchain
 POCKETBOOK_TOOLCHAIN=toolchain/pocketbook-toolchain
 
-# if TARGET is not defined we will build an emulator on current machine
-ifdef TARGET
-    export EMULATE_READER=
-else
-    export EMULATE_READER=1
-endif
-
 # CMAKE=cmake --no-warn-unused-cli
 CMAKE=cmake
 
 # set this to your ARM cross compiler:
 # set CC CXX AR LD RANLIB
 ifneq (,$(filter $(TARGET), kindle arm-generic))
-	CHOST?=arm-linux-gnueabi
+    CHOST?=arm-linux-gnueabi
 else ifeq ($(TARGET), kindle5)
-	CHOST?=arm-kindle5-linux-gnueabi
+    CHOST?=arm-kindle5-linux-gnueabi
 else ifeq ($(TARGET), kindlepw2)
-	CHOST?=arm-kindlepw2-linux-gnueabi
+    CHOST?=arm-kindlepw2-linux-gnueabi
 else ifeq ($(TARGET), kindle-legacy)
-	CHOST?=arm-kindle-linux-gnueabi
-	export LEGACY=1
+    CHOST?=arm-kindle-linux-gnueabi
+    export LEGACY=1
 else ifeq ($(TARGET), kobo)
-	CHOST?=arm-linux-gnueabihf
+    CHOST?=arm-linux-gnueabihf
 else ifeq ($(TARGET), ubuntu-touch)
-	CHOST?=arm-linux-gnueabihf
-	export SDL=1
-	export UBUNTUTOUCH=1
+    CHOST?=arm-linux-gnueabihf
+    export SDL=1
+    export UBUNTUTOUCH=1
 else ifeq ($(TARGET), android)
-	export ANDROID=1
-	export PATH:=$(CURDIR)/$(ANDROID_TOOLCHAIN)/bin:$(PATH)
-	export SYSROOT=$(NDK)/platforms/android-9/arch-arm
-	CHOST?=arm-linux-androideabi
+    export ANDROID=1
+    export PATH:=$(CURDIR)/$(ANDROID_TOOLCHAIN)/bin:$(PATH)
+    export SYSROOT=$(NDK)/platforms/android-9/arch-arm
+    CHOST?=arm-linux-androideabi
 else ifeq ($(TARGET), win32)
-	CHOST?=i686-w64-mingw32
-	export WIN32=1
-	export SDL=1
+    CHOST?=i686-w64-mingw32
+    export WIN32=1
+    export SDL=1
 else ifeq ($(TARGET), pocketbook)
-	CHOST?=arm-obreey-linux-gnueabi
-	export LEGACY=1
-	export POCKETBOOK=1
-	export PATH:=$(CURDIR)/$(POCKETBOOK_TOOLCHAIN)/bin:$(PATH)
-	export SYSROOT=$(CURDIR)/$(POCKETBOOK_TOOLCHAIN)/arm-obreey-linux-gnueabi/sysroot
+    CHOST?=arm-obreey-linux-gnueabi
+    export LEGACY=1
+    export POCKETBOOK=1
+    export PATH:=$(CURDIR)/$(POCKETBOOK_TOOLCHAIN)/bin:$(PATH)
+    export SYSROOT=$(CURDIR)/$(POCKETBOOK_TOOLCHAIN)/arm-obreey-linux-gnueabi/sysroot
+else ifndef TARGET
+    # if TARGET is not defined we will build an emulator on current machine
+    export EMULATE_READER=1
+    export SDL=1
 else
-	export SDL=1
+    $(error Invalid TARGET: "$(TARGET)")
 endif
 
 # unknown device
 ifdef SBOX_UNAME_MACHINE
-	CC:=gcc
-	CXX:=g++
+    CC:=gcc
+    CXX:=g++
 endif
 
 # set cross-compiler/host CC and CXX
@@ -71,7 +68,7 @@ ifeq ($(CC), clang)
     CXX:=$(CHOST)-clang++
     HOSTCC:=clang
     HOSTCXX:=clang++
-	# quiet flag
+    # quiet flag
     QFLAGS:=-Qunused-arguments
     export CLANG=1
 else
