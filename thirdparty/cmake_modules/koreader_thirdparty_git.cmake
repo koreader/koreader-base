@@ -77,7 +77,7 @@ if(NOT \"\${curr_tag}\" STREQUAL \"${git_tag}\")
     message(FATAL_ERROR \"Failed to fetch update from origin\")
   endif()
   execute_process(
-    COMMAND \"${git_EXECUTABLE}\" checkout ${git_tag}
+    COMMAND \"${git_EXECUTABLE}\" checkout -f ${git_tag}
     WORKING_DIRECTORY \"${work_dir}/${src_name}\"
     RESULT_VARIABLE error_code
   )
