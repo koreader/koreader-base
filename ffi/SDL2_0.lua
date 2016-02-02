@@ -51,9 +51,9 @@ function S.open()
 	end
 
 	-- set up screen (window)
-	S.screen = SDL.SDL_CreateWindow("KoReader",
-		SDL.SDL_WINDOWPOS_UNDEFINED,
-		SDL.SDL_WINDOWPOS_UNDEFINED,
+	S.screen = SDL.SDL_CreateWindow("KOReader",
+		SDL.SDL_WINDOWPOS_CENTERED,
+		SDL.SDL_WINDOWPOS_CENTERED,
 		S.w, S.h, full_screen and 1 or 0)
 
 	S.renderer = SDL.SDL_CreateRenderer(S.screen, -1, 0)

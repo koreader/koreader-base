@@ -1,4 +1,5 @@
 local ffi = require("ffi")
+
 ffi.cdef[[
 typedef unsigned int Uint32;
 typedef int Sint32;
@@ -6,7 +7,6 @@ typedef short unsigned int Uint16;
 typedef short int Sint16;
 typedef unsigned char Uint8;
 typedef signed char Sint8;
-typedef int64_t Sint64;
 struct SDL_Keysym {
   enum {
     SDL_SCANCODE_UNKNOWN = 0,
@@ -253,8 +253,8 @@ struct SDL_Keysym {
     SDL_NUM_SCANCODES = 512,
   } scancode;
   int sym;
-  short unsigned int mod;
-  unsigned int unused;
+  Uint16 mod;
+  Uint32 unused;
 };
 typedef enum {
   SDL_FIRSTEVENT = 0,
@@ -296,178 +296,172 @@ typedef enum {
   SDL_MULTIGESTURE = 2050,
   SDL_CLIPBOARDUPDATE = 2304,
   SDL_DROPFILE = 4096,
+  SDL_RENDER_TARGETS_RESET = 8192,
   SDL_USEREVENT = 32768,
   SDL_LASTEVENT = 65535,
 } SDL_EventType;
 struct SDL_CommonEvent {
-  unsigned int type;
-  unsigned int timestamp;
+  Uint32 type;
+  Uint32 timestamp;
 };
 struct SDL_WindowEvent {
-  unsigned int type;
-  unsigned int timestamp;
-  unsigned int windowID;
-  unsigned char event;
-  unsigned char padding1;
-  unsigned char padding2;
-  unsigned char padding3;
-  int data1;
-  int data2;
+  Uint32 type;
+  Uint32 timestamp;
+  Uint32 windowID;
+  Uint8 event;
+  Uint8 padding1;
+  Uint8 padding2;
+  Uint8 padding3;
+  Sint32 data1;
+  Sint32 data2;
 };
 struct SDL_KeyboardEvent {
-  unsigned int type;
-  unsigned int timestamp;
-  unsigned int windowID;
-  unsigned char state;
-  unsigned char repeat;
-  unsigned char padding2;
-  unsigned char padding3;
+  Uint32 type;
+  Uint32 timestamp;
+  Uint32 windowID;
+  Uint8 state;
+  Uint8 repeat;
+  Uint8 padding2;
+  Uint8 padding3;
   struct SDL_Keysym keysym;
 };
 struct SDL_TextEditingEvent {
-  unsigned int type;
-  unsigned int timestamp;
-  unsigned int windowID;
+  Uint32 type;
+  Uint32 timestamp;
+  Uint32 windowID;
   char text[32];
-  int start;
-  int length;
+  Sint32 start;
+  Sint32 length;
 };
 struct SDL_TextInputEvent {
-  unsigned int type;
-  unsigned int timestamp;
-  unsigned int windowID;
+  Uint32 type;
+  Uint32 timestamp;
+  Uint32 windowID;
   char text[32];
 };
 struct SDL_MouseMotionEvent {
-  unsigned int type;
-  unsigned int timestamp;
-  unsigned int windowID;
-  unsigned int which;
-  unsigned int state;
-  int x;
-  int y;
-  int xrel;
-  int yrel;
+  Uint32 type;
+  Uint32 timestamp;
+  Uint32 windowID;
+  Uint32 which;
+  Uint32 state;
+  Sint32 x;
+  Sint32 y;
+  Sint32 xrel;
+  Sint32 yrel;
 };
 struct SDL_MouseButtonEvent {
-  unsigned int type;
-  unsigned int timestamp;
-  unsigned int windowID;
-  unsigned int which;
-  unsigned char button;
-  unsigned char state;
-  unsigned char padding1;
-  unsigned char padding2;
-  int x;
-  int y;
+  Uint32 type;
+  Uint32 timestamp;
+  Uint32 windowID;
+  Uint32 which;
+  Uint8 button;
+  Uint8 state;
+  Uint8 clicks;
+  Uint8 padding1;
+  Sint32 x;
+  Sint32 y;
 };
 struct SDL_MouseWheelEvent {
-  unsigned int type;
-  unsigned int timestamp;
-  unsigned int windowID;
-  unsigned int which;
-  int x;
-  int y;
+  Uint32 type;
+  Uint32 timestamp;
+  Uint32 windowID;
+  Uint32 which;
+  Sint32 x;
+  Sint32 y;
 };
 struct SDL_JoyAxisEvent {
-  unsigned int type;
-  unsigned int timestamp;
+  Uint32 type;
+  Uint32 timestamp;
   int which;
-  unsigned char axis;
-  unsigned char padding1;
-  unsigned char padding2;
-  unsigned char padding3;
-  short int value;
-  short unsigned int padding4;
+  Uint8 axis;
+  Uint8 padding1;
+  Uint8 padding2;
+  Uint8 padding3;
+  Sint16 value;
+  Uint16 padding4;
 };
 struct SDL_JoyBallEvent {
-  unsigned int type;
-  unsigned int timestamp;
+  Uint32 type;
+  Uint32 timestamp;
   int which;
-  unsigned char ball;
-  unsigned char padding1;
-  unsigned char padding2;
-  unsigned char padding3;
-  short int xrel;
-  short int yrel;
+  Uint8 ball;
+  Uint8 padding1;
+  Uint8 padding2;
+  Uint8 padding3;
+  Sint16 xrel;
+  Sint16 yrel;
 };
 struct SDL_JoyHatEvent {
-  unsigned int type;
-  unsigned int timestamp;
+  Uint32 type;
+  Uint32 timestamp;
   int which;
-  unsigned char hat;
-  unsigned char value;
-  unsigned char padding1;
-  unsigned char padding2;
+  Uint8 hat;
+  Uint8 value;
+  Uint8 padding1;
+  Uint8 padding2;
 };
 struct SDL_JoyButtonEvent {
-  unsigned int type;
-  unsigned int timestamp;
+  Uint32 type;
+  Uint32 timestamp;
   int which;
-  unsigned char button;
-  unsigned char state;
-  unsigned char padding1;
-  unsigned char padding2;
+  Uint8 button;
+  Uint8 state;
+  Uint8 padding1;
+  Uint8 padding2;
 };
 struct SDL_JoyDeviceEvent {
-  unsigned int type;
-  unsigned int timestamp;
-  int which;
+  Uint32 type;
+  Uint32 timestamp;
+  Sint32 which;
 };
 struct SDL_ControllerAxisEvent {
-  unsigned int type;
-  unsigned int timestamp;
+  Uint32 type;
+  Uint32 timestamp;
   int which;
-  unsigned char axis;
-  unsigned char padding1;
-  unsigned char padding2;
-  unsigned char padding3;
-  short int value;
-  short unsigned int padding4;
+  Uint8 axis;
+  Uint8 padding1;
+  Uint8 padding2;
+  Uint8 padding3;
+  Sint16 value;
+  Uint16 padding4;
 };
 struct SDL_ControllerButtonEvent {
-  unsigned int type;
-  unsigned int timestamp;
+  Uint32 type;
+  Uint32 timestamp;
   int which;
-  unsigned char button;
-  unsigned char state;
-  unsigned char padding1;
-  unsigned char padding2;
+  Uint8 button;
+  Uint8 state;
+  Uint8 padding1;
+  Uint8 padding2;
 };
 struct SDL_ControllerDeviceEvent {
-  unsigned int type;
-  unsigned int timestamp;
-  int which;
+  Uint32 type;
+  Uint32 timestamp;
+  Sint32 which;
 };
 struct SDL_QuitEvent {
-  unsigned int type;
-  unsigned int timestamp;
+  Uint32 type;
+  Uint32 timestamp;
 };
 struct SDL_UserEvent {
-  unsigned int type;
-  unsigned int timestamp;
-  unsigned int windowID;
-  int code;
+  Uint32 type;
+  Uint32 timestamp;
+  Uint32 windowID;
+  Sint32 code;
   void *data1;
   void *data2;
 };
-struct SDL_DisplayMode {
-  unsigned int format;
-  int w;
-  int h;
-  int refresh_rate;
-  void *data;
-};
 struct SDL_SysWMEvent {
-  unsigned int type;
-  unsigned int timestamp;
+  Uint32 type;
+  Uint32 timestamp;
   struct SDL_SysWMmsg *msg;
 };
 struct SDL_TouchFingerEvent {
-  unsigned int type;
-  unsigned int timestamp;
-  Sint64 touchId;
-  Sint64 fingerId;
+  Uint32 type;
+  Uint32 timestamp;
+  long int touchId;
+  long int fingerId;
   float x;
   float y;
   float dx;
@@ -475,33 +469,33 @@ struct SDL_TouchFingerEvent {
   float pressure;
 };
 struct SDL_MultiGestureEvent {
-  unsigned int type;
-  unsigned int timestamp;
-  Sint64 touchId;
+  Uint32 type;
+  Uint32 timestamp;
+  long int touchId;
   float dTheta;
   float dDist;
   float x;
   float y;
-  short unsigned int numFingers;
-  short unsigned int padding;
+  Uint16 numFingers;
+  Uint16 padding;
 };
 struct SDL_DollarGestureEvent {
-  unsigned int type;
-  unsigned int timestamp;
-  Sint64 touchId;
-  Sint64 gestureId;
-  unsigned int numFingers;
+  Uint32 type;
+  Uint32 timestamp;
+  long int touchId;
+  long int gestureId;
+  Uint32 numFingers;
   float error;
   float x;
   float y;
 };
 struct SDL_DropEvent {
-  unsigned int type;
-  unsigned int timestamp;
+  Uint32 type;
+  Uint32 timestamp;
   char *file;
 };
 union SDL_Event {
-  unsigned int type;
+  Uint32 type;
   struct SDL_CommonEvent common;
   struct SDL_WindowEvent window;
   struct SDL_KeyboardEvent key;
@@ -525,7 +519,7 @@ union SDL_Event {
   struct SDL_MultiGestureEvent mgesture;
   struct SDL_DollarGestureEvent dgesture;
   struct SDL_DropEvent drop;
-  unsigned char padding[56];
+  Uint8 padding[56];
 };
 struct SDL_Rect {
   int x;
@@ -540,30 +534,30 @@ struct SDL_Renderer;
 typedef struct SDL_Renderer SDL_Renderer;
 struct SDL_Texture;
 typedef struct SDL_Texture SDL_Texture;
-int SDL_Init(unsigned int) __attribute__((visibility("default")));
-unsigned int SDL_WasInit(unsigned int) __attribute__((visibility("default")));
+int SDL_Init(Uint32) __attribute__((visibility("default")));
+Uint32 SDL_WasInit(Uint32) __attribute__((visibility("default")));
 void SDL_SetMainReady(void) __attribute__((visibility("default")));
 void SDL_Quit(void) __attribute__((visibility("default")));
 int SDL_WaitEvent(union SDL_Event *) __attribute__((visibility("default")));
 int SDL_WaitEventTimeout(union SDL_Event *, int) __attribute__((visibility("default")));
 int SDL_PollEvent(union SDL_Event *) __attribute__((visibility("default")));
-unsigned int SDL_GetTicks(void) __attribute__((visibility("default")));
-void SDL_Delay(unsigned int) __attribute__((visibility("default")));
-int SDL_GetCurrentDisplayMode(int, struct SDL_DisplayMode*) __attribute__((visibility("default")));
-struct SDL_Window *SDL_CreateWindow(const char *, int, int, int, int, unsigned int) __attribute__((visibility("default")));
-struct SDL_Renderer *SDL_CreateRenderer(struct SDL_Window *, int, unsigned int) __attribute__((visibility("default")));
-int SDL_CreateWindowAndRenderer(int, int, unsigned int, struct SDL_Window **, struct SDL_Renderer **) __attribute__((visibility("default")));
-int SDL_SetRenderDrawColor(struct SDL_Renderer *, unsigned char, unsigned char, unsigned char, unsigned char) __attribute__((visibility("default")));
-int SDL_RenderClear(struct SDL_Renderer *) __attribute__((visibility("default")));
-void SDL_RenderPresent(struct SDL_Renderer *) __attribute__((visibility("default")));
-int SDL_RenderCopy(struct SDL_Renderer *, struct SDL_Texture *, const struct SDL_Rect *, const struct SDL_Rect *) __attribute__((visibility("default")));
-struct SDL_Texture *SDL_CreateTexture(struct SDL_Renderer *, unsigned int, int, int, int) __attribute__((visibility("default")));
-int SDL_UpdateTexture(struct SDL_Texture *, const struct SDL_Rect *, const void *, int) __attribute__((visibility("default")));
-void SDL_SetWindowTitle(struct SDL_Window *, const char *) __attribute__((visibility("default")));
+Uint32 SDL_GetTicks(void) __attribute__((visibility("default")));
+void SDL_Delay(Uint32) __attribute__((visibility("default")));
+SDL_Window *SDL_CreateWindow(const char *, int, int, int, int, Uint32) __attribute__((visibility("default")));
+SDL_Renderer *SDL_CreateRenderer(SDL_Window *, int, Uint32) __attribute__((visibility("default")));
+int SDL_CreateWindowAndRenderer(int, int, Uint32, SDL_Window **, SDL_Renderer **) __attribute__((visibility("default")));
+int SDL_SetRenderDrawColor(SDL_Renderer *, Uint8, Uint8, Uint8, Uint8) __attribute__((visibility("default")));
+int SDL_RenderClear(SDL_Renderer *) __attribute__((visibility("default")));
+void SDL_RenderPresent(SDL_Renderer *) __attribute__((visibility("default")));
+int SDL_RenderCopy(SDL_Renderer *, SDL_Texture *, const SDL_Rect *, const SDL_Rect *) __attribute__((visibility("default")));
+SDL_Texture *SDL_CreateTexture(SDL_Renderer *, Uint32, int, int, int) __attribute__((visibility("default")));
+int SDL_UpdateTexture(SDL_Texture *, const SDL_Rect *, const void *, int) __attribute__((visibility("default")));
+void SDL_SetWindowTitle(SDL_Window *, const char *) __attribute__((visibility("default")));
 static const int SDL_INIT_AUDIO = 16;
 static const int SDL_INIT_VIDEO = 32;
 static const int SDL_INIT_EVENTS = 16384;
 static const int SDL_WINDOWPOS_UNDEFINED = 536805376;
+static const int SDL_WINDOWPOS_CENTERED = 805240832;
 static const int SDL_WINDOW_FULLSCREEN = 1;
 static const int SDL_WINDOW_FULLSCREEN_DESKTOP = 4097;
 static const int SDL_TEXTUREACCESS_STREAMING = 1;
