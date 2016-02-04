@@ -41,7 +41,7 @@ endif
 	cd $(EVERNOTE_SDK_DIR) && \
 		cp -r *.lua evernote $(CURDIR)/$(EVERNOTE_PLUGIN_DIR) && \
 		cp thrift/*.lua $(CURDIR)/$(EVERNOTE_THRIFT_DIR)
-	test -e $(LPEG_RE) && chmod 664 $(LPEG_RE)  # hot fix re.lua permission
+	test -e $(LPEG_RE) && chmod 664 $(LPEG_RE) || true  # hot fix re.lua permission
 
 $(OUTPUT_DIR)/libs:
 	install -d $(OUTPUT_DIR)/libs
@@ -101,7 +101,10 @@ $(OUTPUT_DIR)/libs/libwrap-mupdf.so: wrap-mupdf.c \
 		-o $@ $^
 
 ffi/mupdf_h.lua: ffi-cdecl/mupdf_decl.c $(MUPDF_DIR)/include
-	CPPFLAGS="$(CFLAGS) -I. -I$(MUPDF_DIR)/include" $(FFI-CDECL) gcc ffi-cdecl/mupdf_decl.c ffi/mupdf_h.lua
+	CPPFLAGS="$(CFLAGS) -I. -I$(MUPDF_DIR)/include" $(FFI_CDECL) gcc ffi-cdecl/mupdf_decl.c $@
+
+ffi/SDL2_0_h.lua: ffi-cdecl/SDL2_0_decl.c
+	CPPFLAGS="$(CFLAGS) -I. -LSDL2" $(FFI_CDECL) gcc ffi-cdecl/SDL2_0_decl.c $@
 
 # include all third party libs
 include third.Makefile
