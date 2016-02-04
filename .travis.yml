@@ -54,7 +54,8 @@ install:
     - export PATH=$PATH:$HOME/.luarocks/bin
 
 script:
-    - make fetchthirdparty all
+    - travis_retry make fetchthirdparty
+    - make all
     - cp build/*/luajit $HOME/.luarocks/bin
     # install tesseract trained language data for testing OCR functionality
     - wget https://tesseract-ocr.googlecode.com/files/tesseract-ocr-3.02.eng.tar.gz
