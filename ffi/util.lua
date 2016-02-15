@@ -140,7 +140,7 @@ end
 function util.purgeDir(dir)
     local ok, err
     ok, err = lfs.attributes(dir)
-    if err ~= nil then
+    if not ok or err ~= nil then
         return nil, err
     end
     for f in lfs.dir(dir) do
@@ -180,7 +180,6 @@ end
 function util.utf8charcode(charstring)
 	local ptr = ffi.cast("uint8_t *", charstring)
 	local len = #charstring
-	local result = 0
 	if len == 1 then
 		return bit.band(ptr[0], 0x7F)
 	elseif len == 2 then
@@ -250,7 +249,7 @@ function util.isSDL()
 end
 
 function util.idiv(a, b)
-    q = a/b
+    local q = a/b
     return (q > 0) and math.floor(q) or math.ceil(q)
 end
 
@@ -270,7 +269,7 @@ function util.orderedPairs(t)
         -- Equivalent of the next function, but returns the keys in the alphabetic
         -- order. We use a temporary ordered key table that is stored in the
         -- table being iterated.
-
+        local key
         if state == nil then
             -- the first time, generate the index
             t.__orderedIndex = __genOrderedIndex( t )
@@ -278,7 +277,6 @@ function util.orderedPairs(t)
             return key, t[key]
         end
         -- fetch the next value
-        key = nil
         for i = 1,table.getn(t.__orderedIndex) do
             if t.__orderedIndex[i] == state then
                 key = t.__orderedIndex[i+1]
@@ -294,7 +292,7 @@ function util.orderedPairs(t)
         return
     end
 
--- this function is taken from http://lua-users.org/wiki/SortedIteration
+    -- this function is taken from http://lua-users.org/wiki/SortedIteration
     -- Equivalent of the pairs() function on tables. Allows to iterate
     -- in order
     return orderedNext, t, nil
