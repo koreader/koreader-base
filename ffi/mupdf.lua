@@ -42,17 +42,17 @@ local save_ctx = nil
 local function context()
     if save_ctx ~= nil then return save_ctx end
 
-    local context = M.fz_new_context_imp(
+    local ctx = M.fz_new_context_imp(
         mupdf.debug_memory and W.mupdf_get_my_alloc_context() or nil,
         nil,
         mupdf.cache_size, FZ_VERSION)
 
-    if context == nil then
+    if ctx == nil then
         error("cannot create fz_context for MuPDF")
     end
 
-    save_ctx = context
-    return context
+    save_ctx = ctx
+    return ctx
 end
 
 -- a wrapper for mupdf exception error messages
@@ -420,7 +420,6 @@ function page_mt.__index:getPageText()
             -- a block contains lines, which is our primary return datum
             for line_num = 0, block.len - 1 do
                 local line = {}
-                local word = 1
                 local line_bbox = ffi.new("fz_rect[1]")
 
                 -- a line consists of spans, which can contain words
@@ -436,7 +435,6 @@ function page_mt.__index:getPageText()
 
                     local i = 0
                     while i < span.len do
-                        local word = {}
                         local textlen = 0
                         local word_bbox = ffi.new("fz_rect[1]")
                         while i < span.len do
@@ -571,6 +569,7 @@ function page_mt.__index:draw_new(draw_context, width, height, offset_x, offset_
         M.fz_gamma_pixmap(context(), pix, draw_context.gamma)
     end
 
+    -- FIXME: undefined pixmap
     M.fz_drop_pixmap(context(), pixmap)
 
     return bb
@@ -615,7 +614,7 @@ function page_mt.__index:addMarkupAnnotation(points, n, type)
     local ok = W.mupdf_pdf_set_markup_annot_quadpoints(context(), doc, annot, points, n)
     if ok == nil then merror("could not set markup annot quadpoints") end
 
-    local ok = W.mupdf_pdf_set_markup_appearance(context(), doc, annot, color, alpha, line_thickness, line_height)
+    ok = W.mupdf_pdf_set_markup_appearance(context(), doc, annot, color, alpha, line_thickness, line_height)
     if ok == nil then merror("could not set markup appearance") end
 end
 
@@ -663,36 +662,37 @@ end
 -- k2pdfopt interfacing
 
 -- will lazily load ffi/koptcontext.lua in order to interface k2pdfopt
-local k2pdfopt
+local cached_k2pdfopt
 local function get_k2pdfopt()
-    if k2pdfopt then return k2pdfopt end
+    if cached_k2pdfopt then return cached_k2pdfopt end
 
     local koptcontext = require("ffi/koptcontext")
-    k2pdfopt = koptcontext.k2pdfopt
-    return k2pdfopt
+    cached_k2pdfopt = koptcontext.k2pdfopt
+    return cached_k2pdfopt
 end
 
 -- lazily load libpthread
-local pthread
+local cached_pthread
 local function get_pthread()
-    if pthread then return pthread end
+    if cached_pthread then return cached_pthread end
 
     local util = require("ffi/util")
 
     require("ffi/pthread_h")
 
+    local ok
     if ffi.os == "Windows" then
         return ffi.load("libwinpthread-1.dll")
     elseif util.isAndroid() then
         -- pthread directives are in Bionic library on Android
-        local ok, pthread = pcall(ffi.load, "libc.so")
-        if ok then return pthread end
+        ok, cached_pthread = pcall(ffi.load, "libc.so")
+        if ok then return cached_pthread end
     else
         -- Kobo devices strangely have no libpthread.so in LD_LIBRARY_PATH
         -- so we hardcode the libpthread.so.0 here just for Kobo.
         for _, libname in ipairs({"libpthread.so", "libpthread.so.0"}) do
-            local ok, pthread = pcall(ffi.load, libname)
-            if ok then return pthread end
+            ok, cached_pthread = pcall(ffi.load, libname)
+            if ok then return cached_pthread end
         end
     end
 end
@@ -705,7 +705,7 @@ only 8bit+8bit alpha or 24bit+8bit alpha pixmaps. So we need to convert
 what we get from mupdf.
 --]]
 local function bmpmupdf_pixmap_to_bmp(bmp, pixmap)
-    local hook, mask, count = debug.gethook()
+    local hook, mask, _ = debug.gethook()
     debug.sethook()
     local k2pdfopt = get_k2pdfopt()
 
