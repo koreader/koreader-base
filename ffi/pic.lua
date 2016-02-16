@@ -1,17 +1,15 @@
 local ffi = require("ffi")
 local BB = require("ffi/blitbuffer")
+local Png = require("ffi/png")
 
 local dummy = require("ffi/turbojpeg_h")
-local dummy = require("ffi/lodepng_h")
 local dummy = require("ffi/giflib_h")
-local turbojpeg, lodepng, giflib
+local turbojpeg, giflib
 if ffi.os == "Windows" then
     turbojpeg = ffi.load("libs/libturbojpeg.dll")
-    lodepng = ffi.load("libs/liblodepng.dll")
     giflib = ffi.load("libs/libgif-7.dll")
 else
     turbojpeg = ffi.load("libs/libturbojpeg.so")
-    lodepng = ffi.load("libs/liblodepng.so")
     giflib = ffi.load("libs/libgif.so.7")
 end
 
@@ -23,7 +21,7 @@ start of pic page type
 local PicPage = {}
 
 function PicPage:new(o)
-    local o = o or {}
+    o = o or {}
     setmetatable(o, self)
     self.__index = self
     return o
@@ -173,15 +171,11 @@ function Pic.openGIFDocument(filename)
 end
 
 function Pic.openPNGDocument(filename)
-    local width = ffi.new("int[1]")
-    local height = ffi.new("int[1]")
-    local ptr = ffi.new("unsigned char*[1]")
-    local err = lodepng.lodepng_decode32_file(ptr, width, height, filename)
-    if err ~= 0 then
-        error("decoding PNG file")
-    end
-    local doc = PicDocument:new{width=width[0], height=height[0]}
-    doc.image_bb = BB.new(width[0], height[0], BB.TYPE_BBRGB32, ptr[0])
+    local ok, re = Png.decodeFromFile(filename)
+    if not ok then error(re) end
+
+    local doc = PicDocument:new{width=re.width, height=re.height}
+    doc.image_bb = BB.new(re.width, re.height, BB.TYPE_BBRGB32, re.data)
     -- mark buffer for freeing when Blitbuffer is freed:
     doc.image_bb:setAllocated(1)
     doc.components = 4

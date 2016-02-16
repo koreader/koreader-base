@@ -106,6 +106,9 @@ ffi/mupdf_h.lua: ffi-cdecl/mupdf_decl.c $(MUPDF_DIR)/include
 ffi/SDL2_0_h.lua: ffi-cdecl/SDL2_0_decl.c
 	CPPFLAGS="$(CFLAGS) -I. -LSDL2" $(FFI_CDECL) gcc ffi-cdecl/SDL2_0_decl.c $@
 
+ffi/lodepng_h.lua: ffi-cdecl/lodepng_decl.c $(LODEPNG_DIR)
+	CPPFLAGS="$(CFLAGS) -I. -I$(LODEPNG_DIR)" $(FFI_CDECL) gcc ffi-cdecl/lodepng_decl.c $@
+
 # include all third party libs
 include third.Makefile
 
