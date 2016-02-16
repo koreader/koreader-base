@@ -19,7 +19,7 @@ set(BUILD_CMD_STR "${CC} -shared ${CFLAGS} -Wl,-E -Wl,-rpath,'$ORIGIN' -Wl,-sona
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
     https://github.com/lvandeve/lodepng.git
-    eb16d900b2e82c01ba9d81b376e7fd7419edd15b
+    4a02c6f8c55839c08521c538a36284ce9400c3a5
     ${SOURCE_DIR}
 )
 

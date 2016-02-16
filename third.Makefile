@@ -79,7 +79,7 @@ $(MUPDF_LIB) $(MUPDF_DIR)/include: $(JPEG_LIB) \
 		$(CURDIR)/$(THIRDPARTY_DIR)/mupdf && \
 		$(MAKE)
 
-$(LODEPNG_LIB): $(THIRDPARTY_DIR)/lodepng/CMakeLists.txt
+$(LODEPNG_LIB) $(LODEPNG_DIR): $(THIRDPARTY_DIR)/lodepng/CMakeLists.txt
 	install -d $(LODEPNG_BUILD_DIR)
 	-rm -f $(LODEPNG_DIR)/../lodepng-stamp/lodepng-build
 	cd $(LODEPNG_BUILD_DIR) && \

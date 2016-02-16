@@ -1205,27 +1205,26 @@ write blitbuffer contents to a PNG file
 
 @param filename the name of the file to be created
 --]]
+local Png  -- lazy load ffi/png
 function BB_mt.__index:writePNG(filename)
-    local hook, mask, count = debug.gethook()
+    if not Png then Png = require("ffi/png") end
+    local hook, mask, _ = debug.gethook()
     debug.sethook()
-    require("ffi/leptonica_h")
-    local lept = nil
-    if ffi.os == "Windows" then
-        lept = ffi.load("libs/liblept-3.dll")
-    else
-        lept = ffi.load("libs/liblept.so.3")
-    end
-    local w, h = self:getWidth(), self:getHeight()
-    local pix = lept.pixCreate(w, h, 8)
-    if pix ~= nil then
+    local w, h = self.w, self.h
+    local cdata = ffi.C.malloc(w * h * 4)
+    local mem = ffi.cast("char*", cdata)
+    for x = 0, w-1 do
         for y = 0, h-1 do
-            for x = 0, w-1 do
-                lept.pixSetPixel(pix, x, y, self:getPixel(x, y):getColor8().a)
-            end
+            local c = self:getPixel(x, y):getColorRGB32()
+            local offset = 4 * w * y + 4 * x
+            mem[offset] = c.r
+            mem[offset + 1] = c.g
+            mem[offset + 2] = c.b
+            mem[offset + 3] = 0xFF
         end
-        lept.pixWritePng(filename, pix, ffi.new("float", 0.0))
-        lept.pixDestroy(ffi.new('PIX *[1]', pix))
     end
+    Png.encodeToFile(filename, mem, w, h)
+    ffi.C.free(cdata)
     debug.sethook(hook, mask)
 end
 
