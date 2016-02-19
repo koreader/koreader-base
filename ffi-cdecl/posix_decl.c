@@ -60,6 +60,8 @@ cdecl_func(usleep)
 cdecl_func(statvfs)
 cdecl_func(gettimeofday)
 cdecl_func(realpath)
+cdecl_func(basename)
+cdecl_func(dirname)
 
 cdecl_func(malloc)
 cdecl_func(free)

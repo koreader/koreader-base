@@ -36,7 +36,6 @@ macro(assert_var_defined varName)
 endmacro(assert_var_defined)
 
 assert_var_defined(MACHINE)
-# assert_var_defined(CHOST)
 
 macro(ep_get_source_dir varName)
     set(${varName} "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}-prefix/src/${PROJECT_NAME}")
