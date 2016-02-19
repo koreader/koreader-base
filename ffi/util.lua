@@ -28,6 +28,7 @@ DWORD GetFullPathNameA(
     LPSTR lpBuffer,
     LPSTR *lpFilePart
 );
+LPTSTR PathFindFileNameA(LPCSTR lpszPath);
 UINT GetACP(void);
 int MultiByteToWideChar(
     UINT CodePage,
@@ -105,6 +106,14 @@ function util.realpath(path)
 			return ffi.string(buffer)
 		end
 	end
+end
+
+function util.basename(path)
+    if ffi.os == "Windows" then
+        return ffi.string(C.PathFindFileNameA(path))
+    else
+        return ffi.string(C.basename(path))
+    end
 end
 
 function util.copyFile(from, to)
