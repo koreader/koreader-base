@@ -63,6 +63,8 @@ int usleep(unsigned int);
 int statvfs(const char *restrict, struct statvfs *restrict) __attribute__((__nothrow__, __leaf__));
 int gettimeofday(struct timeval *restrict, struct timezone *restrict) __attribute__((__nothrow__, __leaf__));
 char *realpath(const char *restrict, char *restrict) __attribute__((__nothrow__, __leaf__));
+char *basename(char *path) __attribute__((__nothrow__, __leaf__));
+char *dirname(char *path) __attribute__((__nothrow__, __leaf__));
 void *malloc(long unsigned int) __attribute__((malloc, leaf, nothrow));
 void free(void *) __attribute__((__nothrow__, __leaf__));
 char *strdup(const char *) __attribute__((malloc, leaf, nothrow));
