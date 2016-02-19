@@ -16,6 +16,7 @@ typedef const char *LPCSTR;
 typedef const wchar_t *LPCWSTR;
 typedef bool *LPBOOL;
 typedef LPSTR LPTSTR;
+typedef int BOOL;
 
 typedef struct _FILETIME {
 	DWORD dwLowDateTime;
@@ -30,6 +31,7 @@ DWORD GetFullPathNameA(
     LPSTR *lpFilePart
 );
 LPTSTR PathFindFileNameA(LPCSTR lpszPath);
+BOOL PathRemoveFileSpec(LPTSTR pszPath);
 UINT GetACP(void);
 int MultiByteToWideChar(
     UINT CodePage,
@@ -115,6 +117,21 @@ function util.basename(path)
         return ffi.string(C.PathFindFileNameA(ptr))
     else
         return ffi.string(C.basename(ptr))
+    end
+end
+
+function util.dirname(in_path)
+    local path = ffi.new("char[?]", #in_path + 1)
+    ffi.copy(path, in_path)
+    local ptr = ffi.cast("uint8_t *", path)
+    if ffi.os == "Windows" then
+        if C.PathRemoveFileSpec(ptr) then
+            return ffi.string(ptr)
+        else
+            return path
+        end
+    else
+        return ffi.string(C.dirname(ptr))
     end
 end
 
