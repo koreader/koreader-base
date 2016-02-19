@@ -15,6 +15,7 @@ typedef wchar_t *LPWSTR;
 typedef const char *LPCSTR;
 typedef const wchar_t *LPCWSTR;
 typedef bool *LPBOOL;
+typedef LPSTR LPTSTR;
 
 typedef struct _FILETIME {
 	DWORD dwLowDateTime;
@@ -109,10 +110,11 @@ function util.realpath(path)
 end
 
 function util.basename(path)
+	local ptr = ffi.cast("uint8_t *", path)
     if ffi.os == "Windows" then
-        return ffi.string(C.PathFindFileNameA(path))
+        return ffi.string(C.PathFindFileNameA(ptr))
     else
-        return ffi.string(C.basename(path))
+        return ffi.string(C.basename(ptr))
     end
 end
 
