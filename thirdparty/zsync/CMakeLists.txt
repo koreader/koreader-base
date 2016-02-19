@@ -18,8 +18,8 @@ set(CFG_CMD_STR "CC=\"${CC}\" CFLAGS=\"$(CFLAGS) -I${SOURCE_DIR}/c\" ${SOURCE_DI
 
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
-    http://zsync.moria.org.uk/zsync.git
-    b89a03f304f9761fe4029fff8f33db6cb12ae002
+    https://github.com/hzj-jie/zsync.git
+    af9ee0a1a187010452551e5cc80de6f0ef8fe259
     ${SOURCE_DIR}
 )
 
