@@ -3,7 +3,9 @@
 
 language: c
 
-sudo: false
+dist: trusty
+sudo: required
+# sudo: false
 
 cache:
   apt: true
@@ -40,6 +42,9 @@ before_install:
     - ln -s $(which gcc-4.8) bin/gcc
     - ln -s $(which c++-4.8) bin/c++
     - ln -s $(which g++-4.8) bin/g++
+    # - curl "http://ftp.gnu.org/gnu/automake/automake-1.13.1.tar.gz" > automake-1.13.1.tar.gz
+    # - tar -zxvf automake-1.13.1.tar.gz
+    # - (cd automake-1.13.1 && ./configure --prefix=`pwd`/../ && make -j5 && make install)
     - export PATH=$PWD/bin:$PATH
 
 install:

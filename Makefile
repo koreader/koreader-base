@@ -162,6 +162,6 @@ $(OUTPUT_DIR)/spec/base:
 		ln -sf ../../../spec $(OUTPUT_DIR)/spec/base
 
 test: $(OUTPUT_DIR)/spec $(OUTPUT_DIR)/.busted
-	cd $(OUTPUT_DIR) && busted -l ./luajit --exclude-tags=notest
+	cd $(OUTPUT_DIR) && ./luajit $(shell which busted) ./spec/base/unit
 
 .PHONY: test
