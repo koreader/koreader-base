@@ -9,9 +9,11 @@ local jbig2_pdf = "spec/base/unit/data/2col.jbig2.pdf"
 
 describe("mupdf module", function()
     local M
+    local md5
 
     setup(function()
         M = require("ffi/mupdf")
+        md5 = require("ffi/MD5")
     end)
 
     it("should open PDFs", function()
@@ -93,10 +95,10 @@ describe("mupdf module", function()
             local out_f = io.open(simple_pdf_out, "r")
             local out_data = out_f:read("*a")
             out_f:close()
-            local test_f = io.open(simple_pdf_compare, "r")
-            local test_data = test_f:read("*a")
-            test_f:close()
-            assert.equals(out_data, test_data)
+            assert.is_equal(
+                md5.sumFile(simple_pdf_out),
+                md5.sumFile(simple_pdf_compare)
+            )
         end)
 
         describe("PDF page API", function()
@@ -155,7 +157,13 @@ describe("mupdf module", function()
             local img = M.renderImageFile(test_img)
             assert.is_not_nil(img)
         end)
-        it("should render an image, 1000 times", function()
+        it("should render an image, 10 times #notest", function()
+            for i = 1, 10 do
+                local img = M.renderImageFile(test_img)
+                assert.is_not_nil(img)
+            end
+        end)
+        it("should render an image, 1000 times #notest", function()
             for i = 1, 1000 do
                 local img = M.renderImageFile(test_img)
                 assert.is_not_nil(img)

@@ -24,7 +24,6 @@ ko_write_gitclone_script(
     ${SOURCE_DIR}
 )
 
-set(LIBPNG_VER "1.6.19")
 include(ExternalProject)
 ExternalProject_Add(
     ${PROJECT_NAME}
