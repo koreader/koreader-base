@@ -121,6 +121,10 @@ function util.basename(path)
 end
 
 function util.dirname(in_path)
+    --[[
+    Both PathRemoveFileSpec and dirname will change original input string, so
+    we need to make a copy.
+    --]]
     local path = ffi.new("char[?]", #in_path + 1)
     ffi.copy(path, in_path)
     local ptr = ffi.cast("uint8_t *", path)
