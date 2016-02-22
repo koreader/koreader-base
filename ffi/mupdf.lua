@@ -85,7 +85,7 @@ function mupdf.openDocument(filename, cache_size)
     }
 
     if mupdf_doc.doc == nil then
-		merror("cannot open PDF file")
+        merror("cannot open PDF file")
     end
 
     setmetatable(mupdf_doc, document_mt)
