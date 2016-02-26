@@ -438,7 +438,7 @@ LUA_SPORE_ROCK=$(LUAROCKS_DIR)/lua-spore/$(SPORE_VER)/$(LUA_SPORE_VER).rockspec
 #
 # also, dynamic libraries must be compiled with "-shared" and "-fPIC".
 # having all symbols included (-E) won't hurt, too.
-DYNLIB_CFLAGS=-L$(OUTPUT_DIR)/libs $(CFLAGS) \
+DYNLIB_CFLAGS=-L$(CURDIR)/$(OUTPUT_DIR)/libs $(CFLAGS) \
 		-I$(LUAJIT_DIR)/src -shared -Wl,-E -Wl,-rpath,'$$ORIGIN'
 
 LPEG_BUILD_DIR=$(THIRDPARTY_DIR)/lpeg/build/$(MACHINE)

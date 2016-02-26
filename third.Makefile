@@ -446,9 +446,10 @@ $(TURBO_FFI_WRAP_LIB): $(SSL_LIB) $(THIRDPARTY_DIR)/turbo/CMakeLists.txt
 	cd $(TURBO_BUILD_DIR) && \
 		$(CMAKE) -DCC="$(CC) $(CFLAGS) -I$(OPENSSL_DIR)/include" \
 		-DLDFLAGS="$(LDFLAGS) -lcrypto -lssl \
-		$(if $(ANDROID),$(CURDIR)/$(LUAJIT_LIB),) \
-		$(if $(WIN32),$(CURDIR)/$(LUAJIT_LIB),) \
-		-L$(OPENSSL_DIR) -Wl,-rpath,'libs'" -DMACHINE="$(MACHINE)" \
+			$(if $(ANDROID),$(CURDIR)/$(LUAJIT_LIB),) \
+			$(if $(WIN32),$(CURDIR)/$(LUAJIT_LIB),) \
+			-L$(OPENSSL_DIR) -Wl,-rpath,'libs'" \
+		-DMACHINE="$(MACHINE)" \
 		$(CURDIR)/$(THIRDPARTY_DIR)/turbo && \
 		$(MAKE)
 	cp -fL $(TURBO_DIR)/$(notdir $(TURBO_FFI_WRAP_LIB)) $@
@@ -470,14 +471,14 @@ $(LUA_SPORE_ROCK): $(THIRDPARTY_DIR)/lua-Spore/CMakeLists.txt
 		$(MAKE)
 
 # override lpeg built by luarocks, this is only necessary for Android
-$(LPEG_DYNLIB) $(LPEG_RE): $(THIRDPARTY_DIR)/lpeg/CMakeLists.txt
+$(LPEG_DYNLIB) $(LPEG_RE): $(LUAJIT_LIB) $(THIRDPARTY_DIR)/lpeg/CMakeLists.txt
 	install -d $(OUTPUT_DIR)/rocks/lib/lua/5.1
 	install -d $(OUTPUT_DIR)/rocks/share/lua/5.1
 	install -d $(LPEG_BUILD_DIR)
 	cd $(LPEG_BUILD_DIR) && \
 		$(CMAKE) -DCC="$(CC)" -DDYNLIB_CFLAGS="$(DYNLIB_CFLAGS)" \
-		-DLUA_DIR="$(LUAJIT_DIR)" -DLUAJIT_LIB="$(CURDIR)/$(LUAJIT_LIB)" \
-		-DMACHINE="$(MACHINE)" $(CURDIR)/$(THIRDPARTY_DIR)/lpeg && \
+		-DLUA_DIR="$(LUAJIT_DIR)" -DMACHINE="$(MACHINE)" \
+		$(CURDIR)/$(THIRDPARTY_DIR)/lpeg && \
 		$(MAKE)
 	cp -rf $(LPEG_DIR)/lpeg.so $(OUTPUT_DIR)/rocks/lib/lua/5.1
 	cp -rf $(LPEG_DIR)/re.lua $(OUTPUT_DIR)/rocks/share/lua/5.1
