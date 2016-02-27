@@ -21,60 +21,17 @@ function kobolight_mt.__index:close()
 	end
 end
 
-function kobolight_mt.__index:toggle()
-	if self.isOn then
-		self.savedBrightness = self.brightness
-		self:setBrightness(0)
-	else
-		self:setBrightness(self.savedBrightness or 0)
-	end
-end
-
-function kobolight_mt.__index:sleep()
-	if self.isOn then
-		self.sleepLight = true
-		self:toggle()
-	else
-		self.sleepLight = false
-		-- Because the brightness value cannot be read, the front light
-		-- could be on even is isOn is false. This can happen if the light
-		-- was enabled in e.g. KSM or Nickel before starting KOReader.
-		-- Therefore, always set brightness to 0 just in case.
-		self:setBrightness(0)
-	end
-end
-
-function kobolight_mt.__index:restore()
-	if self.sleepLight then
-		self:toggle()
-	end
-end
-
 function kobolight_mt.__index:setBrightness(brightness)
 	assert(brightness >= 0 and brightness <= 100,
 		"Wrong brightness value given!")
 
 	assert(ffi.C.ioctl(self.light_fd.ld, 241, ffi.cast("int", brightness)) == 0,
 		"cannot change brightess value")
-
-	self.brightness = brightness
-	if brightness > 0 then
-		self.isOn = true
-	else
-		self.isOn = false
-	end
-end
-
-function kobolight_mt.__index:restoreBrightness(brightness)
-	self.brightness = brightness
-	self.savedBrightness = brightness
 end
 
 function kobolight.open(device)
 	local light = {
 		light_fd = nil,
-		brightness = 0,
-		isOn = false
 	}
 
 	local ld = ffi.C.open(device or "/dev/ntx_io", ffi.C.O_RDWR)
