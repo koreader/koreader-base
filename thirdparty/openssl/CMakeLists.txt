@@ -12,11 +12,11 @@ assert_var_defined(CC)
 assert_var_defined(SHARED_LDFLAGS)
 assert_var_defined(LD)
 assert_var_defined(RANLIB)
-assert_var_defined(CHOST)
 
 ep_get_source_dir(SOURCE_DIR)
 
 if(${MINGW})
+    assert_var_defined(CHOST)
     set(CFG_ENV_VAR "CROSS_COMPILE=\"${CHOST}-\"")
     set(CFG_OPTS "no-shared")
 else()
