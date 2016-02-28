@@ -14,7 +14,7 @@ assert_var_defined(OUTPUT_PATH)
 
 ep_get_source_dir(SOURCE_DIR)
 
-set(BUILD_CMD_STR "${CC} -shared ${CFLAGS} -Wl,-E -Wl,-rpath,'$ORIGIN' -Wl,-soname=${SONAME} lodepng.c -o ${OUTPUT_PATH}/${SONAME}")
+set(BUILD_CMD_STR "${CC} -shared ${CFLAGS} -Wl,-E -Wl,-soname=${SONAME} lodepng.c -o ${OUTPUT_PATH}/${SONAME}")
 
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME

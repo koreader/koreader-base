@@ -71,8 +71,9 @@ libs: \
 	$(OUTPUT_DIR)/libs/libwrap-mupdf.so
 
 $(OUTPUT_DIR)/libs/libkoreader-input.so: input.c $(POPEN_NOSHELL_LIB)
-	$(CC) $(DYNLIB_CFLAGS) -I$(POPEN_NOSHELL_DIR) $(if $(POCKETBOOK),-DPOCKETBOOK,) \
-		-o $@ $^ $(if $(POCKETBOOK),-linkview,) \
+	$(CC) $(DYNLIB_CFLAGS) -I$(POPEN_NOSHELL_DIR) \
+		$(if $(POCKETBOOK),-DPOCKETBOOK,) \
+		-o $@ $^ $(if $(POCKETBOOK),-linkview,)
 
 $(OUTPUT_DIR)/libs/libkoreader-lfs.so: \
 			$(if $(or $(ANDROID),$(WIN32)),$(LUAJIT_LIB),) \
@@ -92,13 +93,11 @@ $(OUTPUT_DIR)/libs/libkoreader-cre.so: cre.cpp \
 			$(CRENGINE_LIB)
 	$(CXX) -I$(CRENGINE_SRC_DIR)/crengine/include/ $(DYNLIB_CFLAGS) \
 		-DLDOM_USE_OWN_MEM_MAN=$(if $(WIN32),0,1) \
-		$(if $(WIN32),-DQT_GL=1) \
-		-Wl,-rpath,'libs' -static-libstdc++ -o $@ $^
+		$(if $(WIN32),-DQT_GL=1) -static-libstdc++ -o $@ $^
 
 $(OUTPUT_DIR)/libs/libwrap-mupdf.so: wrap-mupdf.c \
 			$(MUPDF_LIB)
-	$(CC) -I$(MUPDF_DIR)/include $(DYNLIB_CFLAGS) \
-		-o $@ $^
+	$(CC) -I$(MUPDF_DIR)/include $(DYNLIB_CFLAGS) -o $@ $^
 
 ffi/mupdf_h.lua: ffi-cdecl/mupdf_decl.c $(MUPDF_DIR)/include
 	CPPFLAGS="$(CFLAGS) -I. -I$(MUPDF_DIR)/include" $(FFI_CDECL) gcc ffi-cdecl/mupdf_decl.c $@
