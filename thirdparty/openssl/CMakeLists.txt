@@ -19,10 +19,10 @@ ep_get_source_dir(SOURCE_DIR)
 if(${MINGW})
     set(CFG_ENV_VAR "CROSS_COMPILE=\"${CHOST}-\"")
     set(CFG_OPTS "no-shared")
-else(${MINGW})
+else()
     set(CFG_ENV_VAR "")
     set(CFG_OPTS "shared")
-endif(${MINGW})
+endif()
 set(CFG_OPTS "${CFG_OPTS} no-asm no-idea no-mdc2 no-rc5")
 set(CFG_CMD_STR "${CFG_ENV_VAR} ${SOURCE_DIR}/${CONFIG_SCRIPT} ${CFG_OPTS}")
 
@@ -32,7 +32,7 @@ set(MAKE_CMD_STR "${MAKE_CMD_STR} --silent depend build_crypto build_ssl >/dev/n
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
     https://github.com/openssl/openssl.git
-    3df69d3aefde7671053d4e3c242b228e5d79c83f
+    OpenSSL_1_0_2f
     ${SOURCE_DIR}
 )
 

@@ -40,7 +40,7 @@ $(PNG_LIB): $(ZLIB) $(THIRDPARTY_DIR)/libpng/CMakeLists.txt
 	cd $(PNG_BUILD_DIR) && \
 		$(CMAKE) -DCC="$(CC)" -DCXX="$(CXX)" \
 		-DCPPFLAGS="$(CFLAGS) -I$(ZLIB_DIR)" \
-		-DLDFLAGS="$(LDFLAGS) -L$(ZLIB_DIR)" \
+		-DLDFLAGS="$(LDFLAGS) -L$(ZLIB_DIR) -Wl,-rpath,'$(ORIGIN_CMAKE_TO_AUTOCFG)'" \
 		-DCHOST="$(CHOST)" -DMACHINE="$(MACHINE)" \
 		$(CURDIR)/$(THIRDPARTY_DIR)/libpng && \
 		$(MAKE)
@@ -72,7 +72,7 @@ $(MUPDF_LIB) $(MUPDF_DIR)/include: $(JPEG_LIB) \
 		-DMUPDF_THIRDPARTY_LIBS=$(MUPDF_THIRDPARTY_LIBS) \
 		-DMUPDF_LIB=$(CURDIR)/$(MUPDF_LIB) $(if $(ANDROID),-DANDROID:BOOL=ON,) \
 		-DMUPDF_SONAME=$(notdir $(MUPDF_LIB)) \
-		-DAES_LIB=$(AES_LIB) \
+		-DAES_LIB=$(AES_LIB) -DRPATH="\$$ORIGIN" \
 		-DZLIB=$(CURDIR)/$(ZLIB) -DJPEG_LIB=$(CURDIR)/$(JPEG_LIB) \
 		-DFREETYPE_LIB=$(CURDIR)/$(FREETYPE_LIB) \
 		-DMACHINE=$(MACHINE) \
@@ -188,8 +188,8 @@ $(K2PDFOPT_LIB) $(LEPTONICA_LIB) $(TESSERACT_LIB): $(PNG_LIB) $(ZLIB) \
 	cd $(K2PDFOPT_BUILD_DIR) && \
 		$(CMAKE) $(if $(EMULATE_READER),,-DHOST="$(if $(ANDROID),"arm-linux",$(CHOST))") \
 		-DCC="$(CC)" -DCFLAGS="$(CFLAGS)" -DCXX="$(CXX)" -DCXXFLAGS="$(CXXFLAGS) -O3" \
-		-DAR="$(AR)" -DLDFLAGS="$(LDFLAGS)" -DMACHINE="$(MACHINE)" \
-		-DSTDCPPLIB="$(STATIC_LIBSTDCPP)" \
+		-DAR="$(AR)" -DSTDCPPLIB="$(STATIC_LIBSTDCPP)" \
+		-DLDFLAGS="$(LDFLAGS)" -DMACHINE="$(MACHINE)" \
 		-DZLIB_DIR=$(ZLIB_DIR) -DZLIB=$(CURDIR)/$(ZLIB) -DPNG_DIR=$(PNG_DIR) \
 		-DLEPTONICA_DIR=$(LEPTONICA_DIR) -DTESSERACT_DIR=$(TESSERACT_DIR) \
 		$(CURDIR)/$(THIRDPARTY_DIR)/libk2pdfopt && \
@@ -341,12 +341,14 @@ $(LUASOCKET): $(THIRDPARTY_DIR)/luasocket/CMakeLists.txt
 		$(CURDIR)/$(THIRDPARTY_DIR)/luasocket && \
 		$(MAKE)
 
+# RPATH for OPENSSL is even uglier because its Makefile uses single quote :/
+OPENSSL_RPATH_ORIGIN=\\\"'$(ORIGIN_CMAKE_TO_AUTOCFG)'\\\"
 $(OPENSSL_LIB) $(OPENSSL_DIR): $(THIRDPARTY_DIR)/openssl/CMakeLists.txt
 	install -d $(OPENSSL_BUILD_DIR)
 	-rm -f $(OPENSSL_DIR)/../openssl-stamp/openssl-build
 	cd $(OPENSSL_BUILD_DIR) && \
 		$(CMAKE) -DCC="$(CC) $(CFLAGS)" \
-		-DSHARED_LDFLAGS="$(LDFLAGS) -Wl,-rpath,'libs'" \
+		-DSHARED_LDFLAGS="$(LDFLAGS) -Wl,-rpath,$(OPENSSL_RPATH_ORIGIN)" \
 		-DLD="$(LD)" -DRANLIB="$(RANLIB)" \
 		-DCONFIG_SCRIPT="$(if $(EMULATE_READER),config,Configure $(if $(WIN32),mingw,linux-generic32))" \
 		-DMACHINE="$(MACHINE)" -DCHOST="$(CHOST)" \
@@ -357,11 +359,13 @@ $(SSL_LIB): $(OPENSSL_LIB)
 	cp -fL $(OPENSSL_DIR)/$(notdir $(SSL_LIB)) $(SSL_LIB)
 	cp -fL $(OPENSSL_DIR)/$(notdir $(CRYPTO_LIB)) $(CRYPTO_LIB)
 
+# ssl.so locates in koreader/common, but libssl.so and libcrypto.so live
+# in koreader/libs, so we need to set rpath accordingly
 $(LUASEC): $(OPENSSL_DIR) $(THIRDPARTY_DIR)/luasec/CMakeLists.txt
 	install -d $(LUASEC_BUILD_DIR)
 	-rm -f $(LUASEC_DIR)/../luasec-stamp/luasec-install
 	cd $(LUASEC_BUILD_DIR) && \
-		$(CMAKE) -DCC="$(CC) $(CFLAGS)" -DLD="$(CC) -Wl,-rpath,'libs'" \
+		$(CMAKE) -DCC="$(CC) $(CFLAGS)" -DLD="$(CC) -Wl,-rpath,'$(ORIGIN_CMAKE_TO_AUTOCFG)/../libs'" \
 		$(if $(ANDROID),-DLIBS="-lssl -lcrypto -lluasocket $(CURDIR)/$(LUAJIT_LIB)",) \
 		-DINC_PATH="-I$(LUAJIT_DIR)/src -I$(OPENSSL_DIR)/include" \
 		-DLIB_PATH="-L$(OPENSSL_DIR)" -DMACHINE="$(MACHINE)" \
@@ -412,7 +416,7 @@ endif
 $(CZMQ_LIB): $(ZMQ_LIB) $(THIRDPARTY_DIR)/czmq/CMakeLists.txt
 	install -d $(CZMQ_BUILD_DIR)
 	cd $(CZMQ_BUILD_DIR) && \
-		$(CMAKE) -DCC="$(CC)" -DLDFLAGS="$(LDFLAGS) -Wl,-rpath,'libs'" \
+		$(CMAKE) -DCC="$(CC)" -DLDFLAGS="$(LDFLAGS) -Wl,-rpath,'$(ORIGIN_CMAKE_TO_AUTOCFG)'" \
 		-DCFLAGS="$(CFLAGS) $(if $(CLANG),-O0,) $(if $(WIN32),-DLIBCZMQ_EXPORTS)" \
 		-DZMQ_DIR=$(ZMQ_DIR) -DHOST=$(CHOST) -DMACHINE="$(MACHINE)" \
 		$(CURDIR)/$(THIRDPARTY_DIR)/czmq && \
@@ -423,7 +427,7 @@ $(FILEMQ_LIB): $(ZMQ_LIB) $(CZMQ_LIB) $(SSL_LIB) $(THIRDPARTY_DIR)/filemq/CMakeL
 	install -d $(FILEMQ_BUILD_DIR)
 	cd $(FILEMQ_BUILD_DIR) && \
 		$(CMAKE) -DCC="$(CC)" -DCFLAGS="$(CFLAGS) $(if $(CLANG),-O0,) -I$(OPENSSL_DIR)/include" \
-		-DLDFLAGS="$(LDFLAGS) -L$(OPENSSL_DIR) -Wl,-rpath,'libs'" \
+		-DLDFLAGS="$(LDFLAGS) -L$(OPENSSL_DIR) -Wl,-rpath,'${ORIGIN_CMAKE_TO_AUTOCFG}'" \
 		-DZMQ_DIR=$(ZMQ_DIR) -DCZMQ_DIR=$(CZMQ_DIR) \
 		-DHOST=$(CHOST) -DMACHINE="$(MACHINE)" \
 		$(CURDIR)/$(THIRDPARTY_DIR)/filemq && \
@@ -434,13 +438,15 @@ $(ZYRE_LIB): $(ZMQ_LIB) $(CZMQ_LIB) $(THIRDPARTY_DIR)/zyre/CMakeLists.txt
 	install -d $(ZYRE_BUILD_DIR)
 	cd $(ZYRE_BUILD_DIR) && \
 		$(CMAKE) -DCC="$(CC)" -DCFLAGS="$(CFLAGS) $(if $(CLANG),-O0,)" \
-		-DCXXFLAGS="$(CXXFLAGS)" -DLDFLAGS="$(LDFLAGS) -Wl,-rpath,'libs'" \
+		-DCXXFLAGS="$(CXXFLAGS)" -DLDFLAGS="$(LDFLAGS) -Wl,-rpath,'$(ORIGIN_CMAKE_TO_AUTOCFG)'" \
 		-DZMQ_DIR=$(ZMQ_DIR) -DCZMQ_DIR=$(CZMQ_DIR) \
 		-DHOST=$(CHOST) -DMACHINE="$(MACHINE)" \
 		$(CURDIR)/$(THIRDPARTY_DIR)/zyre && \
 		$(MAKE)
 	cp -fL $(ZYRE_DIR)/$(if $(WIN32),bin,lib)/$(notdir $(ZYRE_LIB)) $@
 
+# libtffi_wrap.so locates in koreader/common, but libssl.so and libcrypto.so
+# live in koreader/libs, so we need to set rpath accordingly
 $(TURBO_FFI_WRAP_LIB): $(SSL_LIB) $(THIRDPARTY_DIR)/turbo/CMakeLists.txt
 	install -d $(TURBO_BUILD_DIR)
 	cd $(TURBO_BUILD_DIR) && \
@@ -448,7 +454,7 @@ $(TURBO_FFI_WRAP_LIB): $(SSL_LIB) $(THIRDPARTY_DIR)/turbo/CMakeLists.txt
 		-DLDFLAGS="$(LDFLAGS) -lcrypto -lssl \
 			$(if $(ANDROID),$(CURDIR)/$(LUAJIT_LIB),) \
 			$(if $(WIN32),$(CURDIR)/$(LUAJIT_LIB),) \
-			-L$(OPENSSL_DIR) -Wl,-rpath,'libs'" \
+			-L$(OPENSSL_DIR) -Wl,-rpath,'$(ORIGIN_CMAKE_TO_AUTOCFG)/../libs'" \
 		-DMACHINE="$(MACHINE)" \
 		$(CURDIR)/$(THIRDPARTY_DIR)/turbo && \
 		$(MAKE)
