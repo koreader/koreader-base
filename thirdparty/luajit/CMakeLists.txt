@@ -52,7 +52,7 @@ endif()
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
     https://github.com/LuaJIT/LuaJIT
-    18f6aa97fd93df8e9964c2d22f20f16e6b71b72b
+    v2.1.0-beta2
     ${SOURCE_DIR}
 )
 
