@@ -90,7 +90,10 @@ HOSTAR:=ar
 HOSTLD:=ld
 HOSTRANLIB:=ranlib
 
-# static libstdc++
+# Static libstdc++, because libtool filters flags at link-time, and drops -static-libstdc++ on GNU/Linux...
+# NOTE: We default to libtool's preferred workaround of putting those extra flags we really want to keep in CC/CXX
+# But to add insult to injury, libtool also links with -nostdlib, which renders -static-lib* useless, so we
+# need this ugly workaround, even on recent (>= 4.5) GCC versions where any sane person would imagine -static-libstdc++ to be enough...
 STATIC_LIBSTDCPP=$(shell $(CC) -print-file-name=libstdc++.a)
 
 # try to find number of CPUs for build machine
@@ -130,7 +133,7 @@ BASE_CFLAGS:=-O2 -ffast-math -pipe -fomit-frame-pointer
 MG2K12_COMPAT_CFLAGS:=-fno-stack-protector -U_FORTIFY_SOURCE -D_GNU_SOURCE -fno-finite-math-only
 MG2K12_COMPAT_CXXFLAGS:=-fno-use-cxa-atexit
 # My legacy TC is based on glibc 2.9, that should be enough :).
-NILUJE_COMPAT_CFLAGS:=-fno-stack-protector -U_FORTIFY_SOURCE -D_GNU_SOURCE
+NILUJE_COMPAT_CFLAGS:=-fno-stack-protector -U_FORTIFY_SOURCE -D_GNU_SOURCE -mno-unaligned-access
 
 # Same deal, but when targeting the K5/Kobo & using Ubuntu's Linaro TCs
 UBUNTU_COMPAT_CFLAGS:=-fno-finite-math-only -fno-stack-protector -U_FORTIFY_SOURCE
@@ -247,8 +250,11 @@ ifdef EMULATE_READER
 	CFLAGS+= $(HOST_ARCH)
 	CXXFLAGS+= $(HOST_ARCH)
 else
-	CC:=$(strip $(CCACHE) $(CC))
-	CXX:=$(strip $(CCACHE) $(CXX))
+	# Don't let libtool piss on our parade...
+	# See what was mentioned around STATIC_LIBSTDCPP on ~L#93 for more details
+	# (cf. https://www.gnu.org/software/libtool/manual/html_node/Stripped-link-flags.html#Stripped-link-flags)
+	CC:=$(strip $(CCACHE) $(CC)) -static-libstdc++
+	CXX:=$(strip $(CCACHE) $(CXX)) -static-libstdc++
 	AR:=$(strip $(CCACHE) $(AR))
 	CFLAGS+= $(ARM_ARCH) $(COMPAT_CFLAGS)
 	CXXFLAGS+= $(ARM_ARCH) $(COMPAT_CXXFLAGS)

@@ -7,13 +7,17 @@ include("koreader_thirdparty_git")
 
 enable_language(C CXX)
 
+assert_var_defined(CC)
+assert_var_defined(CXX)
+assert_var_defined(CFLAGS)
+assert_var_defined(CXXFLAGS)
 assert_var_defined(LDFLAGS)
 assert_var_defined(STATIC_LIBSTDCPP)
 
 ep_get_source_dir(SOURCE_DIR)
 ep_get_binary_dir(BINARY_DIR)
 
-set(CFG_ENV_VAR "CC=\"${CC}\" CFLAGS=\"${CFLAGS}\" LDFLAGS=\"${LDFLAGS}\" LIBS=\"${STATIC_LIBSTDCPP}\" libzmq_have_xmlto=no libzmq_have_asciidoc=no")
+set(CFG_ENV_VAR "CC=\"${CC}\" CXX=\"${CXX}\" CFLAGS=\"${CFLAGS}\" CXXFLAGS=\"${CXXFLAGS}\"  LDFLAGS=\"${LDFLAGS}\" LIBS=\"${STATIC_LIBSTDCPP}\" libzmq_have_xmlto=no libzmq_have_asciidoc=no")
 
 set(CFG_OPTS "-q --prefix=${BINARY_DIR} --disable-static --enable-shared --without-documentation --host=\"${CHOST}\"")
 if(${LEGACY})
@@ -39,7 +43,7 @@ ExternalProject_Add(
     ${PROJECT_NAME}
     DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
     PATCH_COMMAND ./autogen.sh COMMAND ${FORCE_DYNAMLIB_VERSION} COMMAND ${SKIP_TEST} COMMAND ${CLEAR_BUILD_DIR}
-    CONFIGURE_COMMAND sh -c ${CFG_CMD_STR} COMMANd sed -i 's|-lstdc++||g' libtool
+    CONFIGURE_COMMAND sh -c ${CFG_CMD_STR} COMMAND sed -i "s|-lstdc++||g" libtool
     BUILD_COMMAND $(MAKE) -j${PARALLEL_JOBS} --silent
     INSTALL_COMMAND $(MAKE) -j${PARALLEL_JOBS} --silent install
 )

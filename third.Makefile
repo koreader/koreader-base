@@ -383,7 +383,9 @@ $(LUACOMPAT52): $(LUASERIAL_LIB) $(THIRDPARTY_DIR)/lua-serialize/CMakeLists.txt
 $(ZMQ_LIB): $(THIRDPARTY_DIR)/libzmq/CMakeLists.txt
 	install -d $(ZMQ_BUILD_DIR)
 	cd $(ZMQ_BUILD_DIR) && \
-		$(CMAKE) -DCC="$(CC)" -DCFLAGS="$(CFLAGS) $(if $(CLANG),-O0,)" \
+		$(CMAKE) -DCC="$(CC)" -DCXX="$(CXX)" \
+		-DCFLAGS="$(CFLAGS) $(if $(CLANG),-O0,)" \
+		-DCXXFLAGS="$(CXXFLAGS) $(if $(CLANG),-O0,)" \
 		-DLDFLAGS="$(LDFLAGS)" -DSTATIC_LIBSTDCPP="$(STATIC_LIBSTDCPP)" \
 		$(if $(LEGACY),-DLEGACY:BOOL=ON,) -DCHOST=$(CHOST) \
 		$(CURDIR)/$(THIRDPARTY_DIR)/libzmq && \
