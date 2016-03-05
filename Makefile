@@ -19,14 +19,14 @@ all: $(OUTPUT_DIR)/libs $(if $(ANDROID),,$(LUAJIT)) \
 		$(LUA_SPORE_ROCK) \
 		$(if $(ANDROID),$(LPEG_DYNLIB) $(LPEG_RE),) \
 		$(if $(WIN32),,$(OUTPUT_DIR)/sdcv) \
-		$(if $(or $(ANDROID),$(WIN32)),,$(OUTPUT_DIR)/tar) \
-		$(if $(or $(ANDROID),$(WIN32)),,$(OUTPUT_DIR)/zsync) \
+		$(if $(WIN32),,$(OUTPUT_DIR)/tar) \
+		$(if $(WIN32),,$(OUTPUT_DIR)/zsync) \
 		$(if $(WIN32), ,$(ZMQ_LIB) $(CZMQ_LIB) $(FILEMQ_LIB) $(ZYRE_LIB))
 ifndef EMULATE_READER
 	STRIP_FILES="\
 		$(if $(WIN32),,$(OUTPUT_DIR)/sdcv) \
-		$(if $(or $(ANDROID),$(WIN32)),,$(OUTPUT_DIR)/tar) \
-		$(if $(or $(ANDROID),$(WIN32)),,$(OUTPUT_DIR)/zsync) \
+		$(if $(WIN32),,$(OUTPUT_DIR)/tar) \
+		$(if $(WIN32),,$(OUTPUT_DIR)/zsync) \
 		$(if $(ANDROID),,$(LUAJIT)) \
 		$(OUTPUT_DIR)/libs/$(if $(WIN32),*.dll,*.so*)" ;\
 	$(STRIP) --strip-unneeded $${STRIP_FILES} ;\

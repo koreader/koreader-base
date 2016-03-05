@@ -280,6 +280,9 @@ endif
 
 # this will create a path named build/arm-none-linux-gnueabi or similar
 MACHINE?=$(shell PATH=$(PATH) $(CC) -dumpmachine 2>/dev/null)
+$(info ************ Building for MACHINE: "$(MACHINE)" **********)
+$(info ************ PATH: "$(PATH)" **********)
+$(info ************ CHOST: "$(CHOST)" **********)
 OUTPUT_DIR?=build/$(MACHINE)
 
 # you can probably leave these settings alone:

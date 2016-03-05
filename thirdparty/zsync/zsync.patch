@@ -1,0 +1,108 @@
+diff --git a/c/autotools/sockinttypes.m4 b/c/autotools/sockinttypes.m4
+index fb1084f..2507221 100644
+--- a/c/autotools/sockinttypes.m4
++++ b/c/autotools/sockinttypes.m4
+@@ -12,7 +12,7 @@ dnl *    documentation and/or other materials provided with the distribution.
+ dnl * 3. Neither the name of the project nor the names of its contributors
+ dnl *    may be used to endorse or promote products derived from this software
+ dnl *    without specific prior written permission.
+-dnl * 
++dnl *
+ dnl * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
+ dnl * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ dnl * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+@@ -26,9 +26,9 @@ dnl * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
+ dnl * THE POSSIBILITY OF SUCH DAMAGE.
+ dnl *
+ 
+-dnl * 
++dnl *
+ dnl * Check for socklen_t.
+-dnl * 
++dnl *
+ AC_DEFUN([X_TYPE_SOCKLEN_T],
+ [AC_CACHE_CHECK([for socklen_t], ac_cv_type_socklen_t,
+ [AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
+@@ -41,68 +41,9 @@ if test "$ac_cv_type_socklen_t" != yes; then
+ [Define to `int' if <sys/types.h> or <sys/socket.h> does not define.])
+ fi])
+ 
+-dnl * 
+-dnl * Check for in_port_t.
+-dnl * 
+-AC_DEFUN([X_TYPE_IN_PORT_T],
+-[AC_CACHE_CHECK([for in_port_t], ac_cv_type_in_port_t,
+-[AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
+-#include <sys/types.h>
+-#include <sys/socket.h>
+-#include <netinet/in.h>]], [[
+-in_port_t in_port;
+-]])],[ac_cv_type_in_port_t=yes],[ac_cv_type_in_port_t=no])])
+-if test "$ac_cv_type_in_port_t" != yes; then
+-    ac_cv_sin_port_size=unknown
+-    AC_RUN_IFELSE([AC_LANG_SOURCE([[
+-    #include <sys/types.h>
+-    #include <sys/socket.h>
+-    #include <netinet/in.h>
+-    int main() {
+-	struct sockaddr_in addr;
+-	return (sizeof(addr.sin_port) == sizeof(long)) ? 0 : 1;
+-    }
+-    ]])],[ac_cv_sin_port_size=long],[],[])
+-    AC_RUN_IFELSE([AC_LANG_SOURCE([[
+-    #include <sys/types.h>
+-    #include <sys/socket.h>
+-    #include <netinet/in.h>
+-    int main() {
+-	struct sockaddr_in addr;
+-	return (sizeof(addr.sin_port) == sizeof(int)) ? 0 : 1;
+-    }
+-    ]])],[ac_cv_sin_port_size=int],[],[])
+-    AC_RUN_IFELSE([AC_LANG_SOURCE([[
+-    #include <sys/types.h>
+-    #include <sys/socket.h>
+-    #include <netinet/in.h>
+-    int main() {
+-	struct sockaddr_in addr;
+-	return (sizeof(addr.sin_port) == sizeof(short)) ? 0 : 1;
+-    }
+-    ]])],[ac_cv_sin_port_size=short],[],[])
+-    AC_RUN_IFELSE([AC_LANG_SOURCE([[
+-    #include <sys/types.h>
+-    #include <sys/socket.h>
+-    #include <netinet/in.h>
+-    int main() {
+-	struct sockaddr_in addr;
+-	return (sizeof(addr.sin_port) == sizeof(char)) ? 0 : 1;
+-    }
+-    ]])],[ac_cv_sin_port_size=char],[],[])
+-    if test "$ac_cv_sin_port_size" = unknown; then
+-	AC_MSG_ERROR([Failed to get size of sin_port in struct sockaddr_in.])
+-    fi
+-    AC_DEFINE_UNQUOTED(in_port_t, unsigned $ac_cv_sin_port_size,
+-[Define to `unsigned char', `unsigned short', `unsigned int' or
+-`unsigned long' according with size of `sin_port' in `struct sockaddr_in',
+-if <sys/types.h>, <sys/socket.h> or <netinet/in.h> does not define
+-`in_port_t'.])
+-fi])
+-
+-dnl * 
++dnl *
+ dnl * Check for sa_family_t.
+-dnl * 
++dnl *
+ AC_DEFUN([X_TYPE_SA_FAMILY_T],
+ [AC_CACHE_CHECK([for sa_family_t], ac_cv_type_sa_family_t,
+ [AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
+diff --git a/c/libzsync/sha1.h b/c/libzsync/sha1.h
+index 3946505..c898185 100644
+--- a/c/libzsync/sha1.h
++++ b/c/libzsync/sha1.h
+@@ -10,6 +10,7 @@
+ #define _SHA1_H
+ 
+ #include "config.h"
++#include <stdio.h>
+ 
+ #ifdef HAVE_INTTYPES_H
+ #include <inttypes.h>
