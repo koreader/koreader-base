@@ -109,7 +109,7 @@ ffi/lodepng_h.lua: ffi-cdecl/lodepng_decl.c $(LODEPNG_DIR)
 	CPPFLAGS="$(CFLAGS) -I. -I$(LODEPNG_DIR)" $(FFI_CDECL) gcc ffi-cdecl/lodepng_decl.c $@
 
 # include all third party libs
-include third.Makefile
+include Makefile.third
 
 # ===========================================================================
 # the attachment extraction tool:
