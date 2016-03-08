@@ -196,6 +196,7 @@ else ifeq ($(TARGET), kindle-legacy)
 else ifeq ($(TARGET), android)
 	ARM_ARCH:=$(ANDROID_ARCH)
 	ARM_ARCH+=-mfloat-abi=softfp
+	export ac_cv_type_in_port_t=yes
 else ifeq ($(TARGET), arm-generic)
 	# Defaults to generic crap
 	ARM_ARCH:=$(ARMV6_GENERIC_ARCH)
@@ -280,6 +281,11 @@ endif
 
 # this will create a path named build/arm-none-linux-gnueabi or similar
 MACHINE?=$(shell PATH=$(PATH) $(CC) -dumpmachine 2>/dev/null)
+ifdef DEBUG
+    $(info ************ Building for MACHINE: "$(MACHINE)" **********)
+    $(info ************ PATH: "$(PATH)" **********)
+    $(info ************ CHOST: "$(CHOST)" **********)
+endif
 OUTPUT_DIR?=build/$(MACHINE)
 
 # you can probably leave these settings alone:
