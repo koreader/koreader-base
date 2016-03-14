@@ -33,20 +33,23 @@ function FTFace_mt.__index:checkGlyph(char)
 end
 
 function FTFace_mt.__index:renderGlyph(char, bold)
-	assert(ft2.FT_Load_Char(self, char, ft2.FT_LOAD_RENDER) == 0, "freetype error")
+    assert(ft2.FT_Load_Char(self, char, ft2.FT_LOAD_RENDER) == 0, "freetype error")
 
-	if bold then ft2.FT_GlyphSlot_Embolden(self.glyph) end
-	local bitmap = self.glyph.bitmap
-	local glyph = {
-		bb = Blitbuffer.new(bitmap.width, bitmap.rows, Blitbuffer.TYPE_BB8, bitmap.buffer, bitmap.pitch):copy(),
-		l  = self.glyph.bitmap_left,
-		t  = self.glyph.bitmap_top,
-		r  = tonumber(self.glyph.metrics.horiAdvance / 64),
-		ax = tonumber(self.glyph.advance.x / 64),
-		ay = tonumber(self.glyph.advance.y / 64)
-	}
+    if bold then ft2.FT_GlyphSlot_Embolden(self.glyph) end
+    local bitmap = self.glyph.bitmap
+    -- NOTE: depending on the char, bitmap_top (bearingY) can be larger than
+    -- bb:getHeight(). For example: ×. This means the char needs to be drawn
+    -- above baseline.
+    local glyph = {
+        bb = Blitbuffer.new(bitmap.width, bitmap.rows, Blitbuffer.TYPE_BB8, bitmap.buffer, bitmap.pitch):copy(),
+        l  = self.glyph.bitmap_left,
+        t  = self.glyph.bitmap_top,
+        r  = tonumber(self.glyph.metrics.horiAdvance / 64),
+        ax = tonumber(self.glyph.advance.x / 64),
+        ay = tonumber(self.glyph.advance.y / 64)
+    }
 
-	return glyph
+    return glyph
 end
 
 function FTFace_mt.__index:hasKerning()
