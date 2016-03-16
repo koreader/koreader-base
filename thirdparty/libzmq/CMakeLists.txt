@@ -45,5 +45,5 @@ ExternalProject_Add(
     PATCH_COMMAND ./autogen.sh COMMAND ${FORCE_DYNAMLIB_VERSION} COMMAND ${SKIP_TEST} COMMAND ${CLEAR_BUILD_DIR}
     CONFIGURE_COMMAND sh -c ${CFG_CMD_STR} COMMAND sed -i "s|-lstdc++||g" libtool
     BUILD_COMMAND $(MAKE) -j${PARALLEL_JOBS} --silent
-    INSTALL_COMMAND $(MAKE) -j${PARALLEL_JOBS} --silent installdirs uninstall install
+    INSTALL_COMMAND $(MAKE) --silent installdirs uninstall install
 )
