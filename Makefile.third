@@ -454,7 +454,7 @@ $(LUA_SPORE_ROCK): $(THIRDPARTY_DIR)/lua-Spore/CMakeLists.txt
 	-rm -f $(LUA_SPORE_ROCK)
 	cd $(LUA_SPORE_BUILD_DIR) && \
 		$(CMAKE) -DOUTPUT_DIR="$(CURDIR)/$(OUTPUT_DIR)" \
-		-DLUA_SPORE_VER=$(LUA_SPORE_VER) -DLD="$(LD)" \
+		-DLUA_SPORE_VER=$(LUA_SPORE_VER) -DLD="$(CC)" \
 		-DCC="$(CC)" -DCFLAGS="$(CFLAGS) -I$(LUAJIT_DIR)/src" \
 		$(if $(ANDROID),-DLDFLAGS="$(LDFLAGS) $(CURDIR)/$(LUAJIT_LIB)",) \
 		$(CURDIR)/$(THIRDPARTY_DIR)/lua-Spore && \

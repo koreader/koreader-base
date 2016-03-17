@@ -17,7 +17,7 @@ ep_get_source_dir(SOURCE_DIR)
 
 set(LUA_SPORE_ROCKSPEC rockspec/${LUA_SPORE_VER}.rockspec)
 
-set(BUILD_CMD_STR "luarocks make ${LUA_SPORE_ROCKSPEC} --to=${OUTPUT_DIR}/rocks")
+set(BUILD_CMD_STR "luarocks make --tree=${OUTPUT_DIR}/rocks ${LUA_SPORE_ROCKSPEC}")
 if(DEFINED LDFLAGS)
     set(BUILD_CMD_STR "${BUILD_CMD_STR} LDFLAGS=\"${LDFLAGS}\"")
 endif()
