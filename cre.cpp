@@ -971,8 +971,8 @@ static int getTextFromPositions(lua_State *L) {
 	lvPoint endpt(x1, y1);
 	ldomXPointer startp = tv->getNodeByPoint(startpt);
 	ldomXPointer endp = tv->getNodeByPoint(endpt);
-	lua_newtable(L); // new text boxes
 	if (!startp.isNull() && !endp.isNull()) {
+	    lua_newtable(L); // new text boxes
 		ldomXRange r(startp, endp);
 		if (r.getStart().isNull() || r.getEnd().isNull())
 			return 0;
@@ -1022,8 +1022,9 @@ static int getTextFromPositions(lua_State *L) {
 		lua_pushstring(L, "percent");
 		lua_pushnumber(L, 1.0*page/(pages-1));
 		lua_settable(L, -3);
+	    return 1;
 	}
-	return 1;
+    return 0;
 }
 
 void lua_pushLineRect(lua_State *L, int left, int top, int right, int bottom, int lcount) {
