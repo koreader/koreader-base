@@ -376,10 +376,4 @@ function util.unichar (value)
     end
 end
 
--- Returns current time in seconds
-function util.getsec()
-    local now = { util.gettime() }
-    return now[1]
-end
-
 return util
