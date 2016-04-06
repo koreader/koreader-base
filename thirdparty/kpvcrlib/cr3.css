@@ -42,7 +42,7 @@ h4 { font-size: 120% }
 h5 { font-size: 110% }
 
 
-table { font-size: 80% }
+table { font-size: 80%; margin:3px; }
 td, th { text-indent: 0px; padding: 3px }
 th {  font-weight: bold; /* background-color: #DDD */ }
 table > caption { text-indent: 0px; padding: 4px; /* background-color: #EEE */ }
