@@ -10,6 +10,8 @@ enable_language(C)
 assert_var_defined(CC)
 assert_var_defined(CFLAGS)
 assert_var_defined(LD)
+assert_var_defined(LUA_INCDIR)
+assert_var_defined(LUA_LIBDIR)
 assert_var_defined(LUA_SPORE_VER)
 assert_var_defined(OUTPUT_DIR)
 
@@ -22,7 +24,7 @@ if(DEFINED LDFLAGS)
     set(BUILD_CMD_STR "${BUILD_CMD_STR} LDFLAGS=\"${LDFLAGS}\"")
 endif()
 set(BUILD_CMD_STR "${BUILD_CMD_STR} CC=\"${CC}\" CFLAGS=\"${CFLAGS}\" LD=\"${LD}\"")
-set(BUILD_CMD_STR "${BUILD_CMD_STR} LUA_INCDIR=\".\" LUA_LIBDIR=\".\"")
+set(BUILD_CMD_STR "${BUILD_CMD_STR} LUA_INCDIR=\"${LUA_INCDIR}\" LUA_LIBDIR=\"${LUA_LIBDIR}\"")
 
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
