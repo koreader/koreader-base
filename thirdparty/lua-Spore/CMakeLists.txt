@@ -22,6 +22,7 @@ if(DEFINED LDFLAGS)
     set(BUILD_CMD_STR "${BUILD_CMD_STR} LDFLAGS=\"${LDFLAGS}\"")
 endif()
 set(BUILD_CMD_STR "${BUILD_CMD_STR} CC=\"${CC}\" CFLAGS=\"${CFLAGS}\" LD=\"${LD}\"")
+set(BUILD_CMD_STR "${BUILD_CMD_STR} LUA_INCDIR=\".\" LUA_LIBDIR=\".\"")
 
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME

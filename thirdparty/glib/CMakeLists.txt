@@ -34,7 +34,7 @@ set(CFG_ENV_VAR "${CFG_ENV_VAR} LIBFFI_CFLAGS=\"-I${LIBFFI_DIR}/include\"")
 set(CFG_ENV_VAR "${CFG_ENV_VAR} LIBFFI_LIBS=\"-L${LIBFFI_DIR}/.libs -lffi\"")
 set(CFG_ENV_VAR "${CFG_ENV_VAR} ZLIB_CFLAGS=\"-I${ZLIB_DIR}/include\"")
 set(CFG_ENV_VAR "${CFG_ENV_VAR} ZLIB_LIBS=\"-L${ZLIB_DIR} -lz\"")
-set(CFG_OPTS "--with-libiconv=\"${WITH_LIBICONV}\" --with-threads=posix --prefix=${BINARY_DIR} --without-included-gettext --with-gettext=no --enable-shared=${ENABLE_SHARED} --disable-libelf")
+set(CFG_OPTS "--with-libiconv=\"${WITH_LIBICONV}\" --with-threads=posix --prefix=${BINARY_DIR} --without-included-gettext --with-gettext=no --enable-shared=${ENABLE_SHARED} --disable-libelf --with-pcre=internal --disable-selinux --disable-compile-warnings")
 if(${ENABLE_SHARED} STREQUAL "false")
     set(CFG_OPTS "${CFG_OPTS} --enable-static=true")
 else()
@@ -46,7 +46,7 @@ set(CFG_CMD_STR "${CFG_ENV_VAR} ${SOURCE_DIR}/configure ${CFG_OPTS}")
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
     https://github.com/GNOME/glib.git
-    21107959ab12da217151fe8d5f0eb65bd93fd5aa
+    2.48.0
     ${SOURCE_DIR}
 )
 

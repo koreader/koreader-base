@@ -13,12 +13,12 @@ set(CFG_ENV_VAR "CC=\"${CC}\" CFLAGS=\"${CFLAGS}\" LDFLAGS=\"${LDFLAGS}\" ")
 set(CFG_OPTS "-q --prefix=${BINARY_DIR} --disable-static --enable-shared --host=\"${CHOST}\"")
 set(CFG_CMD_STR "${CFG_ENV_VAR} ${SOURCE_DIR}/configure ${CFG_OPTS}")
 
-set(GIFLIB_VER "5.1.1")
+set(GIFLIB_VER "5.1.4")
 include(ExternalProject)
 ExternalProject_Add(
     ${PROJECT_NAME}
     URL http://download.sourceforge.net/giflib/giflib-${GIFLIB_VER}.tar.gz
-    URL_MD5 801fffd6fcfbac9ee99d3ea929828688
+    URL_MD5 8985c9411fdb2178b89d3348da9a06b0
     DOWNLOAD_DIR ${KO_DOWNLOAD_DIR}
     CONFIGURE_COMMAND sh -c ${CFG_CMD_STR}
     BUILD_COMMAND $(MAKE) -j${PARALLEL_JOBS} --silent

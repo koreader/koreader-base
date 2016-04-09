@@ -23,7 +23,7 @@ else()
     set(CFG_ENV_VAR "")
     set(CFG_OPTS "shared")
 endif()
-set(CFG_OPTS "${CFG_OPTS} no-asm no-idea no-mdc2 no-rc5")
+set(CFG_OPTS "${CFG_OPTS} no-asm no-idea no-mdc2 no-rc5 enable-ssl2")
 set(CFG_CMD_STR "${CFG_ENV_VAR} ${SOURCE_DIR}/${CONFIG_SCRIPT} ${CFG_OPTS}")
 
 set(MAKE_CMD_STR "$(MAKE) CC=\"${CC}\" SHARED_LDFLAGS=\"${SHARED_LDFLAGS}\" LD=\"${LD}\" RANLIB=\"${RANLIB}\"")
