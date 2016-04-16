@@ -8,6 +8,9 @@ local turbojpeg, giflib
 if ffi.os == "Windows" then
     turbojpeg = ffi.load("libs/libturbojpeg.dll")
     giflib = ffi.load("libs/libgif-7.dll")
+elseif ffi.os == "OSX" then
+    turbojpeg = ffi.load("libs/libturbojpeg.dylib")
+    giflib = ffi.load("libs/libgif.7.dylib")
 else
     turbojpeg = ffi.load("libs/libturbojpeg.so")
     giflib = ffi.load("libs/libgif.so.7")

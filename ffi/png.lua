@@ -10,6 +10,8 @@ local _ = require("ffi/lodepng_h")
 local loadpng
 if ffi.os == "Windows" then
     lodepng = ffi.load("libs/liblodepng.dll")
+elseif ffi.os == "OSX" then
+	lodepng = ffi.load("libs/liblodepng.dylib")
 else
     lodepng = ffi.load("libs/liblodepng.so")
 end
