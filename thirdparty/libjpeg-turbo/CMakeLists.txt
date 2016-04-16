@@ -10,6 +10,11 @@ enable_language(C CXX)
 ep_get_source_dir(SOURCE_DIR)
 ep_get_binary_dir(BINARY_DIR)
 
+set(LIBTOOLIZE libtoolize)
+if(APPLE)
+    set(LIBTOOLIZE glibtoolize)
+endif()
+
 set(CFG_ENV_VAR "CC=\"${CC}\" CXX=\"${CXX}\" CPPFLAGS=\"${CPPFLAGS}\" LDFLAGS=\"${LDFLAGS}\" ")
 set(CFG_OPTS "-q --prefix=${BINARY_DIR} --host=\"${CHOST}\" --disable-static --enable-shared --with-jpeg8")
 if(${WITHOUT_SIMD})
@@ -28,7 +33,7 @@ include(ExternalProject)
 ExternalProject_Add(
     libjpeg-turbo
     DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
-    PATCH_COMMAND libtoolize COMMAND aclocal COMMAND autoheader COMMAND autoconf COMMAND automake --force-missing --add-missing
+    PATCH_COMMAND ${LIBTOOLIZE} COMMAND aclocal COMMAND autoheader COMMAND autoconf COMMAND automake --force-missing --add-missing
     CONFIGURE_COMMAND sh -c ${CFG_CMD_STR}
     BUILD_COMMAND $(MAKE) -j${PARALLEL_JOBS} --silent
     INSTALL_COMMAND $(MAKE) -j${PARALLEL_JOBS} --silent install

@@ -6,6 +6,9 @@ local leptonica, k2pdfopt = nil, nil
 if ffi.os == "Windows" then
 	leptonica = ffi.load("libs/liblept-3.dll")
 	k2pdfopt = ffi.load("libs/libk2pdfopt-2.dll")
+elseif ffi.os == "OSX" then
+	leptonica = ffi.load("libs/liblept.3.dylib")
+	k2pdfopt = ffi.load("libs/libk2pdfopt.2.dylib")
 else
 	leptonica = ffi.load("libs/liblept.so.3")
 	k2pdfopt = ffi.load("libs/libk2pdfopt.so.2")

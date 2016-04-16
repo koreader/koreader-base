@@ -14,12 +14,12 @@ assert_var_defined(INSTALL_DIR)
 
 ep_get_source_dir(SOURCE_DIR)
 
-set(PATCH_CMD_STR "sed -i 's|socket\\.core|socket\\.score|' src/*")
-set(PATCH_CMD_STR "${PATCH_CMD_STR} && sed -i 's|socket_core|socket_score|' src/*")
-set(PATCH_CMD_STR "${PATCH_CMD_STR} && sed -i 's|mime\\.core|mime\\.mcore|' src/*")
-set(PATCH_CMD_STR "${PATCH_CMD_STR} && sed -i 's|mime_core|mime_mcore|' src/*")
-set(PATCH_CMD_STR "${PATCH_CMD_STR} && sed -i 's|SOCKET_CDIR)/core|SOCKET_CDIR)/score|' src/*")
-set(PATCH_CMD_STR "${PATCH_CMD_STR} && sed -i 's|MIME_CDIR)/core|MIME_CDIR)/mcore|' src/*")
+set(PATCH_CMD_STR "sed -ie 's|socket\\.core|socket\\.score|' src/*")
+set(PATCH_CMD_STR "${PATCH_CMD_STR} && sed -ie 's|socket_core|socket_score|' src/*")
+set(PATCH_CMD_STR "${PATCH_CMD_STR} && sed -ie 's|mime\\.core|mime\\.mcore|' src/*")
+set(PATCH_CMD_STR "${PATCH_CMD_STR} && sed -ie 's|mime_core|mime_mcore|' src/*")
+set(PATCH_CMD_STR "${PATCH_CMD_STR} && sed -ie 's|SOCKET_CDIR)/core|SOCKET_CDIR)/score|' src/*")
+set(PATCH_CMD_STR "${PATCH_CMD_STR} && sed -ie 's|MIME_CDIR)/core|MIME_CDIR)/mcore|' src/*")
 
 set(BUILD_CMD_STR "$(MAKE) PLAT=${PLAT} CC=\"${CC}\" LD=\"${CC}\"")
 if(DEFINED MYLDFLAGS)
@@ -28,7 +28,7 @@ endif()
 if(DEFINED LUALIB_mingw)
     set(BUILD_CMD_STR "${BUILD_CMD_STR} LUALIB_mingw=\"${LUALIB_mingw}\"")
 endif()
-set(BUILD_CMD_STR "${BUILD_CMD_STR} LUAINC=\"${LUAINC}\" -j${PARALLEL_JOBS} --silent all")
+set(BUILD_CMD_STR "${BUILD_CMD_STR} LUAINC=\"${LUAINC}\" -j${PARALLEL_JOBS} all")
 
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME

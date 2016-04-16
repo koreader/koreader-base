@@ -17,6 +17,8 @@ local BlitBuffer = require("ffi/blitbuffer")
 local M
 if ffi.os == "Windows" then
     M = ffi.load("libs/libmupdf.dll")
+elseif ffi.os == "OSX" then
+	M = ffi.load("libs/libmupdf.dylib")
 else
     M = ffi.load("libs/libmupdf.so")
 end

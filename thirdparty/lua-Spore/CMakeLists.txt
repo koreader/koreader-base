@@ -38,7 +38,7 @@ ExternalProject_Add(
     ${PROJECT_NAME}
     DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
     BUILD_IN_SOURCE 1
-    PATCH_COMMAND sh -c "mkdir -p doc && sed -i \"s| 'luasocket|--'luasocket|g\" ${LUA_SPORE_ROCKSPEC}"
+    PATCH_COMMAND sh -c "mkdir -p doc && sed -ie \"s| 'luasocket|--'luasocket|g\" ${LUA_SPORE_ROCKSPEC}"
     CONFIGURE_COMMAND ""
     BUILD_COMMAND sh -c ${BUILD_CMD_STR}
     # skip install

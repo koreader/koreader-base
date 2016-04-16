@@ -16,8 +16,8 @@ set(BUILD_CMD_STR "$(MAKE) -j${PARALLEL_JOBS} CC=\"${CC}\" LDFLAGS=\"${LDFLAGS}\
 
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
-    https://github.com/chrox/lua-serialize
-    aabebaf6560ff54cb34eb558c7f85f78a948f80b
+    https://github.com/koreader/lua-serialize
+    decd0f171cb61f3919d2441a3f0d9b3174b951e2
     ${SOURCE_DIR}
 )
 

@@ -28,13 +28,18 @@ set(BUILD_CMD_STR "${BUILD_CMD_STR} CXX=\"${CXX}\" CXXFLAGS=\"${CXXFLAGS}\" AR=\
 set(BUILD_CMD_STR "${BUILD_CMD_STR} TESSERACT_DIR=${TESSERACT_DIR} LEPTONICA_DIR=${LEPTONICA_DIR}")
 set(BUILD_CMD_STR "${BUILD_CMD_STR} LEPT_CFLAGS=\"${CFLAGS} -I${ZLIB_DIR} -I${PNG_DIR}/include\"")
 set(BUILD_CMD_STR "${BUILD_CMD_STR} LEPT_LDFLAGS=\"${LDFLAGS} -L${ZLIB_DIR} -L${PNG_DIR}/lib\"")
-set(BUILD_CMD_STR "${BUILD_CMD_STR} STDCPPLIB=\"${STDCPPLIB}\" ZLIB_LDFLAGS=\"-Wl,-rpath-link,${ZLIB_DIR}\"")
-set(BUILD_CMD_STR "${BUILD_CMD_STR} PNG_LDFLAGS=\"-Wl,-rpath-link,${PNG_DIR}/lib\" all")
+if (APPLE)
+    set(BUILD_CMD_STR "${BUILD_CMD_STR} STDCPPLIB=\"${STDCPPLIB}\" ZLIB_LDFLAGS=\"-L${ZLIB_DIR}\"")
+    set(BUILD_CMD_STR "${BUILD_CMD_STR} PNG_LDFLAGS=\"-L${PNG_DIR}/lib\" all")
+else()
+    set(BUILD_CMD_STR "${BUILD_CMD_STR} STDCPPLIB=\"${STDCPPLIB}\" ZLIB_LDFLAGS=\"-Wl,-rpath-link,${ZLIB_DIR}\"")
+    set(BUILD_CMD_STR "${BUILD_CMD_STR} PNG_LDFLAGS=\"-Wl,-rpath-link,${PNG_DIR}/lib\" all")
+endif()
 
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
     git://github.com/koreader/libk2pdfopt.git
-    25c29f1e256f4a2fe2b1a553ea28b82e6fddb347
+    5aa0165519ec4d6dc74e12aa231f184be85e8a9b
     ${SOURCE_DIR}
 )
 

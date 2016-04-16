@@ -18,7 +18,7 @@ include(ExternalProject)
 ExternalProject_Add(
     ${PROJECT_NAME}
     DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
-    PATCH_COMMAND sh -c "sed -i 's/AM_CONFIG_HEADER/AC_CONFIG_HEADERS/g' configure.ac"
+    PATCH_COMMAND sh -c "sed -ie 's/AM_CONFIG_HEADER/AC_CONFIG_HEADERS/g' configure.ac"
     CONFIGURE_COMMAND ""
     # skip build and install, libk2pdfopt will build it
     BUILD_COMMAND ""

@@ -28,7 +28,6 @@ $(TURBOJPEG_LIB) $(JPEG_LIB): $(THIRDPARTY_DIR)/libjpeg-turbo/CMakeLists.txt
 		$(CMAKE) -DCC="$(CC)" -DCXX="$(CXX)" \
 		-DCPPFLAGS="$(CFLAGS)" -DLDFLAGS="$(LDFLAGS)" \
 		$(if $(findstring armv6, $(ARM_ARCH)),-DWITHOUT_SIMD:BOOL=ON,) \
-		-DCHOST="$(if $(ANDROID),"arm-linux",$(CHOST))" \
 		$(CURDIR)/$(THIRDPARTY_DIR)/libjpeg-turbo && \
 		$(MAKE)
 	cp -fL $(JPEG_DIR)/.libs/$(notdir $(TURBOJPEG_LIB)) $(TURBOJPEG_LIB)
@@ -144,13 +143,16 @@ $(LUAJIT) $(LUAJIT_LIB) $(LUAJIT_JIT): $(THIRDPARTY_DIR)/luajit/CMakeLists.txt
 ifdef WIN32
 	cp -fL $(LUAJIT_DIR)/src/$(notdir $(LUAJIT_LIB)) $(LUAJIT_LIB)
 endif
+ifdef DARWIN
+	cp -fL $(LUAJIT_DIR)/src/$(notdir $(LUAJIT_LIB)) $(LUAJIT_LIB)
+endif
 ifdef ANDROID
 	cp -fL $(LUAJIT_DIR)/src/$(notdir $(LUAJIT_LIB)) $(LUAJIT_LIB)
 else
 	cp -fL $(LUAJIT_DIR)/src/$(notdir $(LUAJIT)) $(LUAJIT)
 endif
 	-rm -rf $(LUAJIT_JIT)
-	cp -rfL $(LUAJIT_DIR)/src/jit $(OUTPUT_DIR)
+	$(RCP) -fL $(LUAJIT_DIR)/src/jit $(OUTPUT_DIR)
 
 $(POPEN_NOSHELL_LIB): $(THIRDPARTY_DIR)/popen-noshell/CMakeLists.txt
 	install -d $(POPEN_NOSHELL_BUILD_DIR)
@@ -189,6 +191,10 @@ $(K2PDFOPT_LIB) $(LEPTONICA_LIB) $(TESSERACT_LIB): $(PNG_LIB) $(ZLIB) \
 	cp -fL $(K2PDFOPT_DIR)/$(notdir $(K2PDFOPT_LIB)) $(K2PDFOPT_LIB)
 	cp -fL $(K2PDFOPT_DIR)/$(notdir $(LEPTONICA_LIB)) $(LEPTONICA_LIB)
 	cp -fL $(K2PDFOPT_DIR)/$(notdir $(TESSERACT_LIB)) $(TESSERACT_LIB)
+ifdef DARWIN
+	install_name_tool -change /usr/local/lib/$(notdir $(TESSERACT_LIB)) \
+		libs/$(notdir $(TESSERACT_LIB)) $(K2PDFOPT_LIB)
+endif
 
 # ===========================================================================
 # sdcv dependencies: glib-2.0 and zlib
@@ -323,7 +329,7 @@ $(LUASOCKET): $(THIRDPARTY_DIR)/luasocket/CMakeLists.txt
 	-rm -rf $(LUASOCKET) $(LUASOCKET_BUILD_DIR)
 	install -d $(LUASOCKET_BUILD_DIR)
 	cd $(LUASOCKET_BUILD_DIR) && \
-		$(CMAKE) -DPLAT="$(if $(WIN32),mingw,linux)" \
+		$(CMAKE) -DPLAT="$(if $(WIN32),mingw,$(if $(DARWIN),macosx,linux))" \
 		-DCC="$(CC) $(CFLAGS)" \
 		$(if $(ANDROID),-DMYLDFLAGS="$(LDFLAGS) $(CURDIR)/$(LUAJIT_LIB)",) \
 		$(if $(WIN32),-DLUALIB_mingw="$(CURDIR)/$(LUAJIT_LIB)",) \
@@ -369,13 +375,13 @@ $(LUASERIAL_LIB): $(THIRDPARTY_DIR)/lua-serialize/CMakeLists.txt
 	-rm -f $(LUASERIAL_LIB)
 	cd $(LUASERIAL_BUILD_DIR) && \
 		$(CMAKE) -DCC="$(CC) $(CFLAGS)" \
-		-DLDFLAGS="$(LDFLAGS)$(if $(or $(ANDROID),$(WIN32)), $(CURDIR)/$(LUAJIT_LIB),)" \
+		-DLDFLAGS="$(LDFLAGS) $(if $(or $(ANDROID),$(WIN32)), $(CURDIR)/$(LUAJIT_LIB),)" \
 		-DOUTPUT_DIR=$(CURDIR)/$(OUTPUT_DIR)/common \
 		$(CURDIR)/$(THIRDPARTY_DIR)/lua-serialize && \
 		$(MAKE)
 
 $(LUACOMPAT52): $(LUASERIAL_LIB) $(THIRDPARTY_DIR)/lua-serialize/CMakeLists.txt
-	cp $(OUTPUT_DIR)/common/libluacompat52.so $(OUTPUT_DIR)/libs
+	cp $(OUTPUT_DIR)/common/$(LUACOMPAT52) $(OUTPUT_DIR)/libs
 
 # zeromq should be compiled without optimization in clang 3.4
 # which otherwise may throw a warning saying "array index is past the end
@@ -446,9 +452,9 @@ $(TURBO_FFI_WRAP_LIB): $(SSL_LIB) $(THIRDPARTY_DIR)/turbo/CMakeLists.txt
 		$(CURDIR)/$(THIRDPARTY_DIR)/turbo && \
 		$(MAKE)
 	cp -fL $(TURBO_DIR)/$(notdir $(TURBO_FFI_WRAP_LIB)) $@
-	cp -r $(TURBO_DIR)/turbo $(OUTPUT_DIR)/common
-	cp -r $(TURBO_DIR)/turbo.lua $(OUTPUT_DIR)/common
-	cp -r $(TURBO_DIR)/turbovisor.lua $(OUTPUT_DIR)/common
+	$(RCP) $(TURBO_DIR)/turbo $(OUTPUT_DIR)/common
+	cp $(TURBO_DIR)/turbo.lua $(OUTPUT_DIR)/common
+	cp $(TURBO_DIR)/turbovisor.lua $(OUTPUT_DIR)/common
 
 $(LUA_SPORE_ROCK): $(THIRDPARTY_DIR)/lua-Spore/CMakeLists.txt
 	install -d $(LUA_SPORE_BUILD_DIR)
@@ -472,8 +478,8 @@ $(LPEG_DYNLIB) $(LPEG_RE): $(LUAJIT_LIB) $(THIRDPARTY_DIR)/lpeg/CMakeLists.txt
 		$(CMAKE) -DCC="$(CC)" -DDYNLIB_CFLAGS="$(DYNLIB_CFLAGS)" \
 		-DLUA_DIR="$(LUAJIT_DIR)" $(CURDIR)/$(THIRDPARTY_DIR)/lpeg && \
 		$(MAKE)
-	cp -rf $(LPEG_DIR)/lpeg.so $(OUTPUT_DIR)/rocks/lib/lua/5.1
-	cp -rf $(LPEG_DIR)/re.lua $(OUTPUT_DIR)/rocks/share/lua/5.1
+	cp -f $(LPEG_DIR)/lpeg.so $(OUTPUT_DIR)/rocks/lib/lua/5.1
+	cp -f $(LPEG_DIR)/re.lua $(OUTPUT_DIR)/rocks/share/lua/5.1
 
 $(EVERNOTE_LIB): $(THIRDPARTY_DIR)/evernote-sdk-lua/CMakeLists.txt
 	install -d $(EVERNOTE_SDK_BUILD_DIR)

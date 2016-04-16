@@ -12,7 +12,7 @@ ExternalProject_Add(
     URL_MD5 d4085c302cbcab7f9af9d3d6f004ab22
     DOWNLOAD_DIR ${KO_DOWNLOAD_DIR}
     # patch leptonica for a small typo, it's already fixed in 1.70
-    PATCH_COMMAND sh -c "sed -i 's|hfind|hFind|g' src/utils.c"
+    PATCH_COMMAND sh -c "sed -ie 's|hfind|hFind|g' src/utils.c"
     CONFIGURE_COMMAND ""
     # skip build and install, libk2pdfopt will build it
     BUILD_COMMAND ""

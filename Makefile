@@ -2,7 +2,7 @@ include Makefile.defs
 
 # main target
 all: $(OUTPUT_DIR)/libs $(if $(ANDROID),,$(LUAJIT)) \
-		$(if $(or $(ANDROID),$(WIN32)),$(LUAJIT_LIB),) \
+		$(if $(USE_LUAJIT_LIB),$(LUAJIT_LIB),) \
 		$(LUAJIT_JIT) \
 		libs $(K2PDFOPT_LIB) \
 		$(OUTPUT_DIR)/spec/base $(OUTPUT_DIR)/common $(OUTPUT_DIR)/rocks \
@@ -10,18 +10,18 @@ all: $(OUTPUT_DIR)/libs $(if $(ANDROID),,$(LUAJIT)) \
 		$(OUTPUT_DIR)/ffi $(OUTPUT_DIR)/data \
 		$(if $(WIN32),,$(LUASEC)) \
 		$(if $(ANDROID),$(LUACOMPAT52) $(LUALONGNUMBER),) \
-		$(if $(WIN32),,$(EVERNOTE_LIB)) \
+		$(if $(or $(DARWIN),$(WIN32)),,$(EVERNOTE_LIB)) \
 		$(LUASERIAL_LIB) \
 		$(TURBOJPEG_LIB) \
 		$(LODEPNG_LIB) \
 		$(GIF_LIB) \
-		$(TURBO_FFI_WRAP_LIB) \
+		$(if $(DARWIN),,$(TURBO_FFI_WRAP_LIB)) \
 		$(LUA_SPORE_ROCK) \
 		$(if $(ANDROID),$(LPEG_DYNLIB) $(LPEG_RE),) \
-		$(if $(WIN32),,$(OUTPUT_DIR)/sdcv) \
-		$(if $(WIN32),,$(OUTPUT_DIR)/tar) \
-		$(if $(WIN32),,$(OUTPUT_DIR)/zsync) \
-		$(if $(WIN32), ,$(ZMQ_LIB) $(CZMQ_LIB) $(FILEMQ_LIB) $(ZYRE_LIB))
+		$(if $(or $(DARWIN),$(WIN32)),,$(OUTPUT_DIR)/sdcv) \
+		$(if $(or $(DARWIN),$(WIN32)),,$(OUTPUT_DIR)/tar) \
+		$(if $(or $(DARWIN),$(WIN32)),,$(OUTPUT_DIR)/zsync) \
+		$(if $(or $(DARWIN),$(WIN32)), ,$(ZMQ_LIB) $(CZMQ_LIB) $(FILEMQ_LIB) $(ZYRE_LIB))
 ifndef EMULATE_READER
 	STRIP_FILES="\
 		$(if $(WIN32),,$(OUTPUT_DIR)/sdcv) \
@@ -39,7 +39,7 @@ endif
 	ln -sf $(CURDIR)/$(THIRDPARTY_DIR)/kpvcrlib/cr3.css $(OUTPUT_DIR)/data/
 	# setup Evernote SDK
 	cd $(EVERNOTE_SDK_DIR) && \
-		cp -r *.lua evernote $(CURDIR)/$(EVERNOTE_PLUGIN_DIR) && \
+		$(RCP) *.lua evernote $(CURDIR)/$(EVERNOTE_PLUGIN_DIR) && \
 		cp thrift/*.lua $(CURDIR)/$(EVERNOTE_THRIFT_DIR)
 	test -e $(LPEG_RE) && chmod 664 $(LPEG_RE) || true  # hot fix re.lua permission
 
@@ -87,6 +87,12 @@ $(OUTPUT_DIR)/libs/libkoreader-djvu.so: djvu.c \
 			$(DJVULIBRE_LIB) $(K2PDFOPT_LIB)
 	$(CC) -I$(DJVULIBRE_DIR) -I$(MUPDF_DIR)/include $(K2PDFOPT_CFLAGS) \
 		$(DYNLIB_CFLAGS) -o $@ $^ $(if $(ANDROID),,-lpthread)
+ifdef DARWIN
+	install_name_tool -change /usr/local/lib/$(notdir $(DJVULIBRE_LIB)) \
+		libs/$(notdir $(DJVULIBRE_LIB)) $@
+	install_name_tool -change $(notdir $(K2PDFOPT_LIB)) \
+		libs/$(notdir $(K2PDFOPT_LIB)) $@
+endif
 
 $(OUTPUT_DIR)/libs/libkoreader-cre.so: cre.cpp \
 			$(if $(or $(ANDROID),$(WIN32)),$(LUAJIT_LIB),) \
@@ -94,6 +100,10 @@ $(OUTPUT_DIR)/libs/libkoreader-cre.so: cre.cpp \
 	$(CXX) -I$(CRENGINE_SRC_DIR)/crengine/include/ $(DYNLIB_CFLAGS) \
 		-DLDOM_USE_OWN_MEM_MAN=$(if $(WIN32),0,1) \
 		$(if $(WIN32),-DQT_GL=1) -static-libstdc++ -o $@ $^
+ifdef DARWIN
+	install_name_tool -change $(notdir $(CRENGINE_LIB)) \
+		libs/$(notdir $(CRENGINE_LIB)) $@
+endif
 
 $(OUTPUT_DIR)/libs/libwrap-mupdf.so: wrap-mupdf.c \
 			$(MUPDF_LIB)
