@@ -57,8 +57,8 @@ $(AES_LIB): $(THIRDPARTY_DIR)/minizip/CMakeLists.txt
 $(MUPDF_LIB) $(MUPDF_DIR)/include: $(JPEG_LIB) \
 		$(FREETYPE_LIB) $(FREETYPE_DIR)/include \
 		$(ZLIB) $(AES_LIB) $(THIRDPARTY_DIR)/mupdf/CMakeLists.txt
+	-rm -rf $(MUPDF_BUILD_DIR)
 	install -d $(MUPDF_BUILD_DIR)
-	-rm -f $(MUPDF_DIR)/../mupdf-stamp/mupdf-build
 	cd $(MUPDF_BUILD_DIR) && \
 		$(CMAKE) -DHOSTCFLAGS="$(HOSTCFLAGS)" -DHOSTCC="$(HOSTCC)" \
 		-DCC="$(CC)" -DCFLAGS="$(CFLAGS)" -DOS="$(if $(WIN32),,Other)" \

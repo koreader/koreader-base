@@ -52,6 +52,10 @@ set(SHARED_BUILD_CMD "${CC} -shared ${CFLAGS} ${LINK_OPTS} ${AES_LIB} ${ZLIB} ${
 if(${ANDROID})
     set(SHARED_BUILD_CMD "${SHARED_BUILD_CMD} -llog")
 endif(${ANDROID})
+# use external fonts
+set(PATCH_CMD1 sh -c "patch -N -p1 < ${CMAKE_CURRENT_SOURCE_DIR}/external_fonts.patch || true")
+# add support for encryted zips
+set(PATCH_CMD2 sh -c "patch -N -p1 < ${CMAKE_CURRENT_SOURCE_DIR}/encrypted_zip.patch || true")
 
 # TODO: ignore shared git submodules built outside of mupdf by ourselves
 ep_get_source_dir(SOURCE_DIR)
@@ -67,8 +71,7 @@ ExternalProject_Add(
     ${PROJECT_NAME}
     DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
     BUILD_IN_SOURCE 1
-	# MuPDF patch: use external fonts
-    PATCH_COMMAND sh -c "patch -N -p1 < ${CMAKE_CURRENT_SOURCE_DIR}/external_fonts.patch || true"
+    PATCH_COMMAND COMMAND ${PATCH_CMD1} COMMAND ${PATCH_CMD2}
     # skip configure
     CONFIGURE_COMMAND ""
     BUILD_COMMAND ${BUILD_CMD_GENERATE} COMMAND sh -c ${STATIC_BUILD_CMD} COMMAND sh -c ${SHARED_BUILD_CMD}

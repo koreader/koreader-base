@@ -1,0 +1,302 @@
+diff --git a/include/mupdf/fitz/unzip.h b/include/mupdf/fitz/unzip.h
+index b19ffbd..e94970d 100644
+--- a/include/mupdf/fitz/unzip.h
++++ b/include/mupdf/fitz/unzip.h
+@@ -19,4 +19,7 @@ void fz_drop_archive(fz_context *ctx, fz_archive *ar);
+ int fz_count_archive_entries(fz_context *ctx, fz_archive *zip);
+ const char *fz_list_archive_entry(fz_context *ctx, fz_archive *zip, int idx);
+ 
++int fz_archive_needs_password(fz_context *ctx, fz_archive *zip);
++int fz_archive_authenticate_password(fz_context *ctx, fz_archive *zip, const char *password);
++
+ #endif
+diff --git a/source/cbz/mucbz.c b/source/cbz/mucbz.c
+index 91f6e9d..f9b9676 100644
+--- a/source/cbz/mucbz.c
++++ b/source/cbz/mucbz.c
+@@ -186,6 +186,18 @@ cbz_load_page(fz_context *ctx, cbz_document *doc, int number)
+ 	return page;
+ }
+ 
++int
++cbz_needs_password(fz_context *ctx, cbz_document *doc)
++{
++	return fz_archive_needs_password(ctx, doc->zip);
++}
++
++int
++cbz_authenticate_password(fz_context *ctx, cbz_document *doc, const char *pwd_utf8)
++{
++	return fz_archive_authenticate_password(ctx, doc->zip, pwd_utf8);
++}
++
+ static int
+ cbz_lookup_metadata(fz_context *ctx, cbz_document *doc, const char *key, char *buf, int size)
+ {
+@@ -200,6 +212,8 @@ cbz_open_document_with_stream(fz_context *ctx, fz_stream *file)
+ 	cbz_document *doc = fz_new_document(ctx, sizeof *doc);
+ 
+ 	doc->super.close = (fz_document_close_fn *)cbz_close_document;
++	doc->super.needs_password = (fz_document_needs_password_fn *)cbz_needs_password;
++	doc->super.authenticate_password = (fz_document_authenticate_password_fn *)cbz_authenticate_password;
+ 	doc->super.count_pages = (fz_document_count_pages_fn *)cbz_count_pages;
+ 	doc->super.load_page = (fz_document_load_page_fn *)cbz_load_page;
+ 	doc->super.lookup_metadata = (fz_document_lookup_metadata_fn *)cbz_lookup_metadata;
+diff --git a/source/fitz/unzip.c b/source/fitz/unzip.c
+index b14705b..27b9bdf 100644
+--- a/source/fitz/unzip.c
++++ b/source/fitz/unzip.c
+@@ -17,10 +17,32 @@
+ 
+ #define ZIP_ENCRYPTED_FLAG 0x1
+ 
++/*
++ * Note that the crypt.h in minizip uses unsigned long pointer to pcrc_32_tab
++ * it will cause problem on x86_64 machine. While the crypt.h in zlib-1.2.8
++ * contrib minizip uses z_crc_t pointer which is determined to unsigned int
++ * pointer on 64 bit machine.
++ */
++#include "contrib/minizip/crypt.h"  // from zlib-1.2.8
++
++#include "aes/fileenc.h"            // from minizip-g0b46a2b
++
++#define AES_METHOD          (99)
++#define AES_PWVERIFYSIZE    (2)
++#define AES_MAXSALTLENGTH   (16)
++#define AES_AUTHCODESIZE    (10)
++#define AES_HEADERSIZE      (11)
++#define AES_KEYSIZE(mode)   (64 + (mode * 64))
++
++#define KEY_LENGTH(mode)        (8 * (mode & 3) + 8)
++#define SALT_LENGTH(mode)       (4 * (mode & 3) + 4)
++#define MAC_LENGTH(mode)        (10)
++
+ struct zip_entry
+ {
+ 	char *name;
+ 	int offset, csize, usize;
++	int crypted;
+ };
+ 
+ struct fz_archive_s
+@@ -29,6 +51,15 @@ struct fz_archive_s
+ 	fz_stream *file;
+ 	int count;
+ 	struct zip_entry *table;
++
++	int crypted;
++	char password[128];
++	unsigned long keys[3];     /* keys defining the pseudo-random sequence */
++	const z_crc_t *pcrc_32_tab;
++	unsigned long aes_encryption_mode;
++	unsigned long aes_compression_method;
++	unsigned long aes_version;
++	fcrypt_ctx aes_ctx;
+ };
+ 
+ static inline int zip_toupper(int c)
+@@ -81,6 +112,7 @@ static void read_zip_dir_imp(fz_context *ctx, fz_archive *zip, int start_offset)
+ 	int offset, count;
+ 	int namesize, metasize, commentsize;
+ 	int i;
++	int general;
+ 
+ 	fz_seek(ctx, file, start_offset, 0);
+ 
+@@ -155,11 +187,17 @@ static void read_zip_dir_imp(fz_context *ctx, fz_archive *zip, int start_offset)
+ 
+ 		(void) fz_read_int16_le(ctx, file); /* version made by */
+ 		(void) fz_read_int16_le(ctx, file); /* version to extract */
+-		(void) fz_read_int16_le(ctx, file); /* general */
++		general = fz_read_int16_le(ctx, file); /* general */
+ 		(void) fz_read_int16_le(ctx, file); /* method */
+ 		(void) fz_read_int16_le(ctx, file); /* last mod file time */
+ 		(void) fz_read_int16_le(ctx, file); /* last mod file date */
+ 		(void) fz_read_int32_le(ctx, file); /* crc-32 */
++		if (general & ZIP_ENCRYPTED_FLAG) {
++			zip->crypted = 1;
++			zip->table[i].crypted = 1;
++		} else {
++			zip->table[i].crypted = 0;
++		}
+ 		zip->table[i].csize = fz_read_int32_le(ctx, file);
+ 		zip->table[i].usize = fz_read_int32_le(ctx, file);
+ 		namesize = fz_read_int16_le(ctx, file);
+@@ -245,6 +283,10 @@ static int read_zip_entry_header(fz_context *ctx, fz_archive *zip, struct zip_en
+ {
+ 	fz_stream *file = zip->file;
+ 	int sig, general, method, namelength, extralength;
++	int i, headerid, datasize, crc32, modtime, chk;
++
++	unsigned char source[12];
++	unsigned char crcbyte;
+ 
+ 	fz_seek(ctx, file, ent->offset, 0);
+ 
+@@ -253,20 +295,66 @@ static int read_zip_entry_header(fz_context *ctx, fz_archive *zip, struct zip_en
+ 		fz_throw(ctx, FZ_ERROR_GENERIC, "wrong zip local file signature (0x%x)", sig);
+ 
+ 	(void) fz_read_int16_le(ctx, file); /* version */
+-	general = fz_read_int16_le(ctx, file); /* general */
+-	if (general & ZIP_ENCRYPTED_FLAG)
+-		fz_throw(ctx, FZ_ERROR_GENERIC, "zip content is encrypted");
+-
+-	method = fz_read_int16_le(ctx, file);
+-	(void) fz_read_int16_le(ctx, file); /* file time */
++	general = fz_read_uint16_le(ctx, file); /* general */
++	method = fz_read_uint16_le(ctx, file);
++	modtime = fz_read_uint16_le(ctx, file); /* file time */
+ 	(void) fz_read_int16_le(ctx, file); /* file date */
+-	(void) fz_read_int32_le(ctx, file); /* crc-32 */
++	crc32 = fz_read_uint32_le(ctx, file); /* crc-32 */
+ 	(void) fz_read_int32_le(ctx, file); /* csize */
+ 	(void) fz_read_int32_le(ctx, file); /* usize */
+ 	namelength = fz_read_int16_le(ctx, file);
+ 	extralength = fz_read_int16_le(ctx, file);
+ 
+-	fz_seek(ctx, file, namelength + extralength, 1);
++	fz_seek(ctx, file, namelength, 1);
++	if (general & ZIP_ENCRYPTED_FLAG) {
++		if (method == AES_METHOD) {
++			while (extralength > 0) {
++				headerid = fz_read_uint16_le(ctx, file);
++				datasize = fz_read_uint16_le(ctx, file);
++				if (headerid == 0x9901) {
++					zip->aes_version = fz_read_int16_le(ctx, file);
++					(void) fz_read_int16_le(ctx, file); /* "AE" */
++					zip->aes_encryption_mode = fz_read_byte(ctx, file);
++					zip->aes_compression_method = fz_read_int16_le(ctx, file);
++				}
++				extralength -= 2 + 2 + datasize;
++			}
++			if (zip->aes_encryption_mode) {
++				unsigned char passverifyread[AES_PWVERIFYSIZE];
++				unsigned char passverifycalc[AES_PWVERIFYSIZE];
++				unsigned char saltvalue[AES_MAXSALTLENGTH];
++				unsigned int saltlength;
++				saltlength = SALT_LENGTH(zip->aes_encryption_mode);
++				fz_read(ctx, file, saltvalue, saltlength);
++				fz_read(ctx, file, passverifyread, AES_PWVERIFYSIZE);
++				fcrypt_init(zip->aes_encryption_mode, zip->password, strlen(zip->password),
++					saltvalue, passverifycalc, &zip->aes_ctx);
++				for (i = 0; i < AES_PWVERIFYSIZE; i++) {
++					if (passverifyread[i] != passverifycalc[i]) {
++						return -1;
++					}
++				}
++			}
++		} else {
++			fz_seek(ctx, file, extralength, 1);
++			zip->pcrc_32_tab = (const z_crc_t*)get_crc_table();
++			init_keys(zip->password, zip->keys, zip->pcrc_32_tab);
++			fz_read(ctx, file, source, 12);
++			for (i = 0; i < 12; i++) {
++				crcbyte = zdecode(zip->keys, zip->pcrc_32_tab, source[i]);
++			}
++			if (general & 0x8) {
++				chk = modtime;  // WTF? This is undocumented in the APPNOTE!
++			} else {
++				chk = crc32 >> 16;
++			}
++			if (chk >> 8 != crcbyte) {
++				return -1;
++			}
++		}
++	} else {
++		fz_seek(ctx, file, extralength, 1);
++	}
+ 
+ 	return method;
+ }
+@@ -275,6 +363,9 @@ static fz_stream *open_zip_entry(fz_context *ctx, fz_archive *zip, struct zip_en
+ {
+ 	fz_stream *file = zip->file;
+ 	int method = read_zip_entry_header(ctx, zip, ent);
++	if (method == AES_METHOD) {
++		method = zip->aes_compression_method;
++	}
+ 	if (method == 0)
+ 		return fz_open_null(ctx, file, ent->usize, fz_tell(ctx, file));
+ 	if (method == 8)
+@@ -288,10 +379,14 @@ static fz_buffer *read_zip_entry(fz_context *ctx, fz_archive *zip, struct zip_en
+ 	fz_buffer *ubuf;
+ 	unsigned char *cbuf;
+ 	int method;
++	int i;
+ 	z_stream z;
+ 	int code;
+ 
+ 	method = read_zip_entry_header(ctx, zip, ent);
++	if (method == AES_METHOD) {
++		method = zip->aes_compression_method;
++	}
+ 
+ 	ubuf = fz_new_buffer(ctx, ent->usize + 1); /* +1 because many callers will add a terminating zero */
+ 	ubuf->len = ent->usize;
+@@ -301,6 +396,14 @@ static fz_buffer *read_zip_entry(fz_context *ctx, fz_archive *zip, struct zip_en
+ 		fz_try(ctx)
+ 		{
+ 			fz_read(ctx, file, ubuf->data, ent->usize);
++			if (ent->crypted) {
++				if (zip->aes_encryption_mode) {
++					fcrypt_decrypt(ubuf->data, ent->usize, &zip->aes_ctx);
++				} else {
++					for(i = 0; i < ent->usize; ++i)
++						ubuf->data[i] = zdecode(zip->keys,zip->pcrc_32_tab, ubuf->data[i]);
++				}
++			}
+ 		}
+ 		fz_catch(ctx)
+ 		{
+@@ -317,6 +420,15 @@ static fz_buffer *read_zip_entry(fz_context *ctx, fz_archive *zip, struct zip_en
+ 		{
+ 			fz_read(ctx, file, cbuf, ent->csize);
+ 
++			if (ent->crypted) {
++				if (zip->aes_encryption_mode) {
++					fcrypt_decrypt(cbuf, ent->csize, &zip->aes_ctx);
++				} else {
++					for(i = 0; i < ent->csize; ++i) {
++						cbuf[i] = zdecode(zip->keys, zip->pcrc_32_tab, cbuf[i]);
++					}
++				}
++			}
+ 			z.zalloc = (alloc_func) fz_malloc_array;
+ 			z.zfree = (free_func) fz_free;
+ 			z.opaque = ctx;
+@@ -359,6 +471,25 @@ static fz_buffer *read_zip_entry(fz_context *ctx, fz_archive *zip, struct zip_en
+ }
+ 
+ int
++fz_archive_needs_password(fz_context *ctx, fz_archive *zip)
++{
++	return zip->crypted;
++}
++
++int
++fz_archive_authenticate_password(fz_context *ctx, fz_archive *zip, const char *password)
++{
++	int i;
++	fz_strlcpy(zip->password, password, sizeof zip->password);
++	for (i = 0; i < zip->count; ++i) {
++		if (zip->table[i].crypted) {
++			return read_zip_entry_header(ctx, zip, &zip->table[i]) != -1;
++		}
++	}
++	return 1;
++}
++
++int
+ fz_has_archive_entry(fz_context *ctx, fz_archive *zip, const char *name)
+ {
+ 	if (zip->directory)
+@@ -489,6 +620,9 @@ fz_open_archive(fz_context *ctx, const char *filename)
+ 
+ 	fz_try(ctx)
+ 		zip = fz_open_archive_with_stream(ctx, file);
++		zip->aes_compression_method = 0;
++		zip->aes_encryption_mode = 0;
++		zip->aes_version = 0;
+ 	fz_always(ctx)
+ 		fz_drop_stream(ctx, file);
+ 	fz_catch(ctx)
