@@ -223,7 +223,9 @@ $(LIBFFI_DIR)/include: $(THIRDPARTY_DIR)/libffi/CMakeLists.txt
 
 $(GLIB): $(LIBFFI_DIR)/include $(THIRDPARTY_DIR)/glib/CMakeLists.txt
 	install -d $(GLIB_BUILD_DIR)
-	-rm -f $(GLIB_DIR)/../glib-stamp/glib-install
+	# make install sometimes only update symlink, so purge lib dir here
+	# to update mtime for all the binaries
+	-rm -rf $(GLIB_DIR)/lib $(GLIB_DIR)/../glib-stamp/glib-install
 	cd $(GLIB_BUILD_DIR) && \
 		$(CMAKE) -DCC="$(CC) -std=gnu89" \
 		-DCFLAGS="$(CFLAGS)" -DLDFLAGS="$(LDFLAGS)" \
