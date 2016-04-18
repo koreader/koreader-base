@@ -397,7 +397,7 @@ CRYPTO_LIB=$(OUTPUT_DIR)/libs/libcrypto$(if $(WIN32),-1.dll,.so.1.0.0)
 LUASOCKET_BUILD_DIR=$(THIRDPARTY_DIR)/luasocket/build/$(MACHINE)
 LUASOCKET_DIR=$(CURDIR)/luasocket-prefix/src/luasocket
 LUASEC_BUILD_DIR=$(THIRDPARTY_DIR)/luasec/build/$(MACHINE)
-LUASEC_DIR=$(CURDIR)/$(LUASERIAL_BUILD_DIR)/luasec-prefix/src/luasec
+LUASEC_DIR=$(CURDIR)/$(LUASEC_BUILD_DIR)/luasec-prefix/src/luasec
 LUASOCKET=$(OUTPUT_DIR)/common/socket
 LUASEC=$(OUTPUT_DIR)/common/ssl
 
