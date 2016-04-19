@@ -193,17 +193,20 @@ describe("mupdf module", function()
         it("should render an image", function()
             local img = M.renderImageFile(test_img)
             assert.is_not_nil(img)
+            img:free()
         end)
         it("should render an image, 10 times", function()
             for i = 1, 10 do
                 local img = M.renderImageFile(test_img)
                 assert.is_not_nil(img)
+                img:free()
             end
         end)
         it("should render an image, 1000 times", function()
             for i = 1, 1000 do
                 local img = M.renderImageFile(test_img)
                 assert.is_not_nil(img)
+                img:free()
             end
         end)
     end)
