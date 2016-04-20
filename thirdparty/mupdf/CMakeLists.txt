@@ -48,7 +48,7 @@ endif(${ANDROID})
 ep_get_source_dir(SOURCE_DIR)
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
-    git://git.ghostscript.com/mupdf.git
+    https://gitlab.com/koreader/mupdf.git
     c3a0d0fe7615ae201efd882dc961f3815a92a375
     ${SOURCE_DIR}
 )
