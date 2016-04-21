@@ -6,6 +6,9 @@ local simple_pdf_out = "/tmp/simple-out.pdf"
 local simple_pdf_compare = "spec/base/unit/data/simple-out.pdf"
 local test_img = "spec/base/unit/data/sample.jpg"
 local jbig2_pdf = "spec/base/unit/data/2col.jbig2.pdf"
+local aes_encrypted_zip = "spec/base/unit/data/encrypted-aes.zip"
+local none_encrypted_zip = "spec/base/unit/data/encrypted-none.zip"
+local plain_encrypted_zip = "spec/base/unit/data/encrypted-plain.zip"
 
 describe("mupdf module", function()
     local M
@@ -16,15 +19,18 @@ describe("mupdf module", function()
         md5 = require("ffi/MD5")
     end)
 
-    it("should open PDFs", function()
-        assert.is_not_nil(M.openDocument(sample_pdf))
+    it("should open and close PDFs", function()
+        local doc = M.openDocument(sample_pdf)
+        assert.is_not_nil(doc)
+        doc:close()
     end)
 
-    it("should open 1000 PDFs", function()
+    it("should open and close 1000 PDFs", function()
         local t = {}
         for i = 1, 1000 do
             t[i] = M.openDocument(sample_pdf)
             assert.is_not_nil(t[i])
+            t[i]:close()
         end
     end)
 
@@ -35,6 +41,32 @@ describe("mupdf module", function()
         local dc = require("ffi/drawcontext").new()
         local bb = require("ffi/blitbuffer").new(800, 600)
         page:draw(dc, bb, 0, 0)
+        doc:close()
+    end)
+
+    describe("ZIP document API", function()
+        local aes_encry_zip, none_encry_zip, plain_encry_zip
+        setup(function()
+            aes_encry_zip = M.openDocument(aes_encrypted_zip)
+            none_encry_zip = M.openDocument(none_encrypted_zip)
+            plain_encry_zip = M.openDocument(plain_encrypted_zip)
+        end)
+        teardown(function()
+            aes_encry_zip:close()
+            none_encry_zip:close()
+            plain_encry_zip:close()
+        end)
+        it("should check password presence", function()
+            assert.equals(aes_encry_zip:needsPassword(), true)
+            assert.equals(none_encry_zip:needsPassword(), false)
+            assert.equals(plain_encry_zip:needsPassword(), true)
+        end)
+        it("should not accept wrong password", function()
+            assert.equals(aes_encry_zip:authenticatePassword("QWERTY"), false)
+            assert.equals(aes_encry_zip:authenticatePassword("qwerty"), true)
+            assert.equals(plain_encry_zip:authenticatePassword("QWERTY"), false)
+            assert.equals(plain_encry_zip:authenticatePassword("qwerty"), true)
+        end)
     end)
 
     describe("PDF document API", function()
@@ -46,6 +78,11 @@ describe("mupdf module", function()
             assert.is_not_nil(doc2)
             doc3 = M.openDocument(password_pdf)
             assert.is_not_nil(doc3)
+        end)
+        teardown(function()
+            doc1:close()
+            doc2:close()
+            doc3:close()
         end)
         it("should check password presence", function()
             assert.equals(doc3:needsPassword(), true)
@@ -156,17 +193,20 @@ describe("mupdf module", function()
         it("should render an image", function()
             local img = M.renderImageFile(test_img)
             assert.is_not_nil(img)
+            img:free()
         end)
-        it("should render an image, 10 times #notest", function()
+        it("should render an image, 10 times", function()
             for i = 1, 10 do
                 local img = M.renderImageFile(test_img)
                 assert.is_not_nil(img)
+                img:free()
             end
         end)
-        it("should render an image, 1000 times #notest", function()
+        it("should render an image, 1000 times", function()
             for i = 1, 1000 do
                 local img = M.renderImageFile(test_img)
                 assert.is_not_nil(img)
+                img:free()
             end
         end)
     end)

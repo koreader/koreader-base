@@ -19,12 +19,14 @@ ep_get_source_dir(SOURCE_DIR)
 
 set(LUA_SPORE_ROCKSPEC rockspec/${LUA_SPORE_VER}.rockspec)
 
-set(BUILD_CMD_STR "luarocks make --tree=${OUTPUT_DIR}/rocks ${LUA_SPORE_ROCKSPEC}")
+set(BUILD_CMD sh -c "luarocks make --tree=${OUTPUT_DIR}/rocks ${LUA_SPORE_ROCKSPEC}")
 if(DEFINED LDFLAGS)
-    set(BUILD_CMD_STR "${BUILD_CMD_STR} LDFLAGS=\"${LDFLAGS}\"")
+    set(BUILD_CMD "${BUILD_CMD} LDFLAGS=\"${LDFLAGS}\"")
 endif()
-set(BUILD_CMD_STR "${BUILD_CMD_STR} CC=\"${CC}\" CFLAGS=\"${CFLAGS}\" LD=\"${LD}\"")
-set(BUILD_CMD_STR "${BUILD_CMD_STR} LUA_INCDIR=\"${LUA_INCDIR}\" LUA_LIBDIR=\"${LUA_LIBDIR}\"")
+set(BUILD_CMD "${BUILD_CMD} CC=\"${CC}\" CFLAGS=\"${CFLAGS}\" LD=\"${LD}\"")
+set(BUILD_CMD "${BUILD_CMD} LUA_INCDIR=\"${LUA_INCDIR}\" LUA_LIBDIR=\"${LUA_LIBDIR}\"")
+
+set(PATCH_CMD sh -c "mkdir -p doc && ${ISED} \"s| 'luasocket|--'luasocket|g\" ${LUA_SPORE_ROCKSPEC}")
 
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
@@ -38,9 +40,9 @@ ExternalProject_Add(
     ${PROJECT_NAME}
     DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
     BUILD_IN_SOURCE 1
-    PATCH_COMMAND sh -c "mkdir -p doc && sed -i \"s| 'luasocket|--'luasocket|g\" ${LUA_SPORE_ROCKSPEC}"
+    PATCH_COMMAND ${PATCH_CMD}
     CONFIGURE_COMMAND ""
-    BUILD_COMMAND sh -c ${BUILD_CMD_STR}
+    BUILD_COMMAND ${BUILD_CMD}
     # skip install
     INSTALL_COMMAND ""
 )

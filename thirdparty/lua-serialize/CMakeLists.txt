@@ -12,12 +12,12 @@ assert_var_defined(OUTPUT_DIR)
 
 ep_get_source_dir(SOURCE_DIR)
 
-set(BUILD_CMD_STR "$(MAKE) -j${PARALLEL_JOBS} CC=\"${CC}\" LDFLAGS=\"${LDFLAGS}\" OUTPUT_DIR=${OUTPUT_DIR}")
+set(BUILD_CMD sh -c "$(MAKE) -j${PARALLEL_JOBS} CC=\"${CC}\" LDFLAGS=\"${LDFLAGS}\" OUTPUT_DIR=${OUTPUT_DIR}")
 
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
-    https://github.com/chrox/lua-serialize
-    aabebaf6560ff54cb34eb558c7f85f78a948f80b
+    https://github.com/koreader/lua-serialize
+    decd0f171cb61f3919d2441a3f0d9b3174b951e2
     ${SOURCE_DIR}
 )
 
@@ -27,7 +27,7 @@ ExternalProject_Add(
     DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
     BUILD_IN_SOURCE 1
     CONFIGURE_COMMAND ""
-    BUILD_COMMAND sh -c ${BUILD_CMD_STR}
+    BUILD_COMMAND ${BUILD_CMD}
     # skip install
     INSTALL_COMMAND ""
 )

@@ -11,6 +11,8 @@ require("ffi/freetype_h")
 local ft2 = nil
 if ffi.os == "Windows" then
 	ft2 = ffi.load("libs/libfreetype-6.dll")
+elseif ffi.os == "OSX" then
+	ft2 = ffi.load("libs/libfreetype.6.dylib")
 else
 	ft2 = ffi.load("libs/libfreetype.so.6")
 end

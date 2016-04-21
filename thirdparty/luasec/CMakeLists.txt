@@ -19,8 +19,13 @@ set(BUILD_CMD_STR "$(MAKE) CC=\"${CC}\" LD=\"${LD}\" INC_PATH=\"${INC_PATH}\" LI
 if(DEFINED LIBS)
     set(BUILD_CMD_STR "${BUILD_CMD_STR} LIBS=\"${LIBS}\"")
 endif()
-set(BUILD_CMD_STR "${BUILD_CMD_STR} --silent linux")
-set(INSTALL_CMD_STR "${BUILD_CMD_STR} --silent linux install")
+if (APPLE)
+    set(INSTALL_CMD sh -c "${BUILD_CMD_STR} --silent macosx install")
+    set(BUILD_CMD sh -c "${BUILD_CMD_STR} --silent macosx")
+else()
+    set(INSTALL_CMD sh -c "${BUILD_CMD_STR} --silent linux install")
+    set(BUILD_CMD sh -c "${BUILD_CMD_STR} --silent linux")
+endif()
 
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
@@ -35,6 +40,6 @@ ExternalProject_Add(
     DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
     BUILD_IN_SOURCE 1
     CONFIGURE_COMMAND ""
-    BUILD_COMMAND sh -c ${BUILD_CMD_STR}
-    INSTALL_COMMAND sh -c ${INSTALL_CMD_STR}
+    BUILD_COMMAND ${BUILD_CMD}
+    INSTALL_COMMAND ${INSTALL_CMD}
 )

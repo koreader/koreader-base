@@ -12,6 +12,8 @@ assert_var_defined(LDFLAGS)
 
 ep_get_source_dir(SOURCE_DIR)
 
+set(BUILD_CMD sh -c "$(MAKE) CC=\"${CC}\" LDFLAGS=\"${LDFLAGS}\" all")
+
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
     https://github.com/kernelsauce/turbo
@@ -28,7 +30,7 @@ ExternalProject_Add(
     PATCH_COMMAND patch -N -p1 < ${CMAKE_CURRENT_SOURCE_DIR}/turbo.patch
     # skip configure
     CONFIGURE_COMMAND ""
-    BUILD_COMMAND sh -c "$(MAKE) CC=\"${CC}\" LDFLAGS=\"${LDFLAGS}\" all"
+    BUILD_COMMAND ${BUILD_CMD}
     # skip install
     INSTALL_COMMAND ""
 )
