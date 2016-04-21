@@ -20,7 +20,7 @@ set(CFG_OPTS "-q --prefix=${BINARY_DIR} --host=\"${CHOST}\" --disable-static --e
 if(${WITHOUT_SIMD})
     set(CFG_OPTS "${CFG_OPTS} --without-simd")
 endif(${WITHOUT_SIMD})
-set(CFG_CMD_STR "${CFG_ENV_VAR} ${SOURCE_DIR}/configure ${CFG_OPTS}")
+set(CFG_CMD sh -c "${CFG_ENV_VAR} ${SOURCE_DIR}/configure ${CFG_OPTS}")
 
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
@@ -34,7 +34,7 @@ ExternalProject_Add(
     libjpeg-turbo
     DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
     PATCH_COMMAND ${LIBTOOLIZE} COMMAND aclocal COMMAND autoheader COMMAND autoconf COMMAND automake --force-missing --add-missing
-    CONFIGURE_COMMAND sh -c ${CFG_CMD_STR}
+    CONFIGURE_COMMAND ${CFG_CMD}
     BUILD_COMMAND $(MAKE) -j${PARALLEL_JOBS} --silent
     INSTALL_COMMAND $(MAKE) -j${PARALLEL_JOBS} --silent install
 )

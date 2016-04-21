@@ -18,7 +18,7 @@ set(STATIC_BUILD_CMD "$(MAKE) -j${PARALLEL_JOBS}")
 set(STATIC_BUILD_CMD "${STATIC_BUILD_CMD} LDFLAGS=\"${LDFLAGS}\" XCFLAGS=\"${XCFLAGS}\"")
 set(STATIC_BUILD_CMD "${STATIC_BUILD_CMD} CC=\"${CC}\" build=\"release\" MUDRAW= MUTOOL= CURL_LIB= OS=${OS}")
 set(STATIC_BUILD_CMD "${STATIC_BUILD_CMD} verbose=1 FREETYPE_DIR=nonexisting JPEG_DIR=nonexisting ZLIB_DIR=nonexisting CROSSCOMPILE=yes")
-set(STATIC_BUILD_CMD "${STATIC_BUILD_CMD} third libs")
+set(STATIC_BUILD_CMD sh -c "${STATIC_BUILD_CMD} third libs")
 
 # by default, mupdf compiles to a static library:
 # we generate a dynamic library from the static library:
@@ -48,10 +48,11 @@ else()
     set(LINK_OPTS "${LINK_OPTS} -Wl,-soname=${MUPDF_SONAME}")
     set(LINK_OPTS "${LINK_OPTS} build/release/libopenjpeg.a build/release/libmujs.a build/release/libjbig2dec.a")
 endif()
-set(SHARED_BUILD_CMD "${CC} -shared ${CFLAGS} ${LINK_OPTS} ${AES_LIB} ${ZLIB} ${JPEG_LIB} ${FREETYPE_LIB} -o ${MUPDF_LIB} -lm")
+set(SHARED_BUILD_STR "${CC} -shared ${CFLAGS} ${LINK_OPTS} ${AES_LIB} ${ZLIB} ${JPEG_LIB} ${FREETYPE_LIB} -o ${MUPDF_LIB} -lm")
 if(${ANDROID})
-    set(SHARED_BUILD_CMD "${SHARED_BUILD_CMD} -llog")
+    set(SHARED_BUILD_STR "${SHARED_BUILD_STR} -llog")
 endif(${ANDROID})
+set(SHARED_BUILD_CMD sh -c "${SHARED_BUILD_STR}")
 # use external fonts
 set(PATCH_CMD1 sh -c "patch -N -p1 < ${CMAKE_CURRENT_SOURCE_DIR}/external_fonts.patch || true")
 # add support for encryted zips
@@ -74,7 +75,7 @@ ExternalProject_Add(
     PATCH_COMMAND COMMAND ${PATCH_CMD1} COMMAND ${PATCH_CMD2}
     # skip configure
     CONFIGURE_COMMAND ""
-    BUILD_COMMAND ${BUILD_CMD_GENERATE} COMMAND sh -c ${STATIC_BUILD_CMD} COMMAND sh -c ${SHARED_BUILD_CMD}
+    BUILD_COMMAND ${BUILD_CMD_GENERATE} COMMAND ${STATIC_BUILD_CMD} COMMAND ${SHARED_BUILD_CMD}
     # skip install
     INSTALL_COMMAND ""
 )

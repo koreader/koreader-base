@@ -12,7 +12,7 @@ assert_var_defined(OUTPUT_DIR)
 
 ep_get_source_dir(SOURCE_DIR)
 
-set(BUILD_CMD_STR "$(MAKE) -j${PARALLEL_JOBS} CC=\"${CC}\" LDFLAGS=\"${LDFLAGS}\" OUTPUT_DIR=${OUTPUT_DIR}")
+set(BUILD_CMD sh -c "$(MAKE) -j${PARALLEL_JOBS} CC=\"${CC}\" LDFLAGS=\"${LDFLAGS}\" OUTPUT_DIR=${OUTPUT_DIR}")
 
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
@@ -27,7 +27,7 @@ ExternalProject_Add(
     DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
     BUILD_IN_SOURCE 1
     CONFIGURE_COMMAND ""
-    BUILD_COMMAND sh -c ${BUILD_CMD_STR}
+    BUILD_COMMAND ${BUILD_CMD}
     # skip install
     INSTALL_COMMAND ""
 )

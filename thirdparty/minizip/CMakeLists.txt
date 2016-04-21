@@ -15,8 +15,8 @@ assert_var_defined(RANLIB)
 
 ep_get_source_dir(SOURCE_DIR)
 
-set(PATCH_CMD_STR "sed -ie 's|^CC=|#CC=|g' aes/Makefile && sed -ie 's|^CFLAGS=|#CFLAGS=|g' aes/Makefile")
-set(BUILD_CMD_STR "$(MAKE) -j${PARALLEL_JOBS} -C aes CC=\"${CC}\" LDFLAGS=\"${LDFLAGS}\" AR=\"${AR}\" RANLIB=\"${RANLIB}\"")
+set(PATCH_CMD sh -c "${ISED} \"s|^CC=|#CC=|g\" aes/Makefile && ${ISED} \"s|^CFLAGS=|#CFLAGS=|g\" aes/Makefile")
+set(BUILD_CMD_STR -j${PARALLEL_JOBS} -C aes CC=${CC} LDFLAGS=${LDFLAGS} AR=${AR} RANLIB=${RANLIB})
 
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
@@ -30,9 +30,9 @@ ExternalProject_Add(
     ${PROJECT_NAME}
     DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
     BUILD_IN_SOURCE 1
-    PATCH_COMMAND sh -c ${PATCH_CMD_STR}
+    PATCH_COMMAND ${PATCH_CMD}
     CONFIGURE_COMMAND ""
-    BUILD_COMMAND sh -c ${BUILD_CMD_STR}
+    BUILD_COMMAND $(MAKE) ${BUILD_CMD_STR}
     # skip install
     INSTALL_COMMAND ""
 )

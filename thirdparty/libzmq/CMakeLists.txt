@@ -24,7 +24,8 @@ if(${LEGACY})
     set(CFG_OPTS "${CFG_OPTS} --disable-eventfd")
 endif(${LEGACY})
 
-set(CFG_CMD_STR "${CFG_ENV_VAR} ${SOURCE_DIR}/configure ${CFG_OPTS}")
+set(CFG_CMD sh -c "${CFG_ENV_VAR} ${SOURCE_DIR}/configure ${CFG_OPTS}")
+set(PATCH_CMD sh -c "${ISED} \"s|-lstdc++||g\" libtool")
 
 set(FORCE_DYNAMLIB_VERSION sed -i "s|-avoid-version||g" src/Makefile.am)
 set(SKIP_TEST sed -i "s|tests||g" Makefile.am)
@@ -43,7 +44,7 @@ ExternalProject_Add(
     ${PROJECT_NAME}
     DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
     PATCH_COMMAND ./autogen.sh COMMAND ${FORCE_DYNAMLIB_VERSION} COMMAND ${SKIP_TEST} COMMAND ${CLEAR_BUILD_DIR}
-    CONFIGURE_COMMAND sh -c ${CFG_CMD_STR} COMMAND sed -i "s|-lstdc++||g" libtool
+    CONFIGURE_COMMAND COMMAND ${CFG_CMD} COMMAND ${PATCH_CMD}
     BUILD_COMMAND $(MAKE) -j${PARALLEL_JOBS} --silent
     INSTALL_COMMAND $(MAKE) --silent installdirs uninstall install
 )

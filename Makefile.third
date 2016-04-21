@@ -25,7 +25,7 @@ $(FREETYPE_LIB) $(FREETYPE_DIR)/include: $(THIRDPARTY_DIR)/freetype2/CMakeLists.
 $(TURBOJPEG_LIB) $(JPEG_LIB): $(THIRDPARTY_DIR)/libjpeg-turbo/CMakeLists.txt
 	install -d $(JPEG_BUILD_DIR)
 	cd $(JPEG_BUILD_DIR) && \
-		$(CMAKE) -DCC="$(CC)" -DCXX="$(CXX)" \
+		$(CMAKE) -DCC="$(CC)" -DCXX="$(CXX)" -DCHOST="$(CHOST)" \
 		-DCPPFLAGS="$(CFLAGS)" -DLDFLAGS="$(LDFLAGS)" \
 		$(if $(findstring armv6, $(ARM_ARCH)),-DWITHOUT_SIMD:BOOL=ON,) \
 		$(CURDIR)/$(THIRDPARTY_DIR)/libjpeg-turbo && \
@@ -90,6 +90,7 @@ $(GIF_LIB): $(THIRDPARTY_DIR)/giflib/CMakeLists.txt
 	cd $(GIF_BUILD_DIR) && \
 		$(CMAKE) -DCC="$(CC) $(if $(ANDROID),-DS_IREAD=S_IRUSR -DS_IWRITE=S_IWUSR,)" \
 		-DCFLAGS="$(CFLAGS)" -DLDFLAGS="$(LDFLAGS)" -DCHOST="$(CHOST)" \
+		$(if $(ANDROID),-DIS_ANDROID:BOOL=on,) \
 		$(CURDIR)/thirdparty/giflib && \
 		$(MAKE)
 	cp -fL $(GIF_DIR)/lib/$(notdir $(GIF_LIB)) $@
@@ -381,7 +382,7 @@ $(LUASERIAL_LIB): $(THIRDPARTY_DIR)/lua-serialize/CMakeLists.txt
 		$(MAKE)
 
 $(LUACOMPAT52): $(LUASERIAL_LIB) $(THIRDPARTY_DIR)/lua-serialize/CMakeLists.txt
-	cp $(OUTPUT_DIR)/common/$(LUACOMPAT52) $(OUTPUT_DIR)/libs
+	cp $(OUTPUT_DIR)/common/$(notdir $(LUACOMPAT52)) $(OUTPUT_DIR)/libs
 
 # zeromq should be compiled without optimization in clang 3.4
 # which otherwise may throw a warning saying "array index is past the end

@@ -10,9 +10,9 @@ assert_var_defined(CC)
 ep_get_source_dir(BINARY_DIR)
 ep_get_source_dir(SOURCE_DIR)
 
-set(CFG_CMD_STR "CC=\"${CC}\" ${SOURCE_DIR}/configure --prefix=${BINARY_DIR} --host=${HOST} --enable-static")
+set(CFG_CMD sh -c "CC=\"${CC}\" ${SOURCE_DIR}/configure --prefix=${BINARY_DIR} --host=${HOST} --enable-static")
 if(DEFINED SYSROOT)
-    set(CFG_CMD_STR "${CFG_CMD_STR} CFLAGS=\"--sysroot ${SYSROOT}\"")
+    set(CFG_CMD "${CFG_CMD} CFLAGS=\"--sysroot ${SYSROOT}\"")
 endif()
 
 include(ExternalProject)
@@ -22,7 +22,7 @@ ExternalProject_Add(
     DOWNLOAD_DIR ${KO_DOWNLOAD_DIR}
     URL ftp://sourceware.org/pub/libffi/libffi-${LIBFFI_VER}.tar.gz
     URL_MD5 83b89587607e3eb65c70d361f13bab43
-    CONFIGURE_COMMAND sh -c ${CFG_CMD_STR}
+    CONFIGURE_COMMAND ${CFG_CMD}
     # skip the rest, we only need the header for glib
     BUILD_COMMAND $(MAKE) -j${PROCESSORS}
     INSTALL_COMMAND $(MAKE) -j${PROCESSORS} uninstall install

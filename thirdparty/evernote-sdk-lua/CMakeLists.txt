@@ -12,6 +12,8 @@ assert_var_defined(CC)
 assert_var_defined(OUTPUT_DIR)
 assert_var_defined(LDFLAGS)
 
+set(BUILD_CMD sh -c "$(MAKE) -C thrift CC=\"${CC}\" LDFLAGS=\"${LDFLAGS}\" OUTPUT_DIR=${OUTPUT_DIR}")
+
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
     https://github.com/koreader/evernote-sdk-lua
@@ -26,7 +28,7 @@ ExternalProject_Add(
     BUILD_IN_SOURCE 1
     # skip configure
     CONFIGURE_COMMAND ""
-    BUILD_COMMAND sh -c "$(MAKE) -C thrift CC=\"${CC}\" LDFLAGS=\"${LDFLAGS}\" OUTPUT_DIR=${OUTPUT_DIR}"
+    BUILD_COMMAND ${BUILD_CMD}
     # skip install
     INSTALL_COMMAND ""
 )

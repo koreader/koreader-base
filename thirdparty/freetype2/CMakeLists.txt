@@ -16,7 +16,7 @@ ep_get_binary_dir(BINARY_DIR)
 
 set(CFG_ENV_VAR "CC=\"${CC}\" CXX=\"${CXX}\" CFLAGS=\"${CFLAGS}\" CXXFLAGS=\"${CXXFLAGS}\" LDFLAGS=\"${LDFLAGS}\"")
 set(CFG_OPTS "-q --prefix=${BINARY_DIR} --disable-static --enable-shared --with-zlib=no --with-bzip2=no --with-png=no --with-harfbuzz=no --host=\"${CHOST}\"")
-set(CFG_CMD_STR "${CFG_ENV_VAR} ${SOURCE_DIR}/configure ${CFG_OPTS}")
+set(CFG_CMD sh -c "${CFG_ENV_VAR} ${SOURCE_DIR}/configure ${CFG_OPTS}")
 
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
@@ -30,7 +30,7 @@ ExternalProject_Add(
     ${PROJECT_NAME}
     DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
     PATCH_COMMAND ./autogen.sh
-    CONFIGURE_COMMAND sh -c ${CFG_CMD_STR}
+    CONFIGURE_COMMAND ${CFG_CMD}
     BUILD_COMMAND $(MAKE) -j${PARALLEL_JOBS}
     INSTALL_COMMAND $(MAKE) -j${PARALLEL_JOBS} --silent install
 )

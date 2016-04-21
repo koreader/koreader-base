@@ -15,9 +15,9 @@ assert_var_defined(OUTPUT_PATH)
 ep_get_source_dir(SOURCE_DIR)
 
 if (APPLE)
-    set(BUILD_CMD_STR "${CC} -shared ${CFLAGS} lodepng.c -o ${OUTPUT_PATH}/${SONAME}")
+    set(BUILD_CMD sh -c "${CC} -shared ${CFLAGS} lodepng.c -o ${OUTPUT_PATH}/${SONAME}")
 else()
-    set(BUILD_CMD_STR "${CC} -shared ${CFLAGS} -Wl,-E -Wl,-soname=${SONAME} lodepng.c -o ${OUTPUT_PATH}/${SONAME}")
+    set(BUILD_CMD sh -c "${CC} -shared ${CFLAGS} -Wl,-E -Wl,-soname=${SONAME} lodepng.c -o ${OUTPUT_PATH}/${SONAME}")
 endif()
 
 ko_write_gitclone_script(
@@ -34,7 +34,7 @@ ExternalProject_Add(
     BUILD_IN_SOURCE 1
     PATCH_COMMAND ${CMAKE_COMMAND} -E copy lodepng.cpp lodepng.c
     CONFIGURE_COMMAND ""
-    BUILD_COMMAND sh -c ${BUILD_CMD_STR}
+    BUILD_COMMAND ${BUILD_CMD}
     # skip install
     INSTALL_COMMAND ""
 )

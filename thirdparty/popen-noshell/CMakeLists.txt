@@ -17,7 +17,7 @@ endif(${LEGACY})
 
 assert_var_defined(AR)
 set(MAKE_ENV_VAR "CC=\"${CC}\" AR=\"${AR}\" CFLAGS=\"${CFLAGS}\"")
-set(BUILD_CMD_STR "$(MAKE) -j${PARALLEL_JOBS} ${MAKE_ENV_VAR}")
+set(BUILD_CMD sh -c "$(MAKE) -j${PARALLEL_JOBS} ${MAKE_ENV_VAR}")
 
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
@@ -36,7 +36,7 @@ ExternalProject_Add(
     PATCH_COMMAND patch -N -p0 < ${CMAKE_CURRENT_SOURCE_DIR}/popen_noshell.patch ${EXTRA_PATCH_CMD}
     # skip configure
     CONFIGURE_COMMAND ""
-    BUILD_COMMAND sh -c ${BUILD_CMD_STR}
+    BUILD_COMMAND ${BUILD_CMD}
     # skip install
     # NOTE: we always update lib timestamp to notify Make for a fresh build
     INSTALL_COMMAND ${CMAKE_COMMAND} -E touch ${SOURCE_DIR}/libpopen_noshell.a

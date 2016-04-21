@@ -19,7 +19,8 @@ ep_get_source_dir(SOURCE_DIR)
 
 set(CFG_ENV_VAR "CC=\"${CC}\" CXX=\"${CXX}\" CFLAGS=\"${CFLAGS}\" CXXFLAGS=\"${CXXFLAGS}\" LDFLAGS=\"${LDFLAGS}\" LIBS=\"${LIBS}\"")
 set(CFG_OPTS "-q --disable-desktopfiles --disable-static --enable-shared --disable-xmltools --disable-largefile --without-jpeg --without-tiff -host=\"${CHOST}\"")
-set(CFG_CMD_STR "${CFG_ENV_VAR} ${SOURCE_DIR}/configure ${CFG_OPTS}")
+set(CFG_CMD sh -c "${CFG_ENV_VAR} ${SOURCE_DIR}/configure ${CFG_OPTS}")
+set(PATCH_CMD sh -c "${ISED} \"s|-lstdc++||g\" libtool")
 
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
@@ -34,7 +35,7 @@ ExternalProject_Add(
     DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
     PATCH_COMMAND NOCONFIGURE=1 ./autogen.sh
     BUILD_IN_SOURCE 1
-    CONFIGURE_COMMAND sh -c ${CFG_CMD_STR} COMMAND sed -ie "s|-lstdc++||g" libtool
+    CONFIGURE_COMMAND COMMAND ${CFG_CMD} COMMAND ${PATCH_CMD}
     BUILD_COMMAND $(MAKE) -j${PARALLEL_JOBS} SUBDIRS_FIRST=libdjvu --silent
     # skip install
     INSTALL_COMMAND ""

@@ -24,10 +24,10 @@ else()
     set(CFG_OPTS "shared")
 endif()
 set(CFG_OPTS "${CFG_OPTS} no-asm no-idea no-mdc2 no-rc5 enable-ssl2")
-set(CFG_CMD_STR "${CFG_ENV_VAR} ${SOURCE_DIR}/${CONFIG_SCRIPT} ${CFG_OPTS}")
+set(CFG_CMD sh -c "${CFG_ENV_VAR} ${SOURCE_DIR}/${CONFIG_SCRIPT} ${CFG_OPTS}")
 
-set(MAKE_CMD_STR "$(MAKE) CC=\"${CC}\" SHARED_LDFLAGS=\"${SHARED_LDFLAGS}\" LD=\"${LD}\" RANLIB=\"${RANLIB}\"")
-set(MAKE_CMD_STR "${MAKE_CMD_STR} --silent depend build_crypto build_ssl >/dev/null 2>&1")
+set(BUILD_CMD "$(MAKE) CC=\"${CC}\" SHARED_LDFLAGS=\"${SHARED_LDFLAGS}\" LD=\"${LD}\" RANLIB=\"${RANLIB}\"")
+set(BUILD_CMD sh -c "${BUILD_CMD} --silent depend build_crypto build_ssl >/dev/null 2>&1")
 
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
@@ -40,9 +40,9 @@ include(ExternalProject)
 ExternalProject_Add(
     ${PROJECT_NAME}
     DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
-    CONFIGURE_COMMAND sh -c ${CFG_CMD_STR}
+    CONFIGURE_COMMAND ${CFG_CMD}
     BUILD_IN_SOURCE 1
-    BUILD_COMMAND sh -c ${MAKE_CMD_STR}
+    BUILD_COMMAND ${BUILD_CMD}
     # skip install
     INSTALL_COMMAND ""
 )
