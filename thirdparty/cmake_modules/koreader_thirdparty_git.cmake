@@ -11,7 +11,8 @@ set(run 0)
 ######################################################################
 # 1. if not cloned before, do a git clone
 # 2. are we already at the given commit hash?
-#   2.1. if not git fetch && checkout
+#   2.1. checkout to the given commit hash
+#   2.2. if checkout failed, git fetch && checkout again
 # 4. git submodules update
 # 5. copy everything over to source directory
 ######################################################################
@@ -69,20 +70,27 @@ endif()
 
 if(NOT \"\${curr_tag}\" STREQUAL \"${git_tag}\")
   execute_process(
-    COMMAND \"${git_EXECUTABLE}\" fetch
-    WORKING_DIRECTORY \"${work_dir}/${src_name}\"
-    RESULT_VARIABLE error_code
-  )
-  if(error_code)
-    message(FATAL_ERROR \"Failed to fetch update from origin\")
-  endif()
-  execute_process(
     COMMAND \"${git_EXECUTABLE}\" checkout -f ${git_tag}
     WORKING_DIRECTORY \"${work_dir}/${src_name}\"
     RESULT_VARIABLE error_code
   )
   if(error_code)
-    message(FATAL_ERROR \"Failed to checkout tag: '${git_tag}'\")
+    execute_process(
+      COMMAND \"${git_EXECUTABLE}\" fetch
+      WORKING_DIRECTORY \"${work_dir}/${src_name}\"
+      RESULT_VARIABLE error_code
+    )
+    if(error_code)
+      message(FATAL_ERROR \"Failed to fetch update from origin\")
+    endif()
+    execute_process(
+      COMMAND \"${git_EXECUTABLE}\" checkout -f ${git_tag}
+      WORKING_DIRECTORY \"${work_dir}/${src_name}\"
+      RESULT_VARIABLE error_code
+    )
+    if(error_code)
+      message(FATAL_ERROR \"Failed to checkout tag: '${git_tag}'\")
+    endif()
   endif()
 endif()
 
