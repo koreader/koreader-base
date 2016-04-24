@@ -76,6 +76,14 @@ if(NOT \"\${curr_tag}\" STREQUAL \"${git_tag}\")
   )
   if(error_code)
     execute_process(
+      COMMAND \"${git_EXECUTABLE}\" remote rm origin
+      WORKING_DIRECTORY \"${work_dir}/${src_name}\"
+    )
+    execute_process(
+      COMMAND \"${git_EXECUTABLE}\" remote add origin \"${git_repository}\"
+      WORKING_DIRECTORY \"${work_dir}/${src_name}\"
+    )
+    execute_process(
       COMMAND \"${git_EXECUTABLE}\" fetch
       WORKING_DIRECTORY \"${work_dir}/${src_name}\"
       RESULT_VARIABLE error_code
