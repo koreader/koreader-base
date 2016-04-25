@@ -184,18 +184,18 @@ end
 
 function KOPTContext_mt.__index:nativeToReflowPosTransform(xc, yc)
     local function wrectmap_native_distance(wrmap, x0, y0)
+        local x = wrmap.coords[0].x*self.dev_dpi*self.quality/wrmap.srcdpiw
+        local y = wrmap.coords[0].y*self.dev_dpi*self.quality/wrmap.srcdpih
+        local w = wrmap.coords[2].x*self.dev_dpi*self.quality/wrmap.srcdpiw
+        local h = wrmap.coords[2].y*self.dev_dpi*self.quality/wrmap.srcdpih
         local function wrectmap_native_inside(wrmap, x0, y0)
-            return wrmap.coords[0].x <= x0 and wrmap.coords[0].y <= y0
-                    and wrmap.coords[0].x + wrmap.coords[2].x >= x0
-                    and wrmap.coords[0].y + wrmap.coords[2].y >= y0
+            return x <= x0 and y <= y0
+                    and x + w >= x0
+                    and y + h >= y0
         end
         if wrectmap_native_inside(wrmap, x0, y0) then
             return 0
         else
-            local x = wrmap.coords[0].x*self.dev_dpi*self.quality/wrmap.srcdpiw
-            local y = wrmap.coords[0].y*self.dev_dpi*self.quality/wrmap.srcdpih
-            local w = wrmap.coords[2].x*self.dev_dpi*self.quality/wrmap.srcdpiw
-            local h = wrmap.coords[2].y*self.dev_dpi*self.quality/wrmap.srcdpih
             local x1, y1 = x + w/2, y + h/2
             return (x0 - x1)*(x0 - x1) + (y0 - y1)*(y0 - y1)
         end
