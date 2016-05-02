@@ -495,3 +495,11 @@ $(EVERNOTE_LIB): $(THIRDPARTY_DIR)/evernote-sdk-lua/CMakeLists.txt
 $(LUALONGNUMBER): $(EVERNOTE_LIB) $(THIRDPARTY_DIR)/evernote-sdk-lua/CMakeLists.txt
 	cp $(CURDIR)/$(EVERNOTE_PLUGIN_DIR)/lib/liblualongnumber.so \
 		$(CURDIR)/$(OUTPUT_DIR)/libs
+
+$(SQLITE_LIB): $(THIRDPARTY_DIR)/sqlite/CMakeLists.txt
+	install -d $(SQLITE_BUILD_DIR)
+	cd $(SQLITE_BUILD_DIR) && \
+		$(CMAKE) -DCC="$(CC)" \
+			-DCFLAGS="$(CFLAGS)" \
+		$(CURDIR)/thirdparty/sqlite && \
+		$(MAKE)
