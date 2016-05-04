@@ -480,6 +480,10 @@ LUA_SPORE_VER=lua-spore-$(SPORE_VER)
 LUAROCKS_DIR=$(OUTPUT_DIR)/rocks/lib/luarocks/rocks
 LUA_SPORE_ROCK=$(LUAROCKS_DIR)/lua-spore/$(SPORE_VER)/$(LUA_SPORE_VER).rockspec
 
+SQLITE_BUILD_DIR=$(THIRDPARTY_DIR)/sqlite/build/$(MACHINE)
+SQLITE_DIR=$(CURDIR)/$(SQLITE_BUILD_DIR)/sqlite-prefix/src/sqlite-build
+SQLITE_LIB=$(SQLITE_DIR)/lib/libsqlite3.a
+
 # CFLAGS for the Lua/C/C++ modules:
 #
 # setting the rpath to '$ORIGIN' will make the dynamic linker search
