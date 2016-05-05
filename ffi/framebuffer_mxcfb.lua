@@ -395,6 +395,14 @@ function framebuffer:init()
             self.wait_for_marker_full = true
             self.wait_for_marker_partial = false
             self.wait_for_marker_fast = false
+        elseif self.device.model == "Kobo_alyssum" then
+            self.wait_for_marker_full = true
+            self.wait_for_marker_partial = false
+            self.wait_for_marker_fast = false
+        elseif self.device.model == "Kobo_pika" then
+            self.wait_for_marker_full = true
+            self.wait_for_marker_partial = false
+            self.wait_for_marker_fast = false
         end
     elseif self.device:isPocketBook() then
         require("ffi/mxcfb_pocketbook_h")
