@@ -4,13 +4,13 @@ local dummy = require("ffi/koptcontext_h")
 local Blitbuffer = require("ffi/blitbuffer")
 local leptonica, k2pdfopt = nil, nil
 if ffi.os == "Windows" then
-	leptonica = ffi.load("libs/liblept-3.dll")
+	leptonica = ffi.load("libs/liblept-4.dll")
 	k2pdfopt = ffi.load("libs/libk2pdfopt-2.dll")
 elseif ffi.os == "OSX" then
-	leptonica = ffi.load("libs/liblept.3.dylib")
+	leptonica = ffi.load("libs/liblept.4.dylib")
 	k2pdfopt = ffi.load("libs/libk2pdfopt.2.dylib")
 else
-	leptonica = ffi.load("libs/liblept.so.3")
+	leptonica = ffi.load("libs/liblept.so.4")
 	k2pdfopt = ffi.load("libs/libk2pdfopt.so.2")
 end
 

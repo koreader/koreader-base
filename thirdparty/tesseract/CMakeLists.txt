@@ -12,7 +12,7 @@ set(PATCH_CMD sh -c "${ISED} \"s|AM_CONFIG_HEADER|AC_CONFIG_HEADERS|g\" configur
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
     https://github.com/tesseract-ocr/tesseract.git
-    be09fec7a20db58da4a0c694491c1f7783969769
+    60176fc5ae5e7f6bdef60c926a4b5ea03de2bfa7
     ${SOURCE_DIR}
 )
 

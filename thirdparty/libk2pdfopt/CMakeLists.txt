@@ -39,7 +39,7 @@ endif()
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
     git://github.com/koreader/libk2pdfopt.git
-    5aa0165519ec4d6dc74e12aa231f184be85e8a9b
+    d9ddb6e7c5a334cb8b68ac95b1707cb7bf2c5b9c
     ${SOURCE_DIR}
 )
 
