@@ -1,0 +1,60 @@
+diff --git a/src/bmpio.c b/src/bmpio.c
+index e775dd2..68dc56c 100644
+--- a/src/bmpio.c
++++ b/src/bmpio.c
+@@ -554,6 +554,7 @@ RGBA_QUAD  *pquad;
+ #endif  /* HAVE_CONFIG_H */
+ 
+ #if HAVE_FMEMOPEN
++__asm__(".symver fmemopen,fmemopen@GLIBC_2.2.5");
+ extern FILE *open_memstream(char **data, size_t *size);
+ extern FILE *fmemopen(void *data, size_t size, const char *mode);
+ #endif  /* HAVE_FMEMOPEN */
+diff --git a/src/jp2kio.c b/src/jp2kio.c
+index 9eb88d1..105b160 100644
+--- a/src/jp2kio.c
++++ b/src/jp2kio.c
+@@ -743,6 +743,7 @@ opj_image_cmptparm_t  cmptparm[4];
+  *                         Read/write to memory                        *
+  *---------------------------------------------------------------------*/
+ #if HAVE_FMEMOPEN
++__asm__(".symver fmemopen,fmemopen@GLIBC_2.2.5");
+ extern FILE *open_memstream(char **data, size_t *size);
+ extern FILE *fmemopen(void *data, size_t size, const char *mode);
+ #endif  /* HAVE_FMEMOPEN */
+diff --git a/src/jpegio.c b/src/jpegio.c
+index 06185da..ddc4a3c 100644
+--- a/src/jpegio.c
++++ b/src/jpegio.c
+@@ -939,6 +939,7 @@ jmp_buf                      jmpbuf;  /* must be local to the function */
+  *                         Read/write to memory                        *
+  *---------------------------------------------------------------------*/
+ #if HAVE_FMEMOPEN
++__asm__(".symver fmemopen,fmemopen@GLIBC_2.2.5");
+ extern FILE *open_memstream(char **data, size_t *size);
+ extern FILE *fmemopen(void *data, size_t size, const char *mode);
+ #endif  /* HAVE_FMEMOPEN */
+diff --git a/src/pngio.c b/src/pngio.c
+index 19f6c55..79b7ed3 100644
+--- a/src/pngio.c
++++ b/src/pngio.c
+@@ -1252,6 +1252,7 @@ l_pngSetReadStrip16To8(l_int32  flag)
+  *                         Read/write to memory                        *
+  *---------------------------------------------------------------------*/
+ #if HAVE_FMEMOPEN
++__asm__(".symver fmemopen,fmemopen@GLIBC_2.2.5");
+ extern FILE *open_memstream(char **data, size_t *size);
+ extern FILE *fmemopen(void *data, size_t size, const char *mode);
+ #endif  /* HAVE_FMEMOPEN */
+diff --git a/src/pnmio.c b/src/pnmio.c
+index 3b4b931..00b4e47 100644
+--- a/src/pnmio.c
++++ b/src/pnmio.c
+@@ -601,6 +601,7 @@ PIX       *pixs;
+ #endif  /* HAVE_CONFIG_H */
+ 
+ #if HAVE_FMEMOPEN
++__asm__(".symver fmemopen,fmemopen@GLIBC_2.2.5");
+ extern FILE *open_memstream(char **data, size_t *size);
+ extern FILE *fmemopen(void *data, size_t size, const char *mode);
+ #endif  /* HAVE_FMEMOPEN */
