@@ -151,6 +151,9 @@ BASE_CFLAGS:=-O2 -ffast-math -pipe -fomit-frame-pointer
 # FIXME: If we cared, we'd probably need to do something to convince libzmq not to enable support for eventfd [@GLIBC_2.7]
 # FIXED: To cross compile libzmq for GLIBC_2.4 you need to configure with the option '--disable-eventfd'
 #
+# In the same vein, see base#421 for how to deal with an updated glibc symbol for a function which did NOT change its signature,
+# and where we don't have access to a public definition of the old implementation, only a compat versioned symbol.
+#
 MG2K12_COMPAT_CFLAGS:=-fno-stack-protector -U_FORTIFY_SOURCE -D_GNU_SOURCE -fno-finite-math-only
 MG2K12_COMPAT_CXXFLAGS:=-fno-use-cxa-atexit
 # My legacy TC is based on glibc 2.9, that should be enough :).
