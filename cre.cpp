@@ -1108,13 +1108,13 @@ static int getWordBoxesFromPositions(lua_State *L) {
 				lastx = wordRect.left;
 			} else {  // word is hyphenated
 				ldomWord word = words[i];
-				int y=-1;
+				int y = -1;
 				for (int j=word.getStart(); j < word.getEnd(); j++) {
 					if (ldomXPointer(word.getNode(), j).getRectEX(charRect)) {
-						if(!docToWindowRect(tv,charRect)) continue;
-						if(y==-1) y=charRect.top;
-						if(j!=word.getStart()&&y==charRect.top) continue;
-						y=charRect.top;
+						if (!docToWindowRect(tv, charRect)) continue;
+						if (y == -1) y = charRect.top;
+						if (j != word.getStart() && y == charRect.top) continue;
+						y = charRect.top;
 						if (charRect.left < lastx) {
 							lua_pushLineRect(L, lineRect.left, lineRect.top,
 												lineRect.right, lineRect.bottom, lcount++);
