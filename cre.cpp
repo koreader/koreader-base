@@ -1043,12 +1043,12 @@ void lua_pushLineRect(lua_State *L, int left, int top, int right, int bottom, in
 	lua_rawseti(L, -2, lcount);
 }
 
-void docToWindowRect(LVDocView *tv, lvRect &rc) {
+bool docToWindowRect(LVDocView *tv, lvRect &rc) {
     lvPoint topLeft = rc.topLeft();
     lvPoint bottomRight = rc.bottomRight();
     if (tv->docToWindowPoint(topLeft)) {
         rc.setTopLeft(topLeft);
-    }
+    }else return false;
     if (tv->docToWindowPoint(bottomRight)) {
         rc.setBottomRight(bottomRight);
     } else {
@@ -1056,8 +1056,9 @@ void docToWindowRect(LVDocView *tv, lvRect &rc) {
         bottomRight.x -= 2;
         if (tv->docToWindowPoint(bottomRight)) {
             rc.setBottomRight(bottomRight);
-        }
+        }else return false;
     }
+    return true;
 }
 
 static int getWordBoxesFromPositions(lua_State *L) {
@@ -1096,7 +1097,7 @@ static int getWordBoxesFromPositions(lua_State *L) {
 		lua_newtable(L); // first line box
 		for (int i=0; i<words.length(); i++) {
 			if (ldomXRange(words[i]).getRect(wordRect)) {
-				docToWindowRect(tv, wordRect);
+				if (!docToWindowRect(tv, wordRect)) continue;//docToWindowRect returns false means it is not on current showing page.
 				if (wordRect.left < lastx) {
 					lua_pushLineRect(L, lineRect.left, lineRect.top,
 									    lineRect.right, lineRect.bottom, lcount++);
@@ -1107,9 +1108,13 @@ static int getWordBoxesFromPositions(lua_State *L) {
 				lastx = wordRect.left;
 			} else {  // word is hyphenated
 				ldomWord word = words[i];
+				int y = -1;
 				for (int j=word.getStart(); j < word.getEnd(); j++) {
-					if (ldomXPointer(word.getNode(), j).getRect(charRect)) {
-						docToWindowRect(tv, charRect);
+					if (ldomXPointer(word.getNode(), j).getRectEx(charRect)) {
+						if (!docToWindowRect(tv, charRect)) continue;
+						if (y == -1) y = charRect.top;
+						if (j != word.getStart() && y == charRect.top) continue;
+						y = charRect.top;
 						if (charRect.left < lastx) {
 							lua_pushLineRect(L, lineRect.left, lineRect.top,
 												lineRect.right, lineRect.bottom, lcount++);
