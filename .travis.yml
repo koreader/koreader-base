@@ -51,7 +51,7 @@ install:
     # recent versions of busted may cause some weird segmentation faults
     # - git clone https://github.com/Olivine-Labs/busted/
     # - cd busted && git checkout v1.10.0 && luarocks --local make busted-1.10.0-0.rockspec && cd ..
-    - travis_retry luarocks --local install busted 2.0.rc11-0
+    - travis_retry luarocks --local install busted 2.0.rc12-1
     # for verbose_print module
     - travis_retry luarocks --local install ansicolors
     - eval $(luarocks path --bin)
