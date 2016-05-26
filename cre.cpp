@@ -936,7 +936,7 @@ static int getWordFromPosition(lua_State *L) {
 	if (word) {
 		lvRect rect;
 		ldomXRange range = word->getRange();
-		if (range.getRect(rect)) {
+		if (range.getRectEx(rect)) {
 			lua_pushstring(L, "word");
 			lua_pushstring(L, UnicodeToLocal(word->getText()).c_str());
 			lua_settable(L, -3);
@@ -1096,7 +1096,7 @@ static int getWordBoxesFromPositions(lua_State *L) {
 		int lastx = -1;
 		lua_newtable(L); // first line box
 		for (int i=0; i<words.length(); i++) {
-			if (ldomXRange(words[i]).getRect(wordRect)) {
+			if (ldomXRange(words[i]).getRectEx(wordRect)) {
 				if (!docToWindowRect(tv, wordRect)) continue;//docToWindowRect returns false means it is not on current showing page.
 				if (wordRect.left < lastx) {
 					lua_pushLineRect(L, lineRect.left, lineRect.top,
