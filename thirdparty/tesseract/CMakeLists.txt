@@ -7,7 +7,11 @@ include("koreader_thirdparty_git")
 
 ep_get_source_dir(SOURCE_DIR)
 
-set(PATCH_CMD sh -c "${ISED} \"s|AM_CONFIG_HEADER|AC_CONFIG_HEADERS|g\" configure.ac")
+if ("$ENV{ANDROID}" STREQUAL "1")
+    set(PATCH_CMD sh -c "patch -N -p1 < ${CMAKE_CURRENT_SOURCE_DIR}/tesseract-android.patch")
+else()
+    set(PATCH_CMD echo)
+endif()
 
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
