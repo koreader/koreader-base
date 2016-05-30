@@ -537,8 +537,8 @@ end
 function BB_mt.__index:checkCoordinates(x, y)
     assert(x >= 0, "x coordinate >= 0")
     assert(y >= 0, "y coordinate >= 0")
-    assert(x < self.w, "x coordinate < width")
-    assert(y < self.h, "y coordinate < height")
+    assert(x < self:getWidth(), "x coordinate < width")
+    assert(y < self:getHeight(), "y coordinate < height")
 end
 
 -- getPixelP (pointer) routines, working on physical coordinates
@@ -1210,17 +1210,18 @@ function BB_mt.__index:writePNG(filename)
     if not Png then Png = require("ffi/png") end
     local hook, mask, _ = debug.gethook()
     debug.sethook()
-    local w, h = self.w, self.h
+    local w, h = self:getWidth(), self:getHeight()
     local cdata = ffi.C.malloc(w * h * 4)
     local mem = ffi.cast("char*", cdata)
-    for x = 0, w-1 do
-        for y = 0, h-1 do
+    for y = 0, h-1 do
+        local offset = 4 * w * y
+        for x = 0, w-1 do
             local c = self:getPixel(x, y):getColorRGB32()
-            local offset = 4 * w * y + 4 * x
             mem[offset] = c.r
             mem[offset + 1] = c.g
             mem[offset + 2] = c.b
             mem[offset + 3] = 0xFF
+            offset = offset + 4
         end
     end
     Png.encodeToFile(filename, mem, w, h)
