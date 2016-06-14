@@ -86,13 +86,13 @@ function KOPTContext_mt.__index:getWordBoxes(bmp, x, y, w, h, box_type)
     local l_x0, l_y0, l_x1, l_y1
 
     if box_type == 0 then
-        k2pdfopt.k2pdfopt_get_reflowed_word_boxes(self, bmp == "src" and self.src or self.dst,
-            ffi.new("int", x), ffi.new("int", y), ffi.new("int", w), ffi.new("int", h))
+        k2pdfopt.k2pdfopt_get_reflowed_word_boxes(self,
+            bmp == "src" and self.src or self.dst, x, y, w, h)
         boxa = self.rboxa
         nai = self.rnai
     elseif box_type == 1 then
-        k2pdfopt.k2pdfopt_get_native_word_boxes(self, bmp == "src" and self.src or self.dst,
-            ffi.new("int", x), ffi.new("int", y), ffi.new("int", w), ffi.new("int", h))
+        k2pdfopt.k2pdfopt_get_native_word_boxes(self,
+            bmp == "src" and self.src or self.dst, x, y, w, h)
         boxa = self.nboxa
         nai = self.nnai
     end
@@ -153,7 +153,7 @@ end
 function KOPTContext_mt.__index:reflowToNativePosTransform(xc, yc, wr, hr)
     local function wrectmap_reflow_distance(wrmap, x, y)
         local function wrectmap_reflow_inside(wrmap, x, y)
-            return k2pdfopt.wrectmap_inside(wrmap, ffi.new("int", x), ffi.new("int", y)) ~= 0
+            return k2pdfopt.wrectmap_inside(wrmap, x, y) ~= 0
         end
         if wrectmap_reflow_inside(wrmap, x, y) then
             return 0
@@ -216,8 +216,7 @@ end
 function KOPTContext_mt.__index:getTOCRWord(bmp, x, y, w, h, datadir, lang, ocr_type, allow_spaces, std_proc)
     local word = ffi.new("char[256]")
     k2pdfopt.k2pdfopt_tocr_single_word(bmp == "src" and self.src or self.dst,
-        ffi.new("int", x), ffi.new("int", y), ffi.new("int", w), ffi.new("int", h),
-        word, 255, ffi.cast("char*", datadir), ffi.cast("char*", lang),
+        x, y, w, h, word, 255, ffi.cast("char*", datadir), ffi.cast("char*", lang),
         ocr_type, allow_spaces, std_proc)
     return ffi.string(word)
 end
@@ -233,32 +232,120 @@ function KOPTContext_mt.__index:getAutoBBox()
     return x0, y0, x1, y1
 end
 
-function KOPTContext_mt.__index:getPageRegions()
-    k2pdfopt.k2pdfopt_part_bmp(self)
-    local w, h = self.page_width, self.page_height
-    local regions = {}
-    for i = 0, self.pageregions.n - 1 do
-        local bmpregion = (self.pageregions.pageregion + i).bmpregion
-        local c1, c2 = bmpregion.c1, bmpregion.c2
-        local r1, r2 = bmpregion.r1, bmpregion.r2
-        if c2 > 0 and r2 > 0 then
-            table.insert(regions, {
-                x0 = c1/w, x1 = c2/w,
-                y0 = r1/h, y1 = r2/h
-            })
+function KOPTContext_mt.__index:findPageBlocks()
+    if self.src.data then
+        local pixs = k2pdfopt.bitmap2pix(self.src,
+            0, 0, self.src.width, self.src.height)
+        local pixb = leptonica.pixThresholdToBinary(pixs, 128)
+        local pixr = leptonica.pixReduceRankBinaryCascade(pixb, 1, 0, 0, 0)
+        leptonica.pixDestroy(ffi.new('PIX *[1]', pixs))
+        leptonica.pixDestroy(ffi.new('PIX *[1]', pixb))
+
+        local pixtb = ffi.new("PIX *[1]")
+        local status = leptonica.pixGetRegionsBinary(pixr, nil, nil, pixtb, 0)
+        if status == 0 then
+            self.nboxa = leptonica.pixSplitIntoBoxa(pixtb[0], 5, 10, 20, 80, 10, 0)
+            for i = 0, leptonica.boxaGetCount(self.nboxa) - 1 do
+                local box = leptonica.boxaGetBox(self.nboxa, i, ffi.C.L_CLONE)
+                leptonica.boxAdjustSides(box, box, -1, 0, -1, 0)
+            end
+            self.rboxa = leptonica.boxaCombineOverlaps(self.nboxa)
+            self.page_width = leptonica.pixGetWidth(pixr)
+            self.page_height = leptonica.pixGetHeight(pixr)
+
+            -- uncomment this to show text blocks in situ
+            --leptonica.pixWritePng("textblock-mask.png", pixtb[0], 0.0)
+
+            leptonica.pixDestroy(ffi.new('PIX *[1]', pixtb))
         end
+        leptonica.pixDestroy(ffi.new('PIX *[1]', pixr))
     end
-    return regions
+end
+
+--[[
+-- get page block in location x, y both of which in range [0, 1] relative to page
+-- width and height respectively
+--]]
+function KOPTContext_mt.__index:getPageBlock(x_rel, y_rel)
+    local block = nil
+    if self.src.data and self.nboxa ~= nil and self.rboxa ~= nil then
+        local w, h = self:getPageDim()
+        local tbox = leptonica.boxCreate(0, y_rel * h, w, 2)
+        local boxa = leptonica.boxaClipToBox(self.nboxa, tbox)
+        leptonica.boxDestroy(ffi.new('BOX *[1]', tbox))
+        for i = 0, leptonica.boxaGetCount(boxa) - 1 do
+            local box = leptonica.boxaGetBox(boxa, i, ffi.C.L_CLONE)
+            leptonica.boxAdjustSides(box, box, -1, 0, -1, 0)
+        end
+        local boxatb = leptonica.boxaCombineOverlaps(boxa)
+        leptonica.boxaDestroy(ffi.new('BOXA *[1]', boxa))
+        local clipped_box, unclipped_box
+        for i = 0, leptonica.boxaGetCount(boxatb) - 1 do
+            local box = leptonica.boxaGetBox(boxatb, i, ffi.C.L_CLONE)
+            if box.x / w <= x_rel and (box.x + box.w) / w >= x_rel then
+                clipped_box = leptonica.boxCreate(box.x, 0, box.w, h)
+            end
+            leptonica.boxDestroy(ffi.new('BOX *[1]', box))
+            if clipped_box ~= nil then break end
+        end
+        for i = 0, leptonica.boxaGetCount(self.rboxa) - 1 do
+            local box = leptonica.boxaGetBox(self.rboxa, i, ffi.C.L_CLONE)
+            if box.x / w <= x_rel and (box.x + box.w) / w >= x_rel
+                and box.y / h <= y_rel and (box.y + box.h) / h >= y_rel then
+                unclipped_box = leptonica.boxCreate(box.x, box.y, box.w, box.h)
+            end
+            leptonica.boxDestroy(ffi.new('BOX *[1]', box))
+            if unclipped_box ~= nil then break end
+        end
+        if clipped_box ~= nil and unclipped_box ~= nil then
+            local box = leptonica.boxOverlapRegion(clipped_box, unclipped_box)
+            if box ~= nil then
+                block = {
+                    x0 = box.x / w, y0 = box.y / h,
+                    x1 = (box.x + box.w) / w,
+                    y1 = (box.y + box.h) / h,
+                }
+            end
+            leptonica.boxDestroy(ffi.new('BOX *[1]', box))
+        end
+        if clipped_box ~= nil then
+            leptonica.boxDestroy(ffi.new('BOX *[1]', clipped_box))
+        end
+        if unclipped_box ~= nil then
+            leptonica.boxDestroy(ffi.new('BOX *[1]', unclipped_box))
+        end
+
+        -- uncomment this to show text blocks in situ
+        --[[
+        if block then
+            local w, h = self.src.width, self.src.height
+            local box = leptonica.boxCreate(block.x0*w, block.y0*h,
+                (block.x1-block.x0)*w, (block.y1-block.y0)*h)
+            local boxa = leptonica.boxaCreate(1)
+            leptonica.boxaAddBox(boxa, box, ffi.C.L_COPY)
+            local pixs = k2pdfopt.bitmap2pix(self.src,
+                0, 0, self.src.width, self.src.height)
+            local pixc = leptonica.pixDrawBoxaRandom(pixs, boxa, 8)
+            leptonica.pixWritePng("textblock.png", pixc, 0.0)
+            leptonica.pixDestroy(ffi.new('PIX *[1]', pixc))
+            leptonica.boxaDestroy(ffi.new('BOXA *[1]', boxa))
+            leptonica.boxDestroy(ffi.new('BOX *[1]', box))
+        end
+        --]]
+
+        leptonica.boxaDestroy(ffi.new('BOXA *[1]', boxatb))
+    end
+
+    return block
 end
 
 --[[
 -- draw highlights into pix and return leptonica pixmap
 --]]
 function KOPTContext_mt.__index:getSrcPix(pboxes, drawer)
-    if self.src ~= nil then
+    if self.src.data ~= nil then
         local pix1 = k2pdfopt.bitmap2pix(self.src,
-            ffi.new("int", 0), ffi.new("int", 0),
-            ffi.new("int", self.src.width), ffi.new("int", self.src.height))
+            0, 0, self.src.width, self.src.height)
         if pboxes and drawer == "lighten" then
             local color = 0xFFFF0000
             local bbox = self.bbox
@@ -292,7 +379,7 @@ function KOPTContext_mt.__index:exportSrcPNGString(pboxes, drawer)
     if pix ~= nil then
         local pdata = ffi.new("char *[1]")
         local psize = ffi.new("size_t[1]")
-        leptonica.pixWriteMemPng(pdata, psize, pix, ffi.new("float", 0.0))
+        leptonica.pixWriteMemPng(pdata, psize, pix, 0.0)
         leptonica.pixDestroy(ffi.new('PIX *[1]', pix))
         if pdata[0] ~= nil then
            local pngstr = ffi.string(pdata[0], psize[0])
@@ -314,7 +401,6 @@ function KOPTContext_mt.__index:free()
     k2pdfopt.bmp_free(self.src)
     k2pdfopt.bmp_free(self.dst)
     k2pdfopt.wrectmaps_free(self.rectmaps)
-    k2pdfopt.pageregions_free(self.pageregions)
 end
 
 function KOPTContext_mt.__index:__gc() self:free() end
@@ -364,11 +450,28 @@ function KOPTContext.new()
     kc.nboxa = nil
     kc.nnai = nil
     kc.language = nil
-
+    -- 1. in page reflowing context,
+    --  `src` is the source page image fed into k2pdfopt, and `dst` is the reflowed
+    --  page image. They usually have different page sizes.
+    -- 2. in page optimization context,
+    --  `src` is the source page image fed into k2pdfopt, and `dst` is the
+    --  de-watermarked page image. They have the same page size.
+    -- 3. in page segmentation context,
+    --  `src` is the source page image fed into leptonica, and `dst` is the
+    --  text block mask. They usually have different page sizes (the mask will be
+    --  scaled down to half width and height).
+    -- 4. in OCR context,
+    --  `src` is an image of a word to be OCRed fed into k2pdfopt, and `dst` is unused.
+    -- 5. in page cropping context,
+    --  `src` is the source page image fed into k2pdfopt, and `dst` is unused.
+    -- 6. in words boxing context,
+    --  `src` is the source page image fed into k2pdfopt, and `dst` is unused.
+    -- 7. in page drawing context,
+    --  `src` is the source page image fed into leptonica, and `dst` is unused.
     k2pdfopt.bmp_init(kc.src)
     k2pdfopt.bmp_init(kc.dst)
+    -- only used in words boxing context
     k2pdfopt.wrectmaps_init(kc.rectmaps)
-    k2pdfopt.pageregions_init(kc.pageregions)
 
     return kc
 end
@@ -571,9 +674,6 @@ function KOPTContext.fromtable(context)
     else
         kc.rectmaps.wrectmap = nil
     end
-
-    -- for now we don't serialize pageregions
-    k2pdfopt.pageregions_init(kc.pageregions)
 
     return kc
 end
