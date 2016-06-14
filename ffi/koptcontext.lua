@@ -236,10 +236,8 @@ function KOPTContext_mt.__index:findPageBlocks()
     if self.src.data then
         local pixs = k2pdfopt.bitmap2pix(self.src,
             0, 0, self.src.width, self.src.height)
-        local pixb = leptonica.pixThresholdToBinary(pixs, 128)
-        local pixr = leptonica.pixReduceRankBinaryCascade(pixb, 1, 0, 0, 0)
+        local pixr = leptonica.pixThresholdToBinary(pixs, 128)
         leptonica.pixDestroy(ffi.new('PIX *[1]', pixs))
-        leptonica.pixDestroy(ffi.new('PIX *[1]', pixb))
 
         local pixtb = ffi.new("PIX *[1]")
         local status = leptonica.pixGetRegionsBinary(pixr, nil, nil, pixtb, 0)
