@@ -31,6 +31,7 @@ else ifeq ($(TARGET), kindle-legacy)
     export LEGACY=1
 else ifeq ($(TARGET), kobo)
     CHOST?=arm-linux-gnueabihf
+    export USE_LJ_WPACLIENT=1
 else ifeq ($(TARGET), ubuntu-touch)
     CHOST?=arm-linux-gnueabihf
     export SDL=1
@@ -506,6 +507,11 @@ LUA_SPORE_ROCK=$(LUAROCKS_DIR)/lua-spore/$(SPORE_VER)/$(LUA_SPORE_VER).rockspec
 SQLITE_BUILD_DIR=$(THIRDPARTY_DIR)/sqlite/build/$(MACHINE)
 SQLITE_DIR=$(CURDIR)/$(SQLITE_BUILD_DIR)/sqlite-prefix/src/sqlite-build
 SQLITE_LIB=$(SQLITE_DIR)/lib/libsqlite3.a
+
+# pure LuaJIT module, so no need to separate build dir by MACHINE
+LJ_WPACLIENT_BUILD_DIR=$(THIRDPARTY_DIR)/lj-wpaclient/build
+LJ_WPACLIENT_DIR=$(CURDIR)/$(LJ_WPACLIENT_BUILD_DIR)/lj-wpaclient-prefix/src/lj-wpaclient
+LJ_WPACLIENT=$(OUTPUT_DIR)/common/lj-wpaclient/wpaclient.lua
 
 # CFLAGS for the Lua/C/C++ modules:
 #
