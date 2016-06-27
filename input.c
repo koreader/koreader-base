@@ -97,7 +97,7 @@ static inline void genEmuEvent(int fd, int type, int code, int value) {
 	input.value = value;
 
 	gettimeofday(&input.time, NULL);
-	if(write(fd, &input, sizeof(struct input_event)) == -1) {
+	if (write(fd, &input, sizeof(struct input_event)) == -1) {
 		printf("Failed to generate emu event.\n");
 	}
 
@@ -183,46 +183,61 @@ int pb_event_handler(int type, int par1, int par2) {
     }
 	return 0;
 }
+
+static int forkInkViewMain(lua_State *L, const char *inputdevice) {
+	struct sigaction new_sa;
+	int childpid;
+	if ((childpid = fork()) == -1) {
+		return luaL_error(L, "cannot fork() emu event listener");
+	}
+	if (childpid == 0) {
+		/* we only use inputfds[0] in emu mode, because we only have one
+		 * fake device so far. */
+		inputfds[0] = open(inputdevice, O_RDWR | O_NONBLOCK);
+		if (inputfds < 0) {
+			return luaL_error(L, "error opening input device <%s>: %d", inputdevice, errno);
+		}
+		InkViewMain(pb_event_handler);
+		/* child will block in InkViewMain and never reach here */
+		_exit(EXIT_SUCCESS);
+	} else {
+		/* InkViewMain will handle SIGINT in child and send EVT_EXIT event to
+		 * inputdevice. So it's safe for parent to ignore the signal */
+		new_sa.sa_handler = SIG_IGN;
+		new_sa.sa_flags = SA_RESTART;
+		if (sigaction(SIGINT, &new_sa, NULL) == -1) {
+			return luaL_error(L, "error setting up sigaction for SIGINT: %d", errno);
+		}
+		if (sigaction(SIGTERM, &new_sa, NULL) == -1) {
+			return luaL_error(L, "error setting up sigaction for SIGTERM: %d", errno);
+		}
+	}
+	return 0;
+}
 #endif
 
 static int openInputDevice(lua_State *L) {
-	const char* inputdevice = luaL_checkstring(L, 1);
-#ifdef POCKETBOOK
-	int inkview_events = luaL_checkint(L, 2);
-#endif
-	int fd;
+	const char *inputdevice = luaL_checkstring(L, 1);
 	int childpid;
-	fd = findFreeFdSlot();
-	if(fd == -1) {
+	int fd = findFreeFdSlot();
+	if (fd == -1) {
 		return luaL_error(L, "no free slot for new input device <%s>", inputdevice);
 	}
 
 #ifdef POCKETBOOK
-	if(inkview_events == 1) {
-		if ((childpid = fork()) == -1) {
-			return luaL_error(L, "cannot fork() emu event listener");
-		}
-		if(childpid == 0) {
-			/* we only use inputfds[0] in emu mode, because we only have one
-			* fake device so far. */
-			inputfds[0] = open(inputdevice, O_RDWR | O_NONBLOCK);
-			if (inputfds < 0) {
-				return luaL_error(L, "error opening input device <%s>: %d", inputdevice, errno);
-			}
-			InkViewMain(pb_event_handler);
-		}
-	}
+	int inkview_events = luaL_checkint(L, 2);
+	if (inkview_events == 1) { forkInkViewMain(L, inputdevice); }
 #endif
 
-	if(!strcmp("fake_events", inputdevice)) {
+	if (!strcmp("fake_events", inputdevice)) {
 		/* special case: the power slider */
 		int pipefd[2];
 
 		pipe(pipefd);
-		if((childpid = fork()) == -1) {
+		if ((childpid = fork()) == -1) {
 			return luaL_error(L, "cannot fork() slider event listener");
 		}
-		if(childpid == 0) {
+		if (childpid == 0) {
 			// We send a SIGTERM to this child on exit, trap it to kill lipc properly.
 			signal(SIGTERM, slider_handler);
 
@@ -253,8 +268,8 @@ static int openInputDevice(lua_State *L) {
 			/* Flush to get rid of buffering issues? */
 			fflush(fp);
 
-			while(fgets(std_out, sizeof(std_out)-1, fp)) {
-				if(std_out[0] == 'g') {
+			while (fgets(std_out, sizeof(std_out)-1, fp)) {
+				if (std_out[0] == 'g') {
 					ev.code = CODE_IN_SAVER;
 				} else if(std_out[0] == 'o') {
 					ev.code = CODE_OUT_SAVER;
@@ -273,7 +288,7 @@ static int openInputDevice(lua_State *L) {
 				gettimeofday(&ev.time, NULL);
 
 				/* generate event */
-				if(write(pipefd[1], &ev, sizeof(struct input_event)) == -1) {
+				if (write(pipefd[1], &ev, sizeof(struct input_event)) == -1) {
 					printf("Failed to generate event.\n");
 				}
 			}
@@ -302,7 +317,7 @@ static int openInputDevice(lua_State *L) {
 		}
 	} else {
 		inputfds[fd] = open(inputdevice, O_RDONLY | O_NONBLOCK, 0);
-		if(inputfds[fd] != -1) {
+		if (inputfds[fd] != -1) {
 			ioctl(inputfds[fd], EVIOCGRAB, 1);
 			return 0;
 		} else {
@@ -314,13 +329,13 @@ static int openInputDevice(lua_State *L) {
 
 static int closeInputDevices(lua_State *L) {
 	int i;
-	for(i=0; i<NUM_FDS; i++) {
+	for (i=0; i<NUM_FDS; i++) {
 		if(inputfds[i] != -1) {
 			ioctl(inputfds[i], EVIOCGRAB, 0);
 			close(inputfds[i]);
 		}
 	}
-	if(slider_pid != -1) {
+	if (slider_pid != -1) {
 		/* kill and wait for child process */
 		kill(slider_pid, SIGTERM);
 		waitpid(-1, NULL, 0);
@@ -336,7 +351,7 @@ static int fakeTapInput(lua_State *L) {
 	int inputfd = -1;
 	struct input_event ev;
 	inputfd = open(inputdevice, O_WRONLY | O_NDELAY);
-	if(inputfd != -1) {
+	if (inputfd != -1) {
 		gettimeofday(&ev.time, NULL);
 		ev.type = 3;
 		ev.code = 57;
@@ -432,10 +447,10 @@ static int waitForInput(lua_State *L) {
 	nfds = 0;
 
 	FD_ZERO(&fds);
-	for(i=0; i<NUM_FDS; i++) {
-		if(inputfds[i] != -1)
+	for (i=0; i<NUM_FDS; i++) {
+		if (inputfds[i] != -1)
 			FD_SET(inputfds[i], &fds);
-		if(inputfds[i] + 1 > nfds)
+		if (inputfds[i] + 1 > nfds)
 			nfds = inputfds[i] + 1;
 	}
 
@@ -450,10 +465,10 @@ static int waitForInput(lua_State *L) {
 		return luaL_error(L, "Waiting for input failed: %d\n", errno);
 	}
 
-	for(i=0; i<NUM_FDS; i++) {
-		if(inputfds[i] != -1 && FD_ISSET(inputfds[i], &fds)) {
+	for (i=0; i<NUM_FDS; i++) {
+		if (inputfds[i] != -1 && FD_ISSET(inputfds[i], &fds)) {
 			n = read(inputfds[i], &input, sizeof(struct input_event));
-			if(n == sizeof(struct input_event)) {
+			if (n == sizeof(struct input_event)) {
 				set_event_table(L, input);
 				return 1;
 			}
@@ -472,6 +487,5 @@ static const struct luaL_Reg input_func[] = {
 
 int luaopen_input(lua_State *L) {
 	luaL_register(L, "input", input_func);
-
 	return 1;
 }
