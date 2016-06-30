@@ -29,7 +29,7 @@ set(CFG_CMD sh -c "${SOURCE_DIR}/configure ${CFG_OPTS}")
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
     git://github.com/koreader/sdcv.git
-    7f21045094191804149b36a7cea3045bba0770d9
+    d1b85743ded5e99232aed59e84129a551bfc8c82
     ${SOURCE_DIR}
 )
 
