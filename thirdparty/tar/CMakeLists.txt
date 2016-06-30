@@ -11,7 +11,7 @@ ep_get_source_dir(SOURCE_DIR)
 ep_get_binary_dir(BINARY_DIR)
 
 set(CFG_ENV_VAR "CC=\"${CC} -DHAVE_MKFIFO=1\"")
-set(CFG_OPTS "-q LIBS=${LIBS} --host=\"${CHOST}\"")
+set(CFG_OPTS "-q LIBS=\"${LIBS}\" --host=\"${CHOST}\"")
 
 if(${DISABLE_LARGEFILE})
     set(CFG_OPTS "${CFG_OPTS} --disable-largefile")
