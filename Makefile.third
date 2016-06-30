@@ -297,10 +297,15 @@ $(OUTPUT_DIR)/sdcv: $(if $(ANDROID),$(GLIB_STATIC),$(GLIB)) $(ZLIB_STATIC) $(THI
 		-DLIBS="$(if $(ANDROID),$(GLIB_STATIC),) \
 			$(if $(ANDROID),,-lpthread -lrt) \
 			$(ZLIB_STATIC) \
+			$(if $(ANDROID),-static,) \
 			-static-libgcc -static-libstdc++" \
 		$(CURDIR)/$(THIRDPARTY_DIR)/sdcv && \
 		$(MAKE)
 	cp $(SDCV_DIR)/src/sdcv $(OUTPUT_DIR)/
+ifdef ANDROID
+	readelf -d $@ | grep "no dynamic" \
+		|| echo "warning: Android L+ support only PIE binary and can't run this"
+endif
 
 # ===========================================================================
 # tar: tar package for zsync
@@ -308,12 +313,17 @@ $(OUTPUT_DIR)/sdcv: $(if $(ANDROID),$(GLIB_STATIC),$(GLIB)) $(ZLIB_STATIC) $(THI
 $(OUTPUT_DIR)/tar: $(THIRDPARTY_DIR)/tar/CMakeLists.txt
 	install -d $(TAR_BUILD_DIR)
 	cd $(TAR_BUILD_DIR) && \
-		$(CMAKE) -DCC="$(CC)" -DLIBS="$(if $(or $(ANDROID),$(WIN32)),,-lrt)" \
+		$(CMAKE) -DCC="$(CC)" \
+		-DLIBS="$(if $(or $(ANDROID),$(WIN32)),,-lrt) $(if $(ANDROID),-static,)" \
 		$(if $(LEGACY),-DDISABLE_LARGEFILE:BOOL=ON -DDISABLE_FORTIFY:BOOL=ON,) \
 		-DCHOST="$(if $(EMULATE_READER),,$(CHOST))" \
 		$(CURDIR)/$(THIRDPARTY_DIR)/tar && \
 		$(MAKE)
 	cp $(TAR_DIR)/src/tar $(OUTPUT_DIR)/
+ifdef ANDROID
+	readelf -d $@ | grep "no dynamic" \
+		|| echo "warning: Android L+ support only PIE binary and can't run this"
+endif
 
 # ===========================================================================
 # zsync: rsync over HTTP
@@ -322,9 +332,14 @@ $(OUTPUT_DIR)/zsync: $(THIRDPARTY_DIR)/zsync/CMakeLists.txt
 	install -d $(ZSYNC_BUILD_DIR)
 	cd $(ZSYNC_BUILD_DIR) && \
 		$(CMAKE) -DHOST="$(if $(EMULATE_READER),,$(CHOST))" -DCC="$(CC)" \
+		-DLIBS="$(if $(ANDROID),-static,)" \
 		$(CURDIR)/$(THIRDPARTY_DIR)/zsync && \
 		$(MAKE)
 	cp $(ZSYNC_DIR)/zsync $(OUTPUT_DIR)/
+ifdef ANDROID
+	readelf -d $@ | grep "no dynamic" \
+		|| echo "warning: Android L+ support only PIE binary and can't run this"
+endif
 
 # ===========================================================================
 # common lua library for networking

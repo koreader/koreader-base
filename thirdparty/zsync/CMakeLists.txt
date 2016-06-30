@@ -9,13 +9,14 @@ enable_language(C)
 
 assert_var_defined(CC)
 assert_var_defined(HOST)
+assert_var_defined(LIBS)
 
 ep_get_source_dir(SOURCE_DIR)
 ep_get_binary_dir(BINARY_DIR)
 
 set(RECONF_CMD sh -c "cd c && autoreconf -fi")
 set(CFG_OPTS "-q --prefix=${BINARY_DIR} --host=\"${HOST}\"")
-set(CFG_CMD sh -c "CC=\"${CC}\" CFLAGS=\"$(CFLAGS) -I${SOURCE_DIR}/c\" ${SOURCE_DIR}/c/configure ${CFG_OPTS}")
+set(CFG_CMD sh -c "CC=\"${CC}\" CFLAGS=\"$(CFLAGS) -I${SOURCE_DIR}/c\" LIBS=\"${LIBS}\" ${SOURCE_DIR}/c/configure ${CFG_OPTS}")
 # don't check missing definition of in_port_t in NDK <netinet/in.h>
 set(PATCH_CMD1 sh -c "patch -N -p1 < ${CMAKE_CURRENT_SOURCE_DIR}/zsync.patch || true")
 # fix "rename: Invalid cross-device link" error for Android
