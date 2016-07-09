@@ -25,7 +25,7 @@ set(CFG_CMD sh -c "${CFG_ENV_VAR} ${SOURCE_DIR}/configure ${CFG_OPTS}")
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
     https://github.com/libjpeg-turbo/libjpeg-turbo.git
-    d8da49effe6460d55239c4c009c57f42d8e4a494
+    1.5.0
     ${SOURCE_DIR}
 )
 

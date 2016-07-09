@@ -18,12 +18,12 @@ set(CFG_CMD "${CFG_CMD} --enable-static --disable-shared --enable-threadsafe")
 set(CFG_CMD "${CFG_CMD} --disable-dynamic-extensions")
 
 include(ExternalProject)
-set(SQLITE_VER "3120200")
+set(SQLITE_VER "3130000")
 ExternalProject_Add(
     ${PROJECT_NAME}
     DOWNLOAD_DIR ${KO_DOWNLOAD_DIR}
     URL https://www.sqlite.org/2016/sqlite-autoconf-${SQLITE_VER}.tar.gz
-    URL_HASH SHA1=b43c2e7238e54c50b95fbbd85c48792f4f39af8c
+    URL_HASH SHA1=4e83f39fa2ffb610ac5ecd36865da6a2
     BUILD_IN_SOURCE 1
     CONFIGURE_COMMAND ${CFG_CMD}
     BUILD_COMMAND $(MAKE) -j1
