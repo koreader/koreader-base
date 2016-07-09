@@ -21,7 +21,7 @@ set(CFG_CMD sh -c "${CFG_ENV_VAR} ${SOURCE_DIR}/configure ${CFG_OPTS}")
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
     https://gitlab.com/koreader/freetype2.git
-    VER-2-6-4
+    83c877f11c6cbd99cb203447d248748ad45624c3
     ${SOURCE_DIR}
 )
 
