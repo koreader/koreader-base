@@ -351,6 +351,22 @@ function framebuffer:init()
             self.wait_for_marker_partial = true
             self.wait_for_marker_fast = true
             self.wait_for_marker_ui = false
+        elseif self.device.model == "KindleOasis" then
+            self.mech_wait_update_complete = kindle_carta_mxc_wait_for_update_complete
+            self.waveform_partial = ffi.C.WAVEFORM_MODE_REAGL
+            self.update_mode_partial = ffi.C.UPDATE_MODE_FULL -- REAGL get upgraded to full
+            self.wait_for_marker_full = true
+            self.wait_for_marker_partial = true
+            self.wait_for_marker_fast = true
+            self.wait_for_marker_ui = false
+        elseif self.device.model == "KindleBasic2" then
+            self.mech_wait_update_complete = kindle_carta_mxc_wait_for_update_complete
+            self.waveform_partial = ffi.C.WAVEFORM_MODE_REAGL
+            self.update_mode_partial = ffi.C.UPDATE_MODE_FULL -- REAGL get upgraded to full
+            self.wait_for_marker_full = true
+            self.wait_for_marker_partial = true
+            self.wait_for_marker_fast = true
+            self.wait_for_marker_ui = false
         end
     elseif self.device:isKobo() then
         require("ffi/mxcfb_kobo_h")
