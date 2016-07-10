@@ -319,6 +319,9 @@ static int openInputDevice(lua_State *L) {
 		inputfds[fd] = open(inputdevice, O_RDONLY | O_NONBLOCK, 0);
 		if (inputfds[fd] != -1) {
 			ioctl(inputfds[fd], EVIOCGRAB, 1);
+			/* prevent background command started from exec call from grabbing
+			 * input fd. for example: wpa_supplicant. */
+			fcntl(inputfds[fd], F_SETFD, FD_CLOEXEC);
 			return 0;
 		} else {
 			return luaL_error(L, "error opening input device <%s>: %d", inputdevice, errno);
