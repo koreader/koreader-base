@@ -521,3 +521,12 @@ $(SQLITE_LIB): $(THIRDPARTY_DIR)/sqlite/CMakeLists.txt
 			-DCFLAGS="$(CFLAGS)" \
 		$(CURDIR)/thirdparty/sqlite && \
 		$(MAKE)
+
+$(LJ_WPACLIENT): $(THIRDPARTY_DIR)/lj-wpaclient/CMakeLists.txt
+	install -d $(LJ_WPACLIENT_BUILD_DIR)
+	cd $(LJ_WPACLIENT_BUILD_DIR) && \
+		$(CMAKE) $(CURDIR)/thirdparty/lj-wpaclient && \
+		$(MAKE)
+	install -d $(OUTPUT_DIR)/common/lj-wpaclient
+	cp $(LJ_WPACLIENT_DIR)/{wpaclient,wpa_ctrl,socket_h,socket}.lua \
+		$(OUTPUT_DIR)/common/lj-wpaclient/

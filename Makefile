@@ -15,6 +15,7 @@ all: $(OUTPUT_DIR)/libs $(if $(ANDROID),,$(LUAJIT)) \
 		$(TURBOJPEG_LIB) \
 		$(LODEPNG_LIB) \
 		$(GIF_LIB) \
+		$(if $(USE_LJ_WPACLIENT),$(LJ_WPACLIENT),) \
 		$(if $(DARWIN),,$(TURBO_FFI_WRAP_LIB)) \
 		$(LUA_SPORE_ROCK) \
 		$(if $(ANDROID),$(LPEG_DYNLIB) $(LPEG_RE),) \
