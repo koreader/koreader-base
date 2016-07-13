@@ -24,7 +24,7 @@ set(PATCH_CMD sh -c "${ISED} \"s|-lstdc++||g\" libtool")
 
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
-    git://git.code.sf.net/p/djvu/djvulibre-git
+    https://gitlab.com/koreader/djvulibre.git
     070fef721a8e8fdf68c4b0e3fcf0a179c804d818
     ${SOURCE_DIR}
 )
