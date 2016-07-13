@@ -3,6 +3,7 @@ cmake_minimum_required(VERSION 2.8.3)
 
 SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_LIST_DIR}/../cmake_modules")
 include("koreader_thirdparty_common")
+include("koreader_thirdparty_git")
 
 enable_language(C)
 
@@ -17,13 +18,18 @@ if(${IS_ANDROID})
     set(CFG_CMD "${CFG_CMD} && ${ISED} \"s|stdint.h|limits.h|g\" ${SOURCE_DIR}/lib/openbsd-reallocarray.c")
 endif()
 
-set(GIFLIB_VER "5.1.4")
+ko_write_gitclone_script(
+    GIT_CLONE_SCRIPT_FILENAME
+    https://gitlab.com/koreader/giflib.git
+    5.1.4
+    ${SOURCE_DIR}
+)
+
 include(ExternalProject)
 ExternalProject_Add(
     ${PROJECT_NAME}
-    URL http://download.sourceforge.net/giflib/giflib-${GIFLIB_VER}.tar.gz
-    URL_MD5 8985c9411fdb2178b89d3348da9a06b0
-    DOWNLOAD_DIR ${KO_DOWNLOAD_DIR}
+    DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
+    PATCH_COMMAND COMMAND sh -c "${ISED} \"s|\\$srcdir\\/configure \\$\\*||g\" autogen.sh" COMMAND ./autogen.sh
     CONFIGURE_COMMAND ${CFG_CMD}
     BUILD_COMMAND $(MAKE) -j${PARALLEL_JOBS} --silent
     INSTALL_COMMAND $(MAKE) -j${PARALLEL_JOBS} --silent install
