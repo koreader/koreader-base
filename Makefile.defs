@@ -30,7 +30,12 @@ else ifeq ($(TARGET), kindle-legacy)
     CHOST?=arm-kindle-linux-gnueabi
     export LEGACY=1
 else ifeq ($(TARGET), kobo)
-    CHOST?=arm-linux-gnueabihf
+    HAS_KOBO_TC:=$(shell command -v arm-kobo-linux-gnueabi-gcc 2> /dev/null)
+    ifdef HAS_KOBO_TC
+        CHOST?=arm-kobo-linux-gnueabi
+    else
+        CHOST?=arm-linux-gnueabihf
+    endif
     export USE_LJ_WPACLIENT=1
 else ifeq ($(TARGET), ubuntu-touch)
     CHOST?=arm-linux-gnueabihf
