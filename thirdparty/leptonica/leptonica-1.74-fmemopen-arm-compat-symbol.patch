@@ -1,12 +1,12 @@
 diff --git a/src/utils.c b/src/utils.c
-index 76e7d43..9da46b0 100644
+index bb3507c..9caf08f 100644
 --- a/src/utils.c
 +++ b/src/utils.c
-@@ -1912,6 +1912,7 @@ FILE  *fp;
+@@ -1903,6 +1903,7 @@ FILE  *fp;
          return (FILE *)ERROR_PTR("data not defined", procName, NULL);
  
  #if HAVE_FMEMOPEN
-+    __asm__(".symver fmemopen,fmemopen@GLIBC_2.2.5");
++    __asm__(".symver fmemopen,fmemopen@GLIBC_2.4");
      if ((fp = fmemopen((void *)data, size, "rb")) == NULL)
          return (FILE *)ERROR_PTR("stream not opened", procName, NULL);
  #else  /* write to tmp file */
