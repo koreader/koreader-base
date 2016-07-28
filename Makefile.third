@@ -170,7 +170,7 @@ $(LEPTONICA_DIR): $(THIRDPARTY_DIR)/leptonica/CMakeLists.txt
 	rm -rf $(LEPTONICA_DIR)
 	cd $(LEPTONICA_BUILD_DIR) && \
 		$(CMAKE) \
-		$(if $(GLIBC_GTE_2_22),-DGLIBC_GTE_2_22=on,) \
+		$(if $(ARM_GLIBC_GTE_2_22),-DARM_GLIBC_GTE_2_22=on,) \
 		$(CURDIR)/$(THIRDPARTY_DIR)/leptonica && \
 		$(MAKE)
 

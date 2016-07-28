@@ -317,18 +317,22 @@ endif
 # In the same vein, see base#421 for how to deal with an updated glibc symbol
 # for a function which did NOT change its signature, and where we don't have
 # access to a public definition of the old implementation, only a compat
-# versioned symbol. With the added quirk that in this specific instance
-# (fmemopen), the compat symbol has a different version than the old default
-# symbol, so we can only apply this patch when linking against glibc >= 2.22...
+# versioned symbol.
+# With the added confusing quirk that the compat symbol (here, fmemopen) is
+# pinned to a different GLIBC version on arm than on x86... (cf. #2188).
 ifndef DARWIN
 ifndef ANDROID
 ifndef WIN32
     # We're a glibc system... Find the actual libc used by our TC, and check if it's >= 2.22...
-    GLIBC_FILE=$(basename $(notdir $(realpath $(shell $(CC) -print-file-name=libc.so.6))))
-    GLIBC_VER=$(shell echo $(GLIBC_FILE) | cut -f2 -d'-')
-    GLIBC_2_22_SORT=$(shell echo -e "$(GLIBC_VER)\n2.22" | sort -V | head -n1)
-    ifeq ($(GLIBC_2_22_SORT), 2.22)
-        GLIBC_GTE_2_22=1
+    # We only care about that on non-emulated builds (i.e., arm), because compat symbols may be pinned
+    # to different versions on different arches, and we only account for arm in our patches.
+    ifndef EMULATE_READER
+        GLIBC_FILE=$(basename $(notdir $(realpath $(shell $(CC) -print-file-name=libc.so.6))))
+        GLIBC_VER=$(shell echo $(GLIBC_FILE) | cut -f2 -d'-')
+        GLIBC_2_22_SORT=$(shell echo -e "$(GLIBC_VER)\n2.22" | sort -V | head -n1)
+        ifeq ($(GLIBC_2_22_SORT), 2.22)
+            ARM_GLIBC_GTE_2_22=1
+        endif
     endif
 endif
 endif
