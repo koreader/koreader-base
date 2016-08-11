@@ -1,8 +1,10 @@
 diff --git a/turbo/cdef.lua b/turbo/cdef.lua
-index c9c83a0..ba60723 100644
+old mode 100755
+new mode 100644
+index 751bcd5..5d78d5c
 --- a/turbo/cdef.lua
 +++ b/turbo/cdef.lua
-@@ -163,7 +163,7 @@ end
+@@ -164,7 +164,7 @@ end
      --- ******* Signals *******
      ffi.cdef(string.format([[
          typedef void(*sighandler_t)(int);
@@ -11,7 +13,7 @@ index c9c83a0..ba60723 100644
          int kill(pid_t pid, int sig);
          typedef struct {
              unsigned long int __val[%d];
-@@ -203,10 +203,12 @@ end
+@@ -204,10 +204,12 @@ end
      ffi.cdef([[
          typedef long suseconds_t;
          typedef long time_t;
@@ -25,19 +27,30 @@ index c9c83a0..ba60723 100644
              int tz_minuteswest;
              int tz_dsttime;
 diff --git a/turbo/signal.lua b/turbo/signal.lua
-index 97e82ee..2de54c5 100644
+old mode 100755
+new mode 100644
+index 69643da..a971ca2
 --- a/turbo/signal.lua
 +++ b/turbo/signal.lua
-@@ -27,7 +27,7 @@ local platform = require "turbo.platform"
- -- For Linux and LuaJIT only.
- if platform.__LINUX__ and jit then
-     return {
+@@ -26,7 +26,7 @@ local platform = require "turbo.platform"
+ 
+ if ffi.arch == "mipsel" then
+ return {
+-	signal = ffi.C.signal
++	signal = ffi.C.signal or ffi.C.sysv_signal
+     -- For sigprocmask(2)
+     , SIG_BLOCK   = 1
+     , SIG_UNBLOCK = 2
+@@ -75,7 +75,7 @@ return {
+ 	}
+ else
+ return {
 -        signal = ffi.C.signal
-+        signal = ffi.C.sysv_signal
++        signal = ffi.C.signal or ffi.C.sysv_signal
          -- For sigprocmask(2)
          , SIG_BLOCK   = 0
          , SIG_UNBLOCK = 1
-@@ -74,4 +74,4 @@ if platform.__LINUX__ and jit then
+@@ -122,4 +122,4 @@ return {
          ,   SIGUNUSED = 31
          ,   _NSIG   =   65  --[[ Biggest signal number + 1 (including real-time signals).  ]]
      }
@@ -45,28 +58,16 @@ index 97e82ee..2de54c5 100644
 \ No newline at end of file
 +end
 diff --git a/turbo/util.lua b/turbo/util.lua
-index b52fa94..b37f2fa 100644
+index 85cadc1..7f92575 100644
 --- a/turbo/util.lua
 +++ b/turbo/util.lua
-@@ -345,7 +345,7 @@ end
- --- Loads dynamic library with helper functions or bails out with error.
- -- @param name Custom library name or path
- function util.load_libtffi(name)
--    name = name or os.getenv("TURBO_LIBTFFI") or "libtffi_wrap"
-+    name = name or os.getenv("TURBO_LIBTFFI") or "common/libtffi_wrap.so"
-     local ok, lib = pcall(ffi.load, name)
-     if not ok then
-         error("Could not load " .. name .. " \
-diff --git a/turbo/crypto_luasec.lua b/turbo/crypto_luasec.lua
-index 356b100..ce19192 100644
---- a/turbo/crypto_luasec.lua
-+++ b/turbo/crypto_luasec.lua
-@@ -43,7 +43,7 @@ function crypto.ssl_create_client_context(
-         protocol = "sslv23",
-         key = prv_file,
-         certificate = cert_file,
--        cafile = ca_cert_path or "/etc/ssl/certs/ca-certificates.crt",
-+        cafile = ca_cert_path,
-         verify = verify and {"peer", "fail_if_no_peer_cert"} or nil,
-         options = {"all"},
-     }
+@@ -353,6 +353,9 @@ function util.load_libtffi(name)
+             ok, lib = pcall(ffi.load, "/usr/local/lib/libtffi_wrap.so")
+         end
+         if not ok then
++            ok, lib = pcall(ffi.load, "common/libtffi_wrap.so")
++        end
++        if not ok then
+             -- Still not OK...
+             error("Could not load " .. name .. " \
+             Please run makefile and ensure that installation is done correct.")

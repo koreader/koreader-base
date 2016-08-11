@@ -17,7 +17,7 @@ set(BUILD_CMD sh -c "$(MAKE) CC=\"${CC}\" LDFLAGS=\"${LDFLAGS}\" all")
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
     https://github.com/kernelsauce/turbo
-    5ccd3c7a3b57f1c3b93aefb6e756d7974e8d4c9b
+    5234825fd09bb0401aab6e2603f9f6d1aa83350b
     ${SOURCE_DIR}
 )
 
