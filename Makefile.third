@@ -220,6 +220,7 @@ $(LIBGETTEXT): $(LIBICONV) $(THIRDPARTY_DIR)/gettext/CMakeLists.txt
 		$(CMAKE) -DCC="$(CC) -std=gnu89" -DLIBICONV_PREFIX=$(LIBICONV_DIR) \
 		-DCHOST_OPTS="$(if $(EMULATE_READER),,--host=$(if $(ANDROID),arm-linux,$(CHOST)))" \
 		$(if $(ANDROID),-DIS_ANDROID:BOOL=on,) \
+		$(if $(ANDROID),-DNDK=$(NDK),) \
 		$(CURDIR)/thirdparty/gettext && \
 		$(MAKE)
 

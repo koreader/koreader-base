@@ -1,8 +1,6 @@
 # Travis-CI Build for koreader-base
 # see travis-ci.org for details
 
-language: c
-
 dist: trusty
 sudo: required
 # sudo: false
@@ -12,17 +10,16 @@ cache:
   directories:
       - $HOME/.ccache
 
-compiler:
-    - gcc
-    - clang
-
 env:
-    - EMULATE_READER=1
+    - EMULATE_READER=1 CC=gcc
+    - EMULATE_READER=1 CC=clang
+    - TARGET=kindle
+    - TARGET=kobo
+    - TARGET=android NDKREV=r9c
+    - TARGET=android NDKREV=r11c
 
 addons:
   apt:
-    sources:
-      - ubuntu-toolchain-r-test
     packages:
       - g++-4.8
       - libsdl1.2-dev
@@ -33,43 +30,15 @@ addons:
       # OpenSSL likes this (package contains makedepend)
       - xutils-dev
 
-before_install:
-    # don't do this for clang
-    - if [ "$CXX" = "g++" ]; then export CXX="g++-4.8" CC="gcc-4.8"; fi
-    # in case anything ignores the environment variables, override through PATH
-    - mkdir bin
-    - ln -s $(which gcc-4.8) bin/cc
-    - ln -s $(which gcc-4.8) bin/gcc
-    - ln -s $(which c++-4.8) bin/c++
-    - ln -s $(which g++-4.8) bin/g++
-    - export PATH=$PWD/bin:$PATH
+before_install: source .ci/before_install.sh
 
 install:
-    - mkdir $HOME/.luarocks
-    - cp /etc/luarocks/config.lua $HOME/.luarocks/config.lua
-    - echo "wrap_bin_scripts = false" >> $HOME/.luarocks/config.lua
-    # recent versions of busted may cause some weird segmentation faults
-    # - git clone https://github.com/Olivine-Labs/busted/
-    # - cd busted && git checkout v1.10.0 && luarocks --local make busted-1.10.0-0.rockspec && cd ..
-    - travis_retry luarocks --local install busted 2.0.rc12-1
-    # for verbose_print module
-    - travis_retry luarocks --local install ansicolors
-    - eval $(luarocks path --bin)
-    - export PATH=$PATH:$HOME/.luarocks/bin
+    - if [ "$EMULATE_READER" = 1 ]; then source .ci/emulator_install.sh; fi
+    - if [ "$TARGET" = kindle ]; then .ci/kindle_install.sh; fi
+    - if [ "$TARGET" = kobo ]; then .ci/kobo_install.sh; fi
+    - if [ "$TARGET" = android ]; then source .ci/android_install.sh; fi
 
 script:
-    - travis_retry make fetchthirdparty
-    - make all
-    - cp build/*/luajit $HOME/.luarocks/bin
-    # install tesseract trained language data for testing OCR functionality
-    - travis_retry wget https://tesseract-ocr.googlecode.com/files/tesseract-ocr-3.02.eng.tar.gz
-    - tar zxf tesseract-ocr-3.02.eng.tar.gz
-    - cd build/* && export TESSDATA_PREFIX=`pwd`/data && mkdir -p data/tessdata
-    - mv ../../tesseract-ocr/tessdata/* data/tessdata/ && cd ../../
-    # fetch font for base test
-    - travis_retry wget https://github.com/koreader/koreader/raw/master/resources/fonts/droid/DroidSansMono.ttf
-    - export OUTPUT_DIR=`ls -d ./build/x86_64-*linux-gnu`
-    - mkdir -p ${OUTPUT_DIR}/fonts/droid/
-    - cp DroidSansMono.ttf ${OUTPUT_DIR}/fonts/droid/DroidSansMono.ttf
-    # finally make test
-    - travis_retry make test
+    - .ci/build_script.sh
+    - if [ "$EMULATE_READER" = 1 ]; then source .ci/test_script.sh; fi
+
