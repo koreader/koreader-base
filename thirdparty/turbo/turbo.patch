@@ -37,7 +37,7 @@ index 69643da..a971ca2
  if ffi.arch == "mipsel" then
  return {
 -	signal = ffi.C.signal
-+	signal = ffi.C.signal or ffi.C.sysv_signal
++	signal = ffi.C.sysv_signal
      -- For sigprocmask(2)
      , SIG_BLOCK   = 1
      , SIG_UNBLOCK = 2
@@ -46,7 +46,7 @@ index 69643da..a971ca2
  else
  return {
 -        signal = ffi.C.signal
-+        signal = ffi.C.signal or ffi.C.sysv_signal
++        signal = ffi.C.sysv_signal
          -- For sigprocmask(2)
          , SIG_BLOCK   = 0
          , SIG_UNBLOCK = 1
