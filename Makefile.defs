@@ -30,9 +30,9 @@ else ifeq ($(TARGET), kindle-legacy)
     CHOST?=arm-kindle-linux-gnueabi
     export LEGACY=1
 else ifeq ($(TARGET), kobo)
-    HAS_KOBO_TC:=$(shell command -v arm-kobo-linux-gnueabi-gcc 2> /dev/null)
+    HAS_KOBO_TC:=$(shell command -v arm-kobo-linux-gnueabihf-gcc 2> /dev/null)
     ifdef HAS_KOBO_TC
-        CHOST?=arm-kobo-linux-gnueabi
+        CHOST?=arm-kobo-linux-gnueabihf
     else
         CHOST?=arm-linux-gnueabihf
     endif
