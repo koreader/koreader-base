@@ -144,6 +144,7 @@ static int walkTableOfContent(lua_State *L, miniexp_t r, int *count, int depth) 
 	int counter = 0;
 	const char* page_name;
 	int page_number;
+	uint32_t page_name_num_idx;
 
 	while(counter < length-1) {
 		lua_pushnumber(L, *count);
@@ -153,7 +154,11 @@ static int walkTableOfContent(lua_State *L, miniexp_t r, int *count, int depth) 
 		page_name = miniexp_to_str(miniexp_car(miniexp_cdr(miniexp_nth(counter, lista))));
 		if(page_name != NULL && page_name[0] == '#') {
 			errno = 0;
-			page_number = strtol(page_name + 1, NULL, 10);
+			page_name_num_idx = 1;  /* skip leading # */
+			while (page_name[page_name_num_idx] && !isdigit(page_name[page_name_num_idx])) {
+				page_name_num_idx++;
+			}
+			page_number = strtol(page_name+page_name_num_idx, NULL, 10);
 			if(!errno) {
 				lua_pushnumber(L, page_number);
 			} else {
