@@ -9,11 +9,9 @@ endif
 
 UNAME:=$(shell uname -s)
 
-# android toolchain
-ANDROID_TOOLCHAIN=toolchain/android-toolchain
-
-# pocketbook toolchain
-POCKETBOOK_TOOLCHAIN=toolchain/pocketbook-toolchain
+TOOLCHAIN_DIR=toolchain
+ANDROID_TOOLCHAIN=$(TOOLCHAIN_DIR)/android-toolchain
+POCKETBOOK_TOOLCHAIN=$(TOOLCHAIN_DIR)/pocketbook-toolchain
 
 # CMAKE=cmake --no-warn-unused-cli
 CMAKE=cmake
