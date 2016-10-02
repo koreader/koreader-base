@@ -16,7 +16,10 @@ tags
 /.cproject
 /.project
 
-toolchain
+toolchain/android-ndk-r*
+toolchain/android-sdk-linux
+toolchain/pocketbook-toolchain
+toolchain/android-toolchain
 fonts
 /data
 history
