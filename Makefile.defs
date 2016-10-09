@@ -12,7 +12,7 @@ UNAME:=$(shell uname -s)
 TOOLCHAIN_DIR=toolchain
 POCKETBOOK_TOOLCHAIN=$(TOOLCHAIN_DIR)/pocketbook-toolchain
 ANDROID_TOOLCHAIN=$(TOOLCHAIN_DIR)/android-toolchain
-NDKABI=21
+NDKABI=9
 
 # CMAKE=cmake --no-warn-unused-cli
 CMAKE=cmake
