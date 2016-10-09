@@ -10,8 +10,9 @@ endif
 UNAME:=$(shell uname -s)
 
 TOOLCHAIN_DIR=toolchain
-ANDROID_TOOLCHAIN=$(TOOLCHAIN_DIR)/android-toolchain
 POCKETBOOK_TOOLCHAIN=$(TOOLCHAIN_DIR)/pocketbook-toolchain
+ANDROID_TOOLCHAIN=$(TOOLCHAIN_DIR)/android-toolchain
+NDKABI=21
 
 # CMAKE=cmake --no-warn-unused-cli
 CMAKE=cmake
@@ -42,7 +43,7 @@ else ifeq ($(TARGET), ubuntu-touch)
 else ifeq ($(TARGET), android)
     export ANDROID=1
     export PATH:=$(CURDIR)/$(ANDROID_TOOLCHAIN)/bin:$(PATH)
-    export SYSROOT=$(NDK)/platforms/android-9/arch-arm
+    export SYSROOT=$(NDK)/platforms/android-$(NDKABI)/arch-arm
     CHOST?=arm-linux-androideabi
 else ifeq ($(TARGET), win32)
     CHOST?=i686-w64-mingw32

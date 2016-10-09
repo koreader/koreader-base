@@ -221,6 +221,7 @@ $(LIBGETTEXT): $(LIBICONV) $(THIRDPARTY_DIR)/gettext/CMakeLists.txt
 		-DCHOST_OPTS="$(if $(EMULATE_READER),,--host=$(if $(ANDROID),arm-linux,$(CHOST)))" \
 		$(if $(ANDROID),-DIS_ANDROID:BOOL=on,) \
 		$(if $(ANDROID),-DNDK=$(NDK),) \
+		$(if $(ANDROID),-DNDKABI=$(NDKABI),) \
 		$(CURDIR)/thirdparty/gettext && \
 		$(MAKE)
 

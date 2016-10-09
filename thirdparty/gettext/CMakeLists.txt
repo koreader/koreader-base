@@ -15,7 +15,7 @@ ep_get_binary_dir(BINARY_DIR)
 set(CFG_ENV_VAR "CC=\"${CC}\"")
 if(${IS_ANDROID})
     # workaround of 'undefined reference to getdtablesize' for NDK-r11c
-    set(CFG_ENV_VAR "${CFG_ENV_VAR} LDFLAGS=-lc LIBS=${NDK}/platforms/android-9/arch-arm/usr/lib/libc.a")
+    set(CFG_ENV_VAR "${CFG_ENV_VAR} LDFLAGS=-lc LIBS=${NDK}/platforms/android-${NDKABI}/arch-arm/usr/lib/libc.a")
 endif()
 set(CFG_OPTS "--with-threads=none --prefix=${BINARY_DIR} --with-libiconv-prefix=${LIBICONV_PREFIX} --enable-shared=false --enable-static=true ${CHOST_OPTS}")
 set(CFG_CMD sh -c "${CFG_ENV_VAR} ${SOURCE_DIR}/configure ${CFG_OPTS}")
