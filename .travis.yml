@@ -17,6 +17,7 @@ env:
     - TARGET=kobo
     - TARGET=android NDKREV=r9c
     - TARGET=android NDKREV=r11c
+    - TARGET=android NDKREV=r12b
 
 addons:
   apt:
@@ -41,4 +42,3 @@ install:
 script:
     - .ci/build_script.sh
     - if [ "$EMULATE_READER" = 1 ]; then source .ci/test_script.sh; fi
-
