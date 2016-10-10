@@ -221,6 +221,7 @@ $(LIBGETTEXT): $(LIBICONV) $(THIRDPARTY_DIR)/gettext/CMakeLists.txt
 		-DCHOST_OPTS="$(if $(EMULATE_READER),,--host=$(if $(ANDROID),arm-linux,$(CHOST)))" \
 		$(if $(ANDROID),-DIS_ANDROID:BOOL=on,) \
 		$(if $(ANDROID),-DNDK=$(NDK),) \
+		$(if $(ANDROID),-DNDKABI=$(NDKABI),) \
 		$(CURDIR)/thirdparty/gettext && \
 		$(MAKE)
 
@@ -427,7 +428,7 @@ ifdef POCKETBOOK
 		$(ZMQ_DIR)/lib/libzmq.la
 	# and the libuuid.so is also missing in the PocketBook SDK, but libuuid.la
 	# may let the build system assume that libuuid is installed
-	rm -f $(CURDIR)/$(POCKETBOOK_TOOLCHAIN)/arm-obreey-linux-gnueabi/sysroot/usr/lib/libuuid*
+	rm -f $(POCKETBOOK_TOOLCHAIN)/arm-obreey-linux-gnueabi/sysroot/usr/lib/libuuid*
 endif
 
 $(CZMQ_LIB): $(ZMQ_LIB) $(THIRDPARTY_DIR)/czmq/CMakeLists.txt

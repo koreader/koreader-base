@@ -9,9 +9,10 @@ endif
 
 UNAME:=$(shell uname -s)
 
-TOOLCHAIN_DIR=toolchain
-ANDROID_TOOLCHAIN=$(TOOLCHAIN_DIR)/android-toolchain
+TOOLCHAIN_DIR=$(CURDIR)/toolchain
 POCKETBOOK_TOOLCHAIN=$(TOOLCHAIN_DIR)/pocketbook-toolchain
+ANDROID_TOOLCHAIN=$(TOOLCHAIN_DIR)/android-toolchain
+NDKABI=9
 
 # CMAKE=cmake --no-warn-unused-cli
 CMAKE=cmake
@@ -41,8 +42,8 @@ else ifeq ($(TARGET), ubuntu-touch)
     export UBUNTUTOUCH=1
 else ifeq ($(TARGET), android)
     export ANDROID=1
-    export PATH:=$(CURDIR)/$(ANDROID_TOOLCHAIN)/bin:$(PATH)
-    export SYSROOT=$(NDK)/platforms/android-9/arch-arm
+    export PATH:=$(ANDROID_TOOLCHAIN)/bin:$(PATH)
+    export SYSROOT=$(NDK)/platforms/android-$(NDKABI)/arch-arm
     CHOST?=arm-linux-androideabi
 else ifeq ($(TARGET), win32)
     CHOST?=i686-w64-mingw32
@@ -52,8 +53,8 @@ else ifeq ($(TARGET), pocketbook)
     CHOST?=arm-obreey-linux-gnueabi
     export LEGACY=1
     export POCKETBOOK=1
-    export PATH:=$(CURDIR)/$(POCKETBOOK_TOOLCHAIN)/bin:$(PATH)
-    export SYSROOT=$(CURDIR)/$(POCKETBOOK_TOOLCHAIN)/arm-obreey-linux-gnueabi/sysroot
+    export PATH:=$(POCKETBOOK_TOOLCHAIN)/bin:$(PATH)
+    export SYSROOT=$(POCKETBOOK_TOOLCHAIN)/arm-obreey-linux-gnueabi/sysroot
 else ifndef TARGET
     # if TARGET is not defined we will build an emulator on current machine
     export EMULATE_READER=1

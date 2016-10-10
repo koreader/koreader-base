@@ -133,11 +133,15 @@ $(OUTPUT_DIR)/extr: extr.c $(MUPDF_LIB) $(MUPDF_DIR)/include $(JPEG_LIB) $(FREET
 # helper target for creating standalone android toolchain from NDK
 # NDK variable should be set in your environment and it should point to
 # the root directory of the NDK
-
 android-toolchain:
+ifeq ($(wildcard $(NDK)/build/tools/make_standalone_toolchain.py),)
 	install -d $(ANDROID_TOOLCHAIN)
-	$(NDK)/build/tools/make-standalone-toolchain.sh --platform=android-9 \
+	$(NDK)/build/tools/make-standalone-toolchain.sh --platform=android-$(NDKABI) \
 		--install-dir=$(ANDROID_TOOLCHAIN)
+else
+	$(NDK)/build/tools/make_standalone_toolchain.py --force --install-dir=$(ANDROID_TOOLCHAIN) \
+		--arch arm --api $(NDKABI)
+endif
 
 # ===========================================================================
 # helper target for creating standalone pocket toolchain from

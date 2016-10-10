@@ -27,6 +27,10 @@ set(gen_arm_config "${gen_arm_config}glib_cv_eventfd=no\\n")
 set(gen_arm_config "${gen_arm_config}ac_cv_func_pipe2=no\\n")
 set(gen_arm_config "${gen_arm_config}ac_cv_func_posix_getpwuid_r=no\\n")
 set(gen_arm_config "${gen_arm_config}ac_cv_func_posix_getgrgid_r=no\\n")
+# disable getpwuid, getgrgid and timegm for > android-12
+set(gen_arm_config "${gen_arm_config}ac_cv_func_getpwuid_r=no\\n")
+set(gen_arm_config "${gen_arm_config}ac_cv_func_getgrgid_r=no\\n")
+set(gen_arm_config "${gen_arm_config}ac_cv_func_timegm=no\\n")
 set(gen_arm_config sh -c "printf \"${gen_arm_config}\" > arm_cache.conf")
 
 set(CFG_ENV_VAR "CC=\"${CC} -std=gnu89\"")
