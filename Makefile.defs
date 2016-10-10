@@ -9,7 +9,9 @@ endif
 
 UNAME:=$(shell uname -s)
 
-TOOLCHAIN_DIR=$(CURDIR)/toolchain
+# use MAKEFILE_DIR instead of CURDIR for variables that are exported through -include
+MAKEFILE_DIR=$(dir $(abspath $(lastword $(MAKEFILE_LIST))))
+TOOLCHAIN_DIR=$(MAKEFILE_DIR)toolchain
 POCKETBOOK_TOOLCHAIN=$(TOOLCHAIN_DIR)/pocketbook-toolchain
 ANDROID_TOOLCHAIN=$(TOOLCHAIN_DIR)/android-toolchain
 NDKABI=9
