@@ -22,15 +22,20 @@ CMAKE=cmake
 # set this to your ARM cross compiler:
 # set CC CXX AR LD RANLIB
 ifneq (,$(filter $(TARGET), kindle arm-generic))
+    export KINDLE=1
     CHOST?=arm-linux-gnueabi
 else ifeq ($(TARGET), kindle5)
+    export KINDLE=1
     CHOST?=arm-kindle5-linux-gnueabi
 else ifeq ($(TARGET), kindlepw2)
+    export KINDLE=1
     CHOST?=arm-kindlepw2-linux-gnueabi
 else ifeq ($(TARGET), kindle-legacy)
+    export KINDLE=1
     CHOST?=arm-kindle-linux-gnueabi
     export LEGACY=1
 else ifeq ($(TARGET), kobo)
+    export KOBO=1
     HAS_KOBO_TC:=$(shell command -v arm-kobo-linux-gnueabihf-gcc 2> /dev/null)
     ifdef HAS_KOBO_TC
         CHOST?=arm-kobo-linux-gnueabihf

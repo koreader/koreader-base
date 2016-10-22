@@ -25,4 +25,3 @@
 int luaopen_input(lua_State *L);
 
 #endif
-

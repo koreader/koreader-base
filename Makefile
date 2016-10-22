@@ -73,7 +73,7 @@ libs: \
 
 $(OUTPUT_DIR)/libs/libkoreader-input.so: input.c $(POPEN_NOSHELL_LIB)
 	$(CC) $(DYNLIB_CFLAGS) -I$(POPEN_NOSHELL_DIR) \
-		$(if $(POCKETBOOK),-DPOCKETBOOK,) \
+		$(if $(KOBO),-DKOBO,) $(if $(KINDLE),-DKINDLE,) $(if $(POCKETBOOK),-DPOCKETBOOK,) \
 		-o $@ $^ $(if $(POCKETBOOK),-linkview,)
 
 $(OUTPUT_DIR)/libs/libkoreader-lfs.so: \
