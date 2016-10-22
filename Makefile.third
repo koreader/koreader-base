@@ -7,8 +7,9 @@ fetchthirdparty:
 	git submodule sync
 	git submodule foreach --recursive git reset --hard
 	git submodule update
-	rm -rf thirdparty/kpvcrlib/crengine/thirdparty
-	test -d thirdparty/kpvcrlib/crengine \
+	@echo "cleaning up crengine checkout..."
+	@rm -rf thirdparty/kpvcrlib/crengine/thirdparty
+	@test -d thirdparty/kpvcrlib/crengine \
 		&& (cd thirdparty/kpvcrlib/crengine; git checkout .) \
 		|| echo warn: crengine folder not found
 
