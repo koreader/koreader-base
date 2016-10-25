@@ -265,6 +265,8 @@ static const struct luaL_Reg input_func[] = {
 };
 
 int luaopen_input(lua_State *L) {
+    /* disable buffering on stdout for logging purpose */
+    setbuf(stdout, NULL);
     luaL_register(L, "input", input_func);
     return 1;
 }
