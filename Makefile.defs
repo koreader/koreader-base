@@ -124,7 +124,9 @@ LIBTOOLIZE:=$(if $(DARWIN),glibtoolize,libtoolize)
 # But to add insult to injury, libtool also links with -nostdlib, which renders -static-lib* useless, so we
 # need this ugly workaround, even on recent (>= 4.5) GCC versions where any sane person would imagine -static-libstdc++ to be enough...
 ifndef DARWIN
-    STATIC_LIBSTDCPP=$(shell $(CC) -print-file-name=libstdc++.a)
+    # we need to set PATH manually here because export PATH in gmake only takes
+    # effect for for sub shells
+    STATIC_LIBSTDCPP=$(shell PATH='$(PATH)' $(CC) -print-file-name=libstdc++.a)
 else
     STATIC_LIBSTDCPP=
 endif
@@ -333,7 +335,7 @@ ifndef WIN32
     # We only care about that on non-emulated builds (i.e., arm), because compat symbols may be pinned
     # to different versions on different arches, and we only account for arm in our patches.
     ifndef EMULATE_READER
-        GLIBC_FILE=$(basename $(notdir $(realpath $(shell $(CC) -print-file-name=libc.so.6))))
+        GLIBC_FILE=$(basename $(notdir $(realpath $(shell PATH='$(PATH)' $(CC) -print-file-name=libc.so.6))))
         GLIBC_VER=$(shell echo $(GLIBC_FILE) | cut -f2 -d'-')
         GLIBC_2_22_SORT=$(shell echo -e "$(GLIBC_VER)\n2.22" | sort -V | head -n1)
         ifeq ($(GLIBC_2_22_SORT), 2.22)
@@ -345,7 +347,7 @@ endif
 endif
 
 # this will create a path named build/arm-none-linux-gnueabi or similar
-MACHINE?=$(shell PATH=$(PATH) $(CC) -dumpmachine 2>/dev/null)
+MACHINE?=$(shell PATH='$(PATH)' $(CC) -dumpmachine 2>/dev/null)
 ifdef DEBUG
     $(info ************ Building for MACHINE: "$(MACHINE)" **********)
     $(info ************ PATH: "$(PATH)" **********)
