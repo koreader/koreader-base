@@ -286,7 +286,7 @@ endif
 
 # ===========================================================================
 # console version of StarDict(sdcv)
-ifeq ("$(shell $(CC) -dumpmachine | sed s/-.*//)","x86_64")
+ifeq ("$(shell PATH='$(PATH)' $(CC) -dumpmachine | sed s/-.*//)","x86_64")
 PAGE_SIZE_CFG=-D64BIT_PAGE:BOOL=on
 endif
 $(OUTPUT_DIR)/sdcv: $(if $(ANDROID),$(GLIB_STATIC),$(GLIB)) $(ZLIB_STATIC) $(THIRDPARTY_DIR)/sdcv/CMakeLists.txt
