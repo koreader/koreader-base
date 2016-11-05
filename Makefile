@@ -71,12 +71,14 @@ libs: \
 	$(OUTPUT_DIR)/libs/libkoreader-cre.so \
 	$(OUTPUT_DIR)/libs/libwrap-mupdf.so
 
-$(OUTPUT_DIR)/libs/libkoreader-input.so: input/*.c input/*.h $(POPEN_NOSHELL_LIB)
+$(OUTPUT_DIR)/libs/libkoreader-input.so: input/*.c input/*.h $(if $(KINDLE),$(POPEN_NOSHELL_LIB),)
 	@echo "Building koreader input module..."
 	$(CC) $(DYNLIB_CFLAGS) -I$(POPEN_NOSHELL_DIR) -I./input \
 		$(if $(KOBO),-DKOBO,) $(if $(KINDLE),-DKINDLE,) $(if $(POCKETBOOK),-DPOCKETBOOK,) \
 		-o $@ \
-		input/input.c $(POPEN_NOSHELL_LIB) $(if $(POCKETBOOK),-linkview,)
+		input/input.c \
+		$(if $(KINDLE),$(POPEN_NOSHELL_LIB),) \
+		$(if $(POCKETBOOK),-linkview,)
 
 $(OUTPUT_DIR)/libs/libkoreader-lfs.so: \
 			$(if $(or $(ANDROID),$(WIN32)),$(LUAJIT_LIB),) \
