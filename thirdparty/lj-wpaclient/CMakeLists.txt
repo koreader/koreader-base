@@ -10,7 +10,7 @@ ep_get_source_dir(SOURCE_DIR)
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
     https://github.com/koreader/lj-wpaclient.git
-    4f69339f9cbd320259c29e451aaba75d8dd9b818
+    d1ad33b2af9585313f803a27d62726d952655acc
     ${SOURCE_DIR}
 )
 
