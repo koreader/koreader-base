@@ -523,7 +523,12 @@ LUA_SPORE_ROCK=$(LUAROCKS_DIR)/lua-spore/$(SPORE_VER)/$(LUA_SPORE_VER).rockspec
 
 SQLITE_BUILD_DIR=$(THIRDPARTY_DIR)/sqlite/build/$(MACHINE)
 SQLITE_DIR=$(CURDIR)/$(SQLITE_BUILD_DIR)/sqlite-prefix/src/sqlite-build
-SQLITE_LIB=$(SQLITE_DIR)/lib/libsqlite3.a
+SQLITE_LIB=$(OUTPUT_DIR)/libs/libsqlite3.so
+
+LUA_LJ_SQLITE_DIR=$(CURDIR)/$(THIRDPARTY_DIR)/lua-ljsqlite3
+LUA_LJ_SQLITE_INSTALL_DIR=$(OUTPUT_DIR)/common/lua-ljsqlite3
+LUA_LJ_SQLITE=$(LUA_LJ_SQLITE_INSTALL_DIR)/init.lua
+
 
 # pure LuaJIT module, so no need to separate build dir by MACHINE
 LJ_WPACLIENT_FILES=wpaclient.lua socket_h.lua consts_h.lua socket.lua wpa_ctrl.lua
