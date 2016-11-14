@@ -526,12 +526,17 @@ $(SQLITE_LIB): $(THIRDPARTY_DIR)/sqlite/CMakeLists.txt
 			-DCFLAGS="$(CFLAGS)" \
 		$(CURDIR)/thirdparty/sqlite && \
 		$(MAKE)
+	cp $(SQLITE_DIR)/lib/libsqlite3.so $(OUTPUT_DIR)/libs
+
+$(LUA_LJ_SQLITE) $(OUTPUT_DIR)/common/xsys.lua: $(LUA_LJ_SQLITE_DIR)/init.lua $(LUA_LJ_SQLITE_DIR)/xsys.lua
+	install -d $(LUA_LJ_SQLITE_INSTALL_DIR)
+	cp $(LUA_LJ_SQLITE_DIR)/{init.lua,LICENSE} $(LUA_LJ_SQLITE_INSTALL_DIR)
+	cp $(LUA_LJ_SQLITE_DIR)/xsys.lua $(OUTPUT_DIR)/common
 
 comma:=,
 empty:=
 space:=$(empty) $(empty)
 $(LJ_WPACLIENT): $(THIRDPARTY_DIR)/lj-wpaclient/CMakeLists.txt
-	echo 'yoo' $(LJ_WPACLIENT)
 	install -d $(LJ_WPACLIENT_BUILD_DIR)
 	cd $(LJ_WPACLIENT_BUILD_DIR) && \
 		$(CMAKE) $(CURDIR)/thirdparty/lj-wpaclient && \
