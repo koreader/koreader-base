@@ -197,6 +197,7 @@ function Pic.openJPGDocument(filename)
     local width = ffi.new("int[1]")
     local height = ffi.new("int[1]")
     local jpegsubsamp = ffi.new("int[1]")
+
     turbojpeg.tjDecompressHeader2(handle, ffi.cast("unsigned char*", data), #data, width, height, jpegsubsamp)
     assert(width[0] > 0 and height[0] > 0, "image dimensions")
 
@@ -220,6 +221,29 @@ function Pic.openJPGDocument(filename)
 
     turbojpeg.tjDestroy(handle)
 
+    return doc
+end
+
+function Pic.openJPGDocumentFromMem(data)
+    local handle = turbojpeg.tjInitDecompress()
+    assert(handle, "no TurboJPEG API decompressor handle")
+
+    local width = ffi.new("int[1]")
+    local height = ffi.new("int[1]")
+    local jpegsubsamp = ffi.new("int[1]")
+    turbojpeg.tjDecompressHeader2(handle, ffi.cast("unsigned char*", data), #data, width, height, jpegsubsamp)
+
+    local doc = PicDocument:new{width=width[0], height=height[0] }
+    doc.image_bb = BB.new(width[0], height[0], BB.TYPE_BBRGB24)
+    doc.components = 1
+    local format = turbojpeg.TJPF_BGR
+
+    if turbojpeg.tjDecompress2(handle, ffi.cast("unsigned char*", data), #data,
+        ffi.cast("unsigned char*", doc.image_bb.data),
+        width[0], doc.image_bb.pitch, height[0], format, 0) == -1 then
+        return false
+    end
+    turbojpeg.tjDestroy(handle)
     return doc
 end
 
