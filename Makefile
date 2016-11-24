@@ -40,10 +40,12 @@ endif
 	# set up some needed paths and links
 	install -d $(OUTPUT_DIR)/{cache,history,clipboard,fonts} $(CURDIR)/$(EVERNOTE_THRIFT_DIR)
 	ln -sf $(CURDIR)/$(THIRDPARTY_DIR)/kpvcrlib/cr3.css $(OUTPUT_DIR)/data/
+ifndef DARWIN
 	# setup Evernote SDK
 	cd $(EVERNOTE_SDK_DIR) && \
 		$(RCP) *.lua evernote $(CURDIR)/$(EVERNOTE_PLUGIN_DIR) && \
 		cp thrift/*.lua $(CURDIR)/$(EVERNOTE_THRIFT_DIR)
+endif
 	test -e $(LPEG_RE) && chmod 664 $(LPEG_RE) || true  # hot fix re.lua permission
 
 $(OUTPUT_DIR)/libs:

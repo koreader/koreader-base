@@ -14,12 +14,13 @@ assert_var_defined(LUA_INCDIR)
 assert_var_defined(LUA_LIBDIR)
 assert_var_defined(LUA_SPORE_VER)
 assert_var_defined(OUTPUT_DIR)
+assert_var_defined(LUAROCKS)
 
 ep_get_source_dir(SOURCE_DIR)
 
 set(LUA_SPORE_ROCKSPEC rockspec/${LUA_SPORE_VER}.rockspec)
 
-set(BUILD_CMD sh -c "luarocks make --tree=${OUTPUT_DIR}/rocks ${LUA_SPORE_ROCKSPEC}")
+set(BUILD_CMD sh -c "${LUAROCKS} make --tree=${OUTPUT_DIR}/rocks ${LUA_SPORE_ROCKSPEC}")
 if(DEFINED LDFLAGS)
     set(BUILD_CMD "${BUILD_CMD} LDFLAGS=\"${LDFLAGS}\"")
 endif()
