@@ -189,6 +189,35 @@ static int fakeTapInput(lua_State *L) {
     return 0;
 }
 
+static int koboFakeTapInput(lua_State *L) {
+    int x = luaL_checkint(L, 2);
+    int y = luaL_checkint(L, 3);
+    int i;
+    struct input_event ev;
+
+    inputfd = open(inputdevice, O_WRONLY | O_NDELAY);
+    if (inputfd == -1) return luaL_error(L, "cannot open input device <%s>", inputdevice);
+    SEND(3, 57, 1)
+    SEND(3, 48, 1)
+    SEND(3, 50, 1)
+    SEND(3, 53, x)
+    SEND(3, 54, y)
+    SEND(0, 2,  0)
+    SEND(0, 0,  0)
+
+    SEND(3, 57, 1)
+    SEND(3, 48, 0)
+    SEND(3, 50, 0)
+    SEND(3, 53, x)
+    SEND(3, 54, y)
+    SEND(0, 2,  0)
+    SEND(0, 0,  0)
+
+    ioctl(inputfd, EVIOCGRAB, 0);
+    close(inputfd);
+    return 0;
+}
+
 static inline void set_event_table(lua_State *L, struct input_event input) {
     lua_newtable(L);
     lua_pushstring(L, "type");
