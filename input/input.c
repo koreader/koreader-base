@@ -39,6 +39,13 @@
 #define CODE_FAKE_CHARGING      10020
 #define CODE_FAKE_NOT_CHARGING  10021
 
+#define SEND(a,b,c){ \
+    gettimeofday(&ev.time, NULL);\
+    ev.type = (a);\
+    ev.code = (b);\
+    ev.value = (c);\
+    write(inputfd, &ev, sizeof(ev));}
+
 #define NUM_FDS 4
 int inputfds[4] = { -1, -1, -1, -1 };
 pid_t fake_ev_generator_pid = -1;
@@ -190,9 +197,11 @@ static int fakeTapInput(lua_State *L) {
 }
 
 static int koboFakeTapInput(lua_State *L) {
+    const char* inputdevice = luaL_checkstring(L, 1);
     int x = luaL_checkint(L, 2);
     int y = luaL_checkint(L, 3);
     int i;
+    int inputfd = -1;
     struct input_event ev;
 
     inputfd = open(inputdevice, O_WRONLY | O_NDELAY);
@@ -290,6 +299,7 @@ static const struct luaL_Reg input_func[] = {
     {"closeAll", closeInputDevices},
     {"waitForEvent", waitForInput},
     {"fakeTapInput", fakeTapInput},
+    {"koboFakeTapInput", koboFakeTapInput},
     {NULL, NULL}
 };
 
