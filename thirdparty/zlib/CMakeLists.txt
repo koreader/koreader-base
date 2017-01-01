@@ -28,12 +28,14 @@ else()
 endif()
 
 include(ExternalProject)
+# TODO: update to 1.2.9
 set(ZLIB_VER "1.2.8")
+set(ZLIB_MD5 "44d667c142d7cda120332623eab69f40")
 ExternalProject_Add(
     ${PROJECT_NAME}
     DOWNLOAD_DIR ${KO_DOWNLOAD_DIR}
-    URL http://zlib.net/zlib-${ZLIB_VER}.tar.gz
-    URL_MD5 44d667c142d7cda120332623eab69f40
+    URL http://pkgs.fedoraproject.org/repo/pkgs/mingw-zlib/zlib-${ZLIB_VER}.tar.gz/${ZLIB_MD5}/zlib-${ZLIB_VER}.tar.gz
+    URL_MD5 ${ZLIB_MD5}
     BUILD_IN_SOURCE 1
     ${optional_cfg_cmd}
     BUILD_COMMAND ${BUILD_CMD}
