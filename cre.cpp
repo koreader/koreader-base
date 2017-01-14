@@ -1281,6 +1281,9 @@ static int getCoverPageImageData(lua_State *L) {
 		unsigned size = stream->GetSize();
 		lvsize_t read_size = 0;
 		void *buffer = (void *)malloc(size);
+		/* This malloc'ed buffer NEEDs to be freed from lua after use with :
+		 *     ffi.C.free(data)
+		 * to not leak memory */
 		if (buffer != NULL) {
 			stream->Read(buffer, size, &read_size);
 			if (read_size == size) {
@@ -1392,6 +1395,49 @@ static int isXPointerInCurrentPage(lua_State *L) {
 	return 1;
 }
 
+static int isXPointerInDocument(lua_State *L) {
+    CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
+    const char *xpointer_str = luaL_checkstring(L, 2);
+
+    bool found = true;
+    ldomXPointer xp = doc->dom_doc->createXPointer(lString16(xpointer_str));
+    lvPoint pt = xp.toPoint();
+    if (pt.y < 0) {
+        found = false;
+    }
+    lua_pushboolean(L, found);
+    return 1;
+}
+
+static int getImageDataFromPosition(lua_State *L) {
+    CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
+    int x = luaL_checkint(L, 2);
+    int y = luaL_checkint(L, 3);
+    lvPoint pt(x, y);
+    ldomXPointer ptr = doc->text_view->getNodeByPoint(pt);
+    if (ptr.isNull())
+        return 0;
+    LVStreamRef stream = ptr.getNode()->getObjectImageStream();
+    if (!stream.isNull()) {
+        unsigned size = stream->GetSize();
+        lvsize_t read_size = 0;
+        void *buffer = (void *)malloc(size);
+        /* This malloc'ed buffer NEEDs to be freed from lua after use with :
+         *     ffi.C.free(data)
+         * to not leak memory */
+        if (buffer != NULL) {
+            stream->Read(buffer, size, &read_size);
+            if (read_size == size) {
+                lua_pushlightuserdata(L, buffer);
+                lua_pushinteger(L, size);
+                return 2;
+            }
+        }
+    }
+    return 0;
+}
+
+
 static const struct luaL_Reg cre_func[] = {
 	{"initCache", initCache},
 	{"initHyphDict", initHyphDict},
@@ -1453,10 +1499,12 @@ static const struct luaL_Reg credocument_meth[] = {
 	//{"drawCoverPage", drawCoverPage},
 	{"findText", findText},
 	{"isXPointerInCurrentPage", isXPointerInCurrentPage},
+	{"isXPointerInDocument", isXPointerInDocument},
 	{"getLinkFromPosition", getLinkFromPosition},
 	{"getWordFromPosition", getWordFromPosition},
 	{"getTextFromPositions", getTextFromPositions},
 	{"getWordBoxesFromPositions", getWordBoxesFromPositions},
+	{"getImageDataFromPosition", getImageDataFromPosition},
 	{"getPageLinks", getPageLinks},
 	{"getCoverPageImageData", getCoverPageImageData},
 	{"gotoLink", gotoLink},
