@@ -912,7 +912,7 @@ static int getLinkFromPosition(lua_State *L) {
 	int y = luaL_checkint(L, 3);
 
 	lvPoint pt(x, y);
-	ldomXPointer p = doc->text_view->getNodeByPoint(pt);
+	ldomXPointer p = doc->text_view->getNodeByPoint(pt, true);
 	lString16 href = p.getHRef();
 	lua_pushstring(L, UnicodeToLocal(href).c_str());
 	return 1;
