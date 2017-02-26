@@ -356,7 +356,7 @@ function util.template(str, ...)
     return result
 end
 
-function util.unichar (value)
+function util.unichar(value)
 -- this function is taken from dkjson
 -- http://dkolf.de/src/dkjson-lua.fsl/
     local floor = math.floor
