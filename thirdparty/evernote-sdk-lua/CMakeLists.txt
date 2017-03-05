@@ -17,7 +17,7 @@ set(BUILD_CMD sh -c "$(MAKE) -C thrift CC=\"${CC}\" LDFLAGS=\"${LDFLAGS}\" OUTPU
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
     https://github.com/koreader/evernote-sdk-lua
-    cfe65376a5ee04ca8f1f10993f5ff9cceaad2857
+    bf32db95018627c9c9e43b50721362ac60de72fa
     ${SOURCE_DIR}
 )
 
