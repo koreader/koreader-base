@@ -1078,10 +1078,25 @@ static int getWordBoxesFromPositions(lua_State *L) {
 			return 0;
 		r.sort();
 
+	        // Old saved highlights may have included punctuation at
+	        // edges (they were not displayed in boxes because of
+	        // lvtinydom.cpp's ldomWordsCollector catching only letters)
+	        // and punctuation was considered part of the word
+	        // (a space was the sole word separator), so
+	        // r.getStart().isVisibleWordStart() and r.getEnd().isVisibleWordEnd()
+	        // were always true.
+	        // With our changes to word detection, this is no more true,
+	        // and the next tests would gather the previous or following
+	        // words, which were not part of the saved highlight !
+	        // But we can change the method to indeed get the word just
+	        // after or before the punctuation and actually get
+	        // exactly the included words without punctuation
 		if (!r.getStart().isVisibleWordStart())
-			r.getStart().prevVisibleWordStart();
+			// r.getStart().prevVisibleWordStart();
+			r.getStart().nextVisibleWordStart();
 		if (!r.getEnd().isVisibleWordEnd())
-			r.getEnd().nextVisibleWordEnd();
+			// r.getEnd().nextVisibleWordEnd();
+			r.getEnd().prevVisibleWordEnd();
 		if (r.isNull())
 			return 0;
 
