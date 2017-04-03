@@ -18,10 +18,10 @@ ep_get_source_dir(SOURCE_DIR)
 ep_get_binary_dir(BINARY_DIR)
 
 # added -Wno-unused-result in CXXFLAGS to ignore sodium_init() warning
-set(CFG_ENV_VAR "CC=\"${CC}\" CXX=\"${CXX}\" CFLAGS=\"${CFLAGS}\" CXXFLAGS=\"${CXXFLAGS} -Wno-unused-result\" LDFLAGS=\"${LDFLAGS}\" LIBS=\"${STATIC_LIBSTDCPP}\"")
+set(CFG_ENV_VAR "CC=\"${CC}\" CXX=\"${CXX}\" CFLAGS=\"${CFLAGS}\" CXXFLAGS=\"${CXXFLAGS}\" LDFLAGS=\"${LDFLAGS}\" LIBS=\"${STATIC_LIBSTDCPP}\"")
 set(CFG_ENV_VAR "${CFG_ENV_VAR} libzmq_have_xmlto=no libzmq_have_asciidoc=no")
 
-set(CFG_OPTS "-q --prefix=${BINARY_DIR} --disable-static --enable-shared --without-documentation --host=\"${CHOST}\"")
+set(CFG_OPTS "-q --prefix=${BINARY_DIR} --disable-static --enable-shared --without-docs --host=\"${CHOST}\"")
 if(${LEGACY})
     set(CFG_OPTS "${CFG_OPTS} --disable-eventfd")
 endif(${LEGACY})
@@ -45,7 +45,7 @@ set(CLEAR_BUILD_DIR ${CMAKE_COMMAND} -E remove_directory ${BINARY_DIR} COMMAND $
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
     https://github.com/zeromq/libzmq
-    883e95b22e0bffffa72312ea1fec76199afbe458
+    8d75d506b6f88265bc0fb57b93385b45e35cdd10
     ${SOURCE_DIR}
 )
 

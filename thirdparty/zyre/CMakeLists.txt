@@ -36,7 +36,7 @@ set(SED_CMD2 sh -c "${ISED} 's|^runpath_var=LD_RUN_PATH|runpath_var=DIE_RPATH_DI
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
     https://github.com/zeromq/zyre.git
-    3a0a14a37422604c99fda8d7befeaae95c15791b
+    ab263dac21250fc85fa8c7239973109eca2251a7
     ${SOURCE_DIR}
 )
 

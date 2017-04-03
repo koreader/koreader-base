@@ -17,7 +17,7 @@ assert_var_defined(HOST)
 ep_get_source_dir(SOURCE_DIR)
 ep_get_binary_dir(BINARY_DIR)
 
-set(CFG_ENV_VAR "CC=\"${CC}\" CFLAGS=\"${CFLAGS}\" LDFLAGS=\"${LDFLAGS}\" fmq_have_xmlto=no fmq_have_asciidoc=no")
+set(CFG_ENV_VAR "PKG_CONFIG_PATH=\"${PKG_CONFIG_PATH}:${ZMQ_DIR}/lib/pkgconfig:${CZMQ_DIR}/lib/pkgconfig\" CC=\"${CC} -Wno-implicit-function-declaration -Wno-int-conversion\" CFLAGS=\"${CFLAGS}\" LDFLAGS=\"${LDFLAGS}\" fmq_have_xmlto=no fmq_have_asciidoc=no")
 set(CFG_OPTS "-q --prefix=${BINARY_DIR} --with-libzmq=${ZMQ_DIR} --with-libczmq=${CZMQ_DIR} --disable-static --enable-shared --host=\"${HOST}\"")
 set(CFG_CMD sh -c "${CFG_ENV_VAR} ${SOURCE_DIR}/configure ${CFG_OPTS}")
 
@@ -31,11 +31,10 @@ endif()
 
 set(PATCH_CMD1 sh -c "${ISED} 's|^hardcode_libdir_flag_spec=.*|hardcode_libdir_flag_spec=\"\"|g' libtool")
 set(PATCH_CMD2 sh -c "${ISED} 's|^runpath_var=LD_RUN_PATH|runpath_var=DIE_RPATH_DIE|g' libtool")
-
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
     https://github.com/zeromq/filemq.git
-    9a24134d4c0a84abc5eebf1dfb2eb184adee72df
+    3dc89932903b0320853d87833aabc6f7e7781c49
     ${SOURCE_DIR}
 )
 
