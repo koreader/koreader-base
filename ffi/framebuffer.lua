@@ -47,7 +47,7 @@ fb.ORIENTATION_PORTRAIT_ROTATED = 2
 fb.ORIENTATION_LANDSCAPE_ROTATED = 3
 
 function fb:extend(o)
-    local o = o or {}
+    o = o or {}
     setmetatable(o, self)
     self.__index = self
     o.parent = self
@@ -55,7 +55,7 @@ function fb:extend(o)
 end
 
 function fb:new(o)
-    local o = self:extend(o)
+    o = self:extend(o)
     if o.init then o:init() end
     return o
 end
