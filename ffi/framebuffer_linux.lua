@@ -39,6 +39,10 @@ function framebuffer:init()
         -- it seems that finfo.smem_len is unreliable on kobo
         -- Figure out the size of the screen in bytes
         self.fb_size = vinfo.xres_virtual * vinfo.yres_virtual * vinfo.bits_per_pixel / 8
+        -- Kobo hasn't updated smem_len when the depth was changed from 16 to 32
+        if vinfo.bits_per_pixel == 32 then
+            self.fb_size = finfo.smem_len
+        end
     -- PocketBook eink framebuffer seems to have no finfo.id
     elseif string.byte(ffi.string(finfo.id, 16), 1, 1) == 0 then
         -- finfo.line_length needs to be 16-bytes aligned
@@ -50,7 +54,9 @@ function framebuffer:init()
 
     self.data = ffi.C.mmap(nil, self.fb_size, bit.bor(ffi.C.PROT_READ, ffi.C.PROT_WRITE), ffi.C.MAP_SHARED, self.fd, 0)
     assert(self.data ~= ffi.C.MAP_FAILED, "can not mmap() framebuffer")
-    if vinfo.bits_per_pixel == 16 then
+    if vinfo.bits_per_pixel == 32 then
+        self.bb = BB.new(vinfo.xres, vinfo.yres, BB.TYPE_BBRGB32, self.data, finfo.line_length)
+    elseif vinfo.bits_per_pixel == 16 then
         self.bb = BB.new(vinfo.xres, vinfo.yres, BB.TYPE_BBRGB16, self.data, finfo.line_length)
     elseif vinfo.bits_per_pixel == 8 then
         self.bb = BB.new(vinfo.xres, vinfo.yres, BB.TYPE_BB8, self.data, finfo.line_length)
