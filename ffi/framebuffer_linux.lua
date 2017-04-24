@@ -106,7 +106,8 @@ function framebuffer:init()
                            ffi.C.MAP_SHARED,
                            self.fd,
                            0)
-    assert(self.data ~= ffi.C.MAP_FAILED, "can not mmap() framebuffer")
+    assert(tonumber(ffi.cast("intptr_t", self.data)) ~= ffi.C.MAP_FAILED,
+           "can not mmap() framebuffer")
     if vinfo.bits_per_pixel == 32 then
         self.bb = BB.new(vinfo.xres, vinfo.yres, BB.TYPE_BBRGB32, self.data, finfo.line_length)
     elseif vinfo.bits_per_pixel == 16 then
