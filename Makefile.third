@@ -108,7 +108,7 @@ $(DJVULIBRE_LIB): $(JPEG_LIB) $(THIRDPARTY_DIR)/djvulibre/CMakeLists.txt
 	cp -fL $(DJVULIBRE_LIB_DIR)/$(notdir $(DJVULIBRE_LIB)) $(DJVULIBRE_LIB)
 
 # crengine, fetched via GIT as a submodule
-$(CRENGINE_LIB): $(ZLIB) $(PNG_LIB) $(FREETYPE_LIB) $(JPEG_LIB) \
+$(CRENGINE_LIB): $(ZLIB) $(PNG_LIB) $(FREETYPE_LIB) $(JPEG_LIB) $(NANOSVG_HEADERS) \
 		$(THIRDPARTY_DIR)/kpvcrlib/crengine $(THIRDPARTY_DIR)/kpvcrlib/CMakeLists.txt
 	install -d $(CRENGINE_BUILD_DIR)
 	cd $(CRENGINE_BUILD_DIR) && \
@@ -122,6 +122,7 @@ $(CRENGINE_LIB): $(ZLIB) $(PNG_LIB) $(FREETYPE_LIB) $(JPEG_LIB) \
 		$(CMAKE) -DJPEGLIB_INCLUDE_DIR=$(JPEG_DIR)/include \
 		-DJCONFIG_INCLUDE_DIR="$(MUPDF_DIR)/scripts" \
 		-DPNG_INCLUDE_DIR="$(PNG_DIR)/include" \
+		-DNANOSVG_INCLUDE_DIR="$(NANOSVG_INCLUDE_DIR)" \
 		-DZLIB_INCLUDE_DIR="$(ZLIB_DIR)/include" \
 		-DFREETYPE_INCLUDE_DIR="$(FREETYPE_DIR)/include/freetype2" \
 		-DCMAKE_BUILD_TYPE=Release \
@@ -533,6 +534,17 @@ $(LUA_LJ_SQLITE) $(OUTPUT_DIR)/common/xsys.lua: $(LUA_LJ_SQLITE_DIR)/init.lua $(
 	install -d $(LUA_LJ_SQLITE_INSTALL_DIR)
 	cp $(LUA_LJ_SQLITE_DIR)/{init.lua,LICENSE} $(LUA_LJ_SQLITE_INSTALL_DIR)
 	cp $(LUA_LJ_SQLITE_DIR)/xsys.lua $(OUTPUT_DIR)/common
+
+$(NANOSVG_HEADERS): $(THIRDPARTY_DIR)/nanosvg/CMakeLists.txt
+	install -d $(NANOSVG_BUILD_DIR)
+	cd $(NANOSVG_BUILD_DIR) && \
+		$(CMAKE) \
+		$(CURDIR)/$(THIRDPARTY_DIR)/nanosvg && \
+		$(MAKE)
+	install -d $(NANOSVG_INCLUDE_DIR)
+	cp -fL $(NANOSVG_DIR)/nanosvg/src/nanosvg.h $(NANOSVG_INCLUDE_DIR)/
+	cp -fL $(NANOSVG_DIR)/nanosvg/src/nanosvgrast.h $(NANOSVG_INCLUDE_DIR)/
+	cp -fL $(NANOSVG_DIR)/nanosvg/example/stb_image_write.h $(NANOSVG_INCLUDE_DIR)/
 
 comma:=,
 empty:=
