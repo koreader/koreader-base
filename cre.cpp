@@ -29,6 +29,7 @@ extern "C" {
 
 #include "crengine.h"
 #include "lvdocview.h"
+#include "lvimg.h"
 
 static void replaceColor( char * str, lUInt32 color ) {
 	// in line like "0 c #80000000",
@@ -1443,6 +1444,25 @@ static int getImageDataFromPosition(lua_State *L) {
         if (buffer != NULL) {
             stream->Read(buffer, size, &read_size);
             if (read_size == size) {
+                // buffer may be SVG data, that MuPDF does not support yet (20170429)
+                // But crengine (with nanosvg code) can convert SVG to PNG, so let's do that here
+                unsigned char *cbuf = (unsigned char*) buffer; // cast same void pointer to char pointer
+                // if buffer starts with <?xml or <svg, it's probably SVG
+                if ( (size > 5 && cbuf[0]=='<' && cbuf[1]=='?' && (cbuf[2]=='x' || cbuf[2] == 'X') && (cbuf[3]=='m' || cbuf[3] == 'M') && (cbuf[4]=='l' || cbuf[4] == 'L')) ||
+                     (size > 4 && cbuf[0]=='<' && (cbuf[1]=='s' || cbuf[1] == 'S') && (cbuf[2]=='v' || cbuf[2] == 'V') && (cbuf[3]=='g' || cbuf[3] == 'G')) ) {
+                    unsigned char *pngbuf;
+                    int pngbuflen;
+                    // We use a zoom_factor of 4 to return a higher quality rasterized image from the SVG vector image
+                    pngbuf = convertSVGtoPNG(cbuf, size, 4, &pngbuflen); // provided by crengine/src/lvimg.cpp
+                    if (pngbuf != NULL) {
+                        // free SVG data, and return PNG data instead
+                        free(buffer);
+                        lua_pushlightuserdata(L, (void*)pngbuf);
+                        lua_pushinteger(L, pngbuflen);
+                        return 2;
+                    }
+                    // if it failed, go on returning original data
+                }
                 lua_pushlightuserdata(L, buffer);
                 lua_pushinteger(L, size);
                 return 2;
