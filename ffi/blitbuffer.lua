@@ -1296,7 +1296,9 @@ end
 function BB.fromstring(width, height, buffertype, str, pitch)
     local dataptr = ffi.C.malloc(#str)
     ffi.copy(dataptr, str, #str)
-    return BB.new(width, height, buffertype, dataptr, pitch)
+    local bb = BB.new(width, height, buffertype, dataptr, pitch)
+    bb:setAllocated(1)
+    return bb
 end
 
 function BB.tostring(bb)
