@@ -17,6 +17,10 @@ set(CFG_ENV_VAR "CC=\"${CC}\" CXX=\"${CXX}\" CPPFLAGS=\"${CPPFLAGS}\" LDFLAGS=\"
 set(CFG_OPTS "-q --prefix=${BINARY_DIR} --disable-static --enable-shared --host=\"${CHOST}\"")
 set(CFG_CMD sh -c "${CFG_ENV_VAR} ${SOURCE_DIR}/configure ${CFG_OPTS}")
 
+if($ENV{ANDROID})
+    set(CFG_CMD "${CFG_CMD} && ${ISED} 's|\${shared_ext}\\\\\$major|\${shared_ext}|' libtool")
+endif()
+
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
     https://github.com/glennrp/libpng.git

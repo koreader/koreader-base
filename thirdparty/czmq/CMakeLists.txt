@@ -21,6 +21,10 @@ set(CFG_ENV_VAR "CC=\"${CC}\" LDFLAGS=\"${LDFLAGS}\" CFLAGS=\"-Wno-error ${CFLAG
 set(CFG_OPTS "-q --prefix=${BINARY_DIR} --with-gnu-ld --with-libzmq=${ZMQ_DIR} --disable-static --enable-shared --host=${HOST}")
 set(CFG_CMD sh -c "${CFG_ENV_VAR} ${SOURCE_DIR}/configure ${CFG_OPTS}")
 
+if($ENV{ANDROID})
+    set(CFG_CMD "${CFG_CMD} && ${ISED} 's|\${shared_ext}\\\\\$major|\${shared_ext}|' libtool")
+endif()
+
 # hack to remove hardcoded rpath
 set(SED_CMD1 sh -c "${ISED} 's|^hardcode_libdir_flag_spec=.*|hardcode_libdir_flag_spec=\"\"|g' libtool")
 set(SED_CMD2 sh -c "${ISED} 's|^runpath_var=LD_RUN_PATH|runpath_var=DIE_RPATH_DIE|g' libtool")

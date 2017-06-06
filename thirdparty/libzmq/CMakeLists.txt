@@ -29,6 +29,10 @@ endif(${LEGACY})
 set(CFG_CMD sh -c "${CFG_ENV_VAR} ${SOURCE_DIR}/configure ${CFG_OPTS}")
 set(PATCH_CMD sh -c "${ISED} \"s|-lstdc++||g\" libtool")
 
+if($ENV{ANDROID})
+    set(PATCH_CMD "${PATCH_CMD} && ${ISED} 's|\${shared_ext}\\\\\$major|\${shared_ext}|' libtool")
+endif()
+
 set(FORCE_DYNAMLIB_VERSION sed -i "s|-avoid-version||g" src/Makefile.am)
 set(SKIP_TEST sed -i "s|tests||g" Makefile.am)
 # clear build dir every time so make install won't fail

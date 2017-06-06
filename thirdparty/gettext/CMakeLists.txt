@@ -13,7 +13,7 @@ ep_get_source_dir(SOURCE_DIR)
 ep_get_binary_dir(BINARY_DIR)
 
 set(CFG_ENV_VAR "CC=\"${CC}\"")
-if(${IS_ANDROID})
+if($ENV{ANDROID})
     # workaround of 'undefined reference to getdtablesize' for NDK-r11c
     set(CFG_ENV_VAR "${CFG_ENV_VAR} LDFLAGS=-lc LIBS=${NDK}/platforms/android-${NDKABI}/arch-arm/usr/lib/libc.a")
 endif()
@@ -21,8 +21,9 @@ set(CFG_OPTS "--with-threads=none --disable-acl --disable-curses --disable-openm
 set(CFG_OPTS "${CFG_OPTS} --prefix=${BINARY_DIR} --with-libiconv-prefix=${LIBICONV_PREFIX}")
 set(CFG_OPTS "${CFG_OPTS} --enable-shared=false --enable-static=true ${CHOST_OPTS}")
 set(CFG_CMD sh -c "${CFG_ENV_VAR} ${SOURCE_DIR}/configure ${CFG_OPTS}")
+
 # remove HAVE_PWD_H for android build
-if(${IS_ANDROID})
+if($ENV{ANDROID})
     set(CFG_CMD "${CFG_CMD} && ${ISED} \"s|#define HAVE_PWD_H 1||\" gettext-tools/config.h")
 endif()
 
