@@ -13,9 +13,11 @@ ep_get_binary_dir(BINARY_DIR)
 set(CFG_ENV_VAR "CC=\"${CC}\" CFLAGS=\"${CFLAGS}\" LDFLAGS=\"${LDFLAGS}\" ")
 set(CFG_OPTS "-q --prefix=${BINARY_DIR} --disable-static --enable-shared --host=\"${CHOST}\"")
 set(CFG_CMD sh -c "${CFG_ENV_VAR} ${SOURCE_DIR}/configure ${CFG_OPTS}")
+
 # use limits.h instead of stdint.h for android build
-if(${IS_ANDROID})
+if($ENV{ANDROID})
     set(CFG_CMD "${CFG_CMD} && ${ISED} \"s|stdint.h|limits.h|g\" ${SOURCE_DIR}/lib/openbsd-reallocarray.c")
+    set(CFG_CMD "${CFG_CMD} && ${ISED} 's|\${shared_ext}\\\\\$major|\${shared_ext}|' libtool")
 endif()
 
 ko_write_gitclone_script(

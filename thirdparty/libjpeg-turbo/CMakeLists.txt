@@ -22,6 +22,10 @@ if(${WITHOUT_SIMD})
 endif(${WITHOUT_SIMD})
 set(CFG_CMD sh -c "${CFG_ENV_VAR} ${SOURCE_DIR}/configure ${CFG_OPTS}")
 
+if($ENV{ANDROID})
+    set(CFG_CMD "${CFG_CMD} && ${ISED} 's|\${shared_ext}\\\\\$major|\${shared_ext}|' libtool")
+endif()
+
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
     https://github.com/libjpeg-turbo/libjpeg-turbo.git

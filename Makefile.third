@@ -91,7 +91,6 @@ $(GIF_LIB): $(THIRDPARTY_DIR)/giflib/CMakeLists.txt
 	cd $(GIF_BUILD_DIR) && \
 		$(CMAKE) -DCC="$(CC) $(if $(ANDROID),-DS_IREAD=S_IRUSR -DS_IWRITE=S_IWUSR,)" \
 		-DCFLAGS="$(CFLAGS)" -DLDFLAGS="$(LDFLAGS)" -DCHOST="$(CHOST)" \
-		$(if $(ANDROID),-DIS_ANDROID:BOOL=on,) \
 		$(CURDIR)/thirdparty/giflib && \
 		$(MAKE)
 	cp -fL $(GIF_DIR)/lib/$(notdir $(GIF_LIB)) $@
@@ -221,7 +220,6 @@ $(LIBGETTEXT): $(LIBICONV) $(THIRDPARTY_DIR)/gettext/CMakeLists.txt
 	cd $(GETTEXT_BUILD_DIR) && \
 		$(CMAKE) -DCC="$(CC) -std=gnu89" -DLIBICONV_PREFIX=$(LIBICONV_DIR) \
 		-DCHOST_OPTS="$(if $(EMULATE_READER),,--host=$(if $(ANDROID),arm-linux,$(CHOST)))" \
-		$(if $(ANDROID),-DIS_ANDROID:BOOL=on,) \
 		$(if $(ANDROID),-DNDK=$(NDK),) \
 		$(if $(ANDROID),-DNDKABI=$(NDKABI),) \
 		$(CURDIR)/thirdparty/gettext && \
