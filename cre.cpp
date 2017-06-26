@@ -466,6 +466,14 @@ static int getDocumentProps(lua_State *L) {
 	lua_pushstring(L, UnicodeToLocal(doc->text_view->getSeries()).c_str());
 	lua_settable(L, -3);
 
+	lua_pushstring(L, "description");
+	lua_pushstring(L, UnicodeToLocal(doc->text_view->getDescription()).c_str());
+	lua_settable(L, -3);
+
+	lua_pushstring(L, "keywords");
+	lua_pushstring(L, UnicodeToLocal(doc->text_view->getKeywords()).c_str());
+	lua_settable(L, -3);
+
 	return 1;
 }
 
