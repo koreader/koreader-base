@@ -24,7 +24,7 @@ set(CFG_CMD cmake -DENABLE_NLS:BOOL=False -DWITH_READLINE:BOOL=False "${SOURCE_D
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
     git://github.com/Dushistov/sdcv.git
-    d5698bdf33fc35204c91154a31c3af9303930694
+    8f16ceae593461b22c85f5f3e060e5a07b043549
     ${SOURCE_DIR}
 )
 
