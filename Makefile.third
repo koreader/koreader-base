@@ -302,7 +302,7 @@ $(OUTPUT_DIR)/sdcv: $(if $(ANDROID),$(GLIB_STATIC),$(GLIB)) $(ZLIB_STATIC) $(THI
 			-static-libgcc -static-libstdc++" \
 		$(CURDIR)/$(THIRDPARTY_DIR)/sdcv && \
 		$(MAKE)
-	cp $(SDCV_DIR)/src/sdcv $(OUTPUT_DIR)/
+	cp $(SDCV_DIR)/usr/local/bin/sdcv $(OUTPUT_DIR)/
 ifdef ANDROID
 	readelf -d $@ | grep "no dynamic" \
 		|| echo "warning: Android L+ support only PIE binary and can't run this"
