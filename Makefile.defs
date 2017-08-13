@@ -446,7 +446,7 @@ LIBFFI_BUILD_DIR=$(THIRDPARTY_DIR)/libffi/build/$(MACHINE)
 LIBFFI_DIR=$(CURDIR)/$(LIBFFI_BUILD_DIR)/libffi-prefix/src/libffi-build
 
 SDCV_BUILD_DIR=$(THIRDPARTY_DIR)/sdcv/build/$(MACHINE)
-SDCV_DIR=$(CURDIR)/$(SDCV_BUILD_DIR)/sdcv-prefix/src/sdcv-build
+SDCV_DIR=$(CURDIR)/$(SDCV_BUILD_DIR)/sdcv-prefix/src/sdcv
 GLIB_BUILD_DIR=$(THIRDPARTY_DIR)/glib/build/$(MACHINE)
 GLIB_DIR=$(CURDIR)/$(GLIB_BUILD_DIR)/glib-prefix/src/glib-build
 LIBICONV_BUILD_DIR=$(THIRDPARTY_DIR)/libiconv/build/$(MACHINE)
