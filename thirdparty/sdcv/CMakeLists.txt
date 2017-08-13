@@ -15,16 +15,17 @@ assert_var_defined(LIBS)
 assert_var_defined(HOST)
 
 ep_get_source_dir(SOURCE_DIR)
-ep_get_binary_dir(BINARY_DIR)
 
-set(DESTDIR "${BINARY_DIR}")
+set(PATCH_CMD "${ISED} 's|-lz||' configure.ac && ${ISED} 's|-lz||' configure")
+set(PATCH_CMD sh -c "${PATCH_CMD}")
 
-set(CFG_CMD cmake -DENABLE_NLS:BOOL=False -DWITH_READLINE:BOOL=False "${SOURCE_DIR}")
+set(CFG_OPTS "--host=\"${HOST}\" PKG_CONFIG_PATH=\"${PKG_CONFIG_PATH}\" CXX=\"${CXX}\" CXXFLAGS=\"${CXXFLAGS}\" LDFLAGS=\"${LDFLAGS}\" LIBS=\"${LIBS}\"")
+set(CFG_CMD sh -c "${SOURCE_DIR}/configure ${CFG_OPTS}")
 
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
-    git://github.com/Dushistov/sdcv.git
-    8f16ceae593461b22c85f5f3e060e5a07b043549
+    git://github.com/koreader/sdcv.git
+    4455cf31bb4a424370e29d858dc07cf8d8f5de04
     ${SOURCE_DIR}
 )
 
@@ -36,5 +37,6 @@ ExternalProject_Add(
     PATCH_COMMAND ${PATCH_CMD}
     CONFIGURE_COMMAND ${CFG_CMD}
     BUILD_COMMAND $(MAKE) -j${PARALLEL_JOBS}
-    INSTALL_COMMAND DESTDIR=${DESTDIR} $(MAKE) -j${PARALLEL_JOBS} install
+    # skip install
+    INSTALL_COMMAND ""
 )
