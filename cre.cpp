@@ -881,6 +881,14 @@ static int setEmbeddedStyleSheet(lua_State *L) {
 	return 0;
 }
 
+static int setEmbeddedFonts(lua_State *L) {
+	CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
+
+	doc->text_view->doCommand(DCMD_SET_DOC_FONTS, luaL_checkint(L, 2));
+
+	return 0;
+}
+
 static int toggleFontBolder(lua_State *L) {
 	CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
 
@@ -1525,6 +1533,7 @@ static const struct luaL_Reg credocument_meth[] = {
 	{"setDefaultInterlineSpace", setDefaultInterlineSpace},
 	{"setStyleSheet", setStyleSheet},
 	{"setEmbeddedStyleSheet", setEmbeddedStyleSheet},
+	{"setEmbeddedFonts", setEmbeddedFonts},
 	{"setPageMargins", setPageMargins},
 	{"setVisiblePageCount", setVisiblePageCount},
 	{"adjustFontSizes", adjustFontSizes},
