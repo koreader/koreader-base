@@ -719,6 +719,20 @@ static int setFontFace(lua_State *L) {
 	return 0;
 }
 
+static int setAsPreferredFontWithBias(lua_State *L) {
+	CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
+	const char *face = luaL_checkstring(L, 2);
+	int bias = luaL_checkint(L, 3);
+	bool clearOthersBias = true;
+	if (lua_isboolean(L,4)) {
+		clearOthersBias = lua_toboolean(L, 4);
+	}
+
+	fontMan->SetAsPreferredFontWithBias(lString8(face), bias, clearOthersBias);
+
+	return 0;
+}
+
 static int gotoPage(lua_State *L) {
 	CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
 	int pageno = luaL_checkint(L, 2);
@@ -1529,6 +1543,7 @@ static const struct luaL_Reg credocument_meth[] = {
 	{"setHeaderInfo", setHeaderInfo},
 	{"setHeaderFont", setHeaderFont},
 	{"setFontFace", setFontFace},
+	{"setAsPreferredFontWithBias", setAsPreferredFontWithBias},
 	{"setFontSize", setFontSize},
 	{"setDefaultInterlineSpace", setDefaultInterlineSpace},
 	{"setStyleSheet", setStyleSheet},
