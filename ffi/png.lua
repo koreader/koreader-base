@@ -2,6 +2,8 @@
 Module for PNG decoding/encoding.
 
 Currently, this is a LuaJIT FFI wrapper for lodepng lib.
+
+@module ffi.png
 ]]
 
 local ffi = require("ffi")

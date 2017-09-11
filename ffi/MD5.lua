@@ -1,6 +1,8 @@
 --[[--
 MD5 hash library.
-  ]]
+
+@module ffi.md5
+]]
 
 local ffi = require "ffi"
 local bit = require "bit"

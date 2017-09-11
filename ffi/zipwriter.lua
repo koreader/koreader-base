@@ -1,8 +1,12 @@
--- Zip packing workflow & code from luarocks' zip.lua :
---   https://github.com/luarocks/luarocks/blob/master/src/luarocks/tools/zip.lua
--- Modified to not require lua-zlib (we can wrap zlib with ffi)
---   cf: http://luajit.org/ext_ffi_tutorial.html, which uses zlib as an example !
--- Simplified to take filename and content from strings and not from disk
+--[[--
+Zip packing workflow & code from luarocks' zip.lua :
+   https://github.com/luarocks/luarocks/blob/master/src/luarocks/tools/zip.lua
+ Modified to not require lua-zlib (we can wrap zlib with ffi)
+   cf: http://luajit.org/ext_ffi_tutorial.html, which uses zlib as an example !
+ Simplified to take filename and content from strings and not from disk
+
+@module ffi.zipwriter
+]]
 
 -- We only need a few functions from zlib
 local ffi = require "ffi"

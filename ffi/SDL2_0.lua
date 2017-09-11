@@ -5,6 +5,8 @@ This module is intended to provide input/output facilities on a
 typical desktop (rather than a dedicated e-ink reader, for which
 there would probably be raw framebuffer/input device access
 instead).
+
+@module ffi.sdl2_0
 ]]
 
 local ffi = require("ffi")
