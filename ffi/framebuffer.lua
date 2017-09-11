@@ -1,7 +1,9 @@
---[[
-Framebuffer API
+--[[--
+Framebuffer API.
 
 This will be extended by implementations of this API.
+
+@module ffi.framebuffer
 --]]
 
 local Blitbuffer = require("ffi/blitbuffer")

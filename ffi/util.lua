@@ -1,5 +1,7 @@
---[[
-Module for various utility functions
+--[[--
+Module for various utility functions.
+
+@module ffi.util
 ]]
 
 local bit = require "bit"
@@ -59,18 +61,18 @@ local util = {}
 
 
 if ffi.os == "Windows" then
-	util.gettime = function()
-		local ft = ffi.new('FILETIME[1]')[0]
-		local tmpres = ffi.new('unsigned long', 0)
-		C.GetSystemTimeAsFileTime(ft)
-		tmpres = bit.bor(tmpres, ft.dwHighDateTime)
-		tmpres = bit.lshift(tmpres, 32)
-		tmpres = bit.bor(tmpres, ft.dwLowDateTime)
-		-- converting file time to unix epoch
-		tmpres = tmpres - 11644473600000000ULL
-		tmpres = tmpres / 10
-		return tonumber(tmpres / 1000000ULL), tonumber(tmpres % 1000000ULL)
-	end
+    util.gettime = function()
+        local ft = ffi.new('FILETIME[1]')[0]
+        local tmpres = ffi.new('unsigned long', 0)
+        C.GetSystemTimeAsFileTime(ft)
+        tmpres = bit.bor(tmpres, ft.dwHighDateTime)
+        tmpres = bit.lshift(tmpres, 32)
+        tmpres = bit.bor(tmpres, ft.dwLowDateTime)
+        -- converting file time to unix epoch
+        tmpres = tmpres - 11644473600000000ULL
+        tmpres = tmpres / 10
+        return tonumber(tmpres / 1000000ULL), tonumber(tmpres % 1000000ULL)
+    end
 else
     local timeval = ffi.new("struct timeval")
     util.gettime = function()
@@ -80,39 +82,39 @@ else
 end
 
 if ffi.os == "Windows" then
-	util.sleep = function(sec)
-		C.Sleep(sec*1000)
-	end
-	util.usleep = function(usec)
-		C.Sleep(usec/1000)
-	end
+    util.sleep = function(sec)
+        C.Sleep(sec*1000)
+    end
+    util.usleep = function(usec)
+        C.Sleep(usec/1000)
+    end
 else
-	util.sleep = C.sleep
-	util.usleep = C.usleep
+    util.sleep = C.sleep
+    util.usleep = C.usleep
 end
 
 local statvfs = ffi.new("struct statvfs")
 function util.df(path)
-	C.statvfs(path, statvfs)
-	return tonumber(statvfs.f_blocks * statvfs.f_bsize),
-		tonumber(statvfs.f_bfree * statvfs.f_bsize)
+    C.statvfs(path, statvfs)
+    return tonumber(statvfs.f_blocks * statvfs.f_bsize),
+        tonumber(statvfs.f_bfree * statvfs.f_bsize)
 end
 
 function util.realpath(path)
-	local buffer = ffi.new("char[?]", C.PATH_MAX)
-	if ffi.os == "Windows" then
-		if C.GetFullPathNameA(path, C.PATH_MAX, buffer, nil) ~= 0 then
-			return ffi.string(buffer)
-		end
-	else
-		if C.realpath(path, buffer) ~= nil then
-			return ffi.string(buffer)
-		end
-	end
+    local buffer = ffi.new("char[?]", C.PATH_MAX)
+    if ffi.os == "Windows" then
+        if C.GetFullPathNameA(path, C.PATH_MAX, buffer, nil) ~= 0 then
+            return ffi.string(buffer)
+        end
+    else
+        if C.realpath(path, buffer) ~= nil then
+            return ffi.string(buffer)
+        end
+    end
 end
 
 function util.basename(path)
-	local ptr = ffi.cast("uint8_t *", path)
+    local ptr = ffi.cast("uint8_t *", path)
     if ffi.os == "Windows" then
         return ffi.string(C.PathFindFileNameA(ptr))
     else
@@ -156,8 +158,9 @@ function util.copyFile(from, to)
     tfp:close()
 end
 
---[[
-NOTE: If path2 is an absolute path, then ignore path1 and return path2 directly
+--[[--
+Joins paths
+NOTE: If path2 is an absolute path, then this function ignores path1 and returns path2 directly
 --]]
 function util.joinPath(path1, path2)
     if string.sub(path2, 1, 1) == "/" then
@@ -169,6 +172,7 @@ function util.joinPath(path1, path2)
     return path1 .. path2
 end
 
+--- Purges directory.
 function util.purgeDir(dir)
     local ok, err
     ok, err = lfs.attributes(dir)
@@ -193,6 +197,7 @@ function util.purgeDir(dir)
     return ok, err
 end
 
+--- Executes child process.
 function util.execute(...)
     if util.isAndroid() then
         local A = require("android")
@@ -209,23 +214,24 @@ function util.execute(...)
     end
 end
 
+--- Gets UTF-8 charcode.
 function util.utf8charcode(charstring)
-	local ptr = ffi.cast("uint8_t *", charstring)
-	local len = #charstring
-	if len == 1 then
-		return bit.band(ptr[0], 0x7F)
-	elseif len == 2 then
-		return bit.lshift(bit.band(ptr[0], 0x1F), 6) +
-			bit.band(ptr[1], 0x3F)
-	elseif len == 3 then
-		return bit.lshift(bit.band(ptr[0], 0x0F), 12) +
-			bit.lshift(bit.band(ptr[1], 0x3F), 6) +
-			bit.band(ptr[2], 0x3F)
-	end
+    local ptr = ffi.cast("uint8_t *", charstring)
+    local len = #charstring
+    if len == 1 then
+        return bit.band(ptr[0], 0x7F)
+    elseif len == 2 then
+        return bit.lshift(bit.band(ptr[0], 0x1F), 6) +
+            bit.band(ptr[1], 0x3F)
+    elseif len == 3 then
+        return bit.lshift(bit.band(ptr[0], 0x0F), 12) +
+            bit.lshift(bit.band(ptr[1], 0x3F), 6) +
+            bit.band(ptr[2], 0x3F)
+    end
 end
 
 local CP_UTF8 = 65001
--- convert multibyte string to utf-8 encoded string on Windows
+--- Converts multibyte string to utf-8 encoded string on Windows.
 function util.multiByteToUTF8(str, codepage)
     -- if codepage is not provided we will query the system codepage
     codepage = codepage or C.GetACP()
@@ -242,44 +248,49 @@ function util.multiByteToUTF8(str, codepage)
     end
 end
 
+--- Returns true if isWindows…
 function util.isWindows()
     return ffi.os == "Windows"
 end
 
--- for now, we just check if the "android" module can be loaded
 local isAndroid = nil
+--- Returns true if Android.
+-- For now, we just check if the "android" module can be loaded.
 function util.isAndroid()
-	if isAndroid == nil then
-		isAndroid = pcall(require, "android")
-	end
-	return isAndroid
+    if isAndroid == nil then
+        isAndroid = pcall(require, "android")
+    end
+    return isAndroid
 end
 
 local haveSDL1 = nil
 local haveSDL2 = nil
 
 function util.haveSDL1()
-	if haveSDL1 == nil then
-		haveSDL1 = pcall(ffi.load, "SDL")
-	end
-	return haveSDL1
+    if haveSDL1 == nil then
+        haveSDL1 = pcall(ffi.load, "SDL")
+    end
+    return haveSDL1
 end
 
+--- Returns true if SDL2
 function util.haveSDL2()
-	if haveSDL2 == nil then
-		haveSDL2 = pcall(ffi.load, "SDL2")
-	end
-	return haveSDL2
+    if haveSDL2 == nil then
+        haveSDL2 = pcall(ffi.load, "SDL2")
+    end
+    return haveSDL2
 end
 
 local isSDL = nil
+--- Returns true if SDL (can be 1 or 2)
 function util.isSDL()
-	if isSDL == nil then
-		isSDL = util.haveSDL2() or util.haveSDL1()
-	end
-	return isSDL
+    if isSDL == nil then
+        isSDL = util.haveSDL2() or util.haveSDL1()
+    end
+    return isSDL
 end
 
+--- Division with integer result.
 function util.idiv(a, b)
     local q = a/b
     return (q > 0) and math.floor(q) or math.ceil(q)
@@ -330,20 +341,21 @@ function util.orderedPairs(t)
     return orderedNext, t, nil
 end
 
---[[
+--[[--
 The util.template function allows for better translations through
 dynamic positioning of place markers. The range of place markers
 runs from %1 to %99, but normally no more than two or three should
 be required. There are no provisions for escaping place markers.
 
-output = util.template(
-    _("Hello %1, welcome to %2."),
-    name,
-    company
-)
+@usage
+    output = util.template(
+        _("Hello %1, welcome to %2."),
+        name,
+        company
+    )
 
 This function was inspired by Qt:
-http://qt-project.org/doc/qt-4.8/internationalization.html#use-qstring-arg-for-dynamic-text
+<http://qt-project.org/doc/qt-4.8/internationalization.html#use-qstring-arg-for-dynamic-text>
 --]]
 function util.template(str, ...)
     local params = {...}
