@@ -1,4 +1,4 @@
---[[
+--[[--
 Module for interfacing SDL 2.0 video/input facilities
 
 This module is intended to provide input/output facilities on a
@@ -160,7 +160,9 @@ function S.waitForEvent(usecs)
 		elseif event.type == SDL.SDL_MULTIGESTURE then
 			-- TODO: multi-touch support
 		elseif event.type == SDL.SDL_QUIT then
-			error("application forced to quit")
+			-- send Alt + F4
+			genEmuEvent(ffi.C.EV_KEY, 226, 1)
+			genEmuEvent(ffi.C.EV_KEY, 61, 1)
 		end
 	end
 end
