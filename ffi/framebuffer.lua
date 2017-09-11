@@ -221,7 +221,7 @@ end
 
 function fb:getDPI()
     if self.dpi == nil then
-        self.dpi = G_reader_settings:readSetting("screen_dpi")
+        self.dpi = tonumber(os.getenv("EMULATE_READER_DPI")) or G_reader_settings:readSetting("screen_dpi")
     end
     if self.dpi == nil and self.device then
         self.dpi = self.device.display_dpi
@@ -247,7 +247,7 @@ function fb:scaleBySize(px)
     -- if users custom screen dpi, also scale by dpi
     local dpi_scale = size_scale
 
-    local custom_dpi = G_reader_settings:readSetting("screen_dpi")
+    local custom_dpi = tonumber(os.getenv("EMULATE_READER_DPI")) or G_reader_settings:readSetting("screen_dpi")
     if custom_dpi and self.device and self.device.display_dpi ~= self.dpi then
         dpi_scale = self.dpi / 167
     end
