@@ -1,4 +1,4 @@
---[[--
+--[[
 Module for interfacing SDL video/input facilities
 
 This module is intended to provide input/output facilities on a
@@ -117,9 +117,7 @@ function S.waitForEvent(usecs)
 			genEmuEvent(ffi.C.EV_ABS, ffi.C.ABS_MT_POSITION_Y, event.button.y)
 			genEmuEvent(ffi.C.EV_SYN, ffi.C.SYN_REPORT, 0)
 		elseif event.type == SDL.SDL_QUIT then
-			-- send Alt + F4
-			genEmuEvent(ffi.C.EV_KEY, 226, 1)
-			genEmuEvent(ffi.C.EV_KEY, 61, 1)
+			error("application forced to quit")
 		end
 	end
 end
