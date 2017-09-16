@@ -1,28 +1,35 @@
 SHELL:=/bin/bash
 
 
-SDK_DL_URL=https://dl.google.com/android/android-sdk_r24.4.1-linux.tgz
-SDK_TARBALL=android-sdk_r24.4.1-linux.tgz
-SDK_SUM="978ee9da3dda10fb786709b7c2e924c0"
+SDK_DL_URL=https://dl.google.com/android/repository/sdk-tools-linux-3859397.zip
+SDK_TARBALL=sdk-tools-linux-3859397.zip
+SDK_SUM="444e22ce8ca0f67353bda4b85175ed3731cae3ffa695ca18119cbacef1c1bea0"
 SDK_DIR=android-sdk-linux
 
 android-sdk:
 	[ -e $(SDK_TARBALL) ] || wget $(SDK_DL_URL)
-	CHECKSUM=`md5sum $(SDK_TARBALL) | awk '{ print $$1 }'`; \
+	CHECKSUM=`sha256sum $(SDK_TARBALL) | awk '{ print $$1 }'`; \
 		 [[ "$$CHECKSUM" = $(SDK_SUM) ]] || \
 		 { echo "$(SDK_TARBALL) has the wrong checksum!"; exit 1; }
-	tar xvf $(SDK_TARBALL)
+	[ -e android-sdk-linux ] || { mkdir android-sdk-linux && \
+		pushd android-sdk-linux && unzip ../$(SDK_TARBALL) && popd; }
+	# broken nonsense in the SDK as usual; error message if you don't do this
+	[ -e ~/.android/repositories.cfg ] || touch ~/.android/repositories.cfg
+	pushd android-sdk-linux/tools/bin && \
+	yes | ./sdkmanager --licenses && \
+	./sdkmanager "build-tools;26.0.1" "platform-tools" "platforms;android-14" "platforms;android-16" && \
+	popd
 	rm -f $(SDK_TARBALL)
 
 
-NDK_DL_URL=https://dl.google.com/android/repository/android-ndk-r12b-linux-x86_64.zip
-NDK_TARBALL=android-ndk-r12b-linux-x86_64.zip
-NDK_SUM="1d1a5ee71a5123be01e0dd9adb5df80d"
-NDK_DIR=android-ndk-r12b
+NDK_DL_URL=https://dl.google.com/android/repository/android-ndk-r15c-linux-x86_64.zip
+NDK_TARBALL=android-ndk-r15c-linux-x86_64.zip
+NDK_SUM="0bf02d4e8b85fd770fd7b9b2cdec57f9441f27a2"
+NDK_DIR=android-ndk-r15c
 
 android-ndk:
 	[ -e $(NDK_TARBALL) ] || wget $(NDK_DL_URL)
-	CHECKSUM=`md5sum $(NDK_TARBALL) | awk '{ print $$1 }'`; \
+	CHECKSUM=`sha1sum $(NDK_TARBALL) | awk '{ print $$1 }'`; \
 		 [[ "$$CHECKSUM" = $(NDK_SUM) ]] || \
 		 { echo "$(NDK_TARBALL) has the wrong checksum!"; exit 1; }
 	unzip $(NDK_TARBALL)
