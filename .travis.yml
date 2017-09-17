@@ -52,5 +52,5 @@ install:
   - if [[ -n ${DOCKER_IMG+x} ]]; then docker pull $DOCKER_IMG; fi
 
 script:
-  - [ "$SHELLCHECKS" = 1 ] && .ci/lint_script.sh || .ci/build_script.sh
+  - if [ "$SHELLCHECKS" = 1 ]; then .ci/lint_script.sh; else .ci/build_script.sh; fi
   - if [ "$EMULATE_READER" = 1 ]; then source .ci/test_script.sh; fi
