@@ -75,3 +75,5 @@ cdecl_func(printf)
 cdecl_func(sprintf)
 cdecl_func(fprintf)
 cdecl_func(fputc)
+
+cdecl_func(fileno)

@@ -214,6 +214,23 @@ function util.execute(...)
     end
 end
 
+--- Returns the length of data that can be read immediately without blocking
+function util.getNonBlockingReadSize(luafile)
+    -- returns 0 if not readable yet, otherwise len of available data
+    -- returns nil when unsupported: caller may read (with possible blocking)
+    if util.isAndroid() then
+        return
+    end
+    local fileno = ffi.C.fileno(luafile)
+    local available = ffi.new('int[1]')
+    local ok = ffi.C.ioctl(fileno, ffi.C.FIONREAD, available)
+    if ok ~= 0 then -- ioctl failed, not supported
+        return
+    end
+    available = tonumber(available[0])
+    return available
+end
+
 --- Gets UTF-8 charcode.
 function util.utf8charcode(charstring)
     local ptr = ffi.cast("uint8_t *", charstring)
