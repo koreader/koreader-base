@@ -15,7 +15,7 @@ TOOLCHAIN_DIR=$(MAKEFILE_DIR)toolchain
 POCKETBOOK_TOOLCHAIN=$(TOOLCHAIN_DIR)/pocketbook-toolchain
 ANDROID_TOOLCHAIN=$(TOOLCHAIN_DIR)/android-toolchain
 NDK?=$(TOOLCHAIN_DIR)/android-ndk-r15c
-NDKABI?=14
+NDKABI?=9
 
 # CMAKE=cmake --no-warn-unused-cli
 CMAKE=cmake
