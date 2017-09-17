@@ -14,9 +14,10 @@ read_globals = {
 
 exclude_files = {
     "build/*",
-    "spec/*",
     "thirdparty/*",
 }
+
+files["spec/unit/*"].std = "+busted"
 
 -- TODO: clean up and enforce max line width (631)
 ignore = {
