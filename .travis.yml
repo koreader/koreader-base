@@ -22,7 +22,8 @@ env:
   - TARGET=android NDKREV=r9c
   - TARGET=android NDKREV=r11c
   - TARGET=android NDKREV=r12b
-  - TARGET=android NDKREV=r15c
+  # API level 14 is the minimum target for NDK 15
+  - TARGET=android NDKREV=r15c NDKABI=14
 
 addons:
   apt:
