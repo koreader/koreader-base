@@ -164,7 +164,7 @@ describe("util module", function()
     describe("util.getNonBlockingReadSize", function()
         it("should read pipe when data is available", function()
             if not util.isAndroid() then
-		local std_out = io.popen("sleep 1; echo 'done'", "r")
+		local std_out = io.popen("sleep 3; echo 'done'", "r")
 		assert.are.equal(util.getNonBlockingReadSize(std_out), 0)
 		util.sleep(1)
 		assert.are.equal(util.getNonBlockingReadSize(std_out), 0)
