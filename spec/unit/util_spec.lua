@@ -161,10 +161,10 @@ describe("util module", function()
         end)
     end)
 
-    if not util.isAndroid() then
-	describe("util.getNonBlockingReadSize", function()
-	    it("should read pipe when data is available", function()
-		local std_out = io.popen("sleep 3; echo 'done'", "r")
+    describe("util.getNonBlockingReadSize", function()
+        it("should read pipe when data is available", function()
+            if not util.isAndroid() then
+		local std_out = io.popen("sleep 1; echo 'done'", "r")
 		assert.are.equal(util.getNonBlockingReadSize(std_out), 0)
 		util.sleep(1)
 		assert.are.equal(util.getNonBlockingReadSize(std_out), 0)
@@ -177,7 +177,7 @@ describe("util module", function()
 		local donesec = util.gettime()
 		assert.are.equal(data, "done\n")
 		assert.is_true(donesec - startsec <= 1)
-	    end)
-	end)
-    end
+            end
+        end)
+    end)
 end)
