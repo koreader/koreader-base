@@ -14,7 +14,8 @@ MAKEFILE_DIR=$(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 TOOLCHAIN_DIR=$(MAKEFILE_DIR)toolchain
 POCKETBOOK_TOOLCHAIN=$(TOOLCHAIN_DIR)/pocketbook-toolchain
 ANDROID_TOOLCHAIN=$(TOOLCHAIN_DIR)/android-toolchain
-NDKABI=9
+NDK?=$(TOOLCHAIN_DIR)/android-ndk-r15c
+NDKABI?=9
 
 # CMAKE=cmake --no-warn-unused-cli
 CMAKE=cmake

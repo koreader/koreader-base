@@ -22,6 +22,7 @@ env:
   - TARGET=android NDKREV=r9c
   - TARGET=android NDKREV=r11c
   - TARGET=android NDKREV=r12b
+  - TARGET=android NDKREV=r15c
 
 addons:
   apt:

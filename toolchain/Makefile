@@ -12,17 +12,20 @@ android-sdk:
 		 [[ "$$CHECKSUM" = $(SDK_SUM) ]] || \
 		 { echo "$(SDK_TARBALL) has the wrong checksum!"; exit 1; }
 	tar xvf $(SDK_TARBALL)
+	pushd android-sdk-linux/tools && \
+		./android update sdk -u --filter "platform-tools,build-tools-26.0.1,android-14,android-19" && \
+		popd
 	rm -f $(SDK_TARBALL)
 
 
-NDK_DL_URL=https://dl.google.com/android/repository/android-ndk-r12b-linux-x86_64.zip
-NDK_TARBALL=android-ndk-r12b-linux-x86_64.zip
-NDK_SUM="1d1a5ee71a5123be01e0dd9adb5df80d"
-NDK_DIR=android-ndk-r12b
+NDK_DL_URL=https://dl.google.com/android/repository/android-ndk-r15c-linux-x86_64.zip
+NDK_TARBALL=android-ndk-r15c-linux-x86_64.zip
+NDK_SUM="0bf02d4e8b85fd770fd7b9b2cdec57f9441f27a2"
+NDK_DIR=android-ndk-r15c
 
 android-ndk:
 	[ -e $(NDK_TARBALL) ] || wget $(NDK_DL_URL)
-	CHECKSUM=`md5sum $(NDK_TARBALL) | awk '{ print $$1 }'`; \
+	CHECKSUM=`sha1sum $(NDK_TARBALL) | awk '{ print $$1 }'`; \
 		 [[ "$$CHECKSUM" = $(NDK_SUM) ]] || \
 		 { echo "$(NDK_TARBALL) has the wrong checksum!"; exit 1; }
 	unzip $(NDK_TARBALL)
