@@ -141,7 +141,7 @@ describe("util module", function()
 
     describe("util.purgeDir", function()
         it("should error out on non-exists directory", function()
-            ok, err = util.purgeDir('/tmp/123/abc/567/foobar')
+            local ok, err = util.purgeDir('/tmp/123/abc/567/foobar')
             assert.is_nil(ok)
             assert.is_not_nil(err)
         end)
