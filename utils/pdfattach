@@ -116,5 +116,5 @@ for ((i = 0; i < ${#infiles[*]}; i++)); do
 done
 echo -E "\end{document}" >>tmp.tex
 pdflatex -halt-on-error tmp.tex >/dev/null && mv tmp.pdf "$outfile"
-cd - >/dev/null
+cd - >/dev/null | exit
 rm -rf "${workdir}"
