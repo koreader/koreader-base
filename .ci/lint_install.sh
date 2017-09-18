@@ -9,26 +9,10 @@ echo "TRAVIS_BUILD_DIR: ${TRAVIS_BUILD_DIR}"
 echo "pwd: $(pwd)"
 ls
 
-# install our own updated luarocks
-if [ ! -f "${TRAVIS_BUILD_DIR}/install/bin/luarocks" ]; then
-    git clone https://github.com/torch/luajit-rocks.git
-    pushd luajit-rocks && {
-        git checkout 6529891
-        cmake . -DWITH_LUAJIT21=ON -DCMAKE_INSTALL_PREFIX="${TRAVIS_BUILD_DIR}/install"
-        make install
-    } || exit
-    popd
-else
-    echo -e "${ANSI_GREEN}Using cached luarocks."
-fi
-
-if [ ! -d "${HOME}/.luarocks" ] || [ ! -f "${HOME}/.luarocks/$(md5sum <"${CI_DIR}/helper_luarocks.sh")" ]; then
-    echo -e "${ANSI_GREEN}Grabbing new .luarocks."
-    "${CI_DIR}/helper_luarocks.sh"
-    touch "${HOME}/.luarocks/$(md5sum <"${CI_DIR}/helper_luarocks.sh")"
-else
-    echo -e "${ANSI_GREEN}Using cached .luarocks."
-fi
+travis_retry luarocks --local install luacheck
+travis_retry luarocks --local install lanes # for parallel luacheck
+eval "$(luarocks path --bin)"
+export PATH=$PATH:$HOME/.luarocks/bin
 
 #install our own updated shellcheck
 SHELLCHECK_URL="https://s3.amazonaws.com/travis-blue-public/binaries/ubuntu/14.04/x86_64/shellcheck-0.4.5.tar.bz2"

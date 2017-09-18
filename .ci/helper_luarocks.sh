@@ -6,7 +6,9 @@ source "${CI_DIR}/common.sh"
 
 rm -rf "${HOME}/.luarocks"
 mkdir "${HOME}/.luarocks"
-cp "${TRAVIS_BUILD_DIR}/install/etc/luarocks/config.lua" "${HOME}/.luarocks/config.lua"
+cp /etc/luarocks/config.lua "${HOME}/.luarocks/config.lua"
 echo "wrap_bin_scripts = false" >>"$HOME/.luarocks/config.lua"
 travis_retry luarocks --local install luacheck
 travis_retry luarocks --local install lanes # for parallel luacheck
+eval "$(luarocks path --bin)"
+export PATH=$PATH:$HOME/.luarocks/bin

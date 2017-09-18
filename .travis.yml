@@ -50,7 +50,8 @@ install:
   - if [ "$EMULATE_READER" = 1 ]; then source .ci/emulator_install.sh; fi
   - if [ "$TARGET" = android ]; then source .ci/android_install.sh; fi
   - if [[ -n ${DOCKER_IMG+x} ]]; then docker pull $DOCKER_IMG; fi
+  - if [ "$SHELLCHECKS" = 1 ]; then source .ci/lint_install.sh; fi
 
 script:
-  - if [ "$SHELLCHECKS" = 1 ]; then .ci/lint_script.sh; else .ci/build_script.sh; fi
+  - if [ "$SHELLCHECKS" = 1 ]; then source .ci/lint_script.sh; else source .ci/build_script.sh; fi
   - if [ "$EMULATE_READER" = 1 ]; then source .ci/test_script.sh; fi
