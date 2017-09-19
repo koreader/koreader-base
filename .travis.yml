@@ -14,16 +14,22 @@ cache:
     - $HOME/.ccache
 
 env:
-  - EMULATE_READER=1 CC=gcc
-  - EMULATE_READER=1 CC=clang
-  - TARGET=kindle DOCKER_IMG=houqp/kokindle:0.0.2
-  - TARGET=kobo DOCKER_IMG=houqp/kokobo:0.0.2
-  - TARGET=pocketbook DOCKER_IMG=houqp/kopb:0.0.1
-  - TARGET=android NDKREV=r9c
-  - TARGET=android NDKREV=r11c
-  - TARGET=android NDKREV=r12b
-  # API level 14 is the minimum target for NDK 15
-  - TARGET=android NDKREV=r15c NDKABI=14
+  matrix:
+    - EMULATE_READER=1 CC=gcc
+    - EMULATE_READER=1 CC=clang
+    - TARGET=kindle DOCKER_IMG=houqp/kokindle:0.0.2
+    - TARGET=kobo DOCKER_IMG=houqp/kokobo:0.0.2
+    - TARGET=pocketbook DOCKER_IMG=houqp/kopb:0.0.1
+    - TARGET=android NDKREV=r9c
+    - TARGET=android NDKREV=r11c
+    - TARGET=android NDKREV=r12b
+    # API level 14 is the minimum target for NDK 15
+    - TARGET=android NDKREV=r15c NDKABI=14
+    - SHELLCHECKS=1
+
+matrix:
+  allow_failures:
+    - env: SHELLCHECKS=1
 
 addons:
   apt:
@@ -44,7 +50,8 @@ install:
   - if [ "$EMULATE_READER" = 1 ]; then source .ci/emulator_install.sh; fi
   - if [ "$TARGET" = android ]; then source .ci/android_install.sh; fi
   - if [[ -n ${DOCKER_IMG+x} ]]; then docker pull $DOCKER_IMG; fi
+  - if [ "$SHELLCHECKS" = 1 ]; then source .ci/lint_install.sh; fi
 
 script:
-  - .ci/build_script.sh
+  - if [ "$SHELLCHECKS" = 1 ]; then source .ci/lint_script.sh; else source .ci/build_script.sh; fi
   - if [ "$EMULATE_READER" = 1 ]; then source .ci/test_script.sh; fi

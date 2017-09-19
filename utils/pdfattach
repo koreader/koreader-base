@@ -12,7 +12,8 @@ progname=$(basename "$0")
 
 function escape_tex_specialchars() {
     local txt=$1
-    local res=$(echo "$txt" | sed -e "s%_%\\\_%g" -e "s%&%\\\&%g")
+    local res
+    res=$(echo "$txt" | sed -e "s%_%\\\\_%g" -e "s%&%\\\\&%g")
     echo "$res"
 }
 
@@ -73,7 +74,7 @@ for ((i = 1; i <= numargs; i++)); do
         usage
     fi
     infiles[$infcount]="$fullname"
-    infiles_texclean[$infcount]=$(escape_tex_specialchars $(basename "${infiles[$infcount]}"))
+    infiles_texclean[$infcount]=$(escape_tex_specialchars "$(basename "${infiles[$infcount]}")")
     infilesize[$infcount]=$(stat --print="%s" "$fullname")
     ((totalsize = totalsize + ${infilesize[$infcount]}))
     ((infcount++))
@@ -92,29 +93,31 @@ fi
 
 workdir=$(mktemp --tmpdir -d pdfattach.XXXXXX)
 cd "${workdir}" || exit
->tmp.tex
+touch tmp.tex
 # emit TeX preamble
-echo -E "\documentclass{book}" >>tmp.tex
-echo -E "\usepackage[margin={1mm},papersize={9cm,12cm}]{geometry}" >>tmp.tex
-echo -E "\usepackage{hyperref,attachfile}" >>tmp.tex
+{
+    echo -E "\\documentclass{book}"
+    echo -E "\\usepackage[margin={1mm},papersize={9cm,12cm}]{geometry}"
+    echo -E "\\usepackage{hyperref,attachfile}"
+} >>tmp.tex
 if [ ! -z "$author" ]; then
-    echo -E "\AtBeginDocument{\hypersetup{pdfauthor={$author}}}" >>tmp.tex
+    echo -E "\\AtBeginDocument{\\hypersetup{pdfauthor={$author}}}" >>tmp.tex
 fi
-echo -E "\begin{document}" >>tmp.tex
-echo -E "\tolerance=10000\pagestyle{empty}\fontsize{7}{13}\selectfont" >>tmp.tex
+echo -E "\\begin{document}" >>tmp.tex
+echo -eE "\\tolerance=10000\\pagestyle{empty}\\fontsize{7}{13}\\selectfont" >>tmp.tex
 
 # emit the list of all files
 for ((i = 0; i < ${#infiles[*]}; i++)); do
-    echo -E "\noindent \hyperlink{L$i}{$((i + 1))/${infcount}} \texttt{${infiles_texclean[$i]}} (${infilesize[$i]} bytes)" >>tmp.tex
+    echo -eE "\\noindent \\hyperlink{L$i}{$((i + 1))/${infcount}} \\texttt{${infiles_texclean[$i]}} (${infilesize[$i]} bytes)" >>tmp.tex
     echo >>tmp.tex
 done
-echo -E "\noindent Total size $totalsize bytes\newpage" >>tmp.tex
+echo -eE "\\noindent Total size $totalsize bytes\\newpage" >>tmp.tex
 
 # now emit all the attachments, one per page
 for ((i = 0; i < ${#infiles[*]}; i++)); do
-    echo -E "\noindent\hypertarget{L$i}$((i + 1))/${infcount}\\\\\texttt{${infiles_texclean[$i]}} (\textattachfile[color={0 0 0}]{${infiles[$i]}}{${infilesize[$i]} bytes})\newpage" >>tmp.tex
+    echo -eE "\\noindent\\hypertarget{L$i}$((i + 1))/${infcount}\\\\\\texttt{${infiles_texclean[$i]}} (\\textattachfile[color={0 0 0}]{${infiles[$i]}}{${infilesize[$i]} bytes})\\newpage" >>tmp.tex
 done
-echo -E "\end{document}" >>tmp.tex
+echo -E "\\end{document}" >>tmp.tex
 pdflatex -halt-on-error tmp.tex >/dev/null && mv tmp.pdf "$outfile"
-cd - >/dev/null
+cd - >/dev/null || exit
 rm -rf "${workdir}"
