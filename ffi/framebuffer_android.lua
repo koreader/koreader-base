@@ -8,8 +8,8 @@ function framebuffer:init()
     -- we present this buffer to the outside
     self.bb = BB.new(android.screen.width, android.screen.height)
     -- TODO: should we better use these?
-    -- ffi.C.ANativeWindow_getWidth(window)
-    -- ffi.C.ANativeWindow_getHeight(window)
+    -- android.lib.ANativeWindow_getWidth(window)
+    -- android.lib.ANativeWindow_getHeight(window)
     self.bb:fill(BB.COLOR_WHITE)
 	self:refreshFull()
 
@@ -23,7 +23,7 @@ function framebuffer:refreshFullImp()
     end
 
     local buffer = ffi.new("ANativeWindow_Buffer[1]")
-    if ffi.C.ANativeWindow_lock(android.app.window, buffer, nil) < 0 then
+    if android.lib.ANativeWindow_lock(android.app.window, buffer, nil) < 0 then
         android.LOGW("Unable to lock window buffer")
         return
     end
@@ -47,7 +47,7 @@ function framebuffer:refreshFullImp()
         bb:blitFrom(self.bb)
     end
 
-    ffi.C.ANativeWindow_unlockAndPost(android.app.window);
+    android.lib.ANativeWindow_unlockAndPost(android.app.window);
 end
 
 return require("ffi/framebuffer"):extend(framebuffer)

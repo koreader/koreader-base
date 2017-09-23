@@ -27,8 +27,8 @@ local function genEmuEvent(evtype, code, value)
 end
 
 local function genTouchDownEvent(event, id)
-    local x = ffi.C.AMotionEvent_getX(event, id)
-    local y = ffi.C.AMotionEvent_getY(event, id)
+    local x = android.lib.AMotionEvent_getX(event, id)
+    local y = android.lib.AMotionEvent_getY(event, id)
     genEmuEvent(ffi.C.EV_ABS, ffi.C.ABS_MT_SLOT, id)
     genEmuEvent(ffi.C.EV_ABS, ffi.C.ABS_MT_TRACKING_ID, id)
     genEmuEvent(ffi.C.EV_ABS, ffi.C.ABS_MT_POSITION_X, x)
@@ -37,8 +37,8 @@ local function genTouchDownEvent(event, id)
 end
 
 local function genTouchUpEvent(event, id)
-    local x = ffi.C.AMotionEvent_getX(event, id)
-    local y = ffi.C.AMotionEvent_getY(event, id)
+    local x = android.lib.AMotionEvent_getX(event, id)
+    local y = android.lib.AMotionEvent_getY(event, id)
     genEmuEvent(ffi.C.EV_ABS, ffi.C.ABS_MT_SLOT, id)
     genEmuEvent(ffi.C.EV_ABS, ffi.C.ABS_MT_TRACKING_ID, -1)
     genEmuEvent(ffi.C.EV_ABS, ffi.C.ABS_MT_POSITION_X, x)
@@ -47,8 +47,8 @@ local function genTouchUpEvent(event, id)
 end
 
 local function genTouchMoveEvent(event, id, index)
-    local x = ffi.C.AMotionEvent_getX(event, index)
-    local y = ffi.C.AMotionEvent_getY(event, index)
+    local x = android.lib.AMotionEvent_getX(event, index)
+    local y = android.lib.AMotionEvent_getY(event, index)
     genEmuEvent(ffi.C.EV_ABS, ffi.C.ABS_MT_SLOT, id)
     genEmuEvent(ffi.C.EV_ABS, ffi.C.ABS_MT_POSITION_X, x)
     genEmuEvent(ffi.C.EV_ABS, ffi.C.ABS_MT_POSITION_Y, y)
@@ -57,12 +57,12 @@ end
 
 local is_in_touch = false
 local function motionEventHandler(motion_event)
-    local action = ffi.C.AMotionEvent_getAction(motion_event)
-    local pointer_count = ffi.C.AMotionEvent_getPointerCount(motion_event)
+    local action = android.lib.AMotionEvent_getAction(motion_event)
+    local pointer_count = android.lib.AMotionEvent_getPointerCount(motion_event)
     local pointer_index = bit.rshift(
             bit.band(action, ffi.C.AMOTION_EVENT_ACTION_POINTER_INDEX_MASK),
             ffi.C.AMOTION_EVENT_ACTION_POINTER_INDEX_SHIFT)
-    local id = ffi.C.AMotionEvent_getPointerId(motion_event, pointer_index)
+    local id = android.lib.AMotionEvent_getPointerId(motion_event, pointer_index)
     local flags = bit.band(action, ffi.C.AMOTION_EVENT_ACTION_MASK)
     if flags == ffi.C.AMOTION_EVENT_ACTION_DOWN then
         is_in_touch = true
@@ -79,7 +79,7 @@ local function motionEventHandler(motion_event)
     elseif flags == ffi.C.AMOTION_EVENT_ACTION_MOVE then
         if is_in_touch then
             for index = 0, pointer_count - 1 do
-                id = ffi.C.AMotionEvent_getPointerId(motion_event, index)
+                id = android.lib.AMotionEvent_getPointerId(motion_event, index)
                 genTouchMoveEvent(motion_event, id, index)
             end
         end
@@ -87,8 +87,8 @@ local function motionEventHandler(motion_event)
 end
 
 local function keyEventHandler(key_event)
-    local code = ffi.C.AKeyEvent_getKeyCode(key_event)
-    local action = ffi.C.AKeyEvent_getAction(key_event)
+    local code = android.lib.AKeyEvent_getKeyCode(key_event)
+    local action = android.lib.AKeyEvent_getAction(key_event)
     if action == ffi.C.AKEY_EVENT_ACTION_DOWN then
         genEmuEvent(ffi.C.EV_KEY, code, 1)
     elseif action == ffi.C.AKEY_EVENT_ACTION_UP then
@@ -110,7 +110,7 @@ function input.waitForEvent(usecs)
         end
         local events = ffi.new("int[1]")
         local source = ffi.new("struct android_poll_source*[1]")
-        local poll_state = ffi.C.ALooper_pollAll(timeout, nil, events, ffi.cast("void**", source))
+        local poll_state = android.lib.ALooper_pollAll(timeout, nil, events, ffi.cast("void**", source))
         if poll_state >= 0 then
             if source[0] ~= nil then
                 --source[0].process(android.app, source[0])
@@ -121,15 +121,15 @@ function input.waitForEvent(usecs)
                     ffi.C.android_app_post_exec_cmd(android.app, cmd)
                 elseif source[0].id == ffi.C.LOOPER_ID_INPUT then
                     local event = ffi.new("AInputEvent*[1]")
-                    while ffi.C.AInputQueue_getEvent(android.app.inputQueue, event) >= 0 do
-                        if ffi.C.AInputQueue_preDispatchEvent(android.app.inputQueue, event[0]) == 0 then
-                            local event_type = ffi.C.AInputEvent_getType(event[0])
+                    while android.lib.AInputQueue_getEvent(android.app.inputQueue, event) >= 0 do
+                        if android.lib.AInputQueue_preDispatchEvent(android.app.inputQueue, event[0]) == 0 then
+                            local event_type = android.lib.AInputEvent_getType(event[0])
                             if event_type == ffi.C.AINPUT_EVENT_TYPE_MOTION then
                                 motionEventHandler(event[0])
                             elseif event_type == ffi.C.AINPUT_EVENT_TYPE_KEY then
                                 keyEventHandler(event[0])
                             end
-                            ffi.C.AInputQueue_finishEvent(android.app.inputQueue, event[0], 1)
+                            android.lib.AInputQueue_finishEvent(android.app.inputQueue, event[0], 1)
                         end
                     end
                 end
