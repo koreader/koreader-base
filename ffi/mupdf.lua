@@ -640,6 +640,15 @@ function mupdf.renderImage(data, size, width, height)
 
     local p_width = M.fz_pixmap_width(context(), pixmap)
     local p_height = M.fz_pixmap_height(context(), pixmap)
+    -- mupdf_new_pixmap_from_image() may not scale image to the
+    -- width and height provided, so check and scale it if needed
+    if width and height and (p_width ~= width or p_height ~= height) then
+        local scaled_pixmap = M.fz_scale_pixmap(context(), pixmap, 0, 0, width, height, nil)
+        M.fz_drop_pixmap(context(), pixmap)
+        pixmap = scaled_pixmap
+        p_width = M.fz_pixmap_width(context(), pixmap)
+        p_height = M.fz_pixmap_height(context(), pixmap)
+    end
     local bbtype
     local ncomp = M.fz_pixmap_components(context(), pixmap)
     if ncomp == 2 then bbtype = BlitBuffer.TYPE_BB8A

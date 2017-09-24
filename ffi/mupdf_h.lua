@@ -290,6 +290,7 @@ fz_pixmap *fz_new_pixmap(fz_context *, fz_colorspace *, int, int);
 fz_pixmap *mupdf_new_pixmap_with_bbox(fz_context *, fz_colorspace *, const fz_irect *);
 fz_pixmap *mupdf_new_pixmap_with_data(fz_context *, fz_colorspace *, int, int, unsigned char *);
 fz_pixmap *mupdf_new_pixmap_with_bbox_and_data(fz_context *, fz_colorspace *, const fz_irect *, unsigned char *);
+fz_pixmap *fz_scale_pixmap(fz_context *, fz_pixmap *, float, float, float, float, fz_irect *);
 void fz_convert_pixmap(fz_context *, fz_pixmap *, fz_pixmap *);
 fz_pixmap *fz_keep_pixmap(fz_context *, fz_pixmap *);
 void fz_drop_pixmap(fz_context *, fz_pixmap *);
