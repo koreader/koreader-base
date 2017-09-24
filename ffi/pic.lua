@@ -151,12 +151,12 @@ function GifDocument:openPage(number)
     return page
 end
 function GifDocument:close()
-    if giflib.DGifCloseFile(self.giffile, self.err) ~= giflib.GIF_OK then
+    local err = ffi.new("int[1]")
+    if giflib.DGifCloseFile(self.giffile, err) ~= giflib.GIF_OK then
         error(string.format("error closing/deallocating GIF: %s",
-            ffi.string(giflib.GifErrorString(self.err[0]))))
+            ffi.string(giflib.GifErrorString(err[0]))))
     end
     self.giffile = nil
-    self.err = nil
 end
 
 function Pic.openGIFDocument(filename)
@@ -171,7 +171,7 @@ function Pic.openGIFDocument(filename)
         error(string.format("Cannot parse GIF file: %s",
             ffi.string(giflib.GifErrorString(giffile.Error))))
     end
-    return GifDocument:new{giffile = giffile, err = err}
+    return GifDocument:new{giffile = giffile}
 end
 
 function Pic.openPNGDocument(filename)
