@@ -2,7 +2,7 @@ package.path = "common/?.lua;" .. package.path
 package.cpath = "common/?.so;" .. package.cpath
 
 local url = require("socket.url")
-local http = require("socket.http)
+local http = require("socket.http")
 local https = require("ssl.https")
 local serial = require("serialize")
 local Blitbuffer = require("ffi/blitbuffer")
