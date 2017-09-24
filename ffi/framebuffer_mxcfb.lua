@@ -88,7 +88,7 @@ function framebuffer:_wait_for_next()
         end
     end
     if oldest then
-        self.debug("waiting for a free marker, oldest update is", i)
+        self.debug("waiting for a free marker, oldest update is", oldest)
         self:_wait_marker(oldest)
         return oldest
     end

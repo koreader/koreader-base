@@ -151,6 +151,7 @@ function GifDocument:openPage(number)
     return page
 end
 function GifDocument:close()
+    local err = ffi.new("int[1]")
     if giflib.DGifCloseFile(self.giffile, err) ~= giflib.GIF_OK then
         error(string.format("error closing/deallocating GIF: %s",
             ffi.string(giflib.GifErrorString(err[0]))))

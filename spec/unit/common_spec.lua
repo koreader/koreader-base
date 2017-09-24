@@ -1,7 +1,6 @@
 package.path = "common/?.lua;" .. package.path
 package.cpath = "common/?.so;" .. package.cpath
 
-local socket = require("socket")
 local url = require("socket.url")
 local http = require("socket.http")
 local https = require("ssl.https")
