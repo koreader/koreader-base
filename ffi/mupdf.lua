@@ -670,6 +670,65 @@ function mupdf.renderImageFile(filename, width, height)
     return mupdf.renderImage(data, #data, width, height)
 end
 
+--[[
+Scale a blitbuffer.
+Quality of scaling done by MuPDF is better than the one done in blitbuffer.lua
+(see fz_scale_pixmap_cached() in mupdf/source/fitz/draw-scale-simple.c).
+Same arguments as BlitBuffer:scale() for easy replacement.
+--]]
+function mupdf.scaleBlitBuffer(bb, width, height)
+    -- We need first to convert our BlitBuffer to a pixmap
+    local orig_w, orig_h = bb:getWidth(), bb:getHeight()
+    local bbtype = bb:getType()
+    -- bb types TYPE_BB8A and TYPE_BBRGB32 work as-is with MuPDF
+    -- but the other types' bb.data give corrupted resulting pixmap.
+    local colorspace
+    local converted_bb
+    if bbtype == BlitBuffer.TYPE_BB8A then
+        colorspace = M.fz_device_gray(context())
+    elseif bbtype == BlitBuffer.TYPE_BBRGB32 then
+        colorspace = M.fz_device_rgb(context())
+    else
+        -- We need to convert the other types to one of the working
+        -- types, and TYPE_BBRGB32 is the only one that works with
+        -- the following operation (greyscale TYPE_B48 and TYPE_BB8
+        -- get corrupted if we blit them to a TYPE_BB8A, but are fine
+        -- when blited to a TYPE_BBRGB32)
+        converted_bb = BlitBuffer.new(orig_w, orig_h, BlitBuffer.TYPE_BBRGB32)
+        converted_bb:blitFrom(bb, 0, 0, 0, 0, orig_w, orig_h)
+        bb = converted_bb -- we don't free() the provided bb, but we'll have to free our converted_bb
+        colorspace = M.fz_device_rgb(context())
+    end
+    -- We can now create a pixmap from this bb of correct type
+    -- whose bb.data is valid for mupdf
+    local pixmap = W.mupdf_new_pixmap_with_data(context(), colorspace,
+                    orig_w, orig_h, ffi.cast("unsigned char*", bb.data))
+    if pixmap == nil then
+        if converted_bb then converted_bb:free() end -- free our home made bb
+        merror("could not create pixmap from blitbuffer")
+    end
+    -- We can now scale the pixmap
+    -- Better to ensure we give integer width and height, to avoid a black 1-pixel line at right and bottom of image
+    local scaled_pixmap = M.fz_scale_pixmap(context(), pixmap, 0, 0, math.floor(width), math.floor(height), nil)
+    M.fz_drop_pixmap(context(), pixmap) -- free our original pixmap
+    local p_width = M.fz_pixmap_width(context(), scaled_pixmap)
+    local p_height = M.fz_pixmap_height(context(), scaled_pixmap)
+    -- And convert the pixmap back to a BlitBuffer
+    bbtype = nil
+    local ncomp = M.fz_pixmap_components(context(), scaled_pixmap)
+    if ncomp == 2 then bbtype = BlitBuffer.TYPE_BB8A
+    elseif ncomp == 4 then bbtype = BlitBuffer.TYPE_BBRGB32
+    else
+        if converted_bb then converted_bb:free() end -- free our home made bb
+        error("unsupported number of color components")
+    end
+    local p = M.fz_pixmap_samples(context(), scaled_pixmap)
+    bb = BlitBuffer.new(p_width, p_height, bbtype, p):copy()
+    M.fz_drop_pixmap(context(), scaled_pixmap) -- free our scaled pixmap
+    if converted_bb then converted_bb:free() end -- free our home made bb
+    return bb
+end
+
 -- k2pdfopt interfacing
 
 -- will lazily load ffi/koptcontext.lua in order to interface k2pdfopt

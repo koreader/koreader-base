@@ -774,6 +774,17 @@ function BB_mt.__index:scale(new_width, new_height)
     return scaled_bb
 end
 
+-- rotatedCopy method, unlike rotate method, does not modify the original
+-- blitbuffer, instead, it allocates and returns a new rotated blitbuffer.
+function BB_mt.__index:rotatedCopy(degree)
+    self:rotate(degree) -- rotate in-place
+    local rot_w, rot_h = self:getWidth(), self:getHeight()
+    local rot_bb = BB.new(rot_w, rot_h, self:getType())
+    rot_bb:blitFrom(self, 0, 0, 0, 0, rot_w, rot_h)
+    self:rotate(-degree) -- revert in-place rotation
+    return rot_bb
+end
+
 --[[
 explicit unset
 
