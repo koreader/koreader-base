@@ -31,7 +31,7 @@ describe("Png module", function()
 
         ok, re = Png.decodeFromFile(fn)
         assert.are.same(ok, true)
-        bb2 = BB.new(re.width, re.height, BB.TYPE_BBRGB32, re.data)
+        local bb2 = BB.new(re.width, re.height, BB.TYPE_BBRGB32, re.data)
         local c = bb2:getPixel(0, 0)
         assert.are.same({0x80, 0x80, 0x80, 0}, {c.r, c.g, c.b, c.alpha})
         c = bb2:getPixel(200, 200)
