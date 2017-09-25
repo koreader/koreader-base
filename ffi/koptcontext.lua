@@ -2,16 +2,16 @@ local ffi = require("ffi")
 
 local dummy = require("ffi/koptcontext_h")
 local Blitbuffer = require("ffi/blitbuffer")
-local leptonica, k2pdfopt = nil, nil
+local leptonica, k2pdfopt
 if ffi.os == "Windows" then
-	leptonica = ffi.load("libs/liblept-4.dll")
-	k2pdfopt = ffi.load("libs/libk2pdfopt-2.dll")
+    leptonica = ffi.load("libs/liblept-4.dll")
+    k2pdfopt = ffi.load("libs/libk2pdfopt-2.dll")
 elseif ffi.os == "OSX" then
-	leptonica = ffi.load("libs/liblept.4.dylib")
-	k2pdfopt = ffi.load("libs/libk2pdfopt.2.dylib")
+    leptonica = ffi.load("libs/liblept.4.dylib")
+    k2pdfopt = ffi.load("libs/libk2pdfopt.2.dylib")
 else
-	leptonica = ffi.load("libs/liblept.so.4")
-	k2pdfopt = ffi.load("libs/libk2pdfopt.so.2")
+    leptonica = ffi.load("libs/liblept.so.4")
+    k2pdfopt = ffi.load("libs/libk2pdfopt.so.2")
 end
 
 local KOPTContext = {
@@ -101,9 +101,9 @@ function KOPTContext_mt.__index:getWordBoxes(bmp, x, y, w, h, box_type)
 
     --get number of lines in this area
     leptonica.numaGetMax(nai, max_val, last_index)
-    local nr_line = max_val[0]
+    nr_line = max_val[0]
     --get number of lines in this area
-    local nr_word = leptonica.boxaGetCount(boxa)
+    nr_word = leptonica.boxaGetCount(boxa)
     assert(nr_word == leptonica.numaGetCount(nai))
 
     local boxes = {}

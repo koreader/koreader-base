@@ -145,28 +145,29 @@ describe("KOPTContext module", function()
 		kc:free()
 		assert(kc.dst.size_allocated == 0)
 	end)
-	it("should get page textblock at any relative location", function()
-		local kc = KOPTContext.new()
-		paper_pdf_doc:openPage(1):toBmp(kc.src, 150)
-		kc.page_width, kc.page_height = kc.src.width, kc.src.height
-		kc:findPageBlocks()
-		local block = kc:getPageBlock(0.6, 0.5)
-		assert.truthy(block.x1 > 0 and block.x0 > 0)
-		assert.truthy(block.x1 - block.x0 < 0.5) -- we know this is a two-column page
-		assert.truthy(block.x0 <= 0.6 and block.x1 >= 0.6)
-		assert.truthy(block.y0 <= 0.5 and block.y1 >= 0.5)
-		for y = 0, 1, 0.2 do
-			for x = 0, 1, 0.2 do
-				local block = kc:getPageBlock(x, y)
-				if block then
-					assert.truthy(block.x1 > 0 and block.x0 > 0)
-					assert.truthy(block.x1 - block.x0 < 0.5)
-					assert.truthy(block.x0 <= x and block.x1 >= x)
-					assert.truthy(block.y0 <= y and block.y1 >= y)
-				end
-			end
-		end
-	end)
+    it("should get page textblock at any relative location", function()
+        local kc = KOPTContext.new()
+        paper_pdf_doc:openPage(1):toBmp(kc.src, 150)
+        kc.page_width, kc.page_height = kc.src.width, kc.src.height
+        kc:findPageBlocks()
+        local block = kc:getPageBlock(0.6, 0.5)
+        assert.truthy(block.x1 > 0 and block.x0 > 0)
+        assert.truthy(block.x1 - block.x0 < 0.5) -- we know this is a two-column page
+        assert.truthy(block.x0 <= 0.6 and block.x1 >= 0.6)
+        assert.truthy(block.y0 <= 0.5 and block.y1 >= 0.5)
+        block = nil
+        for y = 0, 1, 0.2 do
+            for x = 0, 1, 0.2 do
+                block = kc:getPageBlock(x, y)
+                if block then
+                    assert.truthy(block.x1 > 0 and block.x0 > 0)
+                    assert.truthy(block.x1 - block.x0 < 0.5)
+                    assert.truthy(block.x0 <= x and block.x1 >= x)
+                    assert.truthy(block.y0 <= y and block.y1 >= y)
+                end
+            end
+        end
+    end)
 	it("should convert koptcontext to/from table", function()
 		local kc = KOPTContext.new()
 		kc:setLanguage("eng")
