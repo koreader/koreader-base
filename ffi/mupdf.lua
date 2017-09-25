@@ -697,7 +697,6 @@ function mupdf.scaleBlitBuffer(bb, width, height)
         converted_bb = BlitBuffer.new(orig_w, orig_h, BlitBuffer.TYPE_BBRGB32)
         converted_bb:blitFrom(bb, 0, 0, 0, 0, orig_w, orig_h)
         bb = converted_bb -- we don't free() the provided bb, but we'll have to free our converted_bb
-        bbtype = bb:getType()
         colorspace = M.fz_device_rgb(context())
     end
     -- We can now create a pixmap from this bb of correct type
@@ -715,7 +714,7 @@ function mupdf.scaleBlitBuffer(bb, width, height)
     local p_width = M.fz_pixmap_width(context(), scaled_pixmap)
     local p_height = M.fz_pixmap_height(context(), scaled_pixmap)
     -- And convert the pixmap back to a BlitBuffer
-    local bbtype
+    bbtype = nil
     local ncomp = M.fz_pixmap_components(context(), scaled_pixmap)
     if ncomp == 2 then bbtype = BlitBuffer.TYPE_BB8A
     elseif ncomp == 4 then bbtype = BlitBuffer.TYPE_BBRGB32
@@ -724,7 +723,7 @@ function mupdf.scaleBlitBuffer(bb, width, height)
         error("unsupported number of color components")
     end
     local p = M.fz_pixmap_samples(context(), scaled_pixmap)
-    local bb = BlitBuffer.new(p_width, p_height, bbtype, p):copy()
+    bb = BlitBuffer.new(p_width, p_height, bbtype, p):copy()
     M.fz_drop_pixmap(context(), scaled_pixmap) -- free our scaled pixmap
     if converted_bb then converted_bb:free() end -- free our home made bb
     return bb
