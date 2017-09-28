@@ -13,7 +13,7 @@ android-sdk:
 		 { echo "$(SDK_TARBALL) has the wrong checksum!"; exit 1; }
 	tar xvf $(SDK_TARBALL)
 	pushd android-sdk-linux/tools && \
-		./android update sdk -u --filter "platform-tools,build-tools-26.0.1,android-14,android-19" && \
+		./android update sdk --all -u --filter "platform-tools,build-tools-26.0.1,android-14,android-19" && \
 		popd
 	rm -f $(SDK_TARBALL)
 
