@@ -84,6 +84,12 @@ changed at runtime by changing the following environment variables:
 EMULATE_READER_W=746 EMULATE_READER_H=1024
 ```
 
+The emulator uses a default DPI of 160. It also can be changed with an environment variable:
+
+```
+EMULATE_READER_DPI=300
+```
+
 KOReader supports "viewports", i.e. displaying only in a rectangular
 excerpt of the screen. This is useful on devices where the framebuffer
 is larger than the area that is actually visible. In order to simulate
