@@ -60,7 +60,7 @@ function S.open()
 
 	S.renderer = SDL.SDL_CreateRenderer(S.screen, -1, 0)
 	S.texture = SDL.SDL_CreateTexture(S.renderer,
-		SDL.SDL_PIXELFORMAT_ARGB8888,
+		SDL.SDL_PIXELFORMAT_ABGR8888,
 		SDL.SDL_TEXTUREACCESS_STREAMING,
 		S.w, S.h)
 end
