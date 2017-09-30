@@ -1286,15 +1286,28 @@ static int clearSelection(lua_State *L) {
 static int drawCurrentPage(lua_State *L) {
 	CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
 	BlitBuffer *bb = (BlitBuffer*) lua_topointer(L, 2);
+	bool color = false;
+	if (lua_isboolean(L, 3)) {
+		color = lua_toboolean(L, 3);
+	}
 
 	int w = bb->w,
 		h = bb->h;
-	/* Set DrawBuf to 8bpp */
-	LVGrayDrawBuf drawBuf(w, h, 8, bb->data);
 
 	doc->text_view->Resize(w, h);
 	doc->text_view->Render();
-	doc->text_view->Draw(drawBuf, false);
+	if (color) {
+		/* Use Color buffer - caller should have provided us with a
+                 * Blitbuffer.TYPE_BBRGB16, see CreDocument:drawCurrentView
+                 * for why not TYPE_BBRGB32) */
+		LVColorDrawBuf drawBuf(w, h, bb->data, 16);
+		doc->text_view->Draw(drawBuf, false);
+	}
+	else {
+		/* Set DrawBuf to 8bpp */
+		LVGrayDrawBuf drawBuf(w, h, 8, bb->data);
+		doc->text_view->Draw(drawBuf, false);
+	}
 
 	return 0;
 }
