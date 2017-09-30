@@ -1287,7 +1287,7 @@ static int drawCurrentPage(lua_State *L) {
 	CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
 	BlitBuffer *bb = (BlitBuffer*) lua_topointer(L, 2);
 	bool color = false;
-	if (lua_isboolean(L,3)) {
+	if (lua_isboolean(L, 3)) {
 		color = lua_toboolean(L, 3);
 	}
 
