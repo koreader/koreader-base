@@ -557,7 +557,7 @@ function page_mt.__index:draw_new(draw_context, width, height, offset_x, offset_
     bbox[0].x1 = offset_x + width
     bbox[0].y1 = offset_y + height
 
-    local bb = BlitBuffer.new(width, height, mupdf.color and BlitBuffer.TYPE_RGB32 or BlitBuffer.TYPE_BB8A)
+    local bb = BlitBuffer.new(width, height, mupdf.color and BlitBuffer.TYPE_BBRGB32 or BlitBuffer.TYPE_BB8A)
 
     local colorspace = mupdf.color and M.fz_device_rgb(context())
         or M.fz_device_gray(context())
