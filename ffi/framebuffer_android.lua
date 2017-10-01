@@ -6,7 +6,7 @@ local framebuffer = {}
 
 function framebuffer:init()
     -- we present this buffer to the outside
-    self.bb = BB.new(android.screen.width, android.screen.height)
+    self.bb = BB.new(android.screen.width, android.screen.height, BB.TYPE_BBRGB32)
     -- TODO: should we better use these?
     -- android.lib.ANativeWindow_getWidth(window)
     -- android.lib.ANativeWindow_getHeight(window)
