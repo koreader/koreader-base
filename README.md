@@ -3,7 +3,7 @@
 This is the base framework for creating document readers like KOReader,
 an e-ink device oriented reader application for various document formats.
 
-It's using the MuPDF library (see http://mupdf.com/), djvulibre library,
+It uses the MuPDF library (see http://mupdf.com/), djvulibre library,
 CREngine library, libk2pdfopt library and it is scripted using Lua (see
 http://www.lua.org/). To gain good speed at that, it uses the LuaJIT compiler.
 
@@ -17,8 +17,8 @@ The code is distributed under the GNU AGPL v3 license (read the [COPYING](COPYIN
 Follow these steps:
 
 * automatically fetch thirdparty sources with Makefile:
-		* make sure you have patch, wget, unzip, git and svn installed
-		* run `make fetchthirdparty`.
+  * make sure you have `patch`, `wget`, `unzip`, `git` and `svn` installed
+  * run `make fetchthirdparty`.
 
 * run `make TARGET=kindle5` or `make TARGET=kindlepw2` for touch based Kindle devices.
 
@@ -35,6 +35,8 @@ Follow these steps:
 * or run `make TARGET=generic-arm` for generic ARM devices.
 
 * or run `make TARGET=ubuntu-touch` for Ubuntu Touch.
+
+* or run `make KODEBUG=1` to build with debugging symbols.
 
 * or run `make` for emulator on Linux.
 
@@ -65,10 +67,8 @@ for this. It allows to develop on a standard PC and saves precious development
 time. It might also compose the most unfriendly desktop PDF reader, depending
 on your view.
 
-If you are using Fedora Core Linux, do `yum install SDL SDL-devel`.
-If you are using Ubuntu, install `libsdl-dev1.2` package.
-
-Alternatively, SDL2 is supported, too.
+If you are using Fedora Core Linux, run `yum install SDL2 SDL2-devel`.
+If you are using Debian or Ubuntu, install the `libsdl2-dev` package.
 
 By default, the build system builds in "emulation mode", so following is all
 you need to build the emulator:
@@ -84,7 +84,7 @@ changed at runtime by changing the following environment variables:
 EMULATE_READER_W=746 EMULATE_READER_H=1024
 ```
 
-The emulator uses a default DPI of 160. It also can be changed with an environment variable:
+The emulator uses a default DPI of 160. This can also be changed with an environment variable:
 
 ```
 EMULATE_READER_DPI=300
@@ -109,4 +109,3 @@ EMULATE_READER_FLASH=100
 
 [travis-icon]:https://travis-ci.org/koreader/koreader-base.png?branch=master
 [travis-link]:https://travis-ci.org/koreader/koreader-base
-
