@@ -10,6 +10,27 @@ enable_language(C)
 ep_get_source_dir(SOURCE_DIR)
 assert_var_defined(XCOMPILE)
 
+if($ENV{KODEBUG})
+    # Debugging is go!
+    set(DBG_CMD "${ISED} 's|#CCDEBUG= -g|CCDEBUG= -g|' ${SOURCE_DIR}/src/Makefile")
+    # To-do: make this auto-trigger when Valgrind is installed
+    #set(DBG_CMD "${DBG_CMD} && ${ISED} 's|#XCFLAGS+= -DLUAJIT_USE_VALGRIND|XCFLAGS+= -DLUAJIT_USE_VALGRIND|' ${SOURCE_DIR}/src/Makefile")
+    if($ENV{KODEBUG_LUAJIT_USE_SYSMALLOC})
+        # Could this be helpful on Android?
+        set(DBG_CMD "${DBG_CMD} && ${ISED} 's|#XCFLAGS+= -DLUAJIT_USE_SYSMALLOC|XCFLAGS+= -DLUAJIT_USE_SYSMALLOC|' ${SOURCE_DIR}/src/Makefile")
+    endif()
+    # Performance impact; not recommended unless required for something specific
+    if($ENV{KODEBUG_LUAJIT})
+        set(DBG_CMD "${DBG_CMD} && ${ISED} 's|#XCFLAGS+= -DLUAJIT_USE_GDBJIT|XCFLAGS+= -DLUAJIT_USE_GDBJIT|' ${SOURCE_DIR}/src/Makefile")
+        set(DBG_CMD "${DBG_CMD} && ${ISED} 's|#XCFLAGS+= -DLUA_USE_APICHECK|XCFLAGS+= -DLUA_USE_APICHECK|' ${SOURCE_DIR}/src/Makefile")
+        set(DBG_CMD "${DBG_CMD} && ${ISED} 's|#XCFLAGS+= -DLUA_USE_ASSERT|XCFLAGS+= -DLUA_USE_ASSERT|' ${SOURCE_DIR}/src/Makefile")
+    endif()
+
+    set(BUILD_CMD_STR "${DBG_CMD} && $(MAKE) -j${PARALLEL_JOBS}")
+else()
+    set(BUILD_CMD_STR "$(MAKE) -j${PARALLEL_JOBS}")
+endif()
+
 if(${XCOMPILE})
     assert_var_defined(HOST_CFLAGS)
     assert_var_defined(CC)
@@ -43,11 +64,9 @@ if(${XCOMPILE})
         set(BUILD_CMD_STR "${BUILD_CMD_STR} TARGET_SYS=\"${TARGET_SYS}\"")
     endif()
     set(BUILD_CMD_STR "${BUILD_CMD_STR} TARGET_SONAME=\"${TARGET_SONAME}\" TARGET_CFLAGS=\"${TARGET_CFLAGS}\" TARGET_FLAGS=\"-DLUAJIT_NO_LOG2 -DLUAJIT_NO_EXP2\" CROSS=\"${CROSS}\" amalg")
-    set(BUILD_CMD sh -c ${BUILD_CMD_STR})
-else()
-    set(BUILD_CMD $(MAKE) -j${PARALLEL_JOBS})
 endif()
 
+set(BUILD_CMD sh -c ${BUILD_CMD_STR})
 
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
