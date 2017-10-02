@@ -178,6 +178,9 @@ dist-clean:
 	-rm -rf build
 	-rm -rf $(THIRDPARTY_DIR)/{$(CMAKE_THIRDPARTY_LIBS)}/build
 
+luajit-clean:
+	-rm -rf $(LUAJIT_BUILD_DIR)
+
 # ===========================================================================
 # start of unit tests section
 
