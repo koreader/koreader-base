@@ -23,7 +23,7 @@ else()
     set(CFG_ENV_VAR "")
     set(CFG_OPTS "shared")
 endif()
-set(CFG_OPTS "${CFG_OPTS} no-asm no-idea no-mdc2 no-rc5 enable-ssl2")
+set(CFG_OPTS "${CFG_OPTS} no-asm no-idea no-mdc2 no-rc5 no-ssl2 no-ssl3")
 set(CFG_CMD sh -c "${CFG_ENV_VAR} ${SOURCE_DIR}/${CONFIG_SCRIPT} ${CFG_OPTS}")
 
 set(BUILD_CMD "$(MAKE) CC=\"${CC}\" SHARED_LDFLAGS=\"${SHARED_LDFLAGS}\" LD=\"${LD}\" RANLIB=\"${RANLIB}\"")
@@ -32,7 +32,7 @@ set(BUILD_CMD sh -c "${BUILD_CMD} --silent depend build_crypto build_ssl >/dev/n
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
     https://github.com/openssl/openssl.git
-    OpenSSL_1_0_1t
+    OpenSSL_1_0_2l
     ${SOURCE_DIR}
 )
 
