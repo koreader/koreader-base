@@ -32,7 +32,7 @@ set(PATCH_CMD sh -c "mkdir -p doc && ${ISED} \"s| 'luasocket|--'luasocket|g\" ${
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
     https://github.com/fperrad/lua-Spore
-    8e96c4adc6e900e259aea400ce8e5fe8f6158d59
+    29193c1f48e2d7b71ba4121792e6cb7b45579d2d
     ${SOURCE_DIR}
 )
 
