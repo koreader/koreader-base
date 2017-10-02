@@ -32,7 +32,7 @@ set(BUILD_CMD sh -c "${BUILD_CMD} --silent depend build_crypto build_ssl >/dev/n
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
     https://github.com/openssl/openssl.git
-    OpenSSL_1_0_2l
+    OpenSSL_1_0_1u
     ${SOURCE_DIR}
 )
 
