@@ -55,7 +55,7 @@ if(${XCOMPILE})
         set(HOST_CC "${CC}")
     endif()
 
-    set(BUILD_CMD_STR "$(MAKE) -j${PARALLEL_JOBS} CC=\"${CC}\" HOST_CC=\"${HOST_CC}\"")
+    set(BUILD_CMD_STR "${BUILD_CMD_STR} CC=\"${CC}\" HOST_CC=\"${HOST_CC}\"")
     set(BUILD_CMD_STR "${BUILD_CMD_STR} CFLAGS=\"${BASE_CFLAGS}\" HOST_CFLAGS=\"${HOST_CFLAGS}\"")
     if(DEFINED LDFLAGS)
         set(BUILD_CMD_STR "${BUILD_CMD_STR} LDFLAGS=\"${LDFLAGS}\"")
