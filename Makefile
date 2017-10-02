@@ -1,7 +1,7 @@
 include Makefile.defs
 
 # main target
-all: $(OUTPUT_DIR)/libs $(if $(ANDROID),,$(LUAJIT)) \
+all: check-luajit-clean $(OUTPUT_DIR)/libs $(if $(ANDROID),,$(LUAJIT)) \
 		$(if $(USE_LUAJIT_LIB),$(LUAJIT_LIB),) \
 		$(LUAJIT_JIT) \
 		libs $(K2PDFOPT_LIB) \
@@ -177,6 +177,19 @@ clean:
 dist-clean:
 	-rm -rf build
 	-rm -rf $(THIRDPARTY_DIR)/{$(CMAKE_THIRDPARTY_LIBS)}/build
+
+luajit-clean:
+	-rm -rf $(LUAJIT_BUILD_DIR)
+
+.PHONY: check-luajit-clean
+
+KODEBUG_OLD=`cat kodebug-$(TARGET)`
+check-luajit-clean:
+	if ! test "$(KODEBUG)" = "$(KODEBUG_OLD)" ; then \
+		echo "KODEBUG variable changed; calling luajit-clean"; \
+		$(MAKE) luajit-clean; \
+	fi; \
+	echo "$(KODEBUG)" >kodebug-$(TARGET)
 
 # ===========================================================================
 # start of unit tests section
