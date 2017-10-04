@@ -11,7 +11,7 @@ function framebuffer:init()
     -- android.lib.ANativeWindow_getWidth(window)
     -- android.lib.ANativeWindow_getHeight(window)
     self.bb:fill(BB.COLOR_WHITE)
-	self:refreshFull()
+    self:refreshFull()
 
     framebuffer.parent.init(self)
 end
@@ -40,11 +40,19 @@ function framebuffer:refreshFullImp()
     end
 
     if bb then
-        bb:setInverse(self.bb:getInverse())
-        -- adapt to possible rotation changes
-        bb:setRotation(self.bb:getRotation())
+        local ext_bb = self.full_bb or self.bb
 
-        bb:blitFrom(self.bb)
+        -- on Android we just do the whole screen
+        local x = 0
+        local y = 0
+        local w = buffer[0].width
+        local h = buffer[0].height
+
+        bb:setInverse(ext_bb:getInverse())
+        -- adapt to possible rotation changes
+        bb:setRotation(ext_bb:getRotation())
+
+        bb:blitFrom(ext_bb, x, y, x, y, w, h)
     end
 
     android.lib.ANativeWindow_unlockAndPost(android.app.window);
