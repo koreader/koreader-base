@@ -39,7 +39,7 @@ local function render(bb)
 	SDL.SDL.SDL_RenderPresent(SDL.renderer)
 end
 
-function framebuffer:refreshFullImp()
+function framebuffer:refreshFullImp(x, y, w, h)
 	if self.dummy then return end
 
     local bb = self.full_bb or self.bb
