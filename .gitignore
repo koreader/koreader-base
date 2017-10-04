@@ -4,6 +4,9 @@
 cscope.*
 libs-emu
 *.orig
+
+debug-*
+
 lua
 crash.log
 .vimrc
