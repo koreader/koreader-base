@@ -132,13 +132,6 @@ else
     STATIC_LIBSTDCPP=
 endif
 
-# try to find number of CPUs for build machine
-PROCESSORS:=$(shell echo $(grep processor /proc/cpuinfo|wc -l))
-# incase we build on system that has no /proc/cpuinfo file
-ifeq ($(PROCESSORS), 0)
-    PROCESSORS=1
-endif
-
 # Base CFLAGS, without arch. We'll need it for luajit, because its
 # Makefiles do some tricky stuff to differentiate HOST/TARGET
 BASE_CFLAGS:=-O2 -ffast-math -pipe -fomit-frame-pointer
