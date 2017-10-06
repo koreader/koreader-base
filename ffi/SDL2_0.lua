@@ -159,7 +159,7 @@ function S.waitForEvent(usecs)
 			genEmuEvent(ffi.C.EV_ABS, ffi.C.ABS_MT_POSITION_Y,
 				is_finger and event.tfinger.y * S.h or event.button.y)
 			genEmuEvent(ffi.C.EV_SYN, ffi.C.SYN_REPORT, 0)
-		elseif event.type == SDL.SDL_MULTIGESTURE then
+		elseif event.type == SDL.SDL_MULTIGESTURE then -- luacheck: ignore 542
 			-- TODO: multi-touch support
 		elseif event.type == SDL.SDL_QUIT then
 			-- send Alt + F4
