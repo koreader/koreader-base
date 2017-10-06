@@ -14,6 +14,7 @@ read_globals = {
 
 exclude_files = {
     "build/*",
+    "luafilesystem/*",
     "thirdparty/*",
 }
 
