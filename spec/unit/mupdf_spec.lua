@@ -130,7 +130,7 @@ describe("mupdf module", function()
             page:close()
             doc:writeDocument(simple_pdf_out)
             local out_f = io.open(simple_pdf_out, "r")
-            local out_data = out_f:read("*a")
+            out_f:read("*a")
             out_f:close()
             assert.is_equal(
                 md5.sumFile(simple_pdf_out),
