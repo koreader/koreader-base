@@ -1,5 +1,7 @@
---[[
+--[[--
 Generic blitbuffer/GFX stuff that works on memory buffers
+
+@module ffi.blitbuffer
 --]]
 
 local ffi = require("ffi")
@@ -14,9 +16,9 @@ local bor = bit.bor
 local bxor = bit.bxor
 
 local intt = ffi.typeof("int")
-local uint32pt = ffi.typeof("uint32_t*")
+local uint32pt = ffi.typeof("uint32_t*") -- luacheck: ignore 211
 local uint8pt = ffi.typeof("uint8_t*")
-local posix = require("ffi/posix_h")
+local posix = require("ffi/posix_h") -- luacheck: ignore 211
 local debug = debug
 
 -- the following definitions are redundant.
@@ -110,11 +112,11 @@ local ColorRGB32 = ffi.typeof("ColorRGB32")
 -- color value pointer types
 local P_Color4U = ffi.typeof("Color4U*")
 local P_Color4L = ffi.typeof("Color4L*")
-local P_Color8 = ffi.typeof("Color8*")
-local P_Color8A = ffi.typeof("Color8A*")
-local P_ColorRGB16 = ffi.typeof("ColorRGB16*")
-local P_ColorRGB24 = ffi.typeof("ColorRGB24*")
-local P_ColorRGB32 = ffi.typeof("ColorRGB32*")
+local P_Color8 = ffi.typeof("Color8*") -- luacheck: ignore 211
+local P_Color8A = ffi.typeof("Color8A*") -- luacheck: ignore 211
+local P_ColorRGB16 = ffi.typeof("ColorRGB16*") -- luacheck: ignore 211
+local P_ColorRGB24 = ffi.typeof("ColorRGB24*") -- luacheck: ignore 211
+local P_ColorRGB32 = ffi.typeof("ColorRGB32*") -- luacheck: ignore 211
 
 -- metatables for color types:
 local Color4L_mt = {__index={}}
@@ -752,12 +754,6 @@ function BB_mt.__index:colorblitFrom(source, dest_x, dest_y, offs_x, offs_y, wid
     self:blitFrom(source, dest_x, dest_y, offs_x, offs_y, width, height, self.setPixelColorize, color)
 end
 
-function BB_mt.__index:blitFromRotate(source, degree)
-    self:rotate(degree)
-    self:blitFrom(source, dest_x, dest_y, offs_x, offs_y, width, height, self.setPixel, intensity)
-    self:rotate(-degree)
-end
-
 -- scale method does not modify the original blitbuffer, instead, it allocates
 -- and returns a new scaled blitbuffer.
 function BB_mt.__index:scale(new_width, new_height)
@@ -862,9 +858,9 @@ function BB_mt.__index:paintRect(x, y, w, h, value, setter)
     if w <= 0 or h <= 0 then return end
     w, x = BB.checkBounds(w, x, 0, self:getWidth(), 0xFFFF)
     h, y = BB.checkBounds(h, y, 0, self:getHeight(), 0xFFFF)
-    for y = y, y+h-1 do
-        for x = x, x+w-1 do
-            setter(self, x, y, value)
+    for tmp_y = y, y+h-1 do
+        for tmp_x = x, x+w-1 do
+            setter(self, tmp_x, tmp_y, value)
         end
     end
     debug.sethook(hook, mask)
