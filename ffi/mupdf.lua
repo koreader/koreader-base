@@ -1,4 +1,4 @@
---[[
+--[[--
 MuPDF API
 
 This is a FFI wrapper for what was a Lua-based API in the past
@@ -6,6 +6,8 @@ Some kind of C wrapper is needed for muPDF since muPDF uses
 a setjmp/longjmp based approach to error/exception handling.
 That's one of the very few things we can't deal with using
 LuaJIT's FFI.
+
+@module ffi.mupdf
 --]]
 
 local ffi = require("ffi")
@@ -18,7 +20,7 @@ local M
 if ffi.os == "Windows" then
     M = ffi.load("libs/libmupdf.dll")
 elseif ffi.os == "OSX" then
-	M = ffi.load("libs/libmupdf.dylib")
+    M = ffi.load("libs/libmupdf.dylib")
 else
     M = ffi.load("libs/libmupdf.so")
 end
@@ -75,8 +77,8 @@ function mupdf_mt.__gc()
     end
 end
 
---[[
-open a document
+--[[--
+Opens a document.
 --]]
 function mupdf.openDocument(filename, cache_size)
     M.fz_register_document_handlers(context())
@@ -137,7 +139,7 @@ function document_mt.__index:getPages()
 
     local pages = W.mupdf_count_pages(context(), self.doc)
     if pages == -1 then
-	    merror("cannot access page tree")
+        merror("cannot access page tree")
     end
 
     self.number_of_pages = pages
@@ -190,7 +192,7 @@ function document_mt.__index:openPage(number)
         doc = self,
     }
     if mupdf_page.page == nil then
-		merror("cannot open page #" .. number)
+        merror("cannot open page #" .. number)
     end
     setmetatable(mupdf_page, page_mt)
     return mupdf_page
@@ -251,14 +253,14 @@ function document_mt.__index:writeDocument(filename)
     local filename_str = ffi.C.malloc(#filename + 1)
     if filename == nil then error("could not allocate memory for filename") end
     ffi.copy(filename_str, filename)
-	local opts = ffi.new("fz_write_options[1]")
-	opts[0].do_incremental = (filename == self.filename ) and 1 or 0
-	opts[0].do_ascii = 0
-	opts[0].do_expand = 0
-	opts[0].do_garbage = 0
-	opts[0].do_linear = 0
-	opts[0].continue_on_error = 1
-	local ok = W.mupdf_write_document(context(), self.doc, filename_str, opts)
+    local opts = ffi.new("fz_write_options[1]")
+    opts[0].do_incremental = (filename == self.filename ) and 1 or 0
+    opts[0].do_ascii = 0
+    opts[0].do_expand = 0
+    opts[0].do_garbage = 0
+    opts[0].do_linear = 0
+    opts[0].continue_on_error = 1
+    local ok = W.mupdf_write_document(context(), self.doc, filename_str, opts)
     if ok == nil then merror("could not write document") end
 end
 
@@ -286,12 +288,12 @@ function page_mt.__index:getSize(draw_context)
     local bbox = ffi.new("fz_irect[1]")
     local ctm = ffi.new("fz_matrix")
 
-	M.fz_scale(ctm, draw_context.zoom, draw_context.zoom)
-	M.fz_pre_rotate(ctm, draw_context.rotate)
+    M.fz_scale(ctm, draw_context.zoom, draw_context.zoom)
+    M.fz_pre_rotate(ctm, draw_context.rotate)
 
-	M.fz_bound_page(context(), self.page, bounds)
-	M.fz_transform_rect(bounds, ctm)
-	M.fz_round_rect(bbox, bounds)
+    M.fz_bound_page(context(), self.page, bounds)
+    M.fz_transform_rect(bounds, ctm)
+    M.fz_round_rect(bbox, bounds)
 
     return bbox[0].x1-bbox[0].x0, bbox[0].y1-bbox[0].y0
 end
@@ -304,7 +306,7 @@ function page_mt.__index:getUsedBBox()
 
     local dev = W.mupdf_new_bbox_device(context(), result)
     if dev == nil then merror("cannot allocate bbox_device") end
-	local ok = W.mupdf_run_page(context(), self.page, dev, M.fz_identity, nil)
+    local ok = W.mupdf_run_page(context(), self.page, dev, M.fz_identity, nil)
     M.fz_drop_device(context(), dev)
     if ok == nil then merror("cannot calculate bbox for page") end
 
@@ -313,42 +315,42 @@ end
 
 local C = string.byte
 local function is_unicode_wspace(c)
-	return c == 9 or --  TAB
-		c == 0x0a or --  HT
-		c == 0x0b or --  LF
-		c == 0x0c or --  VT
-		c == 0x0d or --  FF
-		c == 0x20 or --  CR
-		c == 0x85 or --  NEL
-		c == 0xA0 or --  No break space
-		c == 0x1680 or --  Ogham space mark
-		c == 0x180E or --  Mongolian Vowel Separator
-		c == 0x2000 or --  En quad
-		c == 0x2001 or --  Em quad
-		c == 0x2002 or --  En space
-		c == 0x2003 or --  Em space
-		c == 0x2004 or --  Three-per-Em space
-		c == 0x2005 or --  Four-per-Em space
-		c == 0x2006 or --  Five-per-Em space
-		c == 0x2007 or --  Figure space
-		c == 0x2008 or --  Punctuation space
-		c == 0x2009 or --  Thin space
-		c == 0x200A or --  Hair space
-		c == 0x2028 or --  Line separator
-		c == 0x2029 or --  Paragraph separator
-		c == 0x202F or --  Narrow no-break space
-		c == 0x205F or --  Medium mathematical space
-		c == 0x3000 --  Ideographic space
+    return c == 9 or --  TAB
+        c == 0x0a or --  HT
+        c == 0x0b or --  LF
+        c == 0x0c or --  VT
+        c == 0x0d or --  FF
+        c == 0x20 or --  CR
+        c == 0x85 or --  NEL
+        c == 0xA0 or --  No break space
+        c == 0x1680 or --  Ogham space mark
+        c == 0x180E or --  Mongolian Vowel Separator
+        c == 0x2000 or --  En quad
+        c == 0x2001 or --  Em quad
+        c == 0x2002 or --  En space
+        c == 0x2003 or --  Em space
+        c == 0x2004 or --  Three-per-Em space
+        c == 0x2005 or --  Four-per-Em space
+        c == 0x2006 or --  Five-per-Em space
+        c == 0x2007 or --  Figure space
+        c == 0x2008 or --  Punctuation space
+        c == 0x2009 or --  Thin space
+        c == 0x200A or --  Hair space
+        c == 0x2028 or --  Line separator
+        c == 0x2029 or --  Paragraph separator
+        c == 0x202F or --  Narrow no-break space
+        c == 0x205F or --  Medium mathematical space
+        c == 0x3000 --  Ideographic space
 end
 local function is_unicode_bullet(c)
-	-- The last 2 aren't strictly bullets, but will do for our usage here
-	return c == 0x2022 or --  Bullet
-		c == 0x2023 or --  Triangular bullet
-		c == 0x25e6 or --  White bullet
-		c == 0x2043 or --  Hyphen bullet
-		c == 0x2219 or --  Bullet operator
-		c == 149 or --  Ascii bullet
-		c == C'*'
+    -- The last 2 aren't strictly bullets, but will do for our usage here
+    return c == 0x2022 or --  Bullet
+        c == 0x2023 or --  Triangular bullet
+        c == 0x25e6 or --  White bullet
+        c == 0x2043 or --  Hyphen bullet
+        c == 0x2219 or --  Bullet operator
+        c == 149 or --  Ascii bullet
+        c == C'*'
 end
 -- this function had (disabled) functionality to check for lines
 -- starting with a span that contained numbers, roman numbers or
@@ -362,12 +364,14 @@ local function is_list_entry(span)
         local c = text[n].c
         if is_unicode_wspace(c) then
             -- skip whitespace at the beginning
+            goto continue
         elseif is_unicode_bullet(c) then
             -- return true for all lines starting with bullets
             return true
         else
             return false
         end
+        ::continue::
     end
 end
 
@@ -444,19 +448,19 @@ function page_mt.__index:getPageText()
                                 -- ignore and end word
                                 break
                             end
-						    textlen = textlen + M.fz_runetochar(textbuf + textlen, span.text[i].c)
-						    M.fz_union_rect(word_bbox, M.fz_text_char_bbox(context(), char_bbox, span, i))
-						    M.fz_union_rect(line_bbox, char_bbox)
-						    if span.text[i].c >= 0x4e00 and span.text[i].c <= 0x9FFF or -- CJK Unified Ideographs
-							    span.text[i].c >= 0x2000 and span.text[i].c <= 0x206F or -- General Punctuation
-							    span.text[i].c >= 0x3000 and span.text[i].c <= 0x303F or -- CJK Symbols and Punctuation
-							    span.text[i].c >= 0x3400 and span.text[i].c <= 0x4DBF or -- CJK Unified Ideographs Extension A
-							    span.text[i].c >= 0xF900 and span.text[i].c <= 0xFAFF or -- CJK Compatibility Ideographs
-							    span.text[i].c >= 0xFF01 and span.text[i].c <= 0xFFEE or -- Halfwidth and Fullwidth Forms
-							    span.text[i].c >= 0x20000 and span.text[i].c <= 0x2A6DF  -- CJK Unified Ideographs Extension B
-						    then
+                            textlen = textlen + M.fz_runetochar(textbuf + textlen, span.text[i].c)
+                            M.fz_union_rect(word_bbox, M.fz_text_char_bbox(context(), char_bbox, span, i))
+                            M.fz_union_rect(line_bbox, char_bbox)
+                            if span.text[i].c >= 0x4e00 and span.text[i].c <= 0x9FFF or -- CJK Unified Ideographs
+                                span.text[i].c >= 0x2000 and span.text[i].c <= 0x206F or -- General Punctuation
+                                span.text[i].c >= 0x3000 and span.text[i].c <= 0x303F or -- CJK Symbols and Punctuation
+                                span.text[i].c >= 0x3400 and span.text[i].c <= 0x4DBF or -- CJK Unified Ideographs Extension A
+                                span.text[i].c >= 0xF900 and span.text[i].c <= 0xFAFF or -- CJK Compatibility Ideographs
+                                span.text[i].c >= 0xFF01 and span.text[i].c <= 0xFFEE or -- Halfwidth and Fullwidth Forms
+                                span.text[i].c >= 0x20000 and span.text[i].c <= 0x2A6DF  -- CJK Unified Ideographs Extension B
+                            then
                                 -- end word
-							    break
+                                break
                             end
                             i = i + 1
                         end
@@ -490,7 +494,7 @@ end
 Get a list of the Hyperlinks on a page
 --]]
 function page_mt.__index:getPageLinks()
-	local page_links = W.mupdf_load_links(context(), self.page)
+    local page_links = W.mupdf_load_links(context(), self.page)
     -- do not error out when page_links == NULL, since there might
     -- simply be no links present.
 
@@ -513,18 +517,18 @@ function page_mt.__index:getPageLinks()
         link = link.next
     end
 
-	M.fz_drop_link(context(), page_links)
+    M.fz_drop_link(context(), page_links)
 
     return links
 end
 
 local function run_page(page, pixmap, ctm)
-	M.fz_clear_pixmap_with_value(context(), pixmap, 0xff)
+    M.fz_clear_pixmap_with_value(context(), pixmap, 0xff)
 
-	local dev = W.mupdf_new_draw_device(context(), pixmap)
+    local dev = W.mupdf_new_draw_device(context(), pixmap)
     if dev == nil then merror("cannot create draw device") end
 
-	local ok = W.mupdf_run_page(context(), page.page, dev, ctm, nil)
+    local ok = W.mupdf_run_page(context(), page.page, dev, ctm, nil)
     M.fz_drop_device(context(), dev)
     if ok == nil then merror("could not run page") end
 end
@@ -572,7 +576,7 @@ function page_mt.__index:draw_new(draw_context, width, height, offset_x, offset_
     end
 
     -- FIXME: undefined pixmap
-    M.fz_drop_pixmap(context(), pixmap)
+    M.fz_drop_pixmap(context(), pixmap) -- luacheck: ignore 113
 
     return bb
 end
@@ -582,32 +586,32 @@ mupdf.UNDERLINE_HEIGHT = 0.075
 mupdf.LINE_THICKNESS = 0.07
 
 function page_mt.__index:addMarkupAnnotation(points, n, type)
-	local color = ffi.new("float[3]")
-	local alpha = 1.0
-	local line_height = 0.5
-	local line_thickness = 1.0
+    local color = ffi.new("float[3]")
+    local alpha = 1.0
+    local line_height = 0.5
+    local line_thickness = 1.0
     if type == M.FZ_ANNOT_HIGHLIGHT then
         color[0] = 1.0
-		color[1] = 1.0
-		color[2] = 0.0
-		alpha = 0.5
+        color[1] = 1.0
+        color[2] = 0.0
+        alpha = 0.5
     elseif type == M.FZ_ANNOT_UNDERLINE then
-		color[0] = 0.0
-		color[1] = 0.0
-		color[2] = 1.0
-		line_thickness = mupdf.LINE_THICKNESS
-		line_height = mupdf.UNDERLINE_HEIGHT
-	elseif type == M.FZ_ANNOT_STRIKEOUT then
-		color[0] = 1.0
-		color[1] = 0.0
-		color[2] = 0.0
-		line_thickness = mupdf.LINE_THICKNESS
-		line_height = mupdf.STRIKE_HEIGHT
+        color[0] = 0.0
+        color[1] = 0.0
+        color[2] = 1.0
+        line_thickness = mupdf.LINE_THICKNESS
+        line_height = mupdf.UNDERLINE_HEIGHT
+    elseif type == M.FZ_ANNOT_STRIKEOUT then
+        color[0] = 1.0
+        color[1] = 0.0
+        color[2] = 0.0
+        line_thickness = mupdf.LINE_THICKNESS
+        line_height = mupdf.STRIKE_HEIGHT
     else
         return
     end
 
-	local doc = M.pdf_specifics(context(), self.doc.doc)
+    local doc = M.pdf_specifics(context(), self.doc.doc)
     if doc == nil then merror("could not get pdf_specifics") end
 
     local annot = W.mupdf_pdf_create_annot(context(), doc, ffi.cast("pdf_page*", self.page), type)
@@ -623,8 +627,8 @@ end
 
 -- image loading via MuPDF:
 
---[[
-render image data
+--[[--
+Renders image data.
 --]]
 function mupdf.renderImage(data, size, width, height)
     local image = W.mupdf_new_image_from_data(context(),
@@ -662,6 +666,7 @@ function mupdf.renderImage(data, size, width, height)
     return bb
 end
 
+--- Renders image file.
 function mupdf.renderImageFile(filename, width, height)
     local file = io.open(filename, "rb")
     if not file then error("could not open image file") end
@@ -670,8 +675,9 @@ function mupdf.renderImageFile(filename, width, height)
     return mupdf.renderImage(data, #data, width, height)
 end
 
---[[
-Scale a blitbuffer.
+--[[--
+Scales a blitbuffer.
+
 Quality of scaling done by MuPDF is better than the one done in blitbuffer.lua
 (see fz_scale_pixmap_cached() in mupdf/source/fitz/draw-scale-simple.c).
 Same arguments as BlitBuffer:scale() for easy replacement.
@@ -786,7 +792,7 @@ local function bmpmupdf_pixmap_to_bmp(bmp, pixmap)
     if ncomp == 2 then
         -- 8bit grayscale (and 8 bit alpha)
         bmp.bpp = 8
-	    k2pdfopt.bmp_alloc(bmp)
+        k2pdfopt.bmp_alloc(bmp)
         -- set palette
         for i = 0, 255 do
             bmp.red[i] = i
@@ -806,7 +812,7 @@ local function bmpmupdf_pixmap_to_bmp(bmp, pixmap)
     elseif ncomp == 4 then
         -- 32bit RGBA
         bmp.bpp = 24
-	    k2pdfopt.bmp_alloc(bmp)
+        k2pdfopt.bmp_alloc(bmp)
         -- copy color values (and skip alpha)
         for row = 0, bmp.height - 1 do
             local dest = k2pdfopt.bmp_rowptr_from_top(bmp, row)
@@ -831,20 +837,20 @@ local function render_for_kopt(bmp, page, scale, bounds)
 
     local bbox = ffi.new("fz_irect[1]")
     local ctm = ffi.new("fz_matrix")
-	M.fz_scale(ctm, scale, scale)
-	M.fz_transform_rect(bounds, ctm)
-	M.fz_round_rect(bbox, bounds)
+    M.fz_scale(ctm, scale, scale)
+    M.fz_transform_rect(bounds, ctm)
+    M.fz_round_rect(bbox, bounds)
 
     local colorspace = mupdf.color and M.fz_device_rgb(context())
         or M.fz_device_gray(context())
-	local pix = W.mupdf_new_pixmap_with_bbox(context(), colorspace, bbox)
+    local pix = W.mupdf_new_pixmap_with_bbox(context(), colorspace, bbox)
     if pix == nil then merror("could not allocate pixmap") end
 
     run_page(page, pix, ctm)
 
-	k2pdfopt.bmp_init(bmp)
+    k2pdfopt.bmp_init(bmp)
 
-	bmpmupdf_pixmap_to_bmp(bmp, pix)
+    bmpmupdf_pixmap_to_bmp(bmp, pix)
 
     M.fz_drop_pixmap(context(), pix)
 end
@@ -857,17 +863,17 @@ function page_mt.__index:reflow(kopt_context)
     bounds[0].y0 = kopt_context.bbox.y0
     bounds[0].x1 = kopt_context.bbox.x1
     bounds[0].y1 = kopt_context.bbox.y1
-	-- probe scale
-	local zoom = kopt_context.zoom * kopt_context.quality
-	M.fz_transform_rect(bounds, M.fz_identity)
-	local scale = (1.5 * zoom * kopt_context.dev_width) / bounds[0].x1
-	-- store zoom
-	kopt_context.zoom = scale
-	-- do real scale
-	mupdf.debug(string.format("reading page:%d,%d,%d,%d scale:%.2f",bounds[0].x0,bounds[0].y0,bounds[0].x1,bounds[0].y1,scale))
+    -- probe scale
+    local zoom = kopt_context.zoom * kopt_context.quality
+    M.fz_transform_rect(bounds, M.fz_identity)
+    local scale = (1.5 * zoom * kopt_context.dev_width) / bounds[0].x1
+    -- store zoom
+    kopt_context.zoom = scale
+    -- do real scale
+    mupdf.debug(string.format("reading page:%d,%d,%d,%d scale:%.2f",bounds[0].x0,bounds[0].y0,bounds[0].x1,bounds[0].y1,scale))
     render_for_kopt(kopt_context.src, self, scale, bounds)
 
-	if kopt_context.precache ~= 0 then
+    if kopt_context.precache ~= 0 then
         local pthread = get_pthread()
         local rf_thread = ffi.new("pthread_t[1]")
         local attr = ffi.new("pthread_attr_t")
@@ -875,9 +881,9 @@ function page_mt.__index:reflow(kopt_context)
         pthread.pthread_attr_setdetachstate(attr, pthread.PTHREAD_CREATE_DETACHED)
         pthread.pthread_create(rf_thread, attr, k2pdfopt.k2pdfopt_reflow_bmp, ffi.cast("void*", kopt_context))
         pthread.pthread_attr_destroy(attr)
-	else
-		k2pdfopt.k2pdfopt_reflow_bmp(kopt_context)
-	end
+    else
+        k2pdfopt.k2pdfopt_reflow_bmp(kopt_context)
+    end
 end
 
 function page_mt.__index:getPagePix(kopt_context)
@@ -898,7 +904,7 @@ function page_mt.__index:toBmp(bmp, dpi, color)
     mupdf.color = color and true or false
 
     local bounds = ffi.new("fz_rect[1]")
-	M.fz_bound_page(context(), self.page, bounds)
+    M.fz_bound_page(context(), self.page, bounds)
 
     render_for_kopt(bmp, self, dpi/72, bounds)
 
