@@ -1,5 +1,4 @@
 local Blitbuffer = require("ffi/blitbuffer")
-local ffi = require("ffi")
 
 describe("Blitbuffer unit tests", function()
     describe("Color conversion", function()
@@ -7,8 +6,8 @@ describe("Blitbuffer unit tests", function()
         -- 0xAA = 0b10101010
         -- 0x55 = 0b01010101
         local cRGB32 = Blitbuffer.ColorRGB32(0xFF, 0xAA, 0x55, 0)
-        local cRGB24 = Blitbuffer.ColorRGB24(0xFF, 0xAA, 0x55)
-        local cRGB24_32 = cRGB32:getColorRGB24()
+        local cRGB24 = Blitbuffer.ColorRGB24(0xFF, 0xAA, 0x55) -- luacheck: ignore 211
+        local cRGB24_32 = cRGB32:getColorRGB24() -- luacheck: ignore 211
 
         it("should convert RGB32 to RGB16", function()
             local c16_32 = cRGB32:getColorRGB16()
@@ -42,8 +41,8 @@ describe("Blitbuffer unit tests", function()
             assert.are.equals(bb:getHeight(), 200)
         end)
 
-        local bb = Blitbuffer.new(800, 600, Blitbuffer.TYPE_BB4)
         it("should set pixel correctly", function()
+            local bb = Blitbuffer.new(800, 600, Blitbuffer.TYPE_BB4)
             local test_x = 15
             local test_y = 20
             local new_c = Blitbuffer.Color4(2)
