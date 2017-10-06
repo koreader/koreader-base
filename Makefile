@@ -183,7 +183,7 @@ luajit-clean:
 
 .PHONY: check-luajit-clean
 
-KODEBUG_OLD=`cat kodebug-$(TARGET)`
+KODEBUG_OLD=`cat kodebug-$(TARGET) 2>/dev/null`
 check-luajit-clean:
 	if ! test "$(KODEBUG)" = "$(KODEBUG_OLD)" ; then \
 		echo "KODEBUG variable changed; calling luajit-clean"; \
