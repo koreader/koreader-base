@@ -1,5 +1,7 @@
---[[
+--[[--
 Freetype library interface (text rendering)
+
+@module ffi.freetype
 --]]
 
 local ffi = require("ffi")
@@ -8,13 +10,13 @@ local Blitbuffer = require("ffi/blitbuffer")
 -- the header definitions
 require("ffi/freetype_h")
 
-local ft2 = nil
+local ft2
 if ffi.os == "Windows" then
-	ft2 = ffi.load("libs/libfreetype-6.dll")
+    ft2 = ffi.load("libs/libfreetype-6.dll")
 elseif ffi.os == "OSX" then
-	ft2 = ffi.load("libs/libfreetype.6.dylib")
+    ft2 = ffi.load("libs/libfreetype.6.dylib")
 else
-	ft2 = ffi.load("libs/libfreetype.so.6")
+    ft2 = ffi.load("libs/libfreetype.so.6")
 end
 
 local freetypelib = ffi.new("FT_Library[1]")
@@ -27,11 +29,11 @@ local FT = {}
 local FTFace_mt = {__index={}}
 
 function FTFace_mt.__index:checkGlyph(char)
-	if ft2.FT_Get_Char_Index(self, char) == 0 then
-		return 0
-	else
-		return 1
-	end
+    if ft2.FT_Get_Char_Index(self, char) == 0 then
+        return 0
+    else
+        return 1
+    end
 end
 
 function FTFace_mt.__index:renderGlyph(char, bold)
@@ -55,33 +57,33 @@ function FTFace_mt.__index:renderGlyph(char, bold)
 end
 
 function FTFace_mt.__index:hasKerning()
-	if bit.band(self.face_flags, ft2.FT_FACE_FLAG_KERNING) ~= 0 then
-		return 1
-	else
-		return 0
-	end
+    if bit.band(self.face_flags, ft2.FT_FACE_FLAG_KERNING) ~= 0 then
+        return 1
+    else
+        return 0
+    end
 end
 
 function FTFace_mt.__index:getKerning(leftcharcode, rightcharcode)
-	local kerning = ffi.new("FT_Vector")
-	assert(ft2.FT_Get_Kerning(self, leftcharcode, rightcharcode,
-		ft2.FT_KERNING_DEFAULT, kerning) == 0,
-		"freetype error when getting kerning.")
-	return tonumber(kerning.x / 64)
+    local kerning = ffi.new("FT_Vector")
+    assert(ft2.FT_Get_Kerning(self, leftcharcode, rightcharcode,
+        ft2.FT_KERNING_DEFAULT, kerning) == 0,
+        "freetype error when getting kerning.")
+    return tonumber(kerning.x / 64)
 end
 
 function FTFace_mt.__index:getHeightAndAscender()
-	local y_scale = self.size.metrics.y_ppem / self.units_per_EM
-	return self.height * y_scale, self.ascender * y_scale
+    local y_scale = self.size.metrics.y_ppem / self.units_per_EM
+    return self.height * y_scale, self.ascender * y_scale
 end
 
 function FTFace_mt.__index:done()
-	assert(ft2.FT_Done_Face(self) == 0, "freetype error when freeing face")
+    assert(ft2.FT_Done_Face(self) == 0, "freetype error when freeing face")
 end
 
 FTFace_mt.__gc = FTFace_mt.__index.done;
 
-local FTFaceType = ffi.metatype("struct FT_FaceRec_", FTFace_mt)
+local FTFaceType = ffi.metatype("struct FT_FaceRec_", FTFace_mt) -- luacheck: ignore 211
 
 function FT.newFace(filename, pxsize)
     if pxsize == nil then pxsize = 16*64 end
