@@ -100,6 +100,7 @@ function util.df(path)
         tonumber(statvfs.f_bfree * statvfs.f_bsize)
 end
 
+--- Wrapper for C.realpath.
 function util.realpath(path)
     local buffer = ffi.new("char[?]", C.PATH_MAX)
     if ffi.os == "Windows" then
@@ -113,6 +114,7 @@ function util.realpath(path)
     end
 end
 
+--- Wrapper for C.basename.
 function util.basename(path)
     local ptr = ffi.cast("uint8_t *", path)
     if ffi.os == "Windows" then
@@ -122,6 +124,7 @@ function util.basename(path)
     end
 end
 
+--- Wrapper for C.dirname.
 function util.dirname(in_path)
     --[[
     Both PathRemoveFileSpec and dirname will change original input string, so
@@ -141,6 +144,7 @@ function util.dirname(in_path)
     end
 end
 
+--- Copies file.
 function util.copyFile(from, to)
     local ffp, err = io.open(from, "rb")
     if err ~= nil then
@@ -159,8 +163,9 @@ function util.copyFile(from, to)
 end
 
 --[[--
-Joins paths
-NOTE: If path2 is an absolute path, then this function ignores path1 and returns path2 directly
+Joins paths.
+
+NOTE: If `path2` is an absolute path, then this function ignores `path1` and returns `path2` directly.
 --]]
 function util.joinPath(path1, path2)
     if string.sub(path2, 1, 1) == "/" then
@@ -313,7 +318,9 @@ function util.idiv(a, b)
     return (q > 0) and math.floor(q) or math.ceil(q)
 end
 
-function util.orderedPairs(t)
+--- Equivalent of the pairs() function on tables. Allows to iterate in order.
+function util.orderedPairs(t) return end
+do -- limits scope
     local function __genOrderedIndex( t )
     -- this function is taken from http://lua-users.org/wiki/SortedIteration
         local orderedIndex = {}
@@ -352,10 +359,12 @@ function util.orderedPairs(t)
         return
     end
 
-    -- this function is taken from http://lua-users.org/wiki/SortedIteration
-    -- Equivalent of the pairs() function on tables. Allows to iterate
-    -- in order
-    return orderedNext, t, nil
+    function util.orderedPairs(t)
+        -- this function is taken from http://lua-users.org/wiki/SortedIteration
+        -- Equivalent of the pairs() function on tables. Allows to iterate
+        -- in order
+        return orderedNext, t, nil
+    end
 end
 
 --[[--
