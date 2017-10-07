@@ -28,10 +28,6 @@ env:
     - TARGET=android NDKREV=r15c NDKABI=14
     - SHELLCHECKS=1
 
-matrix:
-  allow_failures:
-    - env: SHELLCHECKS=1
-
 addons:
   apt:
     packages:
