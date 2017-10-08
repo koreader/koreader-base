@@ -75,13 +75,10 @@ function KOPTContext_mt.__index:dstToBlitBuffer()
 end
 
 function KOPTContext_mt.__index:getWordBoxes(bmp, x, y, w, h, box_type)
-    local box = ffi.new("BOX[1]")
     local boxa = ffi.new("BOXA[1]")
     local nai = ffi.new("NUMA[1]")
-    local max_val = ffi.new("float[1]")
-    local last_index = ffi.new("int[1]")
     local counter_l = ffi.new("int[1]")
-    local nr_line, nr_word, current_line
+    local nr_word, current_line
     local counter_w, counter_cw
     local l_x0, l_y0, l_x1, l_y1
 
@@ -100,9 +97,6 @@ function KOPTContext_mt.__index:getWordBoxes(bmp, x, y, w, h, box_type)
     if boxa == nil or nai == nil then return end
 
     --get number of lines in this area
-    leptonica.numaGetMax(nai, max_val, last_index)
-    nr_line = max_val[0]
-    --get number of lines in this area
     nr_word = leptonica.boxaGetCount(boxa)
     assert(nr_word == leptonica.numaGetCount(nai))
 
@@ -117,7 +111,7 @@ function KOPTContext_mt.__index:getWordBoxes(bmp, x, y, w, h, box_type)
         counter_cw = 0
         l_x0, l_y0, l_x1, l_y1 = 9999, 9999, 0, 0
         while current_line == counter_l[0] and counter_w < nr_word do
-            box = leptonica.boxaGetBox(boxa, counter_w, ffi.C.L_CLONE)
+            local box = leptonica.boxaGetBox(boxa, counter_w, ffi.C.L_CLONE)
             --update line box
             l_x0 = box.x < l_x0 and box.x or l_x0
             l_y0 = box.y < l_y0 and box.y or l_y0
@@ -152,8 +146,8 @@ end
 
 function KOPTContext_mt.__index:reflowToNativePosTransform(xc, yc, wr, hr)
     local function wrectmap_reflow_distance(wrmap, x, y)
-        local function wrectmap_reflow_inside(wrmap, x, y)
-            return k2pdfopt.wrectmap_inside(wrmap, x, y) ~= 0
+        local function wrectmap_reflow_inside(wrmap_inside, x_inside, y_inside)
+            return k2pdfopt.wrectmap_inside(wrmap_inside, x_inside, y_inside) ~= 0
         end
         if wrectmap_reflow_inside(wrmap, x, y) then
             return 0
@@ -188,10 +182,10 @@ function KOPTContext_mt.__index:nativeToReflowPosTransform(xc, yc)
         local y = wrmap.coords[0].y*self.dev_dpi*self.quality/wrmap.srcdpih
         local w = wrmap.coords[2].x*self.dev_dpi*self.quality/wrmap.srcdpiw
         local h = wrmap.coords[2].y*self.dev_dpi*self.quality/wrmap.srcdpih
-        local function wrectmap_native_inside(wrmap, x0, y0)
-            return x <= x0 and y <= y0
-                    and x + w >= x0
-                    and y + h >= y0
+        local function wrectmap_native_inside(wrmap_inside, x0_inside, y0_inside)
+            return x <= x0_inside and y <= y0_inside
+                    and x + w >= x0_inside
+                    and y + h >= y0_inside
         end
         if wrectmap_native_inside(wrmap, x0, y0) then
             return 0
