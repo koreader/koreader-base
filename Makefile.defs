@@ -1,5 +1,8 @@
 SHELL:=/bin/bash
 
+# Used to decide whether to generate new CircleCI cache in frontend
+VERSION_BASE=$(shell git describe HEAD)
+
 # Use ccache in build system by default. Define USE_NO_CCACHE=1 to force disable it.
 ifeq ($(USE_NO_CCACHE), 1)
     CCACHE:=
