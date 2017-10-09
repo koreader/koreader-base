@@ -25,6 +25,7 @@ all: check-luajit-clean $(OUTPUT_DIR)/libs $(if $(ANDROID),,$(LUAJIT)) \
 		$(if $(or $(DARWIN),$(WIN32)), ,$(ZMQ_LIB) $(CZMQ_LIB) $(FILEMQ_LIB) $(ZYRE_LIB)) \
 		$(SQLITE_LIB) \
 		$(LUA_LJ_SQLITE) $(OUTPUT_DIR)/common/xsys.lua
+	echo $(VERSION_BASE) >git-rev
 ifndef EMULATE_READER
 	STRIP_FILES="\
 		$(if $(WIN32),,$(OUTPUT_DIR)/sdcv) \
