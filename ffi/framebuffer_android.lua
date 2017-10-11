@@ -42,17 +42,11 @@ function framebuffer:refreshFullImp()
     if bb then
         local ext_bb = self.full_bb or self.bb
 
-        -- on Android we just do the whole screen
-        local x = 0
-        local y = 0
-        local w = buffer[0].width
-        local h = buffer[0].height
-
         bb:setInverse(ext_bb:getInverse())
         -- adapt to possible rotation changes
         bb:setRotation(ext_bb:getRotation())
 
-        bb:blitFrom(ext_bb, x, y, x, y, w, h)
+        bb:blitFrom(ext_bb)
     end
 
     android.lib.ANativeWindow_unlockAndPost(android.app.window);
