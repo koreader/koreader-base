@@ -152,9 +152,9 @@ ifeq ($(wildcard $(NDK)/build/tools/make_standalone_toolchain.py),)
 		--install-dir=$(ANDROID_TOOLCHAIN)
 else
 	$(NDK)/build/tools/make_standalone_toolchain.py --force --install-dir=$(ANDROID_TOOLCHAIN) \
-		--arch arm --api $(NDKABI) --deprecated-headers || \
+		--arch $(ANDROID_ARCH) --api $(NDKABI) --deprecated-headers || \
 	$(NDK)/build/tools/make_standalone_toolchain.py --force --install-dir=$(ANDROID_TOOLCHAIN) \
-		--arch arm --api $(NDKABI)
+		--arch $(ANDROID_ARCH) --api $(NDKABI)
 endif
 endif
 
