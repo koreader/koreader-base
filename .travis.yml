@@ -21,11 +21,13 @@ env:
     - TARGET=kindle DOCKER_IMG=houqp/kokindle:0.0.2
     - TARGET=kobo DOCKER_IMG=houqp/kokobo:0.0.2
     - TARGET=pocketbook DOCKER_IMG=houqp/kopb:0.0.1
-    - TARGET=android NDKREV=r9c
     - TARGET=android NDKREV=r11c
+    - TARGET=android NDKREV=r11c ANDROID_ARCH=x86
     - TARGET=android NDKREV=r12b
+    - TARGET=android NDKREV=r12b ANDROID_ARCH=x86
     # API level 14 is the minimum target for NDK 15
     - TARGET=android NDKREV=r15c NDKABI=14
+    - TARGET=android NDKREV=r15c NDKABI=14 ANDROID_ARCH=x86
     - SHELLCHECKS=1
 
 addons:
