@@ -13,7 +13,8 @@ UNAME:=$(shell uname -s)
 MAKEFILE_DIR=$(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 TOOLCHAIN_DIR=$(MAKEFILE_DIR)toolchain
 POCKETBOOK_TOOLCHAIN=$(TOOLCHAIN_DIR)/pocketbook-toolchain
-ANDROID_TOOLCHAIN=$(TOOLCHAIN_DIR)/android-toolchain
+ANDROID_ARCH?=arm
+ANDROID_TOOLCHAIN=$(TOOLCHAIN_DIR)/android-toolchain-$(ANDROID_ARCH)
 NDK?=$(TOOLCHAIN_DIR)/android-ndk-r15c
 NDKABI?=9
 
@@ -51,8 +52,12 @@ else ifeq ($(TARGET), ubuntu-touch)
 else ifeq ($(TARGET), android)
     export ANDROID=1
     export PATH:=$(ANDROID_TOOLCHAIN)/bin:$(PATH)
-    export SYSROOT=$(NDK)/platforms/android-$(NDKABI)/arch-arm
-    CHOST?=arm-linux-androideabi
+    export SYSROOT=$(NDK)/platforms/android-$(NDKABI)/arch-$(ANDROID_ARCH)
+    ifeq ($(ANDROID_ARCH), x86)
+        CHOST?=i686-linux-android
+    else
+        CHOST?=arm-linux-androideabi
+    endif
 else ifeq ($(TARGET), win32)
     CHOST?=i686-w64-mingw32
     export WIN32=1
@@ -176,11 +181,14 @@ ARMV7_A8_ARCH:=-march=armv7-a -mtune=cortex-a8 -mfpu=neon -mthumb
 # Cortex A9 (Kindle PW2)
 ARMV7_A9_ARCH:=-march=armv7-a -mtune=cortex-a9 -mfpu=neon -mthumb
 # Android.
+ANDROID_COMPAT_CFLAGS:=--sysroot $(SYSROOT)
+ANDROID_COMPAT_CXXFLAGS:=--sysroot $(SYSROOT)
 # Mirror the NDK's armeabi-v7a APP_ABI (cf. #201)
-ANDROID_ARCH:=--sysroot $(SYSROOT)
-ANDROID_ARCH+=-march=armv7-a -mfpu=vfpv3-d16
-ANDROID_ARCH+=-mthumb
-ANDROID_ARCH+=-ffunction-sections -funwind-tables -fstack-protector -no-canonical-prefixes
+ifeq ($(ANDROID_ARCH), arm)
+    ANDROID_ARM_ARCH:=-march=armv7-a -mfpu=vfpv3-d16
+    ANDROID_ARM_ARCH+=-mthumb
+    ANDROID_ARM_ARCH+=-ffunction-sections -funwind-tables -fstack-protector -no-canonical-prefixes
+endif
 
 # Use target-specific CFLAGS
 ifeq ($(TARGET), kobo)
@@ -223,9 +231,13 @@ else ifeq ($(TARGET), kindle-legacy)
 	export ac_cv_func_utimensat=no
 	export ac_cv_func_futimens=no
 else ifeq ($(TARGET), android)
-	ARM_ARCH:=$(ANDROID_ARCH)
-	ARM_ARCH+=-mfloat-abi=softfp
-	export ac_cv_type_in_port_t=yes
+	COMPAT_CFLAGS:=$(ANDROID_COMPAT_CFLAGS)
+	COMPAT_CXXFLAGS:=$(ANDROID_COMPAT_CXXFLAGS)
+	ifeq ($(ANDROID_ARCH), arm)
+		ARM_ARCH:=$(ANDROID_ARM_ARCH)
+		ARM_ARCH+=-mfloat-abi=softfp
+		export ac_cv_type_in_port_t=yes
+	endif
 else ifeq ($(TARGET), arm-generic)
 	# Defaults to generic crap
 	ARM_ARCH:=$(ARMV6_GENERIC_ARCH)
@@ -254,7 +266,10 @@ endif
 
 # NOTE: Follow the NDK's lead
 ifeq ($(TARGET), android)
-	LDFLAGS+=-march=armv7-a -no-canonical-prefixes -Wl,--fix-cortex-a8
+	LDFLAGS+=-no-canonical-prefixes -Wl,--fix-cortex-a8
+	ifeq ($(ANDROID_ARCH), arm)
+		LDFLAGS+=-march=armv7-a
+	endif
 endif
 
 ifeq ($(TARGET), win32)
