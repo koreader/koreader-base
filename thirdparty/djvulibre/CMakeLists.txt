@@ -23,12 +23,28 @@ set(CFLAGS "${CFLAGS} -Wno-error")
 set(CFG_ENV_VAR "CC=\"${CC}\" CXX=\"${CXX}\" CFLAGS=\"${CFLAGS}\" CXXFLAGS=\"${CXXFLAGS}\" LDFLAGS=\"${LDFLAGS}\" LIBS=\"${LIBS}\"")
 set(CFG_OPTS "-q --disable-desktopfiles --disable-static --enable-shared --disable-xmltools --disable-largefile --without-jpeg --without-tiff -host=\"${CHOST}\"")
 set(CFG_CMD sh -c "${CFG_ENV_VAR} ${SOURCE_DIR}/configure ${CFG_OPTS}")
+
+if($ENV{ANDROID})
+    set(CFG_CMD "${CFG_CMD} && ${ISED} 's|version_type=none|version_type=linux|' libtool")
+    set(CFG_CMD "${CFG_CMD} && ${ISED} 's|need_lib_prefix=no|need_lib_prefix=yes|' libtool")
+    set(CFG_CMD "${CFG_CMD} && ${ISED} 's|need_version=no|need_version=yes|' libtool")
+    set(CFG_CMD "${CFG_CMD} && ${ISED} 's|library_names_spec=.*|library_names_spec=\"\\\\\$libname\\\\\$release\\\\\$shared_ext\\\\\$versuffix \\\\\$libname\\\\\$release\\\\\$shared_ext\\\\\$major \\\\\$libname\\\\\$shared_ext\"|' libtool")
+    set(CFG_CMD "${CFG_CMD} && ${ISED} 's|soname_spec=.*|soname_spec=\"\\\\\$libname\\\\\$release\\\\\$shared_ext\\\\\$major\"|' libtool")
+endif()
+
 set(PATCH_CMD sh -c "${ISED} \"s|-lstdc++||g\" libtool")
+
+# Technically we don't need tools on any platform but they only cause issues on Android
+if($ENV{ANDROID})
+    set(PATCH_CMD "${PATCH_CMD} && ${ISED} \"s|DIST_SUBDIRS = libdjvu.*|DIST_SUBDIRS = libdjvu|g\" Makefile")
+    set(PATCH_CMD "${PATCH_CMD} && ${ISED} \"s|SUBDIRS = libdjvu tools share \\$(am__append_1) \\$(am__append_2)|SUBDIRS = libdjvu share \\$(am__append_1) \\$(am__append_2)|g\" Makefile")
+    set(PATCH_CMD "${PATCH_CMD} && patch -N -p1 < ${CMAKE_CURRENT_SOURCE_DIR}/android.patch || true")
+endif()
 
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
     https://gitlab.com/koreader/djvulibre.git
-    070fef721a8e8fdf68c4b0e3fcf0a179c804d818
+    debian/3.5.27.1-7
     ${SOURCE_DIR}
 )
 
