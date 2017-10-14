@@ -366,7 +366,7 @@ $(OPENSSL_LIB) $(OPENSSL_DIR): $(THIRDPARTY_DIR)/openssl/CMakeLists.txt
 		$(CMAKE) -DCC="$(CC) $(if $(DARWIN),$(DYNLIB_CFLAGS),$(CFLAGS))" \
 		-DSHARED_LDFLAGS="$(LDFLAGS) -Wl,-rpath,$(OPENSSL_RPATH_ORIGIN)" \
 		-DLD="$(LD)" -DRANLIB="$(RANLIB)" $(if $(WIN32),-DCHOST="$(CHOST)",) \
-		-DCONFIG_SCRIPT="$(if $(EMULATE_READER),config,Configure $(if $(WIN32),mingw,linux-generic32))" \
+		-DCONFIG_SCRIPT="$(if $(EMULATE_READER),$(if $(DARWIN),Configure darwin64-x86_64-cc,config),Configure $(if $(WIN32),mingw,linux-generic32))" \
 		$(CURDIR)/$(THIRDPARTY_DIR)/openssl && \
 		$(MAKE)
 
@@ -376,7 +376,7 @@ $(SSL_LIB): $(OPENSSL_LIB)
 
 # ssl.so locates in koreader/common, but libssl.so and libcrypto.so live
 # in koreader/libs, so we need to set rpath accordingly
-$(LUASEC): $(OPENSSL_DIR) $(THIRDPARTY_DIR)/luasec/CMakeLists.txt
+$(LUASEC): $(SSL_LIB) $(THIRDPARTY_DIR)/luasec/CMakeLists.txt
 	install -d $(LUASEC_BUILD_DIR)
 	-rm -f $(LUASEC_DIR)/../luasec-stamp/luasec-install
 	cd $(LUASEC_BUILD_DIR) && \
@@ -523,7 +523,7 @@ $(SQLITE_LIB): $(THIRDPARTY_DIR)/sqlite/CMakeLists.txt
 			-DCFLAGS="$(CFLAGS)" \
 		$(CURDIR)/thirdparty/sqlite && \
 		$(MAKE)
-	cp $(SQLITE_DIR)/lib/libsqlite3.so $(OUTPUT_DIR)/libs
+	cp $(SQLITE_DIR)/lib/$(notdir $(SQLITE_LIB)) $(OUTPUT_DIR)/libs
 
 $(LUA_LJ_SQLITE) $(OUTPUT_DIR)/common/xsys.lua: $(LUA_LJ_SQLITE_DIR)/init.lua $(LUA_LJ_SQLITE_DIR)/xsys.lua
 	install -d $(LUA_LJ_SQLITE_INSTALL_DIR)
