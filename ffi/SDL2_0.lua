@@ -117,7 +117,8 @@ function S.waitForEvent(usecs)
 		if ffi.os == "OSX" and (event.type == SDL.SDL_FINGERMOTION or
 			event.type == SDL.SDL_FINGERDOWN or
 			event.type == SDL.SDL_FINGERUP) then
-			-- no op
+			-- noop for trackpad finger inputs which interfere with emulated mouse inputs
+			do end
 		elseif event.type == SDL.SDL_KEYDOWN then
 			genEmuEvent(ffi.C.EV_KEY, event.key.keysym.scancode, 1)
 		elseif event.type == SDL.SDL_KEYUP then
