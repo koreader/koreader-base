@@ -118,7 +118,7 @@ function S.waitForEvent(usecs)
 			event.type == SDL.SDL_FINGERDOWN or
 			event.type == SDL.SDL_FINGERUP) then
 			-- noop for trackpad finger inputs which interfere with emulated mouse inputs
-			do end
+			do end -- luacheck: ignore 541
 		elseif event.type == SDL.SDL_KEYDOWN then
 			genEmuEvent(ffi.C.EV_KEY, event.key.keysym.scancode, 1)
 		elseif event.type == SDL.SDL_KEYUP then
