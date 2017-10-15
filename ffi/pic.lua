@@ -237,7 +237,7 @@ function Pic.openJPGDocumentFromMem(data)
     local doc = PicDocument:new{width=width[0], height=height[0] }
     doc.image_bb = BB.new(width[0], height[0], BB.TYPE_BBRGB24)
     doc.components = 1
-    local format = turbojpeg.TJPF_BGR
+    local format = turbojpeg.TJPF_RGB
 
     if turbojpeg.tjDecompress2(handle, ffi.cast("unsigned char*", data), #data,
         ffi.cast("unsigned char*", doc.image_bb.data),
