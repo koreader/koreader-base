@@ -479,8 +479,8 @@ TESSERACT_LIB=$(OUTPUT_DIR)/libs/libtesseract$(TESS_LIB_EXT)
 OPENSSL_BUILD_DIR=$(THIRDPARTY_DIR)/openssl/build/$(MACHINE)
 OPENSSL_DIR=$(CURDIR)/$(OPENSSL_BUILD_DIR)/openssl-prefix/src/openssl
 OPENSSL_LIB=$(OPENSSL_DIR)/libssl.$(if $(WIN32),a,so)
-SSL_LIB=$(OUTPUT_DIR)/libs/libssl$(if $(WIN32),-1.dll,.so.1.0.0)
-CRYPTO_LIB=$(OUTPUT_DIR)/libs/libcrypto$(if $(WIN32),-1.dll,.so.1.0.0)
+SSL_LIB=$(OUTPUT_DIR)/libs/libssl$(if $(WIN32),-1.dll,$(if $(DARWIN),.1.0.0.dylib,.so.1.0.0))
+CRYPTO_LIB=$(OUTPUT_DIR)/libs/libcrypto$(if $(WIN32),-1.dll,$(if $(DARWIN),.1.0.0.dylib,.so.1.0.0))
 
 LUASOCKET_BUILD_DIR=$(THIRDPARTY_DIR)/luasocket/build/$(MACHINE)
 LUASOCKET_DIR=$(CURDIR)/luasocket-prefix/src/luasocket
@@ -534,7 +534,8 @@ LUA_SPORE_ROCK=$(LUAROCKS_DIR)/lua-spore/$(SPORE_VER)/$(LUA_SPORE_VER).rockspec
 
 SQLITE_BUILD_DIR=$(THIRDPARTY_DIR)/sqlite/build/$(MACHINE)
 SQLITE_DIR=$(CURDIR)/$(SQLITE_BUILD_DIR)/sqlite-prefix/src/sqlite-build
-SQLITE_LIB=$(OUTPUT_DIR)/libs/libsqlite3.so
+SQLITE_LIB_EXT=$(if $(WIN32),.dll,$(if $(DARWIN),.dylib,.so))
+SQLITE_LIB=$(OUTPUT_DIR)/libs/libsqlite3$(SQLITE_LIB_EXT)
 
 LUA_LJ_SQLITE_DIR=$(CURDIR)/$(THIRDPARTY_DIR)/lua-ljsqlite3
 LUA_LJ_SQLITE_INSTALL_DIR=$(OUTPUT_DIR)/common/lua-ljsqlite3
