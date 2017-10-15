@@ -39,6 +39,7 @@ typedef struct DjvuDocument {
 	ddjvu_context_t *context;
 	ddjvu_document_t *doc_ref;
 	ddjvu_format_t *pixelformat;
+	int pixelsize;
 } DjvuDocument;
 
 typedef struct DjvuPage {
@@ -78,7 +79,8 @@ static int handle(lua_State *L, ddjvu_context_t *ctx, int wait)
 
 static int openDocument(lua_State *L) {
 	const char *filename = luaL_checkstring(L, 1);
-	int cache_size = luaL_optint(L, 2, 10 << 20);
+	int color = lua_toboolean(L, 2);
+	int cache_size = luaL_optint(L, 3, 10 << 20);
 
 	DjvuDocument *doc = (DjvuDocument*) lua_newuserdata(L, sizeof(DjvuDocument));
 	luaL_getmetatable(L, "djvudocument");
@@ -98,7 +100,14 @@ static int openDocument(lua_State *L) {
 	while (! ddjvu_document_decoding_done(doc->doc_ref))
 		handle(L, doc->context, True);
 
-	doc->pixelformat = ddjvu_format_create(DDJVU_FORMAT_GREY8, 0, NULL);
+	if (color) {
+		doc->pixelsize = 3;
+		doc->pixelformat = ddjvu_format_create(DDJVU_FORMAT_RGB24, 0, NULL);
+	}
+	else {
+		doc->pixelsize = 1;
+		doc->pixelformat = ddjvu_format_create(DDJVU_FORMAT_GREY8, 0, NULL);
+	}
 	if (! doc->pixelformat) {
 		return luaL_error(L, "cannot create DjVu pixelformat for <%s>", filename);
 	}
@@ -126,6 +135,26 @@ static int closeDocument(lua_State *L) {
 		ddjvu_format_release(doc->pixelformat);
 		doc->pixelformat = NULL;
 	}
+	return 0;
+}
+
+static int setColorRendering(lua_State *L) {
+	DjvuDocument *doc = (DjvuDocument*) luaL_checkudata(L, 1, "djvudocument");
+	int color = lua_toboolean(L, 2);
+	if (doc->pixelformat != NULL) {
+		ddjvu_format_release(doc->pixelformat);
+		doc->pixelformat = NULL;
+	}
+	if (color) {
+		doc->pixelsize = 3;
+		doc->pixelformat = ddjvu_format_create(DDJVU_FORMAT_RGB24, 0, NULL);
+	}
+	else {
+		doc->pixelsize = 1;
+		doc->pixelformat = ddjvu_format_create(DDJVU_FORMAT_GREY8, 0, NULL);
+	}
+	ddjvu_format_set_row_order(doc->pixelformat, 1);
+	ddjvu_format_set_y_direction(doc->pixelformat, 1);
 	return 0;
 }
 
@@ -515,7 +544,7 @@ static int getPagePix(lua_State *L) {
 	bmp_init(dst);
 	dst->width = rrect.w;
 	dst->height = rrect.h;
-	dst->bpp = 8;
+	dst->bpp = 8*page->doc->pixelsize;
 	bmp_alloc(dst);
 	if (dst->bpp == 8) {
 		int ii;
@@ -569,7 +598,7 @@ static int reflowPage(lua_State *L) {
 	bmp_init(src);
 	src->width = rrect.w;
 	src->height = rrect.h;
-	src->bpp = 8;
+	src->bpp = 8*page->doc->pixelsize;
 
 	bmp_alloc(src);
 	if (src->bpp == 8) {
@@ -603,7 +632,7 @@ static int drawPage(lua_State *L) {
 	BlitBuffer *bb = (BlitBuffer*) lua_topointer(L, 3);
 	ddjvu_render_mode_t djvu_render_mode = (int) luaL_checkint(L, 6);
 	ddjvu_rect_t pagerect, renderrect;
-	int bbsize = (bb->w)*(bb->h);
+	int bbsize = (bb->w)*(bb->h)*page->doc->pixelsize;
 	uint8_t *imagebuffer = bb->data;
 
 	/*printf("@page %d, @@zoom:%f, offset: (%d, %d)\n", page->num, dc->zoom, dc->offset_x, dc->offset_y);*/
@@ -638,7 +667,7 @@ static int drawPage(lua_State *L) {
 	 * So we don't set rotation here.
 	 */
 
-	if (!ddjvu_page_render(page->page_ref, djvu_render_mode, &pagerect, &renderrect, page->doc->pixelformat, bb->w, imagebuffer))
+	if (!ddjvu_page_render(page->page_ref, djvu_render_mode, &pagerect, &renderrect, page->doc->pixelformat, bb->w*page->doc->pixelsize, imagebuffer))
 		memset(imagebuffer, 0xFF, bbsize);
 
 	/* Gamma correction of the blitbuffer, do we need to build this into BlitBuffer? */
@@ -689,6 +718,7 @@ static const struct luaL_Reg djvudocument_meth[] = {
 	{"getOriginalPageSize", getOriginalPageSize},
 	{"getPageInfo", getPageInfo},
 	{"close", closeDocument},
+	{"setColorRendering", setColorRendering},
 	{"getCacheSize", getCacheSize},
 	{"cleanCache", cleanCache},
 	{"__gc", closeDocument},
