@@ -16,7 +16,7 @@ endif()
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
     https://github.com/tesseract-ocr/tesseract.git
-    60176fc5ae5e7f6bdef60c926a4b5ea03de2bfa7
+    3.05.01
     ${SOURCE_DIR}
 )
 
