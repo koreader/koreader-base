@@ -309,8 +309,8 @@ ifdef EMULATE_READER
 	CXXFLAGS+= $(HOST_ARCH)
 else
 	# CMake is difficult about CC and CXX, especially when it's not just a full path
-	CMAKE_C_COMPILER:=$(shell which $(CC))
-	CMAKE_CXX_COMPILER:=$(shell which $(CXX))
+	CMAKE_C_COMPILER:=$(shell which $(strip $(CC)))
+	CMAKE_CXX_COMPILER:=$(shell which $(strip $(CXX)))
 	CMAKE_C_COMPILER_ARG1:= -static-libstdc++
 	CMAKE_CXX_COMPILER_ARG1:= -static-libstdc++
 	ifdef CCACHE
