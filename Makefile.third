@@ -290,19 +290,19 @@ $(OUTPUT_DIR)/sdcv: $(if $(ANDROID),$(GLIB_STATIC),$(GLIB)) $(ZLIB_STATIC) $(THI
 	cd $(SDCV_BUILD_DIR) && \
 		$(CMAKE) -DHOST="$(if $(EMULATE_READER),,$(CHOST))" \
 		$(PAGE_SIZE_CFG) -DPKG_CONFIG_PATH="$(GLIB_DIR)/lib/pkgconfig" \
-		-DCXX="$(CXX) $(if $(ANDROID),-D_GETOPT_DEFINED,)" \
-		-DCXXFLAGS="$(CXXFLAGS) -I$(ZLIB_DIR) $(if $(ANDROID), \
-			-I$(LIBICONV_DIR)/include -I$(GETTEXT_DIR)/include,)" \
-		-DLDFLAGS="$(LDFLAGS) -L$(ZLIB_DIR) $(if $(ANDROID), \
-			-L$(LIBICONV_DIR)/lib -L$(GETTEXT_DIR)/lib,)" \
-		-DLIBS="$(if $(ANDROID),$(GLIB_STATIC),) \
-			$(if $(ANDROID),,-lpthread -lrt) \
-			$(ZLIB_STATIC) \
-			$(if $(ANDROID),-static,) \
-			-static-libgcc -static-libstdc++" \
+		-DLDFLAGS="$(LDFLAGS)" \
+		-DCMAKE_CXX_COMPILER="$(CMAKE_CXX_COMPILER)" \
+		-DCMAKE_CXX_COMPILER_LAUNCHER="$(CMAKE_CXX_COMPILER_LAUNCHER)" \
+		-DCMAKE_CXX_COMPILER_ARG1="$(CMAKE_CXX_COMPILER_ARG1)" \
+		-DGLIB="$(if $(ANDROID),$(GLIB_STATIC),$(GLIB))" \
+		-DGLIB_DIR="$(GLIB_DIR)" \
+		-DZLIB="$(ZLIB_STATIC)" \
+		-DZLIB_DIR="$(ZLIB_DIR)" \
+		-DLIBICONV_DIR="$(LIBICONV_DIR)" \
+		-DGETTEXT_DIR="$(GETTEXT_DIR)" \
 		$(CURDIR)/$(THIRDPARTY_DIR)/sdcv && \
 		$(MAKE)
-	cp $(SDCV_DIR)/src/sdcv $(OUTPUT_DIR)/
+	cp $(SDCV_DIR)/sdcv $(OUTPUT_DIR)/
 ifdef ANDROID
 	readelf -d $@ | grep "no dynamic" \
 		|| echo "warning: Android L+ support only PIE binary and can't run this"
