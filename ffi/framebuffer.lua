@@ -138,9 +138,20 @@ function fb:setViewport(viewport)
     or viewport.w < 0 or viewport.x+viewport.w > self.screen_size.w
     or viewport.h < 0 or viewport.y+viewport.h > self.screen_size.h
     then
-        error("bad viewport")
+        error("fb:setViewport() bad viewport")
     end
-    self.full_bb = self.bb
+    -- we might be switching the viewport on the fly, so don't overwrite self.full_bb
+    if not self.full_bb then
+        self.full_bb = self.bb
+    else
+        -- reset before applying new viewport
+        self.bb = self.bb:viewport(
+            -self.viewport.x, -self.viewport.y,
+            self.screen_size.w, self.screen_size.h)
+    end
+    self.debug("fb:setViewport() setting viewport to",
+               viewport.x, viewport.y,
+               viewport.w, viewport.h)
     self.bb = self.bb:viewport(
         viewport.x, viewport.y,
         viewport.w, viewport.h)
