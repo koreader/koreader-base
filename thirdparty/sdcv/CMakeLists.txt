@@ -87,6 +87,8 @@ set(CFG_OPTS "${CFG_OPTS} -DENABLE_NLS:BOOL=False -DWITH_READLINE:BOOL=False")
 ### Disable the silly build tree RPATH
 set(CFG_OPTS "${CFG_OPTS} -DCMAKE_SKIP_BUILD_RPATH:BOOL=True")
 set(CFG_CMD sh -c "${CMAKE_COMMAND} ${CFG_OPTS}")
+# Force utf8 command line parsing, and accept not-found -u dictnames
+set(PATCH_CMD2 sh -c "patch -N -p1 < ${CMAKE_CURRENT_SOURCE_DIR}/sdcv.patch || true")
 
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
@@ -100,7 +102,7 @@ ExternalProject_Add(
     ${PROJECT_NAME}
     DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
     BUILD_IN_SOURCE 1
-    PATCH_COMMAND ${PATCH_CMD}
+    PATCH_COMMAND COMMAND ${PATCH_CMD} COMMAND ${PATCH_CMD2}
     CONFIGURE_COMMAND ${CFG_CMD}
     BUILD_COMMAND $(MAKE) -j${PARALLEL_JOBS}
     # skip install

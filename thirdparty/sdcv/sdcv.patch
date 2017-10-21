@@ -1,0 +1,24 @@
+diff --git a/src/sdcv.cpp b/src/sdcv.cpp
+index 0c75eb1..f0dee2b 100644
+--- a/src/sdcv.cpp
++++ b/src/sdcv.cpp
+@@ -62,7 +62,7 @@ using StrArr = ResourceWrapper<gchar *, gchar *, free_str_array>;
+ static void list_dicts(const std::list<std::string> &dicts_dir_list, bool use_json);
+ 
+ int main(int argc, char *argv[]) try {
+-    setlocale(LC_ALL, "");
++    setlocale(LC_ALL, "en_US.UTF-8");
+ #if ENABLE_NLS
+     bindtextdomain("sdcv",
+                    //"./locale"//< for testing
+@@ -182,7 +182,9 @@ int main(int argc, char *argv[]) try {
+         // add bookname to list
+         gchar **p = get_impl(use_dict_list);
+         while (*p) {
+-            order_list.push_back(bookname_to_ifo.at(*p));
++            if (bookname_to_ifo.count(*p) > 0) {
++                order_list.push_back(bookname_to_ifo.at(*p));
++            }
+             ++p;
+         }
+     } else {
