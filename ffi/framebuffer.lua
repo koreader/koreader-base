@@ -143,19 +143,16 @@ function fb:setViewport(viewport)
     -- we might be switching the viewport on the fly, so don't overwrite self.full_bb
     if not self.full_bb then
         self.full_bb = self.bb
-    else
-        -- reset before applying new viewport
-        self.bb = self.bb:viewport(
-            -self.viewport.x, -self.viewport.y,
-            self.screen_size.w, self.screen_size.h)
     end
     self.debug("fb:setViewport() setting viewport to",
                viewport.x, viewport.y,
                viewport.w, viewport.h)
-    self.bb = self.bb:viewport(
+    self.bb = self.full_bb:viewport(
         viewport.x, viewport.y,
         viewport.w, viewport.h)
     self.viewport = viewport
+    self.full_bb:fill(Blitbuffer.COLOR_WHITE)
+    self:refreshFull()
 end
 
 function fb:calculateRealCoordinates(x, y)
