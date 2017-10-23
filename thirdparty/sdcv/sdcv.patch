@@ -1,8 +1,31 @@
 diff --git a/src/sdcv.cpp b/src/sdcv.cpp
-index 0c75eb1..da3ff4c 100644
+index 0c75eb1..4da9f16 100644
 --- a/src/sdcv.cpp
 +++ b/src/sdcv.cpp
-@@ -88,7 +88,7 @@ int main(int argc, char *argv[]) try {
+@@ -62,7 +62,9 @@ using StrArr = ResourceWrapper<gchar *, gchar *, free_str_array>;
+ static void list_dicts(const std::list<std::string> &dicts_dir_list, bool use_json);
+ 
+ int main(int argc, char *argv[]) try {
+-    setlocale(LC_ALL, "");
++    // LC_ALL may be empty on Android, and GLib would consider locale to be 'C'
++    // and try to convert our provided utf8 to utf8 which would fail
++    setlocale(LC_ALL, "en_US.UTF-8");
+ #if ENABLE_NLS
+     bindtextdomain("sdcv",
+                    //"./locale"//< for testing
+@@ -83,12 +85,19 @@ int main(int argc, char *argv[]) try {
+     gboolean only_data_dir = FALSE;
+     gboolean colorize = FALSE;
+ 
++    // Glib, with G_OPTION_ARG_STRING* option, would convert it to utf8
++    // according to current locale (LC_ALL). But for that, even when locale
++    // is utf8 and no conversion should be then needded, it needs some locale
++    // infrastructure to be present on the system (/usr/lib/locale/locale-archive
++    // on most Linux distributions). Such infrastructure is not present on Kobo.
++    // This conversion can be prevented by using G_OPTION_ARG_FILENAME* instead
++    // of G_OPTION_ARG_STRING*.
+     const GOptionEntry entries[] = {
+         { "version", 'v', 0, G_OPTION_ARG_NONE, &show_version,
            _("display version information and exit"), nullptr },
          { "list-dicts", 'l', 0, G_OPTION_ARG_NONE, &show_list_dicts,
            _("display list of available dictionaries and exit"), nullptr },
@@ -11,7 +34,7 @@ index 0c75eb1..da3ff4c 100644
            _("for search use only dictionary with this bookname"),
            _("bookname") },
          { "non-interactive", 'n', 0, G_OPTION_ARG_NONE, &non_interactive,
-@@ -101,7 +101,7 @@ int main(int argc, char *argv[]) try {
+@@ -101,7 +110,7 @@ int main(int argc, char *argv[]) try {
            _("output must be in utf8"), nullptr },
          { "utf8-input", '1', 0, G_OPTION_ARG_NONE, &utf8_input,
            _("input of sdcv in utf8"), nullptr },
@@ -20,12 +43,12 @@ index 0c75eb1..da3ff4c 100644
            _("use this directory as path to stardict data directory"),
            _("path/to/dir") },
          { "only-data-dir", 'x', 0, G_OPTION_ARG_NONE, &only_data_dir,
-@@ -182,7 +182,9 @@ int main(int argc, char *argv[]) try {
+@@ -182,7 +191,9 @@ int main(int argc, char *argv[]) try {
          // add bookname to list
          gchar **p = get_impl(use_dict_list);
          while (*p) {
 -            order_list.push_back(bookname_to_ifo.at(*p));
-+            if (bookname_to_ifo.count(*p) > 0) {
++            if (bookname_to_ifo.count(*p) > 0) { // don't fail if -u <bookname> is not found
 +                order_list.push_back(bookname_to_ifo.at(*p));
 +            }
              ++p;
