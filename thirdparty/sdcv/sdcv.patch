@@ -1,19 +1,20 @@
 diff --git a/src/sdcv.cpp b/src/sdcv.cpp
-index 0c75eb1..4da9f16 100644
+index 0c75eb1..2e40b6d 100644
 --- a/src/sdcv.cpp
 +++ b/src/sdcv.cpp
-@@ -62,7 +62,9 @@ using StrArr = ResourceWrapper<gchar *, gchar *, free_str_array>;
+@@ -62,7 +62,10 @@ using StrArr = ResourceWrapper<gchar *, gchar *, free_str_array>;
  static void list_dicts(const std::list<std::string> &dicts_dir_list, bool use_json);
  
  int main(int argc, char *argv[]) try {
 -    setlocale(LC_ALL, "");
-+    // LC_ALL may be empty on Android, and GLib would consider locale to be 'C'
++    // LC_ALL and LANG may be empty on Android, and GLib would consider locale to be 'C'
 +    // and try to convert our provided utf8 to utf8 which would fail
++    g_setenv("LANG", "en_US.UTF-8", true);
 +    setlocale(LC_ALL, "en_US.UTF-8");
  #if ENABLE_NLS
      bindtextdomain("sdcv",
                     //"./locale"//< for testing
-@@ -83,12 +85,19 @@ int main(int argc, char *argv[]) try {
+@@ -83,12 +86,19 @@ int main(int argc, char *argv[]) try {
      gboolean only_data_dir = FALSE;
      gboolean colorize = FALSE;
  
@@ -34,7 +35,7 @@ index 0c75eb1..4da9f16 100644
            _("for search use only dictionary with this bookname"),
            _("bookname") },
          { "non-interactive", 'n', 0, G_OPTION_ARG_NONE, &non_interactive,
-@@ -101,7 +110,7 @@ int main(int argc, char *argv[]) try {
+@@ -101,7 +111,7 @@ int main(int argc, char *argv[]) try {
            _("output must be in utf8"), nullptr },
          { "utf8-input", '1', 0, G_OPTION_ARG_NONE, &utf8_input,
            _("input of sdcv in utf8"), nullptr },
@@ -43,7 +44,7 @@ index 0c75eb1..4da9f16 100644
            _("use this directory as path to stardict data directory"),
            _("path/to/dir") },
          { "only-data-dir", 'x', 0, G_OPTION_ARG_NONE, &only_data_dir,
-@@ -182,7 +191,9 @@ int main(int argc, char *argv[]) try {
+@@ -182,7 +192,9 @@ int main(int argc, char *argv[]) try {
          // add bookname to list
          gchar **p = get_impl(use_dict_list);
          while (*p) {
