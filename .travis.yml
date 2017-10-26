@@ -3,7 +3,6 @@
 
 dist: trusty
 sudo: required
-# sudo: false
 
 service:
   - docker
@@ -15,6 +14,7 @@ cache:
 
 env:
   matrix:
+    - SHELLCHECKS=1
     - EMULATE_READER=1 CC=gcc
     - EMULATE_READER=1 CC=gcc KODEBUG=1
     - EMULATE_READER=1 CC=clang
@@ -27,7 +27,6 @@ env:
     # API level 14 is the minimum target for NDK 15
     - TARGET=android NDKREV=r15c NDKABI=14
     - TARGET=android NDKREV=r15c NDKABI=14 ANDROID_ARCH=x86
-    - SHELLCHECKS=1
 
 addons:
   apt:
