@@ -18,6 +18,15 @@ ANDROID_TOOLCHAIN=$(TOOLCHAIN_DIR)/android-toolchain-$(ANDROID_ARCH)
 NDK?=$(TOOLCHAIN_DIR)/android-ndk-r15c
 NDKABI?=9
 
+# set debug-related variables to cascade down
+ifdef KODEBUG
+	DEBUG:=$(KODEBUG)
+	export DEBUG
+	# will have to be passed as -DCMAKE_BUILD_TYPE to $(CMAKE) invocations
+	CMAKE_BUILD_TYPE:=Debug
+	export CMAKE_BUILD_TYPE
+endif
+
 # CMAKE=cmake --no-warn-unused-cli
 CMAKE=cmake
 
@@ -376,7 +385,8 @@ endif
 
 # this will create a path named build/arm-none-linux-gnueabi or similar
 MACHINE?=$(shell PATH='$(PATH)' $(CC) -dumpmachine 2>/dev/null)
-ifdef DEBUG
+ifdef KODEBUG
+    MACHINE:=$(MACHINE)-debug
     $(info ************ Building for MACHINE: "$(MACHINE)" **********)
     $(info ************ PATH: "$(PATH)" **********)
     $(info ************ CHOST: "$(CHOST)" **********)
