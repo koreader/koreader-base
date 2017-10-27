@@ -26,6 +26,7 @@ all: check-luajit-clean $(OUTPUT_DIR)/libs $(if $(ANDROID),,$(LUAJIT)) \
 		$(SQLITE_LIB) \
 		$(LUA_LJ_SQLITE) $(OUTPUT_DIR)/common/xsys.lua
 ifndef EMULATE_READER
+ifndef KODEBUG
 	STRIP_FILES="\
 		$(if $(WIN32),,$(OUTPUT_DIR)/sdcv) \
 		$(if $(WIN32),,$(OUTPUT_DIR)/tar) \
@@ -36,6 +37,7 @@ ifndef EMULATE_READER
 	touch -r $${STRIP_FILES}  # let all files have the same mtime
 	find $(OUTPUT_DIR)/common -name "$(if $(WIN32),*.dll,*.so*)" | \
 		xargs $(STRIP) --strip-unneeded
+endif
 endif
 	# set up some needed paths and links
 	install -d $(OUTPUT_DIR)/{cache,history,clipboard,fonts} $(CURDIR)/$(EVERNOTE_THRIFT_DIR)
