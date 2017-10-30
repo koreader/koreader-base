@@ -8,19 +8,19 @@ source "${CI_DIR}/common.sh"
 travis_retry make fetchthirdparty
 
 if [ "$TARGET" = kobo ]; then
-    chmod -R 777 "${HOME}/.ccache"
+    sudo chmod -R 777 "${HOME}/.ccache"
     docker run -t \
         -v "${HOME}/.ccache:${DOCKER_HOME}/.ccache" \
         -v "$(pwd):${DOCKER_HOME}/base" "${DOCKER_IMG}" \
         /bin/bash -c 'source /home/ko/.bashrc && cd /home/ko/base && sudo chown -R ko:ko . && make TARGET=kobo all'
 elif [ "$TARGET" = kindle ]; then
-    chmod -R 777 "${HOME}/.ccache"
+    sudo chmod -R 777 "${HOME}/.ccache"
     docker run -t \
         -v "${HOME}/.ccache:${DOCKER_HOME}/.ccache" \
         -v "$(pwd):${DOCKER_HOME}/base" "${DOCKER_IMG}" \
         /bin/bash -c 'source /home/ko/.bashrc && cd /home/ko/base && sudo chown -R ko:ko . && make TARGET=kindle all'
 elif [ "$TARGET" = pocketbook ]; then
-    chmod -R 777 "${HOME}/.ccache"
+    sudo chmod -R 777 "${HOME}/.ccache"
     docker run -t \
         -v "${HOME}/.ccache:${DOCKER_HOME}/.ccache" \
         -v "$(pwd):${DOCKER_HOME}/base" "${DOCKER_IMG}" \
