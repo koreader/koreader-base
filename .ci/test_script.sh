@@ -14,7 +14,10 @@ mv ../../tesseract-ocr/tessdata/* data/tessdata/ && cd ../../ || exit
 # fetch font for base test
 travis_retry wget https://github.com/koreader/koreader/raw/master/resources/fonts/droid/DroidSansMono.ttf
 export OUTPUT_DIR
-OUTPUT_DIR=$(ls -d ./build/x86_64-*linux-gnu)
+if [ -n "${KODEBUG+x}" ]; then
+    KODEBUG_SUFFIX=-debug
+fi
+OUTPUT_DIR=$(ls -d ./build/x86_64-*linux-gnu${KODEBUG_SUFFIX})
 mkdir -p "${OUTPUT_DIR}/fonts/droid/"
 cp DroidSansMono.ttf "${OUTPUT_DIR}/fonts/droid/DroidSansMono.ttf"
 # finally make test
