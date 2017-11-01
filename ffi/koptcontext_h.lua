@@ -168,5 +168,6 @@ void pageregions_free(PAGEREGIONS *regions);
 void k2pdfopt_crop_bmp(KOPTContext *kctx);
 void k2pdfopt_part_bmp(KOPTContext *kctx);
 void k2pdfopt_optimize_bmp(KOPTContext *kctx);
+void pixmap_to_bmp(WILLUSBITMAP *bmp, unsigned char *pix_data, int ncomp);
 PIX* bitmap2pix(WILLUSBITMAP *src, int x, int y, int w, int h);
 ]]
