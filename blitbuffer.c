@@ -52,25 +52,25 @@
 #define GET_BB_TYPE(bb) (((MASK_TYPE & bb->config) >> SHIFT_TYPE))
 #define SET_ALPHA_FROM_A(sbb_type, src) \
     if (sbb_type == TYPE_BB8) { \
-        Color8 *srcptr = (Color8*)(src->data) + (o_y * src->w) + o_x; \
+        Color8 *srcptr = (Color8*)(src->data + o_y * src->pitch) + o_x; \
         alpha = srcptr->a; \
     } else if (sbb_type == TYPE_BB8A) { \
-        Color8A *srcptr = (Color8A*)(src->data) + (o_y * src->w) + o_x; \
+        Color8A *srcptr = (Color8A*)(src->data + o_y * src->pitch) + o_x; \
         alpha = srcptr->a; \
     } else if (sbb_type == TYPE_BBRGB16) { \
-        ColorRGB16 *srcptr = (ColorRGB16*)(src->data) + (o_y * src->w) + o_x; \
+        ColorRGB16 *srcptr = (ColorRGB16*)(src->data + o_y * src->pitch) + o_x; \
         alpha = ColorRGB16_To_A(srcptr->v); \
     } else if (sbb_type == TYPE_BBRGB24) { \
-        ColorRGB24 *srcptr = (ColorRGB24*)(src->data) + (o_y * src->w) + o_x; \
+        ColorRGB24 *srcptr = (ColorRGB24*)(src->data + o_y * src->pitch) + o_x; \
         alpha = RGB_To_A(srcptr->r, srcptr->g, srcptr->b); \
     } else if (sbb_type == TYPE_BBRGB32) { \
-        ColorRGB32 *srcptr = (ColorRGB32*)(src->data) + (o_y * src->w) + o_x; \
+        ColorRGB32 *srcptr = (ColorRGB32*)(src->data + o_y * src->pitch) + o_x; \
         alpha = RGB_To_A(srcptr->r, srcptr->g, srcptr->b); \
     }
 #define FILL_COLOR(COLOR, c) \
     for (i = x; i < x + w; i++) { \
         for (j = y; j < y + h; j++) { \
-            COLOR *dstptr = (COLOR*)(bb->data) + (j * bb->w) + i; \
+            COLOR *dstptr = (COLOR*)(bb->data + j * bb->pitch) + i; \
             *dstptr = c; \
         } \
     }
@@ -101,21 +101,21 @@ void BB_blend_rect(BlitBuffer *bb, int x, int y, int w, int h, ColorRGB32 *color
     if (bb_type == TYPE_BB8) {
         for (i = x; i < x + w; i++) {
             for (j = y; j < y + h; j++) {
-                Color8 *dstptr = (Color8*)(bb->data) + (j * bb->w) + i;
+                Color8 *dstptr = (Color8*)(bb->data + j * bb->pitch) + i;
                 dstptr->a = DIV_255(dstptr->a * ainv + color->r * alpha);
             }
         }
     } else if (bb_type == TYPE_BB8A) {
         for (i = x; i < x + w; i++) {
             for (j = y; j < y + h; j++) {
-                Color8A *dstptr = (Color8A*)(bb->data) + (j * bb->w) + i;
+                Color8A *dstptr = (Color8A*)(bb->data + j * bb->pitch) + i;
                 dstptr->a = DIV_255(dstptr->a * ainv + color->r * alpha);
             }
         }
     } else if (bb_type == TYPE_BBRGB16) {
         for (i = x; i < x + w; i++) {
             for (j = y; j < y + h; j++) {
-                ColorRGB16 *dstptr = (ColorRGB16*)(bb->data) + (j * bb->w) + i;
+                ColorRGB16 *dstptr = (ColorRGB16*)(bb->data + j * bb->pitch) + i;
                 r = DIV_255(ColorRGB16_GetR(dstptr->v) * ainv + color->r * alpha);
                 g = DIV_255(ColorRGB16_GetG(dstptr->v) * ainv + color->g * alpha);
                 b = DIV_255(ColorRGB16_GetB(dstptr->v) * ainv + color->b * alpha);
@@ -125,7 +125,7 @@ void BB_blend_rect(BlitBuffer *bb, int x, int y, int w, int h, ColorRGB32 *color
     } else if (bb_type == TYPE_BBRGB24) {
         for (i = x; i < x + w; i++) {
             for (j = y; j < y + h; j++) {
-                ColorRGB24 *dstptr = (ColorRGB24*)(bb->data) + (j * bb->w) + i;
+                ColorRGB24 *dstptr = (ColorRGB24*)(bb->data + j * bb->pitch) + i;
                 dstptr->r = DIV_255(dstptr->r * ainv + color->r * alpha);
                 dstptr->g = DIV_255(dstptr->g * ainv + color->g * alpha);
                 dstptr->b = DIV_255(dstptr->b * ainv + color->b * alpha);
@@ -134,7 +134,7 @@ void BB_blend_rect(BlitBuffer *bb, int x, int y, int w, int h, ColorRGB32 *color
     } else if (bb_type == TYPE_BBRGB32) {
         for (i = x; i < x + w; i++) {
             for (j = y; j < y + h; j++) {
-                ColorRGB32 *dstptr = (ColorRGB32*)(bb->data) + (j * bb->w) + i;
+                ColorRGB32 *dstptr = (ColorRGB32*)(bb->data + j * bb->pitch) + i;
                 dstptr->r = DIV_255(dstptr->r * ainv + color->r * alpha);
                 dstptr->g = DIV_255(dstptr->g * ainv + color->g * alpha);
                 dstptr->b = DIV_255(dstptr->b * ainv + color->b * alpha);
@@ -152,8 +152,8 @@ void BB_blit_to_BB8(BlitBuffer *src, BlitBuffer *dst,
         for (d_x = dest_x; d_x < dest_x + w; d_x++) {
             o_y = offs_y;
             for (d_y = dest_y; d_y < dest_y + h; d_y++) {
-                Color8 *dstptr = (Color8*)(dst->data) + (d_y * dst->w) + d_x;
-                Color8 *srcptr = (Color8*)(src->data) + (o_y * src->w) + o_x;
+                Color8 *dstptr = (Color8*)(dst->data + d_y * dst->pitch) + d_x;
+                Color8 *srcptr = (Color8*)(src->data + o_y * src->pitch) + o_x;
                 *dstptr = *srcptr;
                 o_y += 1;
             }
@@ -164,8 +164,8 @@ void BB_blit_to_BB8(BlitBuffer *src, BlitBuffer *dst,
         for (d_x = dest_x; d_x < dest_x + w; d_x++) {
             o_y = offs_y;
             for (d_y = dest_y; d_y < dest_y + h; d_y++) {
-                Color8 *dstptr = (Color8*)(dst->data) + (d_y * dst->w) + d_x;
-                Color8A *srcptr = (Color8A*)(src->data) + (o_y * src->w) + o_x;
+                Color8 *dstptr = (Color8*)(dst->data + d_y * dst->pitch) + d_x;
+                Color8A *srcptr = (Color8A*)(src->data + o_y * src->pitch) + o_x;
                 dstptr->a = srcptr->a;
                 o_y += 1;
             }
@@ -176,8 +176,8 @@ void BB_blit_to_BB8(BlitBuffer *src, BlitBuffer *dst,
         for (d_x = dest_x; d_x < dest_x + w; d_x++) {
             o_y = offs_y;
             for (d_y = dest_y; d_y < dest_y + h; d_y++) {
-                Color8 *dstptr = (Color8*)(dst->data) + (d_y * dst->w) + d_x;
-                ColorRGB16 *srcptr = (ColorRGB16*)(src->data) + (o_y * src->w) + o_x;
+                Color8 *dstptr = (Color8*)(dst->data + d_y * dst->pitch) + d_x;
+                ColorRGB16 *srcptr = (ColorRGB16*)(src->data + o_y * src->pitch) + o_x;
                 dstptr->a = ColorRGB16_To_A(srcptr->v);
                 o_y += 1;
             }
@@ -188,8 +188,8 @@ void BB_blit_to_BB8(BlitBuffer *src, BlitBuffer *dst,
         for (d_x = dest_x; d_x < dest_x + w; d_x++) {
             o_y = offs_y;
             for (d_y = dest_y; d_y < dest_y + h; d_y++) {
-                Color8 *dstptr = (Color8*)(dst->data) + (d_y * dst->w) + d_x;
-                ColorRGB24 *srcptr = (ColorRGB24*)(src->data) + (o_y * src->w) + o_x;
+                Color8 *dstptr = (Color8*)(dst->data + d_y * dst->pitch) + d_x;
+                ColorRGB24 *srcptr = (ColorRGB24*)(src->data + o_y * src->pitch) + o_x;
                 dstptr->a = RGB_To_A(srcptr->r, srcptr->g, srcptr->b);
                 o_y += 1;
             }
@@ -200,8 +200,8 @@ void BB_blit_to_BB8(BlitBuffer *src, BlitBuffer *dst,
         for (d_x = dest_x; d_x < dest_x + w; d_x++) {
             o_y = offs_y;
             for (d_y = dest_y; d_y < dest_y + h; d_y++) {
-                Color8 *dstptr = (Color8*)(dst->data) + (d_y * dst->w) + d_x;
-                ColorRGB32 *srcptr = (ColorRGB32*)(src->data) + (o_y * src->w) + o_x;
+                Color8 *dstptr = (Color8*)(dst->data + d_y * dst->pitch) + d_x;
+                ColorRGB32 *srcptr = (ColorRGB32*)(src->data + o_y * src->pitch) + o_x;
                 dstptr->a = RGB_To_A(srcptr->r, srcptr->g, srcptr->b);
                 o_y += 1;
             }
@@ -219,8 +219,8 @@ void BB_blit_to_BB8A(BlitBuffer *src, BlitBuffer *dst,
         for (d_x = dest_x; d_x < dest_x + w; d_x++) {
             o_y = offs_y;
             for (d_y = dest_y; d_y < dest_y + h; d_y++) {
-                Color8A *dstptr = (Color8A*)(dst->data) + (d_y * dst->w) + d_x;
-                Color8 *srcptr = (Color8*)(src->data) + (o_y * src->w) + o_x;
+                Color8A *dstptr = (Color8A*)(dst->data + d_y * dst->pitch) + d_x;
+                Color8 *srcptr = (Color8*)(src->data + o_y * src->pitch) + o_x;
                 dstptr->a = srcptr->a;
                 o_y += 1;
             }
@@ -231,8 +231,8 @@ void BB_blit_to_BB8A(BlitBuffer *src, BlitBuffer *dst,
         for (d_x = dest_x; d_x < dest_x + w; d_x++) {
             o_y = offs_y;
             for (d_y = dest_y; d_y < dest_y + h; d_y++) {
-                Color8A *dstptr = (Color8A*)(dst->data) + (d_y * dst->w) + d_x;
-                Color8A *srcptr = (Color8A*)(src->data) + (o_y * src->w) + o_x;
+                Color8A *dstptr = (Color8A*)(dst->data + d_y * dst->pitch) + d_x;
+                Color8A *srcptr = (Color8A*)(src->data + o_y * src->pitch) + o_x;
                 *dstptr = *srcptr;
                 o_y += 1;
             }
@@ -243,8 +243,8 @@ void BB_blit_to_BB8A(BlitBuffer *src, BlitBuffer *dst,
         for (d_x = dest_x; d_x < dest_x + w; d_x++) {
             o_y = offs_y;
             for (d_y = dest_y; d_y < dest_y + h; d_y++) {
-                Color8A *dstptr = (Color8A*)(dst->data) + (d_y * dst->w) + d_x;
-                ColorRGB16 *srcptr = (ColorRGB16*)(src->data) + (o_y * src->w) + o_x;
+                Color8A *dstptr = (Color8A*)(dst->data + d_y * dst->pitch) + d_x;
+                ColorRGB16 *srcptr = (ColorRGB16*)(src->data + o_y * src->pitch) + o_x;
                 dstptr->a = ColorRGB16_To_A(srcptr->v);
                 o_y += 1;
             }
@@ -255,8 +255,8 @@ void BB_blit_to_BB8A(BlitBuffer *src, BlitBuffer *dst,
         for (d_x = dest_x; d_x < dest_x + w; d_x++) {
             o_y = offs_y;
             for (d_y = dest_y; d_y < dest_y + h; d_y++) {
-                Color8A *dstptr = (Color8A*)(dst->data) + (d_y * dst->w) + d_x;
-                ColorRGB24 *srcptr = (ColorRGB24*)(src->data) + (o_y * src->w) + o_x;
+                Color8A *dstptr = (Color8A*)(dst->data + d_y * dst->pitch) + d_x;
+                ColorRGB24 *srcptr = (ColorRGB24*)(src->data + o_y * src->pitch) + o_x;
                 dstptr->a = RGB_To_A(srcptr->r, srcptr->g, srcptr->b);
                 o_y += 1;
             }
@@ -267,8 +267,8 @@ void BB_blit_to_BB8A(BlitBuffer *src, BlitBuffer *dst,
         for (d_x = dest_x; d_x < dest_x + w; d_x++) {
             o_y = offs_y;
             for (d_y = dest_y; d_y < dest_y + h; d_y++) {
-                Color8A *dstptr = (Color8A*)(dst->data) + (d_y * dst->w) + d_x;
-                ColorRGB32 *srcptr = (ColorRGB32*)(src->data) + (o_y * src->w) + o_x;
+                Color8A *dstptr = (Color8A*)(dst->data + d_y * dst->pitch) + d_x;
+                ColorRGB32 *srcptr = (ColorRGB32*)(src->data + o_y * src->pitch) + o_x;
                 dstptr->a = RGB_To_A(srcptr->r, srcptr->g, srcptr->b);
                 o_y += 1;
             }
@@ -287,8 +287,8 @@ void BB_blit_to_BB16(BlitBuffer *src, BlitBuffer *dst,
         for (d_x = dest_x; d_x < dest_x + w; d_x++) {
             o_y = offs_y;
             for (d_y = dest_y; d_y < dest_y + h; d_y++) {
-                ColorRGB16 *dstptr = (ColorRGB16*)(dst->data) + (d_y * dst->w) + d_x;
-                Color8 *srcptr = (Color8*)(src->data) + (o_y * src->w) + o_x;
+                ColorRGB16 *dstptr = (ColorRGB16*)(dst->data + d_y * dst->pitch) + d_x;
+                Color8 *srcptr = (Color8*)(src->data + o_y * src->pitch) + o_x;
                 v = srcptr->a;
                 v5bit = v >> 3;
                 dstptr->v = (v5bit << 11) + ((v & 0xFC) << 3) + v5bit;
@@ -301,8 +301,8 @@ void BB_blit_to_BB16(BlitBuffer *src, BlitBuffer *dst,
         for (d_x = dest_x; d_x < dest_x + w; d_x++) {
             o_y = offs_y;
             for (d_y = dest_y; d_y < dest_y + h; d_y++) {
-                ColorRGB16 *dstptr = (ColorRGB16*)(dst->data) + (d_y * dst->w) + d_x;
-                Color8A *srcptr = (Color8A*)(src->data) + (o_y * src->w) + o_x;
+                ColorRGB16 *dstptr = (ColorRGB16*)(dst->data + d_y * dst->pitch) + d_x;
+                Color8A *srcptr = (Color8A*)(src->data + o_y * src->pitch) + o_x;
                 v = srcptr->a;
                 v5bit = v >> 3;
                 dstptr->v = (v5bit << 11) + ((v & 0xFC) << 3) + v5bit;
@@ -315,8 +315,8 @@ void BB_blit_to_BB16(BlitBuffer *src, BlitBuffer *dst,
         for (d_x = dest_x; d_x < dest_x + w; d_x++) {
             o_y = offs_y;
             for (d_y = dest_y; d_y < dest_y + h; d_y++) {
-                ColorRGB16 *dstptr = (ColorRGB16*)(dst->data) + (d_y * dst->w) + d_x;
-                ColorRGB16 *srcptr = (ColorRGB16*)(src->data) + (o_y * src->w) + o_x;
+                ColorRGB16 *dstptr = (ColorRGB16*)(dst->data + d_y * dst->pitch) + d_x;
+                ColorRGB16 *srcptr = (ColorRGB16*)(src->data + o_y * src->pitch) + o_x;
                 *dstptr = *srcptr;
                 o_y += 1;
             }
@@ -327,8 +327,8 @@ void BB_blit_to_BB16(BlitBuffer *src, BlitBuffer *dst,
         for (d_x = dest_x; d_x < dest_x + w; d_x++) {
             o_y = offs_y;
             for (d_y = dest_y; d_y < dest_y + h; d_y++) {
-                ColorRGB16 *dstptr = (ColorRGB16*)(dst->data) + (d_y * dst->w) + d_x;
-                ColorRGB24 *srcptr = (ColorRGB24*)(src->data) + (o_y * src->w) + o_x;
+                ColorRGB16 *dstptr = (ColorRGB16*)(dst->data + d_y * dst->pitch) + d_x;
+                ColorRGB24 *srcptr = (ColorRGB24*)(src->data + o_y * src->pitch) + o_x;
                 dstptr->v = RGB_To_RGB16(srcptr->r, srcptr->g, srcptr->b);
                 o_y += 1;
             }
@@ -339,8 +339,8 @@ void BB_blit_to_BB16(BlitBuffer *src, BlitBuffer *dst,
         for (d_x = dest_x; d_x < dest_x + w; d_x++) {
             o_y = offs_y;
             for (d_y = dest_y; d_y < dest_y + h; d_y++) {
-                ColorRGB16 *dstptr = (ColorRGB16*)(dst->data) + (d_y * dst->w) + d_x;
-                ColorRGB32 *srcptr = (ColorRGB32*)(src->data) + (o_y * src->w) + o_x;
+                ColorRGB16 *dstptr = (ColorRGB16*)(dst->data + d_y * dst->pitch) + d_x;
+                ColorRGB32 *srcptr = (ColorRGB32*)(src->data + o_y * src->pitch) + o_x;
                 dstptr->v = RGB_To_RGB16(srcptr->r, srcptr->g, srcptr->b);
                 o_y += 1;
             }
@@ -359,8 +359,8 @@ void BB_blit_to_BB24(BlitBuffer *src, BlitBuffer *dst,
         for (d_x = dest_x; d_x < dest_x + w; d_x++) {
             o_y = offs_y;
             for (d_y = dest_y; d_y < dest_y + h; d_y++) {
-                ColorRGB24 *dstptr = (ColorRGB24*)(dst->data) + (d_y * dst->w) + d_x;
-                Color8 *srcptr = (Color8*)(src->data) + (o_y * src->w) + o_x;
+                ColorRGB24 *dstptr = (ColorRGB24*)(dst->data + d_y * dst->pitch) + d_x;
+                Color8 *srcptr = (Color8*)(src->data + o_y * src->pitch) + o_x;
                 dstptr->r = srcptr->a;
                 dstptr->g = srcptr->a;
                 dstptr->b = srcptr->a;
@@ -373,8 +373,8 @@ void BB_blit_to_BB24(BlitBuffer *src, BlitBuffer *dst,
         for (d_x = dest_x; d_x < dest_x + w; d_x++) {
             o_y = offs_y;
             for (d_y = dest_y; d_y < dest_y + h; d_y++) {
-                ColorRGB24 *dstptr = (ColorRGB24*)(dst->data) + (d_y * dst->w) + d_x;
-                Color8A *srcptr = (Color8A*)(src->data) + (o_y * src->w) + o_x;
+                ColorRGB24 *dstptr = (ColorRGB24*)(dst->data + d_y * dst->pitch) + d_x;
+                Color8A *srcptr = (Color8A*)(src->data + o_y * src->pitch) + o_x;
                 dstptr->r = srcptr->a;
                 dstptr->g = srcptr->a;
                 dstptr->b = srcptr->a;
@@ -387,8 +387,8 @@ void BB_blit_to_BB24(BlitBuffer *src, BlitBuffer *dst,
         for (d_x = dest_x; d_x < dest_x + w; d_x++) {
             o_y = offs_y;
             for (d_y = dest_y; d_y < dest_y + h; d_y++) {
-                ColorRGB24 *dstptr = (ColorRGB24*)(dst->data) + (d_y * dst->w) + d_x;
-                ColorRGB16 *srcptr = (ColorRGB16*)(src->data) + (o_y * src->w) + o_x;
+                ColorRGB24 *dstptr = (ColorRGB24*)(dst->data + d_y * dst->pitch) + d_x;
+                ColorRGB16 *srcptr = (ColorRGB16*)(src->data + o_y * src->pitch) + o_x;
                 dstptr->r = ColorRGB16_GetR(srcptr->v);
                 dstptr->g = ColorRGB16_GetG(srcptr->v);
                 dstptr->b = ColorRGB16_GetB(srcptr->v);
@@ -401,8 +401,8 @@ void BB_blit_to_BB24(BlitBuffer *src, BlitBuffer *dst,
         for (d_x = dest_x; d_x < dest_x + w; d_x++) {
             o_y = offs_y;
             for (d_y = dest_y; d_y < dest_y + h; d_y++) {
-                ColorRGB24 *dstptr = (ColorRGB24*)(dst->data) + (d_y * dst->w) + d_x;
-                ColorRGB24 *srcptr = (ColorRGB24*)(src->data) + (o_y * src->w) + o_x;
+                ColorRGB24 *dstptr = (ColorRGB24*)(dst->data + d_y * dst->pitch) + d_x;
+                ColorRGB24 *srcptr = (ColorRGB24*)(src->data + o_y * src->pitch) + o_x;
                 *dstptr = *srcptr;
                 o_y += 1;
             }
@@ -413,8 +413,8 @@ void BB_blit_to_BB24(BlitBuffer *src, BlitBuffer *dst,
         for (d_x = dest_x; d_x < dest_x + w; d_x++) {
             o_y = offs_y;
             for (d_y = dest_y; d_y < dest_y + h; d_y++) {
-                ColorRGB24 *dstptr = (ColorRGB24*)(dst->data) + (d_y * dst->w) + d_x;
-                ColorRGB32 *srcptr = (ColorRGB32*)(src->data) + (o_y * src->w) + o_x;
+                ColorRGB24 *dstptr = (ColorRGB24*)(dst->data + d_y * dst->pitch) + d_x;
+                ColorRGB32 *srcptr = (ColorRGB32*)(src->data + o_y * src->pitch) + o_x;
                 dstptr->r = srcptr->r;
                 dstptr->g = srcptr->g;
                 dstptr->b = srcptr->b;
@@ -435,8 +435,8 @@ void BB_blit_to_BB32(BlitBuffer *src, BlitBuffer *dst,
         for (d_x = dest_x; d_x < dest_x + w; d_x++) {
             o_y = offs_y;
             for (d_y = dest_y; d_y < dest_y + h; d_y++) {
-                ColorRGB32 *dstptr = (ColorRGB32*)(dst->data) + (d_y * dst->w) + d_x;
-                Color8 *srcptr = (Color8*)(src->data) + (o_y * src->w) + o_x;
+                ColorRGB32 *dstptr = (ColorRGB32*)(dst->data + d_y * dst->pitch) + d_x;
+                Color8 *srcptr = (Color8*)(src->data + o_y * src->pitch) + o_x;
                 dstptr->r = srcptr->a;
                 dstptr->g = srcptr->a;
                 dstptr->b = srcptr->a;
@@ -449,8 +449,8 @@ void BB_blit_to_BB32(BlitBuffer *src, BlitBuffer *dst,
         for (d_x = dest_x; d_x < dest_x + w; d_x++) {
             o_y = offs_y;
             for (d_y = dest_y; d_y < dest_y + h; d_y++) {
-                ColorRGB32 *dstptr = (ColorRGB32*)(dst->data) + (d_y * dst->w) + d_x;
-                Color8A *srcptr = (Color8A*)(src->data) + (o_y * src->w) + o_x;
+                ColorRGB32 *dstptr = (ColorRGB32*)(dst->data + d_y * dst->pitch) + d_x;
+                Color8A *srcptr = (Color8A*)(src->data + o_y * src->pitch) + o_x;
                 dstptr->r = srcptr->a;
                 dstptr->g = srcptr->a;
                 dstptr->b = srcptr->a;
@@ -463,8 +463,8 @@ void BB_blit_to_BB32(BlitBuffer *src, BlitBuffer *dst,
         for (d_x = dest_x; d_x < dest_x + w; d_x++) {
             o_y = offs_y;
             for (d_y = dest_y; d_y < dest_y + h; d_y++) {
-                ColorRGB32 *dstptr = (ColorRGB32*)(dst->data) + (d_y * dst->w) + d_x;
-                ColorRGB16 *srcptr = (ColorRGB16*)(src->data) + (o_y * src->w) + o_x;
+                ColorRGB32 *dstptr = (ColorRGB32*)(dst->data + d_y * dst->pitch) + d_x;
+                ColorRGB16 *srcptr = (ColorRGB16*)(src->data + o_y * src->pitch) + o_x;
                 dstptr->r = ColorRGB16_GetR(srcptr->v);
                 dstptr->g = ColorRGB16_GetG(srcptr->v);
                 dstptr->b = ColorRGB16_GetB(srcptr->v);
@@ -477,8 +477,8 @@ void BB_blit_to_BB32(BlitBuffer *src, BlitBuffer *dst,
         for (d_x = dest_x; d_x < dest_x + w; d_x++) {
             o_y = offs_y;
             for (d_y = dest_y; d_y < dest_y + h; d_y++) {
-                ColorRGB32 *dstptr = (ColorRGB32*)(dst->data) + (d_y * dst->w) + d_x;
-                ColorRGB24 *srcptr = (ColorRGB24*)(src->data) + (o_y * src->w) + o_x;
+                ColorRGB32 *dstptr = (ColorRGB32*)(dst->data + d_y * dst->pitch) + d_x;
+                ColorRGB24 *srcptr = (ColorRGB24*)(src->data + o_y * src->pitch) + o_x;
                 dstptr->r = srcptr->r;
                 dstptr->g = srcptr->g;
                 dstptr->b = srcptr->b;
@@ -491,8 +491,8 @@ void BB_blit_to_BB32(BlitBuffer *src, BlitBuffer *dst,
         for (d_x = dest_x; d_x < dest_x + w; d_x++) {
             o_y = offs_y;
             for (d_y = dest_y; d_y < dest_y + h; d_y++) {
-                ColorRGB32 *dstptr = (ColorRGB32*)(dst->data) + (d_y * dst->w) + d_x;
-                ColorRGB32 *srcptr = (ColorRGB32*)(src->data) + (o_y * src->w) + o_x;
+                ColorRGB32 *dstptr = (ColorRGB32*)(dst->data + d_y * dst->pitch) + d_x;
+                ColorRGB32 *srcptr = (ColorRGB32*)(src->data + o_y * src->pitch) + o_x;
                 *dstptr = *srcptr;
                 o_y += 1;
             }
@@ -535,8 +535,8 @@ void BB_add_blit_from(BlitBuffer *dst, BlitBuffer *src,
         for (d_x = dest_x; d_x < dest_x + w; d_x++) {
             o_y = offs_y;
             for (d_y = dest_y; d_y < dest_y + h; d_y++) {
-                Color8 *dstptr = (Color8*)(dst->data) + (d_y * dst->w) + d_x;
-                Color8 *srcptr = (Color8*)(src->data) + (o_y * src->w) + o_x;
+                Color8 *dstptr = (Color8*)(dst->data + d_y * dst->pitch) + d_x;
+                Color8 *srcptr = (Color8*)(src->data + o_y * src->pitch) + o_x;
                 dstptr->a = DIV_255(dstptr->a * ainv + srcptr->a * alpha);
                 o_y += 1;
             }
@@ -547,8 +547,8 @@ void BB_add_blit_from(BlitBuffer *dst, BlitBuffer *src,
         for (d_x = dest_x; d_x < dest_x + w; d_x++) {
             o_y = offs_y;
             for (d_y = dest_y; d_y < dest_y + h; d_y++) {
-                Color8A *dstptr = (Color8A*)(dst->data) + (d_y * dst->w) + d_x;
-                Color8A *srcptr = (Color8A*)(src->data) + (o_y * src->w) + o_x;
+                Color8A *dstptr = (Color8A*)(dst->data + d_y * dst->pitch) + d_x;
+                Color8A *srcptr = (Color8A*)(src->data + o_y * src->pitch) + o_x;
                 dstptr->a = DIV_255(dstptr->a * ainv + srcptr->a * alpha);
                 o_y += 1;
             }
@@ -559,8 +559,8 @@ void BB_add_blit_from(BlitBuffer *dst, BlitBuffer *src,
         for (d_x = dest_x; d_x < dest_x + w; d_x++) {
             o_y = offs_y;
             for (d_y = dest_y; d_y < dest_y + h; d_y++) {
-                ColorRGB16 *dstptr = (ColorRGB16*)(dst->data) + (d_y * dst->w) + d_x;
-                ColorRGB16 *srcptr = (ColorRGB16*)(src->data) + (o_y * src->w) + o_x;
+                ColorRGB16 *dstptr = (ColorRGB16*)(dst->data + d_y * dst->pitch) + d_x;
+                ColorRGB16 *srcptr = (ColorRGB16*)(src->data + o_y * src->pitch) + o_x;
                 r = DIV_255(ColorRGB16_GetR(dstptr->v) * ainv + ColorRGB16_GetR(srcptr->v) * alpha);
                 g = DIV_255(ColorRGB16_GetG(dstptr->v) * ainv + ColorRGB16_GetG(srcptr->v) * alpha);
                 b = DIV_255(ColorRGB16_GetB(dstptr->v) * ainv + ColorRGB16_GetB(srcptr->v) * alpha);
@@ -574,8 +574,8 @@ void BB_add_blit_from(BlitBuffer *dst, BlitBuffer *src,
         for (d_x = dest_x; d_x < dest_x + w; d_x++) {
             o_y = offs_y;
             for (d_y = dest_y; d_y < dest_y + h; d_y++) {
-                ColorRGB24 *dstptr = (ColorRGB24*)(dst->data) + (d_y * dst->w) + d_x;
-                ColorRGB32 *srcptr = (ColorRGB32*)(src->data) + (o_y * src->w) + o_x;
+                ColorRGB24 *dstptr = (ColorRGB24*)(dst->data + d_y * dst->pitch) + d_x;
+                ColorRGB32 *srcptr = (ColorRGB32*)(src->data + o_y * src->pitch) + o_x;
                 dstptr->r = DIV_255(dstptr->r * ainv + srcptr->r * alpha);
                 dstptr->g = DIV_255(dstptr->g * ainv + srcptr->g * alpha);
                 dstptr->b = DIV_255(dstptr->b * ainv + srcptr->b * alpha);
@@ -588,8 +588,8 @@ void BB_add_blit_from(BlitBuffer *dst, BlitBuffer *src,
         for (d_x = dest_x; d_x < dest_x + w; d_x++) {
             o_y = offs_y;
             for (d_y = dest_y; d_y < dest_y + h; d_y++) {
-                ColorRGB32 *dstptr = (ColorRGB32*)(dst->data) + (d_y * dst->w) + d_x;
-                ColorRGB32 *srcptr = (ColorRGB32*)(src->data) + (o_y * src->w) + o_x;
+                ColorRGB32 *dstptr = (ColorRGB32*)(dst->data + d_y * dst->pitch) + d_x;
+                ColorRGB32 *srcptr = (ColorRGB32*)(src->data + o_y * src->pitch) + o_x;
                 dstptr->r = DIV_255(dstptr->r * ainv + srcptr->r * alpha);
                 dstptr->g = DIV_255(dstptr->g * ainv + srcptr->g * alpha);
                 dstptr->b = DIV_255(dstptr->b * ainv + srcptr->b * alpha);
@@ -615,8 +615,8 @@ void BB_alpha_blit_from(BlitBuffer *dst, BlitBuffer *src,
         for (d_x = dest_x; d_x < dest_x + w; d_x++) {
             o_y = offs_y;
             for (d_y = dest_y; d_y < dest_y + h; d_y++) {
-                Color8 *dstptr = (Color8*)(dst->data) + (d_y * dst->w) + d_x;
-                Color8 *srcptr = (Color8*)(src->data) + (o_y * src->w) + o_x;
+                Color8 *dstptr = (Color8*)(dst->data + d_y * dst->pitch) + d_x;
+                Color8 *srcptr = (Color8*)(src->data + o_y * src->pitch) + o_x;
                 *dstptr = *srcptr;
                 o_y += 1;
             }
@@ -627,8 +627,8 @@ void BB_alpha_blit_from(BlitBuffer *dst, BlitBuffer *src,
         for (d_x = dest_x; d_x < dest_x + w; d_x++) {
             o_y = offs_y;
             for (d_y = dest_y; d_y < dest_y + h; d_y++) {
-                Color8A *dstptr = (Color8A*)(dst->data) + (d_y * dst->w) + d_x;
-                Color8A *srcptr = (Color8A*)(src->data) + (o_y * src->w) + o_x;
+                Color8A *dstptr = (Color8A*)(dst->data + d_y * dst->pitch) + d_x;
+                Color8A *srcptr = (Color8A*)(src->data + o_y * src->pitch) + o_x;
                 alpha = srcptr->alpha;
                 ainv = 0xFF - alpha;
                 dstptr->a = dstptr->a * ainv + srcptr->a * alpha;
@@ -641,8 +641,8 @@ void BB_alpha_blit_from(BlitBuffer *dst, BlitBuffer *src,
         for (d_x = dest_x; d_x < dest_x + w; d_x++) {
             o_y = offs_y;
             for (d_y = dest_y; d_y < dest_y + h; d_y++) {
-                ColorRGB16 *dstptr = (ColorRGB16*)(dst->data) + (d_y * dst->w) + d_x;
-                ColorRGB16 *srcptr = (ColorRGB16*)(src->data) + (o_y * src->w) + o_x;
+                ColorRGB16 *dstptr = (ColorRGB16*)(dst->data + d_y * dst->pitch) + d_x;
+                ColorRGB16 *srcptr = (ColorRGB16*)(src->data + o_y * src->pitch) + o_x;
                 *dstptr = *srcptr;
                 o_y += 1;
             }
@@ -653,8 +653,8 @@ void BB_alpha_blit_from(BlitBuffer *dst, BlitBuffer *src,
         for (d_x = dest_x; d_x < dest_x + w; d_x++) {
             o_y = offs_y;
             for (d_y = dest_y; d_y < dest_y + h; d_y++) {
-                ColorRGB24 *dstptr = (ColorRGB24*)(dst->data) + (d_y * dst->w) + d_x;
-                ColorRGB32 *srcptr = (ColorRGB32*)(src->data) + (o_y * src->w) + o_x;
+                ColorRGB24 *dstptr = (ColorRGB24*)(dst->data + d_y * dst->pitch) + d_x;
+                ColorRGB32 *srcptr = (ColorRGB32*)(src->data + o_y * src->pitch) + o_x;
                 alpha = srcptr->alpha;
                 ainv = 0xFF - alpha;
                 dstptr->r = DIV_255(dstptr->r * ainv + srcptr->r * alpha);
@@ -669,8 +669,8 @@ void BB_alpha_blit_from(BlitBuffer *dst, BlitBuffer *src,
         for (d_x = dest_x; d_x < dest_x + w; d_x++) {
             o_y = offs_y;
             for (d_y = dest_y; d_y < dest_y + h; d_y++) {
-                ColorRGB32 *dstptr = (ColorRGB32*)(dst->data) + (d_y * dst->w) + d_x;
-                ColorRGB32 *srcptr = (ColorRGB32*)(src->data) + (o_y * src->w) + o_x;
+                ColorRGB32 *dstptr = (ColorRGB32*)(dst->data + d_y * dst->pitch) + d_x;
+                ColorRGB32 *srcptr = (ColorRGB32*)(src->data + o_y * src->pitch) + o_x;
                 alpha = srcptr->alpha;
                 ainv = 0xFF - alpha;
                 dstptr->r = DIV_255(dstptr->r * ainv + srcptr->r * alpha);
@@ -697,8 +697,8 @@ void BB_invert_blit_from(BlitBuffer *dst, BlitBuffer *src,
         for (d_x = dest_x; d_x < dest_x + w; d_x++) {
             o_y = offs_y;
             for (d_y = dest_y; d_y < dest_y + h; d_y++) {
-                Color8 *dstptr = (Color8*)(dst->data) + (d_y * dst->w) + d_x;
-                Color8 *srcptr = (Color8*)(src->data) + (o_y * src->w) + o_x;
+                Color8 *dstptr = (Color8*)(dst->data + d_y * dst->pitch) + d_x;
+                Color8 *srcptr = (Color8*)(src->data + o_y * src->pitch) + o_x;
                 dstptr->a = srcptr->a ^ 0xFF;
                 o_y += 1;
             }
@@ -709,8 +709,8 @@ void BB_invert_blit_from(BlitBuffer *dst, BlitBuffer *src,
         for (d_x = dest_x; d_x < dest_x + w; d_x++) {
             o_y = offs_y;
             for (d_y = dest_y; d_y < dest_y + h; d_y++) {
-                Color8A *dstptr = (Color8A*)(dst->data) + (d_y * dst->w) + d_x;
-                Color8A *srcptr = (Color8A*)(src->data) + (o_y * src->w) + o_x;
+                Color8A *dstptr = (Color8A*)(dst->data + d_y * dst->pitch) + d_x;
+                Color8A *srcptr = (Color8A*)(src->data + o_y * src->pitch) + o_x;
                 dstptr->a = srcptr->a ^ 0xFF;
                 o_y += 1;
             }
@@ -721,8 +721,8 @@ void BB_invert_blit_from(BlitBuffer *dst, BlitBuffer *src,
         for (d_x = dest_x; d_x < dest_x + w; d_x++) {
             o_y = offs_y;
             for (d_y = dest_y; d_y < dest_y + h; d_y++) {
-                ColorRGB16 *dstptr = (ColorRGB16*)(dst->data) + (d_y * dst->w) + d_x;
-                ColorRGB16 *srcptr = (ColorRGB16*)(src->data) + (o_y * src->w) + o_x;
+                ColorRGB16 *dstptr = (ColorRGB16*)(dst->data + d_y * dst->pitch) + d_x;
+                ColorRGB16 *srcptr = (ColorRGB16*)(src->data + o_y * src->pitch) + o_x;
                 dstptr->v = srcptr->v ^ 0xFFFF;
                 o_y += 1;
             }
@@ -733,8 +733,8 @@ void BB_invert_blit_from(BlitBuffer *dst, BlitBuffer *src,
         for (d_x = dest_x; d_x < dest_x + w; d_x++) {
             o_y = offs_y;
             for (d_y = dest_y; d_y < dest_y + h; d_y++) {
-                ColorRGB24 *dstptr = (ColorRGB24*)(dst->data) + (d_y * dst->w) + d_x;
-                ColorRGB32 *srcptr = (ColorRGB32*)(src->data) + (o_y * src->w) + o_x;
+                ColorRGB24 *dstptr = (ColorRGB24*)(dst->data + d_y * dst->pitch) + d_x;
+                ColorRGB32 *srcptr = (ColorRGB32*)(src->data + o_y * src->pitch) + o_x;
                 dstptr->r = srcptr->r ^ 0xFF;
                 dstptr->g = srcptr->g ^ 0xFF;
                 dstptr->b = srcptr->b ^ 0xFF;
@@ -747,8 +747,8 @@ void BB_invert_blit_from(BlitBuffer *dst, BlitBuffer *src,
         for (d_x = dest_x; d_x < dest_x + w; d_x++) {
             o_y = offs_y;
             for (d_y = dest_y; d_y < dest_y + h; d_y++) {
-                ColorRGB32 *dstptr = (ColorRGB32*)(dst->data) + (d_y * dst->w) + d_x;
-                ColorRGB32 *srcptr = (ColorRGB32*)(src->data) + (o_y * src->w) + o_x;
+                ColorRGB32 *dstptr = (ColorRGB32*)(dst->data + d_y * dst->pitch) + d_x;
+                ColorRGB32 *srcptr = (ColorRGB32*)(src->data + o_y * src->pitch) + o_x;
                 dstptr->r = srcptr->r ^ 0xFF;
                 dstptr->g = srcptr->g ^ 0xFF;
                 dstptr->b = srcptr->b ^ 0xFF;
@@ -773,7 +773,7 @@ void BB_color_blit_from(BlitBuffer *dst, BlitBuffer *src,
             o_y = offs_y;
             for (d_y = dest_y; d_y < dest_y + h; d_y++) {
                 SET_ALPHA_FROM_A(sbb_type, src)
-                Color8 *dstptr = (Color8*)(dst->data) + (d_y * dst->w) + d_x;
+                Color8 *dstptr = (Color8*)(dst->data + d_y * dst->pitch) + d_x;
                 ainv = 0xFF - alpha;
                 dstptr->a = DIV_255(dstptr->a * ainv + color->r * alpha);
                 o_y += 1;
@@ -786,7 +786,7 @@ void BB_color_blit_from(BlitBuffer *dst, BlitBuffer *src,
             o_y = offs_y;
             for (d_y = dest_y; d_y < dest_y + h; d_y++) {
                 SET_ALPHA_FROM_A(sbb_type, src)
-                Color8 *dstptr = (Color8*)(dst->data) + (d_y * dst->w) + d_x;
+                Color8 *dstptr = (Color8*)(dst->data + d_y * dst->pitch) + d_x;
                 ainv = 0xFF - alpha;
                 dstptr->a = DIV_255(dstptr->a * ainv + color->r * alpha);
                 o_y += 1;
@@ -799,7 +799,7 @@ void BB_color_blit_from(BlitBuffer *dst, BlitBuffer *src,
             o_y = offs_y;
             for (d_y = dest_y; d_y < dest_y + h; d_y++) {
                 SET_ALPHA_FROM_A(sbb_type, src)
-                ColorRGB16 *dstptr = (ColorRGB16*)(dst->data) + (d_y * dst->w) + d_x;
+                ColorRGB16 *dstptr = (ColorRGB16*)(dst->data + d_y * dst->pitch) + d_x;
                 ainv = 0xFF - alpha;
                 r = DIV_255(ColorRGB16_GetR(dstptr->v) * ainv + color->r * alpha);
                 g = DIV_255(ColorRGB16_GetG(dstptr->v) * ainv + color->g * alpha);
@@ -815,7 +815,7 @@ void BB_color_blit_from(BlitBuffer *dst, BlitBuffer *src,
             o_y = offs_y;
             for (d_y = dest_y; d_y < dest_y + h; d_y++) {
                 SET_ALPHA_FROM_A(sbb_type, src)
-                ColorRGB24 *dstptr = (ColorRGB24*)(dst->data) + (d_y * dst->w) + d_x;
+                ColorRGB24 *dstptr = (ColorRGB24*)(dst->data + d_y * dst->pitch) + d_x;
                 ainv = 0xFF - alpha;
                 dstptr->r = DIV_255(dstptr->r * ainv + color->r * alpha);
                 dstptr->g = DIV_255(dstptr->g * ainv + color->g * alpha);
@@ -830,7 +830,7 @@ void BB_color_blit_from(BlitBuffer *dst, BlitBuffer *src,
             o_y = offs_y;
             for (d_y = dest_y; d_y < dest_y + h; d_y++) {
                 SET_ALPHA_FROM_A(sbb_type, src)
-                ColorRGB32 *dstptr = (ColorRGB32*)(dst->data) + (d_y * dst->w) + d_x;
+                ColorRGB32 *dstptr = (ColorRGB32*)(dst->data + d_y * dst->pitch) + d_x;
                 ainv = 0xFF - alpha;
                 dstptr->r = DIV_255(dstptr->r * ainv + color->r * alpha);
                 dstptr->g = DIV_255(dstptr->g * ainv + color->g * alpha);
