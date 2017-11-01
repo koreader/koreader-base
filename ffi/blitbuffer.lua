@@ -53,6 +53,13 @@ typedef struct ColorRGB32 {
     uint8_t alpha;
 } ColorRGB32;
 
+typedef struct BlitBuffer {
+	int w;
+	int h;
+	int pitch;
+	uint8_t *data;
+	uint8_t config;
+} BlitBuffer;
 typedef struct BlitBuffer4 {
     int w;
     int h;
@@ -96,9 +103,24 @@ typedef struct BlitBufferRGB32 {
     uint8_t config;
 } BlitBufferRGB32;
 
+void BB_fill_rect(BlitBuffer *bb, int x, int y, int w, int h, ColorRGB32 *color);
+void BB_blend_rect(BlitBuffer *bb, int x, int y, int w, int h, ColorRGB32 *color);
+void BB_blit_to(BlitBuffer *source, BlitBuffer *dest, int dest_x, int dest_y,
+                int offs_x, int offs_y, int w, int h);
+void BB_add_blit_from(BlitBuffer *dest, BlitBuffer *source, int dest_x, int dest_y,
+                      int offs_x, int offs_y, int w, int h, int intensity);
+void BB_alpha_blit_from(BlitBuffer *dest, BlitBuffer *source, int dest_x, int dest_y,
+                        int offs_x, int offs_y, int w, int h);
+void BB_invert_blit_from(BlitBuffer *dest, BlitBuffer *source, int dest_x, int dest_y,
+                         int offs_x, int offs_y, int w, int h);
+void BB_color_blit_from(BlitBuffer *dest, BlitBuffer *source, int dest_x, int dest_y,
+                        int offs_x, int offs_y, int w, int h, ColorRGB32 *color);
+
 void *malloc(int size);
 void free(void *ptr);
 ]]
+
+local use_cblitbuffer, cblitbuffer = pcall(ffi.load, 'blitbuffer')
 
 -- color value types
 local Color4U = ffi.typeof("Color4U")
@@ -729,21 +751,50 @@ function BB_mt.__index:blitFrom(source, dest_x, dest_y, offs_x, offs_y, width, h
     width, height = width or source:getWidth(), height or source:getHeight()
     width, dest_x, offs_x = BB.checkBounds(width, dest_x or 0, offs_x or 0, self:getWidth(), source:getWidth())
     height, dest_y, offs_y = BB.checkBounds(height, dest_y or 0, offs_y or 0, self:getHeight(), source:getHeight())
-    if not setter then setter = self.setPixel end
-
     if width <= 0 or height <= 0 then return end
-    return source[self.blitfunc](source, self, dest_x, dest_y, offs_x, offs_y, width, height, setter, set_param)
+
+    if not setter then setter = self.setPixel end
+    if use_cblitbuffer and setter == self.setPixel then
+        cblitbuffer.BB_blit_to(ffi.cast("struct BlitBuffer *", source),
+            ffi.cast("struct BlitBuffer *", self),
+            dest_x, dest_y, offs_x, offs_y, width, height)
+    else
+        source[self.blitfunc](source, self, dest_x, dest_y, offs_x, offs_y, width, height, setter, set_param)
+    end
 end
 BB_mt.__index.blitFullFrom = BB_mt.__index.blitFrom
 
 -- blitting with a per-blit alpha value
 function BB_mt.__index:addblitFrom(source, dest_x, dest_y, offs_x, offs_y, width, height, intensity)
-    self:blitFrom(source, dest_x, dest_y, offs_x, offs_y, width, height, self.setPixelAdd, intt(intensity*0xFF))
+    if use_cblitbuffer then
+        cblitbuffer.BB_add_blit_from(ffi.cast("struct BlitBuffer *", self),
+            ffi.cast("struct BlitBuffer *", source),
+            dest_x, dest_y, offs_x, offs_y, width, height, intt(intensity*0xFF))
+    else
+        self:blitFrom(source, dest_x, dest_y, offs_x, offs_y, width, height, self.setPixelAdd, intt(intensity*0xFF))
+    end
 end
 
 -- alpha-pane aware blitting
 function BB_mt.__index:alphablitFrom(source, dest_x, dest_y, offs_x, offs_y, width, height)
-    self:blitFrom(source, dest_x, dest_y, offs_x, offs_y, width, height, self.setPixelBlend)
+    if use_cblitbuffer then
+        cblitbuffer.BB_alpha_blit_from(ffi.cast("struct BlitBuffer *", self),
+            ffi.cast("struct BlitBuffer *", source),
+            dest_x, dest_y, offs_x, offs_y, width, height)
+    else
+        self:blitFrom(source, dest_x, dest_y, offs_x, offs_y, width, height, self.setPixelBlend)
+    end
+end
+
+-- invert blitting
+function BB_mt.__index:invertblitFrom(source, dest_x, dest_y, offs_x, offs_y, width, height)
+    if use_cblitbuffer then
+        cblitbuffer.BB_invert_blit_from(ffi.cast("struct BlitBuffer *", self),
+            ffi.cast("struct BlitBuffer *", source),
+            dest_x, dest_y, offs_x, offs_y, width, height)
+    else
+        self:blitFrom(self, dest_x, dest_y, offs_x, offs_y, width, height, self.setPixelInverted)
+    end
 end
 
 -- colorize area using source blitbuffer as a alpha-map
@@ -751,7 +802,13 @@ function BB_mt.__index:colorblitFrom(source, dest_x, dest_y, offs_x, offs_y, wid
     -- we need color with alpha later:
     color = color:getColorRGB32()
     if self:getInverse() == 1 then color = color:invert() end
-    self:blitFrom(source, dest_x, dest_y, offs_x, offs_y, width, height, self.setPixelColorize, color)
+    if use_cblitbuffer then
+        cblitbuffer.BB_color_blit_from(ffi.cast("struct BlitBuffer *", self),
+            ffi.cast("struct BlitBuffer *", source),
+            dest_x, dest_y, offs_x, offs_y, width, height, color:getColorRGB32())
+    else
+        self:blitFrom(source, dest_x, dest_y, offs_x, offs_y, width, height, self.setPixelColorize, color)
+    end
 end
 
 -- scale method does not modify the original blitbuffer, instead, it allocates
@@ -808,10 +865,15 @@ PAINTING
 fill the whole blitbuffer with a given color value
 --]]
 function BB_mt.__index:fill(value)
-    local hook, mask, count = debug.gethook()
-    debug.sethook()
     local w = self:getWidth()
     local h = self:getHeight()
+    if use_cblitbuffer then
+        cblitbuffer.BB_fill_rect(ffi.cast("struct BlitBuffer *", self),
+            0, 0, w, h, value:getColorRGB32())
+        return
+    end
+    local hook, mask, count = debug.gethook()
+    debug.sethook()
     for y = 0, h-1 do
         for x = 0, w-1 do
             self:setPixel(x, y, value)
@@ -837,7 +899,7 @@ invert a rectangle within the buffer
 @param h height
 --]]
 function BB_mt.__index:invertRect(x, y, w, h)
-    self:blitFrom(self, x, y, x, y, w, h, self.setPixelInverted)
+    self:invertblitFrom(self, x, y, x, y, w, h)
 end
 
 --[[
@@ -853,14 +915,19 @@ paint a rectangle onto this buffer
 function BB_mt.__index:paintRect(x, y, w, h, value, setter)
     local hook, mask, count = debug.gethook()
     debug.sethook()
+    if w <= 0 or h <= 0 then return end
     setter = setter or self.setPixel
     value = value or Color8(0)
-    if w <= 0 or h <= 0 then return end
     w, x = BB.checkBounds(w, x, 0, self:getWidth(), 0xFFFF)
     h, y = BB.checkBounds(h, y, 0, self:getHeight(), 0xFFFF)
-    for tmp_y = y, y+h-1 do
-        for tmp_x = x, x+w-1 do
-            setter(self, tmp_x, tmp_y, value)
+    if use_cblitbuffer and setter == self.setPixel then
+        cblitbuffer.BB_fill_rect(ffi.cast("struct BlitBuffer *", self),
+            x, y, w, h, value:getColorRGB32())
+    else
+        for tmp_y = y, y+h-1 do
+            for tmp_x = x, x+w-1 do
+                setter(self, tmp_x, tmp_y, value)
+            end
         end
     end
     debug.sethook(hook, mask)
@@ -1091,9 +1158,13 @@ dim color values in rectangular area
 @param by dim by this factor (default: 0.5)
 --]]
 function BB_mt.__index:dimRect(x, y, w, h, by)
-    return self:paintRect(x, y, w, h,
-        Color8A(255, 255*(by or 0.5)),
-        self.setPixelBlend)
+    local color = Color8A(255, 255*(by or 0.5))
+    if use_cblitbuffer then
+        cblitbuffer.BB_blend_rect(ffi.cast("struct BlitBuffer *", self),
+            x, y, w, h, color:getColorRGB32())
+    else
+        self:paintRect(x, y, w, h, color, self.setPixelBlend)
+    end
 end
 
 --[[
@@ -1106,9 +1177,13 @@ lighten color values in rectangular area
 @param by lighten by this factor (default: 0.5)
 --]]
 function BB_mt.__index:lightenRect(x, y, w, h, by)
-    return self:paintRect(x, y, w, h,
-        Color8A(0, 255*(by or 0.5)),
-        self.setPixelBlend)
+    local color = Color8A(0, 255*(by or 0.5))
+    if use_cblitbuffer then
+        cblitbuffer.BB_blend_rect(ffi.cast("struct BlitBuffer *", self),
+            x, y, w, h, color:getColorRGB32())
+    else
+        self:paintRect(x, y, w, h, color, self.setPixelBlend)
+    end
 end
 
 --[[
@@ -1138,73 +1213,6 @@ function BB_mt.__index:viewport(x, y, w, h)
     viewport:setRotation(self:getRotation())
     viewport:setInverse(self:getInverse())
     return viewport
-end
-
---[[
-write blitbuffer contents to a PAM file
-
-see http://netpbm.sourceforge.net/doc/pam.html for PAM file specs.
-
-@param filename the name of the file to be created
---]]
-function BB_mt.__index:writePAM(filename)
-    local hook, mask, count = debug.gethook()
-    debug.sethook()
-    local f = io.open(filename, "w")
-    f:write("P7\n")
-    f:write("# written by blitbuffer.lua\n")
-    f:write("WIDTH ", self:getWidth(), "\n")
-    f:write("HEIGHT ", self:getHeight(), "\n")
-    local bb_type = self:getType()
-    if bb_type == TYPE_BB4 then
-        f:write("DEPTH 1\n", "MAXVAL 15\n", "TUPLTYPE GRAYSCALE\n")
-    elseif bb_type == TYPE_BB8 then
-        f:write("DEPTH 1\n", "MAXVAL 255\n", "TUPLTYPE GRAYSCALE\n")
-    elseif bb_type == TYPE_BB8A then
-        f:write("DEPTH 2\n", "MAXVAL 255\n", "TUPLTYPE GRAYSCALE_ALPHA\n")
-    elseif bb_type == TYPE_BBRGB16 then
-        -- this is not supported by PAM since the tuple consists of different bit widths
-        -- so we convert to RGB24 in this case
-        f:write("DEPTH 3\n", "MAXVAL 255\n", "TUPLTYPE RGB\n")
-    elseif bb_type == TYPE_BBRGB24 then
-        f:write("DEPTH 3\n", "MAXVAL 255\n", "TUPLTYPE RGB\n")
-    elseif bb_type == TYPE_BBRGB32 then
-        f:write("DEPTH 4\n", "MAXVAL 255\n", "TUPLTYPE RGB_ALPHA\n")
-    end
-    f:write("ENDHDR\n")
-    for y = 0, self:getHeight()-1 do
-        for x = 0, self:getWidth()-1 do
-            local v = self:getPixel(x, y)
-            if bb_type == TYPE_BB4 or bb_type == TYPE_BB8 then
-                ffi.C.fputc(v.a, f)
-            elseif bb_type == TYPE_BB8A then
-                ffi.C.fputc(v.a, f)
-                -- note that other functions do not support
-                -- alpha values for now
-                -- TODO: use correct alpha value of struct here
-                ffi.C.fputc(255, f)
-            elseif bb_type == TYPE_BBRGB16 then
-                v = v:getColorRGB24()
-                ffi.C.fputc(v.r, f)
-                ffi.C.fputc(v.g, f)
-                ffi.C.fputc(v.b, f)
-            elseif bb_type == TYPE_BBRGB24 then
-                ffi.C.fputc(v.r, f)
-                ffi.C.fputc(v.g, f)
-                ffi.C.fputc(v.b, f)
-            elseif bb_type == TYPE_BBRGB32 then
-                ffi.C.fputc(v.r, f)
-                ffi.C.fputc(v.g, f)
-                ffi.C.fputc(v.b, f)
-                -- note that other functions do not support
-                -- alpha values for now
-                -- TODO: use correct alpha value of struct here
-                ffi.C.fputc(255, f)
-            end
-        end
-    end
-    f:close()
-    debug.sethook(hook, mask)
 end
 
 --[[

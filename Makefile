@@ -75,6 +75,7 @@ libs: \
 	$(OUTPUT_DIR)/libs/libkoreader-lfs.so \
 	$(OUTPUT_DIR)/libs/libkoreader-djvu.so \
 	$(OUTPUT_DIR)/libs/libkoreader-cre.so \
+	$(OUTPUT_DIR)/libs/libblitbuffer.so \
 	$(OUTPUT_DIR)/libs/libwrap-mupdf.so
 
 $(OUTPUT_DIR)/libs/libkoreader-input.so: input/*.c input/*.h $(if $(KINDLE),$(POPEN_NOSHELL_LIB),)
@@ -115,6 +116,9 @@ ifdef DARWIN
 	install_name_tool -change $(notdir $(CRENGINE_LIB)) \
 		libs/$(notdir $(CRENGINE_LIB)) $@
 endif
+
+$(OUTPUT_DIR)/libs/libblitbuffer.so: blitbuffer.c
+	$(CC) $(DYNLIB_CFLAGS) -o $@ $^
 
 $(OUTPUT_DIR)/libs/libwrap-mupdf.so: wrap-mupdf.c \
 			$(MUPDF_LIB)

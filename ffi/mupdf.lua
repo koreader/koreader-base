@@ -766,7 +766,7 @@ local function get_pthread()
     else
         -- Kobo devices strangely have no libpthread.so in LD_LIBRARY_PATH
         -- so we hardcode the libpthread.so.0 here just for Kobo.
-        for _, libname in ipairs({"libpthread.so", "libpthread.so.0"}) do
+        for _, libname in ipairs({"pthread", "libpthread.so.0"}) do
             ok, cached_pthread = pcall(ffi.load, libname)
             if ok then return cached_pthread end
         end
@@ -781,55 +781,17 @@ only 8bit+8bit alpha or 24bit+8bit alpha pixmaps. So we need to convert
 what we get from mupdf.
 --]]
 local function bmpmupdf_pixmap_to_bmp(bmp, pixmap)
-    local hook, mask, _ = debug.gethook()
-    debug.sethook()
     local k2pdfopt = get_k2pdfopt()
 
     bmp.width = M.fz_pixmap_width(context(), pixmap)
     bmp.height = M.fz_pixmap_height(context(), pixmap)
     local ncomp = M.fz_pixmap_components(context(), pixmap)
     local p = M.fz_pixmap_samples(context(), pixmap)
-    if ncomp == 2 then
-        -- 8bit grayscale (and 8 bit alpha)
-        bmp.bpp = 8
-        k2pdfopt.bmp_alloc(bmp)
-        -- set palette
-        for i = 0, 255 do
-            bmp.red[i] = i
-            bmp.green[i] = i
-            bmp.blue[i] = i
-        end
-        -- copy color values (and skip alpha)
-        for row = 0, bmp.height - 1 do
-            local dest = k2pdfopt.bmp_rowptr_from_top(bmp, row)
-            local p_max = p + 2*bmp.width
-            while p < p_max do
-                dest[0] = p[0]
-                dest = dest + 1
-                p = p + 2
-            end
-        end
-    elseif ncomp == 4 then
-        -- 32bit RGBA
-        bmp.bpp = 24
-        k2pdfopt.bmp_alloc(bmp)
-        -- copy color values (and skip alpha)
-        for row = 0, bmp.height - 1 do
-            local dest = k2pdfopt.bmp_rowptr_from_top(bmp, row)
-            local p_max = p + 4*bmp.width
-            while p < p_max do
-                dest[0] = p[0]
-                dest[1] = p[1]
-                dest[2] = p[2]
-                dest = dest + 3
-                p = p + 4
-            end
-        end
+    if ncomp == 2 or ncomp == 4 then
+        k2pdfopt.pixmap_to_bmp(bmp, p, ncomp)
     else
-        debug.sethook(hook, mask)
         error("unsupported pixmap format for conversion to bmp")
     end
-    debug.sethook(hook, mask)
 end
 
 local function render_for_kopt(bmp, page, scale, bounds)
