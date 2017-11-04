@@ -488,6 +488,9 @@ $(LUA_SPORE_ROCK): $(THIRDPARTY_DIR)/lua-Spore/CMakeLists.txt
 		$(if $(ANDROID),-DLDFLAGS="$(LDFLAGS) $(CURDIR)/$(LUAJIT_LIB)",) \
 		$(CURDIR)/$(THIRDPARTY_DIR)/lua-Spore && \
 		$(MAKE)
+ifdef ANDROID
+	-rm -f $(LPEG_DYNLIB) # so that LPEG can be rebuilt in our control
+endif
 
 # override lpeg built by luarocks, this is only necessary for Android
 $(LPEG_DYNLIB) $(LPEG_RE): $(LUAJIT_LIB) $(THIRDPARTY_DIR)/lpeg/CMakeLists.txt
