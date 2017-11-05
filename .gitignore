@@ -22,7 +22,7 @@ tags
 toolchain/android-ndk-r*
 toolchain/android-sdk-linux
 toolchain/pocketbook-toolchain
-toolchain/android-toolchain
+toolchain/android-toolchain*
 fonts
 /data
 history
@@ -33,3 +33,4 @@ build
 
 kpvcrlib/build
 thirdparty/*/build
+kodebug-*
