@@ -22,6 +22,7 @@ function framebuffer:init()
         else
             self.bb = bb
         end
+        self.invert_bb = BB.new(SDL.w, SDL.h, BB.TYPE_BBRGB32)
 	else
 		self.bb = BB.new(600, 800)
     end
@@ -32,8 +33,13 @@ function framebuffer:init()
     framebuffer.parent.init(self)
 end
 
-local function render(bb)
-	SDL.SDL.SDL_UpdateTexture(SDL.texture, nil, bb.data, bb.pitch)
+function framebuffer:_render(bb)
+    if bb:getInverse() == 1 then
+        self.invert_bb:invertblitFrom(bb)
+	    SDL.SDL.SDL_UpdateTexture(SDL.texture, nil, self.invert_bb.data, self.invert_bb.pitch)
+    else
+	    SDL.SDL.SDL_UpdateTexture(SDL.texture, nil, bb.data, bb.pitch)
+    end
 	SDL.SDL.SDL_RenderClear(SDL.renderer)
 	SDL.SDL.SDL_RenderCopy(SDL.renderer, SDL.texture, nil, nil)
 	SDL.SDL.SDL_RenderPresent(SDL.renderer)
@@ -56,13 +62,13 @@ function framebuffer:refreshFullImp(x, y, w, h)
     local flash = os.getenv("EMULATE_READER_FLASH")
     if flash then
         self.sdl_bb:invertRect(x, y, w, h)
-        render(bb)
+        self:_render(bb)
         util.usleep(tonumber(flash)*1000)
         self.sdl_bb:setRotation(bb:getRotation())
         self.sdl_bb:setInverse(bb:getInverse())
         self.sdl_bb:blitFrom(bb, x, y, x, y, w, h)
     end
-    render(bb)
+    self:_render(bb)
 end
 
 function framebuffer:close()

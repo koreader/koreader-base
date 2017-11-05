@@ -72,10 +72,10 @@ $(OUTPUT_DIR)/data:
 
 libs: \
 	$(if $(or $(SDL),$(ANDROID)),,$(OUTPUT_DIR)/libs/libkoreader-input.so) \
+	$(if $(or $(SDL),$(ANDROID)),$(OUTPUT_DIR)/libs/libblitbuffer.so,) \
 	$(OUTPUT_DIR)/libs/libkoreader-lfs.so \
 	$(OUTPUT_DIR)/libs/libkoreader-djvu.so \
 	$(OUTPUT_DIR)/libs/libkoreader-cre.so \
-	$(OUTPUT_DIR)/libs/libblitbuffer.so \
 	$(OUTPUT_DIR)/libs/libwrap-mupdf.so
 
 $(OUTPUT_DIR)/libs/libkoreader-input.so: input/*.c input/*.h $(if $(KINDLE),$(POPEN_NOSHELL_LIB),)

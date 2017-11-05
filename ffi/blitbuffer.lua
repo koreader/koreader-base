@@ -351,7 +351,7 @@ function Color4L_mt.__index:getColorRGB32()
 end
 Color4U_mt.__index.getColorRGB32 = Color4L_mt.__index.getColorRGB32
 Color8_mt.__index.getColorRGB32 = Color4L_mt.__index.getColorRGB32
-Color8A_mt.__index.getColorRGB32 = Color4L_mt.__index.getColorRGB32
+function Color8A_mt.__index:getColorRGB32() return ColorRGB32(self.a, self.a, self.a, self.alpha) end
 function ColorRGB16_mt.__index:getColorRGB32()
     local r = rshift(self.v, 11)
     local g = band(rshift(self.v, 5), 0x3F)
@@ -598,7 +598,7 @@ function BBRGB32_mt.__index.getMyColor(color) return color:getColorRGB32() end
 -- set pixel values
 function BB_mt.__index:setPixel(x, y, color)
     local px, py = self:getPhysicalCoordinates(x, y)
-    if self:getInverse() == 1 then color = color:invert() end
+    if not use_cblitbuffer and self:getInverse() == 1 then color = color:invert() end
     self:getPixelP(px, py)[0]:set(color)
 end
 function BB_mt.__index:setPixelAdd(x, y, color, alpha)
@@ -766,6 +766,11 @@ BB_mt.__index.blitFullFrom = BB_mt.__index.blitFrom
 
 -- blitting with a per-blit alpha value
 function BB_mt.__index:addblitFrom(source, dest_x, dest_y, offs_x, offs_y, width, height, intensity)
+    width, height = width or source:getWidth(), height or source:getHeight()
+    width, dest_x, offs_x = BB.checkBounds(width, dest_x or 0, offs_x or 0, self:getWidth(), source:getWidth())
+    height, dest_y, offs_y = BB.checkBounds(height, dest_y or 0, offs_y or 0, self:getHeight(), source:getHeight())
+    if width <= 0 or height <= 0 then return end
+
     if use_cblitbuffer then
         cblitbuffer.BB_add_blit_from(ffi.cast("struct BlitBuffer *", self),
             ffi.cast("struct BlitBuffer *", source),
@@ -777,6 +782,11 @@ end
 
 -- alpha-pane aware blitting
 function BB_mt.__index:alphablitFrom(source, dest_x, dest_y, offs_x, offs_y, width, height)
+    width, height = width or source:getWidth(), height or source:getHeight()
+    width, dest_x, offs_x = BB.checkBounds(width, dest_x or 0, offs_x or 0, self:getWidth(), source:getWidth())
+    height, dest_y, offs_y = BB.checkBounds(height, dest_y or 0, offs_y or 0, self:getHeight(), source:getHeight())
+    if width <= 0 or height <= 0 then return end
+
     if use_cblitbuffer then
         cblitbuffer.BB_alpha_blit_from(ffi.cast("struct BlitBuffer *", self),
             ffi.cast("struct BlitBuffer *", source),
@@ -788,6 +798,11 @@ end
 
 -- invert blitting
 function BB_mt.__index:invertblitFrom(source, dest_x, dest_y, offs_x, offs_y, width, height)
+    width, height = width or source:getWidth(), height or source:getHeight()
+    width, dest_x, offs_x = BB.checkBounds(width, dest_x or 0, offs_x or 0, self:getWidth(), source:getWidth())
+    height, dest_y, offs_y = BB.checkBounds(height, dest_y or 0, offs_y or 0, self:getHeight(), source:getHeight())
+    if width <= 0 or height <= 0 then return end
+
     if use_cblitbuffer then
         cblitbuffer.BB_invert_blit_from(ffi.cast("struct BlitBuffer *", self),
             ffi.cast("struct BlitBuffer *", source),
@@ -801,12 +816,12 @@ end
 function BB_mt.__index:colorblitFrom(source, dest_x, dest_y, offs_x, offs_y, width, height, color)
     -- we need color with alpha later:
     color = color:getColorRGB32()
-    if self:getInverse() == 1 then color = color:invert() end
     if use_cblitbuffer then
         cblitbuffer.BB_color_blit_from(ffi.cast("struct BlitBuffer *", self),
             ffi.cast("struct BlitBuffer *", source),
             dest_x, dest_y, offs_x, offs_y, width, height, color:getColorRGB32())
     else
+        if self:getInverse() == 1 then color = color:invert() end
         self:blitFrom(source, dest_x, dest_y, offs_x, offs_y, width, height, self.setPixelColorize, color)
     end
 end
@@ -1160,6 +1175,7 @@ dim color values in rectangular area
 function BB_mt.__index:dimRect(x, y, w, h, by)
     local color = Color8A(255, 255*(by or 0.5))
     if use_cblitbuffer then
+        c = color:getColorRGB32()
         cblitbuffer.BB_blend_rect(ffi.cast("struct BlitBuffer *", self),
             x, y, w, h, color:getColorRGB32())
     else
