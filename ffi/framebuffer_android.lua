@@ -46,7 +46,11 @@ function framebuffer:refreshFullImp()
         -- adapt to possible rotation changes
         bb:setRotation(ext_bb:getRotation())
 
-        bb:blitFrom(ext_bb)
+        if ext_bb:getInverse() == 1 then
+            bb:invertblitFrom(ext_bb)
+        else
+            bb:blitFrom(ext_bb)
+        end
     end
 
     android.lib.ANativeWindow_unlockAndPost(android.app.window);
