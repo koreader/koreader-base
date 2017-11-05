@@ -560,6 +560,14 @@ int SDL_RenderCopy(struct SDL_Renderer *, struct SDL_Texture *, const struct SDL
 struct SDL_Texture *SDL_CreateTexture(struct SDL_Renderer *, unsigned int, int, int, int) __attribute__((visibility("default")));
 int SDL_UpdateTexture(struct SDL_Texture *, const struct SDL_Rect *, const void *, int) __attribute__((visibility("default")));
 void SDL_SetWindowTitle(struct SDL_Window *, const char *) __attribute__((visibility("default")));
+typedef enum SDL_bool {
+    SDL_FALSE = 0,
+    SDL_TRUE  = 1
+} SDL_bool;
+SDL_bool SDL_HasClipboardText(void);
+char* SDL_GetClipboardText(void);
+int SDL_SetClipboardText(const char* text);
+const char* SDL_GetError(void);
 static const int SDL_INIT_AUDIO = 16;
 static const int SDL_INIT_VIDEO = 32;
 static const int SDL_INIT_EVENTS = 16384;
