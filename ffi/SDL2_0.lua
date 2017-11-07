@@ -174,4 +174,16 @@ function S.waitForEvent(usecs)
 	end
 end
 
+function S.hasClipboardText()
+    return SDL.SDL_HasClipboardText()
+end
+
+function S.getClipboardText()
+    return ffi.string(SDL.SDL_GetClipboardText())
+end
+
+function S.setClipboardText(text)
+    return SDL.SDL_SetClipboardText(text)
+end
+
 return S

@@ -7,5 +7,8 @@ return {
     -- NOP:
     fakeTapInput = function() end,
     -- NOP:
-    closeAll = function() end
+    closeAll = function() end,
+    hasClipboardText = SDL.hasClipboardText,
+    getClipboardText = SDL.getClipboardText,
+    setClipboardText = SDL.setClipboardText,
 }
