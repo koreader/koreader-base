@@ -373,6 +373,10 @@ $(OPENSSL_LIB) $(OPENSSL_DIR): $(THIRDPARTY_DIR)/openssl/CMakeLists.txt
 $(SSL_LIB): $(OPENSSL_LIB)
 	cp -fL $(OPENSSL_DIR)/$(notdir $(SSL_LIB)) $(SSL_LIB)
 	cp -fL $(OPENSSL_DIR)/$(notdir $(CRYPTO_LIB)) $(CRYPTO_LIB)
+ifdef DARWIN
+	install_name_tool -change /usr/local/ssl/lib/$(notdir $(CRYPTO_LIB)) \
+		libs/$(notdir $(CRYPTO_LIB)) $(SSL_LIB)
+endif
 
 # ssl.so locates in koreader/common, but libssl.so and libcrypto.so live
 # in koreader/libs, so we need to set rpath accordingly
@@ -387,6 +391,12 @@ $(LUASEC): $(SSL_LIB) $(THIRDPARTY_DIR)/luasec/CMakeLists.txt
 		-DLUAPATH="$(CURDIR)/$(OUTPUT_DIR)/common" \
 		$(CURDIR)/$(THIRDPARTY_DIR)/luasec && \
 		$(MAKE)
+ifdef DARWIN
+	install_name_tool -change /usr/local/ssl/lib/$(notdir $(CRYPTO_LIB)) \
+		libs/$(notdir $(CRYPTO_LIB)) $(OUTPUT_DIR)/common/ssl.so
+	install_name_tool -change /usr/local/ssl/lib/$(notdir $(SSL_LIB)) \
+		libs/$(notdir $(SSL_LIB)) $(OUTPUT_DIR)/common/ssl.so
+endif
 
 $(LUASERIAL_LIB): $(THIRDPARTY_DIR)/lua-serialize/CMakeLists.txt
 	install -d $(LUASERIAL_BUILD_DIR)
