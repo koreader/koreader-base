@@ -48,7 +48,7 @@ set(GLIB2_LIBRARIES "${GLIB}")
 # `CMAKE_PREFIX_PATH`, `CMAKE_INCLUDE_PATH` and `CMAKE_LIBRARY_PATH` are key
 # It's very hard to tell CMake to use specific directories, but it's easy to
 # tell it to search in specific directories.
-set(CMAKE_PREFIX_PATH "${GLIB2_INCLUDE_DIRS}$<SEMICOLON>${ZLIB_DIR}$<SEMICOLON>${LIBICONV_DIR}$<SEMICOLON>${GETTEXT_DIR}") 
+set(CMAKE_PREFIX_PATH "${GLIB2_INCLUDE_DIRS}$<SEMICOLON>${ZLIB_DIR}$<SEMICOLON>${LIBICONV_DIR}$<SEMICOLON>${GETTEXT_DIR}")
 
 # For some reason this doesn't actually work and CMake keeps finding mostly .so
 # Which is funny, because the .a is in the *same* directory. Just saying.
@@ -75,10 +75,11 @@ set(ZLIB_LIBRARY_RELEASE "${ZLIB}")
 set(CFG_OPTS "-DGLIB2_INCLUDE_DIRS='${GLIB2_INCLUDE_DIRS}' -DGLIB2_LIBRARIES='${GLIB2_LIBRARIES}' -DZLIB_INCLUDE_DIR='${ZLIB_INCLUDE_DIR}' -DZLIB_LIBRARIES='${ZLIB_LIBRARIES}' -DZLIB_LIBRARY_RELEASE='${ZLIB_LIBRARY_RELEASE}'")
 # These are the directories where we tell CMake to search for libs and includes
 set(CFG_OPTS "${CFG_OPTS} -DCMAKE_PREFIX_PATH='${CMAKE_PREFIX_PATH}'")
-if(DEFINED ENV{ANDROID})
+if($ENV{ANDROID})
     # the default `;` causes escape issues
     # we could escape it but on Android we only want .a and otherwise the default
     set(CFG_OPTS "${CFG_OPTS} -DCMAKE_FIND_LIBRARY_SUFFIXES='${CMAKE_FIND_LIBRARY_SUFFIXES}'")
+    set(CFG_OPTS "${CFG_OPTS} -DCMAKE_SYSTEM_NAME=Android -DCMAKE_SYSTEM_VERSION=1")
 endif()
 ### Compiler and linker flags
 set(CFG_OPTS "${CFG_OPTS} -DCMAKE_CXX_COMPILER='${CMAKE_CXX_COMPILER}' -DCMAKE_CXX_COMPILER_LAUNCHER='${CMAKE_CXX_COMPILER_LAUNCHER}' -DCMAKE_CXX_COMPILER_ARG1='${CMAKE_CXX_COMPILER_ARG1}' -DCMAKE_CXX_FLAGS='${CMAKE_CXX_FLAGS}' -DCMAKE_EXE_LINKER_FLAGS='${CMAKE_EXE_LINKER_FLAGS}'")

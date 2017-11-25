@@ -23,6 +23,11 @@ else()
     set(CFG_ENV_VAR "")
     set(CFG_OPTS "shared")
 endif()
+
+if($ENV{ANDROID})
+    set(CFG_ENV_VAR "${CFG_ENV_VAR} CROSS_COMPILE=\"${CHOST}-\"")
+endif()
+
 set(CFG_OPTS "${CFG_OPTS} no-asm no-idea no-mdc2 no-rc5 no-ssl2 no-ssl3")
 set(CFG_CMD sh -c "${CFG_ENV_VAR} ${SOURCE_DIR}/${CONFIG_SCRIPT} ${CFG_OPTS}")
 

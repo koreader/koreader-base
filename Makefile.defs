@@ -86,16 +86,28 @@ else
 endif
 
 ifneq (,$(filter $(UNAME), Darwin))
-    export DARWIN=1
+    export DARWINHOST=1
+    ifdef EMULATE_READER
+        export DARWIN=1
+    endif
+endif
+
+# ccache still has tons of problems when cross-compiling Android port on Darwin
+ifdef DARWINHOST
+    ifdef ANDROID
+        CCACHE=
+    endif
 endif
 
 USE_LUAJIT_LIB=$(or $(DARWIN),$(ANDROID),$(WIN32))
 
 # handle utility params on different host systems
-ifdef DARWIN
+ifdef DARWINHOST
     RCP:=cp -R
+    ISED:=sed -i '' -e
 else
     RCP:=cp -r
+    ISED:=sed -i -e
 endif
 
 # unknown device
@@ -275,6 +287,7 @@ endif
 
 # NOTE: Follow the NDK's lead
 ifeq ($(TARGET), android)
+	ZLIB_LDFLAGS:=-Wl,-soname,libz.so.1
 	LDFLAGS+=-no-canonical-prefixes -Wl,--fix-cortex-a8
 	ifeq ($(ANDROID_ARCH), arm)
 		LDFLAGS+=-march=armv7-a
