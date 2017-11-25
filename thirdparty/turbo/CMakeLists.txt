@@ -14,7 +14,8 @@ ep_get_source_dir(SOURCE_DIR)
 
 set(BUILD_CMD sh -c "$(MAKE) CC=\"${CC}\" CFLAGS=\"${CFLAGS}\" LDFLAGS=\"${LDFLAGS}\" all")
 
-if (APPLE AND $ENV{ANDROID})
+if (APPLE AND DEFINED ENV{ANDROID})
+    # makefile of turbo hardcodes the shared library filename on darwin
     set(PATCH_CMD "${ISED} 's|libtffi_wrap.dylib|libtffi_wrap.so|' ${SOURCE_DIR}/Makefile")
     set(PATCH_CMD "${PATCH_CMD} && ${ISED} 's|CC=|CC:=|' ${SOURCE_DIR}/Makefile")
     set(PATCH_CMD sh -c "${PATCH_CMD}")
