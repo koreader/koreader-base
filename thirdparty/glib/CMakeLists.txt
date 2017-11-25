@@ -44,7 +44,14 @@ if(${ENABLE_SHARED} STREQUAL "false")
 else()
     set(CFG_OPTS "${CFG_OPTS} --disable-static")
 endif()
-set(CFG_OPTS "${CFG_OPTS} CFLAGS=\"${CFLAGS}\" LDFLAGS=\"${LDFLAGS} -Wl,-rpath-link,${ZLIB_DIR}/lib -Wl,-rpath-link,${LIBFFI_DIR}/.libs -Wl,-rpath-link,${BINARY_DIR}/gmodule/.libs\" ${HOST_OPTS}")
+
+if(NOT DEFINED ENV{DARWIN})
+    set(LDFLAGS "${LDFLAGS} -Wl,-rpath-link,${ZLIB_DIR}/lib -Wl,-rpath-link,${LIBFFI_DIR}/.libs -Wl,-rpath-link,${BINARY_DIR}/gmodule/.libs")
+else()
+    set(LDFLAGS "${LDFLAGS} -L${LIBICONV_DIR}/lib -L${ZLIB_DIR}/lib -L${LIBFFI_DIR}/.libs -L${BINARY_DIR}/gmodule/.libs")
+endif()
+
+set(CFG_OPTS "${CFG_OPTS} CFLAGS=\"${CFLAGS}\" LDFLAGS=\"${LDFLAGS}\" ${HOST_OPTS}")
 set(CFG_CMD sh -c "${CFG_ENV_VAR} ${SOURCE_DIR}/configure ${CFG_OPTS}")
 
 ko_write_gitclone_script(

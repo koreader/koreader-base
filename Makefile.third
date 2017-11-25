@@ -239,7 +239,7 @@ $(LIBFFI_DIR)/include: $(THIRDPARTY_DIR)/libffi/CMakeLists.txt
 		$(CURDIR)/$(THIRDPARTY_DIR)/libffi && \
 		$(MAKE)
 
-$(GLIB): $(LIBFFI_DIR)/include $(THIRDPARTY_DIR)/glib/CMakeLists.txt
+$(GLIB): $(if $(DARWIN),$(LIBICONV) $(LIBGETTEXT),) $(LIBFFI_DIR)/include $(THIRDPARTY_DIR)/glib/CMakeLists.txt
 	install -d $(GLIB_BUILD_DIR)
 	# make install sometimes only update symlink, so purge lib dir here
 	# to update mtime for all the binaries
@@ -248,8 +248,9 @@ $(GLIB): $(LIBFFI_DIR)/include $(THIRDPARTY_DIR)/glib/CMakeLists.txt
 		$(CMAKE) -DCC="$(CC) -std=gnu89" \
 		-DAR="$(AR)" -DRANLIB="$(RANLIB)" \
 		-DCFLAGS="$(CFLAGS)" -DLDFLAGS="$(LDFLAGS)" \
+		-DLIBICONV_DIR="$(LIBICONV_DIR)" \
 		-DLIBFFI_DIR="$(LIBFFI_DIR)" -DZLIB_DIR="$(ZLIB_DIR)" \
-		-DWITH_LIBICONV="no" -DENABLE_SHARED="glib" \
+		-DWITH_LIBICONV="$(if $(DARWIN),yes,no)" -DENABLE_SHARED="glib" \
 		-DHOST_OPTS="$(if $(EMULATE_READER),,--host=$(CHOST) --cache-file=arm_cache.conf)" \
 		$(CURDIR)/$(THIRDPARTY_DIR)/glib && \
 		$(MAKE)
@@ -318,7 +319,7 @@ $(OUTPUT_DIR)/tar: $(THIRDPARTY_DIR)/tar/CMakeLists.txt
 	install -d $(TAR_BUILD_DIR)
 	cd $(TAR_BUILD_DIR) && \
 		$(CMAKE) -DCC="$(CC)" \
-		-DLIBS="$(if $(or $(ANDROID),$(WIN32)),,-lrt) $(if $(ANDROID),-static,)" \
+		-DLIBS="$(if $(or $(ANDROID),$(WIN32),$(DARWIN)),,-lrt) $(if $(ANDROID),-static,)" \
 		$(if $(LEGACY),-DDISABLE_LARGEFILE:BOOL=ON -DDISABLE_FORTIFY:BOOL=ON,) \
 		-DCHOST="$(if $(EMULATE_READER),,$(CHOST))" \
 		$(CURDIR)/$(THIRDPARTY_DIR)/tar && \
@@ -524,7 +525,8 @@ $(EVERNOTE_LIB): $(THIRDPARTY_DIR)/evernote-sdk-lua/CMakeLists.txt
 	cd $(EVERNOTE_SDK_BUILD_DIR) && \
 		$(CMAKE) -DCC="$(CC) $(CFLAGS)" \
 		-DOUTPUT_DIR="$(CURDIR)/$(EVERNOTE_PLUGIN_DIR)/lib" \
-		-DLDFLAGS="$(LDFLAGS)$(if $(or $(ANDROID),$(WIN32)), -lm $(CURDIR)/$(LUAJIT_LIB))" \
+		-DLDFLAGS="$(LDFLAGS) $(if $(or $(ANDROID),$(WIN32)),-lm $(CURDIR)/$(LUAJIT_LIB))" \
+		-DDYNLIB_CFLAGS="$(DYNLIB_CFLAGS)" \
 		$(CURDIR)/$(THIRDPARTY_DIR)/evernote-sdk-lua && \
 		$(MAKE)
 
