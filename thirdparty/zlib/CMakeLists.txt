@@ -20,7 +20,7 @@ if(${MINGW})
     set(INSTALL_CMD ${BUILD_VARS} $(MAKE) -f win32/Makefile.gcc ${BUILD_ARGS} install)
 else()
     # configure
-    set(optional_cfg_cmd CONFIGURE_COMMAND sh -c "CC=\"${CC}\" ./configure --prefix=${SOURCE_DIR}")
+    set(optional_cfg_cmd CONFIGURE_COMMAND sh -c "CC=\"${CC}\" CHOST=\"${CHOST}\" LDFLAGS=\"${LDFLAGS}\" ./configure --prefix=${SOURCE_DIR}")
     # build
     set(BUILD_CMD $(MAKE) -j${PARALLEL_JOBS} --silent shared static)
     # install

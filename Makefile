@@ -10,19 +10,19 @@ all: $(OUTPUT_DIR)/libs $(if $(ANDROID),,$(LUAJIT)) \
 		$(OUTPUT_DIR)/ffi $(OUTPUT_DIR)/data \
 		$(if $(WIN32),,$(LUASEC)) \
 		$(if $(ANDROID),$(LUACOMPAT52) $(LUALONGNUMBER),) \
-		$(if $(or $(DARWIN),$(WIN32)),,$(EVERNOTE_LIB)) \
+		$(if $(WIN32),,$(EVERNOTE_LIB)) \
 		$(LUASERIAL_LIB) \
 		$(TURBOJPEG_LIB) \
 		$(LODEPNG_LIB) \
 		$(GIF_LIB) \
 		$(if $(USE_LJ_WPACLIENT),$(LJ_WPACLIENT),) \
-		$(if $(DARWIN),,$(TURBO_FFI_WRAP_LIB)) \
+		$(TURBO_FFI_WRAP_LIB) \
 		$(LUA_SPORE_ROCK) \
 		$(if $(ANDROID),$(LPEG_DYNLIB) $(LPEG_RE),) \
-		$(if $(or $(DARWIN),$(WIN32)),,$(OUTPUT_DIR)/sdcv) \
+		$(if $(WIN32),,$(ZMQ_LIB) $(CZMQ_LIB) $(FILEMQ_LIB) $(ZYRE_LIB)) \
+		$(if $(WIN32),,$(OUTPUT_DIR)/sdcv) \
+		$(if $(WIN32),,$(OUTPUT_DIR)/zsync) \
 		$(if $(or $(DARWIN),$(WIN32)),,$(OUTPUT_DIR)/tar) \
-		$(if $(or $(DARWIN),$(WIN32)),,$(OUTPUT_DIR)/zsync) \
-		$(if $(or $(DARWIN),$(WIN32)), ,$(ZMQ_LIB) $(CZMQ_LIB) $(FILEMQ_LIB) $(ZYRE_LIB)) \
 		$(SQLITE_LIB) \
 		$(LUA_LJ_SQLITE) $(OUTPUT_DIR)/common/xsys.lua
 ifndef EMULATE_READER

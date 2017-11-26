@@ -12,12 +12,12 @@ assert_var_defined(CC)
 assert_var_defined(OUTPUT_DIR)
 assert_var_defined(LDFLAGS)
 
-set(BUILD_CMD sh -c "$(MAKE) -C thrift CC=\"${CC}\" LDFLAGS=\"${LDFLAGS}\" OUTPUT_DIR=${OUTPUT_DIR}")
+set(BUILD_CMD sh -c "$(MAKE) -C thrift CC=\"${CC}\" LDFLAGS=\"${LDFLAGS}\" DYNLIB_CFLAGS=\"${DYNLIB_CFLAGS}\" OUTPUT_DIR=${OUTPUT_DIR}")
 
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
     https://github.com/koreader/evernote-sdk-lua
-    bf32db95018627c9c9e43b50721362ac60de72fa
+    eb4a5ecbfe067b0fb93c150ec56b16e4cbdefadb
     ${SOURCE_DIR}
 )
 

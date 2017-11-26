@@ -12,7 +12,13 @@ assert_var_defined(LDFLAGS)
 
 ep_get_source_dir(SOURCE_DIR)
 
-set(BUILD_CMD sh -c "$(MAKE) CC=\"${CC}\" LDFLAGS=\"${LDFLAGS}\" all")
+set(BUILD_CMD sh -c "$(MAKE) CC=\"${CC}\" CFLAGS=\"${CFLAGS}\" LDFLAGS=\"${LDFLAGS}\" all")
+
+set(PATCH_CMD "${ISED} 's|CC=|CC:=|' ${SOURCE_DIR}/Makefile")
+if (APPLE AND DEFINED ENV{ANDROID})
+    # makefile of turbo hardcodes the shared library filename on darwin
+    set(PATCH_CMD "${PATCH_CMD} && ${ISED} 's|libtffi_wrap.dylib|libtffi_wrap.so|' ${SOURCE_DIR}/Makefile")
+endif()
 
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
@@ -28,8 +34,7 @@ ExternalProject_Add(
     BUILD_IN_SOURCE 1
     # patch turbo to specify path of libssl and libcrypto and to remove -Werror flag from turbo/deps/http_parser/Makefile
     PATCH_COMMAND patch -N -p1 < ${CMAKE_CURRENT_SOURCE_DIR}/turbo.patch
-    # skip configure
-    CONFIGURE_COMMAND ""
+    CONFIGURE_COMMAND COMMAND sh -c ${PATCH_CMD}
     BUILD_COMMAND ${BUILD_CMD}
     # skip install
     INSTALL_COMMAND ""

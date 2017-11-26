@@ -86,16 +86,28 @@ else
 endif
 
 ifneq (,$(filter $(UNAME), Darwin))
-    export DARWIN=1
+    export DARWINHOST=1
+    ifdef EMULATE_READER
+        export DARWIN=1
+    endif
+endif
+
+# ccache still has tons of problems when cross-compiling Android port on Darwin
+ifdef DARWINHOST
+    ifdef ANDROID
+        CCACHE=
+    endif
 endif
 
 USE_LUAJIT_LIB=$(or $(DARWIN),$(ANDROID),$(WIN32))
 
 # handle utility params on different host systems
-ifdef DARWIN
+ifdef DARWINHOST
     RCP:=cp -R
+    ISED:=sed -i '' -e
 else
     RCP:=cp -r
+    ISED:=sed -i -e
 endif
 
 # unknown device
@@ -275,6 +287,7 @@ endif
 
 # NOTE: Follow the NDK's lead
 ifeq ($(TARGET), android)
+	ZLIB_LDFLAGS:=-Wl,-soname,libz.so.1
 	LDFLAGS+=-no-canonical-prefixes -Wl,--fix-cortex-a8
 	ifeq ($(ANDROID_ARCH), arm)
 		LDFLAGS+=-march=armv7-a
@@ -494,7 +507,7 @@ GETTEXT_DIR=$(CURDIR)/$(GETTEXT_BUILD_DIR)/gettext-prefix/src/gettext-build
 
 LIBICONV=$(LIBICONV_DIR)/lib/libiconv.a
 LIBGETTEXT=$(GETTEXT_DIR)/lib/libintl.a
-GLIB=$(GLIB_DIR)/lib/libglib-2.0.so.0
+GLIB=$(GLIB_DIR)/lib/libglib-2.0$(if $(DARWIN),.dylib,.so.0)
 GLIB_STATIC=$(GLIB_DIR)/lib/libglib-2.0.a
 ZLIB=$(OUTPUT_DIR)/libs/$(if $(WIN32),zlib1.dll,$(if $(DARWIN),libz.1.dylib,libz.so.1))
 
@@ -550,7 +563,7 @@ TAR_DIR=$(CURDIR)/$(TAR_BUILD_DIR)/tar-prefix/src/tar-build
 
 TURBO_BUILD_DIR=$(THIRDPARTY_DIR)/turbo/build/$(MACHINE)
 TURBO_DIR=$(CURDIR)/$(TURBO_BUILD_DIR)/turbo-prefix/src/turbo
-TURBO_FFI_WRAP_LIB=$(OUTPUT_DIR)/common/libtffi_wrap.so
+TURBO_FFI_WRAP_LIB=$(OUTPUT_DIR)/common/libtffi_wrap$(LIB_EXT)
 
 LUA_SPORE_BUILD_DIR=$(THIRDPARTY_DIR)/lua-Spore/build/$(MACHINE)
 LUA_SPORE_DIR=$(CURDIR)/$(LUA_SPORE_BUILD_DIR)/lua-Spore-prefix/src/lua-Spore

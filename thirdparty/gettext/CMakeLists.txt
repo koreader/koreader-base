@@ -12,7 +12,7 @@ assert_var_defined(CHOST_OPTS)
 ep_get_source_dir(SOURCE_DIR)
 ep_get_binary_dir(BINARY_DIR)
 
-set(CFG_ENV_VAR "CC=\"${CC}\"")
+set(CFG_ENV_VAR "CC=\"${CC}\" AR=\"${AR}\" RANLIB=\"${RANLIB}\"")
 if($ENV{ANDROID})
     # workaround of 'undefined reference to getdtablesize' for NDK-r11c
     set(CFG_ENV_VAR "${CFG_ENV_VAR} LDFLAGS=-lc LIBS=${NDK}/platforms/android-${NDKABI}/arch-arm/usr/lib/libc.a")

@@ -15,11 +15,11 @@ assert_var_defined(LUAPATH)
 
 ep_get_source_dir(SOURCE_DIR)
 
-set(BUILD_CMD_STR "$(MAKE) CC=\"${CC}\" LD=\"${LD}\" INC_PATH=\"${INC_PATH}\" LIB_PATH=\"${LIB_PATH}\" LUAPATH=\"${LUAPATH}\" LUACPATH=\"${LUAPATH}\"")
+set(BUILD_CMD_STR "$(MAKE) CC=\"${CC}\" LD=\"${LD}\" AR=\"${AR}\" RANLIB=\"${RANLIB}\" INC_PATH=\"${INC_PATH}\" LIB_PATH=\"${LIB_PATH}\" LUAPATH=\"${LUAPATH}\" LUACPATH=\"${LUAPATH}\"")
 if(DEFINED LIBS)
     set(BUILD_CMD_STR "${BUILD_CMD_STR} LIBS=\"${LIBS}\"")
 endif()
-if (APPLE)
+if ($ENV{DARWIN})
     set(INSTALL_CMD sh -c "${BUILD_CMD_STR} --silent macosx install")
     set(BUILD_CMD sh -c "${BUILD_CMD_STR} --silent macosx")
 else()

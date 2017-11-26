@@ -29,12 +29,18 @@ if(DEFINED ENV{ANDROID})
     set(PATCH_CMD sh -c "${PATCH_CMD}")
 endif()
 
-if(NOT DEFINED ENV{ANDROID})
+if(NOT DEFINED ENV{ANDROID} AND NOT DEFINED ENV{DARWIN})
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -lpthread -lrt")
 endif()
 
 # because cmake needs all kinds of annoying special cmake variables
-set(CMAKE_EXE_LINKER_FLAGS "${LDFLAGS} -static-libgcc -static-libstdc++")
+set(CMAKE_EXE_LINKER_FLAGS "${LDFLAGS} -static-libstdc++")
+if(DEFINED ENV{DARWIN})
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -framework CoreFoundation -framework Security")
+else()
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static-libgcc")
+endif()
+
 if(DEFINED ENV{ANDROID})
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static")
 endif()
@@ -42,18 +48,18 @@ endif()
 # took me an eternity to find $<SEMICOLON>
 # important docs here https://cmake.org/cmake/help/v2.8.11/cmake.html#command:add_custom_command
 set(GLIB2_INCLUDE_DIRS "${GLIB_DIR}/include/glib-2.0")
-set(GLIB2_INCLUDE_DIRS "${GLIB2_INCLUDE_DIRS}$<SEMICOLON>${GLIB_DIR}/lib/glib-2.0/include")
+set(GLIB2_INCLUDE_DIRS "${GLIB2_INCLUDE_DIRS}$<SEMICOLON>${GLIB_DIR}/lib/glib-2.0/include$<SEMICOLON>${GETTEXT_DIR}/include")
 set(GLIB2_LIBRARIES "${GLIB}")
 
 # `CMAKE_PREFIX_PATH`, `CMAKE_INCLUDE_PATH` and `CMAKE_LIBRARY_PATH` are key
 # It's very hard to tell CMake to use specific directories, but it's easy to
 # tell it to search in specific directories.
-set(CMAKE_PREFIX_PATH "${GLIB2_INCLUDE_DIRS}$<SEMICOLON>${ZLIB_DIR}$<SEMICOLON>${LIBICONV_DIR}$<SEMICOLON>${GETTEXT_DIR}") 
+set(CMAKE_PREFIX_PATH "${GLIB2_INCLUDE_DIRS}$<SEMICOLON>${ZLIB_DIR}$<SEMICOLON>${LIBICONV_DIR}$<SEMICOLON>${GETTEXT_DIR}")
 
 # For some reason this doesn't actually work and CMake keeps finding mostly .so
 # Which is funny, because the .a is in the *same* directory. Just saying.
 # Instead we add semi-hardcoded references to the right libraries in GLIB2_LIBRARIES
-if(DEFINED ENV{ANDROID})
+if(DEFINED ENV{ANDROID} OR DEFINED ENV{DARWIN})
     set(CMAKE_FIND_LIBRARY_SUFFIXES ".a")
 
     # glib2 also needs to link with libiconv and gettext
@@ -61,7 +67,6 @@ if(DEFINED ENV{ANDROID})
     # CMAKE_CXX_FLAGS with -I and -L doesn't seem to have much of an effect
     set(GLIB2_LIBRARIES "${GLIB2_LIBRARIES}$<SEMICOLON>${LIBICONV_DIR}/lib/libiconv.a$<SEMICOLON>${GETTEXT_DIR}/lib/libintl.a")
 endif()
-
 
 set(ZLIB_INCLUDE_DIR "${ZLIB_DIR}/include")
 set(ZLIB_LIBRARIES "${ZLIB}")
@@ -75,10 +80,11 @@ set(ZLIB_LIBRARY_RELEASE "${ZLIB}")
 set(CFG_OPTS "-DGLIB2_INCLUDE_DIRS='${GLIB2_INCLUDE_DIRS}' -DGLIB2_LIBRARIES='${GLIB2_LIBRARIES}' -DZLIB_INCLUDE_DIR='${ZLIB_INCLUDE_DIR}' -DZLIB_LIBRARIES='${ZLIB_LIBRARIES}' -DZLIB_LIBRARY_RELEASE='${ZLIB_LIBRARY_RELEASE}'")
 # These are the directories where we tell CMake to search for libs and includes
 set(CFG_OPTS "${CFG_OPTS} -DCMAKE_PREFIX_PATH='${CMAKE_PREFIX_PATH}'")
-if(DEFINED ENV{ANDROID})
+if($ENV{ANDROID})
     # the default `;` causes escape issues
     # we could escape it but on Android we only want .a and otherwise the default
     set(CFG_OPTS "${CFG_OPTS} -DCMAKE_FIND_LIBRARY_SUFFIXES='${CMAKE_FIND_LIBRARY_SUFFIXES}'")
+    set(CFG_OPTS "${CFG_OPTS} -DCMAKE_SYSTEM_NAME=Android -DCMAKE_SYSTEM_VERSION=1")
 endif()
 ### Compiler and linker flags
 set(CFG_OPTS "${CFG_OPTS} -DCMAKE_CXX_COMPILER='${CMAKE_CXX_COMPILER}' -DCMAKE_CXX_COMPILER_LAUNCHER='${CMAKE_CXX_COMPILER_LAUNCHER}' -DCMAKE_CXX_COMPILER_ARG1='${CMAKE_CXX_COMPILER_ARG1}' -DCMAKE_CXX_FLAGS='${CMAKE_CXX_FLAGS}' -DCMAKE_EXE_LINKER_FLAGS='${CMAKE_EXE_LINKER_FLAGS}'")
