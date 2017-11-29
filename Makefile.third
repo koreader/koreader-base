@@ -276,11 +276,18 @@ $(GLIB_STATIC): $(LIBICONV) $(LIBGETTEXT) $(LIBFFI_DIR)/include $(THIRDPARTY_DIR
 $(ZLIB) $(ZLIB_STATIC): $(THIRDPARTY_DIR)/zlib/CMakeLists.txt
 	install -d $(ZLIB_BUILD_DIR)
 	-rm -f $(ZLIB_DIR)/../zlib-stamp/zlib-install $(ZLIB) $(ZLIB_STATIC)
+ifdef ANDROID
 	cd $(ZLIB_BUILD_DIR) && \
 		$(CMAKE) -DCC="$(CC)" -DCHOST="$(CHOST)" \
-		-DLDFLAGS="$(LDFLAGS) $(if $(ANDROID),-shared $(ZLIB_LDFLAGS),) " \
+		-DLDFLAGS="$(LDFLAGS) -shared $(ZLIB_LDFLAGS)" \
 		$(CURDIR)/thirdparty/zlib && \
 		$(MAKE)
+else
+	cd $(ZLIB_BUILD_DIR) && \
+		$(CMAKE) -DCC="$(CC)" \
+		$(CURDIR)/thirdparty/zlib && \
+		$(MAKE)
+endif
 ifdef WIN32
 	cp -fL $(ZLIB_DIR)/$(notdir $(ZLIB)) $(ZLIB)
 else
