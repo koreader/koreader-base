@@ -50,6 +50,7 @@ fz_matrix *fz_translate(fz_matrix *, float, float);
 fz_matrix *fz_pre_translate(fz_matrix *, float, float);
 fz_rect *fz_transform_rect(fz_rect *restrict, const fz_matrix *restrict);
 typedef struct fz_context_s fz_context;
+typedef struct fz_separations_s fz_separations;
 typedef struct fz_storable_s fz_storable;
 typedef void fz_store_drop_fn(fz_context *, fz_storable *);
 struct fz_storable_s {
@@ -97,10 +98,19 @@ struct fz_pixmap_s {
   unsigned char *samples;
   int free_samples;
 };
-fz_image *fz_new_image_from_data(fz_context *, unsigned char *, int);
-fz_image *mupdf_new_image_from_data(fz_context *, unsigned char *, int);
+typedef struct fz_buffer_s fz_buffer;
+struct fz_buffer_s
+{
+	int refs;
+	unsigned char *data;
+	size_t cap, len;
+	int unused_bits;
+	int shared;
+};
+fz_image *mupdf_new_image_from_buffer(fz_context *, fz_buffer *);
 fz_pixmap *fz_new_pixmap_from_image(fz_context *, fz_image *, int, int);
-fz_pixmap *mupdf_new_pixmap_from_image(fz_context *, fz_image *, int, int);
+fz_pixmap *mupdf_get_pixmap_from_image(fz_context *, fz_image *, int, int);
+void *mupdf_save_pixmap_as_png(fz_context *, fz_pixmap *, const char *);
 fz_image *fz_keep_image(fz_context *, fz_image *);
 void fz_drop_image(fz_context *, fz_image *);
 fz_pixmap *fz_load_png(fz_context *, unsigned char *, int);
@@ -289,7 +299,7 @@ fz_pixmap *mupdf_new_pixmap(fz_context *, fz_colorspace *, int, int);
 fz_pixmap *fz_new_pixmap(fz_context *, fz_colorspace *, int, int);
 fz_pixmap *mupdf_new_pixmap_with_bbox(fz_context *, fz_colorspace *, const fz_irect *);
 fz_pixmap *mupdf_new_pixmap_with_data(fz_context *, fz_colorspace *, int, int, unsigned char *);
-fz_pixmap *mupdf_new_pixmap_with_bbox_and_data(fz_context *, fz_colorspace *, const fz_irect *, unsigned char *);
+fz_pixmap *mupdf_new_pixmap_with_bbox_and_data(fz_context *, fz_colorspace *, const fz_irect *, fz_separations *, int, unsigned char *);
 fz_pixmap *fz_scale_pixmap(fz_context *, fz_pixmap *, float, float, float, float, fz_irect *);
 void fz_convert_pixmap(fz_context *, fz_pixmap *, fz_pixmap *);
 fz_pixmap *fz_keep_pixmap(fz_context *, fz_pixmap *);
@@ -302,10 +312,11 @@ int fz_pixmap_components(fz_context *, fz_pixmap *);
 unsigned char *fz_pixmap_samples(fz_context *, fz_pixmap *);
 fz_colorspace *fz_device_gray(fz_context *);
 fz_colorspace *fz_device_rgb(fz_context *);
-struct fz_device_s *mupdf_new_draw_device(fz_context *, fz_pixmap *);
+struct fz_device_s *mupdf_new_draw_device(fz_context *, const fz_matrix *, fz_pixmap *);
 struct fz_device_s *mupdf_new_text_device(fz_context *, fz_text_sheet *, fz_text_page *);
 struct fz_device_s *mupdf_new_bbox_device(fz_context *, fz_rect *);
 void *mupdf_run_page(fz_context *, fz_page *, struct fz_device_s *, const fz_matrix *, struct fz_cookie_s *);
+void fz_close_device(fz_context *, struct fz_device_s *);
 void fz_drop_device(fz_context *, struct fz_device_s *);
 typedef struct pdf_hotspot_s pdf_hotspot;
 struct pdf_hotspot_s {
@@ -447,4 +458,6 @@ fz_alloc_context *mupdf_get_my_alloc_context();
 int mupdf_get_cache_size();
 int mupdf_error_code(fz_context *);
 char *mupdf_error_message(fz_context *);
+fz_buffer *mupdf_new_buffer_from_shared_data(fz_context *, const unsigned char *, size_t);
+void *mupdf_drop_buffer(fz_context *, fz_buffer *);
 ]]

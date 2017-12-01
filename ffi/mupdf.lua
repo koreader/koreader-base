@@ -33,7 +33,7 @@ local mupdf = {
 }
 -- this cannot get adapted by the cdecl file because it is a
 -- string constant. Must match the actual mupdf API:
-local FZ_VERSION = "1.8"
+local FZ_VERSION = "1.12.0"
 
 local document_mt = { __index = {} }
 local page_mt = { __index = {} }
@@ -525,10 +525,11 @@ end
 local function run_page(page, pixmap, ctm)
     M.fz_clear_pixmap_with_value(context(), pixmap, 0xff)
 
-    local dev = W.mupdf_new_draw_device(context(), pixmap)
+    local dev = W.mupdf_new_draw_device(context(), nil, pixmap)
     if dev == nil then merror("cannot create draw device") end
 
     local ok = W.mupdf_run_page(context(), page.page, dev, ctm, nil)
+    M.fz_close_device(context(), dev)
     M.fz_drop_device(context(), dev)
     if ok == nil then merror("could not run page") end
 end
@@ -566,7 +567,7 @@ function page_mt.__index:draw_new(draw_context, width, height, offset_x, offset_
     local colorspace = mupdf.color and M.fz_device_rgb(context())
         or M.fz_device_gray(context())
     local pix = W.mupdf_new_pixmap_with_bbox_and_data(
-        context(), colorspace, bbox, ffi.cast("unsigned char*", bb.data))
+        context(), colorspace, bbox, nil, 1, ffi.cast("unsigned char*", bb.data))
     if pix == nil then merror("cannot allocate pixmap") end
 
     run_page(self, pix, ctm)
@@ -631,20 +632,22 @@ end
 Renders image data.
 --]]
 function mupdf.renderImage(data, size, width, height)
-    local image = W.mupdf_new_image_from_data(context(),
-                    ffi.cast("unsigned char*", data), size)
+    local buffer = W.mupdf_new_buffer_from_shared_data(context(),
+                     ffi.cast("unsigned char*", data), size)
+    local image = W.mupdf_new_image_from_buffer(context(), buffer)
     if image == nil then merror("could not load image data") end
     M.fz_keep_image(context(), image)
-    local pixmap = W.mupdf_new_pixmap_from_image(context(),
+    local pixmap = W.mupdf_get_pixmap_from_image(context(),
                     image, width or -1, height or -1)
     if pixmap == nil then
         M.fz_drop_image(context(), image)
+        W.mupdf_drop_buffer(context(), buffer)
         merror("could not create pixmap from image")
     end
 
     local p_width = M.fz_pixmap_width(context(), pixmap)
     local p_height = M.fz_pixmap_height(context(), pixmap)
-    -- mupdf_new_pixmap_from_image() may not scale image to the
+    -- mupdf_get_pixmap_from_image() may not scale image to the
     -- width and height provided, so check and scale it if needed
     if width and height and (p_width ~= width or p_height ~= height) then
         local scaled_pixmap = M.fz_scale_pixmap(context(), pixmap, 0, 0, width, height, nil)
@@ -655,7 +658,9 @@ function mupdf.renderImage(data, size, width, height)
     end
     local bbtype
     local ncomp = M.fz_pixmap_components(context(), pixmap)
-    if ncomp == 2 then bbtype = BlitBuffer.TYPE_BB8A
+    if ncomp == 1 then bbtype = BlitBuffer.TYPE_BB8
+    elseif ncomp == 2 then bbtype = BlitBuffer.TYPE_BB8A
+    elseif ncomp == 3 then bbtype = BlitBuffer.TYPE_BBRGB24
     elseif ncomp == 4 then bbtype = BlitBuffer.TYPE_BBRGB32
     else error("unsupported number of color components")
     end
@@ -663,6 +668,7 @@ function mupdf.renderImage(data, size, width, height)
     local bb = BlitBuffer.new(p_width, p_height, bbtype, p):copy()
     M.fz_drop_pixmap(context(), pixmap)
     M.fz_drop_image(context(), image)
+    W.mupdf_drop_buffer(context(), buffer)
     return bb
 end
 

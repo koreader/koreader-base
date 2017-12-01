@@ -24,7 +24,6 @@ set(STATIC_BUILD_CMD sh -c "${STATIC_BUILD_CMD} third libs")
 # we generate a dynamic library from the static library:
 assert_var_defined(CFLAGS)
 assert_var_defined(MUPDF_LIB_STATIC)
-assert_var_defined(MUPDF_JS_LIB_STATIC)
 assert_var_defined(MUPDF_THIRDPARTY_LIBS)
 assert_var_defined(MUPDF_SONAME)
 assert_var_defined(ZLIB)
@@ -36,17 +35,15 @@ assert_var_defined(RPATH)
 if($ENV{DARWIN})
     set(LINK_OPTS "-Wl,-rpath,'${RPATH}'")
     set(LINK_OPTS "${LINK_OPTS} -Wl,-all_load ${MUPDF_LIB_STATIC}")
-    set(LINK_OPTS "${LINK_OPTS} -Wl,-all_load ${MUPDF_JS_LIB_STATIC}")
     set(LINK_OPTS "${LINK_OPTS} -Wl,-all_load ${MUPDF_THIRDPARTY_LIBS}")
     set(LINK_OPTS "${LINK_OPTS} -dynamiclib -undefined dynamic_lookup")
     set(LINK_OPTS "${LINK_OPTS} build/release/libjbig2dec.a")
 else()
     set(LINK_OPTS "-Wl,-E -Wl,-rpath,'${RPATH}'")
     set(LINK_OPTS "${LINK_OPTS} -Wl,--whole-archive ${MUPDF_LIB_STATIC}")
-    set(LINK_OPTS "${LINK_OPTS} -Wl,--whole-archive ${MUPDF_JS_LIB_STATIC}")
     set(LINK_OPTS "${LINK_OPTS} -Wl,--no-whole-archive ${MUPDF_THIRDPARTY_LIBS}")
     set(LINK_OPTS "${LINK_OPTS} -Wl,-soname=${MUPDF_SONAME}")
-    set(LINK_OPTS "${LINK_OPTS} build/release/libopenjpeg.a build/release/libmujs.a build/release/libjbig2dec.a")
+    set(LINK_OPTS "${LINK_OPTS} build/release/libmupdfthird.a")
 endif()
 set(SHARED_BUILD_STR "${CC} -shared ${CFLAGS} ${LINK_OPTS} ${AES_LIB} ${ZLIB} ${JPEG_LIB} ${FREETYPE_LIB} -o ${MUPDF_LIB} -lm")
 
@@ -56,17 +53,19 @@ if($ENV{ANDROID})
 endif($ENV{ANDROID})
 
 set(SHARED_BUILD_CMD sh -c "${SHARED_BUILD_STR}")
+# TODO: MuPDF 1.12: check the patches
 # use external fonts
-set(PATCH_CMD1 sh -c "patch -N -p1 < ${CMAKE_CURRENT_SOURCE_DIR}/external_fonts.patch || true")
+#set(PATCH_CMD1 sh -c "patch -N -p1 < ${CMAKE_CURRENT_SOURCE_DIR}/external_fonts.patch || true")
 # add support for encryted zips
-set(PATCH_CMD2 sh -c "patch -N -p1 < ${CMAKE_CURRENT_SOURCE_DIR}/encrypted_zip.patch || true")
+#set(PATCH_CMD2 sh -c "patch -N -p1 < ${CMAKE_CURRENT_SOURCE_DIR}/encrypted_zip.patch || true")
 
 # TODO: ignore shared git submodules built outside of mupdf by ourselves
+# TODO: MuPDF 1.12: change the URL back to gitlab
 ep_get_source_dir(SOURCE_DIR)
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
-    https://gitlab.com/koreader/mupdf.git
-    c3a0d0fe7615ae201efd882dc961f3815a92a375
+    https://git.ghostscript.com/mupdf.git/
+    b7749e563f93160de82c97fe34fb3fb0d3396304
     ${SOURCE_DIR}
 )
 

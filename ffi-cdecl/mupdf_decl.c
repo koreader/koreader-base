@@ -45,6 +45,10 @@ cdecl_type(fz_storable)
 cdecl_type(fz_store_drop_fn)
 cdecl_struct(fz_storable_s)
 
+/* buffer */
+cdecl_func(mupdf_new_buffer_from_shared_data)
+cdecl_func(mupdf_drop_buffer)
+
 /* context */
 cdecl_type(fz_alloc_context)
 cdecl_type(fz_colorspace)
@@ -57,10 +61,10 @@ cdecl_type(fz_image)
 cdecl_type(fz_pixmap)
 cdecl_struct(fz_image_s)
 cdecl_struct(fz_pixmap_s)
-cdecl_func(fz_new_image_from_data) // compat, use wrapper instead:
-cdecl_func(mupdf_new_image_from_data)
+cdecl_func(mupdf_new_image_from_buffer)
 cdecl_func(fz_new_pixmap_from_image) // compat, use wrapper instead:
-cdecl_func(mupdf_new_pixmap_from_image)
+cdecl_func(mupdf_get_pixmap_from_image)
+cdecl_func(mupdf_save_pixmap_as_png)
 cdecl_func(fz_keep_image)
 cdecl_func(fz_drop_image)
 
@@ -154,6 +158,7 @@ cdecl_func(mupdf_new_draw_device)
 cdecl_func(mupdf_new_text_device)
 cdecl_func(mupdf_new_bbox_device)
 cdecl_func(mupdf_run_page)
+cdecl_func(fz_close_device)
 cdecl_func(fz_drop_device) // NOTE: libk2pdfopt uses old fz_free_device symbol
 
 /* pdf specifics */
