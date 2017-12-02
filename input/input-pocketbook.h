@@ -79,16 +79,27 @@ static inline void debug_mtinfo(iv_mtinfo *mti) {
     printf("\n");
 }
 
+#define PB_SPECIAL_SUSPEND 333
+
+void disable_suspend(void) {
+	iv_sleepmode(0);
+}
+
+void enable_suspend(void) {
+	iv_sleepmode(1);
+}
+
 int touch_pointers = 0;
 static int pb_event_handler(int type, int par1, int par2) {
-    //printf("ev:%d %d %d\n", type, par1, par2);
-    //fflush(stdout);
+    // printf("ev:%d %d %d\n", type, par1, par2);
+    // fflush(stdout);
     int i;
     iv_mtinfo *mti;
     // general settings in only possible in forked process
     if (type == EVT_INIT) {
         SetPanelType(PANEL_DISABLED);
         get_gti_pointer();
+	disable_suspend();
     }
 
     if (type == EVT_POINTERDOWN) {
@@ -132,10 +143,23 @@ static int pb_event_handler(int type, int par1, int par2) {
             genEmuEvent(inputfds[0], EV_ABS, ABS_MT_TRACKING_ID, -1);
         }
         touch_pointers = 0;
+    } else if (type == PB_SPECIAL_SUSPEND) {
+	if (par1 == 0)
+		SetHardTimer("disable_suspend", disable_suspend, par2);
+	else
+		SetHardTimer("enable_suspend", enable_suspend, par2);
     } else {
         genEmuEvent(inputfds[0], type, par1, par2);
     }
     return 0;
+}
+
+static int send_to_event_handler(int type, int par1, int par2) {
+	SendEventTo(GetCurrentTask(), type, par1, par2);
+}
+
+static int setSuspendState(lua_State *L) {
+	send_to_event_handler(PB_SPECIAL_SUSPEND, luaL_checkint(L, 1), luaL_checkint(L,2));
 }
 
 static int forkInkViewMain(lua_State *L, const char *inputdevice) {
