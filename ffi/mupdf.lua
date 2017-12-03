@@ -635,13 +635,13 @@ function mupdf.renderImage(data, size, width, height)
     local buffer = W.mupdf_new_buffer_from_shared_data(context(),
                      ffi.cast("unsigned char*", data), size)
     local image = W.mupdf_new_image_from_buffer(context(), buffer)
+    W.mupdf_drop_buffer(context(), buffer)
     if image == nil then merror("could not load image data") end
     M.fz_keep_image(context(), image)
     local pixmap = W.mupdf_get_pixmap_from_image(context(),
                     image, nil, nil, nil, nil)
+    M.fz_drop_image(context(), image)
     if pixmap == nil then
-        M.fz_drop_image(context(), image)
-        W.mupdf_drop_buffer(context(), buffer)
         merror("could not create pixmap from image")
     end
 
@@ -667,8 +667,6 @@ function mupdf.renderImage(data, size, width, height)
     local p = M.fz_pixmap_samples(context(), pixmap)
     local bb = BlitBuffer.new(p_width, p_height, bbtype, p):copy()
     M.fz_drop_pixmap(context(), pixmap)
-    M.fz_drop_image(context(), image)
-    W.mupdf_drop_buffer(context(), buffer)
     return bb
 end
 
