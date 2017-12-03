@@ -638,7 +638,7 @@ function mupdf.renderImage(data, size, width, height)
     if image == nil then merror("could not load image data") end
     M.fz_keep_image(context(), image)
     local pixmap = W.mupdf_get_pixmap_from_image(context(),
-                    image, width or -1, height or -1)
+                    image, nil, nil, nil, nil)
     if pixmap == nil then
         M.fz_drop_image(context(), image)
         W.mupdf_drop_buffer(context(), buffer)

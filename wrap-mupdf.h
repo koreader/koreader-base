@@ -110,10 +110,9 @@ MUPDF_WRAP(mupdf_pdf_set_markup_annot_quadpoints, void*, NULL,
 MUPDF_WRAP(mupdf_pdf_set_markup_appearance, void*, NULL,
     { pdf_set_markup_appearance(ctx, doc, annot, color, alpha, line_thickness, line_height); ret = (void*) -1; },
     pdf_document *doc, pdf_annot *annot, float color[3], float alpha, float line_thickness, float line_height)
-// TODO: MuPDF 1.12: w and h are not used
 MUPDF_WRAP(mupdf_get_pixmap_from_image, fz_pixmap*, NULL,
-    ret = fz_get_pixmap_from_image(ctx, image, NULL, NULL, NULL, NULL),
-    fz_image *image, int w, int h)
+    ret = fz_get_pixmap_from_image(ctx, image, subarea, trans, w, h),
+    fz_image *image, const fz_irect *subarea, fz_matrix *trans, int *w, int *h)
 MUPDF_WRAP(mupdf_save_pixmap_as_png, void*, NULL,
     { fz_save_pixmap_as_png(ctx, pixmap, filename); ret = (void*) -1; },
     fz_pixmap *pixmap, const char *filename)

@@ -109,7 +109,7 @@ struct fz_buffer_s
 };
 fz_image *mupdf_new_image_from_buffer(fz_context *, fz_buffer *);
 fz_pixmap *fz_new_pixmap_from_image(fz_context *, fz_image *, int, int);
-fz_pixmap *mupdf_get_pixmap_from_image(fz_context *, fz_image *, int, int);
+fz_pixmap *mupdf_get_pixmap_from_image(fz_context *, fz_image *, const fz_irect *, fz_matrix *, int *, int *);
 void *mupdf_save_pixmap_as_png(fz_context *, fz_pixmap *, const char *);
 fz_image *fz_keep_image(fz_context *, fz_image *);
 void fz_drop_image(fz_context *, fz_image *);
