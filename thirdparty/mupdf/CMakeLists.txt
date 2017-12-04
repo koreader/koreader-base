@@ -57,6 +57,8 @@ set(SHARED_BUILD_CMD sh -c "${SHARED_BUILD_STR}")
 set(PATCH_CMD1 sh -c "patch -N -p1 < ${CMAKE_CURRENT_SOURCE_DIR}/external_fonts.patch || true")
 # add support for encryted zips
 set(PATCH_CMD2 sh -c "patch -N -p1 < ${CMAKE_CURRENT_SOURCE_DIR}/encrypted_zip.patch || true")
+# use libjpeg as a shared library
+set(PATCH_CMD2 sh -c "patch -N -p1 < ${CMAKE_CURRENT_SOURCE_DIR}/libjpeg_shared.patch || true")
 
 # TODO: ignore shared git submodules built outside of mupdf by ourselves
 # TODO: MuPDF 1.12: change the URL back to gitlab
