@@ -58,7 +58,7 @@ set(PATCH_CMD1 sh -c "patch -N -p1 < ${CMAKE_CURRENT_SOURCE_DIR}/external_fonts.
 # add support for encryted zips
 set(PATCH_CMD2 sh -c "patch -N -p1 < ${CMAKE_CURRENT_SOURCE_DIR}/encrypted_zip.patch || true")
 # use libjpeg as a shared library
-set(PATCH_CMD2 sh -c "patch -N -p1 < ${CMAKE_CURRENT_SOURCE_DIR}/libjpeg_shared.patch || true")
+set(PATCH_CMD3 sh -c "patch -N -p1 < ${CMAKE_CURRENT_SOURCE_DIR}/libjpeg_shared.patch || true")
 
 # TODO: ignore shared git submodules built outside of mupdf by ourselves
 # TODO: MuPDF 1.12: change the URL back to gitlab
@@ -75,7 +75,7 @@ ExternalProject_Add(
     ${PROJECT_NAME}
     DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
     BUILD_IN_SOURCE 1
-    PATCH_COMMAND COMMAND ${PATCH_CMD1} COMMAND ${PATCH_CMD2}
+    PATCH_COMMAND COMMAND ${PATCH_CMD1} COMMAND ${PATCH_CMD2} COMMAND ${PATCH_CMD3}
     # skip configure
     CONFIGURE_COMMAND ""
     BUILD_COMMAND ${BUILD_CMD_GENERATE} COMMAND ${STATIC_BUILD_CMD} COMMAND ${SHARED_BUILD_CMD}
