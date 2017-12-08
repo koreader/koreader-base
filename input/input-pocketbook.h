@@ -121,7 +121,7 @@ void enable_suspend(void) {
 	iv_sleepmode(1);
 }
 
-static external_suspend_control = 0;
+static int external_suspend_control = 0;
 void fallback_enable_suspend(void) {
 	if (external_suspend_control == 0)
 		enable_suspend();
