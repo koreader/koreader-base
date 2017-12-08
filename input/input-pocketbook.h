@@ -122,6 +122,7 @@ void enable_suspend(void) {
 }
 
 static int external_suspend_control = 0;
+
 void fallback_enable_suspend(void) {
 	if (external_suspend_control == 0)
 		enable_suspend();
@@ -131,8 +132,8 @@ static int send_to_event_handler(int type, int par1, int par2) {
 	SendEventTo(GetCurrentTask(), type, par1, par2);
 }
 
+
 static int setSuspendState(lua_State *L) {
-	external_suspend_control = 1;
 	send_to_event_handler(
 			PB_SPECIAL_SUSPEND, 
 			luaL_checkint(L, 1), 
@@ -146,6 +147,7 @@ static int pb_event_handler(int type, int par1, int par2) {
     // fflush(stdout);
     int i;
     iv_mtinfo *mti;
+
     // general settings in only possible in forked process
     if (type == EVT_INIT) {
         SetPanelType(PANEL_DISABLED);
@@ -203,6 +205,7 @@ static int pb_event_handler(int type, int par1, int par2) {
         }
         touch_pointers = 0;
     } else if (type == PB_SPECIAL_SUSPEND) {
+	external_suspend_control = 1;
 	if (par1 == 0)
 		SetHardTimer("disable_suspend", disable_suspend, par2);
 	else
