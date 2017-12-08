@@ -123,7 +123,7 @@ void enable_suspend(void) {
 
 static external_suspend_control = 0;
 void fallback_enable_suspend(void) {
-	if (external_suspend_control)
+	if (external_suspend_control == 0)
 		enable_suspend();
 }
 
