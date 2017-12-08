@@ -61,11 +61,12 @@ set(PATCH_CMD2 sh -c "patch -N -p1 < ${CMAKE_CURRENT_SOURCE_DIR}/encrypted_zip.p
 set(PATCH_CMD3 sh -c "patch -N -p1 < ${CMAKE_CURRENT_SOURCE_DIR}/libjpeg_shared.patch || true")
 
 # TODO: ignore shared git submodules built outside of mupdf by ourselves
-# TODO: MuPDF 1.12: change the URL back to gitlab
+# https://git.ghostscript.com/mupdf.git is slow, so we use the official mirror on GitHub
+# v1.12 isn't tagged, so we refer to it with a hash
 ep_get_source_dir(SOURCE_DIR)
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
-    https://git.ghostscript.com/mupdf.git/
+    https://github.com/ArtifexSoftware/mupdf.git
     b7749e563f93160de82c97fe34fb3fb0d3396304
     ${SOURCE_DIR}
 )
