@@ -79,14 +79,52 @@ static inline void debug_mtinfo(iv_mtinfo *mti) {
     printf("\n");
 }
 
+/* 
+ * The PocketBook has an auto-suspend-feature, which puts the reader to sleep
+ * after approximately two seconds "inactivity in the current eventhandler".
+ *
+ * The handler (pb_event_handle) runs via InkViewMain in a forked-off process
+ * and just relays incoming events like keypress / touch via a pipe to the
+ * main-koreader-process when they occur. In consequence, the forked process
+ * quickly becomes idle w/o external events, leading to suspension of the
+ * whole device.
+ *
+ * This breaks the initial loading of modules and books. 
+ *
+ * There are multiple functions which can affect auto-suspension: Beside
+ * iv_sleepmode() which controls if auto-suspension is enabled at all, the
+ * function SetHardTimer() makes it possible to execute a callback after a
+ * given amount of time. SetHardTimer() will wake the Reader if it is
+ * suspended and suspension will not occur while the callback is executed. 
+ *
+ * However, both functions will not work properly if not called _from within
+ * the current eventhandler_.
+ *
+ * SendEventTo() can be used to send an event to the current eventhandler of a
+ * specific (system) task. GetCurrentTask() returns the caller's currently
+ * active task.
+ */
+
+/* 
+ * define a fake-event which can be send via SendEventTo into 
+ * pb_event_handle()
+ */
 #define PB_SPECIAL_SUSPEND 333
 
+/* callback to disable suspension */
 void disable_suspend(void) {
 	iv_sleepmode(0);
 }
 
+/* callback to enable suspension */
 void enable_suspend(void) {
 	iv_sleepmode(1);
+}
+
+static external_suspend_control = 0;
+void fallback_enable_suspend(void) {
+	if (external_suspend_control)
+		enable_suspend();
 }
 
 int touch_pointers = 0;
@@ -99,7 +137,15 @@ static int pb_event_handler(int type, int par1, int par2) {
     if (type == EVT_INIT) {
         SetPanelType(PANEL_DISABLED);
         get_gti_pointer();
+	/* disable suspend to make uninterrupted loading possible. */
 	disable_suspend();
+	/* 
+	 * re-enable suspending after a minute. This is normally handled by a
+	 * plugin on onReaderReady(). However, if loading of the plugin fails
+	 * for some reason, suspension would stay inactive consuming a lot of
+	 * power
+	 */
+	SetHardTimer("fallback_enable_suspend", fallback_enable_suspend, 1000 * 60);
     }
 
     if (type == EVT_POINTERDOWN) {
@@ -159,6 +205,7 @@ static int send_to_event_handler(int type, int par1, int par2) {
 }
 
 static int setSuspendState(lua_State *L) {
+	external_suspend_control = 1;
 	send_to_event_handler(PB_SPECIAL_SUSPEND, luaL_checkint(L, 1), luaL_checkint(L,2));
 }
 
