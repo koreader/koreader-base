@@ -255,6 +255,7 @@ fz_pixmap *fz_keep_pixmap(fz_context *, fz_pixmap *);
 void fz_drop_pixmap(fz_context *, fz_pixmap *);
 void fz_clear_pixmap_with_value(fz_context *, fz_pixmap *, int);
 void fz_gamma_pixmap(fz_context *, fz_pixmap *, float);
+fz_pixmap *fz_scale_pixmap(fz_context *, fz_pixmap *, float, float, float, float, fz_irect *);
 int fz_pixmap_width(fz_context *, fz_pixmap *);
 int fz_pixmap_height(fz_context *, fz_pixmap *);
 int fz_pixmap_components(fz_context *, fz_pixmap *);
