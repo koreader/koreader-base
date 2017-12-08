@@ -13,29 +13,31 @@ index c204b34f..4854c1ac 100644
  
  fz_zip_writer *fz_new_zip_writer(fz_context *ctx, const char *filename);
 diff --git a/source/cbz/mucbz.c b/source/cbz/mucbz.c
-index 2d357b6e..f1ecd5bf 100644
+index 2d357b6e..861a7902 100644
 --- a/source/cbz/mucbz.c
 +++ b/source/cbz/mucbz.c
-@@ -210,6 +210,18 @@ cbz_load_page(fz_context *ctx, fz_document *doc_, int number)
+@@ -210,6 +210,20 @@ cbz_load_page(fz_context *ctx, fz_document *doc_, int number)
  	return (fz_page*)page;
  }
  
 +int
-+cbz_needs_password(fz_context *ctx, cbz_document *doc)
++cbz_needs_password(fz_context *ctx, fz_document *doc_)
 +{
++	cbz_document *doc = (cbz_document*)doc_;
 +	return fz_archive_needs_password(ctx, doc->arch);
 +}
 +
 +int
-+cbz_authenticate_password(fz_context *ctx, cbz_document *doc, const char *pwd_utf8)
++cbz_authenticate_password(fz_context *ctx, fz_document *doc_, const char *password)
 +{
-+	return fz_archive_authenticate_password(ctx, doc->arch, pwd_utf8);
++	cbz_document *doc = (cbz_document*)doc_;
++	return fz_archive_authenticate_password(ctx, doc->arch, password);
 +}
 +
  static int
  cbz_lookup_metadata(fz_context *ctx, fz_document *doc_, const char *key, char *buf, int size)
  {
-@@ -230,6 +242,8 @@ cbz_open_document_with_stream(fz_context *ctx, fz_stream *file)
+@@ -230,6 +244,8 @@ cbz_open_document_with_stream(fz_context *ctx, fz_stream *file)
  	doc->super.count_pages = cbz_count_pages;
  	doc->super.load_page = cbz_load_page;
  	doc->super.lookup_metadata = cbz_lookup_metadata;
@@ -45,7 +47,7 @@ index 2d357b6e..f1ecd5bf 100644
  	fz_try(ctx)
  	{
 diff --git a/source/fitz/unzip.c b/source/fitz/unzip.c
-index 4eb90dda..8c2a26a1 100644
+index 4eb90dda..2fc60f70 100644
 --- a/source/fitz/unzip.c
 +++ b/source/fitz/unzip.c
 @@ -20,6 +20,27 @@
@@ -187,7 +189,7 @@ index 4eb90dda..8c2a26a1 100644
 +				saltlength = SALT_LENGTH(zip->aes_encryption_mode);
 +				fz_read(ctx, file, saltvalue, saltlength);
 +				fz_read(ctx, file, passverifyread, AES_PWVERIFYSIZE);
-+				fcrypt_init(zip->aes_encryption_mode, zip->password, strlen(zip->password),
++				fcrypt_init(zip->aes_encryption_mode, (const unsigned char*)zip->password, strlen(zip->password),
 +					saltvalue, passverifycalc, &zip->aes_ctx);
 +				for (i = 0; i < AES_PWVERIFYSIZE; i++) {
 +					if (passverifyread[i] != passverifycalc[i]) {
