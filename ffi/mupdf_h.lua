@@ -154,7 +154,9 @@ typedef struct fz_outline_s fz_outline;
 struct fz_outline_s {
   int refs;
   char *title;
-  fz_link_dest dest;
+  char *uri;
+  int page;
+  float x, y;
   fz_outline *next;
   fz_outline *down;
   int is_open;

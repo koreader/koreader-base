@@ -150,7 +150,7 @@ end
 local function toc_walker(toc, outline, depth)
     while outline ~= nil do
         table.insert(toc, {
-            page = outline.dest.ld.gotor.page + 1,
+            page = outline.page + 1,
             title = ffi.string(outline.title),
             depth = depth,
         })
