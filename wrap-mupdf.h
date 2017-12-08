@@ -70,7 +70,7 @@ MUPDF_WRAP(mupdf_load_page, fz_page*, NULL,
     ret = fz_load_page(ctx, doc, pageno),
     fz_document *doc, int pageno)
 MUPDF_WRAP(mupdf_new_text_page, fz_stext_page*, NULL,
-    ret = fz_new_text_page(ctx))
+    ret = fz_new_stext_page(ctx, NULL))
 MUPDF_WRAP(mupdf_new_text_device, fz_device*, NULL,
     ret = fz_new_text_device(ctx, page),
     fz_stext_page *page)
