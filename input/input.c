@@ -39,6 +39,13 @@
 #define CODE_FAKE_CHARGING      10020
 #define CODE_FAKE_NOT_CHARGING  10021
 
+#define SEND(a,b,c){ \
+    gettimeofday(&ev.time, NULL);\
+    ev.type = (a);\
+    ev.code = (b);\
+    ev.value = (c);\
+    write(inputfd, &ev, sizeof(ev));}
+
 #define NUM_FDS 4
 int inputfds[4] = { -1, -1, -1, -1 };
 pid_t fake_ev_generator_pid = -1;
@@ -189,6 +196,37 @@ static int fakeTapInput(lua_State *L) {
     return 0;
 }
 
+static int koboFakeTapInput(lua_State *L) {
+    const char* inputdevice = luaL_checkstring(L, 1);
+    int x = luaL_checkint(L, 2);
+    int y = luaL_checkint(L, 3);
+    int i;
+    int inputfd = -1;
+    struct input_event ev;
+
+    inputfd = open(inputdevice, O_WRONLY | O_NDELAY);
+    if (inputfd == -1) return luaL_error(L, "cannot open input device <%s>", inputdevice);
+    SEND(3, 57, 1)
+    SEND(3, 48, 1)
+    SEND(3, 50, 1)
+    SEND(3, 53, x)
+    SEND(3, 54, y)
+    SEND(0, 2,  0)
+    SEND(0, 0,  0)
+
+    SEND(3, 57, 1)
+    SEND(3, 48, 0)
+    SEND(3, 50, 0)
+    SEND(3, 53, x)
+    SEND(3, 54, y)
+    SEND(0, 2,  0)
+    SEND(0, 0,  0)
+
+    ioctl(inputfd, EVIOCGRAB, 0);
+    close(inputfd);
+    return 0;
+}
+
 static inline void set_event_table(lua_State *L, struct input_event input) {
     lua_newtable(L);
     lua_pushstring(L, "type");
@@ -261,6 +299,7 @@ static const struct luaL_Reg input_func[] = {
     {"closeAll", closeInputDevices},
     {"waitForEvent", waitForInput},
     {"fakeTapInput", fakeTapInput},
+    {"koboFakeTapInput", koboFakeTapInput},
     {NULL, NULL}
 };
 
