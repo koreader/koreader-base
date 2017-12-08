@@ -127,6 +127,19 @@ void fallback_enable_suspend(void) {
 		enable_suspend();
 }
 
+static int send_to_event_handler(int type, int par1, int par2) {
+	SendEventTo(GetCurrentTask(), type, par1, par2);
+}
+
+static int setSuspendState(lua_State *L) {
+	external_suspend_control = 1;
+	send_to_event_handler(
+			PB_SPECIAL_SUSPEND, 
+			luaL_checkint(L, 1), 
+			luaL_checkint(L,2)
+			);
+}
+
 int touch_pointers = 0;
 static int pb_event_handler(int type, int par1, int par2) {
     // printf("ev:%d %d %d\n", type, par1, par2);
@@ -198,15 +211,6 @@ static int pb_event_handler(int type, int par1, int par2) {
         genEmuEvent(inputfds[0], type, par1, par2);
     }
     return 0;
-}
-
-static int send_to_event_handler(int type, int par1, int par2) {
-	SendEventTo(GetCurrentTask(), type, par1, par2);
-}
-
-static int setSuspendState(lua_State *L) {
-	external_suspend_control = 1;
-	send_to_event_handler(PB_SPECIAL_SUSPEND, luaL_checkint(L, 1), luaL_checkint(L,2));
 }
 
 static int forkInkViewMain(lua_State *L, const char *inputdevice) {
