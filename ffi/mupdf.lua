@@ -506,12 +506,11 @@ function page_mt.__index:getPageLinks()
             x0 = link.rect.x0, y0 = link.rect.y0,
             x1 = link.rect.x1, y1 = link.rect.y1,
         }
-        if link.dest.kind == M.FZ_LINK_URI then
-            data.uri = ffi.string(link.dest.ld.uri.uri)
-        elseif link.dest.kind == M.FZ_LINK_GOTO then
-            data.page = link.dest.ld.gotor.page -- FIXME page+1?
+        local page = M.fz_resolve_link(context(), link.doc, link.uri, nil, nil)
+        if page >= 0 then
+            data.page = page -- FIXME page+1?
         else
-            mupdf.debug(string.format("ERROR: unknown link kind 0x%x", tonumber(link.dest.kind)))
+            data.uri = ffi.string(link.uri)
         end
         table.insert(links, data)
         link = link.next
