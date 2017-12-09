@@ -812,7 +812,7 @@ local function render_for_kopt(bmp, page, scale, bounds)
 
     local colorspace = mupdf.color and M.fz_device_rgb(context())
         or M.fz_device_gray(context())
-    local pix = W.mupdf_new_pixmap_with_bbox(context(), colorspace, bbox)
+    local pix = W.mupdf_new_pixmap_with_bbox(context(), colorspace, bbox, nil, 1)
     if pix == nil then merror("could not allocate pixmap") end
 
     run_page(page, pix, ctm)
