@@ -261,6 +261,9 @@ static const struct luaL_Reg input_func[] = {
     {"closeAll", closeInputDevices},
     {"waitForEvent", waitForInput},
     {"fakeTapInput", fakeTapInput},
+#ifdef POCKETBOOK
+    {"setSuspendState", setSuspendState},
+#endif
     {NULL, NULL}
 };
 
