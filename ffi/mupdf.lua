@@ -393,17 +393,17 @@ will return an empty table if we have no text
 --]]
 function page_mt.__index:getPageText()
     -- first, we run the page through a special device, the text_device
-    local text_page = W.mupdf_new_text_page(context(), M.fz_empty_rect)
+    local text_page = W.mupdf_new_stext_page_from_page(context(), self.page, nil)
     if text_page == nil then merror("cannot alloc text_page") end
     local tdev = W.mupdf_new_text_device(context(), text_page, nil)
     if tdev == nil then
-        M.fz_drop_text_page(context(), text_page)
+        M.fz_drop_stext_page(context(), text_page)
         merror("cannot alloc text device")
     end
 
     if W.mupdf_run_page(context(), self.page, tdev, M.fz_identity, nil) == nil then
-        M.fz_drop_text_page(context(), text_page)
         M.fz_drop_device(context(), tdev)
+        M.fz_drop_stext_page(context(), text_page)
         merror("cannot run page through text device")
     end
 
@@ -412,72 +412,87 @@ function page_mt.__index:getPageText()
     local lines = {}
     local char_bbox = ffi.new("fz_rect[1]")
 
-    for block_num = 0, text_page.len - 1 do
-        if text_page.blocks[block_num].type == M.FZ_PAGE_BLOCK_TEXT then
-            local block = text_page.blocks[block_num].u.text
-
+    local block = text_page.first_block
+    while block ~= nil do
+        if block.type == M.FZ_STEXT_BLOCK_TEXT then
             -- a block contains lines, which is our primary return datum
-            for line_num = 0, block.len - 1 do
+            local mupdf_line = block.u.t.first_line
+            while mupdf_line ~= nil do
                 local line = {}
                 local line_bbox = ffi.new("fz_rect[1]")
 
-                -- a line consists of spans, which can contain words
-                local span = block.lines[line_num].first_span
-                if span and is_list_entry(span) then
-                    -- skip list bullets & co
-                    span = span.next
-                end
-                while span ~= nil do
-                    -- here we will collect UTF-8 chars before making them
-                    -- a Lua string:
-                    local textbuf = ffi.new("char[?]", span.len * 4)
+                -- TODO: MuPDF 1.12: is this is_list_entry check needed?
+                ---- a line consists of spans, which can contain words
+                --local span = mupdf_line.first_span
+                --if span and is_list_entry(span) then
+                --    -- skip list bullets & co
+                --    span = span.next
+                --end
 
-                    local i = 0
-                    while i < span.len do
-                        local textlen = 0
-                        local word_bbox = ffi.new("fz_rect[1]")
-                        while i < span.len do
-                            if is_unicode_wspace(span.text[i].c) then
-                                -- ignore and end word
-                                break
-                            end
-                            textlen = textlen + M.fz_runetochar(textbuf + textlen, span.text[i].c)
-                            M.fz_union_rect(word_bbox, M.fz_text_char_bbox(context(), char_bbox, span, i))
-                            M.fz_union_rect(line_bbox, char_bbox)
-                            if span.text[i].c >= 0x4e00 and span.text[i].c <= 0x9FFF or -- CJK Unified Ideographs
-                                span.text[i].c >= 0x2000 and span.text[i].c <= 0x206F or -- General Punctuation
-                                span.text[i].c >= 0x3000 and span.text[i].c <= 0x303F or -- CJK Symbols and Punctuation
-                                span.text[i].c >= 0x3400 and span.text[i].c <= 0x4DBF or -- CJK Unified Ideographs Extension A
-                                span.text[i].c >= 0xF900 and span.text[i].c <= 0xFAFF or -- CJK Compatibility Ideographs
-                                span.text[i].c >= 0xFF01 and span.text[i].c <= 0xFFEE or -- Halfwidth and Fullwidth Forms
-                                span.text[i].c >= 0x20000 and span.text[i].c <= 0x2A6DF  -- CJK Unified Ideographs Extension B
-                            then
-                                -- end word
-                                break
-                            end
-                            i = i + 1
+                local ch = mupdf_line.first_char
+                local ch_len = 0
+                while ch ~= nil do
+                    ch = ch.next
+                    ch_len = ch_len + 1
+                end
+                
+                -- here we will collect UTF-8 chars before making them
+                -- a Lua string:
+                local textbuf = ffi.new("char[?]", ch_len * 4)
+
+                ch = mupdf_line.first_char
+                while ch ~= nil do
+                    local textlen = 0
+                    local word_bbox = ffi.new("fz_rect[1]")
+                    while ch ~= nil do
+                        if is_unicode_wspace(ch.c) then
+                            -- ignore and end word
+                            break
                         end
-                        -- add word to line
-                        table.insert(line, {
-                            word = ffi.string(textbuf, textlen),
-                            x0 = word_bbox[0].x0, y0 = word_bbox[0].y0,
-                            x1 = word_bbox[0].x1, y1 = word_bbox[0].y1,
-                        })
-                        i = i + 1
+                        textlen = textlen + M.fz_runetochar(textbuf + textlen, ch.c)
+                        M.fz_union_rect(word_bbox, ch.bbox)
+                        M.fz_union_rect(line_bbox, ch.bbox)
+                        if ch.c >= 0x4e00 and ch.c <= 0x9FFF or -- CJK Unified Ideographs
+                            ch.c >= 0x2000 and ch.c <= 0x206F or -- General Punctuation
+                            ch.c >= 0x3000 and ch.c <= 0x303F or -- CJK Symbols and Punctuation
+                            ch.c >= 0x3400 and ch.c <= 0x4DBF or -- CJK Unified Ideographs Extension A
+                            ch.c >= 0xF900 and ch.c <= 0xFAFF or -- CJK Compatibility Ideographs
+                            ch.c >= 0xFF01 and ch.c <= 0xFFEE or -- Halfwidth and Fullwidth Forms
+                            ch.c >= 0x20000 and ch.c <= 0x2A6DF  -- CJK Unified Ideographs Extension B
+                        then
+                            -- end word
+                            break
+                        end
+                        ch = ch.next
                     end
-                    span = span.next
+                    -- add word to line
+                    table.insert(line, {
+                        word = ffi.string(textbuf, textlen),
+                        x0 = word_bbox[0].x0, y0 = word_bbox[0].y0,
+                        x1 = word_bbox[0].x1, y1 = word_bbox[0].y1,
+                    })
+
+                    if ch == nil then
+                        break
+                    end
+
+                    ch = ch.next
                 end
 
                 line.x0, line.y0 = line_bbox[0].x0, line_bbox[0].y0
                 line.x1, line.y1 = line_bbox[0].x1, line_bbox[0].y1
 
                 table.insert(lines, line)
+
+                mupdf_line = mupdf_line.next
             end
         end
+
+        block = block.next
     end
 
     M.fz_drop_device(context(), tdev)
-    M.fz_drop_text_page(context(), text_page)
+    M.fz_drop_stext_page(context(), text_page)
 
     return lines
 end

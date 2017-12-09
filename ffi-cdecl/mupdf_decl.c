@@ -116,9 +116,11 @@ cdecl_struct(fz_stext_line_s)
 
 cdecl_type(fz_stext_block)
 cdecl_struct(fz_stext_block_s)
+cdecl_type(fz_stext_options)
+cdecl_struct(fz_stext_options_s)
 cdecl_type(fz_stext_page)
 cdecl_struct(fz_stext_page_s)
-cdecl_func(mupdf_new_text_page)
+cdecl_func(mupdf_new_stext_page_from_page)
 cdecl_func(fz_drop_stext_page) // NOTE: libk2pdfopt uses old fz_free_text_page symbol
 
 /* pixmaps */
@@ -166,7 +168,7 @@ cdecl_type(pdf_document)
 cdecl_struct(pdf_document_s)
 cdecl_func(pdf_specifics)
 cdecl_func(mupdf_pdf_create_annot)
-cdecl_func(mupdf_pdf_set_markup_annot_quadpoints)
+cdecl_func(mupdf_pdf_set_text_annot_position)
 cdecl_func(mupdf_pdf_set_markup_appearance)
 
 /* saving documents */

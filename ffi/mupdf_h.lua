@@ -236,6 +236,10 @@ struct fz_stext_block_s {
   fz_stext_block *prev;
   fz_stext_block *next;
 };
+typedef struct fz_stext_options_s fz_stext_options;
+struct fz_stext_options_s {
+  int flags;
+};
 typedef struct fz_stext_page_s fz_stext_page;
 struct fz_stext_page_s {
   struct fz_pool_s *pool;
@@ -243,7 +247,7 @@ struct fz_stext_page_s {
   fz_stext_block *first_block;
   fz_stext_block *last_block;
 };
-fz_stext_page *mupdf_new_text_page(fz_context *);
+fz_stext_page *mupdf_new_stext_page_from_page(fz_context *, fz_page *, const fz_stext_options *);
 void fz_drop_stext_page(fz_context *, fz_stext_page *);
 fz_pixmap *mupdf_new_pixmap(fz_context *, fz_colorspace *, int, int, struct fz_separations_s *, int);
 fz_pixmap *fz_new_pixmap(fz_context *, fz_colorspace *, int, int, struct fz_separations_s *, int);
@@ -263,7 +267,7 @@ unsigned char *fz_pixmap_samples(fz_context *, fz_pixmap *);
 fz_colorspace *fz_device_gray(fz_context *);
 fz_colorspace *fz_device_rgb(fz_context *);
 struct fz_device_s *mupdf_new_draw_device(fz_context *, const fz_matrix *, fz_pixmap *);
-struct fz_device_s *mupdf_new_text_device(fz_context *, fz_stext_page *);
+struct fz_device_s *mupdf_new_text_device(fz_context *, fz_stext_page *, const fz_stext_options *);
 struct fz_device_s *mupdf_new_bbox_device(fz_context *, fz_rect *);
 void *mupdf_run_page(fz_context *, fz_page *, struct fz_device_s *, const fz_matrix *, struct fz_cookie_s *);
 void fz_close_device(fz_context *, struct fz_device_s *);
@@ -405,7 +409,7 @@ pdf_annot *mupdf_pdf_create_annot(fz_context *, pdf_page *, enum {
   PDF_ANNOT_3D = 24,
   PDF_ANNOT_UNKNOWN = -1,
 });
-void *mupdf_pdf_set_markup_annot_quadpoints(fz_context *, pdf_document *, pdf_annot *, fz_point *, int);
+void *mupdf_pdf_set_text_annot_position(fz_context *, pdf_annot *, fz_point);
 void *mupdf_pdf_set_markup_appearance(fz_context *, pdf_document *, pdf_annot *, float *, float, float, float);
 typedef struct pdf_write_options_s pdf_write_options;
 struct pdf_write_options_s {
