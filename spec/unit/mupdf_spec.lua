@@ -121,12 +121,12 @@ describe("mupdf module", function()
             assert.is_not_nil(doc)
             local page = doc:openPage(1)
             assert.is_not_nil(page)
-            page:addMarkupAnnotation(ffi.new("fz_point[4]", {
-                { x =  70, y = 930 },
-                { x = 510, y = 930 },
-                { x = 510, y = 970 },
-                { x =  70, y = 970 }}),
-                4, ffi.C.FZ_ANNOT_HIGHLIGHT)
+            page:addMarkupAnnotation(ffi.new("float[8]", {
+                {  70,  930,
+                  510,  930,
+                  510,  970,
+                   70,  970 }),
+                1, ffi.C.PDF_ANNOT_HIGHLIGHT)
             page:close()
             doc:writeDocument(simple_pdf_out)
             local out_f = io.open(simple_pdf_out, "r")

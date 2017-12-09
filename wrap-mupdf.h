@@ -84,9 +84,9 @@ MUPDF_WRAP(mupdf_new_draw_device, fz_device*, NULL,
 MUPDF_WRAP(mupdf_run_page, void*, NULL,
     { fz_run_page(ctx, page, dev, transform, cookie); ret = (void*) -1; },
     fz_page *page, fz_device *dev, const fz_matrix *transform, fz_cookie *cookie)
-MUPDF_WRAP(mupdf_write_document, void*, NULL,
-    { pdf_write_document(ctx, doc, filename, opts); ret = (void*) -1; },
-    fz_document *doc, char* filename, pdf_write_options *opts)
+MUPDF_WRAP(mupdf_pdf_save_document, void*, NULL,
+    { pdf_save_document(ctx, doc, filename, opts); ret = (void*) -1; },
+    pdf_document *doc, const char *filename, pdf_write_options *opts)
 MUPDF_WRAP(mupdf_new_pixmap, fz_pixmap*, NULL,
     ret = fz_new_pixmap(ctx, cs, w, h, seps, alpha),
     fz_colorspace *cs, int w, int h, fz_separations *seps, int alpha)
@@ -105,6 +105,9 @@ MUPDF_WRAP(mupdf_load_links, fz_link*, NULL,
 MUPDF_WRAP(mupdf_pdf_create_annot, pdf_annot*, NULL,
     ret = pdf_create_annot(ctx,  page, type),
     pdf_page *page, fz_annot_type type)
+MUPDF_WRAP(mupdf_pdf_set_annot_quad_points, void*, NULL,
+    { pdf_set_annot_quad_points(ctx, annot, n, v); ret = (void*) -1; },
+     pdf_annot *annot, int n, const float *v)
 MUPDF_WRAP(mupdf_pdf_set_text_annot_position, void*, NULL,
     { pdf_set_text_annot_position(ctx, annot, pt); ret = (void*) -1; },
     pdf_annot *annot, fz_point pt)

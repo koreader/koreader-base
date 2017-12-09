@@ -247,20 +247,13 @@ end
 write the document to a new file
 --]]
 function document_mt.__index:writeDocument(filename)
-    -- the API takes a char*, not a const char*,
-    -- so we claim memory - and never free it. Too bad.
-    -- TODO: free on closing document?
-    local filename_str = ffi.C.malloc(#filename + 1)
-    if filename == nil then error("could not allocate memory for filename") end
-    ffi.copy(filename_str, filename)
-    local opts = ffi.new("fz_write_options[1]")
+    local opts = ffi.new("pdf_write_options[1]")
     opts[0].do_incremental = (filename == self.filename ) and 1 or 0
     opts[0].do_ascii = 0
-    opts[0].do_expand = 0
     opts[0].do_garbage = 0
     opts[0].do_linear = 0
     opts[0].continue_on_error = 1
-    local ok = W.mupdf_write_document(context(), self.doc, filename_str, opts)
+    local ok = W.mupdf_pdf_save_document(context(), ffi.cast("pdf_document*", self.doc), filename, opts)
     if ok == nil then merror("could not write document") end
 end
 
@@ -597,18 +590,18 @@ function page_mt.__index:addMarkupAnnotation(points, n, type)
     local alpha = 1.0
     local line_height = 0.5
     local line_thickness = 1.0
-    if type == M.FZ_ANNOT_HIGHLIGHT then
+    if type == M.PDF_ANNOT_HIGHLIGHT then
         color[0] = 1.0
         color[1] = 1.0
         color[2] = 0.0
         alpha = 0.5
-    elseif type == M.FZ_ANNOT_UNDERLINE then
+    elseif type == M.PDF_ANNOT_UNDERLINE then
         color[0] = 0.0
         color[1] = 0.0
         color[2] = 1.0
         line_thickness = mupdf.LINE_THICKNESS
         line_height = mupdf.UNDERLINE_HEIGHT
-    elseif type == M.FZ_ANNOT_STRIKEOUT then
+    elseif type == M.PDF_ANNOT_STRIKEOUT then
         color[0] = 1.0
         color[1] = 0.0
         color[2] = 0.0
@@ -621,10 +614,10 @@ function page_mt.__index:addMarkupAnnotation(points, n, type)
     local doc = M.pdf_specifics(context(), self.doc.doc)
     if doc == nil then merror("could not get pdf_specifics") end
 
-    local annot = W.mupdf_pdf_create_annot(context(), doc, ffi.cast("pdf_page*", self.page), type)
+    local annot = W.mupdf_pdf_create_annot(context(), ffi.cast("pdf_page*", self.page), type)
     if annot == nil then merror("could not create annotation") end
 
-    local ok = W.mupdf_pdf_set_markup_annot_quadpoints(context(), doc, annot, points, n)
+    local ok = W.mupdf_pdf_set_annot_quad_points(context(), annot, n, points)
     if ok == nil then merror("could not set markup annot quadpoints") end
 
     ok = W.mupdf_pdf_set_markup_appearance(context(), doc, annot, color, alpha, line_thickness, line_height)

@@ -152,6 +152,7 @@ cdecl_func(fz_close_device)
 cdecl_func(fz_drop_device) // NOTE: libk2pdfopt uses old fz_free_device symbol
 
 /* pdf specifics */
+cdecl_enum(fz_annot_type)
 cdecl_type(pdf_hotspot)
 cdecl_struct(pdf_hotspot_s)
 cdecl_type(pdf_lexbuf)
@@ -168,13 +169,14 @@ cdecl_type(pdf_document)
 cdecl_struct(pdf_document_s)
 cdecl_func(pdf_specifics)
 cdecl_func(mupdf_pdf_create_annot)
+cdecl_func(mupdf_pdf_set_annot_quad_points)
 cdecl_func(mupdf_pdf_set_text_annot_position)
 cdecl_func(mupdf_pdf_set_markup_appearance)
 
 /* saving documents */
 cdecl_type(pdf_write_options)
 cdecl_struct(pdf_write_options_s)
-cdecl_func(mupdf_write_document)
+cdecl_func(mupdf_pdf_save_document)
 
 /* the following is for our own wrapper lib: */
 cdecl_func(mupdf_get_my_alloc_context)

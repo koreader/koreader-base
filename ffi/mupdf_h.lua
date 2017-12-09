@@ -272,6 +272,7 @@ struct fz_device_s *mupdf_new_bbox_device(fz_context *, fz_rect *);
 void *mupdf_run_page(fz_context *, fz_page *, struct fz_device_s *, const fz_matrix *, struct fz_cookie_s *);
 void fz_close_device(fz_context *, struct fz_device_s *);
 void fz_drop_device(fz_context *, struct fz_device_s *);
+enum fz_annot_type;
 typedef struct pdf_hotspot_s pdf_hotspot;
 struct pdf_hotspot_s {
   int num;
@@ -409,6 +410,7 @@ pdf_annot *mupdf_pdf_create_annot(fz_context *, pdf_page *, enum {
   PDF_ANNOT_3D = 24,
   PDF_ANNOT_UNKNOWN = -1,
 });
+void *mupdf_pdf_set_annot_quad_points(fz_context *, pdf_annot *, int, const float *);
 void *mupdf_pdf_set_text_annot_position(fz_context *, pdf_annot *, fz_point);
 void *mupdf_pdf_set_markup_appearance(fz_context *, pdf_document *, pdf_annot *, float *, float, float, float);
 typedef struct pdf_write_options_s pdf_write_options;
@@ -426,7 +428,7 @@ struct pdf_write_options_s {
   int continue_on_error;
   int *errors;
 };
-void *mupdf_write_document(fz_context *, fz_document *, char *, pdf_write_options *);
+void *mupdf_pdf_save_document(fz_context *, pdf_document *, const char *, pdf_write_options *);
 fz_alloc_context *mupdf_get_my_alloc_context();
 int mupdf_get_cache_size();
 int mupdf_error_code(fz_context *);
