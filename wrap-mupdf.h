@@ -70,10 +70,11 @@ MUPDF_WRAP(mupdf_load_page, fz_page*, NULL,
     ret = fz_load_page(ctx, doc, pageno),
     fz_document *doc, int pageno)
 MUPDF_WRAP(mupdf_new_text_page, fz_stext_page*, NULL,
-    ret = fz_new_stext_page(ctx, NULL))
+    ret = fz_new_stext_page(ctx, mediabox),
+    const fz_rect *mediabox)
 MUPDF_WRAP(mupdf_new_text_device, fz_device*, NULL,
-    ret = fz_new_text_device(ctx, page),
-    fz_stext_page *page)
+    ret = fz_new_stext_device(ctx, page, options),
+    fz_stext_page *page, const fz_stext_options *options)
 MUPDF_WRAP(mupdf_new_bbox_device, fz_device*, NULL,
     ret = fz_new_bbox_device(ctx, rectp),
     fz_rect *rectp)

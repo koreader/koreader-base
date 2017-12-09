@@ -393,23 +393,16 @@ will return an empty table if we have no text
 --]]
 function page_mt.__index:getPageText()
     -- first, we run the page through a special device, the text_device
-    local text_page = W.mupdf_new_text_page(context())
+    local text_page = W.mupdf_new_text_page(context(), M.fz_empty_rect)
     if text_page == nil then merror("cannot alloc text_page") end
-    local text_sheet = W.mupdf_new_text_sheet(context())
-    if text_sheet == nil then
-        M.fz_drop_text_page(context(), text_page)
-        merror("cannot alloc text_sheet")
-    end
-    local tdev = W.mupdf_new_text_device(context(), text_sheet, text_page)
+    local tdev = W.mupdf_new_text_device(context(), text_page, nil)
     if tdev == nil then
         M.fz_drop_text_page(context(), text_page)
-        M.fz_drop_text_sheet(context(), text_sheet)
         merror("cannot alloc text device")
     end
 
     if W.mupdf_run_page(context(), self.page, tdev, M.fz_identity, nil) == nil then
         M.fz_drop_text_page(context(), text_page)
-        M.fz_drop_text_sheet(context(), text_sheet)
         M.fz_drop_device(context(), tdev)
         merror("cannot run page through text device")
     end
@@ -484,7 +477,6 @@ function page_mt.__index:getPageText()
     end
 
     M.fz_drop_device(context(), tdev)
-    M.fz_drop_text_sheet(context(), text_sheet)
     M.fz_drop_text_page(context(), text_page)
 
     return lines
