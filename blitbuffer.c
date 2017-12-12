@@ -599,8 +599,8 @@ void BB_add_blit_from(BlitBuffer *dst, BlitBuffer *src,
     int sbb_rotation = GET_BB_ROTATION(src);
     int dbb_rotation = GET_BB_ROTATION(dst);
     if (dbb_type != sbb_type) {
-        fprintf(stderr, "incompatible bb in file %s, line %d!\r\n",
-                __FILE__, __LINE__); exit(1);
+        fprintf(stderr, "incompatible bb (dst: %d, src: %d) in file %s, line %d!\r\n",
+                dbb_type, sbb_type, __FILE__, __LINE__); exit(1);
     }
     uint8_t r, g, b;
     uint8_t ainv = 0xFF - alpha;
@@ -687,8 +687,8 @@ void BB_alpha_blit_from(BlitBuffer *dst, BlitBuffer *src,
     int sbb_rotation = GET_BB_ROTATION(src);
     int dbb_rotation = GET_BB_ROTATION(dst);
     if (dbb_type != sbb_type) {
-        fprintf(stderr, "incompatible bb in file %s, line %d!\r\n",
-                __FILE__, __LINE__); exit(1);
+        fprintf(stderr, "incompatible bb (dst: %d, src: %d) in file %s, line %d!\r\n",
+                dbb_type, sbb_type, __FILE__, __LINE__); exit(1);
     }
     uint8_t r, g, b, ainv, alpha;
     int d_x, d_y, o_x, o_y;
@@ -773,8 +773,8 @@ void BB_invert_blit_from(BlitBuffer *dst, BlitBuffer *src,
     int sbb_rotation = GET_BB_ROTATION(src);
     int dbb_rotation = GET_BB_ROTATION(dst);
     if (dbb_type != sbb_type) {
-        fprintf(stderr, "incompatible bb in file %s, line %d!\r\n",
-                __FILE__, __LINE__); exit(1);
+        fprintf(stderr, "incompatible bb (dst: %d, src: %d) in file %s, line %d!\r\n",
+                dbb_type, sbb_type, __FILE__, __LINE__); exit(1);
     }
     int d_x, d_y, o_x, o_y;
     if (dbb_type == TYPE_BB8) {
