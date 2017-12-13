@@ -300,6 +300,7 @@ function page_mt.__index:getUsedBBox()
     local dev = W.mupdf_new_bbox_device(context(), result)
     if dev == nil then merror("cannot allocate bbox_device") end
     local ok = W.mupdf_run_page(context(), self.page, dev, M.fz_identity, nil)
+    M.fz_close_device(context(), dev)
     M.fz_drop_device(context(), dev)
     if ok == nil then merror("cannot calculate bbox for page") end
 
@@ -390,17 +391,6 @@ function page_mt.__index:getPageText()
     -- first, we run the page through a special device, the text_device
     local text_page = W.mupdf_new_stext_page_from_page(context(), self.page, nil)
     if text_page == nil then merror("cannot alloc text_page") end
-    local tdev = W.mupdf_new_text_device(context(), text_page, nil)
-    if tdev == nil then
-        M.fz_drop_stext_page(context(), text_page)
-        merror("cannot alloc text device")
-    end
-
-    if W.mupdf_run_page(context(), self.page, tdev, M.fz_identity, nil) == nil then
-        M.fz_drop_device(context(), tdev)
-        M.fz_drop_stext_page(context(), text_page)
-        merror("cannot run page through text device")
-    end
 
     -- now we analyze the data returned by the device and bring it
     -- into the format we want to return
@@ -481,7 +471,6 @@ function page_mt.__index:getPageText()
         block = block.next
     end
 
-    M.fz_drop_device(context(), tdev)
     M.fz_drop_stext_page(context(), text_page)
 
     return lines
