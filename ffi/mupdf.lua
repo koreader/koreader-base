@@ -395,7 +395,6 @@ function page_mt.__index:getPageText()
     -- now we analyze the data returned by the device and bring it
     -- into the format we want to return
     local lines = {}
-    local char_bbox = ffi.new("fz_rect[1]")
 
     local block = text_page.first_block
     while block ~= nil do
@@ -413,7 +412,7 @@ function page_mt.__index:getPageText()
                     ch = ch.next
                     ch_len = ch_len + 1
                 end
-                
+
                 if ch_len > 0 then
                     -- here we will collect UTF-8 chars before making them
                     -- a Lua string:
