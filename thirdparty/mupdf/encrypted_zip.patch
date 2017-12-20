@@ -47,7 +47,7 @@ index 2d357b6e..861a7902 100644
  	fz_try(ctx)
  	{
 diff --git a/source/fitz/unzip.c b/source/fitz/unzip.c
-index 4eb90dda..2fc60f70 100644
+index 4eb90dda..a9dee1c2 100644
 --- a/source/fitz/unzip.c
 +++ b/source/fitz/unzip.c
 @@ -20,6 +20,27 @@
@@ -282,13 +282,18 @@ index 4eb90dda..2fc60f70 100644
  			z.zalloc = zalloc_zip;
  			z.zfree = zfree_zip;
  			z.opaque = ctx;
-@@ -379,6 +496,26 @@ static fz_buffer *read_zip_entry(fz_context *ctx, fz_archive *arch, const char *
+@@ -379,6 +496,31 @@ static fz_buffer *read_zip_entry(fz_context *ctx, fz_archive *arch, const char *
  	fz_throw(ctx, FZ_ERROR_GENERIC, "unknown zip method: %d", method);
  }
  
 +int fz_archive_needs_password(fz_context *ctx, fz_archive *arch)
 +{
-+	fz_zip_archive *zip = (fz_zip_archive *) arch;
++	fz_zip_archive *zip;
++
++	if (strcmp(arch->format, "zip") != 0)
++		return 0;
++
++	zip = (fz_zip_archive *) arch;
 +	return zip->crypted;
 +}
 +
@@ -309,7 +314,7 @@ index 4eb90dda..2fc60f70 100644
  static int has_zip_entry(fz_context *ctx, fz_archive *arch, const char *name)
  {
  	fz_zip_archive *zip = (fz_zip_archive *) arch;
-@@ -426,6 +563,10 @@ fz_open_zip_archive_with_stream(fz_context *ctx, fz_stream *file)
+@@ -426,6 +568,10 @@ fz_open_zip_archive_with_stream(fz_context *ctx, fz_stream *file)
  		fz_throw(ctx, FZ_ERROR_GENERIC, "cannot recognize zip archive");
  
  	zip = fz_new_derived_archive(ctx, file, fz_zip_archive);
