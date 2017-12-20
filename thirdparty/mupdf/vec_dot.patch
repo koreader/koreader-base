@@ -1,0 +1,13 @@
+diff --git a/source/fitz/stext-device.c b/source/fitz/stext-device.c
+index cd657acc..40b203b3 100644
+--- a/source/fitz/stext-device.c
++++ b/source/fitz/stext-device.c
+@@ -212,7 +212,7 @@ direction_from_bidi_class(int bidiclass, int curdir)
+ 	}
+ }
+ 
+-static int
++static float
+ vec_dot(const fz_point *a, const fz_point *b)
+ {
+ 	return a->x * b->x + a->y * b->y;

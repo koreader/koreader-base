@@ -1,67 +1,76 @@
-diff --git a/source/pdf/pdf-font.c b/source/pdf/pdf-font.c
-index 35e61f9..8c5ad86 100644
---- a/source/pdf/pdf-font.c
-+++ b/source/pdf/pdf-font.c
-@@ -188,7 +188,12 @@ pdf_load_builtin_font(fz_context *ctx, pdf_font_desc *fontdesc, char *fontname,
- 		if (!data)
- 			fz_throw(ctx, FZ_ERROR_GENERIC, "cannot find builtin font: '%s'", fontname);
-
-+#ifndef NOBUILTINFONT
- 		fontdesc->font = fz_new_font_from_memory(ctx, fontname, data, len, 0, 1);
-+#else
-+		fontdesc->font = fz_new_font_from_file(ctx, fontname, data, 0, 1);
-+		free(data);
-+#endif
- 	}
-
- 	if (!strcmp(clean_name, "Symbol") || !strcmp(clean_name, "ZapfDingbats"))
-@@ -212,7 +217,12 @@ pdf_load_substitute_font(fz_context *ctx, pdf_font_desc *fontdesc, char *fontnam
- 		if (!data)
- 			fz_throw(ctx, FZ_ERROR_GENERIC, "cannot find substitute font");
-
-+#ifndef NOBUILTINFONT
- 		fontdesc->font = fz_new_font_from_memory(ctx, fontname, data, len, 0, 1);
-+#else
-+		fontdesc->font = fz_new_font_from_file(ctx, fontname, data, 0, 1);
-+		free(data);
-+#endif
- 		fontdesc->font->ft_bold = bold && !ft_is_bold(fontdesc->font->ft_face);
- 		fontdesc->font->ft_italic = italic && !ft_is_italic(fontdesc->font->ft_face);
- 	}
-@@ -235,7 +245,12 @@ pdf_load_substitute_cjk_font(fz_context *ctx, pdf_font_desc *fontdesc, char *fon
- 			fz_throw(ctx, FZ_ERROR_GENERIC, "cannot find builtin CJK font");
-
- 		/* A glyph bbox cache is too big for CJK fonts. */
-+#ifndef NOBUILTINFONT
- 		fontdesc->font = fz_new_font_from_memory(ctx, fontname, data, len, index, 0);
-+#else
-+		fontdesc->font = fz_new_font_from_file(ctx, fontname, data, 0, 1);
-+		free(data);
-+#endif
- 	}
-
- 	fontdesc->font->ft_substitute = 1;
-diff --git a/source/pdf/pdf-fontfile.c b/source/pdf/pdf-fontfile.c
-index 86b6682..4e062de 100644
---- a/source/pdf/pdf-fontfile.c
-+++ b/source/pdf/pdf-fontfile.c
-@@ -11,6 +11,8 @@
- 	Set NOCJKFULL to embed a smaller CJK font without CJK Extension A support.
+diff --git a/Makefile b/Makefile
+index 114a6eb6..73880a64 100644
+--- a/Makefile
++++ b/Makefile
+@@ -320,7 +320,6 @@ MUPDF_OBJ := \
+ 	$(FITZ_OBJ) \
+ 	$(PDF_OBJ) \
+ 	$(CMAP_OBJ) \
+-	$(FONT_OBJ) \
+ 	$(JAVASCRIPT_OBJ) \
+ 	$(XPS_OBJ) \
+ 	$(SVG_OBJ) \
+diff --git a/include/mupdf/fitz/font.h b/include/mupdf/fitz/font.h
+index ef4cd74d..65bce17f 100644
+--- a/include/mupdf/fitz/font.h
++++ b/include/mupdf/fitz/font.h
+@@ -624,4 +624,11 @@ void fz_hb_lock(fz_context *ctx);
  */
-
+ void fz_hb_unlock(fz_context *ctx);
+ 
++#ifdef NOBUILTINFONT
++
++char *fz_lookup_base14_font_from_file(fz_context *ctx, const char *name);
++char *fz_lookup_cjk_font_from_file(fz_context *ctx, int registry, int serif, int wmode);
++
++#endif
++
+ #endif
+diff --git a/source/fitz/font.c b/source/fitz/font.c
+index e197fa1b..8b74c624 100644
+--- a/source/fitz/font.c
++++ b/source/fitz/font.c
+@@ -320,9 +320,15 @@ void fz_install_load_system_font_funcs(fz_context *ctx,
+ 		fz_load_system_cjk_font_fn *f_cjk,
+ 		fz_load_system_fallback_font_fn *f_back)
+ {
++#ifndef NOBUILTINFONT
+ 	ctx->font->load_font = f;
+ 	ctx->font->load_cjk_font = f_cjk;
+ 	ctx->font->load_fallback_font = f_back;
++#else
++	ctx->font->load_font = NULL;
++	ctx->font->load_cjk_font = NULL;
++	ctx->font->load_fallback_font = NULL;
++#endif
+ }
+ 
+ fz_font *fz_load_system_font(fz_context *ctx, const char *name, int bold, int italic, int needs_exact_metrics)
+diff --git a/source/fitz/noto.c b/source/fitz/noto.c
+index f6951ba2..40188875 100644
+--- a/source/fitz/noto.c
++++ b/source/fitz/noto.c
+@@ -1,8 +1,12 @@
+ #include "mupdf/fitz.h"
+ #include "mupdf/ucdn.h"
+ 
++#include <stdio.h>
++#include <stdlib.h>
+ #include <string.h>
+ 
 +#ifndef NOBUILTINFONT
 +
- #ifdef NOCJK
- #define NOCJKFONT
- #endif
-@@ -136,3 +138,116 @@ pdf_lookup_substitute_cjk_font(fz_context *ctx, int ros, int serif, int wmode, u
- 	return NULL;
+ /*
+ 	Base 14 PDF fonts from URW.
+ 	Noto fonts from Google.
+@@ -367,3 +371,122 @@ fz_lookup_noto_emoji_font(fz_context *ctx, int *size)
+ 	return *size = 0, NULL;
  #endif
  }
 +
 +#else // NOBUILTINFONT
 +
-+unsigned char *
++char *
 +get_font_file(char *name)
 +{
 +	char *fontdir;
@@ -80,10 +89,16 @@ index 86b6682..4e062de 100644
 +	return filename;
 +}
 +
-+unsigned char *
-+pdf_lookup_builtin_font(fz_context *ctx, const char *name, unsigned int *len)
++const unsigned char *
++fz_lookup_base14_font(fz_context *ctx, const char *name, int *size)
 +{
-+	*len = 0;
++	*size = 0;
++	return NULL;
++}
++
++char *
++fz_lookup_base14_font_from_file(fz_context *ctx, const char *name)
++{
 +	if (!strcmp("Courier", name)) {
 +		return get_font_file("urw/NimbusMono-Regular.cff");
 +	}
@@ -129,45 +144,244 @@ index 86b6682..4e062de 100644
 +	return NULL;
 +}
 +
-+unsigned char *
-+pdf_lookup_substitute_font(fz_context *ctx, int mono, int serif, int bold, int italic, unsigned int *len)
++const unsigned char *
++fz_lookup_builtin_font(fz_context *ctx, const char *name, int is_bold, int is_italic, int *size)
++{
++	*size = 0;
++	return NULL;
++}
++
++const unsigned char *
++fz_lookup_cjk_font(fz_context *ctx, int registry, int serif, int wmode, int *size, int *index)
++{
++	*size = 0;
++	return NULL;
++}
++
++char *
++fz_lookup_cjk_font_from_file(fz_context *ctx, int registry, int serif, int wmode)
++{
++	return get_font_file("noto/NotoSansCJK-Regular.ttf");
++}
++
++const unsigned char *
++fz_lookup_noto_font(fz_context *ctx, int script, int language, int serif, int *size)
++{
++	*size = 0;
++	return NULL;
++}
++
++const unsigned char *
++fz_lookup_noto_symbol_font(fz_context *ctx, int *size)
++{
++	*size = 0;
++	return NULL;
++}
++
++const unsigned char *
++fz_lookup_noto_emoji_font(fz_context *ctx, int *size)
++{
++	*size = 0;
++	return NULL;
++}
++
++#endif
+diff --git a/source/html/html-font.c b/source/html/html-font.c
+index d319a462..bb59e0d6 100644
+--- a/source/html/html-font.c
++++ b/source/html/html-font.c
+@@ -3,6 +3,37 @@
+ 
+ #include <string.h>
+ 
++char *
++html_lookup_substitute_font_from_file(fz_context *ctx, int mono, int serif, int bold, int italic)
 +{
 +	if (mono) {
 +		if (bold) {
-+			if (italic) return pdf_lookup_builtin_font(ctx, "Courier-BoldOblique", len);
-+			else return pdf_lookup_builtin_font(ctx, "Courier-Bold", len);
++			if (italic) return fz_lookup_base14_font_from_file(ctx, "Courier-BoldOblique");
++			else return fz_lookup_base14_font_from_file(ctx, "Courier-Bold");
 +		} else {
-+			if (italic) return pdf_lookup_builtin_font(ctx, "Courier-Oblique", len);
-+			else return pdf_lookup_builtin_font(ctx, "Courier", len);
++			if (italic) return fz_lookup_base14_font_from_file(ctx, "Courier-Oblique");
++			else return fz_lookup_base14_font_from_file(ctx, "Courier");
 +		}
 +	} else if (serif) {
 +		if (bold) {
-+			if (italic) return pdf_lookup_builtin_font(ctx, "Times-BoldItalic", len);
-+			else return pdf_lookup_builtin_font(ctx, "Times-Bold", len);
++			if (italic) return fz_lookup_base14_font_from_file(ctx, "Times-BoldItalic");
++			else return fz_lookup_base14_font_from_file(ctx, "Times-Bold");
 +		} else {
-+			if (italic) return pdf_lookup_builtin_font(ctx, "Times-Italic", len);
-+			else return pdf_lookup_builtin_font(ctx, "Times-Roman", len);
++			if (italic) return fz_lookup_base14_font_from_file(ctx, "Times-Italic");
++			else return fz_lookup_base14_font_from_file(ctx, "Times-Roman");
 +		}
 +	} else {
 +		if (bold) {
-+			if (italic) return pdf_lookup_builtin_font(ctx, "Helvetica-BoldOblique", len);
-+			else return pdf_lookup_builtin_font(ctx, "Helvetica-Bold", len);
++			if (italic) return fz_lookup_base14_font_from_file(ctx, "Helvetica-BoldOblique");
++			else return fz_lookup_base14_font_from_file(ctx, "Helvetica-Bold");
 +		} else {
-+			if (italic) return pdf_lookup_builtin_font(ctx, "Helvetica-Oblique", len);
-+			else return pdf_lookup_builtin_font(ctx, "Helvetica", len);
++			if (italic) return fz_lookup_base14_font_from_file(ctx, "Helvetica-Oblique");
++			else return fz_lookup_base14_font_from_file(ctx, "Helvetica");
 +		}
 +	}
 +}
 +
-+unsigned char *
-+pdf_lookup_substitute_cjk_font(fz_context *ctx, int ros, int serif, int wmode, unsigned int *len, int *index)
++
+ static fz_font *
+ fz_load_html_default_font(fz_context *ctx, fz_html_font_set *set, const char *family, int is_bold, int is_italic)
+ {
+@@ -13,6 +44,7 @@ fz_load_html_default_font(fz_context *ctx, fz_html_font_set *set, const char *fa
+ 	int idx = (is_mono ? 8 : is_sans ? 4 : 0) + is_bold * 2 + is_italic;
+ 	if (!set->fonts[idx])
+ 	{
++#ifndef NOBUILTINFONT
+ 		const unsigned char *data;
+ 		int size;
+ 
+@@ -23,6 +55,13 @@ fz_load_html_default_font(fz_context *ctx, fz_html_font_set *set, const char *fa
+ 			fz_throw(ctx, FZ_ERROR_GENERIC, "cannot load html font: %s", real_family);
+ 		set->fonts[idx] = fz_new_font_from_memory(ctx, NULL, data, size, 0, 1);
+ 		fz_font_flags(set->fonts[idx])->is_serif = !is_sans;
++#else
++		char * filename = html_lookup_substitute_font_from_file(ctx, is_mono, !is_sans, is_bold, is_italic);
++		if (!filename)
++			fz_throw(ctx, FZ_ERROR_GENERIC, "cannot load html font");
++
++		set->fonts[idx] = fz_new_font_from_file(ctx, NULL, filename, 0, 1);
++#endif
+ 	}
+ 	return set->fonts[idx];
+ }
+diff --git a/source/pdf/pdf-font.c b/source/pdf/pdf-font.c
+index be69ce1c..a24b2122 100644
+--- a/source/pdf/pdf-font.c
++++ b/source/pdf/pdf-font.c
+@@ -54,6 +54,8 @@ static const char *base_font_names[][10] =
+ 	{ "ZapfDingbats", NULL }
+ };
+ 
++#ifndef NOBUILTINFONT
++
+ const unsigned char *
+ pdf_lookup_substitute_font(fz_context *ctx, int mono, int serif, int bold, int italic, int *len)
+ {
+@@ -84,6 +86,47 @@ pdf_lookup_substitute_font(fz_context *ctx, int mono, int serif, int bold, int i
+ 	}
+ }
+ 
++#else
++
++const unsigned char *
++pdf_lookup_substitute_font(fz_context *ctx, int mono, int serif, int bold, int italic, int* len)
 +{
 +	*len = 0;
-+	return get_font_file("noto/NotoSansCJK-Regular.ttf");
++	return NULL;
 +}
 +
-+void pdf_install_load_system_font_funcs(fz_context *ctx)
++char *
++pdf_lookup_substitute_font_from_file(fz_context *ctx, int mono, int serif, int bold, int italic)
 +{
++	if (mono) {
++		if (bold) {
++			if (italic) return fz_lookup_base14_font_from_file(ctx, "Courier-BoldOblique");
++			else return fz_lookup_base14_font_from_file(ctx, "Courier-Bold");
++		} else {
++			if (italic) return fz_lookup_base14_font_from_file(ctx, "Courier-Oblique");
++			else return fz_lookup_base14_font_from_file(ctx, "Courier");
++		}
++	} else if (serif) {
++		if (bold) {
++			if (italic) return fz_lookup_base14_font_from_file(ctx, "Times-BoldItalic");
++			else return fz_lookup_base14_font_from_file(ctx, "Times-Bold");
++		} else {
++			if (italic) return fz_lookup_base14_font_from_file(ctx, "Times-Italic");
++			else return fz_lookup_base14_font_from_file(ctx, "Times-Roman");
++		}
++	} else {
++		if (bold) {
++			if (italic) return fz_lookup_base14_font_from_file(ctx, "Helvetica-BoldOblique");
++			else return fz_lookup_base14_font_from_file(ctx, "Helvetica-Bold");
++		} else {
++			if (italic) return fz_lookup_base14_font_from_file(ctx, "Helvetica-Oblique");
++			else return fz_lookup_base14_font_from_file(ctx, "Helvetica");
++		}
++	}
 +}
 +
-+#endif // NOBUILTINFONT
++#endif
++
+ static int is_dynalab(char *name)
+ {
+ 	if (strstr(name, "HuaTian"))
+@@ -350,6 +393,7 @@ pdf_load_builtin_font(fz_context *ctx, pdf_font_desc *fontdesc, const char *font
+ 	fontdesc->font = fz_load_system_font(ctx, fontname, 0, 0, !has_descriptor);
+ 	if (!fontdesc->font)
+ 	{
++#ifndef NOBUILTINFONT
+ 		const unsigned char *data;
+ 		int len;
+ 
+@@ -358,6 +402,15 @@ pdf_load_builtin_font(fz_context *ctx, pdf_font_desc *fontdesc, const char *font
+ 			fz_throw(ctx, FZ_ERROR_GENERIC, "cannot find builtin font: '%s'", fontname);
+ 
+ 		fontdesc->font = fz_new_font_from_memory(ctx, fontname, data, len, 0, 1);
++#else
++		char * filename = fz_lookup_base14_font_from_file(ctx, clean_name);
++		if (!filename)
++			fz_throw(ctx, FZ_ERROR_GENERIC, "cannot find builtin font: '%s'", fontname);
++
++		fontdesc->font = fz_new_font_from_file(ctx, fontname, filename, 0, 1);
++		free(filename);
++#endif
++
+ 		fontdesc->font->flags.is_serif = !!strstr(clean_name, "Times");
+ 	}
+ 
+@@ -375,6 +428,7 @@ pdf_load_substitute_font(fz_context *ctx, pdf_font_desc *fontdesc, const char *f
+ 	fontdesc->font = fz_load_system_font(ctx, fontname, bold, italic, 0);
+ 	if (!fontdesc->font)
+ 	{
++#ifndef NOBUILTINFONT
+ 		const unsigned char *data;
+ 		int len;
+ 
+@@ -383,6 +437,15 @@ pdf_load_substitute_font(fz_context *ctx, pdf_font_desc *fontdesc, const char *f
+ 			fz_throw(ctx, FZ_ERROR_GENERIC, "cannot find substitute font");
+ 
+ 		fontdesc->font = fz_new_font_from_memory(ctx, fontname, data, len, 0, 1);
++#else
++		char * filename = pdf_lookup_substitute_font_from_file(ctx, mono, serif, bold, italic);
++		if (!filename)
++			fz_throw(ctx, FZ_ERROR_GENERIC, "cannot find substitute font");
++
++		fontdesc->font = fz_new_font_from_file(ctx, fontname, filename, 0, 1);
++		free(filename);
++#endif
++
+ 		fontdesc->font->flags.fake_bold = bold && !fontdesc->font->flags.is_bold;
+ 		fontdesc->font->flags.fake_italic = italic && !fontdesc->font->flags.is_italic;
+ 
+@@ -402,6 +465,8 @@ pdf_load_substitute_cjk_font(fz_context *ctx, pdf_font_desc *fontdesc, const cha
+ 	fontdesc->font = fz_load_system_cjk_font(ctx, fontname, ros, serif);
+ 	if (!fontdesc->font)
+ 	{
++		/* A glyph bbox cache is too big for CJK fonts. */
++#ifndef NOBUILTINFONT
+ 		const unsigned char *data;
+ 		int len;
+ 		int index;
+@@ -410,8 +475,15 @@ pdf_load_substitute_cjk_font(fz_context *ctx, pdf_font_desc *fontdesc, const cha
+ 		if (!data)
+ 			fz_throw(ctx, FZ_ERROR_GENERIC, "cannot find builtin CJK font");
+ 
+-		/* A glyph bbox cache is too big for CJK fonts. */
+ 		fontdesc->font = fz_new_font_from_memory(ctx, fontname, data, len, index, 0);
++#else
++		char * filename = fz_lookup_cjk_font_from_file(ctx, ros, serif, fontdesc->wmode);
++		if (!filename)
++			fz_throw(ctx, FZ_ERROR_GENERIC, "cannot find builtin CJK font");
++
++		fontdesc->font = fz_new_font_from_file(ctx, fontname, filename, 0, 1);
++		free(filename);
++#endif
+ 	}
+ 
+ 	fontdesc->font->flags.ft_substitute = 1;

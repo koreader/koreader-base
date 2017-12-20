@@ -427,9 +427,7 @@ MUPDF_BUILD_DIR=$(CURDIR)/$(THIRDPARTY_DIR)/mupdf/build/$(MACHINE)
 MUPDF_DIR=$(MUPDF_BUILD_DIR)/mupdf-prefix/src/mupdf
 MUPDF_LIB_DIR=$(MUPDF_DIR)/build/release
 MUPDF_LIB_STATIC=$(MUPDF_LIB_DIR)/libmupdf.a
-MUPDF_JS_LIB_STATIC=$(MUPDF_LIB_DIR)/libmujs.a
-MUPDF_THIRDPARTY_LIBS=$(MUPDF_LIB_DIR)/libopenjpeg.a \
-			$(MUPDF_LIB_DIR)/libjbig2dec.a \
+MUPDF_THIRDPARTY_LIBS=$(MUPDF_LIB_DIR)/libmupdfthird.a \
 			$(AES_LIB)
 MUPDF_LIB=$(OUTPUT_DIR)/libs/libmupdf$(LIB_EXT)
 

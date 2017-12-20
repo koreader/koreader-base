@@ -599,8 +599,8 @@ void BB_add_blit_from(BlitBuffer *dst, BlitBuffer *src,
     int sbb_rotation = GET_BB_ROTATION(src);
     int dbb_rotation = GET_BB_ROTATION(dst);
     if (dbb_type != sbb_type) {
-        fprintf(stderr, "incompatible bb in file %s, line %d!\r\n",
-                __FILE__, __LINE__); exit(1);
+        fprintf(stderr, "incompatible bb (dst: %d, src: %d) in file %s, line %d!\r\n",
+                dbb_type, sbb_type, __FILE__, __LINE__); exit(1);
     }
     uint8_t r, g, b;
     uint8_t ainv = 0xFF - alpha;
@@ -686,13 +686,9 @@ void BB_alpha_blit_from(BlitBuffer *dst, BlitBuffer *src,
     int sbb_type = GET_BB_TYPE(src);
     int sbb_rotation = GET_BB_ROTATION(src);
     int dbb_rotation = GET_BB_ROTATION(dst);
-    if (dbb_type != sbb_type) {
-        fprintf(stderr, "incompatible bb in file %s, line %d!\r\n",
-                __FILE__, __LINE__); exit(1);
-    }
     uint8_t r, g, b, ainv, alpha;
     int d_x, d_y, o_x, o_y;
-    if (dbb_type == TYPE_BB8) {
+    if (dbb_type == TYPE_BB8 && sbb_type == TYPE_BB8) {
         o_x = offs_x;
         Color8 *dstptr, *srcptr;
         for (d_x = dest_x; d_x < dest_x + w; d_x++) {
@@ -705,7 +701,7 @@ void BB_alpha_blit_from(BlitBuffer *dst, BlitBuffer *src,
             }
             o_x += 1;
         }
-    } else if (dbb_type == TYPE_BB8A) {
+    } else if (dbb_type == TYPE_BB8A && sbb_type == TYPE_BB8A) {
         o_x = offs_x;
         Color8A *dstptr, *srcptr;
         for (d_x = dest_x; d_x < dest_x + w; d_x++) {
@@ -720,7 +716,7 @@ void BB_alpha_blit_from(BlitBuffer *dst, BlitBuffer *src,
             }
             o_x += 1;
         }
-    } else if (dbb_type == TYPE_BBRGB16) {
+    } else if (dbb_type == TYPE_BBRGB16 && sbb_type == TYPE_BBRGB16) {
         o_x = offs_x;
         ColorRGB16 *dstptr, *srcptr;
         for (d_x = dest_x; d_x < dest_x + w; d_x++) {
@@ -733,7 +729,7 @@ void BB_alpha_blit_from(BlitBuffer *dst, BlitBuffer *src,
             }
             o_x += 1;
         }
-    } else if (dbb_type == TYPE_BBRGB24) {
+    } else if (dbb_type == TYPE_BBRGB24 && sbb_type == TYPE_BBRGB24) {
         o_x = offs_x;
         ColorRGB24 *dstptr, *srcptr;
         for (d_x = dest_x; d_x < dest_x + w; d_x++) {
@@ -746,7 +742,7 @@ void BB_alpha_blit_from(BlitBuffer *dst, BlitBuffer *src,
             }
             o_x += 1;
         }
-    } else if (dbb_type == TYPE_BBRGB32) {
+    } else if (dbb_type == TYPE_BBRGB32 && sbb_type == TYPE_BBRGB32) {
         o_x = offs_x;
         ColorRGB32 *dstptr, *srcptr;
         for (d_x = dest_x; d_x < dest_x + w; d_x++) {
@@ -763,6 +759,25 @@ void BB_alpha_blit_from(BlitBuffer *dst, BlitBuffer *src,
             }
             o_x += 1;
         }
+    } else if (dbb_type == TYPE_BBRGB32 && sbb_type == TYPE_BBRGB24) {
+        o_x = offs_x;
+        ColorRGB32 *dstptr;
+        ColorRGB24 *srcptr;
+        for (d_x = dest_x; d_x < dest_x + w; d_x++) {
+            o_y = offs_y;
+            for (d_y = dest_y; d_y < dest_y + h; d_y++) {
+                BB_GET_PIXEL(dst, dbb_rotation, ColorRGB32, d_x, d_y, &dstptr);
+                BB_GET_PIXEL(src, sbb_rotation, ColorRGB24, o_x, o_y, &srcptr);
+                dstptr->r = srcptr->r;
+                dstptr->g = srcptr->g;
+                dstptr->b = srcptr->b;
+                o_y += 1;
+            }
+            o_x += 1;
+        }
+    } else {
+        fprintf(stderr, "incompatible bb (dst: %d, src: %d) in file %s, line %d!\r\n",
+                dbb_type, sbb_type, __FILE__, __LINE__); exit(1);
     }
 }
 
@@ -773,8 +788,8 @@ void BB_invert_blit_from(BlitBuffer *dst, BlitBuffer *src,
     int sbb_rotation = GET_BB_ROTATION(src);
     int dbb_rotation = GET_BB_ROTATION(dst);
     if (dbb_type != sbb_type) {
-        fprintf(stderr, "incompatible bb in file %s, line %d!\r\n",
-                __FILE__, __LINE__); exit(1);
+        fprintf(stderr, "incompatible bb (dst: %d, src: %d) in file %s, line %d!\r\n",
+                dbb_type, sbb_type, __FILE__, __LINE__); exit(1);
     }
     int d_x, d_y, o_x, o_y;
     if (dbb_type == TYPE_BB8) {

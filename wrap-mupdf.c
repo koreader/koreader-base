@@ -17,8 +17,10 @@
 */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <math.h>
 #include <stddef.h>
+#include <string.h>
 #include "wrap-mupdf.h"
 
 static double LOG_TRESHOLD_PERC = 0.05; // 5%
@@ -65,7 +67,7 @@ static void log_size(char *funcName){
 }
 
 static void *
-my_malloc_default(void *opaque, unsigned int size)
+my_malloc_default(void *opaque, size_t size)
 {
     struct header * h = malloc(size + sizeof(header));
     if (h == NULL)
@@ -97,7 +99,7 @@ my_free_default(void *opaque, void *ptr)
 }
 
 static void *
-my_realloc_default(void *opaque, void *old, unsigned int size)
+my_realloc_default(void *opaque, void *old, size_t size)
 {
     void * newp;
     if (old==NULL) { //practically, it's a malloc

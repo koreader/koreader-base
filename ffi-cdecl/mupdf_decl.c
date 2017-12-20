@@ -3,7 +3,7 @@
 
 #include "ffi-cdecl.h"
 
-cdecl_const(FZ_PAGE_BLOCK_TEXT)
+cdecl_const(FZ_STEXT_BLOCK_TEXT)
 
 /* math */
 cdecl_type(fz_point)
@@ -41,9 +41,17 @@ cdecl_func(fz_transform_rect)
 
 /* misc/assorted */
 cdecl_type(fz_context)
+cdecl_type(fz_font)
+cdecl_type(fz_hash_table)
 cdecl_type(fz_storable)
+cdecl_type(fz_key_storable)
 cdecl_type(fz_store_drop_fn)
 cdecl_struct(fz_storable_s)
+cdecl_struct(fz_key_storable_s)
+
+/* buffer */
+cdecl_func(mupdf_new_buffer_from_shared_data)
+cdecl_func(mupdf_drop_buffer)
 
 /* context */
 cdecl_type(fz_alloc_context)
@@ -57,10 +65,9 @@ cdecl_type(fz_image)
 cdecl_type(fz_pixmap)
 cdecl_struct(fz_image_s)
 cdecl_struct(fz_pixmap_s)
-cdecl_func(fz_new_image_from_data) // compat, use wrapper instead:
-cdecl_func(mupdf_new_image_from_data)
-cdecl_func(fz_new_pixmap_from_image) // compat, use wrapper instead:
-cdecl_func(mupdf_new_pixmap_from_image)
+cdecl_func(mupdf_new_image_from_buffer)
+cdecl_func(mupdf_get_pixmap_from_image)
+cdecl_func(mupdf_save_pixmap_as_png)
 cdecl_func(fz_keep_image)
 cdecl_func(fz_drop_image)
 
@@ -68,16 +75,14 @@ cdecl_func(fz_load_png)
 cdecl_func(fz_runetochar)
 
 /* document */
-cdecl_enum(fz_link_kind_e)
-cdecl_type(fz_link_dest)
-cdecl_struct(fz_link_dest_s)
+cdecl_type(fz_annot)
+cdecl_struct(fz_annot_s)
 cdecl_type(fz_outline)
 cdecl_struct(fz_outline_s)
 cdecl_type(fz_document)
 cdecl_type(fz_page)
-cdecl_type(fz_write_options)
-cdecl_struct(fz_document_s)
 cdecl_type(fz_link)
+cdecl_struct(fz_document_s)
 cdecl_struct(fz_page_s)
 
 cdecl_func(mupdf_open_document)
@@ -86,6 +91,7 @@ cdecl_func(fz_authenticate_password)
 cdecl_func(fz_drop_document) // NOTE: libk2pdfopt uses old fz_free_document symbol
 cdecl_func(mupdf_count_pages)
 cdecl_func(fz_lookup_metadata)
+cdecl_func(fz_resolve_link)
 
 /* page */
 cdecl_func(mupdf_load_page)
@@ -102,33 +108,20 @@ cdecl_func(mupdf_load_outline)
 cdecl_func(fz_drop_outline) // NOTE: libk2pdfopt uses old fz_free_outline symbol
 
 /* structured text */
-cdecl_type(fz_text_style)
-cdecl_struct(fz_text_style_s)
+cdecl_type(fz_stext_char)
+cdecl_struct(fz_stext_char_s)
 
-cdecl_type(fz_text_char)
-cdecl_struct(fz_text_char_s)
+cdecl_type(fz_stext_line)
+cdecl_struct(fz_stext_line_s)
 
-cdecl_type(fz_text_span)
-cdecl_struct(fz_text_span_s)
-
-cdecl_type(fz_text_line)
-cdecl_struct(fz_text_line_s)
-
-cdecl_type(fz_text_sheet)
-cdecl_struct(fz_text_sheet_s)
-cdecl_func(mupdf_new_text_sheet)
-cdecl_func(fz_drop_text_sheet) // NOTE: libk2pdfopt uses old fz_free_text_sheet symbol
-
-cdecl_type(fz_text_page)
-cdecl_type(fz_page_block)
-cdecl_struct(fz_text_page_s)
-cdecl_func(mupdf_new_text_page)
-cdecl_func(fz_drop_text_page) // NOTE: libk2pdfopt uses old fz_free_text_page symbol
-cdecl_type(fz_text_block)
-cdecl_struct(fz_page_block_s)
-cdecl_struct(fz_text_block_s)
-
-cdecl_func(fz_text_char_bbox)
+cdecl_type(fz_stext_block)
+cdecl_struct(fz_stext_block_s)
+cdecl_type(fz_stext_options)
+cdecl_struct(fz_stext_options_s)
+cdecl_type(fz_stext_page)
+cdecl_struct(fz_stext_page_s)
+cdecl_func(mupdf_new_stext_page_from_page)
+cdecl_func(fz_drop_stext_page) // NOTE: libk2pdfopt uses old fz_free_text_page symbol
 
 /* pixmaps */
 cdecl_func(mupdf_new_pixmap)
@@ -141,6 +134,7 @@ cdecl_func(fz_keep_pixmap)
 cdecl_func(fz_drop_pixmap)
 cdecl_func(fz_clear_pixmap_with_value)
 cdecl_func(fz_gamma_pixmap)
+cdecl_func(fz_scale_pixmap)
 cdecl_func(fz_pixmap_width)
 cdecl_func(fz_pixmap_height)
 cdecl_func(fz_pixmap_components)
@@ -154,28 +148,35 @@ cdecl_func(mupdf_new_draw_device)
 cdecl_func(mupdf_new_text_device)
 cdecl_func(mupdf_new_bbox_device)
 cdecl_func(mupdf_run_page)
+cdecl_func(fz_close_device)
 cdecl_func(fz_drop_device) // NOTE: libk2pdfopt uses old fz_free_device symbol
 
 /* pdf specifics */
+cdecl_enum(fz_annot_type)
 cdecl_type(pdf_hotspot)
 cdecl_struct(pdf_hotspot_s)
 cdecl_type(pdf_lexbuf)
 cdecl_struct(pdf_lexbuf_s)
 cdecl_type(pdf_lexbuf_large)
 cdecl_struct(pdf_lexbuf_large_s)
+cdecl_type(pdf_obj)
+cdecl_type(pdf_xobject)
 cdecl_type(pdf_annot)
 cdecl_type(pdf_page)
+cdecl_struct(pdf_xobject_s)
 cdecl_struct(pdf_annot_s)
 cdecl_type(pdf_document)
 cdecl_struct(pdf_document_s)
 cdecl_func(pdf_specifics)
 cdecl_func(mupdf_pdf_create_annot)
-cdecl_func(mupdf_pdf_set_markup_annot_quadpoints)
+cdecl_func(mupdf_pdf_set_annot_quad_points)
+cdecl_func(mupdf_pdf_set_text_annot_position)
 cdecl_func(mupdf_pdf_set_markup_appearance)
 
 /* saving documents */
-cdecl_struct(fz_write_options_s)
-cdecl_func(mupdf_write_document)
+cdecl_type(pdf_write_options)
+cdecl_struct(pdf_write_options_s)
+cdecl_func(mupdf_pdf_save_document)
 
 /* the following is for our own wrapper lib: */
 cdecl_func(mupdf_get_my_alloc_context)

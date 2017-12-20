@@ -33,7 +33,7 @@ local mupdf = {
 }
 -- this cannot get adapted by the cdecl file because it is a
 -- string constant. Must match the actual mupdf API:
-local FZ_VERSION = "1.8"
+local FZ_VERSION = "1.12.0"
 
 local document_mt = { __index = {} }
 local page_mt = { __index = {} }
@@ -150,7 +150,7 @@ end
 local function toc_walker(toc, outline, depth)
     while outline ~= nil do
         table.insert(toc, {
-            page = outline.dest.ld.gotor.page + 1,
+            page = outline.page + 1,
             title = ffi.string(outline.title),
             depth = depth,
         })
@@ -247,20 +247,13 @@ end
 write the document to a new file
 --]]
 function document_mt.__index:writeDocument(filename)
-    -- the API takes a char*, not a const char*,
-    -- so we claim memory - and never free it. Too bad.
-    -- TODO: free on closing document?
-    local filename_str = ffi.C.malloc(#filename + 1)
-    if filename == nil then error("could not allocate memory for filename") end
-    ffi.copy(filename_str, filename)
-    local opts = ffi.new("fz_write_options[1]")
+    local opts = ffi.new("pdf_write_options[1]")
     opts[0].do_incremental = (filename == self.filename ) and 1 or 0
     opts[0].do_ascii = 0
-    opts[0].do_expand = 0
     opts[0].do_garbage = 0
     opts[0].do_linear = 0
     opts[0].continue_on_error = 1
-    local ok = W.mupdf_write_document(context(), self.doc, filename_str, opts)
+    local ok = W.mupdf_pdf_save_document(context(), ffi.cast("pdf_document*", self.doc), filename, opts)
     if ok == nil then merror("could not write document") end
 end
 
@@ -307,6 +300,7 @@ function page_mt.__index:getUsedBBox()
     local dev = W.mupdf_new_bbox_device(context(), result)
     if dev == nil then merror("cannot allocate bbox_device") end
     local ok = W.mupdf_run_page(context(), self.page, dev, M.fz_identity, nil)
+    M.fz_close_device(context(), dev)
     M.fz_drop_device(context(), dev)
     if ok == nil then merror("cannot calculate bbox for page") end
 
@@ -343,35 +337,37 @@ local function is_unicode_wspace(c)
         c == 0x3000 --  Ideographic space
 end
 local function is_unicode_bullet(c)
-    -- The last 2 aren't strictly bullets, but will do for our usage here
+    -- Not all of them are strictly bullets, but will do for our usage here
     return c == 0x2022 or --  Bullet
         c == 0x2023 or --  Triangular bullet
+        c == 0x25a0 or --  Black square
+        c == 0x25cb or --  White circle
+        c == 0x25cf or --  Black circle
         c == 0x25e6 or --  White bullet
         c == 0x2043 or --  Hyphen bullet
         c == 0x2219 or --  Bullet operator
         c == 149 or --  Ascii bullet
         c == C'*'
 end
--- this function had (disabled) functionality to check for lines
--- starting with a span that contained numbers, roman numbers or
--- latin literals, optionally followed by ":" or ")" for which
--- it would also return true. Since the implementation looked dubious
--- and was disabled anyway, it was left out when porting to Lua/FFI API
-local function is_list_entry(span)
-    local len = span.len
-    local text = span.text
-    for n = 0, len - 1 do
-        local c = text[n].c
-        if is_unicode_wspace(c) then
-            -- skip whitespace at the beginning
-            goto continue
-        elseif is_unicode_bullet(c) then
-            -- return true for all lines starting with bullets
-            return true
-        else
-            return false
+
+local function skip_starting_bullet(line)
+    local ch = line.first_char
+    local found_bullet = false
+
+    while ch ~= nil do
+        if is_unicode_bullet(ch.c) then
+            found_bullet = true
+        elseif not is_unicode_wspace(ch.c) then
+            break
         end
-        ::continue::
+
+        ch = ch.next
+    end
+
+    if found_bullet then
+        return ch
+    else
+        return line.first_char
     end
 end
 
@@ -393,76 +389,59 @@ will return an empty table if we have no text
 --]]
 function page_mt.__index:getPageText()
     -- first, we run the page through a special device, the text_device
-    local text_page = W.mupdf_new_text_page(context())
+    local text_page = W.mupdf_new_stext_page_from_page(context(), self.page, nil)
     if text_page == nil then merror("cannot alloc text_page") end
-    local text_sheet = W.mupdf_new_text_sheet(context())
-    if text_sheet == nil then
-        M.fz_drop_text_page(context(), text_page)
-        merror("cannot alloc text_sheet")
-    end
-    local tdev = W.mupdf_new_text_device(context(), text_sheet, text_page)
-    if tdev == nil then
-        M.fz_drop_text_page(context(), text_page)
-        M.fz_drop_text_sheet(context(), text_sheet)
-        merror("cannot alloc text device")
-    end
-
-    if W.mupdf_run_page(context(), self.page, tdev, M.fz_identity, nil) == nil then
-        M.fz_drop_text_page(context(), text_page)
-        M.fz_drop_text_sheet(context(), text_sheet)
-        M.fz_drop_device(context(), tdev)
-        merror("cannot run page through text device")
-    end
 
     -- now we analyze the data returned by the device and bring it
     -- into the format we want to return
     local lines = {}
-    local char_bbox = ffi.new("fz_rect[1]")
 
-    for block_num = 0, text_page.len - 1 do
-        if text_page.blocks[block_num].type == M.FZ_PAGE_BLOCK_TEXT then
-            local block = text_page.blocks[block_num].u.text
-
+    local block = text_page.first_block
+    while block ~= nil do
+        if block.type == M.FZ_STEXT_BLOCK_TEXT then
             -- a block contains lines, which is our primary return datum
-            for line_num = 0, block.len - 1 do
+            local mupdf_line = block.u.t.first_line
+            while mupdf_line ~= nil do
                 local line = {}
                 local line_bbox = ffi.new("fz_rect[1]")
 
-                -- a line consists of spans, which can contain words
-                local span = block.lines[line_num].first_span
-                if span and is_list_entry(span) then
-                    -- skip list bullets & co
-                    span = span.next
+                local first_char = skip_starting_bullet( mupdf_line )
+                local ch = first_char
+                local ch_len = 0
+                while ch ~= nil do
+                    ch = ch.next
+                    ch_len = ch_len + 1
                 end
-                while span ~= nil do
+
+                if ch_len > 0 then
                     -- here we will collect UTF-8 chars before making them
                     -- a Lua string:
-                    local textbuf = ffi.new("char[?]", span.len * 4)
+                    local textbuf = ffi.new("char[?]", ch_len * 4)
 
-                    local i = 0
-                    while i < span.len do
+                    ch = first_char
+                    while ch ~= nil do
                         local textlen = 0
                         local word_bbox = ffi.new("fz_rect[1]")
-                        while i < span.len do
-                            if is_unicode_wspace(span.text[i].c) then
+                        while ch ~= nil do
+                            if is_unicode_wspace(ch.c) then
                                 -- ignore and end word
                                 break
                             end
-                            textlen = textlen + M.fz_runetochar(textbuf + textlen, span.text[i].c)
-                            M.fz_union_rect(word_bbox, M.fz_text_char_bbox(context(), char_bbox, span, i))
-                            M.fz_union_rect(line_bbox, char_bbox)
-                            if span.text[i].c >= 0x4e00 and span.text[i].c <= 0x9FFF or -- CJK Unified Ideographs
-                                span.text[i].c >= 0x2000 and span.text[i].c <= 0x206F or -- General Punctuation
-                                span.text[i].c >= 0x3000 and span.text[i].c <= 0x303F or -- CJK Symbols and Punctuation
-                                span.text[i].c >= 0x3400 and span.text[i].c <= 0x4DBF or -- CJK Unified Ideographs Extension A
-                                span.text[i].c >= 0xF900 and span.text[i].c <= 0xFAFF or -- CJK Compatibility Ideographs
-                                span.text[i].c >= 0xFF01 and span.text[i].c <= 0xFFEE or -- Halfwidth and Fullwidth Forms
-                                span.text[i].c >= 0x20000 and span.text[i].c <= 0x2A6DF  -- CJK Unified Ideographs Extension B
+                            textlen = textlen + M.fz_runetochar(textbuf + textlen, ch.c)
+                            M.fz_union_rect(word_bbox, ch.bbox)
+                            M.fz_union_rect(line_bbox, ch.bbox)
+                            if ch.c >= 0x4e00 and ch.c <= 0x9FFF or -- CJK Unified Ideographs
+                                ch.c >= 0x2000 and ch.c <= 0x206F or -- General Punctuation
+                                ch.c >= 0x3000 and ch.c <= 0x303F or -- CJK Symbols and Punctuation
+                                ch.c >= 0x3400 and ch.c <= 0x4DBF or -- CJK Unified Ideographs Extension A
+                                ch.c >= 0xF900 and ch.c <= 0xFAFF or -- CJK Compatibility Ideographs
+                                ch.c >= 0xFF01 and ch.c <= 0xFFEE or -- Halfwidth and Fullwidth Forms
+                                ch.c >= 0x20000 and ch.c <= 0x2A6DF  -- CJK Unified Ideographs Extension B
                             then
                                 -- end word
                                 break
                             end
-                            i = i + 1
+                            ch = ch.next
                         end
                         -- add word to line
                         table.insert(line, {
@@ -470,22 +449,28 @@ function page_mt.__index:getPageText()
                             x0 = word_bbox[0].x0, y0 = word_bbox[0].y0,
                             x1 = word_bbox[0].x1, y1 = word_bbox[0].y1,
                         })
-                        i = i + 1
+
+                        if ch == nil then
+                            break
+                        end
+
+                        ch = ch.next
                     end
-                    span = span.next
+
+                    line.x0, line.y0 = line_bbox[0].x0, line_bbox[0].y0
+                    line.x1, line.y1 = line_bbox[0].x1, line_bbox[0].y1
+
+                    table.insert(lines, line)
                 end
 
-                line.x0, line.y0 = line_bbox[0].x0, line_bbox[0].y0
-                line.x1, line.y1 = line_bbox[0].x1, line_bbox[0].y1
-
-                table.insert(lines, line)
+                mupdf_line = mupdf_line.next
             end
         end
+
+        block = block.next
     end
 
-    M.fz_drop_device(context(), tdev)
-    M.fz_drop_text_sheet(context(), text_sheet)
-    M.fz_drop_text_page(context(), text_page)
+    M.fz_drop_stext_page(context(), text_page)
 
     return lines
 end
@@ -506,12 +491,11 @@ function page_mt.__index:getPageLinks()
             x0 = link.rect.x0, y0 = link.rect.y0,
             x1 = link.rect.x1, y1 = link.rect.y1,
         }
-        if link.dest.kind == M.FZ_LINK_URI then
-            data.uri = ffi.string(link.dest.ld.uri.uri)
-        elseif link.dest.kind == M.FZ_LINK_GOTO then
-            data.page = link.dest.ld.gotor.page -- FIXME page+1?
+        local page = M.fz_resolve_link(context(), link.doc, link.uri, nil, nil)
+        if page >= 0 then
+            data.page = page -- FIXME page+1?
         else
-            mupdf.debug(string.format("ERROR: unknown link kind 0x%x", tonumber(link.dest.kind)))
+            data.uri = ffi.string(link.uri)
         end
         table.insert(links, data)
         link = link.next
@@ -525,10 +509,11 @@ end
 local function run_page(page, pixmap, ctm)
     M.fz_clear_pixmap_with_value(context(), pixmap, 0xff)
 
-    local dev = W.mupdf_new_draw_device(context(), pixmap)
+    local dev = W.mupdf_new_draw_device(context(), nil, pixmap)
     if dev == nil then merror("cannot create draw device") end
 
     local ok = W.mupdf_run_page(context(), page.page, dev, ctm, nil)
+    M.fz_close_device(context(), dev)
     M.fz_drop_device(context(), dev)
     if ok == nil then merror("could not run page") end
 end
@@ -566,7 +551,7 @@ function page_mt.__index:draw_new(draw_context, width, height, offset_x, offset_
     local colorspace = mupdf.color and M.fz_device_rgb(context())
         or M.fz_device_gray(context())
     local pix = W.mupdf_new_pixmap_with_bbox_and_data(
-        context(), colorspace, bbox, ffi.cast("unsigned char*", bb.data))
+        context(), colorspace, bbox, nil, 1, ffi.cast("unsigned char*", bb.data))
     if pix == nil then merror("cannot allocate pixmap") end
 
     run_page(self, pix, ctm)
@@ -590,18 +575,18 @@ function page_mt.__index:addMarkupAnnotation(points, n, type)
     local alpha = 1.0
     local line_height = 0.5
     local line_thickness = 1.0
-    if type == M.FZ_ANNOT_HIGHLIGHT then
+    if type == M.PDF_ANNOT_HIGHLIGHT then
         color[0] = 1.0
         color[1] = 1.0
         color[2] = 0.0
         alpha = 0.5
-    elseif type == M.FZ_ANNOT_UNDERLINE then
+    elseif type == M.PDF_ANNOT_UNDERLINE then
         color[0] = 0.0
         color[1] = 0.0
         color[2] = 1.0
         line_thickness = mupdf.LINE_THICKNESS
         line_height = mupdf.UNDERLINE_HEIGHT
-    elseif type == M.FZ_ANNOT_STRIKEOUT then
+    elseif type == M.PDF_ANNOT_STRIKEOUT then
         color[0] = 1.0
         color[1] = 0.0
         color[2] = 0.0
@@ -614,10 +599,10 @@ function page_mt.__index:addMarkupAnnotation(points, n, type)
     local doc = M.pdf_specifics(context(), self.doc.doc)
     if doc == nil then merror("could not get pdf_specifics") end
 
-    local annot = W.mupdf_pdf_create_annot(context(), doc, ffi.cast("pdf_page*", self.page), type)
+    local annot = W.mupdf_pdf_create_annot(context(), ffi.cast("pdf_page*", self.page), type)
     if annot == nil then merror("could not create annotation") end
 
-    local ok = W.mupdf_pdf_set_markup_annot_quadpoints(context(), doc, annot, points, n)
+    local ok = W.mupdf_pdf_set_annot_quad_points(context(), annot, n, points)
     if ok == nil then merror("could not set markup annot quadpoints") end
 
     ok = W.mupdf_pdf_set_markup_appearance(context(), doc, annot, color, alpha, line_thickness, line_height)
@@ -631,20 +616,22 @@ end
 Renders image data.
 --]]
 function mupdf.renderImage(data, size, width, height)
-    local image = W.mupdf_new_image_from_data(context(),
-                    ffi.cast("unsigned char*", data), size)
+    local buffer = W.mupdf_new_buffer_from_shared_data(context(),
+                     ffi.cast("unsigned char*", data), size)
+    local image = W.mupdf_new_image_from_buffer(context(), buffer)
+    W.mupdf_drop_buffer(context(), buffer)
     if image == nil then merror("could not load image data") end
     M.fz_keep_image(context(), image)
-    local pixmap = W.mupdf_new_pixmap_from_image(context(),
-                    image, width or -1, height or -1)
+    local pixmap = W.mupdf_get_pixmap_from_image(context(),
+                    image, nil, nil, nil, nil)
+    M.fz_drop_image(context(), image)
     if pixmap == nil then
-        M.fz_drop_image(context(), image)
         merror("could not create pixmap from image")
     end
 
     local p_width = M.fz_pixmap_width(context(), pixmap)
     local p_height = M.fz_pixmap_height(context(), pixmap)
-    -- mupdf_new_pixmap_from_image() may not scale image to the
+    -- mupdf_get_pixmap_from_image() may not scale image to the
     -- width and height provided, so check and scale it if needed
     if width and height and (p_width ~= width or p_height ~= height) then
         local scaled_pixmap = M.fz_scale_pixmap(context(), pixmap, 0, 0, width, height, nil)
@@ -655,14 +642,15 @@ function mupdf.renderImage(data, size, width, height)
     end
     local bbtype
     local ncomp = M.fz_pixmap_components(context(), pixmap)
-    if ncomp == 2 then bbtype = BlitBuffer.TYPE_BB8A
+    if ncomp == 1 then bbtype = BlitBuffer.TYPE_BB8
+    elseif ncomp == 2 then bbtype = BlitBuffer.TYPE_BB8A
+    elseif ncomp == 3 then bbtype = BlitBuffer.TYPE_BBRGB24
     elseif ncomp == 4 then bbtype = BlitBuffer.TYPE_BBRGB32
     else error("unsupported number of color components")
     end
     local p = M.fz_pixmap_samples(context(), pixmap)
     local bb = BlitBuffer.new(p_width, p_height, bbtype, p):copy()
     M.fz_drop_pixmap(context(), pixmap)
-    M.fz_drop_image(context(), image)
     return bb
 end
 
@@ -690,10 +678,13 @@ function mupdf.scaleBlitBuffer(bb, width, height)
     -- but the other types' bb.data give corrupted resulting pixmap.
     local colorspace
     local converted_bb
+    local stride
     if bbtype == BlitBuffer.TYPE_BB8A then
         colorspace = M.fz_device_gray(context())
+        stride = orig_w * 2
     elseif bbtype == BlitBuffer.TYPE_BBRGB32 then
         colorspace = M.fz_device_rgb(context())
+        stride = orig_w * 4
     else
         -- We need to convert the other types to one of the working
         -- types, and TYPE_BBRGB32 is the only one that works with
@@ -704,11 +695,12 @@ function mupdf.scaleBlitBuffer(bb, width, height)
         converted_bb:blitFrom(bb, 0, 0, 0, 0, orig_w, orig_h)
         bb = converted_bb -- we don't free() the provided bb, but we'll have to free our converted_bb
         colorspace = M.fz_device_rgb(context())
+        stride = orig_w * 4
     end
     -- We can now create a pixmap from this bb of correct type
     -- whose bb.data is valid for mupdf
     local pixmap = W.mupdf_new_pixmap_with_data(context(), colorspace,
-                    orig_w, orig_h, ffi.cast("unsigned char*", bb.data))
+                    orig_w, orig_h, nil, 1, stride, ffi.cast("unsigned char*", bb.data))
     if pixmap == nil then
         if converted_bb then converted_bb:free() end -- free our home made bb
         merror("could not create pixmap from blitbuffer")
@@ -805,7 +797,7 @@ local function render_for_kopt(bmp, page, scale, bounds)
 
     local colorspace = mupdf.color and M.fz_device_rgb(context())
         or M.fz_device_gray(context())
-    local pix = W.mupdf_new_pixmap_with_bbox(context(), colorspace, bbox)
+    local pix = W.mupdf_new_pixmap_with_bbox(context(), colorspace, bbox, nil, 1)
     if pix == nil then merror("could not allocate pixmap") end
 
     run_page(page, pix, ctm)
