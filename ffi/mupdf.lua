@@ -622,6 +622,10 @@ function mupdf.renderImage(data, size, width, height)
     W.mupdf_drop_buffer(context(), buffer)
     if image == nil then merror("could not load image data") end
     M.fz_keep_image(context(), image)
+    -- Note: mupdf1.12 (unlike mupdf1.8) may incorrectly guess the
+    -- nb of channels of a jpeg image (image.n = 3 instead of 1 for
+    -- some greyscale jpeg), resulting in the following call
+    -- outputing "padding truncated image" and a corrupted image.
     local pixmap = W.mupdf_get_pixmap_from_image(context(),
                     image, nil, nil, nil, nil)
     M.fz_drop_image(context(), image)
