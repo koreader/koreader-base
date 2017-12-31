@@ -86,10 +86,12 @@ cdecl_struct(fz_document_s)
 cdecl_struct(fz_page_s)
 
 cdecl_func(mupdf_open_document)
+cdecl_func(mupdf_open_document_with_stream)
 cdecl_func(fz_needs_password)
 cdecl_func(fz_authenticate_password)
 cdecl_func(fz_drop_document) // NOTE: libk2pdfopt uses old fz_free_document symbol
 cdecl_func(mupdf_count_pages)
+cdecl_func(mupdf_layout_document)
 cdecl_func(fz_lookup_metadata)
 cdecl_func(fz_resolve_link)
 
@@ -106,6 +108,10 @@ cdecl_func(fz_drop_link)
 /* outline */
 cdecl_func(mupdf_load_outline)
 cdecl_func(fz_drop_outline) // NOTE: libk2pdfopt uses old fz_free_outline symbol
+
+/* stream */
+cdecl_func(mupdf_drop_stream)
+cdecl_func(mupdf_open_memory)
 
 /* structured text */
 cdecl_type(fz_stext_char)

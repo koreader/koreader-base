@@ -97,6 +97,26 @@ function mupdf.openDocument(filename, cache_size)
     return mupdf_doc
 end
 
+function mupdf.openDocumentFromText(text, magic)
+    M.fz_register_document_handlers(context())
+
+    stream = W.mupdf_open_memory(context(), ffi.cast("const unsigned char*", text), #text)
+
+    local mupdf_doc = {
+        doc = W.mupdf_open_document_with_stream(context(), magic, stream),
+    }
+
+    W.mupdf_drop_stream(context(), stream)
+
+    if mupdf_doc.doc == nil then
+        merror("MuPDF cannot open document from text")
+    end
+
+    setmetatable(mupdf_doc, document_mt)
+
+    return mupdf_doc
+end
+
 -- Document functions:
 
 --[[
@@ -145,6 +165,13 @@ function document_mt.__index:getPages()
     self.number_of_pages = pages
 
     return pages
+end
+
+function document_mt.__index:layoutDocument(width, height, em)
+    -- Reset the cache.
+    self.number_of_pages = nil
+
+    W.mupdf_layout_document(context(), self.doc, width, height, em)
 end
 
 local function toc_walker(toc, outline, depth)

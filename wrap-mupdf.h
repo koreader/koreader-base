@@ -60,9 +60,21 @@ extern char* mupdf_error_message(fz_context *ctx);
 MUPDF_WRAP(mupdf_open_document, fz_document*, NULL,
     ret = fz_open_document(ctx, filename),
     const char* filename)
+MUPDF_WRAP(mupdf_open_document_with_stream, fz_document*, NULL,
+    ret = fz_open_document_with_stream(ctx, magic, stream),
+    const char *magic, fz_stream *stream)
+MUPDF_WRAP(mupdf_open_memory, fz_stream*, NULL,
+    ret = fz_open_memory(ctx, data, len),
+    const unsigned char *data, size_t len)
+MUPDF_WRAP(mupdf_drop_stream, void*, NULL,
+    { fz_drop_stream(ctx, stm); ret = (void*) -1; },
+    fz_stream *stm)
 MUPDF_WRAP(mupdf_count_pages, int, -1,
     ret = fz_count_pages(ctx, doc),
     fz_document *doc)
+MUPDF_WRAP(mupdf_layout_document, void*, NULL,
+    { fz_layout_document(ctx, doc, w, h, em); ret = (void*) -1; },
+    fz_document *doc, float w, float h, float em)
 MUPDF_WRAP(mupdf_load_outline, fz_outline*, NULL,
     ret = fz_load_outline(ctx, doc),
     fz_document *doc)
