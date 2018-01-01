@@ -100,12 +100,10 @@ end
 function mupdf.openDocumentFromText(text, magic)
     M.fz_register_document_handlers(context())
 
-    stream = W.mupdf_open_memory(context(), ffi.cast("const unsigned char*", text), #text)
-
+    local stream = W.mupdf_open_memory(context(), ffi.cast("const unsigned char*", text), #text)
     local mupdf_doc = {
         doc = W.mupdf_open_document_with_stream(context(), magic, stream),
     }
-
     W.mupdf_drop_stream(context(), stream)
 
     if mupdf_doc.doc == nil then
