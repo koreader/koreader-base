@@ -424,7 +424,10 @@ static int loadDocument(lua_State *L) {
 	doc->text_view->LoadDocument(file_name);
 	doc->dom_doc = doc->text_view->getDocument();
 
-	return 0;
+	bool loaded = false;
+	if (doc->dom_doc) { loaded = true ;}
+	lua_pushboolean(L, loaded);
+	return 1;
 }
 
 static int renderDocument(lua_State *L) {
