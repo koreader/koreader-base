@@ -180,10 +180,12 @@ struct fz_page_s {
   int (*overprint)(fz_context *, fz_page *);
 };
 fz_document *mupdf_open_document(fz_context *, const char *);
+fz_document *mupdf_open_document_with_stream(fz_context *, const char *, struct fz_stream_s *);
 int fz_needs_password(fz_context *, fz_document *);
 int fz_authenticate_password(fz_context *, fz_document *, const char *);
 void fz_drop_document(fz_context *, fz_document *);
 int mupdf_count_pages(fz_context *, fz_document *);
+void *mupdf_layout_document(fz_context *, fz_document *, float, float, float);
 int fz_lookup_metadata(fz_context *, fz_document *, const char *, char *, int);
 int fz_resolve_link(fz_context *, fz_document *, const char *, float *, float *);
 fz_page *mupdf_load_page(fz_context *, fz_document *, int);
@@ -200,6 +202,8 @@ fz_link *mupdf_load_links(fz_context *, fz_page *);
 void fz_drop_link(fz_context *, fz_link *);
 fz_outline *mupdf_load_outline(fz_context *, fz_document *);
 void fz_drop_outline(fz_context *, fz_outline *);
+void *mupdf_drop_stream(fz_context *, struct fz_stream_s *);
+struct fz_stream_s *mupdf_open_memory(fz_context *, const unsigned char *, long unsigned int);
 typedef struct fz_stext_char_s fz_stext_char;
 struct fz_stext_char_s {
   int c;
