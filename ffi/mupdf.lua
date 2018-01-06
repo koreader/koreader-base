@@ -55,6 +55,8 @@ local function context()
         error("cannot create fz_context for MuPDF")
     end
 
+    M.fz_install_external_font_funcs(ctx);
+
     save_ctx = ctx
     return ctx
 end

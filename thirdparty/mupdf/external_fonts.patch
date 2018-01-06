@@ -11,43 +11,20 @@ index 114a6eb6..73880a64 100644
  	$(XPS_OBJ) \
  	$(SVG_OBJ) \
 diff --git a/include/mupdf/fitz/font.h b/include/mupdf/fitz/font.h
-index ef4cd74d..65bce17f 100644
+index ef4cd74d..9dfc8ed8 100644
 --- a/include/mupdf/fitz/font.h
 +++ b/include/mupdf/fitz/font.h
-@@ -624,4 +624,11 @@ void fz_hb_lock(fz_context *ctx);
+@@ -624,4 +624,8 @@ void fz_hb_lock(fz_context *ctx);
  */
  void fz_hb_unlock(fz_context *ctx);
  
-+#ifdef NOBUILTINFONT
-+
 +char *fz_lookup_base14_font_from_file(fz_context *ctx, const char *name);
 +char *fz_lookup_cjk_font_from_file(fz_context *ctx, int registry, int serif, int wmode);
-+
-+#endif
++void fz_install_external_font_funcs(fz_context *ctx);
 +
  #endif
-diff --git a/source/fitz/font.c b/source/fitz/font.c
-index e197fa1b..8b74c624 100644
---- a/source/fitz/font.c
-+++ b/source/fitz/font.c
-@@ -320,9 +320,15 @@ void fz_install_load_system_font_funcs(fz_context *ctx,
- 		fz_load_system_cjk_font_fn *f_cjk,
- 		fz_load_system_fallback_font_fn *f_back)
- {
-+#ifndef NOBUILTINFONT
- 	ctx->font->load_font = f;
- 	ctx->font->load_cjk_font = f_cjk;
- 	ctx->font->load_fallback_font = f_back;
-+#else
-+	ctx->font->load_font = NULL;
-+	ctx->font->load_cjk_font = NULL;
-+	ctx->font->load_fallback_font = NULL;
-+#endif
- }
- 
- fz_font *fz_load_system_font(fz_context *ctx, const char *name, int bold, int italic, int needs_exact_metrics)
 diff --git a/source/fitz/noto.c b/source/fitz/noto.c
-index f6951ba2..bc338184 100644
+index f6951ba2..3973312c 100644
 --- a/source/fitz/noto.c
 +++ b/source/fitz/noto.c
 @@ -1,8 +1,12 @@
@@ -63,7 +40,7 @@ index f6951ba2..bc338184 100644
  /*
  	Base 14 PDF fonts from URW.
  	Noto fonts from Google.
-@@ -367,3 +371,134 @@ fz_lookup_noto_emoji_font(fz_context *ctx, int *size)
+@@ -367,3 +371,161 @@ fz_lookup_noto_emoji_font(fz_context *ctx, int *size)
  	return *size = 0, NULL;
  #endif
  }
@@ -195,6 +172,33 @@ index f6951ba2..bc338184 100644
 +{
 +	*size = 0;
 +	return NULL;
++}
++
++fz_font *
++fz_load_system_fallback_font_from_file(fz_context *ctx, int script, int language, int serif, int bold, int italic)
++{
++	char *filename;
++	fz_font *font;
++
++	switch (script)
++	{
++	case UCDN_SCRIPT_HANGUL:
++	case UCDN_SCRIPT_HIRAGANA:
++	case UCDN_SCRIPT_KATAKANA:
++	case UCDN_SCRIPT_BOPOMOFO:
++	case UCDN_SCRIPT_HAN:
++		filename = get_font_file("noto/NotoSansCJK-Regular.ttf");
++		font = fz_new_font_from_file(ctx, NULL, filename, 0, 1);
++		return font;
++	}
++
++	return NULL;
++}
++
++void
++fz_install_external_font_funcs(fz_context *ctx)
++{
++	fz_install_load_system_font_funcs(ctx, NULL, NULL, &fz_load_system_fallback_font_from_file);
 +}
 +
 +#endif

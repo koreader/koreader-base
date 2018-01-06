@@ -63,6 +63,7 @@ struct fz_key_storable_s {
   fz_storable storable;
   short int store_key_refs;
 };
+void fz_install_external_font_funcs(fz_context *);
 struct fz_buffer_s *mupdf_new_buffer_from_shared_data(fz_context *, const unsigned char *, long unsigned int);
 void *mupdf_drop_buffer(fz_context *, struct fz_buffer_s *);
 typedef struct fz_alloc_context_s fz_alloc_context;
