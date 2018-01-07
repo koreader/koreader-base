@@ -48,6 +48,7 @@ cdecl_type(fz_key_storable)
 cdecl_type(fz_store_drop_fn)
 cdecl_struct(fz_storable_s)
 cdecl_struct(fz_key_storable_s)
+cdecl_func(fz_install_external_font_funcs)
 
 /* buffer */
 cdecl_func(mupdf_new_buffer_from_shared_data)
