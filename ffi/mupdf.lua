@@ -659,12 +659,19 @@ function mupdf.renderImage(data, size, width, height)
     local p_height = M.fz_pixmap_height(context(), pixmap)
     -- mupdf_get_pixmap_from_image() may not scale image to the
     -- width and height provided, so check and scale it if needed
-    if width and height and (p_width ~= width or p_height ~= height) then
-        local scaled_pixmap = M.fz_scale_pixmap(context(), pixmap, 0, 0, width, height, nil)
-        M.fz_drop_pixmap(context(), pixmap)
-        pixmap = scaled_pixmap
-        p_width = M.fz_pixmap_width(context(), pixmap)
-        p_height = M.fz_pixmap_height(context(), pixmap)
+    if width and height then
+        -- MuPDF 1.12 fz_scale_pixmap() may behave strangely (on ARM only!)
+        -- if it is given non-integer width and height, and returns a corrupted
+        -- image with a different ncomp than original pixmap...)
+        width = math.floor(width)
+        height = math.floor(height)
+        if p_width ~= width or p_height ~= height then
+            local scaled_pixmap = M.fz_scale_pixmap(context(), pixmap, 0, 0, width, height, nil)
+            M.fz_drop_pixmap(context(), pixmap)
+            pixmap = scaled_pixmap
+            p_width = M.fz_pixmap_width(context(), pixmap)
+            p_height = M.fz_pixmap_height(context(), pixmap)
+        end
     end
     local bbtype
     local ncomp = M.fz_pixmap_components(context(), pixmap)
