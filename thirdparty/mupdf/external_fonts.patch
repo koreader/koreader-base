@@ -312,7 +312,7 @@ index d319a462..df823fa0 100644
  
  	return NULL;
 diff --git a/source/pdf/pdf-font.c b/source/pdf/pdf-font.c
-index be69ce1c..4599f336 100644
+index be69ce1c..e71d4dc9 100644
 --- a/source/pdf/pdf-font.c
 +++ b/source/pdf/pdf-font.c
 @@ -54,6 +54,8 @@ static const char *base_font_names[][10] =
@@ -412,7 +412,7 @@ index be69ce1c..4599f336 100644
 +		char *filename = pdf_lookup_substitute_font_from_file(ctx, mono, serif, bold, italic);
 +		if (!filename)
 +			fz_throw(ctx, FZ_ERROR_GENERIC, "cannot find substitute font");
-+	
++
 +		fontdesc->font = fz_new_font_from_file(ctx, fontname, filename, 0, 1);
 +		fontdesc->font->flags.is_bold = bold;
 +		fontdesc->font->flags.is_italic = italic;
