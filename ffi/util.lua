@@ -219,14 +219,106 @@ function util.execute(...)
     end
 end
 
---- Returns the length of data that can be read immediately without blocking
-function util.getNonBlockingReadSize(luafile)
-    -- returns 0 if not readable yet, otherwise len of available data
-    -- returns nil when unsupported: caller may read (with possible blocking)
-    if util.isAndroid() then
-        return
+--- Run lua code (func) in a forked subprocess
+--
+-- With with_pipe=true, sets up a pipe for communication
+-- from children towards parent.
+-- func is called with the child pid as 1st argument, and,
+-- if with_pipe: a fd for writting
+-- This function returns (to parent): the child pid, and,
+-- if with_pipe: a fd for reading what the child wrote
+function util.runInSubProcess(func, with_pipe)
+    local parent_read_fd, child_write_fd
+    if with_pipe then
+        local pipe = ffi.new('int[2]', {-1, -1})
+        if ffi.C.pipe(pipe) ~= 0 then -- failed creating pipe !
+            return false
+        end
+        parent_read_fd, child_write_fd = pipe[0], pipe[1]
+        if parent_read_fd == -1 or child_write_fd == -1 then
+            return false
+        end
     end
-    local fileno = ffi.C.fileno(luafile)
+    local pid = C.fork()
+    if pid == 0 then -- child process
+        -- We need to wrap it with pcall: otherwise, if we were in a
+        -- subroutine, the error would just abort the coroutine, bypassing
+        -- our os.exit(0), and this subprocess would be a working 2nd instance
+        -- of KOReader (with libraries or drivers probably getting messed up).
+        local ok, err = xpcall(function()
+            if parent_read_fd then
+                -- close our duplicate of parent fd
+                ffi.C.close(parent_read_fd)
+            end
+            -- Just run the provided lua code object in this new process,
+            -- and exit immediatly (so we do not release drivers and
+            -- resources still used by parent process)
+            -- We pass child pid to func, which can serve as a key
+            -- to communicate with parent process.
+            -- We pass child_write_fd (if with_pipe) so 'func' can write to it
+            pid = C.getpid()
+            func(pid, child_write_fd)
+        end, debug.traceback)
+        if not ok then
+            print("error in subprocess:", err)
+        end
+        os.exit(0)
+    end
+    -- parent/main process
+    if pid == -1 then -- on failure, fork() returns -1
+        return false
+    end
+    if child_write_fd then
+        -- close our duplicate of child fd
+        ffi.C.close(child_write_fd)
+    end
+    return pid, parent_read_fd
+end
+
+--- Collect subprocess so it does not become a zombie.
+-- This does not block. Returns true if process was collected or was already
+-- no more running, false if process is still running
+function util.isSubProcessDone(pid)
+    local status = ffi.new('int[1]')
+    local ret = C.waitpid(pid, status, 1) -- 1 = WNOHANG : don't wait, just tell
+    -- status = tonumber(status[0])
+    -- If still running: ret = 0 , status = 0
+    -- If exited: ret = pid , status = 0 or 9 if killed
+    -- If no more running: ret = -1 , status = 0
+    if ret == pid or ret == -1 then
+        return true
+    end
+    return false
+end
+
+--- Terminate subprocess pid by sending SIGKILL
+function util.terminateSubProcess(pid)
+    local done = util.isSubProcessDone(pid)
+    if not done then
+        -- We kill with signal 9/SIGKILL, which may be violent, but ensures
+        -- that it is terminated (a process may catch or ignore SIGTERM)
+        C.kill(pid, 9)
+        -- Process will still have to be collected with calls to
+        -- util.isSubProcessDone(), which may still return false for
+        -- some small amount of time after our kill()
+    end
+end
+
+--- Returns the length of data that can be read immediately without blocking
+--
+-- Accepts a low-level file descriptor, or a higher level lua file object
+-- returns 0 if not readable yet, otherwise len of available data
+-- returns nil when unsupported: caller may read (with possible blocking)
+--
+-- Caveats with pipes: returns 0 too if other side of pipe has exited
+-- without writing anything
+function util.getNonBlockingReadSize(fd_or_luafile)
+    local fileno
+    if type(fd_or_luafile) == "number" then -- low-level fd
+        fileno = fd_or_luafile
+    else -- lua file object
+        fileno = ffi.C.fileno(fd_or_luafile)
+    end
     local available = ffi.new('int[1]')
     local ok = ffi.C.ioctl(fileno, ffi.C.FIONREAD, available)
     if ok ~= 0 then -- ioctl failed, not supported
@@ -234,6 +326,49 @@ function util.getNonBlockingReadSize(luafile)
     end
     available = tonumber(available[0])
     return available
+end
+
+--- Write data to file descriptor, and optionally close it when done
+--
+-- May block if data is large until the other end has read it.
+-- If data fits into kernel pipe buffer, it can return before the
+-- other end has started reading it.
+function util.writeToFD(fd, data, close_fd)
+    local size = #data
+    local ptr = ffi.cast("uint8_t *", data)
+    -- print("writing to fd")
+    local bytes_written = ffi.C.write(fd, ptr, size)
+    -- print("done writing to fd")
+    local success = bytes_written == size
+    if close_fd then
+        ffi.C.close(fd)
+        -- print("write fd closed")
+    end
+    return success
+end
+
+--- Read all data from file descriptor, and close it.
+-- This blocks until remote side has closed its side of the fd
+function util.readAllFromFD(fd)
+    local chunksize = 8192
+    local buffer = ffi.new('char[?]', chunksize, {0})
+    local data = {}
+    while true do
+        -- print("reading from fd")
+	local bytes_read = tonumber(ffi.C.read(fd, ffi.cast('void*', buffer), chunksize))
+	if bytes_read < 0 then
+            local err = ffi.errno()
+            print("readFromFD() error: "..ffi.string(ffi.C.strerror(err)))
+            break
+	elseif bytes_read == 0 then -- EOF, no more data to read
+	    break
+	else
+	    table.insert(data, ffi.string(buffer, bytes_read))
+	end
+    end
+    ffi.C.close(fd)
+    -- print("read fd closed")
+    return table.concat(data)
 end
 
 --- Gets UTF-8 charcode.

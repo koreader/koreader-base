@@ -38,6 +38,7 @@ long int write(int, const void *, long unsigned int);
 long int read(int, void *, long unsigned int);
 int kill(int, int) __attribute__((__nothrow__, __leaf__));
 int waitpid(int, int *, int);
+int getpid();
 struct pollfd {
   int fd;
   short int events;
@@ -77,4 +78,5 @@ int fprintf(struct _IO_FILE *restrict, const char *restrict, ...);
 int fputc(int, struct _IO_FILE *);
 static const int FIONREAD = 21531;
 int fileno(struct FILE *stream);
+char *strerror(int);
 ]]
