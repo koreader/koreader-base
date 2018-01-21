@@ -246,6 +246,13 @@ function util.runInSubProcess(func, with_pipe)
         -- our os.exit(0), and this subprocess would be a working 2nd instance
         -- of KOReader (with libraries or drivers probably getting messed up).
         local ok, err = xpcall(function()
+            -- Give the child its own process group, so we can kill(-pid) it
+            -- to have all its own children killed too (otherwise, parent
+            -- process would kill the child, the child's children would
+            -- be adopted by init, but parent would still have
+            -- util.isSubProcessDone() returning false until all the child's
+            -- children are done.
+            C.setpgid(0, 0)
             if parent_read_fd then
                 -- close our duplicate of parent fd
                 ffi.C.close(parent_read_fd)
@@ -297,7 +304,10 @@ function util.terminateSubProcess(pid)
     if not done then
         -- We kill with signal 9/SIGKILL, which may be violent, but ensures
         -- that it is terminated (a process may catch or ignore SIGTERM)
-        C.kill(pid, 9)
+        -- If we used setpgid(0,0) above, we can kill the process group
+        -- instead, by just using -pid
+        -- C.kill(pid, 9)
+        C.kill(-pid, 9)
         -- Process will still have to be collected with calls to
         -- util.isSubProcessDone(), which may still return false for
         -- some small amount of time after our kill()
