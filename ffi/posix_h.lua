@@ -39,6 +39,7 @@ long int read(int, void *, long unsigned int);
 int kill(int, int) __attribute__((__nothrow__, __leaf__));
 int waitpid(int, int *, int);
 int getpid();
+int setpgid(int, int);
 struct pollfd {
   int fd;
   short int events;
