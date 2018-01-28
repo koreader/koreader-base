@@ -766,12 +766,11 @@ BB_mt.__index.blitFullFrom = BB_mt.__index.blitFrom
 
 -- blitting with a per-blit alpha value
 function BB_mt.__index:addblitFrom(source, dest_x, dest_y, offs_x, offs_y, width, height, intensity)
-    width, height = width or source:getWidth(), height or source:getHeight()
-    width, dest_x, offs_x = BB.checkBounds(width, dest_x or 0, offs_x or 0, self:getWidth(), source:getWidth())
-    height, dest_y, offs_y = BB.checkBounds(height, dest_y or 0, offs_y or 0, self:getHeight(), source:getHeight())
-    if width <= 0 or height <= 0 then return end
-
     if use_cblitbuffer then
+        width, height = width or source:getWidth(), height or source:getHeight()
+        width, dest_x, offs_x = BB.checkBounds(width, dest_x or 0, offs_x or 0, self:getWidth(), source:getWidth())
+        height, dest_y, offs_y = BB.checkBounds(height, dest_y or 0, offs_y or 0, self:getHeight(), source:getHeight())
+        if width <= 0 or height <= 0 then return end
         cblitbuffer.BB_add_blit_from(ffi.cast("struct BlitBuffer *", self),
             ffi.cast("struct BlitBuffer *", source),
             dest_x, dest_y, offs_x, offs_y, width, height, intt(intensity*0xFF))
@@ -782,12 +781,11 @@ end
 
 -- alpha-pane aware blitting
 function BB_mt.__index:alphablitFrom(source, dest_x, dest_y, offs_x, offs_y, width, height)
-    width, height = width or source:getWidth(), height or source:getHeight()
-    width, dest_x, offs_x = BB.checkBounds(width, dest_x or 0, offs_x or 0, self:getWidth(), source:getWidth())
-    height, dest_y, offs_y = BB.checkBounds(height, dest_y or 0, offs_y or 0, self:getHeight(), source:getHeight())
-    if width <= 0 or height <= 0 then return end
-
     if use_cblitbuffer then
+        width, height = width or source:getWidth(), height or source:getHeight()
+        width, dest_x, offs_x = BB.checkBounds(width, dest_x or 0, offs_x or 0, self:getWidth(), source:getWidth())
+        height, dest_y, offs_y = BB.checkBounds(height, dest_y or 0, offs_y or 0, self:getHeight(), source:getHeight())
+        if width <= 0 or height <= 0 then return end
         cblitbuffer.BB_alpha_blit_from(ffi.cast("struct BlitBuffer *", self),
             ffi.cast("struct BlitBuffer *", source),
             dest_x, dest_y, offs_x, offs_y, width, height)
@@ -798,17 +796,16 @@ end
 
 -- invert blitting
 function BB_mt.__index:invertblitFrom(source, dest_x, dest_y, offs_x, offs_y, width, height)
-    width, height = width or source:getWidth(), height or source:getHeight()
-    width, dest_x, offs_x = BB.checkBounds(width, dest_x or 0, offs_x or 0, self:getWidth(), source:getWidth())
-    height, dest_y, offs_y = BB.checkBounds(height, dest_y or 0, offs_y or 0, self:getHeight(), source:getHeight())
-    if width <= 0 or height <= 0 then return end
-
     if use_cblitbuffer then
+        width, height = width or source:getWidth(), height or source:getHeight()
+        width, dest_x, offs_x = BB.checkBounds(width, dest_x or 0, offs_x or 0, self:getWidth(), source:getWidth())
+        height, dest_y, offs_y = BB.checkBounds(height, dest_y or 0, offs_y or 0, self:getHeight(), source:getHeight())
+        if width <= 0 or height <= 0 then return end
         cblitbuffer.BB_invert_blit_from(ffi.cast("struct BlitBuffer *", self),
             ffi.cast("struct BlitBuffer *", source),
             dest_x, dest_y, offs_x, offs_y, width, height)
     else
-        self:blitFrom(self, dest_x, dest_y, offs_x, offs_y, width, height, self.setPixelInverted)
+        self:blitFrom(source, dest_x, dest_y, offs_x, offs_y, width, height, self.setPixelInverted)
     end
 end
 
@@ -817,6 +814,10 @@ function BB_mt.__index:colorblitFrom(source, dest_x, dest_y, offs_x, offs_y, wid
     -- we need color with alpha later:
     color = color:getColorRGB32()
     if use_cblitbuffer then
+        width, height = width or source:getWidth(), height or source:getHeight()
+        width, dest_x, offs_x = BB.checkBounds(width, dest_x or 0, offs_x or 0, self:getWidth(), source:getWidth())
+        height, dest_y, offs_y = BB.checkBounds(height, dest_y or 0, offs_y or 0, self:getHeight(), source:getHeight())
+        if width <= 0 or height <= 0 then return end
         cblitbuffer.BB_color_blit_from(ffi.cast("struct BlitBuffer *", self),
             ffi.cast("struct BlitBuffer *", source),
             dest_x, dest_y, offs_x, offs_y, width, height, color:getColorRGB32())
