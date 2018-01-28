@@ -241,7 +241,7 @@ L = 0.299*Red + 0.587*Green + 0.114*Blue
 --]]
 function ColorRGB16_mt.__index:getColor4L()
     local r = rshift(self.v, 11)
-    local g = band(rshift(self.v, 5, 0x3F))
+    local g = band(rshift(self.v, 5), 0x3F)
     local b = band(self.v, 0x001F)
     return Color4L(rshift(39919*r + 39185*g + 15220*b, 18))
 end
@@ -257,7 +257,7 @@ function Color8_mt.__index:getColor4U() return Color4U(band(0xF0, self.a)) end
 function Color8A_mt.__index:getColor4U() return Color4U(band(0xF0, self.a)) end
 function ColorRGB16_mt.__index:getColor4U()
     local r = rshift(self.v, 11)
-    local g = band(rshift(self.v, 5, 0x3F))
+    local g = band(rshift(self.v, 5), 0x3F)
     local b = band(self.v, 0x001F)
     return Color4U(band(0xF0, rshift(39919*r + 39185*g + 15220*b, 14)))
 end
