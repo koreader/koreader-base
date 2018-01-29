@@ -72,16 +72,22 @@ function ZipWriter:_open_new_file_in_zip(filename)
 end
 
 --- Write data to the file currently being stored in the zipfile.
-function ZipWriter:_write_file_in_zip(data)
+function ZipWriter:_write_file_in_zip(data, no_compression)
     if not self.in_open_file then
         return nil
     end
     local lfh = self.local_file_header
-    local compressed = zlibCompress(data):sub(3, -5)
     lfh.crc32 = tonumber(zlibCrc32(data))
-    lfh.compressed_size = #compressed
     lfh.uncompressed_size = #data
-    self.data = compressed
+    if no_compression then
+        lfh.compressed_size = lfh.uncompressed_size
+        self.data = data
+        lfh._no_compression = true
+    else
+        local compressed = zlibCompress(data):sub(3, -5)
+        lfh.compressed_size = #compressed
+        self.data = compressed
+    end
     return true
 end
 
@@ -97,7 +103,11 @@ function ZipWriter:_close_file_in_zip()
     zh:write(numberToByteString(0x04034b50, 4)) -- signature
     zh:write(numberToByteString(20, 2)) -- version needed to extract: 2.0
     zh:write(numberToByteString(0, 2)) -- general purpose bit flag
-    zh:write(numberToByteString(8, 2)) -- compression method: deflate
+    if lfh._no_compression then
+        zh:write(numberToByteString(0, 2)) -- compression method: store
+    else
+        zh:write(numberToByteString(8, 2)) -- compression method: deflate
+    end
     zh:write(numberToByteString(lfh.last_mod_file_time, 2))
     zh:write(numberToByteString(lfh.last_mod_file_date, 2))
     zh:write(numberToByteString(lfh.crc32, 4))
@@ -129,7 +139,11 @@ function ZipWriter:close()
         zh:write(numberToByteString(3, 2)) -- version made by: UNIX
         zh:write(numberToByteString(20, 2)) -- version needed to extract: 2.0
         zh:write(numberToByteString(0, 2)) -- general purpose bit flag
-        zh:write(numberToByteString(8, 2)) -- compression method: deflate
+        if lfh._no_compression then
+            zh:write(numberToByteString(0, 2)) -- compression method: store
+        else
+            zh:write(numberToByteString(8, 2)) -- compression method: deflate
+        end
         zh:write(numberToByteString(lfh.last_mod_file_time, 2))
         zh:write(numberToByteString(lfh.last_mod_file_date, 2))
         zh:write(numberToByteString(lfh.crc32, 4))
@@ -182,9 +196,9 @@ function ZipWriter:open(zipfilepath)
 end
 
 -- Add to zipfile content with the name in_zip_filepath
-function ZipWriter:add(in_zip_filepath, content)
+function ZipWriter:add(in_zip_filepath, content, no_compression)
     self:_open_new_file_in_zip(in_zip_filepath)
-    self:_write_file_in_zip(content)
+    self:_write_file_in_zip(content, no_compression)
     self:_close_file_in_zip()
 end
 
