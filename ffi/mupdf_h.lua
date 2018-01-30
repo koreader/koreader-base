@@ -271,7 +271,6 @@ int fz_pixmap_components(fz_context *, fz_pixmap *);
 unsigned char *fz_pixmap_samples(fz_context *, fz_pixmap *);
 fz_colorspace *fz_device_gray(fz_context *);
 fz_colorspace *fz_device_rgb(fz_context *);
-void fz_drop_colorspace(fz_context *, fz_colorspace *);
 struct fz_device_s *mupdf_new_draw_device(fz_context *, const fz_matrix *, fz_pixmap *);
 struct fz_device_s *mupdf_new_text_device(fz_context *, fz_stext_page *, const fz_stext_options *);
 struct fz_device_s *mupdf_new_bbox_device(fz_context *, fz_rect *);
