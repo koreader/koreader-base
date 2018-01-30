@@ -587,8 +587,7 @@ function page_mt.__index:draw_new(draw_context, width, height, offset_x, offset_
         M.fz_gamma_pixmap(context(), pix, draw_context.gamma)
     end
 
-    -- FIXME: undefined pixmap
-    M.fz_drop_pixmap(context(), pixmap) -- luacheck: ignore 113
+    M.fz_drop_pixmap(context(), pix)
 
     return bb
 end
