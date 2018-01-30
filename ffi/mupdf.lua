@@ -587,8 +587,8 @@ function page_mt.__index:draw_new(draw_context, width, height, offset_x, offset_
         M.fz_gamma_pixmap(context(), pix, draw_context.gamma)
     end
 
-    -- FIXME: undefined pixmap
-    M.fz_drop_pixmap(context(), pixmap) -- luacheck: ignore 113
+    M.fz_drop_pixmap(context(), pix)
+    M.fz_drop_colorspace(context(), colorspace)
 
     return bb
 end
@@ -756,6 +756,7 @@ function mupdf.scaleBlitBuffer(bb, width, height)
     local p = M.fz_pixmap_samples(context(), scaled_pixmap)
     bb = BlitBuffer.new(p_width, p_height, bbtype, p):copy()
     M.fz_drop_pixmap(context(), scaled_pixmap) -- free our scaled pixmap
+    M.fz_drop_colorspace(context(), colorspace)
     if converted_bb then converted_bb:free() end -- free our home made bb
     return bb
 end
@@ -840,6 +841,7 @@ local function render_for_kopt(bmp, page, scale, bounds)
     bmpmupdf_pixmap_to_bmp(bmp, pix)
 
     M.fz_drop_pixmap(context(), pix)
+    M.fz_drop_colorspace(context(), colorspace)
 end
 
 function page_mt.__index:reflow(kopt_context)
