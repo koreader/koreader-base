@@ -1382,7 +1382,25 @@ static int findText(lua_State *L) {
     LVArray<ldomWord> words;
     lvRect rc;
     doc->text_view->GetPos( rc );
-    int pageHeight = rc.height();
+    int pageHeight = doc->text_view->GetHeight();
+    // To not miss any occurence, and have them all highlighted,
+    // we need to search in 3*pageHeight:
+    // 1) the current page that we may include in start-end below,
+    // 2) the next/previous page where we may find our interesting occurences
+    // 3) the page after/before that one, where some node shown on 2) may start or end in
+    // (We only need to use "2 * pageHeight" here, because current page (1) is
+    // not accounted for searchHeight, thanks to the searchHeightCheckStartY
+    // we set below when needed)
+    int searchHeight = 2 * pageHeight;
+    // And to not be stopped from searching further if there is a hit on current page,
+    // but none on 2) & 3): let crengine not start ensuring searchHeight before
+    // we pass beyond current page.
+    int searchHeightCheckStartY = -1;
+    // So, below, we include current page when needed, and adjust searchHeightCheckStartY
+    // accordingly.
+    // Results will be highlighted on multiple page, but lua code will find the good
+    // page to go to and show among the results.
+
     int start = -1;
     int end = -1;
     if ( reverse ) {
@@ -1390,29 +1408,39 @@ static int findText(lua_State *L) {
         if ( origin == 0 ) {
             // from end of current page to first page
             end = rc.bottom;
+            searchHeightCheckStartY = rc.top - 1;
         } else if ( origin == -1 ) {
             // from the last page to end of current page
-            start = rc.bottom + 1;
+            // start = rc.bottom + 1;
+            start = rc.top; // avoid edge cases and include current page
         } else { // origin == 1
             // from prev page to the first page
-            end = rc.top - 1;
+            // end = rc.top - 1;
+            if (rc.top == 0) // if we are on first page, nothing to search back
+                return 0;
+            end = rc.bottom; // avoid edge cases and include current page
+            searchHeightCheckStartY = rc.top - 1;
         }
     } else {
         // forward
         if ( origin == 0 ) {
             // from current page to the last page
             start = rc.top;
+            searchHeightCheckStartY = rc.bottom + 1;
         } else if ( origin == -1 ) {
             // from the first page to current page
-            end = rc.top + 1;
+            // end = rc.top + 1;
+            end = rc.bottom; // avoid edge cases and include current page
         } else { // origin == 1
             // from next page to the last page
-            start = rc.bottom + 1;
+            // start = rc.bottom + 1;
+            start = rc.top; // avoid edge cases and include current page
+            searchHeightCheckStartY = rc.bottom + 1;
         }
     }
     CRLog::debug("CRViewDialog::findText: Current page: %d .. %d", rc.top, rc.bottom);
     CRLog::debug("CRViewDialog::findText: searching for text '%s' from %d to %d origin %d", LCSTR(pattern), start, end, origin );
-    if ( doc->text_view->getDocument()->findText( pattern, caseInsensitive, reverse, start, end, words, 200, pageHeight ) ) {
+    if ( doc->text_view->getDocument()->findText( pattern, caseInsensitive, reverse, start, end, words, 200, searchHeight, searchHeightCheckStartY ) ) {
         CRLog::debug("CRViewDialog::findText: pattern found");
         doc->text_view->clearSelection();
         doc->text_view->selectWords( words );
