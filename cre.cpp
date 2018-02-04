@@ -949,6 +949,10 @@ static int getLinkFromPosition(lua_State *L) {
 	ldomXPointer p = doc->text_view->getNodeByPoint(pt, true);
 	lString16 href = p.getHRef();
 	lua_pushstring(L, UnicodeToLocal(href).c_str());
+	if (!p.isNull()) {// return position's xpointer too
+		lua_pushstring(L, UnicodeToLocal(p.toString()).c_str());
+		return 2;
+	}
 	return 1;
 }
 
@@ -1228,6 +1232,13 @@ static int getPageLinks(lua_State *L) {
 			lua_settable(L, -3);
 			lua_pushstring(L, "end_y");
 			lua_pushinteger(L, end_pt.y - y_offset);
+			lua_settable(L, -3);
+
+			lua_pushstring(L, "start_xpointer");
+			lua_pushstring(L, UnicodeToLocal(currSel.getStart().toString()).c_str());
+			lua_settable(L, -3);
+			lua_pushstring(L, "end_xpointer");
+			lua_pushstring(L, UnicodeToLocal(currSel.getEnd().toString()).c_str());
 			lua_settable(L, -3);
 
 			const char * link_to = link8.c_str();
