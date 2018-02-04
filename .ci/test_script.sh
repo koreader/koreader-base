@@ -6,7 +6,7 @@ source "${CI_DIR}/common.sh"
 
 cp build/*/luajit "${HOME}/.luarocks/bin"
 # install tesseract trained language data for testing OCR functionality
-travis_retry wget http://pkgs.fedoraproject.org/repo/pkgs/tesseract/tesseract-ocr-3.02.eng.tar.gz/3562250fe6f4e76229a329166b8ae853/tesseract-ocr-3.02.eng.tar.gz
+travis_retry wget https://src.fedoraproject.org/repo/pkgs/tesseract/tesseract-ocr-3.02.eng.tar.gz/3562250fe6f4e76229a329166b8ae853/tesseract-ocr-3.02.eng.tar.gz
 tar zxf tesseract-ocr-3.02.eng.tar.gz
 export TESSDATA_PREFIX
 cd build/* && TESSDATA_PREFIX=$(pwd)/data && mkdir -p data/tessdata
