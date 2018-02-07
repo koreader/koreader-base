@@ -523,7 +523,11 @@ static int getPosFromXPointer(lua_State *L) {
 	}
 	lua_pushinteger(L, pos);
 
-	return 1;
+	// Also returns the x value (as the 2nd returned value, as its
+	// less interesting to current code than the y value)
+	lua_pushinteger(L, pt.x);
+
+	return 2;
 }
 
 static int getCurrentPos(lua_State *L) {
@@ -947,10 +951,11 @@ static int getLinkFromPosition(lua_State *L) {
 
 	lvPoint pt(x, y);
 	ldomXPointer p = doc->text_view->getNodeByPoint(pt, true);
-	lString16 href = p.getHRef();
+	ldomXPointer a_p;
+	lString16 href = p.getHRef(a_p);
 	lua_pushstring(L, UnicodeToLocal(href).c_str());
-	if (!p.isNull()) {// return position's xpointer too
-		lua_pushstring(L, UnicodeToLocal(p.toString()).c_str());
+	if (!a_p.isNull()) { // return xpointer to <a> itself
+		lua_pushstring(L, UnicodeToLocal(a_p.toString()).c_str());
 		return 2;
 	}
 	return 1;
@@ -1205,7 +1210,8 @@ static int getPageLinks(lua_State *L) {
 			lString16 txt = links[i]->getRangeText();
 			lString8 txt8 = UnicodeToLocal( txt );
 
-			lString16 link = links[i]->getHRef();
+			ldomXPointer a_xpointer;
+			lString16 link = links[i]->getHRef(a_xpointer);
 			lString8 link8 = UnicodeToLocal( link );
 
 			ldomXRange currSel;
@@ -1234,12 +1240,11 @@ static int getPageLinks(lua_State *L) {
 			lua_pushinteger(L, end_pt.y - y_offset);
 			lua_settable(L, -3);
 
-			lua_pushstring(L, "start_xpointer");
-			lua_pushstring(L, UnicodeToLocal(currSel.getStart().toString()).c_str());
-			lua_settable(L, -3);
-			lua_pushstring(L, "end_xpointer");
-			lua_pushstring(L, UnicodeToLocal(currSel.getEnd().toString()).c_str());
-			lua_settable(L, -3);
+			if (!a_xpointer.isNull()) { // xpointer to <a> itself
+				lua_pushstring(L, "a_xpointer");
+				lua_pushstring(L, UnicodeToLocal(a_xpointer.toString()).c_str());
+				lua_settable(L, -3);
+			}
 
 			const char * link_to = link8.c_str();
 
