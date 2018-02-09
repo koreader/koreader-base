@@ -298,6 +298,14 @@ typedef struct CreDocument {
 static int initCache(lua_State *L) {
     const char *cache_path = luaL_checkstring(L, 1);
     int cache_size = luaL_checkint(L, 2);
+    bool compress_cached_data = true;
+    if (lua_isboolean(L, 3)) {
+        compress_cached_data = lua_toboolean(L, 3);
+    }
+
+    // Setting this to false uses more disk space for cache,
+    // but speed up rendering and page turns quite a bit
+    compressCachedData(compress_cached_data);
 
     ldomDocCache::init(lString16(cache_path), cache_size);
 
