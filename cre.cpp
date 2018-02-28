@@ -302,10 +302,15 @@ static int initCache(lua_State *L) {
     if (lua_isboolean(L, 3)) {
         compress_cached_data = lua_toboolean(L, 3);
     }
+    float storage_max_uncompressed_size_factor = (float)luaL_optnumber(L, 4, 1.0);
 
     // Setting this to false uses more disk space for cache,
     // but speed up rendering and page turns quite a bit
     compressCachedData(compress_cached_data);
+
+    // Increase the 4 hardcoded TEXT_CACHE_UNPACKED_SPACE, ELEM_CACHE_UNPACKED_SPACE,
+    // RECT_CACHE_UNPACKED_SPACE and STYLE_CACHE_UNPACKED_SPACE by this factor
+    setStorageMaxUncompressedSizeFactor(storage_max_uncompressed_size_factor);
 
     ldomDocCache::init(lString16(cache_path), cache_size);
 
@@ -605,10 +610,13 @@ static int walkTableOfContent(lua_State *L, LVTocItem *toc, int *count) {
 		lua_pushnumber(L, toc_tmp->getPage()+1);
 		lua_settable(L, -3);
 
+		// Note: toc_tmp->getXPointer().toString() and toc_tmp->getPath() return
+		// the same xpath string. But when just loaded from cache, the XPointer
+		// is not yet available, but getPath() is. So let's use it, which avoids
+		// having to build the XPointers until they are needed to update page numbers.
 		lua_pushstring(L, "xpointer");
-		lua_pushstring(L, UnicodeToLocal(
-							toc_tmp->getXPointer().toString()).c_str()
-							);
+		// lua_pushstring(L, UnicodeToLocal( toc_tmp->getXPointer().toString()).c_str());
+		lua_pushstring(L, UnicodeToLocal(toc_tmp->getPath()).c_str());
 		lua_settable(L, -3);
 
 		lua_pushstring(L, "depth");
