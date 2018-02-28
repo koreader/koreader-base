@@ -610,10 +610,12 @@ static int walkTableOfContent(lua_State *L, LVTocItem *toc, int *count) {
 		lua_pushnumber(L, toc_tmp->getPage()+1);
 		lua_settable(L, -3);
 
+		// Note: toc_tmp->getXPointer().toString() and toc_tmp->getPath() return
+		// the same xpath string. But when just loaded from cache, the XPointer
+		// is not yet available, but getPath() is. So let's use it, which avoids
+		// having to build the XPointers until they are needed to update page numbers.
 		lua_pushstring(L, "xpointer");
 		// lua_pushstring(L, UnicodeToLocal( toc_tmp->getXPointer().toString()).c_str());
-		// As an optimisation, we use _path, which is available when loading from
-		// cache, so we can delay the expensive ->getXPointer() till next rendering
 		lua_pushstring(L, UnicodeToLocal(toc_tmp->getPath()).c_str());
 		lua_settable(L, -3);
 
