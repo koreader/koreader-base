@@ -91,10 +91,14 @@ function mupdf.openDocument(filename, cache_size)
     }
 
     if mupdf_doc.doc == nil then
-        merror("cannot open PDF file")
+        merror("MuPDF cannot open file.")
     end
 
     setmetatable(mupdf_doc, document_mt)
+
+    if not (mupdf_doc:getPages() > 0) then
+        merror("MuPDF found no pages in file.")
+    end
 
     return mupdf_doc
 end
