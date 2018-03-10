@@ -433,8 +433,12 @@ static int setHyphDictionary(lua_State *L) {
 static int loadDocument(lua_State *L) {
 	CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
 	const char *file_name = luaL_checkstring(L, 2);
+	bool only_metadata = false;
+	if (lua_isboolean(L, 3)) {
+		only_metadata = lua_toboolean(L, 3);
+	}
 
-	doc->text_view->LoadDocument(file_name);
+	doc->text_view->LoadDocument(file_name, only_metadata);
 	doc->dom_doc = doc->text_view->getDocument();
 
 	bool loaded = false;
