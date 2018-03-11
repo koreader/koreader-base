@@ -394,6 +394,12 @@ static int setStringProperty(lua_State *L) {
     return 0;
 }
 
+static int getGammaLevel(lua_State *L) {
+    lua_pushnumber(L, fontMan->GetGamma());
+
+    return 1;
+}
+
 static int getGammaIndex(lua_State *L) {
 	lua_pushinteger(L, fontMan->GetGammaIndex());
 
@@ -1589,6 +1595,7 @@ static const struct luaL_Reg cre_func[] = {
 	{"initHyphDict", initHyphDict},
 	{"newDocView", newDocView},
 	{"getFontFaces", getFontFaces},
+	{"getGammaLevel", getGammaLevel},
 	{"getGammaIndex", getGammaIndex},
 	{"setGammaIndex", setGammaIndex},
 	{"registerFont", registerFont},
