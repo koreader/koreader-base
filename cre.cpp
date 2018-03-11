@@ -395,9 +395,9 @@ static int setStringProperty(lua_State *L) {
 }
 
 static int getGammaLevel(lua_State *L) {
-	lua_pushnumber(L, fontMan->GetGamma());
+    lua_pushnumber(L, fontMan->GetGamma());
 
-	return 1;
+    return 1;
 }
 
 static int getGammaIndex(lua_State *L) {
