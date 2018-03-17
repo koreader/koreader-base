@@ -9,6 +9,7 @@ instead).
 @module ffi.sdl2_0
 ]]
 
+local bit = require("bit")
 local ffi = require("ffi")
 local util = require("ffi/util")
 
@@ -56,7 +57,9 @@ function S.open()
     S.screen = SDL.SDL_CreateWindow("KOReader",
         tonumber(os.getenv("KOREADER_WINDOW_POS_X")) or SDL.SDL_WINDOWPOS_UNDEFINED,
         tonumber(os.getenv("KOREADER_WINDOW_POS_Y")) or SDL.SDL_WINDOWPOS_UNDEFINED,
-        S.w, S.h, full_screen and 1 or 0)
+        S.w, S.h,
+        bit.bor(full_screen and 1 or 0, SDL.SDL_WINDOW_RESIZABLE)
+    )
 
     S.renderer = SDL.SDL_CreateRenderer(S.screen, -1, 0)
     S.texture = SDL.SDL_CreateTexture(
