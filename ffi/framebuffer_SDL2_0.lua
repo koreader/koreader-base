@@ -10,9 +10,9 @@ local framebuffer = {
 
 function framebuffer:init()
     if not self.dummy then
-		SDL.open()
-		-- we present this buffer to the outside
-		local bb = BB.new(SDL.w, SDL.h, BB.TYPE_BBRGB32)
+        SDL.open()
+        -- we present this buffer to the outside
+        local bb = BB.new(SDL.w, SDL.h, BB.TYPE_BBRGB32)
         local flash = os.getenv("EMULATE_READER_FLASH")
         if flash then
             -- in refresh emulation mode, we use a shadow blitbuffer
@@ -23,12 +23,12 @@ function framebuffer:init()
             self.bb = bb
         end
         self.invert_bb = BB.new(SDL.w, SDL.h, BB.TYPE_BBRGB32)
-	else
-		self.bb = BB.new(600, 800)
+    else
+        self.bb = BB.new(600, 800)
     end
 
     self.bb:fill(BB.COLOR_WHITE)
-	self:refreshFull()
+    self:refreshFull()
 
     framebuffer.parent.init(self)
 end
@@ -36,17 +36,17 @@ end
 function framebuffer:_render(bb)
     if bb:getInverse() == 1 then
         self.invert_bb:invertblitFrom(bb)
-	    SDL.SDL.SDL_UpdateTexture(SDL.texture, nil, self.invert_bb.data, self.invert_bb.pitch)
+        SDL.SDL.SDL_UpdateTexture(SDL.texture, nil, self.invert_bb.data, self.invert_bb.pitch)
     else
-	    SDL.SDL.SDL_UpdateTexture(SDL.texture, nil, bb.data, bb.pitch)
+        SDL.SDL.SDL_UpdateTexture(SDL.texture, nil, bb.data, bb.pitch)
     end
-	SDL.SDL.SDL_RenderClear(SDL.renderer)
-	SDL.SDL.SDL_RenderCopy(SDL.renderer, SDL.texture, nil, nil)
-	SDL.SDL.SDL_RenderPresent(SDL.renderer)
+    SDL.SDL.SDL_RenderClear(SDL.renderer)
+    SDL.SDL.SDL_RenderCopy(SDL.renderer, SDL.texture, nil, nil)
+    SDL.SDL.SDL_RenderPresent(SDL.renderer)
 end
 
 function framebuffer:refreshFullImp(x, y, w, h)
-	if self.dummy then return end
+    if self.dummy then return end
 
     local bb = self.full_bb or self.bb
 
