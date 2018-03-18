@@ -11,18 +11,7 @@ local framebuffer = {
 function framebuffer:init()
     if not self.dummy then
         SDL.open()
-        -- we present this buffer to the outside
-        local bb = BB.new(SDL.w, SDL.h, BB.TYPE_BBRGB32)
-        local flash = os.getenv("EMULATE_READER_FLASH")
-        if flash then
-            -- in refresh emulation mode, we use a shadow blitbuffer
-            -- and blit refresh areas from it.
-            self.sdl_bb = bb
-            self.bb = BB.new(SDL.w, SDL.h, BB.TYPE_BBRGB32)
-        else
-            self.bb = bb
-        end
-        self.invert_bb = BB.new(SDL.w, SDL.h, BB.TYPE_BBRGB32)
+        self:_newBB()
     else
         self.bb = BB.new(600, 800)
     end
@@ -31,6 +20,46 @@ function framebuffer:init()
     self:refreshFull()
 
     framebuffer.parent.init(self)
+end
+
+function framebuffer:resize(w, h)
+    w = w or SDL.w
+    h = h or SDL.h
+
+    if not self.dummy then
+        self:_newBB(w, h)
+    else
+        self.bb:free()
+        self.bb = BB.new(600, 800)
+    end
+
+    if SDL.texture then SDL.destroyTexture(SDL.texture) end
+    SDL.texture = SDL.createTexture(w, h)
+
+    self.bb:fill(BB.COLOR_WHITE)
+    self:refreshFull()
+end
+
+function framebuffer:_newBB(w, h)
+    w = w or SDL.w
+    h = h or SDL.h
+
+    if self.sdl_bb then self.sdl_bb:free() end
+    if self.bb then self.bb:free() end
+    if self.invert_bb then self.invert_bb:free() end
+
+    -- we present this buffer to the outside
+    local bb = BB.new(w, h, BB.TYPE_BBRGB32)
+    local flash = os.getenv("EMULATE_READER_FLASH")
+    if flash then
+        -- in refresh emulation mode, we use a shadow blitbuffer
+        -- and blit refresh areas from it.
+        self.sdl_bb = bb
+        self.bb = BB.new(w, h, BB.TYPE_BBRGB32)
+    else
+        self.bb = bb
+    end
+    self.invert_bb = BB.new(w, h, BB.TYPE_BBRGB32)
 end
 
 function framebuffer:_render(bb)

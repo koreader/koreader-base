@@ -62,11 +62,22 @@ function S.open()
     )
 
     S.renderer = SDL.SDL_CreateRenderer(S.screen, -1, 0)
-    S.texture = SDL.SDL_CreateTexture(
-                    S.renderer,
-                    SDL.SDL_PIXELFORMAT_ABGR8888,
-                    SDL.SDL_TEXTUREACCESS_STREAMING,
-                    S.w, S.h)
+    S.texture = S.createTexture()
+end
+
+function S.createTexture(w, h)
+    w = w or S.w
+    h = h or S.h
+
+    return SDL.SDL_CreateTexture(
+        S.renderer,
+        SDL.SDL_PIXELFORMAT_ABGR8888,
+        SDL.SDL_TEXTUREACCESS_STREAMING,
+        w, h)
+end
+
+function S.destroyTexture(texture)
+    SDL.SDL_DestroyTexture(texture)
 end
 
 -- one SDL event can generate more than one event for koreader,
@@ -170,6 +181,19 @@ function S.waitForEvent(usecs)
             genEmuEvent(ffi.C.EV_SYN, ffi.C.SYN_REPORT, 0)
         elseif event.type == SDL.SDL_MULTIGESTURE then -- luacheck: ignore 542
             -- TODO: multi-touch support
+        elseif event.type == SDL.SDL_WINDOWEVENT
+            and (event.window.event == SDL.SDL_WINDOWEVENT_RESIZED
+                 or event.window.event == SDL.SDL_WINDOWEVENT_SIZE_CHANGED) then
+            local w = 0
+            local h = 1
+            local new_size_w = event.window.data1
+            local new_size_h = event.window.data2
+
+            if new_size_w and new_size_h then
+                genEmuEvent(ffi.C.EV_MSC, w, new_size_w)
+                genEmuEvent(ffi.C.EV_MSC, h, new_size_h)
+                genEmuEvent(ffi.C.EV_MSC, SDL.SDL_WINDOWEVENT_RESIZED, 0)
+            end
         elseif event.type == SDL.SDL_QUIT then
             -- send Alt + F4
             genEmuEvent(ffi.C.EV_KEY, 226, 1)
