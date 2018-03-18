@@ -29,6 +29,7 @@ function framebuffer:resize(w, h)
     if not self.dummy then
         self:_newBB(w, h)
     else
+        self.bb:free()
         self.bb = BB.new(600, 800)
     end
 
@@ -45,6 +46,7 @@ function framebuffer:_newBB(w, h)
 
     if self.sdl_bb then self.sdl_bb:free() end
     if self.bb then self.bb:free() end
+    if self.invert_bb then self.invert_bb:free() end
 
     -- we present this buffer to the outside
     local bb = BB.new(w, h, BB.TYPE_BBRGB32)

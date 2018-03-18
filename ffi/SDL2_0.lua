@@ -184,15 +184,15 @@ function S.waitForEvent(usecs)
         elseif event.type == SDL.SDL_WINDOWEVENT
             and (event.window.event == SDL.SDL_WINDOWEVENT_RESIZED
                  or event.window.event == SDL.SDL_WINDOWEVENT_SIZE_CHANGED) then
-            local x = 0
-            local y = 1
-            local new_size_x = event.window.data1
-            local new_size_y = event.window.data2
+            local w = 0
+            local h = 1
+            local new_size_w = event.window.data1
+            local new_size_h = event.window.data2
 
-            if new_size_x and new_size_y then
+            if new_size_w and new_size_h then
+                genEmuEvent(ffi.C.EV_MSC, w, new_size_w)
+                genEmuEvent(ffi.C.EV_MSC, h, new_size_h)
                 genEmuEvent(ffi.C.EV_MSC, SDL.SDL_WINDOWEVENT_RESIZED, 0)
-                genEmuEvent(ffi.C.EV_MSC, x, new_size_x)
-                genEmuEvent(ffi.C.EV_MSC, y, new_size_y)
             end
         elseif event.type == SDL.SDL_QUIT then
             -- send Alt + F4
