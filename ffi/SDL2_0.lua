@@ -66,8 +66,8 @@ function S.open()
 end
 
 function S.createTexture(w, h)
-    local w = w or S.w
-    local h = h or S.h
+    w = w or S.w
+    h = h or S.h
 
     return SDL.SDL_CreateTexture(
         S.renderer,

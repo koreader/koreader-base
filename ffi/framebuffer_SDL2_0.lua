@@ -23,8 +23,8 @@ function framebuffer:init()
 end
 
 function framebuffer:resize(w, h)
-    local w = w or SDL.w
-    local h = h or SDL.h
+    w = w or SDL.w
+    h = h or SDL.h
 
     if not self.dummy then
         self:_newBB(w, h)
@@ -41,8 +41,8 @@ function framebuffer:resize(w, h)
 end
 
 function framebuffer:_newBB(w, h)
-    local w = w or SDL.w
-    local h = h or SDL.h
+    w = w or SDL.w
+    h = h or SDL.h
 
     if self.sdl_bb then self.sdl_bb:free() end
     if self.bb then self.bb:free() end
