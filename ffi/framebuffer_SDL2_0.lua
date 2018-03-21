@@ -100,6 +100,11 @@ function framebuffer:refreshFullImp(x, y, w, h)
     self:_render(bb)
 end
 
+function framebuffer:setWindowTitle(new_title)
+    framebuffer.parent.setWindowTitle(self, new_title)
+    SDL.SDL.SDL_SetWindowTitle(SDL.screen, self.window_title)
+end
+
 function framebuffer:close()
     SDL.SDL.SDL_Quit()
 end

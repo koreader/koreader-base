@@ -306,6 +306,18 @@ function fb:setScreenMode(mode)
     end
 end
 
+function fb:getWindowTitle()
+    return self.window_title
+end
+
+function fb:setWindowTitle(new_title)
+    if new_title and new_title ~= "" then
+        self.window_title = new_title .. " - KOReader"
+    else
+        self.window_title = "KOReader"
+    end
+end
+
 function fb:toggleNightMode()
     self.bb:invert()
     if self.viewport then
