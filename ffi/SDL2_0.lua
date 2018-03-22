@@ -96,6 +96,7 @@ local function genEmuEvent(evtype, code, value)
 end
 
 local is_in_touch = false
+local dropped_file_path
 
 function S.waitForEvent(usecs)
     usecs = usecs or -1
@@ -181,6 +182,9 @@ function S.waitForEvent(usecs)
             genEmuEvent(ffi.C.EV_SYN, ffi.C.SYN_REPORT, 0)
         elseif event.type == SDL.SDL_MULTIGESTURE then -- luacheck: ignore 542
             -- TODO: multi-touch support
+        elseif event.type == SDL.SDL_DROPFILE then
+            dropped_file_path = ffi.string(event.drop.file)
+            genEmuEvent(ffi.C.EV_MSC, SDL.SDL_DROPFILE, 0)
         elseif event.type == SDL.SDL_WINDOWEVENT
             and (event.window.event == SDL.SDL_WINDOWEVENT_RESIZED
                  or event.window.event == SDL.SDL_WINDOWEVENT_SIZE_CHANGED) then
@@ -200,6 +204,10 @@ function S.waitForEvent(usecs)
             genEmuEvent(ffi.C.EV_KEY, 61, 1)
         end
     end
+end
+
+function S.getDroppedFilePath()
+    return dropped_file_path
 end
 
 function S.hasClipboardText()
