@@ -8,6 +8,7 @@ return {
     fakeTapInput = function() end,
     -- NOP:
     closeAll = function() end,
+    getDroppedFilePath = SDL.getDroppedFilePath,
     hasClipboardText = SDL.hasClipboardText,
     getClipboardText = SDL.getClipboardText,
     setClipboardText = SDL.setClipboardText,
