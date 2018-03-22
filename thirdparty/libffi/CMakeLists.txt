@@ -20,7 +20,7 @@ set(LIBFFI_VER "3.2.1")
 ExternalProject_Add(
     ${PROJECT_NAME}
     DOWNLOAD_DIR ${KO_DOWNLOAD_DIR}
-    URL ftp://sourceware.org/pub/libffi/libffi-${LIBFFI_VER}.tar.gz
+    URL https://sourceware.org/pub/libffi/libffi-${LIBFFI_VER}.tar.gz
     URL_MD5 83b89587607e3eb65c70d361f13bab43
     CONFIGURE_COMMAND ${CFG_CMD}
     # skip the rest, we only need the header for glib
