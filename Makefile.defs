@@ -158,17 +158,12 @@ else
     STATIC_LIBSTDCPP=
 endif
 
-FSANITIZED_UNDEFINED_SUPPORTED := $(shell touch foo.c && gcc -fsanitize=undefined -c foo.c -o foo.o &> /dev/null && echo 1; rm -f foo.c foo.o)
-
 # Base CFLAGS, without arch. We'll need it for luajit, because its
 # Makefiles do some tricky stuff to differentiate HOST/TARGET
 BASE_CFLAGS:=-O2 -ffast-math -pipe -fomit-frame-pointer
 # Use this for debugging:
 ifdef KODEBUG
     BASE_CFLAGS:=-Og -g -ffast-math -pipe -fomit-frame-pointer
-    ifeq ($(FSANITIZED_UNDEFINED_SUPPORTED),1)
-        BASE_CFLAGS:=$(BASE_CFLAGS) -fsanitize=undefined
-    endif
 endif
 # For ricers.
 #BASE_CFLAGS:=-O3 -ffast-math -pipe -fomit-frame-pointer -frename-registers -fweb
@@ -408,7 +403,6 @@ ifdef KODEBUG
     $(info ************ Building for MACHINE: "$(MACHINE)" **********)
     $(info ************ PATH: "$(PATH)" **********)
     $(info ************ CHOST: "$(CHOST)" **********)
-    $(info ************ BASE_CFLAGS: "$(BASE_CFLAGS)" **********)
 endif
 OUTPUT_DIR?=build/$(MACHINE)
 
