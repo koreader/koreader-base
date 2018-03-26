@@ -7,6 +7,7 @@ local framebuffer = {}
 function framebuffer:init()
     -- we present this buffer to the outside
     self.bb = BB.new(android.screen.width, android.screen.height, BB.TYPE_BBRGB32)
+    self.invert_bb = BB.new(android.screen.width, android.screen.height, BB.TYPE_BBRGB32)
     -- TODO: should we better use these?
     -- android.lib.ANativeWindow_getWidth(window)
     -- android.lib.ANativeWindow_getHeight(window)
@@ -47,7 +48,8 @@ function framebuffer:refreshFullImp()
         bb:setRotation(ext_bb:getRotation())
 
         if ext_bb:getInverse() == 1 then
-            bb:invertblitFrom(ext_bb)
+            self.invert_bb:invertblitFrom(ext_bb)
+            bb:blitFrom(self.invert_bb)
         else
             bb:blitFrom(ext_bb)
         end
