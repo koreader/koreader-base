@@ -95,6 +95,31 @@ local function genEmuEvent(evtype, code, value)
     table.insert(inputQueue, ev)
 end
 
+local function handleWindowEvent(event_window)
+    -- The next buffer might always contain garbage, and on X11 without
+    -- compositing the buffers will be damaged just by moving the window
+    -- partly offscreen, minimizing it, or putting another window
+    -- (partially) on top of it.
+    -- Handling `SDL_WINDOWEVENT_EXPOSED` is the only way to deal with
+    -- this without sending regular updates.
+    if event_window.event == SDL.SDL_WINDOWEVENT_EXPOSED then
+        SDL.SDL_RenderCopy(S.renderer, S.texture, nil, nil)
+        SDL.SDL_RenderPresent(S.renderer)
+    elseif (event_window.event == SDL.SDL_WINDOWEVENT_RESIZED
+             or event_window.event == SDL.SDL_WINDOWEVENT_SIZE_CHANGED) then
+        local w = 0
+        local h = 1
+        local new_size_w = event_window.data1
+        local new_size_h = event_window.data2
+
+        if new_size_w and new_size_h then
+            genEmuEvent(ffi.C.EV_MSC, w, new_size_w)
+            genEmuEvent(ffi.C.EV_MSC, h, new_size_h)
+            genEmuEvent(ffi.C.EV_MSC, SDL.SDL_WINDOWEVENT_RESIZED, 0)
+        end
+    end
+end
+
 local is_in_touch = false
 local dropped_file_path
 
@@ -185,19 +210,8 @@ function S.waitForEvent(usecs)
         elseif event.type == SDL.SDL_DROPFILE then
             dropped_file_path = ffi.string(event.drop.file)
             genEmuEvent(ffi.C.EV_MSC, SDL.SDL_DROPFILE, 0)
-        elseif event.type == SDL.SDL_WINDOWEVENT
-            and (event.window.event == SDL.SDL_WINDOWEVENT_RESIZED
-                 or event.window.event == SDL.SDL_WINDOWEVENT_SIZE_CHANGED) then
-            local w = 0
-            local h = 1
-            local new_size_w = event.window.data1
-            local new_size_h = event.window.data2
-
-            if new_size_w and new_size_h then
-                genEmuEvent(ffi.C.EV_MSC, w, new_size_w)
-                genEmuEvent(ffi.C.EV_MSC, h, new_size_h)
-                genEmuEvent(ffi.C.EV_MSC, SDL.SDL_WINDOWEVENT_RESIZED, 0)
-            end
+        elseif event.type == SDL.SDL_WINDOWEVENT then
+            handleWindowEvent(event.window)
         elseif event.type == SDL.SDL_QUIT then
             -- send Alt + F4
             genEmuEvent(ffi.C.EV_KEY, 226, 1)
