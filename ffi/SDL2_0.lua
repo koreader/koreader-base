@@ -103,7 +103,8 @@ local function handleWindowEvent(event_window)
     -- Handling `SDL_WINDOWEVENT_EXPOSED` is the only way to deal with
     -- this without sending regular updates.
     if event_window.event == SDL.SDL_WINDOWEVENT_EXPOSED then
-        genEmuEvent(ffi.C.EV_MSC, SDL.SDL_WINDOWEVENT_EXPOSED, 0)
+        SDL.SDL_RenderCopy(S.renderer, S.texture, nil, nil)
+        SDL.SDL_RenderPresent(S.renderer)
     elseif (event_window.event == SDL.SDL_WINDOWEVENT_RESIZED
              or event_window.event == SDL.SDL_WINDOWEVENT_SIZE_CHANGED) then
         local w = 0
