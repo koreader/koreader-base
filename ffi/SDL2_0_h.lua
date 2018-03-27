@@ -590,6 +590,7 @@ int SDL_RenderCopy(struct SDL_Renderer *, struct SDL_Texture *, const struct SDL
 struct SDL_Texture *SDL_CreateTexture(struct SDL_Renderer *, unsigned int, int, int, int) __attribute__((visibility("default")));
 int SDL_UpdateTexture(struct SDL_Texture *, const struct SDL_Rect *, const void *, int) __attribute__((visibility("default")));
 void SDL_DestroyTexture(SDL_Texture* texture);
+int SDL_SetRenderTarget(SDL_Renderer *renderer, SDL_Texture *texture);
 void SDL_SetWindowTitle(struct SDL_Window *, const char *) __attribute__((visibility("default")));
 typedef enum SDL_bool {
     SDL_FALSE = 0,
@@ -606,7 +607,12 @@ static const int SDL_WINDOWPOS_UNDEFINED = 536805376;
 static const int SDL_WINDOW_FULLSCREEN = 1;
 static const int SDL_WINDOW_FULLSCREEN_DESKTOP = 4097;
 static const int SDL_WINDOW_RESIZABLE = 32;
-static const int SDL_TEXTUREACCESS_STREAMING = 1;
+typedef enum
+{
+    SDL_TEXTUREACCESS_STATIC,
+    SDL_TEXTUREACCESS_STREAMING,
+    SDL_TEXTUREACCESS_TARGET
+} SDL_TextureAccess;
 static const int SDL_PIXELFORMAT_ARGB8888 = 372645892;
 static const int SDL_PIXELFORMAT_RGBA8888 = 373694468;
 static const int SDL_PIXELFORMAT_ABGR8888 = 376840196;

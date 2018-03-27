@@ -28,6 +28,8 @@ function framebuffer:resize(w, h)
 
     if not self.dummy then
         self:_newBB(w, h)
+        SDL.w = w
+        SDL.h = h
     else
         self.bb:free()
         self.bb = BB.new(600, 800)
@@ -62,13 +64,32 @@ function framebuffer:_newBB(w, h)
     self.invert_bb = BB.new(w, h, BB.TYPE_BBRGB32)
 end
 
-function framebuffer:_render(bb)
+function framebuffer:_render(bb, x, y, w, h)
+    w, x = BB.checkBounds(w or bb:getWidth(), x or 0, 0, bb:getWidth(), 0xFFFF)
+    h, y = BB.checkBounds(h or bb:getHeight(), y or 0, 0, bb:getHeight(), 0xFFFF)
+    x, y, w, h = bb:getPhysicalRect(x, y, w, h)
+
+    local rect = SDL.rect(x, y, w, h)
+    -- lazy solution: ideally it'd be a texture of exactly
+    -- the right size with SDL.createTexture(w, h)
+    local temp_texture = SDL.createTexture()
+
     if bb:getInverse() == 1 then
         self.invert_bb:invertblitFrom(bb)
-        SDL.SDL.SDL_UpdateTexture(SDL.texture, nil, self.invert_bb.data, self.invert_bb.pitch)
+        SDL.SDL.SDL_UpdateTexture(temp_texture, nil, self.invert_bb.data, self.invert_bb.pitch)
     else
-        SDL.SDL.SDL_UpdateTexture(SDL.texture, nil, bb.data, bb.pitch)
+        SDL.SDL.SDL_UpdateTexture(temp_texture, nil, bb.data, bb.pitch)
     end
+
+    -- render to our beloved texture instead of the window
+    SDL.SDL.SDL_SetRenderTarget(SDL.renderer, SDL.texture)
+    -- ideally nil, rect to render the full temp_texture to rect in
+    -- our beloved target texture but in this case we select the same
+    -- rect from both textures
+    SDL.SDL.SDL_RenderCopy(SDL.renderer, temp_texture, rect, rect)
+    -- back to default (= window)
+    SDL.SDL.SDL_SetRenderTarget(SDL.renderer, nil)
+    -- regular rendering of our beloved texture
     SDL.SDL.SDL_RenderClear(SDL.renderer)
     SDL.SDL.SDL_RenderCopy(SDL.renderer, SDL.texture, nil, nil)
     SDL.SDL.SDL_RenderPresent(SDL.renderer)
@@ -91,13 +112,13 @@ function framebuffer:refreshFullImp(x, y, w, h)
     local flash = os.getenv("EMULATE_READER_FLASH")
     if flash then
         self.sdl_bb:invertRect(x, y, w, h)
-        self:_render(bb)
+        self:_render(self.sdl_bb, x, y, w, h)
         util.usleep(tonumber(flash)*1000)
         self.sdl_bb:setRotation(bb:getRotation())
         self.sdl_bb:setInverse(bb:getInverse())
         self.sdl_bb:blitFrom(bb, x, y, x, y, w, h)
     end
-    self:_render(bb)
+    self:_render(bb, x, y, w, h)
 end
 
 function framebuffer:setWindowTitle(new_title)
