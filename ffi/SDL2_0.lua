@@ -72,7 +72,7 @@ function S.createTexture(w, h)
     return SDL.SDL_CreateTexture(
         S.renderer,
         SDL.SDL_PIXELFORMAT_ABGR8888,
-        SDL.SDL_TEXTUREACCESS_TARGET,
+        SDL.SDL_TEXTUREACCESS_STREAMING,
         w, h)
 end
 

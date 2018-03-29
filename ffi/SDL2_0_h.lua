@@ -590,7 +590,6 @@ int SDL_RenderCopy(struct SDL_Renderer *, struct SDL_Texture *, const struct SDL
 struct SDL_Texture *SDL_CreateTexture(struct SDL_Renderer *, unsigned int, int, int, int) __attribute__((visibility("default")));
 int SDL_UpdateTexture(struct SDL_Texture *, const struct SDL_Rect *, const void *, int) __attribute__((visibility("default")));
 void SDL_DestroyTexture(SDL_Texture* texture);
-int SDL_SetRenderTarget(SDL_Renderer *renderer, SDL_Texture *texture);
 void SDL_SetWindowTitle(struct SDL_Window *, const char *) __attribute__((visibility("default")));
 typedef enum SDL_bool {
     SDL_FALSE = 0,
