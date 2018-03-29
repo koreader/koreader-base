@@ -44,8 +44,13 @@ function framebuffer:_newBB(w, h)
     w = w or SDL.w
     h = h or SDL.h
 
+    local inverse
+
     if self.sdl_bb then self.sdl_bb:free() end
-    if self.bb then self.bb:free() end
+    if self.bb then
+        inverse = self.bb:getInverse() == 1
+        self.bb:free()
+    end
     if self.invert_bb then self.invert_bb:free() end
 
     -- we present this buffer to the outside
@@ -60,6 +65,11 @@ function framebuffer:_newBB(w, h)
         self.bb = bb
     end
     self.invert_bb = BB.new(w, h, BB.TYPE_BBRGB32)
+
+    -- reinit inverse mode on resize
+    if inverse then
+        self.bb:invert()
+    end
 end
 
 function framebuffer:_render(bb)
