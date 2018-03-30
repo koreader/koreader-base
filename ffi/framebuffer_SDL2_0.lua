@@ -1,10 +1,7 @@
-local ffi = require("ffi")
 -- load common SDL input/video library
 local SDL = require("ffi/SDL2_0")
 local BB = require("ffi/blitbuffer")
 local util = require("ffi/util")
-
-local uint8pt = ffi.typeof("uint8_t*")
 
 local framebuffer = {
     -- this blitbuffer will be used when we use refresh emulation
@@ -68,54 +65,25 @@ function framebuffer:_newBB(w, h)
 end
 
 function framebuffer:_render(bb, x, y, w, h)
-    local bb_width = bb:getWidth()
-    w, x = BB.checkBounds(w or bb_width, x or 0, 0, bb_width, 0xFFFF)
+    w, x = BB.checkBounds(w or bb:getWidth(), x or 0, 0, bb:getWidth(), 0xFFFF)
     h, y = BB.checkBounds(h or bb:getHeight(), y or 0, 0, bb:getHeight(), 0xFFFF)
     x, y, w, h = bb:getPhysicalRect(x, y, w, h)
-
-    local cdata, mem
-    -- width is variable, so not the same as bb.pitch
-    -- this should be the same as 4*w
-    local pitch = bb.pitch/bb_width * w
-    local rect = SDL.rect(x, y, w, h)
 
     if bb:getInverse() == 1 then
         self.invert_bb:invertblitFrom(bb)
         bb = self.invert_bb
     end
 
-    -- Optimize drawing from left at full width.
-    -- SDL ignores superfluous data thanks to our rectangle
-    -- in SDL_UpdateTexture
-    if x == 0 and w == bb_width then
-        mem = ffi.cast(bb.data, ffi.cast(uint8pt, bb.data) + bb.pitch*y)
-    -- copy the relevant rectangular section of the BB
-    else
-        -- @TODO also use this on Android?
-        cdata = ffi.C.malloc(w * h * 4)
-        mem = ffi.cast("char*", cdata)
-        local offset_counter = 0
-        for from_top = y, y+h-1 do
-            local offset = 4 * w * offset_counter
-            offset_counter = offset_counter + 1
-            for from_left = x, x+w-1 do
-                local c = bb:getPixel(from_left, from_top):getColorRGB32()
-                mem[offset] = c.r
-                mem[offset + 1] = c.g
-                mem[offset + 2] = c.b
-                mem[offset + 3] = 0xFF
-                offset = offset + 4
-            end
-        end
-    end
+    -- A viewport is a Blitbuffer object that works on a rectangular
+    -- subset of the underlying memory without allocating new memory.
+    local bb_rect = bb:viewport(x, y, w, h)
+    local sdl_rect = SDL.rect(x, y, w, h)
 
-    SDL.SDL.SDL_UpdateTexture(SDL.texture, rect, mem, pitch)
+    SDL.SDL.SDL_UpdateTexture(SDL.texture, sdl_rect, bb_rect.data, bb_rect.pitch)
 
     SDL.SDL.SDL_RenderClear(SDL.renderer)
     SDL.SDL.SDL_RenderCopy(SDL.renderer, SDL.texture, nil, nil)
     SDL.SDL.SDL_RenderPresent(SDL.renderer)
-
-    ffi.C.free(cdata)
 end
 
 function framebuffer:refreshFullImp(x, y, w, h)
