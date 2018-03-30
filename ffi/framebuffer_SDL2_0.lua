@@ -28,6 +28,8 @@ function framebuffer:resize(w, h)
 
     if not self.dummy then
         self:_newBB(w, h)
+        SDL.w = w
+        SDL.h = h
     else
         self.bb:free()
         self.bb = BB.new(600, 800)
@@ -72,13 +74,23 @@ function framebuffer:_newBB(w, h)
     end
 end
 
-function framebuffer:_render(bb)
+function framebuffer:_render(bb, x, y, w, h)
+    w, x = BB.checkBounds(w or bb:getWidth(), x or 0, 0, bb:getWidth(), 0xFFFF)
+    h, y = BB.checkBounds(h or bb:getHeight(), y or 0, 0, bb:getHeight(), 0xFFFF)
+    x, y, w, h = bb:getPhysicalRect(x, y, w, h)
+
     if bb:getInverse() == 1 then
         self.invert_bb:invertblitFrom(bb)
-        SDL.SDL.SDL_UpdateTexture(SDL.texture, nil, self.invert_bb.data, self.invert_bb.pitch)
-    else
-        SDL.SDL.SDL_UpdateTexture(SDL.texture, nil, bb.data, bb.pitch)
+        bb = self.invert_bb
     end
+
+    -- A viewport is a Blitbuffer object that works on a rectangular
+    -- subset of the underlying memory without allocating new memory.
+    local bb_rect = bb:viewport(x, y, w, h)
+    local sdl_rect = SDL.rect(x, y, w, h)
+
+    SDL.SDL.SDL_UpdateTexture(SDL.texture, sdl_rect, bb_rect.data, bb_rect.pitch)
+
     SDL.SDL.SDL_RenderClear(SDL.renderer)
     SDL.SDL.SDL_RenderCopy(SDL.renderer, SDL.texture, nil, nil)
     SDL.SDL.SDL_RenderPresent(SDL.renderer)
@@ -101,13 +113,13 @@ function framebuffer:refreshFullImp(x, y, w, h)
     local flash = os.getenv("EMULATE_READER_FLASH")
     if flash then
         self.sdl_bb:invertRect(x, y, w, h)
-        self:_render(bb)
+        self:_render(self.sdl_bb, x, y, w, h)
         util.usleep(tonumber(flash)*1000)
         self.sdl_bb:setRotation(bb:getRotation())
         self.sdl_bb:setInverse(bb:getInverse())
         self.sdl_bb:blitFrom(bb, x, y, x, y, w, h)
     end
-    self:_render(bb)
+    self:_render(bb, x, y, w, h)
 end
 
 function framebuffer:setWindowTitle(new_title)

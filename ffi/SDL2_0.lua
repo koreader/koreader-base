@@ -80,6 +80,11 @@ function S.destroyTexture(texture)
     SDL.SDL_DestroyTexture(texture)
 end
 
+local rect = ffi.metatype("SDL_Rect", {})
+function S.rect(x, y, w, h)
+    return rect(x, y, w, h)
+end
+
 -- one SDL event can generate more than one event for koreader,
 -- so this represents a FIFO queue
 local inputQueue = {}
