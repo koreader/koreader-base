@@ -66,7 +66,6 @@ function S.open()
     S.renderer = SDL.SDL_CreateRenderer(S.screen, -1, 0)
     S.texture = S.createTexture()
 
-    local joystick_counter
     for joystick_counter = 0, SDL.SDL_NumJoysticks()-1 do
         if SDL.SDL_IsGameController(joystick_counter) ~= 0 then
             S.controller = SDL.SDL_GameControllerOpen(joystick_counter);
