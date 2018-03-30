@@ -144,7 +144,6 @@ end
 
 local is_in_touch = false
 local dropped_file_path
-local last_joystick_axes = {}
 local last_joystick_event_s = 0
 local last_joystick_event_us = 0
 
