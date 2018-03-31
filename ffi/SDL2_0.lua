@@ -28,6 +28,30 @@ local S = {
     SDL = SDL,
 }
 
+local function openGameController()
+    local num_joysticks = SDL.SDL_NumJoysticks()
+
+    if num_joysticks < 1 then
+        S.controller = nil
+        io.write("SDL: no gamecontrollers connected", "\n")
+        return
+    end
+
+    for joystick_counter = 0, num_joysticks-1 do
+        if SDL.SDL_IsGameController(joystick_counter) ~= 0 then
+            S.controller = SDL.SDL_GameControllerOpen(joystick_counter);
+            if S.controller ~= nil then
+                io.write("SDL: opened gamecontroller ",joystick_counter, ": ",
+                         ffi.string(SDL.SDL_GameControllerNameForIndex(joystick_counter)), "\n");
+                break
+            else
+                io.write("SDL: could not open gamecontroller ",joystick_counter, ": ",
+                         ffi.string(SDL.SDL_GameControllerNameForIndex(joystick_counter)), "\n");
+            end
+        end
+    end
+end
+
 -- initialization for both input and eink output
 function S.open()
     if SDL.SDL_WasInit(SDL.SDL_INIT_VIDEO) ~= 0 then
@@ -37,7 +61,9 @@ function S.open()
 
     SDL.SDL_SetMainReady()
 
-    if SDL.SDL_Init(SDL.SDL_INIT_VIDEO) ~= 0 then
+    if SDL.SDL_Init(bit.bor(SDL.SDL_INIT_VIDEO,
+                            SDL.SDL_INIT_JOYSTICK,
+                            SDL.SDL_INIT_GAMECONTROLLER)) ~= 0 then
         error("Cannot initialize SDL.")
     end
 
@@ -63,6 +89,8 @@ function S.open()
 
     S.renderer = SDL.SDL_CreateRenderer(S.screen, -1, 0)
     S.texture = S.createTexture()
+
+    openGameController()
 end
 
 function S.createTexture(w, h)
@@ -123,6 +151,60 @@ local function handleWindowEvent(event_window)
             genEmuEvent(ffi.C.EV_MSC, SDL.SDL_WINDOWEVENT_RESIZED, 0)
         end
     end
+end
+
+local last_joystick_event_secs = 0
+local last_joystick_event_usecs = 0
+
+local function handleJoyAxisMotionEvent(event)
+    local axis_ev = event.jaxis
+    local value = axis_ev.value
+
+    local neutral_max_val = 5000
+    local min_time_since_last_ev = 0.3
+
+    -- ignore random neutral fluctuations
+    if (value > -neutral_max_val) and (value < neutral_max_val) then return end
+
+    local current_ev_s, current_ev_us = util.gettime()
+
+    local since_last_ev = current_ev_s-last_joystick_event_secs + (current_ev_us-last_joystick_event_usecs)/1000000
+
+    local axis = axis_ev.axis
+
+    if not ( since_last_ev > min_time_since_last_ev ) then return end
+
+    -- left stick 0/1
+    if axis == 0 then
+        if value < -neutral_max_val then
+            -- send left
+            genEmuEvent(ffi.C.EV_KEY, 80, 1)
+        else
+            -- send right
+            genEmuEvent(ffi.C.EV_KEY, 79, 1)
+        end
+    elseif axis == 1 then
+        if value < -neutral_max_val then
+            -- send up
+            genEmuEvent(ffi.C.EV_KEY, 82, 1)
+        else
+            -- send down
+            genEmuEvent(ffi.C.EV_KEY, 81, 1)
+        end
+    -- right stick 3/4
+    elseif axis == 4 then
+        if value < -neutral_max_val then
+            -- send page up
+            genEmuEvent(ffi.C.EV_KEY, 75, 1)
+        else
+            -- send page down
+            genEmuEvent(ffi.C.EV_KEY, 78, 1)
+        end
+    -- left trigger 2
+    -- right trigger 5
+    end
+
+    last_joystick_event_secs, last_joystick_event_usecs = util.gettime()
 end
 
 local is_in_touch = false
@@ -217,6 +299,61 @@ function S.waitForEvent(usecs)
             genEmuEvent(ffi.C.EV_MSC, SDL.SDL_DROPFILE, 0)
         elseif event.type == SDL.SDL_WINDOWEVENT then
             handleWindowEvent(event.window)
+        --- Gamepad support ---
+        -- For debugging it can be helpful to use:
+        -- print(ffi.string(SDL.SDL_GameControllerGetStringForButton(button)))
+        -- @TODO Proper support instead of faux keyboard presses
+        --
+        --- Controllers ---
+        elseif event.type == SDL.SDL_CONTROLLERDEVICEADDED
+               or event.type == SDL.SDL_CONTROLLERDEVICEREMOVED
+               or event.type == SDL.SDL_CONTROLLERDEVICEREMAPPED then
+            openGameController()
+        --- Sticks & triggers ---
+        elseif event.type == SDL.SDL_JOYAXISMOTION then
+            handleJoyAxisMotionEvent(event)
+        --- Buttons (such as A, B, X, Y) ---
+        elseif event.type == SDL.SDL_JOYBUTTONDOWN then
+            local button = event.cbutton.button
+
+            if button == SDL.SDL_CONTROLLER_BUTTON_A then
+                -- send enter
+                genEmuEvent(ffi.C.EV_KEY, 40, 1)
+                -- send end (bound to press)
+                genEmuEvent(ffi.C.EV_KEY, 77, 1)
+            elseif button == SDL.SDL_CONTROLLER_BUTTON_B then
+                -- send escape
+                genEmuEvent(ffi.C.EV_KEY, 41, 1)
+            -- left bumper
+            elseif button == SDL.SDL_CONTROLLER_BUTTON_BACK then
+                -- send page up
+                genEmuEvent(ffi.C.EV_KEY, 75, 1)
+            -- right bumper
+            elseif button == SDL.SDL_CONTROLLER_BUTTON_GUIDE then
+                -- send page down
+                genEmuEvent(ffi.C.EV_KEY, 78, 1)
+            -- On the Xbox One controller, start = start but leftstick = menu button
+            elseif button == SDL.SDL_CONTROLLER_BUTTON_START or button == SDL.SDL_CONTROLLER_BUTTON_LEFTSTICK then
+                -- send F1 (bound to menu in front at the time of writing)
+                genEmuEvent(ffi.C.EV_KEY, 58, 1)
+            end
+        --- D-pad ---
+        elseif event.type == SDL.SDL_JOYHATMOTION then
+            local hat_position = event.jhat.value
+
+            if hat_position == SDL.SDL_HAT_UP then
+                -- send up
+                genEmuEvent(ffi.C.EV_KEY, 82, 1)
+            elseif hat_position == SDL.SDL_HAT_DOWN then
+                -- send down
+                genEmuEvent(ffi.C.EV_KEY, 81, 1)
+            elseif hat_position == SDL.SDL_HAT_LEFT then
+                -- send left
+                genEmuEvent(ffi.C.EV_KEY, 80, 1)
+            elseif hat_position == SDL.SDL_HAT_RIGHT then
+                -- send right
+                genEmuEvent(ffi.C.EV_KEY, 79, 1)
+            end
         elseif event.type == SDL.SDL_QUIT then
             -- send Alt + F4
             genEmuEvent(ffi.C.EV_KEY, 226, 1)

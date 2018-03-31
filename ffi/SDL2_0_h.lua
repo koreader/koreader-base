@@ -599,9 +599,152 @@ SDL_bool SDL_HasClipboardText(void);
 char* SDL_GetClipboardText(void);
 int SDL_SetClipboardText(const char* text);
 const char* SDL_GetError(void);
-static const int SDL_INIT_AUDIO = 16;
-static const int SDL_INIT_VIDEO = 32;
-static const int SDL_INIT_EVENTS = 16384;
+struct _SDL_Joystick;
+typedef struct _SDL_Joystick SDL_Joystick;
+typedef struct {
+    Uint8 data[16];
+} SDL_JoystickGUID;
+typedef Sint32 SDL_JoystickID;
+int SDL_NumJoysticks(void);
+const char * SDL_JoystickNameForIndex(int device_index);
+SDL_Joystick * SDL_JoystickOpen(int device_index);
+const char * SDL_JoystickName(SDL_Joystick * joystick);
+SDL_JoystickGUID SDL_JoystickGetDeviceGUID(int device_index);
+SDL_JoystickGUID SDL_JoystickGetGUID(SDL_Joystick * joystick);
+void SDL_JoystickGetGUIDString(SDL_JoystickGUID guid, char *pszGUID, int cbGUID);
+SDL_JoystickGUID SDL_JoystickGetGUIDFromString(const char *pchGUID);
+SDL_bool SDL_JoystickGetAttached(SDL_Joystick * joystick);
+SDL_JoystickID SDL_JoystickInstanceID(SDL_Joystick * joystick);
+int SDL_JoystickNumAxes(SDL_Joystick * joystick);
+int SDL_JoystickNumBalls(SDL_Joystick * joystick);
+int SDL_JoystickNumHats(SDL_Joystick * joystick);
+int SDL_JoystickNumButtons(SDL_Joystick * joystick);
+void SDL_JoystickUpdate(void);
+int SDL_JoystickEventState(int state);
+Sint16 SDL_JoystickGetAxis(SDL_Joystick * joystick,
+                                                   int axis);
+Uint8 SDL_JoystickGetHat(SDL_Joystick * joystick,
+                                                 int hat);
+int SDL_JoystickGetBall(SDL_Joystick * joystick,
+                                                int ball, int *dx, int *dy);
+Uint8 SDL_JoystickGetButton(SDL_Joystick * joystick,
+                                                    int button);
+void SDL_JoystickClose(SDL_Joystick * joystick);
+struct _SDL_GameController;
+typedef struct _SDL_GameController SDL_GameController;
+typedef enum
+{
+    SDL_CONTROLLER_BINDTYPE_NONE = 0,
+    SDL_CONTROLLER_BINDTYPE_BUTTON,
+    SDL_CONTROLLER_BINDTYPE_AXIS,
+    SDL_CONTROLLER_BINDTYPE_HAT
+} SDL_GameControllerBindType;
+typedef struct SDL_GameControllerButtonBind
+{
+    SDL_GameControllerBindType bindType;
+    union
+    {
+        int button;
+        int axis;
+        struct {
+            int hat;
+            int hat_mask;
+        } hat;
+    } value;
+} SDL_GameControllerButtonBind;
+int SDL_GameControllerAddMapping( const char* mappingString );
+char * SDL_GameControllerMappingForGUID( SDL_JoystickGUID guid );
+char * SDL_GameControllerMapping( SDL_GameController * gamecontroller );
+SDL_bool SDL_IsGameController(int joystick_index);
+const char * SDL_GameControllerNameForIndex(int joystick_index);
+SDL_GameController * SDL_GameControllerOpen(int joystick_index);
+const char * SDL_GameControllerName(SDL_GameController *gamecontroller);
+SDL_bool SDL_GameControllerGetAttached(SDL_GameController *gamecontroller);
+SDL_Joystick * SDL_GameControllerGetJoystick(SDL_GameController *gamecontroller);
+int SDL_GameControllerEventState(int state);
+void SDL_GameControllerUpdate(void);
+typedef enum
+{
+    SDL_CONTROLLER_AXIS_INVALID = -1,
+    SDL_CONTROLLER_AXIS_LEFTX,
+    SDL_CONTROLLER_AXIS_LEFTY,
+    SDL_CONTROLLER_AXIS_RIGHTX,
+    SDL_CONTROLLER_AXIS_RIGHTY,
+    SDL_CONTROLLER_AXIS_TRIGGERLEFT,
+    SDL_CONTROLLER_AXIS_TRIGGERRIGHT,
+    SDL_CONTROLLER_AXIS_MAX
+} SDL_GameControllerAxis;
+SDL_GameControllerAxis SDL_GameControllerGetAxisFromString(const char *pchString);
+const char* SDL_GameControllerGetStringForAxis(SDL_GameControllerAxis axis);
+SDL_GameControllerButtonBind
+SDL_GameControllerGetBindForAxis(SDL_GameController *gamecontroller,
+                                 SDL_GameControllerAxis axis);
+Sint16
+SDL_GameControllerGetAxis(SDL_GameController *gamecontroller,
+                          SDL_GameControllerAxis axis);
+typedef enum
+{
+    SDL_CONTROLLER_BUTTON_INVALID = -1,
+    SDL_CONTROLLER_BUTTON_A,
+    SDL_CONTROLLER_BUTTON_B,
+    SDL_CONTROLLER_BUTTON_X,
+    SDL_CONTROLLER_BUTTON_Y,
+    SDL_CONTROLLER_BUTTON_BACK,
+    SDL_CONTROLLER_BUTTON_GUIDE,
+    SDL_CONTROLLER_BUTTON_START,
+    SDL_CONTROLLER_BUTTON_LEFTSTICK,
+    SDL_CONTROLLER_BUTTON_RIGHTSTICK,
+    SDL_CONTROLLER_BUTTON_LEFTSHOULDER,
+    SDL_CONTROLLER_BUTTON_RIGHTSHOULDER,
+    SDL_CONTROLLER_BUTTON_DPAD_UP,
+    SDL_CONTROLLER_BUTTON_DPAD_DOWN,
+    SDL_CONTROLLER_BUTTON_DPAD_LEFT,
+    SDL_CONTROLLER_BUTTON_DPAD_RIGHT,
+    SDL_CONTROLLER_BUTTON_MAX
+} SDL_GameControllerButton;
+SDL_GameControllerButton SDL_GameControllerGetButtonFromString(const char *pchString);
+const char* SDL_GameControllerGetStringForButton(SDL_GameControllerButton button);
+SDL_GameControllerButtonBind
+SDL_GameControllerGetBindForButton(SDL_GameController *gamecontroller,
+                                   SDL_GameControllerButton button);
+Uint8 SDL_GameControllerGetButton(SDL_GameController *gamecontroller,
+                                                          SDL_GameControllerButton button);
+void SDL_GameControllerClose(SDL_GameController *gamecontroller);
+enum {
+SDL_HAT_CENTERED    = 0x00,
+SDL_HAT_UP          = 0x01,
+SDL_HAT_RIGHT       = 0x02,
+SDL_HAT_DOWN        = 0x04,
+SDL_HAT_LEFT        = 0x08,
+SDL_HAT_RIGHTUP     = (SDL_HAT_RIGHT|SDL_HAT_UP),
+SDL_HAT_RIGHTDOWN   = (SDL_HAT_RIGHT|SDL_HAT_DOWN),
+SDL_HAT_LEFTUP      = (SDL_HAT_LEFT|SDL_HAT_UP),
+SDL_HAT_LEFTDOWN    = (SDL_HAT_LEFT|SDL_HAT_DOWN)
+};
+typedef Sint64 SDL_TouchID;
+typedef Sint64 SDL_FingerID;
+typedef struct SDL_Finger
+{
+    SDL_FingerID id;
+    float x;
+    float y;
+    float pressure;
+} SDL_Finger;
+int SDL_GetNumTouchDevices(void);
+SDL_TouchID SDL_GetTouchDevice(int index);
+int SDL_GetNumTouchFingers(SDL_TouchID touchID);
+SDL_Finger * SDL_GetTouchFinger(SDL_TouchID touchID, int index);
+enum {
+SDL_INIT_TIMER          = 0x00000001,
+SDL_INIT_AUDIO          = 0x00000010,
+SDL_INIT_VIDEO          = 0x00000020,
+SDL_INIT_JOYSTICK       = 0x00000200,
+SDL_INIT_HAPTIC         = 0x00001000,
+SDL_INIT_GAMECONTROLLER = 0x00002000,
+SDL_INIT_EVENTS         = 0x00004000,
+SDL_INIT_NOPARACHUTE    = 0x00100000,
+SDL_INIT_EVERYTHING     = ( SDL_INIT_TIMER | SDL_INIT_AUDIO | SDL_INIT_VIDEO | SDL_INIT_EVENTS | SDL_INIT_JOYSTICK | SDL_INIT_HAPTIC | SDL_INIT_GAMECONTROLLER )
+};
 static const int SDL_WINDOWPOS_UNDEFINED = 536805376;
 static const int SDL_WINDOW_FULLSCREEN = 1;
 static const int SDL_WINDOW_FULLSCREEN_DESKTOP = 4097;
