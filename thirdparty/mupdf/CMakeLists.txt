@@ -14,6 +14,10 @@ set(BUILD_CMD_GENERATE sh -c "env CFLAGS=\"${HOSTCFLAGS}\" $(MAKE) -j${PARALLEL_
 
 assert_var_defined(LDFLAGS)
 assert_var_defined(XCFLAGS)
+# disable a couple of things to save a small bit of space
+# CMYK plotter only 100 kB
+# javascript (for form data validation) close to 800 kB
+set(XCFLAGS "${XCFLAGS} -DFZ_PLOTTERS_CMYK=0 -DFZ_ENABLE_JS=0")
 set(STATIC_BUILD_CMD "$(MAKE) -j${PARALLEL_JOBS}")
 set(STATIC_BUILD_CMD "${STATIC_BUILD_CMD} LDFLAGS=\"${LDFLAGS}\" XCFLAGS=\"${XCFLAGS}\"")
 set(STATIC_BUILD_CMD "${STATIC_BUILD_CMD} CC=\"${CC}\" AR=\"${AR}\" build=\"release\" MUDRAW= MUTOOL= CURL_LIB= OS=${OS}")
