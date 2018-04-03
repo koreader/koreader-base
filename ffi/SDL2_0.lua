@@ -20,6 +20,9 @@ local dummy = require("ffi/linux_input_h")
 
 local SDL = ffi.load("SDL2")
 
+-- for frontend SDL event handling
+local EV_SDL = 53 -- ASCII code for S
+
 local S = {
     w = 0, h = 0,
     screen = nil,
@@ -119,10 +122,11 @@ local inputQueue = {}
 
 local function genEmuEvent(evtype, code, value)
     local secs, usecs = util.gettime()
+
     local ev = {
         type = tonumber(evtype),
         code = tonumber(code),
-        value = tonumber(value),
+        value = tonumber(value) or value,
         time = { sec = secs, usec = usecs },
     }
     table.insert(inputQueue, ev)
@@ -140,16 +144,7 @@ local function handleWindowEvent(event_window)
         SDL.SDL_RenderPresent(S.renderer)
     elseif (event_window.event == SDL.SDL_WINDOWEVENT_RESIZED
              or event_window.event == SDL.SDL_WINDOWEVENT_SIZE_CHANGED) then
-        local w = 0
-        local h = 1
-        local new_size_w = event_window.data1
-        local new_size_h = event_window.data2
-
-        if new_size_w and new_size_h then
-            genEmuEvent(ffi.C.EV_MSC, w, new_size_w)
-            genEmuEvent(ffi.C.EV_MSC, h, new_size_h)
-            genEmuEvent(ffi.C.EV_MSC, SDL.SDL_WINDOWEVENT_RESIZED, 0)
-        end
+        genEmuEvent(EV_SDL, event_window.event, event_window)
     end
 end
 
@@ -208,7 +203,6 @@ local function handleJoyAxisMotionEvent(event)
 end
 
 local is_in_touch = false
-local dropped_file_path
 
 function S.waitForEvent(usecs)
     usecs = usecs or -1
@@ -292,11 +286,13 @@ function S.waitForEvent(usecs)
             genEmuEvent(ffi.C.EV_ABS, ffi.C.ABS_MT_POSITION_Y,
                 is_finger and event.tfinger.y * S.h or event.button.y)
             genEmuEvent(ffi.C.EV_SYN, ffi.C.SYN_REPORT, 0)
-        elseif event.type == SDL.SDL_MULTIGESTURE then -- luacheck: ignore 542
-            -- TODO: multi-touch support
+        elseif event.type == SDL.SDL_MULTIGESTURE then
+            genEmuEvent(EV_SDL, SDL.SDL_MULTIGESTURE, event.mgesture)
+        elseif event.type == SDL.SDL_MOUSEWHEEL then
+            genEmuEvent(EV_SDL, SDL.SDL_MOUSEWHEEL, event.wheel)
         elseif event.type == SDL.SDL_DROPFILE then
-            dropped_file_path = ffi.string(event.drop.file)
-            genEmuEvent(ffi.C.EV_MSC, SDL.SDL_DROPFILE, 0)
+            local dropped_file_path = ffi.string(event.drop.file)
+            genEmuEvent(EV_SDL, SDL.SDL_DROPFILE, dropped_file_path)
         elseif event.type == SDL.SDL_WINDOWEVENT then
             handleWindowEvent(event.window)
         --- Gamepad support ---
@@ -360,10 +356,6 @@ function S.waitForEvent(usecs)
             genEmuEvent(ffi.C.EV_KEY, 61, 1)
         end
     end
-end
-
-function S.getDroppedFilePath()
-    return dropped_file_path
 end
 
 function S.hasClipboardText()
