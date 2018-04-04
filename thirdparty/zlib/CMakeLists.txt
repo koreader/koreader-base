@@ -8,7 +8,7 @@ enable_language(C)
 
 ep_get_source_dir(SOURCE_DIR)
 
-if(${MINGW})
+if($ENV{WIN32})
     # configure
     set(optional_cfg_cmd "")
     # build
@@ -28,9 +28,8 @@ else()
 endif()
 
 include(ExternalProject)
-# TODO: update to 1.2.9
-set(ZLIB_VER "1.2.8")
-set(ZLIB_MD5 "44d667c142d7cda120332623eab69f40")
+set(ZLIB_VER "1.2.11")
+set(ZLIB_MD5 "1c9f62f0778697a09d36121ead88e08e")
 ExternalProject_Add(
     ${PROJECT_NAME}
     DOWNLOAD_DIR ${KO_DOWNLOAD_DIR}
