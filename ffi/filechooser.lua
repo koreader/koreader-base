@@ -12,3 +12,5 @@ if util.isSDL() then
         end
     end
 end
+
+return false
