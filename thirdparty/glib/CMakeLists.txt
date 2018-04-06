@@ -57,7 +57,7 @@ set(CFG_CMD sh -c "${CFG_ENV_VAR} ${SOURCE_DIR}/configure ${CFG_OPTS}")
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
     https://github.com/GNOME/glib.git
-    2.54.1
+    2.54.3
     ${SOURCE_DIR}
 )
 
