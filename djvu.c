@@ -95,8 +95,9 @@ static int openDocument(lua_State *L) {
 	ddjvu_cache_set_size(doc->context, (unsigned long)cache_size);
 
 	doc->doc_ref = ddjvu_document_create_by_filename_utf8(doc->context, filename, TRUE);
-	if (! doc->doc_ref)
-		return luaL_error(L, "cannot open DjVu file <%s>", filename);
+	if (! doc->doc_ref) {
+		return handle(L, doc->context, FALSE);
+	}
 	while (! ddjvu_document_decoding_done(doc->doc_ref))
 		handle(L, doc->context, True);
 
