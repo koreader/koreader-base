@@ -1,0 +1,22 @@
+diff --git a/libdjvu/ByteStream.cpp b/libdjvu/ByteStream.cpp
+index 840885d..b3c40a9 100644
+--- a/libdjvu/ByteStream.cpp
++++ b/libdjvu/ByteStream.cpp
+@@ -671,7 +671,7 @@ urlfopen(const GURL &url,const char mode[])
+        }
+   }
+   return retval?retval:fopen((const char *)url.NativeFilename(),mode);
+-#elif defined(__APPLE__)
++#elif defined(__APPLE__) or 1
+   return fopen((const char *)url.UTF8Filename(),mode);
+ #else
+   return fopen((const char *)url.NativeFilename(),mode);
+@@ -682,7 +682,7 @@ urlfopen(const GURL &url,const char mode[])
+ static int
+ urlopen(const GURL &url, const int mode, const int perm)
+ {
+-#if defined(__APPLE__)
++#if defined(__APPLE__) or 1
+   return open((const char *)url.UTF8Filename(),mode,perm);
+ #else
+   return open((const char *)url.NativeFilename(),mode,perm);

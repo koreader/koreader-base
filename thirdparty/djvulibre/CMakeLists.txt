@@ -41,6 +41,16 @@ if($ENV{ANDROID})
     set(PATCH_CMD "${PATCH_CMD} && patch -N -p1 < ${CMAKE_CURRENT_SOURCE_DIR}/android.patch || true")
 endif()
 
+if($ENV{KOBO})
+    # Generalizes djvulibre commit https://gitlab.com/koreader/djvulibre/commit/03f86480458edc9199da47075de06df545021118
+    # which always assumes UTF-8 on Mac. This patch also always assumes UTF-8 on Kobo.
+    #
+    # This allows for the opening of filenames with Cyrillic characters, see https://github.com/koreader/koreader/issues/542
+    #
+    # Also see https://sourceforge.net/p/djvu/bugs/197/#ef32 for potential caveats.
+    set(PATCH_CMD "${PATCH_CMD} && patch -N -p1 < ${CMAKE_CURRENT_SOURCE_DIR}/filename-always-utf-8.patch || true")
+endif()
+
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
     https://gitlab.com/koreader/djvulibre.git
