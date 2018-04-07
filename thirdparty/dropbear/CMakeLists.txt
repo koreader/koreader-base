@@ -29,6 +29,7 @@ set(DROPBEAR_VER "2018.76")
 ExternalProject_Add(
     dropbear
     URL https://matt.ucc.asn.au/dropbear/releases/dropbear-${DROPBEAR_VER}.tar.bz2
+    URL_MD5 c3912f7fcdcc57c99937e4a79480d2c2 
     DOWNLOAD_DIR ${KO_DOWNLOAD_DIR}
     CONFIGURE_COMMAND ${CFG_CMD}
     BUILD_COMMAND $(MAKE) -j${PARALLEL_JOBS} --silent
