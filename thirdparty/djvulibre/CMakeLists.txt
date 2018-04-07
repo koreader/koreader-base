@@ -48,7 +48,7 @@ if($ENV{KOBO})
     # This allows for the opening of filenames with Cyrillic characters, see https://github.com/koreader/koreader/issues/542
     #
     # Also see https://sourceforge.net/p/djvu/bugs/197/#ef32 for potential caveats.
-    set(PATCH_CMD "${PATCH_CMD} && patch -N -p1 < ${CMAKE_CURRENT_SOURCE_DIR}/kobo-always-utf-8.patch || true")
+    set(PATCH_CMD "${PATCH_CMD} && patch -N -p1 < ${CMAKE_CURRENT_SOURCE_DIR}/filename-always-utf-8.patch || true")
 endif()
 
 ko_write_gitclone_script(
