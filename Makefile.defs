@@ -58,6 +58,10 @@ else ifeq ($(TARGET), ubuntu-touch)
     CHOST?=arm-linux-gnueabihf
     export SDL=1
     export UBUNTUTOUCH=1
+else ifeq ($(TARGET), appimage)
+    export EMULATE_READER=1
+    export SDL=1
+    export APPIMAGE=1
 else ifeq ($(TARGET), android)
     export ANDROID=1
     export PATH:=$(ANDROID_TOOLCHAIN)/bin:$(PATH)
