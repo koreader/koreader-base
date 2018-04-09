@@ -18,8 +18,8 @@ env:
     - EMULATE_READER=1 CC=gcc
     - EMULATE_READER=1 CC=gcc KODEBUG=1
     - EMULATE_READER=1 CC=clang
-    - TARGET=kindle DOCKER_IMG=houqp/kokindle:0.0.2
-    - TARGET=kobo DOCKER_IMG=houqp/kokobo:0.0.2
+    - TARGET=kindle DOCKER_IMG=houqp/kokindle:0.0.3
+    - TARGET=kobo DOCKER_IMG=houqp/kokobo:0.0.3
     - TARGET=pocketbook DOCKER_IMG=houqp/kopb:0.0.1
     # ANDROID_ARCH=x86 is currently broken on these older NDKs (at least on Travis), so no point in testing it
     - TARGET=android NDKREV=r11c
