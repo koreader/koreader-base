@@ -278,6 +278,10 @@ ifdef CLANG
 endif
 
 HOST_ARCH:=-march=native
+ifdef APPIMAGE
+    # We want to run the AppImage on any 64-bit CPU
+    HOST_ARCH:=-mtune=generic -march=x86-64
+endif
 HOSTCFLAGS:=$(HOST_ARCH) $(BASE_CFLAGS) $(QFLAGS)
 
 CFLAGS:=$(BASE_CFLAGS) $(QFLAGS)
