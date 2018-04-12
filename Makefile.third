@@ -320,23 +320,21 @@ endif
 # ===========================================================================
 # dropbear
 
-$(OUTPUT_DIR)/dropbear: $(THIRDPARTY_DIR)/dropbear/CMakeLists.txt
+$(OUTPUT_DIR)/dropbear: $(ZLIB) $(THIRDPARTY_DIR)/dropbear/CMakeLists.txt
 	install -d $(DROPBEAR_BUILD_DIR)
 	cd $(DROPBEAR_BUILD_DIR) && \
 		$(CMAKE) -DCC="$(CC)" \
-		-DLIBS="$(if $(or $(ANDROID),$(WIN32),$(DARWIN)),,-lrt) $(if $(ANDROID),-static,)" \
-		$(if $(LEGACY),-DDISABLE_LARGEFILE:BOOL=ON -DDISABLE_FORTIFY:BOOL=ON,) \
+		-DLIBS="$(if $(ANDROID),-static,)" \
 		-DCHOST="$(if $(EMULATE_READER),,$(CHOST))" \
+		-DCPPFLAGS="$(CFLAGS) -I$(ZLIB_DIR)" \
+		-DLDFLAGS="$(LDFLAGS) -L$(ZLIB_DIR)" \
 		$(CURDIR)/$(THIRDPARTY_DIR)/dropbear && \
 		$(MAKE)
-	cp $(DROPBEAR_DIR)/dropbear $(OUTPUT_DIR)/
-	cp $(DROPBEAR_DIR)/dropbearkey $(OUTPUT_DIR)/
+	cp $(DROPBEAR_DIR)/dropbearmulti $(OUTPUT_DIR)/
 ifdef ANDROID
 	readelf -d $@ | grep "no dynamic" \
 		|| echo "warning: Android L+ support only PIE binary and can't run this"
 endif
-
-
 # ===========================================================================
 # tar: tar package for zsync
 
