@@ -107,7 +107,7 @@ $(DJVULIBRE_LIB): $(JPEG_LIB) $(THIRDPARTY_DIR)/djvulibre/CMakeLists.txt
 
 # crengine, fetched via GIT as a submodule
 $(CRENGINE_LIB): $(ZLIB) $(PNG_LIB) $(FREETYPE_LIB) $(JPEG_LIB) $(NANOSVG_HEADERS) \
-		$(THIRDPARTY_DIR)/kpvcrlib/crengine $(THIRDPARTY_DIR)/kpvcrlib/CMakeLists.txt
+		$(CRENGINE_SRC_FILES) $(THIRDPARTY_DIR)/kpvcrlib/CMakeLists.txt
 	install -d $(CRENGINE_BUILD_DIR)
 	cd $(CRENGINE_BUILD_DIR) && \
 		CC="$(CC)" CXX="$(CXX)" RC="$(RC)" \
