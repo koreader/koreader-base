@@ -127,6 +127,10 @@ function framebuffer:setWindowTitle(new_title)
     SDL.SDL.SDL_SetWindowTitle(SDL.screen, self.window_title)
 end
 
+function framebuffer:setWindowIcon(icon)
+    SDL.setWindowIcon(icon)
+end
+
 function framebuffer:close()
     SDL.SDL.SDL_Quit()
 end

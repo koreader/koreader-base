@@ -590,6 +590,90 @@ int SDL_RenderCopy(struct SDL_Renderer *, struct SDL_Texture *, const struct SDL
 struct SDL_Texture *SDL_CreateTexture(struct SDL_Renderer *, unsigned int, int, int, int) __attribute__((visibility("default")));
 int SDL_UpdateTexture(struct SDL_Texture *, const struct SDL_Rect *, const void *, int) __attribute__((visibility("default")));
 void SDL_DestroyTexture(SDL_Texture* texture);
+typedef struct SDL_Color
+{
+    Uint8 r;
+    Uint8 g;
+    Uint8 b;
+    Uint8 a;
+} SDL_Color;
+typedef struct SDL_Palette
+{
+    int ncolors;
+    SDL_Color *colors;
+    Uint32 version;
+    int refcount;
+} SDL_Palette;
+typedef struct SDL_PixelFormat
+{
+    Uint32 format;
+    SDL_Palette *palette;
+    Uint8 BitsPerPixel;
+    Uint8 BytesPerPixel;
+    Uint8 padding[2];
+    Uint32 Rmask;
+    Uint32 Gmask;
+    Uint32 Bmask;
+    Uint32 Amask;
+    Uint8 Rloss;
+    Uint8 Gloss;
+    Uint8 Bloss;
+    Uint8 Aloss;
+    Uint8 Rshift;
+    Uint8 Gshift;
+    Uint8 Bshift;
+    Uint8 Ashift;
+    int refcount;
+    struct SDL_PixelFormat *next;
+} SDL_PixelFormat;
+typedef enum
+{
+    SDL_BLENDMODE_NONE = 0x00000000,
+    SDL_BLENDMODE_BLEND = 0x00000001,
+    SDL_BLENDMODE_ADD = 0x00000002,
+    SDL_BLENDMODE_MOD = 0x00000004
+} SDL_BlendMode;
+typedef struct SDL_Surface
+{
+    Uint32 flags;
+    SDL_PixelFormat *format;
+    int w, h;
+    int pitch;
+    void *pixels;
+    void *userdata;
+    int locked;
+    void *lock_data;
+    SDL_Rect clip_rect;
+    struct SDL_BlitMap *map;
+    int refcount;
+} SDL_Surface;
+typedef int (*SDL_blit) (struct SDL_Surface * src, SDL_Rect * srcrect,
+                         struct SDL_Surface * dst, SDL_Rect * dstrect);
+SDL_Surface * SDL_CreateRGBSurface
+    (Uint32 flags, int width, int height, int depth,
+     Uint32 Rmask, Uint32 Gmask, Uint32 Bmask, Uint32 Amask);
+SDL_Surface * SDL_CreateRGBSurfaceFrom(void *pixels,
+                                                    int width,
+                                                    int height,
+                                                    int depth,
+                                                    int pitch,
+                                                    Uint32 Rmask,
+                                                    Uint32 Gmask,
+                                                    Uint32 Bmask,
+                                                    Uint32 Amask);
+SDL_Surface* SDL_CreateRGBSurfaceWithFormatFrom(void*  pixels,
+                                                int    width,
+                                                int    height,
+                                                int    depth,
+                                                int    pitch,
+                                                Uint32 format);
+void SDL_FreeSurface(SDL_Surface * surface);
+int SDL_SetSurfacePalette(SDL_Surface * surface,
+                                                  SDL_Palette * palette);
+int SDL_LockSurface(SDL_Surface * surface);
+void SDL_UnlockSurface(SDL_Surface * surface);
+void SDL_SetWindowIcon(SDL_Window * window,
+                                           SDL_Surface * icon);
 void SDL_SetWindowTitle(struct SDL_Window *, const char *) __attribute__((visibility("default")));
 typedef enum SDL_bool {
     SDL_FALSE = 0,

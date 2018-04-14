@@ -370,4 +370,25 @@ function S.setClipboardText(text)
     return SDL.SDL_SetClipboardText(text)
 end
 
+function S.setWindowIcon(icon)
+    if not icon then error("setWindowIcon: no icon path given") end
+
+    local Png = require("ffi/png")
+    local ok, re = Png.decodeFromFile(icon)
+    if not ok then
+        error(re.." ("..icon..")")
+    end
+
+    local BB = require("ffi/blitbuffer")
+    local icon_bb = BB.new(re.width, re.height, BB.TYPE_BBRGB32, re.data)
+    local icon_bit_depth = 32
+    local surface = SDL.SDL_CreateRGBSurfaceWithFormatFrom(icon_bb.data,
+                                                           icon_bb:getWidth(), icon_bb:getHeight(),
+                                                           icon_bit_depth, icon_bb.pitch,
+                                                           SDL.SDL_PIXELFORMAT_ABGR8888)
+    SDL.SDL_SetWindowIcon(S.screen, surface)
+    SDL.SDL_FreeSurface(surface)
+    icon_bb:free()
+end
+
 return S
