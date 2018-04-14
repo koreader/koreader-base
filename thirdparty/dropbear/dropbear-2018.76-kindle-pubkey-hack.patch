@@ -6,7 +6,7 @@ diff -ur dropbear-2018.76/svr-authpubkey.c dropbear-2018.76-PATCHED/svr-authpubk
  
  	FILE * authfile = NULL;
 -	char * filename = NULL;
-+	char filename[] = "SSH/authorized_keys";
++	char filename[] = "settings/SSH/authorized_keys";
  	int ret = DROPBEAR_FAILURE;
  	buffer * line = NULL;
  	unsigned int len;
