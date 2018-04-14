@@ -1,0 +1,28 @@
+diff -ur dropbear-2018.76/gensignkey.c dropbear-2018.76-PATCHED/gensignkey.c
+--- dropbear-2018.76/gensignkey.c	2018-02-27 15:25:10.000000000 +0100
++++ dropbear-2018.76-PATCHED/gensignkey.c	2018-04-14 17:17:03.419481762 +0200
+@@ -139,17 +139,14 @@
+ 	if (ret == DROPBEAR_FAILURE) {
+ 		goto out;
+ 	}
++   /* Hard links are not possible and renam. */
++   if (skip_exist && access(filename, F_OK) == 0) {
++       /* Ok. */
++   } else if (rename(fn_temp, filename) < 0) {
++       dropbear_log(LOG_ERR, "Failed moving key file to %s: %s", filename,
++           strerror(errno));
++       ret = DROPBEAR_FAILURE;
+ 
+-	if (link(fn_temp, filename) < 0) {
+-		/* If generating keys on connection (skipexist) it's OK to get EEXIST 
+-		- we probably just lost a race with another connection to generate the key */
+-		if (!(skip_exist && errno == EEXIST)) {
+-			dropbear_log(LOG_ERR, "Failed moving key file to %s: %s", filename,
+-				strerror(errno));
+-			/* XXX fallback to non-atomic copy for some filesystems? */
+-			ret = DROPBEAR_FAILURE;
+-			goto out;
+-		}
+ 	}
+ 
+ out:
