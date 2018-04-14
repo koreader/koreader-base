@@ -12,7 +12,7 @@ assert_var_defined(CPPFLAGS)
 ep_get_source_dir(SOURCE_DIR)
 ep_get_binary_dir(BINARY_DIR)
 
-set(CFG_ENV_VAR "CC=\"${CC}\" CFLAGS=\"$(CFLAGS) -I${SOURCE_DIR}\" LIBS=\"${LIBS}\"  CPPFLAGS=\"${CPPFLAGS}\" LDFLAGS=\"${LDFLAGS}\" ")
+set(CFG_ENV_VAR "CC=\"${CC}\" CFLAGS=\"${CFLAGS} -I${SOURCE_DIR}\" LIBS=\"${LIBS}\"  CPPFLAGS=\"${CPPFLAGS}\" LDFLAGS=\"${LDFLAGS}\" ")
 set(CFG_OPTS "-q --host=\"${CHOST}\"")
 set(CFG_CMD "${CFG_ENV_VAR} ${SOURCE_DIR}/configure ${CFG_OPTS}")
 set(CFG_CMD sh -c ${CFG_CMD})
