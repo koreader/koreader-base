@@ -386,9 +386,9 @@ function S.setWindowIcon(icon)
                                                            icon_bb:getWidth(), icon_bb:getHeight(),
                                                            icon_bit_depth, icon_bb.pitch,
                                                            SDL.SDL_PIXELFORMAT_ABGR8888)
-    icon_bb:free()
-
     SDL.SDL_SetWindowIcon(S.screen, surface)
+    SDL.SDL_FreeSurface(surface)
+    icon_bb:free()
 end
 
 return S
