@@ -18,7 +18,7 @@ elif [ "$TARGET" = kindle ]; then
     docker run -t \
         -v "${HOME}/.ccache:${DOCKER_HOME}/.ccache" \
         -v "$(pwd):${DOCKER_HOME}/base" "${DOCKER_IMG}" \
-        /bin/bash -c 'source /home/ko/.bashrc && cd /home/ko/base && sudo chown -R ko:ko . && make TARGET=kindle all'
+        /bin/bash -c 'source /home/ko/.bashrc && cd /home/ko/base && sudo chown -R ko:ko . && make TARGET=kindle5 all'
 elif [ "$TARGET" = pocketbook ]; then
     sudo chmod -R 777 "${HOME}/.ccache"
     docker run -t \
