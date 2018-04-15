@@ -20,9 +20,13 @@ Follow these steps:
   * make sure you have `patch`, `wget`, `unzip`, `git` and `svn` installed
   * run `make fetchthirdparty`.
 
-* run `make TARGET=kindle5` or `make TARGET=kindlepw2` for touch based Kindle devices.
+* run `make TARGET=kindle` For kindle with touch support 
 
-* run `make TARGET=kindle-legacy` for Kindle DXG/2/3/4 devices.
+* run `make TARGET=kindlepw2` For kindle models >= paper white 2 
+
+* run `make TARGET=kindle5` For kindle models >= kindle4 < paper white 2
+
+* run `make TARGET=kindle-legacy` for Kindle DXG/2/3 devices.
 
 * or run `make TARGET=kobo` for Kobo devices.
 
