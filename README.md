@@ -20,17 +20,17 @@ Follow these steps:
   * make sure you have `patch`, `wget`, `unzip`, `git` and `svn` installed
   * run `make fetchthirdparty`.
 
-* run `make TARGET=kindle` For kindle with touch support 
+* run `make TARGET=kindle` For Kindle with touch support 
 
-* run `make TARGET=kindlepw2` For kindle models >= paper white 2 
+* run `make TARGET=kindlepw2` For Kindle models >= Paperwhite 2 
 
-* run `make TARGET=kindle5` For kindle models >= kindle4 < paper white 2
+* run `make TARGET=kindle5` For Kindle models >= Kindle 4 < Paperwhite 2
 
 * run `make TARGET=kindle-legacy` for Kindle DXG/2/3 devices.
 
 * or run `make TARGET=kobo` for Kobo devices.
 
-* or run `make TARGET=pocketbook` for pocketbook devices.
+* or run `make TARGET=pocketbook` for PocketBook devices.
 
 * or run `make TARGET=android` for Android devices.
 
@@ -44,7 +44,7 @@ Follow these steps:
 
 * or run `make KODEBUG=1` to build with debugging symbols.
 
-* or run `make` for emulator on Linux.
+* or run `make` for the emulator on Linux.
 
 ## Use ccache
 
