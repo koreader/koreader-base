@@ -1176,6 +1176,8 @@ dim color values in rectangular area
 function BB_mt.__index:dimRect(x, y, w, h, by)
     local color = Color8A(255, 255*(by or 0.5))
     if use_cblitbuffer then
+        w, x = BB.checkBounds(w, x, 0, self:getWidth(), 0xFFFF)
+        h, y = BB.checkBounds(h, y, 0, self:getHeight(), 0xFFFF)
         cblitbuffer.BB_blend_rect(ffi.cast("struct BlitBuffer *", self),
             x, y, w, h, color:getColorRGB32())
     else
@@ -1195,6 +1197,8 @@ lighten color values in rectangular area
 function BB_mt.__index:lightenRect(x, y, w, h, by)
     local color = Color8A(0, 255*(by or 0.5))
     if use_cblitbuffer then
+        w, x = BB.checkBounds(w, x, 0, self:getWidth(), 0xFFFF)
+        h, y = BB.checkBounds(h, y, 0, self:getHeight(), 0xFFFF)
         cblitbuffer.BB_blend_rect(ffi.cast("struct BlitBuffer *", self),
             x, y, w, h, color:getColorRGB32())
     else
