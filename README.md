@@ -40,6 +40,8 @@ Follow these steps:
 
 * or run `make TARGET=ubuntu-touch` for Ubuntu Touch.
 
+* or run `make TARGET=appimage` for the desktop AppImage.
+
 * or run `make KODEBUG=1` to build with debugging symbols.
 
 * or run `make` for emulator on Linux.
