@@ -33,7 +33,7 @@ if(DEFINED ENV{ANDROID})
 endif()
 
 if(NOT DEFINED ENV{ANDROID} AND NOT DEFINED ENV{DARWIN})
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -lpthread -lrt")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -lpthread -lrt")
 endif()
 
 # because cmake needs all kinds of annoying special cmake variables
