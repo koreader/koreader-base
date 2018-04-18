@@ -165,12 +165,13 @@ endif
 # Base CFLAGS, without arch. We'll need it for luajit, because its
 # Makefiles do some tricky stuff to differentiate HOST/TARGET
 BASE_CFLAGS:=-O2 -ffast-math -pipe -fomit-frame-pointer
-# Use this for debugging:
-ifdef KODEBUG
-    BASE_CFLAGS:=-Og -g -ffast-math -pipe -fomit-frame-pointer
-endif
 # For ricers.
 #BASE_CFLAGS:=-O3 -ffast-math -pipe -fomit-frame-pointer -frename-registers -fweb
+# Use this for debugging:
+ifdef KODEBUG
+    BASE_CFLAGS:=-Og -g -pipe
+    STRIP:=true
+endif
 
 # Misc GCC tricks to ensure backward compatibility with the K2,
 # even when using a fairly recent TC (Linaro/MG).
