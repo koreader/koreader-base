@@ -8,6 +8,9 @@ include("koreader_thirdparty_git")
 enable_language(C CXX)
 
 assert_var_defined(PKG_CONFIG_PATH)
+assert_var_defined(CMAKE_C_COMPILER)
+assert_var_defined(CMAKE_C_COMPILER_LAUNCHER)
+assert_var_defined(CMAKE_C_COMPILER_ARG1)
 assert_var_defined(CMAKE_CXX_COMPILER)
 assert_var_defined(CMAKE_CXX_COMPILER_LAUNCHER)
 assert_var_defined(CMAKE_CXX_COMPILER_ARG1)
@@ -29,20 +32,14 @@ if(DEFINED ENV{ANDROID})
     set(PATCH_CMD sh -c "${PATCH_CMD}")
 endif()
 
-if(NOT DEFINED ENV{ANDROID} AND NOT DEFINED ENV{DARWIN})
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -lpthread -lrt")
-endif()
-
 # because cmake needs all kinds of annoying special cmake variables
 set(CMAKE_EXE_LINKER_FLAGS "${LDFLAGS} -static-libstdc++")
 if(DEFINED ENV{DARWIN})
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -framework CoreFoundation -framework Security")
-else()
-    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static-libgcc")
 endif()
 
 if(DEFINED ENV{ANDROID})
-    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static")
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static-libgcc -static")
 endif()
 
 # took me an eternity to find $<SEMICOLON>
@@ -87,7 +84,7 @@ if($ENV{ANDROID})
     set(CFG_OPTS "${CFG_OPTS} -DCMAKE_SYSTEM_NAME=Android -DCMAKE_SYSTEM_VERSION=1")
 endif()
 ### Compiler and linker flags
-set(CFG_OPTS "${CFG_OPTS} -DCMAKE_CXX_COMPILER='${CMAKE_CXX_COMPILER}' -DCMAKE_CXX_COMPILER_LAUNCHER='${CMAKE_CXX_COMPILER_LAUNCHER}' -DCMAKE_CXX_COMPILER_ARG1='${CMAKE_CXX_COMPILER_ARG1}' -DCMAKE_CXX_FLAGS='${CMAKE_CXX_FLAGS}' -DCMAKE_EXE_LINKER_FLAGS='${CMAKE_EXE_LINKER_FLAGS}'")
+set(CFG_OPTS "${CFG_OPTS} -DCMAKE_C_COMPILER='${CMAKE_C_COMPILER}' -DCMAKE_C_COMPILER_LAUNCHER='${CMAKE_C_COMPILER_LAUNCHER}' -DCMAKE_C_COMPILER_ARG1='${CMAKE_C_COMPILER_ARG1}' -DCMAKE_CXX_COMPILER='${CMAKE_CXX_COMPILER}' -DCMAKE_CXX_COMPILER_LAUNCHER='${CMAKE_CXX_COMPILER_LAUNCHER}' -DCMAKE_CXX_COMPILER_ARG1='${CMAKE_CXX_COMPILER_ARG1}' -DCMAKE_CXX_FLAGS='${CMAKE_CXX_FLAGS}' -DCMAKE_EXE_LINKER_FLAGS='${CMAKE_EXE_LINKER_FLAGS}'")
 ### Disable some sdcv stuff we don't need
 set(CFG_OPTS "${CFG_OPTS} -DENABLE_NLS:BOOL=False -DWITH_READLINE:BOOL=False")
 ### Disable the silly build tree RPATH

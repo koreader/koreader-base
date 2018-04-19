@@ -419,6 +419,21 @@ function framebuffer:init()
             self.wait_for_marker_full = true
             self.wait_for_marker_partial = false
             self.wait_for_marker_fast = false
+        -- FIXME: Aura SE, did it inherit its ancestor's semi-REAGL support?
+        elseif self.device.model == "Kobo_star" then
+            self.wait_for_marker_full = true
+            self.wait_for_marker_partial = false
+            self.wait_for_marker_fast = false
+        -- FIXME: Same conundrum for the Aura One...
+        elseif self.device.model == "Kobo_daylight" then
+            self.wait_for_marker_full = true
+            self.wait_for_marker_partial = false
+            self.wait_for_marker_fast = false
+        -- FIXME: And what of the H2O²?
+        elseif self.device.model == "Kobo_snow" then
+            self.wait_for_marker_full = true
+            self.wait_for_marker_partial = false
+            self.wait_for_marker_fast = false
         end
     elseif self.device:isPocketBook() then
         require("ffi/mxcfb_pocketbook_h")
