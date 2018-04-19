@@ -155,10 +155,9 @@ function GifDocument:openPage(number)
         -- (not tested, all found animated gif have DISPOSE_DO_NOT
         if disposal_mode == giflib.DISPOSE_BACKGROUND then
             bb:fill(BB.COLOR_WHITE) -- fill with white
-        elseif disposal_mode == giflib.DISPOSE_PREVIOUS then
+        -- elseif disposal_mode == giflib.DISPOSE_PREVIOUS then
             -- Rare (no sample to test with), and not supported for now: we should
             -- keep a copy of the last bb drawn widh DISPOSE_DO_NOT
-            do end
         -- else: giflib.DISPOSE_DO_NOT or DISPOSAL_UNSPECIFIED: draw over previous frame
         end
 
@@ -171,8 +170,8 @@ function GifDocument:openPage(number)
         end
 
         -- Draw current frame on our bb
-        f_w, f_h = i.ImageDesc.Width, i.ImageDesc.Height
-        f_x, f_y = i.ImageDesc.Left, i.ImageDesc.Top
+        local f_w, f_h = i.ImageDesc.Width, i.ImageDesc.Height
+        local f_x, f_y = i.ImageDesc.Left, i.ImageDesc.Top
         local p = i.RasterBits
         for y = f_y, f_y+f_h-1 do
             for x = f_x, f_x+f_w-1 do
