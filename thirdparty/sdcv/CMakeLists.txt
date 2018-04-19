@@ -32,16 +32,10 @@ if(DEFINED ENV{ANDROID})
     set(PATCH_CMD sh -c "${PATCH_CMD}")
 endif()
 
-if(NOT DEFINED ENV{ANDROID} AND NOT DEFINED ENV{DARWIN})
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -lpthread -lrt")
-endif()
-
 # because cmake needs all kinds of annoying special cmake variables
 set(CMAKE_EXE_LINKER_FLAGS "${LDFLAGS} -static-libstdc++")
 if(DEFINED ENV{DARWIN})
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -framework CoreFoundation -framework Security")
-else()
-    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static-libgcc")
 endif()
 
 if(DEFINED ENV{ANDROID})
