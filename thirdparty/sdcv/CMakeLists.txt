@@ -39,7 +39,7 @@ if(DEFINED ENV{DARWIN})
 endif()
 
 if(DEFINED ENV{ANDROID})
-    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static")
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static-libgcc -static")
 endif()
 
 # took me an eternity to find $<SEMICOLON>
