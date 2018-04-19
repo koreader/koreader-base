@@ -25,6 +25,19 @@ struct GifImageDesc {
   ColorMapObject *ColorMap;
 };
 typedef struct GifImageDesc GifImageDesc;
+struct ExtensionBlock {
+    int ByteCount;
+    GifByteType *Bytes;
+    int Function;
+};
+typedef struct ExtensionBlock ExtensionBlock;
+struct GraphicsControlBlock {
+    int DisposalMode;
+    bool UserInputFlag;
+    int DelayTime;
+    int TransparentColor;
+};
+typedef struct GraphicsControlBlock GraphicsControlBlock;
 struct SavedImage {
   GifImageDesc ImageDesc;
   GifByteType *RasterBits;
@@ -56,4 +69,10 @@ GifFileType *DGifOpenFileHandle(int, int *);
 int DGifCloseFile(GifFileType *, int *);
 int DGifSlurp(GifFileType *);
 const char *GifErrorString(int);
+int DGifSavedExtensionToGCB(GifFileType *, int, GraphicsControlBlock *);
+static const int DISPOSAL_UNSPECIFIED = 0;
+static const int DISPOSE_DO_NOT       = 1;
+static const int DISPOSE_BACKGROUND   = 2;
+static const int DISPOSE_PREVIOUS     = 3;
+static const int NO_TRANSPARENT_COLOR = -1;
 ]]
