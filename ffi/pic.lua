@@ -117,33 +117,80 @@ function GifDocument:getPages()
     return self.giffile.ImageCount
 end
 function GifDocument:getOriginalPageSize(number)
-    local i = self.giffile.SavedImages[number-1]
+    -- subsequent frames may have a smaller size than 1 frame
+    local i = self.giffile.SavedImages[0]
     return i.ImageDesc.Width, i.ImageDesc.Height, 4 -- components
 end
 function GifDocument:openPage(number)
-    local i = self.giffile.SavedImages[number-1]
+    -- If there are multiple frames (animated GIF), a standalone
+    -- frame may not be enough (it may be smaller than the first frame,
+    -- and have some transparency): we need to paste it (and all the
+    -- previous frames) over the first frame
+    -- Here, because requesting a random number is possible, we redo all the
+    -- pastes from first frame till requested frame number: it could be optimized
+    local i = self.giffile.SavedImages[0]
     local width = i.ImageDesc.Width
     local height = i.ImageDesc.Height
     local bb = BB.new(width, height, BB.TYPE_BBRGB32)
+    bb:fill(BB.COLOR_WHITE) -- fill with white in case first frame has transparency
 
-    local cmap = i.ImageDesc.ColorMap ~= nil and i.ImageDesc.ColorMap or self.giffile.SColorMap
-    local palette={}
-    -- TODO: transparency from Graphics Control Extension
-    for c=0, cmap.ColorCount-1 do
-        local color = cmap.Colors[c]
-        palette[c] = BB.ColorRGB32(color.Red, color.Green, color.Blue, 0)
-    end
-    local p = i.RasterBits
-    for y = 0, height-1 do
-        for x = 0, width-1 do
-            bb:setPixel(x, y, palette[p[0]])
-            p = p + 1
+    local gcb = ffi.new("GraphicsControlBlock") -- re-used with each frame
+    local framenum = 1
+    while framenum <= number and framenum <= self.giffile.ImageCount do
+        -- print("frame "..framenum)
+
+        -- get transparency (index into palette) and disposal_mode (how to draw
+        -- frame over previous ones) from Graphics Control Extension
+        local transparent_color = nil
+        local disposal_mode = nil
+        if giflib.DGifSavedExtensionToGCB(self.giffile, framenum-1, gcb) == 1 then
+            if gcb.TransparentColor ~= giflib.NO_TRANSPARENT_COLOR then
+                transparent_color = gcb.TransparentColor
+            end
+            if gcb.DisposalMode ~= giflib.DISPOSAL_UNSPECIFIED then
+                disposal_mode = gcb.DisposalMode
+            end
+        end
+        -- See http://webreference.com/content/studio/disposal.html
+        -- (not tested, all found animated gif have DISPOSE_DO_NOT
+        if disposal_mode == giflib.DISPOSE_BACKGROUND then
+            bb:fill(BB.COLOR_WHITE) -- fill with white
+        -- elseif disposal_mode == giflib.DISPOSE_PREVIOUS then
+            -- Rare (no sample to test with), and not supported for now: we should
+            -- keep a copy of the last bb drawn widh DISPOSE_DO_NOT
+        -- else: giflib.DISPOSE_DO_NOT or DISPOSAL_UNSPECIFIED: draw over previous frame
+        end
+
+        -- build palette from frame or global color map
+        local cmap = i.ImageDesc.ColorMap ~= nil and i.ImageDesc.ColorMap or self.giffile.SColorMap
+        local palette={}
+        for c=0, cmap.ColorCount-1 do
+            local color = cmap.Colors[c]
+            palette[c] = BB.ColorRGB32(color.Red, color.Green, color.Blue, 0)
+        end
+
+        -- Draw current frame on our bb
+        local f_w, f_h = i.ImageDesc.Width, i.ImageDesc.Height
+        local f_x, f_y = i.ImageDesc.Left, i.ImageDesc.Top
+        local p = i.RasterBits
+        for y = f_y, f_y+f_h-1 do
+            for x = f_x, f_x+f_w-1 do
+                if not transparent_color or p[0] ~= transparent_color then
+                    bb:setPixel(x, y, palette[p[0]])
+                end
+                p = p + 1
+            end
+        end
+
+        framenum = framenum + 1
+        if framenum <= self.giffile.ImageCount then
+            i = self.giffile.SavedImages[framenum-1]
         end
     end
 
     local page = GifPage:new{
-        width = i.ImageDesc.Width,
-        height = i.ImageDesc.Height,
+        width = width,
+        height = height,
         image_bb = bb,
         doc = self,
     }
