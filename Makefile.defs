@@ -32,7 +32,7 @@ CMAKE=cmake
 
 # set this to your ARM cross compiler:
 # set CC CXX AR LD RANLIB
-ifneq (,$(filter $(TARGET), arm-generic))
+ifeq ($(TARGET), arm-generic)
     CHOST?=arm-linux-gnueabi
 else ifeq ($(TARGET), kindle)
     export KINDLE=1
