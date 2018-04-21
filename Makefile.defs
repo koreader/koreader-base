@@ -37,21 +37,21 @@ ifneq (,$(filter $(TARGET), arm-generic))
 else ifeq ($(TARGET), kindle)
     export KINDLE=1
     HAS_KINDLE5_TC:=$(shell command -v arm-kindle5-linux-gnueabi-gcc 2> /dev/null)
-	ifdef HAS_KINDLE5_TC
-		#Use the custom build TC
-    	CHOST?=arm-kindle5-linux-gnueabi
-	else
-		#Use the generic linaro TC for debugging
-    	CHOST?=arm-linux-gnueabi
-	endif
+    ifdef HAS_KINDLE5_TC
+        #Use the custom build TC
+        CHOST?=arm-kindle5-linux-gnueabi
+    else
+        #Use the generic linaro TC for debugging
+        CHOST?=arm-linux-gnueabi
+    endif
 else ifeq ($(TARGET), kindlepw2)
     export KINDLE=1
     HAS_KINDLEPW2_TC:=$(shell command -v arm-kindlepw2-linux-gnueabi-gcc 2> /dev/null)
-	ifdef HAS_KINDLEPW2_TC
-    	CHOST?=arm-kindlepw2-linux-gnueabi
-	else
-    	CHOST?=arm-linux-gnueabi
-	endif
+    ifdef HAS_KINDLEPW2_TC
+        CHOST?=arm-kindlepw2-linux-gnueabi
+    else
+        CHOST?=arm-linux-gnueabi
+    endif
 else ifeq ($(TARGET), kindle-legacy)
     export KINDLE=1
     CHOST?=arm-kindle-linux-gnueabi
@@ -248,14 +248,17 @@ else ifeq ($(TARGET), kindle)
 	ARM_ARCH:=$(ARMV7_A8_ARCH)
 	ARM_ARCH+=-mfloat-abi=softfp
 	MACHINE_KINDLE:=$(shell PATH='$(PATH)' $(CC) -dumpmachine 2>/dev/null)
-	ifeq ($MACHINE_KINDLE, arm-linux-gnueabi)
-		COMPAT_CFLAGS:=$(UBUNTU_COMPAT_CFLAGS)
-		COMPAT_CXXFLAGS:=$(UBUNTU_COMPAT_CFLAGS)
-	endif
+    ifeq ($MACHINE_KINDLE, arm-linux-gnueabi)
+        COMPAT_CFLAGS:=$(UBUNTU_COMPAT_CFLAGS)
+        COMPAT_CXXFLAGS:=$(UBUNTU_COMPAT_CFLAGS)
+    endif
 else ifeq ($(TARGET), kindlepw2)
 	ARM_ARCH:=$(ARMV7_A9_ARCH)
 	ARM_ARCH+=-mfloat-abi=softfp
-else ifeq ($(TARGET), kindle-legacy)
+    ifeq ($MACHINE_KINDLE, arm-linux-gnueabi)
+        COMPAT_CFLAGS:=$(UBUNTU_COMPAT_CFLAGS)
+        COMPAT_CXXFLAGS:=$(UBUNTU_COMPAT_CFLAGS)
+    endif
 	ARM_ARCH:=$(ARMV6_1136_ARCH)
 	ARM_ARCH+=-mfloat-abi=softfp
 	COMPAT_CFLAGS:=$(MG2K12_COMPAT_CFLAGS)
