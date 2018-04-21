@@ -36,8 +36,7 @@ ifeq ($(TARGET), arm-generic)
     CHOST?=arm-linux-gnueabi
 else ifeq ($(TARGET), kindle)
     export KINDLE=1
-    HAS_KINDLE5_TC:=$(shell command -v arm-kindle5-linux-gnueabi-gcc 2> /dev/null)
-    ifdef HAS_KINDLE5_TC
+    ifeq ($(shell arm-kindle5-linux-gnueabi-gcc -dumpmachine), arm-kindle5-linux-gnueabi) 
         #Use the custom build TC
         CHOST?=arm-kindle5-linux-gnueabi
     else
@@ -46,8 +45,7 @@ else ifeq ($(TARGET), kindle)
     endif
 else ifeq ($(TARGET), kindlepw2)
     export KINDLE=1
-    HAS_KINDLEPW2_TC:=$(shell command -v arm-kindlepw2-linux-gnueabi-gcc 2> /dev/null)
-    ifdef HAS_KINDLEPW2_TC
+    ifeq ($(shell arm-kindlepw2-linux-gnueabi-gcc -dumpmachine), arm-kindlepw2-linux-gnueabi) 
         CHOST?=arm-kindlepw2-linux-gnueabi
     else
         CHOST?=arm-linux-gnueabi
@@ -58,8 +56,7 @@ else ifeq ($(TARGET), kindle-legacy)
     export LEGACY=1
 else ifeq ($(TARGET), kobo)
     export KOBO=1
-    HAS_KOBO_TC:=$(shell command -v arm-kobo-linux-gnueabihf-gcc 2> /dev/null)
-    ifdef HAS_KOBO_TC
+    ifeq ($(shell arm-kobo-linux-gnueabihf-gcc -dumpmachine), arm-kobo-linux-gnueabihf) 
         CHOST?=arm-kobo-linux-gnueabihf
     else
         CHOST?=arm-linux-gnueabihf
