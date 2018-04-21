@@ -223,14 +223,14 @@ end
 
 function Pic.openGIFDocumentFromData(data, size)
     -- Create GIF from data pointer (from https://github.com/luapower/giflib)
-    local function data_reader(data, size)
-        data = ffi.cast('unsigned char*', data)
+    local function data_reader(r_data, r_size)
+        r_data = ffi.cast('unsigned char*', r_data)
         return function(_, buf, sz)
-            if sz < 1 or size < 1 then error('eof') end
-            sz = math.min(size, sz)
-            ffi.copy(buf, data, sz)
-            data = data + sz
-            size = size - sz
+            if sz < 1 or r_size < 1 then error('eof') end
+            sz = math.min(r_size, sz)
+            ffi.copy(buf, r_data, sz)
+            r_data = r_data + sz
+            r_size = r_size - sz
             return sz
         end
     end
