@@ -13,7 +13,7 @@ if [ "$TARGET" = kobo ]; then
         -v "${HOME}/.ccache:${DOCKER_HOME}/.ccache" \
         -v "$(pwd):${DOCKER_HOME}/base" "${DOCKER_IMG}" \
         /bin/bash -c 'source /home/ko/.bashrc && cd /home/ko/base && sudo chown -R ko:ko . && make TARGET=kobo all'
-elif [ "$TARGET" = kindle ]; then
+elif [ "$TARGET" = kindle5 ]; then
     sudo chmod -R 777 "${HOME}/.ccache"
     docker run -t \
         -v "${HOME}/.ccache:${DOCKER_HOME}/.ccache" \
