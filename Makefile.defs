@@ -247,15 +247,14 @@ else ifeq ($(TARGET), pocketbook)
 else ifeq ($(TARGET), kindle)
 	ARM_ARCH:=$(ARMV7_A8_ARCH)
 	ARM_ARCH+=-mfloat-abi=softfp
-	MACHINE_KINDLE:=$(shell PATH='$(PATH)' $(CC) -dumpmachine 2>/dev/null)
-    ifeq ($MACHINE_KINDLE, arm-linux-gnueabi)
+    ifeq ($(shell PATH='$(PATH)' $(CC) -dumpmachine 2>/dev/null), arm-linux-gnueabi)
         COMPAT_CFLAGS:=$(UBUNTU_COMPAT_CFLAGS)
         COMPAT_CXXFLAGS:=$(UBUNTU_COMPAT_CFLAGS)
     endif
 else ifeq ($(TARGET), kindlepw2)
 	ARM_ARCH:=$(ARMV7_A9_ARCH)
 	ARM_ARCH+=-mfloat-abi=softfp
-    ifeq ($MACHINE_KINDLE, arm-linux-gnueabi)
+    ifeq ($(shell PATH='$(PATH)' $(CC) -dumpmachine 2>/dev/null), arm-linux-gnueabi)
         COMPAT_CFLAGS:=$(UBUNTU_COMPAT_CFLAGS)
         COMPAT_CXXFLAGS:=$(UBUNTU_COMPAT_CFLAGS)
     endif
