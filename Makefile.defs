@@ -259,6 +259,7 @@ else ifeq ($(TARGET), kindlepw2)
         COMPAT_CFLAGS:=$(UBUNTU_COMPAT_CFLAGS)
         COMPAT_CXXFLAGS:=$(UBUNTU_COMPAT_CFLAGS)
     endif
+else ifeq ($(TARGET), kindle-legacy)
 	ARM_ARCH:=$(ARMV6_1136_ARCH)
 	ARM_ARCH+=-mfloat-abi=softfp
 	COMPAT_CFLAGS:=$(MG2K12_COMPAT_CFLAGS)
