@@ -75,4 +75,6 @@ static const int DISPOSE_DO_NOT       = 1;
 static const int DISPOSE_BACKGROUND   = 2;
 static const int DISPOSE_PREVIOUS     = 3;
 static const int NO_TRANSPARENT_COLOR = -1;
+typedef int (*GifInputFunc) (GifFileType *, GifByteType *, int);
+GifFileType *DGifOpen(void *, GifInputFunc, int *);
 ]]
