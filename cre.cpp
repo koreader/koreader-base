@@ -540,7 +540,7 @@ static int getPosFromXPointer(lua_State *L) {
 	int pos = 0;
 	ldomXPointer xp = doc->dom_doc->createXPointer(lString16(xpointer_str));
 
-	lvPoint pt = xp.toPoint();
+	lvPoint pt = xp.toPoint(true); // use_getRectEx, for better accuracy
 	if (pt.y > 0) {
 		pos = pt.y;
 	}
