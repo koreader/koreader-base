@@ -166,7 +166,7 @@ function GifDocument:openPage(number)
         local palette={}
         for c=0, cmap.ColorCount-1 do
             local color = cmap.Colors[c]
-            palette[c] = BB.ColorRGB32(color.Red, color.Green, color.Blue, 0)
+            palette[c] = BB.ColorRGB32(color.Red, color.Green, color.Blue, 0xFF)
         end
 
         -- Draw current frame on our bb
@@ -218,6 +218,37 @@ function Pic.openGIFDocument(filename)
         error(string.format("Cannot parse GIF file: %s",
             ffi.string(giflib.GifErrorString(giffile.Error))))
     end
+    return GifDocument:new{giffile = giffile}
+end
+
+function Pic.openGIFDocumentFromData(data, size)
+    -- Create GIF from data pointer (from https://github.com/luapower/giflib)
+    local function data_reader(r_data, r_size)
+        r_data = ffi.cast('unsigned char*', r_data)
+        return function(_, buf, sz)
+            if sz < 1 or r_size < 1 then error('eof') end
+            sz = math.min(r_size, sz)
+            ffi.copy(buf, r_data, sz)
+            r_data = r_data + sz
+            r_size = r_size - sz
+            return sz
+        end
+    end
+    local read_cb = ffi.cast('GifInputFunc', data_reader(data, size))
+    local err = ffi.new("int[1]")
+    local giffile = giflib.DGifOpen(nil, read_cb, err)
+    if giffile == nil then
+        read_cb:free()
+        error(string.format("Cannot read GIF file: %s",
+            ffi.string(giflib.GifErrorString(err[0]))))
+    end
+    if giflib.DGifSlurp(giffile) ~= giflib.GIF_OK then
+        giflib.DGifCloseFile(giffile, err)
+        read_cb:free()
+        error(string.format("Cannot parse GIF file: %s",
+            ffi.string(giflib.GifErrorString(giffile.Error))))
+    end
+    read_cb:free()
     return GifDocument:new{giffile = giffile}
 end
 
