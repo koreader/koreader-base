@@ -32,15 +32,26 @@ CMAKE=cmake
 
 # set this to your ARM cross compiler:
 # set CC CXX AR LD RANLIB
-ifneq (,$(filter $(TARGET), kindle arm-generic))
-    export KINDLE=1
+ifeq ($(TARGET), arm-generic)
     CHOST?=arm-linux-gnueabi
-else ifeq ($(TARGET), kindle5)
+else ifeq ($(TARGET), kindle)
     export KINDLE=1
-    CHOST?=arm-kindle5-linux-gnueabi
+    HAS_KINDLE5_TC:=$(shell command -v arm-kindle5-linux-gnueabi-gcc 2> /dev/null)
+    ifdef HAS_KINDLE5_TC
+        #Use the custom build TC
+        CHOST?=arm-kindle5-linux-gnueabi
+    else
+        #Use the generic linaro TC for debugging
+        CHOST?=arm-linux-gnueabi
+    endif
 else ifeq ($(TARGET), kindlepw2)
     export KINDLE=1
-    CHOST?=arm-kindlepw2-linux-gnueabi
+    HAS_KINDLEPW2_TC:=$(shell command -v arm-kindlepw2-linux-gnueabi-gcc 2> /dev/null)
+    ifdef HAS_KINDLEPW2_TC
+        CHOST?=arm-kindlepw2-linux-gnueabi
+    else
+        CHOST?=arm-linux-gnueabi
+    endif
 else ifeq ($(TARGET), kindle-legacy)
     export KINDLE=1
     CHOST?=arm-kindle-linux-gnueabi
@@ -228,22 +239,25 @@ else ifeq ($(TARGET), ubuntu-touch)
 	ARM_ARCH+=-mfloat-abi=hard
 	COMPAT_CFLAGS:=$(UBUNTU_COMPAT_CFLAGS)
 	COMPAT_CXXFLAGS:=$(UBUNTU_COMPAT_CFLAGS)
-else ifeq ($(TARGET), kindle)
-	ARM_ARCH:=$(ARMV7_A8_ARCH)
-	ARM_ARCH+=-mfloat-abi=softfp
-	COMPAT_CFLAGS:=$(UBUNTU_COMPAT_CFLAGS)
-	COMPAT_CXXFLAGS:=$(UBUNTU_COMPAT_CFLAGS)
 else ifeq ($(TARGET), pocketbook)
 	ARM_ARCH:=$(ARMV7_A8_ARCH)
 	ARM_ARCH+=-mfloat-abi=softfp
 	COMPAT_CFLAGS:=$(MG2K12_COMPAT_CFLAGS) -std=gnu99 --sysroot $(SYSROOT)
 	COMPAT_CXXFLAGS:=$(MG2K12_COMPAT_CXXFLAGS) --sysroot $(SYSROOT)
-else ifeq ($(TARGET), kindle5)
+else ifeq ($(TARGET), kindle)
 	ARM_ARCH:=$(ARMV7_A8_ARCH)
 	ARM_ARCH+=-mfloat-abi=softfp
+    ifeq ($(shell PATH='$(PATH)' $(CC) -dumpmachine 2>/dev/null), arm-linux-gnueabi)
+        COMPAT_CFLAGS:=$(UBUNTU_COMPAT_CFLAGS)
+        COMPAT_CXXFLAGS:=$(UBUNTU_COMPAT_CFLAGS)
+    endif
 else ifeq ($(TARGET), kindlepw2)
 	ARM_ARCH:=$(ARMV7_A9_ARCH)
 	ARM_ARCH+=-mfloat-abi=softfp
+    ifeq ($(shell PATH='$(PATH)' $(CC) -dumpmachine 2>/dev/null), arm-linux-gnueabi)
+        COMPAT_CFLAGS:=$(UBUNTU_COMPAT_CFLAGS)
+        COMPAT_CXXFLAGS:=$(UBUNTU_COMPAT_CFLAGS)
+    endif
 else ifeq ($(TARGET), kindle-legacy)
 	ARM_ARCH:=$(ARMV6_1136_ARCH)
 	ARM_ARCH+=-mfloat-abi=softfp

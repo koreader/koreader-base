@@ -20,11 +20,9 @@ Follow these steps:
   * make sure you have `patch`, `wget`, `unzip`, `git` and `svn` installed
   * run `make fetchthirdparty`.
 
-* run `make TARGET=kindle` For Kindle models with touch support.
-
 * run `make TARGET=kindlepw2` For Kindle models >= Paperwhite 2.
 
-* run `make TARGET=kindle5` For Kindle models >= Kindle 4 < Paperwhite 2.
+* run `make TARGET=kindle` For Kindle models >= Kindle 4 < Paperwhite 2.
 
 * run `make TARGET=kindle-legacy` for Kindle DXG/2/3 devices.
 
