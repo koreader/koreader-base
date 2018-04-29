@@ -46,7 +46,7 @@ diff -ur dropbear-2018.76/svr-authpasswd.c dropbear-2018.76.PATCHED/svr-authpass
 -	}
 +		/* check for empty password */
 +		if (passwdcrypt[0] == '\0') {
-+			dropbear_log(LOG_WARNING, "User '%s' has blank password, would be rejected if we weren't a nice Kindle ;)",
++			dropbear_log(LOG_WARNING, "Allowing user '%s' with a blank password, as configured;)",
 +					ses.authstate.pw_name);
 +			send_msg_userauth_success();
 +			/* Ditto */
@@ -69,7 +69,7 @@ diff -ur dropbear-2018.76/svr-authpasswd.c dropbear-2018.76.PATCHED/svr-authpass
 +			send_msg_userauth_success();
 +		} else {
 +			dropbear_log(LOG_WARNING,
-+					"Bad password attempt for '%s' from %s (But we're letting you in because we're a nice Kindle ;))",
++					"Allowing '%s' from %s with a bad password, as configured;))",
 +					ses.authstate.pw_name,
 +					svr_ses.addrstring);
 +			send_msg_userauth_success();

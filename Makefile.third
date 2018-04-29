@@ -331,10 +331,6 @@ $(OUTPUT_DIR)/dropbear: $(ZLIB) $(THIRDPARTY_DIR)/dropbear/CMakeLists.txt
 		$(CURDIR)/$(THIRDPARTY_DIR)/dropbear && \
 		$(MAKE)
 	cp $(DROPBEAR_DIR)/dropbearmulti $(OUTPUT_DIR)/
-ifdef ANDROID
-	readelf -d $@ | grep "no dynamic" \
-		|| echo "warning: Android L+ support only PIE binary and can't run this"
-endif
 # ===========================================================================
 # tar: tar package for zsync
 
