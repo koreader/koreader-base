@@ -75,7 +75,7 @@ ep_get_source_dir(SOURCE_DIR)
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
     https://github.com/ArtifexSoftware/mupdf.git
-    tags/1.12.0
+    tags/1.13.0
     ${SOURCE_DIR}
 )
 

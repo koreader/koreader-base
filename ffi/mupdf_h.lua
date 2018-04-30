@@ -277,7 +277,34 @@ struct fz_device_s *mupdf_new_bbox_device(fz_context *, fz_rect *);
 void *mupdf_run_page(fz_context *, fz_page *, struct fz_device_s *, const fz_matrix *, struct fz_cookie_s *);
 void fz_close_device(fz_context *, struct fz_device_s *);
 void fz_drop_device(fz_context *, struct fz_device_s *);
-enum fz_annot_type;
+enum pdf_annot_type {
+  PDF_ANNOT_TEXT = 0,
+  PDF_ANNOT_LINK = 1,
+  PDF_ANNOT_FREE_TEXT = 2,
+  PDF_ANNOT_LINE = 3,
+  PDF_ANNOT_SQUARE = 4,
+  PDF_ANNOT_CIRCLE = 5,
+  PDF_ANNOT_POLYGON = 6,
+  PDF_ANNOT_POLY_LINE = 7,
+  PDF_ANNOT_HIGHLIGHT = 8,
+  PDF_ANNOT_UNDERLINE = 9,
+  PDF_ANNOT_SQUIGGLY = 10,
+  PDF_ANNOT_STRIKE_OUT = 11,
+  PDF_ANNOT_STAMP = 12,
+  PDF_ANNOT_CARET = 13,
+  PDF_ANNOT_INK = 14,
+  PDF_ANNOT_POPUP = 15,
+  PDF_ANNOT_FILE_ATTACHMENT = 16,
+  PDF_ANNOT_SOUND = 17,
+  PDF_ANNOT_MOVIE = 18,
+  PDF_ANNOT_WIDGET = 19,
+  PDF_ANNOT_SCREEN = 20,
+  PDF_ANNOT_PRINTER_MARK = 21,
+  PDF_ANNOT_TRAP_NET = 22,
+  PDF_ANNOT_WATERMARK = 23,
+  PDF_ANNOT_3D = 24,
+  PDF_ANNOT_UNKNOWN = -1,
+};
 typedef struct pdf_hotspot_s pdf_hotspot;
 struct pdf_hotspot_s {
   int num;
@@ -299,21 +326,15 @@ struct pdf_lexbuf_large_s {
   char buffer[65280];
 };
 typedef struct pdf_obj_s pdf_obj;
-typedef struct pdf_xobject_s pdf_xobject;
 typedef struct pdf_annot_s pdf_annot;
 typedef struct pdf_page_s pdf_page;
-struct pdf_xobject_s {
-  fz_storable storable;
-  pdf_obj *obj;
-  int iteration;
-};
 struct pdf_annot_s {
   fz_annot super;
   pdf_page *page;
   pdf_obj *obj;
-  pdf_xobject *ap;
-  int ap_iteration;
-  int dirty;
+  pdf_obj *ap;
+  int needs_new_ap;
+  int has_new_ap;
   pdf_annot *next;
 };
 typedef struct pdf_document_s pdf_document;
@@ -372,7 +393,6 @@ struct pdf_document_s {
   struct pdf_js_s *js;
   int recalculating;
   int dirty;
-  void (*update_appearance)(fz_context *, pdf_document *, pdf_annot *);
   void (*event_cb)(fz_context *, pdf_document *, struct pdf_doc_event_s *, void *);
   void *event_cb_data;
   int num_type3_fonts;
@@ -387,34 +407,7 @@ struct pdf_document_s {
   pdf_obj **orphans;
 };
 pdf_document *pdf_specifics(fz_context *, fz_document *);
-pdf_annot *mupdf_pdf_create_annot(fz_context *, pdf_page *, enum {
-  PDF_ANNOT_TEXT = 0,
-  PDF_ANNOT_LINK = 1,
-  PDF_ANNOT_FREE_TEXT = 2,
-  PDF_ANNOT_LINE = 3,
-  PDF_ANNOT_SQUARE = 4,
-  PDF_ANNOT_CIRCLE = 5,
-  PDF_ANNOT_POLYGON = 6,
-  PDF_ANNOT_POLY_LINE = 7,
-  PDF_ANNOT_HIGHLIGHT = 8,
-  PDF_ANNOT_UNDERLINE = 9,
-  PDF_ANNOT_SQUIGGLY = 10,
-  PDF_ANNOT_STRIKE_OUT = 11,
-  PDF_ANNOT_STAMP = 12,
-  PDF_ANNOT_CARET = 13,
-  PDF_ANNOT_INK = 14,
-  PDF_ANNOT_POPUP = 15,
-  PDF_ANNOT_FILE_ATTACHMENT = 16,
-  PDF_ANNOT_SOUND = 17,
-  PDF_ANNOT_MOVIE = 18,
-  PDF_ANNOT_WIDGET = 19,
-  PDF_ANNOT_SCREEN = 20,
-  PDF_ANNOT_PRINTER_MARK = 21,
-  PDF_ANNOT_TRAP_NET = 22,
-  PDF_ANNOT_WATERMARK = 23,
-  PDF_ANNOT_3D = 24,
-  PDF_ANNOT_UNKNOWN = -1,
-});
+pdf_annot *mupdf_pdf_create_annot(fz_context *, pdf_page *, enum pdf_annot_type);
 void *mupdf_pdf_set_annot_quad_points(fz_context *, pdf_annot *, int, const float *);
 void *mupdf_pdf_set_text_annot_position(fz_context *, pdf_annot *, fz_point);
 void *mupdf_pdf_set_markup_appearance(fz_context *, pdf_document *, pdf_annot *, float *, float, float, float);
@@ -430,6 +423,7 @@ struct pdf_write_options_s {
   int do_garbage;
   int do_linear;
   int do_clean;
+  int do_sanitize;
   int continue_on_error;
   int *errors;
 };
