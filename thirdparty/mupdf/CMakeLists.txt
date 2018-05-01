@@ -20,7 +20,7 @@ assert_var_defined(XCFLAGS)
 set(XCFLAGS "${XCFLAGS} -DFZ_PLOTTERS_CMYK=0 -DFZ_ENABLE_JS=0")
 set(STATIC_BUILD_CMD "$(MAKE) -j${PARALLEL_JOBS}")
 set(STATIC_BUILD_CMD "${STATIC_BUILD_CMD} LDFLAGS=\"${LDFLAGS}\" XCFLAGS=\"${XCFLAGS}\"")
-set(STATIC_BUILD_CMD "${STATIC_BUILD_CMD} CC=\"${CC}\" AR=\"${AR}\" build=\"release\" MUDRAW= MUTOOL= CURL_LIB= OS=${OS}")
+set(STATIC_BUILD_CMD "${STATIC_BUILD_CMD} CC=\"${CC}\" CXX=\"${CXX}\" AR=\"${AR}\" build=\"release\" MUDRAW= MUTOOL= CURL_LIB= OS=${OS}")
 set(STATIC_BUILD_CMD "${STATIC_BUILD_CMD} verbose=1 FREETYPE_DIR=nonexisting JPEG_DIR=nonexisting ZLIB_DIR=nonexisting CROSSCOMPILE=yes")
 set(STATIC_BUILD_CMD sh -c "${STATIC_BUILD_CMD} third libs")
 
