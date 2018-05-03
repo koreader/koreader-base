@@ -20,7 +20,7 @@ assert_var_defined(XCFLAGS)
 set(XCFLAGS "${XCFLAGS} -DFZ_PLOTTERS_CMYK=0 -DFZ_ENABLE_JS=0")
 set(STATIC_BUILD_CMD "$(MAKE) -j${PARALLEL_JOBS}")
 set(STATIC_BUILD_CMD "${STATIC_BUILD_CMD} LDFLAGS=\"${LDFLAGS}\" XCFLAGS=\"${XCFLAGS}\"")
-set(STATIC_BUILD_CMD "${STATIC_BUILD_CMD} CC=\"${CC}\" AR=\"${AR}\" build=\"release\" MUDRAW= MUTOOL= CURL_LIB= OS=${OS}")
+set(STATIC_BUILD_CMD "${STATIC_BUILD_CMD} CC=\"${CC}\" CXX=\"${CXX}\" AR=\"${AR}\" build=\"release\" MUDRAW= MUTOOL= CURL_LIB= OS=${OS}")
 set(STATIC_BUILD_CMD "${STATIC_BUILD_CMD} verbose=1 FREETYPE_DIR=nonexisting JPEG_DIR=nonexisting ZLIB_DIR=nonexisting CROSSCOMPILE=yes")
 set(STATIC_BUILD_CMD sh -c "${STATIC_BUILD_CMD} third libs")
 
@@ -62,12 +62,6 @@ set(PATCH_CMD1 sh -c "patch -N -p1 < ${CMAKE_CURRENT_SOURCE_DIR}/external_fonts.
 set(PATCH_CMD2 sh -c "patch -N -p1 < ${CMAKE_CURRENT_SOURCE_DIR}/encrypted_zip.patch || true")
 # use libjpeg as a shared library
 set(PATCH_CMD3 sh -c "patch -N -p1 < ${CMAKE_CURRENT_SOURCE_DIR}/libjpeg_shared.patch || true")
-# vec_dot fix (see https://github.com/ArtifexSoftware/mupdf/pull/5, needed for v1.12)
-set(PATCH_CMD4 sh -c "patch -N -p1 < ${CMAKE_CURRENT_SOURCE_DIR}/vec_dot.patch || true")
-# needed for Android
-set(PATCH_CMD5 sh -c "patch -N -p1 < ${CMAKE_CURRENT_SOURCE_DIR}/size_max.patch || true")
-# needed to not fail reading some PNG with icc with our -DNO_ICC
-set(PATCH_CMD6 sh -c "patch -N -p1 < ${CMAKE_CURRENT_SOURCE_DIR}/no_icc_fixes.patch || true")
 
 # TODO: ignore shared git submodules built outside of mupdf by ourselves
 # https://git.ghostscript.com/mupdf.git is slow, so we use the official mirror on GitHub
@@ -75,7 +69,7 @@ ep_get_source_dir(SOURCE_DIR)
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
     https://github.com/ArtifexSoftware/mupdf.git
-    tags/1.12.0
+    tags/1.13.0
     ${SOURCE_DIR}
 )
 
@@ -84,7 +78,7 @@ ExternalProject_Add(
     ${PROJECT_NAME}
     DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
     BUILD_IN_SOURCE 1
-    PATCH_COMMAND COMMAND ${PATCH_CMD1} COMMAND ${PATCH_CMD2} COMMAND ${PATCH_CMD3} COMMAND ${PATCH_CMD4} COMMAND ${PATCH_CMD5} COMMAND ${PATCH_CMD6}
+    PATCH_COMMAND COMMAND ${PATCH_CMD1} COMMAND ${PATCH_CMD2} COMMAND ${PATCH_CMD3}
     # skip configure
     CONFIGURE_COMMAND ""
     BUILD_COMMAND ${BUILD_CMD_GENERATE} COMMAND ${STATIC_BUILD_CMD} COMMAND ${SHARED_BUILD_CMD}
