@@ -33,7 +33,7 @@ endif()
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
     https://github.com/libjpeg-turbo/libjpeg-turbo.git
-    1.5.2
+    1.5.3
     ${SOURCE_DIR}
 )
 
