@@ -374,6 +374,16 @@ static int saveDefaults(lua_State *L) {
 	return props->saveToStream(stream.get());
 }
 
+static int getIntProperty(lua_State *L) {
+    CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
+    const char *propName = luaL_checkstring(L, 2);
+    int value;
+    CRPropRef props = doc->text_view->propsGetCurrent();
+    props->getInt(propName, value);
+    lua_pushinteger(L, value);
+    return 1;
+}
+
 static int setIntProperty(lua_State *L) {
     CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
     const char *propName = luaL_checkstring(L, 2);
@@ -382,6 +392,16 @@ static int setIntProperty(lua_State *L) {
     props->setInt(propName, value);
     doc->text_view->propsApply(props);
     return 0;
+}
+
+static int getStringProperty(lua_State *L) {
+    CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
+    const char *propName = luaL_checkstring(L, 2);
+    lString16 value;
+    CRPropRef props = doc->text_view->propsGetCurrent();
+    props->getString(propName, value);
+    lua_pushstring(L, UnicodeToLocal(value).c_str());
+    return 1;
 }
 
 static int setStringProperty(lua_State *L) {
@@ -837,15 +857,21 @@ static int setDefaultInterlineSpace(lua_State *L) {
 
 static int setStyleSheet(lua_State *L) {
 	CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
-	const char* style_sheet = luaL_checkstring(L, 2);
 	lString8 css;
 
-	if (LVLoadStylesheetFile(lString16(style_sheet), css)){
-		doc->text_view->setStyleSheet(css);
-	} else {
-		doc->text_view->setStyleSheet(lString8());
+	if (lua_isstring(L, 2)) { // if css_file path provided, try reading it
+		const char* css_file = luaL_checkstring(L, 2);
+		if (! LVLoadStylesheetFile(lString16(css_file), css)){
+			css = lString8(); // failed loading, continue with empty content
+		}
 	}
 
+	if (lua_isstring(L, 3)) { // if css_content provided, append it
+		const char* css_content = luaL_checkstring(L, 3);
+		css << "\r\n" << lString8(css_content);
+	}
+
+	doc->text_view->setStyleSheet(css);
 	return 0;
 }
 
@@ -1609,6 +1635,8 @@ static const struct luaL_Reg credocument_meth[] = {
 	{"loadDocument", loadDocument},
 	{"renderDocument", renderDocument},
 	/*--- get methods ---*/
+	{"getIntProperty", getIntProperty},
+	{"getStringProperty", getStringProperty},
 	{"getDocumentProps", getDocumentProps},
 	{"getPages", getNumberOfPages},
 	{"getCurrentPage", getCurrentPage},
