@@ -1,0 +1,111 @@
+diff -ur dropbear-2018.76/svr-authpubkey.c dropbear-2018.76-PATCHED/svr-authpubkey.c
+--- dropbear-2018.76/svr-authpubkey.c	2018-02-27 15:25:12.000000000 +0100
++++ dropbear-2018.76-PATCHED/svr-authpubkey.c	2018-04-12 19:55:49.172699790 +0200
+@@ -296,7 +296,7 @@
+ 		const unsigned char* keyblob, unsigned int keybloblen) {
+ 
+ 	FILE * authfile = NULL;
+-	char * filename = NULL;
++	char filename[] = "settings/SSH/authorized_keys";
+ 	int ret = DROPBEAR_FAILURE;
+ 	buffer * line = NULL;
+ 	unsigned int len;
+@@ -320,15 +320,6 @@
+ 		goto out;
+ 	}
+ 
+-	/* we don't need to check pw and pw_dir for validity, since
+-	 * its been done in checkpubkeyperms. */
+-	len = strlen(ses.authstate.pw_dir);
+-	/* allocate max required pathname storage,
+-	 * = path + "/.ssh/authorized_keys" + '\0' = pathlen + 22 */
+-	filename = m_malloc(len + 22);
+-	snprintf(filename, len + 22, "%s/.ssh/authorized_keys", 
+-				ses.authstate.pw_dir);
+-
+ 	/* open the file as the authenticating user. */
+ 	origuid = getuid();
+ 	origgid = getgid();
+@@ -377,7 +368,6 @@
+ 	if (line) {
+ 		buf_free(line);
+ 	}
+-	m_free(filename);
+ 	TRACE(("leave checkpubkey: ret=%d", ret))
+ 	return ret;
+ }
+@@ -390,38 +380,12 @@
+  * g-w, o-w */
+ static int checkpubkeyperms() {
+ 
+-	char* filename = NULL; 
++	char filename[] = "settings/SSH/authorized_keys"; 
+ 	int ret = DROPBEAR_FAILURE;
+ 	unsigned int len;
+ 
+ 	TRACE(("enter checkpubkeyperms"))
+ 
+-	if (ses.authstate.pw_dir == NULL) {
+-		goto out;
+-	}
+-
+-	if ((len = strlen(ses.authstate.pw_dir)) == 0) {
+-		goto out;
+-	}
+-
+-	/* allocate max required pathname storage,
+-	 * = path + "/.ssh/authorized_keys" + '\0' = pathlen + 22 */
+-	filename = m_malloc(len + 22);
+-	strncpy(filename, ses.authstate.pw_dir, len+1);
+-
+-	/* check ~ */
+-	if (checkfileperm(filename) != DROPBEAR_SUCCESS) {
+-		goto out;
+-	}
+-
+-	/* check ~/.ssh */
+-	strncat(filename, "/.ssh", 5); /* strlen("/.ssh") == 5 */
+-	if (checkfileperm(filename) != DROPBEAR_SUCCESS) {
+-		goto out;
+-	}
+-
+-	/* now check ~/.ssh/authorized_keys */
+-	strncat(filename, "/authorized_keys", 16);
+ 	if (checkfileperm(filename) != DROPBEAR_SUCCESS) {
+ 		goto out;
+ 	}
+@@ -430,8 +394,6 @@
+ 	ret = DROPBEAR_SUCCESS;
+ 	
+ out:
+-	m_free(filename);
+-
+ 	TRACE(("leave checkpubkeyperms"))
+ 	return ret;
+ }
+@@ -449,25 +411,6 @@
+ 		TRACE(("leave checkfileperm: stat() != 0"))
+ 		return DROPBEAR_FAILURE;
+ 	}
+-	/* check ownership - user or root only*/
+-	if (filestat.st_uid != ses.authstate.pw_uid
+-			&& filestat.st_uid != 0) {
+-		badperm = 1;
+-		TRACE(("wrong ownership"))
+-	}
+-	/* check permissions - don't want group or others +w */
+-	if (filestat.st_mode & (S_IWGRP | S_IWOTH)) {
+-		badperm = 1;
+-		TRACE(("wrong perms"))
+-	}
+-	if (badperm) {
+-		if (!ses.authstate.perm_warn) {
+-			ses.authstate.perm_warn = 1;
+-			dropbear_log(LOG_INFO, "%s must be owned by user or root, and not writable by others", filename);
+-		}
+-		TRACE(("leave checkfileperm: failure perms/owner"))
+-		return DROPBEAR_FAILURE;
+-	}
+ 
+ 	TRACE(("leave checkfileperm: success"))
+ 	return DROPBEAR_SUCCESS;

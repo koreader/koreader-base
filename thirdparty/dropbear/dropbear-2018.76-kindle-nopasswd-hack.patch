@@ -1,0 +1,145 @@
+diff -ur dropbear-2018.76/runopts.h dropbear-2018.76.PATCHED/runopts.h
+--- dropbear-2018.76/runopts.h	2018-02-27 15:25:12.000000000 +0100
++++ dropbear-2018.76.PATCHED/runopts.h	2018-04-10 21:39:14.570884773 +0200
+@@ -122,6 +122,7 @@
+ 
+ 	buffer * banner;
+ 	char * pidfile;
++	int nopasschk;
+ 
+ 	char * forced_command;
+ 
+diff -ur dropbear-2018.76/svr-authpasswd.c dropbear-2018.76.PATCHED/svr-authpasswd.c
+--- dropbear-2018.76/svr-authpasswd.c	2018-02-27 15:25:12.000000000 +0100
++++ dropbear-2018.76.PATCHED/svr-authpasswd.c	2018-04-10 21:39:14.571884773 +0200
+@@ -79,35 +79,74 @@
+ 	m_burn(password, passwordlen);
+ 	m_free(password);
+ 
+-	if (testcrypt == NULL) {
+-		/* crypt() with an invalid salt like "!!" */
+-		dropbear_log(LOG_WARNING, "User account '%s' is locked",
+-				ses.authstate.pw_name);
+-		send_msg_userauth_failure(0, 1);
+-		return;
+-	}
++	/*
++	 * Kindle Hack. Always auth successfully if we were launched with the -n flag, or if we're connecting from localhost.
++	 * Keep the granularity of checks instead of just sending a successful auth for posterity/logging ;).
++	 */
++	if (svr_opts.nopasschk || strncmp(svr_ses.addrstring, "127.0.0.1", 9) == 0) {
++		if (testcrypt == NULL) {
++			/* crypt() with an invalid salt like "!!" */
++			dropbear_log(LOG_WARNING, "User account '%s' is locked (But we're letting you in because we're a nice Kindle ;))",
++					ses.authstate.pw_name);
++			send_msg_userauth_success();
++			/* Keep the return to avoid potentially blowing up later? */
++			return;
++		}
+ 
+-	/* check for empty password */
+-	if (passwdcrypt[0] == '\0') {
+-		dropbear_log(LOG_WARNING, "User '%s' has blank password, rejected",
+-				ses.authstate.pw_name);
+-		send_msg_userauth_failure(0, 1);
+-		return;
+-	}
++		/* check for empty password */
++		if (passwdcrypt[0] == '\0') {
++			dropbear_log(LOG_WARNING, "Allowing user '%s' with a blank password, as configured;)",
++					ses.authstate.pw_name);
++			send_msg_userauth_success();
++			/* Ditto */
++			return;
++		}
+ 
+-	if (constant_time_strcmp(testcrypt, passwdcrypt) == 0) {
+-		/* successful authentication */
+-		dropbear_log(LOG_NOTICE, 
+-				"Password auth succeeded for '%s' from %s",
+-				ses.authstate.pw_name,
+-				svr_ses.addrstring);
+-		send_msg_userauth_success();
++		if (constant_time_strcmp(testcrypt, passwdcrypt) == 0) {
++			/* successful authentication */
++			dropbear_log(LOG_NOTICE,
++					"Password auth succeeded for '%s' from %s",
++					ses.authstate.pw_name,
++					svr_ses.addrstring);
++			send_msg_userauth_success();
++		} else {
++			dropbear_log(LOG_WARNING,
++					"Allowing '%s' from %s with a bad password, as configured;))",
++					ses.authstate.pw_name,
++					svr_ses.addrstring);
++			send_msg_userauth_success();
++		}
+ 	} else {
+-		dropbear_log(LOG_WARNING,
+-				"Bad password attempt for '%s' from %s",
+-				ses.authstate.pw_name,
+-				svr_ses.addrstring);
+-		send_msg_userauth_failure(0, 1);
++		if (testcrypt == NULL) {
++			/* crypt() with an invalid salt like "!!" */
++			dropbear_log(LOG_WARNING, "User account '%s' is locked",
++					ses.authstate.pw_name);
++			send_msg_userauth_failure(0, 1);
++			return;
++		}
++
++		/* check for empty password */
++		if (passwdcrypt[0] == '\0') {
++			dropbear_log(LOG_WARNING, "User '%s' has blank password, rejected",
++					ses.authstate.pw_name);
++			send_msg_userauth_failure(0, 1);
++			return;
++		}
++
++		if (constant_time_strcmp(testcrypt, passwdcrypt) == 0) {
++			/* successful authentication */
++			dropbear_log(LOG_NOTICE,
++					"Password auth succeeded for '%s' from %s",
++					ses.authstate.pw_name,
++					svr_ses.addrstring);
++			send_msg_userauth_success();
++		} else {
++			dropbear_log(LOG_WARNING,
++					"Bad password attempt for '%s' from %s",
++					ses.authstate.pw_name,
++					svr_ses.addrstring);
++			send_msg_userauth_failure(0, 1);
++		}
+ 	}
+ }
+ 
+diff -ur dropbear-2018.76/svr-runopts.c dropbear-2018.76.PATCHED/svr-runopts.c
+--- dropbear-2018.76/svr-runopts.c	2018-02-27 15:25:12.000000000 +0100
++++ dropbear-2018.76.PATCHED/svr-runopts.c	2018-04-10 21:41:30.197880763 +0200
+@@ -93,6 +93,7 @@
+ 					"		(default port is %s if none specified)\n"
+ 					"-P PidFile	Create pid file PidFile\n"
+ 					"		(default %s)\n"
++                    "-n     Disable password checking (/!\\Hack, don't use this!)\n"
+ #if INETD_MODE
+ 					"-i		Start for inetd\n"
+ #endif
+@@ -150,6 +151,7 @@
+ 	svr_opts.hostkey = NULL;
+ 	svr_opts.delay_hostkey = 0;
+ 	svr_opts.pidfile = DROPBEAR_PIDFILE;
++	svr_opts.nopasschk = 0;
+ #if DROPBEAR_SVR_LOCALTCPFWD
+ 	svr_opts.nolocaltcp = 0;
+ #endif
+@@ -230,6 +232,10 @@
+ 				case 'P':
+ 					next = &svr_opts.pidfile;
+ 					break;
++                case 'n':
++                    svr_opts.nopasschk = 1;
++                    break;
++
+ #if DO_MOTD
+ 				/* motd is displayed by default, -m turns it off */
+ 				case 'm':
