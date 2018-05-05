@@ -46,10 +46,12 @@ function framebuffer:_newBB(w, h)
     w = w or SDL.w
     h = h or SDL.h
 
+    local rotation
     local inverse
 
     if self.sdl_bb then self.sdl_bb:free() end
     if self.bb then
+        rotation = self.bb:getRotation()
         inverse = self.bb:getInverse() == 1
         self.bb:free()
     end
@@ -68,6 +70,10 @@ function framebuffer:_newBB(w, h)
     end
     self.invert_bb = BB.new(w, h, BB.TYPE_BBRGB32)
 
+    if rotation then
+        self.bb:setRotation(rotation)
+    end
+
     -- reinit inverse mode on resize
     if inverse then
         self.bb:invert()
@@ -77,7 +83,9 @@ end
 function framebuffer:_render(bb, x, y, w, h)
     w, x = BB.checkBounds(w or bb:getWidth(), x or 0, 0, bb:getWidth(), 0xFFFF)
     h, y = BB.checkBounds(h or bb:getHeight(), y or 0, 0, bb:getHeight(), 0xFFFF)
-    x, y, w, h = bb:getPhysicalRect(x, y, w, h)
+
+    -- x, y, w, h without rotation for SDL rectangle
+    local px, py, pw, ph = bb:getPhysicalRect(x, y, w, h)
 
     if bb:getInverse() == 1 then
         self.invert_bb:invertblitFrom(bb)
@@ -87,7 +95,7 @@ function framebuffer:_render(bb, x, y, w, h)
     -- A viewport is a Blitbuffer object that works on a rectangular
     -- subset of the underlying memory without allocating new memory.
     local bb_rect = bb:viewport(x, y, w, h)
-    local sdl_rect = SDL.rect(x, y, w, h)
+    local sdl_rect = SDL.rect(px, py, pw, ph)
 
     SDL.SDL.SDL_UpdateTexture(SDL.texture, sdl_rect, bb_rect.data, bb_rect.pitch)
 
