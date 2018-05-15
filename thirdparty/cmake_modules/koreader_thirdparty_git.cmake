@@ -134,7 +134,15 @@ execute_process(
   RESULT_VARIABLE error_code
 )
 if(error_code)
-  message(FATAL_ERROR \"Failed to update submodules in: '${work_dir}/${src_name}'\")
+  message(STATUS \"Fetching full repo\")
+  execute_process(
+    COMMAND \"${git_EXECUTABLE}\" submodule update --depth 999999 --recursive ${git_submodules}
+    WORKING_DIRECTORY \"${work_dir}/${src_name}\"
+    RESULT_VARIABLE error_code
+  )
+  if(error_code)
+    message(FATAL_ERROR \"Failed to update submodules in: '${work_dir}/${src_name}'\")
+  endif()
 endif()
 
 # Complete success, update the script-last-run stamp file:
