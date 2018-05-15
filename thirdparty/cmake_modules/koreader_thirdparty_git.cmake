@@ -88,7 +88,7 @@ if(NOT \"\${curr_tag}\" STREQUAL \"${git_tag}\")
       WORKING_DIRECTORY \"${work_dir}/${src_name}\"
     )
     execute_process(
-      COMMAND \"${git_EXECUTABLE}\" fetch origin :refs/remotes/origin/${git_tag}
+      COMMAND \"${git_EXECUTABLE}\" fetch origin \"${git_tag}\"
       WORKING_DIRECTORY \"${work_dir}/${src_name}\"
       RESULT_VARIABLE error_code
     )
