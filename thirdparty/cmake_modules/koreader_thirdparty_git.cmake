@@ -88,7 +88,7 @@ if(NOT \"\${curr_tag}\" STREQUAL \"${git_tag}\")
       WORKING_DIRECTORY \"${work_dir}/${src_name}\"
     )
     execute_process(
-      COMMAND \"${git_EXECUTABLE}\" fetch origin \"${git_tag}\"
+      COMMAND \"${git_EXECUTABLE}\" fetch
       WORKING_DIRECTORY \"${work_dir}/${src_name}\"
       RESULT_VARIABLE error_code
     )
@@ -103,7 +103,7 @@ if(NOT \"\${curr_tag}\" STREQUAL \"${git_tag}\")
     if(error_code)
       message(STATUS \"Fetching full repo\")
       execute_process(
-        COMMAND \"${git_EXECUTABLE}\" fetch --all
+        COMMAND \"${git_EXECUTABLE}\" fetch --depth 999999
         WORKING_DIRECTORY \"${work_dir}/${src_name}\"
       )
       execute_process(
