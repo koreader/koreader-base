@@ -249,7 +249,7 @@ local function refresh_kobo(fb, refreshtype, waveform_mode, wait, x, y, w, h)
 	-- Enable the appropriate flag when requesting a REAGLD waveform (NTX_WFM_MODE_GLD16 on the Aura)
 	if waveform_mode == ffi.C.NTX_WFM_MODE_GLD16 then
 		refarea[0].flags = ffi.C.EPDC_FLAG_USE_AAD
-	else if waveform_mode == ffi.C.WAVEFORM_MODE_A2 then
+	elseif waveform_mode == ffi.C.WAVEFORM_MODE_A2 then
 		-- As well as when requesting a 2bit waveform
 		refarea[0].flags = ffi.C.EPDC_FLAG_FORCE_MONOCHROME
 	else
