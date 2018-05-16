@@ -30,6 +30,8 @@ local framebuffer = {
     -- for now we use up to 10 markers in order to
     -- leave a bit of room for non-tagged updates
     max_marker = 10,
+    -- and start incrementing non-tracked marker from here
+    marker = 41,
 }
 
 --[[ refresh list management: --]]
@@ -124,6 +126,19 @@ function framebuffer:_get_marker(rect, refreshtype, waveform_mode)
     return marker
 end
 
+--[[
+return an incrementing marker value for untracked updates
+makes debugging spurious refreshes slightly less obnoxious.
+--]]
+function framebuffer:_get_untracked_marker()
+    local marker = self.marker + 1
+    if marker > (42 * 2) then
+        marker = 42
+    end
+    self.marker = marker
+    return marker
+end
+
 --[[ handlers for the wait API of the eink driver --]]
 
 -- Kindle's MXCFB_WAIT_FOR_UPDATE_COMPLETE_PEARL == 0x4004462f
@@ -200,7 +215,7 @@ local function mxc_update(fb, refarea, refreshtype, waveform_mode, wait, x, y, w
         submit_marker = fb:_get_marker(rect, refreshtype, waveform_mode)
     else
         -- NOTE: 0 is an invalid marker id! Use something randomly fun instead, but > self.max_marker to avoid wreaking havoc.
-        submit_marker = 42
+        submit_marker = fb:_get_untracked_marker()
     end
     refarea[0].update_marker = submit_marker
 	-- NOTE: We're not using EPDC_FLAG_USE_ALT_BUFFER
