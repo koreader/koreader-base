@@ -177,7 +177,7 @@ index f6951ba2..b1fdd981 100644
 +char *
 +fz_lookup_cjk_font_from_file(fz_context *ctx, int registry, int serif, int wmode)
 +{
-+	return get_font_file("noto/NotoSansCJK-Regular.ttf");
++	return get_font_file("noto/NotoSansCJKsc-Regular.otf");
 +}
 +
 +const unsigned char *
@@ -207,7 +207,7 @@ index f6951ba2..b1fdd981 100644
 +	char *filename;
 +	fz_font *font;
 +
-+	filename = get_font_file("noto/NotoSansCJK-Regular.ttf");
++	filename = get_font_file("noto/NotoSansCJKsc-Regular.otf");
 +	font = fz_new_font_from_file(ctx, NULL, filename, 0, 1);
 +	free(filename);
 +	return font;

@@ -1398,7 +1398,7 @@ static int drawCoverPage(lua_State *L) {
 		printf("cover size:%d,%d\n", cover->GetWidth(), cover->GetHeight());
 	else
 		printf("cover page is null.\n");
-	LVDrawBookCover(drawBuf, cover, lString8("Droid Sans Fallback"),
+	LVDrawBookCover(drawBuf, cover, lString8("Droid Sans Mono"),
 			lString16("test"), lString16("test"), lString16("test"), 0);
 
 	return 0;
