@@ -244,11 +244,14 @@ local function refresh_kobo(fb, refreshtype, waveform_mode, wait, x, y, w, h)
 	local refarea = ffi.new("struct mxcfb_update_data[1]")
 	-- only for Kobo's driver:
 	refarea[0].alt_buffer_data.virt_addr = nil
-	-- TEMP_USE_AMBIENT
-	refarea[0].temp = 0x1000
-	-- Enable the appropriate flag when requesting a REAGLD waveform (NTX_WFM_MODE_GLD16)
-	if waveform_mode == ffi.C.WAVEFORM_MODE_REAGLD then
+	-- TEMP_USE_AMBIENT, not that there was ever any other choice on Kobo...
+	refarea[0].temp = ffi.C.TEMP_USE_AMBIENT
+	-- Enable the appropriate flag when requesting a REAGLD waveform (NTX_WFM_MODE_GLD16 on the Aura)
+	if waveform_mode == ffi.C.NTX_WFM_MODE_GLD16 then
 		refarea[0].flags = ffi.C.EPDC_FLAG_USE_AAD
+	else if waveform_mode == ffi.C.WAVEFORM_MODE_A2 then
+		-- As well as when requesting a 2bit waveform
+		refarea[0].flags = ffi.C.EPDC_FLAG_FORCE_MONOCHROME
 	else
 		refarea[0].flags = 0
 	end
@@ -388,9 +391,11 @@ function framebuffer:init()
 
         if self.device.model == "Kobo_phoenix" then
             self.waveform_partial = ffi.C.NTX_WFM_MODE_GLD16
+            self.update_mode_partial = ffi.C.UPDATE_MODE_FULL -- REAGL get upgraded to full
             self.wait_for_marker_full = true
             self.wait_for_marker_partial = true
-            self.wait_for_marker_fast = true
+            self.waveform_fast = ffi.C.WAVEFORM_MODE_DU  -- NOTE: Yup, used instead of A2 for menu HL in Nickel...
+            self.wait_for_marker_fast = false
         elseif self.device.model == "Kobo_dahlia" then
             self.wait_for_marker_full = true
             self.wait_for_marker_partial = false
