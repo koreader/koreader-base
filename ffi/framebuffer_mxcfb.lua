@@ -132,7 +132,7 @@ makes debugging spurious refreshes slightly less obnoxious.
 --]]
 function framebuffer:_get_untracked_marker()
     local marker = self.marker + 1
-    if marker > (42 * 2) then
+    if marker > (42 * 42) then
         marker = 42
     end
     self.marker = marker
@@ -165,6 +165,12 @@ local function kindle_carta_mxc_wait_for_update_complete(fb, marker)
     local carta_update_marker = ffi.new("struct mxcfb_update_marker_data[1]")
     carta_update_marker[0].update_marker = marker
     -- We're not using EPDC_FLAG_TEST_COLLISION, assume 0 is okay.
+    -- NOTE: Current FW do fill that with something else than 0:
+    --       1642888 before a GC16_FAST & GC16
+    --       1 after a GC16_FAST & GC16
+    --       0 before a REAGL
+    --       4 after a REAGL
+    --
     carta_update_marker[0].collision_test = 0
     return ffi.C.ioctl(fb.fd, ffi.C.MXCFB_WAIT_FOR_UPDATE_COMPLETE, carta_update_marker)
 end
@@ -229,10 +235,16 @@ local function mxc_update(fb, refarea, refreshtype, waveform_mode, wait, x, y, w
 
 	ffi.C.ioctl(fb.fd, ffi.C.MXCFB_SEND_UPDATE, refarea)
 
+    -- To mimic the framework, only wait for submission of *previous* marker, before sending a (true) full update.
+    -- And follow by a wait for update complete on that same marker.
+    -- If current update is a partial -> full REAGL, only wait for update complete.
+    -- If curent update is GC16_FAST, only wait for submission
     if submit_marker and fb.mech_wait_update_submission then
         fb.debug("refresh: wait for submission")
         fb.mech_wait_update_submission(fb, submit_marker)
     end
+
+    -- NOTE: And wait for update complete after *any kind* of full update.
 end
 
 local function refresh_k51(fb, refreshtype, waveform_mode, wait, x, y, w, h)
@@ -245,7 +257,8 @@ local function refresh_k51(fb, refreshtype, waveform_mode, wait, x, y, w, h)
 		refarea[0].hist_bw_waveform_mode = ffi.C.WAVEFORM_MODE_DU
 	end
 	-- Same as our requested waveform_mode
-	refarea[0].hist_gray_waveform_mode = waveform_mode or ffi.C.WAVEFORM_MODE_GC16
+	-- FIXME: REAGL if REAGL; GC16 if GC16; GC16_FAST otherwise?
+	refarea[0].hist_gray_waveform_mode = waveform_mode or ffi.C.WAVEFORM_MODE_GC16_FAST
 	-- TEMP_USE_PAPYRUS on Touch/PW1, TEMP_USE_AUTO on PW2 (same value in both cases, 0x1001)
 	refarea[0].temp = ffi.C.TEMP_USE_AUTO
 	-- NOTE: We never use any flags on Kindle.
@@ -321,7 +334,7 @@ function framebuffer:init()
         self.update_mode_fast = ffi.C.UPDATE_MODE_PARTIAL
         self.update_mode_ui = ffi.C.UPDATE_MODE_PARTIAL
 
-        self.waveform_fast = ffi.C.WAVEFORM_MODE_A2
+        self.waveform_fast = ffi.C.WAVEFORM_MODE_A2 -- FIXME: -> AUTO on REAGL?
         self.waveform_ui = ffi.C.WAVEFORM_MODE_GC16_FAST
         self.waveform_full = ffi.C.WAVEFORM_MODE_GC16
 
