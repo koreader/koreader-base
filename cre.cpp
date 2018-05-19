@@ -492,6 +492,24 @@ static int closeDocument(lua_State *L) {
 	return 0;
 }
 
+static int isBuiltDomStale(lua_State *L) {
+    CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
+    lua_pushboolean(L, doc->dom_doc->isBuiltDomStale());
+    return 1;
+}
+
+static int hasCacheFile(lua_State *L) {
+    CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
+    lua_pushboolean(L, doc->dom_doc->hasCacheFile());
+    return 1;
+}
+
+static int invalidateCacheFile(lua_State *L) {
+    CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
+    doc->dom_doc->invalidateCacheFile();
+    return 0;
+}
+
 static int getDocumentProps(lua_State *L) {
 	CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
 
@@ -560,7 +578,7 @@ static int getPosFromXPointer(lua_State *L) {
 	int pos = 0;
 	ldomXPointer xp = doc->dom_doc->createXPointer(lString16(xpointer_str));
 
-	lvPoint pt = xp.toPoint(true); // use_getRectEx, for better accuracy
+	lvPoint pt = xp.toPoint(true); // extended=true, for better accuracy
 	if (pt.y > 0) {
 		pos = pt.y;
 	}
@@ -1670,6 +1688,9 @@ static const struct luaL_Reg credocument_meth[] = {
 	{"adjustFontSizes", adjustFontSizes},
 	{"setBatteryState", setBatteryState},
 	/* --- control methods ---*/
+	{"isBuiltDomStale", isBuiltDomStale},
+	{"hasCacheFile", hasCacheFile},
+	{"invalidateCacheFile", invalidateCacheFile},
 	{"gotoPage", gotoPage},
 	{"gotoPercent", gotoPercent},
 	{"gotoPos", gotoPos},
