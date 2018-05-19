@@ -164,7 +164,7 @@ local function kindle_carta_mxc_wait_for_update_complete(fb, marker)
     -- Wait for the previous update to be completed
     local carta_update_marker = ffi.new("struct mxcfb_update_marker_data[1]")
     carta_update_marker[0].update_marker = marker
-    -- We're not using EPDC_FLAG_TEST_COLLISION, assume 0 is okay.
+    -- Assume 0 is okay? (NB: Flag EPDC_FLAG_TEST_COLLISION is for dry-run collision tests, don't set it.)
     -- NOTE: Current FW do fill that with something else than 0:
     --       1642888 before a GC16_FAST & GC16
     --       1 after a GC16_FAST & GC16
