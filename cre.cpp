@@ -510,6 +510,15 @@ static int invalidateCacheFile(lua_State *L) {
     return 0;
 }
 
+static int getCacheFilePath(lua_State *L) {
+    CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
+    lString16 cache_path = doc->dom_doc->getCacheFilePath();
+    if (cache_path.empty())
+        return 0;
+    lua_pushstring(L, UnicodeToLocal(cache_path).c_str());
+    return 1;
+}
+
 static int getDocumentProps(lua_State *L) {
 	CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
 
@@ -1691,6 +1700,7 @@ static const struct luaL_Reg credocument_meth[] = {
 	{"isBuiltDomStale", isBuiltDomStale},
 	{"hasCacheFile", hasCacheFile},
 	{"invalidateCacheFile", invalidateCacheFile},
+	{"getCacheFilePath", getCacheFilePath},
 	{"gotoPage", gotoPage},
 	{"gotoPercent", gotoPercent},
 	{"gotoPos", gotoPos},
