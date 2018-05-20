@@ -12,7 +12,7 @@ export TESSDATA_PREFIX
 cd build/* && TESSDATA_PREFIX=$(pwd)/data && mkdir -p data/tessdata
 mv ../../tesseract-ocr/tessdata/* data/tessdata/ && cd ../../ || exit
 # fetch font for base test
-travis_retry wget https://github.com/koreader/koreader/raw/master/resources/fonts/droid/DroidSansMono.ttf
+travis_retry wget https://github.com/koreader/koreader-fonts/raw/master/droid/DroidSansMono.ttf
 export OUTPUT_DIR
 if [ -n "${KODEBUG+x}" ]; then
     KODEBUG_SUFFIX=-debug
