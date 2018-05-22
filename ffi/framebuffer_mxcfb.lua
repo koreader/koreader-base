@@ -120,7 +120,7 @@ local function mxc_update(fb, refarea, refresh_type, waveform_mode, x, y, w, h)
     -- NOTE: If we're trying to send a:
     --         * true FULL update,
     --         * REAGL update,
-    --         * GC16_FAST update (i.e., popping-up a menu)
+    --         * GC16_FAST update (i.e., popping-up a menu),
     --       then wait for submission of previous marker first.
     -- NOTE: WAVEFORM_MODE_GC16_FAST maps to NTX_WFM_MODE_GC4 in Kobo-land, which we never use,
     --       while WAVEFORM_MODE_GL16_FAST maps to NTX_WFM_MODE_GLR16, which we also never use,
@@ -134,6 +134,17 @@ local function mxc_update(fb, refarea, refresh_type, waveform_mode, x, y, w, h)
       and marker >= MARKER_MIN and marker <= MARKER_MAX then
         fb.debug("refresh: wait for submission of (previous) marker", marker)
         fb.mech_wait_update_submission(fb, marker)
+    end
+
+    -- NOTE: If we're trying to send a:
+    --         * REAGL update,
+    --         * GC16 update,
+    --       then wait for completion of previous marker first.
+    if waveform_mode == waveform_mode == ffi.C.WAVEFORM_MODE_REAGL or waveform_mode == ffi.C.NTX_WFM_MODE_GLD16
+      or waveform_mode == ffi.C.WAVEFORM_MODE_GC16
+      and fb.mech_wait_update_complete then
+        fb.debug("refresh: wait for completion of (previous) marker", marker)
+        fb.mech_wait_update_complete(fb, marker)
     end
 
     refarea[0].update_mode = refresh_type or ffi.C.UPDATE_MODE_PARTIAL
