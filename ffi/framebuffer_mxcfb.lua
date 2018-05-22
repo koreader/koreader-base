@@ -361,10 +361,7 @@ function framebuffer:init()
         self.waveform_fast = ffi.C.WAVEFORM_MODE_A2
         self.waveform_ui = ffi.C.WAVEFORM_MODE_GC16
         self.waveform_full = ffi.C.WAVEFORM_MODE_GC16
-
-        if self.device.model == "PocketBook" then
-            self.waveform_partial = ffi.C.WAVEFORM_MODE_GC16
-        end
+        self.waveform_partial = ffi.C.WAVEFORM_MODE_GC16
     else
         error("unknown device type")
     end
