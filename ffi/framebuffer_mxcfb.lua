@@ -140,10 +140,10 @@ local function mxc_update(fb, refarea, refresh_type, waveform_mode, x, y, w, h)
     --       then wait for submission of previous marker first.
     local marker = fb:_get_marker()
     -- Make sure it's a valid marker, to avoid doing something stupid on our first update.
-    if refresh_type == ffi.C.UPDATE_MODE_FULL
-      or fb:_isUIWaveFormMode(waveform_mode)
+    if (refresh_type == ffi.C.UPDATE_MODE_FULL
+      or fb:_isUIWaveFormMode(waveform_mode))
       and fb.mech_wait_update_submission
-      and marker >= MARKER_MIN and marker <= MARKER_MAX then
+      and (marker >= MARKER_MIN and marker <= MARKER_MAX) then
         fb.debug("refresh: wait for submission of (previous) marker", marker)
         fb.mech_wait_update_submission(fb, marker)
     end
@@ -152,8 +152,8 @@ local function mxc_update(fb, refarea, refresh_type, waveform_mode, x, y, w, h)
     --         * REAGL update,
     --         * GC16 update,
     --       then wait for completion of previous marker first.
-    if fb:_isREAGLWaveFormMode(waveform_mode)
-      or waveform_mode == ffi.C.WAVEFORM_MODE_GC16
+    if (fb:_isREAGLWaveFormMode(waveform_mode)
+      or waveform_mode == ffi.C.WAVEFORM_MODE_GC16)
       and fb.mech_wait_update_complete then
         fb.debug("refresh: wait for completion of (previous) marker", marker)
         fb.mech_wait_update_complete(fb, marker)
