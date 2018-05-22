@@ -29,24 +29,45 @@ local framebuffer = {
 
 --[[ refresh list management: --]]
 
---[[
-returns an incrementing marker value, w/ a sane wraparound.
---]]
+-- Returns an incrementing marker value, w/ a sane wraparound.
 function framebuffer:_get_next_marker()
     local marker = self.marker + 1
     if marker > MARKER_MAX then
         marker = MARKER_MIN
     end
+
     self.marker = marker
     return marker
 end
 
---[[
-returns current marker value.
---]]
+-- Returns current marker value.
 function framebuffer:_get_marker()
     local marker = self.marker
     return marker
+end
+
+-- Returns true if waveform_mode arg matches the UI waveform mode for current device
+-- NOTE: This is to avoid explicit comparison against device-specific waveform constants in mxc_update()
+--       Here, it's for the Kindle-specific WAVEFORM_MODE_GC16_FAST
+-- NOTE: We-re currently only used in conjunction with a mech_wait_update_submission check, which
+--       is also Kindle-specific, so this should be good enough for now.
+function framebuffer:_isUIWaveFormMode(waveform_mode)
+    return waveform_mode == self.waveform_ui
+end
+
+-- Returns true if waveform_mode arg matches the REAGL waveform mode for current device
+-- NOTE: This is to avoid explicit comparison against device-specific waveform constants in mxc_update()
+--       Here, it's Kindle's WAVEFORM_MODE_REAGL vs. Kobo's NTX_WFM_MODE_GLD16
+function framebuffer:_isREAGLWaveFormMode(waveform_mode)
+    local ret = false
+
+    if self.device:isKindle() then
+        ret = waveform_mode == ffi.C.WAVEFORM_MODE_REAGL
+    elseif self.device:isKobo() then
+        ret = waveform_mode == ffi.C.NTX_WFM_MODE_GLD16
+    end
+
+    return ret
 end
 
 --[[ handlers for the wait API of the eink driver --]]
@@ -122,14 +143,11 @@ local function mxc_update(fb, refarea, refresh_type, waveform_mode, x, y, w, h)
     --         * REAGL update,
     --         * GC16_FAST update (i.e., popping-up a menu),
     --       then wait for submission of previous marker first.
-    -- NOTE: WAVEFORM_MODE_GC16_FAST maps to NTX_WFM_MODE_GC4 in Kobo-land, which we never use,
-    --       while WAVEFORM_MODE_GL16_FAST maps to NTX_WFM_MODE_GLR16, which we also never use,
-    --       so, again, we can get away with this without any kind of device check :).
     local marker = fb:_get_marker()
     -- Make sure it's a valid marker, to avoid doing something stupid on our first update.
     if refresh_type == ffi.C.UPDATE_MODE_FULL
-      or waveform_mode == ffi.C.WAVEFORM_MODE_REAGL or waveform_mode == ffi.C.NTX_WFM_MODE_GLD16
-      or waveform_mode == ffi.C.WAVEFORM_MODE_GC16_FAST
+      or fb:_isREAGLWaveFormMode(waveform_mode)
+      or fb:_isUIWaveFormMode(waveform_mode)
       and fb.mech_wait_update_submission
       and marker >= MARKER_MIN and marker <= MARKER_MAX then
         fb.debug("refresh: wait for submission of (previous) marker", marker)
@@ -140,7 +158,7 @@ local function mxc_update(fb, refarea, refresh_type, waveform_mode, x, y, w, h)
     --         * REAGL update,
     --         * GC16 update,
     --       then wait for completion of previous marker first.
-    if waveform_mode == waveform_mode == ffi.C.WAVEFORM_MODE_REAGL or waveform_mode == ffi.C.NTX_WFM_MODE_GLD16
+    if fb:_isREAGLWaveFormMode(waveform_mode)
       or waveform_mode == ffi.C.WAVEFORM_MODE_GC16
       and fb.mech_wait_update_complete then
         fb.debug("refresh: wait for completion of (previous) marker", marker)
@@ -165,9 +183,7 @@ local function mxc_update(fb, refarea, refresh_type, waveform_mode, x, y, w, h)
     refarea[0].alt_buffer_data.alt_update_region.height = 0
 
     -- Handle REAGL promotion...
-    -- NOTE: NTX_WFM_MODE_GLD16 maps to WAVEFORM_MODE_DU4 in Kindle-land, which we never use,
-    --       so we can get away with this without any kind of device check :).
-    if waveform_mode == ffi.C.WAVEFORM_MODE_REAGL or waveform_mode == ffi.C.NTX_WFM_MODE_GLD16 then
+    if fb:_isREAGLWaveFormMode(waveform_mode) then
         refarea[0].update_mode = ffi.C.UPDATE_MODE_FULL
     end
 
