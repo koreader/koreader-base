@@ -18,10 +18,6 @@ local framebuffer = {
     waveform_ui = nil,
     waveform_full = nil,
     waveform_fast = nil,
-    update_mode_partial = nil,
-    update_mode_ui = nil,
-    update_mode_full = nil,
-    update_mode_fast = nil,
     mech_refresh = nil,
     -- start with an out-of bound marker value to avoid doing something stupid on our first update
     marker = MARKER_MIN - 1,
@@ -181,7 +177,9 @@ local function mxc_update(fb, refarea, refresh_type, waveform_mode, x, y, w, h)
     refarea[0].alt_buffer_data.alt_update_region.height = 0
 
     -- Handle REAGL promotion...
+    -- NOTE: We need to do this here, because we rely on the pre-promotion actual refresh_type in previous heuristics.
     if fb:_isREAGLWaveFormMode(waveform_mode) then
+        -- NOTE: REAGL updates always need to be full.
         refarea[0].update_mode = ffi.C.UPDATE_MODE_FULL
     end
 
@@ -250,22 +248,22 @@ end
 
 function framebuffer:refreshPartialImp(x, y, w, h)
     self.debug("refresh: partial", x, y, w, h)
-    self:mech_refresh(self.update_mode_partial, self.waveform_partial, x, y, w, h)
+    self:mech_refresh(ffi.C.UPDATE_MODE_PARTIAL, self.waveform_partial, x, y, w, h)
 end
 
 function framebuffer:refreshUIImp(x, y, w, h)
     self.debug("refresh: ui-mode", x, y, w, h)
-    self:mech_refresh(self.update_mode_ui, self.waveform_ui, x, y, w, h)
+    self:mech_refresh(ffi.C.UPDATE_MODE_PARTIAL, self.waveform_ui, x, y, w, h)
 end
 
 function framebuffer:refreshFullImp(x, y, w, h)
     self.debug("refresh: full", x, y, w, h)
-    self:mech_refresh(self.update_mode_full, self.waveform_full, x, y, w, h)
+    self:mech_refresh(ffi.C.UPDATE_MODE_FULL, self.waveform_full, x, y, w, h)
 end
 
 function framebuffer:refreshFastImp(x, y, w, h)
     self.debug("refresh: fast", x, y, w, h)
-    self:mech_refresh(self.update_mode_fast, self.waveform_fast, x, y, w, h)
+    self:mech_refresh(ffi.C.UPDATE_MODE_PARTIAL, self.waveform_fast, x, y, w, h)
 end
 
 function framebuffer:init()
@@ -281,11 +279,6 @@ function framebuffer:init()
         self.mech_refresh = refresh_k51
         self.mech_wait_update_complete = kindle_pearl_mxc_wait_for_update_complete
         self.mech_wait_update_submission = kindle_mxc_wait_for_update_submission
-
-        self.update_mode_partial = ffi.C.UPDATE_MODE_PARTIAL
-        self.update_mode_full = ffi.C.UPDATE_MODE_FULL
-        self.update_mode_fast = ffi.C.UPDATE_MODE_PARTIAL
-        self.update_mode_ui = ffi.C.UPDATE_MODE_PARTIAL
 
         self.waveform_fast = ffi.C.WAVEFORM_MODE_A2
         self.waveform_ui = ffi.C.WAVEFORM_MODE_GC16_FAST
@@ -312,7 +305,6 @@ function framebuffer:init()
             self.mech_wait_update_complete = kindle_carta_mxc_wait_for_update_complete
             --self.waveform_fast = ffi.C.WAVEFORM_MODE_AUTO
             self.waveform_partial = ffi.C.WAVEFORM_MODE_REAGL
-            self.update_mode_partial = ffi.C.UPDATE_MODE_FULL -- REAGL updates always need to be FULL
         else
             self.waveform_partial = ffi.C.WAVEFORM_MODE_GL16_FAST -- FIXME: Double-check?
         end
@@ -321,11 +313,6 @@ function framebuffer:init()
 
         self.mech_refresh = refresh_kobo
         self.mech_wait_update_complete = kobo_mxc_wait_for_update_complete
-
-        self.update_mode_partial = ffi.C.UPDATE_MODE_PARTIAL
-        self.update_mode_full = ffi.C.UPDATE_MODE_FULL
-        self.update_mode_fast = ffi.C.UPDATE_MODE_PARTIAL
-        self.update_mode_ui = ffi.C.UPDATE_MODE_PARTIAL
 
         self.waveform_fast = ffi.C.WAVEFORM_MODE_A2
         self.waveform_ui = ffi.C.WAVEFORM_MODE_AUTO
@@ -342,7 +329,6 @@ function framebuffer:init()
 
         if isREAGL then
             self.waveform_partial = ffi.C.NTX_WFM_MODE_GLD16
-            self.update_mode_partial = ffi.C.UPDATE_MODE_FULL -- REAGL updates always need to be FULL
             self.waveform_fast = ffi.C.WAVEFORM_MODE_DU -- Mainly menu HLs, compare to Kindle's use of AUTO in these instances ;).
         end
     elseif self.device:isPocketBook() then
@@ -350,11 +336,6 @@ function framebuffer:init()
 
         self.mech_refresh = refresh_pocketbook
         self.mech_wait_update_complete = pocketbook_mxc_wait_for_update_complete
-
-        self.update_mode_partial = ffi.C.UPDATE_MODE_PARTIAL
-        self.update_mode_full = ffi.C.UPDATE_MODE_FULL
-        self.update_mode_fast = ffi.C.UPDATE_MODE_PARTIAL
-        self.update_mode_ui = ffi.C.UPDATE_MODE_PARTIAL
 
         self.waveform_fast = ffi.C.WAVEFORM_MODE_A2
         self.waveform_ui = ffi.C.WAVEFORM_MODE_GC16
