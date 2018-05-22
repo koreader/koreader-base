@@ -167,7 +167,7 @@ local function mxc_update(fb, refarea, refresh_type, waveform_mode, x, y, w, h)
     -- Handle REAGL promotion...
     -- NOTE: NTX_WFM_MODE_GLD16 maps to WAVEFORM_MODE_DU4 in Kindle-land, which we never use,
     --       so we can get away with this without any kind of device check :).
-    if waveform_mode == ffi.C.WAVEFORM_MODE_REAGL or waveform_mode == ffi.C.NTX_WFM_MODE_GLD16
+    if waveform_mode == ffi.C.WAVEFORM_MODE_REAGL or waveform_mode == ffi.C.NTX_WFM_MODE_GLD16 then
         refarea[0].update_mode = ffi.C.UPDATE_MODE_FULL
     end
 
