@@ -363,5 +363,3 @@ function framebuffer:init()
 end
 
 return require("ffi/framebuffer_linux"):extend(framebuffer)
-
--- kate: indent-mode cstyle; indent-width 4; replace-tabs on;
