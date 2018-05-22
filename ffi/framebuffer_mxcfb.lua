@@ -266,9 +266,20 @@ function framebuffer:refreshPartialImp(x, y, w, h)
     self:mech_refresh(ffi.C.UPDATE_MODE_PARTIAL, self.waveform_partial, x, y, w, h)
 end
 
+-- NOTE: UPDATE_MODE_FULL doesn't mean full screen or no region, it means ask for a black flash!
+function framebuffer:refreshFlashPartialImp(x, y, w, h)
+    self.debug("refresh: partial w/ flash", x, y, w, h)
+    self:mech_refresh(ffi.C.UPDATE_MODE_FULL, self.waveform_partial, x, y, w, h)
+end
+
 function framebuffer:refreshUIImp(x, y, w, h)
     self.debug("refresh: ui-mode", x, y, w, h)
     self:mech_refresh(ffi.C.UPDATE_MODE_PARTIAL, self.waveform_ui, x, y, w, h)
+end
+
+function framebuffer:refreshFlashUIImp(x, y, w, h)
+    self.debug("refresh: ui-mode w/ flash", x, y, w, h)
+    self:mech_refresh(ffi.C.UPDATE_MODE_FULL, self.waveform_ui, x, y, w, h)
 end
 
 function framebuffer:refreshFullImp(x, y, w, h)
