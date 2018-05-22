@@ -87,18 +87,13 @@ local function pocketbook_mxc_wait_for_update_complete(fb, marker)
 end
 
 -- Kindle's MXCFB_WAIT_FOR_UPDATE_COMPLETE == 0xc008462f
-local function kindle_carta_mxc_wait_for_update_complete(fb, marker)
+local function kindle_carta_mxc_wait_for_update_complete(fb, marker, collision_test)
     -- Wait for the previous update to be completed
     local carta_update_marker = ffi.new("struct mxcfb_update_marker_data[1]")
     carta_update_marker[0].update_marker = marker
-    -- Assume 0 is okay? (NB: Flag EPDC_FLAG_TEST_COLLISION is for dry-run collision tests, never set it.)
-    -- NOTE: Current FW do fill that with something else than 0:
-    --       1642888 before a GC16_FAST & GC16
-    --       1 after a GC16_FAST & GC16
-    --       0 before a REAGL
-    --       4 after a REAGL
-    --
-    carta_update_marker[0].collision_test = 0
+    -- NOTE: Assume a fallback of 0 is okay.
+    --       On a slightly related note, the EPDC_FLAG_TEST_COLLISION flag is for dry-run collision tests, never set it.
+    carta_update_marker[0].collision_test = collision_test or 0
     return ffi.C.ioctl(fb.fd, ffi.C.MXCFB_WAIT_FOR_UPDATE_COMPLETE, carta_update_marker)
 end
 
@@ -152,11 +147,21 @@ local function mxc_update(fb, refarea, refresh_type, waveform_mode, x, y, w, h)
     --         * REAGL update,
     --         * GC16 update,
     --       then wait for completion of previous marker first.
+    local collision_test = 0
     if (fb:_isREAGLWaveFormMode(waveform_mode)
       or waveform_mode == ffi.C.WAVEFORM_MODE_GC16)
       and fb.mech_wait_update_complete then
-        fb.debug("refresh: wait for completion of (previous) marker", marker)
-        fb.mech_wait_update_complete(fb, marker)
+        -- NOTE: Setup the slightly mysterious collision_test flag...
+        if fb:_isREAGLWaveFormMode(waveform_mode) then
+            collision_test = 0
+        elseif waveform_mode == ffi.C.WAVEFORM_MODE_GC16 then
+            -- NOTE: Technically also when GC16_FAST, because the framework handles menus as GC16_FAST + FULL,
+            --       to get an extra black flash to avoid ghosting... They don't for other popups though...
+            --       When a menu/popup is closed, everyone agrees that we should do a FULL, though ;).
+            collision_test = 1642888
+        end
+        fb.debug("refresh: wait for completion of (previous) marker", marker, "with collision_test", collision_test)
+        fb.mech_wait_update_complete(fb, marker, collision_test)
     end
 
     refarea[0].update_mode = refresh_type or ffi.C.UPDATE_MODE_PARTIAL
@@ -188,8 +193,14 @@ local function mxc_update(fb, refarea, refresh_type, waveform_mode, x, y, w, h)
     -- NOTE: We wait for completion after *any kind* of full update.
     if refarea[0].update_mode == ffi.C.UPDATE_MODE_FULL
       and fb.mech_wait_update_complete then
-        fb.debug("refresh: wait for completion of marker", marker)
-        fb.mech_wait_update_complete(fb, marker)
+        -- NOTE: Again, setup collision_test magic numbers...
+        if fb:_isREAGLWaveFormMode(waveform_mode) then
+            collision_test = 4
+        elseif waveform_mode == ffi.C.WAVEFORM_MODE_GC16 or fb:_isUIWaveFormMode(waveform_mode) then
+            collision_test = 1
+        end
+        fb.debug("refresh: wait for completion of marker", marker, "with collision_test", collision_test)
+        fb.mech_wait_update_complete(fb, marker, collision_test)
     end
 end
 
@@ -211,7 +222,8 @@ local function refresh_k51(fb, refreshtype, waveform_mode, x, y, w, h)
     -- TEMP_USE_PAPYRUS on Touch/PW1, TEMP_USE_AUTO on PW2 (same value in both cases, 0x1001)
     refarea[0].temp = ffi.C.TEMP_USE_AUTO
     -- NOTE: We never use any flags on Kindle.
-    -- TODO: EPDC_FLAG_ENABLE_INVERSION & EPDC_FLAG_FORCE_MONOCHROME might be of use, though...
+    -- TODO: EPDC_FLAG_ENABLE_INVERSION & EPDC_FLAG_FORCE_MONOCHROME might be of use, though,
+    --       although the framework itself barely ever sets any flags, for some reason...
     refarea[0].flags = 0
 
     return mxc_update(fb, refarea, refreshtype, waveform_mode, x, y, w, h)
