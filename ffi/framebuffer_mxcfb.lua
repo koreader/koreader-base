@@ -209,13 +209,13 @@ local function mxc_update(fb, refarea, refreshtype, waveform_mode, wait, x, y, w
     -- always wait for conflicts:
     fb:_wait_for_conflicting(rect)
 
-	refarea[0].update_mode = refreshtype or ffi.C.UPDATE_MODE_PARTIAL
-	refarea[0].waveform_mode = waveform_mode or ffi.C.WAVEFORM_MODE_GC16
-	refarea[0].update_region.left = x
-	refarea[0].update_region.top = y
-	refarea[0].update_region.width = w
-	refarea[0].update_region.height = h
-	-- send a tracked update marker when wait==true, or 42 otherwise
+    refarea[0].update_mode = refreshtype or ffi.C.UPDATE_MODE_PARTIAL
+    refarea[0].waveform_mode = waveform_mode or ffi.C.WAVEFORM_MODE_GC16
+    refarea[0].update_region.left = x
+    refarea[0].update_region.top = y
+    refarea[0].update_region.width = w
+    refarea[0].update_region.height = h
+    -- send a tracked update marker when wait==true, or 42 otherwise
     local submit_marker
     if wait then
         submit_marker = fb:_get_marker(rect, refreshtype, waveform_mode)
@@ -224,16 +224,16 @@ local function mxc_update(fb, refarea, refreshtype, waveform_mode, wait, x, y, w
         submit_marker = fb:_get_untracked_marker()
     end
     refarea[0].update_marker = submit_marker
-	-- NOTE: We're not using EPDC_FLAG_USE_ALT_BUFFER
-	refarea[0].alt_buffer_data.phys_addr = 0
-	refarea[0].alt_buffer_data.width = 0
-	refarea[0].alt_buffer_data.height = 0
-	refarea[0].alt_buffer_data.alt_update_region.top = 0
-	refarea[0].alt_buffer_data.alt_update_region.left = 0
-	refarea[0].alt_buffer_data.alt_update_region.width = 0
-	refarea[0].alt_buffer_data.alt_update_region.height = 0
+    -- NOTE: We're not using EPDC_FLAG_USE_ALT_BUFFER
+    refarea[0].alt_buffer_data.phys_addr = 0
+    refarea[0].alt_buffer_data.width = 0
+    refarea[0].alt_buffer_data.height = 0
+    refarea[0].alt_buffer_data.alt_update_region.top = 0
+    refarea[0].alt_buffer_data.alt_update_region.left = 0
+    refarea[0].alt_buffer_data.alt_update_region.width = 0
+    refarea[0].alt_buffer_data.alt_update_region.height = 0
 
-	ffi.C.ioctl(fb.fd, ffi.C.MXCFB_SEND_UPDATE, refarea)
+    ffi.C.ioctl(fb.fd, ffi.C.MXCFB_SEND_UPDATE, refarea)
 
     -- To mimic the framework, only wait for submission of *previous* marker, before sending a (true) full update.
     -- And follow by a wait for update complete on that same marker.
@@ -248,51 +248,51 @@ local function mxc_update(fb, refarea, refreshtype, waveform_mode, wait, x, y, w
 end
 
 local function refresh_k51(fb, refreshtype, waveform_mode, wait, x, y, w, h)
-	local refarea = ffi.new("struct mxcfb_update_data[1]")
-	-- only for Amazon's driver, try to mostly follow what the stock reader does...
-	if waveform_mode == ffi.C.WAVEFORM_MODE_REAGL then
-		-- If we're requesting WAVEFORM_MODE_REAGL, it's REAGL all around!
-		refarea[0].hist_bw_waveform_mode = waveform_mode
-	else
-		refarea[0].hist_bw_waveform_mode = ffi.C.WAVEFORM_MODE_DU
-	end
-	-- Same as our requested waveform_mode
-	-- FIXME: REAGL if REAGL; GC16 if GC16; GC16_FAST otherwise?
-	refarea[0].hist_gray_waveform_mode = waveform_mode or ffi.C.WAVEFORM_MODE_GC16_FAST
-	-- TEMP_USE_PAPYRUS on Touch/PW1, TEMP_USE_AUTO on PW2 (same value in both cases, 0x1001)
-	refarea[0].temp = ffi.C.TEMP_USE_AUTO
-	-- NOTE: We never use any flags on Kindle.
-	-- TODO: EPDC_FLAG_ENABLE_INVERSION & EPDC_FLAG_FORCE_MONOCHROME might be of use, though...
-	refarea[0].flags = 0
+    local refarea = ffi.new("struct mxcfb_update_data[1]")
+    -- only for Amazon's driver, try to mostly follow what the stock reader does...
+    if waveform_mode == ffi.C.WAVEFORM_MODE_REAGL then
+        -- If we're requesting WAVEFORM_MODE_REAGL, it's REAGL all around!
+        refarea[0].hist_bw_waveform_mode = waveform_mode
+    else
+        refarea[0].hist_bw_waveform_mode = ffi.C.WAVEFORM_MODE_DU
+    end
+    -- Same as our requested waveform_mode
+    -- FIXME: REAGL if REAGL; GC16 if GC16; GC16_FAST otherwise?
+    refarea[0].hist_gray_waveform_mode = waveform_mode or ffi.C.WAVEFORM_MODE_GC16_FAST
+    -- TEMP_USE_PAPYRUS on Touch/PW1, TEMP_USE_AUTO on PW2 (same value in both cases, 0x1001)
+    refarea[0].temp = ffi.C.TEMP_USE_AUTO
+    -- NOTE: We never use any flags on Kindle.
+    -- TODO: EPDC_FLAG_ENABLE_INVERSION & EPDC_FLAG_FORCE_MONOCHROME might be of use, though...
+    refarea[0].flags = 0
 
-	return mxc_update(fb, refarea, refreshtype, waveform_mode, wait, x, y, w, h)
+    return mxc_update(fb, refarea, refreshtype, waveform_mode, wait, x, y, w, h)
 end
 
 local function refresh_kobo(fb, refreshtype, waveform_mode, wait, x, y, w, h)
-	local refarea = ffi.new("struct mxcfb_update_data[1]")
-	-- only for Kobo's driver:
-	refarea[0].alt_buffer_data.virt_addr = nil
-	-- TEMP_USE_AMBIENT, not that there was ever any other choice on Kobo...
-	refarea[0].temp = ffi.C.TEMP_USE_AMBIENT
-	-- Enable the appropriate flag when requesting a REAGLD waveform (NTX_WFM_MODE_GLD16 on the Aura)
-	if waveform_mode == ffi.C.NTX_WFM_MODE_GLD16 then
-		refarea[0].flags = ffi.C.EPDC_FLAG_USE_AAD
-	elseif waveform_mode == ffi.C.WAVEFORM_MODE_A2 then
-		-- As well as when requesting a 2bit waveform
-		refarea[0].flags = ffi.C.EPDC_FLAG_FORCE_MONOCHROME
-	else
-		refarea[0].flags = 0
-	end
+    local refarea = ffi.new("struct mxcfb_update_data[1]")
+    -- only for Kobo's driver:
+    refarea[0].alt_buffer_data.virt_addr = nil
+    -- TEMP_USE_AMBIENT, not that there was ever any other choice on Kobo...
+    refarea[0].temp = ffi.C.TEMP_USE_AMBIENT
+    -- Enable the appropriate flag when requesting a REAGLD waveform (NTX_WFM_MODE_GLD16 on the Aura)
+    if waveform_mode == ffi.C.NTX_WFM_MODE_GLD16 then
+        refarea[0].flags = ffi.C.EPDC_FLAG_USE_AAD
+    elseif waveform_mode == ffi.C.WAVEFORM_MODE_A2 then
+        -- As well as when requesting a 2bit waveform
+        refarea[0].flags = ffi.C.EPDC_FLAG_FORCE_MONOCHROME
+    else
+        refarea[0].flags = 0
+    end
 
-	return mxc_update(fb, refarea, refreshtype, waveform_mode, wait, x, y, w, h)
+    return mxc_update(fb, refarea, refreshtype, waveform_mode, wait, x, y, w, h)
 end
 
 local function refresh_pocketbook(fb, refreshtype, waveform_mode, wait, x, y, w, h)
-	local refarea = ffi.new("struct mxcfb_update_data[1]")
-	-- TEMP_USE_AMBIENT
-	refarea[0].temp = 0x1000
+    local refarea = ffi.new("struct mxcfb_update_data[1]")
+    -- TEMP_USE_AMBIENT
+    refarea[0].temp = 0x1000
 
-	return mxc_update(fb, refarea, refreshtype, waveform_mode, wait, x, y, w, h)
+    return mxc_update(fb, refarea, refreshtype, waveform_mode, wait, x, y, w, h)
 end
 
 --[[ framebuffer API ]]--
