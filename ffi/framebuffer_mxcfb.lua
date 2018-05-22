@@ -5,7 +5,7 @@ local util = require("ffi/util")
 local dummy = require("ffi/posix_h")
 
 local framebuffer = {
--- pass device object here for proper model detection:
+    -- pass device object here for proper model detection:
     device = nil,
 
     mech_wait_update_complete = nil,
@@ -322,6 +322,8 @@ function framebuffer:init()
 
     self.refresh_list = {}
 
+    local isREAGL = false
+
     if self.device:isKindle() then
         require("ffi/mxcfb_kindle_h")
 
@@ -334,69 +336,41 @@ function framebuffer:init()
         self.update_mode_fast = ffi.C.UPDATE_MODE_PARTIAL
         self.update_mode_ui = ffi.C.UPDATE_MODE_PARTIAL
 
-        self.waveform_fast = ffi.C.WAVEFORM_MODE_A2 -- FIXME: -> AUTO on REAGL?
+        self.waveform_fast = ffi.C.WAVEFORM_MODE_A2
         self.waveform_ui = ffi.C.WAVEFORM_MODE_GC16_FAST
         self.waveform_full = ffi.C.WAVEFORM_MODE_GC16
 
-        if self.device.model == "KindleTouch" then
-            self.waveform_partial = ffi.C.WAVEFORM_MODE_GL16_FAST
-            self.wait_for_marker_full = true
-            self.wait_for_marker_partial = false
-            self.wait_for_marker_fast = false
-            self.wait_for_marker_ui = false
+        -- New devices are REAGL-aware, default to REAGL
+        isREAGL = true
+
+        if self.device.model == "Kindle2" then
+            isREAGL = false
+        elseif self.device.model == "KindleDXG" then
+            isREAGL = false
+        elseif self.device.model == "Kindle3" then
+            isREAGL = false
+        elseif self.device.model == "Kindle4" then
+            isREAGL = false
+        elseif self.device.model == "KindleTouch" then
+            isREAGL = false
         elseif self.device.model == "KindlePaperWhite" then
+            isREAGL = false
+        end
+
+        if isREAGL then
+            self.mech_wait_update_complete = kindle_carta_mxc_wait_for_update_complete
+            --self.waveform_fast = ffi.C.WAVEFORM_MODE_AUTO
+            self.waveform_partial = ffi.C.WAVEFORM_MODE_REAGL
+            self.update_mode_partial = ffi.C.UPDATE_MODE_FULL -- REAGL updates always need to be FULL
+            self.wait_for_marker_full = true
+            self.wait_for_marker_partial = true
+            self.wait_for_marker_fast = true
+            self.wait_for_marker_ui = false
+        else
             self.waveform_partial = ffi.C.WAVEFORM_MODE_GL16_FAST
             self.wait_for_marker_full = true
             self.wait_for_marker_partial = false
             self.wait_for_marker_fast = false
-            self.wait_for_marker_ui = false
-        elseif self.device.model == "KindlePaperWhite2" then
-            self.mech_wait_update_complete = kindle_carta_mxc_wait_for_update_complete
-            self.waveform_partial = ffi.C.WAVEFORM_MODE_REAGL
-            self.update_mode_partial = ffi.C.UPDATE_MODE_FULL -- REAGL get upgraded to full
-            self.wait_for_marker_full = true
-            self.wait_for_marker_partial = true
-            self.wait_for_marker_fast = true
-            self.wait_for_marker_ui = false
-        elseif self.device.model == "KindleBasic" then
-            self.mech_wait_update_complete = kindle_carta_mxc_wait_for_update_complete
-            self.waveform_partial = ffi.C.WAVEFORM_MODE_REAGL
-            self.update_mode_partial = ffi.C.UPDATE_MODE_FULL -- REAGL get upgraded to full
-            self.wait_for_marker_full = true
-            self.wait_for_marker_partial = true
-            self.wait_for_marker_fast = true
-            self.wait_for_marker_ui = false
-        elseif self.device.model == "KindleVoyage" then
-            self.mech_wait_update_complete = kindle_carta_mxc_wait_for_update_complete
-            self.waveform_partial = ffi.C.WAVEFORM_MODE_REAGL
-            self.update_mode_partial = ffi.C.UPDATE_MODE_FULL -- REAGL get upgraded to full
-            self.wait_for_marker_full = true
-            self.wait_for_marker_partial = true
-            self.wait_for_marker_fast = true
-            self.wait_for_marker_ui = false
-        elseif self.device.model == "KindlePaperWhite3" then
-            self.mech_wait_update_complete = kindle_carta_mxc_wait_for_update_complete
-            self.waveform_partial = ffi.C.WAVEFORM_MODE_REAGL
-            self.update_mode_partial = ffi.C.UPDATE_MODE_FULL -- REAGL get upgraded to full
-            self.wait_for_marker_full = true
-            self.wait_for_marker_partial = true
-            self.wait_for_marker_fast = true
-            self.wait_for_marker_ui = false
-        elseif self.device.model == "KindleOasis" then
-            self.mech_wait_update_complete = kindle_carta_mxc_wait_for_update_complete
-            self.waveform_partial = ffi.C.WAVEFORM_MODE_REAGL
-            self.update_mode_partial = ffi.C.UPDATE_MODE_FULL -- REAGL get upgraded to full
-            self.wait_for_marker_full = true
-            self.wait_for_marker_partial = true
-            self.wait_for_marker_fast = true
-            self.wait_for_marker_ui = false
-        elseif self.device.model == "KindleBasic2" then
-            self.mech_wait_update_complete = kindle_carta_mxc_wait_for_update_complete
-            self.waveform_partial = ffi.C.WAVEFORM_MODE_REAGL
-            self.update_mode_partial = ffi.C.UPDATE_MODE_FULL -- REAGL get upgraded to full
-            self.wait_for_marker_full = true
-            self.wait_for_marker_partial = true
-            self.wait_for_marker_fast = true
             self.wait_for_marker_ui = false
         end
     elseif self.device:isKobo() then
@@ -417,53 +391,22 @@ function framebuffer:init()
 
         self.wait_for_marker_ui = false
 
+        -- New devices *may* be REAGL-aware, but generally don't expect explicit REAGL requests, default to not.
+        isREAGL = false
+
+        -- NOTE: AFAICT, the Aura was the only one explicitly requiring REAGL requests...
         if self.device.model == "Kobo_phoenix" then
+            isREAGL = true
+        end
+
+        if isREAGL then
             self.waveform_partial = ffi.C.NTX_WFM_MODE_GLD16
-            self.update_mode_partial = ffi.C.UPDATE_MODE_FULL -- REAGL get upgraded to full
+            self.update_mode_partial = ffi.C.UPDATE_MODE_FULL -- REAGL updates always need to be FULL
             self.wait_for_marker_full = true
             self.wait_for_marker_partial = true
-            self.waveform_fast = ffi.C.WAVEFORM_MODE_DU  -- NOTE: Yup, used instead of A2 for menu HL in Nickel...
+            self.waveform_fast = ffi.C.WAVEFORM_MODE_DU -- Mainly menu HLs, compare to Kindle's use of AUTO in these instances ;).
             self.wait_for_marker_fast = false
-        elseif self.device.model == "Kobo_dahlia" then
-            self.wait_for_marker_full = true
-            self.wait_for_marker_partial = false
-            self.wait_for_marker_fast = false
-        elseif self.device.model == "Kobo_pixie" then
-            self.wait_for_marker_full = true
-            self.wait_for_marker_partial = false
-            self.wait_for_marker_fast = false
-        elseif self.device.model == "Kobo_trilogy" then
-            self.wait_for_marker_full = true
-            self.wait_for_marker_partial = false
-            self.wait_for_marker_fast = false
-        elseif self.device.model == "Kobo_dragon" then
-            self.wait_for_marker_full = true
-            self.wait_for_marker_partial = false
-            self.wait_for_marker_fast = false
-        elseif self.device.model == "Kobo_kraken" then
-            self.wait_for_marker_full = true
-            self.wait_for_marker_partial = false
-            self.wait_for_marker_fast = false
-        elseif self.device.model == "Kobo_alyssum" then
-            self.wait_for_marker_full = true
-            self.wait_for_marker_partial = false
-            self.wait_for_marker_fast = false
-        elseif self.device.model == "Kobo_pika" then
-            self.wait_for_marker_full = true
-            self.wait_for_marker_partial = false
-            self.wait_for_marker_fast = false
-        -- FIXME: Aura SE, did it inherit its ancestor's semi-REAGL support?
-        elseif self.device.model == "Kobo_star" then
-            self.wait_for_marker_full = true
-            self.wait_for_marker_partial = false
-            self.wait_for_marker_fast = false
-        -- FIXME: Same conundrum for the Aura One...
-        elseif self.device.model == "Kobo_daylight" then
-            self.wait_for_marker_full = true
-            self.wait_for_marker_partial = false
-            self.wait_for_marker_fast = false
-        -- FIXME: And what of the H2O²?
-        elseif self.device.model == "Kobo_snow" then
+        else
             self.wait_for_marker_full = true
             self.wait_for_marker_partial = false
             self.wait_for_marker_fast = false
@@ -496,3 +439,5 @@ function framebuffer:init()
 end
 
 return require("ffi/framebuffer_linux"):extend(framebuffer)
+
+-- kate: indent-mode cstyle; indent-width 4; replace-tabs on;
