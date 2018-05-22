@@ -140,13 +140,11 @@ local function mxc_update(fb, refarea, refresh_type, waveform_mode, x, y, w, h)
 
     -- NOTE: If we're trying to send a:
     --         * true FULL update,
-    --         * REAGL update,
     --         * GC16_FAST update (i.e., popping-up a menu),
     --       then wait for submission of previous marker first.
     local marker = fb:_get_marker()
     -- Make sure it's a valid marker, to avoid doing something stupid on our first update.
     if refresh_type == ffi.C.UPDATE_MODE_FULL
-      or fb:_isREAGLWaveFormMode(waveform_mode)
       or fb:_isUIWaveFormMode(waveform_mode)
       and fb.mech_wait_update_submission
       and marker >= MARKER_MIN and marker <= MARKER_MAX then
