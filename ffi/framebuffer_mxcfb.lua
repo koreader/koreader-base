@@ -253,12 +253,15 @@ local function refresh_k51(fb, refreshtype, waveform_mode, wait, x, y, w, h)
     if waveform_mode == ffi.C.WAVEFORM_MODE_REAGL then
         -- If we're requesting WAVEFORM_MODE_REAGL, it's REAGL all around!
         refarea[0].hist_bw_waveform_mode = waveform_mode
+        refarea[0].hist_gray_waveform_mode = waveform_mode
     else
         refarea[0].hist_bw_waveform_mode = ffi.C.WAVEFORM_MODE_DU
+        refarea[0].hist_gray_waveform_mode = ffi.C.WAVEFORM_MODE_GC16_FAST
     end
-    -- Same as our requested waveform_mode
-    -- FIXME: REAGL if REAGL; GC16 if GC16; GC16_FAST otherwise?
-    refarea[0].hist_gray_waveform_mode = waveform_mode or ffi.C.WAVEFORM_MODE_GC16_FAST
+    -- And we're only left with true full updates to special-case.
+    if waveform_mode == ffi.C.WAVEFORM_MODE_GC16 then
+        refarea[0].hist_gray_waveform_mode = waveform_mode
+    end
     -- TEMP_USE_PAPYRUS on Touch/PW1, TEMP_USE_AUTO on PW2 (same value in both cases, 0x1001)
     refarea[0].temp = ffi.C.TEMP_USE_AUTO
     -- NOTE: We never use any flags on Kindle.
