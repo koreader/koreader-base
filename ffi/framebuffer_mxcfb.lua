@@ -148,9 +148,11 @@ local function mxc_update(fb, refarea, refresh_type, waveform_mode, x, y, w, h)
     --         * GC16 update,
     --       then wait for completion of previous marker first.
     local collision_test = 0
+    -- Again, make sure the marker is valid, too.
     if (fb:_isREAGLWaveFormMode(waveform_mode)
       or waveform_mode == ffi.C.WAVEFORM_MODE_GC16)
-      and fb.mech_wait_update_complete then
+      and fb.mech_wait_update_complete
+      and (marker >= MARKER_MIN and marker <= MARKER_MAX) then
         -- NOTE: Setup the slightly mysterious collision_test flag...
         if fb:_isREAGLWaveFormMode(waveform_mode) then
             collision_test = 0
