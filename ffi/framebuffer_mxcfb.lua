@@ -306,7 +306,7 @@ function framebuffer:init()
             --self.waveform_fast = ffi.C.WAVEFORM_MODE_AUTO
             self.waveform_partial = ffi.C.WAVEFORM_MODE_REAGL
         else
-            self.waveform_partial = ffi.C.WAVEFORM_MODE_GL16_FAST -- FIXME: Double-check?
+            self.waveform_partial = ffi.C.WAVEFORM_MODE_GL16_FAST -- NOTE: Depending on FW, might instead be AUTO w/ hist_gray_waveform_mode set to GL16_FAST
         end
     elseif self.device:isKobo() then
         require("ffi/mxcfb_kobo_h")
