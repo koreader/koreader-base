@@ -158,6 +158,10 @@ local function mxc_update(fb, refarea, refresh_type, waveform_mode, x, y, w, h)
             -- NOTE: Technically also when GC16_FAST, because the framework handles menus as GC16_FAST + FULL,
             --       to get an extra black flash to avoid ghosting... They don't for other popups though...
             --       When a menu/popup is closed, everyone agrees that we should do a FULL, though ;).
+            -- NOTE: Speaking of, this wait_update_complete only happens for *some* GC16_FAST + FULL combos though, namely,
+            --       the actually fullscreen ones done after a menu/popup close like we just mentioned...
+            --       We currently don't have such fine-grained control over those kinds of distinctions, hence the lack
+            --       of _isUIWaveFormMode handling here ;).
             collision_test = 1642888
         end
         fb.debug("refresh: wait for completion of (previous) marker", marker, "with collision_test", collision_test)
