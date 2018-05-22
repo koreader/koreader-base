@@ -1,6 +1,5 @@
 local ffi = require("ffi")
 local BB = require("ffi/blitbuffer")
-local util = require("ffi/util")
 
 local dummy = require("ffi/posix_h")
 
@@ -126,8 +125,6 @@ local function mxc_update(fb, refarea, refresh_type, waveform_mode, x, y, w, h)
         fb.debug("got a 1x1 pixel refresh request, ignoring it.")
         return
     end
-
-    local rect = { x=x, y=y, w=w, h=h }
 
     -- NOTE: If we're trying to send a:
     --         * true FULL update,
@@ -289,8 +286,6 @@ function framebuffer:init()
 
     self.refresh_list = {}
 
-    local isREAGL = false
-
     if self.device:isKindle() then
         require("ffi/mxcfb_kindle_h")
 
@@ -303,7 +298,7 @@ function framebuffer:init()
         self.waveform_full = ffi.C.WAVEFORM_MODE_GC16
 
         -- New devices are REAGL-aware, default to REAGL
-        isREAGL = true
+        local isREAGL = true
 
         if self.device.model == "Kindle2" then
             isREAGL = false
@@ -338,7 +333,7 @@ function framebuffer:init()
         self.waveform_partial = ffi.C.WAVEFORM_MODE_AUTO
 
         -- New devices *may* be REAGL-aware, but generally don't expect explicit REAGL requests, default to not.
-        isREAGL = false
+        local isREAGL = false
 
         -- NOTE: AFAICT, the Aura was the only one explicitly requiring REAGL requests...
         if self.device.model == "Kobo_phoenix" then
