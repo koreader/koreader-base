@@ -127,6 +127,9 @@ local function mxc_update(fb, refarea, refresh_type, waveform_mode, x, y, w, h)
         fb.mech_wait_update_submission(fb, marker)
     end
 
+    -- FIXME: Before a REAGL (FULL or not), wait for complete of previous marker (in reader)?
+    -- FIXME: In reader, before a MENU, wait for submission of previous marker.
+
     refarea[0].update_mode = refresh_type or ffi.C.UPDATE_MODE_PARTIAL
     refarea[0].waveform_mode = waveform_mode or ffi.C.WAVEFORM_MODE_GC16
     refarea[0].update_region.left = x
@@ -163,9 +166,8 @@ local function mxc_update(fb, refarea, refresh_type, waveform_mode, x, y, w, h)
         fb.mech_wait_update_submission(fb, marker)
     end
 
-    -- NOTE: We wait for completion after *any kind* of full update, except with GC16_FAST waveform mode.
+    -- NOTE: We wait for completion after *any kind* of full update.
     if refarea[0].update_mode == ffi.C.UPDATE_MODE_FULL
-      and waveform_mode ~= ffi.C.WAVEFORM_MODE_GC16_FAST
       and fb.mech_wait_update_complete then
         fb.debug("refresh: wait for completion of marker", marker)
         fb.mech_wait_update_complete(fb, marker)
