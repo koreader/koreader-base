@@ -65,6 +65,23 @@ function framebuffer:_isREAGLWaveFormMode(waveform_mode)
     return ret
 end
 
+-- Returns true if w & h are equal or larger than our visible screen estate (i.e., we asked for a full-screen update)
+function framebuffer:_isFullScreen(fb, w, h)
+    -- NOTE: fb:getWidth() & fb:getHeight() return the viewport size, but obey rotation, which means we can't rely on it directly.
+    --       fb:getScreenWidth() & fb:getScreenHeight return the full screen size, without the viewport, and in the default rotatoin, which doesn't help either.
+    -- Settle for getWidth() & getHeight() w/ rotation handling, like what bb:getPhysicalRect() does...
+    if fb:getRotationMode() % 2 == 1 then w, h = h, w end
+
+    if w >= fb:getWidth() and h >= fb:getHeight() then
+        return true
+    else
+        return false
+    end
+    fb.debug("w:", w, "h:", h, "vs. getWidth:", fb:getWidth(), "getHeight:", fb:getHeight(), "vs. getScreenWidth:", fb:getScreenWidth(), "getScreenHeight:", fb:getScreenHeight())
+
+    return true
+end
+
 --[[ handlers for the wait API of the eink driver --]]
 
 -- Kindle's MXCFB_WAIT_FOR_UPDATE_COMPLETE_PEARL == 0x4004462f
@@ -166,6 +183,8 @@ local function mxc_update(fb, refarea, refresh_type, waveform_mode, x, y, w, h)
         fb.debug("refresh: wait for completion of (previous) marker", marker, "with collision_test", collision_test)
         fb.mech_wait_update_complete(fb, marker, collision_test)
     end
+
+    fb:_isFullScreen(fb, w, h)
 
     refarea[0].update_mode = refresh_type or ffi.C.UPDATE_MODE_PARTIAL
     refarea[0].waveform_mode = waveform_mode or ffi.C.WAVEFORM_MODE_GC16
