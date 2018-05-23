@@ -75,8 +75,6 @@ function framebuffer:_isFullScreen(fb, w, h)
     else
         return false
     end
-
-    return true
 end
 
 --[[ handlers for the wait API of the eink driver --]]
