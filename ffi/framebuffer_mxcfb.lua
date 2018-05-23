@@ -43,9 +43,7 @@ end
 
 -- Returns true if waveform_mode arg matches the UI waveform mode for current device
 -- NOTE: This is to avoid explicit comparison against device-specific waveform constants in mxc_update()
---       Here, it's for the Kindle-specific WAVEFORM_MODE_GC16_FAST
--- NOTE: We-re currently only used in conjunction with a mech_wait_update_submission check, which
---       is also Kindle-specific, so this should be good enough for now.
+--       Here, it's because of the Kindle-specific WAVEFORM_MODE_GC16_FAST
 function framebuffer:_isUIWaveFormMode(waveform_mode)
     return waveform_mode == self.waveform_ui
 end
@@ -77,7 +75,6 @@ function framebuffer:_isFullScreen(fb, w, h)
     else
         return false
     end
-    fb.debug("w:", w, "h:", h, "vs. getWidth:", fb:getWidth(), "getHeight:", fb:getHeight(), "vs. getScreenWidth:", fb:getScreenWidth(), "getScreenHeight:", fb:getScreenHeight())
 
     return true
 end
@@ -160,31 +157,24 @@ local function mxc_update(fb, refarea, refresh_type, waveform_mode, x, y, w, h)
     -- NOTE: If we're trying to send a:
     --         * REAGL update,
     --         * GC16 update,
+    --         * Full-screen, flashing GC16_FAST update,
     --       then wait for completion of previous marker first.
     local collision_test = 0
     -- Again, make sure the marker is valid, too.
     if (fb:_isREAGLWaveFormMode(waveform_mode)
-      or waveform_mode == ffi.C.WAVEFORM_MODE_GC16)
+      or waveform_mode == ffi.C.WAVEFORM_MODE_GC16
+      or (refresh_type == ffi.C.UPDATE_MODE_FULL and fb:_isUIWaveFormMode(waveform_mode) and fb:_isFullScreen(fb, w, h)))
       and fb.mech_wait_update_complete
       and (marker >= MARKER_MIN and marker <= MARKER_MAX) then
         -- NOTE: Setup the slightly mysterious collision_test flag...
         if fb:_isREAGLWaveFormMode(waveform_mode) then
             collision_test = 0
-        elseif waveform_mode == ffi.C.WAVEFORM_MODE_GC16 then
-            -- NOTE: Technically also when GC16_FAST, because the framework handles menus as GC16_FAST + FULL,
-            --       to get an extra black flash to avoid ghosting... They don't for other popups though...
-            --       When a menu/popup is closed, everyone agrees that we should do a FULL, though ;).
-            -- NOTE: Speaking of, this wait_update_complete only happens for *some* GC16_FAST + FULL combos though, namely,
-            --       the actually fullscreen ones done after a menu/popup close like we just mentioned...
-            --       We currently don't have such fine-grained control over those kinds of distinctions, hence the lack
-            --       of _isUIWaveFormMode handling here ;).
+        elseif waveform_mode == ffi.C.WAVEFORM_MODE_GC16 or fb:_isUIWaveFormMode(waveform_mode) then
             collision_test = 1642888
         end
         fb.debug("refresh: wait for completion of (previous) marker", marker, "with collision_test", collision_test)
         fb.mech_wait_update_complete(fb, marker, collision_test)
     end
-
-    fb:_isFullScreen(fb, w, h)
 
     refarea[0].update_mode = refresh_type or ffi.C.UPDATE_MODE_PARTIAL
     refarea[0].waveform_mode = waveform_mode or ffi.C.WAVEFORM_MODE_GC16
