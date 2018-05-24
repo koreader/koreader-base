@@ -367,6 +367,17 @@ static int newDocView(lua_State *L) {
 	return 1;
 }
 
+static int getLatestDomVersion(lua_State *L) {
+    lua_pushnumber(L, gDOMVersionCurrent);
+    return 1;
+}
+
+static int requestDomVersion(lua_State *L) {
+    int version = luaL_checkint(L, 1);
+    gDOMVersionRequested = version;
+    return 0;
+}
+
 static int saveDefaults(lua_State *L) {
 	CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
 	CRPropRef props = doc->text_view->propsGetCurrent();
@@ -1655,6 +1666,8 @@ static const struct luaL_Reg cre_func[] = {
 	{"getHyphDictList", getHyphDictList},
 	{"getSelectedHyphDict", getSelectedHyphDict},
 	{"setHyphDictionary", setHyphDictionary},
+	{"getLatestDomVersion", getLatestDomVersion},
+	{"requestDomVersion", requestDomVersion},
 	{NULL, NULL}
 };
 
