@@ -18,7 +18,7 @@ local framebuffer = {
     waveform_full = nil,
     waveform_fast = nil,
     mech_refresh = nil,
-    -- start with an out-of bound marker value to avoid doing something stupid on our first update
+    -- start with an out of bound marker value to avoid doing something stupid on our first update
     marker = MARKER_MIN - 1,
 }
 
@@ -32,12 +32,6 @@ function framebuffer:_get_next_marker()
     end
 
     self.marker = marker
-    return marker
-end
-
--- Returns current marker value.
-function framebuffer:_get_marker()
-    local marker = self.marker
     return marker
 end
 
@@ -64,13 +58,13 @@ function framebuffer:_isREAGLWaveFormMode(waveform_mode)
 end
 
 -- Returns true if w & h are equal or larger than our visible screen estate (i.e., we asked for a full-screen update)
-function framebuffer:_isFullScreen(fb, w, h)
-    -- NOTE: fb:getWidth() & fb:getHeight() return the viewport size, but obey rotation, which means we can't rely on it directly.
-    --       fb:getScreenWidth() & fb:getScreenHeight return the full screen size, without the viewport, and in the default rotatoin, which doesn't help either.
+function framebuffer:_isFullScreen(w, h)
+    -- NOTE: fb:getWidth() & fb:getHeight() return the viewport size, but obey rotation, which means we can't rely on them directly.
+    --       fb:getScreenWidth() & fb:getScreenHeight return the full screen size, without the viewport, and in the default rotation, which doesn't help either.
     -- Settle for getWidth() & getHeight() w/ rotation handling, like what bb:getPhysicalRect() does...
-    if fb:getRotationMode() % 2 == 1 then w, h = h, w end
+    if self:getRotationMode() % 2 == 1 then w, h = h, w end
 
-    if w >= fb:getWidth() and h >= fb:getHeight() then
+    if w >= self:getWidth() and h >= self:getHeight() then
         return true
     else
         return false
@@ -102,7 +96,7 @@ local function kindle_carta_mxc_wait_for_update_complete(fb, marker, collision_t
     -- Wait for the previous update to be completed
     local carta_update_marker = ffi.new("struct mxcfb_update_marker_data[1]")
     carta_update_marker[0].update_marker = marker
-    -- NOTE: Assume a fallback of 0 is okay.
+    -- NOTE: 0 seems to be a fairly safe assumption for "we don't care about collisions".
     --       On a slightly related note, the EPDC_FLAG_TEST_COLLISION flag is for dry-run collision tests, never set it.
     carta_update_marker[0].collision_test = collision_test or 0
     return ffi.C.ioctl(fb.fd, ffi.C.MXCFB_WAIT_FOR_UPDATE_COMPLETE, carta_update_marker)
@@ -142,7 +136,7 @@ local function mxc_update(fb, refarea, refresh_type, waveform_mode, x, y, w, h)
     --         * true FULL update,
     --         * GC16_FAST update (i.e., popping-up a menu),
     --       then wait for submission of previous marker first.
-    local marker = fb:_get_marker()
+    local marker = fb.marker
     -- Make sure it's a valid marker, to avoid doing something stupid on our first update.
     if (refresh_type == ffi.C.UPDATE_MODE_FULL
       or fb:_isUIWaveFormMode(waveform_mode))
@@ -161,10 +155,11 @@ local function mxc_update(fb, refarea, refresh_type, waveform_mode, x, y, w, h)
     -- Again, make sure the marker is valid, too.
     if (fb:_isREAGLWaveFormMode(waveform_mode)
       or waveform_mode == ffi.C.WAVEFORM_MODE_GC16
-      or (refresh_type == ffi.C.UPDATE_MODE_FULL and fb:_isUIWaveFormMode(waveform_mode) and fb:_isFullScreen(fb, w, h)))
+      or (refresh_type == ffi.C.UPDATE_MODE_FULL and fb:_isUIWaveFormMode(waveform_mode) and fb:_isFullScreen(w, h)))
       and fb.mech_wait_update_complete
       and (marker >= MARKER_MIN and marker <= MARKER_MAX) then
         -- NOTE: Setup the slightly mysterious collision_test flag...
+        --       This is Kindle-only, but extra arguments are safely ignored in Lua ;).
         if fb:_isREAGLWaveFormMode(waveform_mode) then
             collision_test = 0
         elseif waveform_mode == ffi.C.WAVEFORM_MODE_GC16 or fb:_isUIWaveFormMode(waveform_mode) then
@@ -200,7 +195,7 @@ local function mxc_update(fb, refarea, refresh_type, waveform_mode, x, y, w, h)
 
     ffi.C.ioctl(fb.fd, ffi.C.MXCFB_SEND_UPDATE, refarea)
 
-    -- NOTE: We wait for completion after *any kind* of full update.
+    -- NOTE: We wait for completion after *any kind* of full (i.e., flashing) update.
     if refarea[0].update_mode == ffi.C.UPDATE_MODE_FULL
       and fb.mech_wait_update_complete then
         -- NOTE: Again, setup collision_test magic numbers...

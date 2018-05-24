@@ -83,7 +83,7 @@ function framebuffer:refreshPartialImp(x, y, w, h)
 end
 
 function framebuffer:refreshFlashPartialImp(x, y, w, h)
-    self.debug("partial refresh on physical rectangle", x, y, w, h)
+    self.debug("Flashing partial refresh on physical rectangle", x, y, w, h)
     self:_refresh(x, y, w, h,
         self.flash_duration and
         (self.flash_duration * 0.75 * w*h / (self.bb:getWidth()*self.bb:getHeight())))
