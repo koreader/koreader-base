@@ -820,7 +820,7 @@ function BB_mt.__index:colorblitFrom(source, dest_x, dest_y, offs_x, offs_y, wid
         if width <= 0 or height <= 0 then return end
         cblitbuffer.BB_color_blit_from(ffi.cast("struct BlitBuffer *", self),
             ffi.cast("struct BlitBuffer *", source),
-            dest_x, dest_y, offs_x, offs_y, width, height, color:getColorRGB32())
+            dest_x, dest_y, offs_x, offs_y, width, height, color)
     else
         if self:getInverse() == 1 then color = color:invert() end
         self:blitFrom(source, dest_x, dest_y, offs_x, offs_y, width, height, self.setPixelColorize, color)
