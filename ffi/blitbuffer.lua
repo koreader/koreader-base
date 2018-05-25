@@ -636,18 +636,18 @@ end
 function BB_mt.__index:setPixelColorize(x, y, mask, color)
     -- use 8bit grayscale pixel value as alpha for blitting
     local alpha = mask:getColor8().a
-    -- NOTE: Pass a Color8 color, and locally cast it to ColorRGB32 here, because otherwise, for some mysterious reason,
-    --       updating color updates our original set_param,
-    --       which leads to screwy alpha when blitting to (at least) 32bpp, c.f., #3949
-    local fgcolor = color:getColorRGB32()
     -- fast path:
     if alpha == 0 then return end
     local px, py = self:getPhysicalCoordinates(x, y)
     if alpha == 0xFF then
-        self:getPixelP(px, py)[0]:set(fgcolor)
+        self:getPixelP(px, py)[0]:set(color)
     else
-        fgcolor.alpha = alpha
-        self:getPixelP(px, py)[0]:blend(fgcolor)
+        -- NOTE: Don't screw up color permanently, that's a pointer to our set_param
+        --       Avoids screwing with alpha when blitting to >=24bpp bbs (c.f., #3949).
+        local fgcolor_alpha = color.alpha
+        color.alpha = alpha
+        self:getPixelP(px, py)[0]:blend(color)
+        color.alpha = fgcolor_alpha
     end
 end
 function BB_mt.__index:setPixelInverted(x, y, color)
@@ -816,6 +816,8 @@ end
 
 -- colorize area using source blitbuffer as a alpha-map
 function BB_mt.__index:colorblitFrom(source, dest_x, dest_y, offs_x, offs_y, width, height, color)
+    -- we need color with alpha later:
+    color = color:getColorRGB32()
     if use_cblitbuffer then
         width, height = width or source:getWidth(), height or source:getHeight()
         width, dest_x, offs_x = BB.checkBounds(width, dest_x or 0, offs_x or 0, self:getWidth(), source:getWidth())
@@ -823,7 +825,7 @@ function BB_mt.__index:colorblitFrom(source, dest_x, dest_y, offs_x, offs_y, wid
         if width <= 0 or height <= 0 then return end
         cblitbuffer.BB_color_blit_from(ffi.cast("struct BlitBuffer *", self),
             ffi.cast("struct BlitBuffer *", source),
-            dest_x, dest_y, offs_x, offs_y, width, height, color:getColorRGB32())
+            dest_x, dest_y, offs_x, offs_y, width, height, color)
     else
         if self:getInverse() == 1 then color = color:invert() end
         self:blitFrom(source, dest_x, dest_y, offs_x, offs_y, width, height, self.setPixelColorize, color)
