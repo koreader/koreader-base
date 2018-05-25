@@ -688,13 +688,13 @@ function mupdf.renderImage(data, size, width, height, bgr)
     local bb
     if bgr and ncomp >= 3 then
         -- NOTE: Missing Lua/FFI cdecl for fz_default_color_params & co., and I'm too lazy to do it.
-        --local bgr = M.fz_convert_pixmap(context(), pixmap, M.fz_device_bgr(context()), NULL, NULL, M.fz_default_color_params(context()), 1)
-        local bgr = M.fz_convert_pixmap(context(), pixmap, M.fz_device_bgr(context()), NULL, NULL, NULL, 1)
+        --local bgr_pixmap = M.fz_convert_pixmap(context(), pixmap, M.fz_device_bgr(context()), NULL, NULL, M.fz_default_color_params(context()), 1)
+        local bgr_pixmap = M.fz_convert_pixmap(context(), pixmap, M.fz_device_bgr(context()), NULL, NULL, NULL, 1)
         M.fz_drop_pixmap(context(), pixmap)
 
-        local p = M.fz_pixmap_samples(context(), bgr)
+        local p = M.fz_pixmap_samples(context(), bgr_pixmap)
         bb = BlitBuffer.new(p_width, p_height, bbtype, p):copy()
-        M.fz_drop_pixmap(context(), bgr)
+        M.fz_drop_pixmap(context(), bgr_pixmap)
     else
         local p = M.fz_pixmap_samples(context(), pixmap)
         bb = BlitBuffer.new(p_width, p_height, bbtype, p):copy()
