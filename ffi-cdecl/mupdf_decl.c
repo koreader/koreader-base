@@ -149,6 +149,7 @@ cdecl_func(fz_pixmap_samples)
 
 cdecl_func(fz_device_gray)
 cdecl_func(fz_device_rgb)
+cdecl_func(fz_device_bgr)
 
 /* device, rendering */
 cdecl_func(mupdf_new_draw_device)

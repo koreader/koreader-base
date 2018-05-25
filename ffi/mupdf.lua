@@ -645,7 +645,7 @@ end
 --[[--
 Renders image data.
 --]]
-function mupdf.renderImage(data, size, width, height)
+function mupdf.renderImage(data, size, width, height, bgr)
     local buffer = W.mupdf_new_buffer_from_shared_data(context(),
                      ffi.cast("unsigned char*", data), size)
     local image = W.mupdf_new_image_from_buffer(context(), buffer)
@@ -684,9 +684,22 @@ function mupdf.renderImage(data, size, width, height)
     elseif ncomp == 4 then bbtype = BlitBuffer.TYPE_BBRGB32
     else error("unsupported number of color components")
     end
-    local p = M.fz_pixmap_samples(context(), pixmap)
-    local bb = BlitBuffer.new(p_width, p_height, bbtype, p):copy()
-    M.fz_drop_pixmap(context(), pixmap)
+    -- Handle RGB->BGR conversion for Kobos when needed
+    local bb
+    if bgr and ncomp >= 3 then
+        -- NOTE: Missing Lua/FFI cdecl for fz_default_color_params & co., and I'm too lazy to do it.
+        --local bgr = M.fz_convert_pixmap(context(), pixmap, M.fz_device_bgr(context()), NULL, NULL, M.fz_default_color_params(context()), 1)
+        local bgr = M.fz_convert_pixmap(context(), pixmap, M.fz_device_bgr(context()), NULL, NULL, NULL, 1)
+        M.fz_drop_pixmap(context(), pixmap)
+
+        local p = M.fz_pixmap_samples(context(), bgr)
+        bb = BlitBuffer.new(p_width, p_height, bbtype, p):copy()
+        M.fz_drop_pixmap(context(), bgr)
+    else
+        local p = M.fz_pixmap_samples(context(), pixmap)
+        bb = BlitBuffer.new(p_width, p_height, bbtype, p):copy()
+        M.fz_drop_pixmap(context(), pixmap)
+    end
     return bb
 end
 
