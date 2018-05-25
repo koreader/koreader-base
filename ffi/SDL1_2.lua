@@ -9,6 +9,7 @@ instead).
 
 local ffi = require("ffi")
 local util = require("ffi/util")
+local C = ffi.C
 
 local dummy = require("ffi/SDL1_2_h")
 local dummy = require("ffi/linux_input_h")
@@ -92,30 +93,30 @@ function S.waitForEvent(usecs)
 		-- if we got an event, examine it here and generate
 		-- events for koreader
 		if event.type == SDL.SDL_KEYDOWN then
-			genEmuEvent(ffi.C.EV_KEY, event.key.keysym.scancode, 1)
+			genEmuEvent(C.EV_KEY, event.key.keysym.scancode, 1)
 		elseif event.type == SDL.SDL_KEYUP then
-			genEmuEvent(ffi.C.EV_KEY, event.key.keysym.scancode, 0)
+			genEmuEvent(C.EV_KEY, event.key.keysym.scancode, 0)
 		elseif event.type == SDL.SDL_MOUSEMOTION then
 			if is_in_touch then
 				if event.motion.xrel ~= 0 then
-					genEmuEvent(ffi.C.EV_ABS, ffi.C.ABS_MT_POSITION_X, event.button.x)
+					genEmuEvent(C.EV_ABS, C.ABS_MT_POSITION_X, event.button.x)
 				end
 				if event.motion.yrel ~= 0 then
-					genEmuEvent(ffi.C.EV_ABS, ffi.C.ABS_MT_POSITION_Y, event.button.y)
+					genEmuEvent(C.EV_ABS, C.ABS_MT_POSITION_Y, event.button.y)
 				end
-				genEmuEvent(ffi.C.EV_SYN, ffi.C.SYN_REPORT, 0)
+				genEmuEvent(C.EV_SYN, C.SYN_REPORT, 0)
 			end
 		elseif event.type == SDL.SDL_MOUSEBUTTONUP then
 			is_in_touch = false;
-			genEmuEvent(ffi.C.EV_ABS, ffi.C.ABS_MT_TRACKING_ID, -1)
-			genEmuEvent(ffi.C.EV_SYN, ffi.C.SYN_REPORT, 0)
+			genEmuEvent(C.EV_ABS, C.ABS_MT_TRACKING_ID, -1)
+			genEmuEvent(C.EV_SYN, C.SYN_REPORT, 0)
 		elseif event.type == SDL.SDL_MOUSEBUTTONDOWN then
 			-- use mouse click to simulate single tap
 			is_in_touch = true
-			genEmuEvent(ffi.C.EV_ABS, ffi.C.ABS_MT_TRACKING_ID, 0)
-			genEmuEvent(ffi.C.EV_ABS, ffi.C.ABS_MT_POSITION_X, event.button.x)
-			genEmuEvent(ffi.C.EV_ABS, ffi.C.ABS_MT_POSITION_Y, event.button.y)
-			genEmuEvent(ffi.C.EV_SYN, ffi.C.SYN_REPORT, 0)
+			genEmuEvent(C.EV_ABS, C.ABS_MT_TRACKING_ID, 0)
+			genEmuEvent(C.EV_ABS, C.ABS_MT_POSITION_X, event.button.x)
+			genEmuEvent(C.EV_ABS, C.ABS_MT_POSITION_Y, event.button.y)
+			genEmuEvent(C.EV_SYN, C.SYN_REPORT, 0)
 		elseif event.type == SDL.SDL_QUIT then
 			error("application forced to quit")
 		end

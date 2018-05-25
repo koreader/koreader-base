@@ -6,6 +6,7 @@ Generic blitbuffer/GFX stuff that works on memory buffers
 
 local ffi = require("ffi")
 local util = require("ffi/util")
+local C = ffi.C
 
 -- we will use this extensively
 local floor = math.floor
@@ -54,11 +55,11 @@ typedef struct ColorRGB32 {
 } ColorRGB32;
 
 typedef struct BlitBuffer {
-	int w;
-	int h;
-	int pitch;
-	uint8_t *data;
-	uint8_t config;
+    int w;
+    int h;
+    int pitch;
+    uint8_t *data;
+    uint8_t config;
 } BlitBuffer;
 typedef struct BlitBuffer4 {
     int w;
@@ -865,7 +866,7 @@ this is also called upon garbage collection
 function BB_mt.__index:free()
     if band(lshift(1, SHIFT_ALLOCATED), self.config) ~= 0 then
         self.config = band(self.config, bxor(0xFF, lshift(1, SHIFT_ALLOCATED)))
-        ffi.C.free(self.data)
+        C.free(self.data)
     end
 end
 
@@ -1213,7 +1214,7 @@ make a full copy of the current buffer, with its own memory
 --]]
 function BB_mt.__index:copy()
     local mytype = ffi.typeof(self)
-    local buffer = ffi.C.malloc(self.pitch * self.h)
+    local buffer = C.malloc(self.pitch * self.h)
     assert(buffer, "cannot allocate buffer")
     ffi.copy(buffer, self.data, self.pitch * self.h)
     local copy = mytype(self.w, self.h, self.pitch, buffer, self.config)
@@ -1248,7 +1249,7 @@ function BB_mt.__index:writePNG(filename)
     local hook, mask, _ = debug.gethook()
     debug.sethook()
     local w, h = self:getWidth(), self:getHeight()
-    local cdata = ffi.C.malloc(w * h * 4)
+    local cdata = C.malloc(w * h * 4)
     local mem = ffi.cast("char*", cdata)
     for y = 0, h-1 do
         local offset = 4 * w * y
@@ -1262,7 +1263,7 @@ function BB_mt.__index:writePNG(filename)
         end
     end
     Png.encodeToFile(filename, mem, w, h)
-    ffi.C.free(cdata)
+    C.free(cdata)
     debug.sethook(hook, mask)
 end
 
@@ -1317,7 +1318,7 @@ function BB.new(width, height, buffertype, dataptr, pitch)
     end
     bb:setType(buffertype)
     if dataptr == nil then
-        dataptr = ffi.C.malloc(pitch*height)
+        dataptr = C.malloc(pitch*height)
         assert(dataptr, "cannot allocate memory for blitbuffer")
         ffi.fill(dataptr, pitch*height)
         bb:setAllocated(1)
@@ -1331,7 +1332,7 @@ function BB.compat(oldbuffer)
 end
 
 function BB.fromstring(width, height, buffertype, str, pitch)
-    local dataptr = ffi.C.malloc(#str)
+    local dataptr = C.malloc(#str)
     ffi.copy(dataptr, str, #str)
     local bb = BB.new(width, height, buffertype, dataptr, pitch)
     bb:setAllocated(1)

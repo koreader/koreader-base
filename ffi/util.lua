@@ -231,7 +231,7 @@ function util.runInSubProcess(func, with_pipe)
     local parent_read_fd, child_write_fd
     if with_pipe then
         local pipe = ffi.new('int[2]', {-1, -1})
-        if ffi.C.pipe(pipe) ~= 0 then -- failed creating pipe !
+        if C.pipe(pipe) ~= 0 then -- failed creating pipe !
             return false
         end
         parent_read_fd, child_write_fd = pipe[0], pipe[1]
@@ -255,7 +255,7 @@ function util.runInSubProcess(func, with_pipe)
             C.setpgid(0, 0)
             if parent_read_fd then
                 -- close our duplicate of parent fd
-                ffi.C.close(parent_read_fd)
+                C.close(parent_read_fd)
             end
             -- Just run the provided lua code object in this new process,
             -- and exit immediatly (so we do not release drivers and
@@ -277,7 +277,7 @@ function util.runInSubProcess(func, with_pipe)
     end
     if child_write_fd then
         -- close our duplicate of child fd
-        ffi.C.close(child_write_fd)
+        C.close(child_write_fd)
     end
     return pid, parent_read_fd
 end
@@ -327,10 +327,10 @@ function util.getNonBlockingReadSize(fd_or_luafile)
     if type(fd_or_luafile) == "number" then -- low-level fd
         fileno = fd_or_luafile
     else -- lua file object
-        fileno = ffi.C.fileno(fd_or_luafile)
+        fileno = C.fileno(fd_or_luafile)
     end
     local available = ffi.new('int[1]')
-    local ok = ffi.C.ioctl(fileno, ffi.C.FIONREAD, available)
+    local ok = C.ioctl(fileno, C.FIONREAD, available)
     if ok ~= 0 then -- ioctl failed, not supported
         return
     end
@@ -347,11 +347,11 @@ function util.writeToFD(fd, data, close_fd)
     local size = #data
     local ptr = ffi.cast("uint8_t *", data)
     -- print("writing to fd")
-    local bytes_written = ffi.C.write(fd, ptr, size)
+    local bytes_written = C.write(fd, ptr, size)
     -- print("done writing to fd")
     local success = bytes_written == size
     if close_fd then
-        ffi.C.close(fd)
+        C.close(fd)
         -- print("write fd closed")
     end
     return success
@@ -365,10 +365,10 @@ function util.readAllFromFD(fd)
     local data = {}
     while true do
         -- print("reading from fd")
-	local bytes_read = tonumber(ffi.C.read(fd, ffi.cast('void*', buffer), chunksize))
+	local bytes_read = tonumber(C.read(fd, ffi.cast('void*', buffer), chunksize))
 	if bytes_read < 0 then
             local err = ffi.errno()
-            print("readFromFD() error: "..ffi.string(ffi.C.strerror(err)))
+            print("readFromFD() error: "..ffi.string(C.strerror(err)))
             break
 	elseif bytes_read == 0 then -- EOF, no more data to read
 	    break
@@ -376,7 +376,7 @@ function util.readAllFromFD(fd)
 	    table.insert(data, ffi.string(buffer, bytes_read))
 	end
     end
-    ffi.C.close(fd)
+    C.close(fd)
     -- print("read fd closed")
     return table.concat(data)
 end

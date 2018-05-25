@@ -12,6 +12,7 @@ instead).
 local bit = require("bit")
 local ffi = require("ffi")
 local util = require("ffi/util")
+local C = ffi.C
 
 local dummy = require("ffi/SDL2_0_h")
 local dummy = require("ffi/linux_input_h")
@@ -173,27 +174,27 @@ local function handleJoyAxisMotionEvent(event)
     if axis == 0 then
         if value < -neutral_max_val then
             -- send left
-            genEmuEvent(ffi.C.EV_KEY, 80, 1)
+            genEmuEvent(C.EV_KEY, 80, 1)
         else
             -- send right
-            genEmuEvent(ffi.C.EV_KEY, 79, 1)
+            genEmuEvent(C.EV_KEY, 79, 1)
         end
     elseif axis == 1 then
         if value < -neutral_max_val then
             -- send up
-            genEmuEvent(ffi.C.EV_KEY, 82, 1)
+            genEmuEvent(C.EV_KEY, 82, 1)
         else
             -- send down
-            genEmuEvent(ffi.C.EV_KEY, 81, 1)
+            genEmuEvent(C.EV_KEY, 81, 1)
         end
     -- right stick 3/4
     elseif axis == 4 then
         if value < -neutral_max_val then
             -- send page up
-            genEmuEvent(ffi.C.EV_KEY, 75, 1)
+            genEmuEvent(C.EV_KEY, 75, 1)
         else
             -- send page down
-            genEmuEvent(ffi.C.EV_KEY, 78, 1)
+            genEmuEvent(C.EV_KEY, 78, 1)
         end
     -- left trigger 2
     -- right trigger 5
@@ -242,50 +243,50 @@ function S.waitForEvent(usecs)
             -- noop for trackpad finger inputs which interfere with emulated mouse inputs
             do end -- luacheck: ignore 541
         elseif event.type == SDL.SDL_KEYDOWN then
-            genEmuEvent(ffi.C.EV_KEY, event.key.keysym.scancode, 1)
+            genEmuEvent(C.EV_KEY, event.key.keysym.scancode, 1)
         elseif event.type == SDL.SDL_KEYUP then
-            genEmuEvent(ffi.C.EV_KEY, event.key.keysym.scancode, 0)
+            genEmuEvent(C.EV_KEY, event.key.keysym.scancode, 0)
         elseif event.type == SDL.SDL_MOUSEMOTION
             or event.type == SDL.SDL_FINGERMOTION then
             local is_finger = event.type == SDL.SDL_FINGERMOTION
             if is_in_touch then
                 if is_finger then
                     if event.tfinger.dx ~= 0 then
-                        genEmuEvent(ffi.C.EV_ABS, ffi.C.ABS_MT_POSITION_X,
+                        genEmuEvent(C.EV_ABS, C.ABS_MT_POSITION_X,
                             event.tfinger.x * S.w)
                     end
                     if event.tfinger.dy ~= 0 then
-                        genEmuEvent(ffi.C.EV_ABS, ffi.C.ABS_MT_POSITION_Y,
+                        genEmuEvent(C.EV_ABS, C.ABS_MT_POSITION_Y,
                             event.tfinger.y * S.h)
                     end
                 else
                     if event.motion.xrel ~= 0 then
-                        genEmuEvent(ffi.C.EV_ABS, ffi.C.ABS_MT_POSITION_X,
+                        genEmuEvent(C.EV_ABS, C.ABS_MT_POSITION_X,
                             event.button.x)
                     end
                     if event.motion.yrel ~= 0 then
-                        genEmuEvent(ffi.C.EV_ABS, ffi.C.ABS_MT_POSITION_Y,
+                        genEmuEvent(C.EV_ABS, C.ABS_MT_POSITION_Y,
                             event.button.y)
                     end
                 end
-                genEmuEvent(ffi.C.EV_SYN, ffi.C.SYN_REPORT, 0)
+                genEmuEvent(C.EV_SYN, C.SYN_REPORT, 0)
             end
         elseif event.type == SDL.SDL_MOUSEBUTTONUP
             or event.type == SDL.SDL_FINGERUP then
             is_in_touch = false;
-            genEmuEvent(ffi.C.EV_ABS, ffi.C.ABS_MT_TRACKING_ID, -1)
-            genEmuEvent(ffi.C.EV_SYN, ffi.C.SYN_REPORT, 0)
+            genEmuEvent(C.EV_ABS, C.ABS_MT_TRACKING_ID, -1)
+            genEmuEvent(C.EV_SYN, C.SYN_REPORT, 0)
         elseif event.type == SDL.SDL_MOUSEBUTTONDOWN
             or event.type == SDL.SDL_FINGERDOWN then
             local is_finger = event.type == SDL.SDL_FINGERDOWN
             -- use mouse click to simulate single tap
             is_in_touch = true
-            genEmuEvent(ffi.C.EV_ABS, ffi.C.ABS_MT_TRACKING_ID, 0)
-            genEmuEvent(ffi.C.EV_ABS, ffi.C.ABS_MT_POSITION_X,
+            genEmuEvent(C.EV_ABS, C.ABS_MT_TRACKING_ID, 0)
+            genEmuEvent(C.EV_ABS, C.ABS_MT_POSITION_X,
                 is_finger and event.tfinger.x * S.w or event.button.x)
-            genEmuEvent(ffi.C.EV_ABS, ffi.C.ABS_MT_POSITION_Y,
+            genEmuEvent(C.EV_ABS, C.ABS_MT_POSITION_Y,
                 is_finger and event.tfinger.y * S.h or event.button.y)
-            genEmuEvent(ffi.C.EV_SYN, ffi.C.SYN_REPORT, 0)
+            genEmuEvent(C.EV_SYN, C.SYN_REPORT, 0)
         elseif event.type == SDL.SDL_MULTIGESTURE then
             genEmuEvent(EV_SDL, SDL.SDL_MULTIGESTURE, event.mgesture)
         elseif event.type == SDL.SDL_MOUSEWHEEL then
@@ -314,24 +315,24 @@ function S.waitForEvent(usecs)
 
             if button == SDL.SDL_CONTROLLER_BUTTON_A then
                 -- send enter
-                genEmuEvent(ffi.C.EV_KEY, 40, 1)
+                genEmuEvent(C.EV_KEY, 40, 1)
                 -- send end (bound to press)
-                genEmuEvent(ffi.C.EV_KEY, 77, 1)
+                genEmuEvent(C.EV_KEY, 77, 1)
             elseif button == SDL.SDL_CONTROLLER_BUTTON_B then
                 -- send escape
-                genEmuEvent(ffi.C.EV_KEY, 41, 1)
+                genEmuEvent(C.EV_KEY, 41, 1)
             -- left bumper
             elseif button == SDL.SDL_CONTROLLER_BUTTON_BACK then
                 -- send page up
-                genEmuEvent(ffi.C.EV_KEY, 75, 1)
+                genEmuEvent(C.EV_KEY, 75, 1)
             -- right bumper
             elseif button == SDL.SDL_CONTROLLER_BUTTON_GUIDE then
                 -- send page down
-                genEmuEvent(ffi.C.EV_KEY, 78, 1)
+                genEmuEvent(C.EV_KEY, 78, 1)
             -- On the Xbox One controller, start = start but leftstick = menu button
             elseif button == SDL.SDL_CONTROLLER_BUTTON_START or button == SDL.SDL_CONTROLLER_BUTTON_LEFTSTICK then
                 -- send F1 (bound to menu in front at the time of writing)
-                genEmuEvent(ffi.C.EV_KEY, 58, 1)
+                genEmuEvent(C.EV_KEY, 58, 1)
             end
         --- D-pad ---
         elseif event.type == SDL.SDL_JOYHATMOTION then
@@ -339,21 +340,21 @@ function S.waitForEvent(usecs)
 
             if hat_position == SDL.SDL_HAT_UP then
                 -- send up
-                genEmuEvent(ffi.C.EV_KEY, 82, 1)
+                genEmuEvent(C.EV_KEY, 82, 1)
             elseif hat_position == SDL.SDL_HAT_DOWN then
                 -- send down
-                genEmuEvent(ffi.C.EV_KEY, 81, 1)
+                genEmuEvent(C.EV_KEY, 81, 1)
             elseif hat_position == SDL.SDL_HAT_LEFT then
                 -- send left
-                genEmuEvent(ffi.C.EV_KEY, 80, 1)
+                genEmuEvent(C.EV_KEY, 80, 1)
             elseif hat_position == SDL.SDL_HAT_RIGHT then
                 -- send right
-                genEmuEvent(ffi.C.EV_KEY, 79, 1)
+                genEmuEvent(C.EV_KEY, 79, 1)
             end
         elseif event.type == SDL.SDL_QUIT then
             -- send Alt + F4
-            genEmuEvent(ffi.C.EV_KEY, 226, 1)
-            genEmuEvent(ffi.C.EV_KEY, 61, 1)
+            genEmuEvent(C.EV_KEY, 226, 1)
+            genEmuEvent(C.EV_KEY, 61, 1)
         end
     end
 end

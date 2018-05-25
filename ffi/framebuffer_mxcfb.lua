@@ -1,5 +1,6 @@
 local ffi = require("ffi")
 local BB = require("ffi/blitbuffer")
+local C = ffi.C
 
 local dummy = require("ffi/posix_h")
 
@@ -49,9 +50,9 @@ function framebuffer:_isREAGLWaveFormMode(waveform_mode)
     local ret = false
 
     if self.device:isKindle() then
-        ret = waveform_mode == ffi.C.WAVEFORM_MODE_REAGL
+        ret = waveform_mode == C.WAVEFORM_MODE_REAGL
     elseif self.device:isKobo() then
-        ret = waveform_mode == ffi.C.NTX_WFM_MODE_GLD16
+        ret = waveform_mode == C.NTX_WFM_MODE_GLD16
     end
 
     return ret
@@ -76,19 +77,19 @@ end
 -- Kindle's MXCFB_WAIT_FOR_UPDATE_COMPLETE_PEARL == 0x4004462f
 local function kindle_pearl_mxc_wait_for_update_complete(fb, marker)
     -- Wait for the previous update to be completed
-    return ffi.C.ioctl(fb.fd, ffi.C.MXCFB_WAIT_FOR_UPDATE_COMPLETE_PEARL, ffi.new("uint32_t[1]", marker))
+    return C.ioctl(fb.fd, C.MXCFB_WAIT_FOR_UPDATE_COMPLETE_PEARL, ffi.new("uint32_t[1]", marker))
 end
 
 -- Kobo's MXCFB_WAIT_FOR_UPDATE_COMPLETE == 0x4004462f
 local function kobo_mxc_wait_for_update_complete(fb, marker)
     -- Wait for the previous update to be completed
-    return ffi.C.ioctl(fb.fd, ffi.C.MXCFB_WAIT_FOR_UPDATE_COMPLETE, ffi.new("uint32_t[1]", marker))
+    return C.ioctl(fb.fd, C.MXCFB_WAIT_FOR_UPDATE_COMPLETE, ffi.new("uint32_t[1]", marker))
 end
 
 -- Kindle's MXCFB_WAIT_FOR_UPDATE_COMPLETE == 0x4004462f
 local function pocketbook_mxc_wait_for_update_complete(fb, marker)
     -- Wait for the previous update to be completed
-    return ffi.C.ioctl(fb.fd, ffi.C.MXCFB_WAIT_FOR_UPDATE_COMPLETE, ffi.new("uint32_t[1]", marker))
+    return C.ioctl(fb.fd, C.MXCFB_WAIT_FOR_UPDATE_COMPLETE, ffi.new("uint32_t[1]", marker))
 end
 
 -- Kindle's MXCFB_WAIT_FOR_UPDATE_COMPLETE == 0xc008462f
@@ -99,13 +100,13 @@ local function kindle_carta_mxc_wait_for_update_complete(fb, marker, collision_t
     -- NOTE: 0 seems to be a fairly safe assumption for "we don't care about collisions".
     --       On a slightly related note, the EPDC_FLAG_TEST_COLLISION flag is for dry-run collision tests, never set it.
     carta_update_marker[0].collision_test = collision_test or 0
-    return ffi.C.ioctl(fb.fd, ffi.C.MXCFB_WAIT_FOR_UPDATE_COMPLETE, carta_update_marker)
+    return C.ioctl(fb.fd, C.MXCFB_WAIT_FOR_UPDATE_COMPLETE, carta_update_marker)
 end
 
 -- Kindle's MXCFB_WAIT_FOR_UPDATE_SUBMISSION == 0x40044637
 local function kindle_mxc_wait_for_update_submission(fb, marker)
     -- Wait for the current (the one we just sent) update to be submitted
-    return ffi.C.ioctl(fb.fd, ffi.C.MXCFB_WAIT_FOR_UPDATE_SUBMISSION, ffi.new("uint32_t[1]", marker))
+    return C.ioctl(fb.fd, C.MXCFB_WAIT_FOR_UPDATE_SUBMISSION, ffi.new("uint32_t[1]", marker))
 end
 
 
@@ -138,7 +139,7 @@ local function mxc_update(fb, refarea, refresh_type, waveform_mode, x, y, w, h)
     --       then wait for submission of previous marker first.
     local marker = fb.marker
     -- Make sure it's a valid marker, to avoid doing something stupid on our first update.
-    if (refresh_type == ffi.C.UPDATE_MODE_FULL
+    if (refresh_type == C.UPDATE_MODE_FULL
       or fb:_isUIWaveFormMode(waveform_mode))
       and fb.mech_wait_update_submission
       and (marker >= MARKER_MIN and marker <= MARKER_MAX) then
@@ -154,23 +155,23 @@ local function mxc_update(fb, refarea, refresh_type, waveform_mode, x, y, w, h)
     local collision_test = 0
     -- Again, make sure the marker is valid, too.
     if (fb:_isREAGLWaveFormMode(waveform_mode)
-      or waveform_mode == ffi.C.WAVEFORM_MODE_GC16
-      or (refresh_type == ffi.C.UPDATE_MODE_FULL and fb:_isUIWaveFormMode(waveform_mode) and fb:_isFullScreen(w, h)))
+      or waveform_mode == C.WAVEFORM_MODE_GC16
+      or (refresh_type == C.UPDATE_MODE_FULL and fb:_isUIWaveFormMode(waveform_mode) and fb:_isFullScreen(w, h)))
       and fb.mech_wait_update_complete
       and (marker >= MARKER_MIN and marker <= MARKER_MAX) then
         -- NOTE: Setup the slightly mysterious collision_test flag...
         --       This is Kindle-only, but extra arguments are safely ignored in Lua ;).
         if fb:_isREAGLWaveFormMode(waveform_mode) then
             collision_test = 0
-        elseif waveform_mode == ffi.C.WAVEFORM_MODE_GC16 or fb:_isUIWaveFormMode(waveform_mode) then
+        elseif waveform_mode == C.WAVEFORM_MODE_GC16 or fb:_isUIWaveFormMode(waveform_mode) then
             collision_test = 1642888
         end
         fb.debug("refresh: wait for completion of (previous) marker", marker, "with collision_test", collision_test)
         fb.mech_wait_update_complete(fb, marker, collision_test)
     end
 
-    refarea[0].update_mode = refresh_type or ffi.C.UPDATE_MODE_PARTIAL
-    refarea[0].waveform_mode = waveform_mode or ffi.C.WAVEFORM_MODE_GC16
+    refarea[0].update_mode = refresh_type or C.UPDATE_MODE_PARTIAL
+    refarea[0].waveform_mode = waveform_mode or C.WAVEFORM_MODE_GC16
     refarea[0].update_region.left = x
     refarea[0].update_region.top = y
     refarea[0].update_region.width = w
@@ -190,18 +191,18 @@ local function mxc_update(fb, refarea, refresh_type, waveform_mode, x, y, w, h)
     -- NOTE: We need to do this here, because we rely on the pre-promotion actual refresh_type in previous heuristics.
     if fb:_isREAGLWaveFormMode(waveform_mode) then
         -- NOTE: REAGL updates always need to be full.
-        refarea[0].update_mode = ffi.C.UPDATE_MODE_FULL
+        refarea[0].update_mode = C.UPDATE_MODE_FULL
     end
 
-    ffi.C.ioctl(fb.fd, ffi.C.MXCFB_SEND_UPDATE, refarea)
+    C.ioctl(fb.fd, C.MXCFB_SEND_UPDATE, refarea)
 
     -- NOTE: We wait for completion after *any kind* of full (i.e., flashing) update.
-    if refarea[0].update_mode == ffi.C.UPDATE_MODE_FULL
+    if refarea[0].update_mode == C.UPDATE_MODE_FULL
       and fb.mech_wait_update_complete then
         -- NOTE: Again, setup collision_test magic numbers...
         if fb:_isREAGLWaveFormMode(waveform_mode) then
             collision_test = 4
-        elseif waveform_mode == ffi.C.WAVEFORM_MODE_GC16 or fb:_isUIWaveFormMode(waveform_mode) then
+        elseif waveform_mode == C.WAVEFORM_MODE_GC16 or fb:_isUIWaveFormMode(waveform_mode) then
             collision_test = 1
         end
         fb.debug("refresh: wait for completion of marker", marker, "with collision_test", collision_test)
@@ -212,20 +213,20 @@ end
 local function refresh_k51(fb, refreshtype, waveform_mode, x, y, w, h)
     local refarea = ffi.new("struct mxcfb_update_data[1]")
     -- only for Amazon's driver, try to mostly follow what the stock reader does...
-    if waveform_mode == ffi.C.WAVEFORM_MODE_REAGL then
+    if waveform_mode == C.WAVEFORM_MODE_REAGL then
         -- If we're requesting WAVEFORM_MODE_REAGL, it's REAGL all around!
         refarea[0].hist_bw_waveform_mode = waveform_mode
         refarea[0].hist_gray_waveform_mode = waveform_mode
     else
-        refarea[0].hist_bw_waveform_mode = ffi.C.WAVEFORM_MODE_DU
-        refarea[0].hist_gray_waveform_mode = ffi.C.WAVEFORM_MODE_GC16_FAST
+        refarea[0].hist_bw_waveform_mode = C.WAVEFORM_MODE_DU
+        refarea[0].hist_gray_waveform_mode = C.WAVEFORM_MODE_GC16_FAST
     end
     -- And we're only left with true full updates to special-case.
-    if waveform_mode == ffi.C.WAVEFORM_MODE_GC16 then
+    if waveform_mode == C.WAVEFORM_MODE_GC16 then
         refarea[0].hist_gray_waveform_mode = waveform_mode
     end
     -- TEMP_USE_PAPYRUS on Touch/PW1, TEMP_USE_AUTO on PW2 (same value in both cases, 0x1001)
-    refarea[0].temp = ffi.C.TEMP_USE_AUTO
+    refarea[0].temp = C.TEMP_USE_AUTO
     -- NOTE: We never use any flags on Kindle.
     -- TODO: EPDC_FLAG_ENABLE_INVERSION & EPDC_FLAG_FORCE_MONOCHROME might be of use, though,
     --       although the framework itself barely ever sets any flags, for some reason...
@@ -239,13 +240,13 @@ local function refresh_kobo(fb, refreshtype, waveform_mode, x, y, w, h)
     -- only for Kobo's driver:
     refarea[0].alt_buffer_data.virt_addr = nil
     -- TEMP_USE_AMBIENT, not that there was ever any other choice on Kobo...
-    refarea[0].temp = ffi.C.TEMP_USE_AMBIENT
+    refarea[0].temp = C.TEMP_USE_AMBIENT
     -- Enable the appropriate flag when requesting a REAGLD waveform (NTX_WFM_MODE_GLD16 on the Aura)
-    if waveform_mode == ffi.C.NTX_WFM_MODE_GLD16 then
-        refarea[0].flags = ffi.C.EPDC_FLAG_USE_AAD
-    elseif waveform_mode == ffi.C.WAVEFORM_MODE_A2 then
+    if waveform_mode == C.NTX_WFM_MODE_GLD16 then
+        refarea[0].flags = C.EPDC_FLAG_USE_AAD
+    elseif waveform_mode == C.WAVEFORM_MODE_A2 then
         -- As well as when requesting a 2bit waveform
-        refarea[0].flags = ffi.C.EPDC_FLAG_FORCE_MONOCHROME
+        refarea[0].flags = C.EPDC_FLAG_FORCE_MONOCHROME
     else
         refarea[0].flags = 0
     end
@@ -265,33 +266,33 @@ end
 
 function framebuffer:refreshPartialImp(x, y, w, h)
     self.debug("refresh: partial", x, y, w, h)
-    self:mech_refresh(ffi.C.UPDATE_MODE_PARTIAL, self.waveform_partial, x, y, w, h)
+    self:mech_refresh(C.UPDATE_MODE_PARTIAL, self.waveform_partial, x, y, w, h)
 end
 
 -- NOTE: UPDATE_MODE_FULL doesn't mean full screen or no region, it means ask for a black flash!
 function framebuffer:refreshFlashPartialImp(x, y, w, h)
     self.debug("refresh: partial w/ flash", x, y, w, h)
-    self:mech_refresh(ffi.C.UPDATE_MODE_FULL, self.waveform_partial, x, y, w, h)
+    self:mech_refresh(C.UPDATE_MODE_FULL, self.waveform_partial, x, y, w, h)
 end
 
 function framebuffer:refreshUIImp(x, y, w, h)
     self.debug("refresh: ui-mode", x, y, w, h)
-    self:mech_refresh(ffi.C.UPDATE_MODE_PARTIAL, self.waveform_ui, x, y, w, h)
+    self:mech_refresh(C.UPDATE_MODE_PARTIAL, self.waveform_ui, x, y, w, h)
 end
 
 function framebuffer:refreshFlashUIImp(x, y, w, h)
     self.debug("refresh: ui-mode w/ flash", x, y, w, h)
-    self:mech_refresh(ffi.C.UPDATE_MODE_FULL, self.waveform_ui, x, y, w, h)
+    self:mech_refresh(C.UPDATE_MODE_FULL, self.waveform_ui, x, y, w, h)
 end
 
 function framebuffer:refreshFullImp(x, y, w, h)
     self.debug("refresh: full", x, y, w, h)
-    self:mech_refresh(ffi.C.UPDATE_MODE_FULL, self.waveform_full, x, y, w, h)
+    self:mech_refresh(C.UPDATE_MODE_FULL, self.waveform_full, x, y, w, h)
 end
 
 function framebuffer:refreshFastImp(x, y, w, h)
     self.debug("refresh: fast", x, y, w, h)
-    self:mech_refresh(ffi.C.UPDATE_MODE_PARTIAL, self.waveform_fast, x, y, w, h)
+    self:mech_refresh(C.UPDATE_MODE_PARTIAL, self.waveform_fast, x, y, w, h)
 end
 
 function framebuffer:init()
@@ -306,9 +307,9 @@ function framebuffer:init()
         self.mech_wait_update_complete = kindle_pearl_mxc_wait_for_update_complete
         self.mech_wait_update_submission = kindle_mxc_wait_for_update_submission
 
-        self.waveform_fast = ffi.C.WAVEFORM_MODE_A2
-        self.waveform_ui = ffi.C.WAVEFORM_MODE_GC16_FAST
-        self.waveform_full = ffi.C.WAVEFORM_MODE_GC16
+        self.waveform_fast = C.WAVEFORM_MODE_A2
+        self.waveform_ui = C.WAVEFORM_MODE_GC16_FAST
+        self.waveform_full = C.WAVEFORM_MODE_GC16
 
         -- New devices are REAGL-aware, default to REAGL
         local isREAGL = true
@@ -329,10 +330,10 @@ function framebuffer:init()
 
         if isREAGL then
             self.mech_wait_update_complete = kindle_carta_mxc_wait_for_update_complete
-            --self.waveform_fast = ffi.C.WAVEFORM_MODE_AUTO
-            self.waveform_partial = ffi.C.WAVEFORM_MODE_REAGL
+            --self.waveform_fast = C.WAVEFORM_MODE_AUTO
+            self.waveform_partial = C.WAVEFORM_MODE_REAGL
         else
-            self.waveform_partial = ffi.C.WAVEFORM_MODE_GL16_FAST -- NOTE: Depending on FW, might instead be AUTO w/ hist_gray_waveform_mode set to GL16_FAST
+            self.waveform_partial = C.WAVEFORM_MODE_GL16_FAST -- NOTE: Depending on FW, might instead be AUTO w/ hist_gray_waveform_mode set to GL16_FAST
         end
     elseif self.device:isKobo() then
         require("ffi/mxcfb_kobo_h")
@@ -340,10 +341,10 @@ function framebuffer:init()
         self.mech_refresh = refresh_kobo
         self.mech_wait_update_complete = kobo_mxc_wait_for_update_complete
 
-        self.waveform_fast = ffi.C.WAVEFORM_MODE_A2
-        self.waveform_ui = ffi.C.WAVEFORM_MODE_AUTO
-        self.waveform_full = ffi.C.NTX_WFM_MODE_GC16
-        self.waveform_partial = ffi.C.WAVEFORM_MODE_AUTO
+        self.waveform_fast = C.WAVEFORM_MODE_A2
+        self.waveform_ui = C.WAVEFORM_MODE_AUTO
+        self.waveform_full = C.NTX_WFM_MODE_GC16
+        self.waveform_partial = C.WAVEFORM_MODE_AUTO
 
         -- New devices *may* be REAGL-aware, but generally don't expect explicit REAGL requests, default to not.
         local isREAGL = false
@@ -354,8 +355,8 @@ function framebuffer:init()
         end
 
         if isREAGL then
-            self.waveform_partial = ffi.C.NTX_WFM_MODE_GLD16
-            self.waveform_fast = ffi.C.WAVEFORM_MODE_DU -- Mainly menu HLs, compare to Kindle's use of AUTO in these instances ;).
+            self.waveform_partial = C.NTX_WFM_MODE_GLD16
+            self.waveform_fast = C.WAVEFORM_MODE_DU -- Mainly menu HLs, compare to Kindle's use of AUTO in these instances ;).
         end
     elseif self.device:isPocketBook() then
         require("ffi/mxcfb_pocketbook_h")
@@ -363,10 +364,10 @@ function framebuffer:init()
         self.mech_refresh = refresh_pocketbook
         self.mech_wait_update_complete = pocketbook_mxc_wait_for_update_complete
 
-        self.waveform_fast = ffi.C.WAVEFORM_MODE_A2
-        self.waveform_ui = ffi.C.WAVEFORM_MODE_GC16
-        self.waveform_full = ffi.C.WAVEFORM_MODE_GC16
-        self.waveform_partial = ffi.C.WAVEFORM_MODE_GC16
+        self.waveform_fast = C.WAVEFORM_MODE_A2
+        self.waveform_ui = C.WAVEFORM_MODE_GC16
+        self.waveform_full = C.WAVEFORM_MODE_GC16
+        self.waveform_partial = C.WAVEFORM_MODE_GC16
     else
         error("unknown device type")
     end
