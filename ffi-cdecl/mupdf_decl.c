@@ -151,6 +151,9 @@ cdecl_func(fz_device_gray)
 cdecl_func(fz_device_rgb)
 cdecl_func(fz_device_bgr)
 
+cdecl_struct(fz_color_params_s)
+cdecl_func(fz_default_color_params)
+
 /* device, rendering */
 cdecl_func(mupdf_new_draw_device)
 cdecl_func(mupdf_new_text_device)

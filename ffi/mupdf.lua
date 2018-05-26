@@ -687,9 +687,7 @@ function mupdf.renderImage(data, size, width, height, bgr)
     -- Handle RGB->BGR conversion for Kobos when needed
     local bb
     if bgr and ncomp >= 3 then
-        -- NOTE: Missing Lua/FFI cdecl for fz_default_color_params & co., and I'm too lazy to do it.
-        --local bgr_pixmap = M.fz_convert_pixmap(context(), pixmap, M.fz_device_bgr(context()), nil, nil, M.fz_default_color_params(context()), 1)
-        local bgr_pixmap = M.fz_convert_pixmap(context(), pixmap, M.fz_device_bgr(context()), nil, nil, nil, 1)
+        local bgr_pixmap = M.fz_convert_pixmap(context(), pixmap, M.fz_device_bgr(context()), nil, nil, M.fz_default_color_params(context()), (ncomp == 4 and 1 or 0))
         M.fz_drop_pixmap(context(), pixmap)
 
         local p = M.fz_pixmap_samples(context(), bgr_pixmap)
