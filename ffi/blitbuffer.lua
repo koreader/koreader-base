@@ -1246,7 +1246,7 @@ write blitbuffer contents to a PNG file
 @param filename the name of the file to be created
 --]]
 local Png  -- lazy load ffi/png
-function BB_mt.__index:writePNG(filename)
+function BB_mt.__index:writePNG(filename, bgr)
     if not Png then Png = require("ffi/png") end
     local hook, mask, _ = debug.gethook()
     debug.sethook()
@@ -1257,9 +1257,16 @@ function BB_mt.__index:writePNG(filename)
         local offset = 4 * w * y
         for x = 0, w-1 do
             local c = self:getPixel(x, y):getColorRGB32()
-            mem[offset] = c.r
-            mem[offset + 1] = c.g
-            mem[offset + 2] = c.b
+            -- NOTE: Kobo's FB is BGR(A), we already trick MuPDF into doing it that way for us, so, keep faking it here!
+            if bgr then
+                mem[offset] = c.b
+                mem[offset + 1] = c.g
+                mem[offset + 2] = c.r
+            else
+                mem[offset] = c.r
+                mem[offset + 1] = c.g
+                mem[offset + 2] = c.b
+            end
             mem[offset + 3] = 0xFF
             offset = offset + 4
         end

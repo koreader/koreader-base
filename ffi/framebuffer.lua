@@ -358,7 +358,12 @@ function fb:restoreFromSavedBB()
 end
 
 function fb:shot(filename)
-    self.bb:writePNG(filename)
+    -- Handle the RGB->BGR switcheroo on Kobos
+    local bgr = false
+    if self.device:isKobo() then
+        bgr = true
+    end
+    self.bb:writePNG(filename, bgr)
 end
 
 return fb
