@@ -332,7 +332,7 @@ function framebuffer:init()
 
         if isREAGL then
             self.mech_wait_update_complete = kindle_carta_mxc_wait_for_update_complete
-            --self.waveform_fast = C.WAVEFORM_MODE_AUTO
+            --self.waveform_fast = C.WAVEFORM_MODE_AUTO -- NOTE: That's what the FW does, because, indeed, A2 looks truly terrible on REAGL devices.
             self.waveform_partial = C.WAVEFORM_MODE_REAGL
         else
             self.waveform_partial = C.WAVEFORM_MODE_GL16_FAST -- NOTE: Depending on FW, might instead be AUTO w/ hist_gray_waveform_mode set to GL16_FAST
