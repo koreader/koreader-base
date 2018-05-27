@@ -138,6 +138,9 @@ local function mxc_update(fb, refarea, refresh_type, waveform_mode, x, y, w, h)
     --         * GC16_FAST update (i.e., popping-up a menu),
     --       then wait for submission of previous marker first.
     local marker = fb.marker
+    -- NOTE: Technically, we might not always want to wait for *exactly* the previous marker
+    --       (we might actually want the one before that), but in the vast majority of cases, that's good enough,
+    --       and saves us a lot of annoying and hard-to-get-right heuristics anyway ;).
     -- Make sure it's a valid marker, to avoid doing something stupid on our first update.
     if (refresh_type == C.UPDATE_MODE_FULL
       or fb:_isUIWaveFormMode(waveform_mode))
