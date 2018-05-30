@@ -358,9 +358,9 @@ function fb:restoreFromSavedBB()
 end
 
 function fb:shot(filename)
-    -- Handle the RGB->BGR switcheroo on Kobos
+    -- Handle the RGB->BGR switcheroo if need be
     local bgr = false
-    if self.device:isKobo() then
+    if self.device:hasBGRFrameBuffer() then
         bgr = true
     end
     self.bb:writePNG(filename, bgr)
