@@ -64,11 +64,11 @@ struct fz_key_storable_s {
   short int store_key_refs;
 };
 void fz_install_external_font_funcs(fz_context *);
-struct fz_buffer_s *mupdf_new_buffer_from_shared_data(fz_context *, const unsigned char *, long unsigned int);
+struct fz_buffer_s *mupdf_new_buffer_from_shared_data(fz_context *, const unsigned char *, unsigned int);
 void *mupdf_drop_buffer(fz_context *, struct fz_buffer_s *);
 typedef struct fz_alloc_context_s fz_alloc_context;
 typedef struct fz_colorspace_s fz_colorspace;
-fz_context *fz_new_context_imp(const fz_alloc_context *, const struct fz_locks_context_s *, long unsigned int, const char *);
+fz_context *fz_new_context_imp(const fz_alloc_context *, const struct fz_locks_context_s *, unsigned int, const char *);
 void fz_drop_context(fz_context *);
 void fz_register_document_handlers(fz_context *);
 typedef struct fz_image_s fz_image;
@@ -92,7 +92,7 @@ struct fz_image_s {
   fz_colorspace *colorspace;
   void (*drop_image)(fz_context *, fz_image *);
   fz_pixmap *(*get_pixmap)(fz_context *, fz_image *, fz_irect *, int, int, int *);
-  long unsigned int (*get_size)(fz_context *, fz_image *);
+  unsigned int (*get_size)(fz_context *, fz_image *);
   int colorkey[64];
   float decode[64];
 };
@@ -106,7 +106,7 @@ struct fz_pixmap_s {
   unsigned char s;
   unsigned char alpha;
   unsigned char flags;
-  long int stride;
+  int stride;
   struct fz_separations_s *seps;
   int xres;
   int yres;
@@ -119,7 +119,7 @@ fz_pixmap *mupdf_get_pixmap_from_image(fz_context *, fz_image *, const fz_irect 
 void *mupdf_save_pixmap_as_png(fz_context *, fz_pixmap *, const char *);
 fz_image *fz_keep_image(fz_context *, fz_image *);
 void fz_drop_image(fz_context *, fz_image *);
-fz_pixmap *fz_load_png(fz_context *, const unsigned char *, long unsigned int);
+fz_pixmap *fz_load_png(fz_context *, const unsigned char *, unsigned int);
 int fz_runetochar(char *, int);
 typedef struct fz_annot_s fz_annot;
 struct fz_annot_s {
@@ -157,8 +157,8 @@ struct fz_document_s {
   });
   fz_outline *(*load_outline)(fz_context *, fz_document *);
   void (*layout)(fz_context *, fz_document *, float, float, float);
-  long int (*make_bookmark)(fz_context *, fz_document *, int);
-  int (*lookup_bookmark)(fz_context *, fz_document *, long int);
+  int (*make_bookmark)(fz_context *, fz_document *, int);
+  int (*lookup_bookmark)(fz_context *, fz_document *, int);
   int (*resolve_link)(fz_context *, fz_document *, const char *, float *, float *);
   int (*count_pages)(fz_context *, fz_document *);
   fz_page *(*load_page)(fz_context *, fz_document *, int);
@@ -204,7 +204,7 @@ void fz_drop_link(fz_context *, fz_link *);
 fz_outline *mupdf_load_outline(fz_context *, fz_document *);
 void fz_drop_outline(fz_context *, fz_outline *);
 void *mupdf_drop_stream(fz_context *, struct fz_stream_s *);
-struct fz_stream_s *mupdf_open_memory(fz_context *, const unsigned char *, long unsigned int);
+struct fz_stream_s *mupdf_open_memory(fz_context *, const unsigned char *, unsigned int);
 typedef struct fz_stext_char_s fz_stext_char;
 struct fz_stext_char_s {
   int c;
@@ -271,6 +271,14 @@ int fz_pixmap_components(fz_context *, fz_pixmap *);
 unsigned char *fz_pixmap_samples(fz_context *, fz_pixmap *);
 fz_colorspace *fz_device_gray(fz_context *);
 fz_colorspace *fz_device_rgb(fz_context *);
+fz_colorspace *fz_device_bgr(fz_context *);
+struct fz_color_params_s {
+  unsigned char ri;
+  unsigned char bp;
+  unsigned char op;
+  unsigned char opm;
+};
+const struct fz_color_params_s *fz_default_color_params(fz_context *);
 struct fz_device_s *mupdf_new_draw_device(fz_context *, const fz_matrix *, fz_pixmap *);
 struct fz_device_s *mupdf_new_text_device(fz_context *, fz_stext_page *, const fz_stext_options *);
 struct fz_device_s *mupdf_new_bbox_device(fz_context *, fz_rect *);
@@ -315,7 +323,7 @@ struct pdf_lexbuf_s {
   int size;
   int base_size;
   int len;
-  long int i;
+  long long int i;
   float f;
   char *scratch;
   char buffer[256];
@@ -342,8 +350,8 @@ struct pdf_document_s {
   fz_document super;
   struct fz_stream_s *file;
   int version;
-  long int startxref;
-  long int file_size;
+  long long int startxref;
+  long long int file_size;
   struct pdf_crypt_s *crypt;
   struct pdf_ocg_descriptor_s *ocg;
   struct pdf_portfolio_s *portfolio;
@@ -364,28 +372,28 @@ struct pdf_document_s {
   struct pdf_rev_page_map_s *rev_page_map;
   int repair_attempted;
   int file_reading_linearly;
-  long int file_length;
+  long long int file_length;
   int linear_page_count;
   pdf_obj *linear_obj;
   pdf_obj **linear_page_refs;
   int linear_page1_obj_num;
-  long int linear_pos;
+  long long int linear_pos;
   int linear_page_num;
   int hint_object_offset;
   int hint_object_length;
   int hints_loaded;
   struct {
     int number;
-    long int offset;
-    long int index;
+    long long int offset;
+    long long int index;
   } *hint_page;
   int *hint_shared_ref;
   struct {
     int number;
-    long int offset;
+    long long int offset;
   } *hint_shared;
   int hint_obj_offsets_max;
-  long int *hint_obj_offsets;
+  long long int *hint_obj_offsets;
   int resources_localised;
   pdf_lexbuf_large lexbuf;
   pdf_annot *focus;

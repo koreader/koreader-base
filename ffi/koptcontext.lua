@@ -1,4 +1,5 @@
 local ffi = require("ffi")
+local C = ffi.C
 
 local dummy = require("ffi/koptcontext_h")
 local Blitbuffer = require("ffi/blitbuffer")
@@ -111,7 +112,7 @@ function KOPTContext_mt.__index:getWordBoxes(bmp, x, y, w, h, box_type)
         counter_cw = 0
         l_x0, l_y0, l_x1, l_y1 = 9999, 9999, 0, 0
         while current_line == counter_l[0] and counter_w < nr_word do
-            local box = leptonica.boxaGetBox(boxa, counter_w, ffi.C.L_CLONE)
+            local box = leptonica.boxaGetBox(boxa, counter_w, C.L_CLONE)
             --update line box
             l_x0 = box.x < l_x0 and box.x or l_x0
             l_y0 = box.y < l_y0 and box.y or l_y0
@@ -238,7 +239,7 @@ function KOPTContext_mt.__index:findPageBlocks()
         if status == 0 then
             self.nboxa = leptonica.pixSplitIntoBoxa(pixtb[0], 5, 10, 20, 80, 10, 0)
             for i = 0, leptonica.boxaGetCount(self.nboxa) - 1 do
-                local box = leptonica.boxaGetBox(self.nboxa, i, ffi.C.L_CLONE)
+                local box = leptonica.boxaGetBox(self.nboxa, i, C.L_CLONE)
                 leptonica.boxAdjustSides(box, box, -1, 0, -1, 0)
             end
             self.rboxa = leptonica.boxaCombineOverlaps(self.nboxa)
@@ -266,14 +267,14 @@ function KOPTContext_mt.__index:getPageBlock(x_rel, y_rel)
         local boxa = leptonica.boxaClipToBox(self.nboxa, tbox)
         leptonica.boxDestroy(ffi.new('BOX *[1]', tbox))
         for i = 0, leptonica.boxaGetCount(boxa) - 1 do
-            local box = leptonica.boxaGetBox(boxa, i, ffi.C.L_CLONE)
+            local box = leptonica.boxaGetBox(boxa, i, C.L_CLONE)
             leptonica.boxAdjustSides(box, box, -1, 0, -1, 0)
         end
         local boxatb = leptonica.boxaCombineOverlaps(boxa)
         leptonica.boxaDestroy(ffi.new('BOXA *[1]', boxa))
         local clipped_box, unclipped_box
         for i = 0, leptonica.boxaGetCount(boxatb) - 1 do
-            local box = leptonica.boxaGetBox(boxatb, i, ffi.C.L_CLONE)
+            local box = leptonica.boxaGetBox(boxatb, i, C.L_CLONE)
             if box.x / w <= x_rel and (box.x + box.w) / w >= x_rel then
                 clipped_box = leptonica.boxCreate(box.x, 0, box.w, h)
             end
@@ -281,7 +282,7 @@ function KOPTContext_mt.__index:getPageBlock(x_rel, y_rel)
             if clipped_box ~= nil then break end
         end
         for i = 0, leptonica.boxaGetCount(self.rboxa) - 1 do
-            local box = leptonica.boxaGetBox(self.rboxa, i, ffi.C.L_CLONE)
+            local box = leptonica.boxaGetBox(self.rboxa, i, C.L_CLONE)
             if box.x / w <= x_rel and (box.x + box.w) / w >= x_rel
                 and box.y / h <= y_rel and (box.y + box.h) / h >= y_rel then
                 unclipped_box = leptonica.boxCreate(box.x, box.y, box.w, box.h)
@@ -314,7 +315,7 @@ function KOPTContext_mt.__index:getPageBlock(x_rel, y_rel)
             local box = leptonica.boxCreate(block.x0*w, block.y0*h,
                 (block.x1-block.x0)*w, (block.y1-block.y0)*h)
             local boxa = leptonica.boxaCreate(1)
-            leptonica.boxaAddBox(boxa, box, ffi.C.L_COPY)
+            leptonica.boxaAddBox(boxa, box, C.L_COPY)
             local pixs = k2pdfopt.bitmap2pix(self.src,
                 0, 0, self.src.width, self.src.height)
             local pixc = leptonica.pixDrawBoxaRandom(pixs, boxa, 8)
@@ -375,7 +376,7 @@ function KOPTContext_mt.__index:exportSrcPNGString(pboxes, drawer)
         leptonica.pixDestroy(ffi.new('PIX *[1]', pix))
         if pdata[0] ~= nil then
            local pngstr = ffi.string(pdata[0], psize[0])
-           ffi.C.free(pdata[0])
+           C.free(pdata[0])
            return pngstr
        end
     end
@@ -612,7 +613,7 @@ function KOPTContext.fromtable(context)
     if context.rboxa and context.rboxa.n > 0 then
         kc.rboxa = leptonica.boxaCreate(context.rboxa.n)
         for i=0, context.rboxa.n - 1 do
-            leptonica.boxaAddBox(kc.rboxa, ffi.new("BOX[1]"), ffi.C.L_COPY)
+            leptonica.boxaAddBox(kc.rboxa, ffi.new("BOX[1]"), C.L_COPY)
             ffi.copy(kc.rboxa.box[i], context.rboxa.box[i+1], ffi.sizeof("BOX"))
         end
     else
@@ -620,12 +621,12 @@ function KOPTContext.fromtable(context)
     end
     if context.rnai and context.rnai.n > 0 then
         kc.rnai = leptonica.numaCreateFromFArray(ffi.cast("float*",
-                context.rnai.array), context.rnai.n, ffi.C.L_COPY)
+                context.rnai.array), context.rnai.n, C.L_COPY)
     end
     if context.nboxa and context.nboxa.n > 0 then
         kc.nboxa = leptonica.boxaCreate(context.nboxa.n)
         for i=0, context.nboxa.n - 1 do
-            leptonica.boxaAddBox(kc.nboxa, ffi.new("BOX[1]"), ffi.C.L_COPY)
+            leptonica.boxaAddBox(kc.nboxa, ffi.new("BOX[1]"), C.L_COPY)
             ffi.copy(kc.nboxa.box[i], context.nboxa.box[i+1], ffi.sizeof("BOX"))
         end
     else
@@ -633,7 +634,7 @@ function KOPTContext.fromtable(context)
     end
     if context.nnai and context.nnai.n > 0 then
         kc.nnai = leptonica.numaCreateFromFArray(ffi.cast("float*",
-                context.nnai.array), context.nnai.n, ffi.C.L_COPY)
+                context.nnai.array), context.nnai.n, C.L_COPY)
     end
     if context.language then
         local lang = context.language
@@ -643,7 +644,7 @@ function KOPTContext.fromtable(context)
     k2pdfopt.bmp_init(kc.src)
     ffi.copy(kc.src, context.src, ffi.sizeof(kc.src))
     if context.src_data ~= "" then
-        kc.src.data = ffi.C.malloc(#context.src_data)
+        kc.src.data = C.malloc(#context.src_data)
         ffi.copy(kc.src.data, context.src_data, #context.src_data)
     else
         kc.src.data = nil
@@ -651,7 +652,7 @@ function KOPTContext.fromtable(context)
     k2pdfopt.bmp_init(kc.dst)
     ffi.copy(kc.dst, context.dst, ffi.sizeof(kc.dst))
     if context.dst_data ~= "" then
-        kc.dst.data = ffi.C.malloc(#context.dst_data)
+        kc.dst.data = C.malloc(#context.dst_data)
         ffi.copy(kc.dst.data, context.dst_data, #context.dst_data)
     else
         kc.dst.data = nil
@@ -660,7 +661,7 @@ function KOPTContext.fromtable(context)
     kc.rectmaps.n = context.rectmaps.n
     kc.rectmaps.na = context.rectmaps.n
     if context.rectmaps.wrectmap ~= "" then
-        kc.rectmaps.wrectmap = ffi.C.malloc(#context.rectmaps.wrectmap)
+        kc.rectmaps.wrectmap = C.malloc(#context.rectmaps.wrectmap)
         ffi.copy(kc.rectmaps.wrectmap,
                 context.rectmaps.wrectmap, #context.rectmaps.wrectmap)
     else

@@ -1,6 +1,7 @@
 local ffi = require("ffi")
 local bit = require("bit")
 local BB = require("ffi/blitbuffer")
+local C = ffi.C
 
 require("ffi/linux_fb_h")
 require("ffi/posix_h")
@@ -68,15 +69,15 @@ function framebuffer:init()
     local finfo = ffi.new("struct fb_fix_screeninfo")
     local vinfo = ffi.new("struct fb_var_screeninfo")
 
-    self.fd = ffi.C.open(self.device_node, ffi.C.O_RDWR)
+    self.fd = C.open(self.device_node, C.O_RDWR)
     assert(self.fd ~= -1, "cannot open framebuffer")
 
     -- Get fixed screen information
-    assert(ffi.C.ioctl(self.fd, ffi.C.FBIOGET_FSCREENINFO, finfo) == 0, "cannot get screen info")
-    assert(ffi.C.ioctl(self.fd, ffi.C.FBIOGET_VSCREENINFO, vinfo) == 0,
+    assert(C.ioctl(self.fd, C.FBIOGET_FSCREENINFO, finfo) == 0, "cannot get screen info")
+    assert(C.ioctl(self.fd, C.FBIOGET_VSCREENINFO, vinfo) == 0,
            "cannot get variable screen info")
 
-    assert(finfo.type == ffi.C.FB_TYPE_PACKED_PIXELS, "video type not supported")
+    assert(finfo.type == C.FB_TYPE_PACKED_PIXELS, "video type not supported")
     assert(vinfo.xres_virtual > 0 and vinfo.yres_virtual > 0, "invalid framebuffer resolution")
 
     -- Classic eink framebuffer (Kindle 2, 3, DXG, 4)
@@ -100,13 +101,13 @@ function framebuffer:init()
         error("framebuffer model not supported");
     end
 
-    self.data = ffi.C.mmap(nil,
+    self.data = C.mmap(nil,
                            self.fb_size,
-                           bit.bor(ffi.C.PROT_READ, ffi.C.PROT_WRITE),
-                           ffi.C.MAP_SHARED,
+                           bit.bor(C.PROT_READ, C.PROT_WRITE),
+                           C.MAP_SHARED,
                            self.fd,
                            0)
-    assert(tonumber(ffi.cast("intptr_t", self.data)) ~= ffi.C.MAP_FAILED,
+    assert(tonumber(ffi.cast("intptr_t", self.data)) ~= C.MAP_FAILED,
            "can not mmap() framebuffer")
     if vinfo.bits_per_pixel == 32 then
         self.bb = BB.new(vinfo.xres, vinfo.yres, BB.TYPE_BBRGB32, self.data, finfo.line_length)
@@ -136,11 +137,11 @@ function framebuffer:close()
         self.bb = nil
     end
     if self.data then
-        ffi.C.munmap(self.data, self.fb_size)
+        C.munmap(self.data, self.fb_size)
         self.data = nil
     end
     if self.fd ~= -1 then
-        ffi.C.close(self.fd)
+        C.close(self.fd)
         self.fd = -1
     end
 end

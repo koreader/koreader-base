@@ -6,6 +6,7 @@ Generic blitbuffer/GFX stuff that works on memory buffers
 
 local ffi = require("ffi")
 local util = require("ffi/util")
+local C = ffi.C
 
 -- we will use this extensively
 local floor = math.floor
@@ -54,11 +55,11 @@ typedef struct ColorRGB32 {
 } ColorRGB32;
 
 typedef struct BlitBuffer {
-	int w;
-	int h;
-	int pitch;
-	uint8_t *data;
-	uint8_t config;
+    int w;
+    int h;
+    int pitch;
+    uint8_t *data;
+    uint8_t config;
 } BlitBuffer;
 typedef struct BlitBuffer4 {
     int w;
@@ -641,8 +642,12 @@ function BB_mt.__index:setPixelColorize(x, y, mask, color)
     if alpha == 0xFF then
         self:getPixelP(px, py)[0]:set(color)
     else
+        -- NOTE: Don't screw up color permanently, that's a pointer to our set_param
+        --       Avoids screwing with alpha when blitting to >=24bpp bbs (c.f., #3949).
+        local fgcolor_alpha = color.alpha
         color.alpha = alpha
         self:getPixelP(px, py)[0]:blend(color)
+        color.alpha = fgcolor_alpha
     end
 end
 function BB_mt.__index:setPixelInverted(x, y, color)
@@ -820,7 +825,7 @@ function BB_mt.__index:colorblitFrom(source, dest_x, dest_y, offs_x, offs_y, wid
         if width <= 0 or height <= 0 then return end
         cblitbuffer.BB_color_blit_from(ffi.cast("struct BlitBuffer *", self),
             ffi.cast("struct BlitBuffer *", source),
-            dest_x, dest_y, offs_x, offs_y, width, height, color:getColorRGB32())
+            dest_x, dest_y, offs_x, offs_y, width, height, color)
     else
         if self:getInverse() == 1 then color = color:invert() end
         self:blitFrom(source, dest_x, dest_y, offs_x, offs_y, width, height, self.setPixelColorize, color)
@@ -863,7 +868,7 @@ this is also called upon garbage collection
 function BB_mt.__index:free()
     if band(lshift(1, SHIFT_ALLOCATED), self.config) ~= 0 then
         self.config = band(self.config, bxor(0xFF, lshift(1, SHIFT_ALLOCATED)))
-        ffi.C.free(self.data)
+        C.free(self.data)
     end
 end
 
@@ -1211,7 +1216,7 @@ make a full copy of the current buffer, with its own memory
 --]]
 function BB_mt.__index:copy()
     local mytype = ffi.typeof(self)
-    local buffer = ffi.C.malloc(self.pitch * self.h)
+    local buffer = C.malloc(self.pitch * self.h)
     assert(buffer, "cannot allocate buffer")
     ffi.copy(buffer, self.data, self.pitch * self.h)
     local copy = mytype(self.w, self.h, self.pitch, buffer, self.config)
@@ -1241,26 +1246,33 @@ write blitbuffer contents to a PNG file
 @param filename the name of the file to be created
 --]]
 local Png  -- lazy load ffi/png
-function BB_mt.__index:writePNG(filename)
+function BB_mt.__index:writePNG(filename, bgr)
     if not Png then Png = require("ffi/png") end
     local hook, mask, _ = debug.gethook()
     debug.sethook()
     local w, h = self:getWidth(), self:getHeight()
-    local cdata = ffi.C.malloc(w * h * 4)
+    local cdata = C.malloc(w * h * 4)
     local mem = ffi.cast("char*", cdata)
     for y = 0, h-1 do
         local offset = 4 * w * y
         for x = 0, w-1 do
             local c = self:getPixel(x, y):getColorRGB32()
-            mem[offset] = c.r
-            mem[offset + 1] = c.g
-            mem[offset + 2] = c.b
+            -- NOTE: Kobo's FB is BGR(A), we already trick MuPDF into doing it that way for us, so, keep faking it here!
+            if bgr then
+                mem[offset] = c.b
+                mem[offset + 1] = c.g
+                mem[offset + 2] = c.r
+            else
+                mem[offset] = c.r
+                mem[offset + 1] = c.g
+                mem[offset + 2] = c.b
+            end
             mem[offset + 3] = 0xFF
             offset = offset + 4
         end
     end
     Png.encodeToFile(filename, mem, w, h)
-    ffi.C.free(cdata)
+    C.free(cdata)
     debug.sethook(hook, mask)
 end
 
@@ -1315,7 +1327,7 @@ function BB.new(width, height, buffertype, dataptr, pitch)
     end
     bb:setType(buffertype)
     if dataptr == nil then
-        dataptr = ffi.C.malloc(pitch*height)
+        dataptr = C.malloc(pitch*height)
         assert(dataptr, "cannot allocate memory for blitbuffer")
         ffi.fill(dataptr, pitch*height)
         bb:setAllocated(1)
@@ -1329,7 +1341,7 @@ function BB.compat(oldbuffer)
 end
 
 function BB.fromstring(width, height, buffertype, str, pitch)
-    local dataptr = ffi.C.malloc(#str)
+    local dataptr = C.malloc(#str)
     ffi.copy(dataptr, str, #str)
     local bb = BB.new(width, height, buffertype, dataptr, pitch)
     bb:setAllocated(1)

@@ -581,6 +581,9 @@ function page_mt.__index:draw_new(draw_context, width, height, offset_x, offset_
 
     local colorspace = mupdf.color and M.fz_device_rgb(context())
         or M.fz_device_gray(context())
+    if mupdf.bgr and mupdf.color then
+        colorspace = M.fz_device_bgr(context())
+    end
     local pix = W.mupdf_new_pixmap_with_bbox_and_data(
         context(), colorspace, bbox, nil, 1, ffi.cast("unsigned char*", bb.data))
     if pix == nil then merror("cannot allocate pixmap") end
@@ -684,9 +687,20 @@ function mupdf.renderImage(data, size, width, height)
     elseif ncomp == 4 then bbtype = BlitBuffer.TYPE_BBRGB32
     else error("unsupported number of color components")
     end
-    local p = M.fz_pixmap_samples(context(), pixmap)
-    local bb = BlitBuffer.new(p_width, p_height, bbtype, p):copy()
-    M.fz_drop_pixmap(context(), pixmap)
+    -- Handle RGB->BGR conversion for Kobos when needed
+    local bb
+    if mupdf.bgr and ncomp >= 3 then
+        local bgr_pixmap = M.fz_convert_pixmap(context(), pixmap, M.fz_device_bgr(context()), nil, nil, M.fz_default_color_params(context()), (ncomp == 4 and 1 or 0))
+        M.fz_drop_pixmap(context(), pixmap)
+
+        local p = M.fz_pixmap_samples(context(), bgr_pixmap)
+        bb = BlitBuffer.new(p_width, p_height, bbtype, p):copy()
+        M.fz_drop_pixmap(context(), bgr_pixmap)
+    else
+        local p = M.fz_pixmap_samples(context(), pixmap)
+        bb = BlitBuffer.new(p_width, p_height, bbtype, p):copy()
+        M.fz_drop_pixmap(context(), pixmap)
+    end
     return bb
 end
 
@@ -719,7 +733,11 @@ function mupdf.scaleBlitBuffer(bb, width, height)
         colorspace = M.fz_device_gray(context())
         stride = orig_w * 2
     elseif bbtype == BlitBuffer.TYPE_BBRGB32 then
-        colorspace = M.fz_device_rgb(context())
+        if mupdf.bgr then
+            colorspace = M.fz_device_bgr(context())
+        else
+            colorspace = M.fz_device_rgb(context())
+        end
         stride = orig_w * 4
     else
         -- We need to convert the other types to one of the working
@@ -730,7 +748,11 @@ function mupdf.scaleBlitBuffer(bb, width, height)
         converted_bb = BlitBuffer.new(orig_w, orig_h, BlitBuffer.TYPE_BBRGB32)
         converted_bb:blitFrom(bb, 0, 0, 0, 0, orig_w, orig_h)
         bb = converted_bb -- we don't free() the provided bb, but we'll have to free our converted_bb
-        colorspace = M.fz_device_rgb(context())
+        if mupdf.bgr then
+            colorspace = M.fz_device_bgr(context())
+        else
+            colorspace = M.fz_device_rgb(context())
+        end
         stride = orig_w * 4
     end
     -- We can now create a pixmap from this bb of correct type
@@ -833,6 +855,9 @@ local function render_for_kopt(bmp, page, scale, bounds)
 
     local colorspace = mupdf.color and M.fz_device_rgb(context())
         or M.fz_device_gray(context())
+    if mupdf.bgr and mupdf.color then
+        colorspace = M.fz_device_bgr(context())
+    end
     local pix = W.mupdf_new_pixmap_with_bbox(context(), colorspace, bbox, nil, 1)
     if pix == nil then merror("could not allocate pixmap") end
 
