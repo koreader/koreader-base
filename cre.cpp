@@ -736,6 +736,22 @@ static int getTableOfContent(lua_State *L) {
 	return 1;
 }
 
+static int isTocAlternativeToc(lua_State *L) {
+	CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
+	if (doc->dom_doc) {
+            lua_pushboolean(L, doc->dom_doc->isTocAlternativeToc());
+            return 1;
+        }
+	return 0;
+}
+static int buildAlternativeToc(lua_State *L) {
+	CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
+	if (doc->dom_doc) {
+            doc->dom_doc->buildAlternativeToc();
+        }
+	return 0;
+}
+
 /*
  * Return a table like this:
  * {
@@ -1714,6 +1730,8 @@ static const struct luaL_Reg credocument_meth[] = {
 	{"hasCacheFile", hasCacheFile},
 	{"invalidateCacheFile", invalidateCacheFile},
 	{"getCacheFilePath", getCacheFilePath},
+	{"buildAlternativeToc", buildAlternativeToc},
+	{"isTocAlternativeToc", isTocAlternativeToc},
 	{"gotoPage", gotoPage},
 	{"gotoPercent", gotoPercent},
 	{"gotoPos", gotoPos},
