@@ -80,10 +80,21 @@ local function kindle_pearl_mxc_wait_for_update_complete(fb, marker)
     return C.ioctl(fb.fd, C.MXCFB_WAIT_FOR_UPDATE_COMPLETE_PEARL, ffi.new("uint32_t[1]", marker))
 end
 
--- Kobo's MXCFB_WAIT_FOR_UPDATE_COMPLETE == 0x4004462f
+-- Kobo's MXCFB_WAIT_FOR_UPDATE_COMPLETE_V1 == 0x4004462f
 local function kobo_mxc_wait_for_update_complete(fb, marker)
     -- Wait for the previous update to be completed
-    return C.ioctl(fb.fd, C.MXCFB_WAIT_FOR_UPDATE_COMPLETE, ffi.new("uint32_t[1]", marker))
+    return C.ioctl(fb.fd, C.MXCFB_WAIT_FOR_UPDATE_COMPLETE_V1, ffi.new("uint32_t[1]", marker))
+end
+
+-- Kobo's Mk7 MXCFB_WAIT_FOR_UPDATE_COMPLETE_V3
+local function kobo_mk7_mxc_wait_for_update_complete(fb, marker)
+    -- Wait for the previous update to be completed
+    local mk7_update_marker = ffi.new("struct mxcfb_update_marker_data[1]")
+    mk7_update_marker[0].update_marker = marker
+    -- NOTE: 0 seems to be a fairly safe assumption for "we don't care about collisions".
+    --       On a slightly related note, the EPDC_FLAG_TEST_COLLISION flag is for dry-run collision tests, never set it.
+    mk7_update_marker[0].collision_test = 0
+    return C.ioctl(fb.fd, C.MXCFB_WAIT_FOR_UPDATE_COMPLETE_V3, mk7_update_marker)
 end
 
 -- Kindle's MXCFB_WAIT_FOR_UPDATE_COMPLETE == 0x4004462f
@@ -115,7 +126,7 @@ end
 -- Kindle's MXCFB_SEND_UPDATE == 0x4048462e
 -- Kobo's MXCFB_SEND_UPDATE == 0x4044462e
 -- Pocketbook's MXCFB_SEND_UPDATE == 0x4040462e
-local function mxc_update(fb, refarea, refresh_type, waveform_mode, x, y, w, h)
+local function mxc_update(fb, update_ioctl, refarea, refresh_type, waveform_mode, x, y, w, h)
     local bb = fb.full_bb or fb.bb
     w, x = BB.checkBounds(w or bb:getWidth(), x or 0, 0, bb:getWidth(), 0xFFFF)
     h, y = BB.checkBounds(h or bb:getHeight(), y or 0, 0, bb:getHeight(), 0xFFFF)
@@ -197,7 +208,7 @@ local function mxc_update(fb, refarea, refresh_type, waveform_mode, x, y, w, h)
         refarea[0].update_mode = C.UPDATE_MODE_FULL
     end
 
-    C.ioctl(fb.fd, C.MXCFB_SEND_UPDATE, refarea)
+    C.ioctl(fb.fd, update_ioctl, refarea)
 
     -- NOTE: We wait for completion after *any kind* of full (i.e., flashing) update.
     if refarea[0].update_mode == C.UPDATE_MODE_FULL
@@ -235,11 +246,11 @@ local function refresh_k51(fb, refreshtype, waveform_mode, x, y, w, h)
     --       although the framework itself barely ever sets any flags, for some reason...
     refarea[0].flags = 0
 
-    return mxc_update(fb, refarea, refreshtype, waveform_mode, x, y, w, h)
+    return mxc_update(fb, C.MXCFB_SEND_UPDATE, refarea, refreshtype, waveform_mode, x, y, w, h)
 end
 
 local function refresh_kobo(fb, refreshtype, waveform_mode, x, y, w, h)
-    local refarea = ffi.new("struct mxcfb_update_data[1]")
+    local refarea = ffi.new("struct mxcfb_update_data_v1_ntx[1]")
     -- only for Kobo's driver:
     refarea[0].alt_buffer_data.virt_addr = nil
     -- TEMP_USE_AMBIENT, not that there was ever any other choice on Kobo...
@@ -254,7 +265,27 @@ local function refresh_kobo(fb, refreshtype, waveform_mode, x, y, w, h)
         refarea[0].flags = 0
     end
 
-    return mxc_update(fb, refarea, refreshtype, waveform_mode, x, y, w, h)
+    return mxc_update(fb, C.MXCFB_SEND_UPDATE_V1_NTX, refarea, refreshtype, waveform_mode, x, y, w, h)
+end
+
+local function refresh_kobo_mk7(fb, refreshtype, waveform_mode, x, y, w, h)
+    local refarea = ffi.new("struct mxcfb_update_data_v2[1]")
+    -- TEMP_USE_AMBIENT, not that there was ever any other choice on Kobo...
+    refarea[0].temp = C.TEMP_USE_AMBIENT
+    -- TODO: Here be dragons! This is entirely based on what the Nightmode hack does, and not on an actual analysis of Nickel's behavior.
+    refarea[0].dither_mode = C.EPDC_FLAG_USE_DITHERING_PASSTHROUGH
+    refarea[0].quant_bit = 7;
+    -- Enable the appropriate flag when requesting a REAGLD waveform (NTX_WFM_MODE_GLD16 on Mk7?)
+    if waveform_mode == C.NTX_WFM_MODE_GLD16 then
+        refarea[0].flags = C.EPDC_FLAG_USE_REGAL
+    elseif waveform_mode == C.WAVEFORM_MODE_A2 then
+        -- As well as when requesting a 2bit waveform
+        refarea[0].flags = C.EPDC_FLAG_FORCE_MONOCHROME
+    else
+        refarea[0].flags = 0
+    end
+
+    return mxc_update(fb, C.MXCFB_SEND_UPDATE_V2, refarea, refreshtype, waveform_mode, x, y, w, h)
 end
 
 local function refresh_pocketbook(fb, refreshtype, waveform_mode, x, y, w, h)
@@ -262,7 +293,7 @@ local function refresh_pocketbook(fb, refreshtype, waveform_mode, x, y, w, h)
     -- TEMP_USE_AMBIENT
     refarea[0].temp = 0x1000
 
-    return mxc_update(fb, refarea, refreshtype, waveform_mode, x, y, w, h)
+    return mxc_update(fb, C.MXCFB_SEND_UPDATE, refarea, refreshtype, waveform_mode, x, y, w, h)
 end
 
 --[[ framebuffer API ]]--
@@ -354,15 +385,35 @@ function framebuffer:init()
         -- New devices *may* be REAGL-aware, but generally don't expect explicit REAGL requests, default to not.
         local isREAGL = false
 
+        -- Mark 7 devices sport an updated driver.
+        -- For now, it appears backward compatibility has been somewhat preserved, but let's be ready...
+        local isMk7 = false
+
         -- NOTE: AFAICT, the Aura was the only one explicitly requiring REAGL requests...
         if self.device.model == "Kobo_phoenix" then
             isREAGL = true
+        end
+
+        if self.device.model == "KoboStarRev2" then
+            isMk7 = true
+        elseif self.device.model == "KoboSnowRev2" then
+            isMk7 = true
+        elseif self.device.model == "KoboNova" then
+            isMk7 = true
         end
 
         if isREAGL then
             self.waveform_partial = C.NTX_WFM_MODE_GLD16
             self.waveform_fast = C.WAVEFORM_MODE_DU -- Mainly menu HLs, compare to Kindle's use of AUTO in these instances ;).
         end
+
+        -- TODO: Keep this dormant until someone can actually test this w/ the proper HW...
+        --[[
+        if isMk7 then
+            self.mech_refresh = refresh_kobo_mk7
+            self.mech_wait_update_complete = kobo_mk7_mxc_wait_for_update_complete
+        end
+        --]]
     elseif self.device:isPocketBook() then
         require("ffi/mxcfb_pocketbook_h")
 
