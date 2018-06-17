@@ -18,6 +18,7 @@ local framebuffer = {
     waveform_ui = nil,
     waveform_full = nil,
     waveform_fast = nil,
+    waveform_reagl = nil,
     mech_refresh = nil,
     -- start with an out of bound marker value to avoid doing something stupid on our first update
     marker = MARKER_MIN - 1,
@@ -45,21 +46,9 @@ end
 
 -- Returns true if waveform_mode arg matches the REAGL waveform mode for current device
 -- NOTE: This is to avoid explicit comparison against device-specific waveform constants in mxc_update()
---       Here, it's Kindle's WAVEFORM_MODE_REAGL vs. Kobo's NTX_WFM_MODE_GLD16
+--       Here, it's Kindle's various WAVEFORM_MODE_REAGL vs. Kobo's NTX_WFM_MODE_GLD16
 function framebuffer:_isREAGLWaveFormMode(waveform_mode)
-    local ret = false
-
-    if self.device:isKindle() then
-        if self.device.model == "KindleOasis2" then
-            ret = waveform_mode == C.WAVEFORM_MODE_KOA2_REAGL
-        else
-            ret = waveform_mode == C.WAVEFORM_MODE_REAGL
-        end
-    elseif self.device:isKobo() then
-        ret = waveform_mode == C.NTX_WFM_MODE_GLD16
-    end
-
-    return ret
+    return waveform_mode == self.waveform_reagl
 end
 
 -- Returns true if w & h are equal or larger than our visible screen estate (i.e., we asked for a full-screen update)
@@ -406,7 +395,8 @@ function framebuffer:init()
         if isREAGL then
             self.mech_wait_update_complete = kindle_carta_mxc_wait_for_update_complete
             --self.waveform_fast = C.WAVEFORM_MODE_AUTO -- NOTE: That's what the FW does, because, indeed, A2 looks truly terrible on REAGL devices.
-            self.waveform_partial = C.WAVEFORM_MODE_REAGL
+            self.waveform_reagl = C.WAVEFORM_MODE_REAGL
+            self.waveform_partial = self.waveform_reagl
         else
             self.waveform_partial = C.WAVEFORM_MODE_GL16_FAST -- NOTE: Depending on FW, might instead be AUTO w/ hist_gray_waveform_mode set to GL16_FAST
         end
@@ -417,7 +407,8 @@ function framebuffer:init()
             self.waveform_fast = C.WAVEFORM_MODE_KOA2_A2
             self.waveform_ui = C.WAVEFORM_MODE_KOA2_GC16_FAST
             self.waveform_full = C.WAVEFORM_MODE_GC16
-            self.waveform_partial = C.WAVEFORM_MODE_KOA2_REAGL
+            self.waveform_reagl = C.WAVEFORM_MODE_KOA2_REAGL
+            self.waveform_partial = self.waveform_reagl
         end
     elseif self.device:isKobo() then
         require("ffi/mxcfb_kobo_h")
@@ -451,7 +442,8 @@ function framebuffer:init()
         end
 
         if isREAGL then
-            self.waveform_partial = C.NTX_WFM_MODE_GLD16
+            self.waveform_reagl = C.NTX_WFM_MODE_GLD16
+            self.waveform_partial = self.waveform_reagl
             self.waveform_fast = C.WAVEFORM_MODE_DU -- Mainly menu HLs, compare to Kindle's use of AUTO in these instances ;).
         end
 
@@ -460,6 +452,8 @@ function framebuffer:init()
         if isMk7 then
             self.mech_refresh = refresh_kobo_mk7
             self.mech_wait_update_complete = kobo_mk7_mxc_wait_for_update_complete
+
+            -- FIXME: Is it REAGL, too?
         end
         --]]
     elseif self.device:isPocketBook() then
