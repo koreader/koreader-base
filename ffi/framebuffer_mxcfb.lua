@@ -50,7 +50,11 @@ function framebuffer:_isREAGLWaveFormMode(waveform_mode)
     local ret = false
 
     if self.device:isKindle() then
-        ret = waveform_mode == C.WAVEFORM_MODE_REAGL
+        if self.device.model == "KindleOasis2" then
+            ret = waveform_mode == C.WAVEFORM_MODE_KOA2_REAGL
+        else
+            ret = waveform_mode == C.WAVEFORM_MODE_REAGL
+        end
     elseif self.device:isKobo() then
         ret = waveform_mode == C.NTX_WFM_MODE_GLD16
     end
@@ -249,6 +253,34 @@ local function refresh_k51(fb, refreshtype, waveform_mode, x, y, w, h)
     return mxc_update(fb, C.MXCFB_SEND_UPDATE, refarea, refreshtype, waveform_mode, x, y, w, h)
 end
 
+local function refresh_koa2(fb, refreshtype, waveform_mode, x, y, w, h)
+    local refarea = ffi.new("struct mxcfb_update_data[1]")
+    -- only for Amazon's driver, try to mostly follow what the stock reader does...
+    if waveform_mode == C.WAVEFORM_MODE_KOA2_REAGL then
+        -- If we're requesting WAVEFORM_MODE_KOA2_REAGL, it's REAGL all around!
+        refarea[0].hist_bw_waveform_mode = waveform_mode
+        refarea[0].hist_gray_waveform_mode = waveform_mode
+    else
+        refarea[0].hist_bw_waveform_mode = C.WAVEFORM_MODE_DU
+        refarea[0].hist_gray_waveform_mode = C.WAVEFORM_MODE_KOA2_GC16_FAST
+    end
+    -- And we're only left with true full updates to special-case.
+    if waveform_mode == C.WAVEFORM_MODE_GC16 then
+        refarea[0].hist_gray_waveform_mode = waveform_mode
+    end
+    refarea[0].temp = C.TEMP_USE_KOA2_AUTO
+    -- TODO: Here be dragons! This is a complete shot in the dark!
+    refarea[0].dither_mode = C.EPDC_FLAG_USE_DITHERING_PASSTHROUGH
+    refarea[0].quant_bit = 7;
+    -- FIXME: We never used to use any flags on Kindle...
+    --        But there's a shiny renamed EPDC_FLAG_USE_KOA2_REGAL on the KOA2...
+    --        Which means that the framework might be using WAVEFORM_MODE_KOA2_REAGLD somewhere...
+    -- TODO: There's also the HW-backed NightMode which should be somewhat accessible...
+    refarea[0].flags = 0
+
+    return mxc_update(fb, C.MXCFB_SEND_UPDATE_KOA2, refarea, refreshtype, waveform_mode, x, y, w, h)
+end
+
 local function refresh_kobo(fb, refreshtype, waveform_mode, x, y, w, h)
     local refarea = ffi.new("struct mxcfb_update_data_v1_ntx[1]")
     -- only for Kobo's driver:
@@ -350,6 +382,9 @@ function framebuffer:init()
         -- New devices are REAGL-aware, default to REAGL
         local isREAGL = true
 
+        -- The KOA2 uses a new eink driver, one that massively breaks backward compatibility.
+        local isKOA2 = false
+
         if self.device.model == "Kindle2" then
             isREAGL = false
         elseif self.device.model == "KindleDXG" then
@@ -364,12 +399,25 @@ function framebuffer:init()
             isREAGL = false
         end
 
+        if self.device.model == "KindleOasis2" then
+            isKOA2 = false
+        end
+
         if isREAGL then
             self.mech_wait_update_complete = kindle_carta_mxc_wait_for_update_complete
             --self.waveform_fast = C.WAVEFORM_MODE_AUTO -- NOTE: That's what the FW does, because, indeed, A2 looks truly terrible on REAGL devices.
             self.waveform_partial = C.WAVEFORM_MODE_REAGL
         else
             self.waveform_partial = C.WAVEFORM_MODE_GL16_FAST -- NOTE: Depending on FW, might instead be AUTO w/ hist_gray_waveform_mode set to GL16_FAST
+        end
+
+        if isKOA2 then
+            self.mech_refresh = refresh_koa2
+
+            self.waveform_fast = C.WAVEFORM_MODE_KOA2_A2
+            self.waveform_ui = C.WAVEFORM_MODE_KOA2_GC16_FAST
+            self.waveform_full = C.WAVEFORM_MODE_GC16
+            self.waveform_partial = C.WAVEFORM_MODE_KOA2_REAGL
         end
     elseif self.device:isKobo() then
         require("ffi/mxcfb_kobo_h")
