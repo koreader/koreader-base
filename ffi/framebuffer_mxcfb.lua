@@ -80,7 +80,7 @@ local function kobo_mxc_wait_for_update_complete(fb, marker)
 end
 
 -- Kobo's Mk7 MXCFB_WAIT_FOR_UPDATE_COMPLETE_V3
-local function kobo_mk7_mxc_wait_for_update_complete(fb, marker)
+local function kobo_mk7_mxc_wait_for_update_complete(fb, marker) -- luacheck: ignore
     -- Wait for the previous update to be completed
     local mk7_update_marker = ffi.new("struct mxcfb_update_marker_data[1]")
     mk7_update_marker[0].update_marker = marker
@@ -289,7 +289,7 @@ local function refresh_kobo(fb, refreshtype, waveform_mode, x, y, w, h)
     return mxc_update(fb, C.MXCFB_SEND_UPDATE_V1_NTX, refarea, refreshtype, waveform_mode, x, y, w, h)
 end
 
-local function refresh_kobo_mk7(fb, refreshtype, waveform_mode, x, y, w, h)
+local function refresh_kobo_mk7(fb, refreshtype, waveform_mode, x, y, w, h) -- luacheck: ignore
     local refarea = ffi.new("struct mxcfb_update_data_v2[1]")
     -- TEMP_USE_AMBIENT, not that there was ever any other choice on Kobo...
     refarea[0].temp = C.TEMP_USE_AMBIENT
@@ -426,7 +426,7 @@ function framebuffer:init()
 
         -- Mark 7 devices sport an updated driver.
         -- For now, it appears backward compatibility has been somewhat preserved, but let's be ready...
-        local isMk7 = false
+        local isMk7 = false -- luacheck: ignore
 
         -- NOTE: AFAICT, the Aura was the only one explicitly requiring REAGL requests...
         if self.device.model == "Kobo_phoenix" then
@@ -448,6 +448,7 @@ function framebuffer:init()
         end
 
         -- TODO: Keep this dormant until someone can actually test this w/ the proper HW...
+        --       Don't forget to zap the three inilined luacheck: ignore pragmas when you do ;).
         --[[
         if isMk7 then
             self.mech_refresh = refresh_kobo_mk7
