@@ -11,6 +11,8 @@
 #include <string.h>
 #include <stdio.h>
 #include <linux/limits.h>
+#include <libgen.h>
+#include <sys/ioctl.h>
 
 #include "ffi-cdecl.h"
 
@@ -39,6 +41,8 @@ cdecl_func(write)
 cdecl_func(read)
 cdecl_func(kill)
 cdecl_func(waitpid)
+cdecl_func(getpid)
+cdecl_func(setpgid)
 
 cdecl_struct(pollfd)
 cdecl_const(POLLIN)
@@ -52,9 +56,12 @@ cdecl_const(PROT_WRITE)
 cdecl_const(MAP_SHARED)
 cdecl_const(MAP_FAILED)
 cdecl_const(PATH_MAX)
+cdecl_func(memcmp)
 cdecl_func(mmap)
+cdecl_func(munmap)
 
 cdecl_func(ioctl)
+//cdecl_func(Sleep) // Win32
 cdecl_func(sleep)
 cdecl_func(usleep)
 cdecl_func(statvfs)
@@ -76,4 +83,6 @@ cdecl_func(sprintf)
 cdecl_func(fprintf)
 cdecl_func(fputc)
 
+cdecl_const(FIONREAD)
 cdecl_func(fileno)
+cdecl_func(strerror)
