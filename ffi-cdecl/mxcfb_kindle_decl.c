@@ -3,7 +3,6 @@
 
 #include <linux/ioctl.h>
 // specialized eink framebuffer headers
-typedef unsigned int uint;
 #include "include/mxcfb-kindle.h"
 
 #include "ffi-cdecl.h"
@@ -28,7 +27,6 @@ cdecl_const(WAVEFORM_MODE_AUTO)
 
 cdecl_const(WAVEFORM_MODE_KOA2_GL16)
 cdecl_const(WAVEFORM_MODE_KOA2_A2)
-cdecl_const(WAVEFORM_MODE_KOA2_DU4)
 cdecl_const(WAVEFORM_MODE_KOA2_LAST)
 cdecl_const(WAVEFORM_MODE_KOA2_REAGL)
 cdecl_const(WAVEFORM_MODE_KOA2_REAGLD)

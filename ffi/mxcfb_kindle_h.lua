@@ -19,7 +19,6 @@ static const int WAVEFORM_MODE_GL16_INV = 11;
 static const int WAVEFORM_MODE_AUTO = 257;
 static const int WAVEFORM_MODE_KOA2_GL16 = 3;
 static const int WAVEFORM_MODE_KOA2_A2 = 6;
-static const int WAVEFORM_MODE_KOA2_DU4 = 7;
 static const int WAVEFORM_MODE_KOA2_LAST = 7;
 static const int WAVEFORM_MODE_KOA2_REAGL = 4;
 static const int WAVEFORM_MODE_KOA2_REAGLD = 5;

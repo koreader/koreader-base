@@ -149,7 +149,7 @@ struct mxcfb_rect {
 #define WAVEFORM_MODE_KOA2_GL16			0x3
 
 #define WAVEFORM_MODE_KOA2_A2			0x6
-#define WAVEFORM_MODE_KOA2_DU4			0x7
+//#define WAVEFORM_MODE_KOA2_DU4			0x7
 #define WAVEFORM_MODE_KOA2_LAST			0x7
 
 #define WAVEFORM_MODE_KOA2_REAGL		WAVEFORM_MODE_KOA2_GLR16
@@ -177,7 +177,7 @@ struct mxcfb_rect {
 /* PW2, Gone w/ KOA2 */
 #define TEMP_USE_AUTO				0x1001
 
-/* KOA2... Once again breaking backward compat... */
+/* KOA2... Once again breaking backward compat... (NOTE: TEMP_USE_AMBIENT hasn't budged, though) */
 #define TEMP_USE_KOA2_AUTO			TEMP_USE_AMBIENT
 
 /* PXP Operations */
@@ -246,7 +246,7 @@ struct mxcfb_update_data {
 	__u32 hist_bw_waveform_mode;    /*Lab126: Def bw waveform for hist analysis*/
 	__u32 hist_gray_waveform_mode;  /*Lab126: Def gray waveform for hist analysis*/
 	int temp;
-	uint flags;
+	unsigned int flags;
 	struct mxcfb_alt_buffer_data alt_buffer_data;
 };
 
@@ -284,7 +284,7 @@ struct mxcfb_update_data_50x {
 	__u32 update_mode;
 	__u32 update_marker;
 	int temp;
-	uint flags;
+	unsigned int flags;
 	struct mxcfb_alt_buffer_data alt_buffer_data;
 };
 
