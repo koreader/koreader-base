@@ -7,17 +7,17 @@ struct FT_Generic_ {
   void (*finalizer)(void *);
 };
 typedef struct FT_Generic_ FT_Generic;
+typedef struct FT_ListNodeRec_ *FT_ListNode;
 struct FT_ListNodeRec_ {
   FT_ListNode prev;
   FT_ListNode next;
   void *data;
 };
-typedef struct FT_ListNodeRec_ *FT_ListNode;
+typedef struct FT_ListRec_ *FT_List;
 struct FT_ListRec_ {
   FT_ListNode head;
   FT_ListNode tail;
 };
-typedef struct FT_ListRec_ *FT_List;
 struct FT_BBox_ {
   long int xMin;
   long int yMin;

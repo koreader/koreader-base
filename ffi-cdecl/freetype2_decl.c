@@ -11,11 +11,11 @@ cdecl_type(FT_Error)
 cdecl_struct(FT_Generic_)
 cdecl_type(FT_Generic)
 
-cdecl_struct(FT_ListNodeRec_)
 cdecl_type(FT_ListNode)
+cdecl_struct(FT_ListNodeRec_)
 
-cdecl_struct(FT_ListRec_)
 cdecl_type(FT_List)
+cdecl_struct(FT_ListRec_)
 
 cdecl_struct(FT_BBox_)
 cdecl_type(FT_BBox)
