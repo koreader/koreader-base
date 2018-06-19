@@ -44,6 +44,9 @@ cdecl_struct(FT_StreamRec_)
 cdecl_enum(FT_Glyph_Format_)
 cdecl_type(FT_Glyph_Format)
 
+cdecl_struct(FT_LibraryRec_)
+cdecl_type(FT_Library)
+
 cdecl_type(FT_GlyphSlot)
 cdecl_struct(FT_GlyphSlotRec_)
 
@@ -68,20 +71,17 @@ cdecl_type(FT_Encoding)
 cdecl_type(FT_CharMap)
 cdecl_struct(FT_CharMapRec_)
 
-cdecl_type(FT_Face_Internal)
 cdecl_struct(FT_Face_InternalRec_)
+cdecl_type(FT_Face_Internal)
 
-cdecl_type(FT_Library)
-cdecl_struct(FT_LibraryRec_)
-
-cdecl_type(FT_SubGlyph)
 cdecl_struct(FT_SubGlyphRec_)
+cdecl_type(FT_SubGlyph)
 
-cdecl_type(FT_Slot_Internal)
 cdecl_struct(FT_Slot_InternalRec_)
+cdecl_type(FT_Slot_Internal)
 
-cdecl_type(FT_Driver)
 cdecl_struct(FT_DriverRec_)
+cdecl_type(FT_Driver)
 
 cdecl_func(FT_Init_FreeType)
 

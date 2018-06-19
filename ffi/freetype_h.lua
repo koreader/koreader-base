@@ -91,6 +91,8 @@ enum FT_Glyph_Format_ {
   FT_GLYPH_FORMAT_PLOTTER = 1886154612,
 };
 typedef enum FT_Glyph_Format_ FT_Glyph_Format;
+struct FT_LibraryRec_;
+typedef struct FT_LibraryRec_ *FT_Library;
 typedef struct FT_GlyphSlotRec_ *FT_GlyphSlot;
 struct FT_GlyphSlotRec_ {
   FT_Library library;
@@ -211,16 +213,14 @@ struct FT_CharMapRec_ {
   short unsigned int platform_id;
   short unsigned int encoding_id;
 };
-typedef struct FT_Face_InternalRec_ *FT_Face_Internal;
 struct FT_Face_InternalRec_;
-typedef struct FT_LibraryRec_ *FT_Library;
-struct FT_LibraryRec_;
-typedef struct FT_SubGlyphRec_ *FT_SubGlyph;
+typedef struct FT_Face_InternalRec_ *FT_Face_Internal;
 struct FT_SubGlyphRec_;
-typedef struct FT_Slot_InternalRec_ *FT_Slot_Internal;
+typedef struct FT_SubGlyphRec_ *FT_SubGlyph;
 struct FT_Slot_InternalRec_;
-typedef struct FT_DriverRec_ *FT_Driver;
+typedef struct FT_Slot_InternalRec_ *FT_Slot_Internal;
 struct FT_DriverRec_;
+typedef struct FT_DriverRec_ *FT_Driver;
 FT_Error FT_Init_FreeType(FT_Library *);
 FT_Error FT_New_Face(FT_Library, const char *, long int, FT_Face *);
 FT_Error FT_Set_Pixel_Sizes(FT_Face, unsigned int, unsigned int);
