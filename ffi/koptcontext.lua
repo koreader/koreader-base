@@ -436,7 +436,7 @@ function KOPTContext.new()
     kc.debug = 0
     kc.cjkchar = 0
     -- struct
-    kc.bbox = ffi.new("struct BBox", {0.0, 0.0, 0.0, 0.0})
+    kc.bbox = ffi.new("BBox", {0.0, 0.0, 0.0, 0.0})
     -- pointers
     kc.rboxa = nil
     kc.rnai = nil
