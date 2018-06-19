@@ -11,10 +11,10 @@ enum LodePNGColorType {
 };
 const char *lodepng_error_text(unsigned int);
 unsigned int lodepng_decode32_file(unsigned char **, unsigned int *, unsigned int *, const char *);
-unsigned int lodepng_decode32(unsigned char **, unsigned int *, unsigned int *, const unsigned char *, long unsigned int);
+unsigned int lodepng_decode32(unsigned char **, unsigned int *, unsigned int *, const unsigned char *, unsigned int);
 unsigned int lodepng_decode24_file(unsigned char **, unsigned int *, unsigned int *, const char *);
-unsigned int lodepng_decode24(unsigned char **, unsigned int *, unsigned int *, const unsigned char *, long unsigned int);
-unsigned int lodepng_decode_memory(unsigned char **, unsigned int *, unsigned int *, const unsigned char *, long unsigned int, LodePNGColorType, unsigned int);
+unsigned int lodepng_decode24(unsigned char **, unsigned int *, unsigned int *, const unsigned char *, unsigned int);
+unsigned int lodepng_decode_memory(unsigned char **, unsigned int *, unsigned int *, const unsigned char *, unsigned int, LodePNGColorType, unsigned int);
 unsigned int lodepng_decode_file(unsigned char **, unsigned int *, unsigned int *, const char *, LodePNGColorType, unsigned int);
 unsigned int lodepng_encode32_file(const char *, const unsigned char *, unsigned int, unsigned int);
 ]]
