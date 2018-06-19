@@ -234,7 +234,7 @@ function Pic.openGIFDocumentFromData(data, size)
             return sz
         end
     end
-    local read_cb = ffi.cast('GifInputFunc', data_reader(data, size))
+    local read_cb = ffi.cast('InputFunc', data_reader(data, size))
     local err = ffi.new("int[1]")
     local giffile = giflib.DGifOpen(nil, read_cb, err)
     if giffile == nil then
