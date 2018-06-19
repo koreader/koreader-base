@@ -95,6 +95,16 @@ struct FT_LibraryRec_;
 typedef struct FT_LibraryRec_ *FT_Library;
 typedef struct FT_FaceRec_ *FT_Face;
 typedef struct FT_Glyph_Metrics_ FT_Glyph_Metrics;
+struct FT_Glyph_Metrics_ {
+  long int width;
+  long int height;
+  long int horiBearingX;
+  long int horiBearingY;
+  long int horiAdvance;
+  long int vertBearingX;
+  long int vertBearingY;
+  long int vertAdvance;
+};
 struct FT_SubGlyphRec_;
 typedef struct FT_SubGlyphRec_ *FT_SubGlyph;
 struct FT_Slot_InternalRec_;
@@ -123,16 +133,6 @@ struct FT_GlyphSlotRec_ {
   long int rsb_delta;
   void *other;
   FT_Slot_Internal internal;
-};
-struct FT_Glyph_Metrics_ {
-  long int width;
-  long int height;
-  long int horiBearingX;
-  long int horiBearingY;
-  long int horiAdvance;
-  long int vertBearingX;
-  long int vertBearingY;
-  long int vertAdvance;
 };
 struct FT_Size_Metrics_ {
   short unsigned int x_ppem;

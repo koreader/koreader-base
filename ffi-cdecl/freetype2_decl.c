@@ -49,6 +49,7 @@ cdecl_type(FT_Library)
 
 cdecl_type(FT_Face)
 cdecl_type(FT_Glyph_Metrics)
+cdecl_struct(FT_Glyph_Metrics_)
 cdecl_struct(FT_SubGlyphRec_)
 cdecl_type(FT_SubGlyph)
 cdecl_struct(FT_Slot_InternalRec_)
@@ -56,8 +57,6 @@ cdecl_type(FT_Slot_Internal)
 
 cdecl_type(FT_GlyphSlot)
 cdecl_struct(FT_GlyphSlotRec_)
-
-cdecl_struct(FT_Glyph_Metrics_)
 
 cdecl_struct(FT_Size_Metrics_)
 cdecl_type(FT_Size_Metrics)
