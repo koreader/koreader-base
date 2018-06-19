@@ -58,18 +58,19 @@ struct FT_Outline_ {
   int flags;
 };
 typedef struct FT_Outline_ FT_Outline;
+typedef struct FT_MemoryRec_ *FT_Memory;
 struct FT_MemoryRec_ {
   void *user;
   void *(*alloc)(FT_Memory, long int);
   void (*free)(FT_Memory, void *);
   void *(*realloc)(FT_Memory, long int, long int, void *);
 };
-typedef struct FT_MemoryRec_ *FT_Memory;
 union FT_StreamDesc_ {
   long int value;
   void *pointer;
 };
 typedef union FT_StreamDesc_ FT_StreamDesc;
+typedef struct FT_StreamRec_ *FT_Stream;
 struct FT_StreamRec_ {
   unsigned char *base;
   long unsigned int size;
@@ -82,7 +83,6 @@ struct FT_StreamRec_ {
   unsigned char *cursor;
   unsigned char *limit;
 };
-typedef struct FT_StreamRec_ *FT_Stream;
 enum FT_Glyph_Format_ {
   FT_GLYPH_FORMAT_NONE = 0,
   FT_GLYPH_FORMAT_COMPOSITE = 1668246896,
@@ -91,6 +91,7 @@ enum FT_Glyph_Format_ {
   FT_GLYPH_FORMAT_PLOTTER = 1886154612,
 };
 typedef enum FT_Glyph_Format_ FT_Glyph_Format;
+typedef struct FT_GlyphSlotRec_ *FT_GlyphSlot;
 struct FT_GlyphSlotRec_ {
   FT_Library library;
   FT_Face face;
@@ -115,7 +116,6 @@ struct FT_GlyphSlotRec_ {
   void *other;
   FT_Slot_Internal internal;
 };
-typedef struct FT_GlyphSlotRec_ *FT_GlyphSlot;
 struct FT_Glyph_Metrics_ {
   long int width;
   long int height;
@@ -138,15 +138,16 @@ struct FT_Size_Metrics_ {
   long int max_advance;
 };
 typedef struct FT_Size_Metrics_ FT_Size_Metrics;
-struct FT_Size_InternalRec_;
 typedef struct FT_Size_InternalRec_ *FT_Size_Internal;
+struct FT_Size_InternalRec_;
+typedef struct FT_SizeRec_ *FT_Size;
 struct FT_SizeRec_ {
   FT_Face face;
   FT_Generic generic;
   FT_Size_Metrics metrics;
   FT_Size_Internal internal;
 };
-typedef struct FT_SizeRec_ *FT_Size;
+typedef struct FT_FaceRec_ *FT_Face;
 struct FT_FaceRec_ {
   long int num_faces;
   long int face_index;
@@ -180,7 +181,6 @@ struct FT_FaceRec_ {
   void *extensions;
   FT_Face_Internal internal;
 };
-typedef struct FT_FaceRec_ *FT_Face;
 enum FT_Encoding_ {
   FT_ENCODING_NONE = 0,
   FT_ENCODING_MS_SYMBOL = 1937337698,
@@ -204,23 +204,23 @@ enum FT_Encoding_ {
   FT_ENCODING_APPLE_ROMAN = 1634889070,
 };
 typedef enum FT_Encoding_ FT_Encoding;
+typedef struct FT_CharMapRec_ *FT_CharMap;
 struct FT_CharMapRec_ {
   FT_Face face;
   FT_Encoding encoding;
   short unsigned int platform_id;
   short unsigned int encoding_id;
 };
-typedef struct FT_CharMapRec_ *FT_CharMap;
-struct FT_Face_InternalRec_;
 typedef struct FT_Face_InternalRec_ *FT_Face_Internal;
-struct FT_LibraryRec_;
+struct FT_Face_InternalRec_;
 typedef struct FT_LibraryRec_ *FT_Library;
-struct FT_SubGlyphRec_;
+struct FT_LibraryRec_;
 typedef struct FT_SubGlyphRec_ *FT_SubGlyph;
-struct FT_Slot_InternalRec_;
+struct FT_SubGlyphRec_;
 typedef struct FT_Slot_InternalRec_ *FT_Slot_Internal;
-struct FT_DriverRec_;
+struct FT_Slot_InternalRec_;
 typedef struct FT_DriverRec_ *FT_Driver;
+struct FT_DriverRec_;
 FT_Error FT_Init_FreeType(FT_Library *);
 FT_Error FT_New_Face(FT_Library, const char *, long int, FT_Face *);
 FT_Error FT_Set_Pixel_Sizes(FT_Face, unsigned int, unsigned int);

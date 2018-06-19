@@ -32,20 +32,20 @@ cdecl_type(FT_Vector)
 cdecl_struct(FT_Outline_)
 cdecl_type(FT_Outline)
 
-cdecl_struct(FT_MemoryRec_)
 cdecl_type(FT_Memory)
+cdecl_struct(FT_MemoryRec_)
 
 cdecl_union(FT_StreamDesc_)
 cdecl_type(FT_StreamDesc)
 
-cdecl_struct(FT_StreamRec_)
 cdecl_type(FT_Stream)
+cdecl_struct(FT_StreamRec_)
 
 cdecl_enum(FT_Glyph_Format_)
 cdecl_type(FT_Glyph_Format)
 
-cdecl_struct(FT_GlyphSlotRec_)
 cdecl_type(FT_GlyphSlot)
+cdecl_struct(FT_GlyphSlotRec_)
 
 cdecl_struct(FT_Glyph_Metrics_)
 cdecl_type(FT_Glyph_Metrics)
@@ -53,35 +53,35 @@ cdecl_type(FT_Glyph_Metrics)
 cdecl_struct(FT_Size_Metrics_)
 cdecl_type(FT_Size_Metrics)
 
-cdecl_struct(FT_Size_InternalRec_)
 cdecl_type(FT_Size_Internal)
+cdecl_struct(FT_Size_InternalRec_)
 
-cdecl_struct(FT_SizeRec_)
 cdecl_type(FT_Size)
+cdecl_struct(FT_SizeRec_)
 
-cdecl_struct(FT_FaceRec_)
 cdecl_type(FT_Face)
+cdecl_struct(FT_FaceRec_)
 
 cdecl_enum(FT_Encoding_)
 cdecl_type(FT_Encoding)
 
-cdecl_struct(FT_CharMapRec_)
 cdecl_type(FT_CharMap)
+cdecl_struct(FT_CharMapRec_)
 
-cdecl_struct(FT_Face_InternalRec_)
 cdecl_type(FT_Face_Internal)
+cdecl_struct(FT_Face_InternalRec_)
 
-cdecl_struct(FT_LibraryRec_)
 cdecl_type(FT_Library)
+cdecl_struct(FT_LibraryRec_)
 
-cdecl_struct(FT_SubGlyphRec_)
 cdecl_type(FT_SubGlyph)
+cdecl_struct(FT_SubGlyphRec_)
 
-cdecl_struct(FT_Slot_InternalRec_)
 cdecl_type(FT_Slot_Internal)
+cdecl_struct(FT_Slot_InternalRec_)
 
-cdecl_struct(FT_DriverRec_)
 cdecl_type(FT_Driver)
+cdecl_struct(FT_DriverRec_)
 
 cdecl_func(FT_Init_FreeType)
 
