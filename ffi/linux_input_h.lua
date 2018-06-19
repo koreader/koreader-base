@@ -1,12 +1,6 @@
 local ffi = require("ffi")
 
 ffi.cdef[[
-struct input_event {
-  struct timeval time;
-  short unsigned int type;
-  short unsigned int code;
-  int value;
-};
 static const int EVIOCGRAB = 1074021776;
 static const int EV_SYN = 0;
 static const int EV_KEY = 1;
@@ -40,4 +34,10 @@ static const int ABS_MT_PRESSURE = 58;
 static const int ABS_MT_DISTANCE = 59;
 static const int ABS_MT_TOOL_X = 60;
 static const int ABS_MT_TOOL_Y = 61;
+struct input_event {
+  struct timeval time;
+  short unsigned int type;
+  short unsigned int code;
+  int value;
+};
 ]]
