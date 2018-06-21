@@ -371,7 +371,7 @@ function KOPTContext_mt.__index:exportSrcPNGString(pboxes, drawer)
     local pix = self:getSrcPix(pboxes, drawer)
     if pix ~= nil then
         local pdata = ffi.new("char *[1]")
-        local psize = ffi.new("size_t[1]")
+        local psize = ffi.new("unsigned int[1]")
         leptonica.pixWriteMemPng(pdata, psize, pix, 0.0)
         leptonica.pixDestroy(ffi.new('PIX *[1]', pix))
         if pdata[0] ~= nil then
@@ -436,7 +436,7 @@ function KOPTContext.new()
     kc.debug = 0
     kc.cjkchar = 0
     -- struct
-    kc.bbox = ffi.new("struct BBox", {0.0, 0.0, 0.0, 0.0})
+    kc.bbox = ffi.new("BBox", {0.0, 0.0, 0.0, 0.0})
     -- pointers
     kc.rboxa = nil
     kc.rnai = nil

@@ -1,6 +1,63 @@
 local ffi = require("ffi")
 
 ffi.cdef[[
+typedef int FT_Error;
+struct FT_Generic_ {
+  void *data;
+  void (*finalizer)(void *);
+};
+typedef struct FT_Generic_ FT_Generic;
+typedef struct FT_ListNodeRec_ *FT_ListNode;
+struct FT_ListNodeRec_ {
+  FT_ListNode prev;
+  FT_ListNode next;
+  void *data;
+};
+typedef struct FT_ListRec_ *FT_List;
+struct FT_ListRec_ {
+  FT_ListNode head;
+  FT_ListNode tail;
+};
+struct FT_BBox_ {
+  long int xMin;
+  long int yMin;
+  long int xMax;
+  long int yMax;
+};
+typedef struct FT_BBox_ FT_BBox;
+struct FT_Bitmap_Size_ {
+  short int height;
+  short int width;
+  long int size;
+  long int x_ppem;
+  long int y_ppem;
+};
+typedef struct FT_Bitmap_Size_ FT_Bitmap_Size;
+struct FT_Bitmap_ {
+  unsigned int rows;
+  unsigned int width;
+  int pitch;
+  unsigned char *buffer;
+  short unsigned int num_grays;
+  unsigned char pixel_mode;
+  unsigned char palette_mode;
+  void *palette;
+};
+typedef struct FT_Bitmap_ FT_Bitmap;
+struct FT_Vector_ {
+  long int x;
+  long int y;
+};
+typedef struct FT_Vector_ FT_Vector;
+struct FT_Outline_ {
+  short int n_contours;
+  short int n_points;
+  FT_Vector *points;
+  char *tags;
+  short int *contours;
+  int flags;
+};
+typedef struct FT_Outline_ FT_Outline;
 typedef struct FT_MemoryRec_ *FT_Memory;
 struct FT_MemoryRec_ {
   void *user;
@@ -8,12 +65,12 @@ struct FT_MemoryRec_ {
   void (*free)(FT_Memory, void *);
   void *(*realloc)(FT_Memory, long int, long int, void *);
 };
-typedef struct FT_StreamRec_ *FT_Stream;
 union FT_StreamDesc_ {
   long int value;
   void *pointer;
 };
 typedef union FT_StreamDesc_ FT_StreamDesc;
+typedef struct FT_StreamRec_ *FT_Stream;
 struct FT_StreamRec_ {
   unsigned char *base;
   long unsigned int size;
@@ -26,38 +83,6 @@ struct FT_StreamRec_ {
   unsigned char *cursor;
   unsigned char *limit;
 };
-struct FT_Vector_ {
-  long int x;
-  long int y;
-};
-typedef struct FT_Vector_ FT_Vector;
-struct FT_BBox_ {
-  long int xMin;
-  long int yMin;
-  long int xMax;
-  long int yMax;
-};
-typedef struct FT_BBox_ FT_BBox;
-struct FT_Bitmap_ {
-  int rows;
-  int width;
-  int pitch;
-  unsigned char *buffer;
-  short int num_grays;
-  char pixel_mode;
-  char palette_mode;
-  void *palette;
-};
-typedef struct FT_Bitmap_ FT_Bitmap;
-struct FT_Outline_ {
-  short int n_contours;
-  short int n_points;
-  FT_Vector *points;
-  char *tags;
-  short int *contours;
-  int flags;
-};
-typedef struct FT_Outline_ FT_Outline;
 enum FT_Glyph_Format_ {
   FT_GLYPH_FORMAT_NONE = 0,
   FT_GLYPH_FORMAT_COMPOSITE = 1668246896,
@@ -66,23 +91,10 @@ enum FT_Glyph_Format_ {
   FT_GLYPH_FORMAT_PLOTTER = 1886154612,
 };
 typedef enum FT_Glyph_Format_ FT_Glyph_Format;
-typedef int FT_Error;
-struct FT_Generic_ {
-  void *data;
-  void (*finalizer)(void *);
-};
-typedef struct FT_Generic_ FT_Generic;
-typedef struct FT_ListNodeRec_ *FT_ListNode;
-typedef struct FT_ListRec_ *FT_List;
-struct FT_ListNodeRec_ {
-  FT_ListNode prev;
-  FT_ListNode next;
-  void *data;
-};
-struct FT_ListRec_ {
-  FT_ListNode head;
-  FT_ListNode tail;
-};
+struct FT_LibraryRec_;
+typedef struct FT_LibraryRec_ *FT_Library;
+typedef struct FT_FaceRec_ *FT_Face;
+typedef struct FT_Glyph_Metrics_ FT_Glyph_Metrics;
 struct FT_Glyph_Metrics_ {
   long int width;
   long int height;
@@ -93,51 +105,58 @@ struct FT_Glyph_Metrics_ {
   long int vertBearingY;
   long int vertAdvance;
 };
-typedef struct FT_Glyph_Metrics_ FT_Glyph_Metrics;
-struct FT_Bitmap_Size_ {
-  short int height;
-  short int width;
-  long int size;
-  long int x_ppem;
-  long int y_ppem;
+struct FT_SubGlyphRec_;
+typedef struct FT_SubGlyphRec_ *FT_SubGlyph;
+struct FT_Slot_InternalRec_;
+typedef struct FT_Slot_InternalRec_ *FT_Slot_Internal;
+typedef struct FT_GlyphSlotRec_ *FT_GlyphSlot;
+struct FT_GlyphSlotRec_ {
+  FT_Library library;
+  FT_Face face;
+  FT_GlyphSlot next;
+  unsigned int reserved;
+  FT_Generic generic;
+  FT_Glyph_Metrics metrics;
+  long int linearHoriAdvance;
+  long int linearVertAdvance;
+  FT_Vector advance;
+  FT_Glyph_Format format;
+  FT_Bitmap bitmap;
+  int bitmap_left;
+  int bitmap_top;
+  FT_Outline outline;
+  unsigned int num_subglyphs;
+  FT_SubGlyph subglyphs;
+  void *control_data;
+  long int control_len;
+  long int lsb_delta;
+  long int rsb_delta;
+  void *other;
+  FT_Slot_Internal internal;
 };
-typedef struct FT_Bitmap_Size_ FT_Bitmap_Size;
-struct FT_LibraryRec_;
-typedef struct FT_LibraryRec_ *FT_Library;
+struct FT_Size_Metrics_ {
+  short unsigned int x_ppem;
+  short unsigned int y_ppem;
+  long int x_scale;
+  long int y_scale;
+  long int ascender;
+  long int descender;
+  long int height;
+  long int max_advance;
+};
+typedef struct FT_Size_Metrics_ FT_Size_Metrics;
+typedef struct FT_Size_InternalRec_ *FT_Size_Internal;
+struct FT_Size_InternalRec_;
+typedef struct FT_SizeRec_ *FT_Size;
+struct FT_SizeRec_ {
+  FT_Face face;
+  FT_Generic generic;
+  FT_Size_Metrics metrics;
+  FT_Size_Internal internal;
+};
+typedef struct FT_CharMapRec_ *FT_CharMap;
 struct FT_DriverRec_;
 typedef struct FT_DriverRec_ *FT_Driver;
-typedef struct FT_FaceRec_ *FT_Face;
-typedef struct FT_SizeRec_ *FT_Size;
-typedef struct FT_GlyphSlotRec_ *FT_GlyphSlot;
-typedef struct FT_CharMapRec_ *FT_CharMap;
-enum FT_Encoding_ {
-  FT_ENCODING_NONE = 0,
-  FT_ENCODING_MS_SYMBOL = 1937337698,
-  FT_ENCODING_UNICODE = 1970170211,
-  FT_ENCODING_SJIS = 1936353651,
-  FT_ENCODING_GB2312 = 1734484000,
-  FT_ENCODING_BIG5 = 1651074869,
-  FT_ENCODING_WANSUNG = 2002873971,
-  FT_ENCODING_JOHAB = 1785686113,
-  FT_ENCODING_MS_SJIS = 1936353651,
-  FT_ENCODING_MS_GB2312 = 1734484000,
-  FT_ENCODING_MS_BIG5 = 1651074869,
-  FT_ENCODING_MS_WANSUNG = 2002873971,
-  FT_ENCODING_MS_JOHAB = 1785686113,
-  FT_ENCODING_ADOBE_STANDARD = 1094995778,
-  FT_ENCODING_ADOBE_EXPERT = 1094992453,
-  FT_ENCODING_ADOBE_CUSTOM = 1094992451,
-  FT_ENCODING_ADOBE_LATIN_1 = 1818326065,
-  FT_ENCODING_OLD_LATIN_2 = 1818326066,
-  FT_ENCODING_APPLE_ROMAN = 1634889070,
-};
-typedef enum FT_Encoding_ FT_Encoding;
-struct FT_CharMapRec_ {
-  FT_Face face;
-  FT_Encoding encoding;
-  short unsigned int platform_id;
-  short unsigned int encoding_id;
-};
 struct FT_Face_InternalRec_;
 typedef struct FT_Face_InternalRec_ *FT_Face_Internal;
 struct FT_FaceRec_ {
@@ -173,52 +192,34 @@ struct FT_FaceRec_ {
   void *extensions;
   FT_Face_Internal internal;
 };
-struct FT_Size_InternalRec_;
-typedef struct FT_Size_InternalRec_ *FT_Size_Internal;
-struct FT_Size_Metrics_ {
-  short unsigned int x_ppem;
-  short unsigned int y_ppem;
-  long int x_scale;
-  long int y_scale;
-  long int ascender;
-  long int descender;
-  long int height;
-  long int max_advance;
+enum FT_Encoding_ {
+  FT_ENCODING_NONE = 0,
+  FT_ENCODING_MS_SYMBOL = 1937337698,
+  FT_ENCODING_UNICODE = 1970170211,
+  FT_ENCODING_SJIS = 1936353651,
+  FT_ENCODING_PRC = 1734484000,
+  FT_ENCODING_BIG5 = 1651074869,
+  FT_ENCODING_WANSUNG = 2002873971,
+  FT_ENCODING_JOHAB = 1785686113,
+  FT_ENCODING_GB2312 = 1734484000,
+  FT_ENCODING_MS_SJIS = 1936353651,
+  FT_ENCODING_MS_GB2312 = 1734484000,
+  FT_ENCODING_MS_BIG5 = 1651074869,
+  FT_ENCODING_MS_WANSUNG = 2002873971,
+  FT_ENCODING_MS_JOHAB = 1785686113,
+  FT_ENCODING_ADOBE_STANDARD = 1094995778,
+  FT_ENCODING_ADOBE_EXPERT = 1094992453,
+  FT_ENCODING_ADOBE_CUSTOM = 1094992451,
+  FT_ENCODING_ADOBE_LATIN_1 = 1818326065,
+  FT_ENCODING_OLD_LATIN_2 = 1818326066,
+  FT_ENCODING_APPLE_ROMAN = 1634889070,
 };
-typedef struct FT_Size_Metrics_ FT_Size_Metrics;
-struct FT_SizeRec_ {
+typedef enum FT_Encoding_ FT_Encoding;
+struct FT_CharMapRec_ {
   FT_Face face;
-  FT_Generic generic;
-  FT_Size_Metrics metrics;
-  FT_Size_Internal internal;
-};
-struct FT_SubGlyphRec_;
-typedef struct FT_SubGlyphRec_ *FT_SubGlyph;
-struct FT_Slot_InternalRec_;
-typedef struct FT_Slot_InternalRec_ *FT_Slot_Internal;
-struct FT_GlyphSlotRec_ {
-  FT_Library library;
-  FT_Face face;
-  FT_GlyphSlot next;
-  unsigned int reserved;
-  FT_Generic generic;
-  FT_Glyph_Metrics metrics;
-  long int linearHoriAdvance;
-  long int linearVertAdvance;
-  FT_Vector advance;
-  FT_Glyph_Format format;
-  FT_Bitmap bitmap;
-  int bitmap_left;
-  int bitmap_top;
-  FT_Outline outline;
-  unsigned int num_subglyphs;
-  FT_SubGlyph subglyphs;
-  void *control_data;
-  long int control_len;
-  long int lsb_delta;
-  long int rsb_delta;
-  void *other;
-  FT_Slot_Internal internal;
+  FT_Encoding encoding;
+  short unsigned int platform_id;
+  short unsigned int encoding_id;
 };
 FT_Error FT_Init_FreeType(FT_Library *);
 FT_Error FT_New_Face(FT_Library, const char *, long int, FT_Face *);

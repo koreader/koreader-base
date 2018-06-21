@@ -1,3 +1,5 @@
+// NOTE: This ones needs a recent kernel, the ones from eInk devices TCs are too old for some of the stuff we need for Android.
+//       i.e., CPPFLAGS="-I/usr/include" ./ffi-cdecl ...
 #include <linux/input.h>
 
 #include "ffi-cdecl.h"

@@ -126,9 +126,16 @@ enum fx_type
     //
     fx_flash = 20,                          // Only for use with update_area_t (for faking a flashing update).
     fx_invert = 21,                         // Only for use with update_area_t (only inverts output data).
+        
+    fx_update_partial = 0,                  // Higher-speed, lower-fidelity update at bit depth's number of grays (aka non-flashing). 
+    fx_update_full = 1,                     // Higher-fidelity, lower speed update at bit depth's number of grays (aka flashing).
     
-    fx_update_partial = 0,                  // eInk GU/PU/MU-style (non-flashing) update.
-    fx_update_full = 1                      // eInk GC-style (slower, flashing) update.
+    fx_update_fast = 2,                     // Sacrifices all fidelity for speed (will be non-flashing).
+    fx_update_slow = 3,                     // Sacrifices any speed for fidelity (will be flashing).
+    
+    fx_buffer_load = 99,                    // Just load the hardware buffer; don't update the display.
+    fx_buffer_display_partial = 100,        // Display whatever's in the hardware's buffer, non-flashing style.
+    fx_buffer_display_full = 101            // Display whatever's in the hardware's buffer, flashing style.
 };
 typedef enum fx_type fx_type;
 
@@ -138,16 +145,27 @@ typedef enum fx_type fx_type;
     ((fx_mask == (f))                   ||  \
      (fx_buf_is_mask == (f)))
 
+// Fast page turns consists of both fast updates to begin with, which are low fidelity, and then a
+// slow update at the end of the fast-update sequence to restore fidelity to the display.
+//
+#define UPDATE_FAST_PAGE_TURN(f)            \
+    ((fx_update_fast == (f))            ||  \
+     (fx_update_slow == (f)))
+
 // The default ("none") for area updates is partial (non-flashing); full (flashing) updates
 // are for FX and such (i.e., explicit completion is desired).
 //
 #define UPDATE_AREA_PART(f)                 \
-    ((fx_none == (f))           ||          \
-     (fx_update_partial == (f)))
+    ((fx_none == (f))                   ||  \
+     (fx_buffer_display_partial == (f)) ||  \
+     (fx_update_partial == (f))         ||  \
+     (fx_update_fast == (f)))
      
 #define UPDATE_AREA_FULL(f)                 \
-    (UPDATE_AREA_FX(f)          ||          \
-     (fx_update_full == (f)))
+    (UPDATE_AREA_FX(f)                  ||  \
+     (fx_buffer_display_full == (f))    ||  \
+     (fx_update_full == (f))            ||  \
+     (fx_update_slow == (f)))
 
 #define UPDATE_AREA_MODE(f)                 \
     (UPDATE_AREA_FULL(f) ? fx_update_full   \
@@ -156,12 +174,28 @@ typedef enum fx_type fx_type;
 // For use with the FBIO_EINK_UPDATE_DISPLAY ioctl.
 //
 #define UPDATE_PART(f)                      \
-    (fx_update_partial == (f))
+    ((fx_buffer_display_partial == (f)) ||  \
+     (fx_update_partial == (f))         ||  \
+     (fx_update_fast == (f)))
+
 #define UPDATE_FULL(f)                      \
-    (fx_update_full == (f))
+    ((fx_buffer_display_full == (f))    ||  \
+     (fx_update_full == (f))            ||  \
+     (fx_update_slow == (f)))
+
 #define UPDATE_MODE(f)                      \
     (UPDATE_FULL(f) ? fx_update_full        \
                     : fx_update_partial)
+
+#define UPDATE_MODE_BUFFER(f)               \
+    ((fx_buffer_load == (f))            ||  \
+     (fx_buffer_display_partial == (f)) ||  \
+     (fx_buffer_display_full == (f)))
+     
+#define SKIP_BUFFERS_EQUAL(f, c)            \
+    (UPDATE_MODE_BUFFER(f)              ||  \
+     (fx_update_slow == (f))            ||  \
+     (contrast_off != (c)))
 
 struct rect_t
 {
@@ -301,6 +335,22 @@ enum sleep_behavior_t
 };
 typedef enum sleep_behavior_t sleep_behavior_t;
 
+enum contrast_t
+{
+    contrast_off,
+    
+    contrast_light,
+    contrast_medium,
+    contrast_dark,
+    
+    contrast_lighter,
+    contrast_lightest,
+    
+    contrast_darker,
+    contrast_darkest
+};
+typedef enum contrast_t contrast_t;
+
 #define EINK_FRAME_BUFFER                   "/dev/fb/0"
 
 #define SIZEOF_EINK_EVENT                   sizeof(einkfb_event_t)
@@ -318,9 +368,11 @@ typedef enum sleep_behavior_t sleep_behavior_t;
 
 #define EINK_CLEAR_SCREEN                   0
 #define EINK_CLEAR_BUFFER                   1
+#define EINK_CLEAR_SCREEN_NOT_BUFFER        2
 
 #define FBIO_EINK_SCREEN_CLEAR              FBIO_EINK_CLEAR_SCREEN, EINK_CLEAR_SCREEN
 #define FBIO_EINK_BUFFER_CLEAR              FBIO_EINK_CLEAR_SCREEN, EINK_CLEAR_BUFFER
+#define FBIO_EINK_SCREEN_CLEAR_ONLY         FBIO_EINK_CLEAR_SCREEN, EINK_CLEAR_SCREEN_NOT_BUFFER
 
 #define FBIO_MIN_SCREEN                     splash_screen_powering_off
 #define FBIO_MAX_SCREEN                     num_splash_screens
@@ -334,7 +386,7 @@ typedef enum sleep_behavior_t sleep_behavior_t;
 #define FBIO_EINK_UPDATE_DISPLAY            _IO(FBIO_MAGIC_NUMBER, 0xdb) // 0x46db (fx_type)
 #define FBIO_EINK_UPDATE_DISPLAY_AREA       _IO(FBIO_MAGIC_NUMBER, 0xdd) // 0x46dd (update_area_t *)
 
-#define FBIO_EINK_RESTORE_DISPLAY           _IO(FBIO_MAGIC_NUMBER, 0xef) // 0x46ef (fx_type)
+#define FBIO_EINK_RESTORE_DISPLAY           _IO(FBIO_MAGIC_NUMBER, 0xef) // 0x46ef (UPDATE_MODE(fx_type))
 
 #define FBIO_EINK_SET_REBOOT_BEHAVIOR       _IO(FBIO_MAGIC_NUMBER, 0xe9) // 0x46e9 (reboot_behavior_t)
 #define FBIO_EINK_GET_REBOOT_BEHAVIOR       _IO(FBIO_MAGIC_NUMBER, 0xed) // 0x46ed (reboot_behavior_t *)
@@ -345,19 +397,34 @@ typedef enum sleep_behavior_t sleep_behavior_t;
 #define FBIO_EINK_SET_SLEEP_BEHAVIOR        _IO(FBIO_MAGIC_NUMBER, 0xf2) // 0x46f2 (sleep_behavior_t)
 #define FBIO_EINK_GET_SLEEP_BEHAVIOR        _IO(FBIO_MAGIC_NUMBER, 0xf3) // 0x46f3 (sleep_behavior_t *)
 
+#define FBIO_EINK_SET_CONTRAST              _IO(FBIO_MAGIC_NUMBER, 0xf5) // 0x46f5 (contrast_t)
+
 // Implemented in the eInk Shim.
 //
 #define FBIO_EINK_UPDATE_DISPLAY_FX         _IO(FBIO_MAGIC_NUMBER, 0xe4) // 0x46e4 (fx_t *)
 #define FBIO_EINK_SPLASH_SCREEN             _IO(FBIO_MAGIC_NUMBER, 0xdc) // 0x46dc (splash_screen_type)
 #define FBIO_EINK_SPLASH_SCREEN_SLEEP       _IO(FBIO_MAGIC_NUMBER, 0xe0) // 0x46e0 (splash_screen_type)
-#define FBIO_EINK_OFF_CLEAR_SCREEN          _IO(FBIO_MAGIC_NUMBER, 0xdf) // 0x46df (EINK_CLEAR_SCREEN || EINK_CLEAR_BUFFER)
-#define FBIO_EINK_CLEAR_SCREEN              _IO(FBIO_MAGIC_NUMBER, 0xe1) // 0x46e1 (no args)
+#define FBIO_EINK_OFF_CLEAR_SCREEN          _IO(FBIO_MAGIC_NUMBER, 0xdf) // 0x46df (no args)
+#define FBIO_EINK_CLEAR_SCREEN              _IO(FBIO_MAGIC_NUMBER, 0xe1) // 0x46e1 (EINK_CLEAR_SCREEN || EINK_CLEAR_BUFFER || EINK_CLEAR_SCREEN_NOT_BUFFER)
 #define FBIO_EINK_POWER_OVERRIDE            _IO(FBIO_MAGIC_NUMBER, 0xe3) // 0x46e3 (power_override_t *)
 
 #define FBIO_EINK_PROGRESSBAR               _IO(FBIO_MAGIC_NUMBER, 0xea) // 0x46ea (int: 0..100 -> draw progressbar || !(0..100) -> clear progressbar)
 #define FBIO_EINK_PROGRESSBAR_SET_XY        _IO(FBIO_MAGIC_NUMBER, 0xeb) // 0x46eb (progressbar_xy_t *)
 #define FBIO_EINK_PROGRESSBAR_BADGE         _IO(FBIO_MAGIC_NUMBER, 0xec) // 0x46ec (progressbar_badge_t);
 #define FBIO_EINK_PROGRESSBAR_BACKGROUND    _IO(FBIO_MAGIC_NUMBER, 0xf4) // 0x46f4 (int: EINKFB_WHITE || EINKFB_BLACK)
+
+#define IS_UPDATE_DISPLAY_CMD(c)                \
+    ((FBIO_EINK_UPDATE_DISPLAY == (c))      ||  \
+     (FBIO_EINK_UPDATE_DISPLAY_FX == (c))   ||  \
+     (FBIO_EINK_UPDATE_DISPLAY_AREA == (c)) ||  \
+     (FBIO_EINK_RESTORE_DISPLAY == (c))     ||  \
+     (FBIO_EINK_CLEAR_SCREEN == (c)))
+
+#define IS_PROGRESSBAR_CMD(c)                   \
+    ((FBIO_EINK_PROGRESSBAR == (c))         ||  \
+     (FBIO_EINK_PROGRESSBAR_SET_XY == (c))  ||  \
+     (FBIO_EINK_PROGRESSBAR_BADGE == (c))   ||  \
+     (FBIO_EINK_PROGRESSBAR_BACKGROUND == (c)))
 
 // Deprecated from the HAL & Shim.
 //
@@ -385,6 +452,7 @@ typedef enum sleep_behavior_t sleep_behavior_t;
 #define PROC_EINK_SET_SLEEP_BEHAVIOR       16   // FBIO_EINK_SET_SLEEP_BEHAVIOR
 #define PROC_EINK_PROGRESSBAR_BACKGROUND   17   // FBIO_EINK_PROGRESSBAR_BACKGROUND
 #define PROC_EINK_UPDATE_DISPLAY_WHICH     18   // FBIO_EINK_UPDATE_DISPLAY
+#define PROC_EINK_SET_CONTRAST             19   // FBIO_EINK_SET_CONTRAST
 
 //#define PROC_EINK_FAKE_PNLCD_TEST       100   // Programmatically drive FBIO_EINK_FAKE_PNLCD (not implemented).
 #define PROC_EINK_GRAYSCALE_TEST          101   // Fills display with white-to-black ramp at current bit depth.

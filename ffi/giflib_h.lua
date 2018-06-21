@@ -1,21 +1,24 @@
 local ffi = require("ffi")
 
 ffi.cdef[[
-typedef unsigned char GifByteType;
+static const int GIF_OK = 1;
+static const int GIF_ERROR = 0;
 typedef int GifWord;
+typedef unsigned char GifByteType;
+typedef struct GifColorType GifColorType;
 struct GifColorType {
   GifByteType Red;
   GifByteType Green;
   GifByteType Blue;
 };
-typedef struct GifColorType GifColorType;
+typedef struct ColorMapObject ColorMapObject;
 struct ColorMapObject {
   int ColorCount;
   int BitsPerPixel;
   _Bool SortFlag;
   GifColorType *Colors;
 };
-typedef struct ColorMapObject ColorMapObject;
+typedef struct GifImageDesc GifImageDesc;
 struct GifImageDesc {
   GifWord Left;
   GifWord Top;
@@ -24,27 +27,27 @@ struct GifImageDesc {
   _Bool Interlace;
   ColorMapObject *ColorMap;
 };
-typedef struct GifImageDesc GifImageDesc;
-struct ExtensionBlock {
-    int ByteCount;
-    GifByteType *Bytes;
-    int Function;
-};
 typedef struct ExtensionBlock ExtensionBlock;
-struct GraphicsControlBlock {
-    int DisposalMode;
-    bool UserInputFlag;
-    int DelayTime;
-    int TransparentColor;
+struct ExtensionBlock {
+  int ByteCount;
+  GifByteType *Bytes;
+  int Function;
 };
 typedef struct GraphicsControlBlock GraphicsControlBlock;
+struct GraphicsControlBlock {
+  int DisposalMode;
+  _Bool UserInputFlag;
+  int DelayTime;
+  int TransparentColor;
+};
+typedef struct SavedImage SavedImage;
 struct SavedImage {
   GifImageDesc ImageDesc;
   GifByteType *RasterBits;
   int ExtensionBlockCount;
-  struct ExtensionBlock *ExtensionBlocks;
+  ExtensionBlock *ExtensionBlocks;
 };
-typedef struct SavedImage SavedImage;
+typedef struct GifFileType GifFileType;
 struct GifFileType {
   GifWord SWidth;
   GifWord SHeight;
@@ -56,14 +59,11 @@ struct GifFileType {
   GifImageDesc Image;
   SavedImage *SavedImages;
   int ExtensionBlockCount;
-  struct ExtensionBlock *ExtensionBlocks;
+  ExtensionBlock *ExtensionBlocks;
   int Error;
   void *UserData;
   void *Private;
 };
-typedef struct GifFileType GifFileType;
-static const int GIF_OK = 1;
-static const int GIF_ERROR = 0;
 GifFileType *DGifOpenFileName(const char *, int *);
 GifFileType *DGifOpenFileHandle(int, int *);
 int DGifCloseFile(GifFileType *, int *);
@@ -71,10 +71,10 @@ int DGifSlurp(GifFileType *);
 const char *GifErrorString(int);
 int DGifSavedExtensionToGCB(GifFileType *, int, GraphicsControlBlock *);
 static const int DISPOSAL_UNSPECIFIED = 0;
-static const int DISPOSE_DO_NOT       = 1;
-static const int DISPOSE_BACKGROUND   = 2;
-static const int DISPOSE_PREVIOUS     = 3;
+static const int DISPOSE_DO_NOT = 1;
+static const int DISPOSE_BACKGROUND = 2;
+static const int DISPOSE_PREVIOUS = 3;
 static const int NO_TRANSPARENT_COLOR = -1;
-typedef int (*GifInputFunc) (GifFileType *, GifByteType *, int);
-GifFileType *DGifOpen(void *, GifInputFunc, int *);
+typedef int (*InputFunc)(GifFileType *, GifByteType *, int);
+GifFileType *DGifOpen(void *, InputFunc, int *);
 ]]

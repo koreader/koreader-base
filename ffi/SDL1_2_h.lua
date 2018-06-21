@@ -1,12 +1,12 @@
 local ffi = require("ffi")
 
 ffi.cdef[[
-typedef signed char Sint8;
-typedef unsigned char Uint8;
-typedef short int Sint16;
-typedef short unsigned int Uint16;
-typedef int Sint32;
 typedef unsigned int Uint32;
+typedef int Sint32;
+typedef short unsigned int Uint16;
+typedef short int Sint16;
+typedef unsigned char Uint8;
+typedef signed char Sint8;
 struct SDL_keysym {
   Uint8 scancode;
   enum {
@@ -262,57 +262,6 @@ struct SDL_keysym {
   } mod;
   Uint16 unicode;
 };
-struct SDL_Rect {
-  Sint16 x;
-  Sint16 y;
-  Uint16 w;
-  Uint16 h;
-};
-struct SDL_Color {
-  Uint8 r;
-  Uint8 g;
-  Uint8 b;
-  Uint8 unused;
-};
-struct SDL_Palette {
-  int ncolors;
-  struct SDL_Color *colors;
-};
-struct SDL_PixelFormat {
-  struct SDL_Palette *palette;
-  Uint8 BitsPerPixel;
-  Uint8 BytesPerPixel;
-  Uint8 Rloss;
-  Uint8 Gloss;
-  Uint8 Bloss;
-  Uint8 Aloss;
-  Uint8 Rshift;
-  Uint8 Gshift;
-  Uint8 Bshift;
-  Uint8 Ashift;
-  Uint32 Rmask;
-  Uint32 Gmask;
-  Uint32 Bmask;
-  Uint32 Amask;
-  Uint32 colorkey;
-  Uint8 alpha;
-};
-struct SDL_Surface {
-  Uint32 flags;
-  struct SDL_PixelFormat *format;
-  int w;
-  int h;
-  Uint16 pitch;
-  void *pixels;
-  int offset;
-  struct private_hwdata *hwdata;
-  struct SDL_Rect clip_rect;
-  Uint32 unused1;
-  Uint32 locked;
-  struct SDL_BlitMap *map;
-  unsigned int format_version;
-  int refcount;
-};
 typedef enum {
   SDL_NOEVENT = 0,
   SDL_ACTIVEEVENT = 1,
@@ -450,6 +399,57 @@ union SDL_Event {
   struct SDL_QuitEvent quit;
   struct SDL_UserEvent user;
   struct SDL_SysWMEvent syswm;
+};
+struct SDL_Rect {
+  Sint16 x;
+  Sint16 y;
+  Uint16 w;
+  Uint16 h;
+};
+struct SDL_Color {
+  Uint8 r;
+  Uint8 g;
+  Uint8 b;
+  Uint8 unused;
+};
+struct SDL_Palette {
+  int ncolors;
+  struct SDL_Color *colors;
+};
+struct SDL_PixelFormat {
+  struct SDL_Palette *palette;
+  Uint8 BitsPerPixel;
+  Uint8 BytesPerPixel;
+  Uint8 Rloss;
+  Uint8 Gloss;
+  Uint8 Bloss;
+  Uint8 Aloss;
+  Uint8 Rshift;
+  Uint8 Gshift;
+  Uint8 Bshift;
+  Uint8 Ashift;
+  Uint32 Rmask;
+  Uint32 Gmask;
+  Uint32 Bmask;
+  Uint32 Amask;
+  Uint32 colorkey;
+  Uint8 alpha;
+};
+struct SDL_Surface {
+  Uint32 flags;
+  struct SDL_PixelFormat *format;
+  int w;
+  int h;
+  Uint16 pitch;
+  void *pixels;
+  int offset;
+  struct private_hwdata *hwdata;
+  struct SDL_Rect clip_rect;
+  Uint32 unused1;
+  Uint32 locked;
+  struct SDL_BlitMap *map;
+  unsigned int format_version;
+  int refcount;
 };
 int SDL_Init(Uint32) __attribute__((visibility("default")));
 Uint32 SDL_WasInit(Uint32) __attribute__((visibility("default")));

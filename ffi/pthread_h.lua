@@ -2,11 +2,10 @@ local ffi = require("ffi")
 
 ffi.cdef[[
 typedef long unsigned int pthread_t;
-union pthread_attr_t {
-  char __size[56];
+typedef union {
+  char __size[36];
   long int __align;
-};
-typedef union pthread_attr_t pthread_attr_t;
+} pthread_attr_t;
 int pthread_attr_init(pthread_attr_t *) __attribute__((__nothrow__, __leaf__));
 int pthread_attr_setdetachstate(pthread_attr_t *, int) __attribute__((__nothrow__, __leaf__));
 int pthread_attr_destroy(pthread_attr_t *) __attribute__((__nothrow__, __leaf__));

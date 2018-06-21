@@ -1,6 +1,14 @@
 local ffi = require("ffi")
 
 ffi.cdef[[
+static const int FBIOGET_FSCREENINFO = 17922;
+static const int FBIOGET_VSCREENINFO = 17920;
+static const int FB_TYPE_PACKED_PIXELS = 0;
+struct fb_bitfield {
+  unsigned int offset;
+  unsigned int length;
+  unsigned int msb_right;
+};
 struct fb_fix_screeninfo {
   char id[16];
   long unsigned int smem_start;
@@ -15,13 +23,7 @@ struct fb_fix_screeninfo {
   long unsigned int mmio_start;
   unsigned int mmio_len;
   unsigned int accel;
-  short unsigned int capabilities;
-  short unsigned int reserved[2];
-};
-struct fb_bitfield {
-  unsigned int offset;
-  unsigned int length;
-  unsigned int msb_right;
+  short unsigned int reserved[3];
 };
 struct fb_var_screeninfo {
   unsigned int xres;
@@ -51,10 +53,6 @@ struct fb_var_screeninfo {
   unsigned int sync;
   unsigned int vmode;
   unsigned int rotate;
-  unsigned int colorspace;
-  unsigned int reserved[4];
+  unsigned int reserved[5];
 };
-static const int FBIOGET_FSCREENINFO = 17922;
-static const int FBIOGET_VSCREENINFO = 17920;
-static const int FB_TYPE_PACKED_PIXELS = 0;
 ]]

@@ -1,13 +1,6 @@
 local ffi = require("ffi")
 
 ffi.cdef[[
-struct inotify_event {
-  int wd;
-  uint32_t mask;
-  uint32_t cookie;
-  uint32_t len;
-  char name[];
-};
 static const int IN_ACCESS = 1;
 static const int IN_ATTRIB = 4;
 static const int IN_CLOSE_WRITE = 8;
@@ -36,6 +29,13 @@ static const int IN_NONBLOCK = 2048;
 static const int IN_CLOEXEC = 524288;
 int inotify_init(void) __attribute__((__nothrow__, __leaf__));
 int inotify_init1(int) __attribute__((__nothrow__, __leaf__));
-int inotify_add_watch(int, const char *, uint32_t) __attribute__((__nothrow__, __leaf__));
+int inotify_add_watch(int, const char *, unsigned int) __attribute__((__nothrow__, __leaf__));
 int inotify_rm_watch(int, int) __attribute__((__nothrow__, __leaf__));
+struct inotify_event {
+  int wd;
+  unsigned int mask;
+  unsigned int cookie;
+  unsigned int len;
+  char name[];
+};
 ]]

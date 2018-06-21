@@ -9,6 +9,11 @@ enum fx_type {
   fx_invert = 21,
   fx_update_partial = 0,
   fx_update_full = 1,
+  fx_update_fast = 2,
+  fx_update_slow = 3,
+  fx_buffer_load = 99,
+  fx_buffer_display_partial = 100,
+  fx_buffer_display_full = 101,
 };
 struct update_area_t {
   int x1;
