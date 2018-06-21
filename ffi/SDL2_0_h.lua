@@ -311,6 +311,20 @@ typedef enum {
   SDL_USEREVENT = 32768,
   SDL_LASTEVENT = 65535,
 } SDL_EventType;
+struct _SDL_Joystick;
+typedef struct _SDL_Joystick SDL_Joystick;
+typedef struct {
+  Uint8 data[16];
+} SDL_JoystickGUID;
+typedef int SDL_JoystickID;
+typedef long int SDL_TouchID;
+typedef long int SDL_FingerID;
+struct SDL_Finger {
+  SDL_FingerID id;
+  float x;
+  float y;
+  float pressure;
+};
 struct SDL_CommonEvent {
   Uint32 type;
   Uint32 timestamp;
@@ -470,6 +484,15 @@ struct SDL_ControllerDeviceEvent {
   Uint32 type;
   Uint32 timestamp;
   Sint32 which;
+};
+struct SDL_AudioDeviceEvent {
+  Uint32 type;
+  Uint32 timestamp;
+  Uint32 which;
+  Uint8 iscapture;
+  Uint8 padding1;
+  Uint8 padding2;
+  Uint8 padding3;
 };
 struct SDL_QuitEvent {
   Uint32 type;
@@ -662,12 +685,6 @@ SDL_bool SDL_HasClipboardText(void) __attribute__((visibility("default")));
 char *SDL_GetClipboardText(void) __attribute__((visibility("default")));
 int SDL_SetClipboardText(const char *) __attribute__((visibility("default")));
 const char *SDL_GetError(void) __attribute__((visibility("default")));
-struct _SDL_Joystick;
-typedef struct _SDL_Joystick SDL_Joystick;
-typedef struct {
-  Uint8 data[16];
-} SDL_JoystickGUID;
-typedef int SDL_JoystickID;
 int SDL_NumJoysticks(void) __attribute__((visibility("default")));
 const char *SDL_JoystickNameForIndex(int) __attribute__((visibility("default")));
 SDL_Joystick *SDL_JoystickOpen(int) __attribute__((visibility("default")));
@@ -767,14 +784,6 @@ static const int SDL_HAT_RIGHTUP = 3;
 static const int SDL_HAT_RIGHTDOWN = 6;
 static const int SDL_HAT_LEFTUP = 9;
 static const int SDL_HAT_LEFTDOWN = 12;
-typedef long int SDL_TouchID;
-typedef long int SDL_FingerID;
-struct SDL_Finger {
-  SDL_FingerID id;
-  float x;
-  float y;
-  float pressure;
-};
 int SDL_GetNumTouchDevices(void) __attribute__((visibility("default")));
 SDL_TouchID SDL_GetTouchDevice(int) __attribute__((visibility("default")));
 int SDL_GetNumTouchFingers(SDL_TouchID) __attribute__((visibility("default")));
@@ -797,7 +806,6 @@ typedef enum {
   SDL_TEXTUREACCESS_STREAMING = 1,
   SDL_TEXTUREACCESS_TARGET = 2,
 } SDL_TextureAccess;
-static const int SDL_TEXTUREACCESS_STREAMING = 1;
 static const int SDL_PIXELFORMAT_ARGB8888 = 372645892;
 static const int SDL_PIXELFORMAT_RGBA8888 = 373694468;
 static const int SDL_PIXELFORMAT_ABGR8888 = 376840196;
