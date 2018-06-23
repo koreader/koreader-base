@@ -1,4 +1,5 @@
 // CPPFLAGS="-I../koreader-base/ -I../koreader-base/thirdparty/libk2pdfopt/libk2pdfopt/k2pdfoptlib -I../koreader-base/thirdparty/libk2pdfopt/libk2pdfopt -I../koreader-base/thirdparty/libk2pdfopt/libk2pdfopt/willuslib -I../koreader-base/thirdparty/libk2pdfopt/libk2pdfopt/include_mod -I../koreader-base/thirdparty/leptonica/leptonica/src -I/usr/include/luajit-2.0" ./ffi-cdecl ...
+//#include "alltypes.h"
 #include "koptcontext.h"
 #include "koptreflow.h"
 #include "koptcrop.h"

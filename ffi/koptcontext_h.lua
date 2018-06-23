@@ -132,10 +132,10 @@ struct KOPTContext {
   int precache;
   int debug;
   int cjkchar;
-  struct Boxa *rboxa;
-  struct Numa *rnai;
-  struct Boxa *nboxa;
-  struct Numa *nnai;
+  BOXA* rboxa;
+  NUMA* rnai;
+  BOXA* nboxa;
+  NUMA* nnai;
   WRECTMAPS rectmaps;
   PAGEREGIONS pageregions;
   BBox bbox;
