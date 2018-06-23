@@ -3,7 +3,7 @@ local ffi = require("ffi")
 ffi.cdef[[
 typedef long unsigned int pthread_t;
 typedef union {
-  char __size[36];
+  char __size[56];
   long int __align;
 } pthread_attr_t;
 int pthread_attr_init(pthread_attr_t *) __attribute__((__nothrow__, __leaf__));

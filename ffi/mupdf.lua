@@ -891,7 +891,7 @@ function page_mt.__index:reflow(kopt_context)
     if kopt_context.precache ~= 0 then
         local pthread = get_pthread()
         local rf_thread = ffi.new("pthread_t[1]")
-        local attr = ffi.new("pthread_attr_t")
+        local attr = ffi.new("pthread_attr_t[1]")
         pthread.pthread_attr_init(attr)
         pthread.pthread_attr_setdetachstate(attr, pthread.PTHREAD_CREATE_DETACHED)
         pthread.pthread_create(rf_thread, attr, k2pdfopt.k2pdfopt_reflow_bmp, ffi.cast("void*", kopt_context))
