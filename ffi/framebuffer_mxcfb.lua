@@ -277,7 +277,7 @@ local function refresh_koa2(fb, refreshtype, waveform_mode, x, y, w, h)
         refarea[0].hist_gray_waveform_mode = waveform_mode
     else
         refarea[0].hist_bw_waveform_mode = C.WAVEFORM_MODE_DU
-        refarea[0].hist_gray_waveform_mode = C.WAVEFORM_MODE_GC16	-- NOTE: GC16_FAST points to GC16
+        refarea[0].hist_gray_waveform_mode = C.WAVEFORM_MODE_GC16 -- NOTE: GC16_FAST points to GC16
     end
     -- NOTE: Since there's no longer a distinction between GC16_FAST & GC16, we're done!
     refarea[0].temp = C.TEMP_USE_AMBIENT
@@ -390,7 +390,7 @@ function framebuffer:init()
 
         self.waveform_fast = C.WAVEFORM_MODE_A2
         self.waveform_ui = C.WAVEFORM_MODE_GC16_FAST
-        self.waveform_flashui = C.WAVEFORM_MODE_GC16_FAST
+        self.waveform_flashui = self.waveform_ui
         self.waveform_full = C.WAVEFORM_MODE_GC16
 
         -- New devices are REAGL-aware, default to REAGL
@@ -419,7 +419,7 @@ function framebuffer:init()
 
         if isREAGL then
             self.mech_wait_update_complete = kindle_carta_mxc_wait_for_update_complete
-            self.waveform_fast = C.WAVEFORM_MODE_DU
+            self.waveform_fast = C.WAVEFORM_MODE_DU -- NOTE: DU, because A2 looks terrible on REAGL devices. Older devices/FW may be using AUTO in this instance.
             self.waveform_reagl = C.WAVEFORM_MODE_REAGL
             self.waveform_partial = self.waveform_reagl
         else
@@ -446,7 +446,7 @@ function framebuffer:init()
 
         self.waveform_fast = C.WAVEFORM_MODE_A2
         self.waveform_ui = C.WAVEFORM_MODE_AUTO
-        self.waveform_flashui = C.WAVEFORM_MODE_AUTO
+        self.waveform_flashui = self.waveform_ui
         self.waveform_full = C.NTX_WFM_MODE_GC16
         self.waveform_partial = C.WAVEFORM_MODE_AUTO
 
@@ -494,7 +494,7 @@ function framebuffer:init()
 
         self.waveform_fast = C.WAVEFORM_MODE_A2
         self.waveform_ui = C.WAVEFORM_MODE_GC16
-        self.waveform_flashui = C.WAVEFORM_MODE_GC16
+        self.waveform_flashui = self.waveform_ui
         self.waveform_full = C.WAVEFORM_MODE_GC16
         self.waveform_partial = C.WAVEFORM_MODE_GC16
     else
