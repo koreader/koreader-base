@@ -16,6 +16,7 @@ local framebuffer = {
     mech_wait_update_submission = nil,
     waveform_partial = nil,
     waveform_ui = nil,
+    waveform_flashui = nil,
     waveform_full = nil,
     waveform_fast = nil,
     waveform_reagl = nil,
@@ -42,6 +43,13 @@ end
 --       Here, it's because of the Kindle-specific WAVEFORM_MODE_GC16_FAST
 function framebuffer:_isUIWaveFormMode(waveform_mode)
     return waveform_mode == self.waveform_ui
+end
+
+-- Returns true if waveform_mode arg matches the FlashUI waveform mode for current device
+-- NOTE: This is to avoid explicit comparison against device-specific waveform constants in mxc_update()
+--       Here, it's because of the Kindle-specific WAVEFORM_MODE_GC16_FAST
+function framebuffer:_isFlashUIWaveFormMode(waveform_mode)
+    return waveform_mode == self.waveform_flashui
 end
 
 -- Returns true if waveform_mode arg matches the REAGL waveform mode for current device
@@ -163,7 +171,7 @@ local function mxc_update(fb, update_ioctl, refarea, refresh_type, waveform_mode
     -- Again, make sure the marker is valid, too.
     if (fb:_isREAGLWaveFormMode(waveform_mode)
       or waveform_mode == C.WAVEFORM_MODE_GC16
-      or (refresh_type == C.UPDATE_MODE_FULL and fb:_isUIWaveFormMode(waveform_mode) and fb:_isFullScreen(w, h)))
+      or (refresh_type == C.UPDATE_MODE_FULL and fb:_isFlashUIWaveFormMode(waveform_mode) and fb:_isFullScreen(w, h)))
       and fb.mech_wait_update_complete
       and (marker >= MARKER_MIN and marker <= MARKER_MAX) then
         -- NOTE: Disabled collision_test handling, because it's fragile, mysterious, easy to get wrong, hard to do right,
@@ -173,7 +181,7 @@ local function mxc_update(fb, update_ioctl, refarea, refresh_type, waveform_mode
         --       This is Kindle-only, but extra arguments are safely ignored in Lua ;).
         if fb:_isREAGLWaveFormMode(waveform_mode) then
             collision_test = 0
-        elseif waveform_mode == C.WAVEFORM_MODE_GC16 or fb:_isUIWaveFormMode(waveform_mode) then
+        elseif waveform_mode == C.WAVEFORM_MODE_GC16 or fb:_isFlashUIWaveFormMode(waveform_mode) then
             collision_test = 1642888
             -- On a KOA2:
             collision_test = 2126091812
@@ -220,7 +228,7 @@ local function mxc_update(fb, update_ioctl, refarea, refresh_type, waveform_mode
             collision_test = 4
             -- On a KOA2:
             collision_test = 4096
-        elseif waveform_mode == C.WAVEFORM_MODE_GC16 or fb:_isUIWaveFormMode(waveform_mode) then
+        elseif waveform_mode == C.WAVEFORM_MODE_GC16 or fb:_isFlashUIWaveFormMode(waveform_mode) then
             collision_test = 1
             -- On a KOA2:
             collision_test = 4096
@@ -355,13 +363,7 @@ end
 
 function framebuffer:refreshFlashUIImp(x, y, w, h)
     self.debug("refresh: ui-mode w/ flash", x, y, w, h)
-    -- NOTE: Sneaky bit of trickery: on some devices, AUTO, when FULL, *may* NOT flash.
-    --       Make sure we always use GC16 to work-around that...
-    if self.waveform_ui == C.WAVEFORM_MODE_AUTO then
-        self:mech_refresh(C.UPDATE_MODE_FULL, C.WAVEFORM_MODE_GC16, x, y, w, h)
-    else
-        self:mech_refresh(C.UPDATE_MODE_FULL, self.waveform_ui, x, y, w, h)
-    end
+    self:mech_refresh(C.UPDATE_MODE_FULL, self.waveform_flashui, x, y, w, h)
 end
 
 function framebuffer:refreshFullImp(x, y, w, h)
@@ -388,6 +390,7 @@ function framebuffer:init()
 
         self.waveform_fast = C.WAVEFORM_MODE_A2
         self.waveform_ui = C.WAVEFORM_MODE_GC16_FAST
+        self.waveform_flashui = C.WAVEFORM_MODE_GC16_FAST
         self.waveform_full = C.WAVEFORM_MODE_GC16
 
         -- New devices are REAGL-aware, default to REAGL
@@ -428,7 +431,7 @@ function framebuffer:init()
 
             self.waveform_fast = C.WAVEFORM_MODE_DU
             self.waveform_ui = C.WAVEFORM_MODE_AUTO
-            self.waveform_full = C.WAVEFORM_MODE_GC16
+            self.waveform_flashui = C.WAVEFORM_MODE_GC16
             self.waveform_reagl = C.WAVEFORM_MODE_KOA2_GLR16
             self.waveform_partial = self.waveform_reagl
         end
@@ -440,6 +443,7 @@ function framebuffer:init()
 
         self.waveform_fast = C.WAVEFORM_MODE_A2
         self.waveform_ui = C.WAVEFORM_MODE_AUTO
+        self.waveform_flashui = C.NTX_WFM_MODE_GC16
         self.waveform_full = C.NTX_WFM_MODE_GC16
         self.waveform_partial = C.WAVEFORM_MODE_AUTO
 
@@ -466,7 +470,7 @@ function framebuffer:init()
         if isREAGL then
             self.waveform_reagl = C.NTX_WFM_MODE_GLD16
             self.waveform_partial = self.waveform_reagl
-            self.waveform_fast = C.WAVEFORM_MODE_DU -- Mainly menu HLs, compare to Kindle's use of AUTO in these instances ;).
+            self.waveform_fast = C.WAVEFORM_MODE_DU -- Mainly menu HLs, compare to Kindle's use of AUTO or DU also in these instances ;).
         end
 
         -- TODO: Keep this dormant until someone can actually test this w/ the proper HW...
@@ -487,6 +491,7 @@ function framebuffer:init()
 
         self.waveform_fast = C.WAVEFORM_MODE_A2
         self.waveform_ui = C.WAVEFORM_MODE_GC16
+        self.waveform_flashui = C.WAVEFORM_MODE_GC16
         self.waveform_full = C.WAVEFORM_MODE_GC16
         self.waveform_partial = C.WAVEFORM_MODE_GC16
     else
