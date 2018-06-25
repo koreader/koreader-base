@@ -172,7 +172,11 @@ local function mxc_update(fb, update_ioctl, refarea, refresh_type, waveform_mode
             collision_test = 0
         elseif waveform_mode == C.WAVEFORM_MODE_GC16 or fb:_isUIWaveFormMode(waveform_mode) then
             collision_test = 1642888
+            -- On a KOA2:
+            collision_test = 2126091812
         end
+        -- NOTE: The KOA2 also sometimes (flashing? new menu?) waits on a previous (sometimes as far back as ~10 updates ago)
+        --       "fast" (i.e., DU) marker, in which case collision is set to 1981826464
         fb.debug("refresh: wait for completion of (previous) marker", marker, "with collision_test", collision_test)
         fb.mech_wait_update_complete(fb, marker, collision_test)
     end
@@ -209,8 +213,12 @@ local function mxc_update(fb, update_ioctl, refarea, refresh_type, waveform_mode
         -- NOTE: Again, setup collision_test magic numbers...
         if fb:_isREAGLWaveFormMode(waveform_mode) then
             collision_test = 4
+            -- On a KOA2:
+            collision_test = 4096
         elseif waveform_mode == C.WAVEFORM_MODE_GC16 or fb:_isUIWaveFormMode(waveform_mode) then
             collision_test = 1
+            -- On a KOA2:
+            collision_test = 4096
         end
         fb.debug("refresh: wait for completion of marker", marker, "with collision_test", collision_test)
         fb.mech_wait_update_complete(fb, marker, collision_test)
@@ -341,7 +349,13 @@ end
 
 function framebuffer:refreshFlashUIImp(x, y, w, h)
     self.debug("refresh: ui-mode w/ flash", x, y, w, h)
-    self:mech_refresh(C.UPDATE_MODE_FULL, self.waveform_ui, x, y, w, h)
+    -- NOTE: Sneaky bit of trickery: on some devices, AUTO, when FULL, *may* NOT flash.
+    --       Make sure we always use GC16 to work-around that...
+    if self.waveform_ui == C.WAVEFORM_MODE_AUTO then
+        self:mech_refresh(C.UPDATE_MODE_FULL, C.WAVEFORM_MODE_GC16, x, y, w, h)
+    else
+        self:mech_refresh(C.UPDATE_MODE_FULL, self.waveform_ui, x, y, w, h)
+    end
 end
 
 function framebuffer:refreshFullImp(x, y, w, h)
