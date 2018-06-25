@@ -234,10 +234,14 @@ local function refresh_k51(fb, refreshtype, waveform_mode, x, y, w, h)
     end
     -- TEMP_USE_PAPYRUS on Touch/PW1, TEMP_USE_AUTO on PW2 (same value in both cases, 0x1001)
     refarea[0].temp = C.TEMP_USE_AUTO
-    -- NOTE: We never use any flags on Kindle.
-    -- TODO: EPDC_FLAG_ENABLE_INVERSION & EPDC_FLAG_FORCE_MONOCHROME might be of use, though,
+    -- Enable the appropriate flag when requesting what amounts to a 2bit update
+    if waveform_mode == C.WAVEFORM_MODE_DU then
+        refarea[0].flags = C.EPDC_FLAG_FORCE_MONOCHROME
+    else
+        refarea[0].flags = 0
+    end
+    -- TODO: EPDC_FLAG_ENABLE_INVERSION might be of use for NightMode,
     --       although the framework itself barely ever sets any flags, for some reason...
-    refarea[0].flags = 0
 
     return mxc_update(fb, C.MXCFB_SEND_UPDATE, refarea, refreshtype, waveform_mode, x, y, w, h)
 end
@@ -251,21 +255,22 @@ local function refresh_koa2(fb, refreshtype, waveform_mode, x, y, w, h)
         refarea[0].hist_gray_waveform_mode = waveform_mode
     else
         refarea[0].hist_bw_waveform_mode = C.WAVEFORM_MODE_DU
-        refarea[0].hist_gray_waveform_mode = C.WAVEFORM_MODE_KOA2_GC16_FAST
+        refarea[0].hist_gray_waveform_mode = C.WAVEFORM_MODE_KOA2_GC16_FAST	-- NOTE: Points to WAVEFORM_MODE_GC16
     end
     -- And we're only left with true full updates to special-case.
     if waveform_mode == C.WAVEFORM_MODE_GC16 then
         refarea[0].hist_gray_waveform_mode = waveform_mode
     end
     refarea[0].temp = C.TEMP_USE_KOA2_AUTO
-    -- TODO: Here be dragons! This is a complete shot in the dark!
     refarea[0].dither_mode = C.EPDC_FLAG_USE_DITHERING_PASSTHROUGH
-    refarea[0].quant_bit = 7;
-    -- FIXME: We never used to use any flags on Kindle...
-    --        But there's a shiny renamed EPDC_FLAG_USE_KOA2_REGAL on the KOA2...
-    --        Which means that the framework might be using WAVEFORM_MODE_KOA2_REAGLD somewhere...
+    refarea[0].quant_bit = 0;
+    -- Enable the appropriate flag when requesting what amounts to a 2bit update
+    if waveform_mode == C.WAVEFORM_MODE_DU then
+        refarea[0].flags = C.EPDC_FLAG_FORCE_MONOCHROME
+    else
+        refarea[0].flags = 0
+    end
     -- TODO: There's also the HW-backed NightMode which should be somewhat accessible...
-    refarea[0].flags = 0
 
     return mxc_update(fb, C.MXCFB_SEND_UPDATE_KOA2, refarea, refreshtype, waveform_mode, x, y, w, h)
 end
@@ -394,7 +399,7 @@ function framebuffer:init()
 
         if isREAGL then
             self.mech_wait_update_complete = kindle_carta_mxc_wait_for_update_complete
-            --self.waveform_fast = C.WAVEFORM_MODE_AUTO -- NOTE: That's what the FW does, because, indeed, A2 looks truly terrible on REAGL devices.
+            self.waveform_fast = C.WAVEFORM_MODE_DU
             self.waveform_reagl = C.WAVEFORM_MODE_REAGL
             self.waveform_partial = self.waveform_reagl
         else
@@ -404,10 +409,10 @@ function framebuffer:init()
         if isKOA2 then
             self.mech_refresh = refresh_koa2
 
-            self.waveform_fast = C.WAVEFORM_MODE_KOA2_A2
-            self.waveform_ui = C.WAVEFORM_MODE_KOA2_GC16_FAST
+            self.waveform_fast = C.WAVEFORM_MODE_DU
+            self.waveform_ui = C.WAVEFORM_MODE_AUTO
             self.waveform_full = C.WAVEFORM_MODE_GC16
-            self.waveform_reagl = C.WAVEFORM_MODE_KOA2_REAGL
+            self.waveform_reagl = C.WAVEFORM_MODE_KOA2_REAGL	-- NOTE: Points to WAVEFORM_MODE_GLR16
             self.waveform_partial = self.waveform_reagl
         end
     elseif self.device:isKobo() then
