@@ -431,6 +431,9 @@ function framebuffer:init()
 
             self.waveform_fast = C.WAVEFORM_MODE_DU
             self.waveform_ui = C.WAVEFORM_MODE_AUTO
+            -- NOTE: Possibly to bypass the possibility that AUTO, even when FULL, might not flash (something which holds true for a number of devices, especially on small regions),
+            --       The KOA2 explicitly requests GC16 when flashing an UI element that doesn't cover the full screen...
+            --       And it resorts to AUTO when PARTIAL, because GC16_FAST is no more (it points to GC16).
             self.waveform_flashui = C.WAVEFORM_MODE_GC16
             self.waveform_reagl = C.WAVEFORM_MODE_KOA2_GLR16
             self.waveform_partial = self.waveform_reagl
