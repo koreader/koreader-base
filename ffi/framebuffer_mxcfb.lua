@@ -258,7 +258,7 @@ local function refresh_koa2(fb, refreshtype, waveform_mode, x, y, w, h)
         refarea[0].hist_gray_waveform_mode = C.WAVEFORM_MODE_GC16	-- NOTE: GC16_FAST points to GC16
     end
     -- NOTE: Since there's no longer a distinction between GC16_FAST & GC16, we're done!
-    refarea[0].temp = C.TEMP_USE_KOA2_AUTO
+    refarea[0].temp = C.TEMP_USE_AMBIENT
     refarea[0].dither_mode = C.EPDC_FLAG_USE_DITHERING_PASSTHROUGH
     refarea[0].quant_bit = 0;
     -- Enable the appropriate flag when requesting what amounts to a 2bit update
