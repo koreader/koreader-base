@@ -166,6 +166,9 @@ local function mxc_update(fb, update_ioctl, refarea, refresh_type, waveform_mode
       or (refresh_type == C.UPDATE_MODE_FULL and fb:_isUIWaveFormMode(waveform_mode) and fb:_isFullScreen(w, h)))
       and fb.mech_wait_update_complete
       and (marker >= MARKER_MIN and marker <= MARKER_MAX) then
+        -- NOTE: Disabled collision_test handling, because it's fragile, mysterious, easy to get wrong, hard to do right,
+        --       and might change at a moment's notice, like the KOA2 proved...
+        --[[
         -- NOTE: Setup the slightly mysterious collision_test flag...
         --       This is Kindle-only, but extra arguments are safely ignored in Lua ;).
         if fb:_isREAGLWaveFormMode(waveform_mode) then
@@ -177,6 +180,7 @@ local function mxc_update(fb, update_ioctl, refarea, refresh_type, waveform_mode
         end
         -- NOTE: The KOA2 also sometimes (flashing? new menu?) waits on a previous (sometimes as far back as ~10 updates ago)
         --       "fast" (i.e., DU) marker, in which case collision is set to 1981826464
+        --]]
         fb.debug("refresh: wait for completion of (previous) marker", marker, "with collision_test", collision_test)
         fb.mech_wait_update_complete(fb, marker, collision_test)
     end
@@ -210,6 +214,7 @@ local function mxc_update(fb, update_ioctl, refarea, refresh_type, waveform_mode
     -- NOTE: We wait for completion after *any kind* of full (i.e., flashing) update.
     if refarea[0].update_mode == C.UPDATE_MODE_FULL
       and fb.mech_wait_update_complete then
+        --[[
         -- NOTE: Again, setup collision_test magic numbers...
         if fb:_isREAGLWaveFormMode(waveform_mode) then
             collision_test = 4
@@ -220,6 +225,7 @@ local function mxc_update(fb, update_ioctl, refarea, refresh_type, waveform_mode
             -- On a KOA2:
             collision_test = 4096
         end
+        --]]
         fb.debug("refresh: wait for completion of marker", marker, "with collision_test", collision_test)
         fb.mech_wait_update_complete(fb, marker, collision_test)
     end
