@@ -255,7 +255,7 @@ local function refresh_koa2(fb, refreshtype, waveform_mode, x, y, w, h)
         refarea[0].hist_gray_waveform_mode = waveform_mode
     else
         refarea[0].hist_bw_waveform_mode = C.WAVEFORM_MODE_DU
-        refarea[0].hist_gray_waveform_mode = C.WAVEFORM_MODE_KOA2_GC16_FAST	-- NOTE: Points to WAVEFORM_MODE_GC16
+        refarea[0].hist_gray_waveform_mode = C.WAVEFORM_MODE_GC16	-- NOTE: GC16_FAST points to GC16
     end
     -- And we're only left with true full updates to special-case.
     if waveform_mode == C.WAVEFORM_MODE_GC16 then
@@ -412,7 +412,7 @@ function framebuffer:init()
             self.waveform_fast = C.WAVEFORM_MODE_DU
             self.waveform_ui = C.WAVEFORM_MODE_AUTO
             self.waveform_full = C.WAVEFORM_MODE_GC16
-            self.waveform_reagl = C.WAVEFORM_MODE_KOA2_REAGL	-- NOTE: Points to WAVEFORM_MODE_GLR16
+            self.waveform_reagl = C.WAVEFORM_MODE_KOA2_GLR16
             self.waveform_partial = self.waveform_reagl
         end
     elseif self.device:isKobo() then
