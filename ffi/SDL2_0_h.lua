@@ -667,6 +667,7 @@ void SDL_RenderPresent(SDL_Renderer *) __attribute__((visibility("default")));
 int SDL_RenderCopy(SDL_Renderer *, SDL_Texture *, const SDL_Rect *, const SDL_Rect *) __attribute__((visibility("default")));
 SDL_Texture *SDL_CreateTexture(SDL_Renderer *, Uint32, int, int, int) __attribute__((visibility("default")));
 int SDL_UpdateTexture(SDL_Texture *, const SDL_Rect *, const void *, int) __attribute__((visibility("default")));
+void SDL_DestroyTexture(SDL_Texture *) __attribute__((visibility("default")));
 void SDL_SetWindowTitle(SDL_Window *, const char *) __attribute__((visibility("default")));
 typedef int (*SDL_blit)(struct SDL_Surface *, SDL_Rect *, struct SDL_Surface *, SDL_Rect *);
 SDL_Surface *SDL_CreateRGBSurface(Uint32, int, int, int, Uint32, Uint32, Uint32, Uint32) __attribute__((visibility("default")));

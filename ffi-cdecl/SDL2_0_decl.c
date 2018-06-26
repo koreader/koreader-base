@@ -87,6 +87,7 @@ cdecl_func(SDL_RenderPresent)
 cdecl_func(SDL_RenderCopy)
 cdecl_func(SDL_CreateTexture)
 cdecl_func(SDL_UpdateTexture)
+cdecl_func(SDL_DestroyTexture)
 cdecl_func(SDL_SetWindowTitle)
 
 cdecl_type(SDL_blit)
