@@ -388,7 +388,7 @@ $(OPENSSL_LIB) $(OPENSSL_DIR): $(THIRDPARTY_DIR)/openssl/CMakeLists.txt
 	install -d $(OPENSSL_BUILD_DIR)
 	-rm -f $(OPENSSL_DIR)/../openssl-stamp/openssl-build
 	cd $(OPENSSL_BUILD_DIR) && \
-		$(CMAKE) -UCMAKE_C_COMPILER_LAUNCHER -DCC="$(REALCC) $(if $(DARWIN),$(DYNLIB_CFLAGS),$(CFLAGS))" \
+		$(CMAKE) -DCC="$(REALCC) $(if $(DARWIN),$(DYNLIB_CFLAGS),$(CFLAGS))" \
 		-DSHARED_LDFLAGS="$(LDFLAGS)" \
 		-DLD="$(LD)" -DRANLIB="$(RANLIB)" $(if $(or $(WIN32),$(ANDROID)),-DCHOST="$(CHOST)",) \
 		-DCONFIG_SCRIPT="$(if $(EMULATE_READER),$(if $(DARWIN),Configure darwin64-x86_64-cc,config),Configure $(if $(WIN32),mingw,linux-generic32))" \
