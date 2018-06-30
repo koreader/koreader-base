@@ -9,7 +9,8 @@ all: $(OUTPUT_DIR)/libs $(if $(ANDROID),,$(LUAJIT)) \
 		$(OUTPUT_DIR)/plugins $(LUASOCKET) \
 		$(OUTPUT_DIR)/ffi $(OUTPUT_DIR)/data \
 		$(if $(WIN32),,$(LUASEC)) \
-		$(if $(WIN32),,$(LUACOMPAT52) $(LUALONGNUMBER) $(EVERNOTE_LIB)) \
+		$(if $(ANDROID),$(LUACOMPAT52) $(LUALONGNUMBER),) \
+		$(if $(WIN32),,$(EVERNOTE_LIB)) \
 		$(LUASERIAL_LIB) \
 		$(TURBOJPEG_LIB) \
 		$(LODEPNG_LIB) \
