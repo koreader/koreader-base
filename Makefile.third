@@ -548,7 +548,7 @@ $(EVERNOTE_LIB): $(THIRDPARTY_DIR)/evernote-sdk-lua/CMakeLists.txt
 		$(CMAKE) -DCC="$(CC) $(CFLAGS)" \
 		-DOUTPUT_DIR="$(CURDIR)/$(EVERNOTE_PLUGIN_DIR)/lib" \
 		-DLDFLAGS="$(LDFLAGS) $(if $(or $(ANDROID),$(WIN32)),-lm $(CURDIR)/$(LUAJIT_LIB))" \
-		-DDYNLIB_CFLAGS="$(DYNLIB_CFLAGS)" \
+		-DDYNLIB_CFLAGS="$(DYNLIB_CMAKE_CFLAGS)" \
 		$(CURDIR)/$(THIRDPARTY_DIR)/evernote-sdk-lua && \
 		$(MAKE)
 
