@@ -35,8 +35,8 @@ set(CFG_CMD sh -c "${CFG_ENV_VAR} CC=\"${REALCC}\" ${SOURCE_DIR}/${CONFIG_SCRIPT
 set(MAKE_CMD "$(MAKE) CC=\"${CC}\" SHARED_LDFLAGS=\"${SHARED_LDFLAGS}\" LD=\"${LD}\" RANLIB=\"${RANLIB}\"")
 # NOTE: Make depend fails when using ccache, and may fail when // (on some OpenSSL versions, at least)
 set(MAKE_CMD_REALCC "$(MAKE) -j1 CC=\"${REALCC}\" SHARED_LDFLAGS=\"${SHARED_LDFLAGS}\" LD=\"${LD}\" RANLIB=\"${RANLIB}\"")
-set(BUILD_CMD1 sh -c "${BUILD_CMD_REALCC} depend")
-set(BUILD_CMD2 sh -c "${BUILD_CMD} build_crypto build_ssl")
+set(BUILD_CMD1 sh -c "${MAKE_CMD_REALCC} depend")
+set(BUILD_CMD2 sh -c "${MAKE_CMD} build_crypto build_ssl")
 
 
 ko_write_gitclone_script(
