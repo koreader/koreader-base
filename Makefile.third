@@ -383,20 +383,12 @@ $(LUASOCKET): $(THIRDPARTY_DIR)/luasocket/CMakeLists.txt
 		$(CURDIR)/$(THIRDPARTY_DIR)/luasocket && \
 		$(MAKE)
 
-# RPATH for OPENSSL is even uglier because its Makefile uses single quote :/
-#OPENSSL_RPATH_ORIGIN=\\\"'$(ORIGIN_CMAKE_TO_AUTOCFG)'\\\"
-# FIXME: Possibly because CMake is *also* terrible, this doesn't work either.
-#        So go with a cheap-ass better than nothing (maybe?) workaround.
-OPENSSL_RPATH_ORIGIN="'.'"
-# FWIW, when doing thing manually, passing \\\$\$\$\$ORIGIN works
-#       f.g., make libssl.so.1.0.0 SHARED_LDFLAGS="${LDFLAGS} -Wl,-rpath,\\\$\$\$\$ORIGIN"
-# SO if anyone can replicate that w/ CMake, bully for you.
 $(OPENSSL_LIB) $(OPENSSL_DIR): $(THIRDPARTY_DIR)/openssl/CMakeLists.txt
 	install -d $(OPENSSL_BUILD_DIR)
 	-rm -f $(OPENSSL_DIR)/../openssl-stamp/openssl-build
 	cd $(OPENSSL_BUILD_DIR) && \
 		$(CMAKE) -DCC="$(CC) $(if $(DARWIN),$(DYNLIB_CFLAGS),$(CFLAGS))" \
-		-DSHARED_LDFLAGS="$(LDFLAGS) -Wl,-rpath,$(OPENSSL_RPATH_ORIGIN)" \
+		-DSHARED_LDFLAGS="$(LDFLAGS)" \
 		-DLD="$(LD)" -DRANLIB="$(RANLIB)" $(if $(or $(WIN32),$(ANDROID)),-DCHOST="$(CHOST)",) \
 		-DCONFIG_SCRIPT="$(if $(EMULATE_READER),$(if $(DARWIN),Configure darwin64-x86_64-cc,config),Configure $(if $(WIN32),mingw,linux-generic32))" \
 		$(CURDIR)/$(THIRDPARTY_DIR)/openssl && \
