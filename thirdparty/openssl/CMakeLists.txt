@@ -8,6 +8,7 @@ include("koreader_thirdparty_git")
 enable_language(C)
 
 assert_var_defined(CONFIG_SCRIPT)
+assert_var_defined(REALCC)
 assert_var_defined(CC)
 assert_var_defined(SHARED_LDFLAGS)
 assert_var_defined(LD)
@@ -29,10 +30,14 @@ if($ENV{ANDROID})
 endif()
 
 set(CFG_OPTS "${CFG_OPTS} no-asm no-idea no-mdc2 no-rc5 no-ssl2 no-ssl3")
-set(CFG_CMD sh -c "${CFG_ENV_VAR} CC=\"${CC}\" ${SOURCE_DIR}/${CONFIG_SCRIPT} ${CFG_OPTS}")
+set(CFG_CMD sh -c "${CFG_ENV_VAR} CC=\"${REALCC}\" ${SOURCE_DIR}/${CONFIG_SCRIPT} ${CFG_OPTS}")
 
-set(BUILD_CMD "$(MAKE) CC=\"${CC}\" SHARED_LDFLAGS=\"${SHARED_LDFLAGS}\" LD=\"${LD}\" RANLIB=\"${RANLIB}\"")
-set(BUILD_CMD sh -c "${BUILD_CMD} depend build_crypto build_ssl")
+set(MAKE_CMD "$(MAKE) CC=\"${CC}\" SHARED_LDFLAGS=\"${SHARED_LDFLAGS}\" LD=\"${LD}\" RANLIB=\"${RANLIB}\"")
+# NOTE: Make depend fails when using ccache, and may fail when // (on some OpenSSL versions, at least)
+set(MAKE_CMD_REALCC "$(MAKE) -j1 CC=\"${REALCC}\" SHARED_LDFLAGS=\"${SHARED_LDFLAGS}\" LD=\"${LD}\" RANLIB=\"${RANLIB}\"")
+set(BUILD_CMD1 sh -c "${BUILD_CMD_REALCC} depend")
+set(BUILD_CMD2 sh -c "${BUILD_CMD} build_crypto build_ssl")
+
 
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
@@ -48,7 +53,7 @@ ExternalProject_Add(
     PATCH_COMMAND patch -N -p1 < ${CMAKE_CURRENT_SOURCE_DIR}/openssl-origin-rpath.patch
     CONFIGURE_COMMAND ${CFG_CMD}
     BUILD_IN_SOURCE 1
-    BUILD_COMMAND ${BUILD_CMD}
+    BUILD_COMMAND COMMAND ${BUILD_CMD1} COMMAND ${BUILD_CMD2}
     # skip install
     INSTALL_COMMAND ""
 )
