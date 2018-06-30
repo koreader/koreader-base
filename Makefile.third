@@ -384,7 +384,13 @@ $(LUASOCKET): $(THIRDPARTY_DIR)/luasocket/CMakeLists.txt
 		$(MAKE)
 
 # RPATH for OPENSSL is even uglier because its Makefile uses single quote :/
-OPENSSL_RPATH_ORIGIN=\\\"'$(ORIGIN_CMAKE_TO_AUTOCFG)'\\\"
+#OPENSSL_RPATH_ORIGIN=\\\"'$(ORIGIN_CMAKE_TO_AUTOCFG)'\\\"
+# FIXME: Possibly because CMake is *also* terrible, this doesn't work either.
+#        So go with a cheap-ass better than nothing (maybe?) workaround.
+OPENSSL_RPATH_ORIGIN="'.'"
+# FWIW, when doing thing manually, passing \\\$\$\$\$ORIGIN works
+#       f.g., make libssl.so.1.0.0 SHARED_LDFLAGS="${LDFLAGS} -Wl,-rpath,\\\$\$\$\$ORIGIN"
+# SO if anyone can replicate that w/ CMake, bully for you.
 $(OPENSSL_LIB) $(OPENSSL_DIR): $(THIRDPARTY_DIR)/openssl/CMakeLists.txt
 	install -d $(OPENSSL_BUILD_DIR)
 	-rm -f $(OPENSSL_DIR)/../openssl-stamp/openssl-build
