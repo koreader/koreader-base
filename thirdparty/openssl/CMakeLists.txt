@@ -32,7 +32,7 @@ set(CFG_OPTS "${CFG_OPTS} no-asm no-idea no-mdc2 no-rc5 no-ssl2 no-ssl3")
 set(CFG_CMD sh -c "${CFG_ENV_VAR} ${SOURCE_DIR}/${CONFIG_SCRIPT} ${CFG_OPTS}")
 
 set(BUILD_CMD "$(MAKE) CC=\"${CC}\" SHARED_LDFLAGS=\"${SHARED_LDFLAGS}\" LD=\"${LD}\" RANLIB=\"${RANLIB}\"")
-set(BUILD_CMD sh -c "${BUILD_CMD} depend build_crypto build_ssl >/dev/null 2>&1")
+set(BUILD_CMD sh -c "${BUILD_CMD} depend build_crypto build_ssl")
 
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
