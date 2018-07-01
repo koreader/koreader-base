@@ -275,8 +275,8 @@ end
 local function refresh_koa2(fb, refreshtype, waveform_mode, x, y, w, h)
     local refarea = ffi.new("struct mxcfb_update_data_koa2[1]")
     -- only for Amazon's driver, try to mostly follow what the stock reader does...
-    if waveform_mode == C.WAVEFORM_MODE_KOA2_REAGL then
-        -- If we're requesting WAVEFORM_MODE_KOA2_REAGL, it's REAGL all around!
+    if waveform_mode == C.WAVEFORM_MODE_KOA2_GLR16 then
+        -- If we're requesting WAVEFORM_MODE_KOA2_GLR16, it's REAGL all around!
         refarea[0].hist_bw_waveform_mode = waveform_mode
         refarea[0].hist_gray_waveform_mode = waveform_mode
     else
