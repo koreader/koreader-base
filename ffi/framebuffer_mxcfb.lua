@@ -217,7 +217,11 @@ local function mxc_update(fb, update_ioctl, refarea, refresh_type, waveform_mode
         refarea[0].update_mode = C.UPDATE_MODE_FULL
     end
 
-    C.ioctl(fb.fd, update_ioctl, refarea)
+    local rv = C.ioctl(fb.fd, update_ioctl, refarea)
+    if rv < 0 then
+        local err = ffi.errno()
+        fb.debug("MXCFB_SEND_UPDATE ioctl failed:", ffi.string(C.strerror(err)))
+    end
 
     -- NOTE: We wait for completion after *any kind* of full (i.e., flashing) update.
     if refarea[0].update_mode == C.UPDATE_MODE_FULL
