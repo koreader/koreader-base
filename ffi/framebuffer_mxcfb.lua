@@ -217,7 +217,11 @@ local function mxc_update(fb, update_ioctl, refarea, refresh_type, waveform_mode
         refarea[0].update_mode = C.UPDATE_MODE_FULL
     end
 
-    C.ioctl(fb.fd, update_ioctl, refarea)
+    local rv = C.ioctl(fb.fd, update_ioctl, refarea)
+    if rv < 0 then
+        local err = ffi.errno()
+        fb.debug("MXCFB_SEND_UPDATE ioctl failed:", ffi.string(C.strerror(err)))
+    end
 
     -- NOTE: We wait for completion after *any kind* of full (i.e., flashing) update.
     if refarea[0].update_mode == C.UPDATE_MODE_FULL
@@ -271,8 +275,8 @@ end
 local function refresh_koa2(fb, refreshtype, waveform_mode, x, y, w, h)
     local refarea = ffi.new("struct mxcfb_update_data_koa2[1]")
     -- only for Amazon's driver, try to mostly follow what the stock reader does...
-    if waveform_mode == C.WAVEFORM_MODE_KOA2_REAGL then
-        -- If we're requesting WAVEFORM_MODE_KOA2_REAGL, it's REAGL all around!
+    if waveform_mode == C.WAVEFORM_MODE_KOA2_GLR16 then
+        -- If we're requesting WAVEFORM_MODE_KOA2_GLR16, it's REAGL all around!
         refarea[0].hist_bw_waveform_mode = waveform_mode
         refarea[0].hist_gray_waveform_mode = waveform_mode
     else
@@ -414,7 +418,7 @@ function framebuffer:init()
         end
 
         if self.device.model == "KindleOasis2" then
-            isKOA2 = false
+            isKOA2 = true
         end
 
         if isREAGL then
