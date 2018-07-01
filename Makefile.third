@@ -383,14 +383,15 @@ $(LUASOCKET): $(THIRDPARTY_DIR)/luasocket/CMakeLists.txt
 		$(CURDIR)/$(THIRDPARTY_DIR)/luasocket && \
 		$(MAKE)
 
-# RPATH for OPENSSL is even uglier because its Makefile uses single quote :/
-OPENSSL_RPATH_ORIGIN=\\\"'$(ORIGIN_CMAKE_TO_AUTOCFG)'\\\"
+# NOTE: We bypass ccache because OpenSSL's build-system is a Jenga tower waiting to fall.
 $(OPENSSL_LIB) $(OPENSSL_DIR): $(THIRDPARTY_DIR)/openssl/CMakeLists.txt
 	install -d $(OPENSSL_BUILD_DIR)
 	-rm -f $(OPENSSL_DIR)/../openssl-stamp/openssl-build
 	cd $(OPENSSL_BUILD_DIR) && \
-		$(CMAKE) -DCC="$(CC) $(if $(DARWIN),$(DYNLIB_CFLAGS),$(CFLAGS))" \
-		-DSHARED_LDFLAGS="$(LDFLAGS) -Wl,-rpath,$(OPENSSL_RPATH_ORIGIN)" \
+		$(CMAKE) \
+		-DREALCC="$(REALCC) $(if $(DARWIN),$(DYNLIB_CFLAGS),$(CFLAGS))" \
+		-DCC="$(CC) $(if $(DARWIN),$(DYNLIB_CFLAGS),$(CFLAGS))" \
+		-DSHARED_LDFLAGS="$(LDFLAGS)" \
 		-DLD="$(LD)" -DRANLIB="$(RANLIB)" $(if $(or $(WIN32),$(ANDROID)),-DCHOST="$(CHOST)",) \
 		-DCONFIG_SCRIPT="$(if $(EMULATE_READER),$(if $(DARWIN),Configure darwin64-x86_64-cc,config),Configure $(if $(WIN32),mingw,linux-generic32))" \
 		$(CURDIR)/$(THIRDPARTY_DIR)/openssl && \
@@ -548,7 +549,7 @@ $(EVERNOTE_LIB): $(THIRDPARTY_DIR)/evernote-sdk-lua/CMakeLists.txt
 		$(CMAKE) -DCC="$(CC) $(CFLAGS)" \
 		-DOUTPUT_DIR="$(CURDIR)/$(EVERNOTE_PLUGIN_DIR)/lib" \
 		-DLDFLAGS="$(LDFLAGS) $(if $(or $(ANDROID),$(WIN32)),-lm $(CURDIR)/$(LUAJIT_LIB))" \
-		-DDYNLIB_CFLAGS="$(DYNLIB_CFLAGS)" \
+		-DDYNLIB_CFLAGS="$(DYNLIB_CMAKE_CFLAGS)" \
 		$(CURDIR)/$(THIRDPARTY_DIR)/evernote-sdk-lua && \
 		$(MAKE)
 

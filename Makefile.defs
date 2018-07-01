@@ -342,6 +342,9 @@ ifdef EMULATE_READER
 		CMAKE_CXX_COMPILER_LAUNCHER:=$(CCACHE)
 	endif
 	# Regular
+	REALCC:=$(HOSTCC)
+	REALCXX:=$(HOSTCXX)
+	REALAR:=$(HOSTAR)
 	HOSTCC:=$(strip $(CCACHE) $(HOSTCC))
 	HOSTCXX:=$(strip $(CCACHE) $(HOSTCXX))
 	HOSTAR:=$(strip $(CCACHE) $(HOSTAR))
@@ -362,6 +365,9 @@ else
 		CMAKE_C_COMPILER_LAUNCHER:=$(CCACHE)
 		CMAKE_CXX_COMPILER_LAUNCHER:=$(CCACHE)
 	endif
+	REALCC:=$(CC)
+	REALCXX:=$(CXX)
+	REALAR:=$(AR)
 	# Don't let libtool piss on our parade...
 	# See what was mentioned around STATIC_LIBSTDCPP on ~L#93 for more details
 	# (cf. https://www.gnu.org/software/libtool/manual/html_node/Stripped-link-flags.html#Stripped-link-flags)
@@ -629,6 +635,7 @@ NANOSVG_HEADERS=$(addprefix $(NANOSVG_INCLUDE_DIR)/, $(NANOSVG_HEADER_FILES))
 # also, dynamic libraries must be compiled with "-shared" and "-fPIC".
 # having all symbols included (-E) won't hurt, too.
 DYNLIB_CFLAGS=-L$(CURDIR)/$(OUTPUT_DIR)/libs $(CFLAGS) -I$(LUAJIT_DIR)/src -shared
+DYNLIB_CMAKE_CFLAGS=-L$(CURDIR)/$(OUTPUT_DIR)/libs $(CFLAGS) -I$(LUAJIT_DIR)/src -shared
 ifdef DARWIN
 	DYNLIB_CFLAGS+= -dynamiclib -undefined dynamic_lookup
 else
@@ -640,6 +647,11 @@ endif
 # \\\$$\\\$$ORIGIN   \\\$\\\$ORIGIN   \$\$ORIGIN   $$ORIGIN     $$ORIGIN   $ORIGIN
 ORIGIN_CMAKE_TO_AUTOCFG=\\\$$\\\$$ORIGIN
 
+ifdef DARWIN
+	DYNLIB_CMAKE_CFLAGS+= -dynamiclib -undefined dynamic_lookup
+else
+	DYNLIB_CMAKE_CFLAGS+= -Wl,-E -Wl,-rpath,'$(ORIGIN_CMAKE_TO_AUTOCFG)'
+endif
 
 LPEG_BUILD_DIR=$(THIRDPARTY_DIR)/lpeg/build/$(MACHINE)
 LPEG_DIR=$(CURDIR)/$(LPEG_BUILD_DIR)/lpeg-prefix/src/lpeg
