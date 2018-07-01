@@ -414,7 +414,7 @@ function framebuffer:init()
         end
 
         if self.device.model == "KindleOasis2" then
-            isKOA2 = false
+            isKOA2 = true
         end
 
         if isREAGL then
