@@ -378,8 +378,6 @@ $(OUTPUT_DIR)/fbink: $(THIRDPARTY_DIR)/fbink/CMakeLists.txt
 	cd $(FBINK_BUILD_DIR) && \
 		$(CMAKE) \
 		-DCROSS_TC="$(CHOST)" \
-		-DCFLAGS="$(CFLAGS)" \
-		-DLDFLAGS="$(LDFLAGS)" \
 		$(CURDIR)/$(THIRDPARTY_DIR)/fbink && \
 		$(MAKE)
 	cp $(FBINK_DIR)/fbink $(OUTPUT_DIR)/
