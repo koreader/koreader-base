@@ -16,6 +16,9 @@ ep_get_binary_dir(BINARY_DIR)
 
 # Minimal, statically linked build, we don't care about extra fonts
 set(BUILD_CMD sh -c "$(MAKE) MINIMAL=1 CROSS_TC=\"${CROSS_TC}\" CFLAGS=\"${CFLAGS}\" LDFLAGS=\"${LDFLAGS}\" strip")
+# We build in-tree...
+set(INSTALL_CMD1 ${CMAKE_COMMAND} -E make_directory ${BINARY_DIR})
+set(INSTALL_CMD2 ${CMAKE_COMMAND} -E rename ${SOURCE_DIR}/Release/fbink ${BINARY_DIR}/fbink)
 
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
@@ -33,5 +36,5 @@ ExternalProject_Add(
     CONFIGURE_COMMAND ""
     BUILD_COMMAND ${BUILD_CMD}
     # The buildsystem outputs binaries in a subdirectory...
-    INSTALL_COMMAND ${CMAKE_COMMAND} -E rename ${SOURCE_DIR}/Release/fbink ${BINARY_DIR}/fbink
+    INSTALL_COMMAND COMMAND INSTALL_CMD1 COMMAND INSTALL_CMD2
 )
