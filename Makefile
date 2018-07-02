@@ -24,6 +24,7 @@ all: $(OUTPUT_DIR)/libs $(if $(ANDROID),,$(LUAJIT)) \
 		$(if $(WIN32),,$(OUTPUT_DIR)/zsync) \
 		$(if $(or $(DARWIN),$(WIN32),$(ANDROID),$(UBUNTUTOUCH),$(APPIMAGE)),,$(OUTPUT_DIR)/dropbearmulti) \
 		$(if $(or $(DARWIN),$(WIN32)),,$(OUTPUT_DIR)/tar) \
+		$(if $(KOBO),$(OUTPUT_DIR)/fbink,) \
 		$(SQLITE_LIB) \
 		$(LUA_LJ_SQLITE) $(OUTPUT_DIR)/common/xsys.lua
 ifndef EMULATE_READER
@@ -32,6 +33,8 @@ ifndef KODEBUG
 		$(if $(WIN32),,$(OUTPUT_DIR)/sdcv) \
 		$(if $(WIN32),,$(OUTPUT_DIR)/tar) \
 		$(if $(WIN32),,$(OUTPUT_DIR)/zsync) \
+		$(if $(or $(DARWIN),$(WIN32),$(ANDROID),$(UBUNTUTOUCH),$(APPIMAGE)),,$(OUTPUT_DIR)/dropbearmulti) \
+		$(if $(KOBO),$(OUTPUT_DIR)/fbink,) \
 		$(if $(ANDROID),,$(LUAJIT)) \
 		$(OUTPUT_DIR)/libs/$(if $(WIN32),*.dll,*.so*)" ;\
 	$(STRIP) --strip-unneeded $${STRIP_FILES} ;\

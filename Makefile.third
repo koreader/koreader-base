@@ -320,6 +320,7 @@ ifdef ANDROID
 	readelf -d $@ | grep "no dynamic" \
 		|| echo "warning: Android L+ support only PIE binary and can't run this"
 endif
+
 # ===========================================================================
 # dropbear
 
@@ -334,6 +335,7 @@ $(OUTPUT_DIR)/dropbearmulti: $(ZLIB) $(THIRDPARTY_DIR)/dropbear/CMakeLists.txt
 		$(CURDIR)/$(THIRDPARTY_DIR)/dropbear && \
 		$(MAKE)
 	cp $(DROPBEAR_DIR)/dropbearmulti $(OUTPUT_DIR)/
+
 # ===========================================================================
 # tar: tar package for zsync
 
@@ -367,6 +369,21 @@ ifdef ANDROID
 	readelf -d $@ | grep "no dynamic" \
 		|| echo "warning: Android L+ support only PIE binary and can't run this"
 endif
+
+# ===========================================================================
+# FBInk: visual feedback on Kobo
+
+$(OUTPUT_DIR)/fbink: $(THIRDPARTY_DIR)/fbink/CMakeLists.txt
+	install -d $(FBINK_BUILD_DIR)
+	cd $(FBINK_BUILD_DIR) && \
+		$(CMAKE) \
+		-DCMAKE_VERBOSE_MAKEFILE:BOOL=ON \
+		-DCROSS_TC="$(CHOST)" \
+		-DCFLAGS="$(CFLAGS)" \
+		-DLDFLAGS="$(LDFLAGS)" \
+		$(CURDIR)/$(THIRDPARTY_DIR)/fbink && \
+		$(MAKE)
+	cp $(FBINK_DIR)/fbink $(OUTPUT_DIR)/
 
 # ===========================================================================
 # common lua library for networking
