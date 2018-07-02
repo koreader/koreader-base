@@ -13,7 +13,7 @@ ep_get_source_dir(SOURCE_DIR)
 ep_get_source_dir(BINARY_DIR)
 
 # Minimal, statically linked build, we don't care about extra fonts
-set(BUILD_CMD "$(MAKE) strip MINIMAL=1 CROSS_TC=\"${CROSS_TC}\"")
+set(BUILD_CMD sh -c "$(MAKE) MINIMAL=1 CROSS_TC=\"${CROSS_TC}\" strip")
 
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
