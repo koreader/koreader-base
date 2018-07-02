@@ -10,6 +10,7 @@ assert_var_defined(CFLAGS)
 assert_var_defined(LDFLAGS)
 
 ep_get_source_dir(SOURCE_DIR)
+ep_get_source_dir(BINARY_DIR)
 
 # Minimal, statically linked build, we don't care about extra fonts
 set(BUILD_CMD "$(MAKE) strip MINIMAL=1 CROSS_TC=\"${CROSS_TC}\" CFLAGS=\"${CFLAGS}\" LDFLAGS=\"${LDFLAGS}\"")
@@ -25,9 +26,9 @@ include(ExternalProject)
 ExternalProject_Add(
     ${PROJECT_NAME}
     DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
-    BUILD_IN_SOURCE 1
     PATCH_COMMAND ""
     CONFIGURE_COMMAND ""
     BUILD_COMMAND ${BUILD_CMD}
-    INSTALL_COMMAND ""
+    # The buildsystem outputs binaries in a subdirectory...
+    INSTALL_COMMAND ${CMAKE_COMMAND} -E rename ${BINARY_DIR}/Release/fbink ${BINARY_DIR}/fbink
 )
