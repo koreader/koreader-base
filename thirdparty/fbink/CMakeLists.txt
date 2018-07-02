@@ -36,5 +36,5 @@ ExternalProject_Add(
     CONFIGURE_COMMAND ""
     BUILD_COMMAND ${BUILD_CMD}
     # The buildsystem outputs binaries in a subdirectory...
-    INSTALL_COMMAND COMMAND INSTALL_CMD1 COMMAND INSTALL_CMD2
+    INSTALL_COMMAND COMMAND ${INSTALL_CMD1} COMMAND ${INSTALL_CMD2}
 )
