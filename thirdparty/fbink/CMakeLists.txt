@@ -33,5 +33,5 @@ ExternalProject_Add(
     CONFIGURE_COMMAND ""
     BUILD_COMMAND ${BUILD_CMD}
     # The buildsystem outputs binaries in a subdirectory...
-    INSTALL_COMMAND ${CMAKE_COMMAND} -E rename ${BINARY_DIR}/Release/fbink ${BINARY_DIR}/fbink
+    INSTALL_COMMAND ${CMAKE_COMMAND} -E rename ${SOURCE_DIR}/Release/fbink ${BINARY_DIR}/fbink
 )
