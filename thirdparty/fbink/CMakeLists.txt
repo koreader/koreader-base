@@ -8,12 +8,14 @@ include("koreader_thirdparty_git")
 enable_language(C)
 
 assert_var_defined(CROSS_TC)
+assert_var_defined(CFLAGS)
+assert_var_defined(LDFLAGS)
 
 ep_get_source_dir(SOURCE_DIR)
 ep_get_source_dir(BINARY_DIR)
 
 # Minimal, statically linked build, we don't care about extra fonts
-set(BUILD_CMD sh -c "$(MAKE) MINIMAL=1 CROSS_TC=\"${CROSS_TC}\" strip")
+set(BUILD_CMD sh -c "$(MAKE) MINIMAL=1 CROSS_TC=\"${CROSS_TC}\" CFLAGS=\"${CFLAGS}\" LDFLAGS=\"${LDFLAGS}\" strip")
 
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
@@ -26,6 +28,7 @@ include(ExternalProject)
 ExternalProject_Add(
     ${PROJECT_NAME}
     DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
+    BUILD_IN_SOURCE 1
     PATCH_COMMAND ""
     CONFIGURE_COMMAND ""
     BUILD_COMMAND ${BUILD_CMD}
