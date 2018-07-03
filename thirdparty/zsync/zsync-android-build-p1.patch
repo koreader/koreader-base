@@ -1,8 +1,8 @@
 diff --git a/c/configure.ac b/c/configure.ac
-index 87b0be1..6b5596f 100644
+index 4b7566b..c745218 100644
 --- a/c/configure.ac
 +++ b/c/configure.ac
-@@ -32,7 +32,7 @@ AC_TYPE_SIZE_T
+@@ -35,7 +35,7 @@ AC_TYPE_SIZE_T
  AC_CHECK_FUNCS(memcpy pwrite pread mkstemp)
  
  X_TYPE_SOCKLEN_T

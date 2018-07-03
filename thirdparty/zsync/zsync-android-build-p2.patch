@@ -1,5 +1,5 @@
 diff --git a/c/libzsync/zsync.c b/c/libzsync/zsync.c
-index 8b18d42..971d2c6 100644
+index 6a7486c..99f4381 100644
 --- a/c/libzsync/zsync.c
 +++ b/c/libzsync/zsync.c
 @@ -41,6 +41,8 @@
@@ -8,10 +8,10 @@ index 8b18d42..971d2c6 100644
  #include <time.h>
 +#include <errno.h>
 +#include <fcntl.h>
-
+ 
  #include <arpa/inet.h>
-
-@@ -533,6 +535,17 @@ int zsync_rename_file(struct zsync_state *zs, const char *f) {
+ 
+@@ -535,6 +537,17 @@ int zsync_rename_file(struct zsync_state *zs, const char *f) {
          free(rf);
          zs->cur_filename = strdup(f);
      }
@@ -28,4 +28,4 @@ index 8b18d42..971d2c6 100644
 +    }
      else
          perror("rename");
-
+ 
