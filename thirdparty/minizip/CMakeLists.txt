@@ -21,7 +21,7 @@ set(BUILD_CMD_STR -j${PARALLEL_JOBS} -C aes CC=${CC} LDFLAGS=${LDFLAGS} AR=${AR}
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
     https://github.com/nmoinvaz/minizip
-    0b46a2b4ca317b80bc53594688883f7188ac4d08
+    2.3.4
     ${SOURCE_DIR}
 )
 
