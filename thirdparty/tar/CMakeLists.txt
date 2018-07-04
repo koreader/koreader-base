@@ -25,13 +25,13 @@ endif(${DISABLE_FORTIFY})
 set(CFG_CMD sh -c ${CFG_CMD})
 
 include(ExternalProject)
-set(TAR_VER "1.28")
+set(TAR_VER "1.30")
 ExternalProject_Add(
     tar
     URL http://ftp.gnu.org/gnu/tar/tar-${TAR_VER}.tar.gz
-    URL_MD5 6ea3dbea1f2b0409b234048e021a9fd7
+    URL_MD5 e0c5ed59e4dd33d765d6c90caadd3c73
     DOWNLOAD_DIR ${KO_DOWNLOAD_DIR}
-    PATCH_COMMAND patch -N -p1 < ${CMAKE_CURRENT_SOURCE_DIR}/tar-0001-fix-build-failure.patch
+    PATCH_COMMAND ""
     CONFIGURE_COMMAND ${CFG_CMD}
     BUILD_COMMAND $(MAKE) -j${PARALLEL_JOBS} --silent
     # skip install for tar
