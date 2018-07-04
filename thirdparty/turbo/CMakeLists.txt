@@ -23,7 +23,7 @@ endif()
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
     https://github.com/kernelsauce/turbo
-    5234825fd09bb0401aab6e2603f9f6d1aa83350b
+    1023f02f787bdd15c752a6d8d46fbe7addc0b6bc
     ${SOURCE_DIR}
 )
 

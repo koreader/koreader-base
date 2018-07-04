@@ -30,7 +30,7 @@ endif()
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
     https://github.com/brunoos/luasec
-    luasec-0.7alpha
+    luasec-0.7
     ${SOURCE_DIR}
 )
 

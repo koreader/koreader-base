@@ -1,2 +1,2 @@
 xsys is adapted from upstream commit: 87df92c
-lua-ljsqlite3 is copied from upstream commit: 9ff0194
+lua-ljsqlite3 is copied from upstream commit: d742002

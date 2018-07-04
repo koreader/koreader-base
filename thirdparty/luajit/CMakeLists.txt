@@ -71,7 +71,7 @@ set(BUILD_CMD sh -c ${BUILD_CMD_STR})
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
     https://github.com/LuaJIT/LuaJIT
-    v2.1.0-beta3
+    9b41062156779160b88fe5e1eb1ece1ee1fe6a74
     ${SOURCE_DIR}
 )
 

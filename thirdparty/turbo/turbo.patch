@@ -1,11 +1,11 @@
 diff --git a/turbo/cdef.lua b/turbo/cdef.lua
 old mode 100755
 new mode 100644
-index 751bcd5..5d78d5c
+index efa69fc..b6ccfff
 --- a/turbo/cdef.lua
 +++ b/turbo/cdef.lua
-@@ -164,7 +164,7 @@ end
-     --- ******* Signals *******
+@@ -222,7 +222,7 @@ end
+     end
      ffi.cdef(string.format([[
          typedef void(*sighandler_t)(int);
 -        sighandler_t signal(int signum, sighandler_t handler);
@@ -13,23 +13,23 @@ index 751bcd5..5d78d5c
          int kill(pid_t pid, int sig);
          typedef struct {
              unsigned long int __val[%d];
-@@ -204,10 +204,12 @@ end
-     ffi.cdef([[
-         typedef long suseconds_t;
-         typedef long time_t;
-+        /*
-         struct timeval{
-             time_t tv_sec;
-             suseconds_t tv_usec;
-         };
-+        */
-         struct timezone{
-             int tz_minuteswest;
-             int tz_dsttime;
+@@ -243,10 +243,12 @@ end
+         ffi.cdef[[
+             typedef long suseconds_t;
+             typedef long time_t;
++            /*
+             struct timeval{
+                 time_t tv_sec;
+                 suseconds_t tv_usec;
+             };
++            */
+             struct timezone{
+                 int tz_minuteswest;
+                 int tz_dsttime;
 diff --git a/turbo/signal.lua b/turbo/signal.lua
 old mode 100755
 new mode 100644
-index 69643da..a971ca2
+index 7edb21a..834c12c
 --- a/turbo/signal.lua
 +++ b/turbo/signal.lua
 @@ -26,7 +26,7 @@ local platform = require "turbo.platform"
@@ -58,30 +58,16 @@ index 69643da..a971ca2
 \ No newline at end of file
 +end
 diff --git a/turbo/util.lua b/turbo/util.lua
-index 85cadc1..7f92575 100644
+index 18c00bb..c8dfc14 100644
 --- a/turbo/util.lua
 +++ b/turbo/util.lua
-@@ -353,6 +353,9 @@ function util.load_libtffi(name)
+@@ -350,6 +350,9 @@ function util.load_libtffi(name)
+         if not have_name then
              ok, lib = pcall(ffi.load, "/usr/local/lib/libtffi_wrap.so")
          end
-         if not ok then
++        if not ok then
 +            ok, lib = pcall(ffi.load, "common/libtffi_wrap.so")
 +        end
-+        if not ok then
+         if not ok then
              -- Still not OK...
              error("Could not load " .. name .. " \
-             Please run makefile and ensure that installation is done correct.")
-diff --git a/deps/http-parser/Makefile b/deps/http-parser/Makefile
-index c8e7b8c..68f5eda 100644
---- a/deps/http-parser/Makefile
-+++ b/deps/http-parser/Makefile
-@@ -37,7 +37,7 @@ CPPFLAGS_DEBUG += $(CPPFLAGS_DEBUG_EXTRA)
- CPPFLAGS_FAST = $(MYCPPFLAGS) -DHTTP_PARSER_STRICT=0
- CPPFLAGS_FAST += $(CPPFLAGS_FAST_EXTRA)
- 
--MYCFLAGS = -Wall -Wextra -Werror
-+MYCFLAGS = -Wall -Wextra
- CFLAGS_DEBUG = $(MYCFLAGS) -O0 -g $(CFLAGS_DEBUG_EXTRA)
- CFLAGS_FAST = $(MYCFLAGS) -O3 $(CFLAGS_FAST_EXTRA)
- CFLAGS = -O3 $(CFLAGS_FAST_EXTRA)
-

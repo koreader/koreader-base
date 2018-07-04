@@ -73,6 +73,7 @@ end
 
 -- Cdef ------------------------------------------------------------------------
 -- SQLITE_*, OPEN_*
+
 ffi.cdef(table.concat(sqlconstants))
 
 -- sqlite3*, ljsqlite3_*
@@ -118,6 +119,8 @@ int sqlite3_bind_double(sqlite3_stmt*, int, double);
 int sqlite3_bind_null(sqlite3_stmt*, int);
 int sqlite3_bind_text(sqlite3_stmt*, int, const char*, int n, void(*)(void*));
 int sqlite3_bind_blob(sqlite3_stmt*, int, const void*, int n, void(*)(void*));
+
+int sqlite3_bind_parameter_index(sqlite3_stmt *stmt, const char *name);
 
 // Clear bindings.
 int sqlite3_clear_bindings(sqlite3_stmt*);
@@ -275,10 +278,10 @@ local function loadcode(s, env)
 end
 
 -- Must always be called from *:_* function due to error level 4.
-local get_column = loadcode(sql_format(sql_get_code, "column", ",i"),	sql_env)
-local get_value  = loadcode(sql_format(sql_get_code, "value" , "  "),	sql_env)
-local set_column = loadcode(sql_format(sql_set_code, "bind"  , ",i"),	sql_env)
-local set_value  = loadcode(sql_format(sql_set_code, "result", "  "),	sql_env)
+local get_column = loadcode(sql_format(sql_get_code, "column", ",i"),   sql_env)
+local get_value  = loadcode(sql_format(sql_get_code, "value" , "  "),   sql_env)
+local set_column = loadcode(sql_format(sql_set_code, "bind"  , ",i"),   sql_env)
+local set_value  = loadcode(sql_format(sql_set_code, "result", "  "),   sql_env)
 
 -- Connection ------------------------------------------------------------------
 local open_modes = {
@@ -358,7 +361,11 @@ function conn_mt:rowexec(command) T_open(self)
     err("misuse", "multiple records returned, 1 expected")
   end
   stmt:close()
-  return unpack(res)
+  if res then
+    return unpack(res)
+  else
+    return nil
+  end
 end
 
 function conn_mt:__call(commands, out) T_open(self)
@@ -583,6 +590,19 @@ end
 
 function stmt_mt:bind(...) T_open(self)
   for i=1,select("#", ...) do self:_bind1(i, select(i, ...)) end
+  return self
+end
+
+function stmt_mt:bindkv(t, pre) T_open(self)
+  pre = pre or ":"
+  for k,v in pairs(t) do
+    if type(k) == "string" then
+      local param = sql.sqlite3_bind_parameter_index(self._ptr, pre..k)
+      if param ~= 0 then
+        self:_bind1(param, v)
+      end
+    end
+  end
   return self
 end
 
