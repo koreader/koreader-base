@@ -22,7 +22,7 @@ set(DROPBEAR_VER "2018.76")
 ExternalProject_Add(
     dropbear
     URL https://matt.ucc.asn.au/dropbear/releases/dropbear-${DROPBEAR_VER}.tar.bz2
-    URL_MD5 c3912f7fcdcc57c99937e4a79480d2c2 
+    URL_MD5 c3912f7fcdcc57c99937e4a79480d2c2
     DOWNLOAD_DIR ${KO_DOWNLOAD_DIR}
     PATCH_COMMAND COMMAND patch -N -p1 -i ${CMAKE_CURRENT_SOURCE_DIR}/dropbear-2018.76-kindle-nopasswd-hack.patch COMMAND patch -N -p1 -i ${CMAKE_CURRENT_SOURCE_DIR}/dropbear-2018.76-kindle-pubkey-hack.patch COMMAND patch -N -p1 -i ${CMAKE_CURRENT_SOURCE_DIR}/dropbear-2018.76-kindle-pubkey-gen-hack.patch COMMAND patch -N -p1 -i ${CMAKE_CURRENT_SOURCE_DIR}/dropbear-2018.76-kindle-pubkey2-gen-hack.patch
     CONFIGURE_COMMAND ${CFG_CMD}
