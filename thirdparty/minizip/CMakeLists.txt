@@ -15,13 +15,13 @@ assert_var_defined(RANLIB)
 
 ep_get_source_dir(SOURCE_DIR)
 
-set(PATCH_CMD sh -c "${ISED} \"s|^CC=|#CC=|g\" aes/Makefile && ${ISED} \"s|^CFLAGS=|#CFLAGS=|g\" aes/Makefile")
+set(PATCH_CMD sh -c "patch -N -p1 -i ${CMAKE_CURRENT_SOURCE_DIR}/minizip-libaes-makefile.patch")
 set(BUILD_CMD_STR -j${PARALLEL_JOBS} -C aes CC=${CC} LDFLAGS=${LDFLAGS} AR=${AR} RANLIB=${RANLIB})
 
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
     https://github.com/nmoinvaz/minizip
-    2.3.4
+    53a657318af1fccc4bac7ed230729302b2391d1d
     ${SOURCE_DIR}
 )
 
