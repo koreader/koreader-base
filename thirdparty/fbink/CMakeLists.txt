@@ -23,7 +23,7 @@ set(INSTALL_CMD2 ${CMAKE_COMMAND} -E rename ${SOURCE_DIR}/Release/fbink ${BINARY
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
     https://github.com/NiLuJe/FBInk.git
-    v0.9.12
+    v0.9.14
     ${SOURCE_DIR}
 )
 
