@@ -18,12 +18,16 @@ ep_get_binary_dir(BINARY_DIR)
 set(BUILD_CMD sh -c "$(MAKE) MINIMAL=1 CROSS_TC=\"${CROSS_TC}\" CFLAGS=\"${CFLAGS}\" LDFLAGS=\"${LDFLAGS}\" strip")
 # We build in-tree...
 set(INSTALL_CMD1 ${CMAKE_COMMAND} -E make_directory ${BINARY_DIR})
-set(INSTALL_CMD2 ${CMAKE_COMMAND} -E rename ${SOURCE_DIR}/Release/fbink ${BINARY_DIR}/fbink)
+if($ENV{DEBUG})
+    set(INSTALL_CMD2 ${CMAKE_COMMAND} -E rename ${SOURCE_DIR}/Debug/fbink ${BINARY_DIR}/fbink)
+else()
+    set(INSTALL_CMD2 ${CMAKE_COMMAND} -E rename ${SOURCE_DIR}/Release/fbink ${BINARY_DIR}/fbink)
+endif()
 
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
     https://github.com/NiLuJe/FBInk.git
-    v0.9.14
+    7c753adf8ad2c9dec0a4ef449abe9947704ab8de
     ${SOURCE_DIR}
 )
 
