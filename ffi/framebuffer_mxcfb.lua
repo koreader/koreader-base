@@ -88,7 +88,7 @@ local function kobo_mxc_wait_for_update_complete(fb, marker)
 end
 
 -- Kobo's Mk7 MXCFB_WAIT_FOR_UPDATE_COMPLETE_V3
-local function kobo_mk7_mxc_wait_for_update_complete(fb, marker) -- luacheck: ignore
+local function kobo_mk7_mxc_wait_for_update_complete(fb, marker)
     -- Wait for the previous update to be completed
     local mk7_update_marker = ffi.new("struct mxcfb_update_marker_data[1]")
     mk7_update_marker[0].update_marker = marker
@@ -317,18 +317,16 @@ local function refresh_kobo(fb, refreshtype, waveform_mode, x, y, w, h)
     return mxc_update(fb, C.MXCFB_SEND_UPDATE_V1_NTX, refarea, refreshtype, waveform_mode, x, y, w, h)
 end
 
-local function refresh_kobo_mk7(fb, refreshtype, waveform_mode, x, y, w, h) -- luacheck: ignore
+local function refresh_kobo_mk7(fb, refreshtype, waveform_mode, x, y, w, h)
     local refarea = ffi.new("struct mxcfb_update_data_v2[1]")
     -- TEMP_USE_AMBIENT, not that there was ever any other choice on Kobo...
     refarea[0].temp = C.TEMP_USE_AMBIENT
-    -- TODO: Here be dragons! This is entirely based on what the Nightmode hack does, and not on an actual analysis of Nickel's behavior.
     refarea[0].dither_mode = C.EPDC_FLAG_USE_DITHERING_PASSTHROUGH
-    refarea[0].quant_bit = 7;
-    -- Enable the appropriate flag when requesting a REAGLD waveform (NTX_WFM_MODE_GLD16 on Mk7?)
-    if waveform_mode == C.NTX_WFM_MODE_GLD16 then
-        refarea[0].flags = C.EPDC_FLAG_USE_REGAL
-    elseif waveform_mode == C.WAVEFORM_MODE_A2 then
-        -- As well as when requesting a 2bit waveform
+    refarea[0].quant_bit = 0;
+    -- Enable the appropriate flag when requesting a 2bit update
+    -- NOTE: As of right now (FW 4.9.x), WAVEFORM_MODE_GLD16 appears not to be used by Nickel,
+    --       so we don't have to care about EPDC_FLAG_USE_REGAL
+    if waveform_mode == C.WAVEFORM_MODE_A2 then
         refarea[0].flags = C.EPDC_FLAG_FORCE_MONOCHROME
     else
         refarea[0].flags = 0
@@ -458,8 +456,9 @@ function framebuffer:init()
         local isREAGL = false
 
         -- Mark 7 devices sport an updated driver.
-        -- For now, it appears backward compatibility has been somewhat preserved, but let's be ready...
-        local isMk7 = false -- luacheck: ignore
+        -- For now, it appears backward compatibility has been somewhat preserved,
+        -- but let's use the shiny new stuff!
+        local isMk7 = false
 
         -- NOTE: AFAICT, the Aura was the only one explicitly requiring REAGL requests...
         if self.device.model == "Kobo_phoenix" then
@@ -480,16 +479,18 @@ function framebuffer:init()
             self.waveform_fast = C.WAVEFORM_MODE_DU -- Mainly menu HLs, compare to Kindle's use of AUTO or DU also in these instances ;).
         end
 
-        -- TODO: Keep this dormant until someone can actually test this w/ the proper HW...
-        --       Don't forget to zap the three inilined luacheck: ignore pragmas when you do ;).
-        --[[
+        -- NOTE: There's a fun twist to Mark 7 devices:
+        --       they do use GLR16 update modes (i.e., REAGL), but they do NOT need/do the PARTIAL -> FULL trick...
+        --       We handle that by NOT setting waveform_reagl (so _isREAGLWaveFormMode never matches), and just customizing waveform_partial.
+        --       Nickel doesn't wait for completion of previous markers on those PARTIAL GLR16, so that's enough to keep our heuristics intact,
+        --       while still doing the right thing everywhere ;).
         if isMk7 then
             self.mech_refresh = refresh_kobo_mk7
             self.mech_wait_update_complete = kobo_mk7_mxc_wait_for_update_complete
 
-            -- FIXME: Is it REAGL, too?
+            self.waveform_partial = C.WAVEFORM_MODE_GLR16
+            -- NOTE: DU may rarely be used instead of A2 by Nickel, but never w/ the MONOCHROME flag, so, keep using A2 everywhere on our end.
         end
-        --]]
     elseif self.device:isPocketBook() then
         require("ffi/mxcfb_pocketbook_h")
 
