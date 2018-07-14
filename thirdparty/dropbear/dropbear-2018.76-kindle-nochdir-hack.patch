@@ -1,0 +1,13 @@
+diff --git a/svr-main.c b/svr-main.c
+index 6f3144b..65a5c63 100644
+--- a/svr-main.c
++++ b/svr-main.c
+@@ -156,7 +156,7 @@ static void main_noinetd() {
+ 			closefds = 1;
+ 		}
+ #endif
+-		if (daemon(0, closefds) < 0) {
++		if (daemon(1, closefds) < 0) {
+ 			dropbear_exit("Failed to daemonize: %s", strerror(errno));
+ 		}
+ 	}
