@@ -1,17 +1,10 @@
-diff -ur dropbear-2018.76/gensignkey.c dropbear-2018.76-PATCHED/gensignkey.c
---- dropbear-2018.76/gensignkey.c	2018-02-27 15:25:10.000000000 +0100
-+++ dropbear-2018.76-PATCHED/gensignkey.c	2018-04-14 17:17:03.419481762 +0200
-@@ -139,17 +139,14 @@
- 	if (ret == DROPBEAR_FAILURE) {
+diff --git a/gensignkey.c b/gensignkey.c
+index 8317fea..7c212ce 100644
+--- a/gensignkey.c
++++ b/gensignkey.c
+@@ -140,16 +140,13 @@ int signkey_generate(enum signkey_type keytype, int bits, const char* filename,
  		goto out;
  	}
-+   /* Hard links are not possible and renam. */
-+   if (skip_exist && access(filename, F_OK) == 0) {
-+       /* Ok. */
-+   } else if (rename(fn_temp, filename) < 0) {
-+       dropbear_log(LOG_ERR, "Failed moving key file to %s: %s", filename,
-+           strerror(errno));
-+       ret = DROPBEAR_FAILURE;
  
 -	if (link(fn_temp, filename) < 0) {
 -		/* If generating keys on connection (skipexist) it's OK to get EEXIST 
@@ -23,6 +16,13 @@ diff -ur dropbear-2018.76/gensignkey.c dropbear-2018.76-PATCHED/gensignkey.c
 -			ret = DROPBEAR_FAILURE;
 -			goto out;
 -		}
++	/* Hack. We can't do hardlinks on vfat, so just use rename */
++	if (skip_exist && access(filename, F_OK) == 0) {
++		/* Ok. */
++	} else if (rename(fn_temp, filename) < 0) {
++		dropbear_log(LOG_ERR, "Failed moving key file to %s: %s", filename,
++		strerror(errno));
++		ret = DROPBEAR_FAILURE;
  	}
  
  out:

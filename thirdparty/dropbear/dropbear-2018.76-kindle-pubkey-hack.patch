@@ -1,7 +1,8 @@
-diff -ur dropbear-2018.76/svr-authpubkey.c dropbear-2018.76-PATCHED/svr-authpubkey.c
---- dropbear-2018.76/svr-authpubkey.c	2018-02-27 15:25:12.000000000 +0100
-+++ dropbear-2018.76-PATCHED/svr-authpubkey.c	2018-04-12 19:55:49.172699790 +0200
-@@ -296,7 +296,7 @@
+diff --git a/svr-authpubkey.c b/svr-authpubkey.c
+index aa6087c..7395837 100644
+--- a/svr-authpubkey.c
++++ b/svr-authpubkey.c
+@@ -296,7 +296,7 @@ static int checkpubkey(const char* algo, unsigned int algolen,
  		const unsigned char* keyblob, unsigned int keybloblen) {
  
  	FILE * authfile = NULL;
@@ -10,7 +11,7 @@ diff -ur dropbear-2018.76/svr-authpubkey.c dropbear-2018.76-PATCHED/svr-authpubk
  	int ret = DROPBEAR_FAILURE;
  	buffer * line = NULL;
  	unsigned int len;
-@@ -320,15 +320,6 @@
+@@ -320,15 +320,6 @@ static int checkpubkey(const char* algo, unsigned int algolen,
  		goto out;
  	}
  
@@ -26,7 +27,7 @@ diff -ur dropbear-2018.76/svr-authpubkey.c dropbear-2018.76-PATCHED/svr-authpubk
  	/* open the file as the authenticating user. */
  	origuid = getuid();
  	origgid = getgid();
-@@ -377,7 +368,6 @@
+@@ -377,7 +368,6 @@ out:
  	if (line) {
  		buf_free(line);
  	}
@@ -34,12 +35,12 @@ diff -ur dropbear-2018.76/svr-authpubkey.c dropbear-2018.76-PATCHED/svr-authpubk
  	TRACE(("leave checkpubkey: ret=%d", ret))
  	return ret;
  }
-@@ -390,38 +380,12 @@
+@@ -390,48 +380,20 @@ out:
   * g-w, o-w */
  static int checkpubkeyperms() {
  
 -	char* filename = NULL; 
-+	char filename[] = "settings/SSH/authorized_keys"; 
++	char filename[] = "settings/SSH/authorized_keys";
  	int ret = DROPBEAR_FAILURE;
  	unsigned int len;
  
@@ -74,16 +75,18 @@ diff -ur dropbear-2018.76/svr-authpubkey.c dropbear-2018.76-PATCHED/svr-authpubk
  	if (checkfileperm(filename) != DROPBEAR_SUCCESS) {
  		goto out;
  	}
-@@ -430,8 +394,6 @@
+ 
+ 	/* file looks ok, return success */
  	ret = DROPBEAR_SUCCESS;
- 	
- out:
+-	
+-out:
 -	m_free(filename);
--
+ 
++out:
  	TRACE(("leave checkpubkeyperms"))
  	return ret;
  }
-@@ -449,25 +411,6 @@
+@@ -449,25 +411,6 @@ static int checkfileperm(char * filename) {
  		TRACE(("leave checkfileperm: stat() != 0"))
  		return DROPBEAR_FAILURE;
  	}
