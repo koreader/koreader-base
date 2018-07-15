@@ -327,11 +327,13 @@ endif
 $(OUTPUT_DIR)/dropbearmulti: $(ZLIB) $(THIRDPARTY_DIR)/dropbear/CMakeLists.txt
 	install -d $(DROPBEAR_BUILD_DIR)
 	cd $(DROPBEAR_BUILD_DIR) && \
-		$(CMAKE) -DCC="$(CC)" \
+		$(CMAKE) \
+		-DCC="$(CC)" \
+		-DCPPFLAGS="$(CPPFLAGS) -I$(ZLIB_DIR)" \
+		-DCFLAGS="$(CFLAGS)" \
 		-DLIBS="$(if $(ANDROID),-static,)" \
-		-DCHOST="$(if $(EMULATE_READER),,$(CHOST))" \
-		-DCPPFLAGS="$(CFLAGS) -I$(ZLIB_DIR)" \
 		-DLDFLAGS="$(LDFLAGS) -L$(ZLIB_DIR)" \
+		-DCHOST="$(if $(EMULATE_READER),,$(CHOST))" \
 		$(CURDIR)/$(THIRDPARTY_DIR)/dropbear && \
 		$(MAKE)
 	cp $(DROPBEAR_DIR)/dropbearmulti $(OUTPUT_DIR)/

@@ -11,6 +11,7 @@ assert_var_defined(CPPFLAGS)
 assert_var_defined(CFLAGS)
 assert_var_defined(LIBS)
 assert_var_defined(LDFLAGS)
+assert_var_defined(CHOST)
 
 ep_get_source_dir(SOURCE_DIR)
 
