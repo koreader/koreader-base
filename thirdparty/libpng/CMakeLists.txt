@@ -28,7 +28,7 @@ endif()
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
     https://github.com/glennrp/libpng.git
-    v1.6.34
+    v1.6.35
     ${SOURCE_DIR}
 )
 
@@ -36,7 +36,7 @@ include(ExternalProject)
 ExternalProject_Add(
     ${PROJECT_NAME}
     DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
-    PATCH_COMMAND sh autogen.sh
+    PATCH_COMMAND ""
     CONFIGURE_COMMAND ${CFG_CMD}
     BUILD_COMMAND $(MAKE) -j${PARALLEL_JOBS} --silent
     INSTALL_COMMAND $(MAKE) -j${PARALLEL_JOBS} --silent install
