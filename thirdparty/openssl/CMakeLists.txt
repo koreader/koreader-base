@@ -40,7 +40,11 @@ set(PATCH_CMD1 sh -c "patch -N -p1 < ${CMAKE_CURRENT_SOURCE_DIR}/openssl-origin-
 set(PATCH_CMD2 sh -c "patch -N -p1 < ${CMAKE_CURRENT_SOURCE_DIR}/openssl-android-makedepend.patch || true")
 set(PATCH_CMD3 sh -c "chmod a+x \"${SOURCE_DIR}/util/gcc-makedepend.pl\" || true")
 
-set(CFG_OPTS "${CFG_OPTS} ${CFLAGS} no-asm no-idea no-mdc2 no-rc5 no-ssl2 no-ssl3")
+# NOTE: We should be passing $CFLAGS to OpenSSL's Configure script, except it
+# balks on a number of different flags, which we'd need to filter.
+# Of particular interest, --sysroot breaks it hard (and we use it on Android,
+# and crappy old TCs).
+set(CFG_OPTS "${CFG_OPTS} no-asm no-idea no-mdc2 no-rc5 no-ssl2 no-ssl3")
 set(CFG_CMD sh -c "${CFG_ENV_VAR} CC=\"${REALCC}\" ${SOURCE_DIR}/${CONFIG_SCRIPT} ${CFG_OPTS}")
 
 set(MAKE_CMD "$(MAKE) CC=\"${CC}\" SHARED_LDFLAGS=\"${SHARED_LDFLAGS}\" LD=\"${LD}\" RANLIB=\"${RANLIB}\"")
