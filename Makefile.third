@@ -286,6 +286,7 @@ else
 	cd $(ZLIB_BUILD_DIR) && \
 		$(CMAKE) -DCC="$(CC)" \
 		-DCFLAGS="$(CFLAGS)" \
+		-DLDFLAGS="$(LDFLAGS)" \
 		$(CURDIR)/thirdparty/zlib && \
 		$(MAKE)
 endif
