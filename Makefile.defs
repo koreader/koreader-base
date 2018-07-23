@@ -289,7 +289,21 @@ endif
 
 # Clang 3.4 on Travis however doesn't define macro '__extern_always_inline'
 ifdef CLANG
-    BASE_CFLAGS+= -D__extern_always_inline=inline
+    BASE_CFLAGS+=-D__extern_always_inline=inline
+    # Tone down some very verbose Clang 5 warnings, too.
+    # This one can be *extremely* verbose
+    BASE_CFLAGS+=-Wno-array-bounds
+    # This one checks if -I flags are actually used, even at steps where it makes little sense.
+    # Since we massively pass -I/-L flags ourselves, this becomes insane really quick.
+    # QFLAGS should have been taking care of this already, but it looks like it doesn't take in every case...
+    BASE_CFLAGS+=-Wno-unused-command-line-argument
+    # Let FreeType do its thing...
+    BASE_CFLAGS+=-Wno-self-assign
+    # Also extremely verbose...
+    BASE_CFLAGS+=-Wno-parentheses-equality
+    # For dropbear's libtom...
+    BASE_CFLAGS+=-Wno-macro-redefined
+    # Note that things appear to be better with Clang >= 6 ;).
 endif
 
 HOST_ARCH:=-march=native
@@ -353,8 +367,8 @@ ifdef EMULATE_READER
 	AR:=$(HOSTAR)
 	LD:=$(HOSTLD)
 	RANLIB:=$(HOSTRANLIB)
-	CFLAGS+= $(HOST_ARCH)
-	CXXFLAGS+= $(HOST_ARCH)
+	CFLAGS+=$(HOST_ARCH)
+	CXXFLAGS+=$(HOST_ARCH)
 else
 	# CMake is difficult about CC and CXX, especially when it's not just a full path
 	CMAKE_C_COMPILER:=$(CC)
@@ -374,8 +388,8 @@ else
 	CC:=$(strip $(CCACHE) $(CC)) -static-libstdc++
 	CXX:=$(strip $(CCACHE) $(CXX)) -static-libstdc++
 	AR:=$(strip $(CCACHE) $(AR))
-	CFLAGS+= $(ARM_ARCH) $(COMPAT_CFLAGS)
-	CXXFLAGS+= $(ARM_ARCH) $(COMPAT_CXXFLAGS)
+	CFLAGS+=$(ARM_ARCH) $(COMPAT_CFLAGS)
+	CXXFLAGS+=$(ARM_ARCH) $(COMPAT_CXXFLAGS)
 	# Make sure we always have mmap() support.
 	# This is critical for FreeType, since the usage of platform-specific code depends on this,
 	# and without it, we don't get CLOEXEC handling, which is problematic on Kobos, where we spawn stuff that might
@@ -386,14 +400,14 @@ endif
 
 # not necessary to use PIC flag for win32 which has relocation table in dll
 ifneq ($(TARGET), win32)
-    CFLAGS+= -fPIC
-    CXXFLAGS+= -fPIC
+    CFLAGS+=-fPIC
+    CXXFLAGS+=-fPIC
 endif
 
 # set a flag that C code can differenciate on for Kobo code
 # currently used for framebuffer related code in einkfb.c
 ifeq ($(TARGET), kobo)
-	CFLAGS+= -DKOBO_PLATFORM
+	CFLAGS+=-DKOBO_PLATFORM
 endif
 
 # FIXME: If we cared, we'd probably need to do something to convince libzmq not
@@ -639,9 +653,9 @@ NANOSVG_HEADERS=$(addprefix $(NANOSVG_INCLUDE_DIR)/, $(NANOSVG_HEADER_FILES))
 DYNLIB_CFLAGS=-L$(CURDIR)/$(OUTPUT_DIR)/libs $(CFLAGS) -I$(LUAJIT_DIR)/src -shared
 DYNLIB_CMAKE_CFLAGS=-L$(CURDIR)/$(OUTPUT_DIR)/libs $(CFLAGS) -I$(LUAJIT_DIR)/src -shared
 ifdef DARWIN
-	DYNLIB_CFLAGS+= -dynamiclib -undefined dynamic_lookup
+	DYNLIB_CFLAGS+=-dynamiclib -undefined dynamic_lookup
 else
-	DYNLIB_CFLAGS+= -Wl,-E -Wl,-rpath,'$$ORIGIN'
+	DYNLIB_CFLAGS+=-Wl,-E -Wl,-rpath,'$$ORIGIN'
 endif
 
 # RPATH for all libraries in koreader/libs. The expand path looks like below:
@@ -650,9 +664,9 @@ endif
 ORIGIN_CMAKE_TO_AUTOCFG=\\\$$\\\$$ORIGIN
 
 ifdef DARWIN
-	DYNLIB_CMAKE_CFLAGS+= -dynamiclib -undefined dynamic_lookup
+	DYNLIB_CMAKE_CFLAGS+=-dynamiclib -undefined dynamic_lookup
 else
-	DYNLIB_CMAKE_CFLAGS+= -Wl,-E -Wl,-rpath,'$(ORIGIN_CMAKE_TO_AUTOCFG)'
+	DYNLIB_CMAKE_CFLAGS+=-Wl,-E -Wl,-rpath,'$(ORIGIN_CMAKE_TO_AUTOCFG)'
 endif
 
 LPEG_BUILD_DIR=$(THIRDPARTY_DIR)/lpeg/build/$(MACHINE)

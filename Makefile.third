@@ -234,6 +234,8 @@ $(LIBFFI_DIR)/include: $(THIRDPARTY_DIR)/libffi/CMakeLists.txt
 	-rm -rf $(LIBFFI_DIR)/include $(LIBFFI_DIR)/../libffi-stamp
 	cd $(LIBFFI_BUILD_DIR) && \
 		$(CMAKE) -DCC="$(CC)" -DHOST="$(CHOST)" \
+		-DCFLAGS="$(CFLAGS)" \
+		-DLDFLAGS="$(LDFLAGS)" \
 		$(if $(ANDROID),-DSYSROOT="$(SYSROOT)",) \
 		$(CURDIR)/$(THIRDPARTY_DIR)/libffi && \
 		$(MAKE)
@@ -278,12 +280,15 @@ $(ZLIB) $(ZLIB_STATIC): $(THIRDPARTY_DIR)/zlib/CMakeLists.txt
 ifdef ANDROID
 	cd $(ZLIB_BUILD_DIR) && \
 		$(CMAKE) -DCC="$(CC)" -DCHOST="$(CHOST)" \
+		-DCFLAGS="$(CFLAGS)" \
 		-DLDFLAGS="$(LDFLAGS) -shared $(ZLIB_LDFLAGS)" \
 		$(CURDIR)/thirdparty/zlib && \
 		$(MAKE)
 else
 	cd $(ZLIB_BUILD_DIR) && \
 		$(CMAKE) -DCC="$(CC)" \
+		-DCFLAGS="$(CFLAGS)" \
+		-DLDFLAGS="$(LDFLAGS)" \
 		$(CURDIR)/thirdparty/zlib && \
 		$(MAKE)
 endif
@@ -300,7 +305,7 @@ $(OUTPUT_DIR)/sdcv: $(if $(ANDROID),$(GLIB_STATIC),$(GLIB)) $(ZLIB_STATIC) $(THI
 	cd $(SDCV_BUILD_DIR) && \
 		$(CMAKE) -DHOST="$(if $(EMULATE_READER),,$(CHOST))" \
 		$(PAGE_SIZE_CFG) -DPKG_CONFIG_PATH="$(GLIB_DIR)/lib/pkgconfig" \
-		-DCFLAGS="$(CFLAGS)" -DLDFLAGS="$(LDFLAGS)" \
+		-DCFLAGS="$(CFLAGS)" -DCXXFLAGS="$(CXXFLAGS)" -DLDFLAGS="$(LDFLAGS)" \
 		-DCMAKE_C_COMPILER="$(CMAKE_C_COMPILER)" \
 		-DCMAKE_C_COMPILER_LAUNCHER="$(CMAKE_C_COMPILER_LAUNCHER)" \
 		-DCMAKE_C_COMPILER_ARG1="$(CMAKE_C_COMPILER_ARG1)" \
@@ -328,6 +333,7 @@ $(OUTPUT_DIR)/dropbearmulti: $(ZLIB) $(THIRDPARTY_DIR)/dropbear/CMakeLists.txt
 	install -d $(DROPBEAR_BUILD_DIR)
 	cd $(DROPBEAR_BUILD_DIR) && \
 		$(CMAKE) \
+		-DCMAKE_VERBOSE_MAKEFILE:BOOL=OFF \
 		-DCC="$(CC)" \
 		-DCPPFLAGS="$(CPPFLAGS) -I$(ZLIB_DIR)" \
 		-DCFLAGS="$(CFLAGS)" \
@@ -345,6 +351,7 @@ $(OUTPUT_DIR)/tar: $(THIRDPARTY_DIR)/tar/CMakeLists.txt
 	install -d $(TAR_BUILD_DIR)
 	cd $(TAR_BUILD_DIR) && \
 		$(CMAKE) -DCC="$(CC)" \
+		-DCFLAGS="$(CFLAGS)" \
 		-DLIBS="$(if $(or $(ANDROID),$(WIN32),$(DARWIN)),,-lrt) $(if $(ANDROID),-static,)" \
 		$(if $(LEGACY),-DDISABLE_LARGEFILE:BOOL=ON -DDISABLE_FORTIFY:BOOL=ON,) \
 		-DCHOST="$(if $(EMULATE_READER),,$(CHOST))" \
@@ -363,6 +370,7 @@ $(OUTPUT_DIR)/zsync: $(THIRDPARTY_DIR)/zsync/CMakeLists.txt
 	install -d $(ZSYNC_BUILD_DIR)
 	cd $(ZSYNC_BUILD_DIR) && \
 		$(CMAKE) -DHOST="$(if $(EMULATE_READER),,$(CHOST))" -DCC="$(CC)" \
+		-DCFLAGS="$(CFLAGS)" \
 		-DLIBS="$(if $(ANDROID),-static,)" \
 		$(CURDIR)/$(THIRDPARTY_DIR)/zsync && \
 		$(MAKE)
@@ -379,7 +387,7 @@ $(OUTPUT_DIR)/fbink: $(THIRDPARTY_DIR)/fbink/CMakeLists.txt
 	install -d $(FBINK_BUILD_DIR)
 	cd $(FBINK_BUILD_DIR) && \
 		$(CMAKE) \
-		-DCMAKE_VERBOSE_MAKEFILE:BOOL=ON \
+		-DCMAKE_VERBOSE_MAKEFILE:BOOL=OFF \
 		-DCROSS_TC="$(CHOST)" \
 		-DCFLAGS="$(CFLAGS)" \
 		-DLDFLAGS="$(LDFLAGS)" \
@@ -410,6 +418,7 @@ $(OPENSSL_LIB) $(OPENSSL_DIR): $(THIRDPARTY_DIR)/openssl/CMakeLists.txt
 		$(CMAKE) \
 		-DREALCC="$(REALCC) $(if $(DARWIN),$(DYNLIB_CFLAGS),$(CFLAGS))" \
 		-DCC="$(CC) $(if $(DARWIN),$(DYNLIB_CFLAGS),$(CFLAGS))" \
+		-DCFLAGS="$(CFLAGS)" \
 		-DSHARED_LDFLAGS="$(LDFLAGS)" \
 		-DLD="$(LD)" -DRANLIB="$(RANLIB)" $(if $(or $(WIN32),$(ANDROID)),-DCHOST="$(CHOST)",) \
 		-DCONFIG_SCRIPT="$(if $(EMULATE_READER),$(if $(DARWIN),Configure darwin64-x86_64-cc,config),Configure $(if $(WIN32),mingw,linux-generic32))" \

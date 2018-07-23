@@ -7,6 +7,8 @@ include("koreader_thirdparty_git")
 
 enable_language(C CXX)
 
+assert_var_defined(CC)
+assert_var_defined(CXX)
 assert_var_defined(CPPFLAGS)
 assert_var_defined(LDFLAGS)
 
