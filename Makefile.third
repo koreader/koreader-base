@@ -331,7 +331,7 @@ $(OUTPUT_DIR)/dropbearmulti: $(ZLIB) $(THIRDPARTY_DIR)/dropbear/CMakeLists.txt
 	install -d $(DROPBEAR_BUILD_DIR)
 	cd $(DROPBEAR_BUILD_DIR) && \
 		$(CMAKE) \
-		-DCMAKE_VERBOSE_MAKEFILE:BOOL=ON \
+		-DCMAKE_VERBOSE_MAKEFILE:BOOL=OFF \
 		-DCC="$(CC)" \
 		-DCPPFLAGS="$(CPPFLAGS) -I$(ZLIB_DIR)" \
 		-DCFLAGS="$(CFLAGS)" \
