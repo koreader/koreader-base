@@ -301,6 +301,8 @@ ifdef CLANG
     BASE_CFLAGS+=-Wno-self-assign
     # Also extremely verbose...
     BASE_CFLAGS+=-Wno-parentheses-equality
+    # For dropbear's libtom...
+    BASE_CFLAGS+=-Wno-macro-redefined
     # Note that things appear to be better with Clang >= 6 ;).
 endif
 

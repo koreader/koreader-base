@@ -234,6 +234,8 @@ $(LIBFFI_DIR)/include: $(THIRDPARTY_DIR)/libffi/CMakeLists.txt
 	-rm -rf $(LIBFFI_DIR)/include $(LIBFFI_DIR)/../libffi-stamp
 	cd $(LIBFFI_BUILD_DIR) && \
 		$(CMAKE) -DCC="$(CC)" -DHOST="$(CHOST)" \
+		-DCFLAGS="$(CFLAGS)" \
+		-DLDFLAGS="$(LDFLAGS)" \
 		$(if $(ANDROID),-DSYSROOT="$(SYSROOT)",) \
 		$(CURDIR)/$(THIRDPARTY_DIR)/libffi && \
 		$(MAKE)
