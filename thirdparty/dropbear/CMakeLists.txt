@@ -23,8 +23,8 @@ set(PATCH_CMD5 sh -c "patch -N -p1 < ${CMAKE_CURRENT_SOURCE_DIR}/dropbear-2018.7
 
 set(CFG_ENV_VAR "CC=\"${CC}\" CPPFLAGS=\"${CPPFLAGS} -I${SOURCE_DIR}\" CFLAGS=\"${CFLAGS}\" LIBS=\"${LIBS}\" LDFLAGS=\"${LDFLAGS}\"")
 set(CFG_OPTS "--host=\"${CHOST}\" --disable-lastlog --enable-zlib --enable-openpty --enable-shadow --enable-syslog --disable-harden")
-set(CFG_CMD "env ${CFG_ENV_VAR} ${SOURCE_DIR}/configure ${CFG_OPTS}")
-set(CFG_CMD sh -c ${CFG_CMD})
+set(CFG_CMD "${CFG_ENV_VAR} ${SOURCE_DIR}/configure ${CFG_OPTS}")
+set(CFG_CMD sh -c "${CFG_CMD}")
 
 set(BUILD_CMD sh -c "$(MAKE) -j${PARALLEL_JOBS} strip MULTI=1")
 

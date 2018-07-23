@@ -24,7 +24,7 @@ if(${DISABLE_FORTIFY})
     # Forcibly disable FORTIFY on legacy devices...
     set(CFG_CMD "${CFG_CMD} && ${ISED} 's/# define _FORTIFY_SOURCE 2/#undef _FORTIFY_SOURCE/' config.h")
 endif(${DISABLE_FORTIFY})
-set(CFG_CMD sh -c ${CFG_CMD})
+set(CFG_CMD sh -c "${CFG_CMD}")
 
 include(ExternalProject)
 set(TAR_VER "1.30")
