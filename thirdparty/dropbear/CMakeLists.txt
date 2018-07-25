@@ -21,7 +21,12 @@ set(PATCH_CMD3 sh -c "patch -N -p1 < ${CMAKE_CURRENT_SOURCE_DIR}/dropbear-2018.7
 set(PATCH_CMD4 sh -c "patch -N -p1 < ${CMAKE_CURRENT_SOURCE_DIR}/dropbear-2018.76-kindle-nochdir-hack.patch || true")
 set(PATCH_CMD5 sh -c "patch -N -p1 < ${CMAKE_CURRENT_SOURCE_DIR}/dropbear-2018.76-kindle-options-hack.patch || true")
 set(PATCH_CMD6 sh -c "patch -N -p1 < ${CMAKE_CURRENT_SOURCE_DIR}/dropbear-2018.76-upstream-fixes.patch || true")
-set(PATCH_CMD7 sh -c "patch -N -p1 < ${CMAKE_CURRENT_SOURCE_DIR}/dropbear-2018.76-scp-command-hack.patch || true")
+# This is pretty much Kobo-specific... Hard-coded paths and all that...
+if($ENV{KOBO})
+    set(PATCH_CMD7 sh -c "patch -N -p1 < ${CMAKE_CURRENT_SOURCE_DIR}/dropbear-2018.76-scp-command-hack-kobo.patch || true")
+else()
+    set(PATCH_CMD7 sh -c "true")
+endif()
 set(PATCH_CMD8 sh -c "autoreconf -fi")
 
 set(CFG_ENV_VAR "CC=\"${CC}\" CPPFLAGS=\"${CPPFLAGS} -I${SOURCE_DIR}\" CFLAGS=\"${CFLAGS}\" LIBS=\"${LIBS}\" LDFLAGS=\"${LDFLAGS}\"")
@@ -34,7 +39,7 @@ set(BUILD_CMD sh -c "$(MAKE) -j${PARALLEL_JOBS} strip PROGRAMS=\"dropbear scp\" 
 include(ExternalProject)
 set(DROPBEAR_VER "2018.76")
 ExternalProject_Add(
-    dropbear
+    ${PROJECT_NAME}
     URL https://matt.ucc.asn.au/dropbear/releases/dropbear-${DROPBEAR_VER}.tar.bz2
     URL_MD5 c3912f7fcdcc57c99937e4a79480d2c2
     DOWNLOAD_DIR ${KO_DOWNLOAD_DIR}
