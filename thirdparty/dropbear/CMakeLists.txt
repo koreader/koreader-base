@@ -21,7 +21,7 @@ set(PATCH_CMD3 sh -c "patch -N -p1 < ${CMAKE_CURRENT_SOURCE_DIR}/dropbear-2018.7
 set(PATCH_CMD4 sh -c "patch -N -p1 < ${CMAKE_CURRENT_SOURCE_DIR}/dropbear-2018.76-kindle-nochdir-hack.patch || true")
 set(PATCH_CMD5 sh -c "patch -N -p1 < ${CMAKE_CURRENT_SOURCE_DIR}/dropbear-2018.76-kindle-options-hack.patch || true")
 set(PATCH_CMD6 sh -c "patch -N -p1 < ${CMAKE_CURRENT_SOURCE_DIR}/dropbear-2018.76-upstream-fixes.patch || true")
-# This is pretty much Kobo-specific... Hard-coded paths and all that...
+# This is pretty much platform-specific... Hard-coded paths and all that...
 if($ENV{KOBO})
     set(PATCH_CMD7 sh -c "patch -N -p1 < ${CMAKE_CURRENT_SOURCE_DIR}/dropbear-2018.76-scp-command-hack-kobo.patch || true")
 elseif($ENV{KINDLE})
