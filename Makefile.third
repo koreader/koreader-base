@@ -343,12 +343,9 @@ $(OUTPUT_DIR)/dropbear: $(ZLIB) $(THIRDPARTY_DIR)/dropbear/CMakeLists.txt
 		$(CURDIR)/$(THIRDPARTY_DIR)/dropbear && \
 		$(MAKE)
 	cp $(DROPBEAR_DIR)/dropbear $(OUTPUT_DIR)/
-ifdef KOBO
-	cp $(DROPBEAR_DIR)/scp $(OUTPUT_DIR)/
-endif
 
 # ===========================================================================
-# OpenSSH (sftp-server)
+# OpenSSH (sftp-server & scp)
 
 $(OUTPUT_DIR)/sftp-server: $(ZLIB) $(SSL_LIB) $(THIRDPARTY_DIR)/openssh/CMakeLists.txt
 	install -d $(OPENSSH_BUILD_DIR)
@@ -363,6 +360,7 @@ $(OUTPUT_DIR)/sftp-server: $(ZLIB) $(SSL_LIB) $(THIRDPARTY_DIR)/openssh/CMakeLis
 		$(CURDIR)/$(THIRDPARTY_DIR)/openssh && \
 		$(MAKE)
 	cp $(OPENSSH_DIR)/sftp-server $(OUTPUT_DIR)/
+	cp $(OPENSSH_DIR)/scp $(OUTPUT_DIR)/
 
 # ===========================================================================
 # tar: tar package for zsync

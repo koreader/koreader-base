@@ -25,11 +25,12 @@ set(CFG_OPTS "--host=\"${CHOST}\" --without-hardening --without-stackprotect --d
 set(CFG_CMD "${CFG_ENV_VAR} ${SOURCE_DIR}/configure ${CFG_OPTS}")
 set(CFG_CMD sh -c "${CFG_CMD}")
 
-set(BUILD_CMD sh -c "$(MAKE) -j${PARALLEL_JOBS} sftp-server")
+set(BUILD_CMD sh -c "$(MAKE) -j${PARALLEL_JOBS} sftp-server scp")
 
 # We build in-tree...
 set(INSTALL_CMD1 ${CMAKE_COMMAND} -E make_directory ${BINARY_DIR})
 set(INSTALL_CMD2 ${CMAKE_COMMAND} -E rename ${SOURCE_DIR}/sftp-server ${BINARY_DIR}/sftp-server)
+set(INSTALL_CMD3 ${CMAKE_COMMAND} -E rename ${SOURCE_DIR}/scp ${BINARY_DIR}/scp)
 
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
@@ -46,5 +47,5 @@ ExternalProject_Add(
     PATCH_COMMAND COMMAND ${PATCH_CMD}
     CONFIGURE_COMMAND ${CFG_CMD}
     BUILD_COMMAND ${BUILD_CMD}
-    INSTALL_COMMAND COMMAND ${INSTALL_CMD1} COMMAND ${INSTALL_CMD2}
+    INSTALL_COMMAND COMMAND ${INSTALL_CMD1} COMMAND ${INSTALL_CMD2} COMMAND ${INSTALL_CMD3}
 )

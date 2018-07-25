@@ -34,7 +34,7 @@ set(CFG_OPTS "--host=\"${CHOST}\" --disable-lastlog --enable-zlib --enable-openp
 set(CFG_CMD "${CFG_ENV_VAR} ${SOURCE_DIR}/configure ${CFG_OPTS}")
 set(CFG_CMD sh -c "${CFG_CMD}")
 
-set(BUILD_CMD sh -c "$(MAKE) -j${PARALLEL_JOBS} strip PROGRAMS=\"dropbear scp\" SCPPROGRESS=1")
+set(BUILD_CMD sh -c "$(MAKE) -j${PARALLEL_JOBS} strip PROGRAMS=\"dropbear\"")
 
 include(ExternalProject)
 set(DROPBEAR_VER "2018.76")
