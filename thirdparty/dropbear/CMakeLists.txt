@@ -24,6 +24,8 @@ set(PATCH_CMD6 sh -c "patch -N -p1 < ${CMAKE_CURRENT_SOURCE_DIR}/dropbear-2018.7
 # This is pretty much Kobo-specific... Hard-coded paths and all that...
 if($ENV{KOBO})
     set(PATCH_CMD7 sh -c "patch -N -p1 < ${CMAKE_CURRENT_SOURCE_DIR}/dropbear-2018.76-scp-command-hack-kobo.patch || true")
+elseif($ENV{KINDLE})
+    set(PATCH_CMD7 sh -c "patch -N -p1 < ${CMAKE_CURRENT_SOURCE_DIR}/dropbear-2018.76-scp-command-hack-kindle.patch || true")
 else()
     set(PATCH_CMD7 sh -c "true")
 endif()
