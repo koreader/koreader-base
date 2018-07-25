@@ -329,7 +329,7 @@ endif
 # ===========================================================================
 # dropbear
 
-$(OUTPUT_DIR)/dropbearmulti: $(ZLIB) $(THIRDPARTY_DIR)/dropbear/CMakeLists.txt
+$(OUTPUT_DIR)/dropbear: $(ZLIB) $(THIRDPARTY_DIR)/dropbear/CMakeLists.txt
 	install -d $(DROPBEAR_BUILD_DIR)
 	cd $(DROPBEAR_BUILD_DIR) && \
 		$(CMAKE) \
@@ -342,7 +342,25 @@ $(OUTPUT_DIR)/dropbearmulti: $(ZLIB) $(THIRDPARTY_DIR)/dropbear/CMakeLists.txt
 		-DCHOST="$(if $(EMULATE_READER),,$(CHOST))" \
 		$(CURDIR)/$(THIRDPARTY_DIR)/dropbear && \
 		$(MAKE)
-	cp $(DROPBEAR_DIR)/dropbearmulti $(OUTPUT_DIR)/
+	cp $(DROPBEAR_DIR)/dropbear $(OUTPUT_DIR)/
+
+# ===========================================================================
+# OpenSSH (sftp-server & scp)
+
+$(OUTPUT_DIR)/sftp-server: $(ZLIB) $(SSL_LIB) $(THIRDPARTY_DIR)/openssh/CMakeLists.txt
+	install -d $(OPENSSH_BUILD_DIR)
+	cd $(OPENSSH_BUILD_DIR) && \
+		$(CMAKE) \
+		-DCMAKE_VERBOSE_MAKEFILE:BOOL=OFF \
+		-DCC="$(CC)" \
+		-DCPPFLAGS="$(CPPFLAGS) -I$(ZLIB_DIR) -I$(OPENSSL_DIR)/include" \
+		-DCFLAGS="$(CFLAGS)" \
+		-DLDFLAGS="$(LDFLAGS) -L$(ZLIB_DIR) -L$(OPENSSL_DIR)" \
+		-DCHOST="$(if $(EMULATE_READER),,$(CHOST))" \
+		$(CURDIR)/$(THIRDPARTY_DIR)/openssh && \
+		$(MAKE)
+	cp $(OPENSSH_DIR)/sftp-server $(OUTPUT_DIR)/
+	cp $(OPENSSH_DIR)/scp $(OUTPUT_DIR)/
 
 # ===========================================================================
 # tar: tar package for zsync

@@ -605,6 +605,8 @@ TAR_BUILD_DIR=$(THIRDPARTY_DIR)/tar/build/$(MACHINE)
 TAR_DIR=$(CURDIR)/$(TAR_BUILD_DIR)/tar-prefix/src/tar-build
 DROPBEAR_BUILD_DIR=$(THIRDPARTY_DIR)/dropbear/build/$(MACHINE)
 DROPBEAR_DIR=$(CURDIR)/$(DROPBEAR_BUILD_DIR)/dropbear-prefix/src/dropbear-build
+OPENSSH_BUILD_DIR=$(THIRDPARTY_DIR)/openssh/build/$(MACHINE)
+OPENSSH_DIR=$(CURDIR)/$(OPENSSH_BUILD_DIR)/openssh-prefix/src/openssh-build
 FBINK_BUILD_DIR=$(THIRDPARTY_DIR)/fbink/build/$(MACHINE)
 FBINK_DIR=$(CURDIR)/$(FBINK_BUILD_DIR)/fbink-prefix/src/fbink-build
 
@@ -675,4 +677,4 @@ LPEG_RE=$(OUTPUT_DIR)/rocks/share/lua/5.1/re.lua
 LPEG_DYNLIB=$(OUTPUT_DIR)/rocks/lib/lua/5.1/lpeg.so
 
 
-CMAKE_THIRDPARTY_LIBS=kpvcrlib,evernote-sdk-lua,luajit,lpeg,turbo,zsync,zyre,czmq,filemq,libk2pdfopt,tesseract,leptonica,lua-Spore,sdcv,luasec,luasocket,libffi,lua-serialize,glib,lodepng,minizip,djvulibre,openssl,mupdf,libzmq,freetype2,giflib,libpng,zlib,tar,libiconv,gettext,libjpeg-turbo,popen-noshell,nanosvg,dropbearmulti,fbink
+CMAKE_THIRDPARTY_LIBS=kpvcrlib,evernote-sdk-lua,luajit,lpeg,turbo,zsync,zyre,czmq,filemq,libk2pdfopt,tesseract,leptonica,lua-Spore,sdcv,luasec,luasocket,libffi,lua-serialize,glib,lodepng,minizip,djvulibre,openssl,mupdf,libzmq,freetype2,giflib,libpng,zlib,tar,libiconv,gettext,libjpeg-turbo,popen-noshell,nanosvg,dropbear,openssh,fbink
