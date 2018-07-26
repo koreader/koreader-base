@@ -409,7 +409,6 @@ void BB_blit_to_BB16(BlitBuffer *src, BlitBuffer *dst,
 void BB_blit_to_BB24(BlitBuffer *src, BlitBuffer *dst,
         int dest_x, int dest_y, int offs_x, int offs_y, int w, int h) {
     int d_x, d_y, o_x, o_y;
-    uint8_t v, v5bit;
     ColorRGB24 *dstptr;
     int sbb_type = GET_BB_TYPE(src);
     int sbb_rotation = GET_BB_ROTATION(src);
@@ -493,7 +492,6 @@ void BB_blit_to_BB24(BlitBuffer *src, BlitBuffer *dst,
 void BB_blit_to_BB32(BlitBuffer *src, BlitBuffer *dst,
         int dest_x, int dest_y, int offs_x, int offs_y, int w, int h) {
     int d_x, d_y, o_x, o_y;
-    uint8_t v, v5bit;
     ColorRGB32 *dstptr;
     int sbb_type = GET_BB_TYPE(src);
     int sbb_rotation = GET_BB_ROTATION(src);
@@ -690,7 +688,7 @@ void BB_alpha_blit_from(BlitBuffer *dst, BlitBuffer *src,
     int sbb_type = GET_BB_TYPE(src);
     int sbb_rotation = GET_BB_ROTATION(src);
     int dbb_rotation = GET_BB_ROTATION(dst);
-    uint8_t r, g, b, ainv, alpha;
+    uint8_t ainv, alpha;
     int d_x, d_y, o_x, o_y;
     if (dbb_type == TYPE_BB8 && sbb_type == TYPE_BB8) {
         o_x = offs_x;
