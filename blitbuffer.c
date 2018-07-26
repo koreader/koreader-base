@@ -113,6 +113,7 @@
             break; \
     }
 
+// NOTE: This one needs block scope because it's used inside case labels by BB_fill_rect
 #define FILL_COLOR(bb, COLOR, c, i, j) \
 { \
     int rotation = GET_BB_ROTATION(bb); \
