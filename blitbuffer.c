@@ -56,7 +56,7 @@
       14942*ColorRGB16_GetB(v)) >> 14)
 #define RGB_To_RGB16(r, g, b) (((r & 0xF8) << 8) + ((g & 0xFC) << 3) + (b >> 3))
 #define RGB_To_A(r, g, b) ((4897*r + 9617*g + 1868*b) >> 14)
-#define DIV_255(x) (((x) + 0x01 + (((x) + 0x01) >> 8)) >> 8)
+#define DIV_255(x) ((((x) >> 8) + (x) + 0x01) >> 8)
 
 #define BB_GET_PIXEL(bb, rotation, COLOR, x, y, pptr) \
     if (rotation == 0) { \
