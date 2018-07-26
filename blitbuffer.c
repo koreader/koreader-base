@@ -1168,5 +1168,3 @@ void BB_color_blit_from(BlitBuffer *dst, BlitBuffer *src,
             break;
     }
 }
-
-// kate: indent-mode cstyle; indent-width 4; replace-tabs on; remove-trailing-spaces none;
