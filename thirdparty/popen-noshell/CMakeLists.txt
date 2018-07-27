@@ -15,8 +15,12 @@ if(${LEGACY})
     set(EXTRA_PATCH_CMD COMMAND patch -N -p1 < ${CMAKE_CURRENT_SOURCE_DIR}/kindle_legacy.patch)
 endif(${LEGACY})
 
+assert_var_defined(CC)
 assert_var_defined(AR)
-set(MAKE_ENV_VAR "CC=\"${CC}\" AR=\"${AR}\" CFLAGS=\"${CFLAGS}\"")
+assert_var_defined(CFLAGS)
+assert_var_defined(LDFLAGS)
+
+set(MAKE_ENV_VAR "CC=\"${CC}\" AR=\"${AR}\" CFLAGS=\"${CFLAGS}\" LDFLAGS=\"${LDFLAGS}\"")
 set(BUILD_CMD sh -c "$(MAKE) -j${PARALLEL_JOBS} ${MAKE_ENV_VAR}")
 
 # NOTE: As of right now (1a70ef9bb131df98d5e75c9951699f2d91c24c15), wait until stuff settles down before bumping this.
