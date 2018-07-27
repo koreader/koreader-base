@@ -79,7 +79,7 @@ $(LODEPNG_LIB) $(LODEPNG_DIR): $(THIRDPARTY_DIR)/lodepng/CMakeLists.txt
 	install -d $(LODEPNG_BUILD_DIR)
 	-rm -f $(LODEPNG_DIR)/../lodepng-stamp/lodepng-build
 	cd $(LODEPNG_BUILD_DIR) && \
-		$(CMAKE) -DCC="$(CC)" -DCFLAGS="$(CFLAGS)" \
+		$(CMAKE) -DCC="$(CC)" -DCFLAGS="$(CFLAGS)" -DLDFLAGS="$(LDFLAGS)" \
 		-DSONAME="$(notdir $(LODEPNG_LIB))" \
 		-DOUTPUT_PATH="$(CURDIR)/$(dir $(LODEPNG_LIB))" \
 		$(CURDIR)/$(THIRDPARTY_DIR)/lodepng && \
@@ -165,6 +165,7 @@ $(POPEN_NOSHELL_LIB): $(THIRDPARTY_DIR)/popen-noshell/CMakeLists.txt
 		$(CMAKE) $(if $(LEGACY),-DLEGACY:BOOL=ON,) \
 		-DCC="$(CC)" -DAR="$(AR)" \
 		-DCFLAGS="$(CFLAGS) $(if $(ANDROID),--sysroot=$(SYSROOT),)" \
+		-DLDFLAGS="$(LDFLAGS)" \
 		$(CURDIR)/$(THIRDPARTY_DIR)/popen-noshell && \
 		$(MAKE)
 
@@ -370,6 +371,7 @@ $(OUTPUT_DIR)/tar: $(THIRDPARTY_DIR)/tar/CMakeLists.txt
 	cd $(TAR_BUILD_DIR) && \
 		$(CMAKE) -DCC="$(CC)" \
 		-DCFLAGS="$(CFLAGS)" \
+		-DLDFLAGS="$(LDFLAGS)" \
 		-DLIBS="$(if $(or $(ANDROID),$(WIN32),$(DARWIN)),,-lrt) $(if $(ANDROID),-static,)" \
 		$(if $(LEGACY),-DDISABLE_LARGEFILE:BOOL=ON -DDISABLE_FORTIFY:BOOL=ON,) \
 		-DCHOST="$(if $(EMULATE_READER),,$(CHOST))" \
@@ -389,6 +391,7 @@ $(OUTPUT_DIR)/zsync: $(THIRDPARTY_DIR)/zsync/CMakeLists.txt
 	cd $(ZSYNC_BUILD_DIR) && \
 		$(CMAKE) -DHOST="$(if $(EMULATE_READER),,$(CHOST))" -DCC="$(CC)" \
 		-DCFLAGS="$(CFLAGS)" \
+		-DLDFLAGS="$(LDFLAGS)" \
 		-DLIBS="$(if $(ANDROID),-static,)" \
 		$(CURDIR)/$(THIRDPARTY_DIR)/zsync && \
 		$(MAKE)
@@ -608,7 +611,9 @@ $(SQLITE_LIB): $(THIRDPARTY_DIR)/sqlite/CMakeLists.txt
 	cd $(SQLITE_BUILD_DIR) && \
 		$(CMAKE) -DCHOST="$(CHOST)" \
 			-DCC="$(CC)" \
+			-DCPPFLAGS="$(CPPFLAGS)" \
 			-DCFLAGS="$(CFLAGS)" \
+			-DLDFLAGS="$(LDFLAGS)" \
 		$(CURDIR)/thirdparty/sqlite && \
 		$(MAKE)
 	cp $(SQLITE_DIR)/lib/$(notdir $(SQLITE_LIB)) $(OUTPUT_DIR)/libs

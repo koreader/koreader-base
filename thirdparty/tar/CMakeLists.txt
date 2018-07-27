@@ -7,12 +7,13 @@ enable_language(C)
 
 assert_var_defined(CC)
 assert_var_defined(CFLAGS)
+assert_var_defined(LDFLAGS)
 assert_var_defined(LIBS)
 
 ep_get_source_dir(SOURCE_DIR)
 ep_get_binary_dir(BINARY_DIR)
 
-set(CFG_ENV_VAR "CC=\"${CC} -DHAVE_MKFIFO=1\" CFLAGS=\"${CFLAGS}\"")
+set(CFG_ENV_VAR "CC=\"${CC} -DHAVE_MKFIFO=1\" CFLAGS=\"${CFLAGS}\" LDFLAGS=\"${LDFLAGS}\"")
 set(CFG_OPTS "-q LIBS=\"${LIBS}\" --host=\"${CHOST}\"")
 
 if(${DISABLE_LARGEFILE})
