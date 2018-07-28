@@ -6,7 +6,7 @@ index dce7f75..2fb083e 100644
          ;;
      *)
          # default
--        AM_CONDITIONAL(ADD_RT, true)
-+        AM_CONDITIONAL(ADD_RT, false)
+-        AM_CONDITIONAL([ADD_RT], true)
++        AM_CONDITIONAL([ADD_RT], false)
          ;;
  esac
