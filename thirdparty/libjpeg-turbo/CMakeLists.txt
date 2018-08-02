@@ -24,7 +24,7 @@ ep_get_source_dir(SOURCE_DIR)
 ep_get_binary_dir(BINARY_DIR)
 
 # CMake hell.
-set(CFG_OPTS "-DCMAKE_INSTALL_PREFIX=${BINARY_DIR}")
+set(CFG_OPTS "-DCMAKE_INSTALL_PREFIX='${BINARY_DIR}'")
 set(CFG_OPTS "${CFG_OPTS} -DCMAKE_SKIP_BUILD_RPATH:BOOL=True")
 
 # Follow sdcv's lead
@@ -39,9 +39,9 @@ set(CFG_OPTS "${CFG_OPTS} -DCMAKE_EXE_LINKER_FLAGS='${LDFLAGS}'")
 
 # c.f., http://trac.ak-team.com/trac/browser/niluje/Configs/trunk/Kindle/Misc/CMakeCross.txt
 # set various other toolchain tools
-set(CFG_OPTS "${CFG_OPTS} -DCMAKE_STRIP ${STRIP}")
-set(CFG_OPTS "${CFG_OPTS} -DCMAKE_AR ${AR}")
-set(CFG_OPTS "${CFG_OPTS} -DCMAKE_RANLIB ${RANLIB}")
+set(CFG_OPTS "${CFG_OPTS} -DCMAKE_STRIP='${STRIP}'")
+set(CFG_OPTS "${CFG_OPTS} -DCMAKE_AR='${AR}'")
+set(CFG_OPTS "${CFG_OPTS} -DCMAKE_RANLIB='${RANLIB}'")
 
 # And, finally, the actual libjpeg-turbo build options
 set(CFG_OPTS "${CFG_OPTS} -DENABLE_STATIC=OFF -DENABLE_SHARED=ON -DWITH_JAVA=OFF -DWITH_JPEG8=ON")
