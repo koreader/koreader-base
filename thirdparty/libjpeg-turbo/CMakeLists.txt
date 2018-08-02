@@ -29,17 +29,14 @@ set(CFG_OPTS "${CFG_OPTS} -DCMAKE_C_COMPILER='${CMAKE_C_COMPILER}' -DCMAKE_C_COM
 set(CFG_OPTS "${CFG_OPTS} -DCMAKE_EXE_LINKER_FLAGS='${LDFLAGS}'")
 
 # c.f., http://trac.ak-team.com/trac/browser/niluje/Configs/trunk/Kindle/Misc/CMakeCross.txt
-if((NOT DEFINED $ENV{ANDROID}) AND (NOT DEFINED $ENV{DARWIN}) AND (NOT DEFINED $ENV{WIN32}) AND (NOT DEFINED $ENV{SDL}))
-	set(CFG_OPTS "${CFG_OPTS} -DCMAKE_SYSTEM_NAME=Linux")
-endif()
 if("${CHOST}" MATCHES "^arm-.*")
 	set(CFG_OPTS "${CFG_OPTS} -DCMAKE_SYSTEM_PROCESSOR=arm")
-endif()
+endif("${CHOST}" MATCHES "^arm-.*")
 
 # Follow sdcv's lead
 if(DEFINED $ENV{ANDROID})
 	set(CFG_OPTS "${CFG_OPTS} -DCMAKE_SYSTEM_NAME=Android -DCMAKE_SYSTEM_VERSION=1")
-endif()
+endif(DEFINED $ENV{ANDROID})
 
 # set various other toolchain tools
 set(CFG_OPTS "${CFG_OPTS} -DCMAKE_STRIP='${STRIP}'")
@@ -50,7 +47,8 @@ set(CFG_OPTS "${CFG_OPTS} -DCMAKE_RANLIB='${RANLIB}'")
 set(CFG_OPTS "${CFG_OPTS} -DENABLE_STATIC=OFF -DENABLE_SHARED=ON -DWITH_JAVA=OFF -DWITH_JPEG8=ON")
 if(DEFINED ${WITHOUT_SIMD})
     set(CFG_OPTS "${CFG_OPTS} -DREQUIRE_SIMD=OFF -DWITH_SIMD=OFF")
-endif(${WITHOUT_SIMD})
+endif(DEFINED ${WITHOUT_SIMD})
+
 set(CFG_CMD sh -c "${CMAKE_COMMAND} ${CFG_OPTS}")
 
 ko_write_gitclone_script(
