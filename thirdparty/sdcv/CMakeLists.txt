@@ -5,7 +5,7 @@ SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_LIST_DIR}/../cmake_m
 include("koreader_thirdparty_common")
 include("koreader_thirdparty_git")
 
-enable_language(C)
+enable_language(C CXX)
 
 assert_var_defined(PKG_CONFIG_PATH)
 assert_var_defined(CMAKE_C_COMPILER)
