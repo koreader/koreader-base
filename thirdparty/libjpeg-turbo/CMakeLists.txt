@@ -7,14 +7,11 @@ include("koreader_thirdparty_git")
 
 enable_language(C CXX)
 
+assert_var_defined(CHOST)
 assert_var_defined(CMAKE_C_COMPILER)
 assert_var_defined(CMAKE_C_COMPILER_LAUNCHER)
 assert_var_defined(CMAKE_C_COMPILER_ARG1)
-assert_var_defined(CMAKE_CXX_COMPILER)
-assert_var_defined(CMAKE_CXX_COMPILER_LAUNCHER)
-assert_var_defined(CMAKE_CXX_COMPILER_ARG1)
 assert_var_defined(CFLAGS)
-assert_var_defined(CXXFLAGS)
 assert_var_defined(LDFLAGS)
 assert_var_defined(STRIP)
 assert_var_defined(AR)
@@ -27,17 +24,23 @@ ep_get_binary_dir(BINARY_DIR)
 set(CFG_OPTS "-DCMAKE_INSTALL_PREFIX='${BINARY_DIR}'")
 set(CFG_OPTS "${CFG_OPTS} -DCMAKE_SKIP_BUILD_RPATH:BOOL=True")
 
-# Follow sdcv's lead
-if($ENV{ANDROID})
-	set(CFG_OPTS "${CFG_OPTS} -DCMAKE_SYSTEM_NAME=Android -DCMAKE_SYSTEM_VERSION=1")
-endif()
-
 # Compiler and linker flags
 set(CFG_OPTS "${CFG_OPTS} -DCMAKE_C_COMPILER='${CMAKE_C_COMPILER}' -DCMAKE_C_COMPILER_LAUNCHER='${CMAKE_C_COMPILER_LAUNCHER}' -DCMAKE_C_COMPILER_ARG1='${CMAKE_C_COMPILER_ARG1}' -DCMAKE_C_FLAGS='${CFLAGS}'")
-set(CFG_OPTS "${CFG_OPTS} -DCMAKE_CXX_COMPILER='${CMAKE_CXX_COMPILER}' -DCMAKE_CXX_COMPILER_LAUNCHER='${CMAKE_CXX_COMPILER_LAUNCHER}' -DCMAKE_CXX_COMPILER_ARG1='${CMAKE_CXX_COMPILER_ARG1}' -DCMAKE_CXX_FLAGS='${CXXFLAGS}'")
 set(CFG_OPTS "${CFG_OPTS} -DCMAKE_EXE_LINKER_FLAGS='${LDFLAGS}'")
 
 # c.f., http://trac.ak-team.com/trac/browser/niluje/Configs/trunk/Kindle/Misc/CMakeCross.txt
+if(NOT DEFINED $ENV{ANDROID} AND NOT DEFINED $ENV{DARWIN} AND NOT DEFINED $ENV{WIN32})
+	set(CFG_OPTS "${CFG_OPTS} -DCMAKE_SYSTEM_NAME=Linux")
+endif()
+if(${CHOST} MATCHES "arm")
+	set(CFG_OPTS "${CFG_OPTS} -DCMAKE_SYSTEM_PROCESSOR=arm")
+endif()
+
+# Follow sdcv's lead
+if(DEFINED $ENV{ANDROID})
+	set(CFG_OPTS "${CFG_OPTS} -DCMAKE_SYSTEM_NAME=Android -DCMAKE_SYSTEM_VERSION=1")
+endif()
+
 # set various other toolchain tools
 set(CFG_OPTS "${CFG_OPTS} -DCMAKE_STRIP='${STRIP}'")
 set(CFG_OPTS "${CFG_OPTS} -DCMAKE_AR='${AR}'")
