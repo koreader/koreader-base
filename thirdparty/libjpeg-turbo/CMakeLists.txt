@@ -29,9 +29,9 @@ set(CFG_OPTS "${CFG_OPTS} -DCMAKE_C_COMPILER='${CMAKE_C_COMPILER}' -DCMAKE_C_COM
 set(CFG_OPTS "${CFG_OPTS} -DCMAKE_EXE_LINKER_FLAGS='${LDFLAGS}'")
 
 # c.f., http://trac.ak-team.com/trac/browser/niluje/Configs/trunk/Kindle/Misc/CMakeCross.txt
-if("${CHOST}" MATCHES "^arm-.*")
+if("${CHOST}" MATCHES "arm")
 	set(CFG_OPTS "${CFG_OPTS} -DCMAKE_SYSTEM_PROCESSOR=arm")
-endif("${CHOST}" MATCHES "^arm-.*")
+endif("${CHOST}" MATCHES "arm")
 
 # Follow sdcv's lead
 if(DEFINED $ENV{ANDROID})
