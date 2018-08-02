@@ -7,13 +7,43 @@ include("koreader_thirdparty_git")
 
 enable_language(C CXX)
 
+assert_var_defined(CMAKE_C_COMPILER)
+assert_var_defined(CMAKE_C_COMPILER_LAUNCHER)
+assert_var_defined(CMAKE_C_COMPILER_ARG1)
+assert_var_defined(CMAKE_CXX_COMPILER)
+assert_var_defined(CMAKE_CXX_COMPILER_LAUNCHER)
+assert_var_defined(CMAKE_CXX_COMPILER_ARG1)
+assert_var_defined(CFLAGS)
+assert_var_defined(CXXFLAGS)
+assert_var_defined(LDFLAGS)
+assert_var_defined(STRIP)
+assert_var_defined(AR)
+assert_var_defined(RANLIB)
+
 ep_get_source_dir(SOURCE_DIR)
 ep_get_binary_dir(BINARY_DIR)
 
 # CMake hell.
 set(CFG_OPTS "-DCMAKE_INSTALL_PREFIX=${BINARY_DIR}")
+set(CFG_OPTS "${CFG_OPTS} -DCMAKE_SKIP_BUILD_RPATH:BOOL=True")
 
-# Actual libjpeg-turbo build options
+# Follow sdcv's lead
+if($ENV{ANDROID})
+	set(CFG_OPTS "${CFG_OPTS} -DCMAKE_SYSTEM_NAME=Android -DCMAKE_SYSTEM_VERSION=1")
+endif()
+
+# Compiler and linker flags
+set(CFG_OPTS "${CFG_OPTS} -DCMAKE_C_COMPILER='${CMAKE_C_COMPILER}' -DCMAKE_C_COMPILER_LAUNCHER='${CMAKE_C_COMPILER_LAUNCHER}' -DCMAKE_C_COMPILER_ARG1='${CMAKE_C_COMPILER_ARG1}' -DCMAKE_C_FLAGS='${CFLAGS}'")
+set(CFG_OPTS "${CFG_OPTS} -DCMAKE_CXX_COMPILER='${CMAKE_CXX_COMPILER}' -DCMAKE_CXX_COMPILER_LAUNCHER='${CMAKE_CXX_COMPILER_LAUNCHER}' -DCMAKE_CXX_COMPILER_ARG1='${CMAKE_CXX_COMPILER_ARG1}' -DCMAKE_CXX_FLAGS='${CXXFLAGS}'")
+set(CFG_OPTS "${CFG_OPTS} -DCMAKE_EXE_LINKER_FLAGS='${LDFLAGS}'")
+
+# c.f., http://trac.ak-team.com/trac/browser/niluje/Configs/trunk/Kindle/Misc/CMakeCross.txt
+# set various other toolchain tools
+set(CFG_OPTS "${CFG_OPTS} -DCMAKE_STRIP ${STRIP}")
+set(CFG_OPTS "${CFG_OPTS} -DCMAKE_AR ${AR}")
+set(CFG_OPTS "${CFG_OPTS} -DCMAKE_RANLIB ${RANLIB}")
+
+# And, finally, the actual libjpeg-turbo build options
 set(CFG_OPTS "${CFG_OPTS} -DENABLE_STATIC=OFF -DENABLE_SHARED=ON -DWITH_JAVA=OFF -DWITH_JPEG8=ON")
 if(${WITHOUT_SIMD})
     set(CFG_OPTS "${CFG_OPTS} -DWITH_SIMD=OFF")
