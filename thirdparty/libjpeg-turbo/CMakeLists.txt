@@ -40,10 +40,26 @@ if($ENV{ANDROID})
 	set(CFG_OPTS "${CFG_OPTS} -DCMAKE_SYSTEM_NAME='Android'")
 	# Magical value that inhibits all of CMake's own NDK handling code. (Or shit goes boom.)
 	set(CFG_OPTS "${CFG_OPTS} -DCMAKE_SYSTEM_VERSION=1")
+
+	# x86 Android, because we can't set CMAKE_SYSTEM_NAME without setting CMAKE_SYSTEM_PROCESSOR too...
+	if(${CHOST} MATCHES "^i686-.*")
+		set(CFG_OPTS "${CFG_OPTS} -DCMAKE_SYSTEM_PROCESSOR='i686'")
+	endif(${CHOST} MATCHES "^i686-.*")
+
+	# Handle AArch64 NDKs while we're here...
+	if(${CHOST} MATCHES "^aarch64-.*")
+		set(CFG_OPTS "${CFG_OPTS} -DCMAKE_SYSTEM_PROCESSOR='aarch64'")
+	endif(${CHOST} MATCHES "^aarch64-.*")
+
+	# And x86_64 too, because why the hell stop there.
+	if(${CHOST} MATCHES "^x86_64-.*")
+		set(CFG_OPTS "${CFG_OPTS} -DCMAKE_SYSTEM_PROCESSOR='x86_64'")
+	endif(${CHOST} MATCHES "^x86_64-.*")
 endif($ENV{ANDROID})
 
 # Needed so that libjpeg-turbo tries to build the right set of SIMD routines for the target when cross-compiling...
-# NOTE: Setting CMAKE_SYSTEM_PROCESSOR without CMAKE_SYSTEM_NAME or vice versa has a tendency to wreck it anyway, especially on Linux targets...
+# NOTE: When CMAKE_SYSTEM_PROCESSOR is set, CMAKE_SYSTEM_NAME MUST be too (or vice versa).
+#       Failure to do so is a sure recipe to disaster in weird and interesting ways...
 if(${CHOST} MATCHES "^arm-.*")
 	set(CFG_OPTS "${CFG_OPTS} -DCMAKE_SYSTEM_PROCESSOR='arm'")
 endif(${CHOST} MATCHES "^arm-.*")
