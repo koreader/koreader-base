@@ -155,6 +155,7 @@ LD:=$(CHOST)-ld
 RC:=$(CHOST)-windres
 RANLIB:=$(CHOST)-ranlib
 
+HOSTSTRIP:=strip
 HOSTAR:=ar
 HOSTLD:=ld
 HOSTRANLIB:=ranlib
@@ -364,6 +365,7 @@ ifdef EMULATE_READER
 	HOSTAR:=$(strip $(CCACHE) $(HOSTAR))
 	CC:=$(HOSTCC)
 	CXX:=$(HOSTCXX)
+	STRIP:=$(HOSTSTRIP)
 	AR:=$(HOSTAR)
 	LD:=$(HOSTLD)
 	RANLIB:=$(HOSTRANLIB)
