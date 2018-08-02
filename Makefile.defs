@@ -155,6 +155,7 @@ LD:=$(CHOST)-ld
 RC:=$(CHOST)-windres
 RANLIB:=$(CHOST)-ranlib
 
+HOSTSTRIP:=strip
 HOSTAR:=ar
 HOSTLD:=ld
 HOSTRANLIB:=ranlib
@@ -358,12 +359,11 @@ ifdef EMULATE_READER
 	# Regular
 	REALCC:=$(HOSTCC)
 	REALCXX:=$(HOSTCXX)
-	REALAR:=$(HOSTAR)
 	HOSTCC:=$(strip $(CCACHE) $(HOSTCC))
 	HOSTCXX:=$(strip $(CCACHE) $(HOSTCXX))
-	HOSTAR:=$(strip $(CCACHE) $(HOSTAR))
 	CC:=$(HOSTCC)
 	CXX:=$(HOSTCXX)
+	STRIP:=$(HOSTSTRIP)
 	AR:=$(HOSTAR)
 	LD:=$(HOSTLD)
 	RANLIB:=$(HOSTRANLIB)
@@ -381,13 +381,11 @@ else
 	endif
 	REALCC:=$(CC)
 	REALCXX:=$(CXX)
-	REALAR:=$(AR)
 	# Don't let libtool piss on our parade...
 	# See what was mentioned around STATIC_LIBSTDCPP on ~L#93 for more details
 	# (cf. https://www.gnu.org/software/libtool/manual/html_node/Stripped-link-flags.html#Stripped-link-flags)
 	CC:=$(strip $(CCACHE) $(CC)) -static-libstdc++
 	CXX:=$(strip $(CCACHE) $(CXX)) -static-libstdc++
-	AR:=$(strip $(CCACHE) $(AR))
 	CFLAGS+=$(ARM_ARCH) $(COMPAT_CFLAGS)
 	CXXFLAGS+=$(ARM_ARCH) $(COMPAT_CXXFLAGS)
 	# Make sure we always have mmap() support.
@@ -516,7 +514,7 @@ FREETYPE_LIB=$(OUTPUT_DIR)/libs/libfreetype$(FREETYPE_LIB_EXT)
 FREETYPE_BUILD_DIR=$(THIRDPARTY_DIR)/freetype2/build/$(MACHINE)
 FREETYPE_DIR=$(CURDIR)/$(FREETYPE_BUILD_DIR)/freetype2-prefix/src/freetype2-build
 
-JPEG_LIB_EXT=$(if $(WIN32),-8.dll,$(if $(DARWIN),.8.dylib,.so.8))
+JPEG_LIB_EXT=$(if $(WIN32),-8.dll,$(if $(DARWIN),.8.dylib,.so$(if $(ANDROID),,.8)))
 JPEG_LIB=$(OUTPUT_DIR)/libs/libjpeg$(JPEG_LIB_EXT)
 TURBOJPEG_LIB=$(OUTPUT_DIR)/libs/libturbojpeg$(if $(WIN32),.dll,$(if $(DARWIN),.dylib,.so))
 JPEG_BUILD_DIR=$(THIRDPARTY_DIR)/libjpeg-turbo/build/$(MACHINE)

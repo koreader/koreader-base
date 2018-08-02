@@ -15,6 +15,7 @@ enum TJPF {
   TJPF_ABGR = 9,
   TJPF_ARGB = 10,
   TJPF_CMYK = 11,
+  TJPF_UNKNOWN = -1,
 };
 int tjDestroy(tjhandle);
 tjhandle tjInitDecompress(void);
