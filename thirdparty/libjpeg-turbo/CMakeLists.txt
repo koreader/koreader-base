@@ -7,8 +7,6 @@ include("koreader_thirdparty_git")
 
 enable_language(C CXX)
 
-assert_var_defined(WITHOUT_SIMD)
-
 ep_get_source_dir(SOURCE_DIR)
 ep_get_binary_dir(BINARY_DIR)
 
