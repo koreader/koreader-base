@@ -35,7 +35,7 @@ endif(($ENV{KINDLE}) OR ($ENV{LEGACY}) OR ($ENV{KOBO}) OR ($ENV{POCKETBOOK}))
 
 # Follow sdcv's lead
 if($ENV{ANDROID})
-	set(CFG_OPTS "${CFG_OPTS} -DCMAKE_SYSTEM_NAME='Android' -DCMAKE_SYSTEM_VERSION=1")
+	set(CFG_OPTS "${CFG_OPTS} -DCMAKE_SYSTEM_NAME='Android'")
 endif($ENV{ANDROID})
 
 # Needed so that libjpeg-turbo tries to build the right set of SIMD routines for the target when cross-compiling...
