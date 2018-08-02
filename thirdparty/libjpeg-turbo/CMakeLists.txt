@@ -7,33 +7,25 @@ include("koreader_thirdparty_git")
 
 enable_language(C CXX)
 
+assert_var_defined(WITHOUT_SIMD)
+
 ep_get_source_dir(SOURCE_DIR)
 ep_get_binary_dir(BINARY_DIR)
 
-set(LIBTOOLIZE libtoolize)
-if(APPLE)
-    set(LIBTOOLIZE glibtoolize)
-endif()
+# CMake hell.
+set(CFG_OPTS "-DCMAKE_INSTALL_PREFIX=${BINARY_DIR}")
 
-set(CFG_ENV_VAR "CC=\"${CC}\" CXX=\"${CXX}\" CPPFLAGS=\"${CPPFLAGS}\" LDFLAGS=\"${LDFLAGS}\" ")
-set(CFG_OPTS "-q --prefix=${BINARY_DIR} --host=\"${CHOST}\" --disable-static --enable-shared --with-jpeg8")
+# Actual libjpeg-turbo build options
+set(CFG_OPTS "${CFG_OPTS} -DENABLE_STATIC=OFF -DENABLE_SHARED=ON -DWITH_JAVA=OFF -DWITH_JPEG8=ON")
 if(${WITHOUT_SIMD})
-    set(CFG_OPTS "${CFG_OPTS} --without-simd")
+    set(CFG_OPTS "${CFG_OPTS} -DWITH_SIMD=OFF")
 endif(${WITHOUT_SIMD})
-set(CFG_CMD sh -c "${CFG_ENV_VAR} ${SOURCE_DIR}/configure ${CFG_OPTS}")
-
-if($ENV{ANDROID})
-    set(CFG_CMD "${CFG_CMD} && ${ISED} 's|version_type=none|version_type=linux|' libtool")
-    set(CFG_CMD "${CFG_CMD} && ${ISED} 's|need_lib_prefix=no|need_lib_prefix=yes|' libtool")
-    set(CFG_CMD "${CFG_CMD} && ${ISED} 's|need_version=no|need_version=yes|' libtool")
-    set(CFG_CMD "${CFG_CMD} && ${ISED} 's|library_names_spec=.*|library_names_spec=\"\\\\\$libname\\\\\$release\\\\\$shared_ext\\\\\$versuffix \\\\\$libname\\\\\$release\\\\\$shared_ext\\\\\$major \\\\\$libname\\\\\$shared_ext\"|' libtool")
-    set(CFG_CMD "${CFG_CMD} && ${ISED} 's|soname_spec=.*|soname_spec=\"\\\\\$libname\\\\\$release\\\\\$shared_ext\\\\\$major\"|' libtool")
-endif()
+set(CFG_CMD sh -c "${CMAKE_COMMAND} ${CFG_OPTS}")
 
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
     https://github.com/libjpeg-turbo/libjpeg-turbo.git
-    1.5.3
+    2.0.0
     ${SOURCE_DIR}
 )
 
@@ -41,8 +33,9 @@ include(ExternalProject)
 ExternalProject_Add(
     libjpeg-turbo
     DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
-    PATCH_COMMAND ${LIBTOOLIZE} COMMAND aclocal COMMAND autoheader COMMAND autoconf COMMAND automake --force-missing --add-missing
+    BUILD_IN_SOURCE 1
+    PATCH_COMMAND ""
     CONFIGURE_COMMAND ${CFG_CMD}
-    BUILD_COMMAND $(MAKE) -j${PARALLEL_JOBS} --silent
-    INSTALL_COMMAND $(MAKE) -j${PARALLEL_JOBS} --silent install
+    BUILD_COMMAND $(MAKE) -j${PARALLEL_JOBS}
+    INSTALL_COMMAND $(MAKE) -j${PARALLEL_JOBS} install
 )

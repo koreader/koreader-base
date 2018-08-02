@@ -26,13 +26,12 @@ $(FREETYPE_LIB) $(FREETYPE_DIR)/include: $(THIRDPARTY_DIR)/freetype2/CMakeLists.
 $(TURBOJPEG_LIB) $(JPEG_LIB): $(THIRDPARTY_DIR)/libjpeg-turbo/CMakeLists.txt
 	install -d $(JPEG_BUILD_DIR)
 	cd $(JPEG_BUILD_DIR) && \
-		$(CMAKE) -DCC="$(CC)" -DCXX="$(CXX)" -DCHOST="$(CHOST)" \
-		-DCPPFLAGS="$(CFLAGS)" -DLDFLAGS="$(LDFLAGS)" \
+		$(CMAKE) \
 		$(if $(findstring armv6, $(ARM_ARCH)),-DWITHOUT_SIMD:BOOL=ON,) \
 		$(CURDIR)/$(THIRDPARTY_DIR)/libjpeg-turbo && \
 		$(MAKE)
-	cp -fL $(JPEG_DIR)/.libs/$(notdir $(TURBOJPEG_LIB)) $(TURBOJPEG_LIB)
-	cp -fL $(JPEG_DIR)/.libs/$(notdir $(JPEG_LIB)) $(JPEG_LIB)
+	cp -fL $(JPEG_DIR)/$(notdir $(TURBOJPEG_LIB)) $(TURBOJPEG_LIB)
+	cp -fL $(JPEG_DIR)/$(notdir $(JPEG_LIB)) $(JPEG_LIB)
 
 $(PNG_LIB): $(ZLIB) $(THIRDPARTY_DIR)/libpng/CMakeLists.txt
 	install -d $(PNG_BUILD_DIR)
