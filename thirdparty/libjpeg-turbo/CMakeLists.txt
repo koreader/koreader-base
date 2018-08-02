@@ -38,8 +38,8 @@ if($ENV{ANDROID})
 	set(CFG_OPTS "${CFG_OPTS} -DCMAKE_SYSTEM_NAME='Android' -DCMAKE_SYSTEM_VERSION=1")
 endif($ENV{ANDROID})
 
-# Needed so that libjpeg-turbo tries to build the right set of SIMD routines for the target...
-# NOTE: Setting CMAKE_SYSTEM_PROCESSOR without CMAKE_SYSTEM_NAME or vice versa breaks everything, because why the fuck wouldn't it, I guess? -_-".
+# Needed so that libjpeg-turbo tries to build the right set of SIMD routines for the target when cross-compiling...
+# NOTE: Setting CMAKE_SYSTEM_PROCESSOR without CMAKE_SYSTEM_NAME or vice versa has a tendency to wreck it anyway, especially on Linux targets...
 if(${CHOST} MATCHES "^arm-.*")
 	set(CFG_OPTS "${CFG_OPTS} -DCMAKE_SYSTEM_PROCESSOR='arm'")
 endif(${CHOST} MATCHES "^arm-.*")
