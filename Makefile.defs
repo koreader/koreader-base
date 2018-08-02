@@ -383,13 +383,11 @@ else
 	endif
 	REALCC:=$(CC)
 	REALCXX:=$(CXX)
-	REALAR:=$(AR)
 	# Don't let libtool piss on our parade...
 	# See what was mentioned around STATIC_LIBSTDCPP on ~L#93 for more details
 	# (cf. https://www.gnu.org/software/libtool/manual/html_node/Stripped-link-flags.html#Stripped-link-flags)
 	CC:=$(strip $(CCACHE) $(CC)) -static-libstdc++
 	CXX:=$(strip $(CCACHE) $(CXX)) -static-libstdc++
-	AR:=$(strip $(CCACHE) $(AR))
 	CFLAGS+=$(ARM_ARCH) $(COMPAT_CFLAGS)
 	CXXFLAGS+=$(ARM_ARCH) $(COMPAT_CXXFLAGS)
 	# Make sure we always have mmap() support.
