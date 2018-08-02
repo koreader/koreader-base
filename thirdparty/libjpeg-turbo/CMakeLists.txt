@@ -33,9 +33,13 @@ if(($ENV{KINDLE}) OR ($ENV{LEGACY}) OR ($ENV{KOBO}) OR ($ENV{POCKETBOOK}))
 	set(CFG_OPTS "${CFG_OPTS} -DCMAKE_SYSTEM_NAME='Linux'")
 endif(($ENV{KINDLE}) OR ($ENV{LEGACY}) OR ($ENV{KOBO}) OR ($ENV{POCKETBOOK}))
 
-# Follow sdcv's lead
+# c.f., https://android.googlesource.com/platform/ndk/+/master/build/cmake/android.toolchain.cmake
+# and   https://github.com/taka-no-me/android-cmake
+# In the meantime, I'll be sitting in the corner, crying hysterically.
 if($ENV{ANDROID})
 	set(CFG_OPTS "${CFG_OPTS} -DCMAKE_SYSTEM_NAME='Android'")
+	# Magical value that inhibits all of CMake's own NDK handling code. (Or shit goes boom.)
+	set(CFG_OPTS "${CFG_OPTS} -DCMAKE_SYSTEM_VERSION=1")
 endif($ENV{ANDROID})
 
 # Needed so that libjpeg-turbo tries to build the right set of SIMD routines for the target when cross-compiling...
