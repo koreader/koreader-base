@@ -39,23 +39,23 @@
 #define GET_BB_TYPE(bb) (((MASK_TYPE & bb->config) >> SHIFT_TYPE))
 
 #define ColorRGB32_To_Color8(color) \
-    (Color8){(4897*color->r + 9617*color->g + 1868*color->b) >> 14}
+    (Color8){(4898*color->r + 9618*color->g + 1869*color->b) >> 14}
 #define ColorRGB32_To_Color8A(color) \
-    (Color8A){(4897*color->r + 9617*color->g + 1868*color->b) >> 14, color->alpha}
+    (Color8A){(4898*color->r + 9618*color->g + 1869*color->b) >> 14, color->alpha}
 #define ColorRGB32_To_Color16(color) \
     (ColorRGB16){((color->r & 0xF8) << 8) + ((color->g & 0xFC) << 3) + ((color->b >> 3))}
 #define ColorRGB32_To_Color24(color) \
     (ColorRGB24){color->r, color->g, color->b}
 
 #define ColorRGB16_GetR(v) (((v >> 11) << 3) + ((v >> 11) >> 2))
-#define ColorRGB16_GetG(v) (((v >> 5 & 0x3F) << 2) + ((v >> 5 & 0x3F) >> 4))
+#define ColorRGB16_GetG(v) ((((v >> 5) & 0x3F) << 2) + (((v >> 5) & 0x3F) >> 4))
 #define ColorRGB16_GetB(v) (((v & 0x001F) << 3) + ((v & 0x001F) >> 2))
 #define ColorRGB16_To_A(v) \
-    ((39190*ColorRGB16_GetR(v) + \
-      38469*ColorRGB16_GetG(v) + \
-      14942*ColorRGB16_GetB(v)) >> 14)
+    ((39919*ColorRGB16_GetR(v) + \
+      39185*ColorRGB16_GetG(v) + \
+      15220*ColorRGB16_GetB(v)) >> 14)
 #define RGB_To_RGB16(r, g, b) (((r & 0xF8) << 8) + ((g & 0xFC) << 3) + (b >> 3))
-#define RGB_To_A(r, g, b) ((4897*r + 9617*g + 1868*b) >> 14)
+#define RGB_To_A(r, g, b) ((4898*r + 9618*g + 1869*b) >> 14)
 #define DIV_255(x) ((((x) >> 8) + (x) + 0x01) >> 8)
 
 #define BB_GET_PIXEL(bb, rotation, COLOR, x, y, pptr) \
