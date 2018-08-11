@@ -334,7 +334,7 @@ static int newDocView(lua_State *L) {
 	luaL_getmetatable(L, "credocument");
 	lua_setmetatable(L, -2);
 
-	doc->text_view = new LVDocView();
+	doc->text_view = new LVDocView(-1, true); // bitsPerPixel=-1, noDefaultDocument=true
 	//doc->text_view->setBackgroundColor(0xFFFFFF);
 	//doc->text_view->setTextColor(0x000000);
 	//doc->text_view->doCommand(DCMD_SET_DOC_FONTS, 1);
