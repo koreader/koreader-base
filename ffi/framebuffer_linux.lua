@@ -10,6 +10,7 @@ local framebuffer = {
     device_node = "/dev/fb0",
     fd = -1,
     fb_size = nil,
+    fb_bpp = nil,
     data = nil,
 }
 
@@ -120,6 +121,9 @@ function framebuffer:init()
     else
         error("unknown bpp value for the eink driver")
     end
+
+    -- Make accessing the bitdepth easier, because we might want to know we're running on Kobo's quirky 16bpp mode later...
+    self.fb_bpp = vinfo.bits_per_pixel
 
     if ffi.string(finfo.id, 7) == "eink_fb" then
         -- classic eink framebuffer driver has grayscale values inverted (i.e. 0xF = black, 0 = white)
