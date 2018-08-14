@@ -514,6 +514,11 @@ FREETYPE_LIB=$(OUTPUT_DIR)/libs/libfreetype$(FREETYPE_LIB_EXT)
 FREETYPE_BUILD_DIR=$(THIRDPARTY_DIR)/freetype2/build/$(MACHINE)
 FREETYPE_DIR=$(CURDIR)/$(FREETYPE_BUILD_DIR)/freetype2-prefix/src/freetype2-build
 
+HARFBUZZ_LIB_EXT=$(if $(WIN32),-0.dll,$(if $(DARWIN),.0.dylib,.so.0))
+HARFBUZZ_LIB=$(OUTPUT_DIR)/libs/libharfbuzz$(HARFBUZZ_LIB_EXT)
+HARFBUZZ_BUILD_DIR=$(THIRDPARTY_DIR)/harfbuzz/build/$(MACHINE)
+HARFBUZZ_DIR=$(CURDIR)/$(HARFBUZZ_BUILD_DIR)/harfbuzz-prefix/src/harfbuzz-build
+
 JPEG_LIB_EXT=$(if $(WIN32),-8.dll,$(if $(DARWIN),.8.dylib,.so$(if $(ANDROID),,.8)))
 JPEG_LIB=$(OUTPUT_DIR)/libs/libjpeg$(JPEG_LIB_EXT)
 TURBOJPEG_LIB=$(OUTPUT_DIR)/libs/libturbojpeg$(if $(WIN32),.dll,$(if $(DARWIN),.dylib,.so))
@@ -675,4 +680,4 @@ LPEG_RE=$(OUTPUT_DIR)/rocks/share/lua/5.1/re.lua
 LPEG_DYNLIB=$(OUTPUT_DIR)/rocks/lib/lua/5.1/lpeg.so
 
 
-CMAKE_THIRDPARTY_LIBS=kpvcrlib,evernote-sdk-lua,luajit,lpeg,turbo,zsync,zyre,czmq,filemq,libk2pdfopt,tesseract,leptonica,lua-Spore,sdcv,luasec,luasocket,libffi,lua-serialize,glib,lodepng,minizip,djvulibre,openssl,mupdf,libzmq,freetype2,giflib,libpng,zlib,tar,libiconv,gettext,libjpeg-turbo,popen-noshell,nanosvg,dropbear,openssh,fbink
+CMAKE_THIRDPARTY_LIBS=kpvcrlib,evernote-sdk-lua,luajit,lpeg,turbo,zsync,zyre,czmq,filemq,libk2pdfopt,tesseract,leptonica,lua-Spore,sdcv,luasec,luasocket,libffi,lua-serialize,glib,lodepng,minizip,djvulibre,openssl,mupdf,libzmq,freetype2,harfbuzz,giflib,libpng,zlib,tar,libiconv,gettext,libjpeg-turbo,popen-noshell,nanosvg,dropbear,openssh,fbink
