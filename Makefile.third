@@ -22,6 +22,16 @@ $(FREETYPE_LIB) $(FREETYPE_DIR)/include: $(THIRDPARTY_DIR)/freetype2/CMakeLists.
 		$(MAKE)
 	cp -fL $(FREETYPE_DIR)/$(if $(WIN32),bin,lib)/$(notdir $(FREETYPE_LIB)) $@
 
+$(HARFBUZZ_LIB) $(HARFBUZZ_DIR)/include: $(THIRDPARTY_DIR)/harfbuzz/CMakeLists.txt
+	install -d $(HARFBUZZ_BUILD_DIR)
+	cd $(HARFBUZZ_BUILD_DIR) && \
+		$(CMAKE) -DCC="$(CC)" -DCXX="$(CXX)" -DCFLAGS="$(CFLAGS)"\
+		-DCXXFLAGS="$(CXXFLAGS)" -DLDFLAGS="$(LDFLAGS)" -DCHOST=$(CHOST) \
+		-DFREETYPE_DIR="$(FREETYPE_DIR)" \
+		$(CURDIR)/$(THIRDPARTY_DIR)/harfbuzz && \
+		$(MAKE)
+	cp -fL $(HARFBUZZ_DIR)/lib/$(notdir $(HARFBUZZ_LIB)) $@
+
 # libjpeg-turbo and libjepg
 $(TURBOJPEG_LIB) $(JPEG_LIB): $(THIRDPARTY_DIR)/libjpeg-turbo/CMakeLists.txt
 	install -d $(JPEG_BUILD_DIR)
@@ -115,7 +125,7 @@ $(DJVULIBRE_LIB): $(JPEG_LIB) $(THIRDPARTY_DIR)/djvulibre/CMakeLists.txt
 	cp -fL $(DJVULIBRE_LIB_DIR)/$(notdir $(DJVULIBRE_LIB)) $(DJVULIBRE_LIB)
 
 # crengine, fetched via GIT as a submodule
-$(CRENGINE_LIB): $(ZLIB) $(PNG_LIB) $(FREETYPE_LIB) $(JPEG_LIB) $(NANOSVG_HEADERS) \
+$(CRENGINE_LIB): $(ZLIB) $(PNG_LIB) $(FREETYPE_LIB) $(HARFBUZZ_LIB) $(JPEG_LIB) $(NANOSVG_HEADERS) \
 		$(CRENGINE_SRC_FILES) $(THIRDPARTY_DIR)/kpvcrlib/CMakeLists.txt
 	install -d $(CRENGINE_BUILD_DIR)
 	cd $(CRENGINE_BUILD_DIR) && \
@@ -125,6 +135,7 @@ $(CRENGINE_LIB): $(ZLIB) $(PNG_LIB) $(FREETYPE_LIB) $(JPEG_LIB) $(NANOSVG_HEADER
 		JPEG_LIB="$(CURDIR)/$(JPEG_LIB)" \
 		PNG_LIB="$(CURDIR)/$(PNG_LIB)" \
 		FREETYPE_LIB="$(CURDIR)/$(FREETYPE_LIB)" \
+		HARFBUZZ_LIB="$(CURDIR)/$(HARFBUZZ_LIB)" \
 		ZLIB="$(CURDIR)/$(ZLIB)" \
 		LIBS_DIR="$(CURDIR)/$(OUTPUT_DIR)/libs" \
 		$(CMAKE) -DJPEGLIB_INCLUDE_DIR=$(JPEG_DIR)/include \
@@ -133,6 +144,7 @@ $(CRENGINE_LIB): $(ZLIB) $(PNG_LIB) $(FREETYPE_LIB) $(JPEG_LIB) $(NANOSVG_HEADER
 		-DNANOSVG_INCLUDE_DIR="$(NANOSVG_INCLUDE_DIR)" \
 		-DZLIB_INCLUDE_DIR="$(ZLIB_DIR)/include" \
 		-DFREETYPE_INCLUDE_DIR="$(FREETYPE_DIR)/include/freetype2" \
+		-DHARFBUZZ_INCLUDE_DIR="$(HARFBUZZ_DIR)/include/harfbuzz" \
 		-DCMAKE_BUILD_TYPE=Release \
 		$(if $(WIN32),-DCMAKE_SYSTEM_NAME=Windows,) \
 		$(if $(ANDROID),-DCMAKE_SYSTEM_NAME=Android,) \
