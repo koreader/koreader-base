@@ -8,26 +8,26 @@ include("koreader_thirdparty_git")
 enable_language(C)
 
 assert_var_defined(CONFIG_SCRIPT)
+assert_var_defined(CHOST)
 assert_var_defined(REALCC)
 assert_var_defined(CC)
 assert_var_defined(CFLAGS)
 assert_var_defined(SHARED_LDFLAGS)
 assert_var_defined(LD)
+assert_var_defined(AR)
 assert_var_defined(RANLIB)
 
 ep_get_source_dir(SOURCE_DIR)
 
 if(${MINGW})
-    assert_var_defined(CHOST)
-    set(CFG_ENV_VAR "CROSS_COMPILE=\"${CHOST}-\"")
     set(CFG_OPTS "no-shared")
 else()
-    set(CFG_ENV_VAR "")
     set(CFG_OPTS "shared")
 endif()
 
-if($ENV{ANDROID})
-    set(CFG_ENV_VAR "${CFG_ENV_VAR} CROSS_COMPILE=\"${CHOST}-\"")
+# If we have a CHOST set, use it
+if (NOT "${CHOST}" STREQUAL "")
+    set(CFG_ENV_VAR "CROSS_COMPILE=\"${CHOST}-\"")
 endif()
 
 set(PATCH_CMD1 sh -c "patch -N -p1 < ${CMAKE_CURRENT_SOURCE_DIR}/openssl-origin-rpath.patch || true")
@@ -39,9 +39,9 @@ set(PATCH_CMD1 sh -c "patch -N -p1 < ${CMAKE_CURRENT_SOURCE_DIR}/openssl-origin-
 set(CFG_OPTS "${CFG_OPTS} no-asm no-idea no-mdc2 no-rc5 no-ssl2 no-ssl3")
 set(CFG_CMD sh -c "${CFG_ENV_VAR} CC=\"${REALCC}\" ${SOURCE_DIR}/${CONFIG_SCRIPT} ${CFG_OPTS}")
 
-set(MAKE_CMD "$(MAKE) CC=\"${CC}\" SHARED_LDFLAGS=\"${SHARED_LDFLAGS}\" LD=\"${LD}\" RANLIB=\"${RANLIB}\"")
+set(MAKE_CMD "$(MAKE) CC=\"${CC}\" SHARED_LDFLAGS=\"${SHARED_LDFLAGS}\" LD=\"${LD}\" AR=\"${AR}\" RANLIB=\"${RANLIB}\"")
 # NOTE: Make depend fails when using ccache, and may fail when // (on some OpenSSL versions, at least)
-set(MAKE_CMD_REALCC "$(MAKE) -j1 CC=\"${REALCC}\" SHARED_LDFLAGS=\"${SHARED_LDFLAGS}\" LD=\"${LD}\" RANLIB=\"${RANLIB}\"")
+set(MAKE_CMD_REALCC "$(MAKE) -j1 CC=\"${REALCC}\" SHARED_LDFLAGS=\"${SHARED_LDFLAGS}\" LD=\"${LD}\" AR=\"${AR}\" RANLIB=\"${RANLIB}\"")
 set(BUILD_CMD1 sh -c "${MAKE_CMD_REALCC} depend")
 set(BUILD_CMD2 sh -c "${MAKE_CMD} build_crypto build_ssl")
 
