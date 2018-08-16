@@ -51,12 +51,12 @@ set(PATCH_CMD1 sh -c "patch -N -p1 < ${CMAKE_CURRENT_SOURCE_DIR}/openssl-origin-
 # balks on a number of different flags, which we'd need to filter.
 # Of particular interest, --sysroot breaks it hard (and we use it on Android,
 # and crappy old TCs).
-set(CFG_OPTS "${CFG_OPTS} no-asm no-idea no-mdc2 no-rc5 no-ssl2 no-ssl3")
+set(CFG_OPTS "${CFG_OPTS} enable-asm no-idea no-mdc2 no-rc5 no-ssl2 no-ssl3")
 set(CFG_CMD sh -c "${CFG_ENV_VAR} ${SOURCE_DIR}/${CONFIG_SCRIPT} ${CFG_OPTS}")
 
 set(MAKE_CMD "$(MAKE) CC=\"${CC}\" SHARED_LDFLAGS=\"${SHARED_LDFLAGS}\" LD=\"${LD}\" AR=\"${AR} r\" RANLIB=\"${RANLIB}\"")
 # NOTE: Make depend fails when using ccache, and may fail when // (on some OpenSSL versions, at least)
-set(BUILD_CMD1 sh -c "$(MAKE) -j1 depend V=1")
+set(BUILD_CMD1 sh -c "$(MAKE) -j1 depend")
 set(BUILD_CMD2 sh -c "${MAKE_CMD} build_crypto build_ssl")
 
 
