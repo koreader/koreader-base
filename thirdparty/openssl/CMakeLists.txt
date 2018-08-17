@@ -49,7 +49,7 @@ set(PATCH_CMD1 sh -c "patch -N -p1 < ${CMAKE_CURRENT_SOURCE_DIR}/openssl-origin-
 
 # NOTE: We need to pass $CFLAGS to OpenSSL's Configure script,
 # except it balks on a few exotic flags, so, filter those out...
-string(REGEX REPLACE "--sysroot [a-Z0-9/_-]*?" "" FILTERED_CFLAGS "${CFLAGS}")
+string(REGEX REPLACE "--sysroot [a-zA-Z0-9/_-]*?" "" FILTERED_CFLAGS "${CFLAGS}")
 
 set(CFG_OPTS "${CFG_OPTS} ${FILTERED_CFLAGS} enable-asm no-idea no-mdc2 no-rc5 no-ssl2 no-ssl3")
 set(CFG_CMD sh -c "${CFG_ENV_VAR} ${SOURCE_DIR}/${CONFIG_SCRIPT} ${CFG_OPTS}")
