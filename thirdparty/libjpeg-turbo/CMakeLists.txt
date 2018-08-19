@@ -23,7 +23,7 @@ ep_get_binary_dir(BINARY_DIR)
 # CMake hell.
 set(CFG_OPTS "-DCMAKE_INSTALL_PREFIX='${BINARY_DIR}'")
 # We expect lib later on in Makefile.third, even on multilib systems...
-set(CFG_OPTS "${CFG_OPTS} -DCMAKE_INSTALL_LIBDIR='lib'")
+set(CFG_OPTS "${CFG_OPTS} -DCMAKE_INSTALL_LIBDIR='${BINARY_DIR}/lib'")
 set(CFG_OPTS "${CFG_OPTS} -DCMAKE_SKIP_BUILD_RPATH:BOOL=True")
 
 # Compiler and linker flags
