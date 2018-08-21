@@ -18,13 +18,13 @@ ep_get_binary_dir(BINARY_DIR)
 set(CFG_ENV_VAR "CC=\"${CC}\" CXX=\"${CXX}\" CFLAGS=\"${CFLAGS}\" CXXFLAGS=\"${CXXFLAGS}\" LDFLAGS=\"${LDFLAGS}\"")
 set(CFG_ENV_VAR "${CFG_ENV_VAR} FREETYPE_CFLAGS=\"-I${FREETYPE_DIR}/include/freetype2\"")
 set(CFG_ENV_VAR "${CFG_ENV_VAR} FREETYPE_LIBS=\"-L${FREETYPE_DIR} -lfreetype\"")
-set(CFG_OPTS "--prefix=${BINARY_DIR} --enable-shared --disable-static --with-freetype --with-ucdn --without-glib --without-gobject --without-cairo --without-fontconfig --without-icu --without-graphite2 --without-uniscribe --without-directwrite --without-coretext --host=\"${CHOST}\"")
+set(CFG_OPTS "--prefix=\"${BINARY_DIR}\" --enable-shared --disable-static --with-freetype --with-ucdn --without-glib --without-gobject --without-cairo --without-fontconfig --without-icu --without-graphite2 --without-uniscribe --without-directwrite --without-coretext --host=\"${CHOST}\"")
 set(CFG_CMD sh -c "${CFG_ENV_VAR} ${SOURCE_DIR}/configure ${CFG_OPTS}")
 
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
     https://github.com/harfbuzz/harfbuzz.git
-    1.8.7
+    1.8.8
     ${SOURCE_DIR}
 )
 
