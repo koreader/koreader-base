@@ -22,6 +22,8 @@ ep_get_binary_dir(BINARY_DIR)
 
 # CMake hell.
 set(CFG_OPTS "-DCMAKE_INSTALL_PREFIX='${BINARY_DIR}'")
+# We expect lib later on in Makefile.third, even on multilib systems...
+set(CFG_OPTS "${CFG_OPTS} -DCMAKE_INSTALL_LIBDIR='${BINARY_DIR}/lib'")
 set(CFG_OPTS "${CFG_OPTS} -DCMAKE_SKIP_BUILD_RPATH:BOOL=True")
 
 # Compiler and linker flags
@@ -29,9 +31,9 @@ set(CFG_OPTS "${CFG_OPTS} -DCMAKE_C_COMPILER='${CMAKE_C_COMPILER}' -DCMAKE_C_COM
 set(CFG_OPTS "${CFG_OPTS} -DCMAKE_EXE_LINKER_FLAGS='${LDFLAGS}'")
 
 # c.f., http://trac.ak-team.com/trac/browser/niluje/Configs/trunk/Kindle/Misc/CMakeCross.txt
-if(($ENV{KINDLE}) OR ($ENV{LEGACY}) OR ($ENV{KOBO}) OR ($ENV{POCKETBOOK}))
+if(($ENV{KINDLE}) OR ($ENV{LEGACY}) OR ($ENV{KOBO}) OR ($ENV{POCKETBOOK}) OR ($ENV{UBUNTUTOUCH}))
 	set(CFG_OPTS "${CFG_OPTS} -DCMAKE_SYSTEM_NAME='Linux'")
-endif(($ENV{KINDLE}) OR ($ENV{LEGACY}) OR ($ENV{KOBO}) OR ($ENV{POCKETBOOK}))
+endif(($ENV{KINDLE}) OR ($ENV{LEGACY}) OR ($ENV{KOBO}) OR ($ENV{POCKETBOOK}) OR ($ENV{UBUNTUTOUCH}))
 
 # c.f., https://android.googlesource.com/platform/ndk/+/master/build/cmake/android.toolchain.cmake
 # and   https://github.com/taka-no-me/android-cmake

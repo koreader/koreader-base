@@ -462,8 +462,11 @@ $(OPENSSL_LIB) $(OPENSSL_DIR): $(THIRDPARTY_DIR)/openssl/CMakeLists.txt
 		-DCC="$(CC) $(if $(DARWIN),$(DYNLIB_CFLAGS),$(CFLAGS))" \
 		-DCFLAGS="$(CFLAGS)" \
 		-DSHARED_LDFLAGS="$(LDFLAGS)" \
-		-DLD="$(LD)" -DRANLIB="$(RANLIB)" $(if $(or $(WIN32),$(ANDROID)),-DCHOST="$(CHOST)",) \
-		-DCONFIG_SCRIPT="$(if $(EMULATE_READER),$(if $(DARWIN),Configure darwin64-x86_64-cc,config),Configure $(if $(WIN32),mingw,linux-generic32))" \
+		-DLD="$(LD)" \
+		-DAR="$(AR)" \
+		-DRANLIB="$(RANLIB)" \
+		-DCHOST="$(CHOST)" \
+		-DCONFIG_SCRIPT="$(if $(EMULATE_READER),$(if $(DARWIN),Configure darwin64-x86_64-cc,config),Configure $(if $(WIN32),mingw,))" \
 		$(CURDIR)/$(THIRDPARTY_DIR)/openssl && \
 		$(MAKE)
 
