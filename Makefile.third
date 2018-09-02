@@ -423,7 +423,7 @@ ifdef ANDROID
 endif
 
 # ===========================================================================
-# FBInk: visual feedback on Kobo
+# FBInk: visual feedback on Kobo/Kindle
 
 $(OUTPUT_DIR)/fbink: $(THIRDPARTY_DIR)/fbink/CMakeLists.txt
 	install -d $(FBINK_BUILD_DIR)
