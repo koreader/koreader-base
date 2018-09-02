@@ -49,6 +49,8 @@ pid_t fake_ev_generator_pid = -1;
     #include "input-kindle.h"
 #elif defined KOBO
     #include "input-kobo.h"
+#elif defined PRST
+    #include "input-prst.h"
 #endif
 
 static inline int findFreeFdSlot() {
