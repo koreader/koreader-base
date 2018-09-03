@@ -37,7 +37,7 @@ static const int WAVEFORM_MODE_A2 = 4;
 static const int WAVEFORM_MODE_AUTO = 257;
 static const int TEMP_USE_AMBIENT = 4096;
 static const int TEMP_USE_AUTO = 4097; // this does not exist, simply use a value different than above
-static const int EPDC_FLAG_ENABLE_INVERSION = 1; 
+static const int EPDC_FLAG_ENABLE_INVERSION = 1;
 static const int EPDC_FLAG_FORCE_MONOCHROME = 2;
 static const int EPDC_FLAG_USE_ALT_BUFFER = 256;
 

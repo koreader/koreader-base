@@ -81,6 +81,7 @@ struct mxcfb_rect {
 #define WAVEFORM_MODE_AUTO			257
 
 #define TEMP_USE_AMBIENT			0x1000
+#define TEMP_USE_AUTO				0x1001
 
 #define EPDC_FLAG_ENABLE_INVERSION		0x01
 #define EPDC_FLAG_FORCE_MONOCHROME		0x02
