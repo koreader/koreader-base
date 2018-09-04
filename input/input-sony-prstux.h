@@ -1,5 +1,5 @@
 /*
-    KOReader: Sony PRST input abstraction for Lua
+    KOReader: Sony PRSTUX input abstraction for Lua
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -15,8 +15,8 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef _KO_INPUT_PRST_H
-#define _KO_INPUT_PRST_H
+#ifndef _KO_INPUT_SONY_PRSTUX_H
+#define _KO_INPUT_SONY_PRSTUX_H
 
 void generateFakeEvent(int pipefd[2]) {
     return;
