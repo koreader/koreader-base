@@ -92,6 +92,10 @@ else ifeq ($(TARGET), pocketbook)
     export POCKETBOOK=1
     export PATH:=$(POCKETBOOK_TOOLCHAIN)/bin:$(PATH)
     export SYSROOT=$(POCKETBOOK_TOOLCHAIN)/arm-obreey-linux-gnueabi/sysroot
+else ifeq ($(TARGET), sony_prstux)
+    CHOST?=arm-linux-gnueabihf
+    export SONY_PRSTUX=1 
+    export USE_LJ_WPACLIENT=1
 else ifndef TARGET
     # if TARGET is not defined we will build an emulator on current machine
     export EMULATE_READER=1
@@ -279,6 +283,9 @@ else ifeq ($(TARGET), android)
 		ARM_ARCH+=-mfloat-abi=softfp
 		export ac_cv_type_in_port_t=yes
 	endif
+else ifeq ($(TARGET), sony_prstux)
+        ARM_ARCH:=$(ARMV7_A8_ARCH)
+        ARM_ARCH+=-mfloat-abi=hard
 else ifeq ($(TARGET), arm-generic)
 	# Defaults to generic crap
 	ARM_ARCH:=$(ARMV6_GENERIC_ARCH)
