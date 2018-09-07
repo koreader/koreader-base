@@ -223,6 +223,9 @@ local function mxc_update(fb, update_ioctl, refarea, refresh_type, waveform_mode
         refarea[0].update_mode = C.UPDATE_MODE_FULL
     end
 
+    -- Recap the actual details of the ioctl, vs. what UIManager asked for...
+    fb.debug(string.format("mxc_update: %ux%u region @ (%u, %u) with marker %u (WFM: %u & UPD: %u)", w, h, x, y, marker, refarea[0].waveform_mode, refarea[0].update_mode))
+
     local rv = C.ioctl(fb.fd, update_ioctl, refarea)
     if rv < 0 then
         local err = ffi.errno()
