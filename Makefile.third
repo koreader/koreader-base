@@ -635,9 +635,9 @@ $(SQLITE_LIB): $(THIRDPARTY_DIR)/sqlite/CMakeLists.txt
 	cd $(SQLITE_BUILD_DIR) && \
 		$(CMAKE) -DCHOST="$(CHOST)" \
 			-DCC="$(CC)" \
-			-DCPPFLAGS="$(CPPFLAGS)" \
+			-DCPPFLAGS="$(CPPFLAGS) -I$(ZLIB_DIR)" \
 			-DCFLAGS="$(CFLAGS)" \
-			-DLDFLAGS="$(LDFLAGS)" \
+			-DLDFLAGS="$(LDFLAGS) -L$(ZLIB_DIR) -Wl,-rpath,'$(ORIGIN_CMAKE_TO_AUTOCFG)'" \
 		$(CURDIR)/thirdparty/sqlite && \
 		$(MAKE)
 	cp $(SQLITE_DIR)/lib/$(notdir $(SQLITE_LIB)) $(OUTPUT_DIR)/libs
