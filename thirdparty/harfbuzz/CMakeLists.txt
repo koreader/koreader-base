@@ -24,7 +24,7 @@ set(CFG_CMD sh -c "${CFG_ENV_VAR} ${SOURCE_DIR}/configure ${CFG_OPTS}")
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
     https://github.com/harfbuzz/harfbuzz.git
-    1.8.8
+    1.9.0
     ${SOURCE_DIR}
 )
 
