@@ -38,7 +38,7 @@ ExternalProject_Add(
     ${PROJECT_NAME}
     DOWNLOAD_DIR ${KO_DOWNLOAD_DIR}
     URL https://www.sqlite.org/2018/sqlite-autoconf-${SQLITE_VER}.tar.gz
-    URL_HASH SHA1=c6a44ad5cc67ed8824d1346d4d7e488527754667
+    URL_HASH SHA1=1d494ca2355ffe8ddbeea7cf615ef61122fe421e
     BUILD_IN_SOURCE 1
     CONFIGURE_COMMAND ${CFG_CMD}
     BUILD_COMMAND $(MAKE) -j1
