@@ -153,7 +153,7 @@ local function mxc_update(fb, update_ioctl, refarea, refresh_type, waveform_mode
 
     -- Pocketbook Color Lux refreshes based on bytes (not based on pixel)
     if fb.device:has3BytesWideFrameBuffer() then
-       w = w*3 
+       w = w*3
     end
 
     -- NOTE: If we're trying to send a:
