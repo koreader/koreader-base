@@ -102,6 +102,12 @@ function framebuffer:init()
         error("framebuffer model not supported");
     end
 
+    -- Pocketbook Color Lux reports bits_per_pixel = 8, but actually uses an RGB24 framebuffer
+    if self.device:has3BytesWideFrameBuffer() then
+        vinfo.bits_per_pixel = 24
+        vinfo.xres = vinfo.xres / 3
+    end
+
     self.data = C.mmap(nil,
                            self.fb_size,
                            bit.bor(C.PROT_READ, C.PROT_WRITE),
@@ -112,6 +118,8 @@ function framebuffer:init()
            "can not mmap() framebuffer")
     if vinfo.bits_per_pixel == 32 then
         self.bb = BB.new(vinfo.xres, vinfo.yres, BB.TYPE_BBRGB32, self.data, finfo.line_length)
+    elseif vinfo.bits_per_pixel == 24 then
+        self.bb = BB.new(vinfo.xres, vinfo.yres, BB.TYPE_BBRGB24, self.data, finfo.line_length)
     elseif vinfo.bits_per_pixel == 16 then
         self.bb = BB.new(vinfo.xres, vinfo.yres, BB.TYPE_BBRGB16, self.data, finfo.line_length)
     elseif vinfo.bits_per_pixel == 8 then
