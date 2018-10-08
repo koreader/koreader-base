@@ -1353,6 +1353,107 @@ static int getWordBoxesFromPositions(lua_State *L) {
 	return 1;
 }
 
+static int getDocumentFileContent(lua_State *L) {
+    CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
+    const char* internalFilePath = luaL_checkstring(L, 2);
+
+    LVStreamRef stream = doc->text_view->getDocumentFileStream(lString16(internalFilePath));
+    if (!stream.isNull()) {
+        unsigned size = stream->GetSize();
+        lvsize_t read_size = 0;
+        void *buffer = (void *)malloc(size);
+        if (buffer != NULL) {
+            stream->Read(buffer, size, &read_size);
+            if (read_size == size) {
+                // (We can push a string containing NULL bytes with lua_pushlstring,
+                // so this function works with binary files like images.)
+                lua_pushlstring(L, (const char*)buffer, size);
+                free(buffer);
+                return 1;
+            }
+            free(buffer);
+        }
+    }
+    return 0;
+}
+
+static int getTextFromXPointer(lua_State *L) {
+    CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
+    const char* xp = luaL_checkstring(L, 2);
+
+    ldomXPointer nodep = doc->dom_doc->createXPointer(lString16(xp));
+    if (nodep.isNull())
+        return 0;
+    ldomNode * node = nodep.getNode();
+    if (node->isNull())
+        return 0;
+    lString8 text = node->getText8();
+    lua_pushstring(L, text.c_str());
+    return 1;
+}
+
+static int getHTMLFromXPointer(lua_State *L) {
+    CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
+    const char* xp = luaL_checkstring(L, 2);
+    int wflags = (int)luaL_optint(L, 3, 0);
+    bool fromParentFinalNode = false;
+    if (lua_isboolean(L, 4))
+        fromParentFinalNode = lua_toboolean(L, 4);
+
+    ldomXPointer nodep = doc->dom_doc->createXPointer(lString16(xp));
+    if (nodep.isNull())
+        return 0;
+    ldomNode * node = nodep.getNode();
+    if (node->isNull())
+        return 0;
+    if (fromParentFinalNode) {
+        // get the first parent that is rendered final, which is probably
+        // what we want if we are displaying footnotes
+        ldomNode * finalNode = nodep.getFinalNode();
+        if ( finalNode && !finalNode->isNull() )
+            node = finalNode;
+    }
+    nodep = ldomXPointer(node, 0); // reset offset to 0, to get the full text of text nodes
+    lString16Collection cssFiles;
+    lString8 html = nodep.getHtml(cssFiles, wflags);
+    lua_pushstring(L, html.c_str());
+    lua_newtable(L);
+    for (int i = 0; i < cssFiles.length(); i++) {
+        lua_pushnumber(L, i+1);
+        lua_pushstring(L, UnicodeToLocal(cssFiles[i]).c_str());
+        lua_settable(L, -3);
+    }
+    return 2;
+}
+
+static int getHTMLFromXPointers(lua_State *L) {
+    CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
+    const char* xp0 = luaL_checkstring(L, 2);
+    const char* xp1 = luaL_checkstring(L, 3);
+    int wflags = (int)luaL_optint(L, 4, 0);
+    bool fromRootNode = false;
+    if (lua_isboolean(L, 5))
+        fromRootNode = lua_toboolean(L, 5);
+
+    ldomXPointer startp = doc->dom_doc->createXPointer(lString16(xp0));
+    ldomXPointer endp = doc->dom_doc->createXPointer(lString16(xp1));
+    if (startp.isNull() || endp.isNull())
+        return 0;
+    ldomXRange r(startp, endp);
+    if (r.getStart().isNull() || r.getEnd().isNull())
+        return 0;
+    lString16Collection cssFiles;
+    lString8 html = r.getHtml(cssFiles, wflags, fromRootNode);
+    lua_pushstring(L, html.c_str());
+    lua_newtable(L);
+    for (int i = 0; i < cssFiles.length(); i++) {
+        lua_pushnumber(L, i+1);
+        lua_pushstring(L, UnicodeToLocal(cssFiles[i]).c_str());
+        lua_settable(L, -3);
+    }
+    return 2;
+}
+
 static int getPageLinks(lua_State *L) {
 	CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
 
@@ -1805,6 +1906,10 @@ static const struct luaL_Reg credocument_meth[] = {
 	{"getTextFromPositions", getTextFromPositions},
 	{"getWordBoxesFromPositions", getWordBoxesFromPositions},
 	{"getImageDataFromPosition", getImageDataFromPosition},
+	{"getDocumentFileContent", getDocumentFileContent},
+	{"getTextFromXPointer", getTextFromXPointer},
+	{"getHTMLFromXPointer", getHTMLFromXPointer},
+	{"getHTMLFromXPointers", getHTMLFromXPointers},
 	{"getPageLinks", getPageLinks},
 	{"getCoverPageImageData", getCoverPageImageData},
 	{"gotoLink", gotoLink},
