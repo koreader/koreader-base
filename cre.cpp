@@ -1216,10 +1216,37 @@ bool docToWindowRect(LVDocView *tv, lvRect &rc) {
     return true;
 }
 
+// Push to the Lua stack the multiple segments (rectangle for each text line)
+// that a ldomXRange spans on the page.
+// Each segment is pushed as a table {x0=, y0=, x1=, y1=}.
+// The Lua stack must be prepared as a table to receive them.
+void lua_pushSegmentsFromRange(lua_State *L, CreDocument *doc, ldomXRange *range) {
+    LVDocView *tv = doc->text_view;
+    LVArray<lvRect> rects;
+    range->getSegmentRects(rects);
+    int lcount = 1;
+    for (int i=0; i<rects.length(); i++) {
+        lvRect r = rects[i];
+        if (! r.isEmpty()) {
+            if (docToWindowRect(tv, r)) { // it is in current showing page
+                lua_newtable(L); // new segment
+                lua_pushLineRect(L, r.left, r.top, r.right, r.bottom, lcount++);
+            }
+        }
+    }
+}
+
 static int getWordBoxesFromPositions(lua_State *L) {
 	CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
 	const char* pos0 = luaL_checkstring(L, 2);
 	const char* pos1 = luaL_checkstring(L, 3);
+	bool getSegments = false; // by default, use concatenated boxes from each word
+	if (lua_isboolean(L, 4)) {
+		// Use full line segments instead of concatenated words boxes.
+		// This will gather punctuations at start and end of intermediate
+		// lines, which makes out a nicer display of text selection.
+		getSegments = lua_toboolean(L, 4);
+	}
 
 	LVDocView *tv = doc->text_view;
 	ldomDocument *dv = doc->dom_doc;
@@ -1232,6 +1259,16 @@ static int getWordBoxesFromPositions(lua_State *L) {
 		if (r.getStart().isNull() || r.getEnd().isNull())
 			return 0;
 		r.sort();
+
+		// Segments are not limited to word boundaries, so they
+		// work with precise xpointers. Do that before the
+		// VisibleWord() stuff below, so that it works if/when
+		// we make text selection work outside word boundaries
+		// (to select following puncutations, etc...)
+		if (getSegments) {
+			lua_pushSegmentsFromRange(L, doc, &r);
+			return 1;
+		}
 
 	        // Old saved highlights may have included punctuation at
 	        // edges (they were not displayed in boxes because of
