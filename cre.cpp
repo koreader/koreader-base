@@ -1146,13 +1146,15 @@ static int getTextFromPositions(lua_State *L) {
 		}
 
 		r.setFlags(1);
-		tv->selectRange(r);  // we don't need native highlight of selection
+		tv->selectRange(r);  // we let crengine do native highlight of selection
 
+		/* We don't need these:
 		int page = tv->getBookmarkPage(startp);
 		int pages = tv->getPageCount();
 		lString16 titleText;
 		lString16 posText;
 		tv->getBookmarkPosText(startp, titleText, posText);
+		*/
 		lString16 selText = r.getRangeText( '\n', 8192 );
 
 		lua_pushstring(L, "text");
@@ -1164,6 +1166,7 @@ static int getTextFromPositions(lua_State *L) {
 		lua_pushstring(L, "pos1");
 		lua_pushstring(L, UnicodeToLocal(r.getEnd().toString()).c_str());
 		lua_settable(L, -3);
+		/* We don't need these:
 		lua_pushstring(L, "title");
 		lua_pushstring(L, UnicodeToLocal(titleText).c_str());
 		lua_settable(L, -3);
@@ -1173,6 +1176,7 @@ static int getTextFromPositions(lua_State *L) {
 		lua_pushstring(L, "percent");
 		lua_pushnumber(L, 1.0*page/(pages-1));
 		lua_settable(L, -3);
+		*/
 	    return 1;
 	}
     return 0;
@@ -1274,11 +1278,10 @@ static int getWordBoxesFromPositions(lua_State *L) {
 				lastx = wordRect.left;
 			} else {  // word is hyphenated
 				ldomWord word = words[i];
-				int y = -1;
+				// int y = -1; // no more used
 				for (int j=word.getStart(); j < word.getEnd(); j++) {
 					if (ldomXPointer(word.getNode(), j).getRectEx(charRect)) {
 						if (!docToWindowRect(tv, charRect)) continue;
-						if (y == -1) y = charRect.top;
 						// charRect is now the width of each individual char.
 						// Previously, ldomXPointer::getRectEx() was returning its
 						// own word->width, so getting it only from the first call
@@ -1288,11 +1291,13 @@ static int getWordBoxesFromPositions(lua_State *L) {
 						// We would then get shifted highlights with some texts
 						// (e.g. with french text "l'empereur" word->t.start starts
 						// at 'l' while here our word may start at 'e'mpereur)
-						// was: if (j != word.getStart() && y == charRect.top) continue;
+						// was:
+						//   if (y == -1) y = charRect.top;
+						//   if (j != word.getStart() && y == charRect.top) continue;
+						//   y = charRect.top;
 						// Keep extending lineRect with each individual charRect we met.
 						// When charRect.left < lastx, we are on next line and lineRect
 						// is ready to be pushed.
-						y = charRect.top;
 						if (charRect.left < lastx) {
 							lua_pushLineRect(L, lineRect.left, lineRect.top,
 												lineRect.right, lineRect.bottom, lcount++);
