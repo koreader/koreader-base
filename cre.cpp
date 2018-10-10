@@ -1456,6 +1456,10 @@ static int getHTMLFromXPointers(lua_State *L) {
 
 static int getPageLinks(lua_State *L) {
 	CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
+	int internalLinksOnly = false;
+	if (lua_isboolean(L, 2)) {
+		internalLinksOnly = lua_toboolean(L, 2);
+	}
 
 	lua_newtable(L); // all links
 
@@ -1465,10 +1469,11 @@ static int getPageLinks(lua_State *L) {
 	doc->text_view->getCurrentPageLinks( links );
 	int linkCount = links.length();
 	if ( linkCount ) {
-		sel.clear();
+		// sel.clear();
 		lvRect margin = doc->text_view->getPageMargins();
 		int x_offset = margin.left;
 		int y_offset = doc->text_view->GetPos() - doc->text_view->getPageHeaderHeight() - margin.top;
+		int linkNum = 1;
 		for ( int i=0; i<linkCount; i++ ) {
 			lString16 txt = links[i]->getRangeText();
 			lString8 txt8 = UnicodeToLocal( txt );
@@ -1476,6 +1481,10 @@ static int getPageLinks(lua_State *L) {
 			ldomXPointer a_xpointer;
 			lString16 link = links[i]->getHRef(a_xpointer);
 			lString8 link8 = UnicodeToLocal( link );
+			bool isInternal = link8[0] == '#';
+
+			if ( internalLinksOnly && !isInternal )
+				continue;
 
 			ldomXRange currSel;
 			currSel = *links[i];
@@ -1510,26 +1519,675 @@ static int getPageLinks(lua_State *L) {
 			}
 
 			const char * link_to = link8.c_str();
-
-			if ( link_to[0] == '#' ) {
+			if ( isInternal ) {
 				lua_pushstring(L, "section");
 				lua_pushstring(L, link_to);
 				lua_settable(L, -3);
-
-				sel.add( new ldomXRange(*links[i]) ); // highlight
 			} else {
 				lua_pushstring(L, "uri");
 				lua_pushstring(L, link_to);
 				lua_settable(L, -3);
 			}
 
-			lua_rawseti(L, -2, i + 1);
+			// Add segments rects
+			ldomXRange *linkRange = new ldomXRange(*links[i]);
+			lua_pushstring(L, "segments");
+			lua_newtable(L); // all segments
+			lua_pushSegmentsFromRange(L, doc, linkRange);
+			lua_settable(L, -3); // adds "segments" = table
 
+			lua_rawseti(L, -2, linkNum++);
+
+			// If we'd need to visually see them when debugging:
+			// sel.add( new ldomXRange(*links[i]) );
 		}
-		doc->text_view->updateSelections();
+		// If we'd need to visually see them when debugging:
+		// doc->text_view->updateSelections();
 	}
 
 	return 1;
+}
+
+// Internal function that just returns true or false as soon as detection is decided.
+// Used by the real isLinkToFootnote(lua_State *L) that will push that bool to the Lua stack
+static bool _isLinkToFootnote(CreDocument *doc, const lString16 source_xpointer, const lString16 target_xpointer,
+            const int flags, const int maxTextSize, lString16 &reason,
+            lString16 &extendedStopReason, ldomXRange &extendedRange)
+{
+    ldomDocument *dv = doc->dom_doc;
+    const ldomXPointerEx sourceXP = ldomXPointerEx(doc->dom_doc->createXPointer(source_xpointer));
+    const ldomXPointerEx targetXP = ldomXPointerEx(doc->dom_doc->createXPointer(target_xpointer));
+    ldomNode *sourceNode = sourceXP.getNode();
+    ldomNode *targetNode = targetXP.getNode();
+    // target_xpointer might be "#_doc_fragment_0_ References", but we may also need
+    // to use its DOM xpath equivalent: /body/DocFragment/body/div/div[5]/span.0
+    const lString16 targetXpath = ldomXPointer(targetNode, 0).toString();
+
+    // We return false when it can't be a footnote.
+    // We return true when it is surely a footnote, and when
+    // there is no need to go further, neither to extend the footnote.
+    // We set likelyFootnote=true when it looks like it could be a
+    // footnote, and continue checking conditions, and go on to see
+    // if extending the target is needed
+    reason = "";
+    extendedStopReason = "trusted container, no need"; // for when we return true early
+
+    bool likelyFootnote = false;
+    if (flags & 0x0001) {
+        likelyFootnote = true;
+    }
+
+    // For details about detection and flags, see ReaderLink:showAsFootnotePopup()
+    // in frontend/apps/reader/modules/readerlink.lua
+    bool trusted_source_xpointer = flags & 0x0002;
+
+    if (flags & 0x0004) { // Trust role= and epub:type= attributes
+        // About epub:type, see:
+        //   http://apex.infogridpacific.com/df/epub-type-epubpackaging8.html
+        //   http://www.idpf.org/epub/profiles/edu/structure/
+        // Should epub:type="glossterm" epub:type="glossdef" be considered
+        // as footnotes?
+        // And other like epub:type="chapter" that probably are not footnotes?
+        //
+        // (If needed, add check for a private CSS property "-cr-hint: footnote"
+        // or "-cr-hint: noteref", so one can define it to specific classes
+        // with Styles tweaks.)
+        //
+        // We also trust that the target is the whole footnote container, and
+        // so there is no need to extend it.
+        // These attributes value may contain multiple values separated by space
+        // Source
+        if (trusted_source_xpointer) {
+            // epub:type=
+            // (Looks like crengine has no support for alternate namesepace prefix
+            // set with xmlns:zzz="http://www.idpf.org/2007/ops")
+            lString16 type = sourceNode->getAttributeValue("epub", "type");
+            if (type.empty()) { // Fallback to any type= or zzz:type=
+                type = sourceNode->getAttributeValue("type");
+            }
+            if (!type.empty()) {
+                type.lowercase();
+                lString16Collection types;
+                types.parse(type, ' ', true);
+                for (int i=0; i<types.length(); i++) {
+                    lString16 type = types[i];
+                    if (type == "noteref") {
+                        reason = "source has epub:type=" + type;
+                        return true;
+                    }
+                    if (type == "link") {
+                        reason = "source has epub:type=" + type;
+                        return false;
+                    }
+                }
+            }
+            // role=
+            lString16 role = sourceNode->getAttributeValue("role");
+            if (!role.empty()) {
+                role.lowercase();
+                lString16Collection roles;
+                roles.parse(role, ' ', true);
+                for (int i=0; i<roles.length(); i++) {
+                    lString16 role = roles[i];
+                    if (role == "doc-noteref") {
+                        reason = "source has role=" + role;
+                        return true;
+                    }
+                    if (role == "doc-link") {
+                        reason = "source has role=" + role;
+                        return false;
+                    }
+                }
+            }
+            // if needed: getStyle() -cr-hint: noteref
+        }
+        // Target
+        // (Note that calibre first gets the block container of targetNode if
+        // targetNode is not a block element, and test these attribute on it.
+        // Which seems strange: we should at best test that on both the original
+        // targetNode, and its block parent.
+        // Let's assume that if a publisher has set epub:type=footnote, it has
+        // set it to the correct container, probably a <aside> tag.
+        // epub:type=
+        lString16 type = targetNode->getAttributeValue("epub", "type");
+        if (type.empty()) { // Fallback to any type= or zzz:type=
+            type = targetNode->getAttributeValue("type");
+        }
+        if (!type.empty()) {
+            type.lowercase();
+            lString16Collection types;
+            types.parse(type, ' ', true);
+            for (int i=0; i<types.length(); i++) {
+                lString16 type = types[i];
+                if (type == "note" || type == "footnote" || type == "rearnote" ) {
+                    reason = "target has epub:type=" + type;
+                    return true;
+                }
+            }
+        }
+        // role=
+        lString16 role = targetNode->getAttributeValue("role");
+        if (!role.empty()) {
+            lString16Collection roles;
+            roles.parse(role, ' ', true);
+            for (int i=0; i<roles.length(); i++) {
+                lString16 role = roles[i];
+                if (role == "doc-note" || role == "doc-footnote" || role == "doc-rearnote") {
+                    reason = "target has role=" + role;
+                    return true;
+                }
+            }
+        }
+        // if needed: getStyle() -cr-hint: footnote
+    }
+
+    if (flags & 0x0010) { // Target must have an anchor #id
+        // We should be called only with internal links, so they should
+        // all start with "#". But check that anyway.
+        if ( target_xpointer[0] != '#' ) {
+            reason = "target is not an internal link (not #something)";
+            return false;
+        }
+        // For multiple internal files container like EPUB, internal links
+        // may have the form:
+        //   "#_doc_fragment_7_ References" when href="content7.html#Reference"
+        //   "#_doc_fragment_5" when href="content5.html"
+        // The former could be a footnote, but the later is not.
+        if ( target_xpointer.pos("_ ") < 0 ) {
+            reason = "target is missing an anchor (#someId)";
+            return false;
+        }
+    }
+
+    if (flags & 0x0020) { // Target must come after source in the book
+        // We can check that even when not trusted_source_xpointer (the
+        // incoherent XPointer seems to always be in the same paragraph
+        // as the original one)
+        if (sourceXP.compare(targetXP) > 0) {
+            reason = "target does not come after source in book";
+            return false;
+        }
+    }
+
+    if (flags & 0x0040) { // Target must not be in the TOC
+        // Walk the tree up and down, avoid the need for recursion.
+        LVTocItem * item = doc->text_view->getToc();
+        if (item->getChildCount() > 0) {
+            int nextChildIndex = 0;
+            item = item->getChild(nextChildIndex);
+            while (true) {
+                // Do the item processing only the first time we met a node
+                // (nextChildIndex == 0) and not when we get back to it from
+                // a child to process next sibling
+                if (nextChildIndex == 0) {
+                    // printf("%d %d %s %s\n", item->getLevel(), item->getIndex(),
+                    //   UnicodeToLocal(item->getPath()).c_str(), UnicodeToLocal(item->getName()).c_str());
+                    // TOC entries already had their #someId translated to a DOM xpath
+                    if (item->getPath() == targetXpath) {
+                        reason = "target also appears in TOC";
+                        return false;
+                    }
+                }
+                // Process next child
+                if (nextChildIndex < item->getChildCount()) {
+                    item = item->getChild(nextChildIndex);
+                    nextChildIndex = 0;
+                    continue;
+                }
+                // No more child, get back to parent and have it process our sibling
+                nextChildIndex = item->getIndex() + 1;
+                item = item->getParent();
+                if (!item) // all done and back to root node which has no parent
+                    break;
+            }
+        }
+    }
+
+    // Source link must not be empty content, and must not be the only content of
+    // its parent final node (this could mean it's a chapter title in an inline ToC)
+    if (flags & 0x0100 && trusted_source_xpointer) {
+        ldomNode * finalNode = sourceXP.getFinalNode();
+        lString16 sourceText = sourceNode->getText();
+        if ( sourceText.empty() ) {
+            // (Empty links may have already been filtered out.)
+            // This will also discard a link containing a single image pointing
+            // to a bigger size image (it could also be a small image linking
+            // to a footnote, but well...)
+            reason = "source has no text content";
+            return false;
+        }
+        if ( finalNode && !finalNode->isNull() ) {
+            if ( sourceText == finalNode->getText() ) {
+                reason = "source is the only content of its parent block";
+                return false;
+            }
+        }
+    }
+
+    // Source may be all vertical-align: sub super top bottom
+    if (flags & 0x0200 && trusted_source_xpointer && !likelyFootnote) {
+        // We must see some text, otherwise it could be an image (see above)
+        // surrounded by space-only text and elements
+        bool seen_non_empty_text = false;
+        bool is_only_footnote_likely_vertical_align = true;
+        ldomXPointerEx endText = sourceXP; // copy;
+        endText.lastInnerTextNode(true);
+        // Walk all text nodes till endText
+        ldomXPointerEx curText = sourceXP; // copy
+        while ( curText.nextText() && curText.compare(endText) <= 0 ) {
+            // Ignore empty or space-only text nodes
+            lString16 nodeText = curText.getText();
+            int textLen = nodeText.length();
+            if ( textLen == 0 || (textLen == 1 && nodeText[0] == ' ' ) )
+                continue;
+            seen_non_empty_text = true;
+            ldomNode * parent = curText.getNode()->getParentNode();
+            css_style_ref_t style = parent->getStyle();
+            css_vertical_align_t va = style->vertical_align;
+            if (va != css_va_sub &&
+                va != css_va_super &&
+                // Also test those that crengine does not support,
+                // but that the publisher may have used for that
+                // sub/super effect.
+                va != css_va_top &&
+                va != css_va_bottom &&
+                va != css_va_text_top &&
+                va != css_va_text_bottom) {
+                    is_only_footnote_likely_vertical_align = false;
+                    break;
+            }
+        }
+        if ( seen_non_empty_text && is_only_footnote_likely_vertical_align ) {
+            if ( !reason.empty() ) reason += "; ";
+            reason += "source has only vertical-align: super/sub/top/bottom";
+            likelyFootnote = true;
+        }
+        else {
+            // Also check if any of the 2 first parents are <sup> or <sub>
+            // (which may have been tweaked with CSS and not have the expected
+            // vertical-align:)
+            lUInt16 el_sup = doc->dom_doc->getElementNameIndex("sup");
+            lUInt16 el_sub = doc->dom_doc->getElementNameIndex("sub");
+            ldomNode * n = sourceNode->getParentNode();
+            for ( int i=0; i<2; i++ ) {
+                if ( !n || n->isNull() )
+                    break;
+                if ( n->getNodeId() == el_sup || n->getNodeId() == el_sub ) {
+                    if ( !reason.empty() ) reason += "; ";
+                    reason += "source is child or grandchild of <sup> or <sub>";
+                    likelyFootnote = true;
+                    break;
+                }
+                n = n->getParentNode();
+            }
+            if ( !likelyFootnote ) {
+                // Also check if all direct child nodes are <sup> or <sub>
+                // (which may have been tweaked with CSS and not have the expected
+                // vertical-align:)
+                bool hasOnlySupSub = false;
+                for ( int i=0; i<sourceNode->getChildCount(); i++ ) {
+                    n = sourceNode->getChildNode(i);
+                    if ( n->isText() ) {
+                        lString16 nodeText = n->getText();
+                        int textLen = nodeText.length();
+                        if ( textLen == 0 || (textLen == 1 && nodeText[0] == ' ' ) ) {
+                            continue;
+                        }
+                        else { // non empty text node, test failed
+                            hasOnlySupSub = false;
+                            break;
+                        }
+                    }
+                    else {
+                        if ( n->getNodeId() == el_sup || n->getNodeId() == el_sub ) {
+                            hasOnlySupSub = true;
+                        }
+                        else { // other tag
+                            hasOnlySupSub = false;
+                            break;
+                        }
+                    }
+                }
+                if ( hasOnlySupSub ) {
+                    if ( !reason.empty() ) reason += "; ";
+                    reason += "source has only <sup> or <sub> children";
+                    likelyFootnote = true;
+                }
+            }
+        }
+    }
+
+    // Source node text (punctuation stripped) is only numbers (3 digits max,
+    // to avoid catching years ... but only years>1000)
+    // Source node text (punctuation stripped) is 1 to 2 letters, with 0 to 2
+    // numbers (a, z, ab, 1a, B2)
+    if ( (flags & 0x0400 || flags & 0x0800) && trusted_source_xpointer && !likelyFootnote) {
+        lString16 sourceText = sourceNode->getText();
+        int nbDigits = 0;
+        int nbAlpha = 0;
+        int nbOthers = 0;
+        for (int i=0 ; i<sourceText.length(); i++) {
+            if ( !lStr_isWordSeparator(sourceText[i]) ) { // ignore space, punctuations...
+                int props = lGetCharProps(sourceText[i]);
+                if (props & CH_PROP_DIGIT)
+                    nbDigits += 1;
+                else if (props & CH_PROP_ALPHA)
+                    nbAlpha += 1;
+                else
+                    nbOthers += 1; // CJK, other alphabets...
+            }
+        }
+        if (flags & 0x0400 && nbDigits >= 1 && nbDigits <= 3 && nbAlpha==0 && nbOthers==0) {
+            if (!reason.empty()) reason += "; ";
+            reason += "source text is only 1 to 3 digits";
+            likelyFootnote = true;
+        }
+        if (flags & 0x0800 && nbAlpha>=1 && nbAlpha<=2 && nbDigits >= 0 && nbDigits <= 2 && nbOthers==0) {
+            // (should we only allow lowercase alpha?)
+            if (!reason.empty()) reason += "; ";
+            reason += "source text is 1 to 2 letters with 0 to 2 digits";
+            likelyFootnote = true;
+        }
+    }
+
+    // Target must not contain, or be contained in, H1..H6
+    if (flags & 0x1000) {
+        // We expect h1..h6 to stay consecutive and ascending in crengine/include/fb2def.h
+        lUInt16 el_h1 = doc->dom_doc->getElementNameIndex("h1");
+        lUInt16 el_h6 = doc->dom_doc->getElementNameIndex("h6");
+        // Check parents
+        ldomNode * n = targetNode;
+        while ( n && !n->isNull() ) {
+            // printf("< %s\n", UnicodeToLocal(ldomXPointerEx(n, 0).toString()).c_str());
+            if ( n->getNodeId() >= el_h1 && n->getNodeId() <= el_h6 ) {
+                reason = "target is, or is inside, a <h1>...<h6>";
+                return false;
+            }
+            n = n->getParentNode();
+        }
+        // Check all descendant elements
+        ldomXPointerEx curXP = targetXP; // copy
+        ldomXPointerEx endXP = targetXP; // copy
+        endXP.lastInnerNode();
+        while (!curXP.isNull() && curXP.compare(endXP) <= 0) {
+            // printf("> %s\n", UnicodeToLocal(curXP.toString()).c_str());
+            lUInt16 id = curXP.getNode()->getNodeId();
+            if ( id >= el_h1 && id <= el_h6 ) {
+                reason = "target contains a <h1>...<h6>";
+                return false;
+            }
+            if (!curXP.nextElement())
+                break;
+        }
+        // It may also happen with a link to a chapter that the target has
+        // a H1..H6 as its next sibling. But catching that may lead to
+        // missing the last footnote in a chapter on other books.
+
+    }
+
+    // Try to extend footnote
+    if (flags & 0x4000) {
+        // With not well formatted books, the target node might just be
+        // the first line or paragraph among multiple paragraphs that
+        // make up this footnote complete text.
+        // We try to gather as much paragraphs (final nodes) after the
+        // linked one, and stop when we meet:
+        //   - a new <DocFragment> or <body>, or any of <h1>...<h6>
+        //   - (before) a node with page-break-before: always/left/right
+        //   - (after) a node with page-break-after: always/left/right
+        //   - a node with an id= attribute, which may be the start of
+        //     another footnote (calibre additionally verifies that
+        //     the new id= found is actually a referenced target, that
+        //     there is somewhere in the book a <a href="#thatId"> ;
+        //     we can't do that quickly, so we don't).
+        //
+        // We start looking at elements after targetXP "final" parent.
+        bool do_extend = true;
+        ldomXPointerEx extendedStart;
+        ldomXPointerEx curPos;
+        ldomNode * firstFinalNode = targetXP.getFinalNode();
+        if (firstFinalNode && !firstFinalNode->isNull()) {
+            // The target is an inline element, and we got its containing
+            // final block.
+            extendedStart = ldomXPointerEx(firstFinalNode, 0);
+            curPos = extendedStart; // copy
+            // We can't just go looking at next final nodes, there
+            // may be block containers that have page-break styles
+            // or an ID= and are not part of any final node.
+            // We need to start inspecting from the node just after
+            // this firstFinalNode.
+            do_extend = curPos.nextOuterElement();
+            // if no next elements, this was the last final node
+            // in the book, so nothing to find further
+        }
+        else {
+            // The target is an empty element not rendered (so not part
+            // of any final node), and there is a final node after it.
+            // Or it is an outer block that may contain a final node, in
+            // which case we assume it's a proper container of 1 or more
+            // final nodes that fully represent the footnote content,
+            // and we won't extend it further.
+            curPos = targetXP;
+            ldomXPointerEx endPos = curPos; // copy
+            while ( endPos.lastChild() ) {} // get last grand children
+            bool has_final_child = false;
+            while ( curPos.nextElement() && curPos.compare(endPos) <= 0 ) {
+                if ( curPos.isFinalNode() ) {
+                    has_final_child = true;
+                    extendedStopReason = "contains 1 or more final nodes, trusting container";
+                    do_extend = false;
+                    // We could go on extending from this final node if we
+                    // decide to not trust such containers to be proper.
+                    // firstFinalNode = curNode;
+                    break;
+                }
+            }
+            if (!has_final_child) {
+                // We will not inspect the first final node we see after
+                // our target node: it's probably the footnote content
+                extendedStart = targetXP; // start range from original targer anyway
+                curPos = targetXP;
+                do_extend = false;
+                if ( curPos.nextOuterElement() ) { // skip the node we just inspected
+                    do {
+                        if ( curPos.isFinalNode() ) {
+                            // This one is our first final node, step to the
+                            // next one if there is one to go on with
+                            do_extend = curPos.nextOuterElement();
+                            break;
+                        }
+                    }
+                    while ( curPos.nextElement() );
+                }
+            }
+        }
+        if (do_extend) {
+            // Check all coming elements until we meet one that can't
+            // be part of current footnote: its final container too
+            // can't be part of current footnote
+            lUInt16 el_DocFragment = doc->dom_doc->getElementNameIndex("DocFragment");
+            lUInt16 el_body = doc->dom_doc->getElementNameIndex("body");
+            lUInt16 el_h1 = doc->dom_doc->getElementNameIndex("h1");
+            lUInt16 el_h6 = doc->dom_doc->getElementNameIndex("h6");
+            lUInt16 attr_id = doc->dom_doc->getAttrNameIndex(L"id");
+            ldomNode * goodFinalNode = NULL;
+            ldomNode * curFinalNode = NULL;
+            ldomXPointerEx notAfter;
+            lString16 extStopReason;
+            extStopReason = "End of document met";
+            // printf("[start: %s\n", UnicodeToLocal(curPos.toString()).c_str());
+            while (true) {
+                ldomNode * newFinalNode = curPos.getFinalNode();
+                if (newFinalNode != curFinalNode) {
+                    // New final node. We didn't stop in the previous finalNode,
+                    // so it is fully usable to extend our footnote to include it.
+                    if (curFinalNode && !curFinalNode->isNull())
+                        goodFinalNode = curFinalNode;
+                    curFinalNode = newFinalNode;
+                    // printf("new final node\n");
+                }
+                ldomNode * node = curPos.getNode();
+                lUInt16 nodeId = node->getNodeId();
+                // We should stop on specific occasions:
+                // A footnote can not span <body> or <DocFragment>
+                if ( nodeId == el_body || nodeId == el_DocFragment ) {
+                    extStopReason = "end of document fragment met";
+                    break;
+                }
+                // A footnote can not span headings
+                if ( nodeId >= el_h1 && nodeId <= el_h6 ) {
+                    extStopReason = "H1..H6 met";
+                    break;
+                }
+                // A footnote can not span page breaks (set with CSS properties)
+                css_style_ref_t style = node->getStyle();
+                css_page_break_t pb_before = style->page_break_before;
+                css_page_break_t pb_after = style->page_break_after;
+                if ( pb_before == css_pb_always || pb_before == css_pb_left || pb_before == css_pb_right ) {
+                    extStopReason = "page-break-before met";
+                    break;
+                }
+                if ( pb_after == css_pb_always || pb_after == css_pb_left || pb_after == css_pb_right ) {
+                    ldomXPointerEx tmpPos = curPos;
+                    // printf("[pbafter at %s\n", UnicodeToLocal(notAfter.toString()).c_str());
+                    if ( tmpPos.nextOuterElement() ) {
+                        notAfter = tmpPos;
+                        // printf("[notAfter %s\n", UnicodeToLocal(notAfter.toString()).c_str());
+                    }
+                }
+                // When we meet another final block containing a node with an ID= attribute,
+                // it's probably another footnote.
+                // (In the first final block, it's possible to have multiple nodes with
+                // different ID, which could mean there are multiple terms or synonyms...)
+                lString16 id = node->getAttributeValue("id");
+                if ( !id.empty() ) {
+                    // printf("id=%s\n", UnicodeToLocal(id).c_str());
+                    extStopReason = "node with 'id=' attr met";
+                    break;
+                }
+                // Done checking
+                if ( !curPos.nextElement() ) {
+                    extStopReason = "end of document met";
+                    break;
+                }
+                // printf("[...: %s\n", UnicodeToLocal(curPos.toString()).c_str());
+                if ( !notAfter.isNull() && curPos.compare(notAfter) >= 0 ) {
+                    extStopReason = "page-break-after met";
+                    if ( curFinalNode && !curFinalNode->isNull() )
+                        goodFinalNode = curFinalNode;
+                    break;
+                }
+            } // end of while (true)
+            extendedStopReason = extStopReason;
+            if ( goodFinalNode && !goodFinalNode->isNull() ) {
+                // printf("GOOD final node\n");
+                ldomXPointerEx extendedEnd = ldomXPointerEx(goodFinalNode, 0);
+                extendedEnd.lastInnerNode(true); // We may miss a trailing image
+                extendedRange = ldomXRange(extendedStart, extendedEnd);
+            }
+            // If we'd get multiple <LI> in multiple final nodes, we'll
+            // be requesting the HTML from the common parent, and if it
+            // is a <OL>, we'll start numbering the <LI> from "1", which
+            // may not be the original numbering in the document.
+            // Howerver, this should not happen with documents using <LI id=...>
+            // as the container for each footnote (like Wikipedia EPUBs), as
+            // the ID= check will then prevent us from including multiple <LI>
+            // in our extended range: the root node will be the <LI>, that we
+            // will mask with CSS "body > li { list-style-type: none; }".
+        }
+    }
+
+    // Target text must be less than the provided maxTextSize
+    if (flags & 0x8000) {
+        int size = 0;
+        ldomXPointerEx curText;
+        ldomXPointerEx endText;
+        if ( !extendedRange.isNull() ) {
+            curText = extendedRange.getStart();
+            endText = extendedRange.getEnd();
+        }
+        else {
+            ldomNode * finalNode = targetXP.getFinalNode();
+            if ( finalNode && !finalNode->isNull() )
+                curText = ldomXPointerEx(finalNode, 0);
+            else
+                curText = targetXP;
+            endText = curText; // copy
+            endText.lastInnerTextNode();
+        }
+        // Walk all text nodes till endText
+        while (curText.nextText() && curText.compare(endText) <= 0) {
+            lString16 nodeText = curText.getText();
+            size += nodeText.length();
+            if (size > maxTextSize) {
+                reason = "target text is too large";
+                return false;
+                // If we checked the extended one, should we try again
+                // on the non-extended one?
+            }
+        }
+        // printf("target size is %d\n", size);
+    }
+
+    if ( likelyFootnote ) {
+        if ( reason.empty() ) {
+            reason = "no decision, default to be a footnote";
+        }
+        return true;
+    }
+
+    if ( !reason.empty() ) reason += "; ";
+    reason += "no decision made, default to not a footnote";
+    return false;
+}
+
+static int isLinkToFootnote(lua_State *L) {
+    CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
+    const char* source_xpointer = luaL_checkstring(L, 2);
+    const char* target_xpointer = luaL_checkstring(L, 3);
+    const int flags = (int)luaL_checkint(L, 4);
+    const int max_text_size = (int)luaL_optint(L, 5, 10000); // default: 10 000 chars
+
+    lString16 reason;
+    lString16 extendedStopReason;
+    ldomXRange extendedRange;
+    bool isFootnote = _isLinkToFootnote(doc, lString16(source_xpointer), lString16(target_xpointer),
+            flags, max_text_size, reason, extendedStopReason, extendedRange);
+    int stackLength = 2;
+    lua_pushboolean(L, isFootnote);
+    lua_pushstring(L, UnicodeToLocal(reason).c_str());
+    if (!extendedStopReason.empty()) {
+        stackLength += 1;
+        lua_pushstring(L, UnicodeToLocal(extendedStopReason).c_str());
+    }
+    if (!extendedRange.isNull()) {
+        stackLength += 2;
+        lua_pushstring(L, UnicodeToLocal(extendedRange.getStart().toString()).c_str());
+        lua_pushstring(L, UnicodeToLocal(extendedRange.getEnd().toString()).c_str());
+    }
+    return stackLength;
+}
+
+static int highlightXPointer(lua_State *L) {
+    CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
+    ldomXRangeList & sel = doc->text_view->getDocument()->getSelections();
+
+    if (lua_isstring(L, 2)) { // if xpointer provided, highlight it
+        const char* xp = luaL_checkstring(L, 2);
+        ldomXPointer nodep = doc->dom_doc->createXPointer(lString16(xp));
+        if (nodep.isNull())
+            return 0;
+        ldomNode * node = nodep.getNode();
+        if (node->isNull())
+            return 0;
+        sel.add( new ldomXRange(node, true) ); // highlight
+        lua_pushboolean(L, true);
+        return 1;
+    }
+    // if no xpointer provided, clear all highlights
+    sel.clear();
+    lua_pushboolean(L, true);
+    return 1;
 }
 
 static int gotoLink(lua_State *L) {
@@ -1911,6 +2569,8 @@ static const struct luaL_Reg credocument_meth[] = {
 	{"getHTMLFromXPointer", getHTMLFromXPointer},
 	{"getHTMLFromXPointers", getHTMLFromXPointers},
 	{"getPageLinks", getPageLinks},
+	{"isLinkToFootnote", isLinkToFootnote},
+	{"highlightXPointer", highlightXPointer},
 	{"getCoverPageImageData", getCoverPageImageData},
 	{"gotoLink", gotoLink},
 	{"goBack", goBack},
