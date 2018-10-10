@@ -2097,7 +2097,7 @@ static bool _isLinkToFootnote(CreDocument *doc, const lString16 source_xpointer,
         }
     }
 
-    // Target text must be < 10000 chars
+    // Target text must be less than the provided maxTextSize
     if (flags & 0x8000) {
         int size = 0;
         ldomXPointerEx curText;
@@ -2146,7 +2146,7 @@ static int isLinkToFootnote(lua_State *L) {
     const char* source_xpointer = luaL_checkstring(L, 2);
     const char* target_xpointer = luaL_checkstring(L, 3);
     const int flags = (int)luaL_checkint(L, 4);
-    const int max_text_size = (int)luaL_optint(L, 5, 10000);
+    const int max_text_size = (int)luaL_optint(L, 5, 10000); // default: 10 000 chars
 
     lString16 reason;
     lString16 extendedStopReason;
