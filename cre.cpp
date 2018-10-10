@@ -1550,17 +1550,18 @@ static int getPageLinks(lua_State *L) {
 
 // Internal function that just returns true or false as soon as detection is decided.
 // Used by the real isLinkToFootnote(lua_State *L) that will push that bool to the Lua stack
-static bool _isLinkToFootnote(CreDocument *doc, lString16 source_xpointer, lString16 target_xpointer, int flags,
-            lString16 &reason, lString16 &extendedStopReason, ldomXRange &extendedRange)
+static bool _isLinkToFootnote(CreDocument *doc, const lString16 source_xpointer, const lString16 target_xpointer,
+            const int flags, const int maxTextSize, lString16 &reason,
+            lString16 &extendedStopReason, ldomXRange &extendedRange)
 {
     ldomDocument *dv = doc->dom_doc;
-    ldomXPointerEx sourceXP = ldomXPointerEx(doc->dom_doc->createXPointer(source_xpointer));
-    ldomXPointerEx targetXP = ldomXPointerEx(doc->dom_doc->createXPointer(target_xpointer));
+    const ldomXPointerEx sourceXP = ldomXPointerEx(doc->dom_doc->createXPointer(source_xpointer));
+    const ldomXPointerEx targetXP = ldomXPointerEx(doc->dom_doc->createXPointer(target_xpointer));
     ldomNode *sourceNode = sourceXP.getNode();
     ldomNode *targetNode = targetXP.getNode();
     // target_xpointer might be "#_doc_fragment_0_ References", but we may also need
     // to use its DOM xpath equivalent: /body/DocFragment/body/div/div[5]/span.0
-    lString16 targetXpath = ldomXPointer(targetNode, 0).toString();
+    const lString16 targetXpath = ldomXPointer(targetNode, 0).toString();
 
     // We return false when it can't be a footnote.
     // We return true when it is surely a footnote, and when
@@ -1576,7 +1577,7 @@ static bool _isLinkToFootnote(CreDocument *doc, lString16 source_xpointer, lStri
         likelyFootnote = true;
     }
 
-    // For details about detection and flags, see ReaderLink:showAsFoonotePopup()
+    // For details about detection and flags, see ReaderLink:showAsFootnotePopup()
     // in frontend/apps/reader/modules/readerlink.lua
     bool trusted_source_xpointer = flags & 0x0002;
 
@@ -1592,7 +1593,7 @@ static bool _isLinkToFootnote(CreDocument *doc, lString16 source_xpointer, lStri
         // or "-cr-hint: noteref", so one can define it to specific classes
         // with Styles tweaks.)
         //
-        // We also trust that the target is the whole foonote container, and
+        // We also trust that the target is the whole footnote container, and
         // so there is no need to extend it.
         // These attributes value may contain multiple values separated by space
         // Source
@@ -2098,7 +2099,6 @@ static bool _isLinkToFootnote(CreDocument *doc, lString16 source_xpointer, lStri
 
     // Target text must be < 10000 chars
     if (flags & 0x8000) {
-        int SIZE_LIMIT = 10000;
         int size = 0;
         ldomXPointerEx curText;
         ldomXPointerEx endText;
@@ -2119,7 +2119,7 @@ static bool _isLinkToFootnote(CreDocument *doc, lString16 source_xpointer, lStri
         while (curText.nextText() && curText.compare(endText) <= 0) {
             lString16 nodeText = curText.getText();
             size += nodeText.length();
-            if (size > SIZE_LIMIT) {
+            if (size > maxTextSize) {
                 reason = "target text is too large";
                 return false;
                 // If we checked the extended one, should we try again
@@ -2145,13 +2145,14 @@ static int isLinkToFootnote(lua_State *L) {
     CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
     const char* source_xpointer = luaL_checkstring(L, 2);
     const char* target_xpointer = luaL_checkstring(L, 3);
-    int flags = (int)luaL_optint(L, 4, 0);
+    const int flags = (int)luaL_checkint(L, 4);
+    const int max_text_size = (int)luaL_optint(L, 5, 10000);
 
     lString16 reason;
     lString16 extendedStopReason;
     ldomXRange extendedRange;
     bool isFootnote = _isLinkToFootnote(doc, lString16(source_xpointer), lString16(target_xpointer),
-            flags, reason, extendedStopReason, extendedRange);
+            flags, max_text_size, reason, extendedStopReason, extendedRange);
     int stackLength = 2;
     lua_pushboolean(L, isFootnote);
     lua_pushstring(L, UnicodeToLocal(reason).c_str());
