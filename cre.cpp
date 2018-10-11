@@ -1129,9 +1129,13 @@ static int getTextFromPositions(lua_State *L) {
 			return 0;
 		r.sort();
 
-		if (!r.getStart().isVisibleWordStart())
+		// Only extend to include the whole word when we are actually
+		// holding inside a word. This allows selecting punctuation,
+		// quotes or parens at start or end of selection to have them
+		// included in the highlight.
+		if (r.getStart().isVisibleWordChar() && !r.getStart().isVisibleWordStart())
 			r.getStart().prevVisibleWordStart();
-		if (!r.getEnd().isVisibleWordEnd())
+		if (r.getEnd().isVisibleWordChar() && !r.getEnd().isVisibleWordEnd())
 			r.getEnd().nextVisibleWordEnd();
 		if (r.isNull())
 			return 0;
