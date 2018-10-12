@@ -1002,6 +1002,13 @@ static int getPageMargins(lua_State *L) {
 	return 1;
 }
 
+static int getHeaderHeight(lua_State *L) {
+	CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
+
+	lua_pushinteger(L, doc->text_view->getPageHeaderHeight());
+	return 1;
+}
+
 static int setEmbeddedStyleSheet(lua_State *L) {
 	CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
 
@@ -2523,6 +2530,7 @@ static const struct luaL_Reg credocument_meth[] = {
 	{"getFontSize", getFontSize},
 	{"getFontFace", getFontFace},
 	{"getPageMargins", getPageMargins},
+	{"getHeaderHeight", getHeaderHeight},
 	{"getToc", getTableOfContent},
 	{"getVisiblePageCount", getVisiblePageCount},
 	/*--- set methods ---*/
