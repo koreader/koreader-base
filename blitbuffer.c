@@ -959,6 +959,69 @@ void BB_alpha_blit_from(BlitBuffer *dst, BlitBuffer *src,
             }
             o_x += 1;
         }
+    } else if (dbb_type == TYPE_BBRGB16 && sbb_type == TYPE_BB8A) {
+        o_x = offs_x;
+        Color8A *srcptr;
+        ColorRGB16 *dstptr;
+        for (d_x = dest_x; d_x < dest_x + w; d_x++) {
+            o_y = offs_y;
+            for (d_y = dest_y; d_y < dest_y + h; d_y++) {
+                BB_GET_PIXEL(dst, dbb_rotation, ColorRGB16, d_x, d_y, &dstptr);
+                BB_GET_PIXEL(src, sbb_rotation, Color8A, o_x, o_y, &srcptr);
+                dstptr->v = RGB_To_RGB16(srcptr->a, srcptr->a, srcptr->a);
+                o_y += 1;
+            }
+            o_x += 1;
+        }
+    } else if (dbb_type == TYPE_BBRGB16 && sbb_type == TYPE_BB8) {
+        o_x = offs_x;
+        Color8 *srcptr;
+        ColorRGB16 *dstptr;
+        for (d_x = dest_x; d_x < dest_x + w; d_x++) {
+            o_y = offs_y;
+            for (d_y = dest_y; d_y < dest_y + h; d_y++) {
+                BB_GET_PIXEL(dst, dbb_rotation, ColorRGB16, d_x, d_y, &dstptr);
+                BB_GET_PIXEL(src, sbb_rotation, Color8, o_x, o_y, &srcptr);
+                dstptr->v = RGB_To_RGB16(srcptr->a, srcptr->a, srcptr->a);
+                o_y += 1;
+            }
+            o_x += 1;
+        }
+    } else if (dbb_type == TYPE_BBRGB16 && sbb_type == TYPE_BBRGB24) {
+        o_x = offs_x;
+        ColorRGB24 *srcptr;
+        ColorRGB16 *dstptr;
+        uint8_t r, g, b;
+        for (d_x = dest_x; d_x < dest_x + w; d_x++) {
+            o_y = offs_y;
+            for (d_y = dest_y; d_y < dest_y + h; d_y++) {
+                BB_GET_PIXEL(dst, dbb_rotation, ColorRGB16, d_x, d_y, &dstptr);
+                BB_GET_PIXEL(src, sbb_rotation, ColorRGB24, o_x, o_y, &srcptr);
+                dstptr->v = RGB_To_RGB16(srcptr->r, srcptr->g, srcptr->b);
+                o_y += 1;
+            }
+            o_x += 1;
+        }
+    } else if (dbb_type == TYPE_BBRGB16 && sbb_type == TYPE_BBRGB32) {
+        o_x = offs_x;
+        ColorRGB32 *srcptr;
+        ColorRGB16 *dstptr;
+        uint8_t r, g, b;
+        for (d_x = dest_x; d_x < dest_x + w; d_x++) {
+            o_y = offs_y;
+            for (d_y = dest_y; d_y < dest_y + h; d_y++) {
+                BB_GET_PIXEL(dst, dbb_rotation, ColorRGB16, d_x, d_y, &dstptr);
+                BB_GET_PIXEL(src, sbb_rotation, ColorRGB32, o_x, o_y, &srcptr);
+                alpha = srcptr->alpha;
+                ainv = 0xFF - alpha;
+                r = DIV_255(ColorRGB16_GetR(dstptr->v) * ainv + srcptr->r * alpha);
+                g = DIV_255(ColorRGB16_GetG(dstptr->v) * ainv + srcptr->g * alpha);
+                b = DIV_255(ColorRGB16_GetB(dstptr->v) * ainv + srcptr->b * alpha);
+                dstptr->v = RGB_To_RGB16(r, g, b);
+                o_y += 1;
+            }
+            o_x += 1;
+        }
     } else {
         fprintf(stderr, "incompatible bb (dst: %d, src: %d) in file %s, line %d!\r\n",
                 dbb_type, sbb_type, __FILE__, __LINE__); exit(1);
