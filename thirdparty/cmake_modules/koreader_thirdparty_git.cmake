@@ -134,9 +134,10 @@ execute_process(
   RESULT_VARIABLE error_code
 )
 if(error_code)
-  message(STATUS \"Fetching full repo\")
+  message(STATUS \"Fetching fuller submodule\")
   execute_process(
-    COMMAND \"${git_EXECUTABLE}\" submodule update --depth 999999 --recursive ${git_submodules}
+    # some repos are already unshallow at --depth=10, so go deep
+    COMMAND \"${git_EXECUTABLE}\" submodule foreach \"${git_EXECUTABLE} fetch --depth=9999\" --recursive ${git_submodules}
     WORKING_DIRECTORY \"${work_dir}/${src_name}\"
     RESULT_VARIABLE error_code
   )
