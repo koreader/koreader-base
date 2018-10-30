@@ -103,7 +103,7 @@ if(NOT \"\${curr_tag}\" STREQUAL \"${git_tag}\")
     if(error_code)
       message(STATUS \"Fetching full repo\")
       execute_process(
-        COMMAND \"${git_EXECUTABLE}\" fetch --depth 999999
+        COMMAND \"${git_EXECUTABLE}\" fetch --unshallow --tags
         WORKING_DIRECTORY \"${work_dir}/${src_name}\"
       )
       execute_process(
