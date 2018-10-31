@@ -23,7 +23,7 @@ ep_get_binary_dir(BINARY_DIR)
 # but fails to actually honor the specified/detected Python version in every cases,
 # sometimes just hoping there's a python binary somewhere in $PATH (which, granted, there should be)...
 # Enforce that to python3 for containers where that's the only available Python version.
-if(($ENV{KINDLE}) OR ($ENV{KOBO}) OR ($ENV{APPIMAGE}))
+if(($ENV{APPIMAGE}) OR ($ENV{CERVANTES}) OR ($ENV{KINDLE}) OR ($ENV{KOBO}))
     set(PATCH_CMD1 sh -c "patch -N -p1 < ${CMAKE_CURRENT_SOURCE_DIR}/glib-2.56.2-python3.patch || true")
 else()
     set(PATCH_CMD1 sh -c "true")
