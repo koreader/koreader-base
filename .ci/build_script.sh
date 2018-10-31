@@ -31,6 +31,12 @@ elif [ "$TARGET" = "sony-prstux" ]; then
         -v "${HOME}/.ccache:${DOCKER_HOME}/.ccache" \
         -v "$(pwd):${DOCKER_HOME}/base" "${DOCKER_IMG}" \
         /bin/bash -c "source /home/ko/.bashrc && cd /home/ko/base && sudo chown -R ko:ko . && make VERBOSE=1 TARGET=sony-prstux all"
+elif [ "$TARGET" = "cervantes" ]; then
+    sudo chmod -R 777 "${HOME}/.ccache"
+    docker run -t \
+        -v "${HOME}/.ccache:${DOCKER_HOME}/.ccache" \
+        -v "$(pwd):${DOCKER_HOME}/base" "${DOCKER_IMG}" \
+        /bin/bash -c 'source /home/ko/.bashrc && cd /home/ko/base && sudo chown -R ko:ko . && make TARGET=cervantes all'
 else
     make all
 fi

@@ -30,6 +30,8 @@ Follow these steps:
 
 * or run `make TARGET=pocketbook` for PocketBook devices.
 
+* or run `make TARGET=cervantes` for BQ Cervantes devices.
+
 * or run `make TARGET=android` for Android devices.
 
 * or run `make TARGET=win32` for Windows.

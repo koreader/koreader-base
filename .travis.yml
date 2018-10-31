@@ -22,6 +22,7 @@ env:
     - TARGET=kobo DOCKER_IMG=frenzie/kokobo:0.1.0
     - TARGET=pocketbook DOCKER_IMG=frenzie/kopb:0.1.0
     - TARGET=sony-prstux DOCKER_IMG=phreakuencies/prstux-dev:16.04
+    - TARGET=cervantes DOCKER_IMG=frenzie/kocervantes:0.1.0
     # ANDROID_ARCH=x86 is currently broken on these older NDKs (at least on Travis), so no point in testing it
     - TARGET=android NDKREV=r11c
     - TARGET=android NDKREV=r12b

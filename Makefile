@@ -23,9 +23,9 @@ all: $(OUTPUT_DIR)/libs $(if $(ANDROID),,$(LUAJIT)) \
 		$(if $(WIN32),,$(OUTPUT_DIR)/sdcv) \
 		$(if $(WIN32),,$(OUTPUT_DIR)/zsync) \
 		$(if $(or $(DARWIN),$(WIN32),$(ANDROID),$(UBUNTUTOUCH),$(APPIMAGE)),,$(OUTPUT_DIR)/dropbear) \
-		$(if $(or $(KINDLE),$(KOBO)),$(OUTPUT_DIR)/sftp-server,) \
+		$(if $(or $(KINDLE),$(KOBO),$(CERVANTES)),$(OUTPUT_DIR)/sftp-server,) \
 		$(if $(or $(DARWIN),$(WIN32)),,$(OUTPUT_DIR)/tar) \
-		$(if $(or $(KINDLE),$(KOBO)),$(OUTPUT_DIR)/fbink,) \
+		$(if $(or $(KINDLE),$(KOBO),$(CERVANTES)),$(OUTPUT_DIR)/fbink,) \
 		$(SQLITE_LIB) \
 		$(LUA_LJ_SQLITE) $(OUTPUT_DIR)/common/xsys.lua
 ifndef EMULATE_READER
@@ -88,7 +88,7 @@ libs: \
 $(OUTPUT_DIR)/libs/libkoreader-input.so: input/*.c input/*.h $(if $(KINDLE),$(POPEN_NOSHELL_LIB),)
 	@echo "Building koreader input module..."
 	$(CC) $(DYNLIB_CFLAGS) -I$(POPEN_NOSHELL_DIR) -I./input \
-		$(if $(KOBO),-DKOBO,) $(if $(KINDLE),-DKINDLE,) $(if $(POCKETBOOK),-DPOCKETBOOK,) $(if $(SONY_PRSTUX),-DSONY_PRSTUX,)\
+		$(if $(KOBO),-DKOBO,) $(if $(KINDLE),-DKINDLE,) $(if $(POCKETBOOK),-DPOCKETBOOK,) $(if $(SONY_PRSTUX),-DSONY_PRSTUX,) $(if $(CERVANTES),-DCERVANTES,)\
 		-o $@ \
 		input/input.c \
 		$(if $(KINDLE),$(POPEN_NOSHELL_LIB),) \

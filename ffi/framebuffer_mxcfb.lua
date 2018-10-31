@@ -110,6 +110,12 @@ local function sony_prstux_mxc_wait_for_update_complete(fb, marker)
     return C.ioctl(fb.fd, C.MXCFB_WAIT_FOR_UPDATE_COMPLETE, ffi.new("uint32_t[1]", marker))
 end
 
+-- BQ Cervantes MXCFB_WAIT_FOR_UPDATE_COMPLETE == 0x4004462f
+local function cervantes_mxc_wait_for_update_complete(fb, marker)
+    -- Wait for the previous update to be completed
+    return C.ioctl(fb.fd, C.MXCFB_WAIT_FOR_UPDATE_COMPLETE, ffi.new("uint32_t[1]", marker))
+end
+
 -- Kindle's MXCFB_WAIT_FOR_UPDATE_COMPLETE == 0xc008462f
 local function kindle_carta_mxc_wait_for_update_complete(fb, marker, collision_test)
     -- Wait for the previous update to be completed
@@ -133,6 +139,7 @@ end
 -- Kindle's MXCFB_SEND_UPDATE == 0x4048462e
 -- Kobo's MXCFB_SEND_UPDATE == 0x4044462e
 -- Pocketbook's MXCFB_SEND_UPDATE == 0x4040462e
+-- Cervantes MXCFB_SEND_UPDATE == 0x4044462e
 local function mxc_update(fb, update_ioctl, refarea, refresh_type, waveform_mode, x, y, w, h)
     local bb = fb.full_bb or fb.bb
     w, x = BB.checkBounds(w or bb:getWidth(), x or 0, 0, bb:getWidth(), 0xFFFF)
@@ -363,6 +370,26 @@ local function refresh_sony_prstux(fb, refreshtype, waveform_mode, x, y, w, h)
     return mxc_update(fb, C.MXCFB_SEND_UPDATE, refarea, refreshtype, waveform_mode, x, y, w, h)
 end
 
+local function refresh_cervantes_old(fb, refreshtype, waveform_mode, x, y, w, h)
+    local refarea = ffi.new("struct mxcfb_update_data[1]")
+    refarea[0].alt_buffer_data.virt_addr = nil
+    refarea[0].temp = C.TEMP_USE_AMBIENT
+
+    if waveform_mode == C.WAVEFORM_MODE_A2 then
+        refarea[0].flags = C.EPDC_FLAG_FORCE_MONOCHROME
+    else
+        refarea[0].flags = 0
+    end
+    return mxc_update(fb, C.MXCFB_SEND_UPDATE_OLD, refarea, refreshtype, waveform_mode, x, y, w, h)
+end
+
+local function refresh_cervantes(fb, refreshtype, waveform_mode, x, y, w, h)
+    local refarea = ffi.new("struct mxcfb_update_data[1]")
+    refarea[0].temp = C.TEMP_USE_AMBIENT
+    return mxc_update(fb, C.MXCFB_SEND_UPDATE, refarea, refreshtype, waveform_mode, x, y, w, h)
+end
+
+
 --[[ framebuffer API ]]--
 
 function framebuffer:refreshPartialImp(x, y, w, h)
@@ -533,6 +560,29 @@ function framebuffer:init()
         self.waveform_flashui = self.waveform_ui
         self.waveform_full = C.WAVEFORM_MODE_GC16
         self.waveform_partial = C.WAVEFORM_MODE_AUTO
+    elseif self.device:isCervantes() then
+        require("ffi/mxcfb_cervantes_h")
+
+        self.mech_refresh = refresh_cervantes_old
+        self.mech_wait_update_complete = cervantes_mxc_wait_for_update_complete
+
+        self.waveform_fast = C.WAVEFORM_MODE_A2
+        self.waveform_ui = C.WAVEFORM_MODE_AUTO
+        self.waveform_flashui = self.waveform_ui
+        self.waveform_full = C.WAVEFORM_MODE_GC16
+        self.waveform_partial = C.WAVEFORM_MODE_AUTO
+
+        -- new devices
+        local is_new = false
+        if self.device.model == "Cervantes2013" or self.device.model == "Cervantes3"
+            or self.device.model == "Cervantes4" then is_new = true end
+
+        if is_new then
+            self.mech_refresh = refresh_cervantes
+            self.waveform_fast = C.WAVEFORM_MODE_DU
+            self.waveform_reagl = C.WAVEFORM_MODE_GLD16
+            self.waveform_partial = self.waveform_reagl
+        end
     else
         error("unknown device type")
     end
