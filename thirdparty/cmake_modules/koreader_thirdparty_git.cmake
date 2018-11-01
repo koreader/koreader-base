@@ -8,7 +8,6 @@ endif()
 
 # Default depth
 set(git_clone_depth 50)
-set(git_submodule_depth 10)
 
 set(run 0)
 
@@ -129,21 +128,12 @@ if(error_code)
 endif()
 
 execute_process(
-  COMMAND \"${git_EXECUTABLE}\" submodule update --depth \${git_submodule_depth} --recursive ${git_submodules}
+  COMMAND \"${git_EXECUTABLE}\" submodule update --recursive ${git_submodules}
   WORKING_DIRECTORY \"${work_dir}/${src_name}\"
   RESULT_VARIABLE error_code
 )
 if(error_code)
-  message(STATUS \"Fetching fuller submodule\")
-  execute_process(
-    # some repos are already unshallow at --depth=10, so go deep
-    COMMAND \"${git_EXECUTABLE}\" submodule foreach \"${git_EXECUTABLE} fetch --depth=9999\" --recursive ${git_submodules}
-    WORKING_DIRECTORY \"${work_dir}/${src_name}\"
-    RESULT_VARIABLE error_code
-  )
-  if(error_code)
-    message(FATAL_ERROR \"Failed to update submodules in: '${work_dir}/${src_name}'\")
-  endif()
+  message(FATAL_ERROR \"Failed to update submodules in: '${work_dir}/${src_name}'\")
 endif()
 
 # Complete success, update the script-last-run stamp file:
