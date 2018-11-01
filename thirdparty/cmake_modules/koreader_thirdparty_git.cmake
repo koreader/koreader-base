@@ -6,6 +6,9 @@ function(_ko_write_gitclone_script script_filename git_EXECUTABLE git_repository
   message(FATAL_ERROR \"Tag for git checkout should not be empty.\")
 endif()
 
+# Default depth
+set(git_clone_depth 50)
+
 set(run 0)
 
 ######################################################################
@@ -53,7 +56,7 @@ if(should_clone)
   set(number_of_tries 0)
   while(error_code AND number_of_tries LESS 3)
     execute_process(
-      COMMAND \"${git_EXECUTABLE}\" clone \"${git_repository}\" \"${src_name}\"
+      COMMAND \"${git_EXECUTABLE}\" clone --depth \${git_clone_depth} \"${git_repository}\" \"${src_name}\"
       WORKING_DIRECTORY \"${work_dir}\"
       RESULT_VARIABLE error_code
     )
@@ -97,7 +100,19 @@ if(NOT \"\${curr_tag}\" STREQUAL \"${git_tag}\")
       RESULT_VARIABLE error_code
     )
     if(error_code)
-      message(FATAL_ERROR \"Failed to checkout tag: '${git_tag}'\")
+      message(STATUS \"Fetching full repo\")
+      execute_process(
+        COMMAND \"${git_EXECUTABLE}\" fetch --unshallow --tags
+        WORKING_DIRECTORY \"${work_dir}/${src_name}\"
+      )
+      execute_process(
+        COMMAND \"${git_EXECUTABLE}\" checkout -f ${git_tag}
+        WORKING_DIRECTORY \"${work_dir}/${src_name}\"
+        RESULT_VARIABLE error_code
+      )
+      if(error_code)
+        message(FATAL_ERROR \"Failed to checkout tag: '${git_tag}'\")
+      endif()
     endif()
   endif()
 endif()
