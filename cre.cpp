@@ -1776,7 +1776,7 @@ static bool _isLinkToFootnote(CreDocument *doc, const lString16 source_xpointer,
         }
     }
 
-    // Source may be all vertical-align: sub super top bottom
+    // Source may have all content shifted by vertical-align:
     if (flags & 0x0200 && trusted_source_xpointer && !likelyFootnote) {
         // We must see some text, otherwise it could be an image (see above)
         // surrounded by space-only text and elements
@@ -1786,6 +1786,7 @@ static bool _isLinkToFootnote(CreDocument *doc, const lString16 source_xpointer,
         endText.lastInnerTextNode(true);
         // Walk all text nodes till endText
         ldomXPointerEx curText = sourceXP; // copy
+        ldomNode * finalNode = sourceXP.getFinalNode();
         while ( curText.nextText() && curText.compare(endText) <= 0 ) {
             // Ignore empty or space-only text nodes
             lString16 nodeText = curText.getText();
@@ -1793,25 +1794,46 @@ static bool _isLinkToFootnote(CreDocument *doc, const lString16 source_xpointer,
             if ( textLen == 0 || (textLen == 1 && nodeText[0] == ' ' ) )
                 continue;
             seen_non_empty_text = true;
+            // vertical-align being non-inherited, we need to check it for
+            // all the parents of this text node up to a final node.
+            // If any such parent has a vertical align shift, this text node
+            // has a vertical align shift (which could be cancelled by another
+            // parent vertical-align, but too complicated to check from here).
+            // For simplicity, assume any vertical-align shift (so, other
+            // than 'baseline' or a 0 length value), even small, may likely
+            // be a footnote.
+            bool is_vertically_shifted = false;
             ldomNode * parent = curText.getNode()->getParentNode();
-            css_style_ref_t style = parent->getStyle();
-            css_vertical_align_t va = style->vertical_align;
-            if (va != css_va_sub &&
-                va != css_va_super &&
-                // Also test those that crengine does not support,
-                // but that the publisher may have used for that
-                // sub/super effect.
-                va != css_va_top &&
-                va != css_va_bottom &&
-                va != css_va_text_top &&
-                va != css_va_text_bottom) {
-                    is_only_footnote_likely_vertical_align = false;
+            while (parent && !parent->isNull()) {
+                css_style_ref_t style = parent->getStyle();
+                css_length_t vertical_align = style->vertical_align;
+                if (vertical_align.type == css_val_unspecified) {
+                    css_vertical_align_t va = (css_vertical_align_t)vertical_align.value;
+                    if (va != css_va_inherit && va != css_va_baseline) {
+                        is_vertically_shifted = true;
+                        break;
+                    }
+                }
+                else {
+                    // We would prefer to check if shift is > 20%, but that's
+                    // not easy from here
+                    if (vertical_align.value != 0) {
+                        is_vertically_shifted = true;
+                        break;
+                    }
+                }
+                if (parent == finalNode)
                     break;
+                parent = parent->getParentNode();
+            }
+            if ( !is_vertically_shifted ) {
+                is_only_footnote_likely_vertical_align = false;
+                break;
             }
         }
         if ( seen_non_empty_text && is_only_footnote_likely_vertical_align ) {
             if ( !reason.empty() ) reason += "; ";
-            reason += "source has only vertical-align: super/sub/top/bottom";
+            reason += "source has all content shifted by vertical-align";
             likelyFootnote = true;
         }
         else {
