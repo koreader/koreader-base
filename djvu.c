@@ -162,6 +162,32 @@ static int setColorRendering(lua_State *L) {
 	return 0;
 }
 
+static int getMetadata(lua_State *L) {
+	DjvuDocument *doc = (DjvuDocument*) luaL_checkudata(L, 1, "djvudocument");
+	miniexp_t anno = ddjvu_document_get_anno(doc->doc_ref, 1);
+	miniexp_t *keys = ddjvu_anno_get_metadata_keys(anno);
+
+	// `keys` can be null if there's an error. In that case,
+	// we have the choice of returning either `nil` or
+	// the empty table back to lua.  Here we prefer the latter.
+	lua_newtable(L);
+	if (!keys) return 1;
+
+	int i;
+	for (i = 0; keys[i] != miniexp_nil; i++) {
+		const char *value = ddjvu_anno_get_metadata(anno, keys[i]);
+
+		if (value) {
+			lua_pushstring(L, miniexp_to_name(keys[i]));
+			lua_pushstring(L, value);
+			lua_settable(L, -3);
+		}
+	}
+
+	if (keys) free(keys);
+	return 1;
+}
+
 static int getNumberOfPages(lua_State *L) {
 	DjvuDocument *doc = (DjvuDocument*) luaL_checkudata(L, 1, "djvudocument");
 	lua_pushinteger(L, ddjvu_document_get_pagenum(doc->doc_ref));
@@ -716,6 +742,7 @@ static const struct luaL_Reg djvu_func[] = {
 
 static const struct luaL_Reg djvudocument_meth[] = {
 	{"openPage", openPage},
+	{"getMetadata", getMetadata},
 	{"getPages", getNumberOfPages},
 	{"getToc", getTableOfContent},
 	{"getPageText", getPageText},
