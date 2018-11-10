@@ -38,7 +38,6 @@ $(TURBOJPEG_LIB) $(JPEG_LIB): $(THIRDPARTY_DIR)/libjpeg-turbo/CMakeLists.txt
 	cd $(JPEG_BUILD_DIR) && \
 		$(CMAKE) \
 		-DCMAKE_VERBOSE_MAKEFILE:BOOL=OFF \
-		$(if $(findstring armv6, $(ARM_ARCH)),-DWITHOUT_SIMD:BOOL=ON,) \
 		-DCHOST="$(CHOST)" \
 		-DCFLAGS="$(CFLAGS)" \
 		-DLDFLAGS="$(LDFLAGS)" \

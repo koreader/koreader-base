@@ -73,9 +73,11 @@ set(CFG_OPTS "${CFG_OPTS} -DCMAKE_RANLIB='${RANLIB}'")
 
 # And, finally, the actual libjpeg-turbo build options
 set(CFG_OPTS "${CFG_OPTS} -DENABLE_STATIC=OFF -DENABLE_SHARED=ON -DWITH_JAVA=OFF -DWITH_JPEG8=ON")
-if(${WITHOUT_SIMD})
+
+# make sure we disable ASM if we don't support SIMD
+if(NOT DEFINED ENV{WANT_SIMD})
     set(CFG_OPTS "${CFG_OPTS} -DREQUIRE_SIMD=OFF -DWITH_SIMD=OFF")
-endif(${WITHOUT_SIMD})
+endif(NOT DEFINED ENV{WANT_SIMD})
 
 set(CFG_CMD sh -c "${CMAKE_COMMAND} ${CFG_OPTS}")
 
