@@ -45,13 +45,20 @@ else()
     endif()
 endif()
 
+# Do we support SIMD?
+if($ENV{WANT_SIMD})
+    set(ASM_OPT "enable-asm")
+else()
+    set(ASM_OPT "no-asm")
+endif()
+
 set(PATCH_CMD1 sh -c "patch -N -p1 < ${CMAKE_CURRENT_SOURCE_DIR}/openssl-origin-rpath.patch || true")
 
 # NOTE: We need to pass $CFLAGS to OpenSSL's Configure script,
 # except it balks on a few exotic flags, so, filter those out...
 string(REGEX REPLACE "--sysroot [a-zA-Z0-9/_-]*" "" FILTERED_CFLAGS "${CFLAGS}")
 
-set(CFG_OPTS "${CFG_OPTS} ${FILTERED_CFLAGS} enable-asm no-idea no-mdc2 no-rc5 no-ssl2 no-ssl3")
+set(CFG_OPTS "${CFG_OPTS} ${FILTERED_CFLAGS} ${ASM_OPT} no-idea no-mdc2 no-rc5 no-ssl2 no-ssl3")
 set(CFG_CMD sh -c "${CFG_ENV_VAR} ${SOURCE_DIR}/${CONFIG_SCRIPT} ${CFG_OPTS}")
 
 set(MAKE_CMD "$(MAKE) CC=\"${CC}\" SHARED_LDFLAGS=\"${SHARED_LDFLAGS}\" LD=\"${LD}\" AR=\"${AR} r\" RANLIB=\"${RANLIB}\"")
