@@ -1,5 +1,9 @@
 include Makefile.defs
 
+$(info ************ Building for MACHINE: "$(MACHINE)" **********)
+$(info ************ PATH: "$(PATH)" **********)
+$(info ************ CHOST: "$(CHOST)" **********)
+
 # main target
 all: $(OUTPUT_DIR)/libs $(if $(ANDROID),,$(LUAJIT)) \
 		$(if $(USE_LUAJIT_LIB),$(LUAJIT_LIB),) \

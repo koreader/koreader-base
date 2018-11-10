@@ -2,9 +2,9 @@ SHELL:=/bin/bash
 
 # Use ccache in build system by default. Define USE_NO_CCACHE=1 to force disable it.
 ifeq ($(USE_NO_CCACHE), 1)
-    CCACHE:=
+	CCACHE:=
 else
-    CCACHE?=$(shell which ccache)
+	CCACHE?=$(shell which ccache)
 endif
 
 UNAME:=$(shell uname -s)
@@ -33,132 +33,132 @@ CMAKE=cmake
 # set this to your ARM cross compiler:
 # set CC CXX AR LD RANLIB
 ifeq ($(TARGET), arm-generic)
-    CHOST?=arm-linux-gnueabi
+	CHOST?=arm-linux-gnueabi
 else ifeq ($(TARGET), kindle)
-    export KINDLE=1
-    HAS_KINDLE5_TC:=$(shell command -v arm-kindle5-linux-gnueabi-gcc 2> /dev/null)
-    ifdef HAS_KINDLE5_TC
-        #Use the custom build TC
-        CHOST?=arm-kindle5-linux-gnueabi
-    else
-        #Use the generic linaro TC for debugging
-        CHOST?=arm-linux-gnueabi
-    endif
+	export KINDLE=1
+	HAS_KINDLE5_TC:=$(shell command -v arm-kindle5-linux-gnueabi-gcc 2> /dev/null)
+	ifdef HAS_KINDLE5_TC
+		#Use the custom build TC
+		CHOST?=arm-kindle5-linux-gnueabi
+	else
+		#Use the generic linaro TC for debugging
+		CHOST?=arm-linux-gnueabi
+	endif
 else ifeq ($(TARGET), kindlepw2)
-    export KINDLE=1
-    HAS_KINDLEPW2_TC:=$(shell command -v arm-kindlepw2-linux-gnueabi-gcc 2> /dev/null)
-    ifdef HAS_KINDLEPW2_TC
-        CHOST?=arm-kindlepw2-linux-gnueabi
-    else
-        CHOST?=arm-linux-gnueabi
-    endif
+	export KINDLE=1
+	HAS_KINDLEPW2_TC:=$(shell command -v arm-kindlepw2-linux-gnueabi-gcc 2> /dev/null)
+	ifdef HAS_KINDLEPW2_TC
+		CHOST?=arm-kindlepw2-linux-gnueabi
+	else
+		CHOST?=arm-linux-gnueabi
+	endif
 else ifeq ($(TARGET), kindle-legacy)
-    export KINDLE=1
-    CHOST?=arm-kindle-linux-gnueabi
-    export LEGACY=1
+	export KINDLE=1
+	CHOST?=arm-kindle-linux-gnueabi
+	export LEGACY=1
 else ifeq ($(TARGET), kobo)
-    export KOBO=1
-    HAS_KOBO_TC:=$(shell command -v arm-kobo-linux-gnueabihf-gcc 2> /dev/null)
-    ifdef HAS_KOBO_TC
-        CHOST?=arm-kobo-linux-gnueabihf
-    else
-        CHOST?=arm-linux-gnueabihf
-    endif
-    export USE_LJ_WPACLIENT=1
+	export KOBO=1
+	HAS_KOBO_TC:=$(shell command -v arm-kobo-linux-gnueabihf-gcc 2> /dev/null)
+	ifdef HAS_KOBO_TC
+		CHOST?=arm-kobo-linux-gnueabihf
+	else
+		CHOST?=arm-linux-gnueabihf
+	endif
+	export USE_LJ_WPACLIENT=1
 else ifeq ($(TARGET), ubuntu-touch)
-    CHOST?=arm-linux-gnueabihf
-    export SDL=1
-    export UBUNTUTOUCH=1
+	CHOST?=arm-linux-gnueabihf
+	export SDL=1
+	export UBUNTUTOUCH=1
 else ifeq ($(TARGET), appimage)
-    export EMULATE_READER=1
-    export SDL=1
-    export APPIMAGE=1
+	export EMULATE_READER=1
+	export SDL=1
+	export APPIMAGE=1
 else ifeq ($(TARGET), android)
-    export ANDROID=1
-    export PATH:=$(ANDROID_TOOLCHAIN)/bin:$(PATH)
-    export SYSROOT=$(NDK)/platforms/android-$(NDKABI)/arch-$(ANDROID_ARCH)
-    ifeq ($(ANDROID_ARCH), x86)
-        CHOST?=i686-linux-android
-    else
-        CHOST?=arm-linux-androideabi
-    endif
+	export ANDROID=1
+	export PATH:=$(ANDROID_TOOLCHAIN)/bin:$(PATH)
+	export SYSROOT=$(NDK)/platforms/android-$(NDKABI)/arch-$(ANDROID_ARCH)
+	ifeq ($(ANDROID_ARCH), x86)
+		CHOST?=i686-linux-android
+	else
+		CHOST?=arm-linux-androideabi
+	endif
 else ifeq ($(TARGET), win32)
-    CHOST?=i686-w64-mingw32
-    export WIN32=1
-    export SDL=1
+	CHOST?=i686-w64-mingw32
+	export WIN32=1
+	export SDL=1
 else ifeq ($(TARGET), pocketbook)
-    CHOST?=arm-obreey-linux-gnueabi
-    export LEGACY=1
-    export POCKETBOOK=1
-    export PATH:=$(POCKETBOOK_TOOLCHAIN)/bin:$(PATH)
-    export SYSROOT=$(POCKETBOOK_TOOLCHAIN)/arm-obreey-linux-gnueabi/sysroot
+	CHOST?=arm-obreey-linux-gnueabi
+	export LEGACY=1
+	export POCKETBOOK=1
+	export PATH:=$(POCKETBOOK_TOOLCHAIN)/bin:$(PATH)
+	export SYSROOT=$(POCKETBOOK_TOOLCHAIN)/arm-obreey-linux-gnueabi/sysroot
 else ifeq ($(TARGET), sony-prstux)
-    CHOST?=arm-linux-gnueabihf
-    export SONY_PRSTUX=1 
-    export USE_LJ_WPACLIENT=1
+	CHOST?=arm-linux-gnueabihf
+	export SONY_PRSTUX=1
+	export USE_LJ_WPACLIENT=1
 else ifeq ($(TARGET), cervantes)
-    export CERVANTES=1
-    HAS_CERVANTES_TC:=$(shell command -v arm-cervantes-linux-gnueabi-gcc 2> /dev/null)
-    ifdef HAS_CERVANTES_TC
-        CHOST?=arm-cervantes-linux-gnueabi
-    else
-        CHOST?=arm-linux-gnueabi
-    endif
-    export USE_LJ_WPACLIENT=1
+	export CERVANTES=1
+	HAS_CERVANTES_TC:=$(shell command -v arm-cervantes-linux-gnueabi-gcc 2> /dev/null)
+	ifdef HAS_CERVANTES_TC
+		CHOST?=arm-cervantes-linux-gnueabi
+	else
+		CHOST?=arm-linux-gnueabi
+	endif
+	export USE_LJ_WPACLIENT=1
 else ifndef TARGET
-    # if TARGET is not defined we will build an emulator on current machine
-    export EMULATE_READER=1
-    export SDL=1
+	# if TARGET is not defined we will build an emulator on current machine
+	export EMULATE_READER=1
+	export SDL=1
 else
-    $(error Invalid TARGET: "$(TARGET)")
+	$(error Invalid TARGET: "$(TARGET)")
 endif
 
 ifneq (,$(filter $(UNAME), Darwin))
-    export DARWINHOST=1
-    ifdef EMULATE_READER
-        export DARWIN=1
-    endif
+	export DARWINHOST=1
+	ifdef EMULATE_READER
+		export DARWIN=1
+	endif
 endif
 
 # ccache still has tons of problems when cross-compiling Android port on Darwin
 ifdef DARWINHOST
-    ifdef ANDROID
-        CCACHE=
-    endif
+	ifdef ANDROID
+		CCACHE=
+	endif
 endif
 
 USE_LUAJIT_LIB=$(or $(DARWIN),$(ANDROID),$(WIN32))
 
 # handle utility params on different host systems
 ifdef DARWINHOST
-    RCP:=cp -R
-    ISED:=sed -i '' -e
+	RCP:=cp -R
+	ISED:=sed -i '' -e
 else
-    RCP:=cp -r
-    ISED:=sed -i -e
+	RCP:=cp -r
+	ISED:=sed -i -e
 endif
 
 # unknown device
 ifdef SBOX_UNAME_MACHINE
-    CC:=gcc
-    CXX:=g++
+	CC:=gcc
+	CXX:=g++
 endif
 
 # set cross-compiler/host CC and CXX
 ifeq ($(CC), clang)
-    CC:=$(CHOST)-clang
-    CXX:=$(CHOST)-clang++
-    HOSTCC:=clang
-    HOSTCXX:=clang++
-    # quiet flag
-    QFLAGS:=-Qunused-arguments
-    export CLANG=1
+	CC:=$(CHOST)-clang
+	CXX:=$(CHOST)-clang++
+	HOSTCC:=clang
+	HOSTCXX:=clang++
+	# quiet flag
+	QFLAGS:=-Qunused-arguments
+	export CLANG=1
 else
-    CC:=$(CHOST)-gcc
-    CXX:=$(CHOST)-g++
-    HOSTCC:=gcc
-    HOSTCXX:=g++
-    QFLAGS:=
+	CC:=$(CHOST)-gcc
+	CXX:=$(CHOST)-g++
+	HOSTCC:=gcc
+	HOSTCXX:=g++
+	QFLAGS:=
 endif
 
 # set cross-compiler/host AR LD RANLIB
@@ -180,11 +180,11 @@ LIBTOOLIZE:=$(if $(DARWIN),glibtoolize,libtoolize)
 # But to add insult to injury, libtool also links with -nostdlib, which renders -static-lib* useless, so we
 # need this ugly workaround, even on recent (>= 4.5) GCC versions where any sane person would imagine -static-libstdc++ to be enough...
 ifndef DARWIN
-    # we need to set PATH manually here because export PATH in gmake only takes
-    # effect for for sub shells
-    STATIC_LIBSTDCPP=$(shell PATH='$(PATH)' $(CC) -print-file-name=libstdc++.a)
+	# we need to set PATH manually here because export PATH in gmake only takes
+	# effect for for sub shells
+	STATIC_LIBSTDCPP=$(shell PATH='$(PATH)' $(CC) -print-file-name=libstdc++.a)
 else
-    STATIC_LIBSTDCPP=
+	STATIC_LIBSTDCPP=
 endif
 
 # Base CFLAGS, without arch. We'll need it for luajit, because its
@@ -194,8 +194,8 @@ BASE_CFLAGS:=-O2 -ffast-math -pipe -fomit-frame-pointer
 #BASE_CFLAGS:=-O3 -ffast-math -pipe -fomit-frame-pointer -frename-registers -fweb
 # Use this for debugging:
 ifdef KODEBUG
-    BASE_CFLAGS:=-Og -g -pipe
-    STRIP:=true
+	BASE_CFLAGS:=-Og -g -pipe
+	STRIP:=true
 endif
 
 # Misc GCC tricks to ensure backward compatibility with the K2,
@@ -238,9 +238,9 @@ ANDROID_COMPAT_CFLAGS:=--sysroot $(SYSROOT)
 ANDROID_COMPAT_CXXFLAGS:=--sysroot $(SYSROOT)
 # Mirror the NDK's armeabi-v7a APP_ABI (cf. #201)
 ifeq ($(ANDROID_ARCH), arm)
-    ANDROID_ARM_ARCH:=-march=armv7-a -mfpu=vfpv3-d16
-    ANDROID_ARM_ARCH+=-mthumb
-    ANDROID_ARM_ARCH+=-ffunction-sections -funwind-tables -fstack-protector -no-canonical-prefixes
+	ANDROID_ARM_ARCH:=-march=armv7-a -mfpu=vfpv3-d16
+	ANDROID_ARM_ARCH+=-mthumb
+	ANDROID_ARM_ARCH+=-ffunction-sections -funwind-tables -fstack-protector -no-canonical-prefixes
 endif
 
 # Use target-specific CFLAGS
@@ -263,17 +263,17 @@ else ifeq ($(TARGET), pocketbook)
 else ifeq ($(TARGET), kindle)
 	ARM_ARCH:=$(ARMV7_A8_ARCH)
 	ARM_ARCH+=-mfloat-abi=softfp
-    ifeq ($(shell PATH='$(PATH)' $(CC) -dumpmachine 2>/dev/null), arm-linux-gnueabi)
-        COMPAT_CFLAGS:=$(UBUNTU_COMPAT_CFLAGS)
-        COMPAT_CXXFLAGS:=$(UBUNTU_COMPAT_CFLAGS)
-    endif
+	ifeq ($(shell PATH='$(PATH)' $(CC) -dumpmachine 2>/dev/null), arm-linux-gnueabi)
+		COMPAT_CFLAGS:=$(UBUNTU_COMPAT_CFLAGS)
+		COMPAT_CXXFLAGS:=$(UBUNTU_COMPAT_CFLAGS)
+	endif
 else ifeq ($(TARGET), kindlepw2)
 	ARM_ARCH:=$(ARMV7_A9_ARCH)
 	ARM_ARCH+=-mfloat-abi=softfp
-    ifeq ($(shell PATH='$(PATH)' $(CC) -dumpmachine 2>/dev/null), arm-linux-gnueabi)
-        COMPAT_CFLAGS:=$(UBUNTU_COMPAT_CFLAGS)
-        COMPAT_CXXFLAGS:=$(UBUNTU_COMPAT_CFLAGS)
-    endif
+	ifeq ($(shell PATH='$(PATH)' $(CC) -dumpmachine 2>/dev/null), arm-linux-gnueabi)
+		COMPAT_CFLAGS:=$(UBUNTU_COMPAT_CFLAGS)
+		COMPAT_CXXFLAGS:=$(UBUNTU_COMPAT_CFLAGS)
+	endif
 else ifeq ($(TARGET), kindle-legacy)
 	ARM_ARCH:=$(ARMV6_1136_ARCH)
 	ARM_ARCH+=-mfloat-abi=softfp
@@ -295,8 +295,8 @@ else ifeq ($(TARGET), android)
 		export ac_cv_type_in_port_t=yes
 	endif
 else ifeq ($(TARGET), sony-prstux)
-        ARM_ARCH:=$(ARMV7_A8_ARCH)
-        ARM_ARCH+=-mfloat-abi=hard
+	ARM_ARCH:=$(ARMV7_A8_ARCH)
+	ARM_ARCH+=-mfloat-abi=hard
 else ifeq ($(TARGET), cervantes)
 	ARM_ARCH:=$(ARMV7_GENERIC_ARCH)
 	ARM_ARCH+=-mfloat-abi=softfp
@@ -309,33 +309,33 @@ else ifeq ($(TARGET), arm-generic)
 	ARM_ARCH:=$(ARMV6_GENERIC_ARCH)
 	ARM_ARCH+=-mfloat-abi=softfp
 else
-    # else, we are compiling emulator on x86
-    ARM_ARCH:=
+	# else, we are compiling emulator on x86
+	ARM_ARCH:=
 endif
 
 # Clang 3.4 on Travis however doesn't define macro '__extern_always_inline'
 ifdef CLANG
-    BASE_CFLAGS+=-D__extern_always_inline=inline
-    # Tone down some very verbose Clang 5 warnings, too.
-    # This one can be *extremely* verbose
-    BASE_CFLAGS+=-Wno-array-bounds
-    # This one checks if -I flags are actually used, even at steps where it makes little sense.
-    # Since we massively pass -I/-L flags ourselves, this becomes insane really quick.
-    # QFLAGS should have been taking care of this already, but it looks like it doesn't take in every case...
-    BASE_CFLAGS+=-Wno-unused-command-line-argument
-    # Let FreeType do its thing...
-    BASE_CFLAGS+=-Wno-self-assign
-    # Also extremely verbose...
-    BASE_CFLAGS+=-Wno-parentheses-equality
-    # For dropbear's libtom...
-    BASE_CFLAGS+=-Wno-macro-redefined
-    # Note that things appear to be better with Clang >= 6 ;).
+	BASE_CFLAGS+=-D__extern_always_inline=inline
+	# Tone down some very verbose Clang 5 warnings, too.
+	# This one can be *extremely* verbose
+	BASE_CFLAGS+=-Wno-array-bounds
+	# This one checks if -I flags are actually used, even at steps where it makes little sense.
+	# Since we massively pass -I/-L flags ourselves, this becomes insane really quick.
+	# QFLAGS should have been taking care of this already, but it looks like it doesn't take in every case...
+	BASE_CFLAGS+=-Wno-unused-command-line-argument
+	# Let FreeType do its thing...
+	BASE_CFLAGS+=-Wno-self-assign
+	# Also extremely verbose...
+	BASE_CFLAGS+=-Wno-parentheses-equality
+	# For dropbear's libtom...
+	BASE_CFLAGS+=-Wno-macro-redefined
+	# Note that things appear to be better with Clang >= 6 ;).
 endif
 
 HOST_ARCH:=-march=native
 ifdef APPIMAGE
-    # We want to run the AppImage on any 64-bit CPU
-    HOST_ARCH:=-mtune=generic -march=x86-64
+	# We want to run the AppImage on any 64-bit CPU
+	HOST_ARCH:=-mtune=generic -march=x86-64
 endif
 HOSTCFLAGS:=$(HOST_ARCH) $(BASE_CFLAGS) $(QFLAGS)
 
@@ -423,14 +423,8 @@ endif
 
 # not necessary to use PIC flag for win32 which has relocation table in dll
 ifneq ($(TARGET), win32)
-    CFLAGS+=-fPIC
-    CXXFLAGS+=-fPIC
-endif
-
-# set a flag that C code can differenciate on for Kobo code
-# currently used for framebuffer related code in einkfb.c
-ifeq ($(TARGET), kobo)
-	CFLAGS+=-DKOBO_PLATFORM
+	CFLAGS+=-fPIC
+	CXXFLAGS+=-fPIC
 endif
 
 # FIXME: If we cared, we'd probably need to do something to convince libzmq not
@@ -447,17 +441,17 @@ endif
 ifndef DARWIN
 ifndef ANDROID
 ifndef WIN32
-    # We're a glibc system... Find the actual libc used by our TC, and check if it's >= 2.22...
-    # We only care about that on non-emulated builds (i.e., arm), because compat symbols may be pinned
-    # to different versions on different arches, and we only account for arm in our patches.
-    ifndef EMULATE_READER
-        GLIBC_FILE=$(basename $(notdir $(realpath $(shell PATH='$(PATH)' $(CC) -print-file-name=libc.so.6))))
-        GLIBC_VER=$(shell echo $(GLIBC_FILE) | cut -f2 -d'-')
-        GLIBC_2_22_SORT=$(shell echo -e "$(GLIBC_VER)\n2.22" | sort -V | head -n1)
-        ifeq ($(GLIBC_2_22_SORT), 2.22)
-            ARM_GLIBC_GTE_2_22=1
-        endif
-    endif
+	# We're a glibc system... Find the actual libc used by our TC, and check if it's >= 2.22...
+	# We only care about that on non-emulated builds (i.e., arm), because compat symbols may be pinned
+	# to different versions on different arches, and we only account for arm in our patches.
+	ifndef EMULATE_READER
+		GLIBC_FILE=$(basename $(notdir $(realpath $(shell PATH='$(PATH)' $(CC) -print-file-name=libc.so.6))))
+		GLIBC_VER=$(shell echo $(GLIBC_FILE) | cut -f2 -d'-')
+		GLIBC_2_22_SORT=$(shell echo -e "$(GLIBC_VER)\n2.22" | sort -V | head -n1)
+		ifeq ($(GLIBC_2_22_SORT), 2.22)
+			ARM_GLIBC_GTE_2_22=1
+		endif
+	endif
 endif
 endif
 endif
@@ -465,10 +459,7 @@ endif
 # this will create a path named build/arm-none-linux-gnueabi or similar
 MACHINE?=$(shell PATH='$(PATH)' $(CC) -dumpmachine 2>/dev/null)
 ifdef KODEBUG
-    MACHINE:=$(MACHINE)-debug
-    $(info ************ Building for MACHINE: "$(MACHINE)" **********)
-    $(info ************ PATH: "$(PATH)" **********)
-    $(info ************ CHOST: "$(CHOST)" **********)
+	MACHINE:=$(MACHINE)-debug
 endif
 OUTPUT_DIR?=build/$(MACHINE)
 
