@@ -460,9 +460,6 @@ endif
 MACHINE?=$(shell PATH='$(PATH)' $(CC) -dumpmachine 2>/dev/null)
 ifdef KODEBUG
 	MACHINE:=$(MACHINE)-debug
-	$(info ************ Building for MACHINE: "$(MACHINE)" **********)
-	$(info ************ PATH: "$(PATH)" **********)
-	$(info ************ CHOST: "$(CHOST)" **********)
 endif
 OUTPUT_DIR?=build/$(MACHINE)
 
