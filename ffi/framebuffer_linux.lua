@@ -11,6 +11,7 @@ local framebuffer = {
     fd = -1,
     fb_size = nil,
     fb_bpp = nil,
+    fb_rota = nil,
     data = nil,
 }
 
@@ -132,6 +133,9 @@ function framebuffer:init()
 
     -- Make accessing the bitdepth easier, because we might want to know we're running on Kobo's quirky 16bpp mode later...
     self.fb_bpp = vinfo.bits_per_pixel
+
+    -- Same for the current hardware rotation, it's potentially useful info on the Kobo Forma
+    self.fb_rota = vinfo.rotate
 
     if ffi.string(finfo.id, 7) == "eink_fb" then
         -- classic eink framebuffer driver has grayscale values inverted (i.e. 0xF = black, 0 = white)
