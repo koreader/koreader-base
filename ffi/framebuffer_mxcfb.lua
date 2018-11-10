@@ -574,8 +574,12 @@ function framebuffer:init()
 
         -- new devices
         local is_new = false
-        if self.device.model == "Cervantes2013" or self.device.model == "Cervantes3"
-            or self.device.model == "Cervantes4" then is_new = true end
+        if self.device.model == "Cervantes2013"
+        or self.device.model == "Cervantes3"
+        or self.device.model == "Cervantes4"
+        then
+            is_new = true
+        end
 
         if is_new then
             self.mech_refresh = refresh_cervantes
