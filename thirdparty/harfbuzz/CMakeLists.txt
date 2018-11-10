@@ -32,7 +32,7 @@ endif()
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
     https://github.com/harfbuzz/harfbuzz.git
-    1.9.0
+    2.1.1
     ${SOURCE_DIR}
 )
 
