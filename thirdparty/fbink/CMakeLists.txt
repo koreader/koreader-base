@@ -19,6 +19,8 @@ if($ENV{LEGACY})
     set(FBINK_TARGET "legacy")
 elseif($ENV{KINDLE})
     set(FBINK_TARGET "kindle")
+elseif($ENV{CERVANTES})
+    set(FBINK_TARGET "cervantes")
 else()
     set(FBINK_TARGET "strip")
 endif()
@@ -36,7 +38,7 @@ endif()
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
     https://github.com/NiLuJe/FBInk.git
-    v1.7.0
+    v1.9.1
     ${SOURCE_DIR}
 )
 
