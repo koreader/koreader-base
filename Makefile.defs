@@ -463,7 +463,8 @@ ifneq (,$(findstring march=arm,$(CFLAGS)))
 	# We're on ARM
 	ifeq (,$(findstring fpu=neon,$(CFLAGS)))
 		# We don't support NEON
-		undefine WANT_SIMD
+		# NOTE: undefine is new to GNU make 3.8...
+		#undefine WANT_SIMD
 		unexport WANT_SIMD
 	endif
 endif
