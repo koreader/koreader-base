@@ -15,7 +15,7 @@ assert_var_defined(FREETYPE_DIR)
 ep_get_source_dir(SOURCE_DIR)
 ep_get_binary_dir(BINARY_DIR)
 
-set(CFG_ENV_VAR "CC=\"${CC}\" CXX=\"${CXX}\" CFLAGS=\"${CFLAGS}\" CXXFLAGS=\"${CXXFLAGS}\" LDFLAGS=\"${LDFLAGS}\"")
+set(CFG_ENV_VAR "CC=\"${CC}\" CXX=\"${CXX}\" CFLAGS=\"${CFLAGS}\" CXXFLAGS=\"${CXXFLAGS} -std=c++14\" LDFLAGS=\"${LDFLAGS}\"")
 set(CFG_ENV_VAR "${CFG_ENV_VAR} FREETYPE_CFLAGS=\"-I${FREETYPE_DIR}/include/freetype2\"")
 set(CFG_ENV_VAR "${CFG_ENV_VAR} FREETYPE_LIBS=\"-L${FREETYPE_DIR} -lfreetype\"")
 set(CFG_OPTS "--prefix=\"${BINARY_DIR}\" --enable-shared --disable-static --with-freetype --with-ucdn --without-glib --without-gobject --without-cairo --without-fontconfig --without-icu --without-graphite2 --without-uniscribe --without-directwrite --without-coretext --host=\"${CHOST}\"")
