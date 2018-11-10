@@ -574,7 +574,7 @@ function framebuffer:init()
 
         -- new devices
         local is_new = false
-        if self.device.model == "Cervantes2013" or self.device.model == "Cervantes3"
+        if self.device.model == "Cervantes2013" or self.device.model == "Cervantes 3"
             or self.device.model == "Cervantes4" then is_new = true end
 
         if is_new then
