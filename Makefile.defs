@@ -427,12 +427,6 @@ ifneq ($(TARGET), win32)
 	CXXFLAGS+=-fPIC
 endif
 
-# set a flag that C code can differenciate on for Kobo code
-# currently used for framebuffer related code in einkfb.c
-ifeq ($(TARGET), kobo)
-	CFLAGS+=-DKOBO_PLATFORM
-endif
-
 # FIXME: If we cared, we'd probably need to do something to convince libzmq not
 # to enable support for eventfd [@GLIBC_2.7]
 # FIXED: To cross compile libzmq for GLIBC_2.4 you need to configure with the
