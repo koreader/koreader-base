@@ -93,8 +93,22 @@ struct mxcfb_update_data_koa2 {
   unsigned int ts_pxp;
   unsigned int ts_epdc;
 };
+struct mxcfb_update_data_pw4 {
+  struct mxcfb_rect update_region;
+  unsigned int waveform_mode;
+  unsigned int update_mode;
+  unsigned int update_marker;
+  int temp;
+  unsigned int flags;
+  int dither_mode;
+  int quant_bit;
+  struct mxcfb_alt_buffer_data alt_buffer_data;
+  unsigned int hist_bw_waveform_mode;
+  unsigned int hist_gray_waveform_mode;
+};
 static const int MXCFB_SEND_UPDATE = 1078478382;
 static const int MXCFB_SEND_UPDATE_KOA2 = 1079526958;
+static const int MXCFB_SEND_UPDATE_PW4 = 1079002670;
 struct mxcfb_update_marker_data {
   unsigned int update_marker;
   unsigned int collision_test;
@@ -102,6 +116,8 @@ struct mxcfb_update_marker_data {
 static const int MXCFB_WAIT_FOR_UPDATE_COMPLETE = 3221767727;
 static const int MXCFB_WAIT_FOR_UPDATE_COMPLETE_PEARL = 1074021935;
 static const int MXCFB_WAIT_FOR_UPDATE_SUBMISSION = 1074021943;
+static const int NIGHTMODE_STRIDE_DEFAULT = 16;
+static const int NIGHTMODE_STRIDE_DEFAULT_PW4 = 138;
 struct mxcfb_nightmode_ctrl {
   int disable;
   int start;

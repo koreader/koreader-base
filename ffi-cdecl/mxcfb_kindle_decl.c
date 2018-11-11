@@ -68,9 +68,13 @@ cdecl_struct(mxcfb_update_data)
 
 cdecl_struct(mxcfb_update_data_koa2)
 
+cdecl_struct(mxcfb_update_data_pw4)
+
 cdecl_const(MXCFB_SEND_UPDATE)
 
 cdecl_const(MXCFB_SEND_UPDATE_KOA2)
+
+cdecl_const(MXCFB_SEND_UPDATE_PW4)
 
 cdecl_struct(mxcfb_update_marker_data)
 cdecl_const(MXCFB_WAIT_FOR_UPDATE_COMPLETE)
@@ -79,5 +83,7 @@ cdecl_const(MXCFB_WAIT_FOR_UPDATE_COMPLETE_PEARL)
 
 cdecl_const(MXCFB_WAIT_FOR_UPDATE_SUBMISSION)
 
+cdecl_const(NIGHTMODE_STRIDE_DEFAULT)
+cdecl_const(NIGHTMODE_STRIDE_DEFAULT_PW4)
 cdecl_struct(mxcfb_nightmode_ctrl)
 cdecl_const(MXCFB_SET_NIGHTMODE)

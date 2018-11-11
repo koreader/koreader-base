@@ -319,6 +319,32 @@ local function refresh_koa2(fb, refreshtype, waveform_mode, x, y, w, h)
     return mxc_update(fb, C.MXCFB_SEND_UPDATE_KOA2, refarea, refreshtype, waveform_mode, x, y, w, h)
 end
 
+local function refresh_pw4(fb, refreshtype, waveform_mode, x, y, w, h)
+    local refarea = ffi.new("struct mxcfb_update_data_pw4[1]")
+    -- only for Amazon's driver, try to mostly follow what the stock reader does...
+    if waveform_mode == C.WAVEFORM_MODE_KOA2_GLR16 then
+        -- If we're requesting WAVEFORM_MODE_KOA2_GLR16, it's REAGL all around!
+        refarea[0].hist_bw_waveform_mode = waveform_mode
+        refarea[0].hist_gray_waveform_mode = waveform_mode
+    else
+        refarea[0].hist_bw_waveform_mode = C.WAVEFORM_MODE_DU
+        refarea[0].hist_gray_waveform_mode = C.WAVEFORM_MODE_GC16 -- NOTE: GC16_FAST points to GC16
+    end
+    -- NOTE: Since there's no longer a distinction between GC16_FAST & GC16, we're done!
+    refarea[0].temp = C.TEMP_USE_AMBIENT
+    refarea[0].dither_mode = C.EPDC_FLAG_USE_DITHERING_PASSTHROUGH
+    refarea[0].quant_bit = 0;
+    -- Enable the appropriate flag when requesting what amounts to a 2bit update
+    if waveform_mode == C.WAVEFORM_MODE_DU then
+        refarea[0].flags = C.EPDC_FLAG_FORCE_MONOCHROME
+    else
+        refarea[0].flags = 0
+    end
+    -- TODO: There's also the HW-backed NightMode which should be somewhat accessible...
+
+    return mxc_update(fb, C.MXCFB_SEND_UPDATE_PW4, refarea, refreshtype, waveform_mode, x, y, w, h)
+end
+
 local function refresh_kobo(fb, refreshtype, waveform_mode, x, y, w, h)
     local refarea = ffi.new("struct mxcfb_update_data_v1_ntx[1]")
     -- only for Kobo's driver:
@@ -447,6 +473,8 @@ function framebuffer:init()
 
         -- The KOA2 uses a new eink driver, one that massively breaks backward compatibility.
         local isKOA2 = false
+        -- And because that worked well enough the first time, lab126 did the same with the PW4!
+        local isPW4 = false
 
         if self.device.model == "Kindle2" then
             isREAGL = false
@@ -465,6 +493,9 @@ function framebuffer:init()
         if self.device.model == "KindleOasis2" then
             isKOA2 = true
         end
+        if self.device.model == "KindlePaperWhite4" then
+            isPW4 = true
+        end
 
         if isREAGL then
             self.mech_wait_update_complete = kindle_carta_mxc_wait_for_update_complete
@@ -475,8 +506,13 @@ function framebuffer:init()
             self.waveform_partial = C.WAVEFORM_MODE_GL16_FAST -- NOTE: Depending on FW, might instead be AUTO w/ hist_gray_waveform_mode set to GL16_FAST
         end
 
-        if isKOA2 then
-            self.mech_refresh = refresh_koa2
+        -- NOTE: The PW4 essentially uses the same driver as the KOA2, it's just passing a slightly smaller mxcfb_update_data struct
+        if isKOA2 or isPW4 then
+            if isKOA2 then
+                self.mech_refresh = refresh_koa2
+            else
+                self.mech_refresh = refresh_pw4
+            end
 
             self.waveform_fast = C.WAVEFORM_MODE_DU
             self.waveform_ui = C.WAVEFORM_MODE_AUTO
@@ -574,8 +610,12 @@ function framebuffer:init()
 
         -- new devices
         local is_new = false
-        if self.device.model == "Cervantes2013" or self.device.model == "Cervantes3"
-            or self.device.model == "Cervantes4" then is_new = true end
+        if self.device.model == "Cervantes2013"
+        or self.device.model == "Cervantes3"
+        or self.device.model == "Cervantes4"
+        then
+            is_new = true
+        end
 
         if is_new then
             self.mech_refresh = refresh_cervantes
