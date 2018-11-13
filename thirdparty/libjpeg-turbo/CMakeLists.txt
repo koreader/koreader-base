@@ -84,7 +84,7 @@ set(CFG_CMD sh -c "${CMAKE_COMMAND} ${CFG_OPTS}")
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
     https://github.com/libjpeg-turbo/libjpeg-turbo.git
-    2.0.0
+    2.0.1
     ${SOURCE_DIR}
 )
 
