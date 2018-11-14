@@ -17,6 +17,9 @@ cdecl_const(fz_infinite_rect)
 cdecl_func(fz_intersect_rect)
 cdecl_func(fz_union_rect)
 
+cdecl_type(fz_quad)
+cdecl_struct(fz_quad_s)
+
 cdecl_type(fz_irect)
 cdecl_struct(fz_irect_s)
 cdecl_const(fz_empty_irect)

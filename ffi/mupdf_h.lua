@@ -19,6 +19,13 @@ extern const fz_rect fz_empty_rect;
 extern const fz_rect fz_infinite_rect;
 fz_rect fz_intersect_rect(fz_rect, fz_rect);
 fz_rect fz_union_rect(fz_rect, fz_rect);
+typedef struct fz_quad_s fz_quad;
+struct fz_quad_s {
+  fz_point ul;
+  fz_point ur;
+  fz_point ll;
+  fz_point lr;
+};
 typedef struct fz_irect_s fz_irect;
 struct fz_irect_s {
   int x0;
@@ -213,7 +220,7 @@ typedef struct fz_stext_char_s fz_stext_char;
 struct fz_stext_char_s {
   int c;
   fz_point origin;
-  struct fz_quad_s quad;
+  fz_quad quad;
   float size;
   fz_font *font;
   fz_stext_char *next;
