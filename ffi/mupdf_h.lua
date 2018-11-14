@@ -17,8 +17,8 @@ struct fz_rect_s {
 extern const fz_rect fz_unit_rect;
 extern const fz_rect fz_empty_rect;
 extern const fz_rect fz_infinite_rect;
-fz_rect *fz_intersect_rect(fz_rect *restrict, const fz_rect *restrict);
-fz_rect *fz_union_rect(fz_rect *restrict, const fz_rect *restrict);
+fz_rect fz_intersect_rect(fz_rect, fz_rect);
+fz_rect fz_union_rect(fz_rect, fz_rect);
 typedef struct fz_irect_s fz_irect;
 struct fz_irect_s {
   int x0;
@@ -28,9 +28,9 @@ struct fz_irect_s {
 };
 extern const fz_irect fz_empty_irect;
 extern const fz_irect fz_infinite_irect;
-fz_irect *fz_intersect_irect(fz_irect *restrict, const fz_irect *restrict);
-fz_irect *fz_irect_from_rect(fz_irect *restrict, const fz_rect *restrict);
-fz_irect *fz_round_rect(fz_irect *restrict, const fz_rect *restrict);
+fz_irect fz_intersect_irect(fz_irect, fz_irect);
+fz_irect fz_irect_from_rect(fz_rect);
+fz_irect fz_round_rect(fz_rect);
 typedef struct fz_matrix_s fz_matrix;
 struct fz_matrix_s {
   float a;
@@ -41,14 +41,14 @@ struct fz_matrix_s {
   float f;
 };
 extern const fz_matrix fz_identity;
-fz_matrix *fz_concat(fz_matrix *, const fz_matrix *, const fz_matrix *);
-fz_matrix *fz_scale(fz_matrix *, float, float);
-fz_matrix *fz_pre_scale(fz_matrix *, float, float);
-fz_matrix *fz_rotate(fz_matrix *, float);
-fz_matrix *fz_pre_rotate(fz_matrix *, float);
-fz_matrix *fz_translate(fz_matrix *, float, float);
-fz_matrix *fz_pre_translate(fz_matrix *, float, float);
-fz_rect *fz_transform_rect(fz_rect *restrict, const fz_matrix *restrict);
+fz_matrix fz_concat(fz_matrix, fz_matrix);
+fz_matrix fz_scale(float, float);
+fz_matrix fz_pre_scale(fz_matrix, float, float);
+fz_matrix fz_rotate(float);
+fz_matrix fz_pre_rotate(fz_matrix, float);
+fz_matrix fz_translate(float, float);
+fz_matrix fz_pre_translate(fz_matrix, float, float);
+fz_rect fz_transform_rect(fz_rect, fz_matrix);
 typedef struct fz_context_s fz_context;
 typedef struct fz_font_s fz_font;
 typedef struct fz_hash_table_s fz_hash_table;
@@ -125,8 +125,8 @@ typedef struct fz_annot_s fz_annot;
 struct fz_annot_s {
   int refs;
   void (*drop_annot)(fz_context *, fz_annot *);
-  fz_rect *(*bound_annot)(fz_context *, fz_annot *, fz_rect *);
-  void (*run_annot)(fz_context *, fz_annot *, struct fz_device_s *, const fz_matrix *, struct fz_cookie_s *);
+  fz_rect (*bound_annot)(fz_context *, fz_annot *);
+  void (*run_annot)(fz_context *, fz_annot *, struct fz_device_s *, fz_matrix, struct fz_cookie_s *);
   fz_annot *(*next_annot)(fz_context *, fz_annot *);
 };
 typedef struct fz_outline_s fz_outline;
@@ -166,12 +166,14 @@ struct fz_document_s {
   fz_colorspace *(*get_output_intent)(fz_context *, fz_document *);
   int did_layout;
   int is_reflowable;
+  fz_page *open;
 };
 struct fz_page_s {
   int refs;
+  int number;
   void (*drop_page)(fz_context *, fz_page *);
-  fz_rect *(*bound_page)(fz_context *, fz_page *, fz_rect *);
-  void (*run_page_contents)(fz_context *, fz_page *, struct fz_device_s *, const fz_matrix *, struct fz_cookie_s *);
+  fz_rect (*bound_page)(fz_context *, fz_page *);
+  void (*run_page_contents)(fz_context *, fz_page *, struct fz_device_s *, fz_matrix, struct fz_cookie_s *);
   fz_link *(*load_links)(fz_context *, fz_page *);
   fz_annot *(*first_annot)(fz_context *, fz_page *);
   struct fz_transition_s *(*page_presentation)(fz_context *, fz_page *, struct fz_transition_s *, float *);
@@ -179,6 +181,8 @@ struct fz_page_s {
   int (*separation_disabled)(fz_context *, fz_page *, int);
   struct fz_separations_s *(*separations)(fz_context *, fz_page *);
   int (*overprint)(fz_context *, fz_page *);
+  fz_page **prev;
+  fz_page *next;
 };
 fz_document *mupdf_open_document(fz_context *, const char *);
 fz_document *mupdf_open_document_with_stream(fz_context *, const char *, struct fz_stream_s *);
@@ -190,7 +194,7 @@ void *mupdf_layout_document(fz_context *, fz_document *, float, float, float);
 int fz_lookup_metadata(fz_context *, fz_document *, const char *, char *, int);
 int fz_resolve_link(fz_context *, fz_document *, const char *, float *, float *);
 fz_page *mupdf_load_page(fz_context *, fz_document *, int);
-fz_rect *fz_bound_page(fz_context *, fz_page *, fz_rect *);
+fz_rect fz_bound_page(fz_context *, fz_page *);
 void fz_drop_page(fz_context *, fz_page *);
 struct fz_link_s {
   int refs;
@@ -209,7 +213,7 @@ typedef struct fz_stext_char_s fz_stext_char;
 struct fz_stext_char_s {
   int c;
   fz_point origin;
-  fz_rect bbox;
+  struct fz_quad_s quad;
   float size;
   fz_font *font;
   fz_stext_char *next;
@@ -264,7 +268,7 @@ fz_pixmap *fz_keep_pixmap(fz_context *, fz_pixmap *);
 void fz_drop_pixmap(fz_context *, fz_pixmap *);
 void fz_clear_pixmap_with_value(fz_context *, fz_pixmap *, int);
 void fz_gamma_pixmap(fz_context *, fz_pixmap *, float);
-fz_pixmap *fz_scale_pixmap(fz_context *, fz_pixmap *, float, float, float, float, fz_irect *);
+fz_pixmap *fz_scale_pixmap(fz_context *, fz_pixmap *, float, float, float, float, const fz_irect *);
 int fz_pixmap_width(fz_context *, fz_pixmap *);
 int fz_pixmap_height(fz_context *, fz_pixmap *);
 int fz_pixmap_components(fz_context *, fz_pixmap *);
@@ -368,6 +372,7 @@ struct pdf_document_s {
   int *xref_index;
   int freeze_updates;
   int has_xref_streams;
+  int has_old_style_xrefs;
   int rev_page_count;
   struct pdf_rev_page_map_s *rev_page_map;
   int repair_attempted;
