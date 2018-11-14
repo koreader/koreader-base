@@ -434,7 +434,7 @@ function page_mt.__index:getPageText()
             local mupdf_line = block.u.t.first_line
             while mupdf_line ~= nil do
                 local line = {}
-                local line_bbox = ffi.new("fz_rect[1]")
+                local line_bbox = ffi.new("fz_rect")
 
                 local first_char = skip_starting_bullet( mupdf_line )
                 local ch = first_char
@@ -452,15 +452,15 @@ function page_mt.__index:getPageText()
                     ch = first_char
                     while ch ~= nil do
                         local textlen = 0
-                        local word_bbox = ffi.new("fz_rect[1]")
+                        local word_bbox = ffi.new("fz_rect")
                         while ch ~= nil do
                             if is_unicode_wspace(ch.c) then
                                 -- ignore and end word
                                 break
                             end
                             textlen = textlen + M.fz_runetochar(textbuf + textlen, ch.c)
-                            M.fz_union_rect(word_bbox, ch.bbox)
-                            M.fz_union_rect(line_bbox, ch.bbox)
+                            word_bbox = M.fz_union_rect(word_bbox, ch.bbox)
+                            line_bbox = M.fz_union_rect(line_bbox, ch.bbox)
                             if ch.c >= 0x4e00 and ch.c <= 0x9FFF or -- CJK Unified Ideographs
                                 ch.c >= 0x2000 and ch.c <= 0x206F or -- General Punctuation
                                 ch.c >= 0x3000 and ch.c <= 0x303F or -- CJK Symbols and Punctuation
@@ -477,8 +477,8 @@ function page_mt.__index:getPageText()
                         -- add word to line
                         table.insert(line, {
                             word = ffi.string(textbuf, textlen),
-                            x0 = word_bbox[0].x0, y0 = word_bbox[0].y0,
-                            x1 = word_bbox[0].x1, y1 = word_bbox[0].y1,
+                            x0 = word_bbox.x0, y0 = word_bbox.y0,
+                            x1 = word_bbox.x1, y1 = word_bbox.y1,
                         })
 
                         if ch == nil then
@@ -488,8 +488,8 @@ function page_mt.__index:getPageText()
                         ch = ch.next
                     end
 
-                    line.x0, line.y0 = line_bbox[0].x0, line_bbox[0].y0
-                    line.x1, line.y1 = line_bbox[0].x1, line_bbox[0].y1
+                    line.x0, line.y0 = line_bbox.x0, line_bbox.y0
+                    line.x1, line.y1 = line_bbox.x1, line_bbox.y1
 
                     table.insert(lines, line)
                 end
