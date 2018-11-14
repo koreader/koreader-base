@@ -104,7 +104,7 @@ MUPDF_WRAP(mupdf_new_pixmap, fz_pixmap*, NULL,
     fz_colorspace *cs, int w, int h, fz_separations *seps, int alpha)
 MUPDF_WRAP(mupdf_new_pixmap_with_bbox, fz_pixmap*, NULL,
     ret = fz_new_pixmap_with_bbox(ctx, cs, bbox, seps, alpha),
-    fz_colorspace *cs, const fz_irect *bbox, fz_separations *seps, int alpha)
+    fz_colorspace *cs, fz_irect bbox, fz_separations *seps, int alpha)
 MUPDF_WRAP(mupdf_new_pixmap_with_data, fz_pixmap*, NULL,
     ret = fz_new_pixmap_with_data(ctx, cs, w, h, seps, alpha, stride, samples),
     fz_colorspace *cs, int w, int h, fz_separations *seps, int alpha, int stride, unsigned char *samples)

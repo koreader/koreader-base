@@ -308,18 +308,18 @@ page_mt.__index.__gc = page_mt.__index.close
 calculate page size after applying DrawContext
 --]]
 function page_mt.__index:getSize(draw_context)
-    local bounds = ffi.new("fz_rect[1]")
-    local bbox = ffi.new("fz_irect[1]")
+    local bounds = ffi.new("fz_rect")
+    local bbox = ffi.new("fz_irect")
     local ctm = ffi.new("fz_matrix")
 
-    M.fz_scale(ctm, draw_context.zoom, draw_context.zoom)
-    M.fz_pre_rotate(ctm, draw_context.rotate)
+    ctm = M.fz_scale(draw_context.zoom, draw_context.zoom)
+    ctm = M.fz_pre_rotate(ctm, draw_context.rotate)
 
-    M.fz_bound_page(context(), self.page, bounds)
-    M.fz_transform_rect(bounds, ctm)
-    M.fz_round_rect(bbox, bounds)
+    bounds = M.fz_bound_page(context(), self.page)
+    bounds = M.fz_transform_rect(bounds, ctm)
+    bbox = M.fz_round_rect(bounds)
 
-    return bbox[0].x1-bbox[0].x0, bbox[0].y1-bbox[0].y0
+    return bbox.x1-bbox.x0, bbox.y1-bbox.y0
 end
 
 --[[
@@ -567,15 +567,15 @@ TODO: make this the used interface
 function page_mt.__index:draw_new(draw_context, width, height, offset_x, offset_y)
     local ctm = ffi.new("fz_matrix")
 
-    M.fz_scale(ctm, draw_context.zoom, draw_context.zoom)
-    M.fz_pre_rotate(ctm, draw_context.rotate)
-    M.fz_pre_translate(ctm, draw_context.offset_x, draw_context.offset_y)
+    ctm = M.fz_scale(draw_context.zoom, draw_context.zoom)
+    ctm = M.fz_pre_rotate(ctm, draw_context.rotate)
+    ctm = M.fz_pre_translate(ctm, draw_context.offset_x, draw_context.offset_y)
 
-    local bbox = ffi.new("fz_irect[1]")
-    bbox[0].x0 = offset_x
-    bbox[0].y0 = offset_y
-    bbox[0].x1 = offset_x + width
-    bbox[0].y1 = offset_y + height
+    local bbox = ffi.new("fz_irect")
+    bbox.x0 = offset_x
+    bbox.y0 = offset_y
+    bbox.x1 = offset_x + width
+    bbox.y1 = offset_y + height
 
     local bb = BlitBuffer.new(width, height, mupdf.color and BlitBuffer.TYPE_BBRGB32 or BlitBuffer.TYPE_BB8A)
 
@@ -847,11 +847,11 @@ end
 local function render_for_kopt(bmp, page, scale, bounds)
     local k2pdfopt = get_k2pdfopt()
 
-    local bbox = ffi.new("fz_irect[1]")
+    local bbox = ffi.new("fz_irect")
     local ctm = ffi.new("fz_matrix")
-    M.fz_scale(ctm, scale, scale)
-    M.fz_transform_rect(bounds, ctm)
-    M.fz_round_rect(bbox, bounds)
+    ctm = M.fz_scale(scale, scale)
+    bounds = M.fz_transform_rect(bounds, ctm)
+    bbox = M.fz_round_rect(bounds)
 
     local colorspace = mupdf.color and M.fz_device_rgb(context())
         or M.fz_device_gray(context())
@@ -873,19 +873,19 @@ end
 function page_mt.__index:reflow(kopt_context)
     local k2pdfopt = get_k2pdfopt()
 
-    local bounds = ffi.new("fz_rect[1]")
-    bounds[0].x0 = kopt_context.bbox.x0
-    bounds[0].y0 = kopt_context.bbox.y0
-    bounds[0].x1 = kopt_context.bbox.x1
-    bounds[0].y1 = kopt_context.bbox.y1
+    local bounds = ffi.new("fz_rect")
+    bounds.x0 = kopt_context.bbox.x0
+    bounds.y0 = kopt_context.bbox.y0
+    bounds.x1 = kopt_context.bbox.x1
+    bounds.y1 = kopt_context.bbox.y1
     -- probe scale
     local zoom = kopt_context.zoom * kopt_context.quality
-    M.fz_transform_rect(bounds, M.fz_identity)
-    local scale = (1.5 * zoom * kopt_context.dev_width) / bounds[0].x1
+    bounds = M.fz_transform_rect(bounds, M.fz_identity)
+    local scale = (1.5 * zoom * kopt_context.dev_width) / bounds.x1
     -- store zoom
     kopt_context.zoom = scale
     -- do real scale
-    mupdf.debug(string.format("reading page:%d,%d,%d,%d scale:%.2f",bounds[0].x0,bounds[0].y0,bounds[0].x1,bounds[0].y1,scale))
+    mupdf.debug(string.format("reading page:%d,%d,%d,%d scale:%.2f",bounds.x0,bounds.y0,bounds.x1,bounds.y1,scale))
     render_for_kopt(kopt_context.src, self, scale, bounds)
 
     if kopt_context.precache ~= 0 then
@@ -902,11 +902,11 @@ function page_mt.__index:reflow(kopt_context)
 end
 
 function page_mt.__index:getPagePix(kopt_context)
-    local bounds = ffi.new("fz_rect[1]")
-    bounds[0].x0 = kopt_context.bbox.x0
-    bounds[0].y0 = kopt_context.bbox.y0
-    bounds[0].x1 = kopt_context.bbox.x1
-    bounds[0].y1 = kopt_context.bbox.y1
+    local bounds = ffi.new("fz_rect")
+    bounds.x0 = kopt_context.bbox.x0
+    bounds.y0 = kopt_context.bbox.y0
+    bounds.x1 = kopt_context.bbox.x1
+    bounds.y1 = kopt_context.bbox.y1
 
     render_for_kopt(kopt_context.src, self, kopt_context.zoom, bounds)
 
@@ -918,8 +918,8 @@ function page_mt.__index:toBmp(bmp, dpi, color)
     local color_save = mupdf.color
     mupdf.color = color and true or false
 
-    local bounds = ffi.new("fz_rect[1]")
-    M.fz_bound_page(context(), self.page, bounds)
+    local bounds = ffi.new("fz_rect")
+    bounds = M.fz_bound_page(context(), self.page)
 
     render_for_kopt(bmp, self, dpi/72, bounds)
 
