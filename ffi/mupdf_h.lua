@@ -56,6 +56,19 @@ fz_matrix fz_pre_rotate(fz_matrix, float);
 fz_matrix fz_translate(float, float);
 fz_matrix fz_pre_translate(fz_matrix, float, float);
 fz_rect fz_transform_rect(fz_rect, fz_matrix);
+typedef struct fz_locks_context_s fz_locks_context;
+struct fz_locks_context_s {
+  void *user;
+  void (*lock)(void *, int);
+  void (*unlock)(void *, int);
+};
+typedef struct fz_alloc_context_s fz_alloc_context;
+struct fz_alloc_context_s {
+  void *user;
+  void *(*malloc)(void *, unsigned int);
+  void *(*realloc)(void *, void *, unsigned int);
+  void (*free)(void *, void *);
+};
 typedef struct fz_context_s fz_context;
 struct fz_context_s {
   void *user;
@@ -79,8 +92,8 @@ typedef struct fz_font_s fz_font;
 struct fz_font_s;
 typedef struct fz_hash_table_s fz_hash_table;
 struct fz_hash_table_s;
-typedef void fz_store_drop_fn(fz_context *, fz_storable *);
 typedef struct fz_storable_s fz_storable;
+typedef void fz_store_drop_fn(fz_context *, fz_storable *);
 struct fz_storable_s {
   int refs;
   fz_store_drop_fn *drop;
@@ -91,23 +104,21 @@ struct fz_key_storable_s {
   short int store_key_refs;
 };
 void fz_install_external_font_funcs(fz_context *);
+typedef struct fz_buffer_s fz_buffer;
+struct fz_buffer_s;
 fz_buffer *mupdf_new_buffer_from_shared_data(fz_context *, const unsigned char *, unsigned int);
 void *mupdf_drop_buffer(fz_context *, fz_buffer *);
-typedef struct fz_alloc_context_s fz_alloc_context;
-struct fz_alloc_context_s {
-  void *user;
-  void *(*malloc)(void *, unsigned int);
-  void *(*realloc)(void *, void *, unsigned int);
-  void (*free)(void *, void *);
-};
-typedef struct fz_locks_context_s fz_locks_context;
-struct fz_locks_context_s {
-  void *user;
-  void (*lock)(void *, int);
-  void (*unlock)(void *, int);
+typedef struct fz_color_params_s fz_color_params;
+struct fz_color_params_s {
+  unsigned char ri;
+  unsigned char bp;
+  unsigned char op;
+  unsigned char opm;
 };
 typedef struct fz_colorspace_s fz_colorspace;
 struct fz_colorspace_s;
+typedef struct fz_default_colorspaces_s fz_default_colorspaces;
+struct fz_default_colorspaces_s;
 fz_context *fz_new_context_imp(const fz_alloc_context *, const fz_locks_context *, unsigned int, const char *);
 void fz_drop_context(fz_context *);
 void fz_register_document_handlers(fz_context *);
@@ -156,8 +167,6 @@ struct fz_image_s {
   int colorkey[64];
   float decode[64];
 };
-typedef struct fz_buffer_s fz_buffer;
-struct fz_buffer_s;
 fz_image *mupdf_new_image_from_buffer(fz_context *, fz_buffer *);
 fz_pixmap *mupdf_get_pixmap_from_image(fz_context *, fz_image *, const fz_irect *, fz_matrix *, int *, int *);
 void *mupdf_save_pixmap_as_png(fz_context *, fz_pixmap *, const char *);
@@ -168,6 +177,18 @@ int fz_runetochar(char *, int);
 typedef struct fz_path_s fz_path;
 struct fz_path_s;
 typedef struct fz_stroke_state_s fz_stroke_state;
+enum fz_linecap_e {
+  FZ_LINECAP_BUTT = 0,
+  FZ_LINECAP_ROUND = 1,
+  FZ_LINECAP_SQUARE = 2,
+  FZ_LINECAP_TRIANGLE = 3,
+};
+enum fz_linejoin_e {
+  FZ_LINEJOIN_MITER = 0,
+  FZ_LINEJOIN_ROUND = 1,
+  FZ_LINEJOIN_BEVEL = 2,
+  FZ_LINEJOIN_MITER_XPS = 3,
+};
 struct fz_stroke_state_s {
   int refs;
   enum fz_linecap_e start_cap;
@@ -293,6 +314,24 @@ struct fz_outline_s {
   fz_outline *down;
   int is_open;
 };
+typedef struct fz_link_s fz_link;
+struct fz_link_s {
+  int refs;
+  fz_link *next;
+  fz_rect rect;
+  void *doc;
+  char *uri;
+};
+typedef struct fz_transition_s fz_transition;
+struct fz_transition_s {
+  int type;
+  float duration;
+  int vertical;
+  int outwards;
+  int direction;
+  int state0;
+  int state1;
+};
 typedef struct fz_page_s fz_page;
 struct fz_page_s {
   int refs;
@@ -309,14 +348,6 @@ struct fz_page_s {
   int (*overprint)(fz_context *, fz_page *);
   fz_page **prev;
   fz_page *next;
-};
-typedef struct fz_link_s fz_link;
-struct fz_link_s {
-  int refs;
-  fz_link *next;
-  fz_rect rect;
-  void *doc;
-  char *uri;
 };
 typedef struct fz_document_s fz_document;
 struct fz_document_s {
@@ -342,16 +373,6 @@ struct fz_document_s {
   int did_layout;
   int is_reflowable;
   fz_page *open;
-};
-typedef struct fz_transition_s fz_transition;
-struct fz_transition_s {
-  int type;
-  float duration;
-  int vertical;
-  int outwards;
-  int direction;
-  int state0;
-  int state1;
 };
 typedef struct fz_stream_s fz_stream;
 struct fz_stream_s {
@@ -441,15 +462,6 @@ fz_pixmap *fz_new_pixmap(fz_context *, fz_colorspace *, int, int, fz_separations
 fz_pixmap *mupdf_new_pixmap_with_bbox(fz_context *, fz_colorspace *, fz_irect, fz_separations *, int);
 fz_pixmap *mupdf_new_pixmap_with_data(fz_context *, fz_colorspace *, int, int, fz_separations *, int, int, unsigned char *);
 fz_pixmap *mupdf_new_pixmap_with_bbox_and_data(fz_context *, fz_colorspace *, fz_irect, fz_separations *, int, unsigned char *);
-typedef struct fz_default_colorspaces_s fz_default_colorspaces;
-struct fz_default_colorspaces_s;
-typedef struct fz_color_params_s fz_color_params;
-struct fz_color_params_s {
-  unsigned char ri;
-  unsigned char bp;
-  unsigned char op;
-  unsigned char opm;
-};
 fz_pixmap *fz_convert_pixmap(fz_context *, fz_pixmap *, fz_colorspace *, fz_colorspace *, fz_default_colorspaces *, const fz_color_params *, int);
 fz_pixmap *fz_keep_pixmap(fz_context *, fz_pixmap *);
 void fz_drop_pixmap(fz_context *, fz_pixmap *);
@@ -521,6 +533,17 @@ struct pdf_lexbuf_large_s {
 typedef struct pdf_obj_s pdf_obj;
 struct pdf_obj_s;
 typedef struct pdf_annot_s pdf_annot;
+typedef struct pdf_crypt_s pdf_crypt;
+typedef struct pdf_ocg_descriptor_s pdf_ocg_descriptor;
+typedef struct pdf_portfolio_s pdf_portfolio;
+typedef struct pdf_xref_subsec_s pdf_xref_subsec;
+typedef struct pdf_unsaved_sig_s pdf_unsaved_sig;
+typedef struct pdf_xref_s pdf_xref;
+typedef struct pdf_rev_page_map_s pdf_rev_page_map;
+typedef struct pdf_js_s pdf_js;
+typedef struct pdf_doc_event_s pdf_doc_event;
+typedef struct pdf_document_s pdf_document;
+typedef struct pdf_page_s pdf_page;
 struct pdf_annot_s {
   fz_annot super;
   pdf_page *page;
@@ -530,7 +553,6 @@ struct pdf_annot_s {
   int has_new_ap;
   pdf_annot *next;
 };
-typedef struct pdf_page_s pdf_page;
 struct pdf_page_s {
   fz_page super;
   pdf_document *doc;
@@ -542,20 +564,15 @@ struct pdf_page_s {
   pdf_annot *annots;
   pdf_annot **annot_tailp;
 };
-typedef struct pdf_crypt_s pdf_crypt;
 struct pdf_crypt_s;
-typedef struct pdf_ocg_descriptor_s pdf_ocg_descriptor;
 struct pdf_ocg_descriptor_s;
-typedef struct pdf_portfolio_s pdf_portfolio;
 struct pdf_portfolio_s;
-typedef struct pdf_xref_subsec_s pdf_xref_subsec;
 struct pdf_xref_subsec_s {
   pdf_xref_subsec *next;
   int len;
   int start;
   struct pdf_xref_entry_s *table;
 };
-typedef struct pdf_unsaved_sig_s pdf_unsaved_sig;
 struct pdf_unsaved_sig_s {
   pdf_obj *field;
   int byte_range_start;
@@ -565,7 +582,6 @@ struct pdf_unsaved_sig_s {
   struct pdf_pkcs7_signer_s *signer;
   pdf_unsaved_sig *next;
 };
-typedef struct pdf_xref_s pdf_xref;
 struct pdf_xref_s {
   int num_objects;
   pdf_xref_subsec *subsec;
@@ -575,18 +591,14 @@ struct pdf_xref_s {
   pdf_unsaved_sig **unsaved_sigs_end;
   long long int end_ofs;
 };
-typedef struct pdf_rev_page_map_s pdf_rev_page_map;
 struct pdf_rev_page_map_s {
   int page;
   int object;
 };
-typedef struct pdf_js_s pdf_js;
 struct pdf_js_s;
-typedef struct pdf_doc_event_s pdf_doc_event;
 struct pdf_doc_event_s {
   int type;
 };
-typedef struct pdf_document_s pdf_document;
 struct pdf_document_s {
   fz_document super;
   fz_stream *file;
