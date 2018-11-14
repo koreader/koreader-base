@@ -1,20 +1,49 @@
 diff --git a/Makefile b/Makefile
-index 114a6eb6..73880a64 100644
+index 37fc48e6..3d6b2b3b 100644
 --- a/Makefile
 +++ b/Makefile
-@@ -320,7 +320,6 @@ MUPDF_OBJ := \
- 	$(FITZ_OBJ) \
- 	$(PDF_OBJ) \
- 	$(CMAP_OBJ) \
--	$(FONT_OBJ) \
- 	$(JAVASCRIPT_OBJ) \
- 	$(XPS_OBJ) \
- 	$(SVG_OBJ) \
+@@ -131,36 +131,6 @@ PKCS7_SRC := source/helpers/pkcs7/pkcs7-check.c
+ PKCS7_SRC += source/helpers/pkcs7/pkcs7-openssl.c
+ PKCS7_OBJ := $(PKCS7_SRC:%.c=$(OUT)/%.o)
+ 
+-# --- Generated embedded font files ---
+-
+-HEXDUMP_EXE := $(OUT)/scripts/hexdump.exe
+-
+-FONT_BIN := $(sort $(wildcard resources/fonts/urw/*.cff))
+-FONT_BIN += $(sort $(wildcard resources/fonts/han/*.ttc))
+-FONT_BIN += $(sort $(wildcard resources/fonts/droid/*.ttf))
+-FONT_BIN += $(sort $(wildcard resources/fonts/noto/*.otf))
+-FONT_BIN += $(sort $(wildcard resources/fonts/noto/*.ttf))
+-FONT_BIN += $(sort $(wildcard resources/fonts/sil/*.cff))
+-
+-FONT_GEN := $(FONT_BIN:%=generated/%.c)
+-
+-generated/%.cff.c : %.cff $(HEXDUMP_EXE) ; $(QUIET_GEN) $(MKTGTDIR) ; $(HEXDUMP_EXE) -s $@ $<
+-generated/%.otf.c : %.otf $(HEXDUMP_EXE) ; $(QUIET_GEN) $(MKTGTDIR) ; $(HEXDUMP_EXE) -s $@ $<
+-generated/%.ttf.c : %.ttf $(HEXDUMP_EXE) ; $(QUIET_GEN) $(MKTGTDIR) ; $(HEXDUMP_EXE) -s $@ $<
+-generated/%.ttc.c : %.ttc $(HEXDUMP_EXE) ; $(QUIET_GEN) $(MKTGTDIR) ; $(HEXDUMP_EXE) -s $@ $<
+-
+-ifeq ($(HAVE_OBJCOPY),yes)
+-  MUPDF_OBJ += $(FONT_BIN:%=$(OUT)/%.o)
+-  $(OUT)/%.cff.o : %.cff ; $(OBJCOPY_CMD)
+-  $(OUT)/%.otf.o : %.otf ; $(OBJCOPY_CMD)
+-  $(OUT)/%.ttf.o : %.ttf ; $(OBJCOPY_CMD)
+-  $(OUT)/%.ttc.o : %.ttc ; $(OBJCOPY_CMD)
+-else
+-  MUPDF_OBJ += $(FONT_GEN:%.c=$(OUT)/%.o)
+-endif
+-
+-generate: $(FONT_GEN)
+-
+ # --- Generated ICC profiles ---
+ 
+ source/fitz/icc/%.icc.h: resources/icc/%.icc
 diff --git a/include/mupdf/fitz/font.h b/include/mupdf/fitz/font.h
-index ef4cd74d..6e6ea124 100644
+index 4565983c..88f6cc00 100644
 --- a/include/mupdf/fitz/font.h
 +++ b/include/mupdf/fitz/font.h
-@@ -624,4 +624,9 @@ void fz_hb_lock(fz_context *ctx);
+@@ -610,4 +610,9 @@ void fz_hb_lock(fz_context *ctx);
  */
  void fz_hb_unlock(fz_context *ctx);
  
@@ -25,33 +54,54 @@ index ef4cd74d..6e6ea124 100644
 +
  #endif
 diff --git a/source/fitz/font.c b/source/fitz/font.c
-index e197fa1b..03bfbb34 100644
+index 733d91da..dde55b02 100644
 --- a/source/fitz/font.c
 +++ b/source/fitz/font.c
-@@ -420,13 +420,19 @@ fz_font *fz_load_fallback_font(fz_context *ctx, int script, int language, int se
+@@ -427,26 +427,38 @@ fz_font *fz_load_fallback_font(fz_context *ctx, int script, int language, int se
  
- fz_font *fz_load_fallback_symbol_font(fz_context *ctx)
+ static fz_font *fz_load_fallback_symbol1_font(fz_context *ctx)
  {
 -	const unsigned char *data;
 -	int size;
- 	if (!ctx->font->symbol)
+ 	if (!ctx->font->symbol1)
  	{
 +#ifndef NOBUILTINFONT
 +		const unsigned char *data;
 +		int size;
- 		data = fz_lookup_noto_symbol_font(ctx, &size);
+ 		data = fz_lookup_noto_symbol1_font(ctx, &size);
  		if (data)
- 			ctx->font->symbol = fz_new_font_from_memory(ctx, NULL, data, size, 0, 0);
+ 			ctx->font->symbol1 = fz_new_font_from_memory(ctx, NULL, data, size, 0, 0);
 +#else
 +		char *filename = get_font_file("freefont/FreeSans.ttf");
-+		ctx->font->symbol = fz_new_font_from_file(ctx, NULL, filename, 0, 1);
++		ctx->font->symbol1 = fz_new_font_from_file(ctx, NULL, filename, 0, 1);
 +		free(filename);
 +#endif
  	}
- 	return ctx->font->symbol;
+ 	return ctx->font->symbol1;
+ }
+ 
+ static fz_font *fz_load_fallback_symbol2_font(fz_context *ctx)
+ {
+-	const unsigned char *data;
+-	int size;
+ 	if (!ctx->font->symbol2)
+ 	{
++#ifndef NOBUILTINFONT
++		const unsigned char *data;
++		int size;
+ 		data = fz_lookup_noto_symbol2_font(ctx, &size);
+ 		if (data)
+ 			ctx->font->symbol2 = fz_new_font_from_memory(ctx, NULL, data, size, 0, 0);
++#else
++		char *filename = get_font_file("freefont/FreeSerif.ttf");
++		ctx->font->symbol2 = fz_new_font_from_file(ctx, NULL, filename, 0, 1);
++		free(filename);
++#endif
+ 	}
+ 	return ctx->font->symbol2;
  }
 diff --git a/source/fitz/noto.c b/source/fitz/noto.c
-index f6951ba2..b1fdd981 100644
+index 7ab62488..4baaab23 100644
 --- a/source/fitz/noto.c
 +++ b/source/fitz/noto.c
 @@ -1,8 +1,12 @@
@@ -67,7 +117,7 @@ index f6951ba2..b1fdd981 100644
  /*
  	Base 14 PDF fonts from URW.
  	Noto fonts from Google.
-@@ -367,3 +371,152 @@ fz_lookup_noto_emoji_font(fz_context *ctx, int *size)
+@@ -404,3 +408,152 @@ fz_lookup_noto_emoji_font(fz_context *ctx, int *size)
  	return *size = 0, NULL;
  #endif
  }
@@ -312,7 +362,7 @@ index d319a462..df823fa0 100644
  
  	return NULL;
 diff --git a/source/pdf/pdf-font.c b/source/pdf/pdf-font.c
-index be69ce1c..e71d4dc9 100644
+index a0df70fd..0034ff44 100644
 --- a/source/pdf/pdf-font.c
 +++ b/source/pdf/pdf-font.c
 @@ -54,6 +54,8 @@ static const char *base_font_names[][10] =
@@ -372,7 +422,7 @@ index be69ce1c..e71d4dc9 100644
  static int is_dynalab(char *name)
  {
  	if (strstr(name, "HuaTian"))
-@@ -350,6 +393,7 @@ pdf_load_builtin_font(fz_context *ctx, pdf_font_desc *fontdesc, const char *font
+@@ -356,6 +399,7 @@ pdf_load_builtin_font(fz_context *ctx, pdf_font_desc *fontdesc, const char *font
  	fontdesc->font = fz_load_system_font(ctx, fontname, 0, 0, !has_descriptor);
  	if (!fontdesc->font)
  	{
@@ -380,7 +430,7 @@ index be69ce1c..e71d4dc9 100644
  		const unsigned char *data;
  		int len;
  
-@@ -358,6 +402,15 @@ pdf_load_builtin_font(fz_context *ctx, pdf_font_desc *fontdesc, const char *font
+@@ -364,6 +408,15 @@ pdf_load_builtin_font(fz_context *ctx, pdf_font_desc *fontdesc, const char *font
  			fz_throw(ctx, FZ_ERROR_GENERIC, "cannot find builtin font: '%s'", fontname);
  
  		fontdesc->font = fz_new_font_from_memory(ctx, fontname, data, len, 0, 1);
@@ -396,7 +446,7 @@ index be69ce1c..e71d4dc9 100644
  		fontdesc->font->flags.is_serif = !!strstr(clean_name, "Times");
  	}
  
-@@ -375,6 +428,7 @@ pdf_load_substitute_font(fz_context *ctx, pdf_font_desc *fontdesc, const char *f
+@@ -381,6 +434,7 @@ pdf_load_substitute_font(fz_context *ctx, pdf_font_desc *fontdesc, const char *f
  	fontdesc->font = fz_load_system_font(ctx, fontname, bold, italic, 0);
  	if (!fontdesc->font)
  	{
@@ -404,7 +454,7 @@ index be69ce1c..e71d4dc9 100644
  		const unsigned char *data;
  		int len;
  
-@@ -383,6 +437,17 @@ pdf_load_substitute_font(fz_context *ctx, pdf_font_desc *fontdesc, const char *f
+@@ -389,6 +443,17 @@ pdf_load_substitute_font(fz_context *ctx, pdf_font_desc *fontdesc, const char *f
  			fz_throw(ctx, FZ_ERROR_GENERIC, "cannot find substitute font");
  
  		fontdesc->font = fz_new_font_from_memory(ctx, fontname, data, len, 0, 1);
@@ -422,21 +472,21 @@ index be69ce1c..e71d4dc9 100644
  		fontdesc->font->flags.fake_bold = bold && !fontdesc->font->flags.is_bold;
  		fontdesc->font->flags.fake_italic = italic && !fontdesc->font->flags.is_italic;
  
-@@ -402,6 +467,8 @@ pdf_load_substitute_cjk_font(fz_context *ctx, pdf_font_desc *fontdesc, const cha
+@@ -408,6 +473,8 @@ pdf_load_substitute_cjk_font(fz_context *ctx, pdf_font_desc *fontdesc, const cha
  	fontdesc->font = fz_load_system_cjk_font(ctx, fontname, ros, serif);
  	if (!fontdesc->font)
  	{
 +		/* A glyph bbox cache is too big for CJK fonts. */
 +#ifndef NOBUILTINFONT
  		const unsigned char *data;
- 		int len;
- 		int index;
-@@ -410,8 +477,15 @@ pdf_load_substitute_cjk_font(fz_context *ctx, pdf_font_desc *fontdesc, const cha
+ 		int size;
+ 		int subfont;
+@@ -416,8 +483,15 @@ pdf_load_substitute_cjk_font(fz_context *ctx, pdf_font_desc *fontdesc, const cha
  		if (!data)
  			fz_throw(ctx, FZ_ERROR_GENERIC, "cannot find builtin CJK font");
  
 -		/* A glyph bbox cache is too big for CJK fonts. */
- 		fontdesc->font = fz_new_font_from_memory(ctx, fontname, data, len, index, 0);
+ 		fontdesc->font = fz_new_font_from_memory(ctx, fontname, data, size, subfont, 0);
 +#else
 +		char *filename = fz_lookup_cjk_font_from_file(ctx, ros, serif, fontdesc->wmode);
 +		if (!filename)

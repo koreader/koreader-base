@@ -1,8 +1,8 @@
 diff --git a/include/mupdf/fitz/archive.h b/include/mupdf/fitz/archive.h
-index c204b34f..4854c1ac 100644
+index 317ab996..15f84beb 100644
 --- a/include/mupdf/fitz/archive.h
 +++ b/include/mupdf/fitz/archive.h
-@@ -178,6 +178,9 @@ fz_archive *fz_open_zip_archive(fz_context *ctx, const char *path);
+@@ -180,6 +180,9 @@ fz_archive *fz_open_zip_archive(fz_context *ctx, const char *path);
  */
  fz_archive *fz_open_zip_archive_with_stream(fz_context *ctx, fz_stream *file);
  
@@ -13,10 +13,10 @@ index c204b34f..4854c1ac 100644
  
  fz_zip_writer *fz_new_zip_writer(fz_context *ctx, const char *filename);
 diff --git a/source/cbz/mucbz.c b/source/cbz/mucbz.c
-index 2d357b6e..861a7902 100644
+index 5cbdf0ca..34c89d74 100644
 --- a/source/cbz/mucbz.c
 +++ b/source/cbz/mucbz.c
-@@ -210,6 +210,20 @@ cbz_load_page(fz_context *ctx, fz_document *doc_, int number)
+@@ -211,6 +211,20 @@ cbz_load_page(fz_context *ctx, fz_document *doc_, int number)
  	return (fz_page*)page;
  }
  
@@ -37,7 +37,7 @@ index 2d357b6e..861a7902 100644
  static int
  cbz_lookup_metadata(fz_context *ctx, fz_document *doc_, const char *key, char *buf, int size)
  {
-@@ -230,6 +244,8 @@ cbz_open_document_with_stream(fz_context *ctx, fz_stream *file)
+@@ -231,6 +245,8 @@ cbz_open_document_with_stream(fz_context *ctx, fz_stream *file)
  	doc->super.count_pages = cbz_count_pages;
  	doc->super.load_page = cbz_load_page;
  	doc->super.lookup_metadata = cbz_lookup_metadata;
@@ -47,7 +47,7 @@ index 2d357b6e..861a7902 100644
  	fz_try(ctx)
  	{
 diff --git a/source/fitz/unzip.c b/source/fitz/unzip.c
-index 4eb90dda..a9dee1c2 100644
+index dfe4fb6b..3d1e1824 100644
 --- a/source/fitz/unzip.c
 +++ b/source/fitz/unzip.c
 @@ -20,6 +20,27 @@
@@ -228,7 +228,7 @@ index 4eb90dda..a9dee1c2 100644
 +		method = zip->aes_compression_method;
 +	}
  	if (method == 0)
- 		return fz_open_null(ctx, file, ent->usize, fz_tell(ctx, file));
+ 		return fz_open_null_filter(ctx, file, ent->usize, fz_tell(ctx, file));
  	if (method == 8)
 @@ -299,6 +392,7 @@ static fz_buffer *read_zip_entry(fz_context *ctx, fz_archive *arch, const char *
  	fz_buffer *ubuf;
