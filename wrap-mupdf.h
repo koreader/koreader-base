@@ -92,10 +92,10 @@ MUPDF_WRAP(mupdf_new_bbox_device, fz_device*, NULL,
     fz_rect *rectp)
 MUPDF_WRAP(mupdf_new_draw_device, fz_device*, NULL,
     ret = fz_new_draw_device(ctx, transform, dest),
-    const fz_matrix *transform, fz_pixmap *dest)
+    fz_matrix transform, fz_pixmap *dest)
 MUPDF_WRAP(mupdf_run_page, void*, NULL,
     { fz_run_page(ctx, page, dev, transform, cookie); ret = (void*) -1; },
-    fz_page *page, fz_device *dev, const fz_matrix *transform, fz_cookie *cookie)
+    fz_page *page, fz_device *dev, fz_matrix transform, fz_cookie *cookie)
 MUPDF_WRAP(mupdf_pdf_save_document, void*, NULL,
     { pdf_save_document(ctx, doc, filename, opts); ret = (void*) -1; },
     pdf_document *doc, const char *filename, pdf_write_options *opts)
@@ -110,7 +110,7 @@ MUPDF_WRAP(mupdf_new_pixmap_with_data, fz_pixmap*, NULL,
     fz_colorspace *cs, int w, int h, fz_separations *seps, int alpha, int stride, unsigned char *samples)
 MUPDF_WRAP(mupdf_new_pixmap_with_bbox_and_data, fz_pixmap*, NULL,
     ret = fz_new_pixmap_with_bbox_and_data(ctx, cs, rect, seps, alpha, samples),
-    fz_colorspace *cs, const fz_irect *rect, fz_separations *seps, int alpha, unsigned char *samples)
+    fz_colorspace *cs, fz_irect rect, fz_separations *seps, int alpha, unsigned char *samples)
 MUPDF_WRAP(mupdf_load_links, fz_link*, NULL,
     ret = fz_load_links(ctx, page),
     fz_page *page)
