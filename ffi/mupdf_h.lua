@@ -260,7 +260,7 @@ fz_stext_page *mupdf_new_stext_page_from_page(fz_context *, fz_page *, const fz_
 void fz_drop_stext_page(fz_context *, fz_stext_page *);
 fz_pixmap *mupdf_new_pixmap(fz_context *, fz_colorspace *, int, int, struct fz_separations_s *, int);
 fz_pixmap *fz_new_pixmap(fz_context *, fz_colorspace *, int, int, struct fz_separations_s *, int);
-fz_pixmap *mupdf_new_pixmap_with_bbox(fz_context *, fz_colorspace *, const fz_irect *, struct fz_separations_s *, int);
+fz_pixmap *mupdf_new_pixmap_with_bbox(fz_context *, fz_colorspace *, fz_irect, struct fz_separations_s *, int);
 fz_pixmap *mupdf_new_pixmap_with_data(fz_context *, fz_colorspace *, int, int, struct fz_separations_s *, int, int, unsigned char *);
 fz_pixmap *mupdf_new_pixmap_with_bbox_and_data(fz_context *, fz_colorspace *, const fz_irect *, struct fz_separations_s *, int, unsigned char *);
 fz_pixmap *fz_convert_pixmap(fz_context *, fz_pixmap *, fz_colorspace *, fz_colorspace *, struct fz_default_colorspaces_s *, const struct fz_color_params_s *, int);
