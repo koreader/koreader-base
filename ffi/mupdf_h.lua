@@ -262,7 +262,7 @@ fz_pixmap *mupdf_new_pixmap(fz_context *, fz_colorspace *, int, int, struct fz_s
 fz_pixmap *fz_new_pixmap(fz_context *, fz_colorspace *, int, int, struct fz_separations_s *, int);
 fz_pixmap *mupdf_new_pixmap_with_bbox(fz_context *, fz_colorspace *, fz_irect, struct fz_separations_s *, int);
 fz_pixmap *mupdf_new_pixmap_with_data(fz_context *, fz_colorspace *, int, int, struct fz_separations_s *, int, int, unsigned char *);
-fz_pixmap *mupdf_new_pixmap_with_bbox_and_data(fz_context *, fz_colorspace *, const fz_irect *, struct fz_separations_s *, int, unsigned char *);
+fz_pixmap *mupdf_new_pixmap_with_bbox_and_data(fz_context *, fz_colorspace *, fz_irect, struct fz_separations_s *, int, unsigned char *);
 fz_pixmap *fz_convert_pixmap(fz_context *, fz_pixmap *, fz_colorspace *, fz_colorspace *, struct fz_default_colorspaces_s *, const struct fz_color_params_s *, int);
 fz_pixmap *fz_keep_pixmap(fz_context *, fz_pixmap *);
 void fz_drop_pixmap(fz_context *, fz_pixmap *);
@@ -283,10 +283,10 @@ struct fz_color_params_s {
   unsigned char opm;
 };
 const struct fz_color_params_s *fz_default_color_params(fz_context *);
-struct fz_device_s *mupdf_new_draw_device(fz_context *, const fz_matrix *, fz_pixmap *);
+struct fz_device_s *mupdf_new_draw_device(fz_context *, fz_matrix, fz_pixmap *);
 struct fz_device_s *mupdf_new_text_device(fz_context *, fz_stext_page *, const fz_stext_options *);
 struct fz_device_s *mupdf_new_bbox_device(fz_context *, fz_rect *);
-void *mupdf_run_page(fz_context *, fz_page *, struct fz_device_s *, const fz_matrix *, struct fz_cookie_s *);
+void *mupdf_run_page(fz_context *, fz_page *, struct fz_device_s *, fz_matrix, struct fz_cookie_s *);
 void fz_close_device(fz_context *, struct fz_device_s *);
 void fz_drop_device(fz_context *, struct fz_device_s *);
 enum pdf_annot_type {
