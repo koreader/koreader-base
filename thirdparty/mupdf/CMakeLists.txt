@@ -10,7 +10,7 @@ enable_language(C)
 assert_var_defined(HOSTCFLAGS)
 assert_var_defined(HOSTCC)
 assert_var_defined(OS)
-set(BUILD_CMD_GENERATE sh -c "env CFLAGS=\"${HOSTCFLAGS}\" $(MAKE) -j${PARALLEL_JOBS} generate build=\"release\" CC=\"${HOSTCC}\" verbose=\"yes\"")
+set(BUILD_CMD_GENERATE sh -c "env CFLAGS=\"${HOSTCFLAGS}\" $(MAKE) -j${PARALLEL_JOBS} generate build=\"release\" CC=\"${HOSTCC}\" verbose=\"1\"")
 
 assert_var_defined(LDFLAGS)
 assert_var_defined(XCFLAGS)
@@ -22,7 +22,7 @@ set(STATIC_BUILD_CMD "$(MAKE) -j${PARALLEL_JOBS}")
 set(STATIC_BUILD_CMD "${STATIC_BUILD_CMD} LDFLAGS=\"${LDFLAGS}\" XCFLAGS=\"${XCFLAGS}\"")
 set(STATIC_BUILD_CMD "${STATIC_BUILD_CMD} CC=\"${CC}\" CXX=\"${CXX}\" AR=\"${AR}\" build=\"release\" OS=\"${OS}\"")
 set(STATIC_BUILD_CMD "${STATIC_BUILD_CMD} HAVE_CURL=\"no\" HAVE_GLUT=\"no\" HAVE_X11=\"no\"")
-set(STATIC_BUILD_CMD "${STATIC_BUILD_CMD} verbose=\"yes\" USE_SYSTEM_FREETYPE=\"yes\" USE_SYSTEM_HARFBUZZ=\"yes\" USE_SYSTEM_LIBJPEG=\"yes\" USE_SYSTEM_ZLIB=\"yes\"")
+set(STATIC_BUILD_CMD "${STATIC_BUILD_CMD} verbose=\"1\" USE_SYSTEM_FREETYPE=\"yes\" USE_SYSTEM_HARFBUZZ=\"yes\" USE_SYSTEM_LIBJPEG=\"yes\" USE_SYSTEM_ZLIB=\"yes\"")
 set(STATIC_BUILD_CMD sh -c "${STATIC_BUILD_CMD} third libs")
 
 # by default, mupdf compiles to a static library:
