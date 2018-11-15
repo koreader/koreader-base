@@ -117,17 +117,22 @@ describe("mupdf module", function()
         end)
         it("should open a page, add an annotation and write a new document", function()
             local ffi = require("ffi")
+            print("openDocument")
             local doc = M.openDocument(simple_pdf)
             assert.is_not_nil(doc)
+            print("openPage")
             local page = doc:openPage(1)
             assert.is_not_nil(page)
+            print("addMarkupAnnotation")
             page:addMarkupAnnotation(ffi.new("float[8]", {
                  70,  930,
                 510,  930,
                 510,  970,
                  70,  970 }),
                 1, ffi.C.PDF_ANNOT_HIGHLIGHT)
+            print("close")
             page:close()
+            print("writeDocument")
             doc:writeDocument(simple_pdf_out)
             local out_f = io.open(simple_pdf_out, "r")
             out_f:read("*a")
