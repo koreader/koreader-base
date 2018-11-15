@@ -308,16 +308,12 @@ page_mt.__index.__gc = page_mt.__index.close
 calculate page size after applying DrawContext
 --]]
 function page_mt.__index:getSize(draw_context)
-    local bounds = ffi.new("fz_rect")
-    local bbox = ffi.new("fz_irect")
-    local ctm = ffi.new("fz_matrix")
-
-    ctm = M.fz_scale(draw_context.zoom, draw_context.zoom)
+    local ctm = M.fz_scale(draw_context.zoom, draw_context.zoom)
     ctm = M.fz_pre_rotate(ctm, draw_context.rotate)
 
-    bounds = M.fz_bound_page(context(), self.page)
+    local bounds = M.fz_bound_page(context(), self.page)
     bounds = M.fz_transform_rect(bounds, ctm)
-    bbox = M.fz_round_rect(bounds)
+    local bbox = M.fz_round_rect(bounds)
 
     return bbox.x1-bbox.x0, bbox.y1-bbox.y0
 end
@@ -565,9 +561,7 @@ new interface: creates the blitbuffer with the rendered data and returns that
 TODO: make this the used interface
 --]]
 function page_mt.__index:draw_new(draw_context, width, height, offset_x, offset_y)
-    local ctm = ffi.new("fz_matrix")
-
-    ctm = M.fz_scale(draw_context.zoom, draw_context.zoom)
+    local ctm = M.fz_scale(draw_context.zoom, draw_context.zoom)
     ctm = M.fz_pre_rotate(ctm, draw_context.rotate)
     ctm = M.fz_pre_translate(ctm, draw_context.offset_x, draw_context.offset_y)
 
@@ -847,11 +841,9 @@ end
 local function render_for_kopt(bmp, page, scale, bounds)
     local k2pdfopt = get_k2pdfopt()
 
-    local bbox = ffi.new("fz_irect")
-    local ctm = ffi.new("fz_matrix")
-    ctm = M.fz_scale(scale, scale)
+    local ctm = M.fz_scale(scale, scale)
     bounds = M.fz_transform_rect(bounds, ctm)
-    bbox = M.fz_round_rect(bounds)
+    local bbox = M.fz_round_rect(bounds)
 
     local colorspace = mupdf.color and M.fz_device_rgb(context())
         or M.fz_device_gray(context())
@@ -918,8 +910,7 @@ function page_mt.__index:toBmp(bmp, dpi, color)
     local color_save = mupdf.color
     mupdf.color = color and true or false
 
-    local bounds = ffi.new("fz_rect")
-    bounds = M.fz_bound_page(context(), self.page)
+    local bounds = M.fz_bound_page(context(), self.page)
 
     render_for_kopt(bmp, self, dpi/72, bounds)
 
