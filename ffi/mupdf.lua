@@ -632,6 +632,7 @@ function page_mt.__index:addMarkupAnnotation(points, n, type)
     local ok = W.mupdf_pdf_set_annot_quad_points(context(), annot, n, points)
     if ok == nil then merror("could not set markup annot quadpoints") end
 
+    -- FIXME: is gone (https://github.com/ArtifexSoftware/mupdf/commit/8fc19912a4898ca6993a2acf92116e621d140f7a)
     ok = W.mupdf_pdf_set_markup_appearance(context(), doc, annot, color, alpha, line_thickness, line_height)
     if ok == nil then merror("could not set markup appearance") end
 end
