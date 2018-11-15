@@ -623,19 +623,15 @@ function page_mt.__index:addMarkupAnnotation(points, n, type)
         return
     end
 
-    print("pdf_specifics")
     local doc = M.pdf_specifics(context(), self.doc.doc)
     if doc == nil then merror("could not get pdf_specifics") end
 
-    print("mupdf_pdf_create_annot")
     local annot = W.mupdf_pdf_create_annot(context(), ffi.cast("pdf_page*", self.page), type)
     if annot == nil then merror("could not create annotation") end
 
-    print("mupdf_pdf_set_annot_quad_points")
     local ok = W.mupdf_pdf_set_annot_quad_points(context(), annot, n, points)
     if ok == nil then merror("could not set markup annot quadpoints") end
 
-    print("mupdf_pdf_set_markup_appearance")
     ok = W.mupdf_pdf_set_markup_appearance(context(), doc, annot, color, alpha, line_thickness, line_height)
     if ok == nil then merror("could not set markup appearance") end
 end
