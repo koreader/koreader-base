@@ -40,7 +40,7 @@ index 37fc48e6..3d6b2b3b 100644
  
  source/fitz/icc/%.icc.h: resources/icc/%.icc
 diff --git a/include/mupdf/fitz/font.h b/include/mupdf/fitz/font.h
-index 4565983c..88f6cc00 100644
+index 4565983c..0914edb9 100644
 --- a/include/mupdf/fitz/font.h
 +++ b/include/mupdf/fitz/font.h
 @@ -610,4 +610,9 @@ void fz_hb_lock(fz_context *ctx);
@@ -49,7 +49,7 @@ index 4565983c..88f6cc00 100644
  
 +char *get_font_file(char *name);
 +char *fz_lookup_base14_font_from_file(fz_context *ctx, const char *name);
-+char *fz_lookup_cjk_font_from_file(fz_context *ctx, int registry, int serif, int wmode);
++char *fz_lookup_cjk_font_from_file(fz_context *ctx);
 +void fz_install_external_font_funcs(fz_context *ctx);
 +
  #endif
@@ -101,7 +101,7 @@ index 733d91da..dde55b02 100644
  	return ctx->font->symbol2;
  }
 diff --git a/source/fitz/noto.c b/source/fitz/noto.c
-index 7ab62488..4baaab23 100644
+index 7ab62488..6ce7e408 100644
 --- a/source/fitz/noto.c
 +++ b/source/fitz/noto.c
 @@ -1,8 +1,12 @@
@@ -117,7 +117,7 @@ index 7ab62488..4baaab23 100644
  /*
  	Base 14 PDF fonts from URW.
  	Noto fonts from Google.
-@@ -404,3 +408,152 @@ fz_lookup_noto_emoji_font(fz_context *ctx, int *size)
+@@ -404,3 +408,160 @@ fz_lookup_noto_emoji_font(fz_context *ctx, int *size)
  	return *size = 0, NULL;
  #endif
  }
@@ -211,34 +211,42 @@ index 7ab62488..4baaab23 100644
 +}
 +
 +const unsigned char *
-+fz_lookup_builtin_font(fz_context *ctx, const char *name, int is_bold, int is_italic, int *size)
++fz_lookup_builtin_font(fz_context *ctx, const char *name, int bold, int italic, int *size)
 +{
 +	*size = 0;
 +	return NULL;
 +}
 +
 +const unsigned char *
-+fz_lookup_cjk_font(fz_context *ctx, int registry, int serif, int wmode, int *size, int *index)
++fz_lookup_cjk_font(fz_context *ctx, int ordering, int *size, int *index)
 +{
 +	*size = 0;
 +	return NULL;
 +}
 +
 +char *
-+fz_lookup_cjk_font_from_file(fz_context *ctx, int registry, int serif, int wmode)
++fz_lookup_cjk_font_from_file(fz_context *ctx)
 +{
 +	return get_font_file("noto/NotoSansCJKsc-Regular.otf");
 +}
 +
 +const unsigned char *
-+fz_lookup_noto_font(fz_context *ctx, int script, int language, int serif, int *size)
++fz_lookup_noto_font(fz_context *ctx, int script, int lang, int *size, int *subfont)
++{
++	*size = 0;
++	*subfont = 0;
++	return NULL;
++}
++
++const unsigned char *
++fz_lookup_noto_symbol1_font(fz_context *ctx, int *size)
 +{
 +	*size = 0;
 +	return NULL;
 +}
 +
 +const unsigned char *
-+fz_lookup_noto_symbol_font(fz_context *ctx, int *size)
++fz_lookup_noto_symbol2_font(fz_context *ctx, int *size)
 +{
 +	*size = 0;
 +	return NULL;
@@ -362,7 +370,7 @@ index d319a462..df823fa0 100644
  
  	return NULL;
 diff --git a/source/pdf/pdf-font.c b/source/pdf/pdf-font.c
-index a0df70fd..0034ff44 100644
+index a0df70fd..109d0b46 100644
 --- a/source/pdf/pdf-font.c
 +++ b/source/pdf/pdf-font.c
 @@ -54,6 +54,8 @@ static const char *base_font_names[][10] =
@@ -488,7 +496,7 @@ index a0df70fd..0034ff44 100644
 -		/* A glyph bbox cache is too big for CJK fonts. */
  		fontdesc->font = fz_new_font_from_memory(ctx, fontname, data, size, subfont, 0);
 +#else
-+		char *filename = fz_lookup_cjk_font_from_file(ctx, ros, serif, fontdesc->wmode);
++		char *filename = fz_lookup_cjk_font_from_file(ctx);
 +		if (!filename)
 +			fz_throw(ctx, FZ_ERROR_GENERIC, "cannot find builtin CJK font");
 +
