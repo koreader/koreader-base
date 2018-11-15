@@ -69,23 +69,50 @@ struct fz_alloc_context_s {
   void *(*realloc)(void *, void *, unsigned int);
   void (*free)(void *, void *);
 };
+typedef struct fz_error_stack_slot_s fz_error_stack_slot;
+typedef struct fz_error_context_s fz_error_context;
+typedef struct fz_warn_context_s fz_warn_context;
+struct fz_warn_context_s {
+  char message[256];
+  int count;
+};
+typedef struct fz_font_context_s fz_font_context;
+struct fz_font_context_s;
+typedef struct fz_colorspace_context_s fz_colorspace_context;
+struct fz_colorspace_context_s;
+typedef struct fz_cmm_instance_s fz_cmm_instance;
+struct fz_cmm_instance_s;
+typedef struct fz_aa_context_s fz_aa_context;
+struct fz_aa_context_s;
+typedef struct fz_style_context_s fz_style_context;
+struct fz_style_context_s;
+typedef struct fz_store_s fz_store;
+struct fz_store_s;
+typedef struct fz_glyph_cache_s fz_glyph_cache;
+struct fz_glyph_cache_s;
+typedef struct fz_tuning_context_s fz_tuning_context;
+struct fz_tuning_context_s;
+typedef struct fz_document_handler_context_s fz_document_handler_context;
+struct fz_document_handler_context_s;
+typedef struct fz_output_context_s fz_output_context;
+struct fz_output_context_s;
 typedef struct fz_context_s fz_context;
 struct fz_context_s {
   void *user;
   const fz_alloc_context *alloc;
   fz_locks_context locks;
-  struct fz_error_context_s *error;
-  struct fz_warn_context_s *warn;
-  struct fz_font_context_s *font;
-  struct fz_colorspace_context_s *colorspace;
-  struct fz_cmm_instance_s *cmm_instance;
-  struct fz_aa_context_s *aa;
-  struct fz_style_context_s *style;
-  struct fz_store_s *store;
-  struct fz_glyph_cache_s *glyph_cache;
-  struct fz_tuning_context_s *tuning;
-  struct fz_document_handler_context_s *handler;
-  struct fz_output_context_s *output;
+  fz_error_context *error;
+  fz_warn_context *warn;
+  fz_font_context *font;
+  fz_colorspace_context *colorspace;
+  fz_cmm_instance *cmm_instance;
+  fz_aa_context *aa;
+  fz_style_context *style;
+  fz_store *store;
+  fz_glyph_cache *glyph_cache;
+  fz_tuning_context *tuning;
+  fz_document_handler_context *handler;
+  fz_output_context *output;
   short unsigned int seed48[7];
 };
 typedef struct fz_font_s fz_font;
@@ -201,11 +228,76 @@ struct fz_stroke_state_s {
   int dash_len;
   float dash_list[32];
 };
+typedef struct fz_text_item_s fz_text_item;
+struct fz_text_item_s {
+  float x;
+  float y;
+  int gid;
+  int ucs;
+};
+typedef struct fz_text_span_s fz_text_span;
+struct fz_text_span_s {
+  fz_font *font;
+  fz_matrix trm;
+  unsigned int wmode : 1;
+  unsigned int bidi_level : 7;
+  unsigned int markup_dir : 2;
+  unsigned int language : 15;
+  int len;
+  int cap;
+  fz_text_item *items;
+  fz_text_span *next;
+};
 typedef struct fz_text_s fz_text;
 struct fz_text_s {
   int refs;
-  struct fz_text_span_s *head;
-  struct fz_text_span_s *tail;
+  fz_text_span *head;
+  fz_text_span *tail;
+};
+typedef struct fz_jbig2_globals_s fz_jbig2_globals;
+struct fz_jbig2_globals_s;
+typedef struct fz_compression_params_s fz_compression_params;
+struct fz_compression_params_s {
+  int type;
+  union {
+    struct {
+      int color_transform;
+    } jpeg;
+    struct {
+      int smask_in_data;
+    } jpx;
+    struct {
+      fz_jbig2_globals *globals;
+    } jbig2;
+    struct {
+      int columns;
+      int rows;
+      int k;
+      int end_of_line;
+      int encoded_byte_align;
+      int end_of_block;
+      int black_is_1;
+      int damaged_rows_before_error;
+    } fax;
+    struct {
+      int columns;
+      int colors;
+      int predictor;
+      int bpc;
+    } flate;
+    struct {
+      int columns;
+      int colors;
+      int predictor;
+      int bpc;
+      int early_change;
+    } lzw;
+  } u;
+};
+typedef struct fz_compressed_buffer_s fz_compressed_buffer;
+struct fz_compressed_buffer_s {
+  fz_compression_params params;
+  fz_buffer *buffer;
 };
 typedef struct fz_shade_s fz_shade;
 struct fz_shade_s {
@@ -243,7 +335,7 @@ struct fz_shade_s {
       float *fn_vals;
     } f;
   } u;
-  struct fz_compressed_buffer_s *buffer;
+  fz_compressed_buffer *buffer;
 };
 typedef struct fz_device_container_stack_s fz_device_container_stack;
 struct fz_device_container_stack_s;
@@ -448,9 +540,11 @@ typedef struct fz_stext_options_s fz_stext_options;
 struct fz_stext_options_s {
   int flags;
 };
+typedef struct fz_pool_s fz_pool;
+struct fz_pool_s;
 typedef struct fz_stext_page_s fz_stext_page;
 struct fz_stext_page_s {
-  struct fz_pool_s *pool;
+  fz_pool *pool;
   fz_rect mediabox;
   fz_stext_block *first_block;
   fz_stext_block *last_block;
@@ -536,7 +630,10 @@ typedef struct pdf_annot_s pdf_annot;
 typedef struct pdf_crypt_s pdf_crypt;
 typedef struct pdf_ocg_descriptor_s pdf_ocg_descriptor;
 typedef struct pdf_portfolio_s pdf_portfolio;
+typedef struct pdf_xref_entry_s pdf_xref_entry;
 typedef struct pdf_xref_subsec_s pdf_xref_subsec;
+typedef struct pdf_pkcs7_designated_name_s pdf_pkcs7_designated_name;
+typedef struct pdf_pkcs7_signer_s pdf_pkcs7_signer;
 typedef struct pdf_unsaved_sig_s pdf_unsaved_sig;
 typedef struct pdf_xref_s pdf_xref;
 typedef struct pdf_rev_page_map_s pdf_rev_page_map;
@@ -567,11 +664,36 @@ struct pdf_page_s {
 struct pdf_crypt_s;
 struct pdf_ocg_descriptor_s;
 struct pdf_portfolio_s;
+struct pdf_xref_entry_s {
+  char type;
+  unsigned char flags;
+  short unsigned int gen;
+  int num;
+  long long int ofs;
+  long long int stm_ofs;
+  fz_buffer *stm_buf;
+  pdf_obj *obj;
+};
 struct pdf_xref_subsec_s {
   pdf_xref_subsec *next;
   int len;
   int start;
-  struct pdf_xref_entry_s *table;
+  pdf_xref_entry *table;
+};
+struct pdf_pkcs7_designated_name_s {
+  char *cn;
+  char *o;
+  char *ou;
+  char *email;
+  char *c;
+};
+struct pdf_pkcs7_signer_s {
+  pdf_pkcs7_signer *(*keep)(pdf_pkcs7_signer *);
+  void (*drop)(pdf_pkcs7_signer *);
+  pdf_pkcs7_designated_name *(*designated_name)(pdf_pkcs7_signer *);
+  void (*drop_designated_name)(pdf_pkcs7_signer *, pdf_pkcs7_designated_name *);
+  int (*max_digest_size)(pdf_pkcs7_signer *);
+  int (*create_digest)(pdf_pkcs7_signer *, fz_stream *, unsigned char *, int *);
 };
 struct pdf_unsaved_sig_s {
   pdf_obj *field;
@@ -579,7 +701,7 @@ struct pdf_unsaved_sig_s {
   int byte_range_end;
   int contents_start;
   int contents_end;
-  struct pdf_pkcs7_signer_s *signer;
+  pdf_pkcs7_signer *signer;
   pdf_unsaved_sig *next;
 };
 struct pdf_xref_s {
