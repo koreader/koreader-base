@@ -15,6 +15,13 @@ static const int WAVEFORM_MODE_GLD16 = 7;
 static const int EPDC_FLAG_ENABLE_INVERSION = 1;
 static const int EPDC_FLAG_FORCE_MONOCHROME = 2;
 static const int EPDC_FLAG_USE_ALT_BUFFER = 256;
+static const int EPDC_FLAG_USE_CMAP = 4;
+static const int EPDC_FLAG_TEST_COLLISION = 512;
+static const int EPDC_FLAG_GROUP_UPDATE = 1024;
+static const int EPDC_FLAG_USE_DITHERING_Y1 = 8192;
+static const int EPDC_FLAG_USE_DITHERING_Y4 = 16384;
+static const int EPDC_FLAG_USE_AAD = 4096;
+static const int EPDC_FLAG_USE_DITHERING_NTX_D8 = 1048576;
 struct mxcfb_rect {
   unsigned int top;
   unsigned int left;

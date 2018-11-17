@@ -41,9 +41,21 @@
 #define WAVEFORM_MODE_GLR16		6	/* Ghost compensation waveform */
 #define WAVEFORM_MODE_GLD16		7	/* Ghost compensation waveform with dithering */
 
+/* common flags */
 #define EPDC_FLAG_ENABLE_INVERSION      0x01
 #define EPDC_FLAG_FORCE_MONOCHROME      0x02
 #define EPDC_FLAG_USE_ALT_BUFFER        0x100
+
+/* introduced in Cervantes2013 */
+#define EPDC_FLAG_USE_CMAP		0x04
+#define EPDC_FLAG_TEST_COLLISION	0x200
+#define EPDC_FLAG_GROUP_UPDATE		0x400
+#define EPDC_FLAG_USE_DITHERING_Y1	0x2000
+#define EPDC_FLAG_USE_DITHERING_Y4	0x4000
+
+/* introduced in Cervantes3 */
+#define EPDC_FLAG_USE_AAD		0x1000
+#define EPDC_FLAG_USE_DITHERING_NTX_D8	0x100000
 
 struct mxcfb_rect {
         __u32 top;

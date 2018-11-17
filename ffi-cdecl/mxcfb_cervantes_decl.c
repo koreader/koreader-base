@@ -21,6 +21,13 @@ cdecl_const(WAVEFORM_MODE_GLD16)
 cdecl_const(EPDC_FLAG_ENABLE_INVERSION)
 cdecl_const(EPDC_FLAG_FORCE_MONOCHROME)
 cdecl_const(EPDC_FLAG_USE_ALT_BUFFER)
+cdecl_const(EPDC_FLAG_USE_CMAP)
+cdecl_const(EPDC_FLAG_TEST_COLLISION)
+cdecl_const(EPDC_FLAG_GROUP_UPDATE)
+cdecl_const(EPDC_FLAG_USE_DITHERING_Y1)
+cdecl_const(EPDC_FLAG_USE_DITHERING_Y4)
+cdecl_const(EPDC_FLAG_USE_AAD)
+cdecl_const(EPDC_FLAG_USE_DITHERING_NTX_D8)
 
 cdecl_struct(mxcfb_rect)
 
