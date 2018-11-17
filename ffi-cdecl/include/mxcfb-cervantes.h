@@ -99,7 +99,6 @@ struct mxcfb_rect {
 
 #define FB_POWERDOWN_DISABLE            -1
 
-/* Cervantes 2013+ */
 struct mxcfb_alt_buffer_data {
 	void *virt_addr;
 	__u32 phys_addr;
@@ -116,24 +115,6 @@ struct mxcfb_update_data {
         int temp;
         unsigned int flags;
         struct mxcfb_alt_buffer_data alt_buffer_data;
-};
-
-/* Older devices */
-struct mxcfb_alt_buffer_data_old {
-        __u32 phys_addr;
-        __u32 width;    /* width of entire buffer */
-        __u32 height;   /* height of entire buffer */
-        struct mxcfb_rect alt_update_region; /* region within buffer to update */
-};
-
-struct mxcfb_update_data_old {
-        struct mxcfb_rect update_region;
-        __u32 waveform_mode;
-        __u32 update_mode;
-        __u32 update_marker;
-        int temp;
-        unsigned int flags;
-        struct mxcfb_alt_buffer_data_old alt_buffer_data;
 };
 
 /*
@@ -191,7 +172,6 @@ struct mxcfb_csc_matrix {
 #define MXCFB_SET_TEMPERATURE		_IOW('F', 0x2C, int32_t)
 #define MXCFB_SET_AUTO_UPDATE_MODE	_IOW('F', 0x2D, __u32)
 #define MXCFB_SEND_UPDATE		_IOW('F', 0x2E, struct mxcfb_update_data)
-#define MXCFB_SEND_UPDATE_OLD		_IOW('F', 0x2E, struct mxcfb_update_data_old)
 #define MXCFB_WAIT_FOR_UPDATE_COMPLETE	_IOW('F', 0x2F, __u32)
 #define MXCFB_SET_PWRDOWN_DELAY		_IOW('F', 0x30, int32_t)
 #define MXCFB_GET_PWRDOWN_DELAY		_IOR('F', 0x31, int32_t)
