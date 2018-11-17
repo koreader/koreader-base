@@ -402,6 +402,8 @@ local function refresh_cervantes(fb, refreshtype, waveform_mode, x, y, w, h)
 
     if waveform_mode == C.WAVEFORM_MODE_A2 then
         refarea[0].flags = C.EPDC_FLAG_FORCE_MONOCHROME
+    elseif waveform_mode == C.WAVEFORM_MODE_GLD16 then
+        refarea[0].flags = C.EPDC_FLAG_USE_AAD
     else
         refarea[0].flags = 0
     end
@@ -601,16 +603,16 @@ function framebuffer:init()
         self.waveform_full = C.WAVEFORM_MODE_GC16
         self.waveform_partial = C.WAVEFORM_MODE_AUTO
 
-        -- new devices
-        local is_new = false
-        if self.device.model == "Cervantes2013"
+        -- reagl aware devices. TODO: test on Cervantes2013
+        local is_reagl = false
+        if self.device.model == "Cervantes4"
         or self.device.model == "Cervantes3"
-        or self.device.model == "Cervantes4"
+        --or self.device.model == "Cervantes2013"
         then
-            is_new = true
+            is_reagl = true
         end
 
-        if is_new then
+        if is_reagl then
             self.waveform_fast = C.WAVEFORM_MODE_DU
             self.waveform_reagl = C.WAVEFORM_MODE_GLD16
             self.waveform_partial = self.waveform_reagl
