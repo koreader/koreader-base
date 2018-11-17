@@ -396,9 +396,8 @@ local function refresh_sony_prstux(fb, refreshtype, waveform_mode, x, y, w, h)
     return mxc_update(fb, C.MXCFB_SEND_UPDATE, refarea, refreshtype, waveform_mode, x, y, w, h)
 end
 
-local function refresh_cervantes_old(fb, refreshtype, waveform_mode, x, y, w, h)
+local function refresh_cervantes(fb, refreshtype, waveform_mode, x, y, w, h)
     local refarea = ffi.new("struct mxcfb_update_data[1]")
-    refarea[0].alt_buffer_data.virt_addr = nil
     refarea[0].temp = C.TEMP_USE_AMBIENT
 
     if waveform_mode == C.WAVEFORM_MODE_A2 then
@@ -406,12 +405,6 @@ local function refresh_cervantes_old(fb, refreshtype, waveform_mode, x, y, w, h)
     else
         refarea[0].flags = 0
     end
-    return mxc_update(fb, C.MXCFB_SEND_UPDATE_OLD, refarea, refreshtype, waveform_mode, x, y, w, h)
-end
-
-local function refresh_cervantes(fb, refreshtype, waveform_mode, x, y, w, h)
-    local refarea = ffi.new("struct mxcfb_update_data[1]")
-    refarea[0].temp = C.TEMP_USE_AMBIENT
     return mxc_update(fb, C.MXCFB_SEND_UPDATE, refarea, refreshtype, waveform_mode, x, y, w, h)
 end
 
@@ -599,7 +592,7 @@ function framebuffer:init()
     elseif self.device:isCervantes() then
         require("ffi/mxcfb_cervantes_h")
 
-        self.mech_refresh = refresh_cervantes_old
+        self.mech_refresh = refresh_cervantes
         self.mech_wait_update_complete = cervantes_mxc_wait_for_update_complete
 
         self.waveform_fast = C.WAVEFORM_MODE_A2
@@ -618,7 +611,6 @@ function framebuffer:init()
         end
 
         if is_new then
-            self.mech_refresh = refresh_cervantes
             self.waveform_fast = C.WAVEFORM_MODE_DU
             self.waveform_reagl = C.WAVEFORM_MODE_GLD16
             self.waveform_partial = self.waveform_reagl
