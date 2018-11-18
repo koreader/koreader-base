@@ -90,8 +90,11 @@ else ifeq ($(TARGET), pocketbook)
 	CHOST?=arm-obreey-linux-gnueabi
 	export LEGACY=1
 	export POCKETBOOK=1
-	export PATH:=$(POCKETBOOK_TOOLCHAIN)/bin:$(PATH)
-	export SYSROOT=$(POCKETBOOK_TOOLCHAIN)/arm-obreey-linux-gnueabi/sysroot
+	HAS_POCKETBOOK_TC:=$(shell command -v arm-obreey-linux-gnueabi-gcc 2> /dev/null)
+	ifndef HAS_POCKETBOOK_TC
+		export PATH:=$(POCKETBOOK_TOOLCHAIN)/bin:$(PATH)
+		export SYSROOT=$(POCKETBOOK_TOOLCHAIN)/arm-obreey-linux-gnueabi/sysroot
+	endif
 else ifeq ($(TARGET), sony-prstux)
 	CHOST?=arm-linux-gnueabihf
 	export SONY_PRSTUX=1
