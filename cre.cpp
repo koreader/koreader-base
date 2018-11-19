@@ -342,6 +342,18 @@ static int newDocView(lua_State *L) {
 	doc->text_view->setViewMode(view_mode, -1);
 	doc->text_view->Resize(width, height);
 	doc->text_view->setPageHeaderInfo(PGHDR_AUTHOR|PGHDR_TITLE|PGHDR_PAGE_NUMBER|PGHDR_PAGE_COUNT|PGHDR_CHAPTER_MARKS|PGHDR_CLOCK);
+	doc->text_view->setBatteryIcons(getBatteryIcons(0x000000));
+
+	return 1;
+}
+
+static int readDefaults(lua_State *L) {
+	// This is to be called only when the document is opened to be
+	// read by ReaderUI - not when the document is opened to just
+	// get its metadata or cover image - as it will affect some
+	// crengine global variables and state, whose change would
+	// affect the currently opened for reading document.
+	CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
 
 	// it will overwrite all settings by values found in ./data/cr3.ini
 	CRPropRef props = doc->text_view->propsGetCurrent();
@@ -362,10 +374,14 @@ static int newDocView(lua_State *L) {
 		stream = LVOpenFileStream("data/cr3.ini", LVOM_WRITE);
 		props->saveToStream(stream.get());
 	}
+	return 0;
+}
 
-	doc->text_view->setBatteryIcons(getBatteryIcons(0x000000));
-
-	return 1;
+static int saveDefaults(lua_State *L) {
+	CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
+	CRPropRef props = doc->text_view->propsGetCurrent();
+	LVStreamRef stream = LVOpenFileStream("data/cr3.ini", LVOM_WRITE);
+	return props->saveToStream(stream.get());
 }
 
 static int getLatestDomVersion(lua_State *L) {
@@ -377,13 +393,6 @@ static int requestDomVersion(lua_State *L) {
     int version = luaL_checkint(L, 1);
     gDOMVersionRequested = version;
     return 0;
-}
-
-static int saveDefaults(lua_State *L) {
-	CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
-	CRPropRef props = doc->text_view->propsGetCurrent();
-	LVStreamRef stream = LVOpenFileStream("data/cr3.ini", LVOM_WRITE);
-	return props->saveToStream(stream.get());
 }
 
 static int getIntProperty(lua_State *L) {
@@ -2611,6 +2620,7 @@ static const struct luaL_Reg credocument_meth[] = {
 	{"goBack", goBack},
 	{"goForward", goForward},
 	{"clearSelection", clearSelection},
+	{"readDefaults", readDefaults},
 	{"saveDefaults", saveDefaults},
 	{"close", closeDocument},
 	{"__gc", closeDocument},
