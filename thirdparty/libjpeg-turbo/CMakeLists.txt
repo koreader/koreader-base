@@ -39,7 +39,7 @@ endif((DEFINED ENV{CERVANTES}) OR (DEFINED ENV{KINDLE}) OR (DEFINED ENV{KOBO}) O
 # and   https://github.com/taka-no-me/android-cmake
 # In the meantime, I'll be sitting in the corner, crying hysterically.
 if(DEFINED ENV{ANDROID})
-	set(CFG_OPTS "${CFG_OPTS} -DCMAKE_SYSTEM_NAME='Android'")
+	set(CFG_OPTS "${CFG_OPTS} -DCMAKE_SYSTEM_NAME='Linux'")
 	# Magical value that inhibits all of CMake's own NDK handling code. (Or shit goes boom.)
 	set(CFG_OPTS "${CFG_OPTS} -DCMAKE_SYSTEM_VERSION=1")
 
