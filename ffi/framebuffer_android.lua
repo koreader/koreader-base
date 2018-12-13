@@ -47,6 +47,7 @@ function framebuffer:refreshFullImp()
         bb:setInverse(ext_bb:getInverse())
         -- adapt to possible rotation changes
         bb:setRotation(ext_bb:getRotation())
+        self.invert_bb:setRotation(ext_bb:getRotation())
 
         if ext_bb:getInverse() == 1 then
             self.invert_bb:invertblitFrom(ext_bb)
