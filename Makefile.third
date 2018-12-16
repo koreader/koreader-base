@@ -92,6 +92,10 @@ $(MUPDF_LIB) $(MUPDF_DIR)/include: $(JPEG_LIB) \
 		-DFREETYPE_LIB=$(CURDIR)/$(FREETYPE_LIB) \
 		$(CURDIR)/$(THIRDPARTY_DIR)/mupdf && \
 		$(MAKE)
+ifdef DARWIN
+	install_name_tool -change @rpath/libjpeg.8.dylib \
+		libs/libjpeg.8.dylib $(MUPDF_LIB)
+endif
 
 $(LODEPNG_LIB) $(LODEPNG_DIR): $(THIRDPARTY_DIR)/lodepng/CMakeLists.txt
 	install -d $(LODEPNG_BUILD_DIR)
