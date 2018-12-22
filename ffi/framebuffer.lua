@@ -307,8 +307,8 @@ function fb:setRotationMode(mode)
 end
 
 -- Handles orientation changes as requested...
--- If current orientation is already Portrait, swap to Inverted Portrait
--- If current orientation is already Landscape, swap to Inverted Landscape
+-- If current orientation is already Portrait, swap to Inverted Portrait (and vice versa)
+-- If current orientation is already Landscape, swap to Inverted Landscape (and vice versa)
 -- For Landscape, if swapping from any Portrait orientation,
 -- swap straight to Inverted Landscape if DLANDSCAPE_CLOCKWISE_ROTATION is false
 -- Things to remember to make sense of the logic:
