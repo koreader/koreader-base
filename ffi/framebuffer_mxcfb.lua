@@ -543,11 +543,13 @@ function framebuffer:init()
             isREAGL = true
         end
 
-        if self.device.model == "KoboStarRev2" then
+        if self.device.model == "Kobo_star_r2" then
             isMk7 = true
-        elseif self.device.model == "KoboSnowRev2" then
+        elseif self.device.model == "Kobo_snow_r2" then
             isMk7 = true
-        elseif self.device.model == "KoboNova" then
+        elseif self.device.model == "Kobo_nova" then
+            isMk7 = true
+        elseif self.device.model == "Kobo_frost" then
             isMk7 = true
         end
 
