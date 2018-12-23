@@ -320,7 +320,7 @@ end
 function fb:setScreenMode(mode, interactive)
     self.debug("Called fb:setScreenMode with mode:", mode, "and interactive:", interactive or "nil")
     if mode == "portrait" then
-        if (self.cur_rotation_mode % 2) == 1 then
+        if bit.band(self.cur_rotation_mode, 1) == 1 then
             -- We were in a Landscape orientation (odd number), swap to Portrait (UR)
             self:setRotationMode(self.ORIENTATION_PORTRAIT)
         elseif interactive == true then
@@ -329,7 +329,7 @@ function fb:setScreenMode(mode, interactive)
             self:setRotationMode(bit.bxor(self.cur_rotation_mode, 2))
         end
     elseif mode == "landscape" then
-        if (self.cur_rotation_mode % 2) == 0 then
+        if bit.band(self.cur_rotation_mode, 1) == 0 then
             -- We were in a Portrait orientation (even number), swap to Landscape (CW or CCW, depending on user preference)
             self:setRotationMode(
                 DLANDSCAPE_CLOCKWISE_ROTATION
