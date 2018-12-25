@@ -96,9 +96,23 @@ function framebuffer:init()
         end
     -- PocketBook eink framebuffer seems to have no finfo.id
     elseif string.byte(ffi.string(finfo.id, 16), 1, 1) == 0 then
-        -- finfo.line_length needs to be 16-bytes aligned
-        finfo.line_length = bit.band(finfo.line_length * vinfo.bits_per_pixel / 8 + 15, bit.bnot(15))
+        -- We may need to make sure finfo.line_length is 16-bytes aligned ourselves...
+        local line_length = finfo.line_length
+        finfo.line_length = bit.band(line_length * vinfo.bits_per_pixel / 8 + 15, bit.bnot(15))
         self.fb_size = finfo.line_length * vinfo.yres_virtual
+        -- NOTE: If our manually computed value is larger than the reported smem_len, honor smem_len instead (c.f., #4416)
+        --       Because despite PB's shenanigans, I'm assuming smem_len matches the actual HW bounds,
+        --       and as such matches the extent of memory we can safely mmap.
+        --       TL;DR: We can safely mmap a *smaller* memory region than smem_len,
+        --              (which is usually what all of the fb_size computations that don't use smem_len do here),
+        --              but we certainly CANNOT mmap a *larger* one!
+        --              Hell, if PB wasn't so broken, I'd make that an assert!
+        if self.fb_size > finfo.smem_len then
+            self.fb_size = finfo.smem_len
+            -- And that means line_length should *probably* be honored, too...
+            -- Possibly 8-bytes aligned to make the PxP happy?
+            finfo.line_length = bit.band(line_length * vinfo.bits_per_pixel / 8 + 7, bit.bnot(7))
+        end
     else
         error("framebuffer model not supported");
     end
@@ -108,6 +122,9 @@ function framebuffer:init()
         vinfo.bits_per_pixel = 24
         vinfo.xres = vinfo.xres / 3
     end
+
+    -- Make sure we never try to map a larger memory region than the fb reports
+    assert(self.fb_size <= finfo.smem_len, "computed fb memory region too large")
 
     self.data = C.mmap(nil,
                            self.fb_size,
