@@ -312,8 +312,8 @@ end
 -- For Landscape, if swapping from any Portrait orientation,
 -- swap straight to Inverted Landscape if DLANDSCAPE_CLOCKWISE_ROTATION is false
 -- Things to remember to make sense of the logic:
--- All even orientations are Portrait (0 and 2)
--- All odd orientations are Landscape (1 and 3)
+-- All even orientations are Portrait (0 and 2), the larger one being the Inverted variant
+-- All odd orientations are Landscape (1 and 3), the larger one being the Inverted variant
 -- NOTE: We only swap to Inverted variants when that was requested interactively by the user,
 --       to avoid doing unrequested inversions during the few manual setScreenMode calls we might do,
 --       (f.g., user selected default orientation)
@@ -323,7 +323,7 @@ function fb:setScreenMode(mode, interactive)
             -- We were in a Landscape orientation (odd number), swap to Portrait (UR)
             self:setRotationMode(self.ORIENTATION_PORTRAIT)
         elseif interactive == true then
-            -- We were in a Portrait orientation (even number), swap to its Inverted variant (^= 2),
+            -- We were in a Portrait orientation (even number), swap to its Inverted variant (^= 2, i.e., 0 <-> 2),
             -- only if that was an interactive request.
             self:setRotationMode(bit.bxor(self.cur_rotation_mode, 2))
         end
@@ -335,7 +335,7 @@ function fb:setScreenMode(mode, interactive)
                 and self.ORIENTATION_LANDSCAPE
                 or self.ORIENTATION_LANDSCAPE_ROTATED)
         elseif interactive == true then
-            -- We were in a Landscape orientation (odd number), swap to its Inverted variant (^= 2),
+            -- We were in a Landscape orientation (odd number), swap to its Inverted variant (^= 2, i.e., 1 <-> 3),
             -- only if that was an interactive request.
             self:setRotationMode(bit.bxor(self.cur_rotation_mode, 2))
         end
