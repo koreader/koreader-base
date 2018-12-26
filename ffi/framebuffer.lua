@@ -318,7 +318,6 @@ end
 --       to avoid doing unrequested inversions during the few manual setScreenMode calls we might do,
 --       (f.g., user selected default orientation)
 function fb:setScreenMode(mode, interactive)
-    self.debug("Called fb:setScreenMode with mode:", mode, "and interactive:", interactive or "nil")
     if mode == "portrait" then
         if bit.band(self.cur_rotation_mode, 1) == 1 then
             -- We were in a Landscape orientation (odd number), swap to Portrait (UR)
