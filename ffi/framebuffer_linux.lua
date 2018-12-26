@@ -68,7 +68,7 @@ The only settings that got changed are `finfo.line_length` and `vinfo.bits_per_p
 
 There's a reason for that: there used to be enough space for a shadow buffer on 16bpp modesets,
 and that's no longer the case on 32bpp, since the active buffer now takes twice as much space.
-What *is* definitely wrong in this log in the yres_virtual in the 32bpp case, it should be much smaller,
+What *is* definitely wrong in this log is yres_virtual in the 32bpp case, it should be much smaller,
 so that line_length * yres_virtual == smem_len
 AFAICT, this has since been fixed.
 
