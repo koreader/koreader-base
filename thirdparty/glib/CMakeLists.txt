@@ -28,7 +28,14 @@ if(($ENV{APPIMAGE}) OR ($ENV{CERVANTES}) OR ($ENV{KINDLE}) OR ($ENV{KOBO}))
 else()
     set(PATCH_CMD1 sh -c "true")
 endif()
-set(PATCH_CMD2 sh -c "NOCONFIGURE=1 ./autogen.sh")
+# Android makes Linux syscalls hard to get to... Fix pilfered from Python.
+if($ENV{ANDROID})
+    set(PATCH_CMD2 sh -c "patch -N -p1 < ${CMAKE_CURRENT_SOURCE_DIR}/glib-2.58.2-android-linux-syscalls.patch || true")
+else()
+    set(PATCH_CMD2 sh -c "true")
+endif()
+
+set(PATCH_CMD3 sh -c "NOCONFIGURE=1 ./autogen.sh")
 
 # in order to support legacy PocketBook 4.x firmware we should get rid of
 # eventfd@GLIBC_2.7 and pipe2@GLIB_2.9
@@ -68,7 +75,7 @@ set(CFG_CMD sh -c "${CFG_ENV_VAR} ${SOURCE_DIR}/configure ${CFG_OPTS}")
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
     https://github.com/GNOME/glib.git
-    2.56.2
+    2.58.2
     ${SOURCE_DIR}
 )
 
@@ -76,7 +83,7 @@ include(ExternalProject)
 ExternalProject_Add(
     ${PROJECT_NAME}
     DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
-    PATCH_COMMAND COMMAND ${PATCH_CMD1} COMMAND ${PATCH_CMD2}
+    PATCH_COMMAND COMMAND ${PATCH_CMD1} COMMAND ${PATCH_CMD2} COMMAND ${PATCH_CMD3}
     CONFIGURE_COMMAND COMMAND ${gen_arm_config} COMMAND ${CFG_CMD}
     BUILD_COMMAND $(MAKE) -j${PARALLEL_JOBS} --silent
     INSTALL_COMMAND $(MAKE) -j${PARALLEL_JOBS} install
