@@ -1602,6 +1602,29 @@ static bool _isLinkToFootnote(CreDocument *doc, const lString16 source_xpointer,
     // in frontend/apps/reader/modules/readerlink.lua
     bool trusted_source_xpointer = flags & 0x0002;
 
+    // Trust -cr-hint: noteref noteref-ignore footnote footnote-ignore
+    if (trusted_source_xpointer) {
+        css_cr_hint_t hint = sourceNode->getStyle()->cr_hint;
+        if (hint == css_cr_hint_noteref) {
+            reason = "source has -cr-hint: noteref";
+            return true;
+        }
+        else if (hint == css_cr_hint_noteref_ignore) {
+            reason = "source has -cr-hint: noteref-ignore";
+            return false;
+        }
+    }
+    css_cr_hint_t hint = targetNode->getStyle()->cr_hint;
+    if (hint == css_cr_hint_footnote) {
+        reason = "target has -cr-hint: footnote";
+        return true;
+    }
+    else if (hint == css_cr_hint_footnote_ignore) {
+        reason = "target has -cr-hint: footnote-ignore";
+        return false;
+    }
+
+
     if (flags & 0x0004) { // Trust role= and epub:type= attributes
         // About epub:type, see:
         //   http://apex.infogridpacific.com/df/epub-type-epubpackaging8.html
@@ -1609,10 +1632,6 @@ static bool _isLinkToFootnote(CreDocument *doc, const lString16 source_xpointer,
         // Should epub:type="glossterm" epub:type="glossdef" be considered
         // as footnotes?
         // And other like epub:type="chapter" that probably are not footnotes?
-        //
-        // (If needed, add check for a private CSS property "-cr-hint: footnote"
-        // or "-cr-hint: noteref", so one can define it to specific classes
-        // with Styles tweaks.)
         //
         // We also trust that the target is the whole footnote container, and
         // so there is no need to extend it.
@@ -1660,7 +1679,6 @@ static bool _isLinkToFootnote(CreDocument *doc, const lString16 source_xpointer,
                     }
                 }
             }
-            // if needed: getStyle() -cr-hint: noteref
         }
         // Target
         // (Note that calibre first gets the block container of targetNode if
@@ -1699,7 +1717,6 @@ static bool _isLinkToFootnote(CreDocument *doc, const lString16 source_xpointer,
                 }
             }
         }
-        // if needed: getStyle() -cr-hint: footnote
     }
 
     if (flags & 0x0010) { // Target must have an anchor #id
