@@ -73,6 +73,18 @@ else ifeq ($(TARGET), appimage)
 	export EMULATE_READER=1
 	export SDL=1
 	export APPIMAGE=1
+else ifeq ($(TARGET), debian)
+	export SDL=1
+	export DEBIAN=1
+	export EMULATE_READER=1
+else ifeq ($(TARGET), debian-armel)
+	CHOST?=arm-linux-gnueabi
+	export SDL=1
+	export DEBIAN_CROSS=1
+else ifeq ($(TARGET), debian-armhf)
+	CHOST?=arm-linux-gnueabihf
+	export SDL=1
+	export DEBIAN_CROSS=1
 else ifeq ($(TARGET), android)
 	export ANDROID=1
 	export PATH:=$(ANDROID_TOOLCHAIN)/bin:$(PATH)
@@ -311,6 +323,12 @@ else ifeq ($(TARGET), arm-generic)
 	# Defaults to generic crap
 	ARM_ARCH:=$(ARMV6_GENERIC_ARCH)
 	ARM_ARCH+=-mfloat-abi=softfp
+else ifeq ($(TARGET), debian-armel)
+	ARM_ARCH:=$(ARMV7_GENERIC_ARCH)
+	ARM_ARCH+=-mfloat-abi=softfp
+else ifeq ($(TARGET), debian-armhf)
+	ARM_ARCH:=$(ARMV7_GENERIC_ARCH)
+	ARM_ARCH+=-mfloat-abi=hard
 else
 	# else, we are compiling emulator on x86
 	ARM_ARCH:=
@@ -340,6 +358,11 @@ ifdef APPIMAGE
 	# We want to run the AppImage on any 64-bit CPU
 	HOST_ARCH:=-mtune=generic -march=x86-64
 endif
+
+ifdef DEBIAN
+	HOST_ARCH:=-mtune=generic -march=native
+endif
+
 HOSTCFLAGS:=$(HOST_ARCH) $(BASE_CFLAGS) $(QFLAGS)
 
 CFLAGS:=$(BASE_CFLAGS) $(QFLAGS)
