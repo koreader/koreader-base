@@ -66,6 +66,12 @@ But under 32bits mode, we got:
 The only settings that got changed are `finfo.line_length` and `vinfo.bits_per_pixel`.
 `finfo.smem_len` still remains at 10813440.
 
+There's a reason for that: there used to be enough space for a shadow buffer on 16bpp modesets,
+and that's no longer the case on 32bpp, since the active buffer now takes twice as much space.
+What *is* definitely wrong in this log is yres_virtual in the 32bpp case, it should be much smaller,
+so that line_length * yres_virtual == smem_len
+AFAICT, this has since been fixed.
+
 --]]
 function framebuffer:init()
     local finfo = ffi.new("struct fb_fix_screeninfo")
@@ -87,18 +93,35 @@ function framebuffer:init()
         self.fb_size = vinfo.xres_virtual * vinfo.yres_virtual * vinfo.bits_per_pixel / 8
     -- Newer eink framebuffer (Kindle Touch, Paperwhite, Kobo)
     elseif ffi.string(finfo.id, 11) == "mxc_epdc_fb" then
-        -- it seems that finfo.smem_len is unreliable on kobo
-        -- Figure out the size of the screen in bytes
+        -- Figure out the size of the active screen buffer in bytes
         self.fb_size = vinfo.xres_virtual * vinfo.yres_virtual * vinfo.bits_per_pixel / 8
-        -- Kobo hasn't updated smem_len when the depth was changed from 16 to 32
+        -- There's no longer space for a shadow buffer on 32bpp modesets, and yres_virtual may be bogus, so, use smem_len as-is
         if vinfo.bits_per_pixel == 32 then
             self.fb_size = finfo.smem_len
         end
     -- PocketBook eink framebuffer seems to have no finfo.id
     elseif string.byte(ffi.string(finfo.id, 16), 1, 1) == 0 then
-        -- We may need to make sure finfo.line_length is 16-bytes aligned ourselves...
+        -- We may need to make sure finfo.line_length is properly aligned ourselves...
+        -- NOTE: Technically, the PxP *may* require a scratch space of *up to* 8 extra *pixels* in a line.
+        --       Here, we're dealing with bytes, so, technically, we should enforce an alignement to:
+        --       8px * bpp / 8 which neatly comes down to simply bpp itself ;).
+        --       That's why xres_virtual is often a few px larger than xres: 8-bytes alignment, for that scratch space.
         local line_length = finfo.line_length
-        finfo.line_length = bit.band(line_length * vinfo.bits_per_pixel / 8 + 15, bit.bnot(15))
+        -- NOTE: But because everything is terrible, line_length apparently sometimes doesn't take bpp into account on PB,
+        --       (i.e., it's in pixels instead of being in bytes), which is horribly wrong...
+        --       So try to fix that...
+        if finfo.line_length == vinfo.xres_virtual then
+            -- Make sure xres_virtual is aligned to 8-bytes
+            vinfo.xres_virtual = bit.band(vinfo.xres_virtual + 7, bit.bnot(7))
+            -- And now compute the proper line_length
+            finfo.line_length = (vinfo.xres_virtual * (vinfo.bits_per_pixel / 8))
+        else
+            -- As we said initially, ensure it's properly aligned, according to the bitdepth...
+            finfo.line_length = bit.band(finfo.line_length + (vinfo.bits_per_pixel - 1), bit.bnot(vinfo.bits_per_pixel - 1))
+        end
+        -- Now make sure yres_virtual is aligned to 8-bytes, too
+        vinfo.yres_virtual = bit.band(vinfo.yres_virtual + 7, bit.bnot(7))
+        -- And we should now have an accurate computation of the active buffer size... Whew!
         self.fb_size = finfo.line_length * vinfo.yres_virtual
         -- NOTE: If our manually computed value is larger than the reported smem_len, honor smem_len instead (c.f., #4416)
         --       Because despite PB's shenanigans, I'm assuming smem_len matches the actual HW bounds,
@@ -106,12 +129,11 @@ function framebuffer:init()
         --       TL;DR: We can safely mmap a *smaller* memory region than smem_len,
         --              (which is usually what all of the fb_size computations that don't use smem_len do here),
         --              but we certainly CANNOT mmap a *larger* one!
-        --              Hell, if PB wasn't so broken, I'd make that an assert!
         if self.fb_size > finfo.smem_len then
             self.fb_size = finfo.smem_len
             -- And that means line_length should *probably* be honored, too...
-            -- Possibly 8-bytes aligned to make the PxP happy?
-            finfo.line_length = bit.band(line_length * vinfo.bits_per_pixel / 8 + 7, bit.bnot(7))
+            -- Here's hoping that it's honoring the PxP requirements properly...
+            finfo.line_length = line_length
         end
     else
         error("framebuffer model not supported");
