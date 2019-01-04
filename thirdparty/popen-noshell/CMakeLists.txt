@@ -23,7 +23,7 @@ assert_var_defined(LDFLAGS)
 set(MAKE_ENV_VAR "CC=\"${CC}\" AR=\"${AR}\" CFLAGS=\"${CFLAGS}\" LDFLAGS=\"${LDFLAGS}\"")
 set(BUILD_CMD sh -c "$(MAKE) -j${PARALLEL_JOBS} ${MAKE_ENV_VAR}")
 
-# NOTE: As of right now (1a70ef9bb131df98d5e75c9951699f2d91c24c15), wait until stuff settles down before bumping this.
+# NOTE: As of right now (1f9eaf4eeef348d1efe0f3c7fe8ab670653cfbb1), wait until stuff settles down before bumping this.
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
     https://github.com/famzah/popen-noshell.git
