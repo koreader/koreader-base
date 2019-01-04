@@ -28,11 +28,11 @@ endif(${DISABLE_FORTIFY})
 set(CFG_CMD sh -c "${CFG_CMD}")
 
 include(ExternalProject)
-set(TAR_VER "1.30")
+set(TAR_VER "1.31")
 ExternalProject_Add(
     tar
     URL http://ftp.gnu.org/gnu/tar/tar-${TAR_VER}.tar.gz
-    URL_MD5 e0c5ed59e4dd33d765d6c90caadd3c73
+    URL_MD5 f2d3b2c7130390f2fd204527c4c22aa5
     DOWNLOAD_DIR ${KO_DOWNLOAD_DIR}
     PATCH_COMMAND ""
     CONFIGURE_COMMAND ${CFG_CMD}
