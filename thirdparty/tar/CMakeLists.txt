@@ -13,6 +13,9 @@ assert_var_defined(LIBS)
 ep_get_source_dir(SOURCE_DIR)
 ep_get_binary_dir(BINARY_DIR)
 
+set(PATCH_CMD1 sh -c "patch -N -p1 < ${CMAKE_CURRENT_SOURCE_DIR}/tar-android-fix.patch || true")
+set(PATCH_CMD2 sh -c "./bootstrap")
+
 set(CFG_ENV_VAR "CC=\"${CC} -DHAVE_MKFIFO=1\" CFLAGS=\"${CFLAGS}\" LDFLAGS=\"${LDFLAGS}\"")
 set(CFG_OPTS "-q LIBS=\"${LIBS}\" --host=\"${CHOST}\"")
 
@@ -27,14 +30,19 @@ if(${DISABLE_FORTIFY})
 endif(${DISABLE_FORTIFY})
 set(CFG_CMD sh -c "${CFG_CMD}")
 
+ko_write_gitclone_script(
+    GIT_CLONE_SCRIPT_FILENAME
+    https://git.savannah.gnu.org/git/tar.git
+    release_1_31
+    ${SOURCE_DIR}
+)
+
 include(ExternalProject)
-set(TAR_VER "1.31")
 ExternalProject_Add(
-    tar
-    URL http://ftp.gnu.org/gnu/tar/tar-${TAR_VER}.tar.gz
-    URL_MD5 f2d3b2c7130390f2fd204527c4c22aa5
-    DOWNLOAD_DIR ${KO_DOWNLOAD_DIR}
-    PATCH_COMMAND ""
+    ${PROJECT_NAME}
+    DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
+    BUILD_IN_SOURCE 1
+    PATCH_COMMAND COMMAND ${PATCH_CMD1} COMMAND ${PATCH_CMD2}
     CONFIGURE_COMMAND ${CFG_CMD}
     BUILD_COMMAND $(MAKE) -j${PARALLEL_JOBS} --silent
     # skip install for tar
