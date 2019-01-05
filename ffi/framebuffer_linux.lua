@@ -90,11 +90,11 @@ function framebuffer:init()
 
     -- Classic eink framebuffer (Kindle 2, 3, DXG, 4)
     if ffi.string(finfo.id, 7) == "eink_fb" then
-        self.fb_size = vinfo.xres_virtual * vinfo.yres_virtual * vinfo.bits_per_pixel / 8
+        self.fb_size = vinfo.xres_virtual * vinfo.yres_virtual * (vinfo.bits_per_pixel / 8)
     -- Newer eink framebuffer (Kindle Touch, Paperwhite, Kobo)
     elseif ffi.string(finfo.id, 11) == "mxc_epdc_fb" then
         -- Figure out the size of the active screen buffer in bytes
-        self.fb_size = vinfo.xres_virtual * vinfo.yres_virtual * vinfo.bits_per_pixel / 8
+        self.fb_size = vinfo.xres_virtual * vinfo.yres_virtual * (vinfo.bits_per_pixel / 8)
         -- There's no longer space for a shadow buffer on 32bpp modesets, and yres_virtual may be bogus, so, use smem_len as-is
         if vinfo.bits_per_pixel == 32 then
             self.fb_size = finfo.smem_len
