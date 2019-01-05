@@ -15,7 +15,7 @@ ep_get_source_dir(SOURCE_DIR)
 ep_get_binary_dir(BINARY_DIR)
 
 set(PATCH_CMD1 sh -c "patch -N -p1 < ${CMAKE_CURRENT_SOURCE_DIR}/tar-android-fix.patch || true")
-set(PATCH_CMD2 sh -c "./bootstrap")
+set(PATCH_CMD2 sh -c "./bootstrap --skip-po")
 
 set(CFG_ENV_VAR "CC=\"${CC} -DHAVE_MKFIFO=1\" CFLAGS=\"${CFLAGS}\" LDFLAGS=\"${LDFLAGS}\"")
 set(CFG_OPTS "-q LIBS=\"${LIBS}\" --host=\"${CHOST}\"")
