@@ -101,6 +101,14 @@ function framebuffer:init()
         end
     -- PocketBook eink framebuffer seems to have no finfo.id
     elseif string.byte(ffi.string(finfo.id, 16), 1, 1) == 0 then
+        -- Dump FB information to the log on PB to make bug reports about these kinds of issues useful straight away...
+        io.write("PB FB: smem_len    : ", finfo.smem_len, "\n")
+        io.write("PB FB: line_length : ", finfo.line_length, "\n")
+        io.write("PB FB: xres        : ", vinfo.xres, "\n")
+        io.write("PB FB: xres_virtual: ", vinfo.xres_virtual, "\n")
+        io.write("PB FB: yres        : ", vinfo.yres, "\n")
+        io.write("PB FB: yres_virtual: ", vinfo.yres_virtual, "\n")
+        io.write("PB FB: bpp         : ", vinfo.bits_per_pixel, "\n")
         -- We may need to make sure finfo.line_length is properly aligned ourselves...
         -- NOTE: Technically, the PxP *may* require a scratch space of *up to* 8 extra *pixels* in a line.
         --       Here, we're dealing with bytes, so, technically, we should enforce an alignement to:
@@ -144,6 +152,16 @@ function framebuffer:init()
         vinfo.bits_per_pixel = 24
         vinfo.xres = vinfo.xres / 3
     end
+
+    -- Recap final, potentially tweaked FB setup...
+    io.write("FB: computed size: ", self.fb_size, "\n")
+    io.write("FB: smem_len     : ", finfo.smem_len, "\n")
+    io.write("FB: line_length  : ", finfo.line_length, "\n")
+    io.write("FB: xres         : ", vinfo.xres, "\n")
+    io.write("FB: xres_virtual : ", vinfo.xres_virtual, "\n")
+    io.write("FB: yres         : ", vinfo.yres, "\n")
+    io.write("FB: yres_virtual : ", vinfo.yres_virtual, "\n")
+    io.write("FB: bpp          : ", vinfo.bits_per_pixel, "\n")
 
     -- Make sure we never try to map a larger memory region than the fb reports
     assert(self.fb_size <= finfo.smem_len, "computed fb memory region too large")
