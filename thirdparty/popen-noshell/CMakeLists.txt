@@ -36,7 +36,7 @@ ExternalProject_Add(
     popen-noshell
     BUILD_IN_SOURCE 1
     DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
-	# popen_noshell patch: Make it build on recent TCs, and implement
+    # popen_noshell patch: Make it build on recent TCs, and implement
     # a simple Makefile for building it as a static lib
     PATCH_COMMAND patch -N -p0 < ${CMAKE_CURRENT_SOURCE_DIR}/popen_noshell.patch ${EXTRA_PATCH_CMD}
     # skip configure
