@@ -155,7 +155,7 @@ function framebuffer:init()
 
     -- Recap final, potentially tweaked FB setup...
     io.write("FB: computed size: ", self.fb_size, "\n")
-    io.write("FB: id           : ", finfo.id, "\n")
+    io.write("FB: id           : ", ffi.string(finfo.id), "\n")
     io.write("FB: smem_len     : ", finfo.smem_len, "\n")
     io.write("FB: line_length  : ", finfo.line_length, "\n")
     io.write("FB: xres         : ", vinfo.xres, "\n")
