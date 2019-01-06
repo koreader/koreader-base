@@ -90,17 +90,25 @@ function framebuffer:init()
 
     -- Classic eink framebuffer (Kindle 2, 3, DXG, 4)
     if ffi.string(finfo.id, 7) == "eink_fb" then
-        self.fb_size = vinfo.xres_virtual * vinfo.yres_virtual * vinfo.bits_per_pixel / 8
+        self.fb_size = vinfo.xres_virtual * vinfo.yres_virtual * (vinfo.bits_per_pixel / 8)
     -- Newer eink framebuffer (Kindle Touch, Paperwhite, Kobo)
     elseif ffi.string(finfo.id, 11) == "mxc_epdc_fb" then
         -- Figure out the size of the active screen buffer in bytes
-        self.fb_size = vinfo.xres_virtual * vinfo.yres_virtual * vinfo.bits_per_pixel / 8
+        self.fb_size = vinfo.xres_virtual * vinfo.yres_virtual * (vinfo.bits_per_pixel / 8)
         -- There's no longer space for a shadow buffer on 32bpp modesets, and yres_virtual may be bogus, so, use smem_len as-is
         if vinfo.bits_per_pixel == 32 then
             self.fb_size = finfo.smem_len
         end
     -- PocketBook eink framebuffer seems to have no finfo.id
     elseif string.byte(ffi.string(finfo.id, 16), 1, 1) == 0 then
+        -- Dump FB information to the log on PB to make bug reports about these kinds of issues useful straight away...
+        io.write("PB FB: smem_len    : ", finfo.smem_len, "\n")
+        io.write("PB FB: line_length : ", finfo.line_length, "\n")
+        io.write("PB FB: xres        : ", vinfo.xres, "\n")
+        io.write("PB FB: xres_virtual: ", vinfo.xres_virtual, "\n")
+        io.write("PB FB: yres        : ", vinfo.yres, "\n")
+        io.write("PB FB: yres_virtual: ", vinfo.yres_virtual, "\n")
+        io.write("PB FB: bpp         : ", vinfo.bits_per_pixel, "\n")
         -- We may need to make sure finfo.line_length is properly aligned ourselves...
         -- NOTE: Technically, the PxP *may* require a scratch space of *up to* 8 extra *pixels* in a line.
         --       Here, we're dealing with bytes, so, technically, we should enforce an alignement to:
@@ -110,11 +118,23 @@ function framebuffer:init()
         -- NOTE: But because everything is terrible, line_length apparently sometimes doesn't take bpp into account on PB,
         --       (i.e., it's in pixels instead of being in bytes), which is horribly wrong...
         --       So try to fix that...
+        -- NOTE: The 4bpp special-case might be an explanation for this...
+        --       In which case, the shorter line_length alignment branch might acually be the right thing to do *everywhere*...
         if finfo.line_length == vinfo.xres_virtual then
             -- Make sure xres_virtual is aligned to 8-bytes
             vinfo.xres_virtual = bit.band(vinfo.xres_virtual + 7, bit.bnot(7))
-            -- And now compute the proper line_length
-            finfo.line_length = (vinfo.xres_virtual * (vinfo.bits_per_pixel / 8))
+            -- And now compute the proper line_length, with an added quirk on 4bpp fb...
+            if vinfo.bits_per_pixel >= 8 then
+                finfo.line_length = (vinfo.xres_virtual * (vinfo.bits_per_pixel / 8))
+            else
+                -- For some mystical reason, on (some?) 4bpp devices, the device expects a virtual 8bpp fb
+                -- (i.e., when iv_fbinfo's ndepth=4 but vdepth=8)
+                -- NOTE: We probably should trust InkView rather than the kernel, actually,
+                --       but I don't have a PB device to make sure that's a sane idea and test it...
+                --       c.f., GetTaskFramebufferInfo @ arm-obreey-linux-gnueabi/sysroot/usr/local/include/inkview.h
+                -- c.f., #4447
+                finfo.line_length = vinfo.xres_virtual
+            end
         else
             -- As we said initially, ensure it's properly aligned, according to the bitdepth...
             finfo.line_length = bit.band(finfo.line_length + (vinfo.bits_per_pixel - 1), bit.bnot(vinfo.bits_per_pixel - 1))
@@ -144,6 +164,17 @@ function framebuffer:init()
         vinfo.bits_per_pixel = 24
         vinfo.xres = vinfo.xres / 3
     end
+
+    -- Recap final, potentially tweaked FB setup...
+    io.write("FB: computed size: ", self.fb_size, "\n")
+    io.write("FB: id           : ", ffi.string(finfo.id), "\n")
+    io.write("FB: smem_len     : ", finfo.smem_len, "\n")
+    io.write("FB: line_length  : ", finfo.line_length, "\n")
+    io.write("FB: xres         : ", vinfo.xres, "\n")
+    io.write("FB: xres_virtual : ", vinfo.xres_virtual, "\n")
+    io.write("FB: yres         : ", vinfo.yres, "\n")
+    io.write("FB: yres_virtual : ", vinfo.yres_virtual, "\n")
+    io.write("FB: bpp          : ", vinfo.bits_per_pixel, "\n")
 
     -- Make sure we never try to map a larger memory region than the fb reports
     assert(self.fb_size <= finfo.smem_len, "computed fb memory region too large")
