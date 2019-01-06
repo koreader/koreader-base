@@ -401,7 +401,7 @@ $(OUTPUT_DIR)/tar: $(THIRDPARTY_DIR)/tar/CMakeLists.txt
 		-DCHOST="$(if $(EMULATE_READER),,$(CHOST))" \
 		$(CURDIR)/$(THIRDPARTY_DIR)/tar && \
 		$(MAKE)
-	cp $(TAR_DIR)/src/tar $(OUTPUT_DIR)/
+	cp $(TAR_DIR)/tar $(OUTPUT_DIR)/
 ifdef ANDROID
 	readelf -d $@ | grep "no dynamic" \
 		|| echo "warning: Android L+ support only PIE binary and can't run this"

@@ -32,6 +32,10 @@ if(${DISABLE_FORTIFY})
 endif(${DISABLE_FORTIFY})
 set(CFG_CMD sh -c "${CFG_CMD}")
 
+# We build in-tree...
+set(INSTALL_CMD1 ${CMAKE_COMMAND} -E make_directory ${BINARY_DIR})
+set(INSTALL_CMD2 ${CMAKE_COMMAND} -E rename ${SOURCE_DIR}/src/tar ${BINARY_DIR}/tar)
+
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
     https://git.savannah.gnu.org/git/tar.git
@@ -47,7 +51,6 @@ ExternalProject_Add(
     PATCH_COMMAND COMMAND ${PATCH_CMD1} COMMAND ${PATCH_CMD2} COMMAND ${PATCH_CMD3}
     CONFIGURE_COMMAND ${CFG_CMD}
     BUILD_COMMAND $(MAKE) -j${PARALLEL_JOBS} --silent
-    # skip install for tar
-    # NOTE: we always update binary timestamp to notify Make for a fresh build
-    INSTALL_COMMAND ${CMAKE_COMMAND} -E touch ${BINARY_DIR}/tar
+    # The buildsystem outputs binaries in a subdirectory...
+    INSTALL_COMMAND COMMAND ${INSTALL_CMD1} COMMAND ${INSTALL_CMD2}
 )
