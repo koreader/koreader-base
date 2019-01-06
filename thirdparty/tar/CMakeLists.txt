@@ -15,7 +15,8 @@ ep_get_source_dir(SOURCE_DIR)
 ep_get_binary_dir(BINARY_DIR)
 
 set(PATCH_CMD1 sh -c "patch -N -p1 < ${CMAKE_CURRENT_SOURCE_DIR}/tar-android-fix.patch || true")
-set(PATCH_CMD2 sh -c "./bootstrap --skip-po")
+set(PATCH_CMD2 sh -c "touch ABOUT-NLS po/Makevars.template")
+set(PATCH_CMD3 sh -c "env AUTOPOINT=true ./bootstrap --skip-po")
 
 set(CFG_ENV_VAR "CC=\"${CC} -DHAVE_MKFIFO=1\" CFLAGS=\"${CFLAGS}\" LDFLAGS=\"${LDFLAGS}\"")
 set(CFG_OPTS "-q LIBS=\"${LIBS}\" --host=\"${CHOST}\"")
@@ -23,7 +24,7 @@ set(CFG_OPTS "-q LIBS=\"${LIBS}\" --host=\"${CHOST}\"")
 if(${DISABLE_LARGEFILE})
     set(CFG_OPTS "${CFG_OPTS} --disable-largefile")
 endif(${DISABLE_LARGEFILE})
-set(CFG_CMD "${CFG_ENV_VAR} ${SOURCE_DIR}/configure ${CFG_OPTS}")
+set(CFG_CMD "${CFG_ENV_VAR} ${SOURCE_DIR}/configure --disable-nls --disable-gcc-warnings ${CFG_OPTS}")
 
 if(${DISABLE_FORTIFY})
     # Forcibly disable FORTIFY on legacy devices...
@@ -43,7 +44,7 @@ ExternalProject_Add(
     ${PROJECT_NAME}
     DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
     BUILD_IN_SOURCE 1
-    PATCH_COMMAND COMMAND ${PATCH_CMD1} COMMAND ${PATCH_CMD2}
+    PATCH_COMMAND COMMAND ${PATCH_CMD1} COMMAND ${PATCH_CMD2} COMMAND ${PATCH_CMD3}
     CONFIGURE_COMMAND ${CFG_CMD}
     BUILD_COMMAND $(MAKE) -j${PARALLEL_JOBS} --silent
     # skip install for tar

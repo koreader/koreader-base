@@ -1,3 +1,16 @@
+diff --git a/Makefile.am b/Makefile.am
+index 15946e7..018b9a7 100644
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -19,7 +19,7 @@
+ 
+ ACLOCAL_AMFLAGS = -I m4
+ EXTRA_DIST = ChangeLog.1 Make.rules
+-SUBDIRS = doc gnu lib rmt src scripts po tests
++SUBDIRS = doc gnu lib rmt src scripts
+ 
+ dist-hook:
+ 	$(MAKE) changelog_dir=$(distdir) ChangeLog
 diff --git a/gnulib.modules b/gnulib.modules
 index 03e01f3..ee78e94 100644
 --- a/gnulib.modules
