@@ -66,7 +66,7 @@ set(MAKE_CMD "$(MAKE) CC=\"${CC}\" SHARED_LDFLAGS=\"${SHARED_LDFLAGS}\" LD=\"${L
 set(BUILD_CMD1 sh -c "$(MAKE) -j1 depend")
 set(BUILD_CMD2 sh -c "${MAKE_CMD} build_crypto build_ssl")
 
-
+# NOTE: Wait for a really compatible luasec release before moving to 1.1.x
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
     https://github.com/openssl/openssl.git

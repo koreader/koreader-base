@@ -23,7 +23,7 @@ assert_var_defined(LDFLAGS)
 set(MAKE_ENV_VAR "CC=\"${CC}\" AR=\"${AR}\" CFLAGS=\"${CFLAGS}\" LDFLAGS=\"${LDFLAGS}\"")
 set(BUILD_CMD sh -c "$(MAKE) -j${PARALLEL_JOBS} ${MAKE_ENV_VAR}")
 
-# NOTE: As of right now (1a70ef9bb131df98d5e75c9951699f2d91c24c15), wait until stuff settles down before bumping this.
+# NOTE: As of right now (1f9eaf4eeef348d1efe0f3c7fe8ab670653cfbb1), wait until stuff settles down before bumping this.
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
     https://github.com/famzah/popen-noshell.git
@@ -36,7 +36,7 @@ ExternalProject_Add(
     popen-noshell
     BUILD_IN_SOURCE 1
     DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
-	# popen_noshell patch: Make it build on recent TCs, and implement
+    # popen_noshell patch: Make it build on recent TCs, and implement
     # a simple Makefile for building it as a static lib
     PATCH_COMMAND patch -N -p0 < ${CMAKE_CURRENT_SOURCE_DIR}/popen_noshell.patch ${EXTRA_PATCH_CMD}
     # skip configure
