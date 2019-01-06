@@ -24,7 +24,7 @@ set(CFG_OPTS "-q LIBS=\"${LIBS}\" --host=\"${CHOST}\"")
 if(${DISABLE_LARGEFILE})
     set(CFG_OPTS "${CFG_OPTS} --disable-largefile")
 endif(${DISABLE_LARGEFILE})
-set(CFG_CMD "${CFG_ENV_VAR} ${SOURCE_DIR}/configure --disable-nls --disable-gcc-warnings ${CFG_OPTS}")
+set(CFG_CMD "${CFG_ENV_VAR} ${SOURCE_DIR}/configure --disable-nls --disable-gcc-warnings --disable-acl --without-xattrs --without-posix-acls ${CFG_OPTS}")
 
 if(${DISABLE_FORTIFY})
     # Forcibly disable FORTIFY on legacy devices...
