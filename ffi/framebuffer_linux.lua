@@ -110,7 +110,7 @@ function framebuffer:init()
         io.write("PB FB: yres_virtual: ", vinfo.yres_virtual, "\n")
         io.write("PB FB: bpp         : ", vinfo.bits_per_pixel, "\n")
         -- We may need to make sure finfo.line_length is properly aligned ourselves...
-        -- NOTE: Technically, the PxP *may* require a scratch space of *up to* 8 extra *pixels* in a line.
+        -- NOTE: Technically, the PxP *may* require a scratch space of *at least* 8 extra *pixels* in a line.
         --       Here, we're dealing with bytes, so, technically, we should enforce an alignement to:
         --       8px * bpp / 8 which neatly comes down to simply bpp itself ;).
         --       That's why xres_virtual is often a few px larger than xres: 8-bytes alignment, for that scratch space.
@@ -118,27 +118,35 @@ function framebuffer:init()
         -- NOTE: But because everything is terrible, line_length apparently sometimes doesn't take bpp into account on PB,
         --       (i.e., it's in pixels instead of being in bytes), which is horribly wrong...
         --       So try to fix that...
-        -- NOTE: The 4bpp special-case might be an explanation for this...
-        --       In which case, the shorter line_length alignment branch might acually be the right thing to do *everywhere*...
         if finfo.line_length == vinfo.xres_virtual then
             -- Make sure xres_virtual is aligned to 8-bytes
+            local xres_virtual = vinfo.xres_virtual
             vinfo.xres_virtual = bit.band(vinfo.xres_virtual + 7, bit.bnot(7))
-            -- And now compute the proper line_length, with an added quirk on 4bpp fb...
-            if vinfo.bits_per_pixel >= 8 then
-                finfo.line_length = (vinfo.xres_virtual * (vinfo.bits_per_pixel / 8))
-            else
-                -- For some mystical reason, on (some?) 4bpp devices, the device expects a virtual 8bpp fb
-                -- (i.e., when iv_fbinfo's ndepth=4 but vdepth=8)
-                -- NOTE: We probably should trust InkView rather than the kernel, actually,
-                --       but I don't have a PB device to make sure that's a sane idea and test it...
-                --       c.f., GetTaskFramebufferInfo @ arm-obreey-linux-gnueabi/sysroot/usr/local/include/inkview.h
-                -- c.f., #4447
-                finfo.line_length = vinfo.xres_virtual
+            -- If it's already aligned, we're probably good, but if it's not, make sure we added at least 8px...
+            if xres_virtual ~= vinfo.xres_virtual then
+                if (vinfo.xres_virtual - xres_virtual) < 8 then
+                    -- Align to 16-bytes instead to get that extra scratch space...
+                    vinfo.xres_virtual = bit.band(xres_virtual + 15, bit.bnot(15))
+                end
             end
+            -- And now compute the proper line_length...
+            finfo.line_length = (vinfo.xres_virtual * (vinfo.bits_per_pixel / 8))
         else
             -- As we said initially, ensure it's properly aligned, according to the bitdepth...
             finfo.line_length = bit.band(finfo.line_length + (vinfo.bits_per_pixel - 1), bit.bnot(vinfo.bits_per_pixel - 1))
+            -- Much like the other branch,
+            -- if it's already aligned, we're probably good, but if it's not, make sure we added at least 8px...
+            if line_length ~= finfo.line_length then
+                -- Again, 8px * bpp / 8 == bpp ;).
+                if (finfo.line_length - line_length) < vinfo.bits_per_pixel then
+                    -- Align to 16px worth of bytes instead to get that extra scratch space... (16px * bpp / 8 == bpp * 2)
+                    finfo.line_length = bit.band(line_length + ((vinfo.bits_per_pixel * 2) - 1), bit.bnot((vinfo.bits_per_pixel * 2) - 1))
+                end
+            end
         end
+        -- NOTE: Ideally, if there's no shadow buffer, we should end up with line_length == smem_len / yres_virtual...
+        --       But since I don't know if any PB devices actually have extra buffer space for a shadow buffer,
+        --       I can't rely on that shortcut :/.
         -- Now make sure yres_virtual is aligned to 8-bytes, too
         vinfo.yres_virtual = bit.band(vinfo.yres_virtual + 7, bit.bnot(7))
         -- And we should now have an accurate computation of the active buffer size... Whew!
@@ -175,6 +183,7 @@ function framebuffer:init()
     io.write("FB: yres         : ", vinfo.yres, "\n")
     io.write("FB: yres_virtual : ", vinfo.yres_virtual, "\n")
     io.write("FB: bpp          : ", vinfo.bits_per_pixel, "\n")
+    io.flush()
 
     -- Make sure we never try to map a larger memory region than the fb reports
     assert(self.fb_size <= finfo.smem_len, "computed fb memory region too large")
