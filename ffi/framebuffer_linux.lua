@@ -140,7 +140,7 @@ function framebuffer:init()
                 -- Again, 8px * bpp / 8 == bpp ;).
                 if (finfo.line_length - line_length) < vinfo.bits_per_pixel then
                     -- Align to 16px worth of bytes instead to get that extra scratch space... (16px * bpp / 8 == bpp * 2)
-                    finfo.line_length = bit.band(finfo.line_length + ((vinfo.bits_per_pixel * 2) - 1), bit.bnot((vinfo.bits_per_pixel * 2) - 1))
+                    finfo.line_length = bit.band(line_length + ((vinfo.bits_per_pixel * 2) - 1), bit.bnot((vinfo.bits_per_pixel * 2) - 1))
                 end
             end
         end
