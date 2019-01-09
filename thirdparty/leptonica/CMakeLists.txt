@@ -10,7 +10,7 @@ ep_get_source_dir(SOURCE_DIR)
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
     https://github.com/DanBloomberg/leptonica.git
-    v1.72
+    v1.74.1
     ${SOURCE_DIR}
 )
 
@@ -25,7 +25,7 @@ ko_write_gitclone_script(
 # there's a 1.74 version of the patch already in our tree for when that time
 # comes ;).
 if(${ARM_GLIBC_GTE_2_22})
-    set(PATCH_CMD patch -N -p1 -i ${CMAKE_CURRENT_SOURCE_DIR}/leptonica-1.72-fmemopen-arm-compat-symbol.patch)
+    set(PATCH_CMD patch -N -p1 -i ${CMAKE_CURRENT_SOURCE_DIR}/leptonica-1.74-fmemopen-arm-compat-symbol.patch)
 else()
     set(PATCH_CMD "")
 endif()
