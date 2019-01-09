@@ -7,6 +7,8 @@ include("koreader_thirdparty_git")
 
 ep_get_source_dir(SOURCE_DIR)
 
+# NOTE: Needs to match the version used by whatever version of libk2pdfopt we're currently using...
+#       Probably applies to mupdf & tesseract, too...
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
     https://github.com/DanBloomberg/leptonica.git
