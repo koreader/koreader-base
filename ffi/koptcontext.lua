@@ -235,7 +235,7 @@ function KOPTContext_mt.__index:findPageBlocks()
         leptonica.pixDestroy(ffi.new('PIX *[1]', pixs))
 
         local pixtb = ffi.new("PIX *[1]")
-        local status = leptonica.pixGetRegionsBinary(pixr, nil, nil, pixtb, 0)
+        local status = leptonica.pixGetRegionsBinary(pixr, nil, nil, pixtb, nil)
         if status == 0 then
             self.nboxa = leptonica.pixSplitIntoBoxa(pixtb[0], 5, 10, 20, 80, 10, 0)
             for i = 0, leptonica.boxaGetCount(self.nboxa) - 1 do
