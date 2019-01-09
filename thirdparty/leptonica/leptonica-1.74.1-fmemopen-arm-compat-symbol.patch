@@ -1,8 +1,8 @@
-diff --git a/src/utils.c b/src/utils.c
-index bb3507c..9caf08f 100644
---- a/src/utils.c
-+++ b/src/utils.c
-@@ -1903,6 +1903,7 @@ FILE  *fp;
+diff --git a/src/utils2.c b/src/utils2.c
+index bac9621..4f7c696 100644
+--- a/src/utils2.c
++++ b/src/utils2.c
+@@ -1632,6 +1632,7 @@ FILE  *fp;
          return (FILE *)ERROR_PTR("data not defined", procName, NULL);
  
  #if HAVE_FMEMOPEN

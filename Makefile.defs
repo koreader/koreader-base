@@ -613,7 +613,7 @@ GLIB=$(GLIB_DIR)/lib/libglib-2.0$(if $(DARWIN),.dylib,.so.0)
 GLIB_STATIC=$(GLIB_DIR)/lib/libglib-2.0.a
 ZLIB=$(OUTPUT_DIR)/libs/$(if $(WIN32),zlib1.dll,$(if $(DARWIN),libz.1.dylib,libz.so.1))
 
-LEPT_LIB_EXT=$(if $(WIN32),-4.dll,$(if $(DARWIN),.4.dylib,.so.4))
+LEPT_LIB_EXT=$(if $(WIN32),-5.dll,$(if $(DARWIN),.5.dylib,.so.5))
 LEPTONICA_LIB=$(OUTPUT_DIR)/libs/liblept$(LEPT_LIB_EXT)
 TESS_LIB_EXT=$(if $(WIN32),-3.dll,$(if $(DARWIN),.3.dylib,.so.3))
 TESSERACT_LIB=$(OUTPUT_DIR)/libs/libtesseract$(TESS_LIB_EXT)

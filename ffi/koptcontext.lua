@@ -5,13 +5,13 @@ local dummy = require("ffi/koptcontext_h")
 local Blitbuffer = require("ffi/blitbuffer")
 local leptonica, k2pdfopt
 if ffi.os == "Windows" then
-    leptonica = ffi.load("libs/liblept-4.dll")
+    leptonica = ffi.load("libs/liblept-5.dll")
     k2pdfopt = ffi.load("libs/libk2pdfopt-2.dll")
 elseif ffi.os == "OSX" then
-    leptonica = ffi.load("libs/liblept.4.dylib")
+    leptonica = ffi.load("libs/liblept.5.dylib")
     k2pdfopt = ffi.load("libs/libk2pdfopt.2.dylib")
 else
-    leptonica = ffi.load("libs/liblept.so.4")
+    leptonica = ffi.load("libs/liblept.so.5")
     k2pdfopt = ffi.load("libs/libk2pdfopt.so.2")
 end
 
@@ -235,7 +235,7 @@ function KOPTContext_mt.__index:findPageBlocks()
         leptonica.pixDestroy(ffi.new('PIX *[1]', pixs))
 
         local pixtb = ffi.new("PIX *[1]")
-        local status = leptonica.pixGetRegionsBinary(pixr, nil, nil, pixtb, 0)
+        local status = leptonica.pixGetRegionsBinary(pixr, nil, nil, pixtb, nil)
         if status == 0 then
             self.nboxa = leptonica.pixSplitIntoBoxa(pixtb[0], 5, 10, 20, 80, 10, 0)
             for i = 0, leptonica.boxaGetCount(self.nboxa) - 1 do
