@@ -13,10 +13,11 @@ UNAME:=$(shell uname -s)
 MAKEFILE_DIR=$(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 TOOLCHAIN_DIR=$(MAKEFILE_DIR)toolchain
 POCKETBOOK_TOOLCHAIN?=$(TOOLCHAIN_DIR)/pocketbook-toolchain
+# Android API level 14 is the minimum target for NDK 15
 ANDROID_ARCH?=arm
 ANDROID_TOOLCHAIN=$(TOOLCHAIN_DIR)/android-toolchain-$(ANDROID_ARCH)
 NDK?=$(TOOLCHAIN_DIR)/android-ndk-r15c
-NDKABI?=9
+NDKABI?=14
 
 # set debug-related variables to cascade down
 ifdef KODEBUG
