@@ -23,12 +23,9 @@ env:
     - TARGET=pocketbook DOCKER_IMG=frenzie/kopb:0.1.1
     - TARGET=sony-prstux DOCKER_IMG=phreakuencies/prstux-dev:16.04
     - TARGET=cervantes DOCKER_IMG=frenzie/kocervantes:0.1.0
-    # ANDROID_ARCH=x86 is currently broken on these older NDKs (at least on Travis), so no point in testing it
-    - TARGET=android NDKREV=r12b
-    - TARGET=android DOCKER_IMG=frenzie/koandroid:0.1.0
-    # API level 14 is the minimum target for NDK 15
-    - TARGET=android NDKREV=r15c NDKABI=14
-    - TARGET=android NDKREV=r15c NDKABI=14 ANDROID_ARCH=x86
+    - TARGET=android DOCKER_IMG=frenzie/koandroid:0.2.0
+    - TARGET=android NDKREV=r15c
+    - TARGET=android NDKREV=r15c ANDROID_ARCH=x86
 
 addons:
   apt:

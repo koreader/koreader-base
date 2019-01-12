@@ -5,11 +5,7 @@ sudo dpkg --add-architecture i386
 sudo apt-get update
 sudo apt-get install zlib1g:i386 libc6-dev-i386 linux-libc-dev:i386
 
-if [ "$NDKREV" = "r12b" ]; then
-    wget "https://dl.google.com/android/repository/android-ndk-${NDKREV}-linux-x86_64.zip"
-    echo "extracting android ndk"
-    unzip -q "android-ndk-${NDKREV}-linux-x86_64.zip"
-elif [ "$NDKREV" = "r15c" ]; then
+if [ "$NDKREV" = "r15c" ]; then
     wget "https://dl.google.com/android/repository/android-ndk-${NDKREV}-linux-x86_64.zip"
     echo "extracting android ndk"
     unzip -q "android-ndk-${NDKREV}-linux-x86_64.zip"

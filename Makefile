@@ -159,20 +159,13 @@ $(OUTPUT_DIR)/extr: extr.c $(MUPDF_LIB) $(MUPDF_DIR)/include $(JPEG_LIB) $(FREET
 # NDK variable should be set in your environment and it should point to
 # the root directory of the NDK
 #
-# make-standalone-toolchain.sh is obsolete, for NDK <=11
 # --deprecated-headers is necessary in NDK 15, but will fail in 12-14
 android-toolchain:
 ifneq ($(wildcard $(NDK)/build/tools),)
-ifeq ($(wildcard $(NDK)/build/tools/make_standalone_toolchain.py),)
-	install -d $(ANDROID_TOOLCHAIN)
-	$(NDK)/build/tools/make-standalone-toolchain.sh --platform=android-$(NDKABI) \
-		--install-dir=$(ANDROID_TOOLCHAIN)
-else
 	$(NDK)/build/tools/make_standalone_toolchain.py --force --install-dir=$(ANDROID_TOOLCHAIN) \
 		--arch $(ANDROID_ARCH) --api $(NDKABI) --deprecated-headers || \
 	$(NDK)/build/tools/make_standalone_toolchain.py --force --install-dir=$(ANDROID_TOOLCHAIN) \
 		--arch $(ANDROID_ARCH) --api $(NDKABI)
-endif
 endif
 
 # ===========================================================================
