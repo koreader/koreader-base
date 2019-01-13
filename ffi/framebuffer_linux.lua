@@ -122,8 +122,8 @@ function framebuffer:init()
             -- Make sure xres_virtual is aligned to 8-bytes
             local xres_virtual = vinfo.xres_virtual
             vinfo.xres_virtual = bit.band(vinfo.xres_virtual + 7, bit.bnot(7))
-            -- If it's already aligned, we're probably good, but if it's not, make sure we added at least 8px...
-            if xres_virtual ~= vinfo.xres_virtual then
+            -- If it's already aligned, we're probably good (unless we still match xres), but if it's not, make sure we added at least 8px...
+            if xres_virtual ~= vinfo.xres_virtual or vinfo.xres_virtual == vinfo.xres then
                 if (vinfo.xres_virtual - xres_virtual) < 8 then
                     -- Align to 16-bytes instead to get that extra scratch space...
                     vinfo.xres_virtual = bit.band(xres_virtual + 15, bit.bnot(15))
@@ -136,6 +136,7 @@ function framebuffer:init()
             finfo.line_length = bit.band(finfo.line_length + (vinfo.bits_per_pixel - 1), bit.bnot(vinfo.bits_per_pixel - 1))
             -- Much like the other branch,
             -- if it's already aligned, we're probably good, but if it's not, make sure we added at least 8px...
+            -- NOTE: This unfortunately *might* not cover every case (c.f., the extra xres_virtual == xres check in the previous branch)?
             if line_length ~= finfo.line_length then
                 -- Again, 8px * bpp / 8 == bpp ;).
                 if (finfo.line_length - line_length) < vinfo.bits_per_pixel then
