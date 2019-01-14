@@ -394,6 +394,11 @@ function util.utf8charcode(charstring)
         return bit.lshift(bit.band(ptr[0], 0x0F), 12) +
             bit.lshift(bit.band(ptr[1], 0x3F), 6) +
             bit.band(ptr[2], 0x3F)
+    elseif len == 4 then
+        return bit.lshift(bit.band(ptr[0], 0x07), 18) +
+            bit.lshift(bit.band(ptr[1], 0x3F), 12) +
+            bit.lshift(bit.band(ptr[2], 0x3F), 6) +
+            bit.band(ptr[3], 0x3F)
     end
 end
 
