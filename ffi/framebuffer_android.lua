@@ -3,6 +3,16 @@ local android = require("android")
 local BB = require("ffi/blitbuffer")
 local C = ffi.C
 
+local has_eink_screen = android.isEink()
+local full, partial, a2, auto = 1, 2, 3, 4 -- luacheck: ignore
+
+local function update_eink(mode)
+    if has_eink_screen then
+	android.LOGV("requesting eink update " .. mode)
+        android.einkUpdate(mode)
+    end
+end
+
 local framebuffer = {}
 
 function framebuffer:init()
@@ -18,7 +28,7 @@ function framebuffer:init()
     framebuffer.parent.init(self)
 end
 
-function framebuffer:refreshFullImp()
+function framebuffer:_updateWindow()
     if android.app.window == nil then
         android.LOGW("cannot blit: no window")
         return
@@ -58,6 +68,31 @@ function framebuffer:refreshFullImp()
     end
 
     android.lib.ANativeWindow_unlockAndPost(android.app.window);
+end
+
+function framebuffer:refreshFullImp()
+    self:_updateWindow()
+    update_eink(full)
+end
+
+function framebuffer:refreshPartialImp()
+    self:_updateWindow()
+end
+
+function framebuffer:refreshFlashPartialImp()
+    self:_updateWindow()
+end
+
+function framebuffer:refreshUIImp()
+    self:_updateWindow()
+end
+
+function framebuffer:refreshFlashUIImp()
+    self:_updateWindow()
+end
+
+function framebuffer:refreshFastImp()
+    self:_updateWindow()
 end
 
 return require("ffi/framebuffer"):extend(framebuffer)
