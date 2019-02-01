@@ -444,7 +444,7 @@ end
 --[[ framebuffer API ]]--
 
 function framebuffer:refreshPartialImp(x, y, w, h, dither)
-    self.debug("refresh: partial", x, y, w, h, d and "w/ HW dithering")
+    self.debug("refresh: partial", x, y, w, h, dither and "w/ HW dithering")
     self:mech_refresh(C.UPDATE_MODE_PARTIAL, self.waveform_partial, x, y, w, h, dither)
 end
 
