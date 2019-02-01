@@ -293,7 +293,7 @@ local function refresh_k51(fb, refreshtype, waveform_mode, x, y, w, h)
     return mxc_update(fb, C.MXCFB_SEND_UPDATE, refarea, refreshtype, waveform_mode, x, y, w, h)
 end
 
-local function refresh_koa2(fb, refreshtype, waveform_mode, x, y, w, h)
+local function refresh_koa2(fb, refreshtype, waveform_mode, x, y, w, h, dither)
     local refarea = ffi.new("struct mxcfb_update_data_koa2[1]")
     -- only for Amazon's driver, try to mostly follow what the stock reader does...
     if waveform_mode == C.WAVEFORM_MODE_KOA2_GLR16 then
@@ -306,8 +306,20 @@ local function refresh_koa2(fb, refreshtype, waveform_mode, x, y, w, h)
     end
     -- NOTE: Since there's no longer a distinction between GC16_FAST & GC16, we're done!
     refarea[0].temp = C.TEMP_USE_AMBIENT
-    refarea[0].dither_mode = C.EPDC_FLAG_USE_DITHERING_PASSTHROUGH
-    refarea[0].quant_bit = 0;
+    -- Did we request HW dithering?
+    if dither then
+        refarea[0].dither_mode = C.EPDC_FLAG_USE_DITHERING_ORDERED
+        if waveform_mode == C.WAVEFORM_MODE_A2 then
+            refarea[0].quant_bit = 1;
+        elseif if waveform_mode == C.WAVEFORM_MODE_DU then
+            refarea[0].quant_bit = 3;
+        else
+            refarea[0].quant_bit = 7;
+        end
+    else
+        refarea[0].dither_mode = C.EPDC_FLAG_USE_DITHERING_PASSTHROUGH
+        refarea[0].quant_bit = 0;
+    end
     -- Enable the appropriate flag when requesting what amounts to a 2bit update
     if waveform_mode == C.WAVEFORM_MODE_DU then
         refarea[0].flags = C.EPDC_FLAG_FORCE_MONOCHROME
@@ -319,7 +331,7 @@ local function refresh_koa2(fb, refreshtype, waveform_mode, x, y, w, h)
     return mxc_update(fb, C.MXCFB_SEND_UPDATE_KOA2, refarea, refreshtype, waveform_mode, x, y, w, h)
 end
 
-local function refresh_pw4(fb, refreshtype, waveform_mode, x, y, w, h)
+local function refresh_pw4(fb, refreshtype, waveform_mode, x, y, w, h, dither)
     local refarea = ffi.new("struct mxcfb_update_data_pw4[1]")
     -- only for Amazon's driver, try to mostly follow what the stock reader does...
     if waveform_mode == C.WAVEFORM_MODE_KOA2_GLR16 then
@@ -332,8 +344,20 @@ local function refresh_pw4(fb, refreshtype, waveform_mode, x, y, w, h)
     end
     -- NOTE: Since there's no longer a distinction between GC16_FAST & GC16, we're done!
     refarea[0].temp = C.TEMP_USE_AMBIENT
-    refarea[0].dither_mode = C.EPDC_FLAG_USE_DITHERING_PASSTHROUGH
-    refarea[0].quant_bit = 0;
+    -- Did we request HW dithering?
+    if dither then
+        refarea[0].dither_mode = C.EPDC_FLAG_USE_DITHERING_ORDERED
+        if waveform_mode == C.WAVEFORM_MODE_A2 then
+            refarea[0].quant_bit = 1;
+        elseif if waveform_mode == C.WAVEFORM_MODE_DU then
+            refarea[0].quant_bit = 3;
+        else
+            refarea[0].quant_bit = 7;
+        end
+    else
+        refarea[0].dither_mode = C.EPDC_FLAG_USE_DITHERING_PASSTHROUGH
+        refarea[0].quant_bit = 0;
+    end
     -- Enable the appropriate flag when requesting what amounts to a 2bit update
     if waveform_mode == C.WAVEFORM_MODE_DU then
         refarea[0].flags = C.EPDC_FLAG_FORCE_MONOCHROME
@@ -364,12 +388,22 @@ local function refresh_kobo(fb, refreshtype, waveform_mode, x, y, w, h)
     return mxc_update(fb, C.MXCFB_SEND_UPDATE_V1_NTX, refarea, refreshtype, waveform_mode, x, y, w, h)
 end
 
-local function refresh_kobo_mk7(fb, refreshtype, waveform_mode, x, y, w, h)
+local function refresh_kobo_mk7(fb, refreshtype, waveform_mode, x, y, w, h, dither)
     local refarea = ffi.new("struct mxcfb_update_data_v2[1]")
     -- TEMP_USE_AMBIENT, not that there was ever any other choice on Kobo...
     refarea[0].temp = C.TEMP_USE_AMBIENT
-    refarea[0].dither_mode = C.EPDC_FLAG_USE_DITHERING_PASSTHROUGH
-    refarea[0].quant_bit = 0;
+    -- Did we request HW dithering?
+    if dither then
+        refarea[0].dither_mode = C.EPDC_FLAG_USE_DITHERING_ORDERED
+        if waveform_mode == C.WAVEFORM_MODE_A2 then
+            refarea[0].quant_bit = 1;
+        else
+            refarea[0].quant_bit = 7;
+        end
+    else
+        refarea[0].dither_mode = C.EPDC_FLAG_USE_DITHERING_PASSTHROUGH
+        refarea[0].quant_bit = 0;
+    end
     -- Enable the appropriate flag when requesting a 2bit update
     -- NOTE: As of right now (FW 4.9.x), WAVEFORM_MODE_GLD16 appears not to be used by Nickel,
     --       so we don't have to care about EPDC_FLAG_USE_REGAL
@@ -413,37 +447,37 @@ end
 
 --[[ framebuffer API ]]--
 
-function framebuffer:refreshPartialImp(x, y, w, h)
-    self.debug("refresh: partial", x, y, w, h)
-    self:mech_refresh(C.UPDATE_MODE_PARTIAL, self.waveform_partial, x, y, w, h)
+function framebuffer:refreshPartialImp(x, y, w, h, dither)
+    self.debug("refresh: partial", x, y, w, h, d and "w/ HW dithering")
+    self:mech_refresh(C.UPDATE_MODE_PARTIAL, self.waveform_partial, x, y, w, h, dither)
 end
 
 -- NOTE: UPDATE_MODE_FULL doesn't mean full screen or no region, it means ask for a black flash!
 --       The only exception to that rule is with REAGL waveform modes, where it will *NOT* flash.
 --       But then, REAGL waveform modes will *never* use anything other than FULL update mode anyway ;).
-function framebuffer:refreshFlashPartialImp(x, y, w, h)
-    self.debug("refresh: partial w/ flash", x, y, w, h)
-    self:mech_refresh(C.UPDATE_MODE_FULL, self.waveform_partial, x, y, w, h)
+function framebuffer:refreshFlashPartialImp(x, y, w, h, dither)
+    self.debug("refresh: partial w/ flash", x, y, w, h, dither and "AND w/ HW dithering")
+    self:mech_refresh(C.UPDATE_MODE_FULL, self.waveform_partial, x, y, w, h, dither)
 end
 
-function framebuffer:refreshUIImp(x, y, w, h)
-    self.debug("refresh: ui-mode", x, y, w, h)
-    self:mech_refresh(C.UPDATE_MODE_PARTIAL, self.waveform_ui, x, y, w, h)
+function framebuffer:refreshUIImp(x, y, w, h, dither)
+    self.debug("refresh: ui-mode", x, y, w, h, dither and "w/ HW dithering")
+    self:mech_refresh(C.UPDATE_MODE_PARTIAL, self.waveform_ui, x, y, w, h, dither)
 end
 
-function framebuffer:refreshFlashUIImp(x, y, w, h)
-    self.debug("refresh: ui-mode w/ flash", x, y, w, h)
-    self:mech_refresh(C.UPDATE_MODE_FULL, self.waveform_flashui, x, y, w, h)
+function framebuffer:refreshFlashUIImp(x, y, w, h, dither)
+    self.debug("refresh: ui-mode w/ flash", x, y, w, h, dither and "AND w/ HW dithering")
+    self:mech_refresh(C.UPDATE_MODE_FULL, self.waveform_flashui, x, y, w, h, dither)
 end
 
-function framebuffer:refreshFullImp(x, y, w, h)
-    self.debug("refresh: full", x, y, w, h)
-    self:mech_refresh(C.UPDATE_MODE_FULL, self.waveform_full, x, y, w, h)
+function framebuffer:refreshFullImp(x, y, w, h, dither)
+    self.debug("refresh: full", x, y, w, h, dither and "w/ HW dithering")
+    self:mech_refresh(C.UPDATE_MODE_FULL, self.waveform_full, x, y, w, h, dither)
 end
 
-function framebuffer:refreshFastImp(x, y, w, h)
-    self.debug("refresh: fast", x, y, w, h)
-    self:mech_refresh(C.UPDATE_MODE_PARTIAL, self.waveform_fast, x, y, w, h)
+function framebuffer:refreshFastImp(x, y, w, h, dither)
+    self.debug("refresh: fast", x, y, w, h, dither and "w/ HW dithering")
+    self:mech_refresh(C.UPDATE_MODE_PARTIAL, self.waveform_fast, x, y, w, h, dither)
 end
 
 function framebuffer:init()

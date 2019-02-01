@@ -91,55 +91,55 @@ function fb:init()
 end
 
 -- the ...Imp methods may be overridden to implement refresh
-function fb:refreshFullImp(x, y, w, h)
+function fb:refreshFullImp(x, y, w, h, d)
     -- the simplest form of refresh implements only this method.
     -- the others default to fall back to this.
 end
-function fb:refreshPartialImp(x, y, w, h)
+function fb:refreshPartialImp(x, y, w, h, d)
     -- default is fallback
-    return self:refreshFullImp(x, y, w, h)
+    return self:refreshFullImp(x, y, w, h, d)
 end
-function fb:refreshFlashPartialImp(x, y, w, h)
+function fb:refreshFlashPartialImp(x, y, w, h, d)
     -- default is fallback
-    return self:refreshFullImp(x, y, w, h)
+    return self:refreshFullImp(x, y, w, h, d)
 end
-function fb:refreshUIImp(x, y, w, h)
+function fb:refreshUIImp(x, y, w, h, d)
     -- default is fallback
-    return self:refreshPartialImp(x, y, w, h)
+    return self:refreshPartialImp(x, y, w, h, d)
 end
-function fb:refreshFlashUIImp(x, y, w, h)
+function fb:refreshFlashUIImp(x, y, w, h, d)
     -- default is fallback
-    return self:refreshFullImp(x, y, w, h)
+    return self:refreshFullImp(x, y, w, h, d)
 end
-function fb:refreshFastImp(x, y, w, h)
+function fb:refreshFastImp(x, y, w, h, d)
     -- default is fallback
-    return self:refreshPartialImp(x, y, w, h)
+    return self:refreshPartialImp(x, y, w, h, d)
 end
 
 -- these should not be overridden, they provide the external refresh API:
-function fb:refreshFull(x, y, w, h)
+function fb:refreshFull(x, y, w, h, d)
     x, y = self:calculateRealCoordinates(x, y)
-    return self:refreshFullImp(x, y, w, h)
+    return self:refreshFullImp(x, y, w, h, d)
 end
-function fb:refreshPartial(x, y, w, h)
+function fb:refreshPartial(x, y, w, h, d)
     x, y = self:calculateRealCoordinates(x, y)
-    return self:refreshPartialImp(x, y, w, h)
+    return self:refreshPartialImp(x, y, w, h, d)
 end
-function fb:refreshFlashPartial(x, y, w, h)
+function fb:refreshFlashPartial(x, y, w, h, d)
     x, y = self:calculateRealCoordinates(x, y)
-    return self:refreshFlashPartialImp(x, y, w, h)
+    return self:refreshFlashPartialImp(x, y, w, h, d)
 end
-function fb:refreshUI(x, y, w, h)
+function fb:refreshUI(x, y, w, h, d)
     x, y = self:calculateRealCoordinates(x, y)
-    return self:refreshUIImp(x, y, w, h)
+    return self:refreshUIImp(x, y, w, h, d)
 end
-function fb:refreshFlashUI(x, y, w, h)
+function fb:refreshFlashUI(x, y, w, h, d)
     x, y = self:calculateRealCoordinates(x, y)
-    return self:refreshFlashUIImp(x, y, w, h)
+    return self:refreshFlashUIImp(x, y, w, h, d)
 end
-function fb:refreshFast(x, y, w, h)
+function fb:refreshFast(x, y, w, h, d)
     x, y = self:calculateRealCoordinates(x, y)
-    return self:refreshFastImp(x, y, w, h)
+    return self:refreshFastImp(x, y, w, h, d)
 end
 
 -- should be overridden to free resources
