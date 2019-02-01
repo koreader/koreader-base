@@ -309,10 +309,8 @@ local function refresh_koa2(fb, refreshtype, waveform_mode, x, y, w, h, dither)
     -- Did we request HW dithering?
     if dither then
         refarea[0].dither_mode = C.EPDC_FLAG_USE_DITHERING_ORDERED
-        if waveform_mode == C.WAVEFORM_MODE_A2 then
+        if waveform_mode == C.WAVEFORM_MODE_A2 or waveform_mode == C.WAVEFORM_MODE_DU then
             refarea[0].quant_bit = 1;
-        elseif if waveform_mode == C.WAVEFORM_MODE_DU then
-            refarea[0].quant_bit = 3;
         else
             refarea[0].quant_bit = 7;
         end
@@ -347,10 +345,8 @@ local function refresh_pw4(fb, refreshtype, waveform_mode, x, y, w, h, dither)
     -- Did we request HW dithering?
     if dither then
         refarea[0].dither_mode = C.EPDC_FLAG_USE_DITHERING_ORDERED
-        if waveform_mode == C.WAVEFORM_MODE_A2 then
+        if waveform_mode == C.WAVEFORM_MODE_A2 or waveform_mode == C.WAVEFORM_MODE_DU then
             refarea[0].quant_bit = 1;
-        elseif if waveform_mode == C.WAVEFORM_MODE_DU then
-            refarea[0].quant_bit = 3;
         else
             refarea[0].quant_bit = 7;
         end
