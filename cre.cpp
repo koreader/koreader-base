@@ -2294,6 +2294,9 @@ static int drawCurrentPage(lua_State *L) {
 	int w = bb->w,
 		h = bb->h;
 
+	int drawn_images_count;
+	int drawn_images_surface;
+
 	doc->text_view->Resize(w, h);
 	doc->text_view->Render();
 	if (color) {
@@ -2302,14 +2305,20 @@ static int drawCurrentPage(lua_State *L) {
                  * for why not TYPE_BBRGB32) */
 		LVColorDrawBuf drawBuf(w, h, bb->data, 16);
 		doc->text_view->Draw(drawBuf, false);
+		drawn_images_count = drawBuf.getDrawnImagesCount();
+		drawn_images_surface = drawBuf.getDrawnImagesSurface();
 	}
 	else {
 		/* Set DrawBuf to 8bpp */
 		LVGrayDrawBuf drawBuf(w, h, 8, bb->data);
 		doc->text_view->Draw(drawBuf, false);
+		drawn_images_count = drawBuf.getDrawnImagesCount();
+		drawn_images_surface = drawBuf.getDrawnImagesSurface();
 	}
 
-	return 0;
+	lua_pushinteger(L, drawn_images_count);
+	lua_pushnumber(L, (float)drawn_images_surface/(w*h));
+	return 2;
 }
 
 static int drawCoverPage(lua_State *L) {
