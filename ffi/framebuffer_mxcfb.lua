@@ -452,7 +452,7 @@ end
 --       The only exception to that rule is with REAGL waveform modes, where it will *NOT* flash.
 --       But then, REAGL waveform modes will *never* use anything other than FULL update mode anyway ;).
 function framebuffer:refreshFlashPartialImp(x, y, w, h, dither)
-    self.debug("refresh: partial w/ flash", x, y, w, h, dither and "AND w/ HW dithering")
+    self.debug("refresh: partial w/ flash", x, y, w, h, dither and "w/ HW dithering")
     self:mech_refresh(C.UPDATE_MODE_FULL, self.waveform_partial, x, y, w, h, dither)
 end
 
@@ -462,7 +462,7 @@ function framebuffer:refreshUIImp(x, y, w, h, dither)
 end
 
 function framebuffer:refreshFlashUIImp(x, y, w, h, dither)
-    self.debug("refresh: ui-mode w/ flash", x, y, w, h, dither and "AND w/ HW dithering")
+    self.debug("refresh: ui-mode w/ flash", x, y, w, h, dither and "w/ HW dithering")
     self:mech_refresh(C.UPDATE_MODE_FULL, self.waveform_flashui, x, y, w, h, dither)
 end
 
