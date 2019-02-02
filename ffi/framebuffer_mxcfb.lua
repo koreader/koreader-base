@@ -8,6 +8,8 @@ local dummy = require("ffi/posix_h")
 local MARKER_MIN = 42
 local MARKER_MAX = (42 * 42)
 
+local function yes() return true end
+
 local framebuffer = {
     -- pass device object here for proper model detection:
     device = nil,
@@ -533,6 +535,7 @@ function framebuffer:init()
 
         -- NOTE: The PW4 essentially uses the same driver as the KOA2, it's just passing a slightly smaller mxcfb_update_data struct
         if isKOA2 or isPW4 then
+            self.device.canHWDither = yes
             if isKOA2 then
                 self.mech_refresh = refresh_koa2
             else
@@ -595,6 +598,7 @@ function framebuffer:init()
         --       Nickel doesn't wait for completion of previous markers on those PARTIAL GLR16, so that's enough to keep our heuristics intact,
         --       while still doing the right thing everywhere ;).
         if isMk7 then
+            self.device.canHWDither = yes
             self.mech_refresh = refresh_kobo_mk7
             self.mech_wait_update_complete = kobo_mk7_mxc_wait_for_update_complete
 
