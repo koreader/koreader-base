@@ -452,7 +452,7 @@ end
 
 -- NOTE: UPDATE_MODE_FULL doesn't mean full screen or no region, it means ask for a black flash!
 --       The only exception to that rule is with REAGL waveform modes, where it will *NOT* flash.
---       But then, REAGL waveform modes will *never* use anything other than FULL update mode anyway ;).
+--       That's regardless of whether the REAGL waveform mode is of the "always enforce FULL" variety or not ;).
 function framebuffer:refreshFlashPartialImp(x, y, w, h, dither)
     self.debug("refresh: partial w/ flash", x, y, w, h, dither and "w/ HW dithering")
     self:mech_refresh(C.UPDATE_MODE_FULL, self.waveform_partial, x, y, w, h, dither)
