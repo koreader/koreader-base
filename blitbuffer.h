@@ -48,11 +48,11 @@ typedef struct ColorRGB32 {
 } ColorRGB32;
 
 typedef struct BlitBuffer {
-	int w;
-	int h;
-	int pitch;
-	uint8_t *data;
-	uint8_t config;
+    int w;
+    int h;
+    int pitch;
+    uint8_t *data;
+    uint8_t config;
 } BlitBuffer;
 
 typedef struct BlitBuffer8 {
