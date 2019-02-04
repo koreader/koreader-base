@@ -39,24 +39,24 @@
 #define GET_BB_TYPE(bb) (((MASK_TYPE & bb->config) >> SHIFT_TYPE))
 
 #define ColorRGB32_To_Color8(color) \
-    (Color8){(4898*color->r + 9618*color->g + 1869*color->b) >> 14}
+    (Color8){(4898U*color->r + 9618U*color->g + 1869U*color->b) >> 14U}
 #define ColorRGB32_To_Color8A(color) \
-    (Color8A){(4898*color->r + 9618*color->g + 1869*color->b) >> 14, color->alpha}
+    (Color8A){(4898U*color->r + 9618U*color->g + 1869U*color->b) >> 14U, color->alpha}
 #define ColorRGB32_To_Color16(color) \
-    (ColorRGB16){((color->r & 0xF8) << 8) + ((color->g & 0xFC) << 3) + ((color->b >> 3))}
+    (ColorRGB16){((color->r & 0xF8) << 8U) + ((color->g & 0xFC) << 3U) + ((color->b >> 3U))}
 #define ColorRGB32_To_Color24(color) \
     (ColorRGB24){color->r, color->g, color->b}
 
-#define ColorRGB16_GetR(v) (((v >> 11) << 3) + ((v >> 11) >> 2))
-#define ColorRGB16_GetG(v) ((((v >> 5) & 0x3F) << 2) + (((v >> 5) & 0x3F) >> 4))
-#define ColorRGB16_GetB(v) (((v & 0x001F) << 3) + ((v & 0x001F) >> 2))
+#define ColorRGB16_GetR(v) (((v >> 11U) << 3U) + ((v >> 11U) >> 2U))
+#define ColorRGB16_GetG(v) ((((v >> 5U) & 0x3F) << 2U) + (((v >> 5U) & 0x3F) >> 4U))
+#define ColorRGB16_GetB(v) (((v & 0x001F) << 3U) + ((v & 0x001F) >> 2U))
 #define ColorRGB16_To_A(v) \
     ((39919*ColorRGB16_GetR(v) + \
       39185*ColorRGB16_GetG(v) + \
-      15220*ColorRGB16_GetB(v)) >> 14)
-#define RGB_To_RGB16(r, g, b) (((r & 0xF8) << 8) + ((g & 0xFC) << 3) + (b >> 3))
-#define RGB_To_A(r, g, b) ((4898*r + 9618*g + 1869*b) >> 14)
-#define DIV_255(x) ((((x) >> 8) + (x) + 0x01) >> 8)
+      15220*ColorRGB16_GetB(v)) >> 14U)
+#define RGB_To_RGB16(r, g, b) (((r & 0xF8) << 8U) + ((g & 0xFC) << 3U) + (b >> 3U))
+#define RGB_To_A(r, g, b) ((4898U*r + 9618U*g + 1869U*b) >> 14U)
+#define DIV_255(x) ((((x) >> 8U) + (x) + 0x01) >> 8U)
 
 #define BB_GET_PIXEL(bb, rotation, COLOR, x, y, pptr) \
     switch (rotation) { \
@@ -422,8 +422,8 @@ void BB_blit_to_BB16(BlitBuffer *src, BlitBuffer *dst,
                         BB_GET_PIXEL(dst, dbb_rotation, ColorRGB16, d_x, d_y, &dstptr);
                         BB_GET_PIXEL(src, sbb_rotation, Color8, o_x, o_y, &srcptr);
                         v = srcptr->a;
-                        v5bit = v >> 3;
-                        dstptr->v = (v5bit << 11) + ((v & 0xFC) << 3) + v5bit;
+                        v5bit = v >> 3U;
+                        dstptr->v = (v5bit << 11U) + ((v & 0xFC) << 3U) + v5bit;
                         o_x += 1;
                     }
                     o_y += 1;
@@ -440,8 +440,8 @@ void BB_blit_to_BB16(BlitBuffer *src, BlitBuffer *dst,
                         BB_GET_PIXEL(dst, dbb_rotation, ColorRGB16, d_x, d_y, &dstptr);
                         BB_GET_PIXEL(src, sbb_rotation, Color8A, o_x, o_y, &srcptr);
                         v = srcptr->a;
-                        v5bit = v >> 3;
-                        dstptr->v = (v5bit << 11) + ((v & 0xFC) << 3) + v5bit;
+                        v5bit = v >> 3U;
+                        dstptr->v = (v5bit << 11U) + ((v & 0xFC) << 3U) + v5bit;
                         o_x += 1;
                     }
                     o_y += 1;
@@ -990,7 +990,6 @@ void BB_alpha_blit_from(BlitBuffer *dst, BlitBuffer *src,
     } else if (dbb_type == TYPE_BBRGB16 && sbb_type == TYPE_BBRGB24) {
         ColorRGB24 *srcptr;
         ColorRGB16 *dstptr;
-        uint8_t r, g, b;
         o_y = offs_y;
         for (d_y = dest_y; d_y < dest_y + h; d_y++) {
             o_x = offs_x;
