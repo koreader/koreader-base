@@ -97,6 +97,16 @@ typedef struct BlitBufferRGB32 {
 
 void BB_fill_rect(BlitBuffer *bb, int x, int y, int w, int h, ColorRGB32 *color);
 void BB_blend_rect(BlitBuffer *bb, int x, int y, int w, int h, ColorRGB32 *color);
+void BB_blit_to_BB8(BlitBuffer *src, BlitBuffer *dst,
+                    int dest_x, int dest_y, int offs_x, int offs_y, int w, int h);
+void BB_blit_to_BB8A(BlitBuffer *src, BlitBuffer *dst,
+                     int dest_x, int dest_y, int offs_x, int offs_y, int w, int h);
+void BB_blit_to_BB16(BlitBuffer *src, BlitBuffer *dst,
+                     int dest_x, int dest_y, int offs_x, int offs_y, int w, int h);
+void BB_blit_to_BB24(BlitBuffer *src, BlitBuffer *dst,
+                     int dest_x, int dest_y, int offs_x, int offs_y, int w, int h);
+void BB_blit_to_BB32(BlitBuffer *src, BlitBuffer *dst,
+                     int dest_x, int dest_y, int offs_x, int offs_y, int w, int h);
 void BB_blit_to(BlitBuffer *source, BlitBuffer *dest, int dest_x, int dest_y,
                 int offs_x, int offs_y, int w, int h);
 void BB_add_blit_from(BlitBuffer *dest, BlitBuffer *source, int dest_x, int dest_y,
