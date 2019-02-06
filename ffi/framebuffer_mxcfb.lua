@@ -174,9 +174,9 @@ local function mxc_update(fb, update_ioctl, refarea, refresh_type, waveform_mode
     --       (we might actually want the one before that), but in the vast majority of cases, that's good enough,
     --       and saves us a lot of annoying and hard-to-get-right heuristics anyway ;).
     -- Make sure it's a valid marker, to avoid doing something stupid on our first update.
-    if (refresh_type == C.UPDATE_MODE_FULL
+    if fb.mech_wait_update_submission
+      and (refresh_type == C.UPDATE_MODE_FULL
       or fb:_isUIWaveFormMode(waveform_mode))
-      and fb.mech_wait_update_submission
       and (marker >= MARKER_MIN and marker <= MARKER_MAX) then
         fb.debug("refresh: wait for submission of (previous) marker", marker)
         fb.mech_wait_update_submission(fb, marker)
@@ -530,6 +530,7 @@ function framebuffer:init()
             self.waveform_reagl = C.WAVEFORM_MODE_REAGL
             self.waveform_partial = self.waveform_reagl
         else
+            self.waveform_fast = C.WAVEFORM_MODE_DU -- NOTE: DU, because A2 looks terrible on the Touch, and ghosts horribly. Framework is actually using AUTO for UI feedback inverts.
             self.waveform_partial = C.WAVEFORM_MODE_GL16_FAST -- NOTE: Depending on FW, might instead be AUTO w/ hist_gray_waveform_mode set to GL16_FAST
         end
 
