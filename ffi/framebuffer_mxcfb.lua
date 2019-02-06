@@ -530,6 +530,7 @@ function framebuffer:init()
             self.waveform_reagl = C.WAVEFORM_MODE_REAGL
             self.waveform_partial = self.waveform_reagl
         else
+            self.waveform_fast = C.WAVEFORM_MODE_DU -- NOTE: DU, because A2 looks terrible on the Touch, and ghosts horribly. Framework is actually using AUTO for UI feedback inverts.
             self.waveform_partial = C.WAVEFORM_MODE_GL16_FAST -- NOTE: Depending on FW, might instead be AUTO w/ hist_gray_waveform_mode set to GL16_FAST
         end
 
