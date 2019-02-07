@@ -67,7 +67,7 @@ cdecl_func(usleep)
 cdecl_func(statvfs)
 cdecl_func(gettimeofday)
 cdecl_func(realpath)
-cdecl_func(basename)
+cdecl_func(basename) // NOTE: We'll want the GNU one (c.f., https://github.com/koreader/koreader/issues/4543)
 cdecl_func(dirname)
 
 cdecl_func(malloc)
