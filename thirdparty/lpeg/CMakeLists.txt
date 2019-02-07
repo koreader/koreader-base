@@ -18,7 +18,7 @@ include(ExternalProject)
 ExternalProject_Add(
     ${PROJECT_NAME}
     DOWNLOAD_DIR ${KO_DOWNLOAD_DIR}
-    URL http://www.inf.puc-rio.br/~roberto/lpeg/lpeg-${LPEG_VER}.tar.gz
+    URL http://gentoo.osuosl.org/distfiles/lpeg-${LPEG_VER}.tar.gz
     URL_MD5 049e0cc18fd540ccddab701a1d771e46
     BUILD_IN_SOURCE 1
     # skip configure
