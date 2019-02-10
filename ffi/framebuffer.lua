@@ -254,21 +254,26 @@ function fb:getScreenHeight()
     return self.screen_size.h
 end
 
+local screen_dpi_override
+
 function fb:getDPI()
-    if self.dpi == nil then
-        self.dpi = EMULATE_READER_DPI or G_reader_settings:readSetting("screen_dpi")
-    end
+    if self.dpi ~= nil then return self.dpi end
+
+    self.dpi = EMULATE_READER_DPI or screen_dpi_override
+
     if self.dpi == nil and self.device then
         self.dpi = self.device.display_dpi
     end
+
     if self.dpi == nil then
         self.dpi = 160
     end
+
     return self.dpi
 end
 
 function fb:setDPI(dpi)
-    G_reader_settings:saveSetting("screen_dpi", dpi)
+    screen_dpi_override = dpi
 end
 
 function fb:scaleByDPI(px)
@@ -282,7 +287,7 @@ function fb:scaleBySize(px)
     -- if users custom screen dpi, also scale by dpi
     local dpi_scale = size_scale
 
-    local custom_dpi = EMULATE_READER_DPI or G_reader_settings:readSetting("screen_dpi")
+    local custom_dpi = EMULATE_READER_DPI or screen_dpi_override
     if custom_dpi and self.device and self.device.display_dpi ~= self.dpi then
         dpi_scale = self.dpi / 167
     end
