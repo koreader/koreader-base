@@ -1257,6 +1257,42 @@ void lua_pushSegmentsFromRange(lua_State *L, CreDocument *doc, ldomXRange *range
     }
 }
 
+static int nextVisibleCharEnd(lua_State *L){
+    CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
+	const char* xp = luaL_checkstring(L, 2);
+    ldomXPointerEx nodep = doc->dom_doc->createXPointer(lString16(xp));
+    if (nodep.isNull())
+        return 0;
+    nodep.nextVisibleCharEnd();
+    lua_pushstring(L, UnicodeToLocal(nodep.toString()).c_str());
+
+    return 1;
+}
+
+static int nextVisibleWordEnd(lua_State *L){
+    CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
+	const char* xp = luaL_checkstring(L, 2);
+    ldomXPointerEx nodep = doc->dom_doc->createXPointer(lString16(xp));
+    if (nodep.isNull())
+        return 0;
+    nodep.nextVisibleWordEnd();
+    lua_pushstring(L, UnicodeToLocal(nodep.toString()).c_str());
+
+    return 1;
+}
+
+static int prevVisibleWordEnd(lua_State *L){
+    CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
+	const char* xp = luaL_checkstring(L, 2);
+    ldomXPointerEx nodep = doc->dom_doc->createXPointer(lString16(xp));
+    if (nodep.isNull())
+        return 0;
+    nodep.prevVisibleWordEnd();
+    lua_pushstring(L, UnicodeToLocal(nodep.toString()).c_str());
+
+    return 1;
+}
+
 static int getWordBoxesFromPositions(lua_State *L) {
 	CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
 	const char* pos0 = luaL_checkstring(L, 2);
@@ -2622,6 +2658,8 @@ static const struct luaL_Reg credocument_meth[] = {
 	{"gotoXPointer", gotoXPointer},
 	{"zoomFont", zoomFont},
 	{"toggleFontBolder", toggleFontBolder},
+    {"nextVisibleWordEnd", nextVisibleWordEnd},
+    {"prevVisibleWordEnd", prevVisibleWordEnd},
 	//{"cursorLeft", cursorLeft},
 	//{"cursorRight", cursorRight},
 	{"drawCurrentPage", drawCurrentPage},
