@@ -1257,9 +1257,21 @@ void lua_pushSegmentsFromRange(lua_State *L, CreDocument *doc, ldomXRange *range
     }
 }
 
-static int nextVisibleWordEnd(lua_State *L){
+static int getNextVisibleWordStart(lua_State *L){
     CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
-	const char* xp = luaL_checkstring(L, 2);
+    const char* xp = luaL_checkstring(L, 2);
+    ldomXPointerEx nodep = doc->dom_doc->createXPointer(lString16(xp));
+    if (nodep.isNull())
+        return 0;
+    nodep.nextVisibleWordStart();
+    lua_pushstring(L, UnicodeToLocal(nodep.toString()).c_str());
+
+    return 1;
+}
+
+static int getNextVisibleWordEnd(lua_State *L){
+    CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
+    const char* xp = luaL_checkstring(L, 2);
     ldomXPointerEx nodep = doc->dom_doc->createXPointer(lString16(xp));
     if (nodep.isNull())
         return 0;
@@ -1269,9 +1281,22 @@ static int nextVisibleWordEnd(lua_State *L){
     return 1;
 }
 
-static int prevVisibleWordEnd(lua_State *L){
+static int getPrevVisibleWordStart(lua_State *L){
     CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
-	const char* xp = luaL_checkstring(L, 2);
+    const char* xp = luaL_checkstring(L, 2);
+    ldomXPointerEx nodep = doc->dom_doc->createXPointer(lString16(xp));
+    if (nodep.isNull())
+        return 0;
+    nodep.prevVisibleWordStart();
+    lua_pushstring(L, UnicodeToLocal(nodep.toString()).c_str());
+
+    return 1;
+}
+
+
+static int getPrevVisibleWordEnd(lua_State *L){
+    CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
+    const char* xp = luaL_checkstring(L, 2);
     ldomXPointerEx nodep = doc->dom_doc->createXPointer(lString16(xp));
     if (nodep.isNull())
         return 0;
@@ -2615,8 +2640,10 @@ static const struct luaL_Reg credocument_meth[] = {
 	{"getHeaderHeight", getHeaderHeight},
 	{"getToc", getTableOfContent},
 	{"getVisiblePageCount", getVisiblePageCount},
-    {"nextVisibleWordEnd", nextVisibleWordEnd},
-    {"prevVisibleWordEnd", prevVisibleWordEnd},
+    {"getNextVisibleWordStart", getNextVisibleWordStart},
+    {"getNextVisibleWordEnd", getNextVisibleWordEnd},
+    {"getPrevVisibleWordStart", getPrevVisibleWordStart},
+    {"getPrevVisibleWordEnd", getPrevVisibleWordEnd},
 	/*--- set methods ---*/
 	{"setIntProperty", setIntProperty},
 	{"setStringProperty", setStringProperty},
