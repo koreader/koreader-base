@@ -2627,6 +2627,8 @@ static const struct luaL_Reg credocument_meth[] = {
 	{"getHeaderHeight", getHeaderHeight},
 	{"getToc", getTableOfContent},
 	{"getVisiblePageCount", getVisiblePageCount},
+    {"nextVisibleWordEnd", nextVisibleWordEnd},
+    {"prevVisibleWordEnd", prevVisibleWordEnd},
 	/*--- set methods ---*/
 	{"setIntProperty", setIntProperty},
 	{"setStringProperty", setStringProperty},
@@ -2658,8 +2660,6 @@ static const struct luaL_Reg credocument_meth[] = {
 	{"gotoXPointer", gotoXPointer},
 	{"zoomFont", zoomFont},
 	{"toggleFontBolder", toggleFontBolder},
-    {"nextVisibleWordEnd", nextVisibleWordEnd},
-    {"prevVisibleWordEnd", prevVisibleWordEnd},
 	//{"cursorLeft", cursorLeft},
 	//{"cursorRight", cursorRight},
 	{"drawCurrentPage", drawCurrentPage},
