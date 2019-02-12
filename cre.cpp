@@ -1257,6 +1257,55 @@ void lua_pushSegmentsFromRange(lua_State *L, CreDocument *doc, ldomXRange *range
     }
 }
 
+static int getNextVisibleWordStart(lua_State *L){
+    CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
+    const char* xp = luaL_checkstring(L, 2);
+    ldomXPointerEx nodep = doc->dom_doc->createXPointer(lString16(xp));
+    if (nodep.isNull())
+        return 0;
+    nodep.nextVisibleWordStart();
+    lua_pushstring(L, UnicodeToLocal(nodep.toString()).c_str());
+
+    return 1;
+}
+
+static int getNextVisibleWordEnd(lua_State *L){
+    CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
+    const char* xp = luaL_checkstring(L, 2);
+    ldomXPointerEx nodep = doc->dom_doc->createXPointer(lString16(xp));
+    if (nodep.isNull())
+        return 0;
+    nodep.nextVisibleWordEnd();
+    lua_pushstring(L, UnicodeToLocal(nodep.toString()).c_str());
+
+    return 1;
+}
+
+static int getPrevVisibleWordStart(lua_State *L){
+    CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
+    const char* xp = luaL_checkstring(L, 2);
+    ldomXPointerEx nodep = doc->dom_doc->createXPointer(lString16(xp));
+    if (nodep.isNull())
+        return 0;
+    nodep.prevVisibleWordStart();
+    lua_pushstring(L, UnicodeToLocal(nodep.toString()).c_str());
+
+    return 1;
+}
+
+
+static int getPrevVisibleWordEnd(lua_State *L){
+    CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
+    const char* xp = luaL_checkstring(L, 2);
+    ldomXPointerEx nodep = doc->dom_doc->createXPointer(lString16(xp));
+    if (nodep.isNull())
+        return 0;
+    nodep.prevVisibleWordEnd();
+    lua_pushstring(L, UnicodeToLocal(nodep.toString()).c_str());
+
+    return 1;
+}
+
 static int getWordBoxesFromPositions(lua_State *L) {
 	CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
 	const char* pos0 = luaL_checkstring(L, 2);
@@ -2554,103 +2603,107 @@ static int getImageDataFromPosition(lua_State *L) {
 
 
 static const struct luaL_Reg cre_func[] = {
-	{"initCache", initCache},
-	{"initHyphDict", initHyphDict},
-	{"newDocView", newDocView},
-	{"getFontFaces", getFontFaces},
-	{"getGammaLevel", getGammaLevel},
-	{"getGammaIndex", getGammaIndex},
-	{"setGammaIndex", setGammaIndex},
-	{"registerFont", registerFont},
-	{"getHyphDictList", getHyphDictList},
-	{"getSelectedHyphDict", getSelectedHyphDict},
-	{"setHyphDictionary", setHyphDictionary},
-	{"getLatestDomVersion", getLatestDomVersion},
-	{"requestDomVersion", requestDomVersion},
-	{NULL, NULL}
+    {"initCache", initCache},
+    {"initHyphDict", initHyphDict},
+    {"newDocView", newDocView},
+    {"getFontFaces", getFontFaces},
+    {"getGammaLevel", getGammaLevel},
+    {"getGammaIndex", getGammaIndex},
+    {"setGammaIndex", setGammaIndex},
+    {"registerFont", registerFont},
+    {"getHyphDictList", getHyphDictList},
+    {"getSelectedHyphDict", getSelectedHyphDict},
+    {"setHyphDictionary", setHyphDictionary},
+    {"getLatestDomVersion", getLatestDomVersion},
+    {"requestDomVersion", requestDomVersion},
+    {NULL, NULL}
 };
 
 static const struct luaL_Reg credocument_meth[] = {
-	{"loadDocument", loadDocument},
-	{"renderDocument", renderDocument},
-	/*--- get methods ---*/
-	{"getIntProperty", getIntProperty},
-	{"getStringProperty", getStringProperty},
-	{"getDocumentProps", getDocumentProps},
-	{"getPages", getNumberOfPages},
-	{"getCurrentPage", getCurrentPage},
-	{"getPageFromXPointer", getPageFromXPointer},
-	{"getPosFromXPointer", getPosFromXPointer},
-	{"getCurrentPos", getCurrentPos},
-	{"getCurrentPercent", getCurrentPercent},
-	{"getXPointer", getXPointer},
-	{"getFullHeight", getFullHeight},
-	{"getFontSize", getFontSize},
-	{"getFontFace", getFontFace},
-	{"getPageMargins", getPageMargins},
-	{"getHeaderHeight", getHeaderHeight},
-	{"getToc", getTableOfContent},
-	{"getVisiblePageCount", getVisiblePageCount},
-	/*--- set methods ---*/
-	{"setIntProperty", setIntProperty},
-	{"setStringProperty", setStringProperty},
-	{"setViewMode", setViewMode},
-	{"setViewDimen", setViewDimen},
-	{"setHeaderInfo", setHeaderInfo},
-	{"setHeaderFont", setHeaderFont},
-	{"setFontFace", setFontFace},
-	{"setAsPreferredFontWithBias", setAsPreferredFontWithBias},
-	{"setFontSize", setFontSize},
-	{"setDefaultInterlineSpace", setDefaultInterlineSpace},
-	{"setStyleSheet", setStyleSheet},
-	{"setEmbeddedStyleSheet", setEmbeddedStyleSheet},
-	{"setEmbeddedFonts", setEmbeddedFonts},
-	{"setPageMargins", setPageMargins},
-	{"setVisiblePageCount", setVisiblePageCount},
-	{"adjustFontSizes", adjustFontSizes},
-	{"setBatteryState", setBatteryState},
-	/* --- control methods ---*/
-	{"isBuiltDomStale", isBuiltDomStale},
-	{"hasCacheFile", hasCacheFile},
-	{"invalidateCacheFile", invalidateCacheFile},
-	{"getCacheFilePath", getCacheFilePath},
-	{"buildAlternativeToc", buildAlternativeToc},
-	{"isTocAlternativeToc", isTocAlternativeToc},
-	{"gotoPage", gotoPage},
-	{"gotoPercent", gotoPercent},
-	{"gotoPos", gotoPos},
-	{"gotoXPointer", gotoXPointer},
-	{"zoomFont", zoomFont},
-	{"toggleFontBolder", toggleFontBolder},
-	//{"cursorLeft", cursorLeft},
-	//{"cursorRight", cursorRight},
-	{"drawCurrentPage", drawCurrentPage},
-	//{"drawCoverPage", drawCoverPage},
-	{"findText", findText},
-	{"isXPointerInCurrentPage", isXPointerInCurrentPage},
-	{"isXPointerInDocument", isXPointerInDocument},
-	{"getLinkFromPosition", getLinkFromPosition},
-	{"getWordFromPosition", getWordFromPosition},
-	{"getTextFromPositions", getTextFromPositions},
-	{"getWordBoxesFromPositions", getWordBoxesFromPositions},
-	{"getImageDataFromPosition", getImageDataFromPosition},
-	{"getDocumentFileContent", getDocumentFileContent},
-	{"getTextFromXPointer", getTextFromXPointer},
-	{"getHTMLFromXPointer", getHTMLFromXPointer},
-	{"getHTMLFromXPointers", getHTMLFromXPointers},
-	{"getPageLinks", getPageLinks},
-	{"isLinkToFootnote", isLinkToFootnote},
-	{"highlightXPointer", highlightXPointer},
-	{"getCoverPageImageData", getCoverPageImageData},
-	{"gotoLink", gotoLink},
-	{"goBack", goBack},
-	{"goForward", goForward},
-	{"clearSelection", clearSelection},
-	{"readDefaults", readDefaults},
-	{"saveDefaults", saveDefaults},
-	{"close", closeDocument},
-	{"__gc", closeDocument},
-	{NULL, NULL}
+    {"loadDocument", loadDocument},
+    {"renderDocument", renderDocument},
+    /*--- get methods ---*/
+    {"getIntProperty", getIntProperty},
+    {"getStringProperty", getStringProperty},
+    {"getDocumentProps", getDocumentProps},
+    {"getPages", getNumberOfPages},
+    {"getCurrentPage", getCurrentPage},
+    {"getPageFromXPointer", getPageFromXPointer},
+    {"getPosFromXPointer", getPosFromXPointer},
+    {"getCurrentPos", getCurrentPos},
+    {"getCurrentPercent", getCurrentPercent},
+    {"getXPointer", getXPointer},
+    {"getFullHeight", getFullHeight},
+    {"getFontSize", getFontSize},
+    {"getFontFace", getFontFace},
+    {"getPageMargins", getPageMargins},
+    {"getHeaderHeight", getHeaderHeight},
+    {"getToc", getTableOfContent},
+    {"getVisiblePageCount", getVisiblePageCount},
+    {"getNextVisibleWordStart", getNextVisibleWordStart},
+    {"getNextVisibleWordEnd", getNextVisibleWordEnd},
+    {"getPrevVisibleWordStart", getPrevVisibleWordStart},
+    {"getPrevVisibleWordEnd", getPrevVisibleWordEnd},
+    /*--- set methods ---*/
+    {"setIntProperty", setIntProperty},
+    {"setStringProperty", setStringProperty},
+    {"setViewMode", setViewMode},
+    {"setViewDimen", setViewDimen},
+    {"setHeaderInfo", setHeaderInfo},
+    {"setHeaderFont", setHeaderFont},
+    {"setFontFace", setFontFace},
+    {"setAsPreferredFontWithBias", setAsPreferredFontWithBias},
+    {"setFontSize", setFontSize},
+    {"setDefaultInterlineSpace", setDefaultInterlineSpace},
+    {"setStyleSheet", setStyleSheet},
+    {"setEmbeddedStyleSheet", setEmbeddedStyleSheet},
+    {"setEmbeddedFonts", setEmbeddedFonts},
+    {"setPageMargins", setPageMargins},
+    {"setVisiblePageCount", setVisiblePageCount},
+    {"adjustFontSizes", adjustFontSizes},
+    {"setBatteryState", setBatteryState},
+    /* --- control methods ---*/
+    {"isBuiltDomStale", isBuiltDomStale},
+    {"hasCacheFile", hasCacheFile},
+    {"invalidateCacheFile", invalidateCacheFile},
+    {"getCacheFilePath", getCacheFilePath},
+    {"buildAlternativeToc", buildAlternativeToc},
+    {"isTocAlternativeToc", isTocAlternativeToc},
+    {"gotoPage", gotoPage},
+    {"gotoPercent", gotoPercent},
+    {"gotoPos", gotoPos},
+    {"gotoXPointer", gotoXPointer},
+    {"zoomFont", zoomFont},
+    {"toggleFontBolder", toggleFontBolder},
+    //{"cursorLeft", cursorLeft},
+    //{"cursorRight", cursorRight},
+    {"drawCurrentPage", drawCurrentPage},
+    //{"drawCoverPage", drawCoverPage},
+    {"findText", findText},
+    {"isXPointerInCurrentPage", isXPointerInCurrentPage},
+    {"isXPointerInDocument", isXPointerInDocument},
+    {"getLinkFromPosition", getLinkFromPosition},
+    {"getWordFromPosition", getWordFromPosition},
+    {"getTextFromPositions", getTextFromPositions},
+    {"getWordBoxesFromPositions", getWordBoxesFromPositions},
+    {"getImageDataFromPosition", getImageDataFromPosition},
+    {"getDocumentFileContent", getDocumentFileContent},
+    {"getTextFromXPointer", getTextFromXPointer},
+    {"getHTMLFromXPointer", getHTMLFromXPointer},
+    {"getHTMLFromXPointers", getHTMLFromXPointers},
+    {"getPageLinks", getPageLinks},
+    {"isLinkToFootnote", isLinkToFootnote},
+    {"highlightXPointer", highlightXPointer},
+    {"getCoverPageImageData", getCoverPageImageData},
+    {"gotoLink", gotoLink},
+    {"goBack", goBack},
+    {"goForward", goForward},
+    {"clearSelection", clearSelection},
+    {"readDefaults", readDefaults},
+    {"saveDefaults", saveDefaults},
+    {"close", closeDocument},
+    {"__gc", closeDocument},
+    {NULL, NULL}
 };
 
 int luaopen_cre(lua_State *L) {
