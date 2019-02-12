@@ -2703,7 +2703,7 @@ static const struct luaL_Reg credocument_meth[] = {
     {"saveDefaults", saveDefaults},
     {"close", closeDocument},
     {"__gc", closeDocument},
-	{NULL, NULL}
+    {NULL, NULL}
 };
 
 int luaopen_cre(lua_State *L) {
