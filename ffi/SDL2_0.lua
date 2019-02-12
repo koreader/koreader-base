@@ -68,7 +68,7 @@ function S.open()
     if SDL.SDL_Init(bit.bor(SDL.SDL_INIT_VIDEO,
                             SDL.SDL_INIT_JOYSTICK,
                             SDL.SDL_INIT_GAMECONTROLLER)) ~= 0 then
-        error("Cannot initialize SDL.")
+        error("Cannot initialize SDL: " .. ffi.string(SDL.SDL_GetError()))
     end
 
     local full_screen = os.getenv("SDL_FULLSCREEN")
