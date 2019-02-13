@@ -114,6 +114,10 @@ function framebuffer:init()
         --       Here, we're dealing with bytes, so, technically, we should enforce an alignement to:
         --       8px * bpp / 8 which neatly comes down to simply bpp itself ;).
         --       That's why xres_virtual is often a few px larger than xres: 8-bytes alignment, for that scratch space.
+        -- NOTE: FWIW, Kindle & Kobo kernels do:
+        --       xres_virtual = ALIGN(xres, 32);
+        --       yres_virtual = ALIGN(yres, 128) * num_screens;
+        --       (c.f., mxc_epdc_fb_check_var @ drivers/video/mxc/mxc_epdc_fb.c OR drivers/video/fbdev/mxc/mxc_epdc_v2_fb.c)
         local line_length = finfo.line_length
         -- NOTE: But because everything is terrible, line_length apparently sometimes doesn't take bpp into account on PB,
         --       (i.e., it's in pixels instead of being in bytes), which is horribly wrong...
