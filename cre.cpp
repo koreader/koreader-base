@@ -1150,7 +1150,7 @@ static int getTextFromXPointers(lua_State *L) {
 
 		lString16 selText = r.getRangeText( '\n', 8192 );
 		lua_pushstring(L, UnicodeToLocal(selText).c_str());
-	    return 1;
+        return 1;
 	}
     return 0;
 }
@@ -2675,7 +2675,7 @@ static const struct luaL_Reg credocument_meth[] = {
     {"getNextVisibleWordEnd", getNextVisibleWordEnd},
     {"getPrevVisibleWordStart", getPrevVisibleWordStart},
     {"getPrevVisibleWordEnd", getPrevVisibleWordEnd},
-	{"getTextFromXPointers", getTextFromXPointers},
+    {"getTextFromXPointers", getTextFromXPointers},
     /*--- set methods ---*/
     {"setIntProperty", setIntProperty},
     {"setStringProperty", setStringProperty},
