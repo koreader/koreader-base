@@ -1151,7 +1151,7 @@ static int getTextFromXPointers(lua_State *L) {
 		lString16 selText = r.getRangeText( '\n', 8192 );
 		lua_pushstring(L, UnicodeToLocal(selText).c_str());
         return 1;
-	}
+    }
     return 0;
 }
 
