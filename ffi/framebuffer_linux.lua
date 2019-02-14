@@ -176,6 +176,7 @@ function framebuffer:init()
                 self.fb_size = finfo.smem_len
                 -- And that means the original line_length should *probably* be honored, too...
                 finfo.line_length = line_length
+                io.write("PB FB: line_length <- ", finfo.line_length, "\n")
             end
         end
     else
