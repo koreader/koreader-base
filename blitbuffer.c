@@ -922,7 +922,7 @@ void BB_alpha_blit_from(BlitBuffer *dst, BlitBuffer *src,
                 BB_GET_PIXEL(src, sbb_rotation, Color8A, o_x, o_y, &srcptr);
                 alpha = srcptr->alpha;
                 ainv = 0xFF - alpha;
-                dstptr->a = dstptr->a * ainv + srcptr->a * alpha;
+                dstptr->a = DIV_255(dstptr->a * ainv + srcptr->a * alpha);
                 o_x += 1;
             }
             o_y += 1;
@@ -942,16 +942,20 @@ void BB_alpha_blit_from(BlitBuffer *dst, BlitBuffer *src,
             o_y += 1;
         }
     } else if (dbb_type == TYPE_BBRGB16 && sbb_type == TYPE_BB8A) {
-        // FIXME: Not actually alpha-blending anything?
         Color8A *srcptr;
         ColorRGB16 *dstptr;
+        uint8_t dsta, bdsta;
         o_y = offs_y;
         for (d_y = dest_y; d_y < dest_y + h; d_y++) {
             o_x = offs_x;
             for (d_x = dest_x; d_x < dest_x + w; d_x++) {
                 BB_GET_PIXEL(dst, dbb_rotation, ColorRGB16, d_x, d_y, &dstptr);
                 BB_GET_PIXEL(src, sbb_rotation, Color8A, o_x, o_y, &srcptr);
-                dstptr->v = RGB_To_RGB16(srcptr->a, srcptr->a, srcptr->a);
+                alpha = srcptr->alpha;
+                ainv = 0xFF - alpha;
+                dsta = ColorRGB16_To_A(dstptr->v);
+                bdsta = DIV_255(dsta * ainv + srcptr->a * alpha);
+                dstptr->v = RGB_To_RGB16(bdsta, bdsta, bdsta);
                 o_x += 1;
             }
             o_y += 1;
@@ -1045,7 +1049,6 @@ void BB_alpha_blit_from(BlitBuffer *dst, BlitBuffer *src,
                 dstptr->r = srcptr->r;
                 dstptr->g = srcptr->g;
                 dstptr->b = srcptr->b;
-                dstptr->alpha = 0xFF;
                 o_x += 1;
             }
             o_y += 1;
@@ -1062,7 +1065,6 @@ void BB_alpha_blit_from(BlitBuffer *dst, BlitBuffer *src,
                 dstptr->r = srcptr->a;
                 dstptr->g = srcptr->a;
                 dstptr->b = srcptr->a;
-                dstptr->alpha = 0xFF;
                 o_x += 1;
             }
             o_y += 1;
@@ -1070,16 +1072,20 @@ void BB_alpha_blit_from(BlitBuffer *dst, BlitBuffer *src,
     } else if (dbb_type == TYPE_BBRGB32 && sbb_type == TYPE_BB8A) {
         ColorRGB32 *dstptr;
         Color8A *srcptr;
+        uint8_t dsta, bdsta;
         o_y = offs_y;
         for (d_y = dest_y; d_y < dest_y + h; d_y++) {
             o_x = offs_x;
             for (d_x = dest_x; d_x < dest_x + w; d_x++) {
                 BB_GET_PIXEL(dst, dbb_rotation, ColorRGB32, d_x, d_y, &dstptr);
                 BB_GET_PIXEL(src, sbb_rotation, Color8A, o_x, o_y, &srcptr);
-                dstptr->r = srcptr->a;
-                dstptr->g = srcptr->a;
-                dstptr->b = srcptr->a;
-                dstptr->alpha = srcptr->alpha; // if bad result, try: 0xFF - srcptr->alpha
+                alpha = srcptr->alpha;
+                ainv = 0xFF - alpha;
+                dsta = RGB_To_A(dstptr->r, dstptr->g, dstptr->b);
+                bdsta = DIV_255(dsta * ainv + srcptr->a * alpha);
+                dstptr->r = bdsta;
+                dstptr->g = bdsta;
+                dstptr->b = bdsta;
                 o_x += 1;
             }
             o_y += 1;
