@@ -1124,6 +1124,37 @@ static int getWordFromPosition(lua_State *L) {
 	return 1;
 }
 
+static int getTextFromXPointers(lua_State *L) {
+	CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
+	const char* pos0 = luaL_checkstring(L, 2);
+	const char* pos1 = luaL_checkstring(L, 3);
+
+	ldomDocument *dv = doc->dom_doc;
+
+	ldomXPointer startp = dv->createXPointer(lString16(pos0));
+	ldomXPointer endp = dv->createXPointer(lString16(pos1));
+	if (!startp.isNull() && !endp.isNull()) {
+		ldomXRange r(startp, endp);
+		if (r.getStart().isNull() || r.getEnd().isNull())
+			return 0;
+		r.sort();
+
+		if (r.getStart() == r.getEnd()) { // for single CJK character
+			ldomNode * node = r.getStart().getNode();
+			lString16 text = node->getText();
+			int textLen = text.length();
+			int offset = r.getEnd().getOffset();
+			if (offset < textLen - 1)
+				r.getEnd().setOffset(offset + 1);
+		}
+
+		lString16 selText = r.getRangeText( '\n', 8192 );
+		lua_pushstring(L, UnicodeToLocal(selText).c_str());
+        return 1;
+    }
+    return 0;
+}
+
 static int getTextFromPositions(lua_State *L) {
 	CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
 	int x0 = luaL_checkint(L, 2);
@@ -2644,6 +2675,7 @@ static const struct luaL_Reg credocument_meth[] = {
     {"getNextVisibleWordEnd", getNextVisibleWordEnd},
     {"getPrevVisibleWordStart", getPrevVisibleWordStart},
     {"getPrevVisibleWordEnd", getPrevVisibleWordEnd},
+    {"getTextFromXPointers", getTextFromXPointers},
     /*--- set methods ---*/
     {"setIntProperty", setIntProperty},
     {"setStringProperty", setStringProperty},
