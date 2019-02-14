@@ -137,6 +137,7 @@ function framebuffer:init()
             -- NOTE: As per Kindle/Kobo kernels, xres_virtual = ALIGN(xres, 32);
             vinfo.xres_virtual = ALIGN(vinfo.xres, 32)
         end
+        local yres_virtual = vinfo.yres_virtual
         if not IS_ALIGNED(vinfo.yres_virtual, 128) then
             -- NOTE: As per Kindle/Kobo kernels, yres_virtual = ALIGN(yres, 128) * num_screens;
             --       We don't do hardware panning/flip buffers, so, we only care about a single screen.
@@ -156,9 +157,21 @@ function framebuffer:init()
         --              (which is usually what all of the fb_size computations that don't use smem_len do here),
         --              but we certainly CANNOT mmap a *larger* one!
         if self.fb_size > finfo.smem_len then
-            self.fb_size = finfo.smem_len
-            -- And that means the original line_length should *probably* be honored, too...
-            finfo.line_length = line_length
+            -- NOTE: But first, we'll try to align *both* dimensions to 32...
+            --       This appears to be needed for legacy 600*800 devices, c.f. #4476.
+            if not IS_ALIGNED(yres_virtual, 32) then
+                vinfo.yres_virtual = ALIGN(vinfo.yres, 32)
+            else
+                vinfo.yres_virtual = yres_virtual
+            end
+            self.fb_size = finfo.line_length * vinfo.yres_virtual
+
+            -- If that still didn't cut it, final fallback...
+            if self.fb_size > finfo.smem_len then
+                self.fb_size = finfo.smem_len
+                -- And that means the original line_length should *probably* be honored, too...
+                finfo.line_length = line_length
+            end
         end
     else
         error("framebuffer model not supported");
