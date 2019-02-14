@@ -25,7 +25,7 @@ end
 
 local function IS_ALIGNED(x, a)
     -- (x & (a-1)) == 0
-    if bit.band(x, a -1) == 0 then
+    if bit.band(x, a - 1) == 0 then
         return true
     else
         return false
