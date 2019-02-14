@@ -1294,10 +1294,11 @@ static int getNextVisibleWordStart(lua_State *L){
     ldomXPointerEx nodep = doc->dom_doc->createXPointer(lString16(xp));
     if (nodep.isNull())
         return 0;
-    nodep.nextVisibleWordStart();
-    lua_pushstring(L, UnicodeToLocal(nodep.toString()).c_str());
-
-    return 1;
+    if (nodep.nextVisibleWordStart()) {
+        lua_pushstring(L, UnicodeToLocal(nodep.toString()).c_str());
+        return 1;
+    }
+    return 0;
 }
 
 static int getNextVisibleWordEnd(lua_State *L){
@@ -1306,10 +1307,11 @@ static int getNextVisibleWordEnd(lua_State *L){
     ldomXPointerEx nodep = doc->dom_doc->createXPointer(lString16(xp));
     if (nodep.isNull())
         return 0;
-    nodep.nextVisibleWordEnd();
-    lua_pushstring(L, UnicodeToLocal(nodep.toString()).c_str());
-
-    return 1;
+    if (nodep.nextVisibleWordEnd()) {
+        lua_pushstring(L, UnicodeToLocal(nodep.toString()).c_str());
+        return 1;
+    }
+    return 0;
 }
 
 static int getPrevVisibleWordStart(lua_State *L){
@@ -1318,10 +1320,11 @@ static int getPrevVisibleWordStart(lua_State *L){
     ldomXPointerEx nodep = doc->dom_doc->createXPointer(lString16(xp));
     if (nodep.isNull())
         return 0;
-    nodep.prevVisibleWordStart();
-    lua_pushstring(L, UnicodeToLocal(nodep.toString()).c_str());
-
-    return 1;
+    if (nodep.prevVisibleWordStart()) {
+        lua_pushstring(L, UnicodeToLocal(nodep.toString()).c_str());
+        return 1;
+    }
+    return 0;
 }
 
 
@@ -1331,10 +1334,37 @@ static int getPrevVisibleWordEnd(lua_State *L){
     ldomXPointerEx nodep = doc->dom_doc->createXPointer(lString16(xp));
     if (nodep.isNull())
         return 0;
-    nodep.prevVisibleWordEnd();
-    lua_pushstring(L, UnicodeToLocal(nodep.toString()).c_str());
+    if (nodep.prevVisibleWordEnd()) {
+        lua_pushstring(L, UnicodeToLocal(nodep.toString()).c_str());
+        return 1;
+    }
+    return 0;
+}
 
-    return 1;
+static int getNextVisibleChar(lua_State *L){
+    CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
+    const char* xp = luaL_checkstring(L, 2);
+    ldomXPointerEx nodep = doc->dom_doc->createXPointer(lString16(xp));
+    if (nodep.isNull())
+        return 0;
+    if (nodep.nextVisibleChar()) {
+        lua_pushstring(L, UnicodeToLocal(nodep.toString()).c_str());
+        return 1;
+    }
+    return 0;
+}
+
+static int getPrevVisibleChar(lua_State *L){
+    CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
+    const char* xp = luaL_checkstring(L, 2);
+    ldomXPointerEx nodep = doc->dom_doc->createXPointer(lString16(xp));
+    if (nodep.isNull())
+        return 0;
+    if (nodep.prevVisibleChar()) {
+        lua_pushstring(L, UnicodeToLocal(nodep.toString()).c_str());
+        return 1;
+    }
+    return 0;
 }
 
 static int getWordBoxesFromPositions(lua_State *L) {
@@ -2675,6 +2705,8 @@ static const struct luaL_Reg credocument_meth[] = {
     {"getNextVisibleWordEnd", getNextVisibleWordEnd},
     {"getPrevVisibleWordStart", getPrevVisibleWordStart},
     {"getPrevVisibleWordEnd", getPrevVisibleWordEnd},
+    {"getPrevVisibleChar", getPrevVisibleChar},
+    {"getNextVisibleChar", getNextVisibleChar},
     {"getTextFromXPointers", getTextFromXPointers},
     /*--- set methods ---*/
     {"setIntProperty", setIntProperty},
