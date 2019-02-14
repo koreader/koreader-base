@@ -136,16 +136,19 @@ function framebuffer:init()
         if not IS_ALIGNED(vinfo.xres_virtual, 32) then
             -- NOTE: As per Kindle/Kobo kernels, xres_virtual = ALIGN(xres, 32);
             vinfo.xres_virtual = ALIGN(vinfo.xres, 32)
+            io.write("PB FB: xres_virtual -> ", vinfo.xres_virtual, "\n")
         end
         local yres_virtual = vinfo.yres_virtual
         if not IS_ALIGNED(vinfo.yres_virtual, 128) then
             -- NOTE: As per Kindle/Kobo kernels, yres_virtual = ALIGN(yres, 128) * num_screens;
             --       We don't do hardware panning/flip buffers, so, we only care about a single screen.
             vinfo.yres_virtual = ALIGN(vinfo.yres, 128)
+            io.write("PB FB: yres_virtual -> ", vinfo.yres_virtual, "\n")
         end
         -- Now that we know xres_virtual is sane, we can compute the proper line_length
         local line_length = finfo.line_length
         finfo.line_length = vinfo.xres_virtual * (vinfo.bits_per_pixel / 8)
+        io.write("PB FB: line_length -> ", finfo.line_length, "\n")
 
         -- NOTE: Ideally, if there's no shadow buffer, we should end up with line_length == smem_len / yres_virtual...
         -- So we should now be able to make an accurate computation of the active buffer size... Whew!
@@ -161,8 +164,10 @@ function framebuffer:init()
             --       This appears to be needed for legacy 600*800 devices, c.f. #4476.
             if not IS_ALIGNED(yres_virtual, 32) then
                 vinfo.yres_virtual = ALIGN(vinfo.yres, 32)
+                io.write("PB FB: yres_virtual => ", vinfo.yres_virtual, "\n")
             else
                 vinfo.yres_virtual = yres_virtual
+                io.write("PB FB: yres_virtual <- ", vinfo.yres_virtual, "\n")
             end
             self.fb_size = finfo.line_length * vinfo.yres_virtual
 
