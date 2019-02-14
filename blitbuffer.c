@@ -1033,6 +1033,7 @@ void BB_alpha_blit_from(BlitBuffer *dst, BlitBuffer *src,
                 dstptr->r = DIV_255(dstptr->r * ainv + srcptr->r * alpha);
                 dstptr->g = DIV_255(dstptr->g * ainv + srcptr->g * alpha);
                 dstptr->b = DIV_255(dstptr->b * ainv + srcptr->b * alpha);
+                //dstptr->alpha = dstptr->alpha;
                 o_x += 1;
             }
             o_y += 1;
@@ -1049,6 +1050,7 @@ void BB_alpha_blit_from(BlitBuffer *dst, BlitBuffer *src,
                 dstptr->r = srcptr->r;
                 dstptr->g = srcptr->g;
                 dstptr->b = srcptr->b;
+                //dstptr->alpha = dstptr->alpha;
                 o_x += 1;
             }
             o_y += 1;
@@ -1065,6 +1067,7 @@ void BB_alpha_blit_from(BlitBuffer *dst, BlitBuffer *src,
                 dstptr->r = srcptr->a;
                 dstptr->g = srcptr->a;
                 dstptr->b = srcptr->a;
+                //dstptr->alpha = dstptr->alpha;
                 o_x += 1;
             }
             o_y += 1;
@@ -1086,6 +1089,7 @@ void BB_alpha_blit_from(BlitBuffer *dst, BlitBuffer *src,
                 dstptr->r = bdsta;
                 dstptr->g = bdsta;
                 dstptr->b = bdsta;
+                //dstptr->alpha = dstptr->alpha;
                 o_x += 1;
             }
             o_y += 1;
