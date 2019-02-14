@@ -237,6 +237,7 @@ function framebuffer:clear(w, h)
         -- NOTE: We do not rely on self.fb_size, because it's larger than line_length * yres,
         --       and regions of memory outside of the visible screen *may* be used by other things in the system,
         --       for performance reasons, and we do not want to screw them over ;).
+        -- NOTE: This should be equivalent to line_length * yres
         C.memset(self.data, 0xFF, w * (self.fb_bpp / 8) * h)
     end
 end
