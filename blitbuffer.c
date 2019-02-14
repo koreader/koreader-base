@@ -907,7 +907,7 @@ void BB_alpha_blit_from(BlitBuffer *dst, BlitBuffer *src,
                 alpha = srcptr->alpha;
                 ainv = 0xFF - alpha;
                 srca = RGB_To_A(srcptr->r, srcptr->g, srcptr->b);
-                dstptr->a = DIV_255(dstptr->a * ainv + sa * alpha);
+                dstptr->a = DIV_255(dstptr->a * ainv + srca * alpha);
                 o_x += 1;
             }
             o_y += 1;
