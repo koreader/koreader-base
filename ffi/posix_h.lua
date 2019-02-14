@@ -71,6 +71,7 @@ char *basename(char *) __attribute__((__nothrow__, __leaf__));
 char *dirname(char *) __attribute__((__nothrow__, __leaf__));
 void *malloc(size_t) __attribute__((malloc, leaf, nothrow));
 void free(void *) __attribute__((leaf, nothrow));
+void *memset(void *, int, size_t) __attribute__((leaf, nothrow));
 char *strdup(const char *) __attribute__((malloc, leaf, nothrow));
 char *strndup(const char *, size_t) __attribute__((malloc, leaf, nothrow));
 struct _IO_FILE *fopen(const char *restrict, const char *restrict);

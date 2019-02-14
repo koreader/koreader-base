@@ -142,6 +142,10 @@ function fb:refreshFast(x, y, w, h, d)
     return self:refreshFastImp(x, y, w, h, d)
 end
 
+-- should be overriden if you want/have a way to clear the screen without going through blitting
+function fb:clear()
+end
+
 -- should be overridden to free resources
 function fb:close()
 end

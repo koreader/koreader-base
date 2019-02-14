@@ -72,6 +72,7 @@ cdecl_func(dirname)
 
 cdecl_func(malloc)
 cdecl_func(free)
+cdecl_func(memset)
 
 cdecl_func(strdup)
 cdecl_func(strndup)
