@@ -865,6 +865,34 @@ void BB_alpha_blit_from(BlitBuffer *dst, BlitBuffer *src,
             }
             o_y += 1;
         }
+    } else if (dbb_type == TYPE_BBRGB16 && sbb_type == TYPE_BB8) {
+        Color8 *srcptr;
+        ColorRGB16 *dstptr;
+        o_y = offs_y;
+        for (d_y = dest_y; d_y < dest_y + h; d_y++) {
+            o_x = offs_x;
+            for (d_x = dest_x; d_x < dest_x + w; d_x++) {
+                BB_GET_PIXEL(dst, dbb_rotation, ColorRGB16, d_x, d_y, &dstptr);
+                BB_GET_PIXEL(src, sbb_rotation, Color8, o_x, o_y, &srcptr);
+                dstptr->v = RGB_To_RGB16(srcptr->a, srcptr->a, srcptr->a);
+                o_x += 1;
+            }
+            o_y += 1;
+        }
+    } else if (dbb_type == TYPE_BBRGB16 && sbb_type == TYPE_BB8A) {
+        Color8A *srcptr;
+        ColorRGB16 *dstptr;
+        o_y = offs_y;
+        for (d_y = dest_y; d_y < dest_y + h; d_y++) {
+            o_x = offs_x;
+            for (d_x = dest_x; d_x < dest_x + w; d_x++) {
+                BB_GET_PIXEL(dst, dbb_rotation, ColorRGB16, d_x, d_y, &dstptr);
+                BB_GET_PIXEL(src, sbb_rotation, Color8A, o_x, o_y, &srcptr);
+                dstptr->v = RGB_To_RGB16(srcptr->a, srcptr->a, srcptr->a);
+                o_x += 1;
+            }
+            o_y += 1;
+        }
     } else if (dbb_type == TYPE_BBRGB16 && sbb_type == TYPE_BBRGB16) {
         ColorRGB16 *dstptr, *srcptr;
         o_y = offs_y;
@@ -874,6 +902,40 @@ void BB_alpha_blit_from(BlitBuffer *dst, BlitBuffer *src,
                 BB_GET_PIXEL(dst, dbb_rotation, ColorRGB16, d_x, d_y, &dstptr);
                 BB_GET_PIXEL(src, sbb_rotation, ColorRGB16, o_x, o_y, &srcptr);
                 *dstptr = *srcptr;
+                o_x += 1;
+            }
+            o_y += 1;
+        }
+    } else if (dbb_type == TYPE_BBRGB16 && sbb_type == TYPE_BBRGB24) {
+        ColorRGB24 *srcptr;
+        ColorRGB16 *dstptr;
+        o_y = offs_y;
+        for (d_y = dest_y; d_y < dest_y + h; d_y++) {
+            o_x = offs_x;
+            for (d_x = dest_x; d_x < dest_x + w; d_x++) {
+                BB_GET_PIXEL(dst, dbb_rotation, ColorRGB16, d_x, d_y, &dstptr);
+                BB_GET_PIXEL(src, sbb_rotation, ColorRGB24, o_x, o_y, &srcptr);
+                dstptr->v = RGB_To_RGB16(srcptr->r, srcptr->g, srcptr->b);
+                o_x += 1;
+            }
+            o_y += 1;
+        }
+    } else if (dbb_type == TYPE_BBRGB16 && sbb_type == TYPE_BBRGB32) {
+        ColorRGB32 *srcptr;
+        ColorRGB16 *dstptr;
+        uint8_t r, g, b;
+        o_y = offs_y;
+        for (d_y = dest_y; d_y < dest_y + h; d_y++) {
+            o_x = offs_x;
+            for (d_x = dest_x; d_x < dest_x + w; d_x++) {
+                BB_GET_PIXEL(dst, dbb_rotation, ColorRGB16, d_x, d_y, &dstptr);
+                BB_GET_PIXEL(src, sbb_rotation, ColorRGB32, o_x, o_y, &srcptr);
+                alpha = srcptr->alpha;
+                ainv = 0xFF - alpha;
+                r = DIV_255(ColorRGB16_GetR(dstptr->v) * ainv + srcptr->r * alpha);
+                g = DIV_255(ColorRGB16_GetG(dstptr->v) * ainv + srcptr->g * alpha);
+                b = DIV_255(ColorRGB16_GetB(dstptr->v) * ainv + srcptr->b * alpha);
+                dstptr->v = RGB_To_RGB16(r, g, b);
                 o_x += 1;
             }
             o_y += 1;
@@ -955,68 +1017,6 @@ void BB_alpha_blit_from(BlitBuffer *dst, BlitBuffer *src,
                 dstptr->g = srcptr->a;
                 dstptr->b = srcptr->a;
                 dstptr->alpha = srcptr->alpha; // if bad result, try: 0xFF - srcptr->alpha
-                o_x += 1;
-            }
-            o_y += 1;
-        }
-    } else if (dbb_type == TYPE_BBRGB16 && sbb_type == TYPE_BB8A) {
-        Color8A *srcptr;
-        ColorRGB16 *dstptr;
-        o_y = offs_y;
-        for (d_y = dest_y; d_y < dest_y + h; d_y++) {
-            o_x = offs_x;
-            for (d_x = dest_x; d_x < dest_x + w; d_x++) {
-                BB_GET_PIXEL(dst, dbb_rotation, ColorRGB16, d_x, d_y, &dstptr);
-                BB_GET_PIXEL(src, sbb_rotation, Color8A, o_x, o_y, &srcptr);
-                dstptr->v = RGB_To_RGB16(srcptr->a, srcptr->a, srcptr->a);
-                o_x += 1;
-            }
-            o_y += 1;
-        }
-    } else if (dbb_type == TYPE_BBRGB16 && sbb_type == TYPE_BB8) {
-        Color8 *srcptr;
-        ColorRGB16 *dstptr;
-        o_y = offs_y;
-        for (d_y = dest_y; d_y < dest_y + h; d_y++) {
-            o_x = offs_x;
-            for (d_x = dest_x; d_x < dest_x + w; d_x++) {
-                BB_GET_PIXEL(dst, dbb_rotation, ColorRGB16, d_x, d_y, &dstptr);
-                BB_GET_PIXEL(src, sbb_rotation, Color8, o_x, o_y, &srcptr);
-                dstptr->v = RGB_To_RGB16(srcptr->a, srcptr->a, srcptr->a);
-                o_x += 1;
-            }
-            o_y += 1;
-        }
-    } else if (dbb_type == TYPE_BBRGB16 && sbb_type == TYPE_BBRGB24) {
-        ColorRGB24 *srcptr;
-        ColorRGB16 *dstptr;
-        o_y = offs_y;
-        for (d_y = dest_y; d_y < dest_y + h; d_y++) {
-            o_x = offs_x;
-            for (d_x = dest_x; d_x < dest_x + w; d_x++) {
-                BB_GET_PIXEL(dst, dbb_rotation, ColorRGB16, d_x, d_y, &dstptr);
-                BB_GET_PIXEL(src, sbb_rotation, ColorRGB24, o_x, o_y, &srcptr);
-                dstptr->v = RGB_To_RGB16(srcptr->r, srcptr->g, srcptr->b);
-                o_x += 1;
-            }
-            o_y += 1;
-        }
-    } else if (dbb_type == TYPE_BBRGB16 && sbb_type == TYPE_BBRGB32) {
-        ColorRGB32 *srcptr;
-        ColorRGB16 *dstptr;
-        uint8_t r, g, b;
-        o_y = offs_y;
-        for (d_y = dest_y; d_y < dest_y + h; d_y++) {
-            o_x = offs_x;
-            for (d_x = dest_x; d_x < dest_x + w; d_x++) {
-                BB_GET_PIXEL(dst, dbb_rotation, ColorRGB16, d_x, d_y, &dstptr);
-                BB_GET_PIXEL(src, sbb_rotation, ColorRGB32, o_x, o_y, &srcptr);
-                alpha = srcptr->alpha;
-                ainv = 0xFF - alpha;
-                r = DIV_255(ColorRGB16_GetR(dstptr->v) * ainv + srcptr->r * alpha);
-                g = DIV_255(ColorRGB16_GetG(dstptr->v) * ainv + srcptr->g * alpha);
-                b = DIV_255(ColorRGB16_GetB(dstptr->v) * ainv + srcptr->b * alpha);
-                dstptr->v = RGB_To_RGB16(r, g, b);
                 o_x += 1;
             }
             o_y += 1;
