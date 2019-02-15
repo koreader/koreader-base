@@ -577,7 +577,7 @@ function page_mt.__index:draw_new(draw_context, width, height, offset_x, offset_
     bbox[0].x1 = offset_x + width
     bbox[0].y1 = offset_y + height
 
-    local bb = BlitBuffer.new(width, height, mupdf.color and BlitBuffer.TYPE_BBRGB32 or BlitBuffer.TYPE_BB8A)
+    local bb = BlitBuffer.new(width, height, mupdf.color and BlitBuffer.TYPE_BBRGB32 or BlitBuffer.TYPE_BB8)
 
     local colorspace = mupdf.color and M.fz_device_rgb(context())
         or M.fz_device_gray(context())
@@ -585,7 +585,7 @@ function page_mt.__index:draw_new(draw_context, width, height, offset_x, offset_
         colorspace = M.fz_device_bgr(context())
     end
     local pix = W.mupdf_new_pixmap_with_bbox_and_data(
-        context(), colorspace, bbox, nil, 1, ffi.cast("unsigned char*", bb.data))
+        context(), colorspace, bbox, nil, mupdf.color and 1 or 0, ffi.cast("unsigned char*", bb.data))
     if pix == nil then merror("cannot allocate pixmap") end
 
     run_page(self, pix, ctm)
