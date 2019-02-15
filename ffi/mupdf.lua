@@ -766,6 +766,11 @@ function mupdf.scaleBlitBuffer(bb, width, height)
         converted_bb = BlitBuffer.new(orig_w, orig_h, BlitBuffer.TYPE_BBRGB32)
         converted_bb:blitFrom(bb, 0, 0, 0, 0, orig_w, orig_h)
         bb = converted_bb -- we don't free() the provided bb, but we'll have to free our converted_bb
+        if mupdf.bgr then
+            colorspace = M.fz_device_bgr(context())
+        else
+            colorspace = M.fz_device_rgb(context())
+        end
         alpha = 1
         stride = orig_w * 4
     end
