@@ -673,6 +673,9 @@ function mupdf.renderImage(data, size, width, height)
         if p_width ~= width or p_height ~= height then
             local scaled_pixmap = M.fz_scale_pixmap(context(), pixmap, 0, 0, width, height, nil)
             M.fz_drop_pixmap(context(), pixmap)
+            if scaled_pixmap == nil then
+                merror("could not create scaled pixmap from pixmap")
+            end
             pixmap = scaled_pixmap
             p_width = M.fz_pixmap_width(context(), pixmap)
             p_height = M.fz_pixmap_height(context(), pixmap)
@@ -791,6 +794,10 @@ function mupdf.scaleBlitBuffer(bb, width, height)
     -- Also, fz_scale_pixmap enforces an alpha channel if w or h are floats...
     local scaled_pixmap = M.fz_scale_pixmap(context(), pixmap, 0, 0, math.floor(width), math.floor(height), nil)
     M.fz_drop_pixmap(context(), pixmap) -- free our original pixmap
+    if scaled_pixmap == nil then
+        if converted_bb then converted_bb:free() end -- free our home made bb
+        merror("could not create scaled pixmap from pixmap")
+    end
     local p_width = M.fz_pixmap_width(context(), scaled_pixmap)
     local p_height = M.fz_pixmap_height(context(), scaled_pixmap)
     -- And convert the pixmap back to a BlitBuffer
