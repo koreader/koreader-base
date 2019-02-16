@@ -726,6 +726,8 @@ function mupdf.scaleBlitBuffer(bb, width, height)
     -- We need first to convert our BlitBuffer to a pixmap
     local orig_w, orig_h = bb:getWidth(), bb:getHeight()
     local bbtype = bb:getType()
+    print("Original", orig_w, "by", orig_h, "bb type", bbtype, "scaling to", width, "by", height)
+    -- TODO: Skip if no scaling needed...
     local colorspace
     local converted_bb
     local alpha
@@ -789,10 +791,13 @@ function mupdf.scaleBlitBuffer(bb, width, height)
         if converted_bb then converted_bb:free() end -- free our home made bb
         merror("could not create pixmap from blitbuffer")
     end
+    print("Temporary", M.fz_pixmap_width(context(), pixmap), "by", M.fz_pixmap_height(context(), pixmap), "pixmap w/", M.fz_pixmap_components(context(), pixmap), "components")
     -- We can now scale the pixmap
     -- Better to ensure we give integer width and height, to avoid a black 1-pixel line at right and bottom of image.
     -- Also, fz_scale_pixmap enforces an alpha channel if w or h are floats...
+    print("Calling fz_scale_pixmap from pixmap", tostring(pixmap), "from bb", tostring(bb), "scaled to", width, "by", height)
     local scaled_pixmap = M.fz_scale_pixmap(context(), pixmap, 0, 0, math.floor(width), math.floor(height), nil)
+    print("Dropping unscaled pixmap")
     M.fz_drop_pixmap(context(), pixmap) -- free our original pixmap
     if scaled_pixmap == nil then
         if converted_bb then converted_bb:free() end -- free our home made bb
@@ -815,6 +820,7 @@ function mupdf.scaleBlitBuffer(bb, width, height)
     bb = BlitBuffer.new(p_width, p_height, bbtype, p):copy()
     M.fz_drop_pixmap(context(), scaled_pixmap) -- free our scaled pixmap
     if converted_bb then converted_bb:free() end -- free our home made bb
+    print("returning a bb:", bbtype)
     return bb
 end
 
