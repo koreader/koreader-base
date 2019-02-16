@@ -432,10 +432,8 @@ local function refresh_cervantes(fb, refreshtype, waveform_mode, x, y, w, h)
     local refarea = ffi.new("struct mxcfb_update_data[1]")
     refarea[0].temp = C.TEMP_USE_AMBIENT
 
-    if waveform_mode == C.WAVEFORM_MODE_A2 then
+    if waveform_mode == C.WAVEFORM_MODE_DU then
         refarea[0].flags = C.EPDC_FLAG_FORCE_MONOCHROME
-    elseif waveform_mode == C.WAVEFORM_MODE_GLD16 then
-        refarea[0].flags = C.EPDC_FLAG_USE_AAD
     else
         refarea[0].flags = 0
     end
@@ -634,26 +632,11 @@ function framebuffer:init()
         self.mech_refresh = refresh_cervantes
         self.mech_wait_update_complete = cervantes_mxc_wait_for_update_complete
 
-        self.waveform_fast = C.WAVEFORM_MODE_A2
+        self.waveform_fast = C.WAVEFORM_MODE_DU
         self.waveform_ui = C.WAVEFORM_MODE_AUTO
         self.waveform_flashui = self.waveform_ui
         self.waveform_full = C.WAVEFORM_MODE_GC16
         self.waveform_partial = C.WAVEFORM_MODE_AUTO
-
-        -- reagl aware devices. TODO: test on Cervantes2013
-        local is_reagl = false
-        if self.device.model == "Cervantes4"
-        or self.device.model == "Cervantes3"
-        --or self.device.model == "Cervantes2013"
-        then
-            is_reagl = true
-        end
-
-        if is_reagl then
-            self.waveform_fast = C.WAVEFORM_MODE_DU
-            self.waveform_reagl = C.WAVEFORM_MODE_GLD16
-            self.waveform_partial = self.waveform_reagl
-        end
     else
         error("unknown device type")
     end
