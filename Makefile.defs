@@ -264,8 +264,10 @@ ifeq ($(TARGET), kobo)
 	# NOTE: If we only care about Kobos w/ a Touch screen, we're good.
 	ARM_ARCH:=$(ARMV7_A8_ARCH)
 	ARM_ARCH+=-mfloat-abi=hard
-	COMPAT_CFLAGS:=$(UBUNTU_COMPAT_CFLAGS)
-	COMPAT_CXXFLAGS:=$(UBUNTU_COMPAT_CFLAGS)
+	ifeq ($(shell PATH='$(PATH)' $(CC) -dumpmachine 2>/dev/null), arm-linux-gnueabihf)
+		COMPAT_CFLAGS:=$(UBUNTU_COMPAT_CFLAGS)
+		COMPAT_CXXFLAGS:=$(UBUNTU_COMPAT_CFLAGS)
+	endif
 else ifeq ($(TARGET), ubuntu-touch)
 	ARM_ARCH:=$(ARMV7_A8_ARCH)
 	ARM_ARCH+=-mfloat-abi=hard
@@ -293,9 +295,11 @@ else ifeq ($(TARGET), kindlepw2)
 else ifeq ($(TARGET), kindle-legacy)
 	ARM_ARCH:=$(ARMV6_1136_ARCH)
 	ARM_ARCH+=-mfloat-abi=softfp
-	COMPAT_CFLAGS:=$(MG2K12_COMPAT_CFLAGS)
-	COMPAT_CXXFLAGS:=$(MG2K12_COMPAT_CXXFLAGS)
-	#COMPAT_CFLAGS:=$(NILUJE_COMPAT_CFLAGS)
+	ifeq ($(shell PATH='$(PATH)' $(CC) -dumpmachine 2>/dev/null), arm-linux-gnueabi)
+		COMPAT_CFLAGS:=$(MG2K12_COMPAT_CFLAGS)
+		COMPAT_CXXFLAGS:=$(MG2K12_COMPAT_CXXFLAGS)
+	endif
+	COMPAT_CFLAGS:=$(NILUJE_COMPAT_CFLAGS)
 	# Avoid pulling stuff from GLIBC_2.7 & 2.9 in glib
 	export glib_cv_eventfd=no
 	export ac_cv_func_pipe2=no
