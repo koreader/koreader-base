@@ -1288,6 +1288,19 @@ void lua_pushSegmentsFromRange(lua_State *L, CreDocument *doc, ldomXRange *range
     }
 }
 
+static int compareXPointers(lua_State *L){
+    CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
+    const char* xp1 = luaL_checkstring(L, 2);
+    const char* xp2 = luaL_checkstring(L, 3);
+    ldomXPointerEx nodep1 = doc->dom_doc->createXPointer(lString16(xp1));
+    ldomXPointerEx nodep2 = doc->dom_doc->createXPointer(lString16(xp2));
+    if (nodep1.isNull() || nodep2.isNull())
+        return 0;
+    // Return 1 if pointers are ordered (if xp2 is after xp1), -1 if not, 0 if same
+    lua_pushinteger(L, nodep2.compare(nodep1));
+    return 1;
+}
+
 static int getNextVisibleWordStart(lua_State *L){
     CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
     const char* xp = luaL_checkstring(L, 2);
@@ -2708,6 +2721,7 @@ static const struct luaL_Reg credocument_meth[] = {
     {"getPrevVisibleChar", getPrevVisibleChar},
     {"getNextVisibleChar", getNextVisibleChar},
     {"getTextFromXPointers", getTextFromXPointers},
+    {"compareXPointers", compareXPointers},
     /*--- set methods ---*/
     {"setIntProperty", setIntProperty},
     {"setStringProperty", setStringProperty},
