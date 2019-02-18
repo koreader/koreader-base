@@ -29,7 +29,7 @@ describe("Png module", function()
         ffi.C.free(cdata)
         assert.are.same(ok, true)
 
-        ok, re = Png.decodeFromFile(fn)
+        ok, re = Png.decodeFromFile(fn, Png.LCT_RGBA)
         assert.are.same(ok, true)
         local bb2 = BB.new(re.width, re.height, BB.TYPE_BBRGB32, re.data)
         local c = bb2:getPixel(0, 0)
