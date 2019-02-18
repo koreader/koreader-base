@@ -253,27 +253,25 @@ function Pic.openGIFDocumentFromData(data, size)
 end
 
 function Pic.openPNGDocument(filename)
-    local doc
-
+    local ncomp
+    local bbtype
     if Pic.color then
-        local ok, re = Png.decodeFromFile(filename, 3)
-        if not ok then error(re) end
-
-        doc = PicDocument:new{width=re.width, height=re.height}
-        doc.image_bb = BB.new(re.width, re.height, BB.TYPE_BBRGB24, re.data)
-        doc.components = 3
+        ncomp = 3
+        bbtype = BB.TYPE_BBRGB24
     else
-        local ok, re = Png.decodeFromFile(filename, 1)
-        if not ok then error(re) end
-
-        doc = PicDocument:new{width=re.width, height=re.height}
-        doc.image_bb = BB.new(re.width, re.height, BB.TYPE_BB8, re.data)
-        doc.components = 1
+        ncomp = 1
+        bbtype = BB.TYPE_BB8
     end
+
+    local ok, re = Png.decodeFromFile(filename, ncomp)
+    if not ok then error(re) end
+
+    local doc = PicDocument:new{width=re.width, height=re.height}
+    doc.image_bb = BB.new(re.width, re.height, bbtype, re.data)
+    doc.components = ncomp
 
     -- mark buffer for freeing when Blitbuffer is freed:
     doc.image_bb:setAllocated(1)
-
     return doc
 end
 
