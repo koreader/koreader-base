@@ -253,14 +253,27 @@ function Pic.openGIFDocumentFromData(data, size)
 end
 
 function Pic.openPNGDocument(filename)
-    local ok, re = Png.decodeFromFile(filename)
-    if not ok then error(re) end
+    local doc
 
-    local doc = PicDocument:new{width=re.width, height=re.height}
-    doc.image_bb = BB.new(re.width, re.height, BB.TYPE_BBRGB32, re.data)
+    if Pic.color then
+        local ok, re = Png.decodeFromFile(filename, Png.LCT_RGB)
+        if not ok then error(re) end
+
+        doc = PicDocument:new{width=re.width, height=re.height}
+        doc.image_bb = BB.new(re.width, re.height, BB.TYPE_BBRGB24, re.data)
+        doc.components = 3
+    else
+        local ok, re = Png.decodeFromFile(filename, Png.LCT_GREY)
+        if not ok then error(re) end
+
+        doc = PicDocument:new{width=re.width, height=re.height}
+        doc.image_bb = BB.new(re.width, re.height, BB.TYPE_BB8, re.data)
+        doc.components = 1
+    end
+
     -- mark buffer for freeing when Blitbuffer is freed:
     doc.image_bb:setAllocated(1)
-    doc.components = 4
+
     return doc
 end
 
@@ -299,7 +312,6 @@ function Pic.openJPGDocument(filename)
     end
 
     turbojpeg.tjDestroy(handle)
-
     return doc
 end
 
@@ -312,16 +324,24 @@ function Pic.openJPGDocumentFromMem(data)
     local jpegsubsamp = ffi.new("int[1]")
     turbojpeg.tjDecompressHeader2(handle, ffi.cast("unsigned char*", data), #data, width, height, jpegsubsamp)
 
-    local doc = PicDocument:new{width=width[0], height=height[0] }
-    doc.image_bb = BB.new(width[0], height[0], BB.TYPE_BBRGB24)
-    doc.components = 1
-    local format = turbojpeg.TJPF_RGB
+    local doc = PicDocument:new{width=width[0], height=height[0]}
+    local format
+    if Pic.color then
+        doc.image_bb = BB.new(width[0], height[0], BB.TYPE_BBRGB24)
+        doc.components = 3
+        format = turbojpeg.TJPF_RGB
+    else
+        doc.image_bb = BB.new(width[0], height[0], BB.TYPE_BB8)
+        doc.components = 1
+        format = turbojpeg.TJPF_GRAY
+    end
 
     if turbojpeg.tjDecompress2(handle, ffi.cast("unsigned char*", data), #data,
         ffi.cast("unsigned char*", doc.image_bb.data),
         width[0], doc.image_bb.pitch, height[0], format, 0) == -1 then
         return false
     end
+
     turbojpeg.tjDestroy(handle)
     return doc
 end
