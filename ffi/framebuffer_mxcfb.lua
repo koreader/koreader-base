@@ -295,7 +295,7 @@ local function refresh_k51(fb, refreshtype, waveform_mode, x, y, w, h)
     return mxc_update(fb, C.MXCFB_SEND_UPDATE, refarea, refreshtype, waveform_mode, x, y, w, h)
 end
 
-local function refresh_koa2(fb, refreshtype, waveform_mode, x, y, w, h, dither)
+local function refresh_koa2(fb, refreshtype, waveform_mode, x, y, w, h)
     local refarea = ffi.new("struct mxcfb_update_data_koa2[1]")
     -- only for Amazon's driver, try to mostly follow what the stock reader does...
     if waveform_mode == C.WAVEFORM_MODE_KOA2_GLR16 then
@@ -308,19 +308,9 @@ local function refresh_koa2(fb, refreshtype, waveform_mode, x, y, w, h, dither)
     end
     -- NOTE: Since there's no longer a distinction between GC16_FAST & GC16, we're done!
     refarea[0].temp = C.TEMP_USE_AMBIENT
-    -- Did we request HW dithering?
-    -- FIXME: Behaves differently than on Kobo?
-    if dither then
-        refarea[0].dither_mode = C.EPDC_FLAG_USE_DITHERING_ORDERED
-        if waveform_mode == C.WAVEFORM_MODE_A2 or waveform_mode == C.WAVEFORM_MODE_DU then
-            refarea[0].quant_bit = 1;
-        else
-            refarea[0].quant_bit = 7;
-        end
-    else
-        refarea[0].dither_mode = C.EPDC_FLAG_USE_DITHERING_PASSTHROUGH
-        refarea[0].quant_bit = 0;
-    end
+    -- NOTE: Dithering appears to behave differently than on Kobo, so, forget about it until someone with the device cares enough...
+    refarea[0].dither_mode = C.EPDC_FLAG_USE_DITHERING_PASSTHROUGH
+    refarea[0].quant_bit = 0;
     -- Enable the appropriate flag when requesting what amounts to a 2bit update
     if waveform_mode == C.WAVEFORM_MODE_DU then
         refarea[0].flags = C.EPDC_FLAG_FORCE_MONOCHROME
@@ -332,7 +322,7 @@ local function refresh_koa2(fb, refreshtype, waveform_mode, x, y, w, h, dither)
     return mxc_update(fb, C.MXCFB_SEND_UPDATE_KOA2, refarea, refreshtype, waveform_mode, x, y, w, h)
 end
 
-local function refresh_pw4(fb, refreshtype, waveform_mode, x, y, w, h, dither)
+local function refresh_pw4(fb, refreshtype, waveform_mode, x, y, w, h)
     local refarea = ffi.new("struct mxcfb_update_data_pw4[1]")
     -- only for Amazon's driver, try to mostly follow what the stock reader does...
     if waveform_mode == C.WAVEFORM_MODE_KOA2_GLR16 then
@@ -345,19 +335,9 @@ local function refresh_pw4(fb, refreshtype, waveform_mode, x, y, w, h, dither)
     end
     -- NOTE: Since there's no longer a distinction between GC16_FAST & GC16, we're done!
     refarea[0].temp = C.TEMP_USE_AMBIENT
-    -- Did we request HW dithering?
-    -- FIXME: Behaves differently than on Kobo?
-    if dither then
-        refarea[0].dither_mode = C.EPDC_FLAG_USE_DITHERING_ORDERED
-        if waveform_mode == C.WAVEFORM_MODE_A2 or waveform_mode == C.WAVEFORM_MODE_DU then
-            refarea[0].quant_bit = 1;
-        else
-            refarea[0].quant_bit = 7;
-        end
-    else
-        refarea[0].dither_mode = C.EPDC_FLAG_USE_DITHERING_PASSTHROUGH
-        refarea[0].quant_bit = 0;
-    end
+    -- NOTE: Dithering appears to behave differently than on Kobo, so, forget about it until someone with the device cares enough...
+    refarea[0].dither_mode = C.EPDC_FLAG_USE_DITHERING_PASSTHROUGH
+    refarea[0].quant_bit = 0;
     -- Enable the appropriate flag when requesting what amounts to a 2bit update
     if waveform_mode == C.WAVEFORM_MODE_DU then
         refarea[0].flags = C.EPDC_FLAG_FORCE_MONOCHROME
