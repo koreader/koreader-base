@@ -309,6 +309,7 @@ local function refresh_koa2(fb, refreshtype, waveform_mode, x, y, w, h, dither)
     -- NOTE: Since there's no longer a distinction between GC16_FAST & GC16, we're done!
     refarea[0].temp = C.TEMP_USE_AMBIENT
     -- Did we request HW dithering?
+    -- FIXME: Behaves differently than on Kobo?
     if dither then
         refarea[0].dither_mode = C.EPDC_FLAG_USE_DITHERING_ORDERED
         if waveform_mode == C.WAVEFORM_MODE_A2 or waveform_mode == C.WAVEFORM_MODE_DU then
@@ -345,6 +346,7 @@ local function refresh_pw4(fb, refreshtype, waveform_mode, x, y, w, h, dither)
     -- NOTE: Since there's no longer a distinction between GC16_FAST & GC16, we're done!
     refarea[0].temp = C.TEMP_USE_AMBIENT
     -- Did we request HW dithering?
+    -- FIXME: Behaves differently than on Kobo?
     if dither then
         refarea[0].dither_mode = C.EPDC_FLAG_USE_DITHERING_ORDERED
         if waveform_mode == C.WAVEFORM_MODE_A2 or waveform_mode == C.WAVEFORM_MODE_DU then
@@ -534,7 +536,9 @@ function framebuffer:init()
 
         -- NOTE: The PW4 essentially uses the same driver as the KOA2, it's just passing a slightly smaller mxcfb_update_data struct
         if isKOA2 or isPW4 then
-            self.device.canHWDither = yes
+            -- FIXME: Someone with the device will have to check if/how HW dithering is supposed to be requested,
+            --        as the Kobo Mk.7 way doesn't appear to work, at the very least on the PW4 (c.f., #4602)
+            --self.device.canHWDither = yes
             if isKOA2 then
                 self.mech_refresh = refresh_koa2
             else
