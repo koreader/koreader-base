@@ -259,8 +259,9 @@ function Pic.openPNGDocument(filename)
         ncomp = 3
         bbtype = BB.TYPE_BBRGB24
     else
-        ncomp = 1
-        bbtype = BB.TYPE_BB8
+        -- NOTE: LodePNG will NOT do RGB -> Grayscale conversions for us, for design reasons (multiple ways to do it, lossy).
+        ncomp = 3
+        bbtype = BB.TYPE_BBRGB24
     end
 
     local ok, re = Png.decodeFromFile(filename, ncomp)
@@ -271,6 +272,7 @@ function Pic.openPNGDocument(filename)
     doc.components = ncomp
 
     -- mark buffer for freeing when Blitbuffer is freed:
+    -- FIXME: This is currently crashy, for some mysterious probably gc related reasons.
     doc.image_bb:setAllocated(1)
     return doc
 end
