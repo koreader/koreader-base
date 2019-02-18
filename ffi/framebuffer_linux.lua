@@ -15,6 +15,23 @@ local framebuffer = {
     data = nil,
 }
 
+-- A couple helper functions to compute/check aligned values...
+-- c.f., <linux/kernel.h>
+local function ALIGN(x, a)
+    -- (x + (a-1)) & ~(a-1)
+    local mask = a - 1
+    return bit.band(x + mask, bit.bnot(mask))
+end
+
+local function IS_ALIGNED(x, a)
+    -- (x & (a-1)) == 0
+    if bit.band(x, a - 1) == 0 then
+        return true
+    else
+        return false
+    end
+end
+
 --[[
 
 The raw framebuffer memory is managed through Blitbuffer. When creating the
@@ -110,51 +127,31 @@ function framebuffer:init()
         io.write("PB FB: yres_virtual: ", vinfo.yres_virtual, "\n")
         io.write("PB FB: bpp         : ", vinfo.bits_per_pixel, "\n")
         -- We may need to make sure finfo.line_length is properly aligned ourselves...
-        -- NOTE: Technically, the PxP *may* require a scratch space of *at least* 8 extra *pixels* in a line.
-        --       Here, we're dealing with bytes, so, technically, we should enforce an alignement to:
-        --       8px * bpp / 8 which neatly comes down to simply bpp itself ;).
-        --       That's why xres_virtual is often a few px larger than xres: 8-bytes alignment, for that scratch space.
-        -- NOTE: FWIW, Kindle & Kobo kernels do:
-        --       xres_virtual = ALIGN(xres, 32);
-        --       yres_virtual = ALIGN(yres, 128) * num_screens;
-        --       (c.f., mxc_epdc_fb_check_var @ drivers/video/mxc/mxc_epdc_fb.c OR drivers/video/fbdev/mxc/mxc_epdc_v2_fb.c)
-        local line_length = finfo.line_length
-        -- NOTE: But because everything is terrible, line_length apparently sometimes doesn't take bpp into account on PB,
-        --       (i.e., it's in pixels instead of being in bytes), which is horribly wrong...
-        --       So try to fix that...
-        if finfo.line_length == vinfo.xres_virtual then
-            -- Make sure xres_virtual is aligned to 8-bytes
-            local xres_virtual = vinfo.xres_virtual
-            vinfo.xres_virtual = bit.band(vinfo.xres_virtual + 7, bit.bnot(7))
-            -- If it's already aligned, we're probably good (unless we still match xres), but if it's not, make sure we added at least 8px...
-            if xres_virtual ~= vinfo.xres_virtual or vinfo.xres_virtual == vinfo.xres then
-                if (vinfo.xres_virtual - xres_virtual) < 8 then
-                    -- Align to 16-bytes instead to get that extra scratch space...
-                    vinfo.xres_virtual = bit.band(xres_virtual + 15, bit.bnot(15))
-                end
-            end
-            -- And now compute the proper line_length...
-            finfo.line_length = (vinfo.xres_virtual * (vinfo.bits_per_pixel / 8))
-        else
-            -- As we said initially, ensure it's properly aligned, according to the bitdepth...
-            finfo.line_length = bit.band(finfo.line_length + (vinfo.bits_per_pixel - 1), bit.bnot(vinfo.bits_per_pixel - 1))
-            -- Much like the other branch,
-            -- if it's already aligned, we're probably good, but if it's not, make sure we added at least 8px...
-            -- NOTE: This unfortunately *might* not cover every case (c.f., the extra xres_virtual == xres check in the previous branch)?
-            if line_length ~= finfo.line_length then
-                -- Again, 8px * bpp / 8 == bpp ;).
-                if (finfo.line_length - line_length) < vinfo.bits_per_pixel then
-                    -- Align to 16px worth of bytes instead to get that extra scratch space... (16px * bpp / 8 == bpp * 2)
-                    finfo.line_length = bit.band(line_length + ((vinfo.bits_per_pixel * 2) - 1), bit.bnot((vinfo.bits_per_pixel * 2) - 1))
-                end
-            end
+        -- NOTE: The technical reason being that, on mxcfb (as opposed to the legacy einkfb),
+        --       the PxP *may* require a scratch space of *at least* 8 extra *pixels* in a line.
+        --       On Kobo & Kindle, the kernel takes care of ensuring the sanity of the fixed & variable fbinfo,
+        --       (c.f., mxc_epdc_fb_check_var @ drivers/video/mxc/mxc_epdc_fb.c OR drivers/video/fbdev/mxc/mxc_epdc_v2_fb.c).
+        --       On PB, not so much (possibly because they expect you to use InkView).
+        --       So, do it ourselves, if need be...
+        if not IS_ALIGNED(vinfo.xres_virtual, 32) then
+            -- NOTE: As per Kindle/Kobo kernels, xres_virtual = ALIGN(xres, 32);
+            vinfo.xres_virtual = ALIGN(vinfo.xres, 32)
+            io.write("PB FB: xres_virtual -> ", vinfo.xres_virtual, "\n")
         end
+        local yres_virtual = vinfo.yres_virtual
+        if not IS_ALIGNED(vinfo.yres_virtual, 128) then
+            -- NOTE: As per Kindle/Kobo kernels, yres_virtual = ALIGN(yres, 128) * num_screens;
+            --       We don't do hardware panning/flip buffers, so, we only care about a single screen.
+            vinfo.yres_virtual = ALIGN(vinfo.yres, 128)
+            io.write("PB FB: yres_virtual -> ", vinfo.yres_virtual, "\n")
+        end
+        -- Now that we know xres_virtual is sane, we can compute the proper line_length
+        local line_length = finfo.line_length
+        finfo.line_length = vinfo.xres_virtual * (vinfo.bits_per_pixel / 8)
+        io.write("PB FB: line_length -> ", finfo.line_length, "\n")
+
         -- NOTE: Ideally, if there's no shadow buffer, we should end up with line_length == smem_len / yres_virtual...
-        --       But since I don't know if any PB devices actually have extra buffer space for a shadow buffer,
-        --       I can't rely on that shortcut :/.
-        -- Now make sure yres_virtual is aligned to 8-bytes, too
-        vinfo.yres_virtual = bit.band(vinfo.yres_virtual + 7, bit.bnot(7))
-        -- And we should now have an accurate computation of the active buffer size... Whew!
+        -- So we should now be able to make an accurate computation of the active buffer size... Whew!
         self.fb_size = finfo.line_length * vinfo.yres_virtual
         -- NOTE: If our manually computed value is larger than the reported smem_len, honor smem_len instead (c.f., #4416)
         --       Because despite PB's shenanigans, I'm assuming smem_len matches the actual HW bounds,
@@ -163,10 +160,24 @@ function framebuffer:init()
         --              (which is usually what all of the fb_size computations that don't use smem_len do here),
         --              but we certainly CANNOT mmap a *larger* one!
         if self.fb_size > finfo.smem_len then
-            self.fb_size = finfo.smem_len
-            -- And that means line_length should *probably* be honored, too...
-            -- Here's hoping that it's honoring the PxP requirements properly...
-            finfo.line_length = line_length
+            -- NOTE: But first, we'll try to align *both* dimensions to 32...
+            --       This appears to be needed for legacy 600*800 devices, c.f. #4476.
+            if not IS_ALIGNED(yres_virtual, 32) then
+                vinfo.yres_virtual = ALIGN(vinfo.yres, 32)
+                io.write("PB FB: yres_virtual => ", vinfo.yres_virtual, "\n")
+            else
+                vinfo.yres_virtual = yres_virtual
+                io.write("PB FB: yres_virtual <- ", vinfo.yres_virtual, "\n")
+            end
+            self.fb_size = finfo.line_length * vinfo.yres_virtual
+
+            -- If that still didn't cut it, final fallback...
+            if self.fb_size > finfo.smem_len then
+                self.fb_size = finfo.smem_len
+                -- And that means the original line_length should *probably* be honored, too...
+                finfo.line_length = line_length
+                io.write("PB FB: line_length <- ", finfo.line_length, "\n")
+            end
         end
     else
         error("framebuffer model not supported");
