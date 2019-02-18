@@ -30,10 +30,20 @@ function Png.encodeToFile(filename, mem, w, h)
     end
 end
 
-function Png.decodeFromFile(filename, fmt)
+function Png.decodeFromFile(filename, ncomp)
     local width = ffi.new("int[1]")
     local height = ffi.new("int[1]")
     local ptr = ffi.new("unsigned char*[1]")
+    local fmt
+    if ncomp == 1 then
+        fmt = lodepng.LCT_GREY
+    elseif ncomp == 2 then
+        fmt = lodepng.LCT_GREY_ALPHA
+    elseif ncomp == 3 then
+        fmt = lodepng.LCT_RGB
+    elseif ncomp == 4 then
+        fmt = lodepng.LCT_RGBA
+    end
     local err = lodepng.lodepng_decode_file(ptr, width, height, filename, fmt, 8)
     if err ~= 0 then
         return false, ffi.string(lodepng.lodepng_error_text(err))

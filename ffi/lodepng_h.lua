@@ -1,7 +1,6 @@
 local ffi = require("ffi")
 
 ffi.cdef[[
-typedef enum LodePNGColorType LodePNGColorType;
 enum LodePNGColorType {
   LCT_GREY = 0,
   LCT_RGB = 2,
@@ -9,6 +8,7 @@ enum LodePNGColorType {
   LCT_GREY_ALPHA = 4,
   LCT_RGBA = 6,
 };
+typedef enum LodePNGColorType LodePNGColorType;
 const char *lodepng_error_text(unsigned int);
 unsigned int lodepng_decode32_file(unsigned char **, unsigned int *, unsigned int *, const char *);
 unsigned int lodepng_decode32(unsigned char **, unsigned int *, unsigned int *, const unsigned char *, unsigned int);

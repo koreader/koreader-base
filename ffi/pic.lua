@@ -256,14 +256,14 @@ function Pic.openPNGDocument(filename)
     local doc
 
     if Pic.color then
-        local ok, re = Png.decodeFromFile(filename, Png.LCT_RGB)
+        local ok, re = Png.decodeFromFile(filename, 3)
         if not ok then error(re) end
 
         doc = PicDocument:new{width=re.width, height=re.height}
         doc.image_bb = BB.new(re.width, re.height, BB.TYPE_BBRGB24, re.data)
         doc.components = 3
     else
-        local ok, re = Png.decodeFromFile(filename, Png.LCT_GREY)
+        local ok, re = Png.decodeFromFile(filename, 1)
         if not ok then error(re) end
 
         doc = PicDocument:new{width=re.width, height=re.height}

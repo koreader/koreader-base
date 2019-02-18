@@ -2,8 +2,8 @@
 
 #include "ffi-cdecl.h"
 
-cdecl_type(LodePNGColorType)
 cdecl_enum(LodePNGColorType)
+cdecl_type(LodePNGColorType)
 cdecl_func(lodepng_error_text)
 cdecl_func(lodepng_decode32_file)
 cdecl_func(lodepng_decode32)
