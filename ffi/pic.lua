@@ -286,7 +286,7 @@ end
 
 function Pic.openJPGDocument(filename)
     local fh = io.open(filename, "r")
-    assert(fh, "couldn't open file")
+    assert(fh, "couldn't open JPG file")
     local data = fh:read("*a")
     fh:close()
 

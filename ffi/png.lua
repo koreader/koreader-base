@@ -34,7 +34,7 @@ function Png.decodeFromFile(filename, req_n)
     -- Read the file
     local fh = io.open(filename, "r")
     if not fh then
-        return false, "couldn't open file"
+        return false, "couldn't open PNG file"
     end
     local fdata = fh:read("*a")
     fh:close()
