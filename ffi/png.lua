@@ -62,6 +62,9 @@ function Png.decodeFromFile(filename, req_n)
         elseif state[0].info_png.color.colortype == lodepng.LCT_PALETTE and state[0].info_png.color.palettesize <= 16 then
             -- If input is sRGB, but paletted to 16c or less, assume it's the eInk palette, and honor it.
             -- Just expand it to grayscale so BB knows what to do with it ;).
+            -- NOTE: A properly encoded image targeting eInk should actually be both dithered down to the 16c eInk palette,
+            --       AND flagged color-type 0 (Grayscale) too! Those already fall under the first branch ;).
+            --       As such, this only affects stuff explicitly encoded color-type 3 (Paletted sRGB).
             state[0].info_raw.colortype = lodepng.LCT_GREY
         else
             state[0].info_raw.colortype = lodepng.LCT_RGB
@@ -85,7 +88,7 @@ function Png.decodeFromFile(filename, req_n)
     elseif req_n == 4 then
         state[0].info_raw.colortype = lodepng.LCT_RGBA
     else
-        return false, "requested an invalid noumber of components"
+        return false, "requested an invalid number of components"
     end
 
     err = lodepng.lodepng_decode(ptr, width, height, state, ffi.cast("const unsigned char*", fdata), #fdata)
