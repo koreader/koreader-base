@@ -276,7 +276,7 @@ function Pic.openPNGDocument(filename)
 
     local doc = PicDocument:new{width=re.width, height=re.height}
     doc.image_bb = BB.new(re.width, re.height, bbtype, re.data)
-    doc.components = req_n
+    doc.components = re.ncomp
 
     -- Mark buffer for freeing when Blitbuffer is freed:
     -- FIXME: This is currently crashy, for some mysterious probably gc related reason (c.f, #821, not a PNG specific issue).
