@@ -55,13 +55,12 @@ function Png.decodeFromFile(filename, req_n)
         return false, ffi.string(lodepng.lodepng_error_text(err))
     end
 
-    print("Input PNG type:", state[0].info_png.color.colortype)
     -- Try to keep grayscale PNGs as-is if we requested so...
     if req_n == 1 then
         if state[0].info_png.color.colortype == lodepng.LCT_GREY or state[0].info_png.color.colortype == lodepng.LCT_GREY_ALPHA then
             state[0].info_raw.colortype = lodepng.LCT_GREY
         elseif state[0].info_png.color.colortype == lodepng.LCT_PALETTE and state[0].info_png.color.palettesize <= 16 then
-            -- If input is paletted to 16c or less, assume it's the eInk palette, and honor it.
+            -- If input is sRGB, but paletted to 16c or less, assume it's the eInk palette, and honor it.
             -- Just expand it to grayscale so BB knows what to do with it ;).
             state[0].info_raw.colortype = lodepng.LCT_GREY
         else
@@ -73,11 +72,9 @@ function Png.decodeFromFile(filename, req_n)
         if state[0].info_png.color.colortype == lodepng.LCT_GREY or state[0].info_png.color.colortype == lodepng.LCT_GREY_ALPHA then
             state[0].info_raw.colortype = lodepng.LCT_GREY_ALPHA
         elseif state[0].info_png.color.colortype == lodepng.LCT_PALETTE and state[0].info_png.color.palettesize <= 16 then
-            -- If input is paletted to 16c or less, assume it's the eInk palette, and honor it.
+            -- If input is sRGB, but paletted to 16c or less, assume it's the eInk palette, and honor it.
             -- Just expand it to grayscale w/ alpha so BB knows what to do with it ;).
             state[0].info_raw.colortype = lodepng.LCT_GREY_ALPHA
-            -- NOTE: Palette is *always* single-component
-            --req_n = 1
         else
             state[0].info_raw.colortype = lodepng.LCT_RGBA
             -- Don't forget to update req_n so the caller is aware of the conversion
@@ -92,14 +89,10 @@ function Png.decodeFromFile(filename, req_n)
     end
 
     err = lodepng.lodepng_decode(ptr, width, height, state, ffi.cast("const unsigned char*", fdata), #fdata)
-    print("PNG decode:", err)
     lodepng.lodepng_state_cleanup(state)
-    print("PNG state cleanup")
     if err ~= 0 then
-        print("PNG decode :(")
         return false, ffi.string(lodepng.lodepng_error_text(err))
     else
-        print("PNG decode :)", width[0], height[0], ptr[0], req_n)
         return true, {
             width = width[0],
             height = height[0],
