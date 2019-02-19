@@ -257,15 +257,22 @@ function Pic.openPNGDocument(filename)
     local bbtype
     if Pic.color then
         req_n = 3
-        bbtype = BB.TYPE_BBRGB24
     else
         -- NOTE: LodePNG will NOT do RGB -> Grayscale conversions for us, for design reasons (multiple ways to do it, lossy).
-        req_n = 3
-        bbtype = BB.TYPE_BBRGB24
+        --       So we can only *ask* to keep grayscale PNGs as-is, but we might actually be getting fed back a RGB24 one ;).
+        req_n = 1
     end
 
     local ok, re = Png.decodeFromFile(filename, req_n)
     if not ok then error(re) end
+
+    if re.ncomp == 1 then bbtype = BB.TYPE_BB8
+    elseif re.ncomp == 2 then bbtype = BB.TYPE_BB8A
+    elseif re.ncomp == 3 then bbtype = BB.TYPE_BBRGB24
+    elseif re.ncomp == 4 then bbtype = BB.TYPE_BBRGB32
+    else
+        error("unsupported number of color components")
+    end
 
     local doc = PicDocument:new{width=re.width, height=re.height}
     doc.image_bb = BB.new(re.width, re.height, bbtype, re.data)
