@@ -271,8 +271,8 @@ function Pic.openPNGDocument(filename)
     doc.image_bb = BB.new(re.width, re.height, bbtype, re.data)
     doc.components = ncomp
 
-    -- mark buffer for freeing when Blitbuffer is freed:
-    -- FIXME: This is currently crashy, for some mysterious probably gc related reason (c.f, #816).
+    -- Mark buffer for freeing when Blitbuffer is freed:
+    -- FIXME: This is currently crashy, for some mysterious probably gc related reason (c.f, #821, not a PNG specific issue).
     doc.image_bb:setAllocated(1)
     return doc
 end
