@@ -30,20 +30,21 @@ function Png.encodeToFile(filename, mem, w, h)
     end
 end
 
-function Png.decodeFromFile(filename, ncomp)
+function Png.decodeFromFile(filename, req_n)
     local width = ffi.new("int[1]")
     local height = ffi.new("int[1]")
     local ptr = ffi.new("unsigned char*[1]")
     local fmt
-    if ncomp == 1 then
+    if req_n == 1 then
         fmt = lodepng.LCT_GREY
-    elseif ncomp == 2 then
+    elseif req_n == 2 then
         fmt = lodepng.LCT_GREY_ALPHA
-    elseif ncomp == 3 then
+    elseif req_n == 3 then
         fmt = lodepng.LCT_RGB
-    elseif ncomp == 4 then
+    elseif req_n == 4 then
         fmt = lodepng.LCT_RGBA
     end
+    -- TODO: Inspect, honor req_n if gray/gray_alpha, return actual ncomp so that bbtype matches
     local err = lodepng.lodepng_decode_file(ptr, width, height, filename, fmt, 8)
     if err ~= 0 then
         return false, ffi.string(lodepng.lodepng_error_text(err))

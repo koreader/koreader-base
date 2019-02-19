@@ -253,23 +253,23 @@ function Pic.openGIFDocumentFromData(data, size)
 end
 
 function Pic.openPNGDocument(filename)
-    local ncomp
+    local req_n
     local bbtype
     if Pic.color then
-        ncomp = 3
+        req_n = 3
         bbtype = BB.TYPE_BBRGB24
     else
         -- NOTE: LodePNG will NOT do RGB -> Grayscale conversions for us, for design reasons (multiple ways to do it, lossy).
-        ncomp = 3
+        req_n = 3
         bbtype = BB.TYPE_BBRGB24
     end
 
-    local ok, re = Png.decodeFromFile(filename, ncomp)
+    local ok, re = Png.decodeFromFile(filename, req_n)
     if not ok then error(re) end
 
     local doc = PicDocument:new{width=re.width, height=re.height}
     doc.image_bb = BB.new(re.width, re.height, bbtype, re.data)
-    doc.components = ncomp
+    doc.components = req_n
 
     -- Mark buffer for freeing when Blitbuffer is freed:
     -- FIXME: This is currently crashy, for some mysterious probably gc related reason (c.f, #821, not a PNG specific issue).
