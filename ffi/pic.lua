@@ -273,6 +273,7 @@ function Pic.openPNGDocument(filename)
     else
         error("unsupported number of color components")
     end
+    print("bbtype:", bbtype)
 
     local doc = PicDocument:new{width=re.width, height=re.height}
     doc.image_bb = BB.new(re.width, re.height, bbtype, re.data)
@@ -281,6 +282,7 @@ function Pic.openPNGDocument(filename)
     -- Mark buffer for freeing when Blitbuffer is freed:
     -- FIXME: This is currently crashy, for some mysterious probably gc related reason (c.f, #821, not a PNG specific issue).
     doc.image_bb:setAllocated(1)
+    print("doc:", doc)
     return doc
 end
 
