@@ -57,7 +57,7 @@ function Png.decodeFromFile(filename, req_n)
 
     -- Try to keep grayscale PNGs as-is if we requested so...
     if req_n == 1 then
-        if state.info_png.color.colortype ~= lodepng.LCT_GREY or if state.info_png.color.colortype ~= lodepng.LCT_GREY_ALPHA then
+        if state.info_png.color.colortype ~= lodepng.LCT_GREY or state.info_png.color.colortype ~= lodepng.LCT_GREY_ALPHA then
             state.info_raw.colortype = lodepng.LCT_RGB
             -- Don't forget to update req_n so the caller is aware of the conversion
             req_n = 3
@@ -65,7 +65,7 @@ function Png.decodeFromFile(filename, req_n)
             state.info_raw.colortype = lodepng.LCT_GREY
         end
     elseif req_n == 2 then
-        if state.info_png.color.colortype ~= lodepng.LCT_GREY or if state.info_png.color.colortype ~= lodepng.LCT_GREY_ALPHA then
+        if state.info_png.color.colortype ~= lodepng.LCT_GREY or state.info_png.color.colortype ~= lodepng.LCT_GREY_ALPHA then
             state.info_raw.colortype = lodepng.LCT_RGBA
             req_n = 4
         else
