@@ -9,13 +9,13 @@ enum LodePNGColorType {
   LCT_RGBA = 6,
 };
 typedef enum LodePNGColorType LodePNGColorType;
+typedef struct LodePNGDecompressSettings LodePNGDecompressSettings;
 struct LodePNGDecompressSettings {
   unsigned int ignore_adler32;
   unsigned int (*custom_zlib)(unsigned char **, unsigned int *, const unsigned char *, unsigned int, const LodePNGDecompressSettings *);
   unsigned int (*custom_inflate)(unsigned char **, unsigned int *, const unsigned char *, unsigned int, const LodePNGDecompressSettings *);
   const void *custom_context;
 };
-typedef struct LodePNGDecompressSettings LodePNGDecompressSettings;
 struct LodePNGDecoderSettings {
   LodePNGDecompressSettings zlibsettings;
   unsigned int ignore_crc;
@@ -34,6 +34,7 @@ enum LodePNGFilterStrategy {
   LFS_PREDEFINED = 4,
 };
 typedef enum LodePNGFilterStrategy LodePNGFilterStrategy;
+typedef struct LodePNGCompressSettings LodePNGCompressSettings;
 struct LodePNGCompressSettings {
   unsigned int btype;
   unsigned int use_lz77;
@@ -45,7 +46,6 @@ struct LodePNGCompressSettings {
   unsigned int (*custom_deflate)(unsigned char **, unsigned int *, const unsigned char *, unsigned int, const LodePNGCompressSettings *);
   const void *custom_context;
 };
-typedef struct LodePNGCompressSettings LodePNGCompressSettings;
 struct LodePNGEncoderSettings {
   LodePNGCompressSettings zlibsettings;
   unsigned int auto_convert;
