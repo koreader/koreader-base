@@ -25,7 +25,7 @@ describe("Pic module", function()
             assert.are_not.equal(image, nil)
         end)
         it("should get image size", function()
-            -- NOTE: Pic.openDocument always drops alpha, hence ncomp = 3
+            -- NOTE: Pic.openDocument always drops alpha, hence ncomp = 3 w/ Pic.color
             assert.are.same({32, 32, 3}, {image:getOriginalPageSize()})
             local page = image:openPage()
             assert.are_not.equal(page, nil)
