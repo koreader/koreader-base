@@ -31,7 +31,7 @@ set(GETTEXT_VER "0.19.8.1")
 include(ExternalProject)
 ExternalProject_Add(
     ${PROJECT_NAME}
-    URL http://ftp.gnu.org/pub/gnu/gettext/gettext-${GETTEXT_VER}.tar.gz
+    URL http://ftpmirror.gnu.org/gettext/gettext-${GETTEXT_VER}.tar.gz
     URL_MD5 97e034cf8ce5ba73a28ff6c3c0638092
     DOWNLOAD_DIR ${KO_DOWNLOAD_DIR}
     CONFIGURE_COMMAND ${CFG_CMD}

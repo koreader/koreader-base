@@ -53,7 +53,7 @@ include(ExternalProject)
 set(TAR_VER "1.31")
 ExternalProject_Add(
     ${PROJECT_NAME}
-    URL http://ftp.gnu.org/gnu/tar/tar-${TAR_VER}.tar.gz
+    URL http://ftpmirror.gnu.org/tar/tar-${TAR_VER}.tar.gz
     URL_MD5 f2d3b2c7130390f2fd204527c4c22aa5
     DOWNLOAD_DIR ${KO_DOWNLOAD_DIR}
     PATCH_COMMAND COMMAND ${PATCH_CMD1}
