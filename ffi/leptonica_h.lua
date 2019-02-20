@@ -81,7 +81,7 @@ void boxaDestroy(BOXA **);
 void numaDestroy(NUMA **);
 void pixDestroy(PIX **);
 l_int32 pixWritePng(const char *, PIX *, l_float32);
-l_int32 pixWriteMemPng(l_uint8 **, unsigned int *, PIX *, l_float32);
+l_int32 pixWriteMemPng(l_uint8 **, size_t *, PIX *, l_float32);
 l_int32 pixGetWidth(PIX *);
 l_int32 pixGetHeight(PIX *);
 l_int32 pixGetDepth(PIX *);
