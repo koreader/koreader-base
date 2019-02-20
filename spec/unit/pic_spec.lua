@@ -7,7 +7,7 @@ Pic.color = true
 
 describe("Pic module", function()
     describe("basic API", function()
-        it("should return error on unkonw format", function()
+        it("should return error on unknown format", function()
             assert.has_error(function()
                 Pic.openDocument("/mnt/yolo.jpgwtffmt")
             end, "Unsupported image format")
