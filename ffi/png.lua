@@ -43,6 +43,7 @@ function Png.decodeFromFile(filename, req_n)
     local width = ffi.new("int[1]")
     local height = ffi.new("int[1]")
     local state = ffi.new("LodePNGState[1]")
+    local out_n = req_n
 
     -- Init the state
     lodepng.lodepng_state_init(state);
@@ -68,8 +69,8 @@ function Png.decodeFromFile(filename, req_n)
             state[0].info_raw.colortype = lodepng.LCT_GREY
         else
             state[0].info_raw.colortype = lodepng.LCT_RGB
-            -- Don't forget to update req_n so the caller is aware of the conversion
-            req_n = 3
+            -- Don't forget to update out_n so the caller is aware of the conversion
+            out_n = 3
         end
     elseif req_n == 2 then
         if state[0].info_png.color.colortype == lodepng.LCT_GREY or state[0].info_png.color.colortype == lodepng.LCT_GREY_ALPHA then
@@ -80,8 +81,8 @@ function Png.decodeFromFile(filename, req_n)
             state[0].info_raw.colortype = lodepng.LCT_GREY_ALPHA
         else
             state[0].info_raw.colortype = lodepng.LCT_RGBA
-            -- Don't forget to update req_n so the caller is aware of the conversion
-            req_n = 4
+            -- Don't forget to update out_n so the caller is aware of the conversion
+            out_n = 4
         end
     elseif req_n == 3 then
         state[0].info_raw.colortype = lodepng.LCT_RGB
@@ -100,7 +101,7 @@ function Png.decodeFromFile(filename, req_n)
             width = width[0],
             height = height[0],
             data = ptr[0],
-            ncomp = req_n,
+            ncomp = out_n,
         }
     end
 end
