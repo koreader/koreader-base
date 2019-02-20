@@ -88,7 +88,7 @@ function Png.decodeFromFile(filename, req_n)
     elseif req_n == 4 then
         state[0].info_raw.colortype = lodepng.LCT_RGBA
     else
-        return false, "requested an invalid number of components"
+        return false, "requested an invalid number of color components"
     end
 
     err = lodepng.lodepng_decode(ptr, width, height, state, ffi.cast("const unsigned char*", fdata), #fdata)
