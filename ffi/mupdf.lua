@@ -729,7 +729,7 @@ function mupdf.scaleBlitBuffer(bb, width, height)
     print("Original", orig_w, "by", orig_h, "bb type", bbtype, "scaling to", width, "by", height)
     -- TODO: Skip if no scaling needed...
     local colorspace
-    local converted_bb = nil
+    local converted_bb
     local alpha
     local stride
     -- MuPDF should know how to handle *most* of our BB types,
