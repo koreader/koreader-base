@@ -32,17 +32,25 @@ end
 
 function Png.decodeFromFile(filename, req_n)
     -- Read the file
+    --[[
     local fh = io.open(filename, "rb")
     if not fh then
         return false, "couldn't open PNG file"
     end
     local fdata = fh:read("*a")
     fh:close()
+    --]]
+    local png = ffi.new("unsigned char*[1]")
+    local pngsize = ffi.new("unsigned int[1]")
+    local rf = lodepng.lodepng_load_file(png, pngsize, filename)
+    if rf ~= 0 then
+        return false, ffi.string(lodepng.lodepng_error_text(rf))
+    end
 
-    local ptr = ffi.new("unsigned char*[1]")
     local width = ffi.new("int[1]")
     local height = ffi.new("int[1]")
     local state = ffi.new("LodePNGState[1]")
+    local ptr = ffi.new("unsigned char*[1]")
     local out_n = req_n
 
     -- Init the state
@@ -51,7 +59,7 @@ function Png.decodeFromFile(filename, req_n)
     state[0].info_raw.bitdepth = 8
 
     -- Inspect the PNG data first, to see if we can avoid a color-type conversion
-    local err = lodepng.lodepng_inspect(width, height, state, ffi.cast("const unsigned char*", fdata), #fdata);
+    local err = lodepng.lodepng_inspect(width, height, state, png[0], pngsize[0]);
     if err ~= 0 then
         return false, ffi.string(lodepng.lodepng_error_text(err))
     end
@@ -96,7 +104,7 @@ function Png.decodeFromFile(filename, req_n)
         return false, "requested an invalid number of color components"
     end
 
-    local re = lodepng.lodepng_decode(ptr, width, height, state, ffi.cast("const unsigned char*", fdata), #fdata)
+    local re = lodepng.lodepng_decode(ptr, width, height, state, png[0], pngsize[0])
     lodepng.lodepng_state_cleanup(state)
     if re ~= 0 then
         return false, ffi.string(lodepng.lodepng_error_text(re))
