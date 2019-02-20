@@ -12,8 +12,8 @@ typedef enum LodePNGColorType LodePNGColorType;
 typedef struct LodePNGDecompressSettings LodePNGDecompressSettings;
 struct LodePNGDecompressSettings {
   unsigned int ignore_adler32;
-  unsigned int (*custom_zlib)(unsigned char **, unsigned int *, const unsigned char *, unsigned int, const LodePNGDecompressSettings *);
-  unsigned int (*custom_inflate)(unsigned char **, unsigned int *, const unsigned char *, unsigned int, const LodePNGDecompressSettings *);
+  unsigned int (*custom_zlib)(unsigned char **, size_t *, const unsigned char *, size_t, const LodePNGDecompressSettings *);
+  unsigned int (*custom_inflate)(unsigned char **, size_t *, const unsigned char *, size_t, const LodePNGDecompressSettings *);
   const void *custom_context;
 };
 struct LodePNGDecoderSettings {
@@ -42,8 +42,8 @@ struct LodePNGCompressSettings {
   unsigned int minmatch;
   unsigned int nicematch;
   unsigned int lazymatching;
-  unsigned int (*custom_zlib)(unsigned char **, unsigned int *, const unsigned char *, unsigned int, const LodePNGCompressSettings *);
-  unsigned int (*custom_deflate)(unsigned char **, unsigned int *, const unsigned char *, unsigned int, const LodePNGCompressSettings *);
+  unsigned int (*custom_zlib)(unsigned char **, size_t *, const unsigned char *, size_t, const LodePNGCompressSettings *);
+  unsigned int (*custom_deflate)(unsigned char **, size_t *, const unsigned char *, size_t, const LodePNGCompressSettings *);
   const void *custom_context;
 };
 struct LodePNGEncoderSettings {
@@ -61,7 +61,7 @@ struct LodePNGColorMode {
   LodePNGColorType colortype;
   unsigned int bitdepth;
   unsigned char *palette;
-  unsigned int palettesize;
+  size_t palettesize;
   unsigned int key_defined;
   unsigned int key_r;
   unsigned int key_g;
@@ -86,10 +86,10 @@ struct LodePNGInfo {
   unsigned int background_r;
   unsigned int background_g;
   unsigned int background_b;
-  unsigned int text_num;
+  size_t text_num;
   char **text_keys;
   char **text_strings;
-  unsigned int itext_num;
+  size_t itext_num;
   char **itext_keys;
   char **itext_langtags;
   char **itext_transkeys;
@@ -118,7 +118,7 @@ struct LodePNGInfo {
   unsigned char *iccp_profile;
   unsigned int iccp_profile_size;
   unsigned char *unknown_chunks_data[3];
-  unsigned int unknown_chunks_size[3];
+  size_t unknown_chunks_size[3];
 };
 typedef struct LodePNGInfo LodePNGInfo;
 struct LodePNGState {
@@ -131,16 +131,16 @@ struct LodePNGState {
 typedef struct LodePNGState LodePNGState;
 const char *lodepng_error_text(unsigned int);
 unsigned int lodepng_decode32_file(unsigned char **, unsigned int *, unsigned int *, const char *);
-unsigned int lodepng_decode32(unsigned char **, unsigned int *, unsigned int *, const unsigned char *, unsigned int);
+unsigned int lodepng_decode32(unsigned char **, unsigned int *, unsigned int *, const unsigned char *, size_t);
 unsigned int lodepng_decode24_file(unsigned char **, unsigned int *, unsigned int *, const char *);
-unsigned int lodepng_decode24(unsigned char **, unsigned int *, unsigned int *, const unsigned char *, unsigned int);
-unsigned int lodepng_decode_memory(unsigned char **, unsigned int *, unsigned int *, const unsigned char *, unsigned int, LodePNGColorType, unsigned int);
+unsigned int lodepng_decode24(unsigned char **, unsigned int *, unsigned int *, const unsigned char *, size_t);
+unsigned int lodepng_decode_memory(unsigned char **, unsigned int *, unsigned int *, const unsigned char *, size_t, LodePNGColorType, unsigned int);
 unsigned int lodepng_decode_file(unsigned char **, unsigned int *, unsigned int *, const char *, LodePNGColorType, unsigned int);
 unsigned int lodepng_encode32_file(const char *, const unsigned char *, unsigned int, unsigned int);
 void lodepng_state_init(LodePNGState *);
 void lodepng_state_cleanup(LodePNGState *);
 void lodepng_state_copy(LodePNGState *, const LodePNGState *);
-unsigned int lodepng_decode(unsigned char **, unsigned int *, unsigned int *, LodePNGState *, const unsigned char *, unsigned int);
-unsigned int lodepng_inspect(unsigned int *, unsigned int *, LodePNGState *, const unsigned char *, unsigned int);
-unsigned int lodepng_encode(unsigned char **, unsigned int *, const unsigned char *, unsigned int, unsigned int, LodePNGState *);
+unsigned int lodepng_decode(unsigned char **, unsigned int *, unsigned int *, LodePNGState *, const unsigned char *, size_t);
+unsigned int lodepng_inspect(unsigned int *, unsigned int *, LodePNGState *, const unsigned char *, size_t);
+unsigned int lodepng_encode(unsigned char **, size_t *, const unsigned char *, unsigned int, unsigned int, LodePNGState *);
 ]]
