@@ -130,7 +130,6 @@ struct LodePNGState {
 };
 typedef struct LodePNGState LodePNGState;
 const char *lodepng_error_text(unsigned int);
-unsigned int lodepng_load_file(unsigned char **, unsigned int *, const char *);
 unsigned int lodepng_decode32_file(unsigned char **, unsigned int *, unsigned int *, const char *);
 unsigned int lodepng_decode32(unsigned char **, unsigned int *, unsigned int *, const unsigned char *, unsigned int);
 unsigned int lodepng_decode24_file(unsigned char **, unsigned int *, unsigned int *, const char *);
