@@ -269,6 +269,7 @@ typedef enum {
   SDL_APP_DIDENTERBACKGROUND = 260,
   SDL_APP_WILLENTERFOREGROUND = 261,
   SDL_APP_DIDENTERFOREGROUND = 262,
+  SDL_DISPLAYEVENT = 336,
   SDL_WINDOWEVENT = 512,
   SDL_SYSWMEVENT = 513,
   SDL_KEYDOWN = 768,
@@ -306,6 +307,7 @@ typedef enum {
   SDL_DROPCOMPLETE = 4099,
   SDL_AUDIODEVICEADDED = 4352,
   SDL_AUDIODEVICEREMOVED = 4353,
+  SDL_SENSORUPDATE = 4608,
   SDL_RENDER_TARGETS_RESET = 8192,
   SDL_RENDER_DEVICE_RESET = 8193,
   SDL_USEREVENT = 32768,
@@ -559,6 +561,7 @@ struct SDL_DropEvent {
 union SDL_Event {
   Uint32 type;
   struct SDL_CommonEvent common;
+  struct SDL_DisplayEvent display;
   struct SDL_WindowEvent window;
   struct SDL_KeyboardEvent key;
   struct SDL_TextEditingEvent edit;
@@ -575,6 +578,7 @@ union SDL_Event {
   struct SDL_ControllerButtonEvent cbutton;
   struct SDL_ControllerDeviceEvent cdevice;
   struct SDL_AudioDeviceEvent adevice;
+  struct SDL_SensorEvent sensor;
   struct SDL_QuitEvent quit;
   struct SDL_UserEvent user;
   struct SDL_SysWMEvent syswm;
@@ -797,7 +801,7 @@ static const int SDL_INIT_HAPTIC = 4096;
 static const int SDL_INIT_GAMECONTROLLER = 8192;
 static const int SDL_INIT_EVENTS = 16384;
 static const int SDL_INIT_NOPARACHUTE = 1048576;
-static const int SDL_INIT_EVERYTHING = 29233;
+static const int SDL_INIT_EVERYTHING = 62001;
 static const int SDL_WINDOWPOS_UNDEFINED = 536805376;
 static const int SDL_WINDOW_FULLSCREEN = 1;
 static const int SDL_WINDOW_FULLSCREEN_DESKTOP = 4097;
