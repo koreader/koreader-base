@@ -32,7 +32,7 @@ end
 
 function Png.decodeFromFile(filename, req_n)
     -- Read the file
-    local fh = io.open(filename, "r")
+    local fh = io.open(filename, "rb")
     if not fh then
         return false, "couldn't open PNG file"
     end
@@ -58,6 +58,7 @@ function Png.decodeFromFile(filename, req_n)
 
     -- Try to keep grayscale PNGs as-is if we requested so...
     if req_n == 1 then
+        out_n = 1
         if state[0].info_png.color.colortype == lodepng.LCT_GREY or state[0].info_png.color.colortype == lodepng.LCT_GREY_ALPHA then
             state[0].info_raw.colortype = lodepng.LCT_GREY
         elseif state[0].info_png.color.colortype == lodepng.LCT_PALETTE and state[0].info_png.color.palettesize <= 16 then
@@ -73,6 +74,7 @@ function Png.decodeFromFile(filename, req_n)
             out_n = 3
         end
     elseif req_n == 2 then
+        out_n = 2
         if state[0].info_png.color.colortype == lodepng.LCT_GREY or state[0].info_png.color.colortype == lodepng.LCT_GREY_ALPHA then
             state[0].info_raw.colortype = lodepng.LCT_GREY_ALPHA
         elseif state[0].info_png.color.colortype == lodepng.LCT_PALETTE and state[0].info_png.color.palettesize <= 16 then
@@ -85,17 +87,19 @@ function Png.decodeFromFile(filename, req_n)
             out_n = 4
         end
     elseif req_n == 3 then
+        out_n = 3
         state[0].info_raw.colortype = lodepng.LCT_RGB
     elseif req_n == 4 then
+        out_n = 4
         state[0].info_raw.colortype = lodepng.LCT_RGBA
     else
         return false, "requested an invalid number of color components"
     end
 
-    err = lodepng.lodepng_decode(ptr, width, height, state, ffi.cast("const unsigned char*", fdata), #fdata)
+    local re = lodepng.lodepng_decode(ptr, width, height, state, ffi.cast("const unsigned char*", fdata), #fdata)
     lodepng.lodepng_state_cleanup(state)
-    if err ~= 0 then
-        return false, ffi.string(lodepng.lodepng_error_text(err))
+    if re ~= 0 then
+        return false, ffi.string(lodepng.lodepng_error_text(re))
     else
         return true, {
             width = width[0],
