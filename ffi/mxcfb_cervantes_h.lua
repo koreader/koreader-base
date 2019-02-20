@@ -44,6 +44,6 @@ struct mxcfb_update_data {
   unsigned int flags;
   struct mxcfb_alt_buffer_data alt_buffer_data;
 };
-static const int MXCFB_SEND_UPDATE = 1078216238;
+static const int MXCFB_SEND_UPDATE = 1079002670;
 static const int MXCFB_WAIT_FOR_UPDATE_COMPLETE = 1074021935;
 ]]
