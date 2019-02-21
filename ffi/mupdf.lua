@@ -727,7 +727,6 @@ function mupdf.scaleBlitBuffer(bb, width, height)
     local orig_w, orig_h = bb:getWidth(), bb:getHeight()
     local bbtype = bb:getType()
     print("Original", orig_w, "by", orig_h, "bb type", bbtype, "scaling to", width, "by", height)
-    -- TODO: Skip if no scaling needed...
     local colorspace
     local converted_bb
     local alpha
