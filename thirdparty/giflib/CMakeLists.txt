@@ -17,11 +17,14 @@ ep_get_binary_dir(BINARY_DIR)
 # NOTE: reallocarray is in libbsd since glibc 2.26, so, don't even try to test for it, always use the bundled copy.
 set(BUILD_CMD sh -c "$(MAKE) -j${PARALLEL_JOBS} CC=\"${CC}\" CFLAGS=\"${CFLAGS} -std=gnu99 -fPIC -Wall -Wno-format-truncation\" LDFLAGS=\"${LDFLAGS}\" --silent")
 
+# Make the Makefile friendlier
+set(PATCH_CMD1 sh -c "patch -N -p1 < ${CMAKE_CURRENT_SOURCE_DIR}/giflib-5.1.6-buildsystem.patch || true")
+
 # use limits.h instead of stdint.h for android build
 if($ENV{ANDROID})
-    set(PATCH_CMD sh -c "${ISED} \"s|stdint.h|limits.h|g\" ${SOURCE_DIR}/lib/openbsd-reallocarray.c")
+    set(PATCH_CMD2 sh -c "${ISED} \"s|stdint.h|limits.h|g\" ${SOURCE_DIR}/lib/openbsd-reallocarray.c")
 else()
-    set(PATCH_CMD sh -c "true")
+    set(PATCH_CMD2 sh -c "true")
 endif()
 
 ko_write_gitclone_script(
@@ -36,7 +39,7 @@ ExternalProject_Add(
     ${PROJECT_NAME}
     DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
     BUILD_IN_SOURCE 1
-    PATCH_COMMAND COMMAND ${PATCH_CMD}
+    PATCH_COMMAND COMMAND ${PATCH_CMD1} COMMAND ${PATCH_CMD2}
     CONFIGURE_COMMAND ""
     BUILD_COMMAND ${BUILD_CMD}
     INSTALL_COMMAND $(MAKE) -j${PARALLEL_JOBS} --silent install PREFIX=${BINARY_DIR}

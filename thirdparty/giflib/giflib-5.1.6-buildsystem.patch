@@ -1,0 +1,12 @@
+diff --git a/Makefile b/Makefile
+index 767c73a..7d66a10 100644
+--- a/Makefile
++++ b/Makefile
+@@ -61,7 +61,6 @@ UTILS = $(INSTALLABLE) \
+ LDLIBS=libgif.a -lm
+ 
+ all: libgif.so libgif.a $(UTILS)
+-	$(MAKE) -C doc
+ 
+ $(UTILS):: libgif.a
+ 
