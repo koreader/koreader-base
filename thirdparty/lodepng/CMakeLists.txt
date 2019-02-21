@@ -24,7 +24,7 @@ endif()
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
     https://github.com/lvandeve/lodepng.git
-    425a57e20c8c13aa7c2215fa8cce1100896aa6fa
+    ba9fc1f084f03b5fbf8c9a5df9448173f27544b1
     ${SOURCE_DIR}
 )
 

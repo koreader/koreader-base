@@ -375,7 +375,7 @@ function S.setWindowIcon(icon)
     if not icon then error("setWindowIcon: no icon path given") end
 
     local Png = require("ffi/png")
-    local ok, re = Png.decodeFromFile(icon)
+    local ok, re = Png.decodeFromFile(icon, 4)
     if not ok then
         error(re.." ("..icon..")")
     end
