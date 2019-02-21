@@ -1,5 +1,5 @@
 diff --git a/Makefile b/Makefile
-index 767c73a..7d66a10 100644
+index 767c73a..4485f97 100644
 --- a/Makefile
 +++ b/Makefile
 @@ -61,7 +61,6 @@ UTILS = $(INSTALLABLE) \
@@ -10,3 +10,12 @@ index 767c73a..7d66a10 100644
  
  $(UTILS):: libgif.a
  
+@@ -82,7 +81,7 @@ check: all
+ 
+ # Installation/uninstallation
+ 
+-install: all install-bin install-include install-lib install-man
++install: all install-bin install-include install-lib
+ install-bin: $(INSTALLABLE)
+ 	$(INSTALL) -d "$(DESTDIR)$(BINDIR)"
+ 	$(INSTALL) $^ "$(DESTDIR)$(BINDIR)"
