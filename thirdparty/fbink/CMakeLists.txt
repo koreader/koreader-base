@@ -21,24 +21,39 @@ elseif($ENV{KINDLE})
     set(FBINK_TARGET "kindle")
 elseif($ENV{CERVANTES})
     set(FBINK_TARGET "cervantes")
+elseif($ENV{KOBO})
+    set(FBINK_TARGET "strip")
+    set(UTILS_TARGET "utils")
 else()
     set(FBINK_TARGET "strip")
 endif()
 
 # Minimal, statically linked build, we don't care about extra fonts or image support
-set(BUILD_CMD sh -c "$(MAKE) MINIMAL=1 CROSS_TC=\"${CROSS_TC}\" CFLAGS=\"${CFLAGS}\" LDFLAGS=\"${LDFLAGS}\" ${FBINK_TARGET}")
+set(BUILD_CMD1 sh -c "$(MAKE) MINIMAL=1 CROSS_TC=\"${CROSS_TC}\" CFLAGS=\"${CFLAGS}\" LDFLAGS=\"${LDFLAGS}\" ${FBINK_TARGET}")
+if($ENV{KOBO})
+    set(BUILD_CMD2 sh -c "$(MAKE) MINIMAL=1 CROSS_TC=\"${CROSS_TC}\" CFLAGS=\"${CFLAGS}\" LDFLAGS=\"${LDFLAGS}\" ${UTILS_TARGET}")
+else()
+    set(BUILD_CMD2 sh -c "true")
+    set(INSTALL_CMD3 sh -c "true")
+endif()
 # We build in-tree...
 set(INSTALL_CMD1 ${CMAKE_COMMAND} -E make_directory ${BINARY_DIR})
 if($ENV{DEBUG})
     set(INSTALL_CMD2 ${CMAKE_COMMAND} -E rename ${SOURCE_DIR}/Debug/fbink ${BINARY_DIR}/fbink)
+    if($ENV{KOBO})
+        set(INSTALL_CMD3 ${CMAKE_COMMAND} -E rename ${SOURCE_DIR}/Debug/fbdepth ${BINARY_DIR}/fbdepth)
+    endif()
 else()
     set(INSTALL_CMD2 ${CMAKE_COMMAND} -E rename ${SOURCE_DIR}/Release/fbink ${BINARY_DIR}/fbink)
+    if($ENV{KOBO})
+        set(INSTALL_CMD3 ${CMAKE_COMMAND} -E rename ${SOURCE_DIR}/Release/fbdepth ${BINARY_DIR}/fbdepth)
+    endif()
 endif()
 
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
     https://github.com/NiLuJe/FBInk.git
-    v1.10.2
+    v1.11.1
     ${SOURCE_DIR}
 )
 
@@ -49,7 +64,7 @@ ExternalProject_Add(
     BUILD_IN_SOURCE 1
     PATCH_COMMAND ""
     CONFIGURE_COMMAND ""
-    BUILD_COMMAND ${BUILD_CMD}
+    BUILD_COMMAND COMMAND ${BUILD_CMD1} COMMAND ${BUILD_CMD2}
     # The buildsystem outputs binaries in a subdirectory...
-    INSTALL_COMMAND COMMAND ${INSTALL_CMD1} COMMAND ${INSTALL_CMD2}
+    INSTALL_COMMAND COMMAND ${INSTALL_CMD1} COMMAND ${INSTALL_CMD2} COMMAND ${INSTALL_CMD3}
 )

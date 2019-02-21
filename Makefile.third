@@ -439,6 +439,9 @@ $(OUTPUT_DIR)/fbink: $(THIRDPARTY_DIR)/fbink/CMakeLists.txt
 		$(CURDIR)/$(THIRDPARTY_DIR)/fbink && \
 		$(MAKE)
 	cp $(FBINK_DIR)/fbink $(OUTPUT_DIR)/
+ifdef KOBO
+	cp $(FBINK_DIR)/fbdepth $(OUTPUT_DIR)/
+endif
 
 # ===========================================================================
 # common lua library for networking
