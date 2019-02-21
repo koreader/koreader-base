@@ -42,6 +42,8 @@ Follow these steps:
 
 * or run `make TARGET=appimage` for the desktop AppImage.
 
+* or run `make TARGET=debian`, `debian-armel` or `debian-armhf` for a Debian package.
+
 * or run `make KODEBUG=1` to build with debugging symbols.
 
 * or run `make` for the emulator on Linux.
@@ -49,13 +51,13 @@ Follow these steps:
 ## Use ccache
 
 Ccache can speed up recompilation by caching previous compilations and detecting
-when the same compilation is being done again. In other words, it will decrease
-build time when the source have been built. Ccache support has been added to
-KOReader's build system. Before using it, you need to install a ccache in your
+when the same compilation is being repeated. In other words, it will decrease
+build time when the sources have already been built. Ccache support has been added to
+KOReader's build system. Before using it, you will need to install a ccache in your
 system.
 
-* in ubuntu use:`sudo apt-get install ccache`
-* in fedora use:`sudo yum install ccache`
+* in Ubuntu use:`sudo apt-get install ccache`
+* in Fedora use:`sudo yum install ccache`
 * install from source:
   * get latest ccache source from http://ccache.samba.org/download.html
   * unarchieve the source package in a directory
