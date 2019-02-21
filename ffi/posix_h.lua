@@ -1,27 +1,15 @@
 local ffi = require("ffi")
 
+-- Handle arch-dependent typedefs...
+if ffi.arch == "x64" then
+    require("ffi/posix_types_x64_h")
+elseif ffi.arch == "x86" then
+    require("ffi/posix_types_x86_h")
+else
+    require("ffi/posix_types_def_h")
+end
+
 ffi.cdef[[
-typedef unsigned int size_t;
-typedef long int off_t;
-struct timeval {
-  long int tv_sec;
-  long int tv_usec;
-};
-struct statvfs {
-  long unsigned int f_bsize;
-  long unsigned int f_frsize;
-  long unsigned int f_blocks;
-  long unsigned int f_bfree;
-  long unsigned int f_bavail;
-  long unsigned int f_files;
-  long unsigned int f_ffree;
-  long unsigned int f_favail;
-  long unsigned int f_fsid;
-  int __f_unused;
-  long unsigned int f_flag;
-  long unsigned int f_namemax;
-  int __f_spare[6];
-};
 int pipe(int *) __attribute__((__nothrow__, __leaf__));
 int fork(void) __attribute__((nothrow));
 int dup(int) __attribute__((__nothrow__, __leaf__));
@@ -36,8 +24,8 @@ int execl(const char *, const char *, ...) __attribute__((__nothrow__, __leaf__)
 int execlp(const char *, const char *, ...) __attribute__((__nothrow__, __leaf__));
 int execv(const char *, char *const *) __attribute__((__nothrow__, __leaf__));
 int execvp(const char *, char *const *) __attribute__((__nothrow__, __leaf__));
-int write(int, const void *, size_t);
-int read(int, void *, size_t);
+ssize_t write(int, const void *, size_t);
+ssize_t read(int, void *, size_t);
 int kill(int, int) __attribute__((__nothrow__, __leaf__));
 int waitpid(int, int *, int);
 int getpid(void) __attribute__((__nothrow__, __leaf__));

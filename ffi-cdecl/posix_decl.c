@@ -17,6 +17,7 @@
 #include "ffi-cdecl.h"
 
 cdecl_type(size_t)
+cdecl_type(ssize_t)
 cdecl_type(off_t)
 
 cdecl_struct(timeval)
