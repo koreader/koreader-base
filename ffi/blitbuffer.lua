@@ -607,13 +607,17 @@ function BBRGB32_mt.__index.getMyColor(color) return color:getColorRGB32() end
 -- set pixel values
 function BB_mt.__index:setPixel(x, y, color)
     local px, py = self:getPhysicalCoordinates(x, y)
+    -- NOTE: The cbb exemption is because it's using an inverted bb copy to handle nightmode,
+    --       and setPixel can be used from outside blitFrom, unlike the other setters.
+    -- NOTE: Speaking of the other setters, some of the alpha = 0xFF fastpaths *might* be skipping the invert?
     if not use_cblitbuffer and self:getInverse() == 1 then color = color:invert() end
     self:getPixelP(px, py)[0]:set(color)
 end
 function BB_mt.__index:setPixelAdd(x, y, color, alpha)
     -- fast path:
     if alpha == 0 then return
-    elseif alpha == 0xFF then return self:setPixel(x, y, color)
+    elseif alpha == 0xFF then
+        return self:setPixel(x, y, color)
     end
     -- this method works with a grayscale value
     local px, py = self:getPhysicalCoordinates(x, y)
@@ -625,7 +629,8 @@ end
 function BBRGB16_mt.__index:setPixelAdd(x, y, color, alpha)
     -- fast path:
     if alpha == 0 then return
-    elseif alpha == 0xFF then return self:setPixel(x, y, color)
+    elseif alpha == 0xFF then
+        return self:setPixel(x, y, color)
     end
     -- this method uses a RGB color value
     local px, py = self:getPhysicalCoordinates(x, y)
