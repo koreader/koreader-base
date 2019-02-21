@@ -15,7 +15,7 @@ ep_get_source_dir(SOURCE_DIR)
 ep_get_binary_dir(BINARY_DIR)
 
 # NOTE: reallocarray is in libbsd since glibc 2.26, so, don't even try to test for it, always use the bundled copy.
-set(BUILD_CMD sh -c "$(MAKE) -j${PARALLEL_JOBS} CC=\"${CC}\" CFLAGS=\"${CFLAGS} -std=gnu99 -fPIC -Wno-format-truncation\" LDFLAGS=\"${LDFLAGS}\" --silent")
+set(BUILD_CMD sh -c "$(MAKE) -j${PARALLEL_JOBS} CC=\"${CC}\" CFLAGS=\"${CFLAGS} -std=gnu99 -fPIC -Wall -Wno-format-truncation\" LDFLAGS=\"${LDFLAGS}\" --silent")
 
 # use limits.h instead of stdint.h for android build
 if($ENV{ANDROID})
