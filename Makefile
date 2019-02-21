@@ -84,6 +84,7 @@ $(OUTPUT_DIR)/data:
 libs: \
 	$(if $(or $(SDL),$(ANDROID)),,$(OUTPUT_DIR)/libs/libkoreader-input.so) \
 	$(if $(or $(SDL),$(ANDROID)),$(OUTPUT_DIR)/libs/libblitbuffer.so,) \
+	$(if $(APPIMAGE),$(OUTPUT_DIR)/libs/libXss.so.1,) \
 	$(OUTPUT_DIR)/libs/libkoreader-lfs.so \
 	$(OUTPUT_DIR)/libs/libkoreader-djvu.so \
 	$(OUTPUT_DIR)/libs/libkoreader-cre.so \
@@ -134,6 +135,9 @@ $(OUTPUT_DIR)/libs/libblitbuffer.so: blitbuffer.c
 $(OUTPUT_DIR)/libs/libwrap-mupdf.so: wrap-mupdf.c \
 			$(MUPDF_LIB)
 	$(CC) -I$(MUPDF_DIR)/include $(DYNLIB_CFLAGS) -o $@ $^
+
+$(OUTPUT_DIR)/libs/libXss.so.1: libxss-dummy.c
+	$(CC) $(DYNLIB_CFLAGS) -o $@ $^
 
 ffi/mupdf_h.lua: ffi-cdecl/mupdf_decl.c $(MUPDF_DIR)/include
 	CPPFLAGS="$(CFLAGS) -I. -I$(MUPDF_DIR)/include" $(FFI_CDECL) gcc ffi-cdecl/mupdf_decl.c $@
