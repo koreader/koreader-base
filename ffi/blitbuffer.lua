@@ -637,9 +637,16 @@ end
 BBRGB24_mt.__index.setPixelAdd = BBRGB16_mt.__index.setPixelAdd
 BBRGB32_mt.__index.setPixelAdd = BBRGB16_mt.__index.setPixelAdd
 function BB_mt.__index:setPixelBlend(x, y, color)
+    -- fast path:
+    local alpha = color:getAlpha()
+    if alpha == 0 then return end
     local px, py = self:getPhysicalCoordinates(x, y)
-    if self:getInverse() == 1 then color = color:invert() end
-    self:getPixelP(px, py)[0]:blend(color)
+    if alpha == 0xFF then
+        self:getPixelP(px, py)[0]:set(color)
+    else
+        if self:getInverse() == 1 then color = color:invert() end
+        self:getPixelP(px, py)[0]:blend(color)
+    end
 end
 function BB_mt.__index:setPixelColorize(x, y, mask, color)
     -- use 8bit grayscale pixel value as alpha for blitting
@@ -651,7 +658,7 @@ function BB_mt.__index:setPixelColorize(x, y, mask, color)
         self:getPixelP(px, py)[0]:set(color)
     else
         -- NOTE: Don't screw up color permanently, that's a pointer to our set_param
-        --       Avoids screwing with alpha when blitting to >=24bpp bbs (c.f., #3949).
+        --       Avoids screwing with alpha when blitting to 8A or RGB32 bbs (c.f., #3949).
         local fgcolor_alpha = color.alpha
         color.alpha = alpha
         self:getPixelP(px, py)[0]:blend(color)
