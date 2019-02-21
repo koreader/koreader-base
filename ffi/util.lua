@@ -439,16 +439,24 @@ local haveSDL1 = nil
 local haveSDL2 = nil
 
 function util.haveSDL1()
+    local err
     if haveSDL1 == nil then
-        haveSDL1 = pcall(ffi.load, "SDL")
+        haveSDL1, err = pcall(ffi.load, "SDL")
+    end
+    if not haveSDL1 then
+        print("SDL not loaded:", err)
     end
     return haveSDL1
 end
 
 --- Returns true if SDL2
 function util.haveSDL2()
+    local err
     if haveSDL2 == nil then
-        haveSDL2 = pcall(ffi.load, "SDL2")
+        haveSDL2, err = pcall(ffi.load, "SDL2")
+    end
+    if not haveSDL2 then
+        print("SDL2 not loaded:", err)
     end
     return haveSDL2
 end
