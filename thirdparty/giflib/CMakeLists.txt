@@ -22,7 +22,7 @@ set(PATCH_CMD1 sh -c "patch -N -p1 < ${CMAKE_CURRENT_SOURCE_DIR}/giflib-5.1.6-bu
 
 # use limits.h instead of stdint.h for android build
 if($ENV{ANDROID})
-    set(PATCH_CMD2 sh -c "${ISED} \"s|stdint.h|limits.h|g\" ${SOURCE_DIR}/lib/openbsd-reallocarray.c")
+    set(PATCH_CMD2 sh -c "${ISED} \"s|stdint.h|limits.h|g\" openbsd-reallocarray.c")
 else()
     set(PATCH_CMD2 sh -c "true")
 endif()
