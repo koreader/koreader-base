@@ -872,7 +872,10 @@ static int gotoPos(lua_State *L) {
 	CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
 	int pos = luaL_checkint(L, 2);
 
-	doc->text_view->SetPos(pos);
+	doc->text_view->SetPos(pos, true, true);
+	// savePos=true is the default, but we use allowScrollAfterEnd=true
+	// to allow frontend code to control how much we can scroll after end
+	// by adjusting pos
 
 	return 0;
 }
