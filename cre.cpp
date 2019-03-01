@@ -2046,19 +2046,27 @@ static bool _isLinkToFootnote(CreDocument *doc, const lString16 source_xpointer,
     // Source node text (punctuation stripped) is only numbers (3 digits max,
     // to avoid catching years ... but only years>1000)
     // Source node text (punctuation stripped) is 1 to 2 letters, with 0 to 2
-    // numbers (a, z, ab, 1a, B2)
+    // numbers (a, z, ab, 1a, B2) - or 1 to 10 roman numerals
     if ( (flags & 0x0400 || flags & 0x0800) && trusted_source_xpointer && !likelyFootnote) {
         lString16 sourceText = sourceNode->getText();
         int nbDigits = 0;
         int nbAlpha = 0;
         int nbOthers = 0;
+        int nbRomans = 0;
         for (int i=0 ; i<sourceText.length(); i++) {
             if ( !lStr_isWordSeparator(sourceText[i]) ) { // ignore space, punctuations...
                 int props = lGetCharProps(sourceText[i]);
                 if (props & CH_PROP_DIGIT)
                     nbDigits += 1;
-                else if (props & CH_PROP_ALPHA)
+                else if (props & CH_PROP_ALPHA) {
                     nbAlpha += 1;
+                    // also check for roman numerals (i v x l c d m)
+                    lChar16 c = sourceText[i];
+                    if (c == 'i' || c == 'v' || c == 'x' || c == 'l' || c == 'c' || c == 'd' || c == 'm' ||
+                        c == 'I' || c == 'V' || c == 'X' || c == 'L' || c == 'C' || c == 'D' || c == 'M' ) {
+                            nbRomans += 1;
+                    }
+                }
                 else
                     nbOthers += 1; // CJK, other alphabets...
             }
@@ -2068,10 +2076,15 @@ static bool _isLinkToFootnote(CreDocument *doc, const lString16 source_xpointer,
             reason += "source text is only 1 to 3 digits";
             likelyFootnote = true;
         }
-        if (flags & 0x0800 && nbAlpha>=1 && nbAlpha<=2 && nbDigits >= 0 && nbDigits <= 2 && nbOthers==0) {
+        if (flags & 0x0800 && nbAlpha >= 1 && nbAlpha <= 2 && nbDigits >= 0 && nbDigits <= 2 && nbOthers==0) {
             // (should we only allow lowercase alpha?)
             if (!reason.empty()) reason += "; ";
             reason += "source text is 1 to 2 letters with 0 to 2 digits";
+            likelyFootnote = true;
+        }
+        else if (flags & 0x0800 && nbRomans >= 1 && nbRomans <= 10 && nbRomans == nbAlpha && nbDigits==0 && nbOthers==0) {
+            if (!reason.empty()) reason += "; ";
+            reason += "source text is 1 to 10 roman numerals";
             likelyFootnote = true;
         }
     }
@@ -2195,7 +2208,7 @@ static bool _isLinkToFootnote(CreDocument *doc, const lString16 source_xpointer,
             lUInt16 el_body = doc->dom_doc->getElementNameIndex("body");
             lUInt16 el_h1 = doc->dom_doc->getElementNameIndex("h1");
             lUInt16 el_h6 = doc->dom_doc->getElementNameIndex("h6");
-            lUInt16 attr_id = doc->dom_doc->getAttrNameIndex(L"id");
+            lUInt16 el_a = doc->dom_doc->getElementNameIndex("a");
             ldomNode * goodFinalNode = NULL;
             ldomNode * curFinalNode = NULL;
             ldomXPointerEx notAfter;
@@ -2250,6 +2263,14 @@ static bool _isLinkToFootnote(CreDocument *doc, const lString16 source_xpointer,
                     // printf("id=%s\n", UnicodeToLocal(id).c_str());
                     extStopReason = "node with 'id=' attr met";
                     break;
+                }
+                else if ( nodeId == el_a ) {
+                    // With <a>, crengine may use name= as its id=, so do as well.
+                    lString16 name = node->getAttributeValue("name");
+                    if ( !name.empty() ) {
+                        extStopReason = "node A with 'name=' attr met";
+                        break;
+                    }
                 }
                 // Done checking
                 if ( !curPos.nextElement() ) {
