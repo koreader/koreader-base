@@ -45,16 +45,16 @@ set(INSTALL_CMD1 ${CMAKE_COMMAND} -E rename ${BINARY_DIR}/src/tar ${BINARY_DIR}/
 #ko_write_gitclone_script(
 #    GIT_CLONE_SCRIPT_FILENAME
 #    https://git.savannah.gnu.org/git/tar.git
-#    release_1_31
+#    release_1_32
 #    ${SOURCE_DIR}
 #)
 
 include(ExternalProject)
-set(TAR_VER "1.31")
+set(TAR_VER "1.32")
 ExternalProject_Add(
     ${PROJECT_NAME}
     URL http://ftpmirror.gnu.org/tar/tar-${TAR_VER}.tar.gz
-    URL_MD5 f2d3b2c7130390f2fd204527c4c22aa5
+    URL_MD5 c8b1f4f1759ec8d5fccec20df5849431
     DOWNLOAD_DIR ${KO_DOWNLOAD_DIR}
     PATCH_COMMAND COMMAND ${PATCH_CMD1}
     #DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
