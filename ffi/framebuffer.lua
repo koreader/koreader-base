@@ -274,6 +274,7 @@ end
 
 function fb:setDPI(dpi)
     screen_dpi_override = dpi
+    self.dpi = dpi
 end
 
 function fb:scaleByDPI(px)
