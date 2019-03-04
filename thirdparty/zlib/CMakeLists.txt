@@ -37,7 +37,7 @@ set(ZLIB_MD5 "1c9f62f0778697a09d36121ead88e08e")
 ExternalProject_Add(
     ${PROJECT_NAME}
     DOWNLOAD_DIR ${KO_DOWNLOAD_DIR}
-    URL http://zlib.net/fossils/zlib-${ZLIB_VER}.tar.gz
+    URL http://gentoo.osuosl.org/distfiles/zlib-${ZLIB_VER}.tar.gz
     URL_MD5 ${ZLIB_MD5}
     BUILD_IN_SOURCE 1
     ${optional_cfg_cmd}
