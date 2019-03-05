@@ -254,12 +254,12 @@ function fb:getScreenHeight()
     return self.screen_size.h
 end
 
-local screen_dpi_override
-
 function fb:getDPI()
-    if self.dpi ~= nil then return self.dpi end
+    if self.dpi ~= nil then
+        return self.dpi
+    end
 
-    self.dpi = EMULATE_READER_DPI or screen_dpi_override
+    self.dpi = EMULATE_READER_DPI
 
     if self.dpi == nil and self.device then
         self.dpi = self.device.display_dpi
@@ -273,7 +273,6 @@ function fb:getDPI()
 end
 
 function fb:setDPI(dpi)
-    screen_dpi_override = dpi
     self.dpi = dpi
 end
 
@@ -288,8 +287,7 @@ function fb:scaleBySize(px)
     -- if users custom screen dpi, also scale by dpi
     local dpi_scale = size_scale
 
-    local custom_dpi = EMULATE_READER_DPI or screen_dpi_override
-    if custom_dpi and self.device and self.device.display_dpi ~= self.dpi then
+    if self.device and self.device.display_dpi ~= self.dpi then
         dpi_scale = self.dpi / 167
     end
     -- scaled positive px should also be positive
