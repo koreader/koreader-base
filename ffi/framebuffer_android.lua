@@ -23,7 +23,7 @@ function framebuffer:init()
     -- android.lib.ANativeWindow_getWidth(window)
     -- android.lib.ANativeWindow_getHeight(window)
     self.bb:fill(BB.COLOR_WHITE)
-    self:refreshFull()
+    self:_updateWindow()
 
     framebuffer.parent.init(self)
 end
