@@ -1262,7 +1262,10 @@ bool docToWindowRect(LVDocView *tv, lvRect &rc) {
     else {
         return false;
     }
-    if (tv->docToWindowPoint(bottomRight)) {
+    if (tv->docToWindowPoint(bottomRight, true)) {
+        // isRectBottom=true: allow this bottom point (outside of the
+        // rect content) to be considered in this page, if it is
+        // actually the top of the next page.
         rc.setBottomRight(bottomRight);
     }
     else {
