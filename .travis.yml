@@ -1,7 +1,7 @@
 # Travis-CI Build for koreader-base
 # see travis-ci.org for details
 
-dist: trusty
+dist: xenial
 sudo: required
 
 service:
@@ -24,13 +24,12 @@ env:
     - TARGET=sony-prstux DOCKER_IMG=phreakuencies/prstux-dev:16.04
     - TARGET=cervantes DOCKER_IMG=frenzie/kocervantes:0.1.0
     - TARGET=android DOCKER_IMG=frenzie/koandroid:0.2.0
-    - TARGET=android NDKREV=r15c
-    - TARGET=android NDKREV=r15c ANDROID_ARCH=x86
+    - TARGET=android DOCKER_IMG=frenzie/koandroid:0.2.0 ANDROID_ARCH=x86
 
 addons:
   apt:
     packages:
-      - cmake3
+      - cmake
       - g++-4.8
       - libsdl1.2-dev
       - luarocks
@@ -39,13 +38,14 @@ addons:
       - nasm
       # OpenSSL likes this (package contains makedepend)
       - xutils-dev
+      # libzmq workaround because we're using a positively ancient version, see https://github.com/zeromq/libzmq/pull/1497
+      - libtool-bin
 
 before_install:
   - if [ "$EMULATE_READER" = 1 ]; then source .ci/before_install.sh; fi
 
 install:
   - if [ "$EMULATE_READER" = 1 ]; then source .ci/emulator_install.sh; fi
-  - if [ "$TARGET" = android ]; then source .ci/android_install.sh; fi
   - if [[ -n ${DOCKER_IMG+x} ]]; then docker pull $DOCKER_IMG; fi
   - if [ "$SHELLCHECKS" = 1 ]; then source .ci/lint_install.sh; fi
 
