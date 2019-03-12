@@ -654,6 +654,36 @@ static int getFullHeight(lua_State *L) {
 	return 1;
 }
 
+static int getPageStartY(lua_State *L) {
+	CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
+	int pageno = luaL_checkint(L, 2);
+
+	lua_pushinteger(L, doc->text_view->getPageStartY(pageno - 1));
+
+	return 1;
+}
+
+static int getPageHeight(lua_State *L) {
+	CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
+	int pageno = luaL_checkint(L, 2);
+
+	lua_pushinteger(L, doc->text_view->getPageHeight(pageno - 1));
+
+	return 1;
+}
+
+static int getPageOffsetX(lua_State *L) {
+	// Mostly useful to get the 2nd page x in 2-pages mode
+	CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
+	int pageno = luaL_checkint(L, 2);
+
+	lvRect rc;
+	doc->text_view->getPageRectangle(pageno - 1, rc);
+	lua_pushinteger(L, rc.left);
+
+	return 1;
+}
+
 static int getFontSize(lua_State *L) {
 	CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
 
@@ -854,7 +884,9 @@ static int gotoPage(lua_State *L) {
 	CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
 	int pageno = luaL_checkint(L, 2);
 
-	doc->text_view->goToPage(pageno-1);
+	doc->text_view->goToPage(pageno-1, true, false); // regulateTwoPages=false
+	// In 2-pages mode, we will ensure from frontend the first page displayed
+	// is an even one: we don't need crengine to ensure that.
 
 	return 0;
 }
@@ -1256,22 +1288,42 @@ void lua_pushLineRect(lua_State *L, int left, int top, int right, int bottom, in
 bool docToWindowRect(LVDocView *tv, lvRect &rc) {
     lvPoint topLeft = rc.topLeft();
     lvPoint bottomRight = rc.bottomRight();
+    bool topInPage = false;
+    bool bottomInPage = false;
     if (tv->docToWindowPoint(topLeft)) {
         rc.setTopLeft(topLeft);
-    }
-    else {
-        return false;
+        topInPage = true;
     }
     if (tv->docToWindowPoint(bottomRight, true)) {
         // isRectBottom=true: allow this bottom point (outside of the
         // rect content) to be considered in this page, if it is
         // actually the top of the next page.
         rc.setBottomRight(bottomRight);
+        bottomInPage = true;
     }
-    else {
-        return false;
+    if (topInPage && bottomInPage) {
+        return true;
     }
-    return true;
+    else if (bottomInPage && !topInPage) {
+        // Rect's bottom is in page, but not its top:
+        // get top truncated/clipped to current page top
+        topLeft = rc.topLeft();
+        if (tv->docToWindowPoint(topLeft, false, true)) {
+            rc.setTopLeft(topLeft);
+            return true;
+        }
+    }
+    else if (topInPage && !bottomInPage) {
+        // Rect's top is in page, but not its bottom:
+        // get bottom truncated/clipped to current page bottom
+        bottomRight = rc.bottomRight();
+        if (tv->docToWindowPoint(bottomRight, true, true)) {
+            rc.setBottomRight(bottomRight);
+            return true;
+        }
+    }
+    // Neither top or bottom of rect in page
+    return false;
 }
 
 // Push to the Lua stack the multiple segments (rectangle for each text line)
@@ -2734,6 +2786,9 @@ static const struct luaL_Reg credocument_meth[] = {
     {"getCurrentPos", getCurrentPos},
     {"getCurrentPercent", getCurrentPercent},
     {"getXPointer", getXPointer},
+    {"getPageOffsetX", getPageOffsetX},
+    {"getPageStartY", getPageStartY},
+    {"getPageHeight", getPageHeight},
     {"getFullHeight", getFullHeight},
     {"getFontSize", getFontSize},
     {"getFontFace", getFontFace},
