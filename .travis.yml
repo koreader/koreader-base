@@ -30,7 +30,7 @@ env:
 addons:
   apt:
     packages:
-      - cmake3
+      - cmake
       - g++-4.8
       - libsdl1.2-dev
       - luarocks
