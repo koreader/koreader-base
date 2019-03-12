@@ -24,8 +24,7 @@ env:
     - TARGET=sony-prstux DOCKER_IMG=phreakuencies/prstux-dev:16.04
     - TARGET=cervantes DOCKER_IMG=frenzie/kocervantes:0.1.0
     - TARGET=android DOCKER_IMG=frenzie/koandroid:0.2.0
-    - TARGET=android NDKREV=r15c
-    - TARGET=android NDKREV=r15c ANDROID_ARCH=x86
+    - TARGET=android DOCKER_IMG=frenzie/koandroid:0.2.0 ANDROID_ARCH=x86
 
 addons:
   apt:
@@ -47,7 +46,6 @@ before_install:
 
 install:
   - if [ "$EMULATE_READER" = 1 ]; then source .ci/emulator_install.sh; fi
-  - if [ "$TARGET" = android ]; then source .ci/android_install.sh; fi
   - if [[ -n ${DOCKER_IMG+x} ]]; then docker pull $DOCKER_IMG; fi
   - if [ "$SHELLCHECKS" = 1 ]; then source .ci/lint_install.sh; fi
 
