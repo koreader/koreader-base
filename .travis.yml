@@ -1,7 +1,7 @@
 # Travis-CI Build for koreader-base
 # see travis-ci.org for details
 
-dist: trusty
+dist: xenial
 sudo: required
 
 service:
