@@ -1123,6 +1123,27 @@ function BB_mt.__index:paintBorder(x, y, w, h, bw, c, r)
     end
 end
 
+--[[
+Draw an inner border
+
+@x:  start position in x axis
+@y:  start position in y axis
+@w:  width of the border
+@h:  height of the border
+@bw: line width of the border
+@c:  color for loading bar
+@r:  radius of for border's corner (nil or 0 means right corner border) [FIXME? UNSUPPORTED]
+--]]
+function BB_mt.__index:paintInnerBorder(x, y, w, h, bw, c, r)
+    x, y = math.ceil(x), math.ceil(y)
+    h, w = math.ceil(h), math.ceil(w)
+    -- T -> B -> L -> R
+    self:paintRect(x, y, w, bw, c)
+    self:paintRect(x, y+h-bw, w, bw, c)
+    self:paintRect(x, y, bw, h, c)
+    self:paintRect(x+w-bw, y, bw, h, c)
+end
+
 
 --[[
 Fill a rounded corner rectangular area
