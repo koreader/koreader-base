@@ -1405,8 +1405,8 @@ end
 -- some generic color values:
 BB.COLOR_BLACK = Color8(0)
 BB.COLOR_WHITE = Color8(0xFF)
-BB.COLOR_GREY = Color8(0x80)
-BB.COLOR_LIGHT_GREY = Color8(0xD0)
+BB.COLOR_GREY = Color8(0x88)
+BB.COLOR_LIGHT_GREY = Color8(0xCC)
 
 -- accessors for color types:
 BB.Color4 = Color4L
