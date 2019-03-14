@@ -1428,7 +1428,7 @@ BB.COLOR_LIGHT_GRAY = Color8(0xCC)
 BB.COLOR_GRAY_A = Color8(0xAA)
 BB.COLOR_GRAY_9 = Color8(0x99)
 BB.COLOR_GRAY = Color8(0x88)
-BB.COLOR_GRAY_5 = Color8(0x55)
+BB.COLOR_DIM_GRAY = Color8(0x55)
 BB.COLOR_BLACK = Color8(0)
 
 -- accessors for color types:
