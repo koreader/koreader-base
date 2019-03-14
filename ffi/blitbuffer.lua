@@ -17,7 +17,6 @@ local bor = bit.bor
 local bxor = bit.bxor
 
 local intt = ffi.typeof("int")
-local uint8t = ffi.typeof("uint8_t")
 local uint32pt = ffi.typeof("uint32_t*") -- luacheck: ignore 211
 local uint8pt = ffi.typeof("uint8_t*")
 local posix = require("ffi/posix_h") -- luacheck: ignore 211
@@ -375,7 +374,7 @@ function ColorRGB32_mt.__index:getColorRGB32() return self end
 function Color4L_mt.__index:getR() return self:getColor8().a end
 Color4L_mt.__index.getG = Color4L_mt.__index.getR
 Color4L_mt.__index.getB = Color4L_mt.__index.getR
-function Color4L_mt.__index:getAlpha() return uint8t(0xFF) end
+function Color4L_mt.__index:getAlpha() return 0xFF end
 Color4U_mt.__index.getR = Color4L_mt.__index.getR
 Color4U_mt.__index.getG = Color4L_mt.__index.getR
 Color4U_mt.__index.getB = Color4L_mt.__index.getR
@@ -819,9 +818,9 @@ function BB_mt.__index:addblitFrom(source, dest_x, dest_y, offs_x, offs_y, width
         if width <= 0 or height <= 0 then return end
         cblitbuffer.BB_add_blit_from(ffi.cast("struct BlitBuffer *", self),
             ffi.cast("struct BlitBuffer *", source),
-            dest_x, dest_y, offs_x, offs_y, width, height, uint8t(intensity*0xFF))
+            dest_x, dest_y, offs_x, offs_y, width, height, intensity*0xFF)
     else
-        self:blitFrom(source, dest_x, dest_y, offs_x, offs_y, width, height, self.setPixelAdd, uint8t(intensity*0xFF))
+        self:blitFrom(source, dest_x, dest_y, offs_x, offs_y, width, height, self.setPixelAdd, intensity*0xFF)
     end
 end
 
