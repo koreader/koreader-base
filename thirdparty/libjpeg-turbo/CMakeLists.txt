@@ -28,7 +28,8 @@ set(CMAKE_INSTALL_LIBDIR "${BINARY_DIR}/lib")
 set(CMAKE_SKIP_BUILD_RPATH True)
 
 # To make CMake 3.5 behave better (not necessary on 3.13)
-set(PATCH_CMD "${ISED} 's|set(CMAKE_INSTALL_DEFAULT_PREFIX /opt/\${CMAKE_PROJECT_NAME})||' ${SOURCE_DIR}/CMakeLists.txt")
+set(PATCH_CMD "${ISED} 's|set(CMAKE_INSTALL_DEFAULT_PREFIX|set(CMAKE_INSTALL_DEFAULT_PREFIXXXXX|' ${SOURCE_DIR}/CMakeLists.txt")
+set(PATCH_CMD "${PATCH_CMD} && ${ISED} 's|set(CMAKE_INSTALL_LIBDIR|set(CMAKE_INSTALL_LIBDIRRRRR|' ${SOURCE_DIR}/CMakeLists.txt")
 set(PATCH_CMD "sh -c \"${PATCH_CMD}\"")
 
 # Compiler and linker flags
