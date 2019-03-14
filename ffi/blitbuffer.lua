@@ -857,7 +857,7 @@ end
 -- colorize area using source blitbuffer as a alpha-map
 function BB_mt.__index:colorblitFrom(source, dest_x, dest_y, offs_x, offs_y, width, height, color)
     -- we need color with alpha later:
-    color = color:getColorRGB32()
+    color = color:getColor8A()
     if use_cblitbuffer then
         width, height = width or source:getWidth(), height or source:getHeight()
         width, dest_x, offs_x = BB.checkBounds(width, dest_x or 0, offs_x or 0, self:getWidth(), source:getWidth())
@@ -1245,7 +1245,7 @@ function BB_mt.__index:dimRect(x, y, w, h, by)
         w, x = BB.checkBounds(w, x, 0, self:getWidth(), 0xFFFF)
         h, y = BB.checkBounds(h, y, 0, self:getHeight(), 0xFFFF)
         cblitbuffer.BB_blend_rect(ffi.cast("struct BlitBuffer *", self),
-            x, y, w, h, color:getColorRGB32())
+            x, y, w, h, color)
     else
         self:paintRect(x, y, w, h, color, self.setPixelBlend)
     end
@@ -1266,7 +1266,7 @@ function BB_mt.__index:lightenRect(x, y, w, h, by)
         w, x = BB.checkBounds(w, x, 0, self:getWidth(), 0xFFFF)
         h, y = BB.checkBounds(h, y, 0, self:getHeight(), 0xFFFF)
         cblitbuffer.BB_blend_rect(ffi.cast("struct BlitBuffer *", self),
-            x, y, w, h, color:getColorRGB32())
+            x, y, w, h, color)
     else
         self:paintRect(x, y, w, h, color, self.setPixelBlend)
     end
