@@ -21,6 +21,7 @@ ep_get_source_dir(SOURCE_DIR)
 ep_get_binary_dir(BINARY_DIR)
 
 # CMake hell.
+set(CMAKE_INSTALL_DEFAULT_PREFIX "${BINARY_DIR}")
 set(CMAKE_INSTALL_PREFIX "${BINARY_DIR}")
 # We expect lib later on in Makefile.third, even on multilib systems...
 set(CMAKE_INSTALL_LIBDIR "${BINARY_DIR}/lib")
