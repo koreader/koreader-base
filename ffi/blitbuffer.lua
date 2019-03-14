@@ -930,7 +930,7 @@ function BB_mt.__index:fill(value)
     local h = self:getHeight()
     if use_cblitbuffer then
         cblitbuffer.BB_fill_rect(ffi.cast("struct BlitBuffer *", self),
-            0, 0, w, h, value:getColorRGB32())
+            0, 0, w, h, value:getColor8A())
         return
     end
     local hook, mask, count = debug.gethook()
@@ -983,7 +983,7 @@ function BB_mt.__index:paintRect(x, y, w, h, value, setter)
     h, y = BB.checkBounds(h, y, 0, self:getHeight(), 0xFFFF)
     if use_cblitbuffer and setter == self.setPixel then
         cblitbuffer.BB_fill_rect(ffi.cast("struct BlitBuffer *", self),
-            x, y, w, h, value:getColorRGB32())
+            x, y, w, h, value:getColor8A())
     else
         for tmp_y = y, y+h-1 do
             for tmp_x = x, x+w-1 do
