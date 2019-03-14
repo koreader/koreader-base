@@ -104,18 +104,18 @@ typedef struct BlitBufferRGB32 {
     uint8_t config;
 } BlitBufferRGB32;
 
-void BB_fill_rect(BlitBuffer *bb, int x, int y, int w, int h, ColorRGB32 *color);
-void BB_blend_rect(BlitBuffer *bb, int x, int y, int w, int h, ColorRGB32 *color);
+void BB_fill_rect(BlitBuffer *bb, int x, int y, int w, int h, Color8A *color);
+void BB_blend_rect(BlitBuffer *bb, int x, int y, int w, int h, Color8A *color);
 void BB_blit_to(BlitBuffer *source, BlitBuffer *dest, int dest_x, int dest_y,
                 int offs_x, int offs_y, int w, int h);
 void BB_add_blit_from(BlitBuffer *dest, BlitBuffer *source, int dest_x, int dest_y,
-                      int offs_x, int offs_y, int w, int h, int intensity);
+                      int offs_x, int offs_y, int w, int h, uint8_t alpha);
 void BB_alpha_blit_from(BlitBuffer *dest, BlitBuffer *source, int dest_x, int dest_y,
                         int offs_x, int offs_y, int w, int h);
 void BB_invert_blit_from(BlitBuffer *dest, BlitBuffer *source, int dest_x, int dest_y,
                          int offs_x, int offs_y, int w, int h);
 void BB_color_blit_from(BlitBuffer *dest, BlitBuffer *source, int dest_x, int dest_y,
-                        int offs_x, int offs_y, int w, int h, ColorRGB32 *color);
+                        int offs_x, int offs_y, int w, int h, Color8A *color);
 
 void *malloc(int size);
 void free(void *ptr);
