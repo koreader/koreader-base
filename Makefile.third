@@ -49,7 +49,8 @@ $(TURBOJPEG_LIB) $(JPEG_LIB): $(THIRDPARTY_DIR)/libjpeg-turbo/CMakeLists.txt
 		-DAR="$(AR)" \
 		-DRANLIB="$(RANLIB)" \
 		$(CURDIR)/$(THIRDPARTY_DIR)/libjpeg-turbo && \
-		$(MAKE)
+		$(MAKE) && \
+		$(MAKE) install
 	cp -fL $(JPEG_DIR)/$(notdir $(TURBOJPEG_LIB)) $(TURBOJPEG_LIB)
 	cp -fL $(JPEG_DIR)/$(notdir $(JPEG_LIB)) $(JPEG_LIB)
 
