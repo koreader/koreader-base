@@ -21,14 +21,10 @@ ep_get_source_dir(SOURCE_DIR)
 ep_get_binary_dir(BINARY_DIR)
 
 # CMake hell.
-set(CMAKE_INSTALL_PREFIX "${BINARY_DIR}")
+set(CMAKE_INSTALL_PREFIX "${BINARY_DIR}" CACHE PATH "" FORCE)
 # We expect lib later on in Makefile.third, even on multilib systems...
-set(CMAKE_INSTALL_LIBDIR "${BINARY_DIR}/lib")
+set(CMAKE_INSTALL_LIBDIR "${BINARY_DIR}/lib" CACHE PATH "" FORCE)
 set(CMAKE_SKIP_BUILD_RPATH True)
-
-# To make CMake 3.5 behave better, hopefully (not necessary on 3.13)
-set(PATCH_CMD "${ISED} 's|cmake_minimum_required(VERSION 2.8.12)|cmake_minimum_required(VERSION 3.5.1)|' ${SOURCE_DIR}/CMakeLists.txt")
-set(PATCH_CMD "sh -c \"${PATCH_CMD}\"")
 
 # Compiler and linker flags
 set(CMAKE_C_FLAGS "${CFLAGS}")
