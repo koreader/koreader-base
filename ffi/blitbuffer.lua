@@ -16,7 +16,6 @@ local band = bit.band
 local bor = bit.bor
 local bxor = bit.bxor
 
-local intt = ffi.typeof("int")
 local uint32pt = ffi.typeof("uint32_t*") -- luacheck: ignore 211
 local uint8pt = ffi.typeof("uint8_t*")
 local posix = require("ffi/posix_h") -- luacheck: ignore 211
@@ -188,15 +187,15 @@ end
 
 -- alpha blending (8bit alpha value):
 local function div255(value)
-    return rshift(value + intt(1) + rshift(value, 8), 8)
+    return rshift(value + 0x01 + rshift(value, 8), 8)
 end
 local function div4080(value)
-    return rshift(value + intt(1) + rshift(value, 8), 12)
+    return rshift(value + 0x01 + rshift(value, 8), 12)
 end
 function Color4L_mt.__index:blend(color)
     local alpha = color:getAlpha()
     -- simplified: we expect a 8bit grayscale "color" as parameter
-    local value = div4080(band(self.a, 0x0F) * intt(0x11) * bxor(alpha, 0xFF) + color:getR() * alpha)
+    local value = div4080(band(self.a, 0x0F) * 0x11 * bxor(alpha, 0xFF) + color:getR() * alpha)
     self:set(Color4L(value))
 end
 function Color4U_mt.__index:blend(color)
