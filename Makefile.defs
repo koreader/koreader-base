@@ -589,7 +589,7 @@ JPEG_LIB_EXT=$(if $(WIN32),-8.dll,$(if $(DARWIN),.8.dylib,.so.8))
 JPEG_LIB=$(OUTPUT_DIR)/libs/libjpeg$(JPEG_LIB_EXT)
 TURBOJPEG_LIB=$(OUTPUT_DIR)/libs/libturbojpeg$(if $(WIN32),.dll,$(if $(DARWIN),.dylib,.so))
 JPEG_BUILD_DIR=$(THIRDPARTY_DIR)/libjpeg-turbo/build/$(MACHINE)
-JPEG_DIR=$(CURDIR)/$(JPEG_BUILD_DIR)/libjpeg-turbo-prefix/src/libjpeg-turbo-build
+JPEG_DIR=$(CURDIR)/$(JPEG_BUILD_DIR)/build/$(MACHINE)/libjpeg-turbo-prefix/src/libjpeg-turbo
 
 PNG_LIB_EXT=$(if $(WIN32),-16.dll,$(if $(DARWIN),.16.dylib,.so.16))
 PNG_LIB=$(OUTPUT_DIR)/libs/libpng16$(PNG_LIB_EXT)
