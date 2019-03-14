@@ -19,14 +19,18 @@ ANDROID_TOOLCHAIN=$(TOOLCHAIN_DIR)/android-toolchain-$(ANDROID_ARCH)
 NDK?=$(TOOLCHAIN_DIR)/android-ndk-r15c
 NDKABI?=14
 
+# Some CMake flags
+CMAKE_BUILD_TYPE?=Release
+
 # set debug-related variables to cascade down
 ifdef KODEBUG
 	DEBUG:=$(KODEBUG)
 	export DEBUG
 	# will have to be passed as -DCMAKE_BUILD_TYPE to $(CMAKE) invocations
 	CMAKE_BUILD_TYPE:=Debug
-	export CMAKE_BUILD_TYPE
 endif
+
+export CMAKE_BUILD_TYPE
 
 # CMAKE=cmake --no-warn-unused-cli
 CMAKE=cmake

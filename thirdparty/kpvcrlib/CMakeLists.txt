@@ -46,7 +46,24 @@ ELSE()
     ADD_DEFINITIONS(-DLINUX=1 -D_LINUX=1)
 ENDIF()
 
-ADD_DEFINITIONS(-DUSE_FONTCONFIG=0 -DUSE_FREETYPE=1 -DUSE_HARFBUZZ=1 -DALLOW_KERNING=1 -DCR3_PATCH=1 -DNDEBUG=1)
+add_definitions(
+    -DUSE_FONTCONFIG=0
+    -DUSE_FREETYPE=1
+    -DUSE_HARFBUZZ=1
+    -DALLOW_KERNING=1
+    -DCR3_PATCH=1
+)
+
+if(${CMAKE_BUILD_TYPE} STREQUAL Debug)
+    add_definitions(
+        -D_DEBUG=1
+        -DDEBUG=1
+    )
+else()
+    add_definitions(
+        -DNDEBUG=1
+    )
+endif(${CMAKE_BUILD_TYPE} STREQUAL Debug)
 
 IF(DEFINED ENV{WIN32})
     find_library(ZLIB NAMES "zlib1" PATHS $ENV{LIBS_DIR})
