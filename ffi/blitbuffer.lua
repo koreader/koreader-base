@@ -122,6 +122,14 @@ void free(void *ptr);
 ]]
 
 local use_cblitbuffer, cblitbuffer = pcall(ffi.load, 'blitbuffer')
+-- NOTE: This works-around a number of corner-cases which may end up with LuaJIT's optimizer blacklisting this very codepath,
+--       which'd obviously *murder* performance (to the effect of a soft-lock, essentially).
+--       c.f., #4137, #4752, #4782
+if not use_cblitbuffer then
+    io.write("Tweaking LuaJIT's max loop unroll factor (15 -> 45)\n")
+    io.flush()
+    jit.opt.start("loopunroll=45")
+end
 
 -- color value types
 local Color4U = ffi.typeof("Color4U")
