@@ -50,6 +50,8 @@ else
 	CMAKE_MAKE_PROGRAM := $(MAKE)
 endif
 
+$(info ************ CMAKE_MAKE_PROGRAM: "$(CMAKE_MAKE_PROGRAM)" **********)
+
 # set this to your ARM cross compiler:
 # set CC CXX AR LD RANLIB
 ifeq ($(TARGET), arm-generic)
