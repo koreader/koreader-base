@@ -759,6 +759,7 @@ void BB_add_blit_from(BlitBuffer *dst, BlitBuffer *src,
         uint8_t alpha) {
     // fast paths
     if (alpha == 0) {
+        // NOP
         return;
     } else if (alpha == 0xFF) {
         return BB_blit_to(src, dst, dest_x, dest_y, offs_x, offs_x, w, h);
@@ -907,6 +908,7 @@ void BB_alpha_blit_from(BlitBuffer *dst, BlitBuffer *src,
                                     BB_GET_PIXEL(src, sbb_rotation, Color8A, o_x, o_y, &srcptr);
                                     alpha = srcptr->alpha;
                                     if (alpha == 0) {
+                                        // NOP
                                     } else if (alpha == 0xFF) {
                                         dstptr->a = srcptr->a;
                                     } else {
@@ -963,6 +965,7 @@ void BB_alpha_blit_from(BlitBuffer *dst, BlitBuffer *src,
                                     BB_GET_PIXEL(src, sbb_rotation, ColorRGB32, o_x, o_y, &srcptr);
                                     alpha = srcptr->alpha;
                                     if (alpha == 0) {
+                                        // NOP
                                     } else if (alpha == 0xFF) {
                                         dstptr->a = RGB_To_A(srcptr->r, srcptr->g, srcptr->b);
                                     } else {
@@ -1001,6 +1004,7 @@ void BB_alpha_blit_from(BlitBuffer *dst, BlitBuffer *src,
                                     BB_GET_PIXEL(src, sbb_rotation, Color8A, o_x, o_y, &srcptr);
                                     alpha = srcptr->alpha;
                                     if (alpha == 0) {
+                                        // NOP
                                     } else if (alpha == 0xFF) {
                                         *dstptr = *srcptr;
                                     } else {
@@ -1055,6 +1059,7 @@ void BB_alpha_blit_from(BlitBuffer *dst, BlitBuffer *src,
                                     BB_GET_PIXEL(src, sbb_rotation, Color8A, o_x, o_y, &srcptr);
                                     alpha = srcptr->alpha;
                                     if (alpha == 0) {
+                                        // NOP
                                     } else if (alpha == 0xFF) {
                                         dstptr->v = RGB_To_RGB16(srcptr->a, srcptr->a, srcptr->a);
                                     } else {
@@ -1113,6 +1118,7 @@ void BB_alpha_blit_from(BlitBuffer *dst, BlitBuffer *src,
                                     BB_GET_PIXEL(src, sbb_rotation, ColorRGB32, o_x, o_y, &srcptr);
                                     alpha = srcptr->alpha;
                                     if (alpha == 0) {
+                                        // NOP
                                     } else if (alpha == 0xFF) {
                                         dstptr->v = RGB_To_RGB16(srcptr->r, srcptr->g, srcptr->b);
                                     } else {
@@ -1203,6 +1209,7 @@ void BB_alpha_blit_from(BlitBuffer *dst, BlitBuffer *src,
                                     BB_GET_PIXEL(src, sbb_rotation, Color8A, o_x, o_y, &srcptr);
                                     alpha = srcptr->alpha;
                                     if (alpha == 0) {
+                                        // NOP
                                     } else if (alpha == 0xFF) {
                                         dstptr->r = srcptr->a;
                                         dstptr->g = srcptr->a;
@@ -1272,6 +1279,7 @@ void BB_alpha_blit_from(BlitBuffer *dst, BlitBuffer *src,
                                     BB_GET_PIXEL(src, sbb_rotation, ColorRGB32, o_x, o_y, &srcptr);
                                     alpha = srcptr->alpha;
                                     if (alpha == 0) {
+                                        // NOP
                                     } else if (alpha == 0xFF) {
                                         *dstptr = *srcptr;
                                     } else {
@@ -1429,6 +1437,7 @@ void BB_color_blit_from(BlitBuffer *dst, BlitBuffer *src,
                     for (d_x = dest_x; d_x < dest_x + w; d_x++) {
                         SET_ALPHA_FROM_A(src, sbb_type, sbb_rotation, o_x, o_y, &alpha);
                         if (alpha == 0) {
+                            // NOP
                         } else if (alpha == 0xFF) {
                             BB_GET_PIXEL(dst, dbb_rotation, Color8, d_x, d_y, &dstptr);
                             dstptr->a = color->a;
@@ -1452,6 +1461,7 @@ void BB_color_blit_from(BlitBuffer *dst, BlitBuffer *src,
                     for (d_x = dest_x; d_x < dest_x + w; d_x++) {
                         SET_ALPHA_FROM_A(src, sbb_type, sbb_rotation, o_x, o_y, &alpha);
                         if (alpha == 0) {
+                            // NOP
                         } else if (alpha == 0xFF) {
                             BB_GET_PIXEL(dst, dbb_rotation, Color8A, d_x, d_y, &dstptr);
                             dstptr->a = color->a;
@@ -1475,6 +1485,7 @@ void BB_color_blit_from(BlitBuffer *dst, BlitBuffer *src,
                     for (d_x = dest_x; d_x < dest_x + w; d_x++) {
                         SET_ALPHA_FROM_A(src, sbb_type, sbb_rotation, o_x, o_y, &alpha);
                         if (alpha == 0) {
+                            // NOP
                         } else if (alpha == 0xFF) {
                             BB_GET_PIXEL(dst, dbb_rotation, ColorRGB16, d_x, d_y, &dstptr);
                             dstptr->v = RGB_To_RGB16(color->a, color->a, color->a);
@@ -1501,6 +1512,7 @@ void BB_color_blit_from(BlitBuffer *dst, BlitBuffer *src,
                     for (d_x = dest_x; d_x < dest_x + w; d_x++) {
                         SET_ALPHA_FROM_A(src, sbb_type, sbb_rotation, o_x, o_y, &alpha);
                         if (alpha == 0) {
+                            // NOP
                         } else if (alpha == 0xFF) {
                             BB_GET_PIXEL(dst, dbb_rotation, ColorRGB24, d_x, d_y, &dstptr);
                             dstptr->r = color->a;
@@ -1528,6 +1540,7 @@ void BB_color_blit_from(BlitBuffer *dst, BlitBuffer *src,
                     for (d_x = dest_x; d_x < dest_x + w; d_x++) {
                         SET_ALPHA_FROM_A(src, sbb_type, sbb_rotation, o_x, o_y, &alpha);
                         if (alpha == 0) {
+                            // NOP
                         } else if (alpha == 0xFF) {
                             BB_GET_PIXEL(dst, dbb_rotation, ColorRGB32, d_x, d_y, &dstptr);
                             dstptr->r = color->a;
