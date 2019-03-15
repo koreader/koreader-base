@@ -8,7 +8,6 @@ include("DownloadProject")
 
 enable_language(C CXX)
 
-assert_var_defined(PKG_CONFIG_PATH)
 assert_var_defined(CMAKE_C_COMPILER)
 assert_var_defined(CMAKE_C_COMPILER_LAUNCHER)
 assert_var_defined(CMAKE_C_COMPILER_ARG1)
@@ -29,6 +28,9 @@ assert_var_defined(ZLIB_DIR)
 ep_get_source_dir(SOURCE_DIR)
 
 # because cmake needs all kinds of annoying special cmake variables
+# Compiler and linker flags
+set(CMAKE_C_FLAGS "${CFLAGS}")
+set(CMAKE_CXX_FLAGS "${CXXFLAGS}")
 set(CMAKE_EXE_LINKER_FLAGS "${LDFLAGS} -static-libstdc++")
 if(DEFINED ENV{DARWIN})
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -framework CoreFoundation -framework Security")
@@ -68,12 +70,11 @@ set(ZLIB_LIBRARY_RELEASE "${ZLIB}")
 ### Disable the silly build tree RPATH
 set(CMAKE_SKIP_BUILD_RPATH True)
 
-# These need to be option(), not set(), for deep & profound CMake reasons
-option(ENABLE_NLS False)
-option(WITH_READLINE False)
+set(ENABLE_NLS False CACHE BOOL "")
+set(WITH_READLINE False CACHE BOOL "")
 
 # Force utf8 command line parsing, and accept not-found -u dictnames
-set(PATCH_CMD2 sh -c "patch -N -p1 < ${CMAKE_CURRENT_SOURCE_DIR}/sdcv.patch || true")
+set(PATCH_CMD patch -N -p1 -i "${CMAKE_CURRENT_SOURCE_DIR}/sdcv.patch")
 
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
@@ -85,8 +86,13 @@ ko_write_gitclone_script(
 include(DownloadProject)
 download_project(
     PROJ ${PROJECT_NAME}
-    DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
-    PATCH_COMMAND COMMAND ${PATH_CMD2}
+    GIT_REPOSITORY
+    https://github.com/Dushistov/sdcv.git
+    GIT_TAG
+    v0.5.2
+    #DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
+    PATCH_COMMAND COMMAND ${PATCH_CMD}
 )
 
-add_subdirectory(${SOURCE_DIR})
+add_subdirectory("${CMAKE_BINARY_DIR}/sdcv-src"
+                 "${CMAKE_BINARY_DIR}/sdcv-build")
