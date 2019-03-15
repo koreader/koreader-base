@@ -16,7 +16,7 @@ fetchthirdparty:
 $(FREETYPE_LIB) $(FREETYPE_DIR)/include: $(THIRDPARTY_DIR)/freetype2/CMakeLists.txt
 	install -d $(FREETYPE_BUILD_DIR)
 	cd $(FREETYPE_BUILD_DIR) && \
-		$(CMAKE) -DCC="$(CC)" -DCXX="$(CXX)" -DCFLAGS="$(CFLAGS)"\
+		$(CMAKE) $(CMAKE_FLAGS) -DCC="$(CC)" -DCXX="$(CXX)" -DCFLAGS="$(CFLAGS)"\
 		-DCXXFLAGS="$(CXXFLAGS)" -DLDFLAGS="$(LDFLAGS)" -DCHOST=$(CHOST) \
 		$(CURDIR)/$(THIRDPARTY_DIR)/freetype2 && \
 		$(CMAKE_MAKE_PROGRAM)
@@ -25,7 +25,7 @@ $(FREETYPE_LIB) $(FREETYPE_DIR)/include: $(THIRDPARTY_DIR)/freetype2/CMakeLists.
 $(HARFBUZZ_LIB) $(HARFBUZZ_DIR)/include: $(THIRDPARTY_DIR)/harfbuzz/CMakeLists.txt
 	install -d $(HARFBUZZ_BUILD_DIR)
 	cd $(HARFBUZZ_BUILD_DIR) && \
-		$(CMAKE) -DCC="$(CC)" -DCXX="$(CXX)" -DCFLAGS="$(CFLAGS)"\
+		$(CMAKE) $(CMAKE_FLAGS) -DCC="$(CC)" -DCXX="$(CXX)" -DCFLAGS="$(CFLAGS)"\
 		-DCXXFLAGS="$(CXXFLAGS)" -DLDFLAGS="$(LDFLAGS)" -DCHOST=$(CHOST) \
 		-DFREETYPE_DIR="$(FREETYPE_DIR)" \
 		$(CURDIR)/$(THIRDPARTY_DIR)/harfbuzz && \
@@ -36,7 +36,7 @@ $(HARFBUZZ_LIB) $(HARFBUZZ_DIR)/include: $(THIRDPARTY_DIR)/harfbuzz/CMakeLists.t
 $(TURBOJPEG_LIB) $(JPEG_LIB): $(THIRDPARTY_DIR)/libjpeg-turbo/CMakeLists.txt
 	install -d $(JPEG_BUILD_DIR)
 	cd $(JPEG_BUILD_DIR) && \
-		$(CMAKE) \
+		$(CMAKE) $(CMAKE_FLAGS) \
 		-DCMAKE_VERBOSE_MAKEFILE:BOOL=OFF \
 		-DCHOST="$(CHOST)" \
 		-DCFLAGS="$(CFLAGS)" \
@@ -55,7 +55,7 @@ $(TURBOJPEG_LIB) $(JPEG_LIB): $(THIRDPARTY_DIR)/libjpeg-turbo/CMakeLists.txt
 $(PNG_LIB): $(ZLIB) $(THIRDPARTY_DIR)/libpng/CMakeLists.txt
 	install -d $(PNG_BUILD_DIR)
 	cd $(PNG_BUILD_DIR) && \
-		$(CMAKE) -DCC="$(CC)" -DCXX="$(CXX)" -DCHOST="$(CHOST)" \
+		$(CMAKE) $(CMAKE_FLAGS) -DCC="$(CC)" -DCXX="$(CXX)" -DCHOST="$(CHOST)" \
 		-DCPPFLAGS="$(CFLAGS) -I$(ZLIB_DIR)" \
 		-DLDFLAGS="$(LDFLAGS) -L$(ZLIB_DIR) -Wl,-rpath,'$(ORIGIN_CMAKE_TO_AUTOCFG)'" \
 		$(CURDIR)/$(THIRDPARTY_DIR)/libpng && \
@@ -66,7 +66,7 @@ $(AES_LIB): $(THIRDPARTY_DIR)/minizip/CMakeLists.txt
 	install -d $(MINIZIP_BUILD_DIR)
 	-rm -f $(MINIZIP_DIR)/../minizip-stamp/minizip-build
 	cd $(MINIZIP_BUILD_DIR) && \
-		$(CMAKE) -DCC="$(CC) $(CFLAGS)" -DLDFLAGS="$(LDFLAGS)" \
+		$(CMAKE) $(CMAKE_FLAGS) -DCC="$(CC) $(CFLAGS)" -DLDFLAGS="$(LDFLAGS)" \
 		-DAR="$(AR)" -DRANLIB="$(RANLIB)" \
 		$(CURDIR)/$(THIRDPARTY_DIR)/minizip && \
 		$(CMAKE_MAKE_PROGRAM)
@@ -79,7 +79,7 @@ $(MUPDF_LIB) $(MUPDF_DIR)/include: $(JPEG_LIB) \
 	-rm -rf $(MUPDF_BUILD_DIR)
 	install -d $(MUPDF_BUILD_DIR)
 	cd $(MUPDF_BUILD_DIR) && \
-		$(CMAKE) -DHOSTCFLAGS="$(HOSTCFLAGS)" -DHOSTCC="$(HOSTCC)" \
+		$(CMAKE) $(CMAKE_FLAGS) -DHOSTCFLAGS="$(HOSTCFLAGS)" -DHOSTCC="$(HOSTCC)" \
 		-DCC="$(CC)" -DCFLAGS="$(CFLAGS)" -DCXX="$(CXX)" -DCXXFLAGS="$(CXXFLAGS)" -DOS="$(if $(WIN32),,Other)" \
 		-DAR="$(AR)" -DLDFLAGS="$(LDFLAGS) -L$(CURDIR)/$(OUTPUT_DIR)" \
 		-DXCFLAGS="$(CFLAGS) -DNOBUILTINFONT -DNO_ICC -I$(JPEG_DIR)/include -I$(FREETYPE_DIR)/include/freetype2 -I$(ZLIB_DIR) -I$(MINIZIP_DIR)" \
@@ -101,7 +101,7 @@ $(LODEPNG_LIB) $(LODEPNG_DIR): $(THIRDPARTY_DIR)/lodepng/CMakeLists.txt
 	install -d $(LODEPNG_BUILD_DIR)
 	-rm -f $(LODEPNG_DIR)/../lodepng-stamp/lodepng-build
 	cd $(LODEPNG_BUILD_DIR) && \
-		$(CMAKE) -DCC="$(CC)" -DCFLAGS="$(CFLAGS)" -DLDFLAGS="$(LDFLAGS)" \
+		$(CMAKE) $(CMAKE_FLAGS) -DCC="$(CC)" -DCFLAGS="$(CFLAGS)" -DLDFLAGS="$(LDFLAGS)" \
 		-DSONAME="$(notdir $(LODEPNG_LIB))" \
 		-DOUTPUT_PATH="$(CURDIR)/$(dir $(LODEPNG_LIB))" \
 		$(CURDIR)/$(THIRDPARTY_DIR)/lodepng && \
@@ -110,7 +110,7 @@ $(LODEPNG_LIB) $(LODEPNG_DIR): $(THIRDPARTY_DIR)/lodepng/CMakeLists.txt
 $(GIF_LIB): $(THIRDPARTY_DIR)/giflib/CMakeLists.txt
 	install -d $(GIF_BUILD_DIR)
 	cd $(GIF_BUILD_DIR) && \
-		$(CMAKE) -DCC="$(CC) $(if $(ANDROID),-DS_IREAD=S_IRUSR -DS_IWRITE=S_IWUSR,)" \
+		$(CMAKE) $(CMAKE_FLAGS) -DCC="$(CC) $(if $(ANDROID),-DS_IREAD=S_IRUSR -DS_IWRITE=S_IWUSR,)" \
 		-DCFLAGS="$(CFLAGS)" -DLDFLAGS="$(LDFLAGS)" -DCHOST="$(CHOST)" \
 		$(CURDIR)/thirdparty/giflib && \
 		$(CMAKE_MAKE_PROGRAM)
@@ -119,7 +119,7 @@ $(GIF_LIB): $(THIRDPARTY_DIR)/giflib/CMakeLists.txt
 $(DJVULIBRE_LIB): $(JPEG_LIB) $(THIRDPARTY_DIR)/djvulibre/CMakeLists.txt
 	install -d $(DJVULIBRE_BUILD_DIR)
 	cd $(DJVULIBRE_BUILD_DIR) && \
-		$(CMAKE) -DCC="$(CC)" -DCXX="$(CXX)" -DCFLAGS="$(CFLAGS)" \
+		$(CMAKE) $(CMAKE_FLAGS) -DCC="$(CC)" -DCXX="$(CXX)" -DCFLAGS="$(CFLAGS)" \
 		-DCXXFLAGS="$(CXXFLAGS)" -DLDFLAGS="$(LDFLAGS)" \
 		-DLIBS="$(STATIC_LIBSTDCPP)" \
 		-DCHOST="$(if $(EMULATE_READER),,$(CHOST))" \
@@ -141,7 +141,7 @@ $(CRENGINE_LIB): $(ZLIB) $(PNG_LIB) $(FREETYPE_LIB) $(HARFBUZZ_LIB) $(JPEG_LIB) 
 		HARFBUZZ_LIB="$(CURDIR)/$(HARFBUZZ_LIB)" \
 		ZLIB="$(CURDIR)/$(ZLIB)" \
 		LIBS_DIR="$(CURDIR)/$(OUTPUT_DIR)/libs" \
-		$(CMAKE) -DJPEGLIB_INCLUDE_DIR=$(JPEG_DIR)/include \
+		$(CMAKE) $(CMAKE_FLAGS) -DJPEGLIB_INCLUDE_DIR=$(JPEG_DIR)/include \
 		-DJCONFIG_INCLUDE_DIR="$(MUPDF_DIR)/scripts" \
 		-DPNG_INCLUDE_DIR="$(PNG_DIR)/include" \
 		-DNANOSVG_INCLUDE_DIR="$(NANOSVG_INCLUDE_DIR)" \
@@ -159,7 +159,7 @@ $(CRENGINE_LIB): $(ZLIB) $(PNG_LIB) $(FREETYPE_LIB) $(HARFBUZZ_LIB) $(JPEG_LIB) 
 $(LUAJIT) $(LUAJIT_LIB) $(LUAJIT_JIT): $(THIRDPARTY_DIR)/luajit/CMakeLists.txt
 	install -d $(LUAJIT_BUILD_DIR)
 	cd $(LUAJIT_BUILD_DIR) && \
-		$(CMAKE) -DCC="$(HOSTCC)" \
+		$(CMAKE) $(CMAKE_FLAGS) -DCC="$(HOSTCC)" \
 		-DXCOMPILE:BOOL=$(if $(EMULATE_READER),off,on) \
 		-DBASE_CFLAGS="$(BASE_CFLAGS)" -DHOST_CFLAGS="$(HOSTCFLAGS)" \
 		$(if $(WIN32),-DLDFLAGS="$(LDFLAGS)" -DTARGET_SYS=Windows,) \
@@ -186,7 +186,7 @@ endif
 $(POPEN_NOSHELL_LIB): $(THIRDPARTY_DIR)/popen-noshell/CMakeLists.txt
 	install -d $(POPEN_NOSHELL_BUILD_DIR)
 	cd $(POPEN_NOSHELL_BUILD_DIR) && \
-		$(CMAKE) $(if $(LEGACY),-DLEGACY:BOOL=ON,) \
+		$(CMAKE) $(CMAKE_FLAGS) $(if $(LEGACY),-DLEGACY:BOOL=ON,) \
 		-DCC="$(CC)" -DAR="$(AR)" \
 		-DCFLAGS="$(CFLAGS) $(if $(ANDROID),--sysroot=$(SYSROOT),)" \
 		-DLDFLAGS="$(LDFLAGS)" \
@@ -198,7 +198,7 @@ $(LEPTONICA_DIR): $(THIRDPARTY_DIR)/leptonica/CMakeLists.txt
 	install -d $(LEPTONICA_BUILD_DIR)
 	rm -rf $(LEPTONICA_DIR)
 	cd $(LEPTONICA_BUILD_DIR) && \
-		$(CMAKE) \
+		$(CMAKE) $(CMAKE_FLAGS) \
 		$(if $(ARM_GLIBC_GTE_2_22),-DARM_GLIBC_GTE_2_22=on,) \
 		$(CURDIR)/$(THIRDPARTY_DIR)/leptonica && \
 		$(CMAKE_MAKE_PROGRAM)
@@ -207,7 +207,7 @@ $(TESSERACT_DIR): $(THIRDPARTY_DIR)/tesseract/CMakeLists.txt
 	install -d $(TESSERACT_BUILD_DIR)
 	rm -rf $(TESSERACT_DIR)
 	cd $(TESSERACT_BUILD_DIR) && \
-		$(CMAKE) $(CURDIR)/$(THIRDPARTY_DIR)/tesseract && \
+		$(CMAKE) $(CMAKE_FLAGS) $(CURDIR)/$(THIRDPARTY_DIR)/tesseract && \
 		$(CMAKE_MAKE_PROGRAM)
 
 $(K2PDFOPT_LIB) $(LEPTONICA_LIB) $(TESSERACT_LIB): $(PNG_LIB) $(ZLIB) \
@@ -215,7 +215,7 @@ $(K2PDFOPT_LIB) $(LEPTONICA_LIB) $(TESSERACT_LIB): $(PNG_LIB) $(ZLIB) \
 		$(TESSERACT_DIR) $(LEPTONICA_DIR)
 	install -d $(K2PDFOPT_BUILD_DIR)
 	cd $(K2PDFOPT_BUILD_DIR) && \
-		$(CMAKE) $(if $(EMULATE_READER),,-DHOST="$(if $(ANDROID),"arm-linux",$(CHOST))") \
+		$(CMAKE) $(CMAKE_FLAGS) $(if $(EMULATE_READER),,-DHOST="$(if $(ANDROID),"arm-linux",$(CHOST))") \
 		-DCC="$(CC)" -DCFLAGS="$(CFLAGS)" -DCXX="$(CXX)" -DCXXFLAGS="$(CXXFLAGS) -O3" \
 		-DAR="$(AR)" -DRANLIB="$(RANLIB)" -DSTDCPPLIB="$(STATIC_LIBSTDCPP)" -DLDFLAGS="$(LDFLAGS)" \
 		-DZLIB_DIR=$(ZLIB_DIR) -DZLIB=$(CURDIR)/$(ZLIB) -DPNG_DIR=$(PNG_DIR) \
@@ -237,7 +237,7 @@ endif
 $(LIBICONV): $(THIRDPARTY_DIR)/libiconv/CMakeLists.txt
 	install -d $(LIBICONV_BUILD_DIR)
 	cd $(LIBICONV_BUILD_DIR) && \
-		$(CMAKE) -DCC="$(CC) -std=gnu89" -DLD="$(LD)" -DAR="$(AR)" -DRANLIB="$(RANLIB)" \
+		$(CMAKE) $(CMAKE_FLAGS) -DCC="$(CC) -std=gnu89" -DLD="$(LD)" -DAR="$(AR)" -DRANLIB="$(RANLIB)" \
 		-DHOST="$(if $(EMULATE_READER),,$(if $(ANDROID),"arm-linux",$(CHOST)))" \
 		$(CURDIR)/$(THIRDPARTY_DIR)/libiconv && \
 		$(CMAKE_MAKE_PROGRAM)
@@ -246,7 +246,7 @@ $(LIBICONV): $(THIRDPARTY_DIR)/libiconv/CMakeLists.txt
 $(LIBGETTEXT): $(LIBICONV) $(THIRDPARTY_DIR)/gettext/CMakeLists.txt
 	install -d $(GETTEXT_BUILD_DIR)
 	cd $(GETTEXT_BUILD_DIR) && \
-		$(CMAKE) -DCC="$(CC) -std=gnu89" -DLIBICONV_PREFIX=$(LIBICONV_DIR) \
+		$(CMAKE) $(CMAKE_FLAGS) -DCC="$(CC) -std=gnu89" -DLIBICONV_PREFIX=$(LIBICONV_DIR) \
 		-DAR="$(AR)" -DRANLIB="$(RANLIB)" \
 		-DCHOST_OPTS="$(if $(EMULATE_READER),,--host=$(if $(ANDROID),arm-linux,$(CHOST)))" \
 		$(if $(ANDROID),-DNDK=$(NDK),) \
@@ -258,7 +258,7 @@ $(LIBFFI_DIR)/include: $(THIRDPARTY_DIR)/libffi/CMakeLists.txt
 	install -d $(LIBFFI_BUILD_DIR)
 	-rm -rf $(LIBFFI_DIR)/include $(LIBFFI_DIR)/../libffi-stamp
 	cd $(LIBFFI_BUILD_DIR) && \
-		$(CMAKE) -DCC="$(CC)" -DHOST="$(CHOST)" \
+		$(CMAKE) $(CMAKE_FLAGS) -DCC="$(CC)" -DHOST="$(CHOST)" \
 		-DCFLAGS="$(CFLAGS)" \
 		-DLDFLAGS="$(LDFLAGS)" \
 		$(if $(ANDROID),-DSYSROOT="$(SYSROOT)",) \
@@ -271,7 +271,7 @@ $(GLIB): $(if $(DARWIN),$(LIBICONV) $(LIBGETTEXT),) $(LIBFFI_DIR)/include $(THIR
 	# to update mtime for all the binaries
 	-rm -rf $(GLIB_DIR)/lib $(GLIB_DIR)/../glib-stamp/glib-install
 	cd $(GLIB_BUILD_DIR) && \
-		$(CMAKE) -DCC="$(CC) -std=gnu89" \
+		$(CMAKE) $(CMAKE_FLAGS) -DCC="$(CC) -std=gnu89" \
 		-DAR="$(AR)" -DRANLIB="$(RANLIB)" \
 		-DCFLAGS="$(CFLAGS)" -DLDFLAGS="$(LDFLAGS)" \
 		-DLIBICONV_DIR="$(LIBICONV_DIR)" \
@@ -288,7 +288,7 @@ $(GLIB_STATIC): $(LIBICONV) $(LIBGETTEXT) $(LIBFFI_DIR)/include $(THIRDPARTY_DIR
 	install -d $(GLIB_BUILD_DIR)
 	-rm -f $(GLIB_DIR)/../glib-stamp/glib-install
 	cd $(GLIB_BUILD_DIR) && \
-		$(CMAKE) -DCC="$(CC) -std=gnu89" \
+		$(CMAKE) $(CMAKE_FLAGS) -DCC="$(CC) -std=gnu89" \
 		-DLDFLAGS="$(LDFLAGS) $(if $(ANDROID), \
 			-L$(LIBICONV_DIR)/lib -L$(GETTEXT_DIR)/lib,)" \
 		-DCFLAGS="$(CFLAGS) $(if $(ANDROID), -L$(LIBICONV_DIR)/lib -L$(GETTEXT_DIR)/lib \
@@ -304,14 +304,14 @@ $(ZLIB) $(ZLIB_STATIC): $(THIRDPARTY_DIR)/zlib/CMakeLists.txt
 	-rm -f $(ZLIB_DIR)/../zlib-stamp/zlib-install $(ZLIB) $(ZLIB_STATIC)
 ifdef ANDROID
 	cd $(ZLIB_BUILD_DIR) && \
-		$(CMAKE) -DCC="$(CC)" -DCHOST="$(CHOST)" \
+		$(CMAKE) $(CMAKE_FLAGS) -DCC="$(CC)" -DCHOST="$(CHOST)" \
 		-DCFLAGS="$(CFLAGS)" \
 		-DLDFLAGS="$(LDFLAGS) -shared $(ZLIB_LDFLAGS)" \
 		$(CURDIR)/thirdparty/zlib && \
 		$(CMAKE_MAKE_PROGRAM)
 else
 	cd $(ZLIB_BUILD_DIR) && \
-		$(CMAKE) -DCC="$(CC)" \
+		$(CMAKE) $(CMAKE_FLAGS) -DCC="$(CC)" \
 		-DCFLAGS="$(CFLAGS)" \
 		-DLDFLAGS="$(LDFLAGS)" \
 		$(CURDIR)/thirdparty/zlib && \
@@ -328,7 +328,7 @@ endif
 $(OUTPUT_DIR)/sdcv: $(if $(ANDROID),$(GLIB_STATIC),$(GLIB)) $(ZLIB_STATIC) $(THIRDPARTY_DIR)/sdcv/CMakeLists.txt
 	install -d $(SDCV_BUILD_DIR)
 	cd $(SDCV_BUILD_DIR) && \
-		$(CMAKE) -DHOST="$(if $(EMULATE_READER),,$(CHOST))" \
+		$(CMAKE) $(CMAKE_FLAGS) -DHOST="$(if $(EMULATE_READER),,$(CHOST))" \
 		$(PAGE_SIZE_CFG) \
 		-DCFLAGS="$(CFLAGS)" -DCXXFLAGS="$(CXXFLAGS)" -DLDFLAGS="$(LDFLAGS)" \
 		-DCMAKE_C_COMPILER="$(CMAKE_C_COMPILER)" \
@@ -358,7 +358,7 @@ endif
 $(OUTPUT_DIR)/dropbear: $(ZLIB) $(THIRDPARTY_DIR)/dropbear/CMakeLists.txt
 	install -d $(DROPBEAR_BUILD_DIR)
 	cd $(DROPBEAR_BUILD_DIR) && \
-		$(CMAKE) \
+		$(CMAKE) $(CMAKE_FLAGS) \
 		-DCMAKE_VERBOSE_MAKEFILE:BOOL=OFF \
 		-DCC="$(CC)" \
 		-DCPPFLAGS="$(CPPFLAGS) -I$(ZLIB_DIR)" \
@@ -376,7 +376,7 @@ $(OUTPUT_DIR)/dropbear: $(ZLIB) $(THIRDPARTY_DIR)/dropbear/CMakeLists.txt
 $(OUTPUT_DIR)/sftp-server: $(ZLIB) $(SSL_LIB) $(THIRDPARTY_DIR)/openssh/CMakeLists.txt
 	install -d $(OPENSSH_BUILD_DIR)
 	cd $(OPENSSH_BUILD_DIR) && \
-		$(CMAKE) \
+		$(CMAKE) $(CMAKE_FLAGS) \
 		-DCMAKE_VERBOSE_MAKEFILE:BOOL=OFF \
 		-DCC="$(CC)" \
 		-DCPPFLAGS="$(CPPFLAGS) -I$(ZLIB_DIR) -I$(OPENSSL_DIR)/include" \
@@ -394,7 +394,7 @@ $(OUTPUT_DIR)/sftp-server: $(ZLIB) $(SSL_LIB) $(THIRDPARTY_DIR)/openssh/CMakeLis
 $(OUTPUT_DIR)/tar: $(THIRDPARTY_DIR)/tar/CMakeLists.txt
 	install -d $(TAR_BUILD_DIR)
 	cd $(TAR_BUILD_DIR) && \
-		$(CMAKE) -DCC="$(CC)" \
+		$(CMAKE) $(CMAKE_FLAGS) -DCC="$(CC)" \
 		-DCFLAGS="$(CFLAGS)" \
 		-DLDFLAGS="$(LDFLAGS)" \
 		-DLIBS="$(if $(or $(ANDROID),$(WIN32),$(DARWIN)),,-lrt) $(if $(ANDROID),-static,)" \
@@ -414,7 +414,7 @@ endif
 $(OUTPUT_DIR)/zsync: $(THIRDPARTY_DIR)/zsync/CMakeLists.txt
 	install -d $(ZSYNC_BUILD_DIR)
 	cd $(ZSYNC_BUILD_DIR) && \
-		$(CMAKE) -DHOST="$(if $(EMULATE_READER),,$(CHOST))" -DCC="$(CC)" \
+		$(CMAKE) $(CMAKE_FLAGS) -DHOST="$(if $(EMULATE_READER),,$(CHOST))" -DCC="$(CC)" \
 		-DCFLAGS="$(CFLAGS)" \
 		-DLDFLAGS="$(LDFLAGS)" \
 		-DLIBS="$(if $(ANDROID),-static,)" \
@@ -432,7 +432,7 @@ endif
 $(OUTPUT_DIR)/fbink: $(THIRDPARTY_DIR)/fbink/CMakeLists.txt
 	install -d $(FBINK_BUILD_DIR)
 	cd $(FBINK_BUILD_DIR) && \
-		$(CMAKE) \
+		$(CMAKE) $(CMAKE_FLAGS) \
 		-DCMAKE_VERBOSE_MAKEFILE:BOOL=OFF \
 		-DCROSS_TC="$(CHOST)" \
 		-DCFLAGS="$(CFLAGS)" \
@@ -450,7 +450,7 @@ $(LUASOCKET): $(THIRDPARTY_DIR)/luasocket/CMakeLists.txt
 	-rm -rf $(LUASOCKET) $(LUASOCKET_BUILD_DIR)
 	install -d $(LUASOCKET_BUILD_DIR)
 	cd $(LUASOCKET_BUILD_DIR) && \
-		$(CMAKE) -DPLAT="$(if $(WIN32),mingw,$(if $(DARWIN),macosx,linux))" \
+		$(CMAKE) $(CMAKE_FLAGS) -DPLAT="$(if $(WIN32),mingw,$(if $(DARWIN),macosx,linux))" \
 		-DCC="$(CC) $(CFLAGS)" \
 		$(if $(ANDROID),-DMYLDFLAGS="$(LDFLAGS) $(CURDIR)/$(LUAJIT_LIB)",) \
 		$(if $(WIN32),-DLUALIB_mingw="$(CURDIR)/$(LUAJIT_LIB)",) \
@@ -464,7 +464,7 @@ $(OPENSSL_LIB) $(OPENSSL_DIR): $(THIRDPARTY_DIR)/openssl/CMakeLists.txt
 	install -d $(OPENSSL_BUILD_DIR)
 	-rm -f $(OPENSSL_DIR)/../openssl-stamp/openssl-build
 	cd $(OPENSSL_BUILD_DIR) && \
-		$(CMAKE) \
+		$(CMAKE) $(CMAKE_FLAGS) \
 		-DREALCC="$(REALCC) $(if $(DARWIN),$(DYNLIB_CFLAGS),$(CFLAGS))" \
 		-DCC="$(CC) $(if $(DARWIN),$(DYNLIB_CFLAGS),$(CFLAGS))" \
 		-DCFLAGS="$(CFLAGS)" \
@@ -491,7 +491,7 @@ $(LUASEC): $(SSL_LIB) $(THIRDPARTY_DIR)/luasec/CMakeLists.txt
 	install -d $(LUASEC_BUILD_DIR)
 	-rm -f $(LUASEC_DIR)/../luasec-stamp/luasec-install
 	cd $(LUASEC_BUILD_DIR) && \
-		$(CMAKE) -DCC="$(CC) $(CFLAGS)" -DLD="$(CC) -Wl,-rpath,'$(ORIGIN_CMAKE_TO_AUTOCFG)/../libs'" \
+		$(CMAKE) $(CMAKE_FLAGS) -DCC="$(CC) $(CFLAGS)" -DLD="$(CC) -Wl,-rpath,'$(ORIGIN_CMAKE_TO_AUTOCFG)/../libs'" \
 		-DAR="$(AR)" -DRANLIB="$(RANLIB)" \
 		$(if $(ANDROID),-DLIBS="$(CURDIR)/$(SSL_LIB) $(CURDIR)/$(CRYPTO_LIB) $(CURDIR)/$(LUASEC_BUILD_DIR)/luasec-prefix/src/luasec/src/luasocket/libluasocket.a $(CURDIR)/$(LUAJIT_LIB)",) \
 		-DINC_PATH="-I$(LUAJIT_DIR)/src -I$(OPENSSL_DIR)/include" \
@@ -511,7 +511,7 @@ $(LUASERIAL_LIB): $(THIRDPARTY_DIR)/lua-serialize/CMakeLists.txt
 	-rm -f $(LUASERIAL_DIR)/../lua-serialize-stamp/lua-serialize-build
 	-rm -f $(LUASERIAL_LIB)
 	cd $(LUASERIAL_BUILD_DIR) && \
-		$(CMAKE) -DCC="$(CC) $(CFLAGS)" \
+		$(CMAKE) $(CMAKE_FLAGS) -DCC="$(CC) $(CFLAGS)" \
 		-DLDFLAGS="$(LDFLAGS) $(if $(or $(ANDROID),$(WIN32)), $(CURDIR)/$(LUAJIT_LIB),)" \
 		-DOUTPUT_DIR=$(CURDIR)/$(OUTPUT_DIR)/common \
 		$(CURDIR)/$(THIRDPARTY_DIR)/lua-serialize && \
@@ -528,7 +528,7 @@ $(LUACOMPAT52): $(LUASERIAL_LIB) $(THIRDPARTY_DIR)/lua-serialize/CMakeLists.txt
 $(ZMQ_LIB): $(THIRDPARTY_DIR)/libzmq/CMakeLists.txt
 	install -d $(ZMQ_BUILD_DIR)
 	cd $(ZMQ_BUILD_DIR) && \
-		$(CMAKE) -DCC="$(CC)" -DCXX="$(CXX)" \
+		$(CMAKE) $(CMAKE_FLAGS) -DCC="$(CC)" -DCXX="$(CXX)" \
 		-DCFLAGS="$(CFLAGS) $(if $(CLANG),-O0,)" \
 		-DCXXFLAGS="$(CXXFLAGS) $(if $(CLANG),-O0,)" \
 		-DLDFLAGS="$(LDFLAGS)" -DSTATIC_LIBSTDCPP="$(STATIC_LIBSTDCPP)" \
@@ -549,7 +549,7 @@ endif
 $(CZMQ_LIB): $(ZMQ_LIB) $(THIRDPARTY_DIR)/czmq/CMakeLists.txt
 	install -d $(CZMQ_BUILD_DIR)
 	cd $(CZMQ_BUILD_DIR) && \
-		$(CMAKE) -DCC="$(CC)" -DLDFLAGS="$(LDFLAGS) -Wl,-rpath,'$(ORIGIN_CMAKE_TO_AUTOCFG)'" \
+		$(CMAKE) $(CMAKE_FLAGS) -DCC="$(CC)" -DLDFLAGS="$(LDFLAGS) -Wl,-rpath,'$(ORIGIN_CMAKE_TO_AUTOCFG)'" \
 		-DCFLAGS="$(CFLAGS) $(if $(CLANG),-O0,) $(if $(WIN32),-DLIBCZMQ_EXPORTS)" \
 		-DZMQ_DIR=$(ZMQ_DIR) -DHOST=$(CHOST) \
 		$(CURDIR)/$(THIRDPARTY_DIR)/czmq && \
@@ -559,7 +559,7 @@ $(CZMQ_LIB): $(ZMQ_LIB) $(THIRDPARTY_DIR)/czmq/CMakeLists.txt
 $(FILEMQ_LIB): $(ZMQ_LIB) $(CZMQ_LIB) $(SSL_LIB) $(THIRDPARTY_DIR)/filemq/CMakeLists.txt
 	install -d $(FILEMQ_BUILD_DIR)
 	cd $(FILEMQ_BUILD_DIR) && \
-		$(CMAKE) -DCC="$(CC)" -DCFLAGS="$(CFLAGS) $(if $(CLANG),-O0,) -I$(OPENSSL_DIR)/include" \
+		$(CMAKE) $(CMAKE_FLAGS) -DCC="$(CC)" -DCFLAGS="$(CFLAGS) $(if $(CLANG),-O0,) -I$(OPENSSL_DIR)/include" \
 		-DLDFLAGS="$(LDFLAGS) -L$(OPENSSL_DIR) -Wl,-rpath,'${ORIGIN_CMAKE_TO_AUTOCFG}'" \
 		-DZMQ_DIR=$(ZMQ_DIR) -DCZMQ_DIR=$(CZMQ_DIR) -DHOST=$(CHOST) \
 		$(CURDIR)/$(THIRDPARTY_DIR)/filemq && \
@@ -569,7 +569,7 @@ $(FILEMQ_LIB): $(ZMQ_LIB) $(CZMQ_LIB) $(SSL_LIB) $(THIRDPARTY_DIR)/filemq/CMakeL
 $(ZYRE_LIB): $(ZMQ_LIB) $(CZMQ_LIB) $(THIRDPARTY_DIR)/zyre/CMakeLists.txt
 	install -d $(ZYRE_BUILD_DIR)
 	cd $(ZYRE_BUILD_DIR) && \
-		$(CMAKE) -DCC="$(CC)" -DCFLAGS="$(CFLAGS) $(if $(CLANG),-O0,)" \
+		$(CMAKE) $(CMAKE_FLAGS) -DCC="$(CC)" -DCFLAGS="$(CFLAGS) $(if $(CLANG),-O0,)" \
 		-DCXXFLAGS="$(CXXFLAGS)" -DLDFLAGS="$(LDFLAGS) -Wl,-rpath,'$(ORIGIN_CMAKE_TO_AUTOCFG)'" \
 		-DZMQ_DIR=$(ZMQ_DIR) -DCZMQ_DIR=$(CZMQ_DIR) -DHOST=$(CHOST) \
 		$(CURDIR)/$(THIRDPARTY_DIR)/zyre && \
@@ -581,7 +581,7 @@ $(ZYRE_LIB): $(ZMQ_LIB) $(CZMQ_LIB) $(THIRDPARTY_DIR)/zyre/CMakeLists.txt
 $(TURBO_FFI_WRAP_LIB): $(SSL_LIB) $(THIRDPARTY_DIR)/turbo/CMakeLists.txt
 	install -d $(TURBO_BUILD_DIR)
 	cd $(TURBO_BUILD_DIR) && \
-		$(CMAKE) -DCC="$(CC)" -DCFLAGS="$(CFLAGS) -I$(OPENSSL_DIR)/include" \
+		$(CMAKE) $(CMAKE_FLAGS) -DCC="$(CC)" -DCFLAGS="$(CFLAGS) -I$(OPENSSL_DIR)/include" \
 		-DLDFLAGS="$(LDFLAGS) -lcrypto -lssl \
 			$(if $(ANDROID),$(CURDIR)/$(LUAJIT_LIB),) \
 			$(if $(WIN32),$(CURDIR)/$(LUAJIT_LIB),) \
@@ -598,7 +598,7 @@ $(LUA_SPORE_ROCK): $(THIRDPARTY_DIR)/lua-Spore/CMakeLists.txt
 	-rm -f $(LUA_SPORE_DIR)/../lua-Spore-stamp/lua-Spore-build
 	-rm -f $(LUA_SPORE_ROCK)
 	cd $(LUA_SPORE_BUILD_DIR) && \
-		$(CMAKE) -DOUTPUT_DIR="$(CURDIR)/$(OUTPUT_DIR)" \
+		$(CMAKE) $(CMAKE_FLAGS) -DOUTPUT_DIR="$(CURDIR)/$(OUTPUT_DIR)" \
 		-DLUA_SPORE_VER=$(LUA_SPORE_VER) -DLD="$(CC)" \
 		-DCC="$(CC)" -DCFLAGS="$(CFLAGS) -I$(LUAJIT_DIR)/src" \
 		-DLUAROCKS=$(if $(DARWINHOST),"luarocks --lua-dir=/usr/local/opt/lua@5.1",luarocks) \
@@ -617,7 +617,7 @@ $(LPEG_DYNLIB) $(LPEG_RE): $(LUAJIT_LIB) $(THIRDPARTY_DIR)/lpeg/CMakeLists.txt
 	install -d $(OUTPUT_DIR)/rocks/share/lua/5.1
 	install -d $(LPEG_BUILD_DIR)
 	cd $(LPEG_BUILD_DIR) && \
-		$(CMAKE) -DCC="$(CC)" -DDYNLIB_CFLAGS="$(DYNLIB_CFLAGS)" \
+		$(CMAKE) $(CMAKE_FLAGS) -DCC="$(CC)" -DDYNLIB_CFLAGS="$(DYNLIB_CFLAGS)" \
 		-DLUA_DIR="$(LUAJIT_DIR)" $(CURDIR)/$(THIRDPARTY_DIR)/lpeg && \
 		$(CMAKE_MAKE_PROGRAM)
 	cp -f $(LPEG_DIR)/lpeg.so $(OUTPUT_DIR)/rocks/lib/lua/5.1
@@ -627,7 +627,7 @@ $(EVERNOTE_LIB): $(THIRDPARTY_DIR)/evernote-sdk-lua/CMakeLists.txt
 	install -d $(EVERNOTE_SDK_BUILD_DIR)
 	-rm -f $(EVERNOTE_LIB) $(EVERNOTE_SDK_DIR)/../evernote-sdk-lua-stamp/evernote-sdk-lua-build
 	cd $(EVERNOTE_SDK_BUILD_DIR) && \
-		$(CMAKE) -DCC="$(CC) $(CFLAGS)" \
+		$(CMAKE) $(CMAKE_FLAGS) -DCC="$(CC) $(CFLAGS)" \
 		-DOUTPUT_DIR="$(CURDIR)/$(EVERNOTE_PLUGIN_DIR)/lib" \
 		-DLDFLAGS="$(LDFLAGS) $(if $(or $(ANDROID),$(WIN32)),-lm $(CURDIR)/$(LUAJIT_LIB))" \
 		-DDYNLIB_CFLAGS="$(DYNLIB_CMAKE_CFLAGS)" \
@@ -641,7 +641,7 @@ $(LUALONGNUMBER): $(EVERNOTE_LIB) $(THIRDPARTY_DIR)/evernote-sdk-lua/CMakeLists.
 $(SQLITE_LIB): $(THIRDPARTY_DIR)/sqlite/CMakeLists.txt
 	install -d $(SQLITE_BUILD_DIR)
 	cd $(SQLITE_BUILD_DIR) && \
-		$(CMAKE) -DCHOST="$(CHOST)" \
+		$(CMAKE) $(CMAKE_FLAGS) -DCHOST="$(CHOST)" \
 			-DCC="$(CC)" \
 			-DCPPFLAGS="$(CPPFLAGS)" \
 			-DCFLAGS="$(CFLAGS)" \
@@ -658,7 +658,7 @@ $(LUA_LJ_SQLITE) $(OUTPUT_DIR)/common/xsys.lua: $(LUA_LJ_SQLITE_DIR)/init.lua $(
 $(NANOSVG_HEADERS): $(THIRDPARTY_DIR)/nanosvg/CMakeLists.txt
 	install -d $(NANOSVG_BUILD_DIR)
 	cd $(NANOSVG_BUILD_DIR) && \
-		$(CMAKE) \
+		$(CMAKE) $(CMAKE_FLAGS) \
 		$(CURDIR)/$(THIRDPARTY_DIR)/nanosvg && \
 		$(CMAKE_MAKE_PROGRAM)
 	install -d $(NANOSVG_INCLUDE_DIR)
@@ -672,7 +672,7 @@ space:=$(empty) $(empty)
 $(LJ_WPACLIENT): $(THIRDPARTY_DIR)/lj-wpaclient/CMakeLists.txt
 	install -d $(LJ_WPACLIENT_BUILD_DIR)
 	cd $(LJ_WPACLIENT_BUILD_DIR) && \
-		$(CMAKE) $(CURDIR)/thirdparty/lj-wpaclient && \
+		$(CMAKE) $(CMAKE_FLAGS) $(CURDIR)/thirdparty/lj-wpaclient && \
 		$(CMAKE_MAKE_PROGRAM)
 	install -d $(OUTPUT_DIR)/common/lj-wpaclient
 	cp $(LJ_WPACLIENT_DIR)/{$(subst $(space),$(comma),$(LJ_WPACLIENT_FILES))} \
