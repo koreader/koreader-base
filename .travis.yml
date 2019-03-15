@@ -31,7 +31,7 @@ addons:
   apt:
     packages:
       - cmake
-      - ninja
+      - ninja-build
       - g++
       - libsdl1.2-dev
       - luarocks
