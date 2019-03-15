@@ -28,6 +28,6 @@ ExternalProject_Add(
     URL_MD5 83b89587607e3eb65c70d361f13bab43
     CONFIGURE_COMMAND ${CFG_CMD}
     # skip the rest, we only need the header for glib
-    BUILD_COMMAND $(MAKE) -j${PARALLEL_JOBS}
-    INSTALL_COMMAND $(MAKE) -j${PARALLEL_JOBS} uninstall install
+    BUILD_COMMAND ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS}
+    INSTALL_COMMAND ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS} uninstall install
 )

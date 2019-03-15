@@ -26,9 +26,9 @@ else()
     # configure
     set(optional_cfg_cmd CONFIGURE_COMMAND sh -c "CC=\"${CC}\" CHOST=\"${CHOST}\" CFLAGS=\"${CFLAGS}\" LDFLAGS=\"${LDFLAGS}\" ./configure --prefix=${SOURCE_DIR}")
     # build
-    set(BUILD_CMD $(MAKE) -j${PARALLEL_JOBS} --silent shared static)
+    set(BUILD_CMD ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS} --silent shared static)
     # install
-    set(INSTALL_CMD $(MAKE) install)
+    set(INSTALL_CMD ${KO_MAKE_RECURSIVE} install)
 endif()
 
 include(ExternalProject)

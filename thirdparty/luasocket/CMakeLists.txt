@@ -21,7 +21,7 @@ set(PATCH_CMD "${PATCH_CMD} && ${ISED} 's|mime_core|mime_mcore|' src/*")
 set(PATCH_CMD "${PATCH_CMD} && ${ISED} 's|SOCKET_CDIR)/core|SOCKET_CDIR)/score|' src/*")
 set(PATCH_CMD "${PATCH_CMD} && ${ISED} 's|MIME_CDIR)/core|MIME_CDIR)/mcore|' src/*")
 
-set(BUILD_CMD_STR "$(MAKE) PLAT=${PLAT} CC=\"${CC}\" LD=\"${CC}\"")
+set(BUILD_CMD_STR "${KO_MAKE_RECURSIVE} PLAT=${PLAT} CC=\"${CC}\" LD=\"${CC}\"")
 if(DEFINED MYLDFLAGS)
     set(BUILD_CMD_STR "${BUILD_CMD_STR} MYLDFLAGS=\"${MYLDFLAGS}\"")
 endif()
@@ -45,6 +45,5 @@ ExternalProject_Add(
     PATCH_COMMAND ${PATCH_CMD}
     CONFIGURE_COMMAND ""
     BUILD_COMMAND ${BUILD_CMD}
-    # skip install
-    INSTALL_COMMAND $(MAKE) INSTALL_TOP_LDIR=${INSTALL_DIR} INSTALL_TOP_CDIR=${INSTALL_DIR} install
+    INSTALL_COMMAND ${KO_MAKE_RECURSIVE} INSTALL_TOP_LDIR=${INSTALL_DIR} INSTALL_TOP_CDIR=${INSTALL_DIR} install
 )
