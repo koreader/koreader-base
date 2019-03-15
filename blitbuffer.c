@@ -1412,7 +1412,9 @@ void BB_color_blit_from(BlitBuffer *dst, BlitBuffer *src,
     uint8_t r, g, b, ainv, alpha;
     int d_x, d_y, o_x, o_y;
 
-    if (src->w == 0 || src->h == 0) return;
+    if (src->w == 0 || src->h == 0) {
+        return;
+    }
     int dbb_type = GET_BB_TYPE(dst);
     int sbb_type = GET_BB_TYPE(src);
     int sbb_rotation = GET_BB_ROTATION(src);
