@@ -881,7 +881,7 @@ void BB_alpha_blit_from(BlitBuffer *dst, BlitBuffer *src,
                     dstptr->a = srcptr->a;
                 } else {
                     ainv = alpha ^ 0xFF;
-                    dstptr->a = dstptr->a * ainv + srcptr->a * alpha;
+                    dstptr->a = DIV_255(dstptr->a * ainv + srcptr->a * alpha);
                 }
                 o_x += 1;
             }
