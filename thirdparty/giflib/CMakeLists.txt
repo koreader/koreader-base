@@ -38,6 +38,6 @@ ExternalProject_Add(
     DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
     PATCH_COMMAND COMMAND sh -c "${ISED} \"s|\\$srcdir\\/configure \\$\\*||g\" autogen.sh" COMMAND ./autogen.sh
     CONFIGURE_COMMAND ${CFG_CMD}
-    BUILD_COMMAND $(MAKE) -j${PARALLEL_JOBS} --silent
-    INSTALL_COMMAND $(MAKE) -j${PARALLEL_JOBS} --silent install
+    BUILD_COMMAND ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS} --silent
+    INSTALL_COMMAND ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS} --silent install
 )

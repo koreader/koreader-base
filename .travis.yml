@@ -16,6 +16,7 @@ env:
   matrix:
     - SHELLCHECKS=1
     - EMULATE_READER=1 CC=gcc
+    - EMULATE_READER=1 CC=gcc USE_NINJA=1
     - EMULATE_READER=1 CC=gcc KODEBUG=1
     - EMULATE_READER=1 CC=clang
     - TARGET=kindle DOCKER_IMG=frenzie/kokindle:0.1.0
@@ -30,7 +31,8 @@ addons:
   apt:
     packages:
       - cmake
-      - g++-4.8
+      - ninja-build
+      - g++
       - libsdl1.2-dev
       - luarocks
       # for luasec

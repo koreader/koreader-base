@@ -31,6 +31,15 @@ if(NOT DEFINED PARALLEL_JOBS)
     math(EXPR PARALLEL_JOBS "${PROCESSOR_COUNT}+1")
 endif()
 
+# $(MAKE) is for recursive make invocations, but evidently when using another
+# generator there's no recursion. For us that other generator is ninja, but
+# maybe one day also Visual Studio or Xcode…
+if(CMAKE_GENERATOR MATCHES Makefiles)
+    set(KO_MAKE_RECURSIVE "$(MAKE)")
+else()
+    set(KO_MAKE_RECURSIVE make)
+endif()
+
 macro(assert_var_defined varName)
     if(NOT DEFINED ${varName})
         message(FATAL_ERROR "${varName} variable not defined!")

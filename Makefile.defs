@@ -34,6 +34,11 @@ export CMAKE_BUILD_TYPE
 
 # CMAKE=cmake --no-warn-unused-cli
 CMAKE=cmake
+CMAKE_MAKE_PROGRAM=$(MAKE)
+ifdef USE_NINJA
+	CMAKE:=cmake -G Ninja
+	CMAKE_MAKE_PROGRAM:=ninja
+endif
 
 # set this to your ARM cross compiler:
 # set CC CXX AR LD RANLIB

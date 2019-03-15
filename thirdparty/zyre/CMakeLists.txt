@@ -46,6 +46,6 @@ ExternalProject_Add(
     DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
     PATCH_COMMAND ./autogen.sh
     CONFIGURE_COMMAND COMMAND ${CFG_CMD} COMMAND ${SED_CMD1} COMMAND ${SED_CMD2}
-    BUILD_COMMAND $(MAKE) -j${PARALLEL_JOBS} --silent
-    INSTALL_COMMAND $(MAKE) --silent installdirs uninstall install
+    BUILD_COMMAND ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS} --silent
+    INSTALL_COMMAND ${KO_MAKE_RECURSIVE} --silent installdirs uninstall install
 )
