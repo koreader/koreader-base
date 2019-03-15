@@ -34,10 +34,10 @@ export CMAKE_BUILD_TYPE
 
 # CMAKE=cmake --no-warn-unused-cli
 CMAKE=cmake
-KO_BUILD_SYSTEM=$(MAKE)
+CMAKE_MAKE_PROGRAM=$(MAKE)
 ifdef USE_NINJA
 	CMAKE:=cmake -G Ninja
-	KO_BUILD_SYSTEM:=ninja
+	CMAKE_MAKE_PROGRAM:=ninja
 endif
 
 # set this to your ARM cross compiler:
