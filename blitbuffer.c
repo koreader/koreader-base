@@ -734,7 +734,7 @@ void BB_blit_to_BB32(BlitBuffer *src, BlitBuffer *dst,
 void BB_blit_to(BlitBuffer *src, BlitBuffer *dst,
         int dest_x, int dest_y, int offs_x, int offs_y, int w, int h) {
     int dbb_type = GET_BB_TYPE(dst);
-    // fprintf(stdout, "blit from type: %s to: %s\n", get_bbtype_name(GET_BB_TYPE(src)), get_bbtype_name(GET_BB_TYPE(dst)));
+    // fprintf(stdout, "%s: blit from type: %s to: %s\n", __FUNCTION__, get_bbtype_name(GET_BB_TYPE(src)), get_bbtype_name(GET_BB_TYPE(dst)));
     switch (dbb_type) {
         case TYPE_BB8:
             BB_blit_to_BB8(src, dst, dest_x, dest_y, offs_x, offs_y, w, h);
@@ -769,8 +769,8 @@ void BB_add_blit_from(BlitBuffer *dst, BlitBuffer *src,
     int sbb_rotation = GET_BB_ROTATION(src);
     int dbb_rotation = GET_BB_ROTATION(dst);
     if (dbb_type != sbb_type) {
-        fprintf(stderr, "incompatible bb (dst: %s, src: %s) in file %s, line %d!\r\n",
-                get_bbtype_name(dbb_type), get_bbtype_name(sbb_type), __FILE__, __LINE__);
+        fprintf(stderr, "%s: incompatible bb (dst: %s, src: %s) in file %s, line %d!\r\n",
+                __FUNCTION__, get_bbtype_name(dbb_type), get_bbtype_name(sbb_type), __FILE__, __LINE__);
         exit(1);
     }
     uint8_t r, g, b;
@@ -978,8 +978,8 @@ void BB_alpha_blit_from(BlitBuffer *dst, BlitBuffer *src,
                         break;
                     default:
                         {
-                            fprintf(stderr, "incompatible bb (dst: BB8, src: %s) in file %s, line %d!\r\n",
-                                    get_bbtype_name(sbb_type), __FILE__, __LINE__);
+                            fprintf(stderr, "%s: incompatible bb (dst: BB8, src: %s) in file %s, line %d!\r\n",
+                                    __FUNCTION__, get_bbtype_name(sbb_type), __FILE__, __LINE__);
                             exit(1);
                         }
                         break;
@@ -1015,8 +1015,8 @@ void BB_alpha_blit_from(BlitBuffer *dst, BlitBuffer *src,
                         break;
                     default:
                         {
-                            fprintf(stderr, "incompatible bb (dst: BB8A, src: %s) in file %s, line %d!\r\n",
-                                    get_bbtype_name(sbb_type), __FILE__, __LINE__);
+                            fprintf(stderr, "%s: incompatible bb (dst: BB8A, src: %s) in file %s, line %d!\r\n",
+                                    __FUNCTION__, get_bbtype_name(sbb_type), __FILE__, __LINE__);
                             exit(1);
                         }
                         break;
@@ -1130,8 +1130,8 @@ void BB_alpha_blit_from(BlitBuffer *dst, BlitBuffer *src,
                         break;
                     default:
                         {
-                            fprintf(stderr, "incompatible bb (dst: BBRGB16, src: %s) in file %s, line %d!\r\n",
-                                    get_bbtype_name(sbb_type), __FILE__, __LINE__);
+                            fprintf(stderr, "%s: incompatible bb (dst: BBRGB16, src: %s) in file %s, line %d!\r\n",
+                                    __FUNCTION__, get_bbtype_name(sbb_type), __FILE__, __LINE__);
                             exit(1);
                         }
                         break;
@@ -1160,8 +1160,8 @@ void BB_alpha_blit_from(BlitBuffer *dst, BlitBuffer *src,
                         break;
                     default:
                         {
-                            fprintf(stderr, "incompatible bb (dst: BBRGB24, src: %s) in file %s, line %d!\r\n",
-                                    get_bbtype_name(sbb_type), __FILE__, __LINE__);
+                            fprintf(stderr, "%s: incompatible bb (dst: BBRGB24, src: %s) in file %s, line %d!\r\n",
+                                    __FUNCTION__, get_bbtype_name(sbb_type), __FILE__, __LINE__);
                             exit(1);
                         }
                         break;
@@ -1289,8 +1289,8 @@ void BB_alpha_blit_from(BlitBuffer *dst, BlitBuffer *src,
                         break;
                     default:
                         {
-                            fprintf(stderr, "incompatible bb (dst: BBRGB32, src: %s) in file %s, line %d!\r\n",
-                                    get_bbtype_name(sbb_type), __FILE__, __LINE__);
+                            fprintf(stderr, "%s: incompatible bb (dst: BBRGB32, src: %s) in file %s, line %d!\r\n",
+                                    __FUNCTION__, get_bbtype_name(sbb_type), __FILE__, __LINE__);
                             exit(1);
                         }
                         break;
@@ -1299,8 +1299,8 @@ void BB_alpha_blit_from(BlitBuffer *dst, BlitBuffer *src,
             break;
         default:
             {
-                fprintf(stderr, "incompatible bb (dst: %s, src: %s) in file %s, line %d!\r\n",
-                        get_bbtype_name(dbb_type), get_bbtype_name(sbb_type), __FILE__, __LINE__);
+                fprintf(stderr, "%s: incompatible bb (dst: %s, src: %s) in file %s, line %d!\r\n",
+                        __FUNCTION__, get_bbtype_name(dbb_type), get_bbtype_name(sbb_type), __FILE__, __LINE__);
                 exit(1);
             }
             break;
@@ -1314,8 +1314,8 @@ void BB_invert_blit_from(BlitBuffer *dst, BlitBuffer *src,
     int sbb_rotation = GET_BB_ROTATION(src);
     int dbb_rotation = GET_BB_ROTATION(dst);
     if (dbb_type != sbb_type) {
-        fprintf(stderr, "incompatible bb (dst: %s, src: %s) in file %s, line %d!\r\n",
-                get_bbtype_name(dbb_type), get_bbtype_name(sbb_type), __FILE__, __LINE__);
+        fprintf(stderr, "%s: incompatible bb (dst: %s, src: %s) in file %s, line %d!\r\n",
+                __FUNCTION__, get_bbtype_name(dbb_type), get_bbtype_name(sbb_type), __FILE__, __LINE__);
         exit(1);
     }
     int d_x, d_y, o_x, o_y;
