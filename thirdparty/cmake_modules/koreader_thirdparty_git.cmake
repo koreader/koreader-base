@@ -159,7 +159,7 @@ file(COPY ${work_dir}/${src_name} DESTINATION \${destination_dir})
 endfunction()
 
 function(ko_write_gitclone_script script_filename git_repository git_tag build_source_dir)
-    set(clone_dir ${PROJECT_SOURCE_DIR}/build/git_checkout)
+    set(clone_dir ${CMAKE_CURRENT_SOURCE_DIR}/build/git_checkout)
     set(work_dir ${CMAKE_CURRENT_BINARY_DIR}/git_checkout)
     set(tmp_dir ${work_dir}/tmp)
     set(stamp_dir ${work_dir}/stamp)

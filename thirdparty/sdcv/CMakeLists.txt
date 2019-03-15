@@ -74,7 +74,8 @@ set(ENABLE_NLS False CACHE BOOL "")
 set(WITH_READLINE False CACHE BOOL "")
 
 # Force utf8 command line parsing, and accept not-found -u dictnames
-set(PATCH_CMD sh -c "patch -N -p1 < ${CMAKE_CURRENT_SOURCE_DIR}/sdcv.patch || true")
+# sleep because otherwise the patch command fails O_o
+set(PATCH_CMD sleep .1 && patch -N -p1 < "${CMAKE_CURRENT_SOURCE_DIR}/sdcv.patch")
 
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
@@ -86,9 +87,13 @@ ko_write_gitclone_script(
 include(DownloadProject)
 download_project(
     PROJ ${PROJECT_NAME}
-    DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
+    GIT_REPOSITORY
+    https://github.com/Dushistov/sdcv.git
+    GIT_TAG
+    v0.5.2
+    #DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
     PATCH_COMMAND COMMAND ${PATCH_CMD}
-    SOURCE_DIR ${SOURCE_DIR}
 )
 
-add_subdirectory(${SOURCE_DIR})
+add_subdirectory("${CMAKE_BINARY_DIR}/sdcv-src"
+                 "${CMAKE_BINARY_DIR}/sdcv-build")
