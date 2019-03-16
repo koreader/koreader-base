@@ -111,6 +111,8 @@ void BB_add_blit_from(BlitBuffer *dest, BlitBuffer *source, int dest_x, int dest
                       int offs_x, int offs_y, int w, int h, uint8_t alpha);
 void BB_alpha_blit_from(BlitBuffer *dest, BlitBuffer *source, int dest_x, int dest_y,
                         int offs_x, int offs_y, int w, int h);
+void BB_pmulalpha_blit_from(BlitBuffer *dest, BlitBuffer *source, int dest_x, int dest_y,
+                        int offs_x, int offs_y, int w, int h);
 void BB_invert_blit_from(BlitBuffer *dest, BlitBuffer *source, int dest_x, int dest_y,
                          int offs_x, int offs_y, int w, int h);
 void BB_color_blit_from(BlitBuffer *dest, BlitBuffer *source, int dest_x, int dest_y,
@@ -232,6 +234,49 @@ function ColorRGB32_mt.__index:blend(color)
     local r = div255(self:getR() * ainv + color:getR() * alpha)
     local g = div255(self:getG() * ainv + color:getG() * alpha)
     local b = div255(self:getB() * ainv + color:getB() * alpha)
+    self:set(ColorRGB32(r, g, b, self:getAlpha()))
+end
+-- alpha blending with a premultiplied input (i.e., color OVER self, w/ color being premultiplied)
+function Color4L_mt.__index:pmulblend(color)
+    local alpha = color:getAlpha()
+    -- simplified: we expect a 8bit grayscale "color" as parameter
+    local value = div4080(band(self.a, 0x0F) * 0x11 * bxor(alpha, 0xFF) + color:getR() * 0xFF)
+    self:set(Color4L(value))
+end
+function Color4U_mt.__index:pmulblend(color)
+    local alpha = color:getAlpha()
+    local orig = band(self.a, 0xF0)
+    -- simplified: we expect a 8bit grayscale "color" as parameter
+    local value = div255((orig + rshift(orig, 4)) * bxor(alpha, 0xFF) + color:getR() * 0xFF)
+    self:set(Color4U(value))
+end
+function Color8_mt.__index:pmulblend(color)
+    local alpha = color:getAlpha()
+    -- simplified: we expect a 8bit grayscale "color" as parameter
+    local value = div255(self.a * bxor(alpha, 0xFF) + color:getR() * 0xFF)
+    self:set(Color8(value))
+end
+function Color8A_mt.__index:pmulblend(color)
+    local alpha = color:getAlpha()
+    -- simplified: we expect a 8bit grayscale "color" as parameter
+    local value = div255(self.a * bxor(alpha, 0xFF) + color:getR() * 0xFF)
+    self:set(Color8A(value, self:getAlpha()))
+end
+function ColorRGB16_mt.__index:pmulblend(color)
+    local alpha = color:getAlpha()
+    local ainv = bxor(alpha, 0xFF)
+    local r = div255(self:getR() * ainv + color:getR() * 0xFF)
+    local g = div255(self:getG() * ainv + color:getG() * 0xFF)
+    local b = div255(self:getB() * ainv + color:getB() * 0xFF)
+    self:set(ColorRGB24(r, g, b))
+end
+ColorRGB24_mt.__index.pmulblend = ColorRGB16_mt.__index.pmulblend
+function ColorRGB32_mt.__index:pmulblend(color)
+    local alpha = color:getAlpha()
+    local ainv = bxor(alpha, 0xFF)
+    local r = div255(self:getR() * ainv + color:getR() * 0xFF)
+    local g = div255(self:getG() * ainv + color:getG() * 0xFF)
+    local b = div255(self:getB() * ainv + color:getB() * 0xFF)
     self:set(ColorRGB32(r, g, b, self:getAlpha()))
 end
 
@@ -650,7 +695,7 @@ function BB_mt.__index:setPixelBlend(x, y, color)
     if alpha == 0xFF then
         self:getPixelP(px, py)[0]:set(color)
     else
-        -- The :blend method for these types of target BB assume a grayscale input
+        -- The blend method for these types of target BB assumes a grayscale input
         color = color:getColor8A()
         if self:getInverse() == 1 then color = color:invert() end
         self:getPixelP(px, py)[0]:blend(color)
@@ -672,6 +717,38 @@ function BBRGB16_mt.__index:setPixelBlend(x, y, color)
 end
 BBRGB24_mt.__index.setPixelBlend = BBRGB16_mt.__index.setPixelBlend
 BBRGB32_mt.__index.setPixelBlend = BBRGB16_mt.__index.setPixelBlend
+function BB_mt.__index:setPixelPmulBlend(x, y, color)
+    -- fast path:
+    local alpha = color:getAlpha()
+    if alpha == 0 then
+        return
+    end
+    local px, py = self:getPhysicalCoordinates(x, y)
+    if alpha == 0xFF then
+        self:getPixelP(px, py)[0]:set(color)
+    else
+        -- The pmulblend method for these types of target BB assumes a grayscale input
+        color = color:getColor8A()
+        if self:getInverse() == 1 then color = color:invert() end
+        self:getPixelP(px, py)[0]:pmulblend(color)
+    end
+end
+function BBRGB16_mt.__index:setPixelPmulBlend(x, y, color)
+    -- fast path:
+    local alpha = color:getAlpha()
+    if alpha == 0 then
+        return
+    end
+    local px, py = self:getPhysicalCoordinates(x, y)
+    if alpha == 0xFF then
+        self:getPixelP(px, py)[0]:set(color)
+    else
+        if self:getInverse() == 1 then color = color:invert() end
+        self:getPixelP(px, py)[0]:pmulblend(color)
+    end
+end
+BBRGB24_mt.__index.setPixelBlend = BBRGB16_mt.__index.setPixelPmulBlend
+BBRGB32_mt.__index.setPixelBlend = BBRGB16_mt.__index.setPixelPmulBlend
 function BB_mt.__index:setPixelColorize(x, y, mask, color)
     -- use 8bit grayscale pixel value as alpha for blitting
     local alpha = mask:getColor8().a
@@ -824,6 +901,7 @@ function BB_mt.__index:addblitFrom(source, dest_x, dest_y, offs_x, offs_y, width
 end
 
 -- alpha-pane aware blitting
+-- straight alpha
 function BB_mt.__index:alphablitFrom(source, dest_x, dest_y, offs_x, offs_y, width, height)
     if use_cblitbuffer then
         width, height = width or source:getWidth(), height or source:getHeight()
@@ -835,6 +913,20 @@ function BB_mt.__index:alphablitFrom(source, dest_x, dest_y, offs_x, offs_y, wid
             dest_x, dest_y, offs_x, offs_y, width, height)
     else
         self:blitFrom(source, dest_x, dest_y, offs_x, offs_y, width, height, self.setPixelBlend)
+    end
+end
+-- premultiplied alpha
+function BB_mt.__index:pmulalphablitFrom(source, dest_x, dest_y, offs_x, offs_y, width, height)
+    if use_cblitbuffer then
+        width, height = width or source:getWidth(), height or source:getHeight()
+        width, dest_x, offs_x = BB.checkBounds(width, dest_x or 0, offs_x or 0, self:getWidth(), source:getWidth())
+        height, dest_y, offs_y = BB.checkBounds(height, dest_y or 0, offs_y or 0, self:getHeight(), source:getHeight())
+        if width <= 0 or height <= 0 then return end
+        cblitbuffer.BB_pmulalpha_blit_from(ffi.cast("struct BlitBuffer *", self),
+            ffi.cast("struct BlitBuffer *", source),
+            dest_x, dest_y, offs_x, offs_y, width, height)
+    else
+        self:blitFrom(source, dest_x, dest_y, offs_x, offs_y, width, height, self.setPixelPmulBlend)
     end
 end
 
