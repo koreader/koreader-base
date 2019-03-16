@@ -33,7 +33,25 @@ endif
 export CMAKE_BUILD_TYPE
 
 # CMAKE=cmake --no-warn-unused-cli
-CMAKE=cmake
+CMAKE := cmake
+NINJA := $(shell command -v ninja)
+
+ifneq ($(NINJA),)
+	ifeq ($(USE_MAKE),)
+		USE_NINJA := 1
+	endif
+endif
+
+ifneq ($(USE_NINJA),)
+	CMAKE_FLAGS := -G Ninja
+	CMAKE_MAKE_PROGRAM := $(NINJA)
+	CMAKE_MAKE_PROGRAM_FLAGS ?= $(NINJA_FLAGS)
+else
+	CMAKE_MAKE_PROGRAM := $(MAKE)
+	CMAKE_MAKE_PROGRAM_FLAGS ?= $(MAKE_FLAGS)
+endif
+
+$(info ************ CMAKE_MAKE_PROGRAM: "$(CMAKE_MAKE_PROGRAM)" **********)
 
 # set this to your ARM cross compiler:
 # set CC CXX AR LD RANLIB
@@ -609,7 +627,7 @@ LIBFFI_BUILD_DIR=$(THIRDPARTY_DIR)/libffi/build/$(MACHINE)
 LIBFFI_DIR=$(CURDIR)/$(LIBFFI_BUILD_DIR)/libffi-prefix/src/libffi-build
 
 SDCV_BUILD_DIR=$(THIRDPARTY_DIR)/sdcv/build/$(MACHINE)
-SDCV_DIR=$(CURDIR)/$(SDCV_BUILD_DIR)/build/$(MACHINE)/sdcv-prefix/src/sdcv
+SDCV_DIR=$(CURDIR)/$(SDCV_BUILD_DIR)/sdcv-build
 GLIB_BUILD_DIR=$(THIRDPARTY_DIR)/glib/build/$(MACHINE)
 GLIB_DIR=$(CURDIR)/$(GLIB_BUILD_DIR)/glib-prefix/src/glib-build
 LIBICONV_BUILD_DIR=$(THIRDPARTY_DIR)/libiconv/build/$(MACHINE)
@@ -746,4 +764,12 @@ LPEG_RE=$(OUTPUT_DIR)/rocks/share/lua/5.1/re.lua
 LPEG_DYNLIB=$(OUTPUT_DIR)/rocks/lib/lua/5.1/lpeg.so
 
 
-CMAKE_THIRDPARTY_LIBS=kpvcrlib,evernote-sdk-lua,luajit,lpeg,turbo,zsync,zyre,czmq,filemq,libk2pdfopt,tesseract,leptonica,lua-Spore,sdcv,luasec,luasocket,libffi,lua-serialize,glib,lodepng,minizip,djvulibre,openssl,mupdf,libzmq,freetype2,harfbuzz,giflib,libpng,zlib,tar,libiconv,gettext,libjpeg-turbo,popen-noshell,nanosvg,dropbear,openssh,fbink
+CMAKE_THIRDPARTY_LIBS = kpvcrlib,nanosvg
+CMAKE_THIRDPARTY_LIBS += ,evernote-sdk-lua,luajit,lpeg,turbo
+CMAKE_THIRDPARTY_LIBS += ,zsync,zyre,czmq,filemq,libzmq
+CMAKE_THIRDPARTY_LIBS += ,libk2pdfopt,tesseract,leptonica
+CMAKE_THIRDPARTY_LIBS += ,lua-Spore,luasec,luasocket,libffi,lua-serialize,glib,lodepng,minizip
+CMAKE_THIRDPARTY_LIBS += ,djvulibre,mupdf,freetype2,harfbuzz,giflib,libpng,zlib
+CMAKE_THIRDPARTY_LIBS += ,tar,sdcv,libiconv,gettext,libjpeg-turbo,popen-noshell,sqlite
+CMAKE_THIRDPARTY_LIBS += ,openssl,dropbear,openssh
+CMAKE_THIRDPARTY_LIBS += ,fbink

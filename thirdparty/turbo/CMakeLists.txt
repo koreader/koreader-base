@@ -12,7 +12,7 @@ assert_var_defined(LDFLAGS)
 
 ep_get_source_dir(SOURCE_DIR)
 
-set(BUILD_CMD sh -c "$(MAKE) CC=\"${CC}\" CFLAGS=\"${CFLAGS}\" LDFLAGS=\"${LDFLAGS}\" all")
+set(BUILD_CMD sh -c "${KO_MAKE_RECURSIVE} CC=\"${CC}\" CFLAGS=\"${CFLAGS}\" LDFLAGS=\"${LDFLAGS}\" all")
 
 set(PATCH_CMD "${ISED} 's|CC=|CC:=|' ${SOURCE_DIR}/Makefile")
 if (APPLE AND DEFINED ENV{ANDROID})

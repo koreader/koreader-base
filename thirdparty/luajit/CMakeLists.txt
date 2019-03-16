@@ -26,9 +26,9 @@ if($ENV{KODEBUG})
         set(DBG_CMD "${DBG_CMD} && ${ISED} 's|#XCFLAGS+= -DLUA_USE_ASSERT|XCFLAGS+= -DLUA_USE_ASSERT|' ${SOURCE_DIR}/src/Makefile")
     endif()
 
-    set(BUILD_CMD_STR "${DBG_CMD} && $(MAKE) -j${PARALLEL_JOBS}")
+    set(BUILD_CMD_STR "${DBG_CMD} && ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS}")
 else()
-    set(BUILD_CMD_STR "$(MAKE) -j${PARALLEL_JOBS}")
+    set(BUILD_CMD_STR "${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS}")
 endif()
 
 if(${XCOMPILE})
