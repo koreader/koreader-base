@@ -113,6 +113,8 @@ void BB_add_blit_from(BlitBuffer *dest, BlitBuffer *source, int dest_x, int dest
                       int offs_x, int offs_y, int w, int h, uint8_t alpha);
 void BB_alpha_blit_from(BlitBuffer *dest, BlitBuffer *source, int dest_x, int dest_y,
                         int offs_x, int offs_y, int w, int h);
+void BB_pmulalpha_blit_from(BlitBuffer *dest, BlitBuffer *source, int dest_x, int dest_y,
+                        int offs_x, int offs_y, int w, int h);
 void BB_invert_blit_from(BlitBuffer *dest, BlitBuffer *source, int dest_x, int dest_y,
                          int offs_x, int offs_y, int w, int h);
 void BB_color_blit_from(BlitBuffer *dest, BlitBuffer *source, int dest_x, int dest_y,
