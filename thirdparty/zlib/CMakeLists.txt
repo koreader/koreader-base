@@ -19,9 +19,9 @@ if($ENV{WIN32})
     set(BUILD_VARS DESTDIR=${SOURCE_DIR} INCLUDE_PATH=include LIBRARY_PATH=lib BIN_PATH=bin)
     set(BUILD_ARGS CC="${CC}" CFLAGS="${CFLAGS}" RC="${CHOST}-windres" SHARED_MODE=1)
     # TODO: also use -j for windows?
-    set(BUILD_CMD ${BUILD_VARS} $(MAKE) -f win32/Makefile.gcc ${BUILD_ARGS})
+    set(BUILD_CMD ${BUILD_VARS} ${KO_MAKE_RECURSIVE} -f win32/Makefile.gcc ${BUILD_ARGS})
     # install
-    set(INSTALL_CMD ${BUILD_VARS} $(MAKE) -f win32/Makefile.gcc ${BUILD_ARGS} install)
+    set(INSTALL_CMD ${BUILD_VARS} ${KO_MAKE_RECURSIVE} -f win32/Makefile.gcc ${BUILD_ARGS} install)
 else()
     # configure
     set(optional_cfg_cmd CONFIGURE_COMMAND sh -c "CC=\"${CC}\" CHOST=\"${CHOST}\" CFLAGS=\"${CFLAGS}\" LDFLAGS=\"${LDFLAGS}\" ./configure --prefix=${SOURCE_DIR}")
