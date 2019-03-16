@@ -43,11 +43,15 @@ ifneq ($(NINJA),)
 endif
 
 ifneq ($(USE_NINJA),)
-	# enable Ninja
 	CMAKE_FLAGS := -G Ninja
 	CMAKE_MAKE_PROGRAM := $(NINJA)
+	ifneq ($(VERBOSE),)
+		CMAKE_MAKE_PROGRAM_FLAGS := -v
+	endif
+	CMAKE_MAKE_PROGRAM_FLAGS ?= $(NINJA_FLAGS)
 else
 	CMAKE_MAKE_PROGRAM := $(MAKE)
+	CMAKE_MAKE_PROGRAM_FLAGS ?= $(MAKE_FLAGS)
 endif
 
 $(info ************ CMAKE_MAKE_PROGRAM: "$(CMAKE_MAKE_PROGRAM)" **********)
