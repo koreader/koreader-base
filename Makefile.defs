@@ -33,12 +33,25 @@ endif
 export CMAKE_BUILD_TYPE
 
 # CMAKE=cmake --no-warn-unused-cli
-CMAKE=cmake
-CMAKE_MAKE_PROGRAM=$(MAKE)
-ifdef USE_NINJA
-	CMAKE:=cmake -G Ninja
-	CMAKE_MAKE_PROGRAM:=ninja
+CMAKE := cmake
+NINJA := $(shell command -v ninja)
+
+ifneq ($(NINJA),)
+	ifeq ($(USE_MAKE),)
+		USE_NINJA := 1
+	endif
 endif
+
+ifneq ($(USE_NINJA),)
+	CMAKE_FLAGS := -G Ninja
+	CMAKE_MAKE_PROGRAM := $(NINJA)
+	CMAKE_MAKE_PROGRAM_FLAGS ?= $(NINJA_FLAGS)
+else
+	CMAKE_MAKE_PROGRAM := $(MAKE)
+	CMAKE_MAKE_PROGRAM_FLAGS ?= $(MAKE_FLAGS)
+endif
+
+$(info ************ CMAKE_MAKE_PROGRAM: "$(CMAKE_MAKE_PROGRAM)" **********)
 
 # set this to your ARM cross compiler:
 # set CC CXX AR LD RANLIB

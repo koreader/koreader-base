@@ -16,16 +16,16 @@ env:
   matrix:
     - SHELLCHECKS=1
     - EMULATE_READER=1 CC=gcc
-    - EMULATE_READER=1 CC=gcc USE_NINJA=1
+    - EMULATE_READER=1 CC=gcc USE_MAKE=1
     - EMULATE_READER=1 CC=gcc KODEBUG=1
     - EMULATE_READER=1 CC=clang
-    - TARGET=kindle DOCKER_IMG=frenzie/kokindle:0.1.0
-    - TARGET=kobo DOCKER_IMG=frenzie/kokobo:0.1.0
-    - TARGET=pocketbook DOCKER_IMG=frenzie/kopb:0.1.1
+    - TARGET=kindle DOCKER_IMG=frenzie/kokindle:0.1.1
+    - TARGET=kobo DOCKER_IMG=frenzie/kokobo:0.1.1
+    - TARGET=pocketbook DOCKER_IMG=frenzie/kopb:0.1.2
     - TARGET=sony-prstux DOCKER_IMG=phreakuencies/prstux-dev:16.04
-    - TARGET=cervantes DOCKER_IMG=frenzie/kocervantes:0.1.0
-    - TARGET=android DOCKER_IMG=frenzie/koandroid:0.2.0
-    - TARGET=android DOCKER_IMG=frenzie/koandroid:0.2.0 ANDROID_ARCH=x86
+    - TARGET=cervantes DOCKER_IMG=frenzie/kocervantes:0.1.1
+    - TARGET=android DOCKER_IMG=frenzie/koandroid:0.2.1
+    - TARGET=android DOCKER_IMG=frenzie/koandroid:0.2.1 ANDROID_ARCH=x86
 
 addons:
   apt:
