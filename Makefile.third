@@ -304,7 +304,7 @@ $(ZLIB) $(ZLIB_STATIC): thirdparty $(THIRDPARTY_DIR)/zlib/CMakeLists.txt
 ifdef WIN32
 	cp -fL $(ZLIB_DIR)/$(notdir $(ZLIB)) $(ZLIB)
 else
-	cp -fL $(ZLIB_DIR)/$(notdir $(ZLIB)) $(ZLIB)
+	cp -fL $(ZLIB_DIR)/lib/$(notdir $(ZLIB)) $(ZLIB)
 endif
 
 # ===========================================================================
