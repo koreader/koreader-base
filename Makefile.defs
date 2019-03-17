@@ -768,6 +768,7 @@ CMAKE_THIRDPARTY_LIBS = kpvcrlib,nanosvg
 CMAKE_THIRDPARTY_LIBS += ,evernote-sdk-lua,luajit,lpeg,turbo
 CMAKE_THIRDPARTY_LIBS += ,zsync,zyre,czmq,filemq,libzmq
 CMAKE_THIRDPARTY_LIBS += ,libk2pdfopt,tesseract,leptonica
+CMAKE_THIRDPARTY_LIBS += ,lj-wpaclient
 CMAKE_THIRDPARTY_LIBS += ,lua-Spore,luasec,luasocket,libffi,lua-serialize,glib,lodepng,minizip
 CMAKE_THIRDPARTY_LIBS += ,djvulibre,mupdf,freetype2,harfbuzz,giflib,libpng,zlib
 CMAKE_THIRDPARTY_LIBS += ,tar,sdcv,libiconv,gettext,libjpeg-turbo,popen-noshell,sqlite
