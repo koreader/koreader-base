@@ -10,7 +10,7 @@ assert_var_defined(CC)
 assert_var_defined(CFLAGS)
 assert_var_defined(LDFLAGS)
 
-set(KO_DOWNLOAD_DIR ${CMAKE_CURRENT_SOURCE_DIR}/build/downloads)
+set(KO_DOWNLOAD_DIR "${CMAKE_CURRENT_SOURCE_DIR}/build/downloads")
 
 message(STATUS "Thirdparty: zlib…")
 configure_file(
