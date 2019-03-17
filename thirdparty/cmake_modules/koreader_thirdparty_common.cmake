@@ -1,24 +1,8 @@
 if(NOT DEFINED PROCESSOR_COUNT)
-  # Unknown:
-  set(PROCESSOR_COUNT 0)
-
-  # Linux:
-  set(cpuinfo_file "/proc/cpuinfo")
-  if(EXISTS "${cpuinfo_file}")
-    file(STRINGS "${cpuinfo_file}" procs REGEX "^processor.: [0-9]+$")
-    list(LENGTH procs PROCESSOR_COUNT)
-  endif()
-
-  # Mac:
-  if(APPLE)
-    execute_process(COMMAND sysctl -n hw.ncpu OUTPUT_VARIABLE ncpu)
-    set(PROCESSOR_COUNT "${ncpu}")
-  endif()
-
-  # Windows:
-  if(WIN32)
-    set(PROCESSOR_COUNT "$ENV{NUMBER_OF_PROCESSORS}")
-  endif()
+    include(ProcessorCount)
+    ProcessorCount(N)
+    # 0 if unknown
+    set(PROCESSOR_COUNT ${N})
 endif()
 
 if(APPLE)
@@ -54,4 +38,4 @@ macro(ep_get_binary_dir varName)
     set(${varName} "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}-prefix/src/${PROJECT_NAME}-build")
 endmacro(ep_get_binary_dir)
 
-set(KO_DOWNLOAD_DIR ${CMAKE_CURRENT_SOURCE_DIR}/build/downloads)
+set(KO_DOWNLOAD_DIR "${CMAKE_CURRENT_SOURCE_DIR}/build/downloads")
