@@ -1,9 +1,8 @@
 if(NOT DEFINED PROCESSOR_COUNT)
     include(ProcessorCount)
     ProcessorCount(N)
-    if(NOT N EQUAL 0)
-        set(PROCESSOR_COUNT ${N})
-    endif()
+    # 0 if unknown
+    set(PROCESSOR_COUNT ${N})
 endif()
 
 if(APPLE)
