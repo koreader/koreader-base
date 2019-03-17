@@ -36,7 +36,7 @@ set(ZLIB_VER "1.2.11")
 set(ZLIB_MD5 "1c9f62f0778697a09d36121ead88e08e")
 ExternalProject_Add(
     ${PROJECT_NAME}
-    DOWNLOAD_DIR ${KO_DOWNLOAD_DIR}
+    DOWNLOAD_DIR @KO_DOWNLOAD_DIR@
     URL http://gentoo.osuosl.org/distfiles/zlib-${ZLIB_VER}.tar.gz
     URL_MD5 ${ZLIB_MD5}
     BUILD_IN_SOURCE 1
