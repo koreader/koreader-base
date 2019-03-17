@@ -299,24 +299,8 @@ $(GLIB_STATIC): $(LIBICONV) $(LIBGETTEXT) $(LIBFFI_DIR)/include $(THIRDPARTY_DIR
 		$(CURDIR)/$(THIRDPARTY_DIR)/glib && \
 		$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS)
 
-$(ZLIB) $(ZLIB_STATIC): $(THIRDPARTY_DIR)/zlib/CMakeLists.txt
-	install -d $(THIRDPARTY_BUILD_DIR)
+$(ZLIB) $(ZLIB_STATIC): thirdparty $(THIRDPARTY_DIR)/zlib/CMakeLists.txt
 	-rm -f $(ZLIB_DIR)/../zlib-stamp/zlib-install $(ZLIB) $(ZLIB_STATIC)
-ifdef ANDROID
-	cd $(THIRDPARTY_BUILD_DIR) && \
-		$(CMAKE) $(CMAKE_FLAGS) -DCC="$(CC)" -DCHOST="$(CHOST)" \
-		-DCFLAGS="$(CFLAGS)" \
-		-DLDFLAGS="$(LDFLAGS) -shared $(ZLIB_LDFLAGS)" \
-		$(CURDIR)/$(THIRDPARTY_DIR) && \
-		$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS)
-else
-	cd $(THIRDPARTY_BUILD_DIR) && \
-		$(CMAKE) $(CMAKE_FLAGS) -DCC="$(CC)" \
-		-DCFLAGS="$(CFLAGS)" \
-		-DLDFLAGS="$(LDFLAGS)" \
-		$(CURDIR)/$(THIRDPARTY_DIR) && \
-		$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS)
-endif
 ifdef WIN32
 	cp -fL $(ZLIB_DIR)/$(notdir $(ZLIB)) $(ZLIB)
 else
@@ -665,6 +649,16 @@ $(NANOSVG_HEADERS): $(THIRDPARTY_DIR)/nanosvg/CMakeLists.txt
 	cp -fL $(NANOSVG_DIR)/nanosvg/src/nanosvg.h $(NANOSVG_INCLUDE_DIR)/
 	cp -fL $(NANOSVG_DIR)/nanosvg/src/nanosvgrast.h $(NANOSVG_INCLUDE_DIR)/
 	cp -fL $(NANOSVG_DIR)/nanosvg/example/stb_image_write.h $(NANOSVG_INCLUDE_DIR)/
+
+.PHONY:thirdparty
+thirdparty: $(THIRDPARTY_DIR)/CMakeLists.txt
+	install -d $(THIRDPARTY_BUILD_DIR)
+	cd $(THIRDPARTY_BUILD_DIR) && \
+		$(CMAKE) $(CMAKE_FLAGS) -DCC="$(CC)" -DCHOST="$(CHOST)" \
+		-DCFLAGS="$(CFLAGS)" \
+		-DLDFLAGS="$(LDFLAGS)" \
+		$(CURDIR)/$(THIRDPARTY_DIR) && \
+		$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS)
 
 comma:=,
 empty:=

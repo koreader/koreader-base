@@ -404,7 +404,6 @@ endif
 
 # NOTE: Follow the NDK's lead
 ifeq ($(TARGET), android)
-	ZLIB_LDFLAGS:=-Wl,-soname,libz.so.1
 	LDFLAGS+=-no-canonical-prefixes -Wl,--fix-cortex-a8
 	ifeq ($(ANDROID_ARCH), arm)
 		LDFLAGS+=-march=armv7-a
@@ -541,7 +540,7 @@ THIRDPARTY_BUILD_DIR=$(THIRDPARTY_DIR)/build/$(MACHINE)
 LUAFILESYSTEM_DIR=luafilesystem
 
 ZLIB_BUILD_DIR=$(THIRDPARTY_BUILD_DIR)/zlib-build
-ZLIB_DIR=$(CURDIR)/$(ZLIB_BUILD_DIR)/zlib-prefix/src/zlib
+ZLIB_DIR=$(CURDIR)/$(ZLIB_BUILD_DIR)/zlib-download-prefix/src/zlib-download
 ZLIB_STATIC=$(ZLIB_DIR)/libz.a
 
 MINIZIP_BUILD_DIR=$(THIRDPARTY_DIR)/minizip/build/$(MACHINE)

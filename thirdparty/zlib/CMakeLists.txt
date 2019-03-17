@@ -1,4 +1,4 @@
-PROJECT(zlib)
+PROJECT(zlib-download)
 cmake_minimum_required(VERSION 3.5.1)
 
 SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_LIST_DIR}/../cmake_modules")
@@ -11,6 +11,10 @@ assert_var_defined(CFLAGS)
 assert_var_defined(LDFLAGS)
 
 ep_get_source_dir(SOURCE_DIR)
+
+if ($ENV{ANDROID})
+    set(LDFLAGS "${LDFLAGS} -shared -Wl,-soname,libz.so.1")
+endif()
 
 if($ENV{WIN32})
     # configure
@@ -44,3 +48,7 @@ ExternalProject_Add(
     BUILD_COMMAND ${BUILD_CMD}
     INSTALL_COMMAND ${INSTALL_CMD}
 )
+
+set(ZLIB_INCLUDE_DIR "${SOURCE_DIR}/include" PARENT_SCOPE)
+set(ZLIB_LIB_DIR "${SOURCE_DIR}/lib" PARENT_SCOPE)
+set(ZLIB_STATIC "${SOURCE_DIR}/lib/libz.${CMAKE_STATIC_LIBRARY_SUFFIX}" PARENT_SCOPE)
