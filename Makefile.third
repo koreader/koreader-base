@@ -300,27 +300,27 @@ $(GLIB_STATIC): $(LIBICONV) $(LIBGETTEXT) $(LIBFFI_DIR)/include $(THIRDPARTY_DIR
 		$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS)
 
 $(ZLIB) $(ZLIB_STATIC): $(THIRDPARTY_DIR)/zlib/CMakeLists.txt
-	install -d $(ZLIB_BUILD_DIR)
+	install -d $(THIRDPARTY_BUILD_DIR)
 	-rm -f $(ZLIB_DIR)/../zlib-stamp/zlib-install $(ZLIB) $(ZLIB_STATIC)
 ifdef ANDROID
-	cd $(ZLIB_BUILD_DIR) && \
+	cd $(THIRDPARTY_BUILD_DIR) && \
 		$(CMAKE) $(CMAKE_FLAGS) -DCC="$(CC)" -DCHOST="$(CHOST)" \
 		-DCFLAGS="$(CFLAGS)" \
 		-DLDFLAGS="$(LDFLAGS) -shared $(ZLIB_LDFLAGS)" \
-		$(CURDIR)/thirdparty/zlib && \
+		$(CURDIR)/$(THIRDPARTY_DIR) && \
 		$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS)
 else
-	cd $(ZLIB_BUILD_DIR) && \
+	cd $(THIRDPARTY_BUILD_DIR) && \
 		$(CMAKE) $(CMAKE_FLAGS) -DCC="$(CC)" \
 		-DCFLAGS="$(CFLAGS)" \
 		-DLDFLAGS="$(LDFLAGS)" \
-		$(CURDIR)/thirdparty/zlib && \
+		$(CURDIR)/$(THIRDPARTY_DIR) && \
 		$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS)
 endif
 ifdef WIN32
 	cp -fL $(ZLIB_DIR)/$(notdir $(ZLIB)) $(ZLIB)
 else
-	cp -fL $(ZLIB_DIR)/lib/$(notdir $(ZLIB)) $(ZLIB)
+	cp -fL $(ZLIB_DIR)/$(notdir $(ZLIB)) $(ZLIB)
 endif
 
 # ===========================================================================

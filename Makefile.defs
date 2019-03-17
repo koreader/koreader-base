@@ -536,10 +536,11 @@ LIB_EXT=$(if $(WIN32),.dll,$(if $(DARWIN),.dylib,.so))
 # you can probably leave these settings alone:
 
 THIRDPARTY_DIR=thirdparty
+THIRDPARTY_BUILD_DIR=$(THIRDPARTY_DIR)/build/$(MACHINE)
 
 LUAFILESYSTEM_DIR=luafilesystem
 
-ZLIB_BUILD_DIR=$(THIRDPARTY_DIR)/zlib/build/$(MACHINE)
+ZLIB_BUILD_DIR=$(THIRDPARTY_BUILD_DIR)/zlib-build
 ZLIB_DIR=$(CURDIR)/$(ZLIB_BUILD_DIR)/zlib-prefix/src/zlib
 ZLIB_STATIC=$(ZLIB_DIR)/libz.a
 

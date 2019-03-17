@@ -35,4 +35,5 @@ build
 
 kpvcrlib/build
 thirdparty/*/build
+thirdparty/build
 kodebug-*
