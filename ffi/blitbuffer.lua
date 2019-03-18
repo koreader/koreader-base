@@ -875,8 +875,7 @@ BB_mt.__index.blitToRGB32 = BB_mt.__index.blitDefault
 function BB8_mt.__index:blitTo8(dest, dest_x, dest_y, offs_x, offs_y, width, height, setter, set_param)
     print("BB8_mt.__index.blitTo8:", dest, dest_x, dest_y, offs_x, offs_y, width, height, setter, set_param)
     -- We can only do fast copy for simple blitting with no processing (setPixel, no rota, no invert)
-    -- FIXME: Fix nightmode: src & dst inverse MUST match!
-    if setter ~= self.setPixel or self:getRotation() ~= 0 or self:getInverse() ~= 0 then
+    if setter ~= self.setPixel or self:getRotation() ~= 0 or (self:getInverse() ~= dest:getInverse()) then
         print("Can't do a fast blit from BB8 to BB8! setter", setter, "rota", self:getRotation(), "src invert", self:getInverse(), "dest invert", dest:getInverse())
         return self:blitDefault(dest, dest_x, dest_y, offs_x, offs_y, width, height, setter, set_param)
     end
@@ -893,7 +892,7 @@ function BB8_mt.__index:blitTo8(dest, dest_x, dest_y, offs_x, offs_y, width, hei
     end
 
     -- TODO: All in one go for contiguous scanlines
-    -- offs_x == 0 && offs_y == 0 ?
+    -- offs_x == 0 && dest_x == 0 ?
 end
 
 function BB_mt.__index:blitFrom(source, dest_x, dest_y, offs_x, offs_y, width, height, setter, set_param)
