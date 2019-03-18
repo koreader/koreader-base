@@ -4,6 +4,7 @@ Generic blitbuffer/GFX stuff that works on memory buffers
 @module ffi.blitbuffer
 --]]
 
+local bit = require("bit")
 local ffi = require("ffi")
 local util = require("ffi/util")
 local C = ffi.C
@@ -847,6 +848,7 @@ function BB.checkBounds(length, target_offset, source_offset, target_size, sourc
 end
 
 function BB_mt.__index:blitDefault(dest, dest_x, dest_y, offs_x, offs_y, width, height, setter, set_param)
+    print("blitDefault", self, dest, dest_x, dest_y, offs_x, offs_y, width, height, setter, set_param)
     -- slow default variant:
     local hook, mask, count = debug.gethook()
     debug.sethook()
@@ -868,6 +870,31 @@ BB_mt.__index.blitTo8A = BB_mt.__index.blitDefault
 BB_mt.__index.blitToRGB16 = BB_mt.__index.blitDefault
 BB_mt.__index.blitToRGB24 = BB_mt.__index.blitDefault
 BB_mt.__index.blitToRGB32 = BB_mt.__index.blitDefault
+
+-- Same to same fast blitting
+function BB8_mt.__index:blitTo8(dest, dest_x, dest_y, offs_x, offs_y, width, height, setter, set_param)
+    print("BB8_mt.__index.blitTo8:", dest, dest_x, dest_y, offs_x, offs_y, width, height, setter, set_param)
+    -- We can only do fast copy for simple blitting with no processing (setPixel, no rota, no invert)
+    -- FIXME: Fix nightmode: src & dst inverse MUST match!
+    if setter ~= self.setPixel or self:getRotation() ~= 0 or self:getInverse() ~= 0 then
+        print("Can't do a fast blit from BB8 to BB8! setter", setter, "rota", self:getRotation(), "src invert", self:getInverse(), "dest invert", dest:getInverse())
+        return self:blitDefault(dest, dest_x, dest_y, offs_x, offs_y, width, height, setter, set_param)
+    end
+
+    -- Scanline per scanline copy
+    print("BB8 to BB8 scanline copy")
+    local o_y = offs_y
+    for y = dest_y, dest_y+height-1 do
+        -- BB8 is 1 byte per pixel
+        local srcp = self.data + self.pitch*o_y + offs_x
+        local dstp = dest.data + dest.pitch*y + dest_x
+        ffi.copy(dstp, srcp, width)
+        o_y = o_y + 1
+    end
+
+    -- TODO: All in one go for contiguous scanlines
+    -- offs_x == 0 && offs_y == 0 ?
+end
 
 function BB_mt.__index:blitFrom(source, dest_x, dest_y, offs_x, offs_y, width, height, setter, set_param)
     width, height = width or source:getWidth(), height or source:getHeight()
@@ -1066,6 +1093,7 @@ paint a rectangle onto this buffer
 @param setter function used to set pixels (defaults to normal setPixel)
 --]]
 function BB_mt.__index:paintRect(x, y, w, h, value, setter)
+    print("paintRect", x, y, w, h, value, setter)
     local hook, mask, count = debug.gethook()
     debug.sethook()
     if w <= 0 or h <= 0 then return end
