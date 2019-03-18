@@ -10,6 +10,7 @@ local C = ffi.C
 
 -- we will use this extensively
 local floor = math.floor
+local ceil = math.ceil
 local rshift = bit.rshift
 local lshift = bit.lshift
 local band = bit.band
@@ -1236,16 +1237,16 @@ Draw a border
 @r:  radius of for border's corner (nil or 0 means right corner border)
 --]]
 function BB_mt.__index:paintBorder(x, y, w, h, bw, c, r)
-    x, y = math.ceil(x), math.ceil(y)
-    h, w = math.ceil(h), math.ceil(w)
+    x, y = ceil(x), ceil(y)
+    h, w = ceil(h), ceil(w)
     if not r or r == 0 then
         self:paintRect(x, y, w, bw, c)
         self:paintRect(x, y+h-bw, w, bw, c)
         self:paintRect(x, y+bw, bw, h - 2*bw, c)
         self:paintRect(x+w-bw, y+bw, bw, h - 2*bw, c)
     else
-        if h < 2*r then r = math.floor(h/2) end
-        if w < 2*r then r = math.floor(w/2) end
+        if h < 2*r then r = floor(h/2) end
+        if w < 2*r then r = floor(w/2) end
         self:paintRoundedCorner(x, y, w, h, bw, r, c)
         self:paintRect(r+x, y, w-2*r, bw, c)
         self:paintRect(r+x, y+h-bw, w-2*r, bw, c)
@@ -1266,8 +1267,8 @@ Draw an inner border
 @r:  radius of for border's corner (nil or 0 means right corner border) [FIXME? UNSUPPORTED]
 --]]
 function BB_mt.__index:paintInnerBorder(x, y, w, h, bw, c, r)
-    x, y = math.ceil(x), math.ceil(y)
-    h, w = math.ceil(h), math.ceil(w)
+    x, y = ceil(x), ceil(y)
+    h, w = ceil(h), ceil(w)
     -- T -> B -> L -> R
     self:paintRect(x, y, w, bw, c)
     self:paintRect(x, y+h-bw, w, bw, c)
@@ -1287,13 +1288,13 @@ Fill a rounded corner rectangular area
 @r:  radius of for four corners
 --]]
 function BB_mt.__index:paintRoundedRect(x, y, w, h, c, r)
-    x, y = math.ceil(x), math.ceil(y)
-    h, w = math.ceil(h), math.ceil(w)
+    x, y = ceil(x), ceil(y)
+    h, w = ceil(h), ceil(w)
     if not r or r == 0 then
         self:paintRect(x, y, w, h, c)
     else
-        if h < 2*r then r = math.floor(h/2) end
-        if w < 2*r then r = math.floor(w/2) end
+        if h < 2*r then r = floor(h/2) end
+        if w < 2*r then r = floor(w/2) end
         self:paintBorder(x, y, w, h, r, c, r)
         self:paintRect(x+r, y+r, w-2*r, h-2*r, c)
     end
