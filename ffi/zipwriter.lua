@@ -9,6 +9,7 @@ Zip packing workflow & code from luarocks' zip.lua :
 ]]
 
 -- We only need a few functions from zlib
+local bit = require "bit"
 local ffi = require "ffi"
 ffi.cdef([[
 unsigned long crc32(unsigned long crc, const char *buf, unsigned len);
