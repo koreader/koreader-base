@@ -909,7 +909,6 @@ function BB8_mt.__index:blitTo8(dest, dest_x, dest_y, offs_x, offs_y, width, hei
         end
     end
 end
--- TODO: Add RGB16 (and test it :()
 -- TODO: Add RGB32 (and test it ;p)
 -- TODO: Port to the C blitter \o/
 
