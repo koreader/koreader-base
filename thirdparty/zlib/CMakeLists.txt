@@ -12,6 +12,10 @@ assert_var_defined(LDFLAGS)
 
 ep_get_source_dir(SOURCE_DIR)
 
+if($ENV{ANDROID})
+    set(LD_FLAGS "${LD_FLAGS} -shared -Wl,-soname,libz.so.1")
+endif()
+
 if($ENV{WIN32})
     # configure
     set(optional_cfg_cmd "")

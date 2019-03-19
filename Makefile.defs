@@ -404,7 +404,6 @@ endif
 
 # NOTE: Follow the NDK's lead
 ifeq ($(TARGET), android)
-	ZLIB_LDFLAGS:=-Wl,-soname,libz.so.1
 	LDFLAGS+=-no-canonical-prefixes -Wl,--fix-cortex-a8
 	ifeq ($(ANDROID_ARCH), arm)
 		LDFLAGS+=-march=armv7-a
