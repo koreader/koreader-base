@@ -12,6 +12,7 @@ local C = ffi.C
 -- we will use this extensively
 local floor = math.floor
 local ceil = math.ceil
+local min = math.min
 local rshift = bit.rshift
 local lshift = bit.lshift
 local band = bit.band
@@ -563,7 +564,7 @@ function BB_mt.__index:setInverse(inverse)
     self.config = bor(band(self.config, bxor(MASK_INVERSE, 0xFF)), lshift(inverse, SHIFT_INVERSE))
 end
 function BB_mt.__index:invert()
-    self:setInverse((self:getInverse() + 1) % 2)
+    self:setInverse(band(self:getInverse() + 1, 1))
     return self
 end
 function BB_mt.__index:getAllocated()
@@ -616,8 +617,8 @@ end
 function BB_mt.__index:getPhysicalRect(x, y, w, h)
     local px1, py1 = self:getPhysicalCoordinates(x, y)
     local px2, py2 = self:getPhysicalCoordinates(x+w-1, y+h-1)
-    if self:getRotation() % 2 == 1 then w, h = h, w end
-    return math.min(px1, px2), math.min(py1, py2), w, h
+    if band(self:getRotation(), 1) == 1 then w, h = h, w end
+    return min(px1, px2), min(py1, py2), w, h
 end
 
 -- physical coordinate checking
@@ -1243,7 +1244,7 @@ function BB_mt.__index:paintRoundedCorner(off_x, off_y, w, h, bw, r, c)
         return
     end
 
-    r = math.min(r, h, w)
+    r = min(r, h, w)
     if bw > r then
         bw = r
     end
