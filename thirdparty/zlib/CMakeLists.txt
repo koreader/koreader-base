@@ -34,7 +34,7 @@ if($ENV{WIN32})
     set(INSTALL_CMD ${BUILD_VARS} ${KO_MAKE_RECURSIVE} -f win32/Makefile.gcc ${BUILD_ARGS} install)
 else()
     # configure
-    set(CFG_ENV_VAR "${CFG_ENV_VAR} CC=\"${CC}\" CFLAGS=\"${CFLAGS}\" LDFLAGS=\"${LDFLAGS}\")
+    set(CFG_ENV_VAR "${CFG_ENV_VAR} CC=\"${CC}\" CFLAGS=\"${CFLAGS}\" LDFLAGS=\"${LDFLAGS}\"")
     set(CFG_OPTS "${CFG_OPTS} --prefix=${SOURCE_DIR}")
     set(CFG_CMD sh -c "${CFG_ENV_VAR} ${SOURCE_DIR}/configure ${CFG_OPTS}")
     # build
