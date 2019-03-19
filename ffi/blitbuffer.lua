@@ -1106,32 +1106,33 @@ function BB_mt.__index:paintRect(x, y, w, h, value, setter)
     value = value or Color8(0)
     w, x = BB.checkBounds(w, x, 0, self:getWidth(), 0xFFFF)
     h, y = BB.checkBounds(h, y, 0, self:getHeight(), 0xFFFF)
-    print("Checked (x, y)", x, y, "for wxh", w, h)
     if w <= 0 or h <= 0 then return end
     if use_cblitbuffer and setter == self.setPixel then
         cblitbuffer.BB_fill_rect(ffi.cast("struct BlitBuffer *", self),
             x, y, w, h, value:getColor8A())
     else
         -- We can only do fast filling when there's no processing involved (setPixel, no rota)
-        -- FIXME: Handle pitch properly when != BB8
+        -- NOTE: We cheat a bit when targeting non-greyscale BBs,
+        --       because we know we're only used with a grayscale color as input ;).
+        --       The cbb also takes advantage of the same shortcut.
         if setter == self.setPixel and self:getRotation() == 0 then
             -- We *can* handle nightmode here, though ;).
             local v = value:getColor8()
             if self:getInverse() == 1 then v = v:invert() end
+            -- Handle any target pitch properly (i.e., compute the amount of bytes taken per pixel)...
+            local bpp = self.pitch / self:getWidth()
 
             if x == 0 and w == self:getWidth() then
                 -- Single step for contiguous scanlines
                 print("Single fill paintRect")
-                -- BB8 is 1 byte per pixel
                 local p = self.data + self.pitch*y
-                ffi.fill(p, w*h, v.a)
+                ffi.fill(p, bpp*w*h, v.a)
             else
                 -- Scanline per scanline fill
                 print("Scanline fill paintRect")
                 for j = y, y+h-1 do
-                    -- BB8 is 1 byte per pixel
-                    local p = self.data + self.pitch*j + x
-                    ffi.fill(p, w, v.a)
+                    local p = self.data + self.pitch*j + bpp*x
+                    ffi.fill(p, bpp*w, v.a)
                     j = j + 1
                 end
             end
