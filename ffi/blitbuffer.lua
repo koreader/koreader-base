@@ -1123,6 +1123,8 @@ function BB_mt.__index:paintRect(x, y, w, h, value, setter)
         -- NOTE: We cheat a bit when targeting non-greyscale BBs,
         --       because we know we're only used with a grayscale color as input ;).
         --       The cbb also takes advantage of the same shortcut.
+        -- TODO: We could arguably handle rotations here, unlike for blitTo8 & friends...
+        --       We might even have a rotate rectangle helper function somewhere (basically swap x/y/w/h around the right way)...
         if setter == self.setPixel and self:getRotation() == 0 then
             -- We *can* handle nightmode here, though ;).
             local v = value:getColor8()
