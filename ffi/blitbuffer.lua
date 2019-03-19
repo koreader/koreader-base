@@ -575,12 +575,20 @@ end
 function BB_mt.__index:getType()
     return rshift(band(MASK_TYPE, self.config), SHIFT_TYPE)
 end
+-- Bits per pixel
 function BB4_mt.__index:getBpp() return 4 end
 function BB8_mt.__index:getBpp() return 8 end
-function BB8A_mt.__index:getBpp() return 8 end
+function BB8A_mt.__index:getBpp() return 16 end
 function BBRGB16_mt.__index:getBpp() return 16 end
 function BBRGB24_mt.__index:getBpp() return 24 end
 function BBRGB32_mt.__index:getBpp() return 32 end
+-- Or, generally more useful, bytes per pixel
+function BB4_mt.__index:getBytesPerPixel() return 0.5 end
+function BB8_mt.__index:getBytesPerPixel() return 1 end
+function BB8A_mt.__index:getBytesPerPixel() return 2 end
+function BBRGB16_mt.__index:getBytesPerPixel() return 2 end
+function BBRGB24_mt.__index:getBytesPerPixel() return 3 end
+function BBRGB32_mt.__index:getBytesPerPixel() return 4 end
 function BB_mt.__index:isRGB()
     local bb_type = self:getType()
     if bb_type == TYPE_BBRGB16
@@ -1119,8 +1127,8 @@ function BB_mt.__index:paintRect(x, y, w, h, value, setter)
             -- We *can* handle nightmode here, though ;).
             local v = value:getColor8()
             if self:getInverse() == 1 then v = v:invert() end
-            -- Handle any target pitch properly (i.e., compute the amount of bytes taken per pixel)...
-            local bpp = self.pitch / self:getWidth()
+            -- Handle any target pitch properly (i.e., fetch the amount of bytes taken per pixel)...
+            local bpp = self:getBytesPerPixel()
 
             if x == 0 and w == self:getWidth() then
                 -- Single step for contiguous scanlines
