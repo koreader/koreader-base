@@ -1113,7 +1113,6 @@ function BB_mt.__index:paintRect(x, y, w, h, value, setter)
     print("paintRect", x, y, w, h, value, setter)
     local hook, mask, count = debug.gethook()
     debug.sethook()
-    if w <= 0 or h <= 0 then return end
     setter = setter or self.setPixel
     value = value or Color8(0)
     w, x = BB.checkBounds(w, x, 0, self:getWidth(), 0xFFFF)
