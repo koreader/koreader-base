@@ -1,7 +1,7 @@
-PROJECT(libzmq)
+project(libzmq)
 cmake_minimum_required(VERSION 3.5.1)
 
-SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_LIST_DIR}/../cmake_modules")
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_LIST_DIR}/../cmake_modules")
 include("koreader_thirdparty_common")
 include("koreader_thirdparty_git")
 
@@ -24,7 +24,7 @@ set(CFG_ENV_VAR "${CFG_ENV_VAR} libzmq_have_xmlto=no libzmq_have_asciidoc=no")
 set(CFG_OPTS "-q --prefix=${BINARY_DIR} --disable-static --enable-shared --without-documentation --host=\"${CHOST}\"")
 if(${LEGACY})
     set(CFG_OPTS "${CFG_OPTS} --disable-eventfd")
-endif(${LEGACY})
+endif()
 
 set(CFG_CMD sh -c "${CFG_ENV_VAR} ${SOURCE_DIR}/configure ${CFG_OPTS}")
 set(PATCH_CMD sh -c "${ISED} \"s|-lstdc++||g\" libtool")

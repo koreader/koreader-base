@@ -1,7 +1,7 @@
-PROJECT(popen-noshell)
+project(popen-noshell)
 cmake_minimum_required(VERSION 3.5.1)
 
-SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/../cmake_modules")
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/../cmake_modules")
 include("koreader_thirdparty_common")
 include("koreader_thirdparty_asm")
 include("koreader_thirdparty_git")
@@ -13,7 +13,7 @@ ep_get_source_dir(SOURCE_DIR)
 if(${LEGACY})
     # Revert 8d7a98d on legacy devices, pipe2 was introduced in Linux 2.6.27 & glibc 2.9
     set(EXTRA_PATCH_CMD COMMAND patch -N -p1 < ${CMAKE_CURRENT_SOURCE_DIR}/kindle_legacy.patch)
-endif(${LEGACY})
+endif()
 
 assert_var_defined(CC)
 assert_var_defined(AR)

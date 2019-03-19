@@ -1,7 +1,7 @@
-PROJECT(harfbuzz)
+project(harfbuzz)
 cmake_minimum_required(VERSION 3.5.1)
 
-SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_LIST_DIR}/../cmake_modules")
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_LIST_DIR}/../cmake_modules")
 include("koreader_thirdparty_common")
 include("koreader_thirdparty_git")
 
@@ -22,7 +22,7 @@ if(DEFINED ENV{POCKETBOOK})
 else()
     # Fire and forget! Should generally be sane on GCC >= 6
     set(CXX_STDFLAG "")
-endif(DEFINED ENV{POCKETBOOK})
+endif()
 
 set(CFG_ENV_VAR "CC=\"${CC}\" CXX=\"${CXX}\" CFLAGS=\"${CFLAGS}\" CXXFLAGS=\"${CXXFLAGS} ${CXX_STDFLAG}\" LDFLAGS=\"${LDFLAGS}\"")
 set(CFG_ENV_VAR "${CFG_ENV_VAR} FREETYPE_CFLAGS=\"-I${FREETYPE_DIR}/include/freetype2\"")
