@@ -13,7 +13,13 @@ assert_var_defined(LDFLAGS)
 ep_get_source_dir(SOURCE_DIR)
 
 if($ENV{ANDROID})
+    assert_var_defined(CHOST)
+
     set(LD_FLAGS "${LD_FLAGS} -shared -Wl,-soname,libz.so.1")
+    # Only set CHOST for Android.
+    # This can't be done generically because otherwise you have to specify soname as well.
+    # See <https://github.com/koreader/koreader/issues/3523>.
+    set(CFG_ENV_VAR "${CFG_ENV_VAR} CHOST=\"${CHOST}\"")
 endif()
 
 if($ENV{WIN32})
@@ -28,7 +34,9 @@ if($ENV{WIN32})
     set(INSTALL_CMD ${BUILD_VARS} ${KO_MAKE_RECURSIVE} -f win32/Makefile.gcc ${BUILD_ARGS} install)
 else()
     # configure
-    set(optional_cfg_cmd CONFIGURE_COMMAND sh -c "CC=\"${CC}\" CHOST=\"${CHOST}\" CFLAGS=\"${CFLAGS}\" LDFLAGS=\"${LDFLAGS}\" ./configure --prefix=${SOURCE_DIR}")
+    set(CFG_ENV_VAR "${CFG_ENV_VAR} CC=\"${CC}\" CFLAGS=\"${CFLAGS}\" LDFLAGS=\"${LDFLAGS}\")
+    set(CFG_CMD "./configure --prefix=${SOURCE_DIR}")
+    set(optional_cfg_cmd CONFIGURE_COMMAND sh -c "${CFG_ENV_VAR} ${CFG_CMD}")
     # build
     set(BUILD_CMD ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS} --silent shared static)
     # install
