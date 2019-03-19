@@ -24,7 +24,7 @@ endif()
 
 if($ENV{WIN32})
     # configure
-    set(optional_cfg_cmd "")
+    set(CFG_CMD "")
     # build
     set(BUILD_VARS DESTDIR=${SOURCE_DIR} INCLUDE_PATH=include LIBRARY_PATH=lib BIN_PATH=bin)
     set(BUILD_ARGS CC="${CC}" CFLAGS="${CFLAGS}" RC="${CHOST}-windres" SHARED_MODE=1)
@@ -35,8 +35,8 @@ if($ENV{WIN32})
 else()
     # configure
     set(CFG_ENV_VAR "${CFG_ENV_VAR} CC=\"${CC}\" CFLAGS=\"${CFLAGS}\" LDFLAGS=\"${LDFLAGS}\")
-    set(CFG_CMD "./configure --prefix=${SOURCE_DIR}")
-    set(optional_cfg_cmd CONFIGURE_COMMAND sh -c "${CFG_ENV_VAR} ${CFG_CMD}")
+    set(CFG_OPTS "${CFG_OPTS} --prefix=${SOURCE_DIR}")
+    set(CFG_CMD sh -c "${CFG_ENV_VAR} ${SOURCE_DIR}/configure ${CFG_OPTS}")
     # build
     set(BUILD_CMD ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS} --silent shared static)
     # install
@@ -52,7 +52,7 @@ ExternalProject_Add(
     URL http://gentoo.osuosl.org/distfiles/zlib-${ZLIB_VER}.tar.gz
     URL_MD5 ${ZLIB_MD5}
     BUILD_IN_SOURCE 1
-    ${optional_cfg_cmd}
+    CONFIGURE_COMMAND ${CFG_CMD}
     BUILD_COMMAND ${BUILD_CMD}
     INSTALL_COMMAND ${INSTALL_CMD}
 )
