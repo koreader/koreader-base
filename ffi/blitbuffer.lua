@@ -880,19 +880,25 @@ function BB8_mt.__index:blitTo8(dest, dest_x, dest_y, offs_x, offs_y, width, hei
         return self:blitDefault(dest, dest_x, dest_y, offs_x, offs_y, width, height, setter, set_param)
     end
 
-    -- Scanline per scanline copy
-    print("BB8 to BB8 scanline copy")
-    local o_y = offs_y
-    for y = dest_y, dest_y+height-1 do
+    if offs_x == 0 and dest_x == 0 and width == dest:getWidth() then
+        -- Single step for contiguous scanlines (on both sides)
+        print("BB8 to BB8 full copy")
         -- BB8 is 1 byte per pixel
-        local srcp = self.data + self.pitch*o_y + offs_x
-        local dstp = dest.data + dest.pitch*y + dest_x
-        ffi.copy(dstp, srcp, width)
-        o_y = o_y + 1
+        local srcp = self.data + self.pitch*offs_y
+        local dstp = dest.data + dest.pitch*dest_y
+        ffi.copy(dstp, srcp, width*height)
+    else
+        -- Scanline per scanline copy
+        print("BB8 to BB8 scanline copy")
+        local o_y = offs_y
+        for y = dest_y, dest_y+height-1 do
+            -- BB8 is 1 byte per pixel
+            local srcp = self.data + self.pitch*o_y + offs_x
+            local dstp = dest.data + dest.pitch*y + dest_x
+            ffi.copy(dstp, srcp, width)
+            o_y = o_y + 1
+        end
     end
-
-    -- TODO: All in one go for contiguous scanlines
-    -- offs_x == 0 && dest_x == 0 ?
 end
 
 function BB_mt.__index:blitFrom(source, dest_x, dest_y, offs_x, offs_y, width, height, setter, set_param)
