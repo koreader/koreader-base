@@ -420,6 +420,21 @@ function util.multiByteToUTF8(str, codepage)
     end
 end
 
+function util.ffiLoadCandidates(candidates)
+    local lib_loaded, lib
+
+    for _, candidate in ipairs(candidates) do
+        lib_loaded, lib = pcall(ffi.load, candidate)
+
+        if lib_loaded then
+            return lib
+        end
+    end
+
+    -- we failed, this is the error message
+    return lib
+end
+
 --- Returns true if isWindows…
 function util.isWindows()
     return ffi.os == "Windows"
@@ -452,12 +467,18 @@ end
 --- Returns true if SDL2
 function util.haveSDL2()
     local err
+
     if haveSDL2 == nil then
-        haveSDL2, err = pcall(ffi.load, "SDL2")
+        haveSDL2, err = util.ffiLoadCandidates{
+            "SDL2",
+            -- this unfortunately needs to be written in full due to the . in the name
+            "libSDL2-2.0.so",
+        }
     end
     if not haveSDL2 then
         print("SDL2 not loaded:", err)
     end
+
     return haveSDL2
 end
 
