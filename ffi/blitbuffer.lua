@@ -197,33 +197,33 @@ end
 local function div4080(value)
     return rshift(value + 0x01 + rshift(value, 8), 12)
 end
-function Color4L_mt.__index:blend(color)
-    local alpha = color:getAlpha()
+function Color4L_mt.__index:blend(color, coverage)
+    local alpha = coverage or color:getAlpha()
     -- simplified: we expect a 8bit grayscale "color" as parameter
     local value = div4080(band(self.a, 0x0F) * 0x11 * bxor(alpha, 0xFF) + color:getR() * alpha)
     self:set(Color4L(value))
 end
-function Color4U_mt.__index:blend(color)
-    local alpha = color:getAlpha()
+function Color4U_mt.__index:blend(color, coverage)
+    local alpha = coverage or color:getAlpha()
     local orig = band(self.a, 0xF0)
     -- simplified: we expect a 8bit grayscale "color" as parameter
     local value = div255((orig + rshift(orig, 4)) * bxor(alpha, 0xFF) + color:getR() * alpha)
     self:set(Color4U(value))
 end
-function Color8_mt.__index:blend(color)
-    local alpha = color:getAlpha()
+function Color8_mt.__index:blend(color, coverage)
+    local alpha = coverage or color:getAlpha()
     -- simplified: we expect a 8bit grayscale "color" as parameter
     local value = div255(self.a * bxor(alpha, 0xFF) + color:getR() * alpha)
     self:set(Color8(value))
 end
-function Color8A_mt.__index:blend(color)
-    local alpha = color:getAlpha()
+function Color8A_mt.__index:blend(color, coverage)
+    local alpha = coverage or color:getAlpha()
     -- simplified: we expect a 8bit grayscale "color" as parameter
     local value = div255(self.a * bxor(alpha, 0xFF) + color:getR() * alpha)
     self:set(Color8A(value, self:getAlpha()))
 end
-function ColorRGB16_mt.__index:blend(color)
-    local alpha = color:getAlpha()
+function ColorRGB16_mt.__index:blend(color, coverage)
+    local alpha = coverage or color:getAlpha()
     local ainv = bxor(alpha, 0xFF)
     local r = div255(self:getR() * ainv + color:getR() * alpha)
     local g = div255(self:getG() * ainv + color:getG() * alpha)
@@ -231,8 +231,8 @@ function ColorRGB16_mt.__index:blend(color)
     self:set(ColorRGB24(r, g, b))
 end
 ColorRGB24_mt.__index.blend = ColorRGB16_mt.__index.blend
-function ColorRGB32_mt.__index:blend(color)
-    local alpha = color:getAlpha()
+function ColorRGB32_mt.__index:blend(color, coverage)
+    local alpha = coverage or color:getAlpha()
     local ainv = bxor(alpha, 0xFF)
     local r = div255(self:getR() * ainv + color:getR() * alpha)
     local g = div255(self:getG() * ainv + color:getG() * alpha)
@@ -769,12 +769,10 @@ function BB_mt.__index:setPixelColorize(x, y, mask, color)
     if alpha == 0xFF then
         self:getPixelP(px, py)[0]:set(color)
     else
-        -- NOTE: Don't screw up color permanently, that's a pointer to our set_param
+        -- NOTE: We're using an alpha mask, not color's actual alpha value, which we don't want to mess with,
+        --       as that's a pointer to our set_param...
         --       Avoids screwing with alpha when blitting to 8A or RGB32 bbs (c.f., #3949).
-        local fgcolor_alpha = color.alpha
-        color.alpha = alpha
-        self:getPixelP(px, py)[0]:blend(color)
-        color.alpha = fgcolor_alpha
+        self:getPixelP(px, py)[0]:blend(color, alpha)
     end
 end
 function BB_mt.__index:setPixelInverted(x, y, color)
