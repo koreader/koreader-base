@@ -1157,7 +1157,28 @@ function BB_mt.__index:paintRect(x, y, w, h, value, setter)
     debug.sethook(hook, mask)
 end
 
--- FIXME: BB4 version without filling, because nibbles aren't addressable...
+-- BB4 version, identical if not for the lack of fast filling, because nibbles aren't addressable...
+function BB4_mt.__index:paintRect(x, y, w, h, value, setter)
+    print("paintRect", x, y, w, h, value, setter)
+    local hook, mask, count = debug.gethook()
+    debug.sethook()
+    setter = setter or self.setPixel
+    value = value or Color8(0)
+    w, x = BB.checkBounds(w, x, 0, self:getWidth(), 0xFFFF)
+    h, y = BB.checkBounds(h, y, 0, self:getHeight(), 0xFFFF)
+    if w <= 0 or h <= 0 then return end
+    if use_cblitbuffer and setter == self.setPixel then
+        cblitbuffer.BB_fill_rect(ffi.cast("struct BlitBuffer *", self),
+            x, y, w, h, value:getColor8A())
+    else
+        for tmp_y = y, y+h-1 do
+            for tmp_x = x, x+w-1 do
+                setter(self, tmp_x, tmp_y, value)
+            end
+        end
+    end
+    debug.sethook(hook, mask)
+end
 
 --[[
 paint a circle onto this buffer
@@ -1506,7 +1527,7 @@ end
 
 -- if no special case in BB???_mt exists, use function from BB_mt
 -- (we do not use BB_mt as metatable for BB???_mt since this causes
---  a major slowdown and would not get properly JIT-compiled)
+-- a major slowdown and would not get properly JIT-compiled)
 for name, func in pairs(BB_mt.__index) do
     if not BB4_mt.__index[name] then BB4_mt.__index[name] = func end
     if not BB8_mt.__index[name] then BB8_mt.__index[name] = func end
