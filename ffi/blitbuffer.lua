@@ -1083,7 +1083,7 @@ PAINTING
 --]]
 
 --[[
-fill the whole blitbuffer with a given color value
+fill the whole blitbuffer with a given (grayscale) color value
 --]]
 function BB_mt.__index:fill(value)
     local w = self:getWidth()
@@ -1093,22 +1093,12 @@ function BB_mt.__index:fill(value)
             0, 0, w, h, value:getColor8A())
         return
     end
-    local hook, mask, count = debug.gethook()
-    debug.sethook()
-    for y = 0, h-1 do
-        for x = 0, w-1 do
-            self:setPixel(x, y, value)
-        end
-    end
-    debug.sethook(hook, mask)
+    ffi.fill(self.data, self.pitch*self.h, value:getColor8().a)
 end
 function BB4_mt.__index:fill(value)
     local v = value:getColor4L().a
     v = bor(lshift(v, 4), v)
     ffi.fill(self.data, self.pitch*self.h, v)
-end
-function BB8_mt.__index:fill(value)
-    ffi.fill(self.data, self.pitch*self.h, value:getColor8().a)
 end
 
 --[[
