@@ -1135,8 +1135,6 @@ paint a rectangle onto this buffer
 --]]
 function BB_mt.__index:paintRect(x, y, w, h, value, setter)
     print("paintRect", x, y, w, h, value, setter)
-    local hook, mask, count = debug.gethook()
-    debug.sethook()
     setter = setter or self.setPixel
     value = value or Color8(0)
     w, x = BB.checkBounds(w, x, 0, self:getWidth(), 0xFFFF)
@@ -1147,6 +1145,8 @@ function BB_mt.__index:paintRect(x, y, w, h, value, setter)
         cblitbuffer.BB_fill_rect(ffi.cast("struct BlitBuffer *", self),
             x, y, w, h, value:getColor8A())
     else
+        local hook, mask, count = debug.gethook()
+        debug.sethook()
         -- We can only do fast filling when there's no complex processing involved (i.e., simple setPixel only)
         -- NOTE: We cheat a bit when targeting non-greyscale BBs,
         --       because we know we're only used with a grayscale color as input ;).
@@ -1181,15 +1181,13 @@ function BB_mt.__index:paintRect(x, y, w, h, value, setter)
                 end
             end
         end
+        debug.sethook(hook, mask)
     end
-    debug.sethook(hook, mask)
 end
 
 -- BB4 version, identical if not for the lack of fast filling, because nibbles aren't addressable...
 function BB4_mt.__index:paintRect(x, y, w, h, value, setter)
     print("paintRect", x, y, w, h, value, setter)
-    local hook, mask, count = debug.gethook()
-    debug.sethook()
     setter = setter or self.setPixel
     value = value or Color8(0)
     w, x = BB.checkBounds(w, x, 0, self:getWidth(), 0xFFFF)
@@ -1199,13 +1197,15 @@ function BB4_mt.__index:paintRect(x, y, w, h, value, setter)
         cblitbuffer.BB_fill_rect(ffi.cast("struct BlitBuffer *", self),
             x, y, w, h, value:getColor8A())
     else
+        local hook, mask, count = debug.gethook()
+        debug.sethook()
         for tmp_y = y, y+h-1 do
             for tmp_x = x, x+w-1 do
                 setter(self, tmp_x, tmp_y, value)
             end
         end
+        debug.sethook(hook, mask)
     end
-    debug.sethook(hook, mask)
 end
 
 --[[
