@@ -907,7 +907,34 @@ function BB8_mt.__index:blitTo8(dest, dest_x, dest_y, offs_x, offs_y, width, hei
         end
     end
 end
--- TODO: Add RGB32 (and test it ;p)
+function BBRGB32_mt.__index:blitToRGB32(dest, dest_x, dest_y, offs_x, offs_y, width, height, setter, set_param)
+    print("BBRGB32_mt.__index:blitToRGB32:", dest, dest_x, dest_y, offs_x, offs_y, width, height, setter, set_param)
+    -- We can only do fast copy for simple blitting with no processing (setPixel, no rota, no invert)
+    if setter ~= self.setPixel or self:getRotation() ~= 0 or dest:getRotation() ~= 0 or (self:getInverse() ~= dest:getInverse()) then
+        print("Can't do a fast blit from BB8 to BB8! setter", setter, "src rota", self:getRotation(), "dest rota", dest:getRotation(), "src invert", self:getInverse(), "dest invert", dest:getInverse())
+        return self:blitDefault(dest, dest_x, dest_y, offs_x, offs_y, width, height, setter, set_param)
+    end
+
+    if offs_x == 0 and dest_x == 0 and width == dest:getWidth() then
+        -- Single step for contiguous scanlines (on both sides)
+        print("BBRGB32 to BBRGB32 full copy")
+        -- BBRGB32 is 4 bytes per pixel
+        local srcp = self.data + self.pitch*offs_y
+        local dstp = dest.data + dest.pitch*dest_y
+        ffi.copy(dstp, srcp, 4*width*height)
+    else
+        -- Scanline per scanline copy
+        print("BBRGB32 to BBRGB32 scanline copy")
+        local o_y = offs_y
+        for y = dest_y, dest_y+height-1 do
+            -- BBRGB32 is 4 bytes per pixel
+            local srcp = self.data + self.pitch*o_y + 4*offs_x
+            local dstp = dest.data + dest.pitch*y + 4*dest_x
+            ffi.copy(dstp, srcp, 4*width)
+            o_y = o_y + 1
+        end
+    end
+end
 -- TODO: Port to the C blitter \o/
 
 function BB_mt.__index:blitFrom(source, dest_x, dest_y, offs_x, offs_y, width, height, setter, set_param)
