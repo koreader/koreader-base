@@ -1454,7 +1454,7 @@ dim color values in rectangular area
 @param by dim by this factor (default: 0.5)
 --]]
 function BB_mt.__index:dimRect(x, y, w, h, by)
-    local color = Color8A(255, 255*(by or 0.5))
+    local color = Color8A(0xFF, 0xFF*(by or 0.5))
     if use_cblitbuffer then
         w, x = BB.checkBounds(w, x, 0, self:getWidth(), 0xFFFF)
         h, y = BB.checkBounds(h, y, 0, self:getHeight(), 0xFFFF)
@@ -1476,7 +1476,7 @@ lighten color values in rectangular area
 @param by lighten by this factor (default: 0.5)
 --]]
 function BB_mt.__index:lightenRect(x, y, w, h, by)
-    local color = Color8A(0, 255*(by or 0.5))
+    local color = Color8A(0, 0xFF*(by or 0.5))
     if use_cblitbuffer then
         w, x = BB.checkBounds(w, x, 0, self:getWidth(), 0xFFFF)
         h, y = BB.checkBounds(h, y, 0, self:getHeight(), 0xFFFF)
