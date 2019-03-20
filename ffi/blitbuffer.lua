@@ -1121,14 +1121,14 @@ function BB_mt.__index:paintRect(x, y, w, h, value, setter)
         cblitbuffer.BB_fill_rect(ffi.cast("struct BlitBuffer *", self),
             x, y, w, h, value:getColor8A())
     else
-        -- We can only do fast filling when there's no processing involved (setPixel, no rota)
+        -- We can only do fast filling when there's no complex processing involved (i.e., simple setPixel only)
         -- NOTE: We cheat a bit when targeting non-greyscale BBs,
         --       because we know we're only used with a grayscale color as input ;).
         --       The cbb also takes advantage of the same shortcut.
-        -- TODO: We could arguably handle rotations here, unlike for blitTo8 & friends...
-        --       We might even have a rotate rectangle helper function somewhere (basically swap x/y/w/h around the right way)...
-        if setter == self.setPixel and self:getRotation() == 0 then
-            -- We *can* handle nightmode here, though ;).
+        if setter == self.setPixel then
+            -- Handle rotation...
+            x, y, w, h = self:getPhysicalRect(x, y, w, h)
+            -- Handle invert...
             local v = value:getColor8()
             if self:getInverse() == 1 then v = v:invert() end
             -- Handle any target pitch properly (i.e., fetch the amount of bytes taken per pixel)...
@@ -1158,6 +1158,8 @@ function BB_mt.__index:paintRect(x, y, w, h, value, setter)
     end
     debug.sethook(hook, mask)
 end
+
+-- FIXME: BB4 version without filling, because nibbles aren't addressable...
 
 --[[
 paint a circle onto this buffer
