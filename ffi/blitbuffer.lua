@@ -1141,6 +1141,7 @@ function BB_mt.__index:paintRect(x, y, w, h, value, setter)
     value = value or Color8(0)
     w, x = BB.checkBounds(w, x, 0, self:getWidth(), 0xFFFF)
     h, y = BB.checkBounds(h, y, 0, self:getHeight(), 0xFFFF)
+    print("paintRect checked dimensions", x, y, w, h)
     if w <= 0 or h <= 0 then return end
     if use_cblitbuffer and setter == self.setPixel then
         cblitbuffer.BB_fill_rect(ffi.cast("struct BlitBuffer *", self),
