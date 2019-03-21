@@ -147,6 +147,7 @@ static const char*
 void BB_fill_rect(BlitBuffer *bb, int x, int y, int w, int h, uint8_t v) {
     int rotation = GET_BB_ROTATION(bb);
     int rx, ry, rw, rh;
+    // Compute rotated rectangle coordinates & size
     switch (rotation) {
         case 0:
                 rx = x;
@@ -173,6 +174,7 @@ void BB_fill_rect(BlitBuffer *bb, int x, int y, int w, int h, uint8_t v) {
                 rh = w;
                 break;
     }
+    // Handle any target pitch properly (i.e., fetch the amount of bytes taken per pixel)...
     int bb_type = GET_BB_TYPE(bb);
     uint8_t bpp = 1;
     switch (bb_type) {
@@ -193,9 +195,13 @@ void BB_fill_rect(BlitBuffer *bb, int x, int y, int w, int h, uint8_t v) {
             break;
     }
     if (rx == 0 && rw == bb->w) {
+        // Single step for contiguous scanlines
+        fprintf(stdout, "%s: Single fill paintRect\n", __FUNCTION__);
         uint8_t *p = bb->data + bb->pitch*ry;
         memset(p, v, bpp*rw*rh);
     } else {
+        // Scanline per scanline fill
+        fprintf(stdout, "%s: Scanline fill paintRect\n", __FUNCTION__);
         uint8_t *p = bb->data;
         for (int j = ry; ry+rh-1; j++) {
             p = bb->data + bb->pitch*j + bpp*rx;
