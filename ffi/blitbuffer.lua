@@ -925,8 +925,8 @@ function BBRGB32_mt.__index:blitToRGB32(dest, dest_x, dest_y, offs_x, offs_y, wi
         -- Single step for contiguous scanlines (on both sides)
         print("BBRGB32 to BBRGB32 full copy")
         -- BBRGB32 is 4 bytes per pixel
-        local srcp = self.data + self.pitch*offs_y
-        local dstp = dest.data + dest.pitch*dest_y
+        local srcp = ffi.cast(uint8pt, self.data) + self.pitch*offs_y
+        local dstp = ffi.cast(uint8pt, self.data) + dest.pitch*dest_y
         ffi.copy(dstp, srcp, lshift(width, 2)*height)
     else
         -- Scanline per scanline copy
@@ -934,14 +934,13 @@ function BBRGB32_mt.__index:blitToRGB32(dest, dest_x, dest_y, offs_x, offs_y, wi
         local o_y = offs_y
         for y = dest_y, dest_y+height-1 do
             -- BBRGB32 is 4 bytes per pixel
-            local srcp = self.data + self.pitch*o_y + lshift(offs_x, 2)
-            local dstp = dest.data + dest.pitch*y + lshift(dest_x, 2)
+            local srcp = ffi.cast(uint8pt, self.data) + self.pitch*o_y + lshift(offs_x, 2)
+            local dstp = ffi.cast(uint8pt, self.data) + dest.pitch*y + lshift(dest_x, 2)
             ffi.copy(dstp, srcp, lshift(width, 2))
             o_y = o_y + 1
         end
     end
 end
--- TODO: Port to the C blitter \o/
 
 function BB_mt.__index:blitFrom(source, dest_x, dest_y, offs_x, offs_y, width, height, setter, set_param)
     width, height = width or source:getWidth(), height or source:getHeight()
@@ -1152,13 +1151,13 @@ function BB_mt.__index:paintRect(x, y, w, h, value, setter)
             if x == 0 and w == self:getWidth() then
                 -- Single step for contiguous scanlines
                 print("Single fill paintRect")
-                local p = self.data + self.pitch*y
+                local p = ffi.cast(uint8pt, self.data) + self.pitch*y
                 ffi.fill(p, bpp*w*h, v.a)
             else
                 -- Scanline per scanline fill
                 print("Scanline fill paintRect")
                 for j = y, y+h-1 do
-                    local p = self.data + self.pitch*j + bpp*x
+                    local p = ffi.cast(uint8pt, self.data) + self.pitch*j + bpp*x
                     ffi.fill(p, bpp*w, v.a)
                     j = j + 1
                 end
