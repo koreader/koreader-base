@@ -626,12 +626,6 @@ function BB_mt.__index:getPhysicalRect(x, y, w, h)
         return                y, self.h - (x + w), h, w
     end
 end
-function BB_mt.__index:getPhysicalRectOld(x, y, w, h)
-    local px1, py1 = self:getPhysicalCoordinates(x, y)
-    local px2, py2 = self:getPhysicalCoordinates(x+w-1, y+h-1)
-    if band(self:getRotation(), 1) == 1 then w, h = h, w end
-    return min(px1, px2), min(py1, py2), w, h
-end
 
 -- physical coordinate checking
 function BB_mt.__index:checkCoordinates(x, y)
@@ -1148,11 +1142,7 @@ function BB_mt.__index:paintRect(x, y, w, h, value, setter)
         --       The cbb also takes advantage of the same shortcut.
         if setter == self.setPixel then
             -- Handle rotation...
-            print("paintRect:", x, y, w, h)
-            local xp, yp, wp, hp = self:getPhysicalRectOld(x, y, w, h)
-            print("getPhysicalRectOld:", xp, yp, wp, hp)
             x, y, w, h = self:getPhysicalRect(x, y, w, h)
-            print("getPhysicalRect:", x, y, w, h)
             -- Handle invert...
             local v = value:getColor8()
             if self:getInverse() == 1 then v = v:invert() end
