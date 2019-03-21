@@ -1,7 +1,7 @@
-PROJECT(mupdf)
+project(mupdf)
 cmake_minimum_required(VERSION 3.5.1)
 
-SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/../cmake_modules")
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/../cmake_modules")
 include("koreader_thirdparty_common")
 include("koreader_thirdparty_git")
 
@@ -58,7 +58,7 @@ set(SHARED_BUILD_STR "${CC} -shared ${CFLAGS} ${LINK_OPTS} ${AES_LIB} ${ZLIB} ${
 # explictly use envs defined in Makefile.defs
 if($ENV{ANDROID})
     set(SHARED_BUILD_STR "${SHARED_BUILD_STR} -llog")
-endif($ENV{ANDROID})
+endif()
 
 set(SHARED_BUILD_CMD sh -c "${SHARED_BUILD_STR}")
 # use external fonts

@@ -1,7 +1,7 @@
-PROJECT(libjpeg-turbo)
+project(libjpeg-turbo)
 cmake_minimum_required(VERSION 3.5.1)
 
-SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_LIST_DIR}/../cmake_modules")
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_LIST_DIR}/../cmake_modules")
 include("koreader_thirdparty_common")
 include("koreader_thirdparty_git")
 
@@ -33,7 +33,7 @@ set(CFG_OPTS "${CFG_OPTS} -DCMAKE_EXE_LINKER_FLAGS='${LDFLAGS}'")
 # c.f., http://trac.ak-team.com/trac/browser/niluje/Configs/trunk/Kindle/Misc/CMakeCross.txt
 if((DEFINED ENV{CERVANTES}) OR (DEFINED ENV{DEBIAN_CROSS}) OR (DEFINED ENV{KINDLE}) OR (DEFINED ENV{KOBO}) OR (DEFINED ENV{LEGACY}) OR (DEFINED ENV{POCKETBOOK}) OR (DEFINED ENV{SONY_PRSTUX}) OR (DEFINED ENV{UBUNTUTOUCH}))
 	set(CFG_OPTS "${CFG_OPTS} -DCMAKE_SYSTEM_NAME='Linux'")
-endif((DEFINED ENV{CERVANTES}) OR (DEFINED ENV{DEBIAN_CROSS}) OR (DEFINED ENV{KINDLE}) OR (DEFINED ENV{KOBO}) OR (DEFINED ENV{LEGACY}) OR (DEFINED ENV{POCKETBOOK}) OR (DEFINED ENV{SONY_PRSTUX}) OR (DEFINED ENV{UBUNTUTOUCH}))
+endif()
 
 # c.f., https://android.googlesource.com/platform/ndk/+/master/build/cmake/android.toolchain.cmake
 # and   https://github.com/taka-no-me/android-cmake
@@ -46,25 +46,25 @@ if(DEFINED ENV{ANDROID})
 	# x86 Android, because we can't set CMAKE_SYSTEM_NAME without setting CMAKE_SYSTEM_PROCESSOR too...
 	if(${CHOST} MATCHES "^i686-.*")
 		set(CFG_OPTS "${CFG_OPTS} -DCMAKE_SYSTEM_PROCESSOR='i686'")
-	endif(${CHOST} MATCHES "^i686-.*")
+	endif()
 
 	# Handle AArch64 NDKs while we're here...
 	if(${CHOST} MATCHES "^aarch64-.*")
 		set(CFG_OPTS "${CFG_OPTS} -DCMAKE_SYSTEM_PROCESSOR='aarch64'")
-	endif(${CHOST} MATCHES "^aarch64-.*")
+	endif()
 
 	# And x86_64 too, because why the hell stop there.
 	if(${CHOST} MATCHES "^x86_64-.*")
 		set(CFG_OPTS "${CFG_OPTS} -DCMAKE_SYSTEM_PROCESSOR='x86_64'")
-	endif(${CHOST} MATCHES "^x86_64-.*")
-endif(DEFINED ENV{ANDROID})
+	endif()
+endif()
 
 # Needed so that libjpeg-turbo tries to build the right set of SIMD routines for the target when cross-compiling...
 # NOTE: When CMAKE_SYSTEM_PROCESSOR is set, CMAKE_SYSTEM_NAME MUST be too (or vice versa).
 #       Failure to do so is a sure recipe for disaster in weird and interesting ways...
 if(${CHOST} MATCHES "^arm-.*")
 	set(CFG_OPTS "${CFG_OPTS} -DCMAKE_SYSTEM_PROCESSOR='arm'")
-endif(${CHOST} MATCHES "^arm-.*")
+endif()
 
 # set various other toolchain tools
 set(CFG_OPTS "${CFG_OPTS} -DCMAKE_STRIP='${STRIP}'")
@@ -77,7 +77,7 @@ set(CFG_OPTS "${CFG_OPTS} -DENABLE_STATIC=OFF -DENABLE_SHARED=ON -DWITH_JAVA=OFF
 # make sure we disable ASM if we don't support SIMD
 if(NOT DEFINED ENV{WANT_SIMD})
     set(CFG_OPTS "${CFG_OPTS} -DREQUIRE_SIMD=OFF -DWITH_SIMD=OFF")
-endif(NOT DEFINED ENV{WANT_SIMD})
+endif()
 
 set(CFG_CMD sh -c "${CMAKE_COMMAND} ${CFG_OPTS}")
 

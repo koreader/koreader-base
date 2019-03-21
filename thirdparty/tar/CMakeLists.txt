@@ -1,7 +1,7 @@
-PROJECT(tar)
+project(tar)
 cmake_minimum_required(VERSION 3.5.1)
 
-SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_LIST_DIR}/../cmake_modules")
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_LIST_DIR}/../cmake_modules")
 include("koreader_thirdparty_common")
 #include("koreader_thirdparty_git")
 enable_language(C)
@@ -28,13 +28,13 @@ set(CFG_OPTS "-q LIBS=\"${LIBS}\" --host=\"${CHOST}\"")
 
 if(${DISABLE_LARGEFILE})
     set(CFG_OPTS "${CFG_OPTS} --disable-largefile")
-endif(${DISABLE_LARGEFILE})
+endif()
 set(CFG_CMD "${CFG_ENV_VAR} ${SOURCE_DIR}/configure --disable-nls --disable-gcc-warnings --disable-acl --without-xattrs --without-posix-acls ${CFG_OPTS}")
 
 if(${DISABLE_FORTIFY})
     # Forcibly disable FORTIFY on legacy devices...
     set(CFG_CMD "${CFG_CMD} && ${ISED} 's/# define _FORTIFY_SOURCE 2/#undef _FORTIFY_SOURCE/' config.h")
-endif(${DISABLE_FORTIFY})
+endif()
 set(CFG_CMD sh -c "${CFG_CMD}")
 
 # We build in-tree...
