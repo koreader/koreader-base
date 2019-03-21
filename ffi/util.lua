@@ -431,8 +431,8 @@ function util.ffiLoadCandidates(candidates)
         end
     end
 
-    -- we failed, this is the error message
-    return lib
+    -- we failed, lib is the error message
+    return lib_loaded, lib
 end
 
 --- Returns true if isWindows…
