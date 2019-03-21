@@ -19,7 +19,11 @@ local dummy = require("ffi/linux_input_h")
 
 -----------------------------------------------------------------
 
-local SDL = ffi.load("SDL2")
+local SDL = util.ffiLoadCandidates{
+    "SDL2",
+    -- this unfortunately needs to be written in full due to the . in the name
+    "libSDL2-2.0.so",
+}
 
 -- for frontend SDL event handling
 local EV_SDL = 53 -- ASCII code for S
