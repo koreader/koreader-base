@@ -215,4 +215,4 @@ test: $(OUTPUT_DIR)/spec $(OUTPUT_DIR)/.busted
 		--no-auto-insulate \
 		-o ./spec/base/unit/verbose_print ./spec/base/unit
 
-.PHONY: test
+.PHONY: all clean test
