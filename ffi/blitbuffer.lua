@@ -615,10 +615,16 @@ function BB_mt.__index:getPhysicalCoordinates(x, y)
     end
 end
 function BB_mt.__index:getPhysicalRect(x, y, w, h)
-    local px1, py1 = self:getPhysicalCoordinates(x, y)
-    local px2, py2 = self:getPhysicalCoordinates(x+w-1, y+h-1)
-    if band(self:getRotation(), 1) == 1 then w, h = h, w end
-    return min(px1, px2), min(py1, py2), w, h
+    local rotation = self:getRotation()
+    if rotation == 0 then
+        return                x,                y, w, h
+    elseif rotation == 1 then
+        return self.h - (y + h),                x, h, w
+    elseif rotation == 2 then
+        return self.w - (x + w), self.h - (y + h), w, h
+    elseif rotation == 3 then
+        return                y, self.w - (x + w), h, w
+    end
 end
 
 -- physical coordinate checking
