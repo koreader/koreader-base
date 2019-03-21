@@ -156,7 +156,7 @@ void BB_fill_rect(BlitBuffer *bb, int x, int y, int w, int h, uint8_t v) {
                 rh = h;
                 break;
         case 1:
-                rx = bb->h - (y + h);
+                rx = bb->w - (y + h);
                 ry = x;
                 rw = h;
                 rh = w;
@@ -169,7 +169,7 @@ void BB_fill_rect(BlitBuffer *bb, int x, int y, int w, int h, uint8_t v) {
                 break;
         case 3:
                 rx = y;
-                ry = bb->w - (x + w);
+                ry = bb->h - (x + w);
                 rw = h;
                 rh = w;
                 break;
