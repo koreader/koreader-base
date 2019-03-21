@@ -19,6 +19,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "blitbuffer.h"
 
 #define MASK_INVERSE 0x02
@@ -143,38 +144,63 @@ static const char*
             break; \
     }
 
-// NOTE: This one needs block scope because it's used inside case labels by BB_fill_rect
-#define FILL_COLOR(bb, COLOR, c, i, j) \
-{ \
-    int rotation = GET_BB_ROTATION(bb); \
-    COLOR *dstptr; \
-    for (j = y; j < y + h; j++) { \
-        for (i = x; i < x + w; i++) { \
-            BB_GET_PIXEL(bb, rotation, COLOR, i, j, &dstptr); \
-            *dstptr = c; \
-        } \
-    } \
-}
-
-void BB_fill_rect(BlitBuffer *bb, int x, int y, int w, int h, Color8A *color) {
+void BB_fill_rect(BlitBuffer *bb, int x, int y, int w, int h, uint8_t v) {
+    int rotation = GET_BB_ROTATION(bb);
+    int rx, ry, rw, rh;
+    switch (rotation) {
+        case 0:
+                rx = x;
+                ry = y;
+                rw = w;
+                rh = h;
+                break;
+        case 1:
+                rx = bb->h - (y + h);
+                ry = x;
+                rw = h;
+                rh = w;
+                break;
+        case 2:
+                rx = bb->w - (x + w);
+                ry = bb->h - (y + h);
+                rw = w;
+                rh = h;
+                break;
+        case 3:
+                rx = y;
+                ry = bb->w - (x + w);
+                rw = h;
+                rh = w;
+                break;
+    }
     int bb_type = GET_BB_TYPE(bb);
-    int i, j;
+    uint8_t bpp = 1;
     switch (bb_type) {
         case TYPE_BB8:
-            FILL_COLOR(bb, Color8, Color8A_To_Color8(color), i, j);
+            bpp = 1;
             break;
         case TYPE_BB8A:
-            FILL_COLOR(bb, Color8A, *color, i, j);
+            bpp = 2;
             break;
         case TYPE_BBRGB16:
-            FILL_COLOR(bb, ColorRGB16, Color8A_To_Color16(color), i, j);
+            bpp = 2;
             break;
         case TYPE_BBRGB24:
-            FILL_COLOR(bb, ColorRGB24, Color8A_To_Color24(color), i, j);
+            bpp = 3;
             break;
         case TYPE_BBRGB32:
-            FILL_COLOR(bb, ColorRGB32, Color8A_To_Color32(color), i, j);
+            bpp = 4;
             break;
+    }
+    if (rx == 0 && rw == bb->w) {
+        uint8_t *p = bb->data + bb->pitch*ry;
+        memset(p, v, bpp*rw*rh);
+    } else {
+        uint8_t *p = bb->data;
+        for (int j = ry; ry+rh-1; j++) {
+            p = bb->data + bb->pitch*j + bpp*rx;
+            memset(p, v, bpp*rw);
+        }
     }
 }
 

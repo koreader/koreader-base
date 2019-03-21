@@ -106,7 +106,7 @@ typedef struct BlitBufferRGB32 {
     uint8_t config;
 } BlitBufferRGB32;
 
-void BB_fill_rect(BlitBuffer *bb, int x, int y, int w, int h, Color8A *color);
+void BB_fill_rect(BlitBuffer *bb, int x, int y, int w, int h, uint8_t v);
 void BB_blend_rect(BlitBuffer *bb, int x, int y, int w, int h, Color8A *color);
 void BB_blit_to(BlitBuffer *source, BlitBuffer *dest, int dest_x, int dest_y,
                 int offs_x, int offs_y, int w, int h);
@@ -1086,13 +1086,6 @@ PAINTING
 fill the whole blitbuffer with a given (grayscale) color value
 --]]
 function BB_mt.__index:fill(value)
-    local w = self:getWidth()
-    local h = self:getHeight()
-    if use_cblitbuffer then
-        cblitbuffer.BB_fill_rect(ffi.cast("struct BlitBuffer *", self),
-            0, 0, w, h, value:getColor8A())
-        return
-    end
     ffi.fill(self.data, self.pitch*self.h, value:getColor8().a)
 end
 function BB4_mt.__index:fill(value)
@@ -1133,7 +1126,7 @@ function BB_mt.__index:paintRect(x, y, w, h, value, setter)
     if w <= 0 or h <= 0 then return end
     if use_cblitbuffer and setter == self.setPixel then
         cblitbuffer.BB_fill_rect(ffi.cast("struct BlitBuffer *", self),
-            x, y, w, h, value:getColor8A())
+            x, y, w, h, value:getColor8().a)
     else
         local hook, mask, count = debug.gethook()
         debug.sethook()
@@ -1176,6 +1169,7 @@ function BB_mt.__index:paintRect(x, y, w, h, value, setter)
 end
 
 -- BB4 version, identical if not for the lack of fast filling, because nibbles aren't addressable...
+-- Also, no cbb branch, as cbb doesn't handle 4bpp targets at all.
 function BB4_mt.__index:paintRect(x, y, w, h, value, setter)
     print("paintRect", x, y, w, h, value, setter)
     setter = setter or self.setPixel
@@ -1183,19 +1177,14 @@ function BB4_mt.__index:paintRect(x, y, w, h, value, setter)
     w, x = BB.checkBounds(w, x, 0, self:getWidth(), 0xFFFF)
     h, y = BB.checkBounds(h, y, 0, self:getHeight(), 0xFFFF)
     if w <= 0 or h <= 0 then return end
-    if use_cblitbuffer and setter == self.setPixel then
-        cblitbuffer.BB_fill_rect(ffi.cast("struct BlitBuffer *", self),
-            x, y, w, h, value:getColor8A())
-    else
-        local hook, mask, count = debug.gethook()
-        debug.sethook()
-        for tmp_y = y, y+h-1 do
-            for tmp_x = x, x+w-1 do
-                setter(self, tmp_x, tmp_y, value)
-            end
+    local hook, mask, count = debug.gethook()
+    debug.sethook()
+    for tmp_y = y, y+h-1 do
+        for tmp_x = x, x+w-1 do
+            setter(self, tmp_x, tmp_y, value)
         end
-        debug.sethook(hook, mask)
     end
+    debug.sethook(hook, mask)
 end
 
 --[[
