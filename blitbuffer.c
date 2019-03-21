@@ -287,17 +287,41 @@ void BB_blit_to_BB8(BlitBuffer *src, BlitBuffer *dst,
     switch (sbb_type) {
         case TYPE_BB8:
             {
-                Color8 *srcptr;
-                o_y = offs_y;
-                for (d_y = dest_y; d_y < dest_y + h; d_y++) {
-                    o_x = offs_x;
-                    for (d_x = dest_x; d_x < dest_x + w; d_x++) {
-                        BB_GET_PIXEL(dst, dbb_rotation, Color8, d_x, d_y, &dstptr);
-                        BB_GET_PIXEL(src, sbb_rotation, Color8, o_x, o_y, &srcptr);
-                        *dstptr = *srcptr;
-                        o_x += 1;
+                // We can only do a fast copy for simple same-to-same blitting without any extra processing.
+                // (i.e., setPixel, no rota, no invert).
+                // The cbb codepath ensures setPixel & no invert, so we only check for rotation.
+                if (sbb_rotation == 0 && dbb_rotation == 0) {
+                    if (offs_x == 0 && dest_x == 0 && w == dst->w) {
+                        // Single step for contiguous scanlines (on both sides)
+                        fprintf(stdout, "%s: full copy blit from BB8 to BB8\n", __FUNCTION__);
+                        // BB8 is 1 byte per pixel
+                        const uint8_t *srcp = src->data + src->pitch*offs_y;
+                        uint8_t *dstp = dst->data + dst->pitch*dest_y;
+                        memcpy(dstp, srcp, w*h);
+                    } else {
+                        // Scanline per scanline copy
+                        fprintf(stdout, "%s: scanline copy blit from BB8 to BB8\n", __FUNCTION__);
+                        o_y = offs_y;
+                        for (d_y = dest_y; dest_y+h-1; o_y++) {
+                            // BB8 is 1 byte per pixel
+                            const uint8_t *srcp = src->data + src->pitch*o_y + offs_x;
+                            uint8_t *dstp = dst->data + dst->pitch*d_y + dest_x;
+                            memcpy(dstp, srcp, w);
+                        }
                     }
-                    o_y += 1;
+                } else {
+                    Color8 *srcptr;
+                    o_y = offs_y;
+                    for (d_y = dest_y; d_y < dest_y + h; d_y++) {
+                        o_x = offs_x;
+                        for (d_x = dest_x; d_x < dest_x + w; d_x++) {
+                            BB_GET_PIXEL(dst, dbb_rotation, Color8, d_x, d_y, &dstptr);
+                            BB_GET_PIXEL(src, sbb_rotation, Color8, o_x, o_y, &srcptr);
+                            *dstptr = *srcptr;
+                            o_x += 1;
+                        }
+                        o_y += 1;
+                    }
                 }
             }
             break;
@@ -740,17 +764,41 @@ void BB_blit_to_BB32(BlitBuffer *src, BlitBuffer *dst,
             break;
         case TYPE_BBRGB32:
             {
-                ColorRGB32 *srcptr;
-                o_y = offs_y;
-                for (d_y = dest_y; d_y < dest_y + h; d_y++) {
-                    o_x = offs_x;
-                    for (d_x = dest_x; d_x < dest_x + w; d_x++) {
-                        BB_GET_PIXEL(dst, dbb_rotation, ColorRGB32, d_x, d_y, &dstptr);
-                        BB_GET_PIXEL(src, sbb_rotation, ColorRGB32, o_x, o_y, &srcptr);
-                        *dstptr = *srcptr;
-                        o_x += 1;
+                // We can only do a fast copy for simple same-to-same blitting without any extra processing.
+                // (i.e., setPixel, no rota, no invert).
+                // The cbb codepath ensures setPixel & no invert, so we only check for rotation.
+                if (sbb_rotation == 0 && dbb_rotation == 0) {
+                    if (offs_x == 0 && dest_x == 0 && w == dst->w) {
+                        // Single step for contiguous scanlines (on both sides)
+                        fprintf(stdout, "%s: full copy blit from BBRGB32 to BBRGB32\n", __FUNCTION__);
+                        // BBRGB32 is 4 bytes per pixel
+                        const uint8_t *srcp = src->data + src->pitch*offs_y;
+                        uint8_t *dstp = dst->data + dst->pitch*dest_y;
+                        memcpy(dstp, srcp, (w << 2)*h);
+                    } else {
+                        // Scanline per scanline copy
+                        fprintf(stdout, "%s: scanline copy blit from BBRGB32 to BBRGB32\n", __FUNCTION__);
+                        o_y = offs_y;
+                        for (d_y = dest_y; dest_y+h-1; o_y++) {
+                            // BBRGB32 is 4 bytes per pixel
+                            const uint8_t *srcp = src->data + src->pitch*o_y + (offs_x << 2);
+                            uint8_t *dstp = dst->data + dst->pitch*d_y + (dest_x << 2);
+                            memcpy(dstp, srcp, w << 2);
+                        }
                     }
-                    o_y += 1;
+                } else {
+                    ColorRGB32 *srcptr;
+                    o_y = offs_y;
+                    for (d_y = dest_y; d_y < dest_y + h; d_y++) {
+                        o_x = offs_x;
+                        for (d_x = dest_x; d_x < dest_x + w; d_x++) {
+                            BB_GET_PIXEL(dst, dbb_rotation, ColorRGB32, d_x, d_y, &dstptr);
+                            BB_GET_PIXEL(src, sbb_rotation, ColorRGB32, o_x, o_y, &srcptr);
+                            *dstptr = *srcptr;
+                            o_x += 1;
+                        }
+                        o_y += 1;
+                    }
                 }
             }
             break;
