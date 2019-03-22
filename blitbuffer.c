@@ -308,7 +308,7 @@ void BB_blit_to_BB8(BlitBuffer *src, BlitBuffer *dst,
                         // Scanline per scanline copy
                         fprintf(stdout, "%s: scanline copy blit from BB8 to BB8\n", __FUNCTION__);
                         o_y = offs_y;
-                        for (d_y = dest_y; d_y < dest_y+h; o_y++) {
+                        for (d_y = dest_y; d_y < dest_y+h; d_y++, o_y++) {
                             // BB8 is 1 byte per pixel
                             const uint8_t *srcp = src->data + src->pitch*o_y + offs_x;
                             uint8_t *dstp = dst->data + dst->pitch*d_y + dest_x;
@@ -785,7 +785,7 @@ void BB_blit_to_BB32(BlitBuffer *src, BlitBuffer *dst,
                         // Scanline per scanline copy
                         fprintf(stdout, "%s: scanline copy blit from BBRGB32 to BBRGB32\n", __FUNCTION__);
                         o_y = offs_y;
-                        for (d_y = dest_y; d_y < dest_y+h; o_y++) {
+                        for (d_y = dest_y; d_y < dest_y+h; d_y++, o_y++) {
                             // BBRGB32 is 4 bytes per pixel
                             const uint8_t *srcp = src->data + src->pitch*o_y + (offs_x << 2);
                             uint8_t *dstp = dst->data + dst->pitch*d_y + (dest_x << 2);
