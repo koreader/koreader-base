@@ -1163,6 +1163,7 @@ function BB_mt.__index:paintRect(x, y, w, h, value, setter)
                 end
             end
         else
+            print("Old-style paintRect pixel loop")
             for tmp_y = y, y+h-1 do
                 for tmp_x = x, x+w-1 do
                     setter(self, tmp_x, tmp_y, value)
@@ -1446,6 +1447,7 @@ function BB_mt.__index:dimRect(x, y, w, h, by)
         cblitbuffer.BB_blend_rect(ffi.cast("struct BlitBuffer *", self),
             x, y, w, h, color)
     else
+        print("dimRect", x, y, w, h, by, color)
         self:paintRect(x, y, w, h, color, self.setPixelBlend)
     end
 end
