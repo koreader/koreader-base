@@ -203,7 +203,8 @@ void BB_fill_rect(BlitBuffer *bb, int x, int y, int w, int h, uint8_t v) {
         // Scanline per scanline fill
         fprintf(stdout, "%s: Scanline fill paintRect\n", __FUNCTION__);
         uint8_t *p = bb->data;
-        for (int j = ry; j < ry+rh; j++) {
+        int j;
+        for (j = ry; j < ry+rh; j++) {
             p = bb->data + bb->pitch*j + bpp*rx;
             memset(p, v, bpp*rw);
         }
