@@ -917,7 +917,7 @@ function BBRGB32_mt.__index:blitToRGB32(dest, dest_x, dest_y, offs_x, offs_y, wi
     print("BBRGB32_mt.__index:blitToRGB32:", dest, dest_x, dest_y, offs_x, offs_y, width, height, setter, set_param)
     -- We can only do fast copy for simple blitting with no processing (setPixel, no rota, no invert)
     if setter ~= self.setPixel or self:getRotation() ~= 0 or dest:getRotation() ~= 0 or (self:getInverse() ~= dest:getInverse()) then
-        print("Can't do a fast blit from BB8 to BB8! setter", setter, "src rota", self:getRotation(), "dest rota", dest:getRotation(), "src invert", self:getInverse(), "dest invert", dest:getInverse())
+        print("Can't do a fast blit from BBRGB32 to BBRGB32! setter", setter, "src rota", self:getRotation(), "dest rota", dest:getRotation(), "src invert", self:getInverse(), "dest invert", dest:getInverse())
         return self:blitDefault(dest, dest_x, dest_y, offs_x, offs_y, width, height, setter, set_param)
     end
 
