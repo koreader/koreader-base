@@ -1159,7 +1159,6 @@ function BB_mt.__index:paintRect(x, y, w, h, value, setter)
                 for j = y, y+h-1 do
                     local p = ffi.cast(uint8pt, self.data) + self.pitch*j + bpp*x
                     ffi.fill(p, bpp*w, v.a)
-                    j = j + 1
                 end
             end
         else
