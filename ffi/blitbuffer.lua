@@ -58,49 +58,63 @@ typedef struct ColorRGB32 {
 
 typedef struct BlitBuffer {
     int w;
+    int phys_w;
     int h;
+    int phys_h;
     int pitch;
     uint8_t *data;
     uint8_t config;
 } BlitBuffer;
 typedef struct BlitBuffer4 {
     int w;
+    int phys_w;
     int h;
+    int phys_h;
     int pitch;
     uint8_t *data;
     uint8_t config;
 } BlitBuffer4;
 typedef struct BlitBuffer8 {
     int w;
+    int phys_w;
     int h;
+    int phys_h;
     int pitch;
     Color8 *data;
     uint8_t config;
 } BlitBuffer8;
 typedef struct BlitBuffer8A {
     int w;
+    int phys_w;
     int h;
+    int phys_h;
     int pitch;
     Color8A *data;
     uint8_t config;
 } BlitBuffer8A;
 typedef struct BlitBufferRGB16 {
     int w;
+    int phys_w;
     int h;
+    int phys_h;
     int pitch;
     ColorRGB16 *data;
     uint8_t config;
 } BlitBufferRGB16;
 typedef struct BlitBufferRGB24 {
     int w;
+    int phys_w;
     int h;
+    int phys_h;
     int pitch;
     ColorRGB24 *data;
     uint8_t config;
 } BlitBufferRGB24;
 typedef struct BlitBufferRGB32 {
     int w;
+    int phys_w;
     int h;
+    int phys_h;
     int pitch;
     ColorRGB32 *data;
     uint8_t config;
@@ -1567,9 +1581,12 @@ ffi.metatype("ColorRGB16", ColorRGB16_mt)
 ffi.metatype("ColorRGB24", ColorRGB24_mt)
 ffi.metatype("ColorRGB32", ColorRGB32_mt)
 
-function BB.new(width, height, buffertype, dataptr, pitch)
+function BB.new(width, height, buffertype, dataptr, pitch, phys_width, phys_height)
     local bb = nil
     buffertype = buffertype or TYPE_BB8
+    -- Remember the fb's _virtual dimensions if we specified them, as we'll need 'em for fast blitting codepaths
+    phys_width = phys_width or width
+    phys_height = phys_height or height
     if pitch == nil then
         if buffertype == TYPE_BB4 then pitch = band(1, width) + rshift(width, 1)
         elseif buffertype == TYPE_BB8 then pitch = width
@@ -1579,12 +1596,12 @@ function BB.new(width, height, buffertype, dataptr, pitch)
         elseif buffertype == TYPE_BBRGB32 then pitch = lshift(width, 2)
         end
     end
-    if buffertype == TYPE_BB4 then bb = BlitBuffer4(width, height, pitch, nil, 0)
-    elseif buffertype == TYPE_BB8 then bb = BlitBuffer8(width, height, pitch, nil, 0)
-    elseif buffertype == TYPE_BB8A then bb = BlitBuffer8A(width, height, pitch, nil, 0)
-    elseif buffertype == TYPE_BBRGB16 then bb = BlitBufferRGB16(width, height, pitch, nil, 0)
-    elseif buffertype == TYPE_BBRGB24 then bb = BlitBufferRGB24(width, height, pitch, nil, 0)
-    elseif buffertype == TYPE_BBRGB32 then bb = BlitBufferRGB32(width, height, pitch, nil, 0)
+    if buffertype == TYPE_BB4 then bb = BlitBuffer4(width, phys_width, height, phys_height, pitch, nil, 0)
+    elseif buffertype == TYPE_BB8 then bb = BlitBuffer8(width, phys_width, height, phys_height, pitch, nil, 0)
+    elseif buffertype == TYPE_BB8A then bb = BlitBuffer8A(width, phys_width, height, phys_height, pitch, nil, 0)
+    elseif buffertype == TYPE_BBRGB16 then bb = BlitBufferRGB16(width, phys_width, height, phys_height, pitch, nil, 0)
+    elseif buffertype == TYPE_BBRGB24 then bb = BlitBufferRGB24(width, phys_width, height, phys_height, pitch, nil, 0)
+    elseif buffertype == TYPE_BBRGB32 then bb = BlitBufferRGB32(width, phys_width, height, phys_height, pitch, nil, 0)
     else error("unknown blitbuffer type")
     end
     bb:setType(buffertype)

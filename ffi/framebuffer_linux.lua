@@ -213,15 +213,15 @@ function framebuffer:init()
     assert(tonumber(ffi.cast("intptr_t", self.data)) ~= C.MAP_FAILED,
            "can not mmap() framebuffer")
     if vinfo.bits_per_pixel == 32 then
-        self.bb = BB.new(vinfo.xres, vinfo.yres, BB.TYPE_BBRGB32, self.data, finfo.line_length)
+        self.bb = BB.new(vinfo.xres, vinfo.yres, BB.TYPE_BBRGB32, self.data, finfo.line_length, vinfo.xres_virtual, vinfo.yres_virtual)
     elseif vinfo.bits_per_pixel == 24 then
-        self.bb = BB.new(vinfo.xres, vinfo.yres, BB.TYPE_BBRGB24, self.data, finfo.line_length)
+        self.bb = BB.new(vinfo.xres, vinfo.yres, BB.TYPE_BBRGB24, self.data, finfo.line_length, vinfo.xres_virtual, vinfo.yres_virtual)
     elseif vinfo.bits_per_pixel == 16 then
-        self.bb = BB.new(vinfo.xres, vinfo.yres, BB.TYPE_BBRGB16, self.data, finfo.line_length)
+        self.bb = BB.new(vinfo.xres, vinfo.yres, BB.TYPE_BBRGB16, self.data, finfo.line_length, vinfo.xres_virtual, vinfo.yres_virtual)
     elseif vinfo.bits_per_pixel == 8 then
-        self.bb = BB.new(vinfo.xres, vinfo.yres, BB.TYPE_BB8, self.data, finfo.line_length)
+        self.bb = BB.new(vinfo.xres, vinfo.yres, BB.TYPE_BB8, self.data, finfo.line_length, vinfo.xres_virtual, vinfo.yres_virtual)
     elseif vinfo.bits_per_pixel == 4 then
-        self.bb = BB.new(vinfo.xres, vinfo.yres, BB.TYPE_BB4, self.data, finfo.line_length)
+        self.bb = BB.new(vinfo.xres, vinfo.yres, BB.TYPE_BB4, self.data, finfo.line_length, vinfo.xres_virtual, vinfo.yres_virtual)
     else
         error("unknown bpp value for the eink driver")
     end
