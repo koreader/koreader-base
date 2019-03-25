@@ -814,11 +814,34 @@ function BB_mt.__index:getWidth()
         return self.h
     end
 end
+function BB_mt.__index:getPhysicalWidth()
+    -- NOTE: On eInk devices, alignment is very different between xres_virtual & yres_virtual,
+    --       so we might actually want to *not* honor rotation here...
+    --       c.f., framebuffer_linux.lua
+    --       In our case, we only use this on Portrait anyway, so width always means width,
+    --       so the point is moot ;).
+    if 0 == band(1, self:getRotation()) then
+        print("getPhysicalWidth(): Returning phys_w", self.phys_w)
+        return self.phys_w
+    else
+        print("getPhysicalWidth(): Returning phys_h", self.phys_h)
+        return self.phys_h
+    end
+end
 function BB_mt.__index:getHeight()
     if 0 == band(1, self:getRotation()) then
         return self.h
     else
         return self.w
+    end
+end
+function BB_mt.__index:getPhysicalHeight()
+    if 0 == band(1, self:getRotation()) then
+        print("getPhysicalHeight(): Returning phys_h", self.phys_h)
+        return self.phys_h
+    else
+        print("getPhysicalHeight(): Returning phys_w", self.phys_w)
+        return self.phys_w
     end
 end
 
@@ -1166,7 +1189,7 @@ function BB_mt.__index:paintRect(x, y, w, h, value, setter)
                 -- Single step for contiguous scanlines
                 print("Single fill paintRect")
                 local p = ffi.cast(uint8pt, self.data) + self.pitch*y
-                ffi.fill(p, bpp*w*h, v.a)
+                ffi.fill(p, bpp*self:getPhysicalWidth()*h, v.a)
             else
                 -- Scanline per scanline fill
                 print("Scanline fill paintRect")
