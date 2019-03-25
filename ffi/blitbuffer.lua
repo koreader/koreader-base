@@ -1518,7 +1518,7 @@ function BB_mt.__index:copy()
     local buffer = C.malloc(self.pitch * self.h)
     assert(buffer, "cannot allocate buffer")
     ffi.copy(buffer, self.data, self.pitch * self.h)
-    local copy = mytype(self.w, self.h, self.pitch, buffer, self.config)
+    local copy = mytype(self.w, self.phys_w, self.h, self.phys_h, self.pitch, buffer, self.config)
     copy:setAllocated(1)
     return copy
 end
