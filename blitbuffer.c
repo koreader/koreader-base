@@ -198,7 +198,7 @@ void BB_fill_rect(BlitBuffer *bb, int x, int y, int w, int h, uint8_t v) {
         // Single step for contiguous scanlines
         fprintf(stdout, "%s: Single fill paintRect\n", __FUNCTION__);
         uint8_t *p = bb->data + bb->pitch*ry;
-        memset(p, v, bpp*rw*rh);
+        memset(p, v, bpp*bb->phys_w*rh);
     } else {
         // Scanline per scanline fill
         fprintf(stdout, "%s: Scanline fill paintRect\n", __FUNCTION__);
@@ -298,7 +298,7 @@ void BB_blit_to_BB8(BlitBuffer *src, BlitBuffer *dst,
                 // (i.e., setPixel, no rota, no invert).
                 // The cbb codepath ensures setPixel & no invert, so we only check for rotation.
                 if (sbb_rotation == 0 && dbb_rotation == 0) {
-                    if (offs_x == 0 && dest_x == 0 && w == dst->w) {
+                    if (offs_x == 0 && dest_x == 0 && w == dst->phys_w) {
                         // Single step for contiguous scanlines (on both sides)
                         fprintf(stdout, "%s: full copy blit from BB8 to BB8\n", __FUNCTION__);
                         // BB8 is 1 byte per pixel
@@ -775,7 +775,7 @@ void BB_blit_to_BB32(BlitBuffer *src, BlitBuffer *dst,
                 // (i.e., setPixel, no rota, no invert).
                 // The cbb codepath ensures setPixel & no invert, so we only check for rotation.
                 if (sbb_rotation == 0 && dbb_rotation == 0) {
-                    if (offs_x == 0 && dest_x == 0 && w == dst->w) {
+                    if (offs_x == 0 && dest_x == 0 && w == dst->phys_w) {
                         // Single step for contiguous scanlines (on both sides)
                         fprintf(stdout, "%s: full copy blit from BBRGB32 to BBRGB32\n", __FUNCTION__);
                         // BBRGB32 is 4 bytes per pixel
