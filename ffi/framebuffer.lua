@@ -143,10 +143,6 @@ function fb:refreshFast(x, y, w, h, d)
     return self:refreshFastImp(x, y, w, h, d)
 end
 
--- should be overriden if you want/have a way to clear the screen without going through blitting
-function fb:clear()
-end
-
 -- should be overridden to free resources
 function fb:close()
 end
@@ -395,6 +391,15 @@ function fb:shot(filename)
         bgr = true
     end
     self.bb:writePNG(filename, bgr)
+end
+
+-- Clear the screen to white
+function fb:clear()
+    if self.viewport then
+        self.full_bb:fill(Blitbuffer.COLOR_WHITE)
+    else
+        self.bb:fill(Blitbuffer.COLOR_WHITE)
+    end
 end
 
 return fb
