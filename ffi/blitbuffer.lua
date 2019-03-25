@@ -1533,7 +1533,7 @@ words, a viewport does not create a new buffer with memory.
 --]]
 function BB_mt.__index:viewport(x, y, w, h)
     x, y, w, h = self:getPhysicalRect(x, y, w, h)
-    local viewport = BB.new(w, h, self:getType(), self:getPixelP(x, y), self.pitch)
+    local viewport = BB.new(w, h, self:getType(), self:getPixelP(x, y), self.pitch, self:getPhysicalWidth(), self:getPhysicalHeight())
     viewport:setRotation(self:getRotation())
     viewport:setInverse(self:getInverse())
     return viewport
@@ -1608,8 +1608,12 @@ function BB.new(width, height, buffertype, dataptr, pitch, phys_width, phys_heig
     local bb = nil
     buffertype = buffertype or TYPE_BB8
     -- Remember the fb's _virtual dimensions if we specified them, as we'll need 'em for fast blitting codepaths
+    print("BB.new() phys_width", phys_width)
+    print("BB.new() phys_height", phys_height)
     phys_width = phys_width or width
     phys_height = phys_height or height
+    print("BB.new() phys_width", phys_width)
+    print("BB.new() phys_height", phys_height)
     if pitch == nil then
         if buffertype == TYPE_BB4 then pitch = band(1, width) + rshift(width, 1)
         elseif buffertype == TYPE_BB8 then pitch = width
