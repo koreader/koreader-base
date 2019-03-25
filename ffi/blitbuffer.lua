@@ -930,6 +930,7 @@ function BB8_mt.__index:blitTo8(dest, dest_x, dest_y, offs_x, offs_y, width, hei
         return self:blitDefault(dest, dest_x, dest_y, offs_x, offs_y, width, height, setter, set_param)
     end
 
+    -- NOTE: We need to compare against the fb's *actual* scanline width, off-screen/padding regions included (i.e., xres_virtual instead of xres)
     if offs_x == 0 and dest_x == 0 and width == dest.phys_w then
         -- Single step for contiguous scanlines (on both sides)
         print("BB8 to BB8 full copy")
@@ -958,6 +959,7 @@ function BBRGB32_mt.__index:blitToRGB32(dest, dest_x, dest_y, offs_x, offs_y, wi
         return self:blitDefault(dest, dest_x, dest_y, offs_x, offs_y, width, height, setter, set_param)
     end
 
+    -- NOTE: We need to compare against the fb's *actual* scanline width, off-screen/padding regions included (i.e., xres_virtual instead of xres)
     if offs_x == 0 and dest_x == 0 and width == dest.phys_w then
         -- Single step for contiguous scanlines (on both sides)
         print("BBRGB32 to BBRGB32 full copy")
