@@ -1128,7 +1128,7 @@ PAINTING
 fill the whole blitbuffer with a given (grayscale) color value
 --]]
 function BB_mt.__index:fill(value)
-    ffi.fill(self.data, self.pitch*self.h, value:getColor8().a)
+    ffi.fill(self.data, self.phys_w*self:getBytesPerPixel()*self.h, value:getColor8().a)
 end
 function BB4_mt.__index:fill(value)
     local v = value:getColor4L().a
