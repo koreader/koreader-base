@@ -816,10 +816,10 @@ function BB_mt.__index:getWidth()
 end
 function BB_mt.__index:getPhysicalWidth()
     -- NOTE: On eInk devices, alignment is very different between xres_virtual & yres_virtual,
-    --       so we might actually want to *not* honor rotation here...
+    --       so honoring rotation here is a bit iffy...
     --       c.f., framebuffer_linux.lua
-    --       In our case, we only use this on Portrait anyway, so width always means width,
-    --       so the point is moot ;).
+    --       This is why we generally access phys_w or phys_h directly,
+    --       unless we're sure having those inverted is going to be irrelevant.
     if 0 == band(1, self:getRotation()) then
         print("getPhysicalWidth(): Returning phys_w", self.phys_w)
         return self.phys_w
@@ -1132,6 +1132,7 @@ PAINTING
 fill the whole blitbuffer with a given (grayscale) color value
 --]]
 function BB_mt.__index:fill(value)
+    -- NOTE: We need to account for the *actual* length of a scanline, padding included (hence phys_w instead of w).
     ffi.fill(self.data, self.phys_w*self:getBytesPerPixel()*self.h, value:getColor8().a)
 end
 function BB4_mt.__index:fill(value)
