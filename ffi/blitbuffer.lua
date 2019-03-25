@@ -1177,28 +1177,24 @@ function BB_mt.__index:paintRect(x, y, w, h, value, setter)
         --       because we know we're only used with a grayscale color as input ;).
         --       The cbb also takes advantage of the same shortcut.
         if setter == self.setPixel then
-            -- Handle rotation...
-            x, y, w, h = self:getPhysicalRect(x, y, w, h)
-            print("paintRect rotated dimensions", x, y, w, h)
             -- Handle invert...
             local v = value:getColor8()
             if self:getInverse() == 1 then v = v:invert() end
             -- Handle any target pitch properly (i.e., fetch the amount of bytes taken per pixel)...
             local bpp = self:getBytesPerPixel()
 
-            if x == 0 and w == self:getWidth() then
+            -- We check against unrotated coordinates, as our memory region has a fixed layout, too!
+            if x == 0 and w == self.w then
                 -- Single step for contiguous scanlines
                 print("Single fill paintRect")
                 local p = ffi.cast(uint8pt, self.data) + self.pitch*y
-                -- Make sure we honor off-screen *scanline* bits, no matter the rotation...
-                -- i.e., we only care about xres_virtual, not yres_virtual
-                if w == self.w then
-                    w = self.phys_w
-                elseif h == self.w then
-                    h = self.phys_w
-                end
-                ffi.fill(p, bpp*w*h, v.a)
+                -- Account for potentially off-screen scanline bits by using self.phys_w instead of w,
+                -- as we've just assured ourselves that the requested w matches self.w ;).
+                ffi.fill(p, bpp*self.phys_w*h, v.a)
             else
+                -- Handle rotation...
+                x, y, w, h = self:getPhysicalRect(x, y, w, h)
+                print("paintRect rotated dimensions", x, y, w, h)
                 -- Scanline per scanline fill
                 print("Scanline fill paintRect")
                 for j = y, y+h-1 do
