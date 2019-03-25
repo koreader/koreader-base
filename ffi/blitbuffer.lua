@@ -1622,8 +1622,6 @@ function BB.new(width, height, buffertype, dataptr, pitch, phys_width, phys_heig
     print("BB.new() phys_height", phys_height)
     phys_width = phys_width or width
     phys_height = phys_height or height
-    print("BB.new() phys_width", phys_width)
-    print("BB.new() phys_height", phys_height)
     if pitch == nil then
         if buffertype == TYPE_BB4 then pitch = band(1, width) + rshift(width, 1)
         elseif buffertype == TYPE_BB8 then pitch = width
