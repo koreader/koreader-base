@@ -1179,6 +1179,7 @@ function BB_mt.__index:paintRect(x, y, w, h, value, setter)
         if setter == self.setPixel then
             -- Handle rotation...
             x, y, w, h = self:getPhysicalRect(x, y, w, h)
+            print("paintRect rotated dimensions", x, y, w, h)
             -- Handle invert...
             local v = value:getColor8()
             if self:getInverse() == 1 then v = v:invert() end
@@ -1189,7 +1190,14 @@ function BB_mt.__index:paintRect(x, y, w, h, value, setter)
                 -- Single step for contiguous scanlines
                 print("Single fill paintRect")
                 local p = ffi.cast(uint8pt, self.data) + self.pitch*y
-                ffi.fill(p, bpp*self:getPhysicalWidth()*h, v.a)
+                -- Make sure we honor off-screen *scanline* bits, no matter the rotation...
+                -- i.e., we only care about xres_virtual, not yres_virtual
+                if w == self.w then
+                    w = self.phys_w
+                elseif h == self.w then
+                    h = self.phys_w
+                end
+                ffi.fill(p, bpp*w*h, v.a)
             else
                 -- Scanline per scanline fill
                 print("Scanline fill paintRect")
