@@ -930,7 +930,7 @@ function BB8_mt.__index:blitTo8(dest, dest_x, dest_y, offs_x, offs_y, width, hei
         return self:blitDefault(dest, dest_x, dest_y, offs_x, offs_y, width, height, setter, set_param)
     end
 
-    if offs_x == 0 and dest_x == 0 and width == dest:getPhysicalWidth() then
+    if offs_x == 0 and dest_x == 0 and width == dest.phys_w then
         -- Single step for contiguous scanlines (on both sides)
         print("BB8 to BB8 full copy")
         -- BB8 is 1 byte per pixel
@@ -958,7 +958,7 @@ function BBRGB32_mt.__index:blitToRGB32(dest, dest_x, dest_y, offs_x, offs_y, wi
         return self:blitDefault(dest, dest_x, dest_y, offs_x, offs_y, width, height, setter, set_param)
     end
 
-    if offs_x == 0 and dest_x == 0 and width == dest:getPhysicalWidth() then
+    if offs_x == 0 and dest_x == 0 and width == dest.phys_w then
         -- Single step for contiguous scanlines (on both sides)
         print("BBRGB32 to BBRGB32 full copy")
         -- BBRGB32 is 4 bytes per pixel
@@ -1186,7 +1186,7 @@ function BB_mt.__index:paintRect(x, y, w, h, value, setter)
             -- Handle any target pitch properly (i.e., fetch the amount of bytes taken per pixel)...
             local bpp = self:getBytesPerPixel()
 
-            -- We check against the BB's unrotated coordinates (i.e., self.w not self:getWidth()),
+            -- We check against the BB's unrotated coordinates (i.e., self.w and not self:getWidth()),
             -- as our memory region has a fixed layout, too!
             if x == 0 and w == self.w then
                 -- Single step for contiguous scanlines
