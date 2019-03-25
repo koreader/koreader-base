@@ -983,8 +983,9 @@ end
 
 function BB_mt.__index:blitFrom(source, dest_x, dest_y, offs_x, offs_y, width, height, setter, set_param)
     width, height = width or source:getWidth(), height or source:getHeight()
-    -- NOTE: If we ever manage to convince CRe to render to a padded buffer (to match phys_w and allow us single-copy blitting),
+    -- NOTE: If we convince CRe to render to a padded buffer (to match phys_w and allow us single-copy blitting),
     --       change the self:get* calls to self:getPhysical* ones ;).
+    --       c.f., https://github.com/koreader/koreader-base/pull/878#issuecomment-476312508
     width, dest_x, offs_x = BB.checkBounds(width, dest_x or 0, offs_x or 0, self:getWidth(), source:getWidth())
     height, dest_y, offs_y = BB.checkBounds(height, dest_y or 0, offs_y or 0, self:getHeight(), source:getHeight())
     if width <= 0 or height <= 0 then return end
