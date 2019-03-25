@@ -71,6 +71,8 @@ function KOPTContext_mt.__index:dstToBlitBuffer()
         bb = Blitbuffer.new(self.dst.width, self.dst.height, Blitbuffer.TYPE_BB8, self.dst.data):copy()
     elseif self.dst.bpp == 24 then
         bb = Blitbuffer.new(self.dst.width, self.dst.height, Blitbuffer.TYPE_BBRGB24, self.dst.data):copy()
+    elseif self.dst.bpp == 32 then
+        bb = Blitbuffer.new(self.dst.width, self.dst.height, Blitbuffer.TYPE_BBRGB32, self.dst.data):copy()
     end
     return bb
 end
