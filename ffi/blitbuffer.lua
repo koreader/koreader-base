@@ -821,10 +821,8 @@ function BB_mt.__index:getPhysicalWidth()
     --       This is why we generally access phys_w or phys_h directly,
     --       unless we're sure having those inverted is going to be irrelevant.
     if 0 == band(1, self:getRotation()) then
-        print("getPhysicalWidth(): Returning phys_w", self.phys_w)
         return self.phys_w
     else
-        print("getPhysicalWidth(): Returning phys_h", self.phys_h)
         return self.phys_h
     end
 end
@@ -837,10 +835,8 @@ function BB_mt.__index:getHeight()
 end
 function BB_mt.__index:getPhysicalHeight()
     if 0 == band(1, self:getRotation()) then
-        print("getPhysicalHeight(): Returning phys_h", self.phys_h)
         return self.phys_h
     else
-        print("getPhysicalHeight(): Returning phys_w", self.phys_w)
         return self.phys_w
     end
 end
@@ -898,7 +894,6 @@ function BB.checkBounds(length, target_offset, source_offset, target_size, sourc
 end
 
 function BB_mt.__index:blitDefault(dest, dest_x, dest_y, offs_x, offs_y, width, height, setter, set_param)
-    print("blitDefault", self, dest, dest_x, dest_y, offs_x, offs_y, width, height, setter, set_param)
     -- slow default variant:
     local hook, mask, count = debug.gethook()
     debug.sethook()
@@ -923,24 +918,22 @@ BB_mt.__index.blitToRGB32 = BB_mt.__index.blitDefault
 
 -- Same to same fast blitting
 function BB8_mt.__index:blitTo8(dest, dest_x, dest_y, offs_x, offs_y, width, height, setter, set_param)
-    print("BB8_mt.__index.blitTo8:", dest, dest_x, dest_y, offs_x, offs_y, width, height, setter, set_param)
     -- We can only do fast copy for simple blitting with no processing (setPixel, no rota, no invert)
     if setter ~= self.setPixel or self:getRotation() ~= 0 or dest:getRotation() ~= 0 or (self:getInverse() ~= dest:getInverse()) then
-        print("Can't do a fast blit from BB8 to BB8! setter", setter, "src rota", self:getRotation(), "dest rota", dest:getRotation(), "src invert", self:getInverse(), "dest invert", dest:getInverse())
         return self:blitDefault(dest, dest_x, dest_y, offs_x, offs_y, width, height, setter, set_param)
     end
 
     -- NOTE: We need to compare against the fb's *actual* scanline width, off-screen/padding regions included (i.e., xres_virtual instead of xres)
     if offs_x == 0 and dest_x == 0 and width == self.phys_w and width == dest.phys_w then
         -- Single step for contiguous scanlines (on both sides)
-        print("BB8 to BB8 full copy")
+        --print("BB8 to BB8 full copy")
         -- BB8 is 1 byte per pixel
         local srcp = self.data + self.pitch*offs_y
         local dstp = dest.data + dest.pitch*dest_y
         ffi.copy(dstp, srcp, width*height)
     else
         -- Scanline per scanline copy
-        print("BB8 to BB8 scanline copy")
+        --print("BB8 to BB8 scanline copy")
         local o_y = offs_y
         for y = dest_y, dest_y+height-1 do
             -- BB8 is 1 byte per pixel
@@ -952,24 +945,22 @@ function BB8_mt.__index:blitTo8(dest, dest_x, dest_y, offs_x, offs_y, width, hei
     end
 end
 function BBRGB32_mt.__index:blitToRGB32(dest, dest_x, dest_y, offs_x, offs_y, width, height, setter, set_param)
-    print("BBRGB32_mt.__index:blitToRGB32:", dest, dest_x, dest_y, offs_x, offs_y, width, height, setter, set_param)
     -- We can only do fast copy for simple blitting with no processing (setPixel, no rota, no invert)
     if setter ~= self.setPixel or self:getRotation() ~= 0 or dest:getRotation() ~= 0 or (self:getInverse() ~= dest:getInverse()) then
-        print("Can't do a fast blit from BBRGB32 to BBRGB32! setter", setter, "src rota", self:getRotation(), "dest rota", dest:getRotation(), "src invert", self:getInverse(), "dest invert", dest:getInverse())
         return self:blitDefault(dest, dest_x, dest_y, offs_x, offs_y, width, height, setter, set_param)
     end
 
     -- NOTE: We need to compare against the fb's *actual* scanline width, off-screen/padding regions included (i.e., xres_virtual instead of xres)
     if offs_x == 0 and dest_x == 0 and width == self.phys_w and width == dest.phys_w then
         -- Single step for contiguous scanlines (on both sides)
-        print("BBRGB32 to BBRGB32 full copy")
+        --print("BBRGB32 to BBRGB32 full copy")
         -- BBRGB32 is 4 bytes per pixel
         local srcp = ffi.cast(uint8pt, self.data) + self.pitch*offs_y
         local dstp = ffi.cast(uint8pt, self.data) + dest.pitch*dest_y
         ffi.copy(dstp, srcp, lshift(width, 2)*height)
     else
         -- Scanline per scanline copy
-        print("BBRGB32 to BBRGB32 scanline copy")
+        --print("BBRGB32 to BBRGB32 scanline copy")
         local o_y = offs_y
         for y = dest_y, dest_y+height-1 do
             -- BBRGB32 is 4 bytes per pixel
@@ -1165,12 +1156,10 @@ paint a rectangle onto this buffer
 @param setter function used to set pixels (defaults to normal setPixel)
 --]]
 function BB_mt.__index:paintRect(x, y, w, h, value, setter)
-    print("paintRect", x, y, w, h, value, setter)
     setter = setter or self.setPixel
     value = value or Color8(0)
     w, x = BB.checkBounds(w, x, 0, self:getWidth(), 0xFFFF)
     h, y = BB.checkBounds(h, y, 0, self:getHeight(), 0xFFFF)
-    print("paintRect checked dimensions", x, y, w, h)
     if w <= 0 or h <= 0 then return end
     if use_cblitbuffer and setter == self.setPixel then
         cblitbuffer.BB_fill_rect(ffi.cast("struct BlitBuffer *", self),
@@ -1185,7 +1174,6 @@ function BB_mt.__index:paintRect(x, y, w, h, value, setter)
         if setter == self.setPixel then
             -- Handle rotation...
             x, y, w, h = self:getPhysicalRect(x, y, w, h)
-            print("paintRect rotated dimensions", x, y, w, h)
             -- Handle invert...
             local v = value:getColor8()
             if self:getInverse() == 1 then v = v:invert() end
@@ -1196,21 +1184,21 @@ function BB_mt.__index:paintRect(x, y, w, h, value, setter)
             -- as our memory region has a fixed layout, too!
             if x == 0 and w == self.w then
                 -- Single step for contiguous scanlines
-                print("Single fill paintRect")
+                --print("Single fill paintRect")
                 local p = ffi.cast(uint8pt, self.data) + self.pitch*y
                 -- Account for potentially off-screen scanline bits by using self.phys_w instead of w,
                 -- as we've just assured ourselves that the requested w matches self.w ;).
                 ffi.fill(p, bpp*self.phys_w*h, v.a)
             else
                 -- Scanline per scanline fill
-                print("Scanline fill paintRect")
+                --print("Scanline fill paintRect")
                 for j = y, y+h-1 do
                     local p = ffi.cast(uint8pt, self.data) + self.pitch*j + bpp*x
                     ffi.fill(p, bpp*w, v.a)
                 end
             end
         else
-            print("Old-style paintRect pixel loop on", self, "with", setter, "to", value)
+            --print("Old-style paintRect pixel loop")
             for tmp_y = y, y+h-1 do
                 for tmp_x = x, x+w-1 do
                     setter(self, tmp_x, tmp_y, value)
@@ -1224,7 +1212,6 @@ end
 -- BB4 version, identical if not for the lack of fast filling, because nibbles aren't addressable...
 -- Also, no cbb branch, as cbb doesn't handle 4bpp targets at all.
 function BB4_mt.__index:paintRect(x, y, w, h, value, setter)
-    print("paintRect", x, y, w, h, value, setter)
     setter = setter or self.setPixel
     value = value or Color8(0)
     w, x = BB.checkBounds(w, x, 0, self:getWidth(), 0xFFFF)
@@ -1494,7 +1481,6 @@ function BB_mt.__index:dimRect(x, y, w, h, by)
         cblitbuffer.BB_blend_rect(ffi.cast("struct BlitBuffer *", self),
             x, y, w, h, color)
     else
-        print("dimRect", x, y, w, h, by, color)
         self:paintRect(x, y, w, h, color, self.setPixelBlend)
     end
 end
@@ -1619,8 +1605,6 @@ function BB.new(width, height, buffertype, dataptr, pitch, phys_width, phys_heig
     local bb = nil
     buffertype = buffertype or TYPE_BB8
     -- Remember the fb's _virtual dimensions if we specified them, as we'll need 'em for fast blitting codepaths
-    print("BB.new() phys_width", phys_width)
-    print("BB.new() phys_height", phys_height)
     phys_width = phys_width or width
     phys_height = phys_height or height
     if pitch == nil then
