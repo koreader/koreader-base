@@ -196,12 +196,12 @@ void BB_fill_rect(BlitBuffer *bb, int x, int y, int w, int h, uint8_t v) {
     }
     if (rx == 0 && rw == bb->w) {
         // Single step for contiguous scanlines
-        fprintf(stdout, "%s: Single fill paintRect\n", __FUNCTION__);
+        //fprintf(stdout, "%s: Single fill paintRect\n", __FUNCTION__);
         uint8_t *p = bb->data + bb->pitch*ry;
         memset(p, v, bpp*bb->phys_w*rh);
     } else {
         // Scanline per scanline fill
-        fprintf(stdout, "%s: Scanline fill paintRect\n", __FUNCTION__);
+        //fprintf(stdout, "%s: Scanline fill paintRect\n", __FUNCTION__);
         uint8_t *p = bb->data;
         int j;
         for (j = ry; j < ry+rh; j++) {
@@ -300,14 +300,14 @@ void BB_blit_to_BB8(BlitBuffer *src, BlitBuffer *dst,
                 if (sbb_rotation == 0 && dbb_rotation == 0) {
                     if (offs_x == 0 && dest_x == 0 && w == src->phys_w && w == dst->phys_w) {
                         // Single step for contiguous scanlines (on both sides)
-                        fprintf(stdout, "%s: full copy blit from BB8 to BB8\n", __FUNCTION__);
+                        //fprintf(stdout, "%s: full copy blit from BB8 to BB8\n", __FUNCTION__);
                         // BB8 is 1 byte per pixel
                         const uint8_t *srcp = src->data + src->pitch*offs_y;
                         uint8_t *dstp = dst->data + dst->pitch*dest_y;
                         memcpy(dstp, srcp, w*h);
                     } else {
                         // Scanline per scanline copy
-                        fprintf(stdout, "%s: scanline copy blit from BB8 to BB8\n", __FUNCTION__);
+                        //fprintf(stdout, "%s: scanline copy blit from BB8 to BB8\n", __FUNCTION__);
                         o_y = offs_y;
                         for (d_y = dest_y; d_y < dest_y+h; d_y++, o_y++) {
                             // BB8 is 1 byte per pixel
@@ -777,14 +777,14 @@ void BB_blit_to_BB32(BlitBuffer *src, BlitBuffer *dst,
                 if (sbb_rotation == 0 && dbb_rotation == 0) {
                     if (offs_x == 0 && dest_x == 0 && w == src->phys_w && w == dst->phys_w) {
                         // Single step for contiguous scanlines (on both sides)
-                        fprintf(stdout, "%s: full copy blit from BBRGB32 to BBRGB32\n", __FUNCTION__);
+                        //fprintf(stdout, "%s: full copy blit from BBRGB32 to BBRGB32\n", __FUNCTION__);
                         // BBRGB32 is 4 bytes per pixel
                         const uint8_t *srcp = src->data + src->pitch*offs_y;
                         uint8_t *dstp = dst->data + dst->pitch*dest_y;
                         memcpy(dstp, srcp, (w << 2)*h);
                     } else {
                         // Scanline per scanline copy
-                        fprintf(stdout, "%s: scanline copy blit from BBRGB32 to BBRGB32\n", __FUNCTION__);
+                        //fprintf(stdout, "%s: scanline copy blit from BBRGB32 to BBRGB32\n", __FUNCTION__);
                         o_y = offs_y;
                         for (d_y = dest_y; d_y < dest_y+h; d_y++, o_y++) {
                             // BBRGB32 is 4 bytes per pixel
@@ -815,7 +815,7 @@ void BB_blit_to_BB32(BlitBuffer *src, BlitBuffer *dst,
 void BB_blit_to(BlitBuffer *src, BlitBuffer *dst,
         int dest_x, int dest_y, int offs_x, int offs_y, int w, int h) {
     int dbb_type = GET_BB_TYPE(dst);
-    // fprintf(stdout, "%s: blit from type: %s to: %s\n", __FUNCTION__, get_bbtype_name(GET_BB_TYPE(src)), get_bbtype_name(GET_BB_TYPE(dst)));
+    //fprintf(stdout, "%s: blit from type: %s to: %s\n", __FUNCTION__, get_bbtype_name(GET_BB_TYPE(src)), get_bbtype_name(GET_BB_TYPE(dst)));
     switch (dbb_type) {
         case TYPE_BB8:
             BB_blit_to_BB8(src, dst, dest_x, dest_y, offs_x, offs_y, w, h);
