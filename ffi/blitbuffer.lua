@@ -1168,7 +1168,7 @@ function BB_mt.__index:paintRect(x, y, w, h, value, setter)
         local hook, mask, count = debug.gethook()
         debug.sethook()
         -- We can only do fast filling when there's no complex processing involved (i.e., simple setPixel only)
-        -- NOTE: We cheat a bit when targeting non-greyscale BBs,
+        -- NOTE: We cheat a bit when targeting non-grayscale BBs,
         --       because we know we're only used with a grayscale color as input ;).
         --       The cbb also takes advantage of the same shortcut.
         if setter == self.setPixel then
