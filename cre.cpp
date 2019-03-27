@@ -1007,8 +1007,9 @@ static int adjustFontSizes(lua_State *L) {
     CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
     int dpi = luaL_checkint(L, 2);
     static int fontSizes[] = {	12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30,
-				31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 42, 44, 48, 52, 56, 60, 64, 68, 72,
-				78, 84, 90, 110, 130, 150, 170, 200, 230, 260, 300, 340};
+				31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49,
+				50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68,
+				69, 70, 71, 72, 78, 84, 90, 110, 130, 150, 170, 200, 230, 260, 300, 340};
     LVArray<int> sizes( fontSizes, sizeof(fontSizes)/sizeof(int) );
     doc->text_view->setFontSizes(sizes, false); // text
     if (dpi < 170) {
