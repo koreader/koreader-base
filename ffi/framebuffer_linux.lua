@@ -213,15 +213,15 @@ function framebuffer:init()
     assert(tonumber(ffi.cast("intptr_t", self.data)) ~= C.MAP_FAILED,
            "can not mmap() framebuffer")
     if vinfo.bits_per_pixel == 32 then
-        self.bb = BB.new(vinfo.xres, vinfo.yres, BB.TYPE_BBRGB32, self.data, finfo.line_length)
+        self.bb = BB.new(vinfo.xres, vinfo.yres, BB.TYPE_BBRGB32, self.data, finfo.line_length, vinfo.xres_virtual, vinfo.yres_virtual)
     elseif vinfo.bits_per_pixel == 24 then
-        self.bb = BB.new(vinfo.xres, vinfo.yres, BB.TYPE_BBRGB24, self.data, finfo.line_length)
+        self.bb = BB.new(vinfo.xres, vinfo.yres, BB.TYPE_BBRGB24, self.data, finfo.line_length, vinfo.xres_virtual, vinfo.yres_virtual)
     elseif vinfo.bits_per_pixel == 16 then
-        self.bb = BB.new(vinfo.xres, vinfo.yres, BB.TYPE_BBRGB16, self.data, finfo.line_length)
+        self.bb = BB.new(vinfo.xres, vinfo.yres, BB.TYPE_BBRGB16, self.data, finfo.line_length, vinfo.xres_virtual, vinfo.yres_virtual)
     elseif vinfo.bits_per_pixel == 8 then
-        self.bb = BB.new(vinfo.xres, vinfo.yres, BB.TYPE_BB8, self.data, finfo.line_length)
+        self.bb = BB.new(vinfo.xres, vinfo.yres, BB.TYPE_BB8, self.data, finfo.line_length, vinfo.xres_virtual, vinfo.yres_virtual)
     elseif vinfo.bits_per_pixel == 4 then
-        self.bb = BB.new(vinfo.xres, vinfo.yres, BB.TYPE_BB4, self.data, finfo.line_length)
+        self.bb = BB.new(vinfo.xres, vinfo.yres, BB.TYPE_BB4, self.data, finfo.line_length, vinfo.xres_virtual, vinfo.yres_virtual)
     else
         error("unknown bpp value for the eink driver")
     end
@@ -240,17 +240,6 @@ function framebuffer:init()
     self.bb:fill(BB.COLOR_WHITE)
 
     framebuffer.parent.init(self)
-end
-
--- Used to bypass blitting when we just want a white screen
-function framebuffer:clear(w, h)
-    if self.data and w and h then
-        -- NOTE: We do not rely on self.fb_size, because it's larger than line_length * yres,
-        --       and regions of memory outside of the visible screen *may* be used by other things in the system,
-        --       for performance reasons, and we do not want to screw them over ;).
-        -- NOTE: This should be equivalent to line_length * yres
-        ffi.fill(self.data, w * (self.fb_bpp / 8) * h, 0xFF)
-    end
 end
 
 function framebuffer:close()

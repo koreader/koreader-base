@@ -20,6 +20,8 @@ set(PATCH_CMD "${PATCH_CMD} && ${ISED} 's|mime\\.core|mime\\.mcore|' src/*")
 set(PATCH_CMD "${PATCH_CMD} && ${ISED} 's|mime_core|mime_mcore|' src/*")
 set(PATCH_CMD "${PATCH_CMD} && ${ISED} 's|SOCKET_CDIR)/core|SOCKET_CDIR)/score|' src/*")
 set(PATCH_CMD "${PATCH_CMD} && ${ISED} 's|MIME_CDIR)/core|MIME_CDIR)/mcore|' src/*")
+# Don't enforce CFLAGS
+set(PATCH_CMD "${PATCH_CMD} && ${ISED} 's|-O2 -ggdb3 ||g' -i src/makefile")
 
 set(BUILD_CMD_STR "${KO_MAKE_RECURSIVE} PLAT=${PLAT} CC=\"${CC}\" LD=\"${CC}\"")
 if(DEFINED MYLDFLAGS)
@@ -33,7 +35,7 @@ set(BUILD_CMD sh -c "${BUILD_CMD_STR} LUAINC=\"${LUAINC}\" -j${PARALLEL_JOBS} al
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
     https://github.com/diegonehab/luasocket
-    288219fd6b53ce2e709745c9918aa4c4b7f715c9
+    c89a931cc31f219d51dd32a8a253d5ee3fbd31be
     ${SOURCE_DIR}
 )
 

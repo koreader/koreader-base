@@ -2504,9 +2504,8 @@ static int drawCurrentPage(lua_State *L) {
 	doc->text_view->Render();
 	if (color) {
 		/* Use Color buffer - caller should have provided us with a
-                 * Blitbuffer.TYPE_BBRGB16, see CreDocument:drawCurrentView
-                 * for why not TYPE_BBRGB32) */
-		LVColorDrawBuf drawBuf(w, h, bb->data, 16);
+		 * Blitbuffer.TYPE_BBRGB32, see CreDocument:drawCurrentView */
+		LVColorDrawBuf drawBuf(w, h, bb->data, 32);
 		doc->text_view->Draw(drawBuf, false);
 		drawn_images_count = drawBuf.getDrawnImagesCount();
 		drawn_images_surface = drawBuf.getDrawnImagesSurface();
