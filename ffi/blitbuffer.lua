@@ -956,7 +956,7 @@ function BBRGB32_mt.__index:blitToRGB32(dest, dest_x, dest_y, offs_x, offs_y, wi
         --print("BBRGB32 to BBRGB32 full copy")
         -- BBRGB32 is 4 bytes per pixel
         local srcp = ffi.cast(uint8pt, self.data) + self.pitch*offs_y
-        local dstp = ffi.cast(uint8pt, self.data) + dest.pitch*dest_y
+        local dstp = ffi.cast(uint8pt, dest.data) + dest.pitch*dest_y
         ffi.copy(dstp, srcp, lshift(width, 2)*height)
     else
         -- Scanline per scanline copy
@@ -965,7 +965,7 @@ function BBRGB32_mt.__index:blitToRGB32(dest, dest_x, dest_y, offs_x, offs_y, wi
         for y = dest_y, dest_y+height-1 do
             -- BBRGB32 is 4 bytes per pixel
             local srcp = ffi.cast(uint8pt, self.data) + self.pitch*o_y + lshift(offs_x, 2)
-            local dstp = ffi.cast(uint8pt, self.data) + dest.pitch*y + lshift(dest_x, 2)
+            local dstp = ffi.cast(uint8pt, dest.data) + dest.pitch*y + lshift(dest_x, 2)
             ffi.copy(dstp, srcp, lshift(width, 2))
             o_y = o_y + 1
         end
