@@ -139,7 +139,10 @@ void *malloc(int size);
 void free(void *ptr);
 ]]
 
-local use_cblitbuffer, cblitbuffer = pcall(ffi.load, 'blitbuffer')
+-- NOTE: Try the C blitter, unless it was disabled by the user
+if G_reader_settings:nilOrFalse("dev_no_c_blitter") then
+    local use_cblitbuffer, cblitbuffer = pcall(ffi.load, 'blitbuffer')
+end
 -- NOTE: This works-around a number of corner-cases which may end up with LuaJIT's optimizer blacklisting this very codepath,
 --       which'd obviously *murder* performance (to the effect of a soft-lock, essentially).
 --       c.f., #4137, #4752, #4782
