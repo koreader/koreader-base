@@ -133,6 +133,7 @@ function framebuffer:init()
         --       (c.f., mxc_epdc_fb_check_var @ drivers/video/mxc/mxc_epdc_fb.c OR drivers/video/fbdev/mxc/mxc_epdc_v2_fb.c).
         --       On PB, not so much (possibly because they expect you to use InkView).
         --       So, do it ourselves, if need be...
+        local xres_virtual = vinfo.xres_virtual
         if not IS_ALIGNED(vinfo.xres_virtual, 32) then
             -- NOTE: As per Kindle/Kobo kernels, xres_virtual = ALIGN(xres, 32);
             vinfo.xres_virtual = ALIGN(vinfo.xres, 32)
@@ -177,6 +178,12 @@ function framebuffer:init()
                 -- And that means the original line_length should *probably* be honored, too...
                 finfo.line_length = line_length
                 io.write("PB FB: line_length <- ", finfo.line_length, "\n")
+                -- As well as both _virtual dimensions (c.f., #4851)...
+                vinfo.xres_virtual = xres_virtual
+                io.write("PB FB: xres_virtual <- ", vinfo.xres_virtual, "\n")
+                -- We probably don't care about yres as much ax xres, but, eh.
+                vinfo.yres_virtual = yres_virtual
+                io.write("PB FB: yres_virtual <- ", vinfo.yres_virtual, "\n")
             end
         end
     else
