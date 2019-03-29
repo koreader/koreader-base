@@ -2069,6 +2069,9 @@ void BB_color_blit_from(BlitBuffer *dst, BlitBuffer *src,
                 for (d_y = dest_y; d_y < dest_y + h; d_y++) {
                     o_x = offs_x;
                     for (d_x = dest_x; d_x < dest_x + w; d_x++) {
+                        // NOTE: GCC *may* throw a -Wmaybe-uninitialized about alpha here,
+                        //       because of the lack of default case  in the SET_ALPHA_FROM_A switch.
+                        //       Not a cause for alarm here :).
                         SET_ALPHA_FROM_A(src, sbb_type, sbb_rotation, o_x, o_y, &alpha);
                         if (alpha == 0) {
                             // NOP

@@ -139,7 +139,12 @@ void *malloc(int size);
 void free(void *ptr);
 ]]
 
-local use_cblitbuffer, cblitbuffer = pcall(ffi.load, 'blitbuffer')
+-- NOTE: Try the C blitter, unless it was disabled by the user
+local no_cbb_flag = os.getenv("KO_NO_CBB")
+local use_cblitbuffer, cblitbuffer
+if not no_cbb_flag or no_cbb_flag == "false" then
+    use_cblitbuffer, cblitbuffer = pcall(ffi.load, 'blitbuffer')
+end
 -- NOTE: This works-around a number of corner-cases which may end up with LuaJIT's optimizer blacklisting this very codepath,
 --       which'd obviously *murder* performance (to the effect of a soft-lock, essentially).
 --       c.f., #4137, #4752, #4782
@@ -684,7 +689,6 @@ function BB_mt.__index:setPixel(x, y, color)
     local px, py = self:getPhysicalCoordinates(x, y)
     -- NOTE: The cbb exemption is because it's assuming you're using an inverted bb copy to handle nightmode (c.f., Android & SDL2),
     --       and setPixel can be used from outside blitFrom, unlike the other setters.
-    -- NOTE: Speaking of the other setters, some of the alpha = 0xFF fastpaths *might* be skipping the invert?
     if not use_cblitbuffer and self:getInverse() == 1 then color = color:invert() end
     self:getPixelP(px, py)[0]:set(color)
 end
@@ -956,7 +960,7 @@ function BBRGB32_mt.__index:blitToRGB32(dest, dest_x, dest_y, offs_x, offs_y, wi
         --print("BBRGB32 to BBRGB32 full copy")
         -- BBRGB32 is 4 bytes per pixel
         local srcp = ffi.cast(uint8pt, self.data) + self.pitch*offs_y
-        local dstp = ffi.cast(uint8pt, self.data) + dest.pitch*dest_y
+        local dstp = ffi.cast(uint8pt, dest.data) + dest.pitch*dest_y
         ffi.copy(dstp, srcp, lshift(width, 2)*height)
     else
         -- Scanline per scanline copy
@@ -965,7 +969,7 @@ function BBRGB32_mt.__index:blitToRGB32(dest, dest_x, dest_y, offs_x, offs_y, wi
         for y = dest_y, dest_y+height-1 do
             -- BBRGB32 is 4 bytes per pixel
             local srcp = ffi.cast(uint8pt, self.data) + self.pitch*o_y + lshift(offs_x, 2)
-            local dstp = ffi.cast(uint8pt, self.data) + dest.pitch*y + lshift(dest_x, 2)
+            local dstp = ffi.cast(uint8pt, dest.data) + dest.pitch*y + lshift(dest_x, 2)
             ffi.copy(dstp, srcp, lshift(width, 2))
             o_y = o_y + 1
         end
