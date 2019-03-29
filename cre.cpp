@@ -2493,6 +2493,10 @@ static int drawCurrentPage(lua_State *L) {
 	if (lua_isboolean(L, 3)) {
 		color = lua_toboolean(L, 3);
 	}
+	bool invert_images = false; // set to true when in night mode
+	if (lua_isboolean(L, 4)) {
+		invert_images = lua_toboolean(L, 4);
+	}
 
 	int w = bb->w,
 		h = bb->h;
@@ -2506,6 +2510,7 @@ static int drawCurrentPage(lua_State *L) {
 		/* Use Color buffer - caller should have provided us with a
 		 * Blitbuffer.TYPE_BBRGB32, see CreDocument:drawCurrentView */
 		LVColorDrawBuf drawBuf(w, h, bb->data, 32);
+		drawBuf.setInvertImages(invert_images);
 		doc->text_view->Draw(drawBuf, false);
 		drawn_images_count = drawBuf.getDrawnImagesCount();
 		drawn_images_surface = drawBuf.getDrawnImagesSurface();
@@ -2513,6 +2518,7 @@ static int drawCurrentPage(lua_State *L) {
 	else {
 		/* Set DrawBuf to 8bpp */
 		LVGrayDrawBuf drawBuf(w, h, 8, bb->data);
+		drawBuf.setInvertImages(invert_images);
 		doc->text_view->Draw(drawBuf, false);
 		drawn_images_count = drawBuf.getDrawnImagesCount();
 		drawn_images_surface = drawBuf.getDrawnImagesSurface();
