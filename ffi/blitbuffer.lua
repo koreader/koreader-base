@@ -140,8 +140,9 @@ void free(void *ptr);
 ]]
 
 -- NOTE: Try the C blitter, unless it was disabled by the user
+local no_cbb_flag = os.getenv("KO_NO_CBB")
 local use_cblitbuffer, cblitbuffer
-if G_reader_settings:nilOrFalse("dev_no_c_blitter") then
+if not no_cbb_flag or no_cbb_flag == "false" then
     use_cblitbuffer, cblitbuffer = pcall(ffi.load, 'blitbuffer')
 end
 -- NOTE: This works-around a number of corner-cases which may end up with LuaJIT's optimizer blacklisting this very codepath,
