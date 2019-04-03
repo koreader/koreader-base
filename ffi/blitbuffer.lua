@@ -1149,6 +1149,57 @@ function BB_mt.__index:invertRect(x, y, w, h)
     self:invertblitFrom(self, x, y, x, y, w, h)
 end
 
+function BB_mt.__index:invertRect(x, y, w, h)
+    w, x = BB.checkBounds(w, x, 0, self:getWidth(), 0xFFFF)
+    h, y = BB.checkBounds(h, y, 0, self:getHeight(), 0xFFFF)
+    if w <= 0 or h <= 0 then return end
+    if use_cblitbuffer then
+        cblitbuffer.BB_invert_rect(ffi.cast("struct BlitBuffer *", self),
+            x, y, w, h)
+    else
+        local hook, mask, count = debug.gethook()
+        debug.sethook()
+        -- Handle rotation...
+        x, y, w, h = self:getPhysicalRect(x, y, w, h)
+        -- Handle any target pitch properly (i.e., fetch the amount of bytes taken per pixel)...
+        local bpp = self:getBytesPerPixel()
+
+        -- We check against the BB's unrotated coordinates (i.e., self.w and not self:getWidth()),
+        -- as our memory region has a fixed layout, too!
+        if x == 0 and w == self.w then
+            -- Single step for contiguous scanlines
+            --print("Single fill invertRect")
+            local p = ffi.cast(uint8pt, self.data) + self.pitch*y
+            -- Account for potentially off-screen scanline bits by using self.phys_w instead of w,
+            -- as we've just assured ourselves that the requested w matches self.w ;).
+            for i = 0, bpp*self.phys_w*h do
+                p[0] = bxor(p[0], 0xFF)
+                p = p+1
+            end
+        else
+            -- Scanline per scanline fill
+            --print("Scanline fill invertRect")
+            for j = y, y+h-1 do
+                local p = ffi.cast(uint8pt, self.data) + self.pitch*j + bpp*x
+                for i = 0, bpp*w do
+                    p[0] = bxor(p[0], 0xFF)
+                    p = p+1
+                end
+            end
+        end
+        debug.sethook(hook, mask)
+    end
+end
+
+-- No fast paths @ 4bpp and BB8A
+function BB4_mt.__index:invertRect(x, y, w, h)
+    self:invertblitFrom(self, x, y, x, y, w, h)
+end
+
+function BB8A_mt.__index:invertRect(x, y, w, h)
+    self:invertblitFrom(self, x, y, x, y, w, h)
+end
+
 --[[
 paint a rectangle onto this buffer
 
