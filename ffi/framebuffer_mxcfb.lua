@@ -6,6 +6,7 @@ local C = ffi.C
 local dummy = require("ffi/posix_h")
 
 local band = bit.band
+local bor = bit.bor
 
 -- Valid marker bounds
 local MARKER_MIN = 42
@@ -257,7 +258,7 @@ local function mxc_update(fb, update_ioctl, refarea, refresh_type, waveform_mode
     if fb.night_mode then
         -- We're in nightmode! If the device can do HW inversion safely, do that!
         if fb.device:canHWInvert() then
-            refarea[0].flags = band(refarea[0].flags, C.EPDC_FLAG_ENABLE_INVERSION)
+            refarea[0].flags = bor(refarea[0].flags, C.EPDC_FLAG_ENABLE_INVERSION)
         end
 
         -- If the waveform is not fast or GC16, enforce a nightmode-specific mode (usually, GC16), to limit ghosting
