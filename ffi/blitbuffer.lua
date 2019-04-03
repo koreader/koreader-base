@@ -19,7 +19,8 @@ local band = bit.band
 local bor = bit.bor
 local bxor = bit.bxor
 
-local uint32pt = ffi.typeof("uint32_t*") -- luacheck: ignore 211
+local uint32pt = ffi.typeof("uint32_t*")
+local uint16pt = ffi.typeof("uint16_t*")
 local uint8pt = ffi.typeof("uint8_t*")
 local posix = require("ffi/posix_h") -- luacheck: ignore 211
 local debug = debug
@@ -1163,27 +1164,64 @@ function BB_mt.__index:invertRect(x, y, w, h)
         x, y, w, h = self:getPhysicalRect(x, y, w, h)
         -- Handle any target pitch properly (i.e., fetch the amount of bytes taken per pixel)...
         local bpp = self:getBytesPerPixel()
+        -- If we know the native data type of a pixel, we can use that instead of doing it byte-per-byte...
+        local bbtype = self:getType()
 
         -- We check against the BB's unrotated coordinates (i.e., self.w and not self:getWidth()),
         -- as our memory region has a fixed layout, too!
         if x == 0 and w == self.w then
             -- Single step for contiguous scanlines
             --print("Single fill invertRect")
-            local p = ffi.cast(uint8pt, self.data) + self.pitch*y
-            -- Account for potentially off-screen scanline bits by using self.phys_w instead of w,
-            -- as we've just assured ourselves that the requested w matches self.w ;).
-            for i = 0, bpp*self.phys_w*h do
-                p[0] = bxor(p[0], 0xFF)
-                p = p+1
+            if bbtype == TYPE_BBRGB32 then
+                local p = ffi.cast(uint32pt, self.data) + self.pitch*y
+                -- Account for potentially off-screen scanline bits by using self.phys_w instead of w,
+                -- as we've just assured ourselves that the requested w matches self.w ;).
+                for i = 0, self.phys_w*h do
+                    p[0] = bxor(p[0], 0x00FFFFFF)
+                    -- Pointer arithmetics magic: +1 on an uint32_t* means +4 bytes (i.e., next pixel) ;).
+                    p = p+1
+                end
+            elseif bbtype == TYPE_BBRGB16 then
+                local p = ffi.cast(uint16pt, self.data) + self.pitch*y
+                for i = 0, self.phys_w*h do
+                    p[0] = bxor(p[0], 0xFFFF)
+                    p = p+1
+                end
+            else
+                -- Should only be BB8 left, but honor bpp for safety instead of relying purely on pointer arithmetics...
+                local p = ffi.cast(uint8pt, self.data) + self.pitch*y
+                for i = 0, bpp*self.phys_w*h do
+                    p[0] = bxor(p[0], 0xFF)
+                    p = p+1
+                end
             end
         else
             -- Scanline per scanline fill
             --print("Scanline fill invertRect")
-            for j = y, y+h-1 do
-                local p = ffi.cast(uint8pt, self.data) + self.pitch*j + bpp*x
-                for i = 0, bpp*w do
-                    p[0] = bxor(p[0], 0xFF)
-                    p = p+1
+            if bbtype == TYPE_BBRGB32 then
+                for j = y, y+h-1 do
+                    local p = ffi.cast(uint32pt, self.data) + self.pitch*j + x
+                    for i = 0, w do
+                        p[0] = bxor(p[0], 0x00FFFFFF)
+                        p = p+1
+                    end
+                end
+            elseif bbtype == TYPE_BBRGB16 then
+                for j = y, y+h-1 do
+                    local p = ffi.cast(uint16pt, self.data) + self.pitch*j + x
+                    for i = 0, w do
+                        p[0] = bxor(p[0], 0xFFFF)
+                        p = p+1
+                    end
+                end
+            else
+                -- Again, honor bpp for safety instead of relying purely on pointer arithmetics...
+                for j = y, y+h-1 do
+                    local p = ffi.cast(uint8pt, self.data) + self.pitch*j + bpp*x
+                    for i = 0, bpp*w do
+                        p[0] = bxor(p[0], 0xFF)
+                        p = p+1
+                    end
                 end
             end
         end
