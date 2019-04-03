@@ -1197,8 +1197,8 @@ function BB_mt.__index:invertRect(x, y, w, h)
                 end
             end
         else
-            -- Scanline per scanline fill
-            --print("Scanline fill invertRect")
+            -- Pixel per pixel fill
+            --print("Pixel fill invertRect")
             if bbtype == TYPE_BBRGB32 then
                 for j = y, y+h-1 do
                     local p = ffi.cast(uint32pt, ffi.cast(uint8pt, self.data) + self.pitch*j) + x
@@ -1230,7 +1230,7 @@ function BB_mt.__index:invertRect(x, y, w, h)
     end
 end
 
--- No fast paths @ 4bpp and BB8A
+-- No fast paths for BB4 & BB8A
 function BB4_mt.__index:invertRect(x, y, w, h)
     self:invertblitFrom(self, x, y, x, y, w, h)
 end
