@@ -1174,7 +1174,7 @@ function BB_mt.__index:invertRect(x, y, w, h)
             -- Single step for contiguous scanlines
             --print("Single fill invertRect")
             if bbtype == TYPE_BBRGB32 then
-                local p = ffi.cast(uint32pt, self.data) + self.pitch*y
+                local p = ffi.cast(uint32pt, ffi.cast(uint8pt, self.data) + self.pitch*y)
                 -- Account for potentially off-screen scanline bits by using self.phys_w instead of w,
                 -- as we've just assured ourselves that the requested w matches self.w ;).
                 for i = 1, self.phys_w*h do
@@ -1183,7 +1183,7 @@ function BB_mt.__index:invertRect(x, y, w, h)
                     p = p+1
                 end
             elseif bbtype == TYPE_BBRGB16 then
-                local p = ffi.cast(uint16pt, self.data) + self.pitch*y
+                local p = ffi.cast(uint16pt, ffi.cast(uint8pt, self.data) + self.pitch*y)
                 for i = 1, self.phys_w*h do
                     p[0] = bxor(p[0], 0xFFFF)
                     p = p+1
@@ -1201,7 +1201,7 @@ function BB_mt.__index:invertRect(x, y, w, h)
             --print("Scanline fill invertRect")
             if bbtype == TYPE_BBRGB32 then
                 for j = y, y+h-1 do
-                    local p = ffi.cast(uint32pt, self.data) + self.pitch*j + x
+                    local p = ffi.cast(uint32pt, ffi.cast(uint8pt, self.data) + self.pitch*j) + x
                     for i = 0, w-1 do
                         p[0] = bxor(p[0], 0x00FFFFFF)
                         p = p+1
@@ -1209,7 +1209,7 @@ function BB_mt.__index:invertRect(x, y, w, h)
                 end
             elseif bbtype == TYPE_BBRGB16 then
                 for j = y, y+h-1 do
-                    local p = ffi.cast(uint16pt, self.data) + self.pitch*j + x
+                    local p = ffi.cast(uint16pt, ffi.cast(uint8pt, self.data) + self.pitch*j) + x
                     for i = 0, w-1 do
                         p[0] = bxor(p[0], 0xFFFF)
                         p = p+1
