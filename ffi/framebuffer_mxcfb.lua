@@ -25,6 +25,7 @@ local framebuffer = {
     waveform_full = nil,
     waveform_fast = nil,
     waveform_reagl = nil,
+    waveform_night = nil,
     mech_refresh = nil,
     -- start with an out of bound marker value to avoid doing something stupid on our first update
     marker = MARKER_MIN - 1,
@@ -62,6 +63,18 @@ end
 --       Here, it's Kindle's various WAVEFORM_MODE_REAGL vs. Kobo's NTX_WFM_MODE_GLD16
 function framebuffer:_isREAGLWaveFormMode(waveform_mode)
     return waveform_mode == self.waveform_reagl
+end
+
+-- Returns true if waveform_mode arg matches the fast waveform mode for current device
+-- NOTE: This is to avoid explicit comparison against device-specific waveform constants in mxc_update()
+--       Here, it's because some devices use A2, while other prefer DU
+function framebuffer:_isFastWaveFormMode(waveform_mode)
+    return waveform_mode == self.waveform_fast
+end
+
+-- Returns the device-specific nightmode waveform mode
+function framebuffer:_getNightWaveFormMode()
+    return self.waveform_night
 end
 
 -- Returns true if w & h are equal or larger than our visible screen estate (i.e., we asked for a full-screen update)
@@ -240,6 +253,19 @@ local function mxc_update(fb, update_ioctl, refarea, refresh_type, waveform_mode
         refarea[0].update_mode = C.UPDATE_MODE_FULL
     end
 
+    -- Handle night mode shenanigans
+    if fb.night_mode then
+        -- We're in nightmode! If the device can do HW inversion safely, do that!
+        if fb.device:canHWInvert() then
+            refarea[0].flags = band(refarea[0].flags, C.EPDC_FLAG_ENABLE_INVERSION)
+        end
+
+        -- If the waveform is not fast or GC16, enforce a nightmode-specific mode (usually, GC16), to limit ghosting
+        if not fb:_isFastWaveFormMode(waveform_mode) and waveform_mode ~= C.WAVEFORM_MODE_GC16 then
+            refarea[0].waveform_mode = fb:_getNightWaveFormMode()
+        end
+    end
+
     -- Recap the actual details of the ioctl, vs. what UIManager asked for...
     fb.debug(string.format("mxc_update: %ux%u region @ (%u, %u) with marker %u (WFM: %u & UPD: %u)", w, h, x, y, marker, refarea[0].waveform_mode, refarea[0].update_mode))
 
@@ -292,8 +318,6 @@ local function refresh_k51(fb, refreshtype, waveform_mode, x, y, w, h)
     else
         refarea[0].flags = 0
     end
-    -- TODO: EPDC_FLAG_ENABLE_INVERSION might be of use for NightMode,
-    --       although the framework itself barely ever sets any flags, for some reason...
 
     return mxc_update(fb, C.MXCFB_SEND_UPDATE, refarea, refreshtype, waveform_mode, x, y, w, h)
 end
@@ -477,6 +501,7 @@ function framebuffer:init()
         self.waveform_ui = C.WAVEFORM_MODE_GC16_FAST
         self.waveform_flashui = self.waveform_ui
         self.waveform_full = C.WAVEFORM_MODE_GC16
+        self.waveform_night = C.WAVEFORM_MODE_GC16
 
         -- New devices are REAGL-aware, default to REAGL
         local isREAGL = true
@@ -512,6 +537,9 @@ function framebuffer:init()
             self.waveform_fast = C.WAVEFORM_MODE_DU -- NOTE: DU, because A2 looks terrible on REAGL devices. Older devices/FW may be using AUTO in this instance.
             self.waveform_reagl = C.WAVEFORM_MODE_REAGL
             self.waveform_partial = self.waveform_reagl
+            -- NOTE: We *might* be able to use GL16_INV in nightmode on devices running FW >= 5.6.x...
+            --       Should hopefully fall-back to AUTO on older FWs...
+            self.waveform_night = C.WAVEFORM_MODE_GL16_INV
         else
             self.waveform_fast = C.WAVEFORM_MODE_DU -- NOTE: DU, because A2 looks terrible on the Touch, and ghosts horribly. Framework is actually using AUTO for UI feedback inverts.
             self.waveform_partial = C.WAVEFORM_MODE_GL16_FAST -- NOTE: Depending on FW, might instead be AUTO w/ hist_gray_waveform_mode set to GL16_FAST
@@ -536,6 +564,8 @@ function framebuffer:init()
             self.waveform_flashui = C.WAVEFORM_MODE_GC16
             self.waveform_reagl = C.WAVEFORM_MODE_KOA2_GLR16
             self.waveform_partial = self.waveform_reagl
+            -- NOTE: Not quite sure this is the right one, as there's also KOA2_GLKW16... One might be more suited to UI or text than the other...
+            self.waveform_night = C.WAVEFORM_MODE_KOA2_GCK16
         end
     elseif self.device:isKobo() then
         require("ffi/mxcfb_kobo_h")
@@ -548,6 +578,7 @@ function framebuffer:init()
         self.waveform_flashui = self.waveform_ui
         self.waveform_full = C.NTX_WFM_MODE_GC16
         self.waveform_partial = C.WAVEFORM_MODE_AUTO
+        self.waveform_night = C.NTX_WFM_MODE_GC16
 
         -- New devices *may* be REAGL-aware, but generally don't expect explicit REAGL requests, default to not.
         local isREAGL = false
@@ -602,6 +633,7 @@ function framebuffer:init()
         self.waveform_flashui = self.waveform_ui
         self.waveform_full = C.WAVEFORM_MODE_GC16
         self.waveform_partial = C.WAVEFORM_MODE_GC16
+        self.waveform_night = C.WAVEFORM_MODE_GC16
     elseif self.device:isSonyPRSTUX() then
         require("ffi/mxcfb_sony_h")
 
@@ -613,6 +645,7 @@ function framebuffer:init()
         self.waveform_flashui = self.waveform_ui
         self.waveform_full = C.WAVEFORM_MODE_GC16
         self.waveform_partial = C.WAVEFORM_MODE_AUTO
+        self.waveform_night = C.WAVEFORM_MODE_GC16
     elseif self.device:isCervantes() then
         require("ffi/mxcfb_cervantes_h")
 
@@ -624,6 +657,7 @@ function framebuffer:init()
         self.waveform_flashui = self.waveform_ui
         self.waveform_full = C.WAVEFORM_MODE_GC16
         self.waveform_partial = C.WAVEFORM_MODE_AUTO
+        self.waveform_night = C.WAVEFORM_MODE_GC16
     else
         error("unknown device type")
     end
