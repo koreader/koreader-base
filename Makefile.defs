@@ -230,6 +230,8 @@ endif
 BASE_CFLAGS:=-O2 -ffast-math -pipe -fomit-frame-pointer
 # For ricers.
 #BASE_CFLAGS:=-O3 -ffast-math -pipe -fomit-frame-pointer -frename-registers -fweb
+# Used to enforce aggressive optimizations in some components
+VECTO_CFLAGS:=-O3 -ffast-math -fomit-frame-pointer -frename-registers -fweb -ftree-vectorize -funroll-loops
 # Use this for debugging:
 ifdef KODEBUG
 	BASE_CFLAGS:=-Og -g -pipe -fno-omit-frame-pointer
@@ -238,8 +240,6 @@ ifdef KODEBUG
 	# Don't enforce extra CFLAGS in debug builds
 	VECTO_CFLAGS:=
 endif
-# Used to enforce aggressive optimizations in some components
-VECTO_CFLAGS:=-O3 -ffast-math -fomit-frame-pointer -frename-registers -fweb -ftree-vectorize -funroll-loops
 
 # Misc GCC tricks to ensure backward compatibility with the K2,
 # even when using a fairly recent TC (Linaro/MG).
