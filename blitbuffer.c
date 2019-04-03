@@ -390,8 +390,10 @@ void BB_invert_rect(BlitBuffer *bb, int x, int y, int w, int h) {
                     // Single step for contiguous scanlines
                     fprintf(stdout, "%s: Single fill BBRGB24 invertRect\n", __FUNCTION__);
                     uint8_t *p = bb->data + bb->pitch*ry;
-                    for (i = 0; i < (bb->phys_w * 3)*rh; i++) {
-                        p[i] ^= 0xFFFF;
+                    for (i = 0; i < bb->phys_w*rh; i+=3) {
+                        p[i] ^= 0xFF;
+                        p[i+1] ^= 0xFF;
+                        p[i+2] ^= 0xFF;
                     }
                 } else {
                     // Scanline per scanline fill
@@ -399,8 +401,10 @@ void BB_invert_rect(BlitBuffer *bb, int x, int y, int w, int h) {
                     uint8_t *p;
                     for (j = ry; j < ry+rh; j++) {
                         p = bb->data + bb->pitch*j + (rx * 3);
-                        for (i = 0; i < (rw * 3); i++) {
-                            p[i] ^= 0xFFFF;
+                        for (i = 0; i < rw; i+=3) {
+                            p[i] ^= 0xFF;
+                            p[i+1] ^= 0xFF;
+                            p[i+2] ^= 0xFF;
                         }
                     }
                 }
