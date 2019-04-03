@@ -1176,21 +1176,21 @@ function BB_mt.__index:invertRect(x, y, w, h)
                 local p = ffi.cast(uint32pt, self.data) + self.pitch*y
                 -- Account for potentially off-screen scanline bits by using self.phys_w instead of w,
                 -- as we've just assured ourselves that the requested w matches self.w ;).
-                for i = 0, self.phys_w*h do
+                for i = 1, self.phys_w*h do
                     p[0] = bxor(p[0], 0x00FFFFFF)
                     -- Pointer arithmetics magic: +1 on an uint32_t* means +4 bytes (i.e., next pixel) ;).
                     p = p+1
                 end
             elseif bbtype == TYPE_BBRGB16 then
                 local p = ffi.cast(uint16pt, self.data) + self.pitch*y
-                for i = 0, self.phys_w*h do
+                for i = 1, self.phys_w*h do
                     p[0] = bxor(p[0], 0xFFFF)
                     p = p+1
                 end
             else
                 -- Should only be BB8 left, but honor bpp for safety instead of relying purely on pointer arithmetics...
                 local p = ffi.cast(uint8pt, self.data) + self.pitch*y
-                for i = 0, bpp*self.phys_w*h do
+                for i = 1, bpp*self.phys_w*h do
                     p[0] = bxor(p[0], 0xFF)
                     p = p+1
                 end
@@ -1201,7 +1201,7 @@ function BB_mt.__index:invertRect(x, y, w, h)
             if bbtype == TYPE_BBRGB32 then
                 for j = y, y+h-1 do
                     local p = ffi.cast(uint32pt, self.data) + self.pitch*j + x
-                    for i = 0, w do
+                    for i = 0, w-1 do
                         p[0] = bxor(p[0], 0x00FFFFFF)
                         p = p+1
                     end
@@ -1209,7 +1209,7 @@ function BB_mt.__index:invertRect(x, y, w, h)
             elseif bbtype == TYPE_BBRGB16 then
                 for j = y, y+h-1 do
                     local p = ffi.cast(uint16pt, self.data) + self.pitch*j + x
-                    for i = 0, w do
+                    for i = 0, w-1 do
                         p[0] = bxor(p[0], 0xFFFF)
                         p = p+1
                     end
@@ -1218,7 +1218,7 @@ function BB_mt.__index:invertRect(x, y, w, h)
                 -- Again, honor bpp for safety instead of relying purely on pointer arithmetics...
                 for j = y, y+h-1 do
                     local p = ffi.cast(uint8pt, self.data) + self.pitch*j + bpp*x
-                    for i = 0, bpp*w do
+                    for i = 0, bpp*(w-1) do
                         p[0] = bxor(p[0], 0xFF)
                         p = p+1
                     end
