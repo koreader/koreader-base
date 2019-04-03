@@ -346,7 +346,7 @@ void BB_invert_rect(BlitBuffer *bb, int x, int y, int w, int h) {
                     // Single step for contiguous scanlines
                     fprintf(stdout, "%s: Single fill BB8A invertRect\n", __FUNCTION__);
                     uint16_t *p = (uint16_t*) (bb->data + bb->pitch*ry);
-                    for (i = 0; i < (bb->phys_w << 1)*rh; i++) {
+                    for (i = 0; i < bb->phys_w*rh; i++) {
                         p[i] ^= 0x00FF;
                     }
                 } else {
@@ -355,7 +355,7 @@ void BB_invert_rect(BlitBuffer *bb, int x, int y, int w, int h) {
                     uint16_t *p;
                     for (j = ry; j < ry+rh; j++) {
                         p = (uint16_t*) (bb->data + bb->pitch*j + (rx << 1));
-                        for (i = 0; i < (rw << 1); i++) {
+                        for (i = 0; i < rw; i++) {
                             p[i] ^= 0x00FF;
                         }
                     }
@@ -368,7 +368,7 @@ void BB_invert_rect(BlitBuffer *bb, int x, int y, int w, int h) {
                     // Single step for contiguous scanlines
                     fprintf(stdout, "%s: Single fill BBRGB16 invertRect\n", __FUNCTION__);
                     uint16_t *p = (uint16_t*) (bb->data + bb->pitch*ry);
-                    for (i = 0; i < (bb->phys_w << 1)*rh; i++) {
+                    for (i = 0; i < bb->phys_w*rh; i++) {
                         p[i] ^= 0xFFFF;
                     }
                 } else {
@@ -377,7 +377,7 @@ void BB_invert_rect(BlitBuffer *bb, int x, int y, int w, int h) {
                     uint16_t *p;
                     for (j = ry; j < ry+rh; j++) {
                         p = (uint16_t*) (bb->data + bb->pitch*j + (rx << 1));
-                        for (i = 0; i < (rw << 1); i++) {
+                        for (i = 0; i < rw; i++) {
                             p[i] ^= 0xFFFF;
                         }
                     }
@@ -419,10 +419,7 @@ void BB_invert_rect(BlitBuffer *bb, int x, int y, int w, int h) {
                     // Scanline per scanline fill
                     fprintf(stdout, "%s: Scanline fill TYPE_BBRGB32 invertRect\n", __FUNCTION__);
                     uint32_t *p;
-                    //uint8_t *op;
                     for (j = ry; j < ry+rh; j++) {
-                        //op = (bb->data + bb->pitch*j) + (rx << 2);
-                        //p = (uint32_t*) op;
                         p = (uint32_t*) (bb->data + bb->pitch*j + (rx << 2));
                         for (i = 0; i < rw; i++) {
                             p[i] ^= 0x00FFFFFF;
