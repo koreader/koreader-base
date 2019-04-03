@@ -322,14 +322,14 @@ void BB_invert_rect(BlitBuffer *bb, int x, int y, int w, int h) {
             {
                 if (rx == 0 && rw == bb->w) {
                     // Single step for contiguous scanlines
-                    //fprintf(stdout, "%s: Single fill BB8 invertRect\n", __FUNCTION__);
+                    //fprintf(stdout, "%s: Full BB8 invertRect\n", __FUNCTION__);
                     uint8_t *p = bb->data + bb->pitch*ry;
                     for (i = 0; i < bb->phys_w*rh; i++) {
                         p[i] ^= 0xFF;
                     }
                 } else {
-                    // Pixel per pixel fill
-                    //fprintf(stdout, "%s: Pixel fill BB8 invertRect\n", __FUNCTION__);
+                    // Pixel per pixel
+                    //fprintf(stdout, "%s: Pixel BB8 invertRect\n", __FUNCTION__);
                     uint8_t *p;
                     for (j = ry; j < ry+rh; j++) {
                         p = bb->data + bb->pitch*j + rx;
@@ -344,14 +344,14 @@ void BB_invert_rect(BlitBuffer *bb, int x, int y, int w, int h) {
             {
                 if (rx == 0 && rw == bb->w) {
                     // Single step for contiguous scanlines
-                    //fprintf(stdout, "%s: Single fill BB8A invertRect\n", __FUNCTION__);
+                    //fprintf(stdout, "%s: Full BB8A invertRect\n", __FUNCTION__);
                     uint16_t *p = (uint16_t*) (bb->data + bb->pitch*ry);
                     for (i = 0; i < bb->phys_w*rh; i++) {
                         p[i] ^= 0x00FF;
                     }
                 } else {
-                    // Pixel per pixel fill
-                    //fprintf(stdout, "%s: Pixel fill BB8A invertRect\n", __FUNCTION__);
+                    // Pixel per pixel
+                    //fprintf(stdout, "%s: Pixel BB8A invertRect\n", __FUNCTION__);
                     uint16_t *p;
                     for (j = ry; j < ry+rh; j++) {
                         p = (uint16_t*) (bb->data + bb->pitch*j + (rx << 1));
@@ -366,14 +366,14 @@ void BB_invert_rect(BlitBuffer *bb, int x, int y, int w, int h) {
             {
                 if (rx == 0 && rw == bb->w) {
                     // Single step for contiguous scanlines
-                    //fprintf(stdout, "%s: Single fill BBRGB16 invertRect\n", __FUNCTION__);
+                    //fprintf(stdout, "%s: Full BBRGB16 invertRect\n", __FUNCTION__);
                     uint16_t *p = (uint16_t*) (bb->data + bb->pitch*ry);
                     for (i = 0; i < bb->phys_w*rh; i++) {
                         p[i] ^= 0xFFFF;
                     }
                 } else {
-                    // Pixel per pixel fill
-                    //fprintf(stdout, "%s: Pixel fill BBRGB16 invertRect\n", __FUNCTION__);
+                    // Pixel per pixel
+                    //fprintf(stdout, "%s: Pixel BBRGB16 invertRect\n", __FUNCTION__);
                     uint16_t *p;
                     for (j = ry; j < ry+rh; j++) {
                         p = (uint16_t*) (bb->data + bb->pitch*j + (rx << 1));
@@ -388,7 +388,7 @@ void BB_invert_rect(BlitBuffer *bb, int x, int y, int w, int h) {
             {
                 if (rx == 0 && rw == bb->w) {
                     // Single step for contiguous scanlines
-                    //fprintf(stdout, "%s: Single fill BBRGB24 invertRect\n", __FUNCTION__);
+                    //fprintf(stdout, "%s: Full BBRGB24 invertRect\n", __FUNCTION__);
                     uint8_t *p = bb->data + bb->pitch*ry;
                     for (i = 0; i < bb->phys_w*rh; i+=3) {
                         p[i] ^= 0xFF;
@@ -396,8 +396,8 @@ void BB_invert_rect(BlitBuffer *bb, int x, int y, int w, int h) {
                         p[i+2] ^= 0xFF;
                     }
                 } else {
-                    // Pixel per pixel fill
-                    //fprintf(stdout, "%s: Pixel fill BBRGB24 invertRect\n", __FUNCTION__);
+                    // Pixel per pixel
+                    //fprintf(stdout, "%s: Pixel BBRGB24 invertRect\n", __FUNCTION__);
                     uint8_t *p;
                     for (j = ry; j < ry+rh; j++) {
                         p = bb->data + bb->pitch*j + (rx * 3);
@@ -414,14 +414,14 @@ void BB_invert_rect(BlitBuffer *bb, int x, int y, int w, int h) {
             {
                 if (rx == 0 && rw == bb->w) {
                     // Single step for contiguous scanlines
-                    //fprintf(stdout, "%s: Single fill BBRGB32 invertRect\n", __FUNCTION__);
+                    //fprintf(stdout, "%s: Full BBRGB32 invertRect\n", __FUNCTION__);
                     uint32_t *p = (uint32_t*) (bb->data + bb->pitch*ry);
                     for (i = 0; i < bb->phys_w*rh; i++) {
                         p[i] ^= 0x00FFFFFF;
                     }
                 } else {
-                    // Pixel per pixel fill fill
-                    //fprintf(stdout, "%s: Pixel fill BBRGB32 invertRect\n", __FUNCTION__);
+                    // Pixel per pixel
+                    //fprintf(stdout, "%s: Pixel BBRGB32 invertRect\n", __FUNCTION__);
                     uint32_t *p;
                     for (j = ry; j < ry+rh; j++) {
                         p = (uint32_t*) (bb->data + bb->pitch*j + (rx << 2));

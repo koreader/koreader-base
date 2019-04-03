@@ -1172,7 +1172,7 @@ function BB_mt.__index:invertRect(x, y, w, h)
         -- as our memory region has a fixed layout, too!
         if x == 0 and w == self.w then
             -- Single step for contiguous scanlines
-            --print("Single fill invertRect")
+            --print("Full invertRect")
             if bbtype == TYPE_BBRGB32 then
                 local p = ffi.cast(uint32pt, ffi.cast(uint8pt, self.data) + self.pitch*y)
                 -- Account for potentially off-screen scanline bits by using self.phys_w instead of w,
@@ -1197,8 +1197,8 @@ function BB_mt.__index:invertRect(x, y, w, h)
                 end
             end
         else
-            -- Pixel per pixel fill
-            --print("Pixel fill invertRect")
+            -- Pixel per pixel
+            --print("Pixel invertRect")
             if bbtype == TYPE_BBRGB32 then
                 for j = y, y+h-1 do
                     local p = ffi.cast(uint32pt, ffi.cast(uint8pt, self.data) + self.pitch*j) + x
