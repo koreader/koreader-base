@@ -235,7 +235,11 @@ ifdef KODEBUG
 	BASE_CFLAGS:=-Og -g -pipe -fno-omit-frame-pointer
 	# Prevent runaway buildsystems from screwing with us and stripping stuff behind our backs...
 	STRIP:=true
+	# Don't enforce extra CFLAGS in debug builds
+	VECTO_CFLAGS:=
 endif
+# Used to enforce aggressive optimizations in some components
+VECTO_CFLAGS:=-O3 -ffast-math -fomit-frame-pointer -frename-registers -fweb -ftree-vectorize -funroll-loops
 
 # Misc GCC tricks to ensure backward compatibility with the K2,
 # even when using a fairly recent TC (Linaro/MG).

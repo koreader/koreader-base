@@ -131,7 +131,7 @@ ifdef DARWIN
 endif
 
 $(OUTPUT_DIR)/libs/libblitbuffer.so: blitbuffer.c
-	$(CC) $(DYNLIB_CFLAGS) -o $@ $^
+	$(CC) $(DYNLIB_CFLAGS) $(VECTO_CFLAGS) -o $@ $^
 
 $(OUTPUT_DIR)/libs/libwrap-mupdf.so: wrap-mupdf.c \
 			$(MUPDF_LIB)
