@@ -1934,9 +1934,7 @@ void BB_invert_blit_from(BlitBuffer *dst, BlitBuffer *src,
                     for (d_x = dest_x; d_x < dest_x + w; d_x++) {
                         BB_GET_PIXEL(dst, dbb_rotation, ColorRGB32, d_x, d_y, &dstptr);
                         BB_GET_PIXEL(src, sbb_rotation, ColorRGB32, o_x, o_y, &srcptr);
-                        dstptr->r = srcptr->r ^ 0xFF;
-                        dstptr->g = srcptr->g ^ 0xFF;
-                        dstptr->b = srcptr->b ^ 0xFF;
+                        *(uint32_t*) dstptr = *(uint32_t*) srcptr ^ 0x00FFFFFF;
                         o_x += 1;
                     }
                     o_y += 1;
