@@ -242,16 +242,17 @@ function util.runInSubProcess(func, with_pipe, double_fork)
         end
     end
     local pid = C.fork()
-    -- If we double-fork, remember the first fork's pid so we can reap it.
-    local fpid = pid
+    -- Remember the outer fork's pid so we can reap it when double-forking.
+    local opid = pid
     if pid == 0 then -- child process
         if double_fork then
             pid = C.fork()
             if pid ~= 0 then
-                -- Exit the first fork (i.e., the parent of the nested child)
+                -- Parent side of the outer fork, we don't need it anymore, so just exit.
                 -- NOTE: Technically ought to be _exit, not exit.
                 os.exit((pid < 0) and 1 or 0)
             end
+            -- pid == 0 -> inner child :)
         end
         -- We need to wrap it with pcall: otherwise, if we were in a
         -- subroutine, the error would just abort the coroutine, bypassing
@@ -284,14 +285,14 @@ function util.runInSubProcess(func, with_pipe, double_fork)
         os.exit(0)
     end
     -- parent/main process
-    if fpid < 0 then -- on failure, fork() returns -1
+    if opid < 0 then -- on failure, fork() returns -1
         return false
     end
-    -- If we double-fork, reap the first child
+    -- If we double-fork, reap the outer fork
     if double_fork then
         local status = ffi.new('int[1]')
-        local ret = C.waitpid(fpid, status, 0)
-        -- Returns fpid on success, -1 on failure
+        local ret = C.waitpid(opid, status, 0)
+        -- Returns opid on success, -1 on failure
         if ret < 0 then
             return false
         end
