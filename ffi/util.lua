@@ -242,8 +242,6 @@ function util.runInSubProcess(func, with_pipe, double_fork)
         end
     end
     local pid = C.fork()
-    -- Remember the outer fork's pid so we can reap it when double-forking.
-    local opid = pid
     if pid == 0 then -- child process
         if double_fork then
             pid = C.fork()
@@ -285,14 +283,14 @@ function util.runInSubProcess(func, with_pipe, double_fork)
         os.exit(0)
     end
     -- parent/main process
-    if opid < 0 then -- on failure, fork() returns -1
+    if pid < 0 then -- on failure, fork() returns -1
         return false
     end
     -- If we double-fork, reap the outer fork
     if double_fork then
         local status = ffi.new('int[1]')
-        local ret = C.waitpid(opid, status, 0)
-        -- Returns opid on success, -1 on failure
+        local ret = C.waitpid(pid, status, 0)
+        -- Returns pid on success, -1 on failure
         if ret < 0 then
             return false
         end
