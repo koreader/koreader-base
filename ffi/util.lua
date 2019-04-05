@@ -229,6 +229,11 @@ end
 -- if with_pipe: a fd for reading what the child wrote
 -- if double_fork: do a double fork so the child gets reparented to init,
 --                 ensuring automatic reaping of zombies.
+--                 NOTE: In this case, the pid returned will *already*
+--                       have been reaped, making it fairly useless.
+--                       This means you do NOT have to call isSubProcessDone on it.
+--                       It is safe to do so, though, it'll just immediately return success,
+--                       as waitpid will return -1 w/ an ECHILD errno.
 function util.runInSubProcess(func, with_pipe, double_fork)
     local parent_read_fd, child_write_fd
     if with_pipe then
