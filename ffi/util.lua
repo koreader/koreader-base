@@ -286,7 +286,7 @@ function util.runInSubProcess(func, with_pipe, double_fork)
     if pid < 0 then -- on failure, fork() returns -1
         return false
     end
-    -- If we double-fork, reap the outer fork
+    -- If we double-fork, reap the outer fork now, since its only purpose is fork -> _exit
     if double_fork then
         local status = ffi.new('int[1]')
         local ret = C.waitpid(pid, status, 0)
