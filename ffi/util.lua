@@ -227,7 +227,14 @@ end
 -- if with_pipe: a fd for writting
 -- This function returns (to parent): the child pid, and,
 -- if with_pipe: a fd for reading what the child wrote
-function util.runInSubProcess(func, with_pipe)
+-- if double_fork: do a double fork so the child gets reparented to init,
+--                 ensuring automatic reaping of zombies.
+--                 NOTE: In this case, the pid returned will *already*
+--                       have been reaped, making it fairly useless.
+--                       This means you do NOT have to call isSubProcessDone on it.
+--                       It is safe to do so, though, it'll just immediately return success,
+--                       as waitpid will return -1 w/ an ECHILD errno.
+function util.runInSubProcess(func, with_pipe, double_fork)
     local parent_read_fd, child_write_fd
     if with_pipe then
         local pipe = ffi.new('int[2]', {-1, -1})
@@ -241,6 +248,15 @@ function util.runInSubProcess(func, with_pipe)
     end
     local pid = C.fork()
     if pid == 0 then -- child process
+        if double_fork then
+            pid = C.fork()
+            if pid ~= 0 then
+                -- Parent side of the outer fork, we don't need it anymore, so just exit.
+                -- NOTE: Technically ought to be _exit, not exit.
+                os.exit((pid < 0) and 1 or 0)
+            end
+            -- pid == 0 -> inner child :)
+        end
         -- We need to wrap it with pcall: otherwise, if we were in a
         -- subroutine, the error would just abort the coroutine, bypassing
         -- our os.exit(0), and this subprocess would be a working 2nd instance
@@ -272,8 +288,17 @@ function util.runInSubProcess(func, with_pipe)
         os.exit(0)
     end
     -- parent/main process
-    if pid == -1 then -- on failure, fork() returns -1
+    if pid < 0 then -- on failure, fork() returns -1
         return false
+    end
+    -- If we double-fork, reap the outer fork now, since its only purpose is fork -> _exit
+    if double_fork then
+        local status = ffi.new('int[1]')
+        local ret = C.waitpid(pid, status, 0)
+        -- Returns pid on success, -1 on failure
+        if ret < 0 then
+            return false
+        end
     end
     if child_write_fd then
         -- close our duplicate of child fd

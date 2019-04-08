@@ -20,6 +20,7 @@ local fb = {
     native_rotation_mode = nil,
     cur_rotation_mode = nil,
     blitbuffer_rotation_mode = nil,
+    night_mode = false,
 }
 
 --[[
@@ -362,11 +363,15 @@ function fb:setWindowTitle(new_title)
 end
 
 function fb:toggleNightMode()
-    self.bb:invert()
-    if self.viewport then
-        -- invert and blank out the full framebuffer when we are working on a viewport
-        self.full_bb:invert()
-        self.full_bb:fill(Blitbuffer.COLOR_WHITE)
+    self.night_mode = not self.night_mode
+    -- Only do SW inversion if the HW can't...
+    if not (self.device and self.device:canHWInvert()) then
+        self.bb:invert()
+        if self.viewport then
+            -- invert and blank out the full framebuffer when we are working on a viewport
+            self.full_bb:invert()
+            self.full_bb:fill(Blitbuffer.COLOR_WHITE)
+        end
     end
 end
 

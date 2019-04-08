@@ -284,6 +284,157 @@ void BB_blend_rect(BlitBuffer *bb, int x, int y, int w, int h, Color8A *color) {
     }
 }
 
+void BB_invert_rect(BlitBuffer *bb, int x, int y, int w, int h) {
+    int rotation = GET_BB_ROTATION(bb);
+    int rx, ry, rw, rh;
+    int i, j;
+    // Compute rotated rectangle coordinates & size
+    switch (rotation) {
+        case 0:
+                rx = x;
+                ry = y;
+                rw = w;
+                rh = h;
+                break;
+        case 1:
+                rx = bb->w - (y + h);
+                ry = x;
+                rw = h;
+                rh = w;
+                break;
+        case 2:
+                rx = bb->w - (x + w);
+                ry = bb->h - (y + h);
+                rw = w;
+                rh = h;
+                break;
+        case 3:
+                rx = y;
+                ry = bb->h - (x + w);
+                rw = h;
+                rh = w;
+                break;
+    }
+    // Handle any target pitch properly
+    int bb_type = GET_BB_TYPE(bb);
+    switch (bb_type) {
+        case TYPE_BB8:
+            {
+                if (rx == 0 && rw == bb->w) {
+                    // Single step for contiguous scanlines
+                    //fprintf(stdout, "%s: Full BB8 invertRect\n", __FUNCTION__);
+                    uint8_t *p = bb->data + bb->pitch*ry;
+                    for (i = 0; i < bb->phys_w*rh; i++) {
+                        p[i] ^= 0xFF;
+                    }
+                } else {
+                    // Pixel per pixel
+                    //fprintf(stdout, "%s: Pixel BB8 invertRect\n", __FUNCTION__);
+                    uint8_t *p;
+                    for (j = ry; j < ry+rh; j++) {
+                        p = bb->data + bb->pitch*j + rx;
+                        for (i = 0; i < rw; i++) {
+                            p[i] ^= 0xFF;
+                        }
+                    }
+                }
+            }
+            break;
+        case TYPE_BB8A:
+            {
+                if (rx == 0 && rw == bb->w) {
+                    // Single step for contiguous scanlines
+                    //fprintf(stdout, "%s: Full BB8A invertRect\n", __FUNCTION__);
+                    uint16_t *p = (uint16_t*) (bb->data + bb->pitch*ry);
+                    for (i = 0; i < bb->phys_w*rh; i++) {
+                        p[i] ^= 0x00FF;
+                    }
+                } else {
+                    // Pixel per pixel
+                    //fprintf(stdout, "%s: Pixel BB8A invertRect\n", __FUNCTION__);
+                    uint16_t *p;
+                    for (j = ry; j < ry+rh; j++) {
+                        p = (uint16_t*) (bb->data + bb->pitch*j + (rx << 1));
+                        for (i = 0; i < rw; i++) {
+                            p[i] ^= 0x00FF;
+                        }
+                    }
+                }
+            }
+            break;
+        case TYPE_BBRGB16:
+            {
+                if (rx == 0 && rw == bb->w) {
+                    // Single step for contiguous scanlines
+                    //fprintf(stdout, "%s: Full BBRGB16 invertRect\n", __FUNCTION__);
+                    uint16_t *p = (uint16_t*) (bb->data + bb->pitch*ry);
+                    for (i = 0; i < bb->phys_w*rh; i++) {
+                        p[i] ^= 0xFFFF;
+                    }
+                } else {
+                    // Pixel per pixel
+                    //fprintf(stdout, "%s: Pixel BBRGB16 invertRect\n", __FUNCTION__);
+                    uint16_t *p;
+                    for (j = ry; j < ry+rh; j++) {
+                        p = (uint16_t*) (bb->data + bb->pitch*j + (rx << 1));
+                        for (i = 0; i < rw; i++) {
+                            p[i] ^= 0xFFFF;
+                        }
+                    }
+                }
+            }
+            break;
+        case TYPE_BBRGB24:
+            {
+                if (rx == 0 && rw == bb->w) {
+                    // Single step for contiguous scanlines
+                    //fprintf(stdout, "%s: Full BBRGB24 invertRect\n", __FUNCTION__);
+                    uint8_t *p = bb->data + bb->pitch*ry;
+                    for (i = 0; i < bb->phys_w*rh; i+=3) {
+                        p[i] ^= 0xFF;
+                        p[i+1] ^= 0xFF;
+                        p[i+2] ^= 0xFF;
+                    }
+                } else {
+                    // Pixel per pixel
+                    //fprintf(stdout, "%s: Pixel BBRGB24 invertRect\n", __FUNCTION__);
+                    uint8_t *p;
+                    for (j = ry; j < ry+rh; j++) {
+                        p = bb->data + bb->pitch*j + (rx * 3);
+                        for (i = 0; i < rw; i+=3) {
+                            p[i] ^= 0xFF;
+                            p[i+1] ^= 0xFF;
+                            p[i+2] ^= 0xFF;
+                        }
+                    }
+                }
+            }
+            break;
+        case TYPE_BBRGB32:
+            {
+                if (rx == 0 && rw == bb->w) {
+                    // Single step for contiguous scanlines
+                    //fprintf(stdout, "%s: Full BBRGB32 invertRect\n", __FUNCTION__);
+                    uint32_t *p = (uint32_t*) (bb->data + bb->pitch*ry);
+                    for (i = 0; i < bb->phys_w*rh; i++) {
+                        p[i] ^= 0x00FFFFFF;
+                    }
+                } else {
+                    // Pixel per pixel
+                    //fprintf(stdout, "%s: Pixel BBRGB32 invertRect\n", __FUNCTION__);
+                    uint32_t *p;
+                    for (j = ry; j < ry+rh; j++) {
+                        p = (uint32_t*) (bb->data + bb->pitch*j + (rx << 2));
+                        for (i = 0; i < rw; i++) {
+                            p[i] ^= 0x00FFFFFF;
+                        }
+                    }
+                }
+            }
+            break;
+    }
+}
+
 void BB_blit_to_BB8(BlitBuffer *src, BlitBuffer *dst,
         int dest_x, int dest_y, int offs_x, int offs_y, int w, int h) {
     int d_x, d_y, o_x, o_y;
@@ -1934,9 +2085,7 @@ void BB_invert_blit_from(BlitBuffer *dst, BlitBuffer *src,
                     for (d_x = dest_x; d_x < dest_x + w; d_x++) {
                         BB_GET_PIXEL(dst, dbb_rotation, ColorRGB32, d_x, d_y, &dstptr);
                         BB_GET_PIXEL(src, sbb_rotation, ColorRGB32, o_x, o_y, &srcptr);
-                        dstptr->r = srcptr->r ^ 0xFF;
-                        dstptr->g = srcptr->g ^ 0xFF;
-                        dstptr->b = srcptr->b ^ 0xFF;
+                        *(uint32_t*) dstptr = *(uint32_t*) srcptr ^ 0x00FFFFFF;
                         o_x += 1;
                     }
                     o_y += 1;

@@ -19,7 +19,8 @@ local band = bit.band
 local bor = bit.bor
 local bxor = bit.bxor
 
-local uint32pt = ffi.typeof("uint32_t*") -- luacheck: ignore 211
+local uint32pt = ffi.typeof("uint32_t*")
+local uint16pt = ffi.typeof("uint16_t*")
 local uint8pt = ffi.typeof("uint8_t*")
 local posix = require("ffi/posix_h") -- luacheck: ignore 211
 local debug = debug
@@ -122,6 +123,7 @@ typedef struct BlitBufferRGB32 {
 
 void BB_fill_rect(BlitBuffer *bb, int x, int y, int w, int h, uint8_t v);
 void BB_blend_rect(BlitBuffer *bb, int x, int y, int w, int h, Color8A *color);
+void BB_invert_rect(BlitBuffer *bb, int x, int y, int w, int h);
 void BB_blit_to(BlitBuffer *source, BlitBuffer *dest, int dest_x, int dest_y,
                 int offs_x, int offs_y, int w, int h);
 void BB_add_blit_from(BlitBuffer *dest, BlitBuffer *source, int dest_x, int dest_y,
@@ -1146,6 +1148,94 @@ invert a rectangle within the buffer
 @param h height
 --]]
 function BB_mt.__index:invertRect(x, y, w, h)
+    self:invertblitFrom(self, x, y, x, y, w, h)
+end
+
+function BB_mt.__index:invertRect(x, y, w, h)
+    w, x = BB.checkBounds(w, x, 0, self:getWidth(), 0xFFFF)
+    h, y = BB.checkBounds(h, y, 0, self:getHeight(), 0xFFFF)
+    if w <= 0 or h <= 0 then return end
+    if use_cblitbuffer then
+        cblitbuffer.BB_invert_rect(ffi.cast("struct BlitBuffer *", self),
+            x, y, w, h)
+    else
+        local hook, mask, count = debug.gethook()
+        debug.sethook()
+        -- Handle rotation...
+        x, y, w, h = self:getPhysicalRect(x, y, w, h)
+        -- Handle any target pitch properly (i.e., fetch the amount of bytes taken per pixel)...
+        local bpp = self:getBytesPerPixel()
+        -- If we know the native data type of a pixel, we can use that instead of doing it byte-per-byte...
+        local bbtype = self:getType()
+
+        -- We check against the BB's unrotated coordinates (i.e., self.w and not self:getWidth()),
+        -- as our memory region has a fixed layout, too!
+        if x == 0 and w == self.w then
+            -- Single step for contiguous scanlines
+            --print("Full invertRect")
+            if bbtype == TYPE_BBRGB32 then
+                local p = ffi.cast(uint32pt, ffi.cast(uint8pt, self.data) + self.pitch*y)
+                -- Account for potentially off-screen scanline bits by using self.phys_w instead of w,
+                -- as we've just assured ourselves that the requested w matches self.w ;).
+                for i = 1, self.phys_w*h do
+                    p[0] = bxor(p[0], 0x00FFFFFF)
+                    -- Pointer arithmetics magic: +1 on an uint32_t* means +4 bytes (i.e., next pixel) ;).
+                    p = p+1
+                end
+            elseif bbtype == TYPE_BBRGB16 then
+                local p = ffi.cast(uint16pt, ffi.cast(uint8pt, self.data) + self.pitch*y)
+                for i = 1, self.phys_w*h do
+                    p[0] = bxor(p[0], 0xFFFF)
+                    p = p+1
+                end
+            else
+                -- Should only be BB8 left, but honor bpp for safety instead of relying purely on pointer arithmetics...
+                local p = ffi.cast(uint8pt, self.data) + self.pitch*y
+                for i = 1, bpp*self.phys_w*h do
+                    p[0] = bxor(p[0], 0xFF)
+                    p = p+1
+                end
+            end
+        else
+            -- Pixel per pixel
+            --print("Pixel invertRect")
+            if bbtype == TYPE_BBRGB32 then
+                for j = y, y+h-1 do
+                    local p = ffi.cast(uint32pt, ffi.cast(uint8pt, self.data) + self.pitch*j) + x
+                    for i = 0, w-1 do
+                        p[0] = bxor(p[0], 0x00FFFFFF)
+                        p = p+1
+                    end
+                end
+            elseif bbtype == TYPE_BBRGB16 then
+                for j = y, y+h-1 do
+                    local p = ffi.cast(uint16pt, ffi.cast(uint8pt, self.data) + self.pitch*j) + x
+                    for i = 0, w-1 do
+                        p[0] = bxor(p[0], 0xFFFF)
+                        p = p+1
+                    end
+                end
+            else
+                -- Again, honor bpp for safety instead of relying purely on pointer arithmetics...
+                for j = y, y+h-1 do
+                    local p = ffi.cast(uint8pt, self.data) + self.pitch*j + bpp*x
+                    for i = 0, bpp*(w-1) do
+                        p[0] = bxor(p[0], 0xFF)
+                        p = p+1
+                    end
+                end
+            end
+        end
+        debug.sethook(hook, mask)
+    end
+end
+
+-- No fast paths for BB4 & BB8A
+function BB4_mt.__index:invertRect(x, y, w, h)
+    self:invertblitFrom(self, x, y, x, y, w, h)
+end
+
+function BB8A_mt.__index:invertRect(x, y, w, h)
     self:invertblitFrom(self, x, y, x, y, w, h)
 end
 
