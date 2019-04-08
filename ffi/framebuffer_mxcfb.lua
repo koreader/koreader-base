@@ -254,7 +254,9 @@ local function mxc_update(fb, update_ioctl, refarea, refresh_type, waveform_mode
             refarea[0].flags = bor(refarea[0].flags, C.EPDC_FLAG_ENABLE_INVERSION)
         end
 
-        -- If the waveform is not fast or GC16, enforce a nightmode-specific mode (usually, GC16), to limit ghosting
+        -- If the waveform is not fast or GC16, enforce a nightmode-specific mode (usually, GC16), to limit ghosting.
+        -- There's nothing much we can do about crappy flashing behavior on some devices, though (c.f., base/#884),
+        -- that's in the hands of the EPDC. Kindle PW2+ behave sanely, for instance, even when flashing on AUTO or GC16 ;).
         if not fb:_isFastWaveFormMode(waveform_mode) and waveform_mode ~= C.WAVEFORM_MODE_GC16 then
             waveform_mode = fb:_getNightWaveFormMode()
             refarea[0].waveform_mode = waveform_mode
@@ -539,8 +541,8 @@ function framebuffer:init()
             self.waveform_fast = C.WAVEFORM_MODE_DU -- NOTE: DU, because A2 looks terrible on REAGL devices. Older devices/FW may be using AUTO in this instance.
             self.waveform_reagl = C.WAVEFORM_MODE_REAGL
             self.waveform_partial = self.waveform_reagl
-            -- NOTE: We *might* be able to use GL16_INV in nightmode on devices running FW >= 5.6.x...
-            --       Should hopefully fall-back to AUTO on older FWs...
+            -- NOTE: GL16_INV is available since FW >= 5.6.x only, but it'll safely fall-back to AUTO on older FWs.
+            --       Most people with those devices should be running at least FW 5.9.7 by now, though ;).
             self.waveform_night = C.WAVEFORM_MODE_GL16_INV
         else
             self.waveform_fast = C.WAVEFORM_MODE_DU -- NOTE: DU, because A2 looks terrible on the Touch, and ghosts horribly. Framework is actually using AUTO for UI feedback inverts.
@@ -566,7 +568,7 @@ function framebuffer:init()
             self.waveform_flashui = C.WAVEFORM_MODE_GC16
             self.waveform_reagl = C.WAVEFORM_MODE_KOA2_GLR16
             self.waveform_partial = self.waveform_reagl
-            -- NOTE: Not quite sure this is the right one, as there's also KOA2_GLKW16... One might be more suited to UI or text than the other...
+            -- NOTE: There's also KOA2_GLKW16... One might be more suited to UI or text than the other?
             self.waveform_night = C.WAVEFORM_MODE_KOA2_GCK16
         end
     elseif self.device:isKobo() then
