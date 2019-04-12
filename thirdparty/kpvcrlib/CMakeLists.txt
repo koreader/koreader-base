@@ -103,6 +103,7 @@ add_definitions(-DCR_EMULATE_GETTEXT)
 add_definitions(-DCR_RENDER_32BPP_RGB_PXFMT)
 add_definitions(-Dmain=xxxmain)
 set (CRENGINE_SOURCES
+    ${CRE_DIR}/qimagescale/qimagescale.cpp
     ${CRE_DIR}/src/cp_stats.cpp
     ${CRE_DIR}/src/lvstring.cpp
     ${CRE_DIR}/src/props.cpp
