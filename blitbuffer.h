@@ -112,6 +112,8 @@ void BB_blend_rect(BlitBuffer *bb, int x, int y, int w, int h, Color8A *color);
 void BB_invert_rect(BlitBuffer *bb, int x, int y, int w, int h);
 void BB_blit_to_BB8(BlitBuffer *src, BlitBuffer *dst,
                     int dest_x, int dest_y, int offs_x, int offs_y, int w, int h);
+void BB_dither_blit_to_BB8(BlitBuffer *src, BlitBuffer *dst,
+                    int dest_x, int dest_y, int offs_x, int offs_y, int w, int h);
 void BB_blit_to_BB8A(BlitBuffer *src, BlitBuffer *dst,
                      int dest_x, int dest_y, int offs_x, int offs_y, int w, int h);
 void BB_blit_to_BB16(BlitBuffer *src, BlitBuffer *dst,
@@ -122,11 +124,15 @@ void BB_blit_to_BB32(BlitBuffer *src, BlitBuffer *dst,
                      int dest_x, int dest_y, int offs_x, int offs_y, int w, int h);
 void BB_blit_to(BlitBuffer *source, BlitBuffer *dest, int dest_x, int dest_y,
                 int offs_x, int offs_y, int w, int h);
+void BB_dither_blit_to(BlitBuffer *source, BlitBuffer *dest, int dest_x, int dest_y,
+                int offs_x, int offs_y, int w, int h);
 void BB_add_blit_from(BlitBuffer *dest, BlitBuffer *source, int dest_x, int dest_y,
                       int offs_x, int offs_y, int w, int h, uint8_t alpha);
 void BB_alpha_blit_from(BlitBuffer *dest, BlitBuffer *source, int dest_x, int dest_y,
                         int offs_x, int offs_y, int w, int h);
 void BB_pmulalpha_blit_from(BlitBuffer *dest, BlitBuffer *source, int dest_x, int dest_y,
+                        int offs_x, int offs_y, int w, int h);
+void BB_dither_pmulalpha_blit_from(BlitBuffer *dest, BlitBuffer *source, int dest_x, int dest_y,
                         int offs_x, int offs_y, int w, int h);
 void BB_invert_blit_from(BlitBuffer *dest, BlitBuffer *source, int dest_x, int dest_y,
                          int offs_x, int offs_y, int w, int h);

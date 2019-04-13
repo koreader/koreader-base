@@ -126,11 +126,15 @@ void BB_blend_rect(BlitBuffer *bb, int x, int y, int w, int h, Color8A *color);
 void BB_invert_rect(BlitBuffer *bb, int x, int y, int w, int h);
 void BB_blit_to(BlitBuffer *source, BlitBuffer *dest, int dest_x, int dest_y,
                 int offs_x, int offs_y, int w, int h);
+void BB_dither_blit_to(BlitBuffer *source, BlitBuffer *dest, int dest_x, int dest_y,
+                int offs_x, int offs_y, int w, int h);
 void BB_add_blit_from(BlitBuffer *dest, BlitBuffer *source, int dest_x, int dest_y,
                       int offs_x, int offs_y, int w, int h, uint8_t alpha);
 void BB_alpha_blit_from(BlitBuffer *dest, BlitBuffer *source, int dest_x, int dest_y,
                         int offs_x, int offs_y, int w, int h);
 void BB_pmulalpha_blit_from(BlitBuffer *dest, BlitBuffer *source, int dest_x, int dest_y,
+                        int offs_x, int offs_y, int w, int h);
+void BB_dither_pmulalpha_blit_from(BlitBuffer *dest, BlitBuffer *source, int dest_x, int dest_y,
                         int offs_x, int offs_y, int w, int h);
 void BB_invert_blit_from(BlitBuffer *dest, BlitBuffer *source, int dest_x, int dest_y,
                          int offs_x, int offs_y, int w, int h);
@@ -1136,7 +1140,7 @@ function BB_mt.__index:ditherpmulalphablitFrom(source, dest_x, dest_y, offs_x, o
         width, dest_x, offs_x = BB.checkBounds(width, dest_x or 0, offs_x or 0, self:getWidth(), source:getWidth())
         height, dest_y, offs_y = BB.checkBounds(height, dest_y or 0, offs_y or 0, self:getHeight(), source:getHeight())
         if width <= 0 or height <= 0 then return end
-        cblitbuffer.BB_ditherpmulalpha_blit_from(ffi.cast("struct BlitBuffer *", self),
+        cblitbuffer.BB_dither_pmulalpha_blit_from(ffi.cast("struct BlitBuffer *", self),
             ffi.cast("struct BlitBuffer *", source),
             dest_x, dest_y, offs_x, offs_y, width, height)
     else
@@ -1151,8 +1155,8 @@ function BB_mt.__index:ditherblitFrom(source, dest_x, dest_y, offs_x, offs_y, wi
         width, dest_x, offs_x = BB.checkBounds(width, dest_x or 0, offs_x or 0, self:getWidth(), source:getWidth())
         height, dest_y, offs_y = BB.checkBounds(height, dest_y or 0, offs_y or 0, self:getHeight(), source:getHeight())
         if width <= 0 or height <= 0 then return end
-        cblitbuffer.BB_dither_blit_from(ffi.cast("struct BlitBuffer *", self),
-            ffi.cast("struct BlitBuffer *", source),
+        cblitbuffer.BB_dither_blit_to(ffi.cast("struct BlitBuffer *", source),
+            ffi.cast("struct BlitBuffer *", self),
             dest_x, dest_y, offs_x, offs_y, width, height)
     else
         self:blitFrom(source, dest_x, dest_y, offs_x, offs_y, width, height, self.setPixelDither)
