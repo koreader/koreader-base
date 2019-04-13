@@ -304,12 +304,13 @@ function ColorRGB32_mt.__index:pmulblend(color)
     local b = div255(self:getB() * ainv + color:getB() * 0xFF)
     self:set(ColorRGB32(r, g, b, self:getAlpha()))
 end
--- When dithering on BB8, we want this to simply return the color, so we can dither it before the set...
-function Color8_mt.__index:pmulblend_noset(color)
+-- And the BB8 version of the same that dithers the result...
+function Color8_mt.__index:ditherpmulblend(x, y, color)
     local alpha = color:getAlpha()
     -- simplified: we expect a 8bit grayscale "color" as parameter
     local value = div255(self.a * bxor(alpha, 0xFF) + color:getR() * 0xFF)
-    return value
+    value = dither_o8x8(x, y, value)
+    self:set(Color8(value))
 end
 
 -- color conversions:
@@ -866,9 +867,7 @@ function BB8_mt.__index:setPixelDitherPmulBlend(x, y, color)
         -- The pmulblend method for these types of target BB assumes a grayscale input
         color = color:getColor8A()
         if self:getInverse() == 1 then color = color:invert() end
-        local v = self:getPixelP(px, py)[0]:pmulblend_noset(color)
-        v = dither_o8x8(x, y, v)
-        self:getPixelP(px, py)[0]:set(v)
+        self:getPixelP(px, py)[0]:ditherpmulblend(x, y, color)
     end
 end
 BB_mt.__index.setPixelDitherPmulBlend = BB_mt.__index.setPixelPmulBlend
