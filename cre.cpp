@@ -2515,7 +2515,7 @@ static int drawCurrentPage(lua_State *L) {
 		 * Blitbuffer.TYPE_BBRGB32, see CreDocument:drawCurrentView */
 		LVColorDrawBuf drawBuf(w, h, bb->data, 32);
 		drawBuf.setInvertImages(invert_images);
-		drawBuf.setSmoothImages(smooth_scaling);
+		drawBuf.setSmoothScalingImages(smooth_scaling);
 		doc->text_view->Draw(drawBuf, false);
 		drawn_images_count = drawBuf.getDrawnImagesCount();
 		drawn_images_surface = drawBuf.getDrawnImagesSurface();
@@ -2524,7 +2524,7 @@ static int drawCurrentPage(lua_State *L) {
 		/* Set DrawBuf to 8bpp */
 		LVGrayDrawBuf drawBuf(w, h, 8, bb->data);
 		drawBuf.setInvertImages(invert_images);
-		drawBuf.setSmoothImages(smooth_scaling);
+		drawBuf.setSmoothScalingImages(smooth_scaling);
 		doc->text_view->Draw(drawBuf, false);
 		drawn_images_count = drawBuf.getDrawnImagesCount();
 		drawn_images_surface = drawBuf.getDrawnImagesSurface();
