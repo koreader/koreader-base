@@ -396,7 +396,12 @@ function fb:setupDithering()
     if self.hw_dithering then
         self.sw_dithering = false
     else
-        self.sw_dithering = true
+        -- We only handle SW dithering @ 8bpp, to keep things simple
+        if self.device.screen.fb_bpp == 8 then
+            self.sw_dithering = true
+        else
+            self.sw_dithering = false
+        end
     end
 end
 
