@@ -2497,9 +2497,13 @@ static int drawCurrentPage(lua_State *L) {
 	if (lua_isboolean(L, 4)) {
 		invert_images = lua_toboolean(L, 4);
 	}
+	bool smooth_scaling = false; // set to true when smooth image scaling is enabled
+	if (lua_isboolean(L, 5)) {
+		smooth_scaling = lua_toboolean(L, 5);
+	}
 
-	int w = bb->w,
-		h = bb->h;
+	int w = bb->w;
+	int h = bb->h;
 
 	int drawn_images_count;
 	int drawn_images_surface;
@@ -2511,6 +2515,7 @@ static int drawCurrentPage(lua_State *L) {
 		 * Blitbuffer.TYPE_BBRGB32, see CreDocument:drawCurrentView */
 		LVColorDrawBuf drawBuf(w, h, bb->data, 32);
 		drawBuf.setInvertImages(invert_images);
+		drawBuf.setSmoothImages(smooth_scaling);
 		doc->text_view->Draw(drawBuf, false);
 		drawn_images_count = drawBuf.getDrawnImagesCount();
 		drawn_images_surface = drawBuf.getDrawnImagesSurface();
@@ -2519,6 +2524,7 @@ static int drawCurrentPage(lua_State *L) {
 		/* Set DrawBuf to 8bpp */
 		LVGrayDrawBuf drawBuf(w, h, 8, bb->data);
 		drawBuf.setInvertImages(invert_images);
+		drawBuf.setSmoothImages(smooth_scaling);
 		doc->text_view->Draw(drawBuf, false);
 		drawn_images_count = drawBuf.getDrawnImagesCount();
 		drawn_images_surface = drawBuf.getDrawnImagesSurface();
