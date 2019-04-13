@@ -2503,7 +2503,7 @@ static int drawCurrentPage(lua_State *L) {
 	}
 	bool dithering = false; // set to true when SW dithering is enabled
 	if (lua_isboolean(L, 6)) {
-		smooth_scaling = lua_toboolean(L, 6);
+		dithering = lua_toboolean(L, 6);
 	}
 
 	int w = bb->w;
