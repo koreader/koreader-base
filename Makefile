@@ -101,14 +101,14 @@ $(OUTPUT_DIR)/libs/libkoreader-input.so: input/*.c input/*.h $(if $(KINDLE),$(PO
 		$(if $(POCKETBOOK),-linkview,)
 
 $(OUTPUT_DIR)/libs/libkoreader-lfs.so: \
-			$(if $(or $(ANDROID),$(WIN32)),$(LUAJIT_LIB),) \
+			$(if $(USE_LUAJIT_LIB),$(LUAJIT_LIB),) \
 			luafilesystem/src/lfs.c
 	$(CC) $(DYNLIB_CFLAGS) -o $@ $^
 
 # put all the libs to the end of compile command to make ubuntu's tool chain
 # happy
 $(OUTPUT_DIR)/libs/libkoreader-djvu.so: djvu.c \
-			$(if $(or $(ANDROID),$(WIN32)),$(LUAJIT_LIB),) \
+			$(if $(USE_LUAJIT_LIB),$(LUAJIT_LIB),) \
 			$(DJVULIBRE_LIB) $(K2PDFOPT_LIB)
 	$(CC) -I$(DJVULIBRE_DIR) -I$(MUPDF_DIR)/include $(K2PDFOPT_CFLAGS) \
 		$(DYNLIB_CFLAGS) -o $@ $^ $(if $(ANDROID),,-lpthread)
@@ -120,7 +120,7 @@ ifdef DARWIN
 endif
 
 $(OUTPUT_DIR)/libs/libkoreader-cre.so: cre.cpp \
-			$(if $(or $(ANDROID),$(WIN32)),$(LUAJIT_LIB),) \
+			$(if $(USE_LUAJIT_LIB),$(LUAJIT_LIB),) \
 			$(CRENGINE_LIB)
 	$(CXX) -I$(CRENGINE_SRC_DIR)/crengine/include/ $(DYNLIB_CFLAGS) \
 		-DLDOM_USE_OWN_MEM_MAN=$(if $(WIN32),0,1) \
