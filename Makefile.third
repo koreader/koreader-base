@@ -169,17 +169,10 @@ $(LUAJIT) $(LUAJIT_LIB) $(LUAJIT_JIT): $(THIRDPARTY_DIR)/luajit/CMakeLists.txt
 		-DCROSS="$(strip $(CCACHE) $(CHOST))-" \
 		$(CURDIR)/$(THIRDPARTY_DIR)/luajit && \
 		$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS)
-ifdef WIN32
+ifdef USE_LUAJIT_LIB
 	cp -fL $(LUAJIT_DIR)/src/$(notdir $(LUAJIT_LIB)) $(LUAJIT_LIB)
 endif
-ifdef DARWIN
-	cp -fL $(LUAJIT_DIR)/src/$(notdir $(LUAJIT_LIB)) $(LUAJIT_LIB)
-endif
-ifdef ANDROID
-	cp -fL $(LUAJIT_DIR)/src/$(notdir $(LUAJIT_LIB)) $(LUAJIT_LIB)
-else
 	cp -fL $(LUAJIT_DIR)/src/$(notdir $(LUAJIT)) $(LUAJIT)
-endif
 	-rm -rf $(LUAJIT_JIT)
 	$(RCP) -fL $(LUAJIT_DIR)/src/jit $(OUTPUT_DIR)
 
