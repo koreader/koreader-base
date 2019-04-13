@@ -620,7 +620,7 @@ void BB_dither_blit_to_BB8(BlitBuffer *src, BlitBuffer *dst,
                     for (d_x = dest_x; d_x < dest_x + w; d_x++) {
                         BB_GET_PIXEL(dst, dbb_rotation, Color8, d_x, d_y, &dstptr);
                         BB_GET_PIXEL(src, sbb_rotation, Color8, o_x, o_y, &srcptr);
-                        *dstptr = dither_o8x8(o_x, o_y, *srcptr);
+                        dstptr->a = dither_o8x8(o_x, o_y, srcptr->a);
                         o_x += 1;
                     }
                     o_y += 1;
@@ -2189,7 +2189,7 @@ void BB_dither_pmulalpha_blit_from(BlitBuffer *dst, BlitBuffer *src,
                                 for (d_x = dest_x; d_x < dest_x + w; d_x++) {
                                     BB_GET_PIXEL(dst, dbb_rotation, Color8, d_x, d_y, &dstptr);
                                     BB_GET_PIXEL(src, sbb_rotation, Color8, o_x, o_y, &srcptr);
-                                    *dstptr = dither_o8x8(o_x, o_y, *srcptr);
+                                    dstptr->a = dither_o8x8(o_x, o_y, srcptr->a);
                                     o_x += 1;
                                 }
                                 o_y += 1;
