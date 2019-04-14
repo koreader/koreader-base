@@ -1,4 +1,4 @@
-## koreader-base [![Build Status][travis-icon]][travis-link]
+## koreader-base [![CircleCI](https://circleci.com/gh/koreader/koreader-base.svg?style=svg)](https://circleci.com/gh/koreader/koreader-base)
 
 This is the base framework for creating document readers like KOReader,
 an e-ink device oriented reader application for various document formats.
@@ -114,6 +114,3 @@ variable to the number of milliseconds you want the flash to endure:
 ```
 EMULATE_READER_FLASH=100
 ```
-
-[travis-icon]:https://travis-ci.org/koreader/koreader-base.png?branch=master
-[travis-link]:https://travis-ci.org/koreader/koreader-base

@@ -169,10 +169,12 @@ $(LUAJIT) $(LUAJIT_LIB) $(LUAJIT_JIT): $(THIRDPARTY_DIR)/luajit/CMakeLists.txt
 		-DCROSS="$(strip $(CCACHE) $(CHOST))-" \
 		$(CURDIR)/$(THIRDPARTY_DIR)/luajit && \
 		$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS)
-ifdef USE_LUAJIT_LIB
+ifneq ($(USE_LUAJIT_LIB),)
 	cp -fL $(LUAJIT_DIR)/src/$(notdir $(LUAJIT_LIB)) $(LUAJIT_LIB)
 endif
+ifeq ($(SKIP_LUAJIT_BIN),)
 	cp -fL $(LUAJIT_DIR)/src/$(notdir $(LUAJIT)) $(LUAJIT)
+endif
 	-rm -rf $(LUAJIT_JIT)
 	$(RCP) -fL $(LUAJIT_DIR)/src/jit $(OUTPUT_DIR)
 

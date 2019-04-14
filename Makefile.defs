@@ -167,6 +167,8 @@ endif
 
 USE_LUAJIT_LIB=$(or $(DARWIN),$(ANDROID),$(WIN32))
 
+SKIP_LUAJIT_BIN=$(or $(ANDROID),)
+
 # handle utility params on different host systems
 ifdef DARWINHOST
 	RCP:=cp -R
