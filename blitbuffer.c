@@ -93,6 +93,11 @@ static const char*
     (((_v >> 8U) + _v) >> 8U);                                                                       \
 })
 
+// NOTE: See Pillow's transpose operations, or Qt5 qMemRotate stuff for cache-efficient ways of rotating an image data buffer,
+//       instead of handling the rotation per-pixel, at plotting time.
+//       I have no idea if it'd be an efficient method here, since it requires an extra buffer in which to do the rotation,
+//       just so that new buffer can be used for the memcpy-based fast paths...
+
 #define BB_GET_PIXEL(bb, rotation, COLOR, x, y, pptr) \
     switch (rotation) { \
         case 0: \
