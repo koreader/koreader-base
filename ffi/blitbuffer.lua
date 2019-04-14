@@ -757,7 +757,8 @@ end
 function BB8_mt.__index:setPixelDither(x, y, color)
     local px, py = self:getPhysicalCoordinates(x, y)
     if self:getInverse() == 1 then color = color:invert() end
-    color = dither_o8x8(x, y, color)
+    color = color:getColor8()
+    color.a = dither_o8x8(x, y, color.a)
     self:getPixelP(px, py)[0]:set(color)
 end
 BB_mt.__index.setPixelDither = BB_mt.__index.setPixel
@@ -865,7 +866,8 @@ function BB8_mt.__index:setPixelDitherPmulBlend(x, y, color)
     end
     local px, py = self:getPhysicalCoordinates(x, y)
     if alpha == 0xFF then
-        color = dither_o8x8(x, y, color)
+        color = color:getColor8()
+        color.a = dither_o8x8(x, y, color.a)
         self:getPixelP(px, py)[0]:set(color)
     else
         -- The pmulblend method for these types of target BB assumes a grayscale input
