@@ -8,7 +8,7 @@ fi
 mkdir bin
 ln -s "$(command -v gcc-5)" bin/cc
 ln -s "$(command -v gcc-5)" bin/gcc
-ln -s "$(command -v c++-5)" bin/c++
+ln -s "$(command -v c++)" bin/c++
 ln -s "$(command -v g++-5)" bin/g++
 
 export PATH=$PWD/bin:$PATH

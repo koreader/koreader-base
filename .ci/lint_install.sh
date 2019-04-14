@@ -5,12 +5,12 @@ CI_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${CI_DIR}/common.sh"
 
 # print some useful info
-echo "TRAVIS_BUILD_DIR: ${TRAVIS_BUILD_DIR}"
 echo "pwd: $(pwd)"
 ls
 
-travis_retry luarocks --local install luacheck
-travis_retry luarocks --local install lanes # for parallel luacheck
+# follow deps are already included in ko docker image
+# travis_retry luarocks --local install luacheck
+# travis_retry luarocks --local install lanes # for parallel luacheck
 eval "$(luarocks path --bin)"
 export PATH=$PATH:$HOME/.luarocks/bin
 
