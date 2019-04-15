@@ -506,6 +506,11 @@ ifneq ($(TARGET), win32)
 	CXXFLAGS+=-fPIC
 endif
 
+# Try to make sure CMake picks up our flags...
+export CFLAGS
+export CXXFLAGS
+export LDFLAGS
+
 # FIXME: If we cared, we'd probably need to do something to convince libzmq not
 # to enable support for eventfd [@GLIBC_2.7]
 # FIXED: To cross compile libzmq for GLIBC_2.4 you need to configure with the
@@ -765,11 +770,15 @@ NANOSVG_HEADERS=$(addprefix $(NANOSVG_INCLUDE_DIR)/, $(NANOSVG_HEADER_FILES))
 # also, dynamic libraries must be compiled with "-shared" and "-fPIC".
 # having all symbols included (-E) won't hurt, too.
 DYNLIB_CFLAGS=-L$(CURDIR)/$(OUTPUT_DIR)/libs $(CFLAGS) -I$(LUAJIT_DIR)/src -shared
+DYNLIB_CXXFLAGS=-L$(CURDIR)/$(OUTPUT_DIR)/libs $(CXXFLAGS) -I$(LUAJIT_DIR)/src -shared
 DYNLIB_CMAKE_CFLAGS=-L$(CURDIR)/$(OUTPUT_DIR)/libs $(CFLAGS) -I$(LUAJIT_DIR)/src -shared
+DYNLIB_CMAKE_CXXFLAGS=-L$(CURDIR)/$(OUTPUT_DIR)/libs $(CXXFLAGS) -I$(LUAJIT_DIR)/src -shared
 ifdef DARWIN
 	DYNLIB_CFLAGS+=-dynamiclib -undefined dynamic_lookup
+	DYNLIB_CXXFLAGS+=-dynamiclib -undefined dynamic_lookup
 else
 	DYNLIB_CFLAGS+=-Wl,-E -Wl,-rpath,'$$ORIGIN'
+	DYNLIB_CXXFLAGS+=-Wl,-E -Wl,-rpath,'$$ORIGIN'
 endif
 
 # RPATH for all libraries in koreader/libs. The expand path looks like below:
@@ -779,8 +788,10 @@ ORIGIN_CMAKE_TO_AUTOCFG=\\\$$\\\$$ORIGIN
 
 ifdef DARWIN
 	DYNLIB_CMAKE_CFLAGS+=-dynamiclib -undefined dynamic_lookup
+	DYNLIB_CMAKE_CXXFLAGS+=-dynamiclib -undefined dynamic_lookup
 else
 	DYNLIB_CMAKE_CFLAGS+=-Wl,-E -Wl,-rpath,'$(ORIGIN_CMAKE_TO_AUTOCFG)'
+	DYNLIB_CMAKE_CXXFLAGS+=-Wl,-E -Wl,-rpath,'$(ORIGIN_CMAKE_TO_AUTOCFG)'
 endif
 
 LPEG_BUILD_DIR=$(THIRDPARTY_DIR)/lpeg/build/$(MACHINE)
