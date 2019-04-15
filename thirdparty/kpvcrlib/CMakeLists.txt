@@ -13,7 +13,7 @@ set(CMAKE_ASM_FLAGS_RELEASE "")
 # Oh, CMake. Why would you be using CFLAGS w/ CXX?
 set(CMAKE_C_FLAGS "${CFLAGS} -fPIC")
 set(CMAKE_CXX_FLAGS "${CXXFLAGS} -fPIC")
-set(CMAKE_EXE_LINKER_FLAGS "${LDFLAGS} -fPIC -static-libstdc++")
+set(CMAKE_SHARED_LINKER_FLAGS "${LDFLAGS} -fPIC -static-libstdc++")
 
 set (CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
 set (CMAKE_INSTALL_RPATH "$ORIGIN")
