@@ -191,7 +191,7 @@ ifeq ($(CC), clang)
 	HOSTCC:=clang
 	HOSTCXX:=clang++
 	# quiet flag
-	QFLAGS:=-Qunused-arguments
+	QFLAGS:=-Wno-ignored-optimization-argument -Wno-unknown-warning-option
 	export CLANG=1
 else
 	CC:=$(CHOST)-gcc
