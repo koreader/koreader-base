@@ -409,6 +409,7 @@ ifeq "$(CC_IS_CLANG)" "0"
 	endif
 endif
 ifeq "$(CC_IS_CLANG)" "0"
+	# NOTE: GCC 6.1.0 switched to gnu11 & gnu++14, so only tweak older ones.
 	ifeq "$(shell expr $(CC_VERSION) \< 060000)" "1"
 		CSTD_FLAGS:=-std=gnu11
 		CXXSTD_FLAGS:=-std=gnu++11
