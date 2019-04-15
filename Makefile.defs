@@ -368,9 +368,7 @@ else
 	ARM_ARCH:=
 endif
 
-# Clang 3.4 on Travis however doesn't define macro '__extern_always_inline'
 ifdef CLANG
-	BASE_CFLAGS+=-D__extern_always_inline=inline
 	# Tone down some very verbose Clang 5 warnings, too.
 	# This one can be *extremely* verbose
 	BASE_CFLAGS+=-Wno-array-bounds
