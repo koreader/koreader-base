@@ -42,9 +42,6 @@ if(NOT DEFINED ENV{WANT_SIMD})
     set(CFG_OPTS "${CFG_OPTS} -DREQUIRE_SIMD=OFF -DWITH_SIMD=OFF")
 endif()
 
-# NOTE: If we pass CMAKE_FLAGS w/ Ninja in there, shit goes boom. So, don't?
-set(CFG_CMD ${CMAKE_COMMAND} "${CMAKE_ARGS} ${CFG_OPTS}")
-
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
     https://github.com/libjpeg-turbo/libjpeg-turbo.git
@@ -58,7 +55,7 @@ ExternalProject_Add(
     DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
     BUILD_IN_SOURCE 1
     PATCH_COMMAND ""
-    CONFIGURE_COMMAND ${CFG_CMD}
+    CONFIGURE_COMMAND ${CMAKE_COMMAND} ${CMAKE_ARGS} ${CFG_OPTS}
     BUILD_COMMAND ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS}
     INSTALL_COMMAND ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS} install
 )
