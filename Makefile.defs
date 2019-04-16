@@ -448,9 +448,11 @@ ifdef STATICLIBSTDCPP
 endif
 
 # this will create a path named build/arm-none-linux-gnueabi or similar
-MACHINE:=$(shell PATH='$(PATH)' $(CC) -dumpmachine 2>/dev/null)
+TARGET_MARCHINE:=$(shell PATH='$(PATH)' $(CC) -dumpmachine 2>/dev/null)
 ifdef KODEBUG
-	MACHINE:=$(MACHINE)-debug
+	MACHINE:=$(TARGET_MARCHINE)-debug
+else
+	MACHINE:=$(TARGET_MARCHINE)
 endif
 OUTPUT_DIR:=build/$(MACHINE)
 
