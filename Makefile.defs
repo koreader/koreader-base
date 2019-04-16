@@ -518,6 +518,14 @@ endif
 export CFLAGS
 export CXXFLAGS
 export LDFLAGS
+# And that our TC is honored
+export CC
+export CXX
+export AR
+export RANLIB
+export LD
+export RC
+export STRIP
 
 # FIXME: If we cared, we'd probably need to do something to convince libzmq not
 # to enable support for eventfd [@GLIBC_2.7]
