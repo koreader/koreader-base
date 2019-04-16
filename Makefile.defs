@@ -524,8 +524,10 @@ export CXX
 export AR
 export RANLIB
 export LD
-#export RC
 export STRIP
+ifdef WIN32
+	export RC
+endif
 
 # FIXME: If we cared, we'd probably need to do something to convince libzmq not
 # to enable support for eventfd [@GLIBC_2.7]
