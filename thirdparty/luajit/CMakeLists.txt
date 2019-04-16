@@ -43,13 +43,6 @@ if(${XCOMPILE})
     # To recap: build its TARGET_CC from CROSS+CC, so we need HOSTCC in CC.
     # Build its HOST/TARGET_CFLAGS based on CFLAGS, so we need
     # a neutral CFLAGS without arch,
-    # As for CMake, it currently inherits our env's CFLAGS, which are target-specific,
-    # but we've just enforced CC to HOSTCC in the Makefile, so, obviously, that won't work,
-    # and CMake will fail the compiler test.
-    # Since getting CMake to honor a specific set of CFLAGS is insanely harder than it should be,
-    # we resort to completely undocumented CMAKE_<LANG>_COMPILER_WORKS directives...
-    # It's not as if we were actually using CMake to actually *build* anything in this case.
-
     execute_process(
         COMMAND "${CC}" -dumpmachine
         OUTPUT_VARIABLE HOST_CC_MACHINE
