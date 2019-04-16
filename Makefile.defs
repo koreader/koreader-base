@@ -192,6 +192,19 @@ ifeq ($(CC), clang)
 	HOSTCXX:=clang++
 	# quiet flag
 	QFLAGS:=-Wno-ignored-optimization-argument -Wno-unknown-warning-option
+	# Tone down some very verbose Clang 5 warnings, too.
+	# This one can be *extremely* verbose
+	QFLAGS+=-Wno-array-bounds
+	# This one checks if -I flags are actually used, even at steps where it makes little sense.
+	# Since we massively pass -I/-L flags ourselves, this becomes insane really quick.
+	QFLAGS+=-Wno-unused-command-line-argument
+	# Let FreeType do its thing...
+	QFLAGS+=-Wno-self-assign
+	# Also extremely verbose...
+	QFLAGS+=-Wno-parentheses-equality
+	# For dropbear's libtom...
+	QFLAGS+=-Wno-macro-redefined
+	# Note that things appear to be better with Clang >= 6 ;).
 	export CLANG=1
 else
 	CC:=$(CHOST)-gcc
@@ -366,23 +379,6 @@ else ifeq ($(TARGET), debian-armhf)
 else
 	# else, we are compiling emulator on x86
 	ARM_ARCH:=
-endif
-
-ifdef CLANG
-	# Tone down some very verbose Clang 5 warnings, too.
-	# This one can be *extremely* verbose
-	BASE_CFLAGS+=-Wno-array-bounds
-	# This one checks if -I flags are actually used, even at steps where it makes little sense.
-	# Since we massively pass -I/-L flags ourselves, this becomes insane really quick.
-	# QFLAGS should have been taking care of this already, but it looks like it doesn't take in every case...
-	BASE_CFLAGS+=-Wno-unused-command-line-argument
-	# Let FreeType do its thing...
-	BASE_CFLAGS+=-Wno-self-assign
-	# Also extremely verbose...
-	BASE_CFLAGS+=-Wno-parentheses-equality
-	# For dropbear's libtom...
-	BASE_CFLAGS+=-Wno-macro-redefined
-	# Note that things appear to be better with Clang >= 6 ;).
 endif
 
 HOST_ARCH:=-march=native
