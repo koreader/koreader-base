@@ -45,10 +45,10 @@ if(${XCOMPILE})
     # a neutral CFLAGS without arch,
     # As for CMake, it currently inherits our env's CFLAGS, which are target-specific,
     # but we've just enforced CC to HOSTCC in the Makefile, so, obviously, that won't work,
-    # and CMake will fail the compiler test, unless we also make sure it's using the HOST_CFLAGS,
-    # which we also do in the Makefile...
-    # That is, unless you want to dive into the usual CMake crap,
-    # and resort to the completely undocumented CMAKE_C_COMPILER_WORKS directive...
+    # and CMake will fail the compiler test.
+    # Since getting CMake to honor a specific set of CFLAGS is insanely harder than it should be,
+    # we resort to completely undocumented CMAKE_<LANG>_COMPILER_WORKS directives...
+    # It's not as if we were actually using CMake to actually *build* anything in this case.
 
     execute_process(
         COMMAND "${CC}" -dumpmachine
