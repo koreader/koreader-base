@@ -443,11 +443,11 @@ ifdef STATICLIBSTDCPP
 endif
 
 # this will create a path named build/arm-none-linux-gnueabi or similar
-MACHINE?=$(shell PATH='$(PATH)' $(CC) -dumpmachine 2>/dev/null)
+MACHINE:=$(shell PATH='$(PATH)' $(CC) -dumpmachine 2>/dev/null)
 ifdef KODEBUG
 	MACHINE:=$(MACHINE)-debug
 endif
-OUTPUT_DIR?=build/$(MACHINE)
+OUTPUT_DIR:=build/$(MACHINE)
 
 # you can configure an emulation for the (eink) framebuffer here.
 # the application won't use the framebuffer (and the special e-ink ioctls)
