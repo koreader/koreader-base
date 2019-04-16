@@ -44,7 +44,7 @@ if(NOT DEFINED ENV{WANT_SIMD})
 endif()
 
 # NOTE: If we pass CMAKE_FLAGS w/ Ninja in there, shit goes boom. So, don't?
-set(CFG_CMD sh -c "${CMAKE} ${CFG_OPTS}")
+set(CFG_CMD ${CMAKE_COMMAND} "${CMAKE_ARGS} ${CFG_OPTS}")
 
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
