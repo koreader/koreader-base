@@ -57,6 +57,7 @@ script:
   - if [ "$EMULATE_READER" = 1 ]; then source .ci/test_script.sh; fi
 
 after_failure:
-  - cat thirdparty/kpvcrlib/build/arm-kobo-linux-gnueabihf/rules.ninja
-  - cat thirdparty/kpvcrlib/build/arm-kobo-linux-gnueabihf/CMakeFiles/3.5.1/CMakeCXXCompiler.cmake
-  - cat thirdparty/kpvcrlib/build/arm-kobo-linux-gnueabihf/CMakeFiles/3.5.1/CMakeCCompiler.cmake
+  - cat thirdparty/kpvcrlib/build/*/rules.ninja
+  - cat thirdparty/kpvcrlib/build/*/CMakeFiles/*/CMakeCXXCompiler.cmake
+  - cat thirdparty/kpvcrlib/build/*/CMakeFiles/*/CMakeCCompiler.cmake
+

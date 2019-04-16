@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-set -e
+set +e
 set -o pipefail
 
 ANSI_RED="\033[31;1m"
