@@ -191,8 +191,13 @@ endif
 
 # set cross-compiler/host CC and CXX
 ifeq ($(strip $(CCACHE) $(CC)), clang)
-	CC:=$(CHOST)-clang
-	CXX:=$(CHOST)-clang++
+	ifdef CHOST
+		CC:=$(CHOST)-clang
+		CXX:=$(CHOST)-clang++
+	else
+		CC:=clang
+		CXX:=clang++
+	endif
 	HOSTCC:=clang
 	HOSTCXX:=clang++
 	# quiet flag
@@ -212,19 +217,32 @@ ifeq ($(strip $(CCACHE) $(CC)), clang)
 	# Note that things appear to be better with Clang >= 6 ;).
 	export CLANG=1
 else
-	CC:=$(CHOST)-gcc
-	CXX:=$(CHOST)-g++
+	ifdef CHOST
+		CC:=$(CHOST)-gcc
+		CXX:=$(CHOST)-g++
+	else
+		CC:=gcc
+		CXX:=g++
+	endif
 	HOSTCC:=gcc
 	HOSTCXX:=g++
 	QFLAGS:=
 endif
 
 # set cross-compiler/host AR LD RANLIB
-STRIP:=$(CHOST)-strip
-AR:=$(CHOST)-ar
-LD:=$(CHOST)-ld
-RC:=$(CHOST)-windres
-RANLIB:=$(CHOST)-ranlib
+ifdef CHOST
+	STRIP:=$(CHOST)-strip
+	AR:=$(CHOST)-ar
+	LD:=$(CHOST)-ld
+	RC:=$(CHOST)-windres
+	RANLIB:=$(CHOST)-ranlib
+else
+	STRIP:=strip
+	AR:=ar
+	LD:=ld
+	RC:=windres
+	RANLIB:=ranlib
+endif
 
 HOSTSTRIP:=strip
 HOSTAR:=ar
