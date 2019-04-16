@@ -514,24 +514,6 @@ else
 	export CROSS_STAGING:=$(CURDIR)/$(OUTPUT_DIR)
 	export CMAKE_TCF:=-DCMAKE_TOOLCHAIN_FILE=$(CURDIR)/thirdparty/cmake_modules/CMakeCross.cmake
 	CMAKE+=$(CMAKE_TCF)
-	# With the added twist that CMake is completely bonkers, and expects *some* parts of the ToolChain to be absolute paths,
-	# instead of resolving them itself like a good boy.
-	# c.f., https://gitlab.kitware.com/cmake/cmake/issues/18087
-	# This also seems to depend on the alignment of the planets, because I've never ever reproduced this on my own setup,
-	# while Travis always seems to pickup weird CMake crap like that...
-	export CMAKE_TCF_AR="$(shell PATH='$(PATH)' command -v $(CHOST)-gcc-ar)"
-	ifeq ($(CMAKE_TCF_AR),)
-		export CMAKE_TCF_AR="$(shell PATH='$(PATH)' command -v $(CHOST)-ar)"
-	endif
-	export CMAKE_TCF_NM="$(shell PATH='$(PATH)' command -v $(CHOST)-gcc-nm)"
-	ifeq ($(CMAKE_TCF_NM),)
-		export CMAKE_TCF_NM="$(shell PATH='$(PATH)' command -v $(CHOST)-nm)"
-	endif
-	export CMAKE_TCF_RANLIB="$(shell PATH='$(PATH)' command -v $(CHOST)-gcc-ranlib)"
-	ifeq ($(CMAKE_TCF_RANLIB),)
-		export CMAKE_TCF_RANLIB="$(shell PATH='$(PATH)' command -v $(CHOST)-ranlib)"
-	endif
-	export CMAKE_TCF_STRIP="$(shell PATH='$(PATH)' command -v $(CHOST)-strip)"
 	ifdef CCACHE
 		CMAKE_C_COMPILER_LAUNCHER:=$(CCACHE)
 		CMAKE_CXX_COMPILER_LAUNCHER:=$(CCACHE)
