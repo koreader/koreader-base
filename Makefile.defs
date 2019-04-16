@@ -524,7 +524,7 @@ export CXX
 export AR
 export RANLIB
 export LD
-export RC
+#export RC
 export STRIP
 
 # FIXME: If we cared, we'd probably need to do something to convince libzmq not
