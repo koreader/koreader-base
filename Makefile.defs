@@ -394,8 +394,8 @@ endif
 # Anything below GCC 6 gets to be forcefully switched to decent standards, because some of our deps require C11 & C++11 support.
 # NOTE: Technically, this also means we require Clang >= 3.2, but that should more or less hold true on our end, because that's truly ancient.
 # Tests heavily inspired from Linux's build system ;).
-CC_IS_CLANG:=$(shell $(strip $(CCACHE) $(CC)) -v 2>&1 | grep -q "clang version" && echo 1 || echo 0)
-CC_VERSION:=$(shell printf "%02d%02d%02d" `echo __GNUC__ | $(strip $(CCACHE) $(CC)) -E -x c - | tail -n 1` `echo __GNUC_MINOR__ | $(strip $(CCACHE) $(CC)) -E -x c - | tail -n 1` `echo __GNUC_PATCHLEVEL__ | $(strip $(CCACHE) $(CC)) -E -x c - | tail -n 1`)
+CC_IS_CLANG:=$(shell PATH='$(PATH)' $(strip $(CCACHE) $(CC)) -v 2>&1 | grep -q "clang version" && echo 1 || echo 0)
+CC_VERSION:=$(shell PATH='$(PATH)' printf "%02d%02d%02d" `echo __GNUC__ | $(strip $(CCACHE) $(CC)) -E -x c - | tail -n 1` `echo __GNUC_MINOR__ | $(strip $(CCACHE) $(CC)) -E -x c - | tail -n 1` `echo __GNUC_PATCHLEVEL__ | $(strip $(CCACHE) $(CC)) -E -x c - | tail -n 1`)
 # Detect Clang's SA, too...
 ifeq "$(CC_IS_CLANG)" "0"
 	ifeq "$(lastword $(subst /, ,$(strip $(CCACHE) $(CC))))" "ccc-analyzer"
@@ -478,7 +478,7 @@ else
 	# Use a CMake toolchain file to avoid all kinds of CMake insanity
 	export CROSS_TC:=$(CHOST)
 	ifndef SYSROOT
-		export SYSROOT:=$(shell $(CC) -print-sysroot)
+		export SYSROOT:=$(shell PATH='$(PATH)' $(CC) -print-sysroot)
 	endif
 	export CROSS_STAGING:=$(CURDIR)/$(OUTPUT_DIR)"
 	CMAKE:=cmake -DCMAKE_TOOLCHAIN_FILE=$(CURDIR)/thirdparty/cmake_modules/CMakeCross.cmake
