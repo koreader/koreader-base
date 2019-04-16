@@ -43,7 +43,7 @@ if(${XCOMPILE})
 
     # To recap: build its TARGET_CC from CROSS+CC, so we need HOSTCC in CC.
     # Build its HOST/TARGET_CFLAGS based on CFLAGS, so we need
-    # a neutral CFLAGS without arch,
+    # a neutral CFLAGS without arch
     execute_process(
         COMMAND "${CC}" -dumpmachine
         OUTPUT_VARIABLE HOST_CC_MACHINE
