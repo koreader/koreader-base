@@ -21,6 +21,9 @@ ep_get_source_dir(SOURCE_DIR)
 ep_get_binary_dir(BINARY_DIR)
 
 # CMake hell.
+set(CFG_OPTS "-DCMAKE_INSTALL_PREFIX='${BINARY_DIR}'")
+# We expect lib later on in Makefile.third, even on multilib systems...
+set(CFG_OPTS "${CFG_OPTS} -DCMAKE_INSTALL_LIBDIR='${BINARY_DIR}/lib'")
 set(CFG_OPTS "${CFG_OPTS} -DCMAKE_SKIP_BUILD_RPATH:BOOL=True")
 
 # c.f., https://android.googlesource.com/platform/ndk/+/master/build/cmake/android.toolchain.cmake
@@ -40,7 +43,8 @@ if(NOT DEFINED ENV{WANT_SIMD})
     set(CFG_OPTS "${CFG_OPTS} -DREQUIRE_SIMD=OFF -DWITH_SIMD=OFF")
 endif()
 
-set(CFG_CMD sh -c "${CMAKE} ${CMAKE_FLAGS} ${CFG_OPTS}")
+# NOTE: If we pass CMAKE_FLAGS w/ Ninja in there, shit goes boom. So, don't?
+set(CFG_CMD sh -c "${CMAKE} ${CFG_OPTS}")
 
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
