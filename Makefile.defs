@@ -480,8 +480,8 @@ OUTPUT_DIR=build/$(MACHINE)
 
 ifdef EMULATE_READER
 	# CMake is difficult about CC and CXX, especially when it's not just a full path
-	CMAKE_C_COMPILER:=$(shell which $(strip $(HOSTCC)))
-	CMAKE_CXX_COMPILER:=$(shell which $(strip $(HOSTCXX)))
+	CMAKE_C_COMPILER:=$(shell command -v $(strip $(HOSTCC)))
+	CMAKE_CXX_COMPILER:=$(shell command -v $(strip $(HOSTCXX)))
 	ifdef CCACHE
 		CMAKE_C_COMPILER_LAUNCHER:=$(CCACHE)
 		CMAKE_CXX_COMPILER_LAUNCHER:=$(CCACHE)
@@ -510,11 +510,20 @@ else
 	CMAKE+=$(CMAKE_TCF)
 	# With the added twist that CMake is incredibly twisted, and expects *some* parts of the ToolChain to be absolute paths,
 	# instead of resolving them like a good boy.
-	# c.., https://gitlab.kitware.com/cmake/cmake/issues/18087
-	export CMAKE_TCF_AR="$(shell PATH='$(PATH)' which $(AR))"
-	export CMAKE_TCF_NM="$(shell PATH='$(PATH)' which $(CHOST)-nm)"
-	export CMAKE_TCF_RANLIB="$(shell PATH='$(PATH)' which $(RANLIB))"
-	export CMAKE_TCF_STRIP="$(shell PATH='$(PATH)' which $(STRIP))"
+	# c.f., https://gitlab.kitware.com/cmake/cmake/issues/18087
+	export CMAKE_TCF_AR="$(shell PATH='$(PATH)' command -v $(CHOST)-gcc-ar)"
+	ifeq ($(CMAKE_TCF_AR),)
+		export CMAKE_TCF_AR="$(shell PATH='$(PATH)' command -v $(CHOST)-ar)"
+	endif
+	export CMAKE_TCF_NM="$(shell PATH='$(PATH)' command -v $(CHOST)-gcc-nm)"
+	ifeq ($(CMAKE_TCF_NM),)
+		export CMAKE_TCF_NM="$(shell PATH='$(PATH)' command -v $(CHOST)-nm)"
+	endif
+	export CMAKE_TCF_RANLIB="$(shell PATH='$(PATH)' command -v $(CHOST)-gcc-ranlib)"
+	ifeq ($(CMAKE_TCF_RANLIB),)
+		export CMAKE_TCF_RANLIB="$(shell PATH='$(PATH)' command -v $(CHOST)-ranlib)"
+	endif
+	export CMAKE_TCF_STRIP="$(shell PATH='$(PATH)' command -v $(CHOST)-strip)"
 	ifdef CCACHE
 		CMAKE_C_COMPILER_LAUNCHER:=$(CCACHE)
 		CMAKE_CXX_COMPILER_LAUNCHER:=$(CCACHE)
