@@ -7,6 +7,9 @@ include("koreader_thirdparty_git")
 
 enable_language(C)
 
+assert_var_defined(CMAKE)
+assert_var_defined(CMAKE_FLAGS)
+
 assert_var_defined(CHOST)
 assert_var_defined(CFLAGS)
 assert_var_defined(LDFLAGS)
@@ -23,11 +26,6 @@ set(CFG_OPTS "-DCMAKE_INSTALL_PREFIX='${BINARY_DIR}'")
 set(CFG_OPTS "${CFG_OPTS} -DCMAKE_INSTALL_LIBDIR='${BINARY_DIR}/lib'")
 set(CFG_OPTS "${CFG_OPTS} -DCMAKE_SKIP_BUILD_RPATH:BOOL=True")
 
-# c.f., http://trac.ak-team.com/trac/browser/niluje/Configs/trunk/Kindle/Misc/CMakeCross.txt
-if((DEFINED ENV{CERVANTES}) OR (DEFINED ENV{DEBIAN_CROSS}) OR (DEFINED ENV{KINDLE}) OR (DEFINED ENV{KOBO}) OR (DEFINED ENV{LEGACY}) OR (DEFINED ENV{POCKETBOOK}) OR (DEFINED ENV{SONY_PRSTUX}) OR (DEFINED ENV{UBUNTUTOUCH}))
-	set(CFG_OPTS "${CFG_OPTS} -DCMAKE_SYSTEM_NAME='Linux'")
-endif()
-
 # c.f., https://android.googlesource.com/platform/ndk/+/master/build/cmake/android.toolchain.cmake
 # and   https://github.com/taka-no-me/android-cmake
 # In the meantime, I'll be sitting in the corner, crying hysterically.
@@ -35,34 +33,7 @@ if(DEFINED ENV{ANDROID})
 	set(CFG_OPTS "${CFG_OPTS} -DCMAKE_SYSTEM_NAME='Linux'")
 	# Magical value that inhibits all of CMake's own NDK handling code. (Or shit goes boom.)
 	set(CFG_OPTS "${CFG_OPTS} -DCMAKE_SYSTEM_VERSION=1")
-
-	# x86 Android, because we can't set CMAKE_SYSTEM_NAME without setting CMAKE_SYSTEM_PROCESSOR too...
-	if(${CHOST} MATCHES "^i686-.*")
-		set(CFG_OPTS "${CFG_OPTS} -DCMAKE_SYSTEM_PROCESSOR='i686'")
-	endif()
-
-	# Handle AArch64 NDKs while we're here...
-	if(${CHOST} MATCHES "^aarch64-.*")
-		set(CFG_OPTS "${CFG_OPTS} -DCMAKE_SYSTEM_PROCESSOR='aarch64'")
-	endif()
-
-	# And x86_64 too, because why the hell stop there.
-	if(${CHOST} MATCHES "^x86_64-.*")
-		set(CFG_OPTS "${CFG_OPTS} -DCMAKE_SYSTEM_PROCESSOR='x86_64'")
-	endif()
 endif()
-
-# Needed so that libjpeg-turbo tries to build the right set of SIMD routines for the target when cross-compiling...
-# NOTE: When CMAKE_SYSTEM_PROCESSOR is set, CMAKE_SYSTEM_NAME MUST be too (or vice versa).
-#       Failure to do so is a sure recipe for disaster in weird and interesting ways...
-if(${CHOST} MATCHES "^arm-.*")
-	set(CFG_OPTS "${CFG_OPTS} -DCMAKE_SYSTEM_PROCESSOR='arm'")
-endif()
-
-# set various other toolchain tools
-set(CFG_OPTS "${CFG_OPTS} -DCMAKE_STRIP='${STRIP}'")
-set(CFG_OPTS "${CFG_OPTS} -DCMAKE_AR='${AR}'")
-set(CFG_OPTS "${CFG_OPTS} -DCMAKE_RANLIB='${RANLIB}'")
 
 # And, finally, the actual libjpeg-turbo build options
 set(CFG_OPTS "${CFG_OPTS} -DENABLE_STATIC=OFF -DENABLE_SHARED=ON -DWITH_JAVA=OFF -DWITH_JPEG8=ON")
@@ -72,7 +43,7 @@ if(NOT DEFINED ENV{WANT_SIMD})
     set(CFG_OPTS "${CFG_OPTS} -DREQUIRE_SIMD=OFF -DWITH_SIMD=OFF")
 endif()
 
-set(CFG_CMD sh -c "${CMAKE_COMMAND} ${CFG_OPTS}")
+set(CFG_CMD sh -c "${CMAKE} ${CMAKE_FLAGS} ${CFG_OPTS}")
 
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
