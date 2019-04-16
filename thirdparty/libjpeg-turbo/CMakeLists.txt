@@ -7,8 +7,7 @@ include("koreader_thirdparty_git")
 
 enable_language(C)
 
-assert_var_defined(CMAKE)
-assert_var_defined(CMAKE_FLAGS)
+assert_var_defined(CMAKE_ARGS)
 
 assert_var_defined(CHOST)
 assert_var_defined(CFLAGS)
