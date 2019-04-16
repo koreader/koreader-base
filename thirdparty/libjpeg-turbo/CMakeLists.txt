@@ -7,8 +7,6 @@ include("koreader_thirdparty_git")
 
 enable_language(C)
 
-assert_var_defined(CMAKE_ARGS)
-
 assert_var_defined(CHOST)
 assert_var_defined(CFLAGS)
 assert_var_defined(LDFLAGS)
@@ -55,7 +53,7 @@ ExternalProject_Add(
     DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
     BUILD_IN_SOURCE 1
     PATCH_COMMAND ""
-    CONFIGURE_COMMAND ${CMAKE_COMMAND} ${CMAKE_ARGS} ${CFG_OPTS}
+    CMAKE_ARGS ${CFG_OPTS}
     BUILD_COMMAND ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS}
     INSTALL_COMMAND ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS} install
 )

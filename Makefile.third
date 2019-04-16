@@ -37,7 +37,6 @@ $(TURBOJPEG_LIB) $(JPEG_LIB): $(THIRDPARTY_DIR)/libjpeg-turbo/CMakeLists.txt
 	install -d $(JPEG_BUILD_DIR)
 	cd $(JPEG_BUILD_DIR) && \
 		$(CMAKE) $(CMAKE_FLAGS) \
-		-DCMAKE_ARGS="$(CMAKE_ARGS)" \
 		-DCHOST="$(CHOST)" \
 		-DCFLAGS="$(CFLAGS)" \
 		-DLDFLAGS="$(LDFLAGS)" \
