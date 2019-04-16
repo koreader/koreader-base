@@ -484,8 +484,8 @@ else
 		export SYSROOT:=$(shell PATH='$(PATH)' $(CC) -print-sysroot)
 	endif
 	export CROSS_STAGING:=$(CURDIR)/$(OUTPUT_DIR)
-	CMAKE_ARGS+=-DCMAKE_TOOLCHAIN_FILE=$(CURDIR)/thirdparty/cmake_modules/CMakeCross.cmake
-	CMAKE+=$(CMAKE_ARGS)
+	export CMAKE_TCF:=-DCMAKE_TOOLCHAIN_FILE=$(CURDIR)/thirdparty/cmake_modules/CMakeCross.cmake
+	CMAKE+=$(CMAKE_TCF)
 	ifdef CCACHE
 		CMAKE_C_COMPILER_LAUNCHER:=$(CCACHE)
 		CMAKE_CXX_COMPILER_LAUNCHER:=$(CCACHE)
