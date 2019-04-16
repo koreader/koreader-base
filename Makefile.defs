@@ -468,11 +468,9 @@ ifdef EMULATE_READER
 	CFLAGS+=$(HOST_ARCH)
 	CXXFLAGS+=$(HOST_ARCH)
 else
-	# CMake is difficult about CC and CXX, especially when it's not just a full path
-	CMAKE_C_COMPILER:=$(CC)
-	CMAKE_CXX_COMPILER:=$(CXX)
-	CMAKE_C_COMPILER_ARG1:= -static-libstdc++
-	CMAKE_CXX_COMPILER_ARG1:= -static-libstdc++
+	# Use a CMake toolchain file to avoid all kinds of CMake insanity
+	export CROSS_TC:=$(CHOST)
+	CMAKE:=cmake -DCMAKE_TOOLCHAIN_FILE=$(CURDIR)/thirdparty/cmake_modules/CMakeCross.cmake
 	ifdef CCACHE
 		CMAKE_C_COMPILER_LAUNCHER:=$(CCACHE)
 		CMAKE_CXX_COMPILER_LAUNCHER:=$(CCACHE)
@@ -484,8 +482,9 @@ else
 	# (cf. https://www.gnu.org/software/libtool/manual/html_node/Stripped-link-flags.html#Stripped-link-flags)
 	CC:=$(strip $(CCACHE) $(CC)) -static-libstdc++
 	CXX:=$(strip $(CCACHE) $(CXX)) -static-libstdc++
-	CFLAGS+=$(ARM_ARCH) $(COMPAT_CFLAGS)
-	CXXFLAGS+=$(ARM_ARCH) $(COMPAT_CXXFLAGS)
+	CFLAGS+=$(ARM_ARCH) $(COMPAT_CFLAGS) -static-libstdc++
+	CXXFLAGS+=$(ARM_ARCH) $(COMPAT_CXXFLAGS) -static-libstdc++
+	LDFLAGS+=-static-libstdc++
 	# Make sure we always have mmap() support.
 	# This is critical for FreeType, since the usage of platform-specific code depends on this,
 	# and without it, we don't get CLOEXEC handling, which is problematic on Kobos, where we spawn stuff that might

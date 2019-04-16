@@ -8,9 +8,6 @@ include("koreader_thirdparty_git")
 enable_language(C)
 
 assert_var_defined(CHOST)
-assert_var_defined(CMAKE_C_COMPILER)
-assert_var_defined(CMAKE_C_COMPILER_LAUNCHER)
-assert_var_defined(CMAKE_C_COMPILER_ARG1)
 assert_var_defined(CFLAGS)
 assert_var_defined(LDFLAGS)
 assert_var_defined(STRIP)
@@ -25,10 +22,6 @@ set(CFG_OPTS "-DCMAKE_INSTALL_PREFIX='${BINARY_DIR}'")
 # We expect lib later on in Makefile.third, even on multilib systems...
 set(CFG_OPTS "${CFG_OPTS} -DCMAKE_INSTALL_LIBDIR='${BINARY_DIR}/lib'")
 set(CFG_OPTS "${CFG_OPTS} -DCMAKE_SKIP_BUILD_RPATH:BOOL=True")
-
-# Compiler and linker flags
-set(CFG_OPTS "${CFG_OPTS} -DCMAKE_C_COMPILER='${CMAKE_C_COMPILER}' -DCMAKE_C_COMPILER_LAUNCHER='${CMAKE_C_COMPILER_LAUNCHER}' -DCMAKE_C_COMPILER_ARG1='${CMAKE_C_COMPILER_ARG1}' -DCMAKE_C_FLAGS='${CFLAGS}'")
-set(CFG_OPTS "${CFG_OPTS} -DCMAKE_EXE_LINKER_FLAGS='${LDFLAGS}'")
 
 # c.f., http://trac.ak-team.com/trac/browser/niluje/Configs/trunk/Kindle/Misc/CMakeCross.txt
 if((DEFINED ENV{CERVANTES}) OR (DEFINED ENV{DEBIAN_CROSS}) OR (DEFINED ENV{KINDLE}) OR (DEFINED ENV{KOBO}) OR (DEFINED ENV{LEGACY}) OR (DEFINED ENV{POCKETBOOK}) OR (DEFINED ENV{SONY_PRSTUX}) OR (DEFINED ENV{UBUNTUTOUCH}))

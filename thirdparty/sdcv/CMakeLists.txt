@@ -8,12 +8,6 @@ include("DownloadProject")
 
 enable_language(C CXX)
 
-assert_var_defined(CMAKE_C_COMPILER)
-assert_var_defined(CMAKE_C_COMPILER_LAUNCHER)
-assert_var_defined(CMAKE_C_COMPILER_ARG1)
-assert_var_defined(CMAKE_CXX_COMPILER)
-assert_var_defined(CMAKE_CXX_COMPILER_LAUNCHER)
-assert_var_defined(CMAKE_CXX_COMPILER_ARG1)
 assert_var_defined(CFLAGS)
 assert_var_defined(CXXFLAGS)
 assert_var_defined(LDFLAGS)
@@ -29,9 +23,6 @@ ep_get_source_dir(SOURCE_DIR)
 
 # because cmake needs all kinds of annoying special cmake variables
 # Compiler and linker flags
-set(CMAKE_C_FLAGS "${CFLAGS}")
-set(CMAKE_CXX_FLAGS "${CXXFLAGS}")
-set(CMAKE_EXE_LINKER_FLAGS "${LDFLAGS} -static-libstdc++")
 if(DEFINED ENV{DARWIN})
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -framework CoreFoundation -framework Security")
 endif()
