@@ -220,7 +220,8 @@ endif
 $(LIBICONV): $(THIRDPARTY_DIR)/libiconv/CMakeLists.txt
 	install -d $(LIBICONV_BUILD_DIR)
 	cd $(LIBICONV_BUILD_DIR) && \
-		$(CMAKE) $(CMAKE_FLAGS) -DCC="$(CC) -std=gnu89" -DLD="$(LD)" -DAR="$(AR)" -DRANLIB="$(RANLIB)" \
+		$(CMAKE) $(CMAKE_FLAGS) \
+		-DCC="$(CC)" -DLD="$(LD)" -DAR="$(AR)" -DRANLIB="$(RANLIB)" \
 		-DHOST="$(if $(EMULATE_READER),,$(if $(ANDROID),"arm-linux",$(CHOST)))" \
 		$(CURDIR)/$(THIRDPARTY_DIR)/libiconv && \
 		$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS)
@@ -229,7 +230,7 @@ $(LIBICONV): $(THIRDPARTY_DIR)/libiconv/CMakeLists.txt
 $(LIBGETTEXT): $(LIBICONV) $(THIRDPARTY_DIR)/gettext/CMakeLists.txt
 	install -d $(GETTEXT_BUILD_DIR)
 	cd $(GETTEXT_BUILD_DIR) && \
-		$(CMAKE) $(CMAKE_FLAGS) -DCC="$(CC) -std=gnu89" -DLIBICONV_PREFIX=$(LIBICONV_DIR) \
+		$(CMAKE) $(CMAKE_FLAGS) -DCC="$(CC)" -DLIBICONV_PREFIX=$(LIBICONV_DIR) \
 		-DAR="$(AR)" -DRANLIB="$(RANLIB)" \
 		-DCHOST_OPTS="$(if $(EMULATE_READER),,--host=$(if $(ANDROID),arm-linux,$(CHOST)))" \
 		$(if $(ANDROID),-DNDK=$(NDK),) \
@@ -254,7 +255,7 @@ $(GLIB): $(if $(DARWIN),$(LIBICONV) $(LIBGETTEXT),) $(LIBFFI_DIR)/include $(THIR
 	# to update mtime for all the binaries
 	-rm -rf $(GLIB_DIR)/lib $(GLIB_DIR)/../glib-stamp/glib-install
 	cd $(GLIB_BUILD_DIR) && \
-		$(CMAKE) $(CMAKE_FLAGS) -DCC="$(CC) -std=gnu89" \
+		$(CMAKE) $(CMAKE_FLAGS) -DCC="$(CC)" \
 		-DAR="$(AR)" -DRANLIB="$(RANLIB)" \
 		-DCFLAGS="$(CFLAGS)" -DLDFLAGS="$(LDFLAGS)" \
 		-DLIBICONV_DIR="$(LIBICONV_DIR)" \
@@ -271,7 +272,7 @@ $(GLIB_STATIC): $(LIBICONV) $(LIBGETTEXT) $(LIBFFI_DIR)/include $(THIRDPARTY_DIR
 	install -d $(GLIB_BUILD_DIR)
 	-rm -f $(GLIB_DIR)/../glib-stamp/glib-install
 	cd $(GLIB_BUILD_DIR) && \
-		$(CMAKE) $(CMAKE_FLAGS) -DCC="$(CC) -std=gnu89" \
+		$(CMAKE) $(CMAKE_FLAGS) -DCC="$(CC)" \
 		-DLDFLAGS="$(LDFLAGS) $(if $(ANDROID), \
 			-L$(LIBICONV_DIR)/lib -L$(GETTEXT_DIR)/lib,)" \
 		-DCFLAGS="$(CFLAGS) $(if $(ANDROID), -L$(LIBICONV_DIR)/lib -L$(GETTEXT_DIR)/lib \
