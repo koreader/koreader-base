@@ -450,11 +450,11 @@ endif
 # this will create a path named build/arm-none-linux-gnueabi or similar
 TARGET_MARCHINE:=$(shell PATH='$(PATH)' $(CC) -dumpmachine 2>/dev/null)
 ifdef KODEBUG
-	MACHINE:=$(TARGET_MARCHINE)-debug
+	MACHINE=$(TARGET_MARCHINE)-debug
 else
-	MACHINE:=$(TARGET_MARCHINE)
+	MACHINE=$(TARGET_MARCHINE)
 endif
-OUTPUT_DIR:=build/$(MACHINE)
+OUTPUT_DIR=build/$(MACHINE)
 
 # you can configure an emulation for the (eink) framebuffer here.
 # the application won't use the framebuffer (and the special e-ink ioctls)

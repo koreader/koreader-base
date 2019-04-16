@@ -2,7 +2,7 @@
 # c.f., https://cmake.org/cmake/help/latest/manual/cmake-toolchains.7.html#cross-compiling-toolchain
 
 # set minimum cmake version required for cross-compiling to work
-cmake_minimum_required (VERSION 2.6.3)
+cmake_minimum_required (VERSION 3.5.1)
 SET (NO_POLICY_SCOPE NEW)
 # Build with rm CMakeCache.txt; cmake -DCMAKE_TOOLCHAIN_FILE=./CMakeCross.txt .
 
