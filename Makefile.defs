@@ -34,7 +34,7 @@ export CMAKE_BUILD_TYPE
 
 # CMAKE:=cmake --no-warn-unused-cli
 CMAKE := cmake
-CMAKE_ARGS := --verbose=1 -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON
+CMAKE_ARGS := -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON
 CMAKE+=$(CMAKE_ARGS)
 
 NINJA := $(shell command -v ninja)
