@@ -442,6 +442,13 @@ ifdef STATICLIBSTDCPP
 	DYNAMICLIBSTDCPP:=
 endif
 
+# this will create a path named build/arm-none-linux-gnueabi or similar
+MACHINE?=$(shell PATH='$(PATH)' $(CC) -dumpmachine 2>/dev/null)
+ifdef KODEBUG
+	MACHINE:=$(MACHINE)-debug
+endif
+OUTPUT_DIR?=build/$(MACHINE)
+
 # you can configure an emulation for the (eink) framebuffer here.
 # the application won't use the framebuffer (and the special e-ink ioctls)
 # in that case.
@@ -470,6 +477,10 @@ ifdef EMULATE_READER
 else
 	# Use a CMake toolchain file to avoid all kinds of CMake insanity
 	export CROSS_TC:=$(CHOST)
+	ifndef SYSROOT
+		export SYSROOT:=$(shell $(CC) -print-sysroot)
+	endif
+	export CROSS_STAGING:=$(CURDIR)/$(OUTPUT_DIR)"
 	CMAKE:=cmake -DCMAKE_TOOLCHAIN_FILE=$(CURDIR)/thirdparty/cmake_modules/CMakeCross.cmake
 	ifdef CCACHE
 		CMAKE_C_COMPILER_LAUNCHER:=$(CCACHE)
@@ -546,13 +557,6 @@ ifneq (,$(findstring march=arm,$(CFLAGS)))
 		unexport WANT_SIMD
 	endif
 endif
-
-# this will create a path named build/arm-none-linux-gnueabi or similar
-MACHINE?=$(shell PATH='$(PATH)' $(CC) -dumpmachine 2>/dev/null)
-ifdef KODEBUG
-	MACHINE:=$(MACHINE)-debug
-endif
-OUTPUT_DIR?=build/$(MACHINE)
 
 LIB_EXT=$(if $(WIN32),.dll,$(if $(DARWIN),.dylib,.so))
 
