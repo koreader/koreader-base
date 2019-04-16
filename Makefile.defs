@@ -34,7 +34,9 @@ export CMAKE_BUILD_TYPE
 
 # CMAKE:=cmake --no-warn-unused-cli
 CMAKE := cmake
-CMAKE_ARGS := -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON
+ifdef VERBOSE
+	CMAKE_ARGS := -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON
+endif
 CMAKE+=$(CMAKE_ARGS)
 
 NINJA := $(shell command -v ninja)
@@ -48,11 +50,15 @@ endif
 ifneq ($(USE_NINJA),)
 	CMAKE_FLAGS := -G Ninja
 	CMAKE_MAKE_PROGRAM := $(NINJA)
-	NINJA_FLAGS := -v
+	ifdef VERBOSE
+		NINJA_FLAGS := -v
+	endif
 	CMAKE_MAKE_PROGRAM_FLAGS ?= $(NINJA_FLAGS)
 else
 	CMAKE_MAKE_PROGRAM := $(MAKE)
-	MAKE_FLAGS := VERBOSE=1
+	ifdef VERBOSE
+		MAKE_FLAGS := VERBOSE=1
+	endif
 	CMAKE_MAKE_PROGRAM_FLAGS ?= $(MAKE_FLAGS)
 endif
 
@@ -508,9 +514,11 @@ else
 	export CROSS_STAGING:=$(CURDIR)/$(OUTPUT_DIR)
 	export CMAKE_TCF:=-DCMAKE_TOOLCHAIN_FILE=$(CURDIR)/thirdparty/cmake_modules/CMakeCross.cmake
 	CMAKE+=$(CMAKE_TCF)
-	# With the added twist that CMake is incredibly twisted, and expects *some* parts of the ToolChain to be absolute paths,
-	# instead of resolving them like a good boy.
+	# With the added twist that CMake is completely bonkers, and expects *some* parts of the ToolChain to be absolute paths,
+	# instead of resolving them itself like a good boy.
 	# c.f., https://gitlab.kitware.com/cmake/cmake/issues/18087
+	# This also seems to depend on the alignment of the planets, because I've never ever reproduced this on my own setup,
+	# while Travis always seems to pickup weird CMake crap like that...
 	export CMAKE_TCF_AR="$(shell PATH='$(PATH)' command -v $(CHOST)-gcc-ar)"
 	ifeq ($(CMAKE_TCF_AR),)
 		export CMAKE_TCF_AR="$(shell PATH='$(PATH)' command -v $(CHOST)-ar)"
