@@ -37,7 +37,6 @@ $(TURBOJPEG_LIB) $(JPEG_LIB): $(THIRDPARTY_DIR)/libjpeg-turbo/CMakeLists.txt
 	install -d $(JPEG_BUILD_DIR)
 	cd $(JPEG_BUILD_DIR) && \
 		$(CMAKE) $(CMAKE_FLAGS) \
-		-DCMAKE_VERBOSE_MAKEFILE:BOOL=OFF \
 		-DCMAKE="$(CMAKE)" \
 		-DCMAKE_FLAGS="$(CMAKE_FLAGS)" \
 		-DCHOST="$(CHOST)" \
@@ -339,7 +338,6 @@ $(OUTPUT_DIR)/dropbear: $(ZLIB) $(THIRDPARTY_DIR)/dropbear/CMakeLists.txt
 	install -d $(DROPBEAR_BUILD_DIR)
 	cd $(DROPBEAR_BUILD_DIR) && \
 		$(CMAKE) $(CMAKE_FLAGS) \
-		-DCMAKE_VERBOSE_MAKEFILE:BOOL=OFF \
 		-DCC="$(CC)" \
 		-DCPPFLAGS="$(CPPFLAGS) -I$(ZLIB_DIR)" \
 		-DCFLAGS="$(CFLAGS)" \
@@ -357,7 +355,6 @@ $(OUTPUT_DIR)/sftp-server: $(ZLIB) $(SSL_LIB) $(THIRDPARTY_DIR)/openssh/CMakeLis
 	install -d $(OPENSSH_BUILD_DIR)
 	cd $(OPENSSH_BUILD_DIR) && \
 		$(CMAKE) $(CMAKE_FLAGS) \
-		-DCMAKE_VERBOSE_MAKEFILE:BOOL=OFF \
 		-DCC="$(CC)" \
 		-DCPPFLAGS="$(CPPFLAGS) -I$(ZLIB_DIR) -I$(OPENSSL_DIR)/include" \
 		-DCFLAGS="$(CFLAGS)" \
@@ -413,7 +410,6 @@ $(OUTPUT_DIR)/fbink: $(THIRDPARTY_DIR)/fbink/CMakeLists.txt
 	install -d $(FBINK_BUILD_DIR)
 	cd $(FBINK_BUILD_DIR) && \
 		$(CMAKE) $(CMAKE_FLAGS) \
-		-DCMAKE_VERBOSE_MAKEFILE:BOOL=OFF \
 		-DCROSS_TC="$(CHOST)" \
 		-DCFLAGS="$(CFLAGS)" \
 		-DLDFLAGS="$(LDFLAGS)" \

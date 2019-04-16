@@ -38,7 +38,7 @@ else()
     set(CFG_OPTS "${CFG_OPTS} --prefix=${SOURCE_DIR}")
     set(CFG_CMD sh -c "${CFG_ENV_VAR} ${SOURCE_DIR}/configure ${CFG_OPTS}")
     # build
-    set(BUILD_CMD ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS} --silent shared static)
+    set(BUILD_CMD ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS} shared static)
     # install
     set(INSTALL_CMD ${KO_MAKE_RECURSIVE} install)
 endif()
