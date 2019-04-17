@@ -70,6 +70,7 @@ set(BUILD_CMD2 sh -c "${MAKE_CMD} build_crypto build_ssl")
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
     https://github.com/openssl/openssl.git
+    OpenSSL_1_0_2r
     OpenSSL_1_0_2q
     ${SOURCE_DIR}
 )
