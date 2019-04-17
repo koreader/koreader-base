@@ -20,7 +20,7 @@ endif()
 if(DEFINED ENV{CMAKE_TCF})
     set(MUPDF_CROSS "CROSSCOMPILE=\"yes\"")
 endif()
-set(BUILD_CMD_GENERATE sh -c "env ${MUPDF_CROSS} CFLAGS=\"${HOSTCFLAGS}\" ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS} generate build=\"${MUPDF_BUILD_TYPE}\" CC=\"${HOSTCC}\" verbose=\"no\"")
+set(BUILD_CMD_GENERATE sh -c "env ${MUPDF_CROSS} CFLAGS=\"${HOSTCFLAGS}\" ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS} generate build=\"${MUPDF_BUILD_TYPE}\" CC=\"${HOSTCC}\" LDFLAGS=\"\" verbose=\"no\"")
 
 assert_var_defined(LDFLAGS)
 assert_var_defined(XCFLAGS)
