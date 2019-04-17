@@ -37,7 +37,7 @@ if($ENV{ANDROID})
     if (${CHOST} MATCHES "^arm-.*")
         set(CFG_OPTS "android-arm -D__ANDROID_API__=${NDKABI} ${CFG_OPTS}")
     else()
-        set(CFG_OPTS "android-x86 ${CFG_OPTS}")
+        set(CFG_OPTS "android-x86 -D__ANDROID_API__=${NDKABI} ${CFG_OPTS}")
     endif()
 else()
     # If we're on ARM, make it so
