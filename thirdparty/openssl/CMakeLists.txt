@@ -27,7 +27,9 @@ endif()
 
 # If we have a CHOST set, use it
 if (NOT "${CHOST}" STREQUAL "")
-    set(CFG_ENV_VAR "CROSS_COMPILE=\"${CHOST}-\"")
+    # NOTE: We bypass ccache for the Configure script, in the hope that it'll help the whole makedepend detection.
+    #       At least OpenSSL 1.1.x now drops it instead of trying to call a nonexistent binary, so it's less annoying than before.
+    set(CFG_ENV_VAR "CROSS_COMPILE=\"${CHOST}-\" CC=\"${REALCC}\"")
 endif()
 
 if($ENV{ANDROID})
