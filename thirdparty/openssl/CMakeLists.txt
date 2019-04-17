@@ -33,7 +33,7 @@ endif()
 if($ENV{ANDROID})
     # If we're on ARM, make it so
     if (${CHOST} MATCHES "^arm-.*")
-        set(CFG_OPTS "android-armv7 -DL_ENDIAN ${CFG_OPTS}")
+        set(CFG_OPTS "android-arm -D__ANDROID_API__=${NDKABI} ${CFG_OPTS}")
     else()
         set(CFG_OPTS "android-x86 ${CFG_OPTS}")
     endif()
