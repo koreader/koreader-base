@@ -35,10 +35,10 @@ set(CMAKE_C_COMPILER $ENV{CROSS_TC}-gcc)
 set(CMAKE_CXX_COMPILER $ENV{CROSS_TC}-g++)
 
 # set various other toolchain tools
-set(CMAKE_STRIP $ENV{CROSS_TC}-strip)
-set(CMAKE_AR $ENV{CROSS_TC}-ar)
-set(CMAKE_RANLIB $ENV{CROSS_TC}-ranlib)
-set(CMAKE_NM $ENV{CROSS_TC}-nm)
+set(CMAKE_STRIP "$ENV{CROSS_TC}-strip" CACHE FILEPATH "Strip")
+set(CMAKE_AR "$ENV{CROSS_TC}-ar" CACHE FILEPATH "Archive")
+set(CMAKE_RANLIB "$ENV{CROSS_TC}-ranlib" CACHE FILEPATH "RanLib")
+set(CMAKE_NM "$ENV{CROSS_TC}-nm" CACHE FILEPATH "NM")
 
 # Set path(s) to search for libraries/binaries/headers
 set(CMAKE_SYSROOT $ENV{SYSROOT})
