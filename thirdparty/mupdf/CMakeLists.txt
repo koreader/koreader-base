@@ -15,7 +15,12 @@ if($ENV{KODEBUG})
 else()
     set(MUPDF_BUILD_TYPE "release")
 endif()
-set(BUILD_CMD_GENERATE sh -c "env CFLAGS=\"${HOSTCFLAGS}\" ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS} generate build=\"${MUPDF_BUILD_TYPE}\" CC=\"${HOSTCC}\" verbose=\"no\"")
+
+# Otherwise, it tries to link/run a .exe... -_-".
+if(DEFINED ENV{CMAKE_TCF})
+    set(MUPDF_CROSS "CROSSCOMPILE=\"yes\"")
+endif()
+set(BUILD_CMD_GENERATE sh -c "env ${MUPDF_CROSS} CFLAGS=\"${HOSTCFLAGS}\" ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS} generate build=\"${MUPDF_BUILD_TYPE}\" CC=\"${HOSTCC}\" verbose=\"no\"")
 
 assert_var_defined(LDFLAGS)
 assert_var_defined(XCFLAGS)
