@@ -52,25 +52,29 @@ else()
     set(ASM_OPT "no-asm")
 endif()
 
-set(PATCH_CMD1 sh -c "patch -N -p1 < ${CMAKE_CURRENT_SOURCE_DIR}/openssl-origin-rpath.patch || true")
+set(PATCH_CMD1 sh -c "patch -N -p1 < ${CMAKE_CURRENT_SOURCE_DIR}/openssl-1.1.0j-parallel_install_fix.patch || true")
+set(PATCH_CMD2 sh -c "patch -N -p1 < ${CMAKE_CURRENT_SOURCE_DIR}/openssl-1.1.1b-CVE-2019-1543.patch || true")
 
 # NOTE: We need to pass $CFLAGS to OpenSSL's Configure script,
 # except it balks on a few exotic flags, so, filter those out...
 string(REGEX REPLACE "--sysroot [a-zA-Z0-9/_-]*" "" FILTERED_CFLAGS "${CFLAGS}")
 
-set(CFG_OPTS "${CFG_OPTS} ${FILTERED_CFLAGS} ${ASM_OPT} no-idea no-mdc2 no-rc5 no-ssl2 no-ssl3")
+set(CFG_OPTS "${CFG_OPTS} ${FILTERED_CFLAGS} ${ASM_OPT} no-idea no-mdc2 no-rc5")
 set(CFG_CMD sh -c "${CFG_ENV_VAR} ${SOURCE_DIR}/${CONFIG_SCRIPT} ${CFG_OPTS}")
+
+if (NOT $ENV{DARWIN} AND NOT $ENV{WIN32})
+    set(CFG_OPTS "${CFG_OPTS} '-Wl,-rpath,"'$$'"ORIGIN'")
+endif
 
 set(MAKE_CMD "${KO_MAKE_RECURSIVE} CC=\"${CC}\" SHARED_LDFLAGS=\"${SHARED_LDFLAGS}\" LD=\"${LD}\" AR=\"${AR} r\" RANLIB=\"${RANLIB}\"")
 # NOTE: Make depend fails when using ccache, and may fail when // (on some OpenSSL versions, at least)
-set(BUILD_CMD1 sh -c "${KO_MAKE_RECURSIVE} -j1 depend")
-set(BUILD_CMD2 sh -c "${MAKE_CMD} build_crypto build_ssl")
+set(BUILD_CMD1 sh -c "${MAKE_CMD} depend")
+set(BUILD_CMD2 sh -c "${MAKE_CMD} all")
 
-# NOTE: Wait for a really compatible luasec release before moving to 1.1.x
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
     https://github.com/openssl/openssl.git
-    OpenSSL_1_0_2r
+    OpenSSL_1_1_1b
     ${SOURCE_DIR}
 )
 
@@ -78,7 +82,7 @@ include(ExternalProject)
 ExternalProject_Add(
     ${PROJECT_NAME}
     DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
-    PATCH_COMMAND COMMAND ${PATCH_CMD1} COMMAND ${PATCH_CMD2} COMMAND ${PATCH_CMD3}
+    PATCH_COMMAND COMMAND ${PATCH_CMD1} COMMAND ${PATCH_CMD2}
     CONFIGURE_COMMAND ${CFG_CMD}
     BUILD_IN_SOURCE 1
     BUILD_COMMAND COMMAND ${BUILD_CMD1} COMMAND ${BUILD_CMD2}
