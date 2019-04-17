@@ -69,7 +69,7 @@ endif()
 set(MAKE_CMD "${KO_MAKE_RECURSIVE} CC=\"${CC}\" SHARED_LDFLAGS=\"${SHARED_LDFLAGS}\" LD=\"${LD}\" AR=\"${AR} r\" RANLIB=\"${RANLIB}\"")
 # NOTE: Make depend fails when using ccache, and may fail when // (on some OpenSSL versions, at least)
 set(BUILD_CMD1 sh -c "${MAKE_CMD} -j1 depend")
-set(BUILD_CMD2 sh -c "${MAKE_CMD} all")
+set(BUILD_CMD2 sh -c "${MAKE_CMD} build_libs")
 
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME

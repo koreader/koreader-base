@@ -434,7 +434,7 @@ $(OPENSSL_LIB) $(OPENSSL_DIR): $(THIRDPARTY_DIR)/openssl/CMakeLists.txt
 		-DREALCC="$(REALCC) $(if $(DARWIN),$(DYNLIB_CFLAGS),$(CFLAGS))" \
 		-DCC="$(CC) $(if $(DARWIN),$(DYNLIB_CFLAGS),$(CFLAGS))" \
 		-DCFLAGS="$(CFLAGS)" \
-		-DSHARED_LDFLAGS="$(LDFLAGS)" \
+		-DSHARED_LDFLAGS="$(LDFLAGS) -Wl,-rpath,'$$ORIGIN'" \
 		-DLD="$(LD)" \
 		-DAR="$(AR)" \
 		-DRANLIB="$(RANLIB)" \
