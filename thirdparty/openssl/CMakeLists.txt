@@ -57,7 +57,12 @@ endif()
 set(PATCH_CMD1 sh -c "patch -N -p1 < ${CMAKE_CURRENT_SOURCE_DIR}/openssl-1.1.0j-parallel_install_fix.patch || true")
 set(PATCH_CMD2 sh -c "patch -N -p1 < ${CMAKE_CURRENT_SOURCE_DIR}/openssl-1.1.1b-CVE-2019-1543.patch || true")
 set(PATCH_CMD3 sh -c "patch -N -p1 < ${CMAKE_CURRENT_SOURCE_DIR}/openssl-origin-rpath.patch || true")
-set(PATCH_CMD4 sh -c "patch -N -p1 < ${CMAKE_CURRENT_SOURCE_DIR}/openssl-old-gcc-stdatomic.patch || true")
+# GCC 4.9's <stdatomic.h> is broken (c.f., https://github.com/pytorch/pytorch/issues/3050)
+if($ENV{SONY_PRSTUX})
+    set(PATCH_CMD4 sh -c "patch -N -p1 < ${CMAKE_CURRENT_SOURCE_DIR}/openssl-gcc-4.9-stdatomic.patch || true")
+else()
+    set(PATCH_CMD4 "")
+endif()
 
 # NOTE: We need to pass $CFLAGS to OpenSSL's Configure script,
 # except it balks on a few exotic flags, so, filter those out...
