@@ -62,7 +62,7 @@ string(REGEX REPLACE "--sysroot [a-zA-Z0-9/_-]*" "" FILTERED_CFLAGS "${CFLAGS}")
 set(CFG_OPTS "${CFG_OPTS} ${FILTERED_CFLAGS} ${ASM_OPT} no-idea no-mdc2 no-rc5")
 set(CFG_CMD sh -c "${CFG_ENV_VAR} ${SOURCE_DIR}/${CONFIG_SCRIPT} ${CFG_OPTS}")
 
-if(NOT $ENV{DARWIN} AND NOT $ENV{WIN32})
+if(NOT ($ENV{DARWIN} OR $ENV{WIN32}))
     set(CFG_OPTS "${CFG_OPTS} '-Wl,-rpath,"'$$'"ORIGIN'")
 endif()
 
