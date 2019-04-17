@@ -57,7 +57,7 @@ endif()
 set(PATCH_CMD1 sh -c "patch -N -p1 < ${CMAKE_CURRENT_SOURCE_DIR}/openssl-1.1.0j-parallel_install_fix.patch || true")
 set(PATCH_CMD2 sh -c "patch -N -p1 < ${CMAKE_CURRENT_SOURCE_DIR}/openssl-1.1.1b-CVE-2019-1543.patch || true")
 set(PATCH_CMD3 sh -c "patch -N -p1 < ${CMAKE_CURRENT_SOURCE_DIR}/openssl-origin-rpath.patch || true")
-set(PATCH_CMD4 sh -c "patch -N -p1 < ${CMAKE_CURRENT_SOURCE_DIR}/openssl-pb-gcc-is-old-stdatomic.patch || true")
+set(PATCH_CMD4 sh -c "patch -N -p1 < ${CMAKE_CURRENT_SOURCE_DIR}/openssl-old-gcc-stdatomic.patch || true")
 
 # NOTE: We need to pass $CFLAGS to OpenSSL's Configure script,
 # except it balks on a few exotic flags, so, filter those out...
