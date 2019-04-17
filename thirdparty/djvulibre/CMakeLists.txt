@@ -44,7 +44,7 @@ endif()
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
     https://gitlab.com/koreader/djvulibre.git
-    91d383bc1d0c546176c27770ac5e13ae30c0eda5
+    9658b01431cd7ff6344d7787f855179e73fe81a7
     ${SOURCE_DIR}
 )
 
