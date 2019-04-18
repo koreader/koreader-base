@@ -129,7 +129,7 @@ else ifeq ($(TARGET), android)
 		CHOST?=arm-linux-androideabi
 	endif
 	# Needed for OpenSSL, c.f., NOTES.ANDROID
-	export ANDROID_NDK_HOME=$(NDK)
+	export ANDROID_NDK_HOME=$(ANDROID_TOOLCHAIN)
 else ifeq ($(TARGET), win32)
 	CHOST?=i686-w64-mingw32
 	export WIN32=1
