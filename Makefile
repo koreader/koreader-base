@@ -212,4 +212,4 @@ test: $(OUTPUT_DIR)/spec $(OUTPUT_DIR)/.busted
 		--no-auto-insulate \
 		-o ./spec/base/unit/verbose_print ./spec/base/unit
 
-.PHONY: all clean test
+.PHONY: all android-toolchain pocketbook-toolchain clean distclean test
