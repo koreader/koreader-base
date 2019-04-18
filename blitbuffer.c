@@ -87,7 +87,16 @@ static const char*
       15220*ColorRGB16_GetB(v)) >> 14U)
 #define RGB_To_RGB16(r, g, b) (((r & 0xF8) << 8U) + ((g & 0xFC) << 3U) + (b >> 3U))
 #define RGB_To_A(r, g, b) ((4898U*r + 9618U*g + 1869U*b) >> 14U)
-#define DIV_255(x) ((((x) >> 8U) + (x) + 0x01) >> 8U)
+#define DIV_255(V)                                                                                   \
+({                                                                                                   \
+    __auto_type _v = (V) + 128;                                                                      \
+    (((_v >> 8U) + _v) >> 8U);                                                                       \
+})
+
+// NOTE: See Pillow's transpose operations, or Qt5 qMemRotate stuff for cache-efficient ways of rotating an image data buffer,
+//       instead of handling the rotation per-pixel, at plotting time.
+//       I have no idea if it'd be an efficient method here, since it requires an extra buffer in which to do the rotation,
+//       just so that new buffer can be used for the memcpy-based fast paths...
 
 #define BB_GET_PIXEL(bb, rotation, COLOR, x, y, pptr) \
     switch (rotation) { \
@@ -550,6 +559,146 @@ void BB_blit_to_BB8(BlitBuffer *src, BlitBuffer *dst,
     }
 }
 
+// Quantize an 8-bit color value down to a palette of 16 evenly spaced colors, using an ordered 8x8 dithering pattern.
+// With a grayscale input, this happens to match the eInk palette perfectly ;).
+// If the input is not grayscale, and the output fb is not grayscale either,
+// this usually still happens to match the eInk palette after the EPDC's own quantization pass.
+// c.f., https://en.wikipedia.org/wiki/Ordered_dithering
+// & https://github.com/ImageMagick/ImageMagick/blob/ecfeac404e75f304004f0566557848c53030bad6/MagickCore/threshold.c#L1627
+// NOTE: As the references imply, this is straight from ImageMagick,
+//       with only minor simplifications to enforce Q8 & avoid fp maths.
+static uint8_t
+    dither_o8x8(unsigned short int x, unsigned short int y, uint8_t v)
+{
+	// c.f., https://github.com/ImageMagick/ImageMagick/blob/ecfeac404e75f304004f0566557848c53030bad6/config/thresholds.xml#L107
+	static const uint8_t threshold_map_o8x8[] = { 1,  49, 13, 61, 4,  52, 16, 64, 33, 17, 45, 29, 36, 20, 48, 32,
+						      9,  57, 5,  53, 12, 60, 8,  56, 41, 25, 37, 21, 44, 28, 40, 24,
+						      3,  51, 15, 63, 2,  50, 14, 62, 35, 19, 47, 31, 34, 18, 46, 30,
+						      11, 59, 7,  55, 10, 58, 6,  54, 43, 27, 39, 23, 42, 26, 38, 22 };
+
+	// Constants:
+	// Quantum = 8; Levels = 16; map Divisor = 65
+	// QuantumRange = 0xFF
+	// QuantumScale = 1.0 / QuantumRange
+	//
+	// threshold = QuantumScale * v * ((L-1) * (D-1) + 1)
+	// NOTE: The initial computation of t (specifically, what we pass to DIV255) would overflow an uint8_t.
+	//       So jump to shorts, and do it signed to be extra careful, although I don't *think* we can ever underflow here.
+	int16_t t = (int16_t) DIV_255(v * ((15U << 6) + 1U));
+	// level = t / (D-1);
+	int16_t l = (t >> 6);
+	// t -= l * (D-1);
+	t = (int16_t)(t - (l << 6));
+
+	// map width & height = 8
+	// c = ClampToQuantum((l+(t >= map[(x % mw) + mw * (y % mh)])) * QuantumRange / (L-1));
+	int16_t q = (int16_t)((l + (t >= threshold_map_o8x8[(x & 7U) + 8U * (y & 7U)])) * 17);
+	// NOTE: For some arcane reason, on ARM (at least), this is noticeably faster than Pillow's CLIP8 macro.
+	//       Following this logic with ternary operators yields similar results,
+	//       so I'm guessing it's the < 256 part of Pillow's macro that doesn't agree with GCC/ARM...
+	uint8_t c;
+	if (q > 0xFF) {
+		c = 0xFF;
+	} else if (q < 0) {
+		c = 0U;
+	} else {
+		c = (uint8_t) q;
+	}
+
+	return c;
+}
+
+void BB_dither_blit_to_BB8(BlitBuffer *src, BlitBuffer *dst,
+        int dest_x, int dest_y, int offs_x, int offs_y, int w, int h) {
+    int d_x, d_y, o_x, o_y;
+    Color8 *dstptr;
+    int sbb_type = GET_BB_TYPE(src);
+    int sbb_rotation = GET_BB_ROTATION(src);
+    int dbb_rotation = GET_BB_ROTATION(dst);
+    switch (sbb_type) {
+        case TYPE_BB8:
+            {
+                Color8 *srcptr;
+                o_y = offs_y;
+                for (d_y = dest_y; d_y < dest_y + h; d_y++) {
+                    o_x = offs_x;
+                    for (d_x = dest_x; d_x < dest_x + w; d_x++) {
+                        BB_GET_PIXEL(dst, dbb_rotation, Color8, d_x, d_y, &dstptr);
+                        BB_GET_PIXEL(src, sbb_rotation, Color8, o_x, o_y, &srcptr);
+                        dstptr->a = dither_o8x8(o_x, o_y, srcptr->a);
+                        o_x += 1;
+                    }
+                    o_y += 1;
+                }
+            }
+            break;
+        case TYPE_BB8A:
+            {
+                Color8A *srcptr;
+                o_y = offs_y;
+                for (d_y = dest_y; d_y < dest_y + h; d_y++) {
+                    o_x = offs_x;
+                    for (d_x = dest_x; d_x < dest_x + w; d_x++) {
+                        BB_GET_PIXEL(dst, dbb_rotation, Color8, d_x, d_y, &dstptr);
+                        BB_GET_PIXEL(src, sbb_rotation, Color8A, o_x, o_y, &srcptr);
+                        dstptr->a = dither_o8x8(o_x, o_y, srcptr->a);
+                        o_x += 1;
+                    }
+                    o_y += 1;
+                }
+            }
+            break;
+        case TYPE_BBRGB16:
+            {
+                ColorRGB16 *srcptr;
+                o_y = offs_y;
+                for (d_y = dest_y; d_y < dest_y + h; d_y++) {
+                    o_x = offs_x;
+                    for (d_x = dest_x; d_x < dest_x + w; d_x++) {
+                        BB_GET_PIXEL(dst, dbb_rotation, Color8, d_x, d_y, &dstptr);
+                        BB_GET_PIXEL(src, sbb_rotation, ColorRGB16, o_x, o_y, &srcptr);
+                        dstptr->a = dither_o8x8(o_x, o_y, ColorRGB16_To_A(srcptr->v));
+                        o_x += 1;
+                    }
+                    o_y += 1;
+                }
+            }
+            break;
+        case TYPE_BBRGB24:
+            {
+                ColorRGB24 *srcptr;
+                o_y = offs_y;
+                for (d_y = dest_y; d_y < dest_y + h; d_y++) {
+                    o_x = offs_x;
+                    for (d_x = dest_x; d_x < dest_x + w; d_x++) {
+                        BB_GET_PIXEL(dst, dbb_rotation, Color8, d_x, d_y, &dstptr);
+                        BB_GET_PIXEL(src, sbb_rotation, ColorRGB24, o_x, o_y, &srcptr);
+                        dstptr->a = dither_o8x8(o_x, o_y, RGB_To_A(srcptr->r, srcptr->g, srcptr->b));
+                        o_x += 1;
+                    }
+                    o_y += 1;
+                }
+            }
+            break;
+        case TYPE_BBRGB32:
+            {
+                ColorRGB32 *srcptr;
+                o_y = offs_y;
+                for (d_y = dest_y; d_y < dest_y + h; d_y++) {
+                    o_x = offs_x;
+                    for (d_x = dest_x; d_x < dest_x + w; d_x++) {
+                        BB_GET_PIXEL(dst, dbb_rotation, Color8, d_x, d_y, &dstptr);
+                        BB_GET_PIXEL(src, sbb_rotation, ColorRGB32, o_x, o_y, &srcptr);
+                        dstptr->a = dither_o8x8(o_x, o_y, RGB_To_A(srcptr->r, srcptr->g, srcptr->b));
+                        o_x += 1;
+                    }
+                    o_y += 1;
+                }
+            }
+            break;
+    }
+}
+
 void BB_blit_to_BB8A(BlitBuffer *src, BlitBuffer *dst,
         int dest_x, int dest_y, int offs_x, int offs_y, int w, int h) {
     int d_x, d_y, o_x, o_y;
@@ -970,6 +1119,30 @@ void BB_blit_to(BlitBuffer *src, BlitBuffer *dst,
     switch (dbb_type) {
         case TYPE_BB8:
             BB_blit_to_BB8(src, dst, dest_x, dest_y, offs_x, offs_y, w, h);
+            break;
+        case TYPE_BB8A:
+            BB_blit_to_BB8A(src, dst, dest_x, dest_y, offs_x, offs_y, w, h);
+            break;
+        case TYPE_BBRGB16:
+            BB_blit_to_BB16(src, dst, dest_x, dest_y, offs_x, offs_y, w, h);
+            break;
+        case TYPE_BBRGB24:
+            BB_blit_to_BB24(src, dst, dest_x, dest_y, offs_x, offs_y, w, h);
+            break;
+        case TYPE_BBRGB32:
+            BB_blit_to_BB32(src, dst, dest_x, dest_y, offs_x, offs_y, w, h);
+            break;
+    }
+}
+
+// Only actually honors dithering when blitting to BB8 ;).
+void BB_dither_blit_to(BlitBuffer *src, BlitBuffer *dst,
+        int dest_x, int dest_y, int offs_x, int offs_y, int w, int h) {
+    int dbb_type = GET_BB_TYPE(dst);
+    //fprintf(stdout, "%s: dither blit from type: %s to: %s\n", __FUNCTION__, get_bbtype_name(GET_BB_TYPE(src)), get_bbtype_name(GET_BB_TYPE(dst)));
+    switch (dbb_type) {
+        case TYPE_BB8:
+            BB_dither_blit_to_BB8(src, dst, dest_x, dest_y, offs_x, offs_y, w, h);
             break;
         case TYPE_BB8A:
             BB_blit_to_BB8A(src, dst, dest_x, dest_y, offs_x, offs_y, w, h);
@@ -1992,6 +2165,137 @@ void BB_pmulalpha_blit_from(BlitBuffer *dst, BlitBuffer *src,
                 fprintf(stderr, "%s: incompatible bb (dst: %s, src: %s) in file %s, line %d!\r\n",
                         __FUNCTION__, get_bbtype_name(dbb_type), get_bbtype_name(sbb_type), __FILE__, __LINE__);
                 exit(1);
+            }
+            break;
+    }
+}
+
+// NOTE: Keep in sync w/ BB_pmulalpha_blit_from!
+//       Dithering is only honored for BB8 dbb ;).
+void BB_dither_pmulalpha_blit_from(BlitBuffer *dst, BlitBuffer *src,
+        int dest_x, int dest_y, int offs_x, int offs_y, int w, int h) {
+    int dbb_type = GET_BB_TYPE(dst);
+    int sbb_type = GET_BB_TYPE(src);
+    int sbb_rotation = GET_BB_ROTATION(src);
+    int dbb_rotation = GET_BB_ROTATION(dst);
+    uint8_t ainv, alpha;
+    int d_x, d_y, o_x, o_y;
+    switch (dbb_type) {
+        case TYPE_BB8:
+            {
+                Color8 *dstptr;
+                switch (sbb_type) {
+                    case TYPE_BB8:
+                        {
+                            Color8 *srcptr;
+                            o_y = offs_y;
+                            for (d_y = dest_y; d_y < dest_y + h; d_y++) {
+                                o_x = offs_x;
+                                for (d_x = dest_x; d_x < dest_x + w; d_x++) {
+                                    BB_GET_PIXEL(dst, dbb_rotation, Color8, d_x, d_y, &dstptr);
+                                    BB_GET_PIXEL(src, sbb_rotation, Color8, o_x, o_y, &srcptr);
+                                    dstptr->a = dither_o8x8(o_x, o_y, srcptr->a);
+                                    o_x += 1;
+                                }
+                                o_y += 1;
+                            }
+                        }
+                        break;
+                    case TYPE_BB8A:
+                        {
+                            Color8A *srcptr;
+                            o_y = offs_y;
+                            for (d_y = dest_y; d_y < dest_y + h; d_y++) {
+                                o_x = offs_x;
+                                for (d_x = dest_x; d_x < dest_x + w; d_x++) {
+                                    BB_GET_PIXEL(dst, dbb_rotation, Color8, d_x, d_y, &dstptr);
+                                    BB_GET_PIXEL(src, sbb_rotation, Color8A, o_x, o_y, &srcptr);
+                                    alpha = srcptr->alpha;
+                                    if (alpha == 0) {
+                                        // NOP
+                                    } else if (alpha == 0xFF) {
+                                        dstptr->a = dither_o8x8(o_x, o_y, srcptr->a);
+                                    } else {
+                                        ainv = alpha ^ 0xFF;
+                                        dstptr->a = dither_o8x8(o_x, o_y, DIV_255(dstptr->a * ainv + srcptr->a * 0xFF));
+                                    }
+                                    o_x += 1;
+                                }
+                                o_y += 1;
+                            }
+                        }
+                        break;
+                    case TYPE_BBRGB16:
+                        {
+                            ColorRGB16 *srcptr;
+                            o_y = offs_y;
+                            for (d_y = dest_y; d_y < dest_y + h; d_y++) {
+                                o_x = offs_x;
+                                for (d_x = dest_x; d_x < dest_x + w; d_x++) {
+                                    BB_GET_PIXEL(dst, dbb_rotation, Color8, d_x, d_y, &dstptr);
+                                    BB_GET_PIXEL(src, sbb_rotation, ColorRGB16, o_x, o_y, &srcptr);
+                                    dstptr->a = dither_o8x8(o_x, o_y, ColorRGB16_To_A(srcptr->v));
+                                    o_x += 1;
+                                }
+                                o_y += 1;
+                            }
+                        }
+                        break;
+                    case TYPE_BBRGB24:
+                        {
+                            ColorRGB24 *srcptr;
+                            o_y = offs_y;
+                            for (d_y = dest_y; d_y < dest_y + h; d_y++) {
+                                o_x = offs_x;
+                                for (d_x = dest_x; d_x < dest_x + w; d_x++) {
+                                    BB_GET_PIXEL(dst, dbb_rotation, Color8, d_x, d_y, &dstptr);
+                                    BB_GET_PIXEL(src, sbb_rotation, ColorRGB24, o_x, o_y, &srcptr);
+                                    dstptr->a = dither_o8x8(o_x, o_y, RGB_To_A(srcptr->r, srcptr->g, srcptr->b));
+                                    o_x += 1;
+                                }
+                                o_y += 1;
+                            }
+                        }
+                        break;
+                    case TYPE_BBRGB32:
+                        {
+                            ColorRGB32 *srcptr;
+                            uint8_t srca;
+                            o_y = offs_y;
+                            for (d_y = dest_y; d_y < dest_y + h; d_y++) {
+                                o_x = offs_x;
+                                for (d_x = dest_x; d_x < dest_x + w; d_x++) {
+                                    BB_GET_PIXEL(dst, dbb_rotation, Color8, d_x, d_y, &dstptr);
+                                    BB_GET_PIXEL(src, sbb_rotation, ColorRGB32, o_x, o_y, &srcptr);
+                                    alpha = srcptr->alpha;
+                                    if (alpha == 0) {
+                                        // NOP
+                                    } else if (alpha == 0xFF) {
+                                        dstptr->a = dither_o8x8(o_x, o_y, RGB_To_A(srcptr->r, srcptr->g, srcptr->b));
+                                    } else {
+                                        ainv = alpha ^ 0xFF;
+                                        srca = RGB_To_A(srcptr->r, srcptr->g, srcptr->b);
+                                        dstptr->a = dither_o8x8(o_x, o_y, DIV_255(dstptr->a * ainv + srca * 0xFF));
+                                    }
+                                    o_x += 1;
+                                }
+                                o_y += 1;
+                            }
+                        }
+                        break;
+                    default:
+                        {
+                            fprintf(stderr, "%s: incompatible bb (dst: BB8, src: %s) in file %s, line %d!\r\n",
+                                    __FUNCTION__, get_bbtype_name(sbb_type), __FILE__, __LINE__);
+                            exit(1);
+                        }
+                        break;
+                }
+            }
+            break;
+        default:
+            {
+                return BB_pmulalpha_blit_from(dst, src, dest_x, dest_y, offs_x, offs_y, w, h);
             }
             break;
     }

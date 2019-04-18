@@ -20,17 +20,17 @@ if(DEFINED LIBS)
     set(BUILD_CMD_STR "${BUILD_CMD_STR} LIBS=\"${LIBS}\"")
 endif()
 if ($ENV{DARWIN})
-    set(INSTALL_CMD sh -c "${BUILD_CMD_STR} --silent macosx install")
-    set(BUILD_CMD sh -c "${BUILD_CMD_STR} --silent macosx")
+    set(INSTALL_CMD sh -c "${BUILD_CMD_STR} macosx install")
+    set(BUILD_CMD sh -c "${BUILD_CMD_STR} macosx")
 else()
-    set(INSTALL_CMD sh -c "${BUILD_CMD_STR} --silent linux install")
-    set(BUILD_CMD sh -c "${BUILD_CMD_STR} --silent linux")
+    set(INSTALL_CMD sh -c "${BUILD_CMD_STR} linux install")
+    set(BUILD_CMD sh -c "${BUILD_CMD_STR} linux")
 endif()
 
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
     https://github.com/brunoos/luasec
-    luasec-0.7
+    luasec-0.8
     ${SOURCE_DIR}
 )
 

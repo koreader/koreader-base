@@ -21,6 +21,8 @@ local fb = {
     cur_rotation_mode = nil,
     blitbuffer_rotation_mode = nil,
     night_mode = false,
+    hw_dithering = false, -- will be setup via setupDithering @ startup by reader.lua
+    sw_dithering = false, -- will be setup via setupDithering @ startup by reader.lua
 }
 
 --[[
@@ -371,6 +373,34 @@ function fb:toggleNightMode()
             -- invert and blank out the full framebuffer when we are working on a viewport
             self.full_bb:invert()
             self.full_bb:fill(Blitbuffer.COLOR_WHITE)
+        end
+    end
+end
+
+function fb:toggleHWDithering()
+    self.hw_dithering = not self.hw_dithering
+end
+
+function fb:toggleSWDithering()
+    self.sw_dithering = not self.sw_dithering
+end
+
+function fb:setupDithering()
+    -- Prefer HW dither to SW dither
+    if self.device:canHWDither() then
+        self.hw_dithering = true
+    else
+        self.hw_dithering = false
+    end
+
+    if self.hw_dithering then
+        self.sw_dithering = false
+    else
+        -- We only handle SW dithering @ 8bpp, to keep things simple
+        if self.device.screen.fb_bpp == 8 then
+            self.sw_dithering = true
+        else
+            self.sw_dithering = false
         end
     end
 end

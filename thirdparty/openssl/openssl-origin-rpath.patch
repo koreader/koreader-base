@@ -1,16 +1,13 @@
-diff --git a/Makefile.shared b/Makefile.shared
-index e8d222ac6a..c113e74d5b 100644
---- a/Makefile.shared
-+++ b/Makefile.shared
-@@ -151,9 +151,9 @@ DO_GNU_SO=$(CALC_VERSIONS); \
- 	SHLIB_SUFFIX=; \
- 	ALLSYMSFLAGS='-Wl,--whole-archive'; \
- 	NOALLSYMSFLAGS='-Wl,--no-whole-archive'; \
--	SHAREDFLAGS="$(CFLAGS) $(SHARED_LDFLAGS) -shared -Wl,-Bsymbolic -Wl,-soname=$$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX"
-+	SHAREDFLAGS="$(CFLAGS) $(SHARED_LDFLAGS) -Wl,-rpath,"'$$'"ORIGIN -shared -Wl,-Bsymbolic -Wl,-soname=$$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX"
- 
--DO_GNU_APP=LDFLAGS="$(CFLAGS) -Wl,-rpath,$(LIBRPATH)"
-+DO_GNU_APP=LDFLAGS="$(CFLAGS) -Wl,-rpath,"'$$'"ORIGIN/libs"
- 
- #This is rather special.  It's a special target with which one can link
- #applications without bothering with any features that have anything to
+diff --git a/Configurations/shared-info.pl b/Configurations/shared-info.pl
+index 47eddd6835..4fbb5d50b4 100644
+--- a/Configurations/shared-info.pl
++++ b/Configurations/shared-info.pl
+@@ -25,7 +25,7 @@ sub detect_gnu_cc {
+ my %shared_info;
+ %shared_info = (
+     'gnu-shared' => {
+-        shared_ldflag         => '-shared -Wl,-Bsymbolic',
++        shared_ldflag         => '-shared -Wl,-Bsymbolic -Wl,-rpath,\'$$ORIGIN\'',
+         shared_sonameflag     => '-Wl,-soname=',
+     },
+     'linux-shared' => sub {

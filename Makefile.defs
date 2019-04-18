@@ -4,7 +4,7 @@ SHELL:=/bin/bash
 ifeq ($(USE_NO_CCACHE), 1)
 	CCACHE:=
 else
-	CCACHE?=$(shell which ccache)
+	CCACHE?=$(shell command -v ccache)
 endif
 
 UNAME:=$(shell uname -s)
@@ -32,8 +32,13 @@ endif
 
 export CMAKE_BUILD_TYPE
 
-# CMAKE=cmake --no-warn-unused-cli
+# CMAKE:=cmake --no-warn-unused-cli
 CMAKE := cmake
+ifdef VERBOSE
+	CMAKE_ARGS := -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON
+endif
+CMAKE+=$(CMAKE_ARGS)
+
 NINJA := $(shell command -v ninja)
 
 ifneq ($(NINJA),)
@@ -45,9 +50,15 @@ endif
 ifneq ($(USE_NINJA),)
 	CMAKE_FLAGS := -G Ninja
 	CMAKE_MAKE_PROGRAM := $(NINJA)
+	ifdef VERBOSE
+		NINJA_FLAGS := -v
+	endif
 	CMAKE_MAKE_PROGRAM_FLAGS ?= $(NINJA_FLAGS)
 else
 	CMAKE_MAKE_PROGRAM := $(MAKE)
+	ifdef VERBOSE
+		MAKE_FLAGS := VERBOSE=1
+	endif
 	CMAKE_MAKE_PROGRAM_FLAGS ?= $(MAKE_FLAGS)
 endif
 
@@ -117,6 +128,8 @@ else ifeq ($(TARGET), android)
 	else
 		CHOST?=arm-linux-androideabi
 	endif
+	# Needed for OpenSSL, c.f., NOTES.ANDROID
+	export ANDROID_NDK_HOME=$(ANDROID_TOOLCHAIN)
 else ifeq ($(TARGET), win32)
 	CHOST?=i686-w64-mingw32
 	export WIN32=1
@@ -185,28 +198,59 @@ ifdef SBOX_UNAME_MACHINE
 endif
 
 # set cross-compiler/host CC and CXX
-ifeq ($(CC), clang)
-	CC:=$(CHOST)-clang
-	CXX:=$(CHOST)-clang++
+ifeq ($(strip $(CCACHE) $(CC)), clang)
+	ifdef CHOST
+		CC:=$(CHOST)-clang
+		CXX:=$(CHOST)-clang++
+	else
+		CC:=clang
+		CXX:=clang++
+	endif
 	HOSTCC:=clang
 	HOSTCXX:=clang++
 	# quiet flag
-	QFLAGS:=-Qunused-arguments
+	QFLAGS:=-Wno-ignored-optimization-argument -Wno-unknown-warning-option
+	# Tone down some very verbose Clang 5 warnings, too.
+	# This one can be *extremely* verbose
+	QFLAGS+=-Wno-array-bounds
+	# This one checks if -I flags are actually used, even at steps where it makes little sense.
+	# Since we massively pass -I/-L flags ourselves, this becomes insane really quick.
+	QFLAGS+=-Wno-unused-command-line-argument
+	# Let FreeType do its thing...
+	QFLAGS+=-Wno-self-assign
+	# Also extremely verbose...
+	QFLAGS+=-Wno-parentheses-equality
+	# For dropbear's libtom...
+	QFLAGS+=-Wno-macro-redefined
+	# Note that things appear to be better with Clang >= 6 ;).
 	export CLANG=1
 else
-	CC:=$(CHOST)-gcc
-	CXX:=$(CHOST)-g++
+	ifdef CHOST
+		CC:=$(CHOST)-gcc
+		CXX:=$(CHOST)-g++
+	else
+		CC:=gcc
+		CXX:=g++
+	endif
 	HOSTCC:=gcc
 	HOSTCXX:=g++
 	QFLAGS:=
 endif
 
 # set cross-compiler/host AR LD RANLIB
-STRIP:=$(CHOST)-strip
-AR:=$(CHOST)-ar
-LD:=$(CHOST)-ld
-RC:=$(CHOST)-windres
-RANLIB:=$(CHOST)-ranlib
+ifdef CHOST
+	STRIP:=$(CHOST)-strip
+	AR:=$(CHOST)-ar
+	LD:=$(CHOST)-ld
+	RC:=$(CHOST)-windres
+	RANLIB:=$(CHOST)-ranlib
+else
+	STRIP:=strip
+	AR:=ar
+	LD:=ld
+	RC:=windres
+	RANLIB:=ranlib
+endif
 
 HOSTSTRIP:=strip
 HOSTAR:=ar
@@ -222,7 +266,7 @@ LIBTOOLIZE:=$(if $(DARWIN),glibtoolize,libtoolize)
 ifndef DARWIN
 	# we need to set PATH manually here because export PATH in gmake only takes
 	# effect for for sub shells
-	STATIC_LIBSTDCPP=$(shell PATH='$(PATH)' $(CC) -print-file-name=libstdc++.a)
+	STATIC_LIBSTDCPP=$(shell PATH='$(PATH)' $(strip $(CCACHE) $(CC)) -print-file-name=libstdc++.a)
 else
 	STATIC_LIBSTDCPP=
 endif
@@ -293,7 +337,7 @@ ifeq ($(TARGET), kobo)
 	# NOTE: If we only care about Kobos w/ a Touch screen, we're good.
 	ARM_ARCH:=$(ARMV7_A8_ARCH)
 	ARM_ARCH+=-mfloat-abi=hard
-	ifeq ($(shell PATH='$(PATH)' $(CC) -dumpmachine 2>/dev/null), arm-linux-gnueabihf)
+	ifeq ($(shell PATH='$(PATH)' $(strip $(CCACHE) $(CC)) -dumpmachine 2>/dev/null), arm-linux-gnueabihf)
 		COMPAT_CFLAGS:=$(UBUNTU_COMPAT_CFLAGS)
 		COMPAT_CXXFLAGS:=$(UBUNTU_COMPAT_CFLAGS)
 	endif
@@ -310,21 +354,21 @@ else ifeq ($(TARGET), pocketbook)
 else ifeq ($(TARGET), kindle)
 	ARM_ARCH:=$(ARMV7_A8_ARCH)
 	ARM_ARCH+=-mfloat-abi=softfp
-	ifeq ($(shell PATH='$(PATH)' $(CC) -dumpmachine 2>/dev/null), arm-linux-gnueabi)
+	ifeq ($(shell PATH='$(PATH)' $(strip $(CCACHE) $(CC)) -dumpmachine 2>/dev/null), arm-linux-gnueabi)
 		COMPAT_CFLAGS:=$(UBUNTU_COMPAT_CFLAGS)
 		COMPAT_CXXFLAGS:=$(UBUNTU_COMPAT_CFLAGS)
 	endif
 else ifeq ($(TARGET), kindlepw2)
 	ARM_ARCH:=$(ARMV7_A9_ARCH)
 	ARM_ARCH+=-mfloat-abi=softfp
-	ifeq ($(shell PATH='$(PATH)' $(CC) -dumpmachine 2>/dev/null), arm-linux-gnueabi)
+	ifeq ($(shell PATH='$(PATH)' $(strip $(CCACHE) $(CC)) -dumpmachine 2>/dev/null), arm-linux-gnueabi)
 		COMPAT_CFLAGS:=$(UBUNTU_COMPAT_CFLAGS)
 		COMPAT_CXXFLAGS:=$(UBUNTU_COMPAT_CFLAGS)
 	endif
 else ifeq ($(TARGET), kindle-legacy)
 	ARM_ARCH:=$(ARMV6_1136_ARCH)
 	ARM_ARCH+=-mfloat-abi=softfp
-	ifeq ($(shell PATH='$(PATH)' $(CC) -dumpmachine 2>/dev/null), arm-linux-gnueabi)
+	ifeq ($(shell PATH='$(PATH)' $(strip $(CCACHE) $(CC)) -dumpmachine 2>/dev/null), arm-linux-gnueabi)
 		COMPAT_CFLAGS:=$(MG2K12_COMPAT_CFLAGS)
 		COMPAT_CXXFLAGS:=$(MG2K12_COMPAT_CXXFLAGS)
 	endif
@@ -349,7 +393,7 @@ else ifeq ($(TARGET), sony-prstux)
 else ifeq ($(TARGET), cervantes)
 	ARM_ARCH:=$(ARMV7_GENERIC_ARCH)
 	ARM_ARCH+=-mfloat-abi=softfp
-	ifeq ($(shell PATH='$(PATH)' $(CC) -dumpmachine 2>/dev/null), arm-linux-gnueabi)
+	ifeq ($(shell PATH='$(PATH)' $(strip $(CCACHE) $(CC)) -dumpmachine 2>/dev/null), arm-linux-gnueabi)
 		COMPAT_CFLAGS:=$(UBUNTU_COMPAT_CFLAGS)
 		COMPAT_CXXFLAGS:=$(UBUNTU_COMPAT_CFLAGS)
 	endif
@@ -368,25 +412,6 @@ else
 	ARM_ARCH:=
 endif
 
-# Clang 3.4 on Travis however doesn't define macro '__extern_always_inline'
-ifdef CLANG
-	BASE_CFLAGS+=-D__extern_always_inline=inline
-	# Tone down some very verbose Clang 5 warnings, too.
-	# This one can be *extremely* verbose
-	BASE_CFLAGS+=-Wno-array-bounds
-	# This one checks if -I flags are actually used, even at steps where it makes little sense.
-	# Since we massively pass -I/-L flags ourselves, this becomes insane really quick.
-	# QFLAGS should have been taking care of this already, but it looks like it doesn't take in every case...
-	BASE_CFLAGS+=-Wno-unused-command-line-argument
-	# Let FreeType do its thing...
-	BASE_CFLAGS+=-Wno-self-assign
-	# Also extremely verbose...
-	BASE_CFLAGS+=-Wno-parentheses-equality
-	# For dropbear's libtom...
-	BASE_CFLAGS+=-Wno-macro-redefined
-	# Note that things appear to be better with Clang >= 6 ;).
-endif
-
 HOST_ARCH:=-march=native
 ifdef APPIMAGE
 	# We want to run the AppImage on any 64-bit CPU
@@ -397,10 +422,30 @@ ifdef DEBIAN
 	HOST_ARCH:=-mtune=generic -march=native
 endif
 
+# Anything below GCC 6 gets to be forcefully switched to decent standards, because some of our deps require C11 & C++11 support.
+# NOTE: Technically, this also means we require Clang >= 3.2, but that should more or less hold true on our end, because that's truly ancient.
+# Tests heavily inspired from Linux's build system ;).
+CC_IS_CLANG:=$(shell PATH='$(PATH)' $(strip $(CCACHE) $(CC)) -v 2>&1 | grep -q "clang version" && echo 1 || echo 0)
+CC_VERSION:=$(shell PATH='$(PATH)' printf "%02d%02d%02d" `echo __GNUC__ | $(strip $(CCACHE) $(CC)) -E -x c - | tail -n 1` `echo __GNUC_MINOR__ | $(strip $(CCACHE) $(CC)) -E -x c - | tail -n 1` `echo __GNUC_PATCHLEVEL__ | $(strip $(CCACHE) $(CC)) -E -x c - | tail -n 1`)
+# Detect Clang's SA, too...
+ifeq "$(CC_IS_CLANG)" "0"
+	ifeq "$(lastword $(subst /, ,$(strip $(CCACHE) $(CC))))" "ccc-analyzer"
+		CC_IS_CLANG:=1
+	endif
+endif
+ifeq "$(CC_IS_CLANG)" "0"
+	# NOTE: GCC 6.1.0 switched to gnu11 & gnu++14, so only tweak older ones.
+	#       c.f., https://stackoverflow.com/q/14737104 for a nice recap.
+	ifeq "$(shell expr $(CC_VERSION) \< 060100)" "1"
+		CSTD_FLAGS:=-std=gnu11
+		CXXSTD_FLAGS:=-std=gnu++11
+	endif
+endif
+
 HOSTCFLAGS:=$(HOST_ARCH) $(BASE_CFLAGS) $(QFLAGS)
 
-CFLAGS:=$(BASE_CFLAGS) $(QFLAGS)
-CXXFLAGS:=$(BASE_CFLAGS) $(QFLAGS)
+CFLAGS:=$(BASE_CFLAGS) $(QFLAGS) $(CSTD_FLAGS)
+CXXFLAGS:=$(BASE_CFLAGS) $(QFLAGS) $(CXXSTD_FLAGS)
 
 ifndef DARWIN
 	LDFLAGS:=-Wl,-O1 -Wl,--as-needed -static-libstdc++
@@ -428,14 +473,23 @@ ifdef STATICLIBSTDCPP
 	DYNAMICLIBSTDCPP:=
 endif
 
+# this will create a path named build/arm-none-linux-gnueabi or similar
+TARGET_MARCHINE:=$(shell PATH='$(PATH)' $(strip $(CCACHE) $(CC)) -dumpmachine 2>/dev/null)
+ifdef KODEBUG
+	MACHINE=$(TARGET_MARCHINE)-debug
+else
+	MACHINE=$(TARGET_MARCHINE)
+endif
+OUTPUT_DIR=build/$(MACHINE)
+
 # you can configure an emulation for the (eink) framebuffer here.
 # the application won't use the framebuffer (and the special e-ink ioctls)
 # in that case.
 
 ifdef EMULATE_READER
 	# CMake is difficult about CC and CXX, especially when it's not just a full path
-	CMAKE_C_COMPILER:=$(shell which $(strip $(HOSTCC)))
-	CMAKE_CXX_COMPILER:=$(shell which $(strip $(HOSTCXX)))
+	CMAKE_C_COMPILER:=$(shell command -v $(strip $(HOSTCC)))
+	CMAKE_CXX_COMPILER:=$(shell command -v $(strip $(HOSTCXX)))
 	ifdef CCACHE
 		CMAKE_C_COMPILER_LAUNCHER:=$(CCACHE)
 		CMAKE_CXX_COMPILER_LAUNCHER:=$(CCACHE)
@@ -454,11 +508,14 @@ ifdef EMULATE_READER
 	CFLAGS+=$(HOST_ARCH)
 	CXXFLAGS+=$(HOST_ARCH)
 else
-	# CMake is difficult about CC and CXX, especially when it's not just a full path
-	CMAKE_C_COMPILER:=$(CC)
-	CMAKE_CXX_COMPILER:=$(CXX)
-	CMAKE_C_COMPILER_ARG1:= -static-libstdc++
-	CMAKE_CXX_COMPILER_ARG1:= -static-libstdc++
+	# Use a CMake toolchain file to avoid all kinds of CMake insanity
+	export CROSS_TC:=$(CHOST)
+	ifndef SYSROOT
+		export SYSROOT:=$(shell PATH='$(PATH)' $(strip $(CCACHE) $(CC)) -print-sysroot)
+	endif
+	export CROSS_STAGING:=$(CURDIR)/$(OUTPUT_DIR)
+	export CMAKE_TCF:=-DCMAKE_TOOLCHAIN_FILE=$(CURDIR)/thirdparty/cmake_modules/CMakeCross.cmake
+	CMAKE+=$(CMAKE_TCF)
 	ifdef CCACHE
 		CMAKE_C_COMPILER_LAUNCHER:=$(CCACHE)
 		CMAKE_CXX_COMPILER_LAUNCHER:=$(CCACHE)
@@ -470,8 +527,9 @@ else
 	# (cf. https://www.gnu.org/software/libtool/manual/html_node/Stripped-link-flags.html#Stripped-link-flags)
 	CC:=$(strip $(CCACHE) $(CC)) -static-libstdc++
 	CXX:=$(strip $(CCACHE) $(CXX)) -static-libstdc++
-	CFLAGS+=$(ARM_ARCH) $(COMPAT_CFLAGS)
-	CXXFLAGS+=$(ARM_ARCH) $(COMPAT_CXXFLAGS)
+	CFLAGS+=$(ARM_ARCH) $(COMPAT_CFLAGS) -static-libstdc++
+	CXXFLAGS+=$(ARM_ARCH) $(COMPAT_CXXFLAGS) -static-libstdc++
+	LDFLAGS+=-static-libstdc++
 	# Make sure we always have mmap() support.
 	# This is critical for FreeType, since the usage of platform-specific code depends on this,
 	# and without it, we don't get CLOEXEC handling, which is problematic on Kobos, where we spawn stuff that might
@@ -484,6 +542,21 @@ endif
 ifneq ($(TARGET), win32)
 	CFLAGS+=-fPIC
 	CXXFLAGS+=-fPIC
+endif
+
+# Try to make sure CMake picks up our flags...
+export CFLAGS
+export CXXFLAGS
+export LDFLAGS
+# And that our TC is honored
+export CC
+export CXX
+export AR
+export RANLIB
+export LD
+export STRIP
+ifdef WIN32
+	export RC
 endif
 
 # FIXME: If we cared, we'd probably need to do something to convince libzmq not
@@ -504,7 +577,7 @@ ifndef WIN32
 	# We only care about that on non-emulated builds (i.e., arm), because compat symbols may be pinned
 	# to different versions on different arches, and we only account for arm in our patches.
 	ifndef EMULATE_READER
-		GLIBC_FILE=$(basename $(notdir $(realpath $(shell PATH='$(PATH)' $(CC) -print-file-name=libc.so.6))))
+		GLIBC_FILE=$(basename $(notdir $(realpath $(shell PATH='$(PATH)' $(strip $(CCACHE) $(CC)) -print-file-name=libc.so.6))))
 		GLIBC_VER=$(shell echo $(GLIBC_FILE) | cut -f2 -d'-')
 		GLIBC_2_22_SORT=$(shell echo -e "$(GLIBC_VER)\n2.22" | sort -V | head -n1)
 		ifeq ($(GLIBC_2_22_SORT), 2.22)
@@ -528,13 +601,6 @@ ifneq (,$(findstring march=arm,$(CFLAGS)))
 		unexport WANT_SIMD
 	endif
 endif
-
-# this will create a path named build/arm-none-linux-gnueabi or similar
-MACHINE?=$(shell PATH='$(PATH)' $(CC) -dumpmachine 2>/dev/null)
-ifdef KODEBUG
-	MACHINE:=$(MACHINE)-debug
-endif
-OUTPUT_DIR?=build/$(MACHINE)
 
 LIB_EXT=$(if $(WIN32),.dll,$(if $(DARWIN),.dylib,.so))
 
@@ -654,8 +720,8 @@ TESSERACT_LIB=$(OUTPUT_DIR)/libs/libtesseract$(TESS_LIB_EXT)
 OPENSSL_BUILD_DIR=$(THIRDPARTY_DIR)/openssl/build/$(MACHINE)
 OPENSSL_DIR=$(CURDIR)/$(OPENSSL_BUILD_DIR)/openssl-prefix/src/openssl
 OPENSSL_LIB=$(OPENSSL_DIR)/libssl.$(if $(WIN32),a,so)
-SSL_LIB=$(OUTPUT_DIR)/libs/libssl$(if $(WIN32),-1.dll,$(if $(DARWIN),.1.0.0.dylib,.so.1.0.0))
-CRYPTO_LIB=$(OUTPUT_DIR)/libs/libcrypto$(if $(WIN32),-1.dll,$(if $(DARWIN),.1.0.0.dylib,.so.1.0.0))
+SSL_LIB=$(OUTPUT_DIR)/libs/libssl$(if $(WIN32),-1.dll,$(if $(DARWIN),.1.1.dylib,$(if $(ANDROID),.so,.so.1.1)))
+CRYPTO_LIB=$(OUTPUT_DIR)/libs/libcrypto$(if $(WIN32),-1.dll,$(if $(DARWIN),.1.1.dylib,$(if $(ANDROID),.so,.so.1.1)))
 
 LUASOCKET_BUILD_DIR=$(THIRDPARTY_DIR)/luasocket/build/$(MACHINE)
 LUASOCKET_DIR=$(CURDIR)/luasocket-prefix/src/luasocket
@@ -745,11 +811,15 @@ NANOSVG_HEADERS=$(addprefix $(NANOSVG_INCLUDE_DIR)/, $(NANOSVG_HEADER_FILES))
 # also, dynamic libraries must be compiled with "-shared" and "-fPIC".
 # having all symbols included (-E) won't hurt, too.
 DYNLIB_CFLAGS=-L$(CURDIR)/$(OUTPUT_DIR)/libs $(CFLAGS) -I$(LUAJIT_DIR)/src -shared
+DYNLIB_CXXFLAGS=-L$(CURDIR)/$(OUTPUT_DIR)/libs $(CXXFLAGS) -I$(LUAJIT_DIR)/src -shared
 DYNLIB_CMAKE_CFLAGS=-L$(CURDIR)/$(OUTPUT_DIR)/libs $(CFLAGS) -I$(LUAJIT_DIR)/src -shared
+DYNLIB_CMAKE_CXXFLAGS=-L$(CURDIR)/$(OUTPUT_DIR)/libs $(CXXFLAGS) -I$(LUAJIT_DIR)/src -shared
 ifdef DARWIN
 	DYNLIB_CFLAGS+=-dynamiclib -undefined dynamic_lookup
+	DYNLIB_CXXFLAGS+=-dynamiclib -undefined dynamic_lookup
 else
 	DYNLIB_CFLAGS+=-Wl,-E -Wl,-rpath,'$$ORIGIN'
+	DYNLIB_CXXFLAGS+=-Wl,-E -Wl,-rpath,'$$ORIGIN'
 endif
 
 # RPATH for all libraries in koreader/libs. The expand path looks like below:
@@ -759,8 +829,10 @@ ORIGIN_CMAKE_TO_AUTOCFG=\\\$$\\\$$ORIGIN
 
 ifdef DARWIN
 	DYNLIB_CMAKE_CFLAGS+=-dynamiclib -undefined dynamic_lookup
+	DYNLIB_CMAKE_CXXFLAGS+=-dynamiclib -undefined dynamic_lookup
 else
 	DYNLIB_CMAKE_CFLAGS+=-Wl,-E -Wl,-rpath,'$(ORIGIN_CMAKE_TO_AUTOCFG)'
+	DYNLIB_CMAKE_CXXFLAGS+=-Wl,-E -Wl,-rpath,'$(ORIGIN_CMAKE_TO_AUTOCFG)'
 endif
 
 LPEG_BUILD_DIR=$(THIRDPARTY_DIR)/lpeg/build/$(MACHINE)
@@ -769,13 +841,13 @@ LPEG_RE=$(OUTPUT_DIR)/rocks/share/lua/5.1/re.lua
 LPEG_DYNLIB=$(OUTPUT_DIR)/rocks/lib/lua/5.1/lpeg.so
 
 
-CMAKE_THIRDPARTY_LIBS = kpvcrlib,nanosvg
-CMAKE_THIRDPARTY_LIBS += ,evernote-sdk-lua,luajit,lpeg,turbo
-CMAKE_THIRDPARTY_LIBS += ,zsync,zyre,czmq,filemq,libzmq
-CMAKE_THIRDPARTY_LIBS += ,libk2pdfopt,tesseract,leptonica
-CMAKE_THIRDPARTY_LIBS += ,lj-wpaclient
-CMAKE_THIRDPARTY_LIBS += ,lua-Spore,luasec,luasocket,libffi,lua-serialize,glib,lodepng,minizip
-CMAKE_THIRDPARTY_LIBS += ,djvulibre,mupdf,freetype2,harfbuzz,giflib,libpng,zlib
-CMAKE_THIRDPARTY_LIBS += ,tar,sdcv,libiconv,gettext,libjpeg-turbo,popen-noshell,sqlite
-CMAKE_THIRDPARTY_LIBS += ,openssl,dropbear,openssh
-CMAKE_THIRDPARTY_LIBS += ,fbink
+CMAKE_THIRDPARTY_LIBS := kpvcrlib,nanosvg
+CMAKE_THIRDPARTY_LIBS := $(CMAKE_THIRDPARTY_LIBS),evernote-sdk-lua,luajit,lpeg,turbo
+CMAKE_THIRDPARTY_LIBS := $(CMAKE_THIRDPARTY_LIBS),zsync,zyre,czmq,filemq,libzmq
+CMAKE_THIRDPARTY_LIBS := $(CMAKE_THIRDPARTY_LIBS),libk2pdfopt,tesseract,leptonica
+CMAKE_THIRDPARTY_LIBS := $(CMAKE_THIRDPARTY_LIBS),lj-wpaclient
+CMAKE_THIRDPARTY_LIBS := $(CMAKE_THIRDPARTY_LIBS),lua-Spore,luasec,luasocket,libffi,lua-serialize,glib,lodepng,minizip
+CMAKE_THIRDPARTY_LIBS := $(CMAKE_THIRDPARTY_LIBS),djvulibre,mupdf,freetype2,harfbuzz,giflib,libpng,zlib
+CMAKE_THIRDPARTY_LIBS := $(CMAKE_THIRDPARTY_LIBS),tar,sdcv,libiconv,gettext,libjpeg-turbo,popen-noshell,sqlite
+CMAKE_THIRDPARTY_LIBS := $(CMAKE_THIRDPARTY_LIBS),openssl,dropbear,openssh
+CMAKE_THIRDPARTY_LIBS := $(CMAKE_THIRDPARTY_LIBS),fbink

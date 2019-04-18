@@ -55,3 +55,4 @@ install:
 script:
   - if [ "$SHELLCHECKS" = 1 ]; then source .ci/lint_script.sh; else source .ci/build_script.sh; fi
   - if [ "$EMULATE_READER" = 1 ]; then source .ci/test_script.sh; fi
+

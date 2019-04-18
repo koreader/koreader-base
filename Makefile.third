@@ -37,16 +37,6 @@ $(TURBOJPEG_LIB) $(JPEG_LIB): $(THIRDPARTY_DIR)/libjpeg-turbo/CMakeLists.txt
 	install -d $(JPEG_BUILD_DIR)
 	cd $(JPEG_BUILD_DIR) && \
 		$(CMAKE) $(CMAKE_FLAGS) \
-		-DCMAKE_VERBOSE_MAKEFILE:BOOL=OFF \
-		-DCHOST="$(CHOST)" \
-		-DCFLAGS="$(CFLAGS)" \
-		-DLDFLAGS="$(LDFLAGS)" \
-		-DCMAKE_C_COMPILER="$(CMAKE_C_COMPILER)" \
-		-DCMAKE_C_COMPILER_LAUNCHER="$(CMAKE_C_COMPILER_LAUNCHER)" \
-		-DCMAKE_C_COMPILER_ARG1="$(CMAKE_C_COMPILER_ARG1)" \
-		-DSTRIP="$(STRIP)" \
-		-DAR="$(AR)" \
-		-DRANLIB="$(RANLIB)" \
 		$(CURDIR)/$(THIRDPARTY_DIR)/libjpeg-turbo && \
 		$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS)
 	cp -fL $(JPEG_DIR)/lib/$(notdir $(TURBOJPEG_LIB)) $(TURBOJPEG_LIB)
@@ -132,16 +122,14 @@ $(CRENGINE_LIB): $(ZLIB) $(PNG_LIB) $(FREETYPE_LIB) $(HARFBUZZ_LIB) $(JPEG_LIB) 
 		$(CRENGINE_SRC_FILES) $(THIRDPARTY_DIR)/kpvcrlib/CMakeLists.txt
 	install -d $(CRENGINE_BUILD_DIR)
 	cd $(CRENGINE_BUILD_DIR) && \
-		CC="$(CC)" CXX="$(CXX)" RC="$(RC)" \
-		CFLAGS="$(CFLAGS)" CXXFLAGS="$(CXXFLAGS) -static-libstdc++" \
-		LDFLAGS="$(LDFLAGS)" \
 		JPEG_LIB="$(CURDIR)/$(JPEG_LIB)" \
 		PNG_LIB="$(CURDIR)/$(PNG_LIB)" \
 		FREETYPE_LIB="$(CURDIR)/$(FREETYPE_LIB)" \
 		HARFBUZZ_LIB="$(CURDIR)/$(HARFBUZZ_LIB)" \
 		ZLIB="$(CURDIR)/$(ZLIB)" \
 		LIBS_DIR="$(CURDIR)/$(OUTPUT_DIR)/libs" \
-		$(CMAKE) $(CMAKE_FLAGS) -DJPEGLIB_INCLUDE_DIR=$(JPEG_DIR)/include \
+		$(CMAKE) $(CMAKE_FLAGS) \
+		-DJPEGLIB_INCLUDE_DIR=$(JPEG_DIR)/include \
 		-DJCONFIG_INCLUDE_DIR="$(MUPDF_DIR)/scripts" \
 		-DPNG_INCLUDE_DIR="$(PNG_DIR)/include" \
 		-DNANOSVG_INCLUDE_DIR="$(NANOSVG_INCLUDE_DIR)" \
@@ -162,7 +150,8 @@ $(LUAJIT) $(LUAJIT_LIB) $(LUAJIT_JIT): $(THIRDPARTY_DIR)/luajit/CMakeLists.txt
 		$(CMAKE) $(CMAKE_FLAGS) -DCC="$(HOSTCC)" \
 		-DXCOMPILE:BOOL=$(if $(EMULATE_READER),off,on) \
 		-DBASE_CFLAGS="$(BASE_CFLAGS)" -DHOST_CFLAGS="$(HOSTCFLAGS)" \
-		$(if $(WIN32),-DLDFLAGS="$(LDFLAGS)" -DTARGET_SYS=Windows,) \
+		-DLDFLAGS="$(LDFLAGS)" \
+		$(if $(WIN32),-DTARGET_SYS=Windows,) \
 		$(if $(ANDROID),-DTARGET_SYS=Linux,) \
 		-DTARGET_SONAME=$(notdir $(LUAJIT_LIB)) \
 		-DTARGET_CFLAGS="$(CFLAGS)" \
@@ -232,7 +221,8 @@ endif
 $(LIBICONV): $(THIRDPARTY_DIR)/libiconv/CMakeLists.txt
 	install -d $(LIBICONV_BUILD_DIR)
 	cd $(LIBICONV_BUILD_DIR) && \
-		$(CMAKE) $(CMAKE_FLAGS) -DCC="$(CC) -std=gnu89" -DLD="$(LD)" -DAR="$(AR)" -DRANLIB="$(RANLIB)" \
+		$(CMAKE) $(CMAKE_FLAGS) \
+		-DCC="$(CC)" -DLD="$(LD)" -DAR="$(AR)" -DRANLIB="$(RANLIB)" \
 		-DHOST="$(if $(EMULATE_READER),,$(if $(ANDROID),"arm-linux",$(CHOST)))" \
 		$(CURDIR)/$(THIRDPARTY_DIR)/libiconv && \
 		$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS)
@@ -241,7 +231,7 @@ $(LIBICONV): $(THIRDPARTY_DIR)/libiconv/CMakeLists.txt
 $(LIBGETTEXT): $(LIBICONV) $(THIRDPARTY_DIR)/gettext/CMakeLists.txt
 	install -d $(GETTEXT_BUILD_DIR)
 	cd $(GETTEXT_BUILD_DIR) && \
-		$(CMAKE) $(CMAKE_FLAGS) -DCC="$(CC) -std=gnu89" -DLIBICONV_PREFIX=$(LIBICONV_DIR) \
+		$(CMAKE) $(CMAKE_FLAGS) -DCC="$(CC)" -DLIBICONV_PREFIX=$(LIBICONV_DIR) \
 		-DAR="$(AR)" -DRANLIB="$(RANLIB)" \
 		-DCHOST_OPTS="$(if $(EMULATE_READER),,--host=$(if $(ANDROID),arm-linux,$(CHOST)))" \
 		$(if $(ANDROID),-DNDK=$(NDK),) \
@@ -266,7 +256,7 @@ $(GLIB): $(if $(DARWIN),$(LIBICONV) $(LIBGETTEXT),) $(LIBFFI_DIR)/include $(THIR
 	# to update mtime for all the binaries
 	-rm -rf $(GLIB_DIR)/lib $(GLIB_DIR)/../glib-stamp/glib-install
 	cd $(GLIB_BUILD_DIR) && \
-		$(CMAKE) $(CMAKE_FLAGS) -DCC="$(CC) -std=gnu89" \
+		$(CMAKE) $(CMAKE_FLAGS) -DCC="$(CC)" \
 		-DAR="$(AR)" -DRANLIB="$(RANLIB)" \
 		-DCFLAGS="$(CFLAGS)" -DLDFLAGS="$(LDFLAGS)" \
 		-DLIBICONV_DIR="$(LIBICONV_DIR)" \
@@ -283,7 +273,7 @@ $(GLIB_STATIC): $(LIBICONV) $(LIBGETTEXT) $(LIBFFI_DIR)/include $(THIRDPARTY_DIR
 	install -d $(GLIB_BUILD_DIR)
 	-rm -f $(GLIB_DIR)/../glib-stamp/glib-install
 	cd $(GLIB_BUILD_DIR) && \
-		$(CMAKE) $(CMAKE_FLAGS) -DCC="$(CC) -std=gnu89" \
+		$(CMAKE) $(CMAKE_FLAGS) -DCC="$(CC)" \
 		-DLDFLAGS="$(LDFLAGS) $(if $(ANDROID), \
 			-L$(LIBICONV_DIR)/lib -L$(GETTEXT_DIR)/lib,)" \
 		-DCFLAGS="$(CFLAGS) $(if $(ANDROID), -L$(LIBICONV_DIR)/lib -L$(GETTEXT_DIR)/lib \
@@ -317,12 +307,6 @@ $(OUTPUT_DIR)/sdcv: $(if $(ANDROID),$(GLIB_STATIC),$(GLIB)) $(ZLIB_STATIC) $(THI
 		$(CMAKE) $(CMAKE_FLAGS) -DHOST="$(if $(EMULATE_READER),,$(CHOST))" \
 		$(PAGE_SIZE_CFG) \
 		-DCFLAGS="$(CFLAGS)" -DCXXFLAGS="$(CXXFLAGS)" -DLDFLAGS="$(LDFLAGS)" \
-		-DCMAKE_C_COMPILER="$(CMAKE_C_COMPILER)" \
-		-DCMAKE_C_COMPILER_LAUNCHER="$(CMAKE_C_COMPILER_LAUNCHER)" \
-		-DCMAKE_C_COMPILER_ARG1="$(CMAKE_C_COMPILER_ARG1)" \
-		-DCMAKE_CXX_COMPILER="$(CMAKE_CXX_COMPILER)" \
-		-DCMAKE_CXX_COMPILER_LAUNCHER="$(CMAKE_CXX_COMPILER_LAUNCHER)" \
-		-DCMAKE_CXX_COMPILER_ARG1="$(CMAKE_CXX_COMPILER_ARG1)" \
 		-DGLIB="$(if $(ANDROID),$(GLIB_STATIC),$(GLIB))" \
 		-DGLIB_DIR="$(GLIB_DIR)" \
 		-DZLIB="$(ZLIB_STATIC)" \
@@ -345,7 +329,6 @@ $(OUTPUT_DIR)/dropbear: $(ZLIB) $(THIRDPARTY_DIR)/dropbear/CMakeLists.txt
 	install -d $(DROPBEAR_BUILD_DIR)
 	cd $(DROPBEAR_BUILD_DIR) && \
 		$(CMAKE) $(CMAKE_FLAGS) \
-		-DCMAKE_VERBOSE_MAKEFILE:BOOL=OFF \
 		-DCC="$(CC)" \
 		-DCPPFLAGS="$(CPPFLAGS) -I$(ZLIB_DIR)" \
 		-DCFLAGS="$(CFLAGS)" \
@@ -363,7 +346,6 @@ $(OUTPUT_DIR)/sftp-server: $(ZLIB) $(SSL_LIB) $(THIRDPARTY_DIR)/openssh/CMakeLis
 	install -d $(OPENSSH_BUILD_DIR)
 	cd $(OPENSSH_BUILD_DIR) && \
 		$(CMAKE) $(CMAKE_FLAGS) \
-		-DCMAKE_VERBOSE_MAKEFILE:BOOL=OFF \
 		-DCC="$(CC)" \
 		-DCPPFLAGS="$(CPPFLAGS) -I$(ZLIB_DIR) -I$(OPENSSL_DIR)/include" \
 		-DCFLAGS="$(CFLAGS)" \
@@ -419,8 +401,6 @@ $(OUTPUT_DIR)/fbink: $(THIRDPARTY_DIR)/fbink/CMakeLists.txt
 	install -d $(FBINK_BUILD_DIR)
 	cd $(FBINK_BUILD_DIR) && \
 		$(CMAKE) $(CMAKE_FLAGS) \
-		-DCMAKE_VERBOSE_MAKEFILE:BOOL=OFF \
-		-DCROSS_TC="$(CHOST)" \
 		-DCFLAGS="$(CFLAGS)" \
 		-DLDFLAGS="$(LDFLAGS)" \
 		$(CURDIR)/$(THIRDPARTY_DIR)/fbink && \
@@ -459,6 +439,7 @@ $(OPENSSL_LIB) $(OPENSSL_DIR): $(THIRDPARTY_DIR)/openssl/CMakeLists.txt
 		-DAR="$(AR)" \
 		-DRANLIB="$(RANLIB)" \
 		-DCHOST="$(CHOST)" \
+		$(if $(ANDROID),-DNDKABI=$(NDKABI),) \
 		-DCONFIG_SCRIPT="$(if $(EMULATE_READER),$(if $(DARWIN),Configure darwin64-x86_64-cc,config),Configure $(if $(WIN32),mingw,))" \
 		$(CURDIR)/$(THIRDPARTY_DIR)/openssl && \
 		$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS)

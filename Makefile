@@ -122,7 +122,7 @@ endif
 $(OUTPUT_DIR)/libs/libkoreader-cre.so: cre.cpp \
 			$(if $(USE_LUAJIT_LIB),$(LUAJIT_LIB),) \
 			$(CRENGINE_LIB)
-	$(CXX) -I$(CRENGINE_SRC_DIR)/crengine/include/ $(DYNLIB_CFLAGS) \
+	$(CXX) -I$(CRENGINE_SRC_DIR)/crengine/include/ $(DYNLIB_CXXFLAGS) \
 		-DLDOM_USE_OWN_MEM_MAN=$(if $(WIN32),0,1) \
 		$(if $(WIN32),-DQT_GL=1) -static-libstdc++ -o $@ $^
 ifdef DARWIN
@@ -189,7 +189,7 @@ clean:
 	-rm -rf $(OUTPUT_DIR)/*
 	-rm -rf $(THIRDPARTY_DIR)/{$(CMAKE_THIRDPARTY_LIBS)}/build/$(MACHINE)
 
-dist-clean:
+distclean:
 	-rm -rf build
 	-rm -rf $(THIRDPARTY_DIR)/{$(CMAKE_THIRDPARTY_LIBS)}/build
 
@@ -212,4 +212,4 @@ test: $(OUTPUT_DIR)/spec $(OUTPUT_DIR)/.busted
 		--no-auto-insulate \
 		-o ./spec/base/unit/verbose_print ./spec/base/unit
 
-.PHONY: all clean test
+.PHONY: all android-toolchain pocketbook-toolchain clean distclean test

@@ -27,13 +27,19 @@ endif()
 
 # If we have a CHOST set, use it
 if (NOT "${CHOST}" STREQUAL "")
-    set(CFG_ENV_VAR "CROSS_COMPILE=\"${CHOST}-\"")
+    # NOTE: We bypass ccache for the Configure script, in the hope that it'll help the whole makedepend detection.
+    #       At least OpenSSL 1.1.x now drops it instead of trying to call a nonexistent binary, so it's less annoying than before.
+    if($ENV{ANDROID})
+        set(CFG_ENV_VAR "CC=\"gcc\"")
+    else()
+        set(CFG_ENV_VAR "CROSS_COMPILE=\"${CHOST}-\" CC=\"${REALCC}\"")
+    endif()
 endif()
 
 if($ENV{ANDROID})
     # If we're on ARM, make it so
     if (${CHOST} MATCHES "^arm-.*")
-        set(CFG_OPTS "android-armv7 -DL_ENDIAN ${CFG_OPTS}")
+        set(CFG_OPTS "android-arm ${CFG_OPTS}")
     else()
         set(CFG_OPTS "android-x86 ${CFG_OPTS}")
     endif()
@@ -52,25 +58,39 @@ else()
     set(ASM_OPT "no-asm")
 endif()
 
-set(PATCH_CMD1 sh -c "patch -N -p1 < ${CMAKE_CURRENT_SOURCE_DIR}/openssl-origin-rpath.patch || true")
+set(PATCH_CMD1 sh -c "patch -N -p1 < ${CMAKE_CURRENT_SOURCE_DIR}/openssl-1.1.0j-parallel_install_fix.patch || true")
+set(PATCH_CMD2 sh -c "patch -N -p1 < ${CMAKE_CURRENT_SOURCE_DIR}/openssl-1.1.1b-CVE-2019-1543.patch || true")
+set(PATCH_CMD3 sh -c "patch -N -p1 < ${CMAKE_CURRENT_SOURCE_DIR}/openssl-origin-rpath.patch || true")
+# GCC 4.9's <stdatomic.h> is broken (c.f., https://github.com/pytorch/pytorch/issues/3050)
+if(DEFINED ENV{SONY_PRSTUX} OR DEFINED ENV{ANDROID})
+    set(PATCH_CMD4 sh -c "patch -N -p1 < ${CMAKE_CURRENT_SOURCE_DIR}/openssl-gcc-4.9-stdatomic.patch || true")
+else()
+    set(PATCH_CMD4 "")
+endif()
 
 # NOTE: We need to pass $CFLAGS to OpenSSL's Configure script,
 # except it balks on a few exotic flags, so, filter those out...
 string(REGEX REPLACE "--sysroot [a-zA-Z0-9/_-]*" "" FILTERED_CFLAGS "${CFLAGS}")
+if($ENV{ANDROID})
+    string(REPLACE "-no-canonical-prefixes" "" FILTERED_CFLAGS "${FILTERED_CFLAGS}")
+endif()
 
-set(CFG_OPTS "${CFG_OPTS} ${FILTERED_CFLAGS} ${ASM_OPT} no-idea no-mdc2 no-rc5 no-ssl2 no-ssl3")
+set(CFG_OPTS "${CFG_OPTS} ${FILTERED_CFLAGS} ${ASM_OPT} no-idea no-mdc2 no-rc5")
 set(CFG_CMD sh -c "${CFG_ENV_VAR} ${SOURCE_DIR}/${CONFIG_SCRIPT} ${CFG_OPTS}")
 
-set(MAKE_CMD "${KO_MAKE_RECURSIVE} CC=\"${CC}\" SHARED_LDFLAGS=\"${SHARED_LDFLAGS}\" LD=\"${LD}\" AR=\"${AR} r\" RANLIB=\"${RANLIB}\"")
-# NOTE: Make depend fails when using ccache, and may fail when // (on some OpenSSL versions, at least)
-set(BUILD_CMD1 sh -c "${KO_MAKE_RECURSIVE} -j1 depend")
-set(BUILD_CMD2 sh -c "${MAKE_CMD} build_crypto build_ssl")
+if($ENV{ANDROID})
+    set(MAKE_CMD "${KO_MAKE_RECURSIVE} SHARED_LDFLAGS=\"${SHARED_LDFLAGS}\" LD=\"${LD}\" AR=\"${AR}\" RANLIB=\"${RANLIB}\"")
+else()
+    set(MAKE_CMD "${KO_MAKE_RECURSIVE} CC=\"${CC}\" SHARED_LDFLAGS=\"${SHARED_LDFLAGS}\" LD=\"${LD}\" AR=\"${AR}\" RANLIB=\"${RANLIB}\"")
+endif()
+# NOTE: Make depend may fail when using ccache, and may fail when // (on some OpenSSL versions, at least)
+set(BUILD_CMD1 sh -c "${MAKE_CMD} -j1 depend")
+set(BUILD_CMD2 sh -c "${MAKE_CMD} build_libs")
 
-# NOTE: Wait for a really compatible luasec release before moving to 1.1.x
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
     https://github.com/openssl/openssl.git
-    OpenSSL_1_0_2r
+    OpenSSL_1_1_1b
     ${SOURCE_DIR}
 )
 
@@ -78,7 +98,7 @@ include(ExternalProject)
 ExternalProject_Add(
     ${PROJECT_NAME}
     DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
-    PATCH_COMMAND COMMAND ${PATCH_CMD1} COMMAND ${PATCH_CMD2} COMMAND ${PATCH_CMD3}
+    PATCH_COMMAND COMMAND ${PATCH_CMD1} COMMAND ${PATCH_CMD2} COMMAND ${PATCH_CMD3} COMMAND ${PATCH_CMD4}
     CONFIGURE_COMMAND ${CFG_CMD}
     BUILD_IN_SOURCE 1
     BUILD_COMMAND COMMAND ${BUILD_CMD1} COMMAND ${BUILD_CMD2}

@@ -51,7 +51,7 @@ set(gen_arm_config "${gen_arm_config}ac_cv_func_getgrgid_r=no\\n")
 set(gen_arm_config "${gen_arm_config}ac_cv_func_timegm=no\\n")
 set(gen_arm_config sh -c "printf \"${gen_arm_config}\" > arm_cache.conf")
 
-set(CFG_ENV_VAR "CC=\"${CC} -std=gnu89\" AR=\"${AR}\" RANLIB=\"${RANLIB}\"")
+set(CFG_ENV_VAR "CC=\"${CC}\" AR=\"${AR}\" RANLIB=\"${RANLIB}\"")
 set(CFG_ENV_VAR "${CFG_ENV_VAR} LIBFFI_CFLAGS=\"-I${LIBFFI_DIR}/include\"")
 set(CFG_ENV_VAR "${CFG_ENV_VAR} LIBFFI_LIBS=\"-L${LIBFFI_DIR}/.libs -lffi\"")
 set(CFG_ENV_VAR "${CFG_ENV_VAR} ZLIB_CFLAGS=\"-I${ZLIB_DIR}/include\"")
@@ -85,6 +85,6 @@ ExternalProject_Add(
     DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
     PATCH_COMMAND COMMAND ${PATCH_CMD1} COMMAND ${PATCH_CMD2} COMMAND ${PATCH_CMD3}
     CONFIGURE_COMMAND COMMAND ${gen_arm_config} COMMAND ${CFG_CMD}
-    BUILD_COMMAND ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS} --silent
+    BUILD_COMMAND ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS}
     INSTALL_COMMAND ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS} install
 )
