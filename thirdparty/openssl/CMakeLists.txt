@@ -69,8 +69,6 @@ endif()
 string(REGEX REPLACE "--sysroot [a-zA-Z0-9/_-]*" "" FILTERED_CFLAGS "${CFLAGS}")
 if($ENV{ANDROID})
     string(REPLACE "-no-canonical-prefixes" "" FILTERED_CFLAGS "${FILTERED_CFLAGS}")
-    # c.f., NOTES.ANDROID
-    set(ENV{ANDROID_NDK_HOME} ${NDK})
 endif()
 
 set(CFG_OPTS "${CFG_OPTS} ${FILTERED_CFLAGS} ${ASM_OPT} no-idea no-mdc2 no-rc5")

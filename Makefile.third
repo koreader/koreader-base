@@ -439,7 +439,6 @@ $(OPENSSL_LIB) $(OPENSSL_DIR): $(THIRDPARTY_DIR)/openssl/CMakeLists.txt
 		-DAR="$(AR)" \
 		-DRANLIB="$(RANLIB)" \
 		-DCHOST="$(CHOST)" \
-		$(if $(ANDROID),-DNDK=$(NDK),) \
 		$(if $(ANDROID),-DNDKABI=$(NDKABI),) \
 		-DCONFIG_SCRIPT="$(if $(EMULATE_READER),$(if $(DARWIN),Configure darwin64-x86_64-cc,config),Configure $(if $(WIN32),mingw,))" \
 		$(CURDIR)/$(THIRDPARTY_DIR)/openssl && \
