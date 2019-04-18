@@ -30,7 +30,7 @@ if (NOT "${CHOST}" STREQUAL "")
     # NOTE: We bypass ccache for the Configure script, in the hope that it'll help the whole makedepend detection.
     #       At least OpenSSL 1.1.x now drops it instead of trying to call a nonexistent binary, so it's less annoying than before.
     if($ENV{ANDROID})
-        set(CFG_ENV_VAR "")
+        set(CFG_ENV_VAR "CC=\"gcc\"")
     else()
         set(CFG_ENV_VAR "CROSS_COMPILE=\"${CHOST}-\" CC=\"${REALCC}\"")
     endif()
@@ -79,7 +79,7 @@ set(CFG_OPTS "${CFG_OPTS} ${FILTERED_CFLAGS} ${ASM_OPT} no-idea no-mdc2 no-rc5")
 set(CFG_CMD sh -c "${CFG_ENV_VAR} ${SOURCE_DIR}/${CONFIG_SCRIPT} ${CFG_OPTS}")
 
 if($ENV{ANDROID})
-    set(MAKE_CMD "${KO_MAKE_RECURSIVE} SHARED_LDFLAGS=\"${SHARED_LDFLAGS}\" LD=\"${LD}\" AR=\"${AR}\" RANLIB=\"${RANLIB}\"")
+    set(MAKE_CMD "${KO_MAKE_RECURSIVE} CC=\"gcc\" SHARED_LDFLAGS=\"${SHARED_LDFLAGS}\" LD=\"${LD}\" AR=\"${AR}\" RANLIB=\"${RANLIB}\"")
 else()
     set(MAKE_CMD "${KO_MAKE_RECURSIVE} CC=\"${CC}\" SHARED_LDFLAGS=\"${SHARED_LDFLAGS}\" LD=\"${LD}\" AR=\"${AR}\" RANLIB=\"${RANLIB}\"")
 endif()
