@@ -6,12 +6,18 @@ workflows:
     jobs:
       - lint
       - emu_gcc_ninja:
+          filters:
+            branches:
+              only: master
           requires:
             - lint
       - emu_gcc_ninja_debug:
           requires:
             - lint
       - emu_gcc_make:
+          filters:
+            branches:
+              only: master
           requires:
             - lint
       - emu_clang_ninja:
@@ -36,6 +42,9 @@ workflows:
           requires:
             - emu_gcc_ninja_debug
       - android-x86:
+          filters:
+            branches:
+              only: master
           requires:
             - emu_gcc_ninja_debug
 
