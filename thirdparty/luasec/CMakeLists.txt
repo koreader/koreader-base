@@ -16,7 +16,7 @@ assert_var_defined(LUAPATH)
 ep_get_source_dir(SOURCE_DIR)
 
 # Don't enforce CFLAGS
-set(PATCH_CMD "${PATCH_CMD} && ${ISED} 's|-O2 ||g' -i src/Makefile")
+set(PATCH_CMD "${ISED} 's|-O2 ||g' -i src/Makefile")
 
 set(BUILD_CMD_STR "${KO_MAKE_RECURSIVE} CC=\"${CC}\" LD=\"${LD}\" AR=\"${AR}\" RANLIB=\"${RANLIB}\" INC_PATH=\"${INC_PATH}\" LIB_PATH=\"${LIB_PATH}\" LUAPATH=\"${LUAPATH}\" LUACPATH=\"${LUAPATH}\"")
 if(DEFINED LIBS)
