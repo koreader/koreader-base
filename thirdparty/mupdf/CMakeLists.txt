@@ -31,7 +31,7 @@ set(XCFLAGS "${XCFLAGS} -DFZ_PLOTTERS_CMYK=0 -DFZ_ENABLE_JS=0")
 set(STATIC_BUILD_CMD "env ${MUPDF_CROSS} ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS}")
 set(STATIC_BUILD_CMD "${STATIC_BUILD_CMD} LDFLAGS=\"${LDFLAGS}\" XCFLAGS=\"${XCFLAGS}\"")
 set(STATIC_BUILD_CMD "${STATIC_BUILD_CMD} CC=\"${CC}\" CXX=\"${CXX}\" AR=\"${AR}\" build=\"${MUPDF_BUILD_TYPE}\" MUDRAW= MUTOOL= CURL_LIB= OS=${OS}")
-set(STATIC_BUILD_CMD "${STATIC_BUILD_CMD} verbose=\"no\" FREETYPE_DIR=nonexisting JPEG_DIR=nonexisting ZLIB_DIR=nonexisting CROSSCOMPILE=\"yes\"")
+set(STATIC_BUILD_CMD "${STATIC_BUILD_CMD} verbose=\"no\" FREETYPE_DIR=nonexisting HARFBUZZ_DIR=nonexisting LIBJPEG_DIR=nonexisting ZLIB_DIR=nonexisting CROSSCOMPILE=\"yes\"")
 set(STATIC_BUILD_CMD sh -c "${STATIC_BUILD_CMD} third libs")
 
 # by default, mupdf compiles to a static library:
