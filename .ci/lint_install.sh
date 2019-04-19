@@ -8,9 +8,13 @@ source "${CI_DIR}/common.sh"
 echo "pwd: $(pwd)"
 ls
 
-# follow deps are already included in ko docker image
-# travis_retry luarocks --local install luacheck
-# travis_retry luarocks --local install lanes # for parallel luacheck
+# follow deps are already included in ko docker image (used in circleci)
+command -v luacheck || {
+    test -d "${HOME}/.luarocks" || mkdir "${HOME}/.luarocks"
+    echo "wrap_bin_scripts = false" >>"${HOME}/.luarocks/config.lua"
+    travis_retry luarocks --local install luacheck
+    travis_retry luarocks --local install lanes # for parallel luacheck
+}
 eval "$(luarocks path --bin)"
 export PATH=$PATH:$HOME/.luarocks/bin
 
