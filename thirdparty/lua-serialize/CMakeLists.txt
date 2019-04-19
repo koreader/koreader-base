@@ -12,7 +12,9 @@ assert_var_defined(OUTPUT_DIR)
 
 ep_get_source_dir(SOURCE_DIR)
 
-set(BUILD_CMD sh -c "${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS} CC=\"${CC}\" LDFLAGS=\"${LDFLAGS}\" OUTPUT_DIR=${OUTPUT_DIR}")
+set(PATCH_CMD sh -c "patch -N -p1 < ${CMAKE_CURRENT_SOURCE_DIR}/lua-serialize-lto.patch || true")
+
+set(BUILD_CMD sh -c "${KO_MAKE_RECURSIVE} -j1 CC=\"${CC}\" LDFLAGS=\"${LDFLAGS}\" OUTPUT_DIR=\"${OUTPUT_DIR}\"")
 
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
@@ -25,6 +27,7 @@ include(ExternalProject)
 ExternalProject_Add(
     ${PROJECT_NAME}
     DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
+    PATCH_COMMAND COMMAND ${PATCH_CMD}
     BUILD_IN_SOURCE 1
     CONFIGURE_COMMAND ""
     BUILD_COMMAND ${BUILD_CMD}

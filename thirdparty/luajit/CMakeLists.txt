@@ -64,10 +64,12 @@ if(${XCOMPILE})
     if(DEFINED TARGET_SYS)
         set(BUILD_CMD_STR "${BUILD_CMD_STR} TARGET_SYS=\"${TARGET_SYS}\"")
     endif()
-    set(BUILD_CMD_STR "${BUILD_CMD_STR} TARGET_SONAME=\"${TARGET_SONAME}\" TARGET_CFLAGS=\"${TARGET_CFLAGS}\" TARGET_FLAGS=\"-DLUAJIT_NO_LOG2 -DLUAJIT_NO_EXP2\" CROSS=\"${CROSS}\" amalg")
+    set(BUILD_CMD_STR "${BUILD_CMD_STR} TARGET_AR=\"$ENV{AR} rcus\" TARGET_RANLIB=\"$ENV{RANLIB}\" TARGET_STRIP=\"$ENV{STRIP} --strip-unneeded\" TARGET_SONAME=\"${TARGET_SONAME}\" TARGET_CFLAGS=\"${TARGET_CFLAGS}\" TARGET_FLAGS=\"-DLUAJIT_NO_LOG2 -DLUAJIT_NO_EXP2\" CROSS=\"${CROSS}\" amalg")
 endif()
 
 set(BUILD_CMD sh -c "${BUILD_CMD_STR}")
+
+set(PATCH_CMD sh -c "patch -N -p1 < ${CMAKE_CURRENT_SOURCE_DIR}/koreader-luajit-makefile-tweaks.patch || true")
 
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
@@ -80,6 +82,7 @@ include(ExternalProject)
 ExternalProject_Add(
     ${PROJECT_NAME}
     DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
+    PATCH_COMMAND COMMAND ${PATCH_CMD}
     BUILD_IN_SOURCE 1
     # skip configure
     CONFIGURE_COMMAND ""

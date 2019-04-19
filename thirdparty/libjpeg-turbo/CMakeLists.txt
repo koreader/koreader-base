@@ -19,6 +19,7 @@ endif()
 # We expect lib later on in Makefile.third, even on multilib systems...
 list(APPEND CMAKE_ARGS "-DCMAKE_INSTALL_PREFIX=${BINARY_DIR}")
 list(APPEND CMAKE_ARGS "-DCMAKE_INSTALL_LIBDIR=lib")
+list(APPEND CMAKE_ARGS "-DCMAKE_INSTALL_INCLUDEDIR=include")
 list(APPEND CMAKE_ARGS "-DCMAKE_SKIP_BUILD_RPATH:BOOL=True")
 
 # c.f., https://android.googlesource.com/platform/ndk/+/master/build/cmake/android.toolchain.cmake
