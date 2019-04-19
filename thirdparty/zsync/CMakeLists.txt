@@ -25,7 +25,7 @@ set(PATCH_CMD1 sh -c "patch -N -p1 < ${CMAKE_CURRENT_SOURCE_DIR}/zsync-openstack
 # don't check missing definition of in_port_t in NDK <netinet/in.h>
 set(PATCH_CMD2 sh -c "patch -N -p1 < ${CMAKE_CURRENT_SOURCE_DIR}/zsync-android-build-p1.patch")
 # fix "rename: Invalid cross-device link" error for Android
-set(PATCH_CMD3 sh -c "patch -N -p1 < ${CMAKE_CURRENT_SOURCE_DIR}/zsync-android-build-p2.patch ")
+set(PATCH_CMD3 sh -c "patch -N -p1 < ${CMAKE_CURRENT_SOURCE_DIR}/zsync-android-build-p2.patch")
 
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
