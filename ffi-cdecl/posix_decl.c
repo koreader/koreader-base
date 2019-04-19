@@ -88,3 +88,7 @@ cdecl_func(fputc)
 cdecl_const(FIONREAD)
 cdecl_func(fileno)
 cdecl_func(strerror)
+
+cdecl_func(setenv)
+cdecl_func(unsetenv)
+//cdecl_func(_putenv) // Win32

@@ -19,7 +19,11 @@ local dummy = require("ffi/linux_input_h")
 
 -----------------------------------------------------------------
 
-local SDL = ffi.load("SDL2")
+local SDL = util.ffiLoadCandidates{
+    "SDL2",
+    -- this unfortunately needs to be written in full due to the . in the name
+    "libSDL2-2.0.so",
+}
 
 -- for frontend SDL event handling
 local EV_SDL = 53 -- ASCII code for S
@@ -103,7 +107,7 @@ function S.createTexture(w, h)
 
     return SDL.SDL_CreateTexture(
         S.renderer,
-        SDL.SDL_PIXELFORMAT_ABGR8888,
+        SDL.SDL_PIXELFORMAT_RGBA32,
         SDL.SDL_TEXTUREACCESS_STREAMING,
         w, h)
 end
@@ -386,7 +390,7 @@ function S.setWindowIcon(icon)
     local surface = SDL.SDL_CreateRGBSurfaceWithFormatFrom(icon_bb.data,
                                                            icon_bb:getWidth(), icon_bb:getHeight(),
                                                            icon_bit_depth, icon_bb.pitch,
-                                                           SDL.SDL_PIXELFORMAT_ABGR8888)
+                                                           SDL.SDL_PIXELFORMAT_RGBA32)
     SDL.SDL_SetWindowIcon(S.screen, surface)
     SDL.SDL_FreeSurface(surface)
     icon_bb:free()

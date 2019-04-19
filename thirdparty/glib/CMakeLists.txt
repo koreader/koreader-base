@@ -1,7 +1,7 @@
-PROJECT(glib)
-cmake_minimum_required(VERSION 2.8.3)
+project(glib)
+cmake_minimum_required(VERSION 3.5.1)
 
-SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_LIST_DIR}/../cmake_modules")
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_LIST_DIR}/../cmake_modules")
 include("koreader_thirdparty_common")
 include("koreader_thirdparty_git")
 
@@ -51,7 +51,7 @@ set(gen_arm_config "${gen_arm_config}ac_cv_func_getgrgid_r=no\\n")
 set(gen_arm_config "${gen_arm_config}ac_cv_func_timegm=no\\n")
 set(gen_arm_config sh -c "printf \"${gen_arm_config}\" > arm_cache.conf")
 
-set(CFG_ENV_VAR "CC=\"${CC} -std=gnu89\" AR=\"${AR}\" RANLIB=\"${RANLIB}\"")
+set(CFG_ENV_VAR "CC=\"${CC}\" AR=\"${AR}\" RANLIB=\"${RANLIB}\"")
 set(CFG_ENV_VAR "${CFG_ENV_VAR} LIBFFI_CFLAGS=\"-I${LIBFFI_DIR}/include\"")
 set(CFG_ENV_VAR "${CFG_ENV_VAR} LIBFFI_LIBS=\"-L${LIBFFI_DIR}/.libs -lffi\"")
 set(CFG_ENV_VAR "${CFG_ENV_VAR} ZLIB_CFLAGS=\"-I${ZLIB_DIR}/include\"")
@@ -85,6 +85,6 @@ ExternalProject_Add(
     DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
     PATCH_COMMAND COMMAND ${PATCH_CMD1} COMMAND ${PATCH_CMD2} COMMAND ${PATCH_CMD3}
     CONFIGURE_COMMAND COMMAND ${gen_arm_config} COMMAND ${CFG_CMD}
-    BUILD_COMMAND $(MAKE) -j${PARALLEL_JOBS} --silent
-    INSTALL_COMMAND $(MAKE) -j${PARALLEL_JOBS} install
+    BUILD_COMMAND ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS}
+    INSTALL_COMMAND ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS} install
 )

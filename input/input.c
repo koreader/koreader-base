@@ -71,7 +71,10 @@ static int openInputDevice(lua_State *L) {
 
 #ifdef POCKETBOOK
     int inkview_events = luaL_checkint(L, 2);
-    if (inkview_events == 1) { forkInkViewMain(L, inputdevice); }
+    if (inkview_events == 1) { 
+        startInkViewMain(L, fd, inputdevice); 
+        return 0;
+    }
 #endif
 
     if (!strcmp("fake_events", inputdevice)) {

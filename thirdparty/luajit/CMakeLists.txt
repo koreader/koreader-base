@@ -1,7 +1,7 @@
-PROJECT(luajit)
-cmake_minimum_required(VERSION 2.8.3)
+project(luajit)
+cmake_minimum_required(VERSION 3.5.1)
 
-SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/../cmake_modules")
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/../cmake_modules")
 include("koreader_thirdparty_common")
 include("koreader_thirdparty_git")
 
@@ -26,9 +26,9 @@ if($ENV{KODEBUG})
         set(DBG_CMD "${DBG_CMD} && ${ISED} 's|#XCFLAGS+= -DLUA_USE_ASSERT|XCFLAGS+= -DLUA_USE_ASSERT|' ${SOURCE_DIR}/src/Makefile")
     endif()
 
-    set(BUILD_CMD_STR "${DBG_CMD} && $(MAKE) -j${PARALLEL_JOBS}")
+    set(BUILD_CMD_STR "${DBG_CMD} && ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS}")
 else()
-    set(BUILD_CMD_STR "$(MAKE) -j${PARALLEL_JOBS}")
+    set(BUILD_CMD_STR "${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS}")
 endif()
 
 if(${XCOMPILE})
@@ -36,6 +36,7 @@ if(${XCOMPILE})
     assert_var_defined(CC)
     assert_var_defined(BASE_CFLAGS)
     assert_var_defined(HOST_CFLAGS)
+    assert_var_defined(LDFLAGS)
     assert_var_defined(TARGET_SONAME)
     assert_var_defined(TARGET_CFLAGS)
     assert_var_defined(CROSS)
@@ -58,15 +59,17 @@ if(${XCOMPILE})
     set(BUILD_CMD_STR "${BUILD_CMD_STR} CC=\"${CC}\" HOST_CC=\"${HOST_CC}\"")
     set(BUILD_CMD_STR "${BUILD_CMD_STR} CFLAGS=\"${BASE_CFLAGS}\" HOST_CFLAGS=\"${HOST_CFLAGS}\"")
     if(DEFINED LDFLAGS)
-        set(BUILD_CMD_STR "${BUILD_CMD_STR} LDFLAGS=\"${LDFLAGS}\"")
+        set(BUILD_CMD_STR "${BUILD_CMD_STR} LDFLAGS=\"\" HOST_LDFLAGS=\"\" TARGET_LDFLAGS=\"${LDFLAGS}\"")
     endif()
     if(DEFINED TARGET_SYS)
         set(BUILD_CMD_STR "${BUILD_CMD_STR} TARGET_SYS=\"${TARGET_SYS}\"")
     endif()
-    set(BUILD_CMD_STR "${BUILD_CMD_STR} TARGET_SONAME=\"${TARGET_SONAME}\" TARGET_CFLAGS=\"${TARGET_CFLAGS}\" TARGET_FLAGS=\"-DLUAJIT_NO_LOG2 -DLUAJIT_NO_EXP2\" CROSS=\"${CROSS}\" amalg")
+    set(BUILD_CMD_STR "${BUILD_CMD_STR} TARGET_AR=\"$ENV{AR} rcus\" TARGET_RANLIB=\"$ENV{RANLIB}\" TARGET_STRIP=\"$ENV{STRIP} --strip-unneeded\" TARGET_SONAME=\"${TARGET_SONAME}\" TARGET_CFLAGS=\"${TARGET_CFLAGS}\" TARGET_FLAGS=\"-DLUAJIT_NO_LOG2 -DLUAJIT_NO_EXP2\" CROSS=\"${CROSS}\" amalg")
 endif()
 
 set(BUILD_CMD sh -c "${BUILD_CMD_STR}")
+
+set(PATCH_CMD sh -c "patch -N -p1 < ${CMAKE_CURRENT_SOURCE_DIR}/koreader-luajit-makefile-tweaks.patch || true")
 
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
@@ -79,6 +82,7 @@ include(ExternalProject)
 ExternalProject_Add(
     ${PROJECT_NAME}
     DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
+    PATCH_COMMAND COMMAND ${PATCH_CMD}
     BUILD_IN_SOURCE 1
     # skip configure
     CONFIGURE_COMMAND ""

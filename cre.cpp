@@ -654,6 +654,36 @@ static int getFullHeight(lua_State *L) {
 	return 1;
 }
 
+static int getPageStartY(lua_State *L) {
+	CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
+	int pageno = luaL_checkint(L, 2);
+
+	lua_pushinteger(L, doc->text_view->getPageStartY(pageno - 1));
+
+	return 1;
+}
+
+static int getPageHeight(lua_State *L) {
+	CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
+	int pageno = luaL_checkint(L, 2);
+
+	lua_pushinteger(L, doc->text_view->getPageHeight(pageno - 1));
+
+	return 1;
+}
+
+static int getPageOffsetX(lua_State *L) {
+	// Mostly useful to get the 2nd page x in 2-pages mode
+	CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
+	int pageno = luaL_checkint(L, 2);
+
+	lvRect rc;
+	doc->text_view->getPageRectangle(pageno - 1, rc);
+	lua_pushinteger(L, rc.left);
+
+	return 1;
+}
+
 static int getFontSize(lua_State *L) {
 	CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
 
@@ -854,7 +884,9 @@ static int gotoPage(lua_State *L) {
 	CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
 	int pageno = luaL_checkint(L, 2);
 
-	doc->text_view->goToPage(pageno-1);
+	doc->text_view->goToPage(pageno-1, true, false); // regulateTwoPages=false
+	// In 2-pages mode, we will ensure from frontend the first page displayed
+	// is an even one: we don't need crengine to ensure that.
 
 	return 0;
 }
@@ -872,7 +904,10 @@ static int gotoPos(lua_State *L) {
 	CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
 	int pos = luaL_checkint(L, 2);
 
-	doc->text_view->SetPos(pos);
+	doc->text_view->SetPos(pos, true, true);
+	// savePos=true is the default, but we use allowScrollAfterEnd=true
+	// to allow frontend code to control how much we can scroll after end
+	// by adjusting pos
 
 	return 0;
 }
@@ -972,8 +1007,9 @@ static int adjustFontSizes(lua_State *L) {
     CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
     int dpi = luaL_checkint(L, 2);
     static int fontSizes[] = {	12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30,
-				31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 42, 44, 48, 52, 56, 60, 64, 68, 72,
-				78, 84, 90, 110, 130, 150, 170, 200, 230, 260, 300, 340};
+				31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49,
+				50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68,
+				69, 70, 71, 72, 78, 84, 90, 110, 130, 150, 170, 200, 230, 260, 300, 340};
     LVArray<int> sizes( fontSizes, sizeof(fontSizes)/sizeof(int) );
     doc->text_view->setFontSizes(sizes, false); // text
     if (dpi < 170) {
@@ -1253,19 +1289,42 @@ void lua_pushLineRect(lua_State *L, int left, int top, int right, int bottom, in
 bool docToWindowRect(LVDocView *tv, lvRect &rc) {
     lvPoint topLeft = rc.topLeft();
     lvPoint bottomRight = rc.bottomRight();
+    bool topInPage = false;
+    bool bottomInPage = false;
     if (tv->docToWindowPoint(topLeft)) {
         rc.setTopLeft(topLeft);
+        topInPage = true;
     }
-    else {
-        return false;
-    }
-    if (tv->docToWindowPoint(bottomRight)) {
+    if (tv->docToWindowPoint(bottomRight, true)) {
+        // isRectBottom=true: allow this bottom point (outside of the
+        // rect content) to be considered in this page, if it is
+        // actually the top of the next page.
         rc.setBottomRight(bottomRight);
+        bottomInPage = true;
     }
-    else {
-        return false;
+    if (topInPage && bottomInPage) {
+        return true;
     }
-    return true;
+    else if (bottomInPage && !topInPage) {
+        // Rect's bottom is in page, but not its top:
+        // get top truncated/clipped to current page top
+        topLeft = rc.topLeft();
+        if (tv->docToWindowPoint(topLeft, false, true)) {
+            rc.setTopLeft(topLeft);
+            return true;
+        }
+    }
+    else if (topInPage && !bottomInPage) {
+        // Rect's top is in page, but not its bottom:
+        // get bottom truncated/clipped to current page bottom
+        bottomRight = rc.bottomRight();
+        if (tv->docToWindowPoint(bottomRight, true, true)) {
+            rc.setBottomRight(bottomRight);
+            return true;
+        }
+    }
+    // Neither top or bottom of rect in page
+    return false;
 }
 
 // Push to the Lua stack the multiple segments (rectangle for each text line)
@@ -2043,19 +2102,27 @@ static bool _isLinkToFootnote(CreDocument *doc, const lString16 source_xpointer,
     // Source node text (punctuation stripped) is only numbers (3 digits max,
     // to avoid catching years ... but only years>1000)
     // Source node text (punctuation stripped) is 1 to 2 letters, with 0 to 2
-    // numbers (a, z, ab, 1a, B2)
+    // numbers (a, z, ab, 1a, B2) - or 1 to 10 roman numerals
     if ( (flags & 0x0400 || flags & 0x0800) && trusted_source_xpointer && !likelyFootnote) {
         lString16 sourceText = sourceNode->getText();
         int nbDigits = 0;
         int nbAlpha = 0;
         int nbOthers = 0;
+        int nbRomans = 0;
         for (int i=0 ; i<sourceText.length(); i++) {
             if ( !lStr_isWordSeparator(sourceText[i]) ) { // ignore space, punctuations...
                 int props = lGetCharProps(sourceText[i]);
                 if (props & CH_PROP_DIGIT)
                     nbDigits += 1;
-                else if (props & CH_PROP_ALPHA)
+                else if (props & CH_PROP_ALPHA) {
                     nbAlpha += 1;
+                    // also check for roman numerals (i v x l c d m)
+                    lChar16 c = sourceText[i];
+                    if (c == 'i' || c == 'v' || c == 'x' || c == 'l' || c == 'c' || c == 'd' || c == 'm' ||
+                        c == 'I' || c == 'V' || c == 'X' || c == 'L' || c == 'C' || c == 'D' || c == 'M' ) {
+                            nbRomans += 1;
+                    }
+                }
                 else
                     nbOthers += 1; // CJK, other alphabets...
             }
@@ -2065,10 +2132,15 @@ static bool _isLinkToFootnote(CreDocument *doc, const lString16 source_xpointer,
             reason += "source text is only 1 to 3 digits";
             likelyFootnote = true;
         }
-        if (flags & 0x0800 && nbAlpha>=1 && nbAlpha<=2 && nbDigits >= 0 && nbDigits <= 2 && nbOthers==0) {
+        if (flags & 0x0800 && nbAlpha >= 1 && nbAlpha <= 2 && nbDigits >= 0 && nbDigits <= 2 && nbOthers==0) {
             // (should we only allow lowercase alpha?)
             if (!reason.empty()) reason += "; ";
             reason += "source text is 1 to 2 letters with 0 to 2 digits";
+            likelyFootnote = true;
+        }
+        else if (flags & 0x0800 && nbRomans >= 1 && nbRomans <= 10 && nbRomans == nbAlpha && nbDigits==0 && nbOthers==0) {
+            if (!reason.empty()) reason += "; ";
+            reason += "source text is 1 to 10 roman numerals";
             likelyFootnote = true;
         }
     }
@@ -2192,7 +2264,7 @@ static bool _isLinkToFootnote(CreDocument *doc, const lString16 source_xpointer,
             lUInt16 el_body = doc->dom_doc->getElementNameIndex("body");
             lUInt16 el_h1 = doc->dom_doc->getElementNameIndex("h1");
             lUInt16 el_h6 = doc->dom_doc->getElementNameIndex("h6");
-            lUInt16 attr_id = doc->dom_doc->getAttrNameIndex(L"id");
+            lUInt16 el_a = doc->dom_doc->getElementNameIndex("a");
             ldomNode * goodFinalNode = NULL;
             ldomNode * curFinalNode = NULL;
             ldomXPointerEx notAfter;
@@ -2247,6 +2319,14 @@ static bool _isLinkToFootnote(CreDocument *doc, const lString16 source_xpointer,
                     // printf("id=%s\n", UnicodeToLocal(id).c_str());
                     extStopReason = "node with 'id=' attr met";
                     break;
+                }
+                else if ( nodeId == el_a ) {
+                    // With <a>, crengine may use name= as its id=, so do as well.
+                    lString16 name = node->getAttributeValue("name");
+                    if ( !name.empty() ) {
+                        extStopReason = "node A with 'name=' attr met";
+                        break;
+                    }
                 }
                 // Done checking
                 if ( !curPos.nextElement() ) {
@@ -2413,9 +2493,21 @@ static int drawCurrentPage(lua_State *L) {
 	if (lua_isboolean(L, 3)) {
 		color = lua_toboolean(L, 3);
 	}
+	bool invert_images = false; // set to true when in night mode
+	if (lua_isboolean(L, 4)) {
+		invert_images = lua_toboolean(L, 4);
+	}
+	bool smooth_scaling = false; // set to true when smooth image scaling is enabled
+	if (lua_isboolean(L, 5)) {
+		smooth_scaling = lua_toboolean(L, 5);
+	}
+	bool dithering = false; // set to true when SW dithering is enabled
+	if (lua_isboolean(L, 6)) {
+		dithering = lua_toboolean(L, 6);
+	}
 
-	int w = bb->w,
-		h = bb->h;
+	int w = bb->w;
+	int h = bb->h;
 
 	int drawn_images_count;
 	int drawn_images_surface;
@@ -2424,9 +2516,10 @@ static int drawCurrentPage(lua_State *L) {
 	doc->text_view->Render();
 	if (color) {
 		/* Use Color buffer - caller should have provided us with a
-                 * Blitbuffer.TYPE_BBRGB16, see CreDocument:drawCurrentView
-                 * for why not TYPE_BBRGB32) */
-		LVColorDrawBuf drawBuf(w, h, bb->data, 16);
+		 * Blitbuffer.TYPE_BBRGB32, see CreDocument:drawCurrentView */
+		LVColorDrawBuf drawBuf(w, h, bb->data, 32);
+		drawBuf.setInvertImages(invert_images);
+		drawBuf.setSmoothScalingImages(smooth_scaling);
 		doc->text_view->Draw(drawBuf, false);
 		drawn_images_count = drawBuf.getDrawnImagesCount();
 		drawn_images_surface = drawBuf.getDrawnImagesSurface();
@@ -2434,6 +2527,9 @@ static int drawCurrentPage(lua_State *L) {
 	else {
 		/* Set DrawBuf to 8bpp */
 		LVGrayDrawBuf drawBuf(w, h, 8, bb->data);
+		drawBuf.setInvertImages(invert_images);
+		drawBuf.setSmoothScalingImages(smooth_scaling);
+		drawBuf.setDitherImages(dithering);
 		doc->text_view->Draw(drawBuf, false);
 		drawn_images_count = drawBuf.getDrawnImagesCount();
 		drawn_images_surface = drawBuf.getDrawnImagesSurface();
@@ -2707,6 +2803,9 @@ static const struct luaL_Reg credocument_meth[] = {
     {"getCurrentPos", getCurrentPos},
     {"getCurrentPercent", getCurrentPercent},
     {"getXPointer", getXPointer},
+    {"getPageOffsetX", getPageOffsetX},
+    {"getPageStartY", getPageStartY},
+    {"getPageHeight", getPageHeight},
     {"getFullHeight", getFullHeight},
     {"getFontSize", getFontSize},
     {"getFontFace", getFontFace},

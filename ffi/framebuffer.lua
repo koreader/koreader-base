@@ -6,6 +6,7 @@ This will be extended by implementations of this API.
 @module ffi.framebuffer
 --]]
 
+local bit = require("bit")
 local Blitbuffer = require("ffi/blitbuffer")
 
 local fb = {
@@ -19,6 +20,9 @@ local fb = {
     native_rotation_mode = nil,
     cur_rotation_mode = nil,
     blitbuffer_rotation_mode = nil,
+    night_mode = false,
+    hw_dithering = false, -- will be setup via setupDithering @ startup by reader.lua
+    sw_dithering = false, -- will be setup via setupDithering @ startup by reader.lua
 }
 
 --[[
@@ -142,10 +146,6 @@ function fb:refreshFast(x, y, w, h, d)
     return self:refreshFastImp(x, y, w, h, d)
 end
 
--- should be overriden if you want/have a way to clear the screen without going through blitting
-function fb:clear()
-end
-
 -- should be overridden to free resources
 function fb:close()
 end
@@ -254,26 +254,38 @@ function fb:getScreenHeight()
     return self.screen_size.h
 end
 
+local screen_dpi_override
+
 function fb:getDPI()
-    if self.dpi == nil then
-        self.dpi = EMULATE_READER_DPI or G_reader_settings:readSetting("screen_dpi")
-    end
+    if self.dpi ~= nil then return self.dpi end
+
+    self.dpi = EMULATE_READER_DPI or screen_dpi_override
+
     if self.dpi == nil and self.device then
         self.dpi = self.device.display_dpi
     end
+
     if self.dpi == nil then
         self.dpi = 160
     end
+
     return self.dpi
 end
 
 function fb:setDPI(dpi)
-    G_reader_settings:saveSetting("screen_dpi", dpi)
+    screen_dpi_override = dpi
+    self.dpi = dpi
 end
 
-function fb:scaleByDPI(px)
+--[[--
+Calculate pixel from density-independent pixel
+
+@int dp density-independent pixel
+@treturn int pixel
+]]--
+function fb:scaleByDPI(dp)
     -- scaled positive px should also be positive
-    return math.ceil(px * self:getDPI()/167)
+    return math.ceil(dp * self:getDPI()/160)
 end
 
 function fb:scaleBySize(px)
@@ -282,9 +294,9 @@ function fb:scaleBySize(px)
     -- if users custom screen dpi, also scale by dpi
     local dpi_scale = size_scale
 
-    local custom_dpi = EMULATE_READER_DPI or G_reader_settings:readSetting("screen_dpi")
+    local custom_dpi = EMULATE_READER_DPI or screen_dpi_override
     if custom_dpi and self.device and self.device.display_dpi ~= self.dpi then
-        dpi_scale = self.dpi / 167
+        dpi_scale = self.dpi / 160
     end
     -- scaled positive px should also be positive
     return math.ceil(px * (size_scale + dpi_scale) / 2)
@@ -359,11 +371,43 @@ function fb:setWindowTitle(new_title)
 end
 
 function fb:toggleNightMode()
-    self.bb:invert()
-    if self.viewport then
-        -- invert and blank out the full framebuffer when we are working on a viewport
-        self.full_bb:invert()
-        self.full_bb:fill(Blitbuffer.COLOR_WHITE)
+    self.night_mode = not self.night_mode
+    -- Only do SW inversion if the HW can't...
+    if not (self.device and self.device:canHWInvert()) then
+        self.bb:invert()
+        if self.viewport then
+            -- invert and blank out the full framebuffer when we are working on a viewport
+            self.full_bb:invert()
+            self.full_bb:fill(Blitbuffer.COLOR_WHITE)
+        end
+    end
+end
+
+function fb:toggleHWDithering()
+    self.hw_dithering = not self.hw_dithering
+end
+
+function fb:toggleSWDithering()
+    self.sw_dithering = not self.sw_dithering
+end
+
+function fb:setupDithering()
+    -- Prefer HW dither to SW dither
+    if self.device:canHWDither() then
+        self.hw_dithering = true
+    else
+        self.hw_dithering = false
+    end
+
+    if self.hw_dithering then
+        self.sw_dithering = false
+    else
+        -- We only handle SW dithering @ 8bpp, to keep things simple
+        if self.device.screen.fb_bpp == 8 then
+            self.sw_dithering = true
+        else
+            self.sw_dithering = false
+        end
     end
 end
 
@@ -388,6 +432,15 @@ function fb:shot(filename)
         bgr = true
     end
     self.bb:writePNG(filename, bgr)
+end
+
+-- Clear the screen to white
+function fb:clear()
+    if self.viewport then
+        self.full_bb:fill(Blitbuffer.COLOR_WHITE)
+    else
+        self.bb:fill(Blitbuffer.COLOR_WHITE)
+    end
 end
 
 return fb

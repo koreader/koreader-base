@@ -1,7 +1,7 @@
-PROJECT(minizip)
-cmake_minimum_required(VERSION 2.8.3)
+project(minizip)
+cmake_minimum_required(VERSION 3.5.1)
 
-SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_LIST_DIR}/../cmake_modules")
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_LIST_DIR}/../cmake_modules")
 include("koreader_thirdparty_common")
 include("koreader_thirdparty_asm")
 include("koreader_thirdparty_git")
@@ -36,7 +36,7 @@ ExternalProject_Add(
     BUILD_IN_SOURCE 1
     PATCH_COMMAND ${PATCH_CMD}
     CONFIGURE_COMMAND ""
-    BUILD_COMMAND $(MAKE) ${BUILD_CMD_STR}
+    BUILD_COMMAND ${KO_MAKE_RECURSIVE} ${BUILD_CMD_STR}
     # skip install
     INSTALL_COMMAND ""
 )

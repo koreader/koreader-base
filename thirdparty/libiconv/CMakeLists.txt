@@ -1,7 +1,7 @@
-PROJECT(libiconv)
-cmake_minimum_required(VERSION 2.8.3)
+project(libiconv)
+cmake_minimum_required(VERSION 3.5.1)
 
-SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_LIST_DIR}/../cmake_modules")
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_LIST_DIR}/../cmake_modules")
 include("koreader_thirdparty_common")
 
 enable_language(C)
@@ -23,6 +23,6 @@ ExternalProject_Add(
     URL_MD5 ace8b5f2db42f7b3b3057585e80d9808
     DOWNLOAD_DIR ${KO_DOWNLOAD_DIR}
     CONFIGURE_COMMAND ${CFG_CMD}
-    BUILD_COMMAND $(MAKE) -j${PARALLEL_JOBS} --silent
-    INSTALL_COMMAND $(MAKE) -j${PARALLEL_JOBS} --silent install
+    BUILD_COMMAND ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS}
+    INSTALL_COMMAND ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS} install
 )

@@ -1,7 +1,7 @@
-PROJECT(libffi)
-cmake_minimum_required(VERSION 2.8.3)
+project(libffi)
+cmake_minimum_required(VERSION 3.5.1)
 
-SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_LIST_DIR}/../cmake_modules")
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_LIST_DIR}/../cmake_modules")
 include("koreader_thirdparty_common")
 
 enable_language(C)
@@ -28,6 +28,6 @@ ExternalProject_Add(
     URL_MD5 83b89587607e3eb65c70d361f13bab43
     CONFIGURE_COMMAND ${CFG_CMD}
     # skip the rest, we only need the header for glib
-    BUILD_COMMAND $(MAKE) -j${PARALLEL_JOBS}
-    INSTALL_COMMAND $(MAKE) -j${PARALLEL_JOBS} uninstall install
+    BUILD_COMMAND ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS}
+    INSTALL_COMMAND ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS} uninstall install
 )

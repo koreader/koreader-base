@@ -71,6 +71,8 @@ function KOPTContext_mt.__index:dstToBlitBuffer()
         bb = Blitbuffer.new(self.dst.width, self.dst.height, Blitbuffer.TYPE_BB8, self.dst.data):copy()
     elseif self.dst.bpp == 24 then
         bb = Blitbuffer.new(self.dst.width, self.dst.height, Blitbuffer.TYPE_BBRGB24, self.dst.data):copy()
+    elseif self.dst.bpp == 32 then
+        bb = Blitbuffer.new(self.dst.width, self.dst.height, Blitbuffer.TYPE_BBRGB32, self.dst.data):copy()
     end
     return bb
 end
@@ -412,7 +414,7 @@ function KOPTContext.new()
     kc.columns = 2
     kc.offset_x = 0
     kc.offset_y = 0
-    kc.dev_dpi = 167
+    kc.dev_dpi = 160
     kc.dev_width = 600
     kc.dev_height = 800
     kc.page_width = 600

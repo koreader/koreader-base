@@ -1,7 +1,7 @@
-PROJECT(sqlite)
-cmake_minimum_required(VERSION 2.8.3)
+project(sqlite)
+cmake_minimum_required(VERSION 3.5.1)
 
-SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_LIST_DIR}/../cmake_modules")
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_LIST_DIR}/../cmake_modules")
 include("koreader_thirdparty_common")
 
 enable_language(C)
@@ -33,13 +33,13 @@ set(CFG_CMD "${CFG_CMD} --disable-readline")
 set(CFG_CMD "${CFG_CMD} --disable-static-shell")
 
 include(ExternalProject)
-set(SQLITE_VER "3270100")
+set(SQLITE_VER "3280000")
 ExternalProject_Add(
     ${PROJECT_NAME}
     DOWNLOAD_DIR ${KO_DOWNLOAD_DIR}
     URL https://www.sqlite.org/2019/sqlite-autoconf-${SQLITE_VER}.tar.gz
-    URL_HASH SHA1=6cdb46a153b0e88f8a5fd80e29b3966885f39ea4
+    URL_HASH SHA1=01b9d8fc77085e144dddc87456c9783e53d09a53
     BUILD_IN_SOURCE 1
     CONFIGURE_COMMAND ${CFG_CMD}
-    BUILD_COMMAND $(MAKE) -j1
+    BUILD_COMMAND ${KO_MAKE_RECURSIVE} -j1
 )

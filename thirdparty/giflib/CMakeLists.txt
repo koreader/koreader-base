@@ -1,7 +1,7 @@
-PROJECT(giflib)
-cmake_minimum_required(VERSION 2.8.3)
+project(giflib)
+cmake_minimum_required(VERSION 3.5.1)
 
-SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_LIST_DIR}/../cmake_modules")
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_LIST_DIR}/../cmake_modules")
 include("koreader_thirdparty_common")
 include("koreader_thirdparty_git")
 
@@ -15,7 +15,7 @@ ep_get_source_dir(SOURCE_DIR)
 ep_get_binary_dir(BINARY_DIR)
 
 # NOTE: reallocarray is in libbsd since glibc 2.26, so, don't even try to test for it, always use the bundled copy.
-set(BUILD_CMD sh -c "$(MAKE) -j${PARALLEL_JOBS} CC=\"${CC}\" CFLAGS=\"${CFLAGS} -std=gnu99 -fPIC -Wall -Wno-format-truncation\" LDFLAGS=\"${LDFLAGS}\" --silent")
+set(BUILD_CMD sh -c "${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS} CC=\"${CC}\" CFLAGS=\"${CFLAGS} -std=gnu99 -fPIC -Wall -Wno-format-truncation\" LDFLAGS=\"${LDFLAGS}\" --silent")
 
 # Make the Makefile friendlier
 set(PATCH_CMD1 sh -c "patch -N -p1 < ${CMAKE_CURRENT_SOURCE_DIR}/giflib-5.1.6-buildsystem.patch || true")
@@ -30,7 +30,7 @@ endif()
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
     https://gitlab.com/koreader/giflib.git
-    5.1.6
+    5.1.9
     ${SOURCE_DIR}
 )
 
@@ -42,5 +42,5 @@ ExternalProject_Add(
     PATCH_COMMAND COMMAND ${PATCH_CMD1} COMMAND ${PATCH_CMD2}
     CONFIGURE_COMMAND ""
     BUILD_COMMAND ${BUILD_CMD}
-    INSTALL_COMMAND $(MAKE) -j${PARALLEL_JOBS} --silent install PREFIX=${BINARY_DIR}
+    INSTALL_COMMAND ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS} --silent install PREFIX=${BINARY_DIR}
 )

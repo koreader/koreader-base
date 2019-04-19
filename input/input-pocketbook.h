@@ -216,34 +216,29 @@ static int pb_event_handler(int type, int par1, int par2) {
     return 0;
 }
 
-static int forkInkViewMain(lua_State *L, const char *inputdevice) {
-    struct sigaction new_sa;
-    int childpid;
-    if ((childpid = fork()) == -1) {
-        return luaL_error(L, "cannot fork() emu event listener");
+static void *runInkViewThread(void *arg) {
+    InkViewMain(pb_event_handler);
+    return 0;
+}
+
+static int startInkViewMain(lua_State *L, int fd, const char *inputdevice) {
+    pthread_t thread;
+    pthread_attr_t thread_attr;
+
+    inputfds[fd] = open(inputdevice, O_RDWR | O_NONBLOCK);
+    if (inputfds[fd] < 0) {
+        return luaL_error(L, "error opening input device <%s>: %d\n", inputdevice, errno);
     }
-    if (childpid == 0) {
-        /* we only use inputfds[0] in emu mode, because we only have one
-         * fake device so far. */
-        inputfds[0] = open(inputdevice, O_RDWR | O_NONBLOCK);
-        if (inputfds < 0) {
-            return luaL_error(L, "error opening input device <%s>: %d", inputdevice, errno);
-        }
-        InkViewMain(pb_event_handler);
-        /* child will block in InkViewMain and never reach here */
-        _exit(EXIT_SUCCESS);
-    } else {
-        /* InkViewMain will handle SIGINT in child and send EVT_EXIT event to
-         * inputdevice. So it's safe for parent to ignore the signal */
-        new_sa.sa_handler = SIG_IGN;
-        new_sa.sa_flags = SA_RESTART;
-        if (sigaction(SIGINT, &new_sa, NULL) == -1) {
-            return luaL_error(L, "error setting up sigaction for SIGINT: %d", errno);
-        }
-        if (sigaction(SIGTERM, &new_sa, NULL) == -1) {
-            return luaL_error(L, "error setting up sigaction for SIGTERM: %d", errno);
-        }
+
+    if (pthread_attr_init(&thread_attr) != 0) {
+        return luaL_error(L, "error initializing event listener thread attributes: %d", errno);
     }
+
+    pthread_attr_setdetachstate(&thread_attr, PTHREAD_CREATE_DETACHED);
+    if (pthread_create(&thread, &thread_attr, runInkViewThread, 0) == -1) {
+        return luaL_error(L, "error creating event listener thread: %d", errno);
+    }
+    pthread_attr_destroy(&thread_attr);
     return 0;
 }
 

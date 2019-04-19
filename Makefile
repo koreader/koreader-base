@@ -42,6 +42,7 @@ ifndef KODEBUG
 		$(if $(or $(KINDLE),$(KOBO),$(CERVANTES)),$(OUTPUT_DIR)/sftp-server,) \
 		$(if $(or $(KINDLE),$(KOBO)),$(OUTPUT_DIR)/scp,) \
 		$(if $(or $(KINDLE),$(KOBO),$(CERVANTES)),$(OUTPUT_DIR)/fbink,) \
+		$(if $(KOBO),$(OUTPUT_DIR)/fbdepth,) \
 		$(if $(ANDROID),,$(LUAJIT)) \
 		$(OUTPUT_DIR)/libs/$(if $(WIN32),*.dll,*.so*)" ;\
 	$(STRIP) --strip-unneeded $${STRIP_FILES} ;\
@@ -84,6 +85,7 @@ $(OUTPUT_DIR)/data:
 libs: \
 	$(if $(or $(SDL),$(ANDROID)),,$(OUTPUT_DIR)/libs/libkoreader-input.so) \
 	$(if $(or $(SDL),$(ANDROID)),$(OUTPUT_DIR)/libs/libblitbuffer.so,) \
+	$(if $(APPIMAGE),$(OUTPUT_DIR)/libs/libXss.so.1,) \
 	$(OUTPUT_DIR)/libs/libkoreader-lfs.so \
 	$(OUTPUT_DIR)/libs/libkoreader-djvu.so \
 	$(OUTPUT_DIR)/libs/libkoreader-cre.so \
@@ -99,14 +101,14 @@ $(OUTPUT_DIR)/libs/libkoreader-input.so: input/*.c input/*.h $(if $(KINDLE),$(PO
 		$(if $(POCKETBOOK),-linkview,)
 
 $(OUTPUT_DIR)/libs/libkoreader-lfs.so: \
-			$(if $(or $(ANDROID),$(WIN32)),$(LUAJIT_LIB),) \
+			$(if $(USE_LUAJIT_LIB),$(LUAJIT_LIB),) \
 			luafilesystem/src/lfs.c
 	$(CC) $(DYNLIB_CFLAGS) -o $@ $^
 
 # put all the libs to the end of compile command to make ubuntu's tool chain
 # happy
 $(OUTPUT_DIR)/libs/libkoreader-djvu.so: djvu.c \
-			$(if $(or $(ANDROID),$(WIN32)),$(LUAJIT_LIB),) \
+			$(if $(USE_LUAJIT_LIB),$(LUAJIT_LIB),) \
 			$(DJVULIBRE_LIB) $(K2PDFOPT_LIB)
 	$(CC) -I$(DJVULIBRE_DIR) -I$(MUPDF_DIR)/include $(K2PDFOPT_CFLAGS) \
 		$(DYNLIB_CFLAGS) -o $@ $^ $(if $(ANDROID),,-lpthread)
@@ -118,9 +120,9 @@ ifdef DARWIN
 endif
 
 $(OUTPUT_DIR)/libs/libkoreader-cre.so: cre.cpp \
-			$(if $(or $(ANDROID),$(WIN32)),$(LUAJIT_LIB),) \
+			$(if $(USE_LUAJIT_LIB),$(LUAJIT_LIB),) \
 			$(CRENGINE_LIB)
-	$(CXX) -I$(CRENGINE_SRC_DIR)/crengine/include/ $(DYNLIB_CFLAGS) \
+	$(CXX) -I$(CRENGINE_SRC_DIR)/crengine/include/ $(DYNLIB_CXXFLAGS) \
 		-DLDOM_USE_OWN_MEM_MAN=$(if $(WIN32),0,1) \
 		$(if $(WIN32),-DQT_GL=1) -static-libstdc++ -o $@ $^
 ifdef DARWIN
@@ -129,11 +131,14 @@ ifdef DARWIN
 endif
 
 $(OUTPUT_DIR)/libs/libblitbuffer.so: blitbuffer.c
-	$(CC) $(DYNLIB_CFLAGS) -o $@ $^
+	$(CC) $(DYNLIB_CFLAGS) $(VECTO_CFLAGS) -o $@ $^
 
 $(OUTPUT_DIR)/libs/libwrap-mupdf.so: wrap-mupdf.c \
 			$(MUPDF_LIB)
 	$(CC) -I$(MUPDF_DIR)/include $(DYNLIB_CFLAGS) -o $@ $^
+
+$(OUTPUT_DIR)/libs/libXss.so.1: libxss-dummy.c
+	$(CC) $(DYNLIB_CFLAGS) -o $@ $^
 
 ffi/mupdf_h.lua: ffi-cdecl/mupdf_decl.c $(MUPDF_DIR)/include
 	CPPFLAGS="$(CFLAGS) -I. -I$(MUPDF_DIR)/include" $(FFI_CDECL) gcc ffi-cdecl/mupdf_decl.c $@
@@ -184,12 +189,9 @@ clean:
 	-rm -rf $(OUTPUT_DIR)/*
 	-rm -rf $(THIRDPARTY_DIR)/{$(CMAKE_THIRDPARTY_LIBS)}/build/$(MACHINE)
 
-dist-clean:
+distclean:
 	-rm -rf build
 	-rm -rf $(THIRDPARTY_DIR)/{$(CMAKE_THIRDPARTY_LIBS)}/build
-
-luajit-clean:
-	$(MAKE) -C $(LUAJIT_DIR) clean
 
 # ===========================================================================
 # start of unit tests section
@@ -210,4 +212,4 @@ test: $(OUTPUT_DIR)/spec $(OUTPUT_DIR)/.busted
 		--no-auto-insulate \
 		-o ./spec/base/unit/verbose_print ./spec/base/unit
 
-.PHONY: test
+.PHONY: all android-toolchain pocketbook-toolchain clean distclean test

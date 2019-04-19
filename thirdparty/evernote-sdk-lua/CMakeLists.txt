@@ -1,7 +1,7 @@
-PROJECT(evernote-sdk-lua)
-cmake_minimum_required(VERSION 2.8.3)
+project(evernote-sdk-lua)
+cmake_minimum_required(VERSION 3.5.1)
 
-SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/../cmake_modules")
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/../cmake_modules")
 include("koreader_thirdparty_common")
 include("koreader_thirdparty_git")
 
@@ -12,7 +12,7 @@ assert_var_defined(CC)
 assert_var_defined(OUTPUT_DIR)
 assert_var_defined(LDFLAGS)
 
-set(BUILD_CMD sh -c "$(MAKE) -C thrift CC=\"${CC}\" LDFLAGS=\"${LDFLAGS}\" DYNLIB_CFLAGS=\"${DYNLIB_CFLAGS}\" OUTPUT_DIR=${OUTPUT_DIR}")
+set(BUILD_CMD sh -c "${KO_MAKE_RECURSIVE} -C thrift CC=\"${CC}\" LDFLAGS=\"${LDFLAGS}\" DYNLIB_CFLAGS=\"${DYNLIB_CFLAGS}\" OUTPUT_DIR=${OUTPUT_DIR}")
 
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME

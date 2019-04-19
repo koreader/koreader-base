@@ -7,4 +7,8 @@ source "${CI_DIR}/common.sh"
 "${CI_DIR}/helper_shellchecks.sh"
 
 echo -e "\n${ANSI_GREEN}Luacheck results"
-luacheck --no-color -q ffi spec
+if ! command -v luajit; then
+    luacheck --no-color -q ffi spec
+else
+    luajit "$(command -v luacheck)" --no-color -q ffi spec
+fi

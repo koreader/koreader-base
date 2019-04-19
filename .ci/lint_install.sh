@@ -5,12 +5,16 @@ CI_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${CI_DIR}/common.sh"
 
 # print some useful info
-echo "TRAVIS_BUILD_DIR: ${TRAVIS_BUILD_DIR}"
 echo "pwd: $(pwd)"
 ls
 
-travis_retry luarocks --local install luacheck
-travis_retry luarocks --local install lanes # for parallel luacheck
+# follow deps are already included in ko docker image (used in circleci)
+command -v luacheck || {
+    test -d "${HOME}/.luarocks" || mkdir "${HOME}/.luarocks"
+    echo "wrap_bin_scripts = false" >>"${HOME}/.luarocks/config.lua"
+    travis_retry luarocks --local install luacheck
+    travis_retry luarocks --local install lanes # for parallel luacheck
+}
 eval "$(luarocks path --bin)"
 export PATH=$PATH:$HOME/.luarocks/bin
 
@@ -25,8 +29,8 @@ else
 fi
 
 # install shfmt
-SHFMT_URL="https://github.com/mvdan/sh/releases/download/v1.3.1/shfmt_v1.3.1_linux_amd64"
-if [ "$(shfmt --version)" != "v1.3.1" ]; then
+SHFMT_URL="https://github.com/mvdan/sh/releases/download/v2.6.4/shfmt_v2.6.4_linux_amd64"
+if [ "$(shfmt --version)" != "v2.6.4" ]; then
     curl -sSL "${SHFMT_URL}" -o "${HOME}/bin/shfmt"
     chmod +x "${HOME}/bin/shfmt"
 else

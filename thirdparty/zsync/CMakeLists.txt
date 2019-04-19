@@ -1,7 +1,7 @@
-PROJECT(zsync)
-cmake_minimum_required(VERSION 2.8.3)
+project(zsync)
+cmake_minimum_required(VERSION 3.5.1)
 
-SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_LIST_DIR}/../cmake_modules")
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_LIST_DIR}/../cmake_modules")
 include("koreader_thirdparty_common")
 include("koreader_thirdparty_git")
 
@@ -40,7 +40,7 @@ ExternalProject_Add(
     DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
     PATCH_COMMAND COMMAND ${PATCH_CMD1} COMMAND ${PATCH_CMD2} COMMAND ${PATCH_CMD3} COMMAND ${RECONF_CMD}
     CONFIGURE_COMMAND ${CFG_CMD}
-    BUILD_COMMAND $(MAKE) -j${PARALLEL_JOBS} --silent
+    BUILD_COMMAND ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS}
     # skip install
     INSTALL_COMMAND ""
 )

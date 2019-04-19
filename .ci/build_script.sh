@@ -5,6 +5,9 @@ DOCKER_HOME=/home/ko
 # shellcheck source=/dev/null
 source "${CI_DIR}/common.sh"
 
+test -d "${HOME}/.ccache" || mkdir "${HOME}/.ccache"
+echo "using cache dir: ${HOME}/.ccache."
+
 travis_retry make fetchthirdparty
 
 if [ "$TARGET" = "android" ] && [ -n "${DOCKER_IMG}" ]; then

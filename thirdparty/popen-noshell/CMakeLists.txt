@@ -1,7 +1,7 @@
-PROJECT(popen-noshell)
-cmake_minimum_required(VERSION 2.8.3)
+project(popen-noshell)
+cmake_minimum_required(VERSION 3.5.1)
 
-SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/../cmake_modules")
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/../cmake_modules")
 include("koreader_thirdparty_common")
 include("koreader_thirdparty_asm")
 include("koreader_thirdparty_git")
@@ -13,7 +13,7 @@ ep_get_source_dir(SOURCE_DIR)
 if(${LEGACY})
     # Revert 8d7a98d on legacy devices, pipe2 was introduced in Linux 2.6.27 & glibc 2.9
     set(EXTRA_PATCH_CMD COMMAND patch -N -p1 < ${CMAKE_CURRENT_SOURCE_DIR}/kindle_legacy.patch)
-endif(${LEGACY})
+endif()
 
 assert_var_defined(CC)
 assert_var_defined(AR)
@@ -21,7 +21,7 @@ assert_var_defined(CFLAGS)
 assert_var_defined(LDFLAGS)
 
 set(MAKE_ENV_VAR "CC=\"${CC}\" AR=\"${AR}\" CFLAGS=\"${CFLAGS}\" LDFLAGS=\"${LDFLAGS}\"")
-set(BUILD_CMD sh -c "$(MAKE) -j${PARALLEL_JOBS} ${MAKE_ENV_VAR}")
+set(BUILD_CMD sh -c "${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS} ${MAKE_ENV_VAR}")
 
 # NOTE: As of right now (1f9eaf4eeef348d1efe0f3c7fe8ab670653cfbb1), wait until stuff settles down before bumping this.
 ko_write_gitclone_script(

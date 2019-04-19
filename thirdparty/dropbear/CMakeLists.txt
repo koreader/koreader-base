@@ -1,7 +1,7 @@
-PROJECT(dropbear)
-cmake_minimum_required(VERSION 2.8.3)
+project(dropbear)
+cmake_minimum_required(VERSION 3.5.1)
 
-SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_LIST_DIR}/../cmake_modules")
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_LIST_DIR}/../cmake_modules")
 include("koreader_thirdparty_common")
 
 enable_language(C)
@@ -38,13 +38,13 @@ set(CFG_OPTS "--host=\"${CHOST}\" --disable-lastlog --enable-zlib --enable-openp
 set(CFG_CMD "${CFG_ENV_VAR} ${SOURCE_DIR}/configure ${CFG_OPTS}")
 set(CFG_CMD sh -c "${CFG_CMD}")
 
-set(BUILD_CMD sh -c "$(MAKE) -j${PARALLEL_JOBS} strip PROGRAMS=\"dropbear\"")
+set(BUILD_CMD sh -c "${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS} strip PROGRAMS=\"dropbear\"")
 
 include(ExternalProject)
 set(DROPBEAR_VER "2018.76")
 ExternalProject_Add(
     ${PROJECT_NAME}
-    URL https://gentoo.osuosl.org/distfiles/dropbear-${DROPBEAR_VER}.tar.bz2
+    URL http://gentoo.osuosl.org/distfiles/dropbear-${DROPBEAR_VER}.tar.bz2
     URL_MD5 c3912f7fcdcc57c99937e4a79480d2c2
     DOWNLOAD_DIR ${KO_DOWNLOAD_DIR}
     PATCH_COMMAND COMMAND ${PATCH_CMD1} COMMAND ${PATCH_CMD2} COMMAND

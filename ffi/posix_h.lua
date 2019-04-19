@@ -71,4 +71,7 @@ int fputc(int, struct _IO_FILE *);
 static const int FIONREAD = 21531;
 int fileno(struct _IO_FILE *) __attribute__((__nothrow__, __leaf__));
 char *strerror(int) __attribute__((__nothrow__, __leaf__));
+int setenv(const char *, const char *, int) __attribute__((__nothrow__, __leaf__));
+int unsetenv(const char *) __attribute__((__nothrow__, __leaf__));
+int _putenv(const char *);
 ]]
