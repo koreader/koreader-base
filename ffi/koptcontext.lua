@@ -414,7 +414,7 @@ function KOPTContext.new()
     kc.columns = 2
     kc.offset_x = 0
     kc.offset_y = 0
-    kc.dev_dpi = 167
+    kc.dev_dpi = 160
     kc.dev_width = 600
     kc.dev_height = 800
     kc.page_width = 600

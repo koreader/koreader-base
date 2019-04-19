@@ -277,9 +277,15 @@ function fb:setDPI(dpi)
     self.dpi = dpi
 end
 
-function fb:scaleByDPI(px)
+--[[--
+Calculate pixel from density-independent pixel
+
+@int dp density-independent pixel
+@treturn int pixel
+]]--
+function fb:scaleByDPI(dp)
     -- scaled positive px should also be positive
-    return math.ceil(px * self:getDPI()/167)
+    return math.ceil(dp * self:getDPI()/160)
 end
 
 function fb:scaleBySize(px)
@@ -290,7 +296,7 @@ function fb:scaleBySize(px)
 
     local custom_dpi = EMULATE_READER_DPI or screen_dpi_override
     if custom_dpi and self.device and self.device.display_dpi ~= self.dpi then
-        dpi_scale = self.dpi / 167
+        dpi_scale = self.dpi / 160
     end
     -- scaled positive px should also be positive
     return math.ceil(px * (size_scale + dpi_scale) / 2)
