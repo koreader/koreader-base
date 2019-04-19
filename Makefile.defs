@@ -722,8 +722,8 @@ TESSERACT_LIB=$(OUTPUT_DIR)/libs/libtesseract$(TESS_LIB_EXT)
 OPENSSL_BUILD_DIR=$(THIRDPARTY_DIR)/openssl/build/$(MACHINE)
 OPENSSL_DIR=$(CURDIR)/$(OPENSSL_BUILD_DIR)/openssl-prefix/src/openssl
 OPENSSL_LIB=$(OPENSSL_DIR)/libssl.$(if $(WIN32),a,so)
-SSL_LIB=$(OUTPUT_DIR)/libs/libssl$(if $(WIN32),-1.dll,$(if $(DARWIN),.1.1.dylib,$(if $(ANDROID),.so,.so.1.1)))
-CRYPTO_LIB=$(OUTPUT_DIR)/libs/libcrypto$(if $(WIN32),-1.dll,$(if $(DARWIN),.1.1.dylib,$(if $(ANDROID),.so,.so.1.1)))
+SSL_LIB=$(OUTPUT_DIR)/libs/libssl$(if $(WIN32),-1.dll,$(if $(DARWIN),.1.1.dylib,.so.1.1))
+CRYPTO_LIB=$(OUTPUT_DIR)/libs/libcrypto$(if $(WIN32),-1.dll,$(if $(DARWIN),.1.1.dylib,.so.1.1))
 
 LUASOCKET_BUILD_DIR=$(THIRDPARTY_DIR)/luasocket/build/$(MACHINE)
 LUASOCKET_DIR=$(CURDIR)/luasocket-prefix/src/luasocket
