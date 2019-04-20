@@ -198,7 +198,7 @@ ifdef SBOX_UNAME_MACHINE
 endif
 
 # set cross-compiler/host CC and CXX
-ifeq ($(strip $(CCACHE) $(CC)), clang)
+ifeq ($(strip $(CC)), clang)
 	ifdef CHOST
 		CC:=$(CHOST)-clang
 		CXX:=$(CHOST)-clang++
