@@ -1,17 +1,16 @@
 #!/bin/sh
 
-# Depends on input from stdin
-
-patch -p1 -N
-
-exit_status=$?
-
-if [ $exit_status -eq 0 ]; then
-    # Patch applied successfully
-    exit 0
-elif [ $exit_status -eq 1 ]; then
-    echo "Previously applied patch, ignoring."
-    exit 0
+if [ $# -eq 0 ]; then
+    echo "Patch file required as argument."
+    exit 1
 fi
 
-exit $?
+PATCH_FILE=$1
+
+# Reverse patch will succeed if the patch is already applied.
+# In case of failure, it means we should try to apply the patch.
+if ! patch -R -p1 -N --dry-run <"${PATCH_FILE}" >/dev/null 2>&1; then
+    # Now patch for real.
+    patch -p1 -N <"${PATCH_FILE}"
+    exit $?
+fi
