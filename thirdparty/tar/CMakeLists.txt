@@ -16,7 +16,7 @@ ep_get_binary_dir(BINARY_DIR)
 
 # The wordsplit changes introduced in 1.31 require glob.h, which is not present on Androdi before ABI 28 (c.f., #787)
 if(DEFINED ENV{ANDROID})
-    set(PATCH_CMD1 sh -c "patch -N -p1 < ${CMAKE_CURRENT_SOURCE_DIR}/tar-1.31-revert-wordsplit-for-android-glob.patch || true")
+    set(PATCH_CMD1 sh -c "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/tar-1.31-revert-wordsplit-for-android-glob.patch")
 else()
     set(PATCH_CMD1 sh -c "true")
 endif()
