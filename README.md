@@ -80,6 +80,7 @@ If you are using Debian or Ubuntu, install the `libsdl2-dev` package.
 
 By default, the build system builds in "emulation mode", so following is all
 you need to build the emulator:
+
 ```
 make
 ```
