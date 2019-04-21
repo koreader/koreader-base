@@ -197,8 +197,28 @@ ifdef SBOX_UNAME_MACHINE
 	CXX:=g++
 endif
 
+# Anything below GCC 6 gets to be forcefully switched to decent standards, because some of our deps require C11 & C++11 support.
+# NOTE: Technically, this also means we require Clang >= 3.2, but that should more or less hold true on our end, because that's truly ancient.
+# Tests heavily inspired from Linux's build system ;).
+CC_IS_CLANG:=$(shell PATH='$(PATH)' $(CC) -v 2>&1 | grep -q "clang version" && echo 1 || echo 0)
+CC_VERSION:=$(shell PATH='$(PATH)' printf "%02d%02d%02d" `echo __GNUC__ | $(CC) -E -x c - | tail -n 1` `echo __GNUC_MINOR__ | $(CC) -E -x c - | tail -n 1` `echo __GNUC_PATCHLEVEL__ | $(CC) -E -x c - | tail -n 1`)
+# Detect Clang's SA, too...
+ifeq "$(CC_IS_CLANG)" "0"
+	ifeq "$(lastword $(subst /, ,$(CC)))" "ccc-analyzer"
+		CC_IS_CLANG:=1
+	endif
+endif
+ifeq "$(CC_IS_CLANG)" "0"
+	# NOTE: GCC 6.1.0 switched to gnu11 & gnu++14, so only tweak older ones.
+	#       c.f., https://stackoverflow.com/q/14737104 for a nice recap.
+	ifeq "$(shell expr $(CC_VERSION) \< 060100)" "1"
+		CSTD_FLAGS:=-std=gnu11
+		CXXSTD_FLAGS:=-std=gnu++11
+	endif
+endif
+
 # set cross-compiler/host CC and CXX
-ifeq ($(strip $(CC)), clang)
+ifeq "$(CC_IS_CLANG)" "1"
 	ifdef CHOST
 		CC:=$(CHOST)-clang
 		CXX:=$(CHOST)-clang++
@@ -422,26 +442,6 @@ endif
 
 ifdef DEBIAN
 	HOST_ARCH:=-mtune=generic -march=native
-endif
-
-# Anything below GCC 6 gets to be forcefully switched to decent standards, because some of our deps require C11 & C++11 support.
-# NOTE: Technically, this also means we require Clang >= 3.2, but that should more or less hold true on our end, because that's truly ancient.
-# Tests heavily inspired from Linux's build system ;).
-CC_IS_CLANG:=$(shell PATH='$(PATH)' $(strip $(CCACHE) $(CC)) -v 2>&1 | grep -q "clang version" && echo 1 || echo 0)
-CC_VERSION:=$(shell PATH='$(PATH)' printf "%02d%02d%02d" `echo __GNUC__ | $(strip $(CCACHE) $(CC)) -E -x c - | tail -n 1` `echo __GNUC_MINOR__ | $(strip $(CCACHE) $(CC)) -E -x c - | tail -n 1` `echo __GNUC_PATCHLEVEL__ | $(strip $(CCACHE) $(CC)) -E -x c - | tail -n 1`)
-# Detect Clang's SA, too...
-ifeq "$(CC_IS_CLANG)" "0"
-	ifeq "$(lastword $(subst /, ,$(strip $(CCACHE) $(CC))))" "ccc-analyzer"
-		CC_IS_CLANG:=1
-	endif
-endif
-ifeq "$(CC_IS_CLANG)" "0"
-	# NOTE: GCC 6.1.0 switched to gnu11 & gnu++14, so only tweak older ones.
-	#       c.f., https://stackoverflow.com/q/14737104 for a nice recap.
-	ifeq "$(shell expr $(CC_VERSION) \< 060100)" "1"
-		CSTD_FLAGS:=-std=gnu11
-		CXXSTD_FLAGS:=-std=gnu++11
-	endif
 endif
 
 HOSTCFLAGS:=$(HOST_ARCH) $(BASE_CFLAGS) $(QFLAGS)
