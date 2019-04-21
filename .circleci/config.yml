@@ -117,6 +117,8 @@ jobs:
 
   emu_clang_ninja:
     <<: *EMU_TPL
+    docker:
+      - image: frenzie/kobase-clang:0.1.0
     environment:
       <<: *EMU_ENV_LST
       CC: "clang-7"
