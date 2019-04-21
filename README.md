@@ -72,7 +72,7 @@ Device emulation
 
 The code also features a device emulation. You need SDL headers and library
 for this. It allows to develop on a standard PC and saves precious development
-time. It might also compose the most unfriendly desktop PDF reader, depending
+time. It might also create a suboptimal desktop PDF viewer, depending
 on your view.
 
 If you are using Fedora Core Linux, run `yum install SDL2 SDL2-devel`.
