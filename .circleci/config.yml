@@ -78,7 +78,6 @@ jobs:
       - run:
           name: install
           command: |
-            source .ci/before_install.sh
             source .ci/emulator_install.sh
 
       - restore_cache:
