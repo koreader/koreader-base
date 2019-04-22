@@ -44,9 +44,6 @@ addons:
       # libzmq workaround because we're using a positively ancient version, see https://github.com/zeromq/libzmq/pull/1497
       - libtool-bin
 
-before_install:
-  - if [ "$EMULATE_READER" = 1 ]; then source .ci/before_install.sh; fi
-
 install:
   - if [ "$EMULATE_READER" = 1 ]; then source .ci/emulator_install.sh; fi
   - if [[ -n ${DOCKER_IMG+x} ]]; then docker pull $DOCKER_IMG; fi

@@ -24,13 +24,13 @@ ep_get_binary_dir(BINARY_DIR)
 # sometimes just hoping there's a python binary somewhere in $PATH (which, granted, there should be)...
 # Enforce that to python3 for containers where that's the only available Python version.
 if(($ENV{APPIMAGE}) OR ($ENV{CERVANTES}) OR ($ENV{KINDLE}) OR ($ENV{KOBO}))
-    set(PATCH_CMD1 sh -c "patch -N -p1 < ${CMAKE_CURRENT_SOURCE_DIR}/glib-2.56.2-python3.patch || true")
+    set(PATCH_CMD1 sh -c "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/glib-2.56.2-python3.patch")
 else()
     set(PATCH_CMD1 sh -c "true")
 endif()
 # Android makes Linux syscalls hard to get to... Fix pilfered from Python.
 if($ENV{ANDROID})
-    set(PATCH_CMD2 sh -c "patch -N -p1 < ${CMAKE_CURRENT_SOURCE_DIR}/glib-2.58.2-android-linux-syscalls.patch || true")
+    set(PATCH_CMD2 sh -c "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/glib-2.58.2-android-linux-syscalls.patch")
 else()
     set(PATCH_CMD2 sh -c "true")
 endif()

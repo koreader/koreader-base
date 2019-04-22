@@ -21,7 +21,7 @@ set(PATCH_CMD "${PATCH_CMD} && ${ISED} 's|mime_core|mime_mcore|' src/*")
 set(PATCH_CMD "${PATCH_CMD} && ${ISED} 's|SOCKET_CDIR)/core|SOCKET_CDIR)/score|' src/*")
 set(PATCH_CMD "${PATCH_CMD} && ${ISED} 's|MIME_CDIR)/core|MIME_CDIR)/mcore|' src/*")
 # Don't enforce CFLAGS
-set(PATCH_CMD "${PATCH_CMD} && ${ISED} 's|-O2 -ggdb3 ||g' -i src/makefile")
+set(PATCH_CMD "${PATCH_CMD} && ${ISED} 's|-O2 -ggdb3 ||g' src/makefile")
 
 set(BUILD_CMD_STR "${KO_MAKE_RECURSIVE} PLAT=${PLAT} CC=\"${CC}\" LD=\"${CC}\"")
 if(DEFINED MYLDFLAGS)

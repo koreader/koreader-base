@@ -16,10 +16,7 @@ else()
     set(MUPDF_BUILD_TYPE "release")
 endif()
 
-# Otherwise, it tries to link/run a .exe... -_-".
-if(DEFINED ENV{CMAKE_TCF})
-    set(MUPDF_CROSS "CROSSCOMPILE=\"yes\"")
-endif()
+# There's some headers to generate on the host's side first, before we run our actual build (where we enforce CROSSCOMPILE to avoid trying to regen those).
 set(BUILD_CMD_GENERATE sh -c "env CFLAGS=\"${HOSTCFLAGS}\" ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS} generate build=\"${MUPDF_BUILD_TYPE}\" CC=\"${HOSTCC}\" LDFLAGS=\"\" verbose=\"no\"")
 
 assert_var_defined(LDFLAGS)
@@ -28,10 +25,11 @@ assert_var_defined(XCFLAGS)
 # CMYK plotter only 100 kB
 # javascript (for form data validation) close to 800 kB
 set(XCFLAGS "${XCFLAGS} -DFZ_PLOTTERS_CMYK=0 -DFZ_ENABLE_JS=0")
-set(STATIC_BUILD_CMD "env ${MUPDF_CROSS} ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS}")
+set(STATIC_BUILD_CMD "${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS}")
 set(STATIC_BUILD_CMD "${STATIC_BUILD_CMD} LDFLAGS=\"${LDFLAGS}\" XCFLAGS=\"${XCFLAGS}\"")
 set(STATIC_BUILD_CMD "${STATIC_BUILD_CMD} CC=\"${CC}\" CXX=\"${CXX}\" AR=\"${AR}\" build=\"${MUPDF_BUILD_TYPE}\" MUDRAW= MUTOOL= CURL_LIB= OS=${OS}")
-set(STATIC_BUILD_CMD "${STATIC_BUILD_CMD} verbose=\"no\" FREETYPE_DIR=nonexisting JPEG_DIR=nonexisting ZLIB_DIR=nonexisting CROSSCOMPILE=\"yes\"")
+set(STATIC_BUILD_CMD "${STATIC_BUILD_CMD} verbose=\"no\" FREETYPE_DIR=nonexisting HARFBUZZ_DIR=nonexisting LIBJPEG_DIR=nonexisting ZLIB_DIR=nonexisting CROSSCOMPILE=\"yes\"")
+set(STATIC_BUILD_CMD "${STATIC_BUILD_CMD} SYS_HARFBUZZ_CFLAGS=\"\" SYS_HARFBUZZ_LIBS=\"-lharfbuzz\"")
 set(STATIC_BUILD_CMD sh -c "${STATIC_BUILD_CMD} third libs")
 
 # by default, mupdf compiles to a static library:
@@ -44,6 +42,7 @@ assert_var_defined(ZLIB)
 assert_var_defined(AES_LIB)
 assert_var_defined(JPEG_LIB)
 assert_var_defined(FREETYPE_LIB)
+assert_var_defined(HARFBUZZ_LIB)
 assert_var_defined(MUPDF_LIB)
 assert_var_defined(RPATH)
 if($ENV{DARWIN})
@@ -58,7 +57,7 @@ else()
     set(LINK_OPTS "${LINK_OPTS} -Wl,-soname=${MUPDF_SONAME}")
     set(LINK_OPTS "${LINK_OPTS} build/${MUPDF_BUILD_TYPE}/libmupdfthird.a")
 endif()
-set(SHARED_BUILD_STR "${CC} -shared ${CFLAGS} ${LINK_OPTS} ${AES_LIB} ${ZLIB} ${JPEG_LIB} ${FREETYPE_LIB} -o ${MUPDF_LIB} -lm")
+set(SHARED_BUILD_STR "${CC} -shared ${CFLAGS} ${LINK_OPTS} ${AES_LIB} ${ZLIB} ${JPEG_LIB} ${FREETYPE_LIB} ${HARFBUZZ_LIB} -o ${MUPDF_LIB} -lm")
 
 # explictly use envs defined in Makefile.defs
 if($ENV{ANDROID})
@@ -67,17 +66,17 @@ endif()
 
 set(SHARED_BUILD_CMD sh -c "${SHARED_BUILD_STR}")
 # use external fonts
-set(PATCH_CMD1 sh -c "patch -N -p1 < ${CMAKE_CURRENT_SOURCE_DIR}/external_fonts.patch || true")
+set(PATCH_CMD1 sh -c "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/external_fonts.patch")
 # add support for encryted zips
-set(PATCH_CMD2 sh -c "patch -N -p1 < ${CMAKE_CURRENT_SOURCE_DIR}/encrypted_zip.patch || true")
+set(PATCH_CMD2 sh -c "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/encrypted_zip.patch")
 # use libjpeg as a shared library
-set(PATCH_CMD3 sh -c "patch -N -p1 < ${CMAKE_CURRENT_SOURCE_DIR}/libjpeg_shared.patch || true")
+set(PATCH_CMD3 sh -c "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/libjpeg_shared.patch")
 # Disable potentially crashy ARM ASM (it's 7 years old, and hell to debug)
 # NOTE: There's also a few ARCH_UNALIGNED_OK checks, but we never did pass that define.
 #       (FWIW, we *could*, on anything not kindle-legacy).
-set(PATCH_CMD4 sh -c "patch -N -p1 < ${CMAKE_CURRENT_SOURCE_DIR}/no_arm_asm.patch || true")
+set(PATCH_CMD4 sh -c "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/no_arm_asm.patch")
 # Honor CFLAGS
-set(PATCH_CMD5 sh -c "patch -N -p1 < ${CMAKE_CURRENT_SOURCE_DIR}/honor_cflags.patch || true")
+set(PATCH_CMD5 sh -c "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/honor_cflags.patch")
 
 # TODO: ignore shared git submodules built outside of mupdf by ourselves
 # https://git.ghostscript.com/mupdf.git is slow, so we use the official mirror on GitHub
