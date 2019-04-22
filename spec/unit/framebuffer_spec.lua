@@ -22,9 +22,9 @@ describe("Framebuffer unit tests", function()
 
     it("should scale by DPI", function()
         fb:setDPI(167)
-        assert.are.equals(30, fb:scaleBySize(30))
+        assert.are.equals(31, fb:scaleBySize(30))
 
         fb:setDPI(167 * 3)
-        assert.are.equals(60, fb:scaleBySize(30))
+        assert.are.equals(62, fb:scaleBySize(30))
     end)
 end)

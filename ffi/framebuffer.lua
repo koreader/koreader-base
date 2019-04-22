@@ -293,8 +293,7 @@ function fb:scaleBySize(px)
     -- if users custom screen dpi, also scale by dpi
     local dpi_scale = size_scale
 
-    local custom_dpi = EMULATE_READER_DPI or screen_dpi_override
-    if custom_dpi and self.device and self.device.display_dpi ~= self.dpi then
+    if self.device and self.device.display_dpi ~= self.dpi then
         dpi_scale = self.dpi / 160
     end
     -- scaled positive px should also be positive
