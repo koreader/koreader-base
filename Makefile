@@ -210,6 +210,6 @@ test: $(OUTPUT_DIR)/spec $(OUTPUT_DIR)/.busted
 		./luajit $(shell which busted) \
 		--exclude-tags=notest \
 		--no-auto-insulate \
-		-o ./spec/base/unit/verbose_print ./spec/base/unit
+		-o gtest ./spec/base/unit
 
 .PHONY: all android-toolchain pocketbook-toolchain clean distclean test
