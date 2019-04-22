@@ -77,7 +77,7 @@ function S.open()
 
     local full_screen = os.getenv("SDL_FULLSCREEN")
     if full_screen then
-        local mode = ffi.new("struct SDL_DisplayMode")
+        local mode = ffi.new("SDL_DisplayMode")
         if SDL.SDL_GetCurrentDisplayMode(0, mode) ~= 0 then
             error("SDL cannot get current display mode.")
         end
