@@ -8,10 +8,7 @@ test -d "${HOME}/.luarocks" || {
     mkdir "${HOME}/.luarocks"
     cp /etc/luarocks/config-5.1.lua "${HOME}/.luarocks/config.lua"
     echo "wrap_bin_scripts = false" >>"${HOME}/.luarocks/config.lua"
-    # recent versions of busted may cause some weird segmentation faults
-    # - git clone https://github.com/Olivine-Labs/busted/
-    # - cd busted && git checkout v1.10.0 && luarocks --local make busted-1.10.0-0.rockspec && cd ..
-    travis_retry luarocks --local install busted 2.0.rc12-1
+    travis_retry luarocks --local install busted 2.0.rc13-0
     # for verbose_print module
     travis_retry luarocks --local install ansicolors
 }
