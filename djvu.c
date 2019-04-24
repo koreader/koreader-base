@@ -35,6 +35,14 @@
 #define MIN(a, b)      ((a) < (b) ? (a) : (b))
 #define MAX(a, b)      ((a) > (b) ? (a) : (b))
 
+#define LUA_SETTABLE_STACK_TOP   ((int)-3)
+#define lua_setkeyval(L, type, key, val) do { \
+	lua_pushstring(L, key); \
+	lua_push##type(L, val); \
+	lua_settable(L, LUA_SETTABLE_STACK_TOP); \
+} while(0)
+
+
 typedef struct DjvuDocument {
 	ddjvu_context_t *context;
 	ddjvu_document_t *doc_ref;
@@ -48,6 +56,53 @@ typedef struct DjvuPage {
 	ddjvu_pageinfo_t info;
 	DjvuDocument *doc;
 } DjvuPage;
+
+
+typedef enum DjvuZoneId {
+	ZI_PAGE,
+	ZI_COLUMN,
+	ZI_REGION,
+	ZI_PARA,
+	ZI_LINE,
+	ZI_WORD,
+	ZI_CHAR,
+	N_ZI
+} DjvuZoneId;
+
+static const char *djvuZoneName[N_ZI] = {
+	"page",
+	"column",
+	"region",
+	"para",
+	"line",
+	"word",
+	"char"
+};
+
+typedef enum DjvuZoneSexpIdx {
+	SI_ZONE_NAME,
+	SI_ZONE_XMIN,
+	SI_ZONE_YMIN,
+	SI_ZONE_XMAX,
+	SI_ZONE_YMAX,
+	SI_ZONE_DATA,
+	N_SI_ZONE
+} DjvuZoneSexpIdx;
+
+static const char *djvuZoneLuaKey[N_SI_ZONE] = {
+	NULL,
+	"x0",
+	"y1",
+	"x1",
+	"y0",
+	NULL
+};
+
+
+int int_from_miniexp_nth(int n, miniexp_t sexp) {
+	miniexp_t s = miniexp_nth(n, sexp);
+	return (miniexp_numberp(s) ? miniexp_to_int(s) : ((int)0));
+}
 
 static int handle(lua_State *L, ddjvu_context_t *ctx, int wait)
 {
@@ -407,38 +462,32 @@ void lua_settable_djvu_anno(lua_State *L, miniexp_t anno, int yheight) {
 	if (!L) return;
 	if (!miniexp_consp(anno)) return;
 
-	miniexp_t anno_type = miniexp_nth(0, anno);
+	miniexp_t anno_type = miniexp_nth(SI_ZONE_NAME, anno);
 	if (!miniexp_symbolp(anno_type)) return;
 
-	lua_pushstring(L, "x0");
-	lua_pushnumber(L, miniexp_to_int(miniexp_nth(1, anno)));
-	lua_settable(L, -3);
+	int xmin = int_from_miniexp_nth(SI_ZONE_XMIN, anno);
+	int ymin = int_from_miniexp_nth(SI_ZONE_YMIN, anno);
+	int xmax = int_from_miniexp_nth(SI_ZONE_XMAX, anno);
+	int ymax = int_from_miniexp_nth(SI_ZONE_YMAX, anno);
 
-	lua_pushstring(L, "y1");
-	lua_pushnumber(L, yheight - miniexp_to_int(miniexp_nth(2, anno)));
-	lua_settable(L, -3);
+	lua_setkeyval(L, integer, djvuZoneLuaKey[SI_ZONE_XMIN], xmin);
+	lua_setkeyval(L, integer, djvuZoneLuaKey[SI_ZONE_YMIN], yheight - ymin);
+	lua_setkeyval(L, integer, djvuZoneLuaKey[SI_ZONE_XMAX], xmax);
+	lua_setkeyval(L, integer, djvuZoneLuaKey[SI_ZONE_YMAX], yheight - ymax);
 
-	lua_pushstring(L, "x1");
-	lua_pushnumber(L, miniexp_to_int(miniexp_nth(3, anno)));
-	lua_settable(L, -3);
-
-	lua_pushstring(L, "y0");
-	lua_pushnumber(L, yheight - miniexp_to_int(miniexp_nth(4, anno)));
-	lua_settable(L, -3);
-
-	for (int i = 5; i < miniexp_length(anno); i++) {
+	for (int i = SI_ZONE_DATA; i < miniexp_length(anno); i++) {
 		miniexp_t data = miniexp_nth(i, anno);
-		int tindex = i - 5 + 1; // Lua tables are 1-indexed
+		int tindex = i - SI_ZONE_DATA + 1; // Lua tables are 1-indexed
 
 		if (miniexp_stringp(data)) {
-			lua_pushstring(L, "word");
-			lua_pushstring(L, miniexp_to_str(miniexp_nth(5, anno)));
-			lua_settable(L, -3);
+			const char *zname = miniexp_to_name(anno_type);
+			const char *txt = miniexp_to_str(data);
+			lua_setkeyval(L, string, zname, txt);
 		} else {
 			lua_pushinteger(L, tindex);
 			lua_newtable(L);
 			lua_settable_djvu_anno(L, data, yheight);
-			lua_settable(L, -3);
+			lua_settable(L, LUA_SETTABLE_STACK_TOP);
 		}
 	}
 }
