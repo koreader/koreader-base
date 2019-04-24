@@ -394,26 +394,55 @@ static int getPageInfo(lua_State *L) {
 	return 5;
 }
 
-/*
- * Return a table like following:
- * {
- *    -- a line entry
- *    1 = {
- *       1 = {word="This", x0=377, y0=4857, x1=2427, y1=5089},
- *       2 = {word="is", x0=377, y0=4857, x1=2427, y1=5089},
- *       3 = {word="Word", x0=377, y0=4857, x1=2427, y1=5089},
- *       4 = {word="List", x0=377, y0=4857, x1=2427, y1=5089},
- *       x0 = 377, y0 = 4857, x1 = 2427, y1 = 5089,
- *    },
+/** Fill Lua table with DjVu text annotations
  *
- *    -- an other line entry
- *    2 = {
- *       1 = {word="This", x0=377, y0=4857, x1=2427, y1=5089},
- *       2 = {word="is", x0=377, y0=4857, x1=2427, y1=5089},
- *       x0 = 377, y0 = 4857, x1 = 2427, y1 = 5089,
- *    },
- * }
+ * This simply maps the S-expression structure of `anno` into a Lua table, @see
+ * djvused(1) for details.
+ *
+ * @param L        Lua state. Table to be filled should exist at top of stack.
+ * @param yheight  Page height. DjVu zones are origined at the bottom-left, but
+ *                   koptinterface convention origins at top-left.
  */
+void lua_settable_djvu_anno(lua_State *L, miniexp_t anno, int yheight) {
+	if (!L) return;
+	if (!miniexp_consp(anno)) return;
+
+	miniexp_t anno_type = miniexp_nth(0, anno);
+	if (!miniexp_symbolp(anno_type)) return;
+
+	lua_pushstring(L, "x0");
+	lua_pushnumber(L, miniexp_to_int(miniexp_nth(1, anno)));
+	lua_settable(L, -3);
+
+	lua_pushstring(L, "y1");
+	lua_pushnumber(L, yheight - miniexp_to_int(miniexp_nth(2, anno)));
+	lua_settable(L, -3);
+
+	lua_pushstring(L, "x1");
+	lua_pushnumber(L, miniexp_to_int(miniexp_nth(3, anno)));
+	lua_settable(L, -3);
+
+	lua_pushstring(L, "y0");
+	lua_pushnumber(L, yheight - miniexp_to_int(miniexp_nth(4, anno)));
+	lua_settable(L, -3);
+
+	for (int i = 5; i < miniexp_length(anno); i++) {
+		miniexp_t data = miniexp_nth(i, anno);
+		int tindex = i - 5 + 1; // Lua tables are 1-indexed
+
+		if (miniexp_stringp(data)) {
+			lua_pushstring(L, "word");
+			lua_pushstring(L, miniexp_to_str(miniexp_nth(5, anno)));
+			lua_settable(L, -3);
+		} else {
+			lua_pushinteger(L, tindex);
+			lua_newtable(L);
+			lua_settable_djvu_anno(L, data, yheight);
+			lua_settable(L, -3);
+		}
+	}
+}
+
 static int getPageText(lua_State *L) {
 	DjvuDocument *doc = (DjvuDocument*) luaL_checkudata(L, 1, "djvudocument");
 	int pageno = luaL_checkint(L, 2);
@@ -439,94 +468,8 @@ static int getPageText(lua_State *L) {
 		handle(L, doc->context, True);
 	}
 
-	/* throuw page info and obtain lines info, after this, sexp's entries
-	 * are lines. */
-	sexp = miniexp_cdr(sexp);
-	/* get number of lines in a page */
-	nr_line = miniexp_length(sexp);
-	/* table that contains all the lines */
 	lua_newtable(L);
-
-	counter_l = 1;
-	for(i = 1; i <= nr_line; i++) {
-		/* retrive one line entry */
-		se_line = miniexp_nth(i, sexp);
-		nr_word = miniexp_length(se_line);
-		if (nr_word == 0) {
-			continue;
-		}
-
-		/* subtable that contains words in a line */
-		lua_pushnumber(L, counter_l);
-		lua_newtable(L);
-		counter_l++;
-
-		/* set line position */
-		lua_pushstring(L, "x0");
-		lua_pushnumber(L, miniexp_to_int(miniexp_nth(1, se_line)));
-		lua_settable(L, -3);
-
-		lua_pushstring(L, "y1");
-		lua_pushnumber(L,
-				info.height - miniexp_to_int(miniexp_nth(2, se_line)));
-		lua_settable(L, -3);
-
-		lua_pushstring(L, "x1");
-		lua_pushnumber(L, miniexp_to_int(miniexp_nth(3, se_line)));
-		lua_settable(L, -3);
-
-		lua_pushstring(L, "y0");
-		lua_pushnumber(L,
-				info.height - miniexp_to_int(miniexp_nth(4, se_line)));
-		lua_settable(L, -3);
-
-		/* now loop through each word in the line */
-		counter_w = 1;
-		for(j = 1; j <= nr_word; j++) {
-			/* retrive one word entry */
-			se_word = miniexp_nth(j, se_line);
-			/* check to see whether the entry is empty */
-			word = miniexp_to_str(miniexp_nth(5, se_word));
-			if (!word) {
-				continue;
-			}
-
-			/* create table that contains info for a word */
-			lua_pushnumber(L, counter_w);
-			lua_newtable(L);
-			counter_w++;
-
-			/* set word info */
-			lua_pushstring(L, "x0");
-			lua_pushnumber(L, miniexp_to_int(miniexp_nth(1, se_word)));
-			lua_settable(L, -3);
-
-			lua_pushstring(L, "y1");
-			lua_pushnumber(L,
-					info.height - miniexp_to_int(miniexp_nth(2, se_word)));
-			lua_settable(L, -3);
-
-			lua_pushstring(L, "x1");
-			lua_pushnumber(L, miniexp_to_int(miniexp_nth(3, se_word)));
-			lua_settable(L, -3);
-
-			lua_pushstring(L, "y0");
-			lua_pushnumber(L,
-					info.height - miniexp_to_int(miniexp_nth(4, se_word)));
-			lua_settable(L, -3);
-
-			lua_pushstring(L, "word");
-			lua_pushstring(L, word);
-			lua_settable(L, -3);
-
-			/* set word entry to line subtable */
-			lua_settable(L, -3);
-		} /* end of for (j) */
-
-		/* set line entry to page text table */
-		lua_settable(L, -3);
-	} /* end of for (i) */
-
+	lua_settable_djvu_anno(L, sexp, info.height);
 	return 1;
 }
 
