@@ -207,6 +207,8 @@ local function handleJoyAxisMotionEvent(event)
     last_joystick_event_secs, last_joystick_event_usecs = util.gettime()
 end
 
+local SDL_BUTTON_LEFT = 1
+
 local is_in_touch = false
 
 function S.waitForEvent(usecs)
@@ -283,6 +285,9 @@ function S.waitForEvent(usecs)
         elseif event.type == SDL.SDL_MOUSEBUTTONDOWN
             or event.type == SDL.SDL_FINGERDOWN then
             local is_finger = event.type == SDL.SDL_FINGERDOWN
+            if not is_finger and event.button.button ~= SDL_BUTTON_LEFT then
+                return
+            end
             -- use mouse click to simulate single tap
             is_in_touch = true
             genEmuEvent(C.EV_ABS, C.ABS_MT_TRACKING_ID, 0)
