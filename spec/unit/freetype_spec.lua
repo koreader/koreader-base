@@ -1,3 +1,4 @@
+require("ffi_wrapper")
 local Freetype = require("ffi/freetype")
 
 describe("Freetype module", function()

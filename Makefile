@@ -209,7 +209,6 @@ test: $(OUTPUT_DIR)/spec $(OUTPUT_DIR)/.busted
 	cd $(OUTPUT_DIR) && \
 		./luajit $(shell which busted) \
 		--exclude-tags=notest \
-		--no-auto-insulate \
 		-o gtest ./spec/base/unit
 
 .PHONY: all android-toolchain pocketbook-toolchain clean distclean test
