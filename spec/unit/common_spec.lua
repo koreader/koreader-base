@@ -1,5 +1,6 @@
 package.path = "common/?.lua;" .. package.path
 package.cpath = "common/?.so;" .. package.cpath
+require("ffi_wrapper")
 
 local url = require("socket.url")
 local http = require("socket.http")

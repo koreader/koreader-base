@@ -1,3 +1,5 @@
+require("ffi_wrapper")
+
 local Blitbuffer = require("ffi/blitbuffer")
 
 describe("Blitbuffer unit tests", function()

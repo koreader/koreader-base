@@ -1,4 +1,5 @@
 local ffi = require("ffi")
+require("ffi_wrapper")
 local BB = require("ffi/blitbuffer")
 local Png = require("ffi/png")
 

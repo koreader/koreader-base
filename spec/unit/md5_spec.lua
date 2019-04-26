@@ -1,3 +1,4 @@
+require("ffi_wrapper")
 
 describe("MD5 module", function()
     local md5
