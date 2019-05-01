@@ -91,7 +91,8 @@ static const char*
 // __auto_type was introduced in GCC 4.9 (and Clang ~3.8)...
 // NOTE: Inspired from glibc's __GNUC_PREREQ && __glibc_clang_prereq macros (from <features.h>),
 //       which we of course can't use because some of our TCs use a glibc version old enough not to have the clang one...
-#if (defined(__clang__) && (__clang_major__ > 3 || (__clang_major__ == 3 && __clang_minor__ >= 8))) || (defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 9)))
+#if (defined(__clang__) && (__clang_major__ > 3 || (__clang_major__ == 3 && __clang_minor__ >= 8))) || \
+    ((defined(__GNUC__) && !defined(__clang__)) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 9)))
 //#warning "Auto Type :)"
 #define DIV_255(V)                                                                                   \
 ({                                                                                                   \
