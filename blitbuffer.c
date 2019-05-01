@@ -87,11 +87,25 @@ static const char*
       15220*ColorRGB16_GetB(v)) >> 14U)
 #define RGB_To_RGB16(r, g, b) (((r & 0xF8) << 8U) + ((g & 0xFC) << 3U) + (b >> 3U))
 #define RGB_To_A(r, g, b) ((4898U*r + 9618U*g + 1869U*b) >> 14U)
+
+// __auto_type was introduced in GCC 4.9 (and Clang ~3.8)...
+// NOTE: Inspired from glibc's __GNUC_PREREQ && __glibc_clang_prereq macros (from <features.h>),
+//       which we of course can't use because some of our TCs use a glibc version old enough not to have the clang one...
+#if (defined(__clang__) && (__clang_major__ > 3 || (__clang_major__ == 3 && __clang_minor__ >= 8))) || (defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 9)))
+//#warning "Auto Type :)"
 #define DIV_255(V)                                                                                   \
 ({                                                                                                   \
     __auto_type _v = (V) + 128;                                                                      \
     (((_v >> 8U) + _v) >> 8U);                                                                       \
 })
+#else
+#warning "TypeOf :("
+#define DIV_255(V)                                                                                   \
+({                                                                                                   \
+    typeof (V) _v = (V) + 128;                                                                       \
+    (((_v >> 8U) + _v) >> 8U);                                                                       \
+})
+#endif
 
 // NOTE: See Pillow's transpose operations, or Qt5 qMemRotate stuff for cache-efficient ways of rotating an image data buffer,
 //       instead of handling the rotation per-pixel, at plotting time.
