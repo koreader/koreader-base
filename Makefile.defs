@@ -421,7 +421,7 @@ ifdef APPIMAGE
 endif
 
 ifdef DEBIAN
-	HOST_ARCH:=-mtune=generic -march=native
+	HOST_ARCH:=-mtune=generic
 endif
 
 # Anything below GCC 6 gets to be forcefully switched to decent standards, because some of our deps require C11 & C++11 support.
