@@ -353,8 +353,8 @@ local function refresh_koa2(fb, refreshtype, waveform_mode, x, y, w, h)
     return mxc_update(fb, C.MXCFB_SEND_UPDATE_KOA2, refarea, refreshtype, waveform_mode, x, y, w, h)
 end
 
-local function refresh_pw4(fb, refreshtype, waveform_mode, x, y, w, h)
-    local refarea = ffi.new("struct mxcfb_update_data_pw4[1]")
+local function refresh_rex(fb, refreshtype, waveform_mode, x, y, w, h)
+    local refarea = ffi.new("struct mxcfb_update_data_rex[1]")
     -- only for Amazon's driver, try to mostly follow what the stock reader does...
     if waveform_mode == C.WAVEFORM_MODE_KOA2_GLR16 then
         -- If we're requesting WAVEFORM_MODE_KOA2_GLR16, it's REAGL all around!
@@ -377,7 +377,7 @@ local function refresh_pw4(fb, refreshtype, waveform_mode, x, y, w, h)
     end
     -- TODO: There's also the HW-backed NightMode which should be somewhat accessible...
 
-    return mxc_update(fb, C.MXCFB_SEND_UPDATE_PW4, refarea, refreshtype, waveform_mode, x, y, w, h)
+    return mxc_update(fb, C.MXCFB_SEND_UPDATE_REX, refarea, refreshtype, waveform_mode, x, y, w, h)
 end
 
 local function refresh_kobo(fb, refreshtype, waveform_mode, x, y, w, h)
@@ -512,8 +512,8 @@ function framebuffer:init()
 
         -- The KOA2 uses a new eink driver, one that massively breaks backward compatibility.
         local isKOA2 = false
-        -- And because that worked well enough the first time, lab126 did the same with the PW4!
-        local isPW4 = false
+        -- And because that worked well enough the first time, lab126 did the same with Rex!
+        local isRex = false
 
         if self.device.model == "Kindle2" then
             isREAGL = false
@@ -532,8 +532,11 @@ function framebuffer:init()
         if self.device.model == "KindleOasis2" then
             isKOA2 = true
         end
+
         if self.device.model == "KindlePaperWhite4" then
-            isPW4 = true
+            isRex = true
+        elseif self.device.model == "KindleBasic3" then
+            isRex = true
         end
 
         if isREAGL then
@@ -549,15 +552,15 @@ function framebuffer:init()
             self.waveform_partial = C.WAVEFORM_MODE_GL16_FAST -- NOTE: Depending on FW, might instead be AUTO w/ hist_gray_waveform_mode set to GL16_FAST
         end
 
-        -- NOTE: The PW4 essentially uses the same driver as the KOA2, it's just passing a slightly smaller mxcfb_update_data struct
-        if isKOA2 or isPW4 then
+        -- NOTE: Devices on the Rex platform essentially use the same driver as the KOA2, they're just passing a slightly smaller mxcfb_update_data struct
+        if isKOA2 or isRex then
             -- FIXME: Someone with the device will have to check if/how HW dithering is supposed to be requested,
             --        as the Kobo Mk.7 way doesn't appear to work, at the very least on the PW4 (c.f., #4602)
             --self.device.canHWDither = yes
             if isKOA2 then
                 self.mech_refresh = refresh_koa2
             else
-                self.mech_refresh = refresh_pw4
+                self.mech_refresh = refresh_rex
             end
 
             self.waveform_fast = C.WAVEFORM_MODE_DU
