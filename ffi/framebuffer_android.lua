@@ -3,14 +3,34 @@ local android = require("android")
 local BB = require("ffi/blitbuffer")
 local C = ffi.C
 
-local has_eink_screen = android.isEink()
-local full, partial, a2, auto = 1, 2, 3, 4 -- luacheck: ignore
+--[[ configuration for devices with an electric paper display controller ]]--
 
-local function update_eink(mode)
-    if has_eink_screen then
-	android.LOGV("requesting eink update " .. mode)
-        android.einkUpdate(mode)
+-- does the device has an e-ink screen?
+local has_eink_screen = android.isEink()
+
+-- does the device needs to handle all screen refreshes
+local has_eink_full_support = android.isEinkFull()
+
+-- for *some* rockchip devices
+local rk_full, rk_partial, rk_a2, rk_auto = 1, 2, 3, 4 -- luacheck: ignore
+
+-- for *some* freescale devices
+local ntx_du, ntx_gc16, ntx_regal, ntx_full = 1, 2, 7, 34 -- luacheck: ignore
+
+-- update only a region of the screen
+local function updatePartial(mode, delay, x, y, w, h)
+    if not (x and y and w and h) then
+        x = 0
+        y = 0
+        w = android.screen.width
+        h = android.screen.height
     end
+    if x < 0 then x = 0 end
+    if y < 0 then y = 0 end
+    if (x + w) > android.screen.width then w = android.screen.width - x end
+    if (y + h) > android.screen.height then h = android.screen.height - y end
+
+    android.einkUpdate(mode, delay, x, y, (x + w), (y + h))
 end
 
 local framebuffer = {}
@@ -70,29 +90,48 @@ function framebuffer:_updateWindow()
     android.lib.ANativeWindow_unlockAndPost(android.app.window);
 end
 
-function framebuffer:refreshFullImp()
+function framebuffer:refreshFullImp(x, y, w, h)
     self:_updateWindow()
-    update_eink(full)
+    if has_eink_full_support then
+        updatePartial(ntx_full, 50, x, y, w, h)
+    elseif has_eink_screen then
+        android.einkUpdate(rk_full)
+    end
 end
 
-function framebuffer:refreshPartialImp()
+function framebuffer:refreshPartialImp(x, y, w, h)
     self:_updateWindow()
+    if has_eink_full_support then
+        updatePartial(ntx_regal, 0, x, y, w, h)
+    end
 end
 
-function framebuffer:refreshFlashPartialImp()
+function framebuffer:refreshFlashPartialImp(x, y, w, h)
     self:_updateWindow()
+    if has_eink_full_support then
+        updatePartial(ntx_gc16, 0, x, y, w, h)
+    end
 end
 
-function framebuffer:refreshUIImp()
+function framebuffer:refreshUIImp(x, y, w, h)
     self:_updateWindow()
+    if has_eink_full_support then
+        updatePartial(ntx_regal, 0, x, y, w, h)
+    end
 end
 
-function framebuffer:refreshFlashUIImp()
+function framebuffer:refreshFlashUIImp(x, y, w, h)
     self:_updateWindow()
+    if has_eink_full_support then
+        updatePartial(ntx_gc16, 0, x, y, w, h)
+    end
 end
 
-function framebuffer:refreshFastImp()
+function framebuffer:refreshFastImp(x, y, w, h)
     self:_updateWindow()
+    if has_eink_full_support then
+        updatePartial(ntx_du, 0, x, y, w, h)
+    end
 end
 
 return require("ffi/framebuffer"):extend(framebuffer)
