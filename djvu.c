@@ -662,7 +662,7 @@ static int drawPage(lua_State *L) {
 	if (gamma == 2) {
 		// default
 		gamma = 2.2;
-	}	else if (gamma < 2) {
+	} else if (gamma < 2) {
 		// with this function, 0.8 = 5, 2 = 2.2
 		gamma = 6.86666 - 2.33333 * gamma;
 	} else if (gamma > 2) {
