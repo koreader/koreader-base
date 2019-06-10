@@ -32,6 +32,8 @@
 #include "koptcrop.h"
 #include "djvu.h"
 
+#define ABS(x) ((x<0)?(-x):(x))
+
 #define MIN(a, b)      ((a) < (b) ? (a) : (b))
 #define MAX(a, b)      ((a) > (b) ? (a) : (b))
 
@@ -654,6 +656,26 @@ static int drawPage(lua_State *L) {
 	BlitBuffer *bb = (BlitBuffer*) lua_topointer(L, 3);
 	ddjvu_render_mode_t djvu_render_mode = (int) luaL_checkint(L, 6);
 	ddjvu_rect_t pagerect, renderrect;
+	// map KOReader gamma to djvulibre gamma
+	// djvulibre goes from 0.5 to 5.0
+	double gamma = ABS(dc->gamma); // not sure why, but 1 is given as -1?
+	if (gamma == 2) {
+		// default
+		gamma = 2.2;
+	} else if (gamma < 2) {
+		// with this function, 0.8 = 5, 2 = 2.2
+		gamma = 6.86666 - 2.33333 * gamma;
+		if (gamma > 5) {
+			gamma = 5;
+		}
+	} else if (gamma > 2) {
+		// with this function, 9 = 0.5, 2 = 2.2
+		gamma = 2.68571 - 0.242856 * gamma;
+		if (gamma < 0.5) {
+			gamma = 0.5;
+		}
+	}
+	ddjvu_format_set_gamma(page->doc->pixelformat, gamma);
 	int bbsize = (bb->w)*(bb->h)*page->doc->pixelsize;
 	uint8_t *imagebuffer = bb->data;
 
@@ -691,23 +713,6 @@ static int drawPage(lua_State *L) {
 
 	if (!ddjvu_page_render(page->page_ref, djvu_render_mode, &pagerect, &renderrect, page->doc->pixelformat, bb->w*page->doc->pixelsize, imagebuffer))
 		memset(imagebuffer, 0xFF, bbsize);
-
-	/* Gamma correction of the blitbuffer, do we need to build this into BlitBuffer? */
-	unsigned char gamma_map[256];
-	unsigned char *s = imagebuffer;
-	int k, x, y;
-
-	if (dc->gamma != -1.0) {
-		for (k = 0; k < 256; k++)
-			gamma_map[k] = pow(k / 255.0f, dc->gamma) * 255;
-
-		for (y = 0; y < bb->h; y++) {
-			for (x = 0; x < bb->w; x++) {
-				k = y*bb->pitch + x;
-				s[k] = gamma_map[s[k]];
-			}
-		}
-	}
 
 	return 0;
 }
