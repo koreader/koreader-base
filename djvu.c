@@ -665,9 +665,15 @@ static int drawPage(lua_State *L) {
 	} else if (gamma < 2) {
 		// with this function, 0.8 = 5, 2 = 2.2
 		gamma = 6.86666 - 2.33333 * gamma;
+		if (gamma > 5) {
+			gamma = 5;
+		}
 	} else if (gamma > 2) {
 		// with this function, 9 = 0.5, 2 = 2.2
 		gamma = 2.68571 - 0.242856 * gamma;
+		if (gamma < 0.5) {
+			gamma = 0.5;
+		}
 	}
 	ddjvu_format_set_gamma(page->doc->pixelformat, gamma);
 	int bbsize = (bb->w)*(bb->h)*page->doc->pixelsize;
