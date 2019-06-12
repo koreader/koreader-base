@@ -6,7 +6,7 @@ local C = ffi.C
 --[[ configuration for devices with an electric paper display controller ]]--
 
 -- does the device has an e-ink screen?
-local has_eink_screen = android.isEink()
+local has_eink_screen, eink_platform = android.isEink()
 
 -- does the device needs to handle all screen refreshes
 local has_eink_full_support = android.isEinkFull()
@@ -15,9 +15,9 @@ local has_eink_full_support = android.isEinkFull()
 local rk_full, rk_partial, rk_a2, rk_auto = 1, 2, 3, 4 -- luacheck: ignore
 
 -- for *some* freescale devices
-local ntx_du, ntx_gc16, ntx_regal, ntx_full = 1, 2, 7, 34 -- luacheck: ignore
+local ntx_du, ntx_gc16, ntx_auto, ntx_regal, ntx_full = 1, 2, 5, 7, 34 -- luacheck: ignore
 
--- update only a region of the screen
+-- update a region of the screen
 local function updatePartial(mode, delay, x, y, w, h)
     if not (x and y and w and h) then
         x = 0
@@ -31,6 +31,23 @@ local function updatePartial(mode, delay, x, y, w, h)
     if (y + h) > android.screen.height then h = android.screen.height - y end
 
     android.einkUpdate(mode, delay, x, y, (x + w), (y + h))
+end
+
+-- update the entire screen
+local function updateFull()
+    -- freescale ntx platform
+    if has_eink_screen and (eink_platform == "freescale") then
+        if has_eink_full_support then
+            -- we handle the screen entirely. Add a delay before a full update.
+            updatePartial(ntx_full, 50)
+        else
+            -- we're racing against system driver, update without delay to avoid artifacts
+            updatePartial(ntx_full, 0)
+        end
+    -- rockchip rk3x platform
+    elseif has_eink_screen and (eink_platform == "rockchip") then
+        android.einkUpdate(rk_full)
+    end
 end
 
 local framebuffer = {}
@@ -92,17 +109,13 @@ end
 
 function framebuffer:refreshFullImp(x, y, w, h)
     self:_updateWindow()
-    if has_eink_full_support then
-        updatePartial(ntx_full, 50, x, y, w, h)
-    elseif has_eink_screen then
-        android.einkUpdate(rk_full)
-    end
+    updateFull()
 end
 
 function framebuffer:refreshPartialImp(x, y, w, h)
     self:_updateWindow()
     if has_eink_full_support then
-        updatePartial(ntx_regal, 0, x, y, w, h)
+        updatePartial(ntx_auto, 0, x, y, w, h)
     end
 end
 
@@ -116,7 +129,7 @@ end
 function framebuffer:refreshUIImp(x, y, w, h)
     self:_updateWindow()
     if has_eink_full_support then
-        updatePartial(ntx_regal, 0, x, y, w, h)
+        updatePartial(ntx_auto, 0, x, y, w, h)
     end
 end
 
