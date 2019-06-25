@@ -27,6 +27,8 @@ local framebuffer = {
     waveform_fast = nil,
     waveform_reagl = nil,
     waveform_night = nil,
+    waveform_flashnight = nil,
+    night_is_reagl = nil,
     mech_refresh = nil,
     -- start with an out of bound marker value to avoid doing something stupid on our first update
     marker = MARKER_MIN - 1,
@@ -45,37 +47,54 @@ function framebuffer:_get_next_marker()
     return marker
 end
 
--- Returns true if waveform_mode arg matches the UI waveform mode for current device
+-- Returns true if waveform_mode arg matches the UI waveform mode for the current device
 -- NOTE: This is to avoid explicit comparison against device-specific waveform constants in mxc_update()
 --       Here, it's because of the Kindle-specific WAVEFORM_MODE_GC16_FAST
 function framebuffer:_isUIWaveFormMode(waveform_mode)
     return waveform_mode == self.waveform_ui
 end
 
--- Returns true if waveform_mode arg matches the FlashUI waveform mode for current device
+-- Returns true if waveform_mode arg matches the FlashUI waveform mode for the current device
 -- NOTE: This is to avoid explicit comparison against device-specific waveform constants in mxc_update()
 --       Here, it's because of the Kindle-specific WAVEFORM_MODE_GC16_FAST
 function framebuffer:_isFlashUIWaveFormMode(waveform_mode)
     return waveform_mode == self.waveform_flashui
 end
 
--- Returns true if waveform_mode arg matches the REAGL waveform mode for current device
+-- Returns true if waveform_mode arg matches the REAGL waveform mode for the current device
 -- NOTE: This is to avoid explicit comparison against device-specific waveform constants in mxc_update()
 --       Here, it's Kindle's various WAVEFORM_MODE_REAGL vs. Kobo's NTX_WFM_MODE_GLD16
 function framebuffer:_isREAGLWaveFormMode(waveform_mode)
     return waveform_mode == self.waveform_reagl
 end
 
--- Returns true if waveform_mode arg matches the fast waveform mode for current device
+-- Returns true if the night waveform mode for the current device requires a REAGL promotion to FULL
+function framebuffer:_isNightREAGL()
+   return self.night_is_reagl
+end
+
+-- Returns true if waveform_mode arg matches the fast waveform mode for the current device
 -- NOTE: This is to avoid explicit comparison against device-specific waveform constants in mxc_update()
 --       Here, it's because some devices use A2, while other prefer DU
 function framebuffer:_isFastWaveFormMode(waveform_mode)
     return waveform_mode == self.waveform_fast
 end
 
+-- Returns true if waveform_mode arg matches the partial waveform mode for the current device
+-- NOTE: This is to avoid explicit comparison against device-specific waveform constants in mxc_update()
+--       Here, because of REAGL or device-specific quirks.
+function framebuffer:_isPartialWaveFormMode(waveform_mode)
+    return waveform_mode == self.waveform_partial
+end
+
 -- Returns the device-specific nightmode waveform mode
 function framebuffer:_getNightWaveFormMode()
     return self.waveform_night
+end
+
+-- Returns the device-specific flashing nightmode waveform mode
+function framebuffer:_getFlashNightWaveFormMode()
+    return self.waveform_flashnight
 end
 
 -- Returns true if w & h are equal or larger than our visible screen estate (i.e., we asked for a full-screen update)
@@ -254,11 +273,18 @@ local function mxc_update(fb, update_ioctl, refarea, refresh_type, waveform_mode
             refarea[0].flags = bor(refarea[0].flags, C.EPDC_FLAG_ENABLE_INVERSION)
         end
 
-        -- If the waveform is not fast or GC16, enforce a nightmode-specific mode (usually, GC16), to limit ghosting.
+        -- Enforce a nightmode-specific mode (usually, GC16), to limit ghosting, where appropriate (i.e., partial & flashes).
         -- There's nothing much we can do about crappy flashing behavior on some devices, though (c.f., base/#884),
         -- that's in the hands of the EPDC. Kindle PW2+ behave sanely, for instance, even when flashing on AUTO or GC16 ;).
-        if not fb:_isFastWaveFormMode(waveform_mode) and waveform_mode ~= C.WAVEFORM_MODE_GC16 then
+        if fb:_isPartialWaveFormMode(waveform_mode) then
             waveform_mode = fb:_getNightWaveFormMode()
+            refarea[0].waveform_mode = waveform_mode
+            -- And handle devices like the KOA2/PW4, where night is a REAGL waveform that needs to be FULL...
+            if fb:_isNightREAGL() then
+                refarea[0].update_mode = C.UPDATE_MODE_FULL
+            end
+        elseif waveform_mode == C.WAVEFORM_MODE_GC16 or refresh_type == C.UPDATE_MODE_FULL then
+            waveform_mode = fb:_getFlashNightWaveFormMode()
             refarea[0].waveform_mode = waveform_mode
         end
     end
@@ -506,6 +532,8 @@ function framebuffer:init()
         self.waveform_flashui = self.waveform_ui
         self.waveform_full = C.WAVEFORM_MODE_GC16
         self.waveform_night = C.WAVEFORM_MODE_GC16
+        self.waveform_flashnight = self.waveform_night
+        self.night_is_reagl = false
 
         -- New devices are REAGL-aware, default to REAGL
         local isREAGL = true
@@ -547,6 +575,7 @@ function framebuffer:init()
             -- NOTE: GL16_INV is available since FW >= 5.6.x only, but it'll safely fall-back to AUTO on older FWs.
             --       Most people with those devices should be running at least FW 5.9.7 by now, though ;).
             self.waveform_night = C.WAVEFORM_MODE_GL16_INV
+            -- NOTE: Might be worth using GL16_INV for flashnight, too?
         else
             self.waveform_fast = C.WAVEFORM_MODE_DU -- NOTE: DU, because A2 looks terrible on the Touch, and ghosts horribly. Framework is actually using AUTO for UI feedback inverts.
             self.waveform_partial = C.WAVEFORM_MODE_GL16_FAST -- NOTE: Depending on FW, might instead be AUTO w/ hist_gray_waveform_mode set to GL16_FAST
@@ -571,8 +600,11 @@ function framebuffer:init()
             self.waveform_flashui = C.WAVEFORM_MODE_GC16
             self.waveform_reagl = C.WAVEFORM_MODE_KOA2_GLR16
             self.waveform_partial = self.waveform_reagl
-            -- NOTE: There's also KOA2_GLKW16... One might be more suited to UI or text than the other?
-            self.waveform_night = C.WAVEFORM_MODE_KOA2_GCK16
+            -- NOTE: Apparently, the KT4 doesn't support one or both of those. Consider swapping night to GL16 and flashnight to GC16, or both to GC16 for the KT4 only.
+            --       c.f., ko/#5076
+            self.waveform_night = C.WAVEFORM_MODE_KOA2_GLKW16
+            self.night_is_reagl = true
+            self.waveform_flashnight = C.WAVEFORM_MODE_KOA2_GCK16
         end
     elseif self.device:isKobo() then
         require("ffi/mxcfb_kobo_h")
@@ -586,6 +618,8 @@ function framebuffer:init()
         self.waveform_full = C.NTX_WFM_MODE_GC16
         self.waveform_partial = C.WAVEFORM_MODE_AUTO
         self.waveform_night = C.NTX_WFM_MODE_GC16
+        self.waveform_flashnight = self.waveform_night
+        self.night_is_reagl = false
 
         -- New devices *may* be REAGL-aware, but generally don't expect explicit REAGL requests, default to not.
         local isREAGL = false
@@ -641,6 +675,8 @@ function framebuffer:init()
         self.waveform_full = C.WAVEFORM_MODE_GC16
         self.waveform_partial = C.WAVEFORM_MODE_GC16
         self.waveform_night = C.WAVEFORM_MODE_GC16
+        self.waveform_flashnight = self.waveform_night
+        self.night_is_reagl = false
     elseif self.device:isSonyPRSTUX() then
         require("ffi/mxcfb_sony_h")
 
@@ -653,6 +689,8 @@ function framebuffer:init()
         self.waveform_full = C.WAVEFORM_MODE_GC16
         self.waveform_partial = C.WAVEFORM_MODE_AUTO
         self.waveform_night = C.WAVEFORM_MODE_GC16
+        self.waveform_flashnight = self.waveform_night
+        self.night_is_reagl = false
     elseif self.device:isCervantes() then
         require("ffi/mxcfb_cervantes_h")
 
@@ -665,6 +703,8 @@ function framebuffer:init()
         self.waveform_full = C.WAVEFORM_MODE_GC16
         self.waveform_partial = C.WAVEFORM_MODE_AUTO
         self.waveform_night = C.WAVEFORM_MODE_GC16
+        self.waveform_flashnight = self.waveform_night
+        self.night_is_reagl = false
     else
         error("unknown device type")
     end
