@@ -247,6 +247,13 @@ local function mxc_update(fb, update_ioctl, refarea, refresh_type, waveform_mode
     refarea[0].alt_buffer_data.alt_update_region.width = 0
     refarea[0].alt_buffer_data.alt_update_region.height = 0
 
+    -- Handle REAGL promotion...
+    -- NOTE: We need to do this here, because we rely on the pre-promotion actual refresh_type in previous heuristics.
+    if fb:_isREAGLWaveFormMode(waveform_mode) then
+        -- NOTE: REAGL updates always need to be full.
+        refarea[0].update_mode = C.UPDATE_MODE_FULL
+    end
+
     -- Handle night mode shenanigans
     if fb.night_mode then
         -- We're in nightmode! If the device can do HW inversion safely, do that!
@@ -261,13 +268,6 @@ local function mxc_update(fb, update_ioctl, refarea, refresh_type, waveform_mode
             waveform_mode = fb:_getNightWaveFormMode()
             refarea[0].waveform_mode = waveform_mode
         end
-    end
-
-    -- Handle REAGL promotion...
-    -- NOTE: We need to do this here, because we rely on the pre-promotion actual refresh_type in previous heuristics.
-    if fb:_isREAGLWaveFormMode(waveform_mode) then
-        -- NOTE: REAGL updates always need to be full.
-        refarea[0].update_mode = C.UPDATE_MODE_FULL
     end
 
     -- Recap the actual details of the ioctl, vs. what UIManager asked for...
