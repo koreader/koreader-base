@@ -591,6 +591,7 @@ function framebuffer:init()
             self.waveform_reagl = C.WAVEFORM_MODE_KOA2_GLR16
             self.waveform_partial = self.waveform_reagl
             -- NOTE: Apparently, the KT4 doesn't support one or both of those. Consider swapping night to GL16 and flashnight to GC16, or both to GC16.
+            --       c.f., ko/#5076
             self.waveform_night = C.WAVEFORM_MODE_KOA2_GLKW16
             self.waveform_flashnight = C.WAVEFORM_MODE_KOA2_GCK16
         end
