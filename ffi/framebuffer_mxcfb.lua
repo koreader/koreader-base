@@ -82,7 +82,7 @@ end
 
 -- Returns true if waveform_mode arg matches the partial waveform mode for the current device
 -- NOTE: This is to avoid explicit comparison against device-specific waveform constants in mxc_update()
---       Here, because REAGL or device-specific quirks.
+--       Here, because of REAGL or device-specific quirks.
 function framebuffer:_isPartialWaveFormMode(waveform_mode)
     return waveform_mode == self.waveform_partial
 end
@@ -279,7 +279,7 @@ local function mxc_update(fb, update_ioctl, refarea, refresh_type, waveform_mode
         if fb:_isPartialWaveFormMode(waveform_mode) then
             waveform_mode = fb:_getNightWaveFormMode()
             refarea[0].waveform_mode = waveform_mode
-            -- And handle devices likes the KOA2/PW4, where night is a REAGL waveform that needs to be FULL...
+            -- And handle devices like the KOA2/PW4, where night is a REAGL waveform that needs to be FULL...
             if fb:_isNightREAGL() then
                 refarea[0].update_mode = C.UPDATE_MODE_FULL
             end
