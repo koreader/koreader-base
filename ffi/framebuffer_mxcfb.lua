@@ -281,7 +281,7 @@ local function mxc_update(fb, update_ioctl, refarea, refresh_type, waveform_mode
         if fb:_isPartialWaveFormMode(waveform_mode) then
             waveform_mode = fb:_getNightWaveFormMode()
             refarea[0].waveform_mode = waveform_mode
-        elseif waveform_mode == C.WAVEFORM_MODE_GC16 then
+        elseif waveform_mode == C.WAVEFORM_MODE_GC16 or refresh_type == C.UPDATE_MODE_FULL then
             waveform_mode = fb:_getFlashNightWaveFormMode()
             refarea[0].waveform_mode = waveform_mode
         end
