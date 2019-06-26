@@ -542,6 +542,8 @@ function framebuffer:init()
         local isKOA2 = false
         -- And because that worked well enough the first time, lab126 did the same with Rex!
         local isRex = false
+        -- But of course, some devices don't actually support all the features the kernel exposes...
+        local isNightModeChallenged = false
 
         if self.device.model == "Kindle2" then
             isREAGL = false
@@ -565,6 +567,8 @@ function framebuffer:init()
             isRex = true
         elseif self.device.model == "KindleBasic3" then
             isRex = true
+            -- NOTE: Apparently, the KT4 doesn't actually support the fancy nightmode waveforms, c.f., ko/#5076
+            isNightModeChallenged = true
         end
 
         if isREAGL then
@@ -575,7 +579,7 @@ function framebuffer:init()
             -- NOTE: GL16_INV is available since FW >= 5.6.x only, but it'll safely fall-back to AUTO on older FWs.
             --       Most people with those devices should be running at least FW 5.9.7 by now, though ;).
             self.waveform_night = C.WAVEFORM_MODE_GL16_INV
-            -- NOTE: Might be worth using GL16_INV for flashnight, too?
+            self.waveform_flashnight = C.WAVEFORM_MODE_GC16
         else
             self.waveform_fast = C.WAVEFORM_MODE_DU -- NOTE: DU, because A2 looks terrible on the Touch, and ghosts horribly. Framework is actually using AUTO for UI feedback inverts.
             self.waveform_partial = C.WAVEFORM_MODE_GL16_FAST -- NOTE: Depending on FW, might instead be AUTO w/ hist_gray_waveform_mode set to GL16_FAST
@@ -600,11 +604,15 @@ function framebuffer:init()
             self.waveform_flashui = C.WAVEFORM_MODE_GC16
             self.waveform_reagl = C.WAVEFORM_MODE_KOA2_GLR16
             self.waveform_partial = self.waveform_reagl
-            -- NOTE: Apparently, the KT4 doesn't support one or both of those. Consider swapping night to GL16 and flashnight to GC16, or both to GC16 for the KT4 only.
-            --       c.f., ko/#5076
-            self.waveform_night = C.WAVEFORM_MODE_KOA2_GLKW16
-            self.night_is_reagl = true
-            self.waveform_flashnight = C.WAVEFORM_MODE_KOA2_GCK16
+            -- NOTE: Because we can't have nice things, we have to account for devices that do not actuallly support the fancy inverted waveforms...
+            if isNightModeChallenged then
+                self.waveform_night = C.WAVEFORM_MODE_KOA2_GL16_INV -- NOTE: Currently points to the bog-standard GL16, but one can hope...
+                self.waveform_flashnight = C.WAVEFORM_MODE_GC16
+            else
+                self.waveform_night = C.WAVEFORM_MODE_KOA2_GLKW16
+                self.night_is_reagl = true
+                self.waveform_flashnight = C.WAVEFORM_MODE_KOA2_GCK16
+            end
         end
     elseif self.device:isKobo() then
         require("ffi/mxcfb_kobo_h")
