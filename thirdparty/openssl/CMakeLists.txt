@@ -59,13 +59,12 @@ else()
 endif()
 
 set(PATCH_CMD1 sh -c "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/openssl-1.1.0j-parallel_install_fix.patch")
-set(PATCH_CMD2 sh -c "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/openssl-1.1.1b-CVE-2019-1543.patch")
-set(PATCH_CMD3 sh -c "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/openssl-origin-rpath.patch")
+set(PATCH_CMD2 sh -c "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/openssl-origin-rpath.patch")
 # GCC 4.9's <stdatomic.h> is broken (c.f., https://github.com/pytorch/pytorch/issues/3050)
 if(DEFINED ENV{SONY_PRSTUX} OR DEFINED ENV{ANDROID})
-    set(PATCH_CMD4 sh -c "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/openssl-gcc-4.9-stdatomic.patch")
+    set(PATCH_CMD3 sh -c "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/openssl-gcc-4.9-stdatomic.patch")
 else()
-    set(PATCH_CMD4 "")
+    set(PATCH_CMD3 "")
 endif()
 
 # NOTE: We need to pass $CFLAGS to OpenSSL's Configure script,
@@ -90,7 +89,7 @@ set(BUILD_CMD2 sh -c "${MAKE_CMD} build_libs")
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
     https://github.com/openssl/openssl.git
-    OpenSSL_1_1_1b
+    OpenSSL_1_1_1c
     ${SOURCE_DIR}
 )
 
@@ -98,7 +97,7 @@ include(ExternalProject)
 ExternalProject_Add(
     ${PROJECT_NAME}
     DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
-    PATCH_COMMAND COMMAND ${PATCH_CMD1} COMMAND ${PATCH_CMD2} COMMAND ${PATCH_CMD3} COMMAND ${PATCH_CMD4}
+    PATCH_COMMAND COMMAND ${PATCH_CMD1} COMMAND ${PATCH_CMD2} COMMAND ${PATCH_CMD3}
     CONFIGURE_COMMAND ${CFG_CMD}
     BUILD_IN_SOURCE 1
     BUILD_COMMAND COMMAND ${BUILD_CMD1} COMMAND ${BUILD_CMD2}
