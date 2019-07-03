@@ -181,11 +181,11 @@ jobs:
     <<: *XCOMPILE_TPL
     environment:
       TARGET: "android"
-      DOCKER_IMG: frenzie/koandroid:0.2.1
+      DOCKER_IMG: koreader/koandroid:0.3
 
   android-x86:
     <<: *ANDROID_TPL
     environment:
       TARGET: "android"
       ANDROID_ARCH: "x86"
-      DOCKER_IMG: frenzie/koandroid:0.2.1
+      DOCKER_IMG: koreader/koandroid:0.3
