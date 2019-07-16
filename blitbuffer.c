@@ -114,59 +114,42 @@ static const char*
 //       just so that new buffer can be used for the memcpy-based fast paths...
 
 #define BB_GET_PIXEL(bb, rotation, COLOR, x, y, pptr) \
-    switch (rotation) { \
-        case 0: \
-            *pptr = (COLOR*)(bb->data + y * bb->pitch) + x; \
-            break; \
-        case 1: \
-            *pptr = (COLOR*)(bb->data + x * bb->pitch) + bb->w - y - 1; \
-            break; \
-        case 2: \
-            *pptr = (COLOR*)(bb->data + (bb->h - y - 1) * bb->pitch) + bb->w - x - 1; \
-            break; \
-        case 3: \
-            *pptr = (COLOR*)(bb->data + (bb->h - x - 1) * bb->pitch) + y; \
-            break; \
-    }
+({ \
+    if (rotation == 0) { \
+        *pptr = (COLOR*)(bb->data + y * bb->pitch) + x; \
+    } else if (rotation == 1) { \
+        *pptr = (COLOR*)(bb->data + x * bb->pitch) + bb->w - y - 1; \
+    } else if (rotation == 2) { \
+        *pptr = (COLOR*)(bb->data + (bb->h - y - 1) * bb->pitch) + bb->w - x - 1; \
+    } else if (rotation == 3) { \
+        *pptr = (COLOR*)(bb->data + (bb->h - x - 1) * bb->pitch) + y; \
+    } \
+})
 
 #define SET_ALPHA_FROM_A(bb, bb_type, bb_rotation, x, y, alpha) \
-    switch (bb_type) { \
-        case TYPE_BB8: \
-            { \
-                Color8 *srcptr; \
-                BB_GET_PIXEL(bb, bb_rotation, Color8, x, y, &srcptr); \
-                *alpha = srcptr->a; \
-            } \
-            break; \
-        case TYPE_BB8A: \
-            { \
-                Color8A *srcptr; \
-                BB_GET_PIXEL(bb, bb_rotation, Color8A, x, y, &srcptr); \
-                *alpha = srcptr->a; \
-            } \
-            break; \
-        case TYPE_BBRGB16: \
-            { \
-                ColorRGB16 *srcptr; \
-                BB_GET_PIXEL(bb, bb_rotation, ColorRGB16, x, y, &srcptr); \
-                *alpha = ColorRGB16_To_A(srcptr->v); \
-            } \
-            break; \
-        case TYPE_BBRGB24: \
-            { \
-                ColorRGB24 *srcptr; \
-                BB_GET_PIXEL(bb, bb_rotation, ColorRGB24, x, y, &srcptr); \
-                *alpha = RGB_To_A(srcptr->r, srcptr->g, srcptr->b); \
-            } \
-            break; \
-        case TYPE_BBRGB32: \
-            { \
-                ColorRGB32 *srcptr; \
-                BB_GET_PIXEL(bb, bb_rotation, ColorRGB32, x, y, &srcptr); \
-                *alpha = RGB_To_A(srcptr->r, srcptr->g, srcptr->b); \
-            } \
-            break; \
-    }
+({ \
+    if (bb_type == TYPE_BB8) { \
+        Color8 *srcptr; \
+        BB_GET_PIXEL(bb, bb_rotation, Color8, x, y, &srcptr); \
+        *alpha = srcptr->a; \
+    } else if (bb_type == TYPE_BB8A) { \
+        Color8A *srcptr; \
+        BB_GET_PIXEL(bb, bb_rotation, Color8A, x, y, &srcptr); \
+        *alpha = srcptr->a; \
+    } else if (bb_type == TYPE_BBRGB16) { \
+        ColorRGB16 *srcptr; \
+        BB_GET_PIXEL(bb, bb_rotation, ColorRGB16, x, y, &srcptr); \
+        *alpha = ColorRGB16_To_A(srcptr->v); \
+    } else if (bb_type == TYPE_BBRGB24) { \
+        ColorRGB24 *srcptr; \
+        BB_GET_PIXEL(bb, bb_rotation, ColorRGB24, x, y, &srcptr); \
+        *alpha = RGB_To_A(srcptr->r, srcptr->g, srcptr->b); \
+    } else if (bb_type == TYPE_BBRGB32) { \
+        ColorRGB32 *srcptr; \
+        BB_GET_PIXEL(bb, bb_rotation, ColorRGB32, x, y, &srcptr); \
+        *alpha = RGB_To_A(srcptr->r, srcptr->g, srcptr->b); \
+    } \
+})
 
 void BB_fill_rect(BlitBuffer *bb, int x, int y, int w, int h, uint8_t v) {
     int rotation = GET_BB_ROTATION(bb);
