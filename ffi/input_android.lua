@@ -58,6 +58,9 @@ end
 
 local is_in_touch = false
 local function motionEventHandler(motion_event)
+    if android.isTouchscreenIgnored() then
+        return
+    end
     local action = android.lib.AMotionEvent_getAction(motion_event)
     local pointer_count = android.lib.AMotionEvent_getPointerCount(motion_event)
     local pointer_index = bit.rshift(
