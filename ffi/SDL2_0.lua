@@ -23,6 +23,7 @@ local SDL = util.ffiLoadCandidates{
     "SDL2",
     -- this unfortunately needs to be written in full due to the . in the name
     "libSDL2-2.0.so",
+    "libSDL2-2.0.so.0",
 }
 
 -- for frontend SDL event handling
