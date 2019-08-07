@@ -223,7 +223,7 @@ function md5_proto:update(luastr)
     MD5Update(self.ctx, ffi.cast("const char*", luastr), #luastr)
 end
 
---- Calcualte md5 sum with the state of a md5 hashing instance.
+--- Calculate md5 sum with the state of a md5 hashing instance.
 ---- @string luastr stream to process
 ---- @treturn string md5 sum in Lua string
 function md5_proto:sum(luastr)
@@ -251,14 +251,14 @@ function md5.new()
     return o
 end
 
---- Calcualte md5 sum.
+--- Calculate md5 sum.
 ---- @string luastr stream to process
 ---- @treturn string md5 sum in Lua string
 function md5.sum(luastr)
     return md5:new():sum(luastr)
 end
 
---- Calcualte md5 sum for a file.
+--- Calculate md5 sum for a file.
 ---- @string filename
 ---- @treturn string md5 sum in Lua string
 function md5.sumFile(filename)
