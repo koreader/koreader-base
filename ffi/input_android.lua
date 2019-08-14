@@ -105,7 +105,15 @@ local function keyEventHandler(key_event)
     or code == C.AKEYCODE_MEDIA_REWIND
     or code == C.AKEYCODE_MEDIA_FAST_FORWARD then
         return 0 -- event not consumed
+    elseif code == C.AKEYCODE_MEDIA_MUTE
+    or code == C.AKEYCODE_VOLUME_MUTE then
+        if android.getVolumeKeysIgnored() then
+            return 0
+        else
+            return 1
+        end
     end
+
     if action == C.AKEY_EVENT_ACTION_DOWN then
         genEmuEvent(C.EV_KEY, code, 1)
     elseif action == C.AKEY_EVENT_ACTION_UP then
