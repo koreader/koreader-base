@@ -974,6 +974,25 @@ static int setStyleSheet(lua_State *L) {
 	return 0;
 }
 
+static int setBackgroundImage(lua_State *L) {
+	CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
+	if (lua_isstring(L, 2)) {
+		const char *img_path = luaL_checkstring(L, 2);
+		LVStreamRef stream = LVOpenFileStream(img_path, LVOM_READ);
+		if ( !stream.isNull() ) {
+			LVImageSourceRef img = LVCreateStreamImageSource(stream);
+			if ( !img.isNull() ) {
+				doc->text_view->setBackgroundImage(img, true); // tiled=true
+			}
+		}
+	}
+	else { // if not a string (nil, false...), remove background image
+		LVImageSourceRef img;
+		doc->text_view->setBackgroundImage(img);
+	}
+	return 0;
+}
+
 /// ------- Page Margins -------
 
 static int setPageMargins(lua_State *L) {
@@ -2835,6 +2854,7 @@ static const struct luaL_Reg credocument_meth[] = {
     {"setStyleSheet", setStyleSheet},
     {"setEmbeddedStyleSheet", setEmbeddedStyleSheet},
     {"setEmbeddedFonts", setEmbeddedFonts},
+    {"setBackgroundImage", setBackgroundImage},
     {"setPageMargins", setPageMargins},
     {"setVisiblePageCount", setVisiblePageCount},
     {"adjustFontSizes", adjustFontSizes},
