@@ -105,7 +105,7 @@ local function keyEventHandler(key_event)
     or code == C.AKEYCODE_MEDIA_REWIND
     or code == C.AKEYCODE_MEDIA_FAST_FORWARD then
         return 0 -- event not consumed
-    elseif code == C.AKEYCODE_MEDIA_MUTE
+    elseif code == C.AKEYCODE_MUTE
     or code == C.AKEYCODE_VOLUME_MUTE then
         if android.getVolumeKeysIgnored() then
             return 0
