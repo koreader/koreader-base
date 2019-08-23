@@ -35,7 +35,7 @@ if($ENV{POCKETBOOK})
     # See https://github.com/koreader/koreader-base/pull/917#issuecomment-495940413
     set(HB_VER 2.4.0)
 else()
-    set(HB_VER 2.6.0)
+    set(HB_VER 2.6.1)
 endif()
 
 ko_write_gitclone_script(
