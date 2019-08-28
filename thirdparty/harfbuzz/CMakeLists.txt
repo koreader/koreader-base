@@ -29,14 +29,7 @@ if($ENV{ANDROID})
     set(CFG_CMD "${CFG_CMD} && ${ISED} 's|soname_spec=.*|soname_spec=\"\\\\\$libname\\\\\$release\\\\\$shared_ext\\\\\$major\"|' libtool")
 endif()
 
-if($ENV{POCKETBOOK})
-    # The PocketBook toolchain is stuck with gcc 4.8, support of which was dropped in HB 2.5.
-    # In the short term we deal with this by keeping PB at a lower version.
-    # See https://github.com/koreader/koreader-base/pull/917#issuecomment-495940413
-    set(HB_VER 2.4.0)
-else()
-    set(HB_VER 2.6.1)
-endif()
+set(HB_VER 2.6.1)
 
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
