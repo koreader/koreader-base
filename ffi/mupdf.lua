@@ -171,7 +171,7 @@ function document_mt.__index:getPages()
     return pages
 end
 
-function document_mt.__index:isDocumentReflowable(width, height, em)
+function document_mt.__index:isDocumentReflowable()
     if self.is_reflowable then return self.is_reflowable end
     self.is_reflowable = M.fz_is_document_reflowable(context(), self.doc) == 1
     return self.is_reflowable
