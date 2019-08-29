@@ -88,6 +88,7 @@ cdecl_struct(fz_page_s)
 
 cdecl_func(mupdf_open_document)
 cdecl_func(mupdf_open_document_with_stream)
+cdecl_func(fz_is_document_reflowable)
 cdecl_func(fz_needs_password)
 cdecl_func(fz_authenticate_password)
 cdecl_func(fz_drop_document) // NOTE: libk2pdfopt uses old fz_free_document symbol

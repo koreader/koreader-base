@@ -182,6 +182,7 @@ struct fz_page_s {
 };
 fz_document *mupdf_open_document(fz_context *, const char *);
 fz_document *mupdf_open_document_with_stream(fz_context *, const char *, struct fz_stream_s *);
+int fz_is_document_reflowable(fz_context *, fz_document *);
 int fz_needs_password(fz_context *, fz_document *);
 int fz_authenticate_password(fz_context *, fz_document *, const char *);
 void fz_drop_document(fz_context *, fz_document *);
