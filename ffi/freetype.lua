@@ -93,7 +93,7 @@ function FT.newFace(filename, pxsize)
 
     local err = ft2.FT_New_Face(freetypelib, filename, 0, facept)
     if err ~= 0 then
-        error("Failed to load font, freetype error code: "..err)
+        error("Failed to load font '"..filename.."', freetype error code: "..err)
     end
 
     local face = facept[0]
