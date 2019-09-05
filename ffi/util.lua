@@ -475,19 +475,7 @@ function util.isAndroid()
     return isAndroid
 end
 
-local haveSDL1 = nil
 local haveSDL2 = nil
-
-function util.haveSDL1()
-    local err
-    if haveSDL1 == nil then
-        haveSDL1, err = pcall(ffi.load, "SDL")
-    end
-    if not haveSDL1 then
-        print("SDL not loaded:", err)
-    end
-    return haveSDL1
-end
 
 --- Returns true if SDL2
 function util.haveSDL2()
@@ -509,10 +497,10 @@ function util.haveSDL2()
 end
 
 local isSDL = nil
---- Returns true if SDL (can be 1 or 2)
+--- Returns true if SDL
 function util.isSDL()
     if isSDL == nil then
-        isSDL = util.haveSDL2() or util.haveSDL1()
+        isSDL = util.haveSDL2()
     end
     return isSDL
 end

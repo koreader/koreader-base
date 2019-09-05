@@ -33,7 +33,7 @@ addons:
       - cmake
       - ninja-build
       - g++
-      - libsdl1.2-dev
+      - libsdl2-dev
       - luajit
       - luarocks
       # for luasec
