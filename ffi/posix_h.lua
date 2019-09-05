@@ -17,6 +17,7 @@ int dup2(int, int) __attribute__((__nothrow__, __leaf__));
 static const int O_RDWR = 2;
 static const int O_RDONLY = 0;
 static const int O_NONBLOCK = 2048;
+static const int O_CLOEXEC = 524288;
 int open(const char *, int, ...);
 int close(int);
 int fcntl(int, int, ...);
