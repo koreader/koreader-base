@@ -34,5 +34,6 @@ struct tm {
   const char *tm_zone;
 };
 time_t time(time_t *) __attribute__((nothrow, leaf));
+struct tm *gmtime(const time_t *) __attribute__((nothrow, leaf));
 struct tm *localtime(const time_t *) __attribute__((nothrow, leaf));
 ]]
