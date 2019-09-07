@@ -37,5 +37,4 @@ time_t time(time_t *) __attribute__((nothrow, leaf));
 struct tm *gmtime(const time_t *) __attribute__((nothrow, leaf));
 struct tm *localtime(const time_t *) __attribute__((nothrow, leaf));
 time_t mktime(struct tm *) __attribute__((nothrow, leaf));
-double difftime(time_t, time_t) __attribute__((nothrow, leaf, const));
 ]]
