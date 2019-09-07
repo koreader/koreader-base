@@ -15,3 +15,6 @@ cdecl_struct(tm)
 cdecl_func(time)
 cdecl_func(gmtime)
 cdecl_func(localtime)
+cdecl_func(mktime)
+
+cdecl_func(difftime)
