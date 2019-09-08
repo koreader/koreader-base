@@ -20,6 +20,12 @@ local RTC = {
     _wakeup_scheduled_ptm = nil,
 }
 
+--[[
+Adds seconds to epoch.
+
+@int seconds_from_now
+@treturn cdata epoch
+--]]
 function RTC:secondsFromNowToEpoch(seconds_from_now)
     local t = ffi.new("time_t[1]")
     t[0] = C.time(nil)
@@ -28,6 +34,16 @@ function RTC:secondsFromNowToEpoch(seconds_from_now)
     return epoch
 end
 
+--[[
+Set wakeup alarm.
+
+@int epoch If you want to set to an amount of time from now, process your value with @{secondsFromNowToEpoch}
+@enabled bool Whether the call enables or disables the alarm. Defaults to true.
+
+@treturn bool Success.
+@treturn re Error code (if any).
+@treturn err Error string (if any).
+--]]
 function RTC:setWakeupAlarm(epoch, enabled)
     enabled = (enabled ~= nil) and enabled or true
 
@@ -78,18 +94,25 @@ function RTC:setWakeupAlarm(epoch, enabled)
     end
 end
 
+--[[
+Unset wakeup alarm.
+--]]
 function RTC:unsetWakeupAlarm()
     self:setWakeupAlarm(-1, false)
     self._wakeup_scheduled = false
     self._wakeup_scheduled_ptm = nil
 end
 
---- Get wakealarm as set by us.
+--[[--
+Get wakealarm as set by us.
+--]]
 function RTC:getWakeupAlarm()
     return self._wakeup_scheduled_ptm
 end
 
---- Get RTC wakealarm from system.
+--[[--
+Get RTC wakealarm from system.
+--]]
 function RTC:getWakeupAlarmSys()
     local wake = ffi.new("struct rtc_wkalrm")
 
@@ -125,6 +148,9 @@ function RTC:getWakeupAlarmSys()
     end
 end
 
+--[[--
+Checks if the alarm we set matches the system alarm as well as the current time.
+--]]
 function RTC:validateWakeupAlarmByProximity(task_alarm_epoch, proximity)
     -- In principle alarm time and current time should match within a second,
     -- but let's be absurdly generous and assume anything within 30 is a match.
@@ -158,6 +184,11 @@ function RTC:validateWakeupAlarmByProximity(task_alarm_epoch, proximity)
     if diff >= 0 and diff < proximity then return true end
 end
 
+--[[--
+Checks if we scheduled a wakeup alarm.
+
+@treturn bool
+--]]
 function RTC:isWakeupAlarmScheduled()
     return self._wakeup_scheduled
 end
