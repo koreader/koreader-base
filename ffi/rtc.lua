@@ -3,6 +3,8 @@ Module for interfacing with the RTC (real time clock).
 
 This module provides the ability to schedule wakeups through RTC.
 
+See <http://man7.org/linux/man-pages/man4/rtc.4.html> for technical details.
+
 @module ffi.rtc
 ]]
 
@@ -10,21 +12,22 @@ local ffi = require("ffi")
 local bor = bit.bor
 local C = ffi.C
 
+-- required to load the headers
 local dummy = require("ffi/posix_h")
 local dummy = require("ffi/rtc_h")
 
 -----------------------------------------------------------------
 
 local RTC = {
-    _wakeup_scheduled = false,
-    _wakeup_scheduled_ptm = nil,
+    _wakeup_scheduled = false,   -- Flipped in @{setWakeupAlarm} and @{unsetWakeupAlarm}.
+    _wakeup_scheduled_ptm = nil, -- Stores a reference to the time of the last scheduled wakeup alarm.
 }
 
---[[
+--[[--
 Adds seconds to epoch.
 
-@int seconds_from_now
-@treturn cdata epoch
+@int seconds_from_now Number of seconds.
+@treturn int (cdata) Epoch.
 --]]
 function RTC:secondsFromNowToEpoch(seconds_from_now)
     local t = ffi.new("time_t[1]")
@@ -34,10 +37,13 @@ function RTC:secondsFromNowToEpoch(seconds_from_now)
     return epoch
 end
 
---[[
+--[[--
 Set wakeup alarm.
 
-@int epoch If you want to set to an amount of time from now, process your value with @{secondsFromNowToEpoch}
+If you want to set the alarm to a certain amount of time from now,
+you can process your value with @{secondsFromNowToEpoch}.
+
+@int Epoch.
 @enabled bool Whether the call enables or disables the alarm. Defaults to true.
 
 @treturn bool Success.
@@ -94,7 +100,7 @@ function RTC:setWakeupAlarm(epoch, enabled)
     end
 end
 
---[[
+--[[--
 Unset wakeup alarm.
 --]]
 function RTC:unsetWakeupAlarm()
@@ -104,7 +110,11 @@ function RTC:unsetWakeupAlarm()
 end
 
 --[[--
-Get wakealarm as set by us.
+Get a copy of the wakealarm we set (if any).
+
+This value is compared with @{getWakeupAlarmSys} in @{validateWakeupAlarmByProximity}.
+
+@treturn tm (time struct)
 --]]
 function RTC:getWakeupAlarm()
     return self._wakeup_scheduled_ptm
@@ -112,6 +122,8 @@ end
 
 --[[--
 Get RTC wakealarm from system.
+
+@treturn tm (time struct)
 --]]
 function RTC:getWakeupAlarmSys()
     local wake = ffi.new("struct rtc_wkalrm")
