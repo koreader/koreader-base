@@ -75,29 +75,28 @@ function RTC:setWakeupAlarm(epoch, enabled)
     if rtc0 == -1 then
         err = ffi.string(C.strerror(ffi.errno()))
         print("setWakeupAlarm open /dev/rtc0", rtc0, err)
+        return nil, re, err
     end
     local re = C.ioctl(rtc0, C.RTC_WKALM_SET, wake)
     if re == -1 then
         err = ffi.string(C.strerror(ffi.errno()))
         print("setWakeupAlarm ioctl RTC_WKALM_SET", re, err)
+        return nil, re, err
     end
     re = C.close(rtc0)
     if re == -1 then
         err = ffi.string(C.strerror(ffi.errno()))
         print("setWakeupAlarm close /dev/rtc0", re, err)
-    end
-
-    if re == 0 then
-        if enabled then
-            self._wakeup_scheduled = true
-        else
-            self._wakeup_scheduled = false
-            self._wakeup_scheduled_ptm = nil
-        end
-        return true
-    else
         return nil, re, err
     end
+
+    if enabled then
+        self._wakeup_scheduled = true
+    else
+        self._wakeup_scheduled = false
+        self._wakeup_scheduled_ptm = nil
+    end
+    return true
 end
 
 --[[--
@@ -133,16 +132,19 @@ function RTC:getWakeupAlarmSys()
     if rtc0 == -1 then
         err = ffi.string(C.strerror(ffi.errno()))
         print("getWakeupAlarm open /dev/rtc0", rtc0, err)
+        return nil, re, err
     end
     re = C.ioctl(rtc0, C.RTC_WKALM_RD, wake)
     if re == -1 then
         err = ffi.string(C.strerror(ffi.errno()))
         print("getWakeupAlarm ioctl RTC_WKALM_RD", re, err)
+        return nil, re, err
     end
     re = C.close(rtc0)
     if re == -1 then
         err = ffi.string(C.strerror(ffi.errno()))
         print("getWakeupAlarm close /dev/rtc0", re, err)
+        return nil, re, err
     end
 
     if wake ~= -1 then
