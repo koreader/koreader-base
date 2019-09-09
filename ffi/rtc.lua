@@ -12,7 +12,7 @@ local ffi = require("ffi")
 local bor = bit.bor
 local C = ffi.C
 
--- Add header definitions for functions and constants to the ffi.C namespace.
+-- Load header definitions for functions and constants to the ffi.C namespace.
 local dummy = require("ffi/posix_h")
 local dummy = require("ffi/rtc_h")
 
@@ -75,7 +75,7 @@ function RTC:setWakeupAlarm(epoch, enabled)
     if rtc0 == -1 then
         err = ffi.string(C.strerror(ffi.errno()))
         print("setWakeupAlarm open /dev/rtc0", rtc0, err)
-        return nil, re, err
+        return nil, rtc0, err
     end
     local re = C.ioctl(rtc0, C.RTC_WKALM_SET, wake)
     if re == -1 then
@@ -132,7 +132,7 @@ function RTC:getWakeupAlarmSys()
     if rtc0 == -1 then
         err = ffi.string(C.strerror(ffi.errno()))
         print("getWakeupAlarm open /dev/rtc0", rtc0, err)
-        return nil, re, err
+        return nil, rtc0, err
     end
     re = C.ioctl(rtc0, C.RTC_WKALM_RD, wake)
     if re == -1 then
