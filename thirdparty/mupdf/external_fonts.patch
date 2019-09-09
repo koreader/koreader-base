@@ -68,7 +68,7 @@ index f6951ba2..b1fdd981 100644
  /*
  	Base 14 PDF fonts from URW.
  	Noto fonts from Google.
-@@ -367,3 +371,191 @@ fz_lookup_noto_emoji_font(fz_context *ctx, int *size)
+@@ -367,3 +371,185 @@ fz_lookup_noto_emoji_font(fz_context *ctx, int *size)
  	return *size = 0, NULL;
  #endif
  }
@@ -97,13 +97,10 @@ index f6951ba2..b1fdd981 100644
 +char *
 +get_font_file_android(char *name)
 +{
-+	char *fontdir;
-+	char *filename;
-+	int len;
-+	fontdir = "/system/fonts";
-+	len = strlen(fontdir) + strlen(name) + 2;
-+	filename = malloc(len);
-+	if(filename == NULL) {
++	const char fontdir[] = "/system/fonts";
++	size_t len = sizeof(fontdir) + strlen(name) + 1;	// sizeof on a string literal includes the NUL
++	char *filename = malloc(len);
++	if (filename == NULL) {
 +		return NULL;
 +	}
 +	snprintf(filename, len, "%s/%s", fontdir, name);
