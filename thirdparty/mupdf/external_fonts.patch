@@ -14,11 +14,12 @@ diff --git a/include/mupdf/fitz/font.h b/include/mupdf/fitz/font.h
 index ef4cd74d..6e6ea124 100644
 --- a/include/mupdf/fitz/font.h
 +++ b/include/mupdf/fitz/font.h
-@@ -624,4 +624,9 @@ void fz_hb_lock(fz_context *ctx);
+@@ -624,4 +624,10 @@ void fz_hb_lock(fz_context *ctx);
  */
  void fz_hb_unlock(fz_context *ctx);
  
 +char *get_font_file(char *name);
++char *get_font_file_android(char *name);
 +char *fz_lookup_base14_font_from_file(fz_context *ctx, const char *name);
 +char *fz_lookup_cjk_font_from_file(fz_context *ctx, int registry, int serif, int wmode);
 +void fz_install_external_font_funcs(fz_context *ctx);
@@ -67,7 +68,7 @@ index f6951ba2..b1fdd981 100644
  /*
  	Base 14 PDF fonts from URW.
  	Noto fonts from Google.
-@@ -367,3 +371,152 @@ fz_lookup_noto_emoji_font(fz_context *ctx, int *size)
+@@ -367,3 +371,188 @@ fz_lookup_noto_emoji_font(fz_context *ctx, int *size)
  	return *size = 0, NULL;
  #endif
  }
@@ -87,6 +88,19 @@ index f6951ba2..b1fdd981 100644
 +	len = strlen(fontdir) + strlen(name) + 2;
 +	filename = malloc(len);
 +	if(filename == NULL) {
++		return NULL;
++	}
++	snprintf(filename, len, "%s/%s", fontdir, name);
++	return filename;
++}
++
++char *
++get_font_file_android(char *name)
++{
++	const char fontdir[] = "/system/fonts";
++	size_t len = sizeof(fontdir) + strlen(name) + 1;	// sizeof on a string literal includes the NUL
++	char *filename = malloc(len);
++	if (filename == NULL) {
 +		return NULL;
 +	}
 +	snprintf(filename, len, "%s/%s", fontdir, name);
@@ -127,6 +141,20 @@ index f6951ba2..b1fdd981 100644
 +	if (!strcmp("Helvetica-BoldOblique", name)) {
 +		return get_font_file("urw/NimbusSanL-BolIta.cff");
 +	}
++#ifdef __ANDROID__
++	if (!strcmp("NotoSans", name)) {
++		return get_font_file_android("Roboto-Regular.ttf");
++	}
++	if (!strcmp("NotoSans-Bold", name)) {
++		return get_font_file_android("Roboto-Bold.ttf");
++	}
++	if (!strcmp("NotoSans-BoldItalic", name)) {
++		return get_font_file_android("Roboto-BoldItalic.ttf");
++	}
++	if (!strcmp("NotoSans-Italic", name)) {
++		return get_font_file_android("Roboto-Italic.ttf");
++	}
++#else
 +	if (!strcmp("NotoSans", name)) {
 +		return get_font_file("noto/NotoSans-Regular.ttf");
 +	}
@@ -139,6 +167,7 @@ index f6951ba2..b1fdd981 100644
 +	if (!strcmp("NotoSans-Italic", name)) {
 +		return get_font_file("noto/NotoSans-Italic.ttf");
 +	}
++#endif
 +	if (!strcmp("Times-Roman", name)) {
 +		return get_font_file("urw/NimbusRomNo9L-Reg.cff");
 +	}
@@ -177,7 +206,11 @@ index f6951ba2..b1fdd981 100644
 +char *
 +fz_lookup_cjk_font_from_file(fz_context *ctx, int registry, int serif, int wmode)
 +{
++#ifdef __ANDROID__
++	return get_font_file_android("Roboto-Regular.ttf");
++#else
 +	return get_font_file("noto/NotoSansCJKsc-Regular.otf");
++#endif
 +}
 +
 +const unsigned char *
@@ -207,7 +240,11 @@ index f6951ba2..b1fdd981 100644
 +	char *filename;
 +	fz_font *font;
 +
++#ifdef __ANDROID__
++	filename = get_font_file_android("Roboto-Regular.ttf");
++#else
 +	filename = get_font_file("noto/NotoSansCJKsc-Regular.otf");
++#endif
 +	font = fz_new_font_from_file(ctx, NULL, filename, 0, 1);
 +	free(filename);
 +	return font;
