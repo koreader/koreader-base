@@ -107,19 +107,19 @@ end
 
 -- Kindle's MXCFB_WAIT_FOR_UPDATE_COMPLETE_PEARL == 0x4004462f
 local function kindle_pearl_mxc_wait_for_update_complete(fb, marker)
-    -- Wait for the previous update to be completed
+    -- Wait for a specific update to be completed
     return C.ioctl(fb.fd, C.MXCFB_WAIT_FOR_UPDATE_COMPLETE_PEARL, ffi.new("uint32_t[1]", marker))
 end
 
 -- Kobo's MXCFB_WAIT_FOR_UPDATE_COMPLETE_V1 == 0x4004462f
 local function kobo_mxc_wait_for_update_complete(fb, marker)
-    -- Wait for the previous update to be completed
+    -- Wait for a specific update to be completed
     return C.ioctl(fb.fd, C.MXCFB_WAIT_FOR_UPDATE_COMPLETE_V1, ffi.new("uint32_t[1]", marker))
 end
 
 -- Kobo's Mk7 MXCFB_WAIT_FOR_UPDATE_COMPLETE_V3
 local function kobo_mk7_mxc_wait_for_update_complete(fb, marker)
-    -- Wait for the previous update to be completed
+    -- Wait for a specific update to be completed
     local mk7_update_marker = ffi.new("struct mxcfb_update_marker_data[1]")
     mk7_update_marker[0].update_marker = marker
     -- NOTE: 0 seems to be a fairly safe assumption for "we don't care about collisions".
@@ -130,25 +130,25 @@ end
 
 -- Kindle's MXCFB_WAIT_FOR_UPDATE_COMPLETE == 0x4004462f
 local function pocketbook_mxc_wait_for_update_complete(fb, marker)
-    -- Wait for the previous update to be completed
+    -- Wait for a specific update to be completed
     return C.ioctl(fb.fd, C.MXCFB_WAIT_FOR_UPDATE_COMPLETE, ffi.new("uint32_t[1]", marker))
 end
 
 -- Sony PRS MXCFB_WAIT_FOR_UPDATE_COMPLETE
 local function sony_prstux_mxc_wait_for_update_complete(fb, marker)
-    -- Wait for the previous update to be completed
+    -- Wait for a specific update to be completed
     return C.ioctl(fb.fd, C.MXCFB_WAIT_FOR_UPDATE_COMPLETE, ffi.new("uint32_t[1]", marker))
 end
 
 -- BQ Cervantes MXCFB_WAIT_FOR_UPDATE_COMPLETE == 0x4004462f
 local function cervantes_mxc_wait_for_update_complete(fb, marker)
-    -- Wait for the previous update to be completed
+    -- Wait for a specific update to be completed
     return C.ioctl(fb.fd, C.MXCFB_WAIT_FOR_UPDATE_COMPLETE, ffi.new("uint32_t[1]", marker))
 end
 
 -- Kindle's MXCFB_WAIT_FOR_UPDATE_COMPLETE == 0xc008462f
 local function kindle_carta_mxc_wait_for_update_complete(fb, marker)
-    -- Wait for the previous update to be completed
+    -- Wait for a specific update to be completed
     local carta_update_marker = ffi.new("struct mxcfb_update_marker_data[1]")
     carta_update_marker[0].update_marker = marker
     -- NOTE: 0 seems to be a fairly safe assumption for "we don't care about collisions".
@@ -159,7 +159,7 @@ end
 
 -- Kindle's MXCFB_WAIT_FOR_UPDATE_SUBMISSION == 0x40044637
 local function kindle_mxc_wait_for_update_submission(fb, marker)
-    -- Wait for the current (the one we just sent) update to be submitted
+    -- Wait for a specific update to be submitted
     return C.ioctl(fb.fd, C.MXCFB_WAIT_FOR_UPDATE_SUBMISSION, ffi.new("uint32_t[1]", marker))
 end
 
@@ -182,8 +182,8 @@ local function mxc_update(fb, update_ioctl, refarea, refresh_type, waveform_mode
     end
 
     if w == 1 and h == 1 then
-        -- avoid system freeze when updating 1x1 pixel block on KPW2 and KV,
-        -- see koreader/koreader#1299 and koreader/koreader#1486
+        -- Avoid a kernel deadlock when updating 1x1 pixel block on KPW2 and KV,
+        -- c.f., koreader/koreader#1299 and koreader/koreader#1486
         fb.debug("got a 1x1 pixel refresh request, ignoring it.")
         return
     end
