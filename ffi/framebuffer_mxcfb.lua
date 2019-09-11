@@ -147,13 +147,13 @@ local function cervantes_mxc_wait_for_update_complete(fb, marker)
 end
 
 -- Kindle's MXCFB_WAIT_FOR_UPDATE_COMPLETE == 0xc008462f
-local function kindle_carta_mxc_wait_for_update_complete(fb, marker, collision_test)
+local function kindle_carta_mxc_wait_for_update_complete(fb, marker)
     -- Wait for the previous update to be completed
     local carta_update_marker = ffi.new("struct mxcfb_update_marker_data[1]")
     carta_update_marker[0].update_marker = marker
     -- NOTE: 0 seems to be a fairly safe assumption for "we don't care about collisions".
     --       On a slightly related note, the EPDC_FLAG_TEST_COLLISION flag is for dry-run collision tests, never set it.
-    carta_update_marker[0].collision_test = collision_test or 0
+    carta_update_marker[0].collision_test = 0
     return C.ioctl(fb.fd, C.MXCFB_WAIT_FOR_UPDATE_COMPLETE, carta_update_marker)
 end
 
@@ -215,30 +215,14 @@ local function mxc_update(fb, update_ioctl, refarea, refresh_type, waveform_mode
     --         * GC16 update,
     --         * Full-screen, flashing GC16_FAST update,
     --       then wait for completion of previous marker first.
-    local collision_test = 0
     -- Again, make sure the marker is valid, too.
     if (fb:_isREAGLWaveFormMode(waveform_mode)
       or waveform_mode == C.WAVEFORM_MODE_GC16
       or (refresh_type == C.UPDATE_MODE_FULL and fb:_isFlashUIWaveFormMode(waveform_mode) and fb:_isFullScreen(w, h)))
       and fb.mech_wait_update_complete
       and (marker ~= 0) then
-        -- NOTE: Disabled collision_test handling, because it's fragile, mysterious, easy to get wrong, hard to do right,
-        --       and might change at a moment's notice, like the KOA2 proved...
-        --[[
-        -- NOTE: Setup the slightly mysterious collision_test flag...
-        --       This is Kindle-only, but extra arguments are safely ignored in Lua ;).
-        if fb:_isREAGLWaveFormMode(waveform_mode) then
-            collision_test = 0
-        elseif waveform_mode == C.WAVEFORM_MODE_GC16 or fb:_isFlashUIWaveFormMode(waveform_mode) then
-            collision_test = 1642888
-            -- On a KOA2:
-            collision_test = 2126091812
-        end
-        -- NOTE: The KOA2 also sometimes (flashing? new menu?) waits on a previous (sometimes as far back as ~10 updates ago)
-        --       "fast" (i.e., DU) marker, in which case collision is set to 1981826464
-        --]]
-        fb.debug("refresh: wait for completion of (previous) marker", marker, "with collision_test", collision_test)
-        fb.mech_wait_update_complete(fb, marker, collision_test)
+        fb.debug("refresh: wait for completion of (previous) marker", marker)
+        fb.mech_wait_update_complete(fb, marker)
     end
 
     refarea[0].update_mode = refresh_type or C.UPDATE_MODE_PARTIAL
@@ -300,20 +284,8 @@ local function mxc_update(fb, update_ioctl, refarea, refresh_type, waveform_mode
     -- NOTE: We wait for completion after *any kind* of full (i.e., flashing) update.
     if refarea[0].update_mode == C.UPDATE_MODE_FULL
       and fb.mech_wait_update_complete then
-        --[[
-        -- NOTE: Again, setup collision_test magic numbers...
-        if fb:_isREAGLWaveFormMode(waveform_mode) then
-            collision_test = 4
-            -- On a KOA2:
-            collision_test = 4096
-        elseif waveform_mode == C.WAVEFORM_MODE_GC16 or fb:_isFlashUIWaveFormMode(waveform_mode) then
-            collision_test = 1
-            -- On a KOA2:
-            collision_test = 4096
-        end
-        --]]
-        fb.debug("refresh: wait for completion of marker", marker, "with collision_test", collision_test)
-        fb.mech_wait_update_complete(fb, marker, collision_test)
+        fb.debug("refresh: wait for completion of marker", marker)
+        fb.mech_wait_update_complete(fb, marker)
     end
 end
 
