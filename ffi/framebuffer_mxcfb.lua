@@ -8,10 +8,6 @@ local dummy = require("ffi/posix_h")
 local band = bit.band
 local bor = bit.bor
 
--- Valid marker bounds
-local MARKER_MIN = 42
-local MARKER_MAX = (42 * 42)
-
 local function yes() return true end
 
 local framebuffer = {
@@ -30,21 +26,17 @@ local framebuffer = {
     waveform_flashnight = nil,
     night_is_reagl = nil,
     mech_refresh = nil,
-    -- start with an out of bound marker value to avoid doing something stupid on our first update
-    marker = MARKER_MIN - 1,
+    -- start with an invalid marker value to avoid doing something stupid on our first update
+    marker = 0,
 }
 
 --[[ refresh list management: --]]
 
 -- Returns an incrementing marker value, w/ a sane wraparound.
 function framebuffer:_get_next_marker()
-    local marker = self.marker + 1
-    if marker > MARKER_MAX then
-        marker = MARKER_MIN
-    end
-
-    self.marker = marker
-    return marker
+    -- Wrap around at 128
+    self.marker = band(self.marker + 1, 127)
+    return self.marker
 end
 
 -- Returns true if waveform_mode arg matches the UI waveform mode for the current device
@@ -213,7 +205,7 @@ local function mxc_update(fb, update_ioctl, refarea, refresh_type, waveform_mode
     if fb.mech_wait_update_submission
       and (refresh_type == C.UPDATE_MODE_FULL
       or fb:_isUIWaveFormMode(waveform_mode))
-      and (marker >= MARKER_MIN and marker <= MARKER_MAX) then
+      and (marker ~= 0) then
         fb.debug("refresh: wait for submission of (previous) marker", marker)
         fb.mech_wait_update_submission(fb, marker)
     end
@@ -229,7 +221,7 @@ local function mxc_update(fb, update_ioctl, refarea, refresh_type, waveform_mode
       or waveform_mode == C.WAVEFORM_MODE_GC16
       or (refresh_type == C.UPDATE_MODE_FULL and fb:_isFlashUIWaveFormMode(waveform_mode) and fb:_isFullScreen(w, h)))
       and fb.mech_wait_update_complete
-      and (marker >= MARKER_MIN and marker <= MARKER_MAX) then
+      and (marker ~= 0) then
         -- NOTE: Disabled collision_test handling, because it's fragile, mysterious, easy to get wrong, hard to do right,
         --       and might change at a moment's notice, like the KOA2 proved...
         --[[
