@@ -182,15 +182,12 @@ local function mxc_update(fb, update_ioctl, refarea, refresh_type, waveform_mode
     h, y = BB.checkBounds(h or bb:getHeight(), y or 0, 0, bb:getHeight(), 0xFFFF)
     x, y, w, h = bb:getPhysicalRect(x, y, w, h)
 
-    if w == 0 or h == 0 then
-        fb.debug("got an empty (no height and/or width) refresh request, ignoring it.")
-        return
-    end
-
-    if w == 1 and h == 1 then
-        -- Avoid a kernel deadlock when updating 1x1 pixel block on KPW2 and KV,
-        -- c.f., koreader/koreader#1299 and koreader/koreader#1486
-        fb.debug("got a 1x1 pixel refresh request, ignoring it.")
+    -- NOTE: Discard empty or bogus regions, as they might murder some kernels with extreme prejudice...
+    -- (c.f., https://github.com/NiLuJe/FBInk/blob/5449a03d3be28823991b425cd20aa048d2d71845/fbink.c#L1755).
+    -- We have practical experience of that with 1x1 pixel blocks on Kindle PW2 and KV,
+    -- c.f., koreader/koreader#1299 and koreader/koreader#1486
+    if w <= 1 or h <= 1 then
+        fb.debug("discarding bogus refresh region:", w, h)
         return
     end
 
