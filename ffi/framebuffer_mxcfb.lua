@@ -303,7 +303,7 @@ local function mxc_update(fb, update_ioctl, refarea, refresh_type, waveform_mode
       and fb.mech_wait_update_complete then
         fb.debug("refresh: wait for completion of marker", marker)
         fb.mech_wait_update_complete(fb, marker)
-        -- And make sure we don't wait for it again, in case the next refresh trips one of our heuristics ;).
+        -- And make sure we won't wait for it again, in case the next refresh trips one of our wai_for_*  heuristics ;).
         fb.dont_wait_for_marker = marker
     end
 end
