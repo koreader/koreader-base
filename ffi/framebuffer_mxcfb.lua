@@ -34,7 +34,7 @@ local framebuffer = {
 
 -- Returns an incrementing marker value, w/ a sane wraparound.
 function framebuffer:_get_next_marker()
-    -- Wrap around at 128
+    -- Wrap around at 128 (via an optimized modulo of a power of two)
     self.marker = band(self.marker + 1, 127)
     return self.marker
 end
