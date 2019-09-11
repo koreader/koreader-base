@@ -177,7 +177,7 @@ local function mxc_update(fb, update_ioctl, refarea, refresh_type, waveform_mode
     x, y, w, h = bb:getPhysicalRect(x, y, w, h)
 
     if w == 0 or h == 0 then
-        fb.debug("got a 0 size (height and/or width) refresh request, ignoring it.")
+        fb.debug("got an empty (no height and/or width) refresh request, ignoring it.")
         return
     end
 
