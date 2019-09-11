@@ -34,9 +34,13 @@ local framebuffer = {
 
 -- Returns an incrementing marker value, w/ a sane wraparound.
 function framebuffer:_get_next_marker()
-    -- Wrap around at 128 (via an optimized modulo of a power of two)
-    self.marker = band(self.marker + 1, 127)
-    return self.marker
+    local marker = self.marker + 1
+    if marker > 128 then
+        marker = 1
+    end
+
+    self.marker = marker
+    return marker
 end
 
 -- Returns true if waveform_mode arg matches the UI waveform mode for the current device
