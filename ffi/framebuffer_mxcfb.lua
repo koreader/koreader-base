@@ -28,8 +28,8 @@ local framebuffer = {
     mech_refresh = nil,
     -- start with an invalid marker value to avoid doing something stupid on our first update
     marker = 0,
-    -- remember a specific marker we'll want to wait for on the following refresh...
-    wait_for_marker = nil,
+    -- used to avoid waiting twice on the same marker
+    dont_wait_for_marker = nil,
 }
 
 --[[ refresh list management: --]]
@@ -199,53 +199,37 @@ local function mxc_update(fb, update_ioctl, refarea, refresh_type, waveform_mode
        w = w*3
     end
 
-    -- NOTE: If we have a previous marker we need to wait for, do it now
-    --       Can never be set without fb.mech_wait_update_complete, so we don't need to check for that again.
-    if fb.wait_for_marker then
-        -- On Kindle, prefer wait_for_submission, unless we're queuing a REAGL update
-        if fb.mech_wait_update_submission and not fb:_isREAGLWaveFormMode(waveform_mode) then
-            fb.debug("refresh: wait for submission of (past) marker", fb.wait_for_marker)
-            fb.mech_wait_update_submission(fb, fb.wait_for_marker)
-        else
-            fb.debug("refresh: wait for completion of (past) marker", fb.wait_for_marker)
-            fb.mech_wait_update_complete(fb, fb.wait_for_marker)
-        end
-        -- Clear it
-        fb.wait_for_marker = nil
-    else
-        -- NOTE: Otherwise, wait for the previous marker right before any kind of FULL (or FULL-like) update.
-        --
-        -- NOTE: If we're trying to send a:
-        --         * true FULL update,
-        --         * GC16_FAST update (i.e., popping-up a menu),
-        --       then wait for submission of previous marker first.
-        local marker = fb.marker
-        -- NOTE: Technically, we might not always want to wait for *exactly* the previous marker
-        --       (we might actually want the one before that), but in the vast majority of cases, that's good enough,
-        --       and saves us a lot of annoying and hard-to-get-right heuristics anyway ;).
-        -- Make sure it's a valid marker, to avoid doing something stupid on our first update.
-        if fb.mech_wait_update_submission
-        and (refresh_type == C.UPDATE_MODE_FULL
-        or fb:_isUIWaveFormMode(waveform_mode))
-        and (marker ~= 0) then
-            fb.debug("refresh: wait for submission of (previous) marker", marker)
-            fb.mech_wait_update_submission(fb, marker)
-        end
+    -- NOTE: If we're trying to send a:
+    --         * true FULL update,
+    --         * GC16_FAST update (i.e., popping-up a menu),
+    --       then wait for submission of previous marker first.
+    local marker = fb.marker
+    -- NOTE: Technically, we might not always want to wait for *exactly* the previous marker
+    --       (we might actually want the one before that), but in the vast majority of cases, that's good enough,
+    --       and saves us a lot of annoying and hard-to-get-right heuristics anyway ;).
+    -- Make sure it's a valid marker, to avoid doing something stupid on our first update.
+    -- Also make sure we haven't already waited on this marker ;).
+    if fb.mech_wait_update_submission
+    and (refresh_type == C.UPDATE_MODE_FULL
+    or fb:_isUIWaveFormMode(waveform_mode))
+    and (marker ~= 0 and marker ~= fb.dont_wait_for_marker) then
+        fb.debug("refresh: wait for submission of (previous) marker", marker)
+        fb.mech_wait_update_submission(fb, marker)
+    end
 
-        -- NOTE: If we're trying to send a:
-        --         * REAGL update,
-        --         * GC16 update,
-        --         * Full-screen, flashing GC16_FAST update,
-        --       then wait for completion of previous marker first.
-        -- Again, make sure the marker is valid, too.
-        if (fb:_isREAGLWaveFormMode(waveform_mode)
-        or waveform_mode == C.WAVEFORM_MODE_GC16
-        or (refresh_type == C.UPDATE_MODE_FULL and fb:_isFlashUIWaveFormMode(waveform_mode) and fb:_isFullScreen(w, h)))
-        and fb.mech_wait_update_complete
-        and (marker ~= 0) then
-            fb.debug("refresh: wait for completion of (previous) marker", marker)
-            fb.mech_wait_update_complete(fb, marker)
-        end
+    -- NOTE: If we're trying to send a:
+    --         * REAGL update,
+    --         * GC16 update,
+    --         * Full-screen, flashing GC16_FAST update,
+    --       then wait for completion of previous marker first.
+    -- Again, make sure the marker is valid, too.
+    if (fb:_isREAGLWaveFormMode(waveform_mode)
+    or waveform_mode == C.WAVEFORM_MODE_GC16
+    or (refresh_type == C.UPDATE_MODE_FULL and fb:_isFlashUIWaveFormMode(waveform_mode) and fb:_isFullScreen(w, h)))
+    and fb.mech_wait_update_complete
+    and (marker ~= 0 and marker ~= fb.dont_wait_for_marker) then
+        fb.debug("refresh: wait for completion of (previous) marker", marker)
+        fb.mech_wait_update_complete(fb, marker)
     end
 
     refarea[0].update_mode = refresh_type or C.UPDATE_MODE_PARTIAL
@@ -304,10 +288,20 @@ local function mxc_update(fb, update_ioctl, refarea, refresh_type, waveform_mode
         fb.debug("MXCFB_SEND_UPDATE ioctl failed:", ffi.string(C.strerror(err)))
     end
 
-    -- NOTE: Remember every flashing update, so we can wait for their completion before the next refresh...
+    -- NOTE: We want to fence off FULL updates.
+    --       Mainly to mimic stock readers, but also because there's a good reason to do it:
+    --       forgoing that can yield slightly "jittery" looking screens when multiple flashes are shown on screen and not in sync.
+    --       To achieve that, we could simply store this marker, and wait for it on the *next* refresh,
+    --       ensuring the wait would potentially be shorter, or even null.
+    --       In practice, we won't actually be busy for a bit after this refresh call,
+    --       so we can instead afford to wait for it right now, which *will* block for a while,
+    --       but will save us an ioctl before the next refresh, something which, even if it doesn't block at all,
+    --       may end up being more detrimental to interactivity.
     if refarea[0].update_mode == C.UPDATE_MODE_FULL
       and fb.mech_wait_update_complete then
-        fb.wait_for_marker = marker
+        fb.debug("refresh: wait for completion of marker", marker)
+        fb.mech_wait_update_complete(fb, marker)
+        fb.dont_wait_for_marker = marker
     end
 end
 
