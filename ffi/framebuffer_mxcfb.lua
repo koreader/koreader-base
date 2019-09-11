@@ -297,8 +297,8 @@ local function mxc_update(fb, update_ioctl, refarea, refresh_type, waveform_mode
     --       ensuring the wait would potentially be shorter, or even null.
     --       In practice, we won't actually be busy for a bit after most (if not all) flashing refresh calls,
     --       so we can instead afford to wait for it right now, which *will* block for a while,
-    --       but will save us an ioctl before the next refresh, something which, even if it doesn't block at all,
-    --       may end up being more detrimental to interactivity.
+    --       but will save us an ioctl before the next refresh, something which, even if it didn't block at all,
+    --       would possibly end up being more detrimental to latency/reactivity.
     if refarea[0].update_mode == C.UPDATE_MODE_FULL
       and fb.mech_wait_update_complete then
         fb.debug("refresh: wait for completion of marker", marker)
