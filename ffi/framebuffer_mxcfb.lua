@@ -210,11 +210,13 @@ local function mxc_update(fb, update_ioctl, refarea, refresh_type, waveform_mode
     -- Make sure it's a valid marker, to avoid doing something stupid on our first update.
     -- Also make sure we haven't already waited on this marker ;).
     if fb.mech_wait_update_submission
-    and (refresh_type == C.UPDATE_MODE_FULL
-    or fb:_isUIWaveFormMode(waveform_mode))
-    and (marker ~= 0 and marker ~= fb.dont_wait_for_marker) then
+      and (refresh_type == C.UPDATE_MODE_FULL
+      or fb:_isUIWaveFormMode(waveform_mode))
+      and (marker ~= 0 and marker ~= fb.dont_wait_for_marker) then
         fb.debug("refresh: wait for submission of (previous) marker", marker)
         fb.mech_wait_update_submission(fb, marker)
+        -- NOTE: We don't set dont_wait_for_marker here,
+        --       as we *do* want to chain wait_for_submission & wait_for_complete in some rare instances...
     end
 
     -- NOTE: If we're trying to send a:
@@ -224,10 +226,10 @@ local function mxc_update(fb, update_ioctl, refarea, refresh_type, waveform_mode
     --       then wait for completion of previous marker first.
     -- Again, make sure the marker is valid, too.
     if (fb:_isREAGLWaveFormMode(waveform_mode)
-    or waveform_mode == C.WAVEFORM_MODE_GC16
-    or (refresh_type == C.UPDATE_MODE_FULL and fb:_isFlashUIWaveFormMode(waveform_mode) and fb:_isFullScreen(w, h)))
-    and fb.mech_wait_update_complete
-    and (marker ~= 0 and marker ~= fb.dont_wait_for_marker) then
+      or waveform_mode == C.WAVEFORM_MODE_GC16
+      or (refresh_type == C.UPDATE_MODE_FULL and fb:_isFlashUIWaveFormMode(waveform_mode) and fb:_isFullScreen(w, h)))
+      and fb.mech_wait_update_complete
+      and (marker ~= 0 and marker ~= fb.dont_wait_for_marker) then
         fb.debug("refresh: wait for completion of (previous) marker", marker)
         fb.mech_wait_update_complete(fb, marker)
     end
@@ -293,7 +295,7 @@ local function mxc_update(fb, update_ioctl, refarea, refresh_type, waveform_mode
     --       forgoing that can yield slightly "jittery" looking screens when multiple flashes are shown on screen and not in sync.
     --       To achieve that, we could simply store this marker, and wait for it on the *next* refresh,
     --       ensuring the wait would potentially be shorter, or even null.
-    --       In practice, we won't actually be busy for a bit after this refresh call,
+    --       In practice, we won't actually be busy for a bit after most (if not all) flashing refresh calls,
     --       so we can instead afford to wait for it right now, which *will* block for a while,
     --       but will save us an ioctl before the next refresh, something which, even if it doesn't block at all,
     --       may end up being more detrimental to interactivity.
@@ -301,6 +303,7 @@ local function mxc_update(fb, update_ioctl, refarea, refresh_type, waveform_mode
       and fb.mech_wait_update_complete then
         fb.debug("refresh: wait for completion of marker", marker)
         fb.mech_wait_update_complete(fb, marker)
+        -- And make sure we don't wait for it again, in case the next refresh trips one of our heuristics ;).
         fb.dont_wait_for_marker = marker
     end
 end
