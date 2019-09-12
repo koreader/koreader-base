@@ -8,10 +8,6 @@ local dummy = require("ffi/posix_h")
 local band = bit.band
 local bor = bit.bor
 
--- Valid marker bounds
-local MARKER_MIN = 42
-local MARKER_MAX = (42 * 42)
-
 local function yes() return true end
 
 local framebuffer = {
@@ -30,8 +26,10 @@ local framebuffer = {
     waveform_flashnight = nil,
     night_is_reagl = nil,
     mech_refresh = nil,
-    -- start with an out of bound marker value to avoid doing something stupid on our first update
-    marker = MARKER_MIN - 1,
+    -- start with an invalid marker value to avoid doing something stupid on our first update
+    marker = 0,
+    -- used to avoid waiting twice on the same marker
+    dont_wait_for_marker = nil,
 }
 
 --[[ refresh list management: --]]
@@ -39,8 +37,8 @@ local framebuffer = {
 -- Returns an incrementing marker value, w/ a sane wraparound.
 function framebuffer:_get_next_marker()
     local marker = self.marker + 1
-    if marker > MARKER_MAX then
-        marker = MARKER_MIN
+    if marker > 128 then
+        marker = 1
     end
 
     self.marker = marker
@@ -115,19 +113,19 @@ end
 
 -- Kindle's MXCFB_WAIT_FOR_UPDATE_COMPLETE_PEARL == 0x4004462f
 local function kindle_pearl_mxc_wait_for_update_complete(fb, marker)
-    -- Wait for the previous update to be completed
+    -- Wait for a specific update to be completed
     return C.ioctl(fb.fd, C.MXCFB_WAIT_FOR_UPDATE_COMPLETE_PEARL, ffi.new("uint32_t[1]", marker))
 end
 
 -- Kobo's MXCFB_WAIT_FOR_UPDATE_COMPLETE_V1 == 0x4004462f
 local function kobo_mxc_wait_for_update_complete(fb, marker)
-    -- Wait for the previous update to be completed
+    -- Wait for a specific update to be completed
     return C.ioctl(fb.fd, C.MXCFB_WAIT_FOR_UPDATE_COMPLETE_V1, ffi.new("uint32_t[1]", marker))
 end
 
 -- Kobo's Mk7 MXCFB_WAIT_FOR_UPDATE_COMPLETE_V3
 local function kobo_mk7_mxc_wait_for_update_complete(fb, marker)
-    -- Wait for the previous update to be completed
+    -- Wait for a specific update to be completed
     local mk7_update_marker = ffi.new("struct mxcfb_update_marker_data[1]")
     mk7_update_marker[0].update_marker = marker
     -- NOTE: 0 seems to be a fairly safe assumption for "we don't care about collisions".
@@ -138,36 +136,36 @@ end
 
 -- Kindle's MXCFB_WAIT_FOR_UPDATE_COMPLETE == 0x4004462f
 local function pocketbook_mxc_wait_for_update_complete(fb, marker)
-    -- Wait for the previous update to be completed
+    -- Wait for a specific update to be completed
     return C.ioctl(fb.fd, C.MXCFB_WAIT_FOR_UPDATE_COMPLETE, ffi.new("uint32_t[1]", marker))
 end
 
 -- Sony PRS MXCFB_WAIT_FOR_UPDATE_COMPLETE
 local function sony_prstux_mxc_wait_for_update_complete(fb, marker)
-    -- Wait for the previous update to be completed
+    -- Wait for a specific update to be completed
     return C.ioctl(fb.fd, C.MXCFB_WAIT_FOR_UPDATE_COMPLETE, ffi.new("uint32_t[1]", marker))
 end
 
 -- BQ Cervantes MXCFB_WAIT_FOR_UPDATE_COMPLETE == 0x4004462f
 local function cervantes_mxc_wait_for_update_complete(fb, marker)
-    -- Wait for the previous update to be completed
+    -- Wait for a specific update to be completed
     return C.ioctl(fb.fd, C.MXCFB_WAIT_FOR_UPDATE_COMPLETE, ffi.new("uint32_t[1]", marker))
 end
 
 -- Kindle's MXCFB_WAIT_FOR_UPDATE_COMPLETE == 0xc008462f
-local function kindle_carta_mxc_wait_for_update_complete(fb, marker, collision_test)
-    -- Wait for the previous update to be completed
+local function kindle_carta_mxc_wait_for_update_complete(fb, marker)
+    -- Wait for a specific update to be completed
     local carta_update_marker = ffi.new("struct mxcfb_update_marker_data[1]")
     carta_update_marker[0].update_marker = marker
     -- NOTE: 0 seems to be a fairly safe assumption for "we don't care about collisions".
     --       On a slightly related note, the EPDC_FLAG_TEST_COLLISION flag is for dry-run collision tests, never set it.
-    carta_update_marker[0].collision_test = collision_test or 0
+    carta_update_marker[0].collision_test = 0
     return C.ioctl(fb.fd, C.MXCFB_WAIT_FOR_UPDATE_COMPLETE, carta_update_marker)
 end
 
 -- Kindle's MXCFB_WAIT_FOR_UPDATE_SUBMISSION == 0x40044637
 local function kindle_mxc_wait_for_update_submission(fb, marker)
-    -- Wait for the current (the one we just sent) update to be submitted
+    -- Wait for a specific update to be submitted
     return C.ioctl(fb.fd, C.MXCFB_WAIT_FOR_UPDATE_SUBMISSION, ffi.new("uint32_t[1]", marker))
 end
 
@@ -184,15 +182,12 @@ local function mxc_update(fb, update_ioctl, refarea, refresh_type, waveform_mode
     h, y = BB.checkBounds(h or bb:getHeight(), y or 0, 0, bb:getHeight(), 0xFFFF)
     x, y, w, h = bb:getPhysicalRect(x, y, w, h)
 
-    if w == 0 or h == 0 then
-        fb.debug("got a 0 size (height and/or width) refresh request, ignoring it.")
-        return
-    end
-
-    if w == 1 and h == 1 then
-        -- avoid system freeze when updating 1x1 pixel block on KPW2 and KV,
-        -- see koreader/koreader#1299 and koreader/koreader#1486
-        fb.debug("got a 1x1 pixel refresh request, ignoring it.")
+    -- NOTE: Discard empty or bogus regions, as they might murder some kernels with extreme prejudice...
+    -- (c.f., https://github.com/NiLuJe/FBInk/blob/5449a03d3be28823991b425cd20aa048d2d71845/fbink.c#L1755).
+    -- We have practical experience of that with 1x1 pixel blocks on Kindle PW2 and KV,
+    -- c.f., koreader/koreader#1299 and koreader/koreader#1486
+    if w <= 1 or h <= 1 then
+        fb.debug("discarding bogus refresh region, w:", w, "h:", h)
         return
     end
 
@@ -210,12 +205,15 @@ local function mxc_update(fb, update_ioctl, refarea, refresh_type, waveform_mode
     --       (we might actually want the one before that), but in the vast majority of cases, that's good enough,
     --       and saves us a lot of annoying and hard-to-get-right heuristics anyway ;).
     -- Make sure it's a valid marker, to avoid doing something stupid on our first update.
+    -- Also make sure we haven't already waited on this marker ;).
     if fb.mech_wait_update_submission
       and (refresh_type == C.UPDATE_MODE_FULL
       or fb:_isUIWaveFormMode(waveform_mode))
-      and (marker >= MARKER_MIN and marker <= MARKER_MAX) then
+      and (marker ~= 0 and marker ~= fb.dont_wait_for_marker) then
         fb.debug("refresh: wait for submission of (previous) marker", marker)
         fb.mech_wait_update_submission(fb, marker)
+        -- NOTE: We don't set dont_wait_for_marker here,
+        --       as we *do* want to chain wait_for_submission & wait_for_complete in some rare instances...
     end
 
     -- NOTE: If we're trying to send a:
@@ -223,30 +221,14 @@ local function mxc_update(fb, update_ioctl, refarea, refresh_type, waveform_mode
     --         * GC16 update,
     --         * Full-screen, flashing GC16_FAST update,
     --       then wait for completion of previous marker first.
-    local collision_test = 0
     -- Again, make sure the marker is valid, too.
     if (fb:_isREAGLWaveFormMode(waveform_mode)
       or waveform_mode == C.WAVEFORM_MODE_GC16
       or (refresh_type == C.UPDATE_MODE_FULL and fb:_isFlashUIWaveFormMode(waveform_mode) and fb:_isFullScreen(w, h)))
       and fb.mech_wait_update_complete
-      and (marker >= MARKER_MIN and marker <= MARKER_MAX) then
-        -- NOTE: Disabled collision_test handling, because it's fragile, mysterious, easy to get wrong, hard to do right,
-        --       and might change at a moment's notice, like the KOA2 proved...
-        --[[
-        -- NOTE: Setup the slightly mysterious collision_test flag...
-        --       This is Kindle-only, but extra arguments are safely ignored in Lua ;).
-        if fb:_isREAGLWaveFormMode(waveform_mode) then
-            collision_test = 0
-        elseif waveform_mode == C.WAVEFORM_MODE_GC16 or fb:_isFlashUIWaveFormMode(waveform_mode) then
-            collision_test = 1642888
-            -- On a KOA2:
-            collision_test = 2126091812
-        end
-        -- NOTE: The KOA2 also sometimes (flashing? new menu?) waits on a previous (sometimes as far back as ~10 updates ago)
-        --       "fast" (i.e., DU) marker, in which case collision is set to 1981826464
-        --]]
-        fb.debug("refresh: wait for completion of (previous) marker", marker, "with collision_test", collision_test)
-        fb.mech_wait_update_complete(fb, marker, collision_test)
+      and (marker ~= 0 and marker ~= fb.dont_wait_for_marker) then
+        fb.debug("refresh: wait for completion of (previous) marker", marker)
+        fb.mech_wait_update_complete(fb, marker)
     end
 
     refarea[0].update_mode = refresh_type or C.UPDATE_MODE_PARTIAL
@@ -305,23 +287,21 @@ local function mxc_update(fb, update_ioctl, refarea, refresh_type, waveform_mode
         fb.debug("MXCFB_SEND_UPDATE ioctl failed:", ffi.string(C.strerror(err)))
     end
 
-    -- NOTE: We wait for completion after *any kind* of full (i.e., flashing) update.
+    -- NOTE: We want to fence off FULL updates.
+    --       Mainly to mimic stock readers, but also because there's a good reason to do it:
+    --       forgoing that can yield slightly "jittery" looking screens when multiple flashes are shown on screen and not in sync.
+    --       To achieve that, we could simply store this marker, and wait for it on the *next* refresh,
+    --       ensuring the wait would potentially be shorter, or even null.
+    --       In practice, we won't actually be busy for a bit after most (if not all) flashing refresh calls,
+    --       so we can instead afford to wait for it right now, which *will* block for a while,
+    --       but will save us an ioctl before the next refresh, something which, even if it didn't block at all,
+    --       would possibly end up being more detrimental to latency/reactivity.
     if refarea[0].update_mode == C.UPDATE_MODE_FULL
       and fb.mech_wait_update_complete then
-        --[[
-        -- NOTE: Again, setup collision_test magic numbers...
-        if fb:_isREAGLWaveFormMode(waveform_mode) then
-            collision_test = 4
-            -- On a KOA2:
-            collision_test = 4096
-        elseif waveform_mode == C.WAVEFORM_MODE_GC16 or fb:_isFlashUIWaveFormMode(waveform_mode) then
-            collision_test = 1
-            -- On a KOA2:
-            collision_test = 4096
-        end
-        --]]
-        fb.debug("refresh: wait for completion of marker", marker, "with collision_test", collision_test)
-        fb.mech_wait_update_complete(fb, marker, collision_test)
+        fb.debug("refresh: wait for completion of marker", marker)
+        fb.mech_wait_update_complete(fb, marker)
+        -- And make sure we won't wait for it again, in case the next refresh trips one of our wait_for_*  heuristics ;).
+        fb.dont_wait_for_marker = marker
     end
 end
 
@@ -649,6 +629,8 @@ function framebuffer:init()
         elseif self.device.model == "Kobo_nova" then
             isMk7 = true
         elseif self.device.model == "Kobo_frost" then
+            isMk7 = true
+        elseif self.device.model == "Kobo_storm" then
             isMk7 = true
         end
 
