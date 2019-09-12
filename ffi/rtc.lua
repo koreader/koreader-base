@@ -53,7 +53,7 @@ you can process your value with @{secondsFromNowToEpoch}.
 function RTC:setWakeupAlarm(epoch, enabled)
     enabled = (enabled ~= nil) and enabled or true
 
-    local ptm = C.gmtime(ffi.new("int[1]", epoch))
+    local ptm = C.gmtime(ffi.new("time_t[1]", epoch))
     self._wakeup_scheduled_ptm = ptm
 
     local wake = ffi.new("struct rtc_wkalrm")
