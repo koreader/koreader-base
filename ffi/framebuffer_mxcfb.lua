@@ -187,7 +187,7 @@ local function mxc_update(fb, update_ioctl, refarea, refresh_type, waveform_mode
     -- We have practical experience of that with 1x1 pixel blocks on Kindle PW2 and KV,
     -- c.f., koreader/koreader#1299 and koreader/koreader#1486
     if w <= 1 or h <= 1 then
-        fb.debug("discarding bogus refresh region:", w, h)
+        fb.debug("discarding bogus refresh region, w:", w, "h:", h)
         return
     end
 
