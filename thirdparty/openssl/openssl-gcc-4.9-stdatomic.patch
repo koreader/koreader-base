@@ -1,5 +1,5 @@
 diff --git a/include/internal/refcount.h b/include/internal/refcount.h
-index 75d70a6418..1ef43dff80 100644
+index 6e1a840ef1..f01d7ca371 100644
 --- a/include/internal/refcount.h
 +++ b/include/internal/refcount.h
 @@ -22,8 +22,8 @@
@@ -14,7 +14,7 @@ index 75d70a6418..1ef43dff80 100644
  #  define HAVE_ATOMICS 1
  
 diff --git a/include/internal/tsan_assist.h b/include/internal/tsan_assist.h
-index 38ba0c7ebb..1ad64e9d68 100644
+index cc30162eb7..5cc194bcdb 100644
 --- a/include/internal/tsan_assist.h
 +++ b/include/internal/tsan_assist.h
 @@ -51,8 +51,8 @@
