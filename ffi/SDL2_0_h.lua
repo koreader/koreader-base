@@ -785,6 +785,7 @@ SDL_bool SDL_GameControllerGetAttached(SDL_GameController *) __attribute__((visi
 SDL_Joystick *SDL_GameControllerGetJoystick(SDL_GameController *) __attribute__((visibility("default")));
 int SDL_GameControllerEventState(int) __attribute__((visibility("default")));
 void SDL_GameControllerUpdate(void) __attribute__((visibility("default")));
+int SDL_GameControllerRumble(SDL_GameController *, Uint16, Uint16, Uint32) __attribute__((visibility("default")));
 typedef enum {
   SDL_CONTROLLER_AXIS_INVALID = -1,
   SDL_CONTROLLER_AXIS_LEFTX = 0,
