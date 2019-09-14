@@ -182,17 +182,19 @@ function RTC:validateWakeupAlarmByProximity(task_alarm_epoch, proximity)
 
     if not (alarm and alarm_sys) then return end
 
+    -- Convert from UTC to local because these time-related functions are @#$@#$ stupid.
+    local task_alarm_epoch_local = task_alarm_epoch and C.mktime(C.gmtime(ffi.new("time_t[1]", task_alarm_epoch))) or nil
     alarm_epoch = C.mktime(alarm)
     alarm_sys_epoch = C.mktime(alarm_sys)
 
-    print("validateWakeupAlarmByProximity", task_alarm_epoch, alarm_epoch, alarm_sys_epoch, current_time_epoch)
+    print("validateWakeupAlarmByProximity", task_alarm_epoch_local, alarm_epoch, alarm_sys_epoch, current_time_epoch)
 
     -- If our stored alarm and the system alarm don't match, we didn't set it.
     if not (alarm_epoch == alarm_sys_epoch) then return end
 
     -- If our stored alarm and the provided task alarm don't match,
     -- we're not talking about the same task. This should never happen.
-    if task_alarm_epoch and not (alarm_epoch == task_alarm_epoch) then return end
+    if task_alarm_epoch_local and not (alarm_epoch == task_alarm_epoch_local) then return end
 
     local diff = current_time_epoch - alarm_epoch
     if diff >= 0 and diff < proximity then return true end
