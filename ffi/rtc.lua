@@ -183,7 +183,7 @@ function RTC:validateWakeupAlarmByProximity(task_alarm_epoch, proximity)
     if not (alarm and alarm_sys) then return end
 
     -- Convert from UTC to local because these time-related functions are @#$@#$ stupid.
-    task_alarm_epoch_local = task_alarm_epoch and C.mktime(C.gmtime(ffi.new("time_t[1]", task_alarm_epoch))) or nil
+    local task_alarm_epoch_local = task_alarm_epoch and C.mktime(C.gmtime(ffi.new("time_t[1]", task_alarm_epoch))) or nil
     alarm_epoch = C.mktime(alarm)
     alarm_sys_epoch = C.mktime(alarm_sys)
 
