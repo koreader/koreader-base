@@ -402,4 +402,14 @@ function S.setWindowIcon(icon)
     icon_bb:free()
 end
 
+function S.gameControllerRumble(left_intensity, right_intensity, duration)
+    if S.controller == nil then return end
+
+    left_intensity = left_intensity or 20000
+    right_intensity = right_intensity or 20000
+    duration = duration or 200
+
+    return SDL.SDL_GameControllerRumble(S.controller, left_intensity, right_intensity, duration)
+end
+
 return S

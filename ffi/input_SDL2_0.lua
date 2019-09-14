@@ -12,5 +12,6 @@ return {
     hasClipboardText = SDL.hasClipboardText,
     getClipboardText = SDL.getClipboardText,
     setClipboardText = SDL.setClipboardText,
+    gameControllerRumble = SDL.gameControllerRumble,
     file_chooser = FileChooser,
 }

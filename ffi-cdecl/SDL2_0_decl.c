@@ -177,6 +177,7 @@ cdecl_func(SDL_GameControllerGetAttached)
 cdecl_func(SDL_GameControllerGetJoystick)
 cdecl_func(SDL_GameControllerEventState)
 cdecl_func(SDL_GameControllerUpdate)
+cdecl_func(SDL_GameControllerRumble)
 
 cdecl_type(SDL_GameControllerAxis)
 cdecl_func(SDL_GameControllerGetAxisFromString)
