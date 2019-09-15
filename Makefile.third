@@ -42,6 +42,16 @@ $(UTF8PROC_LIB) $(UTF8PROC_DIR): $(THIRDPARTY_DIR)/utf8proc/CMakeLists.txt
 	cp -fL $(UTF8PROC_DIR)/$(notdir $(UTF8PROC_LIB)) $@
 	chmod 755 $@
 
+$(FRIBIDI_LIB) $(FRIBIDI_DIR): $(THIRDPARTY_DIR)/fribidi/CMakeLists.txt
+	install -d $(FRIBIDI_BUILD_DIR)
+	cd $(FRIBIDI_BUILD_DIR) && \
+		$(CMAKE) $(CMAKE_FLAGS) -DCC="$(CC)" -DCFLAGS="$(CFLAGS)"\
+		-DLDFLAGS="$(LDFLAGS)" -DCHOST=$(CHOST) \
+		$(CURDIR)/$(THIRDPARTY_DIR)/fribidi && \
+		$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS)
+	cp -fL $(FRIBIDI_DIR)/lib/$(notdir $(FRIBIDI_LIB)) $@
+	chmod 755 $@
+
 # libjpeg-turbo and libjepg
 $(TURBOJPEG_LIB) $(JPEG_LIB): $(THIRDPARTY_DIR)/libjpeg-turbo/CMakeLists.txt
 	install -d $(JPEG_BUILD_DIR)
