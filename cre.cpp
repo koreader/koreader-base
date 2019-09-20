@@ -290,10 +290,149 @@ static LVRefVec<LVImageSource> getBatteryIcons(lUInt32 color) {
 	return icons;
 }
 
+// Single global object to handle callbacks from crengine to Lua
+class CreCallbackForwarder : public LVDocViewCallback
+{
+    bool _active;
+    lua_State * _L; // stack (of the coroutine) that set the callback
+    // References in the Lua registry, to prevent these objects to be gc()'ed
+    int _r_L; // ref to L, to prevent it from being gc'ed when coroutine ends
+    int _r_cb; // ref to provided Lua function to be forwarded crengine events
+public:
+    CreCallbackForwarder() :
+        _active(false),
+        // As a crengine document is opened from inside a coroutine, but can be closed
+        // from the main thread, and as Lua 5.1 does not provide access to the main thread
+        // from a coroutine, we need to store the coroutine lua_State to keep a reference
+        // to it and prevent if from being gc'ed.
+        // Fortunatly, the registry index is shared by the main thread and all coroutines
+        _L(NULL),
+        _r_L(LUA_NOREF),
+        _r_cb(LUA_NOREF)
+        { }
+    void setCallback(lua_State *L) {
+        // Cleanup any previous references
+        unsetCallback(L);
+        // Get and keep reference to the callback (first on the stack)
+        _r_cb = luaL_ref(L, LUA_REGISTRYINDEX);
+        // printf("CreCallbackForwarder._r_cb = %x\n", _r_cb);
+        // Push current coroutine/thread (L) onto the stack, and keep a reference to it,
+        // so it does not get gc'ed when our coroutine exits
+        lua_pushthread(L);
+        _r_L = luaL_ref(L, LUA_REGISTRYINDEX);
+        // printf("CreCallbackForwarder._r_L = %x\n", _r_L);
+        _L = L; // Store L, so we can fetch the callback from _r_cb
+        _active = true;
+    }
+    void unsetCallback(lua_State *L) {
+        _active = false;
+        if (_r_cb != LUA_NOREF) {
+            luaL_unref(L, LUA_REGISTRYINDEX, _r_cb);
+            _r_cb = LUA_NOREF;
+        }
+        if (_r_L != LUA_NOREF) {
+            luaL_unref(L, LUA_REGISTRYINDEX, _r_L);
+            _r_L = LUA_NOREF;
+        }
+        _L = NULL;
+    }
+    void callback(const char * event) {
+        if (!_active)
+            return;
+        lua_rawgeti(_L, LUA_REGISTRYINDEX, _r_cb);
+        lua_pushstring(_L, event);
+        lua_pcall(_L, 1, 0, 0);
+    }
+    void callback(const char * event, int number) {
+        if (!_active)
+            return;
+        lua_rawgeti(_L, LUA_REGISTRYINDEX, _r_cb);
+        lua_pushstring(_L, event);
+        lua_pushnumber(_L, number);
+        lua_pcall(_L, 2, 0, 0);
+    }
+    void callback(const char * event, const char * str) {
+        if (!_active)
+            return;
+        lua_rawgeti(_L, LUA_REGISTRYINDEX, _r_cb);
+        lua_pushstring(_L, event);
+        lua_pushstring(_L, str);
+        lua_pcall(_L, 2, 0, 0);
+    }
+    virtual void OnLoadFileStart( lString16 filename ) {
+        callback("OnLoadFileStart", UnicodeToLocal(filename).c_str());
+    }
+    virtual void OnLoadFileFormatDetected( doc_format_t fileFormat) {
+        callback("OnLoadFileFormatDetected", UnicodeToLocal(getDocFormatName(fileFormat)).c_str());
+    }
+    virtual void OnLoadFileProgress( int percent) {
+        callback("OnLoadFileProgress", percent);
+    }
+    virtual void OnLoadFileEnd() {
+        callback("OnLoadFileEnd");
+    }
+    virtual void OnLoadFileError(lString16 message) {
+        callback("OnLoadFileError", UnicodeToLocal(message).c_str());
+    }
+    virtual void OnNodeStylesUpdateStart() {
+        callback("OnNodeStylesUpdateStart");
+    }
+    virtual void OnNodeStylesUpdateProgress(int percent) {
+        callback("OnNodeStylesUpdateProgress", percent);
+    }
+    virtual void OnNodeStylesUpdateEnd() {
+        callback("OnNodeStylesUpdateEnd");
+    }
+    virtual void OnFormatStart() {
+        callback("OnFormatStart");
+    }
+    virtual void OnFormatProgress(int percent) {
+        callback("OnFormatProgress", percent);
+    }
+    virtual void OnFormatEnd() {
+        callback("OnFormatEnd");
+    }
+    virtual void OnDocumentReady() {
+        callback("OnDocumentReady");
+    }
+    virtual void OnSaveCacheFileStart() {
+        callback("OnSaveCacheFileStart");
+    }
+    virtual void OnSaveCacheFileProgress(int percent) {
+        callback("OnSaveCacheFileProgress", percent);
+    }
+    virtual void OnSaveCacheFileEnd() {
+        callback("OnSaveCacheFileEnd");
+    }
+    // virtual void OnLoadFileFirstPagesReady() { } // useless
+    // virtual void OnExportProgress(int percent) { } // Export to WOL format
+    // virtual void OnExternalLink(lString16 /*url*/, ldomNode * /*node*/) { }
+    // virtual void OnImageCacheClear() { }
+    // virtual bool OnRequestReload() { return false; }
+};
+
+CreCallbackForwarder * cre_callback_forwarder = NULL;
+
 typedef struct CreDocument {
 	LVDocView *text_view;
 	ldomDocument *dom_doc;
 } CreDocument;
+
+static int setCallback(lua_State *L) {
+    CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
+    if ( cre_callback_forwarder == NULL ) {
+        cre_callback_forwarder = new CreCallbackForwarder();
+    }
+    if (lua_isfunction(L, 2)) {
+        cre_callback_forwarder->setCallback(L);
+        doc->text_view->setCallback(cre_callback_forwarder);
+    }
+    else {
+        doc->text_view->setCallback(NULL);
+        cre_callback_forwarder->unsetCallback(L);
+    }
+    return 0;
+}
 
 static int initCache(lua_State *L) {
     const char *cache_path = luaL_checkstring(L, 1);
@@ -506,6 +645,14 @@ static int closeDocument(lua_State *L) {
 
 	/* should be save if called twice */
 	if(doc->text_view != NULL) {
+		// Call close() to have the cache explicitely saved now
+		// while we still have a callback (to show its progress).
+		doc->text_view->close();
+		// Remove any callback
+		if (cre_callback_forwarder) {
+			doc->text_view->setCallback(NULL);
+			cre_callback_forwarder->unsetCallback(L);
+		}
 		delete doc->text_view;
 		doc->text_view = NULL;
 	}
@@ -537,6 +684,13 @@ static int getCacheFilePath(lua_State *L) {
     if (cache_path.empty())
         return 0;
     lua_pushstring(L, UnicodeToLocal(cache_path).c_str());
+    return 1;
+}
+
+static int getStatistics(lua_State *L) {
+    CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
+    lString16 stats = doc->dom_doc->getStatistics();
+    lua_pushstring(L, UnicodeToLocal(stats).c_str());
     return 1;
 }
 
@@ -2859,11 +3013,13 @@ static const struct luaL_Reg credocument_meth[] = {
     {"setVisiblePageCount", setVisiblePageCount},
     {"adjustFontSizes", adjustFontSizes},
     {"setBatteryState", setBatteryState},
+    {"setCallback", setCallback},
     /* --- control methods ---*/
     {"isBuiltDomStale", isBuiltDomStale},
     {"hasCacheFile", hasCacheFile},
     {"invalidateCacheFile", invalidateCacheFile},
     {"getCacheFilePath", getCacheFilePath},
+    {"getStatistics", getStatistics},
     {"buildAlternativeToc", buildAlternativeToc},
     {"isTocAlternativeToc", isTocAlternativeToc},
     {"gotoPage", gotoPage},
