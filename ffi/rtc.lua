@@ -71,7 +71,7 @@ function RTC:setWakeupAlarm(epoch, enabled)
     wake.enabled = enabled and 1 or 0
 
     local err
-    local rtc0 = C.open("/dev/rtc0", bor(C.O_RDONLY, C.O_NONBLOCK))
+    local rtc0 = C.open("/dev/rtc0", bor(bor(C.O_RDONLY, C.O_NONBLOCK), C.O_CLOEXEC))
     if rtc0 == -1 then
         err = ffi.string(C.strerror(ffi.errno()))
         print("setWakeupAlarm open /dev/rtc0", rtc0, err)
@@ -128,7 +128,7 @@ function RTC:getWakeupAlarmSys()
     local wake = ffi.new("struct rtc_wkalrm")
 
     local err, re
-    local rtc0 = C.open("/dev/rtc0", C.O_RDONLY)
+    local rtc0 = C.open("/dev/rtc0", bor(bor(C.O_RDONLY, C.O_NONBLOCK), C.O_CLOEXEC))
     if rtc0 == -1 then
         err = ffi.string(C.strerror(ffi.errno()))
         print("getWakeupAlarm open /dev/rtc0", rtc0, err)
