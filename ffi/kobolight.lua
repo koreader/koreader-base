@@ -1,5 +1,7 @@
 local ffi = require("ffi")
+local bor = bit.bor
 local C = ffi.C
+
 -- for closing on garbage collection, we need a pointer or aggregate
 -- cdata object (not a plain "int"). So we encapsulate in a struct.
 ffi.cdef[[
@@ -35,7 +37,7 @@ function kobolight.open(device)
 		light_fd = nil,
 	}
 
-	local ld = C.open(device or "/dev/ntx_io", C.O_RDWR)
+	local ld = C.open(device or "/dev/ntx_io", bor(bor(C.O_RDONLY, C.O_NONBLOCK), C.O_CLOEXEC))
 	assert(ld ~= -1, "cannot open light device")
 	light.light_fd = ffi.gc(
 		ffi.new("light_fd", ld),
