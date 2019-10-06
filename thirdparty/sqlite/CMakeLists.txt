@@ -33,12 +33,12 @@ set(CFG_CMD "${CFG_CMD} --disable-readline")
 set(CFG_CMD "${CFG_CMD} --disable-static-shell")
 
 include(ExternalProject)
-set(SQLITE_VER "3290000")
+set(SQLITE_VER "3300000")
 ExternalProject_Add(
     ${PROJECT_NAME}
     DOWNLOAD_DIR ${KO_DOWNLOAD_DIR}
     URL https://www.sqlite.org/2019/sqlite-autoconf-${SQLITE_VER}.tar.gz
-    URL_HASH SHA1=053d8237eb9741b0e297073810668c2611a8e38e
+    URL_HASH SHA1=785c0f6f00fe1871cb1dd97893267cb50db03b9b
     BUILD_IN_SOURCE 1
     CONFIGURE_COMMAND ${CFG_CMD}
     BUILD_COMMAND ${KO_MAKE_RECURSIVE} -j1
