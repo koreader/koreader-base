@@ -131,6 +131,9 @@ set (CRENGINE_SOURCES
     ${CRE_DIR}/src/epubfmt.cpp
     ${CRE_DIR}/src/pdbfmt.cpp
     ${CRE_DIR}/src/wordfmt.cpp
+    ${CRE_DIR}/src/lvopc.cpp
+    ${CRE_DIR}/src/docxfmt.cpp
+    ${CRE_DIR}/src/fb3fmt.cpp
     ${CRE_DIR}/src/lvstsheet.cpp
     ${CRE_DIR}/src/txtselector.cpp
     ${CRE_DIR}/src/crtest.cpp
