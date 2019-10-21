@@ -1,0 +1,22 @@
+From 5855be47b2fe018363bd7dd1b64ea81f93c47f1e Mon Sep 17 00:00:00 2001
+From: Frans de Jonge <fransdejonge@gmail.com>
+Date: Sun, 15 Sep 2019 19:58:24 +0200
+Subject: [PATCH] Use LDFLAGS_FOR_BUILD for cross-compilation
+
+Otherwise the regular LDFLAGS can wreak havoc.
+---
+ gen.tab/Makefile.am | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/gen.tab/Makefile.am b/gen.tab/Makefile.am
+index fe3c80f..014c646 100644
+--- a/gen.tab/Makefile.am
++++ b/gen.tab/Makefile.am
+@@ -26,6 +26,7 @@ gen_brackets_type_tab_CPPFLAGS = $(AM_CPPFLAGS)
+ CFLAGS_FOR_BUILD += -DHAVE_CONFIG_H -I$(top_builddir) -I$(top_builddir)/lib -I$(top_srcdir)/lib
+ CC = $(CC_FOR_BUILD)
+ CFLAGS = $(CFLAGS_FOR_BUILD)
++LDFLAGS = $(LDFLAGS_FOR_BUILD)
+ 
+ CLEANFILES = $(EXTRA_PROGRAMS)
+ DISTCLEANFILES =
