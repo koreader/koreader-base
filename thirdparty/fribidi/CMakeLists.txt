@@ -16,7 +16,7 @@ ep_get_source_dir(SOURCE_DIR)
 ep_get_binary_dir(BINARY_DIR)
 
 # Temporary, while waiting for https://github.com/fribidi/fribidi/pull/115 to be merged
-set(PATCH_CMD sh -c "${ISED} \"s|^CFLAGS = |LDFLAGS = \\nCFLAGS = |\"  gen.tab/Makefile.am")
+set(PATCH_CMD patch -N -p1 -i ${CMAKE_CURRENT_SOURCE_DIR}/fribidi-pr115.patch)
 
 set(CFG_ENV_VAR "CC=\"${CC}\" CFLAGS=\"${CFLAGS}\" LDFLAGS=\"${LDFLAGS}\" ")
 set(CFG_OPTS "-q --prefix=${BINARY_DIR} --disable-static --enable-shared --host=\"${CHOST}\"")

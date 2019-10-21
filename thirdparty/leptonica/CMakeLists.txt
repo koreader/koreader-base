@@ -32,11 +32,14 @@ else()
     set(PATCH_CMD "")
 endif()
 
+# We apparently need a rebuild of the configure on macOS (https://github.com/koreader/koreader/issues/4448#issuecomment-522363325)
+set(RECONF_CMD sh -c "autoreconf -fi")
+
 include(ExternalProject)
 ExternalProject_Add(
     ${PROJECT_NAME}
     DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
-    PATCH_COMMAND ${PATCH_CMD}
+    PATCH_COMMAND ${PATCH_CMD} COMMAND ${RECONF_CMD}
     CONFIGURE_COMMAND ""
     # skip build and install, libk2pdfopt will build it
     BUILD_COMMAND ""
