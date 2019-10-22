@@ -25,6 +25,8 @@ else()
 endif()
 
 set(KO_PATCH sh -c "${CMAKE_MODULE_PATH}/patch-wrapper.sh")
+# DownloadProject somehow faceplants with the variant above...
+set(KO_PATCH_DP "sh ${CMAKE_MODULE_PATH}/patch-wrapper.sh")
 
 macro(assert_var_defined varName)
     if(NOT DEFINED ${varName})
