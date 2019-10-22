@@ -1,4 +1,5 @@
-#include <mupdf/fitz.h>
+// We need to make generate first...
+// CPPFLAGS="-I../koreader-base -I/var/tmp/niluje/mupdf/include"
 #include "wrap-mupdf.h"
 
 #include "ffi-cdecl.h"
@@ -83,7 +84,7 @@ cdecl_struct(fz_outline_s)
 cdecl_type(fz_document)
 cdecl_type(fz_page)
 cdecl_type(fz_link)
-cdecl_struct(fz_document_s)
+cdecl_struct(fz_document_s) // NOTE: And now it's intptr_t that's being converted... >_<"
 cdecl_struct(fz_page_s)
 
 cdecl_func(mupdf_open_document)

@@ -77,8 +77,8 @@ struct fz_image_s {
   fz_key_storable key_storable;
   int w;
   int h;
-  unsigned char n;
-  unsigned char bpc;
+  uint8_t n;
+  uint8_t bpc;
   unsigned int imagemask : 1;
   unsigned int interpolate : 1;
   unsigned int use_colorkey : 1;
@@ -274,10 +274,10 @@ fz_colorspace *fz_device_gray(fz_context *);
 fz_colorspace *fz_device_rgb(fz_context *);
 fz_colorspace *fz_device_bgr(fz_context *);
 struct fz_color_params_s {
-  unsigned char ri;
-  unsigned char bp;
-  unsigned char op;
-  unsigned char opm;
+  uint8_t ri;
+  uint8_t bp;
+  uint8_t op;
+  uint8_t opm;
 };
 const struct fz_color_params_s *fz_default_color_params(fz_context *);
 struct fz_device_s *mupdf_new_draw_device(fz_context *, const fz_matrix *, fz_pixmap *);
