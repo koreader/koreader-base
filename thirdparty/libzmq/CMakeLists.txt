@@ -27,7 +27,7 @@ if(${LEGACY})
 endif()
 
 set(CFG_CMD sh -c "${CFG_ENV_VAR} ${SOURCE_DIR}/configure ${CFG_OPTS}")
-set(PATCH_CMD "${ISED} \"s|-lstdc++||g\" libtool")
+set(PATCH_CMD sh -c "${ISED} \"s|-lstdc++||g\" libtool")
 
 if($ENV{ANDROID})
     set(CFG_CMD "${CFG_CMD} && ${ISED} 's|version_type=none|version_type=linux|' libtool")
@@ -37,8 +37,8 @@ if($ENV{ANDROID})
     set(CFG_CMD "${CFG_CMD} && ${ISED} 's|soname_spec=.*|soname_spec=\"\\\\\$libname\\\\\$release\\\\\$shared_ext\\\\\$major\"|' libtool")
 endif()
 
-set(FORCE_DYNAMLIB_VERSION "${ISED} \"s|-avoid-version||g\" src/Makefile.am")
-set(SKIP_TEST "${ISED} \"s|tests||g\" Makefile.am")
+set(FORCE_DYNAMLIB_VERSION sh -c "${ISED} \"s|-avoid-version||g\" src/Makefile.am")
+set(SKIP_TEST sh -c "${ISED} \"s|tests||g\" Makefile.am")
 # clear build dir every time so make install won't fail
 set(CLEAR_BUILD_DIR ${CMAKE_COMMAND} -E remove_directory ${BINARY_DIR} COMMAND ${CMAKE_COMMAND} -E make_directory ${BINARY_DIR})
 

@@ -31,7 +31,7 @@ if($ENV{ANDROID})
     set(PATCH_CMD2 "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/glib-2.58.2-android-linux-syscalls.patch")
 endif()
 
-set(PATCH_CMD3 "NOCONFIGURE=1 ./autogen.sh")
+set(PATCH_CMD3 sh -c "NOCONFIGURE=1 ./autogen.sh")
 
 # in order to support legacy PocketBook 4.x firmware we should get rid of
 # eventfd@GLIBC_2.7 and pipe2@GLIB_2.9

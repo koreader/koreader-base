@@ -25,7 +25,7 @@ set(CFG_OPTS "--host=\"${CHOST}\" --without-hardening --without-stackprotect --d
 set(CFG_CMD "${CFG_ENV_VAR} ${SOURCE_DIR}/configure ${CFG_OPTS}")
 set(CFG_CMD sh -c "${CFG_CMD}")
 
-set(BUILD_CMD "${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS} sftp-server scp")
+set(BUILD_CMD sh -c "${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS} sftp-server scp")
 
 # We build in-tree...
 set(INSTALL_CMD1 ${CMAKE_COMMAND} -E make_directory ${BINARY_DIR})

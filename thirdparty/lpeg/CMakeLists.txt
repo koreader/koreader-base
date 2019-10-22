@@ -11,7 +11,7 @@ assert_var_defined(DYNLIB_CFLAGS)
 assert_var_defined(LUA_DIR)
 
 # NOTE: probably needs a similar fix as LFS: https://github.com/keplerproject/luafilesystem/commit/a84d81bc52590f930e54f108099df5d155bdc8bf
-set(BUILD_CMD "${CC} ${DYNLIB_CFLAGS} -I${LUA_DIR}/src -L${LUA_DIR} -lluajit -o lpeg.so lpcap.c lpcode.c lpprint.c lptree.c lpvm.c")
+set(BUILD_CMD sh -c "${CC} ${DYNLIB_CFLAGS} -I${LUA_DIR}/src -L${LUA_DIR} -lluajit -o lpeg.so lpcap.c lpcode.c lpprint.c lptree.c lpvm.c")
 
 set(LPEG_VER "1.0.2")
 include(ExternalProject)

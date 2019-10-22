@@ -36,7 +36,7 @@ set(CFG_OPTS "--host=\"${CHOST}\" --disable-lastlog --enable-zlib --enable-openp
 set(CFG_CMD "${CFG_ENV_VAR} ${SOURCE_DIR}/configure ${CFG_OPTS}")
 set(CFG_CMD sh -c "${CFG_CMD}")
 
-set(BUILD_CMD "${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS} strip PROGRAMS=\"dropbear\"")
+set(BUILD_CMD sh -c "${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS} strip PROGRAMS=\"dropbear\"")
 
 include(ExternalProject)
 set(DROPBEAR_VER "2018.76")
