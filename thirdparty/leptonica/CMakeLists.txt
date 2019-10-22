@@ -31,7 +31,7 @@ if(${ARM_GLIBC_GTE_2_22})
 endif()
 
 # We apparently need a rebuild of the configure on macOS (https://github.com/koreader/koreader/issues/4448#issuecomment-522363325)
-set(RECONF_CMD "autoreconf -fi")
+set(RECONF_CMD sh -c "autoreconf -fi")
 
 include(ExternalProject)
 ExternalProject_Add(

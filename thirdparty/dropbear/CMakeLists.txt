@@ -29,7 +29,7 @@ elseif($ENV{KINDLE})
 elseif($ENV{CERVANTES})
     set(PATCH_CMD7 "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/dropbear-2018.76-scp-command-hack-cervantes.patch")
 endif()
-set(PATCH_CMD8 "autoreconf -fi")
+set(PATCH_CMD8 sh -c "autoreconf -fi")
 
 set(CFG_ENV_VAR "CC=\"${CC}\" CPPFLAGS=\"${CPPFLAGS} -I${SOURCE_DIR}\" CFLAGS=\"${CFLAGS}\" LIBS=\"${LIBS}\" LDFLAGS=\"${LDFLAGS}\"")
 set(CFG_OPTS "--host=\"${CHOST}\" --disable-lastlog --enable-zlib --enable-openpty --enable-shadow --enable-syslog --disable-harden")

@@ -18,7 +18,7 @@ ep_get_binary_dir(BINARY_DIR)
 
 # NOTE: OpenSSH >= 7.9p1 is starting to deprecated OpenSSL < 1.1.x... -_-".
 set(PATCH_CMD1 "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/openssh-7.9_p1-openssl-1.0.2-compat.patch")
-set(PATCH_CMD2 "autoreconf -fi")
+set(PATCH_CMD2 sh -c "autoreconf -fi")
 
 set(CFG_ENV_VAR "CC=\"${CC}\" CPPFLAGS=\"${CPPFLAGS} -I${SOURCE_DIR}\" CFLAGS=\"${CFLAGS}\" LIBS=\"${LIBS}\" LDFLAGS=\"${LDFLAGS}\"")
 set(CFG_OPTS "--host=\"${CHOST}\" --without-hardening --without-stackprotect --disable-etc-default-login --disable-lastlog --with-openssl --with-md5-passwords --with-ssl-engine")
