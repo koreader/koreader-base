@@ -74,7 +74,6 @@ ko_write_gitclone_script(
     ${SOURCE_DIR}
 )
 
-include(DownloadProject)
 download_project(
     PROJ ${PROJECT_NAME}
     GIT_REPOSITORY
