@@ -16,8 +16,6 @@
 
 #include "ffi-cdecl.h"
 
-cdecl_type(size_t)
-cdecl_type(ssize_t)
 cdecl_type(off_t)
 
 cdecl_struct(timeval)
@@ -59,7 +57,7 @@ cdecl_const(MAP_SHARED)
 cdecl_const(MAP_FAILED)
 cdecl_const(PATH_MAX)
 cdecl_func(memcmp)
-cdecl_func(mmap)
+cdecl_func(mmap)  // NOTE: off_t gets squished by ffi-cdecl...
 cdecl_func(munmap)
 
 cdecl_func(ioctl)
