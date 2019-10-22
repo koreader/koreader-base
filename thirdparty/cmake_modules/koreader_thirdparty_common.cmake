@@ -24,7 +24,7 @@ else()
     set(KO_MAKE_RECURSIVE make)
 endif()
 
-set(KO_PATCH "sh -c ${CMAKE_MODULE_PATH}/patch-wrapper.sh")
+set(KO_PATCH sh -c "${CMAKE_MODULE_PATH}/patch-wrapper.sh")
 
 macro(assert_var_defined varName)
     if(NOT DEFINED ${varName})
