@@ -38,7 +38,7 @@ set(PATCH_CMD sh -c "${ISED} \"s|-lstdc++||g\" libtool")
 if($ENV{ANDROID})
     set(PATCH_CMD "${PATCH_CMD} && ${ISED} \"s|DIST_SUBDIRS = libdjvu.*|DIST_SUBDIRS = libdjvu|g\" Makefile")
     set(PATCH_CMD "${PATCH_CMD} && ${ISED} \"s|SUBDIRS = libdjvu tools share \\$(am__append_1) \\$(am__append_2)|SUBDIRS = libdjvu share \\$(am__append_1) \\$(am__append_2)|g\" Makefile")
-    set(PATCH_CMD "${PATCH_CMD} && ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/android.patch")
+    set(PATCH_CMD "${PATCH_CMD} && ${KO_PATCH_SH} ${CMAKE_CURRENT_SOURCE_DIR}/android.patch")
 endif()
 
 ko_write_gitclone_script(
