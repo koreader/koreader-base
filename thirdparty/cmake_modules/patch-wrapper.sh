@@ -5,7 +5,8 @@ if [ $# -eq 0 ]; then
     exit 1
 fi
 
-PATCH_FILE=$1
+PATCH_FILE="$1"
+echo "* Applying ${PATCH_FILE} . . ."
 
 # Reverse patch will succeed if the patch is already applied.
 # In case of failure, it means we should try to apply the patch.

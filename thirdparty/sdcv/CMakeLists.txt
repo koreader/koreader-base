@@ -82,7 +82,7 @@ download_project(
     GIT_TAG
     v0.5.2
     #DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
-    PATCH_COMMAND COMMAND ${PATCH_CMD}
+    PATCH_COMMAND ${PATCH_CMD}
 )
 
 add_subdirectory("${CMAKE_BINARY_DIR}/sdcv-src"
