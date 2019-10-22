@@ -1,4 +1,4 @@
-// CPPFLAGS="-I../koreader-base/thirdparty/zyre/zyre/include -I../koreader-base/thirdparty/libzmq/libzmq/include -I../koreader-base/thirdparty/czmq/czmq/include -I../koreader-base/thirdparty/filemq/filemq/include" ./ffi-cdecl ...
+// CPPFLAGS="-I/var/tmp/niluje/zyre/include -I/var/tmp/niluje/libzmq/include -I/var/tmp/niluje/czmq/include -I/var/tmp/niluje/filemq/include"
 #include <zyre.h>
 #include <zre_msg.h>
 #include <zmq.h>
