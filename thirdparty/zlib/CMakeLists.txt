@@ -51,7 +51,7 @@ ExternalProject_Add(
     URL http://gentoo.osuosl.org/distfiles/zlib-${ZLIB_VER}.tar.gz
     URL_MD5 ${ZLIB_MD5}
     BUILD_IN_SOURCE 1
-    CONFIGURE_COMMAND ${CFG_CMD}
+    CONFIGURE_COMMAND COMMAND ${CFG_CMD}
     BUILD_COMMAND ${BUILD_CMD}
     INSTALL_COMMAND ${INSTALL_CMD}
 )
