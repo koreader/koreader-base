@@ -33,7 +33,7 @@ ExternalProject_Add(
     DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
     BUILD_IN_SOURCE 1
     # patch turbo to specify path of libssl and libcrypto and to remove -Werror flag from turbo/deps/http_parser/Makefile
-    PATCH_COMMAND patch -N -p1 < ${CMAKE_CURRENT_SOURCE_DIR}/turbo.patch
+    PATCH_COMMAND COMMAND sh -c "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/turbo.patch"
     CONFIGURE_COMMAND COMMAND sh -c ${PATCH_CMD}
     BUILD_COMMAND ${BUILD_CMD}
     # skip install

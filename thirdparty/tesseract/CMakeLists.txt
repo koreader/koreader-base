@@ -8,7 +8,7 @@ include("koreader_thirdparty_git")
 ep_get_source_dir(SOURCE_DIR)
 
 if ("$ENV{ANDROID}" STREQUAL "1")
-    set(PATCH_CMD COMMAND sh -c "patch -N -p1 < ${CMAKE_CURRENT_SOURCE_DIR}/tesseract-android.patch")
+    set(PATCH_CMD sh -c "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/tesseract-android.patch")
 else()
     set(PATCH_CMD "")
 endif()
@@ -24,7 +24,7 @@ include(ExternalProject)
 ExternalProject_Add(
     ${PROJECT_NAME}
     DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
-    PATCH_COMMAND ${PATCH_CMD}
+    PATCH_COMMAND COMMAND ${PATCH_CMD}
     CONFIGURE_COMMAND ""
     # skip build and install, libk2pdfopt will build it
     BUILD_COMMAND ""
