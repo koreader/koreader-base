@@ -14,7 +14,7 @@ assert_var_defined(LDFLAGS)
 ep_get_source_dir(BINARY_DIR)
 ep_get_source_dir(SOURCE_DIR)
 
-set(CFG_CMD "env CC=\"${CC}\" CFLAGS=\"${CFLAGS}\" LDFLAGS=\"${LDFLAGS}\" ${SOURCE_DIR}/configure --prefix=${BINARY_DIR} --host=${HOST} --enable-static")
+set(CFG_CMD sh -c "CC=\"${CC}\" CFLAGS=\"${CFLAGS}\" LDFLAGS=\"${LDFLAGS}\" ${SOURCE_DIR}/configure --prefix=${BINARY_DIR} --host=${HOST} --enable-static")
 if(DEFINED SYSROOT)
     set(CFG_CMD "${CFG_CMD} CFLAGS=\"--sysroot ${SYSROOT}\"")
 endif()

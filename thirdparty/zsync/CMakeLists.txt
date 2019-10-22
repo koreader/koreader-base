@@ -18,7 +18,7 @@ ep_get_binary_dir(BINARY_DIR)
 
 set(RECONF_CMD sh -c "cd c && autoreconf -fi")
 set(CFG_OPTS "-q --prefix=${BINARY_DIR} --host=\"${HOST}\"")
-set(CFG_CMD "env CC=\"${CC}\" CFLAGS=\"${CFLAGS} -I${SOURCE_DIR}/c\" LDFLAGS=\"${LDFLAGS}\" LIBS=\"${LIBS}\" ${SOURCE_DIR}/c/configure ${CFG_OPTS}")
+set(CFG_CMD sh -c "CC=\"${CC}\" CFLAGS=\"${CFLAGS} -I${SOURCE_DIR}/c\" LDFLAGS=\"${LDFLAGS}\" LIBS=\"${LIBS}\" ${SOURCE_DIR}/c/configure ${CFG_OPTS}")
 # Pickup some build fixes from https://github.com/ahmedammar/zsync
 # Plus, abort if we hit an OpenStack container to avoid infinite loops
 set(PATCH_CMD1 "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/zsync-openstack-abort.patch")

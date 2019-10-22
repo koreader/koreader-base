@@ -13,7 +13,7 @@ ep_get_binary_dir(BINARY_DIR)
 
 set(CFG_ENV_VAR "CC=\"${CC}\" LD=\"${LD}\" AR=\"${AR}\" RANLIB=\"${RANLIB}\"")
 set(CFG_OPTS "--with-threads=none --prefix=${BINARY_DIR} --enable-shared=false --enable-static=true --host=\"${HOST}\"")
-set(CFG_CMD "env ${CFG_ENV_VAR} ${SOURCE_DIR}/configure ${CFG_OPTS}")
+set(CFG_CMD sh -c "${CFG_ENV_VAR} ${SOURCE_DIR}/configure ${CFG_OPTS}")
 
 set(GETTEXT_VER "1.15")
 include(ExternalProject)

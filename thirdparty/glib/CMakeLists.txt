@@ -45,7 +45,7 @@ set(gen_arm_config "${gen_arm_config}ac_cv_func_posix_getgrgid_r=no\\n")
 set(gen_arm_config "${gen_arm_config}ac_cv_func_getpwuid_r=no\\n")
 set(gen_arm_config "${gen_arm_config}ac_cv_func_getgrgid_r=no\\n")
 set(gen_arm_config "${gen_arm_config}ac_cv_func_timegm=no\\n")
-set(gen_arm_config "printf \"${gen_arm_config}\" > arm_cache.conf")
+set(gen_arm_config sh -c "printf \"${gen_arm_config}\" > arm_cache.conf")
 
 set(CFG_ENV_VAR "CC=\"${CC}\" AR=\"${AR}\" RANLIB=\"${RANLIB}\"")
 set(CFG_ENV_VAR "${CFG_ENV_VAR} LIBFFI_CFLAGS=\"-I${LIBFFI_DIR}/include\"")
@@ -66,7 +66,7 @@ else()
 endif()
 
 set(CFG_OPTS "${CFG_OPTS} CFLAGS=\"${CFLAGS}\" LDFLAGS=\"${LDFLAGS}\" ${HOST_OPTS}")
-set(CFG_CMD "env ${CFG_ENV_VAR} ${SOURCE_DIR}/configure ${CFG_OPTS}")
+set(CFG_CMD sh -c "${CFG_ENV_VAR} ${SOURCE_DIR}/configure ${CFG_OPTS}")
 
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME

@@ -35,7 +35,7 @@ else()
     # configure
     set(CFG_ENV_VAR "${CFG_ENV_VAR} CC=\"${CC}\" CFLAGS=\"${CFLAGS}\" LDFLAGS=\"${LDFLAGS}\"")
     set(CFG_OPTS "${CFG_OPTS} --prefix=${SOURCE_DIR}")
-    set(CFG_CMD "env ${CFG_ENV_VAR} ${SOURCE_DIR}/configure ${CFG_OPTS}")
+    set(CFG_CMD sh -c "${CFG_ENV_VAR} ${SOURCE_DIR}/configure ${CFG_OPTS}")
     # build
     set(BUILD_CMD ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS} shared static)
     # install
@@ -51,7 +51,7 @@ ExternalProject_Add(
     URL http://gentoo.osuosl.org/distfiles/zlib-${ZLIB_VER}.tar.gz
     URL_MD5 ${ZLIB_MD5}
     BUILD_IN_SOURCE 1
-    CONFIGURE_COMMAND COMMAND ${CFG_CMD}
+    CONFIGURE_COMMAND ${CFG_CMD}
     BUILD_COMMAND ${BUILD_CMD}
     INSTALL_COMMAND ${INSTALL_CMD}
 )

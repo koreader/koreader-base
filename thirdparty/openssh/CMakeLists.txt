@@ -23,7 +23,7 @@ set(PATCH_CMD2 "autoreconf -fi")
 set(CFG_ENV_VAR "CC=\"${CC}\" CPPFLAGS=\"${CPPFLAGS} -I${SOURCE_DIR}\" CFLAGS=\"${CFLAGS}\" LIBS=\"${LIBS}\" LDFLAGS=\"${LDFLAGS}\"")
 set(CFG_OPTS "--host=\"${CHOST}\" --without-hardening --without-stackprotect --disable-etc-default-login --disable-lastlog --with-openssl --with-md5-passwords --with-ssl-engine")
 set(CFG_CMD "${CFG_ENV_VAR} ${SOURCE_DIR}/configure ${CFG_OPTS}")
-set(CFG_CMD "env ${CFG_CMD}")
+set(CFG_CMD sh -c "${CFG_CMD}")
 
 set(BUILD_CMD "${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS} sftp-server scp")
 

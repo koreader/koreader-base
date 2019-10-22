@@ -73,7 +73,7 @@ if($ENV{ANDROID})
 endif()
 
 set(CFG_OPTS "${CFG_OPTS} ${FILTERED_CFLAGS} ${ASM_OPT} no-idea no-mdc2 no-rc5")
-set(CFG_CMD "env ${CFG_ENV_VAR} ${SOURCE_DIR}/${CONFIG_SCRIPT} ${CFG_OPTS}")
+set(CFG_CMD sh -c "${CFG_ENV_VAR} ${SOURCE_DIR}/${CONFIG_SCRIPT} ${CFG_OPTS}")
 
 if($ENV{ANDROID})
     set(MAKE_CMD "${KO_MAKE_RECURSIVE} SHARED_LDFLAGS=\"${SHARED_LDFLAGS}\" LD=\"${LD}\" AR=\"${AR}\" RANLIB=\"${RANLIB}\"")
