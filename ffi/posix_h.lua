@@ -5,6 +5,8 @@ if ffi.arch == "x64" then
     require("ffi/posix_types_x64_h")
 elseif ffi.arch == "x86" then
     require("ffi/posix_types_x86_h")
+elseif ffi.abi("64bit") then
+    require("ffi/posix_types_64b_h")
 else
     require("ffi/posix_types_def_h")
 end
