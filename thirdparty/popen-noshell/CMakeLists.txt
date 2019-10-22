@@ -12,7 +12,7 @@ ep_get_source_dir(SOURCE_DIR)
 
 if(${LEGACY})
     # Revert 8d7a98d on legacy devices, pipe2 was introduced in Linux 2.6.27 & glibc 2.9
-    set(EXTRA_PATCH_CMD sh -c "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/kindle_legacy.patch")
+    set(EXTRA_PATCH_CMD "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/kindle_legacy.patch")
 endif()
 
 assert_var_defined(CC)
@@ -21,7 +21,7 @@ assert_var_defined(CFLAGS)
 assert_var_defined(LDFLAGS)
 
 set(MAKE_ENV_VAR "CC=\"${CC}\" AR=\"${AR}\" CFLAGS=\"${CFLAGS}\" LDFLAGS=\"${LDFLAGS}\"")
-set(BUILD_CMD sh -c "${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS} ${MAKE_ENV_VAR}")
+set(BUILD_CMD "${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS} ${MAKE_ENV_VAR}")
 
 # NOTE: As of right now (1f9eaf4eeef348d1efe0f3c7fe8ab670653cfbb1), wait until stuff settles down before bumping this.
 ko_write_gitclone_script(
@@ -38,7 +38,7 @@ ExternalProject_Add(
     DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
     # popen_noshell patch: Make it build on recent TCs, and implement
     # a simple Makefile for building it as a static lib
-    PATCH_COMMAND COMMAND sh -c "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/popen_noshell.patch" COMMAND ${EXTRA_PATCH_CMD}
+    PATCH_COMMAND COMMAND "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/popen_noshell.patch" COMMAND ${EXTRA_PATCH_CMD}
     # skip configure
     CONFIGURE_COMMAND ""
     BUILD_COMMAND ${BUILD_CMD}

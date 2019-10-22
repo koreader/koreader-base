@@ -28,12 +28,12 @@ else()
 endif()
 
 # Minimal, statically linked build, we don't care about extra fonts or image support
-set(BUILD_CMD1 sh -c "${KO_MAKE_RECURSIVE} MINIMAL=1 OPENTYPE=1 CFLAGS=\"${CFLAGS}\" LDFLAGS=\"${LDFLAGS}\" ${FBINK_TARGET}")
+set(BUILD_CMD1 "${KO_MAKE_RECURSIVE} MINIMAL=1 OPENTYPE=1 CFLAGS=\"${CFLAGS}\" LDFLAGS=\"${LDFLAGS}\" ${FBINK_TARGET}")
 if($ENV{KOBO})
-    set(BUILD_CMD2 sh -c "${KO_MAKE_RECURSIVE} CFLAGS=\"${CFLAGS}\" LDFLAGS=\"${LDFLAGS}\" ${UTILS_TARGET}")
+    set(BUILD_CMD2 "${KO_MAKE_RECURSIVE} CFLAGS=\"${CFLAGS}\" LDFLAGS=\"${LDFLAGS}\" ${UTILS_TARGET}")
 else()
-    set(BUILD_CMD2 sh -c "true")
-    set(INSTALL_CMD3 sh -c "true")
+    set(BUILD_CMD2 "true")
+    set(INSTALL_CMD3 "true")
 endif()
 # We build in-tree...
 set(INSTALL_CMD1 ${CMAKE_COMMAND} -E make_directory ${BINARY_DIR})

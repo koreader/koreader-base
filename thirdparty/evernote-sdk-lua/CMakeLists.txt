@@ -12,7 +12,7 @@ assert_var_defined(CC)
 assert_var_defined(OUTPUT_DIR)
 assert_var_defined(LDFLAGS)
 
-set(BUILD_CMD sh -c "${KO_MAKE_RECURSIVE} -C thrift CC=\"${CC}\" LDFLAGS=\"${LDFLAGS}\" DYNLIB_CFLAGS=\"${DYNLIB_CFLAGS}\" OUTPUT_DIR=${OUTPUT_DIR}")
+set(BUILD_CMD "${KO_MAKE_RECURSIVE} -C thrift CC=\"${CC}\" LDFLAGS=\"${LDFLAGS}\" DYNLIB_CFLAGS=\"${DYNLIB_CFLAGS}\" OUTPUT_DIR=${OUTPUT_DIR}")
 
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME

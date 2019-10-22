@@ -17,7 +17,7 @@ else()
 endif()
 
 # There's some headers to generate on the host's side first, before we run our actual build (where we enforce CROSSCOMPILE to avoid trying to regen those).
-set(BUILD_CMD_GENERATE sh -c "env CFLAGS=\"${HOSTCFLAGS}\" ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS} generate build=\"${MUPDF_BUILD_TYPE}\" CC=\"${HOSTCC}\" LDFLAGS=\"\" verbose=\"no\"")
+set(BUILD_CMD_GENERATE "env CFLAGS=\"${HOSTCFLAGS}\" ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS} generate build=\"${MUPDF_BUILD_TYPE}\" CC=\"${HOSTCC}\" LDFLAGS=\"\" verbose=\"no\"")
 
 assert_var_defined(LDFLAGS)
 assert_var_defined(XCFLAGS)
@@ -30,7 +30,7 @@ set(STATIC_BUILD_CMD "${STATIC_BUILD_CMD} LDFLAGS=\"${LDFLAGS}\" XCFLAGS=\"${XCF
 set(STATIC_BUILD_CMD "${STATIC_BUILD_CMD} CC=\"${CC}\" CXX=\"${CXX}\" AR=\"${AR}\" build=\"${MUPDF_BUILD_TYPE}\" MUDRAW= MUTOOL= CURL_LIB= OS=${OS}")
 set(STATIC_BUILD_CMD "${STATIC_BUILD_CMD} verbose=\"no\" FREETYPE_DIR=nonexisting HARFBUZZ_DIR=nonexisting LIBJPEG_DIR=nonexisting ZLIB_DIR=nonexisting CROSSCOMPILE=\"yes\"")
 set(STATIC_BUILD_CMD "${STATIC_BUILD_CMD} SYS_HARFBUZZ_CFLAGS=\"\" SYS_HARFBUZZ_LIBS=\"-lharfbuzz\"")
-set(STATIC_BUILD_CMD sh -c "${STATIC_BUILD_CMD} third libs")
+set(STATIC_BUILD_CMD "${STATIC_BUILD_CMD} third libs")
 
 # by default, mupdf compiles to a static library:
 # we generate a dynamic library from the static library:
@@ -64,22 +64,22 @@ if($ENV{ANDROID})
     set(SHARED_BUILD_STR "${SHARED_BUILD_STR} -llog")
 endif()
 
-set(SHARED_BUILD_CMD sh -c "${SHARED_BUILD_STR}")
+set(SHARED_BUILD_CMD "${SHARED_BUILD_STR}")
 # use external fonts
-set(PATCH_CMD1 sh -c "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/external_fonts.patch")
+set(PATCH_CMD1 "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/external_fonts.patch")
 # add support for encryted zips
-set(PATCH_CMD2 sh -c "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/encrypted_zip.patch")
+set(PATCH_CMD2 "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/encrypted_zip.patch")
 # use libjpeg as a shared library
-set(PATCH_CMD3 sh -c "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/libjpeg_shared.patch")
+set(PATCH_CMD3 "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/libjpeg_shared.patch")
 # Disable potentially crashy ARM ASM (it's 7 years old, and hell to debug)
 # NOTE: There's also a few ARCH_UNALIGNED_OK checks, but we never did pass that define.
 #       (FWIW, we *could*, on anything not kindle-legacy).
-set(PATCH_CMD4 sh -c "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/no_arm_asm.patch")
+set(PATCH_CMD4 "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/no_arm_asm.patch")
 # Honor CFLAGS
-set(PATCH_CMD5 sh -c "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/honor_cflags.patch")
+set(PATCH_CMD5 "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/honor_cflags.patch")
 # Patch for https://bugs.ghostscript.com/show_bug.cgi?id=698877; should be in upstream from 1.15
 # cf. https://github.com/koreader/koreader/issues/5182
-set(PATCH_CMD6 sh -c "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/upstream-698877.patch")
+set(PATCH_CMD6 "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/upstream-698877.patch")
 
 # TODO: ignore shared git submodules built outside of mupdf by ourselves
 # https://git.ghostscript.com/mupdf.git is slow, so we use the official mirror on GitHub

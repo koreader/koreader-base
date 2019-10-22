@@ -27,13 +27,13 @@ ko_write_gitclone_script(
 # there's a 1.74 version of the patch already in our tree for when that time
 # comes ;).
 if(${ARM_GLIBC_GTE_2_22})
-    set(PATCH_CMD sh -c "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/leptonica-1.74.1-fmemopen-arm-compat-symbol.patch")
+    set(PATCH_CMD "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/leptonica-1.74.1-fmemopen-arm-compat-symbol.patch")
 else()
     set(PATCH_CMD "")
 endif()
 
 # We apparently need a rebuild of the configure on macOS (https://github.com/koreader/koreader/issues/4448#issuecomment-522363325)
-set(RECONF_CMD sh -c "autoreconf -fi")
+set(RECONF_CMD "autoreconf -fi")
 
 include(ExternalProject)
 ExternalProject_Add(

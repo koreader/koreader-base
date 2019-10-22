@@ -18,14 +18,14 @@ ep_get_binary_dir(BINARY_DIR)
 
 set(RECONF_CMD sh -c "cd c && autoreconf -fi")
 set(CFG_OPTS "-q --prefix=${BINARY_DIR} --host=\"${HOST}\"")
-set(CFG_CMD sh -c "CC=\"${CC}\" CFLAGS=\"${CFLAGS} -I${SOURCE_DIR}/c\" LDFLAGS=\"${LDFLAGS}\" LIBS=\"${LIBS}\" ${SOURCE_DIR}/c/configure ${CFG_OPTS}")
+set(CFG_CMD "env CC=\"${CC}\" CFLAGS=\"${CFLAGS} -I${SOURCE_DIR}/c\" LDFLAGS=\"${LDFLAGS}\" LIBS=\"${LIBS}\" ${SOURCE_DIR}/c/configure ${CFG_OPTS}")
 # Pickup some build fixes from https://github.com/ahmedammar/zsync
 # Plus, abort if we hit an OpenStack container to avoid infinite loops
-set(PATCH_CMD1 sh -c "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/zsync-openstack-abort.patch")
+set(PATCH_CMD1 "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/zsync-openstack-abort.patch")
 # don't check missing definition of in_port_t in NDK <netinet/in.h>
-set(PATCH_CMD2 sh -c "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/zsync-android-build-p1.patch")
+set(PATCH_CMD2 "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/zsync-android-build-p1.patch")
 # fix "rename: Invalid cross-device link" error for Android
-set(PATCH_CMD3 sh -c "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/zsync-android-build-p2.patch")
+set(PATCH_CMD3 "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/zsync-android-build-p2.patch")
 
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME

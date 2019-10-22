@@ -30,7 +30,7 @@ endif()
 if(DEFINED LUALIB_mingw)
     set(BUILD_CMD_STR "${BUILD_CMD_STR} LUALIB_mingw=\"${LUALIB_mingw}\"")
 endif()
-set(BUILD_CMD sh -c "${BUILD_CMD_STR} LUAINC=\"${LUAINC}\" -j${PARALLEL_JOBS} all")
+set(BUILD_CMD "${BUILD_CMD_STR} LUAINC=\"${LUAINC}\" -j${PARALLEL_JOBS} all")
 
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
