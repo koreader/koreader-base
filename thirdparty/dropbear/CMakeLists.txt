@@ -28,8 +28,6 @@ elseif($ENV{KINDLE})
     set(PATCH_CMD7 "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/dropbear-2018.76-scp-command-hack-kindle.patch")
 elseif($ENV{CERVANTES})
     set(PATCH_CMD7 "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/dropbear-2018.76-scp-command-hack-cervantes.patch")
-else()
-    set(PATCH_CMD7 "true")
 endif()
 set(PATCH_CMD8 "autoreconf -fi")
 

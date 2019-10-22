@@ -63,8 +63,6 @@ set(PATCH_CMD2 "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/openssl-origin-rpath.pat
 # GCC 4.9's <stdatomic.h> is broken (c.f., https://github.com/pytorch/pytorch/issues/3050)
 if(DEFINED ENV{SONY_PRSTUX} OR DEFINED ENV{ANDROID})
     set(PATCH_CMD3 "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/openssl-gcc-4.9-stdatomic.patch")
-else()
-    set(PATCH_CMD3 "")
 endif()
 
 # NOTE: We need to pass $CFLAGS to OpenSSL's Configure script,

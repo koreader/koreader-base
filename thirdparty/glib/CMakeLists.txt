@@ -25,14 +25,10 @@ ep_get_binary_dir(BINARY_DIR)
 # Enforce that to python3 for containers where that's the only available Python version.
 if(($ENV{APPIMAGE}) OR ($ENV{CERVANTES}) OR ($ENV{KINDLE}) OR ($ENV{KOBO}))
     set(PATCH_CMD1 "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/glib-2.56.2-python3.patch")
-else()
-    set(PATCH_CMD1 "true")
 endif()
 # Android makes Linux syscalls hard to get to... Fix pilfered from Python.
 if($ENV{ANDROID})
     set(PATCH_CMD2 "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/glib-2.58.2-android-linux-syscalls.patch")
-else()
-    set(PATCH_CMD2 "true")
 endif()
 
 set(PATCH_CMD3 "NOCONFIGURE=1 ./autogen.sh")
