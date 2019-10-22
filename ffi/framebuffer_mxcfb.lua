@@ -332,11 +332,11 @@ local function refresh_k51(fb, refreshtype, waveform_mode, x, y, w, h)
     return mxc_update(fb, C.MXCFB_SEND_UPDATE, refarea, refreshtype, waveform_mode, x, y, w, h)
 end
 
-local function refresh_koa2(fb, refreshtype, waveform_mode, x, y, w, h)
-    local refarea = ffi.new("struct mxcfb_update_data_koa2[1]")
+local function refresh_zelda(fb, refreshtype, waveform_mode, x, y, w, h)
+    local refarea = ffi.new("struct mxcfb_update_data_zelda[1]")
     -- only for Amazon's driver, try to mostly follow what the stock reader does...
-    if waveform_mode == C.WAVEFORM_MODE_KOA2_GLR16 then
-        -- If we're requesting WAVEFORM_MODE_KOA2_GLR16, it's REAGL all around!
+    if waveform_mode == C.WAVEFORM_MODE_ZELDA_GLR16 then
+        -- If we're requesting WAVEFORM_MODE_ZELDA_GLR16, it's REAGL all around!
         refarea[0].hist_bw_waveform_mode = waveform_mode
         refarea[0].hist_gray_waveform_mode = waveform_mode
     else
@@ -356,14 +356,14 @@ local function refresh_koa2(fb, refreshtype, waveform_mode, x, y, w, h)
     end
     -- TODO: There's also the HW-backed NightMode which should be somewhat accessible...
 
-    return mxc_update(fb, C.MXCFB_SEND_UPDATE_KOA2, refarea, refreshtype, waveform_mode, x, y, w, h)
+    return mxc_update(fb, C.MXCFB_SEND_UPDATE_ZELDA, refarea, refreshtype, waveform_mode, x, y, w, h)
 end
 
 local function refresh_rex(fb, refreshtype, waveform_mode, x, y, w, h)
     local refarea = ffi.new("struct mxcfb_update_data_rex[1]")
     -- only for Amazon's driver, try to mostly follow what the stock reader does...
-    if waveform_mode == C.WAVEFORM_MODE_KOA2_GLR16 then
-        -- If we're requesting WAVEFORM_MODE_KOA2_GLR16, it's REAGL all around!
+    if waveform_mode == C.WAVEFORM_MODE_ZELDA_GLR16 then
+        -- If we're requesting WAVEFORM_MODE_ZELDA_GLR16, it's REAGL all around!
         refarea[0].hist_bw_waveform_mode = waveform_mode
         refarea[0].hist_gray_waveform_mode = waveform_mode
     else
@@ -518,8 +518,8 @@ function framebuffer:init()
         -- New devices are REAGL-aware, default to REAGL
         local isREAGL = true
 
-        -- The KOA2 uses a new eink driver, one that massively breaks backward compatibility.
-        local isKOA2 = false
+        -- Zelda uses a new eink driver, one that massively breaks backward compatibility.
+        local isZelda = false
         -- And because that worked well enough the first time, lab126 did the same with Rex!
         local isRex = false
         -- But of course, some devices don't actually support all the features the kernel exposes...
@@ -540,7 +540,7 @@ function framebuffer:init()
         end
 
         if self.device.model == "KindleOasis2" then
-            isKOA2 = true
+            isZelda = true
         end
 
         if self.device.model == "KindlePaperWhite4" then
@@ -565,13 +565,13 @@ function framebuffer:init()
             self.waveform_partial = C.WAVEFORM_MODE_GL16_FAST -- NOTE: Depending on FW, might instead be AUTO w/ hist_gray_waveform_mode set to GL16_FAST
         end
 
-        -- NOTE: Devices on the Rex platform essentially use the same driver as the KOA2, they're just passing a slightly smaller mxcfb_update_data struct
-        if isKOA2 or isRex then
+        -- NOTE: Devices on the Rex platform essentially use the same driver as the Zelda platform, they're just passing a slightly smaller mxcfb_update_data struct
+        if isZelda or isRex then
             -- FIXME: Someone with the device will have to check if/how HW dithering is supposed to be requested,
             --        as the Kobo Mk.7 way doesn't appear to work, at the very least on the PW4 (c.f., #4602)
             --self.device.canHWDither = yes
-            if isKOA2 then
-                self.mech_refresh = refresh_koa2
+            if isZelda then
+                self.mech_refresh = refresh_zelda
             else
                 self.mech_refresh = refresh_rex
             end
@@ -579,19 +579,19 @@ function framebuffer:init()
             self.waveform_fast = C.WAVEFORM_MODE_DU
             self.waveform_ui = C.WAVEFORM_MODE_AUTO
             -- NOTE: Possibly to bypass the possibility that AUTO, even when FULL, might not flash (something which holds true for a number of devices, especially on small regions),
-            --       The KOA2 explicitly requests GC16 when flashing an UI element that doesn't cover the full screen...
+            --       Zelda explicitly requests GC16 when flashing an UI element that doesn't cover the full screen...
             --       And it resorts to AUTO when PARTIAL, because GC16_FAST is no more (it points to GC16).
             self.waveform_flashui = C.WAVEFORM_MODE_GC16
-            self.waveform_reagl = C.WAVEFORM_MODE_KOA2_GLR16
+            self.waveform_reagl = C.WAVEFORM_MODE_ZELDA_GLR16
             self.waveform_partial = self.waveform_reagl
             -- NOTE: Because we can't have nice things, we have to account for devices that do not actuallly support the fancy inverted waveforms...
             if isNightModeChallenged then
-                self.waveform_night = C.WAVEFORM_MODE_KOA2_GL16_INV -- NOTE: Currently points to the bog-standard GL16, but one can hope...
+                self.waveform_night = C.WAVEFORM_MODE_ZELDA_GL16_INV -- NOTE: Currently points to the bog-standard GL16, but one can hope...
                 self.waveform_flashnight = C.WAVEFORM_MODE_GC16
             else
-                self.waveform_night = C.WAVEFORM_MODE_KOA2_GLKW16
+                self.waveform_night = C.WAVEFORM_MODE_ZELDA_GLKW16
                 self.night_is_reagl = true
-                self.waveform_flashnight = C.WAVEFORM_MODE_KOA2_GCK16
+                self.waveform_flashnight = C.WAVEFORM_MODE_ZELDA_GCK16
             end
         end
     elseif self.device:isKobo() then
