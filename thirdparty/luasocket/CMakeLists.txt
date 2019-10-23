@@ -23,14 +23,14 @@ set(PATCH_CMD "${PATCH_CMD} && ${ISED} 's|MIME_CDIR)/core|MIME_CDIR)/mcore|' src
 # Don't enforce CFLAGS
 set(PATCH_CMD "${PATCH_CMD} && ${ISED} 's|-O2 -ggdb3 ||g' src/makefile")
 
-set(BUILD_CMD_STR "${KO_MAKE_RECURSIVE} PLAT=${PLAT} CC=\"${CC}\" LD=\"${CC}\"")
+set(BUILD_CMD_STR sh -c "${KO_MAKE_RECURSIVE} PLAT=${PLAT} CC=\"${CC}\" LD=\"${CC}\"")
 if(DEFINED MYLDFLAGS)
     set(BUILD_CMD_STR "${BUILD_CMD_STR} MYLDFLAGS=\"${MYLDFLAGS}\"")
 endif()
 if(DEFINED LUALIB_mingw)
     set(BUILD_CMD_STR "${BUILD_CMD_STR} LUALIB_mingw=\"${LUALIB_mingw}\"")
 endif()
-set(BUILD_CMD sh -c "${BUILD_CMD_STR} LUAINC=\"${LUAINC}\" -j${PARALLEL_JOBS} all")
+set(BUILD_CMD "${BUILD_CMD_STR} LUAINC=\"${LUAINC}\" -j${PARALLEL_JOBS} all")
 
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME

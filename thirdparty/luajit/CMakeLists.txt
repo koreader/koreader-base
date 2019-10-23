@@ -69,7 +69,7 @@ endif()
 
 set(BUILD_CMD sh -c "${BUILD_CMD_STR}")
 
-set(PATCH_CMD sh -c "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/koreader-luajit-makefile-tweaks.patch")
+set(PATCH_CMD "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/koreader-luajit-makefile-tweaks.patch")
 
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME

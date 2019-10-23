@@ -31,9 +31,6 @@ endif()
 set(BUILD_CMD1 sh -c "${KO_MAKE_RECURSIVE} MINIMAL=1 OPENTYPE=1 CFLAGS=\"${CFLAGS}\" LDFLAGS=\"${LDFLAGS}\" ${FBINK_TARGET}")
 if($ENV{KOBO})
     set(BUILD_CMD2 sh -c "${KO_MAKE_RECURSIVE} CFLAGS=\"${CFLAGS}\" LDFLAGS=\"${LDFLAGS}\" ${UTILS_TARGET}")
-else()
-    set(BUILD_CMD2 sh -c "true")
-    set(INSTALL_CMD3 sh -c "true")
 endif()
 # We build in-tree...
 set(INSTALL_CMD1 ${CMAKE_COMMAND} -E make_directory ${BINARY_DIR})
@@ -52,7 +49,7 @@ endif()
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
     https://github.com/NiLuJe/FBInk.git
-    tags/v1.20.2
+    a1e32e9fd2c9d4676c72e43b495d5d46c367471f
     ${SOURCE_DIR}
 )
 

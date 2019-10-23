@@ -17,23 +17,23 @@ static const int WAVEFORM_MODE_REAGLD = 9;
 static const int WAVEFORM_MODE_GL4 = 10;
 static const int WAVEFORM_MODE_GL16_INV = 11;
 static const int WAVEFORM_MODE_AUTO = 257;
-static const int WAVEFORM_MODE_KOA2_GL16 = 3;
-static const int WAVEFORM_MODE_KOA2_A2 = 6;
-static const int WAVEFORM_MODE_KOA2_LAST = 7;
-static const int WAVEFORM_MODE_KOA2_REAGL = 4;
-static const int WAVEFORM_MODE_KOA2_REAGLD = 5;
-static const int WAVEFORM_MODE_KOA2_GC16_FAST = 2;
-static const int WAVEFORM_MODE_KOA2_GL16_FAST = 3;
-static const int WAVEFORM_MODE_KOA2_GLR16 = 4;
-static const int WAVEFORM_MODE_KOA2_GLD16 = 5;
-static const int WAVEFORM_MODE_KOA2_GCK16 = 8;
-static const int WAVEFORM_MODE_KOA2_GLKW16 = 9;
-static const int WAVEFORM_MODE_KOA2_GL4 = 3;
-static const int WAVEFORM_MODE_KOA2_GL16_INV = 3;
+static const int WAVEFORM_MODE_ZELDA_GL16 = 3;
+static const int WAVEFORM_MODE_ZELDA_A2 = 6;
+static const int WAVEFORM_MODE_ZELDA_LAST = 7;
+static const int WAVEFORM_MODE_ZELDA_REAGL = 4;
+static const int WAVEFORM_MODE_ZELDA_REAGLD = 5;
+static const int WAVEFORM_MODE_ZELDA_GC16_FAST = 2;
+static const int WAVEFORM_MODE_ZELDA_GL16_FAST = 3;
+static const int WAVEFORM_MODE_ZELDA_GLR16 = 4;
+static const int WAVEFORM_MODE_ZELDA_GLD16 = 5;
+static const int WAVEFORM_MODE_ZELDA_GCK16 = 8;
+static const int WAVEFORM_MODE_ZELDA_GLKW16 = 9;
+static const int WAVEFORM_MODE_ZELDA_GL4 = 3;
+static const int WAVEFORM_MODE_ZELDA_GL16_INV = 3;
 static const int TEMP_USE_AMBIENT = 4096;
 static const int TEMP_USE_PAPYRUS = 4097;
 static const int TEMP_USE_AUTO = 4097;
-static const int TEMP_USE_KOA2_AUTO = 4096;
+static const int TEMP_USE_ZELDA_AUTO = 4096;
 static const int EPDC_FLAG_ENABLE_INVERSION = 1;
 static const int EPDC_FLAG_FORCE_MONOCHROME = 2;
 static const int EPDC_FLAG_USE_CMAP = 4;
@@ -45,8 +45,8 @@ static const int EPDC_FLAG_USE_REAGLD = 4096;
 static const int EPDC_FLAG_USE_DITHERING_Y1 = 8192;
 static const int EPDC_FLAG_USE_DITHERING_Y2 = 16384;
 static const int EPDC_FLAG_USE_DITHERING_Y4 = 32768;
-static const int EPDC_FLAG_USE_KOA2_DITHERING_Y4 = 16384;
-static const int EPDC_FLAG_USE_KOA2_REGAL = 32768;
+static const int EPDC_FLAG_USE_ZELDA_DITHERING_Y4 = 16384;
+static const int EPDC_FLAG_USE_ZELDA_REGAL = 32768;
 enum mxcfb_dithering_mode {
   EPDC_FLAG_USE_DITHERING_PASSTHROUGH = 0,
   EPDC_FLAG_USE_DITHERING_FLOYD_STEINBERG = 1,
@@ -78,7 +78,7 @@ struct mxcfb_update_data {
   unsigned int flags;
   struct mxcfb_alt_buffer_data alt_buffer_data;
 };
-struct mxcfb_update_data_koa2 {
+struct mxcfb_update_data_zelda {
   struct mxcfb_rect update_region;
   unsigned int waveform_mode;
   unsigned int update_mode;
@@ -107,7 +107,7 @@ struct mxcfb_update_data_rex {
   unsigned int hist_gray_waveform_mode;
 };
 static const int MXCFB_SEND_UPDATE = 1078478382;
-static const int MXCFB_SEND_UPDATE_KOA2 = 1079526958;
+static const int MXCFB_SEND_UPDATE_ZELDA = 1079526958;
 static const int MXCFB_SEND_UPDATE_REX = 1079002670;
 struct mxcfb_update_marker_data {
   unsigned int update_marker;

@@ -24,7 +24,10 @@ else()
     set(KO_MAKE_RECURSIVE make)
 endif()
 
-set(KO_PATCH "sh ${CMAKE_MODULE_PATH}/patch-wrapper.sh")
+set(KO_PATCH sh -c "${CMAKE_MODULE_PATH}/patch-wrapper.sh")
+# DownloadProject somehow faceplants with the variant above...
+# Plus, we need that one for inlined shell calls anyway.
+set(KO_PATCH_SH "sh ${CMAKE_MODULE_PATH}/patch-wrapper.sh")
 
 macro(assert_var_defined varName)
     if(NOT DEFINED ${varName})

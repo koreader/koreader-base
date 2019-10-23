@@ -114,7 +114,7 @@ struct FT_GlyphSlotRec_ {
   FT_Library library;
   FT_Face face;
   FT_GlyphSlot next;
-  unsigned int reserved;
+  unsigned int glyph_index;
   FT_Generic generic;
   FT_Glyph_Metrics metrics;
   long int linearHoriAdvance;

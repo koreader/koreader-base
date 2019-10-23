@@ -24,7 +24,6 @@ endif()
 
 if($ENV{WIN32})
     # configure
-    set(CFG_CMD "")
     # build
     set(BUILD_VARS DESTDIR=${SOURCE_DIR} INCLUDE_PATH=include LIBRARY_PATH=lib BIN_PATH=bin)
     set(BUILD_ARGS CC="${CC}" CFLAGS="${CFLAGS}" RC="${CHOST}-windres" SHARED_MODE=1)

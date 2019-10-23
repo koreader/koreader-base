@@ -23,23 +23,23 @@ assert_var_defined(STDCPPLIB)
 
 ep_get_source_dir(SOURCE_DIR)
 
-set(BUILD_CMD "${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS} BUILDMODE=shared HOST=${HOST} CC=\"${CC}\" CFLAGS=\"${CFLAGS} -O3\"")
+set(BUILD_CMD sh -c "${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS} BUILDMODE=shared HOST=${HOST} CC=\"${CC}\" CFLAGS=\"${CFLAGS} -O3\"")
 set(BUILD_CMD "${BUILD_CMD} CXX=\"${CXX}\" CXXFLAGS=\"${CXXFLAGS}\" AR=\"${AR}\" RANLIB=\"${RANLIB}\" ZLIB=${ZLIB}")
 set(BUILD_CMD "${BUILD_CMD} TESSERACT_DIR=${TESSERACT_DIR} LEPTONICA_DIR=${LEPTONICA_DIR}")
 set(BUILD_CMD "${BUILD_CMD} LEPT_CFLAGS=\"${CFLAGS} -I${ZLIB_DIR} -I${PNG_DIR}/include\"")
 set(BUILD_CMD "${BUILD_CMD} LEPT_LDFLAGS=\"${LDFLAGS} -L${ZLIB_DIR} -L${PNG_DIR}/lib\"")
 if ($ENV{DARWIN})
     set(BUILD_CMD "${BUILD_CMD} STDCPPLIB=\"${STDCPPLIB}\" ZLIB_LDFLAGS=\"-L${ZLIB_DIR}\"")
-    set(BUILD_CMD sh -c "${BUILD_CMD} PNG_LDFLAGS=\"-L${PNG_DIR}/lib\" all")
+    set(BUILD_CMD "${BUILD_CMD} PNG_LDFLAGS=\"-L${PNG_DIR}/lib\" all")
 else()
     set(BUILD_CMD "${BUILD_CMD} STDCPPLIB=\"${STDCPPLIB}\" ZLIB_LDFLAGS=\"-Wl,-rpath-link,${ZLIB_DIR}\"")
-    set(BUILD_CMD sh -c "${BUILD_CMD} PNG_LDFLAGS=\"-Wl,-rpath-link,${PNG_DIR}/lib\" all")
+    set(BUILD_CMD "${BUILD_CMD} PNG_LDFLAGS=\"-Wl,-rpath-link,${PNG_DIR}/lib\" all")
 endif()
 
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
     https://github.com/koreader/libk2pdfopt.git
-    17dec7daed933607a259ac25012d0773dbdbf28e
+    f28a9afc58dccabcc34b3dc21f9aa101c10aa9f6
     ${SOURCE_DIR}
 )
 

@@ -1,8 +1,6 @@
 local ffi = require("ffi")
 
 ffi.cdef[[
-typedef unsigned int size_t;
-typedef int ssize_t;
 typedef long int off_t;
 struct timeval {
   long int tv_sec;

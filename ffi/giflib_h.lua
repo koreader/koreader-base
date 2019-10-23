@@ -15,7 +15,7 @@ typedef struct ColorMapObject ColorMapObject;
 struct ColorMapObject {
   int ColorCount;
   int BitsPerPixel;
-  _Bool SortFlag;
+  bool SortFlag;
   GifColorType *Colors;
 };
 typedef struct GifImageDesc GifImageDesc;
@@ -24,7 +24,7 @@ struct GifImageDesc {
   GifWord Top;
   GifWord Width;
   GifWord Height;
-  _Bool Interlace;
+  bool Interlace;
   ColorMapObject *ColorMap;
 };
 typedef struct ExtensionBlock ExtensionBlock;
@@ -36,7 +36,7 @@ struct ExtensionBlock {
 typedef struct GraphicsControlBlock GraphicsControlBlock;
 struct GraphicsControlBlock {
   int DisposalMode;
-  _Bool UserInputFlag;
+  bool UserInputFlag;
   int DelayTime;
   int TransparentColor;
 };

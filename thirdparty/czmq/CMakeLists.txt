@@ -34,9 +34,9 @@ set(SED_CMD1 sh -c "${ISED} 's|^hardcode_libdir_flag_spec=.*|hardcode_libdir_fla
 set(SED_CMD2 sh -c "${ISED} 's|^runpath_var=LD_RUN_PATH|runpath_var=DIE_RPATH_DIE|g' libtool")
 
 # patch: ignore limited broadcast address
-set(PATCH_CMD1 sh -c "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/zbeacon.patch")
+set(PATCH_CMD1 "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/zbeacon.patch")
 # patch: add _DEFAULT_SOURCE define for glibc starting at version 2.20
-set(PATCH_CMD2 sh -c "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/czmq_default_source_define.patch")
+set(PATCH_CMD2 "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/czmq_default_source_define.patch")
 
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME

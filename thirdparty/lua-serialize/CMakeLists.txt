@@ -12,7 +12,7 @@ assert_var_defined(OUTPUT_DIR)
 
 ep_get_source_dir(SOURCE_DIR)
 
-set(PATCH_CMD sh -c "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/lua-serialize-lto.patch")
+set(PATCH_CMD "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/lua-serialize-lto.patch")
 
 set(BUILD_CMD sh -c "${KO_MAKE_RECURSIVE} -j1 CC=\"${CC}\" LDFLAGS=\"${LDFLAGS}\" OUTPUT_DIR=\"${OUTPUT_DIR}\"")
 

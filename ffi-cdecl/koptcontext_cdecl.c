@@ -1,4 +1,4 @@
-// CPPFLAGS="-I../koreader-base/ -I../koreader-base/thirdparty/libk2pdfopt/libk2pdfopt/k2pdfoptlib -I../koreader-base/thirdparty/libk2pdfopt/libk2pdfopt -I../koreader-base/thirdparty/libk2pdfopt/libk2pdfopt/willuslib -I../koreader-base/thirdparty/libk2pdfopt/libk2pdfopt/include_mod -I../koreader-base/thirdparty/leptonica/leptonica/src -I/usr/include/luajit-2.0" ./ffi-cdecl ...
+// CPPFLAGS="-I../koreader-base/ -I/var/tmp/niluje/libk2pdfopt/k2pdfoptlib -I/var/tmp/niluje/libk2pdfopt -I/var/tmp/niluje/libk2pdfopt/willuslib -I/var/tmp/niluje/libk2pdfopt/include_mod -I/var/tmp/niluje/leptonica/src -I/usr/include/luajit-2.0"
 //#include "alltypes.h"
 #include "koptcontext.h"
 #include "koptreflow.h"

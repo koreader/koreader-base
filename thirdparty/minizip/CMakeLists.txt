@@ -17,7 +17,7 @@ ep_get_source_dir(SOURCE_DIR)
 
 # NOTE: 53a657318af1fccc4bac7ed230729302b2391d1d is the tip of the 1.2 branch. The fcrypt API we need is gone in master.
 # FIXME: Even then, something in said branch seems to upset MuPDF with our custom patch as-is, so keep using the old code...
-#set(PATCH_CMD sh -c "patch -N -p1 -i ${CMAKE_CURRENT_SOURCE_DIR}/minizip-libaes-makefile.patch")
+#set(PATCH_CMD "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/minizip-libaes-makefile.patch")
 
 set(PATCH_CMD sh -c "${ISED} \"s|^CC=|#CC=|g\" aes/Makefile && ${ISED} \"s|^CFLAGS=|#CFLAGS=|g\" aes/Makefile")
 set(BUILD_CMD_STR -j${PARALLEL_JOBS} -C aes CC=${CC} LDFLAGS=${LDFLAGS} AR=${AR} RANLIB=${RANLIB})
@@ -34,7 +34,7 @@ ExternalProject_Add(
     ${PROJECT_NAME}
     DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
     BUILD_IN_SOURCE 1
-    PATCH_COMMAND ${PATCH_CMD}
+    PATCH_COMMAND COMMAND ${PATCH_CMD}
     CONFIGURE_COMMAND ""
     BUILD_COMMAND ${KO_MAKE_RECURSIVE} ${BUILD_CMD_STR}
     # skip install

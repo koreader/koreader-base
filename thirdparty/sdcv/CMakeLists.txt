@@ -65,7 +65,7 @@ set(ENABLE_NLS False CACHE BOOL "")
 set(WITH_READLINE False CACHE BOOL "")
 
 # Force utf8 command line parsing, and accept not-found -u dictnames
-set(PATCH_CMD "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/sdcv.patch")
+set(PATCH_CMD "${KO_PATCH_SH} ${CMAKE_CURRENT_SOURCE_DIR}/sdcv.patch")
 
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
@@ -74,7 +74,6 @@ ko_write_gitclone_script(
     ${SOURCE_DIR}
 )
 
-include(DownloadProject)
 download_project(
     PROJ ${PROJECT_NAME}
     GIT_REPOSITORY
