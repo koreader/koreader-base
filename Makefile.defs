@@ -444,7 +444,7 @@ ifeq "$(CC_IS_CLANG)" "0"
 	endif
 else
 	# NOTE: Enforce the current default everywhere, otherwise XCode does stupid things on Darwin.
-	#       c.f., https://clang.llvm.org/docs/UsersManual.html#differences-between-various-standard-modes
+	#       c.f., https://clang.llvm.org/docs/CommandGuide/clang.html#language-selection-and-mode-options
 	#          &  https://github.com/llvm/llvm-project/blob/1c4b5a8dfed853ca8cbee98f274ff0a173186586/clang/lib/Frontend/CompilerInvocation.cpp#L2136-L2164
 	#       FWIW, the C++ move to gnu++14 by default dates back to Clang 6:
 	#       c.f., https://github.com/llvm-mirror/clang/commit/466d8da5f89b1a780f735c86f414fa69ce63221b
