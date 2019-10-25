@@ -155,5 +155,7 @@ set (CRENGINE_SOURCES
     ${CRE_DIR}/src/xxhash.c
 )
 add_library(crengine SHARED ${CRENGINE_SOURCES})
+# Make sure we'll get C++11 support
+target_compile_features(crengine PRIVATE cxx_constexpr)
 
 target_link_libraries(crengine chmlib antiword ${THIRDPARTY_LIBS})
