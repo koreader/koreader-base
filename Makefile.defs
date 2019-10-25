@@ -449,7 +449,7 @@ else
 		CSTD_FLAGS:=-std=c11
 		CXXSTD_FLAGS:=-std=c++11
 	else
-		# Keep GNU extensions enabled on Linux (mainly because the CI's Clang version sucks so very hard).
+		# Keep GNU extensions enabled on Linux, otherwise Clang < 9 fails to build LuaJIT.
 		CSTD_FLAGS:=-std=gnu11
 		CXXSTD_FLAGS:=-std=gnu++11
 	endif
