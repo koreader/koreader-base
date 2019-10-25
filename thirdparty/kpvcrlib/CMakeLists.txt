@@ -5,12 +5,6 @@ enable_language(C CXX ASM)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/../cmake_modules")
 include("koreader_thirdparty_common")
 
-# Let CMake make sure we'll get C++11 support...
-set(
-    needed_features
-    cxx_constexpr
-)
-
 set(CMAKE_ASM_COMPILER ${CMAKE_CXX_COMPILER})
 set(CMAKE_ASM_COMPILER_ARG1 ${CMAKE_CXX_COMPILER_ARG1})
 set(CMAKE_ASM_FLAGS ${CMAKE_CXX_FLAGS})
@@ -161,5 +155,7 @@ set (CRENGINE_SOURCES
     ${CRE_DIR}/src/xxhash.c
 )
 add_library(crengine SHARED ${CRENGINE_SOURCES})
+# Make sure we'll get C++11 support
+target_compile_features(crengine PRIVATE cxx_constexpr)
 
 target_link_libraries(crengine chmlib antiword ${THIRDPARTY_LIBS})
