@@ -442,6 +442,11 @@ ifeq "$(CC_IS_CLANG)" "0"
 		CSTD_FLAGS:=-std=gnu11
 		CXXSTD_FLAGS:=-std=gnu++11
 	endif
+else
+	# NOTE: Clang's default std value is... iffy. It appears to behave on Linux, but not on Darwin.
+	#       https://clang.llvm.org/cxx_status.html
+	CSTD_FLAGS:=-std=c11
+	CXXSTD_FLAGS:=-std=c++11
 endif
 
 HOSTCFLAGS:=$(HOST_ARCH) $(BASE_CFLAGS) $(QFLAGS)
