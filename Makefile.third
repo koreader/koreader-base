@@ -83,7 +83,7 @@ $(AES_LIB): $(THIRDPARTY_DIR)/minizip/CMakeLists.txt
 
 # by default, mupdf compiles to a static library:
 # we generate a dynamic library from the static library:
-$(MUPDF_LIB) $(MUPDF_DIR)/include: $(JPEG_LIB) \
+$(MUPDF_LIB) $(MUPDF_DIR)/include:: $(JPEG_LIB) \
 		$(FREETYPE_LIB) $(FREETYPE_DIR)/include \
 		$(HARFBUZZ_LIB) $(HARFBUZZ_DIR)/include \
 		$(ZLIB) $(AES_LIB) $(THIRDPARTY_DIR)/mupdf/CMakeLists.txt
@@ -104,9 +104,13 @@ $(MUPDF_LIB) $(MUPDF_DIR)/include: $(JPEG_LIB) \
 		-DHARFBUZZ_LIB=$(CURDIR)/$(HARFBUZZ_LIB) \
 		$(CURDIR)/$(THIRDPARTY_DIR)/mupdf && \
 		$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS)
+
+$(MUPDF_LIB)::
 ifdef DARWIN
-	install_name_tool -change @rpath/libjpeg.8.dylib \
-		libs/libjpeg.8.dylib $(MUPDF_LIB)
+	install_name_tool -change \
+		$(shell otool -L "$@" | grep "$(notdir $(JPEG_LIB)) " | awk '{print $$1}') \
+		libs/$(notdir $(JPEG_LIB)) \
+		$@
 endif
 
 $(LODEPNG_LIB) $(LODEPNG_DIR): $(THIRDPARTY_DIR)/lodepng/CMakeLists.txt
@@ -221,7 +225,7 @@ $(TESSERACT_DIR): $(THIRDPARTY_DIR)/tesseract/CMakeLists.txt
 		$(CMAKE) $(CMAKE_FLAGS) $(CURDIR)/$(THIRDPARTY_DIR)/tesseract && \
 		$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS)
 
-$(K2PDFOPT_LIB) $(LEPTONICA_LIB) $(TESSERACT_LIB): $(PNG_LIB) $(ZLIB) \
+$(K2PDFOPT_LIB) $(LEPTONICA_LIB) $(TESSERACT_LIB):: $(PNG_LIB) $(ZLIB) \
 		$(THIRDPARTY_DIR)/libk2pdfopt/CMakeLists.txt \
 		$(TESSERACT_DIR) $(LEPTONICA_DIR)
 	install -d $(K2PDFOPT_BUILD_DIR)
@@ -236,9 +240,13 @@ $(K2PDFOPT_LIB) $(LEPTONICA_LIB) $(TESSERACT_LIB): $(PNG_LIB) $(ZLIB) \
 	cp -fL $(K2PDFOPT_DIR)/$(notdir $(K2PDFOPT_LIB)) $(K2PDFOPT_LIB)
 	cp -fL $(K2PDFOPT_DIR)/$(notdir $(LEPTONICA_LIB)) $(LEPTONICA_LIB)
 	cp -fL $(K2PDFOPT_DIR)/$(notdir $(TESSERACT_LIB)) $(TESSERACT_LIB)
+
+$(K2PDFOPT_LIB)::
 ifdef DARWIN
-	install_name_tool -change /usr/local/lib/$(notdir $(TESSERACT_LIB)) \
-		libs/$(notdir $(TESSERACT_LIB)) $(K2PDFOPT_LIB)
+	install_name_tool -change \
+		$(shell otool -L "$@" | grep "$(notdir $(TESSERACT_LIB)) " | awk '{print $$1}') \
+		libs/$(notdir $(TESSERACT_LIB)) \
+		$@
 endif
 
 # ===========================================================================
@@ -471,17 +479,21 @@ $(OPENSSL_LIB) $(OPENSSL_DIR): $(THIRDPARTY_DIR)/openssl/CMakeLists.txt
 		$(CURDIR)/$(THIRDPARTY_DIR)/openssl && \
 		$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS)
 
-$(SSL_LIB): $(OPENSSL_LIB)
+$(SSL_LIB):: $(OPENSSL_LIB)
 	cp -fL $(OPENSSL_DIR)/$(notdir $(SSL_LIB)) $(SSL_LIB)
 	cp -fL $(OPENSSL_DIR)/$(notdir $(CRYPTO_LIB)) $(CRYPTO_LIB)
+
+$(SSL_LIB)::
 ifdef DARWIN
-	install_name_tool -change /usr/local/ssl/lib/$(notdir $(CRYPTO_LIB)) \
-		libs/$(notdir $(CRYPTO_LIB)) $(SSL_LIB)
+	install_name_tool -change \
+		$(shell otool -L "$@" | grep "$(notdir $(CRYPTO_LIB)) " | awk '{print $$1}') \
+		libs/$(notdir $(CRYPTO_LIB)) \
+		$@
 endif
 
 # ssl.so locates in koreader/common, but libssl.so and libcrypto.so live
 # in koreader/libs, so we need to set rpath accordingly
-$(LUASEC): $(SSL_LIB) $(THIRDPARTY_DIR)/luasec/CMakeLists.txt
+$(LUASEC):: $(SSL_LIB) $(THIRDPARTY_DIR)/luasec/CMakeLists.txt
 	install -d $(LUASEC_BUILD_DIR)
 	-rm -f $(LUASEC_DIR)/../luasec-stamp/luasec-install
 	cd $(LUASEC_BUILD_DIR) && \
@@ -493,11 +505,17 @@ $(LUASEC): $(SSL_LIB) $(THIRDPARTY_DIR)/luasec/CMakeLists.txt
 		-DLUAPATH="$(CURDIR)/$(OUTPUT_DIR)/common" \
 		$(CURDIR)/$(THIRDPARTY_DIR)/luasec && \
 		$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS)
+
+$(LUASEC)::
 ifdef DARWIN
-	install_name_tool -change /usr/local/ssl/lib/$(notdir $(CRYPTO_LIB)) \
-		libs/$(notdir $(CRYPTO_LIB)) $(OUTPUT_DIR)/common/ssl.so
-	install_name_tool -change /usr/local/ssl/lib/$(notdir $(SSL_LIB)) \
-		libs/$(notdir $(SSL_LIB)) $(OUTPUT_DIR)/common/ssl.so
+	install_name_tool -change \
+		$(shell otool -L "$(OUTPUT_DIR)/common/ssl.so" | grep "$(notdir $(CRYPTO_LIB)) " | awk '{print $$1}') \
+		libs/$(notdir $(CRYPTO_LIB)) \
+		$(OUTPUT_DIR)/common/ssl.so
+	install_name_tool -change \
+		$(shell otool -L "$(OUTPUT_DIR)/common/ssl.so" | grep "$(notdir $(SSL_LIB)) " | awk '{print $$1}') \
+		libs/$(notdir $(SSL_LIB)) \
+		$(OUTPUT_DIR)/common/ssl.so
 endif
 
 $(LUASERIAL_LIB): $(THIRDPARTY_DIR)/lua-serialize/CMakeLists.txt
