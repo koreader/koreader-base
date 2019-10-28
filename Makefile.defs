@@ -835,8 +835,8 @@ DYNLIB_CXXFLAGS=-L$(CURDIR)/$(OUTPUT_DIR)/libs $(CXXFLAGS) -I$(LUAJIT_DIR)/src -
 DYNLIB_CMAKE_CFLAGS=-L$(CURDIR)/$(OUTPUT_DIR)/libs $(CFLAGS) -I$(LUAJIT_DIR)/src -shared
 DYNLIB_CMAKE_CXXFLAGS=-L$(CURDIR)/$(OUTPUT_DIR)/libs $(CXXFLAGS) -I$(LUAJIT_DIR)/src -shared
 ifdef DARWIN
-	DYNLIB_CFLAGS+=-dynamiclib -undefined dynamic_lookup
-	DYNLIB_CXXFLAGS+=-dynamiclib -undefined dynamic_lookup
+	DYNLIB_CFLAGS+=-dylib -undefined dynamic_lookup
+	DYNLIB_CXXFLAGS+=-dylib -undefined dynamic_lookup
 else
 	DYNLIB_CFLAGS+=-Wl,-E -Wl,-rpath,'$$ORIGIN'
 	DYNLIB_CXXFLAGS+=-Wl,-E -Wl,-rpath,'$$ORIGIN'
@@ -848,8 +848,8 @@ endif
 ORIGIN_CMAKE_TO_AUTOCFG=\\\$$\\\$$ORIGIN
 
 ifdef DARWIN
-	DYNLIB_CMAKE_CFLAGS+=-dynamiclib -undefined dynamic_lookup
-	DYNLIB_CMAKE_CXXFLAGS+=-dynamiclib -undefined dynamic_lookup
+	DYNLIB_CMAKE_CFLAGS+=-dylib -undefined dynamic_lookup
+	DYNLIB_CMAKE_CXXFLAGS+=-dylib -undefined dynamic_lookup
 else
 	DYNLIB_CMAKE_CFLAGS+=-Wl,-E -Wl,-rpath,'$(ORIGIN_CMAKE_TO_AUTOCFG)'
 	DYNLIB_CMAKE_CXXFLAGS+=-Wl,-E -Wl,-rpath,'$(ORIGIN_CMAKE_TO_AUTOCFG)'
