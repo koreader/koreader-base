@@ -78,6 +78,14 @@ ifdef DARWIN
 		$@
 endif
 
+$(TURBOJPEG_LIB)::
+ifdef DARWIN
+	install_name_tool -change \
+		$(shell otool -L "$@" | grep "$(notdir $(TURBOJPEG_LIB)) " | awk '{print $$1}') \
+		libs/$(notdir $(TURBOJPEG_LIB)) \
+		$@
+endif
+
 $(PNG_LIB): $(ZLIB) $(THIRDPARTY_DIR)/libpng/CMakeLists.txt
 	install -d $(PNG_BUILD_DIR)
 	cd $(PNG_BUILD_DIR) && \
@@ -285,6 +293,10 @@ $(K2PDFOPT_LIB) $(LEPTONICA_LIB) $(TESSERACT_LIB):: $(PNG_LIB) $(ZLIB) \
 
 $(K2PDFOPT_LIB)::
 ifdef DARWIN
+	install_name_tool -change \
+		$(shell otool -L "$@" | grep "$(notdir $(K2PDFOPT_LIB)) " | awk '{print $$1}') \
+		libs/$(notdir $(K2PDFOPT_LIB)) \
+		$@
 	install_name_tool -change \
 		$(shell otool -L "$@" | grep "$(notdir $(TESSERACT_LIB)) " | awk '{print $$1}') \
 		libs/$(notdir $(TESSERACT_LIB)) \

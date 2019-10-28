@@ -159,9 +159,17 @@ endif
 $(OUTPUT_DIR)/libs/libblitbuffer.so: blitbuffer.c
 	$(CC) $(DYNLIB_CFLAGS) $(VECTO_CFLAGS) -o $@ $^
 
-$(OUTPUT_DIR)/libs/libwrap-mupdf.so: wrap-mupdf.c \
+$(OUTPUT_DIR)/libs/libwrap-mupdf.so:: wrap-mupdf.c \
 			$(MUPDF_LIB)
 	$(CC) -I$(MUPDF_DIR)/include $(DYNLIB_CFLAGS) -o $@ $^
+
+$(OUTPUT_DIR)/libs/libwrap-mupdf.so::
+ifdef DARWIN
+	install_name_tool -change \
+		$(shell otool -L "$@" | grep "libwrap-mupdf.so " | awk '{print $$1}') \
+		libs/libwrap-mupdf.so \
+		$@
+endif
 
 $(OUTPUT_DIR)/libs/libXss.so.1: libxss-dummy.c
 	$(CC) $(DYNLIB_CFLAGS) -o $@ $^
