@@ -245,7 +245,7 @@ endif
 $(LUAJIT_LIB)::
 ifdef DARWIN
 	install_name_tool -change \
-		$(shell otool -L "$@" | grep "libluajit" | awk '{print $$1}') \
+		$(shell otool -L "$@" | grep "libluajit" | tail -n1 | awk '{print $$1}') \
 		libs/$(notdir $(LUAJIT_LIB)) \
 		$@
 endif
