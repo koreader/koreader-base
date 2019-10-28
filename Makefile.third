@@ -243,10 +243,12 @@ endif
 	$(RCP) -fL $(LUAJIT_DIR)/src/jit $(OUTPUT_DIR)
 
 $(LUAJIT_LIB)::
+ifdef DARWIN
 	install_name_tool -change \
 		$(shell otool -L "$@" | grep "libluajit" | awk '{print $$1}') \
 		libs/$(notdir $(LUAJIT_LIB)) \
 		$@
+endif
 
 $(POPEN_NOSHELL_LIB): $(THIRDPARTY_DIR)/popen-noshell/CMakeLists.txt
 	install -d $(POPEN_NOSHELL_BUILD_DIR)
