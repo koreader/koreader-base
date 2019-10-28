@@ -100,10 +100,18 @@ $(OUTPUT_DIR)/libs/libkoreader-input.so: input/*.c input/*.h $(if $(KINDLE),$(PO
 		$(if $(KINDLE),$(POPEN_NOSHELL_LIB),) \
 		$(if $(POCKETBOOK),-linkview,)
 
-$(OUTPUT_DIR)/libs/libkoreader-lfs.so: \
+$(OUTPUT_DIR)/libs/libkoreader-lfs.so:: \
 			$(if $(USE_LUAJIT_LIB),$(LUAJIT_LIB),) \
 			luafilesystem/src/lfs.c
 	$(CC) $(DYNLIB_CFLAGS) -o $@ $^
+
+$(OUTPUT_DIR)/libs/libkoreader-lfs.so::
+ifdef DARWIN
+	install_name_tool -change \
+		$(shell otool -L "$@" | grep "libluajit" | awk '{print $$1}') \
+		libs/$(notdir $(LUAJIT_LIB)) \
+		$@
+endif
 
 # put all the libs to the end of compile command to make ubuntu's tool chain
 # happy
