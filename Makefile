@@ -113,21 +113,37 @@ $(OUTPUT_DIR)/libs/libkoreader-djvu.so: djvu.c \
 	$(CC) -I$(DJVULIBRE_DIR) -I$(MUPDF_DIR)/include $(K2PDFOPT_CFLAGS) \
 		$(DYNLIB_CFLAGS) -o $@ $^ $(if $(ANDROID),,-lpthread)
 ifdef DARWIN
-	install_name_tool -change /usr/local/lib/$(notdir $(DJVULIBRE_LIB)) \
-		libs/$(notdir $(DJVULIBRE_LIB)) $@
-	install_name_tool -change $(notdir $(K2PDFOPT_LIB)) \
-		libs/$(notdir $(K2PDFOPT_LIB)) $@
+	install_name_tool -change \
+		$(shell otool -L "$(CURDIR)/$@" | grep "libluajit" | awk '{print $1}') \
+		libs/$(notdir $(LUAJIT_LIB)) \
+		$@
+	install_name_tool -change \
+		$(shell otool -L "$(CURDIR)/$@" | grep "$(notdir $(DJVULIBRE_LIB)) " | awk '{print $1}') \
+		libs/$(notdir $(DJVULIBRE_LIB)) \
+		$@
+	install_name_tool -change \
+		$(shell otool -L "$(CURDIR)/$@" | grep "$(notdir $(K2PDFOPT_LIB)) " | awk '{print $1}') \
+		libs/$(notdir $(K2PDFOPT_LIB)) \
+		$@
 endif
 
-$(OUTPUT_DIR)/libs/libkoreader-cre.so: cre.cpp \
+$(OUTPUT_DIR)/libs/libkoreader-cre.so:: cre.cpp \
 			$(if $(USE_LUAJIT_LIB),$(LUAJIT_LIB),) \
 			$(CRENGINE_LIB)
 	$(CXX) -I$(CRENGINE_SRC_DIR)/crengine/include/ $(DYNLIB_CXXFLAGS) \
 		-DLDOM_USE_OWN_MEM_MAN=$(if $(WIN32),0,1) \
 		$(if $(WIN32),-DQT_GL=1) -static-libstdc++ -o $@ $^
+
+$(OUTPUT_DIR)/libs/libkoreader-cre.so::
 ifdef DARWIN
-	install_name_tool -change $(notdir $(CRENGINE_LIB)) \
-		libs/$(notdir $(CRENGINE_LIB)) $@
+	install_name_tool -change \
+		$(shell otool -L "$@" | grep "libluajit" | awk '{print $$1}') \
+		libs/$(notdir $(LUAJIT_LIB)) \
+		$@
+	install_name_tool -change \
+		$(shell otool -L "$@" | grep "$(notdir $(CRENGINE_LIB)) " | awk '{print $$1}') \
+		libs/$(notdir $(CRENGINE_LIB)) \
+		$@
 endif
 
 $(OUTPUT_DIR)/libs/libblitbuffer.so: blitbuffer.c
