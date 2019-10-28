@@ -107,22 +107,24 @@ $(OUTPUT_DIR)/libs/libkoreader-lfs.so: \
 
 # put all the libs to the end of compile command to make ubuntu's tool chain
 # happy
-$(OUTPUT_DIR)/libs/libkoreader-djvu.so: djvu.c \
+$(OUTPUT_DIR)/libs/libkoreader-djvu.so:: djvu.c \
 			$(if $(USE_LUAJIT_LIB),$(LUAJIT_LIB),) \
 			$(DJVULIBRE_LIB) $(K2PDFOPT_LIB)
 	$(CC) -I$(DJVULIBRE_DIR) -I$(MUPDF_DIR)/include $(K2PDFOPT_CFLAGS) \
 		$(DYNLIB_CFLAGS) -o $@ $^ $(if $(ANDROID),,-lpthread)
+
+$(OUTPUT_DIR)/libs/libkoreader-djvu.so::
 ifdef DARWIN
 	install_name_tool -change \
-		$(shell otool -L "$(CURDIR)/$@" | grep "libluajit" | awk '{print $1}') \
+		$(shell otool -L "$@" | grep "libluajit" | awk '{print $$1}') \
 		libs/$(notdir $(LUAJIT_LIB)) \
 		$@
 	install_name_tool -change \
-		$(shell otool -L "$(CURDIR)/$@" | grep "$(notdir $(DJVULIBRE_LIB)) " | awk '{print $1}') \
+		$(shell otool -L "$@" | grep "$(notdir $(DJVULIBRE_LIB)) " | awk '{print $$1}') \
 		libs/$(notdir $(DJVULIBRE_LIB)) \
 		$@
 	install_name_tool -change \
-		$(shell otool -L "$(CURDIR)/$@" | grep "$(notdir $(K2PDFOPT_LIB)) " | awk '{print $1}') \
+		$(shell otool -L "$@" | grep "$(notdir $(K2PDFOPT_LIB)) " | awk '{print $$1}') \
 		libs/$(notdir $(K2PDFOPT_LIB)) \
 		$@
 endif
