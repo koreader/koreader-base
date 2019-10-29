@@ -100,58 +100,52 @@ $(OUTPUT_DIR)/libs/libkoreader-input.so: input/*.c input/*.h $(if $(KINDLE),$(PO
 		$(if $(KINDLE),$(POPEN_NOSHELL_LIB),) \
 		$(if $(POCKETBOOK),-linkview,)
 
-$(OUTPUT_DIR)/libs/libkoreader-lfs.so:: \
+$(OUTPUT_DIR)/libs/libkoreader-lfs.so: \
 			$(if $(USE_LUAJIT_LIB),$(LUAJIT_LIB),) \
 			luafilesystem/src/lfs.c
 	$(CC) $(DYNLIB_CFLAGS) -o $@ $^
-
-$(OUTPUT_DIR)/libs/libkoreader-lfs.so::
 ifdef DARWIN
 	install_name_tool -change \
-		$(shell otool -L "$@" | grep "libluajit" | awk '{print $$1}') \
+		`otool -L "$@" | grep "libluajit" | awk '{print $$1}'` \
 		libs/$(notdir $(LUAJIT_LIB)) \
 		$@
 endif
 
 # put all the libs to the end of compile command to make ubuntu's tool chain
 # happy
-$(OUTPUT_DIR)/libs/libkoreader-djvu.so:: djvu.c \
+$(OUTPUT_DIR)/libs/libkoreader-djvu.so: djvu.c \
 			$(if $(USE_LUAJIT_LIB),$(LUAJIT_LIB),) \
 			$(DJVULIBRE_LIB) $(K2PDFOPT_LIB)
 	$(CC) -I$(DJVULIBRE_DIR) -I$(MUPDF_DIR)/include $(K2PDFOPT_CFLAGS) \
 		$(DYNLIB_CFLAGS) -o $@ $^ $(if $(ANDROID),,-lpthread)
-
-$(OUTPUT_DIR)/libs/libkoreader-djvu.so::
 ifdef DARWIN
 	install_name_tool -change \
-		$(shell otool -L "$@" | grep "libluajit" | awk '{print $$1}') \
+		`otool -L "$@" | grep "libluajit" | awk '{print $$1}'` \
 		libs/$(notdir $(LUAJIT_LIB)) \
 		$@
 	install_name_tool -change \
-		$(shell otool -L "$@" | grep "$(notdir $(DJVULIBRE_LIB)) " | awk '{print $$1}') \
+		`otool -L "$@" | grep "$(notdir $(DJVULIBRE_LIB)) " | awk '{print $$1}'` \
 		libs/$(notdir $(DJVULIBRE_LIB)) \
 		$@
 	install_name_tool -change \
-		$(shell otool -L "$@" | grep "$(notdir $(K2PDFOPT_LIB)) " | awk '{print $$1}') \
+		`otool -L "$@" | grep "$(notdir $(K2PDFOPT_LIB)) " | awk '{print $$1}'` \
 		libs/$(notdir $(K2PDFOPT_LIB)) \
 		$@
 endif
 
-$(OUTPUT_DIR)/libs/libkoreader-cre.so:: cre.cpp \
+$(OUTPUT_DIR)/libs/libkoreader-cre.so: cre.cpp \
 			$(if $(USE_LUAJIT_LIB),$(LUAJIT_LIB),) \
 			$(CRENGINE_LIB)
 	$(CXX) -I$(CRENGINE_SRC_DIR)/crengine/include/ $(DYNLIB_CXXFLAGS) \
 		-DLDOM_USE_OWN_MEM_MAN=$(if $(WIN32),0,1) \
 		$(if $(WIN32),-DQT_GL=1) -static-libstdc++ -o $@ $^
-
-$(OUTPUT_DIR)/libs/libkoreader-cre.so::
 ifdef DARWIN
 	install_name_tool -change \
-		$(shell otool -L "$@" | grep "libluajit" | awk '{print $$1}') \
+		`otool -L "$@" | grep "libluajit" | awk '{print $$1}'` \
 		libs/$(notdir $(LUAJIT_LIB)) \
 		$@
 	install_name_tool -change \
-		$(shell otool -L "$@" | grep "$(notdir $(CRENGINE_LIB)) " | awk '{print $$1}') \
+		`otool -L "$@" | grep "$(notdir $(CRENGINE_LIB)) " | awk '{print $$1}'` \
 		libs/$(notdir $(CRENGINE_LIB)) \
 		$@
 endif
@@ -159,11 +153,9 @@ endif
 $(OUTPUT_DIR)/libs/libblitbuffer.so: blitbuffer.c
 	$(CC) $(DYNLIB_CFLAGS) $(VECTO_CFLAGS) -o $@ $^
 
-$(OUTPUT_DIR)/libs/libwrap-mupdf.so:: wrap-mupdf.c \
+$(OUTPUT_DIR)/libs/libwrap-mupdf.so: wrap-mupdf.c \
 			$(MUPDF_LIB)
 	$(CC) -I$(MUPDF_DIR)/include $(DYNLIB_CFLAGS) -o $@ $^
-
-$(OUTPUT_DIR)/libs/libwrap-mupdf.so::
 ifdef DARWIN
 	install_name_tool -id \
 		libs/libwrap-mupdf.so \
