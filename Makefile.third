@@ -674,6 +674,9 @@ $(TURBO_FFI_WRAP_LIB):: $(SSL_LIB) $(THIRDPARTY_DIR)/turbo/CMakeLists.txt
 
 $(TURBO_FFI_WRAP_LIB)::
 ifdef DARWIN
+	install_name_tool -id \
+		common/$(notdir $(TURBO_FFI_WRAP_LIB)) \
+		$@
 	install_name_tool -change \
 		$(shell otool -L "$@" | grep "$(notdir $(CRYPTO_LIB)) " | awk '{print $$1}') \
 		libs/$(notdir $(CRYPTO_LIB)) \
