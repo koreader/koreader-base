@@ -554,9 +554,9 @@ ifdef DARWIN
 		libs/$(notdir $(CRYPTO_LIB)) \
 		$@
 	install_name_tool -change \
-		$(shell otool -L "$(OUTPUT_DIR)/libs/$(notdir $(CRYPTO_LIB))" | grep "$(notdir $(CRYPTO_LIB)) " | awk '{print $$1}') \
+		$(shell otool -L "$(CRYPTO_LIB)" | grep "$(notdir $(CRYPTO_LIB)) " | awk '{print $$1}') \
 		libs/$(notdir $(CRYPTO_LIB)) \
-		$(OUTPUT_DIR)/libs/$(notdir $(CRYPTO_LIB))
+		$(CRYPTO_LIB)
 endif
 
 # ssl.so locates in koreader/common, but libssl.so and libcrypto.so live
