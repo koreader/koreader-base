@@ -81,7 +81,7 @@ endif
 $(TURBOJPEG_LIB)::
 ifdef DARWIN
 	install_name_tool -change \
-		$(shell otool -L "$@" | grep "$(notdir $(TURBOJPEG_LIB)) " | awk '{print $$1}') \
+		$(shell otool -L "$@" | grep "libturbojpeg" | tail -n1 | awk '{print $$1}') \
 		libs/$(notdir $(TURBOJPEG_LIB)) \
 		$@
 endif
