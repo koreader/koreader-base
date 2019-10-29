@@ -210,6 +210,10 @@ $(CRENGINE_LIB):: $(ZLIB) $(PNG_LIB) $(FREETYPE_LIB) $(HARFBUZZ_LIB) $(FRIBIDI_L
 $(CRENGINE_LIB)::
 ifdef DARWIN
 	install_name_tool -change \
+		$(shell otool -L "$@" | grep "$(notdir $(CRENGINE_LIB)) " | awk '{print $$1}') \
+		libs/$(notdir $(CRENGINE_LIB)) \
+		$@
+	install_name_tool -change \
 		$(shell otool -L "$@" | grep "$(notdir $(UTF8PROC_LIB)) " | awk '{print $$1}') \
 		libs/$(notdir $(UTF8PROC_LIB)) \
 		$@
