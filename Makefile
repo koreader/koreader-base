@@ -165,8 +165,7 @@ $(OUTPUT_DIR)/libs/libwrap-mupdf.so:: wrap-mupdf.c \
 
 $(OUTPUT_DIR)/libs/libwrap-mupdf.so::
 ifdef DARWIN
-	install_name_tool -change \
-		$(shell otool -L "$@" | grep "libwrap-mupdf.so " | awk '{print $$1}') \
+	install_name_tool -id \
 		libs/libwrap-mupdf.so \
 		$@
 endif

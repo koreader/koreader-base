@@ -44,8 +44,7 @@ $(UTF8PROC_LIB) $(UTF8PROC_DIR):: $(THIRDPARTY_DIR)/utf8proc/CMakeLists.txt
 
 $(UTF8PROC_LIB)::
 ifdef DARWIN
-	install_name_tool -change \
-		$(shell otool -L "$@" | grep "$(notdir $(UTF8PROC_LIB)) " | awk '{print $$1}') \
+	install_name_tool -id \
 		libs/$(notdir $(UTF8PROC_LIB)) \
 		$@
 endif
@@ -72,16 +71,14 @@ $(TURBOJPEG_LIB) $(JPEG_LIB):: $(THIRDPARTY_DIR)/libjpeg-turbo/CMakeLists.txt
 
 $(JPEG_LIB)::
 ifdef DARWIN
-	install_name_tool -change \
-		$(shell otool -L "$@" | grep "$(notdir $(JPEG_LIB)) " | awk '{print $$1}') \
+	install_name_tool -id \
 		libs/$(notdir $(JPEG_LIB)) \
 		$@
 endif
 
 $(TURBOJPEG_LIB)::
 ifdef DARWIN
-	install_name_tool -change \
-		$(shell otool -L "$@" | grep "libturbojpeg" | tail -n1 | awk '{print $$1}') \
+	install_name_tool -id \
 		libs/$(notdir $(TURBOJPEG_LIB)) \
 		$@
 endif
@@ -169,8 +166,7 @@ $(DJVULIBRE_LIB):: $(JPEG_LIB) $(THIRDPARTY_DIR)/djvulibre/CMakeLists.txt
 
 $(DJVULIBRE_LIB)::
 ifdef DARWIN
-	install_name_tool -change \
-		$(shell otool -L "$@" | grep "$(notdir $(DJVULIBRE_LIB)) " | awk '{print $$1}') \
+	install_name_tool -id \
 		libs/$(notdir $(DJVULIBRE_LIB)) \
 		$@
 endif
@@ -209,8 +205,7 @@ $(CRENGINE_LIB):: $(ZLIB) $(PNG_LIB) $(FREETYPE_LIB) $(HARFBUZZ_LIB) $(FRIBIDI_L
 
 $(CRENGINE_LIB)::
 ifdef DARWIN
-	install_name_tool -change \
-		$(shell otool -L "$@" | grep "$(notdir $(CRENGINE_LIB)) " | awk '{print $$1}') \
+	install_name_tool -id \
 		libs/$(notdir $(CRENGINE_LIB)) \
 		$@
 	install_name_tool -change \
@@ -248,8 +243,7 @@ endif
 
 $(LUAJIT_LIB)::
 ifdef DARWIN
-	install_name_tool -change \
-		$(shell otool -L "$@" | grep "libluajit" | tail -n1 | awk '{print $$1}') \
+	install_name_tool -id \
 		libs/$(notdir $(LUAJIT_LIB)) \
 		$@
 endif
@@ -299,8 +293,7 @@ $(K2PDFOPT_LIB) $(LEPTONICA_LIB) $(TESSERACT_LIB):: $(PNG_LIB) $(ZLIB) \
 
 $(K2PDFOPT_LIB)::
 ifdef DARWIN
-	install_name_tool -change \
-		$(shell otool -L "$@" | grep "$(notdir $(K2PDFOPT_LIB)) " | awk '{print $$1}') \
+	install_name_tool -id \
 		libs/$(notdir $(K2PDFOPT_LIB)) \
 		$@
 	install_name_tool -change \
@@ -545,16 +538,14 @@ $(SSL_LIB):: $(OPENSSL_LIB)
 
 $(SSL_LIB)::
 ifdef DARWIN
-	install_name_tool -change \
-		$(shell otool -L "$@" | grep "$(notdir $(SSL_LIB)) " | awk '{print $$1}') \
+	install_name_tool -id \
 		libs/$(notdir $(SSL_LIB)) \
 		$@
 	install_name_tool -change \
 		$(shell otool -L "$@" | grep "$(notdir $(CRYPTO_LIB)) " | awk '{print $$1}') \
 		libs/$(notdir $(CRYPTO_LIB)) \
 		$@
-	install_name_tool -change \
-		$(shell otool -L "$(CRYPTO_LIB)" | grep "$(notdir $(CRYPTO_LIB)) " | awk '{print $$1}') \
+	install_name_tool -id \
 		libs/$(notdir $(CRYPTO_LIB)) \
 		$(CRYPTO_LIB)
 endif
