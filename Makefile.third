@@ -44,7 +44,7 @@ $(UTF8PROC_LIB) $(UTF8PROC_DIR): $(THIRDPARTY_DIR)/utf8proc/CMakeLists.txt
 ifdef DARWIN
 	install_name_tool -id \
 		libs/$(notdir $(UTF8PROC_LIB)) \
-		$@
+		$(UTF8PROC_LIB)
 endif
 
 $(FRIBIDI_LIB) $(FRIBIDI_DIR): $(THIRDPARTY_DIR)/fribidi/CMakeLists.txt
@@ -69,10 +69,10 @@ $(TURBOJPEG_LIB) $(JPEG_LIB): $(THIRDPARTY_DIR)/libjpeg-turbo/CMakeLists.txt
 ifdef DARWIN
 	install_name_tool -id \
 		libs/$(notdir $(JPEG_LIB)) \
-		$@
+		$(JPEG_LIB)
 	install_name_tool -id \
 		libs/$(notdir $(TURBOJPEG_LIB)) \
-		$@
+		$(TURBOJPEG_LIB)
 endif
 
 $(PNG_LIB): $(ZLIB) $(THIRDPARTY_DIR)/libpng/CMakeLists.txt
@@ -119,9 +119,9 @@ $(MUPDF_LIB) $(MUPDF_DIR)/include: $(JPEG_LIB) \
 		$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS)
 ifdef DARWIN
 	install_name_tool -change \
-		`otool -L "$@" | grep "$(notdir $(JPEG_LIB)) " | awk '{print $$1}'` \
+		`otool -L "$(MUPDF_LIB)" | grep "$(notdir $(JPEG_LIB)) " | awk '{print $$1}'` \
 		libs/$(notdir $(JPEG_LIB)) \
-		$@
+		$(MUPDF_LIB)
 endif
 
 $(LODEPNG_LIB) $(LODEPNG_DIR): $(THIRDPARTY_DIR)/lodepng/CMakeLists.txt
@@ -229,7 +229,7 @@ endif
 ifdef DARWIN
 	install_name_tool -id \
 		libs/$(notdir $(LUAJIT_LIB)) \
-		$@
+		$(LUAJIT_LIB)
 endif
 
 $(POPEN_NOSHELL_LIB): $(THIRDPARTY_DIR)/popen-noshell/CMakeLists.txt
@@ -277,14 +277,14 @@ $(K2PDFOPT_LIB) $(LEPTONICA_LIB) $(TESSERACT_LIB): $(PNG_LIB) $(ZLIB) \
 ifdef DARWIN
 	install_name_tool -id \
 		libs/$(notdir $(K2PDFOPT_LIB)) \
-		$@
+		$(K2PDFOPT_LIB)
 	install_name_tool -change \
-		`otool -L "$@" | grep "$(notdir $(TESSERACT_LIB)) " | awk '{print $$1}'` \
+		`otool -L "$(K2PDFOPT_LIB)" | grep "$(notdir $(TESSERACT_LIB)) " | awk '{print $$1}'` \
 		libs/$(notdir $(TESSERACT_LIB)) \
-		$@
+		$(K2PDFOPT_LIB)
 	install_name_tool -id \
 		libs/$(notdir $(TESSERACT_LIB)) \
-		$@
+		$(TESSERACT_LIB)
 endif
 
 # ===========================================================================
