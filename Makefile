@@ -104,6 +104,12 @@ $(OUTPUT_DIR)/libs/libkoreader-lfs.so: \
 			$(if $(USE_LUAJIT_LIB),$(LUAJIT_LIB),) \
 			luafilesystem/src/lfs.c
 	$(CC) $(DYNLIB_CFLAGS) -o $@ $^
+ifdef DARWIN
+	install_name_tool -change \
+		`otool -L "$@" | grep "libluajit" | awk '{print $$1}'` \
+		libs/$(notdir $(LUAJIT_LIB)) \
+		$@
+endif
 
 # put all the libs to the end of compile command to make ubuntu's tool chain
 # happy
@@ -113,10 +119,18 @@ $(OUTPUT_DIR)/libs/libkoreader-djvu.so: djvu.c \
 	$(CC) -I$(DJVULIBRE_DIR) -I$(MUPDF_DIR)/include $(K2PDFOPT_CFLAGS) \
 		$(DYNLIB_CFLAGS) -o $@ $^ $(if $(ANDROID),,-lpthread)
 ifdef DARWIN
-	install_name_tool -change /usr/local/lib/$(notdir $(DJVULIBRE_LIB)) \
-		libs/$(notdir $(DJVULIBRE_LIB)) $@
-	install_name_tool -change $(notdir $(K2PDFOPT_LIB)) \
-		libs/$(notdir $(K2PDFOPT_LIB)) $@
+	install_name_tool -change \
+		`otool -L "$@" | grep "libluajit" | awk '{print $$1}'` \
+		libs/$(notdir $(LUAJIT_LIB)) \
+		$@
+	install_name_tool -change \
+		`otool -L "$@" | grep "$(notdir $(DJVULIBRE_LIB)) " | awk '{print $$1}'` \
+		libs/$(notdir $(DJVULIBRE_LIB)) \
+		$@
+	install_name_tool -change \
+		`otool -L "$@" | grep "$(notdir $(K2PDFOPT_LIB)) " | awk '{print $$1}'` \
+		libs/$(notdir $(K2PDFOPT_LIB)) \
+		$@
 endif
 
 $(OUTPUT_DIR)/libs/libkoreader-cre.so: cre.cpp \
@@ -126,8 +140,14 @@ $(OUTPUT_DIR)/libs/libkoreader-cre.so: cre.cpp \
 		-DLDOM_USE_OWN_MEM_MAN=$(if $(WIN32),0,1) \
 		$(if $(WIN32),-DQT_GL=1) -static-libstdc++ -o $@ $^
 ifdef DARWIN
-	install_name_tool -change $(notdir $(CRENGINE_LIB)) \
-		libs/$(notdir $(CRENGINE_LIB)) $@
+	install_name_tool -change \
+		`otool -L "$@" | grep "libluajit" | awk '{print $$1}'` \
+		libs/$(notdir $(LUAJIT_LIB)) \
+		$@
+	install_name_tool -change \
+		`otool -L "$@" | grep "$(notdir $(CRENGINE_LIB)) " | awk '{print $$1}'` \
+		libs/$(notdir $(CRENGINE_LIB)) \
+		$@
 endif
 
 $(OUTPUT_DIR)/libs/libblitbuffer.so: blitbuffer.c
@@ -136,6 +156,11 @@ $(OUTPUT_DIR)/libs/libblitbuffer.so: blitbuffer.c
 $(OUTPUT_DIR)/libs/libwrap-mupdf.so: wrap-mupdf.c \
 			$(MUPDF_LIB)
 	$(CC) -I$(MUPDF_DIR)/include $(DYNLIB_CFLAGS) -o $@ $^
+ifdef DARWIN
+	install_name_tool -id \
+		libs/libwrap-mupdf.so \
+		$@
+endif
 
 $(OUTPUT_DIR)/libs/libXss.so.1: libxss-dummy.c
 	$(CC) $(DYNLIB_CFLAGS) -o $@ $^

@@ -41,6 +41,11 @@ $(UTF8PROC_LIB) $(UTF8PROC_DIR): $(THIRDPARTY_DIR)/utf8proc/CMakeLists.txt
 		$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS)
 	cp -fL $(UTF8PROC_DIR)/$(notdir $(UTF8PROC_LIB)) $@
 	chmod 755 $@
+ifdef DARWIN
+	install_name_tool -id \
+		libs/$(notdir $(UTF8PROC_LIB)) \
+		$(UTF8PROC_LIB)
+endif
 
 $(FRIBIDI_LIB) $(FRIBIDI_DIR): $(THIRDPARTY_DIR)/fribidi/CMakeLists.txt
 	install -d $(FRIBIDI_BUILD_DIR)
@@ -61,6 +66,14 @@ $(TURBOJPEG_LIB) $(JPEG_LIB): $(THIRDPARTY_DIR)/libjpeg-turbo/CMakeLists.txt
 		$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS)
 	cp -fL $(JPEG_DIR)/lib/$(notdir $(TURBOJPEG_LIB)) $(TURBOJPEG_LIB)
 	cp -fL $(JPEG_DIR)/lib/$(notdir $(JPEG_LIB)) $(JPEG_LIB)
+ifdef DARWIN
+	install_name_tool -id \
+		libs/$(notdir $(JPEG_LIB)) \
+		$(JPEG_LIB)
+	install_name_tool -id \
+		libs/$(notdir $(TURBOJPEG_LIB)) \
+		$(TURBOJPEG_LIB)
+endif
 
 $(PNG_LIB): $(ZLIB) $(THIRDPARTY_DIR)/libpng/CMakeLists.txt
 	install -d $(PNG_BUILD_DIR)
@@ -105,8 +118,10 @@ $(MUPDF_LIB) $(MUPDF_DIR)/include: $(JPEG_LIB) \
 		$(CURDIR)/$(THIRDPARTY_DIR)/mupdf && \
 		$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS)
 ifdef DARWIN
-	install_name_tool -change @rpath/libjpeg.8.dylib \
-		libs/libjpeg.8.dylib $(MUPDF_LIB)
+	install_name_tool -change \
+		`otool -L "$(MUPDF_LIB)" | grep "$(notdir $(JPEG_LIB)) " | awk '{print $$1}'` \
+		libs/$(notdir $(JPEG_LIB)) \
+		$(MUPDF_LIB)
 endif
 
 $(LODEPNG_LIB) $(LODEPNG_DIR): $(THIRDPARTY_DIR)/lodepng/CMakeLists.txt
@@ -138,6 +153,11 @@ $(DJVULIBRE_LIB): $(JPEG_LIB) $(THIRDPARTY_DIR)/djvulibre/CMakeLists.txt
 		$(CURDIR)/$(THIRDPARTY_DIR)/djvulibre && \
 		$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS)
 	cp -fL $(DJVULIBRE_LIB_DIR)/$(notdir $(DJVULIBRE_LIB)) $(DJVULIBRE_LIB)
+ifdef DARWIN
+	install_name_tool -id \
+		libs/$(notdir $(DJVULIBRE_LIB)) \
+		$@
+endif
 
 # crengine, fetched via GIT as a submodule
 $(CRENGINE_LIB): $(ZLIB) $(PNG_LIB) $(FREETYPE_LIB) $(HARFBUZZ_LIB) $(FRIBIDI_LIB) \
@@ -170,6 +190,19 @@ $(CRENGINE_LIB): $(ZLIB) $(PNG_LIB) $(FREETYPE_LIB) $(HARFBUZZ_LIB) $(FRIBIDI_LI
 		$(CURDIR)/$(THIRDPARTY_DIR)/kpvcrlib && \
 		$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS)
 	cp -fL $(CRENGINE_DIR)/$(notdir $(CRENGINE_LIB)) $(CRENGINE_LIB)
+ifdef DARWIN
+	install_name_tool -id \
+		libs/$(notdir $(CRENGINE_LIB)) \
+		$@
+	install_name_tool -change \
+		`otool -L "$@" | grep "$(notdir $(UTF8PROC_LIB)) " | awk '{print $$1}'` \
+		libs/$(notdir $(UTF8PROC_LIB)) \
+		$@
+	install_name_tool -change \
+		`otool -L "$@" | grep "$(notdir $(JPEG_LIB)) " | awk '{print $$1}'` \
+		libs/$(notdir $(JPEG_LIB)) \
+		$@
+endif
 
 $(LUAJIT) $(LUAJIT_LIB) $(LUAJIT_JIT): $(THIRDPARTY_DIR)/luajit/CMakeLists.txt
 	install -d $(LUAJIT_BUILD_DIR)
@@ -193,6 +226,11 @@ ifeq ($(SKIP_LUAJIT_BIN),)
 endif
 	-rm -rf $(LUAJIT_JIT)
 	$(RCP) -fL $(LUAJIT_DIR)/src/jit $(OUTPUT_DIR)
+ifdef DARWIN
+	install_name_tool -id \
+		libs/$(notdir $(LUAJIT_LIB)) \
+		$(LUAJIT_LIB)
+endif
 
 $(POPEN_NOSHELL_LIB): $(THIRDPARTY_DIR)/popen-noshell/CMakeLists.txt
 	install -d $(POPEN_NOSHELL_BUILD_DIR)
@@ -237,8 +275,16 @@ $(K2PDFOPT_LIB) $(LEPTONICA_LIB) $(TESSERACT_LIB): $(PNG_LIB) $(ZLIB) \
 	cp -fL $(K2PDFOPT_DIR)/$(notdir $(LEPTONICA_LIB)) $(LEPTONICA_LIB)
 	cp -fL $(K2PDFOPT_DIR)/$(notdir $(TESSERACT_LIB)) $(TESSERACT_LIB)
 ifdef DARWIN
-	install_name_tool -change /usr/local/lib/$(notdir $(TESSERACT_LIB)) \
-		libs/$(notdir $(TESSERACT_LIB)) $(K2PDFOPT_LIB)
+	install_name_tool -id \
+		libs/$(notdir $(K2PDFOPT_LIB)) \
+		$(K2PDFOPT_LIB)
+	install_name_tool -change \
+		`otool -L "$(K2PDFOPT_LIB)" | grep "$(notdir $(TESSERACT_LIB)) " | awk '{print $$1}'` \
+		libs/$(notdir $(TESSERACT_LIB)) \
+		$(K2PDFOPT_LIB)
+	install_name_tool -id \
+		libs/$(notdir $(TESSERACT_LIB)) \
+		$(TESSERACT_LIB)
 endif
 
 # ===========================================================================
@@ -475,8 +521,16 @@ $(SSL_LIB): $(OPENSSL_LIB)
 	cp -fL $(OPENSSL_DIR)/$(notdir $(SSL_LIB)) $(SSL_LIB)
 	cp -fL $(OPENSSL_DIR)/$(notdir $(CRYPTO_LIB)) $(CRYPTO_LIB)
 ifdef DARWIN
-	install_name_tool -change /usr/local/ssl/lib/$(notdir $(CRYPTO_LIB)) \
-		libs/$(notdir $(CRYPTO_LIB)) $(SSL_LIB)
+	install_name_tool -id \
+		libs/$(notdir $(SSL_LIB)) \
+		$@
+	install_name_tool -change \
+		`otool -L "$@" | grep "$(notdir $(CRYPTO_LIB)) " | awk '{print $$1}'` \
+		libs/$(notdir $(CRYPTO_LIB)) \
+		$@
+	install_name_tool -id \
+		libs/$(notdir $(CRYPTO_LIB)) \
+		$(CRYPTO_LIB)
 endif
 
 # ssl.so locates in koreader/common, but libssl.so and libcrypto.so live
@@ -494,10 +548,14 @@ $(LUASEC): $(SSL_LIB) $(THIRDPARTY_DIR)/luasec/CMakeLists.txt
 		$(CURDIR)/$(THIRDPARTY_DIR)/luasec && \
 		$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS)
 ifdef DARWIN
-	install_name_tool -change /usr/local/ssl/lib/$(notdir $(CRYPTO_LIB)) \
-		libs/$(notdir $(CRYPTO_LIB)) $(OUTPUT_DIR)/common/ssl.so
-	install_name_tool -change /usr/local/ssl/lib/$(notdir $(SSL_LIB)) \
-		libs/$(notdir $(SSL_LIB)) $(OUTPUT_DIR)/common/ssl.so
+	install_name_tool -change \
+		`otool -L "$(OUTPUT_DIR)/common/ssl.so" | grep "$(notdir $(CRYPTO_LIB)) " | awk '{print $$1}'` \
+		libs/$(notdir $(CRYPTO_LIB)) \
+		$(OUTPUT_DIR)/common/ssl.so
+	install_name_tool -change \
+		`otool -L "$(OUTPUT_DIR)/common/ssl.so" | grep "$(notdir $(SSL_LIB)) " | awk '{print $$1}'` \
+		libs/$(notdir $(SSL_LIB)) \
+		$(OUTPUT_DIR)/common/ssl.so
 endif
 
 $(LUASERIAL_LIB): $(THIRDPARTY_DIR)/lua-serialize/CMakeLists.txt
@@ -559,6 +617,12 @@ $(FILEMQ_LIB): $(ZMQ_LIB) $(CZMQ_LIB) $(SSL_LIB) $(THIRDPARTY_DIR)/filemq/CMakeL
 		$(CURDIR)/$(THIRDPARTY_DIR)/filemq && \
 		$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS)
 	cp -fL $(FILEMQ_DIR)/$(if $(WIN32),bin,lib)/$(notdir $(FILEMQ_LIB)) $@
+ifdef DARWIN
+	install_name_tool -change \
+		`otool -L "$@" | grep "$(notdir $(CRYPTO_LIB)) " | awk '{print $$1}'` \
+		libs/$(notdir $(CRYPTO_LIB)) \
+		$@
+endif
 
 $(ZYRE_LIB): $(ZMQ_LIB) $(CZMQ_LIB) $(THIRDPARTY_DIR)/zyre/CMakeLists.txt
 	install -d $(ZYRE_BUILD_DIR)
@@ -586,6 +650,19 @@ $(TURBO_FFI_WRAP_LIB): $(SSL_LIB) $(THIRDPARTY_DIR)/turbo/CMakeLists.txt
 	$(RCP) $(TURBO_DIR)/turbo $(OUTPUT_DIR)/common
 	cp $(TURBO_DIR)/turbo.lua $(OUTPUT_DIR)/common
 	cp $(TURBO_DIR)/turbovisor.lua $(OUTPUT_DIR)/common
+ifdef DARWIN
+	install_name_tool -id \
+		common/$(notdir $(TURBO_FFI_WRAP_LIB)) \
+		$@
+	install_name_tool -change \
+		`otool -L "$@" | grep "$(notdir $(CRYPTO_LIB)) " | awk '{print $$1}'` \
+		libs/$(notdir $(CRYPTO_LIB)) \
+		$@
+	install_name_tool -change \
+		`otool -L "$@" | grep "$(notdir $(SSL_LIB)) " | awk '{print $$1}'` \
+		libs/$(notdir $(SSL_LIB)) \
+		$@
+endif
 
 $(LUA_SPORE_ROCK): $(THIRDPARTY_DIR)/lua-Spore/CMakeLists.txt
 	install -d $(LUA_SPORE_BUILD_DIR)
