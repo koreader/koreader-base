@@ -302,6 +302,13 @@ ifdef DARWIN
 		$@
 endif
 
+$(TESSERACT_LIB)::
+ifdef DARWIN
+	install_name_tool -id \
+		libs/$(notdir $(TESSERACT_LIB)) \
+		$@
+endif
+
 # ===========================================================================
 # sdcv dependencies: glib-2.0 and zlib
 
