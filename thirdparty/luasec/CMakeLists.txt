@@ -33,7 +33,7 @@ endif()
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
     https://github.com/brunoos/luasec
-    tags/luasec-0.8.2
+    tags/v0.9
     ${SOURCE_DIR}
 )
 
