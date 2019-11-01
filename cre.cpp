@@ -505,9 +505,11 @@ static int readDefaults(lua_State *L) {
 		props->setString(PROP_HYPHENATION_DICT, "English_US.pattern");
 		props->setString(PROP_STATUS_FONT_FACE, "Noto Sans");
 		props->setString(PROP_FONT_FACE, "Noto Serif");
-		props->setInt(PROP_FONT_HINTING, 2);	// autohint, to be conservative (some ttf fonts' bytecode is truly crappy)
+                // Note: the values we set here don't really matter, they will
+                // be re-set/overridden by readerfont.lua on each book load
+		props->setInt(PROP_FONT_HINTING, 2); // autohint, to be conservative (some ttf fonts' bytecode is truly crappy)
+		props->setInt(PROP_FONT_KERNING, 3); // harfbuzz (slower than freetype kerning, but needed for proper arabic)
 		// props->setInt(PROP_FONT_KERNING_ENABLED, 1);
-		props->setInt(PROP_FONT_KERNING, 1); // freetype kerning (no support for ligature, but faster than harfbuzz)
 		props->setString("styles.pre.font-face", "font-family: \"Droid Sans Mono\"");
 
 		stream = LVOpenFileStream("data/cr3.ini", LVOM_WRITE);
