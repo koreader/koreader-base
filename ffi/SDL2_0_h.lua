@@ -863,4 +863,10 @@ static const int SDL_PIXELFORMAT_RGBA32 = 376840196;
 static const int SDL_PIXELFORMAT_ARGB32 = 377888772;
 static const int SDL_PIXELFORMAT_BGRA32 = 372645892;
 static const int SDL_PIXELFORMAT_ABGR32 = 373694468;
+struct SDL_version {
+  Uint8 major;
+  Uint8 minor;
+  Uint8 patch;
+};
+void SDL_GetVersion(struct SDL_version *) __attribute__((visibility("default")));
 ]]
