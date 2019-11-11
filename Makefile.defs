@@ -19,6 +19,10 @@ ANDROID_TOOLCHAIN=$(TOOLCHAIN_DIR)/android-toolchain-$(ANDROID_ARCH)
 NDK?=$(TOOLCHAIN_DIR)/android-ndk-r15c
 NDKABI?=14
 
+# Detect LuaRocks 3
+LR_VER_NUM = $(shell luarocks --version | grep -o [0-9].[0-9])
+LR_GT_3_0 = $(shell echo $(LR_VER_NUM)\>=3.0 | bc )
+
 # Some CMake flags
 CMAKE_BUILD_TYPE?=Release
 
@@ -796,7 +800,12 @@ LUA_SPORE_BUILD_DIR=$(THIRDPARTY_DIR)/lua-Spore/build/$(MACHINE)
 LUA_SPORE_DIR=$(CURDIR)/$(LUA_SPORE_BUILD_DIR)/lua-Spore-prefix/src/lua-Spore
 SPORE_VER=0.3.1-1
 LUA_SPORE_VER=lua-spore-$(SPORE_VER)
+# Unversioned LR 2 path
+LUAROCKS_DIR=$(OUTPUT_DIR)/rocks/lib/luarocks/rocks
+# Versioned LR 3 path, see koreader-base/pull/1003
+ifeq ($(LR_GT_3_0),1)
 LUAROCKS_DIR=$(OUTPUT_DIR)/rocks/lib/luarocks/rocks-5.1
+endif
 LUA_SPORE_ROCK=$(LUAROCKS_DIR)/lua-spore/$(SPORE_VER)/$(LUA_SPORE_VER).rockspec
 
 SQLITE_BUILD_DIR=$(THIRDPARTY_DIR)/sqlite/build/$(MACHINE)
