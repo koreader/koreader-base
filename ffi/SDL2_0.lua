@@ -26,6 +26,22 @@ local SDL = util.ffiLoadCandidates{
     "libSDL2-2.0.so.0",
 }
 
+-- Some features (like SDL_GameControllerRumble) may require a minimum version
+-- of SDL. These helper functions allow us to prevent any issues with calling
+-- undefined symbols.
+local sdl_linked_ver = ffi.new("struct SDL_version[0]")
+SDL.SDL_GetVersion(sdl_linked_ver)
+
+-- Just a copy of a C macro that unfortunately can't be used through FFI.
+-- This assumes that there will never be more than 100 patchlevels.
+local function SDL_VersionNum(x, y, z)
+    return x*1000 + y*100 + z
+end
+
+local function SDL_Linked_Version_AtLeast(x, y, z)
+    return SDL_VersionNum(sdl_linked_ver[0].major, sdl_linked_ver[0].minor, sdl_linked_ver[0].patch) >= SDL_VersionNum(x, y, z)
+end
+
 -- for frontend SDL event handling
 local EV_SDL = 53 -- ASCII code for S
 
@@ -403,13 +419,17 @@ function S.setWindowIcon(icon)
 end
 
 function S.gameControllerRumble(left_intensity, right_intensity, duration)
-    if S.controller == nil then return end
+    if S.controller == nil
+       or not SDL_Linked_Version_AtLeast(2, 0, 9)
+    then
+        return
+    end
 
     left_intensity = left_intensity or 20000
     right_intensity = right_intensity or 20000
     duration = duration or 200
 
-    return pcall(SDL.SDL_GameControllerRumble, S.controller, left_intensity, right_intensity, duration)
+    return SDL.SDL_GameControllerRumble(S.controller, left_intensity, right_intensity, duration)
 end
 
 return S
