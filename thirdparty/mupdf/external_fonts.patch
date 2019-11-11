@@ -68,7 +68,7 @@ index f6951ba2..b1fdd981 100644
  /*
  	Base 14 PDF fonts from URW.
  	Noto fonts from Google.
-@@ -367,3 +371,188 @@ fz_lookup_noto_emoji_font(fz_context *ctx, int *size)
+@@ -367,3 +371,173 @@ fz_lookup_noto_emoji_font(fz_context *ctx, int *size)
  	return *size = 0, NULL;
  #endif
  }
@@ -141,20 +141,6 @@ index f6951ba2..b1fdd981 100644
 +	if (!strcmp("Helvetica-BoldOblique", name)) {
 +		return get_font_file("urw/NimbusSanL-BolIta.cff");
 +	}
-+#ifdef __ANDROID__
-+	if (!strcmp("NotoSans", name)) {
-+		return get_font_file_android("Roboto-Regular.ttf");
-+	}
-+	if (!strcmp("NotoSans-Bold", name)) {
-+		return get_font_file_android("Roboto-Bold.ttf");
-+	}
-+	if (!strcmp("NotoSans-BoldItalic", name)) {
-+		return get_font_file_android("Roboto-BoldItalic.ttf");
-+	}
-+	if (!strcmp("NotoSans-Italic", name)) {
-+		return get_font_file_android("Roboto-Italic.ttf");
-+	}
-+#else
 +	if (!strcmp("NotoSans", name)) {
 +		return get_font_file("noto/NotoSans-Regular.ttf");
 +	}
@@ -167,7 +153,6 @@ index f6951ba2..b1fdd981 100644
 +	if (!strcmp("NotoSans-Italic", name)) {
 +		return get_font_file("noto/NotoSans-Italic.ttf");
 +	}
-+#endif
 +	if (!strcmp("Times-Roman", name)) {
 +		return get_font_file("urw/NimbusRomNo9L-Reg.cff");
 +	}
