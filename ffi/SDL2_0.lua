@@ -409,7 +409,7 @@ function S.gameControllerRumble(left_intensity, right_intensity, duration)
     right_intensity = right_intensity or 20000
     duration = duration or 200
 
-    return SDL.SDL_GameControllerRumble(S.controller, left_intensity, right_intensity, duration)
+    return pcall(SDL.SDL_GameControllerRumble, S.controller, left_intensity, right_intensity, duration)
 end
 
 return S
