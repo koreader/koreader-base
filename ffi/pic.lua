@@ -272,6 +272,9 @@ function Pic.openPNGDocument(filename)
     elseif re.ncomp == 3 then bbtype = BB.TYPE_BBRGB24
     elseif re.ncomp == 4 then bbtype = BB.TYPE_BBRGB32
     else
+        if re.data then
+            ffi.C.free(re.data)
+        end
         error("unsupported number of color components")
     end
 
