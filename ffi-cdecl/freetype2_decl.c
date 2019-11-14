@@ -4,9 +4,10 @@
 
 #include FT_FREETYPE_H
 #include FT_SYNTHESIS_H
-
+#include FT_OUTLINE_H
 
 cdecl_type(FT_Error)
+cdecl_type(FT_Pos)
 
 cdecl_struct(FT_Generic_)
 cdecl_type(FT_Generic)
@@ -94,6 +95,21 @@ cdecl_func(FT_Get_Kerning)
 cdecl_func(FT_GlyphSlot_Embolden)
 cdecl_func(FT_GlyphSlot_Oblique)
 
+cdecl_enum(FT_Render_Mode_)
+cdecl_type(FT_Render_Mode)
+
+cdecl_func(FT_Load_Glyph)
+cdecl_func(FT_Render_Glyph)
+
+cdecl_func(FT_Outline_Embolden)
+cdecl_func(FT_Outline_Translate)
+cdecl_func(FT_MulFix)
+
 cdecl_const(FT_LOAD_RENDER)
+cdecl_const(FT_LOAD_DEFAULT)
+cdecl_const(FT_LOAD_TARGET_LIGHT)
+cdecl_const(FT_LOAD_NO_AUTOHINT)
+cdecl_const(FT_LOAD_NO_HINTING)
+cdecl_const(FT_LOAD_FORCE_AUTOHINT)
 cdecl_const(FT_FACE_FLAG_KERNING)
 cdecl_const(FT_KERNING_DEFAULT)
