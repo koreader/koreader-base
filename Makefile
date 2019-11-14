@@ -89,6 +89,7 @@ libs: \
 	$(OUTPUT_DIR)/libs/libkoreader-lfs.so \
 	$(OUTPUT_DIR)/libs/libkoreader-djvu.so \
 	$(OUTPUT_DIR)/libs/libkoreader-cre.so \
+	$(OUTPUT_DIR)/libs/libkoreader-xtext.so \
 	$(OUTPUT_DIR)/libs/libwrap-mupdf.so
 
 $(OUTPUT_DIR)/libs/libkoreader-input.so: input/*.c input/*.h $(if $(KINDLE),$(POPEN_NOSHELL_LIB),)
@@ -147,6 +148,29 @@ ifdef DARWIN
 	install_name_tool -change \
 		`otool -L "$@" | grep "$(notdir $(CRENGINE_LIB)) " | awk '{print $$1}'` \
 		libs/$(notdir $(CRENGINE_LIB)) \
+		$@
+endif
+
+$(OUTPUT_DIR)/libs/libkoreader-xtext.so: xtext.cpp \
+			$(if $(USE_LUAJIT_LIB),$(LUAJIT_LIB),) \
+			$(FREETYPE_LIB) $(HARFBUZZ_LIB) $(FRIBIDI_LIB) $(LIBUNIBREAK_LIB)
+	$(CXX) -I$(FREETYPE_DIR)/include/freetype2 \
+	-I$(HARFBUZZ_DIR)/include/harfbuzz \
+	-I$(FRIBIDI_DIR)/include \
+	-I$(LIBUNIBREAK_DIR)/include \
+	$(DYNLIB_CXXFLAGS) -Wall -o $@ $^
+ifdef DARWIN
+	install_name_tool -change \
+		`otool -L "$@" | grep "libluajit" | awk '{print $$1}'` \
+		libs/$(notdir $(LUAJIT_LIB)) \
+		$@
+	install_name_tool -change \
+		`otool -L "$@" | grep "$(notdir $(HARFBUZZ_LIB)) " | awk '{print $$1}'` \
+		libs/$(notdir $(HARFBUZZ_LIB)) \
+		$@
+	install_name_tool -change \
+		`otool -L "$@" | grep "$(notdir $(FRIBIDI_LIB)) " | awk '{print $$1}'` \
+		libs/$(notdir $(FRIBIDI_LIB)) \
 		$@
 endif
 
