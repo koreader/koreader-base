@@ -408,6 +408,7 @@ function S.setWindowIcon(icon)
 
     local BB = require("ffi/blitbuffer")
     local icon_bb = BB.new(re.width, re.height, BB.TYPE_BBRGB32, re.data)
+    icon_bb:setAllocated(1) -- free re.data when bb is freed
     local icon_bit_depth = 32
     local surface = SDL.SDL_CreateRGBSurfaceWithFormatFrom(icon_bb.data,
                                                            icon_bb:getWidth(), icon_bb:getHeight(),

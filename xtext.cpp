@@ -600,8 +600,15 @@ public:
     }
 
     void measure() {
-        if (m_is_measured)
+        if ( m_is_measured )
             return;
+
+        if ( m_length == 0 ) {
+            // Nothing to allocate nor measure
+            m_width = 0;
+            m_is_measured = true;
+            return;
+        }
 
         allocate();
         checkBidi();
@@ -741,8 +748,8 @@ public:
             last_bidi_level = new_bidi_level;
         }
 
-        m_is_measured = true;
         m_width = final_width;
+        m_is_measured = true;
     }
 
     // Based on crengine/src/lvfntman.cpp measureText() with _kerningMode == KERNING_MODE_HARFBUZZ
@@ -1859,13 +1866,20 @@ static int xtext_new(lua_State *L) {
     // 1st argument should be the UTF8 string, but can be a Lua array
     // of UTF8 chars (to stay compatible with TextBoxWidget as used
     // by InputText).
+    bool is_empty = true;
     size_t utf8_len = 0;
     const char * utf8_text = NULL;
     bool input_is_array = false;
-    if (lua_istable(L, 1))
+    if ( lua_istable(L, 1) ) {
         input_is_array = true;
-    else
+        if ( lua_objlen(L, 1) > 0 )
+            is_empty = false;
+    }
+    else {
         utf8_text = luaL_checklstring(L, 1, &utf8_len);
+        if ( utf8_len > 0 )
+            is_empty = false;
+    }
 
     // 2nd argument should be our Lua font object (face_obj), with
     // a getFallbackFont() callback.
@@ -1927,7 +1941,10 @@ static int xtext_new(lua_State *L) {
     if (lang) {
         xt->setLanguage(lang);
     }
-    if (input_is_array) {
+    if ( is_empty ) {
+        xt->m_is_valid = true; // empty text is valid UTF-8
+    }
+    else if (input_is_array) {
         xt->setTextFromUTF8CharsLuaArray(L, 1); // table is still at 1 on stack
     }
     else {
