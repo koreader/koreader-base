@@ -67,7 +67,7 @@ index f6951ba2..b1fdd981 100644
  /*
  	Base 14 PDF fonts from URW.
  	Noto fonts from Google.
-@@ -367,3 +371,173 @@ fz_lookup_noto_emoji_font(fz_context *ctx, int *size)
+@@ -367,3 +371,152 @@ fz_lookup_noto_emoji_font(fz_context *ctx, int *size)
  	return *size = 0, NULL;
  #endif
  }
