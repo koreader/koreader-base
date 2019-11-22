@@ -68,10 +68,11 @@ extern "C"
 #define ELLIPSIS_CHAR 0x2026
 
 // Helpers with font metrics (units are 1/64 px)
-#define FONT_METRIC_FLOOR(x)    ((x) & -64)
-#define FONT_METRIC_CEIL(x)     (((x)+63) & -64)
-#define FONT_METRIC_ROUND(x)    (((x)+32) & -64)
-#define FONT_METRIC_TRUNC(x)    ((x) >> 6)
+// #define FONT_METRIC_FLOOR(x)    ((x) & -64)
+// #define FONT_METRIC_CEIL(x)     (((x)+63) & -64)
+// #define FONT_METRIC_ROUND(x)    (((x)+32) & -64)
+// #define FONT_METRIC_TRUNC(x)    ((x) >> 6)
+#define FONT_METRIC_TO_PX(x)    (((x)+32) >> 6) // ROUND + TRUNC
 
 // Uncomment for debugging text measurement and line shaping:
 // #define DEBUG_MEASURE_TEXT
@@ -296,7 +297,7 @@ private:
 public:
     lua_State * m_L; // updated by each Lua method proxy
     int m_length;    // nb of unicode codepoints
-    bool m_no_more_usable; // to prevent using it between dealloc & Lua gc
+    bool m_no_longer_usable; // to prevent using it between dealloc & Lua gc
     bool m_is_valid; // input was valid UTF-8
     bool m_is_measured;
     bool m_para_direction_rtl;  // paragraph direction
@@ -317,7 +318,7 @@ public:
     XText()
        :m_L(NULL)
        ,m_length(0)
-       ,m_no_more_usable(false)
+       ,m_no_longer_usable(false)
        ,m_is_valid(false)
        ,m_is_measured(false)
        ,m_para_direction_rtl(false)
@@ -358,7 +359,7 @@ public:
         if (m_bidi_btypes) { free(m_bidi_btypes); m_bidi_btypes = NULL; }
         if (m_bidi_levels) { free(m_bidi_levels); m_bidi_levels = NULL; }
         if (m_lang)        { delete m_lang;       m_lang = NULL; }
-        m_no_more_usable = true;
+        m_no_longer_usable = true;
     }
 
     void setLanguage(const char * lang) {
@@ -847,9 +848,9 @@ public:
                 hb_font_get_glyph_name(_hb_font, glyph_info[i].codepoint, glyphname, sizeof(glyphname));
                 printf("%sMSHB g%d c%d(=t:%x) [%x %s]\tadvance=(%d,%d)", indent, i, glyph_info[i].cluster,
                             m_text[glyph_info[i].cluster], glyph_info[i].codepoint, glyphname,
-                            glyph_pos[i].x_advance>>6, glyph_pos[i].y_advance>>6);
+                            FONT_METRIC_TO_PX(glyph_pos[i].x_advance), FONT_METRIC_TO_PX(glyph_pos[i].y_advance));
                 if (glyph_pos[i].x_offset || glyph_pos[i].y_offset)
-                    printf("\toffset=(%d,%d)", glyph_pos[i].x_offset>>6, glyph_pos[i].y_offset>>6);
+                    printf("\toffset=(%d,%d)", FONT_METRIC_TO_PX(glyph_pos[i].x_offset), FONT_METRIC_TO_PX(glyph_pos[i].y_offset));
                 printf("\n");
             }
             printf("%sMSHB ---\n", indent);
@@ -934,14 +935,14 @@ public:
                             // And go on with the found glyph now that we fixed what was before
                         }
                         // Glyph found in this font
-                        advance = FONT_METRIC_TRUNC(FONT_METRIC_ROUND(glyph_pos[hg].x_advance));
+                        advance = FONT_METRIC_TO_PX(glyph_pos[hg].x_advance);
                     }
                     else {
                         #ifdef DEBUG_MEASURE_TEXT
                             printf("(glyph not found) ");
                         #endif
                         // Keep the advance of .notdef/tofu in case there is no fallback font to correct them
-                        advance = FONT_METRIC_TRUNC(FONT_METRIC_ROUND(glyph_pos[hg].x_advance));
+                        advance = FONT_METRIC_TO_PX(glyph_pos[hg].x_advance);
                         if ( t_notdef_start < 0 ) {
                             t_notdef_start = t;
                         }
@@ -1503,9 +1504,9 @@ public:
                 hb_font_get_glyph_name(_hb_font, glyph_info[i].codepoint, glyphname, sizeof(glyphname));
                 printf("%sSLHB g%d c%d(=t:%x) [%x %s]\tadvance=(%d,%d)", indent, i, glyph_info[i].cluster,
                             m_text[glyph_info[i].cluster], glyph_info[i].codepoint, glyphname,
-                            glyph_pos[i].x_advance>>6, glyph_pos[i].y_advance>>6);
+                            FONT_METRIC_TO_PX(glyph_pos[i].x_advance), FONT_METRIC_TO_PX(glyph_pos[i].y_advance));
                 if (glyph_pos[i].x_offset || glyph_pos[i].y_offset)
-                    printf("\toffset=(%d,%d)", glyph_pos[i].x_offset>>6, glyph_pos[i].y_offset>>6);
+                    printf("\toffset=(%d,%d)", FONT_METRIC_TO_PX(glyph_pos[i].x_offset), FONT_METRIC_TO_PX(glyph_pos[i].y_offset));
                 printf("\n");
             }
             printf("%sSLHB ---\n", indent);
@@ -1662,9 +1663,9 @@ public:
                     // already in pixel units (dunno if we could use metrics.horiBearingX
                     // and .horiBearingY instead in freetype.lua, so we can add do the
                     // rounding after having done the addition with HB offsets.)
-                    s->x_advance = FONT_METRIC_TRUNC(FONT_METRIC_ROUND(glyph_pos[i].x_advance));
-                    s->x_offset = FONT_METRIC_TRUNC(FONT_METRIC_ROUND(glyph_pos[i].x_offset));
-                    s->y_offset = FONT_METRIC_TRUNC(FONT_METRIC_ROUND(glyph_pos[i].y_offset));
+                    s->x_advance = FONT_METRIC_TO_PX(glyph_pos[i].x_advance);
+                    s->x_offset = FONT_METRIC_TO_PX(glyph_pos[i].x_offset);
+                    s->y_offset = FONT_METRIC_TO_PX(glyph_pos[i].y_offset);
 
                     s->is_cluster_start = i == hg ? 1 : 0;
                     // What follows is tedious...
@@ -1954,7 +1955,7 @@ static int xtext_new(lua_State *L) {
     return 1; // Return this new userdata
 }
 
-XText * check_XText(lua_State * L, int n, bool replace_with_uservalue=true, bool error_if_no_more_usable=true) {
+XText * check_XText(lua_State * L, int n, bool replace_with_uservalue=true, bool error_if_no_longer_usable=true) {
     // This checks that the thing at n on the stack is a correct XText 
     // wrapping userdata (tagged with the "luaL_XText" metatable).
     XText * xt = *(XText **)luaL_checkudata(L, n, XTEXT_METATABLE_NAME);
@@ -1965,8 +1966,8 @@ XText * check_XText(lua_State * L, int n, bool replace_with_uservalue=true, bool
         lua_getuservalue(L, n);
         lua_replace(L, n);
     }
-    if ( error_if_no_more_usable && xt->m_no_more_usable ) {
-        lua_pushstring(L, "XText C instance already freed and no more usable");
+    if ( error_if_no_longer_usable && xt->m_no_longer_usable ) {
+        lua_pushstring(L, "XText C instance already freed and no longer usable");
         lua_error(L);
     }
     return xt;
@@ -2000,7 +2001,7 @@ static int XText_free(lua_State *L) {
     // Don't error if free() has already been called (allow multiple calls
     // to free() by frontend widgets' :onCloseWidget() without failure)
     XText * xt = check_XText(L, 1, false, false);
-    if ( !xt->m_no_more_usable )
+    if ( !xt->m_no_longer_usable )
         xt->deallocate();
     return 0;
 }
