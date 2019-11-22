@@ -591,24 +591,4 @@ function util.template(str, ...)
     return result
 end
 
-function util.unichar(value)
--- this function is taken from dkjson
--- http://dkolf.de/src/dkjson-lua.fsl/
-    local floor = math.floor
-    local strchar = string.char
-    if value < 0 then
-        return nil
-    elseif value <= 0x007f then
-        return strchar(value)
-    elseif value <= 0x07ff then
-        return strchar(0xc0 + floor(value/0x40),0x80 + (floor(value) % 0x40))
-    elseif value <= 0xffff then
-        return strchar(0xe0 + floor(value/0x1000), 0x80 + (floor(value/0x40) % 0x40), 0x80 + (floor(value) % 0x40))
-    elseif value <= 0x10ffff then
-        return strchar(0xf0 + floor(value/0x40000), 0x80 + (floor(value/0x1000) % 0x40), 0x80 + (floor(value/0x40) % 0x40), 0x80 + (floor(value) % 0x40))
-    else
-        return nil
-    end
-end
-
 return util
