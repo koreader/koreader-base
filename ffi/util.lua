@@ -411,6 +411,7 @@ function util.readAllFromFD(fd)
 end
 
 --- Gets UTF-8 charcode.
+-- See unicodeCodepointToUtf8 in frontend/util for an encoder.
 function util.utf8charcode(charstring)
     local ptr = ffi.cast("uint8_t *", charstring)
     local len = #charstring
