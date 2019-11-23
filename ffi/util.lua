@@ -8,6 +8,10 @@ local bit = require "bit"
 local ffi = require "ffi"
 local C = ffi.C
 
+local lshift = bit.lshift
+local band = bit.band
+local bor = bit.bor
+
 -- win32 utility
 ffi.cdef[[
 typedef unsigned int UINT;
@@ -65,9 +69,9 @@ if ffi.os == "Windows" then
         local ft = ffi.new('FILETIME[1]')[0]
         local tmpres = ffi.new('unsigned long', 0)
         C.GetSystemTimeAsFileTime(ft)
-        tmpres = bit.bor(tmpres, ft.dwHighDateTime)
-        tmpres = bit.lshift(tmpres, 32)
-        tmpres = bit.bor(tmpres, ft.dwLowDateTime)
+        tmpres = bor(tmpres, ft.dwHighDateTime)
+        tmpres = lshift(tmpres, 32)
+        tmpres = bor(tmpres, ft.dwLowDateTime)
         -- converting file time to unix epoch
         tmpres = tmpres - 11644473600000000ULL
         tmpres = tmpres / 10
@@ -390,16 +394,16 @@ function util.readAllFromFD(fd)
     local data = {}
     while true do
         -- print("reading from fd")
-	local bytes_read = tonumber(C.read(fd, ffi.cast('void*', buffer), chunksize))
-	if bytes_read < 0 then
+        local bytes_read = tonumber(C.read(fd, ffi.cast('void*', buffer), chunksize))
+        if bytes_read < 0 then
             local err = ffi.errno()
             print("readFromFD() error: "..ffi.string(C.strerror(err)))
             break
-	elseif bytes_read == 0 then -- EOF, no more data to read
-	    break
-	else
-	    table.insert(data, ffi.string(buffer, bytes_read))
-	end
+        elseif bytes_read == 0 then -- EOF, no more data to read
+            break
+        else
+            table.insert(data, ffi.string(buffer, bytes_read))
+        end
     end
     C.close(fd)
     -- print("read fd closed")
@@ -407,23 +411,24 @@ function util.readAllFromFD(fd)
 end
 
 --- Gets UTF-8 charcode.
+-- See unicodeCodepointToUtf8 in frontend/util for an encoder.
 function util.utf8charcode(charstring)
     local ptr = ffi.cast("uint8_t *", charstring)
     local len = #charstring
     if len == 1 then
-        return bit.band(ptr[0], 0x7F)
+        return band(ptr[0], 0x7F)
     elseif len == 2 then
-        return bit.lshift(bit.band(ptr[0], 0x1F), 6) +
-            bit.band(ptr[1], 0x3F)
+        return lshift(band(ptr[0], 0x1F), 6) +
+            band(ptr[1], 0x3F)
     elseif len == 3 then
-        return bit.lshift(bit.band(ptr[0], 0x0F), 12) +
-            bit.lshift(bit.band(ptr[1], 0x3F), 6) +
-            bit.band(ptr[2], 0x3F)
+        return lshift(band(ptr[0], 0x0F), 12) +
+            lshift(band(ptr[1], 0x3F), 6) +
+            band(ptr[2], 0x3F)
     elseif len == 4 then
-        return bit.lshift(bit.band(ptr[0], 0x07), 18) +
-            bit.lshift(bit.band(ptr[1], 0x3F), 12) +
-            bit.lshift(bit.band(ptr[2], 0x3F), 6) +
-            bit.band(ptr[3], 0x3F)
+        return lshift(band(ptr[0], 0x07), 18) +
+            lshift(band(ptr[1], 0x3F), 12) +
+            lshift(band(ptr[2], 0x3F), 6) +
+            band(ptr[3], 0x3F)
     end
 end
 
@@ -585,26 +590,6 @@ function util.template(str, ...)
             return params[tonumber(i)]
         end)
     return result
-end
-
-function util.unichar(value)
--- this function is taken from dkjson
--- http://dkolf.de/src/dkjson-lua.fsl/
-    local floor = math.floor
-    local strchar = string.char
-    if value < 0 then
-        return nil
-    elseif value <= 0x007f then
-        return strchar(value)
-    elseif value <= 0x07ff then
-        return strchar(0xc0 + floor(value/0x40),0x80 + (floor(value) % 0x40))
-    elseif value <= 0xffff then
-        return strchar(0xe0 + floor(value/0x1000), 0x80 + (floor(value/0x40) % 0x40), 0x80 + (floor(value) % 0x40))
-    elseif value <= 0x10ffff then
-        return strchar(0xf0 + floor(value/0x40000), 0x80 + (floor(value/0x1000) % 0x40), 0x80 + (floor(value/0x40) % 0x40), 0x80 + (floor(value) % 0x40))
-    else
-        return nil
-    end
 end
 
 return util
