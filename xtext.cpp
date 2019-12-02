@@ -490,6 +490,10 @@ public:
                     for ( int j=s_start; j<i; j++ ) {
                         m_charinfo[j].flags |= CHAR_PARA_IS_RTL;
                     }
+                    // Also set it on the \n/FRIBIDI_TYPE_BS char
+                    if (i < m_length) {
+                        m_charinfo[i].flags |= CHAR_PARA_IS_RTL;
+                    }
                 }
                 s_start = i+1;
             }
@@ -1386,6 +1390,12 @@ public:
             lua_pushboolean(m_L, s->is_rtl);
             lua_settable(m_L, -3);
 
+            if ( m_has_bidi ) {
+                lua_pushstring(m_L, "bidi_level");
+                lua_pushinteger(m_L, m_bidi_levels[s->text_index]);
+                lua_settable(m_L, -3);
+            }
+
             lua_pushstring(m_L, "is_cluster_start");
             lua_pushboolean(m_L, s->is_cluster_start);
             lua_settable(m_L, -3);
@@ -2095,6 +2105,31 @@ static int XText_shapeLine(lua_State *L) {
     return 1;
 }
 
+// Get the paragraph direction of the paragraph the char at idx is part
+// of (and the one for the char at idx-1 too, as it might be useful).
+// To be used with empty lines for cursor positionning, to get
+// line.para_is_rtl (similar to what shapeLine() returns, but
+// we can't call shapeLine() on empty lines).
+// If no idx provided, get the specified (or default) direction
+// used by this Xtext object.
+static int XText_getParaDirection(lua_State *L) {
+    XText * xt = check_XText(L, 1);
+    if (!lua_isnumber(L,2)) { // no idx given
+        lua_pushboolean(L, xt->m_para_direction_rtl);
+        return 1;
+    }
+    int idx = luaL_checkint(L, 2);
+    luaL_argcheck(L, idx >= 1 && idx <= xt->m_length, 2, "index out of range");
+    idx--; // Lua to C index
+    xt->measure();
+    lua_pushboolean(L, (bool)(xt->m_charinfo[idx].flags & CHAR_PARA_IS_RTL));
+    if (idx >= 1)
+        lua_pushboolean(L, (bool)(xt->m_charinfo[idx-1].flags & CHAR_PARA_IS_RTL));
+    else
+        lua_pushnil(L);
+    return 2;
+}
+
 // Get the offset in text, from which we can make a segment to
 // the end of string with the specified target_width.
 // (Could be named makeLineFromEnd(max_width), but we don't follow
@@ -2149,6 +2184,7 @@ static const struct luaL_Reg xtext_meth[] = {
     {"getWidth", XText_getWidth},
     {"makeLine", XText_makeLine},
     {"shapeLine", XText_shapeLine},
+    {"getParaDirection", XText_getParaDirection},
     {"getSegmentFromEnd", XText_getSegmentFromEnd},
     {"getSelectedWords", XText_getSelectedWords},
     { "free", XText_free },
