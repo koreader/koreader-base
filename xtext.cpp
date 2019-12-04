@@ -950,8 +950,6 @@ public:
                         if ( t_notdef_start < 0 ) {
                             t_notdef_start = t;
                         }
-                        // We'll remove it from final_width if we measure sucessfully with fallback font
-                        notdef_width += advance;
                     }
                     #ifdef DEBUG_MEASURE_TEXT
                         printf("c%d+%d ", hcl, advance);
@@ -978,6 +976,13 @@ public:
                 final_width += cur_width;
                 // It seems each soft-hyphen is in its own cluster, of length 1 and width 0,
                 // so HarfBuzz must already deal correctly with soft-hyphens.
+                if ( t_notdef_start >= 0 ) {
+                    // If we had one glyph not found, we'll measure the whole cluster with
+                    // a fallback font, so add the full cluster advance to notdef_width,
+                    // that we'll remove from final_width if we measure sucessfully with
+                    // a fallback font.
+                    notdef_width += cur_width;
+                }
             }
             if ( is_rtl )
                 m_charinfo[t].flags |= CHAR_IS_RTL;
@@ -1000,6 +1005,8 @@ public:
                 fb_hints &= ~HINT_BEGINS_PARAGRAPH;
             int fallback_width = measureSegment( font_num+1, t_notdef_start, t_notdef_end, fb_hints );
             if ( fallback_width != NOT_MEASURED ) {
+                // printf("%sMSHB ### final_width=%d - notdef_width=%d + fallback_width=%d > W= %d\n%s[...]",
+                //   indent, final_width, notdef_width, fallback_width, final_width - notdef_width + fallback_width, indent);
                 final_width = final_width - notdef_width + fallback_width;
             }
             #ifdef DEBUG_MEASURE_TEXT
