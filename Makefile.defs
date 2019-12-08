@@ -151,6 +151,10 @@ else ifeq ($(TARGET), sony-prstux)
 	CHOST?=arm-linux-gnueabihf
 	export SONY_PRSTUX=1
 	export USE_LJ_WPACLIENT=1
+else ifeq ($(TARGET), remarkable)
+	CHOST?=arm-kobo-linux-gnueabihf
+	export REMARKABLE=1
+	export USE_LJ_WPACLIENT=1
 else ifeq ($(TARGET), cervantes)
 	export CERVANTES=1
 	HAS_CERVANTES_TC:=$(shell command -v arm-cervantes-linux-gnueabi-gcc 2> /dev/null)
@@ -395,6 +399,9 @@ else ifeq ($(TARGET), android)
 	endif
 else ifeq ($(TARGET), sony-prstux)
 	ARM_ARCH:=$(ARMV7_A8_ARCH)
+	ARM_ARCH+=-mfloat-abi=hard
+else ifeq ($(TARGET), remarkable)
+	ARM_ARCH:=$(ARMV7_A9_ARCH)
 	ARM_ARCH+=-mfloat-abi=hard
 else ifeq ($(TARGET), cervantes)
 	ARM_ARCH:=$(ARMV7_GENERIC_ARCH)
