@@ -682,7 +682,7 @@ $(LUA_SPORE_ROCK): $(THIRDPARTY_DIR)/lua-Spore/*.*
 		$(CMAKE) $(CMAKE_FLAGS) -DOUTPUT_DIR="$(CURDIR)/$(OUTPUT_DIR)" \
 		-DLUA_SPORE_VER=$(LUA_SPORE_VER) -DLD="$(CC)" \
 		-DCC="$(CC)" -DCFLAGS="$(CFLAGS) -I$(LUAJIT_DIR)/src" \
-		-DLUAROCKS=$(if $(DARWINHOST),"luarocks --lua-dir=/usr/local/opt/lua@5.1",luarocks) \
+		-DLUAROCKS=$(if $(DARWINHOST),"luarocks --lua-dir=/usr/local/opt/lua@5.1","luarocks --lua-version=5.1") \
 		-DLUA_INCDIR=$(if $(DARWINHOST),/usr/local/opt/lua@5.1/include/lua5.1,"$(LUAJIT_DIR)/src") \
 		-DLUA_LIBDIR=$(if $(DARWINHOST),/usr/local/opt/lua@5.1/lib,"$(CURDIR)/$(dir $(LUAJIT_LIB))") \
 		$(if $(ANDROID),-DLIBFLAG="$(LDFLAGS) $(CURDIR)/$(LUAJIT_LIB) -nostartfiles",) \
