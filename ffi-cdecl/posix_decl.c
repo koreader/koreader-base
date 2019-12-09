@@ -87,6 +87,8 @@ cdecl_func(fputc)
 cdecl_const(FIONREAD)
 cdecl_func(fileno)
 cdecl_func(strerror)
+cdecl_func(fsync)
+cdecl_func(fdatasync)
 
 cdecl_func(setenv)
 cdecl_func(unsetenv)

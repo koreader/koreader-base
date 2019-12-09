@@ -410,6 +410,72 @@ function util.readAllFromFD(fd)
     return table.concat(data)
 end
 
+--- Ensure content written to lua file or fd is flushed to the storage device.
+--
+-- Accepts a low-level file descriptor, or a higher level lua file object,
+-- which must still be opened (call :close() only after having called this).
+-- If optional parameter sync_metadata is true, use fsync() to also flush
+-- file metadata (timestamps...), otherwise use fdatasync() to only flush
+-- file content and file size.
+-- Returns true if syscall successful
+-- See https://stackoverflow.com/questions/37288453/calling-fsync2-after-close2
+function util.fsyncOpenedFile(fd_or_luafile, sync_metadata)
+    local fileno
+    if type(fd_or_luafile) == "number" then -- low-level fd
+        fileno = fd_or_luafile
+    else -- lua file object
+        fd_or_luafile:flush() -- flush user-space buffers to system buffers
+        fileno = C.fileno(fd_or_luafile)
+    end
+    local ret
+    if sync_metadata then
+        ret = C.fsync(fileno) -- sync file data and metadata
+    else
+        ret = C.fdatasync(fileno) -- sync only file data
+    end
+    if ret ~= 0 then
+        local err = ffi.errno()
+        return false, ffi.string(C.strerror(err))
+    end
+    return true
+end
+
+--- Ensure directory content updates are flushed to the storage device.
+--
+-- Accepts the directory path as a string, or a file path (from which
+-- we can deduce the directory to sync).
+-- Returns true if syscall successful
+-- See http://blog.httrack.com/blog/2013/11/15/everything-you-always-wanted-to-know-about-fsync/
+function util.fsyncDirectory(path)
+    local attributes, err = lfs.attributes(path)
+    if not attributes or err ~= nil then
+        return false, err
+    end
+    if attributes.mode ~= "directory" then
+        -- file, symlink...: get its parent directory
+        path = util.dirname(path)
+        attributes, err = lfs.attributes(path)
+        if not attributes or err ~= nil or attributes.mode ~= "directory" then
+            return false, err
+        end
+    end
+    local dirfd = C.open(ffi.cast("char *", path), C.O_RDONLY)
+    if dirfd == -1 then
+        err = ffi.errno()
+        return false, ffi.string(C.strerror(err))
+    end
+    -- Not certain it's safe to use fdatasync(), so let's go with the more costly fsync()
+    -- https://austin-group-l.opengroup.narkive.com/vC4Fjvsn/fsync-ing-a-directory-file-descriptor
+    local ret = C.fsync(dirfd)
+    if ret ~= 0 then
+        err = ffi.errno()
+        C.close(dirfd)
+        return false, ffi.string(C.strerror(err))
+    end
+    C.close(dirfd)
+    return true
+end
+
 --- Gets UTF-8 charcode.
 -- See unicodeCodepointToUtf8 in frontend/util for an encoder.
 function util.utf8charcode(charstring)
