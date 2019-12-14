@@ -3,6 +3,15 @@ local ffi = require("ffi")
 ffi.cdef[[
 static const int UPDATE_MODE_PARTIAL = 0;
 static const int UPDATE_MODE_FULL = 1;
+static const int WAVEFORM_MODE_DU = 1;
+static const int WAVEFORM_MODE_GC16 = 2;
+static const int WAVEFORM_MODE_GC16_FAST = 3;
+static const int WAVEFORM_MODE_GL16_FAST = 6;
+static const int WAVEFORM_MODE_DU4 = 7;
+static const int WAVEFORM_MODE_REAGL = 8;
+static const int WAVEFORM_MODE_REAGLD = 9;
+static const int WAVEFORM_MODE_GL4 = 10;
+static const int WAVEFORM_MODE_GL16_INV = 11;
 static const int WAVEFORM_MODE_GLR16 = 4;
 static const int WAVEFORM_MODE_GLD16 = 5;
 static const int WAVEFORM_MODE_AUTO = 257;
