@@ -720,13 +720,12 @@ function framebuffer:init()
         self.mech_refresh = refresh_remarkable
         self.mech_wait_update_complete = remarkable_mxc_wait_for_update_complete
 
-        self.waveform_fast = C.WAVEFORM_MODE_AUTO
+        self.waveform_fast = C.WAVEFORM_MODE_DU
         self.waveform_ui = C.WAVEFORM_MODE_AUTO
         self.waveform_flashui = self.waveform_ui
-        self.waveform_full = C.WAVEFORM_MODE_AUTO
-		self.waveform_reagl = C.WAVEFORM_MODE_GLD16
-        self.waveform_partial = self.waveform_reagl
-        self.waveform_night = C.WAVEFORM_MODE_AUTO
+        self.waveform_full = C.WAVEFORM_MODE_GC16
+        self.waveform_partial = C.WAVEFORM_MODE_AUTO
+        self.waveform_night = C.WAVEFORM_MODE_GC16
         self.waveform_flashnight = self.waveform_night
         self.night_is_reagl = false
     elseif self.device:isCervantes() then

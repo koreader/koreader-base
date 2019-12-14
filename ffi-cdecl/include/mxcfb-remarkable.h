@@ -94,6 +94,17 @@ struct mxcfb_rect {
 #define UPDATE_MODE_PARTIAL			0x0
 #define UPDATE_MODE_FULL			0x1
 
+// These modes added by copying values from libremarkable
+#define WAVEFORM_MODE_DU			1
+#define WAVEFORM_MODE_GC16			2
+#define WAVEFORM_MODE_GC16_FAST		3
+#define WAVEFORM_MODE_GL16_FAST		6
+#define WAVEFORM_MODE_DU4			7
+#define WAVEFORM_MODE_REAGL			8
+#define WAVEFORM_MODE_REAGLD		9
+#define WAVEFORM_MODE_GL4			0xA
+#define WAVEFORM_MODE_GL16_INV		0xB
+
 #define WAVEFORM_MODE_GLR16			4
 #define WAVEFORM_MODE_GLD16			5
 #define WAVEFORM_MODE_AUTO			257
