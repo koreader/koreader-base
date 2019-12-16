@@ -482,6 +482,11 @@ public:
                 FriBidiLevel *       bidi_levels = (FriBidiLevel *)      (m_bidi_levels + s_start);
                 int this_max_level = fribidi_get_par_embedding_levels_ex(bidi_ctypes, bidi_btypes,
                                                             s_length, &para_bidi_type, bidi_levels);
+                /* To see resulting bidi levels:
+                printf("par_type %d , max_level %d\n", para_bidi_type, this_max_level);
+                for (int j=s_start; j<i; j++)
+                    printf("%x %c %d\n", m_text[j], m_text[j], m_bidi_levels[j]);
+                */
                 if ( this_max_level > max_level )
                     max_level = this_max_level;
                 // we set a flag on all chars part of this segment so we can know what
@@ -1087,6 +1092,7 @@ public:
             // printf("%d < %d && %d <= %d ?\n", i, m_length, line_width, targeted_width);
         }
         bool can_be_justified = true;
+        bool no_allowed_break_met = false;
         if ( forced_break ) {
             can_be_justified = false;
             if ( i==start ) { // \n at start: empty line with no glyph
@@ -1101,6 +1107,9 @@ public:
             next_line_start_offset = i;
             if ( i == m_length ) {
                 can_be_justified = false; // no justification on last line
+            }
+            else {
+                no_allowed_break_met = true;
             }
         }
         // We could have used some indirection to make that more
@@ -1127,6 +1136,12 @@ public:
         lua_pushstring(m_L, "targeted_width");
         lua_pushinteger(m_L, targeted_width);
         lua_settable(m_L, -3);
+
+        if ( no_allowed_break_met ) {
+            lua_pushstring(m_L, "no_allowed_break_met");
+            lua_pushboolean(m_L, true);
+            lua_settable(m_L, -3);
+        }
 
         if ( next_line_start_offset >= 0 && next_line_start_offset < m_length ) {
             // next_start_offset is to be nil if end of text
