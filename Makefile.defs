@@ -147,13 +147,13 @@ else ifeq ($(TARGET), pocketbook)
 		export PATH:=$(POCKETBOOK_TOOLCHAIN)/bin:$(PATH)
 		export SYSROOT=$(POCKETBOOK_TOOLCHAIN)/arm-obreey-linux-gnueabi/sysroot
 	endif
-else ifeq ($(TARGET), sony-prstux)
-	CHOST?=arm-linux-gnueabihf
-	export SONY_PRSTUX=1
-	export USE_LJ_WPACLIENT=1
 else ifeq ($(TARGET), remarkable)
 	CHOST?=arm-kobo-linux-gnueabihf
 	export REMARKABLE=1
+	export USE_LJ_WPACLIENT=1
+else ifeq ($(TARGET), sony-prstux)
+	CHOST?=arm-linux-gnueabihf
+	export SONY_PRSTUX=1
 	export USE_LJ_WPACLIENT=1
 else ifeq ($(TARGET), cervantes)
 	export CERVANTES=1
@@ -397,11 +397,11 @@ else ifeq ($(TARGET), android)
 		ARM_ARCH+=-mfloat-abi=softfp
 		export ac_cv_type_in_port_t=yes
 	endif
-else ifeq ($(TARGET), sony-prstux)
-	ARM_ARCH:=$(ARMV7_A8_ARCH)
-	ARM_ARCH+=-mfloat-abi=hard
 else ifeq ($(TARGET), remarkable)
 	ARM_ARCH:=$(ARMV7_A9_ARCH)
+	ARM_ARCH+=-mfloat-abi=hard
+else ifeq ($(TARGET), sony-prstux)
+	ARM_ARCH:=$(ARMV7_A8_ARCH)
 	ARM_ARCH+=-mfloat-abi=hard
 else ifeq ($(TARGET), cervantes)
 	ARM_ARCH:=$(ARMV7_GENERIC_ARCH)

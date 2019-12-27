@@ -50,10 +50,10 @@ pid_t fake_ev_generator_pid = -1;
     #include "input-kindle.h"
 #elif defined KOBO
     #include "input-kobo.h"
-#elif defined SONY_PRSTUX
-    #include "input-sony-prstux.h"
 #elif defined REMARKABLE
     #include "input-remarkable.h"
+#elif defined SONY_PRSTUX
+    #include "input-sony-prstux.h"
 #elif defined CERVANTES
     #include "input-cervantes.h"
 #endif
