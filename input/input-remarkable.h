@@ -19,8 +19,8 @@
 #define _KO_INPUT_REMARKABLE_H
 
 static void generateFakeEvent(int pipefd[2]) {
-	// TODO anything required here? Sony PRS port monitors battery charge etc
-	return;
+    // TODO anything required here? Sony PRS port monitors battery charge etc
+    return;
 }
 
 #endif
