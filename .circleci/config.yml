@@ -117,11 +117,11 @@ jobs:
   emu_clang_ninja:
     <<: *EMU_TPL
     docker:
-      - image: koreader/kobase-clang:0.1.2
+      - image: koreader/kobase-clang:0.1.3
     environment:
       <<: *EMU_ENV_LST
-      CC: "clang-8"
-      CXX: "clang++-8"
+      CC: "clang-9"
+      CXX: "clang++-9"
 
 
 
