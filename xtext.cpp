@@ -1166,8 +1166,11 @@ public:
         // Temporarily substitute a char from text with an ellipsis if requested.
         // We'll restore the original item from m_text and m_charinfo when done.
         bool orig_idx_substituted = false;
-        uint32_t orig_idx_char; // Backups, to restore later
+        // Backups, to be restored when done
+        uint32_t orig_idx_char;
         unsigned short orig_idx_charinfo_flags; // .width is not used, no need to update it
+        FriBidiCharType orig_idx_bidi_ctype = 0;
+        FriBidiLevel orig_idx_bidi_level = 0;
         if ( idx_to_substitute_with_ellipsis >= 0 && idx_to_substitute_with_ellipsis < m_length ) {
             orig_idx_substituted = true;
             orig_idx_char = m_text[idx_to_substitute_with_ellipsis];
@@ -1176,7 +1179,26 @@ public:
             m_charinfo[idx_to_substitute_with_ellipsis].flags &= ~CHAR_CAN_EXTEND_WIDTH;
             m_charinfo[idx_to_substitute_with_ellipsis].flags &= ~CHAR_CAN_EXTEND_WIDTH_FALLBACK;
             m_charinfo[idx_to_substitute_with_ellipsis].flags &= ~CHAR_IS_CLUSTER_TAIL;
-                // Looks like we can keep all other flags as is
+            m_charinfo[idx_to_substitute_with_ellipsis].flags &= ~CHAR_SCRIPT_CHANGE; // ellipsis is script neutral
+                                                // Looks like we can keep all other flags as is
+            if ( m_has_bidi ) {
+                // Be sure UAX#9 rules I1, I2, L1 to L4 don't move the ellipsis away
+                // from its neighbours
+                orig_idx_bidi_ctype = m_bidi_ctypes[idx_to_substitute_with_ellipsis];
+                orig_idx_bidi_level = m_bidi_levels[idx_to_substitute_with_ellipsis];
+                // If we're substituting start or end (which is what we do in frontend),
+                // set the bidi level of our ellipsis to be start+1 or end-1, so
+                // it's not moved away from next or previous char.
+                if ( idx_to_substitute_with_ellipsis == end-1 && end-1 >= start)
+                    m_bidi_levels[idx_to_substitute_with_ellipsis] = m_bidi_levels[end-1];
+                else if ( idx_to_substitute_with_ellipsis == start && start+1 < end)
+                    m_bidi_levels[idx_to_substitute_with_ellipsis] = m_bidi_levels[start+1];
+                // Also get the real bidi type of our ellipsis (if it is replacing a space,
+                // we don't want it to be FRIBIDI_MASK_WS as fribidi_reorder_line() could
+                // then move it at start or end in visual order)
+                fribidi_get_bidi_types((const FriBidiChar*)(m_text+idx_to_substitute_with_ellipsis), 1,
+                                         (FriBidiCharType*)(m_bidi_ctypes+idx_to_substitute_with_ellipsis));
+            }
         }
         // If m_has_bidi, we need the help of fribidi to visually reorder
         // the text, before feeding segments (of possible different
@@ -1364,6 +1386,10 @@ public:
         if ( orig_idx_substituted ) {
             m_text[idx_to_substitute_with_ellipsis] = orig_idx_char;
             m_charinfo[idx_to_substitute_with_ellipsis].flags = orig_idx_charinfo_flags;
+            if ( m_has_bidi ) {
+                m_bidi_ctypes[idx_to_substitute_with_ellipsis] = orig_idx_bidi_ctype;
+                m_bidi_levels[idx_to_substitute_with_ellipsis] = orig_idx_bidi_level;
+            }
         }
 
         // Convert out s_shape_result to a Lua array.
