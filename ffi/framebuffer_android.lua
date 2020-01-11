@@ -20,41 +20,35 @@ local waveform_du, waveform_gc16, waveform_regal = 1, 2, 7 -- luacheck: ignore
 local partial_du, partial_gc16, partial_regal = waveform_du, waveform_gc16, waveform_regal -- luacheck: ignore
 local full_gc16, full_regal = update_full + waveform_gc16, update_full + waveform_regal -- luacheck: ignore
 
--- update a region of the screen
-local function updatePartial(mode, delay, x, y, w, h)
-    if not (x and y and w and h) then
-        x = 0
-        y = 0
-        w = android.screen.width
-        h = android.screen.height
-    end
-    if x < 0 then x = 0 end
-    if y < 0 then y = 0 end
-    if (x + w) > android.screen.width then w = android.screen.width - x end
-    if (y + h) > android.screen.height then h = android.screen.height - y end
+local framebuffer = {}
 
+-- update a region of the screen
+function framebuffer:_updatePartial(mode, delay, x, y, w, h)
+    local bb = self.full_bb or self.bb
+    w, x = BB.checkBounds(w or bb:getWidth(), x or 0, 0, bb:getWidth(), 0xFFFF)
+    h, y = BB.checkBounds(h or bb:getHeight(), y or 0, 0, bb:getHeight(), 0xFFFF)
+    x, y, w, h = bb:getPhysicalRect(x, y, w, h)
+   
     android.einkUpdate(mode, delay, x, y, (x + w), (y + h))
 end
 
 -- update the entire screen
-local function updateFull()
+function framebuffer:_updateFull()
     -- freescale ntx platform
     if has_eink_screen and (eink_platform == "freescale") then
         if has_eink_full_support then
             -- we handle the screen entirely. No delay is needed
-            updatePartial(full_gc16, 0)
+            self:_updatePartial(full_gc16, 0)
         else
             -- we're racing against system driver. Let the system win and apply
             -- a full update after it.
-            updatePartial(full_gc16, 500)
+            self:_updatePartial(full_gc16, 500)
         end
     -- rockchip rk3x platform
     elseif has_eink_screen and (eink_platform == "rockchip") then
         android.einkUpdate(rk_full)
     end
 end
-
-local framebuffer = {}
 
 function framebuffer:init()
     -- we present this buffer to the outside
@@ -109,45 +103,46 @@ function framebuffer:_updateWindow()
     end
 
     android.lib.ANativeWindow_unlockAndPost(android.app.window);
+    
 end
 
 function framebuffer:refreshFullImp(x, y, w, h)
     self:_updateWindow()
-    updateFull()
+    self:_updateFull()
 end
 
 function framebuffer:refreshPartialImp(x, y, w, h)
     self:_updateWindow()
     if has_eink_full_support then
-        updatePartial(partial_regal, 0, x, y, w, h)
+        self:_updatePartial(partial_regal, 0, x, y, w, h)
     end
 end
 
 function framebuffer:refreshFlashPartialImp(x, y, w, h)
     self:_updateWindow()
     if has_eink_full_support then
-        updatePartial(full_regal, 0, x, y, w, h)
+        self:_updatePartial(full_regal, 0, x, y, w, h)
     end
 end
 
 function framebuffer:refreshUIImp(x, y, w, h)
     self:_updateWindow()
     if has_eink_full_support then
-        updatePartial(partial_regal, 0, x, y, w, h)
+        self:_updatePartial(partial_regal, 0, x, y, w, h)
     end
 end
 
 function framebuffer:refreshFlashUIImp(x, y, w, h)
     self:_updateWindow()
     if has_eink_full_support then
-        updatePartial(full_regal, 0, x, y, w, h)
+        self:_updatePartial(full_regal, 0, x, y, w, h)
     end
 end
 
 function framebuffer:refreshFastImp(x, y, w, h)
     self:_updateWindow()
     if has_eink_full_support then
-        updatePartial(partial_du, 0, x, y, w, h)
+        self:_updatePartial(partial_du, 0, x, y, w, h)
     end
 end
 
