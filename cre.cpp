@@ -1372,6 +1372,16 @@ static int getTextFromPositions(lua_State *L) {
 	int y0 = luaL_checkint(L, 3);
 	int x1 = luaL_checkint(L, 4);
 	int y1 = luaL_checkint(L, 5);
+	// Default to have crengine do native highlight of selected text
+	// (segmented by line, for better results)
+	bool drawSelection = true;
+	if (lua_isboolean(L, 6)) {
+		drawSelection = lua_toboolean(L, 6);
+	}
+	bool drawSegmentedSelection = true;
+	if (lua_isboolean(L, 7)) {
+		drawSegmentedSelection = lua_toboolean(L, 7);
+	}
 
 	LVDocView *tv = doc->text_view;
 	lvRect margin = tv->getPageMargins();
@@ -1408,8 +1418,11 @@ static int getTextFromPositions(lua_State *L) {
 				r.getEnd().setOffset(offset + 1);
 		}
 
-		r.setFlags(1);
-		tv->selectRange(r);  // we let crengine do native highlight of selection
+		int rangeFlags = 0;
+		if (drawSelection) // have crengine do native highlight of selection
+			rangeFlags = drawSegmentedSelection ? 2 : 1;
+		r.setFlags(rangeFlags);
+		tv->selectRange(r);
 
 		/* We don't need these:
 		int page = tv->getBookmarkPage(startp);
