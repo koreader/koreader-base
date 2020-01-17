@@ -1803,6 +1803,18 @@ public:
         lua_pushinteger(m_L, last_width); // segment width
     }
 
+    // Get (as a single UTF-8 string) the segment of m_text
+    void getText(int start, int end) {
+        // FriBiDi provides a unicode to UTF-8 conversion function, so use it.
+        // Let's be cheap and not count the nb of bytes really needed to store the
+        // UTF-8 encoding of each Unicode codepoint: go allocate for the max (4).
+        int len = end - start;
+        char * s_utf8 = (char *)malloc(len * 4*sizeof(char) + 1);
+        fribidi_unicode_to_charset(FRIBIDI_CHAR_SET_UTF8, m_text+start, len, s_utf8);
+        lua_pushstring(m_L, s_utf8);
+        free(s_utf8);
+    }
+
     // Get (as a single UTF-8 string) the segment of m_text, extended to include
     // the full words that may be cut at boundaries (start, end).
     void getSelectedWords(int start, int end, int context) {
@@ -2193,6 +2205,21 @@ static int XText_getSegmentFromEnd(lua_State *L) {
     return 2;
 }
 
+// Get (as a single UTF-8 string) the segment of m_text.
+static int XText_getText(lua_State *L) {
+    XText * xt = check_XText(L, 1);
+    int start = luaL_checkint(L, 2);
+    luaL_argcheck(L, start >= 1 && start <= xt->m_length, 2, "index out of range");
+    start--; // Lua to C index
+    int end = luaL_checkint(L, 3);
+    luaL_argcheck(L, end >= 1 && end <= xt->m_length, 3, "index out of range");
+    // end--; // Lua to C index, but we don't as end is excluded in our C code,
+              // but it is expected to be included in the Lua call
+    xt->getText(start, end);
+    // getText() will have pushed a Lua string onto the stack
+    return 1;
+}
+
 // Get (as a single UTF-8 string) the segment of m_text, extended to include
 // the full words that may be cut at boundaries (start, end).
 static int XText_getSelectedWords(lua_State *L) {
@@ -2234,6 +2261,7 @@ static const struct luaL_Reg xtext_meth[] = {
     {"shapeLine", XText_shapeLine},
     {"getParaDirection", XText_getParaDirection},
     {"getSegmentFromEnd", XText_getSegmentFromEnd},
+    {"getText", XText_getText},
     {"getSelectedWords", XText_getSelectedWords},
     { "free", XText_free },
     { "__gc", XText_destroy },
