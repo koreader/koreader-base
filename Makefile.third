@@ -492,6 +492,9 @@ $(OUTPUT_DIR)/fbink: $(THIRDPARTY_DIR)/fbink/*.*
 ifdef KOBO
 	cp $(FBINK_DIR)/fbdepth $(OUTPUT_DIR)/
 endif
+ifdef REMARKABLE
+	cp $(FBINK_DIR)/fbdepth $(OUTPUT_DIR)/
+endif
 
 # ===========================================================================
 # common lua library for networking
