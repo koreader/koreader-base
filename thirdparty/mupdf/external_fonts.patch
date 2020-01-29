@@ -43,7 +43,7 @@ index e197fa1b..03bfbb34 100644
  		if (data)
  			ctx->font->symbol = fz_new_font_from_memory(ctx, NULL, data, size, 0, 0);
 +#else
-+		char *filename = get_font_file("freefont/FreeSans.ttf");
++		char *filename = get_font_file("freefont/FreeSerif.ttf");
 +		ctx->font->symbol = fz_new_font_from_file(ctx, NULL, filename, 0, 1);
 +		free(filename);
 +#endif
