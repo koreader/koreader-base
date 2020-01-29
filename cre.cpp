@@ -1420,7 +1420,7 @@ static int getTextFromPositions(lua_State *L) {
 
 		int rangeFlags = 0;
 		if (drawSelection) // have crengine do native highlight of selection
-			rangeFlags = drawSegmentedSelection ? 2 : 1;
+			rangeFlags = drawSegmentedSelection ? 0x11 : 0x01;
 		r.setFlags(rangeFlags);
 		tv->selectRange(r);
 
@@ -2631,7 +2631,9 @@ static int highlightXPointer(lua_State *L) {
         ldomNode * node = nodep.getNode();
         if (node->isNull())
             return 0;
-        sel.add( new ldomXRange(node, true) ); // highlight
+        ldomXRange * fullNodeRange = new ldomXRange(node, true);
+        fullNodeRange->setFlags(0x11); // draw segmented adjusted selection
+        sel.add( fullNodeRange ); // highlight it
         lua_pushboolean(L, true);
         return 1;
     }
