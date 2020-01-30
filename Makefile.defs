@@ -148,7 +148,7 @@ else ifeq ($(TARGET), pocketbook)
 		export SYSROOT=$(POCKETBOOK_TOOLCHAIN)/arm-obreey-linux-gnueabi/sysroot
 	endif
 else ifeq ($(TARGET), remarkable)
-	CHOST?=arm-kobo-linux-gnueabihf
+	CHOST?=arm-remarkable-linux-gnueabihf
 	export REMARKABLE=1
 else ifeq ($(TARGET), sony-prstux)
 	CHOST?=arm-linux-gnueabihf
