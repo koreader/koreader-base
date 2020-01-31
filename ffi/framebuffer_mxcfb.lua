@@ -357,8 +357,8 @@ local function refresh_zelda(fb, refreshtype, waveform_mode, x, y, w, h, dither)
         refarea[0].dither_mode = C.EPDC_FLAG_USE_DITHERING_PASSTHROUGH
         refarea[0].quant_bit = 0;
     end
-    -- Enable the appropriate flag when requesting what amounts to a 2bit update
-    if waveform_mode == C.WAVEFORM_MODE_DU then
+    -- Enable the appropriate flag when requesting what amounts to a 2bit update, provided we're not dithering.
+    if waveform_mode == C.WAVEFORM_MODE_DU and not dither then
         refarea[0].flags = C.EPDC_FLAG_FORCE_MONOCHROME
     else
         refarea[0].flags = 0
@@ -393,8 +393,8 @@ local function refresh_rex(fb, refreshtype, waveform_mode, x, y, w, h, dither)
         refarea[0].dither_mode = C.EPDC_FLAG_USE_DITHERING_PASSTHROUGH
         refarea[0].quant_bit = 0;
     end
-    -- Enable the appropriate flag when requesting what amounts to a 2bit update
-    if waveform_mode == C.WAVEFORM_MODE_DU then
+    -- Enable the appropriate flag when requesting what amounts to a 2bit update, provided we're not dithering.
+    if waveform_mode == C.WAVEFORM_MODE_DU and not dither then
         refarea[0].flags = C.EPDC_FLAG_FORCE_MONOCHROME
     else
         refarea[0].flags = 0
@@ -439,10 +439,10 @@ local function refresh_kobo_mk7(fb, refreshtype, waveform_mode, x, y, w, h, dith
         refarea[0].dither_mode = C.EPDC_FLAG_USE_DITHERING_PASSTHROUGH
         refarea[0].quant_bit = 0;
     end
-    -- Enable the appropriate flag when requesting a 2bit update
+    -- Enable the appropriate flag when requesting a 2bit update, provided we're not dithering.
     -- NOTE: As of right now (FW 4.9.x), WAVEFORM_MODE_GLD16 appears not to be used by Nickel,
     --       so we don't have to care about EPDC_FLAG_USE_REGAL
-    if waveform_mode == C.WAVEFORM_MODE_A2 then
+    if waveform_mode == C.WAVEFORM_MODE_A2 and not dither then
         refarea[0].flags = C.EPDC_FLAG_FORCE_MONOCHROME
     else
         refarea[0].flags = 0
