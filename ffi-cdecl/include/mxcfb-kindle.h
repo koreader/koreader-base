@@ -1,6 +1,8 @@
 /*
  * Copyright (C) 2004-2015 Freescale Semiconductor, Inc. All Rights Reserved.
  *
+ * NOTE: Upstream kernels available here: https://www.amazon.com/gp/help/customer/display.html?nodeId=200203720
+ *
  * - Modified by houqp, added mxcfb_update_data struct from GeekMaster's
  *   video player, refer to:
  *   http://www.mobileread.com/forums/showthread.php?t=177455&page=10
@@ -181,7 +183,7 @@ struct mxcfb_rect {
 /* Display temperature */
 #define TEMP_USE_AMBIENT			0x1000
 /* Gone w/ KOA2 */
-#define TEMP_USE_PAPYRUS			0X1001
+#define TEMP_USE_PAPYRUS			0x1001
 
 /* PW2, Gone w/ KOA2 */
 #define TEMP_USE_AUTO				0x1001
