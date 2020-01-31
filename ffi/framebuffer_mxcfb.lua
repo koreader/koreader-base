@@ -332,7 +332,7 @@ local function refresh_k51(fb, refreshtype, waveform_mode, x, y, w, h)
     return mxc_update(fb, C.MXCFB_SEND_UPDATE, refarea, refreshtype, waveform_mode, x, y, w, h)
 end
 
-local function refresh_zelda(fb, refreshtype, waveform_mode, x, y, w, h)
+local function refresh_zelda(fb, refreshtype, waveform_mode, x, y, w, h, dither)
     local refarea = ffi.new("struct mxcfb_update_data_zelda[1]")
     -- only for Amazon's driver, try to mostly follow what the stock reader does...
     if waveform_mode == C.WAVEFORM_MODE_ZELDA_GLR16 then
@@ -345,11 +345,20 @@ local function refresh_zelda(fb, refreshtype, waveform_mode, x, y, w, h)
     end
     -- NOTE: Since there's no longer a distinction between GC16_FAST & GC16, we're done!
     refarea[0].temp = C.TEMP_USE_AMBIENT
-    -- NOTE: Dithering appears to behave differently than on Kobo, so, forget about it until someone with the device cares enough...
-    refarea[0].dither_mode = C.EPDC_FLAG_USE_DITHERING_PASSTHROUGH
-    refarea[0].quant_bit = 0;
-    -- Enable the appropriate flag when requesting what amounts to a 2bit update
-    if waveform_mode == C.WAVEFORM_MODE_DU then
+    -- Did we request HW dithering?
+    if dither then
+        refarea[0].dither_mode = C.EPDC_FLAG_USE_DITHERING_ORDERED
+        if waveform_mode == C.WAVEFORM_MODE_DU then
+            refarea[0].quant_bit = 1;
+        else
+            refarea[0].quant_bit = 7;
+        end
+    else
+        refarea[0].dither_mode = C.EPDC_FLAG_USE_DITHERING_PASSTHROUGH
+        refarea[0].quant_bit = 0;
+    end
+    -- Enable the appropriate flag when requesting what amounts to a 2bit update, provided we're not dithering.
+    if waveform_mode == C.WAVEFORM_MODE_DU and not dither then
         refarea[0].flags = C.EPDC_FLAG_FORCE_MONOCHROME
     else
         refarea[0].flags = 0
@@ -359,7 +368,7 @@ local function refresh_zelda(fb, refreshtype, waveform_mode, x, y, w, h)
     return mxc_update(fb, C.MXCFB_SEND_UPDATE_ZELDA, refarea, refreshtype, waveform_mode, x, y, w, h)
 end
 
-local function refresh_rex(fb, refreshtype, waveform_mode, x, y, w, h)
+local function refresh_rex(fb, refreshtype, waveform_mode, x, y, w, h, dither)
     local refarea = ffi.new("struct mxcfb_update_data_rex[1]")
     -- only for Amazon's driver, try to mostly follow what the stock reader does...
     if waveform_mode == C.WAVEFORM_MODE_ZELDA_GLR16 then
@@ -372,11 +381,20 @@ local function refresh_rex(fb, refreshtype, waveform_mode, x, y, w, h)
     end
     -- NOTE: Since there's no longer a distinction between GC16_FAST & GC16, we're done!
     refarea[0].temp = C.TEMP_USE_AMBIENT
-    -- NOTE: Dithering appears to behave differently than on Kobo, so, forget about it until someone with the device cares enough...
-    refarea[0].dither_mode = C.EPDC_FLAG_USE_DITHERING_PASSTHROUGH
-    refarea[0].quant_bit = 0;
-    -- Enable the appropriate flag when requesting what amounts to a 2bit update
-    if waveform_mode == C.WAVEFORM_MODE_DU then
+    -- Did we request HW dithering?
+    if dither then
+        refarea[0].dither_mode = C.EPDC_FLAG_USE_DITHERING_ORDERED
+        if waveform_mode == C.WAVEFORM_MODE_DU then
+            refarea[0].quant_bit = 1;
+        else
+            refarea[0].quant_bit = 7;
+        end
+    else
+        refarea[0].dither_mode = C.EPDC_FLAG_USE_DITHERING_PASSTHROUGH
+        refarea[0].quant_bit = 0;
+    end
+    -- Enable the appropriate flag when requesting what amounts to a 2bit update, provided we're not dithering.
+    if waveform_mode == C.WAVEFORM_MODE_DU and not dither then
         refarea[0].flags = C.EPDC_FLAG_FORCE_MONOCHROME
     else
         refarea[0].flags = 0
@@ -421,10 +439,10 @@ local function refresh_kobo_mk7(fb, refreshtype, waveform_mode, x, y, w, h, dith
         refarea[0].dither_mode = C.EPDC_FLAG_USE_DITHERING_PASSTHROUGH
         refarea[0].quant_bit = 0;
     end
-    -- Enable the appropriate flag when requesting a 2bit update
+    -- Enable the appropriate flag when requesting a 2bit update, provided we're not dithering.
     -- NOTE: As of right now (FW 4.9.x), WAVEFORM_MODE_GLD16 appears not to be used by Nickel,
     --       so we don't have to care about EPDC_FLAG_USE_REGAL
-    if waveform_mode == C.WAVEFORM_MODE_A2 then
+    if waveform_mode == C.WAVEFORM_MODE_A2 and not dither then
         refarea[0].flags = C.EPDC_FLAG_FORCE_MONOCHROME
     else
         refarea[0].flags = 0
@@ -567,9 +585,7 @@ function framebuffer:init()
 
         -- NOTE: Devices on the Rex platform essentially use the same driver as the Zelda platform, they're just passing a slightly smaller mxcfb_update_data struct
         if isZelda or isRex then
-            -- FIXME: Someone with the device will have to check if/how HW dithering is supposed to be requested,
-            --        as the Kobo Mk.7 way doesn't appear to work, at the very least on the PW4 (c.f., #4602)
-            --self.device.canHWDither = yes
+            self.device.canHWDither = yes
             if isZelda then
                 self.mech_refresh = refresh_zelda
             else
