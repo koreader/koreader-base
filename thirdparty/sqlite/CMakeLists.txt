@@ -37,7 +37,7 @@ set(SQLITE_VER "3310100")
 ExternalProject_Add(
     ${PROJECT_NAME}
     DOWNLOAD_DIR ${KO_DOWNLOAD_DIR}
-    URL https://www.sqlite.org/2019/sqlite-autoconf-${SQLITE_VER}.tar.gz
+    URL https://www.sqlite.org/2020/sqlite-autoconf-${SQLITE_VER}.tar.gz
     URL_HASH SHA1=0c30f5b22152a8166aa3bebb0f4bc1f3e9cc508b
     BUILD_IN_SOURCE 1
     CONFIGURE_COMMAND ${CFG_CMD}
