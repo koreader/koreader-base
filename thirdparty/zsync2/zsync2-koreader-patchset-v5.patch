@@ -1,0 +1,172 @@
+diff --git a/include/zsclient.h b/include/zsclient.h
+index ca6380a..5b45667 100644
+--- a/include/zsclient.h
++++ b/include/zsclient.h
+@@ -11,7 +11,7 @@ namespace zsync2 {
+         Private *d;
+ 
+     public:
+-        explicit ZSyncClient(std::string urlOrPathToZsyncFile, std::string pathToLocalFile = "", bool overwrite = true);
++        explicit ZSyncClient(std::string urlOrPathToZsyncFile, std::string pathToLocalFile = "", bool overwrite = true, std::string refererUrl = "");
+         ~ZSyncClient();
+ 
+     public:
+diff --git a/src/legacy_progress.c b/src/legacy_progress.c
+index 5180844..b499ecc 100644
+--- a/src/legacy_progress.c
++++ b/src/legacy_progress.c
+@@ -61,7 +61,7 @@ void do_progress(struct progress *p, float pcnt, long long newdl) {
+             if (sleft < 60 * 1000)
+                 printf("%d:%02d ETA  ", sleft / 60, sleft % 60);
+             else
+-                puts("        ");
++                puts("                        ");
+         }
+         p->lastdl = newdl;
+         p->lastpcnt = pcnt;
+@@ -83,6 +83,6 @@ void end_progress(struct progress *p, int done) {
+         float rate = ((float)p->lastdl) / (p->lasttime - p->starttime + 0.5);
+         printf(" %.1f kBps ", rate / 1000.0);
+     }
+-    puts(done == 2 ? "DONE    \n" : !done ? "aborted    \n" : "        \n");
++    puts(done == 2 ? "DONE     \n" : !done ? "aborted    \n" : "           \n");
+     fflush(stdout);
+ }
+diff --git a/src/main.cpp b/src/main.cpp
+index c0f5e87..65a4e25 100644
+--- a/src/main.cpp
++++ b/src/main.cpp
+@@ -43,10 +43,15 @@ int main(const int argc, const char** argv) {
+     );
+ 
+     args::ValueFlag<string> outputFilename(parser, "path",
+-        "Path to local file which should be created. If not given, file path in .zsync file will be used.",
++        "Path to local file which should be created or overwritten. If not given, file path in .zsync file will be used.",
+         {'o', "output"}
+     );
+ 
++    args::ValueFlag<string> refererUrl(parser, "URL",
++        "Referer URL. If not given, URL in .zsync file will be used.",
++        {'u', "url"}
++    );
++
+     args::Flag forceUpdate(parser, "", "Skip update check and force update", {"force-update"});
+ 
+     args::Flag quietMode(parser, "", "Quiet mode", {'s', 'q', "silent-mode"});
+@@ -106,10 +111,16 @@ int main(const int argc, const char** argv) {
+ 
+     string outPath;
+ 
+-    if (outputFilename)
++    if (outputFilename) {
+         outPath = outputFilename.Get();
++    }
++
++    string refUrl;
++
++    if (refererUrl)
++        refUrl = refererUrl.Get();
+ 
+-    zsync2::ZSyncClient client(pathOrUrl.Get(), outPath);
++    zsync2::ZSyncClient client(pathOrUrl.Get(), outPath, true, refUrl);
+ 
+     // unimplemented flags
+     if (httpInsecureMode)
+@@ -118,6 +129,12 @@ int main(const int argc, const char** argv) {
+     if (saveZSyncFilePath)
+         client.storeZSyncFileInPath(saveZSyncFilePath.Get());
+ 
++    if (seedFiles) {
++        for (const auto& seedFile : seedFiles.Get()) {
++            client.addSeedFile(seedFile);
++        }
++    }
++
+     if (checkForChanges || !forceUpdate) {
+         cout << "Checking for changes..." << endl;
+ 
+@@ -140,12 +157,6 @@ int main(const int argc, const char** argv) {
+         }
+     }
+ 
+-    if (seedFiles) {
+-        for (const auto& seedFile : seedFiles.Get()) {
+-            client.addSeedFile(seedFile);
+-        }
+-    }
+-
+     if (!client.run())
+         return 1;
+ 
+diff --git a/src/zsclient.cpp b/src/zsclient.cpp
+index 83eaaf8..fa522dc 100644
+--- a/src/zsclient.cpp
++++ b/src/zsclient.cpp
+@@ -37,7 +37,7 @@ namespace zsync2 {
+         // there might be more than one seed file
+         // using a set to avoid duplicate entries
+         std::set<std::string> seedFiles;
+-        
++
+         const std::string pathOrUrlToZSyncFile;
+         std::string pathToLocalFile;
+         std::string pathToStoreZSyncFileInLocally;
+@@ -68,10 +68,11 @@ namespace zsync2 {
+         Private(
+             std::string pathOrUrlToZSyncFile,
+             const std::string& pathToLocalFile,
+-            const bool overwrite
++            const bool overwrite,
++            const std::string& refererUrl
+         ) : pathOrUrlToZSyncFile(std::move(pathOrUrlToZSyncFile)), zsHandle(nullptr), state(INITIALIZED),
+                                  localUsed(0), httpDown(0), remoteFileSizeCache(-1),
+-                                 zSyncFileStoredLocallyAlready(false), rangesOptimizationThreshold(0) {
++                                 zSyncFileStoredLocallyAlready(false), rangesOptimizationThreshold(64 * 4096) {
+             // if the local file should be overwritten, we'll instruct
+             if (overwrite) {
+                 this->pathToLocalFile = pathToLocalFile;
+@@ -79,6 +80,11 @@ namespace zsync2 {
+                 this->seedFiles.insert(pathToLocalFile);
+             }
+ 
++            // if we specified a referer URL, use it
++            if (!refererUrl.empty()) {
++                this->referer = refererUrl;
++            }
++
+             // initialize cwd
+             {
+                 size_t cwdBufSize = 4096;
+@@ -87,9 +93,9 @@ namespace zsync2 {
+                 free(cwdBuf);
+             }
+         }
+-        
++
+         ~Private() = default;
+-        
++
+     public:
+         // by default, the messages are pushed into a queue which can be fetched by calling the client's
+         // nextStatusMessage()
+@@ -966,7 +972,8 @@ namespace zsync2 {
+ 
+             // check whether file exists at all, because if not, a full download is required
+             if (!isfile(pathToLocalFile)) {
+-                issueStatusMessage("Cannot find file " + pathToLocalFile + ", triggering full download");
++                // Not actually a full download if we have seed file(s) ;).
++                issueStatusMessage("Cannot find file " + pathToLocalFile + ", triggering " + (seedFiles.size() == 0U ? "full" : "delta") + " download");
+                 updateAvailable = true;
+                 return true;
+             }
+@@ -1047,8 +1054,8 @@ namespace zsync2 {
+         }
+     };
+ 
+-    ZSyncClient::ZSyncClient(const std::string pathOrUrlToZSyncFile, const std::string pathToLocalFile, bool overwrite) {
+-        d = new Private(pathOrUrlToZSyncFile, pathToLocalFile, overwrite);
++    ZSyncClient::ZSyncClient(const std::string pathOrUrlToZSyncFile, const std::string pathToLocalFile, bool overwrite, const std::string refererUrl) {
++        d = new Private(pathOrUrlToZSyncFile, pathToLocalFile, overwrite, refererUrl);
+     }
+     ZSyncClient::~ZSyncClient() {
+         delete d;

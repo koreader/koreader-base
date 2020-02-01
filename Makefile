@@ -33,6 +33,7 @@ all: $(OUTPUT_DIR)/libs $(if $(ANDROID),,$(LUAJIT)) \
 		$(if $(REMARKABLE),$(OUTPUT_DIR)/button-listen,) \
 		$(SQLITE_LIB) \
 		$(if $(or $(KINDLE),$(KOBO),$(CERVANTES),$(POCKETBOOK),$(SONY_PRSTUX)),$(CURL_LIB),) \
+		$(if $(or $(KINDLE),$(KOBO),$(CERVANTES),$(POCKETBOOK),$(SONY_PRSTUX)),$(OUTPUT_DIR)/zsync2,) \
 		$(LUA_LJ_SQLITE) $(OUTPUT_DIR)/common/xsys.lua
 ifndef EMULATE_READER
 ifndef KODEBUG
@@ -46,6 +47,7 @@ ifndef KODEBUG
 		$(if $(or $(CERVANTES),$(KINDLE),$(KOBO),$(REMARKABLE)),$(OUTPUT_DIR)/fbink,) \
 		$(if $(REMARKABLE),$(OUTPUT_DIR)/button-listen,) \
 		$(if $(or $(KOBO),$(REMARKABLE)),$(OUTPUT_DIR)/fbdepth,) \
+		$(if $(or $(KINDLE),$(KOBO),$(CERVANTES),$(POCKETBOOK),$(SONY_PRSTUX)),$(OUTPUT_DIR)/zsync2,) \
 		$(if $(ANDROID),,$(LUAJIT)) \
 		$(OUTPUT_DIR)/libs/$(if $(WIN32),*.dll,*.so*)" ;\
 	$(STRIP) --strip-unneeded $${STRIP_FILES} ;\

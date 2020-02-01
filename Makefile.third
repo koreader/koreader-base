@@ -750,6 +750,7 @@ $(NANOSVG_HEADERS): $(THIRDPARTY_DIR)/nanosvg/*.*
 	cp -fL $(NANOSVG_DIR)/nanosvg/src/nanosvgrast.h $(NANOSVG_INCLUDE_DIR)/
 	cp -fL $(NANOSVG_DIR)/nanosvg/example/stb_image_write.h $(NANOSVG_INCLUDE_DIR)/
 
+# cURL
 $(CURL_LIB): $(THIRDPARTY_DIR)/curl/*.*
 	install -d $(CURL_BUILD_DIR)
 	cd $(CURL_BUILD_DIR) && \
@@ -763,6 +764,15 @@ $(CURL_LIB): $(THIRDPARTY_DIR)/curl/*.*
 		$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS)
 	cp -fL $(CURL_DIR)/lib/$(notdir $(CURL_LIB)) $(OUTPUT_DIR)/libs
 	cp $(CURL_DIR)/ca-bundle.crt $(OUTPUT_DIR)/data/ca-bundle.crt
+
+# zsync2
+$(OUTPUT_DIR)/zsync2: $(THIRDPARTY_DIR)/zsync2/*.*
+	install -d $(ZSYNC2_BUILD_DIR)
+	cd $(ZSYNC2_BUILD_DIR) && \
+		$(CMAKE) $(CMAKE_FLAGS) \
+		$(CURDIR)/$(THIRDPARTY_DIR)/zsync2 && \
+		$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS)
+	cp $(ZSYNC2_DIR)/fbink $(OUTPUT_DIR)/
 
 comma:=,
 empty:=

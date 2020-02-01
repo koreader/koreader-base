@@ -804,8 +804,11 @@ FBINK_BUILD_DIR=$(THIRDPARTY_DIR)/fbink/build/$(MACHINE)
 FBINK_DIR=$(CURDIR)/$(FBINK_BUILD_DIR)/fbink-prefix/src/fbink-build
 
 CURL_BUILD_DIR=$(THIRDPARTY_DIR)/curl/build/$(MACHINE)
-CURL_DIR=$(CURDIR)/$(FBINK_BUILD_DIR)/curl-prefix/src/curl-build
+CURL_DIR=$(CURDIR)/$(CURL_BUILD_DIR)/curl-prefix/src/curl-build
 CURL_LIB=$(OUTPUT_DIR)/libs/libcurl.so.4
+
+ZSYNC2_BUILD_DIR=$(THIRDPARTY_DIR)/zsync2/build/$(MACHINE)
+ZSYNC2_DIR=$(CURDIR)/$(ZSYNC2_BUILD_DIR)/zsync2-prefix/src/zsync2-build
 
 TURBO_BUILD_DIR=$(THIRDPARTY_DIR)/turbo/build/$(MACHINE)
 TURBO_DIR=$(CURDIR)/$(TURBO_BUILD_DIR)/turbo-prefix/src/turbo
@@ -894,5 +897,5 @@ CMAKE_THIRDPARTY_LIBS := $(CMAKE_THIRDPARTY_LIBS),lua-Spore,luasec,luasocket,lib
 CMAKE_THIRDPARTY_LIBS := $(CMAKE_THIRDPARTY_LIBS),djvulibre,mupdf,freetype2,harfbuzz,giflib,libpng,zlib
 CMAKE_THIRDPARTY_LIBS := $(CMAKE_THIRDPARTY_LIBS),tar,sdcv,libiconv,gettext,libjpeg-turbo,popen-noshell,sqlite
 CMAKE_THIRDPARTY_LIBS := $(CMAKE_THIRDPARTY_LIBS),openssl,dropbear,openssh
-CMAKE_THIRDPARTY_LIBS := $(CMAKE_THIRDPARTY_LIBS),curl
+CMAKE_THIRDPARTY_LIBS := $(CMAKE_THIRDPARTY_LIBS),curl,zsync2
 CMAKE_THIRDPARTY_LIBS := $(CMAKE_THIRDPARTY_LIBS),fbink
