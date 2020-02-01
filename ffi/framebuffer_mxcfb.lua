@@ -472,7 +472,11 @@ end
 
 local function refresh_remarkable(fb, refreshtype, waveform_mode, x, y, w, h)
     local refarea = ffi.new("struct mxcfb_update_data[1]")
-    refarea[0].temp = C.TEMP_USE_AMBIENT
+    if waveform_mode == C.WAVEFORM_MODE_DU then
+       refarea[0].temp = C.TEMP_USE_REMARKABLE
+    else
+       refarea[0].temp = C.TEMP_USE_AMBIENT
+    end
     return mxc_update(fb, C.MXCFB_SEND_UPDATE, refarea, refreshtype, waveform_mode, x, y, w, h)
 end
 
@@ -707,10 +711,10 @@ function framebuffer:init()
         self.mech_wait_update_complete = remarkable_mxc_wait_for_update_complete
 
         self.waveform_fast = C.WAVEFORM_MODE_DU
-        self.waveform_ui = C.WAVEFORM_MODE_AUTO
-        self.waveform_flashui = self.waveform_ui
+        self.waveform_ui = C.WAVEFORM_MODE_GL16
+        self.waveform_flashui = C.WAVEFORM_MODE_GC16
         self.waveform_full = C.WAVEFORM_MODE_GC16
-        self.waveform_partial = C.WAVEFORM_MODE_AUTO
+        self.waveform_partial = C.WAVEFORM_MODE_GL16
         self.waveform_night = C.WAVEFORM_MODE_GC16
         self.waveform_flashnight = self.waveform_night
         self.night_is_reagl = false
