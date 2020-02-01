@@ -32,6 +32,7 @@ all: $(OUTPUT_DIR)/libs $(if $(ANDROID),,$(LUAJIT)) \
 		$(if $(or $(CERVANTES),$(KINDLE),$(KOBO),$(REMARKABLE)),$(OUTPUT_DIR)/fbink,) \
 		$(if $(REMARKABLE),$(OUTPUT_DIR)/button-listen,) \
 		$(SQLITE_LIB) \
+		$(if $(or $(KINDLE),$(KOBO),$(CERVANTES),$(POCKETBOOK),$(SONY_PRSTUX)),$(CURL_LIB),) \
 		$(LUA_LJ_SQLITE) $(OUTPUT_DIR)/common/xsys.lua
 ifndef EMULATE_READER
 ifndef KODEBUG

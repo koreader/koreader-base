@@ -750,6 +750,20 @@ $(NANOSVG_HEADERS): $(THIRDPARTY_DIR)/nanosvg/*.*
 	cp -fL $(NANOSVG_DIR)/nanosvg/src/nanosvgrast.h $(NANOSVG_INCLUDE_DIR)/
 	cp -fL $(NANOSVG_DIR)/nanosvg/example/stb_image_write.h $(NANOSVG_INCLUDE_DIR)/
 
+$(CURL_LIB): $(THIRDPARTY_DIR)/curl/*.*
+	install -d $(CURL_BUILD_DIR)
+	cd $(CURL_BUILD_DIR) && \
+		$(CMAKE) $(CMAKE_FLAGS) -DCHOST="$(CHOST)" \
+			-DCC="$(CC)" \
+			-DCPPFLAGS="$(CPPFLAGS)" \
+			-DCFLAGS="$(CFLAGS)" \
+			-DLIBS="$(LIBS)" \
+			-DLDFLAGS="$(LDFLAGS)" \
+		$(CURDIR)/thirdparty/curl && \
+		$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS)
+	cp -fL $(CURL_DIR)/lib/$(notdir $(CURL_LIB)) $(OUTPUT_DIR)/libs
+	cp $(CURL_DIR)/ca-bundle.crt $(OUTPUT_DIR)/data/ca-bundle.crt
+
 comma:=,
 empty:=
 space:=$(empty) $(empty)
