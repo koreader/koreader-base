@@ -18,6 +18,14 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+/* Original source:
+ * https://github.com/reMarkable/linux/blob/zero-gravitas/include/uapi/linux/mxcfb.h
+ * Waveform modes constants originally from libremarkable:
+ * https://github.com/canselcik/libremarkable
+ * Then later cleaned up thanks to the official SDK:
+ * https://remarkable.engineering/
+ */
+
 /*
  * @file uapi/linux/mxcfb.h
  *
@@ -94,22 +102,70 @@ struct mxcfb_rect {
 #define UPDATE_MODE_PARTIAL			0x0
 #define UPDATE_MODE_FULL			0x1
 
-// These modes added by copying values from libremarkable
+// Findings courtesy of libremarkable
+/*
+// c.f., https://github.com/canselcik/libremarkable/blob/67ff7ea3926319a6d33a216a2b8c1f679916aa3c/src/framebuffer/common.rs#L338
+// NOTE: Those constant names seem to be inspired from https://github.com/fread-ink/inkwave
+//       (which was itself built around Kindle waveforms, which is why some of those names will look familiar if you check mxcfb-kindle.h ;)).
+// NOTE: Also added relevant enum names from libqsgepaper.a (it's part of the official SDK) as inline comments (AFAICT, here be dragons!).
+// NOTE: Speaking of inkwave, it seems to confirm that the firmware blob only ships 5 different waveform modes, so I'd trust EPFrameBuffer::WaveformMode ;).
+//       Still, it was designed with Kindle firmware blobs in mind, so, take that with a grain of salt nonetheless.
+#define WAVEFORM_MODE_INIT			0	// EPFrameBuffer::WaveformMode::Initialize		EPFrameBuffer::Waveform::INIT
+#define WAVEFORM_MODE_DU			1	// EPFrameBuffer::WaveformMode::Mono			EPFrameBuffer::Waveform::DU
+#define WAVEFORM_MODE_GC16			2	// EPFrameBuffer::WaveformMode::HighQualityGrayscale	EPFrameBuffer::Waveform::GC16
+#define WAVEFORM_MODE_GC16_FAST			3	// EPFrameBuffer::WaveformMode::Grayscale		EPFrameBuffer::Waveform::GL16
+
+#define WAVEFORM_MODE_GL16_FAST			6	// 							EPFrameBuffer::Waveform::A2
+#define WAVEFORM_MODE_DU4			7	// 							EPFrameBuffer::Waveform::DU4
+#define WAVEFORM_MODE_REAGL			8	// EPFrameBuffer::WaveformMode::Highlight		EPFrameBuffer::Waveform::UNKNOWN
+#define WAVEFORM_MODE_REAGLD			9	// 							EPFrameBuffer::Waveform::INIT2
+#define WAVEFORM_MODE_GL4			0xA
+#define WAVEFORM_MODE_GL16_INV			0xB
+
+// NOTE: Those leftover constants from the upstream kernel sources are *extremely* confusingly named.
+//       libremarkable tests & comments hinted that this one was actually A2, which we've also confirmed.
+#define WAVEFORM_MODE_GLR16			4	// 							EPFrameBuffer::Waveform::GLR16
+#define WAVEFORM_MODE_A2			WAVEFORM_MODE_GLR16
+// NOTE: Which would actually make this GL16 (purely by virtue of GL16 *usually* being A2 + 1)?
+//       Practical tests have yielded weird results, but with a weirdness consistent with GL16_FAST at least ^^.
+#define WAVEFORM_MODE_GLD16			5	// 							EPFrameBuffer::Waveform::GLD16
+#define WAVEFORM_MODE_GL16			WAVEFORM_MODE_GLD16
+// NOTE: That one can't be bogus, because it's actually used by the driver to check for obviously invalid modes ;).
+//       Also, it's consistent with other platforms.
+//       Speaking of other platforms, usually, GLR16 == REAGL & GLD16 == REAGLD ;).
+#define WAVEFORM_MODE_AUTO			257
+*/
+
+// Let's honor <epframebuffer.h> instead, it's slightly less confusing ;).
+// c.f., https://github.com/NiLuJe/FBInk/pull/41#issuecomment-579579351
+#define WAVEFORM_MODE_INIT			0
 #define WAVEFORM_MODE_DU			1
 #define WAVEFORM_MODE_GC16			2
-#define WAVEFORM_MODE_GC16_FAST		3
-#define WAVEFORM_MODE_GL16_FAST		6
-#define WAVEFORM_MODE_DU4			7
-#define WAVEFORM_MODE_REAGL			8
-#define WAVEFORM_MODE_REAGLD		9
-#define WAVEFORM_MODE_GL4			0xA
-#define WAVEFORM_MODE_GL16_INV		0xB
-
+#define WAVEFORM_MODE_GL16			3
+// NOTE: Here be dragons!
+//       xochitl itself will never use any of those, and despite what's detailed in <epframebuffer.h>,
+//       testing on production devices reveals that no-one really should either, actually ;).
+//       c.f., https://github.com/NiLuJe/FBInk/pull/41#issuecomment-580926264
+/*
 #define WAVEFORM_MODE_GLR16			4
 #define WAVEFORM_MODE_GLD16			5
+#define WAVEFORM_MODE_A2			6
+#define WAVEFORM_MODE_DU4			7
+#define WAVEFORM_MODE_UNKNOWN			8
+#define WAVEFORM_MODE_INIT2			9
+*/
+// NOTE: The only thing we can salvage is what's quite likely actually A2, according both to testing,
+//       and poking at the binary firmware blob.
+#define WAVEFORM_MODE_A2			4
+
 #define WAVEFORM_MODE_AUTO			257
 
 #define TEMP_USE_AMBIENT			0x1000
+
+// Again, pilfered from libremarkable ;).
+// In practice, only appears to be used in conjunction w/ DU
+// (c.f., https://github.com/NiLuJe/FBInk/pull/41#issuecomment-579424194)
+#define TEMP_USE_REMARKABLE			0x0018
 
 #define EPDC_FLAG_ENABLE_INVERSION		0x01
 #define EPDC_FLAG_FORCE_MONOCHROME		0x02
@@ -119,7 +175,7 @@ struct mxcfb_rect {
 #define EPDC_FLAG_GROUP_UPDATE			0x400
 #define EPDC_FLAG_USE_DITHERING_Y1		0x2000
 #define EPDC_FLAG_USE_DITHERING_Y4		0x4000
-#define EPDC_FLAG_USE_REGAL				0x8000
+#define EPDC_FLAG_USE_REGAL			0x8000
 
 enum mxcfb_dithering_mode {
 	EPDC_FLAG_USE_DITHERING_PASSTHROUGH = 0x0,
