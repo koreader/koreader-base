@@ -29,7 +29,8 @@ all: $(OUTPUT_DIR)/libs $(if $(ANDROID),,$(LUAJIT)) \
 		$(if $(or $(DARWIN),$(WIN32),$(ANDROID),$(UBUNTUTOUCH),$(APPIMAGE)),,$(OUTPUT_DIR)/dropbear) \
 		$(if $(or $(KINDLE),$(KOBO),$(CERVANTES)),$(OUTPUT_DIR)/sftp-server,) \
 		$(if $(or $(DARWIN),$(WIN32)),,$(OUTPUT_DIR)/tar) \
-		$(if $(or $(KINDLE),$(KOBO),$(CERVANTES)),$(OUTPUT_DIR)/fbink,) \
+		$(if $(or $(CERVANTES),$(KINDLE),$(KOBO),$(REMARKABLE)),$(OUTPUT_DIR)/fbink,) \
+		$(if $(REMARKABLE),$(OUTPUT_DIR)/button-listen,) \
 		$(SQLITE_LIB) \
 		$(LUA_LJ_SQLITE) $(OUTPUT_DIR)/common/xsys.lua
 ifndef EMULATE_READER
@@ -41,8 +42,9 @@ ifndef KODEBUG
 		$(if $(or $(DARWIN),$(WIN32),$(ANDROID),$(UBUNTUTOUCH),$(APPIMAGE)),,$(OUTPUT_DIR)/dropbear) \
 		$(if $(or $(KINDLE),$(KOBO),$(CERVANTES)),$(OUTPUT_DIR)/sftp-server,) \
 		$(if $(or $(KINDLE),$(KOBO)),$(OUTPUT_DIR)/scp,) \
-		$(if $(or $(KINDLE),$(KOBO),$(CERVANTES)),$(OUTPUT_DIR)/fbink,) \
-		$(if $(KOBO),$(OUTPUT_DIR)/fbdepth,) \
+		$(if $(or $(CERVANTES),$(KINDLE),$(KOBO),$(REMARKABLE)),$(OUTPUT_DIR)/fbink,) \
+		$(if $(REMARKABLE),$(OUTPUT_DIR)/button-listen,) \
+		$(if $(or $(KOBO),$(REMARKABLE)),$(OUTPUT_DIR)/fbdepth,) \
 		$(if $(ANDROID),,$(LUAJIT)) \
 		$(OUTPUT_DIR)/libs/$(if $(WIN32),*.dll,*.so*)" ;\
 	$(STRIP) --strip-unneeded $${STRIP_FILES} ;\
@@ -95,7 +97,7 @@ libs: \
 $(OUTPUT_DIR)/libs/libkoreader-input.so: input/*.c input/*.h $(if $(KINDLE),$(POPEN_NOSHELL_LIB),)
 	@echo "Building koreader input module..."
 	$(CC) $(DYNLIB_CFLAGS) -I$(POPEN_NOSHELL_DIR) -I./input \
-		$(if $(KOBO),-DKOBO,) $(if $(KINDLE),-DKINDLE,) $(if $(POCKETBOOK),-DPOCKETBOOK,) $(if $(SONY_PRSTUX),-DSONY_PRSTUX,) $(if $(CERVANTES),-DCERVANTES,)\
+		$(if $(CERVANTES),-DCERVANTES,) $(if $(KOBO),-DKOBO,) $(if $(KINDLE),-DKINDLE,) $(if $(POCKETBOOK),-DPOCKETBOOK,) $(if $(REMARKABLE),-DREMARKABLE,) $(if $(SONY_PRSTUX),-DSONY_PRSTUX,)\
 		-o $@ \
 		input/input.c \
 		$(if $(KINDLE),$(POPEN_NOSHELL_LIB),) \
@@ -200,6 +202,12 @@ ffi/lodepng_h.lua: ffi-cdecl/lodepng_decl.c $(LODEPNG_DIR)
 
 # include all third party libs
 include Makefile.third
+
+# ===========================================================================
+# very simple "launcher" for koreader on the remarkable
+
+$(OUTPUT_DIR)/button-listen: button-listen.c
+	$(CC) $(CFLAGS) -o $@ $^
 
 # ===========================================================================
 # the attachment extraction tool:

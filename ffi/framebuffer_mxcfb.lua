@@ -140,6 +140,17 @@ local function pocketbook_mxc_wait_for_update_complete(fb, marker)
     return C.ioctl(fb.fd, C.MXCFB_WAIT_FOR_UPDATE_COMPLETE, ffi.new("uint32_t[1]", marker))
 end
 
+-- Remarkable MXCFB_WAIT_FOR_UPDATE_COMPLETE
+local function remarkable_mxc_wait_for_update_complete(fb, marker)
+    -- Wait for a specific update to be completed
+    local update_marker = ffi.new("struct mxcfb_update_marker_data[1]")
+    update_marker[0].update_marker = marker
+    -- NOTE: 0 seems to be a fairly safe assumption for "we don't care about collisions".
+    --       On a slightly related note, the EPDC_FLAG_TEST_COLLISION flag is for dry-run collision tests, never set it.
+    update_marker[0].collision_test = 0
+    return C.ioctl(fb.fd, C.MXCFB_WAIT_FOR_UPDATE_COMPLETE, update_marker)
+end
+
 -- Sony PRS MXCFB_WAIT_FOR_UPDATE_COMPLETE
 local function sony_prstux_mxc_wait_for_update_complete(fb, marker)
     -- Wait for a specific update to be completed
@@ -459,6 +470,16 @@ local function refresh_pocketbook(fb, refreshtype, waveform_mode, x, y, w, h)
     return mxc_update(fb, C.MXCFB_SEND_UPDATE, refarea, refreshtype, waveform_mode, x, y, w, h)
 end
 
+local function refresh_remarkable(fb, refreshtype, waveform_mode, x, y, w, h)
+    local refarea = ffi.new("struct mxcfb_update_data[1]")
+    if waveform_mode == C.WAVEFORM_MODE_DU then
+       refarea[0].temp = C.TEMP_USE_REMARKABLE
+    else
+       refarea[0].temp = C.TEMP_USE_AMBIENT
+    end
+    return mxc_update(fb, C.MXCFB_SEND_UPDATE, refarea, refreshtype, waveform_mode, x, y, w, h)
+end
+
 local function refresh_sony_prstux(fb, refreshtype, waveform_mode, x, y, w, h)
     local refarea = ffi.new("struct mxcfb_update_data[1]")
     refarea[0].temp = C.TEMP_USE_AMBIENT
@@ -680,6 +701,20 @@ function framebuffer:init()
         self.waveform_flashui = self.waveform_ui
         self.waveform_full = C.WAVEFORM_MODE_GC16
         self.waveform_partial = C.WAVEFORM_MODE_GC16
+        self.waveform_night = C.WAVEFORM_MODE_GC16
+        self.waveform_flashnight = self.waveform_night
+        self.night_is_reagl = false
+    elseif self.device:isRemarkable() then
+        require("ffi/mxcfb_remarkable_h")
+
+        self.mech_refresh = refresh_remarkable
+        self.mech_wait_update_complete = remarkable_mxc_wait_for_update_complete
+
+        self.waveform_fast = C.WAVEFORM_MODE_DU
+        self.waveform_ui = C.WAVEFORM_MODE_GL16
+        self.waveform_flashui = C.WAVEFORM_MODE_GC16
+        self.waveform_full = C.WAVEFORM_MODE_GC16
+        self.waveform_partial = C.WAVEFORM_MODE_GL16
         self.waveform_night = C.WAVEFORM_MODE_GC16
         self.waveform_flashnight = self.waveform_night
         self.night_is_reagl = false

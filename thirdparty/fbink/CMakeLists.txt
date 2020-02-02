@@ -23,25 +23,28 @@ elseif($ENV{CERVANTES})
 elseif($ENV{KOBO})
     set(FBINK_TARGET "strip")
     set(UTILS_TARGET "utils")
+elseif($ENV{REMARKABLE})
+    set(FBINK_TARGET "remarkable")
+    set(UTILS_TARGET "REMARKABLE=1 utils")
 else()
     set(FBINK_TARGET "strip")
 endif()
 
 # Minimal, statically linked build, we don't care about extra fonts or image support
 set(BUILD_CMD1 sh -c "${KO_MAKE_RECURSIVE} MINIMAL=1 OPENTYPE=1 CFLAGS=\"${CFLAGS}\" LDFLAGS=\"${LDFLAGS}\" ${FBINK_TARGET}")
-if($ENV{KOBO})
+if(UTILS_TARGET)
     set(BUILD_CMD2 sh -c "${KO_MAKE_RECURSIVE} CFLAGS=\"${CFLAGS}\" LDFLAGS=\"${LDFLAGS}\" ${UTILS_TARGET}")
 endif()
 # We build in-tree...
 set(INSTALL_CMD1 ${CMAKE_COMMAND} -E make_directory ${BINARY_DIR})
 if($ENV{DEBUG})
     set(INSTALL_CMD2 ${CMAKE_COMMAND} -E rename ${SOURCE_DIR}/Debug/fbink ${BINARY_DIR}/fbink)
-    if($ENV{KOBO})
+    if(UTILS_TARGET)
         set(INSTALL_CMD3 ${CMAKE_COMMAND} -E rename ${SOURCE_DIR}/Debug/fbdepth ${BINARY_DIR}/fbdepth)
     endif()
 else()
     set(INSTALL_CMD2 ${CMAKE_COMMAND} -E rename ${SOURCE_DIR}/Release/fbink ${BINARY_DIR}/fbink)
-    if($ENV{KOBO})
+    if(UTILS_TARGET)
         set(INSTALL_CMD3 ${CMAKE_COMMAND} -E rename ${SOURCE_DIR}/Release/fbdepth ${BINARY_DIR}/fbdepth)
     endif()
 endif()
@@ -49,7 +52,7 @@ endif()
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
     https://github.com/NiLuJe/FBInk.git
-    tags/v1.20.3
+    tags/v1.21.0
     ${SOURCE_DIR}
 )
 
