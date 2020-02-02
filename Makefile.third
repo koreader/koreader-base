@@ -777,7 +777,7 @@ $(OUTPUT_DIR)/zsync2: $(THIRDPARTY_DIR)/zsync2/*.*
 		-DCURL_DIR="$(CURL_DIR)" \
 		$(CURDIR)/$(THIRDPARTY_DIR)/zsync2 && \
 		$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS)
-	cp $(ZSYNC2_DIR)/fbink $(OUTPUT_DIR)/
+	cp $(ZSYNC2_DIR)/zsync2 $(OUTPUT_DIR)/
 
 comma:=,
 empty:=
