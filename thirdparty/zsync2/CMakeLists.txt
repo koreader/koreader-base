@@ -7,6 +7,10 @@ include("koreader_thirdparty_git")
 
 enable_language(C)
 
+assert_var_defined(CPPFLAGS)
+assert_var_defined(CFLAGS)
+assert_var_defined(CXXFLAGS)
+assert_var_defined(LDFLAGS)
 assert_var_defined(CURL_DIR)
 
 ep_get_source_dir(SOURCE_DIR)
@@ -23,6 +27,14 @@ list(APPEND CMAKE_ARGS "-DCMAKE_INSTALL_PREFIX=${BINARY_DIR}")
 list(APPEND CMAKE_ARGS "-DCMAKE_INSTALL_LIBDIR=lib")
 list(APPEND CMAKE_ARGS "-DCMAKE_INSTALL_INCLUDEDIR=include")
 list(APPEND CMAKE_ARGS "-DCMAKE_SKIP_BUILD_RPATH:BOOL=True")
+
+# Honor the env, dammit.
+list(APPEND CMAKE_ARGS "-DCMAKE_EXE_LINKER_FLAGS=${LDFLAGS}")
+list(APPEND CMAKE_ARGS "-DCMAKE_MODULE_LINKER_FLAGS=${LDFLAGS}")
+list(APPEND CMAKE_ARGS "-DCMAKE_SHARED_LINKER_FLAGS=${LDFLAGS}")
+list(APPEND CMAKE_ARGS "-DCMAKE_STATIC_LINKER_FLAGS=${LDFLAGS}")
+list(APPEND CMAKE_ARGS "-DCMAKE_C_FLAGS=${CPPFLAGS} ${CFLAGS}")
+list(APPEND CMAKE_ARGS "-DCMAKE_CXX_FLAGS=${CPPFLAGS} ${CXXFLAGS}")
 
 # And, finally, the actual zsync2 build options
 list(APPEND CMAKE_ARGS "-DUSE_SYSTEM_CURL=1")

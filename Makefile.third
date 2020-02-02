@@ -769,11 +769,11 @@ $(CURL_LIB): $(THIRDPARTY_DIR)/curl/*.*
 $(OUTPUT_DIR)/zsync2: $(THIRDPARTY_DIR)/zsync2/*.*
 	install -d $(ZSYNC2_BUILD_DIR)
 	cd $(ZSYNC2_BUILD_DIR) && \
-		env \
-		CFLAGS="$(CPPFLAGS) -I$(ZLIB_DIR)/include -I$(OPENSSL_DIR)/include $(CFLAGS)" \
-		CXXFLAGS="$(CPPFLAGS) -I$(ZLIB_DIR)/include -I$(OPENSSL_DIR)/include $(CXXFLAGS)" \
-		LDFLAGS="$(LDFLAGS) -L$(CURL_DIR) -L$(OPENSSL_DIR) -Wl,-rpath,'$(ORIGIN_CMAKE_TO_AUTOCFG)/../libs'" \
 		$(CMAKE) $(CMAKE_FLAGS) \
+		-DCPPFLAGS="$(CPPFLAGS) -I$(ZLIB_DIR)/include -I$(OPENSSL_DIR)/include" \
+		-DCFLAGS="$(CFLAGS)" \
+		-DCXXFLAGS="$(CXXFLAGS)" \
+		-DLDFLAGS="$(LDFLAGS) -L$(CURL_DIR) -L$(OPENSSL_DIR) -Wl,-rpath,'$(ORIGIN_CMAKE_TO_AUTOCFG)/../libs'" \
 		-DCURL_DIR="$(CURL_DIR)" \
 		$(CURDIR)/$(THIRDPARTY_DIR)/zsync2 && \
 		$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS)
