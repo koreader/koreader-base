@@ -1,9 +1,12 @@
 # CMake Cross ToolChain config file. Adapted from Debian's dpkg-cross ;).
 # c.f., https://cmake.org/cmake/help/latest/manual/cmake-toolchains.7.html#cross-compiling-toolchain
+# NOTE: Remember that CMake is a special snowflake that completely *ignores* CPPFLAGS,
+# because of course it does...
+# (https://gitlab.kitware.com/cmake/cmake/issues/12928)
 
 # set minimum cmake version required for cross-compiling to work
 cmake_minimum_required (VERSION 3.5.1)
-set (NO_POLICY_SCOPE NEW)
+set(NO_POLICY_SCOPE NEW)
 # Build with rm CMakeCache.txt; cmake -DCMAKE_TOOLCHAIN_FILE=./CMakeCross.txt .
 
 # set target system name
@@ -35,6 +38,11 @@ set(CMAKE_C_COMPILER $ENV{CROSS_TC}-gcc)
 set(CMAKE_CXX_COMPILER $ENV{CROSS_TC}-g++)
 
 # set various other toolchain tools
+# NOTE: These apparently need to be cache values for arcane CMake reasons.
+#       Should also apparently be fully resolved absolute paths,
+#       but that lead to weird expansion and hilarious warnings last time I tried...
+#       If all else fails, comment out, and hope just export AR & co will do the job.
+#       That, or directly including this in a toplevel CmakeFile.txt...
 set(CMAKE_STRIP "$ENV{CROSS_TC}-strip" CACHE FILEPATH "Strip")
 set(CMAKE_AR "$ENV{CROSS_TC}-ar" CACHE FILEPATH "Archive")
 set(CMAKE_RANLIB "$ENV{CROSS_TC}-ranlib" CACHE FILEPATH "RanLib")
