@@ -792,8 +792,6 @@ CZMQ_LIB=$(OUTPUT_DIR)/libs/libczmq$(CZMQ_FMQ_ZYRE_LIB_EXT)
 FILEMQ_LIB=$(OUTPUT_DIR)/libs/libfmq$(CZMQ_FMQ_ZYRE_LIB_EXT)
 ZYRE_LIB=$(OUTPUT_DIR)/libs/libzyre$(CZMQ_FMQ_ZYRE_LIB_EXT)
 
-ZSYNC_BUILD_DIR=$(THIRDPARTY_DIR)/zsync/build/$(MACHINE)
-ZSYNC_DIR=$(CURDIR)/$(ZSYNC_BUILD_DIR)/zsync-prefix/src/zsync-build
 TAR_BUILD_DIR=$(THIRDPARTY_DIR)/tar/build/$(MACHINE)
 TAR_DIR=$(CURDIR)/$(TAR_BUILD_DIR)/tar-prefix/src/tar-build
 DROPBEAR_BUILD_DIR=$(THIRDPARTY_DIR)/dropbear/build/$(MACHINE)
@@ -890,7 +888,7 @@ LPEG_DYNLIB=$(OUTPUT_DIR)/rocks/lib/lua/5.1/lpeg.so
 
 CMAKE_THIRDPARTY_LIBS := kpvcrlib,nanosvg
 CMAKE_THIRDPARTY_LIBS := $(CMAKE_THIRDPARTY_LIBS),evernote-sdk-lua,luajit,lpeg,turbo
-CMAKE_THIRDPARTY_LIBS := $(CMAKE_THIRDPARTY_LIBS),zsync,zyre,czmq,filemq,libzmq
+CMAKE_THIRDPARTY_LIBS := $(CMAKE_THIRDPARTY_LIBS),zyre,czmq,filemq,libzmq
 CMAKE_THIRDPARTY_LIBS := $(CMAKE_THIRDPARTY_LIBS),libk2pdfopt,tesseract,leptonica
 CMAKE_THIRDPARTY_LIBS := $(CMAKE_THIRDPARTY_LIBS),lj-wpaclient
 CMAKE_THIRDPARTY_LIBS := $(CMAKE_THIRDPARTY_LIBS),lua-Spore,luasec,luasocket,libffi,lua-serialize,glib,lodepng,minizip

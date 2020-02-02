@@ -460,24 +460,6 @@ ifdef ANDROID
 endif
 
 # ===========================================================================
-# zsync: rsync over HTTP
-
-$(OUTPUT_DIR)/zsync: $(THIRDPARTY_DIR)/zsync/*.*
-	install -d $(ZSYNC_BUILD_DIR)
-	cd $(ZSYNC_BUILD_DIR) && \
-		$(CMAKE) $(CMAKE_FLAGS) -DHOST="$(if $(EMULATE_READER),,$(CHOST))" -DCC="$(CC)" \
-		-DCFLAGS="$(CFLAGS)" \
-		-DLDFLAGS="$(LDFLAGS)" \
-		-DLIBS="$(if $(ANDROID),-static,)" \
-		$(CURDIR)/$(THIRDPARTY_DIR)/zsync && \
-		$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS)
-	cp $(ZSYNC_DIR)/zsync $(OUTPUT_DIR)/
-ifdef ANDROID
-	readelf -d $@ | grep "no dynamic" \
-		|| echo "warning: Android L+ support only PIE binary and can't run this"
-endif
-
-# ===========================================================================
 # FBInk: visual feedback on Kobo/Kindle/Cervantes
 
 $(OUTPUT_DIR)/fbink: $(THIRDPARTY_DIR)/fbink/*.*
