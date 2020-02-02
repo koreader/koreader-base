@@ -1,0 +1,23 @@
+diff --git a/include/cpr/defines.h b/include/cpr/defines.h
+index b08575c..7aec273 100644
+--- a/lib/cpr/include/cpr/defines.h
++++ b/lib/cpr/include/cpr/defines.h
+@@ -5,4 +5,18 @@
+ 
+ #define CPR_FWD(...) ::std::forward<decltype(__VA_ARGS__)>(__VA_ARGS__)
+ 
++// Workaround PocketBook's old TC being the worst.
++#include <string>
++#include <sstream>
++namespace std
++{
++    template <typename T>
++    std::string to_string(T Value)
++    {
++        std::ostringstream TempStream;
++        TempStream << Value;
++        return TempStream.str();
++    }
++}
++
+ #endif
