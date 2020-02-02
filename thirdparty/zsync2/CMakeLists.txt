@@ -37,11 +37,14 @@ list(APPEND CMAKE_ARGS "-DCMAKE_C_FLAGS=${CPPFLAGS} ${CFLAGS}")
 list(APPEND CMAKE_ARGS "-DCMAKE_CXX_FLAGS=${CPPFLAGS} ${CXXFLAGS}")
 
 # And, finally, the actual zsync2 build options
+list(APPEND CMAKE_ARGS "-DBUILD_CPR_TESTS=0")
 list(APPEND CMAKE_ARGS "-DUSE_SYSTEM_CURL=1")
 list(APPEND CMAKE_ARGS "-DCURL_INCLUDE_DIR=${CURL_DIR}/include")
 list(APPEND CMAKE_ARGS "-DCURL_LIBRARY=curl")
+# And because CMake is being stupid on the bots...
+#list(APPEND CMAKE_ARGS "-DCURL_FOUND=1")
 list(APPEND CMAKE_ARGS "-DCURL_LIBRARIES=curl")
-list(APPEND CMAKE_ARGS "-DBUILD_CPR_TESTS=0")
+#list(APPEND CMAKE_ARGS "-DCURL_INCLUDE_DIRS=${CURL_DIR}/include")
 
 # A few CLI cleanup:
 ## * Enable range requests optimizations on the CLI
