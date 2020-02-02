@@ -8,7 +8,6 @@ include("koreader_thirdparty_git")
 enable_language(C)
 
 assert_var_defined(CURL_DIR)
-assert_var_defined(LDFLAGS)
 
 ep_get_source_dir(SOURCE_DIR)
 ep_get_binary_dir(BINARY_DIR)
