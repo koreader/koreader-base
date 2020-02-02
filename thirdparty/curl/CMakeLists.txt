@@ -17,8 +17,8 @@ assert_var_defined(CHOST)
 ep_get_source_dir(SOURCE_DIR)
 ep_get_binary_dir(BINARY_DIR)
 
-set(PATCH_CMD1 "${ISED} '/LD_LIBRARY_PATH=/d' configure.ac")
-set(PATCH_CMD2 "${ISED} '/CURL_MAC_CFLAGS/d' configure.ac")
+set(PATCH_CMD1 sh -c "${ISED} '/LD_LIBRARY_PATH=/d' ${SOURCE_DIR}/configure.ac")
+set(PATCH_CMD2 sh -c "${ISED} '/CURL_MAC_CFLAGS/d' ${SOURCE_DIR}/configure.ac")
 set(PATCH_CMD3 sh -c "./buildconf")
 
 set(CFG_ENV_VAR "CC=\"${CC}\" CPPFLAGS=\"${CPPFLAGS}\" CFLAGS=\"${CFLAGS}\" LIBS=\"${LIBS}\" LDFLAGS=\"${LDFLAGS}\"")
