@@ -7,6 +7,9 @@ include("koreader_thirdparty_git")
 
 enable_language(C)
 
+assert_var_defined(CURL_DIR)
+assert_var_defined(LDFLAGS)
+
 ep_get_source_dir(SOURCE_DIR)
 ep_get_binary_dir(BINARY_DIR)
 
@@ -24,6 +27,7 @@ list(APPEND CMAKE_ARGS "-DCMAKE_SKIP_BUILD_RPATH:BOOL=True")
 
 # And, finally, the actual zsync2 build options
 list(APPEND CMAKE_ARGS "-DUSE_SYSTEM_CURL=1")
+list(APPEND CMAKE_ARGS "-DCURL_INCLUDE_DIR=\"${CURL_DIR}/include\"")
 list(APPEND CMAKE_ARGS "-DBUILD_CPR_TESTS=0")
 
 # A few CLI cleanup:
