@@ -41,7 +41,7 @@ ko_write_gitclone_script(
 
 include(ExternalProject)
 ExternalProject_Add(
-    libjpeg-turbo
+    zsync2
     DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
     PATCH_COMMAND COMMAND ${PATCH_CMD}
     CMAKE_ARGS "${CMAKE_ARGS}"
