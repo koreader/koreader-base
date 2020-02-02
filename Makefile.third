@@ -756,10 +756,10 @@ $(CURL_LIB): $(THIRDPARTY_DIR)/curl/*.*
 	cd $(CURL_BUILD_DIR) && \
 		$(CMAKE) $(CMAKE_FLAGS) -DCHOST="$(CHOST)" \
 			-DCC="$(CC)" \
-			-DCPPFLAGS="$(CPPFLAGS)" \
+			-DCPPFLAGS="$(CPPFLAGS) -I$(ZLIB_DIR)/include -I$(OPENSSL_DIR)/include" \
 			-DCFLAGS="$(CFLAGS)" \
 			-DLIBS="$(LIBS)" \
-			-DLDFLAGS="$(LDFLAGS)" \
+			-DLDFLAGS="$(LDFLAGS) -L$(ZLIB_DIR) -L$(OPENSSL_DIR) -Wl,-rpath,'$(ORIGIN_CMAKE_TO_AUTOCFG)/../libs'" \
 		$(CURDIR)/thirdparty/curl && \
 		$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS)
 	cp -fL $(CURL_DIR)/lib/$(notdir $(CURL_LIB)) $(OUTPUT_DIR)/libs
