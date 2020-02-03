@@ -2,7 +2,7 @@ diff --git a/include/cpr/compat.h b/include/cpr/compat.h
 new file mode 100644
 index 0000000..2fa8380
 --- /dev/null
-+++ b/include/cpr/compat.h
++++ b/lib/cpr/include/cpr/compat.h
 @@ -0,0 +1,16 @@
 +#pragma once
 +
@@ -22,8 +22,8 @@ index 0000000..2fa8380
 +
 diff --git a/include/cpr/multipart.h b/include/cpr/multipart.h
 index ba2c9ab..259e6d3 100644
---- a/include/cpr/multipart.h
-+++ b/include/cpr/multipart.h
+--- a/lib/cpr/include/cpr/multipart.h
++++ b/lib/cpr/include/cpr/multipart.h
 @@ -8,6 +8,7 @@
  #include <vector>
  
@@ -34,8 +34,8 @@ index ba2c9ab..259e6d3 100644
  
 diff --git a/include/cpr/payload.h b/include/cpr/payload.h
 index a183a61..7c242ac 100644
---- a/include/cpr/payload.h
-+++ b/include/cpr/payload.h
+--- a/lib/cpr/include/cpr/payload.h
++++ b/lib/cpr/include/cpr/payload.h
 @@ -7,6 +7,7 @@
  #include <string>
  
@@ -46,8 +46,8 @@ index a183a61..7c242ac 100644
  
 diff --git a/include/cpr/timeout.h b/include/cpr/timeout.h
 index 6e6fb79..2a819e7 100644
---- a/include/cpr/timeout.h
-+++ b/include/cpr/timeout.h
+--- a/lib/cpr/include/cpr/timeout.h
++++ b/lib/cpr/include/cpr/timeout.h
 @@ -4,6 +4,8 @@
  #include <chrono>
  #include <cstdint>
@@ -59,8 +59,8 @@ index 6e6fb79..2a819e7 100644
  class Timeout {
 diff --git a/test/async_tests.cpp b/test/async_tests.cpp
 index 06a573b..16d0ca8 100644
---- a/test/async_tests.cpp
-+++ b/test/async_tests.cpp
+--- a/lib/cpr/test/async_tests.cpp
++++ b/lib/cpr/test/async_tests.cpp
 @@ -4,6 +4,7 @@
  #include <vector>
  
