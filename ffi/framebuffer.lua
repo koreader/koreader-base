@@ -330,7 +330,7 @@ end
 -- All odd orientations are Landscape (1 and 3), the larger one being the Inverted variant
 -- NOTE: We only swap to Inverted variants when that was requested interactively by the user,
 --       to avoid doing unrequested inversions during the few manual setScreenMode calls we might do,
---       (f.g., user selected default orientation)
+--       (e.g., user selected default orientation)
 function fb:setScreenMode(mode, interactive)
     if mode == "portrait" then
         if bit.band(self.cur_rotation_mode, 1) == 1 then
