@@ -26,8 +26,8 @@ set(CFG_OPTS "--prefix=\"${BINARY_DIR}\" --host=\"${CHOST}\" --enable-shared=yes
 set(CFG_CMD "${CFG_ENV_VAR} ${SOURCE_DIR}/configure ${CFG_OPTS}")
 set(CFG_CMD sh -c "${CFG_CMD}")
 set(BUILD_CMD1 sh -c "${KO_MAKE_RECURSIVE} ca-bundle")
-set(BUILD_CMD2 sh -c "${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS} V=1")
-set(INSTALL_CMD1 sh -c "${KO_MAKE_RECURSIVE} install V=1")
+set(BUILD_CMD2 sh -c "${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS}")
+set(INSTALL_CMD1 sh -c "${KO_MAKE_RECURSIVE} install")
 set(INSTALL_CMD2 ${CMAKE_COMMAND} -E rename ${SOURCE_DIR}/lib/ca-bundle.crt ${BINARY_DIR}/ca-bundle.crt)
 
 ko_write_gitclone_script(
