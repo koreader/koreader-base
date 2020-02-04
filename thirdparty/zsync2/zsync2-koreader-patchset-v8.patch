@@ -530,7 +530,7 @@ index c0f5e87..4b13587 100644
          return 1;
  
 diff --git a/src/zsclient.cpp b/src/zsclient.cpp
-index 83eaaf8..968da3d 100644
+index 83eaaf8..897f53d 100644
 --- a/src/zsclient.cpp
 +++ b/src/zsclient.cpp
 @@ -37,7 +37,7 @@ namespace zsync2 {
@@ -596,29 +596,32 @@ index 83eaaf8..968da3d 100644
 +                #ifdef ZSYNC_STANDALONE
 +                /* Set up progress display to run during the fetch */
 +                struct progress p = { 0, 0, 0, 0 };
-+
 +                fputc('\n', stderr);
++                do_progress(&p, 0, 0);
 +                #endif
 +                int len;
                  for (const auto& pair : ranges) {
                      auto beginbyte = pair.first;
                      auto endbyte = pair.second;
-@@ -689,14 +702,9 @@ namespace zsync2 {
+@@ -689,17 +702,8 @@ namespace zsync2 {
                      range_fetch_addranges(rf, single_range, 1);
  
                      {
 -                        int len;
                          off_t zoffset;
  
-                         #ifdef ZSYNC_STANDALONE
+-                        #ifdef ZSYNC_STANDALONE
 -                        struct progress p = { 0, 0, 0, 0 };
 -
 -                        /* Set up progress display to run during the fetch */
 -                        fputc('\n', stderr);
-                         do_progress(&p, (float) calculateProgress() * 100.0f, range_fetch_bytes_down(rf));
-                         #endif
- 
-@@ -727,13 +735,12 @@ namespace zsync2 {
+-                        do_progress(&p, (float) calculateProgress() * 100.0f, range_fetch_bytes_down(rf));
+-                        #endif
+-
+                         /* Loop while we're receiving data, until we're done or there is an error */
+                         while (!ret
+                                && (len = get_range_block(rf, &zoffset, buffer.data(), BUFFERSIZE)) > 0) {
+@@ -727,13 +731,12 @@ namespace zsync2 {
                           *could be data in its buffer that it can use or needs to process */
                              zsync_receive_data(zr, nullptr, zoffset, 0);
                          }
@@ -635,7 +638,7 @@ index 83eaaf8..968da3d 100644
              }
  
              /* Clean up */
-@@ -966,7 +973,8 @@ namespace zsync2 {
+@@ -966,7 +969,8 @@ namespace zsync2 {
  
              // check whether file exists at all, because if not, a full download is required
              if (!isfile(pathToLocalFile)) {
@@ -645,7 +648,7 @@ index 83eaaf8..968da3d 100644
                  updateAvailable = true;
                  return true;
              }
-@@ -1047,8 +1055,8 @@ namespace zsync2 {
+@@ -1047,8 +1051,8 @@ namespace zsync2 {
          }
      };
  
