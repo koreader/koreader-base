@@ -327,7 +327,7 @@ index 7b21773..c95a0ef 100644
 +#define SIZE_T_PF "%zu"
 +#define OFF_T_PF "%jd"
 diff --git a/src/legacy_http.c b/src/legacy_http.c
-index f97c5a2..899c7c3 100644
+index f97c5a2..b7aa93b 100644
 --- a/src/legacy_http.c
 +++ b/src/legacy_http.c
 @@ -24,6 +24,7 @@
@@ -338,7 +338,33 @@ index f97c5a2..899c7c3 100644
  #include <errno.h>
  #include <unistd.h>
  
-@@ -196,8 +197,8 @@ void http_load_ranges(struct range_fetch* rf)
+@@ -47,12 +48,15 @@
+  */
+ 
+ /**
+- * Prints a log message with a newline character.
++ * Prints a log message bracketed between a carriage return and a linefeed character.
+  */
+ void log_message(const char* msgfmt, ...) {
+     va_list args;
+     va_start(args, msgfmt);
+ 
++    // print CR
++    fprintf(stderr, "\r");
++
+     // print prefix
+     char prefix[] = "zsync_legacy: ";
+     fprintf(stderr, prefix, sizeof(prefix));
+@@ -60,7 +64,7 @@ void log_message(const char* msgfmt, ...) {
+     // print formatted message
+     vfprintf(stderr, msgfmt, args);
+ 
+-    // print newline
++    // print LF
+     fprintf(stderr, "\n");
+ 
+     va_end(args);
+@@ -196,8 +200,8 @@ void http_load_ranges(struct range_fetch* rf)
          i = rf->rangessent;
          l = strlen(ranges_opt);
          snprintf(range, sizeof(range), OFF_T_PF "-" OFF_T_PF ",",
@@ -349,7 +375,37 @@ index f97c5a2..899c7c3 100644
          rf->rangessent++;
      }
  
-@@ -581,7 +582,7 @@ int range_fetch_read_http_headers(struct range_fetch *rf) {
+@@ -516,25 +520,25 @@ int range_fetch_read_http_headers(struct range_fetch *rf) {
+ 
+         if (rfgets(buf, sizeof(buf), rf) == NULL){
+             /* most likely unexpected EOF from server */
+-            log_message("EOF from server\n");
++            log_message("EOF from server");
+             return -1;
+         }
+         if (buf[0] == 0)
+             return 0;           /* EOF, caller decides if that's an error */
+         if (memcmp(buf, "HTTP/1", 6) != 0 || (p = strchr(buf, ' ')) == NULL) {
+-            log_message("got non-HTTP response '%s'\n", buf);
++            log_message("got non-HTTP response '%s'", buf);
+             return -1;
+         }
+         status = atoi(p + 1);
+         if (status != 206 && status != 301 && status != 302) {
+             if (status >= 300 && status < 400) {
+                 log_message(
+-                        "\nzsync received a redirect/further action required status code: %d\nzsync specifically refuses to proceed when a server requests further action. This is because zsync makes a very large number of requests per file retrieved, and so if zsync has to perform additional actions per request, it further increases the load on the target server. The person/entity who created this zsync file should change it to point directly to a URL where the target file can be retrieved without additional actions/redirects needing to be followed.\nSee http://zsync.moria.orc.uk/server-issues",
++                        "zsync received a redirect/further action required status code: %d\nzsync specifically refuses to proceed when a server requests further action. This is because zsync makes a very large number of requests per file retrieved, and so if zsync has to perform additional actions per request, it further increases the load on the target server. The person/entity who created this zsync file should change it to point directly to a URL where the target file can be retrieved without additional actions/redirects needing to be followed.\nSee http://zsync.moria.orc.uk/server-issues",
+                         status);
+             }
+             else if (status == 200) {
+                 log_message(
+-                        "\nzsync received a data response (code %d) but this is not a partial content response\nzsync can only work with servers that support returning partial content from files. The person/entity creating this .zsync has tried to use a server that is not returning partial content. zsync cannot be used with this server.\nSee http://zsync.moria.orc.uk/server-issues",
++                        "zsync received a data response (code %d) but this is not a partial content response\nzsync can only work with servers that support returning partial content from files. The person/entity creating this .zsync has tried to use a server that is not returning partial content. zsync cannot be used with this server.\nSee http://zsync.moria.orc.uk/server-issues",
+                         status);
+             }
+             else {
+@@ -581,7 +585,7 @@ int range_fetch_read_http_headers(struct range_fetch *rf) {
              /* Okay, we're getting a non-MIME block from the remote. Get the
               * range and set our state appropriately */
              int from, to;
@@ -358,7 +414,7 @@ index f97c5a2..899c7c3 100644
              if (from <= to) {
                  rf->block_left = to + 1 - from;
                  rf->offset = from;
-@@ -727,7 +728,7 @@ int get_range_block(struct range_fetch *rf, off_t * offset, unsigned char *data,
+@@ -727,7 +731,7 @@ int get_range_block(struct range_fetch *rf, off_t * offset, unsigned char *data,
                  if (2 ==
                      sscanf(buf,
                             "content-range: bytes " OFF_T_PF "-" OFF_T_PF "/",
@@ -474,7 +530,7 @@ index c0f5e87..4b13587 100644
          return 1;
  
 diff --git a/src/zsclient.cpp b/src/zsclient.cpp
-index 83eaaf8..f50dd6b 100644
+index 83eaaf8..968da3d 100644
 --- a/src/zsclient.cpp
 +++ b/src/zsclient.cpp
 @@ -37,7 +37,7 @@ namespace zsync2 {
@@ -524,7 +580,62 @@ index 83eaaf8..f50dd6b 100644
      public:
          // by default, the messages are pushed into a queue which can be fetched by calling the client's
          // nextStatusMessage()
-@@ -966,7 +972,8 @@ namespace zsync2 {
+@@ -478,7 +484,7 @@ namespace zsync2 {
+ 
+             std::stringstream oss;
+             oss << "optimized ranges, old requests count " << ranges.size()
+-                << ", new requests count " << optimizedRanges.size() << std::endl;
++                << ", new requests count " << optimizedRanges.size();
+ 
+             issueStatusMessage(oss.str());
+ 
+@@ -679,6 +685,13 @@ namespace zsync2 {
+ 
+             // begin downloading ranges, one by one
+             {
++                #ifdef ZSYNC_STANDALONE
++                /* Set up progress display to run during the fetch */
++                struct progress p = { 0, 0, 0, 0 };
++
++                fputc('\n', stderr);
++                #endif
++                int len;
+                 for (const auto& pair : ranges) {
+                     auto beginbyte = pair.first;
+                     auto endbyte = pair.second;
+@@ -689,14 +702,9 @@ namespace zsync2 {
+                     range_fetch_addranges(rf, single_range, 1);
+ 
+                     {
+-                        int len;
+                         off_t zoffset;
+ 
+                         #ifdef ZSYNC_STANDALONE
+-                        struct progress p = { 0, 0, 0, 0 };
+-
+-                        /* Set up progress display to run during the fetch */
+-                        fputc('\n', stderr);
+                         do_progress(&p, (float) calculateProgress() * 100.0f, range_fetch_bytes_down(rf));
+                         #endif
+ 
+@@ -727,13 +735,12 @@ namespace zsync2 {
+                          *could be data in its buffer that it can use or needs to process */
+                             zsync_receive_data(zr, nullptr, zoffset, 0);
+                         }
+-
+-                        #ifdef ZSYNC_STANDALONE
+-                        end_progress(&p, zsync_status(zsHandle) >= 2 ? 2 : len == 0 ? 1 : 0);
+-                        #endif
+                     }
+ 
+                 }
++                #ifdef ZSYNC_STANDALONE
++                end_progress(&p, zsync_status(zsHandle) >= 2 ? 2 : len == 0 ? 1 : 0);
++                #endif
+             }
+ 
+             /* Clean up */
+@@ -966,7 +973,8 @@ namespace zsync2 {
  
              // check whether file exists at all, because if not, a full download is required
              if (!isfile(pathToLocalFile)) {
@@ -534,7 +645,7 @@ index 83eaaf8..f50dd6b 100644
                  updateAvailable = true;
                  return true;
              }
-@@ -1047,8 +1054,8 @@ namespace zsync2 {
+@@ -1047,8 +1055,8 @@ namespace zsync2 {
          }
      };
  
