@@ -50,8 +50,10 @@ list(APPEND CMAKE_ARGS "-DCURL_LIBRARIES=curl")
 ## * Enable range requests optimizations on the CLI
 ## * Re-implement the -u flag for compatibility w/ the old zsync CLI
 ## * Minor CLI output cleanup
+## * Squish all the warnings
+## * Prevent passing a malformed referer URL
 # c.f., https://github.com/NiLuJe/zsync2
-set(PATCH_CMD1 "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/zsync2-koreader-patchset-v5.patch")
+set(PATCH_CMD1 "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/zsync2-koreader-patchset-v6.patch")
 
 # Workaround various issues related to PocketBook's old TC using an awfully old GCC version
 # Inspired by https://github.com/nlohmann/json/issues/136

@@ -1,0 +1,561 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 7e55d10..74b192c 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -73,6 +73,8 @@ if(UNIX)
+         add_definitions("-DAPPIMAGEUPDATE_BSD")
+     elseif("${LOWER_SYSTEM}" MATCHES "linux")
+         add_definitions("-DAPPIMAGEUPDATE_LINUX")
++        # For a whole lotta stuff on Linux...
++        add_definitions("-D_XOPEN_SOURCE=700")
+     else()
+         message(FATAL_ERROR "Unsupported UNIX platform: ${CMAKE_SYSTEM_NAME}")
+     endif()
+diff --git a/include/zsclient.h b/include/zsclient.h
+index ca6380a..5b45667 100644
+--- a/include/zsclient.h
++++ b/include/zsclient.h
+@@ -11,7 +11,7 @@ namespace zsync2 {
+         Private *d;
+ 
+     public:
+-        explicit ZSyncClient(std::string urlOrPathToZsyncFile, std::string pathToLocalFile = "", bool overwrite = true);
++        explicit ZSyncClient(std::string urlOrPathToZsyncFile, std::string pathToLocalFile = "", bool overwrite = true, std::string refererUrl = "");
+         ~ZSyncClient();
+ 
+     public:
+diff --git a/include/zsmake.h b/include/zsmake.h
+index 4f124b6..32270b1 100644
+--- a/include/zsmake.h
++++ b/include/zsmake.h
+@@ -34,7 +34,7 @@ namespace zsync2 {
+         void setUrl(const std::string& url);
+ 
+         // will be called for every log message issued by the code
+-        bool setLogMessageCallback(std::function<void(std::string)> callback);
++        void setLogMessageCallback(std::function<void(std::string)> callback);
+ 
+         // add custom header field
+         // returns true when there is no header with such a key yet, otherwise overwrites the existing value and
+diff --git a/lib/libzsync/zmap.c b/lib/libzsync/zmap.c
+index 14f9382..8d48140 100644
+--- a/lib/libzsync/zmap.c
++++ b/lib/libzsync/zmap.c
+@@ -4,8 +4,8 @@
+  *   Copyright (C) 2004,2005,2007,2009 Colin Phipps <cph@moria.org.uk>
+  *
+  *   This program is free software; you can redistribute it and/or modify
+- *   it under the terms of the Artistic License v2 (see the accompanying 
+- *   file COPYING for the full license terms), or, at your option, any later 
++ *   it under the terms of the Artistic License v2 (see the accompanying
++ *   file COPYING for the full license terms), or, at your option, any later
+  *   version of the same license.
+  *
+  *   This program is distributed in the hope that it will be useful,
+@@ -275,13 +275,13 @@ off_t *zmap_to_compressed_ranges(const struct zmap *zm, off_t * byterange,
+         k = find_compressed_ranges_for(zm, zbyterange, k, &lastwroteblockstart_inbitoffset,
+                                        byterange[2 * i], byterange[2 * i + 1]);
+         if (k < 0) {
+-            fprintf(stderr, "Z-Map couldn't tell us how to find " OFF_T_PF "-" OFF_T_PF "\n", byterange[2 * i], byterange[2 * i + 1]);
++            fprintf(stderr, "Z-Map couldn't tell us how to find " OFF_T_PF "-" OFF_T_PF "\n", (intmax_t) byterange[2 * i], (intmax_t) byterange[2 * i + 1]);
+             free(zbyterange);
+             return NULL;
+         }
+     }
+ 
+-    /* Return the # of ranges and the array of byte ranges we have built 
++    /* Return the # of ranges and the array of byte ranges we have built
+      * after consolidating ranges where possible */
+     *num = k;
+     return consolidate_byteranges(zbyterange, num);
+@@ -320,7 +320,7 @@ int zmap_search(const struct zmap* zm, long zoffset) {
+  * Given an zoffset and a zmap, configure the supplied zstream to be in the
+  * correct state to interpret the compressed data stream read from the
+  * compressed file at this offset. And return the offset in the uncompressed
+- * stream that this corresponds to in the supplied long long* .
++ * stream that this corresponds to in the supplied off_t* .
+  * NOTE: the caller must call zlib:updatewindow() on the zstream to supply it
+  * with 32k of leading context in the uncompressed stream, before the zstream
+  * can be used to actually decompress.
+@@ -333,7 +333,7 @@ int zmap_search(const struct zmap* zm, long zoffset) {
+  * and in the order that it returned them, this condition is satisfied.
+  */
+ void configure_zstream_for_zdata(const struct zmap *zm, z_stream * zs,
+-                                 long zoffset, long long *poutoffset) {
++                                 long zoffset, off_t *poutoffset) {
+     /* Find the zmap entry corresponding to this offset */
+     int i = zmap_search(zm, zoffset);
+ 
+diff --git a/lib/libzsync/zmap.h b/lib/libzsync/zmap.h
+index 20f677d..c9b5fd3 100644
+--- a/lib/libzsync/zmap.h
++++ b/lib/libzsync/zmap.h
+@@ -3,8 +3,8 @@
+  *   Copyright (C) 2004,2005,2007,2009 Colin Phipps <cph@moria.org.uk>
+  *
+  *   This program is free software; you can redistribute it and/or modify
+- *   it under the terms of the Artistic License v2 (see the accompanying 
+- *   file COPYING for the full license terms), or, at your option, any later 
++ *   it under the terms of the Artistic License v2 (see the accompanying
++ *   file COPYING for the full license terms), or, at your option, any later
+  *   version of the same license.
+  *
+  *   This program is distributed in the hope that it will be useful,
+@@ -29,7 +29,7 @@ struct zmap* zmap_make(const struct gzblock* zb, int n);
+ void zmap_free(struct zmap*);
+ 
+ off_t* zmap_to_compressed_ranges(const struct zmap* zm, off_t* byterange, int nrange, int* num);
+-void configure_zstream_for_zdata(const struct zmap* zm, struct z_stream_s* zs, long zoffset, long long* poutoffset);
++void configure_zstream_for_zdata(const struct zmap* zm, struct z_stream_s* zs, long zoffset, off_t* poutoffset);
+ 
+ /* gzip flag byte */
+ #define GZ_ASCII_FLAG   0x01 /* bit 0 set: file probably ascii text */
+diff --git a/lib/libzsync/zsync.c b/lib/libzsync/zsync.c
+index b425db9..2c82636 100644
+--- a/lib/libzsync/zsync.c
++++ b/lib/libzsync/zsync.c
+@@ -4,8 +4,8 @@
+  *   Copyright (C) 2004,2005,2007,2009 Colin Phipps <cph@moria.org.uk>
+  *
+  *   This program is free software; you can redistribute it and/or modify
+- *   it under the terms of the Artistic License v2 (see the accompanying 
+- *   file COPYING for the full license terms), or, at your option, any later 
++ *   it under the terms of the Artistic License v2 (see the accompanying
++ *   file COPYING for the full license terms), or, at your option, any later
+  *   version of the same license.
+  *
+  *   This program is distributed in the hope that it will be useful,
+@@ -27,7 +27,7 @@
+  * of byte ranges at particular URLs to be retrieved by the HTTP code.
+  *
+  * It also handles:
+- * - blocking edge cases (decompressed data not lining up with blocks for rcksum; 
++ * - blocking edge cases (decompressed data not lining up with blocks for rcksum;
+  *   last block of the file only containing partial data)
+  * - recompression of the compressed data at the end of the transfer;
+  * - checksum verification of the entire output.
+@@ -59,7 +59,7 @@
+  * implemented SHA1 so this is it for now. */
+ const char ckmeth_sha1[] = { "SHA-1" };
+ 
+-/* List of options strings for gzip(1) allowed in the .zsync. This is 
++/* List of options strings for gzip(1) allowed in the .zsync. This is
+  * security against someone specifying arbitrary commands. */
+ static const char* const gzip_safe_option[] = {
+     "--best",
+@@ -335,7 +335,7 @@ static char *zsync_cur_filename(struct zsync_state *zs);
+  * the per-block checksums of the target file and holds the local working copy
+  * of the in-progress target. And it populates the per-block checksums from the
+  * given file handle, which must be reading from the .zsync at the start of the
+- * checksums. 
++ * checksums.
+  * rsum_bytes, checksum_bytes, seq_matches are settings for the checksums,
+  * passed through to the rcksum_state. */
+ static int zsync_read_blocksums(struct zsync_state *zs, FILE * f,
+@@ -373,7 +373,7 @@ static int zsync_read_blocksums(struct zsync_state *zs, FILE * f,
+ }
+ 
+ /* parse_822(buf[])
+- * Parse an RFC822 date string. Returns a time_t, or -1 on failure. 
++ * Parse an RFC822 date string. Returns a time_t, or -1 on failure.
+  * E.g. Tue, 25 Jul 2006 20:02:17 +0000
+  */
+ static time_t parse_822(const char* ts) {
+@@ -453,7 +453,7 @@ void zsync_progress(const struct zsync_state *zs, long long *got,
+  * Note that these URLs could be for encoded versions of the target; a 'type'
+  * is returned in *type which tells libzsync in later calls what version of the
+  * target is being retrieved. */
+-const char *const *zsync_get_urls(struct zsync_state *zs, int *n, int *t) {
++char **zsync_get_urls(struct zsync_state *zs, int *n, int *t) {
+     if (zs->zmap && zs->nzurl) {
+         *n = zs->nzurl;
+         *t = 1;
+@@ -784,14 +784,14 @@ char *zsync_end(struct zsync_state *zs) {
+  * Rewrites the state in the given zlib stream object to be ready to decompress
+  * data from the compressed version of this zsync stream at the given offset in
+  * the compressed file. Returns the offset in the uncompressed stream that this
+- * corresponds to in the 4th parameter. 
++ * corresponds to in the 4th parameter.
+  */
+ void zsync_configure_zstream_for_zdata(const struct zsync_state *zs,
+                                        struct z_stream_s *zstrm,
+-                                       long zoffset, long long *poutoffset) {
++                                       long zoffset, off_t *poutoffset) {
+     configure_zstream_for_zdata(zs->zmap, zstrm, zoffset, poutoffset);
+     {                           /* Load in prev 32k sliding window for backreferences */
+-        long long pos = *poutoffset;
++        off_t pos = *poutoffset;
+         int lookback = (pos > 32768) ? 32768 : pos;
+ 
+         /* Read in 32k of leading uncompressed context - needed because the deflate
+@@ -942,7 +942,7 @@ static int zsync_receive_data_compressed(struct zsync_receiver *zr,
+         return 0;
+ 
+     /* Now set up for the downloaded block */
+-    zr->strm.next_in = buf;
++    zr->strm.next_in = (unsigned char *) buf;
+     zr->strm.avail_in = len;
+ 
+     if (zr->strm.total_in == 0 || offset != zr->strm.total_in) {
+@@ -959,7 +959,7 @@ static int zsync_receive_data_compressed(struct zsync_receiver *zr,
+                     "data didn't align with block boundary in compressed stream\n");
+             return 1;
+         }
+-        zr->strm.next_in = buf;
++        zr->strm.next_in = (unsigned char *) buf;
+         zr->strm.avail_in = len;
+     }
+ 
+@@ -1006,7 +1006,7 @@ static int zsync_receive_data_compressed(struct zsync_receiver *zr,
+ }
+ 
+ /* zsync_receive_data(self, buf[], offset, buflen)
+- * Passes data received from the source URL at the given offset; 
++ * Passes data received from the source URL at the given offset;
+  * data is buflen bytes in buf[].
+  * Returns 0 unless there's an error (e.g. the submitted data doesn't match the
+  * expected checksum for the corresponding blocks)
+diff --git a/lib/libzsync/zsync.h b/lib/libzsync/zsync.h
+index be11551..73780b6 100644
+--- a/lib/libzsync/zsync.h
++++ b/lib/libzsync/zsync.h
+@@ -3,8 +3,8 @@
+  *   Copyright (C) 2004,2005,2009 Colin Phipps <cph@moria.org.uk>
+  *
+  *   This program is free software; you can redistribute it and/or modify
+- *   it under the terms of the Artistic License v2 (see the accompanying 
+- *   file COPYING for the full license terms), or, at your option, any later 
++ *   it under the terms of the Artistic License v2 (see the accompanying
++ *   file COPYING for the full license terms), or, at your option, any later
+  *   version of the same license.
+  *
+  *   This program is distributed in the hope that it will be useful,
+@@ -19,7 +19,7 @@ struct zsync_state;
+  */
+ struct zsync_state* zsync_begin(FILE* cf, int headersOnly, const char* target_dir);
+ 
+-/* zsync_hint_decompress - if it returns non-zero, this suggests that 
++/* zsync_hint_decompress - if it returns non-zero, this suggests that
+  *  compressed seed files should be decompressed */
+ int zsync_hint_decompress(const struct zsync_state*);
+ 
+@@ -29,8 +29,8 @@ char* zsync_filename(const struct zsync_state*);
+ time_t zsync_mtime(const struct zsync_state*);
+ 
+ /* zsync_rename_file - renames the temporary file used by zsync to the given name.
+- * You don't "own" the filename until you zsync_end, but you can use this to give zsync a more 
+- * appropriate intermediate filename (in case the user ctrl-c's). 
++ * You don't "own" the filename until you zsync_end, but you can use this to give zsync a more
++ * appropriate intermediate filename (in case the user ctrl-c's).
+  * This is purely a hint; zsync could ignore it. Returns 0 if successful. */
+ int zsync_rename_file(struct zsync_state* zs, const char* f);
+ 
+@@ -58,11 +58,11 @@ int zsync_submit_source_file(struct zsync_state* zs, FILE* f, int progress);
+  * (the URL pointers are still referenced by the library, and are valid only until zsync_end).
+  */
+ 
+-const char * const * zsync_get_urls(struct zsync_state* zs, int* n, int* t);
++char ** zsync_get_urls(struct zsync_state* zs, int* n, int* t);
+ 
+ /* zsync_needed_byte_ranges - get the byte ranges needed from a URL.
+- * Returns the number of ranges in *num, and a malloc'd array (to be freed 
+- * by the caller) of 2*(*num) off_t's which are the starts and ends 
++ * Returns the number of ranges in *num, and a malloc'd array (to be freed
++ * by the caller) of 2*(*num) off_t's which are the starts and ends
+  * of byte ranges.
+  */
+ 
+@@ -80,9 +80,9 @@ char* zsync_end(struct zsync_state* zs);
+ struct zsync_receiver;
+ 
+ /* Begin and end receiving from a particular URL.
+- * Note that the zsync_receiver stores a reference to the zsync_state, 
+- *  and libzsync does not do reference counting, so it is the caller's 
+- *  responsibility not to do a zsync_end without doing a zsync_end_receive 
++ * Note that the zsync_receiver stores a reference to the zsync_state,
++ *  and libzsync does not do reference counting, so it is the caller's
++ *  responsibility not to do a zsync_end without doing a zsync_end_receive
+  *  first.
+  * The url_type is as in the value returned by zsync_get_url.
+  */
+diff --git a/src/format_string.h b/src/format_string.h
+index 7b21773..c95a0ef 100644
+--- a/src/format_string.h
++++ b/src/format_string.h
+@@ -3,8 +3,8 @@
+  *   Copyright (C) 2004,2005 Colin Phipps <cph@moria.org.uk>
+  *
+  *   This program is free software; you can redistribute it and/or modify
+- *   it under the terms of the Artistic License v2 (see the accompanying 
+- *   file COPYING for the full license terms), or, at your option, any later 
++ *   it under the terms of the Artistic License v2 (see the accompanying
++ *   file COPYING for the full license terms), or, at your option, any later
+  *   version of the same license.
+  *
+  *   This program is distributed in the hope that it will be useful,
+@@ -15,23 +15,5 @@
+ 
+ #include <inttypes.h>
+ 
+-#ifdef PRIu32
+-# define SIZE_T_PF "%zd"
+-#else
+-# define SIZE_T_PF "%u"
+-#endif
+-
+-#if SIZEOF_OFF_T == 8
+-# ifdef PRIu64
+-#  define OFF_T_PF "%" PRIu64
+-# else
+-#  define OFF_T_PF "%llu"
+-# endif
+-#else
+-# ifdef PRIu32
+-#  define OFF_T_PF "%" PRIu32
+-# else
+-#  define OFF_T_PF "%lu"
+-# endif
+-#endif
+-
++#define SIZE_T_PF "%zu"
++#define OFF_T_PF "%jd"
+diff --git a/src/legacy_http.c b/src/legacy_http.c
+index f97c5a2..899c7c3 100644
+--- a/src/legacy_http.c
++++ b/src/legacy_http.c
+@@ -24,6 +24,7 @@
+ #include <stdio.h>
+ #include <stdlib.h>
+ #include <string.h>
++#include <strings.h>
+ #include <errno.h>
+ #include <unistd.h>
+ 
+@@ -196,8 +197,8 @@ void http_load_ranges(struct range_fetch* rf)
+         i = rf->rangessent;
+         l = strlen(ranges_opt);
+         snprintf(range, sizeof(range), OFF_T_PF "-" OFF_T_PF ",",
+-                 rf->ranges_todo[2 * i], rf->ranges_todo[2 * i + 1]);
+-        strncat(ranges_opt, range, l + strlen(range));
++                 (intmax_t) rf->ranges_todo[2 * i], (intmax_t) rf->ranges_todo[2 * i + 1]);
++        strncat(ranges_opt, range, sizeof(ranges_opt) - l - 1);
+         rf->rangessent++;
+     }
+ 
+@@ -581,7 +582,7 @@ int range_fetch_read_http_headers(struct range_fetch *rf) {
+             /* Okay, we're getting a non-MIME block from the remote. Get the
+              * range and set our state appropriately */
+             int from, to;
+-            sscanf(p, "bytes " OFF_T_PF "-" OFF_T_PF "/", &from, &to);
++            sscanf(p, "bytes " OFF_T_PF "-" OFF_T_PF "/", (intmax_t *) &from, (intmax_t *) &to);
+             if (from <= to) {
+                 rf->block_left = to + 1 - from;
+                 rf->offset = from;
+@@ -727,7 +728,7 @@ int get_range_block(struct range_fetch *rf, off_t * offset, unsigned char *data,
+                 if (2 ==
+                     sscanf(buf,
+                            "content-range: bytes " OFF_T_PF "-" OFF_T_PF "/",
+-                           &from, &to)) {
++                           (intmax_t *) &from, (intmax_t *) &to)) {
+                     rf->offset = from;
+                     rf->block_left = to - from + 1;
+                     gotr = 1;
+diff --git a/src/legacy_progress.c b/src/legacy_progress.c
+index 5180844..b499ecc 100644
+--- a/src/legacy_progress.c
++++ b/src/legacy_progress.c
+@@ -61,7 +61,7 @@ void do_progress(struct progress *p, float pcnt, long long newdl) {
+             if (sleft < 60 * 1000)
+                 printf("%d:%02d ETA  ", sleft / 60, sleft % 60);
+             else
+-                puts("        ");
++                puts("                        ");
+         }
+         p->lastdl = newdl;
+         p->lastpcnt = pcnt;
+@@ -83,6 +83,6 @@ void end_progress(struct progress *p, int done) {
+         float rate = ((float)p->lastdl) / (p->lasttime - p->starttime + 0.5);
+         printf(" %.1f kBps ", rate / 1000.0);
+     }
+-    puts(done == 2 ? "DONE    \n" : !done ? "aborted    \n" : "        \n");
++    puts(done == 2 ? "DONE     \n" : !done ? "aborted    \n" : "           \n");
+     fflush(stdout);
+ }
+diff --git a/src/main.cpp b/src/main.cpp
+index c0f5e87..4b13587 100644
+--- a/src/main.cpp
++++ b/src/main.cpp
+@@ -43,10 +43,15 @@ int main(const int argc, const char** argv) {
+     );
+ 
+     args::ValueFlag<string> outputFilename(parser, "path",
+-        "Path to local file which should be created. If not given, file path in .zsync file will be used.",
++        "Path to local file which should be created or overwritten. If not given, file path in .zsync file will be used.",
+         {'o', "output"}
+     );
+ 
++    args::ValueFlag<string> refererUrl(parser, "URL",
++        "Referer URL. If not given, URL in .zsync file will be used.",
++        {'u', "url"}
++    );
++
+     args::Flag forceUpdate(parser, "", "Skip update check and force update", {"force-update"});
+ 
+     args::Flag quietMode(parser, "", "Quiet mode", {'s', 'q', "silent-mode"});
+@@ -100,16 +105,33 @@ int main(const int argc, const char** argv) {
+ 
+     // redirect cout/cerr to /dev/null in quiet mode
+     if (quietMode) {
+-        freopen("/dev/null", "a", stdout);
+-        freopen("/dev/null", "a", stderr);
++        if (!freopen("/dev/null", "a", stdout)) {
++            cerr << "Failed to redirect stdout to /dev/null!" << endl;
++            return 1;
++        }
++        if (!freopen("/dev/null", "a", stderr)) {
++            cerr << "Failed to redirect stderr to /dev/null!" << endl;
++            return 1;
++        }
+     }
+ 
+     string outPath;
+ 
+-    if (outputFilename)
++    if (outputFilename) {
+         outPath = outputFilename.Get();
++    }
++
++    string refUrl;
++
++    if (refererUrl) {
++        refUrl = refererUrl.Get();
++        if (!refUrl.empty() && refUrl.back() != '/') {
++            cerr << "Referer URL must actually be an URL (i.e., end with a /)!" << endl;
++            return 1;
++        }
++    }
+ 
+-    zsync2::ZSyncClient client(pathOrUrl.Get(), outPath);
++    zsync2::ZSyncClient client(pathOrUrl.Get(), outPath, true, refUrl);
+ 
+     // unimplemented flags
+     if (httpInsecureMode)
+@@ -118,6 +140,12 @@ int main(const int argc, const char** argv) {
+     if (saveZSyncFilePath)
+         client.storeZSyncFileInPath(saveZSyncFilePath.Get());
+ 
++    if (seedFiles) {
++        for (const auto& seedFile : seedFiles.Get()) {
++            client.addSeedFile(seedFile);
++        }
++    }
++
+     if (checkForChanges || !forceUpdate) {
+         cout << "Checking for changes..." << endl;
+ 
+@@ -140,12 +168,6 @@ int main(const int argc, const char** argv) {
+         }
+     }
+ 
+-    if (seedFiles) {
+-        for (const auto& seedFile : seedFiles.Get()) {
+-            client.addSeedFile(seedFile);
+-        }
+-    }
+-
+     if (!client.run())
+         return 1;
+ 
+diff --git a/src/zsclient.cpp b/src/zsclient.cpp
+index 83eaaf8..f50dd6b 100644
+--- a/src/zsclient.cpp
++++ b/src/zsclient.cpp
+@@ -37,7 +37,7 @@ namespace zsync2 {
+         // there might be more than one seed file
+         // using a set to avoid duplicate entries
+         std::set<std::string> seedFiles;
+-        
++
+         const std::string pathOrUrlToZSyncFile;
+         std::string pathToLocalFile;
+         std::string pathToStoreZSyncFileInLocally;
+@@ -68,10 +68,11 @@ namespace zsync2 {
+         Private(
+             std::string pathOrUrlToZSyncFile,
+             const std::string& pathToLocalFile,
+-            const bool overwrite
++            const bool overwrite,
++            const std::string& refererUrl
+         ) : pathOrUrlToZSyncFile(std::move(pathOrUrlToZSyncFile)), zsHandle(nullptr), state(INITIALIZED),
+                                  localUsed(0), httpDown(0), remoteFileSizeCache(-1),
+-                                 zSyncFileStoredLocallyAlready(false), rangesOptimizationThreshold(0) {
++                                 zSyncFileStoredLocallyAlready(false), rangesOptimizationThreshold(64 * 4096) {
+             // if the local file should be overwritten, we'll instruct
+             if (overwrite) {
+                 this->pathToLocalFile = pathToLocalFile;
+@@ -79,6 +80,11 @@ namespace zsync2 {
+                 this->seedFiles.insert(pathToLocalFile);
+             }
+ 
++            // if we specified a referer URL, use it
++            if (!refererUrl.empty() && refererUrl.back() == '/') {
++                this->referer = refererUrl;
++            }
++
+             // initialize cwd
+             {
+                 size_t cwdBufSize = 4096;
+@@ -87,9 +93,9 @@ namespace zsync2 {
+                 free(cwdBuf);
+             }
+         }
+-        
++
+         ~Private() = default;
+-        
++
+     public:
+         // by default, the messages are pushed into a queue which can be fetched by calling the client's
+         // nextStatusMessage()
+@@ -966,7 +972,8 @@ namespace zsync2 {
+ 
+             // check whether file exists at all, because if not, a full download is required
+             if (!isfile(pathToLocalFile)) {
+-                issueStatusMessage("Cannot find file " + pathToLocalFile + ", triggering full download");
++                // Not actually a full download if we have seed file(s) ;).
++                issueStatusMessage("Cannot find file " + pathToLocalFile + ", triggering " + (seedFiles.size() == 0U ? "full" : "delta") + " download");
+                 updateAvailable = true;
+                 return true;
+             }
+@@ -1047,8 +1054,8 @@ namespace zsync2 {
+         }
+     };
+ 
+-    ZSyncClient::ZSyncClient(const std::string pathOrUrlToZSyncFile, const std::string pathToLocalFile, bool overwrite) {
+-        d = new Private(pathOrUrlToZSyncFile, pathToLocalFile, overwrite);
++    ZSyncClient::ZSyncClient(const std::string pathOrUrlToZSyncFile, const std::string pathToLocalFile, bool overwrite, const std::string refererUrl) {
++        d = new Private(pathOrUrlToZSyncFile, pathToLocalFile, overwrite, refererUrl);
+     }
+     ZSyncClient::~ZSyncClient() {
+         delete d;
+diff --git a/src/zsmake.cpp b/src/zsmake.cpp
+index e89d0aa..51e0dfb 100644
+--- a/src/zsmake.cpp
++++ b/src/zsmake.cpp
+@@ -296,6 +296,7 @@ namespace zsync2 {
+         bool addCustomHeaderField(const std::string& key, const std::string& value) {
+             auto rv = (customHeaderFields.find(key) != customHeaderFields.end());
+             customHeaderFields[key] = value;
++            return rv;
+         }
+     };
+ 
+@@ -344,7 +345,7 @@ namespace zsync2 {
+         d->url = url;
+     }
+ 
+-    bool ZSyncFileMaker::setLogMessageCallback(std::function<void(std::string)> callback) {
++    void ZSyncFileMaker::setLogMessageCallback(std::function<void(std::string)> callback) {
+         d->logMessage = std::move(callback);
+     }
+ 
