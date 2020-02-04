@@ -111,7 +111,7 @@ index 20f677d..c9b5fd3 100644
  /* gzip flag byte */
  #define GZ_ASCII_FLAG   0x01 /* bit 0 set: file probably ascii text */
 diff --git a/lib/libzsync/zsync.c b/lib/libzsync/zsync.c
-index b425db9..2c82636 100644
+index b425db9..973c672 100644
 --- a/lib/libzsync/zsync.c
 +++ b/lib/libzsync/zsync.c
 @@ -4,8 +4,8 @@
@@ -161,15 +161,26 @@ index b425db9..2c82636 100644
   * E.g. Tue, 25 Jul 2006 20:02:17 +0000
   */
  static time_t parse_822(const char* ts) {
-@@ -453,7 +453,7 @@ void zsync_progress(const struct zsync_state *zs, long long *got,
+@@ -453,16 +453,16 @@ void zsync_progress(const struct zsync_state *zs, long long *got,
   * Note that these URLs could be for encoded versions of the target; a 'type'
   * is returned in *type which tells libzsync in later calls what version of the
   * target is being retrieved. */
 -const char *const *zsync_get_urls(struct zsync_state *zs, int *n, int *t) {
-+char **zsync_get_urls(struct zsync_state *zs, int *n, int *t) {
++const char * const *zsync_get_urls(struct zsync_state *zs, int *n, int *t) {
      if (zs->zmap && zs->nzurl) {
          *n = zs->nzurl;
          *t = 1;
+-        return zs->zurl;
++        return (const char * const *) zs->zurl;
+     }
+     else {
+         *n = zs->nurl;
+         *t = 0;
+-        return zs->url;
++        return (const char * const *) zs->url;
+     }
+ }
+ 
 @@ -784,14 +784,14 @@ char *zsync_end(struct zsync_state *zs) {
   * Rewrites the state in the given zlib stream object to be ready to decompress
   * data from the compressed version of this zsync stream at the given offset in
@@ -216,7 +227,7 @@ index b425db9..2c82636 100644
   * Returns 0 unless there's an error (e.g. the submitted data doesn't match the
   * expected checksum for the corresponding blocks)
 diff --git a/lib/libzsync/zsync.h b/lib/libzsync/zsync.h
-index be11551..73780b6 100644
+index be11551..a0421cc 100644
 --- a/lib/libzsync/zsync.h
 +++ b/lib/libzsync/zsync.h
 @@ -3,8 +3,8 @@
@@ -250,12 +261,8 @@ index be11551..73780b6 100644
   * This is purely a hint; zsync could ignore it. Returns 0 if successful. */
  int zsync_rename_file(struct zsync_state* zs, const char* f);
  
-@@ -58,11 +58,11 @@ int zsync_submit_source_file(struct zsync_state* zs, FILE* f, int progress);
-  * (the URL pointers are still referenced by the library, and are valid only until zsync_end).
-  */
- 
--const char * const * zsync_get_urls(struct zsync_state* zs, int* n, int* t);
-+char ** zsync_get_urls(struct zsync_state* zs, int* n, int* t);
+@@ -61,8 +61,8 @@ int zsync_submit_source_file(struct zsync_state* zs, FILE* f, int progress);
+ const char * const * zsync_get_urls(struct zsync_state* zs, int* n, int* t);
  
  /* zsync_needed_byte_ranges - get the byte ranges needed from a URL.
 - * Returns the number of ranges in *num, and a malloc'd array (to be freed 

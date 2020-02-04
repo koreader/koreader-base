@@ -53,7 +53,7 @@ list(APPEND CMAKE_ARGS "-DCURL_LIBRARIES=curl")
 ## * Squish all the warnings
 ## * Prevent passing a malformed referer URL
 # c.f., https://github.com/NiLuJe/zsync2
-set(PATCH_CMD1 "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/zsync2-koreader-patchset-v6.patch")
+set(PATCH_CMD1 "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/zsync2-koreader-patchset-v7.patch")
 
 # Workaround various issues related to PocketBook's old TC using an awfully old GCC version
 # Inspired by https://github.com/nlohmann/json/issues/136
