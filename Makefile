@@ -25,26 +25,27 @@ all: $(OUTPUT_DIR)/libs $(if $(ANDROID),,$(LUAJIT)) \
 		$(if $(ANDROID),$(LPEG_DYNLIB) $(LPEG_RE),) \
 		$(if $(WIN32),,$(ZMQ_LIB) $(CZMQ_LIB) $(FILEMQ_LIB) $(ZYRE_LIB)) \
 		$(if $(WIN32),,$(OUTPUT_DIR)/sdcv) \
-		$(if $(WIN32),,$(OUTPUT_DIR)/zsync) \
 		$(if $(or $(DARWIN),$(WIN32),$(ANDROID),$(UBUNTUTOUCH),$(APPIMAGE)),,$(OUTPUT_DIR)/dropbear) \
 		$(if $(or $(KINDLE),$(KOBO),$(CERVANTES)),$(OUTPUT_DIR)/sftp-server,) \
 		$(if $(or $(DARWIN),$(WIN32)),,$(OUTPUT_DIR)/tar) \
 		$(if $(or $(CERVANTES),$(KINDLE),$(KOBO),$(REMARKABLE)),$(OUTPUT_DIR)/fbink,) \
 		$(if $(REMARKABLE),$(OUTPUT_DIR)/button-listen,) \
 		$(SQLITE_LIB) \
+		$(if $(or $(CERVANTES),$(KINDLE),$(KOBO),$(POCKETBOOK),$(REMARKABLE),$(SONY_PRSTUX)),$(CURL_LIB),) \
+		$(if $(or $(CERVANTES),$(KINDLE),$(KOBO),$(POCKETBOOK),$(REMARKABLE),$(SONY_PRSTUX)),$(OUTPUT_DIR)/zsync2,) \
 		$(LUA_LJ_SQLITE) $(OUTPUT_DIR)/common/xsys.lua
 ifndef EMULATE_READER
 ifndef KODEBUG
 	STRIP_FILES="\
 		$(if $(WIN32),,$(OUTPUT_DIR)/sdcv) \
 		$(if $(WIN32),,$(OUTPUT_DIR)/tar) \
-		$(if $(WIN32),,$(OUTPUT_DIR)/zsync) \
 		$(if $(or $(DARWIN),$(WIN32),$(ANDROID),$(UBUNTUTOUCH),$(APPIMAGE)),,$(OUTPUT_DIR)/dropbear) \
 		$(if $(or $(KINDLE),$(KOBO),$(CERVANTES)),$(OUTPUT_DIR)/sftp-server,) \
 		$(if $(or $(KINDLE),$(KOBO)),$(OUTPUT_DIR)/scp,) \
 		$(if $(or $(CERVANTES),$(KINDLE),$(KOBO),$(REMARKABLE)),$(OUTPUT_DIR)/fbink,) \
 		$(if $(REMARKABLE),$(OUTPUT_DIR)/button-listen,) \
 		$(if $(or $(KOBO),$(REMARKABLE)),$(OUTPUT_DIR)/fbdepth,) \
+		$(if $(or $(CERVANTES),$(KINDLE),$(KOBO),$(POCKETBOOK),$(REMARKABLE),$(SONY_PRSTUX)),$(OUTPUT_DIR)/zsync2,) \
 		$(if $(ANDROID),,$(LUAJIT)) \
 		$(OUTPUT_DIR)/libs/$(if $(WIN32),*.dll,*.so*)" ;\
 	$(STRIP) --strip-unneeded $${STRIP_FILES} ;\

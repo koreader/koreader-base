@@ -1,0 +1,71 @@
+diff --git a/include/cpr/compat.h b/include/cpr/compat.h
+new file mode 100644
+index 0000000..2fa8380
+--- /dev/null
++++ b/lib/cpr/include/cpr/compat.h
+@@ -0,0 +1,16 @@
++#pragma once
++
++// Workaround PocketBook's old TC being the worst.
++#include <string>
++#include <sstream>
++namespace std
++{
++    template <typename T>
++    std::string to_string(T Value)
++    {
++        std::ostringstream TempStream;
++        TempStream << Value;
++        return TempStream.str();
++    }
++}
++
+diff --git a/include/cpr/multipart.h b/include/cpr/multipart.h
+index ba2c9ab..259e6d3 100644
+--- a/lib/cpr/include/cpr/multipart.h
++++ b/lib/cpr/include/cpr/multipart.h
+@@ -8,6 +8,7 @@
+ #include <vector>
+ 
+ #include "cpr/defines.h"
++#include "cpr/compat.h"
+ 
+ namespace cpr {
+ 
+diff --git a/include/cpr/payload.h b/include/cpr/payload.h
+index a183a61..7c242ac 100644
+--- a/lib/cpr/include/cpr/payload.h
++++ b/lib/cpr/include/cpr/payload.h
+@@ -7,6 +7,7 @@
+ #include <string>
+ 
+ #include "cpr/defines.h"
++#include "cpr/compat.h"
+ 
+ namespace cpr {
+ 
+diff --git a/include/cpr/timeout.h b/include/cpr/timeout.h
+index 6e6fb79..2a819e7 100644
+--- a/lib/cpr/include/cpr/timeout.h
++++ b/lib/cpr/include/cpr/timeout.h
+@@ -4,6 +4,8 @@
+ #include <chrono>
+ #include <cstdint>
+ 
++#include "cpr/compat.h"
++
+ namespace cpr {
+ 
+ class Timeout {
+diff --git a/test/async_tests.cpp b/test/async_tests.cpp
+index 06a573b..16d0ca8 100644
+--- a/lib/cpr/test/async_tests.cpp
++++ b/lib/cpr/test/async_tests.cpp
+@@ -4,6 +4,7 @@
+ #include <vector>
+ 
+ #include <cpr/cpr.h>
++#include <cpr/compat.h>
+ 
+ #include "server.h"
+ 

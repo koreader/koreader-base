@@ -460,24 +460,6 @@ ifdef ANDROID
 endif
 
 # ===========================================================================
-# zsync: rsync over HTTP
-
-$(OUTPUT_DIR)/zsync: $(THIRDPARTY_DIR)/zsync/*.*
-	install -d $(ZSYNC_BUILD_DIR)
-	cd $(ZSYNC_BUILD_DIR) && \
-		$(CMAKE) $(CMAKE_FLAGS) -DHOST="$(if $(EMULATE_READER),,$(CHOST))" -DCC="$(CC)" \
-		-DCFLAGS="$(CFLAGS)" \
-		-DLDFLAGS="$(LDFLAGS)" \
-		-DLIBS="$(if $(ANDROID),-static,)" \
-		$(CURDIR)/$(THIRDPARTY_DIR)/zsync && \
-		$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS)
-	cp $(ZSYNC_DIR)/zsync $(OUTPUT_DIR)/
-ifdef ANDROID
-	readelf -d $@ | grep "no dynamic" \
-		|| echo "warning: Android L+ support only PIE binary and can't run this"
-endif
-
-# ===========================================================================
 # FBInk: visual feedback on Kobo/Kindle/Cervantes
 
 $(OUTPUT_DIR)/fbink: $(THIRDPARTY_DIR)/fbink/*.*
@@ -749,6 +731,34 @@ $(NANOSVG_HEADERS): $(THIRDPARTY_DIR)/nanosvg/*.*
 	cp -fL $(NANOSVG_DIR)/nanosvg/src/nanosvg.h $(NANOSVG_INCLUDE_DIR)/
 	cp -fL $(NANOSVG_DIR)/nanosvg/src/nanosvgrast.h $(NANOSVG_INCLUDE_DIR)/
 	cp -fL $(NANOSVG_DIR)/nanosvg/example/stb_image_write.h $(NANOSVG_INCLUDE_DIR)/
+
+# cURL
+$(CURL_LIB): $(THIRDPARTY_DIR)/curl/*.*
+	install -d $(CURL_BUILD_DIR)
+	cd $(CURL_BUILD_DIR) && \
+		$(CMAKE) $(CMAKE_FLAGS) -DCHOST="$(CHOST)" \
+			-DCC="$(CC)" \
+			-DCPPFLAGS="$(CPPFLAGS) -I$(ZLIB_DIR)/include -I$(OPENSSL_DIR)/include" \
+			-DCFLAGS="$(CFLAGS)" \
+			-DLDFLAGS="$(LDFLAGS) -L$(ZLIB_DIR) -L$(OPENSSL_DIR) -Wl,-rpath,'$(ORIGIN_CMAKE_TO_AUTOCFG)/../libs' -lssl -lcrypto -lz -lrt" \
+		$(CURDIR)/thirdparty/curl && \
+		$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS)
+	cp -fL $(CURL_DIR)/lib/$(notdir $(CURL_LIB)) $(OUTPUT_DIR)/libs
+	cp $(CURL_DIR)/ca-bundle.crt $(OUTPUT_DIR)/data/ca-bundle.crt
+
+# zsync2
+$(OUTPUT_DIR)/zsync2: $(THIRDPARTY_DIR)/zsync2/*.*
+	install -d $(ZSYNC2_BUILD_DIR)
+	cd $(ZSYNC2_BUILD_DIR) && \
+		$(CMAKE) $(CMAKE_FLAGS) \
+		-DCPPFLAGS="$(CPPFLAGS) -I$(ZLIB_DIR)/include -I$(OPENSSL_DIR)/include" \
+		-DCFLAGS="$(CFLAGS)" \
+		-DCXXFLAGS="$(CXXFLAGS)" \
+		-DLDFLAGS="$(LDFLAGS) -L$(CURL_DIR)/lib -L$(OPENSSL_DIR) -Wl,-rpath,'\\\$$ORIGIN/./libs' -lssl -lcrypto" \
+		-DCURL_DIR="$(CURL_DIR)" \
+		$(CURDIR)/$(THIRDPARTY_DIR)/zsync2 && \
+		$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS)
+	cp $(ZSYNC2_DIR)/src/zsync2 $(OUTPUT_DIR)/
 
 comma:=,
 empty:=
