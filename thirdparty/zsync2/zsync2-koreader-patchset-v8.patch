@@ -37,6 +37,30 @@ index 4f124b6..32270b1 100644
  
          // add custom header field
          // returns true when there is no header with such a key yet, otherwise overwrites the existing value and
+diff --git a/lib/librcksum/state.c b/lib/librcksum/state.c
+index f9bd958..cf3997f 100644
+--- a/lib/librcksum/state.c
++++ b/lib/librcksum/state.c
+@@ -5,8 +5,8 @@
+  *   Copyright (C) 2004,2005,2007,2009 Colin Phipps <cph@moria.org.uk>
+  *
+  *   This program is free software; you can redistribute it and/or modify
+- *   it under the terms of the Artistic License v2 (see the accompanying 
+- *   file COPYING for the full license terms), or, at your option, any later 
++ *   it under the terms of the Artistic License v2 (see the accompanying
++ *   file COPYING for the full license terms), or, at your option, any later
+  *   version of the same license.
+  *
+  *   This program is distributed in the hope that it will be useful,
+@@ -56,7 +56,7 @@ struct rcksum_state *rcksum_init(zs_blockid nblocks, size_t blocksize,
+ 
+     /* Temporary file to hold the target file as we get blocks for it */
+     static const char template[] = "rcksum-XXXXXX";
+-    if (directory != NULL) {strdup("rcksum-XXXXXX");
++    if (directory != NULL) {
+         rs->filename = (char*) calloc(strlen(directory) + strlen(template) + 2, sizeof(char));
+         strcat(rs->filename, directory);
+         strcat(rs->filename, "/");
 diff --git a/lib/libzsync/zmap.c b/lib/libzsync/zmap.c
 index 14f9382..8d48140 100644
 --- a/lib/libzsync/zmap.c
