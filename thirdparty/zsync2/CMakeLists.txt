@@ -55,7 +55,7 @@ list(APPEND CMAKE_ARGS "-DCURL_LIBRARIES=curl")
 ## * Don't print seven billion progress bars
 ## * Rebase against zsync master (c.f., rebase-zsync-libs branch)
 # c.f., https://github.com/NiLuJe/zsync2
-set(PATCH_CMD1 "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/zsync2-koreader-patchset-v8.patch")
+set(PATCH_CMD1 "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/zsync2-koreader-patchset-v9.patch")
 
 # Workaround various issues related to PocketBook's old TC using an awfully old GCC version
 # Inspired by https://github.com/nlohmann/json/issues/136
