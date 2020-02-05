@@ -1679,7 +1679,7 @@ index c0f5e87..4b13587 100644
          return 1;
  
 diff --git a/src/zsclient.cpp b/src/zsclient.cpp
-index 83eaaf8..df34d92 100644
+index 83eaaf8..3ac21e9 100644
 --- a/src/zsclient.cpp
 +++ b/src/zsclient.cpp
 @@ -37,7 +37,7 @@ namespace zsync2 {
@@ -1738,7 +1738,19 @@ index 83eaaf8..df34d92 100644
  
              issueStatusMessage(oss.str());
  
-@@ -679,6 +685,15 @@ namespace zsync2 {
+@@ -506,7 +512,11 @@ namespace zsync2 {
+                 }
+             }
+ 
++            #ifdef ZSYNC_STANDALONE
++            zsync_submit_source_file(zsHandle, f, true);
++            #else
+             zsync_submit_source_file(zsHandle, f, false);
++            #endif
+ 
+             if (fclose(f) != 0) {
+                 issueStatusMessage("fclose() on file handle failed!");
+@@ -679,6 +689,15 @@ namespace zsync2 {
  
              // begin downloading ranges, one by one
              {
@@ -1754,7 +1766,7 @@ index 83eaaf8..df34d92 100644
                  for (const auto& pair : ranges) {
                      auto beginbyte = pair.first;
                      auto endbyte = pair.second;
-@@ -689,17 +704,8 @@ namespace zsync2 {
+@@ -689,17 +708,8 @@ namespace zsync2 {
                      range_fetch_addranges(rf, single_range, 1);
  
                      {
@@ -1772,7 +1784,7 @@ index 83eaaf8..df34d92 100644
                          /* Loop while we're receiving data, until we're done or there is an error */
                          while (!ret
                                 && (len = get_range_block(rf, &zoffset, buffer.data(), BUFFERSIZE)) > 0) {
-@@ -710,7 +716,7 @@ namespace zsync2 {
+@@ -710,7 +720,7 @@ namespace zsync2 {
  
                              #ifdef ZSYNC_STANDALONE
                              /* Maintain progress display */
@@ -1781,7 +1793,7 @@ index 83eaaf8..df34d92 100644
                                          range_fetch_bytes_down(rf));
                              #endif
  
-@@ -725,15 +731,15 @@ namespace zsync2 {
+@@ -725,15 +735,15 @@ namespace zsync2 {
                          }
                          else{    /* Else, let the zsync receiver know that we're at EOF; there
                           *could be data in its buffer that it can use or needs to process */
@@ -1802,7 +1814,7 @@ index 83eaaf8..df34d92 100644
              }
  
              /* Clean up */
-@@ -966,7 +972,8 @@ namespace zsync2 {
+@@ -966,7 +976,8 @@ namespace zsync2 {
  
              // check whether file exists at all, because if not, a full download is required
              if (!isfile(pathToLocalFile)) {
@@ -1812,7 +1824,7 @@ index 83eaaf8..df34d92 100644
                  updateAvailable = true;
                  return true;
              }
-@@ -1047,8 +1054,8 @@ namespace zsync2 {
+@@ -1047,8 +1058,8 @@ namespace zsync2 {
          }
      };
  
