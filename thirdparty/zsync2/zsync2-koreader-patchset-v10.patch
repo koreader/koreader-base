@@ -17718,7 +17718,7 @@ index c0f5e87..6f20b53 100644
          return 1;
  
 diff --git a/src/zsclient.cpp b/src/zsclient.cpp
-index 83eaaf8..4968492 100644
+index 83eaaf8..4c4aca7 100644
 --- a/src/zsclient.cpp
 +++ b/src/zsclient.cpp
 @@ -37,7 +37,7 @@ namespace zsync2 {
@@ -17786,11 +17786,13 @@ index 83eaaf8..4968492 100644
  
              issueStatusMessage(oss.str());
  
-@@ -506,7 +512,11 @@ namespace zsync2 {
+@@ -506,7 +512,13 @@ namespace zsync2 {
                  }
              }
  
 +            #ifdef ZSYNC_STANDALONE
++            putchar('\n');
++            putchar('\0');
 +            zsync_submit_source_file(zsHandle, f, true);
 +            #else
              zsync_submit_source_file(zsHandle, f, false);
@@ -17798,7 +17800,7 @@ index 83eaaf8..4968492 100644
  
              if (fclose(f) != 0) {
                  issueStatusMessage("fclose() on file handle failed!");
-@@ -657,6 +667,26 @@ namespace zsync2 {
+@@ -657,6 +669,26 @@ namespace zsync2 {
                  }
              }
  
@@ -17825,14 +17827,15 @@ index 83eaaf8..4968492 100644
              if (rangesOptimizationThreshold > 0) {
                  // optimize ranges by combining ones with rather small distances
                  optimizeRanges(ranges, rangesOptimizationThreshold);
-@@ -679,9 +709,24 @@ namespace zsync2 {
+@@ -679,9 +711,25 @@ namespace zsync2 {
  
              // begin downloading ranges, one by one
              {
 +                #ifdef ZSYNC_STANDALONE
 +                /* Set up progress display to run during the fetch */
 +                struct progress *p;
-+                fputc('\n', stderr);
++                putchar('\n');
++                putchar('\0');
 +                p = start_progress();
 +                do_progress(p, (float) calculateProgress() * 100.0f,
 +                                        range_fetch_bytes_down(rf));
@@ -17850,7 +17853,7 @@ index 83eaaf8..4968492 100644
  
                      off_t single_range[2] = {beginbyte, endbyte};
                      /* And give that to the range fetcher */
-@@ -689,28 +734,20 @@ namespace zsync2 {
+@@ -689,28 +737,20 @@ namespace zsync2 {
                      range_fetch_addranges(rf, single_range, 1);
  
                      {
@@ -17882,7 +17885,7 @@ index 83eaaf8..4968492 100644
                                          range_fetch_bytes_down(rf));
                              #endif
  
-@@ -722,18 +759,20 @@ namespace zsync2 {
+@@ -722,18 +762,20 @@ namespace zsync2 {
                          if (len < 0) {
                              ret = -1;
                              break;
@@ -17911,7 +17914,7 @@ index 83eaaf8..4968492 100644
              }
  
              /* Clean up */
-@@ -755,6 +794,7 @@ namespace zsync2 {
+@@ -755,6 +797,7 @@ namespace zsync2 {
                  return false;
              }
  
@@ -17919,7 +17922,7 @@ index 83eaaf8..4968492 100644
              int* status;
              status = static_cast<int*>(calloc(n, sizeof *status));
  
-@@ -768,6 +808,7 @@ namespace zsync2 {
+@@ -768,6 +811,7 @@ namespace zsync2 {
  
                      if (result != 0) {
                          issueStatusMessage("failed to retrieve from " + tryurl + ", status " + std::to_string(result));
@@ -17927,7 +17930,7 @@ index 83eaaf8..4968492 100644
                          return false;
                      }
                  }
-@@ -966,7 +1007,8 @@ namespace zsync2 {
+@@ -966,7 +1010,8 @@ namespace zsync2 {
  
              // check whether file exists at all, because if not, a full download is required
              if (!isfile(pathToLocalFile)) {
@@ -17937,7 +17940,7 @@ index 83eaaf8..4968492 100644
                  updateAvailable = true;
                  return true;
              }
-@@ -1047,8 +1089,8 @@ namespace zsync2 {
+@@ -1047,8 +1092,8 @@ namespace zsync2 {
          }
      };
  
