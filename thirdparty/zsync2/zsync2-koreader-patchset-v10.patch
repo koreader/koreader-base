@@ -17722,7 +17722,7 @@ index c0f5e87..6f20b53 100644
          return 1;
  
 diff --git a/src/zsclient.cpp b/src/zsclient.cpp
-index 83eaaf8..fee8420 100644
+index 83eaaf8..4968492 100644
 --- a/src/zsclient.cpp
 +++ b/src/zsclient.cpp
 @@ -37,7 +37,7 @@ namespace zsync2 {
@@ -17848,7 +17848,7 @@ index 83eaaf8..fee8420 100644
 +                    // See the NOTE above about this dirty hack...
 +                    if (fudge_ranges) {
 +                        // Clamp to remote file size just in case...
-+                        endbyte = std::min(endbyte + (4096 * retries), zsync_filelen(zsHandle));
++                        endbyte = std::min<off_t>(endbyte + (4096 * retries), zsync_filelen(zsHandle));
 +
 +                    }
  
