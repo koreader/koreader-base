@@ -17433,7 +17433,7 @@ index f97c5a2..e368a2b 100644
                      rf->block_left = to - from + 1;
                      gotr = 1;
 diff --git a/src/legacy_progress.c b/src/legacy_progress.c
-index 5180844..cc5b3d5 100644
+index 5180844..ac36498 100644
 --- a/src/legacy_progress.c
 +++ b/src/legacy_progress.c
 @@ -14,10 +14,23 @@
@@ -17460,7 +17460,7 @@ index 5180844..cc5b3d5 100644
  /* progbar(chars, percent)
   * (Re)print progress bar with chars out of 20 shown and followed by the given
   * percentage done. */
-@@ -33,40 +46,53 @@ static void progbar(int j, float pcnt) {
+@@ -33,40 +46,52 @@ static void progbar(int j, float pcnt) {
      printf("\r%s %.1f%%", buf, pcnt);
  }
  
@@ -17514,6 +17514,10 @@ index 5180844..cc5b3d5 100644
 -                printf("%d:%02d ETA  ", sleft / 60, sleft % 60);
 -            else
 -                puts("        ");
+-        }
+-        p->lastdl = newdl;
+-        p->lastpcnt = pcnt;
+-        fflush(stdout);
 +    /* Update progress bar displayed */
 +    progbar(pcnt * (20.0 / 100.0), pcnt);
 +
@@ -17524,21 +17528,17 @@ index 5180844..cc5b3d5 100644
 +        float pcnt_change = (p->history[p->num_history-1].pcnt - p->history[0].pcnt);
 +        int sleft = (100.0f - pcnt) * passed / pcnt_change;
 +        printf(" %.1f kBps ", rate / 1000.0);
-+        if (sleft < 60 * 1000) {
++        if (sleft < 60 * 1000)
 +            printf("%d:%02d ETA  ", sleft / 60, sleft % 60);
-+        } else {
++        else
 +            fputs("           ", stdout);
-         }
--        p->lastdl = newdl;
--        p->lastpcnt = pcnt;
--        fflush(stdout);
      }
 +    putchar('\0');
 +    fflush(stdout);
  }
  
  /* end_progress(progress, done)
-@@ -76,13 +102,18 @@ void do_progress(struct progress *p, float pcnt, long long newdl) {
+@@ -76,13 +101,18 @@ void do_progress(struct progress *p, float pcnt, long long newdl) {
  void end_progress(struct progress *p, int done) {
      if (done == 2)
          progbar(20, 100.0);
