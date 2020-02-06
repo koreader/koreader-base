@@ -17433,7 +17433,7 @@ index f97c5a2..e368a2b 100644
                      rf->block_left = to - from + 1;
                      gotr = 1;
 diff --git a/src/legacy_progress.c b/src/legacy_progress.c
-index 5180844..aa40ac0 100644
+index 5180844..893e5a1 100644
 --- a/src/legacy_progress.c
 +++ b/src/legacy_progress.c
 @@ -14,10 +14,23 @@
@@ -17460,12 +17460,11 @@ index 5180844..aa40ac0 100644
  /* progbar(chars, percent)
   * (Re)print progress bar with chars out of 20 shown and followed by the given
   * percentage done. */
-@@ -30,7 +43,15 @@ static void progbar(int j, float pcnt) {
-     for (; i < 20; i++)
+@@ -31,6 +44,15 @@ static void progbar(int j, float pcnt) {
          buf[i] = '-';
      buf[i] = 0;
--    printf("\r%s %.1f%%", buf, pcnt);
-+    printf("\r%s %.1f%%\0", buf, pcnt);
+     printf("\r%s %.1f%%", buf, pcnt);
++    putchar('\0');
 +}
 +
 +/* struct progress* = start_progress()
@@ -17477,7 +17476,7 @@ index 5180844..aa40ac0 100644
  }
  
  /* do_progress(progress, percent, total_bytes_retrieved
-@@ -38,35 +59,38 @@ static void progbar(int j, float pcnt) {
+@@ -38,35 +60,42 @@ static void progbar(int j, float pcnt) {
   * recalculates the rolling download rate given the supplied
   * total_bytes_retrieved (and the current time) */
  void do_progress(struct progress *p, float pcnt, long long newdl) {
@@ -17504,9 +17503,6 @@ index 5180844..aa40ac0 100644
 +    p->history[p->num_history].dl        = newdl;
 +    p->history[p->num_history].pcnt      = pcnt;
 +    p->num_history++;
-+
-+    /* Update progress bar displayed */
-+    progbar(pcnt * (20.0 / 100.0), pcnt);
  
 -        /* Each time 1s has passed, we update and redisplay our download rate */
 -        if (passed) {
@@ -17521,27 +17517,33 @@ index 5180844..aa40ac0 100644
 -                printf("%d:%02d ETA  ", sleft / 60, sleft % 60);
 -            else
 -                puts("        ");
--        }
--        p->lastdl = newdl;
--        p->lastpcnt = pcnt;
--        fflush(stdout);
++    /* Update progress bar displayed */
++    progbar(pcnt * (20.0 / 100.0), pcnt);
++
 +    /* If we have more than one data point, we can calculate and show rates */
 +    if (p->num_history > 1) {
 +        int passed = p->history[p->num_history-1].hist_time - p->history[0].hist_time;
 +        float rate = (p->history[p->num_history-1].dl - p->history[0].dl) / (float)passed;
 +        float pcnt_change = (p->history[p->num_history-1].pcnt - p->history[0].pcnt);
 +        int sleft = (100.0f - pcnt) * passed / pcnt_change;
-+        printf(" %.1f kBps \0", rate / 1000.0);
-+        if (sleft < 60 * 1000)
-+            printf("%d:%02d ETA  \0", sleft / 60, sleft % 60);
-+        else
-+            fputs("           \0", stdout);
++        printf(" %.1f kBps ", rate / 1000.0);
++        putchar('\0');
++        if (sleft < 60 * 1000) {
++            printf("%d:%02d ETA  ", sleft / 60, sleft % 60);
++            putchar('\0');
++        } else {
++            fputs("           ", stdout);
++            putchar('\0');
+         }
+-        p->lastdl = newdl;
+-        p->lastpcnt = pcnt;
+-        fflush(stdout);
      }
 +    fflush(stdout);
  }
  
  /* end_progress(progress, done)
-@@ -76,13 +100,17 @@ void do_progress(struct progress *p, float pcnt, long long newdl) {
+@@ -76,13 +105,19 @@ void do_progress(struct progress *p, float pcnt, long long newdl) {
  void end_progress(struct progress *p, int done) {
      if (done == 2)
          progbar(20, 100.0);
@@ -17554,14 +17556,14 @@ index 5180844..aa40ac0 100644
  
 -    {
 -        float rate = ((float)p->lastdl) / (p->lasttime - p->starttime + 0.5);
--        printf(" %.1f kBps ", rate / 1000.0);
 +    {   /* For the final display, show the rate for the whole download. */
 +        float rate = (float)(p->history[p->num_history-1].dl) /
 +            (p->history[p->num_history-1].hist_time - p->starttime + 0.5);
-+        printf(" %.1f kBps \0", rate / 1000.0);
+         printf(" %.1f kBps ", rate / 1000.0);
++        putchar('\0');
      }
--    puts(done == 2 ? "DONE    \n" : !done ? "aborted    \n" : "        \n");
-+    puts(done == 2 ? "DONE    \n\0" : !done ? "aborted    \n\0" : "        \n\0");
+     puts(done == 2 ? "DONE    \n" : !done ? "aborted    \n" : "        \n");
++    putchar('\0');
      fflush(stdout);
 +    free(p);
  }
