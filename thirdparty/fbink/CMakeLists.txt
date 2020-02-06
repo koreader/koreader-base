@@ -30,8 +30,8 @@ else()
     set(FBINK_TARGET "strip")
 endif()
 
-# Minimal, statically linked build, we don't care about extra fonts or image support
-set(BUILD_CMD1 sh -c "${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS} MINIMAL=1 OPENTYPE=1 CFLAGS=\"${CFLAGS}\" LDFLAGS=\"${LDFLAGS}\" ${FBINK_TARGET}")
+# Minimal-ish, statically linked build, we don't care about image support
+set(BUILD_CMD1 sh -c "${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS} MINIMAL=1 FONTS=1 OPENTYPE=1 CFLAGS=\"${CFLAGS}\" LDFLAGS=\"${LDFLAGS}\" ${FBINK_TARGET}")
 if(UTILS_TARGET)
     set(BUILD_CMD2 sh -c "${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS} CFLAGS=\"${CFLAGS}\" LDFLAGS=\"${LDFLAGS}\" ${UTILS_TARGET}")
 endif()
@@ -52,7 +52,7 @@ endif()
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
     https://github.com/NiLuJe/FBInk.git
-    tags/v1.21.0
+    d15c42d11b6df61691650fd55db8172d98637c40
     ${SOURCE_DIR}
 )
 

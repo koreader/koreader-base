@@ -54,8 +54,11 @@ list(APPEND CMAKE_ARGS "-DCURL_LIBRARIES=curl")
 ## * Prevent passing a malformed referer URL
 ## * Don't print seven billion progress bars
 ## * Rebase against zsync master (c.f., rebase-zsync-libs branch)
+## * Rebase against zlib 1.2.11 (c.f., rebase-zlib branch)
+## * Workaround potential download loops, like what happened w/ the 2019.12 -> 2020.01 update.
+## * Mangle logging to play nice w/ FBInk
 # c.f., https://github.com/NiLuJe/zsync2
-set(PATCH_CMD1 "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/zsync2-koreader-patchset-v9.patch")
+set(PATCH_CMD1 "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/zsync2-koreader-patchset-v10.patch")
 
 # Workaround various issues related to PocketBook's old TC using an awfully old GCC version
 # Inspired by https://github.com/nlohmann/json/issues/136
