@@ -1,0 +1,1858 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 7e55d10..74b192c 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -73,6 +73,8 @@ if(UNIX)
+         add_definitions("-DAPPIMAGEUPDATE_BSD")
+     elseif("${LOWER_SYSTEM}" MATCHES "linux")
+         add_definitions("-DAPPIMAGEUPDATE_LINUX")
++        # For a whole lotta stuff on Linux...
++        add_definitions("-D_XOPEN_SOURCE=700")
+     else()
+         message(FATAL_ERROR "Unsupported UNIX platform: ${CMAKE_SYSTEM_NAME}")
+     endif()
+diff --git a/include/zsclient.h b/include/zsclient.h
+index ca6380a..5b45667 100644
+--- a/include/zsclient.h
++++ b/include/zsclient.h
+@@ -11,7 +11,7 @@ namespace zsync2 {
+         Private *d;
+ 
+     public:
+-        explicit ZSyncClient(std::string urlOrPathToZsyncFile, std::string pathToLocalFile = "", bool overwrite = true);
++        explicit ZSyncClient(std::string urlOrPathToZsyncFile, std::string pathToLocalFile = "", bool overwrite = true, std::string refererUrl = "");
+         ~ZSyncClient();
+ 
+     public:
+diff --git a/include/zsglobal.h b/include/zsglobal.h
+index 585d438..14f73f4 100644
+--- a/include/zsglobal.h
++++ b/include/zsglobal.h
+@@ -28,4 +28,12 @@
+ #  define ZS_DECL_BOUNDED(x,y,z)
+ #endif /* ZS_DECL_BOUNDED */
+ 
++static inline unsigned min(unsigned short a, unsigned short b) {
++    return a > b ? b : a;
++}
++
++static inline unsigned max(unsigned short a, unsigned short b) {
++    return a > b ? a : b;
++}
++
+ #endif
+diff --git a/include/zsmake.h b/include/zsmake.h
+index 4f124b6..32270b1 100644
+--- a/include/zsmake.h
++++ b/include/zsmake.h
+@@ -34,7 +34,7 @@ namespace zsync2 {
+         void setUrl(const std::string& url);
+ 
+         // will be called for every log message issued by the code
+-        bool setLogMessageCallback(std::function<void(std::string)> callback);
++        void setLogMessageCallback(std::function<void(std::string)> callback);
+ 
+         // add custom header field
+         // returns true when there is no header with such a key yet, otherwise overwrites the existing value and
+diff --git a/lib/librcksum/hash.c b/lib/librcksum/hash.c
+index f60aa6b..261e40d 100644
+--- a/lib/librcksum/hash.c
++++ b/lib/librcksum/hash.c
+@@ -5,8 +5,8 @@
+  *   Copyright (C) 2004,2005,2007,2009 Colin Phipps <cph@moria.org.uk>
+  *
+  *   This program is free software; you can redistribute it and/or modify
+- *   it under the terms of the Artistic License v2 (see the accompanying 
+- *   file COPYING for the full license terms), or, at your option, any later 
++ *   it under the terms of the Artistic License v2 (see the accompanying
++ *   file COPYING for the full license terms), or, at your option, any later
+  *   version of the same license.
+  *
+  *   This program is distributed in the hope that it will be useful,
+@@ -55,27 +55,104 @@ void rcksum_add_target_block(struct rcksum_state *z, zs_blockid b,
+     }
+ }
+ 
++static void print_hashstats(const struct rcksum_state* z) {
++#ifdef DEBUG
++    int i;
++    {
++        int num_bits_set = 0;
++        for (i = 0; i < z->bithashmask + 1; i++) {
++            unsigned char c;
++            for (c = z->bithash[i]; c; c &= c - 1)
++                num_bits_set++;
++        }
++
++        fprintf(stderr, "bithash %dKB, density %.1f%%\n",
++                (z->bithashmask+1)/(1000 * 8),
++                100.0 * num_bits_set / (z->bithashmask + 1));
++    }
++    {
++        int hash_entries_used = 0;
++        int max_depth = 0;
++        for (i = 0; i < z->hashmask + 1; i++) {
++            struct hash_entry* p = z->rsum_hash[i];
++            if (!p) continue;
++            hash_entries_used++;
++            int depth;
++            for (depth = 0; p; p = p->next)
++                depth++;
++            if (depth > max_depth) max_depth = depth;
++        }
++        fprintf(stderr,
++                "rsum hash density: %d/%d %.1f%% (depth avg: %.1f, max: %d)\n",
++                hash_entries_used, z->hashmask+1,
++                100.0 * hash_entries_used / (z->hashmask + 1),
++                z->blocks / (float)hash_entries_used, max_depth);
++    }
++#if 0
++    {   /* Print blocks on "0" hash-chain */
++        unsigned hash = 0;
++        const struct hash_entry *p = z->rsum_hash[hash & z->hashmask];
++        const struct hash_entry *first = p;
++        int depth = 0;
++        int in_range = 0;
++        while (p != NULL) {
++            zs_blockid id = get_HE_blockid(z, p);
++            if (memcmp(p->checksum, first->checksum, sizeof(p->checksum))) {
++                int next_is_too = 0;
++                if (p->next) {
++                    zs_blockid next_id = get_HE_blockid(z, p->next);
++                    if (next_id == id + 1)
++                        if (memcmp(p->next->checksum, first->checksum, sizeof(p->checksum)))
++                            next_is_too = 1;;
++                }
++                if (!in_range) {
++                    printf("%d", id);
++                    if (next_is_too) {
++                        fputs("-", stdout);
++                        in_range = 1;
++                    } else {
++                        fputs(",", stdout);
++                    }
++                } else {
++                    if (next_is_too) {
++                        printf("%d,", id);
++                        in_range = 0;
++                    }
++                }
++            }
++            p = p->next;
++            depth++;
++        }
++        printf(" (depth %d)\n", depth);
++    }
++#endif
++#endif
++}
++
+ /* build_hash(self)
+  * Build hash tables to quickly lookup a block based on its rsum value.
+  * Returns non-zero if successful.
+  */
+ int build_hash(struct rcksum_state *z) {
+     zs_blockid id;
+-    int i = 16;
++    int avail_bits = z->seq_matches > 1 ? min(z->rsum_bits, 16)*2 : z->rsum_bits;
++    int hash_bits = avail_bits;
+ 
+-    /* Try hash size of 2^i; step down the value of i until we find a good size
+-     */
+-    while ((2 << (i - 1)) > z->blocks && i > 4)
+-        i--;
++    /* Pick a hash size that is a power of two and gives a load factor of <1 */
++    while ((1U << (hash_bits-1)) > z->blocks && hash_bits > 5)
++        hash_bits--;
+ 
+     /* Allocate hash based on rsum */
+-    z->hashmask = (2 << i) - 1;
++    z->hashmask = (1U << hash_bits) - 1;
+     z->rsum_hash = calloc(z->hashmask + 1, sizeof *(z->rsum_hash));
+     if (!z->rsum_hash)
+         return 0;
+ 
+-    /* Allocate bit-table based on rsum */
+-    z->bithashmask = (2 << (i + BITHASHBITS)) - 1;
++    /* Allocate bit-table based on rsum. Aim is for 1/(1<<BITHASHBITS) load
++     * factor, so hash_vits shouls be hash_bits + BITHASHBITS if we have that
++     * many bits available. */
++    hash_bits = min(hash_bits + BITHASHBITS, avail_bits);
++    z->bithashmask = (1U << hash_bits) - 1;
+     z->bithash = calloc(z->bithashmask + 1, 1);
+     if (!z->bithash) {
+         free(z->rsum_hash);
+@@ -83,6 +160,19 @@ int build_hash(struct rcksum_state *z) {
+         return 0;
+     }
+ 
++    /* We want the hash function to return hash_bits bits. We will xor one
++     * number with a second number that may have fewer than 16 bits of
++     * available data; set up an appropriate bit shift for the second number.
++     * This is closely tied to calc_rhash().
++     */
++    if (z->seq_matches > 1 && avail_bits < 24) {
++        /* second number has (avail_bits/2) bits available. */
++        z->hash_func_shift = max(0, hash_bits - (avail_bits / 2));
++    } else {
++        /* second number has avail_bits - 16 bits available. */
++        z->hash_func_shift = max(0, hash_bits - (avail_bits - 16));
++    }
++
+     /* Now fill in the hash tables.
+      * Minor point: We do this in reverse order, because we're adding entries
+      * to the hash chains by prepending, so if we iterate over the data in
+@@ -101,13 +191,28 @@ int build_hash(struct rcksum_state *z) {
+         /* And set relevant bit in the bithash to 1 */
+         z->bithash[(h & z->bithashmask) >> 3] |= 1 << (h & 7);
+     }
++
++    print_hashstats(z);
+     return 1;
+ }
+ 
++static void sprint_checksum(char* buf, const struct hash_entry* t) {
++        sprintf(buf, "%x%x%x%x%x%x%x%x%x%x%x%x%x%x%x%x",
++                t->checksum[0], t->checksum[1],
++                t->checksum[2], t->checksum[3],
++                t->checksum[4], t->checksum[5],
++                t->checksum[6], t->checksum[7],
++                t->checksum[8], t->checksum[9],
++                t->checksum[10], t->checksum[11],
++                t->checksum[12], t->checksum[13],
++                t->checksum[14], t->checksum[15]);
++}
++
+ /* remove_block_from_hash(self, block_id)
+  * Remove the given data block from the rsum hash table, so it won't be
+  * returned in a hash lookup again (e.g. because we now have the data)
+  */
++
+ void remove_block_from_hash(struct rcksum_state *z, zs_blockid id) {
+     struct hash_entry *t = &(z->blockhashes[id]);
+ 
+diff --git a/lib/librcksum/internal.h b/lib/librcksum/internal.h
+index 153589a..d495203 100644
+--- a/lib/librcksum/internal.h
++++ b/lib/librcksum/internal.h
+@@ -5,8 +5,8 @@
+  *   Copyright (C) 2004,2005,2009 Colin Phipps <cph@moria.org.uk>
+  *
+  *   This program is free software; you can redistribute it and/or modify
+- *   it under the terms of the Artistic License v2 (see the accompanying 
+- *   file COPYING for the full license terms), or, at your option, any later 
++ *   it under the terms of the Artistic License v2 (see the accompanying
++ *   file COPYING for the full license terms), or, at your option, any later
+  *   version of the same license.
+  *
+  *   This program is distributed in the hope that it will be useful,
+@@ -41,14 +41,15 @@ struct rcksum_state {
+     size_t blocksize;           /* And how many bytes per block */
+     int blockshift;             /* log2(blocksize) */
+     unsigned short rsum_a_mask; /* The mask to apply to rsum values before looking up */
+-    int checksum_bytes;         /* How many bytes of the MD4 checksum are available */
++    unsigned short rsum_bits;   /* # of bits of rsum data in the .zsync for each block */
++    unsigned short hash_func_shift; /* Config for the hash function */
++    unsigned int checksum_bytes; /* How many bytes of the MD4 checksum are available */
+     int seq_matches;
+-
+     unsigned int context;       /* precalculated blocksize * seq_matches */
+ 
+     /* These are used by the library. Note, not thread safe. */
+-    const struct hash_entry *rover;
+     int skip;                   /* skip forward on next submit_source_data */
++    const struct hash_entry *rover;
+ 
+     /* Internal; hint to rcksum_submit_source_data that it should try matching
+      * the following block of input data against the block ->next_match.
+@@ -64,15 +65,16 @@ struct rcksum_state {
+ 
+     /* And a 1-bit per rsum value table to allow fast negative lookups for hash
+      * values that don't occur in the target file. */
+-    unsigned int bithashmask;
+     unsigned char *bithash;
++    unsigned int bithashmask;
+ 
+     /* Current state and stats for data collected by algorithm */
+     int numranges;
+     zs_blockid *ranges;
+     int gotblocks;
+     struct {
+-        int hashhit, weakhit, stronghit, checksummed;
++        long long hashhit;
++        int weakhit, stronghit, checksummed;
+     } stats;
+ 
+     /* Temp file for output */
+@@ -102,7 +104,7 @@ static inline unsigned calc_rhash(const struct rcksum_state *const z,
+     unsigned h = e[0].r.b;
+ 
+     h ^= ((z->seq_matches > 1) ? e[1].r.b
+-        : e[0].r.a & z->rsum_a_mask) << BITHASHBITS;
++        : e[0].r.a & z->rsum_a_mask) << z->hash_func_shift;
+ 
+     return h;
+ }
+diff --git a/lib/librcksum/md4.c b/lib/librcksum/md4.c
+index dcf04ff..2991aef 100644
+--- a/lib/librcksum/md4.c
++++ b/lib/librcksum/md4.c
+@@ -33,6 +33,8 @@ static const char rcsid[] = "$OpenBSD: md4.c,v 1.6 2004/05/28 15:10:27 millert E
+ #define BYTE_ORDER 1
+ #endif
+ 
++//#pragma clang diagnostic ignored "-Wconversion"
++
+ #define PUT_64BIT_LE(cp, value) do {					\
+ 	(cp)[7] = (value) >> 56;					\
+ 	(cp)[6] = (value) >> 48;					\
+diff --git a/lib/librcksum/md4.h b/lib/librcksum/md4.h
+index 4cf9551..e90603a 100644
+--- a/lib/librcksum/md4.h
++++ b/lib/librcksum/md4.h
+@@ -22,7 +22,6 @@
+ #include <inttypes.h>
+ #else
+ #include <sys/types.h>
+-
+ #endif
+ 
+ #define	MD4_BLOCK_LENGTH		64
+diff --git a/lib/librcksum/md4test.c b/lib/librcksum/md4test.c
+index 0e1b5de..0e9f1fa 100644
+--- a/lib/librcksum/md4test.c
++++ b/lib/librcksum/md4test.c
+@@ -3,8 +3,8 @@
+  *   Copyright (C) 2005 Colin Phipps <cph@moria.org.uk>
+  *
+  *   This program is free software; you can redistribute it and/or modify
+- *   it under the terms of the Artistic License v2 (see the accompanying 
+- *   file COPYING for the full license terms), or, at your option, any later 
++ *   it under the terms of the Artistic License v2 (see the accompanying
++ *   file COPYING for the full license terms), or, at your option, any later
+  *   version of the same license.
+  *
+  *   This program is distributed in the hope that it will be useful,
+diff --git a/lib/librcksum/range.c b/lib/librcksum/range.c
+index 383bb0f..1a634e7 100644
+--- a/lib/librcksum/range.c
++++ b/lib/librcksum/range.c
+@@ -5,8 +5,8 @@
+  *   Copyright (C) 2004,2005,2007,2009 Colin Phipps <cph@moria.org.uk>
+  *
+  *   This program is free software; you can redistribute it and/or modify
+- *   it under the terms of the Artistic License v2 (see the accompanying 
+- *   file COPYING for the full license terms), or, at your option, any later 
++ *   it under the terms of the Artistic License v2 (see the accompanying
++ *   file COPYING for the full license terms), or, at your option, any later
+  *   version of the same license.
+  *
+  *   This program is distributed in the hope that it will be useful,
+diff --git a/lib/librcksum/rcksum.h b/lib/librcksum/rcksum.h
+index e4ec44b..3a48506 100644
+--- a/lib/librcksum/rcksum.h
++++ b/lib/librcksum/rcksum.h
+@@ -4,8 +4,8 @@
+  *   Copyright (C) 2004,2005,2009 Colin Phipps <cph@moria.org.uk>
+  *
+  *   This program is free software; you can redistribute it and/or modify
+- *   it under the terms of the Artistic License v2 (see the accompanying 
+- *   file COPYING for the full license terms), or, at your option, any later 
++ *   it under the terms of the Artistic License v2 (see the accompanying
++ *   file COPYING for the full license terms), or, at your option, any later
+  *   version of the same license.
+  *
+  *   This program is distributed in the hope that it will be useful,
+@@ -29,7 +29,10 @@ struct rsum {
+ 
+ #define CHECKSUM_SIZE 16
+ 
+-struct rcksum_state* rcksum_init(zs_blockid nblocks, size_t blocksize, int rsum_butes, int checksum_bytes, int require_consecutive_matches, char* directory);
++struct rcksum_state *rcksum_init(zs_blockid nblocks, size_t blocksize,
++                                 int rsum_butes, unsigned int checksum_bytes,
++                                 int require_consecutive_matches,
++                                 char* directory);
+ void rcksum_end(struct rcksum_state* z);
+ 
+ /* These transfer out the filename and handle of the file backing the data retrieved.
+@@ -46,7 +49,8 @@ int rcksum_submit_source_data(struct rcksum_state* z, unsigned char* data, size_
+ int rcksum_submit_source_file(struct rcksum_state* z, FILE* f, int progress);
+ 
+ /* This reads back in data which is already known. */
+-int rcksum_read_known_data(struct rcksum_state* z, unsigned char* buf, off_t offset, size_t len);
++ssize_t rcksum_read_known_data(struct rcksum_state *z, unsigned char *buf,
++                               off_t offset, size_t len);
+ 
+ /* rcksum_needed_block_ranges tells you what blocks, within the given range,
+  * are still unknown. It returns a list of block ranges in r[]
+@@ -56,6 +60,8 @@ zs_blockid* rcksum_needed_block_ranges(const struct rcksum_state* z, int* num, z
+ int rcksum_blocks_todo(const struct rcksum_state*);
+ 
+ /* For preparing rcksum control files - in both cases len is the block size. */
+-struct rsum __attribute__((pure)) rcksum_calc_rsum_block(const unsigned char* data, size_t len);
++struct rsum __attribute__((pure))
++rcksum_calc_rsum_block(const unsigned char *data, size_t len);
++
+ void rcksum_calc_checksum(unsigned char *c, const unsigned char* data, size_t len);
+ 
+diff --git a/lib/librcksum/rsum.c b/lib/librcksum/rsum.c
+index c1fccb6..d8d0f44 100644
+--- a/lib/librcksum/rsum.c
++++ b/lib/librcksum/rsum.c
+@@ -5,8 +5,8 @@
+  *   Copyright (C) 2004,2005,2007,2009 Colin Phipps <cph@moria.org.uk>
+  *
+  *   This program is free software; you can redistribute it and/or modify
+- *   it under the terms of the Artistic License v2 (see the accompanying 
+- *   file COPYING for the full license terms), or, at your option, any later 
++ *   it under the terms of the Artistic License v2 (see the accompanying
++ *   file COPYING for the full license terms), or, at your option, any later
+  *   version of the same license.
+  *
+  *   This program is distributed in the hope that it will be useful,
+@@ -25,6 +25,8 @@
+ #include <string.h>
+ #include <errno.h>
+ #include <unistd.h>
++#include <sys/types.h>
++#include <sys/stat.h>
+ 
+ #ifdef WITH_DMALLOC
+ # include <dmalloc.h>
+@@ -33,20 +35,26 @@
+ #include "md4.h"
+ #include "rcksum.h"
+ #include "internal.h"
++/* TODO: decide how to handle progress; this is now being used by the client
++ * and by the library, which is ugly. */
++#include "../../src/legacy_progress.h"
+ 
+ #define UPDATE_RSUM(a, b, oldc, newc, bshift) do { (a) += ((unsigned char)(newc)) - ((unsigned char)(oldc)); (b) += (a) - ((oldc) << (bshift)); } while (0)
+ 
+ /* rcksum_calc_rsum_block(data, data_len)
+  * Calculate the rsum for a single block of data. */
+-struct rsum __attribute__ ((pure)) rcksum_calc_rsum_block(const unsigned char *data, size_t len) {
++/* Note int len here, not size_t, because the compiler is stupid and expands
++ * the 32bit size_t to 64bit inside the inner loop. */
++struct rsum __attribute__((pure))
++rcksum_calc_rsum_block(const unsigned char *data, size_t len) {
+     register unsigned short a = 0;
+     register unsigned short b = 0;
++    size_t i;
+ 
+-    while (len) {
+-        unsigned char c = *data++;
++    for (i = 0; i < len; i++) {
++        unsigned char c = data[i];
+         a += c;
+-        b += len * c;
+-        len--;
++        b += a;
+     }
+     {
+         struct rsum r = { a, b };
+@@ -83,8 +91,8 @@ static void write_blocks(struct rcksum_state *z, const unsigned char *data,
+     off_t offset = ((off_t) bfrom) << z->blockshift;
+ 
+     while (len) {
+-        size_t l = len;
+-        int rc;
++        size_t l = (size_t)len;
++        ssize_t rc;
+ 
+         /* On some platforms, the bytes-to-write could be more than pwrite(2)
+          * will accept. Write in blocks of 2^31 bytes in that case. */
+@@ -122,9 +130,9 @@ static void write_blocks(struct rcksum_state *z, const unsigned char *data,
+ /* rcksum_read_known_data(self, buf, offset, len)
+  * Read back data from the working output - read len bytes from offset into
+  * buf[] (which must be at least len bytes long) */
+-int rcksum_read_known_data(struct rcksum_state *z, unsigned char *buf,
+-                           off_t offset, size_t len) {
+-    int rc = pread(z->fd, buf, len, offset);
++ssize_t rcksum_read_known_data(struct rcksum_state *z, unsigned char *buf,
++                               off_t offset, size_t len) {
++    ssize_t rc = pread(z->fd, buf, len, offset);
+     return rc;
+ }
+ 
+@@ -209,16 +217,16 @@ static int check_checksums_on_hash_chain(struct rcksum_state *const z,
+         id = get_HE_blockid(z, e);
+ 
+         if (!onlyone && z->seq_matches > 1
+-            && (z->blockhashes[id + 1].r.a != (z->r[1].a & z->rsum_a_mask)
+-                || z->blockhashes[id + 1].r.b != z->r[1].b))
++            && (e[1].r.a != (z->r[1].a & z->rsum_a_mask)
++                || e[1].r.b != z->r[1].b)) {
+             continue;
++        }
+ 
+         z->stats.weakhit++;
+ 
+         {
+             int ok = 1;
+             signed int check_md4 = 0;
+-            zs_blockid next_known = -1;
+ 
+             /* This block at least must match; we must match at least
+              * z->seq_matches-1 others, which could either be trailing stuff,
+@@ -236,12 +244,10 @@ static int check_checksums_on_hash_chain(struct rcksum_state *const z,
+ 
+                 /* Now check the strong checksum for this block */
+                 if (memcmp(&md4sum[check_md4],
+-                     z->blockhashes[id + check_md4].checksum,
++                     e[check_md4].checksum,
+                      z->checksum_bytes))
+                     ok = 0;
+ 
+-                else if (next_known == -1)
+-
+                 check_md4++;
+             } while (ok && !onlyone && check_md4 < z->seq_matches);
+ 
+@@ -287,24 +293,25 @@ static int check_checksums_on_hash_chain(struct rcksum_state *const z,
+  * offset in the whole source stream otherwise.
+  *
+  * Returns the number of blocks in the target file that we obtained as a result
+- * of reading this buffer. 
++ * of reading this buffer.
+  *
+  * IMPLEMENTATION:
+  * We maintain the following state:
+  * skip - the number of bytes to skip next time we enter rcksum_submit_source_data
+- *        e.g. because we've just matched a block and the forward jump takes 
++ *        e.g. because we've just matched a block and the forward jump takes
+  *        us past the end of the buffer
+  * r[0] - rolling checksum of the first blocksize bytes of the buffer
+  * r[1] - rolling checksum of the next blocksize bytes of the buffer (if seq_matches > 1)
+  */
+ int rcksum_submit_source_data(struct rcksum_state *const z, unsigned char *data,
+                               size_t len, off_t offset) {
+-    /* The window in data[] currently being considered is 
+-     * [x, x+bs)
+-     */
++    /* The window in data[] currently being considered is [x, x+bs) */
+     int x = 0;
+-    register int bs = z->blocksize;
+-    int got_blocks = 0;
++    int got_blocks = 0;  /* Count the number of useful data blocks found. */
++
++    /* z->context doesn't vary during an invocation; help the compiler by
++     * putting it into a local variable here. */
++    register const int x_limit = len - z->context;
+ 
+     if (offset) {
+         x = z->skip;
+@@ -314,54 +321,70 @@ int rcksum_submit_source_data(struct rcksum_state *const z, unsigned char *data,
+     }
+ 
+     if (x || !offset) {
+-        z->r[0] = rcksum_calc_rsum_block(data + x, bs);
++        z->r[0] = rcksum_calc_rsum_block(data + x, z->blocksize);
+         if (z->seq_matches > 1)
+-            z->r[1] = rcksum_calc_rsum_block(data + x + bs, bs);
++            z->r[1] = rcksum_calc_rsum_block(data + x + z->blocksize, z->blocksize);
+     }
+     z->skip = 0;
+ 
+-    /* Work through the block until the current blocksize bytes being
+-     * considered, starting at x, is at the end of the buffer */
+-    for (;;) {
+-        if (x + z->context == len) {
+-            return got_blocks;
+-        }
+-
+-#if 0
+-        {   /* Catch rolling checksum failure */
+-            int k = 0;
+-            struct rsum c = rcksum_calc_rsum_block(data + x + bs * k, bs);
+-            if (c.a != z->r[k].a || c.b != z->r[k].b) {
+-                fprintf(stderr, "rsum miscalc (%d) at %lld\n", k, offset + x);
+-                exit(3);
++    /* Work through the block until the current z->context bytes being
++     * considered, starting at x, is at or past the end of the buffer */
++
++    /* The loop is split into an outer and an inner loop here. Both are looping
++     * over the data in the buffer; the inner loop is not strictly necessary but
++     * makes it clearer what is the critical code path i.e. stepping through the
++     * buffer one byte at a time. When we find a matching block, we skip forward
++     * by a whole block - the outer loop handles this case. */
++    while (x < x_limit /* which is len - z->context */) {
++        /* # of blocks to advance if thismatch > 0. Can be less than
++         * thismatch as thismatch could be N*blocks_matched, if a block was
++         * duplicated to multiple locations in the output file. */
++        int blocks_matched = 0;
++
++        /* Pull some invariants into locals, because the compiler doesn't
++         * know they are invariants. */
++        register const int seq_matches = z->seq_matches;
++        register const size_t bs = z->blocksize;
++
++        /* If the previous block was a match, but we're looking for
++         * sequential matches, then test this block against the block in
++         * the target immediately after our previous hit. */
++        if (z->next_match && z->seq_matches > 1) {
++            int thismatch;
++            if (0 != (thismatch = check_checksums_on_hash_chain(z, z->next_match, data + x, 1))) {
++                blocks_matched = 1;
++                got_blocks += thismatch;
+             }
+         }
+-#endif
+ 
+-        {
++        /* If we already matched this block, we don't look it up in the hash
++         * table at all.
++         * Advance one byte at a time through the input stream, looking up the
++         * rolling checksum in the rsum hash table. */
++        while (0 == blocks_matched && x < x_limit) {
+             /* # of blocks of the output file we got from this data */
+             int thismatch = 0;
+-            /* # of blocks to advance if thismatch > 0. Can be less than
+-             * thismatch as thismatch could be N*blocks_matched, if a block was
+-             * duplicated to multiple locations in the output file. */
+-            int blocks_matched = 0; 
+-
+-            /* If the previous block was a match, but we're looking for
+-             * sequential matches, then test this block against the block in
+-             * the target immediately after our previous hit. */
+-            if (z->next_match && z->seq_matches > 1) {
+-                if (0 != (thismatch = check_checksums_on_hash_chain(z, z->next_match, data + x, 1))) {
+-                    blocks_matched = 1;
++
++#if 0
++            {   /* Catch rolling checksum failure */
++                int k = 0;
++                struct rsum c = rcksum_calc_rsum_block(data + x + bs * k, bs);
++                if (c.a != z->r[k].a || c.b != z->r[k].b) {
++                    fprintf(stderr, "rsum miscalc (%d) at %lld\n", k, offset + x);
++                    exit(3);
+                 }
+             }
+-            if (!thismatch) {
++#endif
++
++            {
+                 const struct hash_entry *e;
+ 
+                 /* Do a hash table lookup - first in the bithash (fast negative
+                  * check) and then in the rsum hash */
+                 unsigned hash = z->r[0].b;
+-                hash ^= ((z->seq_matches > 1) ? z->r[1].b
+-                        : z->r[0].a & z->rsum_a_mask) << BITHASHBITS;
++                hash ^= ((seq_matches > 1) ? z->r[1].b
++                        : z->r[0].a & z->rsum_a_mask) << z->hash_func_shift;
++
+                 if ((z->bithash[(hash & z->bithashmask) >> 3] & (1 << (hash & 7))) != 0
+                     && (e = z->rsum_hash[hash & z->hashmask]) != NULL) {
+ 
+@@ -369,50 +392,70 @@ int rcksum_submit_source_data(struct rcksum_state *const z, unsigned char *data,
+                      * check our block against all the entries. */
+                     thismatch = check_checksums_on_hash_chain(z, e, data + x, 0);
+                     if (thismatch)
+-                        blocks_matched = z->seq_matches;
++                        blocks_matched = seq_matches;
+                 }
+             }
+             got_blocks += thismatch;
+ 
+-            /* If we got a hit, skip forward (if a block in the target matches
+-             * at x, it's highly unlikely to get a hit at x+1 as all the
+-             * target's blocks are multiples of the blocksize apart. */
+-            if (blocks_matched) {
+-                x += bs + (blocks_matched > 1 ? bs : 0);
+-
+-                if (x + z->context > len) {
+-                    /* can't calculate rsum for block after this one, because
+-                     * it's not in the buffer. So leave a hint for next time so
+-                     * we know we need to recalculate */
+-                    z->skip = x + z->context - len;
+-                    return got_blocks;
+-                }
++            /* (If we didn't match any data) advance the window by 1 byte -
++             * update the rolling checksum and our offset in the buffer */
++            if (!blocks_matched) {
++                unsigned char Nc = data[x + bs * 2];
++                unsigned char nc = data[x + bs];
++                unsigned char oc = data[x];
++                UPDATE_RSUM(z->r[0].a, z->r[0].b, oc, nc, z->blockshift);
++                if (seq_matches > 1)
++                    UPDATE_RSUM(z->r[1].a, z->r[1].b, nc, Nc, z->blockshift);
++                x++;
++            }
++        }
+ 
++        /* If we got a hit, skip forward (if a block in the target matches
++         * at x, it's highly unlikely to get a hit at x+1 as all the
++         * target's blocks are multiples of the blocksize apart. */
++        if (blocks_matched) {
++            x += z->blocksize + (blocks_matched > 1 ? z->blocksize : 0);
++
++            if (x > x_limit) {
++                /* can't calculate rsum for block after this one, because
++                 * it's not in the buffer. We will drop out of the loop and
++                 * return. */
++            } else {
+                 /* If we are moving forward just 1 block, we already have the
+                  * following block rsum. If we are skipping both, then
+                  * recalculate both */
+                 if (z->seq_matches > 1 && blocks_matched == 1)
+                     z->r[0] = z->r[1];
+                 else
+-                    z->r[0] = rcksum_calc_rsum_block(data + x, bs);
++                    z->r[0] = rcksum_calc_rsum_block(data + x, z->blocksize);
+                 if (z->seq_matches > 1)
+-                    z->r[1] = rcksum_calc_rsum_block(data + x + bs, bs);
+-                continue;
++                    z->r[1] = rcksum_calc_rsum_block(data + x + z->blocksize, z->blocksize);
+             }
+         }
++    }
++    /* If we jumped to a point in the stream not yet in the buffer (x > x_limit)
++     * then we need to save that state so that the next call knows where to
++     * resume - and also so that the next call knows that it must calculate the
++     * checksum of the first block because we do not have enough data to do so
++     * right now. */
++    z->skip = x - x_limit;
++
++    /* Keep caller informed about how much useful data we are getting. */
++    return got_blocks;
++}
+ 
+-        /* Else - advance the window by 1 byte - update the rolling checksum
+-         * and our offset in the buffer */
+-        {
+-            unsigned char Nc = data[x + bs * 2];
+-            unsigned char nc = data[x + bs];
+-            unsigned char oc = data[x];
+-            UPDATE_RSUM(z->r[0].a, z->r[0].b, oc, nc, z->blockshift);
+-            if (z->seq_matches > 1)
+-                UPDATE_RSUM(z->r[1].a, z->r[1].b, nc, Nc, z->blockshift);
+-        }
+-        x++;
++/* off_t get_file_size(FILE*)
++ * Returns the size of the given file, if available. 0 otherwise.
++ */
++static off_t get_file_size(FILE* f) {
++    struct stat st;
++    int fd = fileno(f);
++    if (fd == -1) return 0;
++    if (fstat(fd, &st) == -1) {
++        perror("fstat");
++        return 0;
+     }
++    return st.st_size;
+ }
+ 
+ /* rcksum_submit_source_file(self, stream, progress)
+@@ -425,9 +468,11 @@ int rcksum_submit_source_file(struct rcksum_state *z, FILE * f, int progress) {
+     int got_blocks = 0;
+     off_t in = 0;
+     int in_mb = 0;
++    off_t size = get_file_size(f);
++    struct progress *p;
+ 
+     /* Allocate buffer of 16 blocks */
+-    register int bufsize = z->blocksize * 16;
++    register size_t bufsize = z->blocksize * 16;
+     unsigned char *buf = malloc(bufsize + z->context);
+     if (!buf)
+         return 0;
+@@ -439,6 +484,11 @@ int rcksum_submit_source_file(struct rcksum_state *z, FILE * f, int progress) {
+             return 0;
+         }
+ 
++    if (progress) {
++        p = start_progress();
++        do_progress(p, 0, in);
++    }
++
+     while (!feof(f)) {
+         size_t len;
+         off_t start_in = in;
+@@ -461,6 +511,8 @@ int rcksum_submit_source_file(struct rcksum_state *z, FILE * f, int progress) {
+         if (ferror(f)) {
+             perror("fread");
+             free(buf);
++            if (progress)
++                end_progress(p, 0);
+             return got_blocks;
+         }
+         if (feof(f)) {          /* 0 pad to complete a block */
+@@ -471,10 +523,13 @@ int rcksum_submit_source_file(struct rcksum_state *z, FILE * f, int progress) {
+         /* Process the data in the buffer, and report progress */
+         got_blocks += rcksum_submit_source_data(z, buf, len, start_in);
+         if (progress && in_mb != in / 1000000) {
++            do_progress(p, 100.0 * in / size, in);
+             in_mb = in / 1000000;
+-            fputc('*', stderr);
+         }
+     }
+     free(buf);
++    if (progress) {
++        end_progress(p, 2);
++    }
+     return got_blocks;
+ }
+diff --git a/lib/librcksum/state.c b/lib/librcksum/state.c
+index f9bd958..2324025 100644
+--- a/lib/librcksum/state.c
++++ b/lib/librcksum/state.c
+@@ -5,8 +5,8 @@
+  *   Copyright (C) 2004,2005,2007,2009 Colin Phipps <cph@moria.org.uk>
+  *
+  *   This program is free software; you can redistribute it and/or modify
+- *   it under the terms of the Artistic License v2 (see the accompanying 
+- *   file COPYING for the full license terms), or, at your option, any later 
++ *   it under the terms of the Artistic License v2 (see the accompanying
++ *   file COPYING for the full license terms), or, at your option, any later
+  *   version of the same license.
+  *
+  *   This program is distributed in the hope that it will be useful,
+@@ -36,9 +36,9 @@
+  * Creates and returns an rcksum_state with the given properties
+  */
+ struct rcksum_state *rcksum_init(zs_blockid nblocks, size_t blocksize,
+-                                 int rsum_bytes, int checksum_bytes,
++                                 int rsum_bytes, unsigned int checksum_bytes,
+                                  int require_consecutive_matches,
+-                                 char* directory) {
++                                 char *directory) {
+     /* Allocate memory for the object */
+     struct rcksum_state *rs = malloc(sizeof(struct rcksum_state));
+     if (rs == NULL) return NULL;
+@@ -47,6 +47,7 @@ struct rcksum_state *rcksum_init(zs_blockid nblocks, size_t blocksize,
+     rs->blocksize = blocksize;
+     rs->blocks = nblocks;
+     rs->rsum_a_mask = rsum_bytes < 3 ? 0 : rsum_bytes == 3 ? 0xff : 0xffff;
++    rs->rsum_bits = rsum_bytes * 8;
+     rs->checksum_bytes = checksum_bytes;
+     rs->seq_matches = require_consecutive_matches;
+ 
+@@ -56,7 +57,7 @@ struct rcksum_state *rcksum_init(zs_blockid nblocks, size_t blocksize,
+ 
+     /* Temporary file to hold the target file as we get blocks for it */
+     static const char template[] = "rcksum-XXXXXX";
+-    if (directory != NULL) {strdup("rcksum-XXXXXX");
++    if (directory != NULL) {
+         rs->filename = (char*) calloc(strlen(directory) + strlen(template) + 2, sizeof(char));
+         strcat(rs->filename, directory);
+         strcat(rs->filename, "/");
+@@ -129,24 +130,24 @@ int rcksum_filehandle(struct rcksum_state *rs) {
+ }
+ 
+ /* rcksum_end - destructor */
+-void rcksum_end(struct rcksum_state *z) {
++void rcksum_end(struct rcksum_state *rs) {
+     /* Free temporary file resources */
+-    if (z->fd != -1)
+-        close(z->fd);
+-    if (z->filename) {
+-        unlink(z->filename);
+-        free(z->filename);
++    if (rs->fd != -1)
++        close(rs->fd);
++    if (rs->filename) {
++        unlink(rs->filename);
++        free(rs->filename);
+     }
+ 
+     /* Free other allocated memory */
+-    free(z->rsum_hash);
+-    free(z->blockhashes);
+-    free(z->bithash);
+-    free(z->ranges);            // Should be NULL already
++    free(rs->rsum_hash);
++    free(rs->blockhashes);
++    free(rs->bithash);
++    free(rs->ranges);            // Should be NULL already
+ #ifdef DEBUG
+-    fprintf(stderr, "hashhit %d, weakhit %d, checksummed %d, stronghit %d\n",
+-            z->stats.hashhit, z->stats.weakhit, z->stats.checksummed,
+-            z->stats.stronghit);
++    fprintf(stderr, "hashhit %lld, weakhit %d, checksummed %d, stronghit %d\n",
++            rs->stats.hashhit, rs->stats.weakhit, rs->stats.checksummed,
++            rs->stats.stronghit);
+ #endif
+-    free(z);
++    free(rs);
+ }
+diff --git a/lib/libzsync/sha1.h b/lib/libzsync/sha1.h
+index 0ce29bd..c9dde5e 100644
+--- a/lib/libzsync/sha1.h
++++ b/lib/libzsync/sha1.h
+@@ -9,7 +9,7 @@
+ #ifndef _SHA1_H
+ #define _SHA1_H
+ 
+-#include "config.h"
++#include "zsglobal.h"
+ 
+ #ifdef HAVE_INTTYPES_H
+ #include <inttypes.h>
+@@ -29,13 +29,22 @@ typedef struct {
+ 
+ void SHA1Init(SHA1_CTX *);
+ void SHA1Pad(SHA1_CTX *);
+-void SHA1Transform(uint32_t [5], const uint8_t [SHA1_BLOCK_LENGTH]);
+-void SHA1Update(SHA1_CTX *, const uint8_t *, size_t);
+-void SHA1Final(uint8_t [SHA1_DIGEST_LENGTH], SHA1_CTX *);
+-char *SHA1End(SHA1_CTX *, char *);
+-char *SHA1File(const char *, char *);
+-char *SHA1FileChunk(const char *, char *, off_t, off_t);
+-char *SHA1Data(const uint8_t *, size_t, char *);
++void SHA1Transform(uint32_t [5], const uint8_t [SHA1_BLOCK_LENGTH])
++		ZS_DECL_BOUNDED(__minbytes__,1,5)
++		ZS_DECL_BOUNDED(__minbytes__,2,SHA1_BLOCK_LENGTH);
++void SHA1Update(SHA1_CTX *, const uint8_t *, size_t)
++		ZS_DECL_BOUNDED(__string__,2,3);
++void SHA1Final(uint8_t [SHA1_DIGEST_LENGTH], SHA1_CTX *)
++		ZS_DECL_BOUNDED(__minbytes__,1,SHA1_DIGEST_LENGTH);
++char *SHA1End(SHA1_CTX *, char *)
++		ZS_DECL_BOUNDED(__minbytes__,2,SHA1_DIGEST_STRING_LENGTH);
++char *SHA1File(const char *, char *)
++		ZS_DECL_BOUNDED(__minbytes__,2,SHA1_DIGEST_STRING_LENGTH);
++char *SHA1FileChunk(const char *, char *, off_t, off_t)
++		ZS_DECL_BOUNDED(__minbytes__,2,SHA1_DIGEST_STRING_LENGTH);
++char *SHA1Data(const uint8_t *, size_t, char *)
++		ZS_DECL_BOUNDED(__string__,1,2)
++		ZS_DECL_BOUNDED(__minbytes__,3,SHA1_DIGEST_STRING_LENGTH);
+ 
+ #define HTONDIGEST(x) do {                                              \
+         x[0] = htonl(x[0]);                                             \
+diff --git a/lib/libzsync/sha1test.c b/lib/libzsync/sha1test.c
+index c869268..5e770c3 100644
+--- a/lib/libzsync/sha1test.c
++++ b/lib/libzsync/sha1test.c
+@@ -3,8 +3,8 @@
+  *   Copyright (C) 2005 Colin Phipps <cph@moria.org.uk>
+  *
+  *   This program is free software; you can redistribute it and/or modify
+- *   it under the terms of the Artistic License v2 (see the accompanying 
+- *   file COPYING for the full license terms), or, at your option, any later 
++ *   it under the terms of the Artistic License v2 (see the accompanying
++ *   file COPYING for the full license terms), or, at your option, any later
+  *   version of the same license.
+  *
+  *   This program is distributed in the hope that it will be useful,
+diff --git a/lib/libzsync/zmap.c b/lib/libzsync/zmap.c
+index 14f9382..e4add6e 100644
+--- a/lib/libzsync/zmap.c
++++ b/lib/libzsync/zmap.c
+@@ -4,8 +4,8 @@
+  *   Copyright (C) 2004,2005,2007,2009 Colin Phipps <cph@moria.org.uk>
+  *
+  *   This program is free software; you can redistribute it and/or modify
+- *   it under the terms of the Artistic License v2 (see the accompanying 
+- *   file COPYING for the full license terms), or, at your option, any later 
++ *   it under the terms of the Artistic License v2 (see the accompanying
++ *   file COPYING for the full license terms), or, at your option, any later
+  *   version of the same license.
+  *
+  *   This program is distributed in the hope that it will be useful,
+@@ -273,7 +273,7 @@ off_t *zmap_to_compressed_ranges(const struct zmap *zm, off_t * byterange,
+         /* (try to) Find byte ranges in the compressed file to get this the ith
+          * byterange. */
+         k = find_compressed_ranges_for(zm, zbyterange, k, &lastwroteblockstart_inbitoffset,
+-                                       byterange[2 * i], byterange[2 * i + 1]);
++                                       (intmax_t) byterange[2 * i], (intmax_t) byterange[2 * i + 1]);
+         if (k < 0) {
+             fprintf(stderr, "Z-Map couldn't tell us how to find " OFF_T_PF "-" OFF_T_PF "\n", byterange[2 * i], byterange[2 * i + 1]);
+             free(zbyterange);
+@@ -281,7 +281,7 @@ off_t *zmap_to_compressed_ranges(const struct zmap *zm, off_t * byterange,
+         }
+     }
+ 
+-    /* Return the # of ranges and the array of byte ranges we have built 
++    /* Return the # of ranges and the array of byte ranges we have built
+      * after consolidating ranges where possible */
+     *num = k;
+     return consolidate_byteranges(zbyterange, num);
+@@ -320,7 +320,7 @@ int zmap_search(const struct zmap* zm, long zoffset) {
+  * Given an zoffset and a zmap, configure the supplied zstream to be in the
+  * correct state to interpret the compressed data stream read from the
+  * compressed file at this offset. And return the offset in the uncompressed
+- * stream that this corresponds to in the supplied long long* .
++ * stream that this corresponds to in the supplied off_t* .
+  * NOTE: the caller must call zlib:updatewindow() on the zstream to supply it
+  * with 32k of leading context in the uncompressed stream, before the zstream
+  * can be used to actually decompress.
+@@ -333,7 +333,7 @@ int zmap_search(const struct zmap* zm, long zoffset) {
+  * and in the order that it returned them, this condition is satisfied.
+  */
+ void configure_zstream_for_zdata(const struct zmap *zm, z_stream * zs,
+-                                 long zoffset, long long *poutoffset) {
++                                 long zoffset, off_t *poutoffset) {
+     /* Find the zmap entry corresponding to this offset */
+     int i = zmap_search(zm, zoffset);
+ 
+diff --git a/lib/libzsync/zmap.h b/lib/libzsync/zmap.h
+index 20f677d..c9b5fd3 100644
+--- a/lib/libzsync/zmap.h
++++ b/lib/libzsync/zmap.h
+@@ -3,8 +3,8 @@
+  *   Copyright (C) 2004,2005,2007,2009 Colin Phipps <cph@moria.org.uk>
+  *
+  *   This program is free software; you can redistribute it and/or modify
+- *   it under the terms of the Artistic License v2 (see the accompanying 
+- *   file COPYING for the full license terms), or, at your option, any later 
++ *   it under the terms of the Artistic License v2 (see the accompanying
++ *   file COPYING for the full license terms), or, at your option, any later
+  *   version of the same license.
+  *
+  *   This program is distributed in the hope that it will be useful,
+@@ -29,7 +29,7 @@ struct zmap* zmap_make(const struct gzblock* zb, int n);
+ void zmap_free(struct zmap*);
+ 
+ off_t* zmap_to_compressed_ranges(const struct zmap* zm, off_t* byterange, int nrange, int* num);
+-void configure_zstream_for_zdata(const struct zmap* zm, struct z_stream_s* zs, long zoffset, long long* poutoffset);
++void configure_zstream_for_zdata(const struct zmap* zm, struct z_stream_s* zs, long zoffset, off_t* poutoffset);
+ 
+ /* gzip flag byte */
+ #define GZ_ASCII_FLAG   0x01 /* bit 0 set: file probably ascii text */
+diff --git a/lib/libzsync/zsync.c b/lib/libzsync/zsync.c
+index b425db9..7d9f134 100644
+--- a/lib/libzsync/zsync.c
++++ b/lib/libzsync/zsync.c
+@@ -4,8 +4,8 @@
+  *   Copyright (C) 2004,2005,2007,2009 Colin Phipps <cph@moria.org.uk>
+  *
+  *   This program is free software; you can redistribute it and/or modify
+- *   it under the terms of the Artistic License v2 (see the accompanying 
+- *   file COPYING for the full license terms), or, at your option, any later 
++ *   it under the terms of the Artistic License v2 (see the accompanying
++ *   file COPYING for the full license terms), or, at your option, any later
+  *   version of the same license.
+  *
+  *   This program is distributed in the hope that it will be useful,
+@@ -27,12 +27,13 @@
+  * of byte ranges at particular URLs to be retrieved by the HTTP code.
+  *
+  * It also handles:
+- * - blocking edge cases (decompressed data not lining up with blocks for rcksum; 
++ * - blocking edge cases (decompressed data not lining up with blocks for rcksum;
+  *   last block of the file only containing partial data)
+  * - recompression of the compressed data at the end of the transfer;
+  * - checksum verification of the entire output.
+  */
+ #include "zsglobal.h"
++#include "config.h"
+ 
+ #include <stdio.h>
+ #include <stdlib.h>
+@@ -57,9 +58,9 @@
+ 
+ /* Probably we really want a table of compression methods here. But I've only
+  * implemented SHA1 so this is it for now. */
+-const char ckmeth_sha1[] = { "SHA-1" };
++static const char ckmeth_sha1[] = { "SHA-1" };
+ 
+-/* List of options strings for gzip(1) allowed in the .zsync. This is 
++/* List of options strings for gzip(1) allowed in the .zsync. This is
+  * security against someone specifying arbitrary commands. */
+ static const char* const gzip_safe_option[] = {
+     "--best",
+@@ -71,7 +72,8 @@ static const char* const gzip_safe_option[] = {
+     "--rsync --no-name",
+     "--rsync --best --no-name"
+ };
+-const int gzip_safe_options = sizeof(gzip_safe_option)/sizeof *gzip_safe_option;
++static const int gzip_safe_options =
++    sizeof(gzip_safe_option) / sizeof *gzip_safe_option;
+ 
+ /****************************************************************************
+  *
+@@ -122,8 +124,9 @@ off_t zsync_filelen(struct zsync_state *zs) {
+ }
+ 
+ static int zsync_read_blocksums(struct zsync_state *zs, FILE * f,
+-                                int rsum_bytes, int checksum_bytes,
++                                int rsum_bytes, unsigned int checksum_bytes,
+                                 int seq_matches);
++//static int zsync_sha1(struct zsync_state *zs, int fh);
+ static int zsync_recompress(struct zsync_state *zs);
+ static time_t parse_822(const char* ts);
+ 
+@@ -144,7 +147,7 @@ static char **append_ptrlist(int *n, char **p, char *a) {
+ }
+ 
+ /* Constructor */
+-struct zsync_state* zsync_begin(FILE * f, int headersOnly, const char* target_dir) {
++struct zsync_state *zsync_begin(FILE * f, int headersOnly, const char* target_dir) {
+     /* Defaults for the checksum bytes and sequential matches properties of the
+      * rcksum_state. These are the defaults from versions of zsync before these
+      * were variable. */
+@@ -215,12 +218,13 @@ struct zsync_state* zsync_begin(FILE * f, int headersOnly, const char* target_di
+                 zs->zurl = (char **)append_ptrlist(&(zs->nzurl), zs->zurl, strdup(p));
+             }
+             else if (!strcmp(buf, "Blocksize")) {
+-                zs->blocksize = atol(p);
++                long blocksize = atol(p);
+                 if (zs->blocksize < 0 || (zs->blocksize & (zs->blocksize - 1))) {
+                     fprintf(stderr, "nonsensical blocksize %ld\n", zs->blocksize);
+                     free(zs);
+                     return NULL;
+                 }
++                zs->blocksize = (size_t)blocksize;
+             }
+             else if (!strcmp(buf, "Hash-Lengths")) {
+                 if (sscanf
+@@ -335,11 +339,11 @@ static char *zsync_cur_filename(struct zsync_state *zs);
+  * the per-block checksums of the target file and holds the local working copy
+  * of the in-progress target. And it populates the per-block checksums from the
+  * given file handle, which must be reading from the .zsync at the start of the
+- * checksums. 
++ * checksums.
+  * rsum_bytes, checksum_bytes, seq_matches are settings for the checksums,
+  * passed through to the rcksum_state. */
+ static int zsync_read_blocksums(struct zsync_state *zs, FILE * f,
+-                                int rsum_bytes, int checksum_bytes,
++                                int rsum_bytes, unsigned int checksum_bytes,
+                                 int seq_matches) {
+     /* Make the rcksum_state first */
+     if (!(zs->rs = rcksum_init(zs->blocks, zs->blocksize, rsum_bytes,
+@@ -373,7 +377,7 @@ static int zsync_read_blocksums(struct zsync_state *zs, FILE * f,
+ }
+ 
+ /* parse_822(buf[])
+- * Parse an RFC822 date string. Returns a time_t, or -1 on failure. 
++ * Parse an RFC822 date string. Returns a time_t, or -1 on failure.
+  * E.g. Tue, 25 Jul 2006 20:02:17 +0000
+  */
+ static time_t parse_822(const char* ts) {
+@@ -395,7 +399,7 @@ int zsync_hint_decompress(const struct zsync_state *zs) {
+ 
+ /* zsync_blocksize(self)
+  * Returns the blocksize used by zsync on this target. */
+-int zsync_blocksize(const struct zsync_state *zs) {
++static size_t zsync_blocksize(const struct zsync_state *zs) {
+     return zs->blocksize;
+ }
+ 
+@@ -440,10 +444,10 @@ void zsync_progress(const struct zsync_state *zs, long long *got,
+ 
+     if (got) {
+         int todo = zs->blocks - rcksum_blocks_todo(zs->rs);
+-        *got = todo * zs->blocksize;
++        *got = todo * (long long)zs->blocksize;
+     }
+     if (total)
+-        *total = zs->blocks * zs->blocksize;
++        *total = zs->blocks * (long long)zs->blocksize;
+ }
+ 
+ /* zsync_get_urls(self, &num, &type)
+@@ -457,12 +461,12 @@ const char *const *zsync_get_urls(struct zsync_state *zs, int *n, int *t) {
+     if (zs->zmap && zs->nzurl) {
+         *n = zs->nzurl;
+         *t = 1;
+-        return zs->zurl;
++        return (const char * const *) zs->zurl;
+     }
+     else {
+         *n = zs->nurl;
+         *t = 0;
+-        return zs->url;
++        return (const char * const *) zs->url;
+     }
+ }
+ 
+@@ -531,7 +535,7 @@ int zsync_submit_source_file(struct zsync_state *zs, FILE * f, int progress) {
+     return rcksum_submit_source_file(zs->rs, f, progress);
+ }
+ 
+-char *zsync_cur_filename(struct zsync_state *zs) {
++static char *zsync_cur_filename(struct zsync_state *zs) {
+     if (!zs->cur_filename)
+         zs->cur_filename = rcksum_filename(zs->rs);
+ 
+@@ -706,10 +710,10 @@ static int zsync_recompress(struct zsync_state *zs) {
+             }
+             while (!feof(g)) {
+                 char buf[1024];
+-                int r;
++                size_t r;
+                 const char *p = buf;
+ 
+-                if ((r = fread(buf, 1, sizeof(buf), g)) < 0) {
++                if ((r = fread(buf, 1, sizeof(buf), g)) == 0 && ferror(g)) {
+                     perror("fread");
+                     rc = -1;
+                     goto leave_it;
+@@ -718,7 +722,8 @@ static int zsync_recompress(struct zsync_state *zs) {
+                     p = skip_zhead(buf);
+                     skip = 0;
+                 }
+-                if (fwrite(p, 1, r - (p - buf), zout) != r - (p - buf)) {
++                int bytes_to_write = r - (p - buf);
++                if (fwrite(p, 1, bytes_to_write, zout) != bytes_to_write) {
+                     perror("fwrite");
+                     rc = -1;
+                     goto leave_it;
+@@ -784,15 +789,16 @@ char *zsync_end(struct zsync_state *zs) {
+  * Rewrites the state in the given zlib stream object to be ready to decompress
+  * data from the compressed version of this zsync stream at the given offset in
+  * the compressed file. Returns the offset in the uncompressed stream that this
+- * corresponds to in the 4th parameter. 
++ * corresponds to in the 4th parameter.
+  */
+-void zsync_configure_zstream_for_zdata(const struct zsync_state *zs,
+-                                       struct z_stream_s *zstrm,
+-                                       long zoffset, long long *poutoffset) {
++static void zsync_configure_zstream_for_zdata(const struct zsync_state *zs,
++                                              struct z_stream_s *zstrm,
++                                              long zoffset,
++                                              off_t *poutoffset) {
+     configure_zstream_for_zdata(zs->zmap, zstrm, zoffset, poutoffset);
+     {                           /* Load in prev 32k sliding window for backreferences */
+-        long long pos = *poutoffset;
+-        int lookback = (pos > 32768) ? 32768 : pos;
++        off_t pos = *poutoffset;
++        size_t lookback = (pos > 32768) ? 32768 : pos;
+ 
+         /* Read in 32k of leading uncompressed context - needed because the deflate
+          * compression method includes back-references to previously-seen strings. */
+@@ -942,7 +948,7 @@ static int zsync_receive_data_compressed(struct zsync_receiver *zr,
+         return 0;
+ 
+     /* Now set up for the downloaded block */
+-    zr->strm.next_in = buf;
++    zr->strm.next_in = (unsigned char *) buf;
+     zr->strm.avail_in = len;
+ 
+     if (zr->strm.total_in == 0 || offset != zr->strm.total_in) {
+@@ -959,7 +965,7 @@ static int zsync_receive_data_compressed(struct zsync_receiver *zr,
+                     "data didn't align with block boundary in compressed stream\n");
+             return 1;
+         }
+-        zr->strm.next_in = buf;
++        zr->strm.next_in = (unsigned char *) buf;
+         zr->strm.avail_in = len;
+     }
+ 
+@@ -1006,7 +1012,7 @@ static int zsync_receive_data_compressed(struct zsync_receiver *zr,
+ }
+ 
+ /* zsync_receive_data(self, buf[], offset, buflen)
+- * Passes data received from the source URL at the given offset; 
++ * Passes data received from the source URL at the given offset;
+  * data is buflen bytes in buf[].
+  * Returns 0 unless there's an error (e.g. the submitted data doesn't match the
+  * expected checksum for the corresponding blocks)
+diff --git a/lib/libzsync/zsync.h b/lib/libzsync/zsync.h
+index be11551..a0421cc 100644
+--- a/lib/libzsync/zsync.h
++++ b/lib/libzsync/zsync.h
+@@ -3,8 +3,8 @@
+  *   Copyright (C) 2004,2005,2009 Colin Phipps <cph@moria.org.uk>
+  *
+  *   This program is free software; you can redistribute it and/or modify
+- *   it under the terms of the Artistic License v2 (see the accompanying 
+- *   file COPYING for the full license terms), or, at your option, any later 
++ *   it under the terms of the Artistic License v2 (see the accompanying
++ *   file COPYING for the full license terms), or, at your option, any later
+  *   version of the same license.
+  *
+  *   This program is distributed in the hope that it will be useful,
+@@ -19,7 +19,7 @@ struct zsync_state;
+  */
+ struct zsync_state* zsync_begin(FILE* cf, int headersOnly, const char* target_dir);
+ 
+-/* zsync_hint_decompress - if it returns non-zero, this suggests that 
++/* zsync_hint_decompress - if it returns non-zero, this suggests that
+  *  compressed seed files should be decompressed */
+ int zsync_hint_decompress(const struct zsync_state*);
+ 
+@@ -29,8 +29,8 @@ char* zsync_filename(const struct zsync_state*);
+ time_t zsync_mtime(const struct zsync_state*);
+ 
+ /* zsync_rename_file - renames the temporary file used by zsync to the given name.
+- * You don't "own" the filename until you zsync_end, but you can use this to give zsync a more 
+- * appropriate intermediate filename (in case the user ctrl-c's). 
++ * You don't "own" the filename until you zsync_end, but you can use this to give zsync a more
++ * appropriate intermediate filename (in case the user ctrl-c's).
+  * This is purely a hint; zsync could ignore it. Returns 0 if successful. */
+ int zsync_rename_file(struct zsync_state* zs, const char* f);
+ 
+@@ -61,8 +61,8 @@ int zsync_submit_source_file(struct zsync_state* zs, FILE* f, int progress);
+ const char * const * zsync_get_urls(struct zsync_state* zs, int* n, int* t);
+ 
+ /* zsync_needed_byte_ranges - get the byte ranges needed from a URL.
+- * Returns the number of ranges in *num, and a malloc'd array (to be freed 
+- * by the caller) of 2*(*num) off_t's which are the starts and ends 
++ * Returns the number of ranges in *num, and a malloc'd array (to be freed
++ * by the caller) of 2*(*num) off_t's which are the starts and ends
+  * of byte ranges.
+  */
+ 
+@@ -80,9 +80,9 @@ char* zsync_end(struct zsync_state* zs);
+ struct zsync_receiver;
+ 
+ /* Begin and end receiving from a particular URL.
+- * Note that the zsync_receiver stores a reference to the zsync_state, 
+- *  and libzsync does not do reference counting, so it is the caller's 
+- *  responsibility not to do a zsync_end without doing a zsync_end_receive 
++ * Note that the zsync_receiver stores a reference to the zsync_state,
++ *  and libzsync does not do reference counting, so it is the caller's
++ *  responsibility not to do a zsync_end without doing a zsync_end_receive
+  *  first.
+  * The url_type is as in the value returned by zsync_get_url.
+  */
+diff --git a/src/format_string.h b/src/format_string.h
+index 7b21773..c95a0ef 100644
+--- a/src/format_string.h
++++ b/src/format_string.h
+@@ -3,8 +3,8 @@
+  *   Copyright (C) 2004,2005 Colin Phipps <cph@moria.org.uk>
+  *
+  *   This program is free software; you can redistribute it and/or modify
+- *   it under the terms of the Artistic License v2 (see the accompanying 
+- *   file COPYING for the full license terms), or, at your option, any later 
++ *   it under the terms of the Artistic License v2 (see the accompanying
++ *   file COPYING for the full license terms), or, at your option, any later
+  *   version of the same license.
+  *
+  *   This program is distributed in the hope that it will be useful,
+@@ -15,23 +15,5 @@
+ 
+ #include <inttypes.h>
+ 
+-#ifdef PRIu32
+-# define SIZE_T_PF "%zd"
+-#else
+-# define SIZE_T_PF "%u"
+-#endif
+-
+-#if SIZEOF_OFF_T == 8
+-# ifdef PRIu64
+-#  define OFF_T_PF "%" PRIu64
+-# else
+-#  define OFF_T_PF "%llu"
+-# endif
+-#else
+-# ifdef PRIu32
+-#  define OFF_T_PF "%" PRIu32
+-# else
+-#  define OFF_T_PF "%lu"
+-# endif
+-#endif
+-
++#define SIZE_T_PF "%zu"
++#define OFF_T_PF "%jd"
+diff --git a/src/legacy_http.c b/src/legacy_http.c
+index f97c5a2..b7aa93b 100644
+--- a/src/legacy_http.c
++++ b/src/legacy_http.c
+@@ -24,6 +24,7 @@
+ #include <stdio.h>
+ #include <stdlib.h>
+ #include <string.h>
++#include <strings.h>
+ #include <errno.h>
+ #include <unistd.h>
+ 
+@@ -47,12 +48,15 @@
+  */
+ 
+ /**
+- * Prints a log message with a newline character.
++ * Prints a log message bracketed between a carriage return and a linefeed character.
+  */
+ void log_message(const char* msgfmt, ...) {
+     va_list args;
+     va_start(args, msgfmt);
+ 
++    // print CR
++    fprintf(stderr, "\r");
++
+     // print prefix
+     char prefix[] = "zsync_legacy: ";
+     fprintf(stderr, prefix, sizeof(prefix));
+@@ -60,7 +64,7 @@ void log_message(const char* msgfmt, ...) {
+     // print formatted message
+     vfprintf(stderr, msgfmt, args);
+ 
+-    // print newline
++    // print LF
+     fprintf(stderr, "\n");
+ 
+     va_end(args);
+@@ -196,8 +200,8 @@ void http_load_ranges(struct range_fetch* rf)
+         i = rf->rangessent;
+         l = strlen(ranges_opt);
+         snprintf(range, sizeof(range), OFF_T_PF "-" OFF_T_PF ",",
+-                 rf->ranges_todo[2 * i], rf->ranges_todo[2 * i + 1]);
+-        strncat(ranges_opt, range, l + strlen(range));
++                 (intmax_t) rf->ranges_todo[2 * i], (intmax_t) rf->ranges_todo[2 * i + 1]);
++        strncat(ranges_opt, range, sizeof(ranges_opt) - l - 1);
+         rf->rangessent++;
+     }
+ 
+@@ -516,25 +520,25 @@ int range_fetch_read_http_headers(struct range_fetch *rf) {
+ 
+         if (rfgets(buf, sizeof(buf), rf) == NULL){
+             /* most likely unexpected EOF from server */
+-            log_message("EOF from server\n");
++            log_message("EOF from server");
+             return -1;
+         }
+         if (buf[0] == 0)
+             return 0;           /* EOF, caller decides if that's an error */
+         if (memcmp(buf, "HTTP/1", 6) != 0 || (p = strchr(buf, ' ')) == NULL) {
+-            log_message("got non-HTTP response '%s'\n", buf);
++            log_message("got non-HTTP response '%s'", buf);
+             return -1;
+         }
+         status = atoi(p + 1);
+         if (status != 206 && status != 301 && status != 302) {
+             if (status >= 300 && status < 400) {
+                 log_message(
+-                        "\nzsync received a redirect/further action required status code: %d\nzsync specifically refuses to proceed when a server requests further action. This is because zsync makes a very large number of requests per file retrieved, and so if zsync has to perform additional actions per request, it further increases the load on the target server. The person/entity who created this zsync file should change it to point directly to a URL where the target file can be retrieved without additional actions/redirects needing to be followed.\nSee http://zsync.moria.orc.uk/server-issues",
++                        "zsync received a redirect/further action required status code: %d\nzsync specifically refuses to proceed when a server requests further action. This is because zsync makes a very large number of requests per file retrieved, and so if zsync has to perform additional actions per request, it further increases the load on the target server. The person/entity who created this zsync file should change it to point directly to a URL where the target file can be retrieved without additional actions/redirects needing to be followed.\nSee http://zsync.moria.orc.uk/server-issues",
+                         status);
+             }
+             else if (status == 200) {
+                 log_message(
+-                        "\nzsync received a data response (code %d) but this is not a partial content response\nzsync can only work with servers that support returning partial content from files. The person/entity creating this .zsync has tried to use a server that is not returning partial content. zsync cannot be used with this server.\nSee http://zsync.moria.orc.uk/server-issues",
++                        "zsync received a data response (code %d) but this is not a partial content response\nzsync can only work with servers that support returning partial content from files. The person/entity creating this .zsync has tried to use a server that is not returning partial content. zsync cannot be used with this server.\nSee http://zsync.moria.orc.uk/server-issues",
+                         status);
+             }
+             else {
+@@ -581,7 +585,7 @@ int range_fetch_read_http_headers(struct range_fetch *rf) {
+             /* Okay, we're getting a non-MIME block from the remote. Get the
+              * range and set our state appropriately */
+             int from, to;
+-            sscanf(p, "bytes " OFF_T_PF "-" OFF_T_PF "/", &from, &to);
++            sscanf(p, "bytes " OFF_T_PF "-" OFF_T_PF "/", (intmax_t *) &from, (intmax_t *) &to);
+             if (from <= to) {
+                 rf->block_left = to + 1 - from;
+                 rf->offset = from;
+@@ -727,7 +731,7 @@ int get_range_block(struct range_fetch *rf, off_t * offset, unsigned char *data,
+                 if (2 ==
+                     sscanf(buf,
+                            "content-range: bytes " OFF_T_PF "-" OFF_T_PF "/",
+-                           &from, &to)) {
++                           (intmax_t *) &from, (intmax_t *) &to)) {
+                     rf->offset = from;
+                     rf->block_left = to - from + 1;
+                     gotr = 1;
+diff --git a/src/legacy_progress.c b/src/legacy_progress.c
+index 5180844..bd4528f 100644
+--- a/src/legacy_progress.c
++++ b/src/legacy_progress.c
+@@ -14,10 +14,23 @@
+  */
+ 
+ #include <stdio.h>
++#include <string.h>
+ #include <time.h>
++#include <stdlib.h>
+ 
+ #include "legacy_progress.h"
+ 
++#define HISTORY 10
++struct progress {
++  time_t starttime;
++  struct {
++    time_t hist_time;
++    long long dl;
++    float pcnt;
++  } history[HISTORY];
++  int num_history;
++};
++
+ /* progbar(chars, percent)
+  * (Re)print progress bar with chars out of 20 shown and followed by the given
+  * percentage done. */
+@@ -33,40 +46,51 @@ static void progbar(int j, float pcnt) {
+     printf("\r%s %.1f%%", buf, pcnt);
+ }
+ 
++/* struct progress* = start_progress()
++ * Returns a progress structure. Caller is responsible for calling
++ * end_progress() on it later (which will free the memory that it uses).
++ */
++struct progress* start_progress(void) {
++    return calloc(1, sizeof(struct progress));
++}
++
+ /* do_progress(progress, percent, total_bytes_retrieved
+  * Updates the supplied progress structure with the new % done given, and
+  * recalculates the rolling download rate given the supplied
+  * total_bytes_retrieved (and the current time) */
+ void do_progress(struct progress *p, float pcnt, long long newdl) {
+-    /* If new or if time has passed, update progress display & data */
+     time_t newtime = time(NULL);
+-    if (p->lasttime != newtime) {
+-        int passed = p->lasttime ? newtime - p->lasttime : 0;
+-        if (!p->lasttime)
+-            p->starttime = newtime;
+-        p->lasttime = newtime;
++    if (!p->num_history)
++        p->starttime = newtime;
++    else if (p->history[p->num_history-1].hist_time == newtime)
++        return;
+ 
+-        /* Update progress bar displayed */
+-        progbar(pcnt * (20.0 / 100.0), pcnt);
++    /* Add to the history, rolling off some old history if needed. */
++    if (p->num_history >= HISTORY) {
++        p->num_history = HISTORY-1;
++        memmove(p->history, &(p->history[1]), (HISTORY-1)*sizeof(p->history[0]));
++    }
++    p->history[p->num_history].hist_time = newtime;
++    p->history[p->num_history].dl        = newdl;
++    p->history[p->num_history].pcnt      = pcnt;
++    p->num_history++;
+ 
+-        /* Each time 1s has passed, we update and redisplay our download rate */
+-        if (passed) {
+-            float rate = newdl - p->lastdl;
+-            int sleft = (100.0f - pcnt) / (pcnt - p->lastpcnt);
+-            if (passed != 1) {
+-                rate /= passed;
+-                sleft *= passed;
+-            }
+-            printf(" %.1f kBps ", rate / 1000.0);
+-            if (sleft < 60 * 1000)
+-                printf("%d:%02d ETA  ", sleft / 60, sleft % 60);
+-            else
+-                puts("        ");
+-        }
+-        p->lastdl = newdl;
+-        p->lastpcnt = pcnt;
+-        fflush(stdout);
++    /* Update progress bar displayed */
++    progbar(pcnt * (20.0 / 100.0), pcnt);
++
++    /* If we have more than one data point, we can calculate and show rates */
++    if (p->num_history > 1) {
++        int passed = p->history[p->num_history-1].hist_time - p->history[0].hist_time;
++        float rate = (p->history[p->num_history-1].dl - p->history[0].dl) / (float)passed;
++        float pcnt_change = (p->history[p->num_history-1].pcnt - p->history[0].pcnt);
++        int sleft = (100.0f - pcnt) * passed / pcnt_change;
++        printf(" %.1f kBps ", rate / 1000.0);
++        if (sleft < 60 * 1000)
++            printf("%d:%02d ETA  ", sleft / 60, sleft % 60);
++        else
++            fputs("           ", stdout);
+     }
++    fflush(stdout);
+ }
+ 
+ /* end_progress(progress, done)
+@@ -76,13 +100,17 @@ void do_progress(struct progress *p, float pcnt, long long newdl) {
+ void end_progress(struct progress *p, int done) {
+     if (done == 2)
+         progbar(20, 100.0);
+-    else
+-        progbar(p->lastpcnt * (20.0 / 100.0), p->lastpcnt);
++    else {
++        float lastpcnt = p->history[p->num_history-1].pcnt;
++        progbar(lastpcnt * (20.0 / 100.0), lastpcnt);
++    }
+ 
+-    {
+-        float rate = ((float)p->lastdl) / (p->lasttime - p->starttime + 0.5);
++    {   /* For the final display, show the rate for the whole download. */
++        float rate = (float)(p->history[p->num_history-1].dl) /
++            (p->history[p->num_history-1].hist_time - p->starttime + 0.5);
+         printf(" %.1f kBps ", rate / 1000.0);
+     }
+     puts(done == 2 ? "DONE    \n" : !done ? "aborted    \n" : "        \n");
+     fflush(stdout);
++    free(p);
+ }
+diff --git a/src/legacy_progress.h b/src/legacy_progress.h
+index f1571a5..ed4af56 100644
+--- a/src/legacy_progress.h
++++ b/src/legacy_progress.h
+@@ -15,14 +15,19 @@
+ 
+ #pragma once
+ 
+-struct progress {
+-    time_t starttime;
+-    time_t lasttime;
+-    float lastpcnt;
+-    long long lastdl;
+-};
++struct progress;
++
++/* struct progress* = start_progress()
++ * Returns a progress structure. Caller is responsible for calling
++ * end_progress() on it later (which will free the memory that it uses).
++ */
++struct progress* start_progress(void) __attribute__((malloc));
+ 
+ void do_progress(struct progress* p, float pcnt, long long newdl);
+ 
+-/* end_progress - done parameter is 0 for error, 1 for okay-but-incomplete, 2 for completed */
++/* end_progress(struct progress*, done)
++ * done parameter is 0 for error, 1 for okay-but-incomplete, 2 for completed
++ * This frees the memory allocated for the progress data; the pointer is no
++ * longer valid when this function returns.
++ */
+ void end_progress(struct progress* p, int done);
+diff --git a/src/main.cpp b/src/main.cpp
+index c0f5e87..4b13587 100644
+--- a/src/main.cpp
++++ b/src/main.cpp
+@@ -43,10 +43,15 @@ int main(const int argc, const char** argv) {
+     );
+ 
+     args::ValueFlag<string> outputFilename(parser, "path",
+-        "Path to local file which should be created. If not given, file path in .zsync file will be used.",
++        "Path to local file which should be created or overwritten. If not given, file path in .zsync file will be used.",
+         {'o', "output"}
+     );
+ 
++    args::ValueFlag<string> refererUrl(parser, "URL",
++        "Referer URL. If not given, URL in .zsync file will be used.",
++        {'u', "url"}
++    );
++
+     args::Flag forceUpdate(parser, "", "Skip update check and force update", {"force-update"});
+ 
+     args::Flag quietMode(parser, "", "Quiet mode", {'s', 'q', "silent-mode"});
+@@ -100,16 +105,33 @@ int main(const int argc, const char** argv) {
+ 
+     // redirect cout/cerr to /dev/null in quiet mode
+     if (quietMode) {
+-        freopen("/dev/null", "a", stdout);
+-        freopen("/dev/null", "a", stderr);
++        if (!freopen("/dev/null", "a", stdout)) {
++            cerr << "Failed to redirect stdout to /dev/null!" << endl;
++            return 1;
++        }
++        if (!freopen("/dev/null", "a", stderr)) {
++            cerr << "Failed to redirect stderr to /dev/null!" << endl;
++            return 1;
++        }
+     }
+ 
+     string outPath;
+ 
+-    if (outputFilename)
++    if (outputFilename) {
+         outPath = outputFilename.Get();
++    }
++
++    string refUrl;
++
++    if (refererUrl) {
++        refUrl = refererUrl.Get();
++        if (!refUrl.empty() && refUrl.back() != '/') {
++            cerr << "Referer URL must actually be an URL (i.e., end with a /)!" << endl;
++            return 1;
++        }
++    }
+ 
+-    zsync2::ZSyncClient client(pathOrUrl.Get(), outPath);
++    zsync2::ZSyncClient client(pathOrUrl.Get(), outPath, true, refUrl);
+ 
+     // unimplemented flags
+     if (httpInsecureMode)
+@@ -118,6 +140,12 @@ int main(const int argc, const char** argv) {
+     if (saveZSyncFilePath)
+         client.storeZSyncFileInPath(saveZSyncFilePath.Get());
+ 
++    if (seedFiles) {
++        for (const auto& seedFile : seedFiles.Get()) {
++            client.addSeedFile(seedFile);
++        }
++    }
++
+     if (checkForChanges || !forceUpdate) {
+         cout << "Checking for changes..." << endl;
+ 
+@@ -140,12 +168,6 @@ int main(const int argc, const char** argv) {
+         }
+     }
+ 
+-    if (seedFiles) {
+-        for (const auto& seedFile : seedFiles.Get()) {
+-            client.addSeedFile(seedFile);
+-        }
+-    }
+-
+     if (!client.run())
+         return 1;
+ 
+diff --git a/src/zsclient.cpp b/src/zsclient.cpp
+index 83eaaf8..3ac21e9 100644
+--- a/src/zsclient.cpp
++++ b/src/zsclient.cpp
+@@ -37,7 +37,7 @@ namespace zsync2 {
+         // there might be more than one seed file
+         // using a set to avoid duplicate entries
+         std::set<std::string> seedFiles;
+-        
++
+         const std::string pathOrUrlToZSyncFile;
+         std::string pathToLocalFile;
+         std::string pathToStoreZSyncFileInLocally;
+@@ -68,10 +68,11 @@ namespace zsync2 {
+         Private(
+             std::string pathOrUrlToZSyncFile,
+             const std::string& pathToLocalFile,
+-            const bool overwrite
++            const bool overwrite,
++            const std::string& refererUrl
+         ) : pathOrUrlToZSyncFile(std::move(pathOrUrlToZSyncFile)), zsHandle(nullptr), state(INITIALIZED),
+                                  localUsed(0), httpDown(0), remoteFileSizeCache(-1),
+-                                 zSyncFileStoredLocallyAlready(false), rangesOptimizationThreshold(0) {
++                                 zSyncFileStoredLocallyAlready(false), rangesOptimizationThreshold(64 * 4096) {
+             // if the local file should be overwritten, we'll instruct
+             if (overwrite) {
+                 this->pathToLocalFile = pathToLocalFile;
+@@ -79,6 +80,11 @@ namespace zsync2 {
+                 this->seedFiles.insert(pathToLocalFile);
+             }
+ 
++            // if we specified a referer URL, use it
++            if (!refererUrl.empty() && refererUrl.back() == '/') {
++                this->referer = refererUrl;
++            }
++
+             // initialize cwd
+             {
+                 size_t cwdBufSize = 4096;
+@@ -87,9 +93,9 @@ namespace zsync2 {
+                 free(cwdBuf);
+             }
+         }
+-        
++
+         ~Private() = default;
+-        
++
+     public:
+         // by default, the messages are pushed into a queue which can be fetched by calling the client's
+         // nextStatusMessage()
+@@ -478,7 +484,7 @@ namespace zsync2 {
+ 
+             std::stringstream oss;
+             oss << "optimized ranges, old requests count " << ranges.size()
+-                << ", new requests count " << optimizedRanges.size() << std::endl;
++                << ", new requests count " << optimizedRanges.size();
+ 
+             issueStatusMessage(oss.str());
+ 
+@@ -506,7 +512,11 @@ namespace zsync2 {
+                 }
+             }
+ 
++            #ifdef ZSYNC_STANDALONE
++            zsync_submit_source_file(zsHandle, f, true);
++            #else
+             zsync_submit_source_file(zsHandle, f, false);
++            #endif
+ 
+             if (fclose(f) != 0) {
+                 issueStatusMessage("fclose() on file handle failed!");
+@@ -679,6 +689,15 @@ namespace zsync2 {
+ 
+             // begin downloading ranges, one by one
+             {
++                #ifdef ZSYNC_STANDALONE
++                /* Set up progress display to run during the fetch */
++                struct progress *p;
++                fputc('\n', stderr);
++                p = start_progress();
++                do_progress(p, (float) calculateProgress() * 100.0f,
++                                        range_fetch_bytes_down(rf));
++                #endif
++                int len;
+                 for (const auto& pair : ranges) {
+                     auto beginbyte = pair.first;
+                     auto endbyte = pair.second;
+@@ -689,17 +708,8 @@ namespace zsync2 {
+                     range_fetch_addranges(rf, single_range, 1);
+ 
+                     {
+-                        int len;
+                         off_t zoffset;
+ 
+-                        #ifdef ZSYNC_STANDALONE
+-                        struct progress p = { 0, 0, 0, 0 };
+-
+-                        /* Set up progress display to run during the fetch */
+-                        fputc('\n', stderr);
+-                        do_progress(&p, (float) calculateProgress() * 100.0f, range_fetch_bytes_down(rf));
+-                        #endif
+-
+                         /* Loop while we're receiving data, until we're done or there is an error */
+                         while (!ret
+                                && (len = get_range_block(rf, &zoffset, buffer.data(), BUFFERSIZE)) > 0) {
+@@ -710,7 +720,7 @@ namespace zsync2 {
+ 
+                             #ifdef ZSYNC_STANDALONE
+                             /* Maintain progress display */
+-                            do_progress(&p, (float) calculateProgress() * 100.0f,
++                            do_progress(p, (float) calculateProgress() * 100.0f,
+                                         range_fetch_bytes_down(rf));
+                             #endif
+ 
+@@ -725,15 +735,15 @@ namespace zsync2 {
+                         }
+                         else{    /* Else, let the zsync receiver know that we're at EOF; there
+                          *could be data in its buffer that it can use or needs to process */
+-                            zsync_receive_data(zr, nullptr, zoffset, 0);
++                            if (zsync_receive_data(zr, nullptr, zoffset, 0) != 0)
++                                ret = 1;
+                         }
+-
+-                        #ifdef ZSYNC_STANDALONE
+-                        end_progress(&p, zsync_status(zsHandle) >= 2 ? 2 : len == 0 ? 1 : 0);
+-                        #endif
+                     }
+ 
+                 }
++                #ifdef ZSYNC_STANDALONE
++                end_progress(p, zsync_status(zsHandle) >= 2 ? 2 : len == 0 ? 1 : 0);
++                #endif
+             }
+ 
+             /* Clean up */
+@@ -966,7 +976,8 @@ namespace zsync2 {
+ 
+             // check whether file exists at all, because if not, a full download is required
+             if (!isfile(pathToLocalFile)) {
+-                issueStatusMessage("Cannot find file " + pathToLocalFile + ", triggering full download");
++                // Not actually a full download if we have seed file(s) ;).
++                issueStatusMessage("Cannot find file " + pathToLocalFile + ", triggering " + (seedFiles.size() == 0U ? "full" : "delta") + " download");
+                 updateAvailable = true;
+                 return true;
+             }
+@@ -1047,8 +1058,8 @@ namespace zsync2 {
+         }
+     };
+ 
+-    ZSyncClient::ZSyncClient(const std::string pathOrUrlToZSyncFile, const std::string pathToLocalFile, bool overwrite) {
+-        d = new Private(pathOrUrlToZSyncFile, pathToLocalFile, overwrite);
++    ZSyncClient::ZSyncClient(const std::string pathOrUrlToZSyncFile, const std::string pathToLocalFile, bool overwrite, const std::string refererUrl) {
++        d = new Private(pathOrUrlToZSyncFile, pathToLocalFile, overwrite, refererUrl);
+     }
+     ZSyncClient::~ZSyncClient() {
+         delete d;
+diff --git a/src/zsmake.cpp b/src/zsmake.cpp
+index e89d0aa..51e0dfb 100644
+--- a/src/zsmake.cpp
++++ b/src/zsmake.cpp
+@@ -296,6 +296,7 @@ namespace zsync2 {
+         bool addCustomHeaderField(const std::string& key, const std::string& value) {
+             auto rv = (customHeaderFields.find(key) != customHeaderFields.end());
+             customHeaderFields[key] = value;
++            return rv;
+         }
+     };
+ 
+@@ -344,7 +345,7 @@ namespace zsync2 {
+         d->url = url;
+     }
+ 
+-    bool ZSyncFileMaker::setLogMessageCallback(std::function<void(std::string)> callback) {
++    void ZSyncFileMaker::setLogMessageCallback(std::function<void(std::string)> callback) {
+         d->logMessage = std::move(callback);
+     }
+ 
