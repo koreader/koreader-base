@@ -42,4 +42,5 @@ install:
   - if [[ -n ${DOCKER_IMG+x} ]]; then docker pull $DOCKER_IMG; fi
 
 script:
+  - source .ci/build_script.sh
   - if [ "$EMULATE_READER" = 1 ]; then source .ci/test_script.sh; fi
