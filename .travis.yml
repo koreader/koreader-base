@@ -19,13 +19,6 @@ env:
     - EMULATE_READER=1 CC=gcc USE_MAKE=1
     - EMULATE_READER=1 CC=gcc KODEBUG=1
     - EMULATE_READER=1 CC=clang
-    - TARGET=kindle DOCKER_IMG=koreader/kokindle:0.1.2
-    - TARGET=kobo DOCKER_IMG=koreader/kokobo:0.1.2
-    - TARGET=pocketbook DOCKER_IMG=koreader/kopb:0.1.3
-    - TARGET=sony-prstux DOCKER_IMG=phreakuencies/prstux-dev:16.04
-    - TARGET=cervantes DOCKER_IMG=koreader/kocervantes:0.1.2
-    - TARGET=android DOCKER_IMG=koreader/koandroid:0.3.1
-    - TARGET=android DOCKER_IMG=koreader/koandroid:0.3.1 ANDROID_ARCH=x86
 
 addons:
   apt:
@@ -47,9 +40,6 @@ addons:
 install:
   - if [ "$EMULATE_READER" = 1 ]; then source .ci/emulator_install.sh; fi
   - if [[ -n ${DOCKER_IMG+x} ]]; then docker pull $DOCKER_IMG; fi
-  - if [ "$SHELLCHECKS" = 1 ]; then source .ci/lint_install.sh; fi
 
 script:
-  - if [ "$SHELLCHECKS" = 1 ]; then source .ci/lint_script.sh; else source .ci/build_script.sh; fi
   - if [ "$EMULATE_READER" = 1 ]; then source .ci/test_script.sh; fi
-
