@@ -57,6 +57,7 @@ list(APPEND CMAKE_ARGS "-DCURL_LIBRARIES=curl")
 ## * Rebase against zlib 1.2.11 (c.f., rebase-zlib branch)
 ## * Workaround potential download loops, like what happened w/ the 2019.12 -> 2020.01 update.
 ## * Mangle logging to play nice w/ FBInk
+## * Plug memory leaks
 # c.f., https://github.com/NiLuJe/zsync2 for more details.
 
 # Workaround various issues related to PocketBook's old TC using an awfully old GCC version
@@ -68,7 +69,7 @@ endif()
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
     https://github.com/NiLuJe/zsync2.git
-    c2a413b0d34e1058ba50c1f2d14c26d583f82584
+    7565c081d581706c6a7859cf41eec976811180b6
     ${SOURCE_DIR}
 )
 
