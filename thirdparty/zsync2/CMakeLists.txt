@@ -46,7 +46,7 @@ list(APPEND CMAKE_ARGS "-DCURL_LIBRARY=curl")
 list(APPEND CMAKE_ARGS "-DCURL_LIBRARIES=curl")
 #list(APPEND CMAKE_ARGS "-DCURL_INCLUDE_DIRS=${CURL_DIR}/include")
 
-# A few CLI cleanup:
+# NOTE: We're currently using our own fork instead of upstream's (https://github.com/AppImage/zsync2):
 ## * Enable range requests optimizations on the CLI
 ## * Re-implement the -u flag for compatibility w/ the old zsync CLI
 ## * Minor CLI output cleanup
@@ -57,19 +57,18 @@ list(APPEND CMAKE_ARGS "-DCURL_LIBRARIES=curl")
 ## * Rebase against zlib 1.2.11 (c.f., rebase-zlib branch)
 ## * Workaround potential download loops, like what happened w/ the 2019.12 -> 2020.01 update.
 ## * Mangle logging to play nice w/ FBInk
-# c.f., https://github.com/NiLuJe/zsync2
-set(PATCH_CMD1 "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/zsync2-koreader-patchset-v10.patch")
+# c.f., https://github.com/NiLuJe/zsync2 for more details.
 
 # Workaround various issues related to PocketBook's old TC using an awfully old GCC version
 # Inspired by https://github.com/nlohmann/json/issues/136
 if(DEFINED ENV{POCKETBOOK})
-    set(PATCH_CMD2 "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/zsync2-pocketbook-old-gcc.diff")
+    set(PATCH_CMD "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/zsync2-pocketbook-old-gcc.diff")
 endif()
 
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
-    https://github.com/AppImage/zsync2.git
-    f41aed234cd790b5d78e420e3fbeb818f8667f58
+    https://github.com/NiLuJe/zsync2.git
+    f10e663d466afffb858bf9eb257d3f9742e6298d
     ${SOURCE_DIR}
 )
 
@@ -77,7 +76,7 @@ include(ExternalProject)
 ExternalProject_Add(
     zsync2
     DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
-    PATCH_COMMAND COMMAND ${PATCH_CMD1} COMMAND ${PATCH_CMD2}
+    PATCH_COMMAND COMMAND ${PATCH_CMD}
     CMAKE_ARGS "${CMAKE_ARGS}"
     CMAKE_GENERATOR "Unix Makefiles"
     BUILD_COMMAND ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS}
