@@ -356,8 +356,8 @@ local function refresh_zelda(fb, refreshtype, waveform_mode, x, y, w, h, dither)
     end
     -- NOTE: Since there's no longer a distinction between GC16_FAST & GC16, we're done!
     refarea[0].temp = C.TEMP_USE_AMBIENT
-    -- Did we request HW dithering?
-    if dither then
+    -- Did we request HW dithering on a device where it works?
+    if dither and fb.device:canHWDither() then
         refarea[0].dither_mode = C.EPDC_FLAG_USE_DITHERING_ORDERED
         if waveform_mode == C.WAVEFORM_MODE_DU then
             refarea[0].quant_bit = 1;
@@ -392,8 +392,8 @@ local function refresh_rex(fb, refreshtype, waveform_mode, x, y, w, h, dither)
     end
     -- NOTE: Since there's no longer a distinction between GC16_FAST & GC16, we're done!
     refarea[0].temp = C.TEMP_USE_AMBIENT
-    -- Did we request HW dithering?
-    if dither then
+    -- Did we request HW dithering on a device where it works?
+    if dither and fb.device:canHWDither() then
         refarea[0].dither_mode = C.EPDC_FLAG_USE_DITHERING_ORDERED
         if waveform_mode == C.WAVEFORM_MODE_DU then
             refarea[0].quant_bit = 1;
@@ -587,6 +587,7 @@ function framebuffer:init()
         elseif self.device.model == "KindleBasic3" then
             isRex = true
             -- NOTE: Apparently, the KT4 doesn't actually support the fancy nightmode waveforms, c.f., ko/#5076
+            --       It also doesn't handle HW dithering, c.f., base/#1039
             isNightModeChallenged = true
         end
 
