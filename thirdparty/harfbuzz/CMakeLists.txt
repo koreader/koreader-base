@@ -28,7 +28,7 @@ set(AUTOGEN_CMD sh -c "env NOCONFIGURE=1 ./autogen.sh")
 # NOTE: Nerf PB, too, mostly because I don't trust the older GCC version used there...
 if(DEFINED ENV{LEGACY} OR DEFINED ENV{POCKETBOOK})
 	set(PATCH_CMD "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/hb-disable-atomics.patch")
-end()
+endif()
 
 if($ENV{ANDROID})
     set(CFG_CMD "${CFG_CMD} && ${ISED} 's|version_type=none|version_type=linux|' libtool")
