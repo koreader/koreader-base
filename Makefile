@@ -232,15 +232,6 @@ ifneq ($(wildcard $(NDK)/build/tools),)
 endif
 
 # ===========================================================================
-# helper target for creating standalone pocket toolchain from
-# pocketbook-free SDK: https://github.com/pocketbook-free/SDK_481
-
-pocketbook-toolchain:
-	install -d toolchain
-	cd toolchain && \
-		git clone https://github.com/pocketbook-free/SDK_481 pocketbook-toolchain
-
-# ===========================================================================
 # helper target for initializing third-party code
 
 clean:
@@ -269,4 +260,4 @@ test: $(OUTPUT_DIR)/spec $(OUTPUT_DIR)/.busted
 		--exclude-tags=notest \
 		-o gtest ./spec/base/unit
 
-.PHONY: all android-toolchain pocketbook-toolchain clean distclean test
+.PHONY: all android-toolchain clean distclean test

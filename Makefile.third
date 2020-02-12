@@ -583,15 +583,6 @@ $(ZMQ_LIB): $(THIRDPARTY_DIR)/libzmq/*.*
 		$(CURDIR)/$(THIRDPARTY_DIR)/libzmq && \
 		$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS)
 	cp -fL $(ZMQ_DIR)/$(if $(WIN32),bin,lib)/$(notdir $(ZMQ_LIB)) $@
-ifdef POCKETBOOK
-	# when cross compiling libtool would find libstdc++.la in wrong location
-	# accoding to the GCC configuration
-	sed -i 's|^dependency_libs=.*|dependency_libs=" -lrt -lpthread -lstdc++"|g' \
-		$(ZMQ_DIR)/lib/libzmq.la
-	# and the libuuid.so is also missing in the PocketBook SDK, but libuuid.la
-	# may let the build system assume that libuuid is installed
-	rm -f $(POCKETBOOK_TOOLCHAIN)/arm-obreey-linux-gnueabi/sysroot/usr/lib/libuuid*
-endif
 
 $(CZMQ_LIB): $(ZMQ_LIB) $(THIRDPARTY_DIR)/czmq/*.*
 	install -d $(CZMQ_BUILD_DIR)

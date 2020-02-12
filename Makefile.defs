@@ -12,7 +12,6 @@ UNAME:=$(shell uname -s)
 # use MAKEFILE_DIR instead of CURDIR for variables that are exported through -include
 MAKEFILE_DIR=$(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 TOOLCHAIN_DIR=$(MAKEFILE_DIR)toolchain
-POCKETBOOK_TOOLCHAIN?=$(TOOLCHAIN_DIR)/pocketbook-toolchain
 # Android API level 14 is the minimum target for NDK 15
 ANDROID_ARCH?=arm
 ANDROID_TOOLCHAIN=$(TOOLCHAIN_DIR)/android-toolchain-$(ANDROID_ARCH)
@@ -139,13 +138,13 @@ else ifeq ($(TARGET), win32)
 	export WIN32=1
 	export SDL=1
 else ifeq ($(TARGET), pocketbook)
-	CHOST?=arm-obreey-linux-gnueabi
-	export LEGACY=1
+	CHOST?=arm-pocketbook-linux-gnueabi
 	export POCKETBOOK=1
-	HAS_POCKETBOOK_TC:=$(shell command -v arm-obreey-linux-gnueabi-gcc 2> /dev/null)
-	ifndef HAS_POCKETBOOK_TC
-		export PATH:=$(POCKETBOOK_TOOLCHAIN)/bin:$(PATH)
-		export SYSROOT=$(POCKETBOOK_TOOLCHAIN)/arm-obreey-linux-gnueabi/sysroot
+	HAS_POCKETBOOK_TC:=$(shell command -v arm-pocketbook-linux-gnueabi-gcc 2> /dev/null)
+	ifdef HAS_POCKETBOOK_TC
+		CHOST?=arm-pocketbook-linux-gnueabi
+	else
+		CHOST?=arm-linux-gnueabi
 	endif
 else ifeq ($(TARGET), remarkable)
 	CHOST?=arm-remarkable-linux-gnueabihf
@@ -358,8 +357,10 @@ else ifeq ($(TARGET), ubuntu-touch)
 else ifeq ($(TARGET), pocketbook)
 	ARM_ARCH:=$(ARMV7_A8_ARCH)
 	ARM_ARCH+=-mfloat-abi=softfp
-	COMPAT_CFLAGS:=$(MG2K12_COMPAT_CFLAGS) -std=gnu99 --sysroot $(SYSROOT)
-	COMPAT_CXXFLAGS:=$(MG2K12_COMPAT_CXXFLAGS) --sysroot $(SYSROOT)
+	ifeq ($(shell PATH='$(PATH)' $(CC) -dumpmachine 2>/dev/null), arm-linux-gnueabi)
+		COMPAT_CFLAGS:=$(UBUNTU_COMPAT_CFLAGS)
+		COMPAT_CXXFLAGS:=$(UBUNTU_COMPAT_CFLAGS)
+	endif
 else ifeq ($(TARGET), kindle)
 	ARM_ARCH:=$(ARMV7_A8_ARCH)
 	ARM_ARCH+=-mfloat-abi=softfp
