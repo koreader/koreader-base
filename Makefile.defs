@@ -355,6 +355,8 @@ else ifeq ($(TARGET), ubuntu-touch)
 	COMPAT_CFLAGS:=$(UBUNTU_COMPAT_CFLAGS)
 	COMPAT_CXXFLAGS:=$(UBUNTU_COMPAT_CFLAGS)
 else ifeq ($(TARGET), pocketbook)
+	# NOTE: The TC itself is built in ARM mode (otherwise glibc 2.9 fails to build).
+	#       We prefer Thumb mode for our own binaries, though, much like on every other i.MX device ;).
 	ARM_ARCH:=$(ARMV7_A8_ARCH)
 	ARM_ARCH+=-mfloat-abi=softfp
 	ifeq ($(shell PATH='$(PATH)' $(CC) -dumpmachine 2>/dev/null), arm-linux-gnueabi)
