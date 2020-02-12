@@ -21,6 +21,7 @@
 
 #include "inkview.h"
 #include <dlfcn.h>
+#include <pthread.h>
 
 #define ABS_MT_SLOT     0x2f
 
@@ -79,7 +80,7 @@ static inline void debug_mtinfo(iv_mtinfo *mti) {
     printf("\n");
 }
 
-/* 
+/*
  * The PocketBook has an auto-suspend-feature, which puts the reader to sleep
  * after approximately two seconds "inactivity in the current eventhandler".
  *
@@ -89,13 +90,13 @@ static inline void debug_mtinfo(iv_mtinfo *mti) {
  * quickly becomes idle w/o external events, leading to suspension of the
  * whole device.
  *
- * This breaks the initial loading of modules and books. 
+ * This breaks the initial loading of modules and books.
  *
  * There are multiple functions which can affect auto-suspension: Beside
  * iv_sleepmode() which controls if auto-suspension is enabled at all, the
  * function SetHardTimer() makes it possible to execute a callback after a
  * given amount of time. SetHardTimer() will wake the Reader if it is
- * suspended and suspension will not occur while the callback is executed. 
+ * suspended and suspension will not occur while the callback is executed.
  *
  * However, both functions will not work properly if not called _from within
  * the current eventhandler_.
@@ -105,8 +106,8 @@ static inline void debug_mtinfo(iv_mtinfo *mti) {
  * active task.
  */
 
-/* 
- * define a fake-event which can be send via SendEventTo into 
+/*
+ * define a fake-event which can be send via SendEventTo into
  * pb_event_handle()
  */
 #define PB_SPECIAL_SUSPEND 333
@@ -135,8 +136,8 @@ static int send_to_event_handler(int type, int par1, int par2) {
 
 static int setSuspendState(lua_State *L) {
 	send_to_event_handler(
-			PB_SPECIAL_SUSPEND, 
-			luaL_checkint(L, 1), 
+			PB_SPECIAL_SUSPEND,
+			luaL_checkint(L, 1),
 			luaL_checkint(L,2)
 			);
 }
@@ -154,7 +155,7 @@ static int pb_event_handler(int type, int par1, int par2) {
         get_gti_pointer();
 	/* disable suspend to make uninterrupted loading possible. */
 	disable_suspend();
-	/* 
+	/*
 	 * re-enable suspending after a minute. This is normally handled by a
 	 * plugin on onReaderReady(). However, if loading of the plugin fails
 	 * for some reason, suspension would stay inactive consuming a lot of
