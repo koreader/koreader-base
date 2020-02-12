@@ -60,12 +60,6 @@ list(APPEND CMAKE_ARGS "-DCURL_LIBRARIES=curl")
 ## * Plug memory leaks
 # c.f., https://github.com/NiLuJe/zsync2 for more details.
 
-# Workaround various issues related to PocketBook's old TC using an awfully old GCC version
-# Inspired by https://github.com/nlohmann/json/issues/136
-if(DEFINED ENV{POCKETBOOK})
-    set(PATCH_CMD "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/zsync2-pocketbook-old-gcc.diff")
-endif()
-
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
     https://github.com/NiLuJe/zsync2.git
@@ -77,7 +71,7 @@ include(ExternalProject)
 ExternalProject_Add(
     zsync2
     DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
-    PATCH_COMMAND COMMAND ${PATCH_CMD}
+    PATCH_COMMAND ""
     CMAKE_ARGS "${CMAKE_ARGS}"
     CMAKE_GENERATOR "Unix Makefiles"
     BUILD_COMMAND ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS}
