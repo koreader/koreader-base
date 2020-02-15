@@ -320,6 +320,9 @@ NILUJE_COMPAT_CFLAGS:=-fno-stack-protector -U_FORTIFY_SOURCE -D_GNU_SOURCE -mno-
 # Same deal, but when targeting the K5/Kobo & using Ubuntu's Linaro TCs
 UBUNTU_COMPAT_CFLAGS:=-fno-finite-math-only -fno-stack-protector -U_FORTIFY_SOURCE
 
+# When we can't avoid pulling in the system's libstdc++ on a platform using GCC < 5.1
+STLABI_COMPAT_CFLAGS:=-D_GLIBCXX_USE_CXX11_ABI=0
+
 # ARM 1136JF-S (Legacy Kidle devices [K2/K3/DX/DXG])
 ARMV6_1136_ARCH:=-march=armv6j -mtune=arm1136jf-s -mfpu=vfp -marm
 # Generic armv6
@@ -359,9 +362,13 @@ else ifeq ($(TARGET), pocketbook)
 	#       We prefer Thumb mode for our own binaries, though, much like on every other i.MX device ;).
 	ARM_ARCH:=$(ARMV7_A8_ARCH)
 	ARM_ARCH+=-mfloat-abi=softfp
+	# NOTE: Because of course everything is terrible, newer FW (5.19+) use GCC 6.3.0's libstdc++,
+	#       so, ideally we shouldn't be using this on those newer devices...
+	COMPAT_CFLAGS:=$(STLABI_COMPAT_CFLAGS)
+	COMPAT_CXXFLAGS:=$(STLABI_COMPAT_CFLAGS)
 	ifeq ($(shell PATH='$(PATH)' $(CC) -dumpmachine 2>/dev/null), arm-linux-gnueabi)
-		COMPAT_CFLAGS:=$(UBUNTU_COMPAT_CFLAGS)
-		COMPAT_CXXFLAGS:=$(UBUNTU_COMPAT_CFLAGS)
+		COMPAT_CFLAGS+=$(UBUNTU_COMPAT_CFLAGS)
+		COMPAT_CXXFLAGS+=$(UBUNTU_COMPAT_CFLAGS)
 	endif
 else ifeq ($(TARGET), kindle)
 	ARM_ARCH:=$(ARMV7_A8_ARCH)
