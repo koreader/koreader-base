@@ -40,10 +40,19 @@ list(APPEND CMAKE_ARGS "-DCMAKE_CXX_FLAGS=${CPPFLAGS} ${CXXFLAGS}")
 list(APPEND CMAKE_ARGS "-DBUILD_CPR_TESTS=0")
 list(APPEND CMAKE_ARGS "-DUSE_SYSTEM_CURL=1")
 list(APPEND CMAKE_ARGS "-DCURL_INCLUDE_DIR=${CURL_DIR}/include")
-list(APPEND CMAKE_ARGS "-DCURL_LIBRARY=curl")
+# NOTE: Because InkView apparently requires & initializes cURL on init, we rename our own on PB to avoid ABI mishaps... (#5861)
+if(DEFINED ENV{POCKETBOOK})
+    list(APPEND CMAKE_ARGS "-DCURL_LIBRARY=curl_ko")
+else()
+    list(APPEND CMAKE_ARGS "-DCURL_LIBRARY=curl")
+endif()
 # And because CMake is being stupid on the bots...
 #list(APPEND CMAKE_ARGS "-DCURL_FOUND=1")
-list(APPEND CMAKE_ARGS "-DCURL_LIBRARIES=curl")
+if(DEFINED ENV{POCKETBOOK})
+    list(APPEND CMAKE_ARGS "-DCURL_LIBRARIES=curl_ko")
+else()
+    list(APPEND CMAKE_ARGS "-DCURL_LIBRARIES=curl")
+endif()
 #list(APPEND CMAKE_ARGS "-DCURL_INCLUDE_DIRS=${CURL_DIR}/include")
 
 # NOTE: We're currently using our own fork instead of upstream's (https://github.com/AppImage/zsync2):
@@ -60,12 +69,6 @@ list(APPEND CMAKE_ARGS "-DCURL_LIBRARIES=curl")
 ## * Plug memory leaks
 # c.f., https://github.com/NiLuJe/zsync2 for more details.
 
-# Workaround various issues related to PocketBook's old TC using an awfully old GCC version
-# Inspired by https://github.com/nlohmann/json/issues/136
-if(DEFINED ENV{POCKETBOOK})
-    set(PATCH_CMD "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/zsync2-pocketbook-old-gcc.diff")
-endif()
-
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
     https://github.com/NiLuJe/zsync2.git
@@ -77,7 +80,7 @@ include(ExternalProject)
 ExternalProject_Add(
     zsync2
     DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
-    PATCH_COMMAND COMMAND ${PATCH_CMD}
+    PATCH_COMMAND ""
     CMAKE_ARGS "${CMAKE_ARGS}"
     CMAKE_GENERATOR "Unix Makefiles"
     BUILD_COMMAND ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS}
