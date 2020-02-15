@@ -817,7 +817,8 @@ FBINK_DIR=$(CURDIR)/$(FBINK_BUILD_DIR)/fbink-prefix/src/fbink-build
 
 CURL_BUILD_DIR=$(THIRDPARTY_DIR)/curl/build/$(MACHINE)
 CURL_DIR=$(CURDIR)/$(CURL_BUILD_DIR)/curl-prefix/src/curl-build
-CURL_LIB_EXT=$(if $(WIN32),.dll,$(if $(DARWIN),.dylib,.so.4))
+# NOTE: We rename cURL on PB because everything is terrible (c.f., #5861)
+CURL_LIB_EXT=$(if $(WIN32),.dll,$(if $(DARWIN),.dylib,$(if $(POCKETBOOK),_ko.so.4,.so.4)))
 CURL_LIB=$(OUTPUT_DIR)/libs/libcurl$(CURL_LIB_EXT)
 
 ZSYNC2_BUILD_DIR=$(THIRDPARTY_DIR)/zsync2/build/$(MACHINE)

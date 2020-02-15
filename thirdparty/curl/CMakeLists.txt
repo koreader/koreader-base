@@ -16,6 +16,11 @@ assert_var_defined(CHOST)
 ep_get_source_dir(SOURCE_DIR)
 ep_get_binary_dir(BINARY_DIR)
 
+# NOTE: Because InkView is the worst, we rename our own cURL build on PocketBook.... (#5861)
+if(DEFINED ENV{POCKETBOOK})
+    set(PATCH_CMD0 "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/curl-7.68.0-pb-rename.patch")
+endif()
+
 set(PATCH_CMD1 sh -c "${ISED} '/LD_LIBRARY_PATH=/d' ${SOURCE_DIR}/configure.ac")
 set(PATCH_CMD2 sh -c "${ISED} '/CURL_MAC_CFLAGS/d' ${SOURCE_DIR}/configure.ac")
 set(PATCH_CMD3 sh -c "./buildconf")
@@ -42,7 +47,7 @@ ExternalProject_Add(
     ${PROJECT_NAME}
     DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
     BUILD_IN_SOURCE 1
-    PATCH_COMMAND COMMAND ${PATCH_CMD1} COMMAND ${PATCH_CMD2} COMMAND ${PATCH_CMD3}
+    PATCH_COMMAND COMMAND ${PATCH_CMD0} COMMAND ${PATCH_CMD1} COMMAND ${PATCH_CMD2} COMMAND ${PATCH_CMD3}
     CONFIGURE_COMMAND ${CFG_CMD}
     BUILD_COMMAND COMMAND ${BUILD_CMD1} COMMAND ${BUILD_CMD2}
     INSTALL_COMMAND COMMAND ${INSTALL_CMD1} COMMAND ${INSTALL_CMD2}
