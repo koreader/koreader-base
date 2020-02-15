@@ -87,7 +87,7 @@ $(OUTPUT_DIR)/data:
 
 libs: \
 	$(if $(or $(SDL),$(ANDROID)),,$(OUTPUT_DIR)/libs/libkoreader-input.so) \
-	$(if $(or $(SDL),$(ANDROID),$(KINDLE),$(KOBO),$(POCKETBOOK)),$(OUTPUT_DIR)/libs/libblitbuffer.so,) \
+	$(if $(or $(SDL),$(ANDROID),$(CERVANTES),$(KINDLE),$(KOBO),$(POCKETBOOK),$(REMARKABLE),$(SONY_PRSTUX)),$(OUTPUT_DIR)/libs/libblitbuffer.so,) \
 	$(if $(APPIMAGE),$(OUTPUT_DIR)/libs/libXss.so.1,) \
 	$(OUTPUT_DIR)/libs/libkoreader-lfs.so \
 	$(OUTPUT_DIR)/libs/libkoreader-djvu.so \
