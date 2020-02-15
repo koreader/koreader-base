@@ -321,6 +321,8 @@ NILUJE_COMPAT_CFLAGS:=-fno-stack-protector -U_FORTIFY_SOURCE -D_GNU_SOURCE -mno-
 UBUNTU_COMPAT_CFLAGS:=-fno-finite-math-only -fno-stack-protector -U_FORTIFY_SOURCE
 
 # When we can't avoid pulling in the system's libstdc++ on a platform using GCC < 5.1
+# The potential for actual runtime issues is fairly low, though,
+# c.f., https://gcc.gnu.org/onlinedocs/libstdc++/manual/using_dual_abi.html
 STLABI_COMPAT_CFLAGS:=-D_GLIBCXX_USE_CXX11_ABI=0
 
 # ARM 1136JF-S (Legacy Kidle devices [K2/K3/DX/DXG])
@@ -363,7 +365,7 @@ else ifeq ($(TARGET), pocketbook)
 	ARM_ARCH:=$(ARMV7_A8_ARCH)
 	ARM_ARCH+=-mfloat-abi=softfp
 	# NOTE: Because of course everything is terrible, newer FW (5.19+) use GCC 6.3.0's libstdc++,
-	#       so, ideally we shouldn't be using this on those newer devices...
+	#       so, ideally, we shouldn't be using this on those newer devices...
 	COMPAT_CFLAGS:=$(STLABI_COMPAT_CFLAGS)
 	COMPAT_CXXFLAGS:=$(STLABI_COMPAT_CFLAGS)
 	ifeq ($(shell PATH='$(PATH)' $(CC) -dumpmachine 2>/dev/null), arm-linux-gnueabi)
