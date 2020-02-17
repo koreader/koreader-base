@@ -246,6 +246,7 @@ int Utf8ToUnicode(const char * src,  int srclen, uint32_t * dst, int dstlen, boo
 #define CHAR_IS_PARA_END                 0x0200
 #define CHAR_PARA_IS_RTL                 0x0400 /// to know the line with this char is part
                                                 /// of a paragraph with main dir RTL
+#define CHAR_IS_TAB                      0x1000 /// char is '\t'
 
 // Info, after measure(), about each m_text char
 typedef struct {
@@ -262,7 +263,8 @@ typedef struct {
     unsigned is_rtl:1;
     unsigned can_extend:1;
     unsigned can_extend_fallback:1;
-    unsigned _unused:5;
+    unsigned is_tab:1;
+    unsigned _unused:4;
     signed short  x_advance;
     signed short  x_offset;
     signed short  y_offset;
@@ -695,7 +697,15 @@ public:
                 // printf("between <%c%c>: brk %d\n", m_text[i-1], m_text[i], brk);
                 // Note: LINEBREAK_ALLOWBREAK is set on the last space in a sequence
                 // of multiple consecutive spaces.
-                if ( brk == LINEBREAK_ALLOWBREAK ) {
+                if ( m_text[i-1] == '\t' ) {
+                    // Previous note also applies to tabs: but allow break
+                    // after any tab (so, between any consecutive tabs)
+                    m_charinfo[i-1].flags |= CHAR_CAN_WRAP_AFTER;
+                    m_charinfo[i-1].flags |= CHAR_SKIP_ON_BREAK; // skip when at end of line
+                    m_charinfo[i-1].flags |= CHAR_CAN_EXTEND_WIDTH; // (frontend can ignore that)
+                    m_charinfo[i-1].flags |= CHAR_IS_TAB;
+                }
+                else if ( brk == LINEBREAK_ALLOWBREAK ) {
                     // Happens between a space (at i-1) and its following non-space
                     // char, or after each CJK char.
                     m_charinfo[i-1].flags |= CHAR_CAN_WRAP_AFTER;
@@ -1035,7 +1045,7 @@ public:
     // No bidi involved: this works with chars in logical order.
     // Returns onto the Lua stack a table with various information about the line.
     // (no_line_breaking_rules=true is just used by TextWidget to truncate its text to max_width)
-    void makeLine(int start, int targeted_width, bool no_line_breaking_rules) {
+    void makeLine(int start, int targeted_width, bool no_line_breaking_rules, int tabstop_width) {
         // Notes:
         // - Given how TextBoxWidget functions work, end_offset is
         //   inclusive: the line spans offset to end_offset included.
@@ -1049,6 +1059,7 @@ public:
         int candidate_end = -1;
         int candidate_line_width = 0;
         bool forced_break = false;
+        bool has_tabs = false;
         int line_width = 0;
         int i = start;
         while ( i < m_length ) {
@@ -1059,6 +1070,16 @@ public:
             else
                 flags = m_charinfo[i].flags;
             int new_line_width = line_width + m_charinfo[i].width;
+            if ( flags & CHAR_IS_TAB ) {
+                has_tabs = true;
+                if ( tabstop_width > 0 ) {
+                    // Account for tabstops in current width
+                    new_line_width -= m_charinfo[i].width; // remove the tab glyph width just added
+                    int nb_tabstops = new_line_width / tabstop_width; // tabstops passed by
+                    nb_tabstops++; // next tabstop
+                    new_line_width = nb_tabstops * tabstop_width; // update current width up to that tabstop
+                }
+            }
             bool exceeding = new_line_width > targeted_width;
             // printf("%x %d %x %x\n", m_text[i], m_charinfo[i].width, flags, flags & CHAR_MUST_BREAK_AFTER);
             if ( flags & CHAR_CAN_WRAP_AFTER || flags & CHAR_MUST_BREAK_AFTER ) {
@@ -1139,6 +1160,12 @@ public:
 
         if ( no_allowed_break_met ) {
             lua_pushstring(m_L, "no_allowed_break_met");
+            lua_pushboolean(m_L, true);
+            lua_settable(m_L, -3);
+        }
+
+        if ( has_tabs ) {
+            lua_pushstring(m_L, "has_tabs");
             lua_pushboolean(m_L, true);
             lua_settable(m_L, -3);
         }
@@ -1397,6 +1424,7 @@ public:
         int total_advance = 0;
         int nb_can_extend = 0;
         int nb_can_extend_fallback = 0;
+        bool has_tabs = false;
 
         lua_createtable(m_L, nb_glyphs, 0 ); // array of glyphs, pre-sized
         for(int i = 0; i < nb_glyphs; i++) {
@@ -1460,6 +1488,13 @@ public:
             lua_pushboolean(m_L, s->can_extend_fallback);
             lua_settable(m_L, -3);
 
+            if ( s->is_tab ) {
+                lua_pushstring(m_L, "is_tab");
+                lua_pushboolean(m_L, true);
+                lua_settable(m_L, -3);
+                has_tabs = true;
+            }
+
             lua_rawseti(m_L, -2, i+1); // add table to array (Lua indices start at 1)
         }
 
@@ -1473,6 +1508,10 @@ public:
         if (m_charinfo[start].flags & CHAR_PARA_IS_RTL) {
             lua_pushboolean(m_L, true);
             lua_setfield(m_L, -2, "para_is_rtl");
+        }
+        if ( has_tabs ) {
+            lua_pushboolean(m_L, true);
+            lua_setfield(m_L, -2, "has_tabs");
         }
 
         // Note: instead of returning an array table, we could allocate
@@ -1712,6 +1751,7 @@ public:
                     s->text_index = hcl;
                     s->can_extend = (m_charinfo[hcl].flags & CHAR_CAN_EXTEND_WIDTH) ? 1 : 0;
                     s->can_extend_fallback = (m_charinfo[hcl].flags & CHAR_CAN_EXTEND_WIDTH_FALLBACK) ? 1 : 0;
+                    s->is_tab = (m_charinfo[hcl].flags & CHAR_IS_TAB) ? 1 : 0;
                     s->is_rtl = is_rtl;
 
                     // Note that we get metrics in 1/64px here, and these are fractional
@@ -2136,8 +2176,12 @@ static int XText_makeLine(lua_State *L) {
     if (lua_isboolean(L,4)) {
         no_line_breaking_rules = lua_toboolean(L, 4);
     }
+    int tabstop_width = 0;
+    if (lua_isnumber(L,5)) {
+        tabstop_width = luaL_checkint(L, 5);
+    }
     xt->measure();
-    xt->makeLine(start, width, no_line_breaking_rules);
+    xt->makeLine(start, width, no_line_breaking_rules, tabstop_width);
     // makeLine() will have pushed onto the stack a table suitable
     // to be added to TextBoxWidget.vertical_string_list
     return 1;
