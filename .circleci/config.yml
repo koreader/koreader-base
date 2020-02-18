@@ -68,7 +68,7 @@ jobs:
 
   emu: &EMU_TPL
     docker:
-      - image: koreader/kobase:0.1.5
+      - image: koreader/kobase:0.1.6
     environment: &EMU_ENV_LST
       BASH_ENV: "~/.bashrc"
       EMULATE_READER: "1"
@@ -163,7 +163,7 @@ jobs:
     <<: *XCOMPILE_TPL
     environment:
       TARGET: "pocketbook"
-      DOCKER_IMG: koreader/kopb:0.1.3
+      DOCKER_IMG: koreader/kopb:0.2.0
 
   sony-prstux:
     <<: *XCOMPILE_TPL
