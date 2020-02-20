@@ -607,9 +607,11 @@ function framebuffer:init()
 
         -- NOTE: Devices on the Rex platform essentially use the same driver as the Zelda platform, they're just passing a slightly smaller mxcfb_update_data struct
         if isZelda or isRex then
-            if not isNightModeChallenged then
-                self.device.canHWDither = yes
-            end
+            -- NOTE: Turns out, nope, it really doesn't work on *any* of 'em :/ (c.f., ko#5884).
+            --[[
+            self.device.canHWDither = yes
+            --]]
+
             if isZelda then
                 self.mech_refresh = refresh_zelda
             else
