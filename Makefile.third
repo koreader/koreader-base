@@ -534,7 +534,7 @@ $(LUASEC): $(SSL_LIB) $(THIRDPARTY_DIR)/luasec/*.*
 	install -d $(LUASEC_BUILD_DIR)
 	-rm -f $(LUASEC_DIR)/../luasec-stamp/luasec-install
 	cd $(LUASEC_BUILD_DIR) && \
-		$(CMAKE) $(CMAKE_FLAGS) -DCC="$(CC) $(CFLAGS)" -DLDFLAGS="$(LDFLAGS)" \
+		$(CMAKE) $(CMAKE_FLAGS) -DCC="$(CC) $(CFLAGS)" -DLD="$(CC) -Wl,-rpath,'$(ORIGIN_CMAKE_TO_AUTOCFG)/../libs'" \
 		-DAR="$(AR)" -DRANLIB="$(RANLIB)" \
 		$(if $(ANDROID),-DLIBS="$(CURDIR)/$(SSL_LIB) $(CURDIR)/$(CRYPTO_LIB) $(CURDIR)/$(LUASEC_BUILD_DIR)/luasec-prefix/src/luasec/src/luasocket/libluasocket.a $(CURDIR)/$(LUAJIT_LIB)",) \
 		-DINC_PATH="-I$(LUAJIT_DIR)/src -I$(OPENSSL_DIR)/include" \
