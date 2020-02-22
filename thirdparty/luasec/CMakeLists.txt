@@ -18,7 +18,7 @@ ep_get_source_dir(SOURCE_DIR)
 # Don't enforce CFLAGS
 set(PATCH_CMD sh -c "${ISED} 's|-O2 ||g' src/Makefile")
 
-set(BUILD_CMD_STR sh -c "${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS} CC=\"${CC}\" LD=\"${LD}\" AR=\"${AR}\" RANLIB=\"${RANLIB}\" INC_PATH=\"${INC_PATH}\" LIB_PATH=\"${LIB_PATH}\" LUAPATH=\"${LUAPATH}\" LUACPATH=\"${LUAPATH}\"")
+set(BUILD_CMD_STR sh -c "${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS} CC=\"${CC}\" CCLD=\"${LD}\" AR=\"${AR}\" RANLIB=\"${RANLIB}\" INC_PATH=\"${INC_PATH}\" LIB_PATH=\"${LIB_PATH}\" LUAPATH=\"${LUAPATH}\" LUACPATH=\"${LUAPATH}\"")
 if(DEFINED LIBS)
     set(BUILD_CMD_STR "${BUILD_CMD_STR} LIBS=\"${LIBS}\"")
 endif()
@@ -33,7 +33,7 @@ endif()
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
     https://github.com/brunoos/luasec
-    tags/luasec-0.8.2
+    tags/v0.9
     ${SOURCE_DIR}
 )
 
