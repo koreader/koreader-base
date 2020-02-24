@@ -530,6 +530,11 @@ static int getLatestDomVersion(lua_State *L) {
     return 1;
 }
 
+static int getDomVersionWithNormalizedXPointers(lua_State *L) {
+    lua_pushnumber(L, DOM_VERSION_WITH_NORMALIZED_XPOINTERS); // defined in lvtinydom.h
+    return 1;
+}
+
 static int requestDomVersion(lua_State *L) {
     int version = luaL_checkint(L, 1);
     gDOMVersionRequested = version;
@@ -2643,6 +2648,24 @@ static int highlightXPointer(lua_State *L) {
     return 1;
 }
 
+static int getNormalizedXPointer(lua_State *L) {
+    CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
+    const char* xp = luaL_checkstring(L, 2);
+    ldomXPointer nodep = doc->dom_doc->createXPointer(lString16(xp));
+        // When gDOMVersionRequested >= DOM_VERSION_WITH_NORMALIZED_XPOINTERS,
+        // it will use internally createXPointerV2(), otherwise createXPointerV1().
+
+    if ( nodep.isNull() ) {
+        // XPointer not found in document
+        lua_pushboolean(L, false);
+    }
+    else {
+        // Force the use of toStrinV2() to get a normalized xpointer
+        lua_pushstring(L, UnicodeToLocal(nodep.toStringV2()).c_str());
+    }
+    return 1;
+}
+
 static int gotoLink(lua_State *L) {
 	CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
 	const char *pos = luaL_checkstring(L, 2);
@@ -2975,6 +2998,7 @@ static const struct luaL_Reg cre_func[] = {
     {"getSelectedHyphDict", getSelectedHyphDict},
     {"setHyphDictionary", setHyphDictionary},
     {"getLatestDomVersion", getLatestDomVersion},
+    {"getDomVersionWithNormalizedXPointers", getDomVersionWithNormalizedXPointers},
     {"requestDomVersion", requestDomVersion},
     {NULL, NULL}
 };
@@ -3064,6 +3088,7 @@ static const struct luaL_Reg credocument_meth[] = {
     {"getPageLinks", getPageLinks},
     {"isLinkToFootnote", isLinkToFootnote},
     {"highlightXPointer", highlightXPointer},
+    {"getNormalizedXPointer", getNormalizedXPointer},
     {"getCoverPageImageData", getCoverPageImageData},
     {"gotoLink", gotoLink},
     {"goBack", goBack},
