@@ -2094,6 +2094,36 @@ static bool _isLinkToFootnote(CreDocument *doc, const lString16 source_xpointer,
         }
     }
 
+    if (flags & 0x0008) { // Accept classic FB2 footnotes
+        // Similar checks as this CSS would do:
+        //    body[name="notes"] section,
+        //    body[name="comments"] section {
+        //        -cr-hint: footnote;
+        //    }
+        if ( targetNode->getNodeId() == doc->dom_doc->getElementNameIndex("section") ) {
+            lUInt16 el_body = doc->dom_doc->getElementNameIndex("body");
+            ldomNode * n = targetNode->getParentNode();
+            while ( n && !n->isNull() ) {
+                if ( n->getNodeId() == el_body ) {
+                    lString16 name = n->getAttributeValue("name");
+                    if (!name.empty()) {
+                        name.lowercase();
+                        if (name == "notes") {
+                            reason = "target is FB2 footnote (body[name=notes] section)";
+                            return true;
+                        }
+                        if (name == "comments") {
+                            reason = "target is FB2 footnote (body[name=comments] section)";
+                            return true;
+                        }
+                    }
+                    break;
+                }
+                n = n->getParentNode();
+            }
+        }
+    }
+
     if (flags & 0x0010) { // Target must have an anchor #id
         // We should be called only with internal links, so they should
         // all start with "#". But check that anyway.
