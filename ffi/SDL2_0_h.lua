@@ -848,8 +848,8 @@ static const int SDL_INIT_NOPARACHUTE = 1048576;
 static const int SDL_INIT_EVERYTHING = 62001;
 static const int SDL_WINDOWPOS_UNDEFINED = 536805376;
 static const int SDL_WINDOW_FULLSCREEN = 1;
-static const int SDL_WINDOW_FULLSCREEN_DESKTOP = 4097;
 static const int SDL_WINDOW_RESIZABLE = 32;
+static const int SDL_WINDOW_FULLSCREEN_DESKTOP = 4097;
 static const int SDL_WINDOW_ALLOW_HIGHDPI = 8192;
 typedef enum {
   SDL_TEXTUREACCESS_STATIC = 0,
