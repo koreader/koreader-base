@@ -105,15 +105,11 @@ function S.open()
     end
 
     -- set up screen (window)
-    local screen_flags = bit.bor(full_screen and 1 or 0, SDL.SDL_WINDOW_RESIZABLE)
-    if SDL_Linked_Version_AtLeast(2, 0, 1) then
-        screen_flags = bit.bor(screen_flags, SDL.SDL_WINDOW_ALLOW_HIGHDPI)
-    end
     S.screen = SDL.SDL_CreateWindow("KOReader",
         tonumber(os.getenv("KOREADER_WINDOW_POS_X")) or SDL.SDL_WINDOWPOS_UNDEFINED,
         tonumber(os.getenv("KOREADER_WINDOW_POS_Y")) or SDL.SDL_WINDOWPOS_UNDEFINED,
         S.w, S.h,
-        screen_flags
+        bit.bor(full_screen and 1 or 0, SDL.SDL_WINDOW_RESIZABLE, SDL.SDL_WINDOW_ALLOW_HIGHDPI)
     )
 
     S.renderer = SDL.SDL_CreateRenderer(S.screen, -1, 0)
