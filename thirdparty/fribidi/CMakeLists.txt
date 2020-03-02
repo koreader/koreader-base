@@ -36,7 +36,7 @@ endif()
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
     https://github.com/fribidi/fribidi.git
-    tags/v1.0.8
+    tags/v1.0.9
     ${SOURCE_DIR}
 )
 
