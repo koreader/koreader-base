@@ -21,15 +21,20 @@ endif()
 #set(PATCH_CMD2 sh -c "touch ABOUT-NLS po/Makevars.template")
 #set(PATCH_CMD3 sh -c "AUTOPOINT=true ./bootstrap --skip-po")
 
-set(CFG_ENV_VAR "CC=\"${CC} -DHAVE_MKFIFO=1\" CFLAGS=\"${CFLAGS}\" LDFLAGS=\"${LDFLAGS}\"")
+# Avoid pulling > GLIBC_2.4 symbols on crappy platforms
+if(DEFINED ENV{LEGACY} OR DEFINED ENV{POCKETBOOK})
+	set(CFG_ENV_VAR "ac_cv_func_utimensat=no ac_cv_func_futimens=no")
+endif()
+
+set(CFG_ENV_VAR "${CFG_ENV_VAR} CC=\"${CC} -DHAVE_MKFIFO=1\" CFLAGS=\"${CFLAGS}\" LDFLAGS=\"${LDFLAGS}\"")
 set(CFG_OPTS "-q LIBS=\"${LIBS}\" --host=\"${CHOST}\"")
 
-if(${DISABLE_LARGEFILE})
+if(DEFINED ENV{LEGACY} OR DEFINED ENV{POCKETBOOK})
     set(CFG_OPTS "${CFG_OPTS} --disable-largefile")
 endif()
 set(CFG_CMD "${CFG_ENV_VAR} ${SOURCE_DIR}/configure --disable-nls --disable-gcc-warnings --disable-acl --without-xattrs --without-posix-acls ${CFG_OPTS}")
 
-if(${DISABLE_FORTIFY})
+if(DEFINED ENV{LEGACY} OR DEFINED ENV{POCKETBOOK})
     # Forcibly disable FORTIFY on legacy devices...
     set(CFG_CMD "${CFG_CMD} && ${ISED} 's/# define _FORTIFY_SOURCE 2/#undef _FORTIFY_SOURCE/' config.h")
 endif()

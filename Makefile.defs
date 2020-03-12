@@ -316,6 +316,8 @@ MG2K12_COMPAT_CFLAGS:=-fno-stack-protector -U_FORTIFY_SOURCE -D_GNU_SOURCE -fno-
 MG2K12_COMPAT_CXXFLAGS:=-fno-use-cxa-atexit
 # My legacy TC is based on glibc 2.9, that should be enough :).
 NILUJE_COMPAT_CFLAGS:=-fno-stack-protector -U_FORTIFY_SOURCE -D_GNU_SOURCE -mno-unaligned-access
+# As for PB, despite the old TC targeting glibc 2.9, some devices are apparently still running glibc 2.5... (#5939)
+PB_COMPAT_CFLAGS:=-D_GNU_SOURCE
 
 # Same deal, but when targeting the K5/Kobo & using Ubuntu's Linaro TCs
 UBUNTU_COMPAT_CFLAGS:=-fno-finite-math-only -fno-stack-protector -U_FORTIFY_SOURCE
@@ -366,8 +368,8 @@ else ifeq ($(TARGET), pocketbook)
 	ARM_ARCH+=-mfloat-abi=softfp
 	# NOTE: Because of course everything is terrible, newer FW (5.19+) use GCC 6.3.0's libstdc++,
 	#       so, ideally, we shouldn't be using this on those newer devices...
-	COMPAT_CFLAGS:=$(STLABI_COMPAT_CFLAGS)
-	COMPAT_CXXFLAGS:=$(STLABI_COMPAT_CFLAGS)
+	COMPAT_CFLAGS:=$(STLABI_COMPAT_CFLAGS) $(PB_COMPAT_CFLAGS)
+	COMPAT_CXXFLAGS:=$(STLABI_COMPAT_CFLAGS) $(PB_COMPAT_CFLAGS)
 	ifeq ($(shell PATH='$(PATH)' $(CC) -dumpmachine 2>/dev/null), arm-linux-gnueabi)
 		COMPAT_CFLAGS+=$(UBUNTU_COMPAT_CFLAGS)
 		COMPAT_CXXFLAGS+=$(UBUNTU_COMPAT_CFLAGS)
