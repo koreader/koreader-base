@@ -23,28 +23,35 @@ ep_get_binary_dir(BINARY_DIR)
 # but fails to actually honor the specified/detected Python version in every cases,
 # sometimes just hoping there's a python binary somewhere in $PATH (which, granted, there should be)...
 # Enforce that to python3 for containers where that's the only available Python version.
-if(($ENV{APPIMAGE}) OR ($ENV{CERVANTES}) OR ($ENV{KINDLE}) OR ($ENV{KOBO}))
+if(DEFINED ENV{APPIMAGE} OR DEFINED ENV{CERVANTES} OR DEFINED ENV{KINDLE} OR DEFINED ENV{KOBO})
     set(PATCH_CMD1 "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/glib-2.56.2-python3.patch")
 endif()
 # Android makes Linux syscalls hard to get to... Fix pilfered from Python.
-if($ENV{ANDROID})
+if(DEFINED ENV{ANDROID})
     set(PATCH_CMD2 "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/glib-2.58.2-android-linux-syscalls.patch")
 endif()
 
 set(PATCH_CMD3 sh -c "NOCONFIGURE=1 ./autogen.sh")
 
-# in order to support legacy PocketBook 4.x firmware we should get rid of
-# eventfd@GLIBC_2.7 and pipe2@GLIB_2.9
-set(gen_arm_config "glib_cv_stack_grows=no\\n")
+# Autotools needs some hints when x-compiling
+set(gen_arm_config "${gen_arm_config}glib_cv_stack_grows=no\\n")
 set(gen_arm_config "${gen_arm_config}glib_cv_uscore=no\\n")
-set(gen_arm_config "${gen_arm_config}glib_cv_eventfd=no\\n")
-set(gen_arm_config "${gen_arm_config}ac_cv_func_pipe2=no\\n")
-set(gen_arm_config "${gen_arm_config}ac_cv_func_posix_getpwuid_r=no\\n")
-set(gen_arm_config "${gen_arm_config}ac_cv_func_posix_getgrgid_r=no\\n")
-# disable getpwuid, getgrgid and timegm for > android-12
-set(gen_arm_config "${gen_arm_config}ac_cv_func_getpwuid_r=no\\n")
-set(gen_arm_config "${gen_arm_config}ac_cv_func_getgrgid_r=no\\n")
-set(gen_arm_config "${gen_arm_config}ac_cv_func_timegm=no\\n")
+# In order to support legacy PocketBook 4.x firmware we should get rid of eventfd@GLIBC_2.7 and pipe2@GLIBC_2.9
+if(DEFINED ENV{LEGACY} OR DEFINED ENV{POCKETBOOK})
+	set(gen_arm_config "${gen_arm_config}glib_cv_eventfd=no\\n")
+	set(gen_arm_config "${gen_arm_config}ac_cv_func_pipe2=no\\n")
+	# As well as mkostemp@GLIBC_2.7
+	set(gen_arm_config "${gen_arm_config}ac_cv_func_mkostemp=no\\n")
+endif()
+if(DEFINED ENV{ANDROID})
+	# disable getpwuid, getgrgid and timegm for > android-12
+	set(gen_arm_config "${gen_arm_config}ac_cv_func_posix_getpwuid_r=no\\n")
+	set(gen_arm_config "${gen_arm_config}ac_cv_func_posix_getgrgid_r=no\\n")
+	set(gen_arm_config "${gen_arm_config}ac_cv_func_getpwuid_r=no\\n")
+	set(gen_arm_config "${gen_arm_config}ac_cv_func_getgrgid_r=no\\n")
+	set(gen_arm_config "${gen_arm_config}ac_cv_func_timegm=no\\n")
+endif()
+
 set(gen_arm_config sh -c "printf \"${gen_arm_config}\" > arm_cache.conf")
 
 set(CFG_ENV_VAR "CC=\"${CC}\" AR=\"${AR}\" RANLIB=\"${RANLIB}\"")
