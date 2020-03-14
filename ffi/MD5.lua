@@ -36,7 +36,7 @@ local function F4(x, y, z) return bxor(y, bor(x, bnot(z))) end
 
 local function MD5STEP(f, w, x, y, z, data, s)
     w = w + f(x, y, z) + data
-    w = bor(lshift(w,s), rshift(w,(32-s)))
+    w = bor(lshift(w, s), rshift(w, (32 - s)))
     w = w + x
 
     return w
@@ -136,7 +136,7 @@ end
 
 local function MD5Update(ctx, buf, len)
     local t = ctx.bits[0]
-    ctx.bits[0] = t + lshift( len, 3)
+    ctx.bits[0] = t + lshift(len, 3)
     if (ctx.bits[0] < t) then
         ctx.bits[1] = ctx.bits[1] + 1
     end
@@ -195,12 +195,14 @@ local function MD5Final(digest, ctx)
     ffi.cast("uint32_t *", ctx.input)[15] = ctx.bits[1]
 
     MD5Transform(ctx.buf, ffi.cast("uint32_t *", ctx.input))
-    byteReverse(ffi.cast("unsigned char *",ctx.buf), 4)
+    byteReverse(ffi.cast("unsigned char *", ctx.buf), 4)
     copy(digest, ctx.buf, 16)
     fill(ffi.cast("unsigned char *", ctx), ffi.sizeof(ctx), 0)
 end
 
 -- From https://github.com/Wiladams/LAPHLibs/blob/master/laphlibs/stringzutils.lua
+-- Output string hex representation requires two bytes per input byte,
+-- so output buffer needs to be twice as large as input, + 1 to accomodate a terminating NUL.
 local hex = ffi.new("const unsigned char[16]", "0123456789abcdef")
 
 local function bin2str(to, p, len)
