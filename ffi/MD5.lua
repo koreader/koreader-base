@@ -202,7 +202,6 @@ end
 
 -- From https://github.com/Wiladams/LAPHLibs/blob/master/laphlibs/stringzutils.lua
 local hex = ffi.new("const unsigned char[16]", "0123456789abcdef")
-local hex = strdup("0123456789abcdef")
 
 local function bin2str(to, p, len)
     while (len > 0) do
