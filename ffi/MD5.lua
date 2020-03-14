@@ -226,7 +226,9 @@ md5_proto.__index = md5_proto
 --- Feed content to md5 hashing instance.
 ---- @string luastr stream to process
 function md5_proto:update(luastr)
-    MD5Update(self.ctx, ffi.cast("const unsigned char *", luastr), #luastr)
+    local len = #luastr
+    local p = ffi.cast("const unsigned char *", luastr)
+    MD5Update(self.ctx, p, len)
 end
 
 --- Calculate md5 sum with the state of a md5 hashing instance.
