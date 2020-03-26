@@ -953,6 +953,263 @@ static int buildAlternativeToc(lua_State *L) {
 	return 0;
 }
 
+static int hasPageMap(lua_State *L) {
+    CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
+
+    LVPageMap * pagemap = doc->text_view->getPageMap();
+    bool has_pagemap = pagemap->getChildCount() > 0;
+    lua_pushboolean(L, has_pagemap);
+    return 1;
+}
+
+static int getPageMap(lua_State *L) {
+    CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
+
+    LVPageMap * pagemap = doc->text_view->getPageMap();
+    int nb = pagemap->getChildCount();
+    if ( !nb )
+        return 0;
+
+    lua_newtable(L);
+    for (int i = 0; i < nb; i++)  {
+        LVPageMapItem * item = pagemap->getChild(i);
+        lua_pushnumber(L, i+1);
+
+        // New table for item
+        lua_newtable(L);
+
+        lua_pushstring(L, "page");
+        lua_pushnumber(L, item->getPage()+1);
+        lua_settable(L, -3);
+
+        // Note: toc_tmp->getXPointer().toString() and toc_tmp->getPath() return
+        // the same xpath string. But when just loaded from cache, the XPointer
+        // is not yet available, but getPath() is. So let's use it, which avoids
+        // having to build the XPointers until they are needed to update page numbers.
+        lua_pushstring(L, "xpointer");
+        lua_pushstring(L, UnicodeToLocal(item->getPath()).c_str());
+        lua_settable(L, -3);
+
+        lua_pushstring(L, "doc_y");
+        lua_pushnumber(L, item->getDocY());
+        lua_settable(L, -3);
+
+        lua_pushstring(L, "label");
+        lua_pushstring(L, UnicodeToLocal(item->getLabel()).c_str());
+        lua_settable(L, -3);
+
+        // add item to returned table
+        lua_settable(L, -3);
+    }
+    return 1;
+}
+
+static int getPageMapSource(lua_State *L) {
+    CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
+
+    LVPageMap * pagemap = doc->text_view->getPageMap();
+    lString16 source = pagemap->getSource();
+    if ( source.empty() )
+        return 0;
+    lua_pushstring(L, UnicodeToLocal(source).c_str());
+    return 1;
+}
+
+static int getPageMapFirstPageLabel(lua_State *L) {
+    CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
+
+    LVDocView * tv = doc->text_view;
+    LVPageMap * pagemap = tv->getPageMap();
+    int nb = pagemap->getChildCount();
+    if ( !nb )
+        return 0;
+    lua_pushstring(L, UnicodeToLocal(pagemap->getChild(0)->getLabel()).c_str());
+    return 1;
+}
+
+static int getPageMapLastPageLabel(lua_State *L) {
+    CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
+
+    LVDocView * tv = doc->text_view;
+    LVPageMap * pagemap = tv->getPageMap();
+    int nb = pagemap->getChildCount();
+    if ( !nb )
+        return 0;
+    lua_pushstring(L, UnicodeToLocal(pagemap->getChild(nb-1)->getLabel()).c_str());
+    return 1;
+}
+
+static int getPageMapCurrentPageLabel(lua_State *L) {
+    CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
+
+    LVDocView * tv = doc->text_view;
+    LVPageMap * pagemap = tv->getPageMap();
+    int nb = pagemap->getChildCount();
+    if ( !nb )
+        return 0;
+
+    // Note: in scroll mode with PDF, when multiple pages are shown on
+    // the screen, the advertized page number is the greatest page number
+    // among the pages shown (so, the page number of the partial page
+    // shown at bottom of screen).
+    // For consistency, we return the last page label shown in the view
+    // if there are more than one (or the previous one if there is none).
+    lvRect rc;
+    tv->GetPos(rc);
+    int max_y = rc.bottom;
+
+    // Binary search to find the last doc_y < max_y
+    // (We expect items to be ordered by doc_y)
+    // https://en.wikipedia.org/wiki/Binary_search_algorithm#Procedure_for_finding_the_leftmost_element
+    int left = 0;
+    int right = nb;
+    int middle;
+    while ( left < right ) {
+        middle = (left + right) / 2;
+        int y = pagemap->getChild(middle)->getDocY();
+        if ( y >= max_y )
+            right = middle;
+        else
+            left = middle + 1;
+    }
+    int idx = left-1;
+    if ( idx < 0 )
+        idx = 0;
+    else if (idx >= nb)
+        idx = nb - 1;
+    lua_pushstring(L, UnicodeToLocal(pagemap->getChild(idx)->getLabel()).c_str());
+    return 1;
+}
+
+static int getPageMapXPointerPageLabel(lua_State *L) {
+    CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
+    const char *xpointer_str = luaL_checkstring(L, 2);
+
+    LVDocView * tv = doc->text_view;
+    LVPageMap * pagemap = tv->getPageMap();
+    int nb = pagemap->getChildCount();
+    if ( !nb )
+        return 0;
+
+    ldomXPointer xp = doc->dom_doc->createXPointer(lString16(xpointer_str));
+
+    lvPoint pt = xp.toPoint(true); // extended=true, for better accuracy
+    int xp_y = pt.y >= 0 ? pt.y : 0;
+
+    // Binary search to find the last doc_y <= xp_y
+    int left = 0;
+    int right = nb;
+    int middle;
+    while ( left < right ) {
+        middle = (left + right) / 2;
+        int y = pagemap->getChild(middle)->getDocY();
+        if ( y > xp_y )
+            right = middle;
+        else
+            left = middle + 1;
+    }
+    int idx = left-1;
+    if ( idx < 0 )
+        idx = 0;
+    else if (idx >= nb)
+        idx = nb - 1;
+    lua_pushstring(L, UnicodeToLocal(pagemap->getChild(idx)->getLabel()).c_str());
+    return 1;
+}
+
+static int getPageMapVisiblePageLabels(lua_State *L) {
+    CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
+
+    LVDocView * tv = doc->text_view;
+    LVPageMap * pagemap = tv->getPageMap();
+    int nb = pagemap->getChildCount();
+    if ( !nb )
+        return 0;
+
+    // Get visible min and max doc_y
+    lvRect rc;
+    tv->GetPos(rc);
+    int min_y = rc.top;
+    int max_y = rc.bottom;
+    int page2_y = -1;
+    if ( tv->getVisiblePageCount() == 2 ) {
+        int next_page = tv->getCurPage() + 1;
+        if ( next_page < tv->getPageCount() ) {
+            page2_y = tv->getPageStartY( next_page );
+        }
+    }
+
+    bool is_page_mode = tv->getViewMode()==DVM_PAGES;
+    int offset_y = is_page_mode ? tv->getPageMargins().top + tv->getPageHeaderHeight() : 0;
+
+    // Binary search to find the first y >= min_y
+    // (We expect items to be ordered by doc_y)
+    // https://en.wikipedia.org/wiki/Binary_search_algorithm#Procedure_for_finding_the_leftmost_element
+    int left = 0;
+    int right = nb;
+    int middle;
+    while ( left < right ) {
+        middle = (left + right) / 2;
+        int y = pagemap->getChild(middle)->getDocY();
+        if ( y < min_y )
+            left = middle + 1;
+        else
+            right = middle;
+    }
+    int start = left;
+
+    lua_newtable(L);
+    int count = 1;
+    for (int i = start; i < nb; i++)  {
+        LVPageMapItem * item = pagemap->getChild(i);
+        int doc_y = item->getDocY();
+        if ( doc_y >= max_y)
+            break;
+        if ( doc_y < min_y ) // should not happen
+            continue;
+
+        int screen_page = 1;
+        int screen_y = doc_y - min_y + offset_y;
+        if ( page2_y >= 0 && doc_y >= page2_y ) {
+            screen_page = 2;
+            screen_y = doc_y - page2_y + offset_y;
+        }
+
+        lua_pushnumber(L, count++);
+
+        // New table for item
+        lua_newtable(L);
+
+        lua_pushstring(L, "screen_page");
+        lua_pushnumber(L, screen_page);
+        lua_settable(L, -3);
+
+        lua_pushstring(L, "screen_y");
+        lua_pushnumber(L, screen_y);
+        lua_settable(L, -3);
+
+        lua_pushstring(L, "page");
+        lua_pushnumber(L, item->getPage()+1);
+        lua_settable(L, -3);
+
+        lua_pushstring(L, "xpointer");
+        lua_pushstring(L, UnicodeToLocal(item->getPath()).c_str());
+        lua_settable(L, -3);
+
+        lua_pushstring(L, "doc_y");
+        lua_pushnumber(L, item->getDocY());
+        lua_settable(L, -3);
+
+        lua_pushstring(L, "label");
+        lua_pushstring(L, UnicodeToLocal(item->getLabel()).c_str());
+        lua_settable(L, -3);
+
+        // add item to returned table
+        lua_settable(L, -3);
+    }
+    return 1;
+}
+
 /*
  * Return a table like this:
  * {
@@ -3124,6 +3381,14 @@ static const struct luaL_Reg credocument_meth[] = {
     {"goBack", goBack},
     {"goForward", goForward},
     {"clearSelection", clearSelection},
+    {"hasPageMap", hasPageMap},
+    {"getPageMap", getPageMap},
+    {"getPageMapSource", getPageMapSource},
+    {"getPageMapFirstPageLabel", getPageMapFirstPageLabel},
+    {"getPageMapLastPageLabel", getPageMapLastPageLabel},
+    {"getPageMapCurrentPageLabel", getPageMapCurrentPageLabel},
+    {"getPageMapXPointerPageLabel", getPageMapXPointerPageLabel},
+    {"getPageMapVisiblePageLabels", getPageMapVisiblePageLabels},
     {"readDefaults", readDefaults},
     {"saveDefaults", saveDefaults},
     {"close", closeDocument},
