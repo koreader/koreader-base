@@ -13,6 +13,10 @@ set(NO_POLICY_SCOPE NEW)
 set(CMAKE_SYSTEM_NAME Linux)
 # set target system processor, because we can't set CMAKE_SYSTEM_NAME without setting CMAKE_SYSTEM_PROCESSOR too...
 
+if($ENV{WIN32})
+    set(CMAKE_SYSTEM_NAME Windows)
+endif()
+
 # x86 Android
 if($ENV{CROSS_TC} MATCHES "^i686-.*")
 	set(CMAKE_SYSTEM_PROCESSOR i686)
