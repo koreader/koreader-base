@@ -67,15 +67,15 @@ $(LIBUNIBREAK_LIB) $(LIBUNIBREAK_DIR): $(THIRDPARTY_DIR)/libunibreak/*.*
 	cp -fL $(LIBUNIBREAK_DIR)/lib/$(notdir $(LIBUNIBREAK_LIB)) $@
 	chmod 755 $@
 
-# libjpeg-turbo and libjepg
+# libjpeg-turbo and libjpeg
 $(TURBOJPEG_LIB) $(JPEG_LIB): $(THIRDPARTY_DIR)/libjpeg-turbo/*.*
 	install -d $(JPEG_BUILD_DIR)
 	cd $(JPEG_BUILD_DIR) && \
 		$(CMAKE) $(CMAKE_FLAGS) \
 		$(CURDIR)/$(THIRDPARTY_DIR)/libjpeg-turbo && \
 		$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS)
-	cp -fL $(JPEG_DIR)/lib/$(notdir $(TURBOJPEG_LIB)) $(TURBOJPEG_LIB)
-	cp -fL $(JPEG_DIR)/lib/$(notdir $(JPEG_LIB)) $(JPEG_LIB)
+	cp -fL $(JPEG_DIR)/$(if $(WIN32),,lib)/$(notdir $(TURBOJPEG_LIB)) $(TURBOJPEG_LIB)
+	cp -fL $(JPEG_DIR)/$(if $(WIN32),,lib)/$(notdir $(JPEG_LIB)) $(JPEG_LIB)
 ifdef DARWIN
 	install_name_tool -id \
 		libs/$(notdir $(JPEG_LIB)) \

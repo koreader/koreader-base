@@ -32,7 +32,9 @@ if($ENV{ANDROID})
     set(CFG_CMD "${CFG_CMD} && ${ISED} 's|soname_spec=.*|soname_spec=\"\\\\\$libname\\\\\$release\\\\\$shared_ext\\\\\$major\"|' libtool")
 endif()
 
-set(PATCH_CMD sh -c "${ISED} \"s|-lstdc++||g\" libtool")
+if(NOT $ENV{WIN32})
+    set(PATCH_CMD sh -c "${ISED} \"s|-lstdc++||g\" libtool")
+endif()
 
 # Technically we don't need tools on any platform but they only cause issues on Android
 if($ENV{ANDROID})
