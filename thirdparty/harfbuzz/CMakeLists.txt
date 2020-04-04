@@ -23,10 +23,9 @@ ep_get_binary_dir(BINARY_DIR)
 # c.f., https://github.com/koreader/koreader/issues/5780 & https://github.com/koreader/koreader/issues/6024
 # NOTE: Our initial approach was to only disable atomics in a very dirty manner, which only helped with the first issue.
 #       This, on the other hand, appears to help with both.
-#       It's conceivable that we'd actually only need HB_NO_MT, but, eh.
 if(DEFINED ENV{LEGACY} OR DEFINED ENV{POCKETBOOK})
 	# NOTE: This ends up in CPPFLAGS!
-	set(HB_CUSTOM_CFG "-DHB_TINY")
+	set(HB_CUSTOM_CFG "-DHB_NO_MT")
 endif()
 
 set(CFG_ENV_VAR "CC=\"${CC}\" CXX=\"${CXX}\" CPPFLAGS=\"${CPPFLAGS} ${HB_CUSTOM_CFG}\" CFLAGS=\"${CFLAGS}\" CXXFLAGS=\"${CXXFLAGS}\" LDFLAGS=\"${LDFLAGS}\"")
