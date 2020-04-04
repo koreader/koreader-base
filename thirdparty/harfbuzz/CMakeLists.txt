@@ -25,6 +25,7 @@ set(AUTOGEN_CMD sh -c "env NOCONFIGURE=1 ./autogen.sh")
 
 # We've apparently hit a weird corner-case w/ XText where GCC/STL atomics *sometimes* horribly blow up on an ARM1136JF-S CPU w/ GCC 7.5...
 # c.f., https://github.com/koreader/koreader/issues/5780
+# NOTE: See also https://github.com/koreader/koreader/issues/6024, which this does *NOT* work around, but which is probably related...
 if(DEFINED ENV{LEGACY})
 	set(PATCH_CMD "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/hb-disable-atomics.patch")
 endif()
