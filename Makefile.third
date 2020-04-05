@@ -25,8 +25,14 @@ $(FREETYPE_LIB) $(FREETYPE_DIR)/include: $(THIRDPARTY_DIR)/freetype2/*.*
 $(HARFBUZZ_LIB) $(HARFBUZZ_DIR)/include: $(THIRDPARTY_DIR)/harfbuzz/*.*
 	install -d $(HARFBUZZ_BUILD_DIR)
 	cd $(HARFBUZZ_BUILD_DIR) && \
-		$(CMAKE) $(CMAKE_FLAGS) -DCC="$(CC)" -DCXX="$(CXX)" -DCFLAGS="$(CFLAGS)"\
-		-DCXXFLAGS="$(CXXFLAGS)" -DLDFLAGS="$(LDFLAGS)" -DCHOST=$(CHOST) \
+		$(CMAKE) $(CMAKE_FLAGS) \
+		-DCC="$(CC)" \
+		-DCXX="$(CXX)" \
+		-DCHOST=$(CHOST) \
+		-DCPPFLAGS="$(CPPFLAGS)" \
+		-DCFLAGS="$(CFLAGS)"\
+		-DCXXFLAGS="$(CXXFLAGS)" \
+		-DLDFLAGS="$(LDFLAGS)" \
 		-DFREETYPE_DIR="$(FREETYPE_DIR)" \
 		$(CURDIR)/$(THIRDPARTY_DIR)/harfbuzz && \
 		$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS)
@@ -348,8 +354,12 @@ $(GLIB): $(if $(DARWIN),$(LIBICONV) $(LIBGETTEXT),) $(LIBFFI_DIR)/include $(THIR
 		-DHOST_OPTS="$(if $(EMULATE_READER),,--host=$(CHOST) --cache-file=arm_cache.conf)" \
 		$(CURDIR)/$(THIRDPARTY_DIR)/glib && \
 		$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS)
+# NOTE: We link against a static glib on Android
 ifndef ANDROID
+# NOTE: Don't ship our own glib on Kindle, it'll clash with liblipc, which depends on it *and* gthread :/.
+ifndef KINDLE
 	cp -fL $(GLIB_DIR)/lib/$(notdir $(GLIB)) $(OUTPUT_DIR)/libs/$(notdir $(GLIB))
+endif
 endif
 
 $(GLIB_STATIC): $(LIBICONV) $(LIBGETTEXT) $(LIBFFI_DIR)/include $(THIRDPARTY_DIR)/glib/*.*
