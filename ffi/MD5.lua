@@ -128,10 +128,10 @@ local function MD5Transform(buf, input)
     c = MD5STEP(F4, c, d, a, b, input[2] + 0x2ad7d2bb, 15)
     b = MD5STEP(F4, b, c, d, a, input[9] + 0xeb86d391, 21)
 
-    buf[0] = buf[0] + a
-    buf[1] = buf[1] + b
-    buf[2] = buf[2] + c
-    buf[3] = buf[3] + d
+    buf[0] = band(buf[0] + a, 0xFFFFFFFF)
+    buf[1] = band(buf[1] + b, 0xFFFFFFFF)
+    buf[2] = band(buf[2] + c, 0xFFFFFFFF)
+    buf[3] = band(buf[3] + d, 0xFFFFFFFF)
 end
 
 local function MD5Update(ctx, buf, len)
