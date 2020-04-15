@@ -559,4 +559,9 @@ function util.unichar(value)
     end
 end
 
+function util.roundPercent(percent)
+    return math.floor(percent * 10000) / 10000
+end
+
+
 return util
