@@ -23,6 +23,7 @@ set(CREGINE_INCLUDE_DIR ${CRE_DIR}/include)
 assert_var_defined(FREETYPE_INCLUDE_DIR)
 assert_var_defined(HARFBUZZ_INCLUDE_DIR)
 assert_var_defined(FRIBIDI_INCLUDE_DIR)
+assert_var_defined(LIBUNIBREAK_INCLUDE_DIR)
 assert_var_defined(UTF8PROC_INCLUDE_DIR)
 assert_var_defined(JPEGLIB_INCLUDE_DIR)
 assert_var_defined(PNG_INCLUDE_DIR)
@@ -34,6 +35,7 @@ include_directories(
     ${FREETYPE_INCLUDE_DIR}
     ${HARFBUZZ_INCLUDE_DIR}
     ${FRIBIDI_INCLUDE_DIR}
+    ${LIBUNIBREAK_INCLUDE_DIR}
     ${UTF8PROC_INCLUDE_DIR}
     ${ANTIWORD_INCLUDE_DIR}
     ${CHM_INCLUDE_DIRS}
@@ -55,6 +57,7 @@ add_definitions(
     -DUSE_FREETYPE=1
     -DUSE_HARFBUZZ=1
     -DUSE_FRIBIDI=1
+    -DUSE_LIBUNIBREAK=1
     -DUSE_UTF8PROC=1
     -DUSE_NANOSVG=1
     -DALLOW_KERNING=1
@@ -78,9 +81,10 @@ if(DEFINED ENV{WIN32})
     find_library(FREETYPE_LIB NAMES "freetype-6" PATHS $ENV{LIBS_DIR})
     find_library(HARFBUZZ_LIB NAMES "harfbuzz-0" PATHS $ENV{LIBS_DIR})
     find_library(FRIBIDI_LIB NAMES "fribidi-0" PATHS $ENV{LIBS_DIR})
+    find_library(LIBUNIBREAK_LIB NAMES "libunibreak-3" PATHS $ENV{LIBS_DIR})
     find_library(UTF8PROC_LIB NAMES "utf8proc-2" PATHS $ENV{LIBS_DIR})
     find_library(JPEG_LIB NAMES "jpeg-8" PATHS $ENV{LIBS_DIR})
-    set(THIRDPARTY_LIBS ${ZLIB} ${FREETYPE_LIB} ${HARFBUZZ_LIB} ${FRIBIDI_LIB} ${UTF8PROC_LIB} ${JPEG_LIB} ${PNG_LIB})
+    set(THIRDPARTY_LIBS ${ZLIB} ${FREETYPE_LIB} ${HARFBUZZ_LIB} ${FRIBIDI_LIB} ${LIBUNIBREAK_LIB} ${UTF8PROC_LIB} ${JPEG_LIB} ${PNG_LIB})
 else()
     add_library(PNG_LIB SHARED IMPORTED)
     set_target_properties(PNG_LIB PROPERTIES IMPORTED_LOCATION $ENV{PNG_LIB})
@@ -90,13 +94,15 @@ else()
     set_target_properties(HARFBUZZ_LIB PROPERTIES IMPORTED_LOCATION $ENV{HARFBUZZ_LIB})
     add_library(FRIBIDI_LIB SHARED IMPORTED)
     set_target_properties(FRIBIDI_LIB PROPERTIES IMPORTED_LOCATION $ENV{FRIBIDI_LIB})
+    add_library(LIBUNIBREAK_LIB SHARED IMPORTED)
+    set_target_properties(LIBUNIBREAK_LIB PROPERTIES IMPORTED_LOCATION $ENV{LIBUNIBREAK_LIB})
     add_library(UTF8PROC_LIB SHARED IMPORTED)
     set_target_properties(UTF8PROC_LIB PROPERTIES IMPORTED_LOCATION $ENV{UTF8PROC_LIB})
     add_library(JPEG_LIB SHARED IMPORTED)
     set_target_properties(JPEG_LIB PROPERTIES IMPORTED_LOCATION $ENV{JPEG_LIB})
     add_library(ZLIB SHARED IMPORTED)
     set_target_properties(ZLIB PROPERTIES IMPORTED_LOCATION $ENV{ZLIB})
-    set(THIRDPARTY_LIBS ZLIB FREETYPE_LIB HARFBUZZ_LIB FRIBIDI_LIB UTF8PROC_LIB JPEG_LIB PNG_LIB)
+    set(THIRDPARTY_LIBS ZLIB FREETYPE_LIB HARFBUZZ_LIB FRIBIDI_LIB LIBUNIBREAK_LIB UTF8PROC_LIB JPEG_LIB PNG_LIB)
 endif()
 
 message("Will build LIBCHM library")
@@ -141,6 +147,7 @@ set (CRENGINE_SOURCES
     ${CRE_DIR}/src/lvbmpbuf.cpp
     ${CRE_DIR}/src/lvfnt.cpp
     ${CRE_DIR}/src/hyphman.cpp
+    ${CRE_DIR}/src/textlang.cpp
     ${CRE_DIR}/src/lvfntman.cpp
     ${CRE_DIR}/src/lvimg.cpp
     ${CRE_DIR}/src/crskin.cpp
