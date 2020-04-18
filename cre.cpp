@@ -623,6 +623,35 @@ static int setHyphDictionary(lua_State *L) {
 	return 0;
 }
 
+static int getTextLangStatus(lua_State *L) {
+	lua_pushstring(L, UnicodeToLocal(TextLangMan::getMainLang()).c_str());
+	lua_pushstring(L, UnicodeToLocal(TextLangMan::getMainLangHyphMethod()->getId()).c_str());
+	lua_newtable(L);
+	LVPtrVector<TextLangCfg> *list = TextLangMan::getLangCfgList();
+	for(int i = 0; i < list->length(); i++) {
+                TextLangCfg * lang_cfg = list->get(i);
+		// Key
+		lua_pushstring(L, UnicodeToLocal(lang_cfg->getLangTag()).c_str());
+		// Value: table
+		lua_newtable(L);
+
+		lua_pushstring(L, "hyph_dict_name");
+		lua_pushstring(L, UnicodeToLocal(lang_cfg->getDefaultHyphMethod()->getId()).c_str());
+		lua_settable(L, -3);
+
+		lua_pushstring(L, "hyph_nb_patterns");
+		lua_pushinteger(L, lang_cfg->getDefaultHyphMethod()->getCount());
+		lua_settable(L, -3);
+
+		lua_pushstring(L, "hyph_mem_size");
+		lua_pushinteger(L, lang_cfg->getDefaultHyphMethod()->getSize());
+		lua_settable(L, -3);
+
+		lua_settable(L, -3);
+	}
+	return 3;
+}
+
 static int loadDocument(lua_State *L) {
 	CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
 	const char *file_name = luaL_checkstring(L, 2);
@@ -3284,6 +3313,7 @@ static const struct luaL_Reg cre_func[] = {
     {"getHyphDictList", getHyphDictList},
     {"getSelectedHyphDict", getSelectedHyphDict},
     {"setHyphDictionary", setHyphDictionary},
+    {"getTextLangStatus", getTextLangStatus},
     {"getLatestDomVersion", getLatestDomVersion},
     {"getDomVersionWithNormalizedXPointers", getDomVersionWithNormalizedXPointers},
     {"requestDomVersion", requestDomVersion},
