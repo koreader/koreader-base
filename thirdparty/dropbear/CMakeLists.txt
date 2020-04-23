@@ -42,7 +42,7 @@ include(ExternalProject)
 set(DROPBEAR_VER "2018.76")
 ExternalProject_Add(
     ${PROJECT_NAME}
-    URL http://gentoo.osuosl.org/distfiles/dropbear-${DROPBEAR_VER}.tar.bz2
+    URL http://deb.debian.org/debian/pool/main/d/dropbear/dropbear_${DROPBEAR_VER}.orig.tar.bz2
     URL_MD5 c3912f7fcdcc57c99937e4a79480d2c2
     DOWNLOAD_DIR ${KO_DOWNLOAD_DIR}
     PATCH_COMMAND COMMAND ${PATCH_CMD1} COMMAND ${PATCH_CMD2} COMMAND
