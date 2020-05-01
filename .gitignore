@@ -12,6 +12,7 @@ debug-*
 lua
 crash.log
 .vimrc
+.kateconfig
 git-rev
 slider_watcher
 *.o
