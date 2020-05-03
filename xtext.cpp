@@ -922,7 +922,12 @@ public:
                         #ifdef DEBUG_MEASURE_TEXT
                             printf("(found cp=%x) ", glyph_info[hg].codepoint);
                         #endif
-                        if ( t_notdef_start >= 0 ) { // But we have a segment of previous ".notdef"
+                        // Note: in crengine, we needed to add the following additional condition
+                        // to only process past notdef when the first glyph of a cluster is found.
+                        // This strangely seems not needed here (the thai sample that caused issues
+                        // with crengine displays fine in xtext), but let's add it for consistency.
+                        if ( t_notdef_start >= 0 && hcl > cur_cluster ) {
+                            // We have a segment of previous ".notdef", and this glyph starts a new cluster
                             t_notdef_end = t;
 
                             // Let a fallback font replace the wrong values in widths and flags
