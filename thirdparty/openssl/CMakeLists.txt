@@ -67,7 +67,7 @@ if(DEFINED ENV{SONY_PRSTUX} OR DEFINED ENV{ANDROID})
 endif()
 
 # NOTE: Disable https://github.com/openssl/openssl/pull/9595 as it's causing stalls long after the early boot on devices without the getrandom() syscall, which is pretty much all of them, because it's a Linux 3.17+ & glibc 2.25+ feature.
-#       This is most easily reproduced with scp transfers that will block on the initial select on /dev/random. Since those devices are low-power and mostly idle, it can take a fairly noticeable amount of time for entriopy to be generated...
+#       This is most easily reproduced with scp transfers that will block on the initial select on /dev/random. Since those devices are low-power, UP, and mostly idle, it can take a fairly noticeable amount of time for entropy to be generated...
 set(CFLAGS "${CPPFLAGS} -DOPENSSL_RAND_SEED_DEVRANDOM_SHM_ID=-1 ${CFLAGS}")
 
 # NOTE: We need to pass $CFLAGS to OpenSSL's Configure script,
