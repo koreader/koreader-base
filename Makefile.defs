@@ -573,7 +573,7 @@ else
 	# gets unmounted for USBMS handling....
 	export ac_cv_func_mmap_fixed_mapped=yes
 	# Never let pkg-config pickup native libraries (we don't actually rely on pkg-config anywhere, we do it all by hand).
-	# NOTE: Let people shoot themselves in the foot wiht custom pkg-config wrappers?
+	# NOTE: Let people shoot themselves in the foot with custom pkg-config wrappers?
 	#undefine PKG_CONFIG
 	#unexport PKG_CONFIG
 	export PKG_CONFIG_PATH=""
