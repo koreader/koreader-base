@@ -730,6 +730,15 @@ static int getStatistics(lua_State *L) {
     return 1;
 }
 
+static int getUnknownEntities(lua_State *L) {
+    CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
+    lString16Collection unknown_entities = doc->dom_doc->getUnknownEntities();
+    lua_pushstring(L, UnicodeToLocal(unknown_entities[0]).c_str());
+    lua_pushstring(L, UnicodeToLocal(unknown_entities[1]).c_str());
+    lua_pushstring(L, UnicodeToLocal(unknown_entities[2]).c_str());
+    return 3;
+}
+
 static int getDocumentProps(lua_State *L) {
 	CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
 
@@ -784,10 +793,25 @@ static int getPageFromXPointer(lua_State *L) {
 
 	int page = 1;
 	ldomXPointer xp = doc->dom_doc->createXPointer(lString16(xpointer_str));
+	if ( !xp.isNull() ) { // Found in document
+		// Ensure xp points to a visible node that has a y in the document.
+		// If it is invisible, get the next visible node
+		ldomXPointerEx xpe = xp;
+		if ( xpe.isText() )
+			xpe.parent();
+		if ( xpe.getNode()->getRendMethod() == erm_invisible ) {
+			xpe = xp;
+			while ( xpe.nextElement() ) {
+				if ( xpe.getNode()->getRendMethod() != erm_invisible ) {
+					xp = xpe;
+					break;
+				}
+			}
+		}
+		page = doc->text_view->getBookmarkPage(xp) + 1;
+	}
 
-	page = doc->text_view->getBookmarkPage(xp) + 1;
 	lua_pushinteger(L, page);
-
 	return 1;
 }
 
@@ -795,19 +819,35 @@ static int getPosFromXPointer(lua_State *L) {
 	CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
 	const char *xpointer_str = luaL_checkstring(L, 2);
 
-	int pos = 0;
+	int y = 0;
+	int x = 0;
 	ldomXPointer xp = doc->dom_doc->createXPointer(lString16(xpointer_str));
-
-	lvPoint pt = xp.toPoint(true); // extended=true, for better accuracy
-	if (pt.y > 0) {
-		pos = pt.y;
+	if ( !xp.isNull() ) { // Found in document
+		// Ensure xp points to a visible node that has a y in the document.
+		// If it is invisible, get the next visible node
+		ldomXPointerEx xpe = xp;
+		if ( xpe.isText() )
+			xpe.parent();
+		if ( xpe.getNode()->getRendMethod() == erm_invisible ) {
+			xpe = xp;
+			while ( xpe.nextElement() ) {
+				if ( xpe.getNode()->getRendMethod() != erm_invisible ) {
+					xp = xpe;
+					break;
+				}
+			}
+		}
+		lvPoint pt = xp.toPoint(true); // extended=true, for better accuracy
+		if (pt.y > 0) {
+			y = pt.y;
+		}
+		x = pt.x;
 	}
-	lua_pushinteger(L, pos);
 
+	lua_pushinteger(L, y);
 	// Also returns the x value (as the 2nd returned value, as its
 	// less interesting to current code than the y value)
-	lua_pushinteger(L, pt.x);
-
+	lua_pushinteger(L, x);
 	return 2;
 }
 
@@ -1418,6 +1458,14 @@ static int setStyleSheet(lua_State *L) {
 	}
 
 	doc->text_view->setStyleSheet(css);
+	return 0;
+}
+
+static int setBackgroundColor(lua_State *L) {
+	CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
+	const int bgcolor = (int)luaL_optint(L, 2, 0xFFFFFF); // default to white if not provided
+
+	doc->text_view->setBackgroundColor(bgcolor);
 	return 0;
 }
 
@@ -3243,12 +3291,8 @@ static int isXPointerInDocument(lua_State *L) {
     CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
     const char *xpointer_str = luaL_checkstring(L, 2);
 
-    bool found = true;
     ldomXPointer xp = doc->dom_doc->createXPointer(lString16(xpointer_str));
-    lvPoint pt = xp.toPoint();
-    if (pt.y < 0) {
-        found = false;
-    }
+    bool found = !xp.isNull();
     lua_pushboolean(L, found);
     return 1;
 }
@@ -3366,6 +3410,7 @@ static const struct luaL_Reg credocument_meth[] = {
     {"setStyleSheet", setStyleSheet},
     {"setEmbeddedStyleSheet", setEmbeddedStyleSheet},
     {"setEmbeddedFonts", setEmbeddedFonts},
+    {"setBackgroundColor", setBackgroundColor},
     {"setBackgroundImage", setBackgroundImage},
     {"setPageMargins", setPageMargins},
     {"setVisiblePageCount", setVisiblePageCount},
@@ -3378,6 +3423,7 @@ static const struct luaL_Reg credocument_meth[] = {
     {"invalidateCacheFile", invalidateCacheFile},
     {"getCacheFilePath", getCacheFilePath},
     {"getStatistics", getStatistics},
+    {"getUnknownEntities", getUnknownEntities},
     {"buildAlternativeToc", buildAlternativeToc},
     {"isTocAlternativeToc", isTocAlternativeToc},
     {"gotoPage", gotoPage},
