@@ -6,9 +6,11 @@ source "${CI_DIR}/common.sh"
 
 "${CI_DIR}/helper_shellchecks.sh"
 
+exclude="ffi/sha2.lua"
+
 echo -e "\n${ANSI_GREEN}Luacheck results"
 if ! command -v luajit; then
-    luacheck --no-color -q ffi spec
+    luacheck --no-color -q --exclude-files "${exclude}" ffi spec
 else
-    luajit "$(command -v luacheck)" --no-color -q ffi spec
+    luajit "$(command -v luacheck)" --no-color -q --exclude-files "${exclude}" ffi spec
 fi
