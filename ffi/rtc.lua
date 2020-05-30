@@ -37,6 +37,52 @@ function RTC:secondsFromNowToEpoch(seconds_from_now)
     return epoch
 end
 
+
+--[[--
+Enable/Disable the alarm interrupt.
+The use of RTC_WKALM_SET allows us to bypass the need for RTC_AIE_* calls,
+thanks to the enabled field in the rtc_wkalrm struct.
+Busybox rtcwake still does an RTC_AIE_OFF when resuming from an alarm wakeup,
+as does Nickel when powering off.
+In this scenario, the modern util-linux rtcwake, which never uses legacy RTC_ALM_SET calls,
+instead uses RTC_WKALM_SET filled from RTC_WKALM_RD but with enabled set to 0.
+
+@enabled bool Whether the call enables or disables the alarm interrupt. Defaults to true.
+
+@treturn bool Success.
+@treturn re Error code (if any).
+@treturn err Error string (if any).
+--]]
+function RTC:toggleAlarmInterrupt(enabled)
+    enabled = (enabled ~= nil) and enabled or true
+
+    local err
+    local rtc0 = C.open("/dev/rtc0", bor(bor(C.O_RDONLY, C.O_NONBLOCK), C.O_CLOEXEC))
+    if rtc0 == -1 then
+        err = ffi.string(C.strerror(ffi.errno()))
+        print("toggleAlarmInterrupt open /dev/rtc0", rtc0, err)
+        return nil, rtc0, err
+    end
+    local re = C.ioctl(rtc0, enabled and C.RTC_AIE_ON or C.RTC_AIE_OFF, 0)
+    if re == -1 then
+        err = ffi.string(C.strerror(ffi.errno()))
+        if enabled then
+            print("toggleAlarmInterrupt ioctl RTC_AIE_ON", re, err)
+        else
+            print("toggleAlarmInterrupt ioctl RTC_AIE_OFF", re, err)
+        end
+        return nil, re, err
+    end
+    re = C.close(rtc0)
+    if re == -1 then
+        err = ffi.string(C.strerror(ffi.errno()))
+        print("toggleAlarmInterrupt close /dev/rtc0", re, err)
+        return nil, re, err
+    end
+
+    return true
+end
+
 --[[--
 Set wakeup alarm.
 
@@ -103,7 +149,9 @@ end
 Unset wakeup alarm.
 --]]
 function RTC:unsetWakeupAlarm()
-    self:setWakeupAlarm(-1, false)
+    -- NOTE: Both util-linux & busybox rtcwake leave the current alarm as-is, and just disable the alarm interrupt.
+    --       c.f., toggleAlarmInterrupt for details.
+    self:toggleAlarmInterrupt(false)
     self._wakeup_scheduled = false
     self._wakeup_scheduled_ptm = nil
 end
