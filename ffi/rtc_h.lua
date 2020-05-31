@@ -17,6 +17,8 @@ struct rtc_wkalrm {
   unsigned char pending;
   struct rtc_time time;
 };
+static const int RTC_AIE_ON = 28673;
+static const int RTC_AIE_OFF = 28674;
 static const int RTC_WKALM_SET = 1076391951;
 static const int RTC_WKALM_RD = 2150133776;
 typedef long int time_t;
