@@ -72,7 +72,7 @@ endif()
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
     https://github.com/NiLuJe/zsync2.git
-    7565c081d581706c6a7859cf41eec976811180b6
+    e618d18f6a7cbf350cededa17ddfe8f76bdf0b5c
     ${SOURCE_DIR}
 )
 
