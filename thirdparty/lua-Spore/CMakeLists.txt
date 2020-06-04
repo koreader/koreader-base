@@ -18,7 +18,7 @@ assert_var_defined(LUAROCKS)
 
 ep_get_source_dir(SOURCE_DIR)
 
-set(LUA_SPORE_ROCKSPEC rockspec/${LUA_SPORE_VER}.rockspec)
+set(LUA_SPORE_ROCKSPEC rockspec/lua-spore-${LUA_SPORE_VER}.rockspec)
 
 set(BUILD_CMD sh -c "${LUAROCKS} make --tree=${OUTPUT_DIR}/rocks ${LUA_SPORE_ROCKSPEC}")
 if(DEFINED LIBFLAG)

@@ -18,7 +18,7 @@ assert_var_defined(LUAROCKS)
 
 ep_get_source_dir(SOURCE_DIR)
 
-set(LUA_HTMLPARSER_ROCKSPEC rockspec/${LUA_HTMLPARSER_VER}.rockspec)
+set(LUA_HTMLPARSER_ROCKSPEC rockspec/htmlparser-${LUA_HTMLPARSER_VER}.rockspec)
 
 set(BUILD_CMD sh -c "${LUAROCKS} make --tree=${OUTPUT_DIR}/rocks ${LUA_HTMLPARSER_ROCKSPEC}")
 if(DEFINED LIBFLAG)

@@ -845,13 +845,12 @@ endif
 
 LUA_HTMLPARSER_VER=scm-0
 LUA_HTMLPARSER_BUILD_DIR=$(THIRDPARTY_DIR)/lua-htmlparser/build/$(MACHINE)
-LUA_HTMLPARSER_ROCK=$(LUAROCKS_DIR)/lua-htmlparser/$(LUA_HTMLPARSER_VER).rockspec
+LUA_HTMLPARSER_ROCK=$(LUAROCKS_DIR)/lua-htmlparser/htmlparser-$(LUA_HTMLPARSER_VER).rockspec
 
 LUA_SPORE_BUILD_DIR=$(THIRDPARTY_DIR)/lua-Spore/build/$(MACHINE)
 LUA_SPORE_DIR=$(CURDIR)/$(LUA_SPORE_BUILD_DIR)/lua-Spore-prefix/src/lua-Spore
-SPORE_VER=0.3.1-1
 LUA_SPORE_VER=lua-spore-$(SPORE_VER)
-LUA_SPORE_ROCK=$(LUAROCKS_DIR)/lua-spore/$(SPORE_VER)/$(LUA_SPORE_VER).rockspec
+LUA_SPORE_ROCK=$(LUAROCKS_DIR)/lua-spore/$(SPORE_VER)/lua-spore-$(LUA_SPORE_VER).rockspec
 
 SQLITE_BUILD_DIR=$(THIRDPARTY_DIR)/sqlite/build/$(MACHINE)
 SQLITE_DIR=$(CURDIR)/$(SQLITE_BUILD_DIR)/sqlite-prefix/src/sqlite-build
