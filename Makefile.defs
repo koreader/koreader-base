@@ -849,8 +849,9 @@ LUA_HTMLPARSER_ROCK=$(LUAROCKS_DIR)/lua-htmlparser/htmlparser-$(LUA_HTMLPARSER_V
 
 LUA_SPORE_BUILD_DIR=$(THIRDPARTY_DIR)/lua-Spore/build/$(MACHINE)
 LUA_SPORE_DIR=$(CURDIR)/$(LUA_SPORE_BUILD_DIR)/lua-Spore-prefix/src/lua-Spore
-LUA_SPORE_VER=lua-spore-$(SPORE_VER)
-LUA_SPORE_ROCK=$(LUAROCKS_DIR)/lua-spore/$(SPORE_VER)/lua-spore-$(LUA_SPORE_VER).rockspec
+SPORE_VER=0.3.1-1
+LUA_SPORE_VER=$(SPORE_VER)
+LUA_SPORE_ROCK=$(LUAROCKS_DIR)/lua-spore/$(SPORE_VER)/lua-spore-$(SPORE_VER).rockspec
 
 SQLITE_BUILD_DIR=$(THIRDPARTY_DIR)/sqlite/build/$(MACHINE)
 SQLITE_DIR=$(CURDIR)/$(SQLITE_BUILD_DIR)/sqlite-prefix/src/sqlite-build
