@@ -836,21 +836,22 @@ TURBO_BUILD_DIR=$(THIRDPARTY_DIR)/turbo/build/$(MACHINE)
 TURBO_DIR=$(CURDIR)/$(TURBO_BUILD_DIR)/turbo-prefix/src/turbo
 TURBO_FFI_WRAP_LIB=$(OUTPUT_DIR)/common/libtffi_wrap$(LIB_EXT)
 
-LUA_SPORE_BUILD_DIR=$(THIRDPARTY_DIR)/lua-Spore/build/$(MACHINE)
-LUA_SPORE_DIR=$(CURDIR)/$(LUA_SPORE_BUILD_DIR)/lua-Spore-prefix/src/lua-Spore
-SPORE_VER=0.3.1-1
-LUA_SPORE_VER=lua-spore-$(SPORE_VER)
 # Unversioned LR 2 path
 LUAROCKS_DIR=$(OUTPUT_DIR)/rocks/lib/luarocks/rocks
 # Versioned LR 3 path, see koreader-base/pull/1003
 ifeq ($(LR_GT_3_0),1)
 LUAROCKS_DIR=$(OUTPUT_DIR)/rocks/lib/luarocks/rocks-5.1
 endif
-LUA_SPORE_ROCK=$(LUAROCKS_DIR)/lua-spore/$(SPORE_VER)/$(LUA_SPORE_VER).rockspec
 
 LUA_HTMLPARSER_VER=v0.3.6
 LUA_HTMLPARSER_BUILD_DIR=$(THIRDPARTY_DIR)/lua-htmlparser/build/$(MACHINE)
 LUA_HTMLPARSER_ROCK=$(LUAROCKS_DIR)/lua-htmlparser/$(LUA_HTMLPARSER_VER).rockspec
+
+LUA_SPORE_BUILD_DIR=$(THIRDPARTY_DIR)/lua-Spore/build/$(MACHINE)
+LUA_SPORE_DIR=$(CURDIR)/$(LUA_SPORE_BUILD_DIR)/lua-Spore-prefix/src/lua-Spore
+SPORE_VER=0.3.1-1
+LUA_SPORE_VER=lua-spore-$(SPORE_VER)
+LUA_SPORE_ROCK=$(LUAROCKS_DIR)/lua-spore/$(SPORE_VER)/$(LUA_SPORE_VER).rockspec
 
 SQLITE_BUILD_DIR=$(THIRDPARTY_DIR)/sqlite/build/$(MACHINE)
 SQLITE_DIR=$(CURDIR)/$(SQLITE_BUILD_DIR)/sqlite-prefix/src/sqlite-build
@@ -915,11 +916,11 @@ LPEG_DYNLIB=$(OUTPUT_DIR)/rocks/lib/lua/5.1/lpeg.so
 
 
 CMAKE_THIRDPARTY_LIBS := kpvcrlib,nanosvg
-CMAKE_THIRDPARTY_LIBS := $(CMAKE_THIRDPARTY_LIBS),evernote-sdk-lua,luajit,lpeg, lua-htmlparser,turbo
+CMAKE_THIRDPARTY_LIBS := $(CMAKE_THIRDPARTY_LIBS),evernote-sdk-lua,luajit,lpeg,turbo
 CMAKE_THIRDPARTY_LIBS := $(CMAKE_THIRDPARTY_LIBS),zyre,czmq,filemq,libzmq
 CMAKE_THIRDPARTY_LIBS := $(CMAKE_THIRDPARTY_LIBS),libk2pdfopt,tesseract,leptonica
 CMAKE_THIRDPARTY_LIBS := $(CMAKE_THIRDPARTY_LIBS),lj-wpaclient
-CMAKE_THIRDPARTY_LIBS := $(CMAKE_THIRDPARTY_LIBS),lua-Spore,luasec,luasocket,libffi,lua-serialize,glib,lodepng,minizip
+CMAKE_THIRDPARTY_LIBS := $(CMAKE_THIRDPARTY_LIBS),lua-htmlparser,lua-Spore,luasec,luasocket,libffi,lua-serialize,glib,lodepng,minizip
 CMAKE_THIRDPARTY_LIBS := $(CMAKE_THIRDPARTY_LIBS),djvulibre,mupdf,freetype2,harfbuzz,giflib,libpng,zlib
 CMAKE_THIRDPARTY_LIBS := $(CMAKE_THIRDPARTY_LIBS),tar,sdcv,libiconv,gettext,libjpeg-turbo,popen-noshell,sqlite
 CMAKE_THIRDPARTY_LIBS := $(CMAKE_THIRDPARTY_LIBS),openssl,dropbear,openssh

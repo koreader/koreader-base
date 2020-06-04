@@ -24,8 +24,8 @@ all: $(OUTPUT_DIR)/libs $(if $(ANDROID),,$(LUAJIT)) \
 		$(GIF_LIB) \
 		$(if $(USE_LJ_WPACLIENT),$(LJ_WPACLIENT),) \
 		$(TURBO_FFI_WRAP_LIB) \
-		$(LUA_SPORE_ROCK) \
 		$(LUA_HTMLPARSER_ROCK) \
+		$(LUA_SPORE_ROCK) \
 		$(if $(ANDROID),$(LPEG_DYNLIB) $(LPEG_RE),) \
 		$(if $(WIN32),,$(ZMQ_LIB) $(CZMQ_LIB) $(FILEMQ_LIB) $(ZYRE_LIB)) \
 		$(if $(WIN32),,$(OUTPUT_DIR)/sdcv) \
