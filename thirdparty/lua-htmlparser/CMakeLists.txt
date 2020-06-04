@@ -20,7 +20,7 @@ ep_get_source_dir(SOURCE_DIR)
 
 set(LUA_HTMLPARSER_ROCKSPEC rockspec/${LUA_HTMLPARSER_VER}.rockspec)
 
-set(BUILD_CMD sh -c "${LUAROCKS} make --tree=${OUTPUT_DIR}/rocks ${LUA_HTMLPAPRSER_ROCKSPEC}")
+set(BUILD_CMD sh -c "${LUAROCKS} make --tree=${OUTPUT_DIR}/rocks ${LUA_HTMLPARSER_ROCKSPEC}")
 if(DEFINED LIBFLAG)
     set(BUILD_CMD "${BUILD_CMD} LIBFLAG=\"${LIBFLAG}\"")
 endif()
@@ -30,7 +30,7 @@ set(BUILD_CMD "${BUILD_CMD} LUA_INCDIR=\"${LUA_INCDIR}\" LUA_LIBDIR=\"${LUA_LIBD
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
     https://github.com/msva/lua-htmlparser
-    tags/v0.3.6
+    tags/${LUA_HTMLPARSER_VER
     ${SOURCE_DIR}
 )
 
