@@ -843,7 +843,7 @@ ifeq ($(LR_GT_3_0),1)
 LUAROCKS_DIR=$(OUTPUT_DIR)/rocks/lib/luarocks/rocks-5.1
 endif
 
-LUA_HTMLPARSER_VER=v0.3.6
+LUA_HTMLPARSER_VER=scm-0
 LUA_HTMLPARSER_BUILD_DIR=$(THIRDPARTY_DIR)/lua-htmlparser/build/$(MACHINE)
 LUA_HTMLPARSER_ROCK=$(LUAROCKS_DIR)/lua-htmlparser/$(LUA_HTMLPARSER_VER).rockspec
 
