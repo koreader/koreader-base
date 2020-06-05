@@ -1334,6 +1334,31 @@ static int setHeaderInfo(lua_State *L) {
 	return 0;
 }
 
+static int setHeaderProgressMarks(lua_State *L) {
+        CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
+        int pages = luaL_checkint(L, 2);
+
+        // Get a reference to LvDocView internal m_section_bounds that
+        // we will update. We need to add ticks for 0 and 10000.
+        // Values are in 0.01 % (so 10000 = 100%)
+        LVArray<int> & m_section_bounds = doc->text_view->getSectionBounds(true);
+        m_section_bounds.clear();
+        m_section_bounds.add(0);
+        if ( lua_istable(L, 3) ) {
+            int len = lua_objlen(L, 3);
+            for (int i = 1; i <= len; i++) {
+                lua_pushinteger(L, i);
+                lua_gettable(L, 3);
+                if ( lua_isnumber(L, -1) ) {
+                    int n = lua_tointeger(L, -1);
+                    m_section_bounds.add( 10000 * (n-1) / pages);
+                }
+            }
+        }
+        m_section_bounds.add(10000);
+
+        return 0;
+}
 static int setHeaderFont(lua_State *L) {
 	CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
 	const char *face = luaL_checkstring(L, 2);
@@ -3403,6 +3428,7 @@ static const struct luaL_Reg credocument_meth[] = {
     {"setViewDimen", setViewDimen},
     {"setHeaderInfo", setHeaderInfo},
     {"setHeaderFont", setHeaderFont},
+    {"setHeaderProgressMarks", setHeaderProgressMarks},
     {"setFontFace", setFontFace},
     {"setAsPreferredFontWithBias", setAsPreferredFontWithBias},
     {"setFontSize", setFontSize},
