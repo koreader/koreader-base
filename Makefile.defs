@@ -847,6 +847,10 @@ LUA_HTMLPARSER_VER=scm-0
 LUA_HTMLPARSER_BUILD_DIR=$(THIRDPARTY_DIR)/lua-htmlparser/build/$(MACHINE)
 LUA_HTMLPARSER_ROCK=$(LUAROCKS_DIR)/lua-htmlparser/htmlparser-$(LUA_HTMLPARSER_VER).rockspec
 
+LUA_RAPIDJSON_VER=0.6.1-1
+LUA_RAPIDJSON_BUILD_DIR=$(THIRDPARTY_DIR)/lua-rapidjson/build/$(MACHINE)
+LUA_RAPIDJSON_ROCK=$(LUAROCKS_DIR)/lua-rapidjson/rapidjson-$(LUA_RAPIDJSON_VER).rockspec
+
 LUA_SPORE_BUILD_DIR=$(THIRDPARTY_DIR)/lua-Spore/build/$(MACHINE)
 LUA_SPORE_DIR=$(CURDIR)/$(LUA_SPORE_BUILD_DIR)/lua-Spore-prefix/src/lua-Spore
 SPORE_VER=0.3.1-1
@@ -920,7 +924,7 @@ CMAKE_THIRDPARTY_LIBS := $(CMAKE_THIRDPARTY_LIBS),evernote-sdk-lua,luajit,lpeg,t
 CMAKE_THIRDPARTY_LIBS := $(CMAKE_THIRDPARTY_LIBS),zyre,czmq,filemq,libzmq
 CMAKE_THIRDPARTY_LIBS := $(CMAKE_THIRDPARTY_LIBS),libk2pdfopt,tesseract,leptonica
 CMAKE_THIRDPARTY_LIBS := $(CMAKE_THIRDPARTY_LIBS),lj-wpaclient
-CMAKE_THIRDPARTY_LIBS := $(CMAKE_THIRDPARTY_LIBS),lua-htmlparser,lua-Spore,luasec,luasocket,libffi,lua-serialize,glib,lodepng,minizip
+CMAKE_THIRDPARTY_LIBS := $(CMAKE_THIRDPARTY_LIBS),lua-htmlparser,lua-rapidjson,lua-Spore,luasec,luasocket,libffi,lua-serialize,glib,lodepng,minizip
 CMAKE_THIRDPARTY_LIBS := $(CMAKE_THIRDPARTY_LIBS),djvulibre,mupdf,freetype2,harfbuzz,giflib,libpng,zlib
 CMAKE_THIRDPARTY_LIBS := $(CMAKE_THIRDPARTY_LIBS),tar,sdcv,libiconv,gettext,libjpeg-turbo,popen-noshell,sqlite
 CMAKE_THIRDPARTY_LIBS := $(CMAKE_THIRDPARTY_LIBS),openssl,dropbear,openssh

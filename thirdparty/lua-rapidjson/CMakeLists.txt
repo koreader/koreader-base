@@ -1,0 +1,50 @@
+project(lua-rapidjson)
+cmake_minimum_required(VERSION 3.5.1)
+
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_LIST_DIR}/../cmake_modules")
+include("koreader_thirdparty_common")
+include("koreader_thirdparty_git")
+
+enable_language(C CXX)
+
+assert_var_defined(CC)
+assert_var_defined(CFLAGS)
+assert_var_defined(CXX)
+assert_var_defined(CXXFLAGS)
+assert_var_defined(LUA_INCDIR)
+assert_var_defined(LUA_LIBDIR)
+assert_var_defined(LUA_RAPIDJSON_VER)
+assert_var_defined(OUTPUT_DIR)
+assert_var_defined(LUAROCKS)
+
+ep_get_source_dir(SOURCE_DIR)
+
+set(LUA_RAPIDJSON_ROCKSPEC rapidjson-${LUA_RAPIDJSON_VER}.rockspec)
+set(PATCH_CMD "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/flags.patch")
+
+set(BUILD_CMD sh -c "${LUAROCKS} make --tree=${OUTPUT_DIR}/rocks ${LUA_RAPIDJSON_ROCKSPEC}")
+if(DEFINED LIBFLAG)
+    set(BUILD_CMD "${BUILD_CMD} LIBFLAG=\"${LIBFLAG}\"")
+endif()
+set(BUILD_CMD "${BUILD_CMD} CC=\"${CC}\" CXX=\"${CXX}\"")
+set(BUILD_CMD "${BUILD_CMD} CFLAGS=\"${CFLAGS}\" CXXFLAGS=\"${CXXFLAGS}\"")
+set(BUILD_CMD "${BUILD_CMD} LUA_INCDIR=\"${LUA_INCDIR}\" LUA_LIBDIR=\"${LUA_LIBDIR}\"")
+
+ko_write_gitclone_script(
+    GIT_CLONE_SCRIPT_FILENAME
+    https://github.com/xpol/lua-rapidjson
+    ca49bba6a3621438b247da6b117ec123341f7565
+    ${SOURCE_DIR}
+)
+
+include(ExternalProject)
+ExternalProject_Add(
+    ${PROJECT_NAME}
+    DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
+    PATCH_COMMAND ${PATCH_CMD}
+    BUILD_IN_SOURCE 1
+    CONFIGURE_COMMAND ""
+    BUILD_COMMAND ${BUILD_CMD}
+    # skip install
+    INSTALL_COMMAND ""
+)
