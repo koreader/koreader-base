@@ -1,0 +1,15 @@
+diff -uNr a/CMakeLists.txt b/CMakeLists.txt
+--- a/CMakeLists.txt	2020-06-08 19:24:43.384755608 +0200
++++ b/CMakeLists.txt	2020-06-08 19:25:26.545655140 +0200
+@@ -32,11 +32,6 @@
+         set(LINK_FLAGS "-shared")
+     endif(APPLE)
+     add_compile_options(-g -Wall -fPIC)
+-    include(CheckCXXCompilerFlag)
+-    CHECK_CXX_COMPILER_FLAG("-march=native" COMPILER_SUPPORTS_ARCH_NATIVE)
+-    if (COMPILER_SUPPORTS_ARCH_NATIVE)
+-        add_compile_options(-march=native)
+-    endif()
+ else(UNIX)
+     if(WIN32)
+         set(PLAT "win32")

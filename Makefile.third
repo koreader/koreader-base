@@ -696,6 +696,26 @@ $(LUA_HTMLPARSER_ROCK): $(THIRDPARTY_DIR)/lua-htmlparser/*.*
 		$(CURDIR)/$(THIRDPARTY_DIR)/lua-htmlparser && \
 		$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS)
 
+$(LUA_RAPIDJSON_ROCK): $(THIRDPARTY_DIR)/lua-rapidjson/*.*
+	install -d $(LUA_RAPIDJSON_BUILD_DIR)
+	-rm -f $(LUA_RAPIDJSON_ROCK)
+	cd $(LUA_RAPIDJSON_BUILD_DIR) && \
+		$(CMAKE) $(CMAKE_FLAGS) -DOUTPUT_DIR="$(CURDIR)/$(OUTPUT_DIR)" \
+		-DLUA_RAPIDJSON_VER=$(LUA_RAPIDJSON_VER) \
+		-DCC="$(CC)" \
+		-DCXX="$(CXX)" \
+		-DCFLAGS="$(CFLAGS)"\
+		-DCXXFLAGS="$(CXXFLAGS)" \
+		-DLDFLAGS="$(LDFLAGS)" \
+		-I$(LUAJIT_DIR)/src \
+		-DLUAROCKS=$(if $(DARWINHOST),"luarocks --lua-dir=/usr/local/opt/lua@5.1",luarocks) \
+		-DLUA_INCDIR=$(if $(DARWINHOST),/usr/local/opt/lua@5.1/include/lua5.1,"$(LUAJIT_DIR)/src") \
+		-DLUA_LIBDIR=$(if $(DARWINHOST),/usr/local/opt/lua@5.1/lib,"$(abspath $(CURDIR)/$(dir $(LUAJIT_LIB)))") \
+		$(if $(ANDROID),-DLUALIB="$(notdir $(LUAJIT_LIB))",) \
+		$(if $(ANDROID),-DLIBFLAG="-lm $(CURDIR)/$(LUAJIT_LIB)",) \
+		$(CURDIR)/$(THIRDPARTY_DIR)/lua-rapidjson && \
+		$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS)
+
 # override lpeg built by luarocks, this is only necessary for Android
 $(LPEG_DYNLIB) $(LPEG_RE): $(LUAJIT_LIB) $(THIRDPARTY_DIR)/lpeg/*.*
 	install -d $(OUTPUT_DIR)/rocks/lib/lua/5.1
