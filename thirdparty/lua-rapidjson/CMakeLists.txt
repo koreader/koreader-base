@@ -29,7 +29,10 @@ endif()
 set(BUILD_CMD sh -c "${LUAROCKS} make --tree=${OUTPUT_DIR}/rocks ${LUA_RAPIDJSON_ROCKSPEC}")
 set(BUILD_CMD "${BUILD_CMD} CC=\"${CC}\" CXX=\"${CXX}\"")
 set(BUILD_CMD "${BUILD_CMD} CFLAGS=\"${CFLAGS}\" CXXFLAGS=\"${CXXFLAGS}\" LDFLAGS=\"${LDFLAGS} ${LIBFLAG}\"")
-set(BUILD_CMD "${BUILD_CMD} LUA_INCDIR=\"${LUA_INCDIR}\" LUA_LIBDIR=\"${LUA_LIBDIR}\" LUALIB=\"${LUALIB}\"")
+set(BUILD_CMD "${BUILD_CMD} LUA_INCDIR=\"${LUA_INCDIR}\" LUA_LIBDIR=\"${LUA_LIBDIR}\"")
+if(DEFINED LUALIB)
+    set(BUILD_CMD "${BUILD_CMD} LUALIB=\"${LUALIB}\"")
+endif()
 if(DEFINED LIBFLAG)
     set(BUILD_CMD "${BUILD_CMD} LIBFLAG=\"${LIBFLAG}\"")
 endif()
@@ -37,7 +40,7 @@ endif()
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
     https://github.com/xpol/lua-rapidjson
-    75bdc42fa822377ebc2acbeda6b2feaf35e8752b
+    944e0f92beb8d10cf2a307dd4b2e4f31db3ce4e9
     ${SOURCE_DIR}
 )
 
