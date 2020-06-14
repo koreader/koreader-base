@@ -113,7 +113,9 @@ local function keyEventHandler(key_event)
             return 1
         end
     end
-
+    if code == C.AKEYCODE_BACK and android.isBackButtonIgnored() then
+        return 1
+    end
     if action == C.AKEY_EVENT_ACTION_DOWN then
         genEmuEvent(C.EV_KEY, code, 1)
     elseif action == C.AKEY_EVENT_ACTION_UP then
