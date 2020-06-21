@@ -16,7 +16,6 @@
 
 #include "ffi-cdecl.h"
 
-cdecl_type(size_t)
 cdecl_type(off_t)
 
 cdecl_struct(timeval)
@@ -30,6 +29,7 @@ cdecl_func(dup2)
 cdecl_const(O_RDWR)
 cdecl_const(O_RDONLY)
 cdecl_const(O_NONBLOCK)
+cdecl_const(O_CLOEXEC)
 cdecl_func(open)
 cdecl_func(close)
 cdecl_func(fcntl)
@@ -57,7 +57,7 @@ cdecl_const(MAP_SHARED)
 cdecl_const(MAP_FAILED)
 cdecl_const(PATH_MAX)
 cdecl_func(memcmp)
-cdecl_func(mmap)
+cdecl_func(mmap)  // NOTE: off_t gets squished by ffi-cdecl...
 cdecl_func(munmap)
 
 cdecl_func(ioctl)
@@ -67,11 +67,12 @@ cdecl_func(usleep)
 cdecl_func(statvfs)
 cdecl_func(gettimeofday)
 cdecl_func(realpath)
-cdecl_func(basename)
+cdecl_func(basename) // NOTE: We'll want the GNU one (c.f., https://github.com/koreader/koreader/issues/4543)
 cdecl_func(dirname)
 
 cdecl_func(malloc)
 cdecl_func(free)
+cdecl_func(memset)
 
 cdecl_func(strdup)
 cdecl_func(strndup)
@@ -86,3 +87,9 @@ cdecl_func(fputc)
 cdecl_const(FIONREAD)
 cdecl_func(fileno)
 cdecl_func(strerror)
+cdecl_func(fsync)
+cdecl_func(fdatasync)
+
+cdecl_func(setenv)
+cdecl_func(unsetenv)
+//cdecl_func(_putenv) // Win32

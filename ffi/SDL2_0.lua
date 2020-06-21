@@ -19,7 +19,28 @@ local dummy = require("ffi/linux_input_h")
 
 -----------------------------------------------------------------
 
-local SDL = ffi.load("SDL2")
+local SDL = util.ffiLoadCandidates{
+    "SDL2",
+    -- this unfortunately needs to be written in full due to the . in the name
+    "libSDL2-2.0.so",
+    "libSDL2-2.0.so.0",
+}
+
+-- Some features (like SDL_GameControllerRumble) may require a minimum version
+-- of SDL. These helper functions allow us to prevent any issues with calling
+-- undefined symbols.
+local sdl_linked_ver = ffi.new("struct SDL_version[0]")
+SDL.SDL_GetVersion(sdl_linked_ver)
+
+-- Just a copy of a C macro that unfortunately can't be used through FFI.
+-- This assumes that there will never be more than 100 patchlevels.
+local function SDL_VersionNum(x, y, z)
+    return x*1000 + y*100 + z
+end
+
+local function SDL_Linked_Version_AtLeast(x, y, z)
+    return SDL_VersionNum(sdl_linked_ver[0].major, sdl_linked_ver[0].minor, sdl_linked_ver[0].patch) >= SDL_VersionNum(x, y, z)
+end
 
 -- for frontend SDL event handling
 local EV_SDL = 53 -- ASCII code for S
@@ -68,12 +89,12 @@ function S.open()
     if SDL.SDL_Init(bit.bor(SDL.SDL_INIT_VIDEO,
                             SDL.SDL_INIT_JOYSTICK,
                             SDL.SDL_INIT_GAMECONTROLLER)) ~= 0 then
-        error("Cannot initialize SDL.")
+        error("Cannot initialize SDL: " .. ffi.string(SDL.SDL_GetError()))
     end
 
     local full_screen = os.getenv("SDL_FULLSCREEN")
     if full_screen then
-        local mode = ffi.new("struct SDL_DisplayMode")
+        local mode = ffi.new("SDL_DisplayMode")
         if SDL.SDL_GetCurrentDisplayMode(0, mode) ~= 0 then
             error("SDL cannot get current display mode.")
         end
@@ -83,12 +104,14 @@ function S.open()
         S.h = tonumber(os.getenv("EMULATE_READER_H")) or 800
     end
 
+    -- default behaviour of SDL 2.0 is to disable the screensaver. This turns it back on
+    SDL.SDL_EnableScreenSaver()
     -- set up screen (window)
     S.screen = SDL.SDL_CreateWindow("KOReader",
         tonumber(os.getenv("KOREADER_WINDOW_POS_X")) or SDL.SDL_WINDOWPOS_UNDEFINED,
         tonumber(os.getenv("KOREADER_WINDOW_POS_Y")) or SDL.SDL_WINDOWPOS_UNDEFINED,
         S.w, S.h,
-        bit.bor(full_screen and 1 or 0, SDL.SDL_WINDOW_RESIZABLE)
+        bit.bor(full_screen and 1 or 0, SDL.SDL_WINDOW_RESIZABLE, SDL.SDL_WINDOW_ALLOW_HIGHDPI)
     )
 
     S.renderer = SDL.SDL_CreateRenderer(S.screen, -1, 0)
@@ -103,7 +126,7 @@ function S.createTexture(w, h)
 
     return SDL.SDL_CreateTexture(
         S.renderer,
-        SDL.SDL_PIXELFORMAT_ABGR8888,
+        SDL.SDL_PIXELFORMAT_RGBA32,
         SDL.SDL_TEXTUREACCESS_STREAMING,
         w, h)
 end
@@ -203,6 +226,8 @@ local function handleJoyAxisMotionEvent(event)
     last_joystick_event_secs, last_joystick_event_usecs = util.gettime()
 end
 
+local SDL_BUTTON_LEFT = 1
+
 local is_in_touch = false
 
 function S.waitForEvent(usecs)
@@ -279,6 +304,9 @@ function S.waitForEvent(usecs)
         elseif event.type == SDL.SDL_MOUSEBUTTONDOWN
             or event.type == SDL.SDL_FINGERDOWN then
             local is_finger = event.type == SDL.SDL_FINGERDOWN
+            if not is_finger and event.button.button ~= SDL_BUTTON_LEFT then
+                return
+            end
             -- use mouse click to simulate single tap
             is_in_touch = true
             genEmuEvent(C.EV_ABS, C.ABS_MT_TRACKING_ID, 0)
@@ -375,21 +403,36 @@ function S.setWindowIcon(icon)
     if not icon then error("setWindowIcon: no icon path given") end
 
     local Png = require("ffi/png")
-    local ok, re = Png.decodeFromFile(icon)
+    local ok, re = Png.decodeFromFile(icon, 4)
     if not ok then
         error(re.." ("..icon..")")
     end
 
     local BB = require("ffi/blitbuffer")
     local icon_bb = BB.new(re.width, re.height, BB.TYPE_BBRGB32, re.data)
+    icon_bb:setAllocated(1) -- free re.data when bb is freed
     local icon_bit_depth = 32
     local surface = SDL.SDL_CreateRGBSurfaceWithFormatFrom(icon_bb.data,
                                                            icon_bb:getWidth(), icon_bb:getHeight(),
                                                            icon_bit_depth, icon_bb.pitch,
-                                                           SDL.SDL_PIXELFORMAT_ABGR8888)
+                                                           SDL.SDL_PIXELFORMAT_RGBA32)
     SDL.SDL_SetWindowIcon(S.screen, surface)
     SDL.SDL_FreeSurface(surface)
     icon_bb:free()
+end
+
+function S.gameControllerRumble(left_intensity, right_intensity, duration)
+    if S.controller == nil
+       or not SDL_Linked_Version_AtLeast(2, 0, 9)
+    then
+        return
+    end
+
+    left_intensity = left_intensity or 20000
+    right_intensity = right_intensity or 20000
+    duration = duration or 200
+
+    return SDL.SDL_GameControllerRumble(S.controller, left_intensity, right_intensity, duration)
 end
 
 return S

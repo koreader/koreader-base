@@ -1,7 +1,7 @@
-PROJECT(libffi)
-cmake_minimum_required(VERSION 2.8.3)
+project(libffi)
+cmake_minimum_required(VERSION 3.5.1)
 
-SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_LIST_DIR}/../cmake_modules")
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_LIST_DIR}/../cmake_modules")
 include("koreader_thirdparty_common")
 
 enable_language(C)
@@ -20,14 +20,14 @@ if(DEFINED SYSROOT)
 endif()
 
 include(ExternalProject)
-set(LIBFFI_VER "3.2.1")
+set(LIBFFI_VER "3.3")
 ExternalProject_Add(
     ${PROJECT_NAME}
     DOWNLOAD_DIR ${KO_DOWNLOAD_DIR}
     URL https://sourceware.org/pub/libffi/libffi-${LIBFFI_VER}.tar.gz
-    URL_MD5 83b89587607e3eb65c70d361f13bab43
+    URL_MD5 6313289e32f1d38a9df4770b014a2ca7
     CONFIGURE_COMMAND ${CFG_CMD}
     # skip the rest, we only need the header for glib
-    BUILD_COMMAND $(MAKE) -j${PARALLEL_JOBS}
-    INSTALL_COMMAND $(MAKE) -j${PARALLEL_JOBS} uninstall install
+    BUILD_COMMAND ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS}
+    INSTALL_COMMAND ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS} uninstall install
 )

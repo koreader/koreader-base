@@ -23,7 +23,8 @@ struct fb_fix_screeninfo {
   long unsigned int mmio_start;
   unsigned int mmio_len;
   unsigned int accel;
-  short unsigned int reserved[3];
+  short unsigned int capabilities;
+  short unsigned int reserved[2];
 };
 struct fb_var_screeninfo {
   unsigned int xres;
@@ -53,6 +54,7 @@ struct fb_var_screeninfo {
   unsigned int sync;
   unsigned int vmode;
   unsigned int rotate;
-  unsigned int reserved[5];
+  unsigned int colorspace;
+  unsigned int reserved[4];
 };
 ]]

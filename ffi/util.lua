@@ -8,6 +8,10 @@ local bit = require "bit"
 local ffi = require "ffi"
 local C = ffi.C
 
+local lshift = bit.lshift
+local band = bit.band
+local bor = bit.bor
+
 -- win32 utility
 ffi.cdef[[
 typedef unsigned int UINT;
@@ -65,9 +69,9 @@ if ffi.os == "Windows" then
         local ft = ffi.new('FILETIME[1]')[0]
         local tmpres = ffi.new('unsigned long', 0)
         C.GetSystemTimeAsFileTime(ft)
-        tmpres = bit.bor(tmpres, ft.dwHighDateTime)
-        tmpres = bit.lshift(tmpres, 32)
-        tmpres = bit.bor(tmpres, ft.dwLowDateTime)
+        tmpres = bor(tmpres, ft.dwHighDateTime)
+        tmpres = lshift(tmpres, 32)
+        tmpres = bor(tmpres, ft.dwLowDateTime)
         -- converting file time to unix epoch
         tmpres = tmpres - 11644473600000000ULL
         tmpres = tmpres / 10
@@ -227,7 +231,14 @@ end
 -- if with_pipe: a fd for writting
 -- This function returns (to parent): the child pid, and,
 -- if with_pipe: a fd for reading what the child wrote
-function util.runInSubProcess(func, with_pipe)
+-- if double_fork: do a double fork so the child gets reparented to init,
+--                 ensuring automatic reaping of zombies.
+--                 NOTE: In this case, the pid returned will *already*
+--                       have been reaped, making it fairly useless.
+--                       This means you do NOT have to call isSubProcessDone on it.
+--                       It is safe to do so, though, it'll just immediately return success,
+--                       as waitpid will return -1 w/ an ECHILD errno.
+function util.runInSubProcess(func, with_pipe, double_fork)
     local parent_read_fd, child_write_fd
     if with_pipe then
         local pipe = ffi.new('int[2]', {-1, -1})
@@ -241,6 +252,15 @@ function util.runInSubProcess(func, with_pipe)
     end
     local pid = C.fork()
     if pid == 0 then -- child process
+        if double_fork then
+            pid = C.fork()
+            if pid ~= 0 then
+                -- Parent side of the outer fork, we don't need it anymore, so just exit.
+                -- NOTE: Technically ought to be _exit, not exit.
+                os.exit((pid < 0) and 1 or 0)
+            end
+            -- pid == 0 -> inner child :)
+        end
         -- We need to wrap it with pcall: otherwise, if we were in a
         -- subroutine, the error would just abort the coroutine, bypassing
         -- our os.exit(0), and this subprocess would be a working 2nd instance
@@ -272,8 +292,17 @@ function util.runInSubProcess(func, with_pipe)
         os.exit(0)
     end
     -- parent/main process
-    if pid == -1 then -- on failure, fork() returns -1
+    if pid < 0 then -- on failure, fork() returns -1
         return false
+    end
+    -- If we double-fork, reap the outer fork now, since its only purpose is fork -> _exit
+    if double_fork then
+        local status = ffi.new('int[1]')
+        local ret = C.waitpid(pid, status, 0)
+        -- Returns pid on success, -1 on failure
+        if ret < 0 then
+            return false
+        end
     end
     if child_write_fd then
         -- close our duplicate of child fd
@@ -365,35 +394,107 @@ function util.readAllFromFD(fd)
     local data = {}
     while true do
         -- print("reading from fd")
-	local bytes_read = tonumber(C.read(fd, ffi.cast('void*', buffer), chunksize))
-	if bytes_read < 0 then
+        local bytes_read = tonumber(C.read(fd, ffi.cast('void*', buffer), chunksize))
+        if bytes_read < 0 then
             local err = ffi.errno()
             print("readFromFD() error: "..ffi.string(C.strerror(err)))
             break
-	elseif bytes_read == 0 then -- EOF, no more data to read
-	    break
-	else
-	    table.insert(data, ffi.string(buffer, bytes_read))
-	end
+        elseif bytes_read == 0 then -- EOF, no more data to read
+            break
+        else
+            table.insert(data, ffi.string(buffer, bytes_read))
+        end
     end
     C.close(fd)
     -- print("read fd closed")
     return table.concat(data)
 end
 
+--- Ensure content written to lua file or fd is flushed to the storage device.
+--
+-- Accepts a low-level file descriptor, or a higher level lua file object,
+-- which must still be opened (call :close() only after having called this).
+-- If optional parameter sync_metadata is true, use fsync() to also flush
+-- file metadata (timestamps...), otherwise use fdatasync() to only flush
+-- file content and file size.
+-- Returns true if syscall successful
+-- See https://stackoverflow.com/questions/37288453/calling-fsync2-after-close2
+function util.fsyncOpenedFile(fd_or_luafile, sync_metadata)
+    local fileno
+    if type(fd_or_luafile) == "number" then -- low-level fd
+        fileno = fd_or_luafile
+    else -- lua file object
+        fd_or_luafile:flush() -- flush user-space buffers to system buffers
+        fileno = C.fileno(fd_or_luafile)
+    end
+    local ret
+    if sync_metadata then
+        ret = C.fsync(fileno) -- sync file data and metadata
+    else
+        ret = C.fdatasync(fileno) -- sync only file data
+    end
+    if ret ~= 0 then
+        local err = ffi.errno()
+        return false, ffi.string(C.strerror(err))
+    end
+    return true
+end
+
+--- Ensure directory content updates are flushed to the storage device.
+--
+-- Accepts the directory path as a string, or a file path (from which
+-- we can deduce the directory to sync).
+-- Returns true if syscall successful
+-- See http://blog.httrack.com/blog/2013/11/15/everything-you-always-wanted-to-know-about-fsync/
+function util.fsyncDirectory(path)
+    local attributes, err = lfs.attributes(path)
+    if not attributes or err ~= nil then
+        return false, err
+    end
+    if attributes.mode ~= "directory" then
+        -- file, symlink...: get its parent directory
+        path = util.dirname(path)
+        attributes, err = lfs.attributes(path)
+        if not attributes or err ~= nil or attributes.mode ~= "directory" then
+            return false, err
+        end
+    end
+    local dirfd = C.open(ffi.cast("char *", path), C.O_RDONLY)
+    if dirfd == -1 then
+        err = ffi.errno()
+        return false, ffi.string(C.strerror(err))
+    end
+    -- Not certain it's safe to use fdatasync(), so let's go with the more costly fsync()
+    -- https://austin-group-l.opengroup.narkive.com/vC4Fjvsn/fsync-ing-a-directory-file-descriptor
+    local ret = C.fsync(dirfd)
+    if ret ~= 0 then
+        err = ffi.errno()
+        C.close(dirfd)
+        return false, ffi.string(C.strerror(err))
+    end
+    C.close(dirfd)
+    return true
+end
+
 --- Gets UTF-8 charcode.
+-- See unicodeCodepointToUtf8 in frontend/util for an encoder.
 function util.utf8charcode(charstring)
     local ptr = ffi.cast("uint8_t *", charstring)
     local len = #charstring
     if len == 1 then
-        return bit.band(ptr[0], 0x7F)
+        return band(ptr[0], 0x7F)
     elseif len == 2 then
-        return bit.lshift(bit.band(ptr[0], 0x1F), 6) +
-            bit.band(ptr[1], 0x3F)
+        return lshift(band(ptr[0], 0x1F), 6) +
+            band(ptr[1], 0x3F)
     elseif len == 3 then
-        return bit.lshift(bit.band(ptr[0], 0x0F), 12) +
-            bit.lshift(bit.band(ptr[1], 0x3F), 6) +
-            bit.band(ptr[2], 0x3F)
+        return lshift(band(ptr[0], 0x0F), 12) +
+            lshift(band(ptr[1], 0x3F), 6) +
+            band(ptr[2], 0x3F)
+    elseif len == 4 then
+        return lshift(band(ptr[0], 0x07), 18) +
+            lshift(band(ptr[1], 0x3F), 12) +
+            lshift(band(ptr[2], 0x3F), 6) +
+            band(ptr[3], 0x3F)
     end
 end
 
@@ -415,6 +516,21 @@ function util.multiByteToUTF8(str, codepage)
     end
 end
 
+function util.ffiLoadCandidates(candidates)
+    local lib_loaded, lib
+
+    for _, candidate in ipairs(candidates) do
+        lib_loaded, lib = pcall(ffi.load, candidate)
+
+        if lib_loaded then
+            return lib
+        end
+    end
+
+    -- we failed, lib is the error message
+    return lib_loaded, lib
+end
+
 --- Returns true if isWindows…
 function util.isWindows()
     return ffi.os == "Windows"
@@ -430,29 +546,32 @@ function util.isAndroid()
     return isAndroid
 end
 
-local haveSDL1 = nil
 local haveSDL2 = nil
-
-function util.haveSDL1()
-    if haveSDL1 == nil then
-        haveSDL1 = pcall(ffi.load, "SDL")
-    end
-    return haveSDL1
-end
 
 --- Returns true if SDL2
 function util.haveSDL2()
+    local err
+
     if haveSDL2 == nil then
-        haveSDL2 = pcall(ffi.load, "SDL2")
+        haveSDL2, err = util.ffiLoadCandidates{
+            "SDL2",
+            -- this unfortunately needs to be written in full due to the . in the name
+            "libSDL2-2.0.so",
+            "libSDL2-2.0.so.0",
+        }
     end
+    if not haveSDL2 then
+        print("SDL2 not loaded:", err)
+    end
+
     return haveSDL2
 end
 
 local isSDL = nil
---- Returns true if SDL (can be 1 or 2)
+--- Returns true if SDL
 function util.isSDL()
     if isSDL == nil then
-        isSDL = util.haveSDL2() or util.haveSDL1()
+        isSDL = util.haveSDL2()
     end
     return isSDL
 end
@@ -537,26 +656,6 @@ function util.template(str, ...)
             return params[tonumber(i)]
         end)
     return result
-end
-
-function util.unichar(value)
--- this function is taken from dkjson
--- http://dkolf.de/src/dkjson-lua.fsl/
-    local floor = math.floor
-    local strchar = string.char
-    if value < 0 then
-        return nil
-    elseif value <= 0x007f then
-        return strchar(value)
-    elseif value <= 0x07ff then
-        return strchar(0xc0 + floor(value/0x40),0x80 + (floor(value) % 0x40))
-    elseif value <= 0xffff then
-        return strchar(0xe0 + floor(value/0x1000), 0x80 + (floor(value/0x40) % 0x40), 0x80 + (floor(value) % 0x40))
-    elseif value <= 0x10ffff then
-        return strchar(0xf0 + floor(value/0x40000), 0x80 + (floor(value/0x1000) % 0x40), 0x80 + (floor(value/0x40) % 0x40), 0x80 + (floor(value) % 0x40))
-    else
-        return nil
-    end
 end
 
 return util

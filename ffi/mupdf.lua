@@ -171,6 +171,12 @@ function document_mt.__index:getPages()
     return pages
 end
 
+function document_mt.__index:isDocumentReflowable()
+    if self.is_reflowable then return self.is_reflowable end
+    self.is_reflowable = M.fz_is_document_reflowable(context(), self.doc) == 1
+    return self.is_reflowable
+end
+
 function document_mt.__index:layoutDocument(width, height, em)
     -- Reset the cache.
     self.number_of_pages = nil
@@ -571,7 +577,7 @@ function page_mt.__index:draw_new(draw_context, width, height, offset_x, offset_
     bbox.x1 = offset_x + width
     bbox.y1 = offset_y + height
 
-    local bb = BlitBuffer.new(width, height, mupdf.color and BlitBuffer.TYPE_BBRGB32 or BlitBuffer.TYPE_BB8A)
+    local bb = BlitBuffer.new(width, height, mupdf.color and BlitBuffer.TYPE_BBRGB32 or BlitBuffer.TYPE_BB8)
 
     local colorspace = mupdf.color and M.fz_device_rgb(context())
         or M.fz_device_gray(context())
@@ -579,7 +585,7 @@ function page_mt.__index:draw_new(draw_context, width, height, offset_x, offset_
         colorspace = M.fz_device_bgr(context())
     end
     local pix = W.mupdf_new_pixmap_with_bbox_and_data(
-        context(), colorspace, bbox, nil, 1, ffi.cast("unsigned char*", bb.data))
+        context(), colorspace, bbox, nil, mupdf.color and 1 or 0, ffi.cast("unsigned char*", bb.data))
     if pix == nil then merror("cannot allocate pixmap") end
 
     run_page(self, pix, ctm)
@@ -661,14 +667,16 @@ function mupdf.renderImage(data, size, width, height)
     -- mupdf_get_pixmap_from_image() may not scale image to the
     -- width and height provided, so check and scale it if needed
     if width and height then
-        -- MuPDF 1.12 fz_scale_pixmap() may behave strangely (on ARM only!)
-        -- if it is given non-integer width and height, and returns a corrupted
-        -- image with a different ncomp than original pixmap...)
+        -- Ensure we pass integer values for width & height to fz_scale_pixmap(),
+        -- because it enforces an alpha channel otherwise...
         width = math.floor(width)
         height = math.floor(height)
         if p_width ~= width or p_height ~= height then
             local scaled_pixmap = M.fz_scale_pixmap(context(), pixmap, 0, 0, width, height, nil)
             M.fz_drop_pixmap(context(), pixmap)
+            if scaled_pixmap == nil then
+                merror("could not create scaled pixmap from pixmap")
+            end
             pixmap = scaled_pixmap
             p_width = M.fz_pixmap_width(context(), pixmap)
             p_height = M.fz_pixmap_height(context(), pixmap)
@@ -719,27 +727,45 @@ function mupdf.scaleBlitBuffer(bb, width, height)
     -- We need first to convert our BlitBuffer to a pixmap
     local orig_w, orig_h = bb:getWidth(), bb:getHeight()
     local bbtype = bb:getType()
-    -- bb types TYPE_BB8A and TYPE_BBRGB32 work as-is with MuPDF
-    -- but the other types' bb.data give corrupted resulting pixmap.
     local colorspace
     local converted_bb
+    local alpha
     local stride
-    if bbtype == BlitBuffer.TYPE_BB8A then
+    -- MuPDF should know how to handle *most* of our BB types,
+    -- special snowflakes excluded (4bpp & RGB565),
+    -- in which case we feed it a temporary copy in the closest format it'll understand.
+    if bbtype == BlitBuffer.TYPE_BB8 then
         colorspace = M.fz_device_gray(context())
+        alpha = 0
+        stride = orig_w
+    elseif bbtype == BlitBuffer.TYPE_BB8A then
+        colorspace = M.fz_device_gray(context())
+        alpha = 1
         stride = orig_w * 2
+    elseif bbtype == BlitBuffer.TYPE_BBRGB24 then
+        if mupdf.bgr then
+            colorspace = M.fz_device_bgr(context())
+        else
+            colorspace = M.fz_device_rgb(context())
+        end
+        alpha = 0
+        stride = orig_w * 3
     elseif bbtype == BlitBuffer.TYPE_BBRGB32 then
         if mupdf.bgr then
             colorspace = M.fz_device_bgr(context())
         else
             colorspace = M.fz_device_rgb(context())
         end
+        alpha = 1
         stride = orig_w * 4
+    elseif bbtype == BlitBuffer.TYPE_BB4 then
+        converted_bb = BlitBuffer.new(orig_w, orig_h, BlitBuffer.TYPE_BB8)
+        converted_bb:blitFrom(bb, 0, 0, 0, 0, orig_w, orig_h)
+        bb = converted_bb -- we don't free() the provided bb, but we'll have to free our converted_bb
+        colorspace = M.fz_device_gray(context())
+        alpha = 0
+        stride = orig_w
     else
-        -- We need to convert the other types to one of the working
-        -- types, and TYPE_BBRGB32 is the only one that works with
-        -- the following operation (greyscale TYPE_B48 and TYPE_BB8
-        -- get corrupted if we blit them to a TYPE_BB8A, but are fine
-        -- when blited to a TYPE_BBRGB32)
         converted_bb = BlitBuffer.new(orig_w, orig_h, BlitBuffer.TYPE_BBRGB32)
         converted_bb:blitFrom(bb, 0, 0, 0, 0, orig_w, orig_h)
         bb = converted_bb -- we don't free() the provided bb, but we'll have to free our converted_bb
@@ -748,26 +774,33 @@ function mupdf.scaleBlitBuffer(bb, width, height)
         else
             colorspace = M.fz_device_rgb(context())
         end
+        alpha = 1
         stride = orig_w * 4
     end
     -- We can now create a pixmap from this bb of correct type
-    -- whose bb.data is valid for mupdf
     local pixmap = W.mupdf_new_pixmap_with_data(context(), colorspace,
-                    orig_w, orig_h, nil, 1, stride, ffi.cast("unsigned char*", bb.data))
+                    orig_w, orig_h, nil, alpha, stride, ffi.cast("unsigned char*", bb.data))
     if pixmap == nil then
         if converted_bb then converted_bb:free() end -- free our home made bb
         merror("could not create pixmap from blitbuffer")
     end
     -- We can now scale the pixmap
-    -- Better to ensure we give integer width and height, to avoid a black 1-pixel line at right and bottom of image
+    -- Better to ensure we give integer width and height, to avoid a black 1-pixel line at right and bottom of image.
+    -- Also, fz_scale_pixmap enforces an alpha channel if w or h are floats...
     local scaled_pixmap = M.fz_scale_pixmap(context(), pixmap, 0, 0, math.floor(width), math.floor(height), nil)
     M.fz_drop_pixmap(context(), pixmap) -- free our original pixmap
+    if scaled_pixmap == nil then
+        if converted_bb then converted_bb:free() end -- free our home made bb
+        merror("could not create scaled pixmap from pixmap")
+    end
     local p_width = M.fz_pixmap_width(context(), scaled_pixmap)
     local p_height = M.fz_pixmap_height(context(), scaled_pixmap)
     -- And convert the pixmap back to a BlitBuffer
     bbtype = nil
     local ncomp = M.fz_pixmap_components(context(), scaled_pixmap)
-    if ncomp == 2 then bbtype = BlitBuffer.TYPE_BB8A
+    if ncomp == 1 then bbtype = BlitBuffer.TYPE_BB8
+    elseif ncomp == 2 then bbtype = BlitBuffer.TYPE_BB8A
+    elseif ncomp == 3 then bbtype = BlitBuffer.TYPE_BBRGB24
     elseif ncomp == 4 then bbtype = BlitBuffer.TYPE_BBRGB32
     else
         if converted_bb then converted_bb:free() end -- free our home made bb

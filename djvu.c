@@ -32,8 +32,18 @@
 #include "koptcrop.h"
 #include "djvu.h"
 
+#define ABS(x) ((x<0)?(-x):(x))
+
 #define MIN(a, b)      ((a) < (b) ? (a) : (b))
 #define MAX(a, b)      ((a) > (b) ? (a) : (b))
+
+#define LUA_SETTABLE_STACK_TOP   ((int)-3)
+#define lua_setkeyval(L, type, key, val) do { \
+	lua_pushstring(L, key); \
+	lua_push##type(L, val); \
+	lua_settable(L, LUA_SETTABLE_STACK_TOP); \
+} while(0)
+
 
 typedef struct DjvuDocument {
 	ddjvu_context_t *context;
@@ -48,6 +58,53 @@ typedef struct DjvuPage {
 	ddjvu_pageinfo_t info;
 	DjvuDocument *doc;
 } DjvuPage;
+
+
+typedef enum DjvuZoneId {
+	ZI_PAGE,
+	ZI_COLUMN,
+	ZI_REGION,
+	ZI_PARA,
+	ZI_LINE,
+	ZI_WORD,
+	ZI_CHAR,
+	N_ZI
+} DjvuZoneId;
+
+static const char *djvuZoneName[N_ZI] = {
+	"page",
+	"column",
+	"region",
+	"para",
+	"line",
+	"word",
+	"char"
+};
+
+typedef enum DjvuZoneSexpIdx {
+	SI_ZONE_NAME,
+	SI_ZONE_XMIN,
+	SI_ZONE_YMIN,
+	SI_ZONE_XMAX,
+	SI_ZONE_YMAX,
+	SI_ZONE_DATA,
+	N_SI_ZONE
+} DjvuZoneSexpIdx;
+
+static const char *djvuZoneLuaKey[N_SI_ZONE] = {
+	NULL,
+	"x0",
+	"y1",
+	"x1",
+	"y0",
+	NULL
+};
+
+
+int int_from_miniexp_nth(int n, miniexp_t sexp) {
+	miniexp_t s = miniexp_nth(n, sexp);
+	return (miniexp_numberp(s) ? miniexp_to_int(s) : ((int)0));
+}
 
 static int handle(lua_State *L, ddjvu_context_t *ctx, int wait)
 {
@@ -394,26 +451,49 @@ static int getPageInfo(lua_State *L) {
 	return 5;
 }
 
-/*
- * Return a table like following:
- * {
- *    -- a line entry
- *    1 = {
- *       1 = {word="This", x0=377, y0=4857, x1=2427, y1=5089},
- *       2 = {word="is", x0=377, y0=4857, x1=2427, y1=5089},
- *       3 = {word="Word", x0=377, y0=4857, x1=2427, y1=5089},
- *       4 = {word="List", x0=377, y0=4857, x1=2427, y1=5089},
- *       x0 = 377, y0 = 4857, x1 = 2427, y1 = 5089,
- *    },
+/** Fill Lua table with DjVu text annotations
  *
- *    -- an other line entry
- *    2 = {
- *       1 = {word="This", x0=377, y0=4857, x1=2427, y1=5089},
- *       2 = {word="is", x0=377, y0=4857, x1=2427, y1=5089},
- *       x0 = 377, y0 = 4857, x1 = 2427, y1 = 5089,
- *    },
- * }
+ * This simply maps the S-expression structure of `anno` into a Lua table, @see
+ * djvused(1) for details.
+ *
+ * @param L        Lua state. Table to be filled should exist at top of stack.
+ * @param yheight  Page height. DjVu zones are origined at the bottom-left, but
+ *                   koptinterface convention origins at top-left.
  */
+void lua_settable_djvu_anno(lua_State *L, miniexp_t anno, int yheight) {
+	if (!L) return;
+	if (!miniexp_consp(anno)) return;
+
+	miniexp_t anno_type = miniexp_nth(SI_ZONE_NAME, anno);
+	if (!miniexp_symbolp(anno_type)) return;
+
+	int xmin = int_from_miniexp_nth(SI_ZONE_XMIN, anno);
+	int ymin = int_from_miniexp_nth(SI_ZONE_YMIN, anno);
+	int xmax = int_from_miniexp_nth(SI_ZONE_XMAX, anno);
+	int ymax = int_from_miniexp_nth(SI_ZONE_YMAX, anno);
+
+	lua_setkeyval(L, integer, djvuZoneLuaKey[SI_ZONE_XMIN], xmin);
+	lua_setkeyval(L, integer, djvuZoneLuaKey[SI_ZONE_YMIN], yheight - ymin);
+	lua_setkeyval(L, integer, djvuZoneLuaKey[SI_ZONE_XMAX], xmax);
+	lua_setkeyval(L, integer, djvuZoneLuaKey[SI_ZONE_YMAX], yheight - ymax);
+
+	for (int i = SI_ZONE_DATA; i < miniexp_length(anno); i++) {
+		miniexp_t data = miniexp_nth(i, anno);
+		int tindex = i - SI_ZONE_DATA + 1; // Lua tables are 1-indexed
+
+		if (miniexp_stringp(data)) {
+			const char *zname = miniexp_to_name(anno_type);
+			const char *txt = miniexp_to_str(data);
+			lua_setkeyval(L, string, zname, txt);
+		} else {
+			lua_pushinteger(L, tindex);
+			lua_newtable(L);
+			lua_settable_djvu_anno(L, data, yheight);
+			lua_settable(L, LUA_SETTABLE_STACK_TOP);
+		}
+	}
+}
+
 static int getPageText(lua_State *L) {
 	DjvuDocument *doc = (DjvuDocument*) luaL_checkudata(L, 1, "djvudocument");
 	int pageno = luaL_checkint(L, 2);
@@ -439,94 +519,8 @@ static int getPageText(lua_State *L) {
 		handle(L, doc->context, True);
 	}
 
-	/* throuw page info and obtain lines info, after this, sexp's entries
-	 * are lines. */
-	sexp = miniexp_cdr(sexp);
-	/* get number of lines in a page */
-	nr_line = miniexp_length(sexp);
-	/* table that contains all the lines */
 	lua_newtable(L);
-
-	counter_l = 1;
-	for(i = 1; i <= nr_line; i++) {
-		/* retrive one line entry */
-		se_line = miniexp_nth(i, sexp);
-		nr_word = miniexp_length(se_line);
-		if (nr_word == 0) {
-			continue;
-		}
-
-		/* subtable that contains words in a line */
-		lua_pushnumber(L, counter_l);
-		lua_newtable(L);
-		counter_l++;
-
-		/* set line position */
-		lua_pushstring(L, "x0");
-		lua_pushnumber(L, miniexp_to_int(miniexp_nth(1, se_line)));
-		lua_settable(L, -3);
-
-		lua_pushstring(L, "y1");
-		lua_pushnumber(L,
-				info.height - miniexp_to_int(miniexp_nth(2, se_line)));
-		lua_settable(L, -3);
-
-		lua_pushstring(L, "x1");
-		lua_pushnumber(L, miniexp_to_int(miniexp_nth(3, se_line)));
-		lua_settable(L, -3);
-
-		lua_pushstring(L, "y0");
-		lua_pushnumber(L,
-				info.height - miniexp_to_int(miniexp_nth(4, se_line)));
-		lua_settable(L, -3);
-
-		/* now loop through each word in the line */
-		counter_w = 1;
-		for(j = 1; j <= nr_word; j++) {
-			/* retrive one word entry */
-			se_word = miniexp_nth(j, se_line);
-			/* check to see whether the entry is empty */
-			word = miniexp_to_str(miniexp_nth(5, se_word));
-			if (!word) {
-				continue;
-			}
-
-			/* create table that contains info for a word */
-			lua_pushnumber(L, counter_w);
-			lua_newtable(L);
-			counter_w++;
-
-			/* set word info */
-			lua_pushstring(L, "x0");
-			lua_pushnumber(L, miniexp_to_int(miniexp_nth(1, se_word)));
-			lua_settable(L, -3);
-
-			lua_pushstring(L, "y1");
-			lua_pushnumber(L,
-					info.height - miniexp_to_int(miniexp_nth(2, se_word)));
-			lua_settable(L, -3);
-
-			lua_pushstring(L, "x1");
-			lua_pushnumber(L, miniexp_to_int(miniexp_nth(3, se_word)));
-			lua_settable(L, -3);
-
-			lua_pushstring(L, "y0");
-			lua_pushnumber(L,
-					info.height - miniexp_to_int(miniexp_nth(4, se_word)));
-			lua_settable(L, -3);
-
-			lua_pushstring(L, "word");
-			lua_pushstring(L, word);
-			lua_settable(L, -3);
-
-			/* set word entry to line subtable */
-			lua_settable(L, -3);
-		} /* end of for (j) */
-
-		/* set line entry to page text table */
-		lua_settable(L, -3);
-	} /* end of for (i) */
-
+	lua_settable_djvu_anno(L, sexp, info.height);
 	return 1;
 }
 
@@ -662,6 +656,26 @@ static int drawPage(lua_State *L) {
 	BlitBuffer *bb = (BlitBuffer*) lua_topointer(L, 3);
 	ddjvu_render_mode_t djvu_render_mode = (int) luaL_checkint(L, 6);
 	ddjvu_rect_t pagerect, renderrect;
+	// map KOReader gamma to djvulibre gamma
+	// djvulibre goes from 0.5 to 5.0
+	double gamma = ABS(dc->gamma); // not sure why, but 1 is given as -1?
+	if (gamma == 2) {
+		// default
+		gamma = 2.2;
+	} else if (gamma < 2) {
+		// with this function, 0.8 = 5, 2 = 2.2
+		gamma = 6.86666 - 2.33333 * gamma;
+		if (gamma > 5) {
+			gamma = 5;
+		}
+	} else if (gamma > 2) {
+		// with this function, 9 = 0.5, 2 = 2.2
+		gamma = 2.68571 - 0.242856 * gamma;
+		if (gamma < 0.5) {
+			gamma = 0.5;
+		}
+	}
+	ddjvu_format_set_gamma(page->doc->pixelformat, gamma);
 	int bbsize = (bb->w)*(bb->h)*page->doc->pixelsize;
 	uint8_t *imagebuffer = bb->data;
 
@@ -699,23 +713,6 @@ static int drawPage(lua_State *L) {
 
 	if (!ddjvu_page_render(page->page_ref, djvu_render_mode, &pagerect, &renderrect, page->doc->pixelformat, bb->w*page->doc->pixelsize, imagebuffer))
 		memset(imagebuffer, 0xFF, bbsize);
-
-	/* Gamma correction of the blitbuffer, do we need to build this into BlitBuffer? */
-	unsigned char gamma_map[256];
-	unsigned char *s = imagebuffer;
-	int k, x, y;
-
-	if (dc->gamma != -1.0) {
-		for (k = 0; k < 256; k++)
-			gamma_map[k] = pow(k / 255.0f, dc->gamma) * 255;
-
-		for (y = 0; y < bb->h; y++) {
-			for (x = 0; x < bb->w; x++) {
-				k = y*bb->pitch + x;
-				s[k] = gamma_map[s[k]];
-			}
-		}
-	}
 
 	return 0;
 }

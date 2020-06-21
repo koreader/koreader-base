@@ -1,4 +1,4 @@
-// CPPFLAGS="-I../koreader-base/thirdparty/leptonica/leptonica/src" ./ffi-cdecl
+// CPPFLAGS="-I/var/tmp/niluje/leptonica/src"
 #include <allheaders.h>
 
 #include "ffi-cdecl.h"

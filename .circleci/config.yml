@@ -1,0 +1,191 @@
+version: 2
+
+workflows:
+  version: 2
+  lint_build_test:
+    jobs:
+      - lint
+      - emu_gcc_ninja:
+          filters:
+            branches:
+              only: master
+          requires:
+            - lint
+      - emu_gcc_ninja_debug:
+          requires:
+            - lint
+      - emu_gcc_make:
+          filters:
+            branches:
+              only: master
+          requires:
+            - lint
+      - emu_clang_ninja:
+          requires:
+            - lint
+      - kindle:
+          requires:
+            - emu_gcc_ninja_debug
+      - kobo:
+          requires:
+            - emu_gcc_ninja_debug
+      - pocketbook:
+          requires:
+            - emu_gcc_ninja_debug
+      - sony-prstux:
+          requires:
+            - emu_gcc_ninja_debug
+      - cervantes:
+          requires:
+            - emu_gcc_ninja_debug
+      - android-arm:
+          requires:
+            - emu_gcc_ninja_debug
+      - android-x86:
+          filters:
+            branches:
+              only: master
+          requires:
+            - emu_gcc_ninja_debug
+
+
+jobs:
+  lint:
+    docker:
+      - image: koreader/kobase:0.1.5
+    environment:
+      BASH_ENV: "~/.bashrc"
+    steps:
+      - checkout
+      - run:
+          name: install
+          command: |
+            source .ci/lint_install.sh
+      - run:
+          name: lint
+          command: |
+            source .ci/lint_script.sh
+
+  emu: &EMU_TPL
+    docker:
+      - image: koreader/kobase:0.1.6
+    environment: &EMU_ENV_LST
+      BASH_ENV: "~/.bashrc"
+      EMULATE_READER: "1"
+      CC: "gcc"
+    steps:
+      - checkout
+      - run:
+          name: install
+          command: |
+            source .ci/emulator_install.sh
+
+      - restore_cache:
+          keys:
+            - emu-{{ .Environment.CIRCLE_JOB }}-
+            - emu-
+
+      - run:
+          name: build
+          command: |
+            source .ci/build_script.sh
+      - run:
+          name: test
+          command: |
+            source .ci/test_script.sh
+
+      - save_cache:
+          key: emu-{{ .Environment.CIRCLE_JOB }}-{{ epoch }}
+          paths:
+            - "/home/ko/.ccache"
+
+  emu_gcc_ninja:
+    <<: *EMU_TPL
+
+  emu_gcc_ninja_debug:
+    <<: *EMU_TPL
+    environment:
+      <<: *EMU_ENV_LST
+      KODEBUG: "1"
+
+  emu_gcc_make:
+    <<: *EMU_TPL
+    environment:
+      <<: *EMU_ENV_LST
+      USE_MAKE: "1"
+
+  emu_clang_ninja:
+    <<: *EMU_TPL
+    docker:
+      - image: koreader/kobase-clang:0.1.4
+    environment:
+      <<: *EMU_ENV_LST
+      CC: "clang-9"
+      CXX: "clang++-9"
+
+
+
+  xcompile: &XCOMPILE_TPL
+    machine: true
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - xcompile-{{ .Environment.CIRCLE_JOB }}-
+
+      - run:
+          name: build
+          command: |
+            source .ci/build_script.sh
+      - run:
+          name: test
+          command: |
+            source .ci/test_script.sh
+
+      - save_cache:
+          key: xcompile-{{ .Environment.CIRCLE_JOB }}-{{ epoch }}
+          paths:
+            - "/home/circleci/.ccache"
+
+  kindle:
+    <<: *XCOMPILE_TPL
+    environment:
+      TARGET: "kindle"
+      DOCKER_IMG: koreader/kokindle:0.1.2
+
+  kobo:
+    <<: *XCOMPILE_TPL
+    environment:
+      TARGET: "kobo"
+      DOCKER_IMG: koreader/kokobo:0.1.2
+
+  pocketbook:
+    <<: *XCOMPILE_TPL
+    environment:
+      TARGET: "pocketbook"
+      DOCKER_IMG: koreader/kopb:0.2.0
+
+  sony-prstux:
+    <<: *XCOMPILE_TPL
+    environment:
+      TARGET: "sony-prstux"
+      DOCKER_IMG: koreader/kobase:0.1.5
+
+  cervantes:
+    <<: *XCOMPILE_TPL
+    environment:
+      TARGET: "cervantes"
+      DOCKER_IMG: koreader/kocervantes:0.1.2
+
+  android-arm: &ANDROID_TPL
+    <<: *XCOMPILE_TPL
+    environment:
+      TARGET: "android"
+      DOCKER_IMG: koreader/koandroid:0.3.1
+
+  android-x86:
+    <<: *ANDROID_TPL
+    environment:
+      TARGET: "android"
+      ANDROID_ARCH: "x86"
+      DOCKER_IMG: koreader/koandroid:0.3.1

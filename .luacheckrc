@@ -4,10 +4,6 @@ std = "luajit"
 -- ignore implicit self
 self = false
 
-globals = {
-    "G_reader_settings",
-}
-
 read_globals = {
     "DLANDSCAPE_CLOCKWISE_ROTATION",
     "lfs",
@@ -15,6 +11,7 @@ read_globals = {
 
 exclude_files = {
     "build/*",
+    "ffi/sha2.lua",
     "luafilesystem/*",
     "thirdparty/*",
 }

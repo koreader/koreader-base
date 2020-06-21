@@ -15,7 +15,7 @@ int fmq_server_test(bool verbose);
 int fmq_client_test(bool verbose);
 ]]
 
-describe("Zyre module #notest", function()
+describe("Zyre module", function()
     it("should pass self test", function()
         local verbose = true
         zyre.zre_msg_test(verbose)
@@ -83,7 +83,7 @@ security
     password = guest
 ]]
 
-describe("FileMQ module #notest", function()
+describe("FileMQ module", function()
     io.open("anonymous.cfg", "w"):write(anonymous_cfg)
     io.open("server_test.cfg", "w"):write(server_test_cfg)
     io.open("client_test.cfg", "w"):write(client_test_cfg)

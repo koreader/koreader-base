@@ -1,8 +1,10 @@
 /*
  * Copyright (C) 2004-2015 Freescale Semiconductor, Inc. All Rights Reserved.
  *
+ * NOTE: Upstream kernels available here: https://github.com/kobolabs/Kobo-Reader/tree/master/hw
  * - slightly modified (commented out include of fb.h) for Lua integration
- * - Frankensteined w/ Mark6 stuff -- NiLuJe
+ * - Frankensteined w/ Mark 6 stuff -- NiLuJe
+ * - Frankensteined w/ Mark 7 stuff -- NiLuJe
  */
 
 /*
@@ -161,12 +163,12 @@ struct mxcfb_rect {
 /* Mark 7 */
 #define EPDC_FLAG_TEST_COLLISION		0x200
 #define EPDC_FLAG_GROUP_UPDATE			0x400
-/* Nickel: only for alyssum and above */
+/* Nickel: only for alyssum and above (i.e., Mk. 6) */
 #define EPDC_FLAG_USE_DITHERING_Y1		0x2000
 #define EPDC_FLAG_USE_DITHERING_Y4		0x4000
 #define EPDC_FLAG_USE_REGAL				0x8000
 
-/* Nickel */
+/* Nickel (gone on Mk. 7) */
 #define EPDC_FLAG_USE_DITHERING_NTX_D8		0x100000
 
 /* Mark 7 */

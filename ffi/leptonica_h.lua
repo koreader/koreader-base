@@ -81,7 +81,7 @@ void boxaDestroy(BOXA **);
 void numaDestroy(NUMA **);
 void pixDestroy(PIX **);
 l_int32 pixWritePng(const char *, PIX *, l_float32);
-l_int32 pixWriteMemPng(l_uint8 **, unsigned int *, PIX *, l_float32);
+l_int32 pixWriteMemPng(l_uint8 **, size_t *, PIX *, l_float32);
 l_int32 pixGetWidth(PIX *);
 l_int32 pixGetHeight(PIX *);
 l_int32 pixGetDepth(PIX *);
@@ -95,7 +95,7 @@ PIX *pixConvertTo32(PIX *);
 PIX *pixDrawBoxaRandom(PIX *, BOXA *, l_int32);
 PIX *pixMultiplyByColor(PIX *, PIX *, BOX *, l_uint32);
 PIX *pixBlendBackgroundToColor(PIX *, PIX *, BOX *, l_uint32, l_float32, l_int32, l_int32);
-l_int32 pixGetRegionsBinary(PIX *, PIX **, PIX **, PIX **, l_int32);
+l_int32 pixGetRegionsBinary(PIX *, PIX **, PIX **, PIX **, struct Pixa *);
 BOXA *pixSplitIntoBoxa(PIX *, l_int32, l_int32, l_int32, l_int32, l_int32, l_int32);
 PIX *pixReduceRankBinaryCascade(PIX *, l_int32, l_int32, l_int32, l_int32);
 ]]

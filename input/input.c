@@ -24,6 +24,7 @@
 #include <errno.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sys/prctl.h>
 
 #include <linux/input.h>
@@ -49,6 +50,8 @@ pid_t fake_ev_generator_pid = -1;
     #include "input-kindle.h"
 #elif defined KOBO
     #include "input-kobo.h"
+#elif defined REMARKABLE
+    #include "input-remarkable.h"
 #elif defined SONY_PRSTUX
     #include "input-sony-prstux.h"
 #elif defined CERVANTES
@@ -71,7 +74,10 @@ static int openInputDevice(lua_State *L) {
 
 #ifdef POCKETBOOK
     int inkview_events = luaL_checkint(L, 2);
-    if (inkview_events == 1) { forkInkViewMain(L, inputdevice); }
+    if (inkview_events == 1) { 
+        startInkViewMain(L, fd, inputdevice); 
+        return 0;
+    }
 #endif
 
     if (!strcmp("fake_events", inputdevice)) {

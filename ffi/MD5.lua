@@ -1,5 +1,6 @@
 --[[--
 MD5 hash library.
+https://github.com/Wiladams/LAPHLibs/blob/master/laphlibs/md5.lua
 
 @module ffi.md5
 ]]
@@ -22,6 +23,7 @@ typedef struct MD5Context {
   unsigned char input[64];
 } MD5_CTX;
 ]]
+local MD5_CTX = ffi.typeof("MD5_CTX");
 
 local function byteReverse(buf, len)
     -- TODO: implement for big-endian architectures?
@@ -34,7 +36,7 @@ local function F4(x, y, z) return bxor(y, bor(x, bnot(z))) end
 
 local function MD5STEP(f, w, x, y, z, data, s)
     w = w + f(x, y, z) + data
-    w = bor(lshift(w,s), rshift(w,(32-s)))
+    w = bor(lshift(w, s), rshift(w, (32 - s)))
     w = w + x
 
     return w
@@ -133,10 +135,8 @@ local function MD5Transform(buf, input)
 end
 
 local function MD5Update(ctx, buf, len)
-    local t
-
-    t = ctx.bits[0]
-    ctx.bits[0] = t + lshift( len, 3)
+    local t = ctx.bits[0]
+    ctx.bits[0] = t + lshift(len, 3)
     if (ctx.bits[0] < t) then
         ctx.bits[1] = ctx.bits[1] + 1
     end
@@ -173,13 +173,9 @@ local function MD5Update(ctx, buf, len)
 end
 
 local function MD5Final(digest, ctx)
+    local count = band(rshift(ctx.bits[0], 3), 0x3F)
 
-    local count
-    local p
-
-    count = band(rshift(ctx.bits[0], 3), 0x3F)
-
-    p = ctx.input + count
+    local p = ctx.input + count
     p[0] = 0x80
     p = p + 1
     count = 64 - 1 - count
@@ -199,18 +195,30 @@ local function MD5Final(digest, ctx)
     ffi.cast("uint32_t *", ctx.input)[15] = ctx.bits[1]
 
     MD5Transform(ctx.buf, ffi.cast("uint32_t *", ctx.input))
-    byteReverse(ffi.cast("unsigned char *",ctx.buf), 4)
+    byteReverse(ffi.cast("unsigned char *", ctx.buf), 4)
     copy(digest, ctx.buf, 16)
-    fill(ffi.cast("char *", ctx), ffi.sizeof(ctx), 0)
+    fill(ffi.cast("unsigned char *", ctx), ffi.sizeof(ctx), 0)
 end
 
-local hex = ffi.new("const char[16]", "0123456789abcdef")
-local function bin2str(output, input, len)
-    if len > 0 then
-        output[0] = hex[rshift(input[0], 4)]
-        output[1] = hex[band(input[0], 0xF)]
-        return bin2str(output+2, input+1, len-1)
+-- From https://github.com/Wiladams/LAPHLibs/blob/master/laphlibs/stringzutils.lua
+-- Output string hex representation requires two bytes per input byte,
+-- so output buffer needs to be twice as large as input, + 1 to accomodate a terminating NUL.
+local hex = ffi.new("const unsigned char[16]", "0123456789abcdef")
+
+local function bin2str(to, p, len)
+    while (len > 0) do
+        local off1 = rshift(p[0], 4)
+        to[0] = hex[off1]
+        to = to + 1
+
+        local off2 = band(p[0], 0x0f)
+        to[0] = hex[off2]
+
+        to = to + 1
+        p = p + 1
+        len = len - 1
     end
+    to[0] = 0
 end
 
 
@@ -220,14 +228,16 @@ md5_proto.__index = md5_proto
 --- Feed content to md5 hashing instance.
 ---- @string luastr stream to process
 function md5_proto:update(luastr)
-    MD5Update(self.ctx, ffi.cast("const char*", luastr), #luastr)
+    local len = #luastr
+    local p = ffi.cast("const unsigned char *", luastr)
+    MD5Update(self.ctx, p, len)
 end
 
---- Calcualte md5 sum with the state of a md5 hashing instance.
+--- Calculate md5 sum with the state of a md5 hashing instance.
 ---- @string luastr stream to process
 ---- @treturn string md5 sum in Lua string
 function md5_proto:sum(luastr)
-    local buf = ffi.new("char[33]")
+    local buf = ffi.new("unsigned char[33]")
     local hash = ffi.new("uint8_t[16]")
     if luastr then
         self:update(luastr)
@@ -245,20 +255,20 @@ local md5 = {}
 ---- @return md5 instance
 function md5.new()
     local o = {}
-    o.ctx = ffi.new("MD5_CTX")
+    o.ctx = MD5_CTX()
     MD5Init(o.ctx)
     setmetatable(o, md5_proto)
     return o
 end
 
---- Calcualte md5 sum.
+--- Calculate md5 sum.
 ---- @string luastr stream to process
 ---- @treturn string md5 sum in Lua string
 function md5.sum(luastr)
     return md5:new():sum(luastr)
 end
 
---- Calcualte md5 sum for a file.
+--- Calculate md5 sum for a file.
 ---- @string filename
 ---- @treturn string md5 sum in Lua string
 function md5.sumFile(filename)

@@ -1,0 +1,32 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index d85260b..46dcfb1 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -79,9 +79,9 @@ endif()
+ 
+ source_group(src FILES ${SOURCES})
+ 
+-if (WIN32)
+-    target_link_libraries(lua-rapidjson ${LUA_LIBRARIES})
+-endif()
++target_link_libraries(lua-rapidjson m ${LUA_LIBRARIES})
++# NOTE: C++, that's a terrible idea (and will fail to build ;)).
++#target_link_options(lua-rapidjson PRIVATE -nostartfiles)
+ 
+ if (LINK_FLAGS)
+     set_target_properties(lua-rapidjson PROPERTIES
+diff --git a/rapidjson-0.6.1-1.rockspec b/rapidjson-0.6.1-1.rockspec
+index aebdc35..5329b39 100644
+--- a/rapidjson-0.6.1-1.rockspec
++++ b/rapidjson-0.6.1-1.rockspec
+@@ -20,9 +20,7 @@ build = {
+     BUILD_SHARED_LIBS = "ON",
+     CMAKE_INSTALL_PREFIX = "$(PREFIX)",
+     LUA_INCLUDE_DIR = "$(LUA_INCDIR)",
++    LUA_LIBRARIES = "$(LUA_LIBDIR)/$(LUALIB)",
+     LUA_RAPIDJSON_VERSION = v
+   },
+-  platforms = { windows = { variables = {
+-    LUA_LIBRARIES = "$(LUA_LIBDIR)/$(LUALIB)"
+-  }}}
+ }

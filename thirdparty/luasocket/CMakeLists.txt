@@ -1,7 +1,7 @@
-PROJECT(luasocket)
-cmake_minimum_required(VERSION 2.8.3)
+project(luasocket)
+cmake_minimum_required(VERSION 3.5.1)
 
-SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_LIST_DIR}/../cmake_modules")
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_LIST_DIR}/../cmake_modules")
 include("koreader_thirdparty_common")
 include("koreader_thirdparty_git")
 
@@ -20,20 +20,22 @@ set(PATCH_CMD "${PATCH_CMD} && ${ISED} 's|mime\\.core|mime\\.mcore|' src/*")
 set(PATCH_CMD "${PATCH_CMD} && ${ISED} 's|mime_core|mime_mcore|' src/*")
 set(PATCH_CMD "${PATCH_CMD} && ${ISED} 's|SOCKET_CDIR)/core|SOCKET_CDIR)/score|' src/*")
 set(PATCH_CMD "${PATCH_CMD} && ${ISED} 's|MIME_CDIR)/core|MIME_CDIR)/mcore|' src/*")
+# Don't enforce CFLAGS
+set(PATCH_CMD "${PATCH_CMD} && ${ISED} 's|-O2 -ggdb3 ||g' src/makefile")
 
-set(BUILD_CMD_STR "$(MAKE) PLAT=${PLAT} CC=\"${CC}\" LD=\"${CC}\"")
+set(BUILD_CMD_STR sh -c "${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS} PLAT=${PLAT} CC=\"${CC}\" LD=\"${CC}\"")
 if(DEFINED MYLDFLAGS)
     set(BUILD_CMD_STR "${BUILD_CMD_STR} MYLDFLAGS=\"${MYLDFLAGS}\"")
 endif()
 if(DEFINED LUALIB_mingw)
     set(BUILD_CMD_STR "${BUILD_CMD_STR} LUALIB_mingw=\"${LUALIB_mingw}\"")
 endif()
-set(BUILD_CMD sh -c "${BUILD_CMD_STR} LUAINC=\"${LUAINC}\" -j${PARALLEL_JOBS} all")
+set(BUILD_CMD "${BUILD_CMD_STR} LUAINC=\"${LUAINC}\" -j${PARALLEL_JOBS} all")
 
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
     https://github.com/diegonehab/luasocket
-    4df569e9f867432f25f0bfbfa56b0962feb3326e
+    c89a931cc31f219d51dd32a8a253d5ee3fbd31be
     ${SOURCE_DIR}
 )
 
@@ -45,6 +47,5 @@ ExternalProject_Add(
     PATCH_COMMAND ${PATCH_CMD}
     CONFIGURE_COMMAND ""
     BUILD_COMMAND ${BUILD_CMD}
-    # skip install
-    INSTALL_COMMAND $(MAKE) INSTALL_TOP_LDIR=${INSTALL_DIR} INSTALL_TOP_CDIR=${INSTALL_DIR} install
+    INSTALL_COMMAND ${KO_MAKE_RECURSIVE} INSTALL_TOP_LDIR=${INSTALL_DIR} INSTALL_TOP_CDIR=${INSTALL_DIR} install
 )

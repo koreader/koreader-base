@@ -1,4 +1,5 @@
-#include <mupdf/fitz.h>
+// We need to make generate first...
+// CPPFLAGS="-I../koreader-base -I/var/tmp/niluje/mupdf/include"
 #include "wrap-mupdf.h"
 
 #include "ffi-cdecl.h"
@@ -159,12 +160,13 @@ cdecl_struct(fz_transition_s)
 cdecl_type(fz_page)
 cdecl_struct(fz_page_s)
 cdecl_type(fz_document)
-cdecl_struct(fz_document_s)
+cdecl_struct(fz_document_s) // NOTE: And now it's intptr_t that's being converted... >_<"
 
 cdecl_type(fz_stream)
 cdecl_struct(fz_stream_s)
 cdecl_func(mupdf_open_document)
 cdecl_func(mupdf_open_document_with_stream)
+cdecl_func(fz_is_document_reflowable)
 cdecl_func(fz_needs_password)
 cdecl_func(fz_authenticate_password)
 cdecl_func(fz_drop_document) // NOTE: libk2pdfopt uses old fz_free_document symbol

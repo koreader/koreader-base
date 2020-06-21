@@ -290,10 +290,149 @@ static LVRefVec<LVImageSource> getBatteryIcons(lUInt32 color) {
 	return icons;
 }
 
+// Single global object to handle callbacks from crengine to Lua
+class CreCallbackForwarder : public LVDocViewCallback
+{
+    bool _active;
+    lua_State * _L; // stack (of the coroutine) that set the callback
+    // References in the Lua registry, to prevent these objects to be gc()'ed
+    int _r_L; // ref to L, to prevent it from being gc'ed when coroutine ends
+    int _r_cb; // ref to provided Lua function to be forwarded crengine events
+public:
+    CreCallbackForwarder() :
+        _active(false),
+        // As a crengine document is opened from inside a coroutine, but can be closed
+        // from the main thread, and as Lua 5.1 does not provide access to the main thread
+        // from a coroutine, we need to store the coroutine lua_State to keep a reference
+        // to it and prevent if from being gc'ed.
+        // Fortunatly, the registry index is shared by the main thread and all coroutines
+        _L(NULL),
+        _r_L(LUA_NOREF),
+        _r_cb(LUA_NOREF)
+        { }
+    void setCallback(lua_State *L) {
+        // Cleanup any previous references
+        unsetCallback(L);
+        // Get and keep reference to the callback (first on the stack)
+        _r_cb = luaL_ref(L, LUA_REGISTRYINDEX);
+        // printf("CreCallbackForwarder._r_cb = %x\n", _r_cb);
+        // Push current coroutine/thread (L) onto the stack, and keep a reference to it,
+        // so it does not get gc'ed when our coroutine exits
+        lua_pushthread(L);
+        _r_L = luaL_ref(L, LUA_REGISTRYINDEX);
+        // printf("CreCallbackForwarder._r_L = %x\n", _r_L);
+        _L = L; // Store L, so we can fetch the callback from _r_cb
+        _active = true;
+    }
+    void unsetCallback(lua_State *L) {
+        _active = false;
+        if (_r_cb != LUA_NOREF) {
+            luaL_unref(L, LUA_REGISTRYINDEX, _r_cb);
+            _r_cb = LUA_NOREF;
+        }
+        if (_r_L != LUA_NOREF) {
+            luaL_unref(L, LUA_REGISTRYINDEX, _r_L);
+            _r_L = LUA_NOREF;
+        }
+        _L = NULL;
+    }
+    void callback(const char * event) {
+        if (!_active)
+            return;
+        lua_rawgeti(_L, LUA_REGISTRYINDEX, _r_cb);
+        lua_pushstring(_L, event);
+        lua_pcall(_L, 1, 0, 0);
+    }
+    void callback(const char * event, int number) {
+        if (!_active)
+            return;
+        lua_rawgeti(_L, LUA_REGISTRYINDEX, _r_cb);
+        lua_pushstring(_L, event);
+        lua_pushnumber(_L, number);
+        lua_pcall(_L, 2, 0, 0);
+    }
+    void callback(const char * event, const char * str) {
+        if (!_active)
+            return;
+        lua_rawgeti(_L, LUA_REGISTRYINDEX, _r_cb);
+        lua_pushstring(_L, event);
+        lua_pushstring(_L, str);
+        lua_pcall(_L, 2, 0, 0);
+    }
+    virtual void OnLoadFileStart( lString16 filename ) {
+        callback("OnLoadFileStart", UnicodeToLocal(filename).c_str());
+    }
+    virtual void OnLoadFileFormatDetected( doc_format_t fileFormat) {
+        callback("OnLoadFileFormatDetected", UnicodeToLocal(getDocFormatName(fileFormat)).c_str());
+    }
+    virtual void OnLoadFileProgress( int percent) {
+        callback("OnLoadFileProgress", percent);
+    }
+    virtual void OnLoadFileEnd() {
+        callback("OnLoadFileEnd");
+    }
+    virtual void OnLoadFileError(lString16 message) {
+        callback("OnLoadFileError", UnicodeToLocal(message).c_str());
+    }
+    virtual void OnNodeStylesUpdateStart() {
+        callback("OnNodeStylesUpdateStart");
+    }
+    virtual void OnNodeStylesUpdateProgress(int percent) {
+        callback("OnNodeStylesUpdateProgress", percent);
+    }
+    virtual void OnNodeStylesUpdateEnd() {
+        callback("OnNodeStylesUpdateEnd");
+    }
+    virtual void OnFormatStart() {
+        callback("OnFormatStart");
+    }
+    virtual void OnFormatProgress(int percent) {
+        callback("OnFormatProgress", percent);
+    }
+    virtual void OnFormatEnd() {
+        callback("OnFormatEnd");
+    }
+    virtual void OnDocumentReady() {
+        callback("OnDocumentReady");
+    }
+    virtual void OnSaveCacheFileStart() {
+        callback("OnSaveCacheFileStart");
+    }
+    virtual void OnSaveCacheFileProgress(int percent) {
+        callback("OnSaveCacheFileProgress", percent);
+    }
+    virtual void OnSaveCacheFileEnd() {
+        callback("OnSaveCacheFileEnd");
+    }
+    // virtual void OnLoadFileFirstPagesReady() { } // useless
+    // virtual void OnExportProgress(int percent) { } // Export to WOL format
+    // virtual void OnExternalLink(lString16 /*url*/, ldomNode * /*node*/) { }
+    // virtual void OnImageCacheClear() { }
+    // virtual bool OnRequestReload() { return false; }
+};
+
+CreCallbackForwarder * cre_callback_forwarder = NULL;
+
 typedef struct CreDocument {
 	LVDocView *text_view;
 	ldomDocument *dom_doc;
 } CreDocument;
+
+static int setCallback(lua_State *L) {
+    CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
+    if ( cre_callback_forwarder == NULL ) {
+        cre_callback_forwarder = new CreCallbackForwarder();
+    }
+    if (lua_isfunction(L, 2)) {
+        cre_callback_forwarder->setCallback(L);
+        doc->text_view->setCallback(cre_callback_forwarder);
+    }
+    else {
+        doc->text_view->setCallback(NULL);
+        cre_callback_forwarder->unsetCallback(L);
+    }
+    return 0;
+}
 
 static int initCache(lua_State *L) {
     const char *cache_path = luaL_checkstring(L, 1);
@@ -342,6 +481,18 @@ static int newDocView(lua_State *L) {
 	doc->text_view->setViewMode(view_mode, -1);
 	doc->text_view->Resize(width, height);
 	doc->text_view->setPageHeaderInfo(PGHDR_AUTHOR|PGHDR_TITLE|PGHDR_PAGE_NUMBER|PGHDR_PAGE_COUNT|PGHDR_CHAPTER_MARKS|PGHDR_CLOCK);
+	doc->text_view->setBatteryIcons(getBatteryIcons(0x000000));
+
+	return 1;
+}
+
+static int readDefaults(lua_State *L) {
+	// This is to be called only when the document is opened to be
+	// read by ReaderUI - not when the document is opened to just
+	// get its metadata or cover image - as it will affect some
+	// crengine global variables and state, whose change would
+	// affect the currently opened for reading document.
+	CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
 
 	// it will overwrite all settings by values found in ./data/cr3.ini
 	CRPropRef props = doc->text_view->propsGetCurrent();
@@ -354,29 +505,17 @@ static int newDocView(lua_State *L) {
 		props->setString(PROP_HYPHENATION_DICT, "English_US.pattern");
 		props->setString(PROP_STATUS_FONT_FACE, "Noto Sans");
 		props->setString(PROP_FONT_FACE, "Noto Serif");
-		props->setInt(PROP_FONT_HINTING, 2);	// autohint, to be conservative (some ttf fonts' bytecode is truly crappy)
+                // Note: the values we set here don't really matter, they will
+                // be re-set/overridden by readerfont.lua on each book load
+		props->setInt(PROP_FONT_HINTING, 2); // autohint, to be conservative (some ttf fonts' bytecode is truly crappy)
+		props->setInt(PROP_FONT_KERNING, 3); // harfbuzz (slower than freetype kerning, but needed for proper arabic)
 		// props->setInt(PROP_FONT_KERNING_ENABLED, 1);
-		props->setInt(PROP_FONT_KERNING, 1); // freetype kerning (no support for ligature, but faster than harfbuzz)
 		props->setString("styles.pre.font-face", "font-family: \"Droid Sans Mono\"");
 
 		stream = LVOpenFileStream("data/cr3.ini", LVOM_WRITE);
 		props->saveToStream(stream.get());
 	}
-
-	doc->text_view->setBatteryIcons(getBatteryIcons(0x000000));
-
-	return 1;
-}
-
-static int getLatestDomVersion(lua_State *L) {
-    lua_pushnumber(L, gDOMVersionCurrent);
-    return 1;
-}
-
-static int requestDomVersion(lua_State *L) {
-    int version = luaL_checkint(L, 1);
-    gDOMVersionRequested = version;
-    return 0;
+	return 0;
 }
 
 static int saveDefaults(lua_State *L) {
@@ -384,6 +523,22 @@ static int saveDefaults(lua_State *L) {
 	CRPropRef props = doc->text_view->propsGetCurrent();
 	LVStreamRef stream = LVOpenFileStream("data/cr3.ini", LVOM_WRITE);
 	return props->saveToStream(stream.get());
+}
+
+static int getLatestDomVersion(lua_State *L) {
+    lua_pushnumber(L, gDOMVersionCurrent);
+    return 1;
+}
+
+static int getDomVersionWithNormalizedXPointers(lua_State *L) {
+    lua_pushnumber(L, DOM_VERSION_WITH_NORMALIZED_XPOINTERS); // defined in lvtinydom.h
+    return 1;
+}
+
+static int requestDomVersion(lua_State *L) {
+    int version = luaL_checkint(L, 1);
+    gDOMVersionRequested = version;
+    return 0;
 }
 
 static int getIntProperty(lua_State *L) {
@@ -468,6 +623,35 @@ static int setHyphDictionary(lua_State *L) {
 	return 0;
 }
 
+static int getTextLangStatus(lua_State *L) {
+	lua_pushstring(L, UnicodeToLocal(TextLangMan::getMainLang()).c_str());
+	lua_pushstring(L, UnicodeToLocal(TextLangMan::getMainLangHyphMethod()->getId()).c_str());
+	lua_newtable(L);
+	LVPtrVector<TextLangCfg> *list = TextLangMan::getLangCfgList();
+	for(int i = 0; i < list->length(); i++) {
+                TextLangCfg * lang_cfg = list->get(i);
+		// Key
+		lua_pushstring(L, UnicodeToLocal(lang_cfg->getLangTag()).c_str());
+		// Value: table
+		lua_newtable(L);
+
+		lua_pushstring(L, "hyph_dict_name");
+		lua_pushstring(L, UnicodeToLocal(lang_cfg->getDefaultHyphMethod()->getId()).c_str());
+		lua_settable(L, -3);
+
+		lua_pushstring(L, "hyph_nb_patterns");
+		lua_pushinteger(L, lang_cfg->getDefaultHyphMethod()->getCount());
+		lua_settable(L, -3);
+
+		lua_pushstring(L, "hyph_mem_size");
+		lua_pushinteger(L, lang_cfg->getDefaultHyphMethod()->getSize());
+		lua_settable(L, -3);
+
+		lua_settable(L, -3);
+	}
+	return 3;
+}
+
 static int loadDocument(lua_State *L) {
 	CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
 	const char *file_name = luaL_checkstring(L, 2);
@@ -497,6 +681,14 @@ static int closeDocument(lua_State *L) {
 
 	/* should be save if called twice */
 	if(doc->text_view != NULL) {
+		// Call close() to have the cache explicitely saved now
+		// while we still have a callback (to show its progress).
+		doc->text_view->close();
+		// Remove any callback
+		if (cre_callback_forwarder) {
+			doc->text_view->setCallback(NULL);
+			cre_callback_forwarder->unsetCallback(L);
+		}
 		delete doc->text_view;
 		doc->text_view = NULL;
 	}
@@ -529,6 +721,22 @@ static int getCacheFilePath(lua_State *L) {
         return 0;
     lua_pushstring(L, UnicodeToLocal(cache_path).c_str());
     return 1;
+}
+
+static int getStatistics(lua_State *L) {
+    CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
+    lString16 stats = doc->dom_doc->getStatistics();
+    lua_pushstring(L, UnicodeToLocal(stats).c_str());
+    return 1;
+}
+
+static int getUnknownEntities(lua_State *L) {
+    CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
+    lString16Collection unknown_entities = doc->dom_doc->getUnknownEntities();
+    lua_pushstring(L, UnicodeToLocal(unknown_entities[0]).c_str());
+    lua_pushstring(L, UnicodeToLocal(unknown_entities[1]).c_str());
+    lua_pushstring(L, UnicodeToLocal(unknown_entities[2]).c_str());
+    return 3;
 }
 
 static int getDocumentProps(lua_State *L) {
@@ -585,10 +793,25 @@ static int getPageFromXPointer(lua_State *L) {
 
 	int page = 1;
 	ldomXPointer xp = doc->dom_doc->createXPointer(lString16(xpointer_str));
+	if ( !xp.isNull() ) { // Found in document
+		// Ensure xp points to a visible node that has a y in the document.
+		// If it is invisible, get the next visible node
+		ldomXPointerEx xpe = xp;
+		if ( xpe.isText() )
+			xpe.parent();
+		if ( xpe.getNode()->getRendMethod() == erm_invisible ) {
+			xpe = xp;
+			while ( xpe.nextElement() ) {
+				if ( xpe.getNode()->getRendMethod() != erm_invisible ) {
+					xp = xpe;
+					break;
+				}
+			}
+		}
+		page = doc->text_view->getBookmarkPage(xp) + 1;
+	}
 
-	page = doc->text_view->getBookmarkPage(xp) + 1;
 	lua_pushinteger(L, page);
-
 	return 1;
 }
 
@@ -596,19 +819,35 @@ static int getPosFromXPointer(lua_State *L) {
 	CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
 	const char *xpointer_str = luaL_checkstring(L, 2);
 
-	int pos = 0;
+	int y = 0;
+	int x = 0;
 	ldomXPointer xp = doc->dom_doc->createXPointer(lString16(xpointer_str));
-
-	lvPoint pt = xp.toPoint(true); // extended=true, for better accuracy
-	if (pt.y > 0) {
-		pos = pt.y;
+	if ( !xp.isNull() ) { // Found in document
+		// Ensure xp points to a visible node that has a y in the document.
+		// If it is invisible, get the next visible node
+		ldomXPointerEx xpe = xp;
+		if ( xpe.isText() )
+			xpe.parent();
+		if ( xpe.getNode()->getRendMethod() == erm_invisible ) {
+			xpe = xp;
+			while ( xpe.nextElement() ) {
+				if ( xpe.getNode()->getRendMethod() != erm_invisible ) {
+					xp = xpe;
+					break;
+				}
+			}
+		}
+		lvPoint pt = xp.toPoint(true); // extended=true, for better accuracy
+		if (pt.y > 0) {
+			y = pt.y;
+		}
+		x = pt.x;
 	}
-	lua_pushinteger(L, pos);
 
+	lua_pushinteger(L, y);
 	// Also returns the x value (as the 2nd returned value, as its
 	// less interesting to current code than the y value)
-	lua_pushinteger(L, pt.x);
-
+	lua_pushinteger(L, x);
 	return 2;
 }
 
@@ -641,6 +880,36 @@ static int getFullHeight(lua_State *L) {
 	CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
 
 	lua_pushinteger(L, doc->text_view->GetFullHeight());
+
+	return 1;
+}
+
+static int getPageStartY(lua_State *L) {
+	CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
+	int pageno = luaL_checkint(L, 2);
+
+	lua_pushinteger(L, doc->text_view->getPageStartY(pageno - 1));
+
+	return 1;
+}
+
+static int getPageHeight(lua_State *L) {
+	CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
+	int pageno = luaL_checkint(L, 2);
+
+	lua_pushinteger(L, doc->text_view->getPageHeight(pageno - 1));
+
+	return 1;
+}
+
+static int getPageOffsetX(lua_State *L) {
+	// Mostly useful to get the 2nd page x in 2-pages mode
+	CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
+	int pageno = luaL_checkint(L, 2);
+
+	lvRect rc;
+	doc->text_view->getPageRectangle(pageno - 1, rc);
+	lua_pushinteger(L, rc.left);
 
 	return 1;
 }
@@ -753,6 +1022,263 @@ static int buildAlternativeToc(lua_State *L) {
 	return 0;
 }
 
+static int hasPageMap(lua_State *L) {
+    CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
+
+    LVPageMap * pagemap = doc->text_view->getPageMap();
+    bool has_pagemap = pagemap->getChildCount() > 0;
+    lua_pushboolean(L, has_pagemap);
+    return 1;
+}
+
+static int getPageMap(lua_State *L) {
+    CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
+
+    LVPageMap * pagemap = doc->text_view->getPageMap();
+    int nb = pagemap->getChildCount();
+    if ( !nb )
+        return 0;
+
+    lua_newtable(L);
+    for (int i = 0; i < nb; i++)  {
+        LVPageMapItem * item = pagemap->getChild(i);
+        lua_pushnumber(L, i+1);
+
+        // New table for item
+        lua_newtable(L);
+
+        lua_pushstring(L, "page");
+        lua_pushnumber(L, item->getPage()+1);
+        lua_settable(L, -3);
+
+        // Note: toc_tmp->getXPointer().toString() and toc_tmp->getPath() return
+        // the same xpath string. But when just loaded from cache, the XPointer
+        // is not yet available, but getPath() is. So let's use it, which avoids
+        // having to build the XPointers until they are needed to update page numbers.
+        lua_pushstring(L, "xpointer");
+        lua_pushstring(L, UnicodeToLocal(item->getPath()).c_str());
+        lua_settable(L, -3);
+
+        lua_pushstring(L, "doc_y");
+        lua_pushnumber(L, item->getDocY());
+        lua_settable(L, -3);
+
+        lua_pushstring(L, "label");
+        lua_pushstring(L, UnicodeToLocal(item->getLabel()).c_str());
+        lua_settable(L, -3);
+
+        // add item to returned table
+        lua_settable(L, -3);
+    }
+    return 1;
+}
+
+static int getPageMapSource(lua_State *L) {
+    CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
+
+    LVPageMap * pagemap = doc->text_view->getPageMap();
+    lString16 source = pagemap->getSource();
+    if ( source.empty() )
+        return 0;
+    lua_pushstring(L, UnicodeToLocal(source).c_str());
+    return 1;
+}
+
+static int getPageMapFirstPageLabel(lua_State *L) {
+    CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
+
+    LVDocView * tv = doc->text_view;
+    LVPageMap * pagemap = tv->getPageMap();
+    int nb = pagemap->getChildCount();
+    if ( !nb )
+        return 0;
+    lua_pushstring(L, UnicodeToLocal(pagemap->getChild(0)->getLabel()).c_str());
+    return 1;
+}
+
+static int getPageMapLastPageLabel(lua_State *L) {
+    CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
+
+    LVDocView * tv = doc->text_view;
+    LVPageMap * pagemap = tv->getPageMap();
+    int nb = pagemap->getChildCount();
+    if ( !nb )
+        return 0;
+    lua_pushstring(L, UnicodeToLocal(pagemap->getChild(nb-1)->getLabel()).c_str());
+    return 1;
+}
+
+static int getPageMapCurrentPageLabel(lua_State *L) {
+    CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
+
+    LVDocView * tv = doc->text_view;
+    LVPageMap * pagemap = tv->getPageMap();
+    int nb = pagemap->getChildCount();
+    if ( !nb )
+        return 0;
+
+    // Note: in scroll mode with PDF, when multiple pages are shown on
+    // the screen, the advertized page number is the greatest page number
+    // among the pages shown (so, the page number of the partial page
+    // shown at bottom of screen).
+    // For consistency, we return the last page label shown in the view
+    // if there are more than one (or the previous one if there is none).
+    lvRect rc;
+    tv->GetPos(rc);
+    int max_y = rc.bottom;
+
+    // Binary search to find the last doc_y < max_y
+    // (We expect items to be ordered by doc_y)
+    // https://en.wikipedia.org/wiki/Binary_search_algorithm#Procedure_for_finding_the_leftmost_element
+    int left = 0;
+    int right = nb;
+    int middle;
+    while ( left < right ) {
+        middle = (left + right) / 2;
+        int y = pagemap->getChild(middle)->getDocY();
+        if ( y >= max_y )
+            right = middle;
+        else
+            left = middle + 1;
+    }
+    int idx = left-1;
+    if ( idx < 0 )
+        idx = 0;
+    else if (idx >= nb)
+        idx = nb - 1;
+    lua_pushstring(L, UnicodeToLocal(pagemap->getChild(idx)->getLabel()).c_str());
+    return 1;
+}
+
+static int getPageMapXPointerPageLabel(lua_State *L) {
+    CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
+    const char *xpointer_str = luaL_checkstring(L, 2);
+
+    LVDocView * tv = doc->text_view;
+    LVPageMap * pagemap = tv->getPageMap();
+    int nb = pagemap->getChildCount();
+    if ( !nb )
+        return 0;
+
+    ldomXPointer xp = doc->dom_doc->createXPointer(lString16(xpointer_str));
+
+    lvPoint pt = xp.toPoint(true); // extended=true, for better accuracy
+    int xp_y = pt.y >= 0 ? pt.y : 0;
+
+    // Binary search to find the last doc_y <= xp_y
+    int left = 0;
+    int right = nb;
+    int middle;
+    while ( left < right ) {
+        middle = (left + right) / 2;
+        int y = pagemap->getChild(middle)->getDocY();
+        if ( y > xp_y )
+            right = middle;
+        else
+            left = middle + 1;
+    }
+    int idx = left-1;
+    if ( idx < 0 )
+        idx = 0;
+    else if (idx >= nb)
+        idx = nb - 1;
+    lua_pushstring(L, UnicodeToLocal(pagemap->getChild(idx)->getLabel()).c_str());
+    return 1;
+}
+
+static int getPageMapVisiblePageLabels(lua_State *L) {
+    CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
+
+    LVDocView * tv = doc->text_view;
+    LVPageMap * pagemap = tv->getPageMap();
+    int nb = pagemap->getChildCount();
+    if ( !nb )
+        return 0;
+
+    // Get visible min and max doc_y
+    lvRect rc;
+    tv->GetPos(rc);
+    int min_y = rc.top;
+    int max_y = rc.bottom;
+    int page2_y = -1;
+    if ( tv->getVisiblePageCount() == 2 ) {
+        int next_page = tv->getCurPage() + 1;
+        if ( next_page < tv->getPageCount() ) {
+            page2_y = tv->getPageStartY( next_page );
+        }
+    }
+
+    bool is_page_mode = tv->getViewMode()==DVM_PAGES;
+    int offset_y = is_page_mode ? tv->getPageMargins().top + tv->getPageHeaderHeight() : 0;
+
+    // Binary search to find the first y >= min_y
+    // (We expect items to be ordered by doc_y)
+    // https://en.wikipedia.org/wiki/Binary_search_algorithm#Procedure_for_finding_the_leftmost_element
+    int left = 0;
+    int right = nb;
+    int middle;
+    while ( left < right ) {
+        middle = (left + right) / 2;
+        int y = pagemap->getChild(middle)->getDocY();
+        if ( y < min_y )
+            left = middle + 1;
+        else
+            right = middle;
+    }
+    int start = left;
+
+    lua_newtable(L);
+    int count = 1;
+    for (int i = start; i < nb; i++)  {
+        LVPageMapItem * item = pagemap->getChild(i);
+        int doc_y = item->getDocY();
+        if ( doc_y >= max_y)
+            break;
+        if ( doc_y < min_y ) // should not happen
+            continue;
+
+        int screen_page = 1;
+        int screen_y = doc_y - min_y + offset_y;
+        if ( page2_y >= 0 && doc_y >= page2_y ) {
+            screen_page = 2;
+            screen_y = doc_y - page2_y + offset_y;
+        }
+
+        lua_pushnumber(L, count++);
+
+        // New table for item
+        lua_newtable(L);
+
+        lua_pushstring(L, "screen_page");
+        lua_pushnumber(L, screen_page);
+        lua_settable(L, -3);
+
+        lua_pushstring(L, "screen_y");
+        lua_pushnumber(L, screen_y);
+        lua_settable(L, -3);
+
+        lua_pushstring(L, "page");
+        lua_pushnumber(L, item->getPage()+1);
+        lua_settable(L, -3);
+
+        lua_pushstring(L, "xpointer");
+        lua_pushstring(L, UnicodeToLocal(item->getPath()).c_str());
+        lua_settable(L, -3);
+
+        lua_pushstring(L, "doc_y");
+        lua_pushnumber(L, item->getDocY());
+        lua_settable(L, -3);
+
+        lua_pushstring(L, "label");
+        lua_pushstring(L, UnicodeToLocal(item->getLabel()).c_str());
+        lua_settable(L, -3);
+
+        // add item to returned table
+        lua_settable(L, -3);
+    }
+    return 1;
+}
+
 /*
  * Return a table like this:
  * {
@@ -808,6 +1334,31 @@ static int setHeaderInfo(lua_State *L) {
 	return 0;
 }
 
+static int setHeaderProgressMarks(lua_State *L) {
+        CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
+        int pages = luaL_checkint(L, 2);
+
+        // Get a reference to LvDocView internal m_section_bounds that
+        // we will update. We need to add ticks for 0 and 10000.
+        // Values are in 0.01 % (so 10000 = 100%)
+        LVArray<int> & m_section_bounds = doc->text_view->getSectionBounds(true);
+        m_section_bounds.clear();
+        m_section_bounds.add(0);
+        if ( lua_istable(L, 3) ) {
+            int len = lua_objlen(L, 3);
+            for (int i = 1; i <= len; i++) {
+                lua_pushinteger(L, i);
+                lua_gettable(L, 3);
+                if ( lua_isnumber(L, -1) ) {
+                    int n = lua_tointeger(L, -1);
+                    m_section_bounds.add( 10000 * (n-1) / pages);
+                }
+            }
+        }
+        m_section_bounds.add(10000);
+
+        return 0;
+}
 static int setHeaderFont(lua_State *L) {
 	CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
 	const char *face = luaL_checkstring(L, 2);
@@ -845,7 +1396,9 @@ static int gotoPage(lua_State *L) {
 	CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
 	int pageno = luaL_checkint(L, 2);
 
-	doc->text_view->goToPage(pageno-1);
+	doc->text_view->goToPage(pageno-1, true, false); // regulateTwoPages=false
+	// In 2-pages mode, we will ensure from frontend the first page displayed
+	// is an even one: we don't need crengine to ensure that.
 
 	return 0;
 }
@@ -863,7 +1416,10 @@ static int gotoPos(lua_State *L) {
 	CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
 	int pos = luaL_checkint(L, 2);
 
-	doc->text_view->SetPos(pos);
+	doc->text_view->SetPos(pos, true, true);
+	// savePos=true is the default, but we use allowScrollAfterEnd=true
+	// to allow frontend code to control how much we can scroll after end
+	// by adjusting pos
 
 	return 0;
 }
@@ -930,6 +1486,33 @@ static int setStyleSheet(lua_State *L) {
 	return 0;
 }
 
+static int setBackgroundColor(lua_State *L) {
+	CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
+	const int bgcolor = (int)luaL_optint(L, 2, 0xFFFFFF); // default to white if not provided
+
+	doc->text_view->setBackgroundColor(bgcolor);
+	return 0;
+}
+
+static int setBackgroundImage(lua_State *L) {
+	CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
+	if (lua_isstring(L, 2)) {
+		const char *img_path = luaL_checkstring(L, 2);
+		LVStreamRef stream = LVOpenFileStream(img_path, LVOM_READ);
+		if ( !stream.isNull() ) {
+			LVImageSourceRef img = LVCreateStreamImageSource(stream);
+			if ( !img.isNull() ) {
+				doc->text_view->setBackgroundImage(img, true); // tiled=true
+			}
+		}
+	}
+	else { // if not a string (nil, false...), remove background image
+		LVImageSourceRef img;
+		doc->text_view->setBackgroundImage(img);
+	}
+	return 0;
+}
+
 /// ------- Page Margins -------
 
 static int setPageMargins(lua_State *L) {
@@ -963,8 +1546,9 @@ static int adjustFontSizes(lua_State *L) {
     CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
     int dpi = luaL_checkint(L, 2);
     static int fontSizes[] = {	12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30,
-				31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 42, 44, 48, 52, 56, 60, 64, 68, 72,
-				78, 84, 90, 110, 130, 150, 170, 200, 230, 260, 300, 340};
+				31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49,
+				50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68,
+				69, 70, 71, 72, 78, 84, 90, 110, 130, 150, 170, 200, 230, 260, 300, 340};
     LVArray<int> sizes( fontSizes, sizeof(fontSizes)/sizeof(int) );
     doc->text_view->setFontSizes(sizes, false); // text
     if (dpi < 170) {
@@ -1115,12 +1699,53 @@ static int getWordFromPosition(lua_State *L) {
 	return 1;
 }
 
+static int getTextFromXPointers(lua_State *L) {
+	CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
+	const char* pos0 = luaL_checkstring(L, 2);
+	const char* pos1 = luaL_checkstring(L, 3);
+
+	ldomDocument *dv = doc->dom_doc;
+
+	ldomXPointer startp = dv->createXPointer(lString16(pos0));
+	ldomXPointer endp = dv->createXPointer(lString16(pos1));
+	if (!startp.isNull() && !endp.isNull()) {
+		ldomXRange r(startp, endp);
+		if (r.getStart().isNull() || r.getEnd().isNull())
+			return 0;
+		r.sort();
+
+		if (r.getStart() == r.getEnd()) { // for single CJK character
+			ldomNode * node = r.getStart().getNode();
+			lString16 text = node->getText();
+			int textLen = text.length();
+			int offset = r.getEnd().getOffset();
+			if (offset < textLen - 1)
+				r.getEnd().setOffset(offset + 1);
+		}
+
+		lString16 selText = r.getRangeText( '\n', 8192 );
+		lua_pushstring(L, UnicodeToLocal(selText).c_str());
+        return 1;
+    }
+    return 0;
+}
+
 static int getTextFromPositions(lua_State *L) {
 	CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
 	int x0 = luaL_checkint(L, 2);
 	int y0 = luaL_checkint(L, 3);
 	int x1 = luaL_checkint(L, 4);
 	int y1 = luaL_checkint(L, 5);
+	// Default to have crengine do native highlight of selected text
+	// (segmented by line, for better results)
+	bool drawSelection = true;
+	if (lua_isboolean(L, 6)) {
+		drawSelection = lua_toboolean(L, 6);
+	}
+	bool drawSegmentedSelection = true;
+	if (lua_isboolean(L, 7)) {
+		drawSegmentedSelection = lua_toboolean(L, 7);
+	}
 
 	LVDocView *tv = doc->text_view;
 	lvRect margin = tv->getPageMargins();
@@ -1157,8 +1782,11 @@ static int getTextFromPositions(lua_State *L) {
 				r.getEnd().setOffset(offset + 1);
 		}
 
-		r.setFlags(1);
-		tv->selectRange(r);  // we let crengine do native highlight of selection
+		int rangeFlags = 0;
+		if (drawSelection) // have crengine do native highlight of selection
+			rangeFlags = drawSegmentedSelection ? 0x11 : 0x01;
+		r.setFlags(rangeFlags);
+		tv->selectRange(r);
 
 		/* We don't need these:
 		int page = tv->getBookmarkPage(startp);
@@ -1213,19 +1841,42 @@ void lua_pushLineRect(lua_State *L, int left, int top, int right, int bottom, in
 bool docToWindowRect(LVDocView *tv, lvRect &rc) {
     lvPoint topLeft = rc.topLeft();
     lvPoint bottomRight = rc.bottomRight();
+    bool topInPage = false;
+    bool bottomInPage = false;
     if (tv->docToWindowPoint(topLeft)) {
         rc.setTopLeft(topLeft);
+        topInPage = true;
     }
-    else {
-        return false;
-    }
-    if (tv->docToWindowPoint(bottomRight)) {
+    if (tv->docToWindowPoint(bottomRight, true)) {
+        // isRectBottom=true: allow this bottom point (outside of the
+        // rect content) to be considered in this page, if it is
+        // actually the top of the next page.
         rc.setBottomRight(bottomRight);
+        bottomInPage = true;
     }
-    else {
-        return false;
+    if (topInPage && bottomInPage) {
+        return true;
     }
-    return true;
+    else if (bottomInPage && !topInPage) {
+        // Rect's bottom is in page, but not its top:
+        // get top truncated/clipped to current page top
+        topLeft = rc.topLeft();
+        if (tv->docToWindowPoint(topLeft, false, true)) {
+            rc.setTopLeft(topLeft);
+            return true;
+        }
+    }
+    else if (topInPage && !bottomInPage) {
+        // Rect's top is in page, but not its bottom:
+        // get bottom truncated/clipped to current page bottom
+        bottomRight = rc.bottomRight();
+        if (tv->docToWindowPoint(bottomRight, true, true)) {
+            rc.setBottomRight(bottomRight);
+            return true;
+        }
+    }
+    // Neither top or bottom of rect in page
+    return false;
 }
 
 // Push to the Lua stack the multiple segments (rectangle for each text line)
@@ -1246,6 +1897,98 @@ void lua_pushSegmentsFromRange(lua_State *L, CreDocument *doc, ldomXRange *range
             }
         }
     }
+}
+
+static int compareXPointers(lua_State *L){
+    CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
+    const char* xp1 = luaL_checkstring(L, 2);
+    const char* xp2 = luaL_checkstring(L, 3);
+    ldomXPointerEx nodep1 = doc->dom_doc->createXPointer(lString16(xp1));
+    ldomXPointerEx nodep2 = doc->dom_doc->createXPointer(lString16(xp2));
+    if (nodep1.isNull() || nodep2.isNull())
+        return 0;
+    // Return 1 if pointers are ordered (if xp2 is after xp1), -1 if not, 0 if same
+    lua_pushinteger(L, nodep2.compare(nodep1));
+    return 1;
+}
+
+static int getNextVisibleWordStart(lua_State *L){
+    CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
+    const char* xp = luaL_checkstring(L, 2);
+    ldomXPointerEx nodep = doc->dom_doc->createXPointer(lString16(xp));
+    if (nodep.isNull())
+        return 0;
+    if (nodep.nextVisibleWordStart()) {
+        lua_pushstring(L, UnicodeToLocal(nodep.toString()).c_str());
+        return 1;
+    }
+    return 0;
+}
+
+static int getNextVisibleWordEnd(lua_State *L){
+    CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
+    const char* xp = luaL_checkstring(L, 2);
+    ldomXPointerEx nodep = doc->dom_doc->createXPointer(lString16(xp));
+    if (nodep.isNull())
+        return 0;
+    if (nodep.nextVisibleWordEnd()) {
+        lua_pushstring(L, UnicodeToLocal(nodep.toString()).c_str());
+        return 1;
+    }
+    return 0;
+}
+
+static int getPrevVisibleWordStart(lua_State *L){
+    CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
+    const char* xp = luaL_checkstring(L, 2);
+    ldomXPointerEx nodep = doc->dom_doc->createXPointer(lString16(xp));
+    if (nodep.isNull())
+        return 0;
+    if (nodep.prevVisibleWordStart()) {
+        lua_pushstring(L, UnicodeToLocal(nodep.toString()).c_str());
+        return 1;
+    }
+    return 0;
+}
+
+
+static int getPrevVisibleWordEnd(lua_State *L){
+    CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
+    const char* xp = luaL_checkstring(L, 2);
+    ldomXPointerEx nodep = doc->dom_doc->createXPointer(lString16(xp));
+    if (nodep.isNull())
+        return 0;
+    if (nodep.prevVisibleWordEnd()) {
+        lua_pushstring(L, UnicodeToLocal(nodep.toString()).c_str());
+        return 1;
+    }
+    return 0;
+}
+
+static int getNextVisibleChar(lua_State *L){
+    CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
+    const char* xp = luaL_checkstring(L, 2);
+    ldomXPointerEx nodep = doc->dom_doc->createXPointer(lString16(xp));
+    if (nodep.isNull())
+        return 0;
+    if (nodep.nextVisibleChar()) {
+        lua_pushstring(L, UnicodeToLocal(nodep.toString()).c_str());
+        return 1;
+    }
+    return 0;
+}
+
+static int getPrevVisibleChar(lua_State *L){
+    CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
+    const char* xp = luaL_checkstring(L, 2);
+    ldomXPointerEx nodep = doc->dom_doc->createXPointer(lString16(xp));
+    if (nodep.isNull())
+        return 0;
+    if (nodep.prevVisibleChar()) {
+        lua_pushstring(L, UnicodeToLocal(nodep.toString()).c_str());
+        return 1;
+    }
+    return 0;
 }
 
 static int getWordBoxesFromPositions(lua_State *L) {
@@ -1593,6 +2336,29 @@ static bool _isLinkToFootnote(CreDocument *doc, const lString16 source_xpointer,
     // in frontend/apps/reader/modules/readerlink.lua
     bool trusted_source_xpointer = flags & 0x0002;
 
+    // Trust -cr-hint: noteref noteref-ignore footnote footnote-ignore
+    if (trusted_source_xpointer) {
+        css_cr_hint_t hint = sourceNode->getStyle()->cr_hint;
+        if (hint == css_cr_hint_noteref) {
+            reason = "source has -cr-hint: noteref";
+            return true;
+        }
+        else if (hint == css_cr_hint_noteref_ignore) {
+            reason = "source has -cr-hint: noteref-ignore";
+            return false;
+        }
+    }
+    css_cr_hint_t hint = targetNode->getStyle()->cr_hint;
+    if (hint == css_cr_hint_footnote) {
+        reason = "target has -cr-hint: footnote";
+        return true;
+    }
+    else if (hint == css_cr_hint_footnote_ignore) {
+        reason = "target has -cr-hint: footnote-ignore";
+        return false;
+    }
+
+
     if (flags & 0x0004) { // Trust role= and epub:type= attributes
         // About epub:type, see:
         //   http://apex.infogridpacific.com/df/epub-type-epubpackaging8.html
@@ -1600,10 +2366,6 @@ static bool _isLinkToFootnote(CreDocument *doc, const lString16 source_xpointer,
         // Should epub:type="glossterm" epub:type="glossdef" be considered
         // as footnotes?
         // And other like epub:type="chapter" that probably are not footnotes?
-        //
-        // (If needed, add check for a private CSS property "-cr-hint: footnote"
-        // or "-cr-hint: noteref", so one can define it to specific classes
-        // with Styles tweaks.)
         //
         // We also trust that the target is the whole footnote container, and
         // so there is no need to extend it.
@@ -1651,7 +2413,6 @@ static bool _isLinkToFootnote(CreDocument *doc, const lString16 source_xpointer,
                     }
                 }
             }
-            // if needed: getStyle() -cr-hint: noteref
         }
         // Target
         // (Note that calibre first gets the block container of targetNode if
@@ -1690,7 +2451,36 @@ static bool _isLinkToFootnote(CreDocument *doc, const lString16 source_xpointer,
                 }
             }
         }
-        // if needed: getStyle() -cr-hint: footnote
+    }
+
+    if (flags & 0x0008) { // Accept classic FB2 footnotes
+        // Similar checks as this CSS would do:
+        //    body[name="notes"] section,
+        //    body[name="comments"] section {
+        //        -cr-hint: footnote;
+        //    }
+        if ( targetNode->getNodeId() == doc->dom_doc->getElementNameIndex("section") ) {
+            lUInt16 el_body = doc->dom_doc->getElementNameIndex("body");
+            ldomNode * n = targetNode->getParentNode();
+            while ( n && !n->isNull() ) {
+                if ( n->getNodeId() == el_body ) {
+                    lString16 name = n->getAttributeValue("name");
+                    if (!name.empty()) {
+                        name.lowercase();
+                        if (name == "notes") {
+                            reason = "target is FB2 footnote (body[name=notes] section)";
+                            return true;
+                        }
+                        if (name == "comments") {
+                            reason = "target is FB2 footnote (body[name=comments] section)";
+                            return true;
+                        }
+                    }
+                    break;
+                }
+                n = n->getParentNode();
+            }
+        }
     }
 
     if (flags & 0x0010) { // Target must have an anchor #id
@@ -1894,19 +2684,27 @@ static bool _isLinkToFootnote(CreDocument *doc, const lString16 source_xpointer,
     // Source node text (punctuation stripped) is only numbers (3 digits max,
     // to avoid catching years ... but only years>1000)
     // Source node text (punctuation stripped) is 1 to 2 letters, with 0 to 2
-    // numbers (a, z, ab, 1a, B2)
+    // numbers (a, z, ab, 1a, B2) - or 1 to 10 roman numerals
     if ( (flags & 0x0400 || flags & 0x0800) && trusted_source_xpointer && !likelyFootnote) {
         lString16 sourceText = sourceNode->getText();
         int nbDigits = 0;
         int nbAlpha = 0;
         int nbOthers = 0;
+        int nbRomans = 0;
         for (int i=0 ; i<sourceText.length(); i++) {
             if ( !lStr_isWordSeparator(sourceText[i]) ) { // ignore space, punctuations...
                 int props = lGetCharProps(sourceText[i]);
                 if (props & CH_PROP_DIGIT)
                     nbDigits += 1;
-                else if (props & CH_PROP_ALPHA)
+                else if (props & CH_PROP_ALPHA) {
                     nbAlpha += 1;
+                    // also check for roman numerals (i v x l c d m)
+                    lChar16 c = sourceText[i];
+                    if (c == 'i' || c == 'v' || c == 'x' || c == 'l' || c == 'c' || c == 'd' || c == 'm' ||
+                        c == 'I' || c == 'V' || c == 'X' || c == 'L' || c == 'C' || c == 'D' || c == 'M' ) {
+                            nbRomans += 1;
+                    }
+                }
                 else
                     nbOthers += 1; // CJK, other alphabets...
             }
@@ -1916,10 +2714,15 @@ static bool _isLinkToFootnote(CreDocument *doc, const lString16 source_xpointer,
             reason += "source text is only 1 to 3 digits";
             likelyFootnote = true;
         }
-        if (flags & 0x0800 && nbAlpha>=1 && nbAlpha<=2 && nbDigits >= 0 && nbDigits <= 2 && nbOthers==0) {
+        if (flags & 0x0800 && nbAlpha >= 1 && nbAlpha <= 2 && nbDigits >= 0 && nbDigits <= 2 && nbOthers==0) {
             // (should we only allow lowercase alpha?)
             if (!reason.empty()) reason += "; ";
             reason += "source text is 1 to 2 letters with 0 to 2 digits";
+            likelyFootnote = true;
+        }
+        else if (flags & 0x0800 && nbRomans >= 1 && nbRomans <= 10 && nbRomans == nbAlpha && nbDigits==0 && nbOthers==0) {
+            if (!reason.empty()) reason += "; ";
+            reason += "source text is 1 to 10 roman numerals";
             likelyFootnote = true;
         }
     }
@@ -2043,7 +2846,7 @@ static bool _isLinkToFootnote(CreDocument *doc, const lString16 source_xpointer,
             lUInt16 el_body = doc->dom_doc->getElementNameIndex("body");
             lUInt16 el_h1 = doc->dom_doc->getElementNameIndex("h1");
             lUInt16 el_h6 = doc->dom_doc->getElementNameIndex("h6");
-            lUInt16 attr_id = doc->dom_doc->getAttrNameIndex(L"id");
+            lUInt16 el_a = doc->dom_doc->getElementNameIndex("a");
             ldomNode * goodFinalNode = NULL;
             ldomNode * curFinalNode = NULL;
             ldomXPointerEx notAfter;
@@ -2098,6 +2901,14 @@ static bool _isLinkToFootnote(CreDocument *doc, const lString16 source_xpointer,
                     // printf("id=%s\n", UnicodeToLocal(id).c_str());
                     extStopReason = "node with 'id=' attr met";
                     break;
+                }
+                else if ( nodeId == el_a ) {
+                    // With <a>, crengine may use name= as its id=, so do as well.
+                    lString16 name = node->getAttributeValue("name");
+                    if ( !name.empty() ) {
+                        extStopReason = "node A with 'name=' attr met";
+                        break;
+                    }
                 }
                 // Done checking
                 if ( !curPos.nextElement() ) {
@@ -2214,13 +3025,33 @@ static int highlightXPointer(lua_State *L) {
         ldomNode * node = nodep.getNode();
         if (node->isNull())
             return 0;
-        sel.add( new ldomXRange(node, true) ); // highlight
+        ldomXRange * fullNodeRange = new ldomXRange(node, true);
+        fullNodeRange->setFlags(0x11); // draw segmented adjusted selection
+        sel.add( fullNodeRange ); // highlight it
         lua_pushboolean(L, true);
         return 1;
     }
     // if no xpointer provided, clear all highlights
     sel.clear();
     lua_pushboolean(L, true);
+    return 1;
+}
+
+static int getNormalizedXPointer(lua_State *L) {
+    CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
+    const char* xp = luaL_checkstring(L, 2);
+    ldomXPointer nodep = doc->dom_doc->createXPointer(lString16(xp));
+        // When gDOMVersionRequested >= DOM_VERSION_WITH_NORMALIZED_XPOINTERS,
+        // it will use internally createXPointerV2(), otherwise createXPointerV1().
+
+    if ( nodep.isNull() ) {
+        // XPointer not found in document
+        lua_pushboolean(L, false);
+    }
+    else {
+        // Force the use of toStrinV2() to get a normalized xpointer
+        lua_pushstring(L, UnicodeToLocal(nodep.toStringV2()).c_str());
+    }
     return 1;
 }
 
@@ -2264,26 +3095,51 @@ static int drawCurrentPage(lua_State *L) {
 	if (lua_isboolean(L, 3)) {
 		color = lua_toboolean(L, 3);
 	}
+	bool invert_images = false; // set to true when in night mode
+	if (lua_isboolean(L, 4)) {
+		invert_images = lua_toboolean(L, 4);
+	}
+	bool smooth_scaling = false; // set to true when smooth image scaling is enabled
+	if (lua_isboolean(L, 5)) {
+		smooth_scaling = lua_toboolean(L, 5);
+	}
+	bool dithering = false; // set to true when SW dithering is enabled
+	if (lua_isboolean(L, 6)) {
+		dithering = lua_toboolean(L, 6);
+	}
 
-	int w = bb->w,
-		h = bb->h;
+	int w = bb->w;
+	int h = bb->h;
+
+	int drawn_images_count;
+	int drawn_images_surface;
 
 	doc->text_view->Resize(w, h);
 	doc->text_view->Render();
 	if (color) {
 		/* Use Color buffer - caller should have provided us with a
-                 * Blitbuffer.TYPE_BBRGB16, see CreDocument:drawCurrentView
-                 * for why not TYPE_BBRGB32) */
-		LVColorDrawBuf drawBuf(w, h, bb->data, 16);
+		 * Blitbuffer.TYPE_BBRGB32, see CreDocument:drawCurrentView */
+		LVColorDrawBuf drawBuf(w, h, bb->data, 32);
+		drawBuf.setInvertImages(invert_images);
+		drawBuf.setSmoothScalingImages(smooth_scaling);
 		doc->text_view->Draw(drawBuf, false);
+		drawn_images_count = drawBuf.getDrawnImagesCount();
+		drawn_images_surface = drawBuf.getDrawnImagesSurface();
 	}
 	else {
 		/* Set DrawBuf to 8bpp */
 		LVGrayDrawBuf drawBuf(w, h, 8, bb->data);
+		drawBuf.setInvertImages(invert_images);
+		drawBuf.setSmoothScalingImages(smooth_scaling);
+		drawBuf.setDitherImages(dithering);
 		doc->text_view->Draw(drawBuf, false);
+		drawn_images_count = drawBuf.getDrawnImagesCount();
+		drawn_images_surface = drawBuf.getDrawnImagesSurface();
 	}
 
-	return 0;
+	lua_pushinteger(L, drawn_images_count);
+	lua_pushnumber(L, (float)drawn_images_surface/(w*h));
+	return 2;
 }
 
 static int drawCoverPage(lua_State *L) {
@@ -2460,12 +3316,8 @@ static int isXPointerInDocument(lua_State *L) {
     CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
     const char *xpointer_str = luaL_checkstring(L, 2);
 
-    bool found = true;
     ldomXPointer xp = doc->dom_doc->createXPointer(lString16(xpointer_str));
-    lvPoint pt = xp.toPoint();
-    if (pt.y < 0) {
-        found = false;
-    }
+    bool found = !xp.isNull();
     lua_pushboolean(L, found);
     return 1;
 }
@@ -2519,102 +3371,131 @@ static int getImageDataFromPosition(lua_State *L) {
 
 
 static const struct luaL_Reg cre_func[] = {
-	{"initCache", initCache},
-	{"initHyphDict", initHyphDict},
-	{"newDocView", newDocView},
-	{"getFontFaces", getFontFaces},
-	{"getGammaLevel", getGammaLevel},
-	{"getGammaIndex", getGammaIndex},
-	{"setGammaIndex", setGammaIndex},
-	{"registerFont", registerFont},
-	{"getHyphDictList", getHyphDictList},
-	{"getSelectedHyphDict", getSelectedHyphDict},
-	{"setHyphDictionary", setHyphDictionary},
-	{"getLatestDomVersion", getLatestDomVersion},
-	{"requestDomVersion", requestDomVersion},
-	{NULL, NULL}
+    {"initCache", initCache},
+    {"initHyphDict", initHyphDict},
+    {"newDocView", newDocView},
+    {"getFontFaces", getFontFaces},
+    {"getGammaLevel", getGammaLevel},
+    {"getGammaIndex", getGammaIndex},
+    {"setGammaIndex", setGammaIndex},
+    {"registerFont", registerFont},
+    {"getHyphDictList", getHyphDictList},
+    {"getSelectedHyphDict", getSelectedHyphDict},
+    {"setHyphDictionary", setHyphDictionary},
+    {"getTextLangStatus", getTextLangStatus},
+    {"getLatestDomVersion", getLatestDomVersion},
+    {"getDomVersionWithNormalizedXPointers", getDomVersionWithNormalizedXPointers},
+    {"requestDomVersion", requestDomVersion},
+    {NULL, NULL}
 };
 
 static const struct luaL_Reg credocument_meth[] = {
-	{"loadDocument", loadDocument},
-	{"renderDocument", renderDocument},
-	/*--- get methods ---*/
-	{"getIntProperty", getIntProperty},
-	{"getStringProperty", getStringProperty},
-	{"getDocumentProps", getDocumentProps},
-	{"getPages", getNumberOfPages},
-	{"getCurrentPage", getCurrentPage},
-	{"getPageFromXPointer", getPageFromXPointer},
-	{"getPosFromXPointer", getPosFromXPointer},
-	{"getCurrentPos", getCurrentPos},
-	{"getCurrentPercent", getCurrentPercent},
-	{"getXPointer", getXPointer},
-	{"getFullHeight", getFullHeight},
-	{"getFontSize", getFontSize},
-	{"getFontFace", getFontFace},
-	{"getPageMargins", getPageMargins},
-	{"getHeaderHeight", getHeaderHeight},
-	{"getToc", getTableOfContent},
-	{"getVisiblePageCount", getVisiblePageCount},
-	/*--- set methods ---*/
-	{"setIntProperty", setIntProperty},
-	{"setStringProperty", setStringProperty},
-	{"setViewMode", setViewMode},
-	{"setViewDimen", setViewDimen},
-	{"setHeaderInfo", setHeaderInfo},
-	{"setHeaderFont", setHeaderFont},
-	{"setFontFace", setFontFace},
-	{"setAsPreferredFontWithBias", setAsPreferredFontWithBias},
-	{"setFontSize", setFontSize},
-	{"setDefaultInterlineSpace", setDefaultInterlineSpace},
-	{"setStyleSheet", setStyleSheet},
-	{"setEmbeddedStyleSheet", setEmbeddedStyleSheet},
-	{"setEmbeddedFonts", setEmbeddedFonts},
-	{"setPageMargins", setPageMargins},
-	{"setVisiblePageCount", setVisiblePageCount},
-	{"adjustFontSizes", adjustFontSizes},
-	{"setBatteryState", setBatteryState},
-	/* --- control methods ---*/
-	{"isBuiltDomStale", isBuiltDomStale},
-	{"hasCacheFile", hasCacheFile},
-	{"invalidateCacheFile", invalidateCacheFile},
-	{"getCacheFilePath", getCacheFilePath},
-	{"buildAlternativeToc", buildAlternativeToc},
-	{"isTocAlternativeToc", isTocAlternativeToc},
-	{"gotoPage", gotoPage},
-	{"gotoPercent", gotoPercent},
-	{"gotoPos", gotoPos},
-	{"gotoXPointer", gotoXPointer},
-	{"zoomFont", zoomFont},
-	{"toggleFontBolder", toggleFontBolder},
-	//{"cursorLeft", cursorLeft},
-	//{"cursorRight", cursorRight},
-	{"drawCurrentPage", drawCurrentPage},
-	//{"drawCoverPage", drawCoverPage},
-	{"findText", findText},
-	{"isXPointerInCurrentPage", isXPointerInCurrentPage},
-	{"isXPointerInDocument", isXPointerInDocument},
-	{"getLinkFromPosition", getLinkFromPosition},
-	{"getWordFromPosition", getWordFromPosition},
-	{"getTextFromPositions", getTextFromPositions},
-	{"getWordBoxesFromPositions", getWordBoxesFromPositions},
-	{"getImageDataFromPosition", getImageDataFromPosition},
-	{"getDocumentFileContent", getDocumentFileContent},
-	{"getTextFromXPointer", getTextFromXPointer},
-	{"getHTMLFromXPointer", getHTMLFromXPointer},
-	{"getHTMLFromXPointers", getHTMLFromXPointers},
-	{"getPageLinks", getPageLinks},
-	{"isLinkToFootnote", isLinkToFootnote},
-	{"highlightXPointer", highlightXPointer},
-	{"getCoverPageImageData", getCoverPageImageData},
-	{"gotoLink", gotoLink},
-	{"goBack", goBack},
-	{"goForward", goForward},
-	{"clearSelection", clearSelection},
-	{"saveDefaults", saveDefaults},
-	{"close", closeDocument},
-	{"__gc", closeDocument},
-	{NULL, NULL}
+    {"loadDocument", loadDocument},
+    {"renderDocument", renderDocument},
+    /*--- get methods ---*/
+    {"getIntProperty", getIntProperty},
+    {"getStringProperty", getStringProperty},
+    {"getDocumentProps", getDocumentProps},
+    {"getPages", getNumberOfPages},
+    {"getCurrentPage", getCurrentPage},
+    {"getPageFromXPointer", getPageFromXPointer},
+    {"getPosFromXPointer", getPosFromXPointer},
+    {"getCurrentPos", getCurrentPos},
+    {"getCurrentPercent", getCurrentPercent},
+    {"getXPointer", getXPointer},
+    {"getPageOffsetX", getPageOffsetX},
+    {"getPageStartY", getPageStartY},
+    {"getPageHeight", getPageHeight},
+    {"getFullHeight", getFullHeight},
+    {"getFontSize", getFontSize},
+    {"getFontFace", getFontFace},
+    {"getPageMargins", getPageMargins},
+    {"getHeaderHeight", getHeaderHeight},
+    {"getToc", getTableOfContent},
+    {"getVisiblePageCount", getVisiblePageCount},
+    {"getNextVisibleWordStart", getNextVisibleWordStart},
+    {"getNextVisibleWordEnd", getNextVisibleWordEnd},
+    {"getPrevVisibleWordStart", getPrevVisibleWordStart},
+    {"getPrevVisibleWordEnd", getPrevVisibleWordEnd},
+    {"getPrevVisibleChar", getPrevVisibleChar},
+    {"getNextVisibleChar", getNextVisibleChar},
+    {"getTextFromXPointers", getTextFromXPointers},
+    {"compareXPointers", compareXPointers},
+    /*--- set methods ---*/
+    {"setIntProperty", setIntProperty},
+    {"setStringProperty", setStringProperty},
+    {"setViewMode", setViewMode},
+    {"setViewDimen", setViewDimen},
+    {"setHeaderInfo", setHeaderInfo},
+    {"setHeaderFont", setHeaderFont},
+    {"setHeaderProgressMarks", setHeaderProgressMarks},
+    {"setFontFace", setFontFace},
+    {"setAsPreferredFontWithBias", setAsPreferredFontWithBias},
+    {"setFontSize", setFontSize},
+    {"setDefaultInterlineSpace", setDefaultInterlineSpace},
+    {"setStyleSheet", setStyleSheet},
+    {"setEmbeddedStyleSheet", setEmbeddedStyleSheet},
+    {"setEmbeddedFonts", setEmbeddedFonts},
+    {"setBackgroundColor", setBackgroundColor},
+    {"setBackgroundImage", setBackgroundImage},
+    {"setPageMargins", setPageMargins},
+    {"setVisiblePageCount", setVisiblePageCount},
+    {"adjustFontSizes", adjustFontSizes},
+    {"setBatteryState", setBatteryState},
+    {"setCallback", setCallback},
+    /* --- control methods ---*/
+    {"isBuiltDomStale", isBuiltDomStale},
+    {"hasCacheFile", hasCacheFile},
+    {"invalidateCacheFile", invalidateCacheFile},
+    {"getCacheFilePath", getCacheFilePath},
+    {"getStatistics", getStatistics},
+    {"getUnknownEntities", getUnknownEntities},
+    {"buildAlternativeToc", buildAlternativeToc},
+    {"isTocAlternativeToc", isTocAlternativeToc},
+    {"gotoPage", gotoPage},
+    {"gotoPercent", gotoPercent},
+    {"gotoPos", gotoPos},
+    {"gotoXPointer", gotoXPointer},
+    {"zoomFont", zoomFont},
+    {"toggleFontBolder", toggleFontBolder},
+    //{"cursorLeft", cursorLeft},
+    //{"cursorRight", cursorRight},
+    {"drawCurrentPage", drawCurrentPage},
+    //{"drawCoverPage", drawCoverPage},
+    {"findText", findText},
+    {"isXPointerInCurrentPage", isXPointerInCurrentPage},
+    {"isXPointerInDocument", isXPointerInDocument},
+    {"getLinkFromPosition", getLinkFromPosition},
+    {"getWordFromPosition", getWordFromPosition},
+    {"getTextFromPositions", getTextFromPositions},
+    {"getWordBoxesFromPositions", getWordBoxesFromPositions},
+    {"getImageDataFromPosition", getImageDataFromPosition},
+    {"getDocumentFileContent", getDocumentFileContent},
+    {"getTextFromXPointer", getTextFromXPointer},
+    {"getHTMLFromXPointer", getHTMLFromXPointer},
+    {"getHTMLFromXPointers", getHTMLFromXPointers},
+    {"getPageLinks", getPageLinks},
+    {"isLinkToFootnote", isLinkToFootnote},
+    {"highlightXPointer", highlightXPointer},
+    {"getNormalizedXPointer", getNormalizedXPointer},
+    {"getCoverPageImageData", getCoverPageImageData},
+    {"gotoLink", gotoLink},
+    {"goBack", goBack},
+    {"goForward", goForward},
+    {"clearSelection", clearSelection},
+    {"hasPageMap", hasPageMap},
+    {"getPageMap", getPageMap},
+    {"getPageMapSource", getPageMapSource},
+    {"getPageMapFirstPageLabel", getPageMapFirstPageLabel},
+    {"getPageMapLastPageLabel", getPageMapLastPageLabel},
+    {"getPageMapCurrentPageLabel", getPageMapCurrentPageLabel},
+    {"getPageMapXPointerPageLabel", getPageMapXPointerPageLabel},
+    {"getPageMapVisiblePageLabels", getPageMapVisiblePageLabels},
+    {"readDefaults", readDefaults},
+    {"saveDefaults", saveDefaults},
+    {"close", closeDocument},
+    {"__gc", closeDocument},
+    {NULL, NULL}
 };
 
 int luaopen_cre(lua_State *L) {

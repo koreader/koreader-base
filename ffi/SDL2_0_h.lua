@@ -269,6 +269,7 @@ typedef enum {
   SDL_APP_DIDENTERBACKGROUND = 260,
   SDL_APP_WILLENTERFOREGROUND = 261,
   SDL_APP_DIDENTERFOREGROUND = 262,
+  SDL_DISPLAYEVENT = 336,
   SDL_WINDOWEVENT = 512,
   SDL_SYSWMEVENT = 513,
   SDL_KEYDOWN = 768,
@@ -306,6 +307,7 @@ typedef enum {
   SDL_DROPCOMPLETE = 4099,
   SDL_AUDIODEVICEADDED = 4352,
   SDL_AUDIODEVICEREMOVED = 4353,
+  SDL_SENSORUPDATE = 4608,
   SDL_RENDER_TARGETS_RESET = 8192,
   SDL_RENDER_DEVICE_RESET = 8193,
   SDL_USEREVENT = 32768,
@@ -325,10 +327,23 @@ struct SDL_Finger {
   float y;
   float pressure;
 };
+typedef struct SDL_Finger SDL_Finger;
 struct SDL_CommonEvent {
   Uint32 type;
   Uint32 timestamp;
 };
+typedef struct SDL_CommonEvent SDL_CommonEvent;
+struct SDL_DisplayEvent {
+  Uint32 type;
+  Uint32 timestamp;
+  Uint32 display;
+  Uint8 event;
+  Uint8 padding1;
+  Uint8 padding2;
+  Uint8 padding3;
+  Sint32 data1;
+};
+typedef struct SDL_DisplayEvent SDL_DisplayEvent;
 struct SDL_WindowEvent {
   Uint32 type;
   Uint32 timestamp;
@@ -340,6 +355,7 @@ struct SDL_WindowEvent {
   Sint32 data1;
   Sint32 data2;
 };
+typedef struct SDL_WindowEvent SDL_WindowEvent;
 typedef enum {
   SDL_WINDOWEVENT_NONE = 0,
   SDL_WINDOWEVENT_SHOWN = 1,
@@ -369,6 +385,7 @@ struct SDL_KeyboardEvent {
   Uint8 padding3;
   struct SDL_Keysym keysym;
 };
+typedef struct SDL_KeyboardEvent SDL_KeyboardEvent;
 struct SDL_TextEditingEvent {
   Uint32 type;
   Uint32 timestamp;
@@ -377,12 +394,14 @@ struct SDL_TextEditingEvent {
   Sint32 start;
   Sint32 length;
 };
+typedef struct SDL_TextEditingEvent SDL_TextEditingEvent;
 struct SDL_TextInputEvent {
   Uint32 type;
   Uint32 timestamp;
   Uint32 windowID;
   char text[32];
 };
+typedef struct SDL_TextInputEvent SDL_TextInputEvent;
 struct SDL_MouseMotionEvent {
   Uint32 type;
   Uint32 timestamp;
@@ -394,6 +413,7 @@ struct SDL_MouseMotionEvent {
   Sint32 xrel;
   Sint32 yrel;
 };
+typedef struct SDL_MouseMotionEvent SDL_MouseMotionEvent;
 struct SDL_MouseButtonEvent {
   Uint32 type;
   Uint32 timestamp;
@@ -406,6 +426,7 @@ struct SDL_MouseButtonEvent {
   Sint32 x;
   Sint32 y;
 };
+typedef struct SDL_MouseButtonEvent SDL_MouseButtonEvent;
 struct SDL_MouseWheelEvent {
   Uint32 type;
   Uint32 timestamp;
@@ -415,6 +436,7 @@ struct SDL_MouseWheelEvent {
   Sint32 y;
   Uint32 direction;
 };
+typedef struct SDL_MouseWheelEvent SDL_MouseWheelEvent;
 struct SDL_JoyAxisEvent {
   Uint32 type;
   Uint32 timestamp;
@@ -426,6 +448,7 @@ struct SDL_JoyAxisEvent {
   Sint16 value;
   Uint16 padding4;
 };
+typedef struct SDL_JoyAxisEvent SDL_JoyAxisEvent;
 struct SDL_JoyBallEvent {
   Uint32 type;
   Uint32 timestamp;
@@ -437,6 +460,7 @@ struct SDL_JoyBallEvent {
   Sint16 xrel;
   Sint16 yrel;
 };
+typedef struct SDL_JoyBallEvent SDL_JoyBallEvent;
 struct SDL_JoyHatEvent {
   Uint32 type;
   Uint32 timestamp;
@@ -446,6 +470,7 @@ struct SDL_JoyHatEvent {
   Uint8 padding1;
   Uint8 padding2;
 };
+typedef struct SDL_JoyHatEvent SDL_JoyHatEvent;
 struct SDL_JoyButtonEvent {
   Uint32 type;
   Uint32 timestamp;
@@ -455,11 +480,13 @@ struct SDL_JoyButtonEvent {
   Uint8 padding1;
   Uint8 padding2;
 };
+typedef struct SDL_JoyButtonEvent SDL_JoyButtonEvent;
 struct SDL_JoyDeviceEvent {
   Uint32 type;
   Uint32 timestamp;
   Sint32 which;
 };
+typedef struct SDL_JoyDeviceEvent SDL_JoyDeviceEvent;
 struct SDL_ControllerAxisEvent {
   Uint32 type;
   Uint32 timestamp;
@@ -471,6 +498,7 @@ struct SDL_ControllerAxisEvent {
   Sint16 value;
   Uint16 padding4;
 };
+typedef struct SDL_ControllerAxisEvent SDL_ControllerAxisEvent;
 struct SDL_ControllerButtonEvent {
   Uint32 type;
   Uint32 timestamp;
@@ -480,11 +508,13 @@ struct SDL_ControllerButtonEvent {
   Uint8 padding1;
   Uint8 padding2;
 };
+typedef struct SDL_ControllerButtonEvent SDL_ControllerButtonEvent;
 struct SDL_ControllerDeviceEvent {
   Uint32 type;
   Uint32 timestamp;
   Sint32 which;
 };
+typedef struct SDL_ControllerDeviceEvent SDL_ControllerDeviceEvent;
 struct SDL_AudioDeviceEvent {
   Uint32 type;
   Uint32 timestamp;
@@ -494,10 +524,19 @@ struct SDL_AudioDeviceEvent {
   Uint8 padding2;
   Uint8 padding3;
 };
+typedef struct SDL_AudioDeviceEvent SDL_AudioDeviceEvent;
+struct SDL_SensorEvent {
+  Uint32 type;
+  Uint32 timestamp;
+  Sint32 which;
+  float data[6];
+};
+typedef struct SDL_SensorEvent SDL_SensorEvent;
 struct SDL_QuitEvent {
   Uint32 type;
   Uint32 timestamp;
 };
+typedef struct SDL_QuitEvent SDL_QuitEvent;
 struct SDL_UserEvent {
   Uint32 type;
   Uint32 timestamp;
@@ -506,6 +545,7 @@ struct SDL_UserEvent {
   void *data1;
   void *data2;
 };
+typedef struct SDL_UserEvent SDL_UserEvent;
 typedef struct {
   Uint32 format;
   int w;
@@ -518,6 +558,7 @@ struct SDL_SysWMEvent {
   Uint32 timestamp;
   struct SDL_SysWMmsg *msg;
 };
+typedef struct SDL_SysWMEvent SDL_SysWMEvent;
 struct SDL_TouchFingerEvent {
   Uint32 type;
   Uint32 timestamp;
@@ -529,6 +570,7 @@ struct SDL_TouchFingerEvent {
   float dy;
   float pressure;
 };
+typedef struct SDL_TouchFingerEvent SDL_TouchFingerEvent;
 struct SDL_MultiGestureEvent {
   Uint32 type;
   Uint32 timestamp;
@@ -540,6 +582,7 @@ struct SDL_MultiGestureEvent {
   Uint16 numFingers;
   Uint16 padding;
 };
+typedef struct SDL_MultiGestureEvent SDL_MultiGestureEvent;
 struct SDL_DollarGestureEvent {
   Uint32 type;
   Uint32 timestamp;
@@ -550,38 +593,42 @@ struct SDL_DollarGestureEvent {
   float x;
   float y;
 };
+typedef struct SDL_DollarGestureEvent SDL_DollarGestureEvent;
 struct SDL_DropEvent {
   Uint32 type;
   Uint32 timestamp;
   char *file;
   Uint32 windowID;
 };
+typedef struct SDL_DropEvent SDL_DropEvent;
 union SDL_Event {
   Uint32 type;
-  struct SDL_CommonEvent common;
-  struct SDL_WindowEvent window;
-  struct SDL_KeyboardEvent key;
-  struct SDL_TextEditingEvent edit;
-  struct SDL_TextInputEvent text;
-  struct SDL_MouseMotionEvent motion;
-  struct SDL_MouseButtonEvent button;
-  struct SDL_MouseWheelEvent wheel;
-  struct SDL_JoyAxisEvent jaxis;
-  struct SDL_JoyBallEvent jball;
-  struct SDL_JoyHatEvent jhat;
-  struct SDL_JoyButtonEvent jbutton;
-  struct SDL_JoyDeviceEvent jdevice;
-  struct SDL_ControllerAxisEvent caxis;
-  struct SDL_ControllerButtonEvent cbutton;
-  struct SDL_ControllerDeviceEvent cdevice;
-  struct SDL_AudioDeviceEvent adevice;
-  struct SDL_QuitEvent quit;
-  struct SDL_UserEvent user;
-  struct SDL_SysWMEvent syswm;
-  struct SDL_TouchFingerEvent tfinger;
-  struct SDL_MultiGestureEvent mgesture;
-  struct SDL_DollarGestureEvent dgesture;
-  struct SDL_DropEvent drop;
+  SDL_CommonEvent common;
+  SDL_DisplayEvent display;
+  SDL_WindowEvent window;
+  SDL_KeyboardEvent key;
+  SDL_TextEditingEvent edit;
+  SDL_TextInputEvent text;
+  SDL_MouseMotionEvent motion;
+  SDL_MouseButtonEvent button;
+  SDL_MouseWheelEvent wheel;
+  SDL_JoyAxisEvent jaxis;
+  SDL_JoyBallEvent jball;
+  SDL_JoyHatEvent jhat;
+  SDL_JoyButtonEvent jbutton;
+  SDL_JoyDeviceEvent jdevice;
+  SDL_ControllerAxisEvent caxis;
+  SDL_ControllerButtonEvent cbutton;
+  SDL_ControllerDeviceEvent cdevice;
+  SDL_AudioDeviceEvent adevice;
+  SDL_SensorEvent sensor;
+  SDL_QuitEvent quit;
+  SDL_UserEvent user;
+  SDL_SysWMEvent syswm;
+  SDL_TouchFingerEvent tfinger;
+  SDL_MultiGestureEvent mgesture;
+  SDL_DollarGestureEvent dgesture;
+  SDL_DropEvent drop;
   Uint8 padding[56];
 };
 struct SDL_Rect {
@@ -611,6 +658,7 @@ struct SDL_Palette {
   int refcount;
 };
 typedef struct SDL_Palette SDL_Palette;
+typedef struct SDL_PixelFormat SDL_PixelFormat;
 struct SDL_PixelFormat {
   Uint32 format;
   SDL_Palette *palette;
@@ -632,7 +680,6 @@ struct SDL_PixelFormat {
   int refcount;
   struct SDL_PixelFormat *next;
 };
-typedef struct SDL_PixelFormat SDL_PixelFormat;
 struct SDL_Surface {
   Uint32 flags;
   SDL_PixelFormat *format;
@@ -658,6 +705,7 @@ int SDL_PollEvent(union SDL_Event *) __attribute__((visibility("default")));
 Uint32 SDL_GetTicks(void) __attribute__((visibility("default")));
 void SDL_Delay(Uint32) __attribute__((visibility("default")));
 int SDL_GetCurrentDisplayMode(int, SDL_DisplayMode *) __attribute__((visibility("default")));
+void SDL_EnableScreenSaver(void);
 SDL_Window *SDL_CreateWindow(const char *, int, int, int, int, Uint32) __attribute__((visibility("default")));
 SDL_Renderer *SDL_CreateRenderer(SDL_Window *, int, Uint32) __attribute__((visibility("default")));
 int SDL_CreateWindowAndRenderer(int, int, Uint32, SDL_Window **, SDL_Renderer **) __attribute__((visibility("default")));
@@ -738,6 +786,7 @@ SDL_bool SDL_GameControllerGetAttached(SDL_GameController *) __attribute__((visi
 SDL_Joystick *SDL_GameControllerGetJoystick(SDL_GameController *) __attribute__((visibility("default")));
 int SDL_GameControllerEventState(int) __attribute__((visibility("default")));
 void SDL_GameControllerUpdate(void) __attribute__((visibility("default")));
+int SDL_GameControllerRumble(SDL_GameController *, Uint16, Uint16, Uint32) __attribute__((visibility("default")));
 typedef enum {
   SDL_CONTROLLER_AXIS_INVALID = -1,
   SDL_CONTROLLER_AXIS_LEFTX = 0,
@@ -788,7 +837,7 @@ static const int SDL_HAT_LEFTDOWN = 12;
 int SDL_GetNumTouchDevices(void) __attribute__((visibility("default")));
 SDL_TouchID SDL_GetTouchDevice(int) __attribute__((visibility("default")));
 int SDL_GetNumTouchFingers(SDL_TouchID) __attribute__((visibility("default")));
-struct SDL_Finger *SDL_GetTouchFinger(SDL_TouchID, int) __attribute__((visibility("default")));
+SDL_Finger *SDL_GetTouchFinger(SDL_TouchID, int) __attribute__((visibility("default")));
 static const int SDL_INIT_TIMER = 1;
 static const int SDL_INIT_AUDIO = 16;
 static const int SDL_INIT_VIDEO = 32;
@@ -797,11 +846,12 @@ static const int SDL_INIT_HAPTIC = 4096;
 static const int SDL_INIT_GAMECONTROLLER = 8192;
 static const int SDL_INIT_EVENTS = 16384;
 static const int SDL_INIT_NOPARACHUTE = 1048576;
-static const int SDL_INIT_EVERYTHING = 29233;
+static const int SDL_INIT_EVERYTHING = 62001;
 static const int SDL_WINDOWPOS_UNDEFINED = 536805376;
 static const int SDL_WINDOW_FULLSCREEN = 1;
-static const int SDL_WINDOW_FULLSCREEN_DESKTOP = 4097;
 static const int SDL_WINDOW_RESIZABLE = 32;
+static const int SDL_WINDOW_FULLSCREEN_DESKTOP = 4097;
+static const int SDL_WINDOW_ALLOW_HIGHDPI = 8192;
 typedef enum {
   SDL_TEXTUREACCESS_STATIC = 0,
   SDL_TEXTUREACCESS_STREAMING = 1,
@@ -810,4 +860,15 @@ typedef enum {
 static const int SDL_PIXELFORMAT_ARGB8888 = 372645892;
 static const int SDL_PIXELFORMAT_RGBA8888 = 373694468;
 static const int SDL_PIXELFORMAT_ABGR8888 = 376840196;
+static const int SDL_PIXELFORMAT_BGRA8888 = 377888772;
+static const int SDL_PIXELFORMAT_RGBA32 = 376840196;
+static const int SDL_PIXELFORMAT_ARGB32 = 377888772;
+static const int SDL_PIXELFORMAT_BGRA32 = 372645892;
+static const int SDL_PIXELFORMAT_ABGR32 = 373694468;
+struct SDL_version {
+  Uint8 major;
+  Uint8 minor;
+  Uint8 patch;
+};
+void SDL_GetVersion(struct SDL_version *) __attribute__((visibility("default")));
 ]]

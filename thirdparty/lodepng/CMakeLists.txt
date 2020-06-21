@@ -1,7 +1,7 @@
-PROJECT(lodepng)
-cmake_minimum_required(VERSION 2.8.3)
+project(lodepng)
+cmake_minimum_required(VERSION 3.5.1)
 
-SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_LIST_DIR}/../cmake_modules")
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_LIST_DIR}/../cmake_modules")
 include("koreader_thirdparty_common")
 include("koreader_thirdparty_git")
 
@@ -24,7 +24,7 @@ endif()
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
     https://github.com/lvandeve/lodepng.git
-    425a57e20c8c13aa7c2215fa8cce1100896aa6fa
+    486d165ed70999cd575a9996a7f2551c7b238c81
     ${SOURCE_DIR}
 )
 

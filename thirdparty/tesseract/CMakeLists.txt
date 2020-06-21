@@ -1,16 +1,14 @@
-PROJECT(tesseract)
-cmake_minimum_required(VERSION 2.8.3)
+project(tesseract)
+cmake_minimum_required(VERSION 3.5.1)
 
-SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_LIST_DIR}/../cmake_modules")
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_LIST_DIR}/../cmake_modules")
 include("koreader_thirdparty_common")
 include("koreader_thirdparty_git")
 
 ep_get_source_dir(SOURCE_DIR)
 
 if ("$ENV{ANDROID}" STREQUAL "1")
-    set(PATCH_CMD COMMAND sh -c "patch -N -p1 < ${CMAKE_CURRENT_SOURCE_DIR}/tesseract-android.patch")
-else()
-    set(PATCH_CMD "")
+    set(PATCH_CMD "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/tesseract-android.patch")
 endif()
 
 ko_write_gitclone_script(
@@ -24,7 +22,7 @@ include(ExternalProject)
 ExternalProject_Add(
     ${PROJECT_NAME}
     DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
-    PATCH_COMMAND ${PATCH_CMD}
+    PATCH_COMMAND COMMAND ${PATCH_CMD}
     CONFIGURE_COMMAND ""
     # skip build and install, libk2pdfopt will build it
     BUILD_COMMAND ""

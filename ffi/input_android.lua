@@ -58,6 +58,9 @@ end
 
 local is_in_touch = false
 local function motionEventHandler(motion_event)
+    if android.isTouchscreenIgnored() then
+        return
+    end
     local action = android.lib.AMotionEvent_getAction(motion_event)
     local pointer_count = android.lib.AMotionEvent_getPointerCount(motion_event)
     local pointer_index = bit.rshift(
@@ -90,11 +93,35 @@ end
 local function keyEventHandler(key_event)
     local code = android.lib.AKeyEvent_getKeyCode(key_event)
     local action = android.lib.AKeyEvent_getAction(key_event)
+    if code == C.AKEYCODE_VOLUME_UP
+    or code == C.AKEYCODE_VOLUME_DOWN then
+        if android.getVolumeKeysIgnored() then
+            return 0 -- event not consumed
+        end
+    elseif code == C.AKEYCODE_MEDIA_PLAY_PAUSE
+    or code == C.AKEYCODE_MEDIA_STOP
+    or code == C.AKEYCODE_MEDIA_NEXT
+    or code == C.AKEYCODE_MEDIA_PREVIOUS
+    or code == C.AKEYCODE_MEDIA_REWIND
+    or code == C.AKEYCODE_MEDIA_FAST_FORWARD then
+        return 0 -- event not consumed
+    elseif code == C.AKEYCODE_MUTE
+    or code == C.AKEYCODE_VOLUME_MUTE then
+        if android.getVolumeKeysIgnored() then
+            return 0
+        else
+            return 1
+        end
+    end
+    if code == C.AKEYCODE_BACK and android.isBackButtonIgnored() then
+        return 1
+    end
     if action == C.AKEY_EVENT_ACTION_DOWN then
         genEmuEvent(C.EV_KEY, code, 1)
     elseif action == C.AKEY_EVENT_ACTION_UP then
         genEmuEvent(C.EV_KEY, code, 0)
     end
+    return 1 -- event consumed
 end
 
 local function commandHandler(code, value)
@@ -125,12 +152,13 @@ function input.waitForEvent(usecs)
                     while android.lib.AInputQueue_getEvent(android.app.inputQueue, event) >= 0 do
                         if android.lib.AInputQueue_preDispatchEvent(android.app.inputQueue, event[0]) == 0 then
                             local event_type = android.lib.AInputEvent_getType(event[0])
+                            local handled = 1
                             if event_type == C.AINPUT_EVENT_TYPE_MOTION then
                                 motionEventHandler(event[0])
                             elseif event_type == C.AINPUT_EVENT_TYPE_KEY then
-                                keyEventHandler(event[0])
+                                handled = keyEventHandler(event[0])
                             end
-                            android.lib.AInputQueue_finishEvent(android.app.inputQueue, event[0], 1)
+                            android.lib.AInputQueue_finishEvent(android.app.inputQueue, event[0], handled)
                         end
                     end
                 end

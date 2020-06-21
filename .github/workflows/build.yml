@@ -1,0 +1,34 @@
+name: test
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        os: [macos-latest]
+
+    steps:
+      - name: Check out Git repository
+        uses: actions/checkout@v2
+
+      - name: Cache for ccache
+        uses: actions/cache@v1
+        env:
+          cache-name: cache-ccache
+        with:
+          path: ~/.ccache # ccache cache files are stored in `~/.ccache` on Linux/macOS
+          key: ${{ runner.os }}-build-${{ env.cache-name }}
+          restore-keys: |
+            ${{ runner.os }}-build-${{ env.cache-name }}-
+            ${{ runner.os }}-build-
+            ${{ runner.os }}-
+
+      - name: Homebrew install dependencies
+        # Compared to the README, adds ccache for faster compilation times and removes sh5sum to prevent some conflict with coreutils
+        run: brew install ccache nasm ragel binutils coreutils libtool autoconf automake cmake makedepend sdl2 lua@5.1 luarocks gettext pkg-config wget
+
+      - name: Building in progress…
+        run: export MACOSX_DEPLOYMENT_TARGET=10.14 PATH="/usr/local/opt/gettext/bin:$PATH" && make fetchthirdparty && make

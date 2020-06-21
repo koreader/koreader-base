@@ -1,5 +1,8 @@
 include Makefile.defs
 
+DO_STRIP := $(if $(or $(EMULATE_READER),$(KODEBUG)),,1)
+DO_STRIP := $(if $(or $(DO_STRIP),$(APPIMAGE),$(DEBIAN)),1,)
+
 $(info ************ Building for MACHINE: "$(MACHINE)" **********)
 $(info ************ PATH: "$(PATH)" **********)
 $(info ************ CHOST: "$(CHOST)" **********)
@@ -21,34 +24,40 @@ all: $(OUTPUT_DIR)/libs $(if $(ANDROID),,$(LUAJIT)) \
 		$(GIF_LIB) \
 		$(if $(USE_LJ_WPACLIENT),$(LJ_WPACLIENT),) \
 		$(TURBO_FFI_WRAP_LIB) \
+		$(LUA_HTMLPARSER_ROCK) \
+		$(LUA_RAPIDJSON_ROCK) \
 		$(LUA_SPORE_ROCK) \
 		$(if $(ANDROID),$(LPEG_DYNLIB) $(LPEG_RE),) \
 		$(if $(WIN32),,$(ZMQ_LIB) $(CZMQ_LIB) $(FILEMQ_LIB) $(ZYRE_LIB)) \
 		$(if $(WIN32),,$(OUTPUT_DIR)/sdcv) \
-		$(if $(WIN32),,$(OUTPUT_DIR)/zsync) \
-		$(if $(or $(DARWIN),$(WIN32),$(ANDROID),$(UBUNTUTOUCH),$(APPIMAGE)),,$(OUTPUT_DIR)/dropbear) \
-		$(if $(or $(KINDLE),$(KOBO),$(CERVANTES)),$(OUTPUT_DIR)/sftp-server,) \
+		$(if $(or $(CERVANTES),$(KINDLE),$(KOBO)),$(OUTPUT_DIR)/dropbear,) \
+		$(if $(or $(CERVANTES),$(KINDLE),$(KOBO)),$(OUTPUT_DIR)/sftp-server,) \
 		$(if $(or $(DARWIN),$(WIN32)),,$(OUTPUT_DIR)/tar) \
-		$(if $(or $(KINDLE),$(KOBO),$(CERVANTES)),$(OUTPUT_DIR)/fbink,) \
+		$(if $(or $(CERVANTES),$(KINDLE),$(KOBO),$(REMARKABLE)),$(OUTPUT_DIR)/fbink,) \
+		$(if $(REMARKABLE),$(OUTPUT_DIR)/button-listen,) \
 		$(SQLITE_LIB) \
+		$(if $(or $(CERVANTES),$(KINDLE),$(KOBO),$(POCKETBOOK),$(REMARKABLE),$(SONY_PRSTUX)),$(CURL_LIB),) \
+		$(if $(or $(CERVANTES),$(KINDLE),$(KOBO),$(POCKETBOOK),$(REMARKABLE),$(SONY_PRSTUX)),$(OUTPUT_DIR)/zsync2,) \
 		$(LUA_LJ_SQLITE) $(OUTPUT_DIR)/common/xsys.lua
-ifndef EMULATE_READER
-ifndef KODEBUG
+ifeq ($(DO_STRIP),1)
 	STRIP_FILES="\
 		$(if $(WIN32),,$(OUTPUT_DIR)/sdcv) \
 		$(if $(WIN32),,$(OUTPUT_DIR)/tar) \
-		$(if $(WIN32),,$(OUTPUT_DIR)/zsync) \
-		$(if $(or $(DARWIN),$(WIN32),$(ANDROID),$(UBUNTUTOUCH),$(APPIMAGE)),,$(OUTPUT_DIR)/dropbear) \
-		$(if $(or $(KINDLE),$(KOBO),$(CERVANTES)),$(OUTPUT_DIR)/sftp-server,) \
+		$(if $(or $(CERVANTES),$(KINDLE),$(KOBO)),$(OUTPUT_DIR)/dropbear,) \
+		$(if $(or $(CERVANTES),$(KINDLE),$(KOBO)),$(OUTPUT_DIR)/sftp-server,) \
 		$(if $(or $(KINDLE),$(KOBO)),$(OUTPUT_DIR)/scp,) \
-		$(if $(or $(KINDLE),$(KOBO),$(CERVANTES)),$(OUTPUT_DIR)/fbink,) \
+		$(if $(or $(CERVANTES),$(KINDLE),$(KOBO),$(REMARKABLE)),$(OUTPUT_DIR)/fbink,) \
+		$(if $(REMARKABLE),$(OUTPUT_DIR)/button-listen,) \
+		$(if $(or $(KOBO),$(REMARKABLE)),$(OUTPUT_DIR)/fbdepth,) \
+		$(if $(or $(CERVANTES),$(KINDLE),$(KOBO),$(POCKETBOOK),$(REMARKABLE),$(SONY_PRSTUX)),$(OUTPUT_DIR)/zsync2,) \
 		$(if $(ANDROID),,$(LUAJIT)) \
+		$(OUTPUT_DIR)/plugins/evernote.koplugin/lib/$(if $(WIN32),*.dll,*.so*) \
+		$(OUTPUT_DIR)/rocks/lib/lua/5.1/$(if $(WIN32),*.dll,*.so*) \
 		$(OUTPUT_DIR)/libs/$(if $(WIN32),*.dll,*.so*)" ;\
 	$(STRIP) --strip-unneeded $${STRIP_FILES} ;\
 	touch -r $${STRIP_FILES}  # let all files have the same mtime
 	find $(OUTPUT_DIR)/common -name "$(if $(WIN32),*.dll,*.so*)" | \
 		xargs $(STRIP) --strip-unneeded
-endif
 endif
 	# set up some needed paths and links
 	install -d $(OUTPUT_DIR)/{cache,history,clipboard,fonts} $(CURDIR)/$(EVERNOTE_THRIFT_DIR)
@@ -83,57 +92,110 @@ $(OUTPUT_DIR)/data:
 
 libs: \
 	$(if $(or $(SDL),$(ANDROID)),,$(OUTPUT_DIR)/libs/libkoreader-input.so) \
-	$(if $(or $(SDL),$(ANDROID)),$(OUTPUT_DIR)/libs/libblitbuffer.so,) \
+	$(if $(or $(SDL),$(ANDROID),$(CERVANTES),$(KINDLE),$(KOBO),$(POCKETBOOK),$(REMARKABLE),$(SONY_PRSTUX)),$(OUTPUT_DIR)/libs/libblitbuffer.so,) \
+	$(if $(APPIMAGE),$(OUTPUT_DIR)/libs/libXss.so.1,) \
 	$(OUTPUT_DIR)/libs/libkoreader-lfs.so \
 	$(OUTPUT_DIR)/libs/libkoreader-djvu.so \
 	$(OUTPUT_DIR)/libs/libkoreader-cre.so \
+	$(OUTPUT_DIR)/libs/libkoreader-xtext.so \
 	$(OUTPUT_DIR)/libs/libwrap-mupdf.so
 
 $(OUTPUT_DIR)/libs/libkoreader-input.so: input/*.c input/*.h $(if $(KINDLE),$(POPEN_NOSHELL_LIB),)
 	@echo "Building koreader input module..."
 	$(CC) $(DYNLIB_CFLAGS) -I$(POPEN_NOSHELL_DIR) -I./input \
-		$(if $(KOBO),-DKOBO,) $(if $(KINDLE),-DKINDLE,) $(if $(POCKETBOOK),-DPOCKETBOOK,) $(if $(SONY_PRSTUX),-DSONY_PRSTUX,) $(if $(CERVANTES),-DCERVANTES,)\
+		$(if $(CERVANTES),-DCERVANTES,) $(if $(KOBO),-DKOBO,) $(if $(KINDLE),-DKINDLE,) $(if $(POCKETBOOK),-DPOCKETBOOK,) $(if $(REMARKABLE),-DREMARKABLE,) $(if $(SONY_PRSTUX),-DSONY_PRSTUX,)\
 		-o $@ \
 		input/input.c \
 		$(if $(KINDLE),$(POPEN_NOSHELL_LIB),) \
 		$(if $(POCKETBOOK),-linkview,)
 
 $(OUTPUT_DIR)/libs/libkoreader-lfs.so: \
-			$(if $(or $(ANDROID),$(WIN32)),$(LUAJIT_LIB),) \
+			$(if $(USE_LUAJIT_LIB),$(LUAJIT_LIB),) \
 			luafilesystem/src/lfs.c
 	$(CC) $(DYNLIB_CFLAGS) -o $@ $^
+ifdef DARWIN
+	install_name_tool -change \
+		`otool -L "$@" | grep "libluajit" | awk '{print $$1}'` \
+		libs/$(notdir $(LUAJIT_LIB)) \
+		$@
+endif
 
 # put all the libs to the end of compile command to make ubuntu's tool chain
 # happy
 $(OUTPUT_DIR)/libs/libkoreader-djvu.so: djvu.c \
-			$(if $(or $(ANDROID),$(WIN32)),$(LUAJIT_LIB),) \
+			$(if $(USE_LUAJIT_LIB),$(LUAJIT_LIB),) \
 			$(DJVULIBRE_LIB) $(K2PDFOPT_LIB)
 	$(CC) -I$(DJVULIBRE_DIR) -I$(MUPDF_DIR)/include $(K2PDFOPT_CFLAGS) \
 		$(DYNLIB_CFLAGS) -o $@ $^ $(if $(ANDROID),,-lpthread)
 ifdef DARWIN
-	install_name_tool -change /usr/local/lib/$(notdir $(DJVULIBRE_LIB)) \
-		libs/$(notdir $(DJVULIBRE_LIB)) $@
-	install_name_tool -change $(notdir $(K2PDFOPT_LIB)) \
-		libs/$(notdir $(K2PDFOPT_LIB)) $@
+	install_name_tool -change \
+		`otool -L "$@" | grep "libluajit" | awk '{print $$1}'` \
+		libs/$(notdir $(LUAJIT_LIB)) \
+		$@
+	install_name_tool -change \
+		`otool -L "$@" | grep "$(notdir $(DJVULIBRE_LIB)) " | awk '{print $$1}'` \
+		libs/$(notdir $(DJVULIBRE_LIB)) \
+		$@
+	install_name_tool -change \
+		`otool -L "$@" | grep "$(notdir $(K2PDFOPT_LIB)) " | awk '{print $$1}'` \
+		libs/$(notdir $(K2PDFOPT_LIB)) \
+		$@
 endif
 
 $(OUTPUT_DIR)/libs/libkoreader-cre.so: cre.cpp \
-			$(if $(or $(ANDROID),$(WIN32)),$(LUAJIT_LIB),) \
+			$(if $(USE_LUAJIT_LIB),$(LUAJIT_LIB),) \
 			$(CRENGINE_LIB)
-	$(CXX) -I$(CRENGINE_SRC_DIR)/crengine/include/ $(DYNLIB_CFLAGS) \
+	$(CXX) -I$(CRENGINE_SRC_DIR)/crengine/include/ $(DYNLIB_CXXFLAGS) \
 		-DLDOM_USE_OWN_MEM_MAN=$(if $(WIN32),0,1) \
 		$(if $(WIN32),-DQT_GL=1) -static-libstdc++ -o $@ $^
 ifdef DARWIN
-	install_name_tool -change $(notdir $(CRENGINE_LIB)) \
-		libs/$(notdir $(CRENGINE_LIB)) $@
+	install_name_tool -change \
+		`otool -L "$@" | grep "libluajit" | awk '{print $$1}'` \
+		libs/$(notdir $(LUAJIT_LIB)) \
+		$@
+	install_name_tool -change \
+		`otool -L "$@" | grep "$(notdir $(CRENGINE_LIB)) " | awk '{print $$1}'` \
+		libs/$(notdir $(CRENGINE_LIB)) \
+		$@
+endif
+
+$(OUTPUT_DIR)/libs/libkoreader-xtext.so: xtext.cpp \
+			$(if $(USE_LUAJIT_LIB),$(LUAJIT_LIB),) \
+			$(FREETYPE_LIB) $(HARFBUZZ_LIB) $(FRIBIDI_LIB) $(LIBUNIBREAK_LIB)
+	$(CXX) -I$(FREETYPE_DIR)/include/freetype2 \
+	-I$(HARFBUZZ_DIR)/include/harfbuzz \
+	-I$(FRIBIDI_DIR)/include \
+	-I$(LIBUNIBREAK_DIR)/include \
+	$(DYNLIB_CXXFLAGS) -static-libstdc++ -Wall -o $@ $^
+ifdef DARWIN
+	install_name_tool -change \
+		`otool -L "$@" | grep "libluajit" | awk '{print $$1}'` \
+		libs/$(notdir $(LUAJIT_LIB)) \
+		$@
+	install_name_tool -change \
+		`otool -L "$@" | grep "$(notdir $(HARFBUZZ_LIB)) " | awk '{print $$1}'` \
+		libs/$(notdir $(HARFBUZZ_LIB)) \
+		$@
+	install_name_tool -change \
+		`otool -L "$@" | grep "$(notdir $(FRIBIDI_LIB)) " | awk '{print $$1}'` \
+		libs/$(notdir $(FRIBIDI_LIB)) \
+		$@
 endif
 
 $(OUTPUT_DIR)/libs/libblitbuffer.so: blitbuffer.c
-	$(CC) $(DYNLIB_CFLAGS) -o $@ $^
+	$(CC) $(DYNLIB_CFLAGS) $(VECTO_CFLAGS) -o $@ $^
 
 $(OUTPUT_DIR)/libs/libwrap-mupdf.so: wrap-mupdf.c \
 			$(MUPDF_LIB)
 	$(CC) -I$(MUPDF_DIR)/include $(DYNLIB_CFLAGS) -o $@ $^
+ifdef DARWIN
+	install_name_tool -id \
+		libs/libwrap-mupdf.so \
+		$@
+endif
+
+$(OUTPUT_DIR)/libs/libXss.so.1: libxss-dummy.c
+	$(CC) $(DYNLIB_CFLAGS) -o $@ $^
 
 ffi/mupdf_h.lua: ffi-cdecl/mupdf_decl.c $(MUPDF_DIR)/include
 	CPPFLAGS="$(CFLAGS) -I. -I$(MUPDF_DIR)/include" $(FFI_CDECL) gcc ffi-cdecl/mupdf_decl.c $@
@@ -148,6 +210,12 @@ ffi/lodepng_h.lua: ffi-cdecl/lodepng_decl.c $(LODEPNG_DIR)
 include Makefile.third
 
 # ===========================================================================
+# very simple "launcher" for koreader on the remarkable
+
+$(OUTPUT_DIR)/button-listen: button-listen.c
+	$(CC) $(CFLAGS) -o $@ $^
+
+# ===========================================================================
 # the attachment extraction tool:
 
 $(OUTPUT_DIR)/extr: extr.c $(MUPDF_LIB) $(MUPDF_DIR)/include $(JPEG_LIB) $(FREETYPE_LIB)
@@ -159,30 +227,14 @@ $(OUTPUT_DIR)/extr: extr.c $(MUPDF_LIB) $(MUPDF_DIR)/include $(JPEG_LIB) $(FREET
 # NDK variable should be set in your environment and it should point to
 # the root directory of the NDK
 #
-# make-standalone-toolchain.sh is obsolete, for NDK <=11
 # --deprecated-headers is necessary in NDK 15, but will fail in 12-14
 android-toolchain:
 ifneq ($(wildcard $(NDK)/build/tools),)
-ifeq ($(wildcard $(NDK)/build/tools/make_standalone_toolchain.py),)
-	install -d $(ANDROID_TOOLCHAIN)
-	$(NDK)/build/tools/make-standalone-toolchain.sh --platform=android-$(NDKABI) \
-		--install-dir=$(ANDROID_TOOLCHAIN)
-else
 	$(NDK)/build/tools/make_standalone_toolchain.py --force --install-dir=$(ANDROID_TOOLCHAIN) \
 		--arch $(ANDROID_ARCH) --api $(NDKABI) --deprecated-headers || \
 	$(NDK)/build/tools/make_standalone_toolchain.py --force --install-dir=$(ANDROID_TOOLCHAIN) \
 		--arch $(ANDROID_ARCH) --api $(NDKABI)
 endif
-endif
-
-# ===========================================================================
-# helper target for creating standalone pocket toolchain from
-# pocketbook-free SDK: https://github.com/pocketbook-free/SDK_481
-
-pocketbook-toolchain:
-	install -d toolchain
-	cd toolchain && \
-		git clone https://github.com/pocketbook-free/SDK_481 pocketbook-toolchain
 
 # ===========================================================================
 # helper target for initializing third-party code
@@ -191,12 +243,9 @@ clean:
 	-rm -rf $(OUTPUT_DIR)/*
 	-rm -rf $(THIRDPARTY_DIR)/{$(CMAKE_THIRDPARTY_LIBS)}/build/$(MACHINE)
 
-dist-clean:
+distclean:
 	-rm -rf build
 	-rm -rf $(THIRDPARTY_DIR)/{$(CMAKE_THIRDPARTY_LIBS)}/build
-
-luajit-clean:
-	$(MAKE) -C $(LUAJIT_DIR) clean
 
 # ===========================================================================
 # start of unit tests section
@@ -214,7 +263,6 @@ test: $(OUTPUT_DIR)/spec $(OUTPUT_DIR)/.busted
 	cd $(OUTPUT_DIR) && \
 		./luajit $(shell which busted) \
 		--exclude-tags=notest \
-		--no-auto-insulate \
-		-o ./spec/base/unit/verbose_print ./spec/base/unit
+		-o gtest ./spec/base/unit
 
-.PHONY: test
+.PHONY: all android-toolchain clean distclean test

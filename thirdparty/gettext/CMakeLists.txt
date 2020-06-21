@@ -1,7 +1,7 @@
-PROJECT(gettext)
-cmake_minimum_required(VERSION 2.8.3)
+project(gettext)
+cmake_minimum_required(VERSION 3.5.1)
 
-SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_LIST_DIR}/../cmake_modules")
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_LIST_DIR}/../cmake_modules")
 include("koreader_thirdparty_common")
 
 enable_language(C)
@@ -27,14 +27,14 @@ if($ENV{ANDROID})
     set(CFG_CMD "${CFG_CMD} && ${ISED} \"s|#define HAVE_PWD_H 1||\" gettext-tools/config.h")
 endif()
 
-set(GETTEXT_VER "0.19.8.1")
+set(GETTEXT_VER "0.20.1")
 include(ExternalProject)
 ExternalProject_Add(
     ${PROJECT_NAME}
-    URL http://ftp.gnu.org/pub/gnu/gettext/gettext-${GETTEXT_VER}.tar.gz
-    URL_MD5 97e034cf8ce5ba73a28ff6c3c0638092
+    URL http://ftpmirror.gnu.org/gettext/gettext-${GETTEXT_VER}.tar.gz
+    URL_MD5 bb5b0c0caa028105f3ca1905ddc306e2
     DOWNLOAD_DIR ${KO_DOWNLOAD_DIR}
     CONFIGURE_COMMAND ${CFG_CMD}
-    BUILD_COMMAND $(MAKE) -j${PARALLEL_JOBS} --silent
-    INSTALL_COMMAND $(MAKE) -j${PARALLEL_JOBS} --silent install
+    BUILD_COMMAND ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS} --silent
+    INSTALL_COMMAND ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS} --silent install
 )

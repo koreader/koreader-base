@@ -1,7 +1,7 @@
-PROJECT(mupdf)
-cmake_minimum_required(VERSION 2.8.3)
+project(mupdf)
+cmake_minimum_required(VERSION 3.5.1)
 
-SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/../cmake_modules")
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/../cmake_modules")
 include("koreader_thirdparty_common")
 include("koreader_thirdparty_git")
 
@@ -10,7 +10,14 @@ enable_language(C)
 assert_var_defined(HOSTCFLAGS)
 assert_var_defined(HOSTCC)
 assert_var_defined(OS)
-set(BUILD_CMD_GENERATE sh -c "env CFLAGS=\"${HOSTCFLAGS}\" $(MAKE) -j${PARALLEL_JOBS} generate build=\"release\" CC=\"${HOSTCC}\" verbose=\"1\"")
+if($ENV{KODEBUG})
+    set(MUPDF_BUILD_TYPE "debug")
+else()
+    set(MUPDF_BUILD_TYPE "release")
+endif()
+
+# There's some headers to generate on the host's side first, before we run our actual build (where we enforce CROSSCOMPILE to avoid trying to regen those).
+set(BUILD_CMD_GENERATE sh -c "env CFLAGS=\"${HOSTCFLAGS}\" ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS} generate build=\"${MUPDF_BUILD_TYPE}\" CC=\"${HOSTCC}\" LDFLAGS=\"\" verbose=\"no\"")
 
 assert_var_defined(LDFLAGS)
 assert_var_defined(XCFLAGS)
@@ -18,12 +25,13 @@ assert_var_defined(XCFLAGS)
 # CMYK plotter only 100 kB
 # javascript (for form data validation) close to 800 kB
 set(XCFLAGS "${XCFLAGS} -DFZ_PLOTTERS_CMYK=0 -DFZ_ENABLE_JS=0")
-set(STATIC_BUILD_CMD "$(MAKE) -j${PARALLEL_JOBS}")
+set(STATIC_BUILD_CMD sh -c "${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS}")
 set(STATIC_BUILD_CMD "${STATIC_BUILD_CMD} LDFLAGS=\"${LDFLAGS}\" XCFLAGS=\"${XCFLAGS}\"")
-set(STATIC_BUILD_CMD "${STATIC_BUILD_CMD} CC=\"${CC}\" CXX=\"${CXX}\" AR=\"${AR}\" build=\"release\" OS=\"${OS}\"")
+set(STATIC_BUILD_CMD "${STATIC_BUILD_CMD} CC=\"${CC}\" CXX=\"${CXX}\" AR=\"${AR}\" build=\"${MUPDF_BUILD_TYPE}\" MUDRAW= MUTOOL= CURL_LIB= OS=${OS}")
 set(STATIC_BUILD_CMD "${STATIC_BUILD_CMD} HAVE_CURL=\"no\" HAVE_GLUT=\"no\" HAVE_X11=\"no\"")
-set(STATIC_BUILD_CMD "${STATIC_BUILD_CMD} verbose=\"1\" USE_SYSTEM_FREETYPE=\"yes\" USE_SYSTEM_HARFBUZZ=\"yes\" USE_SYSTEM_LIBJPEG=\"yes\" USE_SYSTEM_ZLIB=\"yes\"")
-set(STATIC_BUILD_CMD sh -c "${STATIC_BUILD_CMD} third libs")
+set(STATIC_BUILD_CMD "${STATIC_BUILD_CMD} verbose=\"1\" USE_SYSTEM_FREETYPE=\"yes\" USE_SYSTEM_HARFBUZZ=\"yes\" USE_SYSTEM_LIBJPEG=\"yes\" USE_SYSTEM_ZLIB=\"yes\" CROSSCOMPILE=\"yes\"")
+set(STATIC_BUILD_CMD "${STATIC_BUILD_CMD} SYS_HARFBUZZ_CFLAGS=\"\" SYS_HARFBUZZ_LIBS=\"-lharfbuzz\"")
+set(STATIC_BUILD_CMD "${STATIC_BUILD_CMD} third libs")
 
 # by default, mupdf compiles to a static library:
 # we generate a dynamic library from the static library:
@@ -50,18 +58,32 @@ else()
     set(LINK_OPTS "${LINK_OPTS} -Wl,-soname=${MUPDF_SONAME}")
     set(LINK_OPTS "${LINK_OPTS} build/release/libmupdf-third.a")
 endif()
-set(SHARED_BUILD_STR "${CC} -shared ${CFLAGS} ${LINK_OPTS} ${AES_LIB} ${ZLIB} ${JPEG_LIB} ${FREETYPE_LIB} ${HARFBUZZ_LIB} -o ${MUPDF_LIB} -lm")
+set(SHARED_BUILD_STR sh -c "${CC} -shared ${CFLAGS} ${LINK_OPTS} ${AES_LIB} ${ZLIB} ${JPEG_LIB} ${FREETYPE_LIB} ${HARFBUZZ_LIB} -o ${MUPDF_LIB} -lm")
 
 # explictly use envs defined in Makefile.defs
 if($ENV{ANDROID})
     set(SHARED_BUILD_STR "${SHARED_BUILD_STR} -llog")
-endif($ENV{ANDROID})
+endif()
 
-set(SHARED_BUILD_CMD sh -c "${SHARED_BUILD_STR}")
+set(SHARED_BUILD_CMD "${SHARED_BUILD_STR}")
 # use external fonts
-set(PATCH_CMD1 sh -c "patch -N -p1 < ${CMAKE_CURRENT_SOURCE_DIR}/external_fonts.patch || true")
+set(PATCH_CMD1 "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/external_fonts.patch")
 # add support for encryted zips
-set(PATCH_CMD2 sh -c "patch -N -p1 < ${CMAKE_CURRENT_SOURCE_DIR}/encrypted_zip.patch || true")
+set(PATCH_CMD2 "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/encrypted_zip.patch")
+# use libjpeg as a shared library
+set(PATCH_CMD3 "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/libjpeg_shared.patch")
+# Disable potentially crashy ARM ASM (it's 7 years old, and hell to debug)
+# NOTE: There's also a few ARCH_UNALIGNED_OK checks, but we never did pass that define.
+#       (FWIW, we *could*, on anything not kindle-legacy).
+set(PATCH_CMD4 "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/no_arm_asm.patch")
+# Honor CFLAGS
+set(PATCH_CMD5 "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/honor_cflags.patch")
+# Patch for https://bugs.ghostscript.com/show_bug.cgi?id=698877; should be in upstream from 1.15
+# cf. https://github.com/koreader/koreader/issues/5182
+set(PATCH_CMD6 "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/upstream-698877.patch")
+# Patch for tar/cbt support; should be in upstream from 1.17
+# cf. https://github.com/koreader/koreader-base/issues/1041
+set(PATCH_CMD7 "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/tar-fixes.patch")
 
 # TODO: ignore shared git submodules built outside of mupdf by ourselves
 # https://git.ghostscript.com/mupdf.git is slow, so we use the official mirror on GitHub
@@ -78,7 +100,7 @@ ExternalProject_Add(
     ${PROJECT_NAME}
     DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
     BUILD_IN_SOURCE 1
-    PATCH_COMMAND COMMAND ${PATCH_CMD1} COMMAND ${PATCH_CMD2} COMMAND ${PATCH_CMD3}
+    PATCH_COMMAND COMMAND ${PATCH_CMD1} COMMAND ${PATCH_CMD2} COMMAND ${PATCH_CMD3} COMMAND ${PATCH_CMD4} COMMAND ${PATCH_CMD5} COMMAND ${PATCH_CMD6} COMMAND ${PATCH_CMD7}
     # skip configure
     CONFIGURE_COMMAND ""
     BUILD_COMMAND ${BUILD_CMD_GENERATE} COMMAND ${STATIC_BUILD_CMD} COMMAND ${SHARED_BUILD_CMD}

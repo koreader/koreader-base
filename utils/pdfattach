@@ -46,21 +46,21 @@ declare author=""
 
 while getopts ":o:a:" opt; do
     case $opt in
-        a)
-            author="$OPTARG"
-            ;;
-        o)
-            outfile=$(readlink -f "$OPTARG")
-            ((outfcount++))
-            ;;
-        \?)
-            echo "$progname: Invalid option: -$OPTARG" >&2
-            usage
-            ;;
-        :)
-            echo "$progname: Option -$OPTARG requires an argument." >&2
-            usage
-            ;;
+    a)
+        author="$OPTARG"
+        ;;
+    o)
+        outfile=$(readlink -f "$OPTARG")
+        ((outfcount++))
+        ;;
+    \?)
+        echo "$progname: Invalid option: -$OPTARG" >&2
+        usage
+        ;;
+    :)
+        echo "$progname: Option -$OPTARG requires an argument." >&2
+        usage
+        ;;
     esac
 done
 
@@ -100,7 +100,7 @@ touch tmp.tex
     echo -E "\\usepackage[margin={1mm},papersize={9cm,12cm}]{geometry}"
     echo -E "\\usepackage{hyperref,attachfile}"
 } >>tmp.tex
-if [ ! -z "$author" ]; then
+if [ -n "$author" ]; then
     echo -E "\\AtBeginDocument{\\hypersetup{pdfauthor={$author}}}" >>tmp.tex
 fi
 echo -E "\\begin{document}" >>tmp.tex

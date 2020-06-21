@@ -1,24 +1,8 @@
 if(NOT DEFINED PROCESSOR_COUNT)
-  # Unknown:
-  set(PROCESSOR_COUNT 0)
-
-  # Linux:
-  set(cpuinfo_file "/proc/cpuinfo")
-  if(EXISTS "${cpuinfo_file}")
-    file(STRINGS "${cpuinfo_file}" procs REGEX "^processor.: [0-9]+$")
-    list(LENGTH procs PROCESSOR_COUNT)
-  endif()
-
-  # Mac:
-  if(APPLE)
-    execute_process(COMMAND sysctl -n hw.ncpu OUTPUT_VARIABLE ncpu)
-    set(PROCESSOR_COUNT "${ncpu}")
-  endif()
-
-  # Windows:
-  if(WIN32)
-    set(PROCESSOR_COUNT "$ENV{NUMBER_OF_PROCESSORS}")
-  endif()
+    include(ProcessorCount)
+    ProcessorCount(N)
+    # 0 if unknown
+    set(PROCESSOR_COUNT ${N})
 endif()
 
 if(APPLE)
@@ -31,18 +15,32 @@ if(NOT DEFINED PARALLEL_JOBS)
     math(EXPR PARALLEL_JOBS "${PROCESSOR_COUNT}+1")
 endif()
 
+# $(MAKE) is for recursive make invocations, but evidently when using another
+# generator there's no recursion. For us that other generator is ninja, but
+# maybe one day also Visual Studio or Xcode…
+if(CMAKE_GENERATOR MATCHES Makefiles)
+    set(KO_MAKE_RECURSIVE "$(MAKE)")
+else()
+    set(KO_MAKE_RECURSIVE make)
+endif()
+
+set(KO_PATCH sh -c "${CMAKE_MODULE_PATH}/patch-wrapper.sh")
+# DownloadProject somehow faceplants with the variant above...
+# Plus, we need that one for inlined shell calls anyway.
+set(KO_PATCH_SH "sh ${CMAKE_MODULE_PATH}/patch-wrapper.sh")
+
 macro(assert_var_defined varName)
     if(NOT DEFINED ${varName})
         message(FATAL_ERROR "${varName} variable not defined!")
-    endif(NOT DEFINED ${varName})
-endmacro(assert_var_defined)
+    endif()
+endmacro()
 
 macro(ep_get_source_dir varName)
     set(${varName} "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}-prefix/src/${PROJECT_NAME}")
-endmacro(ep_get_source_dir)
+endmacro()
 
 macro(ep_get_binary_dir varName)
     set(${varName} "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}-prefix/src/${PROJECT_NAME}-build")
-endmacro(ep_get_binary_dir)
+endmacro()
 
-set(KO_DOWNLOAD_DIR ${CMAKE_CURRENT_SOURCE_DIR}/build/downloads)
+set(KO_DOWNLOAD_DIR "${CMAKE_CURRENT_SOURCE_DIR}/build/downloads")

@@ -47,6 +47,7 @@ PicPage.__gc = PicPage.close
 function PicPage:draw(dc, bb)
     local scaled_bb = self.image_bb:scale(bb:getWidth(), bb:getHeight())
     bb:blitFullFrom(scaled_bb, 0, 0)
+    scaled_bb:free()
 end
 
 
@@ -253,20 +254,42 @@ function Pic.openGIFDocumentFromData(data, size)
 end
 
 function Pic.openPNGDocument(filename)
-    local ok, re = Png.decodeFromFile(filename)
+    local req_n
+    local bbtype
+    if Pic.color then
+        req_n = 3
+    else
+        -- NOTE: LodePNG will NOT do RGB -> Grayscale conversions for us, for design reasons (multiple ways to do it, lossy).
+        --       So we can only *ask* to keep grayscale PNGs as-is, but we might actually be getting fed back a RGB24 one ;).
+        req_n = 1
+    end
+
+    local ok, re = Png.decodeFromFile(filename, req_n)
     if not ok then error(re) end
 
+    if re.ncomp == 1 then bbtype = BB.TYPE_BB8
+    elseif re.ncomp == 2 then bbtype = BB.TYPE_BB8A
+    elseif re.ncomp == 3 then bbtype = BB.TYPE_BBRGB24
+    elseif re.ncomp == 4 then bbtype = BB.TYPE_BBRGB32
+    else
+        if re.data then
+            ffi.C.free(re.data)
+        end
+        error("unsupported number of color components")
+    end
+
     local doc = PicDocument:new{width=re.width, height=re.height}
-    doc.image_bb = BB.new(re.width, re.height, BB.TYPE_BBRGB32, re.data)
-    -- mark buffer for freeing when Blitbuffer is freed:
+    doc.image_bb = BB.new(re.width, re.height, bbtype, re.data)
+    doc.components = re.ncomp
+
+    -- Mark buffer for freeing when Blitbuffer is freed:
     doc.image_bb:setAllocated(1)
-    doc.components = 4
     return doc
 end
 
 function Pic.openJPGDocument(filename)
-    local fh = io.open(filename, "r")
-    assert(fh, "couldn't open file")
+    local fh = io.open(filename, "rb")
+    assert(fh, "couldn't open JPG file")
     local data = fh:read("*a")
     fh:close()
 
@@ -299,7 +322,6 @@ function Pic.openJPGDocument(filename)
     end
 
     turbojpeg.tjDestroy(handle)
-
     return doc
 end
 
@@ -312,16 +334,24 @@ function Pic.openJPGDocumentFromMem(data)
     local jpegsubsamp = ffi.new("int[1]")
     turbojpeg.tjDecompressHeader2(handle, ffi.cast("unsigned char*", data), #data, width, height, jpegsubsamp)
 
-    local doc = PicDocument:new{width=width[0], height=height[0] }
-    doc.image_bb = BB.new(width[0], height[0], BB.TYPE_BBRGB24)
-    doc.components = 1
-    local format = turbojpeg.TJPF_RGB
+    local doc = PicDocument:new{width=width[0], height=height[0]}
+    local format
+    if Pic.color then
+        doc.image_bb = BB.new(width[0], height[0], BB.TYPE_BBRGB24)
+        doc.components = 3
+        format = turbojpeg.TJPF_RGB
+    else
+        doc.image_bb = BB.new(width[0], height[0], BB.TYPE_BB8)
+        doc.components = 1
+        format = turbojpeg.TJPF_GRAY
+    end
 
     if turbojpeg.tjDecompress2(handle, ffi.cast("unsigned char*", data), #data,
         ffi.cast("unsigned char*", doc.image_bb.data),
         width[0], doc.image_bb.pitch, height[0], format, 0) == -1 then
         return false
     end
+
     turbojpeg.tjDestroy(handle)
     return doc
 end

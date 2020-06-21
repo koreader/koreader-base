@@ -1,4 +1,5 @@
 local ffi = require("ffi")
+require("ffi_wrapper")
 local BB = require("ffi/blitbuffer")
 local Png = require("ffi/png")
 
@@ -13,7 +14,7 @@ describe("Png module", function()
         bb:setPixel(400, 100, BB.ColorRGB32(120, 28, 25, 255))
 
         local cdata = ffi.C.malloc(w * h * 4)
-        local mem = ffi.cast("char*", cdata)
+        local mem = ffi.cast("unsigned char*", cdata)
         for x = 0, w-1 do
             for y = 0, h-1 do
                 local c = bb:getPixel(x, y):getColorRGB32()
@@ -29,7 +30,7 @@ describe("Png module", function()
         ffi.C.free(cdata)
         assert.are.same(ok, true)
 
-        ok, re = Png.decodeFromFile(fn)
+        ok, re = Png.decodeFromFile(fn, 4)
         assert.are.same(ok, true)
         local bb2 = BB.new(re.width, re.height, BB.TYPE_BBRGB32, re.data)
         local c = bb2:getPixel(0, 0)

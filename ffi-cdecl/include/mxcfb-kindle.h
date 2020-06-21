@@ -1,6 +1,8 @@
 /*
  * Copyright (C) 2004-2015 Freescale Semiconductor, Inc. All Rights Reserved.
  *
+ * NOTE: Upstream kernels available here: https://www.amazon.com/gp/help/customer/display.html?nodeId=200203720
+ *
  * - Modified by houqp, added mxcfb_update_data struct from GeekMaster's
  *   video player, refer to:
  *   http://www.mobileread.com/forums/showthread.php?t=177455&page=10
@@ -16,6 +18,15 @@
  * - Frankensteined w/ KOA2 stuff
  *   Upstream could afford to break backward compatibility, we can't,
  *   so all the KOA2 pre/suffixing is ours. -- NiLuJe
+ *
+ * - Frankensteined w/ Rex (PW4 & KT4) stuff -- NiLuJe
+ *
+ * - Frankensteined w/ KOA3 stuff
+ *   Consolidated as Zelda w/ the KOA2 stuff
+ *   Note that most of it is actually shared w/ Rex,
+ *   although some fancier features may not actually work on lower end Rex devices
+ *   (i.e., the KT4). -- NiLuJe
+ *
  */
 
 /*
@@ -146,25 +157,25 @@ struct mxcfb_rect {
 //#define WAVEFORM_MODE_INIT			0x0
 //#define WAVEFORM_MODE_DU			0x1
 //#define WAVEFORM_MODE_GC16			0x2
-#define WAVEFORM_MODE_KOA2_GL16			0x3
+#define WAVEFORM_MODE_ZELDA_GL16		0x3
 
-#define WAVEFORM_MODE_KOA2_A2			0x6
-//#define WAVEFORM_MODE_KOA2_DU4			0x7
-#define WAVEFORM_MODE_KOA2_LAST			0x7
+#define WAVEFORM_MODE_ZELDA_A2			0x6
+//#define WAVEFORM_MODE_ZELDA_DU4			0x7
+#define WAVEFORM_MODE_ZELDA_LAST			0x7
 
-#define WAVEFORM_MODE_KOA2_REAGL		WAVEFORM_MODE_KOA2_GLR16
-#define WAVEFORM_MODE_KOA2_REAGLD		WAVEFORM_MODE_KOA2_GLD16
+#define WAVEFORM_MODE_ZELDA_REAGL		WAVEFORM_MODE_ZELDA_GLR16
+#define WAVEFORM_MODE_ZELDA_REAGLD		WAVEFORM_MODE_ZELDA_GLD16
 
-#define WAVEFORM_MODE_KOA2_GC16_FAST		WAVEFORM_MODE_GC16
-#define WAVEFORM_MODE_KOA2_GL16_FAST		WAVEFORM_MODE_KOA2_GL16
-#define WAVEFORM_MODE_KOA2_GLR16		4
-#define WAVEFORM_MODE_KOA2_GLD16		5
-#define WAVEFORM_MODE_KOA2_GCK16		8
-#define WAVEFORM_MODE_KOA2_GLKW16		9
+#define WAVEFORM_MODE_ZELDA_GC16_FAST		WAVEFORM_MODE_GC16
+#define WAVEFORM_MODE_ZELDA_GL16_FAST		WAVEFORM_MODE_ZELDA_GL16
+#define WAVEFORM_MODE_ZELDA_GLR16		4
+#define WAVEFORM_MODE_ZELDA_GLD16		5
+#define WAVEFORM_MODE_ZELDA_GCK16		8
+#define WAVEFORM_MODE_ZELDA_GLKW16		9
 
 /* for backward compatible */
-#define WAVEFORM_MODE_KOA2_GL4			WAVEFORM_MODE_KOA2_GL16
-#define WAVEFORM_MODE_KOA2_GL16_INV		WAVEFORM_MODE_KOA2_GL16
+#define WAVEFORM_MODE_ZELDA_GL4			WAVEFORM_MODE_ZELDA_GL16
+#define WAVEFORM_MODE_ZELDA_GL16_INV		WAVEFORM_MODE_ZELDA_GL16
 
 
 #define WAVEFORM_MODE_AUTO			257
@@ -172,13 +183,13 @@ struct mxcfb_rect {
 /* Display temperature */
 #define TEMP_USE_AMBIENT			0x1000
 /* Gone w/ KOA2 */
-#define TEMP_USE_PAPYRUS			0X1001
+#define TEMP_USE_PAPYRUS			0x1001
 
 /* PW2, Gone w/ KOA2 */
 #define TEMP_USE_AUTO				0x1001
 
 /* KOA2... Once again breaking backward compat... (NOTE: TEMP_USE_AMBIENT hasn't budged, though) */
-#define TEMP_USE_KOA2_AUTO			TEMP_USE_AMBIENT
+#define TEMP_USE_ZELDA_AUTO			TEMP_USE_AMBIENT
 
 /* PXP Operations */
 #define EPDC_FLAG_ENABLE_INVERSION		0x01
@@ -201,8 +212,8 @@ struct mxcfb_rect {
 #define EPDC_FLAG_USE_DITHERING_Y4		0x8000
 
 /* KOA2... Once again breaking backward compat... */
-#define EPDC_FLAG_USE_KOA2_DITHERING_Y4		0x4000
-#define EPDC_FLAG_USE_KOA2_REGAL		0x8000
+#define EPDC_FLAG_USE_ZELDA_DITHERING_Y4	0x4000
+#define EPDC_FLAG_USE_ZELDA_REGAL		0x8000
 
 
 /* PW2 */
@@ -218,6 +229,9 @@ struct mxcfb_rect {
 
 /* KOA2 */
 #define EPD_MATERIAL_CARTA_1_2			0x02
+
+/* KOA3 */
+#define EPD_MATERIAL_V400			0x03
 
 /* KOA2 */
 enum mxcfb_dithering_mode {
@@ -253,7 +267,7 @@ struct mxcfb_update_data {
 };
 
 /* KOA2... Once again breaking backward compat. */
-struct mxcfb_update_data_koa2 {
+struct mxcfb_update_data_zelda {
 	struct mxcfb_rect update_region;
 	__u32 waveform_mode;
 	__u32 update_mode;
@@ -272,7 +286,7 @@ struct mxcfb_update_data_koa2 {
 };
 
 /* PW4... Guess what? :D */
-struct mxcfb_update_data_pw4 {
+struct mxcfb_update_data_rex {
 	struct mxcfb_rect update_region;
 	__u32 waveform_mode;
 	__u32 update_mode;
@@ -340,7 +354,7 @@ struct mxcfb_waveform_modes {
 };
 
 /* KOA2... Breaking backward compat. */
-struct mxcfb_waveform_modes_koa2 {
+struct mxcfb_waveform_modes_zelda {
 	int mode_init;
 	int mode_du;
 	int mode_gc4;
@@ -386,11 +400,11 @@ struct mxcfb_csc_matrix {
 #define MXCFB_SEND_UPDATE			_IOW('F', 0x2E, struct mxcfb_update_data)
 
 /* KOA2, because backward compat went kablooey */
-#define MXCFB_SET_WAVEFORM_MODES_KOA2		_IOW('F', 0x2B, struct mxcfb_waveform_modes_koa2)
-#define MXCFB_SEND_UPDATE_KOA2			_IOW('F', 0x2E, struct mxcfb_update_data_koa2)
+#define MXCFB_SET_WAVEFORM_MODES_ZELDA		_IOW('F', 0x2B, struct mxcfb_waveform_modes_zelda)
+#define MXCFB_SEND_UPDATE_ZELDA			_IOW('F', 0x2E, struct mxcfb_update_data_zelda)
 
 /* PW4, same dealio... */
-#define MXCFB_SEND_UPDATE_PW4			_IOW('F', 0x2E, struct mxcfb_update_data_pw4)
+#define MXCFB_SEND_UPDATE_REX			_IOW('F', 0x2E, struct mxcfb_update_data_rex)
 
 
 /* This evolved on the PW2... Rename the Touch/PW1 constant to differentiate the two. */
@@ -406,7 +420,7 @@ struct mxcfb_csc_matrix {
 #define MXCFB_SET_RESUME			_IOW('F', 0x35, __u32)
 
 /* KOA2 */
-#define MXCFB_GET_WORK_BUFFER_KOA2		_IOWR('F', 0x34, unsigned long)
+#define MXCFB_GET_WORK_BUFFER_ZELDA		_IOWR('F', 0x34, unsigned long)
 #define MXCFB_DISABLE_EPDC_ACCESS		_IO('F', 0x35)
 #define MXCFB_ENABLE_EPDC_ACCESS		_IO('F', 0x36)
 
@@ -437,7 +451,7 @@ struct mxcfb_csc_matrix {
 /* Use same steps as Cognac */
 #define NIGHTMODE_STRIDE_DEFAULT 16  /*default*/
 /* PW4 */
-#define NIGHTMODE_STRIDE_DEFAULT_PW4 138  /*default*/
+#define NIGHTMODE_STRIDE_DEFAULT_REX 138  /*default*/
 struct mxcfb_nightmode_ctrl {
 	int disable; /*1: disable; 0, enable */
 	int start; /* reduced to level for gck16 */

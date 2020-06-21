@@ -21,6 +21,7 @@
 
 #include "inkview.h"
 #include <dlfcn.h>
+#include <pthread.h>
 
 #define ABS_MT_SLOT     0x2f
 
@@ -79,7 +80,7 @@ static inline void debug_mtinfo(iv_mtinfo *mti) {
     printf("\n");
 }
 
-/* 
+/*
  * The PocketBook has an auto-suspend-feature, which puts the reader to sleep
  * after approximately two seconds "inactivity in the current eventhandler".
  *
@@ -89,13 +90,13 @@ static inline void debug_mtinfo(iv_mtinfo *mti) {
  * quickly becomes idle w/o external events, leading to suspension of the
  * whole device.
  *
- * This breaks the initial loading of modules and books. 
+ * This breaks the initial loading of modules and books.
  *
  * There are multiple functions which can affect auto-suspension: Beside
  * iv_sleepmode() which controls if auto-suspension is enabled at all, the
  * function SetHardTimer() makes it possible to execute a callback after a
  * given amount of time. SetHardTimer() will wake the Reader if it is
- * suspended and suspension will not occur while the callback is executed. 
+ * suspended and suspension will not occur while the callback is executed.
  *
  * However, both functions will not work properly if not called _from within
  * the current eventhandler_.
@@ -105,8 +106,8 @@ static inline void debug_mtinfo(iv_mtinfo *mti) {
  * active task.
  */
 
-/* 
- * define a fake-event which can be send via SendEventTo into 
+/*
+ * define a fake-event which can be send via SendEventTo into
  * pb_event_handle()
  */
 #define PB_SPECIAL_SUSPEND 333
@@ -135,8 +136,8 @@ static int send_to_event_handler(int type, int par1, int par2) {
 
 static int setSuspendState(lua_State *L) {
 	send_to_event_handler(
-			PB_SPECIAL_SUSPEND, 
-			luaL_checkint(L, 1), 
+			PB_SPECIAL_SUSPEND,
+			luaL_checkint(L, 1),
 			luaL_checkint(L,2)
 			);
 }
@@ -154,7 +155,7 @@ static int pb_event_handler(int type, int par1, int par2) {
         get_gti_pointer();
 	/* disable suspend to make uninterrupted loading possible. */
 	disable_suspend();
-	/* 
+	/*
 	 * re-enable suspending after a minute. This is normally handled by a
 	 * plugin on onReaderReady(). However, if loading of the plugin fails
 	 * for some reason, suspension would stay inactive consuming a lot of
@@ -216,34 +217,29 @@ static int pb_event_handler(int type, int par1, int par2) {
     return 0;
 }
 
-static int forkInkViewMain(lua_State *L, const char *inputdevice) {
-    struct sigaction new_sa;
-    int childpid;
-    if ((childpid = fork()) == -1) {
-        return luaL_error(L, "cannot fork() emu event listener");
+static void *runInkViewThread(void *arg) {
+    InkViewMain(pb_event_handler);
+    return 0;
+}
+
+static int startInkViewMain(lua_State *L, int fd, const char *inputdevice) {
+    pthread_t thread;
+    pthread_attr_t thread_attr;
+
+    inputfds[fd] = open(inputdevice, O_RDWR | O_NONBLOCK);
+    if (inputfds[fd] < 0) {
+        return luaL_error(L, "error opening input device <%s>: %d\n", inputdevice, errno);
     }
-    if (childpid == 0) {
-        /* we only use inputfds[0] in emu mode, because we only have one
-         * fake device so far. */
-        inputfds[0] = open(inputdevice, O_RDWR | O_NONBLOCK);
-        if (inputfds < 0) {
-            return luaL_error(L, "error opening input device <%s>: %d", inputdevice, errno);
-        }
-        InkViewMain(pb_event_handler);
-        /* child will block in InkViewMain and never reach here */
-        _exit(EXIT_SUCCESS);
-    } else {
-        /* InkViewMain will handle SIGINT in child and send EVT_EXIT event to
-         * inputdevice. So it's safe for parent to ignore the signal */
-        new_sa.sa_handler = SIG_IGN;
-        new_sa.sa_flags = SA_RESTART;
-        if (sigaction(SIGINT, &new_sa, NULL) == -1) {
-            return luaL_error(L, "error setting up sigaction for SIGINT: %d", errno);
-        }
-        if (sigaction(SIGTERM, &new_sa, NULL) == -1) {
-            return luaL_error(L, "error setting up sigaction for SIGTERM: %d", errno);
-        }
+
+    if (pthread_attr_init(&thread_attr) != 0) {
+        return luaL_error(L, "error initializing event listener thread attributes: %d", errno);
     }
+
+    pthread_attr_setdetachstate(&thread_attr, PTHREAD_CREATE_DETACHED);
+    if (pthread_create(&thread, &thread_attr, runInkViewThread, 0) == -1) {
+        return luaL_error(L, "error creating event listener thread: %d", errno);
+    }
+    pthread_attr_destroy(&thread_attr);
     return 0;
 }
 

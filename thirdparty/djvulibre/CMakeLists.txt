@@ -1,7 +1,7 @@
-PROJECT(djvulibre)
-cmake_minimum_required(VERSION 2.8.3)
+project(djvulibre)
+cmake_minimum_required(VERSION 3.5.1)
 
-SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_LIST_DIR}/../cmake_modules")
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_LIST_DIR}/../cmake_modules")
 include("koreader_thirdparty_common")
 include("koreader_thirdparty_git")
 
@@ -38,13 +38,13 @@ set(PATCH_CMD sh -c "${ISED} \"s|-lstdc++||g\" libtool")
 if($ENV{ANDROID})
     set(PATCH_CMD "${PATCH_CMD} && ${ISED} \"s|DIST_SUBDIRS = libdjvu.*|DIST_SUBDIRS = libdjvu|g\" Makefile")
     set(PATCH_CMD "${PATCH_CMD} && ${ISED} \"s|SUBDIRS = libdjvu tools share \\$(am__append_1) \\$(am__append_2)|SUBDIRS = libdjvu share \\$(am__append_1) \\$(am__append_2)|g\" Makefile")
-    set(PATCH_CMD "${PATCH_CMD} && patch -N -p1 < ${CMAKE_CURRENT_SOURCE_DIR}/android.patch || true")
+    set(PATCH_CMD "${PATCH_CMD} && ${KO_PATCH_SH} ${CMAKE_CURRENT_SOURCE_DIR}/android.patch")
 endif()
 
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
     https://gitlab.com/koreader/djvulibre.git
-    35e56567b200832fcf3c76551a22e3ac4070c636
+    8cb2151866c1147ceb79348c666a81053bedcd11
     ${SOURCE_DIR}
 )
 
@@ -55,7 +55,7 @@ ExternalProject_Add(
     PATCH_COMMAND NOCONFIGURE=1 ./autogen.sh
     BUILD_IN_SOURCE 1
     CONFIGURE_COMMAND COMMAND ${CFG_CMD} COMMAND ${PATCH_CMD}
-    BUILD_COMMAND $(MAKE) -j${PARALLEL_JOBS} SUBDIRS_FIRST=libdjvu --silent
+    BUILD_COMMAND ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS} SUBDIRS_FIRST=libdjvu
     # skip install
     INSTALL_COMMAND ""
 )

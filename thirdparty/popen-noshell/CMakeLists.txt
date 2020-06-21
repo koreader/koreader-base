@@ -1,7 +1,7 @@
-PROJECT(popen-noshell)
-cmake_minimum_required(VERSION 2.8.3)
+project(popen-noshell)
+cmake_minimum_required(VERSION 3.5.1)
 
-SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/../cmake_modules")
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/../cmake_modules")
 include("koreader_thirdparty_common")
 include("koreader_thirdparty_asm")
 include("koreader_thirdparty_git")
@@ -12,8 +12,8 @@ ep_get_source_dir(SOURCE_DIR)
 
 if(${LEGACY})
     # Revert 8d7a98d on legacy devices, pipe2 was introduced in Linux 2.6.27 & glibc 2.9
-    set(EXTRA_PATCH_CMD COMMAND patch -N -p1 < ${CMAKE_CURRENT_SOURCE_DIR}/kindle_legacy.patch)
-endif(${LEGACY})
+    set(EXTRA_PATCH_CMD "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/kindle_legacy.patch")
+endif()
 
 assert_var_defined(CC)
 assert_var_defined(AR)
@@ -21,9 +21,9 @@ assert_var_defined(CFLAGS)
 assert_var_defined(LDFLAGS)
 
 set(MAKE_ENV_VAR "CC=\"${CC}\" AR=\"${AR}\" CFLAGS=\"${CFLAGS}\" LDFLAGS=\"${LDFLAGS}\"")
-set(BUILD_CMD sh -c "$(MAKE) -j${PARALLEL_JOBS} ${MAKE_ENV_VAR}")
+set(BUILD_CMD sh -c "${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS} ${MAKE_ENV_VAR}")
 
-# NOTE: As of right now (1a70ef9bb131df98d5e75c9951699f2d91c24c15), wait until stuff settles down before bumping this.
+# NOTE: As of right now (1f9eaf4eeef348d1efe0f3c7fe8ab670653cfbb1), wait until stuff settles down before bumping this.
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
     https://github.com/famzah/popen-noshell.git
@@ -36,9 +36,9 @@ ExternalProject_Add(
     popen-noshell
     BUILD_IN_SOURCE 1
     DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
-	# popen_noshell patch: Make it build on recent TCs, and implement
+    # popen_noshell patch: Make it build on recent TCs, and implement
     # a simple Makefile for building it as a static lib
-    PATCH_COMMAND patch -N -p0 < ${CMAKE_CURRENT_SOURCE_DIR}/popen_noshell.patch ${EXTRA_PATCH_CMD}
+    PATCH_COMMAND COMMAND "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/popen_noshell.patch" COMMAND ${EXTRA_PATCH_CMD}
     # skip configure
     CONFIGURE_COMMAND ""
     BUILD_COMMAND ${BUILD_CMD}

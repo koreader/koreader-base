@@ -1,9 +1,10 @@
 SHELL:=/bin/bash
 
+# Sdk tools 26.1.1
+SDK_TARBALL=sdk-tools-linux-4333796.zip
+SDK_DL_URL=https://dl.google.com/android/repository/$(SDK_TARBALL)
 
-SDK_DL_URL=https://dl.google.com/android/android-sdk_r24.4.1-linux.tgz
-SDK_TARBALL=android-sdk_r24.4.1-linux.tgz
-SDK_SUM="978ee9da3dda10fb786709b7c2e924c0"
+SDK_SUM="aa190cfd7299cd6a1c687355bb2764e4"
 SDK_DIR=android-sdk-linux
 
 android-sdk:
@@ -11,17 +12,22 @@ android-sdk:
 	CHECKSUM=`md5sum $(SDK_TARBALL) | awk '{ print $$1 }'`; \
 		 [[ "$$CHECKSUM" = $(SDK_SUM) ]] || \
 		 { echo "$(SDK_TARBALL) has the wrong checksum!"; exit 1; }
-	tar xvf $(SDK_TARBALL)
-	pushd android-sdk-linux/tools && \
-		./android update sdk --all -u --filter "platform-tools,build-tools-26.0.1,android-14,android-19" && \
+
+	mkdir -pv $(SDK_DIR)
+	mv -v $(SDK_TARBALL) $(SDK_DIR)
+	unzip $(SDK_DIR)/$(SDK_TARBALL) -d $(SDK_DIR)
+	pushd $(SDK_DIR)/tools/bin && \
+		yes | ./sdkmanager --update && \
+		yes | ./sdkmanager --licenses && \
+		./sdkmanager "platform-tools" "build-tools;28.0.3" "platforms;android-28" "patcher;v4" && \
 		popd
-	rm -f $(SDK_TARBALL)
+	rm -f $(SDK_DIR)/$(SDK_TARBALL)
 
-
-NDK_DL_URL=https://dl.google.com/android/repository/android-ndk-r15c-linux-x86_64.zip
-NDK_TARBALL=android-ndk-r15c-linux-x86_64.zip
-NDK_SUM="0bf02d4e8b85fd770fd7b9b2cdec57f9441f27a2"
+# NDK r15c
 NDK_DIR=android-ndk-r15c
+NDK_TARBALL=$(NDK_DIR)-linux-x86_64.zip
+NDK_DL_URL=https://dl.google.com/android/repository/$(NDK_TARBALL)
+NDK_SUM="0bf02d4e8b85fd770fd7b9b2cdec57f9441f27a2"
 
 android-ndk:
 	[ -e $(NDK_TARBALL) ] || wget $(NDK_DL_URL)
@@ -30,3 +36,5 @@ android-ndk:
 		 { echo "$(NDK_TARBALL) has the wrong checksum!"; exit 1; }
 	unzip $(NDK_TARBALL)
 	rm -f $(NDK_TARBALL)
+
+android: android-sdk android-ndk

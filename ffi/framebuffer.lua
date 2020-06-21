@@ -6,6 +6,7 @@ This will be extended by implementations of this API.
 @module ffi.framebuffer
 --]]
 
+local bit = require("bit")
 local Blitbuffer = require("ffi/blitbuffer")
 
 local fb = {
@@ -19,13 +20,16 @@ local fb = {
     native_rotation_mode = nil,
     cur_rotation_mode = nil,
     blitbuffer_rotation_mode = nil,
+    night_mode = false,
+    hw_dithering = false, -- will be setup via setupDithering @ startup by reader.lua
+    sw_dithering = false, -- will be setup via setupDithering @ startup by reader.lua
 }
 
 --[[
 Codes for rotation modes:
 
-1 for no rotation,
-2 for landscape with bottom on the right side of screen, etc.
+0 for no rotation (i.e., Portrait),
+1 for landscape with bottom on the right side of screen, etc.
 
            2
    +--------------+
@@ -42,9 +46,12 @@ Codes for rotation modes:
    |              |
    +--------------+
           0
+
+i.e., this matches <linux/fb.h> FB_ROTATE_* constants ;).
 --]]
 fb.ORIENTATION_PORTRAIT = 0
 fb.ORIENTATION_LANDSCAPE = 1
+-- And now for Inverted orientations...
 fb.ORIENTATION_PORTRAIT_ROTATED = 2
 fb.ORIENTATION_LANDSCAPE_ROTATED = 3
 
@@ -88,55 +95,55 @@ function fb:init()
 end
 
 -- the ...Imp methods may be overridden to implement refresh
-function fb:refreshFullImp(x, y, w, h)
+function fb:refreshFullImp(x, y, w, h, d)
     -- the simplest form of refresh implements only this method.
     -- the others default to fall back to this.
 end
-function fb:refreshPartialImp(x, y, w, h)
+function fb:refreshPartialImp(x, y, w, h, d)
     -- default is fallback
-    return self:refreshFullImp(x, y, w, h)
+    return self:refreshFullImp(x, y, w, h, d)
 end
-function fb:refreshFlashPartialImp(x, y, w, h)
+function fb:refreshFlashPartialImp(x, y, w, h, d)
     -- default is fallback
-    return self:refreshFullImp(x, y, w, h)
+    return self:refreshFullImp(x, y, w, h, d)
 end
-function fb:refreshUIImp(x, y, w, h)
+function fb:refreshUIImp(x, y, w, h, d)
     -- default is fallback
-    return self:refreshPartialImp(x, y, w, h)
+    return self:refreshPartialImp(x, y, w, h, d)
 end
-function fb:refreshFlashUIImp(x, y, w, h)
+function fb:refreshFlashUIImp(x, y, w, h, d)
     -- default is fallback
-    return self:refreshFullImp(x, y, w, h)
+    return self:refreshFullImp(x, y, w, h, d)
 end
-function fb:refreshFastImp(x, y, w, h)
+function fb:refreshFastImp(x, y, w, h, d)
     -- default is fallback
-    return self:refreshPartialImp(x, y, w, h)
+    return self:refreshPartialImp(x, y, w, h, d)
 end
 
 -- these should not be overridden, they provide the external refresh API:
-function fb:refreshFull(x, y, w, h)
+function fb:refreshFull(x, y, w, h, d)
     x, y = self:calculateRealCoordinates(x, y)
-    return self:refreshFullImp(x, y, w, h)
+    return self:refreshFullImp(x, y, w, h, d)
 end
-function fb:refreshPartial(x, y, w, h)
+function fb:refreshPartial(x, y, w, h, d)
     x, y = self:calculateRealCoordinates(x, y)
-    return self:refreshPartialImp(x, y, w, h)
+    return self:refreshPartialImp(x, y, w, h, d)
 end
-function fb:refreshFlashPartial(x, y, w, h)
+function fb:refreshFlashPartial(x, y, w, h, d)
     x, y = self:calculateRealCoordinates(x, y)
-    return self:refreshFlashPartialImp(x, y, w, h)
+    return self:refreshFlashPartialImp(x, y, w, h, d)
 end
-function fb:refreshUI(x, y, w, h)
+function fb:refreshUI(x, y, w, h, d)
     x, y = self:calculateRealCoordinates(x, y)
-    return self:refreshUIImp(x, y, w, h)
+    return self:refreshUIImp(x, y, w, h, d)
 end
-function fb:refreshFlashUI(x, y, w, h)
+function fb:refreshFlashUI(x, y, w, h, d)
     x, y = self:calculateRealCoordinates(x, y)
-    return self:refreshFlashUIImp(x, y, w, h)
+    return self:refreshFlashUIImp(x, y, w, h, d)
 end
-function fb:refreshFast(x, y, w, h)
+function fb:refreshFast(x, y, w, h, d)
     x, y = self:calculateRealCoordinates(x, y)
-    return self:refreshFastImp(x, y, w, h)
+    return self:refreshFastImp(x, y, w, h, d)
 end
 
 -- should be overridden to free resources
@@ -248,25 +255,36 @@ function fb:getScreenHeight()
 end
 
 function fb:getDPI()
-    if self.dpi == nil then
-        self.dpi = EMULATE_READER_DPI or G_reader_settings:readSetting("screen_dpi")
+    if self.dpi ~= nil then
+        return self.dpi
     end
+
+    self.dpi = EMULATE_READER_DPI
+
     if self.dpi == nil and self.device then
         self.dpi = self.device.display_dpi
     end
+
     if self.dpi == nil then
         self.dpi = 160
     end
+
     return self.dpi
 end
 
 function fb:setDPI(dpi)
-    G_reader_settings:saveSetting("screen_dpi", dpi)
+    self.dpi = dpi
 end
 
-function fb:scaleByDPI(px)
+--[[--
+Calculate pixel from density-independent pixel
+
+@int dp density-independent pixel
+@treturn int pixel
+]]--
+function fb:scaleByDPI(dp)
     -- scaled positive px should also be positive
-    return math.ceil(px * self:getDPI()/167)
+    return math.ceil(dp * self:getDPI()/160)
 end
 
 function fb:scaleBySize(px)
@@ -275,9 +293,8 @@ function fb:scaleBySize(px)
     -- if users custom screen dpi, also scale by dpi
     local dpi_scale = size_scale
 
-    local custom_dpi = EMULATE_READER_DPI or G_reader_settings:readSetting("screen_dpi")
-    if custom_dpi and self.device and self.device.display_dpi ~= self.dpi then
-        dpi_scale = self.dpi / 167
+    if self.device and self.device.display_dpi ~= self.dpi then
+        dpi_scale = self.dpi / 160
     end
     -- scaled positive px should also be positive
     return math.ceil(px * (size_scale + dpi_scale) / 2)
@@ -303,21 +320,38 @@ function fb:setRotationMode(mode)
     self.cur_rotation_mode = mode
 end
 
-function fb:setScreenMode(mode)
+-- Handles orientation changes as requested...
+-- If current orientation is already Portrait, swap to Inverted Portrait (and vice versa)
+-- If current orientation is already Landscape, swap to Inverted Landscape (and vice versa)
+-- For Landscape, if swapping from any Portrait orientation,
+-- swap straight to Inverted Landscape if DLANDSCAPE_CLOCKWISE_ROTATION is false
+-- Things to remember to make sense of the logic:
+-- All even orientations are Portrait (0 and 2), the larger one being the Inverted variant
+-- All odd orientations are Landscape (1 and 3), the larger one being the Inverted variant
+-- NOTE: We only swap to Inverted variants when that was requested interactively by the user,
+--       to avoid doing unrequested inversions during the few manual setScreenMode calls we might do,
+--       (e.g., user selected default orientation)
+function fb:setScreenMode(mode, interactive)
     if mode == "portrait" then
-        if self.cur_rotation_mode ~= 0 then
+        if bit.band(self.cur_rotation_mode, 1) == 1 then
+            -- We were in a Landscape orientation (odd number), swap to Portrait (UR)
             self:setRotationMode(self.ORIENTATION_PORTRAIT)
+        elseif interactive == true then
+            -- We were in a Portrait orientation (even number), swap to its Inverted variant (^= 2, i.e., 0 <-> 2),
+            -- only if that was an interactive request.
+            self:setRotationMode(bit.bxor(self.cur_rotation_mode, 2))
         end
     elseif mode == "landscape" then
-        if self.cur_rotation_mode == self.ORIENTATION_PORTRAIT
-        or self.cur_rotation_mode == self.ORIENTATION_PORTRAIT_ROTATED then
+        if bit.band(self.cur_rotation_mode, 1) == 0 then
+            -- We were in a Portrait orientation (even number), swap to Landscape (CW or CCW, depending on user preference)
             self:setRotationMode(
                 DLANDSCAPE_CLOCKWISE_ROTATION
                 and self.ORIENTATION_LANDSCAPE
                 or self.ORIENTATION_LANDSCAPE_ROTATED)
-        elseif self.cur_rotation_mode == self.ORIENTATION_LANDSCAPE
-        or self.cur_rotation_mode == self.ORIENTATION_LANDSCAPE_ROTATED then
-            self:setRotationMode((self.cur_rotation_mode + 2) % 4)
+        elseif interactive == true then
+            -- We were in a Landscape orientation (odd number), swap to its Inverted variant (^= 2, i.e., 1 <-> 3),
+            -- only if that was an interactive request.
+            self:setRotationMode(bit.bxor(self.cur_rotation_mode, 2))
         end
     end
 end
@@ -335,11 +369,43 @@ function fb:setWindowTitle(new_title)
 end
 
 function fb:toggleNightMode()
-    self.bb:invert()
-    if self.viewport then
-        -- invert and blank out the full framebuffer when we are working on a viewport
-        self.full_bb:invert()
-        self.full_bb:fill(Blitbuffer.COLOR_WHITE)
+    self.night_mode = not self.night_mode
+    -- Only do SW inversion if the HW can't...
+    if not (self.device and self.device:canHWInvert()) then
+        self.bb:invert()
+        if self.viewport then
+            -- invert and blank out the full framebuffer when we are working on a viewport
+            self.full_bb:invert()
+            self.full_bb:fill(Blitbuffer.COLOR_WHITE)
+        end
+    end
+end
+
+function fb:toggleHWDithering()
+    self.hw_dithering = not self.hw_dithering
+end
+
+function fb:toggleSWDithering()
+    self.sw_dithering = not self.sw_dithering
+end
+
+function fb:setupDithering()
+    -- Prefer HW dither to SW dither
+    if self.device:canHWDither() then
+        self.hw_dithering = true
+    else
+        self.hw_dithering = false
+    end
+
+    if self.hw_dithering then
+        self.sw_dithering = false
+    else
+        -- We only handle SW dithering @ 8bpp, to keep things simple
+        if self.device.screen.fb_bpp == 8 then
+            self.sw_dithering = true
+        else
+            self.sw_dithering = false
+        end
     end
 end
 
@@ -364,6 +430,15 @@ function fb:shot(filename)
         bgr = true
     end
     self.bb:writePNG(filename, bgr)
+end
+
+-- Clear the screen to white
+function fb:clear()
+    if self.viewport then
+        self.full_bb:fill(Blitbuffer.COLOR_WHITE)
+    else
+        self.bb:fill(Blitbuffer.COLOR_WHITE)
+    end
 end
 
 return fb

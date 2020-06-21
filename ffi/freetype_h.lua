@@ -2,6 +2,7 @@ local ffi = require("ffi")
 
 ffi.cdef[[
 typedef int FT_Error;
+typedef long int FT_Pos;
 struct FT_Generic_ {
   void *data;
   void (*finalizer)(void *);
@@ -19,18 +20,18 @@ struct FT_ListRec_ {
   FT_ListNode tail;
 };
 struct FT_BBox_ {
-  long int xMin;
-  long int yMin;
-  long int xMax;
-  long int yMax;
+  FT_Pos xMin;
+  FT_Pos yMin;
+  FT_Pos xMax;
+  FT_Pos yMax;
 };
 typedef struct FT_BBox_ FT_BBox;
 struct FT_Bitmap_Size_ {
   short int height;
   short int width;
-  long int size;
-  long int x_ppem;
-  long int y_ppem;
+  FT_Pos size;
+  FT_Pos x_ppem;
+  FT_Pos y_ppem;
 };
 typedef struct FT_Bitmap_Size_ FT_Bitmap_Size;
 struct FT_Bitmap_ {
@@ -45,8 +46,8 @@ struct FT_Bitmap_ {
 };
 typedef struct FT_Bitmap_ FT_Bitmap;
 struct FT_Vector_ {
-  long int x;
-  long int y;
+  FT_Pos x;
+  FT_Pos y;
 };
 typedef struct FT_Vector_ FT_Vector;
 struct FT_Outline_ {
@@ -96,14 +97,14 @@ typedef struct FT_LibraryRec_ *FT_Library;
 typedef struct FT_FaceRec_ *FT_Face;
 typedef struct FT_Glyph_Metrics_ FT_Glyph_Metrics;
 struct FT_Glyph_Metrics_ {
-  long int width;
-  long int height;
-  long int horiBearingX;
-  long int horiBearingY;
-  long int horiAdvance;
-  long int vertBearingX;
-  long int vertBearingY;
-  long int vertAdvance;
+  FT_Pos width;
+  FT_Pos height;
+  FT_Pos horiBearingX;
+  FT_Pos horiBearingY;
+  FT_Pos horiAdvance;
+  FT_Pos vertBearingX;
+  FT_Pos vertBearingY;
+  FT_Pos vertAdvance;
 };
 struct FT_SubGlyphRec_;
 typedef struct FT_SubGlyphRec_ *FT_SubGlyph;
@@ -114,7 +115,7 @@ struct FT_GlyphSlotRec_ {
   FT_Library library;
   FT_Face face;
   FT_GlyphSlot next;
-  unsigned int reserved;
+  unsigned int glyph_index;
   FT_Generic generic;
   FT_Glyph_Metrics metrics;
   long int linearHoriAdvance;
@@ -129,8 +130,8 @@ struct FT_GlyphSlotRec_ {
   FT_SubGlyph subglyphs;
   void *control_data;
   long int control_len;
-  long int lsb_delta;
-  long int rsb_delta;
+  FT_Pos lsb_delta;
+  FT_Pos rsb_delta;
   void *other;
   FT_Slot_Internal internal;
 };
@@ -139,10 +140,10 @@ struct FT_Size_Metrics_ {
   short unsigned int y_ppem;
   long int x_scale;
   long int y_scale;
-  long int ascender;
-  long int descender;
-  long int height;
-  long int max_advance;
+  FT_Pos ascender;
+  FT_Pos descender;
+  FT_Pos height;
+  FT_Pos max_advance;
 };
 typedef struct FT_Size_Metrics_ FT_Size_Metrics;
 typedef struct FT_Size_InternalRec_ *FT_Size_Internal;
@@ -230,7 +231,26 @@ FT_Error FT_Load_Char(FT_Face, long unsigned int, int);
 FT_Error FT_Get_Kerning(FT_Face, unsigned int, unsigned int, unsigned int, FT_Vector *);
 void FT_GlyphSlot_Embolden(FT_GlyphSlot);
 void FT_GlyphSlot_Oblique(FT_GlyphSlot);
+enum FT_Render_Mode_ {
+  FT_RENDER_MODE_NORMAL = 0,
+  FT_RENDER_MODE_LIGHT = 1,
+  FT_RENDER_MODE_MONO = 2,
+  FT_RENDER_MODE_LCD = 3,
+  FT_RENDER_MODE_LCD_V = 4,
+  FT_RENDER_MODE_MAX = 5,
+};
+typedef enum FT_Render_Mode_ FT_Render_Mode;
+FT_Error FT_Load_Glyph(FT_Face, unsigned int, int);
+FT_Error FT_Render_Glyph(FT_GlyphSlot, FT_Render_Mode);
+FT_Error FT_Outline_Embolden(FT_Outline *, FT_Pos);
+void FT_Outline_Translate(const FT_Outline *, FT_Pos, FT_Pos);
+long int FT_MulFix(long int, long int);
 static const int FT_LOAD_RENDER = 4;
+static const int FT_LOAD_DEFAULT = 0;
+static const int FT_LOAD_TARGET_LIGHT = 65536;
+static const int FT_LOAD_NO_AUTOHINT = 32768;
+static const int FT_LOAD_NO_HINTING = 2;
+static const int FT_LOAD_FORCE_AUTOHINT = 32;
 static const int FT_FACE_FLAG_KERNING = 64;
 static const int FT_KERNING_DEFAULT = 0;
 ]]

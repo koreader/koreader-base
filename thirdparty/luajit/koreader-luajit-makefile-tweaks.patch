@@ -1,0 +1,58 @@
+diff --git a/src/Makefile b/src/Makefile
+index d22eb73..be0b659 100644
+--- a/src/Makefile
++++ b/src/Makefile
+@@ -214,6 +214,7 @@ TARGET_STCC= $(STATIC_CC)
+ TARGET_DYNCC= $(DYNAMIC_CC)
+ TARGET_LD= $(CROSS)$(CC)
+ TARGET_AR= $(CROSS)ar rcus
++TARGET_RANLIB= $(CROSS)ranlib
+ TARGET_STRIP= $(CROSS)strip
+ 
+ TARGET_LIBPATH= $(or $(PREFIX),/usr/local)/$(or $(MULTILIB),lib)
+@@ -345,6 +346,7 @@ else
+   endif
+   ifeq (Linux,$(TARGET_SYS))
+     TARGET_XLIBS+= -ldl
++    TARGET_STRIP+= --strip-unneeded
+   endif
+   ifeq (GNU/kFreeBSD,$(TARGET_SYS))
+     TARGET_XLIBS+= -ldl
+@@ -634,7 +636,7 @@ depend:
+ 
+ $(MINILUA_T): $(MINILUA_O)
+ 	$(E) "HOSTLINK  $@"
+-	$(Q)$(HOST_CC) $(HOST_ALDFLAGS) -o $@ $(MINILUA_O) $(MINILUA_LIBS) $(HOST_ALIBS)
++	$(Q)$(HOST_CC) $(HOST_ACFLAGS) $(HOST_ALDFLAGS) -o $@ $(MINILUA_O) $(MINILUA_LIBS) $(HOST_ALIBS)
+ 
+ host/buildvm_arch.h: $(DASM_DASC) $(DASM_DEP) $(DASM_DIR)/*.lua
+ 	$(E) "DYNASM    $@"
+@@ -644,7 +646,7 @@ host/buildvm.o: $(DASM_DIR)/dasm_*.h
+ 
+ $(BUILDVM_T): $(BUILDVM_O)
+ 	$(E) "HOSTLINK  $@"
+-	$(Q)$(HOST_CC) $(HOST_ALDFLAGS) -o $@ $(BUILDVM_O) $(HOST_ALIBS)
++	$(Q)$(HOST_CC) $(HOST_ACFLAGS) $(HOST_ALDFLAGS) -o $@ $(BUILDVM_O) $(HOST_ALIBS)
+ 
+ $(LJVM_BOUT): $(BUILDVM_T)
+ 	$(E) "BUILDVM   $@"
+@@ -705,16 +707,17 @@ include Makefile.dep
+ $(LUAJIT_A): $(LJVMCORE_O)
+ 	$(E) "AR        $@"
+ 	$(Q)$(TARGET_AR) $@ $(LJVMCORE_O)
++	$(Q)$(TARGET_RANLIB) $@
+ 
+ # The dependency on _O, but linking with _DYNO is intentional.
+ $(LUAJIT_SO): $(LJVMCORE_O)
+ 	$(E) "DYNLINK   $@"
+-	$(Q)$(TARGET_LD) $(TARGET_ASHLDFLAGS) -o $@ $(LJVMCORE_DYNO) $(TARGET_ALIBS)
++	$(Q)$(TARGET_LD) $(TARGET_ACFLAGS) $(TARGET_ASHLDFLAGS) -o $@ $(LJVMCORE_DYNO) $(TARGET_ALIBS)
+ 	$(Q)$(TARGET_STRIP) $@
+ 
+ $(LUAJIT_T): $(TARGET_O) $(LUAJIT_O) $(TARGET_DEP)
+ 	$(E) "LINK      $@"
+-	$(Q)$(TARGET_LD) $(TARGET_ALDFLAGS) -o $@ $(LUAJIT_O) $(TARGET_O) $(TARGET_ALIBS)
++	$(Q)$(TARGET_LD) $(TARGET_ACFLAGS) $(TARGET_ALDFLAGS) -o $@ $(LUAJIT_O) $(TARGET_O) $(TARGET_ALIBS)
+ 	$(Q)$(TARGET_STRIP) $@
+ 	$(E) "OK        Successfully built LuaJIT"
+ 
