@@ -12,20 +12,3 @@ index f72a4c9..51b2ce3 100644
  
  #include "DjVuToPS.h"
  #include "IFFByteStream.h"
-diff --git a/libdjvu/GThreads.cpp b/libdjvu/GThreads.cpp
-index 0b0fe0a..afb28b0 100644
---- a/libdjvu/GThreads.cpp
-+++ b/libdjvu/GThreads.cpp
-@@ -446,10 +449,11 @@ GThread::create(void (*entry)(void*), void *arg)
- void 
- GThread::terminate()
- {
-+#ifndef __ANDROID__
-   if (xentry || xarg)
-     pthread_cancel(hthr);
-+#endif
- }
--
- int
- GThread::yield()
- {
