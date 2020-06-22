@@ -17,7 +17,7 @@ set(BUILD_CMD sh -c "${KO_MAKE_RECURSIVE} -j1 -C thrift CC=\"${CC}\" LDFLAGS=\"$
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
     https://github.com/koreader/evernote-sdk-lua
-    45d81cf11588e3c8f1c517395dde706ef5979313
+    b6d8bed1fecb95b062f719dcad3cd720048c623a
     ${SOURCE_DIR}
 )
 
