@@ -35,7 +35,7 @@ set(BUILD_CMD "${BUILD_CMD_STR} LUAINC=\"${LUAINC}\" -j${PARALLEL_JOBS} all")
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
     https://github.com/diegonehab/luasocket
-    c89a931cc31f219d51dd32a8a253d5ee3fbd31be
+    5b18e475f38fcf28429b1cc4b17baee3b9793a62
     ${SOURCE_DIR}
 )
 
