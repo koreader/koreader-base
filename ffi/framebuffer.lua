@@ -78,19 +78,15 @@ function fb:init()
     -- asking the framebuffer for orientation is error prone,
     -- so we do this simple heuristic (for now)
     self.screen_size = self:getSize()
-    if self.screen_size.w > self.screen_size.h then
-        self.native_rotation_mode = self.ORIENTATION_LANDSCAPE
+    if self.screen_size.w > self.screen_size.h and self.device:isAlwaysPortrait() then
         self.screen_size.w, self.screen_size.h = self.screen_size.h, self.screen_size.w
-        if self.device:isAlwaysPortrait() then
-            -- some framebuffers need to be rotated counter-clockwise (they start in landscape mode)
-            self.debug("enforcing portrait mode by doing an initial rotation")
-            self.bb:rotate(-90)
-            self.blitbuffer_rotation_mode = self.bb:getRotation()
-            self.native_rotation_mode = self.ORIENTATION_PORTRAIT
-        end
-    else
+        -- some framebuffers need to be rotated counter-clockwise (they start in landscape mode)
+        self.debug("enforcing portrait mode by doing an initial rotation")
+        self.bb:rotate(-90)
+        self.blitbuffer_rotation_mode = self.bb:getRotation()
         self.native_rotation_mode = self.ORIENTATION_PORTRAIT
     end
+    self.native_rotation_mode = self.ORIENTATION_PORTRAIT
     self.cur_rotation_mode = self.native_rotation_mode
 end
 
