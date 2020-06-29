@@ -54,13 +54,20 @@ function framebuffer:init()
     -- we present this buffer to the outside
     self.bb = BB.new(android.screen.width, android.screen.height, BB.TYPE_BBRGB32)
     self.invert_bb = BB.new(android.screen.width, android.screen.height, BB.TYPE_BBRGB32)
-    -- TODO: should we better use these?
-    -- android.lib.ANativeWindow_getWidth(window)
-    -- android.lib.ANativeWindow_getHeight(window)
     self.bb:fill(BB.COLOR_WHITE)
     self:_updateWindow()
-
     framebuffer.parent.init(self)
+end
+
+-- resize on rotation or split view.
+function framebuffer:resize()
+    android.screen.width = android.getScreenWidth()
+    android.screen.height = android.getScreenHeight()
+    self.bb:free()
+    self.bb = BB.new(android.screen.width, android.screen.height, BB.TYPE_BBRGB32)
+    self.invert_bb = BB.new(android.screen.width, android.screen.height, BB.TYPE_BBRGB32)
+    self.bb:fill(BB.COLOR_WHITE)
+    self:_updateWindow()
 end
 
 function framebuffer:_updateWindow()
