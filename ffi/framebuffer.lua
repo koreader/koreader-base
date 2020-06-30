@@ -84,7 +84,6 @@ function fb:init()
         self.debug("enforcing portrait mode by doing an initial rotation")
         self.bb:rotate(-90)
         self.blitbuffer_rotation_mode = self.bb:getRotation()
-        self.native_rotation_mode = self.ORIENTATION_PORTRAIT
     end
     self.native_rotation_mode = self.ORIENTATION_PORTRAIT
     self.cur_rotation_mode = self.native_rotation_mode
