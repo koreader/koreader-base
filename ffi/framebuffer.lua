@@ -315,22 +315,6 @@ function fb:setRotationMode(mode)
     self.cur_rotation_mode = mode
 end
 
--- Handles orientation changes as requested...
--- All even orientations are Portrait (0 and 2), the larger one being the Inverted variant
--- All odd orientations are Landscape (1 and 3), the larger one being the Inverted variant
-function fb:setScreenMode(mode)
-    if mode == "portrait" and bit.band(self.cur_rotation_mode, 1) == 1 then
-        -- We were in a Landscape orientation (odd number), swap to Portrait (UR)
-        self:setRotationMode(self.ORIENTATION_PORTRAIT)
-    elseif mode == "landscape" and bit.band(self.cur_rotation_mode, 1) == 0 then
-        -- We were in a Portrait orientation (even number), swap to Landscape (CW or CCW, depending on user preference)
-        self:setRotationMode(
-            DLANDSCAPE_CLOCKWISE_ROTATION
-            and self.ORIENTATION_LANDSCAPE
-            or self.ORIENTATION_LANDSCAPE_ROTATED)
-    end
-end
-
 function fb:getWindowTitle()
     return self.window_title
 end
