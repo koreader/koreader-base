@@ -6,7 +6,6 @@ This will be extended by implementations of this API.
 @module ffi.framebuffer
 --]]
 
-local bit = require("bit")
 local Blitbuffer = require("ffi/blitbuffer")
 
 local fb = {
