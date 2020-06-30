@@ -6,7 +6,6 @@ This will be extended by implementations of this API.
 @module ffi.framebuffer
 --]]
 
-local bit = require("bit")
 local Blitbuffer = require("ffi/blitbuffer")
 
 local fb = {
@@ -78,19 +77,16 @@ function fb:init()
     -- asking the framebuffer for orientation is error prone,
     -- so we do this simple heuristic (for now)
     self.screen_size = self:getSize()
-    if self.screen_size.w > self.screen_size.h then
-        self.native_rotation_mode = self.ORIENTATION_LANDSCAPE
+    if self.screen_size.w > self.screen_size.h and self.device:isAlwaysPortrait() then
         self.screen_size.w, self.screen_size.h = self.screen_size.h, self.screen_size.w
-        if self.device:isAlwaysPortrait() then
-            -- some framebuffers need to be rotated counter-clockwise (they start in landscape mode)
-            self.debug("enforcing portrait mode by doing an initial rotation")
-            self.bb:rotate(-90)
-            self.blitbuffer_rotation_mode = self.bb:getRotation()
-            self.native_rotation_mode = self.ORIENTATION_PORTRAIT
-        end
-    else
-        self.native_rotation_mode = self.ORIENTATION_PORTRAIT
+        -- some framebuffers need to be rotated counter-clockwise (they start in landscape mode)
+        io.write("FB: Enforcing portrait mode by doing an initial BB rotation")
+        io.flush()
+        self.debug("FB: This prevents the use of blitting optimizations. This should instead be fixed on the device's side on startup.")
+        self.bb:rotate(-90)
+        self.blitbuffer_rotation_mode = self.bb:getRotation()
     end
+    self.native_rotation_mode = self.ORIENTATION_PORTRAIT
     self.cur_rotation_mode = self.native_rotation_mode
 end
 
@@ -318,22 +314,6 @@ function fb:setRotationMode(mode)
         self.full_bb:setRotation(self.bb:getRotation())
     end
     self.cur_rotation_mode = mode
-end
-
--- Handles orientation changes as requested...
--- All even orientations are Portrait (0 and 2), the larger one being the Inverted variant
--- All odd orientations are Landscape (1 and 3), the larger one being the Inverted variant
-function fb:setScreenMode(mode)
-    if mode == "portrait" and bit.band(self.cur_rotation_mode, 1) == 1 then
-        -- We were in a Landscape orientation (odd number), swap to Portrait (UR)
-        self:setRotationMode(self.ORIENTATION_PORTRAIT)
-    elseif mode == "landscape" and bit.band(self.cur_rotation_mode, 1) == 0 then
-        -- We were in a Portrait orientation (even number), swap to Landscape (CW or CCW, depending on user preference)
-        self:setRotationMode(
-            DLANDSCAPE_CLOCKWISE_ROTATION
-            and self.ORIENTATION_LANDSCAPE
-            or self.ORIENTATION_LANDSCAPE_ROTATED)
-    end
 end
 
 function fb:getWindowTitle()
