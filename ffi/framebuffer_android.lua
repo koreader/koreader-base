@@ -89,11 +89,7 @@ function framebuffer:setRotationMode(mode)
             android.orientation.set(C["ASCREEN_ORIENTATION_" .. key])
         end
     else
-        self.bb:rotateAbsolute(-90 * (mode - self.native_rotation_mode - self.blitbuffer_rotation_mode))
-        if self.viewport then
-            self.full_bb:setRotation(self.bb:getRotation())
-        end
-        self.cur_rotation_mode = mode
+        framebuffer.parent.setRotationMode(self, mode)
     end
 end
 
