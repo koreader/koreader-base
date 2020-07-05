@@ -38,7 +38,7 @@ set(INSTALL_CMD2 ${CMAKE_COMMAND} -E rename ${SOURCE_DIR}/lib/ca-bundle.crt ${BI
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
     https://github.com/curl/curl.git
-    tags/curl-7_71_0
+    tags/curl-7_71_1
     ${SOURCE_DIR}
 )
 
