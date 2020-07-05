@@ -70,6 +70,33 @@ function framebuffer:resize()
     self:_updateWindow()
 end
 
+function framebuffer:getRotationMode()
+    if android.hasNativeRotation() then
+        return android.orientation.get()
+    else
+        return self.cur_rotation_mode
+    end
+end
+
+function framebuffer:setRotationMode(mode)
+    if android.hasNativeRotation() then
+        local key
+        if mode == 0 then key = "PORTRAIT"
+        elseif mode == 1 then key = "LANDSCAPE"
+        elseif mode == 2 then key = "REVERSE_PORTRAIT"
+        elseif mode == 3 then key = "REVERSE_LANDSCAPE" end
+        if key then
+            android.orientation.set(C["ASCREEN_ORIENTATION_" .. key])
+        end
+    else
+        self.bb:rotateAbsolute(-90 * (mode - self.native_rotation_mode - self.blitbuffer_rotation_mode))
+        if self.viewport then
+            self.full_bb:setRotation(self.bb:getRotation())
+        end
+        self.cur_rotation_mode = mode
+    end
+end
+
 function framebuffer:_updateWindow()
     if android.app.window == nil then
         android.LOGW("cannot blit: no window")
