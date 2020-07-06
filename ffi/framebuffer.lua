@@ -47,6 +47,9 @@ Codes for rotation modes:
           0
 
 i.e., this matches <linux/fb.h> FB_ROTATE_* constants ;).
+
+This corresponds to the user-facing *physical device* rotation (in 90° CW steps).
+
 --]]
 fb.ORIENTATION_PORTRAIT = 0
 fb.ORIENTATION_LANDSCAPE = 1
@@ -308,6 +311,7 @@ function fb:getScreenMode()
     end
 end
 
+-- This, on the other hand, is responsible for the internal *buffer* rotation (as such, it's inverted compared to the ORIENTATION_ constants; i.e., it's in 90° CCW steps).
 function fb:setRotationMode(mode)
     self.bb:rotateAbsolute(-90 * (mode - self.native_rotation_mode - self.blitbuffer_rotation_mode))
     if self.viewport then
