@@ -122,6 +122,10 @@ else ifeq ($(TARGET), debian-armhf)
 	CHOST?=arm-linux-gnueabihf
 	export SDL=1
 	export DEBIAN_CROSS=1
+else ifeq ($(TARGET), macos)
+	export SDL=1
+	export MACOS=1
+	export EMULATE_READER=1
 else ifeq ($(TARGET), android)
 	export ANDROID=1
 	export PATH:=$(ANDROID_TOOLCHAIN)/bin:$(PATH)
@@ -445,6 +449,10 @@ ifdef APPIMAGE
 endif
 
 ifdef DEBIAN
+	HOST_ARCH:=-mtune=generic
+endif
+
+ifdef MACOS
 	HOST_ARCH:=-mtune=generic
 endif
 
