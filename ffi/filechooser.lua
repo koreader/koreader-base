@@ -2,7 +2,7 @@ local ffi = require("ffi")
 local util = require("ffi/util")
 
 if util.isSDL() then
-    if util.haveSDL2() then
+    if util.haveSDL2() and jit.os ~= "OSX" then
         local ok, gtk = pcall(ffi.load, "gtk-3")
         if not ok then
             ok, gtk = pcall(ffi.load, "gtk-3.so.0")
