@@ -419,6 +419,19 @@ ifdef ANDROID
 		|| echo "warning: Android L+ support only PIE binary and can't run this"
 endif
 
+
+# ==========================================================================
+# SDL2
+$(SDL2_LIB): $(THIRDPARTY_DIR)/sdl2/*.*
+	install -d $(SDL2_BUILD_DIR)
+	cd $(SDL2_BUILD_DIR) && \
+		$(CMAKE) $(CMAKE_FLAGS) \
+		-DCMAKE_BUILD_TYPE=$(CMAKE_BUILD_TYPE) \
+		-DSDL_TEST=OFF -DSDL_SHARED=ON -DSDL_STATIC=OFF -DSDL_AUDIO=OFF \
+		$(CURDIR)/$(THIRDPARTY_DIR)/sdl2 && \
+		$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS)
+	cp -fL $(SDL2_DIR)/$(notdir $(SDL2_LIB_ORIG)) $(SDL2_LIB)
+
 # ===========================================================================
 # dropbear
 

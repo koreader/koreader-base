@@ -30,6 +30,7 @@ all: $(OUTPUT_DIR)/libs $(if $(ANDROID),,$(LUAJIT)) \
 		$(if $(ANDROID),$(LPEG_DYNLIB) $(LPEG_RE),) \
 		$(if $(WIN32),,$(ZMQ_LIB) $(CZMQ_LIB) $(FILEMQ_LIB) $(ZYRE_LIB)) \
 		$(if $(WIN32),,$(OUTPUT_DIR)/sdcv) \
+		$(if $(MACOS),$(SDL2_LIB),) \
 		$(if $(or $(CERVANTES),$(KINDLE),$(KOBO)),$(OUTPUT_DIR)/dropbear,) \
 		$(if $(or $(CERVANTES),$(KINDLE),$(KOBO)),$(OUTPUT_DIR)/sftp-server,) \
 		$(if $(or $(DARWIN),$(WIN32)),,$(OUTPUT_DIR)/tar) \

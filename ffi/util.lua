@@ -553,12 +553,13 @@ function util.haveSDL2()
     local err
 
     if haveSDL2 == nil then
-        haveSDL2, err = util.ffiLoadCandidates{
-            "SDL2",
-            -- this unfortunately needs to be written in full due to the . in the name
-            "libSDL2-2.0.so",
-            "libSDL2-2.0.so.0",
-        }
+        local candidates
+        if jit.os == "OSX" then
+            candidates = {"libs/libSDL2.dylib", "SDL2"}
+        else
+            candidates = {"SDL2", "libSDL2-2.0.so", "libSDL2-2.0.so.0"}
+        end
+        haveSDL2, err = util.ffiLoadCandidates(candidates)
     end
     if not haveSDL2 then
         print("SDL2 not loaded:", err)
