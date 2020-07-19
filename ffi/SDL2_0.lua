@@ -85,6 +85,7 @@ function S.open()
     end
 
     SDL.SDL_SetMainReady()
+    io.write("SDL base path: ", ffi.string(SDL.SDL_GetBasePath()), "\n");
 
     if SDL.SDL_Init(bit.bor(SDL.SDL_INIT_VIDEO,
                             SDL.SDL_INIT_JOYSTICK,

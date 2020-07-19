@@ -726,6 +726,7 @@ int SDL_SetSurfacePalette(SDL_Surface *, SDL_Palette *) __attribute__((visibilit
 int SDL_LockSurface(SDL_Surface *) __attribute__((visibility("default")));
 void SDL_UnlockSurface(SDL_Surface *) __attribute__((visibility("default")));
 void SDL_SetWindowIcon(SDL_Window *, SDL_Surface *) __attribute__((visibility("default")));
+char * SDL_GetBasePath(void);
 typedef enum {
   SDL_FALSE = 0,
   SDL_TRUE = 1,
