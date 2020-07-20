@@ -15,6 +15,7 @@ jobs:
         uses: maxim-lobanov/setup-xcode@1.0
         with:
           xcode-version: 12.0 # Use the latest Xcode 12, because 11.4 and 11.5 have a segfaulting clang.
+
       - name: Check out Git repository
         uses: actions/checkout@v2
 
