@@ -435,4 +435,40 @@ function S.gameControllerRumble(left_intensity, right_intensity, duration)
     return SDL.SDL_GameControllerRumble(S.controller, left_intensity, right_intensity, duration)
 end
 
+function S.getPlatform()
+    return ffi.string(SDL.SDL_GetPlatform())
+end
+
+function S.getBasePath()
+    return ffi.string(SDL.SDL_GetBasePath())
+end
+
+function S.getPrefPath(organization, appname)
+    if not organization then organization = "dummy" end
+    if not appname then appname = "application" end
+    return ffi.string(SDL.SDL_GetPrefPath(organization, appname))
+end
+
+function S.getPowerInfo()
+    local batt, plugged, charging
+    local ptr = ffi.new("int[1]", {0})
+    local battery_info = SDL.SDL_GetPowerInfo(nil, ptr)
+    if battery_info == SDL.SDL_POWERSTATE_UNKNOWN
+        or battery_info == SDL.SDL_POWERSTATE_NO_BATTERY
+    then
+        plugged = true
+    elseif battery_info == SDL.SDL_POWERSTATE_ON_BATTERY then
+        batt = true
+    elseif battery_info == SDL.SDL_POWERSTATE_CHARGING then
+        batt = true
+        charging = true
+        plugged = true
+    elseif battery_info == SDL.SDL_POWERSTATE_CHARGED then
+        batt = true
+        plugged = true
+    end
+    local percent = ptr[0]
+    return batt, charging, plugged, percent
+end
+
 return S

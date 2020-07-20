@@ -1,4 +1,3 @@
-local FileChooser = require("ffi/filechooser")
 -- load common SDL input/video library
 local SDL = require("ffi/SDL2_0")
 
@@ -13,5 +12,4 @@ return {
     getClipboardText = SDL.getClipboardText,
     setClipboardText = SDL.setClipboardText,
     gameControllerRumble = SDL.gameControllerRumble,
-    file_chooser = FileChooser,
 }

@@ -726,6 +726,17 @@ int SDL_SetSurfacePalette(SDL_Surface *, SDL_Palette *) __attribute__((visibilit
 int SDL_LockSurface(SDL_Surface *) __attribute__((visibility("default")));
 void SDL_UnlockSurface(SDL_Surface *) __attribute__((visibility("default")));
 void SDL_SetWindowIcon(SDL_Window *, SDL_Surface *) __attribute__((visibility("default")));
+char *SDL_GetBasePath(void) __attribute__((visibility("default")));
+char *SDL_GetPrefPath(const char *, const char *) __attribute__((visibility("default")));
+typedef enum {
+  SDL_POWERSTATE_UNKNOWN = 0,
+  SDL_POWERSTATE_ON_BATTERY = 1,
+  SDL_POWERSTATE_NO_BATTERY = 2,
+  SDL_POWERSTATE_CHARGING = 3,
+  SDL_POWERSTATE_CHARGED = 4,
+} SDL_PowerState;
+void SDL_GetPowerInfo(int *, int *) __attribute__((visibility("default")));
+const char *SDL_GetPlatform(void) __attribute__((visibility("default")));
 typedef enum {
   SDL_FALSE = 0,
   SDL_TRUE = 1,
