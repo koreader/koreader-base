@@ -11,6 +11,11 @@ jobs:
         os: [macos-latest]
 
     steps:
+      - name: setup-xcode
+        uses: maxim-lobanov/setup-xcode@1.0
+        with:
+          xcode-version: 11.3.1 # Use Xcode 11.3.1, because 11.4, 11.5, and 11.6 have a segfaulting clang.
+
       - name: Check out Git repository
         uses: actions/checkout@v2
 
