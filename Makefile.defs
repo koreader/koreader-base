@@ -771,6 +771,11 @@ LIBICONV_DIR=$(CURDIR)/$(LIBICONV_BUILD_DIR)/libiconv-prefix/src/libiconv-build
 GETTEXT_BUILD_DIR=$(THIRDPARTY_DIR)/gettext/build/$(MACHINE)
 GETTEXT_DIR=$(CURDIR)/$(GETTEXT_BUILD_DIR)/gettext-prefix/src/gettext-build
 
+SDL2_BUILD_DIR=$(THIRDPARTY_DIR)/sdl2/build/$(MACHINE)
+SDL2_DIR=$(CURDIR)/$(SDL2_BUILD_DIR)/sdl2-build
+SDL2_LIB_ORIG=$(OUTPUT_DIR)/libs/libSDL2-2.0$(if $(KODEBUG),d,)$(LIB_EXT)
+SDL2_LIB=$(OUTPUT_DIR)/libs/libSDL2$(LIB_EXT)
+
 LIBICONV=$(LIBICONV_DIR)/lib/libiconv.a
 LIBGETTEXT=$(GETTEXT_DIR)/lib/libintl.a
 GLIB=$(GLIB_DIR)/lib/libglib-2.0$(if $(DARWIN),.dylib,.so.0)
