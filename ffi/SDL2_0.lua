@@ -451,7 +451,7 @@ end
 
 function S.getPowerInfo()
     local batt, plugged, charging
-    local ptr = ffi.new('int[1]', {0})
+    local ptr = ffi.new("int[1]", {0})
     local battery_info = SDL.SDL_GetPowerInfo(nil, ptr)
     if battery_info == SDL.SDL_POWERSTATE_UNKNOWN
     or battery_info == SDL.SDL_POWERSTATE_NO_BATTERY then
