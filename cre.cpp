@@ -2230,9 +2230,6 @@ static int getPageLinks(lua_State *L) {
 		int y_offset = doc->text_view->GetPos() - doc->text_view->getPageHeaderHeight() - margin.top;
 		int linkNum = 1;
 		for ( int i=0; i<linkCount; i++ ) {
-			lString16 txt = links[i]->getRangeText();
-			lString8 txt8 = UnicodeToLocal( txt );
-
 			ldomXPointer a_xpointer;
 			lString16 link = links[i]->getHRef(a_xpointer);
 			lString8 link8 = UnicodeToLocal( link );
@@ -2247,10 +2244,13 @@ static int getPageLinks(lua_State *L) {
 			lvPoint start_pt ( currSel.getStart().toPoint() );
 			lvPoint end_pt ( currSel.getEnd().toPoint() );
 
+			#if DEBUG_CRENGINE
+				lString16 txt = links[i]->getRangeText();
+				lString8 txt8 = UnicodeToLocal( txt );
 				CRLog::debug("# link %d start %d %d end %d %d '%s' %s\n", i,
 				start_pt.x, start_pt.y, end_pt.x, end_pt.y,
-				txt8.c_str(), link8.c_str()
-			);
+				txt8.c_str(), link8.c_str());
+			#endif
 
 			lua_newtable(L); // new link
 
@@ -2338,22 +2338,22 @@ static bool _isLinkToFootnote(CreDocument *doc, const lString16 source_xpointer,
 
     // Trust -cr-hint: noteref noteref-ignore footnote footnote-ignore
     if (trusted_source_xpointer) {
-        css_cr_hint_t hint = sourceNode->getStyle()->cr_hint;
-        if (hint == css_cr_hint_noteref) {
+        css_style_ref_t sourceNodeStyle = sourceNode->getStyle();
+        if ( STYLE_HAS_CR_HINT(sourceNodeStyle, NOTEREF) ) {
             reason = "source has -cr-hint: noteref";
             return true;
         }
-        else if (hint == css_cr_hint_noteref_ignore) {
+        else if ( STYLE_HAS_CR_HINT(sourceNodeStyle, NOTEREF_IGNORE) ) {
             reason = "source has -cr-hint: noteref-ignore";
             return false;
         }
     }
-    css_cr_hint_t hint = targetNode->getStyle()->cr_hint;
-    if (hint == css_cr_hint_footnote) {
+    css_style_ref_t targetNodeStyle = targetNode->getStyle();
+    if ( STYLE_HAS_CR_HINT(targetNodeStyle, FOOTNOTE) ) {
         reason = "target has -cr-hint: footnote";
         return true;
     }
-    else if (hint == css_cr_hint_footnote_ignore) {
+    else if ( STYLE_HAS_CR_HINT(targetNodeStyle, FOOTNOTE_IGNORE) ) {
         reason = "target has -cr-hint: footnote-ignore";
         return false;
     }
