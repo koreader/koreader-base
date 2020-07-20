@@ -435,6 +435,10 @@ function S.gameControllerRumble(left_intensity, right_intensity, duration)
     return SDL.SDL_GameControllerRumble(S.controller, left_intensity, right_intensity, duration)
 end
 
+function S.getPlatform()
+    return ffi.string(SDL.SDL_GetPlatform())
+end
+
 function S.getBasePath()
     return ffi.string(SDL.SDL_GetBasePath())
 end

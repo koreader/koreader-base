@@ -138,6 +138,7 @@ cdecl_func(SDL_GetBasePath)
 cdecl_func(SDL_GetPrefPath)
 cdecl_type(SDL_PowerState)
 cdecl_func(SDL_GetPowerInfo)
+cdecl_func(SDL_GetPlatform)
 
 cdecl_type(SDL_bool)
 cdecl_func(SDL_HasClipboardText)

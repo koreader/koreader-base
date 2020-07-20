@@ -736,6 +736,7 @@ typedef enum {
   SDL_POWERSTATE_CHARGED = 4,
 } SDL_PowerState;
 void SDL_GetPowerInfo(int *, int *) __attribute__((visibility("default")));
+const char *SDL_GetPlatform(void) __attribute__((visibility("default")));
 typedef enum {
   SDL_FALSE = 0,
   SDL_TRUE = 1,
