@@ -345,12 +345,24 @@ function fb:toggleNightMode()
     end
 end
 
-function fb:toggleHWDithering()
-    self.hw_dithering = not self.hw_dithering
+function fb:toggleHWDithering(toggle)
+    if toggle == true then
+        self.hw_dithering = true
+    elseif toggle == false then
+        self.hw_dithering = false
+    else
+        self.hw_dithering = not self.hw_dithering
+    end
 end
 
-function fb:toggleSWDithering()
-    self.sw_dithering = not self.sw_dithering
+function fb:toggleSWDithering(toggle)
+    if toggle == true then
+        self.sw_dithering = true
+    elseif toggle == false then
+        self.sw_dithering = false
+    else
+        self.sw_dithering = not self.sw_dithering
+    end
 end
 
 function fb:setupDithering()
