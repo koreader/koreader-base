@@ -30,6 +30,7 @@ all: $(OUTPUT_DIR)/libs $(if $(ANDROID),,$(LUAJIT)) \
 		$(if $(ANDROID),$(LPEG_DYNLIB) $(LPEG_RE),) \
 		$(if $(WIN32),,$(ZMQ_LIB) $(CZMQ_LIB) $(FILEMQ_LIB) $(ZYRE_LIB)) \
 		$(if $(WIN32),,$(OUTPUT_DIR)/sdcv) \
+		$(if $(MACOS),$(OUTPUT_DIR)/koreader,) \
 		$(if $(MACOS),$(SDL2_LIB),) \
 		$(if $(or $(CERVANTES),$(KINDLE),$(KOBO)),$(OUTPUT_DIR)/dropbear,) \
 		$(if $(or $(CERVANTES),$(KINDLE),$(KOBO)),$(OUTPUT_DIR)/sftp-server,) \
@@ -209,6 +210,13 @@ ffi/lodepng_h.lua: ffi-cdecl/lodepng_decl.c $(LODEPNG_DIR)
 
 # include all third party libs
 include Makefile.third
+
+# ===========================================================================
+# entry point for the application in OSX
+
+$(OUTPUT_DIR)/koreader: osx_loader.c
+	$(CC) -pagezero_size 10000 -image_base 100000000 \
+	-I$(LUAJIT_DIR)/src $(LUAJIT_STATIC) -o $@ $^
 
 # ===========================================================================
 # very simple "launcher" for koreader on the remarkable
