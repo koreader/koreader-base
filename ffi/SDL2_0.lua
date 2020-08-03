@@ -167,7 +167,8 @@ local function handleWindowEvent(event_window)
         SDL.SDL_RenderCopy(S.renderer, S.texture, nil, nil)
         SDL.SDL_RenderPresent(S.renderer)
     elseif (event_window.event == SDL.SDL_WINDOWEVENT_RESIZED
-             or event_window.event == SDL.SDL_WINDOWEVENT_SIZE_CHANGED) then
+             or event_window.event == SDL.SDL_WINDOWEVENT_SIZE_CHANGED
+             or event_window.event == SDL.SDL_WINDOWEVENT_MOVED) then
         genEmuEvent(EV_SDL, event_window.event, event_window)
     end
 end

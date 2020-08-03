@@ -1,7 +1,50 @@
-diff -uNr a/src/video/cocoa/SDL_cocoaevents.m b/src/video/cocoa/SDL_cocoaevents.m
+diff -uNr a/src/video/cocoa/SDL_cocoaevents.m e/src/video/cocoa/SDL_cocoaevents.m
 --- a/src/video/cocoa/SDL_cocoaevents.m	2020-03-11 02:36:18.000000000 +0100
-+++ b/src/video/cocoa/SDL_cocoaevents.m	2020-07-19 14:50:50.000000000 +0200
-@@ -233,47 +233,12 @@
++++ e/src/video/cocoa/SDL_cocoaevents.m	2020-07-28 21:40:49.000000000 +0200
+@@ -34,6 +34,18 @@
+ #define kIOPMAssertPreventUserIdleDisplaySleep kIOPMAssertionTypePreventUserIdleDisplaySleep
+ #endif
+ 
++static void _openUrl(NSString *url) {
++    [[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:url]];
++}
++
++static void _openFile(NSString *file, NSString *app) {
++    NSString *path = [[[NSBundle mainBundle] resourcePath] stringByAppendingPathComponent:file];
++    if (path) {
++        if (!app) app = @"TextEdit";
++        [[NSWorkspace sharedWorkspace] openFile:path withApplication:app];
++    }
++}
++
+ @interface SDLApplication : NSApplication
+ 
+ - (void)terminate:(id)sender;
+@@ -45,6 +57,23 @@
+ 
+ @implementation SDLApplication
+ 
++/* KOReader specific actions */
++- (IBAction) openWeb: (NSMenuItem*) sender {
++    _openUrl(@"https://koreader.rocks");
++}
++
++- (IBAction) openWiki: (NSMenuItem*) sender {
++    _openUrl(@"https://github.com/koreader/koreader/wiki");
++}
++
++- (IBAction) openForum: (NSMenuItem*) sender {
++    _openUrl(@"https://www.mobileread.com/forums/forumdisplay.php?f=276");
++}
++
++- (IBAction) openLicense: (NSMenuItem*) sender {
++    _openFile(@"COPYING", nil);
++}
++
+ // Override terminate to handle Quit and System Shutdown smoothly.
+ - (void)terminate:(id)sender
+ {
+@@ -233,20 +262,7 @@
  
  - (void)applicationDidFinishLaunching:(NSNotification *)notification
  {
@@ -19,132 +62,20 @@ diff -uNr a/src/video/cocoa/SDL_cocoaevents.m b/src/video/cocoa/SDL_cocoaevents.
 -        SDL_Delay(300);  /* !!! FIXME: this isn't right. */
 -        [NSApp activateIgnoringOtherApps:YES];
 -    }
--
--    /* If we call this before NSApp activation, macOS might print a complaint
--     * about ApplePersistenceIgnoreState. */
-     [SDLApplication registerUserDefaults];
- }
- @end
++    [NSApp activateIgnoringOtherApps:YES];
  
- static SDLAppDelegate *appDelegate = nil;
- 
--static NSString *
--GetApplicationName(void)
--{
--    NSString *appName;
--
--    /* Determine the application name */
--    appName = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleDisplayName"];
--    if (!appName) {
--        appName = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleName"];
--    }
--
--    if (![appName length]) {
--        appName = [[NSProcessInfo processInfo] processName];
--    }
--
--    return appName;
--}
--
- static bool
- LoadMainMenuNibIfAvailable(void)
- {
-@@ -296,11 +261,9 @@
- static void
- CreateApplicationMenus(void)
- {
--    NSString *appName;
-+    NSString *appName = @"KOReader";
-     NSString *title;
-     NSMenu *appleMenu;
--    NSMenu *serviceMenu;
--    NSMenu *windowMenu;
-     NSMenuItem *menuItem;
-     NSMenu *mainMenu;
- 
-@@ -317,27 +280,18 @@
-     mainMenu = nil;
- 
-     /* Create the application menu */
--    appName = GetApplicationName();
-     appleMenu = [[NSMenu alloc] initWithTitle:@""];
- 
--    /* Add menu items */
--    title = [@"About " stringByAppendingString:appName];
--    [appleMenu addItemWithTitle:title action:@selector(orderFrontStandardAboutPanel:) keyEquivalent:@""];
--
--    [appleMenu addItem:[NSMenuItem separatorItem]];
--
--    [appleMenu addItemWithTitle:@"Preferences…" action:nil keyEquivalent:@","];
--
--    [appleMenu addItem:[NSMenuItem separatorItem]];
--
--    serviceMenu = [[NSMenu alloc] initWithTitle:@""];
--    menuItem = (NSMenuItem *)[appleMenu addItemWithTitle:@"Services" action:nil keyEquivalent:@""];
--    [menuItem setSubmenu:serviceMenu];
--
--    [NSApp setServicesMenu:serviceMenu];
--    [serviceMenu release];
--
--    [appleMenu addItem:[NSMenuItem separatorItem]];
-+    /* Add the fullscreen toggle menu option, if supported */
-+    if (floor(NSAppKitVersionNumber) > NSAppKitVersionNumber10_6) {
-+        /* Cocoa should update the title to Enter or Exit Full Screen automatically.
-+         * But if not, then just fallback to Toggle Full Screen.
-+         */
-+        menuItem = [[NSMenuItem alloc] initWithTitle:@"Toggle Full Screen" action:@selector(toggleFullScreen:) keyEquivalent:@"f"];
-+        [menuItem setKeyEquivalentModifierMask:NSEventModifierFlagControl | NSEventModifierFlagCommand];
-+        [appleMenu addItem:menuItem];
-+        [menuItem release];
-+    }
- 
-     title = [@"Hide " stringByAppendingString:appName];
-     [appleMenu addItemWithTitle:title action:@selector(hide:) keyEquivalent:@"h"];
-@@ -361,38 +315,6 @@
-     /* Tell the application object that this is now the application menu */
-     [NSApp setAppleMenu:appleMenu];
-     [appleMenu release];
--
--
--    /* Create the window menu */
--    windowMenu = [[NSMenu alloc] initWithTitle:@"Window"];
--
--    /* Add menu items */
--    [windowMenu addItemWithTitle:@"Close" action:@selector(performClose:) keyEquivalent:@"w"];
--
--    [windowMenu addItemWithTitle:@"Minimize" action:@selector(performMiniaturize:) keyEquivalent:@"m"];
--
--    [windowMenu addItemWithTitle:@"Zoom" action:@selector(performZoom:) keyEquivalent:@""];
--    
--    /* Add the fullscreen toggle menu option, if supported */
--    if (floor(NSAppKitVersionNumber) > NSAppKitVersionNumber10_6) {
--        /* Cocoa should update the title to Enter or Exit Full Screen automatically.
--         * But if not, then just fallback to Toggle Full Screen.
--         */
--        menuItem = [[NSMenuItem alloc] initWithTitle:@"Toggle Full Screen" action:@selector(toggleFullScreen:) keyEquivalent:@"f"];
--        [menuItem setKeyEquivalentModifierMask:NSEventModifierFlagControl | NSEventModifierFlagCommand];
--        [windowMenu addItem:menuItem];
--        [menuItem release];
--    }
--
--    /* Put menu into the menubar */
--    menuItem = [[NSMenuItem alloc] initWithTitle:@"Window" action:nil keyEquivalent:@""];
--    [menuItem setSubmenu:windowMenu];
--    [[NSApp mainMenu] addItem:menuItem];
--    [menuItem release];
--
--    /* Tell the application object that this is now the window menu */
--    [NSApp setWindowsMenu:windowMenu];
--    [windowMenu release];
- }
- 
- void
-@@ -498,7 +420,7 @@
-          * seen by OS X power users. there's an additional optional human-readable
-          * (localized) reason parameter which we don't set.
-          */
--        NSString *name = [GetApplicationName() stringByAppendingString:@" using SDL_DisableScreenSaver"];
-+        NSString *name = [@"luajit" stringByAppendingString:@" using SDL_DisableScreenSaver"];
-         IOPMAssertionCreateWithDescription(kIOPMAssertPreventUserIdleDisplaySleep,
-                                            (CFStringRef) name,
-                                            NULL, NULL, NULL, 0, NULL,
+     /* If we call this before NSApp activation, macOS might print a complaint
+      * about ApplePersistenceIgnoreState. */
+@@ -424,12 +440,6 @@
+             }
+         }
+         [NSApp finishLaunching];
+-        if ([NSApp delegate]) {
+-            /* The SDL app delegate calls this in didFinishLaunching if it's
+-             * attached to the NSApp, otherwise we need to call it manually.
+-             */
+-            [SDLApplication registerUserDefaults];
+-        }
+     }
+     if (NSApp && !appDelegate) {
+         appDelegate = [[SDLAppDelegate alloc] init];

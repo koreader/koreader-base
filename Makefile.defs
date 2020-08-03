@@ -188,9 +188,15 @@ ifdef DARWINHOST
 	endif
 endif
 
+ifdef DARWINHOST
+	LOADER_FLAGS=-pagezero_size 10000 -image_base 100000000 -framework CoreGraphics
+else
+	LOADER_FLAGS=-L/usr/X11/lib -L/usr/X11R6/lib -lX11
+endif
+
 USE_LUAJIT_LIB=$(or $(DARWIN),$(ANDROID),$(WIN32))
 
-SKIP_LUAJIT_BIN=$(or $(ANDROID),)
+SKIP_LUAJIT_BIN=$(or $(ANDROID),$(MACOS))
 
 # handle utility params on different host systems
 ifdef DARWINHOST
@@ -695,6 +701,7 @@ LUAJIT_DIR=$(CURDIR)/$(LUAJIT_BUILD_DIR)/luajit-prefix/src/luajit
 LUAJIT=$(OUTPUT_DIR)/$(if $(WIN32),luajit.exe,luajit)
 LUAJIT_JIT=$(OUTPUT_DIR)/jit
 LUAJIT_LIB=$(OUTPUT_DIR)/$(if $(WIN32),lua51.dll,libs/libluajit.so)
+LUAJIT_STATIC=$(LUAJIT_DIR)/src/libluajit.a
 
 POPEN_NOSHELL_BUILD_DIR=$(THIRDPARTY_DIR)/popen-noshell/build/$(MACHINE)
 POPEN_NOSHELL_DIR=$(CURDIR)/$(POPEN_NOSHELL_BUILD_DIR)/popen-noshell-prefix/src/popen-noshell
