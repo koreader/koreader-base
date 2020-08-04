@@ -10,7 +10,9 @@ enable_language(C)
 
 ep_get_source_dir(SOURCE_DIR)
 
-# override process name, remove workarounds for standalone applications
+# remove workarounds for standalone applications and add a couple of actions
+# to be used from the osx main menu.
+
 set(PATCH_CMD "${KO_PATCH_SH} ${CMAKE_CURRENT_SOURCE_DIR}/cocoa.patch")
 
 set(SDL2_VER "2.0.12")
