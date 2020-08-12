@@ -78,7 +78,7 @@ local function openGameController()
 end
 
 -- initialization for both input and eink output
-function S.open()
+function S.open(w, h, x, y)
     if SDL.SDL_WasInit(SDL.SDL_INIT_VIDEO) ~= 0 then
         -- already initialized
         return true
@@ -100,16 +100,16 @@ function S.open()
         end
         S.w, S.h = mode.w, mode.h
     else
-        S.w = tonumber(os.getenv("EMULATE_READER_W")) or 600
-        S.h = tonumber(os.getenv("EMULATE_READER_H")) or 800
+        S.w = tonumber(os.getenv("EMULATE_READER_W")) or w or 600
+        S.h = tonumber(os.getenv("EMULATE_READER_H")) or h or 800
     end
 
     -- default behaviour of SDL 2.0 is to disable the screensaver. This turns it back on
     SDL.SDL_EnableScreenSaver()
     -- set up screen (window)
     S.screen = SDL.SDL_CreateWindow("KOReader",
-        tonumber(os.getenv("KOREADER_WINDOW_POS_X")) or SDL.SDL_WINDOWPOS_UNDEFINED,
-        tonumber(os.getenv("KOREADER_WINDOW_POS_Y")) or SDL.SDL_WINDOWPOS_UNDEFINED,
+        tonumber(os.getenv("KOREADER_WINDOW_POS_X")) or x or SDL.SDL_WINDOWPOS_UNDEFINED,
+        tonumber(os.getenv("KOREADER_WINDOW_POS_Y")) or y or SDL.SDL_WINDOWPOS_UNDEFINED,
         S.w, S.h,
         bit.bor(full_screen and 1 or 0, SDL.SDL_WINDOW_RESIZABLE, SDL.SDL_WINDOW_ALLOW_HIGHDPI)
     )
@@ -167,7 +167,8 @@ local function handleWindowEvent(event_window)
         SDL.SDL_RenderCopy(S.renderer, S.texture, nil, nil)
         SDL.SDL_RenderPresent(S.renderer)
     elseif (event_window.event == SDL.SDL_WINDOWEVENT_RESIZED
-             or event_window.event == SDL.SDL_WINDOWEVENT_SIZE_CHANGED) then
+             or event_window.event == SDL.SDL_WINDOWEVENT_SIZE_CHANGED
+             or event_window.event == SDL.SDL_WINDOWEVENT_MOVED) then
         genEmuEvent(EV_SDL, event_window.event, event_window)
     end
 end

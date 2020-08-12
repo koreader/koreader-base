@@ -10,7 +10,7 @@ local framebuffer = {
 
 function framebuffer:init()
     if not self.dummy then
-        SDL.open()
+        SDL.open(self.w, self.h, self.x, self.y)
         self:_newBB()
     else
         self.bb = BB.new(600, 800)
