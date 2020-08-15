@@ -882,4 +882,5 @@ struct SDL_version {
   Uint8 patch;
 };
 void SDL_GetVersion(struct SDL_version *) __attribute__((visibility("default")));
+SDL_bool SDL_SetHint(const char *, const char *) __attribute__((visibility("default")));
 ]]
