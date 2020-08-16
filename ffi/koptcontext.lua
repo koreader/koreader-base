@@ -257,6 +257,66 @@ function KOPTContext_mt.__index:findPageBlocks()
     end
 end
 
+function KOPTContext_mt.__index:getPanelFromPage(pos)
+    local function isInRect(x, y, w, h, pos_x, pos_y)
+        return x < pos_x and y < pos_y and x + w > pos_x and y + h > pos_y
+    end
+
+    if self.src.data then
+        local pixs = k2pdfopt.bitmap2pix(self.src, 0, 0, self.src.width, self.src.height)
+        local pixg
+        if leptonica.pixGetDepth(pixs) == 32 then
+            pixg = leptonica.pixConvertRGBToGrayFast(pixs)
+        else
+            pixg = leptonica.pixClone(pixs)
+        end
+
+        -- leptonica's threshold gets pixels lighter than X, we want to get
+        -- pixels darker than X, to do that we invert the image, threshold it,
+        -- and invert the result back. Math: ~(~img < X) <=> img > X
+        local pix_inverted = leptonica.pixInvert(nil, pixg)
+        local pix_thresholded = leptonica.pixThresholdToBinary(pix_inverted, 50)
+        leptonica.pixInvert(pix_thresholded, pix_thresholded)
+
+        -- find connected components (in our case panels)
+        local bb = leptonica.pixConnCompBB(pix_thresholded, 8)
+
+        local img_w = leptonica.pixGetWidth(pixs)
+        local img_h = leptonica.pixGetHeight(pixs)
+        local res
+
+        for i = 0, leptonica.boxaGetCount(bb) - 1 do
+            local box = leptonica.boxaGetBox(bb, i, C.L_CLONE)
+            local pix_tmp = leptonica.pixClipRectangle(pixs, box, nil)
+            local w = leptonica.pixGetWidth(pix_tmp)
+            local h = leptonica.pixGetHeight(pix_tmp)
+            -- check if it's panel or part of the panel, if it's part of the panel skip
+            if w >= img_w / 8 and h >= img_h / 8 then
+                if isInRect(box.x, box.y, box.w, box.h, pos.x, pos.y) then
+                    res = {
+                        x = box.x,
+                        y = box.y,
+                        w = box.w,
+                        h = box.h,
+                    }
+                    leptonica.pixDestroy(ffi.new("PIX *[1]", pix_tmp))
+                    leptonica.boxDestroy(ffi.new("BOX *[1]", box))
+                    break -- we found panel, exit the loop and clean up memory
+                end
+            end
+            leptonica.pixDestroy(ffi.new("PIX *[1]", pix_tmp))
+            leptonica.boxDestroy(ffi.new("BOX *[1]", box))
+        end
+
+        -- free up memory
+        leptonica.boxaDestroy(ffi.new("BOXA *[1]", bb))
+        leptonica.pixDestroy(ffi.new("PIX *[1]", pixg))
+        leptonica.pixDestroy(ffi.new("PIX *[1]", pix_thresholded))
+        leptonica.pixDestroy(ffi.new("PIX *[1]", pixs))
+        return res
+    end
+end
+
 --[[
 -- get page block in location x, y both of which in range [0, 1] relative to page
 -- width and height respectively
