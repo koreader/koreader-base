@@ -257,6 +257,45 @@ function KOPTContext_mt.__index:findPageBlocks()
     end
 end
 
+function KOPTContext_mt.__index:getPanelFromPage(pos)
+    if self.src.data then
+        local pixs = k2pdfopt.bitmap2pix(self.src, 0, 0, self.src.width, self.src.height)
+        local pixg
+        if leptonica.pixGetDepth(pixs) == 32 then
+            pixg = leptonica.pixConvertRGBToGrayFast(pixs)
+        else
+            pixg = leptonica.pixClone(pixs)
+        end
+
+        local pixb
+        if leptonica.pixGetDepth(pixg) == 8 then
+            pixb = leptonica.pixThresholdToBinary(pixg, 200)
+        else
+            pixb = leptonica.pixClone(pixg)
+        end
+        local pix_contour = leptonica.pixRenderContours(pixg, 200, 1, 1)
+        leptonica.pixInvert(pix_contour, pix_contour)
+        leptonica.pixWritePng("textblock.png", pix_contour, 0.0)
+        local bb = leptonica.pixConnCompBB(pix_contour, 8)
+        for i = 0, leptonica.boxaGetCount(bb) - 1 do
+            local box = leptonica.boxaGetBox(bb, i, C.L_CLONE)
+            local pix_tmp = leptonica.pixClipRectangle(pix_contour, box, nil)
+            local w = leptonica.pixGetWidth(pix_tmp)
+            local h = leptonica.pixGetHeight(pix_tmp)
+            if w >= self.src.width / 10 or h >= self.src.height / 10 then
+                leptonica.pixWritePng(i..".png", pix_tmp, 0.0)
+            end
+            leptonica.pixDestroy(ffi.new("PIX *[1]", pix_tmp))
+            leptonica.boxDestroy(ffi.new("BOX *[1]", box))
+        end
+        leptonica.boxaDestroy(ffi.new("BOXA *[1]", bb))
+        leptonica.pixDestroy(ffi.new("PIX *[1]", pix_contour))
+        leptonica.pixDestroy(ffi.new("PIX *[1]", pixb))
+        leptonica.pixDestroy(ffi.new("PIX *[1]", pixg))
+        leptonica.pixDestroy(ffi.new("PIX *[1]", pixs))
+    end
+end
+
 --[[
 -- get page block in location x, y both of which in range [0, 1] relative to page
 -- width and height respectively
