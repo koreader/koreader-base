@@ -18,6 +18,7 @@ ep_get_binary_dir(BINARY_DIR)
 set(CFG_ENV_VAR "CC=\"${CC}\" CFLAGS=\"${CFLAGS}\" LDFLAGS=\"${LDFLAGS}\" ")
 set(CFG_OPTS "--prefix=${BINARY_DIR} --disable-static --enable-shared --host=\"${CHOST}\"")
 set(CFG_CMD sh -c "${CFG_ENV_VAR} ${SOURCE_DIR}/configure ${CFG_OPTS}")
+set(PATCH_CMD1 "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/add_lb_get_char_class.patch")
 
 if($ENV{ANDROID})
     set(CFG_CMD "${CFG_CMD} && ${ISED} 's|version_type=none|version_type=linux|' libtool")
@@ -38,7 +39,7 @@ include(ExternalProject)
 ExternalProject_Add(
     ${PROJECT_NAME}
     DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
-    PATCH_COMMAND NOCONFIGURE=1 ./autogen.sh
+    PATCH_COMMAND ${PATCH_CMD1} COMMAND NOCONFIGURE=1 ./autogen.sh
     CONFIGURE_COMMAND ${CFG_CMD}
     BUILD_COMMAND ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS}
     INSTALL_COMMAND ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS} install
