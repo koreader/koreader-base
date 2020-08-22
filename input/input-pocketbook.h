@@ -114,105 +114,95 @@ static inline void debug_mtinfo(iv_mtinfo *mti) {
 
 /* callback to disable suspension */
 void disable_suspend(void) {
-	iv_sleepmode(0);
+    iv_sleepmode(0);
 }
 
 /* callback to enable suspension */
 void enable_suspend(void) {
-	iv_sleepmode(1);
-}
-
-static int external_suspend_control = 0;
-
-void fallback_enable_suspend(void) {
-	if (external_suspend_control == 0)
-		enable_suspend();
+    iv_sleepmode(1);
 }
 
 static int send_to_event_handler(int type, int par1, int par2) {
-	SendEventTo(GetCurrentTask(), type, par1, par2);
+    SendEventTo(GetCurrentTask(), type, par1, par2);
 }
 
 
 static int setSuspendState(lua_State *L) {
-	send_to_event_handler(
-			PB_SPECIAL_SUSPEND,
-			luaL_checkint(L, 1),
-			luaL_checkint(L,2)
-			);
+    send_to_event_handler(PB_SPECIAL_SUSPEND,
+        luaL_checkint(L, 1), luaL_checkint(L, 2));
 }
 
 int touch_pointers = 0;
 static int pb_event_handler(int type, int par1, int par2) {
-    // printf("ev:%d %d %d\n", type, par1, par2);
-    // fflush(stdout);
     int i;
     iv_mtinfo *mti;
 
-    // general settings in only possible in forked process
-    if (type == EVT_INIT) {
-        SetPanelType(PANEL_DISABLED);
-        get_gti_pointer();
-	/* disable suspend to make uninterrupted loading possible. */
-	disable_suspend();
-	/*
-	 * re-enable suspending after a minute. This is normally handled by a
-	 * plugin on onReaderReady(). However, if loading of the plugin fails
-	 * for some reason, suspension would stay inactive consuming a lot of
-	 * power
-	 */
-	SetHardTimer("fallback_enable_suspend", fallback_enable_suspend, 1000 * 60);
-    }
-
-    if (type == EVT_POINTERDOWN) {
-        touch_pointers = 1;
-        genEmuEvent(inputfds[0], EV_ABS, ABS_MT_TRACKING_ID, 0);
-        genEmuEvent(inputfds[0], EV_ABS, ABS_MT_POSITION_X, par1);
-        genEmuEvent(inputfds[0], EV_ABS, ABS_MT_POSITION_Y, par2);
-        //printf("****init slot0:%d %d\n", par1, par2);
-    } else if (type == EVT_MTSYNC) {
-        if (touch_pointers && (par2 == 2)) {
-            if (gti && (mti = (*gti)())) {
-                touch_pointers = par2;
-                for (i = 0; i < touch_pointers; i++) {
-                    //printf("****sync slot%d:%d %d\n", i, mti[i].x, mti[i].y);
-                    //debug_mtinfo(&mti[i]);
-                    genEmuEvent(inputfds[0], EV_ABS, ABS_MT_SLOT, i);
-                    genEmuEvent(inputfds[0], EV_ABS, ABS_MT_TRACKING_ID, i);
-                    genEmuEvent(inputfds[0], EV_ABS, ABS_MT_POSITION_X, mti[i].x);
-                    genEmuEvent(inputfds[0], EV_ABS, ABS_MT_POSITION_Y, mti[i].y);
-                    genEmuEvent(inputfds[0], EV_SYN, SYN_REPORT, 0);
-                }
-            }
-        } else if (par2 == 0) {
-            for (i = 0; i < 2; i++) {
-                genEmuEvent(inputfds[0], EV_ABS, ABS_MT_SLOT, i);
-                genEmuEvent(inputfds[0], EV_ABS, ABS_MT_TRACKING_ID, -1);
-                genEmuEvent(inputfds[0], EV_SYN, SYN_REPORT, 0);
-            }
-        } else {
-            genEmuEvent(inputfds[0], EV_SYN, SYN_REPORT, 0);
-        }
-    } else if (type == EVT_POINTERMOVE) {
-        /* multi touch POINTERMOVE will be reported in EVT_MTSYNC
-         * this will handle single touch POINTERMOVE only */
-        if (touch_pointers == 1) {
+    switch (type) {
+        case EVT_INIT:
+            SetPanelType(PANEL_DISABLED);
+            get_gti_pointer();
+            disable_suspend();
+            break;
+        case EVT_FOREGROUND:
+        case EVT_SHOW:
+            disable_suspend();
+            genEmuEvent(inputfds[0], type, par1, par2);
+            break;
+        case EVT_BACKGROUND:
+        case EVT_HIDE:
+            enable_suspend();
+            genEmuEvent(inputfds[0], type, par1, par2);
+            break;
+        case EVT_POINTERDOWN:
+            touch_pointers = 1;
+            genEmuEvent(inputfds[0], EV_ABS, ABS_MT_TRACKING_ID, 0);
             genEmuEvent(inputfds[0], EV_ABS, ABS_MT_POSITION_X, par1);
             genEmuEvent(inputfds[0], EV_ABS, ABS_MT_POSITION_Y, par2);
-        }
-    } else if (type == EVT_POINTERUP) {
-        if (touch_pointers == 1) {
-            genEmuEvent(inputfds[0], EV_ABS, ABS_MT_TRACKING_ID, -1);
-        }
-        touch_pointers = 0;
-    } else if (type == PB_SPECIAL_SUSPEND) {
-	external_suspend_control = 1;
-	if (par1 == 0)
-		SetHardTimer("disable_suspend", disable_suspend, par2);
-	else
-		SetHardTimer("enable_suspend", enable_suspend, par2);
-    } else {
-        genEmuEvent(inputfds[0], type, par1, par2);
+            break;
+        case EVT_MTSYNC:
+            if (touch_pointers && (par2 == 2)) {
+                if (gti && (mti = (*gti)())) {
+                    touch_pointers = par2;
+                    for (i = 0; i < touch_pointers; i++) {
+                        genEmuEvent(inputfds[0], EV_ABS, ABS_MT_SLOT, i);
+                        genEmuEvent(inputfds[0], EV_ABS, ABS_MT_TRACKING_ID, i);
+                        genEmuEvent(inputfds[0], EV_ABS, ABS_MT_POSITION_X, mti[i].x);
+                        genEmuEvent(inputfds[0], EV_ABS, ABS_MT_POSITION_Y, mti[i].y);
+                        genEmuEvent(inputfds[0], EV_SYN, SYN_REPORT, 0);
+                    }
+                }
+            } else if (par2 == 0) {
+                for (i = 0; i < 2; i++) {
+                    genEmuEvent(inputfds[0], EV_ABS, ABS_MT_SLOT, i);
+                    genEmuEvent(inputfds[0], EV_ABS, ABS_MT_TRACKING_ID, -1);
+                    genEmuEvent(inputfds[0], EV_SYN, SYN_REPORT, 0);
+                }
+            } else {
+                genEmuEvent(inputfds[0], EV_SYN, SYN_REPORT, 0);
+            }
+            break;
+        case EVT_POINTERMOVE:
+            /* multi touch POINTERMOVE will be reported in EVT_MTSYNC
+             * this will handle single touch POINTERMOVE only */
+            if (touch_pointers == 1) {
+                genEmuEvent(inputfds[0], EV_ABS, ABS_MT_POSITION_X, par1);
+                genEmuEvent(inputfds[0], EV_ABS, ABS_MT_POSITION_Y, par2);
+            }
+            break;
+        case EVT_POINTERUP:
+            if (touch_pointers == 1) {
+                genEmuEvent(inputfds[0], EV_ABS, ABS_MT_TRACKING_ID, -1);
+            }
+            touch_pointers = 0;
+            break;
+        case PB_SPECIAL_SUSPEND:
+            if (par1 == 0)
+                SetHardTimer("disable_suspend", disable_suspend, par2);
+            else
+                SetHardTimer("enable_suspend", enable_suspend, par2);
+            break;
+        default:
+            genEmuEvent(inputfds[0], type, par1, par2);
     }
     return 0;
 }
