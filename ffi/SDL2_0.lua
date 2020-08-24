@@ -104,8 +104,12 @@ function S.open(w, h, x, y)
         S.h = tonumber(os.getenv("EMULATE_READER_H")) or h or 800
     end
 
-    -- default behaviour of SDL 2.0 is to disable the screensaver. This turns it back on
+    -- Enable screensaver and X11 composition.
     SDL.SDL_EnableScreenSaver()
+    if SDL_Linked_Version_AtLeast(2, 0, 8) then
+        SDL.SDL_SetHint("SDL_VIDEO_X11_NET_WM_BYPASS_COMPOSITOR", "0")
+    end
+
     -- set up screen (window)
     S.screen = SDL.SDL_CreateWindow("KOReader",
         tonumber(os.getenv("KOREADER_WINDOW_POS_X")) or x or SDL.SDL_WINDOWPOS_UNDEFINED,

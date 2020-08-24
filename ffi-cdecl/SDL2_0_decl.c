@@ -146,6 +146,8 @@ cdecl_func(SDL_GetClipboardText)
 cdecl_func(SDL_SetClipboardText)
 cdecl_func(SDL_GetError)
 
+cdecl_func(SDL_SetHint)
+
 cdecl_func(SDL_NumJoysticks)
 cdecl_func(SDL_JoystickNameForIndex)
 cdecl_func(SDL_JoystickOpen)

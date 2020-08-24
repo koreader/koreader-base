@@ -745,6 +745,7 @@ SDL_bool SDL_HasClipboardText(void) __attribute__((visibility("default")));
 char *SDL_GetClipboardText(void) __attribute__((visibility("default")));
 int SDL_SetClipboardText(const char *) __attribute__((visibility("default")));
 const char *SDL_GetError(void) __attribute__((visibility("default")));
+SDL_bool SDL_SetHint(const char *, const char *) __attribute__((visibility("default")));
 int SDL_NumJoysticks(void) __attribute__((visibility("default")));
 const char *SDL_JoystickNameForIndex(int) __attribute__((visibility("default")));
 SDL_Joystick *SDL_JoystickOpen(int) __attribute__((visibility("default")));
