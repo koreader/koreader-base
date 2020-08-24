@@ -739,6 +739,13 @@ static int getUnknownEntities(lua_State *L) {
     return 3;
 }
 
+static int getDocumentFormat(lua_State *L) {
+    CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
+    lString16 docformat = getDocFormatName(doc->text_view->getDocFormat());
+    lua_pushstring(L, UnicodeToLocal(docformat).c_str());
+    return 1;
+}
+
 static int getDocumentProps(lua_State *L) {
 	CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
 
@@ -3395,6 +3402,7 @@ static const struct luaL_Reg credocument_meth[] = {
     /*--- get methods ---*/
     {"getIntProperty", getIntProperty},
     {"getStringProperty", getStringProperty},
+    {"getDocumentFormat", getDocumentFormat},
     {"getDocumentProps", getDocumentProps},
     {"getPages", getNumberOfPages},
     {"getCurrentPage", getCurrentPage},

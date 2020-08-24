@@ -97,6 +97,15 @@ else
     util.usleep = C.usleep
 end
 
+function util.getTimestamp()
+    local secs, usecs = util.gettime()
+    return secs + usecs/1000000
+end
+
+function util.getDuration(from_timestamp)
+    return util.getTimestamp() - from_timestamp
+end
+
 local statvfs = ffi.new("struct statvfs")
 function util.df(path)
     C.statvfs(path, statvfs)
