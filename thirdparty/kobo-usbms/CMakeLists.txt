@@ -13,6 +13,7 @@ assert_var_defined(LDFLAGS)
 ep_get_source_dir(SOURCE_DIR)
 ep_get_binary_dir(BINARY_DIR)
 
+set(PREPARE_CMD sh -c "cd FBInk && git submodule init && git submodule update && cd -")
 set(BUILD_CMD sh -c "${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS} CFLAGS=\"${CFLAGS}\" LDFLAGS=\"${LDFLAGS}\" kobo")
 
 # We build in-tree...
@@ -37,7 +38,7 @@ ExternalProject_Add(
     BUILD_IN_SOURCE 1
     PATCH_COMMAND ""
     CONFIGURE_COMMAND ""
-    BUILD_COMMAND COMMAND ${BUILD_CMD}
+    BUILD_COMMAND COMMAND ${PREPARE_CMD} COMMAND ${BUILD_CMD}
     # The buildsystem outputs binaries in a subdirectory...
     INSTALL_COMMAND COMMAND ${INSTALL_CMD1} COMMAND ${INSTALL_CMD2}
 )
