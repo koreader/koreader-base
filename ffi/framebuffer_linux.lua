@@ -94,7 +94,7 @@ function framebuffer:init()
     local finfo = ffi.new("struct fb_fix_screeninfo")
     local vinfo = ffi.new("struct fb_var_screeninfo")
 
-    self.fd = C.open(self.device_node, C.O_RDWR)
+    self.fd = C.open(self.device_node, bit.bor(C.O_RDWR, C.O_CLOEXEC))
     assert(self.fd ~= -1, "cannot open framebuffer")
 
     -- Get fixed screen information

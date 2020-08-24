@@ -505,6 +505,19 @@ ifdef REMARKABLE
 endif
 
 # ===========================================================================
+# KoboUSBMS: Guess what?
+
+$(OUTPUT_DIR)/data/KoboUSBMS.tar.gz: $(THIRDPARTY_DIR)/kobo-usbms/*.*
+	install -d $(KOBO_USBMS_BUILD_DIR)
+	cd $(KOBO_USBMS_BUILD_DIR) && \
+		$(CMAKE) $(CMAKE_FLAGS) \
+		-DCFLAGS="$(CFLAGS)" \
+		-DLDFLAGS="$(LDFLAGS)" \
+		$(CURDIR)/$(THIRDPARTY_DIR)/kobo-usbms && \
+		$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS)
+	cp $(KOBO_USBMS_DIR)/KoboUSBMS.tar.gz $(OUTPUT_DIR)/data/KoboUSBMS.tar.gz
+
+# ===========================================================================
 # common lua library for networking
 $(LUASOCKET): $(THIRDPARTY_DIR)/luasocket/*.*
 	-rm -rf $(LUASOCKET) $(LUASOCKET_BUILD_DIR)

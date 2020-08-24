@@ -836,6 +836,8 @@ OPENSSH_BUILD_DIR=$(THIRDPARTY_DIR)/openssh/build/$(MACHINE)
 OPENSSH_DIR=$(CURDIR)/$(OPENSSH_BUILD_DIR)/openssh-prefix/src/openssh-build
 FBINK_BUILD_DIR=$(THIRDPARTY_DIR)/fbink/build/$(MACHINE)
 FBINK_DIR=$(CURDIR)/$(FBINK_BUILD_DIR)/fbink-prefix/src/fbink-build
+KOBO_USBMS_BUILD_DIR=$(THIRDPARTY_DIR)/kobo-usbms/build/$(MACHINE)
+KOBO_USBMS_DIR=$(CURDIR)/$(KOBO_USBMS_BUILD_DIR)/kobo-usbms-prefix/src/kobo-usbms-build
 
 CURL_BUILD_DIR=$(THIRDPARTY_DIR)/curl/build/$(MACHINE)
 CURL_DIR=$(CURDIR)/$(CURL_BUILD_DIR)/curl-prefix/src/curl-build
@@ -944,3 +946,4 @@ CMAKE_THIRDPARTY_LIBS := $(CMAKE_THIRDPARTY_LIBS),tar,sdcv,libiconv,gettext,libj
 CMAKE_THIRDPARTY_LIBS := $(CMAKE_THIRDPARTY_LIBS),openssl,dropbear,openssh
 CMAKE_THIRDPARTY_LIBS := $(CMAKE_THIRDPARTY_LIBS),curl,zsync2
 CMAKE_THIRDPARTY_LIBS := $(CMAKE_THIRDPARTY_LIBS),fbink
+CMAKE_THIRDPARTY_LIBS := $(CMAKE_THIRDPARTY_LIBS),kobo-usbms
