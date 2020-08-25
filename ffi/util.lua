@@ -546,6 +546,10 @@ function util.isAndroid()
     return isAndroid
 end
 
+function util.isPocketbook()
+    return lfs.attributes("/ebrmain/pocketbook")
+end
+
 local haveSDL2 = nil
 
 --- Returns true if SDL2
