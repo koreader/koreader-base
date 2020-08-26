@@ -1,6 +1,31 @@
 local ffi = require("ffi")
 
 ffi.cdef[[
+enum MencaFileStatus_e {
+  kMencaNoStatus = 0,
+  kMencaInCloud = 1,
+  kMencaSyncing = 2,
+  kMencaDownloaded = 3,
+};
+enum bt_service_e {
+  BT_UNKNOWN = 0,
+  BT_AUTH = 1,
+  BT_OBEX = 2,
+  BT_SECOND_SCREEN = 3,
+};
+enum bt_service_state_e {
+  BT_SERVICE_ACTIVE = 0,
+  BT_SERVICE_CANCEL = 1,
+  BT_SERVICE_ERROR = 2,
+};
+enum obex_status_e {
+  OBEX_UNKNOWN = 0,
+  OBEX_ERROR = 1,
+  OBEX_REQUEST_AUTH = 2,
+  OBEX_REQUEST_AUTH_DONE = 3,
+  OBEX_TRANSFERRING = 4,
+  OBEX_DONE = 5,
+};
 enum PB_STATE_e {
   MP_STOPPED = 0,
   MP_REQUEST_FOR_PLAY = 1,
@@ -82,6 +107,7 @@ typedef enum {
   APPLICATION_ATTRIBUTE_MAX = 31,
 } APPLICATION_ATTRIBUTE;
 typedef enum {
+  NET_STATE_UNKNOWN = -1,
   DISCONNECTED = 0,
   CONNECTING = 1,
   CONNECTED = 2,
@@ -112,6 +138,9 @@ typedef enum {
   kBTQuestion = 3,
   kBTButton = 4,
 } eBubbleTypes;
+typedef enum {
+  FM_SHOW_SIZE = 1,
+} FONT_MENU_FLAGS;
 typedef void (*iv_timerproc)();
 typedef int (*iv_handler)(int, int, int);
 typedef void (*iv_menuhandler)(int);
@@ -139,6 +168,61 @@ typedef int (*iv_hashcmpproc)(char *, void *, char *, void *);
 typedef void (*iv_panelupdateshandler)(int, int, int, int);
 typedef void (*iv_custombubbledraw)(struct icustombubble_s *);
 typedef void (*iv_customherodraw)(struct icustomhero_s *);
+struct BookSyncStatus_s {
+  enum MencaFileStatus_e menca_status_;
+};
+struct iprofile_s {
+  char *name;
+  char *path;
+  int type;
+  struct ibitmap_s *avatar;
+};
+struct iprofiles_s {
+  struct iprofile_s *profile;
+  int count;
+};
+struct FontForSort_s {
+  char *name;
+  int flags;
+  char *font;
+};
+struct obex_service_s {
+  enum obex_status_e status;
+  int auth;
+  long int filesize;
+  long int transferred;
+  char name[128];
+  char path[256];
+  char description[128];
+  char mimetype[64];
+};
+struct bt_service_obj_s {
+  int id;
+  enum bt_service_e service;
+  enum bt_service_state_e state;
+  int lock;
+  int users[16];
+  union {
+    struct obex_service_s obex;
+    char service_data[1024];
+  };
+};
+struct iuser_font_s {
+  char *show_font_name;
+  char *real_font_name;
+  struct ifont_s *font;
+};
+struct ifont_list_s {
+  struct iuser_font_s *list;
+  int count;
+};
+struct ifont_menu_s {
+  char *menu_title;
+  char *current_font;
+  FONT_MENU_FLAGS flags;
+  iv_fontselecthandler hproc;
+  struct ifont_list_s *user_fonts;
+};
 struct irect_s {
   int x;
   int y;
@@ -262,6 +346,7 @@ struct icontext_menu_s {
   short int enable_aura;
   short int use_own_font;
   short int update_after_close;
+  short int only_choise;
 };
 struct iapp_caption_s {
   struct irect_s rect_portrait;
@@ -309,8 +394,8 @@ struct ipager_s {
   int page_width;
   int rigth_width;
   int separator_size;
-  struct ibitmap_s *icon_left;
-  struct ibitmap_s *icon_right;
+  const struct ibitmap_s *icon_left;
+  const struct ibitmap_s *icon_right;
   int current_page;
   int total_pages;
   struct irect_s position;
@@ -396,6 +481,8 @@ struct bookinfo_s {
   int drm;
   char *annotation;
   char *lang;
+  char *publisher;
+  char *identifiers;
 };
 struct iv_filetype_s {
   char *extension;
@@ -512,7 +599,7 @@ struct apinfo_s {
   char ssid[36];
   int mode;
   int channel;
-  int security;
+  WIFI_SECURITY security;
   int quality;
   int level;
   int noise;
@@ -559,6 +646,20 @@ struct icustomdialog_s {
   iv_dialoghandler cb_handler;
   int cancel_enable_;
 };
+static const int MAX_BT_SERVICE_USER = 16;
+static const int MSG_ACTUALIZEFRONTLIGHT = 284;
+static const int MSG_UPDATE_SERVICE_STATUSES = 285;
+static const int MSG_FACTORY_RESET = 286;
+static const int MSG_SETTIME_FROM_NTP = 287;
+static const int MSG_GET_IS_TIME_MONOTONIC_AFTER_LAST_NTP_SYNC = 288;
+static const int MSG_GET_PARTNER_ID = 289;
+static const int MSG_UPDATE_PARTNER_ID = 290;
+static const int MSG_BAN_SUSPEND = 291;
+static const int MSG_BACKUP = 292;
+static const int MSG_RESTORE = 293;
+static const int MSG_TASK_SEND_REQUEST_NOWAIT = 1303;
+static const int MSG_START_SERVICES = 1536;
+static const int MSG_LAST_OPEN_OPENED = 1537;
 static const int APP_UID = 101;
 static const int APP_GID = 101;
 static const int SECAPP_UID = 102;
@@ -629,7 +730,7 @@ static const int MSG_RESETKEY = 181452290;
 static const int EVT_INIT = 21;
 static const int EVT_EXIT = 22;
 static const int EVT_SHOW = 23;
-static const int EVT_REPAINT = 23;
+static const int EVT_REPAINT = 43;
 static const int EVT_HIDE = 24;
 static const int EVT_KEYDOWN = 25;
 static const int EVT_KEYPRESS = 25;
@@ -642,6 +743,7 @@ static const int EVT_POINTERMOVE = 31;
 static const int EVT_POINTERLONG = 34;
 static const int EVT_POINTERHOLD = 35;
 static const int EVT_POINTERDRAG = 44;
+static const int EVT_POINTERCANCEL = 45;
 static const int EVT_ORIENTATION = 32;
 static const int EVT_FOCUS = 36;
 static const int EVT_UNFOCUS = 37;
@@ -702,9 +804,14 @@ static const int EVT_STOPSCAN = 214;
 static const int EVT_STARTSCAN = 215;
 static const int EVT_SCANSTOPPED = 216;
 static const int EVT_POSTPONE_TIMED_POWEROFF = 217;
+static const int EVT_FRAME_ACTIVATED = 218;
+static const int EVT_FRAME_DEACTIVATED = 219;
+static const int EVT_READ_PROGRESS_CHANGED = 220;
+static const int EVT_DUMP_BITMAPS_DEBUG_INFO = 221;
 static const int EVT_NET_CONNECTED = 256;
 static const int EVT_NET_DISCONNECTED = 257;
 static const int EVT_NET_FOUND_NEW_FW = 260;
+static const int EVT_SYNTH_POSITION = 261;
 static const int KEY_POWER = 1;
 static const int KEY_DELETE = 8;
 static const int KEY_OK = 10;
@@ -785,10 +892,13 @@ static const int KBD_NOUPDATE_AFTER_OPEN = 262144;
 static const int KBD_NO_SELFCLOSE_ON_OK = 524288;
 static const int KBD_CUSTOM_ENTER_KEY = 1048576;
 static const int KBD_MARKED_ENTER_KEY = 2097152;
+static const int KBD_PASSWORD_WIFI = 4194304;
+static const int KBD_NEXT = 8388608;
 static const int ICON_INFORMATION = 1;
 static const int ICON_QUESTION = 2;
 static const int ICON_WARNING = 3;
 static const int ICON_ERROR = 4;
+static const int ICON_WIFI = 5;
 static const int DEF_BUTTON1 = 0;
 static const int DEF_BUTTON2 = 4096;
 static const int DEF_BUTTON3 = 8192;
@@ -890,6 +1000,9 @@ static const int REQ_OPENBOOK2 = 88;
 static const int REQ_FRONTLIGHT = 89;
 static const int REQ_KEYUNLOCK = 90;
 static const int REQ_HOURGLASS = 91;
+static const int REQ_MESSAGEBOX = 92;
+static const int REQ_KEYHARDLOCK = 93;
+static const int REQ_PB_CLOUD_NEW_POSITION = 94;
 static const int ALIGN_LEFT = 1;
 static const int ALIGN_CENTER = 2;
 static const int ALIGN_RIGHT = 4;
@@ -1007,6 +1120,7 @@ static const int NET_EPPP = -34;
 static const int NET_EDISABLED = -35;
 static const int NET_EDHCP = -36;
 static const int NET_EWRONGKEY = -37;
+static const int NET_EAUTH = -38;
 static const int GSENSOR_OFF = 0;
 static const int GSENSOR_ON = 1;
 static const int GSENSOR_INTR = 2;
@@ -1024,6 +1138,7 @@ static const int IV_OSY_STATUS_DOWNLOADING = 2;
 static const int IV_OSY_STATUS_PAUSED = 3;
 static const int IV_OSY_STATUS_IDLE = 4;
 static const int IV_OSY_STATUS_ERROR = 5;
+void InitInkview(int);
 void CalibrateGSensor();
 void CloseApp();
 int GetGlobalOrientation();
@@ -1082,12 +1197,13 @@ void ColorMapDestroy(struct icolor_map_s **);
 int convert_to_utf(const char *, char *, int, const char *);
 void CopyActiveFb(void);
 struct ibitmap_s *CopyBitmap(const struct ibitmap_s *);
-struct ibitmap_s *CopyBitmapDepth4To8(struct ibitmap_s *);
+struct ibitmap_s *CopyBitmapDepth4To8(const struct ibitmap_s *);
 int copy_file(const char *, const char *);
 int copy_file_with_af(const char *, const char *);
 proxy_settings *copy_proxy_object(proxy_settings *);
 struct ibitmap_s *CoverCacheGet(enum COVERCACHE_STORAGES_e, const char *);
 int CoverCachePut(enum COVERCACHE_STORAGES_e, const char *, struct ibitmap_s *);
+int FastBookHash(const char *, char *, int);
 unsigned int crc32hash(const char *, unsigned int);
 struct icontext_menu_s *CreateContextMenu(const char *);
 void CreateEmptyNote(const char *);
@@ -1132,6 +1248,7 @@ int DrawPanel(const struct ibitmap_s *, const char *, const char *, int);
 int DrawPanel2(const struct ibitmap_s *, const char *, const char *, int, int);
 int DrawPanel3(const struct ibitmap_s *, int, int, int);
 int DrawPanel4(const struct ibitmap_s *, const char *, int, int, int);
+int DrawPanel5(const struct ibitmap_s *, const char *, const char *, int, int);
 void DrawPickOut(int, int, int, int, const char *);
 void DrawPickOutEx(const struct irect_s *, const char *);
 void DrawPixel(int, int, int);
@@ -1143,7 +1260,7 @@ void DrawStringR(int, int, const char *);
 int DrawSymbol(int, int, int);
 int DrawTabs(const struct ibitmap_s *, int, int);
 char *DrawTextRect(int, int, int, int, const char *, int);
-char *DrawTextRect2(struct irect_s *, const char *);
+char *DrawTextRect2(const struct irect_s *, const char *);
 char *DrawTextRect3(int, int, int, int, const char *, int, int *);
 void DynamicUpdate(int, int, int, int);
 void DynamicUpdateA2(int, int, int, int);
@@ -1152,6 +1269,9 @@ char **EnumBTdevices();
 char **EnumConnections();
 char **EnumDictionaries();
 char **EnumFonts();
+struct FontForSort_s *EnumFontsEx();
+struct FontForSort_s *EnumFontsFromDirectoryEx(const char *, const char *);
+void FreeFontsForSort(struct FontForSort_s *);
 char **EnumFontsFromDirectory(const char *, const char *);
 char **EnumKeyboards();
 char **EnumLanguages();
@@ -1181,6 +1301,7 @@ void GetActiveTask(int *, int *);
 AppStyles GetAppGlobalStyle();
 AppStyles GetAppStyle(const char *);
 struct iappstyle_s *GetAppStyleEx(const char *);
+struct BookSyncStatus_s GetBookSyncStatus(const char *);
 char *GetAssociatedFile(const char *, int);
 int GetBatteryPower();
 int GetBluetoothMode();
@@ -1207,13 +1328,13 @@ short unsigned int *get_encoding_table(const char *);
 void GetEqualizer(int *);
 iv_handler GetEventHandler();
 const char *GetExternalCardSerialNumber();
-char *GetFileHandler(const char *);
-struct ifont_s *GetFont();
+const char *GetFileHandler(const char *);
+const struct ifont_s *GetFont();
 struct ifont_selector_properties *GetFontSelectorProperties();
 struct iconfig_s *GetGlobalConfig();
 int GetHardwareDepth();
 char *GetHardwareType();
-char *GetHeader(int, const char *);
+const char *GetHeader(int, const char *);
 int GetHighVolumeMaxInterval();
 int GetHighVolumeTimeout();
 char *GetHw3GIMEI();
@@ -1221,19 +1342,38 @@ char *GetHwAddress();
 char *GetHwBTAddress();
 int GetKeyboardFlags();
 void GetKeyboardRect(struct irect_s *);
-void GetKeyMapping(char **, char **);
-void GetKeyMappingEx(int, char **, char **, int);
+struct irect_s GetKeyboardRectWithParams(char *, char *, int);
+void GetKeyMapping(const char **, const char **);
+void GetKeyMappingEx(int, const char **, const char **, int);
 struct ibitmap_s *GetKeyResource(const char *, const struct ibitmap_s *);
 const char *GetLangText(const char *);
 const char *GetLangTextF(const char *, ...);
+const char *GetLangTextPlural(const char *, int);
 int GetLastNetConnectionError(void);
+int NetMgr(int);
+int NetMgrStatus(void);
+int NetMgrPing(void);
 char **GetLastOpen();
 int GetListHeaderLevel();
 struct irect_s GetMenuRect(const struct imenu_s *);
 struct irect_s GetMenuRectEx(const struct imenuex_s *);
 int GetMultilineStringWidth(const char *, const int, struct ifont_s *, const int);
 struct network_interface_array_s *GetNetDNS(void);
+int GetNetList(const char *);
+int NetAdd(const char *);
+int NetDelete(const char *);
+int NetSelect(const char *);
+int NetDelete_by_ssid(const char *);
+int NetSelect_by_ssid(const char *);
 network_interface *GetNetGateway(const network_interface *);
+const char *get_partner_id(void);
+int get_keylock();
+int is_enough_free_space();
+int get_screen_dpi();
+int isHighPriorityJobRunning();
+void startHighPriorityJob(int, int);
+void finishHighPriorityJob(int);
+int haveDictionaryKeyboard();
 network_interface_info *GetNetInfo(const network_interface *);
 int GetNetSignalQuality(void);
 NET_STATE GetNetState(void);
@@ -1244,6 +1384,7 @@ int GetPlayerMode();
 int GetPlayerState();
 char **GetPlaylist();
 void GetPreviousTask(int *, int *);
+void GetPreviousTaskInStack(int *, int *);
 struct ibitmap_s *GetProfileAvatar(const char *);
 int GetProfileType(const char *);
 proxy_settings *get_proxy(void);
@@ -1256,6 +1397,7 @@ int GetSessionStatus(int);
 int GetSleepmode();
 char *GetSoftwareVersion();
 struct iv_filetype_s *GetSupportedFileTypes();
+int GetSupportedFileTypesLength();
 struct icanvas_s *GetTaskFramebuffer(int);
 struct iv_fbinfo_s *GetTaskFramebufferInfo(int);
 struct taskinfo_s *GetTaskInfo(int);
@@ -1283,7 +1425,7 @@ int hash_count(struct ihash_s *);
 void hash_delete(struct ihash_s *, const char *);
 void hash_destroy(struct ihash_s *);
 void hash_enumerate(struct ihash_s *, iv_hashcmpproc, iv_hashenumproc, void *);
-char *hash_find(struct ihash_s *, const char *);
+const char *hash_find(struct ihash_s *, const char *);
 struct ihash_s *hash_merge(struct ihash_s *, struct ihash_s *);
 int hash_merge_to(struct ihash_s *, struct ihash_s *, struct ihash_s *);
 struct ihash_s *hash_new(int);
@@ -1294,6 +1436,13 @@ int hw_get_lux_raw(void);
 int hw_is_frontlight_auto(void);
 int hw_is_frontlight_auto_supported(void);
 void hw_set_frontlight_auto_enabled(int);
+int GetFrontlightVersion(void);
+void SetFrontlightState(int);
+void SetFrontlightStateEx(int, int);
+void OpenFrontLightConfig();
+void SwitchFrontlightState();
+int GetFrontlightColor(void);
+void SetFrontlightColor(int);
 void IncreaseHighVolumeInterval(int);
 void InvertArea(int, int, int, int);
 void InvertAreaBW(int, int, int, int);
@@ -1322,6 +1471,7 @@ char *iv_evttype(int);
 void iv_fullscreen();
 int iv_get_obreey_status();
 long int iv_ipc_cmd(long int, long int);
+long int iv_ipc_request_with_timeout(long int, long int, unsigned char *, int, int, int);
 long int iv_ipc_request(long int, long int, unsigned char *, int, int);
 long int iv_ipc_request_secure(long int, long int, unsigned char *, int, int);
 int iv_mkdir(const char *, unsigned int);
@@ -1383,21 +1533,26 @@ void Message(int, const char *, const char *, int);
 int MinimalTextRectWidth(int, const char *);
 void MirrorBitmap(struct ibitmap_s *, int);
 void MoveBitmap(struct ibitmap_s *, int);
+void MoveBitmapRight(struct ibitmap_s *, int);
 int move_file(const char *, const char *);
 int move_file_with_af(const char *, const char *);
 int MultitaskingSupported();
 int NetConnect(const char *);
+int NetConnect2(const char *, int);
+int NetConnectAsync(int (*)(int));
 int NetConnectSilent(const char *);
 int NetDisconnect();
-char *NetError(int);
+const char *NetError(int);
 void NetErrorMessage(int);
 struct iv_netinfo_s *NetInfo();
 struct ibitmap_s *NewBitmap(int, int);
 int NewSession();
 int NewSubtask(char *);
-int NewTask(char *, char **, char *, char *, struct ibitmap_s *, unsigned int);
+int NewTask(const char *, char *const *, const char *, const char *, const struct ibitmap_s *, unsigned int);
+int NewTaskEx(const char *, char *const *, const char *, const char *, const struct ibitmap_s *, unsigned int, int);
 void NextTrack();
 void NotifyConfigChanged();
+void ClearConfig(struct iconfig_s *);
 int OpenBook(const char *, const char *, int);
 int OpenBook2(const char *, int, const char *const *, int);
 void OpenBookmarks(int, long long int, int *, long long int *, int *, int, iv_bmkhandler);
@@ -1412,6 +1567,7 @@ void OpenContextMenu(const struct icontext_menu_s *);
 void OpenControlledDictionaryView(pointer_to_word_hand_t, struct iv_wlist_s *, const char *);
 void OpenControlPanel(struct control_panel_s *);
 void OpenCustomKeyboard(const char *, const char *, char *, int, int, iv_keyboardhandler);
+int GetWordListWithPrefix(const char *, int, char ***);
 int OpenDictionary(const char *);
 void OpenDictionaryView(struct iv_wlist_s *, const char *);
 void OpenDirectorySelector(const char *, char *, int, iv_dirselecthandler);
@@ -1419,7 +1575,13 @@ void OpenDummyList(const char *, const struct ibitmap_s *, char *, iv_listhandle
 void OpenFastTranslation(pointer_to_word_hand_t, struct iv_wlist_s *, int, const char *);
 struct ifont_s *OpenFont(const char *, int, int);
 void OpenFontSelector(const char *, const char *, int, iv_fontselecthandler);
+void OpenFontSelectorEx(const struct ifont_menu_s *);
+struct ifont_menu_s GetFontMenuStruct();
+void SetFontMenuStruct(struct ifont_menu_s *);
+void ClearFontMenuStruct(struct ifont_menu_s *);
+void ClearFontListStruct(struct ifont_list_s *);
 void OpenKeyboard(const char *, char *, int, int, iv_keyboardhandler);
+void OpenKeyboardEx(const char *, char *, int, int, void (*)(char *, void *), void *);
 void OpenLastBooks();
 void OpenList(const char *, const struct ibitmap_s *, int, int, int, int, iv_listhandler);
 void OpenMainMenu();
@@ -1454,6 +1616,8 @@ int PostponeTimedPoweroff(void);
 void PowerOff();
 void PreviousTrack();
 void ProcessEventLoop();
+void PrepareForLoop(iv_handler);
+void ClearOnExit();
 long unsigned int QueryDeviceButtons();
 int QueryHeadphone();
 int QueryNetwork();
@@ -1480,7 +1644,7 @@ void ResetHighVolumeTimeout();
 int RestoreStartupLogo();
 void ResumeTransfer(int);
 int SafeMode();
-int SaveBitmap(const char *, struct ibitmap_s *);
+int SaveBitmap(const char *, const struct ibitmap_s *);
 int SaveConfig(struct iconfig_s *);
 void SaveHighVolumeTimeout();
 int SaveJPEG(const char *, struct ibitmap_s *, int);
@@ -1492,7 +1656,9 @@ int SendEventTo(int, int, int, int);
 int SendGlobalRequest(int);
 int SendMessageTo(int, int, void *, int);
 int SendRequest(int, void *, int, int, int);
+int SendRequestNoWait(int, void *, int, int);
 int SendRequestTo(int, int, void *, int, int, int);
+int SendRequestToNoWait(int, int, void *, int, int);
 int SetActiveTask(int, int);
 void SetApplicationCaptionHeight(int);
 void SetAutoPowerOff(int);
@@ -1504,11 +1670,24 @@ void SetConfigEditorBackground(struct ibitmap_s *);
 void SetContextMenu(const struct icontext_menu_s *);
 void SetCurrentApplicationAttribute(APPLICATION_ATTRIBUTE, int);
 void SetCurrentProfile(const char *, int);
+int GetProfilesCountAfterEnum();
+int ScanProfiles(const char *, int, struct iprofiles_s *);
+int GetLocalProfilesLimit();
+int GetSDProfilesLimit();
+int GetProfilesLimit();
+void ClearProfilesStruct(struct iprofiles_s *);
+void ClearProfileStruct(struct iprofile_s *);
+int GetProfilesList(struct iprofiles_s *);
+int DeleteProfileEx(const struct iprofile_s *);
+int RenameProfileEx(const struct iprofile_s *, const char *);
+int GetCurrentProfileEx(struct iprofile_s *);
+int SetCurrentProfileEx(const struct iprofile_s *);
+int GetProfilesCount();
 void SetEqualizer(int *);
 iv_handler SetEventHandler(iv_handler);
 iv_handler SetEventHandlerEx(iv_handler);
 void SetFileHandler(const char *, const char *);
-void SetFont(struct ifont_s *, int);
+void SetFont(const struct ifont_s *, int);
 void SetHardTimer(const char *, iv_timerproc, int);
 void SetHardTimerEx(const char *, iv_timerprocEx, void *, int);
 void SetKeyboardRate(int, int);
@@ -1520,6 +1699,9 @@ void SetMessageHandler(iv_msghandler);
 void SetMinimalXScrollIndent(struct irect_s *, int);
 void SetMinimalYScrollIndent(struct irect_s *, int);
 int SetPanelSeparatorEnabled(int);
+int IsPanelSeparatorEnabled();
+void InitPanel();
+void SetPanelKeyForFullScreenEnabled(const char *);
 void SetPanelType(int);
 void SetPlayerMode(int);
 void SetPlayerState(int);
@@ -1533,7 +1715,7 @@ int SetRequestListener(int, int, iv_requestlistener);
 void SetRTLBook(int);
 int SetSessionFlag(int, int, void *);
 void SetShowPanelReader(int);
-int SetSubtaskInfo(int, int, char *, char *);
+int SetSubtaskInfo(int, int, const char *, const char *);
 int SetTaskParameters(int, const char *, const char *, struct ibitmap_s *, unsigned int);
 void SetTextStrength(int);
 void SetTrackPosition(int);
@@ -1545,6 +1727,7 @@ void SetWeakTimerEx(const char *, iv_timerprocEx, void *, int);
 void ShowHourglass();
 void ShowHourglassAt(int, int);
 void ShowHourglassForce();
+void ShowHourglassForceAt(int, int);
 void ShowPureHourglass();
 void ShowPureHourglassForce();
 void SoftUpdate();
@@ -1583,7 +1766,7 @@ int utf_tolower_ext(char *, int, char **, int *);
 int utf_toupper_ext(char *, int, char **, int *);
 void vhash_add(struct ihash_s *, const char *, const void *);
 void vhash_delete(struct ihash_s *, const char *);
-void *vhash_find(struct ihash_s *, const char *);
+const void *vhash_find(struct ihash_s *, const char *);
 struct ihash_s *vhash_new(int, void *(*)(void *), iv_hashdelproc);
 void WaitForUpdateComplete();
 int WiFiPower(int);
