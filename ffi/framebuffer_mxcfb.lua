@@ -701,11 +701,11 @@ function framebuffer:init()
         self.mech_refresh = refresh_pocketbook
         self.mech_wait_update_complete = pocketbook_mxc_wait_for_update_complete
 
-        self.waveform_fast = C.WAVEFORM_MODE_A2
+        self.waveform_fast = C.WAVEFORM_MODE_DU
         self.waveform_ui = C.WAVEFORM_MODE_GC16
         self.waveform_flashui = self.waveform_ui
         self.waveform_full = C.WAVEFORM_MODE_GC16
-        self.waveform_partial = C.WAVEFORM_MODE_GC16
+        self.waveform_partial = C.WAVEFORM_MODE_AUTO
         self.waveform_night = C.WAVEFORM_MODE_GC16
         self.waveform_flashnight = self.waveform_night
         self.night_is_reagl = false
