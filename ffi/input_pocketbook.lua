@@ -6,22 +6,12 @@ local util = require("ffi/util")
 require("ffi/linux_input_h")
 require("ffi/inkview_h")
 
-ffi.cdef [[
-// Undocumented
-void PrepareForLoop(iv_handler handler);
-void ClearOnExit();
-]]
-
--- InkView may export GetTouchInfo or GetTouchInfoI depending on version.
--- We'd prefer to use GetTouchInfoI, as that fixes the fragile handling of iv_mtinfo layout.
-local GetTouchInfo
-local ok, GetTouchInfoI = pcall(function() return inkview.GetTouchInfoI end)
-if not ok then
-    GetTouchInfoI = nil
-    ok, GetTouchInfo = pcall(function() return inkview.GetTouchInfo end)
-    if not ok then
-        GetTouchInfo = nil
-    end
+local compat, compat2 = inkview, inkview
+if not pcall(function() _ = inkview.PrepareForLoop end) then
+    compat = ffi.load("inkview-compat")
+    compat2 = compat
+elseif not pcall(function() _ = inkview.GetTouchInfoI end) then
+    compat2 = ffi.load("inkview-compat")
 end
 
 local input = {}
@@ -52,20 +42,11 @@ local function translateEvent(t, par1, par2)
         genEmuEvent(C.EV_ABS, C.ABS_MT_POSITION_Y, par2)
     elseif t == C.EVT_MTSYNC then
         if nTouch > 0 and par2 == 2 then
-            local mti
-            if GetTouchInfoI then
-                -- Emulate as if it were C array of structs
-                mti = { [0] = GetTouchInfoI(0), [1] = GetTouchInfoI(1) }
-            elseif GetTouchInfo then
-                mti = GetTouchInfo()
-            else
-                return
-            end
             nTouch = 2
             for i = 0, 1 do
                 genEmuEvent(C.EV_ABS, C.ABS_MT_SLOT, i);
                 genEmuEvent(C.EV_ABS, C.ABS_MT_TRACKING_ID, i);
-                local mt = mti[i]
+                local mt = compat2.GetTouchInfoI(i)
                 genEmuEvent(C.EV_ABS, C.ABS_MT_POSITION_X, mt.x)
                 genEmuEvent(C.EV_ABS, C.ABS_MT_POSITION_Y, mt.y)
                 genEmuEvent(C.EV_SYN, C.SYN_REPORT, 0)
@@ -98,7 +79,7 @@ end
 function input.open()
     eventq = {}
     -- Initialize inkview and connect event queue to monitor.
-    inkview.PrepareForLoop(translateEvent)
+    compat.PrepareForLoop(translateEvent)
 end
 
 local function now()
@@ -117,7 +98,7 @@ function input.waitForEvent(t)
         -- Our callback then queues whatever events it collects, translating to linux evinput while doing so.
         -- The call holds for 20ms and returns control once no further input is seen during that time. If iv_sleepmode is 1 however, and
         -- no input is seen for >2 seconds (it keeps track across invocations), the call will perform full OS suspend ("autostandby").
-        inkview.ProcessEventLoop()
+        compat.ProcessEventLoop()
         if #eventq > 0 then return table.remove(eventq, 1) end
     end
     error("Waiting for input failed: timeout\n")
@@ -127,7 +108,7 @@ function input.fakeTapInput() end
 
 function input.closeAll()
     eventq = nil
-    inkview.ClearOnExit()
+    compat.ClearOnExit()
 end
 
 return input

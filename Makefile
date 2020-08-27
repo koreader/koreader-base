@@ -97,11 +97,15 @@ libs: \
 	$(if $(or $(SDL),$(ANDROID)),,$(OUTPUT_DIR)/libs/libkoreader-input.so) \
 	$(if $(or $(SDL),$(ANDROID),$(CERVANTES),$(KINDLE),$(KOBO),$(POCKETBOOK),$(REMARKABLE),$(SONY_PRSTUX)),$(OUTPUT_DIR)/libs/libblitbuffer.so,) \
 	$(if $(APPIMAGE),$(OUTPUT_DIR)/libs/libXss.so.1,) \
+	$(if $(POCKETBOOK),$(OUTPUT_DIR)/libs/libinkview-compat.so,) \
 	$(OUTPUT_DIR)/libs/libkoreader-lfs.so \
 	$(OUTPUT_DIR)/libs/libkoreader-djvu.so \
 	$(OUTPUT_DIR)/libs/libkoreader-cre.so \
 	$(OUTPUT_DIR)/libs/libkoreader-xtext.so \
 	$(OUTPUT_DIR)/libs/libwrap-mupdf.so
+
+$(OUTPUT_DIR)/libs/libinkview-compat.so: input/inkview-compat.c
+	$(CC) $(DYNLIB_CFLAGS) -linkview -o $@ $<
 
 $(OUTPUT_DIR)/libs/libkoreader-input.so: input/*.c input/*.h $(if $(KINDLE),$(POPEN_NOSHELL_LIB),)
 	@echo "Building koreader input module..."
