@@ -92,6 +92,7 @@ const char *sqlite3_errmsg(sqlite3*);
 int sqlite3_open_v2(const char *filename, sqlite3 **ppDb, int flags,
   const char *zVfs);
 int sqlite3_close(sqlite3*);
+int sqlite3_close_v2(sqlite3*);
 int sqlite3_busy_timeout(sqlite3*, int ms);
 
 // Statement.
@@ -318,7 +319,7 @@ function conn_mt:close() T_open(self)
   for _,v in pairs(conncb[self].scalar) do v:free() end
   for _,v in pairs(conncb[self].step)   do v:free() end
   for _,v in pairs(conncb[self].final)  do v:free() end
-  local code = sql.sqlite3_close(self._ptr)
+  local code = sql.sqlite3_close_v2(self._ptr)
   T_okcode(self._ptr, code)
   connstmt[self] = nil -- Table connstmt is not weak, need to clear manually.
   conncb[self] = nil
