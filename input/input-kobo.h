@@ -19,12 +19,18 @@
 #ifndef _KO_INPUT_KOBO_H
 #define _KO_INPUT_KOBO_H
 
-#define KOBO_USB_DEVPATH_PLUG "/devices/platform/usb_plug"
-#define KOBO_USB_DEVPATH_HOST "/devices/platform/usb_host"
+#define USBPLUG_DEVPATH "/devices/platform/usb_plug"
+#define USBHOST_DEVPATH "/devices/platform/usb_host"
+
 #include "libue.h"
 
+static void sendEvent(int fd, struct input_event* ev) {
+    if (write(fd, ev, sizeof(struct input_event)) == -1) {
+        fprintf(stderr, "[ko-input]: Failed to generate fake event.\n");
+    }
+}
+
 static void generateFakeEvent(int pipefd[2]) {
-    int re;
     struct uevent_listener listener;
     struct uevent uev;
     struct input_event ev;
@@ -34,29 +40,35 @@ static void generateFakeEvent(int pipefd[2]) {
     ev.type = EV_KEY;
     ev.value = 1;
 
-    re = ue_init_listener(&listener);
+    int re = ue_init_listener(&listener);
     if (re < 0) {
-        fprintf(stderr, "[kobo-fake-event] Failed to initilize libue listener, err: %d\n", re);
+        fprintf(stderr, "[ko-input]: Failed to initialize libue listener, err: %d\n", re);
         return;
     }
 
     while ((re = ue_wait_for_event(&listener, &uev)) == 0) {
-        if (uev.action == UEVENT_ACTION_ADD
-                && uev.devpath
-                && (UE_STR_EQ(uev.devpath, KOBO_USB_DEVPATH_PLUG)
-                    || UE_STR_EQ(uev.devpath, KOBO_USB_DEVPATH_HOST))) {
-            ev.code = CODE_FAKE_CHARGING;
-        } else if (uev.action == UEVENT_ACTION_REMOVE
-                && uev.devpath
-                && (UE_STR_EQ(uev.devpath, KOBO_USB_DEVPATH_PLUG)
-                    || UE_STR_EQ(uev.devpath, KOBO_USB_DEVPATH_HOST))) {
-            ev.code = CODE_FAKE_NOT_CHARGING;
-        } else {
-            continue;
-        }
-        if (write(pipefd[1], &ev, sizeof(struct input_event)) == -1) {
-            fprintf(stderr, "[ko-fake-event] Failed to generate fake event.\n");
-            return;
+        if (uev.devpath && UE_STR_EQ(uev.devpath, USBPLUG_DEVPATH)) {
+            switch(uev.action) {
+                case UEVENT_ACTION_ADD:
+                    ev.code = CODE_FAKE_CHARGING;
+                    sendEvent(pipefd[1], &ev);
+                break;
+                case UEVENT_ACTION_REMOVE:
+                    ev.code = CODE_FAKE_NOT_CHARGING;
+                    sendEvent(pipefd[1], &ev);
+                break;
+            }
+        } else if (uev.devpath && UE_STR_EQ(uev.devpath, USBHOST_DEVPATH)) {
+            switch(uev.action) {
+                case UEVENT_ACTION_ADD:
+                    ev.code = CODE_FAKE_USB_PLUG_IN;
+                    sendEvent(pipefd[1], &ev);
+                break;
+                case UEVENT_ACTION_REMOVE:
+                    ev.code = CODE_FAKE_USB_PLUG_OUT;
+                    sendEvent(pipefd[1], &ev);
+                break;
+            }
         }
     }
 }
