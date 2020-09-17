@@ -134,10 +134,15 @@ local function kobo_mk7_mxc_wait_for_update_complete(fb, marker)
     return C.ioctl(fb.fd, C.MXCFB_WAIT_FOR_UPDATE_COMPLETE_V3, mk7_update_marker)
 end
 
--- Kindle's MXCFB_WAIT_FOR_UPDATE_COMPLETE == 0x4004462f
+-- Pocketbook's MXCFB_WAIT_FOR_UPDATE_COMPLETE == 0x4004462f
 local function pocketbook_mxc_wait_for_update_complete(fb, marker)
     -- Wait for a specific update to be completed
-    return C.ioctl(fb.fd, C.MXCFB_WAIT_FOR_UPDATE_COMPLETE, ffi.new("uint32_t[1]", marker))
+    local update_marker = ffi.new("struct mxcfb_update_marker_data[1]")
+    -- While some kernels expect only the marker, other kernels write to the V2 struct under V1 ioctl.
+    -- Always pass the struct to be on the safe side as the marker int aligns the same in any case.
+    update_marker[0].update_marker = marker
+    update_marker[0].collision_test = 0
+    return C.ioctl(fb.fd, C.MXCFB_WAIT_FOR_UPDATE_COMPLETE, update_marker)
 end
 
 -- Remarkable MXCFB_WAIT_FOR_UPDATE_COMPLETE
