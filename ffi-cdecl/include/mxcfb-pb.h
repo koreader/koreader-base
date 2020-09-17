@@ -27,7 +27,7 @@
 #ifndef __ASM_ARCH_MXCFB_H__
 #define __ASM_ARCH_MXCFB_H__
 
-#include <linux/fb.h>
+//#include <linux/fb.h>
 
 // NOTE: PB631
 #if defined(CONFIG_ANDROID) || defined(ANDROID) //[
@@ -99,6 +99,34 @@ struct mxcfb_rect {
 // PARTIALHQ || PARTIAL + GC16HQ => FULL + AA
 #define UPDATE_MODE_FULLHQ			0x3
 // FULLHQ || FULL + GC16HQ => FULL + AAD
+
+// NOTE: Buried in drivers/video/mxc/mxc_epdc_fb.c
+//       PB only defines DU, A2, A2IN & A2OUT
+#define EPDC_WFTYPE_INIT			0
+#define EPDC_WFTYPE_DU				1
+#define EPDC_WFTYPE_GC16			2
+#define EPDC_WFTYPE_GC4				3
+#define EPDC_WFTYPE_A2				4
+#define EPDC_WFTYPE_GL16			5
+#define EPDC_WFTYPE_A2IN			6
+#define EPDC_WFTYPE_A2OUT			7
+#define EPDC_WFTYPE_DU4				8
+#define EPDC_WFTYPE_AA				9
+#define EPDC_WFTYPE_AAD				10
+#define EPDC_WFTYPE_GC16HQ			15
+// NOTE: Alias that to our usual constant names...
+#define WAVEFORM_MODE_INIT			EPDC_WFTYPE_INIT
+#define WAVEFORM_MODE_DU			EPDC_WFTYPE_DU
+#define WAVEFORM_MODE_GC16			EPDC_WFTYPE_GC16
+#define WAVEFORM_MODE_GC4			EPDC_WFTYPE_GC4
+#define WAVEFORM_MODE_A2			EPDC_WFTYPE_A2
+#define WAVEFORM_MODE_GL16			EPDC_WFTYPE_GL16
+#define WAVEFORM_MODE_A2IN			EPDC_WFTYPE_A2IN
+#define WAVEFORM_MODE_A2OUT			EPDC_WFTYPE_A2OUT
+#define WAVEFORM_MODE_DU4			EPDC_WFTYPE_DU4
+#define WAVEFORM_MODE_REAGL			EPDC_WFTYPE_AA
+#define WAVEFORM_MODE_REAGLD			EPDC_WFTYPE_AAD
+#define WAVEFORM_MODE_GC16HQ			EPDC_WFTYPE_GC16HQ
 
 #define WAVEFORM_MODE_AUTO			257
 
@@ -206,10 +234,10 @@ struct mxcfb_csc_matrix {
 
 // NOTE: PB631
 #ifdef MX50_IOCTL_IF//[
-#define MXCFB_WAIT_FOR_UPDATE_COMPLETE	_IOW('F', 0x2F, __u32)
-#define MXCFB_WAIT_FOR_UPDATE_COMPLETE2 _IOWR('F', 0x35, struct mxcfb_update_marker_data)
+#define MXCFB_WAIT_FOR_UPDATE_COMPLETE_PB631	_IOW('F', 0x2F, __u32)
+#define MXCFB_WAIT_FOR_UPDATE_COMPLETE_PB631_V2 _IOWR('F', 0x35, struct mxcfb_update_marker_data)
 #else //][!MX50_IOCTL_IF
-#define MXCFB_WAIT_FOR_UPDATE_COMPLETE _IOWR('F', 0x35, struct mxcfb_update_marker_data)
+#define MXCFB_WAIT_FOR_UPDATE_COMPLETE_ANDROID _IOWR('F', 0x35, struct mxcfb_update_marker_data)
 #endif//] MX50_IOCTL_IF
 
 #define MXCFB_SET_PWRDOWN_DELAY		_IOW('F', 0x30, int32_t)
