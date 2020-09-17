@@ -485,9 +485,10 @@ local function refresh_pocketbook(fb, refreshtype, waveform_mode, x, y, w, h)
     -- Enable the appropriate flag when requesting a REAGLD waveform (EPDC_WFTYPE_AAD on PB631)
     if waveform_mode == C.EPDC_WFTYPE_AAD then
         refarea[0].flags = C.EPDC_FLAG_USE_AAD
-    elseif waveform_mode == C.WAVEFORM_MODE_A2 then
-        --- @fixme: fast is currently set to DU, not A2!
+    elseif waveform_mode == C.WAVEFORM_MODE_DU then
         -- As well as when requesting a 2bit waveform
+        --- @note: Much like on rM, it appears faking 24°C instead of relying on ambient temp leads to lower latency
+        refarea[0].temp = 24
         refarea[0].flags = C.EPDC_FLAG_FORCE_MONOCHROME
     else
         refarea[0].flags = 0
@@ -732,10 +733,10 @@ function framebuffer:init()
         self.mech_wait_update_complete_fallback = pocketbook_mxc_wait_for_update_complete
 
         self.waveform_fast = C.WAVEFORM_MODE_DU
-        self.waveform_ui = C.WAVEFORM_MODE_GC16
-        self.waveform_flashui = self.waveform_ui
+        self.waveform_ui = C.WAVEFORM_MODE_GL16
+        self.waveform_flashui = C.WAVEFORM_MODE_GC16
         self.waveform_full = C.WAVEFORM_MODE_GC16
-        self.waveform_partial = C.WAVEFORM_MODE_GC16
+        self.waveform_partial = C.WAVEFORM_MODE_GL16
         self.waveform_night = C.WAVEFORM_MODE_GC16
         self.waveform_flashnight = self.waveform_night
         self.night_is_reagl = false
