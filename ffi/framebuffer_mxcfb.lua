@@ -715,7 +715,11 @@ function framebuffer:init()
         require("ffi/mxcfb_pocketbook_h")
 
         self.mech_refresh = refresh_pocketbook
-        self.mech_wait_update_complete = pocketbook_mxc_wait_for_update_complete
+
+        -- NOTE: Situation is a little murky, so, we'll attempt to probe the right ioctl in the frontend...
+        --       c.f., https://github.com/koreader/koreader/issues/6000
+        self.mech_wait_update_complete = pocketbook_pb631_mxc_wait_for_update_complete
+        self.mech_wait_update_complete_fallback = pocketbook_mxc_wait_for_update_complete
 
         self.waveform_fast = C.WAVEFORM_MODE_DU
         self.waveform_ui = C.WAVEFORM_MODE_GC16
