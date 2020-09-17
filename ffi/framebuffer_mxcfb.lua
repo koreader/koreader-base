@@ -134,10 +134,26 @@ local function kobo_mk7_mxc_wait_for_update_complete(fb, marker)
     return C.ioctl(fb.fd, C.MXCFB_WAIT_FOR_UPDATE_COMPLETE_V3, mk7_update_marker)
 end
 
--- Kindle's MXCFB_WAIT_FOR_UPDATE_COMPLETE == 0x4004462f
+-- Pocketbook's MXCFB_WAIT_FOR_UPDATE_COMPLETE
 local function pocketbook_mxc_wait_for_update_complete(fb, marker)
     -- Wait for a specific update to be completed
-    return C.ioctl(fb.fd, C.MXCFB_WAIT_FOR_UPDATE_COMPLETE, ffi.new("uint32_t[1]", marker))
+    local update_marker = ffi.new("struct mxcfb_update_marker_data[1]")
+    update_marker[0].update_marker = marker
+    -- NOTE: 0 seems to be a fairly safe assumption for "we don't care about collisions".
+    --       On a slightly related note, the EPDC_FLAG_TEST_COLLISION flag is for dry-run collision tests, never set it.
+    update_marker[0].collision_test = 0
+    return C.ioctl(fb.fd, C.MXCFB_WAIT_FOR_UPDATE_COMPLETE, update_marker)
+end
+
+-- Pocketbook's MXCFB_WAIT_FOR_UPDATE_COMPLETE_PB631_V2
+local function pocketbook_pb631_mxc_wait_for_update_complete(fb, marker)
+    -- Wait for a specific update to be completed
+    local update_marker = ffi.new("struct mxcfb_update_marker_data[1]")
+    update_marker[0].update_marker = marker
+    -- NOTE: 0 seems to be a fairly safe assumption for "we don't care about collisions".
+    --       On a slightly related note, the EPDC_FLAG_TEST_COLLISION flag is for dry-run collision tests, never set it.
+    update_marker[0].collision_test = 0
+    return C.ioctl(fb.fd, C.MXCFB_WAIT_FOR_UPDATE_COMPLETE_PB631_V2, update_marker)
 end
 
 -- Remarkable MXCFB_WAIT_FOR_UPDATE_COMPLETE
@@ -464,8 +480,8 @@ end
 
 local function refresh_pocketbook(fb, refreshtype, waveform_mode, x, y, w, h)
     local refarea = ffi.new("struct mxcfb_update_data[1]")
-    -- TEMP_USE_AMBIENT
-    refarea[0].temp = 0x1000
+    -- TEMP_USE_AMBIENT, not that there was ever any other choice on Kobo...
+    refarea[0].temp = C.TEMP_USE_AMBIENT
 
     return mxc_update(fb, C.MXCFB_SEND_UPDATE, refarea, refreshtype, waveform_mode, x, y, w, h)
 end
