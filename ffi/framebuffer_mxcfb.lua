@@ -482,6 +482,16 @@ local function refresh_pocketbook(fb, refreshtype, waveform_mode, x, y, w, h)
     local refarea = ffi.new("struct mxcfb_update_data[1]")
     -- TEMP_USE_AMBIENT, not that there was ever any other choice...
     refarea[0].temp = C.TEMP_USE_AMBIENT
+    -- Enable the appropriate flag when requesting a REAGLD waveform (EPDC_WFTYPE_AAD on PB631)
+    if waveform_mode == C.EPDC_WFTYPE_AAD then
+        refarea[0].flags = C.EPDC_FLAG_USE_AAD
+    elseif waveform_mode == C.WAVEFORM_MODE_A2 then
+        --- @fixme: fast is currently set to DU, not A2!
+        -- As well as when requesting a 2bit waveform
+        refarea[0].flags = C.EPDC_FLAG_FORCE_MONOCHROME
+    else
+        refarea[0].flags = 0
+    end
 
     return mxc_update(fb, C.MXCFB_SEND_UPDATE, refarea, refreshtype, waveform_mode, x, y, w, h)
 end
