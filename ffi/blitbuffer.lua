@@ -578,8 +578,10 @@ local MASK_INVERSE = 0x02
 local SHIFT_INVERSE = 1
 local MASK_ROTATED = 0x0C
 local SHIFT_ROTATED = 2
-local MASK_TYPE = 0xF0
+local MASK_TYPE = 0x70
 local SHIFT_TYPE = 4
+local MASK_CFA = 0x80
+local SHIFT_CFA = 7
 
 local TYPE_BB4 = 0
 local TYPE_BB8 = 1
@@ -650,6 +652,14 @@ end
 
 function BB_mt.__index:canUseCbb()
     return use_cblitbuffer and self:getInverse() == 0
+end
+
+function BB_mt.__index:isCFA()
+    return band(MASK_CFA, self.config) ~= 0
+end
+
+function BB_mt.__index:setCFA()
+    self.config = bor(self.config, MASK_CFA)
 end
 
 -- Bits per pixel
@@ -972,6 +982,56 @@ function BB_mt.__index:blitDefault(dest, dest_x, dest_y, offs_x, offs_y, width, 
     -- slow default variant:
     local hook, mask, count = debug.gethook()
     debug.sethook()
+
+    -- RGB(A) -> BB8 CFA
+    -- TODO: maybe a real mt method picked up somehow?
+    if self:getBpp() >= 24 and dest:isCFA() then
+        assert(dest:getType() == TYPE_BB8, "CFA only with BB8 for the time being")
+        local o_y = offs_y
+        for y = dest_y, dest_y+height-1 do
+            -- Skew is the "initial" component drawn for each scanline at y, starting from dest_x. From then on we continue
+            -- painting RGBRGB. Ie for resulting skew 1, we'd paint 8 pixels as: GBRGBRGB
+            -- If the physical Y axis reversed, the order turn into BGRBGR along X, so you need to flip the forward bool.
+            -- If the physical X is inverted, then only flipping the sign should suffice.
+            -- This may need adjusting if display CFA is not rooted as R->G->B order going from (0,0) in both X and Y directions.
+            -- That means flipping +- for either x or y below, and/or add/sub small 1..2 constant if we're going on inverted axis so it doesn't start at R
+            local skew = ((4096 * 3) + dest_x - y) % 3
+            --local skew = ((4096 * 3) - dest_x - y) % 3
+            --local skew = ((4096 * 3) - dest_x + y + 2) % 3
+            --local skew = ((4096 * 3) - dest_x + y - 1) % 3
+            --local skew = ((4096 * 3) + dest_x - y + 1) % 3
+            --local skew = ... something along those lines
+            local forward = true -- skew same component "rightwards" with increasing scanlines (y) if true, otherwise "leftwards" if false
+            --local forward = false
+
+            local mask = lshift(0xff, skew * 8)
+
+            local o_x = offs_x
+            for x = dest_x, dest_x+width-1 do
+
+                -- pick one component off rgb[x%3]
+                local px, py = self:getPhysicalCoordinates(o_x, o_y)
+                local v = band(ffi.cast(uint32pt, self:getPixelP(px, py))[0], mask)
+                -- collapse it to 8 bit value
+                local pixel = bor(v, bor(rshift(v,16),rshift(v,8)))
+                setter(dest, x, y, Color8(pixel), set_param)
+                o_x = o_x + 1
+                -- note that doing mod 3 like this is far cheaper as we avoid exploding the trace into an unstable branch
+                if forward then
+                    -- skew forward, ie on x axis first we show r, then we show g, then b ...
+                    mask = lshift(mask, 8)
+                    mask = band(bor(mask, rshift(mask, 24)), 0xffffff)
+                else
+                    -- skew backward, ie on x axis first we show g, then we show g, then r ...
+                    mask = bor(lshift(band(mask, 0xff), 16), rshift(mask, 8))
+                end
+            end
+            o_y = o_y + 1
+        end
+        debug.sethook(hook, mask)
+        return
+    end
+
     local o_y = offs_y
     for y = dest_y, dest_y+height-1 do
         local o_x = offs_x
