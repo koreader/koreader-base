@@ -480,7 +480,7 @@ end
 
 local function refresh_pocketbook(fb, refreshtype, waveform_mode, x, y, w, h)
     local refarea = ffi.new("struct mxcfb_update_data[1]")
-    -- TEMP_USE_AMBIENT, not that there was ever any other choice on Kobo...
+    -- TEMP_USE_AMBIENT, not that there was ever any other choice...
     refarea[0].temp = C.TEMP_USE_AMBIENT
 
     return mxc_update(fb, C.MXCFB_SEND_UPDATE, refarea, refreshtype, waveform_mode, x, y, w, h)
