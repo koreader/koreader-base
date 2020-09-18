@@ -134,26 +134,20 @@ local function kobo_mk7_mxc_wait_for_update_complete(fb, marker)
     return C.ioctl(fb.fd, C.MXCFB_WAIT_FOR_UPDATE_COMPLETE_V3, mk7_update_marker)
 end
 
--- Pocketbook's MXCFB_WAIT_FOR_UPDATE_COMPLETE
+-- Pocketbook's MXCFB_WAIT_FOR_UPDATE_COMPLETE_PB... with a twist.
 local function pocketbook_mxc_wait_for_update_complete(fb, marker)
     -- Wait for a specific update to be completed
+    -- NOTE: While the ioctl *should* only expect to read an uint32_t, some kernels still write back as if it were a struct,
+    --       like on newer MXCFB_WAIT_FOR_UPDATE_COMPLETE ioctls...
+    --       So, account for that by always passing an address to a mxcfb_update_marker_data struct to make the write safe.
+    --       Given the layout of said struct (marker first), this thankfully works out just fine...
+    --       c.f., https://github.com/koreader/koreader/issues/6000 & https://github.com/koreader/koreader/pull/6669
     local update_marker = ffi.new("struct mxcfb_update_marker_data[1]")
     update_marker[0].update_marker = marker
     -- NOTE: 0 seems to be a fairly safe assumption for "we don't care about collisions".
     --       On a slightly related note, the EPDC_FLAG_TEST_COLLISION flag is for dry-run collision tests, never set it.
     update_marker[0].collision_test = 0
-    return C.ioctl(fb.fd, C.MXCFB_WAIT_FOR_UPDATE_COMPLETE, update_marker)
-end
-
--- Pocketbook's MXCFB_WAIT_FOR_UPDATE_COMPLETE_PB631_V2
-local function pocketbook_pb631_mxc_wait_for_update_complete(fb, marker)
-    -- Wait for a specific update to be completed
-    local update_marker = ffi.new("struct mxcfb_update_marker_data[1]")
-    update_marker[0].update_marker = marker
-    -- NOTE: 0 seems to be a fairly safe assumption for "we don't care about collisions".
-    --       On a slightly related note, the EPDC_FLAG_TEST_COLLISION flag is for dry-run collision tests, never set it.
-    update_marker[0].collision_test = 0
-    return C.ioctl(fb.fd, C.MXCFB_WAIT_FOR_UPDATE_COMPLETE_PB631_V2, update_marker)
+    return C.ioctl(fb.fd, C.MXCFB_WAIT_FOR_UPDATE_COMPLETE_PB, update_marker)
 end
 
 -- Remarkable MXCFB_WAIT_FOR_UPDATE_COMPLETE
@@ -727,10 +721,7 @@ function framebuffer:init()
 
         self.mech_refresh = refresh_pocketbook
 
-        -- NOTE: Situation is a little murky, so, we'll attempt to probe the right ioctl in the frontend...
-        --       c.f., https://github.com/koreader/koreader/issues/6000
-        self.mech_wait_update_complete = pocketbook_pb631_mxc_wait_for_update_complete
-        self.mech_wait_update_complete_fallback = pocketbook_mxc_wait_for_update_complete
+        self.mech_wait_update_complete = pocketbook_mxc_wait_for_update_complete
 
         self.waveform_fast = C.WAVEFORM_MODE_DU
         self.waveform_ui = C.WAVEFORM_MODE_GL16

@@ -67,7 +67,5 @@ struct mxcfb_update_marker_data {
   unsigned int collision_test;
 };
 static const int MXCFB_SEND_UPDATE = 1077954094;
-static const int MXCFB_WAIT_FOR_UPDATE_COMPLETE = 3221767727;
-static const int MXCFB_WAIT_FOR_UPDATE_COMPLETE_PB631 = 1074021935;
-static const int MXCFB_WAIT_FOR_UPDATE_COMPLETE_PB631_V2 = 3221767733;
+static const int MXCFB_WAIT_FOR_UPDATE_COMPLETE_PB = 1074021935;
 ]]

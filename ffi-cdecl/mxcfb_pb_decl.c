@@ -60,6 +60,4 @@ cdecl_struct(mxcfb_update_data)
 cdecl_struct(mxcfb_update_marker_data)
 
 cdecl_const(MXCFB_SEND_UPDATE)
-cdecl_const(MXCFB_WAIT_FOR_UPDATE_COMPLETE)		// PB (mxcfb_update_marker_data)
-cdecl_const(MXCFB_WAIT_FOR_UPDATE_COMPLETE_PB631)	// PB631 (u32)
-cdecl_const(MXCFB_WAIT_FOR_UPDATE_COMPLETE_PB631_V2)	// PB631 (mxcfb_update_marker_data)
+cdecl_const(MXCFB_WAIT_FOR_UPDATE_COMPLETE_PB)
