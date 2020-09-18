@@ -244,7 +244,7 @@ struct mxcfb_csc_matrix {
 //       command, *some* kernels will apparently try to write back as if it were MXCFB_WAIT_FOR_UPDATE_COMPLETE...
 //       The workaround is to actually setup a mxcfb_update_marker_data struct but use MXCFB_WAIT_FOR_UPDATE_COMPLETE_PB.
 //       >_<".
-//       c.f., https://github.com/koreader/koreader/pull/6669
+//       c.f., https://github.com/koreader/koreader-base/pull/1188 & https://github.com/koreader/koreader/pull/6669
 
 #define MXCFB_SET_PWRDOWN_DELAY		_IOW('F', 0x30, int32_t)
 #define MXCFB_GET_PWRDOWN_DELAY		_IOR('F', 0x31, int32_t)
