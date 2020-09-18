@@ -1,21 +1,4 @@
-local ffi = require("ffi")
-local C = ffi.C
-
-local dummy = require("ffi/koptcontext_h")
-local Blitbuffer = require("ffi/blitbuffer")
-local leptonica, k2pdfopt
-if ffi.os == "Windows" then
-    leptonica = ffi.load("libs/liblept-5.dll")
-    k2pdfopt = ffi.load("libs/libk2pdfopt-2.dll")
-elseif ffi.os == "OSX" then
-    leptonica = ffi.load("libs/liblept.5.dylib")
-    k2pdfopt = ffi.load("libs/libk2pdfopt.2.dylib")
-else
-    leptonica = ffi.load("libs/liblept.so.5")
-    k2pdfopt = ffi.load("libs/libk2pdfopt.so.2")
-end
-
---[[
+--[[--
 Leptonica cheatsheet:
 -- Data structures:
 PIX - basic data structure - stores image
@@ -40,7 +23,27 @@ selDestroy(sel) - free memory from SEL
 pixaDestroy(pixa) - free memory from PIXA
 boxaDestroy(boxa) - free memory from BOXA
 selaDestroy(sela) - free memory from SELA
+
+@module ffi.koptcontext
 ]]
+
+local ffi = require("ffi")
+local C = ffi.C
+
+local dummy = require("ffi/koptcontext_h")
+local Blitbuffer = require("ffi/blitbuffer")
+local leptonica, k2pdfopt
+if ffi.os == "Windows" then
+    leptonica = ffi.load("libs/liblept-5.dll")
+    k2pdfopt = ffi.load("libs/libk2pdfopt-2.dll")
+elseif ffi.os == "OSX" then
+    leptonica = ffi.load("libs/liblept.5.dylib")
+    k2pdfopt = ffi.load("libs/libk2pdfopt.2.dylib")
+else
+    leptonica = ffi.load("libs/liblept.so.5")
+    k2pdfopt = ffi.load("libs/libk2pdfopt.so.2")
+end
+
 
 
 local KOPTContext = {
