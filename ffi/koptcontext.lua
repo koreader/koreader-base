@@ -1,3 +1,53 @@
+--[[--
+Leptonica cheatsheet:
+-- Data structures:
+PIX - basic data structure - stores image
+PIXA - array of PIX
+BOX - stores rectangle (x, y, w, h)
+BOXA - array of BOX
+SEL - selector for morphological operations
+SELA - array of SEL
+SELA - array of SEL
+NUMA - array of numbers
+
+-- Functions:
+boxaGetCount(boxa) - get number of elements in boxa array
+boxaGetBox(boxa, index, flag) - flag can be C.L_COPY (creates new copy) or C.L_CLONE (returns ref-counted handle)
+pixThresholdToBinary(pix, threshold) - returns new black-white PIX, if the source pixel is < threshold,
+                                       resulting pixel is 1 (black), otherwise 0 (white)
+pixGetRegionsBinary(input_pix,
+                    output_halftonemask,
+                    output_textline_mask,
+                    output_textblock_mask,
+                    debug) - returns 0 on success and 1 on failure, output_* are PIX
+pixDestroy(pix) - free memory from PIX
+boxDestroy(box) - free memory from BOX
+selDestroy(sel) - free memory from SEL
+pixaDestroy(pixa) - free memory from PIXA
+boxaDestroy(boxa) - free memory from BOXA
+selaDestroy(sela) - free memory from SELA
+
+numaGetIValue(nai, counter_w, counter_l) - returns int value from NUMA
+numaGetFValue(nai, counter_w, counter_l) - returns float vlaue from NUMA
+
+pixGetWidth(pix)
+pixGetHeight(pix)
+pixSplitIntoBoxa
+boxAdjustSides
+boxaCombineOverlaps
+boxCreate
+boxaClipToBox
+boxOverlapRegion
+boxaAddBox
+pixDrawBoxaRandom
+pixWritePng
+pixConvertTo32
+pixMultiplyByColor
+pixWriteMemPng
+numaCreateFromFArray
+@module ffi.koptcontext
+]]
+
 local ffi = require("ffi")
 local C = ffi.C
 
@@ -16,32 +66,6 @@ else
     k2pdfopt = ffi.load("libs/libk2pdfopt.so.2")
 end
 
---[[
-Leptonica cheatsheet:
--- Data structures:
-PIX - basic data structure - stores image
-PIXA - array of PIX
-BOX - stores rectangle (x, y, w, h)
-BOXA - array of BOX
-SEL - selector for morphological operations
-SELA - array of SEL
--- Functions:
-boxaGetCount(boxa) - get number of elements in boxa array
-boxaGetBox(boxa, index, flag) - flag can be C.L_COPY (creates new copy) or C.L_CLONE (returns ref-counted handle)
-pixThresholdToBinary(pix, threshold) - returns new black-white PIX, if the source pixel is < threshold,
-                                       resulting pixel is 1 (black), otherwise 0 (white)
-pixGetRegionsBinary(input_pix,
-                    output_halftonemask,
-                    output_textline_mask,
-                    output_textblock_mask,
-                    debug) - returns 0 on success and 1 on failure, output_* are PIX
-pixDestroy(pix) - free memory from PIX
-boxDestroy(box) - free memory from BOX
-selDestroy(sel) - free memory from SEL
-pixaDestroy(pixa) - free memory from PIXA
-boxaDestroy(boxa) - free memory from BOXA
-selaDestroy(sela) - free memory from SELA
-]]
 
 
 local KOPTContext = {
