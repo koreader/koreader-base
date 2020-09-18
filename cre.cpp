@@ -614,7 +614,9 @@ static int getHyphDictList(lua_State *L) {
 
 static int getSelectedHyphDict(lua_State *L) {
 	lua_pushstring(L, UnicodeToLocal(HyphMan::getSelectedDictionary()->getId()).c_str());
-	return 1;
+	lua_pushnumber(L, TextLangMan::getMainLangHyphMethod()->getLeftHyphenMin());
+	lua_pushnumber(L, TextLangMan::getMainLangHyphMethod()->getRightHyphenMin());
+	return 3;
 }
 
 static int setHyphDictionary(lua_State *L) {
