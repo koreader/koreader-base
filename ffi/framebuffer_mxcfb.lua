@@ -720,7 +720,6 @@ function framebuffer:init()
         require("ffi/mxcfb_pocketbook_h")
 
         self.mech_refresh = refresh_pocketbook
-
         self.mech_wait_update_complete = pocketbook_mxc_wait_for_update_complete
 
         self.waveform_fast = C.WAVEFORM_MODE_DU
