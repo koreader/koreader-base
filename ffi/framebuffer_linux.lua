@@ -300,7 +300,7 @@ end
 
 -- Restore hardware rotation mode to what OS expects. This should be called after paints and refresh are finished.
 function framebuffer:restoreRotation()
-    if self._forced_rotation and self.device:needsRestoredRotation() then 
+    if self._forced_rotation and self.device:needsRestoredRotation() then
         local vinfo = self._vinfo
         vinfo.rotate = self.device.usingForcedRotation[self.native_rotation_mode+1] or self.native_rotation_mode
         self.debug("restoreRotation:", vinfo.rotate)

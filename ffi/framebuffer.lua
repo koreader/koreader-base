@@ -51,7 +51,7 @@ i.e., this matches <linux/fb.h> FB_ROTATE_* constants ;).
 This corresponds to the user-facing *physical device* rotation (in 90° CW steps).
 
 Of course this is not guaranteed, as drivers may interpret the value as CW or CCW, as well
-as starting from elsewhere than a portrait. For such an occasion the frontend can provide
+as starting from elsewhere than portrait. For such an occasion the frontend can provide
 custom mapping for driver's idea of rotation values.
 
 --]]
@@ -160,7 +160,6 @@ end
 
 function fb:restoreRotation()
 end
-
 
 -- you probably do not need to override any of the following functions:
 
