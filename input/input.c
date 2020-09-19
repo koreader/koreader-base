@@ -71,6 +71,8 @@ static int openInputDevice(lua_State *L) {
     int childpid;
     int fd = findFreeFdSlot();
     if (fd == -1) return luaL_error(L, "no free slot for new input device <%s>", inputdevice);
+    char *ko_dont_grab_input = getenv("KO_DONT_GRAB_INPUT");
+
 
 #ifdef POCKETBOOK
     int inkview_events = luaL_checkint(L, 2);
@@ -104,7 +106,10 @@ static int openInputDevice(lua_State *L) {
     } else {
         inputfds[fd] = open(inputdevice, O_RDONLY | O_NONBLOCK, 0);
         if (inputfds[fd] != -1) {
-            ioctl(inputfds[fd], EVIOCGRAB, 1);
+            if (ko_dont_grab_input == NULL) {
+              ioctl(inputfds[fd], EVIOCGRAB, 1);
+            }
+
             /* prevent background command started from exec call from grabbing
              * input fd. for example: wpa_supplicant. */
             fcntl(inputfds[fd], F_SETFD, FD_CLOEXEC);
