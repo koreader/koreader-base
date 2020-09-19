@@ -13,6 +13,10 @@ local framebuffer = {
     fb_bpp = nil,
     fb_rota = nil,
     data = nil,
+
+    _finfo = nil,
+    _vinfo = nil,
+    _forced_rotation = false,
 }
 
 -- A couple helper functions to compute/check aligned values...
@@ -90,12 +94,30 @@ so that line_length * yres_virtual == smem_len
 AFAICT, this has since been fixed.
 
 --]]
-function framebuffer:init()
-    local finfo = ffi.new("struct fb_fix_screeninfo")
-    local vinfo = ffi.new("struct fb_var_screeninfo")
 
+function framebuffer:init()
+    self._finfo = ffi.new("struct fb_fix_screeninfo")
+    self._vinfo = ffi.new("struct fb_var_screeninfo")
     self.fd = C.open(self.device_node, bit.bor(C.O_RDWR, C.O_CLOEXEC))
     assert(self.fd ~= -1, "cannot open framebuffer")
+    self:reinit()
+    framebuffer.parent.init(self)
+    -- if force rotation is on, native rot is bogus so determine it from inverse mapping
+    for k,v in ipairs(self.device.usingForcedRotation or {}) do
+        if v == self.fb_rota then
+            self.native_rotation_mode = k-1
+            self.cur_rotation_mode = k-1
+            break
+        end
+    end
+end
+
+function framebuffer:reinit()
+    local finfo = self._finfo
+    local vinfo = self._vinfo
+
+    -- Unmap early, before fb_size gets overriden
+    self:close(true)
 
     -- Get fixed screen information
     assert(C.ioctl(self.fd, C.FBIOGET_FSCREENINFO, finfo) == 0, "cannot get screen info")
@@ -219,6 +241,8 @@ function framebuffer:init()
                            0)
     assert(tonumber(ffi.cast("intptr_t", self.data)) ~= C.MAP_FAILED,
            "can not mmap() framebuffer")
+
+    -- New invariant: self.bb MUST NOT be cached by anyone if we reinit, as the old one will point to junk now.
     if vinfo.bits_per_pixel == 32 then
         self.bb = BB.new(vinfo.xres, vinfo.yres, BB.TYPE_BBRGB32, self.data, finfo.line_length, vinfo.xres_virtual, vinfo.yres_virtual)
     elseif vinfo.bits_per_pixel == 24 then
@@ -245,11 +269,47 @@ function framebuffer:init()
     end
 
     self.bb:fill(BB.COLOR_WHITE)
-
-    framebuffer.parent.init(self)
 end
 
-function framebuffer:close()
+-- If the device can stomach it (this feature is frontend opt-in) perform hardware rotations
+-- FIXME: What about viewports? Do we need to revert back to SW rotation mode?
+function framebuffer:setRotationMode(mode)
+    if not self.device.usingForcedRotation then
+        -- Go the standard route
+        return self.parent.setRotationMode(self, mode)
+    end
+    self.debug("setRotationMode:", mode, "old:",self.cur_rotation_mode)
+    if mode ~= self.cur_rotation_mode then
+        -- Do this dance only if rotation actually changes
+        self.cur_rotation_mode = mode
+        self:forceRotation()
+        self:reinit()
+        self:restoreRotation()
+    end
+end
+
+-- Force previously set rotation mode in hardware. This should be called on first sequence of paints.
+function framebuffer:forceRotation()
+    if self._forced_rotation or (not self.device.usingForcedRotation) then return end
+    self._forced_rotation = true
+    local vinfo = self._vinfo
+    vinfo.rotate = self.device.usingForcedRotation[self.cur_rotation_mode+1] or self.cur_rotation_mode-- if the table is empty, assume {0,1,2,3}
+    self.debug("forceRotation:",self.cur_rotation_mode, "=>" ,vinfo.rotate)
+    assert(C.ioctl(self.fd, C.FBIOPUT_VSCREENINFO, vinfo) == 0)
+end
+
+-- Restore hardware rotation mode to what OS expects. This should be called after paints and refresh are finished.
+function framebuffer:restoreRotation()
+    if self._forced_rotation and self.device:needsRestoredRotation() then 
+        local vinfo = self._vinfo
+        vinfo.rotate = self.device.usingForcedRotation[self.native_rotation_mode+1] or self.native_rotation_mode
+        self.debug("restoreRotation:", vinfo.rotate)
+        assert(C.ioctl(self.fd, C.FBIOPUT_VSCREENINFO, vinfo) == 0)
+    end
+    self._forced_rotation = false
+end
+
+function framebuffer:close(notfd)
     if self.bb ~= nil then
         self.bb:free()
         self.bb = nil
@@ -258,7 +318,7 @@ function framebuffer:close()
         C.munmap(self.data, self.fb_size)
         self.data = nil
     end
-    if self.fd ~= -1 then
+    if not notfd and (self.fd ~= -1) then
         C.close(self.fd)
         self.fd = -1
     end

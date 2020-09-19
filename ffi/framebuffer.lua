@@ -50,6 +50,10 @@ i.e., this matches <linux/fb.h> FB_ROTATE_* constants ;).
 
 This corresponds to the user-facing *physical device* rotation (in 90° CW steps).
 
+Of course this is not guaranteed, as drivers may interpret the value as CW or CCW, as well
+as starting from elsewhere than a portrait. For such an occasion the frontend can provide
+custom mapping for driver's idea of rotation values.
+
 --]]
 fb.ORIENTATION_PORTRAIT = 0
 fb.ORIENTATION_LANDSCAPE = 1
@@ -88,6 +92,7 @@ function fb:init()
         self.debug("FB: This prevents the use of blitting optimizations. This should instead be fixed on the device's side on startup.")
         self.bb:rotate(-90)
         self.blitbuffer_rotation_mode = self.bb:getRotation()
+        assert(not self.device.usingForcedRotation, "If forced HW rotation is used, isAlwaysPortrait should not be set.")
     end
     self.native_rotation_mode = self.ORIENTATION_PORTRAIT
     self.cur_rotation_mode = self.native_rotation_mode
@@ -148,6 +153,14 @@ end
 -- should be overridden to free resources
 function fb:close()
 end
+
+-- overriden by HW rotation methods
+function fb:forceRotation()
+end
+
+function fb:restoreRotation()
+end
+
 
 -- you probably do not need to override any of the following functions:
 
