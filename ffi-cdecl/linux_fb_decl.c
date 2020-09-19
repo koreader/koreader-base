@@ -7,6 +7,7 @@
 
 cdecl_const(FBIOGET_FSCREENINFO)
 cdecl_const(FBIOGET_VSCREENINFO)
+cdecl_const(FBIOPUT_VSCREENINFO)
 
 cdecl_const(FB_TYPE_PACKED_PIXELS)
 

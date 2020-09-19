@@ -30,6 +30,8 @@ local framebuffer = {
     marker = 0,
     -- used to avoid waiting twice on the same marker
     dont_wait_for_marker = nil,
+    -- Set by frontend to 3 on Pocketbook Color Lux that refreshes based on bytes (not based on pixel)
+    refresh_pixel_size = 1,
 }
 
 --[[ refresh list management: --]]
@@ -212,10 +214,7 @@ local function mxc_update(fb, update_ioctl, refarea, refresh_type, waveform_mode
         return
     end
 
-    -- Pocketbook Color Lux refreshes based on bytes (not based on pixel)
-    if fb.device:has3BytesWideFrameBuffer() then
-       w = w*3
-    end
+    w = w * fb.refresh_pixel_size
 
     -- NOTE: If we're trying to send a:
     --         * true FULL update,

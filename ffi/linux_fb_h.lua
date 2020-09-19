@@ -3,6 +3,7 @@ local ffi = require("ffi")
 ffi.cdef[[
 static const int FBIOGET_FSCREENINFO = 17922;
 static const int FBIOGET_VSCREENINFO = 17920;
+static const int FBIOPUT_VSCREENINFO = 17921;
 static const int FB_TYPE_PACKED_PIXELS = 0;
 struct fb_bitfield {
   unsigned int offset;
