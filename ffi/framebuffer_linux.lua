@@ -29,16 +29,15 @@ E-ink fb drivers are frequently broken, so we make only minimum assumptions
 about correctness of the information reported, namely the following are crucial:
 
 * vinfo.bits_per_pixel: Size of each pixel, for example, 16bits, 32bits, etc.
-* vinfo.yres: Number of rows of the physical screen, i.e. physical screen height
 * finfo.line_length: Size (in bytes) of each row for the framebuffer.
                      Should be >= `vinfo.xres_virtual * vinfo.bits_per_pixel / 8`.
+* vinfo.xres: Number of pixels in one row on physical screen, i.e. physical screen width
+* vinfo.yres: Number of rows of the physical screen, i.e. physical screen height
 
 The following don't concern us and we can survive if the values are bogus:
 
-* vinfo.xres: Number of pixels in one row on physical screen, i.e. physical screen width
-
 * finfo.smem_len: Size of the actual framebuffer memory provided by the kernel. We'll usually map
-                  less than this (stride * yres) to keep things on the safer side.
+                  less than this (just finfo.line_length * vinfo.yres) to keep things on the safer side.
 * vinfo.xres_virtual: Number of pixels in one row on scrollable virtual screen, for fb_pan_display.
                       Should be `vinfo.xres_virtual` >= `vinfo.xres`.
 * vinfo.yres_virtual: Number of pixels in one column on scrollable virtual screen, for fb_pan_display.
@@ -64,6 +63,12 @@ end
 
 -- Frontend driver should override this if they need to apply kludges on vinfo/finfo
 function framebuffer:fbinfoOverride(finfo, vinfo)
+end
+
+-- Align FB size up to 4KB boundary, as device driver may provide direct mmio handler and not standard physmem mmap that does align kernel side.
+-- We always track fb.fb_size unaligned, so as to have correct account of where the screen *really* ends.
+local function PAGE_ALIGN(size)
+    return bit.band(size + 4095, -4096)
 end
 
 function framebuffer:reinit()
@@ -117,14 +122,16 @@ function framebuffer:reinit()
     -- @warning Feel free to remove this check if it burns. There are chinese things out there that even happily report smem as 0x1000 and such.
     assert(self.fb_size <= finfo.smem_len or finfo.smem <= 0x1000, "computed fb memory region too large")
 
+    -- @warning The assumption here is that mapping less than whatever reported (but aligned up to a page size) is always ok to do.
     self.data = C.mmap(nil,
-                           bit.band(self.fb_size+4095,-4096),
+                           PAGE_ALIGN(self.fb_size),
                            bit.bor(C.PROT_READ, C.PROT_WRITE),
                            C.MAP_SHARED,
                            self.fd,
                            0)
     assert(tonumber(ffi.cast("intptr_t", self.data)) ~= C.MAP_FAILED,
-           "can not mmap() framebuffer")
+           "can not mmap() framebuffer, yres or line_length are probably wrong")
+    self.debug("FB mapped at", self.data, "of", PAGE_ALIGN(self.fb_size), "bytes")
 
     -- @warning Don't ever cache self.bb, as we may replace it at any time later due to HW rotation causing fb reinit.
     self.bb = BB.new(vinfo.xres, vinfo.yres, BB["TYPE_BB"..bpp] or BB["TYPE_BBRGB"..bpp], self.data, finfo.line_length, stride_pixels, vinfo.yres)
@@ -137,6 +144,7 @@ function framebuffer:reinit()
 
     if ffi.string(finfo.id, 7) == "eink_fb" then
         -- classic eink framebuffer driver has grayscale values inverted (i.e. 0xF = black, 0 = white)
+        -- technically a device quirk, but hopefuly generic enough to warrant being here
         self.bb:invert()
     end
 
@@ -212,7 +220,7 @@ function framebuffer:close(reinit)
         self.bb = nil
     end
     if self.data then
-        C.munmap(self.data, self.fb_size)
+        C.munmap(self.data, PAGE_ALIGN(self.fb_size))
         self.data = nil
     end
     if not reinit and (self.fd ~= -1) then
