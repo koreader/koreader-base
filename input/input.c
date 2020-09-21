@@ -107,7 +107,7 @@ static int openInputDevice(lua_State *L) {
         inputfds[fd] = open(inputdevice, O_RDONLY | O_NONBLOCK, 0);
         if (inputfds[fd] != -1) {
             if (ko_dont_grab_input == NULL) {
-              ioctl(inputfds[fd], EVIOCGRAB, 1);
+                ioctl(inputfds[fd], EVIOCGRAB, 1);
             }
 
             /* prevent background command started from exec call from grabbing
