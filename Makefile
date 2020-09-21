@@ -35,7 +35,7 @@ all: $(OUTPUT_DIR)/libs $(if $(ANDROID),,$(LUAJIT)) \
 		$(if $(or $(CERVANTES),$(KINDLE),$(KOBO)),$(OUTPUT_DIR)/dropbear,) \
 		$(if $(or $(CERVANTES),$(KINDLE),$(KOBO)),$(OUTPUT_DIR)/sftp-server,) \
 		$(if $(or $(DARWIN),$(WIN32)),,$(OUTPUT_DIR)/tar) \
-		$(if $(or $(CERVANTES),$(KINDLE),$(KOBO),$(REMARKABLE)),$(OUTPUT_DIR)/fbink,) \
+		$(if $(or $(CERVANTES),$(KINDLE),$(KOBO),$(POCKETBOOK),$(REMARKABLE)),$(OUTPUT_DIR)/fbink,) \
 		$(if $(KOBO),$(OUTPUT_DIR)/data/KoboUSBMS.tar.gz,) \
 		$(if $(REMARKABLE),$(OUTPUT_DIR)/button-listen,) \
 		$(SQLITE_LIB) \
@@ -49,9 +49,9 @@ ifeq ($(DO_STRIP),1)
 		$(if $(or $(CERVANTES),$(KINDLE),$(KOBO)),$(OUTPUT_DIR)/dropbear,) \
 		$(if $(or $(CERVANTES),$(KINDLE),$(KOBO)),$(OUTPUT_DIR)/sftp-server,) \
 		$(if $(or $(KINDLE),$(KOBO)),$(OUTPUT_DIR)/scp,) \
-		$(if $(or $(CERVANTES),$(KINDLE),$(KOBO),$(REMARKABLE)),$(OUTPUT_DIR)/fbink,) \
+		$(if $(or $(CERVANTES),$(KINDLE),$(KOBO),$(POCKETBOOK),$(REMARKABLE)),$(OUTPUT_DIR)/fbink,) \
 		$(if $(REMARKABLE),$(OUTPUT_DIR)/button-listen,) \
-		$(if $(or $(KOBO),$(REMARKABLE)),$(OUTPUT_DIR)/fbdepth,) \
+		$(if $(or $(KOBO),$(POCKETBOOK),$(REMARKABLE)),$(OUTPUT_DIR)/fbdepth,) \
 		$(if $(or $(CERVANTES),$(KINDLE),$(KOBO),$(POCKETBOOK),$(REMARKABLE),$(SONY_PRSTUX)),$(OUTPUT_DIR)/zsync2,) \
 		$(if $(ANDROID),,$(LUAJIT)) \
 		$(OUTPUT_DIR)/plugins/evernote.koplugin/lib/$(if $(WIN32),*.dll,*.so*) \
