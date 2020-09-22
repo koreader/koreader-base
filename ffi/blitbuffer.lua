@@ -651,11 +651,11 @@ end
 -- Determine if a pair of buffers can use CBB in relation to each other, or whether CBB is used at all.
 -- Used to skip unsupported modes such as unrelated inverses.
 -- TODO: Possibly some RGB24/32 stuff too?
-function BB_mt.__index:canCBB2(other)
+function BB_mt.__index:canUseCbbTogether(other)
     return use_cblitbuffer and self:getInverse() == other:getInverse()
 end
 
-function BB_mt.__index:canCBB()
+function BB_mt.__index:canUseCbb()
     return use_cblitbuffer and self:getInverse() == 0
 end
 
@@ -1082,7 +1082,7 @@ function BB_mt.__index:blitFrom(source, dest_x, dest_y, offs_x, offs_y, width, h
     if width <= 0 or height <= 0 then return end
 
     if not setter then setter = self.setPixel end
-    if self:canCBB2(source) and setter == self.setPixel then
+    if self:canUseCbbTogether(source) and setter == self.setPixel then
         cblitbuffer.BB_blit_to(ffi.cast("struct BlitBuffer *", source),
             ffi.cast("struct BlitBuffer *", self),
             dest_x, dest_y, offs_x, offs_y, width, height)
@@ -1094,7 +1094,7 @@ BB_mt.__index.blitFullFrom = BB_mt.__index.blitFrom
 
 -- blitting with a per-blit alpha value
 function BB_mt.__index:addblitFrom(source, dest_x, dest_y, offs_x, offs_y, width, height, intensity)
-    if self:canCBB2(source) then
+    if self:canUseCbbTogether(source) then
         width, height = width or source:getWidth(), height or source:getHeight()
         width, dest_x, offs_x = BB.checkBounds(width, dest_x or 0, offs_x or 0, self:getWidth(), source:getWidth())
         height, dest_y, offs_y = BB.checkBounds(height, dest_y or 0, offs_y or 0, self:getHeight(), source:getHeight())
@@ -1110,7 +1110,7 @@ end
 -- alpha-pane aware blitting
 -- straight alpha
 function BB_mt.__index:alphablitFrom(source, dest_x, dest_y, offs_x, offs_y, width, height)
-    if self:canCBB2(source) then
+    if self:canUseCbbTogether(source) then
         width, height = width or source:getWidth(), height or source:getHeight()
         width, dest_x, offs_x = BB.checkBounds(width, dest_x or 0, offs_x or 0, self:getWidth(), source:getWidth())
         height, dest_y, offs_y = BB.checkBounds(height, dest_y or 0, offs_y or 0, self:getHeight(), source:getHeight())
@@ -1124,7 +1124,7 @@ function BB_mt.__index:alphablitFrom(source, dest_x, dest_y, offs_x, offs_y, wid
 end
 -- premultiplied alpha
 function BB_mt.__index:pmulalphablitFrom(source, dest_x, dest_y, offs_x, offs_y, width, height)
-    if self:canCBB2(source) then
+    if self:canUseCbbTogether(source) then
         width, height = width or source:getWidth(), height or source:getHeight()
         width, dest_x, offs_x = BB.checkBounds(width, dest_x or 0, offs_x or 0, self:getWidth(), source:getWidth())
         height, dest_y, offs_y = BB.checkBounds(height, dest_y or 0, offs_y or 0, self:getHeight(), source:getHeight())
@@ -1138,7 +1138,7 @@ function BB_mt.__index:pmulalphablitFrom(source, dest_x, dest_y, offs_x, offs_y,
 end
 -- premultiplied alpha w/ dithering (dithering only if target is BB8)
 function BB_mt.__index:ditherpmulalphablitFrom(source, dest_x, dest_y, offs_x, offs_y, width, height)
-    if self:canCBB2(source) then
+    if self:canUseCbbTogether(source) then
         width, height = width or source:getWidth(), height or source:getHeight()
         width, dest_x, offs_x = BB.checkBounds(width, dest_x or 0, offs_x or 0, self:getWidth(), source:getWidth())
         height, dest_y, offs_y = BB.checkBounds(height, dest_y or 0, offs_y or 0, self:getHeight(), source:getHeight())
@@ -1153,7 +1153,7 @@ end
 
 -- simple blitting w/ dithering (dithering only if target is BB8)
 function BB_mt.__index:ditherblitFrom(source, dest_x, dest_y, offs_x, offs_y, width, height)
-    if self:canCBB2(source) then
+    if self:canUseCbbTogether(source) then
         width, height = width or source:getWidth(), height or source:getHeight()
         width, dest_x, offs_x = BB.checkBounds(width, dest_x or 0, offs_x or 0, self:getWidth(), source:getWidth())
         height, dest_y, offs_y = BB.checkBounds(height, dest_y or 0, offs_y or 0, self:getHeight(), source:getHeight())
@@ -1168,7 +1168,7 @@ end
 
 -- invert blitting
 function BB_mt.__index:invertblitFrom(source, dest_x, dest_y, offs_x, offs_y, width, height)
-    if self:canCBB2(source) then
+    if self:canUseCbbTogether(source) then
         width, height = width or source:getWidth(), height or source:getHeight()
         width, dest_x, offs_x = BB.checkBounds(width, dest_x or 0, offs_x or 0, self:getWidth(), source:getWidth())
         height, dest_y, offs_y = BB.checkBounds(height, dest_y or 0, offs_y or 0, self:getHeight(), source:getHeight())
@@ -1185,7 +1185,7 @@ end
 function BB_mt.__index:colorblitFrom(source, dest_x, dest_y, offs_x, offs_y, width, height, color)
     -- we need color with alpha later:
     color = color:getColor8A()
-    if self:canCBB2(source) then
+    if self:canUseCbbTogether(source) then
         width, height = width or source:getWidth(), height or source:getHeight()
         width, dest_x, offs_x = BB.checkBounds(width, dest_x or 0, offs_x or 0, self:getWidth(), source:getWidth())
         height, dest_y, offs_y = BB.checkBounds(height, dest_y or 0, offs_y or 0, self:getHeight(), source:getHeight())
@@ -1278,7 +1278,7 @@ function BB_mt.__index:invertRect(x, y, w, h)
     w, x = BB.checkBounds(w, x, 0, self:getWidth(), 0xFFFF)
     h, y = BB.checkBounds(h, y, 0, self:getHeight(), 0xFFFF)
     if w <= 0 or h <= 0 then return end
-    if self:canCBB() then
+    if self:canUseCbb() then
         cblitbuffer.BB_invert_rect(ffi.cast("struct BlitBuffer *", self),
             x, y, w, h)
     else
@@ -1378,7 +1378,7 @@ function BB_mt.__index:paintRect(x, y, w, h, value, setter)
     w, x = BB.checkBounds(w, x, 0, self:getWidth(), 0xFFFF)
     h, y = BB.checkBounds(h, y, 0, self:getHeight(), 0xFFFF)
     if w <= 0 or h <= 0 then return end
-    if self:canCBB() and setter == self.setPixel then
+    if self:canUseCbb() and setter == self.setPixel then
         cblitbuffer.BB_fill_rect(ffi.cast("struct BlitBuffer *", self),
             x, y, w, h, value:getColor8().a)
     else
@@ -1691,7 +1691,7 @@ dim color values in rectangular area
 --]]
 function BB_mt.__index:dimRect(x, y, w, h, by)
     local color = Color8A(0xFF, 0xFF*(by or 0.5))
-    if self:canCBB() then
+    if self:canUseCbb() then
         w, x = BB.checkBounds(w, x, 0, self:getWidth(), 0xFFFF)
         h, y = BB.checkBounds(h, y, 0, self:getHeight(), 0xFFFF)
         if w <= 0 or h <= 0 then return end
@@ -1713,7 +1713,7 @@ lighten color values in rectangular area
 --]]
 function BB_mt.__index:lightenRect(x, y, w, h, by)
     local color = Color8A(0, 0xFF*(by or 0.5))
-    if self:canCBB() then
+    if self:canUseCbb() then
         w, x = BB.checkBounds(w, x, 0, self:getWidth(), 0xFFFF)
         h, y = BB.checkBounds(h, y, 0, self:getHeight(), 0xFFFF)
         if w <= 0 or h <= 0 then return end
