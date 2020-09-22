@@ -1918,13 +1918,13 @@ if not os.getenv("KO_NO_CBB") then
 end
 
 -- Set the actual enable/disable CBB flag. Returns the flag of whether it is (actually) enabled.
-function BB:enableCBB(ison)
+function BB:enableCBB(enabled)
     local old = use_cblitbuffer
-    use_cblitbuffer = ison and self.has_cblitbuffer
+    use_cblitbuffer = enabled and self.has_cblitbuffer
     if old ~= use_cblitbuffer then
         -- NOTE: This works-around a number of corner-cases which may end up with LuaJIT's optimizer blacklisting this very codepath,
         --       which'd obviously *murder* performance (to the effect of a soft-lock, essentially).
-        --       c.f., #4137, #4752, #4782
+        --       c.f., koreader/koreader#4137, koreader/koreader#4752, koreader/koreader#4782
         local val = use_cblitbuffer and 15 or 45
         jit.opt.start("loopunroll="..tostring(val))
         jit.flush()
