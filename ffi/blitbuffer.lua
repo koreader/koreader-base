@@ -145,20 +145,9 @@ void *malloc(int size);
 void free(void *ptr);
 ]]
 
--- NOTE: Try the C blitter, unless it was disabled by the user
-local no_cbb_flag = os.getenv("KO_NO_CBB")
-local use_cblitbuffer, cblitbuffer
-if not no_cbb_flag or no_cbb_flag == "false" then
-    use_cblitbuffer, cblitbuffer = pcall(ffi.load, 'blitbuffer')
-end
--- NOTE: This works-around a number of corner-cases which may end up with LuaJIT's optimizer blacklisting this very codepath,
---       which'd obviously *murder* performance (to the effect of a soft-lock, essentially).
---       c.f., #4137, #4752, #4782
-if not use_cblitbuffer then
-    io.write("Tweaking LuaJIT's max loop unroll factor (15 -> 45)\n")
-    io.flush()
-    jit.opt.start("loopunroll=45")
-end
+-- We'll load it later
+local cblitbuffer
+local use_cblitbuffer = false
 
 -- color value types
 local Color4U = ffi.typeof("Color4U")
@@ -658,6 +647,18 @@ end
 function BB_mt.__index:getType()
     return rshift(band(MASK_TYPE, self.config), SHIFT_TYPE)
 end
+
+-- Determine if a pair of buffers can use CBB in relation to each other, or whether CBB is used at all.
+-- Used to skip unsupported modes such as unrelated inverses.
+-- TODO: Possibly some RGB24/32 stuff too?
+function BB_mt.__index:canUseCbbTogether(other)
+    return use_cblitbuffer and self:getInverse() == other:getInverse()
+end
+
+function BB_mt.__index:canUseCbb()
+    return use_cblitbuffer and self:getInverse() == 0
+end
+
 -- Bits per pixel
 function BB4_mt.__index:getBpp() return 4 end
 function BB8_mt.__index:getBpp() return 8 end
@@ -750,9 +751,7 @@ function BBRGB32_mt.__index.getMyColor(color) return color:getColorRGB32() end
 -- set pixel values
 function BB_mt.__index:setPixel(x, y, color)
     local px, py = self:getPhysicalCoordinates(x, y)
-    -- NOTE: The cbb exemption is because it's assuming you're using an inverted bb copy to handle nightmode (c.f., Android & SDL2),
-    --       and setPixel can be used from outside blitFrom, unlike the other setters.
-    if not use_cblitbuffer and self:getInverse() == 1 then color = color:invert() end
+    if self:getInverse() == 1 then color = color:invert() end
     self:getPixelP(px, py)[0]:set(color)
 end
 -- Dithering (BB8 only)
@@ -1083,7 +1082,7 @@ function BB_mt.__index:blitFrom(source, dest_x, dest_y, offs_x, offs_y, width, h
     if width <= 0 or height <= 0 then return end
 
     if not setter then setter = self.setPixel end
-    if use_cblitbuffer and setter == self.setPixel then
+    if self:canUseCbbTogether(source) and setter == self.setPixel then
         cblitbuffer.BB_blit_to(ffi.cast("struct BlitBuffer *", source),
             ffi.cast("struct BlitBuffer *", self),
             dest_x, dest_y, offs_x, offs_y, width, height)
@@ -1095,7 +1094,7 @@ BB_mt.__index.blitFullFrom = BB_mt.__index.blitFrom
 
 -- blitting with a per-blit alpha value
 function BB_mt.__index:addblitFrom(source, dest_x, dest_y, offs_x, offs_y, width, height, intensity)
-    if use_cblitbuffer then
+    if self:canUseCbbTogether(source) then
         width, height = width or source:getWidth(), height or source:getHeight()
         width, dest_x, offs_x = BB.checkBounds(width, dest_x or 0, offs_x or 0, self:getWidth(), source:getWidth())
         height, dest_y, offs_y = BB.checkBounds(height, dest_y or 0, offs_y or 0, self:getHeight(), source:getHeight())
@@ -1111,7 +1110,7 @@ end
 -- alpha-pane aware blitting
 -- straight alpha
 function BB_mt.__index:alphablitFrom(source, dest_x, dest_y, offs_x, offs_y, width, height)
-    if use_cblitbuffer then
+    if self:canUseCbbTogether(source) then
         width, height = width or source:getWidth(), height or source:getHeight()
         width, dest_x, offs_x = BB.checkBounds(width, dest_x or 0, offs_x or 0, self:getWidth(), source:getWidth())
         height, dest_y, offs_y = BB.checkBounds(height, dest_y or 0, offs_y or 0, self:getHeight(), source:getHeight())
@@ -1125,7 +1124,7 @@ function BB_mt.__index:alphablitFrom(source, dest_x, dest_y, offs_x, offs_y, wid
 end
 -- premultiplied alpha
 function BB_mt.__index:pmulalphablitFrom(source, dest_x, dest_y, offs_x, offs_y, width, height)
-    if use_cblitbuffer then
+    if self:canUseCbbTogether(source) then
         width, height = width or source:getWidth(), height or source:getHeight()
         width, dest_x, offs_x = BB.checkBounds(width, dest_x or 0, offs_x or 0, self:getWidth(), source:getWidth())
         height, dest_y, offs_y = BB.checkBounds(height, dest_y or 0, offs_y or 0, self:getHeight(), source:getHeight())
@@ -1139,7 +1138,7 @@ function BB_mt.__index:pmulalphablitFrom(source, dest_x, dest_y, offs_x, offs_y,
 end
 -- premultiplied alpha w/ dithering (dithering only if target is BB8)
 function BB_mt.__index:ditherpmulalphablitFrom(source, dest_x, dest_y, offs_x, offs_y, width, height)
-    if use_cblitbuffer then
+    if self:canUseCbbTogether(source) then
         width, height = width or source:getWidth(), height or source:getHeight()
         width, dest_x, offs_x = BB.checkBounds(width, dest_x or 0, offs_x or 0, self:getWidth(), source:getWidth())
         height, dest_y, offs_y = BB.checkBounds(height, dest_y or 0, offs_y or 0, self:getHeight(), source:getHeight())
@@ -1154,7 +1153,7 @@ end
 
 -- simple blitting w/ dithering (dithering only if target is BB8)
 function BB_mt.__index:ditherblitFrom(source, dest_x, dest_y, offs_x, offs_y, width, height)
-    if use_cblitbuffer then
+    if self:canUseCbbTogether(source) then
         width, height = width or source:getWidth(), height or source:getHeight()
         width, dest_x, offs_x = BB.checkBounds(width, dest_x or 0, offs_x or 0, self:getWidth(), source:getWidth())
         height, dest_y, offs_y = BB.checkBounds(height, dest_y or 0, offs_y or 0, self:getHeight(), source:getHeight())
@@ -1169,7 +1168,7 @@ end
 
 -- invert blitting
 function BB_mt.__index:invertblitFrom(source, dest_x, dest_y, offs_x, offs_y, width, height)
-    if use_cblitbuffer then
+    if self:canUseCbbTogether(source) then
         width, height = width or source:getWidth(), height or source:getHeight()
         width, dest_x, offs_x = BB.checkBounds(width, dest_x or 0, offs_x or 0, self:getWidth(), source:getWidth())
         height, dest_y, offs_y = BB.checkBounds(height, dest_y or 0, offs_y or 0, self:getHeight(), source:getHeight())
@@ -1186,7 +1185,7 @@ end
 function BB_mt.__index:colorblitFrom(source, dest_x, dest_y, offs_x, offs_y, width, height, color)
     -- we need color with alpha later:
     color = color:getColor8A()
-    if use_cblitbuffer then
+    if self:canUseCbbTogether(source) then
         width, height = width or source:getWidth(), height or source:getHeight()
         width, dest_x, offs_x = BB.checkBounds(width, dest_x or 0, offs_x or 0, self:getWidth(), source:getWidth())
         height, dest_y, offs_y = BB.checkBounds(height, dest_y or 0, offs_y or 0, self:getHeight(), source:getHeight())
@@ -1279,7 +1278,7 @@ function BB_mt.__index:invertRect(x, y, w, h)
     w, x = BB.checkBounds(w, x, 0, self:getWidth(), 0xFFFF)
     h, y = BB.checkBounds(h, y, 0, self:getHeight(), 0xFFFF)
     if w <= 0 or h <= 0 then return end
-    if use_cblitbuffer then
+    if self:canUseCbb() then
         cblitbuffer.BB_invert_rect(ffi.cast("struct BlitBuffer *", self),
             x, y, w, h)
     else
@@ -1379,7 +1378,7 @@ function BB_mt.__index:paintRect(x, y, w, h, value, setter)
     w, x = BB.checkBounds(w, x, 0, self:getWidth(), 0xFFFF)
     h, y = BB.checkBounds(h, y, 0, self:getHeight(), 0xFFFF)
     if w <= 0 or h <= 0 then return end
-    if use_cblitbuffer and setter == self.setPixel then
+    if self:canUseCbb() and setter == self.setPixel then
         cblitbuffer.BB_fill_rect(ffi.cast("struct BlitBuffer *", self),
             x, y, w, h, value:getColor8().a)
     else
@@ -1692,7 +1691,7 @@ dim color values in rectangular area
 --]]
 function BB_mt.__index:dimRect(x, y, w, h, by)
     local color = Color8A(0xFF, 0xFF*(by or 0.5))
-    if use_cblitbuffer then
+    if self:canUseCbb() then
         w, x = BB.checkBounds(w, x, 0, self:getWidth(), 0xFFFF)
         h, y = BB.checkBounds(h, y, 0, self:getHeight(), 0xFFFF)
         if w <= 0 or h <= 0 then return end
@@ -1714,7 +1713,7 @@ lighten color values in rectangular area
 --]]
 function BB_mt.__index:lightenRect(x, y, w, h, by)
     local color = Color8A(0, 0xFF*(by or 0.5))
-    if use_cblitbuffer then
+    if self:canUseCbb() then
         w, x = BB.checkBounds(w, x, 0, self:getWidth(), 0xFFFF)
         h, y = BB.checkBounds(h, y, 0, self:getHeight(), 0xFFFF)
         if w <= 0 or h <= 0 then return end
@@ -1911,5 +1910,29 @@ BB.TYPE_BB8A = TYPE_BB8A
 BB.TYPE_BBRGB16 = TYPE_BBRGB16
 BB.TYPE_BBRGB24 = TYPE_BBRGB24
 BB.TYPE_BBRGB32 = TYPE_BBRGB32
+
+BB.has_cblitbuffer = false
+if not os.getenv("KO_NO_CBB") then
+    -- Load C blit buffer, we'll decide whether to use it later on
+    BB.has_cblitbuffer, cblitbuffer = pcall(ffi.load, "blitbuffer")
+end
+
+-- Set the actual enable/disable CBB flag. Returns the flag of whether it is (actually) enabled.
+function BB:enableCBB(enabled)
+    local old = use_cblitbuffer
+    use_cblitbuffer = enabled and self.has_cblitbuffer
+    if old ~= use_cblitbuffer then
+        -- NOTE: This works-around a number of corner-cases which may end up with LuaJIT's optimizer blacklisting this very codepath,
+        --       which'd obviously *murder* performance (to the effect of a soft-lock, essentially).
+        --       c.f., koreader/koreader#4137, koreader/koreader#4752, koreader/koreader#4782
+        local val = use_cblitbuffer and 15 or 45
+        jit.opt.start("loopunroll="..tostring(val))
+        jit.flush()
+    end
+    return use_cblitbuffer
+end
+
+-- By default it's on (if not blacklisted). But frontend may still decide otherwise before anything is ever drawn.
+BB:enableCBB(true)
 
 return BB
