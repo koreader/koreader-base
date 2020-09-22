@@ -22,10 +22,21 @@ local fb = {
     night_mode = false,
     hw_dithering = false, -- will be setup via setupDithering @ startup by reader.lua
     sw_dithering = false, -- will be setup via setupDithering @ startup by reader.lua
+    is_always_portrait = false, -- true = SW flip landscape into portrait (historically a bit of misnomer)
+    forced_rotation = nil, --[[{
+        -- canonically the order below - but frontend may specify their own mapping
+        fb.ORIENTATION_PORTRAIT,
+        fb.ORIENTATION_LANDSCAPE,
+        fb.ORIENTATION_PORTRAIT_ROTATED,
+        fb.ORIENTATION_LANDSCAPE_ROTATED,
+        restore = false, -- true if hw rot mode is to be restored after painting, see framebuffer_linux:afterPaint()
+        default = nil, -- if not nil, use this as default rotation value (this one is canonical, not HW)
+        every_paint = false, -- true if HW mode should be enforced for every paint batch
+    },]]
 }
 
 --[[
-Codes for rotation modes:
+Canonical values for rotation modes:
 
 0 for no rotation (i.e., Portrait),
 1 for landscape with bottom on the right side of screen, etc.
@@ -57,6 +68,42 @@ fb.ORIENTATION_LANDSCAPE = 1
 fb.ORIENTATION_PORTRAIT_ROTATED = 2
 fb.ORIENTATION_LANDSCAPE_ROTATED = 3
 
+--[[
+Rotation modes are not guaranteed to be canonical however, as HW driver may interpret the value as CW or CCW, as well
+as starting from elsewhere than portrait so in practice the values can be pretty much anything.
+For such an occasion the frontend can provide custom mappings, or simply override the HW setter/getter/map function.
+]]
+
+-- Invert HW value to canonical one, needed to interpret the one given by OS.
+-- Some devices may wish to override this if the mapping is not as simple as 1:1.
+function fb:getCanonicalRotationMode(hw)
+    for k,v in ipairs(self.forced_rotation) do
+        if v == hw then
+            return k-1
+        end
+    end
+end
+
+-- To be overridden. Returns the current FB rotation exactly as reported by hw
+-- Pipe the result into getCanonicalRotationMode() if you want canonical (ie the koreader uses) result.
+function fb:getHWRotation()
+    return 0
+end
+
+-- To be overridden. Set HW rotation of the FB. Note that the argument is canonical value, ie this
+-- call should do translation from forced_rotation[] table - or any other necessary dance to convert
+-- canonical fb.ORIENTATION_ mode to HW reality.
+function fb:setHWRotation(canon)
+end
+
+-- Rotation modes may cause desync of rotation for touch translation, so frontend may need to override this
+-- to provide a fixup.
+function fb:getTouchRotation()
+    -- The touch matrix stays the same for things like linuxfb so just output the rotation we're doing either hw or sw.
+    -- But this may not be necessarily so with other backends.
+    return self.cur_rotation_mode
+end
+
 local EMULATE_READER_DPI = tonumber(os.getenv("EMULATE_READER_DPI"))
 
 function fb:extend(o)
@@ -80,7 +127,7 @@ function fb:init()
     -- asking the framebuffer for orientation is error prone,
     -- so we do this simple heuristic (for now)
     self.screen_size = self:getSize()
-    if self.screen_size.w > self.screen_size.h and self.device:isAlwaysPortrait() then
+    if self.screen_size.w > self.screen_size.h and self.is_always_portrait then
         self.screen_size.w, self.screen_size.h = self.screen_size.h, self.screen_size.w
         -- some framebuffers need to be rotated counter-clockwise (they start in landscape mode)
         io.write("FB: Enforcing portrait mode by doing an initial BB rotation")
@@ -88,9 +135,19 @@ function fb:init()
         self.debug("FB: This prevents the use of blitting optimizations. This should instead be fixed on the device's side on startup.")
         self.bb:rotate(-90)
         self.blitbuffer_rotation_mode = self.bb:getRotation()
+        assert(not self.forced_rotation, "If forced HW rotation is used, isAlwaysPortrait should not be set.")
     end
-    self.native_rotation_mode = self.ORIENTATION_PORTRAIT
+    self.native_rotation_mode = self.forced_rotation and self.forced_rotation.default or self.ORIENTATION_PORTRAIT
     self.cur_rotation_mode = self.native_rotation_mode
+end
+
+-- This method must be called just before drawing a sequence of blits into a framebuffer.
+-- It's ok to spam it for each paint, drivers should ensure to become nop for subsequent calls until final afterPaint().
+function fb:beforePaint()
+end
+
+-- This method must be called once we're done drawing all batched updates into a framebuffer, and *after* all the necessary fb:refresh* calls.
+function fb:afterPaint()
 end
 
 -- the ...Imp methods may be overridden to implement refresh
@@ -121,27 +178,27 @@ end
 
 -- these should not be overridden, they provide the external refresh API:
 function fb:refreshFull(x, y, w, h, d)
-    x, y = self:calculateRealCoordinates(x, y)
+    x, y, w, h = self:calculateRealCoordinates(x, y, w, h)
     return self:refreshFullImp(x, y, w, h, d)
 end
 function fb:refreshPartial(x, y, w, h, d)
-    x, y = self:calculateRealCoordinates(x, y)
+    x, y, w, h = self:calculateRealCoordinates(x, y, w, h)
     return self:refreshPartialImp(x, y, w, h, d)
 end
 function fb:refreshFlashPartial(x, y, w, h, d)
-    x, y = self:calculateRealCoordinates(x, y)
+    x, y, w, h = self:calculateRealCoordinates(x, y, w, h)
     return self:refreshFlashPartialImp(x, y, w, h, d)
 end
 function fb:refreshUI(x, y, w, h, d)
-    x, y = self:calculateRealCoordinates(x, y)
+    x, y, w, h = self:calculateRealCoordinates(x, y, w, h)
     return self:refreshUIImp(x, y, w, h, d)
 end
 function fb:refreshFlashUI(x, y, w, h, d)
-    x, y = self:calculateRealCoordinates(x, y)
+    x, y, w, h = self:calculateRealCoordinates(x, y, w, h)
     return self:refreshFlashUIImp(x, y, w, h, d)
 end
 function fb:refreshFast(x, y, w, h, d)
-    x, y = self:calculateRealCoordinates(x, y)
+    x, y, w, h = self:calculateRealCoordinates(x, y, w, h)
     return self:refreshFastImp(x, y, w, h, d)
 end
 
@@ -177,10 +234,14 @@ function fb:setViewport(viewport)
     self:refreshFull()
 end
 
-function fb:calculateRealCoordinates(x, y)
+function fb:calculateRealCoordinates(x, y, w, h)
+    local mode = self:getRotationMode()
+    if not (x and y and w and h) then return end
 
-    if not (x and y) then return end
-    if not self.viewport then return x, y end
+    -- TODO: May need to implement refresh translations for HW rotate on broken drivers.
+    -- For now those should just avoid using HW mode altogether.
+
+    if not self.viewport then return x, y, w, h end
 
     --[[
         we need to adapt the coordinates when we have a viewport.
@@ -212,15 +273,15 @@ function fb:calculateRealCoordinates(x, y)
     local vx2 = self.screen_size.w - (self.viewport.x + self.viewport.w)
     local vy2 = self.screen_size.h - (self.viewport.y + self.viewport.h)
 
-    if self.cur_rotation_mode == self.ORIENTATION_PORTRAIT then
+    if mode == self.ORIENTATION_PORTRAIT then
         -- (0,0) is at top left of screen
         x = x + self.viewport.x
         y = y + self.viewport.y
-    elseif self.cur_rotation_mode == self.ORIENTATION_LANDSCAPE then
+    elseif mode == self.ORIENTATION_LANDSCAPE then
         -- (0,0) is at bottom left of screen
         x = x + vy2
         y = y + self.viewport.x
-    elseif self.cur_rotation_mode == self.ORIENTATION_PORTRAIT_ROTATED then
+    elseif mode == self.ORIENTATION_PORTRAIT_ROTATED then
         -- (0,0) is at bottom right of screen
         x = x + vx2
         y = y + vy2
@@ -230,7 +291,7 @@ function fb:calculateRealCoordinates(x, y)
         y = y + vx2
     end
 
-    return x, y
+    return x, y, w, h
 end
 
 function fb:getSize()
@@ -311,8 +372,11 @@ function fb:getScreenMode()
     end
 end
 
--- This, on the other hand, is responsible for the internal *buffer* rotation (as such, it's inverted compared to the ORIENTATION_ constants; i.e., it's in 90° CCW steps).
+-- Configure desired rotation. By default, we setup the blitter to do rotations for us, but a subclass
+-- may implement rotation via hardware (android with hasNativeRotation, linuxfb with forced_rotation).
 function fb:setRotationMode(mode)
+    -- This, on the other hand, is responsible for the internal *buffer* rotation,
+    -- as such, it's inverted compared to the ORIENTATION_ constants; i.e., it's in 90° CCW steps).
     self.bb:rotateAbsolute(-90 * (mode - self.native_rotation_mode - self.blitbuffer_rotation_mode))
     if self.viewport then
         self.full_bb:setRotation(self.bb:getRotation())

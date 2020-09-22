@@ -456,7 +456,7 @@ void BB_blit_to_BB8(BlitBuffer *src, BlitBuffer *dst,
                 // (i.e., setPixel, no rota, no invert).
                 // The cbb codepath ensures setPixel & no invert, so we only check for rotation.
                 if (sbb_rotation == 0 && dbb_rotation == 0) {
-                    if (offs_x == 0 && dest_x == 0 && w == src->phys_w && w == dst->phys_w) {
+                    if (offs_x == 0 && dest_x == 0 && w == src->w && w == dst->w && src->pitch == dst->pitch) {
                         // Single step for contiguous scanlines (on both sides)
                         //fprintf(stdout, "%s: full copy blit from BB8 to BB8\n", __FUNCTION__);
                         // BB8 is 1 byte per pixel
@@ -1066,7 +1066,7 @@ void BB_blit_to_BB32(BlitBuffer *src, BlitBuffer *dst,
                 // (i.e., setPixel, no rota, no invert).
                 // The cbb codepath ensures setPixel & no invert, so we only check for rotation.
                 if (sbb_rotation == 0 && dbb_rotation == 0) {
-                    if (offs_x == 0 && dest_x == 0 && w == src->phys_w && w == dst->phys_w) {
+                    if (offs_x == 0 && dest_x == 0 && w == src->w && w == dst->w && src->pitch == dst->pitch) {
                         // Single step for contiguous scanlines (on both sides)
                         //fprintf(stdout, "%s: full copy blit from BBRGB32 to BBRGB32\n", __FUNCTION__);
                         // BBRGB32 is 4 bytes per pixel
