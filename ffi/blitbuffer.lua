@@ -1914,7 +1914,7 @@ BB.TYPE_BBRGB32 = TYPE_BBRGB32
 BB.has_cblitbuffer = false
 if not os.getenv("KO_NO_CBB") then
     -- Load C blit buffer, we'll decide whether to use it later on
-    BB.has_cblitbuffer, cblitbuffer = pcall(ffi.load, 'blitbuffer')
+    BB.has_cblitbuffer, cblitbuffer = pcall(ffi.load, "blitbuffer")
 end
 
 -- Set the actual enable/disable CBB flag. Returns the flag of whether it is (actually) enabled.
