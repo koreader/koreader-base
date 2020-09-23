@@ -13,6 +13,11 @@ assert_var_defined(AR)
 assert_var_defined(LDFLAGS)
 assert_var_defined(RANLIB)
 
+if ($ENV{DARWIN})
+    #fix build error due to implicit declarations of function being invalid in C99 under macOS/XCode 12
+    set(CFLAGS "${CFLAGS} -Wno-error=implicit-function-declaration")
+endif()
+
 ep_get_source_dir(SOURCE_DIR)
 
 # NOTE: 53a657318af1fccc4bac7ed230729302b2391d1d is the tip of the 1.2 branch. The fcrypt API we need is gone in master.
@@ -20,7 +25,11 @@ ep_get_source_dir(SOURCE_DIR)
 #set(PATCH_CMD "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/minizip-libaes-makefile.patch")
 
 set(PATCH_CMD sh -c "${ISED} \"s|^CC=|#CC=|g\" aes/Makefile && ${ISED} \"s|^CFLAGS=|#CFLAGS=|g\" aes/Makefile")
-set(BUILD_CMD_STR -j${PARALLEL_JOBS} -C aes CC=${CC} LDFLAGS=${LDFLAGS} AR=${AR} RANLIB=${RANLIB})
+if ($ENV{DARWIN})
+    set(BUILD_CMD_STR -j${PARALLEL_JOBS} -C aes CC=${CC} CFLAGS=${CFLAGS} LDFLAGS=${LDFLAGS} AR=${AR} RANLIB=${RANLIB})
+else()
+    set(BUILD_CMD_STR -j${PARALLEL_JOBS} -C aes CC=${CC} LDFLAGS=${LDFLAGS} AR=${AR} RANLIB=${RANLIB})
+endif()
 
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME

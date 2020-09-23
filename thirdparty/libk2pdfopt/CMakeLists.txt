@@ -21,6 +21,11 @@ assert_var_defined(LEPTONICA_DIR)
 assert_var_defined(TESSERACT_DIR)
 assert_var_defined(STDCPPLIB)
 
+if ($ENV{DARWIN})
+    #fix build error due to implicit declarations of function being invalid in C99 under macOS/XCode 12 
+    set(CFLAGS "${CFLAGS} -Wno-error=implicit-function-declaration")
+endif()
+
 ep_get_source_dir(SOURCE_DIR)
 
 set(BUILD_CMD sh -c "${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS} BUILDMODE=shared HOST=${HOST} CC=\"${CC}\" CFLAGS=\"${CFLAGS} -O3\"")
