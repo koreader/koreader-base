@@ -21,10 +21,8 @@ assert_var_defined(LEPTONICA_DIR)
 assert_var_defined(TESSERACT_DIR)
 assert_var_defined(STDCPPLIB)
 
-if ($ENV{DARWIN})
-    #fix build error due to implicit declarations of function being invalid in C99 under macOS/XCode 12 
-    set(CFLAGS "${CFLAGS} -Wno-error=implicit-function-declaration")
-endif()
+#fix build error due to implicit declarations of function being invalid in C99 under macOS/XCode 12 
+set(CFLAGS "${CFLAGS} -Wno-error=implicit-function-declaration")
 
 ep_get_source_dir(SOURCE_DIR)
 
