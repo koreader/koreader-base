@@ -116,13 +116,13 @@ static const char*
 #define BB_GET_PIXEL(bb, rotation, COLOR, x, y, pptr) \
 ({ \
     if (rotation == 0) { \
-        *pptr = (COLOR*)(bb->data + y * bb->pitch) + x; \
+        *pptr = (COLOR*)(bb->data + y * bb->stride) + x; \
     } else if (rotation == 1) { \
-        *pptr = (COLOR*)(bb->data + x * bb->pitch) + bb->w - y - 1; \
+        *pptr = (COLOR*)(bb->data + x * bb->stride) + bb->w - y - 1; \
     } else if (rotation == 2) { \
-        *pptr = (COLOR*)(bb->data + (bb->h - y - 1) * bb->pitch) + bb->w - x - 1; \
+        *pptr = (COLOR*)(bb->data + (bb->h - y - 1) * bb->stride) + bb->w - x - 1; \
     } else if (rotation == 3) { \
-        *pptr = (COLOR*)(bb->data + (bb->h - x - 1) * bb->pitch) + y; \
+        *pptr = (COLOR*)(bb->data + (bb->h - x - 1) * bb->stride) + y; \
     } \
 })
 
@@ -204,15 +204,15 @@ void BB_fill_rect(BlitBuffer *bb, int x, int y, int w, int h, uint8_t v) {
     if (rx == 0 && rw == bb->w) {
         // Single step for contiguous scanlines
         //fprintf(stdout, "%s: Single fill paintRect\n", __FUNCTION__);
-        uint8_t *p = bb->data + bb->pitch*ry;
-        memset(p, v, bpp*bb->phys_w*rh);
+        uint8_t *p = bb->data + bb->stride*ry;
+        memset(p, v, bb->stride*rh);
     } else {
         // Scanline per scanline fill
         //fprintf(stdout, "%s: Scanline fill paintRect\n", __FUNCTION__);
         uint8_t *p = bb->data;
         int j;
         for (j = ry; j < ry+rh; j++) {
-            p = bb->data + bb->pitch*j + bpp*rx;
+            p = bb->data + bb->stride*j + bpp*rx;
             memset(p, v, bpp*rw);
         }
     }
@@ -330,8 +330,8 @@ void BB_invert_rect(BlitBuffer *bb, int x, int y, int w, int h) {
                 if (rx == 0 && rw == bb->w) {
                     // Single step for contiguous scanlines
                     //fprintf(stdout, "%s: Full BB8 invertRect\n", __FUNCTION__);
-                    uint8_t *p = bb->data + bb->pitch*ry;
-                    for (i = 0; i < bb->phys_w*rh; i++) {
+                    uint8_t *p = bb->data + bb->stride*ry;
+                    for (i = 0; i < bb->pixel_stride*rh; i++) {
                         p[i] ^= 0xFF;
                     }
                 } else {
@@ -339,7 +339,7 @@ void BB_invert_rect(BlitBuffer *bb, int x, int y, int w, int h) {
                     //fprintf(stdout, "%s: Pixel BB8 invertRect\n", __FUNCTION__);
                     uint8_t *p;
                     for (j = ry; j < ry+rh; j++) {
-                        p = bb->data + bb->pitch*j + rx;
+                        p = bb->data + bb->stride*j + rx;
                         for (i = 0; i < rw; i++) {
                             p[i] ^= 0xFF;
                         }
@@ -352,8 +352,8 @@ void BB_invert_rect(BlitBuffer *bb, int x, int y, int w, int h) {
                 if (rx == 0 && rw == bb->w) {
                     // Single step for contiguous scanlines
                     //fprintf(stdout, "%s: Full BB8A invertRect\n", __FUNCTION__);
-                    uint16_t *p = (uint16_t*) (bb->data + bb->pitch*ry);
-                    for (i = 0; i < bb->phys_w*rh; i++) {
+                    uint16_t *p = (uint16_t*) (bb->data + bb->stride*ry);
+                    for (i = 0; i < bb->pixel_stride*rh; i++) {
                         p[i] ^= 0x00FF;
                     }
                 } else {
@@ -361,7 +361,7 @@ void BB_invert_rect(BlitBuffer *bb, int x, int y, int w, int h) {
                     //fprintf(stdout, "%s: Pixel BB8A invertRect\n", __FUNCTION__);
                     uint16_t *p;
                     for (j = ry; j < ry+rh; j++) {
-                        p = (uint16_t*) (bb->data + bb->pitch*j + (rx << 1));
+                        p = (uint16_t*) (bb->data + bb->stride*j + (rx << 1));
                         for (i = 0; i < rw; i++) {
                             p[i] ^= 0x00FF;
                         }
@@ -374,8 +374,8 @@ void BB_invert_rect(BlitBuffer *bb, int x, int y, int w, int h) {
                 if (rx == 0 && rw == bb->w) {
                     // Single step for contiguous scanlines
                     //fprintf(stdout, "%s: Full BBRGB16 invertRect\n", __FUNCTION__);
-                    uint16_t *p = (uint16_t*) (bb->data + bb->pitch*ry);
-                    for (i = 0; i < bb->phys_w*rh; i++) {
+                    uint16_t *p = (uint16_t*) (bb->data + bb->stride*ry);
+                    for (i = 0; i < bb->pixel_stride*rh; i++) {
                         p[i] ^= 0xFFFF;
                     }
                 } else {
@@ -383,7 +383,7 @@ void BB_invert_rect(BlitBuffer *bb, int x, int y, int w, int h) {
                     //fprintf(stdout, "%s: Pixel BBRGB16 invertRect\n", __FUNCTION__);
                     uint16_t *p;
                     for (j = ry; j < ry+rh; j++) {
-                        p = (uint16_t*) (bb->data + bb->pitch*j + (rx << 1));
+                        p = (uint16_t*) (bb->data + bb->stride*j + (rx << 1));
                         for (i = 0; i < rw; i++) {
                             p[i] ^= 0xFFFF;
                         }
@@ -396,8 +396,8 @@ void BB_invert_rect(BlitBuffer *bb, int x, int y, int w, int h) {
                 if (rx == 0 && rw == bb->w) {
                     // Single step for contiguous scanlines
                     //fprintf(stdout, "%s: Full BBRGB24 invertRect\n", __FUNCTION__);
-                    uint8_t *p = bb->data + bb->pitch*ry;
-                    for (i = 0; i < bb->phys_w*rh; i+=3) {
+                    uint8_t *p = bb->data + bb->stride*ry;
+                    for (i = 0; i < bb->pixel_stride*rh; i+=3) {
                         p[i] ^= 0xFF;
                         p[i+1] ^= 0xFF;
                         p[i+2] ^= 0xFF;
@@ -407,7 +407,7 @@ void BB_invert_rect(BlitBuffer *bb, int x, int y, int w, int h) {
                     //fprintf(stdout, "%s: Pixel BBRGB24 invertRect\n", __FUNCTION__);
                     uint8_t *p;
                     for (j = ry; j < ry+rh; j++) {
-                        p = bb->data + bb->pitch*j + (rx * 3);
+                        p = bb->data + bb->stride*j + (rx * 3);
                         for (i = 0; i < rw; i+=3) {
                             p[i] ^= 0xFF;
                             p[i+1] ^= 0xFF;
@@ -422,8 +422,8 @@ void BB_invert_rect(BlitBuffer *bb, int x, int y, int w, int h) {
                 if (rx == 0 && rw == bb->w) {
                     // Single step for contiguous scanlines
                     //fprintf(stdout, "%s: Full BBRGB32 invertRect\n", __FUNCTION__);
-                    uint32_t *p = (uint32_t*) (bb->data + bb->pitch*ry);
-                    for (i = 0; i < bb->phys_w*rh; i++) {
+                    uint32_t *p = (uint32_t*) (bb->data + bb->stride*ry);
+                    for (i = 0; i < bb->pixel_stride*rh; i++) {
                         p[i] ^= 0x00FFFFFF;
                     }
                 } else {
@@ -431,7 +431,7 @@ void BB_invert_rect(BlitBuffer *bb, int x, int y, int w, int h) {
                     //fprintf(stdout, "%s: Pixel BBRGB32 invertRect\n", __FUNCTION__);
                     uint32_t *p;
                     for (j = ry; j < ry+rh; j++) {
-                        p = (uint32_t*) (bb->data + bb->pitch*j + (rx << 2));
+                        p = (uint32_t*) (bb->data + bb->stride*j + (rx << 2));
                         for (i = 0; i < rw; i++) {
                             p[i] ^= 0x00FFFFFF;
                         }
@@ -456,12 +456,12 @@ void BB_blit_to_BB8(BlitBuffer *src, BlitBuffer *dst,
                 // (i.e., setPixel, no rota, no invert).
                 // The cbb codepath ensures setPixel & no invert, so we only check for rotation.
                 if (sbb_rotation == 0 && dbb_rotation == 0) {
-                    if (offs_x == 0 && dest_x == 0 && w == src->w && w == dst->w && src->pitch == dst->pitch) {
+                    if (offs_x == 0 && dest_x == 0 && w == src->w && w == dst->w && src->stride == dst->stride) {
                         // Single step for contiguous scanlines (on both sides)
                         //fprintf(stdout, "%s: full copy blit from BB8 to BB8\n", __FUNCTION__);
                         // BB8 is 1 byte per pixel
-                        const uint8_t *srcp = src->data + src->pitch*offs_y;
-                        uint8_t *dstp = dst->data + dst->pitch*dest_y;
+                        const uint8_t *srcp = src->data + src->stride*offs_y;
+                        uint8_t *dstp = dst->data + dst->stride*dest_y;
                         memcpy(dstp, srcp, w*h);
                     } else {
                         // Scanline per scanline copy
@@ -469,8 +469,8 @@ void BB_blit_to_BB8(BlitBuffer *src, BlitBuffer *dst,
                         o_y = offs_y;
                         for (d_y = dest_y; d_y < dest_y+h; d_y++, o_y++) {
                             // BB8 is 1 byte per pixel
-                            const uint8_t *srcp = src->data + src->pitch*o_y + offs_x;
-                            uint8_t *dstp = dst->data + dst->pitch*d_y + dest_x;
+                            const uint8_t *srcp = src->data + src->stride*o_y + offs_x;
+                            uint8_t *dstp = dst->data + dst->stride*d_y + dest_x;
                             memcpy(dstp, srcp, w);
                         }
                     }
@@ -1066,12 +1066,12 @@ void BB_blit_to_BB32(BlitBuffer *src, BlitBuffer *dst,
                 // (i.e., setPixel, no rota, no invert).
                 // The cbb codepath ensures setPixel & no invert, so we only check for rotation.
                 if (sbb_rotation == 0 && dbb_rotation == 0) {
-                    if (offs_x == 0 && dest_x == 0 && w == src->w && w == dst->w && src->pitch == dst->pitch) {
+                    if (offs_x == 0 && dest_x == 0 && w == src->w && w == dst->w && src->stride == dst->stride) {
                         // Single step for contiguous scanlines (on both sides)
                         //fprintf(stdout, "%s: full copy blit from BBRGB32 to BBRGB32\n", __FUNCTION__);
                         // BBRGB32 is 4 bytes per pixel
-                        const uint8_t *srcp = src->data + src->pitch*offs_y;
-                        uint8_t *dstp = dst->data + dst->pitch*dest_y;
+                        const uint8_t *srcp = src->data + src->stride*offs_y;
+                        uint8_t *dstp = dst->data + dst->stride*dest_y;
                         memcpy(dstp, srcp, (w << 2)*h);
                     } else {
                         // Scanline per scanline copy
@@ -1079,8 +1079,8 @@ void BB_blit_to_BB32(BlitBuffer *src, BlitBuffer *dst,
                         o_y = offs_y;
                         for (d_y = dest_y; d_y < dest_y+h; d_y++, o_y++) {
                             // BBRGB32 is 4 bytes per pixel
-                            const uint8_t *srcp = src->data + src->pitch*o_y + (offs_x << 2);
-                            uint8_t *dstp = dst->data + dst->pitch*d_y + (dest_x << 2);
+                            const uint8_t *srcp = src->data + src->stride*o_y + (offs_x << 2);
+                            uint8_t *dstp = dst->data + dst->stride*d_y + (dest_x << 2);
                             memcpy(dstp, srcp, w << 2);
                         }
                     }

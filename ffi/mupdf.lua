@@ -735,18 +735,16 @@ function mupdf.scaleBlitBuffer(bb, width, height)
     local colorspace
     local converted_bb
     local alpha
-    local stride
+    local stride = bb.stride
     -- MuPDF should know how to handle *most* of our BB types,
     -- special snowflakes excluded (4bpp & RGB565),
     -- in which case we feed it a temporary copy in the closest format it'll understand.
     if bbtype == BlitBuffer.TYPE_BB8 then
         colorspace = M.fz_device_gray(context())
         alpha = 0
-        stride = orig_w
     elseif bbtype == BlitBuffer.TYPE_BB8A then
         colorspace = M.fz_device_gray(context())
         alpha = 1
-        stride = orig_w * 2
     elseif bbtype == BlitBuffer.TYPE_BBRGB24 then
         if mupdf.bgr then
             colorspace = M.fz_device_bgr(context())
@@ -754,7 +752,6 @@ function mupdf.scaleBlitBuffer(bb, width, height)
             colorspace = M.fz_device_rgb(context())
         end
         alpha = 0
-        stride = orig_w * 3
     elseif bbtype == BlitBuffer.TYPE_BBRGB32 then
         if mupdf.bgr then
             colorspace = M.fz_device_bgr(context())
@@ -762,7 +759,6 @@ function mupdf.scaleBlitBuffer(bb, width, height)
             colorspace = M.fz_device_rgb(context())
         end
         alpha = 1
-        stride = orig_w * 4
     elseif bbtype == BlitBuffer.TYPE_BB4 then
         converted_bb = BlitBuffer.new(orig_w, orig_h, BlitBuffer.TYPE_BB8)
         converted_bb:blitFrom(bb, 0, 0, 0, 0, orig_w, orig_h)
@@ -780,7 +776,6 @@ function mupdf.scaleBlitBuffer(bb, width, height)
             colorspace = M.fz_device_rgb(context())
         end
         alpha = 1
-        stride = orig_w * 4
     end
     -- We can now create a pixmap from this bb of correct type
     local pixmap = W.mupdf_new_pixmap_with_data(context(), colorspace,

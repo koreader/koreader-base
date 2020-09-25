@@ -59,64 +59,57 @@ typedef struct ColorRGB32 {
 
 typedef struct BlitBuffer {
     int w;
-    int phys_w;
+    int pixel_stride;   // nb of pixels from the start of a line to the start of next line
     int h;
-    int phys_h;
-    int pitch;
+    int stride;         // nb of bytes from the start of a line to the start of next line
     uint8_t *data;
     uint8_t config;
 } BlitBuffer;
 typedef struct BlitBuffer4 {
     int w;
-    int phys_w;
+    int pixel_stride;
     int h;
-    int phys_h;
-    int pitch;
+    int stride;
     uint8_t *data;
     uint8_t config;
 } BlitBuffer4;
 typedef struct BlitBuffer8 {
     int w;
-    int phys_w;
+    int pixel_stride;
     int h;
-    int phys_h;
-    int pitch;
+    int stride;
     Color8 *data;
     uint8_t config;
 } BlitBuffer8;
 typedef struct BlitBuffer8A {
     int w;
-    int phys_w;
+    int pixel_stride;
     int h;
-    int phys_h;
-    int pitch;
+    int stride;
     Color8A *data;
     uint8_t config;
 } BlitBuffer8A;
 typedef struct BlitBufferRGB16 {
     int w;
-    int phys_w;
+    int pixel_stride;
     int h;
-    int phys_h;
-    int pitch;
+    int stride;
     ColorRGB16 *data;
     uint8_t config;
 } BlitBufferRGB16;
 typedef struct BlitBufferRGB24 {
     int w;
-    int phys_w;
+    int pixel_stride;
     int h;
-    int phys_h;
-    int pitch;
+    int stride;
     ColorRGB24 *data;
     uint8_t config;
 } BlitBufferRGB24;
 typedef struct BlitBufferRGB32 {
     int w;
-    int phys_w;
+    int pixel_stride;
     int h;
-    int phys_h;
-    int pitch;
+    int stride;
     ColorRGB32 *data;
     uint8_t config;
 } BlitBufferRGB32;
@@ -721,11 +714,11 @@ end
 -- getPixelP (pointer) routines, working on physical coordinates
 function BB_mt.__index:getPixelP(x, y)
     --self:checkCoordinates(x, y)
-    return ffi.cast(self.data, ffi.cast(uint8pt, self.data) + self.pitch*y) + x
+    return ffi.cast(self.data, ffi.cast(uint8pt, self.data) + self.stride*y) + x
 end
 function BB4_mt.__index:getPixelP(x, y)
     --self:checkCoordinates(x, y)
-    local p = self.data + self.pitch*y + rshift(x, 1)
+    local p = self.data + self.stride*y + rshift(x, 1)
     if band(x, 1) == 0 then
         return ffi.cast(P_Color4U, p)
     else
@@ -914,30 +907,12 @@ function BB_mt.__index:getWidth()
         return self.h
     end
 end
-function BB_mt.__index:getPhysicalWidth()
-    -- NOTE: On eInk devices, alignment is very different between xres_virtual & yres_virtual,
-    --       so honoring rotation here is a bit iffy...
-    --       c.f., framebuffer_linux.lua
-    --       This is why we generally access phys_w or phys_h directly,
-    --       unless we're sure having those inverted is going to be irrelevant.
-    if 0 == band(1, self:getRotation()) then
-        return self.phys_w
-    else
-        return self.phys_h
-    end
-end
+
 function BB_mt.__index:getHeight()
     if 0 == band(1, self:getRotation()) then
         return self.h
     else
         return self.w
-    end
-end
-function BB_mt.__index:getPhysicalHeight()
-    if 0 == band(1, self:getRotation()) then
-        return self.phys_h
-    else
-        return self.phys_w
     end
 end
 
@@ -1023,13 +998,13 @@ function BB8_mt.__index:blitTo8(dest, dest_x, dest_y, offs_x, offs_y, width, hei
         return self:blitDefault(dest, dest_x, dest_y, offs_x, offs_y, width, height, setter, set_param)
     end
 
-    -- Perform block copies only in the simple case of the blit width being equal to width of both buffers of same pitch.
-    if offs_x == 0 and dest_x == 0 and width == self.w and width == dest.w and dest.pitch == self.pitch then
+    -- Perform block copies only in the simple case of the blit width being equal to width of both buffers of same stride.
+    if offs_x == 0 and dest_x == 0 and width == self.w and width == dest.w and dest.stride == self.stride then
         -- Single step for contiguous scanlines (on both sides)
         --print("BB8 to BB8 full copy")
         -- BB8 is 1 byte per pixel
-        local srcp = self.data + self.pitch*offs_y
-        local dstp = dest.data + dest.pitch*dest_y
+        local srcp = self.data + self.stride*offs_y
+        local dstp = dest.data + dest.stride*dest_y
         ffi.copy(dstp, srcp, width*height)
     else
         -- Scanline per scanline copy
@@ -1037,8 +1012,8 @@ function BB8_mt.__index:blitTo8(dest, dest_x, dest_y, offs_x, offs_y, width, hei
         local o_y = offs_y
         for y = dest_y, dest_y+height-1 do
             -- BB8 is 1 byte per pixel
-            local srcp = self.data + self.pitch*o_y + offs_x
-            local dstp = dest.data + dest.pitch*y + dest_x
+            local srcp = self.data + self.stride*o_y + offs_x
+            local dstp = dest.data + dest.stride*y + dest_x
             ffi.copy(dstp, srcp, width)
             o_y = o_y + 1
         end
@@ -1050,13 +1025,13 @@ function BBRGB32_mt.__index:blitToRGB32(dest, dest_x, dest_y, offs_x, offs_y, wi
         return self:blitDefault(dest, dest_x, dest_y, offs_x, offs_y, width, height, setter, set_param)
     end
 
-    -- Perform block copies only in the simple case of the blit width being equal to width of both buffers of same pitch.
-    if offs_x == 0 and dest_x == 0 and width == self.w and width == dest.w and dest.pitch == self.pitch then
+    -- Perform block copies only in the simple case of the blit width being equal to width of both buffers of same stride.
+    if offs_x == 0 and dest_x == 0 and width == self.w and width == dest.w and dest.stride == self.stride then
         -- Single step for contiguous scanlines (on both sides)
         --print("BBRGB32 to BBRGB32 full copy")
         -- BBRGB32 is 4 bytes per pixel
-        local srcp = ffi.cast(uint8pt, self.data) + self.pitch*offs_y
-        local dstp = ffi.cast(uint8pt, dest.data) + dest.pitch*dest_y
+        local srcp = ffi.cast(uint8pt, self.data) + self.stride*offs_y
+        local dstp = ffi.cast(uint8pt, dest.data) + dest.stride*dest_y
         ffi.copy(dstp, srcp, lshift(width, 2)*height)
     else
         -- Scanline per scanline copy
@@ -1064,8 +1039,8 @@ function BBRGB32_mt.__index:blitToRGB32(dest, dest_x, dest_y, offs_x, offs_y, wi
         local o_y = offs_y
         for y = dest_y, dest_y+height-1 do
             -- BBRGB32 is 4 bytes per pixel
-            local srcp = ffi.cast(uint8pt, self.data) + self.pitch*o_y + lshift(offs_x, 2)
-            local dstp = ffi.cast(uint8pt, dest.data) + dest.pitch*y + lshift(dest_x, 2)
+            local srcp = ffi.cast(uint8pt, self.data) + self.stride*o_y + lshift(offs_x, 2)
+            local dstp = ffi.cast(uint8pt, dest.data) + dest.stride*y + lshift(dest_x, 2)
             ffi.copy(dstp, srcp, lshift(width, 2))
             o_y = o_y + 1
         end
@@ -1074,7 +1049,7 @@ end
 
 function BB_mt.__index:blitFrom(source, dest_x, dest_y, offs_x, offs_y, width, height, setter, set_param)
     width, height = width or source:getWidth(), height or source:getHeight()
-    -- NOTE: If we convince CRe to render to a padded buffer (to match phys_w and allow us single-copy blitting),
+    -- NOTE: If we convince CRe to render to a padded buffer (to match pixel_stride and allow us single-copy blitting),
     --       change the self:get* calls to self:getPhysical* ones ;).
     --       c.f., https://github.com/koreader/koreader-base/pull/878#issuecomment-476312508
     width, dest_x, offs_x = BB.checkBounds(width, dest_x or 0, offs_x or 0, self:getWidth(), source:getWidth())
@@ -1253,13 +1228,12 @@ PAINTING
 fill the whole blitbuffer with a given (grayscale) color value
 --]]
 function BB_mt.__index:fill(value)
-    -- NOTE: We need to account for the *actual* length of a scanline, padding included (hence phys_w instead of w).
-    ffi.fill(self.data, self.phys_w*self:getBytesPerPixel()*self.h, value:getColor8().a)
+    ffi.fill(self.data, self.stride*self.h, value:getColor8().a)
 end
 function BB4_mt.__index:fill(value)
     local v = value:getColor4L().a
     v = bor(lshift(v, 4), v)
-    ffi.fill(self.data, self.pitch*self.h, v)
+    ffi.fill(self.data, self.stride*self.h, v)
 end
 
 --[[
@@ -1286,7 +1260,7 @@ function BB_mt.__index:invertRect(x, y, w, h)
         debug.sethook()
         -- Handle rotation...
         x, y, w, h = self:getPhysicalRect(x, y, w, h)
-        -- Handle any target pitch properly (i.e., fetch the amount of bytes taken per pixel)...
+        -- Handle any target stride properly (i.e., fetch the amount of bytes taken per pixel)...
         local bpp = self:getBytesPerPixel()
         -- If we know the native data type of a pixel, we can use that instead of doing it byte-per-byte...
         local bbtype = self:getType()
@@ -1297,24 +1271,24 @@ function BB_mt.__index:invertRect(x, y, w, h)
             -- Single step for contiguous scanlines
             --print("Full invertRect")
             if bbtype == TYPE_BBRGB32 then
-                local p = ffi.cast(uint32pt, ffi.cast(uint8pt, self.data) + self.pitch*y)
-                -- Account for potentially off-screen scanline bits by using self.phys_w instead of w,
+                local p = ffi.cast(uint32pt, ffi.cast(uint8pt, self.data) + self.stride*y)
+                -- Account for potentially off-screen scanline bits by using self.pixel_stride instead of w,
                 -- as we've just assured ourselves that the requested w matches self.w ;).
-                for i = 1, self.phys_w*h do
+                for i = 1, self.pixel_stride*h do
                     p[0] = bxor(p[0], 0x00FFFFFF)
                     -- Pointer arithmetics magic: +1 on an uint32_t* means +4 bytes (i.e., next pixel) ;).
                     p = p+1
                 end
             elseif bbtype == TYPE_BBRGB16 then
-                local p = ffi.cast(uint16pt, ffi.cast(uint8pt, self.data) + self.pitch*y)
-                for i = 1, self.phys_w*h do
+                local p = ffi.cast(uint16pt, ffi.cast(uint8pt, self.data) + self.stride*y)
+                for i = 1, self.pixel_stride*h do
                     p[0] = bxor(p[0], 0xFFFF)
                     p = p+1
                 end
             else
                 -- Should only be BB8 left, but honor bpp for safety instead of relying purely on pointer arithmetics...
-                local p = ffi.cast(uint8pt, self.data) + self.pitch*y
-                for i = 1, bpp*self.phys_w*h do
+                local p = ffi.cast(uint8pt, self.data) + self.stride*y
+                for i = 1, self.stride*h do
                     p[0] = bxor(p[0], 0xFF)
                     p = p+1
                 end
@@ -1324,7 +1298,7 @@ function BB_mt.__index:invertRect(x, y, w, h)
             --print("Pixel invertRect")
             if bbtype == TYPE_BBRGB32 then
                 for j = y, y+h-1 do
-                    local p = ffi.cast(uint32pt, ffi.cast(uint8pt, self.data) + self.pitch*j) + x
+                    local p = ffi.cast(uint32pt, ffi.cast(uint8pt, self.data) + self.stride*j) + x
                     for i = 0, w-1 do
                         p[0] = bxor(p[0], 0x00FFFFFF)
                         p = p+1
@@ -1332,7 +1306,7 @@ function BB_mt.__index:invertRect(x, y, w, h)
                 end
             elseif bbtype == TYPE_BBRGB16 then
                 for j = y, y+h-1 do
-                    local p = ffi.cast(uint16pt, ffi.cast(uint8pt, self.data) + self.pitch*j) + x
+                    local p = ffi.cast(uint16pt, ffi.cast(uint8pt, self.data) + self.stride*j) + x
                     for i = 0, w-1 do
                         p[0] = bxor(p[0], 0xFFFF)
                         p = p+1
@@ -1341,7 +1315,7 @@ function BB_mt.__index:invertRect(x, y, w, h)
             else
                 -- Again, honor bpp for safety instead of relying purely on pointer arithmetics...
                 for j = y, y+h-1 do
-                    local p = ffi.cast(uint8pt, self.data) + self.pitch*j + bpp*x
+                    local p = ffi.cast(uint8pt, self.data) + self.stride*j + bpp*x
                     for i = 0, bpp*(w-1) do
                         p[0] = bxor(p[0], 0xFF)
                         p = p+1
@@ -1394,7 +1368,7 @@ function BB_mt.__index:paintRect(x, y, w, h, value, setter)
             -- Handle invert...
             local v = value:getColor8()
             if self:getInverse() == 1 then v = v:invert() end
-            -- Handle any target pitch properly (i.e., fetch the amount of bytes taken per pixel)...
+            -- Handle any target stride properly (i.e., fetch the amount of bytes taken per pixel)...
             local bpp = self:getBytesPerPixel()
 
             -- We check against the BB's unrotated coordinates (i.e., self.w and not self:getWidth()),
@@ -1402,15 +1376,15 @@ function BB_mt.__index:paintRect(x, y, w, h, value, setter)
             if x == 0 and w == self.w then
                 -- Single step for contiguous scanlines
                 --print("Single fill paintRect")
-                local p = ffi.cast(uint8pt, self.data) + self.pitch*y
-                -- Account for potentially off-screen scanline bits by using self.phys_w instead of w,
+                local p = ffi.cast(uint8pt, self.data) + self.stride*y
+                -- Account for potentially off-screen scanline bits by using self.pixel_stride instead of w,
                 -- as we've just assured ourselves that the requested w matches self.w ;).
-                ffi.fill(p, bpp*self.phys_w*h, v.a)
+                ffi.fill(p, self.stride*h, v.a)
             else
                 -- Scanline per scanline fill
                 --print("Scanline fill paintRect")
                 for j = y, y+h-1 do
-                    local p = ffi.cast(uint8pt, self.data) + self.pitch*j + bpp*x
+                    local p = ffi.cast(uint8pt, self.data) + self.stride*j + bpp*x
                     ffi.fill(p, bpp*w, v.a)
                 end
             end
@@ -1729,10 +1703,10 @@ make a full copy of the current buffer, with its own memory
 --]]
 function BB_mt.__index:copy()
     local mytype = ffi.typeof(self)
-    local buffer = C.malloc(self.pitch * self.h)
+    local buffer = C.malloc(self.stride * self.h)
     assert(buffer, "cannot allocate buffer")
-    ffi.copy(buffer, self.data, self.pitch * self.h)
-    local copy = mytype(self.w, self.phys_w, self.h, self.phys_h, self.pitch, buffer, self.config)
+    ffi.copy(buffer, self.data, self.stride * self.h)
+    local copy = mytype(self.w, self.pixel_stride, self.h, self.stride, buffer, self.config)
     copy:setAllocated(1)
     return copy
 end
@@ -1747,7 +1721,7 @@ words, a viewport does not create a new buffer with memory.
 --]]
 function BB_mt.__index:viewport(x, y, w, h)
     x, y, w, h = self:getPhysicalRect(x, y, w, h)
-    local viewport = BB.new(w, h, self:getType(), self:getPixelP(x, y), self.pitch, self:getPhysicalWidth(), self:getPhysicalHeight())
+    local viewport = BB.new(w, h, self:getType(), self:getPixelP(x, y), self.stride, self.pixel_stride)
     viewport:setRotation(self:getRotation())
     viewport:setInverse(self:getInverse())
     return viewport
@@ -1818,34 +1792,29 @@ ffi.metatype("ColorRGB16", ColorRGB16_mt)
 ffi.metatype("ColorRGB24", ColorRGB24_mt)
 ffi.metatype("ColorRGB32", ColorRGB32_mt)
 
-function BB.new(width, height, buffertype, dataptr, pitch, phys_width, phys_height)
+function BB.new(width, height, buffertype, dataptr, stride, pixel_stride)
     local bb = nil
     buffertype = buffertype or TYPE_BB8
-    -- Remember the fb's _virtual dimensions if we specified them, as we'll need 'em for fast blitting codepaths
-    phys_width = phys_width or width
-    phys_height = phys_height or height
-    if pitch == nil then
-        if buffertype == TYPE_BB4 then pitch = band(1, width) + rshift(width, 1)
-        elseif buffertype == TYPE_BB8 then pitch = width
-        elseif buffertype == TYPE_BB8A then pitch = lshift(width, 1)
-        elseif buffertype == TYPE_BBRGB16 then pitch = lshift(width, 1)
-        elseif buffertype == TYPE_BBRGB24 then pitch = width * 3
-        elseif buffertype == TYPE_BBRGB32 then pitch = lshift(width, 2)
-        end
-    end
-    if buffertype == TYPE_BB4 then bb = BlitBuffer4(width, phys_width, height, phys_height, pitch, nil, 0)
-    elseif buffertype == TYPE_BB8 then bb = BlitBuffer8(width, phys_width, height, phys_height, pitch, nil, 0)
-    elseif buffertype == TYPE_BB8A then bb = BlitBuffer8A(width, phys_width, height, phys_height, pitch, nil, 0)
-    elseif buffertype == TYPE_BBRGB16 then bb = BlitBufferRGB16(width, phys_width, height, phys_height, pitch, nil, 0)
-    elseif buffertype == TYPE_BBRGB24 then bb = BlitBufferRGB24(width, phys_width, height, phys_height, pitch, nil, 0)
-    elseif buffertype == TYPE_BBRGB32 then bb = BlitBufferRGB32(width, phys_width, height, phys_height, pitch, nil, 0)
+    local bits_per_pixel = assert(BB.TYPE_TO_BPP[tonumber(buffertype)], "unknown buffer type " .. tostring(buffertype))
+
+    -- If no stride is given, make up one from buffer width, while ensuring that 4bpp are always aligned on a byte.
+    stride = stride or rshift(width * bits_per_pixel + 7, 3)
+    -- If no pixel stride is given, use byte stride * 8 / bpp
+    pixel_stride = pixel_stride or (stride * 8 / bits_per_pixel)
+
+    if buffertype == TYPE_BB4 then bb = BlitBuffer4(width, pixel_stride, height, stride, nil, 0)
+    elseif buffertype == TYPE_BB8 then bb = BlitBuffer8(width, pixel_stride, height, stride, nil, 0)
+    elseif buffertype == TYPE_BB8A then bb = BlitBuffer8A(width, pixel_stride, height, stride, nil, 0)
+    elseif buffertype == TYPE_BBRGB16 then bb = BlitBufferRGB16(width, pixel_stride, height, stride, nil, 0)
+    elseif buffertype == TYPE_BBRGB24 then bb = BlitBufferRGB24(width, pixel_stride, height, stride, nil, 0)
+    elseif buffertype == TYPE_BBRGB32 then bb = BlitBufferRGB32(width, pixel_stride, height, stride, nil, 0)
     else error("unknown blitbuffer type")
     end
     bb:setType(buffertype)
     if dataptr == nil then
-        dataptr = C.malloc(pitch*height)
+        dataptr = C.malloc(stride*height)
         assert(dataptr, "cannot allocate memory for blitbuffer")
-        ffi.fill(dataptr, pitch*height)
+        ffi.fill(dataptr, stride*height)
         bb:setAllocated(1)
     end
     bb.data = ffi.cast(bb.data, dataptr)
@@ -1856,16 +1825,16 @@ function BB.compat(oldbuffer)
     return ffi.cast("BlitBuffer4*", oldbuffer)[0]
 end
 
-function BB.fromstring(width, height, buffertype, str, pitch)
+function BB.fromstring(width, height, buffertype, str, stride)
     local dataptr = C.malloc(#str)
     ffi.copy(dataptr, str, #str)
-    local bb = BB.new(width, height, buffertype, dataptr, pitch)
+    local bb = BB.new(width, height, buffertype, dataptr, stride)
     bb:setAllocated(1)
     return bb
 end
 
 function BB.tostring(bb)
-    return ffi.string(bb.data, bb.pitch * bb.h)
+    return ffi.string(bb.data, bb.stride * bb.h)
 end
 
 --[[
@@ -1910,6 +1879,14 @@ BB.TYPE_BB8A = TYPE_BB8A
 BB.TYPE_BBRGB16 = TYPE_BBRGB16
 BB.TYPE_BBRGB24 = TYPE_BBRGB24
 BB.TYPE_BBRGB32 = TYPE_BBRGB32
+BB.TYPE_TO_BPP = {
+    [TYPE_BB4] = 4,
+    [TYPE_BB8] = 8,
+    [TYPE_BB8A] = 16,
+    [TYPE_BBRGB16] = 16,
+    [TYPE_BBRGB24] = 24,
+    [TYPE_BBRGB32] = 32,
+}
 
 BB.has_cblitbuffer = false
 if not os.getenv("KO_NO_CBB") then
