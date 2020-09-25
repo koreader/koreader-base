@@ -13,7 +13,6 @@ local C = ffi.C
 local floor = math.floor
 local ceil = math.ceil
 local min = math.min
-local abs = math.abs
 local rshift = bit.rshift
 local lshift = bit.lshift
 local band = bit.band
