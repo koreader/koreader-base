@@ -49,19 +49,17 @@ typedef struct ColorRGB32 {
 
 typedef struct BlitBuffer {
     int w;
-    int phys_w;
+    int pixel_pitch;   // pitch in pixels
     int h;
-    int phys_h;
-    int pitch;
+    int pitch;         // pitch in bytes
     uint8_t *data;
     uint8_t config;
 } BlitBuffer;
 
 typedef struct BlitBuffer8 {
     int w;
-    int phys_w;
+    int pixel_pitch;
     int h;
-    int phys_h;
     int pitch;
     Color8 *data;
     uint8_t config;
@@ -69,9 +67,8 @@ typedef struct BlitBuffer8 {
 
 typedef struct BlitBuffer8A {
     int w;
-    int phys_w;
+    int pixel_pitch;
     int h;
-    int phys_h;
     int pitch;
     Color8A *data;
     uint8_t config;
@@ -79,9 +76,8 @@ typedef struct BlitBuffer8A {
 
 typedef struct BlitBufferRGB16 {
     int w;
-    int phys_w;
+    int pixel_pitch;
     int h;
-    int phys_h;
     int pitch;
     ColorRGB16 *data;
     uint8_t config;
@@ -89,9 +85,8 @@ typedef struct BlitBufferRGB16 {
 
 typedef struct BlitBufferRGB24 {
     int w;
-    int phys_w;
+    int pixel_pitch;
     int h;
-    int phys_h;
     int pitch;
     ColorRGB24 *data;
     uint8_t config;
@@ -99,9 +94,8 @@ typedef struct BlitBufferRGB24 {
 
 typedef struct BlitBufferRGB32 {
     int w;
-    int phys_w;
+    int pixel_pitch;
     int h;
-    int phys_h;
     int pitch;
     ColorRGB32 *data;
     uint8_t config;

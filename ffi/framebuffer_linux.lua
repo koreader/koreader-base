@@ -134,7 +134,7 @@ function framebuffer:reinit()
     self.debug("FB mapped at", self.data, "of", PAGE_ALIGN(self.fb_size), "bytes")
 
     -- @warning Don't ever cache self.bb, as we may replace it at any time later due to HW rotation causing fb reinit.
-    self.bb = BB.new(vinfo.xres, vinfo.yres, BB["TYPE_BB"..bpp] or BB["TYPE_BBRGB"..bpp], self.data, finfo.line_length, stride_pixels, vinfo.yres)
+    self.bb = BB.new(vinfo.xres, vinfo.yres, BB["TYPE_BB"..bpp] or BB["TYPE_BBRGB"..bpp], self.data, finfo.line_length, stride_pixels)
 
     -- Make accessing the bitdepth easier, because we might want to know we're running on Kobo's quirky 16bpp mode later...
     self.fb_bpp = bpp
