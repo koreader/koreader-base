@@ -2,7 +2,7 @@
 local SDL = require("ffi/SDL2_0")
 local BB = require("ffi/blitbuffer")
 local util = require("ffi/util")
-
+local ffi = require("ffi")
 local framebuffer = {
     -- this blitbuffer will be used when we use refresh emulation
     sdl_bb = nil,
@@ -14,6 +14,10 @@ function framebuffer:init()
         self:_newBB()
     else
         self.bb = BB.new(600, 800)
+    end
+    if os.getenv("EMULATE_BW_SCREEN") then
+        self.device.hasColorScreen = function() return false end
+        self.isColorEnabled = function() return false end
     end
 
     self.bb:fill(BB.COLOR_WHITE)
@@ -42,6 +46,7 @@ function framebuffer:resize(w, h)
     self:refreshFull()
 end
 
+local bb_emu = os.getenv("EMULATE_BB_TYPE")
 function framebuffer:_newBB(w, h)
     w = w or SDL.w
     h = h or SDL.h
@@ -57,13 +62,14 @@ function framebuffer:_newBB(w, h)
     end
 
     -- we present this buffer to the outside
-    local bb = BB.new(w, h, BB.TYPE_BBRGB32)
+    local sdl_bb_type = BB["TYPE_" .. (bb_emu or "BBRGB32")]
+    local bb = BB.new(w, h, sdl_bb_type)
     local flash = os.getenv("EMULATE_READER_FLASH")
     if flash then
         -- in refresh emulation mode, we use a shadow blitbuffer
         -- and blit refresh areas from it.
         self.sdl_bb = bb
-        self.bb = BB.new(w, h, BB.TYPE_BBRGB32)
+        self.bb = BB.new(w, h, bb:getType())
     else
         self.bb = bb
     end
@@ -90,7 +96,20 @@ function framebuffer:_render(bb, x, y, w, h)
     local bb_rect = bb:viewport(x, y, w, h)
     local sdl_rect = SDL.rect(px, py, pw, ph)
 
-    SDL.SDL.SDL_UpdateTexture(SDL.texture, sdl_rect, bb_rect.data, bb_rect.pitch)
+    if not bb_emu then
+        SDL.SDL.SDL_UpdateTexture(SDL.texture, sdl_rect, bb_rect.data, bb_rect.stride)
+    else
+        -- The manual conversion is here deliberately, so as to separate us from possible bugs in the blitter.
+        local vbuf = ffi.new("ColorRGB32[?]", pw*ph)
+        local pos = 0
+        for vy=0, ph-1 do
+            for vx=0, pw-1 do
+                vbuf[pos] = bb_rect:getPixelP(vx, vy)[0]:getColorRGB32()
+                pos = pos+1
+            end
+        end
+        SDL.SDL.SDL_UpdateTexture(SDL.texture, sdl_rect, vbuf, pw * 4)
+    end
 
     SDL.SDL.SDL_RenderClear(SDL.renderer)
     SDL.SDL.SDL_RenderCopy(SDL.renderer, SDL.texture, nil, nil)

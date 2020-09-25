@@ -46,7 +46,7 @@ function FTFace_mt.__index:renderGlyph(char, bold)
     -- bb:getHeight(). For example: ×. This means the char needs to be drawn
     -- above baseline.
     local glyph = {
-        bb = Blitbuffer.new(bitmap.width, bitmap.rows, Blitbuffer.TYPE_BB8, bitmap.buffer, bitmap.pitch):copy(),
+        bb = Blitbuffer.new(bitmap.width, bitmap.rows, Blitbuffer.TYPE_BB8, bitmap.buffer, bitmap.stride):copy(),
         l  = self.glyph.bitmap_left,
         t  = self.glyph.bitmap_top,
         r  = tonumber(self.glyph.metrics.horiAdvance / 64),
@@ -78,7 +78,7 @@ function FTFace_mt.__index:renderGlyphByIndex(index, embolden_half_strength)
     ft2.FT_Render_Glyph(self.glyph, ft2.FT_RENDER_MODE_NORMAL);
     local bitmap = self.glyph.bitmap
     local glyph = {
-        bb = Blitbuffer.new(bitmap.width, bitmap.rows, Blitbuffer.TYPE_BB8, bitmap.buffer, bitmap.pitch):copy(),
+        bb = Blitbuffer.new(bitmap.width, bitmap.rows, Blitbuffer.TYPE_BB8, bitmap.buffer, bitmap.stride):copy(),
         l  = self.glyph.bitmap_left,
         t  = self.glyph.bitmap_top,
         r  = tonumber(self.glyph.metrics.horiAdvance / 64),

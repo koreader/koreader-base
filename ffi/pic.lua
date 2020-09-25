@@ -317,7 +317,7 @@ function Pic.openJPGDocument(filename)
 
     if turbojpeg.tjDecompress2(handle, ffi.cast("unsigned char*", data), #data,
         ffi.cast("unsigned char*", doc.image_bb.data),
-        width[0], doc.image_bb.pitch, height[0], format, 0) == -1 then
+        width[0], doc.image_bb.stride, height[0], format, 0) == -1 then
         error("decoding JPEG file")
     end
 
@@ -348,7 +348,7 @@ function Pic.openJPGDocumentFromMem(data)
 
     if turbojpeg.tjDecompress2(handle, ffi.cast("unsigned char*", data), #data,
         ffi.cast("unsigned char*", doc.image_bb.data),
-        width[0], doc.image_bb.pitch, height[0], format, 0) == -1 then
+        width[0], doc.image_bb.stride, height[0], format, 0) == -1 then
         return false
     end
 

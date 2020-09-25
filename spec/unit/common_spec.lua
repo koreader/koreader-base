@@ -38,7 +38,7 @@ describe("Common modules", function()
         local ss = Blitbuffer.fromstring(serial.load("/tmp/bb.dump"))
         assert.are.same(bb.w, ss.w)
         assert.are.same(bb.h, ss.h)
-        assert.are.same(bb.pitch, ss.pitch)
+        assert.are.same(bb.stride, ss.stride)
         assert.are.same(bb:getType(), ss:getType())
         for i = 0, h - 1 do
             for j = 0, w - 1 do
