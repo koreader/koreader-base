@@ -55,7 +55,6 @@ function framebuffer:_newBB(w, h)
         inverse = self.bb:getInverse() == 1
         self.bb:free()
     end
-    if self.invert_bb then self.invert_bb:free() end
 
     -- we present this buffer to the outside
     local bb = BB.new(w, h, BB.TYPE_BBRGB32)
@@ -68,7 +67,6 @@ function framebuffer:_newBB(w, h)
     else
         self.bb = bb
     end
-    self.invert_bb = BB.new(w, h, BB.TYPE_BBRGB32)
 
     if rotation then
         self.bb:setRotation(rotation)
@@ -86,11 +84,6 @@ function framebuffer:_render(bb, x, y, w, h)
 
     -- x, y, w, h without rotation for SDL rectangle
     local px, py, pw, ph = bb:getPhysicalRect(x, y, w, h)
-
-    if bb:getInverse() == 1 then
-        self.invert_bb:invertblitFrom(bb)
-        bb = self.invert_bb
-    end
 
     -- A viewport is a Blitbuffer object that works on a rectangular
     -- subset of the underlying memory without allocating new memory.
