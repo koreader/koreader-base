@@ -53,7 +53,6 @@ end
 function framebuffer:init()
     -- we present this buffer to the outside
     self.bb = BB.new(android.screen.width, android.screen.height, BB.TYPE_BBRGB32)
-    self.invert_bb = BB.new(android.screen.width, android.screen.height, BB.TYPE_BBRGB32)
     self.bb:fill(BB.COLOR_WHITE)
     self:_updateWindow()
     framebuffer.parent.init(self)
@@ -63,9 +62,23 @@ end
 function framebuffer:resize()
     android.screen.width = android.getScreenWidth()
     android.screen.height = android.getScreenHeight()
-    self.bb:free()
+    local rotation
+    local inverse
+    if self.bb then
+        rotation = self.bb:getRotation()
+        inverse = self.bb:getInverse() == 1
+        self.bb:free()
+    end
     self.bb = BB.new(android.screen.width, android.screen.height, BB.TYPE_BBRGB32)
-    self.invert_bb = BB.new(android.screen.width, android.screen.height, BB.TYPE_BBRGB32)
+
+    -- Rotation and inverse must be inherited
+    if rotation then
+        self.bb:setRotation(rotation)
+    end
+    if inverse then
+        self.bb:invert()
+    end
+
     self.bb:fill(BB.COLOR_WHITE)
     self:_updateWindow()
 end
@@ -118,18 +131,11 @@ function framebuffer:_updateWindow()
 
     if bb then
         local ext_bb = self.full_bb or self.bb
-
+        -- Rotations and inverse are applied in the base ffi/framebuffer class, so our shadow buffer is already inverted and rotated.
+        -- All we need is to do is simply clone the invert and rotation settings, so that the blit below becomes 1:1 copy.
         bb:setInverse(ext_bb:getInverse())
-        -- adapt to possible rotation changes
         bb:setRotation(ext_bb:getRotation())
-        self.invert_bb:setRotation(ext_bb:getRotation())
-
-        if ext_bb:getInverse() == 1 then
-            self.invert_bb:invertblitFrom(ext_bb)
-            bb:blitFrom(self.invert_bb)
-        else
-            bb:blitFrom(ext_bb)
-        end
+        bb:blitFrom(ext_bb)
     end
 
     android.lib.ANativeWindow_unlockAndPost(android.app.window);

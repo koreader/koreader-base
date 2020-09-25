@@ -403,7 +403,7 @@ function fb:toggleNightMode()
         self.bb:invert()
         if self.viewport then
             -- invert and blank out the full framebuffer when we are working on a viewport
-            self.full_bb:invert()
+            self.full_bb:setInverse(self.bb:getInverse())
             self.full_bb:fill(Blitbuffer.COLOR_WHITE)
         end
     end
