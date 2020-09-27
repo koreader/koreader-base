@@ -49,60 +49,54 @@ typedef struct ColorRGB32 {
 
 typedef struct BlitBuffer {
     int w;
-    int phys_w;
+    int pixel_stride;   // nb of pixels from the start of a line to the start of next line
     int h;
-    int phys_h;
-    int pitch;
+    int stride;         // nb of bytes from the start of a line to the start of next line
     uint8_t *data;
     uint8_t config;
 } BlitBuffer;
 
 typedef struct BlitBuffer8 {
     int w;
-    int phys_w;
+    int pixel_stride;
     int h;
-    int phys_h;
-    int pitch;
+    int stride;
     Color8 *data;
     uint8_t config;
 } BlitBuffer8;
 
 typedef struct BlitBuffer8A {
     int w;
-    int phys_w;
+    int pixel_stride;
     int h;
-    int phys_h;
-    int pitch;
+    int stride;
     Color8A *data;
     uint8_t config;
 } BlitBuffer8A;
 
 typedef struct BlitBufferRGB16 {
     int w;
-    int phys_w;
+    int pixel_stride;
     int h;
-    int phys_h;
-    int pitch;
+    int stride;
     ColorRGB16 *data;
     uint8_t config;
 } BlitBufferRGB16;
 
 typedef struct BlitBufferRGB24 {
     int w;
-    int phys_w;
+    int pixel_stride;
     int h;
-    int phys_h;
-    int pitch;
+    int stride;
     ColorRGB24 *data;
     uint8_t config;
 } BlitBufferRGB24;
 
 typedef struct BlitBufferRGB32 {
     int w;
-    int phys_w;
+    int pixel_stride;
     int h;
-    int phys_h;
-    int pitch;
+    int stride;
     ColorRGB32 *data;
     uint8_t config;
 } BlitBufferRGB32;

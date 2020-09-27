@@ -419,7 +419,7 @@ function S.setWindowIcon(icon)
     local icon_bit_depth = 32
     local surface = SDL.SDL_CreateRGBSurfaceWithFormatFrom(icon_bb.data,
                                                            icon_bb:getWidth(), icon_bb:getHeight(),
-                                                           icon_bit_depth, icon_bb.pitch,
+                                                           icon_bit_depth, icon_bb.stride,
                                                            SDL.SDL_PIXELFORMAT_RGBA32)
     SDL.SDL_SetWindowIcon(S.screen, surface)
     SDL.SDL_FreeSurface(surface)
