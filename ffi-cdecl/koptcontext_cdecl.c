@@ -1,6 +1,8 @@
 // CPPFLAGS="-I../koreader-base/ -I/var/tmp/niluje/libk2pdfopt/k2pdfoptlib -I/var/tmp/niluje/libk2pdfopt -I/var/tmp/niluje/libk2pdfopt/willuslib -I/var/tmp/niluje/libk2pdfopt/include_mod -I/var/tmp/niluje/leptonica/src -I/usr/include/luajit-2.0"
 //#include "alltypes.h"
-#include "koptcontext.h"
+
+#define NO_TESSERACT
+#include "context.h"
 #include "koptreflow.h"
 #include "koptcrop.h"
 #include "koptimize.h"

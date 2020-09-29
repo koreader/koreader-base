@@ -20,7 +20,7 @@ $(FREETYPE_LIB) $(FREETYPE_DIR)/include: $(THIRDPARTY_DIR)/freetype2/*.*
 		-DCXXFLAGS="$(CXXFLAGS)" -DLDFLAGS="$(LDFLAGS)" -DCHOST=$(CHOST) \
 		$(CURDIR)/$(THIRDPARTY_DIR)/freetype2 && \
 		$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS)
-	cp -fL $(FREETYPE_DIR)/$(if $(WIN32),bin,lib)/$(notdir $(FREETYPE_LIB)) $@
+	cp -fL $(FREETYPE_LIBDIR)/$(notdir $(FREETYPE_LIB)) $@
 
 $(HARFBUZZ_LIB) $(HARFBUZZ_DIR)/include: $(THIRDPARTY_DIR)/harfbuzz/*.*
 	install -d $(HARFBUZZ_BUILD_DIR)
@@ -80,8 +80,8 @@ $(TURBOJPEG_LIB) $(JPEG_LIB): $(THIRDPARTY_DIR)/libjpeg-turbo/*.*
 		$(CMAKE) $(CMAKE_FLAGS) \
 		$(CURDIR)/$(THIRDPARTY_DIR)/libjpeg-turbo && \
 		$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS)
-	cp -fL $(JPEG_DIR)/$(if $(WIN32),,lib)/$(notdir $(TURBOJPEG_LIB)) $(TURBOJPEG_LIB)
-	cp -fL $(JPEG_DIR)/$(if $(WIN32),,lib)/$(notdir $(JPEG_LIB)) $(JPEG_LIB)
+	cp -fL $(JPEG_LIBDIR)/$(notdir $(TURBOJPEG_LIB)) $(TURBOJPEG_LIB)
+	cp -fL $(JPEG_LIBDIR)/$(notdir $(JPEG_LIB)) $(JPEG_LIB)
 ifdef DARWIN
 	install_name_tool -id \
 		libs/$(notdir $(JPEG_LIB)) \
@@ -91,7 +91,7 @@ ifdef DARWIN
 		$(TURBOJPEG_LIB)
 endif
 
-$(PNG_LIB): $(ZLIB) $(THIRDPARTY_DIR)/libpng/*.*
+$(PNG_LIB) $(PNG_DIR): $(ZLIB) $(THIRDPARTY_DIR)/libpng/*.*
 	install -d $(PNG_BUILD_DIR)
 	cd $(PNG_BUILD_DIR) && \
 		$(CMAKE) $(CMAKE_FLAGS) -DCC="$(CC)" -DCXX="$(CXX)" -DCHOST="$(CHOST)" \
@@ -101,43 +101,25 @@ $(PNG_LIB): $(ZLIB) $(THIRDPARTY_DIR)/libpng/*.*
 		$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS)
 	cp -fL $(PNG_DIR)/.libs/$(notdir $(PNG_LIB)) $@
 
-$(AES_LIB): $(THIRDPARTY_DIR)/minizip/*.*
-	install -d $(MINIZIP_BUILD_DIR)
-	-rm -f $(MINIZIP_DIR)/../minizip-stamp/minizip-build
-	cd $(MINIZIP_BUILD_DIR) && \
-		$(CMAKE) $(CMAKE_FLAGS) -DCC="$(CC) $(CFLAGS)" -DLDFLAGS="$(LDFLAGS)" \
-		-DAR="$(AR)" -DRANLIB="$(RANLIB)" \
-		$(CURDIR)/$(THIRDPARTY_DIR)/minizip && \
-		$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS)
-
-# by default, mupdf compiles to a static library:
-# we generate a dynamic library from the static library:
-$(MUPDF_LIB) $(MUPDF_DIR)/include: $(JPEG_LIB) \
-		$(FREETYPE_LIB) $(FREETYPE_DIR)/include \
-		$(HARFBUZZ_LIB) $(HARFBUZZ_DIR)/include \
-		$(ZLIB) $(AES_LIB) $(THIRDPARTY_DIR)/mupdf/*.*
-	-rm -rf $(MUPDF_BUILD_DIR)
+$(MUPDF_LIB) $(MUPDF_DIR)/include: $(JPEG_LIB) $(JPEG_INC) \
+		$(FREETYPE_LIB) $(FREETYPE_INC) \
+		$(HARFBUZZ_LIB) $(HARFBUZZ_INC) \
+		$(ZLIB) $(ZLIB_INC) $(JP2_LIB) $(JP2_INC) $(OPENSSL_DIR) $(THIRDPARTY_DIR)/mupdf/*.*
 	install -d $(MUPDF_BUILD_DIR)
 	cd $(MUPDF_BUILD_DIR) && \
-		$(CMAKE) $(CMAKE_FLAGS) -DHOSTCFLAGS="$(HOSTCFLAGS)" -DHOSTCC="$(HOSTCC)" \
-		-DCC="$(CC)" -DCFLAGS="$(CFLAGS)" -DCXX="$(CXX)" -DCXXFLAGS="$(CXXFLAGS)" -DOS="$(if $(WIN32),,Other)" \
-		-DAR="$(AR)" -DLDFLAGS="$(LDFLAGS) -L$(CURDIR)/$(OUTPUT_DIR)" \
-		-DXCFLAGS="$(CFLAGS) -DNOBUILTINFONT -DNO_ICC -I$(JPEG_DIR)/include -I$(FREETYPE_DIR)/include/freetype2 -I$(HARFBUZZ_DIR)/include/harfbuzz -I$(ZLIB_DIR) -I$(MINIZIP_DIR)" \
-		-DMUPDF_LIB_STATIC=$(MUPDF_LIB_STATIC) \
-		-DMUPDF_THIRDPARTY_LIBS=$(MUPDF_THIRDPARTY_LIBS) \
-		-DMUPDF_LIB=$(CURDIR)/$(MUPDF_LIB) \
-		-DMUPDF_SONAME=$(notdir $(MUPDF_LIB)) \
-		-DAES_LIB=$(AES_LIB) -DRPATH="\$$ORIGIN" \
-		-DZLIB=$(CURDIR)/$(ZLIB) -DJPEG_LIB=$(CURDIR)/$(JPEG_LIB) \
-		-DFREETYPE_LIB=$(CURDIR)/$(FREETYPE_LIB) \
-		-DHARFBUZZ_LIB=$(CURDIR)/$(HARFBUZZ_LIB) \
+		$(CMAKE) $(CMAKE_FLAGS) \
+		-DCC="$(CC)" \
+		-DLDFLAGS="$(LDFLAGS) -Wl,-rpath,'$(ORIGIN_CMAKE_TO_AUTOCFG)' -L$(OPENSSL_DIR) -L$(LEPTONICA_DIR)/lib -L$(JPEG_LIBDIR) -L$(TESSERACT_DIR)/lib -L$(CURL_DIR)/lib -L$(ZLIB_DIR)/lib -L$(HARFBUZZ_DIR)/lib -L$(FREETYPE_LIBDIR) -L$(JP2_LIBDIR)" \
+		-DOS="$(if $(WIN32),MINGW,$(if $(DARWIN),MACOS,Linux))" \
+		-DMUPDF_LIB="$(MUPDF_LIB_DIR)/$(notdir $(MUPDF_LIB))" \
+		-DXCFLAGS="$(CFLAGS) $(IMG_CFLAGS) -I$(OPENSLS_DIR)/include -I$(FREETYPE_INC) -I$(HARFBUZZ_INC) -I$(ZLIB_INC)" \
 		$(CURDIR)/$(THIRDPARTY_DIR)/mupdf && \
 		$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS)
+	cp -fL $(MUPDF_LIB_DIR)/$(notdir $(MUPDF_LIB)) $(MUPDF_LIB)
 ifdef DARWIN
-	install_name_tool -change \
-		`otool -L "$(MUPDF_LIB)" | grep "$(notdir $(JPEG_LIB)) " | awk '{print $$1}'` \
-		libs/$(notdir $(JPEG_LIB)) \
-		$(MUPDF_LIB)
+	install_name_tool -id \
+		libs/$(notdir $(MUPDF_LIB)) \
+		$@
 endif
 
 $(LODEPNG_LIB) $(LODEPNG_DIR): $(THIRDPARTY_DIR)/lodepng/*.*
@@ -150,7 +132,7 @@ $(LODEPNG_LIB) $(LODEPNG_DIR): $(THIRDPARTY_DIR)/lodepng/*.*
 		$(CURDIR)/$(THIRDPARTY_DIR)/lodepng && \
 		$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS)
 
-$(GIF_LIB): $(THIRDPARTY_DIR)/giflib/*.*
+$(GIF_LIB) $(GIF_DIR): $(THIRDPARTY_DIR)/giflib/*.*
 	install -d $(GIF_BUILD_DIR)
 	cd $(GIF_BUILD_DIR) && \
 		$(CMAKE) $(CMAKE_FLAGS) -DCC="$(CC) $(if $(ANDROID),-DS_IREAD=S_IRUSR -DS_IWRITE=S_IWUSR,)" \
@@ -159,12 +141,42 @@ $(GIF_LIB): $(THIRDPARTY_DIR)/giflib/*.*
 		$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS)
 	cp -fL $(GIF_DIR)/lib/$(notdir $(GIF_LIB)) $@
 
-$(DJVULIBRE_LIB): $(JPEG_LIB) $(THIRDPARTY_DIR)/djvulibre/*.*
+$(TIFF_LIB) $(TIFF_DIR): $(JPEG_DIR) $(ZLIB) $(WEBP_DIR) $(THIRDPARTY_DIR)/libtiff/*.*
+	install -d $(TIFF_BUILD_DIR)
+	cd $(TIFF_BUILD_DIR) && \
+		$(CMAKE) $(CMAKE_FLAGS) \
+		-DCFLAGS="$(CFLAGS) -I$(ZLIB_DIR) -I$(JPEG_DIR)/include -I$(WEBP_DIR)/include" \
+		-DLIBS="-lz -ljpeg -lwebp" \
+		-DLDFLAGS="$(LDFLAGS) -L$(WEBP_DIR)/lib -L$(JPEG_DIR)/lib -L$(ZLIB_DIR) -Wl,-rpath,'$(ORIGIN_CMAKE_TO_AUTOCFG)'" -DCHOST="$(CHOST)" \
+		$(CURDIR)/thirdparty/libtiff && \
+		$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS)
+	cp -fL $(TIFF_DIR)/lib/$(notdir $(TIFF_LIB)) $@
+
+$(JP2_LIB) $(JP2_INC): $(THIRDPARTY_DIR)/openjpeg/*.*
+	install -d $(JP2_BUILD_DIR)
+	cd $(JP2_BUILD_DIR) && \
+		$(CMAKE) $(CMAKE_FLAGS) \
+		-DCFLAGS="$(CFLAGS)" -DLDFLAGS="$(LDFLAGS)" -DCHOST="$(CHOST) -DJP2_LIB_NAME=$(notdir $(JP2_LIB))" \
+		$(CURDIR)/thirdparty/openjpeg && \
+		$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS)
+	ln -s $(JP2_INC) $(JP2_INC)/openjpeg-2.3 || true
+	cp -fL $(JP2_LIBDIR)/$(notdir $(JP2_LIB)) $@
+
+$(WEBP_LIB) $(WEBP_DIR): $(THIRDPARTY_DIR)/libwebp/*.*
+	install -d $(WEBP_BUILD_DIR)
+	cd $(WEBP_BUILD_DIR) && \
+		$(CMAKE) $(CMAKE_FLAGS) \
+		-DCFLAGS="$(CFLAGS)" -DLDFLAGS="$(LDFLAGS)" -DCHOST="$(CHOST)" \
+		$(CURDIR)/thirdparty/libwebp && \
+		$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS)
+	cp -fL $(WEBP_DIR)/lib/$(notdir $(WEBP_LIB)) $@
+
+$(DJVULIBRE_LIB): $(JPEG_LIB) $(TIFF_LIB) $(JPEG_DIR) $(TIFF_DIR) $(THIRDPARTY_DIR)/djvulibre/*.*
 	install -d $(DJVULIBRE_BUILD_DIR)
 	cd $(DJVULIBRE_BUILD_DIR) && \
-		$(CMAKE) $(CMAKE_FLAGS) -DCC="$(CC)" -DCXX="$(CXX)" -DCFLAGS="$(CFLAGS)" \
-		-DCXXFLAGS="$(CXXFLAGS)" -DLDFLAGS="$(LDFLAGS)" \
-		-DLIBS="$(STATIC_LIBSTDCPP)" \
+		$(CMAKE) $(CMAKE_FLAGS) -DCC="$(CC)" -DCXX="$(CXX)" -DCFLAGS="$(CFLAGS) $(IMG_CFLAGS)" \
+		-DCXXFLAGS="$(CXXFLAGS) $(IMG_CFLAGS)" -DLDFLAGS="$(LDFLAGS)" \
+		-DLIBS="$(STATIC_LIBSTDCPP) $(IMG_LDFLAGS)" \
 		-DCHOST="$(if $(EMULATE_READER),,$(CHOST))" \
 		$(CURDIR)/$(THIRDPARTY_DIR)/djvulibre && \
 		$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS)
@@ -260,38 +272,41 @@ $(POPEN_NOSHELL_LIB): $(THIRDPARTY_DIR)/popen-noshell/*.*
 		$(CURDIR)/$(THIRDPARTY_DIR)/popen-noshell && \
 		$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS)
 
-# k2pdfopt depends on leptonica and tesseract
-$(LEPTONICA_DIR): $(THIRDPARTY_DIR)/leptonica/*.*
+$(LEPTONICA_LIB) $(LEPTONICA_DIR): $(WEBP_LIB) $(WEBP_DIR) $(TIFF_LIB) $(TIFF_DIR) $(PNG_LIB) $(PNG_DIR) $(JPEG_LIB) $(JPEG_DIR) $(JP2_LIB) $(JP2_DIR) $(GIF_LIB) $(GIF_DIR) \
+	$(THIRDPARTY_DIR)/leptonica/*.*
 	install -d $(LEPTONICA_BUILD_DIR)
-	rm -rf $(LEPTONICA_DIR)
 	cd $(LEPTONICA_BUILD_DIR) && \
-		$(CMAKE) $(CMAKE_FLAGS) \
+		$(CMAKE) $(CMAKE_FLAGS) -DCC="$(CC)" -DCFLAGS="$(CFLAGS) $(IMG_CFLAGS) -I$(ZLIB_DIR)" \
+		-DLDFLAGS="$(LDFLAGS) $(IMG_LDFLAGS) -Wl,-rpath,'$(ORIGIN_CMAKE_TO_AUTOCFG)'" -DCHOST="$(if $(EMULATE_READER),,$(CHOST))" \
 		$(if $(ARM_GLIBC_GTE_2_22),-DARM_GLIBC_GTE_2_22=on,) \
 		$(CURDIR)/$(THIRDPARTY_DIR)/leptonica && \
 		$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS)
+	cp -f $(LEPTONICA_DIR)/lib/$(notdir $(LEPTONICA_LIB)) $(LEPTONICA_LIB)
 
-$(TESSERACT_DIR): $(THIRDPARTY_DIR)/tesseract/*.*
+$(TESSERACT_LIB) $(TESSERACT_DIR): $(LEPTONICA_LIB) $(LEPTONICA_DIR) $(THIRDPARTY_DIR)/tesseract/*.*
 	install -d $(TESSERACT_BUILD_DIR)
-	rm -rf $(TESSERACT_DIR)
 	cd $(TESSERACT_BUILD_DIR) && \
-		$(CMAKE) $(CMAKE_FLAGS) $(CURDIR)/$(THIRDPARTY_DIR)/tesseract && \
+		$(CMAKE) $(CMAKE_FLAGS) -DCC="$(CC)" -DCXX="$(CXX)" -DCFLAGS="$(CFLAGS) $(IMG_CFLAGS) -I$(LEPTONICA_DIR)/include/leptonica" \
+		-DCXXFLAGS="$(CXXFLAGS) $(IMG_CFLAGS) -I$(TESSERACT_DIR)/src/api -I$(LEPTONICA_DIR)/include/leptonica" \
+		-DLDFLAGS="$(LDFLAGS) -L$(LEPTONICA_DIR)/lib -L$(JPEG_DIR)/lib" \
+		-DLIBS="$(STATIC_LIBSTDCPP)" \
+		-DCHOST="$(if $(EMULATE_READER),,$(CHOST))" \
+		$(CURDIR)/$(THIRDPARTY_DIR)/tesseract && \
 		$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS)
+	cp -f $(TESSERACT_DIR)/lib/$(notdir $(TESSERACT_LIB)) $(TESSERACT_LIB)
 
-$(K2PDFOPT_LIB) $(LEPTONICA_LIB) $(TESSERACT_LIB): $(PNG_LIB) $(ZLIB) \
-		$(THIRDPARTY_DIR)/libk2pdfopt/*.* \
-		$(TESSERACT_DIR) $(LEPTONICA_DIR)
+$(K2PDFOPT_LIB) $(K2PDFOPT_DIR): $(PNG_LIB) $(ZLIB) $(TESSERACT_LIB) $(LEPTONICA_LIB) $(DJVULIBRE_LIB) $(MUPDF_LIB) \
+	$(THIRDPARTY_DIR)/libk2pdfopt/*.*
 	install -d $(K2PDFOPT_BUILD_DIR)
 	cd $(K2PDFOPT_BUILD_DIR) && \
-		$(CMAKE) $(CMAKE_FLAGS) $(if $(EMULATE_READER),,-DHOST="$(if $(ANDROID),"arm-linux",$(CHOST))") \
-		-DCC="$(CC)" -DCFLAGS="$(CFLAGS)" -DCXX="$(CXX)" -DCXXFLAGS="$(CXXFLAGS) -O3" \
-		-DAR="$(AR)" -DRANLIB="$(RANLIB)" -DSTDCPPLIB="$(STATIC_LIBSTDCPP)" -DLDFLAGS="$(LDFLAGS)" \
-		-DZLIB_DIR=$(ZLIB_DIR) -DZLIB=$(CURDIR)/$(ZLIB) -DPNG_DIR=$(PNG_DIR) \
-		-DLEPTONICA_DIR=$(LEPTONICA_DIR) -DTESSERACT_DIR=$(TESSERACT_DIR) \
+		$(CMAKE) $(CMAKE_FLAGS) \
+		-DCC="$(CC)" \
+		-DCFLAGS="$(CFLAGS) -ffunction-sections -fdata-sections $(IMG_CFLAGS) -I$(LEPTONICA_DIR)/include/leptonica -I$(DJVULIBRE_DIR) -I$(MUPDF_DIR)/include -I$(TESSERACT_DIR)/include" \
+		-DLDFLAGS="$(LDFLAGS) $(DYNLIB_CMAKE_CFLAGS) $(DYNLIB_EXPORTMAP) -L$(ZLIB_DIR) -L$(LEPTONICA_DIR)/lib -L$(TESSERACT_DIR)/lib $(IMG_LDFLAGS) -L$(MUPDF_LIB_DIR) -L$(DJVULIBRE_LIB_DIR)" \
+		-DLIBNAME=$(notdir $(K2PDFOPT_LIB)) \
 		$(CURDIR)/$(THIRDPARTY_DIR)/libk2pdfopt && \
 		$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS)
-	cp -fL $(K2PDFOPT_DIR)/$(notdir $(K2PDFOPT_LIB)) $(K2PDFOPT_LIB)
-	cp -fL $(K2PDFOPT_DIR)/$(notdir $(LEPTONICA_LIB)) $(LEPTONICA_LIB)
-	cp -fL $(K2PDFOPT_DIR)/$(notdir $(TESSERACT_LIB)) $(TESSERACT_LIB)
+	cp -f $(K2PDFOPT_DIR)/$(notdir $(K2PDFOPT_LIB)) $(K2PDFOPT_LIB)
 ifdef DARWIN
 	install_name_tool -id \
 		libs/$(notdir $(K2PDFOPT_LIB)) \
@@ -379,7 +394,7 @@ $(GLIB_STATIC): $(LIBICONV) $(LIBGETTEXT) $(LIBFFI_DIR)/include $(THIRDPARTY_DIR
 		$(CURDIR)/$(THIRDPARTY_DIR)/glib && \
 		$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS)
 
-$(ZLIB) $(ZLIB_STATIC): $(THIRDPARTY_DIR)/zlib/*.*
+$(ZLIB) $(ZLIB_STATIC) $(ZLIB_DIR): $(THIRDPARTY_DIR)/zlib/*.*
 	install -d $(ZLIB_BUILD_DIR)
 	-rm -f $(ZLIB_DIR)/../zlib-stamp/zlib-install $(ZLIB) $(ZLIB_STATIC)
 	cd $(ZLIB_BUILD_DIR) && \

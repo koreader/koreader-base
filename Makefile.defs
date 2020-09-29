@@ -480,8 +480,10 @@ else
 	#          &  https://github.com/llvm/llvm-project/blob/1c4b5a8dfed853ca8cbee98f274ff0a173186586/clang/lib/Frontend/CompilerInvocation.cpp#L2136-L2164
 	#       FWIW, the C++ move to gnu++14 by default dates back to Clang 6:
 	#       c.f., https://github.com/llvm-mirror/clang/commit/466d8da5f89b1a780f735c86f414fa69ce63221b
-	CSTD_FLAGS:=-std=gnu11
-	CXXSTD_FLAGS:=-std=gnu++14
+
+	# TBA: Do we need this? It seems to actually break clang/OSX in tesseract..
+	#CSTD_FLAGS:=-std=gnu11
+	#CXXSTD_FLAGS:=-std=gnu++14
 endif
 
 HOSTCFLAGS:=$(HOST_ARCH) $(BASE_CFLAGS) $(QFLAGS)
@@ -662,19 +664,12 @@ LUAFILESYSTEM_DIR=luafilesystem
 
 ZLIB_BUILD_DIR=$(THIRDPARTY_DIR)/zlib/build/$(MACHINE)
 ZLIB_DIR=$(CURDIR)/$(ZLIB_BUILD_DIR)/zlib-prefix/src/zlib
+ZLIB_INC=$(ZLIB_DIR)
 ZLIB_STATIC=$(ZLIB_DIR)/libz.a
-
-MINIZIP_BUILD_DIR=$(THIRDPARTY_DIR)/minizip/build/$(MACHINE)
-MINIZIP_DIR=$(CURDIR)/$(MINIZIP_BUILD_DIR)/minizip-prefix/src/minizip
-AES_LIB_DIR=$(MINIZIP_DIR)/aes
-AES_LIB=$(MINIZIP_DIR)/libaes.a
 
 MUPDF_BUILD_DIR=$(CURDIR)/$(THIRDPARTY_DIR)/mupdf/build/$(MACHINE)
 MUPDF_DIR=$(MUPDF_BUILD_DIR)/mupdf-prefix/src/mupdf
-MUPDF_LIB_DIR=$(MUPDF_DIR)/build/$(if $(KODEBUG),debug,release)
-MUPDF_LIB_STATIC=$(MUPDF_LIB_DIR)/libmupdf.a
-MUPDF_THIRDPARTY_LIBS=$(MUPDF_LIB_DIR)/libmupdfthird.a \
-			$(AES_LIB)
+MUPDF_LIB_DIR=$(MUPDF_DIR)/build/shared-$(if $(KODEBUG),debug,release)
 MUPDF_LIB=$(OUTPUT_DIR)/libs/libmupdf$(LIB_EXT)
 
 DJVULIBRE_BUILD_DIR=$(THIRDPARTY_DIR)/djvulibre/build/$(MACHINE)
@@ -702,28 +697,31 @@ POPEN_NOSHELL_DIR=$(CURDIR)/$(POPEN_NOSHELL_BUILD_DIR)/popen-noshell-prefix/src/
 POPEN_NOSHELL_LIB=$(POPEN_NOSHELL_DIR)/libpopen_noshell.a
 
 LEPTONICA_BUILD_DIR=$(THIRDPARTY_DIR)/leptonica/build/$(MACHINE)
-LEPTONICA_DIR=$(CURDIR)/$(LEPTONICA_BUILD_DIR)/leptonica-prefix/src/leptonica
+LEPTONICA_DIR=$(CURDIR)/$(LEPTONICA_BUILD_DIR)/leptonica-prefix/src/leptonica-build
 
 TESSERACT_BUILD_DIR=$(THIRDPARTY_DIR)/tesseract/build/$(MACHINE)
-TESSERACT_DIR=$(CURDIR)/$(TESSERACT_BUILD_DIR)/tesseract-prefix/src/tesseract
+TESSERACT_DIR=$(CURDIR)/$(TESSERACT_BUILD_DIR)/tesseract-prefix/src/tesseract-build
 
 K2PDFOPT_BUILD_DIR=$(THIRDPARTY_DIR)/libk2pdfopt/build/$(MACHINE)
 K2PDFOPT_DIR=$(CURDIR)/$(K2PDFOPT_BUILD_DIR)/libk2pdfopt-prefix/src/libk2pdfopt
 K2PDFOPT_LIB_EXT=$(if $(WIN32),-2.dll,$(if $(DARWIN),.2.dylib,.so.2))
 K2PDFOPT_LIB=$(OUTPUT_DIR)/libs/libk2pdfopt$(K2PDFOPT_LIB_EXT)
-K2PDFOPT_CFLAGS=-I$(K2PDFOPT_DIR)/willuslib \
-		-I$(K2PDFOPT_DIR)/k2pdfoptlib -I$(K2PDFOPT_DIR) \
-		-I$(K2PDFOPT_DIR)/include_mod
+K2PDFOPT_CFLAGS=-I$(K2PDFOPT_DIR)/k2pdfopt/willuslib \
+		-I$(K2PDFOPT_DIR)/k2pdfopt/k2pdfoptlib -I$(K2PDFOPT_DIR) \
+		-I$(K2PDFOPT_DIR)/k2pdfopt/include_mod
 
 FREETYPE_LIB_EXT=$(if $(WIN32),-6.dll,$(if $(DARWIN),.6.dylib,.so.6))
 FREETYPE_LIB=$(OUTPUT_DIR)/libs/libfreetype$(FREETYPE_LIB_EXT)
 FREETYPE_BUILD_DIR=$(THIRDPARTY_DIR)/freetype2/build/$(MACHINE)
 FREETYPE_DIR=$(CURDIR)/$(FREETYPE_BUILD_DIR)/freetype2-prefix/src/freetype2-build
+FREETYPE_LIBDIR=$(FREETYPE_DIR)/$(if $(WIN32),bin,lib)
+FREETYPE_INC=$(FREETYPE_DIR)/include/freetype2
 
 HARFBUZZ_LIB_EXT=$(if $(WIN32),-0.dll,$(if $(DARWIN),.0.dylib,.so.0))
 HARFBUZZ_LIB=$(OUTPUT_DIR)/libs/libharfbuzz$(HARFBUZZ_LIB_EXT)
 HARFBUZZ_BUILD_DIR=$(THIRDPARTY_DIR)/harfbuzz/build/$(MACHINE)
 HARFBUZZ_DIR=$(CURDIR)/$(HARFBUZZ_BUILD_DIR)/harfbuzz-prefix/src/harfbuzz-build
+HARFBUZZ_INC=$(HARFBUZZ_DIR)/include/harfbuzz
 
 FRIBIDI_LIB_EXT=$(if $(WIN32),-0.dll,$(if $(DARWIN),.0.dylib,.so.0))
 FRIBIDI_LIB=$(OUTPUT_DIR)/libs/libfribidi$(FRIBIDI_LIB_EXT)
@@ -745,6 +743,7 @@ JPEG_LIB=$(OUTPUT_DIR)/libs/libjpeg$(JPEG_LIB_EXT)
 TURBOJPEG_LIB=$(OUTPUT_DIR)/libs/libturbojpeg$(if $(WIN32),.dll,$(if $(DARWIN),.dylib,.so))
 JPEG_BUILD_DIR=$(THIRDPARTY_DIR)/libjpeg-turbo/build/$(MACHINE)
 JPEG_DIR=$(CURDIR)/$(JPEG_BUILD_DIR)/libjpeg-turbo-prefix/src/libjpeg-turbo-build
+JPEG_LIBDIR=$(JPEG_DIR)/$(if $(WIN32),,lib)
 
 PNG_LIB_EXT=$(if $(WIN32),-16.dll,$(if $(DARWIN),.16.dylib,.so.16))
 PNG_LIB=$(OUTPUT_DIR)/libs/libpng16$(PNG_LIB_EXT)
@@ -759,6 +758,35 @@ GIF_LIB_EXT=$(if $(WIN32),-7.dll,$(if $(DARWIN),.7.dylib,.so.7))
 GIF_LIB=$(OUTPUT_DIR)/libs/libgif$(GIF_LIB_EXT)
 GIF_BUILD_DIR=$(THIRDPARTY_DIR)/giflib/build/$(MACHINE)
 GIF_DIR=$(CURDIR)/$(GIF_BUILD_DIR)/giflib-prefix/src/giflib-build
+
+TIFF_LIB_EXT=$(if $(WIN32),-5.dll,$(if $(DARWIN),.5.dylib,.so.5))
+TIFF_LIB=$(OUTPUT_DIR)/libs/libtiff$(TIFF_LIB_EXT)
+TIFF_BUILD_DIR=$(THIRDPARTY_DIR)/libtiff/build/$(MACHINE)
+TIFF_DIR=$(CURDIR)/$(TIFF_BUILD_DIR)/libtiff-prefix/src/libtiff-build
+
+JP2_LIB_EXT=$(if $(WIN32),-7.dll,$(if $(DARWIN),.7.dylib,.so.7))
+JP2_LIB=$(OUTPUT_DIR)/libs/libopenjp2$(JP2_LIB_EXT)
+JP2_BUILD_DIR=$(THIRDPARTY_DIR)/openjpeg/build/$(MACHINE)
+JP2_DIR=$(CURDIR)/$(JP2_BUILD_DIR)/openjpeg-src
+
+# FIXME: openjpeg build behaves real poorly due to the underlying cmake horribleness
+JP2_INC=$(JP2_DIR)/src/lib/openjp2
+JP2_LIBDIR=$(CURDIR)/$(JP2_BUILD_DIR)/build/$(MACHINE)/openjpeg-src/bin
+JP2_INC2=$(CURDIR)/$(JP2_BUILD_DIR)/build/$(MACHINE)/openjpeg-src/src/lib/openjp2
+
+WEBP_LIB_EXT=$(if $(ANDROID),.so,$(if $(WIN32),-7.dll,$(if $(DARWIN),.7.dylib,.so.7)))
+WEBP_LIB=$(OUTPUT_DIR)/libs/libwebp$(WEBP_LIB_EXT)
+WEBP_BUILD_DIR=$(THIRDPARTY_DIR)/libwebp/build/$(MACHINE)
+WEBP_DIR=$(CURDIR)/$(WEBP_BUILD_DIR)/libwebp-prefix/src/libwebp-build
+
+# Shortcut CFLAG for all image format libraries
+IMG_CFLAGS := \
+	-I$(WEBP_DIR)/include -I$(JP2_INC) -I$(JP2_INC2) -I$(TIFF_DIR)/include -I$(GIF_DIR)/include -I$(PNG_DIR)/include -I$(JPEG_DIR)/include
+
+IMG_LDFLAGS := \
+	-L$(WEBP_DIR)/lib -L$(JP2_LIBDIR) -L$(TIFF_DIR)/lib -L$(GIF_DIR)/lib -L$(PNG_DIR)/lib -L$(JPEG_DIR)/lib -L$(ZLIB_DIR)
+
+IMG_LIBS := -lz -lwebp -lopenjp2 -ltiff -lgif -lpng -ljpeg
 
 LIBFFI_BUILD_DIR=$(THIRDPARTY_DIR)/libffi/build/$(MACHINE)
 LIBFFI_DIR=$(CURDIR)/$(LIBFFI_BUILD_DIR)/libffi-prefix/src/libffi-build
@@ -783,9 +811,9 @@ GLIB=$(GLIB_DIR)/lib/libglib-2.0$(if $(DARWIN),.dylib,.so.0)
 GLIB_STATIC=$(GLIB_DIR)/lib/libglib-2.0.a
 ZLIB=$(OUTPUT_DIR)/libs/$(if $(WIN32),zlib1.dll,$(if $(DARWIN),libz.1.dylib,libz.so.1))
 
-LEPT_LIB_EXT=$(if $(WIN32),-5.dll,$(if $(DARWIN),.5.dylib,.so.5))
+LEPT_LIB_EXT=$(if $(ANDROID),.so,$(if $(WIN32),-5.dll,$(if $(DARWIN),.5.dylib,.so.5)))
 LEPTONICA_LIB=$(OUTPUT_DIR)/libs/liblept$(LEPT_LIB_EXT)
-TESS_LIB_EXT=$(if $(WIN32),-3.dll,$(if $(DARWIN),.3.dylib,.so.3))
+TESS_LIB_EXT=$(if $(ANDROID),.so,$(if $(WIN32),-4.dll,$(if $(DARWIN),.4.dylib,.so.4)))
 TESSERACT_LIB=$(OUTPUT_DIR)/libs/libtesseract$(TESS_LIB_EXT)
 
 OPENSSL_BUILD_DIR=$(THIRDPARTY_DIR)/openssl/build/$(MACHINE)
@@ -909,11 +937,13 @@ DYNLIB_CXXFLAGS=-L$(CURDIR)/$(OUTPUT_DIR)/libs $(CXXFLAGS) -I$(LUAJIT_DIR)/src -
 DYNLIB_CMAKE_CFLAGS=-L$(CURDIR)/$(OUTPUT_DIR)/libs $(CFLAGS) -I$(LUAJIT_DIR)/src -shared
 DYNLIB_CMAKE_CXXFLAGS=-L$(CURDIR)/$(OUTPUT_DIR)/libs $(CXXFLAGS) -I$(LUAJIT_DIR)/src -shared
 ifdef DARWIN
+	DYNLIB_EXPORTMAP=
 	DYNLIB_CFLAGS+=-dynamiclib -undefined dynamic_lookup
 	DYNLIB_CXXFLAGS+=-dynamiclib -undefined dynamic_lookup
 else
-	DYNLIB_CFLAGS+=-Wl,-E -Wl,-rpath,'$$ORIGIN'
-	DYNLIB_CXXFLAGS+=-Wl,-E -Wl,-rpath,'$$ORIGIN'
+	DYNLIB_EXPORTMAP=-Wl,--version-script=export.map
+	DYNLIB_CFLAGS+=-Wl,-E -Wl,--gc-sections -Wl,-rpath,'$$ORIGIN'
+	DYNLIB_CXXFLAGS+=-Wl,-E -Wl,--gc-sections -Wl,-rpath,'$$ORIGIN'
 endif
 
 # RPATH for all libraries in koreader/libs. The expand path looks like below:
@@ -925,8 +955,8 @@ ifdef DARWIN
 	DYNLIB_CMAKE_CFLAGS+=-dynamiclib -undefined dynamic_lookup
 	DYNLIB_CMAKE_CXXFLAGS+=-dynamiclib -undefined dynamic_lookup
 else
-	DYNLIB_CMAKE_CFLAGS+=-Wl,-E -Wl,-rpath,'$(ORIGIN_CMAKE_TO_AUTOCFG)'
-	DYNLIB_CMAKE_CXXFLAGS+=-Wl,-E -Wl,-rpath,'$(ORIGIN_CMAKE_TO_AUTOCFG)'
+	DYNLIB_CMAKE_CFLAGS+=-Wl,-E -Wl,--gc-sections -Wl,-rpath,'$(ORIGIN_CMAKE_TO_AUTOCFG)'
+	DYNLIB_CMAKE_CXXFLAGS+=-Wl,-E -Wl,--gc-sections -Wl,-rpath,'$(ORIGIN_CMAKE_TO_AUTOCFG)'
 endif
 
 LPEG_BUILD_DIR=$(THIRDPARTY_DIR)/lpeg/build/$(MACHINE)
@@ -941,7 +971,7 @@ CMAKE_THIRDPARTY_LIBS := $(CMAKE_THIRDPARTY_LIBS),zyre,czmq,filemq,libzmq
 CMAKE_THIRDPARTY_LIBS := $(CMAKE_THIRDPARTY_LIBS),libk2pdfopt,tesseract,leptonica
 CMAKE_THIRDPARTY_LIBS := $(CMAKE_THIRDPARTY_LIBS),lj-wpaclient
 CMAKE_THIRDPARTY_LIBS := $(CMAKE_THIRDPARTY_LIBS),lua-htmlparser,lua-rapidjson,lua-Spore,luasec,luasocket,libffi,lua-serialize,glib,lodepng,minizip
-CMAKE_THIRDPARTY_LIBS := $(CMAKE_THIRDPARTY_LIBS),djvulibre,mupdf,freetype2,harfbuzz,giflib,libpng,zlib
+CMAKE_THIRDPARTY_LIBS := $(CMAKE_THIRDPARTY_LIBS),djvulibre,mupdf,freetype2,harfbuzz,giflib,libpng,zlib,libtiff,libwebp
 CMAKE_THIRDPARTY_LIBS := $(CMAKE_THIRDPARTY_LIBS),tar,sdcv,libiconv,gettext,libjpeg-turbo,popen-noshell,sqlite
 CMAKE_THIRDPARTY_LIBS := $(CMAKE_THIRDPARTY_LIBS),openssl,dropbear,openssh
 CMAKE_THIRDPARTY_LIBS := $(CMAKE_THIRDPARTY_LIBS),curl,zsync2
