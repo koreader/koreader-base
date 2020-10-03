@@ -30,13 +30,15 @@ selaDestroy(sela) - free memory from SELA
 numaGetIValue(nai, counter_w, counter_l) - returns int value from NUMA
 numaGetFValue(nai, counter_w, counter_l) - returns float vlaue from NUMA
 
-pixGetWidth(pix)
-pixGetHeight(pix)
-pixSplitIntoBoxa
-boxAdjustSides
-boxaCombineOverlaps
-boxCreate
-boxaClipToBox
+pixGetWidth(pix) -  gets width(int) of PIX
+pixGetHeight(pix) - gets height(int) of PIX
+pixSplitIntoBoxa(pixs, minsum, skipdist, delta,maxbg, maxcomps, remainder) - https://tpgit.github.io/Leptonica/boxfunc3_8c.html#a1d95d5caf2245994b62ccb19981da78c
+boxAdjustSides(boxd, boxs, delleft, delright, deltop, delbot) - changes dimensions of boxs, boxd is optional, if nil, a new boxd will be created, if boxd == boxs, function will execute be in-place.
+                                                                to increase dimensions by 20 on each side call boxAdjustSides(box, box, -20, 20, -20, 20), note that delleft == deltop == -20, instead of 20
+                                                                for more information consult: https://tpgit.github.io/Leptonica/boxfunc1_8c.html#aed8fcef2e9caac631fb5bd65a018175e
+boxaCombineOverlaps(boxa) - returns new BOXA, where overlapping box elements are combined into a new one
+boxCreate(x, y, w, h) - creates new BOX with given dimensions, w, h can be 0, which is useful for placeholders, but it doesn't represent correct region
+boxaClipToBox(boxa, box) - all box elements of boxa, that don't intersect with box are removed, the rest is clipped to fit box
 boxOverlapRegion
 boxaAddBox
 pixDrawBoxaRandom
@@ -45,6 +47,9 @@ pixConvertTo32
 pixMultiplyByColor
 pixWriteMemPng
 numaCreateFromFArray
+
+For more information you can consult: https://tpgit.github.io/Leptonica/
+
 @module ffi.koptcontext
 ]]
 
