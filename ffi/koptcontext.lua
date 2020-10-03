@@ -1,55 +1,50 @@
 --[[--
-Leptonica cheatsheet:
--- Data structures:
-PIX - basic data structure - stores image
-PIXA - array of PIX
-BOX - stores rectangle (x, y, w, h)
-BOXA - array of BOX
-SEL - selector for morphological operations
-SELA - array of SEL
-SELA - array of SEL
-NUMA - array of numbers
+# Leptonica cheatsheet:
+## Data structures:
+`PIX - basic data structure - stores image`
+`PIXA - array of PIX`
+`BOX - stores rectangle (x, y, w, h)`
+`BOXA - array of BOX`
+`SEL - selector for morphological operations`
+`SELA - array of SEL`
+`SELA - array of SEL`
+`NUMA - array of numbers`
 
--- Functions:
-boxaGetCount(boxa) - get number of elements in boxa array
-boxaGetBox(boxa, index, flag) - flag can be C.L_COPY (creates new copy) or C.L_CLONE (returns ref-counted handle)
-pixThresholdToBinary(pix, threshold) - returns new black-white PIX, if the source pixel is < threshold,
-                                       resulting pixel is 1 (black), otherwise 0 (white)
-pixGetRegionsBinary(input_pix,
-                    output_halftonemask,
-                    output_textline_mask,
-                    output_textblock_mask,
-                    debug) - returns 0 on success and 1 on failure, output_* are PIX
-pixDestroy(pix) - free memory from PIX
-boxDestroy(box) - free memory from BOX
-selDestroy(sel) - free memory from SEL
-pixaDestroy(pixa) - free memory from PIXA
-boxaDestroy(boxa) - free memory from BOXA
-selaDestroy(sela) - free memory from SELA
+## Flags:
+`L_INSERT = 0, - stuff it in; no copy, clone or copy-clone`
+`L_COPY = 1 - make/use a copy of the object`
+`L_CLONE = 2 - make/use clone (ref count) of the object`
 
-numaGetIValue(nai, counter_w, counter_l) - returns int value from NUMA
-numaGetFValue(nai, counter_w, counter_l) - returns float vlaue from NUMA
+## Functions
+`boxaGetCount(boxa) - get number of elements in boxa array`
+`boxaGetBox(boxa, index, flag) - flag can be C.L_COPY (creates new copy) or C.L_CLONE (returns ref-counted handle)`
+`pixThresholdToBinary(pix, threshold) - returns new black-white PIX, if the source pixel is < threshold, resulting pixel is 1 (black), otherwise 0 (white)`
+`pixGetRegionsBinary(input_pix, output_halftonemask, output_textline_mask, output_textblock_mask, debug) - returns 0 on success and 1 on failure, output_* are PIX`
+`pixDestroy(pix) - free memory from PIX`
+`boxDestroy(box) - free memory from BOX`
+`selDestroy(sel) - free memory from SEL`
+`pixaDestroy(pixa) - free memory from PIXA`
+`boxaDestroy(boxa) - free memory from BOXA`
+`selaDestroy(sela) - free memory from SELA`
 
-pixGetWidth(pix) -  gets width(int) of PIX
-pixGetHeight(pix) - gets height(int) of PIX
-pixSplitIntoBoxa(pixs, minsum, skipdist, delta,maxbg, maxcomps, remainder) - https://tpgit.github.io/Leptonica/boxfunc3_8c.html#a1d95d5caf2245994b62ccb19981da78c
-boxAdjustSides(boxd, boxs, delleft, delright, deltop, delbot) - changes dimensions of boxs, boxd is optional, if nil, a new boxd will be created, if boxd == boxs, function will execute be in-place.
-                                                                to increase dimensions by 20 on each side call boxAdjustSides(box, box, -20, 20, -20, 20), note that delleft == deltop == -20, instead of 20
-                                                                for more information consult: https://tpgit.github.io/Leptonica/boxfunc1_8c.html#aed8fcef2e9caac631fb5bd65a018175e
-boxaCombineOverlaps(boxa) - returns new BOXA, where overlapping box elements are combined into a new one
-boxCreate(x, y, w, h) - creates new BOX with given dimensions, w, h can be 0, which is useful for placeholders, but it doesn't represent correct region
-boxaClipToBox(boxa, box) - all box elements of boxa, that don't intersect with box are removed, the rest is clipped to fit box
-boxOverlapRegion(box, box) - returns overlap region of boxes, nil otherwise
-boxaAddBox(boxa, box, flag) - adds box to boxa, flag can be C.L_COPY, C.L_CLONE, C.L_INSERT
-L_INSERT = 0,     /* stuff it in; no copy, clone or copy-clone    */
-L_COPY = 1,       /* make/use a copy of the object                */
-L_CLONE = 2,      /* make/use clone (ref count) of the object     */
-pixDrawBoxaRandom(pix, boxa, width) -
-pixWritePng(filename, pix, gamma) - returns 0 on success, 1 on failure
-pixConvertTo32(pix) - see https://tpgit.github.io/Leptonica/pixconv_8c.html#ad12acf10eb53747f973b328629417be3
-pixMultiplyByColor(pixd, pixs, box, color_32bit) - pixd can be nil, then it'll be created, if pixd == pixs, it executes in-place
-pixWriteMemPng(l_uint8** pdata, size_t* psize, PIX* pix, l_float32 gamma) - writes PIX to memory, see https://tpgit.github.io/Leptonica/pngio_8c.html#a66272f9f73a5df9577b95ce4023cebc5
-numaCreateFromFArray(float_array, size, flag) - flag is C.L_INSERT or C.L_COPY, returns numa, given float array
+`numaGetIValue(nai, counter_w, counter_l) - returns int value from NUMA`
+`numaGetFValue(nai, counter_w, counter_l) - returns float vlaue from NUMA`
+
+`pixGetWidth(pix) -  gets width(int) of PIX`
+`pixGetHeight(pix) - gets height(int) of PIX`
+`pixSplitIntoBoxa(pixs, minsum, skipdist, delta,maxbg, maxcomps, remainder) - https://tpgit.github.io/Leptonica/boxfunc3_8c.html#a1d95d5caf2245994b62ccb19981da78c`
+`boxAdjustSides(boxd, boxs, delleft, delright, deltop, delbot) - changes dimensions of boxs, boxd is optional, if nil, a new boxd will be created, if boxd == boxs, function will execute be in-place.                                              to increase dimensions by 20 on each side call boxAdjustSides(box, box, -20, 20, -20, 20), note that delleft == deltop == -20, instead of 20. For more information consult: https://tpgit.github.io/Leptonica/boxfunc1_8c.html#aed8fcef2e9caac631fb5bd65a018175e`
+`boxaCombineOverlaps(boxa) - returns new BOXA, where overlapping box elements are combined into a new one`
+`boxCreate(x, y, w, h) - creates new BOX with given dimensions, w, h can be 0, which is useful for placeholders, but it doesn't represent correct region`
+`boxaClipToBox(boxa, box) - all box elements of boxa, that don't intersect with box are removed, the rest is clipped to fit box`
+`boxOverlapRegion(box, box) - returns overlap region of boxes, nil otherwise`
+`boxaAddBox(boxa, box, flag) - adds box to boxa, flag can be C.L_COPY, C.L_CLONE, C.L_INSERT`
+`pixDrawBoxaRandom(pix, boxa, width) - see https://tpgit.github.io/Leptonica/boxfunc3_8c.html#ae81dd581bd3220c1c9d516b8c3101aaf`
+`pixWritePng(filename, pix, gamma) - returns 0 on success, 1 on failure`
+`pixConvertTo32(pix) - see https://tpgit.github.io/Leptonica/pixconv_8c.html#ad12acf10eb53747f973b328629417be3`
+`pixMultiplyByColor(pixd, pixs, box, color_32bit) - pixd can be nil, then it'll be created, if pixd == pixs, it executes in-place`
+`pixWriteMemPng(l_uint8** pdata, size_t* psize, PIX* pix, l_float32 gamma) - writes PIX to memory, see https://tpgit.github.io/Leptonica/pngio_8c.html#a66272f9f73a5df9577b95ce4023cebc5`
+`numaCreateFromFArray(float_array, size, flag) - flag is C.L_INSERT or C.L_COPY, returns numa, given float array`
 
 For more information you can consult: https://tpgit.github.io/Leptonica/
 
