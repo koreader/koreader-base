@@ -7,6 +7,9 @@ BOX - stores rectangle (x, y, w, h)
 BOXA - array of BOX
 SEL - selector for morphological operations
 SELA - array of SEL
+SELA - array of SEL
+NUMA - array of numbers
+
 -- Functions:
 boxaGetCount(boxa) - get number of elements in boxa array
 boxaGetBox(boxa, index, flag) - flag can be C.L_COPY (creates new copy) or C.L_CLONE (returns ref-counted handle)
@@ -24,6 +27,24 @@ pixaDestroy(pixa) - free memory from PIXA
 boxaDestroy(boxa) - free memory from BOXA
 selaDestroy(sela) - free memory from SELA
 
+numaGetIValue(nai, counter_w, counter_l) - returns int value from NUMA
+numaGetFValue(nai, counter_w, counter_l) - returns float vlaue from NUMA
+
+pixGetWidth(pix)
+pixGetHeight(pix)
+pixSplitIntoBoxa
+boxAdjustSides
+boxaCombineOverlaps
+boxCreate
+boxaClipToBox
+boxOverlapRegion
+boxaAddBox
+pixDrawBoxaRandom
+pixWritePng
+pixConvertTo32
+pixMultiplyByColor
+pixWriteMemPng
+numaCreateFromFArray
 @module ffi.koptcontext
 ]]
 
