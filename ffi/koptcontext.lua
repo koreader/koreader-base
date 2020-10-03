@@ -49,7 +49,7 @@ pixWritePng(filename, pix, gamma) - returns 0 on success, 1 on failure
 pixConvertTo32(pix) - see https://tpgit.github.io/Leptonica/pixconv_8c.html#ad12acf10eb53747f973b328629417be3
 pixMultiplyByColor(pixd, pixs, box, color_32bit) - pixd can be nil, then it'll be created, if pixd == pixs, it executes in-place
 pixWriteMemPng(l_uint8** pdata, size_t* psize, PIX* pix, l_float32 gamma) - writes PIX to memory, see https://tpgit.github.io/Leptonica/pngio_8c.html#a66272f9f73a5df9577b95ce4023cebc5
-numaCreateFromFArray
+numaCreateFromFArray(float_array, size, flag) - flag is C.L_INSERT or C.L_COPY, returns numa, given float array
 
 For more information you can consult: https://tpgit.github.io/Leptonica/
 
