@@ -535,12 +535,6 @@ static int getDomVersionWithNormalizedXPointers(lua_State *L) {
     return 1;
 }
 
-static int requestDomVersion(lua_State *L) {
-    int version = luaL_checkint(L, 1);
-    gDOMVersionRequested = version;
-    return 0;
-}
-
 static int getIntProperty(lua_State *L) {
     CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
     const char *propName = luaL_checkstring(L, 2);
@@ -3394,7 +3388,6 @@ static const struct luaL_Reg cre_func[] = {
     {"getTextLangStatus", getTextLangStatus},
     {"getLatestDomVersion", getLatestDomVersion},
     {"getDomVersionWithNormalizedXPointers", getDomVersionWithNormalizedXPointers},
-    {"requestDomVersion", requestDomVersion},
     {NULL, NULL}
 };
 
