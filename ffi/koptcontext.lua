@@ -39,13 +39,16 @@ boxAdjustSides(boxd, boxs, delleft, delright, deltop, delbot) - changes dimensio
 boxaCombineOverlaps(boxa) - returns new BOXA, where overlapping box elements are combined into a new one
 boxCreate(x, y, w, h) - creates new BOX with given dimensions, w, h can be 0, which is useful for placeholders, but it doesn't represent correct region
 boxaClipToBox(boxa, box) - all box elements of boxa, that don't intersect with box are removed, the rest is clipped to fit box
-boxOverlapRegion
-boxaAddBox
-pixDrawBoxaRandom
-pixWritePng
-pixConvertTo32
-pixMultiplyByColor
-pixWriteMemPng
+boxOverlapRegion(box, box) - returns overlap region of boxes, nil otherwise
+boxaAddBox(boxa, box, flag) - adds box to boxa, flag can be C.L_COPY, C.L_CLONE, C.L_INSERT
+L_INSERT = 0,     /* stuff it in; no copy, clone or copy-clone    */
+L_COPY = 1,       /* make/use a copy of the object                */
+L_CLONE = 2,      /* make/use clone (ref count) of the object     */
+pixDrawBoxaRandom(pix, boxa, width) -
+pixWritePng(filename, pix, gamma) - returns 0 on success, 1 on failure
+pixConvertTo32(pix) - see https://tpgit.github.io/Leptonica/pixconv_8c.html#ad12acf10eb53747f973b328629417be3
+pixMultiplyByColor(pixd, pixs, box, color_32bit) - pixd can be nil, then it'll be created, if pixd == pixs, it executes in-place
+pixWriteMemPng(l_uint8** pdata, size_t* psize, PIX* pix, l_float32 gamma) - writes PIX to memory, see https://tpgit.github.io/Leptonica/pngio_8c.html#a66272f9f73a5df9577b95ce4023cebc5
 numaCreateFromFArray
 
 For more information you can consult: https://tpgit.github.io/Leptonica/
