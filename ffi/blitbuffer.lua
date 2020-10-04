@@ -1748,7 +1748,7 @@ function BB_mt.__index:writePNG(filename, bgr)
     debug.sethook()
 
     -- Create a copy of the input BB, but with no padding and no soft rotation, in a pixel format usable in a PNG...
-    local in_type == self:getType()
+    local in_type = self:getType()
     local out_type
     local out_n
     if in_type == TYPE_BB4 then
