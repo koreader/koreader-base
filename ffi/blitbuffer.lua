@@ -1765,9 +1765,7 @@ function BB8_mt.__index:writePNG(filename)
     -- NOTE: We've tried feeding self.data directly to LodePNG when it would be possible (i.e., rota 0, w == pixel_stride),
     --       and it turned out to be hilariously slower. Cache trashing?
     local bbdump = BB.new(w, h, TYPE_BB8, nil, w, w)
-    print("before")
     bbdump:blitFrom(self)
-    print("after")
 
     Png.encodeToFile(filename, ffi.cast("const unsigned char*", bbdump.data), w, h, 1)
     bbdump:free()
