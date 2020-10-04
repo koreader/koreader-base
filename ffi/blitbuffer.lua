@@ -1734,17 +1734,19 @@ function BB_mt.__index:viewport(x, y, w, h)
 end
 
 --[[
-write blitbuffer contents to a PNG file
+write blitbuffer contents to a PNG file (in a PNG pixel format as close as possible as the input one)
 
 @param filename the name of the file to be created
 --]]
 local Png  -- lazy load ffi/png
-function BB8_mt.__index:writePNG(filename)
+
+function BB4_mt.__index:writePNG(filename)
     if not Png then Png = require("ffi/png") end
     local hook, mask, _ = debug.gethook()
     debug.sethook()
 
     local w, h = self:getWidth(), self:getHeight()
+    -- Convert to Y8, I'm not sure how 4-bit grayscale works in PNG...
     local bbdump = BB.new(w, h, TYPE_BB8, nil, w, w)
     bbdump:blitFrom(self)
 
@@ -1752,7 +1754,27 @@ function BB8_mt.__index:writePNG(filename)
     bbdump:free()
     debug.sethook(hook, mask)
 end
-BB4_mt.__index.writePNG = BB8_mt.__index.writePNG
+
+function BB8_mt.__index:writePNG(filename)
+    if not Png then Png = require("ffi/png") end
+    local hook, mask, _ = debug.gethook()
+    debug.sethook()
+
+    local w, h = self:getWidth(), self:getHeight()
+    -- See if we can make that zero-copy by using the input BB directly...
+    if self:getRotation() == 0 and w == self.pixel_stride then
+        Png.encodeToFile(filename, ffi.cast("const unsigned char*", self.data), w, h, 1)
+    else
+        -- Otherwise, create a copy of the input BB, but with no padding and no soft rotation.
+        local bbdump = BB.new(w, h, TYPE_BB8, nil, w, w)
+        bbdump:blitFrom(self)
+
+        Png.encodeToFile(filename, ffi.cast("const unsigned char*", bbdump.data), w, h, 1)
+        bbdump:free()
+    end
+
+    debug.sethook(hook, mask)
+end
 
 function BB8A_mt.__index:writePNG(filename)
     if not Png then Png = require("ffi/png") end
@@ -1760,11 +1782,17 @@ function BB8A_mt.__index:writePNG(filename)
     debug.sethook()
 
     local w, h = self:getWidth(), self:getHeight()
-    local bbdump = BB.new(w, h, TYPE_BB8A, nil, w, w)
-    bbdump:blitFrom(self)
+    -- See if we can make that zero-copy by using the input BB directly...
+    if self:getRotation() == 0 and w == self.pixel_stride then
+        Png.encodeToFile(filename, ffi.cast("const unsigned char*", self.data), w, h, 2)
+    else
+        -- Otherwise, create a copy of the input BB, but with no padding and no soft rotation.
+        local bbdump = BB.new(w, h, TYPE_BB8A, nil, w, w)
+        bbdump:blitFrom(self)
 
-    Png.encodeToFile(filename, ffi.cast("const unsigned char*", bbdump.data), w, h, 2)
-    bbdump:free()
+        Png.encodeToFile(filename, ffi.cast("const unsigned char*", bbdump.data), w, h, 2)
+        bbdump:free()
+    end
     debug.sethook(hook, mask)
 end
 
@@ -1774,6 +1802,7 @@ function BBRGB16_mt.__index:writePNG(filename)
     debug.sethook()
 
     local w, h = self:getWidth(), self:getHeight()
+    -- RGB565 is the worst, convert to RGB24
     local bbdump = BB.new(w, h, TYPE_BBRGB24, nil, w, w)
     bbdump:blitFrom(self)
 
@@ -1791,11 +1820,17 @@ function BBRGB24_mt.__index:writePNG(filename)
     debug.sethook()
 
     local w, h = self:getWidth(), self:getHeight()
-    local bbdump = BB.new(w, h, TYPE_BBRGB24, nil, w, w)
-    bbdump:blitFrom(self)
+    -- See if we can make that zero-copy by using the input BB directly...
+    if self:getRotation() == 0 and w == self.pixel_stride then
+        Png.encodeToFile(filename, ffi.cast("const unsigned char*", self.data), w, h, 3)
+    else
+        -- Otherwise, create a copy of the input BB, but with no padding and no soft rotation.
+        local bbdump = BB.new(w, h, TYPE_BBRGB24, nil, w, w)
+        bbdump:blitFrom(self)
 
-    Png.encodeToFile(filename, ffi.cast("const unsigned char*", bbdump.data), w, h, 3)
-    bbdump:free()
+        Png.encodeToFile(filename, ffi.cast("const unsigned char*", bbdump.data), w, h, 3)
+        bbdump:free()
+    end
     debug.sethook(hook, mask)
 end
 
@@ -1808,11 +1843,17 @@ function BBRGB32_mt.__index:writePNG(filename)
     debug.sethook()
 
     local w, h = self:getWidth(), self:getHeight()
-    local bbdump = BB.new(w, h, TYPE_BBRGB32, nil, w, w)
-    bbdump:blitFrom(self)
+    -- See if we can make that zero-copy by using the input BB directly...
+    if self:getRotation() == 0 and w == self.pixel_stride then
+        Png.encodeToFile(filename, ffi.cast("const unsigned char*", self.data), w, h, 4)
+    else
+        -- Otherwise, create a copy of the input BB, but with no padding and no soft rotation.
+        local bbdump = BB.new(w, h, TYPE_BBRGB32, nil, w, w)
+        bbdump:blitFrom(self)
 
-    Png.encodeToFile(filename, ffi.cast("const unsigned char*", bbdump.data), w, h, 4)
-    bbdump:free()
+        Png.encodeToFile(filename, ffi.cast("const unsigned char*", bbdump.data), w, h, 4)
+        bbdump:free()
+    end
     debug.sethook(hook, mask)
 end
 
