@@ -1740,31 +1740,69 @@ write blitbuffer contents to a PNG file
 --]]
 local Png  -- lazy load ffi/png
 function BB_mt.__index:writePNG(filename, bgr)
+    -- If input is BGR, devovle straight away to the crap fallback...
+    if bgr then return self:writePNGFromBGR(filename) end
+
+    if not Png then Png = require("ffi/png") end
+    local hook, mask, _ = debug.gethook()
+    debug.sethook()
+
+    -- Create a copy of the input BB, but with no padding and no soft rotation, in a pixel format usable in a PNG...
+    local in_type == self:getType()
+    local out_type
+    local out_n
+    if in_type == TYPE_BB4 then
+        out_type = TYPE_BB8
+        out_n = 1
+    elseif in_type == TYPE_BB8 then
+        out_type = TYPE_BB8
+        out_n = 1
+    elseif in_type == TYPE_BB8A then
+        out_type = TYPE_BB8A
+        out_n = 2
+    elseif in_type == TYPE_BBRGB16 then
+        out_type = TYPE_BBRGB24
+        out_n = 3
+    elseif in_type == TYPE_BBRGB24 then
+        out_type = TYPE_BBRGB24
+        out_n = 3
+    elseif in_type == TYPE_BBRGB32 then
+        out_type = TYPE_BBRGB32
+        out_n = 4
+    else
+        error("unknown blitbuffer type")
+    end
+
+    local w, h = self:getWidth(), self:getHeight()
+    local bbdump = BB.new(w, h, out_type, nil, w, w)
+    bbdump:blitFrom(self)
+
+    Png.encodeToFile(filename, ffi.cast("const unsigned char*", bbdump.data), w, h, out_n)
+    bbdump:free()
+    debug.sethook(hook, mask)
+end
+
+-- Crap manual fallback when a have a BGR <-> RGB swap to handle...
+function BB_mt.__index:writePNGFromBGR(filename)
     if not Png then Png = require("ffi/png") end
     local hook, mask, _ = debug.gethook()
     debug.sethook()
     local w, h = self:getWidth(), self:getHeight()
-    local cdata = C.malloc(w * h * 4)
+    local stride = w * 3
+    local cdata = C.malloc(stride * h)
     local mem = ffi.cast("char*", cdata)
     for y = 0, h-1 do
-        local offset = 4 * w * y
+        local offset = stride * y
         for x = 0, w-1 do
-            local c = self:getPixel(x, y):getColorRGB32()
-            -- NOTE: Kobo's FB is BGR(A), we already trick MuPDF into doing it that way for us, so, keep faking it here!
-            if bgr then
-                mem[offset] = c.b
-                mem[offset + 1] = c.g
-                mem[offset + 2] = c.r
-            else
-                mem[offset] = c.r
-                mem[offset + 1] = c.g
-                mem[offset + 2] = c.b
-            end
-            mem[offset + 3] = 0xFF
-            offset = offset + 4
+            local c = self:getPixel(x, y):getColorRGB24()
+            -- NOTE: Thankfull, this crap fallback is only ever used on BGR fbs...
+            mem[offset] = c.b
+            mem[offset + 1] = c.g
+            mem[offset + 2] = c.r
+            offset = offset + 3
         end
     end
-    Png.encodeToFile(filename, mem, w, h)
+    Png.encodeToFile(filename, mem, w, h, 3)
     C.free(cdata)
     debug.sethook(hook, mask)
 end
