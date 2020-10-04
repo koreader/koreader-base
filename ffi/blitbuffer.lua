@@ -1739,7 +1739,50 @@ write blitbuffer contents to a PNG file
 @param filename the name of the file to be created
 --]]
 local Png  -- lazy load ffi/png
-function BB_mt.__index:writePNG(filename, bgr)
+function BB8_mt.__index:writePNG(filename)
+    if not Png then Png = require("ffi/png") end
+    local hook, mask, _ = debug.gethook()
+    debug.sethook()
+
+    local w, h = self:getWidth(), self:getHeight()
+    local bbdump = BB.new(w, h, TYPE_BB8, nil, w, w)
+    bbdump:blitFrom(self)
+
+    Png.encodeToFile(filename, ffi.cast("const unsigned char*", bbdump.data), w, h, 1)
+    bbdump:free()
+    debug.sethook(hook, mask)
+end
+BB4_mt.__index.writePNG = BB8_mt.__index.writePNG
+
+function BB8A_mt.__index:writePNG(filename)
+    if not Png then Png = require("ffi/png") end
+    local hook, mask, _ = debug.gethook()
+    debug.sethook()
+
+    local w, h = self:getWidth(), self:getHeight()
+    local bbdump = BB.new(w, h, TYPE_BB8A, nil, w, w)
+    bbdump:blitFrom(self)
+
+    Png.encodeToFile(filename, ffi.cast("const unsigned char*", bbdump.data), w, h, 2)
+    bbdump:free()
+    debug.sethook(hook, mask)
+end
+
+function BBRGB16_mt.__index:writePNG(filename)
+    if not Png then Png = require("ffi/png") end
+    local hook, mask, _ = debug.gethook()
+    debug.sethook()
+
+    local w, h = self:getWidth(), self:getHeight()
+    local bbdump = BB.new(w, h, TYPE_BBRGB24, nil, w, w)
+    bbdump:blitFrom(self)
+
+    Png.encodeToFile(filename, ffi.cast("const unsigned char*", bbdump.data), w, h, 3)
+    bbdump:free()
+    debug.sethook(hook, mask)
+end
+
+function BBRGB24_mt.__index:writePNG(filename)
     -- If input is BGR, devolve straight away to the crap fallback...
     if bgr then return self:writePNGFromBGR(filename) end
 
@@ -1747,43 +1790,34 @@ function BB_mt.__index:writePNG(filename, bgr)
     local hook, mask, _ = debug.gethook()
     debug.sethook()
 
-    -- Create a copy of the input BB, but with no padding and no soft rotation, in a pixel format usable in a PNG...
-    local in_type = self:getType()
-    local out_type
-    local out_n
-    if in_type == TYPE_BB4 then
-        out_type = TYPE_BB8
-        out_n = 1
-    elseif in_type == TYPE_BB8 then
-        out_type = TYPE_BB8
-        out_n = 1
-    elseif in_type == TYPE_BB8A then
-        out_type = TYPE_BB8A
-        out_n = 2
-    elseif in_type == TYPE_BBRGB16 then
-        out_type = TYPE_BBRGB24
-        out_n = 3
-    elseif in_type == TYPE_BBRGB24 then
-        out_type = TYPE_BBRGB24
-        out_n = 3
-    elseif in_type == TYPE_BBRGB32 then
-        out_type = TYPE_BBRGB32
-        out_n = 4
-    else
-        error("unknown blitbuffer type")
-    end
-
     local w, h = self:getWidth(), self:getHeight()
-    local bbdump = BB.new(w, h, out_type, nil, w, w)
+    local bbdump = BB.new(w, h, TYPE_BBRGB24, nil, w, w)
     bbdump:blitFrom(self)
 
-    Png.encodeToFile(filename, ffi.cast("const unsigned char*", bbdump.data), w, h, out_n)
+    Png.encodeToFile(filename, ffi.cast("const unsigned char*", bbdump.data), w, h, 3)
+    bbdump:free()
+    debug.sethook(hook, mask)
+end
+
+function BBRGB32_mt.__index:writePNG(filename)
+    -- If input is BGR, devolve straight away to the crap fallback...
+    if bgr then return self:writePNGFromBGR(filename) end
+
+    if not Png then Png = require("ffi/png") end
+    local hook, mask, _ = debug.gethook()
+    debug.sethook()
+
+    local w, h = self:getWidth(), self:getHeight()
+    local bbdump = BB.new(w, h, TYPE_BBRGB32, nil, w, w)
+    bbdump:blitFrom(self)
+
+    Png.encodeToFile(filename, ffi.cast("const unsigned char*", bbdump.data), w, h, 4)
     bbdump:free()
     debug.sethook(hook, mask)
 end
 
 -- Crap manual fallback when a have a BGR <-> RGB swap to handle...
-function BB_mt.__index:writePNGFromBGR(filename)
+function BB.writePNGFromBGR(filename)
     if not Png then Png = require("ffi/png") end
     local hook, mask, _ = debug.gethook()
     debug.sethook()
