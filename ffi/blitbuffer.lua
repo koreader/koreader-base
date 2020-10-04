@@ -1795,7 +1795,7 @@ function BB_mt.__index:writePNGFromBGR(filename)
         local offset = stride * y
         for x = 0, w-1 do
             local c = self:getPixel(x, y):getColorRGB24()
-            -- NOTE: Thankfull, this crap fallback is only ever used on BGR fbs...
+            -- NOTE: Thankfully, this crap fallback is only ever used on BGR fbs, so, no branching here...
             mem[offset] = c.b
             mem[offset + 1] = c.g
             mem[offset + 2] = c.r
