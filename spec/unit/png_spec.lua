@@ -26,7 +26,7 @@ describe("Png module", function()
             end
         end
 
-        ok = Png.encodeToFile(fn, mem, w, h)
+        ok = Png.encodeToFile(fn, mem, w, h, 4)
         ffi.C.free(cdata)
         assert.are.same(ok, true)
 

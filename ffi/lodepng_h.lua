@@ -143,6 +143,7 @@ unsigned int lodepng_decode24(unsigned char **, unsigned int *, unsigned int *, 
 unsigned int lodepng_decode_memory(unsigned char **, unsigned int *, unsigned int *, const unsigned char *, size_t, LodePNGColorType, unsigned int);
 unsigned int lodepng_decode_file(unsigned char **, unsigned int *, unsigned int *, const char *, LodePNGColorType, unsigned int);
 unsigned int lodepng_encode32_file(const char *, const unsigned char *, unsigned int, unsigned int);
+unsigned int lodepng_encode_file(const char *, const unsigned char *, unsigned int, unsigned int, LodePNGColorType, unsigned int);
 void lodepng_state_init(LodePNGState *);
 void lodepng_state_cleanup(LodePNGState *);
 void lodepng_state_copy(LodePNGState *, const LodePNGState *);

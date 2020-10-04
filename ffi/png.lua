@@ -20,8 +20,26 @@ end
 
 local Png = {}
 
-function Png.encodeToFile(filename, mem, w, h)
-    local err = lodepng.lodepng_encode32_file(filename, mem, w, h)
+function Png.encodeToFile(filename, mem, w, h, n)
+
+    -- We'll always want 8-bits per component
+    local bitdepth = 8
+
+    -- Devise the output color type based on the number of components passed
+    local colortype
+    if n == 1 then
+        colortype = lodepng.LCT_GREY
+    elseif n == 2 then
+        colortype = lodepng.LCT_GREY_ALPHA
+    elseif n == 3 then
+        colortype = lodepng.LCT_RGB
+    elseif n == 4 then
+        colortype = lodepng.LCT_RGBA
+    else
+        return false, "passed an invalid number of color components"
+    end
+
+    local err = lodepng.lodepng_encode_file(filename, mem, w, h, colortype, bitdepth)
     if err ~= 0 then
         local err_msg = lodepng.lodepng_error_text(err)
         return false, err_msg
