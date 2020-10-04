@@ -1763,11 +1763,14 @@ function BB8_mt.__index:writePNG(filename)
     local w, h = self:getWidth(), self:getHeight()
     -- See if we can make that zero-copy by using the input BB directly...
     if self:getRotation() == 0 and w == self.pixel_stride then
+        print("zero copy")
         Png.encodeToFile(filename, ffi.cast("const unsigned char*", self.data), w, h, 1)
     else
         -- Otherwise, create a copy of the input BB, but with no padding and no soft rotation.
         local bbdump = BB.new(w, h, TYPE_BB8, nil, w, w)
+        print("before")
         bbdump:blitFrom(self)
+        print("after")
 
         Png.encodeToFile(filename, ffi.cast("const unsigned char*", bbdump.data), w, h, 1)
         bbdump:free()
@@ -1811,7 +1814,7 @@ function BBRGB16_mt.__index:writePNG(filename)
     debug.sethook(hook, mask)
 end
 
-function BBRGB24_mt.__index:writePNG(filename)
+function BBRGB24_mt.__index:writePNG(filename, bgr)
     -- If input is BGR, devolve straight away to the crap fallback...
     if bgr then return self:writePNGFromBGR(filename) end
 
@@ -1834,7 +1837,7 @@ function BBRGB24_mt.__index:writePNG(filename)
     debug.sethook(hook, mask)
 end
 
-function BBRGB32_mt.__index:writePNG(filename)
+function BBRGB32_mt.__index:writePNG(filename, bgr)
     -- If input is BGR, devolve straight away to the crap fallback...
     if bgr then return self:writePNGFromBGR(filename) end
 
@@ -1845,11 +1848,14 @@ function BBRGB32_mt.__index:writePNG(filename)
     local w, h = self:getWidth(), self:getHeight()
     -- See if we can make that zero-copy by using the input BB directly...
     if self:getRotation() == 0 and w == self.pixel_stride then
+        print("zero copy")
         Png.encodeToFile(filename, ffi.cast("const unsigned char*", self.data), w, h, 4)
     else
         -- Otherwise, create a copy of the input BB, but with no padding and no soft rotation.
         local bbdump = BB.new(w, h, TYPE_BBRGB32, nil, w, w)
+        print("before")
         bbdump:blitFrom(self)
+        print("after")
 
         Png.encodeToFile(filename, ffi.cast("const unsigned char*", bbdump.data), w, h, 4)
         bbdump:free()
@@ -1858,7 +1864,8 @@ function BBRGB32_mt.__index:writePNG(filename)
 end
 
 -- Crap manual fallback when a have a BGR <-> RGB swap to handle...
-function BB.writePNGFromBGR(filename)
+function BB_mt.__index:writePNGFromBGR(filename)
+    print("crap fallback")
     if not Png then Png = require("ffi/png") end
     local hook, mask, _ = debug.gethook()
     debug.sethook()
