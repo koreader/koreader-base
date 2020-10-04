@@ -1740,7 +1740,7 @@ write blitbuffer contents to a PNG file
 --]]
 local Png  -- lazy load ffi/png
 function BB_mt.__index:writePNG(filename, bgr)
-    -- If input is BGR, devovle straight away to the crap fallback...
+    -- If input is BGR, devolve straight away to the crap fallback...
     if bgr then return self:writePNGFromBGR(filename) end
 
     if not Png then Png = require("ffi/png") end
