@@ -1761,17 +1761,16 @@ function BB8_mt.__index:writePNG(filename)
     debug.sethook()
 
     local w, h = self:getWidth(), self:getHeight()
-    -- See if we can make that zero-copy by using the input BB directly...
-    if self:getRotation() == 0 and w == self.pixel_stride then
-        Png.encodeToFile(filename, ffi.cast("const unsigned char*", self.data), w, h, 1)
-    else
-        -- Otherwise, create a copy of the input BB, but with no padding and no soft rotation.
-        local bbdump = BB.new(w, h, TYPE_BB8, nil, w, w)
-        bbdump:blitFrom(self)
+    -- Create a copy of the input BB, but with no padding and no soft rotation.
+    -- NOTE: We've tried feeding self.data directly to LodePNG when it would be possible (i.e., rota 0, w == pixel_stride),
+    --       and it turned out to be hilariously slower. Cache trashing?
+    local bbdump = BB.new(w, h, TYPE_BB8, nil, w, w)
+    print("before")
+    bbdump:blitFrom(self)
+    print("after")
 
-        Png.encodeToFile(filename, ffi.cast("const unsigned char*", bbdump.data), w, h, 1)
-        bbdump:free()
-    end
+    Png.encodeToFile(filename, ffi.cast("const unsigned char*", bbdump.data), w, h, 1)
+    bbdump:free()
 
     debug.sethook(hook, mask)
 end
@@ -1782,17 +1781,12 @@ function BB8A_mt.__index:writePNG(filename)
     debug.sethook()
 
     local w, h = self:getWidth(), self:getHeight()
-    -- See if we can make that zero-copy by using the input BB directly...
-    if self:getRotation() == 0 and w == self.pixel_stride then
-        Png.encodeToFile(filename, ffi.cast("const unsigned char*", self.data), w, h, 2)
-    else
-        -- Otherwise, create a copy of the input BB, but with no padding and no soft rotation.
-        local bbdump = BB.new(w, h, TYPE_BB8A, nil, w * 2, w)
-        bbdump:blitFrom(self)
+    -- Create a copy of the input BB, but with no padding and no soft rotation.
+    local bbdump = BB.new(w, h, TYPE_BB8A, nil, w * 2, w)
+    bbdump:blitFrom(self)
 
-        Png.encodeToFile(filename, ffi.cast("const unsigned char*", bbdump.data), w, h, 2)
-        bbdump:free()
-    end
+    Png.encodeToFile(filename, ffi.cast("const unsigned char*", bbdump.data), w, h, 2)
+    bbdump:free()
     debug.sethook(hook, mask)
 end
 
@@ -1820,17 +1814,12 @@ function BBRGB24_mt.__index:writePNG(filename, bgr)
     debug.sethook()
 
     local w, h = self:getWidth(), self:getHeight()
-    -- See if we can make that zero-copy by using the input BB directly...
-    if self:getRotation() == 0 and w == self.pixel_stride then
-        Png.encodeToFile(filename, ffi.cast("const unsigned char*", self.data), w, h, 3)
-    else
-        -- Otherwise, create a copy of the input BB, but with no padding and no soft rotation.
-        local bbdump = BB.new(w, h, TYPE_BBRGB24, nil, w * 3, w)
-        bbdump:blitFrom(self)
+    -- Create a copy of the input BB, but with no padding and no soft rotation.
+    local bbdump = BB.new(w, h, TYPE_BBRGB24, nil, w * 3, w)
+    bbdump:blitFrom(self)
 
-        Png.encodeToFile(filename, ffi.cast("const unsigned char*", bbdump.data), w, h, 3)
-        bbdump:free()
-    end
+    Png.encodeToFile(filename, ffi.cast("const unsigned char*", bbdump.data), w, h, 3)
+    bbdump:free()
     debug.sethook(hook, mask)
 end
 
@@ -1843,17 +1832,12 @@ function BBRGB32_mt.__index:writePNG(filename, bgr)
     debug.sethook()
 
     local w, h = self:getWidth(), self:getHeight()
-    -- See if we can make that zero-copy by using the input BB directly...
-    if self:getRotation() == 0 and w == self.pixel_stride then
-        Png.encodeToFile(filename, ffi.cast("const unsigned char*", self.data), w, h, 4)
-    else
-        -- Otherwise, create a copy of the input BB, but with no padding and no soft rotation.
-        local bbdump = BB.new(w, h, TYPE_BBRGB32, nil, w * 4, w)
-        bbdump:blitFrom(self)
+    -- Create a copy of the input BB, but with no padding and no soft rotation.
+    local bbdump = BB.new(w, h, TYPE_BBRGB32, nil, w * 4, w)
+    bbdump:blitFrom(self)
 
-        Png.encodeToFile(filename, ffi.cast("const unsigned char*", bbdump.data), w, h, 4)
-        bbdump:free()
-    end
+    Png.encodeToFile(filename, ffi.cast("const unsigned char*", bbdump.data), w, h, 4)
+    bbdump:free()
     debug.sethook(hook, mask)
 end
 
