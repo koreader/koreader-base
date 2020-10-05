@@ -61,6 +61,7 @@ char *realpath(const char *restrict, char *restrict) __attribute__((nothrow, lea
 char *basename(char *) __attribute__((nothrow, leaf));
 char *dirname(char *) __attribute__((nothrow, leaf));
 void *malloc(size_t) __attribute__((malloc, leaf, nothrow));
+void *calloc(size_t, size_t) __attribute__((malloc, leaf, nothrow));
 void free(void *) __attribute__((leaf, nothrow));
 void *memset(void *, int, size_t) __attribute__((leaf, nothrow));
 char *strdup(const char *) __attribute__((malloc, leaf, nothrow));

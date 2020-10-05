@@ -1769,7 +1769,6 @@ function BB8_mt.__index:writePNG(filename)
 
     Png.encodeToFile(filename, ffi.cast("const unsigned char*", bbdump.data), w, h, 1)
     bbdump:free()
-
     debug.sethook(hook, mask)
 end
 
@@ -1913,9 +1912,8 @@ function BB.new(width, height, buffertype, dataptr, stride, pixel_stride)
     end
     bb:setType(buffertype)
     if dataptr == nil then
-        dataptr = C.malloc(stride*height)
+        dataptr = C.calloc(stride*height, 1)
         assert(dataptr, "cannot allocate memory for blitbuffer")
-        ffi.fill(dataptr, stride*height)
         bb:setAllocated(1)
     end
     bb.data = ffi.cast(bb.data, dataptr)
