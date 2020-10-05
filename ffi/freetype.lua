@@ -132,12 +132,13 @@ FTFace_mt.__gc = FTFace_mt.__index.done;
 
 local FTFaceType = ffi.metatype("struct FT_FaceRec_", FTFace_mt) -- luacheck: ignore 211
 
-function FT.newFace(filename, pxsize)
+function FT.newFace(filename, pxsize, faceindex)
     if pxsize == nil then pxsize = 16*64 end
+    if faceindex == nil then faceindex = 0 end
 
     local facept = ffi.new("FT_Face[1]")
 
-    local err = ft2.FT_New_Face(freetypelib, filename, 0, facept)
+    local err = ft2.FT_New_Face(freetypelib, filename, faceindex, facept)
     if err ~= 0 then
         error("Failed to load font '"..filename.."', freetype error code: "..err)
     end
