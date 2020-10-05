@@ -312,6 +312,7 @@ function KOPTContext_mt.__index:getPanelFromPage(pos)
         leptonica.boxaDestroy(ffi.new("BOXA *[1]", bb))
         leptonica.pixDestroy(ffi.new("PIX *[1]", pixg))
         leptonica.pixDestroy(ffi.new("PIX *[1]", pix_thresholded))
+        leptonica.pixDestroy(ffi.new("PIX *[1]", pix_inverted))
         leptonica.pixDestroy(ffi.new("PIX *[1]", pixs))
         return res
     end
