@@ -133,9 +133,6 @@ void BB_invert_blit_from(BlitBuffer *dest, BlitBuffer *source, int dest_x, int d
                          int offs_x, int offs_y, int w, int h);
 void BB_color_blit_from(BlitBuffer *dest, BlitBuffer *source, int dest_x, int dest_y,
                         int offs_x, int offs_y, int w, int h, Color8A *color);
-
-void *malloc(int size);
-void free(void *ptr);
 ]]
 
 -- NOTE: This works-around a number of corner-cases which may end up with LuaJIT's optimizer blacklisting our inner loops,
@@ -1734,37 +1731,131 @@ function BB_mt.__index:viewport(x, y, w, h)
 end
 
 --[[
-write blitbuffer contents to a PNG file
+write blitbuffer contents to a PNG file (in a PNG pixel format as close as possible as the input one)
 
 @param filename the name of the file to be created
 --]]
 local Png  -- lazy load ffi/png
-function BB_mt.__index:writePNG(filename, bgr)
+
+function BB4_mt.__index:writePNG(filename)
+    if not Png then Png = require("ffi/png") end
+    local hook, mask, _ = debug.gethook()
+    debug.sethook()
+
+    local w, h = self:getWidth(), self:getHeight()
+    -- Convert to Y8, I'm not sure how 4-bit grayscale works in PNG...
+    local bbdump = BB.new(w, h, TYPE_BB8, nil, w, w)
+    bbdump:blitFrom(self)
+
+    Png.encodeToFile(filename, ffi.cast("const unsigned char*", bbdump.data), w, h, 1)
+    bbdump:free()
+    debug.sethook(hook, mask)
+end
+
+function BB8_mt.__index:writePNG(filename)
+    if not Png then Png = require("ffi/png") end
+    local hook, mask, _ = debug.gethook()
+    debug.sethook()
+
+    local w, h = self:getWidth(), self:getHeight()
+    -- Create a copy of the input BB, but with no padding and no soft rotation.
+    -- NOTE: We've tried feeding self.data directly to LodePNG when it would be possible (i.e., rota 0, w == pixel_stride),
+    --       and it turned out to be hilariously slower. Cache trashing?
+    local bbdump = BB.new(w, h, TYPE_BB8, nil, w, w)
+    bbdump:blitFrom(self)
+
+    Png.encodeToFile(filename, ffi.cast("const unsigned char*", bbdump.data), w, h, 1)
+    bbdump:free()
+    debug.sethook(hook, mask)
+end
+
+function BB8A_mt.__index:writePNG(filename)
+    if not Png then Png = require("ffi/png") end
+    local hook, mask, _ = debug.gethook()
+    debug.sethook()
+
+    local w, h = self:getWidth(), self:getHeight()
+    -- Create a copy of the input BB, but with no padding and no soft rotation.
+    local bbdump = BB.new(w, h, TYPE_BB8A, nil, w * 2, w)
+    bbdump:blitFrom(self)
+
+    Png.encodeToFile(filename, ffi.cast("const unsigned char*", bbdump.data), w, h, 2)
+    bbdump:free()
+    debug.sethook(hook, mask)
+end
+
+function BBRGB16_mt.__index:writePNG(filename)
+    if not Png then Png = require("ffi/png") end
+    local hook, mask, _ = debug.gethook()
+    debug.sethook()
+
+    local w, h = self:getWidth(), self:getHeight()
+    -- RGB565 is the worst, convert to RGB24
+    local bbdump = BB.new(w, h, TYPE_BBRGB24, nil, w * 3, w)
+    bbdump:blitFrom(self)
+
+    Png.encodeToFile(filename, ffi.cast("const unsigned char*", bbdump.data), w, h, 3)
+    bbdump:free()
+    debug.sethook(hook, mask)
+end
+
+function BBRGB24_mt.__index:writePNG(filename, bgr)
+    -- If input is BGR, devolve straight away to the crap fallback...
+    if bgr then return self:writePNGFromBGR(filename) end
+
+    if not Png then Png = require("ffi/png") end
+    local hook, mask, _ = debug.gethook()
+    debug.sethook()
+
+    local w, h = self:getWidth(), self:getHeight()
+    -- Create a copy of the input BB, but with no padding and no soft rotation.
+    local bbdump = BB.new(w, h, TYPE_BBRGB24, nil, w * 3, w)
+    bbdump:blitFrom(self)
+
+    Png.encodeToFile(filename, ffi.cast("const unsigned char*", bbdump.data), w, h, 3)
+    bbdump:free()
+    debug.sethook(hook, mask)
+end
+
+function BBRGB32_mt.__index:writePNG(filename, bgr)
+    -- If input is BGR, devolve straight away to the crap fallback...
+    if bgr then return self:writePNGFromBGR(filename) end
+
+    if not Png then Png = require("ffi/png") end
+    local hook, mask, _ = debug.gethook()
+    debug.sethook()
+
+    local w, h = self:getWidth(), self:getHeight()
+    -- Create a copy of the input BB, but with no padding and no soft rotation.
+    local bbdump = BB.new(w, h, TYPE_BBRGB32, nil, w * 4, w)
+    bbdump:blitFrom(self)
+
+    Png.encodeToFile(filename, ffi.cast("const unsigned char*", bbdump.data), w, h, 4)
+    bbdump:free()
+    debug.sethook(hook, mask)
+end
+
+-- Crap manual fallback when a have a BGR <-> RGB swap to handle...
+function BB_mt.__index:writePNGFromBGR(filename)
     if not Png then Png = require("ffi/png") end
     local hook, mask, _ = debug.gethook()
     debug.sethook()
     local w, h = self:getWidth(), self:getHeight()
-    local cdata = C.malloc(w * h * 4)
+    local stride = w * 3
+    local cdata = C.malloc(stride * h)
     local mem = ffi.cast("char*", cdata)
     for y = 0, h-1 do
-        local offset = 4 * w * y
+        local offset = stride * y
         for x = 0, w-1 do
-            local c = self:getPixel(x, y):getColorRGB32()
-            -- NOTE: Kobo's FB is BGR(A), we already trick MuPDF into doing it that way for us, so, keep faking it here!
-            if bgr then
-                mem[offset] = c.b
-                mem[offset + 1] = c.g
-                mem[offset + 2] = c.r
-            else
-                mem[offset] = c.r
-                mem[offset + 1] = c.g
-                mem[offset + 2] = c.b
-            end
-            mem[offset + 3] = 0xFF
-            offset = offset + 4
+            local c = self:getPixel(x, y):getColorRGB24()
+            -- NOTE: Thankfully, this crap fallback is only ever used on BGR fbs, so, no branching here...
+            mem[offset] = c.b
+            mem[offset + 1] = c.g
+            mem[offset + 2] = c.r
+            offset = offset + 3
         end
     end
-    Png.encodeToFile(filename, mem, w, h)
+    Png.encodeToFile(filename, mem, w, h, 3)
     C.free(cdata)
     debug.sethook(hook, mask)
 end
@@ -1818,9 +1909,8 @@ function BB.new(width, height, buffertype, dataptr, stride, pixel_stride)
     end
     bb:setType(buffertype)
     if dataptr == nil then
-        dataptr = C.malloc(stride*height)
+        dataptr = C.calloc(stride*height, 1)
         assert(dataptr, "cannot allocate memory for blitbuffer")
-        ffi.fill(dataptr, stride*height)
         bb:setAllocated(1)
     end
     bb.data = ffi.cast(bb.data, dataptr)

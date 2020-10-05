@@ -61,10 +61,16 @@ char *realpath(const char *restrict, char *restrict) __attribute__((nothrow, lea
 char *basename(char *) __attribute__((nothrow, leaf));
 char *dirname(char *) __attribute__((nothrow, leaf));
 void *malloc(size_t) __attribute__((malloc, leaf, nothrow));
+void *calloc(size_t, size_t) __attribute__((malloc, leaf, nothrow));
 void free(void *) __attribute__((leaf, nothrow));
 void *memset(void *, int, size_t) __attribute__((leaf, nothrow));
 char *strdup(const char *) __attribute__((malloc, leaf, nothrow));
 char *strndup(const char *, size_t) __attribute__((malloc, leaf, nothrow));
+int strcoll(const char *, const char *) __attribute__((nothrow, leaf, pure));
+int strcmp(const char *, const char *) __attribute__((pure, leaf, nothrow));
+int strcasecmp(const char *, const char *) __attribute__((pure, leaf, nothrow));
+static const int F_OK = 0;
+int access(const char *, int) __attribute__((nothrow, leaf));
 struct _IO_FILE *fopen(const char *restrict, const char *restrict);
 int fclose(struct _IO_FILE *);
 int printf(const char *, ...);

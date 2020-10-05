@@ -1,5 +1,5 @@
 #include <sys/mman.h>
-#include <stropts.h>
+//#include <stropts.h>
 #include <unistd.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -71,11 +71,18 @@ cdecl_func(basename) // NOTE: We'll want the GNU one (c.f., https://github.com/k
 cdecl_func(dirname)
 
 cdecl_func(malloc)
+cdecl_func(calloc)
 cdecl_func(free)
 cdecl_func(memset)
 
 cdecl_func(strdup)
 cdecl_func(strndup)
+cdecl_func(strcoll)
+cdecl_func(strcmp)
+cdecl_func(strcasecmp)
+
+cdecl_const(F_OK)
+cdecl_func(access)
 
 cdecl_func(fopen)
 cdecl_func(fclose)
