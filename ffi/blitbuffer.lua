@@ -133,9 +133,6 @@ void BB_invert_blit_from(BlitBuffer *dest, BlitBuffer *source, int dest_x, int d
                          int offs_x, int offs_y, int w, int h);
 void BB_color_blit_from(BlitBuffer *dest, BlitBuffer *source, int dest_x, int dest_y,
                         int offs_x, int offs_y, int w, int h, Color8A *color);
-
-void *malloc(int size);
-void free(void *ptr);
 ]]
 
 -- NOTE: This works-around a number of corner-cases which may end up with LuaJIT's optimizer blacklisting our inner loops,
