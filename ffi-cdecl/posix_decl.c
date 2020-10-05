@@ -77,6 +77,12 @@ cdecl_func(memset)
 
 cdecl_func(strdup)
 cdecl_func(strndup)
+cdecl_func(strcoll)
+cdecl_func(strcmp)
+cdecl_func(strcasecmp)
+
+cdecl_const(F_OK)
+cdecl_func(access)
 
 cdecl_func(fopen)
 cdecl_func(fclose)

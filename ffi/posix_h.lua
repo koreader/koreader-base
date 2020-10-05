@@ -66,6 +66,8 @@ void free(void *) __attribute__((leaf, nothrow));
 void *memset(void *, int, size_t) __attribute__((leaf, nothrow));
 char *strdup(const char *) __attribute__((malloc, leaf, nothrow));
 char *strndup(const char *, size_t) __attribute__((malloc, leaf, nothrow));
+static const int F_OK = 0;
+int access(const char *, int) __attribute__((nothrow, leaf));
 struct _IO_FILE *fopen(const char *restrict, const char *restrict);
 int fclose(struct _IO_FILE *);
 int printf(const char *, ...);

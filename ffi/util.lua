@@ -113,6 +113,42 @@ function util.df(path)
         tonumber(statvfs.f_bfree * statvfs.f_bsize)
 end
 
+--- Wrapper for C.strcoll.
+-- string sort function respecting LC_COLLATE
+local function strcoll(str1, str2)
+    return C.strcoll(str1, str2) < 0
+end
+
+function util.strcoll(str1, str2)
+    -- lookup strcoll implementation on first use to avoid circular require
+    local strcoll_func = strcoll
+
+    -- Some devices lack compiled locales (Hi, Kobo!), preventing strcoll from behaving sanely. See issue koreader/koreader#686
+    if jit.os == "Linux" and C.access("/usr/lib/locale/locale-archive", C.F_OK) ~= 0 then
+        strcoll_func = function(a, b)
+            return a < b
+        end
+    end
+
+    -- patch real strcoll implementation
+    util.strcoll = function(a, b)
+        if a == nil and b == nil then
+            return false
+        elseif a == nil then
+            return true
+        elseif b == nil then
+            return false
+        elseif DALPHA_SORT_CASE_INSENSITIVE then
+            return strcoll_func(string.lower(a), string.lower(b))
+        else
+            return strcoll_func(a, b)
+        end
+    end
+
+    -- delegate to real strcoll implementation
+    return util.strcoll(str1, str2)
+end
+
 --- Wrapper for C.realpath.
 function util.realpath(path)
     local buffer = ffi.new("char[?]", C.PATH_MAX)
