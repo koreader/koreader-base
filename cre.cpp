@@ -1308,6 +1308,29 @@ static int getFontFaces(lua_State *L) {
 	return 1;
 }
 
+static int getFontFaceFilenameAndFaceIndex(lua_State *L) {
+	const char *facename = luaL_checkstring(L, 1);
+	bool bold = false;
+	if (lua_isboolean(L, 2)) {
+		bold = lua_toboolean(L, 2);
+	}
+	bool italic = false;
+	if (lua_isboolean(L, 3)) {
+		italic = lua_toboolean(L, 3);
+	}
+
+	lString8 filename;
+	int faceindex = -1;
+	bool found = fontMan->getFontFileNameAndFaceIndex(lString16(facename), bold, italic, filename, faceindex);
+	if (found) {
+		lua_pushstring(L, filename.c_str());
+		lua_pushinteger(L, faceindex);
+		return 2;
+	}
+
+	return 0;
+}
+
 static int setViewMode(lua_State *L) {
 	CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
 	LVDocViewMode view_mode = (LVDocViewMode)luaL_checkint(L, 2);
@@ -3378,6 +3401,7 @@ static const struct luaL_Reg cre_func[] = {
     {"initHyphDict", initHyphDict},
     {"newDocView", newDocView},
     {"getFontFaces", getFontFaces},
+    {"getFontFaceFilenameAndFaceIndex", getFontFaceFilenameAndFaceIndex},
     {"getGammaLevel", getGammaLevel},
     {"getGammaIndex", getGammaIndex},
     {"setGammaIndex", setGammaIndex},
