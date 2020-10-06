@@ -973,7 +973,7 @@ end
 
 function BB_mt.__index:blitDefault(dest, dest_x, dest_y, offs_x, offs_y, width, height, setter, set_param)
     -- slow default variant:
-    local hook, mask, count = debug.gethook()
+    local hook, mask, _ = debug.gethook()
     debug.sethook()
     local o_y = offs_y
     for y = dest_y, dest_y+height-1 do
@@ -1259,7 +1259,7 @@ function BB_mt.__index:invertRect(x, y, w, h)
         cblitbuffer.BB_invert_rect(ffi.cast("struct BlitBuffer *", self),
             x, y, w, h)
     else
-        local hook, mask, count = debug.gethook()
+        local hook, mask, _ = debug.gethook()
         debug.sethook()
         -- Handle rotation...
         x, y, w, h = self:getPhysicalRect(x, y, w, h)
@@ -1359,7 +1359,7 @@ function BB_mt.__index:paintRect(x, y, w, h, value, setter)
         cblitbuffer.BB_fill_rect(ffi.cast("struct BlitBuffer *", self),
             x, y, w, h, value:getColor8().a)
     else
-        local hook, mask, count = debug.gethook()
+        local hook, mask, _ = debug.gethook()
         debug.sethook()
         -- We can only do fast filling when there's no complex processing involved (i.e., simple setPixel only)
         -- NOTE: We cheat a bit when targeting non-grayscale BBs,
@@ -1411,7 +1411,7 @@ function BB4_mt.__index:paintRect(x, y, w, h, value, setter)
     w, x = BB.checkBounds(w, x, 0, self:getWidth(), 0xFFFF)
     h, y = BB.checkBounds(h, y, 0, self:getHeight(), 0xFFFF)
     if w <= 0 or h <= 0 then return end
-    local hook, mask, count = debug.gethook()
+    local hook, mask, _ = debug.gethook()
     debug.sethook()
     for tmp_y = y, y+h-1 do
         for tmp_x = x, x+w-1 do
