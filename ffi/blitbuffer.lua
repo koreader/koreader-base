@@ -581,8 +581,9 @@ local MASK_INVERSE = 0x02
 local SHIFT_INVERSE = 1
 local MASK_ROTATED = 0x0C
 local SHIFT_ROTATED = 2
-local MASK_TYPE = 0xF0
+local MASK_TYPE = 0x70
 local SHIFT_TYPE = 4
+local MASK_CFA = 0x80
 
 local TYPE_BB4 = 0
 local TYPE_BB8 = 1
@@ -653,6 +654,14 @@ end
 
 function BB_mt.__index:canUseCbb()
     return use_cblitbuffer and self:getInverse() == 0
+end
+
+function BB_mt.__index:isCFA()
+    return band(MASK_CFA, self.config) ~= 0
+end
+
+function BB_mt.__index:setCFA()
+    self.config = bor(self.config, MASK_CFA)
 end
 
 -- Bits per pixel
@@ -973,8 +982,122 @@ end
 
 function BB_mt.__index:blitDefault(dest, dest_x, dest_y, offs_x, offs_y, width, height, setter, set_param)
     -- slow default variant:
-    local hook, mask, count = debug.gethook()
+    local hook, mask = debug.gethook()
     debug.sethook()
+
+    -- RGB(A) -> BB8 CFA
+    -- TODO: maybe a real mt method picked up somehow?
+    if self:getBpp() >= 24 and dest:isCFA() then
+        assert(dest:getType() == TYPE_BB8, "CFA only with BB8 for the time being")
+
+        -- Unimportant, just to abstract things a little
+        local screen_width = self:getWidth()
+        local screen_height = self:getHeight()
+        local source = self:viewport(offs_x, offs_y, width, height)
+        local function putPixel(x,y,value)
+            return setter(dest, x, y, value, set_param)
+        end
+        local function select_one_of_rgb(rgb, choice)
+            choice = (3 + choice) % 3
+            return Color8(bit.band(bit.rshift(ffi.cast(uint32pt, rgb)[0], choice*8), 0xff))
+        end
+
+        -- Imagine a minimal 8x8 CFA display, if it has pixel coordinates corresponding to hardware portrait:
+        -- (the arrows indicate "RGB order")
+        --
+        --    x=0 ->  ->    x=7
+        --y=0 R g b R g b R g
+        --    R g b R g b R g
+        --\|/ R g b R g b R g
+        --    g R g b R g b R
+        --\|/ g R g b R g b R
+        --    g R g b R g b R
+        --    b g R g b R g b
+        --y=7 b g R g b R g b
+        --
+        -- However pocketbook is rotated 90 clockwise it's a hardware landscape. So the real pixel coordinates
+        -- if you're *looking at a portrait* can be either (assuming the display is sane):
+        --   y=7   <- <-   y=0
+        --   g R b g R b g R x=0
+        --   g R b g R b g R 
+        --   g R b g R b g R \|/
+        --   b g R b g R b g 
+        --   b g R b g R b g \|/
+        --   b g R b g R b g 
+        --   R b g R b g R b 
+        --   R b g R b g R b x=7
+
+        -- But I'd not count on it. There's potential for insanity like this:
+        --   y=7  <- <-    y=0
+        --   R b g R b g R b x=7
+        --   R b g R b g R b  
+        --   R b g R b g R b 
+        --   b g R b g R b g 
+        --   b g R b g R b g /|\
+        --   b g R b g R b g  | 
+        --   g R b g R b g R 
+        --   g R b g R b g R x=0
+        --
+        -- With no "apparent" RGB anchor whatsoever! That's why we're counting "backwards" using right-to-left/bottom-up setting if needed,
+        -- and possibly adding small "fuzz" factor to account for invisible "starting red" pixel as if the screen was actually 9x9, not 8x8.
+        --
+        -- go from first row (in source image) to last row
+        for y = 0, height-1 do
+            -- from first column to the last one in this row
+            for x = 0, width-1 do
+                -- read a pixel from source image. we don't care where it really comes from as long we get 3 color components.
+                local rgb = source:getPixelP(x, y)
+
+                -- what is important is the on-screen coordinates, as that determines the color filter the pixel will be under
+                local pixel_x = dest_x + x
+                local pixel_y = dest_y + y
+
+                -------------------------------------------------
+                -- right-to-left and/or bottom-up rgb pixel order
+                -------------------------------------------------
+                if true then
+                    -- the row might right-to-level pixel order (probably the case on PB)
+                    pixel_x = screen_width - 1 - pixel_x
+                end
+                if false then
+                    -- or the column RGB can be ordered bottom-up
+                    pixel_y = screen_height - 1 - pixel_y
+                end
+
+                -------------------------------------------------
+                -- fuzz factors. on ideal displays both are 0
+                -------------------------------------------------
+                pixel_x = pixel_x + 0 -- something between -2..2
+                pixel_y = pixel_y + 0 -- something between -8..8
+
+                -- now that we have translated the pixel where it probably is "physically" on the mask.
+                -- the formula is simple "every 3 rows, we get the next color. and every column we can get next color too"
+                local choice = (pixel_x+math.floor(pixel_y/3))%3
+
+                --[[
+                -- Select one channel according to the result.
+                if choice == 0 then
+                    cfa_pixel = rgb.r
+                elseif choice == 1 then
+                    cfa_pixel = rgb.g
+                elseif choice == 2 then
+                    cfa_pixel = rgb.b
+                end
+                The conditions can't be really spelled like that as such code cannot be JITed.
+                Helper rselect_one_of_rgb() function does the equivalent without branching.
+                ]]
+                -- choice=0 for red, choice=1 for green, choice=2 for blue
+                local cfa_pixel = select_one_of_rgb(rgb, choice)
+
+                -- and draw the pixel, hopefully of correctly chosen color
+                putPixel(dest_x+x, dest_y+y, cfa_pixel)
+            end
+        end
+        -- we're finished painting on CFA surface
+        debug.sethook(hook, mask)
+        return
+    end
+
     local o_y = offs_y
     for y = dest_y, dest_y+height-1 do
         local o_x = offs_x
