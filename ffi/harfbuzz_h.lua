@@ -23,6 +23,7 @@ typedef enum {
   HB_DIRECTION_TTB = 6,
   HB_DIRECTION_BTT = 7,
 } hb_direction_t;
+typedef const struct hb_language_impl_t *hb_language_t;
 typedef enum {
   HB_SCRIPT_COMMON = 1517910393,
   HB_SCRIPT_INHERITED = 1516858984,
@@ -400,7 +401,7 @@ struct hb_glyph_position_t {
 struct hb_segment_properties_t {
   hb_direction_t direction;
   hb_script_t script;
-  const struct hb_language_impl_t *language;
+  hb_language_t language;
   void *reserved1;
   void *reserved2;
 };
@@ -447,9 +448,9 @@ hb_tag_t hb_tag_from_string(const char *, int);
 void hb_tag_to_string(hb_tag_t, char *);
 hb_direction_t hb_direction_from_string(const char *, int);
 const char *hb_direction_to_string(hb_direction_t);
-const struct hb_language_impl_t *hb_language_from_string(const char *, int);
-const char *hb_language_to_string(const struct hb_language_impl_t *);
-const struct hb_language_impl_t *hb_language_get_default(void);
+hb_language_t hb_language_from_string(const char *, int);
+const char *hb_language_to_string(hb_language_t);
+hb_language_t hb_language_get_default(void);
 hb_script_t hb_script_from_iso15924_tag(hb_tag_t);
 hb_script_t hb_script_from_string(const char *, int);
 hb_tag_t hb_script_to_iso15924_tag(hb_script_t);
@@ -645,8 +646,8 @@ void hb_buffer_set_direction(hb_buffer_t *, hb_direction_t);
 hb_direction_t hb_buffer_get_direction(hb_buffer_t *);
 void hb_buffer_set_script(hb_buffer_t *, hb_script_t);
 hb_script_t hb_buffer_get_script(hb_buffer_t *);
-void hb_buffer_set_language(hb_buffer_t *, const struct hb_language_impl_t *);
-const struct hb_language_impl_t *hb_buffer_get_language(hb_buffer_t *);
+void hb_buffer_set_language(hb_buffer_t *, hb_language_t);
+hb_language_t hb_buffer_get_language(hb_buffer_t *);
 void hb_buffer_set_segment_properties(hb_buffer_t *, const hb_segment_properties_t *);
 void hb_buffer_get_segment_properties(hb_buffer_t *, hb_segment_properties_t *);
 void hb_buffer_guess_segment_properties(hb_buffer_t *);
@@ -746,7 +747,7 @@ typedef enum {
 struct hb_ot_name_entry_t {
   unsigned int name_id;
   hb_var_int_t var;
-  const struct hb_language_impl_t *language;
+  hb_language_t language;
 };
 struct hb_ot_color_layer_t {
   hb_codepoint_t glyph;
@@ -909,9 +910,9 @@ typedef enum {
 } hb_ot_metrics_tag_t;
 typedef struct hb_ot_var_axis_info_t hb_ot_var_axis_info_t;
 const hb_ot_name_entry_t *hb_ot_name_list_names(hb_face_t *, unsigned int *);
-unsigned int hb_ot_name_get_utf8(hb_face_t *, unsigned int, const struct hb_language_impl_t *, unsigned int *, char *);
-unsigned int hb_ot_name_get_utf16(hb_face_t *, unsigned int, const struct hb_language_impl_t *, unsigned int *, uint16_t *);
-unsigned int hb_ot_name_get_utf32(hb_face_t *, unsigned int, const struct hb_language_impl_t *, unsigned int *, uint32_t *);
+unsigned int hb_ot_name_get_utf8(hb_face_t *, unsigned int, hb_language_t, unsigned int *, char *);
+unsigned int hb_ot_name_get_utf16(hb_face_t *, unsigned int, hb_language_t, unsigned int *, uint16_t *);
+unsigned int hb_ot_name_get_utf32(hb_face_t *, unsigned int, hb_language_t, unsigned int *, uint32_t *);
 hb_bool_t hb_ot_color_has_palettes(hb_face_t *);
 unsigned int hb_ot_color_palette_get_count(hb_face_t *);
 unsigned int hb_ot_color_palette_get_name_id(hb_face_t *, unsigned int);
@@ -927,14 +928,14 @@ hb_blob_t *hb_ot_color_glyph_reference_png(hb_font_t *, hb_codepoint_t);
 hb_bool_t hb_ot_layout_table_choose_script(hb_face_t *, hb_tag_t, const hb_tag_t *, unsigned int *, hb_tag_t *) __attribute__((deprecated("Use 'hb_ot_layout_table_select_script' instead")));
 hb_bool_t hb_ot_layout_script_find_language(hb_face_t *, hb_tag_t, unsigned int, hb_tag_t, unsigned int *) __attribute__((deprecated("Use 'hb_ot_layout_script_select_language' instead")));
 void hb_ot_tags_from_script(hb_script_t, hb_tag_t *, hb_tag_t *) __attribute__((deprecated("Use 'hb_ot_tags_from_script_and_language' instead")));
-hb_tag_t hb_ot_tag_from_language(const struct hb_language_impl_t *) __attribute__((deprecated("Use 'hb_ot_tags_from_script_and_language' instead")));
+hb_tag_t hb_ot_tag_from_language(hb_language_t) __attribute__((deprecated("Use 'hb_ot_tags_from_script_and_language' instead")));
 unsigned int hb_ot_var_get_axes(hb_face_t *, unsigned int, unsigned int *, hb_ot_var_axis_t *) __attribute__((deprecated("Use 'hb_ot_var_get_axis_infos' instead")));
 hb_bool_t hb_ot_var_find_axis(hb_face_t *, hb_tag_t, unsigned int *, hb_ot_var_axis_t *) __attribute__((deprecated("Use 'hb_ot_var_find_axis_info' instead")));
 void hb_ot_font_set_funcs(hb_font_t *);
-void hb_ot_tags_from_script_and_language(hb_script_t, const struct hb_language_impl_t *, unsigned int *, hb_tag_t *, unsigned int *, hb_tag_t *);
+void hb_ot_tags_from_script_and_language(hb_script_t, hb_language_t, unsigned int *, hb_tag_t *, unsigned int *, hb_tag_t *);
 hb_script_t hb_ot_tag_to_script(hb_tag_t);
-const struct hb_language_impl_t *hb_ot_tag_to_language(hb_tag_t);
-void hb_ot_tags_to_script_and_language(hb_tag_t, hb_tag_t, hb_script_t *, const struct hb_language_impl_t **);
+hb_language_t hb_ot_tag_to_language(hb_tag_t);
+void hb_ot_tags_to_script_and_language(hb_tag_t, hb_tag_t, hb_script_t *, hb_language_t *);
 hb_bool_t hb_ot_layout_has_glyph_classes(hb_face_t *);
 hb_ot_layout_glyph_class_t hb_ot_layout_get_glyph_class(hb_face_t *, hb_codepoint_t);
 void hb_ot_layout_get_glyphs_in_class(hb_face_t *, hb_ot_layout_glyph_class_t, hb_set_t *);
