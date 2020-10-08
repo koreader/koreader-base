@@ -736,4 +736,263 @@ void hb_ft_font_set_load_flags(hb_font_t *, int);
 int hb_ft_font_get_load_flags(hb_font_t *);
 void hb_ft_font_changed(hb_font_t *);
 void hb_ft_font_set_funcs(hb_font_t *);
+typedef enum {
+  HB_OT_MATH_GLYPH_PART_FLAG_EXTENDER = 1,
+} hb_ot_math_glyph_part_flags_t;
+typedef enum {
+  HB_OT_VAR_AXIS_FLAG_HIDDEN = 1,
+  _HB_OT_VAR_AXIS_FLAG_MAX_VALUE = 2147483647,
+} hb_ot_var_axis_flags_t;
+struct hb_ot_name_entry_t {
+  unsigned int name_id;
+  hb_var_int_t var;
+  const struct hb_language_impl_t *language;
+};
+struct hb_ot_color_layer_t {
+  hb_codepoint_t glyph;
+  unsigned int color_index;
+};
+struct hb_ot_var_axis_t {
+  hb_tag_t tag;
+  unsigned int name_id;
+  float min_value;
+  float default_value;
+  float max_value;
+};
+struct hb_ot_math_glyph_variant_t {
+  hb_codepoint_t glyph;
+  hb_position_t advance;
+};
+struct hb_ot_math_glyph_part_t {
+  hb_codepoint_t glyph;
+  hb_position_t start_connector_length;
+  hb_position_t end_connector_length;
+  hb_position_t full_advance;
+  hb_ot_math_glyph_part_flags_t flags;
+};
+struct hb_ot_var_axis_info_t {
+  unsigned int axis_index;
+  hb_tag_t tag;
+  unsigned int name_id;
+  hb_ot_var_axis_flags_t flags;
+  float min_value;
+  float default_value;
+  float max_value;
+  unsigned int reserved;
+};
+typedef struct hb_ot_name_entry_t hb_ot_name_entry_t;
+typedef enum {
+  HB_OT_COLOR_PALETTE_FLAG_DEFAULT = 0,
+  HB_OT_COLOR_PALETTE_FLAG_USABLE_WITH_LIGHT_BACKGROUND = 1,
+  HB_OT_COLOR_PALETTE_FLAG_USABLE_WITH_DARK_BACKGROUND = 2,
+} hb_ot_color_palette_flags_t;
+typedef struct hb_ot_color_layer_t hb_ot_color_layer_t;
+typedef struct hb_ot_var_axis_t hb_ot_var_axis_t;
+typedef enum {
+  HB_OT_LAYOUT_GLYPH_CLASS_UNCLASSIFIED = 0,
+  HB_OT_LAYOUT_GLYPH_CLASS_BASE_GLYPH = 1,
+  HB_OT_LAYOUT_GLYPH_CLASS_LIGATURE = 2,
+  HB_OT_LAYOUT_GLYPH_CLASS_MARK = 3,
+  HB_OT_LAYOUT_GLYPH_CLASS_COMPONENT = 4,
+} hb_ot_layout_glyph_class_t;
+typedef enum {
+  HB_OT_LAYOUT_BASELINE_TAG_ROMAN = 1919905134,
+  HB_OT_LAYOUT_BASELINE_TAG_HANGING = 1751215719,
+  HB_OT_LAYOUT_BASELINE_TAG_IDEO_FACE_BOTTOM_OR_LEFT = 1768121954,
+  HB_OT_LAYOUT_BASELINE_TAG_IDEO_FACE_TOP_OR_RIGHT = 1768121972,
+  HB_OT_LAYOUT_BASELINE_TAG_IDEO_EMBOX_BOTTOM_OR_LEFT = 1768187247,
+  HB_OT_LAYOUT_BASELINE_TAG_IDEO_EMBOX_TOP_OR_RIGHT = 1768191088,
+  HB_OT_LAYOUT_BASELINE_TAG_MATH = 1835103336,
+  _HB_OT_LAYOUT_BASELINE_TAG_MAX_VALUE = 2147483647,
+} hb_ot_layout_baseline_tag_t;
+typedef enum {
+  HB_OT_MATH_CONSTANT_SCRIPT_PERCENT_SCALE_DOWN = 0,
+  HB_OT_MATH_CONSTANT_SCRIPT_SCRIPT_PERCENT_SCALE_DOWN = 1,
+  HB_OT_MATH_CONSTANT_DELIMITED_SUB_FORMULA_MIN_HEIGHT = 2,
+  HB_OT_MATH_CONSTANT_DISPLAY_OPERATOR_MIN_HEIGHT = 3,
+  HB_OT_MATH_CONSTANT_MATH_LEADING = 4,
+  HB_OT_MATH_CONSTANT_AXIS_HEIGHT = 5,
+  HB_OT_MATH_CONSTANT_ACCENT_BASE_HEIGHT = 6,
+  HB_OT_MATH_CONSTANT_FLATTENED_ACCENT_BASE_HEIGHT = 7,
+  HB_OT_MATH_CONSTANT_SUBSCRIPT_SHIFT_DOWN = 8,
+  HB_OT_MATH_CONSTANT_SUBSCRIPT_TOP_MAX = 9,
+  HB_OT_MATH_CONSTANT_SUBSCRIPT_BASELINE_DROP_MIN = 10,
+  HB_OT_MATH_CONSTANT_SUPERSCRIPT_SHIFT_UP = 11,
+  HB_OT_MATH_CONSTANT_SUPERSCRIPT_SHIFT_UP_CRAMPED = 12,
+  HB_OT_MATH_CONSTANT_SUPERSCRIPT_BOTTOM_MIN = 13,
+  HB_OT_MATH_CONSTANT_SUPERSCRIPT_BASELINE_DROP_MAX = 14,
+  HB_OT_MATH_CONSTANT_SUB_SUPERSCRIPT_GAP_MIN = 15,
+  HB_OT_MATH_CONSTANT_SUPERSCRIPT_BOTTOM_MAX_WITH_SUBSCRIPT = 16,
+  HB_OT_MATH_CONSTANT_SPACE_AFTER_SCRIPT = 17,
+  HB_OT_MATH_CONSTANT_UPPER_LIMIT_GAP_MIN = 18,
+  HB_OT_MATH_CONSTANT_UPPER_LIMIT_BASELINE_RISE_MIN = 19,
+  HB_OT_MATH_CONSTANT_LOWER_LIMIT_GAP_MIN = 20,
+  HB_OT_MATH_CONSTANT_LOWER_LIMIT_BASELINE_DROP_MIN = 21,
+  HB_OT_MATH_CONSTANT_STACK_TOP_SHIFT_UP = 22,
+  HB_OT_MATH_CONSTANT_STACK_TOP_DISPLAY_STYLE_SHIFT_UP = 23,
+  HB_OT_MATH_CONSTANT_STACK_BOTTOM_SHIFT_DOWN = 24,
+  HB_OT_MATH_CONSTANT_STACK_BOTTOM_DISPLAY_STYLE_SHIFT_DOWN = 25,
+  HB_OT_MATH_CONSTANT_STACK_GAP_MIN = 26,
+  HB_OT_MATH_CONSTANT_STACK_DISPLAY_STYLE_GAP_MIN = 27,
+  HB_OT_MATH_CONSTANT_STRETCH_STACK_TOP_SHIFT_UP = 28,
+  HB_OT_MATH_CONSTANT_STRETCH_STACK_BOTTOM_SHIFT_DOWN = 29,
+  HB_OT_MATH_CONSTANT_STRETCH_STACK_GAP_ABOVE_MIN = 30,
+  HB_OT_MATH_CONSTANT_STRETCH_STACK_GAP_BELOW_MIN = 31,
+  HB_OT_MATH_CONSTANT_FRACTION_NUMERATOR_SHIFT_UP = 32,
+  HB_OT_MATH_CONSTANT_FRACTION_NUMERATOR_DISPLAY_STYLE_SHIFT_UP = 33,
+  HB_OT_MATH_CONSTANT_FRACTION_DENOMINATOR_SHIFT_DOWN = 34,
+  HB_OT_MATH_CONSTANT_FRACTION_DENOMINATOR_DISPLAY_STYLE_SHIFT_DOWN = 35,
+  HB_OT_MATH_CONSTANT_FRACTION_NUMERATOR_GAP_MIN = 36,
+  HB_OT_MATH_CONSTANT_FRACTION_NUM_DISPLAY_STYLE_GAP_MIN = 37,
+  HB_OT_MATH_CONSTANT_FRACTION_RULE_THICKNESS = 38,
+  HB_OT_MATH_CONSTANT_FRACTION_DENOMINATOR_GAP_MIN = 39,
+  HB_OT_MATH_CONSTANT_FRACTION_DENOM_DISPLAY_STYLE_GAP_MIN = 40,
+  HB_OT_MATH_CONSTANT_SKEWED_FRACTION_HORIZONTAL_GAP = 41,
+  HB_OT_MATH_CONSTANT_SKEWED_FRACTION_VERTICAL_GAP = 42,
+  HB_OT_MATH_CONSTANT_OVERBAR_VERTICAL_GAP = 43,
+  HB_OT_MATH_CONSTANT_OVERBAR_RULE_THICKNESS = 44,
+  HB_OT_MATH_CONSTANT_OVERBAR_EXTRA_ASCENDER = 45,
+  HB_OT_MATH_CONSTANT_UNDERBAR_VERTICAL_GAP = 46,
+  HB_OT_MATH_CONSTANT_UNDERBAR_RULE_THICKNESS = 47,
+  HB_OT_MATH_CONSTANT_UNDERBAR_EXTRA_DESCENDER = 48,
+  HB_OT_MATH_CONSTANT_RADICAL_VERTICAL_GAP = 49,
+  HB_OT_MATH_CONSTANT_RADICAL_DISPLAY_STYLE_VERTICAL_GAP = 50,
+  HB_OT_MATH_CONSTANT_RADICAL_RULE_THICKNESS = 51,
+  HB_OT_MATH_CONSTANT_RADICAL_EXTRA_ASCENDER = 52,
+  HB_OT_MATH_CONSTANT_RADICAL_KERN_BEFORE_DEGREE = 53,
+  HB_OT_MATH_CONSTANT_RADICAL_KERN_AFTER_DEGREE = 54,
+  HB_OT_MATH_CONSTANT_RADICAL_DEGREE_BOTTOM_RAISE_PERCENT = 55,
+} hb_ot_math_constant_t;
+typedef enum {
+  HB_OT_MATH_KERN_TOP_RIGHT = 0,
+  HB_OT_MATH_KERN_TOP_LEFT = 1,
+  HB_OT_MATH_KERN_BOTTOM_RIGHT = 2,
+  HB_OT_MATH_KERN_BOTTOM_LEFT = 3,
+} hb_ot_math_kern_t;
+typedef struct hb_ot_math_glyph_variant_t hb_ot_math_glyph_variant_t;
+typedef struct hb_ot_math_glyph_part_t hb_ot_math_glyph_part_t;
+typedef enum {
+  HB_OT_META_TAG_DESIGN_LANGUAGES = 1684827751,
+  HB_OT_META_TAG_SUPPORTED_LANGUAGES = 1936485991,
+  _HB_OT_META_TAG_MAX_VALUE = 2147483647,
+} hb_ot_meta_tag_t;
+typedef enum {
+  HB_OT_METRICS_TAG_HORIZONTAL_ASCENDER = 1751216995,
+  HB_OT_METRICS_TAG_HORIZONTAL_DESCENDER = 1751413603,
+  HB_OT_METRICS_TAG_HORIZONTAL_LINE_GAP = 1751934832,
+  HB_OT_METRICS_TAG_HORIZONTAL_CLIPPING_ASCENT = 1751346273,
+  HB_OT_METRICS_TAG_HORIZONTAL_CLIPPING_DESCENT = 1751346276,
+  HB_OT_METRICS_TAG_VERTICAL_ASCENDER = 1986098019,
+  HB_OT_METRICS_TAG_VERTICAL_DESCENDER = 1986294627,
+  HB_OT_METRICS_TAG_VERTICAL_LINE_GAP = 1986815856,
+  HB_OT_METRICS_TAG_HORIZONTAL_CARET_RISE = 1751347827,
+  HB_OT_METRICS_TAG_HORIZONTAL_CARET_RUN = 1751347822,
+  HB_OT_METRICS_TAG_HORIZONTAL_CARET_OFFSET = 1751347046,
+  HB_OT_METRICS_TAG_VERTICAL_CARET_RISE = 1986228851,
+  HB_OT_METRICS_TAG_VERTICAL_CARET_RUN = 1986228846,
+  HB_OT_METRICS_TAG_VERTICAL_CARET_OFFSET = 1986228070,
+  HB_OT_METRICS_TAG_X_HEIGHT = 2020108148,
+  HB_OT_METRICS_TAG_CAP_HEIGHT = 1668311156,
+  HB_OT_METRICS_TAG_SUBSCRIPT_EM_X_SIZE = 1935833203,
+  HB_OT_METRICS_TAG_SUBSCRIPT_EM_Y_SIZE = 1935833459,
+  HB_OT_METRICS_TAG_SUBSCRIPT_EM_X_OFFSET = 1935833199,
+  HB_OT_METRICS_TAG_SUBSCRIPT_EM_Y_OFFSET = 1935833455,
+  HB_OT_METRICS_TAG_SUPERSCRIPT_EM_X_SIZE = 1936750707,
+  HB_OT_METRICS_TAG_SUPERSCRIPT_EM_Y_SIZE = 1936750963,
+  HB_OT_METRICS_TAG_SUPERSCRIPT_EM_X_OFFSET = 1936750703,
+  HB_OT_METRICS_TAG_SUPERSCRIPT_EM_Y_OFFSET = 1936750959,
+  HB_OT_METRICS_TAG_STRIKEOUT_SIZE = 1937011315,
+  HB_OT_METRICS_TAG_STRIKEOUT_OFFSET = 1937011311,
+  HB_OT_METRICS_TAG_UNDERLINE_SIZE = 1970168947,
+  HB_OT_METRICS_TAG_UNDERLINE_OFFSET = 1970168943,
+  _HB_OT_METRICS_TAG_MAX_VALUE = 2147483647,
+} hb_ot_metrics_tag_t;
+typedef struct hb_ot_var_axis_info_t hb_ot_var_axis_info_t;
+const hb_ot_name_entry_t *hb_ot_name_list_names(hb_face_t *, unsigned int *);
+unsigned int hb_ot_name_get_utf8(hb_face_t *, unsigned int, const struct hb_language_impl_t *, unsigned int *, char *);
+unsigned int hb_ot_name_get_utf16(hb_face_t *, unsigned int, const struct hb_language_impl_t *, unsigned int *, uint16_t *);
+unsigned int hb_ot_name_get_utf32(hb_face_t *, unsigned int, const struct hb_language_impl_t *, unsigned int *, uint32_t *);
+hb_bool_t hb_ot_color_has_palettes(hb_face_t *);
+unsigned int hb_ot_color_palette_get_count(hb_face_t *);
+unsigned int hb_ot_color_palette_get_name_id(hb_face_t *, unsigned int);
+unsigned int hb_ot_color_palette_color_get_name_id(hb_face_t *, unsigned int);
+hb_ot_color_palette_flags_t hb_ot_color_palette_get_flags(hb_face_t *, unsigned int);
+unsigned int hb_ot_color_palette_get_colors(hb_face_t *, unsigned int, unsigned int, unsigned int *, hb_color_t *);
+hb_bool_t hb_ot_color_has_layers(hb_face_t *);
+unsigned int hb_ot_color_glyph_get_layers(hb_face_t *, hb_codepoint_t, unsigned int, unsigned int *, hb_ot_color_layer_t *);
+hb_bool_t hb_ot_color_has_svg(hb_face_t *);
+hb_blob_t *hb_ot_color_glyph_reference_svg(hb_face_t *, hb_codepoint_t);
+hb_bool_t hb_ot_color_has_png(hb_face_t *);
+hb_blob_t *hb_ot_color_glyph_reference_png(hb_font_t *, hb_codepoint_t);
+hb_bool_t hb_ot_layout_table_choose_script(hb_face_t *, hb_tag_t, const hb_tag_t *, unsigned int *, hb_tag_t *) __attribute__((deprecated("Use 'hb_ot_layout_table_select_script' instead")));
+hb_bool_t hb_ot_layout_script_find_language(hb_face_t *, hb_tag_t, unsigned int, hb_tag_t, unsigned int *) __attribute__((deprecated("Use 'hb_ot_layout_script_select_language' instead")));
+void hb_ot_tags_from_script(hb_script_t, hb_tag_t *, hb_tag_t *) __attribute__((deprecated("Use 'hb_ot_tags_from_script_and_language' instead")));
+hb_tag_t hb_ot_tag_from_language(const struct hb_language_impl_t *) __attribute__((deprecated("Use 'hb_ot_tags_from_script_and_language' instead")));
+unsigned int hb_ot_var_get_axes(hb_face_t *, unsigned int, unsigned int *, hb_ot_var_axis_t *) __attribute__((deprecated("Use 'hb_ot_var_get_axis_infos' instead")));
+hb_bool_t hb_ot_var_find_axis(hb_face_t *, hb_tag_t, unsigned int *, hb_ot_var_axis_t *) __attribute__((deprecated("Use 'hb_ot_var_find_axis_info' instead")));
+void hb_ot_font_set_funcs(hb_font_t *);
+void hb_ot_tags_from_script_and_language(hb_script_t, const struct hb_language_impl_t *, unsigned int *, hb_tag_t *, unsigned int *, hb_tag_t *);
+hb_script_t hb_ot_tag_to_script(hb_tag_t);
+const struct hb_language_impl_t *hb_ot_tag_to_language(hb_tag_t);
+void hb_ot_tags_to_script_and_language(hb_tag_t, hb_tag_t, hb_script_t *, const struct hb_language_impl_t **);
+hb_bool_t hb_ot_layout_has_glyph_classes(hb_face_t *);
+hb_ot_layout_glyph_class_t hb_ot_layout_get_glyph_class(hb_face_t *, hb_codepoint_t);
+void hb_ot_layout_get_glyphs_in_class(hb_face_t *, hb_ot_layout_glyph_class_t, hb_set_t *);
+unsigned int hb_ot_layout_get_attach_points(hb_face_t *, hb_codepoint_t, unsigned int, unsigned int *, unsigned int *);
+unsigned int hb_ot_layout_get_ligature_carets(hb_font_t *, hb_direction_t, hb_codepoint_t, unsigned int, unsigned int *, hb_position_t *);
+unsigned int hb_ot_layout_table_get_script_tags(hb_face_t *, hb_tag_t, unsigned int, unsigned int *, hb_tag_t *);
+hb_bool_t hb_ot_layout_table_find_script(hb_face_t *, hb_tag_t, hb_tag_t, unsigned int *);
+hb_bool_t hb_ot_layout_table_select_script(hb_face_t *, hb_tag_t, unsigned int, const hb_tag_t *, unsigned int *, hb_tag_t *);
+unsigned int hb_ot_layout_table_get_feature_tags(hb_face_t *, hb_tag_t, unsigned int, unsigned int *, hb_tag_t *);
+unsigned int hb_ot_layout_script_get_language_tags(hb_face_t *, hb_tag_t, unsigned int, unsigned int, unsigned int *, hb_tag_t *);
+hb_bool_t hb_ot_layout_script_select_language(hb_face_t *, hb_tag_t, unsigned int, unsigned int, const hb_tag_t *, unsigned int *);
+hb_bool_t hb_ot_layout_language_get_required_feature_index(hb_face_t *, hb_tag_t, unsigned int, unsigned int, unsigned int *);
+hb_bool_t hb_ot_layout_language_get_required_feature(hb_face_t *, hb_tag_t, unsigned int, unsigned int, unsigned int *, hb_tag_t *);
+unsigned int hb_ot_layout_language_get_feature_indexes(hb_face_t *, hb_tag_t, unsigned int, unsigned int, unsigned int, unsigned int *, unsigned int *);
+unsigned int hb_ot_layout_language_get_feature_tags(hb_face_t *, hb_tag_t, unsigned int, unsigned int, unsigned int, unsigned int *, hb_tag_t *);
+hb_bool_t hb_ot_layout_language_find_feature(hb_face_t *, hb_tag_t, unsigned int, unsigned int, hb_tag_t, unsigned int *);
+unsigned int hb_ot_layout_feature_get_lookups(hb_face_t *, hb_tag_t, unsigned int, unsigned int, unsigned int *, unsigned int *);
+unsigned int hb_ot_layout_table_get_lookup_count(hb_face_t *, hb_tag_t);
+void hb_ot_layout_collect_features(hb_face_t *, hb_tag_t, const hb_tag_t *, const hb_tag_t *, const hb_tag_t *, hb_set_t *);
+void hb_ot_layout_collect_lookups(hb_face_t *, hb_tag_t, const hb_tag_t *, const hb_tag_t *, const hb_tag_t *, hb_set_t *);
+void hb_ot_layout_lookup_collect_glyphs(hb_face_t *, hb_tag_t, unsigned int, hb_set_t *, hb_set_t *, hb_set_t *, hb_set_t *);
+hb_bool_t hb_ot_layout_table_find_feature_variations(hb_face_t *, hb_tag_t, const int *, unsigned int, unsigned int *);
+unsigned int hb_ot_layout_feature_with_variations_get_lookups(hb_face_t *, hb_tag_t, unsigned int, unsigned int, unsigned int, unsigned int *, unsigned int *);
+hb_bool_t hb_ot_layout_has_substitution(hb_face_t *);
+unsigned int hb_ot_layout_lookup_get_glyph_alternates(hb_face_t *, unsigned int, hb_codepoint_t, unsigned int, unsigned int *, hb_codepoint_t *);
+hb_bool_t hb_ot_layout_lookup_would_substitute(hb_face_t *, unsigned int, const hb_codepoint_t *, unsigned int, hb_bool_t);
+void hb_ot_layout_lookup_substitute_closure(hb_face_t *, unsigned int, hb_set_t *);
+void hb_ot_layout_lookups_substitute_closure(hb_face_t *, const hb_set_t *, hb_set_t *);
+hb_bool_t hb_ot_layout_has_positioning(hb_face_t *);
+hb_bool_t hb_ot_layout_get_size_params(hb_face_t *, unsigned int *, unsigned int *, unsigned int *, unsigned int *, unsigned int *);
+hb_bool_t hb_ot_layout_feature_get_name_ids(hb_face_t *, hb_tag_t, unsigned int, unsigned int *, unsigned int *, unsigned int *, unsigned int *, unsigned int *);
+unsigned int hb_ot_layout_feature_get_characters(hb_face_t *, hb_tag_t, unsigned int, unsigned int, unsigned int *, hb_codepoint_t *);
+hb_bool_t hb_ot_layout_get_baseline(hb_font_t *, hb_ot_layout_baseline_tag_t, hb_direction_t, hb_tag_t, hb_tag_t, hb_position_t *);
+hb_bool_t hb_ot_math_has_data(hb_face_t *);
+hb_position_t hb_ot_math_get_constant(hb_font_t *, hb_ot_math_constant_t);
+hb_position_t hb_ot_math_get_glyph_italics_correction(hb_font_t *, hb_codepoint_t);
+hb_position_t hb_ot_math_get_glyph_top_accent_attachment(hb_font_t *, hb_codepoint_t);
+hb_bool_t hb_ot_math_is_glyph_extended_shape(hb_face_t *, hb_codepoint_t);
+hb_position_t hb_ot_math_get_glyph_kerning(hb_font_t *, hb_codepoint_t, hb_ot_math_kern_t, hb_position_t);
+unsigned int hb_ot_math_get_glyph_variants(hb_font_t *, hb_codepoint_t, hb_direction_t, unsigned int, unsigned int *, hb_ot_math_glyph_variant_t *);
+hb_position_t hb_ot_math_get_min_connector_overlap(hb_font_t *, hb_direction_t);
+unsigned int hb_ot_math_get_glyph_assembly(hb_font_t *, hb_codepoint_t, hb_direction_t, unsigned int, unsigned int *, hb_ot_math_glyph_part_t *, hb_position_t *);
+unsigned int hb_ot_meta_get_entry_tags(hb_face_t *, unsigned int, unsigned int *, hb_ot_meta_tag_t *);
+hb_blob_t *hb_ot_meta_reference_entry(hb_face_t *, hb_ot_meta_tag_t);
+hb_bool_t hb_ot_metrics_get_position(hb_font_t *, hb_ot_metrics_tag_t, hb_position_t *);
+float hb_ot_metrics_get_variation(hb_font_t *, hb_ot_metrics_tag_t);
+hb_position_t hb_ot_metrics_get_x_variation(hb_font_t *, hb_ot_metrics_tag_t);
+hb_position_t hb_ot_metrics_get_y_variation(hb_font_t *, hb_ot_metrics_tag_t);
+void hb_ot_shape_glyphs_closure(hb_font_t *, hb_buffer_t *, const hb_feature_t *, unsigned int, hb_set_t *);
+void hb_ot_shape_plan_collect_lookups(hb_shape_plan_t *, hb_tag_t, hb_set_t *);
+hb_bool_t hb_ot_var_has_data(hb_face_t *);
+unsigned int hb_ot_var_get_axis_count(hb_face_t *);
+unsigned int hb_ot_var_get_axis_infos(hb_face_t *, unsigned int, unsigned int *, hb_ot_var_axis_info_t *);
+hb_bool_t hb_ot_var_find_axis_info(hb_face_t *, hb_tag_t, hb_ot_var_axis_info_t *);
+unsigned int hb_ot_var_get_named_instance_count(hb_face_t *);
+unsigned int hb_ot_var_named_instance_get_subfamily_name_id(hb_face_t *, unsigned int);
+unsigned int hb_ot_var_named_instance_get_postscript_name_id(hb_face_t *, unsigned int);
+unsigned int hb_ot_var_named_instance_get_design_coords(hb_face_t *, unsigned int, unsigned int *, float *);
+void hb_ot_var_normalize_variations(hb_face_t *, const hb_variation_t *, unsigned int, int *, unsigned int);
+void hb_ot_var_normalize_coords(hb_face_t *, unsigned int, const float *, int *);
 ]]
