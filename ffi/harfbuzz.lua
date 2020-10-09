@@ -12,6 +12,7 @@ ffi.metatype("hb_face_t*", hb_face_t)
 -- This table is used to decide whether a face is "good enough" for language,
 -- based on the amount of glyphs that language has.
 -- This is used only for eligibility, later on the results are sorted by miss ratio.
+-- TODO: Those are ballkpark, tweak this to more real-world defaults
 local coverage_thresholds = {
     0,      100,    -- 0-100 glyphs, 0 missing
     100,    99,     -- 100-250 glyphs, 1% missing
@@ -21,38 +22,38 @@ local coverage_thresholds = {
     50000,  40,     -- 50000 and more, special CJK case, allow for 60% missing
 }
 
-local function fair_enough(script,hit,total)
-end
-
 -- Get script and language coverage
 function hb_face_t:getCoverage()
     local set, tmp = hb.hb_set_create(), hb.hb_set_create()
-    hb.hb_face_collect_unicodes(set)
-    local total = hb.hb_set_get_population(set)
     local scripts = {}
     local langs = {}
 
-    for script_id in ipairs(coverage.scripts) do
+    hb.hb_face_collect_unicodes(self, set)
+
+    local function intersect(tab)
         hb.hb_set_set(tmp, set)
-        hb.hb_set_intersect(tmp, coverage.scripts[script_id])
-        local hit = hb.hb_set_get_population(tmp)
-        -- majority hit
+        hb.hb_set_intersect(tmp, tab)
+        return hb.hb_set_get_population(tmp), hb.hb_set_get_population(tab)
+    end
+
+    for script_id in ipairs(coverage.scripts) do
+        local hit, total = intersect(coverage.scripts[script_id])
+        -- for scripts, we do only rough majority hit
         if 2*hit > total then
             scripts[script_id] = hit / total
         end
     end
 
     for lang_id in ipairs(coverage.langs) do
-        hb.hb_set_set(tmp, set)
-        hb.hb_set_intersect(tmp, coverage.langs[lang_id])
-        local hit = hb.hb_set_get_population(tmp)
         local found
+        local hit, total = intersect(coverage.langs[lang_id])
+        -- for languages, consider predefined threshold by glyph count
         for i=1, #coverage_thresholds, 2 do
-            if n > coverage_thresholds[i] then
+            if total > coverage_thresholds[i] then
                 found = i+1
             end
         end
-        if hit*100/total >= thresholds[found] then
+        if hit*100/total >= coverage_thresholds[found] then
             langs[lang_id] = hit / total
         end
     end
@@ -62,7 +63,9 @@ function hb_face_t:getCoverage()
     return scripts, langs
 end
 
-
+function hb_face_t:destroy()
+    hb.hb_face_destroy(self)
+end
 
 -- private
 
@@ -70,7 +73,7 @@ end
 local function make_set(tab)
     local set = hb.hb_set_create()
     local first = 0
-    for i=0,#script,2 do
+    for i=0,#tab,2 do
         first = first + tab[i]
         local last = first + tab[i+1] - 1
         hb.hb_set_add_range(set, first, last)

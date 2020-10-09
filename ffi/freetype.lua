@@ -134,11 +134,8 @@ function FTFace_mt.__index:getInfo()
         index = i,
         name = ffi.string(fp.family_name):gsub(" (%w+)$", {
             -- Some broken fonts include style as a suffix in their name, so get rid of that
-            Regular = "",
             Italic = "",
             Bold = "",
-            BoldItalic = "",
-            ItalicBold = "",
         }),
         -- Style
         mono = bit.band(tonumber(self.face_flags), ft2.FT_FACE_FLAG_FIXED_WIDTH) ~= 0,
