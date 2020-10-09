@@ -201,3 +201,6 @@ cdecl_const(TT_NAME_ID_SAMPLE_TEXT)
 cdecl_const(TT_NAME_ID_CID_FINDFONT_NAME)
 cdecl_const(TT_NAME_ID_WWS_FAMILY)
 cdecl_const(TT_NAME_ID_WWS_SUBFAMILY)
+
+cdecl_func(FT_Get_Sfnt_Name_Count)
+cdecl_func(FT_Get_Sfnt_Name)

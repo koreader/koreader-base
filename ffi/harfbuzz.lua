@@ -17,9 +17,7 @@ local coverage_thresholds = {
     0,      100,    -- 0-100 glyphs, 0 missing
     100,    99,     -- 100-250 glyphs, 1% missing
     250,    98,     -- 250-1000 glyphs, 2% missing
-    1000,   97,     -- 1000-10000 glyphs, 3% missing
-    10000,  96,     -- 10000-50000, 4% missing. JP and KR
-    50000,  40,     -- 50000 and more - CN/JP/KP. allow for 60% missing
+    1000,   85,     -- CJK
 }
 
 -- Get script and language coverage
@@ -54,7 +52,7 @@ function hb_face_t:getCoverage()
             end
         end
         if hit*100/total >= coverage_thresholds[found] then
-            langs[lang_id] = hit / total
+            langs[lang_id] = hit/total
         end
     end
 
@@ -73,12 +71,16 @@ end
 local function make_set(tab)
     local set = hb.hb_set_create()
     local first = 0
+    local seen = 0
     for i=1,#tab,2 do
         first = first + tab[i]
-        local last = first + tab[i+1] - 1
+        local count = tab[i+1]
+        seen = seen + count
+        local last = first + count - 1
         hb.hb_set_add_range(set, first, last)
         first = last
     end
+    assert(hb.hb_set_get_population(set) == seen, "invalid coverage table")
     return set
 end
 

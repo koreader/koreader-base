@@ -378,4 +378,6 @@ static const int TT_NAME_ID_SAMPLE_TEXT = 19;
 static const int TT_NAME_ID_CID_FINDFONT_NAME = 20;
 static const int TT_NAME_ID_WWS_FAMILY = 21;
 static const int TT_NAME_ID_WWS_SUBFAMILY = 22;
+FT_UInt FT_Get_Sfnt_Name_Count(FT_Face);
+FT_Error FT_Get_Sfnt_Name(FT_Face, FT_UInt, FT_SfntName *);
 ]]

@@ -139,7 +139,25 @@ function FTFace_mt.__index:getInfo()
         italic = bit.band(tonumber(self.style_flags), ft2.FT_STYLE_FLAG_ITALIC) ~= 0,
         serif = nil,
         ui = false,
+        names = nil,
     }
+    local ncount = ft2.FT_Get_Sfnt_Name_Count(self)
+    local logger = require("logger")
+    if ncount > 0 then
+        local names = {}
+        local sfn = ffi.new("FT_SfntName[1]")
+        for i=0, ncount-1 do
+            if ft2.FT_Get_Sfnt_Name(self, i, sfn) == 0 then
+                local sn = sfn[0]
+                local st = names[sn.language_id] or {}
+                st[sn.name_id] = ffi.string(sn.string, sn.string_len)
+                names[sn.language_id] = st
+            end
+        end
+        if next(names) then
+            finfo.names = names
+        end
+    end
 
     -- In practice, just going by latin name can tell us more than the depressingly absent tags
     finfo.ui = finfo.name:match("UI$") ~= nil
