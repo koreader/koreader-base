@@ -125,12 +125,52 @@ function FTFace_mt.__index:getHeightAndAscender()
 end
 
 function FTFace_mt.__index:done()
+    -- Note that past this point, accessing self is illegal, FT2 frees the pointer
     assert(ft2.FT_Done_Face(self) == 0, "freetype error when freeing face")
 end
 
-FTFace_mt.__gc = FTFace_mt.__index.done;
+function FTFace_mt.__index:getInfo()
+    local finfo = {
+        index = i,
+        name = ffi.string(fp.family_name):gsub(" (%w+)$", {
+            -- Some broken fonts include style as a suffix in their name, so get rid of that
+            Regular = "",
+            Italic = "",
+            Bold = "",
+            BoldItalic = "",
+            ItalicBold = "",
+        }),
+        -- Style
+        mono = bit.band(tonumber(self.face_flags), ft2.FT_FACE_FLAG_FIXED_WIDTH) ~= 0,
+        hint = bit.band(tonumber(self.face_flags), ft2.FT_FACE_FLAG_HINTER) ~= 0,
+        bold = bit.band(tonumber(self.style_flags), ft2.FT_STYLE_FLAG_BOLD) ~= 0,
+        italic = bit.band(tonumber(self.style_flags), ft2.FT_STYLE_FLAG_ITALIC) ~= 0,
+        serif = nil,
+        ui = false,
+    }
 
-local FTFaceType = ffi.metatype("struct FT_FaceRec_", FTFace_mt) -- luacheck: ignore 211
+    -- In practice, just going by latin name can tell us more than the depressingly absent tags
+    finfo.ui = finfo.name:match("UI$") ~= nil
+    local lname = finfo.name:lower()
+    if lname:match("serif") then
+        finfo.serif = true
+    elseif lname:match("sans") then
+        finfo.serif = false
+    elseif bit.band(tonumber(fp.face_flags), ft2.FT_FACE_FLAG_SFNT) ~= 0 then
+        local os2 = ft2.FT_Get_Sfnt_Table(fp, ft2.FT_SFNT_OS2)
+        if os2 ~= nil then
+            -- class 8 = sans
+            local kls = tonumber(ffi.cast("TT_OS2*", os2).sFamilyClass)
+            if kls ~= 0 then -- 0 is usually bogus
+                finfo.serif = bit.band(kls, 0x0800) == 0
+            end
+        end
+        if finfo.serif == nil then
+        end
+    end
+end
+
+local FTFaceType = ffi.metatype("FT_Face", FTFace_mt) -- luacheck: ignore 211
 
 function FT.newFace(filename, pxsize, faceindex)
     if pxsize == nil then pxsize = 16*64 end
@@ -156,5 +196,16 @@ function FT.newFace(filename, pxsize, faceindex)
 
     return face
 end
+
+function FT.getFaceCount(filename, info)
+    -- Probes number of faces available within the font file
+    local ftface = ffi.new("FT_Face[1]")
+    if ft2.FT_New_Face(freetypelib, filename, -1, ftface) ~= 0 then return nil end
+    local fp = ftface[0]
+    local nfaces = tonumber(ftface[0].num_faces)
+    fp:done()
+    return nfaces
+end
+
 
 return FT

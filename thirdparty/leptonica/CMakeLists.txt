@@ -5,14 +5,22 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_LIST_DIR}/../cmake_m
 include("koreader_thirdparty_common")
 include("koreader_thirdparty_git")
 
+enable_language(C)
+
 ep_get_source_dir(SOURCE_DIR)
+ep_get_binary_dir(BINARY_DIR)
+
+set(CFG_ENV_VAR "PKG_CONFIG=/bin/false CC=\"${CC}\" CFLAGS=\"${CFLAGS}\" LDFLAGS=\"${LDFLAGS}\"")
+set(CFG_OPTS "-q --prefix=${BINARY_DIR} --disable-static --enable-shared --host=\"${CHOST}\"")
+set(CFG_CMD sh -c "${CFG_ENV_VAR} ${SOURCE_DIR}/configure ${CFG_OPTS}")
+
 
 # NOTE: Needs to match the version used by whatever version of libk2pdfopt we're currently using...
 #       Probably applies to mupdf & tesseract, too...
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
     https://github.com/DanBloomberg/leptonica.git
-    1.74.1
+    1.79.0
     ${SOURCE_DIR}
 )
 
@@ -29,6 +37,7 @@ ko_write_gitclone_script(
 if(${ARM_GLIBC_GTE_2_22})
     set(PATCH_CMD "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/leptonica-1.74.1-fmemopen-arm-compat-symbol.patch")
 endif()
+set(PATCH2_CMD "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/leptonica-k2pdfopt.patch")
 
 # We apparently need a rebuild of the configure on macOS (https://github.com/koreader/koreader/issues/4448#issuecomment-522363325)
 set(RECONF_CMD sh -c "autoreconf -fi")
@@ -37,9 +46,8 @@ include(ExternalProject)
 ExternalProject_Add(
     ${PROJECT_NAME}
     DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
-    PATCH_COMMAND COMMAND ${PATCH_CMD} COMMAND ${RECONF_CMD}
-    CONFIGURE_COMMAND ""
-    # skip build and install, libk2pdfopt will build it
-    BUILD_COMMAND ""
-    INSTALL_COMMAND ""
+    PATCH_COMMAND COMMAND sh -c "${ISED} \"s|\\$srcdir\\/configure \\$\\*||g\" autogen.sh" COMMAND ./autogen.sh COMMAND ${PATCH_CMD} COMMAND ${PATCH2_CMD}
+    CONFIGURE_COMMAND ${CFG_CMD}
+    BUILD_COMMAND ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS} -C src
+    INSTALL_COMMAND ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS} -C src install
 )

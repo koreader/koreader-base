@@ -21,6 +21,7 @@ all: $(OUTPUT_DIR)/libs $(if $(ANDROID),,$(LUAJIT)) \
 		$(LUASERIAL_LIB) \
 		$(TURBOJPEG_LIB) \
 		$(LODEPNG_LIB) \
+		$(MUPDF_LIB) \
 		$(GIF_LIB) \
 		$(if $(USE_LJ_WPACLIENT),$(LJ_WPACLIENT),) \
 		$(TURBO_FFI_WRAP_LIB) \
@@ -41,7 +42,7 @@ all: $(OUTPUT_DIR)/libs $(if $(ANDROID),,$(LUAJIT)) \
 		$(SQLITE_LIB) \
 		$(if $(or $(CERVANTES),$(KINDLE),$(KOBO),$(POCKETBOOK),$(REMARKABLE),$(SONY_PRSTUX)),$(CURL_LIB),) \
 		$(if $(or $(CERVANTES),$(KINDLE),$(KOBO),$(POCKETBOOK),$(REMARKABLE),$(SONY_PRSTUX)),$(OUTPUT_DIR)/zsync2,) \
-		$(LUA_LJ_SQLITE) $(OUTPUT_DIR)/common/xsys.lua
+		$(LUA_LJ_SQLITE) $(OUTPUT_DIR)/common/xsys.lua \
 ifeq ($(DO_STRIP),1)
 	STRIP_FILES="\
 		$(if $(WIN32),,$(OUTPUT_DIR)/sdcv) \
@@ -102,7 +103,7 @@ libs: \
 	$(OUTPUT_DIR)/libs/libkoreader-djvu.so \
 	$(OUTPUT_DIR)/libs/libkoreader-cre.so \
 	$(OUTPUT_DIR)/libs/libkoreader-xtext.so \
-	$(OUTPUT_DIR)/libs/libwrap-mupdf.so
+	$(OUTPUT_DIR)/libs/libkoreader-mupdf.so
 
 $(OUTPUT_DIR)/libs/libinkview-compat.so: input/inkview-compat.c
 	$(CC) $(DYNLIB_CFLAGS) -linkview -o $@ $<
@@ -192,12 +193,13 @@ endif
 $(OUTPUT_DIR)/libs/libblitbuffer.so: blitbuffer.c
 	$(CC) $(DYNLIB_CFLAGS) $(VECTO_CFLAGS) -o $@ $^
 
-$(OUTPUT_DIR)/libs/libwrap-mupdf.so: wrap-mupdf.c \
-			$(MUPDF_LIB)
-	$(CC) -I$(MUPDF_DIR)/include $(DYNLIB_CFLAGS) -o $@ $^
+$(OUTPUT_DIR)/libs/libkoreader-mupdf.so: mupdf.c \
+			$(if $(USE_LUAJIT_LIB),$(LUAJIT_LIB),)
+	$(CC) -I$(MUPDF_DIR)/include $(DYNLIB_CFLAGS) -lmupdf -o $@ $^
 ifdef DARWIN
-	install_name_tool -id \
-		libs/libwrap-mupdf.so \
+	install_name_tool -change \
+		`otool -L "$@" | grep "libluajit" | awk '{print $$1}'` \
+		libs/$(notdir $(LUAJIT_LIB)) \
 		$@
 endif
 
