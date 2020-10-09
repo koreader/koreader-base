@@ -15,7 +15,7 @@ cdecl_type(l_float64)
 cdecl_struct(Box)
 cdecl_type(BOX)
 cdecl_struct(Sel)
-cdecl_type(Sel)
+cdecl_type(SEL)
 
 cdecl_struct(Boxa)
 cdecl_type(BOXA)
