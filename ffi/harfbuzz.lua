@@ -7,7 +7,7 @@ require("ffi/harfbuzz_h")
 
 local hb_face_t = {}
 hb_face_t.__index = hb_face_t
-ffi.metatype("hb_face_t*", hb_face_t)
+ffi.metatype("hb_face_t", hb_face_t)
 
 -- This table is used to decide whether a face is "good enough" for language,
 -- based on the amount of glyphs that language has.
@@ -18,8 +18,8 @@ local coverage_thresholds = {
     100,    99,     -- 100-250 glyphs, 1% missing
     250,    98,     -- 250-1000 glyphs, 2% missing
     1000,   97,     -- 1000-10000 glyphs, 3% missing
-    10000,  96,     -- 10000-50000, 4% missing
-    50000,  40,     -- 50000 and more, special CJK case, allow for 60% missing
+    10000,  96,     -- 10000-50000, 4% missing. JP and KR
+    50000,  40,     -- 50000 and more - CN/JP/KP. allow for 60% missing
 }
 
 -- Get script and language coverage
@@ -44,7 +44,7 @@ function hb_face_t:getCoverage()
         end
     end
 
-    for lang_id in ipairs(coverage.langs) do
+    for lang_id in pairs(coverage.langs) do
         local found
         local hit, total = intersect(coverage.langs[lang_id])
         -- for languages, consider predefined threshold by glyph count
@@ -73,7 +73,7 @@ end
 local function make_set(tab)
     local set = hb.hb_set_create()
     local first = 0
-    for i=0,#tab,2 do
+    for i=1,#tab,2 do
         first = first + tab[i]
         local last = first + tab[i+1] - 1
         hb.hb_set_add_range(set, first, last)
@@ -87,7 +87,7 @@ for ucd_id, ranges in ipairs(coverage.scripts) do
 end
 
 for lang_id, ranges in pairs(coverage.langs) do
-    coverage.scripts[lang_id] = make_set(ranges)
+    coverage.langs[lang_id] = make_set(ranges)
 end
 
 return HB

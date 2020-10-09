@@ -131,12 +131,7 @@ end
 
 function FTFace_mt.__index:getInfo()
     local finfo = {
-        index = i,
-        name = ffi.string(fp.family_name):gsub(" (%w+)$", {
-            -- Some broken fonts include style as a suffix in their name, so get rid of that
-            Italic = "",
-            Bold = "",
-        }),
+        name = ffi.string(self.family_name),
         -- Style
         mono = bit.band(tonumber(self.face_flags), ft2.FT_FACE_FLAG_FIXED_WIDTH) ~= 0,
         hint = bit.band(tonumber(self.face_flags), ft2.FT_FACE_FLAG_HINTER) ~= 0,
@@ -153,8 +148,8 @@ function FTFace_mt.__index:getInfo()
         finfo.serif = true
     elseif lname:match("sans") then
         finfo.serif = false
-    elseif bit.band(tonumber(fp.face_flags), ft2.FT_FACE_FLAG_SFNT) ~= 0 then
-        local os2 = ft2.FT_Get_Sfnt_Table(fp, ft2.FT_SFNT_OS2)
+    elseif bit.band(tonumber(self.face_flags), ft2.FT_FACE_FLAG_SFNT) ~= 0 then
+        local os2 = ft2.FT_Get_Sfnt_Table(self, ft2.FT_SFNT_OS2)
         if os2 ~= nil then
             -- class 8 = sans
             local kls = tonumber(ffi.cast("TT_OS2*", os2).sFamilyClass)
@@ -163,11 +158,13 @@ function FTFace_mt.__index:getInfo()
             end
         end
         if finfo.serif == nil then
+            --TODO
         end
     end
+    return finfo
 end
 
-local FTFaceType = ffi.metatype("FT_Face", FTFace_mt) -- luacheck: ignore 211
+local FTFaceType = ffi.metatype("struct FT_FaceRec_", FTFace_mt) -- luacheck: ignore 211
 
 function FT.newFace(filename, pxsize, faceindex)
     if pxsize == nil then pxsize = 16*64 end
