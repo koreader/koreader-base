@@ -1,4 +1,4 @@
---------------------------------------------------------------------------------
+--[[
 -- A library for interfacing with SQLite3 databases.
 --
 -- Copyright (C) 2011-2016 Stefano Peluchetti. All rights reserved.
@@ -7,7 +7,7 @@
 --
 -- This file is part of the LJSQLite3 library, which is released under the MIT
 -- license: full text in file LICENSE.TXT in the library's root folder.
---------------------------------------------------------------------------------
+--]]
 
 -- TODO: Refactor according to latest style / coding guidelines.
 
@@ -18,14 +18,49 @@
 -- TODO: Resultset (and so exec) could be optimized by avoiding loads/stores
 -- TODO: of row table via _step?
 
-local ffi  = require "ffi"
-local bit  = require "bit"
-local xsys = require "xsys"
+local ffi = require("ffi")
+local bit = require("bit")
 
-local split, trim = xsys.string.split, xsys.string.trim
+local function split_sql(sql)
+  local r = {}
+  local s, fs = 1, 1
+  local qc = 0
+
+  while true do
+    local _, e = string.find(sql, '[;\']', fs)
+    local v = nil
+    if e then
+      fs = e + 1
+      v = string.sub(sql, e, e)
+    else
+      v = nil
+    end
+
+    if v == ';' then
+      if bit.band(qc, 1) == 0 then
+        table.insert(r, string.sub(sql, s, e))
+        s = e + 1
+      end
+    elseif v == nil then
+      table.insert(r, string.sub(sql, s))
+    else
+      qc = qc + 1
+    end
+
+    if e == nil then break end
+  end
+  return r
+end
+
+-- c.f., http://lua-users.org/wiki/StringTrim
+local function trim(s)
+  local from = s:match"^%s*()"
+  return from > #s and "" or s:match(".*%S", from)
+end
 
 local function err(code, msg)
-  error("ljsqlite3["..code.."] "..msg)
+  -- Throw a traceback into the mix, because it's extremely unintuitive otherwise...
+  error("ljsqlite3[" .. code .. "] " .. msg .. "\n" .. debug.traceback())
 end
 
 -- Codes -----------------------------------------------------------------------
@@ -84,6 +119,7 @@ typedef struct sqlite3_stmt sqlite3_stmt;
 typedef void (*sqlite3_destructor_type)(void*);
 typedef struct sqlite3_context sqlite3_context;
 typedef struct Mem sqlite3_value;
+typedef int (*ljsqlite3_cbsql3exec)(void*, int total, char** data, char** cols);
 
 // Get informative error message.
 const char *sqlite3_errmsg(sqlite3*);
@@ -94,6 +130,9 @@ int sqlite3_open_v2(const char *filename, sqlite3 **ppDb, int flags,
 int sqlite3_close(sqlite3*);
 int sqlite3_close_v2(sqlite3*);
 int sqlite3_busy_timeout(sqlite3*, int ms);
+
+// exec
+int sqlite3_exec(sqlite3 *conn, const char *sql, ljsqlite3_cbsql3exec, void *, char **errmsg);
 
 // Statement.
 int sqlite3_prepare_v2(sqlite3 *conn, const char *zSql, int nByte,
@@ -162,7 +201,7 @@ int sqlite3_create_function(
 );
 ]]
 
---------------------------------------------------------------------------------
+-- --------------------------------------------------------------------------------
 local sql = ffi.load("sqlite3")
 
 local transient = ffi.cast("sqlite3_destructor_type", -1)
@@ -342,7 +381,7 @@ end
 
 -- Connection exec, __call, rowexec --------------------------------------------
 function conn_mt:exec(commands, get) T_open(self)
-  local cmd1 = split(commands, ";")
+  local cmd1 = split_sql(commands)
   local res, n
   for i=1,#cmd1 do
     local cmd = trim(cmd1[i])
@@ -369,9 +408,29 @@ function conn_mt:rowexec(command) T_open(self)
   end
 end
 
+function conn_mt:execsql(commands) T_open(self)
+  local r = {[0] = {}}
+  local fn = function(conn, total, data, cols)
+    for i = 0, total - 1 do
+      local val, col = ffi.string(data[i]), ffi.string(cols[i])
+      if not r[col] then
+        r[col] = {}
+        table.insert(r, r[col])
+        table.insert(r[0], col)
+      end
+      table.insert(r[col], val)
+    end
+
+    return 0
+  end
+  local cb = ffi.cast('ljsqlite3_cbsql3exec', fn)
+  sql.sqlite3_exec(self._ptr, commands, cb, nil, nil)
+  return r
+end
+
 function conn_mt:__call(commands, out) T_open(self)
   out = out or print
-  local cmd1 = split(commands, ";")
+  local cmd1 = split_sql(commands)
   for c=1,#cmd1 do
     local cmd = trim(cmd1[c])
     if #cmd > 0 then
@@ -576,6 +635,19 @@ function stmt_mt:resultset(get, maxrecords) T_open(self)
     for i=1,#h do out[h[i]] = o[i] end
   end
   return out, n
+end
+
+-- iterator over rows
+function stmt_mt:rows()
+  return function() T_open(self)
+    local row = self:step()
+    if row then
+      return row
+    else
+      self:clearbind():reset()
+      return nil
+    end
+  end
 end
 
 -- Statement bind --------------------------------------------------------------
