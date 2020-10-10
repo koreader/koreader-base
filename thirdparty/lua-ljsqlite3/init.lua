@@ -428,6 +428,14 @@ function conn_mt:execsql(commands) T_open(self)
   return r
 end
 
+-- We need that if we have multiple processes accessing the same SQLite db for writing
+-- (write locks are exclusive, so waiting & retrying is necessary).
+-- SQLite will retry getting a lock multiple times until at least timeout_ms of sleeping have accumulated.
+function conn_mt:set_busy_timeout(timeout_ms) T_open(self)
+  local code = sql.sqlite3_busy_timeout(self._ptr, timeout_ms)
+  T_okcode(self._ptr, code)
+end
+
 function conn_mt:__call(commands, out) T_open(self)
   out = out or print
   for _, command in ipairs(split_sql(commands)) do
