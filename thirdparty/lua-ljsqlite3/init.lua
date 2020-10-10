@@ -21,44 +21,13 @@
 local ffi = require("ffi")
 local bit = require("bit")
 
-local function split_sql(sql)
-  local r = {}
-  local s, fs = 1, 1
-  local qc = 0
-
-  while true do
-    local _, e = string.find(sql, '[;\']', fs)
-    local v = nil
-    if e then
-      fs = e + 1
-      v = string.sub(sql, e, e)
-    else
-      v = nil
-    end
-
-    if v == ';' then
-      if bit.band(qc, 1) == 0 then
-        table.insert(r, string.sub(sql, s, e))
-        s = e + 1
-      end
-    elseif v == nil then
-      table.insert(r, string.sub(sql, s))
-    else
-      qc = qc + 1
-    end
-
-    if e == nil then break end
-  end
-  return r
-end
-
 -- CosminApreutesei's implementation from http://lua-users.org/wiki/SplitJoin
 function string.gsplit(s, sep, plain)
   local start = 1
   local done = false
   local function pass(i, j, ...)
     if i then
-      local seg = s:sub(start, i - 1)
+      local seg = s:sub(start, i)  -- NOTE: Original code used i - 1 to skip the separator!
       start = j + 1
       return seg, ...
     else
@@ -76,36 +45,6 @@ function string.gsplit(s, sep, plain)
     end
     return pass(s:find(sep, start, plain))
   end
-end
-
-local function split_sql(s)
-  local t={}
-  for c in s:gsplit(";", true) do
-    table.insert(t, c)
-  end
-  return t
-end
-
--- Lance Li's implementation from http://lua-users.org/wiki/SplitJoin
--- explode(seperator, string)
-local function explode(d, p)
-   local t, ll
-   t={}
-   ll=0
-   if(#p == 1) then
-      return {p}
-   end
-   while true do
-      l = string.find(p, d, ll, true) -- find the next d in the string
-      if l ~= nil then -- if "not not" found then..
-         table.insert(t, string.sub(p,ll,l-1)) -- Save it in our array.
-         ll = l + 1 -- save just after where we found it for searching next time.
-      else
-         table.insert(t, string.sub(p,ll)) -- Save what's left in our array.
-         break -- Break at end, as it should be, according to the lua manual.
-      end
-   end
-   return t
 end
 
 -- c.f., http://lua-users.org/wiki/StringTrim
@@ -437,10 +376,9 @@ end
 
 -- Connection exec, __call, rowexec --------------------------------------------
 function conn_mt:exec(commands, get) T_open(self)
-  local cmd1 = split_sql(commands)
   local res, n
-  for i=1,#cmd1 do
-    local cmd = trim(cmd1[i])
+  for command in commands:gsplit(";", true) do
+    local cmd = trim(command)
     if #cmd > 0 then
       local stmt = self:prepare(cmd)
       res, n = stmt:resultset(get)
@@ -486,9 +424,8 @@ end
 
 function conn_mt:__call(commands, out) T_open(self)
   out = out or print
-  local cmd1 = split_sql(commands)
-  for c=1,#cmd1 do
-    local cmd = trim(cmd1[c])
+  for command in commands:gsplit(";", true) do
+    local cmd = trim(command)
     if #cmd > 0 then
       local stmt = self:prepare(cmd)
       local ret, n = stmt:resultset()
