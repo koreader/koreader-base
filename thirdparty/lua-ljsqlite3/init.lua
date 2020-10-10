@@ -21,36 +21,30 @@
 local ffi = require("ffi")
 local bit = require("bit")
 
--- From https://github.com/Codezerker/lua-ljsqlite3/commit/4efb927a6514039ec657ce977154b6ea3596f2ce
-local function split_sql(sql)
-  local r = {}
-  local s, fs = 1, 1
-  local qc = 0
-
-  while true do
-    local _, e = sql:find('[;\']', fs)
-    local v = nil
-    if e then
-      fs = e + 1
-      v = sql:sub(e, e)
+-- CosminApreutesei's implementation from http://lua-users.org/wiki/SplitJoin
+function string.gsplit(s, sep, plain)
+  local start = 1
+  local done = false
+  local function pass(i, j, ...)
+    if i then
+      local seg = s:sub(start, i)  -- NOTE: Original code used i - 1 to skip the separator!
+      start = j + 1
+      return seg, ...
     else
-      v = nil
+      done = true
+      return s:sub(start)
     end
-
-    if v == ';' then
-      if bit.band(qc, 1) == 0 then
-        table.insert(r, sql:sub(s, e))
-        s = e + 1
-      end
-    elseif v == nil then
-      table.insert(r, sql:sub(s))
-    else
-      qc = qc + 1
-    end
-
-    if e == nil then break end
   end
-  return r
+  return function()
+    if done then
+      return
+    end
+    if sep == '' then
+      done = true
+      return s
+    end
+    return pass(s:find(sep, start, plain))
+  end
 end
 
 -- c.f., http://lua-users.org/wiki/StringTrim
@@ -383,7 +377,7 @@ end
 -- Connection exec, __call, rowexec --------------------------------------------
 function conn_mt:exec(commands, get) T_open(self)
   local res, n
-  for _, command in ipairs(split_sql(commands)) do
+  for command in commands:gsplit(";", true) do
     local cmd = trim(command)
     if #cmd > 0 then
       local stmt = self:prepare(cmd)
@@ -438,7 +432,7 @@ end
 
 function conn_mt:__call(commands, out) T_open(self)
   out = out or print
-  for _, command in ipairs(split_sql(commands)) do
+  for command in commands:gsplit(";", true) do
     local cmd = trim(command)
     if #cmd > 0 then
       local stmt = self:prepare(cmd)
