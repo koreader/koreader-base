@@ -52,6 +52,62 @@ local function split_sql(sql)
   return r
 end
 
+-- CosminApreutesei's implementation from http://lua-users.org/wiki/SplitJoin
+function string.gsplit(s, sep, plain)
+  local start = 1
+  local done = false
+  local function pass(i, j, ...)
+    if i then
+      local seg = s:sub(start, i - 1)
+      start = j + 1
+      return seg, ...
+    else
+      done = true
+      return s:sub(start)
+    end
+  end
+  return function()
+    if done then
+      return
+    end
+    if sep == '' then
+      done = true
+      return s
+    end
+    return pass(s:find(sep, start, plain))
+  end
+end
+
+local function split_sql(s)
+  local t={}
+  for c in s:gsplit(";", true) do
+    table.insert(t, c)
+  end
+  return t
+end
+
+-- Lance Li's implementation from http://lua-users.org/wiki/SplitJoin
+-- explode(seperator, string)
+local function explode(d, p)
+   local t, ll
+   t={}
+   ll=0
+   if(#p == 1) then
+      return {p}
+   end
+   while true do
+      l = string.find(p, d, ll, true) -- find the next d in the string
+      if l ~= nil then -- if "not not" found then..
+         table.insert(t, string.sub(p,ll,l-1)) -- Save it in our array.
+         ll = l + 1 -- save just after where we found it for searching next time.
+      else
+         table.insert(t, string.sub(p,ll)) -- Save what's left in our array.
+         break -- Break at end, as it should be, according to the lua manual.
+      end
+   end
+   return t
+end
+
 -- c.f., http://lua-users.org/wiki/StringTrim
 local function trim(s)
   local from = s:match"^%s*()"
