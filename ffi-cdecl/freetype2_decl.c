@@ -2,9 +2,9 @@
 
 #include "ffi-cdecl.h"
 
-#include FT_FREETYPE_H
-#include FT_SYNTHESIS_H
-#include FT_OUTLINE_H
+#include <freetype/freetype.h>
+#include <freetype/ftsynth.h>
+#include <freetype/ftoutln.h>
 
 cdecl_type(FT_Error)
 cdecl_type(FT_Pos)
