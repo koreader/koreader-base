@@ -222,15 +222,15 @@ struct FT_CharMapRec_ {
   short unsigned int platform_id;
   short unsigned int encoding_id;
 };
-FT_Error FT_Init_FreeType(FT_Library *);
-FT_Error FT_New_Face(FT_Library, const char *, long int, FT_Face *);
-FT_Error FT_Set_Pixel_Sizes(FT_Face, unsigned int, unsigned int);
-FT_Error FT_Done_Face(FT_Face);
-unsigned int FT_Get_Char_Index(FT_Face, long unsigned int);
-FT_Error FT_Load_Char(FT_Face, long unsigned int, int);
-FT_Error FT_Get_Kerning(FT_Face, unsigned int, unsigned int, unsigned int, FT_Vector *);
-void FT_GlyphSlot_Embolden(FT_GlyphSlot);
-void FT_GlyphSlot_Oblique(FT_GlyphSlot);
+FT_Error FT_Init_FreeType(FT_Library *) __attribute__((visibility("default")));
+FT_Error FT_New_Face(FT_Library, const char *, long int, FT_Face *) __attribute__((visibility("default")));
+FT_Error FT_Set_Pixel_Sizes(FT_Face, unsigned int, unsigned int) __attribute__((visibility("default")));
+FT_Error FT_Done_Face(FT_Face) __attribute__((visibility("default")));
+unsigned int FT_Get_Char_Index(FT_Face, long unsigned int) __attribute__((visibility("default")));
+FT_Error FT_Load_Char(FT_Face, long unsigned int, int) __attribute__((visibility("default")));
+FT_Error FT_Get_Kerning(FT_Face, unsigned int, unsigned int, unsigned int, FT_Vector *) __attribute__((visibility("default")));
+void FT_GlyphSlot_Embolden(FT_GlyphSlot) __attribute__((visibility("default")));
+void FT_GlyphSlot_Oblique(FT_GlyphSlot) __attribute__((visibility("default")));
 enum FT_Render_Mode_ {
   FT_RENDER_MODE_NORMAL = 0,
   FT_RENDER_MODE_LIGHT = 1,
@@ -240,11 +240,11 @@ enum FT_Render_Mode_ {
   FT_RENDER_MODE_MAX = 5,
 };
 typedef enum FT_Render_Mode_ FT_Render_Mode;
-FT_Error FT_Load_Glyph(FT_Face, unsigned int, int);
-FT_Error FT_Render_Glyph(FT_GlyphSlot, FT_Render_Mode);
-FT_Error FT_Outline_Embolden(FT_Outline *, FT_Pos);
-void FT_Outline_Translate(const FT_Outline *, FT_Pos, FT_Pos);
-long int FT_MulFix(long int, long int);
+FT_Error FT_Load_Glyph(FT_Face, unsigned int, int) __attribute__((visibility("default")));
+FT_Error FT_Render_Glyph(FT_GlyphSlot, FT_Render_Mode) __attribute__((visibility("default")));
+FT_Error FT_Outline_Embolden(FT_Outline *, FT_Pos) __attribute__((visibility("default")));
+void FT_Outline_Translate(const FT_Outline *, FT_Pos, FT_Pos) __attribute__((visibility("default")));
+long int FT_MulFix(long int, long int) __attribute__((visibility("default")));
 static const int FT_LOAD_RENDER = 4;
 static const int FT_LOAD_DEFAULT = 0;
 static const int FT_LOAD_TARGET_LIGHT = 65536;
