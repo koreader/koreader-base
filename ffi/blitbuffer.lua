@@ -23,7 +23,6 @@ local uint32pt = ffi.typeof("uint32_t*")
 local uint16pt = ffi.typeof("uint16_t*")
 local uint8pt = ffi.typeof("uint8_t*")
 local posix = require("ffi/posix_h") -- luacheck: ignore 211
-local debug = debug
 
 -- the following definitions are redundant.
 -- they need to be since only this way we can set
@@ -973,8 +972,6 @@ end
 
 function BB_mt.__index:blitDefault(dest, dest_x, dest_y, offs_x, offs_y, width, height, setter, set_param)
     -- slow default variant:
-    local hook, hmask, _ = debug.gethook()
-    debug.sethook()
     local o_y = offs_y
     for y = dest_y, dest_y+height-1 do
         local o_x = offs_x
@@ -984,7 +981,6 @@ function BB_mt.__index:blitDefault(dest, dest_x, dest_y, offs_x, offs_y, width, 
         end
         o_y = o_y + 1
     end
-    debug.sethook(hook, hmask)
 end
 -- no optimized blitting by default:
 BB_mt.__index.blitTo4 = BB_mt.__index.blitDefault
@@ -1259,8 +1255,6 @@ function BB_mt.__index:invertRect(x, y, w, h)
         cblitbuffer.BB_invert_rect(ffi.cast("struct BlitBuffer *", self),
             x, y, w, h)
     else
-        local hook, hmask, _ = debug.gethook()
-        debug.sethook()
         -- Handle rotation...
         x, y, w, h = self:getPhysicalRect(x, y, w, h)
         -- Handle any target stride properly (i.e., fetch the amount of bytes taken per pixel)...
@@ -1326,7 +1320,6 @@ function BB_mt.__index:invertRect(x, y, w, h)
                 end
             end
         end
-        debug.sethook(hook, hmask)
     end
 end
 
@@ -1359,8 +1352,6 @@ function BB_mt.__index:paintRect(x, y, w, h, value, setter)
         cblitbuffer.BB_fill_rect(ffi.cast("struct BlitBuffer *", self),
             x, y, w, h, value:getColor8().a)
     else
-        local hook, hmask, _ = debug.gethook()
-        debug.sethook()
         -- We can only do fast filling when there's no complex processing involved (i.e., simple setPixel only)
         -- NOTE: We cheat a bit when targeting non-grayscale BBs,
         --       because we know we're only used with a grayscale color as input ;).
@@ -1399,7 +1390,6 @@ function BB_mt.__index:paintRect(x, y, w, h, value, setter)
                 end
             end
         end
-        debug.sethook(hook, hmask)
     end
 end
 
@@ -1411,14 +1401,11 @@ function BB4_mt.__index:paintRect(x, y, w, h, value, setter)
     w, x = BB.checkBounds(w, x, 0, self:getWidth(), 0xFFFF)
     h, y = BB.checkBounds(h, y, 0, self:getHeight(), 0xFFFF)
     if w <= 0 or h <= 0 then return end
-    local hook, hmask, _ = debug.gethook()
-    debug.sethook()
     for tmp_y = y, y+h-1 do
         for tmp_x = x, x+w-1 do
             setter(self, tmp_x, tmp_y, value)
         end
     end
-    debug.sethook(hook, hmask)
 end
 
 --[[
@@ -1739,8 +1726,6 @@ local Png  -- lazy load ffi/png
 
 function BB4_mt.__index:writePNG(filename)
     if not Png then Png = require("ffi/png") end
-    local hook, hmask, _ = debug.gethook()
-    debug.sethook()
 
     local w, h = self:getWidth(), self:getHeight()
     -- Convert to Y8, I'm not sure how 4-bit grayscale works in PNG...
@@ -1749,13 +1734,10 @@ function BB4_mt.__index:writePNG(filename)
 
     Png.encodeToFile(filename, ffi.cast("const unsigned char*", bbdump.data), w, h, 1)
     bbdump:free()
-    debug.sethook(hook, hmask)
 end
 
 function BB8_mt.__index:writePNG(filename)
     if not Png then Png = require("ffi/png") end
-    local hook, hmask, _ = debug.gethook()
-    debug.sethook()
 
     local w, h = self:getWidth(), self:getHeight()
     -- Create a copy of the input BB, but with no padding and no soft rotation.
@@ -1766,13 +1748,10 @@ function BB8_mt.__index:writePNG(filename)
 
     Png.encodeToFile(filename, ffi.cast("const unsigned char*", bbdump.data), w, h, 1)
     bbdump:free()
-    debug.sethook(hook, hmask)
 end
 
 function BB8A_mt.__index:writePNG(filename)
     if not Png then Png = require("ffi/png") end
-    local hook, hmask, _ = debug.gethook()
-    debug.sethook()
 
     local w, h = self:getWidth(), self:getHeight()
     -- Create a copy of the input BB, but with no padding and no soft rotation.
@@ -1781,13 +1760,10 @@ function BB8A_mt.__index:writePNG(filename)
 
     Png.encodeToFile(filename, ffi.cast("const unsigned char*", bbdump.data), w, h, 2)
     bbdump:free()
-    debug.sethook(hook, hmask)
 end
 
 function BBRGB16_mt.__index:writePNG(filename)
     if not Png then Png = require("ffi/png") end
-    local hook, hmask, _ = debug.gethook()
-    debug.sethook()
 
     local w, h = self:getWidth(), self:getHeight()
     -- RGB565 is the worst, convert to RGB24
@@ -1796,7 +1772,6 @@ function BBRGB16_mt.__index:writePNG(filename)
 
     Png.encodeToFile(filename, ffi.cast("const unsigned char*", bbdump.data), w, h, 3)
     bbdump:free()
-    debug.sethook(hook, hmask)
 end
 
 function BBRGB24_mt.__index:writePNG(filename, bgr)
@@ -1804,8 +1779,6 @@ function BBRGB24_mt.__index:writePNG(filename, bgr)
     if bgr then return self:writePNGFromBGR(filename) end
 
     if not Png then Png = require("ffi/png") end
-    local hook, hmask, _ = debug.gethook()
-    debug.sethook()
 
     local w, h = self:getWidth(), self:getHeight()
     -- Create a copy of the input BB, but with no padding and no soft rotation.
@@ -1814,7 +1787,6 @@ function BBRGB24_mt.__index:writePNG(filename, bgr)
 
     Png.encodeToFile(filename, ffi.cast("const unsigned char*", bbdump.data), w, h, 3)
     bbdump:free()
-    debug.sethook(hook, hmask)
 end
 
 function BBRGB32_mt.__index:writePNG(filename, bgr)
@@ -1822,8 +1794,6 @@ function BBRGB32_mt.__index:writePNG(filename, bgr)
     if bgr then return self:writePNGFromBGR(filename) end
 
     if not Png then Png = require("ffi/png") end
-    local hook, hmask, _ = debug.gethook()
-    debug.sethook()
 
     local w, h = self:getWidth(), self:getHeight()
     -- Create a copy of the input BB, but with no padding and no soft rotation.
@@ -1832,14 +1802,11 @@ function BBRGB32_mt.__index:writePNG(filename, bgr)
 
     Png.encodeToFile(filename, ffi.cast("const unsigned char*", bbdump.data), w, h, 4)
     bbdump:free()
-    debug.sethook(hook, hmask)
 end
 
 -- Crap manual fallback when a have a BGR <-> RGB swap to handle...
 function BB_mt.__index:writePNGFromBGR(filename)
     if not Png then Png = require("ffi/png") end
-    local hook, hmask, _ = debug.gethook()
-    debug.sethook()
     local w, h = self:getWidth(), self:getHeight()
     local stride = w * 3
     local cdata = C.malloc(stride * h)
@@ -1857,7 +1824,6 @@ function BB_mt.__index:writePNGFromBGR(filename)
     end
     Png.encodeToFile(filename, mem, w, h, 3)
     C.free(cdata)
-    debug.sethook(hook, hmask)
 end
 
 -- if no special case in BB???_mt exists, use function from BB_mt
