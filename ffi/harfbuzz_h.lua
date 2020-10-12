@@ -744,8 +744,9 @@ typedef enum {
   HB_OT_VAR_AXIS_FLAG_HIDDEN = 1,
   _HB_OT_VAR_AXIS_FLAG_MAX_VALUE = 2147483647,
 } hb_ot_var_axis_flags_t;
+typedef unsigned int hb_ot_name_id_t;
 struct hb_ot_name_entry_t {
-  unsigned int name_id;
+  hb_ot_name_id_t name_id;
   hb_var_int_t var;
   hb_language_t language;
 };
@@ -755,7 +756,7 @@ struct hb_ot_color_layer_t {
 };
 struct hb_ot_var_axis_t {
   hb_tag_t tag;
-  unsigned int name_id;
+  hb_ot_name_id_t name_id;
   float min_value;
   float default_value;
   float max_value;
@@ -774,7 +775,7 @@ struct hb_ot_math_glyph_part_t {
 struct hb_ot_var_axis_info_t {
   unsigned int axis_index;
   hb_tag_t tag;
-  unsigned int name_id;
+  hb_ot_name_id_t name_id;
   hb_ot_var_axis_flags_t flags;
   float min_value;
   float default_value;
@@ -910,13 +911,13 @@ typedef enum {
 } hb_ot_metrics_tag_t;
 typedef struct hb_ot_var_axis_info_t hb_ot_var_axis_info_t;
 const hb_ot_name_entry_t *hb_ot_name_list_names(hb_face_t *, unsigned int *);
-unsigned int hb_ot_name_get_utf8(hb_face_t *, unsigned int, hb_language_t, unsigned int *, char *);
-unsigned int hb_ot_name_get_utf16(hb_face_t *, unsigned int, hb_language_t, unsigned int *, uint16_t *);
-unsigned int hb_ot_name_get_utf32(hb_face_t *, unsigned int, hb_language_t, unsigned int *, uint32_t *);
+unsigned int hb_ot_name_get_utf8(hb_face_t *, hb_ot_name_id_t, hb_language_t, unsigned int *, char *);
+unsigned int hb_ot_name_get_utf16(hb_face_t *, hb_ot_name_id_t, hb_language_t, unsigned int *, uint16_t *);
+unsigned int hb_ot_name_get_utf32(hb_face_t *, hb_ot_name_id_t, hb_language_t, unsigned int *, uint32_t *);
 hb_bool_t hb_ot_color_has_palettes(hb_face_t *);
 unsigned int hb_ot_color_palette_get_count(hb_face_t *);
-unsigned int hb_ot_color_palette_get_name_id(hb_face_t *, unsigned int);
-unsigned int hb_ot_color_palette_color_get_name_id(hb_face_t *, unsigned int);
+hb_ot_name_id_t hb_ot_color_palette_get_name_id(hb_face_t *, unsigned int);
+hb_ot_name_id_t hb_ot_color_palette_color_get_name_id(hb_face_t *, unsigned int);
 hb_ot_color_palette_flags_t hb_ot_color_palette_get_flags(hb_face_t *, unsigned int);
 unsigned int hb_ot_color_palette_get_colors(hb_face_t *, unsigned int, unsigned int, unsigned int *, hb_color_t *);
 hb_bool_t hb_ot_color_has_layers(hb_face_t *);
@@ -965,8 +966,8 @@ hb_bool_t hb_ot_layout_lookup_would_substitute(hb_face_t *, unsigned int, const 
 void hb_ot_layout_lookup_substitute_closure(hb_face_t *, unsigned int, hb_set_t *);
 void hb_ot_layout_lookups_substitute_closure(hb_face_t *, const hb_set_t *, hb_set_t *);
 hb_bool_t hb_ot_layout_has_positioning(hb_face_t *);
-hb_bool_t hb_ot_layout_get_size_params(hb_face_t *, unsigned int *, unsigned int *, unsigned int *, unsigned int *, unsigned int *);
-hb_bool_t hb_ot_layout_feature_get_name_ids(hb_face_t *, hb_tag_t, unsigned int, unsigned int *, unsigned int *, unsigned int *, unsigned int *, unsigned int *);
+hb_bool_t hb_ot_layout_get_size_params(hb_face_t *, unsigned int *, unsigned int *, hb_ot_name_id_t *, unsigned int *, unsigned int *);
+hb_bool_t hb_ot_layout_feature_get_name_ids(hb_face_t *, hb_tag_t, unsigned int, hb_ot_name_id_t *, hb_ot_name_id_t *, hb_ot_name_id_t *, unsigned int *, hb_ot_name_id_t *);
 unsigned int hb_ot_layout_feature_get_characters(hb_face_t *, hb_tag_t, unsigned int, unsigned int, unsigned int *, hb_codepoint_t *);
 hb_bool_t hb_ot_layout_get_baseline(hb_font_t *, hb_ot_layout_baseline_tag_t, hb_direction_t, hb_tag_t, hb_tag_t, hb_position_t *);
 hb_bool_t hb_ot_math_has_data(hb_face_t *);
@@ -991,9 +992,34 @@ unsigned int hb_ot_var_get_axis_count(hb_face_t *);
 unsigned int hb_ot_var_get_axis_infos(hb_face_t *, unsigned int, unsigned int *, hb_ot_var_axis_info_t *);
 hb_bool_t hb_ot_var_find_axis_info(hb_face_t *, hb_tag_t, hb_ot_var_axis_info_t *);
 unsigned int hb_ot_var_get_named_instance_count(hb_face_t *);
-unsigned int hb_ot_var_named_instance_get_subfamily_name_id(hb_face_t *, unsigned int);
-unsigned int hb_ot_var_named_instance_get_postscript_name_id(hb_face_t *, unsigned int);
+hb_ot_name_id_t hb_ot_var_named_instance_get_subfamily_name_id(hb_face_t *, unsigned int);
+hb_ot_name_id_t hb_ot_var_named_instance_get_postscript_name_id(hb_face_t *, unsigned int);
 unsigned int hb_ot_var_named_instance_get_design_coords(hb_face_t *, unsigned int, unsigned int *, float *);
 void hb_ot_var_normalize_variations(hb_face_t *, const hb_variation_t *, unsigned int, int *, unsigned int);
 void hb_ot_var_normalize_coords(hb_face_t *, unsigned int, const float *, int *);
+static const int HB_OT_NAME_ID_COPYRIGHT = 0;
+static const int HB_OT_NAME_ID_FONT_FAMILY = 1;
+static const int HB_OT_NAME_ID_FONT_SUBFAMILY = 2;
+static const int HB_OT_NAME_ID_UNIQUE_ID = 3;
+static const int HB_OT_NAME_ID_FULL_NAME = 4;
+static const int HB_OT_NAME_ID_VERSION_STRING = 5;
+static const int HB_OT_NAME_ID_POSTSCRIPT_NAME = 6;
+static const int HB_OT_NAME_ID_TRADEMARK = 7;
+static const int HB_OT_NAME_ID_MANUFACTURER = 8;
+static const int HB_OT_NAME_ID_DESIGNER = 9;
+static const int HB_OT_NAME_ID_DESCRIPTION = 10;
+static const int HB_OT_NAME_ID_VENDOR_URL = 11;
+static const int HB_OT_NAME_ID_DESIGNER_URL = 12;
+static const int HB_OT_NAME_ID_LICENSE = 13;
+static const int HB_OT_NAME_ID_LICENSE_URL = 14;
+static const int HB_OT_NAME_ID_TYPOGRAPHIC_FAMILY = 16;
+static const int HB_OT_NAME_ID_TYPOGRAPHIC_SUBFAMILY = 17;
+static const int HB_OT_NAME_ID_MAC_FULL_NAME = 18;
+static const int HB_OT_NAME_ID_SAMPLE_TEXT = 19;
+static const int HB_OT_NAME_ID_CID_FINDFONT_NAME = 20;
+static const int HB_OT_NAME_ID_WWS_FAMILY = 21;
+static const int HB_OT_NAME_ID_WWS_SUBFAMILY = 22;
+static const int HB_OT_NAME_ID_LIGHT_BACKGROUND = 23;
+static const int HB_OT_NAME_ID_DARK_BACKGROUND = 24;
+static const int HB_OT_NAME_ID_VARIATIONS_PS_PREFIX = 25;
 ]]

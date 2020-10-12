@@ -2,10 +2,23 @@
 
 #include "ffi-cdecl.h"
 
-#include <freetype/freetype.h>
-#include <freetype/ftsynth.h>
-#include <freetype/ftoutln.h>
+#include FT_FREETYPE_H
+#include FT_SYNTHESIS_H
+#include FT_OUTLINE_H
+#include FT_TRUETYPE_TABLES_H
+#include FT_TRUETYPE_TAGS_H
+#include FT_SFNT_NAMES_H
+#include <freetype/ttnameid.h>
 
+
+cdecl_type(FT_String)
+cdecl_type(FT_Byte)
+cdecl_type(FT_UShort)
+cdecl_type(FT_Short)
+cdecl_type(FT_Int)
+cdecl_type(FT_UInt)
+cdecl_type(FT_Long)
+cdecl_type(FT_ULong)
 cdecl_type(FT_Error)
 cdecl_type(FT_Pos)
 
@@ -105,11 +118,89 @@ cdecl_func(FT_Outline_Embolden)
 cdecl_func(FT_Outline_Translate)
 cdecl_func(FT_MulFix)
 
-cdecl_const(FT_LOAD_RENDER)
+cdecl_func(FT_Get_First_Char)
+cdecl_func(FT_Get_Next_Char)
+
 cdecl_const(FT_LOAD_DEFAULT)
-cdecl_const(FT_LOAD_TARGET_LIGHT)
-cdecl_const(FT_LOAD_NO_AUTOHINT)
+cdecl_const(FT_LOAD_NO_SCALE)
 cdecl_const(FT_LOAD_NO_HINTING)
+cdecl_const(FT_LOAD_RENDER)
+cdecl_const(FT_LOAD_NO_BITMAP)
+cdecl_const(FT_LOAD_VERTICAL_LAYOUT)
 cdecl_const(FT_LOAD_FORCE_AUTOHINT)
+cdecl_const(FT_LOAD_CROP_BITMAP)
+cdecl_const(FT_LOAD_PEDANTIC)
+cdecl_const(FT_LOAD_IGNORE_GLOBAL_ADVANCE_WIDTH)
+cdecl_const(FT_LOAD_NO_RECURSE)
+cdecl_const(FT_LOAD_IGNORE_TRANSFORM)
+cdecl_const(FT_LOAD_MONOCHROME)
+cdecl_const(FT_LOAD_LINEAR_DESIGN)
+
+cdecl_const(FT_LOAD_SBITS_ONLY)
+cdecl_const(FT_LOAD_NO_AUTOHINT)
+
+cdecl_const(FT_LOAD_TARGET_NORMAL)
+cdecl_const(FT_LOAD_TARGET_LIGHT)
+cdecl_const(FT_LOAD_TARGET_MONO)
+cdecl_const(FT_LOAD_TARGET_LCD)
+cdecl_const(FT_LOAD_TARGET_LCD_V)
+
+cdecl_const(FT_FACE_FLAG_SCALABLE)
+cdecl_const(FT_FACE_FLAG_FIXED_SIZES)
+cdecl_const(FT_FACE_FLAG_FIXED_WIDTH)
+cdecl_const(FT_FACE_FLAG_HORIZONTAL)
+cdecl_const(FT_FACE_FLAG_VERTICAL)
+cdecl_const(FT_FACE_FLAG_SFNT)
 cdecl_const(FT_FACE_FLAG_KERNING)
+cdecl_const(FT_FACE_FLAG_MULTIPLE_MASTERS)
+cdecl_const(FT_FACE_FLAG_GLYPH_NAMES)
+cdecl_const(FT_FACE_FLAG_EXTERNAL_STREAM)
+cdecl_const(FT_FACE_FLAG_FAST_GLYPHS)
+cdecl_const(FT_FACE_FLAG_HINTER)
+
+
+cdecl_const(FT_STYLE_FLAG_BOLD)
+cdecl_const(FT_STYLE_FLAG_ITALIC)
+
+
 cdecl_const(FT_KERNING_DEFAULT)
+cdecl_const(FT_KERNING_UNFITTED)
+cdecl_const(FT_KERNING_UNSCALED)
+
+cdecl_struct(TT_OS2_)
+cdecl_type(TT_OS2)
+
+cdecl_enum(FT_Sfnt_Tag_)
+cdecl_type(FT_Sfnt_Tag)
+cdecl_func(FT_Get_Sfnt_Table)
+
+cdecl_struct(FT_SfntName_)
+cdecl_type(FT_SfntName)
+
+
+
+cdecl_const(TT_NAME_ID_COPYRIGHT)
+cdecl_const(TT_NAME_ID_FONT_FAMILY)
+cdecl_const(TT_NAME_ID_FONT_SUBFAMILY)
+cdecl_const(TT_NAME_ID_UNIQUE_ID)
+cdecl_const(TT_NAME_ID_FULL_NAME)
+cdecl_const(TT_NAME_ID_VERSION_STRING)
+cdecl_const(TT_NAME_ID_PS_NAME)
+cdecl_const(TT_NAME_ID_TRADEMARK)
+cdecl_const(TT_NAME_ID_MANUFACTURER)
+cdecl_const(TT_NAME_ID_DESIGNER)
+cdecl_const(TT_NAME_ID_DESCRIPTION)
+cdecl_const(TT_NAME_ID_VENDOR_URL)
+cdecl_const(TT_NAME_ID_DESIGNER_URL)
+cdecl_const(TT_NAME_ID_LICENSE)
+cdecl_const(TT_NAME_ID_LICENSE_URL)
+cdecl_const(TT_NAME_ID_PREFERRED_FAMILY)
+cdecl_const(TT_NAME_ID_PREFERRED_SUBFAMILY)
+cdecl_const(TT_NAME_ID_MAC_FULL_NAME)
+cdecl_const(TT_NAME_ID_SAMPLE_TEXT)
+cdecl_const(TT_NAME_ID_CID_FINDFONT_NAME)
+cdecl_const(TT_NAME_ID_WWS_FAMILY)
+cdecl_const(TT_NAME_ID_WWS_SUBFAMILY)
+
+cdecl_func(FT_Get_Sfnt_Name_Count)
+cdecl_func(FT_Get_Sfnt_Name)
