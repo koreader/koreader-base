@@ -2,14 +2,13 @@
 
 #include "ffi-cdecl.h"
 
-#include FT_FREETYPE_H
-#include FT_SYNTHESIS_H
-#include FT_OUTLINE_H
-#include FT_TRUETYPE_TABLES_H
-#include FT_TRUETYPE_TAGS_H
-#include FT_SFNT_NAMES_H
+#include <freetype/freetype.h>
+#include <freetype/ftsynth.h>
+#include <freetype/ftoutln.h>
+#include <freetype/ftsnames.h>
+#include <freetype/tttables.h>
+#include <freetype/tttags.h>
 #include <freetype/ttnameid.h>
-
 
 cdecl_type(FT_String)
 cdecl_type(FT_Byte)
