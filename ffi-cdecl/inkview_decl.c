@@ -3,6 +3,7 @@
 // ~/ffi-cdecl/ffi-cdecl arm-buildroot-linux-musleabihf-gcc inkview_decl.c inkview_h.lua && sed -i 's/char data\[\];/char data[0];/' inkview_h.lua
 
 #include "inkview.h"
+#include "inkinternal.h"
 #include "ffi-cdecl.h"
 
 cdecl_enum(MencaFileStatus_e)
@@ -1270,3 +1271,15 @@ cdecl_func(WriteStartupLogo)
 cdecl_func(WriteString)
 cdecl_func(WriteStringVolatile)
 cdecl_func(zLoadBitmap)
+
+cdecl_struct(hw_event_data_pointer_s)
+cdecl_struct(hw_event_data_common_s)
+cdecl_struct(hw_event_s)
+cdecl_type(hw_event)
+cdecl_func(hw_init)
+cdecl_func(hw_close)
+cdecl_func(hw_setglobalkeymask)
+cdecl_func(iv_setup_touchpanel)
+cdecl_func(iv_setup_gsensor)
+cdecl_func(iv_update_orientation)
+cdecl_func(hw_get_keylock)
