@@ -13,6 +13,7 @@
 #include <linux/limits.h>
 #include <libgen.h>
 #include <sys/ioctl.h>
+#include <mqueue.h>
 
 #include "ffi-cdecl.h"
 
@@ -31,6 +32,9 @@ cdecl_const(O_RDONLY)
 cdecl_const(O_NONBLOCK)
 cdecl_const(O_CLOEXEC)
 cdecl_func(open)
+cdecl_func(mq_open)
+cdecl_func(mq_receive)
+cdecl_func(mq_close)
 cdecl_func(close)
 cdecl_func(fcntl)
 cdecl_func(execl)

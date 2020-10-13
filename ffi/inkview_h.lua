@@ -1785,4 +1785,32 @@ int WriteStartupLogo(const struct ibitmap_s *);
 void WriteString(struct iconfig_s *, const char *, const char *);
 void WriteStringVolatile(struct iconfig_s *, const char *, const char *);
 struct ibitmap_s *zLoadBitmap(void *, const char *);
+struct hw_event_data_pointer_s {
+  int id;
+  int x;
+  int y;
+  int pressure;
+  enum input_dev_e devtype;
+};
+struct hw_event_data_common_s {
+  int mod;
+  int par1;
+  int par2;
+};
+struct hw_event_s {
+  int type;
+  union {
+    struct hw_event_data_common_s common;
+    struct hw_event_data_pointer_s pointer;
+  };
+  struct timeval time;
+};
+typedef struct hw_event_s hw_event;
+int hw_init();
+void hw_close();
+void hw_setglobalkeymask(long int, long int, long int);
+void iv_setup_touchpanel();
+void iv_setup_gsensor();
+void iv_update_orientation(int);
+int hw_get_keylock();
 ]]
