@@ -11,6 +11,8 @@ require("ffi/posix_h")
 require("ffi/linux_input_h")
 require("ffi/inkview_h")
 
+-- InkView 4.x doesn't have the polling APIs, so inkview-compat.c
+-- emulates those in a semaphore step-locked thread.
 local compat, compat2 = inkview, inkview
 if not pcall(function() local _ = inkview.PrepareForLoop end) then
     compat = ffi.load("inkview-compat")
@@ -22,6 +24,8 @@ end
 local input = {}
 
 local ts
+-- Create new 'ts' with current timestamp.
+-- The value is then shared by all events received/emulated at the same point in time.
 local function updateTimestamp()
     local sec, usec = util.gettime()
     ts = { sec = sec, usec = usec }
@@ -29,6 +33,7 @@ local function updateTimestamp()
 end
 
 local eventq
+-- Make emulated event and add it to the queue (ts presumed updated beforehand)
 local function genEmuEvent(t,c,v)
     table.insert(eventq, {
         type = tonumber(t),
@@ -39,6 +44,7 @@ local function genEmuEvent(t,c,v)
 end
 
 local num_touch = 0
+-- Translate event from inkview EVT_* into emulated linuxev EV_
 local function translateEvent(t, par1, par2)
     if eventq == nil then
         return 0
@@ -87,8 +93,7 @@ local function translateEvent(t, par1, par2)
     return 0
 end
 
--- EV_KEY
-local raw_keymap
+local raw_keymap -- [EV_KEY] = "Action" supplied by frontend
 local poll_fds, poll_fds_count = nil, 0
 function input:open()
     eventq = {}
@@ -99,14 +104,17 @@ function input:open()
         raw_keymap = self.raw_input.keymap
         poll_fds = ffi.new("struct pollfd[?]", max_fds)
 
-        -- open the monitor queue
+        -- Open the monitor queue. We could technically live without it on older firmwares
+        -- that don't have it, but I'm not sure how events are meant to be consumed on there
+        -- to prevent stall, so for the time being we bail when we don't see it.
         local hwinput = rt.mq_open("/hwevent", C.O_RDONLY+C.O_NONBLOCK)
         assert(hwinput >= 0, "No /hwevent, probably too old firmware")
         poll_fds[0].fd = hwinput
         poll_fds[0].events = C.POLLIN
         poll_fds_count = 1
 
-        -- open the raw input devices
+        -- Open the raw input devices.
+        -- These need tot be chmoded to be readable by non-root somehow.
         for i=1, max_fds-1 do
             local input_dev = "/dev/input/event"..tostring(i)
             local fd = C.open(input_dev, C.O_RDONLY+C.O_NONBLOCK)
@@ -118,8 +126,9 @@ function input:open()
         end
         assert(poll_fds_count > 1, "Need access to /dev/input devices")
 
-        -- manually connect to the monitor, so basic process state sharing still works
-        -- but avoid the messy inkview input handling
+        -- This is only part of what OpenScreen() does, namely connect to monitor queues
+        -- and setup some basic info so that most inkview API will actually run - in spite
+        -- of never setting up the event loop.
         inkview.hw_init()
         inkview.iv_update_orientation(0)
         inkview.iv_setup_touchpanel()
@@ -156,9 +165,10 @@ local function waitForEventRaw(t)
     local expire = now() + t
     while true do
         local active = inkview.IsTaskActive() ~= 0
-        -- focus transition, emit a synthetic event
+        -- Focus in/out transition, emit a synthetic event.
         if active ~= is_active then
-            -- avoid going to sleep during state transitions
+            -- Avoid going to sleep during state transitions,
+            -- so as to not accidentaly go sleeping mid fb refresh.
             next_sleep = now() + 10 * 1000 * 1000
             is_active = active
             return {
@@ -168,12 +178,18 @@ local function waitForEventRaw(t)
                 time = updateTimestamp(),
             }
         end
-        -- sleepmode requested by frontend
+        -- We have got sleepmode ("autostandby") requested by frontend.
+        -- We must be a "properly" foregroun running to do this - no keylock (zzzz), and IsTaskActive must be true.
+        -- In any other case, the monitor has the hot potato to manage sleep states
         if active and inkview.hw_get_keylock() == 0 and inkview.GetSleepmode() > 0 and now() > next_sleep then
-            -- RTC wake up every 3 minutes to give autoshutdown timer a chance to kick in
             local before = now()
+            -- This function may, or may not suspend the device until RTC in specified time,
+            -- or GPIO (touch/button/Gsensor) fires. We make RTC wake up every 3 minutes to give
+            -- autosuspend.koplugin timers a chance to kick in.
             inkview.GoSleep(240 * 1000, 0)
-            -- if we were sleeping, avoid sleeping for a bit then, for potential keylock to manifest
+            -- If the system got suspended (T delta > 100ms), avoid sleeping for a bit again.
+            -- We need to give chance a to monitor to flip our active / keylock flags if those have have changed.
+            -- Without this, GoSleep could step on monitor while its doing the in/out sleep blur animation.
             if (now() - before) > 100 * 1000 then
                 next_sleep = now() + 100 * 1000
             end
@@ -194,7 +210,10 @@ local function waitForEventRaw(t)
             error("poll(): " .. ffi.string(C.strerror(ffi.errno())))
         end
 
-        -- mq from monitor
+        -- Message from monitor. This sendss us both touch and key events, but not in a format
+        -- thats particularly useful. Keys are nice as they have symbolic names already, but
+        -- touch events are utter mess. In any case, this queue *must* be consumed, lest otherwise
+        -- monitor would spam queued events to whaetever else gets focus after us.
         if band(poll_fds[0].revents, C.POLLIN) ~= 0 then
             updateTimestamp() -- single 'ts' copy for genEmuEvent inside the loop
             while rt.mq_receive(poll_fds[0].fd, ffi.cast("char*", hwmsg), hwmsg_len, nil) > 0 do
@@ -206,7 +225,9 @@ local function waitForEventRaw(t)
             end
         end
 
-        -- direct linux evinput (lower latency)
+        -- Read all /dev/input pipes. We don't care which is which (for instance PB740 has 2
+        -- input keyboards for measly 4 buttons!). So we simply discern by event code some of which is
+        -- EV_KEY/EV_ABS/EV_SYN. One of the pipes is even BT/OTG keyboard, so typing on it works too.
         for i=1, poll_fds_count-1 do
             if band(poll_fds[i].revents, C.POLLIN) ~= 0 then
                 while C.read(poll_fds[i].fd, evmsg, evmsg_len) == evmsg_len do
@@ -217,10 +238,8 @@ local function waitForEventRaw(t)
             end
         end
         if #eventq > 0 then return table.remove(eventq, 1) end
-
     end
 end
-
 
 function input.waitForEvent(t)
     t = t or 2000000
