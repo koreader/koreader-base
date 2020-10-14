@@ -195,7 +195,7 @@ local function waitForEventRaw(t)
         end
 
         -- mq from monitor
-        if band(poll_fds[0].revents, C.POLLIN) then
+        if band(poll_fds[0].revents, C.POLLIN) ~= 0 then
             updateTimestamp() -- single 'ts' copy for genEmuEvent inside the loop
             while rt.mq_receive(poll_fds[0].fd, ffi.cast("char*", hwmsg), hwmsg_len, nil) > 0 do
                 local m = hwmsg[0]
