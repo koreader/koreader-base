@@ -19,10 +19,16 @@ elseif not pcall(function() local _ = inkview.GetTouchInfoI end) then
     compat2 = ffi.load("inkview-compat")
 end
 
-local is_active = false
 local input = {}
-local eventq
+
 local ts
+local function updateTimestamp()
+    local sec, usec = util.gettime()
+    ts = { sec = sec, usec = usec }
+    return ts
+end
+
+local eventq
 local function genEmuEvent(t,c,v)
     table.insert(eventq, {
         type = tonumber(t),
@@ -32,22 +38,12 @@ local function genEmuEvent(t,c,v)
     })
 end
 
--- EV_KEY
-local raw_keymap
-local poll_fds, poll_fds_count = nil, 0
 local num_touch = 0
-
-local function getTimestamp()
-    local sec, usec = util.gettime()
-    ts = { sec = sec, usec = usec }
-    return ts
-end
-
 local function translateEvent(t, par1, par2)
     if eventq == nil then
         return 0
     end
-    getTimestamp()
+    updateTimestamp()
     if t == C.EVT_INIT then
         inkview.SetPanelType(C.PANEL_DISABLED);
     elseif t == C.EVT_POINTERDOWN then
@@ -91,6 +87,9 @@ local function translateEvent(t, par1, par2)
     return 0
 end
 
+-- EV_KEY
+local raw_keymap
+local poll_fds, poll_fds_count = nil, 0
 function input:open()
     eventq = {}
     -- Have all the necessary bits to run in raw mode without inkview interfering
@@ -151,6 +150,7 @@ local function convertEvent(msg)
     }
 end
 
+local is_active = false
 local next_sleep = 0
 local function waitForEventRaw(t)
     local expire = now() + t
@@ -165,7 +165,7 @@ local function waitForEventRaw(t)
                 type = C.EV_MSC,
                 code = active and C.EVT_SHOW or C.EVT_HIDE,
                 value = 0,
-                time = getTimestamp(),
+                time = updateTimestamp(),
             }
         end
         -- sleepmode requested by frontend
@@ -196,7 +196,7 @@ local function waitForEventRaw(t)
 
         -- mq from monitor
         if band(poll_fds[0].revents, C.POLLIN) then
-            getTimestamp()
+            updateTimestamp() -- single 'ts' copy for genEmuEvent inside the loop
             while rt.mq_receive(poll_fds[0].fd, ffi.cast("char*", hwmsg), hwmsg_len, nil) > 0 do
                 local m = hwmsg[0]
                 -- If there's no raw keymapping, emit this one instead
