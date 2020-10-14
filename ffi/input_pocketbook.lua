@@ -114,7 +114,7 @@ function input:open()
         poll_fds_count = 1
 
         -- Open the raw input devices.
-        -- These need tot be chmoded to be readable by non-root somehow.
+        -- You must chmod those to be readable by non-root somehow (or run as root)
         for i=1, max_fds-1 do
             local input_dev = "/dev/input/event"..tostring(i)
             local fd = C.open(input_dev, C.O_RDONLY+C.O_NONBLOCK)
@@ -126,9 +126,9 @@ function input:open()
         end
         assert(poll_fds_count > 1, "Need access to /dev/input devices")
 
-        -- This is only part of what OpenScreen() does, namely connect to monitor queues
-        -- and setup some basic info so that most inkview API will actually run - in spite
-        -- of never setting up the event loop.
+        -- This is only small part of what OpenScreen() does, namely map the shared state
+        -- memory segment, and setup some touch/g info. Most of inkview API can run with just this
+        -- in spite of us never setting up the event loop or screen canvas.
         inkview.hw_init()
         inkview.iv_update_orientation(0)
         inkview.iv_setup_touchpanel()
