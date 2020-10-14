@@ -186,7 +186,7 @@ local function waitForEventRaw(t)
             -- This function may, or may not suspend the device until RTC in specified time,
             -- or GPIO (touch/button/Gsensor) fires. We make RTC wake up every 3 minutes to give
             -- autosuspend.koplugin timers a chance to kick in.
-            inkview.GoSleep(240 * 1000, 0)
+            inkview.GoSleep(180 * 1000, 0)
             -- If the system got suspended (T delta > 100ms), avoid sleeping for a bit again.
             -- We need to give chance a to monitor to flip our active / keylock flags if those have have changed.
             -- Without this, GoSleep could step on monitor while its doing the in/out sleep blur animation.
