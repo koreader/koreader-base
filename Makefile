@@ -40,8 +40,7 @@ all: $(OUTPUT_DIR)/libs $(if $(ANDROID),,$(LUAJIT)) \
 		$(if $(REMARKABLE),$(OUTPUT_DIR)/button-listen,) \
 		$(SQLITE_LIB) \
 		$(if $(or $(CERVANTES),$(KINDLE),$(KOBO),$(POCKETBOOK),$(REMARKABLE),$(SONY_PRSTUX)),$(CURL_LIB),) \
-		$(if $(or $(CERVANTES),$(KINDLE),$(KOBO),$(POCKETBOOK),$(REMARKABLE),$(SONY_PRSTUX)),$(OUTPUT_DIR)/zsync2,) \
-		$(LUA_LJ_SQLITE) $(OUTPUT_DIR)/common/xsys.lua
+		$(if $(or $(CERVANTES),$(KINDLE),$(KOBO),$(POCKETBOOK),$(REMARKABLE),$(SONY_PRSTUX)),$(OUTPUT_DIR)/zsync2,)
 ifeq ($(DO_STRIP),1)
 	STRIP_FILES="\
 		$(if $(WIN32),,$(OUTPUT_DIR)/sdcv) \

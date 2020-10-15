@@ -784,10 +784,9 @@ $(SQLITE_LIB): $(THIRDPARTY_DIR)/sqlite/*.*
 		$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS)
 	cp $(SQLITE_DIR)/lib/$(notdir $(SQLITE_LIB)) $(OUTPUT_DIR)/libs
 
-$(LUA_LJ_SQLITE) $(OUTPUT_DIR)/common/xsys.lua: $(LUA_LJ_SQLITE_DIR)/init.lua $(LUA_LJ_SQLITE_DIR)/xsys.lua
+$(LUA_LJ_SQLITE): $(LUA_LJ_SQLITE_DIR)/init.lua
 	install -d $(LUA_LJ_SQLITE_INSTALL_DIR)
 	cp $(LUA_LJ_SQLITE_DIR)/{init.lua,LICENSE} $(LUA_LJ_SQLITE_INSTALL_DIR)
-	cp $(LUA_LJ_SQLITE_DIR)/xsys.lua $(OUTPUT_DIR)/common
 
 $(NANOSVG_HEADERS): $(THIRDPARTY_DIR)/nanosvg/*.*
 	install -d $(NANOSVG_BUILD_DIR)

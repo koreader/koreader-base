@@ -1,4 +1,4 @@
---------------------------------------------------------------------------------
+--[[
 -- A library for interfacing with SQLite3 databases.
 --
 -- Copyright (C) 2011-2016 Stefano Peluchetti. All rights reserved.
@@ -7,7 +7,7 @@
 --
 -- This file is part of the LJSQLite3 library, which is released under the MIT
 -- license: full text in file LICENSE.TXT in the library's root folder.
---------------------------------------------------------------------------------
+--]]
 
 -- TODO: Refactor according to latest style / coding guidelines.
 
@@ -18,14 +18,44 @@
 -- TODO: Resultset (and so exec) could be optimized by avoiding loads/stores
 -- TODO: of row table via _step?
 
-local ffi  = require "ffi"
-local bit  = require "bit"
-local xsys = require "xsys"
+local ffi = require("ffi")
+local bit = require("bit")
 
-local split, trim = xsys.string.split, xsys.string.trim
+-- CosminApreutesei's implementation from http://lua-users.org/wiki/SplitJoin
+function string.gsplit(s, sep, plain)
+  local start = 1
+  local done = false
+  local function pass(i, j, ...)
+    if i then
+      local seg = s:sub(start, i)  -- NOTE: Original code used i - 1 to skip the separator!
+      start = j + 1
+      return seg, ...
+    else
+      done = true
+      return s:sub(start)
+    end
+  end
+  return function()
+    if done then
+      return
+    end
+    if sep == '' then
+      done = true
+      return s
+    end
+    return pass(s:find(sep, start, plain))
+  end
+end
+
+-- c.f., http://lua-users.org/wiki/StringTrim
+local function trim(s)
+  local from = s:match"^%s*()"
+  return from > #s and "" or s:match(".*%S", from)
+end
 
 local function err(code, msg)
-  error("ljsqlite3["..code.."] "..msg)
+  -- Throw a traceback into the mix, because it's extremely unintuitive otherwise...
+  error("ljsqlite3[" .. code .. "] " .. msg .. "\n" .. debug.traceback())
 end
 
 -- Codes -----------------------------------------------------------------------
@@ -84,6 +114,7 @@ typedef struct sqlite3_stmt sqlite3_stmt;
 typedef void (*sqlite3_destructor_type)(void*);
 typedef struct sqlite3_context sqlite3_context;
 typedef struct Mem sqlite3_value;
+typedef int (*ljsqlite3_cbsql3exec)(void*, int total, char** data, char** cols);
 
 // Get informative error message.
 const char *sqlite3_errmsg(sqlite3*);
@@ -94,6 +125,9 @@ int sqlite3_open_v2(const char *filename, sqlite3 **ppDb, int flags,
 int sqlite3_close(sqlite3*);
 int sqlite3_close_v2(sqlite3*);
 int sqlite3_busy_timeout(sqlite3*, int ms);
+
+// exec
+int sqlite3_exec(sqlite3 *conn, const char *sql, ljsqlite3_cbsql3exec, void *, char **errmsg);
 
 // Statement.
 int sqlite3_prepare_v2(sqlite3 *conn, const char *zSql, int nByte,
@@ -162,7 +196,7 @@ int sqlite3_create_function(
 );
 ]]
 
---------------------------------------------------------------------------------
+-- --------------------------------------------------------------------------------
 local sql = ffi.load("sqlite3")
 
 local transient = ffi.cast("sqlite3_destructor_type", -1)
@@ -342,10 +376,9 @@ end
 
 -- Connection exec, __call, rowexec --------------------------------------------
 function conn_mt:exec(commands, get) T_open(self)
-  local cmd1 = split(commands, ";")
   local res, n
-  for i=1,#cmd1 do
-    local cmd = trim(cmd1[i])
+  for command in commands:gsplit(";", true) do
+    local cmd = trim(command)
     if #cmd > 0 then
       local stmt = self:prepare(cmd)
       res, n = stmt:resultset(get)
@@ -369,11 +402,38 @@ function conn_mt:rowexec(command) T_open(self)
   end
 end
 
+function conn_mt:execsql(commands) T_open(self)
+  local r = {[0] = {}}
+  local fn = function(conn, total, data, cols)
+    for i = 0, total - 1 do
+      local val, col = ffi.string(data[i]), ffi.string(cols[i])
+      if not r[col] then
+        r[col] = {}
+        table.insert(r, r[col])
+        table.insert(r[0], col)
+      end
+      table.insert(r[col], val)
+    end
+
+    return 0
+  end
+  local cb = ffi.cast('ljsqlite3_cbsql3exec', fn)
+  sql.sqlite3_exec(self._ptr, commands, cb, nil, nil)
+  return r
+end
+
+-- We need that if we have multiple processes accessing the same SQLite db for writing
+-- (write locks are exclusive, so waiting & retrying is necessary).
+-- SQLite will retry getting a lock multiple times until at least timeout_ms of sleeping have accumulated.
+function conn_mt:set_busy_timeout(timeout_ms) T_open(self)
+  local code = sql.sqlite3_busy_timeout(self._ptr, timeout_ms)
+  T_okcode(self._ptr, code)
+end
+
 function conn_mt:__call(commands, out) T_open(self)
   out = out or print
-  local cmd1 = split(commands, ";")
-  for c=1,#cmd1 do
-    local cmd = trim(cmd1[c])
+  for command in commands:gsplit(";", true) do
+    local cmd = trim(command)
     if #cmd > 0 then
       local stmt = self:prepare(cmd)
       local ret, n = stmt:resultset()
@@ -576,6 +636,19 @@ function stmt_mt:resultset(get, maxrecords) T_open(self)
     for i=1,#h do out[h[i]] = o[i] end
   end
   return out, n
+end
+
+-- iterator over rows
+function stmt_mt:rows()
+  return function() T_open(self)
+    local row = self:step()
+    if row then
+      return row
+    else
+      self:clearbind():reset()
+      return nil
+    end
+  end
 end
 
 -- Statement bind --------------------------------------------------------------

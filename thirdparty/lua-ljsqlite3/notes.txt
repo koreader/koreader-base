@@ -1,2 +1,5 @@
-xsys is adapted from upstream commit: 87df92c
 lua-ljsqlite3 is copied from upstream commit: d742002
+A few patches from forks have been merged:
+	* https://github.com/Codezerker/lua-ljsqlite3/commit/4efb927a6514039ec657ce977154b6ea3596f2ce
+	* https://github.com/mnemnion/lua-ljsqlite3/commit/c81b2ed8efec34af24876a5b1489650a3f891e53
+
