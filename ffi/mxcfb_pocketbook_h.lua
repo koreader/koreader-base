@@ -11,6 +11,7 @@ static const int EPDC_WFTYPE_GC16 = 2;
 static const int EPDC_WFTYPE_GC4 = 3;
 static const int EPDC_WFTYPE_A2 = 4;
 static const int EPDC_WFTYPE_GL16 = 5;
+static const int EPDC_WFTYPE_GS16 = 14;
 static const int EPDC_WFTYPE_A2IN = 6;
 static const int EPDC_WFTYPE_A2OUT = 7;
 static const int EPDC_WFTYPE_DU4 = 8;
@@ -23,6 +24,7 @@ static const int WAVEFORM_MODE_GC16 = 2;
 static const int WAVEFORM_MODE_GC4 = 3;
 static const int WAVEFORM_MODE_A2 = 4;
 static const int WAVEFORM_MODE_GL16 = 5;
+static const int WAVEFORM_MODE_GS16 = 14;
 static const int WAVEFORM_MODE_A2IN = 6;
 static const int WAVEFORM_MODE_A2OUT = 7;
 static const int WAVEFORM_MODE_DU4 = 8;
@@ -68,4 +70,5 @@ struct mxcfb_update_marker_data {
 };
 static const int MXCFB_SEND_UPDATE = 1077954094;
 static const int MXCFB_WAIT_FOR_UPDATE_COMPLETE_PB = 1074021935;
+static const int EPDC_GET_UPDATE_STATE = 2147763797;
 ]]
