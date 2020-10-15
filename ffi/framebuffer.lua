@@ -33,6 +33,10 @@ local fb = {
         default = nil, -- if not nil, use this as default rotation value (this one is canonical, not HW)
         every_paint = false, -- true if HW mode should be enforced for every paint batch
     },]]
+    -- User-selectable WF aggressiveness.
+    -- Lower level is the slowest and most conservative, increasing values trade speed for glitches and ghosting.
+    wf_level = 0,
+    wf_level_max = 0, -- Maximum supported value for wf_level.
 }
 
 --[[
@@ -447,6 +451,10 @@ function fb:setupDithering()
             self.sw_dithering = false
         end
     end
+end
+
+function fb:getWaveformLevel()
+    return math.min(self.wf_level_max, self.wf_level)
 end
 
 function fb:saveCurrentBB()

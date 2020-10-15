@@ -554,6 +554,13 @@ function framebuffer:refreshFastImp(x, y, w, h, dither)
     self:mech_refresh(C.UPDATE_MODE_PARTIAL, self.waveform_fast, x, y, w, h, dither)
 end
 
+-- Detect Allwinner boards. Those emulate mxcfb API in a custom driver (poorly).
+function framebuffer:isB288(fb)
+    require("ffi/mxcfb_pocketbook_h")
+    -- On a real MXC driver, it returns -EINVAL
+    return C.ioctl(self.fd, C.EPDC_GET_UPDATE_STATE, ffi.new("uint32_t[1]")) == 0
+end
+
 function framebuffer:init()
     framebuffer.parent.init(self)
 
@@ -721,11 +728,29 @@ function framebuffer:init()
         self.mech_refresh = refresh_pocketbook
         self.mech_wait_update_complete = pocketbook_mxc_wait_for_update_complete
 
-        self.waveform_fast = C.WAVEFORM_MODE_DU
-        self.waveform_ui = C.WAVEFORM_MODE_GL16
+        self.wf_level_max = 3
+        local level = self:getWaveformLevel()
+        -- Level 0 is most conservative.
+        -- This is what inkview does on all platforms.
+        -- Slow (>150ms on B288 Carta).
+        if level == 0 then
+            self.waveform_fast = C.WAVEFORM_MODE_GC16
+            self.waveform_partial = C.WAVEFORM_MODE_GC16
+        elseif level == 1 then
+            self.waveform_fast = C.WAVEFORM_MODE_DU
+            self.waveform_partial = C.WAVEFORM_MODE_GC16
+        elseif level == 2 then
+            self.waveform_fast = C.WAVEFORM_MODE_DU
+            self.waveform_partial = self:isB288() and C.WAVEFORM_MODE_GS16 or C.WAVEFORM_MODE_GC16
+        -- Level 3 is most aggressive.
+        -- Fast (>80ms on B288 Carta), but flickers and may be buggy.
+        elseif level == 3 then
+            self.waveform_fast = C.WAVEFORM_MODE_DU
+            self.waveform_partial = C.WAVEFORM_MODE_GL16
+        end
+        self.waveform_ui = self.waveform_partial
         self.waveform_flashui = C.WAVEFORM_MODE_GC16
         self.waveform_full = C.WAVEFORM_MODE_GC16
-        self.waveform_partial = C.WAVEFORM_MODE_GL16
         self.waveform_night = C.WAVEFORM_MODE_GC16
         self.waveform_flashnight = self.waveform_night
         self.night_is_reagl = false

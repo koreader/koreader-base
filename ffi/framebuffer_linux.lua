@@ -181,6 +181,7 @@ function framebuffer:setRotationMode(mode)
         self.cur_rotation_mode = mode
         self:setHWRotation(mode)
         self:reinit()
+        assert(self.forced_rotation, "reinit/fb hooks shouldn't flip hw rotation flags")
         if self.forced_rotation.restore then
             self:setHWRotation(self.native_rotation_mode)
         end
