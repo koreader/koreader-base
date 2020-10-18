@@ -79,7 +79,7 @@ function framebuffer:resize()
         self.bb:invert()
     end
 
-    self.bb:fill(BB.COLOR_WHITE)
+    self.bb:fill(inverse and BB.COLOR_BLACK or BB.COLOR_WHITE)
     self:_updateWindow()
 end
 
