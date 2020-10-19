@@ -20,6 +20,15 @@ local waveform_du, waveform_gc16, waveform_regal = 1, 2, 7 -- luacheck: ignore
 local partial_du, partial_gc16, partial_regal = waveform_du, waveform_gc16, waveform_regal -- luacheck: ignore
 local full_gc16, full_regal = update_full + waveform_gc16, update_full + waveform_regal -- luacheck: ignore
 
+local qualcomm_delay_page = 250
+local qualcomm_delay_ui = 100
+local qualcomm_wait_mode_wait = 64 -- luacheck: ignore
+local qualcomm_reagl_mode_reagl = 4096 -- luacheck: ignore
+local qualcomm_update_full, qualcomm_update_partial = 32, 0 -- luacheck: ignore
+local qualcomm_waveform_du, qualcomm_waveform_gc16, qualcomm_waveform_regal = 1, 2, 6 -- luacheck: ignore
+local qualcomm_partial_du, qualcomm_partial_gc16, qualcomm_partial_regal = qualcomm_waveform_du, qualcomm_waveform_gc16, qualcomm_waveform_regal -- luacheck: ignore
+local qualcomm_full_gc16, qualcomm_full_regal = qualcomm_update_full + qualcomm_waveform_gc16 + qualcomm_wait_mode_wait, qualcomm_update_full + qualcomm_waveform_regal -- luacheck: ignore
+
 local framebuffer = {}
 
 -- update a region of the screen
@@ -47,6 +56,8 @@ function framebuffer:_updateFull()
     -- rockchip rk3x platform
     elseif has_eink_screen and (eink_platform == "rockchip") then
         android.einkUpdate(rk_full)
+    elseif has_eink_screen and (eink_platform == "qualcomm") then
+        self:_updatePartial(qualcomm_full_gc16, qualcomm_delay_page)
     end
 end
 
@@ -149,35 +160,55 @@ end
 function framebuffer:refreshPartialImp(x, y, w, h)
     self:_updateWindow()
     if has_eink_full_support then
-        self:_updatePartial(partial_regal, 0, x, y, w, h)
+        if eink_platform == "qualcomm" then
+            self:_updatePartial(qualcomm_partial_gc16, qualcomm_delay_page, x, y, w, h)
+        else
+            self:_updatePartial(partial_regal, 0, x, y, w, h)
+        end
     end
 end
 
 function framebuffer:refreshFlashPartialImp(x, y, w, h)
     self:_updateWindow()
     if has_eink_full_support then
-        self:_updatePartial(full_regal, 0, x, y, w, h)
+        if eink_platform == "qualcomm" then
+            self:_updatePartial(qualcomm_partial_regal, qualcomm_delay_page, x, y, w, h)
+        else
+            self:_updatePartial(full_regal, 0, x, y, w, h)
+        end
     end
 end
 
 function framebuffer:refreshUIImp(x, y, w, h)
     self:_updateWindow()
     if has_eink_full_support then
-        self:_updatePartial(partial_regal, 0, x, y, w, h)
+        if eink_platform == "qualcomm" then
+            self:_updatePartial(qualcomm_partial_gc16, qualcomm_delay_ui, x, y, w, h)
+        else
+            self:_updatePartial(partial_regal, 0, x, y, w, h)
+        end
     end
 end
 
 function framebuffer:refreshFlashUIImp(x, y, w, h)
     self:_updateWindow()
     if has_eink_full_support then
-        self:_updatePartial(full_regal, 0, x, y, w, h)
+        if eink_platform == "qualcomm" then
+            self:_updatePartial(qualcomm_full_gc16, qualcomm_delay_ui, x, y, w, h)
+        else
+            self:_updatePartial(full_regal, 0, x, y, w, h)
+        end
     end
 end
 
 function framebuffer:refreshFastImp(x, y, w, h)
     self:_updateWindow()
     if has_eink_full_support then
-        self:_updatePartial(partial_du, 0, x, y, w, h)
+        if eink_platform == "qualcomm" then
+            self:_updatePartial(qualcomm_partial_du, 0, x, y, w, h)
+        else
+            self:_updatePartial(partial_du, 0, x, y, w, h)
+        end
     end
 end
 
