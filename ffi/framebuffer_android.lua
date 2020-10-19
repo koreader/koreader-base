@@ -7,6 +7,7 @@ local C = ffi.C
 
 -- does the device has an e-ink screen?
 local has_eink_screen, eink_platform = android.isEink()
+android.LOGW(eink_platform)
 
 -- does the device needs to handle all screen refreshes
 local has_eink_full_support = android.isEinkFull()
@@ -19,6 +20,13 @@ local update_full, update_partial = 32, 0 -- luacheck: ignore
 local waveform_du, waveform_gc16, waveform_regal = 1, 2, 7 -- luacheck: ignore
 local partial_du, partial_gc16, partial_regal = waveform_du, waveform_gc16, waveform_regal -- luacheck: ignore
 local full_gc16, full_regal = update_full + waveform_gc16, update_full + waveform_regal -- luacheck: ignore
+
+local onyx_wait_mode_wait = 64 -- luacheck: ignore
+local onyx_reagl_mode_reagl = 4096
+local onyx_update_full, onyx_update_partial = 32, 0 -- luacheck: ignore
+local onyx_waveform_du, onyx_waveform_gc16, onyx_waveform_regal = 1, 2, 6 -- luacheck: ignore
+local onyx_partial_du, onyx_partial_gc16, onyx_partial_regal = onyx_waveform_du, onyx_waveform_gc16, onyx_waveform_regal
+local onyx_full_gc16, onyx_full_regal = onyx_update_full + onyx_waveform_gc16 + onyx_wait_mode_wait, onyx_update_full + onyx_reagl_mode_reagl + onyx_waveform_regal
 
 local framebuffer = {}
 
@@ -47,6 +55,8 @@ function framebuffer:_updateFull()
     -- rockchip rk3x platform
     elseif has_eink_screen and (eink_platform == "rockchip") then
         android.einkUpdate(rk_full)
+    elseif has_eink_screen and (eink_platform == "qualcomm") then
+        self:_updatePartial(onyx_full_gc16, 100)
     end
 end
 
@@ -149,35 +159,55 @@ end
 function framebuffer:refreshPartialImp(x, y, w, h)
     self:_updateWindow()
     if has_eink_full_support then
-        self:_updatePartial(partial_regal, 0, x, y, w, h)
+        if eink_platform == "qualcomm" then
+            self:_updatePartial(onyx_partial_regal, 0, x, y, w, h)
+        else
+            self:_updatePartial(partial_regal, 0, x, y, w, h)
+        end
     end
 end
 
 function framebuffer:refreshFlashPartialImp(x, y, w, h)
     self:_updateWindow()
     if has_eink_full_support then
-        self:_updatePartial(full_regal, 0, x, y, w, h)
+        if eink_platform == "qualcomm" then
+            self:_updatePartial(onyx_full_regal, 0, x, y, w, h)
+        else
+            self:_updatePartial(full_regal, 0, x, y, w, h)
+        end
     end
 end
 
 function framebuffer:refreshUIImp(x, y, w, h)
     self:_updateWindow()
     if has_eink_full_support then
-        self:_updatePartial(partial_regal, 0, x, y, w, h)
+        if eink_platform == "qualcomm" then
+            self:_updatePartial(onyx_partial_regal, 0, x, y, w, h)
+        else
+            self:_updatePartial(partial_regal, 0, x, y, w, h)
+        end
     end
 end
 
 function framebuffer:refreshFlashUIImp(x, y, w, h)
     self:_updateWindow()
     if has_eink_full_support then
-        self:_updatePartial(full_regal, 0, x, y, w, h)
+        if eink_platform == "qualcomm" then
+            self:_updatePartial(onyx_full_regal, 0, x, y, w, h)
+        else
+            self:_updatePartial(full_regal, 0, x, y, w, h)
+        end
     end
 end
 
 function framebuffer:refreshFastImp(x, y, w, h)
     self:_updateWindow()
     if has_eink_full_support then
-        self:_updatePartial(partial_du, 0, x, y, w, h)
+        if eink_platform == "qualcomm" then
+            self:_updatePartial(onyx_partial_du, 0, x, y, w, h)
+        else
+            self:_updatePartial(partial_du, 0, x, y, w, h)
+        end
     end
 end
 
