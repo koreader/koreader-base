@@ -20,13 +20,14 @@ function hb_face_t:getNames(maxlen)
     for i=0, n[0]-1 do
         local name_id = list[i].name_id
         local hb_lang = list[i].language
-        hb_lang = hb.hb_language_to_string(hb_lang)
-        if hb_lang ~= nil then
-            hb_lang = ffi.string(hb_lang)
+        local lang = hb.hb_language_to_string(hb_lang)
+        if lang ~= nil then
+            lang = ffi.string(lang)
             local got = hb.hb_ot_name_get_utf8(self, name_id, hb_lang, ffi.new("unsigned[1]", maxlen), buf)
+            name_id = tonumber(name_id)
             if got > 0 then
-                res[hb_lang] = res[hb_lang] or {}
-                res[hb_lang][name_id] = ffi.string(buf)
+                res[lang] = res[lang] or {}
+                res[lang][name_id] = ffi.string(buf)
             end
         end
     end
@@ -92,7 +93,7 @@ end
 
 -- private
 
--- preprocess the script/language tables to HB range sets
+-- preprocess the script/language tables into HB range sets
 local function make_set(tab)
     local set = hb.hb_set_create()
     local first = 0
