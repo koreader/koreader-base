@@ -18,13 +18,16 @@ function hb_face_t:getNames(maxlen)
     local buf = ffi.new("char[?]", maxlen)
     local res = {}
     for i=0, n[0]-1 do
-        local hb_lang = list[i].language
         local name_id = list[i].name_id
-        local got = hb.hb_ot_name_get_utf8(self, name_id, hb_lang, ffi.new("unsigned[1]", maxlen), buf)
-        hb_lang = ffi.string(hb.hb_language_to_string(hb_lang))
-        if got > 0 then
-            res[hb_lang] = res[hb_lang] or {}
-            res[hb_lang][name_id] = ffi.string(buf)
+        local hb_lang = list[i].language
+        hb_lang = hb.hb_language_to_string(hb_lang)
+        if hb_lang ~= nil then
+            hb_lang = ffi.string(hb_lang)
+            local got = hb.hb_ot_name_get_utf8(self, name_id, hb_lang, ffi.new("unsigned[1]", maxlen), buf)
+            if got > 0 then
+                res[hb_lang] = res[hb_lang] or {}
+                res[hb_lang][name_id] = ffi.string(buf)
+            end
         end
     end
     return res
