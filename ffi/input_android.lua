@@ -165,7 +165,6 @@ function input.waitForEvent(usecs)
             end
             if android.app.destroyRequested ~= 0 then
                 android.LOGI("Engine thread destroy requested!")
-                error("application forced to quit")
                 return
             end
         elseif poll_state == C.ALOOPER_POLL_TIMEOUT then
