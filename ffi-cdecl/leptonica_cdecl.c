@@ -30,6 +30,8 @@ cdecl_const(L_COPY_CLONE)
 cdecl_struct(PixColormap)
 cdecl_struct(Pix)
 cdecl_type(PIX)
+cdecl_struct(Pixa)
+cdecl_type(PIXA)
 
 cdecl_func(boxCreate)
 cdecl_func(boxaCreate)
