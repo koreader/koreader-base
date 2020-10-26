@@ -14,22 +14,40 @@ local has_eink_full_support = android.isEinkFull()
 -- for *some* rockchip devices
 local rk_full, rk_partial, rk_a2, rk_auto = 1, 2, 3, 4 -- luacheck: ignore
 
--- for *some* freescale devices
-local update_full, update_partial = 32, 0 -- luacheck: ignore
-local waveform_du, waveform_gc16, waveform_regal = 1, 2, 7 -- luacheck: ignore
-local partial_du, partial_gc16, partial_regal = waveform_du, waveform_gc16, waveform_regal -- luacheck: ignore
-local full_gc16, full_regal = update_full + waveform_gc16, update_full + waveform_regal -- luacheck: ignore
-
-local qualcomm_delay_page = 250
-local qualcomm_delay_ui = 100
-local qualcomm_wait_mode_wait = 64 -- luacheck: ignore
-local qualcomm_reagl_mode_reagl = 4096 -- luacheck: ignore
-local qualcomm_update_full, qualcomm_update_partial = 32, 0 -- luacheck: ignore
-local qualcomm_waveform_du, qualcomm_waveform_gc16, qualcomm_waveform_regal = 1, 2, 6 -- luacheck: ignore
-local qualcomm_partial_du, qualcomm_partial_gc16, qualcomm_partial_regal = qualcomm_waveform_du, qualcomm_waveform_gc16, qualcomm_waveform_regal -- luacheck: ignore
-local qualcomm_full_gc16, qualcomm_full_regal = qualcomm_update_full + qualcomm_waveform_gc16 + qualcomm_wait_mode_wait, qualcomm_update_full + qualcomm_waveform_regal -- luacheck: ignore
-
 local framebuffer = {}
+
+local function getWaveformsAndDelays(platform)
+    --common for freescale and qualcomm EPD Controllers
+    local full, partial = 32, 0
+    local wf_du, wf_gc16 = 1, 2
+    local partial_du, partial_gc16 = wf_du, wf_gc16
+
+    -- different contants
+    local full_gc16, full_regal, partial_regal
+    local delay_page, delay_ui
+    if platform == "freescale" then
+        local wf_regal = 7
+        full_gc16 = wf_gc16 + full
+        full_regal = wf_regal + full
+        partial_regal = wf_regal
+        delay_page = 0
+        delay_ui = 0
+    elseif platform == "qualcomm" then
+        local wf_regal = 6
+        local mode_wait = 64
+        full_gc16 = wf_gc16 + full + mode_wait
+        full_regal = wf_regal + full
+        partial_regal = wf_regal
+        delay_page = 250
+        delay_ui = 100
+    end
+    return full_gc16, full_regal, partial_gc16, partial_regal, partial_du, delay_page, delay_ui
+end
+
+local full_gc16, full_regal, partial_gc16, partial_regal, partial_du, delay_page, delay_ui
+if einkUpdate ~= "rockchip" then
+    full_gc16, full_regal, partial_gc16, partial_regal, partial_du, delay_page, delay_ui = getWaveformsAndDelays(eink_platform)
+end
 
 -- update a region of the screen
 function framebuffer:_updatePartial(mode, delay, x, y, w, h)
@@ -44,10 +62,10 @@ end
 -- update the entire screen
 function framebuffer:_updateFull()
     -- freescale ntx platform
-    if has_eink_screen and (eink_platform == "freescale") then
+    if has_eink_screen and (eink_platform == "freescale" or eink_platform == "qualcomm") then
         if has_eink_full_support then
-            -- we handle the screen entirely. No delay is needed
-            self:_updatePartial(full_gc16, 0)
+            -- we handle the screen entirely. 250 delay for qualcomm, no for freescale
+            self:_updatePartial(full_gc16, delay_page)
         else
             -- we're racing against system driver. Let the system win and apply
             -- a full update after it.
@@ -56,8 +74,6 @@ function framebuffer:_updateFull()
     -- rockchip rk3x platform
     elseif has_eink_screen and (eink_platform == "rockchip") then
         android.einkUpdate(rk_full)
-    elseif has_eink_screen and (eink_platform == "qualcomm") then
-        self:_updatePartial(qualcomm_full_gc16, qualcomm_delay_page)
     end
 end
 
@@ -160,55 +176,38 @@ end
 function framebuffer:refreshPartialImp(x, y, w, h)
     self:_updateWindow()
     if has_eink_full_support then
-        if eink_platform == "qualcomm" then
-            self:_updatePartial(qualcomm_partial_gc16, qualcomm_delay_page, x, y, w, h)
-        else
-            self:_updatePartial(partial_regal, 0, x, y, w, h)
-        end
+        self:_updatePartial(partial_regal, delay_page, x, y, w, h)
     end
 end
 
 function framebuffer:refreshFlashPartialImp(x, y, w, h)
     self:_updateWindow()
     if has_eink_full_support then
-        if eink_platform == "qualcomm" then
-            self:_updatePartial(qualcomm_partial_regal, qualcomm_delay_page, x, y, w, h)
-        else
-            self:_updatePartial(full_regal, 0, x, y, w, h)
-        end
+        self:_updatePartial(full_regal, delay_page, x, y, w, h)
     end
 end
 
 function framebuffer:refreshUIImp(x, y, w, h)
     self:_updateWindow()
     if has_eink_full_support then
-        if eink_platform == "qualcomm" then
-            self:_updatePartial(qualcomm_partial_gc16, qualcomm_delay_ui, x, y, w, h)
-        else
-            self:_updatePartial(partial_regal, 0, x, y, w, h)
-        end
+        self:_updatePartial(partial_regal, delay_ui, x, y, w, h)
     end
 end
 
 function framebuffer:refreshFlashUIImp(x, y, w, h)
     self:_updateWindow()
     if has_eink_full_support then
-        if eink_platform == "qualcomm" then
-            self:_updatePartial(qualcomm_full_gc16, qualcomm_delay_ui, x, y, w, h)
-        else
-            self:_updatePartial(full_regal, 0, x, y, w, h)
-        end
+        self:_updatePartial(full_regal, delay_ui, x, y, w, h)
     end
 end
 
 function framebuffer:refreshFastImp(x, y, w, h)
     self:_updateWindow()
     if has_eink_full_support then
-        if eink_platform == "qualcomm" then
-            self:_updatePartial(qualcomm_partial_du, 0, x, y, w, h)
-        else
-            self:_updatePartial(partial_du, 0, x, y, w, h)
-        end
+        -- qualcomm shouldn't have refresh here, since the update will "merge",
+        -- and there will be no "black flash" on icons/menu items and nothing
+        -- bad happens even if the "flash" doesn't appear
+        self:_updatePartial(partial_du, 0, x, y, w, h)
     end
 end
 
