@@ -44,10 +44,7 @@ local function getWaveformsAndDelays(platform)
     return full_gc16, full_regal, partial_gc16, partial_regal, partial_du, delay_page, delay_ui
 end
 
-local full_gc16, full_regal, partial_gc16, partial_regal, partial_du, delay_page, delay_ui
-if einkUpdate ~= "rockchip" then
-    full_gc16, full_regal, partial_gc16, partial_regal, partial_du, delay_page, delay_ui = getWaveformsAndDelays(eink_platform)
-end
+local full_gc16, full_regal, partial_gc16, partial_regal, partial_du, delay_page, delay_ui = getWaveformsAndDelays(eink_platform)
 
 -- update a region of the screen
 function framebuffer:_updatePartial(mode, delay, x, y, w, h)
