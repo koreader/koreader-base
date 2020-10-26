@@ -20,7 +20,7 @@ local function getWaveformsAndDelays(platform)
     --common for freescale and qualcomm EPD Controllers
     local full, partial = 32, 0
     local wf_du, wf_gc16 = 1, 2
-    local partial_du, partial_gc16 = wf_du, wf_gc16
+    local partial_du, partial_gc16 = wf_du + partial, wf_gc16 + partial
 
     -- different contants
     local full_gc16, full_regal, partial_regal
@@ -29,7 +29,7 @@ local function getWaveformsAndDelays(platform)
         local wf_regal = 7
         full_gc16 = wf_gc16 + full
         full_regal = wf_regal + full
-        partial_regal = wf_regal
+        partial_regal = wf_regal + partial
         delay_page = 0
         delay_ui = 0
     elseif platform == "qualcomm" then
@@ -37,7 +37,7 @@ local function getWaveformsAndDelays(platform)
         local mode_wait = 64
         full_gc16 = wf_gc16 + full + mode_wait
         full_regal = wf_regal + full
-        partial_regal = wf_regal
+        partial_regal = wf_regal + partial
         delay_page = 250
         delay_ui = 100
     end
