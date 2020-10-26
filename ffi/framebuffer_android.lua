@@ -36,8 +36,11 @@ local function getWaveformsAndDelays(platform)
         local wf_regal = 6
         local mode_wait = 64
         full_gc16 = wf_gc16 + full + mode_wait
+        -- partial regal seems broken (it refreshes full screen causing a "flicker")
+        -- having partial gc16 looks better, but since freescale uses partial_regal
+        -- variable, I overwrite it here
         full_regal = wf_regal + full
-        partial_regal = wf_regal + partial
+        partial_regal = wf_gc16 + partial -- wf_regal + partial
         delay_page = 250
         delay_ui = 100
     end
@@ -173,6 +176,7 @@ end
 function framebuffer:refreshPartialImp(x, y, w, h)
     self:_updateWindow()
     if has_eink_full_support then
+        -- in case of qualcomm it's actually partial_gc16
         self:_updatePartial(partial_regal, delay_page, x, y, w, h)
     end
 end
@@ -187,6 +191,7 @@ end
 function framebuffer:refreshUIImp(x, y, w, h)
     self:_updateWindow()
     if has_eink_full_support then
+        -- in case of qualcomm it's actually partial_gc16
         self:_updatePartial(partial_regal, delay_ui, x, y, w, h)
     end
 end
