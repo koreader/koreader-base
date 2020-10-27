@@ -10,14 +10,8 @@ enable_language(C ASM)
 
 assert_var_defined(CC)
 assert_var_defined(AR)
-#assert_var_defined(CFLAGS)
 assert_var_defined(LDFLAGS)
 assert_var_defined(RANLIB)
-
-if ($ENV{DARWIN})
-    #fix build error due to implicit declarations of function being invalid in C99 under macOS/XCode 12
-    set(CFLAGS "${CFLAGS} -Wno-error=implicit-function-declaration")
-endif()
 
 ep_get_source_dir(SOURCE_DIR)
 
@@ -26,7 +20,10 @@ ep_get_source_dir(SOURCE_DIR)
 #set(PATCH_CMD "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/minizip-libaes-makefile.patch")
 
 set(PATCH_CMD sh -c "${ISED} \"s|^CC=|#CC=|g\" aes/Makefile && ${ISED} \"s|^CFLAGS=|#CFLAGS=|g\" aes/Makefile")
-set(BUILD_CMD_STR -j${PARALLEL_JOBS} -C aes CC=${CC} CFLAGS=${CFLAGS} LDFLAGS=${LDFLAGS} AR=${AR} RANLIB=${RANLIB})
+
+#fix build error due to implicit declarations of function being invalid in C99 under macOS/XCode 12 
+set(CC "${CC} -Wno-error=implicit-function-declaration")
+set(BUILD_CMD_STR -j${PARALLEL_JOBS} -C aes CC=${CC} LDFLAGS=${LDFLAGS} AR=${AR} RANLIB=${RANLIB})
 
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
