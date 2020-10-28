@@ -359,7 +359,7 @@ public:
         lua_pushstring(_L, str);
         lua_pcall(_L, 2, 0, 0);
     }
-    virtual void OnLoadFileStart( lString16 filename ) {
+    virtual void OnLoadFileStart( lString32 filename ) {
         callback("OnLoadFileStart", UnicodeToLocal(filename).c_str());
     }
     virtual void OnLoadFileFormatDetected( doc_format_t fileFormat) {
@@ -371,7 +371,7 @@ public:
     virtual void OnLoadFileEnd() {
         callback("OnLoadFileEnd");
     }
-    virtual void OnLoadFileError(lString16 message) {
+    virtual void OnLoadFileError(lString32 message) {
         callback("OnLoadFileError", UnicodeToLocal(message).c_str());
     }
     virtual void OnNodeStylesUpdateStart() {
@@ -406,7 +406,7 @@ public:
     }
     // virtual void OnLoadFileFirstPagesReady() { } // useless
     // virtual void OnExportProgress(int percent) { } // Export to WOL format
-    // virtual void OnExternalLink(lString16 /*url*/, ldomNode * /*node*/) { }
+    // virtual void OnExternalLink(lString32 /*url*/, ldomNode * /*node*/) { }
     // virtual void OnImageCacheClear() { }
     // virtual bool OnRequestReload() { return false; }
 };
@@ -451,7 +451,7 @@ static int initCache(lua_State *L) {
     // RECT_CACHE_UNPACKED_SPACE and STYLE_CACHE_UNPACKED_SPACE by this factor
     setStorageMaxUncompressedSizeFactor(storage_max_uncompressed_size_factor);
 
-    ldomDocCache::init(lString16(cache_path), cache_size);
+    ldomDocCache::init(lString32(cache_path), cache_size);
 
     return 0;
 }
@@ -459,7 +459,7 @@ static int initCache(lua_State *L) {
 static int initHyphDict(lua_State *L) {
     const char *dict_path = luaL_checkstring(L, 1);
 
-    HyphMan::initDictionaries(lString16(dict_path));
+    HyphMan::initDictionaries(lString32(dict_path));
 
     return 0;
 }
@@ -558,7 +558,7 @@ static int setIntProperty(lua_State *L) {
 static int getStringProperty(lua_State *L) {
     CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
     const char *propName = luaL_checkstring(L, 2);
-    lString16 value;
+    lString32 value;
     CRPropRef props = doc->text_view->propsGetCurrent();
     props->getString(propName, value);
     lua_pushstring(L, UnicodeToLocal(value).c_str());
@@ -615,7 +615,7 @@ static int getSelectedHyphDict(lua_State *L) {
 
 static int setHyphDictionary(lua_State *L) {
 	const char *id = luaL_checkstring(L, 1);
-	HyphMan::getDictList()->activate((lString16)id);
+	HyphMan::getDictList()->activate((lString32)id);
 	return 0;
 }
 
@@ -712,7 +712,7 @@ static int invalidateCacheFile(lua_State *L) {
 
 static int getCacheFilePath(lua_State *L) {
     CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
-    lString16 cache_path = doc->dom_doc->getCacheFilePath();
+    lString32 cache_path = doc->dom_doc->getCacheFilePath();
     if (cache_path.empty())
         return 0;
     lua_pushstring(L, UnicodeToLocal(cache_path).c_str());
@@ -721,14 +721,14 @@ static int getCacheFilePath(lua_State *L) {
 
 static int getStatistics(lua_State *L) {
     CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
-    lString16 stats = doc->dom_doc->getStatistics();
+    lString32 stats = doc->dom_doc->getStatistics();
     lua_pushstring(L, UnicodeToLocal(stats).c_str());
     return 1;
 }
 
 static int getUnknownEntities(lua_State *L) {
     CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
-    lString16Collection unknown_entities = doc->dom_doc->getUnknownEntities();
+    lString32Collection unknown_entities = doc->dom_doc->getUnknownEntities();
     lua_pushstring(L, UnicodeToLocal(unknown_entities[0]).c_str());
     lua_pushstring(L, UnicodeToLocal(unknown_entities[1]).c_str());
     lua_pushstring(L, UnicodeToLocal(unknown_entities[2]).c_str());
@@ -737,7 +737,7 @@ static int getUnknownEntities(lua_State *L) {
 
 static int getDocumentFormat(lua_State *L) {
     CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
-    lString16 docformat = getDocFormatName(doc->text_view->getDocFormat());
+    lString32 docformat = getDocFormatName(doc->text_view->getDocFormat());
     lua_pushstring(L, UnicodeToLocal(docformat).c_str());
     return 1;
 }
@@ -795,7 +795,7 @@ static int getPageFromXPointer(lua_State *L) {
 	const char *xpointer_str = luaL_checkstring(L, 2);
 
 	int page = 1;
-	ldomXPointer xp = doc->dom_doc->createXPointer(lString16(xpointer_str));
+	ldomXPointer xp = doc->dom_doc->createXPointer(lString32(xpointer_str));
 	if ( !xp.isNull() ) { // Found in document
 		// Ensure xp points to a visible node that has a y in the document.
 		// If it is invisible, get the next visible node
@@ -824,7 +824,7 @@ static int getPosFromXPointer(lua_State *L) {
 
 	int y = 0;
 	int x = 0;
-	ldomXPointer xp = doc->dom_doc->createXPointer(lString16(xpointer_str));
+	ldomXPointer xp = doc->dom_doc->createXPointer(lString32(xpointer_str));
 	if ( !xp.isNull() ) { // Found in document
 		// Ensure xp points to a visible node that has a y in the document.
 		// If it is invisible, get the next visible node
@@ -1080,7 +1080,7 @@ static int getPageMapSource(lua_State *L) {
     CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
 
     LVPageMap * pagemap = doc->text_view->getPageMap();
-    lString16 source = pagemap->getSource();
+    lString32 source = pagemap->getSource();
     if ( source.empty() )
         return 0;
     lua_pushstring(L, UnicodeToLocal(source).c_str());
@@ -1163,7 +1163,7 @@ static int getPageMapXPointerPageLabel(lua_State *L) {
     if ( !nb )
         return 0;
 
-    ldomXPointer xp = doc->dom_doc->createXPointer(lString16(xpointer_str));
+    ldomXPointer xp = doc->dom_doc->createXPointer(lString32(xpointer_str));
 
     lvPoint pt = xp.toPoint(true); // extended=true, for better accuracy
     int xp_y = pt.y >= 0 ? pt.y : 0;
@@ -1293,7 +1293,7 @@ static int getPageMapVisiblePageLabels(lua_State *L) {
  */
 static int getFontFaces(lua_State *L) {
 	int i = 0;
-	lString16Collection face_list;
+	lString32Collection face_list;
 
 	fontMan->getFaceList(face_list);
 
@@ -1321,7 +1321,7 @@ static int getFontFaceFilenameAndFaceIndex(lua_State *L) {
 
 	lString8 filename;
 	int faceindex = -1;
-	bool found = fontMan->getFontFileNameAndFaceIndex(lString16(facename), bold, italic, filename, faceindex);
+	bool found = fontMan->getFontFileNameAndFaceIndex(lString32(facename), bold, italic, filename, faceindex);
 	if (found) {
 		lua_pushstring(L, filename.c_str());
 		lua_pushinteger(L, faceindex);
@@ -1454,7 +1454,7 @@ static int gotoXPointer(lua_State *L) {
 	CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
 	const char *xpointer_str = luaL_checkstring(L, 2);
 
-	ldomXPointer xp = doc->dom_doc->createXPointer(lString16(xpointer_str));
+	ldomXPointer xp = doc->dom_doc->createXPointer(lString32(xpointer_str));
 
 	doc->text_view->goToBookmark(xp);
 	/* CREngine does not call checkPos() immediately after goToBookmark,
@@ -1498,7 +1498,7 @@ static int setStyleSheet(lua_State *L) {
 
 	if (lua_isstring(L, 2)) { // if css_file path provided, try reading it
 		const char* css_file = luaL_checkstring(L, 2);
-		if (! LVLoadStylesheetFile(lString16(css_file), css)){
+		if (! LVLoadStylesheetFile(lString32(css_file), css)){
 			css = lString8(); // failed loading, continue with empty content
 		}
 	}
@@ -1649,13 +1649,13 @@ static int cursorRight(lua_State *L) {
 	//LVDocView *tv = doc->text_view;
 
 	//ldomXPointer p = tv->getCurrentPageMiddleParagraph();
-	//lString16 s = p.getText();
-	//lString16 s = p.toString();
+	//lString32 s = p.getText();
+	//lString32 s = p.toString();
 	//printf("~~~~~~~~~~%s\n", UnicodeToLocal(s).c_str());
 
 	//tv->selectRange(*(tv->selectFirstPageLink()));
 	//ldomXRange *r = tv->selectNextPageLink(true);
-	//lString16 s = r->getRangeText();
+	//lString32 s = r->getRangeText();
 	//printf("------%s\n", UnicodeToLocal(s).c_str());
 
 	//tv->selectRange(*r);
@@ -1677,7 +1677,7 @@ static int getLinkFromPosition(lua_State *L) {
 	lvPoint pt(x, y);
 	ldomXPointer p = doc->text_view->getNodeByPoint(pt, true);
 	ldomXPointer a_p;
-	lString16 href = p.getHRef(a_p);
+	lString32 href = p.getHRef(a_p);
 	lua_pushstring(L, UnicodeToLocal(href).c_str());
 	if (!a_p.isNull()) { // return xpointer to <a> itself
 		lua_pushstring(L, UnicodeToLocal(a_p.toString()).c_str());
@@ -1732,8 +1732,8 @@ static int getTextFromXPointers(lua_State *L) {
 
 	ldomDocument *dv = doc->dom_doc;
 
-	ldomXPointer startp = dv->createXPointer(lString16(pos0));
-	ldomXPointer endp = dv->createXPointer(lString16(pos1));
+	ldomXPointer startp = dv->createXPointer(lString32(pos0));
+	ldomXPointer endp = dv->createXPointer(lString32(pos1));
 	if (!startp.isNull() && !endp.isNull()) {
 		ldomXRange r(startp, endp);
 		if (r.getStart().isNull() || r.getEnd().isNull())
@@ -1742,14 +1742,14 @@ static int getTextFromXPointers(lua_State *L) {
 
 		if (r.getStart() == r.getEnd()) { // for single CJK character
 			ldomNode * node = r.getStart().getNode();
-			lString16 text = node->getText();
+			lString32 text = node->getText();
 			int textLen = text.length();
 			int offset = r.getEnd().getOffset();
 			if (offset < textLen - 1)
 				r.getEnd().setOffset(offset + 1);
 		}
 
-		lString16 selText = r.getRangeText( '\n', 8192 );
+		lString32 selText = r.getRangeText( '\n', 8192 );
 		lua_pushstring(L, UnicodeToLocal(selText).c_str());
         return 1;
     }
@@ -1801,7 +1801,7 @@ static int getTextFromPositions(lua_State *L) {
 
 		if (r.getStart() == r.getEnd()) { // for single CJK character
 			ldomNode * node = r.getStart().getNode();
-			lString16 text = node->getText();
+			lString32 text = node->getText();
 			int textLen = text.length();
 			int offset = r.getEnd().getOffset();
 			if (offset < textLen - 1)
@@ -1817,11 +1817,11 @@ static int getTextFromPositions(lua_State *L) {
 		/* We don't need these:
 		int page = tv->getBookmarkPage(startp);
 		int pages = tv->getPageCount();
-		lString16 titleText;
-		lString16 posText;
+		lString32 titleText;
+		lString32 posText;
 		tv->getBookmarkPosText(startp, titleText, posText);
 		*/
-		lString16 selText = r.getRangeText( '\n', 8192 );
+		lString32 selText = r.getRangeText( '\n', 8192 );
 
 		lua_pushstring(L, "text");
 		lua_pushstring(L, UnicodeToLocal(selText).c_str());
@@ -1929,8 +1929,8 @@ static int compareXPointers(lua_State *L){
     CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
     const char* xp1 = luaL_checkstring(L, 2);
     const char* xp2 = luaL_checkstring(L, 3);
-    ldomXPointerEx nodep1 = doc->dom_doc->createXPointer(lString16(xp1));
-    ldomXPointerEx nodep2 = doc->dom_doc->createXPointer(lString16(xp2));
+    ldomXPointerEx nodep1 = doc->dom_doc->createXPointer(lString32(xp1));
+    ldomXPointerEx nodep2 = doc->dom_doc->createXPointer(lString32(xp2));
     if (nodep1.isNull() || nodep2.isNull())
         return 0;
     // Return 1 if pointers are ordered (if xp2 is after xp1), -1 if not, 0 if same
@@ -1941,7 +1941,7 @@ static int compareXPointers(lua_State *L){
 static int getNextVisibleWordStart(lua_State *L){
     CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
     const char* xp = luaL_checkstring(L, 2);
-    ldomXPointerEx nodep = doc->dom_doc->createXPointer(lString16(xp));
+    ldomXPointerEx nodep = doc->dom_doc->createXPointer(lString32(xp));
     if (nodep.isNull())
         return 0;
     if (nodep.nextVisibleWordStart()) {
@@ -1954,7 +1954,7 @@ static int getNextVisibleWordStart(lua_State *L){
 static int getNextVisibleWordEnd(lua_State *L){
     CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
     const char* xp = luaL_checkstring(L, 2);
-    ldomXPointerEx nodep = doc->dom_doc->createXPointer(lString16(xp));
+    ldomXPointerEx nodep = doc->dom_doc->createXPointer(lString32(xp));
     if (nodep.isNull())
         return 0;
     if (nodep.nextVisibleWordEnd()) {
@@ -1967,7 +1967,7 @@ static int getNextVisibleWordEnd(lua_State *L){
 static int getPrevVisibleWordStart(lua_State *L){
     CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
     const char* xp = luaL_checkstring(L, 2);
-    ldomXPointerEx nodep = doc->dom_doc->createXPointer(lString16(xp));
+    ldomXPointerEx nodep = doc->dom_doc->createXPointer(lString32(xp));
     if (nodep.isNull())
         return 0;
     if (nodep.prevVisibleWordStart()) {
@@ -1981,7 +1981,7 @@ static int getPrevVisibleWordStart(lua_State *L){
 static int getPrevVisibleWordEnd(lua_State *L){
     CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
     const char* xp = luaL_checkstring(L, 2);
-    ldomXPointerEx nodep = doc->dom_doc->createXPointer(lString16(xp));
+    ldomXPointerEx nodep = doc->dom_doc->createXPointer(lString32(xp));
     if (nodep.isNull())
         return 0;
     if (nodep.prevVisibleWordEnd()) {
@@ -1994,7 +1994,7 @@ static int getPrevVisibleWordEnd(lua_State *L){
 static int getNextVisibleChar(lua_State *L){
     CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
     const char* xp = luaL_checkstring(L, 2);
-    ldomXPointerEx nodep = doc->dom_doc->createXPointer(lString16(xp));
+    ldomXPointerEx nodep = doc->dom_doc->createXPointer(lString32(xp));
     if (nodep.isNull())
         return 0;
     if (nodep.nextVisibleChar()) {
@@ -2007,7 +2007,7 @@ static int getNextVisibleChar(lua_State *L){
 static int getPrevVisibleChar(lua_State *L){
     CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
     const char* xp = luaL_checkstring(L, 2);
-    ldomXPointerEx nodep = doc->dom_doc->createXPointer(lString16(xp));
+    ldomXPointerEx nodep = doc->dom_doc->createXPointer(lString32(xp));
     if (nodep.isNull())
         return 0;
     if (nodep.prevVisibleChar()) {
@@ -2032,8 +2032,8 @@ static int getWordBoxesFromPositions(lua_State *L) {
 	LVDocView *tv = doc->text_view;
 	ldomDocument *dv = doc->dom_doc;
 
-	ldomXPointer startp = dv->createXPointer(lString16(pos0));
-	ldomXPointer endp = dv->createXPointer(lString16(pos1));
+	ldomXPointer startp = dv->createXPointer(lString32(pos0));
+	ldomXPointer endp = dv->createXPointer(lString32(pos1));
 	lua_newtable(L); // new word boxes
 	if (!startp.isNull() && !endp.isNull()) {
 		ldomXRange r(startp, endp);
@@ -2138,7 +2138,7 @@ static int getDocumentFileContent(lua_State *L) {
     CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
     const char* internalFilePath = luaL_checkstring(L, 2);
 
-    LVStreamRef stream = doc->text_view->getDocumentFileStream(lString16(internalFilePath));
+    LVStreamRef stream = doc->text_view->getDocumentFileStream(lString32(internalFilePath));
     if (!stream.isNull()) {
         unsigned size = stream->GetSize();
         lvsize_t read_size = 0;
@@ -2162,7 +2162,7 @@ static int getTextFromXPointer(lua_State *L) {
     CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
     const char* xp = luaL_checkstring(L, 2);
 
-    ldomXPointer nodep = doc->dom_doc->createXPointer(lString16(xp));
+    ldomXPointer nodep = doc->dom_doc->createXPointer(lString32(xp));
     if (nodep.isNull())
         return 0;
     ldomNode * node = nodep.getNode();
@@ -2181,7 +2181,7 @@ static int getHTMLFromXPointer(lua_State *L) {
     if (lua_isboolean(L, 4))
         fromParentFinalNode = lua_toboolean(L, 4);
 
-    ldomXPointer nodep = doc->dom_doc->createXPointer(lString16(xp));
+    ldomXPointer nodep = doc->dom_doc->createXPointer(lString32(xp));
     if (nodep.isNull())
         return 0;
     ldomNode * node = nodep.getNode();
@@ -2195,7 +2195,7 @@ static int getHTMLFromXPointer(lua_State *L) {
             node = finalNode;
     }
     nodep = ldomXPointer(node, 0); // reset offset to 0, to get the full text of text nodes
-    lString16Collection cssFiles;
+    lString32Collection cssFiles;
     lString8 html = nodep.getHtml(cssFiles, wflags);
     lua_pushstring(L, html.c_str());
     lua_newtable(L);
@@ -2216,14 +2216,14 @@ static int getHTMLFromXPointers(lua_State *L) {
     if (lua_isboolean(L, 5))
         fromRootNode = lua_toboolean(L, 5);
 
-    ldomXPointer startp = doc->dom_doc->createXPointer(lString16(xp0));
-    ldomXPointer endp = doc->dom_doc->createXPointer(lString16(xp1));
+    ldomXPointer startp = doc->dom_doc->createXPointer(lString32(xp0));
+    ldomXPointer endp = doc->dom_doc->createXPointer(lString32(xp1));
     if (startp.isNull() || endp.isNull())
         return 0;
     ldomXRange r(startp, endp);
     if (r.getStart().isNull() || r.getEnd().isNull())
         return 0;
-    lString16Collection cssFiles;
+    lString32Collection cssFiles;
     lString8 html = r.getHtml(cssFiles, wflags, fromRootNode);
     lua_pushstring(L, html.c_str());
     lua_newtable(L);
@@ -2257,7 +2257,7 @@ static int getPageLinks(lua_State *L) {
 		int linkNum = 1;
 		for ( int i=0; i<linkCount; i++ ) {
 			ldomXPointer a_xpointer;
-			lString16 link = links[i]->getHRef(a_xpointer);
+			lString32 link = links[i]->getHRef(a_xpointer);
 			lString8 link8 = UnicodeToLocal( link );
 			bool isInternal = link8[0] == '#';
 
@@ -2271,7 +2271,7 @@ static int getPageLinks(lua_State *L) {
 			lvPoint end_pt ( currSel.getEnd().toPoint() );
 
 			#if DEBUG_CRENGINE
-				lString16 txt = links[i]->getRangeText();
+				lString32 txt = links[i]->getRangeText();
 				lString8 txt8 = UnicodeToLocal( txt );
 				CRLog::debug("# link %d start %d %d end %d %d '%s' %s\n", i,
 				start_pt.x, start_pt.y, end_pt.x, end_pt.y,
@@ -2331,9 +2331,9 @@ static int getPageLinks(lua_State *L) {
 
 // Internal function that just returns true or false as soon as detection is decided.
 // Used by the real isLinkToFootnote(lua_State *L) that will push that bool to the Lua stack
-static bool _isLinkToFootnote(CreDocument *doc, const lString16 source_xpointer, const lString16 target_xpointer,
-            const int flags, const int maxTextSize, lString16 &reason,
-            lString16 &extendedStopReason, ldomXRange &extendedRange)
+static bool _isLinkToFootnote(CreDocument *doc, const lString32 source_xpointer, const lString32 target_xpointer,
+            const int flags, const int maxTextSize, lString32 &reason,
+            lString32 &extendedStopReason, ldomXRange &extendedRange)
 {
     ldomDocument *dv = doc->dom_doc;
     const ldomXPointerEx sourceXP = ldomXPointerEx(doc->dom_doc->createXPointer(source_xpointer));
@@ -2342,7 +2342,7 @@ static bool _isLinkToFootnote(CreDocument *doc, const lString16 source_xpointer,
     ldomNode *targetNode = targetXP.getNode();
     // target_xpointer might be "#_doc_fragment_0_ References", but we may also need
     // to use its DOM xpath equivalent: /body/DocFragment/body/div/div[5]/span.0
-    const lString16 targetXpath = ldomXPointer(targetNode, 0).toString();
+    const lString32 targetXpath = ldomXPointer(targetNode, 0).toString();
 
     // We return false when it can't be a footnote.
     // We return true when it is surely a footnote, and when
@@ -2401,16 +2401,16 @@ static bool _isLinkToFootnote(CreDocument *doc, const lString16 source_xpointer,
             // epub:type=
             // (Looks like crengine has no support for alternate namesepace prefix
             // set with xmlns:zzz="http://www.idpf.org/2007/ops")
-            lString16 type = sourceNode->getAttributeValue("epub", "type");
+            lString32 type = sourceNode->getAttributeValue("epub", "type");
             if (type.empty()) { // Fallback to any type= or zzz:type=
                 type = sourceNode->getAttributeValue("type");
             }
             if (!type.empty()) {
                 type.lowercase();
-                lString16Collection types;
+                lString32Collection types;
                 types.parse(type, ' ', true);
                 for (int i=0; i<types.length(); i++) {
-                    lString16 type = types[i];
+                    lString32 type = types[i];
                     if (type == "noteref") {
                         reason = "source has epub:type=" + type;
                         return true;
@@ -2422,13 +2422,13 @@ static bool _isLinkToFootnote(CreDocument *doc, const lString16 source_xpointer,
                 }
             }
             // role=
-            lString16 role = sourceNode->getAttributeValue("role");
+            lString32 role = sourceNode->getAttributeValue("role");
             if (!role.empty()) {
                 role.lowercase();
-                lString16Collection roles;
+                lString32Collection roles;
                 roles.parse(role, ' ', true);
                 for (int i=0; i<roles.length(); i++) {
-                    lString16 role = roles[i];
+                    lString32 role = roles[i];
                     if (role == "doc-noteref") {
                         reason = "source has role=" + role;
                         return true;
@@ -2448,16 +2448,16 @@ static bool _isLinkToFootnote(CreDocument *doc, const lString16 source_xpointer,
         // Let's assume that if a publisher has set epub:type=footnote, it has
         // set it to the correct container, probably a <aside> tag.
         // epub:type=
-        lString16 type = targetNode->getAttributeValue("epub", "type");
+        lString32 type = targetNode->getAttributeValue("epub", "type");
         if (type.empty()) { // Fallback to any type= or zzz:type=
             type = targetNode->getAttributeValue("type");
         }
         if (!type.empty()) {
             type.lowercase();
-            lString16Collection types;
+            lString32Collection types;
             types.parse(type, ' ', true);
             for (int i=0; i<types.length(); i++) {
-                lString16 type = types[i];
+                lString32 type = types[i];
                 if (type == "note" || type == "footnote" || type == "rearnote" ) {
                     reason = "target has epub:type=" + type;
                     return true;
@@ -2465,12 +2465,12 @@ static bool _isLinkToFootnote(CreDocument *doc, const lString16 source_xpointer,
             }
         }
         // role=
-        lString16 role = targetNode->getAttributeValue("role");
+        lString32 role = targetNode->getAttributeValue("role");
         if (!role.empty()) {
-            lString16Collection roles;
+            lString32Collection roles;
             roles.parse(role, ' ', true);
             for (int i=0; i<roles.length(); i++) {
-                lString16 role = roles[i];
+                lString32 role = roles[i];
                 if (role == "doc-note" || role == "doc-footnote" || role == "doc-rearnote") {
                     reason = "target has role=" + role;
                     return true;
@@ -2490,7 +2490,7 @@ static bool _isLinkToFootnote(CreDocument *doc, const lString16 source_xpointer,
             ldomNode * n = targetNode->getParentNode();
             while ( n && !n->isNull() ) {
                 if ( n->getNodeId() == el_body ) {
-                    lString16 name = n->getAttributeValue("name");
+                    lString32 name = n->getAttributeValue("name");
                     if (!name.empty()) {
                         name.lowercase();
                         if (name == "notes") {
@@ -2575,7 +2575,7 @@ static bool _isLinkToFootnote(CreDocument *doc, const lString16 source_xpointer,
     // its parent final node (this could mean it's a chapter title in an inline ToC)
     if (flags & 0x0100 && trusted_source_xpointer) {
         ldomNode * finalNode = sourceXP.getFinalNode();
-        lString16 sourceText = sourceNode->getText();
+        lString32 sourceText = sourceNode->getText();
         if ( sourceText.empty() ) {
             // (Empty links may have already been filtered out.)
             // This will also discard a link containing a single image pointing
@@ -2605,7 +2605,7 @@ static bool _isLinkToFootnote(CreDocument *doc, const lString16 source_xpointer,
         ldomNode * finalNode = sourceXP.getFinalNode();
         while ( curText.nextText() && curText.compare(endText) <= 0 ) {
             // Ignore empty or space-only text nodes
-            lString16 nodeText = curText.getText();
+            lString32 nodeText = curText.getText();
             int textLen = nodeText.length();
             if ( textLen == 0 || (textLen == 1 && nodeText[0] == ' ' ) )
                 continue;
@@ -2678,7 +2678,7 @@ static bool _isLinkToFootnote(CreDocument *doc, const lString16 source_xpointer,
                 for ( int i=0; i<sourceNode->getChildCount(); i++ ) {
                     n = sourceNode->getChildNode(i);
                     if ( n->isText() ) {
-                        lString16 nodeText = n->getText();
+                        lString32 nodeText = n->getText();
                         int textLen = nodeText.length();
                         if ( textLen == 0 || (textLen == 1 && nodeText[0] == ' ' ) ) {
                             continue;
@@ -2712,7 +2712,7 @@ static bool _isLinkToFootnote(CreDocument *doc, const lString16 source_xpointer,
     // Source node text (punctuation stripped) is 1 to 2 letters, with 0 to 2
     // numbers (a, z, ab, 1a, B2) - or 1 to 10 roman numerals
     if ( (flags & 0x0400 || flags & 0x0800) && trusted_source_xpointer && !likelyFootnote) {
-        lString16 sourceText = sourceNode->getText();
+        lString32 sourceText = sourceNode->getText();
         int nbDigits = 0;
         int nbAlpha = 0;
         int nbOthers = 0;
@@ -2725,7 +2725,7 @@ static bool _isLinkToFootnote(CreDocument *doc, const lString16 source_xpointer,
                 else if (props & CH_PROP_ALPHA) {
                     nbAlpha += 1;
                     // also check for roman numerals (i v x l c d m)
-                    lChar16 c = sourceText[i];
+                    lChar32 c = sourceText[i];
                     if (c == 'i' || c == 'v' || c == 'x' || c == 'l' || c == 'c' || c == 'd' || c == 'm' ||
                         c == 'I' || c == 'V' || c == 'X' || c == 'L' || c == 'C' || c == 'D' || c == 'M' ) {
                             nbRomans += 1;
@@ -2876,7 +2876,7 @@ static bool _isLinkToFootnote(CreDocument *doc, const lString16 source_xpointer,
             ldomNode * goodFinalNode = NULL;
             ldomNode * curFinalNode = NULL;
             ldomXPointerEx notAfter;
-            lString16 extStopReason;
+            lString32 extStopReason;
             extStopReason = "End of document met";
             // printf("[start: %s\n", UnicodeToLocal(curPos.toString()).c_str());
             while (true) {
@@ -2922,7 +2922,7 @@ static bool _isLinkToFootnote(CreDocument *doc, const lString16 source_xpointer,
                 // it's probably another footnote.
                 // (In the first final block, it's possible to have multiple nodes with
                 // different ID, which could mean there are multiple terms or synonyms...)
-                lString16 id = node->getAttributeValue("id");
+                lString32 id = node->getAttributeValue("id");
                 if ( !id.empty() ) {
                     // printf("id=%s\n", UnicodeToLocal(id).c_str());
                     extStopReason = "node with 'id=' attr met";
@@ -2930,7 +2930,7 @@ static bool _isLinkToFootnote(CreDocument *doc, const lString16 source_xpointer,
                 }
                 else if ( nodeId == el_a ) {
                     // With <a>, crengine may use name= as its id=, so do as well.
-                    lString16 name = node->getAttributeValue("name");
+                    lString32 name = node->getAttributeValue("name");
                     if ( !name.empty() ) {
                         extStopReason = "node A with 'name=' attr met";
                         break;
@@ -2988,7 +2988,7 @@ static bool _isLinkToFootnote(CreDocument *doc, const lString16 source_xpointer,
         }
         // Walk all text nodes till endText
         while (curText.nextText() && curText.compare(endText) <= 0) {
-            lString16 nodeText = curText.getText();
+            lString32 nodeText = curText.getText();
             size += nodeText.length();
             if (size > maxTextSize) {
                 reason = "target text is too large";
@@ -3019,10 +3019,10 @@ static int isLinkToFootnote(lua_State *L) {
     const int flags = (int)luaL_checkint(L, 4);
     const int max_text_size = (int)luaL_optint(L, 5, 10000); // default: 10 000 chars
 
-    lString16 reason;
-    lString16 extendedStopReason;
+    lString32 reason;
+    lString32 extendedStopReason;
     ldomXRange extendedRange;
-    bool isFootnote = _isLinkToFootnote(doc, lString16(source_xpointer), lString16(target_xpointer),
+    bool isFootnote = _isLinkToFootnote(doc, lString32(source_xpointer), lString32(target_xpointer),
             flags, max_text_size, reason, extendedStopReason, extendedRange);
     int stackLength = 2;
     lua_pushboolean(L, isFootnote);
@@ -3045,7 +3045,7 @@ static int highlightXPointer(lua_State *L) {
 
     if (lua_isstring(L, 2)) { // if xpointer provided, highlight it
         const char* xp = luaL_checkstring(L, 2);
-        ldomXPointer nodep = doc->dom_doc->createXPointer(lString16(xp));
+        ldomXPointer nodep = doc->dom_doc->createXPointer(lString32(xp));
         if (nodep.isNull())
             return 0;
         ldomNode * node = nodep.getNode();
@@ -3066,7 +3066,7 @@ static int highlightXPointer(lua_State *L) {
 static int getNormalizedXPointer(lua_State *L) {
     CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
     const char* xp = luaL_checkstring(L, 2);
-    ldomXPointer nodep = doc->dom_doc->createXPointer(lString16(xp));
+    ldomXPointer nodep = doc->dom_doc->createXPointer(lString32(xp));
         // When gDOMVersionRequested >= DOM_VERSION_WITH_NORMALIZED_XPOINTERS,
         // it will use internally createXPointerV2(), otherwise createXPointerV1().
 
@@ -3085,7 +3085,7 @@ static int gotoLink(lua_State *L) {
 	CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
 	const char *pos = luaL_checkstring(L, 2);
 
-	doc->text_view->goLink(lString16(pos), true);
+	doc->text_view->goLink(lString32(pos), true);
 
 	return 0;
 }
@@ -3183,7 +3183,7 @@ static int drawCoverPage(lua_State *L) {
 	else
 		printf("cover page is null.\n");
 	LVDrawBookCover(drawBuf, cover, lString8("Droid Sans Mono"),
-			lString16("test"), lString16("test"), lString16("test"), 0);
+			lString32("test"), lString32("test"), lString32("test"), 0);
 
 	return 0;
 }
@@ -3224,7 +3224,7 @@ static int registerFont(lua_State *L) {
 static int findText(lua_State *L) {
 	CreDocument *doc		= (CreDocument*) luaL_checkudata(L, 1, "credocument");
 	const char *l_pattern   = luaL_checkstring(L, 2);
-	lString16 pattern		= lString16(l_pattern);
+	lString32 pattern		= lString32(l_pattern);
 	int origin				= luaL_checkint(L, 3);
 	bool reverse			= luaL_checkint(L, 4);
 	bool caseInsensitive	= luaL_checkint(L, 5);
@@ -3331,7 +3331,7 @@ static int isXPointerInCurrentPage(lua_State *L) {
 
 	lvRect page_rect, xp_rect;
 	doc->text_view->GetPos(page_rect);
-	doc->dom_doc->createXPointer(lString16(xpointer)).getRect(xp_rect);
+	doc->dom_doc->createXPointer(lString32(xpointer)).getRect(xp_rect);
 	//CRLog::trace("page range: %d,%d - %d,%d", page_rect.left, page_rect.top, page_rect.right, page_rect.bottom);
 	//CRLog::trace("xp range: %d,%d - %d,%d", xp_rect.left, xp_rect.top, xp_rect.right, xp_rect.bottom);
 	lua_pushboolean(L, page_rect.isRectInside(xp_rect));
@@ -3342,7 +3342,7 @@ static int isXPointerInDocument(lua_State *L) {
     CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
     const char *xpointer_str = luaL_checkstring(L, 2);
 
-    ldomXPointer xp = doc->dom_doc->createXPointer(lString16(xpointer_str));
+    ldomXPointer xp = doc->dom_doc->createXPointer(lString32(xpointer_str));
     bool found = !xp.isNull();
     lua_pushboolean(L, found);
     return 1;
