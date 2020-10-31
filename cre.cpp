@@ -790,6 +790,23 @@ static int getCurrentPage(lua_State *L) {
 	return 1;
 }
 
+static int getPageFlow(lua_State *L) {
+	CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
+	int pageno = luaL_checkint(L, 2);
+
+	lua_pushinteger(L, doc->text_view->getPageFlow(pageno-1));
+
+	return 1;
+}
+
+static int hasNonLinearFlows(lua_State *L) {
+	CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
+
+	lua_pushboolean(L, doc->text_view->hasNonLinearFlows());
+
+	return 1;
+}
+
 static int getPageFromXPointer(lua_State *L) {
 	CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
 	const char *xpointer_str = luaL_checkstring(L, 2);
@@ -3425,6 +3442,7 @@ static const struct luaL_Reg credocument_meth[] = {
     {"getDocumentProps", getDocumentProps},
     {"getPages", getNumberOfPages},
     {"getCurrentPage", getCurrentPage},
+    {"getPageFlow", getPageFlow},
     {"getPageFromXPointer", getPageFromXPointer},
     {"getPosFromXPointer", getPosFromXPointer},
     {"getCurrentPos", getCurrentPos},
@@ -3518,6 +3536,7 @@ static const struct luaL_Reg credocument_meth[] = {
     {"getPageMapCurrentPageLabel", getPageMapCurrentPageLabel},
     {"getPageMapXPointerPageLabel", getPageMapXPointerPageLabel},
     {"getPageMapVisiblePageLabels", getPageMapVisiblePageLabels},
+    {"hasNonLinearFlows", hasNonLinearFlows},
     {"readDefaults", readDefaults},
     {"saveDefaults", saveDefaults},
     {"close", closeDocument},
