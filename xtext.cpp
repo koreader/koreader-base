@@ -396,7 +396,7 @@ public:
     // of invalid bytes).
     // Our setTextFromUTF8String() may not always give a m_text
     // equivalent to InputType.charlist - but we need them to be sync'ed
-    // for correct cursor positionning and text insertion/deletion.
+    // for correct cursor positioning and text insertion/deletion.
     // So, we allow XText to handle such input: this avoid having to sync
     // both utf8 decoding algorithms (but we can aim later at having
     // a single good one).
@@ -690,7 +690,7 @@ public:
             else {
                 // When at end of m_text, add a letter ('Z') so a trailing \n can be
                 // flagged as CHAR_MUST_BREAK_AFTER, so we can show an empty line
-                // and allow the cursor to be positionned after that last \n.
+                // and allow the cursor to be positioned after that last \n.
                 int ch = i < m_length ? m_text[i] : 'Z';
                 int brk = lb_process_next_char(&lbCtx, ch);
                 // This tells us about a break between previous char and this 'ch'.
@@ -2216,7 +2216,7 @@ static int XText_shapeLine(lua_State *L) {
 
 // Get the paragraph direction of the paragraph the char at idx is part
 // of (and the one for the char at idx-1 too, as it might be useful).
-// To be used with empty lines for cursor positionning, to get
+// To be used with empty lines for cursor positioning, to get
 // line.para_is_rtl (similar to what shapeLine() returns, but
 // we can't call shapeLine() on empty lines).
 // If no idx provided, get the specified (or default) direction
