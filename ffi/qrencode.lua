@@ -175,7 +175,6 @@ end
 -- See table 2 of the spec. We only support mode 1, 2 and 4.
 -- That is: numeric, alaphnumeric and binary.
 local function get_mode( str )
-    local mode
     if string.match(str,"^[0-9]+$") then
         return 1
     elseif string.match(str,"^[0-9A-Z $%%*./:+-]+$") then
@@ -183,8 +182,6 @@ local function get_mode( str )
     else
         return 4
     end
-    assert(false,"never reached")
-    return nil
 end
 
 
@@ -230,7 +227,7 @@ local function get_version_eclevel(len,mode,requested_ec_level)
     end
     assert( local_mode <= 4 )
 
-    local bytes, bits, digits, modebits, c
+    local bits, digits, modebits, c
     local tab = { {10,9,8,8},{12,11,16,10},{14,13,16,12} }
     local minversion = 40
     local maxec_level = requested_ec_level or 1
@@ -495,7 +492,7 @@ local generator_polynomial = {
 -- Turn a binary string of length 8*x into a table size x of numbers.
 local function convert_bitstring_to_bytes(data)
     local msg = {}
-    local tab = string.gsub(data,"(........)",function(x)
+    local _ = string.gsub(data,"(........)",function(x)
         msg[#msg+1] = tonumber(x,2)
         end)
     return msg
@@ -548,10 +545,10 @@ local function calculate_error_correction(data,num_ec_codewords)
     local len_message = #mp
 
     local highest_exponent = len_message + num_ec_codewords - 1
-    local gp_alpha,tmp
+    local gp_alpha, tmp
     local he
-    local gp_int = {}
-    local mp_int,mp_alpha = {},{}
+    local gp_int, mp_alpha
+    local mp_int = {}
     -- create message shifted to left (highest exponent)
     for i=1,len_message do
         mp_int[highest_exponent - i + 1] = mp[i]
@@ -719,7 +716,7 @@ local function arrange_codewords_and_calculate_ec( version,ec_level,data )
     local blocks = ecblocks[version][ec_level]
     local size_datablock_bytes, size_ecblock_bytes
     local datablocks = {}
-    local ecblocks = {}
+    local _ecblocks = {}
     local count = 1
     local pos = 0
     local cpty_ec_bits = 0
@@ -729,12 +726,12 @@ local function arrange_codewords_and_calculate_ec( version,ec_level,data )
             size_ecblock_bytes   = blocks[2*i][1] - blocks[2*i][2]
             cpty_ec_bits = cpty_ec_bits + size_ecblock_bytes * 8
             datablocks[#datablocks + 1] = string.sub(data, pos * 8 + 1,( pos + size_datablock_bytes)*8)
-            tmp_tab = calculate_error_correction(datablocks[#datablocks],size_ecblock_bytes)
-            tmp_str = ""
+            local tmp_tab = calculate_error_correction(datablocks[#datablocks],size_ecblock_bytes)
+            local tmp_str = ""
             for x=1,#tmp_tab do
                 tmp_str = tmp_str .. binary(tmp_tab[x],8)
             end
-            ecblocks[#ecblocks + 1] = tmp_str
+            _ecblocks[#_ecblocks + 1] = tmp_str
             pos = pos + size_datablock_bytes
             count = count + 1
         end
@@ -753,9 +750,9 @@ local function arrange_codewords_and_calculate_ec( version,ec_level,data )
     local arranged_ec = ""
     pos = 1
     repeat
-        for i=1,#ecblocks do
-            if pos < #ecblocks[i] then
-                arranged_ec = arranged_ec .. string.sub(ecblocks[i],pos, pos + 7)
+        for i=1,#_ecblocks do
+            if pos < #_ecblocks[i] then
+                arranged_ec = arranged_ec .. string.sub(_ecblocks[i],pos, pos + 7)
             end
         end
         pos = pos + 8
@@ -969,7 +966,6 @@ local version_information = {"001010010011111000", "001111011010000100", "100110
 -- Versions 7 and above need two bitfields with version information added to the code
 local function add_version_information(matrix,version)
     if version < 7 then return end
-    local size = #matrix
     local bitstring = version_information[version - 6]
     local x,y, bit
     local start_x, start_y
@@ -1037,9 +1033,8 @@ local function get_pixel_with_mask( mask, x,y,value )
     y = y - 1
     local invert = false
     -- test purpose only:
-    if mask == -1 then
-        -- ignore, no masking applied
-    elseif mask == 0 then
+    -- if mask == -1 then -- ignore, no masking applied
+    if mask == 0 then
         if math.fmod(x + y,2) == 0 then invert = true end
     elseif mask == 1 then
         if math.fmod(y,2) == 0 then invert = true end
@@ -1122,7 +1117,7 @@ end
 
 -- Add the data string (0's and 1's) to the matrix for the given mask.
 local function add_data_to_matrix(matrix,data,mask)
-    size = #matrix
+    local size = #matrix
     local x,y,positions
     local _x,_y,m
     local dir = "up"
@@ -1135,11 +1130,12 @@ local function add_data_to_matrix(matrix,data,mask)
             _x = positions[i][1]
             _y = positions[i][2]
             m = get_pixel_with_mask(mask,_x,_y,string.sub(byte,i,i))
-            if debugging then
-                matrix[_x][_y] = m * (i + 10)
-            else
-                matrix[_x][_y] = m
-            end
+            -- if debugging then
+            --     matrix[_x][_y] = m * (i + 10)
+            -- else
+            --     matrix[_x][_y] = m
+            -- end
+            matrix[_x][_y] = m
         end
     end)
 end
@@ -1156,7 +1152,8 @@ end
 --- reading the code.
 -- Return the penalty for the given matrix
 local function calculate_penalty(matrix)
-    local penalty1, penalty2, penalty3, penalty4 = 0,0,0,0
+    local penalty1, penalty2, penalty3, penalty4
+    penalty1, penalty2, penalty3 = 0,0,0
     local size = #matrix
     -- this is for penalty 4
     local number_of_dark_cells = 0
@@ -1172,14 +1169,11 @@ local function calculate_penalty(matrix)
         number_of_consecutive_bits = 0
         last_bit_blank = nil
         for y = 1,size do
-            if matrix[x][y] > 0 then
+            is_blank = matrix[x][y] < 0
+            if not is_blank then
                 -- small optimization: this is for penalty 4
                 number_of_dark_cells = number_of_dark_cells + 1
-                is_blank = false
-            else
-                is_blank = true
             end
-            is_blank = matrix[x][y] < 0
             if last_bit_blank == is_blank then
                 number_of_consecutive_bits = number_of_consecutive_bits + 1
             else
@@ -1311,7 +1305,7 @@ end
 --- 1. Generate 8 matrices with different masks and calculate the penalty
 --- 1. Return qrcode with least penalty
 -- If ec_level or mode is given, use the ones for generating the qrcode. (mode is not implemented yet)
-local function qrcode( str, ec_level, mode )
+local function qrcode( str, ec_level )
     local arranged_data, version, data_raw, mode, len_bitstring
     version, ec_level, data_raw, mode, len_bitstring = get_version_eclevel_mode_bistringlength(str,ec_level)
     data_raw = data_raw .. len_bitstring
@@ -1324,28 +1318,6 @@ local function qrcode( str, ec_level, mode )
     arranged_data = arranged_data .. string.rep("0",remainder[version])
     local tab = get_matrix_with_lowest_penalty(version,ec_level,arranged_data)
     return true, tab
-end
-
-
-if testing then
-    return {
-        encode_string_numeric = encode_string_numeric,
-        encode_string_ascii = encode_string_ascii,
-        qrcode = qrcode,
-        binary = binary,
-        get_mode = get_mode,
-        get_length = get_length,
-        add_pad_data = add_pad_data,
-        get_generator_polynominal_adjusted = get_generator_polynominal_adjusted,
-        get_pixel_with_mask = get_pixel_with_mask,
-        get_version_eclevel_mode_bistringlength = get_version_eclevel_mode_bistringlength,
-        remainder = remainder,
-        --get_capacity_remainder = get_capacity_remainder,
-        arrange_codewords_and_calculate_ec = arrange_codewords_and_calculate_ec,
-        calculate_error_correction = calculate_error_correction,
-        convert_bitstring_to_bytes = convert_bitstring_to_bytes,
-        bit_xor = bit_xor,
-    }
 end
 
 return {
