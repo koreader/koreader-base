@@ -11,43 +11,10 @@ local has_eink_screen, eink_platform = android.isEink()
 -- does the device needs to handle all screen refreshes
 local has_eink_full_support = android.isEinkFull()
 
--- for *some* rockchip devices
-local rk_full, rk_partial, rk_a2, rk_auto = 1, 2, 3, 4 -- luacheck: ignore
+
+local full, partial, full_ui, partial_ui, fast, delay_page, delay_ui, delay_fast = android.getEinkConstants()
 
 local framebuffer = {}
-
-local function getWaveformsAndDelays(platform)
-    --common for freescale and qualcomm EPD Controllers
-    local full, partial = 32, 0
-    local wf_du, wf_gc16 = 1, 2
-    local partial_du, partial_gc16 = wf_du + partial, wf_gc16 + partial
-
-    -- different contants
-    local full_gc16, full_regal, partial_regal
-    local delay_page, delay_ui
-    if platform == "freescale" then
-        local wf_regal = 7
-        full_gc16 = wf_gc16 + full
-        full_regal = wf_regal + full
-        partial_regal = wf_regal + partial
-        delay_page = 0
-        delay_ui = 0
-    elseif platform == "qualcomm" then
-        local wf_regal = 6
-        local mode_wait = 64
-        full_gc16 = wf_gc16 + full + mode_wait
-        -- partial regal seems broken (it refreshes full screen causing a "flicker")
-        -- having partial gc16 looks better, but since freescale uses partial_regal
-        -- variable, I overwrite it here
-        full_regal = wf_regal + full
-        partial_regal = wf_gc16 + partial -- wf_regal + partial
-        delay_page = 250
-        delay_ui = 100
-    end
-    return full_gc16, full_regal, partial_gc16, partial_regal, partial_du, delay_page, delay_ui
-end
-
-local full_gc16, full_regal, partial_gc16, partial_regal, partial_du, delay_page, delay_ui = getWaveformsAndDelays(eink_platform)
 
 -- update a region of the screen
 function framebuffer:_updatePartial(mode, delay, x, y, w, h)
@@ -64,16 +31,16 @@ function framebuffer:_updateFull()
     -- freescale ntx platform
     if has_eink_screen and (eink_platform == "freescale" or eink_platform == "qualcomm") then
         if has_eink_full_support then
-            -- we handle the screen entirely. 250 delay for qualcomm, no for freescale
-            self:_updatePartial(full_gc16, delay_page)
+            -- we handle the screen entirely
+            self:_updatePartial(full, delay_page)
         else
             -- we're racing against system driver. Let the system win and apply
             -- a full update after it.
-            self:_updatePartial(full_gc16, 500)
+            self:_updatePartial(full, 500)
         end
     -- rockchip rk3x platform
     elseif has_eink_screen and (eink_platform == "rockchip") then
-        android.einkUpdate(rk_full)
+        android.einkUpdate(full)
     end
 end
 
@@ -168,7 +135,7 @@ function framebuffer:_updateWindow()
     android.lib.ANativeWindow_unlockAndPost(android.app.window);
 end
 
-function framebuffer:refreshFullImp(x, y, w, h)
+function framebuffer:refreshFullImp(x, y, w, h) -- luacheck: ignore
     self:_updateWindow()
     self:_updateFull()
 end
@@ -176,40 +143,35 @@ end
 function framebuffer:refreshPartialImp(x, y, w, h)
     self:_updateWindow()
     if has_eink_full_support then
-        -- in case of qualcomm it's actually partial_gc16
-        self:_updatePartial(partial_regal, delay_page, x, y, w, h)
+        self:_updatePartial(partial, delay_page, x, y, w, h)
     end
 end
 
 function framebuffer:refreshFlashPartialImp(x, y, w, h)
     self:_updateWindow()
     if has_eink_full_support then
-        self:_updatePartial(full_regal, delay_page, x, y, w, h)
+        self:_updatePartial(full, delay_page, x, y, w, h)
     end
 end
 
 function framebuffer:refreshUIImp(x, y, w, h)
     self:_updateWindow()
     if has_eink_full_support then
-        -- in case of qualcomm it's actually partial_gc16
-        self:_updatePartial(partial_regal, delay_ui, x, y, w, h)
+        self:_updatePartial(partial_ui, delay_ui, x, y, w, h)
     end
 end
 
 function framebuffer:refreshFlashUIImp(x, y, w, h)
     self:_updateWindow()
     if has_eink_full_support then
-        self:_updatePartial(full_regal, delay_ui, x, y, w, h)
+        self:_updatePartial(full_ui, delay_ui, x, y, w, h)
     end
 end
 
 function framebuffer:refreshFastImp(x, y, w, h)
     self:_updateWindow()
     if has_eink_full_support then
-        -- qualcomm shouldn't have refresh here, since the update will "merge",
-        -- and there will be no "black flash" on icons/menu items and nothing
-        -- bad happens even if the "flash" doesn't appear
-        self:_updatePartial(partial_du, 0, x, y, w, h)
+        self:_updatePartial(fast, delay_fast, x, y, w, h)
     end
 end
 
