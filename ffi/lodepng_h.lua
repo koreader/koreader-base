@@ -14,6 +14,7 @@ typedef struct LodePNGDecompressSettings LodePNGDecompressSettings;
 struct LodePNGDecompressSettings {
   unsigned int ignore_adler32;
   unsigned int ignore_nlen;
+  size_t max_output_size;
   unsigned int (*custom_zlib)(unsigned char **, size_t *, const unsigned char *, size_t, const LodePNGDecompressSettings *);
   unsigned int (*custom_inflate)(unsigned char **, size_t *, const unsigned char *, size_t, const LodePNGDecompressSettings *);
   const void *custom_context;
@@ -26,6 +27,8 @@ struct LodePNGDecoderSettings {
   unsigned int color_convert;
   unsigned int read_text_chunks;
   unsigned int remember_unknown_chunks;
+  size_t max_text_size;
+  size_t max_icc_size;
 };
 typedef struct LodePNGDecoderSettings LodePNGDecoderSettings;
 enum LodePNGFilterStrategy {
