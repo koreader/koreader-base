@@ -10,36 +10,24 @@ enable_language(C CXX ASM)
 
 assert_var_defined(CC)
 assert_var_defined(CFLAGS)
-assert_var_defined(CXX)
-assert_var_defined(CXXFLAGS)
-assert_var_defined(AR)
 assert_var_defined(LDFLAGS)
-assert_var_defined(ZLIB)
-assert_var_defined(ZLIB_DIR)
-assert_var_defined(PNG_DIR)
-assert_var_defined(LEPTONICA_DIR)
-assert_var_defined(TESSERACT_DIR)
-assert_var_defined(STDCPPLIB)
 
 ep_get_source_dir(SOURCE_DIR)
 
-set(BUILD_CMD sh -c "${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS} BUILDMODE=shared HOST=${HOST} CC=\"${CC}\" CFLAGS=\"${CFLAGS} -O3\"")
-set(BUILD_CMD "${BUILD_CMD} CXX=\"${CXX}\" CXXFLAGS=\"${CXXFLAGS}\" AR=\"${AR}\" RANLIB=\"${RANLIB}\" ZLIB=${ZLIB}")
-set(BUILD_CMD "${BUILD_CMD} TESSERACT_DIR=${TESSERACT_DIR} LEPTONICA_DIR=${LEPTONICA_DIR}")
-set(BUILD_CMD "${BUILD_CMD} LEPT_CFLAGS=\"${CFLAGS} -I${ZLIB_DIR} -I${PNG_DIR}/include\"")
-set(BUILD_CMD "${BUILD_CMD} LEPT_LDFLAGS=\"${LDFLAGS} -L${ZLIB_DIR} -L${PNG_DIR}/lib\"")
-if ($ENV{DARWIN})
-    set(BUILD_CMD "${BUILD_CMD} STDCPPLIB=\"${STDCPPLIB}\" ZLIB_LDFLAGS=\"-L${ZLIB_DIR}\"")
-    set(BUILD_CMD "${BUILD_CMD} PNG_LDFLAGS=\"-L${PNG_DIR}/lib\" all")
-else()
-    set(BUILD_CMD "${BUILD_CMD} STDCPPLIB=\"${STDCPPLIB}\" ZLIB_LDFLAGS=\"-Wl,-rpath-link,${ZLIB_DIR}\"")
-    set(BUILD_CMD "${BUILD_CMD} PNG_LDFLAGS=\"-Wl,-rpath-link,${PNG_DIR}/lib\" all")
+if(NOT DEFINED ENV{DARWIN})
+    set(LDFLAGS "${LDFLAGS} -Wl,-soname,${LIBNAME}")
 endif()
+
+set(BUILD_CMD sh -c "${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS} CC=\"${CC}\" CFLAGS=\"${CFLAGS}\" LIBNAME=\"${LIBNAME}\" LDFLAGS=\"${LDFLAGS}\"")
+
+set(PATCH_CMD "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/android.patch")
+set(PATCH_CMD2 sh -c "${ISED} '/#define WILLUS_HAVE_FILE64/d' ${SOURCE_DIR}/k2pdfopt/willuslib/willus.h")
+
 
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
-    https://github.com/koreader/libk2pdfopt.git
-    24b7e6bc136667c98feaa1b519a99dd880b05ebe
+    https://github.com/ezdiy/libk2pdfopt.git
+    master
     ${SOURCE_DIR}
 )
 
@@ -47,6 +35,7 @@ include(ExternalProject)
 ExternalProject_Add(
     ${PROJECT_NAME}
     DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
+    PATCH_COMMAND COMMAND ${PATCH_CMD} COMMAND ${PATCH_CMD2}
     BUILD_IN_SOURCE 1
     CONFIGURE_COMMAND ""
     BUILD_COMMAND ${BUILD_CMD}

@@ -17,7 +17,7 @@ if($ENV{ANDROID})
     # workaround of 'undefined reference to getdtablesize' for NDK-r11c
     set(CFG_ENV_VAR "${CFG_ENV_VAR} LDFLAGS=-lc LIBS=${NDK}/platforms/android-${NDKABI}/arch-arm/usr/lib/libc.a")
 endif()
-set(CFG_OPTS "--with-threads=none --disable-acl --disable-curses --disable-openmp --disable-native-java --disable-java")
+set(CFG_OPTS "-q --with-threads=none --disable-acl --disable-curses --disable-openmp --disable-native-java --disable-java")
 set(CFG_OPTS "${CFG_OPTS} --prefix=${BINARY_DIR} --with-libiconv-prefix=${LIBICONV_PREFIX}")
 set(CFG_OPTS "${CFG_OPTS} --enable-shared=false --enable-static=true ${CHOST_OPTS}")
 set(CFG_CMD sh -c "${CFG_ENV_VAR} ${SOURCE_DIR}/configure ${CFG_OPTS}")

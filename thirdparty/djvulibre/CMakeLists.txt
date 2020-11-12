@@ -20,8 +20,8 @@ ep_get_source_dir(SOURCE_DIR)
 # fix build error due to -Werror under Fedora 26 (and potentially other systems)
 set(CFLAGS "${CFLAGS} -Wno-error")
 
-set(CFG_ENV_VAR "CC=\"${CC}\" CXX=\"${CXX}\" CFLAGS=\"${CFLAGS}\" CXXFLAGS=\"${CXXFLAGS}\" LDFLAGS=\"${LDFLAGS}\" LIBS=\"${LIBS}\"")
-set(CFG_OPTS "-q --disable-desktopfiles --disable-static --enable-shared --disable-xmltools --disable-largefile --without-jpeg --without-tiff -host=\"${CHOST}\"")
+set(CFG_ENV_VAR "PKG_CONFIG=/bin/false CC=\"${CC}\" CXX=\"${CXX}\" CFLAGS=\"${CFLAGS}\" CXXFLAGS=\"${CXXFLAGS}\" LDFLAGS=\"${LDFLAGS}\" LIBS=\"${LIBS}\"")
+set(CFG_OPTS "-q --disable-desktopfiles --disable-static --enable-shared --disable-xmltools --disable-largefile -host=\"${CHOST}\"")
 set(CFG_CMD sh -c "${CFG_ENV_VAR} ${SOURCE_DIR}/configure ${CFG_OPTS}")
 
 if($ENV{ANDROID})
@@ -44,7 +44,7 @@ endif()
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
     https://gitlab.com/koreader/djvulibre.git
-    32ff0948c5bc27c0b7507dba90e726fc941fcc42
+    296252390c2b77ce32f168e229b7e509c84f37f9
     ${SOURCE_DIR}
 )
 
@@ -55,7 +55,7 @@ ExternalProject_Add(
     PATCH_COMMAND NOCONFIGURE=1 ./autogen.sh
     BUILD_IN_SOURCE 1
     CONFIGURE_COMMAND COMMAND ${CFG_CMD} COMMAND ${PATCH_CMD}
-    BUILD_COMMAND ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS} SUBDIRS_FIRST=libdjvu
+    BUILD_COMMAND ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS} SUBDIRS=libdjvu
     # skip install
     INSTALL_COMMAND ""
 )

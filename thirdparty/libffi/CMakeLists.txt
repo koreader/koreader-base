@@ -29,5 +29,5 @@ ExternalProject_Add(
     CONFIGURE_COMMAND ${CFG_CMD}
     # skip the rest, we only need the header for glib
     BUILD_COMMAND ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS}
-    INSTALL_COMMAND ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS} uninstall install
+    INSTALL_COMMAND ""
 )

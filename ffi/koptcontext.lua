@@ -44,7 +44,10 @@ function KOPTContext_mt.__index:setDefectSize(defect_size) self.defect_size = de
 function KOPTContext_mt.__index:setLineSpacing(line_spacing) self.line_spacing = line_spacing end
 function KOPTContext_mt.__index:setWordSpacing(word_spacing) self.word_spacing = word_spacing end
 function KOPTContext_mt.__index:setLanguage(language)
-    self.language = ffi.new("char[?]", #language, language)
+    if self.language then
+        C.free(self.language)
+    end
+    self.language = C.strdup(language)
 end
 
 function KOPTContext_mt.__index:setDebug() self.debug = 1 end
@@ -244,7 +247,7 @@ function KOPTContext_mt.__index:findPageBlocks()
                 local box = leptonica.boxaGetBox(self.nboxa, i, C.L_CLONE)
                 leptonica.boxAdjustSides(box, box, -1, 0, -1, 0)
             end
-            self.rboxa = leptonica.boxaCombineOverlaps(self.nboxa)
+            self.rboxa = leptonica.boxaCombineOverlaps(self.nboxa, nil)
             self.page_width = leptonica.pixGetWidth(pixr)
             self.page_height = leptonica.pixGetHeight(pixr)
 
@@ -333,7 +336,7 @@ function KOPTContext_mt.__index:getPageBlock(x_rel, y_rel)
             local box = leptonica.boxaGetBox(boxa, i, C.L_CLONE)
             leptonica.boxAdjustSides(box, box, -1, 0, -1, 0)
         end
-        local boxatb = leptonica.boxaCombineOverlaps(boxa)
+        local boxatb = leptonica.boxaCombineOverlaps(boxa, nil)
         leptonica.boxaDestroy(ffi.new('BOXA *[1]', boxa))
         local clipped_box, unclipped_box
         for i = 0, leptonica.boxaGetCount(boxatb) - 1 do
@@ -457,6 +460,9 @@ function KOPTContext_mt.__index:free()
     k2pdfopt.bmp_free(self.src)
     k2pdfopt.bmp_free(self.dst)
     k2pdfopt.wrectmaps_free(self.rectmaps)
+    if self.language then
+        C.free(self.language)
+    end
 end
 
 function KOPTContext_mt.__index:__gc() self:free() end
@@ -700,8 +706,7 @@ function KOPTContext.fromtable(context)
                 context.nnai.array), context.nnai.n, C.L_COPY)
     end
     if context.language then
-        local lang = context.language
-        kc.language = ffi.new("char[?]", #lang, lang)
+        kc.language = C.strdup(context.language)
     end
 
     k2pdfopt.bmp_init(kc.src)

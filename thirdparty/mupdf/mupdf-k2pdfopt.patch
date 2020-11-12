@@ -1,0 +1,130 @@
+diff --git a/source/fitz/filter-basic.c b/source/fitz/filter-basic.c
+index 8d516b2..e6133da 100644
+--- a/source/fitz/filter-basic.c
++++ b/source/fitz/filter-basic.c
+@@ -256,7 +256,10 @@ look_for_endstream:
+ 	if (!state->warned)
+ 	{
+ 		state->warned = 1;
++/* willus mod -- no warning */
++/*
+ 		fz_warn(ctx, "PDF stream Length incorrect");
++*/
+ 	}
+ 	return *stm->rp++;
+ }
+diff --git a/source/fitz/font.c b/source/fitz/font.c
+index 41e9cb6..557497f 100644
+--- a/source/fitz/font.c
++++ b/source/fitz/font.c
+@@ -7,8 +7,11 @@
+ #include "pixmap-imp.h"
+ 
+ #include <ft2build.h>
++/* willus mod */
++/*
+ #include "hb.h"
+ #include "hb-ft.h"
++*/
+ 
+ #include <assert.h>
+ 
+diff --git a/source/fitz/stext-device.c b/source/fitz/stext-device.c
+index 491d1eb..1f0af02 100644
+--- a/source/fitz/stext-device.c
++++ b/source/fitz/stext-device.c
+@@ -788,8 +788,11 @@ fz_new_stext_device(fz_context *ctx, fz_stext_page *page, const fz_stext_options
+ 		dev->super.fill_image_mask = fz_stext_fill_image_mask;
+ 	}
+ 
++    /* willus mod -- add "else dev->flags=0" */
+ 	if (opts)
+ 		dev->flags = opts->flags;
++    else
++        dev->flags = 0;
+ 	dev->page = page;
+ 	dev->pen.x = 0;
+ 	dev->pen.y = 0;
+diff --git a/source/fitz/string.c b/source/fitz/string.c
+index 2918c3f..301bdc8 100644
+--- a/source/fitz/string.c
++++ b/source/fitz/string.c
+@@ -494,6 +494,10 @@ fz_utflen(const char *s)
+ 
+ float fz_atof(const char *s)
+ {
++/* willus mod -- #if-#else-#endif */
++#if (!defined(__SSE__))
++    return(s==NULL ? (float)0. : (float)atof(s));
++#else
+ 	float result;
+ 
+ 	if (s == NULL)
+@@ -506,6 +510,7 @@ float fz_atof(const char *s)
+ 		return 1;
+ 	result = fz_clamp(result, -FLT_MAX, FLT_MAX);
+ 	return result;
++#endif
+ }
+ 
+ int fz_atoi(const char *s)
+diff --git a/source/pdf/pdf-link.c b/source/pdf/pdf-link.c
+index c7621dc..8afceb6 100644
+--- a/source/pdf/pdf-link.c
++++ b/source/pdf/pdf-link.c
+@@ -495,6 +495,9 @@ pdf_resolve_link(fz_context *ctx, pdf_document *doc, const char *uri, float *xp,
+ 		}
+ 		return page;
+ 	}
++/* willus mod -- no warning */
++/*
+ 	fz_warn(ctx, "unknown link uri '%s'", uri);
++*/
+ 	return -1;
+ }
+diff --git a/source/pdf/pdf-parse.c b/source/pdf/pdf-parse.c
+index 3dffc43..f9039e0 100644
+--- a/source/pdf/pdf-parse.c
++++ b/source/pdf/pdf-parse.c
+@@ -703,9 +703,14 @@ pdf_parse_ind_obj(fz_context *ctx, pdf_document *doc,
+ 			if (c == '\r')
+ 			{
+ 				c = fz_peek_byte(ctx, file);
++/* willus mod -- no warning */
++/*
+ 				if (c != '\n')
+ 					fz_warn(ctx, "line feed missing after stream begin marker (%d %d R)", num, gen);
+ 				else
++*/
++if (c=='\n')
++/* willus mod -- end */
+ 					fz_read_byte(ctx, file);
+ 			}
+ 			stm_ofs = fz_tell(ctx, file);
+diff --git a/source/pdf/pdf-xref.c b/source/pdf/pdf-xref.c
+index 744d7ac..6149c9d 100644
+--- a/source/pdf/pdf-xref.c
++++ b/source/pdf/pdf-xref.c
+@@ -721,8 +721,11 @@ pdf_xref_size_from_old_trailer(fz_context *ctx, pdf_document *doc, pdf_lexbuf *b
+ 		if (!s)
+ 			fz_throw(ctx, FZ_ERROR_GENERIC, "xref subsection length missing");
+ 		len = fz_atoi(fz_strsep(&s, " "));
++/* willus mod -- no warning */
++/*
+ 		if (len < 0)
+ 			fz_throw(ctx, FZ_ERROR_GENERIC, "xref subsection length must be positive");
++*/
+ 
+ 		/* broken pdfs where the section is not on a separate line */
+ 		if (s && *s != '\0')
+@@ -1425,7 +1428,10 @@ pdf_init_document(fz_context *ctx, pdf_document *doc)
+ 	{
+ 		pdf_drop_xref_sections(ctx, doc);
+ 		fz_rethrow_if(ctx, FZ_ERROR_TRYLATER);
++/* willus mod -- no warning */
++/*
+ 		fz_warn(ctx, "trying to repair broken xref");
++*/
+ 		repaired = 1;
+ 	}
+ 

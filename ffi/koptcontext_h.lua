@@ -132,10 +132,10 @@ struct KOPTContext {
   int precache;
   int debug;
   int cjkchar;
-  BOXA* rboxa;
-  NUMA* rnai;
-  BOXA* nboxa;
-  NUMA* nnai;
+  struct Boxa *rboxa;
+  struct Numa *rnai;
+  struct Boxa *nboxa;
+  struct Numa *nnai;
   WRECTMAPS rectmaps;
   PAGEREGIONS pageregions;
   BBox bbox;
@@ -162,5 +162,5 @@ void pageregions_free(PAGEREGIONS *);
 void k2pdfopt_crop_bmp(KOPTContext *);
 void k2pdfopt_optimize_bmp(KOPTContext *);
 void pixmap_to_bmp(WILLUSBITMAP *, unsigned char *, int);
-PIX* bitmap2pix(WILLUSBITMAP *, int, int, int, int);
+struct Pix *bitmap2pix(WILLUSBITMAP *, int, int, int, int);
 ]]

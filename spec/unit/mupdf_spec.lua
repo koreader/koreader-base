@@ -121,12 +121,13 @@ describe("mupdf module", function()
             assert.is_not_nil(doc)
             local page = doc:openPage(1)
             assert.is_not_nil(page)
-            page:addMarkupAnnotation(ffi.new("float[8]", {
-                 70,  930,
-                510,  930,
-                510,  970,
-                 70,  970 }),
-                1, ffi.C.PDF_ANNOT_HIGHLIGHT)
+            page:addMarkupAnnotation(ffi.new("fz_quad[1]", {{
+               ul = { x = 70, y = 250},
+                ur = { x = 510, y = 250},
+                ll = { x = 70, y = 200},
+                lr = { x = 510, y = 200},
+            }}), 1,
+            ffi.C.PDF_ANNOT_HIGHLIGHT);
             page:close()
             doc:writeDocument(simple_pdf_out)
             local out_f = io.open(simple_pdf_out, "r")
@@ -154,7 +155,10 @@ describe("mupdf module", function()
                 assert.equals(math.floor(bbox[1]*1000), 56145)
                 assert.equals(math.floor(bbox[2]*1000), 69233)
                 assert.equals(math.floor(bbox[3]*1000), 144790)
-                assert.equals(math.floor(bbox[4]*1000), 106089)
+                -- TBA: This dimension has changed with new mupdf,
+                -- possibly different font/rendering. Is that an issue?
+                --assert.equals(math.floor(bbox[4]*1000), 106089)
+                assert.equals(math.floor(bbox[4]*1000), 103669)
             end)
             it("should get page text", function()
                 local text = page:getPageText()

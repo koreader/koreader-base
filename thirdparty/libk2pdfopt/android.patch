@@ -1,0 +1,39 @@
+diff --git a/k2pdfopt/willuslib/ansi.c b/k2pdfopt/willuslib/ansi.c
+index 09db46d..9aad4ff 100644
+--- a/k2pdfopt/willuslib/ansi.c
++++ b/k2pdfopt/willuslib/ansi.c
+@@ -307,18 +307,8 @@ int ansi_rows_cols(FILE *f,int *rows,int *cols)
+     (*cols)=-1;
+     return(ansi_win32_rows_cols(f,rows,cols));
+ #else
+-    int status;
+-    struct winsize ws;
+-
+     (*rows)=-1;
+     (*cols)=-1;
+-    status=ioctl(fileno(f),TIOCGWINSZ,&ws);
+-    if (!status)
+-        {
+-        (*rows)=ws.ws_row;
+-        (*cols)=ws.ws_col;
+-        return(1);
+-        }
+     return(0);
+ #endif
+     }
+diff --git a/k2pdfopt/willuslib/linux.c b/k2pdfopt/willuslib/linux.c
+index 271bf77..33a0261 100644
+--- a/k2pdfopt/willuslib/linux.c
++++ b/k2pdfopt/willuslib/linux.c
+@@ -31,10 +31,7 @@
+ #include <ctype.h>
+ #include <time.h>
+ #include <unistd.h>
+-/* 12-6-18:  Apparently sys/termios.h no longer needed to compile in some cases. */
+-// #if (defined(__MACH__) || !defined(__GNUC__) || __GNUC__ < 7)
+-#include <sys/termios.h>
+-// #endif
++
+ #include <sys/wait.h>
+ #include <sys/types.h>
+ #include <signal.h>
