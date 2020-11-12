@@ -19,7 +19,7 @@ android-sdk:
 	pushd $(SDK_DIR)/tools/bin && \
 		yes | ./sdkmanager --update && \
 		yes | ./sdkmanager --licenses && \
-		./sdkmanager "platform-tools" "build-tools;28.0.3" "platforms;android-28" "patcher;v4" && \
+		./sdkmanager "platform-tools" "build-tools;30.0.2" "platforms;android-30" "patcher;v4" && \
 		popd
 	rm -f $(SDK_DIR)/$(SDK_TARBALL)
 
