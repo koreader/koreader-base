@@ -12,6 +12,11 @@ assert_var_defined(CC)
 assert_var_defined(CFLAGS)
 assert_var_defined(LDFLAGS)
 
+if ($ENV{DARWIN})
+    #fix build error due to implicit declarations of function being invalid in C99 under macOS/XCode 12 
+    set(CFLAGS "${CFLAGS} -Wno-error=implicit-function-declaration")
+endif()
+
 ep_get_source_dir(SOURCE_DIR)
 
 if(NOT DEFINED ENV{DARWIN})
