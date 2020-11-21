@@ -372,4 +372,83 @@ function Pic.openDocument(filename)
     end
 end
 
+--[[
+function for writing BMP to file
+]]
+
+local function write_uint32(of, data )
+    of:write( string.char(data % 256) )
+    data = math.floor(data / 256)
+    of:write(string.char(data % 256) )
+    data = math.floor(data / 256)
+    of:write(string.char(data % 256) )
+    data = math.floor(data / 256)
+    of:write(string.char(data))
+end
+
+local TYPE_BBRGB24 = 4
+
+function Pic.writeBMP(filename, bb)
+    local w, h = bb:getWidth(), bb:getHeight()
+    local output_channels = 3
+
+    local bbdump = BB.new(w, h, TYPE_BBRGB24, nil)
+    bbdump:blitFrom(bb)
+
+    local of, err = io.open(filename, "wb")
+    if err ~= nil then
+        return err
+    end
+
+    local data = ffi.cast("unsigned char *", bbdump.data)
+
+    local filesize = output_channels * w * h + 54
+
+    -- bfType (2 Bytes)
+    of:write("B")
+    of:write("M")
+    -- bfSize (4 Bytes)
+    write_uint32(of, filesize)
+    -- bfReserved (4 Bytes )
+    write_uint32(of, 0 )
+    -- bfOffBits (4 Byte)
+    write_uint32(of, 54 )
+
+    -- biSize (4 Byte)
+    write_uint32(of, 40 )
+    -- biWidth (4 Bytes)
+    write_uint32(of, w )
+     -- biHeight (4 Bytes)
+    write_uint32(of, h )
+    -- biPlanes ( 2 Bytes)
+    of:write(string.char(1))
+    of:write(string.char(0))
+    -- biBitCount (2 Bytes)
+    of:write(string.char(output_channels * 8))
+    of:write(string.char(0))
+
+    for i = 1,24 do
+      of:write(string.char(0))
+    end
+
+    local pos = 0
+    -- start with lowes row
+    for y = h-1, 0, -1 do
+        pos = y * w * output_channels
+        for x = 0,w-1 do
+            of:write(string.char(data[pos+2]))
+            of:write(string.char(data[pos+1]))
+            of:write(string.char(data[pos]))
+            pos = pos + 3
+        end
+        -- fill up a row to a multiply of 4 bytes
+        if pos % 4 ~= 0 then
+            for i = 0, (4 - pos % 4) * output_channels do
+                of:write(string.char(0))
+            end
+        end
+    end
+    of:close()
+end
+
 return Pic
