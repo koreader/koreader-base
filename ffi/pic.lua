@@ -449,7 +449,6 @@ function Pic.writeBMP(filename, bb)
         end
     end
     of:close()
-    bbdump:free()
 end
 
 return Pic
