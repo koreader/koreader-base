@@ -1880,10 +1880,9 @@ function BB_mt.__index:writeBMP(filename)
       of:write(string.char(0))
     end
 
-    local pos = 0
     -- start with bottom line, because BMP stores from bottom to top
     for y = h-1, 0, -1 do
-        pos = y * w * output_channels
+        local pos = y * w * output_channels
         for x = 0, w-1 do
             of:write(string.char(data[pos+2]))
             of:write(string.char(data[pos+1]))
@@ -1892,7 +1891,7 @@ function BB_mt.__index:writeBMP(filename)
         end
         -- fill up a row to a multiple of 4 bytes
         if band(pos, 3) ~= 0 then
-            for i = 0, (4 - pos % 4) * output_channels do
+            for i = 0, (4 - band(pos, 3)) * output_channels do
                 of:write(string.char(0))
             end
         end
