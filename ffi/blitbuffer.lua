@@ -1826,6 +1826,81 @@ function BB_mt.__index:writePNGFromBGR(filename)
     C.free(cdata)
 end
 
+
+local function write_uint32(of, data)
+    of:write(string.char(band(data, 255)))
+    data = math.floor(data / 256)
+    of:write(string.char(band(data, 255)))
+    data = math.floor(data / 256)
+    of:write(string.char(band(data, 255)))
+    data = math.floor(data / 256)
+    of:write(string.char(data))
+end
+
+function BB_mt.__index:writeBMP(filename)
+    local w, h = self:getWidth(), self:getHeight()
+    local output_channels = 3
+
+    local bbdump = BB.new(w, h, TYPE_BBRGB24, nil)
+    bbdump:blitFrom(self)
+
+    local of, err = io.open(filename, "wb")
+    if err ~= nil then
+        return err
+    end
+
+    local data = ffi.cast("unsigned char *", bbdump.data)
+
+    local filesize = output_channels * w * h + 54
+
+    -- bfType (2 Bytes)
+    of:write("B")
+    of:write("M")
+    -- bfSize (4 Bytes)
+    write_uint32(of, filesize)
+    -- bfReserved (4 Bytes)
+    write_uint32(of, 0)
+    -- bfOffBits (4 Byte)
+    write_uint32(of, 54)
+
+    -- biSize (4 Byte)
+    write_uint32(of, 40)
+    -- biWidth (4 Bytes)
+    write_uint32(of, w)
+     -- biHeight (4 Bytes)
+    write_uint32(of, h)
+    -- biPlanes ( 2 Bytes)
+    of:write(string.char(1))
+    of:write(string.char(0))
+    -- biBitCount (2 Bytes)
+    of:write(string.char(output_channels * 8))
+    of:write(string.char(0))
+
+    for i = 1, 24 do
+      of:write(string.char(0))
+    end
+
+    local pos = 0
+    -- start with bottom line, because BMP stores from bottom to top
+    for y = h-1, 0, -1 do
+        pos = y * w * output_channels
+        for x = 0, w-1 do
+            of:write(string.char(data[pos+2]))
+            of:write(string.char(data[pos+1]))
+            of:write(string.char(data[pos]))
+            pos = pos + 3
+        end
+        -- fill up a row to a multiple of 4 bytes
+        if band(pos, 3) ~= 0 then
+            for i = 0, (4 - pos % 4) * output_channels do
+                of:write(string.char(0))
+            end
+        end
+    end
+    of:close()
+    bbdump:free()
+end
+
 -- if no special case in BB???_mt exists, use function from BB_mt
 -- (we do not use BB_mt as metatable for BB???_mt since this causes
 -- a major slowdown and would not get properly JIT-compiled)
