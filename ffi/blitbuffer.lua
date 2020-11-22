@@ -1838,24 +1838,27 @@ local function write_uint32(of, data)
 end
 
 function BB_mt.__index:writeBMP(filename)
-    local w, h = self:getWidth(), self:getHeight()
     local output_channels = 3
-
-    local bbdump = BB.new(w, h, TYPE_BBRGB24, nil)
-    bbdump:blitFrom(self)
+    local w, h = self:getWidth(), self:getHeight()
+    local stride = w * output_channels
 
     local of, err = io.open(filename, "wb")
     if err ~= nil then
         return err
     end
 
+    local bbdump = BB.new(w, h, TYPE_BBRGB24, nil)
+    bbdump:blitFrom(self)
     local data = ffi.cast("unsigned char *", bbdump.data)
 
-    local filesize = output_channels * w * h + 54
+    local filesize = stride * h + 54
+    -- update filesize, if stride is not a multiple of 4
+    if band(stride, 3) ~= 0 then
+        filesize = filesize + (4 - band(stride,3))*h
+    end
 
     -- bfType (2 Bytes)
-    of:write("B")
-    of:write("M")
+    of:write("BM")
     -- bfSize (4 Bytes)
     write_uint32(of, filesize)
     -- bfReserved (4 Bytes)
@@ -1870,28 +1873,24 @@ function BB_mt.__index:writeBMP(filename)
      -- biHeight (4 Bytes)
     write_uint32(of, h)
     -- biPlanes ( 2 Bytes)
-    of:write(string.char(1))
-    of:write(string.char(0))
+    of:write(string.char(1), string.char(0))
     -- biBitCount (2 Bytes)
-    of:write(string.char(output_channels * 8))
-    of:write(string.char(0))
+    of:write(string.char(output_channels * 8), string.char(0))
 
     for i = 1, 24 do
-      of:write(string.char(0))
+        of:write(string.char(0))
     end
 
     -- start with bottom line, because BMP stores from bottom to top
     for y = h-1, 0, -1 do
-        local pos = y * w * output_channels
+        local pos = y * stride
         for x = 0, w-1 do
-            of:write(string.char(data[pos+2]))
-            of:write(string.char(data[pos+1]))
-            of:write(string.char(data[pos]))
-            pos = pos + 3
+            of:write(string.char(data[pos+2]), string.char(data[pos+1]), string.char(data[pos]))
+            pos = pos + output_channels
         end
         -- fill up a row to a multiple of 4 bytes
         if band(pos, 3) ~= 0 then
-            for i = 0, (4 - band(pos, 3)) * output_channels do
+            for x = 0, (4 - band(pos, 3)) do
                 of:write(string.char(0))
             end
         end
