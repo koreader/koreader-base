@@ -1845,7 +1845,7 @@ function BB_mt.__index:writeBMP(filename)
 
     local bbdump
     local data
-    if self:getType() == TYPE_BBRGB24 and self:getRotation()==0 then
+    if self:getType() == TYPE_BBRGB24 and self:getRotation==0 then
         data = ffi.cast("unsigned char *", self.data)
         require("logger").err("xxxxxxxxxxxxxxxxxxx no bbdump")
     else
