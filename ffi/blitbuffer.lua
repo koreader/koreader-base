@@ -138,7 +138,7 @@ void BB_color_blit_from(BlitBuffer *dest, BlitBuffer *source, int dest_x, int de
 --       which'd obviously *murder* performance (to the effect of a soft-lock, essentially).
 --       This is necessary even with CBB on, as not everything goes through CBB.
 --       c.f., koreader/koreader#4137, koreader/koreader#4752, koreader/koreader#4782, koreader/koreader#6736
---jit.opt.start("loopunroll=45")
+jit.opt.start("loopunroll=45")
 
 -- We'll load it later
 local cblitbuffer
