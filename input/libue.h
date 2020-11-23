@@ -25,6 +25,7 @@
 #ifndef __LIBUE_H
 #define __LIBUE_H
 
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -34,12 +35,18 @@
 #include <syslog.h>
 #include <unistd.h>
 
+#include <linux/limits.h>
 #include <linux/netlink.h>
 
-#define LIBUE_VERSION_MAJOR  "0"
-#define LIBUE_VERSION_MINOR  "3.0"
-#define LIBUE_VERSION        LIBUE_VERSION_MAJOR "." LIBUE_VERSION_MINOR
-#define LIBUE_VERSION_NUMBER 10000
+// c.f., https://github.com/NiLuJe/kfmon/tree/master/openssh
+#include "atomicio.h"
+
+#define LIBUE_VERSION_MAJOR "1"
+#define LIBUE_VERSION_MINOR "4"
+#define LIBUE_VERSION_PATCH "0"
+#define LIBUE_VERSION       LIBUE_VERSION_MAJOR "." LIBUE_VERSION_MINOR "." LIBUE_VERSION_PATCH
+// Much like SQLite, this is (MAJOR*1000000 + MINOR*1000 + PATCH)
+#define LIBUE_VERSION_NUMBER 1004000
 
 // Enable debug logging in Debug builds
 #ifdef DEBUG
@@ -100,8 +107,10 @@ struct uevent
 {
 	enum uevent_action action;
 	char*              devpath;
-	char               buf[PIPE_BUF];
-	size_t             buflen;
+	char*              subsystem;
+	char*              modalias;
+	char   buf[PIPE_BUF];    // i.e., 4*1024, which is between busybox's mdev (3kB, stack) and uevent (16kB, mmap).
+	size_t buflen;
 };
 
 /*
@@ -112,7 +121,7 @@ struct uevent
 static int
     ue_parse_event_msg(struct uevent* uevp, size_t buflen)
 {
-	/* skip udev events */
+	/* skip udev events, which we should not receive in the first place */
 	if (memcmp(uevp->buf, "libudev", 7) == 0 || memcmp(uevp->buf, "udev", 4) == 0) {
 		return ERR_PARSE_UDEV;
 	}
@@ -148,6 +157,10 @@ static int
 			}
 		} else if (UE_STR_EQ(p, "DEVPATH")) {
 			uevp->devpath = p + sizeof("DEVPATH");
+		} else if (UE_STR_EQ(p, "SUBSYSTEM")) {
+			uevp->subsystem = p + sizeof("SUBSYSTEM");
+		} else if (UE_STR_EQ(p, "MODALIAS")) {
+			uevp->modalias = p + sizeof("MODALIAS");
 		}
 		/* proceed to next line */
 		i += strlen(cur_line) + 1U;
@@ -158,37 +171,52 @@ static int
 static inline void
     ue_dump_event(struct uevent* uevp)
 {
-	printf("%s %s\n", uev_action_str[uevp->action], uevp->devpath);
+	UE_LOG(LOG_INFO, "%s %s", uev_action_str[uevp->action], uevp->devpath);
 }
 
 static inline void
     ue_reset_event(struct uevent* uevp)
 {
-	uevp->action  = UEVENT_ACTION_INVALID;
-	uevp->devpath = NULL;
-	uevp->buflen  = 0U;
+	uevp->action    = UEVENT_ACTION_INVALID;
+	uevp->devpath   = NULL;
+	uevp->subsystem = NULL;
+	uevp->modalias  = NULL;
+	uevp->buflen    = 0U;
 }
 
+/*
+ * c.f., https://git.busybox.net/busybox/tree/util-linux/uevent.c
+ */
 static int
     ue_init_listener(struct uevent_listener* l)
 {
-	memset(&l->nls, 0, sizeof(struct sockaddr_nl));
+	memset(&l->nls, 0, sizeof(l->nls));
 	l->nls.nl_family = AF_NETLINK;
 	// NOTE: It's actually a pid_t in non-braindead kernels...
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wsign-conversion"
 	l->nls.nl_pid = getpid();
 #pragma GCC diagnostic pop
-	l->nls.nl_groups = -1U;
+	// We only care about kernel events
+	// (c.f., https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/lib/kobject_uevent.c
+	// & https://github.com/gentoo/eudev/blob/9aadd2bfd66333318461c97cc7744ccdb84c24b5/src/libudev/libudev-monitor.c#L65-L69
+	// & https://git.busybox.net/busybox/tree/util-linux/uevent.c)
+	l->nls.nl_groups = 1U << 0U;
 
 	l->pfd.events = POLLIN;
-	l->pfd.fd     = socket(PF_NETLINK, SOCK_DGRAM, NETLINK_KOBJECT_UEVENT);
+	l->pfd.fd     = socket(PF_NETLINK, SOCK_DGRAM | SOCK_NONBLOCK | SOCK_CLOEXEC, NETLINK_KOBJECT_UEVENT);
 	if (l->pfd.fd == -1) {
 		UE_PFLOG(LOG_CRIT, "socket: %m");
 		return ERR_LISTENER_NOT_ROOT;
 	}
 
-	if (bind(l->pfd.fd, (struct sockaddr*) &(l->nls), sizeof(struct sockaddr_nl))) {
+	// See udev & busybox for the reasoning behind the insanely large value used here
+	// (default is from /proc/sys/net/core/rmem_default)
+	// That's thankfully lazily allocated by the kernel, so we don't really waste anything.
+	int recvbuf_size = 128 * 1024 * 1024;
+	setsockopt(l->pfd.fd, SOL_SOCKET, SO_RCVBUFFORCE, &recvbuf_size, sizeof(recvbuf_size));
+
+	if (bind(l->pfd.fd, (const struct sockaddr*) &(l->nls), sizeof(l->nls))) {
 		UE_PFLOG(LOG_CRIT, "bind: %m");
 		return ERR_LISTENER_BIND;
 	}
@@ -201,23 +229,38 @@ static int
 {
 	while (poll(&(l->pfd), 1, -1) != -1) {
 		ue_reset_event(uevp);
-		ssize_t len = recv(l->pfd.fd, uevp->buf, sizeof(uevp->buf), MSG_DONTWAIT);
+		ssize_t len = xread(l->pfd.fd, uevp->buf, sizeof(uevp->buf) - 1U);
 		if (len == -1) {
-			UE_PFLOG(LOG_CRIT, "recv: %m");
+			if (errno == ENOBUFS) {
+				// NOTE: Events will be lost! But our only recourse is to restart from scratch.
+				UE_PFLOG(LOG_WARNING, "uevent overrun!");
+				close(l->pfd.fd);
+				int rc = ue_init_listener(l);
+				if (rc < 0) {
+					UE_PFLOG(LOG_CRIT, "Failed to reinitialize libue listener (%d)", rc);
+					return rc;
+				}
+				return ue_wait_for_event(l, uevp);
+			}
+			UE_PFLOG(LOG_CRIT, "read: %m");
 			return ERR_LISTENER_RECV;
 		}
+		char* end = uevp->buf + len;
+		*end      = '\0';
+
 		int rc = ue_parse_event_msg(uevp, (size_t) len);
 		if (rc == EXIT_SUCCESS) {
 			UE_PFLOG(LOG_DEBUG, "uevent successfully parsed");
 			return EXIT_SUCCESS;
 		} else if (rc == ERR_PARSE_UDEV) {
-			UE_PFLOG(LOG_DEBUG, "skipped udev uevent: `%s`", uevp->buf);
+			UE_PFLOG(LOG_DEBUG, "skipped %zd bytes udev uevent: `%.*s`", len, (int) len, uevp->buf);
 		} else if (rc == ERR_PARSE_INVALID_HDR) {
-			UE_PFLOG(LOG_DEBUG, "skipped malformed uevent: `%s`", uevp->buf);
+			UE_PFLOG(LOG_DEBUG, "skipped %zd bytes malformed uevent: `%.*s`", len, (int) len, uevp->buf);
 		} else {
-			UE_PFLOG(LOG_DEBUG, "skipped unsupported uevent: `%s`", uevp->buf);
+			UE_PFLOG(LOG_DEBUG, "skipped %zd bytes unsupported uevent: `%.*s`", len, (int) len, uevp->buf);
 		}
 	}
+
 	UE_PFLOG(LOG_CRIT, "poll: %m");
 	return ERR_LISTENER_POLL;
 }
