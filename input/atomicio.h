@@ -35,6 +35,28 @@
 //             https://git.savannah.gnu.org/cgit/gnulib.git/tree/lib/full-write.c
 //             https://git.busybox.net/busybox/tree/libbb/read.c
 
+
+#ifndef _ATOMICIO_H
+#define _ATOMICIO_H
+
+#include <errno.h>
+#include <limits.h>
+#include <poll.h>
+#include <sys/socket.h>
+#include <sys/types.h>
+#include <unistd.h>
+
+// Clamp IO chunks to the smallest of 8 MiB and SSIZE_MAX,
+// to deal with various implementation quirks on really old Linux,
+// macOS, or AIX/IRIX.
+// c.f., git, gnulib & busybox for similar stories.
+// Since we ourselves are 32 bit Linux-bound, 8 MiB suits us just fine.
+#define MAX_IO_BUFSIZ (8 * 1024 * 1024)
+#if defined(SSIZE_MAX) && (SSIZE_MAX < MAX_IO_BUFSIZ)
+#	undef MAX_IO_BUFSIZ
+#	define MAX_IO_BUFSIZ SSIZE_MAX
+#endif
+
 // read() with retries on recoverable errors (via polling on EAGAIN).
 // Not guaranteed to return len bytes, even on success (like read() itself).
 // Always returns read()'s return value as-is.
@@ -64,3 +86,5 @@ static ssize_t
 		return nr;
 	}
 }
+
+#endif /* _ATOMICIO_H */
