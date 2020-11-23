@@ -1826,7 +1826,6 @@ function BB_mt.__index:writePNGFromBGR(filename)
     C.free(cdata)
 end
 
-
 --jit.opt.start(1)
 --jit.opt.start("loopunroll=10")
 function BB_mt.__index:writeBMP(filename)
@@ -1853,15 +1852,11 @@ function BB_mt.__index:writeBMP(filename)
     local data
     if self:getType() == TYPE_BBRGB24 then
         data = ffi.cast("unsigned char *", self.data)
-        require("logger").err("xxxxxxxxxxxxxxxxxxx no bbdump")
     else
         bbdump = BB.new(w, h, TYPE_BBRGB24, nil)
         bbdump:blitFrom(self)
         data = ffi.cast("unsigned char *", bbdump.data)
-        require("logger").err("xxxxxxxxxxxxxxxxxxx after bbdump")
     end
-
-
 
     local filesize = stride * h + 54
     -- update filesize, if stride is not a multiple of 4
