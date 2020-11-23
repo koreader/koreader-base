@@ -134,6 +134,12 @@ void BB_color_blit_from(BlitBuffer *dest, BlitBuffer *source, int dest_x, int de
                         int offs_x, int offs_y, int w, int h, Color8A *color);
 ]]
 
+-- NOTE: This works-around a number of corner-cases which may end up with LuaJIT's optimizer blacklisting our inner loops,
+--       which'd obviously *murder* performance (to the effect of a soft-lock, essentially).
+--       This is necessary even with CBB on, as not everything goes through CBB.
+--       c.f., koreader/koreader#4137, koreader/koreader#4752, koreader/koreader#4782, koreader/koreader#6736
+--jit.opt.start("loopunroll=45")
+
 -- We'll load it later
 local cblitbuffer
 local use_cblitbuffer = false
@@ -1821,17 +1827,19 @@ function BB_mt.__index:writePNGFromBGR(filename)
 end
 
 
-local function write_uint32(of, data)
-    of:write(string.char(band(data, 255)))
-    data = math.floor(data / 256)
-    of:write(string.char(band(data, 255)))
-    data = math.floor(data / 256)
-    of:write(string.char(band(data, 255)))
-    data = math.floor(data / 256)
-    of:write(string.char(data))
-end
-
+--jit.opt.start(1)
+--jit.opt.start("loopunroll=10")
 function BB_mt.__index:writeBMP(filename)
+    local function write_uint32(of, data)
+        of:write(string.char(band(data, 255)))
+        data = math.floor(data / 256)
+        of:write(string.char(band(data, 255)))
+        data = math.floor(data / 256)
+        of:write(string.char(band(data, 255)))
+        data = math.floor(data / 256)
+        of:write(string.char(data))
+    end
+
     local output_channels = 3
     local w, h = self:getWidth(), self:getHeight()
     local stride = w * output_channels
@@ -1841,9 +1849,19 @@ function BB_mt.__index:writeBMP(filename)
         return err
     end
 
-    local bbdump = BB.new(w, h, TYPE_BBRGB24, nil)
-    bbdump:blitFrom(self)
-    local data = ffi.cast("unsigned char *", bbdump.data)
+    local bbdump
+    local data
+    if self:getType() == TYPE_BBRGB24 then
+        data = ffi.cast("unsigned char *", self.data)
+        require("logger").err("xxxxxxxxxxxxxxxxxxx no bbdump")
+    else
+        bbdump = BB.new(w, h, TYPE_BBRGB24, nil)
+        bbdump:blitFrom(self)
+        data = ffi.cast("unsigned char *", bbdump.data)
+        require("logger").err("xxxxxxxxxxxxxxxxxxx after bbdump")
+    end
+
+
 
     local filesize = stride * h + 54
     -- update filesize, if stride is not a multiple of 4
@@ -1875,9 +1893,10 @@ function BB_mt.__index:writeBMP(filename)
         of:write(string.char(0))
     end
 
+    local pos
     -- start with bottom line, because BMP stores from bottom to top
     for y = h-1, 0, -1 do
-        local pos = y * stride
+        pos = y * stride
         for x = 0, w-1 do
             of:write(string.char(data[pos+2]), string.char(data[pos+1]), string.char(data[pos]))
             pos = pos + output_channels
@@ -1890,7 +1909,19 @@ function BB_mt.__index:writeBMP(filename)
         end
     end
     of:close()
-    bbdump:free()
+    if bbdump ~= nil then
+        bbdump:free()
+    end
+end
+--jit.off(BB_mt.__index.writeBMP)
+
+function BB_mt.__index:writeToFile(filename, format)
+    format = format or "png" -- set default format
+    if format == "bmp" then
+        self:writeBMP(filename)
+    else -- default all other extensions to png
+        self:writePNG(filename)
+    end
 end
 
 -- if no special case in BB???_mt exists, use function from BB_mt
@@ -2025,16 +2056,7 @@ end
 
 -- Set the actual enable/disable CBB flag. Returns the flag of whether it is (actually) enabled.
 function BB:enableCBB(enabled)
-    local old = use_cblitbuffer
     use_cblitbuffer = enabled and self.has_cblitbuffer
-    if old ~= use_cblitbuffer then
-        -- NOTE: This works-around a number of corner-cases which may end up with LuaJIT's optimizer blacklisting this very codepath,
-        --       which'd obviously *murder* performance (to the effect of a soft-lock, essentially).
-        --       c.f., koreader/koreader#4137, koreader/koreader#4752, koreader/koreader#4782
-        local val = use_cblitbuffer and 15 or 45
-        jit.opt.start("loopunroll="..tostring(val))
-        jit.flush()
-    end
     return use_cblitbuffer
 end
 
