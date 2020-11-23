@@ -1826,8 +1826,6 @@ function BB_mt.__index:writePNGFromBGR(filename)
     C.free(cdata)
 end
 
---jit.opt.start(1)
---jit.opt.start("loopunroll=10")
 function BB_mt.__index:writeBMP(filename)
     local function write_uint32(of, data)
         of:write(string.char(band(data, 255)))
@@ -1908,7 +1906,6 @@ function BB_mt.__index:writeBMP(filename)
         bbdump:free()
     end
 end
---jit.off(BB_mt.__index.writeBMP)
 
 function BB_mt.__index:writeToFile(filename, format)
     format = format or "png" -- set default format
