@@ -1957,7 +1957,8 @@ function BB:enableCBB(enabled)
     if old ~= use_cblitbuffer then
         -- NOTE: This works-around a number of corner-cases which may end up with LuaJIT's optimizer blacklisting this very codepath,
         --       which'd obviously *murder* performance (to the effect of a soft-lock, essentially).
-        --       c.f., koreader/koreader#4137, koreader/koreader#4752, koreader/koreader#4782
+        --       c.f., koreader/koreader#4137, koreader/koreader#4752, koreader/koreader#4782,
+        --       koreader/koreader#6736, #1233
         local val = use_cblitbuffer and 15 or 45
         jit.opt.start("loopunroll="..tostring(val))
         jit.flush()
