@@ -1828,17 +1828,11 @@ end
 
 function BB_mt.__index:writeBMP(filename)
     local function write_uint32(target_ptr, target_pos, data)
-        target_ptr[target_pos] = band(data, 255)
-        target_pos = target_pos + 1
-        data = math.floor(data / 256)
-        target_ptr[target_pos] = band(data, 255)
-        target_pos = target_pos + 1
-        data = math.floor(data / 256)
-        target_ptr[target_pos] = band(data, 255)
-        target_pos = target_pos + 1
-        data = math.floor(data / 256)
-        target_ptr[target_pos] = data
-        return target_pos + 1
+        target_ptr[target_pos] = band(data, 0xFF)
+        target_ptr[target_pos + 1] = band(rshift(data, 8), 0xFF)
+        target_ptr[target_pos + 2] = band(rshift(data, 16), 0xFF)
+        target_ptr[target_pos + 3] = band(rshift(data, 24), 0xFF)
+        return target_pos + 4
     end
 
     local output_channels = 3
@@ -1852,13 +1846,13 @@ function BB_mt.__index:writeBMP(filename)
     end
 
     local bbdump
-    local data
+    local source_ptr
     if self:getType() == TYPE_BBRGB24 then
-        data = ffi.cast("unsigned char *", self.data)
+        source_ptr = ffi.cast("unsigned char *", self.data)
     else
         bbdump = BB.new(w, h, TYPE_BBRGB24, nil)
         bbdump:blitFrom(self)
-        data = ffi.cast("unsigned char *", bbdump.data)
+        source_ptr = ffi.cast("unsigned char *", bbdump.data)
     end
 
     local filesize = stride * h + 54
@@ -1906,20 +1900,14 @@ function BB_mt.__index:writeBMP(filename)
         target_pos = target_pos + 1
     end
 
-    require("logger").err("xxxxxxxxxxxx target_pos="..target_pos)
-
-    local pos
     -- start with bottom line, because BMP stores from bottom to top
     for y = h-1, 0, -1 do
-        pos = y * stride
+        local pos = y * stride
         for x = 0, w-1 do
-            target_ptr[target_pos] = data[pos+2]
-            target_pos = target_pos + 1
-            target_ptr[target_pos] = data[pos+1]
-            target_pos = target_pos + 1
-            target_ptr[target_pos] = data[pos+0]
-            target_pos = target_pos + 1
-
+            target_ptr[target_pos] = source_ptr[pos+2]
+            target_ptr[target_pos + 1] = source_ptr[pos+1]
+            target_ptr[target_pos + 2] = source_ptr[pos]
+            target_pos = target_pos + output_channels
             pos = pos + output_channels
         end
         -- no need to fill up a row to a multiple of 4 bytes, as calloc initializes with 0
@@ -1930,96 +1918,9 @@ function BB_mt.__index:writeBMP(filename)
         require("logger").err("Cover image: internal error:  filesize=" .. filesize .. " target_pos=" .. target_pos)
     end
 
-    require("logger").err("xxxxxxxxxxxx begin dump")
-
---    for y = 0, target_pos-1 do
---        of:write(string.char(target_ptr[y]))
---    end
     of:write(ffi.string(target_ptr, target_pos))
 
-
     C.free(target_ptr)
-    of:close()
-    if bbdump ~= nil then
-        bbdump:free()
-    end
-end
-
-function BB_mt.__index:writeBMP_default(filename)
-    local function write_uint32(of, data)
-        of:write(string.char(band(data, 255)))
-        data = math.floor(data / 256)
-        of:write(string.char(band(data, 255)))
-        data = math.floor(data / 256)
-        of:write(string.char(band(data, 255)))
-        data = math.floor(data / 256)
-        of:write(string.char(data))
-    end
-
-    local output_channels = 3
-    local w, h = self:getWidth(), self:getHeight()
-    local stride = w * output_channels
-
-    local of, err = io.open(filename, "wb")
-    if err ~= nil then
-        return err
-    end
-
-    local bbdump
-    local data
-    if self:getType() == TYPE_BBRGB24 then
-        data = ffi.cast("unsigned char *", self.data)
-    else
-        bbdump = BB.new(w, h, TYPE_BBRGB24, nil)
-        bbdump:blitFrom(self)
-        data = ffi.cast("unsigned char *", bbdump.data)
-    end
-
-    local filesize = stride * h + 54
-    local padding = 0
-    -- update filesize, if stride is not a multiple of 4
-    if band(stride, 3) ~= 0 then
-        padding = 4 - band(stride, 3)
-        filesize = filesize + padding * h
-    end
-
-    -- bfType (2 Bytes)
-    of:write("BM")
-    -- bfSize (4 Bytes)
-    write_uint32(of, filesize)
-    -- bfReserved (4 Bytes)
-    write_uint32(of, 0)
-    -- bfOffBits (4 Byte)
-    write_uint32(of, 54)
-
-    -- biSize (4 Byte)
-    write_uint32(of, 40)
-    -- biWidth (4 Bytes)
-    write_uint32(of, w)
-     -- biHeight (4 Bytes)
-    write_uint32(of, h)
-    -- biPlanes ( 2 Bytes)
-    of:write(string.char(1), string.char(0))
-    -- biBitCount (2 Bytes)
-    of:write(string.char(output_channels * 8), string.char(0))
-
-    for i = 1, 24 do
-        of:write(string.char(0))
-    end
-
-    local pos
-    -- start with bottom line, because BMP stores from bottom to top
-    for y = h-1, 0, -1 do
-        pos = y * stride
-        for x = 0, w-1 do
-            of:write(string.char(data[pos+2]), string.char(data[pos+1]), string.char(data[pos]))
-            pos = pos + output_channels
-        end
-        -- fill up a row to a multiple of 4 bytes
-        for x = 1, padding do
-            of:write(string.char(0))
-        end
-    end
     of:close()
     if bbdump ~= nil then
         bbdump:free()
@@ -2030,7 +1931,6 @@ function BB_mt.__index:writeToFile(filename, format)
     format = format or "png" -- set default format
     if format == "bmp" then
         self:writeBMP(filename)
---        self:writeBMP_default(filename .. ".default")
     else -- default all other extensions to png
         self:writePNG(filename)
     end
