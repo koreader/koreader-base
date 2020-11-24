@@ -1909,9 +1909,7 @@ function BB_mt.__index:writeBMP(filename)
         target_pos = target_pos + padding
     end
 
-    if target_pos ~= filesize then
-        require("logger").err("Cover image: internal error:  filesize=" .. filesize .. " target_pos=" .. target_pos)
-    end
+    assert(filesize == target_pos, "Cover image: internal error:  filesize=" .. filesize .. " target_pos=" .. target_pos)
 
     of:write(ffi.string(target_ptr, target_pos))
 
