@@ -1810,7 +1810,7 @@ function BB_mt.__index:writePNGFromBGR(filename)
     local w, h = self:getWidth(), self:getHeight()
     local stride = w * 3
     local cdata = C.malloc(stride * h)
-    local mem = ffi.cast("char*", cdata)
+    local mem = ffi.cast(uint8pt, cdata)
     for y = 0, h-1 do
         local offset = stride * y
         for x = 0, w-1 do
@@ -1822,7 +1822,7 @@ function BB_mt.__index:writePNGFromBGR(filename)
             offset = offset + 3
         end
     end
-    Png.encodeToFile(filename, mem, w, h, 3)
+    Png.encodeToFile(filename, ffi.cast("const unsigned char*", mem), w, h, 3)
     C.free(cdata)
 end
 
