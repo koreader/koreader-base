@@ -46,7 +46,7 @@ if($ENV{ANDROID})
     endif()
 else()
     # If we're on ARM, make it so
-    if (${CHOST} MATCHES "^arm-.*" AND (NOT CMAKE_SYSTEM_PROCESSOR MATCHES ".+64$"))
+    if ((${CHOST} MATCHES "^arm-.*") AND (NOT CMAKE_SYSTEM_PROCESSOR MATCHES ".+64$"))
         # Yes, OpenSSL's preset names make no sense.
         set(CFG_OPTS "linux-armv4 -DL_ENDIAN ${CFG_OPTS}")
     else()
