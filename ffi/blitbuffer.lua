@@ -1863,7 +1863,8 @@ function BB_mt.__index:writeBMP(filename)
         filesize = filesize + padding * h
     end
 
-    local target_ptr = ffi.cast("unsigned char*", C.calloc(filesize, 1))
+    local target_buff = C.calloc(filesize, 1) -- initiate array with zero
+    local target_ptr = ffi.cast("unsigned char*", target_buff)
     local target_pos = 0
 
     -- bfType (2 Bytes)
@@ -1886,19 +1887,13 @@ function BB_mt.__index:writeBMP(filename)
     target_pos = write_uint32(target_ptr, target_pos, h)
     -- biPlanes ( 2 Bytes)
     target_ptr[target_pos] = 1
-    target_pos = target_pos + 1
-    target_ptr[target_pos] = 0
-    target_pos = target_pos + 1
+    target_pos = target_pos + 2
     -- biBitCount (2 Bytes)
     target_ptr[target_pos] = output_channels * 8
-    target_pos = target_pos + 1
-    target_ptr[target_pos] = 0
-    target_pos = target_pos + 1
+    target_pos = target_pos + 2
 
-    for i = 1, 24 do
-        target_ptr[target_pos] = 0
-        target_pos = target_pos + 1
-    end
+    -- the next 24 bytes are zero (calloc already does that)
+    target_pos = target_pos + 24
 
     -- start with bottom line, because BMP stores from bottom to top
     for y = h-1, 0, -1 do
@@ -1920,7 +1915,7 @@ function BB_mt.__index:writeBMP(filename)
 
     of:write(ffi.string(target_ptr, target_pos))
 
-    C.free(target_ptr)
+    C.free(target_buff)
     of:close()
     if bbdump ~= nil then
         bbdump:free()
