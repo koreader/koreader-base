@@ -1864,7 +1864,7 @@ function BB_mt.__index:writeBMP(filename)
     end
 
     local target_buff = C.calloc(filesize, 1) -- initialize array with zero
-    local target_ptr = ffi.cast("uint8pt", target_buff)
+    local target_ptr = ffi.cast(uint8pt, target_buff)
     local target_pos = 0
 
     -- bfType (2 Bytes)
