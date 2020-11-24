@@ -48,7 +48,7 @@ if(${XCOMPILE})
         COMMAND "${CC}" -dumpmachine
         OUTPUT_VARIABLE HOST_CC_MACHINE
     )
-    if(HOST_CC_MACHINE MATCHES "^x86_64*")
+    if((HOST_CC_MACHINE MATCHES "^.+64-.+$") AND (NOT CMAKE_SYSTEM_PROCESSOR MATCHES ".+64$"))
         # Add -m32 when cross compile on 64 bit host for 32bit target, Per:
         # http://luajit.org/install.html#cross
         set(HOST_CC "${CC} -m32")
