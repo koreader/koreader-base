@@ -1848,11 +1848,11 @@ function BB_mt.__index:writeBMP(filename)
     local bbdump
     local source_ptr
     if self:getType() == TYPE_BBRGB24 then
-        source_ptr = ffi.cast("unsigned char *", self.data)
+        source_ptr = ffi.cast(uint8pt, self.data)
     else
         bbdump = BB.new(w, h, TYPE_BBRGB24, nil)
         bbdump:blitFrom(self)
-        source_ptr = ffi.cast("unsigned char *", bbdump.data)
+        source_ptr = ffi.cast(uint8pt, bbdump.data)
     end
 
     local filesize = stride * h + 54
