@@ -1820,6 +1820,109 @@ function BB_mt.__index:writePNGFromBGR(filename)
     C.free(cdata)
 end
 
+function BB_mt.__index:writeBMP(filename)
+    local function write_uint32(target_ptr, target_pos, data)
+        target_ptr[target_pos] = band(data, 0xFF)
+        target_ptr[target_pos + 1] = band(rshift(data, 8), 0xFF)
+        target_ptr[target_pos + 2] = band(rshift(data, 16), 0xFF)
+        target_ptr[target_pos + 3] = band(rshift(data, 24), 0xFF)
+        return target_pos + 4
+    end
+
+    local output_channels = 3
+    local w, h = self:getWidth(), self:getHeight()
+    local stride = w * output_channels
+
+    -- we do this before all buffer allocations
+    local of, err = io.open(filename, "wb")
+    if err ~= nil then
+        return err
+    end
+
+    local bbdump
+    local source_ptr
+    if self:getType() == TYPE_BBRGB24 then
+        source_ptr = ffi.cast(uint8pt, self.data)
+    else
+        bbdump = BB.new(w, h, TYPE_BBRGB24, nil)
+        bbdump:blitFrom(self)
+        source_ptr = ffi.cast(uint8pt, bbdump.data)
+    end
+
+    local filesize = stride * h + 54
+    local padding = 0
+    -- update filesize, if stride is not a multiple of 4
+    if band(stride, 3) ~= 0 then
+        padding = 4 - band(stride, 3)
+        filesize = filesize + padding * h
+    end
+
+    local target_buff = C.calloc(filesize, 1) -- initialize array with zero
+    local target_ptr = ffi.cast(uint8pt, target_buff)
+    local target_pos = 0
+
+    -- bfType (2 Bytes)
+    target_ptr[target_pos] = 66 -- 'B'
+    target_pos = target_pos + 1
+    target_ptr[target_pos] = 77 -- 'M'
+    target_pos = target_pos + 1
+    -- bfSize (4 Bytes)
+    target_pos = write_uint32(target_ptr, target_pos, filesize)
+    -- bfReserved (4 Bytes)
+    target_pos = write_uint32(target_ptr, target_pos, 0)
+    -- bfOffBits (4 Byte)
+    target_pos = write_uint32(target_ptr, target_pos, 54)
+
+    -- biSize (4 Byte)
+    target_pos = write_uint32(target_ptr, target_pos, 40)
+    -- biWidth (4 Bytes)
+    target_pos = write_uint32(target_ptr, target_pos, w)
+    -- biHeight (4 Bytes)
+    target_pos = write_uint32(target_ptr, target_pos, h)
+    -- biPlanes (2 Bytes)
+    target_ptr[target_pos] = 1
+    target_pos = target_pos + 2
+    -- biBitCount (2 Bytes)
+    target_ptr[target_pos] = output_channels * 8
+    target_pos = target_pos + 2
+
+    -- the next 24 bytes are zero (calloc already does that)
+    target_pos = target_pos + 24
+
+    -- start with bottom line, because BMP stores from bottom to top
+    for y = h-1, 0, -1 do
+        local pos = y * stride
+        for x = 0, w-1 do
+            target_ptr[target_pos] = source_ptr[pos + 2]
+            target_ptr[target_pos + 1] = source_ptr[pos + 1]
+            target_ptr[target_pos + 2] = source_ptr[pos]
+            target_pos = target_pos + output_channels
+            pos = pos + output_channels
+        end
+        -- no need to fill up a row to a multiple of 4 bytes, as calloc initializes with 0
+        target_pos = target_pos + padding
+    end
+
+    assert(filesize == target_pos, "Cover image: internal error:  filesize=" .. filesize .. " target_pos=" .. target_pos)
+
+    of:write(ffi.string(target_ptr, target_pos))
+
+    C.free(target_buff)
+    of:close()
+    if bbdump ~= nil then
+        bbdump:free()
+    end
+end
+
+function BB_mt.__index:writeToFile(filename, format)
+    format = format or "png" -- set default format
+    if format == "bmp" then
+        self:writeBMP(filename)
+    else -- default all other extensions to png
+        self:writePNG(filename)
+    end
+end
+
 -- if no special case in BB???_mt exists, use function from BB_mt
 -- (we do not use BB_mt as metatable for BB???_mt since this causes
 -- a major slowdown and would not get properly JIT-compiled)
