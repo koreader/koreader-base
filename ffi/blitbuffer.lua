@@ -25,7 +25,7 @@ local uint8pt = ffi.typeof("uint8_t*")
 local posix = require("ffi/posix_h") -- luacheck: ignore 211
 
 local _ = require("ffi/turbojpeg_h")
-local turbojpeg, giflib
+local turbojpeg
 if ffi.os == "Windows" then
     turbojpeg = ffi.load("libs/libturbojpeg.dll")
 elseif ffi.os == "OSX" then
