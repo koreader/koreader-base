@@ -24,6 +24,17 @@ local uint16pt = ffi.typeof("uint16_t*")
 local uint8pt = ffi.typeof("uint8_t*")
 local posix = require("ffi/posix_h") -- luacheck: ignore 211
 
+local _ = require("ffi/turbojpeg_h")
+local turbojpeg, giflib
+if ffi.os == "Windows" then
+    turbojpeg = ffi.load("libs/libturbojpeg.dll")
+elseif ffi.os == "OSX" then
+    turbojpeg = ffi.load("libs/libturbojpeg.dylib")
+else
+    turbojpeg = ffi.load("libs/libturbojpeg.so")
+end
+
+
 -- the following definitions are redundant.
 -- they need to be since only this way we can set
 -- different metatables for them.
@@ -1914,12 +1925,59 @@ function BB_mt.__index:writeBMP(filename)
     end
 end
 
-function BB_mt.__index:writeToFile(filename, format)
-    format = format or "png" -- set default format
-    if format == "bmp" then
+function BB_mt.__index:writeJPG(filename, quality)
+    quality = quality or 75
+    local w, h = self:getWidth(), self:getHeight()
+
+    local bbdump
+    local source_ptr
+    if self:getType() == BB.TYPE_BBRGB24 then
+        source_ptr = ffi.cast("const unsigned char*", self.data)
+    else
+        bbdump = BB.new(w, h, BB.TYPE_BBRGB24, nil)
+        bbdump:blitFrom(self)
+        source_ptr = ffi.cast("const unsigned char*", bbdump.data)
+    end
+
+    local jpeg_size = ffi.new("unsigned long int [1]")
+
+    local jpeg_image = ffi.new("unsigned char* [1]")
+    jpeg_image[0] = ffi.new("unsigned char*")
+
+    local handle = turbojpeg.tjInitCompress()
+    assert(handle, "no TurboJPEG API compressor handle")
+
+    if turbojpeg.tjCompress2(handle, source_ptr, w, 0, h, turbojpeg.TJPF_RGB,
+        jpeg_image, jpeg_size, turbojpeg.TJSAMP_420, quality, 0) == 0 then
+
+        local of, err = io.open(filename, "wb")
+        if err ~= nil then
+            return err
+        else
+            of:write(ffi.string(jpeg_image[0], jpeg_size[0]))
+            of:close()
+        end
+    end
+
+    if bbdump then
+        bbdump:free()
+    end
+
+    turbojpeg.tjDestroy(handle)
+    if jpeg_image[0] ~= nil then
+        turbojpeg.tjFree(jpeg_image[0])
+    end
+end
+
+function BB_mt.__index:writeToFile(filename, format, quality)
+    format = format or "jpg" -- set default format
+    format = format:lower()
+    if format == "png" then
+        self:writePNG(filename)
+    elseif format == "bmp" then
         self:writeBMP(filename)
     else -- default all other extensions to png
-        self:writePNG(filename)
+        self:writeJPG(filename, quality)
     end
 end
 
