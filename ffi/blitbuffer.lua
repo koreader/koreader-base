@@ -24,17 +24,6 @@ local uint16pt = ffi.typeof("uint16_t*")
 local uint8pt = ffi.typeof("uint8_t*")
 local posix = require("ffi/posix_h") -- luacheck: ignore 211
 
-local _ = require("ffi/turbojpeg_h")
-local turbojpeg
-if ffi.os == "Windows" then
-    turbojpeg = ffi.load("libs/libturbojpeg.dll")
-elseif ffi.os == "OSX" then
-    turbojpeg = ffi.load("libs/libturbojpeg.dylib")
-else
-    turbojpeg = ffi.load("libs/libturbojpeg.so")
-end
-
-
 -- the following definitions are redundant.
 -- they need to be since only this way we can set
 -- different metatables for them.
@@ -1925,8 +1914,10 @@ function BB_mt.__index:writeBMP(filename)
     end
 end
 
+local Jpeg -- lazy load ffi/jpeg
+
 function BB_mt.__index:writeJPG(filename, quality)
-    quality = quality or 75
+    if not Jpeg then Jpeg = require("ffi/jpeg") end
     local w, h = self:getWidth(), self:getHeight()
 
     local bbdump
@@ -1939,33 +1930,10 @@ function BB_mt.__index:writeJPG(filename, quality)
         source_ptr = ffi.cast("const unsigned char*", bbdump.data)
     end
 
-    local jpeg_size = ffi.new("unsigned long int [1]")
-
-    local jpeg_image = ffi.new("unsigned char* [1]")
-    jpeg_image[0] = ffi.new("unsigned char*")
-
-    local handle = turbojpeg.tjInitCompress()
-    assert(handle, "no TurboJPEG API compressor handle")
-
-    if turbojpeg.tjCompress2(handle, source_ptr, w, 0, h, turbojpeg.TJPF_RGB,
-        jpeg_image, jpeg_size, turbojpeg.TJSAMP_420, quality, 0) == 0 then
-
-        local of, err = io.open(filename, "wb")
-        if err ~= nil then
-            return err
-        else
-            of:write(ffi.string(jpeg_image[0], jpeg_size[0]))
-            of:close()
-        end
-    end
+    Jpeg.encodeToFile(filename, source_ptr, w, h, quality) -- Colortype default, subsample default
 
     if bbdump then
         bbdump:free()
-    end
-
-    turbojpeg.tjDestroy(handle)
-    if jpeg_image[0] ~= nil then
-        turbojpeg.tjFree(jpeg_image[0])
     end
 end
 

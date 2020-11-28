@@ -1,18 +1,16 @@
 local ffi = require("ffi")
 local BB = require("ffi/blitbuffer")
 local Png = require("ffi/png")
+local Jpeg = require("ffi/jpeg")
 
 local dummy = require("ffi/turbojpeg_h")
 local dummy = require("ffi/giflib_h")
-local turbojpeg, giflib
+local giflib
 if ffi.os == "Windows" then
-    turbojpeg = ffi.load("libs/libturbojpeg.dll")
     giflib = ffi.load("libs/libgif-7.dll")
 elseif ffi.os == "OSX" then
-    turbojpeg = ffi.load("libs/libturbojpeg.dylib")
     giflib = ffi.load("libs/libgif.7.dylib")
 else
-    turbojpeg = ffi.load("libs/libturbojpeg.so")
     giflib = ffi.load("libs/libgif.so.7")
 end
 
@@ -288,6 +286,14 @@ function Pic.openPNGDocument(filename)
 end
 
 function Pic.openJPGDocument(filename)
+    local image, w, h, components = Jpeg.openDocument(filename, Pic.color)
+
+    local doc = PicDocument:new{width=w, height=h}
+    doc.image_bb = image
+    doc.components = components
+
+    return doc
+--[[
     local fh = io.open(filename, "rb")
     assert(fh, "couldn't open JPG file")
     local data = fh:read("*a")
@@ -323,9 +329,18 @@ function Pic.openJPGDocument(filename)
 
     turbojpeg.tjDestroy(handle)
     return doc
+    ]]
 end
 
 function Pic.openJPGDocumentFromMem(data)
+    local image, w, h, components = Jpeg.openDocumentFromMem(data, Pic.color)
+
+    local doc = PicDocument:new{width=w, height=h}
+    doc.image_bb = image
+    doc.components = components
+
+    return doc
+--[[
     local handle = turbojpeg.tjInitDecompress()
     assert(handle, "no TurboJPEG API decompressor handle")
 
@@ -354,6 +369,7 @@ function Pic.openJPGDocumentFromMem(data)
 
     turbojpeg.tjDestroy(handle)
     return doc
+    ]]
 end
 
 --[[
