@@ -1,7 +1,7 @@
 --[[--
 Module for JPEG decoding/encoding.
 
-Currently, this is a LuaJIT FFI wrapper for turbojpeg lib.
+This is a LuaJIT FFI wrapper for turbojpeg.
 
 @module ffi.jpeg
 ]]
