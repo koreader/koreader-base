@@ -1944,7 +1944,7 @@ function BB_mt.__index:writeToFile(filename, format, quality)
         self:writePNG(filename)
     elseif format == "bmp" then
         self:writeBMP(filename)
-    else -- default all other extensions to png
+    else -- default all other extensions to jpg
         self:writeJPG(filename, quality)
     end
 end
