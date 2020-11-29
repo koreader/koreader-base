@@ -1,3 +1,10 @@
+--[[--
+Module for JPEG decoding/encoding.
+
+Currently, this is a LuaJIT FFI wrapper for turbojpeg lib.
+
+@module ffi.jpeg
+]]
 
 local BB = require("ffi/blitbuffer")
 local ffi = require("ffi")
