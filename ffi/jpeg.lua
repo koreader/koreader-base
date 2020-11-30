@@ -74,7 +74,7 @@ function Jpeg.encodeToFile(filename, source_ptr, w, h, quality, color_type, subs
     if turbojpeg.tjCompress2(handle, source_ptr, w, 0, h, color_type,
         jpeg_image, jpeg_size, subsample, quality, 0) == 0 then
 
-        local fhandle = C.open(ffi.cast("char *", filename), C.O_RDWR)
+        local fhandle = C.open(filename, C.O_RDWR)
         if fhandle > 0 then
             C.write(fhandle, jpeg_image[0], jpeg_size[0])
             C.close(fhandle)
@@ -88,7 +88,7 @@ function Jpeg.encodeToFile(filename, source_ptr, w, h, quality, color_type, subs
 end
 
 function Jpeg.writeBMP(filename, source_ptr, w, h)
-    turbojpeg.tjSaveImage(ffi.cast("const char *", filename), source_ptr, w, 0, h, turbojpeg.TJPF_BGR, 2)
+    turbojpeg.tjSaveImage(filename, source_ptr, w, 0, h, turbojpeg.TJPF_RGB, 0)
 end
 
 return Jpeg
