@@ -36,9 +36,10 @@ function Jpeg.openDocumentFromMem(data, color)
 
     local width = ffi.new("int[1]")
     local height = ffi.new("int[1]")
-    local jpegsubsamp = ffi.new("int[1]")
+    local jpegSubsamp = ffi.new("int[1]")
+    local colorspace = ffi.new("int[1]")
 
-    turbojpeg.tjDecompressHeader2(handle, ffi.cast("unsigned char*", data), #data, width, height, jpegsubsamp)
+    turbojpeg.tjDecompressHeader3(handle, ffi.cast("const unsigned char*", data), #data, width, height, jpegSubsamp, colorspace)
     assert(width[0] > 0 and height[0] > 0, "image dimensions")
 
     local image_bb
@@ -61,7 +62,7 @@ function Jpeg.openDocumentFromMem(data, color)
     end
 
     turbojpeg.tjDestroy(handle)
-    return image_bb, width[0], height[0], components
+    return image_bb, width[0], height[0], components, colorspace
 end
 
 function Jpeg.encodeToFile(filename, source_ptr, w, h, quality, color_type, subsample)
