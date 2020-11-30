@@ -8,16 +8,9 @@ This is a LuaJIT FFI wrapper for turbojpeg.
 
 local BB = require("ffi/blitbuffer")
 local ffi = require("ffi")
-local _ = require("ffi/turbojpeg_h")
 
-local turbojpeg
-if ffi.os == "Windows" then
-    turbojpeg = ffi.load("libs/libturbojpeg.dll")
-elseif ffi.os == "OSX" then
-    turbojpeg = ffi.load("libs/libturbojpeg.dylib")
-else
-    turbojpeg = ffi.load("libs/libturbojpeg.so")
-end
+local _ = require("ffi/turbojpeg_h")
+local turbojpeg = ffi.load("turbojpeg")
 
 local Jpeg = {}
 
@@ -62,7 +55,7 @@ function Jpeg.openDocumentFromMem(data, color)
     end
 
     turbojpeg.tjDestroy(handle)
-    return image_bb, width[0], height[0], components, colorspace
+    return image_bb, width[0], height[0], components
 end
 
 function Jpeg.encodeToFile(filename, source_ptr, w, h, quality, color_type, subsample)
