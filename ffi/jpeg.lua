@@ -6,9 +6,11 @@ This is a LuaJIT FFI wrapper for turbojpeg.
 @module ffi.jpeg
 ]]
 
-local BB = require("ffi/blitbuffer")
 local ffi = require("ffi")
+local C = ffi.C
+local BB = require("ffi/blitbuffer")
 
+local _ = require("ffi/posix_h")
 local _ = require("ffi/turbojpeg_h")
 local turbojpeg = ffi.load("turbojpeg")
 
@@ -63,11 +65,8 @@ function Jpeg.encodeToFile(filename, source_ptr, w, h, quality, color_type, subs
     color_type = color_type or turbojpeg.TJPF_RGB
     subsample = subsample or turbojpeg.TJSAMP_420
 
-
     local jpeg_size = ffi.new("unsigned long int [1]")
-
     local jpeg_image = ffi.new("unsigned char* [1]")
-    jpeg_image[0] = ffi.new("unsigned char*")
 
     local handle = turbojpeg.tjInitCompress()
     assert(handle, "no TurboJPEG API compressor handle")
@@ -75,12 +74,10 @@ function Jpeg.encodeToFile(filename, source_ptr, w, h, quality, color_type, subs
     if turbojpeg.tjCompress2(handle, source_ptr, w, 0, h, color_type,
         jpeg_image, jpeg_size, subsample, quality, 0) == 0 then
 
-        local of, err = io.open(filename, "wb")
-        if err ~= nil then
-            return err
-        else
-            of:write(ffi.string(jpeg_image[0], jpeg_size[0]))
-            of:close()
+        local fhandle = C.open(ffi.cast("char *", filename), C.O_RDWR)
+        if fhandle > 0 then
+            C.write(fhandle, jpeg_image[0], jpeg_size[0])
+            C.close(fhandle)
         end
     end
 
@@ -88,6 +85,10 @@ function Jpeg.encodeToFile(filename, source_ptr, w, h, quality, color_type, subs
     if jpeg_image[0] ~= nil then
         turbojpeg.tjFree(jpeg_image[0])
     end
+end
+
+function Jpeg.writeBMP(filename, source_ptr, w, h)
+    turbojpeg.tjSaveImage(ffi.cast("const char *", filename), source_ptr, w, 0, h, turbojpeg.TJPF_BGR, 2)
 end
 
 return Jpeg

@@ -49,4 +49,8 @@ int tjCompress2(tjhandle, const unsigned char *, int, int, int, int, unsigned ch
 int tjCompress2(tjhandle handle, const unsigned char *srcBuf, int width, int pitch, int height,
                 int pixelFormat, unsigned char **jpegBuf, unsigned long *jpegSize, int jpegSubsamp,
                 int jpegQual, int flags);
+
+int tjSaveImage(const char *filename, unsigned char *buffer, int width, int pitch, int height,
+                int pixelFormat, int flags);
 ]]
+

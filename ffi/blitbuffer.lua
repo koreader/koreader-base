@@ -1820,6 +1820,30 @@ function BB_mt.__index:writePNGFromBGR(filename)
     C.free(cdata)
 end
 
+local Jpeg -- lazy load ffi/jpeg
+
+function BB_mt.__index:writeBMP(filename)
+    if not Jpeg then Jpeg = require("ffi/jpeg") end
+    local w, h = self:getWidth(), self:getHeight()
+
+    local bbdump
+    local source_ptr
+    if self:getType() == BB.TYPE_BBRGB24 then
+        source_ptr = ffi.cast("unsigned char*", self.data)
+    else
+        bbdump = BB.new(w, h, BB.TYPE_BBRGB24, nil)
+        bbdump:blitFrom(self)
+        source_ptr = ffi.cast("unsigned char*", bbdump.data)
+    end
+
+    Jpeg.writeBMP(filename, source_ptr, w, h)
+
+    if bbdump then
+        bbdump:free()
+    end
+end
+
+--[[
 function BB_mt.__index:writeBMP(filename)
     local function write_uint32(target_ptr, target_pos, data)
         target_ptr[target_pos] = band(data, 0xFF)
@@ -1913,8 +1937,7 @@ function BB_mt.__index:writeBMP(filename)
         bbdump:free()
     end
 end
-
-local Jpeg -- lazy load ffi/jpeg
+]]
 
 function BB_mt.__index:writeJPG(filename, quality)
     if not Jpeg then Jpeg = require("ffi/jpeg") end
