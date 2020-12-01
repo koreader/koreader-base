@@ -83,7 +83,7 @@ function Jpeg.encodeToFile(filename, source_ptr, w, stride, h, quality, color_ty
         jpeg_image, jpeg_size, subsample, quality, 0) == 0 then
 
         local fhandle = C.open(filename, bit.bor(C.O_WRONLY, C.O_CREAT, C.O_TRUNC), bit.bor(C.I_IRUSR, C.I_IWUSR))
-        if fhandle != -1 then
+        if fhandle ~= -1 then
             C.write(fhandle, jpeg_image[0], jpeg_size[0])
             C.close(fhandle)
         end
