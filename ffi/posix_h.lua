@@ -16,10 +16,17 @@ int pipe(int *) __attribute__((nothrow, leaf));
 int fork(void) __attribute__((nothrow));
 int dup(int) __attribute__((nothrow, leaf));
 int dup2(int, int) __attribute__((nothrow, leaf));
+static const int O_APPEND = 1024;
+static const int O_CREAT = 64;
+static const int O_TRUNC = 512;
 static const int O_RDWR = 2;
 static const int O_RDONLY = 0;
+static const int O_WRONLY = 1;
 static const int O_NONBLOCK = 2048;
 static const int O_CLOEXEC = 524288;
+static const int I_IRUSR = 1024;
+static const int I_IWUSR = 512;
+
 int open(const char *, int, ...);
 int mq_open(const char *, int, ...);
 int mq_receive(int, char *, size_t, unsigned int *);
