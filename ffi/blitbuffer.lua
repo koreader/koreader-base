@@ -1844,7 +1844,7 @@ function BB_mt.__index:writeBMP(filename)
 end
 
 --[[
-function BB_mt.__index:writeBMP(filename)
+function BB_mt.__index:writeBMP1(filename)
     local function write_uint32(target_ptr, target_pos, data)
         target_ptr[target_pos] = band(data, 0xFF)
         target_ptr[target_pos + 1] = band(rshift(data, 8), 0xFF)
@@ -1916,7 +1916,7 @@ function BB_mt.__index:writeBMP(filename)
     -- start with bottom line, because BMP stores from bottom to top
     for y = h-1, 0, -1 do
         local pos = y * stride
-        for x = 0, w-1 do
+        for x = w-1, 0, -1 do
             target_ptr[target_pos] = source_ptr[pos + 2]
             target_ptr[target_pos + 1] = source_ptr[pos + 1]
             target_ptr[target_pos + 2] = source_ptr[pos]
@@ -1929,10 +1929,12 @@ function BB_mt.__index:writeBMP(filename)
 
     assert(filesize == target_pos, "Cover image: internal error:  filesize=" .. filesize .. " target_pos=" .. target_pos)
 
-    of:write(ffi.string(target_ptr, target_pos))
-
+    local fhandle = C.open(filename, C.O_WRONLY + C.O_CREAT + C.O_TRUNC, C.I_IRUSR + C.I_IWUSR)
+    if fhandle > 0 then
+        C.write(fhandle, target_ptr, filesize)
+        C.close(fhandle)
+    end
     C.free(target_buff)
-    of:close()
     if bbdump ~= nil then
         bbdump:free()
     end

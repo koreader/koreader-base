@@ -82,7 +82,7 @@ function Jpeg.encodeToFile(filename, source_ptr, w, h, quality, color_type, subs
     if turbojpeg.tjCompress2(handle, source_ptr, w, 0, h, color_type,
         jpeg_image, jpeg_size, subsample, quality, 0) == 0 then
 
-        local fhandle = C.open(filename, C.O_RDWR)
+        local fhandle = C.open(filename, C.O_WRONLY + C.O_CREAT + C.O_TRUNC, C.I_IRUSR + C.I_IWUSR)
         if fhandle > 0 then
             C.write(fhandle, jpeg_image[0], jpeg_size[0])
             C.close(fhandle)
@@ -96,7 +96,15 @@ function Jpeg.encodeToFile(filename, source_ptr, w, h, quality, color_type, subs
 end
 
 function Jpeg.writeBMP(filename, source_ptr, w, h)
-    turbojpeg.tjSaveImage(filename, source_ptr, w, 0, h, turbojpeg.TJPF_RGB, 0)
+    -- if file extension is not ".bmp" tjSaveImage uses netpbm format!
+    if filename:sub(-#".bmp") == ".bmp" then
+        turbojpeg.tjSaveImage(filename .. ".bmp", source_ptr, w, 0, h, turbojpeg.TJPF_RGB, 0)
+    else
+        os.remove(filename)
+        local tmp_filename = filename .. ".tmp.bmp"
+        turbojpeg.tjSaveImage(tmp_filename, source_ptr, w, 0, h, turbojpeg.TJPF_RGB, 0)
+        os.rename(tmp_filename, filename)
+    end
 end
 
 return Jpeg

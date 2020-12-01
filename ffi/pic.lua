@@ -293,43 +293,6 @@ function Pic.openJPGDocument(filename)
     doc.components = components
 
     return doc
---[[
-    local fh = io.open(filename, "rb")
-    assert(fh, "couldn't open JPG file")
-    local data = fh:read("*a")
-    fh:close()
-
-    local handle = turbojpeg.tjInitDecompress()
-    assert(handle, "no TurboJPEG API decompressor handle")
-
-    local width = ffi.new("int[1]")
-    local height = ffi.new("int[1]")
-    local jpegsubsamp = ffi.new("int[1]")
-
-    turbojpeg.tjDecompressHeader2(handle, ffi.cast("unsigned char*", data), #data, width, height, jpegsubsamp)
-    assert(width[0] > 0 and height[0] > 0, "image dimensions")
-
-    local doc = PicDocument:new{width=width[0], height=height[0]}
-    local format
-    if Pic.color then
-        doc.image_bb = BB.new(width[0], height[0], BB.TYPE_BBRGB24)
-        doc.components = 3
-        format = turbojpeg.TJPF_RGB
-    else
-        doc.image_bb = BB.new(width[0], height[0], BB.TYPE_BB8)
-        doc.components = 1
-        format = turbojpeg.TJPF_GRAY
-    end
-
-    if turbojpeg.tjDecompress2(handle, ffi.cast("unsigned char*", data), #data,
-        ffi.cast("unsigned char*", doc.image_bb.data),
-        width[0], doc.image_bb.stride, height[0], format, 0) == -1 then
-        error("decoding JPEG file")
-    end
-
-    turbojpeg.tjDestroy(handle)
-    return doc
-    ]]
 end
 
 function Pic.openJPGDocumentFromMem(data)
@@ -340,36 +303,6 @@ function Pic.openJPGDocumentFromMem(data)
     doc.components = components
 
     return doc
---[[
-    local handle = turbojpeg.tjInitDecompress()
-    assert(handle, "no TurboJPEG API decompressor handle")
-
-    local width = ffi.new("int[1]")
-    local height = ffi.new("int[1]")
-    local jpegsubsamp = ffi.new("int[1]")
-    turbojpeg.tjDecompressHeader2(handle, ffi.cast("unsigned char*", data), #data, width, height, jpegsubsamp)
-
-    local doc = PicDocument:new{width=width[0], height=height[0]}
-    local format
-    if Pic.color then
-        doc.image_bb = BB.new(width[0], height[0], BB.TYPE_BBRGB24)
-        doc.components = 3
-        format = turbojpeg.TJPF_RGB
-    else
-        doc.image_bb = BB.new(width[0], height[0], BB.TYPE_BB8)
-        doc.components = 1
-        format = turbojpeg.TJPF_GRAY
-    end
-
-    if turbojpeg.tjDecompress2(handle, ffi.cast("unsigned char*", data), #data,
-        ffi.cast("unsigned char*", doc.image_bb.data),
-        width[0], doc.image_bb.stride, height[0], format, 0) == -1 then
-        return false
-    end
-
-    turbojpeg.tjDestroy(handle)
-    return doc
-    ]]
 end
 
 --[[

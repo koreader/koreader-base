@@ -45,7 +45,6 @@ int tjDecompressToYUV2(tjhandle handle, const unsigned char *jpegBuf, unsigned l
 
 tjhandle tjInitCompress(void);
 void tjFree(unsigned char *buffer);
-int tjCompress2(tjhandle, const unsigned char *, int, int, int, int, unsigned char **, unsigned long *, int, int, int);
 int tjCompress2(tjhandle handle, const unsigned char *srcBuf, int width, int pitch, int height,
                 int pixelFormat, unsigned char **jpegBuf, unsigned long *jpegSize, int jpegSubsamp,
                 int jpegQual, int flags);
@@ -53,4 +52,3 @@ int tjCompress2(tjhandle handle, const unsigned char *srcBuf, int width, int pit
 int tjSaveImage(const char *filename, unsigned char *buffer, int width, int pitch, int height,
                 int pixelFormat, int flags);
 ]]
-
