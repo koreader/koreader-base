@@ -1822,21 +1822,27 @@ end
 
 local Jpeg -- lazy load ffi/jpeg
 
-function BB_mt.__index:writeBMP(filename)
-    if not Jpeg then Jpeg = require("ffi/jpeg") end
+function BB_mt.__index:getBufferData()
     local w, h = self:getWidth(), self:getHeight()
-
-    local bbdump
-    local source_ptr
+    local bbdump, source_ptr, stride
     if self:getType() == BB.TYPE_BBRGB24 then
         source_ptr = ffi.cast("unsigned char*", self.data)
+        stride = self.stride
     else
         bbdump = BB.new(w, h, BB.TYPE_BBRGB24, nil)
         bbdump:blitFrom(self)
         source_ptr = ffi.cast("unsigned char*", bbdump.data)
+        stride = bbdump.stride
     end
+    return bbdump, source_ptr, w, stride, h
+end
 
-    Jpeg.writeBMP(filename, source_ptr, w, h)
+function BB_mt.__index:writeBMP(filename)
+    if not Jpeg then Jpeg = require("ffi/jpeg") end
+
+    local bbdump, source_ptr, w, stride, h = self:getBufferData()
+
+    Jpeg.writeBMP(filename, source_ptr, w, stride, h)
 
     if bbdump then
         bbdump:free()
@@ -1943,19 +1949,10 @@ end
 
 function BB_mt.__index:writeJPG(filename, quality)
     if not Jpeg then Jpeg = require("ffi/jpeg") end
-    local w, h = self:getWidth(), self:getHeight()
 
-    local bbdump
-    local source_ptr
-    if self:getType() == BB.TYPE_BBRGB24 then
-        source_ptr = ffi.cast("const unsigned char*", self.data)
-    else
-        bbdump = BB.new(w, h, BB.TYPE_BBRGB24, nil)
-        bbdump:blitFrom(self)
-        source_ptr = ffi.cast("const unsigned char*", bbdump.data)
-    end
+    local bbdump, source_ptr, w, stride, h = self:getBufferData()
 
-    Jpeg.encodeToFile(filename, source_ptr, w, h, quality) -- Colortype default, subsample default
+    Jpeg.encodeToFile(filename, source_ptr, w, stride, h, quality) -- Colortype default, subsample default
 
     if bbdump then
         bbdump:free()

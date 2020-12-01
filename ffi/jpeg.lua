@@ -68,7 +68,7 @@ function Jpeg.openDocumentFromMem(data, color)
     return image_bb, width[0], height[0], components
 end
 
-function Jpeg.encodeToFile(filename, source_ptr, w, h, quality, color_type, subsample)
+function Jpeg.encodeToFile(filename, source_ptr, w, stride, h, quality, color_type, subsample)
     quality = quality or 75
     color_type = color_type or turbojpeg.TJPF_RGB
     subsample = subsample or turbojpeg.TJSAMP_420
@@ -79,7 +79,7 @@ function Jpeg.encodeToFile(filename, source_ptr, w, h, quality, color_type, subs
     local handle = turbojpeg.tjInitCompress()
     assert(handle, "no TurboJPEG API compressor handle")
 
-    if turbojpeg.tjCompress2(handle, source_ptr, w, 0, h, color_type,
+    if turbojpeg.tjCompress2(handle, source_ptr, w, stride, h, color_type,
         jpeg_image, jpeg_size, subsample, quality, 0) == 0 then
 
         local fhandle = C.open(filename, bit.bor(C.O_WRONLY, C.O_CREAT, C.O_TRUNC), bit.bor(C.I_IRUSR, C.I_IWUSR))
@@ -95,14 +95,14 @@ function Jpeg.encodeToFile(filename, source_ptr, w, h, quality, color_type, subs
     end
 end
 
-function Jpeg.writeBMP(filename, source_ptr, w, h)
+function Jpeg.writeBMP(filename, source_ptr, w, stride, h)
     -- if file extension is not ".bmp" tjSaveImage uses netpbm format!
     if filename:sub(-#".bmp") == ".bmp" then
-        turbojpeg.tjSaveImage(filename .. ".bmp", source_ptr, w, 0, h, turbojpeg.TJPF_RGB, 0)
+        turbojpeg.tjSaveImage(filename, source_ptr, w, stride, h, turbojpeg.TJPF_RGB, 0)
     else
         os.remove(filename)
         local tmp_filename = filename .. ".tmp.bmp"
-        turbojpeg.tjSaveImage(tmp_filename, source_ptr, w, 0, h, turbojpeg.TJPF_RGB, 0)
+        turbojpeg.tjSaveImage(tmp_filename, source_ptr, w, stride, h, turbojpeg.TJPF_RGB, 0)
         os.rename(tmp_filename, filename)
     end
 end
