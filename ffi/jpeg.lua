@@ -82,7 +82,7 @@ function Jpeg.encodeToFile(filename, source_ptr, w, h, quality, color_type, subs
     if turbojpeg.tjCompress2(handle, source_ptr, w, 0, h, color_type,
         jpeg_image, jpeg_size, subsample, quality, 0) == 0 then
 
-        local fhandle = C.open(filename, C.O_WRONLY + C.O_CREAT + C.O_TRUNC, C.I_IRUSR + C.I_IWUSR)
+        local fhandle = C.open(filename, bit.bor(C.O_WRONLY, C.O_CREAT, C.O_TRUNC), bit.bor(C.I_IRUSR, C.I_IWUSR))
         if fhandle > 0 then
             C.write(fhandle, jpeg_image[0], jpeg_size[0])
             C.close(fhandle)
