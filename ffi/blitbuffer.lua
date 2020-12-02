@@ -1963,11 +1963,11 @@ function BB_mt.__index:writeToFile(filename, format, quality)
     format = format or "jpg" -- set default format
     format = format:lower()
     if format == "png" then
-        self:writePNG(filename)
+        return pcall(self.writePNG, self, filename)
     elseif format == "bmp" then
-        self:writeBMP(filename)
+        return pcall(self.writeBMP, self, filename)
     else -- default all other extensions to jpg
-        self:writeJPG(filename, quality)
+        return pcall(self.writeJPG, self, filename, quality)
     end
 end
 
