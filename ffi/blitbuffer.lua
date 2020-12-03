@@ -1820,7 +1820,37 @@ function BB_mt.__index:writePNGFromBGR(filename)
     C.free(cdata)
 end
 
+local Jpeg -- lazy load ffi/jpeg
+
+function BB_mt.__index:getBufferData()
+    local w, h = self:getWidth(), self:getHeight()
+    local bbdump, source_ptr, stride
+    if self:getType() == BB.TYPE_BBRGB24 then
+        source_ptr = ffi.cast("unsigned char*", self.data)
+        stride = self.stride
+    else
+        bbdump = BB.new(w, h, BB.TYPE_BBRGB24, nil)
+        bbdump:blitFrom(self)
+        source_ptr = ffi.cast("unsigned char*", bbdump.data)
+        stride = bbdump.stride
+    end
+    return bbdump, source_ptr, w, stride, h
+end
+
 function BB_mt.__index:writeBMP(filename)
+    if not Jpeg then Jpeg = require("ffi/jpeg") end
+
+    local bbdump, source_ptr, w, stride, h = self:getBufferData()
+
+    Jpeg.writeBMP(filename, source_ptr, w, stride, h)
+
+    if bbdump then
+        bbdump:free()
+    end
+end
+
+--[[
+function BB_mt.__index:writeBMP1(filename)
     local function write_uint32(target_ptr, target_pos, data)
         target_ptr[target_pos] = band(data, 0xFF)
         target_ptr[target_pos + 1] = band(rshift(data, 8), 0xFF)
@@ -1892,7 +1922,7 @@ function BB_mt.__index:writeBMP(filename)
     -- start with bottom line, because BMP stores from bottom to top
     for y = h-1, 0, -1 do
         local pos = y * stride
-        for x = 0, w-1 do
+        for x = w-1, 0, -1 do
             target_ptr[target_pos] = source_ptr[pos + 2]
             target_ptr[target_pos + 1] = source_ptr[pos + 1]
             target_ptr[target_pos + 2] = source_ptr[pos]
@@ -1905,21 +1935,39 @@ function BB_mt.__index:writeBMP(filename)
 
     assert(filesize == target_pos, "Cover image: internal error:  filesize=" .. filesize .. " target_pos=" .. target_pos)
 
-    of:write(ffi.string(target_ptr, target_pos))
-
+    local fhandle = C.open(filename, C.O_WRONLY + C.O_CREAT + C.O_TRUNC, C.I_IRUSR + C.I_IWUSR)
+    if fhandle > 0 then
+        C.write(fhandle, target_ptr, filesize)
+        C.close(fhandle)
+    end
     C.free(target_buff)
-    of:close()
     if bbdump ~= nil then
         bbdump:free()
     end
 end
+]]
 
-function BB_mt.__index:writeToFile(filename, format)
-    format = format or "png" -- set default format
-    if format == "bmp" then
-        self:writeBMP(filename)
-    else -- default all other extensions to png
-        self:writePNG(filename)
+function BB_mt.__index:writeJPG(filename, quality)
+    if not Jpeg then Jpeg = require("ffi/jpeg") end
+
+    local bbdump, source_ptr, w, stride, h = self:getBufferData()
+
+    Jpeg.encodeToFile(filename, source_ptr, w, stride, h, quality) -- Colortype default, subsample default
+
+    if bbdump then
+        bbdump:free()
+    end
+end
+
+function BB_mt.__index:writeToFile(filename, format, quality)
+    format = format or "jpg" -- set default format
+    format = format:lower()
+    if format == "png" then
+        return pcall(self.writePNG, self, filename)
+    elseif format == "bmp" then
+        return pcall(self.writeBMP, self, filename)
+    else -- default all other extensions to jpg
+        return pcall(self.writeJPG, self, filename, quality)
     end
 end
 
