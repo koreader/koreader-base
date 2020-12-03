@@ -1,18 +1,16 @@
 local ffi = require("ffi")
 local BB = require("ffi/blitbuffer")
 local Png = require("ffi/png")
+local Jpeg = require("ffi/jpeg")
 
 local dummy = require("ffi/turbojpeg_h")
 local dummy = require("ffi/giflib_h")
-local turbojpeg, giflib
+local giflib
 if ffi.os == "Windows" then
-    turbojpeg = ffi.load("libs/libturbojpeg.dll")
     giflib = ffi.load("libs/libgif-7.dll")
 elseif ffi.os == "OSX" then
-    turbojpeg = ffi.load("libs/libturbojpeg.dylib")
     giflib = ffi.load("libs/libgif.7.dylib")
 else
-    turbojpeg = ffi.load("libs/libturbojpeg.so")
     giflib = ffi.load("libs/libgif.so.7")
 end
 
@@ -288,71 +286,22 @@ function Pic.openPNGDocument(filename)
 end
 
 function Pic.openJPGDocument(filename)
-    local fh = io.open(filename, "rb")
-    assert(fh, "couldn't open JPG file")
-    local data = fh:read("*a")
-    fh:close()
+    local image, w, h, components = Jpeg.openDocument(filename, Pic.color)
 
-    local handle = turbojpeg.tjInitDecompress()
-    assert(handle, "no TurboJPEG API decompressor handle")
+    local doc = PicDocument:new{width=w, height=h}
+    doc.image_bb = image
+    doc.components = components
 
-    local width = ffi.new("int[1]")
-    local height = ffi.new("int[1]")
-    local jpegsubsamp = ffi.new("int[1]")
-
-    turbojpeg.tjDecompressHeader2(handle, ffi.cast("unsigned char*", data), #data, width, height, jpegsubsamp)
-    assert(width[0] > 0 and height[0] > 0, "image dimensions")
-
-    local doc = PicDocument:new{width=width[0], height=height[0]}
-    local format
-    if Pic.color then
-        doc.image_bb = BB.new(width[0], height[0], BB.TYPE_BBRGB24)
-        doc.components = 3
-        format = turbojpeg.TJPF_RGB
-    else
-        doc.image_bb = BB.new(width[0], height[0], BB.TYPE_BB8)
-        doc.components = 1
-        format = turbojpeg.TJPF_GRAY
-    end
-
-    if turbojpeg.tjDecompress2(handle, ffi.cast("unsigned char*", data), #data,
-        ffi.cast("unsigned char*", doc.image_bb.data),
-        width[0], doc.image_bb.stride, height[0], format, 0) == -1 then
-        error("decoding JPEG file")
-    end
-
-    turbojpeg.tjDestroy(handle)
     return doc
 end
 
 function Pic.openJPGDocumentFromMem(data)
-    local handle = turbojpeg.tjInitDecompress()
-    assert(handle, "no TurboJPEG API decompressor handle")
+    local image, w, h, components = Jpeg.openDocumentFromMem(data, Pic.color)
 
-    local width = ffi.new("int[1]")
-    local height = ffi.new("int[1]")
-    local jpegsubsamp = ffi.new("int[1]")
-    turbojpeg.tjDecompressHeader2(handle, ffi.cast("unsigned char*", data), #data, width, height, jpegsubsamp)
+    local doc = PicDocument:new{width=w, height=h}
+    doc.image_bb = image
+    doc.components = components
 
-    local doc = PicDocument:new{width=width[0], height=height[0]}
-    local format
-    if Pic.color then
-        doc.image_bb = BB.new(width[0], height[0], BB.TYPE_BBRGB24)
-        doc.components = 3
-        format = turbojpeg.TJPF_RGB
-    else
-        doc.image_bb = BB.new(width[0], height[0], BB.TYPE_BB8)
-        doc.components = 1
-        format = turbojpeg.TJPF_GRAY
-    end
-
-    if turbojpeg.tjDecompress2(handle, ffi.cast("unsigned char*", data), #data,
-        ffi.cast("unsigned char*", doc.image_bb.data),
-        width[0], doc.image_bb.stride, height[0], format, 0) == -1 then
-        return false
-    end
-
-    turbojpeg.tjDestroy(handle)
     return doc
 end
 
