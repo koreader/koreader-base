@@ -8,5 +8,9 @@
 #include <lauxlib.h>
 #include <lualib.h>
 
-int luaopen_nnsvg(lua_State *L);
+// Don't leak NanoSVG's own symbols, this is the only symbol
+// that is needed to use this library from Lua.
+// When compiled with '-fvisibility=hidden', this will be
+// the only one visible.
+__attribute__((visibility("default"))) int luaopen_nnsvg(lua_State *L);
 #endif

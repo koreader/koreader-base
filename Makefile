@@ -194,7 +194,7 @@ $(OUTPUT_DIR)/libs/libkoreader-nnsvg.so: nnsvg.c \
 			$(if $(USE_LUAJIT_LIB),$(LUAJIT_LIB),) \
 			$(NANOSVG_HEADERS)
 	$(CC) -I$(NANOSVG_INCLUDE_DIR) \
-	$(CFLAGS) $(DYNLIB_CFLAGS) -Wall -o $@ nnsvg.c
+	$(CFLAGS) $(DYNLIB_CFLAGS) -fvisibility=hidden -Wall -o $@ nnsvg.c
 ifdef DARWIN
 	install_name_tool -change \
 		`otool -L "$@" | grep "libluajit" | awk '{print $$1}'` \

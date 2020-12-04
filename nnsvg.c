@@ -5,6 +5,8 @@
 #include <lauxlib.h>
 #include <lualib.h>
 
+#include <stdbool.h>
+
 #include "nnsvg.h"
 #include "blitbuffer.h"
 
@@ -32,7 +34,7 @@ static int nnsvg_new(lua_State *L) {
     input = luaL_checklstring(L, 1, &len);
 
     // Second arg specified what the string is: by default, a filepath
-    int is_svg_data = 0;
+    bool is_svg_data = false;
     if ( lua_isboolean(L, 2) ) {
         is_svg_data = lua_toboolean(L, 2);
     }
