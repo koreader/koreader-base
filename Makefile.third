@@ -716,9 +716,9 @@ $(LUA_SPORE_ROCK): $(THIRDPARTY_DIR)/lua-Spore/*.*
 		$(CMAKE) $(CMAKE_FLAGS) -DOUTPUT_DIR="$(CURDIR)/$(OUTPUT_DIR)" \
 		-DLUA_SPORE_VER=$(LUA_SPORE_VER) -DLD="$(CC)" \
 		-DCC="$(CC)" -DCFLAGS="$(CFLAGS) -I$(LUAJIT_DIR)/src" \
-		-DLUAROCKS=$(if $(DARWINHOST),"luarocks --lua-dir=/usr/local/opt/lua@5.1",luarocks) \
-		-DLUA_INCDIR=$(if $(DARWINHOST),/usr/local/opt/lua@5.1/include/lua5.1,"$(LUAJIT_DIR)/src") \
-		-DLUA_LIBDIR=$(if $(DARWINHOST),/usr/local/opt/lua@5.1/lib,"$(CURDIR)/$(dir $(LUAJIT_LIB))") \
+		-DLUAROCKS="$(LUAROCKS_BINARY)" \
+		-DLUA_INCDIR="$(LUA_INCDIR)" \
+		-DLUA_LIBDIR="$(LUA_LIBDIR)" \
 		$(if $(ANDROID),-DLIBFLAG="$(LDFLAGS) $(CURDIR)/$(LUAJIT_LIB) -nostartfiles",) \
 		$(CURDIR)/$(THIRDPARTY_DIR)/lua-Spore && \
 		$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS)
@@ -733,9 +733,9 @@ $(LUA_HTMLPARSER_ROCK): $(THIRDPARTY_DIR)/lua-htmlparser/*.*
 		$(CMAKE) $(CMAKE_FLAGS) -DOUTPUT_DIR="$(CURDIR)/$(OUTPUT_DIR)" \
 		-DLUA_HTMLPARSER_VER=$(LUA_HTMLPARSER_VER) -DLD="$(CC)" \
 		-DCC="$(CC)" -DCFLAGS="$(CFLAGS) -I$(LUAJIT_DIR)/src" \
-		-DLUAROCKS=$(if $(DARWINHOST),"luarocks --lua-dir=/usr/local/opt/lua@5.1",luarocks) \
-		-DLUA_INCDIR=$(if $(DARWINHOST),/usr/local/opt/lua@5.1/include/lua5.1,"$(LUAJIT_DIR)/src") \
-		-DLUA_LIBDIR=$(if $(DARWINHOST),/usr/local/opt/lua@5.1/lib,"$(CURDIR)/$(dir $(LUAJIT_LIB))") \
+		-DLUAROCKS="$(LUAROCKS_BINARY)" \
+		-DLUA_INCDIR="$(LUA_INCDIR)" \
+		-DLUA_LIBDIR="$(LUA_LIBDIR)" \
 		$(if $(ANDROID),-DLIBFLAG="$(LDFLAGS) $(CURDIR)/$(LUAJIT_LIB) -nostartfiles",) \
 		$(CURDIR)/$(THIRDPARTY_DIR)/lua-htmlparser && \
 		$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS)
@@ -752,9 +752,9 @@ $(LUA_RAPIDJSON_ROCK): $(THIRDPARTY_DIR)/lua-rapidjson/*.*
 		-DCXXFLAGS="$(CXXFLAGS)" \
 		-DLDFLAGS="$(LDFLAGS)" \
 		-I$(LUAJIT_DIR)/src \
-		-DLUAROCKS=$(if $(DARWINHOST),"luarocks --lua-dir=/usr/local/opt/lua@5.1",luarocks) \
-		-DLUA_INCDIR=$(if $(DARWINHOST),/usr/local/opt/lua@5.1/include/lua5.1,"$(LUAJIT_DIR)/src") \
-		-DLUA_LIBDIR=$(if $(DARWINHOST),/usr/local/opt/lua@5.1/lib,"$(abspath $(CURDIR)/$(dir $(LUAJIT_LIB)))") \
+		-DLUAROCKS="$(LUAROCKS_BINARY)" \
+		-DLUA_INCDIR="$(LUA_INCDIR)" \
+		-DLUA_LIBDIR="$(LUA_LIBDIR)" \
 		$(if $(ANDROID),-DLUALIB="$(notdir $(LUAJIT_LIB))",) \
 		$(if $(ANDROID),-DLIBFLAG="-lm $(CURDIR)/$(LUAJIT_LIB)",) \
 		$(CURDIR)/$(THIRDPARTY_DIR)/lua-rapidjson && \
