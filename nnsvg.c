@@ -1,16 +1,13 @@
 // nsvg.cpp
 // Lua interface to wrap nanosvg.
 
-extern "C"
-{
 #include <lua.h>
 #include <lauxlib.h>
 #include <lualib.h>
-#include "blitbuffer.h"
-#include "nnsvg.h"
-}
 
-#include <math.h>
+#include "nnsvg.h"
+#include "blitbuffer.h"
+
 #define NANOSVG_ALL_COLOR_KEYWORDS
 #define NANOSVG_IMPLEMENTATION
 #define NANOSVGRAST_IMPLEMENTATION
@@ -35,7 +32,7 @@ static int nnsvg_new(lua_State *L) {
     input = luaL_checklstring(L, 1, &len);
 
     // Second arg specified what the string is: by default, a filepath
-    bool is_svg_data = false;
+    int is_svg_data = 0;
     if ( lua_isboolean(L, 2) ) {
         is_svg_data = lua_toboolean(L, 2);
     }
@@ -80,7 +77,7 @@ NSVGimage * check_NSVGimage(lua_State * L, int n) {
 // the NSVGimage early) and as :__gc() (called by the async Lua GC).
 static int nnSVGImage_free(lua_State *L) {
     NSVGimage ** udata = (NSVGimage **)luaL_checkudata(L, 1, NNSVG_METATABLE_NAME);
-    printf("nnSVGImage_free %p\n", *udata);
+    // printf("nnSVGImage_free %p\n", *udata);
     if ( *udata )
         nsvgDelete(*udata);
     *udata = NULL;

@@ -190,11 +190,11 @@ ifdef DARWIN
 		$@
 endif
 
-$(OUTPUT_DIR)/libs/libkoreader-nnsvg.so: nnsvg.cpp \
+$(OUTPUT_DIR)/libs/libkoreader-nnsvg.so: nnsvg.c \
 			$(if $(USE_LUAJIT_LIB),$(LUAJIT_LIB),) \
 			$(NANOSVG_HEADERS)
-	$(CXX) -I$(NANOSVG_INCLUDE_DIR) \
-	$(DYNLIB_CXXFLAGS) -static-libstdc++ -Wall -o $@ nnsvg.cpp
+	$(CC) -I$(NANOSVG_INCLUDE_DIR) \
+	$(CFLAGS) $(DYNLIB_CFLAGS) -Wall -o $@ nnsvg.c
 ifdef DARWIN
 	install_name_tool -change \
 		`otool -L "$@" | grep "libluajit" | awk '{print $$1}'` \
