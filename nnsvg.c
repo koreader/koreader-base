@@ -106,6 +106,12 @@ static int nnSVGImage_drawTo(lua_State *L) {
 	luaL_typerror(L, -1, "BlitBuffer");
     }
     BlitBuffer * bb = (BlitBuffer*) lua_topointer(L, 2);
+    /* TODO: check bb type is TYPE_BBRGB32
+    if ( GET_BB_TYPE(bb) != TYPE_BBRGB32 ) {
+        lua_pushstring(L, "BlitBuffer BBRGB32 expected.");
+        lua_error(L);
+    }
+    */
 
     // nanosvg's rasterizer won't automatically scale the image
     // to adjust it to the target buffer w/h.
@@ -124,7 +130,7 @@ static int nnSVGImage_drawTo(lua_State *L) {
         lua_pushstring(L, "Could not init rasterizer.");
         lua_error(L);
     }
-    nsvgRasterize(rast, image, offset_x, offset_y, scale_factor, bb->data, bb->w, bb->h, 4*bb->w);
+    nsvgRasterize(rast, image, offset_x, offset_y, scale_factor, bb->data, bb->w, bb->h, bb->stride);
     nsvgDeleteRasterizer(rast);
     return 0;
 }
