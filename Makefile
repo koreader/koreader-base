@@ -103,7 +103,8 @@ libs: \
 	$(OUTPUT_DIR)/libs/libkoreader-djvu.so \
 	$(OUTPUT_DIR)/libs/libkoreader-cre.so \
 	$(OUTPUT_DIR)/libs/libkoreader-xtext.so \
-	$(OUTPUT_DIR)/libs/libkoreader-mupdf.so
+	$(OUTPUT_DIR)/libs/libkoreader-mupdf.so \
+	$(OUTPUT_DIR)/libs/libkoreader-nnsvg.so
 
 $(OUTPUT_DIR)/libs/libinkview-compat.so: input/inkview-compat.c
 	$(CC) $(DYNLIB_CFLAGS) -linkview -o $@ $<
@@ -187,6 +188,18 @@ ifdef DARWIN
 	install_name_tool -change \
 		`otool -L "$@" | grep "$(notdir $(FRIBIDI_LIB)) " | awk '{print $$1}'` \
 		libs/$(notdir $(FRIBIDI_LIB)) \
+		$@
+endif
+
+$(OUTPUT_DIR)/libs/libkoreader-nnsvg.so: nnsvg.c \
+			$(if $(USE_LUAJIT_LIB),$(LUAJIT_LIB),) \
+			$(NANOSVG_HEADERS)
+	$(CC) -I$(NANOSVG_INCLUDE_DIR) \
+	$(CFLAGS) $(DYNLIB_CFLAGS) -fvisibility=hidden -Wall -o $@ nnsvg.c
+ifdef DARWIN
+	install_name_tool -change \
+		`otool -L "$@" | grep "libluajit" | awk '{print $$1}'` \
+		libs/$(notdir $(LUAJIT_LIB)) \
 		$@
 endif
 
