@@ -49,6 +49,8 @@ else()
     if (${CHOST} MATCHES "^arm-.*")
         # Yes, OpenSSL's preset names make no sense.
         set(CFG_OPTS "linux-armv4 -DL_ENDIAN ${CFG_OPTS}")
+    elseif (${CHOST} MATCHES "^aarch64-.*")
+        set(CFG_OPTS "linux-aarch64 -DL_ENDIAN ${CFG_OPTS}")
     endif()
 endif()
 
