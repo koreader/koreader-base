@@ -26,7 +26,7 @@ ko_write_gitclone_script(
 # NOTE: The patch will be much simpler w/ the upcoming leptonica version,
 # there's a 1.74 version of the patch already in our tree for when that time
 # comes ;).
-if(${ARM_GLIBC_GTE_2_22})
+if((${ARM_GLIBC_GTE_2_22}) AND (NOT CMAKE_SYSTEM_PROCESSOR MATCHES ".+64$"))
     set(PATCH_CMD "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/leptonica-1.74.1-fmemopen-arm-compat-symbol.patch")
 endif()
 
