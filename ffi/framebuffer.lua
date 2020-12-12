@@ -336,13 +336,6 @@ function fb:getDPI()
     return self.dpi
 end
 
-function fb:setDPI(dpi)
-    -- Nothing except having a real DPI override ("screen_dpi" reader setting non nil) set calls Device:setScreenDPI -> fb:setDPI
-    self.dpi = dpi
-    -- Remember that we're using an override for scaleBySize
-    self.dpi_override = true
-end
-
 function fb:clearDPI()
     self.dpi = nil
     -- Restore self.dpi to defaults
@@ -350,6 +343,18 @@ function fb:clearDPI()
 
     -- Clear the override flag
     self.dpi_override = nil
+end
+
+function fb:setDPI(dpi)
+    -- If we passed a nil, reset to defaults and clear the override flag
+    if not dpi then
+        return self:clearDPI()
+    end
+
+    -- Nothing except having a real DPI override ("screen_dpi" reader setting non nil) set calls Device:setScreenDPI -> fb:setDPI
+    self.dpi = dpi
+    -- Remember that we're using an override for scaleBySize
+    self.dpi_override = true
 end
 
 --[[--
