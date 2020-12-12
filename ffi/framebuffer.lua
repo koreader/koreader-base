@@ -336,8 +336,25 @@ function fb:getDPI()
     return self.dpi
 end
 
+function fb:clearDPI()
+    self.dpi = nil
+    -- Restore self.dpi to defaults
+    self:getDPI()
+
+    -- Clear the override flag
+    self.dpi_override = nil
+end
+
 function fb:setDPI(dpi)
+    -- If we passed a nil, reset to defaults and clear the override flag
+    if not dpi then
+        return self:clearDPI()
+    end
+
+    -- Nothing except having a real DPI override ("screen_dpi" reader setting non nil) set calls Device:setScreenDPI -> fb:setDPI
     self.dpi = dpi
+    -- Remember that we're using an override for scaleBySize
+    self.dpi_override = true
 end
 
 --[[--
@@ -347,20 +364,21 @@ Calculate pixel from density-independent pixel
 @treturn int pixel
 ]]--
 function fb:scaleByDPI(dp)
-    -- scaled positive px should also be positive
-    return math.ceil(dp * self:getDPI()/160)
+    -- Round up, to make sure we never end up with a zero
+    return math.ceil(dp * self:getDPI() / 160)
 end
 
 function fb:scaleBySize(px)
-    -- larger screen needs larger scale
-    local size_scale = math.min(self:getWidth(), self:getHeight())/600
-    -- if users custom screen dpi, also scale by dpi
-    local dpi_scale = size_scale
+    -- Larger screen needs larger scale
+    local size_scale = math.min(self:getWidth(), self:getHeight()) / 600
 
-    if self.device and self.device.display_dpi ~= self.dpi then
+    -- Unless the user has a DPI override set, DPI doesn't actually factor into the equation at all.
+    local dpi_scale = size_scale
+    if self.dpi_override then
         dpi_scale = self.dpi / 160
     end
-    -- scaled positive px should also be positive
+
+    -- Round up, to make sure we never end up with a zero
     return math.ceil(px * (size_scale + dpi_scale) / 2)
 end
 
