@@ -19,6 +19,8 @@
 -- TODO: of row table via _step?
 
 local ffi = require("ffi")
+local C = ffi.C
+local posix = require("ffi/posix_h") -- luacheck: ignore 211
 local bit = require("bit")
 
 -- CosminApreutesei's implementation from http://lua-users.org/wiki/SplitJoin
@@ -204,8 +206,8 @@ local int64_ct = ffi.typeof("int64_t")
 
 local blob_mt = {} -- For tagging only.
 
-local function blob(str)
-  return setmetatable({ str }, blob_mt)
+local function blob(ptr, size)
+  return setmetatable({ ptr, size }, blob_mt)
 end
 
 local connstmt = {} -- Statements for a conn.
@@ -259,7 +261,7 @@ return function(stmt_or_value <opt_i>)
     return ffi.string(sql.sqlite3_<variant>_text(stmt_or_value <opt_i>), nb)
   elseif t == sql.SQLITE_BLOB then
     local nb = sql.sqlite3_<variant>_bytes(stmt_or_value <opt_i>)
-    return ffi.string(sql.sqlite3_<variant>_blob(stmt_or_value <opt_i>), nb)
+    return blob(sql.sqlite3_<variant>_blob(stmt_or_value <opt_i>), nb)
   elseif t == sql.SQLITE_NULL then
     return nil
   else
@@ -279,9 +281,10 @@ return function(stmt_or_value, v <opt_i>)
     return sql.sqlite3_<variant>_text(stmt_or_value <opt_i>, v, #v,
       transient)
   elseif t == "table" and getmetatable(v) == blob_mt then
-    v = v[1]
-    return sql.sqlite3_<variant>_blob(stmt_or_value <opt_i>, v, #v,
+    local sql_res = sql.sqlite3_<variant>_blob(stmt_or_value <opt_i>, v[1], v[2],
       transient)
+    C.free(v[1])
+    return sql_res
   elseif t == "nil" then
     return sql.sqlite3_<variant>_null(stmt_or_value <opt_i>)
   else
