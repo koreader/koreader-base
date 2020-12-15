@@ -283,7 +283,7 @@ return function(stmt_or_value, v <opt_i>)
   elseif t == "table" and getmetatable(v) == blob_mt then
     local sql_res = sql.sqlite3_<variant>_blob(stmt_or_value <opt_i>, v[1], v[2],
       transient)
-    C.free(v[1])
+    free(v[1])
     return sql_res
   elseif t == "nil" then
     return sql.sqlite3_<variant>_null(stmt_or_value <opt_i>)
@@ -301,6 +301,8 @@ local sql_env = {
   int64_ct     = int64_ct,
   blob_mt      = blob_mt,
   getmetatable = getmetatable,
+  blob         = blob,
+  free         = C.free,
   err          = err,
   type         = type
 }
