@@ -64,7 +64,7 @@ local function context()
         error("cannot create fz_context for MuPDF")
     end
     -- ctx is a cdata<fz_context *>, attach a finalizer to it to release ressources on garbage collection
-    ctx = ffi.gc(ctx, fz_context_gc)
+    ctx = ffi.gc(ctx, mupdf.fz_context_gc)
 
     ctx:fz_register_document_handlers()
     M.fz_install_external_font_funcs(ctx);
@@ -84,10 +84,10 @@ local function merror(message)
     end
 end
 
-function fz_context_gc(ctx)
+--
+function mupdf.fz_context_gc(ctx)
     if ctx ~= nil then
         M.fz_drop_context(ctx)
-        ctx = nil
     end
 end
 
@@ -108,7 +108,7 @@ function mupdf.openDocument(filename, cache_size)
     end
 
     -- doc is a cdata<fz_document *>, attach a finalizer to it to release ressources on garbage collection
-    mupdf_doc.doc = ffi.gc(mupdf_doc.doc, fz_document_gc)
+    mupdf_doc.doc = ffi.gc(mupdf_doc.doc, mupdf.fz_document_gc)
 
     setmetatable(mupdf_doc, document_mt)
 
@@ -126,7 +126,7 @@ function mupdf.openDocumentFromText(text, magic)
     ctx:fz_drop_stream(stream)
 
     -- doc is a cdata<fz_document *>, attach a finalizer to it to release ressources on garbage collection
-    mupdf_doc.doc = ffi.gc(mupdf_doc.doc, fz_document_gc)
+    mupdf_doc.doc = ffi.gc(mupdf_doc.doc, mupdf.fz_document_gc)
 
     setmetatable(mupdf_doc, document_mt)
 
@@ -150,10 +150,9 @@ function document_mt.__index:close()
     end
 end
 
-function fz_document_gc(doc)
+function mupdf.fz_document_gc(doc)
     if doc ~= nil then
         M.fz_drop_document(context(), doc)
-        doc = nil
     end
 end
 
@@ -251,7 +250,7 @@ function document_mt.__index:openPage(number)
     end
 
     -- page is a cdata<fz_page *>, attach a finalizer to it to release ressources on garbage collection
-    mupdf_page.page = ffi.gc(mupdf_page.page, fz_page_gc)
+    mupdf_page.page = ffi.gc(mupdf_page.page, mupdf.fz_page_gc)
 
     setmetatable(mupdf_page, page_mt)
 
@@ -337,10 +336,9 @@ function page_mt.__index:close()
     end
 end
 
-function fz_page_gc(page)
+function mupdf.fz_page_gc(page)
     if page ~= nil then
         M.fz_drop_page(context(), page)
-        page = nil
     end
 end
 

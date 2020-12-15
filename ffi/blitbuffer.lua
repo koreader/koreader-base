@@ -650,9 +650,9 @@ end
 function BB_mt.__index:setAllocated(allocated)
     self.config = bor(band(self.config, bxor(MASK_ALLOCATED, 0xFF)), lshift(allocated, SHIFT_ALLOCATED))
     if allocated == 1 then
-        self = ffi.gc(self, BB.gc)
+        ffi.gc(self, BB.gc)
     else
-        self = ffi.gc(self, nil)
+        ffi.gc(self, nil)
     end
 end
 function BB_mt.__index:getType()
@@ -1260,21 +1260,21 @@ function BB_mt.__index:free()
     if band(lshift(1, SHIFT_ALLOCATED), self.config) ~= 0 then
         self.config = band(self.config, bxor(0xFF, lshift(1, SHIFT_ALLOCATED)))
         C.free(self.data)
-        self = ffi.gc(self, nil)
+        ffi.gc(self, nil)
     end
 end
 
 --[[
-memory management (via an explicit FFI cdata finalizer, since the __gc metamethod only runs on userdata in Lua 5.1/LuaJIT,
+memory management, via an explicit FFI cdata finalizer, since the __gc metamethod only runs on userdata in Lua 5.1/LuaJIT,
 not on tables. LuaJIT *does* support the __gc metamethod for (struct/union) ctypes *if* a metatable was associated to it via ffi.metatype.
-Relying on that is a bit tricky here because of the whole BB_mt not-being-a-real-metatable hack:
-When attempting to do this via a BB_mt.__index.__gc function, the BB_mt shenanigans below were assigning this method
-to ctype_mt.__index.__gc, instead of ctype_mt.__gc!
 (e.g., lj-sqlite3 goes that route).
+Here, relying on that is a bit tricky because of the whole BB_mt not-being-a-real-metatable hack:
+Previous attempts at this mistakenly declared a BB_mt.__index.__gc function,
+which made the BB_mt shenanigans below assign this to ctype_mt.__index.__gc, instead of ctype_mt.__gc!
 We'd instead need to handle each separately, like we do for __eq & __tostring.
 So, prefer doing it explicitly ourselves, as it turns out to be slightly less convoluted to grok anyway,
 and makes perfect sense in the context of setAllocated, since *a few* BBs do not actually need a finalizer
-(.e.g, a linuxfb screen bb is mmap'ed and handled by the linuxfb module),
+(.e.g, a linuxfb screen bb is mmap'ed and its lifetime handled by the linuxfb module),
 and/or that state can change at runtime, via setAllocated ;).
 c.f., BB_mt.__index:setAllocated()
 --]]
