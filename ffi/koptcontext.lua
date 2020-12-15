@@ -44,7 +44,8 @@ function KOPTContext_mt.__index:setDefectSize(defect_size) self.defect_size = de
 function KOPTContext_mt.__index:setLineSpacing(line_spacing) self.line_spacing = line_spacing end
 function KOPTContext_mt.__index:setWordSpacing(word_spacing) self.word_spacing = word_spacing end
 function KOPTContext_mt.__index:setLanguage(language)
-    self.language = ffi.new("char[?]", #language, language)
+    self.language = ffi.new("char[?]", #language + 1)
+    ffi.copy(self.language, language)
 end
 
 function KOPTContext_mt.__index:setDebug() self.debug = 1 end
@@ -730,8 +731,8 @@ function KOPTContext.fromtable(context)
                 context.nnai.array), context.nnai.n, C.L_COPY)
     end
     if context.language then
-        local lang = context.language
-        kc.language = ffi.new("char[?]", #lang, lang)
+        kc.language = ffi.new("char[?]", #context.language + 1)
+        ffi.copy(kc.language, context.language)
     end
 
     k2pdfopt.bmp_init(kc.src)
