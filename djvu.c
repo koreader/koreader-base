@@ -676,7 +676,7 @@ static int drawPage(lua_State *L) {
 		}
 	}
 	ddjvu_format_set_gamma(page->doc->pixelformat, gamma);
-	int bbsize = (bb->w)*(bb->h)*page->doc->pixelsize;
+	size_t bbsize = (bb->w)*(bb->h)*page->doc->pixelsize;
 	uint8_t *imagebuffer = bb->data;
 
 	/*printf("@page %d, @@zoom:%f, offset: (%d, %d)\n", page->num, dc->zoom, dc->offset_x, dc->offset_y);*/
