@@ -111,7 +111,7 @@ describe("mupdf module", function()
             assert.is_not_nil(doc3:openPage(1))
         end)
         it("should open a page 1000x", function()
-            for i = 1,1000 do
+            for i = 1, 1000 do
                 assert.is_not_nil(doc3:openPage(1))
             end
         end)
@@ -145,6 +145,9 @@ describe("mupdf module", function()
             setup(function()
                 page = doc3:openPage(2)
                 dc = require("ffi/drawcontext").new()
+            end)
+            teardown(function()
+            page:close()
             end)
             it("should get page size", function()
                 assert.are.same({page:getSize(dc)}, {612, 792})
