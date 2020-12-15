@@ -50,15 +50,18 @@ end
 
 -- More for correctness than anything, make sure the GC will actually free the resources when the variable goes out of scope...
 -- NOTE: In Lua 5.1/LuaJIT 2.1, the __gc metamethod is *only* called for userdata, *NOT* tables.
---       There are funky workarounds involving newproxy() available (c.f. https://stackoverflow.com/q/55585619),
+--       There are funky workarounds involving newproxy() available
+--       (c.f., https://stackoverflow.com/q/55585619 & https://github.com/LuaJIT/LuaJIT/issues/47),
 --       but, for cdata, LuaJIT provides custom finalizer handling, so, do that instead ;).
+--       And do it explicitly via ffi.gc, instead of relying on the __gc metamethod of a metatable on a cdata
+--       (as bound by via ffi.metatype, c.f., LuaJIT docs and and the comments about this in BB.gc @ ffi/blitbuffer.lua).
 local DCtx
 
 function zstd.zstd_uncompress_ctx(ptr, size)
     --print("zstd_uncompress_ctx:", ptr, size)
 
     -- Lazy init the decompression context
-    if not DCtx then
+    if DCtx == nil then
         DCtx = ffi.gc(zst.ZSTD_createDCtx(), zst.ZSTD_freeDCtx)
         assert(DCtx ~= nil, "Failed to allocate ZSTD decompression context")
     else

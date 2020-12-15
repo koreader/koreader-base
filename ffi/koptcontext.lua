@@ -450,18 +450,48 @@ function KOPTContext_mt.__index:optimizePage()
 end
 
 function KOPTContext_mt.__index:free()
-    leptonica.numaDestroy(ffi.new('NUMA *[1]', self.rnai))
-    leptonica.numaDestroy(ffi.new('NUMA *[1]', self.nnai))
-    leptonica.boxaDestroy(ffi.new('BOXA *[1]', self.rboxa))
-    leptonica.boxaDestroy(ffi.new('BOXA *[1]', self.nboxa))
+    -- NOTE: Jump through a large amount of shitty hoops to avoid double-frees,
+    --       now that __gc may actually call us on collection long after an earlier explicit free...
+    --- @fixme: Invest in a saner KOPTContext struct, possibly with a private bool to store the free state,
+    ---         àla BlitBuffer/lj-sqlite3...
+    if self.rnai ~= nil then
+        local rnai_pptr = ffi.new('NUMA *[1]', self.rnai)
+        leptonica.numaDestroy(rnai_pptr)
+        self.rnai = rnai_pptr[0]
+    end
+    if self.nnai ~= nil then
+        local nnai_pptr = ffi.new('NUMA *[1]', self.nnai)
+        leptonica.numaDestroy(nnai_pptr)
+        self.nnai = nnai_pptr[0]
+    end
+    if self.rboxa ~= nil then
+        local rboxa_pptr = ffi.new('BOXA *[1]', self.rboxa)
+        leptonica.boxaDestroy(rboxa_pptr)
+        self.rboxa = rboxa_pptr[0]
+    end
+    if self.nboxa ~= nil then
+        local nboxa_pptr = ffi.new('BOXA *[1]', self.nboxa)
+        leptonica.boxaDestroy(nboxa_pptr)
+        self.nboxa = nboxa_pptr[0]
+    end
+
+    -- Already guards against NULL data pointers
     k2pdfopt.bmp_free(self.src)
+    -- Already guards against NULL data pointers
     k2pdfopt.bmp_free(self.dst)
-    k2pdfopt.wrectmaps_free(self.rectmaps)
+
+    if self.rectmaps.n ~= 0 then
+        k2pdfopt.wrectmaps_free(self.rectmaps)
+    end
 end
 
-function KOPTContext_mt.__index:__gc() self:free() end
+function KOPTContext_mt:__gc()
+    self:free()
+end
+
 function KOPTContext_mt.__index:freeOCR() k2pdfopt.k2pdfopt_tocr_end() end
 
+-- NOTE: KOPTContext is a cdata struct, which is what makes __gc works here ;).
 local kctype = ffi.metatype("KOPTContext", KOPTContext_mt)
 
 function KOPTContext.new()
