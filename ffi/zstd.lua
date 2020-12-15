@@ -54,7 +54,7 @@ end
 --       (c.f., https://stackoverflow.com/q/55585619 & https://github.com/LuaJIT/LuaJIT/issues/47),
 --       but, for cdata, LuaJIT provides custom finalizer handling, so, do that instead ;).
 --       And do it explicitly via ffi.gc, instead of relying on the __gc metamethod of a metatable on a cdata
---       (as bound by via ffi.metatype, c.f., LuaJIT docs and and the comments about this in BB.gc @ ffi/blitbuffer.lua).
+--       (as bound by via ffi.metatype, c.f., LuaJIT docs and the comments about this in BB.gc @ ffi/blitbuffer.lua).
 local DCtx
 
 function zstd.zstd_uncompress_ctx(ptr, size)
