@@ -66,7 +66,7 @@ static int nnsvg_new(lua_State *L) {
 }
 
 NSVGimage * check_NSVGimage(lua_State * L, int n) {
-    // This checks that the thing at n on the stack is a correct nnSVGImage 
+    // This checks that the thing at n on the stack is a correct nnSVGImage
     // wrapping userdata (tagged with the "luaL_nnSVGImage" metatable).
     NSVGimage * image = *(NSVGimage **)luaL_checkudata(L, n, NNSVG_METATABLE_NAME);
     return image;
@@ -103,15 +103,14 @@ static int nnSVGImage_drawTo(lua_State *L) {
     // We expect it to be a luajit ffi cdata, but the C API does not have a #define for
     // that type. But it looks like its value is higher than the greatest LUA_T* type.
     if ( lua_type(L, 2) <= LUA_TTHREAD ) {// Higher plain Lua datatype (lua.h)
-	luaL_typerror(L, -1, "BlitBuffer");
+        luaL_typerror(L, -1, "BlitBuffer");
     }
     BlitBuffer * bb = (BlitBuffer*) lua_topointer(L, 2);
-    /* TODO: check bb type is TYPE_BBRGB32
+    // Make sure that the target bb is RGB32, because NanoSVG unconditionally outputs an RGBA pixmap.
     if ( GET_BB_TYPE(bb) != TYPE_BBRGB32 ) {
         lua_pushstring(L, "BlitBuffer BBRGB32 expected.");
         lua_error(L);
     }
-    */
 
     // nanosvg's rasterizer won't automatically scale the image
     // to adjust it to the target buffer w/h.
