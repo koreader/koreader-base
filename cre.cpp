@@ -675,7 +675,7 @@ static int renderDocument(lua_State *L) {
 static int closeDocument(lua_State *L) {
 	CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
 
-	/* should be save if called twice */
+	/* should be safe if called twice */
 	if(doc->text_view != NULL) {
 		// Call close() to have the cache explicitely saved now
 		// while we still have a callback (to show its progress).
@@ -687,6 +687,9 @@ static int closeDocument(lua_State *L) {
 		}
 		delete doc->text_view;
 		doc->text_view = NULL;
+
+		// Destroyed by text_view->close()
+		doc->dom_doc = NULL;
 	}
 
 	return 0;
@@ -3563,3 +3566,17 @@ int luaopen_cre(lua_State *L) {
 
 	return 1;
 }
+
+#if DEBUG_CRENGINE
+// Library finalizer (c.f., dlopen(3)). This serves no real purpose except making Valgrind's output slightly more useful.
+__attribute__((destructor)) static void cre_teardown(void) {
+    printf("cre_teardown\n");
+    // Since HyphMan::uninit implodes, run that ourselves.
+    TextLangMan::uninit();
+    // Crashes on the first delete pair->value...
+    //HyphMan::uninit();
+    ShutdownFontManager();
+    CRLog::setLogger( NULL );
+    ldomDocCache::close();
+}
+#endif
