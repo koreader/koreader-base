@@ -20,15 +20,17 @@ set(ANTIWORD_INCLUDE_DIR ${CR_3RDPARTY_DIR}/antiword)
 set(CHM_INCLUDE_DIRS ${CR_3RDPARTY_DIR}/chmlib/src)
 set(CREGINE_INCLUDE_DIR ${CRE_DIR}/include)
 
+assert_var_defined(JCONFIG_INCLUDE_DIR)
 assert_var_defined(FREETYPE_INCLUDE_DIR)
 assert_var_defined(HARFBUZZ_INCLUDE_DIR)
 assert_var_defined(FRIBIDI_INCLUDE_DIR)
 assert_var_defined(LIBUNIBREAK_INCLUDE_DIR)
 assert_var_defined(UTF8PROC_INCLUDE_DIR)
-assert_var_defined(JPEGLIB_INCLUDE_DIR)
 assert_var_defined(PNG_INCLUDE_DIR)
 assert_var_defined(ZLIB_INCLUDE_DIR)
-assert_var_defined(JCONFIG_INCLUDE_DIR)
+assert_var_defined(JPEGLIB_INCLUDE_DIR)
+assert_var_defined(NANOSVG_INCLUDE_DIR)
+assert_var_defined(ZSTD_INCLUDE_DIR)
 
 include_directories(
     ${JCONFIG_INCLUDE_DIR}
@@ -43,6 +45,7 @@ include_directories(
     ${ZLIB_INCLUDE_DIR}
     ${JPEGLIB_INCLUDE_DIR}
     ${NANOSVG_INCLUDE_DIR}
+    ${ZSTD_INCLUDE_DIR}
     ${CREGINE_INCLUDE_DIR}
 )
 
@@ -60,6 +63,7 @@ add_definitions(
     -DUSE_LIBUNIBREAK=1
     -DUSE_UTF8PROC=1
     -DUSE_NANOSVG=1
+    -DUSE_ZSTD=1
     -DALLOW_KERNING=1
     -DCR3_PATCH=1
 )
@@ -77,6 +81,7 @@ endif()
 
 if(DEFINED ENV{WIN32})
     find_library(ZLIB NAMES "zlib1" PATHS $ENV{LIBS_DIR})
+    find_library(ZSTD NAMES "zstd" PATHS $ENV{LIBS_DIR})
     find_library(PNG_LIB NAMES "png16-16" PATHS $ENV{LIBS_DIR})
     find_library(FREETYPE_LIB NAMES "freetype-6" PATHS $ENV{LIBS_DIR})
     find_library(HARFBUZZ_LIB NAMES "harfbuzz-0" PATHS $ENV{LIBS_DIR})
@@ -84,7 +89,7 @@ if(DEFINED ENV{WIN32})
     find_library(LIBUNIBREAK_LIB NAMES "libunibreak-3" PATHS $ENV{LIBS_DIR})
     find_library(UTF8PROC_LIB NAMES "utf8proc-2" PATHS $ENV{LIBS_DIR})
     find_library(JPEG_LIB NAMES "jpeg-8" PATHS $ENV{LIBS_DIR})
-    set(THIRDPARTY_LIBS ${ZLIB} ${FREETYPE_LIB} ${HARFBUZZ_LIB} ${FRIBIDI_LIB} ${LIBUNIBREAK_LIB} ${UTF8PROC_LIB} ${JPEG_LIB} ${PNG_LIB})
+    set(THIRDPARTY_LIBS ${ZLIB} ${ZSTD} ${FREETYPE_LIB} ${HARFBUZZ_LIB} ${FRIBIDI_LIB} ${LIBUNIBREAK_LIB} ${UTF8PROC_LIB} ${JPEG_LIB} ${PNG_LIB})
 else()
     add_library(PNG_LIB SHARED IMPORTED)
     set_target_properties(PNG_LIB PROPERTIES IMPORTED_LOCATION $ENV{PNG_LIB})
@@ -102,7 +107,9 @@ else()
     set_target_properties(JPEG_LIB PROPERTIES IMPORTED_LOCATION $ENV{JPEG_LIB})
     add_library(ZLIB SHARED IMPORTED)
     set_target_properties(ZLIB PROPERTIES IMPORTED_LOCATION $ENV{ZLIB})
-    set(THIRDPARTY_LIBS ZLIB FREETYPE_LIB HARFBUZZ_LIB FRIBIDI_LIB LIBUNIBREAK_LIB UTF8PROC_LIB JPEG_LIB PNG_LIB)
+    add_library(ZSTD SHARED IMPORTED)
+    set_target_properties(ZSTD PROPERTIES IMPORTED_LOCATION $ENV{ZSTD_LIB})
+    set(THIRDPARTY_LIBS ZLIB ZSTD FREETYPE_LIB HARFBUZZ_LIB FRIBIDI_LIB LIBUNIBREAK_LIB UTF8PROC_LIB JPEG_LIB PNG_LIB)
 endif()
 
 message("Will build LIBCHM library")
@@ -162,7 +169,6 @@ set (CRENGINE_SOURCES
     ${CRE_DIR}/src/hist.cpp
     ${CRE_DIR}/src/cri18n.cpp
     ${CRE_DIR}/src/crconcurrent.cpp
-    ${CRE_DIR}/src/xxhash.c
 )
 add_library(crengine SHARED ${CRENGINE_SOURCES})
 # Make sure we'll get C++11 support

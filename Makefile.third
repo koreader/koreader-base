@@ -188,7 +188,7 @@ ifdef DARWIN
 endif
 
 # crengine, fetched via GIT as a submodule
-$(CRENGINE_LIB): $(ZLIB) $(PNG_LIB) $(FREETYPE_LIB) $(HARFBUZZ_LIB) $(FRIBIDI_LIB) \
+$(CRENGINE_LIB): $(ZLIB) $(ZSTD_LIB) $(PNG_LIB) $(FREETYPE_LIB) $(HARFBUZZ_LIB) $(FRIBIDI_LIB) \
 		$(LIBUNIBREAK_LIB) $(UTF8PROC_LIB) $(JPEG_LIB) $(NANOSVG_HEADERS) \
 		$(CRENGINE_SRC_FILES) $(THIRDPARTY_DIR)/kpvcrlib/*.*
 	install -d $(CRENGINE_BUILD_DIR)
@@ -201,6 +201,7 @@ $(CRENGINE_LIB): $(ZLIB) $(PNG_LIB) $(FREETYPE_LIB) $(HARFBUZZ_LIB) $(FRIBIDI_LI
 		LIBUNIBREAK_LIB="$(CURDIR)/$(LIBUNIBREAK_LIB)" \
 		UTF8PROC_LIB="$(CURDIR)/$(UTF8PROC_LIB)" \
 		ZLIB="$(CURDIR)/$(ZLIB)" \
+		ZSTD_LIB="$(CURDIR)/$(ZSTD_LIB)" \
 		LIBS_DIR="$(CURDIR)/$(OUTPUT_DIR)/libs" \
 		$(CMAKE) $(CMAKE_FLAGS) \
 		-DJPEGLIB_INCLUDE_DIR=$(JPEG_DIR)/include \
@@ -213,6 +214,7 @@ $(CRENGINE_LIB): $(ZLIB) $(PNG_LIB) $(FREETYPE_LIB) $(HARFBUZZ_LIB) $(FRIBIDI_LI
 		-DFRIBIDI_INCLUDE_DIR="$(FRIBIDI_DIR)/include" \
 		-DLIBUNIBREAK_INCLUDE_DIR="$(LIBUNIBREAK_DIR)/include" \
 		-DUTF8PROC_INCLUDE_DIR="$(UTF8PROC_DIR)" \
+		-DZSTD_INCLUDE_DIR="$(ZSTD_DESTDIR)/include" \
 		-DCMAKE_BUILD_TYPE=$(CMAKE_BUILD_TYPE) \
 		$(if $(WIN32),-DCMAKE_SYSTEM_NAME=Windows,) \
 		$(if $(ANDROID),-DCMAKE_SYSTEM_NAME=Android,) \
@@ -408,6 +410,16 @@ ifdef WIN32
 else
 	cp -fL $(ZLIB_DIR)/lib/$(notdir $(ZLIB)) $(ZLIB)
 endif
+
+$(ZSTD_LIB): $(THIRDPARTY_DIR)/zstd/*.*
+	install -d $(ZSTD_BUILD_DIR)
+	cd $(ZSTD_BUILD_DIR) && \
+		$(CMAKE) $(CMAKE_FLAGS) -DCC="$(CC)" -DCXX="$(CXX)" -DAR="$(AR)" \
+		-DCFLAGS="$(CFLAGS)" \
+		-DLDFLAGS="$(LDFLAGS) -Wl,-rpath,'$(ORIGIN_CMAKE_TO_AUTOCFG)/./libs'" \
+		$(CURDIR)/$(THIRDPARTY_DIR)/zstd && \
+		$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS)
+	cp -fL $(ZSTD_DIR)/lib/$(notdir $(ZSTD_LIB)) $@
 
 # ===========================================================================
 # console version of StarDict(sdcv)

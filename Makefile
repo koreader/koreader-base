@@ -23,6 +23,7 @@ all: $(OUTPUT_DIR)/libs $(if $(ANDROID),,$(LUAJIT)) \
 		$(LODEPNG_LIB) \
 		$(MUPDF_LIB) \
 		$(GIF_LIB) \
+		$(ZSTD_LIB) \
 		$(if $(USE_LJ_WPACLIENT),$(LJ_WPACLIENT),) \
 		$(TURBO_FFI_WRAP_LIB) \
 		$(LUA_HTMLPARSER_ROCK) \
