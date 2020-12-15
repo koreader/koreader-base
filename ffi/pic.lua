@@ -40,7 +40,11 @@ end
 function PicPage:close()
 end
 
+--[[
+-- NOTE: This is a plain table, that won't work on Lua 5.1/LuaJIT
+--       Comment this out since this a currently a no-op anyway.
 PicPage.__gc = PicPage.close
+--]]
 
 function PicPage:draw(dc, bb)
     local scaled_bb = self.image_bb:scale(bb:getWidth(), bb:getHeight())
@@ -97,8 +101,10 @@ function PicDocument:close()
     end
 end
 
+--[[
+-- NOTE: Ditto, plain table, and essentially a no-op since BlitBuffer already handles the cdata finalizer.
 PicDocument.__gc = PicDocument.close
-
+--]]
 
 local GifPage = PicPage:new()
 function GifPage:close()
