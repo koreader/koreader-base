@@ -812,7 +812,7 @@ $(NANOSVG_HEADERS): $(THIRDPARTY_DIR)/nanosvg/*.*
 	install -d $(NANOSVG_INCLUDE_DIR)
 	cp -fL $(NANOSVG_DIR)/nanosvg/src/nanosvg.h $(NANOSVG_INCLUDE_DIR)/
 	cp -fL $(NANOSVG_DIR)/nanosvg/src/nanosvgrast.h $(NANOSVG_INCLUDE_DIR)/
-	cp -fL $(NANOSVG_DIR)/nanosvg/example/stb_image_write.h $(NANOSVG_INCLUDE_DIR)/
+	cp -fL $(THIRDPARTY_DIR)/nanosvg/stb_image_write.h $(NANOSVG_INCLUDE_DIR)/
 
 # cURL
 $(CURL_LIB): $(THIRDPARTY_DIR)/curl/*.*
