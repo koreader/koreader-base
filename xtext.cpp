@@ -360,7 +360,7 @@ public:
         if (m_bidi_ctypes) { free(m_bidi_ctypes); m_bidi_ctypes = NULL; }
         if (m_bidi_btypes) { free(m_bidi_btypes); m_bidi_btypes = NULL; }
         if (m_bidi_levels) { free(m_bidi_levels); m_bidi_levels = NULL; }
-        if (m_lang)        { delete m_lang;       m_lang = NULL; }
+        if (m_lang)        { delete[] m_lang;     m_lang = NULL; }
         m_no_longer_usable = true;
     }
 
@@ -2071,7 +2071,7 @@ static int xtext_new(lua_State *L) {
 }
 
 XText * check_XText(lua_State * L, int n, bool replace_with_uservalue=true, bool error_if_no_longer_usable=true) {
-    // This checks that the thing at n on the stack is a correct XText 
+    // This checks that the thing at n on the stack is a correct XText
     // wrapping userdata (tagged with the "luaL_XText" metatable).
     XText * xt = *(XText **)luaL_checkudata(L, n, XTEXT_METATABLE_NAME);
     xt->m_L = L; // Replace previous m_L with this fresh one
