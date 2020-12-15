@@ -941,6 +941,9 @@ else
 	DYNLIB_CMAKE_CXXFLAGS+=-Wl,-E -Wl,-rpath,'$(ORIGIN_CMAKE_TO_AUTOCFG)'
 endif
 
+# Used by our custom Lua modules, where we want to hide private symbols by default
+SYMVIS_FLAGS+=-fvisibility=hidden
+
 LPEG_BUILD_DIR=$(THIRDPARTY_DIR)/lpeg/build/$(MACHINE)
 LPEG_DIR=$(CURDIR)/$(LPEG_BUILD_DIR)/lpeg-prefix/src/lpeg
 LPEG_RE=$(OUTPUT_DIR)/rocks/share/lua/5.1/re.lua
