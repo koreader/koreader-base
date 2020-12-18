@@ -63,6 +63,11 @@ typedef enum {
   ZSTD_c_experimentalParam5 = 1002,
   ZSTD_c_experimentalParam6 = 1003,
   ZSTD_c_experimentalParam7 = 1004,
+  ZSTD_c_experimentalParam8 = 1005,
+  ZSTD_c_experimentalParam9 = 1006,
+  ZSTD_c_experimentalParam10 = 1007,
+  ZSTD_c_experimentalParam11 = 1008,
+  ZSTD_c_experimentalParam12 = 1009,
 } ZSTD_cParameter;
 typedef struct {
   size_t error;
@@ -83,6 +88,7 @@ typedef enum {
   ZSTD_d_windowLogMax = 100,
   ZSTD_d_experimentalParam1 = 1000,
   ZSTD_d_experimentalParam2 = 1001,
+  ZSTD_d_experimentalParam3 = 1002,
 } ZSTD_dParameter;
 ZSTD_bounds ZSTD_dParam_getBounds(ZSTD_dParameter) __attribute__((visibility("default")));
 size_t ZSTD_DCtx_setParameter(ZSTD_DCtx *, ZSTD_dParameter, int) __attribute__((visibility("default")));

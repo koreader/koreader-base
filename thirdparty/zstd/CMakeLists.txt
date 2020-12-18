@@ -16,14 +16,16 @@ assert_var_defined(LDFLAGS)
 ep_get_source_dir(SOURCE_DIR)
 ep_get_binary_dir(BINARY_DIR)
 
-# TODO: Build libzstd-mt on platforms where it makes sense?
-set(BUILD_CMD sh -c "${KO_MAKE_RECURSIVE} -C lib -j${PARALLEL_JOBS} CC=\"${CC}\" CXX=\"${CXX}\" AR=\"${AR}\" MOREFLAGS=\"${CFLAGS} ${LDFLAGS}\" libzstd libzstd.pc")
-set(INSTALL_CMD sh -c "${KO_MAKE_RECURSIVE} -C lib -j${PARALLEL_JOBS} CC=\"${CC}\" CXX=\"${CXX}\" AR=\"${AR}\" MOREFLAGS=\"${CFLAGS} ${LDFLAGS}\" prefix=\"${BINARY_DIR}\" install")
+# This a pure Makefile buildsystem, don't enforce CFLAGS via command line args, the buildsystem needs to be able to modify it.
+set(BUILD_ENV "env CFLAGS=\"${CFLAGS}\" LDFLAGS=\"${LDFLAGS}\"")
+
+set(BUILD_CMD sh -c "${BUILD_ENV} ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS} V=1 CC=\"${CC}\" CXX=\"${CXX}\" AR=\"${AR}\" lib-release")
+set(INSTALL_CMD sh -c "${BUILD_ENV} ${KO_MAKE_RECURSIVE} -C lib -j${PARALLEL_JOBS} V=1 CC=\"${CC}\" CXX=\"${CXX}\" AR=\"${AR}\" prefix=\"${BINARY_DIR}\" install")
 
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
     https://github.com/facebook/zstd.git
-    tags/v1.4.5
+    tags/v1.4.7
     ${SOURCE_DIR}
 )
 
