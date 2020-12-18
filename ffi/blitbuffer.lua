@@ -116,6 +116,7 @@ typedef struct BlitBufferRGB32 {
     uint8_t config;
 } BlitBufferRGB32;
 
+void BB_fill(BlitBuffer * restrict bb, uint8_t v);
 void BB_fill_rect(BlitBuffer * restrict bb, unsigned int x, unsigned int y, unsigned int w, unsigned int h, uint8_t v);
 void BB_blend_rect(BlitBuffer * restrict bb, unsigned int x, unsigned int y, unsigned int w, unsigned int h, Color8A * restrict color);
 void BB_invert_rect(BlitBuffer * restrict bb, unsigned int x, unsigned int y, unsigned int w, unsigned int h);
@@ -777,7 +778,8 @@ BB_mt.__index.setPixelDither = BB_mt.__index.setPixel
 -- Add
 function BB_mt.__index:setPixelAdd(x, y, color, alpha)
     -- fast path:
-    if alpha == 0 then return
+    if alpha == 0 then
+        return
     elseif alpha == 0xFF then
         return self:setPixel(x, y, color)
     end
@@ -790,7 +792,8 @@ function BB_mt.__index:setPixelAdd(x, y, color, alpha)
 end
 function BBRGB16_mt.__index:setPixelAdd(x, y, color, alpha)
     -- fast path:
-    if alpha == 0 then return
+    if alpha == 0 then
+        return
     elseif alpha == 0xFF then
         return self:setPixel(x, y, color)
     end
@@ -809,30 +812,26 @@ function BB_mt.__index:setPixelBlend(x, y, color)
     local alpha = color:getAlpha()
     if alpha == 0 then
         return
+    elseif alpha == 0xFF then
+        return self:setPixel(x, y, color)
     end
+    -- The blend method for these types of target BB assumes a grayscale input
     local px, py = self:getPhysicalCoordinates(x, y)
-    if alpha == 0xFF then
-        self:getPixelP(px, py)[0]:set(color)
-    else
-        -- The blend method for these types of target BB assumes a grayscale input
-        color = color:getColor8A()
-        if self:getInverse() == 1 then color = color:invert() end
-        self:getPixelP(px, py)[0]:blend(color)
-    end
+    color = color:getColor8A()
+    if self:getInverse() == 1 then color = color:invert() end
+    self:getPixelP(px, py)[0]:blend(color)
 end
 function BBRGB16_mt.__index:setPixelBlend(x, y, color)
     -- fast path:
     local alpha = color:getAlpha()
     if alpha == 0 then
         return
+    elseif alpha == 0xFF then
+        return self:setPixel(x, y, color)
     end
     local px, py = self:getPhysicalCoordinates(x, y)
-    if alpha == 0xFF then
-        self:getPixelP(px, py)[0]:set(color)
-    else
-        if self:getInverse() == 1 then color = color:invert() end
-        self:getPixelP(px, py)[0]:blend(color)
-    end
+    if self:getInverse() == 1 then color = color:invert() end
+    self:getPixelP(px, py)[0]:blend(color)
 end
 BBRGB24_mt.__index.setPixelBlend = BBRGB16_mt.__index.setPixelBlend
 BBRGB32_mt.__index.setPixelBlend = BBRGB16_mt.__index.setPixelBlend
@@ -842,18 +841,16 @@ function BB8_mt.__index:setPixelDitherBlend(x, y, color)
     local alpha = color:getAlpha()
     if alpha == 0 then
         return
-    end
-    local px, py = self:getPhysicalCoordinates(x, y)
-    if alpha == 0xFF then
+    elseif alpha == 0xFF then
         color = color:getColor8()
         color.a = dither_o8x8(x, y, color.a)
-        self:getPixelP(px, py)[0]:set(color)
-    else
-        -- The blend method for these types of target BB assumes a grayscale input
-        color = color:getColor8A()
-        if self:getInverse() == 1 then color = color:invert() end
-        self:getPixelP(px, py)[0]:ditherblend(x, y, color)
+        return self:setPixel(x, y, color)
     end
+    -- The blend method for these types of target BB assumes a grayscale input
+    local px, py = self:getPhysicalCoordinates(x, y)
+    color = color:getColor8A()
+    if self:getInverse() == 1 then color = color:invert() end
+    self:getPixelP(px, py)[0]:ditherblend(x, y, color)
 end
 BB_mt.__index.setPixelDitherBlend = BB_mt.__index.setPixelBlend
 -- Premultiplied alpha blending
@@ -862,30 +859,26 @@ function BB_mt.__index:setPixelPmulBlend(x, y, color)
     local alpha = color:getAlpha()
     if alpha == 0 then
         return
+    elseif alpha == 0xFF then
+        return self:setPixel(x, y, color)
     end
+    -- The pmulblend method for these types of target BB assumes a grayscale input
     local px, py = self:getPhysicalCoordinates(x, y)
-    if alpha == 0xFF then
-        self:getPixelP(px, py)[0]:set(color)
-    else
-        -- The pmulblend method for these types of target BB assumes a grayscale input
-        color = color:getColor8A()
-        if self:getInverse() == 1 then color = color:invert() end
-        self:getPixelP(px, py)[0]:pmulblend(color)
-    end
+    color = color:getColor8A()
+    if self:getInverse() == 1 then color = color:invert() end
+    self:getPixelP(px, py)[0]:pmulblend(color)
 end
 function BBRGB16_mt.__index:setPixelPmulBlend(x, y, color)
     -- fast path:
     local alpha = color:getAlpha()
     if alpha == 0 then
         return
+    elseif alpha == 0xFF then
+        return self:setPixel(x, y, color)
     end
     local px, py = self:getPhysicalCoordinates(x, y)
-    if alpha == 0xFF then
-        self:getPixelP(px, py)[0]:set(color)
-    else
-        if self:getInverse() == 1 then color = color:invert() end
-        self:getPixelP(px, py)[0]:pmulblend(color)
-    end
+    if self:getInverse() == 1 then color = color:invert() end
+    self:getPixelP(px, py)[0]:pmulblend(color)
 end
 BBRGB24_mt.__index.setPixelPmulBlend = BBRGB16_mt.__index.setPixelPmulBlend
 BBRGB32_mt.__index.setPixelPmulBlend = BBRGB16_mt.__index.setPixelPmulBlend
@@ -895,26 +888,26 @@ function BB8_mt.__index:setPixelDitherPmulBlend(x, y, color)
     local alpha = color:getAlpha()
     if alpha == 0 then
         return
-    end
-    local px, py = self:getPhysicalCoordinates(x, y)
-    if alpha == 0xFF then
+    elseif alpha == 0xFF then
         color = color:getColor8()
         color.a = dither_o8x8(x, y, color.a)
-        self:getPixelP(px, py)[0]:set(color)
-    else
-        -- The pmulblend method for these types of target BB assumes a grayscale input
-        color = color:getColor8A()
-        if self:getInverse() == 1 then color = color:invert() end
-        self:getPixelP(px, py)[0]:ditherpmulblend(x, y, color)
+        return self:setPixel(x, y, color)
     end
+    -- The pmulblend method for these types of target BB assumes a grayscale input
+    local px, py = self:getPhysicalCoordinates(x, y)
+    color = color:getColor8A()
+    if self:getInverse() == 1 then color = color:invert() end
+    self:getPixelP(px, py)[0]:ditherpmulblend(x, y, color)
 end
 BB_mt.__index.setPixelDitherPmulBlend = BB_mt.__index.setPixelPmulBlend
--- Colorize
+-- Colorize (NOTE: colorblitFrom has already handled inversion for us)
 function BB_mt.__index:setPixelColorize(x, y, mask, color)
     -- use 8bit grayscale pixel value as alpha for blitting
     local alpha = mask:getColor8().a
     -- fast path:
-    if alpha == 0 then return end
+    if alpha == 0 then
+        return
+    end
     local px, py = self:getPhysicalCoordinates(x, y)
     if alpha == 0xFF then
         self:getPixelP(px, py)[0]:set(color)
@@ -1291,8 +1284,48 @@ PAINTING
 fill the whole blitbuffer with a given (grayscale) color value
 --]]
 function BB_mt.__index:fill(value)
-    ffi.fill(self.data, self.stride*self.h, value:getColor8().a)
+    if self:canUseCbb() then
+        cblitbuffer.BB_fill(ffi.cast(P_BlitBuffer, self),
+            value:getColor8().a)
+    else
+        -- While we could use a plain ffi.fill, there are a few BB types where we do not want to stomp on the alpha byte...
+        local bbtype = self:getType()
+
+        -- Handle invert...
+        local v = value:getColor8()
+        if self:getInverse() == 1 then v = v:invert() end
+
+        --print("fill")
+        if bbtype == TYPE_BBRGB32 then
+            local src = v:getColorRGB32()
+            local p = ffi.cast(P_ColorRGB32, self.data)
+            for i = 1, self.pixel_stride*self.h do
+                p[0] = src
+                -- Pointer arithmetics magic: +1 on an uint32_t* means +4 bytes (i.e., next pixel) ;).
+                p = p+1
+            end
+        elseif bbtype == TYPE_BBRGB16 then
+            local src = v:getColorRGB16()
+            local p = ffi.cast(P_ColorRGB16, self.data)
+            for i = 1, self.pixel_stride*self.h do
+                p[0] = src
+                p = p+1
+            end
+        elseif bbtype == TYPE_BB8A then
+            local src = v:getColor8A()
+            local p = ffi.cast(P_Color8A, self.data)
+            for i = 1, self.pixel_stride*self.h do
+                p[0] = src
+                p = p+1
+            end
+        else
+            -- Should only be BBRGB24 & BB8 left, where we can use ffi.fill ;)
+            local p = ffi.cast(uint8pt, self.data)
+            ffi.fill(p, self.stride*self.h, v.a)
+        end
+    end
 end
+
 function BB4_mt.__index:fill(value)
     local v = value:getColor4L().a
     v = bor(lshift(v, 4), v)
@@ -1349,7 +1382,7 @@ function BB_mt.__index:invertRect(x, y, w, h)
                     p = p+1
                 end
             else
-                -- Should only be BB8 left, but honor bpp for safety instead of relying purely on pointer arithmetics...
+                -- Should only be BBRGB24 & BB8 left
                 local p = ffi.cast(uint8pt, self.data) + self.stride*y
                 for i = 1, self.stride*h do
                     p[0] = bxor(p[0], 0xFF)
@@ -1384,7 +1417,7 @@ function BB_mt.__index:invertRect(x, y, w, h)
                     end
                 end
             else
-                -- Again, honor bpp for safety instead of relying purely on pointer arithmetics...
+                -- Honor bpp because of BBRGB24...
                 for j = y, y+h-1 do
                     local p = ffi.cast(uint8pt, self.data) + self.stride*j + bpp*x
                     for i = 0, bpp*(w-1) do
@@ -1423,33 +1456,89 @@ function BB_mt.__index:paintRect(x, y, w, h, value, setter)
             x, y, w, h, value:getColor8().a)
     else
         -- We can only do fast filling when there's no complex processing involved (i.e., simple setPixel only)
-        -- NOTE: We cheat a bit when targeting non-grayscale BBs,
-        --       because we know we're only used with a grayscale color as input ;).
-        --       The cbb also takes advantage of the same shortcut.
         if setter == self.setPixel then
             -- Handle rotation...
             x, y, w, h = self:getPhysicalRect(x, y, w, h)
+
+            -- While we could use a plain ffi.fill, there are a few BB types where we do not want to stomp on the alpha byte...
+            local bbtype = self:getType()
+
             -- Handle invert...
             local v = value:getColor8()
             if self:getInverse() == 1 then v = v:invert() end
-            -- Handle any target stride properly (i.e., fetch the amount of bytes taken per pixel)...
-            local bpp = self:getBytesPerPixel()
 
             -- We check against the BB's unrotated coordinates (i.e., self.w and not self:getWidth()),
             -- as our memory region has a fixed layout, too!
             if x == 0 and w == self.w then
                 -- Single step for contiguous scanlines
                 --print("Single fill paintRect")
-                local p = ffi.cast(uint8pt, self.data) + self.stride*y
-                -- Account for potentially off-screen scanline bits by using self.pixel_stride instead of w,
-                -- as we've just assured ourselves that the requested w matches self.w ;).
-                ffi.fill(p, self.stride*h, v.a)
+                if bbtype == TYPE_BBRGB32 then
+                    local src = v:getColorRGB32()
+                    local p = ffi.cast(P_ColorRGB32, ffi.cast(uint8pt, self.data) + self.stride*y)
+                    for i = 1, self.pixel_stride*h do
+                        p[0] = src
+                        p = p+1
+                    end
+                elseif bbtype == TYPE_BBRGB16 then
+                    local src = v:getColorRGB16()
+                    local p = ffi.cast(P_ColorRGB16, ffi.cast(uint8pt, self.data) + self.stride*y)
+                    for i = 1, self.pixel_stride*h do
+                        p[0] = src
+                        p = p+1
+                    end
+                elseif bbtype == TYPE_BB8A then
+                    local src = v:getColor8A()
+                    local p = ffi.cast(P_Color8A, ffi.cast(uint8pt, self.data) + self.stride*y)
+                    for i = 1, self.pixel_stride*h do
+                        p[0] = src
+                        p = p+1
+                    end
+                else
+                    -- BBRGB24 & BB8, where we can just use ffi.fill
+                    local p = ffi.cast(uint8pt, self.data) + self.stride*y
+                    ffi.fill(p, self.stride*h, v.a)
+                end
             else
                 -- Scanline per scanline fill
                 --print("Scanline fill paintRect")
-                for j = y, y+h-1 do
-                    local p = ffi.cast(uint8pt, self.data) + self.stride*j + bpp*x
-                    ffi.fill(p, bpp*w, v.a)
+                if bbtype == TYPE_BBRGB32 then
+                    local src = v:getColorRGB32()
+                    for j = y, y+h-1 do
+                        local p = ffi.cast(P_ColorRGB32, ffi.cast(uint8pt, self.data) + self.stride*j) + x
+                        for i = 0, w-1 do
+                            p[0] = src
+                            p = p+1
+                        end
+                    end
+                elseif bbtype == TYPE_BBRGB24 then
+                    for j = y, y+h-1 do
+                        local p = ffi.cast(uint8pt, self.data) + self.stride*j + (x * 3)
+                        ffi.fill(p, w * 3, v.a)
+                    end
+                elseif bbtype == TYPE_BBRGB16 then
+                    local src = v:getColorRGB16()
+                    for j = y, y+h-1 do
+                        local p = ffi.cast(P_ColorRGB16, ffi.cast(uint8pt, self.data) + self.stride*j) + x
+                        for i = 0, w-1 do
+                            p[0] = src
+                            p = p+1
+                        end
+                    end
+                elseif bbtype == TYPE_BB8A then
+                    local src = v:getColor8A()
+                    for j = y, y+h-1 do
+                        local p = ffi.cast(P_Color8A, ffi.cast(uint8pt, self.data) + self.stride*j) + x
+                        for i = 0, w-1 do
+                            p[0] = src
+                            p = p+1
+                        end
+                    end
+                else
+                    -- BB8
+                    for j = y, y+h-1 do
+                        local p = ffi.cast(uint8pt, self.data) + self.stride*j + x
+                        ffi.fill(p, w, v.a)
+                    end
                 end
             end
         else

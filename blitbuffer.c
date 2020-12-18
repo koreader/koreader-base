@@ -52,6 +52,8 @@ static const char*
 #define ColorRGB32_To_Color24(color) \
     (ColorRGB24){color->r, color->g, color->b}
 
+#define Color8_To_Color8A(color) \
+    (Color8A){color->a, 0xFF}
 #define Color8A_To_Color8(color) \
     (Color8){color->a}
 #define Color8A_To_Color24(color) \
@@ -70,6 +72,11 @@ static const char*
       15220*ColorRGB16_GetB(v)) >> 14U)
 #define RGB_To_RGB16(r, g, b) (((r & 0xF8) << 8U) + ((g & 0xFC) << 3U) + (b >> 3U))
 #define RGB_To_A(r, g, b) ((4898U*r + 9618U*g + 1869U*b) >> 14U)
+
+// Helpers to pack pixels manually, without going through the Color structs.
+#define Y8_To_Y8A(v) (0xFFu << 8U | v)
+#define RGB_To_RGB32(r, g, b) ((uint32_t) (0xFFu << 24U) | (uint32_t) (b << 16U) | (uint32_t) (g << 8U) | r)
+#define Y8_To_RGB32(v) ((uint32_t) (0xFFu << 24U) | (uint32_t) (v << 16U) | (uint32_t) (v << 8U) | v)
 
 // __auto_type was introduced in GCC 4.9 (and Clang ~3.8)...
 // NOTE: Inspired from glibc's __GNUC_PREREQ && __glibc_clang_prereq macros (from <features.h>),
@@ -134,6 +141,48 @@ static const char*
     } \
 })
 
+
+void BB_fill(BlitBuffer * restrict bb, uint8_t v) {
+    // Handle any target pitch properly
+    const int bb_type = GET_BB_TYPE(bb);
+    if (bb_type == TYPE_BB8) {
+            //fprintf(stdout, "%s: BB8 fill\n", __FUNCTION__);
+            uint8_t * restrict p = bb->data;
+            memset(p, v, bb->stride*bb->h);
+    } else if (bb_type == TYPE_BB8A) {
+            // We do NOT want to stomp on the alpha byte here...
+            const uint16_t src = (uint16_t) Y8_To_Y8A(v);
+            //fprintf(stdout, "%s: BB8A fill\n", __FUNCTION__);
+            uint16_t * restrict p = (uint16_t *) bb->data;
+            size_t px_count = bb->pixel_stride*bb->h;
+            while (px_count--) {
+                *p++ = src;
+            }
+    } else if (bb_type == TYPE_BBRGB16) {
+            // Again, RGB565 means we can't use a straight memset
+            const uint16_t src = (uint16_t) RGB_To_RGB16(v, v, v);
+            //fprintf(stdout, "%s: BBRGB16 fill\n", __FUNCTION__);
+            uint16_t * restrict p = (uint16_t *) bb->data;
+            size_t px_count = bb->pixel_stride*bb->h;
+            while (px_count--) {
+                *p++ = src;
+            }
+    } else if (bb_type == TYPE_BBRGB24) {
+            //fprintf(stdout, "%s: BBRGB24 fill\n", __FUNCTION__);
+            uint8_t * restrict p = bb->data;
+            memset(p, v, bb->stride*bb->h);
+    } else if (bb_type == TYPE_BBRGB32) {
+            // And here either, as we want to preserve the alpha byte
+            const uint32_t src = (uint32_t) Y8_To_RGB32(v);
+            //fprintf(stdout, "%s: BBRGB32 fill\n", __FUNCTION__);
+            uint32_t * restrict p = (uint32_t *) bb->data;
+            size_t px_count = bb->pixel_stride*bb->h;
+            while (px_count--) {
+                *p++ = src;
+            }
+    }
+}
+
 void BB_fill_rect(BlitBuffer * restrict bb, unsigned int x, unsigned int y, unsigned int w, unsigned int h, uint8_t v) {
     const int rotation = GET_BB_ROTATION(bb);
     unsigned int rx, ry, rw, rh;
@@ -164,38 +213,112 @@ void BB_fill_rect(BlitBuffer * restrict bb, unsigned int x, unsigned int y, unsi
                 rh = w;
                 break;
     }
-    // Handle any target pitch properly (i.e., fetch the amount of bytes taken per pixel)...
+
+    // Handle any target pitch properly
     const int bb_type = GET_BB_TYPE(bb);
-    uint8_t bpp;
     switch (bb_type) {
         case TYPE_BB8:
-            bpp = 1U;
+            if (rx == 0 && rw == bb->w) {
+                // Single step for contiguous scanlines (e.g., BB_fill())
+                //fprintf(stdout, "%s: Full BB8 paintRect\n", __FUNCTION__);
+                uint8_t * restrict p = bb->data + bb->stride*ry;
+                memset(p, v, bb->stride*rh);
+            } else {
+                // Scanline per scanline
+                //fprintf(stdout, "%s: Scanline BB8 paintRect\n", __FUNCTION__);
+                for (unsigned int j = ry; j < ry+rh; j++) {
+                    uint8_t * restrict p = bb->data + bb->stride*j + rx;
+                    memset(p, v, rw);
+                }
+            }
             break;
         case TYPE_BB8A:
-            bpp = 2U;
+            // We do NOT want to stomp on the alpha byte here...
+            if (rx == 0 && rw == bb->w) {
+                // Single step for contiguous scanlines
+                const uint16_t src = (uint16_t) Y8_To_Y8A(v);
+                //fprintf(stdout, "%s: Full BB8A paintRect\n", __FUNCTION__);
+                uint16_t * restrict p = (uint16_t *) (bb->data + bb->stride*ry);
+                size_t px_count = bb->pixel_stride*rh;
+                while (px_count--) {
+                    *p++ = src;
+                }
+            } else {
+                // Scanline per scanline
+                const uint16_t src = (uint16_t) Y8_To_Y8A(v);
+                //fprintf(stdout, "%s: Scanline BB8A paintRect\n", __FUNCTION__);
+                for (unsigned int j = ry; j < ry+rh; j++) {
+                    uint16_t * restrict p = (uint16_t *) (bb->data + bb->stride*j) + rx;
+                    size_t px_count = rw;
+                    while (px_count--) {
+                        *p++ = src;
+                    }
+                }
+            }
             break;
         case TYPE_BBRGB16:
-            bpp = 2U;
+            // Again, RGB565 means we can't use a straight memset
+            if (rx == 0 && rw == bb->w) {
+                // Single step for contiguous scanlines
+                const uint16_t src = (uint16_t) RGB_To_RGB16(v, v, v);
+                //fprintf(stdout, "%s: Full BBRGB16 paintRect\n", __FUNCTION__);
+                uint16_t * restrict p = (uint16_t *) (bb->data + bb->stride*ry);
+                size_t px_count = bb->pixel_stride*rh;
+                while (px_count--) {
+                    *p++ = src;
+                }
+            } else {
+                // Scanline per scanline
+                const uint16_t src = (uint16_t) RGB_To_RGB16(v, v, v);
+                //fprintf(stdout, "%s: Sanline BBRGB16 paintRect\n", __FUNCTION__);
+                for (unsigned int j = ry; j < ry+rh; j++) {
+                    uint16_t * restrict p = (uint16_t *) (bb->data + bb->stride*j) + rx;
+                    size_t px_count = rw;
+                    while (px_count--) {
+                        *p++ = src;
+                    }
+                }
+            }
             break;
         case TYPE_BBRGB24:
-            bpp = 3U;
+            if (rx == 0 && rw == bb->w) {
+                // Single step for contiguous scanlines
+                //fprintf(stdout, "%s: Full BBRGB24 paintRect\n", __FUNCTION__);
+                uint8_t * restrict p = bb->data + bb->stride*ry;
+                memset(p, v, bb->stride*rh);
+            } else {
+                // Scanline per scanline
+                //fprintf(stdout, "%s: Scanline BBRGB24 paintRect\n", __FUNCTION__);
+                for (unsigned int j = ry; j < ry+rh; j++) {
+                    uint8_t * restrict p = bb->data + bb->stride*j + (rx * 3U);
+                    memset(p, v, (rw * 3U));
+                }
+            }
             break;
         case TYPE_BBRGB32:
-            bpp = 4U;
+            // And here either, as we want to preserve the alpha byte
+            if (rx == 0 && rw == bb->w) {
+                // Single step for contiguous scanlines
+                const uint32_t src = (uint32_t) Y8_To_RGB32(v);
+                //fprintf(stdout, "%s: Full BBRGB32 paintRect\n", __FUNCTION__);
+                uint32_t * restrict p = (uint32_t *) (bb->data + bb->stride*ry);
+                size_t px_count = bb->pixel_stride*rh;
+                while (px_count--) {
+                    *p++ = src;
+                }
+            } else {
+                // Scanline per scanline
+                const uint32_t src = (uint32_t) Y8_To_RGB32(v);
+                //fprintf(stdout, "%s: Pixel BBRGB32 paintRect\n", __FUNCTION__);
+                for (unsigned int j = ry; j < ry+rh; j++) {
+                    uint32_t * restrict p = (uint32_t *) (bb->data + bb->stride*j) + rx;
+                    size_t px_count = rw;
+                    while (px_count--) {
+                        *p++ = src;
+                    }
+                }
+            }
             break;
-    }
-    if (rx == 0 && rw == bb->w) {
-        // Single step for contiguous scanlines
-        //fprintf(stdout, "%s: Single fill paintRect\n", __FUNCTION__);
-        uint8_t * restrict p = bb->data + bb->stride*ry;
-        memset(p, v, bb->stride*rh);
-    } else {
-        // Scanline per scanline fill
-        //fprintf(stdout, "%s: Scanline fill paintRect\n", __FUNCTION__);
-        for (unsigned int j = ry; j < ry+rh; j++) {
-            uint8_t * restrict p = bb->data + bb->stride*j + bpp*rx;
-            memset(p, v, bpp*rw);
-        }
     }
 }
 
@@ -303,8 +426,8 @@ void BB_invert_rect(BlitBuffer * restrict bb, unsigned int x, unsigned int y, un
                     *p++ ^= 0xFF;
                 }
             } else {
-                // Pixel per pixel
-                //fprintf(stdout, "%s: Pixel BB8 invertRect\n", __FUNCTION__);
+                // Scanline per scanline
+                //fprintf(stdout, "%s: Scanline BB8 invertRect\n", __FUNCTION__);
                 for (unsigned int j = ry; j < ry+rh; j++) {
                     uint8_t * restrict p = bb->data + bb->stride*j + rx;
                     size_t px_count = rw;
@@ -324,8 +447,8 @@ void BB_invert_rect(BlitBuffer * restrict bb, unsigned int x, unsigned int y, un
                     *p++ ^= 0x00FF;
                 }
             } else {
-                // Pixel per pixel
-                //fprintf(stdout, "%s: Pixel BB8A invertRect\n", __FUNCTION__);
+                // Scanline per scanline
+                //fprintf(stdout, "%s: Scanline BB8A invertRect\n", __FUNCTION__);
                 for (unsigned int j = ry; j < ry+rh; j++) {
                     uint16_t * restrict p = (uint16_t*) (bb->data + bb->stride*j) + rx;
                     size_t px_count = rw;
@@ -346,8 +469,8 @@ void BB_invert_rect(BlitBuffer * restrict bb, unsigned int x, unsigned int y, un
                     *p++ ^= 0xFFFF;
                 }
             } else {
-                // Pixel per pixel
-                //fprintf(stdout, "%s: Pixel BBRGB16 invertRect\n", __FUNCTION__);
+                // Scanline per scanline
+                //fprintf(stdout, "%s: Scanline BBRGB16 invertRect\n", __FUNCTION__);
                 for (unsigned int j = ry; j < ry+rh; j++) {
                     uint16_t * restrict p = (uint16_t*) (bb->data + bb->stride*j) + rx;
                     size_t px_count = rw;
@@ -369,8 +492,8 @@ void BB_invert_rect(BlitBuffer * restrict bb, unsigned int x, unsigned int y, un
                     *p++ ^= 0xFF;
                 }
             } else {
-                // Pixel per pixel
-                //fprintf(stdout, "%s: Pixel BBRGB24 invertRect\n", __FUNCTION__);
+                // Scanline per scanline
+                //fprintf(stdout, "%s: Scanline BBRGB24 invertRect\n", __FUNCTION__);
                 for (unsigned int j = ry; j < ry+rh; j++) {
                     uint8_t * restrict p = bb->data + bb->stride*j + (rx * 3U);
                     size_t px_count = rw;
@@ -392,8 +515,8 @@ void BB_invert_rect(BlitBuffer * restrict bb, unsigned int x, unsigned int y, un
                     *p++ ^= 0x00FFFFFF;
                 }
             } else {
-                // Pixel per pixel
-                //fprintf(stdout, "%s: Pixel BBRGB32 invertRect\n", __FUNCTION__);
+                // Scanline per scanline
+                //fprintf(stdout, "%s: Scanline BBRGB32 invertRect\n", __FUNCTION__);
                 for (unsigned int j = ry; j < ry+rh; j++) {
                     uint32_t * restrict p = (uint32_t*) (bb->data + bb->stride*j) + rx;
                     size_t px_count = rw;
