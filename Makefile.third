@@ -234,6 +234,10 @@ ifdef DARWIN
 		`otool -L "$@" | grep "$(notdir $(JPEG_LIB)) " | awk '{print $$1}'` \
 		libs/$(notdir $(JPEG_LIB)) \
 		$@
+	install_name_tool -change \
+		`otool -L "$@" | grep "$(notdir $(ZSTD_LIB)) " | awk '{print $$1}'` \
+		libs/$(notdir $(ZSTD_LIB)) \
+		$@
 endif
 
 $(LUAJIT) $(LUAJIT_LIB) $(LUAJIT_JIT): $(THIRDPARTY_DIR)/luajit/*.*
@@ -416,7 +420,7 @@ $(ZSTD_LIB): $(THIRDPARTY_DIR)/zstd/*.*
 	cd $(ZSTD_BUILD_DIR) && \
 		$(CMAKE) $(CMAKE_FLAGS) -DCC="$(CC)" -DCXX="$(CXX)" -DAR="$(AR)" \
 		-DCFLAGS="$(CFLAGS)" \
-		-DLDFLAGS="$(LDFLAGS) -Wl,-rpath,'$(ORIGIN_CMAKE_TO_AUTOCFG)/./libs'" \
+		-DLDFLAGS="$(LDFLAGS)" \
 		$(CURDIR)/$(THIRDPARTY_DIR)/zstd && \
 		$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS)
 	cp -fL $(ZSTD_DIR)/lib/$(notdir $(ZSTD_LIB)) $@
