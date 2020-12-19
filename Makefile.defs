@@ -672,6 +672,12 @@ ZLIB_BUILD_DIR=$(THIRDPARTY_DIR)/zlib/build/$(MACHINE)
 ZLIB_DIR=$(CURDIR)/$(ZLIB_BUILD_DIR)/zlib-prefix/src/zlib
 ZLIB_STATIC=$(ZLIB_DIR)/libz.a
 
+ZSTD_BUILD_DIR=$(THIRDPARTY_DIR)/zstd/build/$(MACHINE)
+ZSTD_DIR=$(CURDIR)/$(ZSTD_BUILD_DIR)/zstd-prefix/src/zstd
+ZSTD_DESTDIR=$(CURDIR)/$(ZSTD_BUILD_DIR)/zstd-prefix/src/zstd-build
+ZSTD_LIB_EXT=$(if $(WIN32),.dll,$(if $(DARWIN),.1.dylib,.so.1))
+ZSTD_LIB=$(OUTPUT_DIR)/libs/libzstd$(ZSTD_LIB_EXT)
+
 MINIZIP_BUILD_DIR=$(THIRDPARTY_DIR)/minizip/build/$(MACHINE)
 MINIZIP_DIR=$(CURDIR)/$(MINIZIP_BUILD_DIR)/minizip-prefix/src/minizip
 AES_LIB_DIR=$(MINIZIP_DIR)/aes
@@ -941,13 +947,16 @@ else
 	DYNLIB_CMAKE_CXXFLAGS+=-Wl,-E -Wl,-rpath,'$(ORIGIN_CMAKE_TO_AUTOCFG)'
 endif
 
+# Used by our custom Lua modules, where we want to hide private symbols by default
+SYMVIS_FLAGS+=-fvisibility=hidden
+
 LPEG_BUILD_DIR=$(THIRDPARTY_DIR)/lpeg/build/$(MACHINE)
 LPEG_DIR=$(CURDIR)/$(LPEG_BUILD_DIR)/lpeg-prefix/src/lpeg
 LPEG_RE=$(OUTPUT_DIR)/rocks/share/lua/5.1/re.lua
 LPEG_DYNLIB=$(OUTPUT_DIR)/rocks/lib/lua/5.1/lpeg.so
 
 
-CMAKE_THIRDPARTY_LIBS := kpvcrlib,nanosvg
+CMAKE_THIRDPARTY_LIBS := kpvcrlib,nanosvg,zstd
 CMAKE_THIRDPARTY_LIBS := $(CMAKE_THIRDPARTY_LIBS),evernote-sdk-lua,luajit,lpeg,turbo
 CMAKE_THIRDPARTY_LIBS := $(CMAKE_THIRDPARTY_LIBS),zyre,czmq,filemq,libzmq
 CMAKE_THIRDPARTY_LIBS := $(CMAKE_THIRDPARTY_LIBS),libk2pdfopt,tesseract,leptonica

@@ -37,7 +37,6 @@ local FZ_VERSION = "1.13.0"
 
 local document_mt = { __index = {} }
 local page_mt = { __index = {} }
-local mupdf_mt = {}
 
 mupdf.debug = function() --[[ no debugging by default ]] end
 
@@ -54,6 +53,9 @@ local function context()
     if ctx == nil then
         error("cannot create fz_context for MuPDF")
     end
+
+    -- ctx is a cdata<fz_context *>, attach a finalizer to it to release ressources on garbage collection
+    ctx = ffi.gc(ctx, mupdf.fz_context_gc)
 
     M.fz_install_external_font_funcs(ctx);
 
@@ -72,10 +74,10 @@ local function merror(message)
     end
 end
 
-function mupdf_mt.__gc()
-    if save_ctx ~= nil then
-        M.fz_drop_context(save_ctx)
-        save_ctx = nil
+--
+function mupdf.fz_context_gc(ctx)
+    if ctx ~= nil then
+        M.fz_drop_context(ctx)
     end
 end
 
@@ -93,6 +95,9 @@ function mupdf.openDocument(filename, cache_size)
     if mupdf_doc.doc == nil then
         merror("MuPDF cannot open file.")
     end
+
+    -- doc is a cdata<fz_document *>, attach a finalizer to it to release ressources on garbage collection
+    mupdf_doc.doc = ffi.gc(mupdf_doc.doc, mupdf.fz_document_gc)
 
     setmetatable(mupdf_doc, document_mt)
 
@@ -116,6 +121,9 @@ function mupdf.openDocumentFromText(text, magic)
         merror("MuPDF cannot open document from text")
     end
 
+    -- doc is a cdata<fz_document *>, attach a finalizer to it to release ressources on garbage collection
+    mupdf_doc.doc = ffi.gc(mupdf_doc.doc, mupdf.fz_document_gc)
+
     setmetatable(mupdf_doc, document_mt)
 
     return mupdf_doc
@@ -132,10 +140,17 @@ triggered explicitly
 function document_mt.__index:close()
     if self.doc ~= nil then
         M.fz_drop_document(context(), self.doc)
+        -- Clear the cdata finalizer to avoid a double-free
+        self.doc = ffi.gc(self.doc, nil)
         self.doc = nil
     end
 end
-document_mt.__index.__gc = document_mt.__index.close
+
+function mupdf.fz_document_gc(doc)
+    if doc ~= nil then
+        M.fz_drop_document(context(), doc)
+    end
+end
 
 --[[
 check if the document needs a password for access
@@ -228,10 +243,16 @@ function document_mt.__index:openPage(number)
         number = number,
         doc = self,
     }
+
     if mupdf_page.page == nil then
         merror("cannot open page #" .. number)
     end
+
+    -- page is a cdata<fz_page *>, attach a finalizer to it to release ressources on garbage collection
+    mupdf_page.page = ffi.gc(mupdf_page.page, mupdf.fz_page_gc)
+
     setmetatable(mupdf_page, page_mt)
+
     return mupdf_page
 end
 
@@ -305,10 +326,17 @@ this is done implicitly by garbage collection, too.
 function page_mt.__index:close()
     if self.page ~= nil then
         M.fz_drop_page(context(), self.page)
+        -- Clear the cdata finalizer to avoid a double-free
+        self.page = ffi.gc(self.page, nil)
         self.page = nil
     end
 end
-page_mt.__index.__gc = page_mt.__index.close
+
+function mupdf.fz_page_gc(page)
+    if page ~= nil then
+        M.fz_drop_page(context(), page)
+    end
+end
 
 --[[
 calculate page size after applying DrawContext
@@ -953,7 +981,5 @@ function page_mt.__index:toBmp(bmp, dpi, color)
 
     mupdf.color = color_save
 end
-
-setmetatable(mupdf, mupdf_mt)
 
 return mupdf
