@@ -16,6 +16,10 @@ assert_var_defined(LDFLAGS)
 ep_get_source_dir(SOURCE_DIR)
 ep_get_binary_dir(BINARY_DIR)
 
+# Because escaping rpath is even more hellish than usual, for some reason...
+# NOTE: In ZSH, passing MOREFLAGS="-Wl,-rpath,'\\\$$\\\$\$ORIGIN/./libs'" works, too.
+set(PATCH_CMD "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/zstd-rpath.patch")
+
 # This a pure Makefile buildsystem, don't enforce CFLAGS via command line args, the buildsystem needs to be able to modify it.
 set(BUILD_ENV "env CFLAGS=\"${CFLAGS}\" LDFLAGS=\"${LDFLAGS}\"")
 
@@ -34,7 +38,7 @@ ExternalProject_Add(
     ${PROJECT_NAME}
     DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
     BUILD_IN_SOURCE 1
-    PATCH_COMMAND ""
+    PATCH_COMMAND COMMAND ${PATCH_CMD}
     CONFIGURE_COMMAND ""
     BUILD_COMMAND COMMAND ${BUILD_CMD}
     INSTALL_COMMAND COMMAND ${INSTALL_CMD}
