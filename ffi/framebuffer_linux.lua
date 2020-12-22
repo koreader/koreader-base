@@ -180,7 +180,10 @@ function framebuffer:setRotationMode(mode)
         -- as well as prod the driver via new mmap() as some do tie down rotation modes to each mapping.
         self.cur_rotation_mode = mode
         self:setHWRotation(mode)
+        -- Remember the screen bb's invert flag, too
+        local inverse = self.bb:getInverse()
         self:reinit()
+        self.bb:setInverse(inverse)
         assert(self.forced_rotation, "reinit/fb hooks shouldn't flip hw rotation flags")
         if self.forced_rotation.restore then
             self:setHWRotation(self.native_rotation_mode)
