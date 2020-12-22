@@ -1327,7 +1327,11 @@ function BB_mt.__index:fill(value)
 end
 
 function BB4_mt.__index:fill(value)
-    local v = value:getColor4L().a
+    -- Handle invert...
+    local v = value:getColor8()
+    if self:getInverse() == 1 then v = v:invert() end
+
+    v = v:getColor4L().a
     v = bor(lshift(v, 4), v)
     ffi.fill(self.data, self.stride*self.h, v)
 end
