@@ -142,7 +142,7 @@ void BB_color_blit_from(BlitBuffer * restrict dest, const BlitBuffer * restrict 
 
 -- We'll load it later
 local cblitbuffer
-local use_cblitbuffer = false
+local use_cblitbuffer
 
 -- color value types
 local Color4U = ffi.typeof("Color4U")
@@ -2167,28 +2167,42 @@ BB.TYPE_TO_BPP = {
 }
 
 BB.has_cblitbuffer = false
-if not os.getenv("KO_NO_CBB") then
-    -- Load C blit buffer, we'll decide whether to use it later on
-    BB.has_cblitbuffer, cblitbuffer = pcall(ffi.load, "blitbuffer")
+-- Load the C blitter, and defaults to using it if available
+BB.has_cblitbuffer, cblitbuffer = pcall(ffi.load, "blitbuffer")
+if BB.has_cblitbuffer then
+    -- If we can, assume we'll want to use it
+    use_cblitbuffer = true
+else
+    use_cblitbuffer = false
 end
 
--- Set the actual enable/disable CBB flag. Returns the flag of whether it is (actually) enabled.
+-- Allow front to update the use_cblitbuffer flag directly, with no checks and no JIT tweaks
+function BB:setUseCBB(enabled)
+   use_cblitbuffer = enabled
+end
+
+-- Set the actual enable/disable CBB flag and tweak JIT opts accordingly.
+-- Returns the actual state.
 function BB:enableCBB(enabled)
+    print(debug.traceback())
+    print("BB:enableCBB", enabled)
     local old = use_cblitbuffer
     use_cblitbuffer = enabled and self.has_cblitbuffer
+    print("old:", old, "use_cblitbuffer:", use_cblitbuffer)
     if old ~= use_cblitbuffer then
         -- NOTE: This works-around a number of corner-cases which may end up with LuaJIT's optimizer blacklisting this very codepath,
         --       which'd obviously *murder* performance (to the effect of a soft-lock, essentially).
         --       c.f., koreader/koreader#4137, koreader/koreader#4752, koreader/koreader#4782,
         --       koreader/koreader#6736, #1233
+        --       15 is LuaJIT's default
         local val = use_cblitbuffer and 15 or 45
         jit.opt.start("loopunroll="..tostring(val))
         jit.flush()
+        print("Set loopunroll to", val)
     end
     return use_cblitbuffer
 end
 
--- By default it's on (if not blacklisted). But frontend may still decide otherwise before anything is ever drawn.
-BB:enableCBB(true)
+-- NOTE: reader.lua will update the flag on startup, with the least amount of JIT tweaking possible.
 
 return BB
