@@ -125,8 +125,6 @@ message("Will build crengine library")
 add_definitions(-DHAVE_PROTOTYPES)
 add_definitions(-DHAVE_UNSIGNED_CHAR)
 add_definitions(-DCR_EMULATE_GETTEXT)
-# c.f., https://github.com/koreader/crengine/pull/275
-add_definitions(-DCR_RENDER_32BPP_RGB_PXFMT)
 add_definitions(-Dmain=xxxmain)
 set (CRENGINE_SOURCES
     ${CRE_DIR}/qimagescale/qimagescale.cpp

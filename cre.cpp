@@ -3171,6 +3171,31 @@ static int drawCurrentPage(lua_State *L) {
 		doc->text_view->Draw(drawBuf, false);
 		drawn_images_count = drawBuf.getDrawnImagesCount();
 		drawn_images_surface = drawBuf.getDrawnImagesSurface();
+
+		/* CRe uses inverted alpha *and* BGRA pixel order, so, fix that up... */
+		size_t pixel_count = w * h;
+
+		/*
+		uint32_t * __restrict p = (uint32_t* __restrict) bb->data;
+		while (pixel_count--) {
+			uint32_t px = *p;
+			// Swap B <-> R, keep G, invert A
+			*p++ = ((px << 16) & 0x00FF0000) | ((px >> 16) & 0x000000FF) | (px & 0x0000FF00) | ((px & 0xFF000000) ^ 0xFF000000);
+		}
+		*/
+
+		uint8_t * __restrict p = bb->data;
+		while (pixel_count--) {
+			// Swap B <-> R
+			const uint8_t b = p[0];
+			p[0] = p[2];
+			p[2] = b;
+			// Invert A
+			p[3] ^= 0xFFu;
+
+			// Next pixel!
+			p+=4;
+		}
 	}
 	else {
 		/* Set DrawBuf to 8bpp */
