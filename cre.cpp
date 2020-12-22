@@ -3172,7 +3172,8 @@ static int drawCurrentPage(lua_State *L) {
 		drawn_images_count = drawBuf.getDrawnImagesCount();
 		drawn_images_surface = drawBuf.getDrawnImagesSurface();
 
-		/* CRe uses inverted alpha *and* BGRA pixel order, so, fix that up... */
+		/* CRe uses inverted alpha *and* BGRA pixel order, so, fix that up,
+		 * as we expecet RGBA and straight alpha... */
 		size_t pixel_count = w * h;
 
 		/*
