@@ -2184,11 +2184,8 @@ end
 -- Set the actual enable/disable CBB flag and tweak JIT opts accordingly.
 -- Returns the actual state.
 function BB:enableCBB(enabled)
-    print(debug.traceback())
-    print("BB:enableCBB", enabled)
     local old = use_cblitbuffer
     use_cblitbuffer = enabled and self.has_cblitbuffer
-    print("old:", old, "use_cblitbuffer:", use_cblitbuffer)
     if old ~= use_cblitbuffer then
         -- NOTE: This works-around a number of corner-cases which may end up with LuaJIT's optimizer blacklisting this very codepath,
         --       which'd obviously *murder* performance (to the effect of a soft-lock, essentially).
@@ -2198,7 +2195,6 @@ function BB:enableCBB(enabled)
         local val = use_cblitbuffer and 15 or 45
         jit.opt.start("loopunroll="..tostring(val))
         jit.flush()
-        print("Set loopunroll to", val)
     end
     return use_cblitbuffer
 end
