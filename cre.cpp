@@ -3174,11 +3174,11 @@ static int drawCurrentPage(lua_State *L) {
 
 		/* CRe uses inverted alpha *and* BGRA pixel order, so, fix that up,
 		 * as we expecet RGBA and straight alpha... */
-		size_t pixel_count = w * h;
+		size_t px_count = w * h;
 
 		/*
 		uint32_t * __restrict p = (uint32_t* __restrict) bb->data;
-		while (pixel_count--) {
+		while (px_count--) {
 			uint32_t px = *p;
 			// Swap B <-> R, keep G, invert A
 			*p++ = ((px << 16) & 0x00FF0000) | ((px >> 16) & 0x000000FF) | (px & 0x0000FF00) | ((px & 0xFF000000) ^ 0xFF000000);
@@ -3186,7 +3186,7 @@ static int drawCurrentPage(lua_State *L) {
 		*/
 
 		uint8_t * __restrict p = bb->data;
-		while (pixel_count--) {
+		while (px_count--) {
 			// Swap B <-> R
 			const uint8_t b = p[0];
 			p[0] = p[2];
@@ -3197,6 +3197,14 @@ static int drawCurrentPage(lua_State *L) {
 			// Next pixel!
 			p+=4;
 		}
+
+		/*
+		uint32_t * __restrict p = (uint32_t* __restrict) bb->data;
+		while (px_count--) {
+			// Invert A
+			*p++ ^= 0xFF000000;
+		}
+		*/
 	}
 	else {
 		/* Set DrawBuf to 8bpp */
