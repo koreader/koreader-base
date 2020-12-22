@@ -31,31 +31,6 @@ extern "C" {
 #include "lvdocview.h"
 #include "lvimg.h"
 
-// For pixel format conversions
-typedef union
-{
-	uint32_t p;
-	struct
-	{
-		uint8_t r;
-		uint8_t g;
-		uint8_t b;
-		uint8_t a;
-	} color;
-} KOPixel;
-
-typedef union
-{
-	uint32_t p;
-	struct
-	{
-		uint8_t b;
-		uint8_t g;
-		uint8_t r;
-		uint8_t a;
-	} color;
-} CRePixel;
-
 static void replaceColor( char * str, lUInt32 color ) {
 	// in line like "0 c #80000000",
 	// replace value of color
@@ -3210,7 +3185,6 @@ static int drawCurrentPage(lua_State *L) {
 		}
 		*/
 
-		/*
 		uint8_t * __restrict p = bb->data;
 		while (pixel_count--) {
 			// Swap B <-> R
@@ -3222,20 +3196,6 @@ static int drawCurrentPage(lua_State *L) {
 
 			// Next pixel!
 			p+=4;
-		}
-		*/
-
-		uint32_t * __restrict p = (uint32_t* __restrict) bb->data;
-		while (pixel_count--) {
-			const CRePixel cre = { .p = *p };
-			// Can't do that in C++ :( (c.f., https://en.cppreference.com/w/cpp/language/aggregate_initialization)
-			//const KOPixel ko = { .color.r = cre.color.r, .color.g = cre.color.g, .color.b = cre.color.b, .color.a = cre.color.a ^ 0xFFu };
-			KOPixel ko;
-			ko.color.r = cre.color.r;
-			ko.color.g = cre.color.g;
-			ko.color.b = cre.color.b;
-			ko.color.a = cre.color.a ^ 0xFFu;
-			*p++ = ko.p;
 		}
 	}
 	else {
