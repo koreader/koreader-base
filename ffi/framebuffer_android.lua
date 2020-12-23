@@ -130,6 +130,7 @@ function framebuffer:_updateWindow()
         bb:setInverse(ext_bb:getInverse())
         bb:setRotation(ext_bb:getRotation())
 
+        -- getUseCBB should *always* be true on Android, but let's be thorough...
         if bb:getInverse() == 1 and BB:getUseCBB() then
             -- If we're using the CBB (which we should), the invert flag has been thoroughly ignored up until now,
             -- so, simply invert everything *now* ;).
