@@ -180,6 +180,33 @@ static const char*
     } \
 })
 
+#define SET_PIXEL_CLAMPED(bb, bb_type, bb_rotation, x, y, width, height, color) \
+({ \
+    if (likely(x >= 0U && x < width && y >= 0 && y < height)) { \
+        if (bb_type == TYPE_BB8) { \
+            Color8 * restrict dstptr; \
+            BB_GET_PIXEL(bb, bb_rotation, Color8, x, y, &dstptr); \
+            *dstptr = *color; \
+        } else if (bb_type == TYPE_BB8A) { \
+            Color8A * restrict dstptr; \
+            BB_GET_PIXEL(bb, bb_rotation, Color8A, x, y, &dstptr); \
+            *dstptr = *color; \
+        } else if (bb_type == TYPE_BBRGB16) { \
+            ColorRGB16 * restrict dstptr; \
+            BB_GET_PIXEL(bb, bb_rotation, ColorRGB16, x, y, &dstptr); \
+            *dstptr = *color; \
+        } else if (bb_type == TYPE_BBRGB24) { \
+            ColorRGB24 * restrict dstptr; \
+            BB_GET_PIXEL(bb, bb_rotation, ColorRGB24, x, y, &dstptr); \
+            *dstptr = *color; \
+        } else if (bb_type == TYPE_BBRGB32) { \
+            ColorRGB32 * restrict dstptr; \
+            BB_GET_PIXEL(bb, bb_rotation, ColorRGB32, x, y, &dstptr); \
+            *dstptr = *color; \
+        } \
+    } \
+})
+
 static inline void BB8_SET_PIXEL_CLAMPED(BlitBuffer * restrict bb, int rotation, unsigned int x, unsigned int y, unsigned int width, unsigned int height, const Color8 * restrict color) {
     if (likely(x >= 0U && x < width && y >= 0 && y < height)) {
         Color8 * restrict pixel;
@@ -2367,6 +2394,9 @@ void BB_paint_rounded_corner(BlitBuffer * restrict bb, unsigned int off_x, unsig
     unsigned int x2 = 0U;
     unsigned int y2 = r2;
     float delta2 = 5.f/4.f - r;
+
+    const int bb_type = GET_BB_TYPE(bb);
+    const int bb_rotation = GET_BB_ROTATION(bb);
 
     while (x < y) {
         // decrease y if we are out of circle
