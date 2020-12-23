@@ -180,33 +180,6 @@ static const char*
     } \
 })
 
-#define SET_PIXEL_CLAMPED(bb, bb_type, bb_rotation, x, y, width, height, color) \
-({ \
-    if (likely(x >= 0U && x < width && y >= 0 && y < height)) { \
-        if (bb_type == TYPE_BB8) { \
-            Color8 * restrict dstptr; \
-            BB_GET_PIXEL(bb, bb_rotation, Color8, x, y, &dstptr); \
-            *dstptr = *color; \
-        } else if (bb_type == TYPE_BB8A) { \
-            Color8A * restrict dstptr; \
-            BB_GET_PIXEL(bb, bb_rotation, Color8A, x, y, &dstptr); \
-            *dstptr = *color; \
-        } else if (bb_type == TYPE_BBRGB16) { \
-            ColorRGB16 * restrict dstptr; \
-            BB_GET_PIXEL(bb, bb_rotation, ColorRGB16, x, y, &dstptr); \
-            *dstptr = *color; \
-        } else if (bb_type == TYPE_BBRGB24) { \
-            ColorRGB24 * restrict dstptr; \
-            BB_GET_PIXEL(bb, bb_rotation, ColorRGB24, x, y, &dstptr); \
-            *dstptr = *color; \
-        } else if (bb_type == TYPE_BBRGB32) { \
-            ColorRGB32 * restrict dstptr; \
-            BB_GET_PIXEL(bb, bb_rotation, ColorRGB32, x, y, &dstptr); \
-            *dstptr = *color; \
-        } \
-    } \
-})
-
 static inline void BB8_SET_PIXEL_CLAMPED(BlitBuffer * restrict bb, int rotation, unsigned int x, unsigned int y, unsigned int width, unsigned int height, const Color8 * restrict color) {
     if (likely(x >= 0U && x < width && y >= 0 && y < height)) {
         Color8 * restrict pixel;
@@ -262,23 +235,6 @@ static inline unsigned int BB_GET_HEIGHT(BlitBuffer * restrict bb) {
         return bb->w;
     }
 }
-
-function BB_mt.__index:getWidth()
-    if 0 == band(1, self:getRotation()) then
-        return self.w
-    else
-        return self.h
-    end
-end
-
-function BB_mt.__index:getHeight()
-    if 0 == band(1, self:getRotation()) then
-        return self.h
-    else
-        return self.w
-    end
-end
-
 
 void BB_fill(BlitBuffer * restrict bb, uint8_t v) {
     // Handle any target pitch properly
@@ -2397,6 +2353,8 @@ void BB_paint_rounded_corner(BlitBuffer * restrict bb, unsigned int off_x, unsig
 
     const int bb_type = GET_BB_TYPE(bb);
     const int bb_rotation = GET_BB_ROTATION(bb);
+    const unsigned int bb_width = BB_GET_WIDTH(bb);
+    const unsigned int bb_height = BB_GET_HEIGHT(bb);
 
     while (x < y) {
         // decrease y if we are out of circle
@@ -2423,17 +2381,77 @@ void BB_paint_rounded_corner(BlitBuffer * restrict bb, unsigned int off_x, unsig
         }
 
         for (unsigned int tmp_y = y; tmp_y < y2; tmp_y--) {
-            self:setPixelClamped((w-r)+off_x+x-1, (h-r)+off_y+tmp_y-1, c)
-            self:setPixelClamped((w-r)+off_x+tmp_y-1, (h-r)+off_y+x-1, c)
+            if (bb_type == TYPE_BB8) {
+                const Color8 color = { .a = c };
 
-            self:setPixelClamped((w-r)+off_x+tmp_y-1, (r)+off_y-x, c)
-            self:setPixelClamped((w-r)+off_x+x-1, (r)+off_y-tmp_y, c)
+                BB8_SET_PIXEL_CLAMPED(bb, bb_rotation, (w-r)+off_x+x-1, (h-r)+off_y+tmp_y-1, bb_width, bb_height, &color);
+                BB8_SET_PIXEL_CLAMPED(bb, bb_rotation, (w-r)+off_x+tmp_y-1, (h-r)+off_y+x-1, bb_width, bb_height, &color);
 
-            self:setPixelClamped((r)+off_x-x, (r)+off_y-tmp_y, c)
-            self:setPixelClamped((r)+off_x-tmp_y, (r)+off_y-x, c)
+                BB8_SET_PIXEL_CLAMPED(bb, bb_rotation, (w-r)+off_x+tmp_y-1, (r)+off_y-x, bb_width, bb_height, &color);
+                BB8_SET_PIXEL_CLAMPED(bb, bb_rotation, (w-r)+off_x+x-1, (r)+off_y-tmp_y, bb_width, bb_height, &color);
 
-            self:setPixelClamped((r)+off_x-tmp_y, (h-r)+off_y+x-1, c)
-            self:setPixelClamped((r)+off_x-x, (h-r)+off_y+tmp_y-1, c)
+                BB8_SET_PIXEL_CLAMPED(bb, bb_rotation, (r)+off_x-x, (r)+off_y-tmp_y, bb_width, bb_height, &color);
+                BB8_SET_PIXEL_CLAMPED(bb, bb_rotation, (r)+off_x-tmp_y, (r)+off_y-x, bb_width, bb_height, &color);
+
+                BB8_SET_PIXEL_CLAMPED(bb, bb_rotation, (r)+off_x-tmp_y, (h-r)+off_y+x-1, bb_width, bb_height, &color);
+                BB8_SET_PIXEL_CLAMPED(bb, bb_rotation, (r)+off_x-x, (h-r)+off_y+tmp_y-1, bb_width, bb_height, &color);
+            } else if (bb_type == TYPE_BB8A) {
+                const Color8A color = { .a = c, .alpha = 0xFF };
+
+                BB8A_SET_PIXEL_CLAMPED(bb, bb_rotation, (w-r)+off_x+x-1, (h-r)+off_y+tmp_y-1, bb_width, bb_height, &color);
+                BB8A_SET_PIXEL_CLAMPED(bb, bb_rotation, (w-r)+off_x+tmp_y-1, (h-r)+off_y+x-1, bb_width, bb_height, &color);
+
+                BB8A_SET_PIXEL_CLAMPED(bb, bb_rotation, (w-r)+off_x+tmp_y-1, (r)+off_y-x, bb_width, bb_height, &color);
+                BB8A_SET_PIXEL_CLAMPED(bb, bb_rotation, (w-r)+off_x+x-1, (r)+off_y-tmp_y, bb_width, bb_height, &color);
+
+                BB8A_SET_PIXEL_CLAMPED(bb, bb_rotation, (r)+off_x-x, (r)+off_y-tmp_y, bb_width, bb_height, &color);
+                BB8A_SET_PIXEL_CLAMPED(bb, bb_rotation, (r)+off_x-tmp_y, (r)+off_y-x, bb_width, bb_height, &color);
+
+                BB8A_SET_PIXEL_CLAMPED(bb, bb_rotation, (r)+off_x-tmp_y, (h-r)+off_y+x-1, bb_width, bb_height, &color);
+                BB8A_SET_PIXEL_CLAMPED(bb, bb_rotation, (r)+off_x-x, (h-r)+off_y+tmp_y-1, bb_width, bb_height, &color);
+            } else if (bb_type == TYPE_BBRGB16) {
+                const ColorRGB16 color = { .v = RGB_To_RGB16(c, c, c) };
+
+                BBRGB16_SET_PIXEL_CLAMPED(bb, bb_rotation, (w-r)+off_x+x-1, (h-r)+off_y+tmp_y-1, bb_width, bb_height, &color);
+                BBRGB16_SET_PIXEL_CLAMPED(bb, bb_rotation, (w-r)+off_x+tmp_y-1, (h-r)+off_y+x-1, bb_width, bb_height, &color);
+
+                BBRGB16_SET_PIXEL_CLAMPED(bb, bb_rotation, (w-r)+off_x+tmp_y-1, (r)+off_y-x, bb_width, bb_height, &color);
+                BBRGB16_SET_PIXEL_CLAMPED(bb, bb_rotation, (w-r)+off_x+x-1, (r)+off_y-tmp_y, bb_width, bb_height, &color);
+
+                BBRGB16_SET_PIXEL_CLAMPED(bb, bb_rotation, (r)+off_x-x, (r)+off_y-tmp_y, bb_width, bb_height, &color);
+                BBRGB16_SET_PIXEL_CLAMPED(bb, bb_rotation, (r)+off_x-tmp_y, (r)+off_y-x, bb_width, bb_height, &color);
+
+                BBRGB16_SET_PIXEL_CLAMPED(bb, bb_rotation, (r)+off_x-tmp_y, (h-r)+off_y+x-1, bb_width, bb_height, &color);
+                BBRGB16_SET_PIXEL_CLAMPED(bb, bb_rotation, (r)+off_x-x, (h-r)+off_y+tmp_y-1, bb_width, bb_height, &color);
+            } else if (bb_type == TYPE_BBRGB24) {
+                const ColorRGB24 color = { .r = c, .g = c, .b = c };
+
+                BBRGB24_SET_PIXEL_CLAMPED(bb, bb_rotation, (w-r)+off_x+x-1, (h-r)+off_y+tmp_y-1, bb_width, bb_height, &color);
+                BBRGB24_SET_PIXEL_CLAMPED(bb, bb_rotation, (w-r)+off_x+tmp_y-1, (h-r)+off_y+x-1, bb_width, bb_height, &color);
+
+                BBRGB24_SET_PIXEL_CLAMPED(bb, bb_rotation, (w-r)+off_x+tmp_y-1, (r)+off_y-x, bb_width, bb_height, &color);
+                BBRGB24_SET_PIXEL_CLAMPED(bb, bb_rotation, (w-r)+off_x+x-1, (r)+off_y-tmp_y, bb_width, bb_height, &color);
+
+                BBRGB24_SET_PIXEL_CLAMPED(bb, bb_rotation, (r)+off_x-x, (r)+off_y-tmp_y, bb_width, bb_height, &color);
+                BBRGB24_SET_PIXEL_CLAMPED(bb, bb_rotation, (r)+off_x-tmp_y, (r)+off_y-x, bb_width, bb_height, &color);
+
+                BBRGB24_SET_PIXEL_CLAMPED(bb, bb_rotation, (r)+off_x-tmp_y, (h-r)+off_y+x-1, bb_width, bb_height, &color);
+                BBRGB24_SET_PIXEL_CLAMPED(bb, bb_rotation, (r)+off_x-x, (h-r)+off_y+tmp_y-1, bb_width, bb_height, &color);
+            } else if (bb_type == TYPE_BBRGB32) {
+                const ColorRGB32 color = { .r = c, .g = c, .b = c, .alpha = 0xFF };
+
+                BBRGB32_SET_PIXEL_CLAMPED(bb, bb_rotation, (w-r)+off_x+x-1, (h-r)+off_y+tmp_y-1, bb_width, bb_height, &color);
+                BBRGB32_SET_PIXEL_CLAMPED(bb, bb_rotation, (w-r)+off_x+tmp_y-1, (h-r)+off_y+x-1, bb_width, bb_height, &color);
+
+                BBRGB32_SET_PIXEL_CLAMPED(bb, bb_rotation, (w-r)+off_x+tmp_y-1, (r)+off_y-x, bb_width, bb_height, &color);
+                BBRGB32_SET_PIXEL_CLAMPED(bb, bb_rotation, (w-r)+off_x+x-1, (r)+off_y-tmp_y, bb_width, bb_height, &color);
+
+                BBRGB32_SET_PIXEL_CLAMPED(bb, bb_rotation, (r)+off_x-x, (r)+off_y-tmp_y, bb_width, bb_height, &color);
+                BBRGB32_SET_PIXEL_CLAMPED(bb, bb_rotation, (r)+off_x-tmp_y, (r)+off_y-x, bb_width, bb_height, &color);
+
+                BBRGB32_SET_PIXEL_CLAMPED(bb, bb_rotation, (r)+off_x-tmp_y, (h-r)+off_y+x-1, bb_width, bb_height, &color);
+                BBRGB32_SET_PIXEL_CLAMPED(bb, bb_rotation, (r)+off_x-x, (h-r)+off_y+tmp_y-1, bb_width, bb_height, &color);
+            }
         }
     }
 }
