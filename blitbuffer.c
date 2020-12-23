@@ -221,7 +221,7 @@ static inline void BBRGB32_SET_PIXEL_CLAMPED(BlitBuffer * restrict bb, int rotat
 }
 
 static inline unsigned int BB_GET_WIDTH(BlitBuffer * restrict bb) {
-    if (GET_BB_ROTATION(bb) & 1 == 0) {
+    if ((GET_BB_ROTATION(bb) & 1U) == 0U) {
         return bb->w;
     } else {
         return bb->h;
@@ -229,7 +229,7 @@ static inline unsigned int BB_GET_WIDTH(BlitBuffer * restrict bb) {
 }
 
 static inline unsigned int BB_GET_HEIGHT(BlitBuffer * restrict bb) {
-    if (GET_BB_ROTATION(bb) & 1 == 0) {
+    if ((GET_BB_ROTATION(bb) & 1U) == 0U) {
         return bb->h;
     } else {
         return bb->w;
@@ -2380,7 +2380,7 @@ void BB_paint_rounded_corner(BlitBuffer * restrict bb, unsigned int off_x, unsig
             }
         }
 
-        for (unsigned int tmp_y = y; tmp_y < y2; tmp_y--) {
+        for (unsigned int tmp_y = y; tmp_y > y2; tmp_y--) {
             if (bb_type == TYPE_BB8) {
                 const Color8 color = { .a = c };
 
