@@ -138,6 +138,8 @@ void BB_invert_blit_from(BlitBuffer * restrict dest, const BlitBuffer * restrict
                          unsigned int offs_x, unsigned int offs_y, unsigned int w, unsigned int h);
 void BB_color_blit_from(BlitBuffer * restrict dest, const BlitBuffer * restrict source, unsigned int dest_x, unsigned int dest_y,
                         unsigned int offs_x, unsigned int offs_y, unsigned int w, unsigned int h, Color8A * restrict color);
+void BB_paint_rounded_corner(BlitBuffer * restrict bb, unsigned int off_x, unsigned int off_y, unsigned int w, unsigned int h,
+                        unsigned int bw, unsigned int r, uint8_t c);
 ]]
 
 -- We'll load it later
@@ -1675,58 +1677,63 @@ function BB_mt.__index:paintRoundedCorner(off_x, off_y, w, h, bw, r, c)
         return
     end
 
-    r = min(r, h, w)
-    if bw > r then
-        bw = r
-    end
-
-    -- for outer circle
-    local x = 0
-    local y = r
-    local delta = 5/4 - r
-
-    -- for inner circle
-    local r2 = r - bw
-    local x2 = 0
-    local y2 = r2
-    local delta2 = 5/4 - r
-
-    while x < y do
-        -- decrease y if we are out of circle
-        x = x + 1
-        if delta > 0 then
-            y = y - 1
-            delta = delta + 2*x - 2*y + 2
-        else
-            delta = delta + 2*x + 1
+    if self:canUseCbb() then
+        cblitbuffer.BB_paint_rounded_corner(ffi.cast(P_BlitBuffer, self),
+            off_x, off_y, w, h, bw, r, c:getColor8().a)
+    else
+        r = min(r, h, w)
+        if bw > r then
+            bw = r
         end
 
-        -- inner circle finished drawing, increase y linearly for filling
-        if x2 > y2 then
-            y2 = y2 + 1
-            x2 = x2 + 1
-        else
-            x2 = x2 + 1
-            if delta2 > 0 then
-                y2 = y2 - 1
-                delta2 = delta2 + 2*x2 - 2*y2 + 2
+        -- for outer circle
+        local x = 0
+        local y = r
+        local delta = 5/4 - r
+
+        -- for inner circle
+        local r2 = r - bw
+        local x2 = 0
+        local y2 = r2
+        local delta2 = 5/4 - r
+
+        while x < y do
+            -- decrease y if we are out of circle
+            x = x + 1
+            if delta > 0 then
+                y = y - 1
+                delta = delta + 2*x - 2*y + 2
             else
-                delta2 = delta2 + 2*x2 + 1
+                delta = delta + 2*x + 1
             end
-        end
 
-        for tmp_y = y, y2+1, -1 do
-            self:setPixelClamped((w-r)+off_x+x-1, (h-r)+off_y+tmp_y-1, c)
-            self:setPixelClamped((w-r)+off_x+tmp_y-1, (h-r)+off_y+x-1, c)
+            -- inner circle finished drawing, increase y linearly for filling
+            if x2 > y2 then
+                y2 = y2 + 1
+                x2 = x2 + 1
+            else
+                x2 = x2 + 1
+                if delta2 > 0 then
+                    y2 = y2 - 1
+                    delta2 = delta2 + 2*x2 - 2*y2 + 2
+                else
+                    delta2 = delta2 + 2*x2 + 1
+                end
+            end
 
-            self:setPixelClamped((w-r)+off_x+tmp_y-1, (r)+off_y-x, c)
-            self:setPixelClamped((w-r)+off_x+x-1, (r)+off_y-tmp_y, c)
+            for tmp_y = y, y2+1, -1 do
+                self:setPixelClamped((w-r)+off_x+x-1, (h-r)+off_y+tmp_y-1, c)
+                self:setPixelClamped((w-r)+off_x+tmp_y-1, (h-r)+off_y+x-1, c)
 
-            self:setPixelClamped((r)+off_x-x, (r)+off_y-tmp_y, c)
-            self:setPixelClamped((r)+off_x-tmp_y, (r)+off_y-x, c)
+                self:setPixelClamped((w-r)+off_x+tmp_y-1, (r)+off_y-x, c)
+                self:setPixelClamped((w-r)+off_x+x-1, (r)+off_y-tmp_y, c)
 
-            self:setPixelClamped((r)+off_x-tmp_y, (h-r)+off_y+x-1, c)
-            self:setPixelClamped((r)+off_x-x, (h-r)+off_y+tmp_y-1, c)
+                self:setPixelClamped((r)+off_x-x, (r)+off_y-tmp_y, c)
+                self:setPixelClamped((r)+off_x-tmp_y, (r)+off_y-x, c)
+
+                self:setPixelClamped((r)+off_x-tmp_y, (h-r)+off_y+x-1, c)
+                self:setPixelClamped((r)+off_x-x, (h-r)+off_y+tmp_y-1, c)
+            end
         end
     end
 end
