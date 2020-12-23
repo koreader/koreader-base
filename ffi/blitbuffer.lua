@@ -145,7 +145,6 @@ void BB_paint_rounded_corner(BlitBuffer * restrict bb, unsigned int off_x, unsig
 -- We'll load it later
 local cblitbuffer
 local use_cblitbuffer
-local fake_invert
 
 -- color value types
 local Color4U = ffi.typeof("Color4U")
