@@ -2181,6 +2181,10 @@ function BB:setUseCBB(enabled)
    use_cblitbuffer = enabled
 end
 
+function BB:getUseCBB(enabled)
+   return use_cblitbuffer
+end
+
 -- Set the actual enable/disable CBB flag and tweak JIT opts accordingly.
 -- Returns the actual state.
 function BB:enableCBB(enabled)
