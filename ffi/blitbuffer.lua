@@ -142,7 +142,7 @@ void BB_color_blit_from(BlitBuffer * restrict dest, const BlitBuffer * restrict 
 
 -- We'll load it later
 local cblitbuffer
-local use_cblitbuffer = false
+local use_cblitbuffer
 
 -- color value types
 local Color4U = ffi.typeof("Color4U")
@@ -1327,7 +1327,11 @@ function BB_mt.__index:fill(value)
 end
 
 function BB4_mt.__index:fill(value)
-    local v = value:getColor4L().a
+    -- Handle invert...
+    local v = value:getColor8()
+    if self:getInverse() == 1 then v = v:invert() end
+
+    v = v:getColor4L().a
     v = bor(lshift(v, 4), v)
     ffi.fill(self.data, self.stride*self.h, v)
 end
@@ -2163,12 +2167,22 @@ BB.TYPE_TO_BPP = {
 }
 
 BB.has_cblitbuffer = false
-if not os.getenv("KO_NO_CBB") then
-    -- Load C blit buffer, we'll decide whether to use it later on
-    BB.has_cblitbuffer, cblitbuffer = pcall(ffi.load, "blitbuffer")
+-- Load the C blitter, and default to using it if available
+BB.has_cblitbuffer, cblitbuffer = pcall(ffi.load, "blitbuffer")
+if BB.has_cblitbuffer then
+    -- If we can, assume we'll want to use it
+    use_cblitbuffer = true
+else
+    use_cblitbuffer = false
 end
 
--- Set the actual enable/disable CBB flag. Returns the flag of whether it is (actually) enabled.
+-- Allow front to update the use_cblitbuffer flag directly, with no checks and no JIT tweaks
+function BB:setUseCBB(enabled)
+   use_cblitbuffer = enabled
+end
+
+-- Set the actual enable/disable CBB flag and tweak JIT opts accordingly.
+-- Returns the actual state.
 function BB:enableCBB(enabled)
     local old = use_cblitbuffer
     use_cblitbuffer = enabled and self.has_cblitbuffer
@@ -2177,6 +2191,7 @@ function BB:enableCBB(enabled)
         --       which'd obviously *murder* performance (to the effect of a soft-lock, essentially).
         --       c.f., koreader/koreader#4137, koreader/koreader#4752, koreader/koreader#4782,
         --       koreader/koreader#6736, #1233
+        --       15 is LuaJIT's default
         local val = use_cblitbuffer and 15 or 45
         jit.opt.start("loopunroll="..tostring(val))
         jit.flush()
@@ -2184,7 +2199,6 @@ function BB:enableCBB(enabled)
     return use_cblitbuffer
 end
 
--- By default it's on (if not blacklisted). But frontend may still decide otherwise before anything is ever drawn.
-BB:enableCBB(true)
+-- NOTE: reader.lua will update the flag on startup, with the least amount of JIT tweaking possible.
 
 return BB
