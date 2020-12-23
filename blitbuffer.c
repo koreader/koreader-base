@@ -84,19 +84,58 @@ static const char*
 #if (defined(__clang__) && (__clang_major__ > 3 || (__clang_major__ == 3 && __clang_minor__ >= 8))) || \
     ((defined(__GNUC__) && !defined(__clang__)) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 9)))
 //#warning "Auto Type :)"
+
 #define DIV_255(V)                                                                                   \
 ({                                                                                                   \
     __auto_type _v = (V) + 128;                                                                      \
     (((_v >> 8U) + _v) >> 8U);                                                                       \
 })
+
+// MIN/MAX with no side-effects,
+// c.f., https://gcc.gnu.org/onlinedocs/cpp/Duplication-of-Side-Effects.html#Duplication-of-Side-Effects
+//     & https://dustri.org/b/min-and-max-macro-considered-harmful.html
+#define MIN(X, Y)                                                                                    \
+({                                                                                                   \
+    __auto_type x_ = (X);                                                                            \
+    __auto_type y_ = (Y);                                                                            \
+    (x_ < y_) ? x_ : y_;                                                                             \
+})
+
+#define MAX(X, Y)                                                                                    \
+({                                                                                                   \
+    __auto_type x__ = (X);                                                                           \
+    __auto_type y__ = (Y);                                                                           \
+    (x__ > y__) ? x__ : y__;                                                                         \
+})
+
 #else
 #warning "TypeOf :("
+
 #define DIV_255(V)                                                                                   \
 ({                                                                                                   \
     typeof (V) _v = (V) + 128;                                                                       \
     (((_v >> 8U) + _v) >> 8U);                                                                       \
 })
+
+#define MIN(X, Y)                                                                                    \
+({                                                                                                   \
+    typeof (X) x_ = (X);                                                                             \
+    typeof (Y) y_ = (Y);                                                                             \
+    (x_ < y_) ? x_ : y_;                                                                             \
+})
+
+#define MAX(X, Y)                                                                                    \
+({                                                                                                   \
+    typeof (X) x__ = (X);                                                                            \
+    typeof (Y) y__ = (Y);                                                                            \
+    (x__ > y__) ? x__ : y__;                                                                         \
+})
+
 #endif
+
+// Likely/Unlikely branch tagging
+#define likely(x)   __builtin_expect(!!(x), 1)
+#define unlikely(x) __builtin_expect(!!(x), 0)
 
 // NOTE: See Pillow's transpose operations, or Qt5 qMemRotate stuff for cache-efficient ways of rotating an image data buffer,
 //       instead of handling the rotation per-pixel, at plotting time.
@@ -2230,5 +2269,69 @@ void BB_color_blit_from(BlitBuffer * restrict dst, const BlitBuffer * restrict s
                 }
             }
             break;
+    }
+}
+
+void BB_paint_rounded_corner(BlitBuffer * restrict bb, unsigned int off_x, unsigned int off_y, unsigned int w, unsigned int h, unsigned int bw, unsigned int r, uint8_t c) {
+    /*
+    if (2*r > h || 2*r > w || r == 0) {
+        // NOP
+        return;
+    }
+    */
+
+    r = MIN(r, h, w);
+    if (bw > r) {
+        bw = r;
+    }
+
+    // for outer circle
+    unsigned int x = 0U;
+    unsigned int y = r;
+    float delta = 5.f/4.f - r;
+
+    // for inner circle
+    const unsigned int r2 = r - bw;
+    unsigned int x2 = 0U;
+    unsigned int y2 = r2;
+    float delta2 = 5.f/4.f - r;
+
+    while (x < y) {
+        // decrease y if we are out of circle
+        x++;
+        if (delta > 0.f) {
+            y--;
+            delta = delta + 2U*x - 2U*y + 2U;
+        } else {
+            delta = delta + 2U*x + 1U;
+        }
+
+        // inner circle finished drawing, increase y linearly for filling
+        if (x2 > y2) {
+            y2++;
+            x2++;
+        } else {
+            x2++;
+            if (delta2 > 0.f) {
+                y2--;
+                delta2 = delta2 + 2U*x2 - 2U*y2 + 2U;
+            } else {
+                delta2 = delta2 + 2U*x2 + 1U;
+            }
+        }
+
+        for (unsigned int tmp_y = y; tmp_y < y2; tmp_y--) {
+            self:setPixelClamped((w-r)+off_x+x-1, (h-r)+off_y+tmp_y-1, c)
+            self:setPixelClamped((w-r)+off_x+tmp_y-1, (h-r)+off_y+x-1, c)
+
+            self:setPixelClamped((w-r)+off_x+tmp_y-1, (r)+off_y-x, c)
+            self:setPixelClamped((w-r)+off_x+x-1, (r)+off_y-tmp_y, c)
+
+            self:setPixelClamped((r)+off_x-x, (r)+off_y-tmp_y, c)
+            self:setPixelClamped((r)+off_x-tmp_y, (r)+off_y-x, c)
+
+            self:setPixelClamped((r)+off_x-tmp_y, (h-r)+off_y+x-1, c)
+            self:setPixelClamped((r)+off_x-x, (h-r)+off_y+tmp_y-1, c)
+        }
     }
 }
