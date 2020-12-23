@@ -679,8 +679,6 @@ if os.getenv("IS_ANDROID") then
     --       too many given the way we handle nightmode on Android
     --       (which is a single invertBlitFrom when we flip the buffer to Android).
     --       Thankfully, the only setter that applies to is setPixel.
-    -- FIXME: Implement paintRounded* in the C BB and get rid of this hack.
-    fake_invert = true
 else
     -- Determine if a pair of buffers can use CBB in relation to each other, or whether CBB is used at all.
     -- Used to skip unsupported modes such as unrelated inverses.
@@ -786,7 +784,7 @@ function BBRGB32_mt.__index.getMyColor(color) return color:getColorRGB32() end
 -- set pixel values
 function BB_mt.__index:setPixel(x, y, color)
     local px, py = self:getPhysicalCoordinates(x, y)
-    if self:getInverse() == 1 and not fake_invert then color = color:invert() end
+    if self:getInverse() == 1 then color = color:invert() end
     self:getPixelP(px, py)[0]:set(color)
 end
 -- Dithering (BB8 only)
