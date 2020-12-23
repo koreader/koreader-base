@@ -671,14 +671,6 @@ end
 if os.getenv("IS_ANDROID") then
     BB_mt.__index.canUseCbbTogether = BB.getUseCBB
     BB_mt.__index.canUseCbb = BB.getUseCBB
-
-    -- NOTE: While we can go through the C BB for *mostly* everything, and as such completely ignore the
-    --       invert flag (because the C BB doesn't support it), a very few things may call setPixel directly,
-    --       outside of blit* methods: most notably the paintRounded* stuff.
-    --       As such, we'll use this flag to bypass the inversion there, otherwise that'll be one inversion
-    --       too many given the way we handle nightmode on Android
-    --       (which is a single invertBlitFrom when we flip the buffer to Android).
-    --       Thankfully, the only setter that applies to is setPixel.
 else
     -- Determine if a pair of buffers can use CBB in relation to each other, or whether CBB is used at all.
     -- Used to skip unsupported modes such as unrelated inverses.
