@@ -663,11 +663,21 @@ function BB_mt.__index:getType()
     return rshift(band(MASK_TYPE, self.config), SHIFT_TYPE)
 end
 
--- NOTE: On Android, we'll wan tto *avoid* the Lua blitter at all costs!
+-- NOTE: On Android, we want to *avoid* the Lua blitter at all costs, *especially* pixel loops,
+--       in order to save precious mcode memory!
+--       c.f., https://github.com/koreader/koreader-base/pull/1263 & co.
 function BB:getUseCBB()
    return use_cblitbuffer
 end
 
+-- In practice, that means that we overload the C BB checks to always return true
+-- (because use_cblitbuffer will be true on Android).
+-- This means that the invert flag is effectively ignored, as it's not supported by the C blitter.
+-- So, how do we handle nightmode, if we can't rely on the Lua fallback?
+-- Well, the flag may be ignored by the blitter, but it's still there:
+-- so, when flipping the buffer for Android's window, ffi/framebuffer_android.lua
+-- just does an invertblitFrom instead of a blitFrom if the screen bb is flagged as inverted,
+-- as the only way this could happen is with nightmode enabled.
 if os.getenv("IS_ANDROID") then
     BB_mt.__index.canUseCbbTogether = BB.getUseCBB
     BB_mt.__index.canUseCbb = BB.getUseCBB
@@ -679,6 +689,7 @@ else
         return use_cblitbuffer and self:getInverse() == other:getInverse()
     end
 
+    -- The C blitter doesn't honor the invert flag, in which case we fall back to Lua.
     function BB_mt.__index:canUseCbb()
         return use_cblitbuffer and self:getInverse() == 0
     end
