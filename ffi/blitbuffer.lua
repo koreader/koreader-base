@@ -660,15 +660,25 @@ function BB_mt.__index:getType()
     return rshift(band(MASK_TYPE, self.config), SHIFT_TYPE)
 end
 
--- Determine if a pair of buffers can use CBB in relation to each other, or whether CBB is used at all.
--- Used to skip unsupported modes such as unrelated inverses.
--- TODO: Possibly some RGB24/32 stuff too?
-function BB_mt.__index:canUseCbbTogether(other)
-    return use_cblitbuffer and self:getInverse() == other:getInverse()
+-- NOTE: On Android, we'll wan tto *avoid* the Lua blitter at all costs!
+function BB:getUseCBB()
+   return use_cblitbuffer
 end
 
-function BB_mt.__index:canUseCbb()
-    return use_cblitbuffer and self:getInverse() == 0
+if os.getenv("IS_ANDROID") then
+    BB_mt.__index.canUseCbbTogether = BB.getUseCBB
+    BB_mt.__index.canUseCbb = BB.getUseCBB
+else
+    -- Determine if a pair of buffers can use CBB in relation to each other, or whether CBB is used at all.
+    -- Used to skip unsupported modes such as unrelated inverses.
+    -- TODO: Possibly some RGB24/32 stuff too?
+    function BB_mt.__index:canUseCbbTogether(other)
+        return use_cblitbuffer and self:getInverse() == other:getInverse()
+    end
+
+    function BB_mt.__index:canUseCbb()
+        return use_cblitbuffer and self:getInverse() == 0
+    end
 end
 
 -- Bits per pixel
@@ -2179,10 +2189,6 @@ end
 -- Allow front to update the use_cblitbuffer flag directly, with no checks and no JIT tweaks
 function BB:setUseCBB(enabled)
    use_cblitbuffer = enabled
-end
-
-function BB:getUseCBB(enabled)
-   return use_cblitbuffer
 end
 
 -- Set the actual enable/disable CBB flag and tweak JIT opts accordingly.
