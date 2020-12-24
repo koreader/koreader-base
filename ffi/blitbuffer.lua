@@ -138,6 +138,8 @@ void BB_invert_blit_from(BlitBuffer * restrict dest, const BlitBuffer * restrict
                          unsigned int offs_x, unsigned int offs_y, unsigned int w, unsigned int h);
 void BB_color_blit_from(BlitBuffer * restrict dest, const BlitBuffer * restrict source, unsigned int dest_x, unsigned int dest_y,
                         unsigned int offs_x, unsigned int offs_y, unsigned int w, unsigned int h, Color8A * restrict color);
+void BB_paint_rounded_corner(BlitBuffer * restrict bb, unsigned int off_x, unsigned int off_y, unsigned int w, unsigned int h,
+                        unsigned int bw, unsigned int r, uint8_t c);
 ]]
 
 -- We'll load it later
@@ -660,15 +662,36 @@ function BB_mt.__index:getType()
     return rshift(band(MASK_TYPE, self.config), SHIFT_TYPE)
 end
 
--- Determine if a pair of buffers can use CBB in relation to each other, or whether CBB is used at all.
--- Used to skip unsupported modes such as unrelated inverses.
--- TODO: Possibly some RGB24/32 stuff too?
-function BB_mt.__index:canUseCbbTogether(other)
-    return use_cblitbuffer and self:getInverse() == other:getInverse()
+-- NOTE: On Android, we want to *avoid* the Lua blitter at all costs, *especially* pixel loops,
+--       in order to save precious mcode memory!
+--       c.f., https://github.com/koreader/koreader-base/pull/1263 & co.
+function BB:getUseCBB()
+   return use_cblitbuffer
 end
 
-function BB_mt.__index:canUseCbb()
-    return use_cblitbuffer and self:getInverse() == 0
+-- In practice, that means that we overload the C BB checks to always return true
+-- (because use_cblitbuffer will be true on Android).
+-- This means that the invert flag is effectively ignored, as it's not supported by the C blitter.
+-- So, how do we handle nightmode, if we can't rely on the Lua fallback?
+-- Well, the flag may be ignored by the blitter, but it's still there:
+-- so, when flipping the buffer for Android's window, ffi/framebuffer_android.lua
+-- just does an invertblitFrom instead of a blitFrom if the screen bb is flagged as inverted,
+-- as the only way this could happen is with nightmode enabled.
+if os.getenv("IS_ANDROID") then
+    BB_mt.__index.canUseCbbTogether = BB.getUseCBB
+    BB_mt.__index.canUseCbb = BB.getUseCBB
+else
+    -- Determine if a pair of buffers can use CBB in relation to each other, or whether CBB is used at all.
+    -- Used to skip unsupported modes such as unrelated inverses.
+    -- TODO: Possibly some RGB24/32 stuff too?
+    function BB_mt.__index:canUseCbbTogether(other)
+        return use_cblitbuffer and self:getInverse() == other:getInverse()
+    end
+
+    -- The C blitter doesn't honor the invert flag, in which case we fall back to Lua.
+    function BB_mt.__index:canUseCbb()
+        return use_cblitbuffer and self:getInverse() == 0
+    end
 end
 
 -- Bits per pixel
@@ -1654,58 +1677,63 @@ function BB_mt.__index:paintRoundedCorner(off_x, off_y, w, h, bw, r, c)
         return
     end
 
-    r = min(r, h, w)
-    if bw > r then
-        bw = r
-    end
-
-    -- for outer circle
-    local x = 0
-    local y = r
-    local delta = 5/4 - r
-
-    -- for inner circle
-    local r2 = r - bw
-    local x2 = 0
-    local y2 = r2
-    local delta2 = 5/4 - r
-
-    while x < y do
-        -- decrease y if we are out of circle
-        x = x + 1
-        if delta > 0 then
-            y = y - 1
-            delta = delta + 2*x - 2*y + 2
-        else
-            delta = delta + 2*x + 1
+    if self:canUseCbb() then
+        cblitbuffer.BB_paint_rounded_corner(ffi.cast(P_BlitBuffer, self),
+            off_x, off_y, w, h, bw, r, c:getColor8().a)
+    else
+        r = min(r, h, w)
+        if bw > r then
+            bw = r
         end
 
-        -- inner circle finished drawing, increase y linearly for filling
-        if x2 > y2 then
-            y2 = y2 + 1
-            x2 = x2 + 1
-        else
-            x2 = x2 + 1
-            if delta2 > 0 then
-                y2 = y2 - 1
-                delta2 = delta2 + 2*x2 - 2*y2 + 2
+        -- for outer circle
+        local x = 0
+        local y = r
+        local delta = 5/4 - r
+
+        -- for inner circle
+        local r2 = r - bw
+        local x2 = 0
+        local y2 = r2
+        local delta2 = 5/4 - r
+
+        while x < y do
+            -- decrease y if we are out of circle
+            x = x + 1
+            if delta > 0 then
+                y = y - 1
+                delta = delta + 2*x - 2*y + 2
             else
-                delta2 = delta2 + 2*x2 + 1
+                delta = delta + 2*x + 1
             end
-        end
 
-        for tmp_y = y, y2+1, -1 do
-            self:setPixelClamped((w-r)+off_x+x-1, (h-r)+off_y+tmp_y-1, c)
-            self:setPixelClamped((w-r)+off_x+tmp_y-1, (h-r)+off_y+x-1, c)
+            -- inner circle finished drawing, increase y linearly for filling
+            if x2 > y2 then
+                y2 = y2 + 1
+                x2 = x2 + 1
+            else
+                x2 = x2 + 1
+                if delta2 > 0 then
+                    y2 = y2 - 1
+                    delta2 = delta2 + 2*x2 - 2*y2 + 2
+                else
+                    delta2 = delta2 + 2*x2 + 1
+                end
+            end
 
-            self:setPixelClamped((w-r)+off_x+tmp_y-1, (r)+off_y-x, c)
-            self:setPixelClamped((w-r)+off_x+x-1, (r)+off_y-tmp_y, c)
+            for tmp_y = y, y2+1, -1 do
+                self:setPixelClamped((w-r)+off_x+x-1, (h-r)+off_y+tmp_y-1, c)
+                self:setPixelClamped((w-r)+off_x+tmp_y-1, (h-r)+off_y+x-1, c)
 
-            self:setPixelClamped((r)+off_x-x, (r)+off_y-tmp_y, c)
-            self:setPixelClamped((r)+off_x-tmp_y, (r)+off_y-x, c)
+                self:setPixelClamped((w-r)+off_x+tmp_y-1, (r)+off_y-x, c)
+                self:setPixelClamped((w-r)+off_x+x-1, (r)+off_y-tmp_y, c)
 
-            self:setPixelClamped((r)+off_x-tmp_y, (h-r)+off_y+x-1, c)
-            self:setPixelClamped((r)+off_x-x, (h-r)+off_y+tmp_y-1, c)
+                self:setPixelClamped((r)+off_x-x, (r)+off_y-tmp_y, c)
+                self:setPixelClamped((r)+off_x-tmp_y, (r)+off_y-x, c)
+
+                self:setPixelClamped((r)+off_x-tmp_y, (h-r)+off_y+x-1, c)
+                self:setPixelClamped((r)+off_x-x, (h-r)+off_y+tmp_y-1, c)
+            end
         end
     end
 end
