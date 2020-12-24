@@ -829,7 +829,7 @@ LUACOMPAT52=$(CURDIR)/$(OUTPUT_DIR)/libs/libluacompat52.so
 
 ZMQ_BUILD_DIR=$(THIRDPARTY_DIR)/libzmq/build/$(MACHINE)
 ZMQ_DIR=$(CURDIR)/$(ZMQ_BUILD_DIR)/libzmq-prefix/src/libzmq-build
-ZMQ_LIB_EXT=$(if $(WIN32),.dll,$(if $(DARWIN),.4.dylib,.so.4))
+ZMQ_LIB_EXT=$(if $(WIN32),.dll,$(if $(DARWIN),.5.dylib,.so.5))
 ZMQ_LIB=$(OUTPUT_DIR)/libs/libzmq$(ZMQ_LIB_EXT)
 CZMQ_BUILD_DIR=$(THIRDPARTY_DIR)/czmq/build/$(MACHINE)
 CZMQ_DIR=$(CURDIR)/$(CZMQ_BUILD_DIR)/czmq-prefix/src/czmq-build
