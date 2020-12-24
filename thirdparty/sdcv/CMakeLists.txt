@@ -70,7 +70,7 @@ set(PATCH_CMD "${KO_PATCH_SH} ${CMAKE_CURRENT_SOURCE_DIR}/sdcv.patch")
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
     https://github.com/Dushistov/sdcv.git
-    v0.5.2
+    4ae420734990ab9f5ccc038262368256b9323f4a
     ${SOURCE_DIR}
 )
 
@@ -79,7 +79,7 @@ download_project(
     GIT_REPOSITORY
     https://github.com/Dushistov/sdcv.git
     GIT_TAG
-    v0.5.2
+    4ae420734990ab9f5ccc038262368256b9323f4a
     #DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
     PATCH_COMMAND COMMAND ${PATCH_CMD}
 )
