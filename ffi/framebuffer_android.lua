@@ -129,7 +129,17 @@ function framebuffer:_updateWindow()
         -- All we need is to do is simply clone the invert and rotation settings, so that the blit below becomes 1:1 copy.
         bb:setInverse(ext_bb:getInverse())
         bb:setRotation(ext_bb:getRotation())
-        bb:blitFrom(ext_bb)
+
+        -- getUseCBB should *always* be true on Android, but let's be thorough...
+        if bb:getInverse() == 1 and BB:getUseCBB() then
+            -- If we're using the CBB (which we should), the invert flag has been thoroughly ignored up until now,
+            -- so, simply invert everything *now* ;).
+            -- The idea is that we absolutely want to avoid the Lua BB on Android, because it is *extremely* erratic,
+            -- because of the mcode alloc issues...
+            bb:invertblitFrom(ext_bb)
+        else
+            bb:blitFrom(ext_bb)
+        end
     end
 
     android.lib.ANativeWindow_unlockAndPost(android.app.window);

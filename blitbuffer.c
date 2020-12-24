@@ -84,19 +84,58 @@ static const char*
 #if (defined(__clang__) && (__clang_major__ > 3 || (__clang_major__ == 3 && __clang_minor__ >= 8))) || \
     ((defined(__GNUC__) && !defined(__clang__)) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 9)))
 //#warning "Auto Type :)"
+
 #define DIV_255(V)                                                                                   \
 ({                                                                                                   \
     __auto_type _v = (V) + 128;                                                                      \
     (((_v >> 8U) + _v) >> 8U);                                                                       \
 })
+
+// MIN/MAX with no side-effects,
+// c.f., https://gcc.gnu.org/onlinedocs/cpp/Duplication-of-Side-Effects.html#Duplication-of-Side-Effects
+//     & https://dustri.org/b/min-and-max-macro-considered-harmful.html
+#define MIN(X, Y)                                                                                    \
+({                                                                                                   \
+    __auto_type x_ = (X);                                                                            \
+    __auto_type y_ = (Y);                                                                            \
+    (x_ < y_) ? x_ : y_;                                                                             \
+})
+
+#define MAX(X, Y)                                                                                    \
+({                                                                                                   \
+    __auto_type x__ = (X);                                                                           \
+    __auto_type y__ = (Y);                                                                           \
+    (x__ > y__) ? x__ : y__;                                                                         \
+})
+
 #else
 #warning "TypeOf :("
+
 #define DIV_255(V)                                                                                   \
 ({                                                                                                   \
     typeof (V) _v = (V) + 128;                                                                       \
     (((_v >> 8U) + _v) >> 8U);                                                                       \
 })
+
+#define MIN(X, Y)                                                                                    \
+({                                                                                                   \
+    typeof (X) x_ = (X);                                                                             \
+    typeof (Y) y_ = (Y);                                                                             \
+    (x_ < y_) ? x_ : y_;                                                                             \
+})
+
+#define MAX(X, Y)                                                                                    \
+({                                                                                                   \
+    typeof (X) x__ = (X);                                                                            \
+    typeof (Y) y__ = (Y);                                                                            \
+    (x__ > y__) ? x__ : y__;                                                                         \
+})
+
 #endif
+
+// Likely/Unlikely branch tagging
+#define likely(x)   __builtin_expect(!!(x), 1)
+#define unlikely(x) __builtin_expect(!!(x), 0)
 
 // NOTE: See Pillow's transpose operations, or Qt5 qMemRotate stuff for cache-efficient ways of rotating an image data buffer,
 //       instead of handling the rotation per-pixel, at plotting time.
@@ -141,6 +180,61 @@ static const char*
     } \
 })
 
+static inline void BB8_SET_PIXEL_CLAMPED(BlitBuffer * restrict bb, int rotation, unsigned int x, unsigned int y, unsigned int width, unsigned int height, const Color8 * restrict color) {
+    if (likely(x >= 0U && x < width && y >= 0 && y < height)) {
+        Color8 * restrict pixel;
+        BB_GET_PIXEL(bb, rotation, Color8, x, y, &pixel);
+        *pixel = *color;
+    }
+}
+
+static inline void BB8A_SET_PIXEL_CLAMPED(BlitBuffer * restrict bb, int rotation, unsigned int x, unsigned int y, unsigned int width, unsigned int height, const Color8A * restrict color) {
+    if (likely(x >= 0U && x < width && y >= 0U && y < height)) {
+        Color8A * restrict pixel;
+        BB_GET_PIXEL(bb, rotation, Color8A, x, y, &pixel);
+        *pixel = *color;
+    }
+}
+
+static inline void BBRGB16_SET_PIXEL_CLAMPED(BlitBuffer * restrict bb, int rotation, unsigned int x, unsigned int y, unsigned int width, unsigned int height, const ColorRGB16 * restrict color) {
+    if (likely(x >= 0U && x < width && y >= 0U && y < height)) {
+        ColorRGB16 * restrict pixel;
+        BB_GET_PIXEL(bb, rotation, ColorRGB16, x, y, &pixel);
+        *pixel = *color;
+    }
+}
+
+static inline void BBRGB24_SET_PIXEL_CLAMPED(BlitBuffer * restrict bb, int rotation, unsigned int x, unsigned int y, unsigned int width, unsigned int height, const ColorRGB24 * restrict color) {
+    if (likely(x >= 0U && x < width && y >= 0U && y < height)) {
+        ColorRGB24 * restrict pixel;
+        BB_GET_PIXEL(bb, rotation, ColorRGB24, x, y, &pixel);
+        *pixel = *color;
+    }
+}
+
+static inline void BBRGB32_SET_PIXEL_CLAMPED(BlitBuffer * restrict bb, int rotation, unsigned int x, unsigned int y, unsigned int width, unsigned int height, const ColorRGB32 * restrict color) {
+    if (likely(x >= 0U && x < width && y >= 0U && y < height)) {
+        ColorRGB32 * restrict pixel;
+        BB_GET_PIXEL(bb, rotation, ColorRGB32, x, y, &pixel);
+        *pixel = *color;
+    }
+}
+
+static inline unsigned int BB_GET_WIDTH(BlitBuffer * restrict bb) {
+    if ((GET_BB_ROTATION(bb) & 1U) == 0U) {
+        return bb->w;
+    } else {
+        return bb->h;
+    }
+}
+
+static inline unsigned int BB_GET_HEIGHT(BlitBuffer * restrict bb) {
+    if ((GET_BB_ROTATION(bb) & 1U) == 0U) {
+        return bb->h;
+    } else {
+        return bb->w;
+    }
+}
 
 void BB_fill(BlitBuffer * restrict bb, uint8_t v) {
     // Handle any target pitch properly
@@ -2230,5 +2324,134 @@ void BB_color_blit_from(BlitBuffer * restrict dst, const BlitBuffer * restrict s
                 }
             }
             break;
+    }
+}
+
+void BB_paint_rounded_corner(BlitBuffer * restrict bb, unsigned int off_x, unsigned int off_y, unsigned int w, unsigned int h, unsigned int bw, unsigned int r, uint8_t c) {
+    /*
+    if (2*r > h || 2*r > w || r == 0) {
+        // NOP
+        return;
+    }
+    */
+
+    r = MIN(r, MIN(h, w));
+    if (bw > r) {
+        bw = r;
+    }
+
+    // for outer circle
+    unsigned int x = 0U;
+    unsigned int y = r;
+    float delta = 5.f/4.f - r;
+
+    // for inner circle
+    const unsigned int r2 = r - bw;
+    unsigned int x2 = 0U;
+    unsigned int y2 = r2;
+    float delta2 = 5.f/4.f - r;
+
+    const int bb_type = GET_BB_TYPE(bb);
+    const int bb_rotation = GET_BB_ROTATION(bb);
+    const unsigned int bb_width = BB_GET_WIDTH(bb);
+    const unsigned int bb_height = BB_GET_HEIGHT(bb);
+
+    while (x < y) {
+        // decrease y if we are out of circle
+        x++;
+        if (delta > 0.f) {
+            y--;
+            delta = delta + 2U*x - 2U*y + 2U;
+        } else {
+            delta = delta + 2U*x + 1U;
+        }
+
+        // inner circle finished drawing, increase y linearly for filling
+        if (x2 > y2) {
+            y2++;
+            x2++;
+        } else {
+            x2++;
+            if (delta2 > 0.f) {
+                y2--;
+                delta2 = delta2 + 2U*x2 - 2U*y2 + 2U;
+            } else {
+                delta2 = delta2 + 2U*x2 + 1U;
+            }
+        }
+
+        for (unsigned int tmp_y = y; tmp_y > y2; tmp_y--) {
+            if (bb_type == TYPE_BB8) {
+                const Color8 color = { .a = c };
+
+                BB8_SET_PIXEL_CLAMPED(bb, bb_rotation, (w-r)+off_x+x-1, (h-r)+off_y+tmp_y-1, bb_width, bb_height, &color);
+                BB8_SET_PIXEL_CLAMPED(bb, bb_rotation, (w-r)+off_x+tmp_y-1, (h-r)+off_y+x-1, bb_width, bb_height, &color);
+
+                BB8_SET_PIXEL_CLAMPED(bb, bb_rotation, (w-r)+off_x+tmp_y-1, (r)+off_y-x, bb_width, bb_height, &color);
+                BB8_SET_PIXEL_CLAMPED(bb, bb_rotation, (w-r)+off_x+x-1, (r)+off_y-tmp_y, bb_width, bb_height, &color);
+
+                BB8_SET_PIXEL_CLAMPED(bb, bb_rotation, (r)+off_x-x, (r)+off_y-tmp_y, bb_width, bb_height, &color);
+                BB8_SET_PIXEL_CLAMPED(bb, bb_rotation, (r)+off_x-tmp_y, (r)+off_y-x, bb_width, bb_height, &color);
+
+                BB8_SET_PIXEL_CLAMPED(bb, bb_rotation, (r)+off_x-tmp_y, (h-r)+off_y+x-1, bb_width, bb_height, &color);
+                BB8_SET_PIXEL_CLAMPED(bb, bb_rotation, (r)+off_x-x, (h-r)+off_y+tmp_y-1, bb_width, bb_height, &color);
+            } else if (bb_type == TYPE_BB8A) {
+                const Color8A color = { .a = c, .alpha = 0xFF };
+
+                BB8A_SET_PIXEL_CLAMPED(bb, bb_rotation, (w-r)+off_x+x-1, (h-r)+off_y+tmp_y-1, bb_width, bb_height, &color);
+                BB8A_SET_PIXEL_CLAMPED(bb, bb_rotation, (w-r)+off_x+tmp_y-1, (h-r)+off_y+x-1, bb_width, bb_height, &color);
+
+                BB8A_SET_PIXEL_CLAMPED(bb, bb_rotation, (w-r)+off_x+tmp_y-1, (r)+off_y-x, bb_width, bb_height, &color);
+                BB8A_SET_PIXEL_CLAMPED(bb, bb_rotation, (w-r)+off_x+x-1, (r)+off_y-tmp_y, bb_width, bb_height, &color);
+
+                BB8A_SET_PIXEL_CLAMPED(bb, bb_rotation, (r)+off_x-x, (r)+off_y-tmp_y, bb_width, bb_height, &color);
+                BB8A_SET_PIXEL_CLAMPED(bb, bb_rotation, (r)+off_x-tmp_y, (r)+off_y-x, bb_width, bb_height, &color);
+
+                BB8A_SET_PIXEL_CLAMPED(bb, bb_rotation, (r)+off_x-tmp_y, (h-r)+off_y+x-1, bb_width, bb_height, &color);
+                BB8A_SET_PIXEL_CLAMPED(bb, bb_rotation, (r)+off_x-x, (h-r)+off_y+tmp_y-1, bb_width, bb_height, &color);
+            } else if (bb_type == TYPE_BBRGB16) {
+                const ColorRGB16 color = { .v = RGB_To_RGB16(c, c, c) };
+
+                BBRGB16_SET_PIXEL_CLAMPED(bb, bb_rotation, (w-r)+off_x+x-1, (h-r)+off_y+tmp_y-1, bb_width, bb_height, &color);
+                BBRGB16_SET_PIXEL_CLAMPED(bb, bb_rotation, (w-r)+off_x+tmp_y-1, (h-r)+off_y+x-1, bb_width, bb_height, &color);
+
+                BBRGB16_SET_PIXEL_CLAMPED(bb, bb_rotation, (w-r)+off_x+tmp_y-1, (r)+off_y-x, bb_width, bb_height, &color);
+                BBRGB16_SET_PIXEL_CLAMPED(bb, bb_rotation, (w-r)+off_x+x-1, (r)+off_y-tmp_y, bb_width, bb_height, &color);
+
+                BBRGB16_SET_PIXEL_CLAMPED(bb, bb_rotation, (r)+off_x-x, (r)+off_y-tmp_y, bb_width, bb_height, &color);
+                BBRGB16_SET_PIXEL_CLAMPED(bb, bb_rotation, (r)+off_x-tmp_y, (r)+off_y-x, bb_width, bb_height, &color);
+
+                BBRGB16_SET_PIXEL_CLAMPED(bb, bb_rotation, (r)+off_x-tmp_y, (h-r)+off_y+x-1, bb_width, bb_height, &color);
+                BBRGB16_SET_PIXEL_CLAMPED(bb, bb_rotation, (r)+off_x-x, (h-r)+off_y+tmp_y-1, bb_width, bb_height, &color);
+            } else if (bb_type == TYPE_BBRGB24) {
+                const ColorRGB24 color = { .r = c, .g = c, .b = c };
+
+                BBRGB24_SET_PIXEL_CLAMPED(bb, bb_rotation, (w-r)+off_x+x-1, (h-r)+off_y+tmp_y-1, bb_width, bb_height, &color);
+                BBRGB24_SET_PIXEL_CLAMPED(bb, bb_rotation, (w-r)+off_x+tmp_y-1, (h-r)+off_y+x-1, bb_width, bb_height, &color);
+
+                BBRGB24_SET_PIXEL_CLAMPED(bb, bb_rotation, (w-r)+off_x+tmp_y-1, (r)+off_y-x, bb_width, bb_height, &color);
+                BBRGB24_SET_PIXEL_CLAMPED(bb, bb_rotation, (w-r)+off_x+x-1, (r)+off_y-tmp_y, bb_width, bb_height, &color);
+
+                BBRGB24_SET_PIXEL_CLAMPED(bb, bb_rotation, (r)+off_x-x, (r)+off_y-tmp_y, bb_width, bb_height, &color);
+                BBRGB24_SET_PIXEL_CLAMPED(bb, bb_rotation, (r)+off_x-tmp_y, (r)+off_y-x, bb_width, bb_height, &color);
+
+                BBRGB24_SET_PIXEL_CLAMPED(bb, bb_rotation, (r)+off_x-tmp_y, (h-r)+off_y+x-1, bb_width, bb_height, &color);
+                BBRGB24_SET_PIXEL_CLAMPED(bb, bb_rotation, (r)+off_x-x, (h-r)+off_y+tmp_y-1, bb_width, bb_height, &color);
+            } else if (bb_type == TYPE_BBRGB32) {
+                const ColorRGB32 color = { .r = c, .g = c, .b = c, .alpha = 0xFF };
+
+                BBRGB32_SET_PIXEL_CLAMPED(bb, bb_rotation, (w-r)+off_x+x-1, (h-r)+off_y+tmp_y-1, bb_width, bb_height, &color);
+                BBRGB32_SET_PIXEL_CLAMPED(bb, bb_rotation, (w-r)+off_x+tmp_y-1, (h-r)+off_y+x-1, bb_width, bb_height, &color);
+
+                BBRGB32_SET_PIXEL_CLAMPED(bb, bb_rotation, (w-r)+off_x+tmp_y-1, (r)+off_y-x, bb_width, bb_height, &color);
+                BBRGB32_SET_PIXEL_CLAMPED(bb, bb_rotation, (w-r)+off_x+x-1, (r)+off_y-tmp_y, bb_width, bb_height, &color);
+
+                BBRGB32_SET_PIXEL_CLAMPED(bb, bb_rotation, (r)+off_x-x, (r)+off_y-tmp_y, bb_width, bb_height, &color);
+                BBRGB32_SET_PIXEL_CLAMPED(bb, bb_rotation, (r)+off_x-tmp_y, (r)+off_y-x, bb_width, bb_height, &color);
+
+                BBRGB32_SET_PIXEL_CLAMPED(bb, bb_rotation, (r)+off_x-tmp_y, (h-r)+off_y+x-1, bb_width, bb_height, &color);
+                BBRGB32_SET_PIXEL_CLAMPED(bb, bb_rotation, (r)+off_x-x, (h-r)+off_y+tmp_y-1, bb_width, bb_height, &color);
+            }
+        }
     }
 }
