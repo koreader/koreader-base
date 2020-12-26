@@ -2,10 +2,11 @@ diff --git a/src/sdcv.cpp b/src/sdcv.cpp
 index 0c75eb1..2e40b6d 100644
 --- a/src/sdcv.cpp
 +++ b/src/sdcv.cpp
-@@ -62,7 +62,10 @@ using StrArr = ResourceWrapper<gchar *, gchar *, free_str_array>;
+@@ -66,7 +66,10 @@ using StrArr = ResourceWrapper<gchar *, gchar *, free_str_array>;
  static void list_dicts(const std::list<std::string> &dicts_dir_list, bool use_json);
  
- int main(int argc, char *argv[]) try {
+ int main(int argc, char *argv[])
+ try {
 -    setlocale(LC_ALL, "");
 +    // LC_ALL and LANG may be empty on Android, and GLib would consider locale to be 'C'
 +    // and try to convert our provided utf8 to utf8 which would fail
