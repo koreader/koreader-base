@@ -44,7 +44,7 @@ if($ENV{ANDROID})
     set(CFG_CMD "${CFG_CMD} && ${ISED} 's|soname_spec=.*|soname_spec=\"\\\\\$libname\\\\\$release\\\\\$shared_ext\\\\\$major\"|' libtool")
 endif()
 
-set(HB_VER 2.7.3)
+set(HB_VER 2.7.4)
 
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
