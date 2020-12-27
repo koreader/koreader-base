@@ -676,7 +676,7 @@ ZLIB_STATIC=$(ZLIB_DIR)/libz.a
 ZSTD_BUILD_DIR=$(THIRDPARTY_DIR)/zstd/build/$(MACHINE)
 ZSTD_DIR=$(CURDIR)/$(ZSTD_BUILD_DIR)/zstd-prefix/src/zstd
 ZSTD_DESTDIR=$(CURDIR)/$(ZSTD_BUILD_DIR)/zstd-prefix/src/zstd-build
-ZSTD_LIB_EXT=$(if $(WIN32),.dll,$(if $(DARWIN),.1.dylib,$(if $(ANDROID),.so,.so.1)))
+ZSTD_LIB_EXT=$(if $(WIN32),.dll,$(if $(DARWIN),.1.dylib,.so.1))
 ZSTD_LIB=$(OUTPUT_DIR)/libs/libzstd$(ZSTD_LIB_EXT)
 
 MINIZIP_BUILD_DIR=$(THIRDPARTY_DIR)/minizip/build/$(MACHINE)
@@ -691,7 +691,7 @@ MUPDF_LIB=$(OUTPUT_DIR)/libs/libmupdf$(LIB_EXT)
 
 DJVULIBRE_BUILD_DIR=$(THIRDPARTY_DIR)/djvulibre/build/$(MACHINE)
 DJVULIBRE_DIR=$(CURDIR)/$(DJVULIBRE_BUILD_DIR)/djvulibre-prefix/src/djvulibre
-DJVULIBRE_LIB_EXT=$(if $(WIN32),-21.dll,$(if $(DARWIN),.21.dylib,$(if $(ANDROID),.so,.so.21)))
+DJVULIBRE_LIB_EXT=$(if $(WIN32),-21.dll,$(if $(DARWIN),.21.dylib,.so.21))
 DJVULIBRE_LIB=$(OUTPUT_DIR)/libs/libdjvulibre$(DJVULIBRE_LIB_EXT)
 DJVULIBRE_LIB_DIR=$(DJVULIBRE_DIR)/libdjvu/.libs
 
@@ -721,48 +721,48 @@ TESSERACT_DIR=$(CURDIR)/$(TESSERACT_BUILD_DIR)/tesseract-prefix/src/tesseract-bu
 
 K2PDFOPT_BUILD_DIR=$(THIRDPARTY_DIR)/libk2pdfopt/build/$(MACHINE)
 K2PDFOPT_DIR=$(CURDIR)/$(K2PDFOPT_BUILD_DIR)/libk2pdfopt-prefix/src/libk2pdfopt
-K2PDFOPT_LIB_EXT=$(if $(WIN32),-2.dll,$(if $(DARWIN),.2.dylib,$(if $(ANDROID),.so,.so.2)))
+K2PDFOPT_LIB_EXT=$(if $(WIN32),-2.dll,$(if $(DARWIN),.2.dylib,.so.2))
 K2PDFOPT_LIB=$(OUTPUT_DIR)/libs/libk2pdfopt$(K2PDFOPT_LIB_EXT)
 K2PDFOPT_CFLAGS=-I$(K2PDFOPT_DIR)/k2pdfopt/willuslib \
 		-I$(K2PDFOPT_DIR)/k2pdfopt/k2pdfoptlib -I$(K2PDFOPT_DIR) \
 		-I$(K2PDFOPT_DIR)/k2pdfopt/include_mod
 
-FREETYPE_LIB_EXT=$(if $(WIN32),-6.dll,$(if $(DARWIN),.6.dylib,$(if $(ANDROID),.so,.so.6)))
+FREETYPE_LIB_EXT=$(if $(WIN32),-6.dll,$(if $(DARWIN),.6.dylib,.so.6))
 FREETYPE_LIB=$(OUTPUT_DIR)/libs/libfreetype$(FREETYPE_LIB_EXT)
 FREETYPE_BUILD_DIR=$(THIRDPARTY_DIR)/freetype2/build/$(MACHINE)
 FREETYPE_DIR=$(CURDIR)/$(FREETYPE_BUILD_DIR)/freetype2-prefix/src/freetype2-build
 FREETYPE_LIBDIR=$(FREETYPE_DIR)/$(if $(WIN32),bin,lib)
 FREETYPE_INC=$(FREETYPE_DIR)/include/freetype2
 
-HARFBUZZ_LIB_EXT=$(if $(WIN32),-0.dll,$(if $(DARWIN),.0.dylib,$(if $(ANDROID),.so,.so.0)))
+HARFBUZZ_LIB_EXT=$(if $(WIN32),-0.dll,$(if $(DARWIN),.0.dylib,.so.0))
 HARFBUZZ_LIB=$(OUTPUT_DIR)/libs/libharfbuzz$(HARFBUZZ_LIB_EXT)
 HARFBUZZ_BUILD_DIR=$(THIRDPARTY_DIR)/harfbuzz/build/$(MACHINE)
 HARFBUZZ_DIR=$(CURDIR)/$(HARFBUZZ_BUILD_DIR)/harfbuzz-prefix/src/harfbuzz-build
 HARFBUZZ_INC=$(HARFBUZZ_DIR)/include/harfbuzz
 
-FRIBIDI_LIB_EXT=$(if $(WIN32),-0.dll,$(if $(DARWIN),.0.dylib,$(if $(ANDROID),.so,.so.0)))
+FRIBIDI_LIB_EXT=$(if $(WIN32),-0.dll,$(if $(DARWIN),.0.dylib,.so.0))
 FRIBIDI_LIB=$(OUTPUT_DIR)/libs/libfribidi$(FRIBIDI_LIB_EXT)
 FRIBIDI_BUILD_DIR=$(THIRDPARTY_DIR)/fribidi/build/$(MACHINE)
 FRIBIDI_DIR=$(CURDIR)/$(FRIBIDI_BUILD_DIR)/fribidi-prefix/src/fribidi-build
 
-LIBUNIBREAK_LIB_EXT=$(if $(WIN32),-3.dll,$(if $(DARWIN),.3.dylib,$(if $(ANDROID),.so,.so.3)))
+LIBUNIBREAK_LIB_EXT=$(if $(WIN32),-3.dll,$(if $(DARWIN),.3.dylib,.so.3))
 LIBUNIBREAK_LIB=$(OUTPUT_DIR)/libs/libunibreak$(LIBUNIBREAK_LIB_EXT)
 LIBUNIBREAK_BUILD_DIR=$(THIRDPARTY_DIR)/libunibreak/build/$(MACHINE)
 LIBUNIBREAK_DIR=$(CURDIR)/$(LIBUNIBREAK_BUILD_DIR)/libunibreak-prefix/src/libunibreak-build
 
-UTF8PROC_LIB_EXT=$(if $(WIN32),-2.dll,$(if $(DARWIN),.2.dylib,$(if $(ANDROID),.so,.so.2)))
+UTF8PROC_LIB_EXT=$(if $(WIN32),-2.dll,$(if $(DARWIN),.2.dylib,.so.2))
 UTF8PROC_LIB=$(OUTPUT_DIR)/libs/libutf8proc$(UTF8PROC_LIB_EXT)
 UTF8PROC_BUILD_DIR=$(THIRDPARTY_DIR)/utf8proc/build/$(MACHINE)
 UTF8PROC_DIR=$(CURDIR)/$(UTF8PROC_BUILD_DIR)/utf8proc-prefix/src/utf8proc
 
-JPEG_LIB_EXT=$(if $(WIN32),-8.dll,$(if $(DARWIN),.8.dylib,$(if $(ANDROID),.so,.so.8)))
+JPEG_LIB_EXT=$(if $(WIN32),-8.dll,$(if $(DARWIN),.8.dylib,.so.8))
 JPEG_LIB=$(OUTPUT_DIR)/libs/libjpeg$(JPEG_LIB_EXT)
 TURBOJPEG_LIB=$(OUTPUT_DIR)/libs/libturbojpeg$(if $(WIN32),.dll,$(if $(DARWIN),.dylib,.so))
 JPEG_BUILD_DIR=$(THIRDPARTY_DIR)/libjpeg-turbo/build/$(MACHINE)
 JPEG_DIR=$(CURDIR)/$(JPEG_BUILD_DIR)/libjpeg-turbo-prefix/src/libjpeg-turbo-build
 JPEG_LIBDIR=$(JPEG_DIR)/$(if $(WIN32),,lib)
 
-PNG_LIB_EXT=$(if $(WIN32),-16.dll,$(if $(DARWIN),.16.dylib,$(if $(ANDROID),.so,.so.16)))
+PNG_LIB_EXT=$(if $(WIN32),-16.dll,$(if $(DARWIN),.16.dylib,.so.16))
 PNG_LIB=$(OUTPUT_DIR)/libs/libpng16$(PNG_LIB_EXT)
 PNG_BUILD_DIR=$(THIRDPARTY_DIR)/libpng/build/$(MACHINE)
 PNG_DIR=$(CURDIR)/$(PNG_BUILD_DIR)/libpng-prefix/src/libpng-build
@@ -771,7 +771,7 @@ LODEPNG_LIB=$(OUTPUT_DIR)/libs/liblodepng$(LIB_EXT)
 LODEPNG_BUILD_DIR=$(THIRDPARTY_DIR)/lodepng/build/$(MACHINE)
 LODEPNG_DIR=$(CURDIR)/$(LODEPNG_BUILD_DIR)/lodepng-prefix/src/lodepng
 
-GIF_LIB_EXT=$(if $(WIN32),-7.dll,$(if $(DARWIN),.7.dylib,$(if $(ANDROID),.so,.so.7)))
+GIF_LIB_EXT=$(if $(WIN32),-7.dll,$(if $(DARWIN),.7.dylib,.so.7))
 GIF_LIB=$(OUTPUT_DIR)/libs/libgif$(GIF_LIB_EXT)
 GIF_BUILD_DIR=$(THIRDPARTY_DIR)/giflib/build/$(MACHINE)
 GIF_DIR=$(CURDIR)/$(GIF_BUILD_DIR)/giflib-prefix/src/giflib-build
@@ -826,18 +826,18 @@ LIBICONV=$(LIBICONV_DIR)/lib/libiconv.a
 LIBGETTEXT=$(GETTEXT_DIR)/lib/libintl.a
 GLIB=$(GLIB_DIR)/lib/libglib-2.0$(if $(DARWIN),.dylib,.so.0)
 GLIB_STATIC=$(GLIB_DIR)/lib/libglib-2.0.a
-ZLIB=$(OUTPUT_DIR)/libs/$(if $(WIN32),zlib1.dll,$(if $(DARWIN),libz.1.dylib,$(if $(ANDROID),libz.so,libz.so.1)))
+ZLIB=$(OUTPUT_DIR)/libs/$(if $(WIN32),zlib1.dll,$(if $(DARWIN),libz.1.dylib,libz.so.1))
 
-LEPT_LIB_EXT=$(if $(WIN32),-5.dll,$(if $(DARWIN),.5.dylib,$(if $(ANDROID),.so,.so.5)))
+LEPT_LIB_EXT=$(if $(WIN32),-5.dll,$(if $(DARWIN),.5.dylib,.so.5))
 LEPTONICA_LIB=$(OUTPUT_DIR)/libs/liblept$(LEPT_LIB_EXT)
-TESS_LIB_EXT=$(if $(WIN32),-3.dll,$(if $(DARWIN),.3.dylib,$(if $(ANDROID),.so,.so.3)))
+TESS_LIB_EXT=$(if $(WIN32),-3.dll,$(if $(DARWIN),.3.dylib,.so.3))
 TESSERACT_LIB=$(OUTPUT_DIR)/libs/libtesseract$(TESS_LIB_EXT)
 
 OPENSSL_BUILD_DIR=$(THIRDPARTY_DIR)/openssl/build/$(MACHINE)
 OPENSSL_DIR=$(CURDIR)/$(OPENSSL_BUILD_DIR)/openssl-prefix/src/openssl
 OPENSSL_LIB=$(OPENSSL_DIR)/libssl.$(if $(WIN32),a,so)
-SSL_LIB=$(OUTPUT_DIR)/libs/libssl$(if $(WIN32),-1.dll,$(if $(DARWIN),.1.1.dylib,$(if $(ANDROID),.so,.so.1.1)))
-CRYPTO_LIB=$(OUTPUT_DIR)/libs/libcrypto$(if $(WIN32),-1.dll,$(if $(DARWIN),.1.1.dylib,$(if $(ANDROID),.so,.so.1.1)))
+SSL_LIB=$(OUTPUT_DIR)/libs/libssl$(if $(WIN32),-1.dll,$(if $(DARWIN),.1.1.dylib,.so.1.1))
+CRYPTO_LIB=$(OUTPUT_DIR)/libs/libcrypto$(if $(WIN32),-1.dll,$(if $(DARWIN),.1.1.dylib,.so.1.1))
 
 LUASOCKET_BUILD_DIR=$(THIRDPARTY_DIR)/luasocket/build/$(MACHINE)
 LUASOCKET_DIR=$(CURDIR)/luasocket-prefix/src/luasocket
@@ -860,7 +860,7 @@ LUACOMPAT52=$(CURDIR)/$(OUTPUT_DIR)/libs/libluacompat52.so
 
 ZMQ_BUILD_DIR=$(THIRDPARTY_DIR)/libzmq/build/$(MACHINE)
 ZMQ_DIR=$(CURDIR)/$(ZMQ_BUILD_DIR)/libzmq-prefix/src/libzmq-build
-ZMQ_LIB_EXT=$(if $(WIN32),.dll,$(if $(DARWIN),.4.dylib,$(if $(ANDROID),.so,.so.4)))
+ZMQ_LIB_EXT=$(if $(WIN32),.dll,$(if $(DARWIN),.4.dylib,.so.4))
 ZMQ_LIB=$(OUTPUT_DIR)/libs/libzmq$(ZMQ_LIB_EXT)
 CZMQ_BUILD_DIR=$(THIRDPARTY_DIR)/czmq/build/$(MACHINE)
 CZMQ_DIR=$(CURDIR)/$(CZMQ_BUILD_DIR)/czmq-prefix/src/czmq-build
@@ -868,7 +868,7 @@ FILEMQ_BUILD_DIR=$(THIRDPARTY_DIR)/filemq/build/$(MACHINE)
 FILEMQ_DIR=$(CURDIR)/$(FILEMQ_BUILD_DIR)/filemq-prefix/src/filemq-build
 ZYRE_BUILD_DIR=$(THIRDPARTY_DIR)/zyre/build/$(MACHINE)
 ZYRE_DIR=$(CURDIR)/$(ZYRE_BUILD_DIR)/zyre-prefix/src/zyre-build
-CZMQ_FMQ_ZYRE_LIB_EXT=$(if $(WIN32),.dll,$(if $(DARWIN),.1.dylib,$(if $(ANDROID),.so,.so.1)))
+CZMQ_FMQ_ZYRE_LIB_EXT=$(if $(WIN32),.dll,$(if $(DARWIN),.1.dylib,.so.1))
 CZMQ_LIB=$(OUTPUT_DIR)/libs/libczmq$(CZMQ_FMQ_ZYRE_LIB_EXT)
 FILEMQ_LIB=$(OUTPUT_DIR)/libs/libfmq$(CZMQ_FMQ_ZYRE_LIB_EXT)
 ZYRE_LIB=$(OUTPUT_DIR)/libs/libzyre$(CZMQ_FMQ_ZYRE_LIB_EXT)
