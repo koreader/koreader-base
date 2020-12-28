@@ -121,12 +121,18 @@ function S.open(w, h, x, y)
     S.renderer = SDL.SDL_CreateRenderer(S.screen, -1, 0)
     S.texture = S.createTexture()
 
+    openGameController()
+end
+
+function S:startTextInput()
     -- Start delivering Unicode text as well as keypresses - this will
     -- handle things like Shift-numbers and letters according to the layout
     -- and will deliver SDL_TEXTINPUT with that text.
     SDL.SDL_StartTextInput()
+end
 
-    openGameController()
+function S:stopTextInput()
+    SDL.SDL_StopTextInput()
 end
 
 function S.createTexture(w, h)

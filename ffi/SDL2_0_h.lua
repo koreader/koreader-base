@@ -260,6 +260,8 @@ struct SDL_Keysym {
   Uint16 mod;
   Uint32 unused;
 };
+void SDL_StartTextInput(void);
+void SDL_StopTextInput(void);
 typedef enum {
   SDL_FIRSTEVENT = 0,
   SDL_QUIT = 256,
@@ -883,5 +885,4 @@ struct SDL_version {
   Uint8 patch;
 };
 void SDL_GetVersion(struct SDL_version *) __attribute__((visibility("default")));
-void SDL_StartTextInput(void);
 ]]

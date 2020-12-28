@@ -12,6 +12,8 @@ cdecl_type(Uint8)
 cdecl_type(Sint8)
 
 cdecl_struct(SDL_Keysym)
+cdecl_func(SDL_StartTextInput)
+cdecl_func(SDL_StopTextInput)
 
 cdecl_type(SDL_EventType)
 
