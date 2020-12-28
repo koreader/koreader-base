@@ -121,6 +121,11 @@ function S.open(w, h, x, y)
     S.renderer = SDL.SDL_CreateRenderer(S.screen, -1, 0)
     S.texture = S.createTexture()
 
+    -- Start delivering Unicode text as well as keypresses - this will
+    -- handle things like Shift-numbers and letters according to the layout
+    -- and will deliver SDL_TEXTINPUT with that text.
+    SDL.SDL_StartTextInput()
+
     openGameController()
 end
 
@@ -273,9 +278,11 @@ function S.waitForEvent(usecs)
             -- noop for trackpad finger inputs which interfere with emulated mouse inputs
             do end -- luacheck: ignore 541
         elseif event.type == SDL.SDL_KEYDOWN then
-            genEmuEvent(C.EV_KEY, event.key.keysym.scancode, 1)
+            genEmuEvent(C.EV_KEY, event.key.keysym.sym, 1)
         elseif event.type == SDL.SDL_KEYUP then
-            genEmuEvent(C.EV_KEY, event.key.keysym.scancode, 0)
+            genEmuEvent(C.EV_KEY, event.key.keysym.sym, 0)
+        elseif event.type == SDL.SDL_TEXTINPUT then
+            genEmuEvent(EV_SDL, SDL.SDL_TEXTINPUT, ffi.string(event.text.text))
         elseif event.type == SDL.SDL_MOUSEMOTION
             or event.type == SDL.SDL_FINGERMOTION then
             local is_finger = event.type == SDL.SDL_FINGERMOTION
