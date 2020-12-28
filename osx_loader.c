@@ -65,26 +65,17 @@ int main(int argc, const char * argv[]) {
     L = luaL_newstate();
     luaL_openlibs(L);
 
-    if (argc == 1) {
-        retval = luaL_dostring(L, "arg = { os.getenv('HOME') }");
-        if (retval) {
-            fprintf(stderr, LUA_ERROR, lua_tostring(L, -1));
-            goto quit;
-        }
-
-    } else {
-        retval = luaL_dostring(L, "arg = {}");
-        if (retval) {
-            fprintf(stderr, LUA_ERROR, lua_tostring(L, -1));
-            goto quit;
-        }
-        for (int i = 1; i < argc; ++i) {
-            if (snprintf(buffer, PATH_MAX, "table.insert(arg, '%s')", argv[i]) >= 0) {
-                retval = luaL_dostring(L, buffer);
-                if (retval) {
-                    fprintf(stderr, LUA_ERROR, lua_tostring(L, -1));
-                    goto quit;
-                }
+    retval = luaL_dostring(L, "arg = {}");
+    if (retval) {
+        fprintf(stderr, LUA_ERROR, lua_tostring(L, -1));
+        goto quit;
+    }
+    for (int i = 1; i < argc; ++i) {
+        if (snprintf(buffer, PATH_MAX, "table.insert(arg, '%s')", argv[i]) >= 0) {
+            retval = luaL_dostring(L, buffer);
+            if (retval) {
+                fprintf(stderr, LUA_ERROR, lua_tostring(L, -1));
+                goto quit;
             }
         }
     }
