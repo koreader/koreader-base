@@ -192,6 +192,8 @@ ifdef DARWINHOST
 	endif
 endif
 
+# NOTE: This is necessary (at least on Android), because some early API levels will not put DT_NEEDED libraries in the global namespace.
+#       Saner APIs behave like Linux, and wouldn't require this hack.
 USE_LUAJIT_LIB=$(or $(DARWIN),$(ANDROID),$(WIN32))
 
 SKIP_LUAJIT_BIN=$(or $(ANDROID),$(MACOS))
