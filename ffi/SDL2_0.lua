@@ -213,27 +213,27 @@ local function handleJoyAxisMotionEvent(event)
     if axis == 0 then
         if value < -neutral_max_val then
             -- send left
-            genEmuEvent(C.EV_KEY, 80, 1)
+            genEmuEvent(C.EV_KEY, 1073741904, 1)
         else
             -- send right
-            genEmuEvent(C.EV_KEY, 79, 1)
+            genEmuEvent(C.EV_KEY, 1073741903, 1)
         end
     elseif axis == 1 then
         if value < -neutral_max_val then
             -- send up
-            genEmuEvent(C.EV_KEY, 82, 1)
+            genEmuEvent(C.EV_KEY, 1073741906, 1)
         else
             -- send down
-            genEmuEvent(C.EV_KEY, 81, 1)
+            genEmuEvent(C.EV_KEY, 1073741905, 1)
         end
     -- right stick 3/4
     elseif axis == 4 then
         if value < -neutral_max_val then
             -- send page up
-            genEmuEvent(C.EV_KEY, 75, 1)
+            genEmuEvent(C.EV_KEY, 1073741899, 1)
         else
             -- send page down
-            genEmuEvent(C.EV_KEY, 78, 1)
+            genEmuEvent(C.EV_KEY, 1073741902, 1)
         end
     -- left trigger 2
     -- right trigger 5
@@ -361,24 +361,24 @@ function S.waitForEvent(usecs)
 
             if button == SDL.SDL_CONTROLLER_BUTTON_A then
                 -- send enter
-                genEmuEvent(C.EV_KEY, 40, 1)
+                genEmuEvent(C.EV_KEY, 13, 1)
                 -- send end (bound to press)
-                genEmuEvent(C.EV_KEY, 77, 1)
+                genEmuEvent(C.EV_KEY, 1073741901, 1)
             elseif button == SDL.SDL_CONTROLLER_BUTTON_B then
                 -- send escape
-                genEmuEvent(C.EV_KEY, 41, 1)
+                genEmuEvent(C.EV_KEY, 27, 1)
             -- left bumper
             elseif button == SDL.SDL_CONTROLLER_BUTTON_BACK then
                 -- send page up
-                genEmuEvent(C.EV_KEY, 75, 1)
+                genEmuEvent(C.EV_KEY, 1073741899, 1)
             -- right bumper
             elseif button == SDL.SDL_CONTROLLER_BUTTON_GUIDE then
                 -- send page down
-                genEmuEvent(C.EV_KEY, 78, 1)
+                genEmuEvent(C.EV_KEY, 1073741902, 1)
             -- On the Xbox One controller, start = start but leftstick = menu button
             elseif button == SDL.SDL_CONTROLLER_BUTTON_START or button == SDL.SDL_CONTROLLER_BUTTON_LEFTSTICK then
                 -- send F1 (bound to menu in front at the time of writing)
-                genEmuEvent(C.EV_KEY, 58, 1)
+                genEmuEvent(C.EV_KEY, 1073741882, 1)
             end
         --- D-pad ---
         elseif event.type == SDL.SDL_JOYHATMOTION then
@@ -386,21 +386,21 @@ function S.waitForEvent(usecs)
 
             if hat_position == SDL.SDL_HAT_UP then
                 -- send up
-                genEmuEvent(C.EV_KEY, 82, 1)
+                genEmuEvent(C.EV_KEY, 1073741906, 1)
             elseif hat_position == SDL.SDL_HAT_DOWN then
                 -- send down
-                genEmuEvent(C.EV_KEY, 81, 1)
+                genEmuEvent(C.EV_KEY, 1073741905, 1)
             elseif hat_position == SDL.SDL_HAT_LEFT then
                 -- send left
-                genEmuEvent(C.EV_KEY, 80, 1)
+                genEmuEvent(C.EV_KEY, 1073741904, 1)
             elseif hat_position == SDL.SDL_HAT_RIGHT then
                 -- send right
-                genEmuEvent(C.EV_KEY, 79, 1)
+                genEmuEvent(C.EV_KEY, 1073741903, 1)
             end
         elseif event.type == SDL.SDL_QUIT then
             -- send Alt + F4
-            genEmuEvent(C.EV_KEY, 226, 1)
-            genEmuEvent(C.EV_KEY, 61, 1)
+            genEmuEvent(C.EV_KEY, 1073742050, 1)
+            genEmuEvent(C.EV_KEY, 1073741885, 1)
         end
     end
 end
