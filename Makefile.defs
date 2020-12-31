@@ -193,6 +193,7 @@ ifdef DARWINHOST
 endif
 
 # NOTE: This is necessary (at least on Android), because some early API levels will not put DT_NEEDED libraries in the global namespace.
+#       Ensuring Lua/C modules have their own DT_NEEDED entry to the shared LuaJIT library works around this quirk (and is otherwise mostly harmless).
 #       Saner APIs behave like Linux, and wouldn't require this hack.
 USE_LUAJIT_LIB=$(or $(DARWIN),$(ANDROID),$(WIN32))
 
