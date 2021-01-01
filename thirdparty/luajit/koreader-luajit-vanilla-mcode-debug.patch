@@ -55,7 +55,7 @@ index 1d0ff54..8ef29a3 100644
      } else {
        if (!(mode & LUAJIT_MODE_ON))
 diff --git a/src/lj_mcode.c b/src/lj_mcode.c
-index a5153b2..0b4e0c1 100644
+index a5153b2..b150438 100644
 --- a/src/lj_mcode.c
 +++ b/src/lj_mcode.c
 @@ -105,12 +105,14 @@ static void *mcode_alloc_at(jit_State *J, uintptr_t hint, size_t sz, int prot)
@@ -81,7 +81,7 @@ index a5153b2..0b4e0c1 100644
 +  LJ_LOG("range is %p", (void *) range);
    /* First try a contiguous area below the last one. */
    uintptr_t hint = J->mcarea ? (uintptr_t)J->mcarea - sz : 0;
-+  J_LOG("original hint is @ %p (mcarea: %p / last: %p / reserve: %p)", (void *) hint, (void *) J->mcarea, (void *) J->lastmcarea, (void *) reserve);
++  LJ_LOG("original hint is @ %p (mcarea: %p)", (void *) hint, (void *) J->mcarea);
    int i;
    /* Limit probing iterations, depending on the available pool size. */
    for (i = 0; i < LJ_TARGET_JUMPRANGE; i++) {
