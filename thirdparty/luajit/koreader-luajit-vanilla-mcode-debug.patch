@@ -23,21 +23,16 @@ index aae7b5b..b675e96 100644
  #ifdef LUA_USE_ASSERT
    as->mcp_prev = as->mcp;
 diff --git a/src/lj_def.h b/src/lj_def.h
-index cfe18c4..6d15871 100644
+index cfe18c4..986a2b8 100644
 --- a/src/lj_def.h
 +++ b/src/lj_def.h
-@@ -45,6 +45,15 @@ typedef unsigned int uintptr_t;
+@@ -45,6 +45,10 @@ typedef unsigned int uintptr_t;
  #include <string.h>
  #include <stdlib.h>
  
 +/* KOReader hack: debug logging */
-+#ifdef __ANDROID__
-+	#include <android/log.h>
-+	#define LJ_LOG(fmt, ...) ((void)__android_log_print(ANDROID_LOG_VERBOSE, "LuaJIT", "%s: " fmt, __FUNCTION__, ##__VA_ARGS__))
-+#else
-+	#include <stdio.h>
-+	#define LJ_LOG(fmt, ...) (fprintf(stderr, "[LuaJIT] [%s] " fmt "\n", __FUNCTION__, ##__VA_ARGS__))
-+#endif
++#include <stdio.h>
++#define LJ_LOG(fmt, ...) (fprintf(stderr, "[LuaJIT] [%s] " fmt "\n", __FUNCTION__, ##__VA_ARGS__))
 +
  /* Various VM limits. */
  #define LJ_MAX_MEM32	0x7fffff00	/* Max. 32 bit memory allocation. */
