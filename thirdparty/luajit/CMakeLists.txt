@@ -71,6 +71,11 @@ set(BUILD_CMD sh -c "${BUILD_CMD_STR}")
 
 set(PATCH_CMD "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/koreader-luajit-makefile-tweaks.patch")
 
+# Extra verbose mcode lifecycle information in debug builds, like on Android
+if($ENV{KODEBUG})
+    set(PATCH_CMD_2 "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/koreader-luajit-vanilla-mcode-debug.patch")
+endif()
+
 # NOTE: Once the dust settles, all forks seem to lead to https://github.com/moonjit/moonjit
 #       Keep that in mind for later, if the need ever arise...
 ko_write_gitclone_script(
@@ -84,7 +89,7 @@ include(ExternalProject)
 ExternalProject_Add(
     ${PROJECT_NAME}
     DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
-    PATCH_COMMAND COMMAND ${PATCH_CMD}
+    PATCH_COMMAND COMMAND ${PATCH_CMD} COMMAND ${PATCH_CMD_2}
     BUILD_IN_SOURCE 1
     # skip configure
     CONFIGURE_COMMAND ""
