@@ -74,7 +74,7 @@ index 655b84c..1fa6292 100644
    MCode *mctop;		/* Top of current mcode area. */
    MCode *mcbot;		/* Bottom of current mcode area. */
 diff --git a/src/lj_mcode.c b/src/lj_mcode.c
-index a5153b2..b7fd544 100644
+index a5153b2..2c2e71d 100644
 --- a/src/lj_mcode.c
 +++ b/src/lj_mcode.c
 @@ -98,19 +98,25 @@ static int mcode_setprot(void *p, size_t sz, DWORD prot)
@@ -171,7 +171,7 @@ index a5153b2..b7fd544 100644
    size_t sz = (size_t)J->param[JIT_P_sizemcode] << 10;
    sz = (sz + LJ_PAGESIZE-1) & ~(size_t)(LJ_PAGESIZE - 1);
    J->mcarea = (MCode *)mcode_alloc(J, sz);
-+  LJ_LOG("new mcarea @ %p (oldarea @ %p)", J->mcarea, oldarea);
++  LJ_LOG("new %zuK mcarea @ %p (oldarea @ %p)", sz, J->mcarea, oldarea);
    J->szmcarea = sz;
    J->mcprot = MCPROT_GEN;
    J->mctop = (MCode *)((char *)J->mcarea + J->szmcarea);
