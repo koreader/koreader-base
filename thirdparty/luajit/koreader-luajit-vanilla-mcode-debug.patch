@@ -74,7 +74,7 @@ index 655b84c..1fa6292 100644
    MCode *mctop;		/* Top of current mcode area. */
    MCode *mcbot;		/* Bottom of current mcode area. */
 diff --git a/src/lj_mcode.c b/src/lj_mcode.c
-index a5153b2..3519065 100644
+index a5153b2..80b685e 100644
 --- a/src/lj_mcode.c
 +++ b/src/lj_mcode.c
 @@ -98,19 +98,25 @@ static int mcode_setprot(void *p, size_t sz, DWORD prot)
@@ -230,7 +230,7 @@ index a5153b2..3519065 100644
 +  J->mctop = (MCode *)((char *)J->mcarea + J->szmcarea);
 +  J->mcbot = (MCode *)((char *)J->mcarea + sizeof(MCLink));
 +  /* We need write access to clear it */
-+  if (LJ_UNLIKELY(mcode_setprot(J->mcarea, size, MCPROT_GEN)))
++  if (LJ_UNLIKELY(mcode_setprot(J->mcarea, J->szmcarea, MCPROT_GEN)))
 +    mcode_protfail(J);
 +  /* Don't touch the MCLink struct */
 +  memset(J->mcarea + sizeof(MCLink), 0, J->szmcarea - sizeof(MCLink));
