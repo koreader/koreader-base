@@ -74,7 +74,7 @@ index 655b84c..1fa6292 100644
    MCode *mctop;		/* Top of current mcode area. */
    MCode *mcbot;		/* Bottom of current mcode area. */
 diff --git a/src/lj_mcode.c b/src/lj_mcode.c
-index a5153b2..ab203d5 100644
+index a5153b2..b7fd544 100644
 --- a/src/lj_mcode.c
 +++ b/src/lj_mcode.c
 @@ -98,19 +98,25 @@ static int mcode_setprot(void *p, size_t sz, DWORD prot)
@@ -175,7 +175,7 @@ index a5153b2..ab203d5 100644
    J->szmcarea = sz;
    J->mcprot = MCPROT_GEN;
    J->mctop = (MCode *)((char *)J->mcarea + J->szmcarea);
-@@ -275,13 +296,64 @@ static void mcode_allocarea(jit_State *J)
+@@ -275,13 +296,66 @@ static void mcode_allocarea(jit_State *J)
  void lj_mcode_free(jit_State *J)
  {
    MCode *mc = J->mcarea;
@@ -232,15 +232,17 @@ index a5153b2..ab203d5 100644
 +  /* We need write access to clear it */
 +  if (LJ_UNLIKELY(mcode_setprot(J->mcarea, J->szmcarea, MCPROT_GEN)))
 +    mcode_protfail(J);
-+  /* Don't touch the MCLink struct */
-+  memset(J->mcarea + sizeof(MCLink), 0, J->szmcarea - sizeof(MCLink));
++  memset(J->mcarea, 0, J->szmcarea);
++  /* Update the MCLink data for the newly coalesced area */
++  ((MCLink *)J->mcarea)->next = NULL;
++  ((MCLink *)J->mcarea)->size = J->szmcarea;
 +  /* Update the protection cache */
 +  J->mcprot = MCPROT_GEN;
 +  LJ_LOG("recycled mcarea @ %p (%zuK)", J->mcarea, J->szmcarea / 1024U);
  }
  
  /* -- MCode transactions -------------------------------------------------- */
-@@ -289,6 +361,7 @@ void lj_mcode_free(jit_State *J)
+@@ -289,6 +363,7 @@ void lj_mcode_free(jit_State *J)
  /* Reserve the remainder of the current MCode area. */
  MCode *lj_mcode_reserve(jit_State *J, MCode **lim)
  {
@@ -248,7 +250,7 @@ index a5153b2..ab203d5 100644
    if (!J->mcarea)
      mcode_allocarea(J);
    else
-@@ -353,6 +426,7 @@ void lj_mcode_limiterr(jit_State *J, size_t need)
+@@ -353,6 +428,7 @@ void lj_mcode_limiterr(jit_State *J, size_t need)
    sizemcode = (size_t)J->param[JIT_P_sizemcode] << 10;
    sizemcode = (sizemcode + LJ_PAGESIZE-1) & ~(size_t)(LJ_PAGESIZE - 1);
    maxmcode = (size_t)J->param[JIT_P_maxmcode] << 10;
