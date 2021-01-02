@@ -143,10 +143,10 @@ function input.waitForEvent(usecs)
             if source[0] ~= nil then
                 --source[0].process(android.app, source[0])
                 if source[0].id == C.LOOPER_ID_MAIN then
-                    local cmd = C.android_app_read_cmd(android.app)
-                    C.android_app_pre_exec_cmd(android.app, cmd)
+                    local cmd = android.glue.android_app_read_cmd(android.app)
+                    android.glue.android_app_pre_exec_cmd(android.app, cmd)
                     commandHandler(cmd, 1)
-                    C.android_app_post_exec_cmd(android.app, cmd)
+                    android.glue.android_app_post_exec_cmd(android.app, cmd)
                 elseif source[0].id == C.LOOPER_ID_INPUT then
                     local event = ffi.new("AInputEvent*[1]")
                     while android.lib.AInputQueue_getEvent(android.app.inputQueue, event) >= 0 do
