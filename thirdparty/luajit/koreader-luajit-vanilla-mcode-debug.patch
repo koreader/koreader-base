@@ -74,7 +74,7 @@ index 655b84c..1fa6292 100644
    MCode *mctop;		/* Top of current mcode area. */
    MCode *mcbot;		/* Bottom of current mcode area. */
 diff --git a/src/lj_mcode.c b/src/lj_mcode.c
-index a5153b2..346aee8 100644
+index a5153b2..3519065 100644
 --- a/src/lj_mcode.c
 +++ b/src/lj_mcode.c
 @@ -98,19 +98,25 @@ static int mcode_setprot(void *p, size_t sz, DWORD prot)
@@ -189,8 +189,8 @@ index a5153b2..346aee8 100644
 +    if (!next) {
 +      J->lastmcarea = mc;
 +    }
-+    mc = next;
-+  }
+     mc = next;
+   }
 +  LJ_LOG("lastmcarea is now %p", J->lastmcarea);
 +}
 +
@@ -204,23 +204,18 @@ index a5153b2..346aee8 100644
 +  while (mc) {
 +    MCode *next = ((MCLink *)mc)->next;
 +    size_t size = ((MCLink *)mc)->size;
-+    /* We need write access to clear it */
-+    if (LJ_UNLIKELY(mcode_setprot(mc, size, MCPROT_GEN)))
-+      mcode_protfail(J);
-+    /* Don't touch the MCLink struct */
-+    memset(mc + sizeof(MCLink), 0, size - sizeof(MCLink));
-+    LJ_LOG("cleared %zuK @ %p (next: %p)", size / 1024U, mc, next);
 +    /* Reset mcarea to the oldest contiguous link */
 +    if ((next && next == mc + size) || (!next && mc == mcarea + prevsize) || (!next && mc == mcarea)) {
 +      szallmcarea += size;
 +      mcarea = mc;
 +      prevsize = size;
++      LJ_LOG("Contiguous %zuK link detected @ %p (total: %zuK) (next @ %p)", size / 1024U, mc, szallmcarea / 1024U, next);
 +    } else {
-+      LJ_LOG("Non contiguous link detected!");
++      LJ_LOG("Non contiguous %zuK link detected @ %p (next @ %p)!", size / 1024U, mc, next);
 +      mcarea = NULL;
 +    }
-     mc = next;
-   }
++    mc = next;
++  }
 +
 +  /* If there were non-contiguous links, fallback to lj_mcode_free */
 +  if (!mcarea) {
@@ -231,11 +226,16 @@ index a5153b2..346aee8 100644
 +  J->mcarea = mcarea;
 +  J->szmcarea = szallmcarea;
 +  J->szallmcarea = szallmcarea;
-+  /* Update the protection cache */
-+  J->mcprot = MCPROT_GEN;
 +  /* Tell the JIT that it once again has the full area available to generate code in, c.f., mcode_allocarea */
 +  J->mctop = (MCode *)((char *)J->mcarea + J->szmcarea);
 +  J->mcbot = (MCode *)((char *)J->mcarea + sizeof(MCLink));
++  /* We need write access to clear it */
++  if (LJ_UNLIKELY(mcode_setprot(J->mcarea, size, MCPROT_GEN)))
++    mcode_protfail(J);
++  /* Don't touch the MCLink struct */
++  memset(J->mcarea + sizeof(MCLink), 0, J->szmcarea - sizeof(MCLink));
++  /* Update the protection cache */
++  J->mcprot = MCPROT_GEN;
 +  LJ_LOG("recycled mcarea @ %p (%zuK)", J->mcarea, J->szmcarea / 1024U);
  }
  
