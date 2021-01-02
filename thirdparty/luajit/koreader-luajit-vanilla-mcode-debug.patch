@@ -74,7 +74,7 @@ index 655b84c..1fa6292 100644
    MCode *mctop;		/* Top of current mcode area. */
    MCode *mcbot;		/* Bottom of current mcode area. */
 diff --git a/src/lj_mcode.c b/src/lj_mcode.c
-index a5153b2..23ecebd 100644
+index a5153b2..ab203d5 100644
 --- a/src/lj_mcode.c
 +++ b/src/lj_mcode.c
 @@ -98,19 +98,25 @@ static int mcode_setprot(void *p, size_t sz, DWORD prot)
@@ -223,7 +223,7 @@ index a5153b2..23ecebd 100644
 +  }
 +
 +  /* Recycle the full chain */
-+  J->mcarea = mcarea - szallmcarea;
++  J->mcarea = mcarea + prevsize - szallmcarea;
 +  J->szmcarea = szallmcarea;
 +  J->szallmcarea = szallmcarea;
 +  /* Tell the JIT that it once again has the full area available to generate code in, c.f., mcode_allocarea */
