@@ -554,6 +554,13 @@ function framebuffer:refreshFastImp(x, y, w, h, dither)
     self:mech_refresh(C.UPDATE_MODE_PARTIAL, self.waveform_fast, x, y, w, h, dither)
 end
 
+function framebuffer:refreshWaitForLastImp()
+    self.debug("refresh: waiting for previous update", self.marker)
+    if self.mech_wait_update_complete then
+        self:mech_wait_update_complete(self.marker)
+    end
+end
+
 -- Detect Allwinner boards. Those emulate mxcfb API in a custom driver (poorly).
 function framebuffer:isB288(fb)
     require("ffi/mxcfb_pocketbook_h")
