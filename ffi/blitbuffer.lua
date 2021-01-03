@@ -723,13 +723,13 @@ end
 function BB_mt.__index:getPhysicalCoordinates(x, y)
     local rotation = self:getRotation()
     if rotation == 0 then
-        return x, y
+        return              x,              y
     elseif rotation == 1 then
-        return self.w - y - 1, x
+        return self.w - y - 1,              x
     elseif rotation == 2 then
         return self.w - x - 1, self.h - y - 1
     elseif rotation == 3 then
-        return y, self.h - x - 1
+        return              y, self.h - x - 1
     end
 end
 function BB_mt.__index:getPhysicalRect(x, y, w, h)
