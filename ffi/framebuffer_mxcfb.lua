@@ -555,9 +555,10 @@ function framebuffer:refreshFastImp(x, y, w, h, dither)
 end
 
 function framebuffer:refreshWaitForLastImp()
-    self.debug("refresh: waiting for previous update", self.marker)
-    if self.mech_wait_update_complete then
+    if self.mech_wait_update_complete and self.dont_wait_for_marker ~= self.marker then
+        self.debug("refresh: waiting for previous update", self.marker)
         self:mech_wait_update_complete(self.marker)
+        self.dont_wait_for_marker = self.marker
     end
 end
 
