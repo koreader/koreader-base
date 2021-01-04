@@ -450,7 +450,7 @@ local function refresh_kobo_mk7(fb, refreshtype, waveform_mode, x, y, w, h, dith
     -- Did we request HW dithering?
     if dither then
         refarea[0].dither_mode = C.EPDC_FLAG_USE_DITHERING_ORDERED
-        if waveform_mode == C.WAVEFORM_MODE_A2 then
+        if waveform_mode == C.WAVEFORM_MODE_A2 or waveform_mode == C.WAVEFORM_MODE_DU then
             refarea[0].quant_bit = 1;
         else
             refarea[0].quant_bit = 7;
@@ -727,7 +727,8 @@ function framebuffer:init()
             self.mech_wait_update_complete = kobo_mk7_mxc_wait_for_update_complete
 
             self.waveform_partial = C.WAVEFORM_MODE_GLR16
-            -- NOTE: DU may rarely be used instead of A2 by Nickel, but never w/ the MONOCHROME flag, so, keep using A2 everywhere on our end.
+            self.waveform_fast = C.WAVEFORM_MODE_DU -- A2 is much more prone to artifacts on Mk. 7 than before, because everything's faster.
+                                                    -- Nickel sometimes uses it, but never w/ the MONOCHROME flag, so, do the same.
         end
     elseif self.device:isPocketBook() then
         require("ffi/mxcfb_pocketbook_h")
