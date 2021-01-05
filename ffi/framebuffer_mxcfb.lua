@@ -729,7 +729,7 @@ function framebuffer:init()
 
             self.waveform_partial = C.WAVEFORM_MODE_GLR16
             self.waveform_fast = C.WAVEFORM_MODE_DU -- A2 is much more prone to artifacts on Mk. 7 than before, because everything's faster.
-                                                    -- Nickel sometimes uses it, but never w/ the MONOCHROME flag, so, do the same.
+                                                    -- Nickel sometimes uses DU, but never w/ the MONOCHROME flag, so, do the same.
                                                     -- Plus, DU + MONOCHROME + INVERT is much more prone to the Mk. 7 EPDC bug where some/all
                                                     -- EPDC flags just randomly go bye-bye...
         end
