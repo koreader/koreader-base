@@ -12,6 +12,10 @@ ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
 WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
 ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+
+Taken from https://github.com/gvx/bitser,
+Removed love specific features
+
 ]]
 
 local VERSION = '1.1'
@@ -411,17 +415,6 @@ end
 return {dumps = function(value)
 	serialize(value)
 	return ffi.string(buf, buf_pos)
-end, dumpLoveFile = function(fname, value)
-	serialize(value)
-	assert(love.filesystem.write(fname, ffi.string(buf, buf_pos)))
-end, loadLoveFile = function(fname)
-	local serializedData, error = love.filesystem.newFileData(fname)
-	assert(serializedData, error)
-	Buffer_newDataReader(serializedData:getPointer(), serializedData:getSize())
-	local value = deserialize_value({})
-	-- serializedData needs to not be collected early in a tail-call
-	-- so make sure deserialize_value returns before loadLoveFile does
-	return value
 end, loadData = function(data, size)
 	if size == 0 then
 		error('cannot load value from empty data')
