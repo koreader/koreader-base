@@ -724,8 +724,8 @@ function framebuffer:init()
         --       while still doing the right thing everywhere ;).
         --       Turns out there's a good reason for that: the EPDC will fence REAGL updates internally (possibly via the PxP).
         --       This makes interaction between partial and other modes slightly finicky in practice in some corner-cases,
-        --       (c.f., the SkimTo widget workaround were we batch a button highlight with the reader's partial,
-        --       and then fence *that* manually to avoid the partial being delayed by the button's 'fast' highlight).
+        --       (c.f., the SkimTo/Button widgets workaround where we batch a button's 'fast' highlight with the reader's 'partial',
+        --       and then fence *that batch* manually to avoid the (REAGL) 'partial' being delayed by the button's 'fast' highlight).
         if isMk7 then
             self.device.canHWDither = yes
             self.mech_refresh = refresh_kobo_mk7
