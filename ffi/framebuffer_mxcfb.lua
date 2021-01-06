@@ -722,6 +722,10 @@ function framebuffer:init()
         --       We handle that by NOT setting waveform_reagl (so _isREAGLWaveFormMode never matches), and just customizing waveform_partial.
         --       Nickel doesn't wait for completion of previous markers on those PARTIAL GLR16, so that's enough to keep our heuristics intact,
         --       while still doing the right thing everywhere ;).
+        --       Turns out there's a good reason for that: the EPDC will fence REAGL updates internally (possibly via the PxP).
+        --       This makes interaction between partial and other modes slightly finicky in practice in some corner-cases,
+        --       (c.f., the SkimTo widget workaround were we batch a button highlight with the reader's partial,
+        --       and then fence *that* manually to avoid the partial being delayed by the button's 'fast' highlight).
         if isMk7 then
             self.device.canHWDither = yes
             self.mech_refresh = refresh_kobo_mk7
