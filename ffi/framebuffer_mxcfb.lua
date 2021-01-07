@@ -677,7 +677,7 @@ function framebuffer:init()
         self.mech_refresh = refresh_kobo
         self.mech_wait_update_complete = kobo_mxc_wait_for_update_complete
 
-        self.waveform_fast = C.WAVEFORM_MODE_A2
+        self.waveform_fast = C.WAVEFORM_MODE_DU
         self.waveform_ui = C.WAVEFORM_MODE_AUTO
         self.waveform_flashui = self.waveform_ui
         self.waveform_full = C.NTX_WFM_MODE_GC16
