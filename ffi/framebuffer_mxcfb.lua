@@ -450,7 +450,7 @@ local function refresh_kobo_mk7(fb, refreshtype, waveform_mode, x, y, w, h, dith
     -- Did we request HW dithering?
     if dither then
         refarea[0].dither_mode = C.EPDC_FLAG_USE_DITHERING_ORDERED
-        if waveform_mode == C.WAVEFORM_MODE_A2 then
+        if waveform_mode == C.WAVEFORM_MODE_A2 or waveform_mode == C.WAVEFORM_MODE_DU then
             refarea[0].quant_bit = 1;
         else
             refarea[0].quant_bit = 7;
@@ -552,6 +552,14 @@ end
 function framebuffer:refreshFastImp(x, y, w, h, dither)
     self.debug("refresh: fast", x, y, w, h, dither and "w/ HW dithering")
     self:mech_refresh(C.UPDATE_MODE_PARTIAL, self.waveform_fast, x, y, w, h, dither)
+end
+
+function framebuffer:refreshWaitForLastImp()
+    if self.mech_wait_update_complete and self.dont_wait_for_marker ~= self.marker then
+        self.debug("refresh: waiting for previous update", self.marker)
+        self:mech_wait_update_complete(self.marker)
+        self.dont_wait_for_marker = self.marker
+    end
 end
 
 -- Detect Allwinner boards. Those emulate mxcfb API in a custom driver (poorly).
@@ -669,7 +677,7 @@ function framebuffer:init()
         self.mech_refresh = refresh_kobo
         self.mech_wait_update_complete = kobo_mxc_wait_for_update_complete
 
-        self.waveform_fast = C.WAVEFORM_MODE_A2
+        self.waveform_fast = C.WAVEFORM_MODE_DU
         self.waveform_ui = C.WAVEFORM_MODE_AUTO
         self.waveform_flashui = self.waveform_ui
         self.waveform_full = C.NTX_WFM_MODE_GC16
@@ -714,13 +722,20 @@ function framebuffer:init()
         --       We handle that by NOT setting waveform_reagl (so _isREAGLWaveFormMode never matches), and just customizing waveform_partial.
         --       Nickel doesn't wait for completion of previous markers on those PARTIAL GLR16, so that's enough to keep our heuristics intact,
         --       while still doing the right thing everywhere ;).
+        --       Turns out there's a good reason for that: the EPDC will fence REAGL updates internally (possibly via the PxP).
+        --       This makes interaction between partial and other modes slightly finicky in practice in some corner-cases,
+        --       (c.f., the SkimTo/Button widgets workaround where we batch a button's 'fast' highlight with the reader's 'partial',
+        --       and then fence *that batch* manually to avoid the (REAGL) 'partial' being delayed by the button's 'fast' highlight).
         if isMk7 then
             self.device.canHWDither = yes
             self.mech_refresh = refresh_kobo_mk7
             self.mech_wait_update_complete = kobo_mk7_mxc_wait_for_update_complete
 
             self.waveform_partial = C.WAVEFORM_MODE_GLR16
-            -- NOTE: DU may rarely be used instead of A2 by Nickel, but never w/ the MONOCHROME flag, so, keep using A2 everywhere on our end.
+            self.waveform_fast = C.WAVEFORM_MODE_DU -- A2 is much more prone to artifacts on Mk. 7 than before, because everything's faster.
+                                                    -- Nickel sometimes uses DU, but never w/ the MONOCHROME flag, so, do the same.
+                                                    -- Plus, DU + MONOCHROME + INVERT is much more prone to the Mk. 7 EPDC bug where some/all
+                                                    -- EPDC flags just randomly go bye-bye...
         end
     elseif self.device:isPocketBook() then
         require("ffi/mxcfb_pocketbook_h")
