@@ -53,11 +53,11 @@ set(INSTALL_CMD1 ${CMAKE_COMMAND} -E rename ${BINARY_DIR}/src/tar ${BINARY_DIR}/
 #)
 
 include(ExternalProject)
-set(TAR_VER "1.32")
+set(TAR_VER "1.33")
 ExternalProject_Add(
     ${PROJECT_NAME}
     URL http://ftpmirror.gnu.org/tar/tar-${TAR_VER}.tar.gz
-    URL_MD5 c8b1f4f1759ec8d5fccec20df5849431
+    URL_MD5 de0816a6bae5d2a982d9bde76b79b291
     DOWNLOAD_DIR ${KO_DOWNLOAD_DIR}
     PATCH_COMMAND COMMAND ${PATCH_CMD1}
     #DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
