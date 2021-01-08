@@ -179,6 +179,10 @@ function fb:refreshFastImp(x, y, w, h, d)
     -- default is fallback
     return self:refreshPartialImp(x, y, w, h, d)
 end
+function fb:refreshWaitForLastImp()
+    -- default is NOP
+    return
+end
 
 -- these should not be overridden, they provide the external refresh API:
 function fb:refreshFull(x, y, w, h, d)
@@ -204,6 +208,9 @@ end
 function fb:refreshFast(x, y, w, h, d)
     x, y, w, h = self:calculateRealCoordinates(x, y, w, h)
     return self:refreshFastImp(x, y, w, h, d)
+end
+function fb:refreshWaitForLast()
+    return self:refreshWaitForLastImp()
 end
 
 -- should be overridden to free resources
