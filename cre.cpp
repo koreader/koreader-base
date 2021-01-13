@@ -1582,8 +1582,13 @@ static int getVisiblePageCount(lua_State *L) {
 
 static int setVisiblePageCount(lua_State *L) {
 	CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
+	int nb_pages = luaL_checkint(L, 2);
+	bool only_if_sane = true;
+	if (lua_isboolean(L, 3)) {
+		only_if_sane = lua_toboolean(L, 3);
+	}
 
-	doc->text_view->setVisiblePageCount(luaL_checkint(L, 2));
+	doc->text_view->setVisiblePageCount(nb_pages, only_if_sane);
 
 	return 0;
 }
