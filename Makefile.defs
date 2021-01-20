@@ -157,6 +157,7 @@ else ifeq ($(TARGET), pocketbook)
 else ifeq ($(TARGET), remarkable)
 	CHOST?=arm-remarkable-linux-gnueabihf
 	export REMARKABLE=1
+	export USE_LJ_WPACLIENT=1
 else ifeq ($(TARGET), sony-prstux)
 	CHOST?=arm-linux-gnueabihf
 	export SONY_PRSTUX=1
