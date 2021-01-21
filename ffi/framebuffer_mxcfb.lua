@@ -260,20 +260,14 @@ local function mxc_update(fb, update_ioctl, refarea, refresh_type, waveform_mode
     --       (Sidebar: this is probably a kernel issue, the EPDC driver is responsible for the alignment fixup,
     --       c.f., epdc_process_update @ drivers/video/fbdev/mxc/mxc_epdc_v2_fb.c on a Kobo Mk. 7 kernel...).
     if dither then
-        print("Dithered refresh align fix:", x, y, w, h)
-        local x_fixup = 0
         local x_orig = x
         x = ALIGN_DOWN(x_orig, 8)
-        x_fixup = x_orig - x
+        local x_fixup = x_orig - x
         w = ALIGN_UP(w + x_fixup, 8)
-        print("x_fixup:", x_fixup)
-        local y_fixup = 0
         local y_orig = y
         y = ALIGN_DOWN(y_orig, 8)
-        y_fixup = y_orig - y
+        local y_fixup = y_orig - y
         h = ALIGN_UP(h + y_fixup, 8)
-        print("y_fixup:", y_fixup)
-        print("Dithered refresh align fixed:", x, y, w, h)
 
         -- NOTE: The Forma is the rare beast with screen dimensions that are themselves a multiple of 8.
         --       Unfortunately, this may not be true for every device, so,
