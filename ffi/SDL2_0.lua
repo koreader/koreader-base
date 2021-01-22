@@ -340,6 +340,9 @@ function S.waitForEvent(usecs)
         elseif event.type == SDL.SDL_DROPFILE then
             local dropped_file_path = ffi.string(event.drop.file)
             genEmuEvent(EV_SDL, SDL.SDL_DROPFILE, dropped_file_path)
+        elseif event.type == SDL.SDL_DROPTEXT then
+            local dropped_text = ffi.string(event.drop.file)
+            genEmuEvent(EV_SDL, SDL.SDL_DROPTEXT, dropped_text)
         elseif event.type == SDL.SDL_WINDOWEVENT then
             handleWindowEvent(event.window)
         --- Gamepad support ---
