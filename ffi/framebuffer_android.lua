@@ -136,7 +136,17 @@ function framebuffer:_updateWindow()
             -- so, simply invert everything *now* ;).
             -- The idea is that we absolutely want to avoid the Lua BB on Android, because it is *extremely* erratic,
             -- because of the mcode alloc issues...
-            bb:invertblitFrom(ext_bb)
+
+            -- NOTE: CBB's invertblitFrom requires source & dest bb to be of the same type!
+            if bb:getType() == ext_bb:getType() then
+                -- In practice, this means RGB32, because our self.bb is always RGB32 (c.f., init above)
+                bb:invertblitFrom(ext_bb)
+            else
+                -- On ther other hand, if the window buffer is RGB565, things become uglier...
+                bb:blitFrom(ext_bb)
+                -- Fair warning, this is inaccurate for anything that isn't pure black or white on RGB565 ;).
+                bb:invertRect(0, 0, bb:getWidth(), bb:getHeight())
+            end
         else
             bb:blitFrom(ext_bb)
         end
