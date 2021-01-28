@@ -64,16 +64,13 @@ set(CMAKE_SKIP_BUILD_RPATH True)
 set(ENABLE_NLS False CACHE BOOL "")
 set(WITH_READLINE False CACHE BOOL "")
 
-# https://github.com/Dushistov/sdcv/pull/68
-set(PATCH_CMD1 "${KO_PATCH_SH} ${CMAKE_CURRENT_SOURCE_DIR}/sdcv-pr68.patch")
-
 # Force utf8 command line parsing, and accept not-found -u dictnames
-set(PATCH_CMD2 "${KO_PATCH_SH} ${CMAKE_CURRENT_SOURCE_DIR}/sdcv-locale-hack.patch")
+set(PATCH_CMD1 "${KO_PATCH_SH} ${CMAKE_CURRENT_SOURCE_DIR}/sdcv-locale-hack.patch")
 
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
     https://github.com/Dushistov/sdcv.git
-    4ae420734990ab9f5ccc038262368256b9323f4a
+    3963e358cd8f6e24e59916ead97bc47a1d932c8d
     ${SOURCE_DIR}
 )
 
@@ -84,7 +81,7 @@ download_project(
     GIT_TAG
     4ae420734990ab9f5ccc038262368256b9323f4a
     #DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
-    PATCH_COMMAND COMMAND ${PATCH_CMD1} COMMAND ${PATCH_CMD2}
+    PATCH_COMMAND COMMAND ${PATCH_CMD1}
 )
 
 add_subdirectory("${CMAKE_BINARY_DIR}/sdcv-src"
