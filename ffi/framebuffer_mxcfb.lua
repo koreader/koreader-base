@@ -7,8 +7,23 @@ local dummy = require("ffi/posix_h")
 
 local band = bit.band
 local bor = bit.bor
+local bnot = bit.bnot
 
 local function yes() return true end
+
+-- A couple helper functions to compute aligned values...
+-- c.f., <linux/kernel.h> & ffi/framebuffer_linux.lua
+local function ALIGN_DOWN(x, a)
+    -- x & ~(a-1)
+    local mask = a - 1
+    return band(x, bnot(mask))
+end
+
+local function ALIGN_UP(x, a)
+    -- (x + (a-1)) & ~(a-1)
+    local mask = a - 1
+    return band(x + mask, bnot(mask))
+end
 
 local framebuffer = {
     -- pass device object here for proper model detection:
@@ -111,6 +126,30 @@ function framebuffer:_isFullScreen(w, h)
     end
 end
 
+-- Clamp w & h to the screen's physical dimensions
+function framebuffer:_clampToPhysicalDim(w, h)
+    -- NOTE: fb:getWidth() & fb:getHeight() return the viewport size, but obey rotation, which means we can't rely on them directly.
+    --       fb:getScreenWidth() & fb:getScreenHeight return the full screen size, without the viewport, and in the default rotation, which doesn't help either.
+    -- Settle for getWidth() & getHeight() w/ rotation handling, like what bb:getPhysicalRect() does...
+    local max_w, max_h
+    if band(self:getRotationMode(), 1) == 1 then
+        max_w = self:getHeight()
+        max_h = self:getWidth()
+    else
+        max_w = self:getWidth()
+        max_h = self:getHeight()
+    end
+
+    if w > max_w then
+        w = max_w
+    end
+    if h > max_h then
+        h = max_h
+    end
+
+    return w, h
+end
+
 --[[ handlers for the wait API of the eink driver --]]
 
 -- Kindle's MXCFB_WAIT_FOR_UPDATE_COMPLETE_PEARL == 0x4004462f
@@ -199,7 +238,7 @@ end
 -- Kobo's MXCFB_SEND_UPDATE == 0x4044462e
 -- Pocketbook's MXCFB_SEND_UPDATE == 0x4040462e
 -- Cervantes MXCFB_SEND_UPDATE == 0x4044462e
-local function mxc_update(fb, update_ioctl, refarea, refresh_type, waveform_mode, x, y, w, h)
+local function mxc_update(fb, update_ioctl, refarea, refresh_type, waveform_mode, x, y, w, h, dither)
     local bb = fb.full_bb or fb.bb
     w, x = BB.checkBounds(w or bb:getWidth(), x or 0, 0, bb:getWidth(), 0xFFFF)
     h, y = BB.checkBounds(h or bb:getHeight(), y or 0, 0, bb:getHeight(), 0xFFFF)
@@ -212,6 +251,28 @@ local function mxc_update(fb, update_ioctl, refarea, refresh_type, waveform_mode
     if w <= 1 or h <= 1 then
         fb.debug("discarding bogus refresh region, w:", w, "h:", h)
         return
+    end
+
+    -- NOTE: If we're requesting hardware dithering on a partial update, make sure the rectangle is using
+    --       coordinates aligned to the previous multiple of 8, and dimensions aligned to the next multiple of 8.
+    --       Otherwise, some unlucky coordinates will play badly with the PxP's own alignment constraints,
+    --       leading to a refresh where content appears to have moved a few pixels to the side...
+    --       (Sidebar: this is probably a kernel issue, the EPDC driver is responsible for the alignment fixup,
+    --       c.f., epdc_process_update @ drivers/video/fbdev/mxc/mxc_epdc_v2_fb.c on a Kobo Mk. 7 kernel...).
+    if dither then
+        local x_orig = x
+        x = ALIGN_DOWN(x_orig, 8)
+        local x_fixup = x_orig - x
+        w = ALIGN_UP(w + x_fixup, 8)
+        local y_orig = y
+        y = ALIGN_DOWN(y_orig, 8)
+        local y_fixup = y_orig - y
+        h = ALIGN_UP(h + y_fixup, 8)
+
+        -- NOTE: The Forma is the rare beast with screen dimensions that are themselves a multiple of 8.
+        --       Unfortunately, this may not be true for every device, so,
+        --       make sure we clamp w & h to the physical screen's size, otherwise the ioctl will fail ;).
+        w, h = fb:_clampToPhysicalDim(w, h)
     end
 
     w = w * fb.refresh_pixel_size
@@ -385,7 +446,7 @@ local function refresh_zelda(fb, refreshtype, waveform_mode, x, y, w, h, dither)
     end
     -- TODO: There's also the HW-backed NightMode which should be somewhat accessible...
 
-    return mxc_update(fb, C.MXCFB_SEND_UPDATE_ZELDA, refarea, refreshtype, waveform_mode, x, y, w, h)
+    return mxc_update(fb, C.MXCFB_SEND_UPDATE_ZELDA, refarea, refreshtype, waveform_mode, x, y, w, h, dither)
 end
 
 local function refresh_rex(fb, refreshtype, waveform_mode, x, y, w, h, dither)
@@ -421,7 +482,7 @@ local function refresh_rex(fb, refreshtype, waveform_mode, x, y, w, h, dither)
     end
     -- TODO: There's also the HW-backed NightMode which should be somewhat accessible...
 
-    return mxc_update(fb, C.MXCFB_SEND_UPDATE_REX, refarea, refreshtype, waveform_mode, x, y, w, h)
+    return mxc_update(fb, C.MXCFB_SEND_UPDATE_REX, refarea, refreshtype, waveform_mode, x, y, w, h, dither)
 end
 
 local function refresh_kobo(fb, refreshtype, waveform_mode, x, y, w, h)
@@ -468,7 +529,7 @@ local function refresh_kobo_mk7(fb, refreshtype, waveform_mode, x, y, w, h, dith
         refarea[0].flags = 0
     end
 
-    return mxc_update(fb, C.MXCFB_SEND_UPDATE_V2, refarea, refreshtype, waveform_mode, x, y, w, h)
+    return mxc_update(fb, C.MXCFB_SEND_UPDATE_V2, refarea, refreshtype, waveform_mode, x, y, w, h, dither)
 end
 
 local function refresh_pocketbook(fb, refreshtype, waveform_mode, x, y, w, h)
