@@ -511,6 +511,15 @@ static int readDefaults(lua_State *L) {
 		props->setInt(PROP_FONT_KERNING, 3); // harfbuzz (slower than freetype kerning, but needed for proper arabic)
 		// props->setInt(PROP_FONT_KERNING_ENABLED, 1);
 		props->setString("styles.pre.font-face", "font-family: \"Droid Sans Mono\"");
+                // Disable crengine image scaling options (we prefer scaling them via crengine.render.dpi)
+		props->setInt(PROP_IMG_SCALING_ZOOMIN_INLINE_MODE, 0);
+		props->setInt(PROP_IMG_SCALING_ZOOMIN_INLINE_SCALE, 1);
+		props->setInt(PROP_IMG_SCALING_ZOOMOUT_INLINE_MODE, 0);
+		props->setInt(PROP_IMG_SCALING_ZOOMOUT_INLINE_SCALE, 1);
+		props->setInt(PROP_IMG_SCALING_ZOOMIN_BLOCK_MODE, 0);
+		props->setInt(PROP_IMG_SCALING_ZOOMIN_BLOCK_SCALE, 1);
+		props->setInt(PROP_IMG_SCALING_ZOOMOUT_BLOCK_MODE, 0);
+		props->setInt(PROP_IMG_SCALING_ZOOMOUT_BLOCK_SCALE, 1);
 
 		stream = LVOpenFileStream("data/cr3.ini", LVOM_WRITE);
 		props->saveToStream(stream.get());
@@ -776,19 +785,35 @@ static int getDocumentProps(lua_State *L) {
 	return 1;
 }
 
-
-static int getNumberOfPages(lua_State *L) {
+static int getDocumentRenderingHash(lua_State *L) {
 	CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
 
-	lua_pushinteger(L, doc->text_view->getPageCount());
+	lua_pushinteger(L, doc->text_view->getDocumentRenderingHash());
+
+	return 1;
+}
+
+static int getPages(lua_State *L) {
+	CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
+	bool internal = false;
+	if (lua_isboolean(L, 2)) {
+		internal = lua_toboolean(L, 2);
+	}
+
+	lua_pushinteger(L, doc->text_view->getPageCount(internal));
 
 	return 1;
 }
 
 static int getCurrentPage(lua_State *L) {
 	CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
+	bool internal = false;
+	if (lua_isboolean(L, 2)) {
+		internal = lua_toboolean(L, 2);
+	}
 
-	lua_pushinteger(L, doc->text_view->getCurPage()+1);
+	int page = doc->text_view->getCurPage(internal);
+	lua_pushinteger(L, page+1);
 
 	return 1;
 }
@@ -1224,9 +1249,10 @@ static int getPageMapVisiblePageLabels(lua_State *L) {
     int min_y = rc.top;
     int max_y = rc.bottom;
     int page2_y = -1;
+    // We must work with internal page numbers
     if ( tv->getVisiblePageCount() == 2 ) {
-        int next_page = tv->getCurPage() + 1;
-        if ( next_page < tv->getPageCount() ) {
+        int next_page = tv->getCurPage(true) + 1;
+        if ( next_page < tv->getPageCount(true) ) {
             page2_y = tv->getPageStartY( next_page );
         }
     }
@@ -1441,8 +1467,12 @@ static int setAsPreferredFontWithBias(lua_State *L) {
 static int gotoPage(lua_State *L) {
 	CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
 	int pageno = luaL_checkint(L, 2);
+	bool internal = false;
+	if (lua_isboolean(L, 3)) {
+		internal = lua_toboolean(L, 3);
+	}
 
-	doc->text_view->goToPage(pageno-1, true, false); // regulateTwoPages=false
+	doc->text_view->goToPage(pageno-1, internal, true, false); // regulateTwoPages=false
 	// In 2-pages mode, we will ensure from frontend the first page displayed
 	// is an even one: we don't need crengine to ensure that.
 
@@ -1591,6 +1621,14 @@ static int setVisiblePageCount(lua_State *L) {
 	doc->text_view->setVisiblePageCount(nb_pages, only_if_sane);
 
 	return 0;
+}
+
+static int getVisiblePageNumberCount(lua_State *L) {
+	CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
+
+	lua_pushinteger(L, doc->text_view->getVisiblePageNumberCount());
+
+	return 1;
 }
 
 static int adjustFontSizes(lua_State *L) {
@@ -3464,7 +3502,8 @@ static const struct luaL_Reg credocument_meth[] = {
     {"getStringProperty", getStringProperty},
     {"getDocumentFormat", getDocumentFormat},
     {"getDocumentProps", getDocumentProps},
-    {"getPages", getNumberOfPages},
+    {"getDocumentRenderingHash", getDocumentRenderingHash},
+    {"getPages", getPages},
     {"getCurrentPage", getCurrentPage},
     {"getPageFlow", getPageFlow},
     {"getPageFromXPointer", getPageFromXPointer},
@@ -3482,6 +3521,7 @@ static const struct luaL_Reg credocument_meth[] = {
     {"getHeaderHeight", getHeaderHeight},
     {"getToc", getTableOfContent},
     {"getVisiblePageCount", getVisiblePageCount},
+    {"getVisiblePageNumberCount", getVisiblePageNumberCount},
     {"getNextVisibleWordStart", getNextVisibleWordStart},
     {"getNextVisibleWordEnd", getNextVisibleWordEnd},
     {"getPrevVisibleWordStart", getPrevVisibleWordStart},
