@@ -17,7 +17,7 @@ if($ENV{ANDROID})
     # workaround of 'undefined reference to getdtablesize' for NDK-r11c
     set(CFG_ENV_VAR "${CFG_ENV_VAR} LDFLAGS=-lc LIBS=${NDK}/platforms/android-${NDKABI}/arch-arm/usr/lib/libc.a")
 endif()
-set(CFG_OPTS "--with-threads=none --disable-acl --disable-curses --disable-openmp --disable-native-java --disable-java")
+set(CFG_OPTS "--enable-silent-rules --with-threads=none --disable-acl --disable-curses --disable-openmp --disable-native-java --disable-java")
 set(CFG_OPTS "${CFG_OPTS} --prefix=${BINARY_DIR} --with-libiconv-prefix=${LIBICONV_PREFIX}")
 set(CFG_OPTS "${CFG_OPTS} --enable-shared=false --enable-static=true ${CHOST_OPTS}")
 set(CFG_CMD sh -c "${CFG_ENV_VAR} ${SOURCE_DIR}/configure ${CFG_OPTS}")
@@ -27,14 +27,14 @@ if($ENV{ANDROID})
     set(CFG_CMD "${CFG_CMD} && ${ISED} \"s|#define HAVE_PWD_H 1||\" gettext-tools/config.h")
 endif()
 
-set(GETTEXT_VER "0.20.1")
+set(GETTEXT_VER "0.21")
 include(ExternalProject)
 ExternalProject_Add(
     ${PROJECT_NAME}
     URL http://ftpmirror.gnu.org/gettext/gettext-${GETTEXT_VER}.tar.gz
-    URL_MD5 bb5b0c0caa028105f3ca1905ddc306e2
+    URL_MD5 28b1cd4c94a74428723ed966c38cf479
     DOWNLOAD_DIR ${KO_DOWNLOAD_DIR}
     CONFIGURE_COMMAND ${CFG_CMD}
     BUILD_COMMAND ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS} --silent
-    INSTALL_COMMAND ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS} --silent install
+    INSTALL_COMMAND ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS} --silent install 2>&1 >/dev/null
 )
