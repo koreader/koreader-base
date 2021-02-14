@@ -1,6 +1,10 @@
 project(glib)
 cmake_minimum_required(VERSION 3.5.1)
 
+# This module is very verbose, which makes it push Android CI logs over the limits.
+# E.g., 4194304 bytes on GitLab CI.
+set(CMAKE_MESSAGE_LOG_LEVEL "WARNING")
+
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_LIST_DIR}/../cmake_modules")
 include("koreader_thirdparty_common")
 include("koreader_thirdparty_git")
