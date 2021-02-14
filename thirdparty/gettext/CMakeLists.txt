@@ -27,12 +27,12 @@ if($ENV{ANDROID})
     set(CFG_CMD "${CFG_CMD} && ${ISED} \"s|#define HAVE_PWD_H 1||\" gettext-tools/config.h")
 endif()
 
-set(GETTEXT_VER "0.20.1")
+set(GETTEXT_VER "0.21")
 include(ExternalProject)
 ExternalProject_Add(
     ${PROJECT_NAME}
     URL http://ftpmirror.gnu.org/gettext/gettext-${GETTEXT_VER}.tar.gz
-    URL_MD5 bb5b0c0caa028105f3ca1905ddc306e2
+    URL_MD5 28b1cd4c94a74428723ed966c38cf479
     DOWNLOAD_DIR ${KO_DOWNLOAD_DIR}
     CONFIGURE_COMMAND ${CFG_CMD}
     BUILD_COMMAND ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS} --silent
