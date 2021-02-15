@@ -42,5 +42,5 @@ ExternalProject_Add(
     PATCH_COMMAND COMMAND ${PATCH_CMD}
     CONFIGURE_COMMAND ${CFG_CMD}
     BUILD_COMMAND ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS} --silent
-    INSTALL_COMMAND sh -c ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS} --silent install 2>&1 >/dev/null
+    INSTALL_COMMAND sh -c "${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS} --silent install 2>&1 >/dev/null"
 )
