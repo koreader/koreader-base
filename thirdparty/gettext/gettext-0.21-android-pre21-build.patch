@@ -1,0 +1,15 @@
+diff -NuarpZ gettext-0.21-ori/libtextstyle/lib/glib/gstrfuncs.c gettext-0.21/libtextstyle/lib/glib/gstrfuncs.c
+--- gettext-0.21-ori/libtextstyle/lib/glib/gstrfuncs.c	2020-04-11 12:01:49.000000000 +0200
++++ gettext-0.21/libtextstyle/lib/glib/gstrfuncs.c	2021-02-15 01:46:57.774772752 +0100
+@@ -588,7 +588,11 @@ g_ascii_formatd (gchar       *buffer,
+   _g_snprintf (buffer, buf_len, format, d);
+ 
+   locale_data = localeconv ();
++#if defined(__ANDROID__) && __ANDROID_API__ < 21
++  decimal_point = '.';
++#else
+   decimal_point = locale_data->decimal_point;
++#endif
+   decimal_point_len = strlen (decimal_point);
+ 
+   g_assert (decimal_point_len != 0);
