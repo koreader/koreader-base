@@ -208,7 +208,7 @@ end
 -- Fast integer only divisions used for quantum scaling
 local function div255(value)
     local v = value + 128
-    return rshift(v + rshift(v, 8), 8)
+    return rshift((rshift(v, 8) + v), 8)
 end
 local function div4080(value)
     return rshift(value + 0x01 + rshift(value, 8), 12)
@@ -236,19 +236,19 @@ local function dither_o8x8(x, y, v)
     -- threshold = QuantumScale * v * ((L-1) * (D-1) + 1)
     -- NOTE: The initial computation of t (specifically, what we pass to DIV255) would overflow an uint8_t.
     --       So jump to shorts, and do it signed to be extra careful, although I don't *think* we can ever underflow here.
-    local t = div255(v * (lshift(15, 6) + 1))
+    local t = ffi.new("uint32_t", div255(v * (lshift(15, 6) + 1)))
     -- level = t / (D-1);
-    local l = rshift(t, 6)
+    local l = ffi.new("uint32_t", rshift(t, 6))
     -- t -= l * (D-1);
     t = t - lshift(l, 6)
 
     -- map width & height = 8
     -- c = ClampToQuantum((l+(t >= map[(x % mw) + mw * (y % mh)])) * QuantumRange / (L-1));
-    local q = (l + (t >= threshold_map_o8x8[band(x, 7) + (8 * band(y, 7))] and 1 or 0)) * 17
+    local q = ffi.new("uint32_t", (l + (t >= threshold_map_o8x8[band(x, 7) + 8 * band(y, 7)] and 1 or 0)) * 17)
     -- NOTE: For some arcane reason, on ARM (at least), this is noticeably faster than Pillow's CLIP8 macro.
     --       Following this logic with ternary operators yields similar results,
     --       so I'm guessing it's the < 256 part of Pillow's macro that doesn't agree with GCC/ARM...
-    local c
+    local c = ffi.new("uint8_t")
     if (q > 0xFF) then
         c = 0xFF
     elseif (q < 0) then
@@ -308,7 +308,7 @@ function Color8_mt.__index:ditherblend(x, y, color)
     local alpha = color:getAlpha()
     -- simplified: we expect a 8bit grayscale "color" as parameter
     local value = div255(self.a * bxor(alpha, 0xFF) + color:getR() * alpha)
-    value = dither_o8x8(x, y, value)
+    value = dither_o8x8(x, y, ffi.cast("uint8_t", value))
     self:set(Color8(value))
 end
 -- Alpha blending with a premultiplied input (i.e., color OVER self, w/ color being premultiplied)
@@ -359,7 +359,7 @@ function Color8_mt.__index:ditherpmulblend(x, y, color)
     local alpha = color:getAlpha()
     -- simplified: we expect a 8bit grayscale "color" as parameter
     local value = div255(self.a * bxor(alpha, 0xFF) + color:getR() * 0xFF)
-    value = dither_o8x8(x, y, value)
+    value = dither_o8x8(x, y, ffi.cast("uint8_t", value))
     self:set(Color8(value))
 end
 
@@ -790,11 +790,11 @@ function BB_mt.__index:setPixel(x, y, color)
     self:getPixelP(px, py)[0]:set(color)
 end
 -- Dithering (BB8 only)
-function BB8_mt.__index:setPixelDither(x, y, color)
+function BB8_mt.__index:setPixelDither(x, y, color, na, o_x, o_y)
     local px, py = self:getPhysicalCoordinates(x, y)
     if self:getInverse() == 1 then color = color:invert() end
     color = color:getColor8()
-    color.a = dither_o8x8(x, y, color.a)
+    color.a = dither_o8x8(o_x, o_y, color.a)
     self:getPixelP(px, py)[0]:set(color)
 end
 BB_mt.__index.setPixelDither = BB_mt.__index.setPixel
@@ -859,21 +859,19 @@ end
 BBRGB24_mt.__index.setPixelBlend = BBRGB16_mt.__index.setPixelBlend
 BBRGB32_mt.__index.setPixelBlend = BBRGB16_mt.__index.setPixelBlend
 -- Straight alpha blending + dithering (dithering applied on BB8 only)
-function BB8_mt.__index:setPixelDitherBlend(x, y, color)
+function BB8_mt.__index:setPixelDitherBlend(x, y, color, na, o_x, o_y)
     -- fast path:
     local alpha = color:getAlpha()
     if alpha == 0 then
         return
     elseif alpha == 0xFF then
-        color = color:getColor8()
-        color.a = dither_o8x8(x, y, color.a)
-        return self:setPixel(x, y, color)
+        return self:setPixelDither(x, y, color, na, o_x, o_y)
     end
     -- The blend method for these types of target BB assumes a grayscale input
     local px, py = self:getPhysicalCoordinates(x, y)
     color = color:getColor8A()
     if self:getInverse() == 1 then color = color:invert() end
-    self:getPixelP(px, py)[0]:ditherblend(x, y, color)
+    self:getPixelP(px, py)[0]:ditherblend(o_x, o_y, color)
 end
 BB_mt.__index.setPixelDitherBlend = BB_mt.__index.setPixelBlend
 -- Premultiplied alpha blending
@@ -906,21 +904,19 @@ end
 BBRGB24_mt.__index.setPixelPmulBlend = BBRGB16_mt.__index.setPixelPmulBlend
 BBRGB32_mt.__index.setPixelPmulBlend = BBRGB16_mt.__index.setPixelPmulBlend
 -- Premultiplied alpha blending + dithering (dithering applied on BB8 only)
-function BB8_mt.__index:setPixelDitherPmulBlend(x, y, color)
+function BB8_mt.__index:setPixelDitherPmulBlend(x, y, color, na, o_x, o_y)
     -- fast path:
     local alpha = color:getAlpha()
     if alpha == 0 then
         return
     elseif alpha == 0xFF then
-        color = color:getColor8()
-        color.a = dither_o8x8(x, y, color.a)
-        return self:setPixel(x, y, color)
+        return self:setPixelDither(x, y, color, na, o_x, o_y)
     end
     -- The pmulblend method for these types of target BB assumes a grayscale input
     local px, py = self:getPhysicalCoordinates(x, y)
     color = color:getColor8A()
     if self:getInverse() == 1 then color = color:invert() end
-    self:getPixelP(px, py)[0]:ditherpmulblend(x, y, color)
+    self:getPixelP(px, py)[0]:ditherpmulblend(o_x, o_y, color)
 end
 BB_mt.__index.setPixelDitherPmulBlend = BB_mt.__index.setPixelPmulBlend
 -- Colorize (NOTE: colorblitFrom has already handled inversion for us)
@@ -1028,7 +1024,7 @@ function BB_mt.__index:blitDefault(dest, dest_x, dest_y, offs_x, offs_y, width, 
     for y = dest_y, dest_y+height-1 do
         local o_x = offs_x
         for x = dest_x, dest_x+width-1 do
-            setter(dest, x, y, self:getPixel(o_x, o_y), set_param)
+            setter(dest, x, y, self:getPixel(o_x, o_y), set_param, o_x, o_y)
             o_x = o_x + 1
         end
         o_y = o_y + 1
