@@ -12,7 +12,9 @@ assert_var_defined(CFLAGS)
 assert_var_defined(CXXFLAGS)
 assert_var_defined(LDFLAGS)
 assert_var_defined(HOST)
+assert_var_defined(GETTEXT)
 assert_var_defined(GETTEXT_DIR)
+assert_var_defined(LIBICONV)
 assert_var_defined(LIBICONV_DIR)
 assert_var_defined(GLIB)
 assert_var_defined(GLIB_DIR)
@@ -46,11 +48,19 @@ set(CMAKE_PREFIX_PATH "${GLIB2_INCLUDE_DIRS}$<SEMICOLON>${ZLIB_DIR}$<SEMICOLON>$
 # For some reason this doesn't actually work and CMake keeps finding mostly .so
 # Which is funny, because the .a is in the *same* directory. Just saying.
 # Instead we add semi-hardcoded references to the right libraries in GLIB2_LIBRARIES
-if(DEFINED ENV{ANDROID} OR DEFINED ENV{DARWIN})
+if(DEFINED ENV{ANDROID})
     # glib2 also needs to link with libiconv and gettext
     # this is a fairly clean hack
     # CMAKE_CXX_FLAGS with -I and -L doesn't seem to have much of an effect
     set(GLIB2_LIBRARIES "${GLIB2_LIBRARIES}$<SEMICOLON>${LIBICONV_DIR}/lib/libiconv.a$<SEMICOLON>${GETTEXT_DIR}/lib/libintl.a")
+endif()
+
+# FIXME: Could *probably* move the Android hack above to use this, too?
+if(DEFINED ENV{DARWIN})
+    set(ICONV_INCLUDE_DIR "${LIBICONV_DIR}/include")
+    set(ICONV_LIBRARIES "${LIBICONV}")
+    set(LIBINTL_LIBRARIES "${GETTEXT}")
+    set(LIBINTL_FOUND True)
 endif()
 
 set(ZLIB_INCLUDE_DIR "${ZLIB_DIR}/include")
