@@ -358,7 +358,7 @@ $(GLIB): $(if $(DARWIN),$(LIBICONV) $(LIBGETTEXT),) $(LIBFFI_DIR)/include $(THIR
 		-DCFLAGS="$(CFLAGS)" -DLDFLAGS="$(LDFLAGS)" \
 		-DLIBICONV_DIR="$(LIBICONV_DIR)" \
 		-DLIBFFI_DIR="$(LIBFFI_DIR)" -DZLIB_DIR="$(ZLIB_DIR)" \
-		-DWITH_LIBICONV="$(if $(DARWIN),yes,no)" -DENABLE_SHARED="glib" \
+		-DWITH_LIBICONV="$(if $(DARWIN),gnu,no)" -DENABLE_SHARED="glib" \
 		-DHOST_OPTS="$(if $(EMULATE_READER),,--host=$(CHOST) --cache-file=arm_cache.conf)" \
 		$(CURDIR)/$(THIRDPARTY_DIR)/glib && \
 		$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS)
