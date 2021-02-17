@@ -179,16 +179,13 @@ local ColorRGB32_mt = {__index={}}
 
 -- color setting
 function Color4L_mt.__index:set(color)
-    local c = color:getColor4L()
-    self.a = bor(band(0xF0, self.a), c.a)
+    self.a = bor(band(0xF0, self.a), color:getColor4L().a)
 end
 function Color4U_mt.__index:set(color)
-    local c = color:getColor4U()
-    self.a = bor(band(0x0F, self.a), c.a)
+    self.a = bor(band(0x0F, self.a), color:getColor4U().a)
 end
 function Color8_mt.__index:set(color)
-    local c = color:getColor8()
-    self.a = c.a
+    self.a = color:getColor8().a
 end
 function Color8A_mt.__index:set(color)
     local c = color:getColor8A()
@@ -196,8 +193,7 @@ function Color8A_mt.__index:set(color)
     self.alpha = c.alpha
 end
 function ColorRGB16_mt.__index:set(color)
-    local c = color:getColorRGB16()
-    self.v = c.v
+    self.v = color:getColorRGB16().v
 end
 function ColorRGB24_mt.__index:set(color)
     local c = color:getColorRGB24()
