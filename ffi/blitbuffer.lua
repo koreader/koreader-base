@@ -246,28 +246,25 @@ local function dither_o8x8(x, y, v)
     -- threshold = QuantumScale * v * ((L-1) * (D-1) + 1)
     -- NOTE: The initial computation of t (specifically, what we pass to DIV255) would overflow an uint8_t.
     --       So jump to shorts, and do it signed to be extra careful, although I don't *think* we can ever underflow here.
-    local t = ffi.new("uint32_t", div255(v * (lshift(15, 6) + 1)))
+    local t = div255(v * (lshift(15, 6) + 1))
     -- level = t / (D-1);
-    local l = ffi.new("uint32_t", rshift(t, 6))
+    local l = rshift(t, 6)
     -- t -= l * (D-1);
     t = t - lshift(l, 6)
 
     -- map width & height = 8
     -- c = ClampToQuantum((l+(t >= map[(x % mw) + mw * (y % mh)])) * QuantumRange / (L-1));
-    local q = ffi.new("uint32_t", (l + (t >= threshold_map_o8x8[band(x, 7) + 8 * band(y, 7)] and 1 or 0)) * 17)
+    local q = (l + (t >= threshold_map_o8x8[band(x, 7) + 8 * band(y, 7)] and 1 or 0)) * 17
     -- NOTE: For some arcane reason, on ARM (at least), this is noticeably faster than Pillow's CLIP8 macro.
     --       Following this logic with ternary operators yields similar results,
     --       so I'm guessing it's the < 256 part of Pillow's macro that doesn't agree with GCC/ARM...
-    local c = ffi.new("uint8_t")
     if (q > 0xFF) then
-        c = 0xFF
+        return 0xFF
     elseif (q < 0) then
-        c = 0
+        return 0
     else
-        c = q
+        return q
     end
-
-    return c
 end
 
 -- Straight alpha blending (8bit alpha value)
@@ -1210,7 +1207,10 @@ function BB_mt.__index:ditherblitFrom(source, dest_x, dest_y, offs_x, offs_y, wi
             ffi.cast(P_BlitBuffer, self),
             dest_x, dest_y, offs_x, offs_y, width, height)
     else
+        local t1 = os.clock()
         self:blitFrom(source, dest_x, dest_y, offs_x, offs_y, width, height, self.setPixelDither)
+        local t2 = os.clock()
+        print(string.format("ditherblitFrom took  %9.3f ms", (t2 - t1) * 1000))
     end
 end
 
