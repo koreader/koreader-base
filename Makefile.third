@@ -328,9 +328,9 @@ $(LIBICONV): $(THIRDPARTY_DIR)/libiconv/*.*
 $(LIBGETTEXT): $(LIBICONV) $(THIRDPARTY_DIR)/gettext/*.*
 	install -d $(GETTEXT_BUILD_DIR)
 	cd $(GETTEXT_BUILD_DIR) && \
-		$(CMAKE) $(CMAKE_FLAGS) -DCC="$(CC)" -DLIBICONV_PREFIX=$(LIBICONV_DIR) \
-		-DAR="$(AR)" -DRANLIB="$(RANLIB)" \
+		$(CMAKE) $(CMAKE_FLAGS) -DCC="$(CC)" -DAR="$(AR)" -DRANLIB="$(RANLIB)" \
 		-DCHOST_OPTS="$(if $(EMULATE_READER),,--host=$(if $(ANDROID),arm-linux,$(CHOST)))" \
+		-DLIBICONV_PREFIX=$(LIBICONV_DIR) \
 		$(if $(ANDROID),-DNDK=$(NDK),) \
 		$(if $(ANDROID),-DNDKABI=$(NDKABI),) \
 		$(CURDIR)/thirdparty/gettext && \
