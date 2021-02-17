@@ -164,8 +164,6 @@ local P_ColorRGB16 = ffi.typeof("ColorRGB16*") -- luacheck: ignore 211
 local P_ColorRGB24 = ffi.typeof("ColorRGB24*") -- luacheck: ignore 211
 local P_ColorRGB32 = ffi.typeof("ColorRGB32*") -- luacheck: ignore 211
 
-local R_Color8 = ffi.typeof("Color8&")
-
 -- blitbuffer struct types (pointers)
 local P_BlitBuffer = ffi.typeof("BlitBuffer*")
 local P_BlitBuffer_ROData = ffi.typeof("const BlitBuffer*")
@@ -371,7 +369,7 @@ function Color8_mt.__index:ditherpmulblend(x, y, color)
 end
 
 -- color conversions:
--- NOTE: These *always* return a new object, even when no conversion is needed.
+-- NOTE: These *always* return a new Color? object, even when no conversion is needed.
 --       This ensures that, we you work on this new object, you won't potentially affect the source reference!
 -- to Color4L:
 function Color4L_mt.__index:getColor4L() return Color4L(band(0x0F, self.a)) end
@@ -421,7 +419,7 @@ function Color4U_mt.__index:getColor8()
     return Color8(bor(rshift(v, 4), v))
 end
 function Color8_mt.__index:getColor8() return Color8(self.a) end
-function Color8A_mt.__index:getColor8() return Color8(self.a) end
+Color8A_mt.__index.getColor8 = Color8_mt.__index.getColor8
 function ColorRGB16_mt.__index:getColor8()
     local r = rshift(self.v, 11)
     local g = band(rshift(self.v, 5), 0x3F)
@@ -464,8 +462,12 @@ function Color4L_mt.__index:getColorRGB16()
     return ColorRGB16(lshift(v5bit, 11) + lshift(band(v, 0xFC), 3) + v5bit)
 end
 Color4U_mt.__index.getColorRGB16 = Color4L_mt.__index.getColorRGB16
-Color8_mt.__index.getColorRGB16 = Color4L_mt.__index.getColorRGB16
-Color8A_mt.__index.getColorRGB16 = Color4L_mt.__index.getColorRGB16
+function Color8_mt.__index:getColorRGB16()
+    local v = self.a
+    local v5bit = rshift(v, 3)
+    return ColorRGB16(lshift(v5bit, 11) + lshift(band(v, 0xFC), 3) + v5bit)
+end
+Color8A_mt.__index.getColorRGB16 = Color8_mt.__index.getColorRGB16
 function ColorRGB16_mt.__index:getColorRGB16() return ColorRGB16(self.v) end
 function ColorRGB24_mt.__index:getColorRGB16()
     return ColorRGB16(lshift(band(self.r, 0xF8), 8) + lshift(band(self.g, 0xFC), 3)  + rshift(self.b, 3))
@@ -478,8 +480,8 @@ function Color4L_mt.__index:getColorRGB24()
     return ColorRGB24(v.a, v.a, v.a)
 end
 Color4U_mt.__index.getColorRGB24 = Color4L_mt.__index.getColorRGB24
-Color8_mt.__index.getColorRGB24 = Color4L_mt.__index.getColorRGB24
-Color8A_mt.__index.getColorRGB24 = Color4L_mt.__index.getColorRGB24
+function Color8_mt.__index:getColorRGB24() return ColorRGB24(self.a, self.a, self.a) end
+Color8A_mt.__index.getColorRGB24 = Color8_mt.__index.getColorRGB24
 function ColorRGB16_mt.__index:getColorRGB24()
     local r = rshift(self.v, 11)
     local g = band(rshift(self.v, 5), 0x3F)
@@ -487,7 +489,7 @@ function ColorRGB16_mt.__index:getColorRGB24()
     return ColorRGB24(lshift(r, 3) + rshift(r, 2), lshift(g, 2) + rshift(g, 4), lshift(b, 3) + rshift(b, 2))
 end
 function ColorRGB24_mt.__index:getColorRGB24() return ColorRGB24(self.r, self.g, self.b) end
-function ColorRGB32_mt.__index:getColorRGB24() return ColorRGB24(self.r, self.g, self.b) end
+function ColorRGB32_mt.__index.getColorRGB24 = ColorRGB24_mt.__index.getColorRGB24
 
 -- to ColorRGB32:
 function Color4L_mt.__index:getColorRGB32()
@@ -495,7 +497,7 @@ function Color4L_mt.__index:getColorRGB32()
     return ColorRGB32(v.a, v.a, v.a, 0xFF)
 end
 Color4U_mt.__index.getColorRGB32 = Color4L_mt.__index.getColorRGB32
-Color8_mt.__index.getColorRGB32 = Color4L_mt.__index.getColorRGB32
+function Color8_mt.__index:getColorRGB32() return ColorRGB32(self.a, self.a, self.a, 0xFF) end
 function Color8A_mt.__index:getColorRGB32() return ColorRGB32(self.a, self.a, self.a, self.alpha) end
 function ColorRGB16_mt.__index:getColorRGB32()
     local r = rshift(self.v, 11)
@@ -543,7 +545,7 @@ ColorRGB24_mt.__index.getAlpha = Color4L_mt.__index.getAlpha
 ColorRGB32_mt.__index.getR = ColorRGB24_mt.__index.getR
 ColorRGB32_mt.__index.getG = ColorRGB24_mt.__index.getG
 ColorRGB32_mt.__index.getB = ColorRGB24_mt.__index.getB
-function ColorRGB32_mt.__index:getAlpha() return self.alpha end
+ColorRGB32_mt.__index.getAlpha = Color8A_mt.__index.getAlpha
 
 -- modifications:
 -- inversion:
