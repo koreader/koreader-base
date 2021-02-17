@@ -164,6 +164,8 @@ local P_ColorRGB16 = ffi.typeof("ColorRGB16*") -- luacheck: ignore 211
 local P_ColorRGB24 = ffi.typeof("ColorRGB24*") -- luacheck: ignore 211
 local P_ColorRGB32 = ffi.typeof("ColorRGB32*") -- luacheck: ignore 211
 
+local R_Color8 = ffi.typeof("Color8&")
+
 -- blitbuffer struct types (pointers)
 local P_BlitBuffer = ffi.typeof("BlitBuffer*")
 local P_BlitBuffer_ROData = ffi.typeof("const BlitBuffer*")
@@ -797,6 +799,13 @@ end
 function BB8_mt.__index:setPixelDither(x, y, color, na, o_x, o_y)
     local px, py = self:getPhysicalCoordinates(x, y)
     if self:getInverse() == 1 then color = color:invert() end
+    if (o_x < 250 and o_y < 50) then
+        if ffi.typeof(color) == R_Color8 then
+            print(string.format("setPixelDither: (%03d, %03d) #%02X", o_x, o_y, color.a))
+        else
+            print(string.format("setPixelDither: (%03d, %03d) #%02X%02X%02X", o_x, o_y, color.r, color.g, color.b))
+        end
+    end
     color = color:getColor8()
     color.a = dither_o8x8(o_x, o_y, color.a)
     self:getPixelP(px, py)[0]:set(color)
