@@ -749,7 +749,14 @@ static uint8_t
     // NOTE: We're doing unsigned maths, so, clamping is basically MIN(q, UINT8_MAX) ;).
     //       The only overflow we should ever catch should be for a few white (v = 0xFF) input pixels
     //       that get shifted to the next step (i.e., q = 272 (0xFF + 17)).
-    return (q > UINT8_MAX ? UINT8_MAX : (uint8_t) q);
+
+    const uint8_t c = q > UINT8_MAX ? UINT8_MAX : (uint8_t) q;
+
+    if (x < 250 && y < 50) {
+        printf("CBB: (%03d, %03d) #%02X -> #%02X\n", x, y, v, c);
+    }
+
+    return c;
 }
 
 void BB_dither_blit_to_BB8(const BlitBuffer * restrict src, BlitBuffer * restrict dst,

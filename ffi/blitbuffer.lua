@@ -257,6 +257,10 @@ local function dither_o8x8(x, y, v)
         c = q
     end
 
+    if (x < 250 and y < 50) then
+        print(string.format("Lua: (%03d, %03d) #%02X -> #%02X", x, y, tonumber(v), tonumber(c)))
+    end
+
     return c
 end
 
