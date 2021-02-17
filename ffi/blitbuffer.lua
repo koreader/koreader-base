@@ -562,8 +562,8 @@ function ColorRGB32_mt.__index:invert()
 end
 
 -- comparison:
-function ColorRGB32_mt:__eq(c)
-    c = c:getColorRGB32()
+function ColorRGB32_mt:__eq(color)
+    local c = color:getColorRGB32()
     return (self:getR() == c:getR())
     and (self:getG() == c:getG())
     and (self:getB() == c:getB())
@@ -803,8 +803,8 @@ end
 -- Dithering (BB8 only)
 function BB8_mt.__index:setPixelDither(x, y, color, na, o_x, o_y)
     local px, py = self:getPhysicalCoordinates(x, y)
-    if self:getInverse() == 1 then color = color:invert() end
     local c = color:getColor8()
+    if self:getInverse() == 1 then c = c:invert() end
     c.a = dither_o8x8(o_x, o_y, c.a)
     self:getPixelP(px, py)[0]:set(c)
 end
@@ -833,8 +833,8 @@ function BBRGB16_mt.__index:setPixelAdd(x, y, color, alpha)
     end
     -- this method uses an RGB color value
     local px, py = self:getPhysicalCoordinates(x, y)
-    if self:getInverse() == 1 then color = color:invert() end
     local c = color:getColorRGB32()
+    if self:getInverse() == 1 then c = c:invert() end
     c.alpha = alpha
     self:getPixelP(px, py)[0]:blend(c)
 end
