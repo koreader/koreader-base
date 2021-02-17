@@ -378,6 +378,8 @@ function Color8_mt.__index:ditherpmulblend(x, y, color)
 end
 
 -- color conversions:
+-- NOTE: These *always* return a new object, even when no conversion is needed.
+--       This ensures that, we you work on this new object, you won't potentially affect the source reference!
 -- to Color4L:
 function Color4L_mt.__index:getColor4L() return Color4L(band(0x0F, self.a)) end
 function Color4U_mt.__index:getColor4L() return Color4L(rshift(self.a, 4)) end
