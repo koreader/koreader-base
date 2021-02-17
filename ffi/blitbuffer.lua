@@ -315,7 +315,7 @@ function Color8_mt.__index:ditherblend(x, y, color)
     local alpha = color:getAlpha()
     -- simplified: we expect a 8bit grayscale "color" as parameter
     local value = div255(self.a * bxor(alpha, 0xFF) + color:getR() * alpha)
-    value = dither_o8x8(x, y, ffi.cast("uint8_t", value))
+    value = dither_o8x8(x, y, value)
     self:set(Color8(value))
 end
 -- Alpha blending with a premultiplied input (i.e., color OVER self, w/ color being premultiplied)
@@ -366,7 +366,7 @@ function Color8_mt.__index:ditherpmulblend(x, y, color)
     local alpha = color:getAlpha()
     -- simplified: we expect a 8bit grayscale "color" as parameter
     local value = div255(self.a * bxor(alpha, 0xFF) + color:getR() * 0xFF)
-    value = dither_o8x8(x, y, ffi.cast("uint8_t", value))
+    value = dither_o8x8(x, y, value)
     self:set(Color8(value))
 end
 
@@ -1207,10 +1207,7 @@ function BB_mt.__index:ditherblitFrom(source, dest_x, dest_y, offs_x, offs_y, wi
             ffi.cast(P_BlitBuffer, self),
             dest_x, dest_y, offs_x, offs_y, width, height)
     else
-        local t1 = os.clock()
         self:blitFrom(source, dest_x, dest_y, offs_x, offs_y, width, height, self.setPixelDither)
-        local t2 = os.clock()
-        print(string.format("ditherblitFrom took  %9.3f ms", (t2 - t1) * 1000))
     end
 end
 
