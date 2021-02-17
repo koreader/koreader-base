@@ -489,7 +489,7 @@ function ColorRGB16_mt.__index:getColorRGB24()
     return ColorRGB24(lshift(r, 3) + rshift(r, 2), lshift(g, 2) + rshift(g, 4), lshift(b, 3) + rshift(b, 2))
 end
 function ColorRGB24_mt.__index:getColorRGB24() return ColorRGB24(self.r, self.g, self.b) end
-function ColorRGB32_mt.__index.getColorRGB24 = ColorRGB24_mt.__index.getColorRGB24
+ColorRGB32_mt.__index.getColorRGB24 = ColorRGB24_mt.__index.getColorRGB24
 
 -- to ColorRGB32:
 function Color4L_mt.__index:getColorRGB32()
