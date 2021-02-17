@@ -248,7 +248,7 @@ local function dither_o8x8(x, y, v)
 
     -- map width & height = 8
     -- c = ClampToQuantum((l+(t >= map[(x % mw) + mw * (y % mh)])) * QuantumRange / (L-1));
-    local q = (l + (t >= threshold_map_o8x8[band(x, 7) + 8 * band(y, 7)] and 1 or 0)) * 17
+    local q = (l + (t >= threshold_map_o8x8[band(x, 7) + (8 * band(y, 7))] and 1 or 0)) * 17
     -- NOTE: For some arcane reason, on ARM (at least), this is noticeably faster than Pillow's CLIP8 macro.
     --       Following this logic with ternary operators yields similar results,
     --       so I'm guessing it's the < 256 part of Pillow's macro that doesn't agree with GCC/ARM...
