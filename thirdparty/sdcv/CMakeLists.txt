@@ -37,25 +37,26 @@ endif()
 # took me an eternity to find $<SEMICOLON>
 # important docs here https://cmake.org/cmake/help/v2.8.11/cmake.html#command:add_custom_command
 set(GLIB2_INCLUDE_DIRS "${GLIB_DIR}/include/glib-2.0")
-set(GLIB2_INCLUDE_DIRS "${GLIB2_INCLUDE_DIRS}$<SEMICOLON>${GLIB_DIR}/lib/glib-2.0/include$<SEMICOLON>${GETTEXT_DIR}/include")
+set(GLIB2_INCLUDE_DIRS "${GLIB2_INCLUDE_DIRS}$<SEMICOLON>${GLIB_DIR}/lib/glib-2.0/include$<SEMICOLON>${GETTEXT_DIR}/include$<SEMICOLON>$(LIBICONV_DIR)/include")
 set(GLIB2_LIBRARIES "${GLIB}")
 
 # `CMAKE_PREFIX_PATH`, `CMAKE_INCLUDE_PATH` and `CMAKE_LIBRARY_PATH` are key
 # It's very hard to tell CMake to use specific directories, but it's easy to
 # tell it to search in specific directories.
-set(CMAKE_PREFIX_PATH "${GLIB2_INCLUDE_DIRS}$<SEMICOLON>${ZLIB_DIR}$<SEMICOLON>${LIBICONV_DIR}$<SEMICOLON>${GETTEXT_DIR}")
+set(CMAKE_PREFIX_PATH "${GLIB2_INCLUDE_DIRS}$<SEMICOLON>${GETTEXT_DIR}$<SEMICOLON>${LIBICONV_DIR}$<SEMICOLON>${ZLIB_DIR}")
 
 # For some reason this doesn't actually work and CMake keeps finding mostly .so
 # Which is funny, because the .a is in the *same* directory. Just saying.
 # Instead we add semi-hardcoded references to the right libraries in GLIB2_LIBRARIES
-if(DEFINED ENV{ANDROID})
+if(DEFINED ENV{ANDROID} OR DEFINED ENV{DARWIN})
     # glib2 also needs to link with libiconv and gettext
     # this is a fairly clean hack
     # CMAKE_CXX_FLAGS with -I and -L doesn't seem to have much of an effect
-    set(GLIB2_LIBRARIES "${GLIB2_LIBRARIES}$<SEMICOLON>${LIBICONV_DIR}/lib/libiconv.a$<SEMICOLON>${GETTEXT_DIR}/lib/libintl.a")
+    set(GLIB2_LIBRARIES "${GLIB2_LIBRARIES}$<SEMICOLON>${GETTEXT_DIR}/lib/libintl.a$<SEMICOLON>${LIBICONV_DIR}/lib/libiconv.a")
 endif()
 
-# FIXME: Could *probably* move the Android hack above to use this, too?
+# NOTE: This is all good and well, but it's unclear whether these actually end up as target_link_libraries, unlike GLIB2_LIBRARIES,
+#       hence the hack above...
 if(DEFINED ENV{DARWIN})
     set(ICONV_INCLUDE_DIR "${LIBICONV_DIR}/include")
     set(ICONV_LIBRARIES "${LIBICONV}")
