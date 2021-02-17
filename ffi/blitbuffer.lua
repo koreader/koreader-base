@@ -782,8 +782,11 @@ end
 function BB_mt.__index:getPixel(x, y)
     local px, py = self:getPhysicalCoordinates(x, y)
     local color = self:getPixelP(px, py)[0]
-    if self:getInverse() == 1 then color = color:invert() end
-    return color
+    if self:getInverse() == 1 then
+        return color:invert()
+    else
+        return color
+    end
 end
 
 -- blitbuffer specific color conversions
@@ -797,8 +800,11 @@ function BBRGB32_mt.__index.getMyColor(color) return color:getColorRGB32() end
 -- set pixel values
 function BB_mt.__index:setPixel(x, y, color)
     local px, py = self:getPhysicalCoordinates(x, y)
-    if self:getInverse() == 1 then color = color:invert() end
-    self:getPixelP(px, py)[0]:set(color)
+    if self:getInverse() == 1 then
+        self:getPixelP(px, py)[0]:set(color:invert())
+    else
+        self:getPixelP(px, py)[0]:set(color)
+    end
 end
 -- Dithering (BB8 only)
 function BB8_mt.__index:setPixelDither(x, y, color, na, o_x, o_y)
@@ -864,8 +870,11 @@ function BBRGB16_mt.__index:setPixelBlend(x, y, color)
         return self:setPixel(x, y, color)
     end
     local px, py = self:getPhysicalCoordinates(x, y)
-    if self:getInverse() == 1 then color = color:invert() end
-    self:getPixelP(px, py)[0]:blend(color)
+    if self:getInverse() == 1 then
+        self:getPixelP(px, py)[0]:blend(color:invert())
+    else
+        self:getPixelP(px, py)[0]:blend(color)
+    end
 end
 BBRGB24_mt.__index.setPixelBlend = BBRGB16_mt.__index.setPixelBlend
 BBRGB32_mt.__index.setPixelBlend = BBRGB16_mt.__index.setPixelBlend
@@ -909,8 +918,11 @@ function BBRGB16_mt.__index:setPixelPmulBlend(x, y, color)
         return self:setPixel(x, y, color)
     end
     local px, py = self:getPhysicalCoordinates(x, y)
-    if self:getInverse() == 1 then color = color:invert() end
-    self:getPixelP(px, py)[0]:pmulblend(color)
+    if self:getInverse() == 1 then
+        self:getPixelP(px, py)[0]:pmulblend(color:invert())
+    else
+        self:getPixelP(px, py)[0]:pmulblend(color)
+    end
 end
 BBRGB24_mt.__index.setPixelPmulBlend = BBRGB16_mt.__index.setPixelPmulBlend
 BBRGB32_mt.__index.setPixelPmulBlend = BBRGB16_mt.__index.setPixelPmulBlend
