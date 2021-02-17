@@ -37,7 +37,7 @@ endif()
 # took me an eternity to find $<SEMICOLON>
 # important docs here https://cmake.org/cmake/help/v2.8.11/cmake.html#command:add_custom_command
 set(GLIB2_INCLUDE_DIRS "${GLIB_DIR}/include/glib-2.0")
-set(GLIB2_INCLUDE_DIRS "${GLIB2_INCLUDE_DIRS}$<SEMICOLON>${GLIB_DIR}/lib/glib-2.0/include$<SEMICOLON>${GETTEXT_DIR}/include$<SEMICOLON>$(LIBICONV_DIR)/include")
+set(GLIB2_INCLUDE_DIRS "${GLIB2_INCLUDE_DIRS}$<SEMICOLON>${GLIB_DIR}/lib/glib-2.0/include$<SEMICOLON>${GETTEXT_DIR}/include$<SEMICOLON>${LIBICONV_DIR}/include")
 set(GLIB2_LIBRARIES "${GLIB}")
 
 # `CMAKE_PREFIX_PATH`, `CMAKE_INCLUDE_PATH` and `CMAKE_LIBRARY_PATH` are key
