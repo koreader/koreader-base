@@ -775,6 +775,8 @@ function BB4_mt.__index:getPixelP(x, y)
     end
 end
 
+-- Do *NOT* write to the returned pointer!
+-- If you want an actual write pointer, use getPixelP
 function BB_mt.__index:getPixel(x, y)
     local px, py = self:getPhysicalCoordinates(x, y)
     local color = self:getPixelP(px, py)[0]
