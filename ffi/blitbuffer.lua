@@ -267,10 +267,6 @@ local function dither_o8x8(x, y, v)
         c = q
     end
 
-    if (x < 250 and y < 50) then
-        print(string.format("Lua: (%03d, %03d) #%02X -> #%02X", x, y, tonumber(v), tonumber(c)))
-    end
-
     return c
 end
 
@@ -809,13 +805,6 @@ end
 function BB8_mt.__index:setPixelDither(x, y, color, na, o_x, o_y)
     local px, py = self:getPhysicalCoordinates(x, y)
     if self:getInverse() == 1 then color = color:invert() end
-    if (o_x < 250 and o_y < 50) then
-        if ffi.typeof(color) == R_Color8 then
-            print(string.format("setPixelDither: (%03d, %03d) #%02X", o_x, o_y, color.a))
-        else
-            print(string.format("setPixelDither: (%03d, %03d) #%02X%02X%02X", o_x, o_y, color.r, color.g, color.b))
-        end
-    end
     local c = color:getColor8()
     c.a = dither_o8x8(o_x, o_y, c.a)
     self:getPixelP(px, py)[0]:set(c)
