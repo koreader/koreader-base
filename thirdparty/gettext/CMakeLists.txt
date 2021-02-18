@@ -6,6 +6,11 @@ include("koreader_thirdparty_common")
 
 enable_language(C)
 
+assert_var_defined(CC)
+assert_var_defined(AR)
+assert_var_defined(RANLIB)
+assert_var_defined(CPPFLAGS)
+assert_var_defined(LDFLAGS)
 assert_var_defined(LIBICONV_PREFIX)
 assert_var_defined(CHOST_OPTS)
 
@@ -17,13 +22,13 @@ if(DEFINED ENV{ANDROID})
     set(PATCH_CMD "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/gettext-0.21-android-pre21-build.patch")
 endif()
 
-set(CFG_ENV_VAR "CC=\"${CC}\" AR=\"${AR}\" RANLIB=\"${RANLIB}\"")
+set(CFG_ENV_VAR "CC=\"${CC}\" AR=\"${AR}\" RANLIB=\"${RANLIB}\" CPPFLAGS=\"${CPPFLAGS}\" LDFLAGS=\"${LDFLAGS}\"")
 if(DEFINED ENV{ANDROID})
     # workaround of 'undefined reference to getdtablesize' for NDK-r11c
-    set(CFG_ENV_VAR "${CFG_ENV_VAR} ac_cv_member_struct_lconv_decimal_point=no LDFLAGS=-lc LIBS=${NDK}/platforms/android-${NDKABI}/arch-arm/usr/lib/libc.a")
+    set(CFG_ENV_VAR "${CFG_ENV_VAR} ac_cv_member_struct_lconv_decimal_point=no LDFLAGS=\"${LDFLAGS} -lc\" LIBS=${NDK}/platforms/android-${NDKABI}/arch-arm/usr/lib/libc.a")
 endif()
 set(CFG_OPTS "--enable-silent-rules --with-threads=none --disable-acl --disable-curses --disable-openmp --disable-native-java --disable-java")
-set(CFG_OPTS "${CFG_OPTS} --prefix=${BINARY_DIR} --with-libiconv-prefix=${LIBICONV_PREFIX}")
+set(CFG_OPTS "${CFG_OPTS} --prefix=${BINARY_DIR} --with-libiconv-prefix=${LIBICONV_PREFIX} --with-included-libunistring --with-included-libxml --with-included-gettext")
 set(CFG_OPTS "${CFG_OPTS} --enable-shared=false --enable-static=true ${CHOST_OPTS}")
 set(CFG_CMD sh -c "${CFG_ENV_VAR} ${SOURCE_DIR}/configure ${CFG_OPTS}")
 
