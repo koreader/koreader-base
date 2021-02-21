@@ -526,7 +526,7 @@ local function refresh_kobo_mk7(fb, refreshtype, waveform_mode, x, y, w, h, dith
     -- NOTE: We never actually request A2 updates anymore (on any platform, actually), but,
     --       on Mk. 7 specifically, we want to avoid stacking EPDC_FLAGs,
     --       because the kernel is buggy (c.f., https://github.com/NiLuJe/FBInk/blob/96a2cd6a93f5184c595c0e53a844fd883adfd75b/fbink.c#L2422-L2440).
-    --       For our use-cases, FORCE_MONOCHROME is mostly unnecessary anyway.
+    --       For our use-cases, FORCE_MONOCHROME is mostly unnecessary anyway (the effect being fuzzier text instead of blockier text, i.e., choose your poison ;p).
     if waveform_mode == C.WAVEFORM_MODE_A2 and not dither then
         refarea[0].flags = C.EPDC_FLAG_FORCE_MONOCHROME
     else
