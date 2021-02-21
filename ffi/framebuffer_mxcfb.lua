@@ -404,7 +404,7 @@ local function refresh_k51(fb, refreshtype, waveform_mode, x, y, w, h)
     -- TEMP_USE_PAPYRUS on Touch/PW1, TEMP_USE_AUTO on PW2 (same value in both cases, 0x1001)
     refarea[0].temp = C.TEMP_USE_AUTO
     -- Enable the appropriate flag when requesting a 2bit update
-    if waveform_mode == C.WAVEFORM_MODE_A2 then
+    if waveform_mode == C.WAVEFORM_MODE_A2 or waveform_mode == C.WAVEFORM_MODE_DU then
         refarea[0].flags = C.EPDC_FLAG_FORCE_MONOCHROME
     else
         refarea[0].flags = 0
@@ -494,7 +494,7 @@ local function refresh_kobo(fb, refreshtype, waveform_mode, x, y, w, h)
     -- Enable the appropriate flag when requesting a REAGLD waveform (NTX_WFM_MODE_GLD16 on the Aura)
     if waveform_mode == C.NTX_WFM_MODE_GLD16 then
         refarea[0].flags = C.EPDC_FLAG_USE_AAD
-    elseif waveform_mode == C.WAVEFORM_MODE_A2 then
+    elseif waveform_mode == C.WAVEFORM_MODE_A2 or waveform_mode == C.WAVEFORM_MODE_DU then
         -- As well as when requesting a 2bit waveform
         refarea[0].flags = C.EPDC_FLAG_FORCE_MONOCHROME
     else
@@ -543,7 +543,7 @@ local function refresh_pocketbook(fb, refreshtype, waveform_mode, x, y, w, h)
     -- Enable the appropriate flag when requesting a REAGLD waveform (EPDC_WFTYPE_AAD on PB631)
     if waveform_mode == C.EPDC_WFTYPE_AAD then
         refarea[0].flags = C.EPDC_FLAG_USE_AAD
-    elseif waveform_mode == C.WAVEFORM_MODE_DU then
+    elseif waveform_mode == C.WAVEFORM_MODE_A2 or waveform_mode == C.WAVEFORM_MODE_DU then
         -- As well as when requesting a 2bit waveform
         --- @note: Much like on rM, it appears faking 24°C instead of relying on ambient temp leads to lower latency
         refarea[0].temp = 24
@@ -575,7 +575,7 @@ local function refresh_cervantes(fb, refreshtype, waveform_mode, x, y, w, h)
     local refarea = ffi.new("struct mxcfb_update_data[1]")
     refarea[0].temp = C.TEMP_USE_AMBIENT
 
-    if waveform_mode == C.WAVEFORM_MODE_A2 then
+    if waveform_mode == C.WAVEFORM_MODE_A2 or waveform_mode == C.WAVEFORM_MODE_DU then
         refarea[0].flags = C.EPDC_FLAG_FORCE_MONOCHROME
     else
         refarea[0].flags = 0
