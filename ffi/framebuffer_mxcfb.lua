@@ -646,7 +646,7 @@ function framebuffer:init()
         self.mech_wait_update_complete = kindle_pearl_mxc_wait_for_update_complete
         self.mech_wait_update_submission = kindle_mxc_wait_for_update_submission
 
-        self.waveform_fast = C.WAVEFORM_MODE_A2 -- NOTE: Mostly here for archeological purposes, we switch to DU below on every device ;).
+        self.waveform_fast = C.WAVEFORM_MODE_A2 -- NOTE: Mostly here for archeological purposes, we switch to DU on every device right below this ;).
         self.waveform_ui = C.WAVEFORM_MODE_GC16_FAST
         self.waveform_flashui = self.waveform_ui
         self.waveform_full = C.WAVEFORM_MODE_GC16
