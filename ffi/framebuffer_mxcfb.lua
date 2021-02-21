@@ -403,8 +403,8 @@ local function refresh_k51(fb, refreshtype, waveform_mode, x, y, w, h)
     end
     -- TEMP_USE_PAPYRUS on Touch/PW1, TEMP_USE_AUTO on PW2 (same value in both cases, 0x1001)
     refarea[0].temp = C.TEMP_USE_AUTO
-    -- Enable the appropriate flag when requesting what amounts to a 2bit update
-    if waveform_mode == C.WAVEFORM_MODE_DU then
+    -- Enable the appropriate flag when requesting a 2bit update
+    if waveform_mode == C.WAVEFORM_MODE_A2 then
         refarea[0].flags = C.EPDC_FLAG_FORCE_MONOCHROME
     else
         refarea[0].flags = 0
@@ -429,7 +429,7 @@ local function refresh_zelda(fb, refreshtype, waveform_mode, x, y, w, h, dither)
     -- Did we request HW dithering on a device where it works?
     if dither and fb.device:canHWDither() then
         refarea[0].dither_mode = C.EPDC_FLAG_USE_DITHERING_ORDERED
-        if waveform_mode == C.WAVEFORM_MODE_DU then
+        if waveform_mode == C.WAVEFORM_MODE_A2 or waveform_mode == C.WAVEFORM_MODE_DU then
             refarea[0].quant_bit = 1;
         else
             refarea[0].quant_bit = 7;
@@ -438,8 +438,8 @@ local function refresh_zelda(fb, refreshtype, waveform_mode, x, y, w, h, dither)
         refarea[0].dither_mode = C.EPDC_FLAG_USE_DITHERING_PASSTHROUGH
         refarea[0].quant_bit = 0;
     end
-    -- Enable the appropriate flag when requesting what amounts to a 2bit update, provided we're not dithering.
-    if waveform_mode == C.WAVEFORM_MODE_DU and not dither then
+    -- Enable the appropriate flag when requesting a 2bit update, provided we're not dithering.
+    if waveform_mode == C.WAVEFORM_MODE_A2 and not dither then
         refarea[0].flags = C.EPDC_FLAG_FORCE_MONOCHROME
     else
         refarea[0].flags = 0
@@ -465,7 +465,7 @@ local function refresh_rex(fb, refreshtype, waveform_mode, x, y, w, h, dither)
     -- Did we request HW dithering on a device where it works?
     if dither and fb.device:canHWDither() then
         refarea[0].dither_mode = C.EPDC_FLAG_USE_DITHERING_ORDERED
-        if waveform_mode == C.WAVEFORM_MODE_DU then
+        if waveform_mode == C.WAVEFORM_MODE_A2 or waveform_mode == C.WAVEFORM_MODE_DU then
             refarea[0].quant_bit = 1;
         else
             refarea[0].quant_bit = 7;
@@ -474,8 +474,8 @@ local function refresh_rex(fb, refreshtype, waveform_mode, x, y, w, h, dither)
         refarea[0].dither_mode = C.EPDC_FLAG_USE_DITHERING_PASSTHROUGH
         refarea[0].quant_bit = 0;
     end
-    -- Enable the appropriate flag when requesting what amounts to a 2bit update, provided we're not dithering.
-    if waveform_mode == C.WAVEFORM_MODE_DU and not dither then
+    -- Enable the appropriate flag when requesting a 2bit update, provided we're not dithering.
+    if waveform_mode == C.WAVEFORM_MODE_A2 and not dither then
         refarea[0].flags = C.EPDC_FLAG_FORCE_MONOCHROME
     else
         refarea[0].flags = 0
@@ -523,6 +523,10 @@ local function refresh_kobo_mk7(fb, refreshtype, waveform_mode, x, y, w, h, dith
     -- Enable the appropriate flag when requesting a 2bit update, provided we're not dithering.
     -- NOTE: As of right now (FW 4.9.x), WAVEFORM_MODE_GLD16 appears not to be used by Nickel,
     --       so we don't have to care about EPDC_FLAG_USE_REGAL
+    -- NOTE: We never actually request A2 updates anymore (on any platform, actually), but,
+    --       on Mk. 7 specifically, we want to avoid stacking EPDC_FLAGs,
+    --       because the kernel is buggy (c.f., https://github.com/NiLuJe/FBInk/blob/96a2cd6a93f5184c595c0e53a844fd883adfd75b/fbink.c#L2422-L2440).
+    --       For our use-cases, FORCE_MONOCHROME is mostly unnecessary anyway (the effect being fuzzier text instead of blockier text, i.e., choose your poison ;p).
     if waveform_mode == C.WAVEFORM_MODE_A2 and not dither then
         refarea[0].flags = C.EPDC_FLAG_FORCE_MONOCHROME
     else
@@ -571,7 +575,7 @@ local function refresh_cervantes(fb, refreshtype, waveform_mode, x, y, w, h)
     local refarea = ffi.new("struct mxcfb_update_data[1]")
     refarea[0].temp = C.TEMP_USE_AMBIENT
 
-    if waveform_mode == C.WAVEFORM_MODE_DU then
+    if waveform_mode == C.WAVEFORM_MODE_A2 then
         refarea[0].flags = C.EPDC_FLAG_FORCE_MONOCHROME
     else
         refarea[0].flags = 0
@@ -642,7 +646,7 @@ function framebuffer:init()
         self.mech_wait_update_complete = kindle_pearl_mxc_wait_for_update_complete
         self.mech_wait_update_submission = kindle_mxc_wait_for_update_submission
 
-        self.waveform_fast = C.WAVEFORM_MODE_A2
+        self.waveform_fast = C.WAVEFORM_MODE_A2 -- NOTE: Mostly here for archeological purposes, we switch to DU on every device right below this ;).
         self.waveform_ui = C.WAVEFORM_MODE_GC16_FAST
         self.waveform_flashui = self.waveform_ui
         self.waveform_full = C.WAVEFORM_MODE_GC16
