@@ -416,7 +416,7 @@ end
 local function refresh_zelda(fb, refreshtype, waveform_mode, x, y, w, h, dither)
     local refarea = ffi.new("struct mxcfb_update_data_zelda[1]")
     -- only for Amazon's driver, try to mostly follow what the stock reader does...
-    if waveform_mode == C.WAVEFORM_MODE_ZELDA_GLR16 then
+    if waveform_mode == C.WAVEFORM_MODE_ZELDA_GLR16 or waveform_mode == C.WAVEFORM_MODE_ZELDA_GLD16 then
         -- If we're requesting WAVEFORM_MODE_ZELDA_GLR16, it's REAGL all around!
         refarea[0].hist_bw_waveform_mode = waveform_mode
         refarea[0].hist_gray_waveform_mode = waveform_mode
@@ -429,7 +429,7 @@ local function refresh_zelda(fb, refreshtype, waveform_mode, x, y, w, h, dither)
     -- Did we request HW dithering on a device where it works?
     if dither and fb.device:canHWDither() then
         refarea[0].dither_mode = C.EPDC_FLAG_USE_DITHERING_ORDERED
-        if waveform_mode == C.WAVEFORM_MODE_A2 or waveform_mode == C.WAVEFORM_MODE_DU then
+        if waveform_mode == C.WAVEFORM_MODE_ZELDA_A2 or waveform_mode == C.WAVEFORM_MODE_DU then
             refarea[0].quant_bit = 1;
         else
             refarea[0].quant_bit = 7;
@@ -438,8 +438,11 @@ local function refresh_zelda(fb, refreshtype, waveform_mode, x, y, w, h, dither)
         refarea[0].dither_mode = C.EPDC_FLAG_USE_DITHERING_PASSTHROUGH
         refarea[0].quant_bit = 0;
     end
+    -- Enable the REAGLD algo when requested
+    if waveform_mode == C.WAVEFORM_MODE_ZELDA_GLD16 then
+        refarea[0].flags = C.EPDC_FLAG_USE_ZELDA_REGAL
     -- Enable the appropriate flag when requesting a 2bit update, provided we're not dithering.
-    if waveform_mode == C.WAVEFORM_MODE_A2 and not dither then
+    elseif waveform_mode == C.WAVEFORM_MODE_ZELDA_A2 and not dither then
         refarea[0].flags = C.EPDC_FLAG_FORCE_MONOCHROME
     else
         refarea[0].flags = 0
@@ -452,7 +455,7 @@ end
 local function refresh_rex(fb, refreshtype, waveform_mode, x, y, w, h, dither)
     local refarea = ffi.new("struct mxcfb_update_data_rex[1]")
     -- only for Amazon's driver, try to mostly follow what the stock reader does...
-    if waveform_mode == C.WAVEFORM_MODE_ZELDA_GLR16 then
+    if waveform_mode == C.WAVEFORM_MODE_ZELDA_GLR16 or waveform_mode == C.WAVEFORM_MODE_ZELDA_GLD16 then
         -- If we're requesting WAVEFORM_MODE_ZELDA_GLR16, it's REAGL all around!
         refarea[0].hist_bw_waveform_mode = waveform_mode
         refarea[0].hist_gray_waveform_mode = waveform_mode
@@ -465,7 +468,7 @@ local function refresh_rex(fb, refreshtype, waveform_mode, x, y, w, h, dither)
     -- Did we request HW dithering on a device where it works?
     if dither and fb.device:canHWDither() then
         refarea[0].dither_mode = C.EPDC_FLAG_USE_DITHERING_ORDERED
-        if waveform_mode == C.WAVEFORM_MODE_A2 or waveform_mode == C.WAVEFORM_MODE_DU then
+        if waveform_mode == C.WAVEFORM_MODE_ZELDA_A2 or waveform_mode == C.WAVEFORM_MODE_DU then
             refarea[0].quant_bit = 1;
         else
             refarea[0].quant_bit = 7;
@@ -474,8 +477,11 @@ local function refresh_rex(fb, refreshtype, waveform_mode, x, y, w, h, dither)
         refarea[0].dither_mode = C.EPDC_FLAG_USE_DITHERING_PASSTHROUGH
         refarea[0].quant_bit = 0;
     end
+    -- Enable the REAGLD algo when requested
+    if waveform_mode == C.WAVEFORM_MODE_ZELDA_GLD16 then
+        refarea[0].flags = C.EPDC_FLAG_USE_ZELDA_REGAL
     -- Enable the appropriate flag when requesting a 2bit update, provided we're not dithering.
-    if waveform_mode == C.WAVEFORM_MODE_A2 and not dither then
+    elseif waveform_mode == C.WAVEFORM_MODE_ZELDA_A2 and not dither then
         refarea[0].flags = C.EPDC_FLAG_FORCE_MONOCHROME
     else
         refarea[0].flags = 0
