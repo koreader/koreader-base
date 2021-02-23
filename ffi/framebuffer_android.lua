@@ -167,13 +167,6 @@ function framebuffer:refreshPartialImp(x, y, w, h)
     end
 end
 
-function framebuffer:refreshReagldImp(x, y, w, h)
-    self:_updateWindow()
-    if has_eink_full_support then
-        self:_updatePartial(partial, delay_page, x, y, w, h)
-    end
-end
-
 function framebuffer:refreshFlashPartialImp(x, y, w, h)
     self:_updateWindow()
     if has_eink_full_support then

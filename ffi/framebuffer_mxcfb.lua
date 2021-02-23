@@ -37,7 +37,6 @@ local framebuffer = {
     waveform_full = nil,
     waveform_fast = nil,
     waveform_reagl = nil,
-    waveform_reagld = nil,
     waveform_night = nil,
     waveform_flashnight = nil,
     night_is_reagl = nil,
@@ -81,7 +80,7 @@ end
 -- NOTE: This is to avoid explicit comparison against device-specific waveform constants in mxc_update()
 --       Here, it's Kindle's various WAVEFORM_MODE_REAGL vs. Kobo's NTX_WFM_MODE_GLD16
 function framebuffer:_isREAGLWaveFormMode(waveform_mode)
-    return waveform_mode == self.waveform_reagl or waveform_mode == self.waveform_reagld
+    return waveform_mode == self.waveform_reagl
 end
 
 -- Returns true if the night waveform mode for the current device requires a REAGL promotion to FULL
@@ -598,19 +597,6 @@ function framebuffer:refreshPartialImp(x, y, w, h, dither)
     self:mech_refresh(C.UPDATE_MODE_PARTIAL, self.waveform_partial, x, y, w, h, dither)
 end
 
-function framebuffer:refreshReagldImp(x, y, w, h, dither)
-    -- NOTE: This is used as a way to inject REAGLD updates on devices where REAGL is more finicky about detecting updated pixels.
-    --       c.f., the tail end of https://github.com/koreader/koreader/issues/7326
-    if self.waveform_reagld then
-        self.debug("refresh: reagld", x, y, w, h, dither and "w/ HW dithering")
-        self:mech_refresh(C.UPDATE_MODE_PARTIAL, self.waveform_reagld, x, y, w, h, dither)
-    else
-        -- Otherwise, it's basically refreshPartialImp ;)
-        self.debug("refresh: reagld -> partial", x, y, w, h, dither and "w/ HW dithering")
-        self:mech_refresh(C.UPDATE_MODE_PARTIAL, self.waveform_partial, x, y, w, h, dither)
-    end
-end
-
 -- NOTE: UPDATE_MODE_FULL doesn't mean full screen or no region, it means ask for a black flash!
 --       The only exception to that rule is with REAGL waveform modes, where it will *NOT* flash.
 --       That's regardless of whether the REAGL waveform mode is of the "always enforce FULL" variety or not ;).
@@ -745,7 +731,6 @@ function framebuffer:init()
             --       And it resorts to AUTO when PARTIAL, because GC16_FAST is no more (it points to GC16).
             self.waveform_flashui = C.WAVEFORM_MODE_GC16
             self.waveform_reagl = C.WAVEFORM_MODE_ZELDA_GLR16
-            self.waveform_reagld = C.WAVEFORM_MODE_ZELDA_GLD16
             self.waveform_partial = self.waveform_reagl
             -- NOTE: Because we can't have nice things, we have to account for devices that do not actuallly support the fancy inverted waveforms...
             if isNightModeChallenged then
