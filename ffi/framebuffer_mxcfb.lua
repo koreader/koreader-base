@@ -430,7 +430,7 @@ local function refresh_zelda(fb, refreshtype, waveform_mode, x, y, w, h, dither)
     -- Did we request HW dithering on a device where it works?
     if dither and fb.device:canHWDither() then
         refarea[0].dither_mode = C.EPDC_FLAG_USE_DITHERING_ORDERED
-        if waveform_mode == C.WAVEFORM_MODE_A2 or waveform_mode == C.WAVEFORM_MODE_DU then
+        if waveform_mode == C.WAVEFORM_MODE_ZELDA_A2 or waveform_mode == C.WAVEFORM_MODE_DU then
             refarea[0].quant_bit = 1;
         else
             refarea[0].quant_bit = 7;
@@ -443,7 +443,7 @@ local function refresh_zelda(fb, refreshtype, waveform_mode, x, y, w, h, dither)
     if waveform_mode == C.WAVEFORM_MODE_ZELDA_GLD16 then
         refarea[0].flags = C.EPDC_FLAG_USE_ZELDA_REGAL
     -- Enable the appropriate flag when requesting a 2bit update, provided we're not dithering.
-    elseif waveform_mode == C.WAVEFORM_MODE_A2 and not dither then
+    elseif (waveform_mode == C.WAVEFORM_MODE_ZELDA_A2 or waveform_mode == C.WAVEFORM_MODE_DU) and not dither then
         refarea[0].flags = C.EPDC_FLAG_FORCE_MONOCHROME
     else
         refarea[0].flags = 0
@@ -469,7 +469,7 @@ local function refresh_rex(fb, refreshtype, waveform_mode, x, y, w, h, dither)
     -- Did we request HW dithering on a device where it works?
     if dither and fb.device:canHWDither() then
         refarea[0].dither_mode = C.EPDC_FLAG_USE_DITHERING_ORDERED
-        if waveform_mode == C.WAVEFORM_MODE_A2 or waveform_mode == C.WAVEFORM_MODE_DU then
+        if waveform_mode == C.WAVEFORM_MODE_ZELDA_A2 or waveform_mode == C.WAVEFORM_MODE_DU then
             refarea[0].quant_bit = 1;
         else
             refarea[0].quant_bit = 7;
@@ -482,7 +482,7 @@ local function refresh_rex(fb, refreshtype, waveform_mode, x, y, w, h, dither)
     if waveform_mode == C.WAVEFORM_MODE_ZELDA_GLD16 then
         refarea[0].flags = C.EPDC_FLAG_USE_ZELDA_REGAL
     -- Enable the appropriate flag when requesting a 2bit update, provided we're not dithering.
-    elseif waveform_mode == C.WAVEFORM_MODE_A2 and not dither then
+    elseif (waveform_mode == C.WAVEFORM_MODE_ZELDA_A2 or waveform_mode == C.WAVEFORM_MODE_DU) and not dither then
         refarea[0].flags = C.EPDC_FLAG_FORCE_MONOCHROME
     else
         refarea[0].flags = 0
