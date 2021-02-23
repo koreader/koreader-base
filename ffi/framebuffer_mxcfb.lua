@@ -37,6 +37,7 @@ local framebuffer = {
     waveform_full = nil,
     waveform_fast = nil,
     waveform_reagl = nil,
+    waveform_reagld = nil,
     waveform_night = nil,
     waveform_flashnight = nil,
     night_is_reagl = nil,
@@ -80,7 +81,7 @@ end
 -- NOTE: This is to avoid explicit comparison against device-specific waveform constants in mxc_update()
 --       Here, it's Kindle's various WAVEFORM_MODE_REAGL vs. Kobo's NTX_WFM_MODE_GLD16
 function framebuffer:_isREAGLWaveFormMode(waveform_mode)
-    return waveform_mode == self.waveform_reagl
+    return waveform_mode == self.waveform_reagl or waveform_mode == self.waveform_reagld
 end
 
 -- Returns true if the night waveform mode for the current device requires a REAGL promotion to FULL
@@ -416,7 +417,7 @@ end
 local function refresh_zelda(fb, refreshtype, waveform_mode, x, y, w, h, dither)
     local refarea = ffi.new("struct mxcfb_update_data_zelda[1]")
     -- only for Amazon's driver, try to mostly follow what the stock reader does...
-    if waveform_mode == C.WAVEFORM_MODE_ZELDA_GLR16 then
+    if waveform_mode == C.WAVEFORM_MODE_ZELDA_GLR16 or waveform_mode == C.WAVEFORM_MODE_ZELDA_GLD16 then
         -- If we're requesting WAVEFORM_MODE_ZELDA_GLR16, it's REAGL all around!
         refarea[0].hist_bw_waveform_mode = waveform_mode
         refarea[0].hist_gray_waveform_mode = waveform_mode
@@ -438,8 +439,11 @@ local function refresh_zelda(fb, refreshtype, waveform_mode, x, y, w, h, dither)
         refarea[0].dither_mode = C.EPDC_FLAG_USE_DITHERING_PASSTHROUGH
         refarea[0].quant_bit = 0;
     end
+    -- Enable the REAGLD algo when requested
+    if waveform_mode == C.WAVEFORM_MODE_ZELDA_GLD16 then
+        refarea[0].flags = C.EPDC_FLAG_USE_ZELDA_REGAL
     -- Enable the appropriate flag when requesting a 2bit update, provided we're not dithering.
-    if waveform_mode == C.WAVEFORM_MODE_A2 and not dither then
+    elseif waveform_mode == C.WAVEFORM_MODE_A2 and not dither then
         refarea[0].flags = C.EPDC_FLAG_FORCE_MONOCHROME
     else
         refarea[0].flags = 0
@@ -452,7 +456,7 @@ end
 local function refresh_rex(fb, refreshtype, waveform_mode, x, y, w, h, dither)
     local refarea = ffi.new("struct mxcfb_update_data_rex[1]")
     -- only for Amazon's driver, try to mostly follow what the stock reader does...
-    if waveform_mode == C.WAVEFORM_MODE_ZELDA_GLR16 then
+    if waveform_mode == C.WAVEFORM_MODE_ZELDA_GLR16 or waveform_mode == C.WAVEFORM_MODE_ZELDA_GLD16 then
         -- If we're requesting WAVEFORM_MODE_ZELDA_GLR16, it's REAGL all around!
         refarea[0].hist_bw_waveform_mode = waveform_mode
         refarea[0].hist_gray_waveform_mode = waveform_mode
@@ -474,8 +478,11 @@ local function refresh_rex(fb, refreshtype, waveform_mode, x, y, w, h, dither)
         refarea[0].dither_mode = C.EPDC_FLAG_USE_DITHERING_PASSTHROUGH
         refarea[0].quant_bit = 0;
     end
+    -- Enable the REAGLD algo when requested
+    if waveform_mode == C.WAVEFORM_MODE_ZELDA_GLD16 then
+        refarea[0].flags = C.EPDC_FLAG_USE_ZELDA_REGAL
     -- Enable the appropriate flag when requesting a 2bit update, provided we're not dithering.
-    if waveform_mode == C.WAVEFORM_MODE_A2 and not dither then
+    elseif waveform_mode == C.WAVEFORM_MODE_A2 and not dither then
         refarea[0].flags = C.EPDC_FLAG_FORCE_MONOCHROME
     else
         refarea[0].flags = 0
@@ -589,6 +596,19 @@ end
 function framebuffer:refreshPartialImp(x, y, w, h, dither)
     self.debug("refresh: partial", x, y, w, h, dither and "w/ HW dithering")
     self:mech_refresh(C.UPDATE_MODE_PARTIAL, self.waveform_partial, x, y, w, h, dither)
+end
+
+function framebuffer:refreshReagldImp(x, y, w, h, dither)
+    -- NOTE: This is used as a way to inject REAGLD updates on devices where REAGL is more finicky about detecting updated pixels.
+    --       c.f., the tail end of https://github.com/koreader/koreader/issues/7326
+    if self.waveform_reagld then
+        self.debug("refresh: reagld", x, y, w, h, dither and "w/ HW dithering")
+        self:mech_refresh(C.UPDATE_MODE_PARTIAL, self.waveform_reagld, x, y, w, h, dither)
+    else
+        -- Otherwise, it's basically refreshPartialImp ;)
+        self.debug("refresh: reagld -> partial", x, y, w, h, dither and "w/ HW dithering")
+        self:mech_refresh(C.UPDATE_MODE_PARTIAL, self.waveform_partial, x, y, w, h, dither)
+    end
 end
 
 -- NOTE: UPDATE_MODE_FULL doesn't mean full screen or no region, it means ask for a black flash!
@@ -725,6 +745,7 @@ function framebuffer:init()
             --       And it resorts to AUTO when PARTIAL, because GC16_FAST is no more (it points to GC16).
             self.waveform_flashui = C.WAVEFORM_MODE_GC16
             self.waveform_reagl = C.WAVEFORM_MODE_ZELDA_GLR16
+            self.waveform_reagld = C.WAVEFORM_MODE_ZELDA_GLD16
             self.waveform_partial = self.waveform_reagl
             -- NOTE: Because we can't have nice things, we have to account for devices that do not actuallly support the fancy inverted waveforms...
             if isNightModeChallenged then
