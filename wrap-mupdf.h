@@ -26,10 +26,10 @@
 #define DLL_PUBLIC __attribute__((visibility("default")))
 #define DLL_LOCAL  __attribute__((visibility("hidden")))
 
-extern fz_alloc_context* mupdf_get_my_alloc_context();
-extern int mupdf_get_cache_size();
-extern int mupdf_error_code(fz_context *ctx);
-extern char* mupdf_error_message(fz_context *ctx);
+DLL_PUBLIC fz_alloc_context* mupdf_get_my_alloc_context();
+DLL_PUBLIC int mupdf_get_cache_size();
+DLL_PUBLIC int mupdf_error_code(fz_context *ctx);
+DLL_PUBLIC char* mupdf_error_message(fz_context *ctx);
 
 // this will turn the wrappers defined below into their declarations
 #define MUPDF_WRAP(wrapper_name, ret_type, failure_value, call, ...) \

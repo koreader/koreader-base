@@ -134,18 +134,18 @@ fz_alloc_context my_alloc_default =
     my_free_default
 };
 
-extern fz_alloc_context* mupdf_get_my_alloc_context() {
+fz_alloc_context* mupdf_get_my_alloc_context() {
     return &my_alloc_default;
 }
 
-extern int mupdf_get_cache_size() {
+int mupdf_get_cache_size() {
     return msize;
 }
 
-extern int mupdf_error_code(fz_context *ctx) {
+int mupdf_error_code(fz_context *ctx) {
     return ctx->error->errcode;
 }
-extern char* mupdf_error_message(fz_context *ctx) {
+char* mupdf_error_message(fz_context *ctx) {
     return ctx->error->message;
 }
 /* wrappers for functions that throw exceptions mupdf-style (setjmp/longjmp) */
