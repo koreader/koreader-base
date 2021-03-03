@@ -109,13 +109,13 @@ libs: \
 $(OUTPUT_DIR)/libs/libinkview-compat.so: input/inkview-compat.c
 	$(CC) $(DYNLIB_CFLAGS) -linkview -o $@ $<
 
-$(OUTPUT_DIR)/libs/libkoreader-input.so: input/*.c input/*.h $(if $(KINDLE),$(POPEN_NOSHELL_LIB),)
+$(OUTPUT_DIR)/libs/libkoreader-input.so: input/*.c input/*.h $(if $(or $(KINDLE),$(REMARKABLE)),$(POPEN_NOSHELL_LIB),)
 	@echo "Building koreader input module..."
 	$(CC) $(DYNLIB_CFLAGS) $(SYMVIS_FLAGS) -I$(POPEN_NOSHELL_DIR) -I./input \
 		$(if $(CERVANTES),-DCERVANTES,) $(if $(KOBO),-DKOBO,) $(if $(KINDLE),-DKINDLE,) $(if $(POCKETBOOK),-DPOCKETBOOK,) $(if $(REMARKABLE),-DREMARKABLE,) $(if $(SONY_PRSTUX),-DSONY_PRSTUX,)\
 		-o $@ \
 		input/input.c \
-		$(if $(KINDLE),$(POPEN_NOSHELL_LIB),) \
+		$(if $(or $(KINDLE),$(REMARKABLE)),$(POPEN_NOSHELL_LIB),) \
 		$(if $(POCKETBOOK),-linkview,)
 
 # Would need a bit of patching to be able to use -fvisibility=hidden...
