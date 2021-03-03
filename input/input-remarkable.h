@@ -52,7 +52,7 @@ static void input_write_event(int fd, int code)
 
 /*
  * On wakeup, reMarkable 2 does not send Power Button events
- * So we watch DBus and insert a "Power Button Released" event when we wake up
+ * So we watch DBus and insert a "Power Button Released" event when the rM2 wakes up
  */
 static void generateFakeEventRM2(int pipefd) {
     FILE *fp;
