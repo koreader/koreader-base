@@ -1,17 +1,17 @@
 diff --git a/lib/Makefile b/lib/Makefile
-index 869d7663..cc3060b7 100644
+index 39ff304..e605357 100644
 --- a/lib/Makefile
 +++ b/lib/Makefile
-@@ -259,7 +259,7 @@ else  # not Windows
+@@ -258,7 +258,7 @@ else  # not Windows
  LIBZSTD = libzstd.$(SHARED_EXT_VER)
  .PHONY: $(LIBZSTD)  # must be run every time
- $(LIBZSTD): CFLAGS += -fPIC
--$(LIBZSTD): LDFLAGS += -shared -fvisibility=hidden
-+$(LIBZSTD): LDFLAGS += -shared -fvisibility=hidden -Wl,-rpath,'\$$\\$$\$$ORIGIN/./libs'
+ $(LIBZSTD): CFLAGS += -fPIC -fvisibility=hidden
+-$(LIBZSTD): LDFLAGS += -shared
++$(LIBZSTD): LDFLAGS += -shared -Wl,-rpath,'\$$\\$$\$$ORIGIN/./libs'
  
  ifndef BUILD_DIR
  # determine BUILD_DIR from compilation flags
-@@ -333,7 +333,7 @@ include $(wildcard $(DEPFILES))
+@@ -332,7 +332,7 @@ include $(wildcard $(DEPFILES))
  # Special case : building library in single-thread mode _and_ without zstdmt_compress.c
  ZSTDMT_FILES = compress/zstdmt_compress.c
  ZSTD_NOMT_FILES = $(filter-out $(ZSTDMT_FILES),$(ZSTD_FILES))
