@@ -33,7 +33,7 @@ set(INSTALL_CMD3 ${CMAKE_COMMAND} -E rename ${SOURCE_DIR}/scp ${BINARY_DIR}/scp)
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
     https://github.com/openssh/openssh-portable.git
-    V_8_4_P1
+    V_8_5_P1
     ${SOURCE_DIR}
 )
 
