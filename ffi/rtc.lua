@@ -257,6 +257,18 @@ function RTC:isWakeupAlarmScheduled()
     return self._wakeup_scheduled
 end
 
+-- Helpers for HCToSys
+local function set_kernel_tz(tz)
+    local re = C.settimeofday(nil, tz)
+    if re == -1 then
+        err = ffi.string(C.strerror(ffi.errno()))
+        print("set_kernel_tz settimeofday", re, err)
+        return nil, re, err
+    end
+
+    return true
+end
+
 --[[--
 Sets the system clock based on the hardware clock.
 
@@ -264,7 +276,7 @@ Sets the system clock based on the hardware clock.
 Heavily inspired by busybox's hwclock applet.
 --]]
 function RTC:HCToSys()
-    local err
+    local ok, err, re
     local rtc0 = C.open("/dev/rtc0", bor(C.O_RDONLY, C.O_NONBLOCK, C.O_CLOEXEC))
     if rtc0 == -1 then
         err = ffi.string(C.strerror(ffi.errno()))
@@ -274,7 +286,7 @@ function RTC:HCToSys()
 
     -- Read the hardware clock
     local tm = ffi.new("struct tm")
-    local re = C.ioctl(rtc0, C.RTC_RD_TIME, tm)
+    re = C.ioctl(rtc0, C.RTC_RD_TIME, tm)
     if re == -1 then
         err = ffi.string(C.strerror(ffi.errno()))
         print("HCToSys ioctl RTC_RD_TIME", re, err)
@@ -298,20 +310,16 @@ function RTC:HCToSys()
 
     -- Deal with some more kernel & TZ nonsense...
     local tz = ffi.new("struct timezone")
-    re = C.settimeofday(nil, tz)
-    if re == -1 then
-        err = ffi.string(C.strerror(ffi.errno()))
-        print("HCToSys settimeofday", re, err)
+    ok, re, err = set_kernel_tz(tz)
+    if not ok then
         return nil, re, err
     end
     local cur = ffi.new("time_t[1]")
     cur[0] = C.time(nil)
     local broken = C.localtime(cur)
     tz.tz_minuteswest = -broken.tm_gmtoff / 60
-    re = C.settimeofday(nil, tz)
-    if re == -1 then
-        err = ffi.string(C.strerror(ffi.errno()))
-        print("HCToSys settimeofday", re, err)
+    ok, re, err = set_kernel_tz(tz)
+    if not ok then
         return nil, re, err
     end
 
