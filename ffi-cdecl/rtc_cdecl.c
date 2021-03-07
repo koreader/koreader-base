@@ -16,7 +16,6 @@ cdecl_const(RTC_RD_TIME)
 
 cdecl_type(time_t)
 cdecl_struct(tm)
-cdecl_struct(timeval)
 cdecl_struct(timezone)
 cdecl_func(time)
 cdecl_func(gmtime)

@@ -36,10 +36,6 @@ struct tm {
   long int tm_gmtoff;
   const char *tm_zone;
 };
-struct timeval {
-  long int tv_sec;
-  long int tv_usec;
-};
 struct timezone {
   int tz_minuteswest;
   int tz_dsttime;
