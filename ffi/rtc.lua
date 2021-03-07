@@ -261,7 +261,7 @@ end
 local function set_kernel_tz(tz)
     local re = C.settimeofday(nil, tz)
     if re == -1 then
-        err = ffi.string(C.strerror(ffi.errno()))
+        local err = ffi.string(C.strerror(ffi.errno()))
         print("set_kernel_tz settimeofday", re, err)
         return nil, re, err
     end
