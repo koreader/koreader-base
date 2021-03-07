@@ -316,7 +316,7 @@ function RTC:HCToSys()
     end
 
     -- Finally set the system clock
-    re = C.settimeofday(tv, tz)
+    re = C.settimeofday(tv, nil)
     if re == -1 then
         err = ffi.string(C.strerror(ffi.errno()))
         print("HCToSys settimeofday", re, err)
