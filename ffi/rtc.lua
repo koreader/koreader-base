@@ -300,10 +300,13 @@ function RTC:HCToSys()
     end
 
     -- Deal with some TZ nonsense to convert that broken down representation to an UTC time_t...
-    -- NOTE: Assumes TZ is unset, for simplicty's sake.
+    local oldtz = os.getenv("TZ")
     C.setenv("TZ", "UTC0", 1)
     local t = C.mktime(tm)
     C.unsetenv("TZ")
+    if oldtz then
+        C.setenv("TZ", oldtz, 1)
+    end
 
     -- We want a timeval for settimeofday
     local tv = ffi.new("struct timeval")
