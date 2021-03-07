@@ -299,7 +299,8 @@ function RTC:HCToSys()
         return nil, re, err
     end
 
-    -- Deal with some TZ nonsense...
+    -- Deal with some TZ nonsense to convert that broken down representation to an UTC time_t...
+    -- NOTE: Assumes TZ is unset, for simplicty's sake.
     C.setenv("TZ", "UTC0", 1)
     local t = C.mktime(tm)
     C.unsetenv("TZ")
