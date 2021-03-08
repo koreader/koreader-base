@@ -21,6 +21,7 @@ static const int RTC_AIE_ON = 28673;
 static const int RTC_AIE_OFF = 28674;
 static const int RTC_WKALM_SET = 1076391951;
 static const int RTC_WKALM_RD = 2150133776;
+static const int RTC_RD_TIME = 2149871625;
 typedef long int time_t;
 struct tm {
   int tm_sec;
@@ -35,8 +36,14 @@ struct tm {
   long int tm_gmtoff;
   const char *tm_zone;
 };
+struct timezone {
+  int tz_minuteswest;
+  int tz_dsttime;
+};
 time_t time(time_t *) __attribute__((nothrow, leaf));
 struct tm *gmtime(const time_t *) __attribute__((nothrow, leaf));
 struct tm *localtime(const time_t *) __attribute__((nothrow, leaf));
 time_t mktime(struct tm *) __attribute__((nothrow, leaf));
+int settimeofday(const struct timeval *, const struct timezone *) __attribute__((nothrow, leaf));
+void tzset(void) __attribute__((nothrow, leaf));
 ]]
