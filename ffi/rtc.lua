@@ -169,6 +169,19 @@ function RTC:getWakeupAlarm()
 end
 
 --[[--
+Return the timestamp of the alarm we set (if any).
+
+@treturn @int Epoch (UTC)
+--]]
+function RTC:getWakeupAlarmEpoch()
+    if self._wakeup_scheduled then
+        return tonumber(C.timegm(self._wakeup_scheduled_ptm))
+    else
+        return nil
+    end
+end
+
+--[[--
 Get RTC wakealarm from system.
 
 @treturn tm (time struct)
