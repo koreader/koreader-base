@@ -6,6 +6,8 @@ This module provides the ability to schedule wakeups through RTC.
 See <http://man7.org/linux/man-pages/man4/rtc.4.html> for technical details.
 
 Things to keep in mind: the RTC tracks time in UTC.
+So do we, as the API only passes around what amounts to time_t values,
+i.e., a Posix epoch, which is intrinsically UTC.
 
 @module ffi.rtc
 ]]
@@ -223,7 +225,7 @@ function RTC:validateWakeupAlarmByProximity(task_alarm, proximity)
 
     if not (alarm_tm and alarm_sys_tm) then return end
 
-    -- We want everything in UTC time_t
+    -- We want everything in UTC time_t (i.e. a Posix epoch).
     local now = os.time()
     local alarm = C.timegm(alarm_tm)
     local alarm_sys = C.timegm(alarm_sys_tm)
