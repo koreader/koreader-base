@@ -231,7 +231,7 @@ function RTC:validateWakeupAlarmByProximity(task_alarm, proximity)
     -- In principle alarm time and current time should match within a second,
     -- but let's be absurdly generous and assume anything within 30 is a match.
     -- In practice, Kobo's suspend() schedules check_unexpected_wakeup 15s *after*
-    -- the actual wakeup, so we need to at account for at least that much ;).
+    -- the actual wakeup, so we need to account for at least that much ;).
     proximity = proximity or 30
 
     -- Those are in UTC broken down time format (struct tm)
