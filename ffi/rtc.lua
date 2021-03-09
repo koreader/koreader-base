@@ -216,8 +216,12 @@ Checks if the alarm we set matches the system alarm as well as the current time.
 --]]
 function RTC:validateWakeupAlarmByProximity(task_alarm, proximity)
     -- In principle alarm time and current time should match within a second,
-    -- but let's be absurdly generous and assume anything within 30 is a match.
-    proximity = proximity or 30
+    -- but let's be absurdly generous and assume anything within 60 is a match.
+    -- The main culprit for needing a larger diff is the check_unexpected_wakeup
+    -- facility on Kobo, which will trip every 30s (and change, as far as we're concerned),
+    -- which means we can actually be called outside of a scheduled wakeup,
+    -- but potentially *near* the time of a scheduled wakeup... ;).
+    proximity = proximity or 60
 
     -- Those are in UTC broken down time format (struct tm)
     local alarm_tm = self:getWakeupAlarm()
