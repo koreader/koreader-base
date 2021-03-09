@@ -325,6 +325,10 @@ function RTC:HCToSys()
     tv.tv_sec = t
 
     -- Deal with some more kernel & TZ nonsense...
+    -- 1. Lock the kernel's warp_clock function
+    --    (iff that's the first settimeofday call after a cold boot! i.e., in our case, that's mostly going to be a NOP).
+    -- 2. Set the kernel timezone.
+    -- c.f., comments in hwclock in both busybox & util-linux, as well as gettimeofday(2) for more details.
     local tz = ffi.new("struct timezone")
     ok, re, err = set_kernel_tz(tz)
     if not ok then
