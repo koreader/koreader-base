@@ -194,19 +194,19 @@ function RTC:getWakeupAlarmSys()
         return nil, re, err
     end
 
-    if wake ~= -1 then
-        local t = ffi.new("time_t[1]")
-        t[0] = C.time(nil)
-        local tm = ffi.new("struct tm") -- luacheck: ignore
-        tm = C.gmtime(t)
-        tm.tm_sec = wake.time.tm_sec
-        tm.tm_min = wake.time.tm_min
-        tm.tm_hour = wake.time.tm_hour
-        tm.tm_mday = wake.time.tm_mday
-        tm.tm_mon = wake.time.tm_mon
-        tm.tm_year = wake.time.tm_year
-        return tm
-    end
+    -- Seed a struct tm with the current time, because not every fields will be set in wake
+    local t = ffi.new("time_t[1]")
+    t[0] = C.time(nil)
+    local tm = ffi.new("struct tm") -- luacheck: ignore
+    tm = C.gmtime(t)
+    -- And now update it with fields that *are* set by the ioctl
+    tm.tm_sec = wake.time.tm_sec
+    tm.tm_min = wake.time.tm_min
+    tm.tm_hour = wake.time.tm_hour
+    tm.tm_mday = wake.time.tm_mday
+    tm.tm_mon = wake.time.tm_mon
+    tm.tm_year = wake.time.tm_year
+    return tm
 end
 
 --[[--
