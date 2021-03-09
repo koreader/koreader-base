@@ -244,8 +244,9 @@ function RTC:validateWakeupAlarmByProximity(task_alarm, proximity)
 
     -- We want everything in UTC time_t (i.e. a Posix epoch).
     local now = os.time()
-    local alarm = C.timegm(alarm_tm)
-    local alarm_sys = C.timegm(alarm_sys_tm)
+    -- time_t may be 64-bit, cast to a Lua number
+    local alarm = tonumber(C.timegm(alarm_tm))
+    local alarm_sys = tonumber(C.timegm(alarm_sys_tm))
 
     -- Everything's in UTC, ask Lua to convert that to a human-readable format in the local timezone
     if task_alarm then
