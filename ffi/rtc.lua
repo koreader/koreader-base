@@ -5,6 +5,8 @@ This module provides the ability to schedule wakeups through RTC.
 
 See <http://man7.org/linux/man-pages/man4/rtc.4.html> for technical details.
 
+Things to keep in mind: the RTC tracks time in UTC.
+
 @module ffi.rtc
 ]]
 
@@ -27,14 +29,11 @@ local RTC = {
 Adds seconds to epoch.
 
 @int seconds_from_now Number of seconds.
-@treturn int (cdata) Epoch.
+@treturn int (cdata) Epoch (UTC).
 --]]
 function RTC:secondsFromNowToEpoch(seconds_from_now)
-    local t = ffi.new("time_t[1]")
-    t[0] = C.time(nil)
-    t[0] = t[0] + seconds_from_now
-    local epoch = C.mktime(C.localtime(t))
-    return epoch
+    -- NOTE: Lua's os.time just calls time(), which returns an epoch (UTC).
+    return os.time() + seconds_from_now
 end
 
 
@@ -89,7 +88,7 @@ Set wakeup alarm.
 If you want to set the alarm to a certain amount of time from now,
 you can process your value with @{secondsFromNowToEpoch}.
 
-@int Epoch.
+@int Epoch (UTC).
 @enabled bool Whether the call enables or disables the alarm. Defaults to true.
 
 @treturn bool Success.
@@ -213,38 +212,37 @@ end
 --[[--
 Checks if the alarm we set matches the system alarm as well as the current time.
 --]]
-function RTC:validateWakeupAlarmByProximity(task_alarm_epoch, proximity)
+function RTC:validateWakeupAlarmByProximity(task_alarm, proximity)
     -- In principle alarm time and current time should match within a second,
     -- but let's be absurdly generous and assume anything within 30 is a match.
     proximity = proximity or 30
 
-    local alarm = self:getWakeupAlarm()
-    local alarm_epoch
-    local alarm_sys = self:getWakeupAlarmSys()
-    local alarm_sys_epoch
+    -- Those are in UTC broken down time format (struct tm)
+    local alarm_tm = self:getWakeupAlarm()
+    local alarm_sys_tm = self:getWakeupAlarmSys()
 
-    -- this seems a bit roundabout
-    local current_time = ffi.new("time_t[1]")
-    current_time[0] = C.time(nil)
-    local current_time_epoch = C.mktime(C.gmtime(current_time))
+    if not (alarm_tm and alarm_sys_tm) then return end
 
-    if not (alarm and alarm_sys) then return end
+    -- We want everything in UTC time_t
+    local now = os.time()
+    local alarm = C.timegm(alarm_tm)
+    local alarm_sys = C.timegm(alarm_sys_tm)
 
-    -- Convert from UTC to local because these time-related functions are @#$@#$ stupid.
-    local task_alarm_epoch_local = task_alarm_epoch and C.mktime(C.gmtime(ffi.new("time_t[1]", task_alarm_epoch))) or nil
-    alarm_epoch = C.mktime(alarm)
-    alarm_sys_epoch = C.mktime(alarm_sys)
-
-    print("validateWakeupAlarmByProximity", task_alarm_epoch_local, alarm_epoch, alarm_sys_epoch, current_time_epoch)
+    -- Everything's in UTC, ask Lua to convert that to a human-readable format in the local timezone
+    print("validateWakeupAlarmByProximity:",
+          "task              @ " .. task_alarm or "N/A" .. os.date(" (%F %T %z)", task_alarm),
+          "last set alarm    @ " .. alarm .. os.date(" (%F %T %z)", alarm),
+          "current rtc alarm @ " .. alarm_sys .. os.date(" (%F %T %z)", alarm_sys),
+          "current time is     " .. now .. os.date(" (%F %T %z)", now))
 
     -- If our stored alarm and the system alarm don't match, we didn't set it.
-    if not (alarm_epoch == alarm_sys_epoch) then return end
+    if not (alarm == alarm_sys) then return end
 
     -- If our stored alarm and the provided task alarm don't match,
     -- we're not talking about the same task. This should never happen.
-    if task_alarm_epoch_local and not (alarm_epoch == task_alarm_epoch_local) then return end
+    if task_alarm and not (alarm == task_alarm) then return end
 
-    local diff = current_time_epoch - alarm_epoch
+    local diff = now - alarm
     if diff >= 0 and diff < proximity then return true end
 end
 
@@ -299,7 +297,7 @@ function RTC:HCToSys()
         return nil, re, err
     end
 
-    -- Convert that broken down representation to an UTC time_t...
+    -- Convert that UTC broken down representation to an UTC time_t...
     local t = C.timegm(tm)
 
     -- We want a timeval for settimeofday
