@@ -43,6 +43,7 @@ struct timezone {
 time_t time(time_t *) __attribute__((nothrow, leaf));
 struct tm *gmtime(const time_t *) __attribute__((nothrow, leaf));
 struct tm *localtime(const time_t *) __attribute__((nothrow, leaf));
+time_t timegm(struct tm *) __attribute__((nothrow, leaf));
 time_t mktime(struct tm *) __attribute__((nothrow, leaf));
 int settimeofday(const struct timeval *, const struct timezone *) __attribute__((nothrow, leaf));
 void tzset(void) __attribute__((nothrow, leaf));
