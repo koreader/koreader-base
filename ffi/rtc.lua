@@ -5,6 +5,10 @@ This module provides the ability to schedule wakeups through RTC.
 
 See <http://man7.org/linux/man-pages/man4/rtc.4.html> for technical details.
 
+Things to keep in mind: the RTC tracks time in UTC.
+So do we, as the API only passes around what amounts to time_t values,
+i.e., a Posix epoch, which is intrinsically UTC.
+
 @module ffi.rtc
 ]]
 
@@ -27,14 +31,11 @@ local RTC = {
 Adds seconds to epoch.
 
 @int seconds_from_now Number of seconds.
-@treturn int (cdata) Epoch.
+@treturn int (cdata) Epoch (UTC).
 --]]
 function RTC:secondsFromNowToEpoch(seconds_from_now)
-    local t = ffi.new("time_t[1]")
-    t[0] = C.time(nil)
-    t[0] = t[0] + seconds_from_now
-    local epoch = C.mktime(C.localtime(t))
-    return epoch
+    -- NOTE: Lua's os.time just calls time(), which returns an epoch (UTC).
+    return os.time() + seconds_from_now
 end
 
 
@@ -89,7 +90,7 @@ Set wakeup alarm.
 If you want to set the alarm to a certain amount of time from now,
 you can process your value with @{secondsFromNowToEpoch}.
 
-@int Epoch.
+@int Epoch (UTC).
 @enabled bool Whether the call enables or disables the alarm. Defaults to true.
 
 @treturn bool Success.
@@ -168,6 +169,19 @@ function RTC:getWakeupAlarm()
 end
 
 --[[--
+Return the timestamp of the alarm we set (if any).
+
+@treturn @int Epoch (UTC)
+--]]
+function RTC:getWakeupAlarmEpoch()
+    if self._wakeup_scheduled then
+        return tonumber(C.timegm(self._wakeup_scheduled_ptm))
+    else
+        return nil
+    end
+end
+
+--[[--
 Get RTC wakealarm from system.
 
 @treturn tm (time struct)
@@ -195,56 +209,60 @@ function RTC:getWakeupAlarmSys()
         return nil, re, err
     end
 
-    if wake ~= -1 then
-        local t = ffi.new("time_t[1]")
-        t[0] = C.time(nil)
-        local tm = ffi.new("struct tm") -- luacheck: ignore
-        tm = C.gmtime(t)
-        tm.tm_sec = wake.time.tm_sec
-        tm.tm_min = wake.time.tm_min
-        tm.tm_hour = wake.time.tm_hour
-        tm.tm_mday = wake.time.tm_mday
-        tm.tm_mon = wake.time.tm_mon
-        tm.tm_year = wake.time.tm_year
-        return tm
-    end
+    -- Seed a struct tm with the current time, because not every field will be set in wake
+    local t = ffi.new("time_t[1]")
+    t[0] = C.time(nil)
+    local tm = ffi.new("struct tm") -- luacheck: ignore
+    tm = C.gmtime(t)
+    -- And now update it with the fields that *are* set by the ioctl
+    tm.tm_sec = wake.time.tm_sec
+    tm.tm_min = wake.time.tm_min
+    tm.tm_hour = wake.time.tm_hour
+    tm.tm_mday = wake.time.tm_mday
+    tm.tm_mon = wake.time.tm_mon
+    tm.tm_year = wake.time.tm_year
+    return tm
 end
 
 --[[--
 Checks if the alarm we set matches the system alarm as well as the current time.
 --]]
-function RTC:validateWakeupAlarmByProximity(task_alarm_epoch, proximity)
+function RTC:validateWakeupAlarmByProximity(task_alarm, proximity)
     -- In principle alarm time and current time should match within a second,
     -- but let's be absurdly generous and assume anything within 30 is a match.
+    -- In practice, Kobo's suspend() schedules check_unexpected_wakeup 15s *after*
+    -- the actual wakeup, so we need to account for at least that much ;).
     proximity = proximity or 30
 
-    local alarm = self:getWakeupAlarm()
-    local alarm_epoch
-    local alarm_sys = self:getWakeupAlarmSys()
-    local alarm_sys_epoch
+    -- Those are in UTC broken down time format (struct tm)
+    local alarm_tm = self:getWakeupAlarm()
+    local alarm_sys_tm = self:getWakeupAlarmSys()
 
-    -- this seems a bit roundabout
-    local current_time = ffi.new("time_t[1]")
-    current_time[0] = C.time(nil)
-    local current_time_epoch = C.mktime(C.gmtime(current_time))
+    if not (alarm_tm and alarm_sys_tm) then return end
 
-    if not (alarm and alarm_sys) then return end
+    -- We want everything in UTC time_t (i.e. a Posix epoch).
+    local now = os.time()
+    -- time_t may be 64-bit, cast to a Lua number
+    local alarm = tonumber(C.timegm(alarm_tm))
+    local alarm_sys = tonumber(C.timegm(alarm_sys_tm))
 
-    -- Convert from UTC to local because these time-related functions are @#$@#$ stupid.
-    local task_alarm_epoch_local = task_alarm_epoch and C.mktime(C.gmtime(ffi.new("time_t[1]", task_alarm_epoch))) or nil
-    alarm_epoch = C.mktime(alarm)
-    alarm_sys_epoch = C.mktime(alarm_sys)
-
-    print("validateWakeupAlarmByProximity", task_alarm_epoch_local, alarm_epoch, alarm_sys_epoch, current_time_epoch)
+    -- Everything's in UTC, ask Lua to convert that to a human-readable format in the local timezone
+    if task_alarm then
+        print("validateWakeupAlarmByProximity:",
+            "\ntask              @ " .. task_alarm .. os.date(" (%F %T %z)", task_alarm),
+            "\nlast set alarm    @ " .. alarm .. os.date(" (%F %T %z)", alarm),
+            "\ncurrent rtc alarm @ " .. alarm_sys .. os.date(" (%F %T %z)", alarm_sys),
+            "\ncurrent time is     " .. now .. os.date(" (%F %T %z)", now))
+    end
 
     -- If our stored alarm and the system alarm don't match, we didn't set it.
-    if not (alarm_epoch == alarm_sys_epoch) then return end
+    if not (alarm == alarm_sys) then return end
 
     -- If our stored alarm and the provided task alarm don't match,
     -- we're not talking about the same task. This should never happen.
-    if task_alarm_epoch_local and not (alarm_epoch == task_alarm_epoch_local) then return end
+    if task_alarm and not (alarm == task_alarm) then return end
 
-    local diff = current_time_epoch - alarm_epoch
+    local diff = now - alarm
     if diff >= 0 and diff < proximity then return true end
 end
 
@@ -299,20 +317,18 @@ function RTC:HCToSys()
         return nil, re, err
     end
 
-    -- Deal with some TZ nonsense to convert that broken down representation to an UTC time_t...
-    local oldtz = os.getenv("TZ")
-    C.setenv("TZ", "UTC0", 1)
-    local t = C.mktime(tm)
-    C.unsetenv("TZ")
-    if oldtz then
-        C.setenv("TZ", oldtz, 1)
-    end
+    -- Convert that UTC broken down representation to an UTC time_t...
+    local t = C.timegm(tm)
 
     -- We want a timeval for settimeofday
     local tv = ffi.new("struct timeval")
     tv.tv_sec = t
 
     -- Deal with some more kernel & TZ nonsense...
+    -- 1. Lock the kernel's warp_clock function
+    --    (iff that's the first settimeofday call after a cold boot! i.e., in our case, that's mostly going to be a NOP).
+    -- 2. Set the kernel timezone.
+    -- c.f., comments in hwclock in both busybox & util-linux, as well as gettimeofday(2) for more details.
     local tz = ffi.new("struct timezone")
     ok, re, err = set_kernel_tz(tz)
     if not ok then
