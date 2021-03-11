@@ -1,5 +1,6 @@
 local bit = require("bit")
 local ffi = require("ffi")
+local ffiUtil = require("ffi/util")
 local BB = require("ffi/blitbuffer")
 local C = ffi.C
 
@@ -173,6 +174,11 @@ local function kobo_mk7_mxc_wait_for_update_complete(fb, marker)
     --       On a slightly related note, the EPDC_FLAG_TEST_COLLISION flag is for dry-run collision tests, never set it.
     mk7_update_marker[0].collision_test = 0
     return C.ioctl(fb.fd, C.MXCFB_WAIT_FOR_UPDATE_COMPLETE_V3, mk7_update_marker)
+end
+
+-- Stub version that simply sleeps for 1ms (which is roughly twice the amount of time a real NOP WAIT_FOR_UPDATE_COMPLETE would take)
+local function stub_mxc_wait_for_update_complete()
+    ffiUtil.usleep(1000)
 end
 
 -- Pocketbook's MXCFB_WAIT_FOR_UPDATE_COMPLETE_PB... with a twist.
@@ -779,6 +785,8 @@ function framebuffer:init()
         elseif self.device.model == "Kobo_frost" then
             isMk7 = true
         elseif self.device.model == "Kobo_storm" then
+            isMk7 = true
+        elseif self.device.model == "Kobo_luna" then
             isMk7 = true
         end
 
