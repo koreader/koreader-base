@@ -170,6 +170,7 @@ function input.waitForEvent(sec, usec)
         --       TL;DR: We don't actually use it here.
         local source = ffi.new("struct android_poll_source*[1]")
         local poll_state = android.lib.ALooper_pollAll(timeout, fd, events, ffi.cast("void**", source))
+
         if poll_state >= 0 then
             -- NOTE: Since we actually want to process this in Lua-land (i.e., here), and not in C-land,
             --       we do *NOT* make use of the weird delayed callback mechanism afforded by the android_poll_source struct
@@ -211,6 +212,10 @@ function input.waitForEvent(sec, usec)
                 android.LOGI("Engine thread destroy requested!")
                 -- Do nothing, if this is set, we've already pushed an APP_CMD_DESTROY event that'll get handled in front.
             end
+        elseif poll_state == C.ALOOPER_POLL_WAKE then
+            -- this happens, when ALOOPER receives infos from the native_glue_fifo
+            android.LOGD("ALOOPER_POLL_WAKE")
+            return
         elseif poll_state == C.ALOOPER_POLL_TIMEOUT then
             return false, C.ETIME
         elseif poll_state == C.ALOOPER_POLL_ERROR then
