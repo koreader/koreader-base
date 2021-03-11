@@ -131,6 +131,8 @@ end
 function input.waitForEvent(usecs)
     local timeout = math.ceil(usecs and usecs/1000 or -1)
     while true do
+require("logger").err("xxxxxxx + waitForEvent a   Timeout="..usecs)
+
         -- check for queued events
         if #inputQueue > 0 then
             -- return oldest FIFO element
@@ -138,7 +140,18 @@ function input.waitForEvent(usecs)
         end
         local events = ffi.new("int[1]")
         local source = ffi.new("struct android_poll_source*[1]")
+
         local poll_state = android.lib.ALooper_pollAll(timeout, nil, events, ffi.cast("void**", source))
+
+require("logger").err("xxxxxxx + waitForEvent c")
+
+            require("logger").err("xxxxxxx ++ poll_state="..poll_state)
+
+        if source[0] ~= nil then
+            require("logger").err("xxxxxxx ++ source[0].id="..source[0].id)
+        end
+
+
         if poll_state >= 0 then
             if source[0] ~= nil then
                 --source[0].process(android.app, source[0])
@@ -167,6 +180,10 @@ function input.waitForEvent(usecs)
                 android.LOGI("Engine thread destroy requested!")
                 return
             end
+        elseif poll_state == C.ALOOPER_POLL_WAKE then
+            -- this happens, when ALOOPER receives infos from the native_glue_fifo
+            android.LOGD("ALOOPER_POLL_WAKE")
+            return
         elseif poll_state == C.ALOOPER_POLL_TIMEOUT then
             error("Waiting for input failed: timeout\n")
         end
