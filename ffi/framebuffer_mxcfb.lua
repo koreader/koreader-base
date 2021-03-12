@@ -177,9 +177,11 @@ local function kobo_mk7_mxc_wait_for_update_complete(fb, marker)
 end
 
 -- Stub version that simply sleeps for 1ms (which is roughly twice the amount of time a real NOP WAIT_FOR_UPDATE_COMPLETE would take)
+--[[
 local function stub_mxc_wait_for_update_complete()
     return ffiUtil.usleep(1000)
 end
+--]]
 
 -- Pocketbook's MXCFB_WAIT_FOR_UPDATE_COMPLETE_PB... with a twist.
 local function pocketbook_mxc_wait_for_update_complete(fb, marker)
