@@ -169,7 +169,7 @@ function input.waitForEvent(sec, usec)
         --       And its process function can be used as a weird delayed callback mechanism, but ALooper already has native callback handling :?.
         --       TL;DR: We don't actually use it here.
         local source = ffi.new("struct android_poll_source*[1]")
-        local poll_state = android.lib.ALooper_pollAll(timeout, fd, events, ffi.cast("void**", source))
+        local poll_state = android.lib.ALooper_pollAll(timeout, nil, events, ffi.cast("void**", source))
 
         if poll_state >= 0 then
             -- NOTE: Since we actually want to process this in Lua-land (i.e., here), and not in C-land,
@@ -207,7 +207,11 @@ function input.waitForEvent(sec, usec)
         elseif poll_state == C.ALOOPER_POLL_WAKE then
             -- this happens, when ALOOPER receives infos from the native_glue_fifo
             android.LOGD("ALOOPER_POLL_WAKE")
-            return
+            if android.isCharging() then
+                commandHandler(C.MSC_CHARGE, 1)
+            else
+                commandHandler(C.MSC_CHARGE, 0)
+            end
         elseif poll_state == C.ALOOPER_POLL_TIMEOUT then
             return false, C.ETIME
         elseif poll_state == C.ALOOPER_POLL_ERROR then
