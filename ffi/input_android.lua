@@ -155,8 +155,6 @@ function input.waitForEvent(sec, usec)
     -- TimeVal's :tomsecs if we were passed one to begin with, otherwise, -1 => block
     local timeout = sec and math.floor(sec * 1000000 + usec + 0.5) / 1000 or -1
     while true do
-require("logger").err("xxxxxxx + waitForEvent a   Timeout="..usecs)
-
         -- check for queued events
         if #inputQueue > 0 then
             -- return oldest FIFO element
@@ -173,15 +171,6 @@ require("logger").err("xxxxxxx + waitForEvent a   Timeout="..usecs)
         local source = ffi.new("struct android_poll_source*[1]")
 
         local poll_state = android.lib.ALooper_pollAll(timeout, nil, events, ffi.cast("void**", source))
-
-require("logger").err("xxxxxxx + waitForEvent c")
-
-            require("logger").err("xxxxxxx ++ poll_state="..poll_state)
-
-        if source[0] ~= nil then
-            require("logger").err("xxxxxxx ++ source[0].id="..source[0].id)
-        end
-
 
         if poll_state >= 0 then
             -- NOTE: Since we actually want to process this in Lua-land (i.e., here), and not in C-land,
@@ -235,7 +224,11 @@ require("logger").err("xxxxxxx + waitForEvent c")
         elseif poll_state == C.ALOOPER_POLL_WAKE then
             -- this happens, when ALOOPER receives infos from the native_glue_fifo
             android.LOGD("ALOOPER_POLL_WAKE")
-            return
+            if android.isCharging() then
+                commandHandler(C.MSC_CHARGE, 1)
+            else
+                commandHandler(C.MSC_CHARGE, 0)
+            end
         elseif poll_state == C.ALOOPER_POLL_TIMEOUT then
             return false, C.ETIME
         elseif poll_state == C.ALOOPER_POLL_ERROR then
