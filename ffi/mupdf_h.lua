@@ -306,14 +306,17 @@ typedef struct pdf_annot pdf_annot;
 typedef struct pdf_page pdf_page;
 typedef struct pdf_document pdf_document;
 pdf_document *pdf_specifics(fz_context *, fz_document *);
-pdf_annot *pdf_create_annot(fz_context *, pdf_page *, enum pdf_annot_type);
-pdf_annot *pdf_create_annot_raw(fz_context *, pdf_page *, enum pdf_annot_type);
-void pdf_add_annot_quad_point(fz_context *, pdf_annot *, fz_quad);
-void pdf_set_annot_color(fz_context *, pdf_annot *, int, const float *);
-void pdf_set_annot_opacity(fz_context *, pdf_annot *, float);
-void pdf_update_appearance(fz_context *, pdf_annot *);
-int pdf_update_annot(fz_context *, pdf_annot *);
-typedef struct {
+pdf_annot *mupdf_pdf_create_annot(fz_context *, pdf_page *, enum pdf_annot_type);
+void *mupdf_pdf_set_annot_quad_points(fz_context *, pdf_annot *, int, const float *);
+void *mupdf_pdf_set_annot_contents(fz_context *, pdf_annot *, const char *);
+pdf_annot *mupdf_pdf_first_annot(fz_context *, pdf_page *);
+pdf_annot *mupdf_pdf_next_annot(fz_context *, pdf_annot *);
+int mupdf_pdf_annot_quad_point_count(fz_context *, pdf_annot *);
+void *mupdf_pdf_annot_quad_point(fz_context *, pdf_annot *, int, float *);
+void *mupdf_pdf_set_text_annot_position(fz_context *, pdf_annot *, fz_point);
+void *mupdf_pdf_set_markup_appearance(fz_context *, pdf_document *, pdf_annot *, float *, float, float, float);
+typedef struct pdf_write_options_s pdf_write_options;
+struct pdf_write_options_s {
   int do_incremental;
   int do_pretty;
   int do_ascii;
