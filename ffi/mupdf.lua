@@ -687,7 +687,7 @@ function page_mt.__index:getMarkupAnnotation(points, n)
             local quadpoint = ffi.new("float[?]", 8)
             local match = true
             for i = 0, n-1 do
-                W.mupdf_pdf_annot_quad_point(context(), annot, i, quadpoint) 
+                W.mupdf_pdf_annot_quad_point(context(), annot, i, quadpoint)
                 for k = 0, 7 do
                     if points[i*8 + k] ~= quadpoint[k] then match = false end
                 end
