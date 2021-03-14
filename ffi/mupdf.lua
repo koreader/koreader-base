@@ -676,6 +676,35 @@ function page_mt.__index:addMarkupAnnotation(points, n, type)
     if ok == nil then merror("could not set markup appearance") end
 end
 
+function page_mt.__index:getMarkupAnnotation(points, n)
+    local doc = M.pdf_specifics(context(), self.doc.doc)
+    if doc == nil then merror("could not get pdf_specifics") end
+
+    local annot = W.mupdf_pdf_first_annot(context(), ffi.cast("pdf_page*", self.page))
+    while annot ~= nil do
+        local n2 = W.mupdf_pdf_annot_quad_point_count(context(), annot)
+        if n == n2 then
+            local quadpoint = ffi.new("float[?]", 8)
+            local match = true
+            for i = 0, n-1 do
+                W.mupdf_pdf_annot_quad_point(context(), annot, i, quadpoint)
+                for k = 0, 7 do
+                    if points[i*8 + k] ~= quadpoint[k] then match = false end
+                end
+            end
+            if match then return annot end
+        end
+        annot = W.mupdf_pdf_next_annot(context(), annot)
+    end
+    return nil
+end
+
+function page_mt.__index:updateMarkupAnnotation(annot, contents)
+    local doc = M.pdf_specifics(context(), self.doc.doc)
+    if doc == nil then merror("could not get pdf_specifics") end
+    local ok = W.mupdf_pdf_set_annot_contents(context(), annot, contents)
+    if ok == nil then merror("could not update markup annot contents") end
+end
 
 -- image loading via MuPDF:
 
