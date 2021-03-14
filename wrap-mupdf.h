@@ -124,6 +124,21 @@ MUPDF_WRAP(mupdf_pdf_create_annot, pdf_annot*, NULL,
 MUPDF_WRAP(mupdf_pdf_set_annot_quad_points, void*, NULL,
     { pdf_set_annot_quad_points(ctx, annot, n, v); ret = (void*) -1; },
      pdf_annot *annot, int n, const float *v)
+MUPDF_WRAP(mupdf_pdf_set_annot_contents, void*, NULL,
+    { pdf_set_annot_contents(ctx, annot, text); ret = (void*) -1; },
+     pdf_annot *annot, const char *text)
+MUPDF_WRAP(mupdf_pdf_first_annot, pdf_annot*, NULL,
+     ret = pdf_first_annot(ctx, page),
+     pdf_page *page)
+MUPDF_WRAP(mupdf_pdf_next_annot, pdf_annot*, NULL,
+     ret = pdf_next_annot(ctx, annot),
+     pdf_annot *annot)
+MUPDF_WRAP(mupdf_pdf_annot_quad_point_count, int, -1,
+     ret = pdf_annot_quad_point_count(ctx, annot),
+     pdf_annot *annot)
+MUPDF_WRAP(mupdf_pdf_annot_quad_point, void*, NULL,
+    { pdf_annot_quad_point(ctx, annot, i, qp); ret = (void*) -1; },
+     pdf_annot *annot, int i, float qp[8])
 MUPDF_WRAP(mupdf_pdf_set_text_annot_position, void*, NULL,
     { pdf_set_text_annot_position(ctx, annot, pt); ret = (void*) -1; },
     pdf_annot *annot, fz_point pt)
