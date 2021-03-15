@@ -1,5 +1,10 @@
 local ffi = require("ffi")
 
+-- clock_gettime & friends require librt on old glibc versions...
+if ffi.os == "Linux" then
+   pcall(ffi.load, "rt")
+end
+
 -- Handle arch-dependent typedefs...
 if ffi.arch == "x64" then
     require("ffi/posix_types_x64_h")
