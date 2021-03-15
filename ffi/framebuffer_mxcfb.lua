@@ -1,5 +1,6 @@
 local bit = require("bit")
 local ffi = require("ffi")
+local ffiUtil = require("ffi/util")
 local BB = require("ffi/blitbuffer")
 local C = ffi.C
 
@@ -231,6 +232,12 @@ local function kindle_mxc_wait_for_update_submission(fb, marker)
     return C.ioctl(fb.fd, C.MXCFB_WAIT_FOR_UPDATE_SUBMISSION, ffi.new("uint32_t[1]", marker))
 end
 
+-- Stub version that simply sleeps for 1ms
+-- This is roughly five times the amount of time a real *NOP* WAIT_FOR_UPDATE_COMPLETE would take.
+-- An effective one could block for ~150ms to north of 500ms, depending on the waveform mode of the waited on marker.
+local function stub_mxc_wait_for_update_complete()
+    return ffiUtil.usleep(1000)
+end
 
 --[[ refresh functions ]]--
 
@@ -809,6 +816,14 @@ function framebuffer:init()
                                                     -- Nickel sometimes uses DU, but never w/ the MONOCHROME flag, so, do the same.
                                                     -- Plus, DU + MONOCHROME + INVERT is much more prone to the Mk. 7 EPDC bug where some/all
                                                     -- EPDC flags just randomly go bye-bye...
+            -- NOTE: The Libra apparently suffers from a mysterious issue where completely innocuous WAIT_FOR_UPDATE_COMPLETE ioctls
+            --       will mysteriously fail with a timeout (5s)...
+            --       This obviously leads to *terrible* user experience, so, until more is understood avout the issue,
+            --       just fake this ioctl by sleeping for a tiny amount of time instead... :/.
+            --       c.f., https://github.com/koreader/koreader/issues/7340
+            if self.device.model == "Kobo_storm" then
+                self.mech_wait_update_complete = stub_mxc_wait_for_update_complete
+            end
         end
     elseif self.device:isPocketBook() then
         require("ffi/mxcfb_pocketbook_h")
