@@ -12,6 +12,16 @@ else
 end
 
 ffi.cdef[[
+typedef long int off_t;
+typedef long int time_t;
+struct timeval {
+  long int tv_sec;
+  long int tv_usec;
+};
+struct timezone {
+  int tz_minuteswest;
+  int tz_dsttime;
+};
 int pipe(int *) __attribute__((nothrow, leaf));
 int fork(void) __attribute__((nothrow));
 int dup(int) __attribute__((nothrow, leaf));
