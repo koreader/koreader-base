@@ -19,6 +19,7 @@
 #include "ffi-cdecl.h"
 
 cdecl_type(off_t)
+cdecl_type(time_t)
 
 cdecl_struct(timeval)
 cdecl_struct(timezone)
