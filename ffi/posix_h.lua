@@ -12,12 +12,6 @@ else
 end
 
 ffi.cdef[[
-typedef long int off_t;
-typedef long int time_t;
-struct timeval {
-  long int tv_sec;
-  long int tv_usec;
-};
 struct timezone {
   int tz_minuteswest;
   int tz_dsttime;
@@ -89,10 +83,6 @@ int gettimeofday(struct timeval *restrict, struct timezone *restrict) __attribut
 char *realpath(const char *restrict, char *restrict) __attribute__((nothrow, leaf));
 char *basename(char *) __attribute__((nothrow, leaf));
 char *dirname(char *) __attribute__((nothrow, leaf));
-struct timespec {
-  long int tv_sec;
-  long int tv_nsec;
-};
 typedef int clockid_t;
 static const int CLOCK_REALTIME = 0;
 static const int CLOCK_REALTIME_COARSE = 5;
