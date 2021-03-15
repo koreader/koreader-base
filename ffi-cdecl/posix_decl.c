@@ -14,12 +14,14 @@
 #include <libgen.h>
 #include <sys/ioctl.h>
 #include <mqueue.h>
+#include <time.h>
 
 #include "ffi-cdecl.h"
 
 cdecl_type(off_t)
 
 cdecl_struct(timeval)
+cdecl_struct(timezone)
 cdecl_struct(statvfs)
 
 cdecl_func(pipe)
@@ -35,18 +37,18 @@ cdecl_const(O_RDONLY)
 cdecl_const(O_WRONLY)
 cdecl_const(O_NONBLOCK)
 cdecl_const(O_CLOEXEC)
-cdecl_const(S_IRWXU)
 cdecl_const(S_IRUSR)
 cdecl_const(S_IWUSR)
 cdecl_const(S_IXUSR)
-cdecl_const(S_IRWXG)
+cdecl_const(S_IRWXU)
 cdecl_const(S_IRGRP)
 cdecl_const(S_IWGRP)
 cdecl_const(S_IXGRP)
-cdecl_const(S_IRWX0)
+cdecl_const(S_IRWXG)
 cdecl_const(S_IROTH)
 cdecl_const(S_IWOTH)
 cdecl_const(S_IXOTH)
+cdecl_const(S_IRWXO)
 cdecl_func(open)
 cdecl_func(mq_open)
 cdecl_func(mq_receive)
@@ -89,6 +91,18 @@ cdecl_func(gettimeofday)
 cdecl_func(realpath)
 cdecl_func(basename) // NOTE: We'll want the GNU one (c.f., https://github.com/koreader/koreader/issues/4543)
 cdecl_func(dirname)
+
+// May require librt at runtime!
+cdecl_struct(timespec)
+cdecl_type(clockid_t)
+cdecl_const(CLOCK_REALTIME)
+cdecl_const(CLOCK_REALTIME_COARSE)
+cdecl_const(CLOCK_MONOTONIC)
+cdecl_const(CLOCK_MONOTONIC_COARSE)
+cdecl_const(CLOCK_MONOTONIC_RAW)
+cdecl_const(CLOCK_BOOTTIME)
+cdecl_func(clock_gettime)
+cdecl_func(clock_settime)
 
 cdecl_func(malloc)
 cdecl_func(calloc)
