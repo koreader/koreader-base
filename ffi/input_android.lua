@@ -141,6 +141,12 @@ function input.waitForEvent(usecs)
 
         local poll_state = android.lib.ALooper_pollAll(timeout, nil, events, ffi.cast("void**", source))
 
+             require("logger").err("xxxxxxxxxxxxxx poll_state="..poll_state)
+
+            if source[0] ~= nil then
+                require("logger").err("xxxxxxxxxxxxxx source[0].id="..source[0].id)
+            end
+
         if poll_state >= 0 then
             if source[0] ~= nil then
                 --source[0].process(android.app, source[0])
@@ -172,10 +178,16 @@ function input.waitForEvent(usecs)
         elseif poll_state == C.ALOOPER_POLL_WAKE then
             -- this happens, when ALOOPER receives infos from the native_glue_fifo
             android.LOGD("ALOOPER_POLL_WAKE")
-            if android.isCharging() then
-                commandHandler(C.MSC_CHARGE, 1)
+            local message = ffi.cast("char*", android.app.userData)
+
+            require("logger").err("xxxxxxxxxxxxxx source[0].id="..message[0])
+
+            if message[0] == C.EVENT_POWER_CONNECTED then
+                commandHandler(C.EVENT_POWER_CONNECTED , 0)
+            elseif message[0] == C.EVENT_POWER_DISCONNECTED then
+                commandHandler(C.EVENT_POWER_DISCONNECTED , 0)
             else
-                commandHandler(C.MSC_CHARGE, 0)
+                android.LOGE("Unknown ALOOPER_POLL_WAKE message")
             end
         elseif poll_state == C.ALOOPER_POLL_TIMEOUT then
             error("Waiting for input failed: timeout\n")
