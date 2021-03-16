@@ -3,7 +3,9 @@ local paper_pdf = "spec/base/unit/data/Paper.pdf"
 local password_pdf = "spec/base/unit/data/testdocument.pdf"
 local simple_pdf = "spec/base/unit/data/simple.pdf"
 local simple_pdf_out = "/tmp/simple-out.pdf"
+local simple_pdf_out_annotated = "/tmp/simple-out-annotated.pdf"
 local simple_pdf_compare = "spec/base/unit/data/simple-out.pdf"
+local simple_pdf_annotated_compare = "spec/base/unit/data/simple-out-annotated.pdf"
 local test_img = "spec/base/unit/data/sample.jpg"
 local jbig2_pdf = "spec/base/unit/data/2col.jbig2.pdf"
 local aes_encrypted_zip = "spec/base/unit/data/encrypted-aes.zip"
@@ -129,13 +131,34 @@ describe("mupdf module", function()
                 1, ffi.C.PDF_ANNOT_HIGHLIGHT)
             page:close()
             doc:writeDocument(simple_pdf_out)
-            local out_f = io.open(simple_pdf_out, "r")
-            out_f:read("*a")
-            out_f:close()
+            doc:close()
             assert.is_equal(
                 md5.sumFile(simple_pdf_out),
                 md5.sumFile(simple_pdf_compare)
             )
+            os.remove(simple_pdf_out)
+        end)
+        it("should open a page, add contents to an existing annotation and write a new document", function()
+            local ffi = require("ffi")
+            local doc = M.openDocument(simple_pdf_compare)
+            assert.is_not_nil(doc)
+            local page = doc:openPage(1)
+            assert.is_not_nil(page)
+            local annot = page:getMarkupAnnotation(ffi.new("float[8]", {
+                 70,  930,
+                510,  930,
+                510,  970,
+                 70,  970 }),
+                1)
+            page:updateMarkupAnnotation(annot, "annotation contents")
+            page:close()
+            doc:writeDocument(simple_pdf_out_annotated)
+            doc:close()
+            assert.is_equal(
+                md5.sumFile(simple_pdf_out_annotated),
+                md5.sumFile(simple_pdf_annotated_compare)
+            )
+            os.remove(simple_pdf_out_annotated)
         end)
 
         describe("PDF page API", function()
