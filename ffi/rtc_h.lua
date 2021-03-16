@@ -36,10 +36,6 @@ struct tm {
   long int tm_gmtoff;
   const char *tm_zone;
 };
-struct timezone {
-  int tz_minuteswest;
-  int tz_dsttime;
-};
 time_t time(time_t *) __attribute__((nothrow, leaf));
 struct tm *gmtime(const time_t *) __attribute__((nothrow, leaf));
 struct tm *localtime(const time_t *) __attribute__((nothrow, leaf));
