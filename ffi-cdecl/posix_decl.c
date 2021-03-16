@@ -103,6 +103,7 @@ cdecl_const(CLOCK_MONOTONIC)
 cdecl_const(CLOCK_MONOTONIC_COARSE)
 cdecl_const(CLOCK_MONOTONIC_RAW)
 cdecl_const(CLOCK_BOOTTIME)
+cdecl_func(clock_getres)
 cdecl_func(clock_gettime)
 cdecl_func(clock_settime)
 
