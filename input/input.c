@@ -122,7 +122,7 @@ static int openInputDevice(lua_State *L) {
     return 0;
 }
 
-static int closeInputDevices(lua_State *L) {
+static int closeInputDevices(lua_State *L __attribute__((unused))) {
     int i;
     for (i=0; i<NUM_FDS; i++) {
         if(inputfds[i] != -1) {
@@ -142,7 +142,6 @@ static int fakeTapInput(lua_State *L) {
     const char* inputdevice = luaL_checkstring(L, 1);
     int x = luaL_checkint(L, 2);
     int y = luaL_checkint(L, 3);
-    int i;
     int inputfd = -1;
     struct input_event ev;
 
