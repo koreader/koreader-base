@@ -220,16 +220,18 @@ function input.waitForEvent(sec, usec)
                 commandHandler(C.MSC_CHARGE, 0)
             end
         elseif poll_state == C.ALOOPER_POLL_WAKE then
-            -- this happens, when ALOOPER receives infos from the native_glue_fifo
+            -- this happens, when ALOOPER receives infos from the native_glue_fifo.
+            -- For now the userData contains four bytes. The first one contains the message
+            -- the other three can be used vor additional values.
             android.LOGD("ALOOPER_POLL_WAKE")
             local message = ffi.cast("char*", android.app.userData)
 
             require("logger").err("xxxxxxxxxxxxxx source[0].id="..message[0])
 
-            if message[0] == C.EVENT_POWER_CONNECTED then
-                commandHandler(C.EVENT_POWER_CONNECTED , 0)
-            elseif message[0] == C.EVENT_POWER_DISCONNECTED then
-                commandHandler(C.EVENT_POWER_DISCONNECTED , 0)
+            if message[0] == C.ALOOPER_FIFO_POWER_CONNECTED then
+                commandHandler(C.ALOOPER_FIFO_POWER_CONNECTED , 0)
+            elseif message[0] == C.ALOOPER_FIFO_POWER_DISCONNECTED then
+                commandHandler(C.ALOOPER_FIFO_POWER_DISCONNECTED , 0)
             else
                 android.LOGE("Unknown ALOOPER_POLL_WAKE message")
             end
