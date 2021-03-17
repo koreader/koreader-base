@@ -236,7 +236,7 @@ static int waitForInput(lua_State *L) {
     int usecs = luaL_optint(L, 1, -1); // we check for <0 later
 
     if (usecs < 0) {
-        // We were passed a nil: wait forever
+        // We were passed a nil: ask select to wait forever
         timeout_ptr = NULL;
     } else {
         timeout.tv_sec = usecs / 1000000;
@@ -250,9 +250,6 @@ static int waitForInput(lua_State *L) {
         if (inputfds[i] + 1 > nfds) nfds = inputfds[i] + 1;
     }
 
-    /* when no value is given as argument, we pass
-     * NULL to select() for the timeout value, setting no
-     * timeout at all. */
     num = select(nfds, &fds, NULL, NULL, timeout_ptr);
     if (num == 0) {
         lua_pushboolean(L, false);
