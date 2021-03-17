@@ -76,8 +76,8 @@ static int openInputDevice(lua_State *L) {
 
 #ifdef POCKETBOOK
     int inkview_events = luaL_checkint(L, 2);
-    if (inkview_events == 1) { 
-        startInkViewMain(L, fd, inputdevice); 
+    if (inkview_events == 1) {
+        startInkViewMain(L, fd, inputdevice);
         return 0;
     }
 #endif
@@ -254,21 +254,26 @@ static int waitForInput(lua_State *L) {
      * timeout at all. */
     num = select(nfds, &fds, NULL, NULL, timeout_ptr);
     if (num == 0) {
-        return luaL_error(L, "Waiting for input failed: timeout\n");
+        lua_pushboolean(L, false);
+        lua_pushinteger(L, ETIMEDOUT);
+        return 2;  // false, ETIMEDOUT
     } else if (num < 0) {
-        return luaL_error(L, "Waiting for input failed: %d\n", errno);
+        lua_pushboolean(L, false);
+        lua_pushinteger(L, errno);
+        return 2;  // false, errno
     }
 
     for (i=0; i<NUM_FDS; i++) {
         if (inputfds[i] != -1 && FD_ISSET(inputfds[i], &fds)) {
             readsz = read(inputfds[i], &input, sizeof(struct input_event));
             if (readsz == sizeof(struct input_event)) {
+                lua_pushboolean(L, true);
                 set_event_table(L, input);
-                return 1;
+                return 2;  // true, ev
             }
         }
     }
-    return 0;
+    return 0;  // Unreachable (unless there was a read error)
 }
 
 static const struct luaL_Reg input_func[] = {
