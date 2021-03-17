@@ -236,6 +236,7 @@ static int waitForInput(lua_State *L) {
     int usecs = luaL_optint(L, 1, -1); // we check for <0 later
 
     if (usecs < 0) {
+        // We were passed a nil: wait forever
         timeout_ptr = NULL;
     } else {
         timeout.tv_sec = usecs / 1000000;
