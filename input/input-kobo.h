@@ -57,6 +57,9 @@ static void generateFakeEvent(int pipefd[2]) {
                     ev.code = CODE_FAKE_NOT_CHARGING;
                     sendEvent(pipefd[1], &ev);
                 break;
+                default:
+                    // NOP
+                break;
             }
         } else if (uev.devpath && UE_STR_EQ(uev.devpath, USBHOST_DEVPATH)) {
             switch(uev.action) {
@@ -67,6 +70,9 @@ static void generateFakeEvent(int pipefd[2]) {
                 case UEVENT_ACTION_REMOVE:
                     ev.code = CODE_FAKE_USB_PLUG_OUT;
                     sendEvent(pipefd[1], &ev);
+                break;
+                default:
+                    // NOP
                 break;
             }
         }
