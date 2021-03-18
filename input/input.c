@@ -41,8 +41,8 @@
 #define CODE_FAKE_CHARGING      10020
 #define CODE_FAKE_NOT_CHARGING  10021
 
-#define NUM_FDS 4
-int inputfds[4] = { -1, -1, -1, -1 };
+#define NUM_FDS 4U
+int inputfds[NUM_FDS] = { -1, -1, -1, -1 };
 pid_t fake_ev_generator_pid = -1;
 
 #if defined POCKETBOOK
@@ -60,18 +60,20 @@ pid_t fake_ev_generator_pid = -1;
 #endif
 
 static inline int findFreeFdSlot() {
-    int i;
-    for (i=0; i<NUM_FDS; i++) {
-        if(inputfds[i] == -1) return i;
+    for (size_t i = 0; i < NUM_FDS; i++) {
+        if (inputfds[i] == -1) {
+            return i;
+        }
     }
     return -1;
 }
 
 static int openInputDevice(lua_State *L) {
     const char *inputdevice = luaL_checkstring(L, 1);
-    int childpid;
     int fd = findFreeFdSlot();
-    if (fd == -1) return luaL_error(L, "no free slot for new input device <%s>", inputdevice);
+    if (fd == -1) {
+        return luaL_error(L, "no free slot for new input device <%s>", inputdevice);
+    }
     char *ko_dont_grab_input = getenv("KO_DONT_GRAB_INPUT");
 
 
@@ -88,6 +90,7 @@ static int openInputDevice(lua_State *L) {
         int pipefd[2];
         pipe(pipefd);
 
+        pid_t childpid;
         if ((childpid = fork()) == -1) {
             return luaL_error(L, "cannot fork() fake event generator");
         }
@@ -99,7 +102,7 @@ static int openInputDevice(lua_State *L) {
             /* We're done, go away :) */
             _exit(EXIT_SUCCESS);
         } else {
-            printf("[ko-input] Forked off fake event generator(pid:%d).\n", childpid);
+            printf("[ko-input] Forked off fake event generator (pid: %ld).\n", (long) childpid);
             close(pipefd[1]);
             inputfds[fd] = pipefd[0];
             fake_ev_generator_pid = childpid;
@@ -113,7 +116,8 @@ static int openInputDevice(lua_State *L) {
 
             /* prevent background command started from exec call from grabbing
              * input fd. for example: wpa_supplicant. */
-            fcntl(inputfds[fd], F_SETFD, FD_CLOEXEC);
+            int fdflags = fcntl(inputfds[fd], F_GETFD, 0);
+            fcntl(inputfds[fd], F_SETFD, fdflags | FD_CLOEXEC);
             return 0;
         } else {
             return luaL_error(L, "error opening input device <%s>: %d", inputdevice, errno);
@@ -123,8 +127,7 @@ static int openInputDevice(lua_State *L) {
 }
 
 static int closeInputDevices(lua_State *L __attribute__((unused))) {
-    int i;
-    for (i=0; i<NUM_FDS; i++) {
+    for (size_t i = 0; i < NUM_FDS; i++) {
         if(inputfds[i] != -1) {
             ioctl(inputfds[i], EVIOCGRAB, 0);
             close(inputfds[i]);
@@ -142,12 +145,13 @@ static int fakeTapInput(lua_State *L) {
     const char* inputdevice = luaL_checkstring(L, 1);
     int x = luaL_checkint(L, 2);
     int y = luaL_checkint(L, 3);
-    int inputfd = -1;
-    struct input_event ev;
 
-    inputfd = open(inputdevice, O_WRONLY | O_NDELAY);
-    if (inputfd == -1) return luaL_error(L, "cannot open input device <%s>", inputdevice);
+    int inputfd = open(inputdevice, O_WRONLY | O_NONBLOCK);
+    if (inputfd == -1) {
+        return luaL_error(L, "cannot open input device <%s>", inputdevice);
+    }
 
+    struct input_event ev = { 0 };
     gettimeofday(&ev.time, NULL);
     ev.type = 3;
     ev.code = 57;
@@ -228,29 +232,32 @@ static inline void set_event_table(lua_State *L, struct input_event input) {
 }
 
 static int waitForInput(lua_State *L) {
-    struct input_event input;
-    fd_set fds;
-    struct timeval timeout;
-    struct timeval *timeout_ptr;
-    int i, num, readsz, nfds = 0;
-    int usecs = luaL_optint(L, 1, -1); // we check for <0 later
+    lua_Integer sec = luaL_optinteger(L, 1, -1); // Fallback to -1 to handle detecting a nil
+    lua_Integer usec = luaL_optinteger(L, 2, 0);
 
-    if (usecs < 0) {
-        // We were passed a nil: ask select to wait forever
-        timeout_ptr = NULL;
-    } else {
-        timeout.tv_sec = usecs / 1000000;
-        timeout.tv_usec = usecs % 1000000;
+    struct timeval timeout = { 0 };
+    struct timeval *timeout_ptr = NULL;
+    // If sec was nil, leave the timeout as NULL (i.e., block)
+    if (sec != -1) {
+        timeout.tv_sec = sec;
+        timeout.tv_usec = usec;
         timeout_ptr = &timeout;
     }
 
+    int nfds = 0;
+    fd_set fds;
     FD_ZERO(&fds);
-    for (i=0; i<NUM_FDS; i++) {
-        if (inputfds[i] != -1) FD_SET(inputfds[i], &fds);
-        if (inputfds[i] + 1 > nfds) nfds = inputfds[i] + 1;
+    for (size_t i = 0; i < NUM_FDS; i++) {
+        if (inputfds[i] != -1) {
+            FD_SET(inputfds[i], &fds);
+        }
+        // That's not the actual number of fds in the set, like poll(), but the highest fd number in the set + 1 (c.f., select(2)).
+        if (inputfds[i] + 1 > nfds) {
+            nfds = inputfds[i] + 1;
+        }
     }
 
-    num = select(nfds, &fds, NULL, NULL, timeout_ptr);
+    int num = select(nfds, &fds, NULL, NULL, timeout_ptr);
     if (num == 0) {
         lua_pushboolean(L, false);
         lua_pushinteger(L, ETIMEDOUT);
@@ -261,9 +268,10 @@ static int waitForInput(lua_State *L) {
         return 2;  // false, errno
     }
 
-    for (i=0; i<NUM_FDS; i++) {
+    for (size_t i = 0; i < NUM_FDS; i++) {
         if (inputfds[i] != -1 && FD_ISSET(inputfds[i], &fds)) {
-            readsz = read(inputfds[i], &input, sizeof(struct input_event));
+            struct input_event input = { 0 };
+            ssize_t readsz = read(inputfds[i], &input, sizeof(struct input_event));
             if (readsz == sizeof(struct input_event)) {
                 lua_pushboolean(L, true);
                 set_event_table(L, input);
