@@ -166,8 +166,8 @@ function input.waitForEvent(sec, usec)
             end
             if android.app.destroyRequested ~= 0 then
                 android.LOGI("Engine thread destroy requested!")
-                -- That'll be handled as a catastrophic failure in the frontend, but the ultimate goal of killing the app will be achieved ;p.
-                return
+                -- Custom code that'll trip a sane exit in front.
+                return false, 192
             end
         elseif poll_state == C.ALOOPER_POLL_TIMEOUT then
             -- ETIME
