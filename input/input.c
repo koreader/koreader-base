@@ -44,6 +44,7 @@
 #define NUM_FDS 4U
 int nfds = 0;
 int inputfds[NUM_FDS] = { -1, -1, -1, -1 };
+size_t num_fds = 0U;
 pid_t fake_ev_generator_pid = -1;
 
 #if defined POCKETBOOK
@@ -60,28 +61,19 @@ pid_t fake_ev_generator_pid = -1;
     #include "input-cervantes.h"
 #endif
 
-static inline int findFreeFdSlot() {
-    for (size_t i = 0; i < NUM_FDS; i++) {
-        if (inputfds[i] == -1) {
-            return i;
-        }
-    }
-    return -1;
-}
-
 static int openInputDevice(lua_State *L) {
     const char *inputdevice = luaL_checkstring(L, 1);
-    int fd = findFreeFdSlot();
-    if (fd == -1) {
+    if (num_fds >= NUM_FDS) {
         return luaL_error(L, "no free slot for new input device <%s>", inputdevice);
     }
+    // Otherwise, we're golden, and num_fds is the index of the next free slot in the inputfds array ;).
     char *ko_dont_grab_input = getenv("KO_DONT_GRAB_INPUT");
 
 
 #ifdef POCKETBOOK
     int inkview_events = luaL_checkint(L, 2);
     if (inkview_events == 1) {
-        startInkViewMain(L, fd, inputdevice);
+        startInkViewMain(L, num_fds, inputdevice);
         return 0;
     }
 #endif
@@ -105,14 +97,14 @@ static int openInputDevice(lua_State *L) {
         } else {
             printf("[ko-input] Forked off fake event generator (pid: %ld).\n", (long) childpid);
             close(pipefd[1]);
-            inputfds[fd] = pipefd[0];
+            inputfds[num_fds] = pipefd[0];
             fake_ev_generator_pid = childpid;
         }
     } else {
-        inputfds[fd] = open(inputdevice, O_RDONLY | O_NONBLOCK);
-        if (inputfds[fd] != -1) {
+        inputfds[num_fds] = open(inputdevice, O_RDONLY | O_NONBLOCK);
+        if (inputfds[num_fds] != -1) {
             if (ko_dont_grab_input == NULL) {
-                ioctl(inputfds[fd], EVIOCGRAB, 1);
+                ioctl(inputfds[num_fds], EVIOCGRAB, 1);
             }
 
             /* Prevents our children from inheriting the fd, which is unnecessary here,
@@ -120,14 +112,17 @@ static int openInputDevice(lua_State *L) {
              * NOTE: We do the legacy fcntl dance because open only supports O_CLOEXEC since Linux 2.6.23,
              *       and legacy Kindles run on 2.6.22... */
             int fdflags = fcntl(inputfds[fd], F_GETFD);
-            fcntl(inputfds[fd], F_SETFD, fdflags | FD_CLOEXEC);
+            fcntl(inputfds[num_fds], F_SETFD, fdflags | FD_CLOEXEC);
 
             /* Compute select's nfds argument.
              * That's not the actual number of fds in the set, like poll(),
              * but the highest fd number in the set + 1 (c.f., select(2)). */
-            if (inputfds[i] >= nfds) {
-                nfds = inputfds[i] + 1;
+            if (inputfds[num_fds] >= nfds) {
+                nfds = inputfds[num_fds] + 1;
             }
+
+            // That, on the other hand, *is* the number of open fds ;).
+            num_fds += 1;
 
             return 0;
         } else {
@@ -138,7 +133,7 @@ static int openInputDevice(lua_State *L) {
 }
 
 static int closeInputDevices(lua_State *L __attribute__((unused))) {
-    for (size_t i = 0; i < NUM_FDS; i++) {
+    for (size_t i = 0; i < num_fds; i++) {
         if(inputfds[i] != -1) {
             ioctl(inputfds[i], EVIOCGRAB, 0);
             close(inputfds[i]);
@@ -257,10 +252,8 @@ static int waitForInput(lua_State *L) {
 
     fd_set rfds;
     FD_ZERO(&rfds);
-    for (size_t i = 0; i < NUM_FDS; i++) {
-        if (inputfds[i] != -1) {
-            FD_SET(inputfds[i], &rfds);
-        }
+    for (size_t i = 0; i < num_fds; i++) {
+        FD_SET(inputfds[i], &rfds);
     }
 
     int num = select(nfds, &rfds, NULL, NULL, timeout_ptr);
@@ -274,8 +267,8 @@ static int waitForInput(lua_State *L) {
         return 2;  // false, errno
     }
 
-    for (size_t i = 0; i < NUM_FDS; i++) {
-        if (inputfds[i] != -1 && FD_ISSET(inputfds[i], &rfds)) {
+    for (size_t i = 0; i < num_fds; i++) {
+        if (FD_ISSET(inputfds[i], &rfds)) {
             struct input_event input;
             ssize_t readsz = read(inputfds[i], &input, sizeof(struct input_event));
             if (readsz == sizeof(struct input_event)) {
