@@ -166,8 +166,7 @@ function input.waitForEvent(sec, usec)
             end
             if android.app.destroyRequested ~= 0 then
                 android.LOGI("Engine thread destroy requested!")
-                -- Custom code that'll trip a sane exit in front.
-                return false, 192
+                -- Do nothing, we've pushed an APP_CMD_DESTROY event that'll get handled in front.
             end
         elseif poll_state == C.ALOOPER_POLL_TIMEOUT then
             -- ETIME
