@@ -246,38 +246,32 @@ local SDL_BUTTON_LEFT = 1
 
 local is_in_touch = false
 
-function S.waitForEvent(usecs)
-    usecs = usecs or -1
+function S.waitForEvent(sec, usec)
     local event = ffi.new("union SDL_Event")
-    local countdown = usecs
+    -- TimeVal's :tomsecs if we were passed one to begin with, otherwise, nil => block
+    local timeout = sec and math.floor(sec * 1000000 + usec + 0.5) / 1000
     while true do
         -- check for queued events
         if #inputQueue > 0 then
             -- return oldest FIFO element
-            return table.remove(inputQueue, 1)
+            return true, table.remove(inputQueue, 1)
         end
 
         -- otherwise, wait for event
         local got_event = 0
-        if usecs < 0 then
-            got_event = SDL.SDL_WaitEvent(event);
+        if not timeout then
+            -- no timeout requested, block
+            got_event = SDL.SDL_WaitEvent(event)
         else
-            -- timeout mode - use polling
-            while countdown > 0 and got_event == 0 do
-                got_event = SDL.SDL_PollEvent(event)
-                if got_event == 0 then
-                    -- no event, wait 10 msecs before polling again
-                    SDL.SDL_Delay(10)
-                    countdown = countdown - 10000
-                end
-            end
+            -- timeout requested
+            got_event = SDL.SDL_WaitEventTimeout(event, timeout)
         end
         if got_event == 0 then
-            error("Waiting for input failed: timeout\n")
+            -- ETIMEDOUT
+            return false, 110
         end
 
-        -- if we got an event, examine it here and generate
-        -- events for koreader
+        -- if we got an event, examine it here and generate events for koreader
         if ffi.os == "OSX" and (event.type == SDL.SDL_FINGERMOTION or
             event.type == SDL.SDL_FINGERDOWN or
             event.type == SDL.SDL_FINGERUP) then
@@ -316,14 +310,15 @@ function S.waitForEvent(usecs)
             end
         elseif event.type == SDL.SDL_MOUSEBUTTONUP
             or event.type == SDL.SDL_FINGERUP then
-            is_in_touch = false;
+            is_in_touch = false
             genEmuEvent(C.EV_ABS, C.ABS_MT_TRACKING_ID, -1)
             genEmuEvent(C.EV_SYN, C.SYN_REPORT, 0)
         elseif event.type == SDL.SDL_MOUSEBUTTONDOWN
             or event.type == SDL.SDL_FINGERDOWN then
             local is_finger = event.type == SDL.SDL_FINGERDOWN
             if not is_finger and event.button.button ~= SDL_BUTTON_LEFT then
-                return
+                -- Used to return nil, but that doesn't feel like a catastrophic failure?
+                return false, 0
             end
             -- use mouse click to simulate single tap
             is_in_touch = true
