@@ -222,12 +222,12 @@ static void *runInkViewThread(void *arg) {
     return 0;
 }
 
-static int startInkViewMain(lua_State *L, int fd, const char *inputdevice) {
+static int startInkViewMain(lua_State *L, size_t fd_idx, const char *inputdevice) {
     pthread_t thread;
     pthread_attr_t thread_attr;
 
-    inputfds[fd] = open(inputdevice, O_RDWR | O_NONBLOCK);
-    if (inputfds[fd] < 0) {
+    inputfds[fd_idx] = open(inputdevice, O_RDWR | O_NONBLOCK);
+    if (inputfds[fd_idx] == -1) {
         return luaL_error(L, "error opening input device <%s>: %d\n", inputdevice, errno);
     }
 
