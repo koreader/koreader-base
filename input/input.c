@@ -42,6 +42,7 @@
 #define CODE_FAKE_NOT_CHARGING  10021
 
 #define NUM_FDS 4U
+int nfds = 0;
 int inputfds[NUM_FDS] = { -1, -1, -1, -1 };
 pid_t fake_ev_generator_pid = -1;
 
@@ -120,6 +121,14 @@ static int openInputDevice(lua_State *L) {
              *       and legacy Kindles run on 2.6.22... */
             int fdflags = fcntl(inputfds[fd], F_GETFD);
             fcntl(inputfds[fd], F_SETFD, fdflags | FD_CLOEXEC);
+
+            /* Compute select's nfds argument.
+             * That's not the actual number of fds in the set, like poll(),
+             * but the highest fd number in the set + 1 (c.f., select(2)). */
+            if (inputfds[i] >= nfds) {
+                nfds = inputfds[i] + 1;
+            }
+
             return 0;
         } else {
             return luaL_error(L, "error opening input device <%s>: %d", inputdevice, errno);
@@ -246,20 +255,15 @@ static int waitForInput(lua_State *L) {
         timeout_ptr = &timeout;
     }
 
-    int nfds = 0;
-    fd_set fds;
-    FD_ZERO(&fds);
+    fd_set rfds;
+    FD_ZERO(&rfds);
     for (size_t i = 0; i < NUM_FDS; i++) {
         if (inputfds[i] != -1) {
-            FD_SET(inputfds[i], &fds);
-        }
-        // That's not the actual number of fds in the set, like poll(), but the highest fd number in the set + 1 (c.f., select(2)).
-        if (inputfds[i] + 1 > nfds) {
-            nfds = inputfds[i] + 1;
+            FD_SET(inputfds[i], &rfds);
         }
     }
 
-    int num = select(nfds, &fds, NULL, NULL, timeout_ptr);
+    int num = select(nfds, &rfds, NULL, NULL, timeout_ptr);
     if (num == 0) {
         lua_pushboolean(L, false);
         lua_pushinteger(L, ETIME);
@@ -271,7 +275,7 @@ static int waitForInput(lua_State *L) {
     }
 
     for (size_t i = 0; i < NUM_FDS; i++) {
-        if (inputfds[i] != -1 && FD_ISSET(inputfds[i], &fds)) {
+        if (inputfds[i] != -1 && FD_ISSET(inputfds[i], &rfds)) {
             struct input_event input;
             ssize_t readsz = read(inputfds[i], &input, sizeof(struct input_event));
             if (readsz == sizeof(struct input_event)) {
