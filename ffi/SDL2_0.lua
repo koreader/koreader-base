@@ -87,6 +87,7 @@ function S.open(w, h, x, y)
     SDL.SDL_SetMainReady()
 
     if SDL.SDL_Init(bit.bor(SDL.SDL_INIT_VIDEO,
+                            SDL.SDL_INIT_EVENTS,
                             SDL.SDL_INIT_JOYSTICK,
                             SDL.SDL_INIT_GAMECONTROLLER)) ~= 0 then
         error("Cannot initialize SDL: " .. ffi.string(SDL.SDL_GetError()))
@@ -396,6 +397,7 @@ function S.waitForEvent(sec, usec)
                 genEmuEvent(C.EV_KEY, 1073741903, 1)
             end
         elseif event.type == SDL.SDL_QUIT then
+            -- NOTE: Generated on SIGTERM, among other things. (Not SIGINT, because LuaJIT already install a handler for that).
             -- send Alt + F4
             genEmuEvent(C.EV_KEY, 1073742050, 1)
             genEmuEvent(C.EV_KEY, 1073741885, 1)
