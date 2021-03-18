@@ -172,12 +172,6 @@ function input.waitForEvent(sec, usec)
 
         local poll_state = android.lib.ALooper_pollAll(timeout, nil, events, ffi.cast("void**", source))
 
-             require("logger").err("xxxxxxxxxxxxxx poll_state="..poll_state)
-
-            if source[0] ~= nil then
-                require("logger").err("xxxxxxxxxxxxxx source[0].id="..source[0].id)
-            end
-
         if poll_state >= 0 then
             -- NOTE: Since we actually want to process this in Lua-land (i.e., here), and not in C-land,
             --       we do *NOT* make use of the weird delayed callback mechanism afforded by the android_poll_source struct
@@ -226,7 +220,7 @@ function input.waitForEvent(sec, usec)
             android.LOGD("ALOOPER_POLL_WAKE")
             local message = ffi.cast("char*", android.app.userData)
 
-            require("logger").err("xxxxxxxxxxxxxx source[0].id="..message[0])
+            android.LOGD("message received:" .. message[0])
 
             if message[0] == C.ALOOPER_FIFO_POWER_CONNECTED then
                 commandHandler(C.ALOOPER_FIFO_POWER_CONNECTED , 0)
