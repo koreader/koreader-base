@@ -111,7 +111,7 @@ static int openInputDevice(lua_State *L) {
              * and would potentially be problematic for long-running scripts (e.g., Wi-Fi stuff) and USBMS.
              * NOTE: We do the legacy fcntl dance because open only supports O_CLOEXEC since Linux 2.6.23,
              *       and legacy Kindles run on 2.6.22... */
-            int fdflags = fcntl(inputfds[fd], F_GETFD);
+            int fdflags = fcntl(inputfds[num_fds], F_GETFD);
             fcntl(inputfds[num_fds], F_SETFD, fdflags | FD_CLOEXEC);
 
             /* Compute select's nfds argument.
