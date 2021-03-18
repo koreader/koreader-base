@@ -235,7 +235,7 @@ static int waitForInput(lua_State *L) {
     lua_Integer sec = luaL_optinteger(L, 1, -1); // Fallback to -1 to handle detecting a nil
     lua_Integer usec = luaL_optinteger(L, 2, 0);
 
-    struct timeval timeout = { 0 };
+    struct timeval timeout;
     struct timeval *timeout_ptr = NULL;
     // If sec was nil, leave the timeout as NULL (i.e., block)
     if (sec != -1) {
@@ -270,7 +270,7 @@ static int waitForInput(lua_State *L) {
 
     for (size_t i = 0; i < NUM_FDS; i++) {
         if (inputfds[i] != -1 && FD_ISSET(inputfds[i], &fds)) {
-            struct input_event input = { 0 };
+            struct input_event input;
             ssize_t readsz = read(inputfds[i], &input, sizeof(struct input_event));
             if (readsz == sizeof(struct input_event)) {
                 lua_pushboolean(L, true);
