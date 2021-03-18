@@ -133,7 +133,7 @@ static int openInputDevice(lua_State *L) {
 }
 
 static int closeInputDevices(lua_State *L __attribute__((unused))) {
-    for (size_t i = 0; i < num_fds; i++) {
+    for (size_t i = 0U; i < num_fds; i++) {
         if(inputfds[i] != -1) {
             ioctl(inputfds[i], EVIOCGRAB, 0);
             close(inputfds[i]);
@@ -252,7 +252,7 @@ static int waitForInput(lua_State *L) {
 
     fd_set rfds;
     FD_ZERO(&rfds);
-    for (size_t i = 0; i < num_fds; i++) {
+    for (size_t i = 0U; i < num_fds; i++) {
         FD_SET(inputfds[i], &rfds);
     }
 
@@ -267,7 +267,7 @@ static int waitForInput(lua_State *L) {
         return 2;  // false, errno
     }
 
-    for (size_t i = 0; i < num_fds; i++) {
+    for (size_t i = 0U; i < num_fds; i++) {
         if (FD_ISSET(inputfds[i], &rfds)) {
             struct input_event input;
             ssize_t readsz = read(inputfds[i], &input, sizeof(struct input_event));
