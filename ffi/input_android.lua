@@ -128,13 +128,14 @@ local function commandHandler(code, value)
     genEmuEvent(C.EV_MSC, code, value)
 end
 
-function input.waitForEvent(usecs)
-    local timeout = math.ceil(usecs and usecs/1000 or -1)
+function input.waitForEvent(sec, usec)
+    -- TimeVal's :tomsecs if we were passed one to begin with, otherwise, -1 => block
+    local timeout = sec and math.floor(sec * 1000000 + usec + 0.5) / 1000 or -1
     while true do
         -- check for queued events
         if #inputQueue > 0 then
             -- return oldest FIFO element
-            return table.remove(inputQueue, 1)
+            return true, table.remove(inputQueue, 1)
         end
         local events = ffi.new("int[1]")
         local source = ffi.new("struct android_poll_source*[1]")
@@ -165,10 +166,15 @@ function input.waitForEvent(usecs)
             end
             if android.app.destroyRequested ~= 0 then
                 android.LOGI("Engine thread destroy requested!")
+                -- That'll be handled as a catastrophic failure in the frontend, but the ultimate goal of killing the app will be achieved ;p.
                 return
             end
         elseif poll_state == C.ALOOPER_POLL_TIMEOUT then
-            error("Waiting for input failed: timeout\n")
+            -- ETIMEDOUT
+            return false, 110
+        elseif poll_state == C.ALOOPER_POLL_ERROR then
+            android.LOGE("Encountered a polling error!")
+            return
         end
     end
 end
