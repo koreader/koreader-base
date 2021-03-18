@@ -122,7 +122,7 @@ static int openInputDevice(lua_State *L) {
             }
 
             // That, on the other hand, *is* the number of open fds ;).
-            num_fds += 1;
+            num_fds += 1U;
 
             return 0;
         } else {
