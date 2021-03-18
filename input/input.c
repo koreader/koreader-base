@@ -108,7 +108,7 @@ static int openInputDevice(lua_State *L) {
             fake_ev_generator_pid = childpid;
         }
     } else {
-        inputfds[fd] = open(inputdevice, O_RDONLY | O_NONBLOCK, 0);
+        inputfds[fd] = open(inputdevice, O_RDONLY | O_NONBLOCK);
         if (inputfds[fd] != -1) {
             if (ko_dont_grab_input == NULL) {
                 ioctl(inputfds[fd], EVIOCGRAB, 1);
@@ -118,7 +118,7 @@ static int openInputDevice(lua_State *L) {
              * and would potentially be problematic for long-running scripts (e.g., Wi-Fi stuff) and USBMS.
              * NOTE: We do the legacy fcntl dance because open only supports O_CLOEXEC since Linux 2.6.23,
              *       and legacy Kindles run on 2.6.22... */
-            int fdflags = fcntl(inputfds[fd], F_GETFD, 0);
+            int fdflags = fcntl(inputfds[fd], F_GETFD);
             fcntl(inputfds[fd], F_SETFD, fdflags | FD_CLOEXEC);
             return 0;
         } else {
