@@ -318,8 +318,8 @@ function S.waitForEvent(sec, usec)
             or event.type == SDL.SDL_FINGERDOWN then
             local is_finger = event.type == SDL.SDL_FINGERDOWN
             if not is_finger and event.button.button ~= SDL_BUTTON_LEFT then
-                -- Used to return nil, but that doesn't feel like a catastrophic failure?
-                return false, 0
+                -- Not a left-click? ENOSYS
+                return false, 38
             end
             -- use mouse click to simulate single tap
             is_in_touch = true
