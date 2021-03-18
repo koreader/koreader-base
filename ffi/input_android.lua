@@ -170,8 +170,8 @@ function input.waitForEvent(sec, usec)
                 return
             end
         elseif poll_state == C.ALOOPER_POLL_TIMEOUT then
-            -- ETIMEDOUT
-            return false, 110
+            -- ETIME
+            return false, 62
         elseif poll_state == C.ALOOPER_POLL_ERROR then
             android.LOGE("Encountered a polling error!")
             return

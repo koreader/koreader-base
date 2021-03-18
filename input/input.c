@@ -260,8 +260,8 @@ static int waitForInput(lua_State *L) {
     int num = select(nfds, &fds, NULL, NULL, timeout_ptr);
     if (num == 0) {
         lua_pushboolean(L, false);
-        lua_pushinteger(L, ETIMEDOUT);
-        return 2;  // false, ETIMEDOUT
+        lua_pushinteger(L, ETIME);
+        return 2;  // false, ETIME
     } else if (num < 0) {
         lua_pushboolean(L, false);
         lua_pushinteger(L, errno);

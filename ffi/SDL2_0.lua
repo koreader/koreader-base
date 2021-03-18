@@ -268,8 +268,8 @@ function S.waitForEvent(sec, usec)
             got_event = SDL.SDL_WaitEventTimeout(event, timeout)
         end
         if got_event == 0 then
-            -- ETIMEDOUT
-            return false, 110
+            -- ETIME
+            return false, 62
         end
 
         -- if we got an event, examine it here and generate events for koreader
