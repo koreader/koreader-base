@@ -115,7 +115,9 @@ static int openInputDevice(lua_State *L) {
             }
 
             /* Prevents our children from inheriting the fd, which is unnecessary here,
-             * and would potentially be problematic for long-running scripts (e.g., Wi-Fi stuff) and USBMS */
+             * and would potentially be problematic for long-running scripts (e.g., Wi-Fi stuff) and USBMS.
+             * NOTE: We do the legacy fcntl dance because open only supports O_CLOEXEC since Linux 2.6.23,
+             *       and legacy Kindles run on 2.6.22... */
             int fdflags = fcntl(inputfds[fd], F_GETFD, 0);
             fcntl(inputfds[fd], F_SETFD, fdflags | FD_CLOEXEC);
             return 0;
