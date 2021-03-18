@@ -114,8 +114,8 @@ static int openInputDevice(lua_State *L) {
                 ioctl(inputfds[fd], EVIOCGRAB, 1);
             }
 
-            /* prevent background command started from exec call from grabbing
-             * input fd. for example: wpa_supplicant. */
+            /* Prevents our children from inheriting the fd, which is unnecessary here,
+             * and would potentially be problematic for long-running scripts (e.g., Wi-Fi stuff) and USBMS */
             int fdflags = fcntl(inputfds[fd], F_GETFD, 0);
             fcntl(inputfds[fd], F_SETFD, fdflags | FD_CLOEXEC);
             return 0;
