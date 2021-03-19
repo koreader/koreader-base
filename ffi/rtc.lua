@@ -17,8 +17,8 @@ local bor = bit.bor
 local C = ffi.C
 
 -- Load header definitions for functions and constants to the ffi.C namespace.
-local dummy = require("ffi/posix_h")
-local dummy = require("ffi/rtc_h")
+require("ffi/posix_h")
+require("ffi/rtc_h")
 
 -----------------------------------------------------------------
 

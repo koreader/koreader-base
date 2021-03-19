@@ -7,7 +7,7 @@ Currently, this is a LuaJIT FFI wrapper for lodepng lib.
 ]]
 
 local ffi = require("ffi")
-local _ = require("ffi/lodepng_h")
+require("ffi/lodepng_h")
 
 local lodepng
 if ffi.os == "Windows" then

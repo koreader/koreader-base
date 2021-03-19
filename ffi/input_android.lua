@@ -3,8 +3,8 @@ local bit = require("bit")
 local C = ffi.C
 
 local android = require("android")
-local dummy = require("ffi/posix_h")
-local dummy = require("ffi/linux_input_h")
+require("ffi/posix_h")
+require("ffi/linux_input_h")
 
 local input = {
 -- to trigger refreshes for certain Android framework events:
