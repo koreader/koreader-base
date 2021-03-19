@@ -488,6 +488,16 @@ function fb:getMxcWaitForBypass()
     return self.mxcfb_bypass_wait_for
 end
 
+function fb:toggleMxcWaitForBypass(toggle)
+    if toggle == true then
+        self.mxcfb_bypass_wait_for = true
+    elseif toggle == false then
+        self.mxcfb_bypass_wait_for = false
+    else
+        self.mxcfb_bypass_wait_for = not self.mxcfb_bypass_wait_for
+    end
+end
+
 function fb:saveCurrentBB()
     if self.saved_bb then self.saved_bb:free() end
     self.saved_bb = self.bb:copy()
