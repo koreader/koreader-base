@@ -212,6 +212,9 @@ local function waitForEventRaw(timeout)
             return false, ffi.errno()
         end
 
+        --- @note: No poll timeout handling?
+        --         e.g., if res == 0 then return false, C.ETIME end
+
         -- Message from monitor. This sendss us both touch and key events, but not in a format
         -- thats particularly useful. Keys are nice as they have symbolic names already, but
         -- touch events are utter mess. In any case, this queue *must* be consumed, lest otherwise
