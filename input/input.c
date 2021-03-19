@@ -228,6 +228,7 @@ static inline void set_event_table(lua_State *L, struct input_event input) {
 
     lua_pushstring(L, "time");
     // NOTE: This is TimeVal-like, but it doesn't feature its metatable!
+    //       The frontend (device/input.lua) will convert it to a proper TimeVal object.
     lua_newtable(L);
     lua_pushstring(L, "sec");
     lua_pushinteger(L, input.time.tv_sec);  // time_t
