@@ -198,8 +198,8 @@ local function waitForEventRaw(timeout)
 
         local remain = expire - now()
         if remain < 0 then
-            -- ETIME
-            return false, 62
+            -- Timed out
+            return false, C.ETIME
         end
 
         local ms = math.max(math.min(remain / 1000, 1000), 20)
@@ -266,8 +266,8 @@ function input.waitForEvent(sec, usec)
         compat.ProcessEventLoop()
         if #eventq > 0 then return true, table.remove(eventq, 1) end
     end
-    -- ETIME
-    return false, 62
+    -- Timed out
+    return false, C.ETIME
 end
 
 function input.fakeTapInput() end
