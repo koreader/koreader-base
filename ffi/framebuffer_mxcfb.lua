@@ -824,14 +824,6 @@ function framebuffer:init()
                                                     -- Nickel sometimes uses DU, but never w/ the MONOCHROME flag, so, do the same.
                                                     -- Plus, DU + MONOCHROME + INVERT is much more prone to the Mk. 7 EPDC bug where some/all
                                                     -- EPDC flags just randomly go bye-bye...
-            -- NOTE: The Libra apparently suffers from a mysterious issue where completely innocuous WAIT_FOR_UPDATE_COMPLETE ioctls
-            --       will mysteriously fail with a timeout (5s)...
-            --       This obviously leads to *terrible* user experience, so, until more is understood avout the issue,
-            --       just fake this ioctl by sleeping for a tiny amount of time instead... :/.
-            --       c.f., https://github.com/koreader/koreader/issues/7340
-            if self.device.model == "Kobo_storm" then
-                self.mech_wait_update_complete = stub_mxc_wait_for_update_complete
-            end
         end
 
         local bypass_wait_for = self:getMxcWaitForBypass()
