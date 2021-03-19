@@ -217,22 +217,23 @@ static int fakeTapInput(lua_State *L) {
 static inline void set_event_table(lua_State *L, struct input_event input) {
     lua_newtable(L);
     lua_pushstring(L, "type");
-    lua_pushinteger(L, (int) input.type);
+    lua_pushinteger(L, input.type);  // uint16_t
     lua_settable(L, -3);
     lua_pushstring(L, "code");
-    lua_pushinteger(L, (int) input.code);
+    lua_pushinteger(L, input.code);  // uint16_t
     lua_settable(L, -3);
     lua_pushstring(L, "value");
-    lua_pushinteger(L, (int) input.value);
+    lua_pushinteger(L, input.value);  // int32_t
     lua_settable(L, -3);
 
     lua_pushstring(L, "time");
+    // NOTE: This is TimeVal-like, but it doesn't feature its metatable!
     lua_newtable(L);
     lua_pushstring(L, "sec");
-    lua_pushinteger(L, (int) input.time.tv_sec);
+    lua_pushinteger(L, input.time.tv_sec);  // time_t
     lua_settable(L, -3);
     lua_pushstring(L, "usec");
-    lua_pushinteger(L, (int) input.time.tv_usec);
+    lua_pushinteger(L, input.time.tv_usec);  // suseconds_t
     lua_settable(L, -3);
     lua_settable(L, -3);
 }
