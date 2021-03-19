@@ -3,8 +3,7 @@ local BB = require("ffi/blitbuffer")
 local Png = require("ffi/png")
 local Jpeg = require("ffi/jpeg")
 
-local dummy = require("ffi/turbojpeg_h")
-local dummy = require("ffi/giflib_h")
+require("ffi/giflib_h")
 local giflib
 if ffi.os == "Windows" then
     giflib = ffi.load("libs/libgif-7.dll")

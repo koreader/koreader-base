@@ -9,7 +9,7 @@ typedef struct light_fd { int ld; } light_fd;
 ]]
 
 -- for ioctl header definition:
-local dummy = require("ffi/posix_h")
+require("ffi/posix_h")
 
 local kobolight = {}
 local kobolight_mt = {__index={}}

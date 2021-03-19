@@ -1,7 +1,7 @@
 local ffi = require("ffi")
 local BB = require("ffi/blitbuffer")
-local dummy = require("ffi/posix_h")
-local dummy = require("ffi/einkfb_h")
+require("ffi/posix_h")
+require("ffi/einkfb_h")
 local C = ffi.C
 
 local framebuffer = {}

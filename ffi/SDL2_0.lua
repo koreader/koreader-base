@@ -14,8 +14,8 @@ local ffi = require("ffi")
 local util = require("ffi/util")
 local C = ffi.C
 
-local dummy = require("ffi/SDL2_0_h")
-local dummy = require("ffi/linux_input_h")
+require("ffi/SDL2_0_h")
+require("ffi/linux_input_h")
 
 -----------------------------------------------------------------
 

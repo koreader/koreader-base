@@ -7,8 +7,8 @@ LuaJIT FFI wrapper for ZSTD.
 local ffi = require("ffi")
 local C = ffi.C
 
-local posix = require("ffi/posix_h") -- luacheck: ignore 211
-local _ = require("ffi/zstd_h")
+require("ffi/posix_h")
+require("ffi/zstd_h")
 
 local zst
 if ffi.os == "Windows" then

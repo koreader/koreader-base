@@ -5,7 +5,7 @@ LuaJIT FFI wrapper for zlib.
 ]]
 
 local ffi = require("ffi")
-local _ = require("ffi/zlib_h")
+require("ffi/zlib_h")
 
 local libz
 if ffi.os == "Windows" then
