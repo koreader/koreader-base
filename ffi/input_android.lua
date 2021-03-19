@@ -3,6 +3,7 @@ local bit = require("bit")
 local C = ffi.C
 
 local android = require("android")
+local dummy = require("ffi/posix_h")
 local dummy = require("ffi/linux_input_h")
 
 local input = {
@@ -169,8 +170,7 @@ function input.waitForEvent(sec, usec)
                 -- Do nothing, we've pushed an APP_CMD_DESTROY event that'll get handled in front.
             end
         elseif poll_state == C.ALOOPER_POLL_TIMEOUT then
-            -- ETIME
-            return false, 62
+            return false, C.ETIME
         elseif poll_state == C.ALOOPER_POLL_ERROR then
             android.LOGE("Encountered a polling error!")
             return
