@@ -299,7 +299,10 @@ local function mxc_update(fb, update_ioctl, refarea, refresh_type, waveform_mode
       or fb:_isUIWaveFormMode(waveform_mode))
       and (marker ~= 0 and marker ~= fb.dont_wait_for_marker) then
         fb.debug("refresh: wait for submission of (previous) marker", marker)
-        fb.mech_wait_update_submission(fb, marker)
+        if fb.mech_wait_update_submission(fb, marker) == -1 then
+            local err = ffi.errno()
+            fb.debug("MXCFB_WAIT_FOR_UPDATE_SUBMISSION ioctl failed:", ffi.string(C.strerror(err)))
+        end
         -- NOTE: We don't set dont_wait_for_marker here,
         --       as we *do* want to chain wait_for_submission & wait_for_complete in some rare instances...
     end
@@ -316,7 +319,10 @@ local function mxc_update(fb, update_ioctl, refarea, refresh_type, waveform_mode
       and fb.mech_wait_update_complete
       and (marker ~= 0 and marker ~= fb.dont_wait_for_marker) then
         fb.debug("refresh: wait for completion of (previous) marker", marker)
-        fb.mech_wait_update_complete(fb, marker)
+        if fb.mech_wait_update_complete(fb, marker) == -1 then
+            local err = ffi.errno()
+            fb.debug("MXCFB_WAIT_FOR_UPDATE_COMPLETE ioctl failed:", ffi.string(C.strerror(err)))
+        end
     end
 
     refarea[0].update_mode = refresh_type or C.UPDATE_MODE_PARTIAL
@@ -369,8 +375,7 @@ local function mxc_update(fb, update_ioctl, refarea, refresh_type, waveform_mode
     -- Recap the actual details of the ioctl, vs. what UIManager asked for...
     fb.debug(string.format("mxc_update: %ux%u region @ (%u, %u) with marker %u (WFM: %u & UPD: %u)", w, h, x, y, marker, refarea[0].waveform_mode, refarea[0].update_mode))
 
-    local rv = C.ioctl(fb.fd, update_ioctl, refarea)
-    if rv < 0 then
+    if C.ioctl(fb.fd, update_ioctl, refarea) == -1 then
         local err = ffi.errno()
         fb.debug("MXCFB_SEND_UPDATE ioctl failed:", ffi.string(C.strerror(err)))
     end
@@ -387,7 +392,10 @@ local function mxc_update(fb, update_ioctl, refarea, refresh_type, waveform_mode
     if refarea[0].update_mode == C.UPDATE_MODE_FULL
       and fb.mech_wait_update_complete then
         fb.debug("refresh: wait for completion of marker", marker)
-        fb.mech_wait_update_complete(fb, marker)
+        if fb.mech_wait_update_complete(fb, marker) == -1 then
+            local err = ffi.errno()
+            fb.debug("MXCFB_WAIT_FOR_UPDATE_COMPLETE ioctl failed:", ffi.string(C.strerror(err)))
+        end
         -- And make sure we won't wait for it again, in case the next refresh trips one of our wait_for_*  heuristics ;).
         fb.dont_wait_for_marker = marker
     end
