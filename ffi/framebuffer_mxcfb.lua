@@ -833,6 +833,13 @@ function framebuffer:init()
                 self.mech_wait_update_complete = stub_mxc_wait_for_update_complete
             end
         end
+
+        local bypass_wait_for = self:getMxcWaitForBypass()
+        -- If the user (or a device cap check) requested bypassing the MXCFB_WAIT_FOR_UPDATE_COMPLETE ioctls, do so.
+        if bypass_wait_for then
+            -- The stub implementation just fakes this ioctl by sleeping for a tiny amount of time instead... :/.
+            self.mech_wait_update_complete = stub_mxc_wait_for_update_complete
+        end
     elseif self.device:isPocketBook() then
         require("ffi/mxcfb_pocketbook_h")
 
