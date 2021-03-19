@@ -25,6 +25,10 @@ cdecl_const(SYN_CONFIG)
 cdecl_const(SYN_MT_REPORT)
 cdecl_const(SYN_DROPPED)
 
+cdecl_const(ABS_X)
+cdecl_const(ABS_Y)
+cdecl_const(ABS_PRESSURE)
+
 cdecl_const(ABS_MT_SLOT)
 cdecl_const(ABS_MT_TOUCH_MAJOR)
 cdecl_const(ABS_MT_TOUCH_MINOR)
@@ -40,5 +44,7 @@ cdecl_const(ABS_MT_PRESSURE)
 cdecl_const(ABS_MT_DISTANCE)
 cdecl_const(ABS_MT_TOOL_X)
 cdecl_const(ABS_MT_TOOL_Y)
+
+cdecl_const(MSC_RAW)
 
 cdecl_struct(input_event)

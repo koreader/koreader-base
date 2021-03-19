@@ -19,6 +19,9 @@ static const int SYN_REPORT = 0;
 static const int SYN_CONFIG = 1;
 static const int SYN_MT_REPORT = 2;
 static const int SYN_DROPPED = 3;
+static const int ABS_X = 0;
+static const int ABS_Y = 1;
+static const int ABS_PRESSURE = 24;
 static const int ABS_MT_SLOT = 47;
 static const int ABS_MT_TOUCH_MAJOR = 48;
 static const int ABS_MT_TOUCH_MINOR = 49;
@@ -34,6 +37,7 @@ static const int ABS_MT_PRESSURE = 58;
 static const int ABS_MT_DISTANCE = 59;
 static const int ABS_MT_TOOL_X = 60;
 static const int ABS_MT_TOOL_Y = 61;
+static const int MSC_RAW = 3;
 struct input_event {
   struct timeval time;
   short unsigned int type;
