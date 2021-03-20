@@ -143,13 +143,20 @@ static int closeInputDevices(lua_State *L __attribute__((unused))) {
         if(inputfds[i] != -1) {
             ioctl(inputfds[i], EVIOCGRAB, 0);
             close(inputfds[i]);
+            inputfds[i] = 1;
         }
     }
+
+#ifdef WITH_TIMERFD
+    clearAllTimers();
+#endif
+
     if (fake_ev_generator_pid != -1) {
         /* kill and wait for child process */
         kill(fake_ev_generator_pid, SIGTERM);
         waitpid(-1, NULL, 0);
     }
+
     return 0;
 }
 
@@ -263,6 +270,16 @@ static int waitForInput(lua_State *L) {
     for (size_t i = 0U; i < num_fds; i++) {
         FD_SET(inputfds[i], &rfds);
     }
+#ifdef WITH_TIMERFD
+    for (size_t i = 0U; i < NUM_TFDS; i++) {
+        if (timerfds[i] != -1) {
+            FD_SET(timerfds[i], &rfds);
+            // Need to update nfds, too...
+            if (timerfds[i] >= nfds) {
+                nfds = timerfds[i] + 1;
+            }
+        }
+#endif
 
     int num = select(nfds, &rfds, NULL, NULL, timeout_ptr);
     if (num == 0) {

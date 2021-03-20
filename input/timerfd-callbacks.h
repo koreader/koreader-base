@@ -109,3 +109,12 @@ static inline int clearTimer(lua_State *L) {
     lua_pushboolean(L, true);
     return 1; // true
 }
+
+static void clearAllTimers(void) {
+    for (size_t i = 0U; i < NUM_TFDS; i++) {
+        if (timerfds[i] != -1) {
+            close(inputfds[i]);
+            timerfds[i] = 1;
+        }
+    }
+}
