@@ -5,6 +5,7 @@ local simple_pdf = "spec/base/unit/data/simple.pdf"
 local tmp_pdf = "/tmp/out.pdf"
 local simple_pdf_compare = "spec/base/unit/data/simple-out.pdf"
 local simple_pdf_annotated_compare = "spec/base/unit/data/simple-out-annotated.pdf"
+local simple_pdf_annotation_deleted_compare = "spec/base/unit/data/simple-out-annotation-deleted.pdf"
 local test_img = "spec/base/unit/data/sample.jpg"
 local jbig2_pdf = "spec/base/unit/data/2col.jbig2.pdf"
 local aes_encrypted_zip = "spec/base/unit/data/encrypted-aes.zip"
@@ -135,6 +136,35 @@ describe("mupdf module", function()
             assert.is_equal(
                 md5.sumFile(tmp_pdf),
                 md5.sumFile(simple_pdf_compare)
+            )
+            os.remove(tmp_pdf)
+        end)
+        it("should open a page, add an annotation, delete it again, and write a new document", function()
+            local ffi = require("ffi")
+            local doc = M.openDocument(simple_pdf)
+            assert.is_not_nil(doc)
+            local page = doc:openPage(1)
+            assert.is_not_nil(page)
+            doc:writeDocument(tmp_pdf)
+            page:addMarkupAnnotation(ffi.new("float[8]", {
+                 70,  930,
+                510,  930,
+                510,  970,
+                 70,  970 }),
+                1, ffi.C.PDF_ANNOT_HIGHLIGHT)
+            local annot = page:getMarkupAnnotation(ffi.new("float[8]", {
+                 70,  930,
+                510,  930,
+                510,  970,
+                 70,  970 }),
+                1)
+            page:deleteMarkupAnnotation(annot)
+            page:close()
+            doc:writeDocument(tmp_pdf)
+            doc:close()
+            assert.is_equal(
+                md5.sumFile(tmp_pdf),
+                md5.sumFile(simple_pdf_annotation_deleted_compare)
             )
             os.remove(tmp_pdf)
         end)
