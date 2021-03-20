@@ -78,8 +78,8 @@ static inline int setTimer(lua_State *L) {
     }
 
     // Need to update select's nfds, too...
-    if (timerfds[i] >= nfds) {
-        nfds = timerfds[i] + 1;
+    if (timerfds[fd_idx] >= nfds) {
+        nfds = timerfds[fd_idx] + 1;
     }
 
     // Success!
