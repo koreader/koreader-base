@@ -307,6 +307,7 @@ typedef struct pdf_page pdf_page;
 typedef struct pdf_document pdf_document;
 pdf_document *pdf_specifics(fz_context *, fz_document *);
 pdf_annot *mupdf_pdf_create_annot(fz_context *, pdf_page *, enum pdf_annot_type);
+void *mupdf_pdf_delete_annot(fz_context *, pdf_page *, pdf_annot *);
 void *mupdf_pdf_set_annot_quad_points(fz_context *, pdf_annot *, int, const float *);
 void *mupdf_pdf_set_annot_contents(fz_context *, pdf_annot *, const char *);
 pdf_annot *mupdf_pdf_first_annot(fz_context *, pdf_page *);

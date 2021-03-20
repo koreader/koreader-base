@@ -662,6 +662,11 @@ function page_mt.__index:addMarkupAnnotation(points, n, type)
     self.ctx:pdf_update_appearance(annot)
 end
 
+function page_mt.__index:deleteMarkupAnnotation(annot)
+    local ok = W.mupdf_pdf_delete_annot(context(), ffi.cast("pdf_page*", self.page), annot)
+    if ok == nil then merror("could not delete markup annotation") end
+end
+
 function page_mt.__index:getMarkupAnnotation(points, n)
     local doc = M.pdf_specifics(context(), self.doc.doc)
     if doc == nil then merror("could not get pdf_specifics") end
