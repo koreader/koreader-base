@@ -73,6 +73,12 @@ describe("mupdf module", function()
 
     describe("PDF document API", function()
         local doc1, doc2, doc3
+        local ffi = require("ffi")
+        local annotation_quadpoints = ffi.new("float[8]", {
+                 70,  930,
+                510,  930,
+                510,  970,
+                 70,  970 })
         setup(function()
             doc1 = M.openDocument(sample_pdf)
             assert.is_not_nil(doc1)
@@ -118,18 +124,11 @@ describe("mupdf module", function()
             end
         end)
         it("should open a page, add an annotation and write a new document", function()
-            local ffi = require("ffi")
             local doc = M.openDocument(simple_pdf)
             assert.is_not_nil(doc)
             local page = doc:openPage(1)
             assert.is_not_nil(page)
-            page:addMarkupAnnotation(ffi.new("fz_quad[1]", {{
-               ul = { x = 70, y = 250},
-                ur = { x = 510, y = 250},
-                ll = { x = 70, y = 200},
-                lr = { x = 510, y = 200},
-            }}), 1,
-            ffi.C.PDF_ANNOT_HIGHLIGHT);
+            page:addMarkupAnnotation(annotation_quadpoints, 1, ffi.C.PDF_ANNOT_HIGHLIGHT)
             page:close()
             doc:writeDocument(tmp_pdf)
             doc:close()
@@ -140,24 +139,13 @@ describe("mupdf module", function()
             os.remove(tmp_pdf)
         end)
         it("should open a page, add an annotation, delete it again, and write a new document", function()
-            local ffi = require("ffi")
             local doc = M.openDocument(simple_pdf)
             assert.is_not_nil(doc)
             local page = doc:openPage(1)
             assert.is_not_nil(page)
             doc:writeDocument(tmp_pdf)
-            page:addMarkupAnnotation(ffi.new("float[8]", {
-                 70,  930,
-                510,  930,
-                510,  970,
-                 70,  970 }),
-                1, ffi.C.PDF_ANNOT_HIGHLIGHT)
-            local annot = page:getMarkupAnnotation(ffi.new("float[8]", {
-                 70,  930,
-                510,  930,
-                510,  970,
-                 70,  970 }),
-                1)
+            page:addMarkupAnnotation(annotation_quadpoints, 1, ffi.C.PDF_ANNOT_HIGHLIGHT)
+            local annot = page:getMarkupAnnotation(annotation_quadpoints, 1)
             page:deleteMarkupAnnotation(annot)
             page:close()
             doc:writeDocument(tmp_pdf)
@@ -169,17 +157,11 @@ describe("mupdf module", function()
             os.remove(tmp_pdf)
         end)
         it("should open a page, add contents to an existing annotation and write a new document", function()
-            local ffi = require("ffi")
             local doc = M.openDocument(simple_pdf_compare)
             assert.is_not_nil(doc)
             local page = doc:openPage(1)
             assert.is_not_nil(page)
-            local annot = page:getMarkupAnnotation(ffi.new("float[8]", {
-                 70,  930,
-                510,  930,
-                510,  970,
-                 70,  970 }),
-                1)
+            local annot = page:getMarkupAnnotation(annotation_quadpoints, 1)
             page:updateMarkupAnnotation(annot, "annotation contents")
             page:close()
             doc:writeDocument(tmp_pdf)
