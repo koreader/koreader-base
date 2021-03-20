@@ -61,6 +61,12 @@ pid_t fake_ev_generator_pid = -1;
     #include "input-cervantes.h"
 #endif
 
+// NOTE: Legacy Kindle systems are too old to support timerfd (and we don't really need it ther anyway),
+//       and PocketBook uses a custom polling loop.
+#if !defined(KINDLE_LEGACY) && !defined(POCKETBOOK)
+    #include "timerfd-callbacks.h"
+#endif
+
 static int openInputDevice(lua_State *L) {
     const char *inputdevice = luaL_checkstring(L, 1);
     if (num_fds >= NUM_FDS) {
@@ -290,6 +296,10 @@ static const struct luaL_Reg input_func[] = {
     {"fakeTapInput", fakeTapInput},
 #ifdef POCKETBOOK
     {"setSuspendState", setSuspendState},
+#endif
+#ifdef WITH_TIMERFD
+    {"setTimer", setTimer},
+    {"clearTimer", clearTimer},
 #endif
     {NULL, NULL}
 };
