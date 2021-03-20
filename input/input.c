@@ -274,11 +274,8 @@ static int waitForInput(lua_State *L) {
     for (size_t i = 0U; i < NUM_TFDS; i++) {
         if (timerfds[i] != -1) {
             FD_SET(timerfds[i], &rfds);
-            // Need to update nfds, too...
-            if (timerfds[i] >= nfds) {
-                nfds = timerfds[i] + 1;
-            }
         }
+    }
 #endif
 
     int num = select(nfds, &rfds, NULL, NULL, timeout_ptr);
@@ -291,6 +288,19 @@ static int waitForInput(lua_State *L) {
         lua_pushinteger(L, errno);
         return 2;  // false, errno
     }
+
+#ifdef WITH_TIMERFD
+    // We check timers *first*, in order to act on them ASAP.
+    for (size_t i = 0U; i < NUM_TFDS; i++) {
+        if (FD_ISSET(timerfds[i], &rfds)) {
+            // It's a single-shot timer, don't even need to read it ;p.
+            lua_pushboolean(L, false);
+            lua_pushinteger(L, ETIME);
+            lua_pushinteger(L, timerfds[i]);
+            return 3;  // false, ETIME, timerfd
+        }
+    }
+#endif
 
     for (size_t i = 0U; i < num_fds; i++) {
         if (FD_ISSET(inputfds[i], &rfds)) {

@@ -77,6 +77,11 @@ static inline int setTimer(lua_State *L) {
         return 0;
     }
 
+    // Need to update select's nfds, too...
+    if (timerfds[i] >= nfds) {
+        nfds = timerfds[i] + 1;
+    }
+
     // Success!
     lua_pushinteger(L, timerfds[fd_idx]);
     return 1; // timerfd
@@ -104,6 +109,8 @@ static inline int clearTimer(lua_State *L) {
     // Cleanup
     close(timerfds[fd_idx]);
     timerfds[fd_idx] = -1;
+
+    // FIXME: We kinda cheat by not recomputing nfds here...
 
     // Success!
     lua_pushboolean(L, true);
