@@ -119,8 +119,11 @@ MUPDF_WRAP(mupdf_load_links, fz_link*, NULL,
     ret = fz_load_links(ctx, page),
     fz_page *page)
 MUPDF_WRAP(mupdf_pdf_create_annot, pdf_annot*, NULL,
-    ret = pdf_create_annot(ctx,  page, type),
+    ret = pdf_create_annot(ctx, page, type),
     pdf_page *page, enum pdf_annot_type type)
+MUPDF_WRAP(mupdf_pdf_delete_annot, void*, NULL,
+    { pdf_delete_annot(ctx, page, annot); ret = (void*) -1; },
+    pdf_page *page, pdf_annot *annot)
 MUPDF_WRAP(mupdf_pdf_set_annot_quad_points, void*, NULL,
     { pdf_set_annot_quad_points(ctx, annot, n, v); ret = (void*) -1; },
      pdf_annot *annot, int n, const float *v)
