@@ -2,8 +2,7 @@ local sample_pdf = "spec/base/unit/data/Alice.pdf"
 local paper_pdf = "spec/base/unit/data/Paper.pdf"
 local password_pdf = "spec/base/unit/data/testdocument.pdf"
 local simple_pdf = "spec/base/unit/data/simple.pdf"
-local simple_pdf_out = "/tmp/simple-out.pdf"
-local simple_pdf_out_annotated = "/tmp/simple-out-annotated.pdf"
+local tmp_pdf = "/tmp/out.pdf"
 local simple_pdf_compare = "spec/base/unit/data/simple-out.pdf"
 local simple_pdf_annotated_compare = "spec/base/unit/data/simple-out-annotated.pdf"
 local test_img = "spec/base/unit/data/sample.jpg"
@@ -130,13 +129,13 @@ describe("mupdf module", function()
                  70,  970 }),
                 1, ffi.C.PDF_ANNOT_HIGHLIGHT)
             page:close()
-            doc:writeDocument(simple_pdf_out)
+            doc:writeDocument(tmp_pdf)
             doc:close()
             assert.is_equal(
-                md5.sumFile(simple_pdf_out),
+                md5.sumFile(tmp_pdf),
                 md5.sumFile(simple_pdf_compare)
             )
-            os.remove(simple_pdf_out)
+            os.remove(tmp_pdf)
         end)
         it("should open a page, add contents to an existing annotation and write a new document", function()
             local ffi = require("ffi")
@@ -152,13 +151,13 @@ describe("mupdf module", function()
                 1)
             page:updateMarkupAnnotation(annot, "annotation contents")
             page:close()
-            doc:writeDocument(simple_pdf_out_annotated)
+            doc:writeDocument(tmp_pdf)
             doc:close()
             assert.is_equal(
-                md5.sumFile(simple_pdf_out_annotated),
+                md5.sumFile(tmp_pdf),
                 md5.sumFile(simple_pdf_annotated_compare)
             )
-            os.remove(simple_pdf_out_annotated)
+            os.remove(tmp_pdf)
         end)
 
         describe("PDF page API", function()
