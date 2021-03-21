@@ -118,6 +118,7 @@ static int openInputDevice(lua_State* L)
 #if defined(KINDLE_LEGACY)
             // NOTE: Legacy fcntl dance because open only supports O_CLOEXEC since Linux 2.6.23,
             //       and legacy Kindles run on 2.6.22...
+            //       (It's silently ignored by open when unsupported).
             int fdflags = fcntl(inputfds[num_fds], F_GETFD);
             fcntl(inputfds[num_fds], F_SETFD, fdflags | FD_CLOEXEC);
 #endif
