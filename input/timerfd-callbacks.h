@@ -16,8 +16,8 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <stdio.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <sys/timerfd.h>
 
@@ -28,24 +28,27 @@
 // As such, we're using a doubly linked list to keep track of it.
 
 // A node in the doubly linked list
-typedef struct timerfd_node {
-    int fd;
-    struct timerfd_node *next;
-    struct timerfd_node *prev;
+typedef struct timerfd_node
+{
+    int                  fd;
+    struct timerfd_node* next;
+    struct timerfd_node* prev;
 } timerfd_node_t;
 
 // A control structure to keep track of a doubly linked list
-typedef struct {
-    size_t count;
-    timerfd_node_t *head;
-    timerfd_node_t *tail;
+typedef struct
+{
+    size_t          count;
+    timerfd_node_t* head;
+    timerfd_node_t* tail;
 } timerfd_list_t;
 
 // Free all resources allocated by a list and its nodes
-static inline void timerfd_list_teardown(timerfd_list_t *list) {
-    timerfd_node_t *node = list->head;
+static inline void timerfd_list_teardown(timerfd_list_t* list)
+{
+    timerfd_node_t* node = list->head;
     while (node) {
-        timerfd_node_t *p = node->next;
+        timerfd_node_t* p = node->next;
         close(node->fd);
         free(node);
         node = p;
@@ -56,9 +59,10 @@ static inline void timerfd_list_teardown(timerfd_list_t *list) {
 }
 
 // Allocate and return a single new node at the tail of the list
-static inline timerfd_node_t* timerfd_list_grow(timerfd_list_t *list) {
-    timerfd_node_t *prev = list->tail;
-    timerfd_node_t *node = calloc(1, sizeof(*node));
+static inline timerfd_node_t* timerfd_list_grow(timerfd_list_t* list)
+{
+    timerfd_node_t* prev = list->tail;
+    timerfd_node_t* node = calloc(1, sizeof(*node));
     if (!node) {
         return NULL;
     }
@@ -81,9 +85,10 @@ static inline timerfd_node_t* timerfd_list_grow(timerfd_list_t *list) {
 
 // Delete the given node from the list and free the resources associated with it.
 // With a little help from https://en.wikipedia.org/wiki/Doubly_linked_list ;).
-static inline void timerfd_list_delete_node(timerfd_list_t *list, timerfd_node_t *node) {
-    timerfd_node_t *prev = node->prev;
-    timerfd_node_t *next = node->next;
+static inline void timerfd_list_delete_node(timerfd_list_t* list, timerfd_node_t* node)
+{
+    timerfd_node_t* prev = node->prev;
+    timerfd_node_t* next = node->next;
 
     if (!prev) {
         // We were the head
@@ -109,9 +114,10 @@ static inline void timerfd_list_delete_node(timerfd_list_t *list, timerfd_node_t
 timerfd_list_t timerfds = { 0 };
 
 // clockid_t clock, time_t deadline_sec, suseconds_t deadline_usec
-static inline int setTimer(lua_State *L) {
-    clockid_t clock           = luaL_checkint(L, 1);
-    time_t deadline_sec       = luaL_checkinteger(L, 2);
+static inline int setTimer(lua_State* L)
+{
+    clockid_t   clock         = luaL_checkint(L, 1);
+    time_t      deadline_sec  = luaL_checkinteger(L, 2);
     suseconds_t deadline_usec = luaL_checkinteger(L, 3);
 
     // Unlike in input.c, we know we're running a kernel recent enough to support the flags
@@ -123,7 +129,7 @@ static inline int setTimer(lua_State *L) {
 
     // Arm the timer for the specified *absolute* deadline
     struct itimerspec clock_timer;
-    clock_timer.it_value.tv_sec  = deadline_sec;
+    clock_timer.it_value.tv_sec = deadline_sec;
     // TIMEVAL_TO_TIMESPEC
     clock_timer.it_value.tv_nsec = deadline_usec * 1000;
     // We only need a single-shot timer
@@ -138,7 +144,7 @@ static inline int setTimer(lua_State *L) {
     }
 
     // Now we can store that in a new node in our list
-    timerfd_node_t *node = timerfd_list_grow(&timerfds);
+    timerfd_node_t* node = timerfd_list_grow(&timerfds);
     if (!node) {
         fprintf(stderr, "failed to allocate a new node in the timerfd list\n");
         // Cleanup
@@ -154,20 +160,21 @@ static inline int setTimer(lua_State *L) {
 
     // Success!
     fprintf(stdout, "setTimer: node is %p\n", node);
-    lua_pushlightuserdata(L, (void *) node);
-    return 1; // node
+    lua_pushlightuserdata(L, (void*) node);
+    return 1;  // node
 }
 
 // timerfd_node_t *node
-static inline int clearTimer(lua_State *L) {
-    timerfd_node_t *node = (timerfd_node_t *) lua_touserdata(L, 1);
+static inline int clearTimer(lua_State* L)
+{
+    timerfd_node_t* node = (timerfd_node_t*) lua_touserdata(L, 1);
     fprintf(stdout, "clearTimer: node is %p\n", node);
 
     timerfd_list_delete_node(&timerfds, node);
 
     // Re-compute nfds...
     nfds = inputfds[num_fds - 1U] + 1;
-    for (timerfd_node_t *node = timerfds.head; node != NULL; node = node->next) {
+    for (timerfd_node_t* node = timerfds.head; node != NULL; node = node->next) {
         if (node->fd >= nfds) {
             nfds = node->fd + 1;
         }
@@ -175,9 +182,10 @@ static inline int clearTimer(lua_State *L) {
 
     // Success!
     lua_pushboolean(L, true);
-    return 1; // true
+    return 1;  // true
 }
 
-static void clearAllTimers(void) {
+static void clearAllTimers(void)
+{
     timerfd_list_teardown(&timerfds);
 }
