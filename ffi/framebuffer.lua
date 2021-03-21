@@ -37,6 +37,8 @@ local fb = {
     -- Lower level is the slowest and most conservative, increasing values trade speed for glitches and ghosting.
     wf_level = 0,
     wf_level_max = 0, -- Maximum supported value for wf_level.
+    -- Whether the user (or a Device cap check) chose to disable MXCFB_WAIT_FOR_UPDATE_* ioctls.
+    mxcfb_bypass_wait_for = false,
 }
 
 --[[
@@ -480,6 +482,10 @@ end
 
 function fb:getWaveformLevel()
     return math.min(self.wf_level_max, self.wf_level)
+end
+
+function fb:getMxcWaitForBypass()
+    return self.mxcfb_bypass_wait_for
 end
 
 function fb:saveCurrentBB()
