@@ -155,14 +155,13 @@ static inline int setTimer(lua_State *L) {
     }
 
     // Success!
-    lua_pushinteger(L, node);   // Whee, pointer to ptrdiff_t
+    lua_pushinteger(L, (lua_Integer) node);   // Whee, pointer to ptrdiff_t hackery
     return 1; // node
 }
 
 // int timerfd
 static inline int clearTimer(lua_State *L) {
-    lua_Integer p = luaL_checkinteger(L, 1);
-    timerfd_node_t *node = (timerfd_node_t *) p;
+    timerfd_node_t *node = (timerfd_node_t *) luaL_checkinteger(L, 1);
 
     timerfd_list_delete_node(&timerfds, node);
 
