@@ -106,8 +106,6 @@ static inline void timerfd_list_delete_node(timerfd_list_t *list, timerfd_node_t
 }
 
 // Now that we're done with boring list stuff, what's left is actual timerfd handling ;).
-
-// FIXME: Less unwieldy storage handling: a doubly linked list; and pass the node's pointer around, instead of the fd number.'
 timerfd_list_t timerfds = { 0 };
 
 // clockid_t clock, time_t deadline_sec, suseconds_t deadline_usec
