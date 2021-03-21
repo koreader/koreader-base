@@ -166,7 +166,7 @@ static inline int clearTimer(lua_State *L) {
     timerfd_list_delete_node(&timerfds, node);
 
     // Re-compute nfds...
-    nfds = inputfds[num_fds] + 1;
+    nfds = inputfds[num_fds - 1U] + 1;
     for (timerfd_node_t *node = timerfds.head; node != NULL; node = node->next) {
         if (node->fd >= nfds) {
             nfds = node->fd + 1;
