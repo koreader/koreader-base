@@ -85,7 +85,7 @@ static int openInputDevice(lua_State* L)
 #endif
 
     if (!strcmp("fake_events", inputdevice)) {
-        /* special case: the power slider for kindle and plug event for kobo */
+        // Special case: the power slider for Kindle and USB events for Kobo.
         int pipefd[2];
         pipe(pipefd);
 
@@ -94,11 +94,11 @@ static int openInputDevice(lua_State* L)
             return luaL_error(L, "cannot fork() fake event generator");
         }
         if (childpid == 0) {
-            /* deliver SIGTERM to child when parent crashes */
+            // Deliver SIGTERM to child when parent crashes.
             prctl(PR_SET_PDEATHSIG, SIGTERM);
-            /* this function needs to be implemented in each platform-specific input header */
+            // NOTE: This function needs to be implemented in each platform-specific input header.
             generateFakeEvent(pipefd);
-            /* We're done, go away :) */
+            // We're done, go away :).
             _exit(EXIT_SUCCESS);
         } else {
             printf("[ko-input] Forked off fake event generator (pid: %ld).\n", (long) childpid);
@@ -113,8 +113,8 @@ static int openInputDevice(lua_State* L)
                 ioctl(inputfds[num_fds], EVIOCGRAB, 1);
             }
 
-            /* Prevents our children from inheriting the fd, which is unnecessary here,
-             * and would potentially be problematic for long-running scripts (e.g., Wi-Fi stuff) and USBMS. */
+            // Prevents our children from inheriting the fd, which is unnecessary here,
+            // and would potentially be problematic for long-running scripts (e.g., Wi-Fi stuff) and USBMS.
 #if defined(KINDLE_LEGACY)
             // NOTE: Legacy fcntl dance because open only supports O_CLOEXEC since Linux 2.6.23,
             //       and legacy Kindles run on 2.6.22...
@@ -123,9 +123,9 @@ static int openInputDevice(lua_State* L)
             fcntl(inputfds[num_fds], F_SETFD, fdflags | FD_CLOEXEC);
 #endif
 
-            /* Compute select's nfds argument.
-             * That's not the actual number of fds in the set, like poll(),
-             * but the highest fd number in the set + 1 (c.f., select(2)). */
+            // Compute select's nfds argument.
+            // That's not the actual number of fds in the set, like poll(),
+            // but the highest fd number in the set + 1 (c.f., select(2)).
             if (inputfds[num_fds] >= nfds) {
                 nfds = inputfds[num_fds] + 1;
             }
@@ -158,7 +158,7 @@ static int closeInputDevices(lua_State* L __attribute__((unused)))
     nfds = 0;
 
     if (fake_ev_generator_pid != -1) {
-        /* kill and wait for child process */
+        // Kill and wait to reap our child process.
         kill(fake_ev_generator_pid, SIGTERM);
         waitpid(-1, NULL, 0);
     }
@@ -267,7 +267,7 @@ static int waitForInput(lua_State* L)
 
     struct timeval  timeout;
     struct timeval* timeout_ptr = NULL;
-    // If sec was nil, leave the timeout as NULL (i.e., block)
+    // If sec was nil, leave the timeout as NULL (i.e., block).
     if (sec != -1) {
         timeout.tv_sec  = sec;
         timeout.tv_usec = usec;
@@ -338,7 +338,7 @@ static const struct luaL_Reg input_func[] = { { "open", openInputDevice },
 
 int luaopen_input(lua_State* L)
 {
-    /* disable buffering on stdout for logging purpose */
+    // Disable buffering on stdout for logging purposes.
     setbuf(stdout, NULL);
     luaL_register(L, "input", input_func);
     return 1;
