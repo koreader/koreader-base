@@ -55,7 +55,7 @@ static inline void timerfd_list_teardown(timerfd_list_t *list) {
     list->tail = NULL;
 }
 
-// Allocate a single new node at the end of the list
+// Allocate a single new node at the end of the list (e.g., it'll be list->tail)
 static inline int timerfd_list_grow(timerfd_list_t *list) {
     timerfd_node_t *prev = list->tail;
     timerfd_node_t *node = calloc(1, sizeof(*node));
@@ -79,34 +79,23 @@ static inline int timerfd_list_grow(timerfd_list_t *list) {
     return EXIT_SUCCESS;
 }
 
-// Delete the given node from the list and free the resources associated with it
+// Delete the given node from the list and free the resources associated with it.
+// With a little help from https://en.wikipedia.org/wiki/Doubly_linked_list ;).
 static inline void timerfd_list_delete_node(timerfd_list_t *list, timerfd_node_t *node) {
     timerfd_node_t *prev = node->prev;
     timerfd_node_t *next = node->next;
 
-    // Plug the hole
-    if (prev) {
-        if (next) {
-            prev->next = next;
-        } else {
-            // We were the tail
-            prev->next = NULL;
-            list->tail = prev;
-        }
+    if (!prev) {
+        // We were the head
+        list->head = next;
+    } else {
+        prev->next = next;
     }
-    if (next) {
-        if (prev) {
-            next->prev = prev;
-        } else {
-            // We were the head
-            next->prev = NULL;
-            list->head = next;
-        }
-    }
-    if (!prev && !next) {
-        // We were the only node of the list
-        list->head = NULL;
-        list->tail = NULL;
+    if (!next) {
+        // We were the tail
+        list->tail = prev;
+    } else {
+        next->prev = prev;
     }
 
     // Free this node
