@@ -61,7 +61,7 @@ pid_t  fake_ev_generator_pid = -1;
 #    include "input-cervantes.h"
 #endif
 
-// NOTE: Legacy Kindle systems are too old to support timerfd (and we don't really need it ther anyway),
+// NOTE: Legacy Kindle systems are too old to support timerfd (and we don't really need it there anyway),
 //       and PocketBook uses a custom polling loop.
 #if !defined(KINDLE_LEGACY) && !defined(POCKETBOOK)
 #    include "timerfd-callbacks.h"
@@ -107,18 +107,20 @@ static int openInputDevice(lua_State* L)
             fake_ev_generator_pid = childpid;
         }
     } else {
-        inputfds[num_fds] = open(inputdevice, O_RDONLY | O_NONBLOCK);
+        inputfds[num_fds] = open(inputdevice, O_RDONLY | O_NONBLOCK | O_CLOEXEC);
         if (inputfds[num_fds] != -1) {
             if (ko_dont_grab_input == NULL) {
                 ioctl(inputfds[num_fds], EVIOCGRAB, 1);
             }
 
             /* Prevents our children from inheriting the fd, which is unnecessary here,
-             * and would potentially be problematic for long-running scripts (e.g., Wi-Fi stuff) and USBMS.
-             * NOTE: We do the legacy fcntl dance because open only supports O_CLOEXEC since Linux 2.6.23,
-             *       and legacy Kindles run on 2.6.22... */
+             * and would potentially be problematic for long-running scripts (e.g., Wi-Fi stuff) and USBMS. */
+#if defined(KINDLE_LEGACY)
+            // NOTE: Legacy fcntl dance because open only supports O_CLOEXEC since Linux 2.6.23,
+            //       and legacy Kindles run on 2.6.22...
             int fdflags = fcntl(inputfds[num_fds], F_GETFD);
             fcntl(inputfds[num_fds], F_SETFD, fdflags | FD_CLOEXEC);
+#endif
 
             /* Compute select's nfds argument.
              * That's not the actual number of fds in the set, like poll(),
