@@ -140,13 +140,13 @@ static inline int setTimer(lua_State *L) {
     }
 
     // Now we can store that in a new node in our list
-    if (timerfd_list_grow(&list) == EXIT_FAILURE) {
+    if (timerfd_list_grow(&timerfds) == EXIT_FAILURE) {
         fprintf(stderr, "failed to allocate a new node in the timerfd list\n");
         // Cleanup
         close(fd);
         return 0;
     }
-    timerfd_node_t *node = list.tail;
+    timerfd_node_t *node = timerfds.tail;
     node->fd = fd;
 
     // Need to update select's nfds, too...
@@ -164,7 +164,7 @@ static inline int clearTimer(lua_State *L) {
     lua_Integer p = luaL_checkinteger(L, 1);
     timerfd_node_t *node = (timerfd_node_t *) p;
 
-    timerfd_list_delete_node(&list, node);
+    timerfd_list_delete_node(&timerfds, node);
 
     // FIXME: We kinda cheat by not recomputing nfds here...
 
@@ -174,5 +174,5 @@ static inline int clearTimer(lua_State *L) {
 }
 
 static void clearAllTimers(void) {
-    timerfd_list_teardown(list);
+    timerfd_list_teardown(&timerfds);
 }
