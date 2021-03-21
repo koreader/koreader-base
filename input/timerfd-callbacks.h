@@ -18,10 +18,105 @@
 
 #include <stdio.h>
 #include <stdint.h>
+#include <stdlib.h>
 #include <sys/timerfd.h>
 
 // So that the main input code knows it's built w/ timerfd support
 #define WITH_TIMERFD 1
+
+// Unlike the main input module, the way in which we open/close timerfds is much more dynamic.
+// As such, we're using a doubly linked list to keep track of it.
+
+// A node in the doubly linked list
+typedef struct {
+    int fd;
+    timerfd_node_t *next;
+    timerfd_node_t *prev;
+} timerfd_node_t;
+
+// A control structure to keep track of a doubly linked list
+typedef struct {
+    size_t count;
+    timerfd_node_t *head;
+    timerfd_node_t *tail;
+} timerfd_list_t;
+
+// Free all resources allocated by a list and its nodes
+static inline void timerfd_list_teardown(timerfd_list_t *list) {
+    timerfd_node_t *node = list->head;
+    while (node) {
+        timerfd_node_t *p = node->next;
+        close(node->fd);
+        free(node);
+        node = p;
+    }
+    // Don't leave dangling pointers
+    list->head = NULL;
+    list->tail = NULL;
+}
+
+// Allocate a single new node at the end of the list
+static inline int timerfd_list_grow(timerfd_list_t *list) {
+    timerfd_node_t *prev = list->tail;
+    timerfd_node_t *node = calloc(1, sizeof(*node));
+    if (!node) {
+        return EXIT_FAILURE;
+    }
+    list->count++;
+
+    // Update the head if this is the first node
+    if (!list->head) {
+        list->head = node;
+    }
+    // Update the tail pointer
+    list->tail = node;
+    // If there was a previous node, link the two together
+    if (prev) {
+        prev->next = node;
+        node->prev = prev;
+    }
+
+    return EXIT_SUCCESS;
+}
+
+// Delete the given node from the list and free the resources associated with it
+static inline void timerfd_list_delete_node(timerfd_list_t *list, timerfd_node_t *node) {
+    timerfd_node_t *prev = node->prev;
+    timerfd_node_t *next = node->next;
+
+    // Plug the hole
+    if (prev) {
+        if (next) {
+            prev->next = next;
+        } else {
+            // We were the tail
+            prev->next = NULL;
+            list->tail = prev;
+        }
+    }
+    if (next) {
+        if (prev) {
+            next->prev = prev;
+        } else {
+            // We were the head
+            next->prev = NULL;
+            list->head = next;
+        }
+    }
+    if (!prev && !next) {
+        // We were the only node of the list
+        list->head = NULL;
+        list->tail = NULL;
+    }
+
+    // Free this node
+    close(node->fd);
+    free(node);
+
+    list->count--;
+}
+
+// Now that we're done with boring list stuff, what's left is actual timerfd handling ;).
 
 // FIXME: Less unwieldy storage handling: a doubly linked list; and pass the node's pointer around, instead of the fd number.'
 #define NUM_TFDS 24U
