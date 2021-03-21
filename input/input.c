@@ -128,7 +128,7 @@ static int openInputDevice(lua_State *L) {
             }
 
             // That, on the other hand, *is* the number of open fds ;).
-            num_fds += 1U;
+            num_fds++;
 
             return 0;
         } else {
@@ -143,13 +143,15 @@ static int closeInputDevices(lua_State *L __attribute__((unused))) {
         if(inputfds[i] != -1) {
             ioctl(inputfds[i], EVIOCGRAB, 0);
             close(inputfds[i]);
-            inputfds[i] = 1;
+            inputfds[i] = -1;
+            num_fds--;
         }
     }
 
 #ifdef WITH_TIMERFD
     clearAllTimers();
 #endif
+    nfds = 0;
 
     if (fake_ev_generator_pid != -1) {
         /* kill and wait for child process */
