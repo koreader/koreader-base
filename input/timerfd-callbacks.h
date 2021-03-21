@@ -114,7 +114,7 @@ static inline void timerfd_list_delete_node(timerfd_list_t* list, timerfd_node_t
 timerfd_list_t timerfds = { 0 };
 
 // clockid_t clock, time_t deadline_sec, suseconds_t deadline_usec
-static inline int setTimer(lua_State* L)
+static int setTimer(lua_State* L)
 {
     clockid_t   clock         = luaL_checkint(L, 1);
     time_t      deadline_sec  = luaL_checkinteger(L, 2);
@@ -165,7 +165,7 @@ static inline int setTimer(lua_State* L)
 }
 
 // timerfd_node_t *node
-static inline int clearTimer(lua_State* L)
+static int clearTimer(lua_State* L)
 {
     timerfd_node_t* node = (timerfd_node_t*) lua_touserdata(L, 1);
     fprintf(stdout, "clearTimer: node is %p\n", node);
