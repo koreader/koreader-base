@@ -296,7 +296,7 @@ static int waitForInput(lua_State *L) {
             // It's a single-shot timer, don't even need to read it ;p.
             lua_pushboolean(L, false);
             lua_pushinteger(L, ETIME);
-            lua_pushinteger(L, (lua_Integer) node);
+            lua_pushlightuserdata(L, (void *) node);
             return 3;  // false, ETIME, node
         }
     }
