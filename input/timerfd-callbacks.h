@@ -28,10 +28,10 @@
 // As such, we're using a doubly linked list to keep track of it.
 
 // A node in the doubly linked list
-typedef struct {
+typedef struct timerfd_node {
     int fd;
-    timerfd_node_t *next;
-    timerfd_node_t *prev;
+    struct timerfd_node *next;
+    struct timerfd_node *prev;
 } timerfd_node_t;
 
 // A control structure to keep track of a doubly linked list
