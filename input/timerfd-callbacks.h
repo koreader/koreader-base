@@ -108,38 +108,17 @@ static inline void timerfd_list_delete_node(timerfd_list_t *list, timerfd_node_t
 // Now that we're done with boring list stuff, what's left is actual timerfd handling ;).
 
 // FIXME: Less unwieldy storage handling: a doubly linked list; and pass the node's pointer around, instead of the fd number.'
-#define NUM_TFDS 24U
-int timerfds[NUM_TFDS] = {
-    -1, -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1, -1
-};
-
-static inline int getTfdSlot() {
-    for (size_t i = 0U; i < NUM_TFDS; i++) {
-        if (timerfds[i] == -1) {
-            return i;
-        }
-    }
-    return -1;
-}
+timerfd_list_t timerfds = { 0 };
 
 // clockid_t clock, time_t deadline_sec, suseconds_t deadline_usec
 static inline int setTimer(lua_State *L) {
-    int fd_idx = getTfdSlot();
-    if (fd_idx == -1) {
-        fprintf(stderr, "no free slot for new timer fd\n");
-        return 0;
-    }
-
     clockid_t clock           = luaL_checkint(L, 1);
     time_t deadline_sec       = luaL_checkinteger(L, 2);
     suseconds_t deadline_usec = luaL_checkinteger(L, 3);
 
     // Unlike in input.c, we know we're running a kernel recent enough to support the flags
-    timerfds[fd_idx] = timerfd_create(clock, TFD_NONBLOCK | TFD_CLOEXEC);
-    if (timerfds[fd_idx] == -1) {
+    int fd = timerfd_create(clock, TFD_NONBLOCK | TFD_CLOEXEC);
+    if (fd == -1) {
         fprintf(stderr, "timerfd_create: %m\n");
         return 0;
     }
@@ -153,46 +132,39 @@ static inline int setTimer(lua_State *L) {
     clock_timer.it_interval.tv_sec  = 0;
     clock_timer.it_interval.tv_nsec = 0;
 
-    if (timerfd_settime(timerfds[fd_idx], TFD_TIMER_ABSTIME, &clock_timer, NULL) == -1) {
+    if (timerfd_settime(fd, TFD_TIMER_ABSTIME, &clock_timer, NULL) == -1) {
         fprintf(stderr, "timerfd_settime: %m\n");
         // Cleanup
-        close(timerfds[fd_idx]);
-        timerfds[fd_idx] = -1;
+        close(fd);
         return 0;
     }
 
+    // Now we can store that in a new node in our list
+    if (timerfd_list_grow(&list) == EXIT_FAILURE) {
+        fprintf(stderr, "failed to allocate a new node in the timerfd list\n");
+        // Cleanup
+        close(fd);
+        return 0;
+    }
+    timerfd_node_t *node = list.tail;
+    node->fd = fd;
+
     // Need to update select's nfds, too...
-    if (timerfds[fd_idx] >= nfds) {
-        nfds = timerfds[fd_idx] + 1;
+    if (fd >= nfds) {
+        nfds = fd + 1;
     }
 
     // Success!
-    lua_pushinteger(L, timerfds[fd_idx]);
-    return 1; // timerfd
-}
-
-static inline int findTfdSlot(int fd) {
-    for (size_t i = 0U; i < NUM_TFDS; i++) {
-        if (timerfds[i] == fd) {
-            return i;
-        }
-    }
-    return -1;
+    lua_pushinteger(L, node);   // Whee, pointer to ptrdiff_t
+    return 1; // node
 }
 
 // int timerfd
 static inline int clearTimer(lua_State *L) {
-    int timerfd = luaL_checkint(L, 1);
+    lua_Integer p = luaL_checkinteger(L, 1);
+    timerfd_node_t *node = (timerfd_node_t *) p;
 
-    int fd_idx = findTfdSlot(timerfd);
-    if (fd_idx == -1) {
-        fprintf(stderr, "failed to find the torage slot of timerfd %d\n", timerfd);
-        return 0;
-    }
-
-    // Cleanup
-    close(timerfds[fd_idx]);
-    timerfds[fd_idx] = -1;
+    timerfd_list_delete_node(&list, node);
 
     // FIXME: We kinda cheat by not recomputing nfds here...
 
@@ -202,10 +174,5 @@ static inline int clearTimer(lua_State *L) {
 }
 
 static void clearAllTimers(void) {
-    for (size_t i = 0U; i < NUM_TFDS; i++) {
-        if (timerfds[i] != -1) {
-            close(inputfds[i]);
-            timerfds[i] = 1;
-        }
-    }
+    timerfd_list_teardown(list);
 }
