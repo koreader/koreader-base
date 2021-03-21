@@ -55,12 +55,12 @@ static inline void timerfd_list_teardown(timerfd_list_t *list) {
     list->tail = NULL;
 }
 
-// Allocate a single new node at the end of the list (e.g., it'll be list->tail)
-static inline int timerfd_list_grow(timerfd_list_t *list) {
+// Allocate and return a single new node at the tail of the list
+static inline timerfd_node_t* timerfd_list_grow(timerfd_list_t *list) {
     timerfd_node_t *prev = list->tail;
     timerfd_node_t *node = calloc(1, sizeof(*node));
     if (!node) {
-        return EXIT_FAILURE;
+        return NULL;
     }
     list->count++;
 
@@ -76,7 +76,7 @@ static inline int timerfd_list_grow(timerfd_list_t *list) {
         node->prev = prev;
     }
 
-    return EXIT_SUCCESS;
+    return node;
 }
 
 // Delete the given node from the list and free the resources associated with it.
@@ -138,13 +138,13 @@ static inline int setTimer(lua_State *L) {
     }
 
     // Now we can store that in a new node in our list
-    if (timerfd_list_grow(&timerfds) == EXIT_FAILURE) {
+    timerfd_node_t *node = timerfd_list_grow(&timerfds);
+    if (!node) {
         fprintf(stderr, "failed to allocate a new node in the timerfd list\n");
         // Cleanup
         close(fd);
         return 0;
     }
-    timerfd_node_t *node = timerfds.tail;
     node->fd = fd;
 
     // Need to update select's nfds, too...
