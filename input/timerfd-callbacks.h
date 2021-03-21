@@ -166,7 +166,18 @@ static inline int clearTimer(lua_State *L) {
 
     timerfd_list_delete_node(&timerfds, node);
 
-    // FIXME: We kinda cheat by not recomputing nfds here...
+    // Re-compute nfds...
+    nfds = 0;
+    for (size_t i = 0U; i < num_fds; i++) {
+        if (inputfds[i] >= nfds) {
+            nfds = inputfds[i] + 1;
+        }
+    }
+    for (timerfd_node_t *node = timerfds.head; node != NULL; node = node->next) {
+        if (node->fd >= nfds) {
+            nfds = node->fd + 1;
+        }
+    }
 
     // Success!
     lua_pushboolean(L, true);
