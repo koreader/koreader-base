@@ -23,7 +23,7 @@
 // So that the main input code knows it's built w/ timerfd support
 #define WITH_TIMERFD 1
 
-// FIXME: Less unwieldy storage handling (linked list?)
+// FIXME: Less unwieldy storage handling: a doubly linked list; and pass the node's pointer around, instead of the fd number.'
 #define NUM_TFDS 24U
 int timerfds[NUM_TFDS] = {
     -1, -1, -1, -1, -1, -1,
