@@ -18,15 +18,15 @@
 */
 
 #include <err.h>
-#include <stdio.h>
-#include <signal.h>
-#include <fcntl.h>
 #include <errno.h>
-#include <unistd.h>
+#include <fcntl.h>
+#include <signal.h>
 #include <stdbool.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/prctl.h>
+#include <unistd.h>
 
 #include <linux/input.h>
 
@@ -34,47 +34,47 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 
-#define CODE_FAKE_IN_SAVER      10000
-#define CODE_FAKE_OUT_SAVER     10001
-#define CODE_FAKE_USB_PLUG_IN   10010
-#define CODE_FAKE_USB_PLUG_OUT  10011
-#define CODE_FAKE_CHARGING      10020
-#define CODE_FAKE_NOT_CHARGING  10021
+#define CODE_FAKE_IN_SAVER     10000
+#define CODE_FAKE_OUT_SAVER    10001
+#define CODE_FAKE_USB_PLUG_IN  10010
+#define CODE_FAKE_USB_PLUG_OUT 10011
+#define CODE_FAKE_CHARGING     10020
+#define CODE_FAKE_NOT_CHARGING 10021
 
 #define NUM_FDS 4U
-int nfds = 0;
-int inputfds[NUM_FDS] = { -1, -1, -1, -1 };
-size_t num_fds = 0U;
-pid_t fake_ev_generator_pid = -1;
+int    nfds                  = 0;
+int    inputfds[NUM_FDS]     = { -1, -1, -1, -1 };
+size_t num_fds               = 0U;
+pid_t  fake_ev_generator_pid = -1;
 
 #if defined POCKETBOOK
-    #include "input-pocketbook.h"
+#    include "input-pocketbook.h"
 #elif defined KINDLE
-    #include "input-kindle.h"
+#    include "input-kindle.h"
 #elif defined KOBO
-    #include "input-kobo.h"
+#    include "input-kobo.h"
 #elif defined REMARKABLE
-    #include "input-remarkable.h"
+#    include "input-remarkable.h"
 #elif defined SONY_PRSTUX
-    #include "input-sony-prstux.h"
+#    include "input-sony-prstux.h"
 #elif defined CERVANTES
-    #include "input-cervantes.h"
+#    include "input-cervantes.h"
 #endif
 
 // NOTE: Legacy Kindle systems are too old to support timerfd (and we don't really need it ther anyway),
 //       and PocketBook uses a custom polling loop.
 #if !defined(KINDLE_LEGACY) && !defined(POCKETBOOK)
-    #include "timerfd-callbacks.h"
+#    include "timerfd-callbacks.h"
 #endif
 
-static int openInputDevice(lua_State *L) {
-    const char *inputdevice = luaL_checkstring(L, 1);
+static int openInputDevice(lua_State* L)
+{
+    const char* inputdevice = luaL_checkstring(L, 1);
     if (num_fds >= NUM_FDS) {
         return luaL_error(L, "no free slot for new input device <%s>", inputdevice);
     }
     // Otherwise, we're golden, and num_fds is the index of the next free slot in the inputfds array ;).
-    char *ko_dont_grab_input = getenv("KO_DONT_GRAB_INPUT");
-
+    char* ko_dont_grab_input = getenv("KO_DONT_GRAB_INPUT");
 
 #ifdef POCKETBOOK
     int inkview_events = luaL_checkint(L, 2);
@@ -103,7 +103,7 @@ static int openInputDevice(lua_State *L) {
         } else {
             printf("[ko-input] Forked off fake event generator (pid: %ld).\n", (long) childpid);
             close(pipefd[1]);
-            inputfds[num_fds] = pipefd[0];
+            inputfds[num_fds]     = pipefd[0];
             fake_ev_generator_pid = childpid;
         }
     } else {
@@ -138,9 +138,10 @@ static int openInputDevice(lua_State *L) {
     return 0;
 }
 
-static int closeInputDevices(lua_State *L __attribute__((unused))) {
+static int closeInputDevices(lua_State* L __attribute__((unused)))
+{
     for (size_t i = 0U; i < num_fds; i++) {
-        if(inputfds[i] != -1) {
+        if (inputfds[i] != -1) {
             ioctl(inputfds[i], EVIOCGRAB, 0);
             close(inputfds[i]);
             inputfds[i] = -1;
@@ -162,10 +163,11 @@ static int closeInputDevices(lua_State *L __attribute__((unused))) {
     return 0;
 }
 
-static int fakeTapInput(lua_State *L) {
+static int fakeTapInput(lua_State* L)
+{
     const char* inputdevice = luaL_checkstring(L, 1);
-    int x = luaL_checkint(L, 2);
-    int y = luaL_checkint(L, 3);
+    int         x           = luaL_checkint(L, 2);
+    int         y           = luaL_checkint(L, 3);
 
     int inputfd = open(inputdevice, O_WRONLY | O_NONBLOCK);
     if (inputfd == -1) {
@@ -174,53 +176,53 @@ static int fakeTapInput(lua_State *L) {
 
     struct input_event ev = { 0 };
     gettimeofday(&ev.time, NULL);
-    ev.type = 3;
-    ev.code = 57;
+    ev.type  = 3;
+    ev.code  = 57;
     ev.value = 0;
     write(inputfd, &ev, sizeof(ev));
     gettimeofday(&ev.time, NULL);
-    ev.type = 3;
-    ev.code = 53;
+    ev.type  = 3;
+    ev.code  = 53;
     ev.value = x;
     write(inputfd, &ev, sizeof(ev));
     gettimeofday(&ev.time, NULL);
-    ev.type = 3;
-    ev.code = 54;
+    ev.type  = 3;
+    ev.code  = 54;
     ev.value = y;
     write(inputfd, &ev, sizeof(ev));
     gettimeofday(&ev.time, NULL);
-    ev.type = 1;
-    ev.code = 330;
+    ev.type  = 1;
+    ev.code  = 330;
     ev.value = 1;
     write(inputfd, &ev, sizeof(ev));
     gettimeofday(&ev.time, NULL);
-    ev.type = 1;
-    ev.code = 325;
+    ev.type  = 1;
+    ev.code  = 325;
     ev.value = 1;
     write(inputfd, &ev, sizeof(ev));
     gettimeofday(&ev.time, NULL);
-    ev.type = 0;
-    ev.code = 0;
+    ev.type  = 0;
+    ev.code  = 0;
     ev.value = 0;
     write(inputfd, &ev, sizeof(ev));
     gettimeofday(&ev.time, NULL);
-    ev.type = 3;
-    ev.code = 57;
+    ev.type  = 3;
+    ev.code  = 57;
     ev.value = -1;
     write(inputfd, &ev, sizeof(ev));
     gettimeofday(&ev.time, NULL);
-    ev.type = 1;
-    ev.code = 330;
+    ev.type  = 1;
+    ev.code  = 330;
     ev.value = 0;
     write(inputfd, &ev, sizeof(ev));
     gettimeofday(&ev.time, NULL);
-    ev.type = 1;
-    ev.code = 325;
+    ev.type  = 1;
+    ev.code  = 325;
     ev.value = 0;
     write(inputfd, &ev, sizeof(ev));
     gettimeofday(&ev.time, NULL);
-    ev.type = 0;
-    ev.code = 0;
+    ev.type  = 0;
+    ev.code  = 0;
     ev.value = 0;
     write(inputfd, &ev, sizeof(ev));
 
@@ -229,7 +231,8 @@ static int fakeTapInput(lua_State *L) {
     return 0;
 }
 
-static inline void set_event_table(lua_State *L, struct input_event input) {
+static inline void set_event_table(lua_State* L, struct input_event input)
+{
     lua_newtable(L);
     lua_pushstring(L, "type");
     lua_pushinteger(L, input.type);  // uint16_t
@@ -254,17 +257,18 @@ static inline void set_event_table(lua_State *L, struct input_event input) {
     lua_settable(L, -3);
 }
 
-static int waitForInput(lua_State *L) {
-    lua_Integer sec = luaL_optinteger(L, 1, -1); // Fallback to -1 to handle detecting a nil
+static int waitForInput(lua_State* L)
+{
+    lua_Integer sec  = luaL_optinteger(L, 1, -1);  // Fallback to -1 to handle detecting a nil
     lua_Integer usec = luaL_optinteger(L, 2, 0);
 
-    struct timeval timeout;
-    struct timeval *timeout_ptr = NULL;
+    struct timeval  timeout;
+    struct timeval* timeout_ptr = NULL;
     // If sec was nil, leave the timeout as NULL (i.e., block)
     if (sec != -1) {
-        timeout.tv_sec = sec;
+        timeout.tv_sec  = sec;
         timeout.tv_usec = usec;
-        timeout_ptr = &timeout;
+        timeout_ptr     = &timeout;
     }
 
     fd_set rfds;
@@ -273,7 +277,7 @@ static int waitForInput(lua_State *L) {
         FD_SET(inputfds[i], &rfds);
     }
 #ifdef WITH_TIMERFD
-    for (timerfd_node_t *node = timerfds.head; node != NULL; node = node->next) {
+    for (timerfd_node_t* node = timerfds.head; node != NULL; node = node->next) {
         FD_SET(node->fd, &rfds);
     }
 #endif
@@ -291,12 +295,12 @@ static int waitForInput(lua_State *L) {
 
 #ifdef WITH_TIMERFD
     // We check timers *first*, in order to act on them ASAP.
-    for (timerfd_node_t *node = timerfds.head; node != NULL; node = node->next) {
+    for (timerfd_node_t* node = timerfds.head; node != NULL; node = node->next) {
         if (FD_ISSET(node->fd, &rfds)) {
             // It's a single-shot timer, don't even need to read it ;p.
             lua_pushboolean(L, false);
             lua_pushinteger(L, ETIME);
-            lua_pushlightuserdata(L, (void *) node);
+            lua_pushlightuserdata(L, (void*) node);
             return 3;  // false, ETIME, node
         }
     }
@@ -305,7 +309,7 @@ static int waitForInput(lua_State *L) {
     for (size_t i = 0U; i < num_fds; i++) {
         if (FD_ISSET(inputfds[i], &rfds)) {
             struct input_event input;
-            ssize_t readsz = read(inputfds[i], &input, sizeof(struct input_event));
+            ssize_t            readsz = read(inputfds[i], &input, sizeof(struct input_event));
             if (readsz == sizeof(struct input_event)) {
                 lua_pushboolean(L, true);
                 set_event_table(L, input);
@@ -316,22 +320,21 @@ static int waitForInput(lua_State *L) {
     return 0;  // Unreachable (unless there was a read error)
 }
 
-static const struct luaL_Reg input_func[] = {
-    {"open", openInputDevice},
-    {"closeAll", closeInputDevices},
-    {"waitForEvent", waitForInput},
-    {"fakeTapInput", fakeTapInput},
+static const struct luaL_Reg input_func[] = { { "open", openInputDevice },
+                                              { "closeAll", closeInputDevices },
+                                              { "waitForEvent", waitForInput },
+                                              { "fakeTapInput", fakeTapInput },
 #ifdef POCKETBOOK
-    {"setSuspendState", setSuspendState},
+                                              { "setSuspendState", setSuspendState },
 #endif
 #ifdef WITH_TIMERFD
-    {"setTimer", setTimer},
-    {"clearTimer", clearTimer},
+                                              { "setTimer", setTimer },
+                                              { "clearTimer", clearTimer },
 #endif
-    {NULL, NULL}
-};
+                                              { NULL, NULL } };
 
-int luaopen_input(lua_State *L) {
+int luaopen_input(lua_State* L)
+{
     /* disable buffering on stdout for logging purpose */
     setbuf(stdout, NULL);
     luaL_register(L, "input", input_func);

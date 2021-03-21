@@ -24,20 +24,22 @@
 
 #include "libue.h"
 
-static void sendEvent(int fd, struct input_event* ev) {
+static void sendEvent(int fd, struct input_event* ev)
+{
     if (write(fd, ev, sizeof(struct input_event)) == -1) {
         fprintf(stderr, "[ko-input]: Failed to generate fake event.\n");
     }
 }
 
-static void generateFakeEvent(int pipefd[2]) {
+static void generateFakeEvent(int pipefd[2])
+{
     struct uevent_listener listener;
-    struct uevent uev;
-    struct input_event ev;
+    struct uevent          uev;
+    struct input_event     ev;
 
     close(pipefd[0]);
 
-    ev.type = EV_KEY;
+    ev.type  = EV_KEY;
     ev.value = 1;
 
     int re = ue_init_listener(&listener);
@@ -48,32 +50,32 @@ static void generateFakeEvent(int pipefd[2]) {
 
     while ((re = ue_wait_for_event(&listener, &uev)) == 0) {
         if (uev.devpath && UE_STR_EQ(uev.devpath, USBPLUG_DEVPATH)) {
-            switch(uev.action) {
+            switch (uev.action) {
                 case UEVENT_ACTION_ADD:
                     ev.code = CODE_FAKE_CHARGING;
                     sendEvent(pipefd[1], &ev);
-                break;
+                    break;
                 case UEVENT_ACTION_REMOVE:
                     ev.code = CODE_FAKE_NOT_CHARGING;
                     sendEvent(pipefd[1], &ev);
-                break;
+                    break;
                 default:
                     // NOP
-                break;
+                    break;
             }
         } else if (uev.devpath && UE_STR_EQ(uev.devpath, USBHOST_DEVPATH)) {
-            switch(uev.action) {
+            switch (uev.action) {
                 case UEVENT_ACTION_ADD:
                     ev.code = CODE_FAKE_USB_PLUG_IN;
                     sendEvent(pipefd[1], &ev);
-                break;
+                    break;
                 case UEVENT_ACTION_REMOVE:
                     ev.code = CODE_FAKE_USB_PLUG_OUT;
                     sendEvent(pipefd[1], &ev);
-                break;
+                    break;
                 default:
                     // NOP
-                break;
+                    break;
             }
         }
     }
