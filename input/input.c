@@ -69,12 +69,12 @@ pid_t  fake_ev_generator_pid = -1;
 
 static int openInputDevice(lua_State* L)
 {
-    const char* inputdevice = luaL_checkstring(L, 1);
+    const char* restrict inputdevice = luaL_checkstring(L, 1);
     if (num_fds >= NUM_FDS) {
         return luaL_error(L, "no free slot for new input device <%s>", inputdevice);
     }
     // Otherwise, we're golden, and num_fds is the index of the next free slot in the inputfds array ;).
-    char* ko_dont_grab_input = getenv("KO_DONT_GRAB_INPUT");
+    const char* restrict ko_dont_grab_input = getenv("KO_DONT_GRAB_INPUT");
 
 #ifdef POCKETBOOK
     int inkview_events = luaL_checkint(L, 2);
@@ -168,9 +168,9 @@ static int closeInputDevices(lua_State* L __attribute__((unused)))
 
 static int fakeTapInput(lua_State* L)
 {
-    const char* inputdevice = luaL_checkstring(L, 1);
-    int         x           = luaL_checkint(L, 2);
-    int         y           = luaL_checkint(L, 3);
+    const char* restrict inputdevice = luaL_checkstring(L, 1);
+    int                  x           = luaL_checkint(L, 2);
+    int                  y           = luaL_checkint(L, 3);
 
     int inputfd = open(inputdevice, O_WRONLY | O_NONBLOCK);
     if (inputfd == -1) {
@@ -280,7 +280,7 @@ static int waitForInput(lua_State* L)
         FD_SET(inputfds[i], &rfds);
     }
 #ifdef WITH_TIMERFD
-    for (timerfd_node_t* node = timerfds.head; node != NULL; node = node->next) {
+    for (timerfd_node_t* restrict node = timerfds.head; node != NULL; node = node->next) {
         FD_SET(node->fd, &rfds);
     }
 #endif
@@ -298,7 +298,7 @@ static int waitForInput(lua_State* L)
 
 #ifdef WITH_TIMERFD
     // We check timers *first*, in order to act on them ASAP.
-    for (timerfd_node_t* node = timerfds.head; node != NULL; node = node->next) {
+    for (timerfd_node_t* restrict node = timerfds.head; node != NULL; node = node->next) {
         if (FD_ISSET(node->fd, &rfds)) {
             // It's a single-shot timer, don't even need to read it ;p.
             lua_pushboolean(L, false);
