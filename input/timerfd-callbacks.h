@@ -46,9 +46,9 @@ typedef struct
 // Free all resources allocated by a list and its nodes
 static inline void timerfd_list_teardown(timerfd_list_t* list)
 {
-    timerfd_node_t* node = list->head;
+    timerfd_node_t* restrict node = list->head;
     while (node) {
-        timerfd_node_t* p = node->next;
+        timerfd_node_t* restrict p = node->next;
         close(node->fd);
         free(node);
         node = p;
@@ -61,8 +61,8 @@ static inline void timerfd_list_teardown(timerfd_list_t* list)
 // Allocate and return a single new node at the tail of the list
 static inline timerfd_node_t* timerfd_list_grow(timerfd_list_t* list)
 {
-    timerfd_node_t* prev = list->tail;
-    timerfd_node_t* node = calloc(1, sizeof(*node));
+    timerfd_node_t* restrict prev = list->tail;
+    timerfd_node_t* restrict node = calloc(1, sizeof(*node));
     if (!node) {
         return NULL;
     }
@@ -87,8 +87,8 @@ static inline timerfd_node_t* timerfd_list_grow(timerfd_list_t* list)
 // With a little help from https://en.wikipedia.org/wiki/Doubly_linked_list ;).
 static inline void timerfd_list_delete_node(timerfd_list_t* list, timerfd_node_t* node)
 {
-    timerfd_node_t* prev = node->prev;
-    timerfd_node_t* next = node->next;
+    timerfd_node_t* restrict prev = node->prev;
+    timerfd_node_t* restrict next = node->next;
 
     if (!prev) {
         // We were the head
@@ -106,7 +106,6 @@ static inline void timerfd_list_delete_node(timerfd_list_t* list, timerfd_node_t
     // Free this node
     close(node->fd);
     free(node);
-
     list->count--;
 }
 
@@ -144,7 +143,7 @@ static int setTimer(lua_State* L)
     }
 
     // Now we can store that in a new node in our list
-    timerfd_node_t* node = timerfd_list_grow(&timerfds);
+    timerfd_node_t* restrict node = timerfd_list_grow(&timerfds);
     if (!node) {
         fprintf(stderr, "failed to allocate a new node in the timerfd list\n");
         // Cleanup
@@ -164,17 +163,17 @@ static int setTimer(lua_State* L)
     return 1;  // node
 }
 
-// timerfd_node_t *node
+// timerfd_node_t* expired_node
 static int clearTimer(lua_State* L)
 {
-    timerfd_node_t* node = (timerfd_node_t*) lua_touserdata(L, 1);
-    fprintf(stdout, "clearTimer: node is %p\n", node);
+    timerfd_node_t* restrict expired_node = (timerfd_node_t * restrict) lua_touserdata(L, 1);
+    fprintf(stdout, "clearTimer: node is %p\n", expired_node);
 
-    timerfd_list_delete_node(&timerfds, node);
+    timerfd_list_delete_node(&timerfds, expired_node);
 
     // Re-compute nfds...
     nfds = inputfds[num_fds - 1U] + 1;
-    for (timerfd_node_t* node = timerfds.head; node != NULL; node = node->next) {
+    for (timerfd_node_t* restrict node = timerfds.head; node != NULL; node = node->next) {
         if (node->fd >= nfds) {
             nfds = node->fd + 1;
         }
