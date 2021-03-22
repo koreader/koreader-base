@@ -23,6 +23,7 @@ cdecl_const(EINTR)
 cdecl_const(ETIME)
 cdecl_const(EAGAIN)
 cdecl_const(EINVAL)
+cdecl_const(ENOSYS)
 cdecl_const(ETIMEDOUT)
 
 cdecl_type(off_t)
