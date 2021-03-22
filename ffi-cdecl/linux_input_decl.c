@@ -19,6 +19,7 @@ cdecl_const(EV_FF)
 cdecl_const(EV_PWR)
 cdecl_const(EV_FF_STATUS)
 cdecl_const(EV_MAX)
+// We manually append an EV_SDL = 'S' constant.
 
 cdecl_const(SYN_REPORT)
 cdecl_const(SYN_CONFIG)
