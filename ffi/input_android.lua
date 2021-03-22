@@ -222,10 +222,10 @@ function input.waitForEvent(sec, usec)
 
             android.LOGD("message received:" .. message[0])
 
-            if message[0] == C.ALOOPER_FIFO_POWER_CONNECTED then
-                commandHandler(C.ALOOPER_FIFO_POWER_CONNECTED , 0)
-            elseif message[0] == C.ALOOPER_FIFO_POWER_DISCONNECTED then
-                commandHandler(C.ALOOPER_FIFO_POWER_DISCONNECTED , 0)
+            if message[0] == C.EVENT_POWER_CONNECTED then
+                commandHandler(C.EVENT_POWER_CONNECTED , 0)
+            elseif message[0] == C.EVENT_POWER_DISCONNECTED then
+                commandHandler(C.EVENT_POWER_DISCONNECTED , 0)
             else
                 android.LOGE("Unknown ALOOPER_POLL_WAKE message")
             end
