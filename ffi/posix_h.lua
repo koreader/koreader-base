@@ -101,6 +101,7 @@ static const int CLOCK_MONOTONIC = 1;
 static const int CLOCK_MONOTONIC_COARSE = 6;
 static const int CLOCK_MONOTONIC_RAW = 4;
 static const int CLOCK_BOOTTIME = 7;
+static const int CLOCK_TAI = 11;
 int clock_getres(clockid_t, struct timespec *) __attribute__((nothrow, leaf));
 int clock_gettime(clockid_t, struct timespec *) __attribute__((nothrow, leaf));
 int clock_settime(clockid_t, const struct timespec *) __attribute__((nothrow, leaf));
