@@ -15,6 +15,7 @@ static const int EV_FF = 21;
 static const int EV_PWR = 22;
 static const int EV_FF_STATUS = 23;
 static const int EV_MAX = 31;
+static const int EV_SDL = 83;
 static const int SYN_REPORT = 0;
 static const int SYN_CONFIG = 1;
 static const int SYN_MT_REPORT = 2;

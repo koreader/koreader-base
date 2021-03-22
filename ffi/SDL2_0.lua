@@ -14,6 +14,7 @@ local ffi = require("ffi")
 local util = require("ffi/util")
 local C = ffi.C
 
+require("ffi/posix_h")
 require("ffi/SDL2_0_h")
 require("ffi/linux_input_h")
 
@@ -41,9 +42,6 @@ end
 local function SDL_Linked_Version_AtLeast(x, y, z)
     return SDL_VersionNum(sdl_linked_ver[0].major, sdl_linked_ver[0].minor, sdl_linked_ver[0].patch) >= SDL_VersionNum(x, y, z)
 end
-
--- for frontend SDL event handling
-local EV_SDL = 53 -- ASCII code for S
 
 local S = {
     w = 0, h = 0,
@@ -185,7 +183,7 @@ local function handleWindowEvent(event_window)
     elseif (event_window.event == SDL.SDL_WINDOWEVENT_RESIZED
              or event_window.event == SDL.SDL_WINDOWEVENT_SIZE_CHANGED
              or event_window.event == SDL.SDL_WINDOWEVENT_MOVED) then
-        genEmuEvent(EV_SDL, event_window.event, event_window)
+        genEmuEvent(C.EV_SDL, event_window.event, event_window)
     end
 end
 
@@ -269,7 +267,7 @@ function S.waitForEvent(sec, usec)
         end
         if got_event == 0 then
             -- ETIME
-            return false, 62
+            return false, C.ETIME
         end
 
         -- if we got an event, examine it here and generate events for koreader
@@ -283,7 +281,7 @@ function S.waitForEvent(sec, usec)
         elseif event.type == SDL.SDL_KEYUP then
             genEmuEvent(C.EV_KEY, event.key.keysym.sym, 0)
         elseif event.type == SDL.SDL_TEXTINPUT then
-            genEmuEvent(EV_SDL, SDL.SDL_TEXTINPUT, ffi.string(event.text.text))
+            genEmuEvent(C.EV_SDL, SDL.SDL_TEXTINPUT, ffi.string(event.text.text))
         elseif event.type == SDL.SDL_MOUSEMOTION
             or event.type == SDL.SDL_FINGERMOTION then
             local is_finger = event.type == SDL.SDL_FINGERMOTION
@@ -330,15 +328,15 @@ function S.waitForEvent(sec, usec)
                 is_finger and event.tfinger.y * S.h or event.button.y)
             genEmuEvent(C.EV_SYN, C.SYN_REPORT, 0)
         elseif event.type == SDL.SDL_MULTIGESTURE then
-            genEmuEvent(EV_SDL, SDL.SDL_MULTIGESTURE, event.mgesture)
+            genEmuEvent(C.EV_SDL, SDL.SDL_MULTIGESTURE, event.mgesture)
         elseif event.type == SDL.SDL_MOUSEWHEEL then
-            genEmuEvent(EV_SDL, SDL.SDL_MOUSEWHEEL, event.wheel)
+            genEmuEvent(C.EV_SDL, SDL.SDL_MOUSEWHEEL, event.wheel)
         elseif event.type == SDL.SDL_DROPFILE then
             local dropped_file_path = ffi.string(event.drop.file)
-            genEmuEvent(EV_SDL, SDL.SDL_DROPFILE, dropped_file_path)
+            genEmuEvent(C.EV_SDL, SDL.SDL_DROPFILE, dropped_file_path)
         elseif event.type == SDL.SDL_DROPTEXT then
             local dropped_text = ffi.string(event.drop.file)
-            genEmuEvent(EV_SDL, SDL.SDL_DROPTEXT, dropped_text)
+            genEmuEvent(C.EV_SDL, SDL.SDL_DROPTEXT, dropped_text)
         elseif event.type == SDL.SDL_WINDOWEVENT then
             handleWindowEvent(event.window)
         --- Gamepad support ---
