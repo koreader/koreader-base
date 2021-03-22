@@ -316,8 +316,8 @@ function S.waitForEvent(sec, usec)
             or event.type == SDL.SDL_FINGERDOWN then
             local is_finger = event.type == SDL.SDL_FINGERDOWN
             if not is_finger and event.button.button ~= SDL_BUTTON_LEFT then
-                -- Not a left-click? ENOSYS
-                return false, 38
+                -- Not a left-click?
+                return false, C.ENOSYS
             end
             -- use mouse click to simulate single tap
             is_in_touch = true
@@ -395,7 +395,7 @@ function S.waitForEvent(sec, usec)
                 genEmuEvent(C.EV_KEY, 1073741903, 1)
             end
         elseif event.type == SDL.SDL_QUIT then
-            -- NOTE: Generated on SIGTERM, among other things. (Not SIGINT, because LuaJIT already install a handler for that).
+            -- NOTE: Generated on SIGTERM, among other things. (Not SIGINT, because LuaJIT already installs a handler for that).
             -- send Alt + F4
             genEmuEvent(C.EV_KEY, 1073742050, 1)
             genEmuEvent(C.EV_KEY, 1073741885, 1)
