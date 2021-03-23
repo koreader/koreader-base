@@ -48,33 +48,33 @@ end
 local function genTouchDownEvent(event, id)
     local x = android.lib.AMotionEvent_getX(event, id)
     local y = android.lib.AMotionEvent_getY(event, id)
-    local msec = android.lib.AMotionEvent_getEventTime(event)
-    genEmuEvent(C.EV_ABS, C.ABS_MT_SLOT, id, msec)
-    genEmuEvent(C.EV_ABS, C.ABS_MT_TRACKING_ID, id, msec)
-    genEmuEvent(C.EV_ABS, C.ABS_MT_POSITION_X, x, msec)
-    genEmuEvent(C.EV_ABS, C.ABS_MT_POSITION_Y, y, msec)
-    genEmuEvent(C.EV_SYN, C.SYN_REPORT, 0, msec)
+    local ts = android.lib.AMotionEvent_getEventTime(event)
+    genEmuEvent(C.EV_ABS, C.ABS_MT_SLOT, id, ts)
+    genEmuEvent(C.EV_ABS, C.ABS_MT_TRACKING_ID, id, ts)
+    genEmuEvent(C.EV_ABS, C.ABS_MT_POSITION_X, x, ts)
+    genEmuEvent(C.EV_ABS, C.ABS_MT_POSITION_Y, y, ts)
+    genEmuEvent(C.EV_SYN, C.SYN_REPORT, 0, ts)
 end
 
 local function genTouchUpEvent(event, id)
     local x = android.lib.AMotionEvent_getX(event, id)
     local y = android.lib.AMotionEvent_getY(event, id)
-    local msec = android.lib.AMotionEvent_getEventTime(event)
-    genEmuEvent(C.EV_ABS, C.ABS_MT_SLOT, id, msec)
-    genEmuEvent(C.EV_ABS, C.ABS_MT_TRACKING_ID, -1, msec)
-    genEmuEvent(C.EV_ABS, C.ABS_MT_POSITION_X, x, msec)
-    genEmuEvent(C.EV_ABS, C.ABS_MT_POSITION_Y, y, msec)
-    genEmuEvent(C.EV_SYN, C.SYN_REPORT, 0, msec)
+    local ts = android.lib.AMotionEvent_getEventTime(event)
+    genEmuEvent(C.EV_ABS, C.ABS_MT_SLOT, id, ts)
+    genEmuEvent(C.EV_ABS, C.ABS_MT_TRACKING_ID, -1, ts)
+    genEmuEvent(C.EV_ABS, C.ABS_MT_POSITION_X, x, ts)
+    genEmuEvent(C.EV_ABS, C.ABS_MT_POSITION_Y, y, ts)
+    genEmuEvent(C.EV_SYN, C.SYN_REPORT, 0, ts)
 end
 
 local function genTouchMoveEvent(event, id, index)
     local x = android.lib.AMotionEvent_getX(event, index)
     local y = android.lib.AMotionEvent_getY(event, index)
-    local msec = android.lib.AMotionEvent_getEventTime(event)
-    genEmuEvent(C.EV_ABS, C.ABS_MT_SLOT, id, msec)
-    genEmuEvent(C.EV_ABS, C.ABS_MT_POSITION_X, x, msec)
-    genEmuEvent(C.EV_ABS, C.ABS_MT_POSITION_Y, y, msec)
-    genEmuEvent(C.EV_SYN, C.SYN_REPORT, 0, msec)
+    local ts = android.lib.AMotionEvent_getEventTime(event)
+    genEmuEvent(C.EV_ABS, C.ABS_MT_SLOT, id, ts)
+    genEmuEvent(C.EV_ABS, C.ABS_MT_POSITION_X, x, ts)
+    genEmuEvent(C.EV_ABS, C.ABS_MT_POSITION_Y, y, ts)
+    genEmuEvent(C.EV_SYN, C.SYN_REPORT, 0, ts)
 end
 
 local is_in_touch = false
@@ -138,11 +138,11 @@ local function keyEventHandler(key_event)
         return 1
     end
     if action == C.AKEY_EVENT_ACTION_DOWN then
-        local msec = android.lib.AKeyEvent_getEventTime(key_event)
-        genEmuEvent(C.EV_KEY, code, 1, msec)
+        local ts = android.lib.AKeyEvent_getEventTime(key_event)
+        genEmuEvent(C.EV_KEY, code, 1, ts)
     elseif action == C.AKEY_EVENT_ACTION_UP then
-        local msec = android.lib.AKeyEvent_getEventTime(key_event)
-        genEmuEvent(C.EV_KEY, code, 0, msec)
+        local ts = android.lib.AKeyEvent_getEventTime(key_event)
+        genEmuEvent(C.EV_KEY, code, 0, ts)
     end
     return 1 -- event consumed
 end
