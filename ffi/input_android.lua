@@ -16,14 +16,27 @@ end
 
 local inputQueue = {}
 
-local ev_time = ffi.new("struct timeval")
-local function genEmuEvent(evtype, code, value)
-    C.gettimeofday(ev_time, nil)
+local function genEmuEvent(evtype, code, value, ts)
+    local timev = { sec = 0, usec = 0 }
+    if ts then
+        -- If we've got one, trust the native event's timestamp, they're guaranteed to be in the CLOCK_MONOTONIC timebase.
+        -- (That's SystemClock.uptimeMillis() in NDK-speak).
+        -- ms to µs
+        timev.usec = tonumber(ts * 1000)
+    else
+        -- Otherwise, synthetize one in the same time scale.
+        -- TimeVal probably ought to be in base...
+        local timespec = ffi.new("struct timespec")
+        C.clock_gettime(C.CLOCK_MONOTONIC, timespec)
+        timev.sec = tonumber(timespec.tv_sec)
+        -- ns to µs
+        timev.usec = math.floor(tonumber(timespec.tv_nsec / 1000))
+    end
     local ev = {
         type = tonumber(evtype),
         code = tonumber(code),
         value = tonumber(value),
-        time = { sec = tonumber(ev_time.tv_sec), usec = tonumber(ev_time.tv_usec) }
+        time = timev,
     }
     table.insert(inputQueue, ev)
 end
@@ -31,30 +44,33 @@ end
 local function genTouchDownEvent(event, id)
     local x = android.lib.AMotionEvent_getX(event, id)
     local y = android.lib.AMotionEvent_getY(event, id)
-    genEmuEvent(C.EV_ABS, C.ABS_MT_SLOT, id)
-    genEmuEvent(C.EV_ABS, C.ABS_MT_TRACKING_ID, id)
-    genEmuEvent(C.EV_ABS, C.ABS_MT_POSITION_X, x)
-    genEmuEvent(C.EV_ABS, C.ABS_MT_POSITION_Y, y)
-    genEmuEvent(C.EV_SYN, C.SYN_REPORT, 0)
+    local msec = android.lib.AMotionEvent_getEventTime(event)
+    genEmuEvent(C.EV_ABS, C.ABS_MT_SLOT, id, msec)
+    genEmuEvent(C.EV_ABS, C.ABS_MT_TRACKING_ID, id, msec)
+    genEmuEvent(C.EV_ABS, C.ABS_MT_POSITION_X, x, msec)
+    genEmuEvent(C.EV_ABS, C.ABS_MT_POSITION_Y, y, msec)
+    genEmuEvent(C.EV_SYN, C.SYN_REPORT, 0, msec)
 end
 
 local function genTouchUpEvent(event, id)
     local x = android.lib.AMotionEvent_getX(event, id)
     local y = android.lib.AMotionEvent_getY(event, id)
-    genEmuEvent(C.EV_ABS, C.ABS_MT_SLOT, id)
-    genEmuEvent(C.EV_ABS, C.ABS_MT_TRACKING_ID, -1)
-    genEmuEvent(C.EV_ABS, C.ABS_MT_POSITION_X, x)
-    genEmuEvent(C.EV_ABS, C.ABS_MT_POSITION_Y, y)
-    genEmuEvent(C.EV_SYN, C.SYN_REPORT, 0)
+    local msec = android.lib.AMotionEvent_getEventTime(event)
+    genEmuEvent(C.EV_ABS, C.ABS_MT_SLOT, id, msec)
+    genEmuEvent(C.EV_ABS, C.ABS_MT_TRACKING_ID, -1, msec)
+    genEmuEvent(C.EV_ABS, C.ABS_MT_POSITION_X, x, msec)
+    genEmuEvent(C.EV_ABS, C.ABS_MT_POSITION_Y, y, msec)
+    genEmuEvent(C.EV_SYN, C.SYN_REPORT, 0, msec)
 end
 
 local function genTouchMoveEvent(event, id, index)
     local x = android.lib.AMotionEvent_getX(event, index)
     local y = android.lib.AMotionEvent_getY(event, index)
-    genEmuEvent(C.EV_ABS, C.ABS_MT_SLOT, id)
-    genEmuEvent(C.EV_ABS, C.ABS_MT_POSITION_X, x)
-    genEmuEvent(C.EV_ABS, C.ABS_MT_POSITION_Y, y)
-    genEmuEvent(C.EV_SYN, C.SYN_REPORT, 0)
+    local msec = android.lib.AMotionEvent_getEventTime(event)
+    genEmuEvent(C.EV_ABS, C.ABS_MT_SLOT, id, msec)
+    genEmuEvent(C.EV_ABS, C.ABS_MT_POSITION_X, x, msec)
+    genEmuEvent(C.EV_ABS, C.ABS_MT_POSITION_Y, y, msec)
+    genEmuEvent(C.EV_SYN, C.SYN_REPORT, 0, msec)
 end
 
 local is_in_touch = false
@@ -118,9 +134,11 @@ local function keyEventHandler(key_event)
         return 1
     end
     if action == C.AKEY_EVENT_ACTION_DOWN then
-        genEmuEvent(C.EV_KEY, code, 1)
+        local msec = android.lib.AKeyEvent_getEventTime(key_event)
+        genEmuEvent(C.EV_KEY, code, 1, msec)
     elseif action == C.AKEY_EVENT_ACTION_UP then
-        genEmuEvent(C.EV_KEY, code, 0)
+        local msec = android.lib.AKeyEvent_getEventTime(key_event)
+        genEmuEvent(C.EV_KEY, code, 0, msec)
     end
     return 1 -- event consumed
 end
