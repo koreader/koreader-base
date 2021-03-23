@@ -21,8 +21,8 @@ local function genEmuEvent(evtype, code, value, ts)
     if ts then
         -- If we've got one, trust the native event's timestamp, they're guaranteed to be in the CLOCK_MONOTONIC timebase.
         -- ns to µs
-        -- NOTE: The documentation is extremely confusing, but this is actually in nanoseconds,
-        --       c.f., https://android.googlesource.com/platform/frameworks/base/+/b11499d2db0ba9782363ec6bf714b583e8585212%5E!/
+        -- NOTE: Unlike the Java APIs, this is in nanoseconds!
+        --       c.f., https://developer.android.com/ndk/reference/group/input#amotionevent_geteventtime
         local us = math.floor(tonumber(ts) / 1000)
         -- TimeVal, how I miss thee...
         timev.sec = math.floor(us / 1000000)
