@@ -20,15 +20,13 @@ local function genEmuEvent(evtype, code, value, ts)
     local timev = { sec = 0, usec = 0 }
     if ts then
         -- If we've got one, trust the native event's timestamp, they're guaranteed to be in the CLOCK_MONOTONIC timebase.
-        -- (That's SystemClock.uptimeMillis() in NDK-speak).
-        -- ns (??!) to µs
-        android.LOGV(string.format("Input TS is: %d", tonumber(ts)))
+        -- ns to µs
+        -- NOTE: The documentation is extremely confusing, but this is actually in nanoseconds,
+        --       c.f., https://android.googlesource.com/platform/frameworks/base/+/b11499d2db0ba9782363ec6bf714b583e8585212%5E!/
         local us = math.floor(tonumber(ts) / 1000)
-        android.LOGV(string.format("Input TS in us: %d", us))
         -- TimeVal, how I miss thee...
         timev.sec = math.floor(us / 1000000)
         timev.usec = us % 1000000
-        android.LOGV(string.format("Input TS: %d.%d", timev.sec, timev.usec))
     else
         -- Otherwise, synthetize one in the same time scale.
         -- TimeVal probably ought to be in base...
@@ -37,7 +35,6 @@ local function genEmuEvent(evtype, code, value, ts)
         timev.sec = tonumber(timespec.tv_sec)
         -- ns to µs
         timev.usec = math.floor(tonumber(timespec.tv_nsec / 1000))
-        android.LOGV(string.format("clock_gettime: %d.%d", timev.sec, timev.usec))
     end
     local ev = {
         type = tonumber(evtype),
