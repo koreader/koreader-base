@@ -103,7 +103,7 @@ static inline void timerfd_list_delete_node(timerfd_list_t* list, timerfd_node_t
         next->prev = prev;
     }
 
-    // Free this node
+    // Free this node and its resources.
     close(node->fd);
     free(node);
     list->count--;
