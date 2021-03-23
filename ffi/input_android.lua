@@ -160,12 +160,12 @@ function input.waitForEvent(sec, usec)
             -- return oldest FIFO element
             return true, table.remove(inputQueue, 1)
         end
-        -- Will contain the raw fd number
+        -- Will point to the the raw fd number
         local fd     = ffi.new("int[1]")
-        -- Will contain the poll events
+        -- Will point to the poll events
         local events = ffi.new("int[1]")
-        -- Will point to the data pointer passed at addFd/attachLooper time, c.f., the struct definition.
-        -- NOTE: Its id field is entirely redundant, as ALooper already returns the ident.
+        -- Will point to the data passed at addFd/attachLooper time, c.f., the android_poll_source struct definition.
+        -- NOTE: Its id field is mostly redundant, as ALooper already returns the ident.
         --       And its process function can be used as a weird delayed callback mechanism, but ALooper already has native callback handling :?.
         --       TL;DR: We don't actually use it here.
         local source = ffi.new("struct android_poll_source*[1]")
