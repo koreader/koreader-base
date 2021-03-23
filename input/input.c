@@ -296,19 +296,6 @@ static int waitForInput(lua_State* L)
         return 2;  // false, errno
     }
 
-#ifdef WITH_TIMERFD
-    // We check timers *first*, in order to act on them ASAP.
-    for (timerfd_node_t* restrict node = timerfds.head; node != NULL; node = node->next) {
-        if (FD_ISSET(node->fd, &rfds)) {
-            // It's a single-shot timer, don't even need to read it ;p.
-            lua_pushboolean(L, false);
-            lua_pushinteger(L, ETIME);
-            lua_pushlightuserdata(L, (void*) node);
-            return 3;  // false, ETIME, node
-        }
-    }
-#endif
-
     for (size_t i = 0U; i < num_fds; i++) {
         if (FD_ISSET(inputfds[i], &rfds)) {
             struct input_event input;
@@ -320,6 +307,21 @@ static int waitForInput(lua_State* L)
             }
         }
     }
+
+#ifdef WITH_TIMERFD
+    // We check timers *last*, so that early timer invalidation has a chance to kick in when we're lagging behind input events,
+    // as we will necessarily be at least 650ms late after a flashing refresh, for instance.
+    for (timerfd_node_t* restrict node = timerfds.head; node != NULL; node = node->next) {
+        if (FD_ISSET(node->fd, &rfds)) {
+            // It's a single-shot timer, don't even need to read it ;p.
+            lua_pushboolean(L, false);
+            lua_pushinteger(L, ETIME);
+            lua_pushlightuserdata(L, (void*) node);
+            return 3;  // false, ETIME, node
+        }
+    }
+#endif
+
     return 0;  // Unreachable (unless there was a read error)
 }
 
