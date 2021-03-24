@@ -158,14 +158,28 @@ end
 -- so this represents a FIFO queue
 local inputQueue = {}
 
-local function genEmuEvent(evtype, code, value)
-    local secs, usecs = util.gettime()
+local function genEmuEvent(evtype, code, value, ts)
+    -- NOTE: SDL timestamps are in ms since application startup, which doesn't tell usanything useful,
+    --       so, use synthetic ones.
+    print("genEmuEvent:", ts)
+    local timev = { sec = 0, usec = 0 }
+    if ts then
+        timev.sec = ts
+    else
+        -- Otherwise, synthetize one in the same time scale.
+        -- TimeVal probably ought to be in base...
+        local timespec = ffi.new("struct timespec")
+        C.clock_gettime(C.CLOCK_MONOTONIC, timespec)
+        timev.sec = tonumber(timespec.tv_sec)
+        -- ns to µs
+        timev.usec = math.floor(tonumber(timespec.tv_nsec / 1000))
+    end
 
     local ev = {
         type = tonumber(evtype),
         code = tonumber(code),
         value = tonumber(value) or value,
-        time = { sec = secs, usec = usecs },
+        time = timev,
     }
     table.insert(inputQueue, ev)
 end
@@ -183,7 +197,7 @@ local function handleWindowEvent(event_window)
     elseif (event_window.event == SDL.SDL_WINDOWEVENT_RESIZED
              or event_window.event == SDL.SDL_WINDOWEVENT_SIZE_CHANGED
              or event_window.event == SDL.SDL_WINDOWEVENT_MOVED) then
-        genEmuEvent(C.EV_SDL, event_window.event, event_window)
+        genEmuEvent(C.EV_SDL, event_window.event, event_window, event_window.timestamp)
     end
 end
 
@@ -212,27 +226,27 @@ local function handleJoyAxisMotionEvent(event)
     if axis == 0 then
         if value < -neutral_max_val then
             -- send left
-            genEmuEvent(C.EV_KEY, 1073741904, 1)
+            genEmuEvent(C.EV_KEY, 1073741904, 1, event.common.timestamp)
         else
             -- send right
-            genEmuEvent(C.EV_KEY, 1073741903, 1)
+            genEmuEvent(C.EV_KEY, 1073741903, 1, event.common.timestamp)
         end
     elseif axis == 1 then
         if value < -neutral_max_val then
             -- send up
-            genEmuEvent(C.EV_KEY, 1073741906, 1)
+            genEmuEvent(C.EV_KEY, 1073741906, 1, event.common.timestamp)
         else
             -- send down
-            genEmuEvent(C.EV_KEY, 1073741905, 1)
+            genEmuEvent(C.EV_KEY, 1073741905, 1, event.common.timestamp)
         end
     -- right stick 3/4
     elseif axis == 4 then
         if value < -neutral_max_val then
             -- send page up
-            genEmuEvent(C.EV_KEY, 1073741899, 1)
+            genEmuEvent(C.EV_KEY, 1073741899, 1, event.common.timestamp)
         else
             -- send page down
-            genEmuEvent(C.EV_KEY, 1073741902, 1)
+            genEmuEvent(C.EV_KEY, 1073741902, 1, event.common.timestamp)
         end
     -- left trigger 2
     -- right trigger 5
@@ -277,11 +291,11 @@ function S.waitForEvent(sec, usec)
             -- noop for trackpad finger inputs which interfere with emulated mouse inputs
             do end -- luacheck: ignore 541
         elseif event.type == SDL.SDL_KEYDOWN then
-            genEmuEvent(C.EV_KEY, event.key.keysym.sym, 1)
+            genEmuEvent(C.EV_KEY, event.key.keysym.sym, 1, event.common.timestamp)
         elseif event.type == SDL.SDL_KEYUP then
-            genEmuEvent(C.EV_KEY, event.key.keysym.sym, 0)
+            genEmuEvent(C.EV_KEY, event.key.keysym.sym, 0, event.common.timestamp)
         elseif event.type == SDL.SDL_TEXTINPUT then
-            genEmuEvent(C.EV_SDL, SDL.SDL_TEXTINPUT, ffi.string(event.text.text))
+            genEmuEvent(C.EV_SDL, SDL.SDL_TEXTINPUT, ffi.string(event.text.text), event.common.timestamp)
         elseif event.type == SDL.SDL_MOUSEMOTION
             or event.type == SDL.SDL_FINGERMOTION then
             local is_finger = event.type == SDL.SDL_FINGERMOTION
@@ -289,29 +303,29 @@ function S.waitForEvent(sec, usec)
                 if is_finger then
                     if event.tfinger.dx ~= 0 then
                         genEmuEvent(C.EV_ABS, C.ABS_MT_POSITION_X,
-                            event.tfinger.x * S.w)
+                            event.tfinger.x * S.w, event.common.timestamp)
                     end
                     if event.tfinger.dy ~= 0 then
                         genEmuEvent(C.EV_ABS, C.ABS_MT_POSITION_Y,
-                            event.tfinger.y * S.h)
+                            event.tfinger.y * S.h, event.common.timestamp)
                     end
                 else
                     if event.motion.xrel ~= 0 then
                         genEmuEvent(C.EV_ABS, C.ABS_MT_POSITION_X,
-                            event.button.x)
+                            event.button.x, event.common.timestamp)
                     end
                     if event.motion.yrel ~= 0 then
                         genEmuEvent(C.EV_ABS, C.ABS_MT_POSITION_Y,
-                            event.button.y)
+                            event.button.y, event.common.timestamp)
                     end
                 end
-                genEmuEvent(C.EV_SYN, C.SYN_REPORT, 0)
+                genEmuEvent(C.EV_SYN, C.SYN_REPORT, 0, event.common.timestamp)
             end
         elseif event.type == SDL.SDL_MOUSEBUTTONUP
             or event.type == SDL.SDL_FINGERUP then
             is_in_touch = false
-            genEmuEvent(C.EV_ABS, C.ABS_MT_TRACKING_ID, -1)
-            genEmuEvent(C.EV_SYN, C.SYN_REPORT, 0)
+            genEmuEvent(C.EV_ABS, C.ABS_MT_TRACKING_ID, -1, event.common.timestamp)
+            genEmuEvent(C.EV_SYN, C.SYN_REPORT, 0, event.common.timestamp)
         elseif event.type == SDL.SDL_MOUSEBUTTONDOWN
             or event.type == SDL.SDL_FINGERDOWN then
             local is_finger = event.type == SDL.SDL_FINGERDOWN
@@ -321,22 +335,24 @@ function S.waitForEvent(sec, usec)
             end
             -- use mouse click to simulate single tap
             is_in_touch = true
-            genEmuEvent(C.EV_ABS, C.ABS_MT_TRACKING_ID, 0)
+            genEmuEvent(C.EV_ABS, C.ABS_MT_TRACKING_ID, 0, event.common.timestamp)
             genEmuEvent(C.EV_ABS, C.ABS_MT_POSITION_X,
-                is_finger and event.tfinger.x * S.w or event.button.x)
+                is_finger and event.tfinger.x * S.w or event.button.x,
+                event.common.timestamp)
             genEmuEvent(C.EV_ABS, C.ABS_MT_POSITION_Y,
-                is_finger and event.tfinger.y * S.h or event.button.y)
-            genEmuEvent(C.EV_SYN, C.SYN_REPORT, 0)
+                is_finger and event.tfinger.y * S.h or event.button.y,
+                event.common.timestamp)
+            genEmuEvent(C.EV_SYN, C.SYN_REPORT, 0, event.common.timestamp)
         elseif event.type == SDL.SDL_MULTIGESTURE then
-            genEmuEvent(C.EV_SDL, SDL.SDL_MULTIGESTURE, event.mgesture)
+            genEmuEvent(C.EV_SDL, SDL.SDL_MULTIGESTURE, event.mgesture, event.common.timestamp)
         elseif event.type == SDL.SDL_MOUSEWHEEL then
-            genEmuEvent(C.EV_SDL, SDL.SDL_MOUSEWHEEL, event.wheel)
+            genEmuEvent(C.EV_SDL, SDL.SDL_MOUSEWHEEL, event.wheel, event.common.timestamp)
         elseif event.type == SDL.SDL_DROPFILE then
             local dropped_file_path = ffi.string(event.drop.file)
-            genEmuEvent(C.EV_SDL, SDL.SDL_DROPFILE, dropped_file_path)
+            genEmuEvent(C.EV_SDL, SDL.SDL_DROPFILE, dropped_file_path, event.common.timestamp)
         elseif event.type == SDL.SDL_DROPTEXT then
             local dropped_text = ffi.string(event.drop.file)
-            genEmuEvent(C.EV_SDL, SDL.SDL_DROPTEXT, dropped_text)
+            genEmuEvent(C.EV_SDL, SDL.SDL_DROPTEXT, dropped_text, event.common.timestamp)
         elseif event.type == SDL.SDL_WINDOWEVENT then
             handleWindowEvent(event.window)
         --- Gamepad support ---
@@ -358,24 +374,24 @@ function S.waitForEvent(sec, usec)
 
             if button == SDL.SDL_CONTROLLER_BUTTON_A then
                 -- send enter
-                genEmuEvent(C.EV_KEY, 13, 1)
+                genEmuEvent(C.EV_KEY, 13, 1, event.common.timestamp)
                 -- send end (bound to press)
-                genEmuEvent(C.EV_KEY, 1073741901, 1)
+                genEmuEvent(C.EV_KEY, 1073741901, 1, event.common.timestamp)
             elseif button == SDL.SDL_CONTROLLER_BUTTON_B then
                 -- send escape
-                genEmuEvent(C.EV_KEY, 27, 1)
+                genEmuEvent(C.EV_KEY, 27, 1, event.common.timestamp)
             -- left bumper
             elseif button == SDL.SDL_CONTROLLER_BUTTON_BACK then
                 -- send page up
-                genEmuEvent(C.EV_KEY, 1073741899, 1)
+                genEmuEvent(C.EV_KEY, 1073741899, 1, event.common.timestamp)
             -- right bumper
             elseif button == SDL.SDL_CONTROLLER_BUTTON_GUIDE then
                 -- send page down
-                genEmuEvent(C.EV_KEY, 1073741902, 1)
+                genEmuEvent(C.EV_KEY, 1073741902, 1, event.common.timestamp)
             -- On the Xbox One controller, start = start but leftstick = menu button
             elseif button == SDL.SDL_CONTROLLER_BUTTON_START or button == SDL.SDL_CONTROLLER_BUTTON_LEFTSTICK then
                 -- send F1 (bound to menu in front at the time of writing)
-                genEmuEvent(C.EV_KEY, 1073741882, 1)
+                genEmuEvent(C.EV_KEY, 1073741882, 1, event.common.timestamp)
             end
         --- D-pad ---
         elseif event.type == SDL.SDL_JOYHATMOTION then
@@ -383,22 +399,22 @@ function S.waitForEvent(sec, usec)
 
             if hat_position == SDL.SDL_HAT_UP then
                 -- send up
-                genEmuEvent(C.EV_KEY, 1073741906, 1)
+                genEmuEvent(C.EV_KEY, 1073741906, 1, event.common.timestamp)
             elseif hat_position == SDL.SDL_HAT_DOWN then
                 -- send down
-                genEmuEvent(C.EV_KEY, 1073741905, 1)
+                genEmuEvent(C.EV_KEY, 1073741905, 1, event.common.timestamp)
             elseif hat_position == SDL.SDL_HAT_LEFT then
                 -- send left
-                genEmuEvent(C.EV_KEY, 1073741904, 1)
+                genEmuEvent(C.EV_KEY, 1073741904, 1, event.common.timestamp)
             elseif hat_position == SDL.SDL_HAT_RIGHT then
                 -- send right
-                genEmuEvent(C.EV_KEY, 1073741903, 1)
+                genEmuEvent(C.EV_KEY, 1073741903, 1, event.common.timestamp)
             end
         elseif event.type == SDL.SDL_QUIT then
             -- NOTE: Generated on SIGTERM, among other things. (Not SIGINT, because LuaJIT already installs a handler for that).
             -- send Alt + F4
-            genEmuEvent(C.EV_KEY, 1073742050, 1)
-            genEmuEvent(C.EV_KEY, 1073741885, 1)
+            genEmuEvent(C.EV_KEY, 1073742050, 1, event.common.timestamp)
+            genEmuEvent(C.EV_KEY, 1073741885, 1, event.common.timestamp)
         end
     end
 end
