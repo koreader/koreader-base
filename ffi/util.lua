@@ -326,7 +326,7 @@ function util.runInSubProcess(func, with_pipe, double_fork)
 
             -- As the name imply, this is a non-interactive background task.
             if ffi.os == "Linux" then
-                -- On Linux, schedule it appropriately.
+                -- On Linux, schedule it accordingly.
                 local param = ffi.new("struct sched_param")
                 C.sched_setscheduler(0, C.SCHED_BATCH, param)
             end
