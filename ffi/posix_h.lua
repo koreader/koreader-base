@@ -131,11 +131,14 @@ int setenv(const char *, const char *, int) __attribute__((nothrow, leaf));
 int unsetenv(const char *) __attribute__((nothrow, leaf));
 int _putenv(const char *);
 typedef unsigned int id_t;
-static const int PRIO_PROCESS = 0;
-static const int PRIO_PGRP = 1;
-static const int PRIO_USER = 2;
-int getpriority(enum __priority_which, id_t) __attribute__((nothrow, leaf));
-int setpriority(enum __priority_which, id_t, int) __attribute__((nothrow, leaf));
+enum __priority_which {
+  PRIO_PROCESS = 0,
+  PRIO_PGRP = 1,
+  PRIO_USER = 2,
+};
+typedef enum __priority_which __priority_which_t;
+int getpriority(__priority_which_t, id_t) __attribute__((nothrow, leaf));
+int setpriority(__priority_which_t, id_t, int) __attribute__((nothrow, leaf));
 typedef int pid_t;
 struct sched_param {
   int sched_priority;

@@ -154,9 +154,8 @@ cdecl_func(unsetenv)
 //cdecl_func(_putenv) // Win32
 
 cdecl_type(id_t)
-cdecl_const(PRIO_PROCESS)
-cdecl_const(PRIO_PGRP)
-cdecl_const(PRIO_USER)
+cdecl_enum(__priority_which)
+cdecl_type(__priority_which_t)
 cdecl_func(getpriority)
 cdecl_func(setpriority)
 
