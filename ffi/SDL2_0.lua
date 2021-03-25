@@ -255,8 +255,8 @@ local is_in_touch = false
 
 function S.waitForEvent(sec, usec)
     local event = ffi.new("union SDL_Event")
-    -- TimeVal's :tomsecs if we were passed one to begin with, otherwise, nil => block
-    local timeout = sec and math.floor(sec * 1000000 + usec + 0.5) / 1000
+    -- TimeVal's :tomsecs if we were passed one to begin with, otherwise, -1 => block
+    local timeout = sec and math.floor(sec * 1000000 + usec + 0.5) / 1000 or -1
     while true do
         -- check for queued events
         if #inputQueue > 0 then
@@ -265,14 +265,7 @@ function S.waitForEvent(sec, usec)
         end
 
         -- otherwise, wait for event
-        local got_event
-        if not timeout then
-            -- no timeout requested, block
-            got_event = SDL.SDL_WaitEvent(event)
-        else
-            -- timeout requested
-            got_event = SDL.SDL_WaitEventTimeout(event, timeout)
-        end
+        local got_event = SDL.SDL_WaitEventTimeout(event, timeout)
         if got_event == 0 then
             -- ETIME
             return false, C.ETIME
