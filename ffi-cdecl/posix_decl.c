@@ -1,3 +1,6 @@
+// For Linux <sched.h> stuff
+#define _GNU_SOURCE
+
 #include <sys/mman.h>
 //#include <stropts.h>
 #include <unistd.h>
@@ -15,6 +18,9 @@
 #include <sys/ioctl.h>
 #include <mqueue.h>
 #include <time.h>
+#include <sys/time.h>
+#include <sys/resource.h>
+#include <sched.h>
 #include <errno.h>
 
 #include "ffi-cdecl.h"
@@ -146,3 +152,38 @@ cdecl_func(fdatasync)
 cdecl_func(setenv)
 cdecl_func(unsetenv)
 //cdecl_func(_putenv) // Win32
+
+cdecl_type(id_t)
+cdecl_const(PRIO_PROCESS)
+cdecl_const(PRIO_PGRP)
+cdecl_const(PRIO_USER)
+cdecl_func(getpriority)
+cdecl_func(setpriority)
+
+cdecl_type(pid_t)
+cdecl_struct(sched_param)
+cdecl_const(SCHED_OTHER)
+cdecl_const(SCHED_BATCH)
+cdecl_const(SCHED_IDLE)
+cdecl_const(SCHED_FIFO)
+cdecl_const(SCHED_RR)
+cdecl_const(SCHED_RESET_ON_FORK)
+cdecl_func(sched_getscheduler)
+cdecl_func(sched_setscheduler)
+cdecl_func(sched_getparam)
+cdecl_func(sched_setparam)
+// No Glibc wrappers around these syscalls:
+/*
+cdecl_struct(sched_attr)
+cdecl_const(SCHED_FLAG_RESET_ON_FORK)
+cdecl_const(SCHED_FLAG_RECLAIM)
+cdecl_const(SCHED_FLAG_DL_OVERRUN)
+cdecl_const(SCHED_FLAG_KEEP_POLICY)
+cdecl_const(SCHED_FLAG_KEEP_PARAMS)
+cdecl_func(sched_getattr)
+cdecl_func(sched_setattr)
+*/
+cdecl_type(cpu_set_t)
+cdecl_func(sched_getaffinity)
+cdecl_func(sched_setaffinity)
+cdecl_func(sched_yield)

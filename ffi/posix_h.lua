@@ -130,4 +130,30 @@ int fdatasync(int);
 int setenv(const char *, const char *, int) __attribute__((nothrow, leaf));
 int unsetenv(const char *) __attribute__((nothrow, leaf));
 int _putenv(const char *);
+typedef unsigned int id_t;
+static const int PRIO_PROCESS = 0;
+static const int PRIO_PGRP = 1;
+static const int PRIO_USER = 2;
+int getpriority(enum __priority_which, id_t) __attribute__((nothrow, leaf));
+int setpriority(enum __priority_which, id_t, int) __attribute__((nothrow, leaf));
+typedef int pid_t;
+struct sched_param {
+  int sched_priority;
+};
+static const int SCHED_OTHER = 0;
+static const int SCHED_BATCH = 3;
+static const int SCHED_IDLE = 5;
+static const int SCHED_FIFO = 1;
+static const int SCHED_RR = 2;
+static const int SCHED_RESET_ON_FORK = 1073741824;
+int sched_getscheduler(int) __attribute__((nothrow, leaf));
+int sched_setscheduler(int, int, const struct sched_param *) __attribute__((nothrow, leaf));
+int sched_getparam(int, struct sched_param *) __attribute__((nothrow, leaf));
+int sched_setparam(int, const struct sched_param *) __attribute__((nothrow, leaf));
+typedef struct {
+  long unsigned int __bits[32];
+} cpu_set_t;
+int sched_getaffinity(int, size_t, cpu_set_t *) __attribute__((nothrow, leaf));
+int sched_setaffinity(int, size_t, const cpu_set_t *) __attribute__((nothrow, leaf));
+int sched_yield(void) __attribute__((nothrow, leaf));
 ]]
