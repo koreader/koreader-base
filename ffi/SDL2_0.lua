@@ -265,7 +265,7 @@ function S.waitForEvent(sec, usec)
         end
 
         -- otherwise, wait for event
-        local got_event = 0
+        local got_event
         if not timeout then
             -- no timeout requested, block
             got_event = SDL.SDL_WaitEvent(event)
