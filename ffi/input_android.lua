@@ -23,10 +23,10 @@ local function genEmuEvent(evtype, code, value, ts)
         -- ns to µs
         -- NOTE: Unlike the Java APIs, this is in nanoseconds!
         --       c.f., https://developer.android.com/ndk/reference/group/input#amotionevent_geteventtime
-        local us = math.floor(tonumber(ts / 1000))
+        local us = ts / 1000
         -- TimeVal, how I miss thee...
-        timev.sec = math.floor(us / 1000000)
-        timev.usec = us % 1000000
+        timev.sec = math.floor(tonumber(us / 1000000))
+        timev.usec = tonumber(us % 1000000)
     else
         -- Otherwise, synthetize one in the same time scale.
         -- TimeVal probably ought to be in base...
