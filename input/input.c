@@ -48,17 +48,17 @@ int    inputfds[NUM_FDS]     = { -1, -1, -1, -1 };
 size_t num_fds               = 0U;
 pid_t  fake_ev_generator_pid = -1;
 
-#if defined POCKETBOOK
+#if defined(POCKETBOOK)
 #    include "input-pocketbook.h"
-#elif defined KINDLE
+#elif defined(KINDLE)
 #    include "input-kindle.h"
-#elif defined KOBO
+#elif defined(KOBO)
 #    include "input-kobo.h"
-#elif defined REMARKABLE
+#elif defined(REMARKABLE)
 #    include "input-remarkable.h"
-#elif defined SONY_PRSTUX
+#elif defined(SONY_PRSTUX)
 #    include "input-sony-prstux.h"
-#elif defined CERVANTES
+#elif defined(CERVANTES)
 #    include "input-cervantes.h"
 #endif
 
@@ -77,7 +77,7 @@ static int openInputDevice(lua_State* L)
     // Otherwise, we're golden, and num_fds is the index of the next free slot in the inputfds array ;).
     const char* restrict ko_dont_grab_input = getenv("KO_DONT_GRAB_INPUT");
 
-#ifdef POCKETBOOK
+#if defined(POCKETBOOK)
     int inkview_events = luaL_checkint(L, 2);
     if (inkview_events == 1) {
         startInkViewMain(L, num_fds, inputdevice);
@@ -169,7 +169,7 @@ static int closeInputDevices(lua_State* L __attribute__((unused)))
         }
     }
 
-#ifdef WITH_TIMERFD
+#if defined(WITH_TIMERFD)
     clearAllTimers();
 #endif
     nfds = 0;
@@ -296,7 +296,7 @@ static int waitForInput(lua_State* L)
     for (size_t i = 0U; i < num_fds; i++) {
         FD_SET(inputfds[i], &rfds);
     }
-#ifdef WITH_TIMERFD
+#if defined(WITH_TIMERFD)
     for (timerfd_node_t* restrict node = timerfds.head; node != NULL; node = node->next) {
         FD_SET(node->fd, &rfds);
     }
@@ -325,7 +325,7 @@ static int waitForInput(lua_State* L)
         }
     }
 
-#ifdef WITH_TIMERFD
+#if defined(WITH_TIMERFD)
     // We check timers *last*, so that early timer invalidation has a chance to kick in when we're lagging behind input events,
     // as we will necessarily be at least 650ms late after a flashing refresh, for instance.
     for (timerfd_node_t* restrict node = timerfds.head; node != NULL; node = node->next) {
@@ -346,10 +346,10 @@ static const struct luaL_Reg input_func[] = { { "open", openInputDevice },
                                               { "closeAll", closeInputDevices },
                                               { "waitForEvent", waitForInput },
                                               { "fakeTapInput", fakeTapInput },
-#ifdef POCKETBOOK
+#if defined(POCKETBOOK)
                                               { "setSuspendState", setSuspendState },
 #endif
-#ifdef WITH_TIMERFD
+#if defined(WITH_TIMERFD)
                                               { "setTimer", setTimer },
                                               { "clearTimer", clearTimer },
 #endif
