@@ -10,8 +10,6 @@ local band = bit.band
 local bor = bit.bor
 local bnot = bit.bnot
 
-local function yes() return true end
-
 -- A couple helper functions to compute aligned values...
 -- c.f., <linux/kernel.h> & ffi/framebuffer_linux.lua
 local function ALIGN_DOWN(x, a)
