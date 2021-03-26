@@ -17,6 +17,7 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#define _GNU_SOURCE
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -86,8 +87,21 @@ static int openInputDevice(lua_State* L)
 
     if (!strcmp("fake_events", inputdevice)) {
         // Special case: the power slider for Kindle and USB events for Kobo.
-        int pipefd[2];
+        int pipefd[2U];
+#if defined(KINDLE_LEGACY)
+        // pipe2 requires Linux 2.6.27 & glibc 2.9...
         pipe(pipefd);
+
+        // Which means we need the fcntl dance like with open below...
+        for (size_t i = 0U; i < 2U; i++) {
+            int flflags = fcntl(pipefd[i], F_GETFL);
+            fcntl(pipefd[i], F_SETFL, flflags | O_NONBLOCK);
+            int fdflags = fcntl(pipefd[i], F_GETFD);
+            fcntl(pipefd[i], F_SETFD, fdflags | FD_CLOEXEC);
+        }
+#else
+        pipe2(pipefd, O_NONBLOCK | O_CLOEXEC);
+#endif
 
         pid_t childpid;
         if ((childpid = fork()) == -1) {
