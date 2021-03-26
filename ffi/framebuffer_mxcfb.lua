@@ -772,34 +772,7 @@ function framebuffer:init()
         self.waveform_flashnight = self.waveform_night
         self.night_is_reagl = false
 
-        -- New devices *may* be REAGL-aware, but generally don't expect explicit REAGL requests, default to not.
-        local isREAGL = false
-
-        -- Mark 7 devices sport an updated driver.
-        -- For now, it appears backward compatibility has been somewhat preserved,
-        -- but let's use the shiny new stuff!
-        local isMk7 = false
-
-        -- NOTE: AFAICT, the Aura was the only one explicitly requiring REAGL requests...
-        if self.device.model == "Kobo_phoenix" then
-            isREAGL = true
-        end
-
-        if self.device.model == "Kobo_star_r2" then
-            isMk7 = true
-        elseif self.device.model == "Kobo_snow_r2" then
-            isMk7 = true
-        elseif self.device.model == "Kobo_nova" then
-            isMk7 = true
-        elseif self.device.model == "Kobo_frost" then
-            isMk7 = true
-        elseif self.device.model == "Kobo_storm" then
-            isMk7 = true
-        elseif self.device.model == "Kobo_luna" then
-            isMk7 = true
-        end
-
-        if isREAGL then
+        if self.device:isREAGL() then
             self.waveform_reagl = C.NTX_WFM_MODE_GLD16
             self.waveform_partial = self.waveform_reagl
             self.waveform_fast = C.WAVEFORM_MODE_DU -- Mainly menu HLs, compare to Kindle's use of AUTO or DU also in these instances ;).
@@ -814,8 +787,7 @@ function framebuffer:init()
         --       This makes interaction between partial and other modes slightly finicky in practice in some corner-cases,
         --       (c.f., the SkimTo/Button widgets workaround where we batch a button's 'fast' highlight with the reader's 'partial',
         --       and then fence *that batch* manually to avoid the (REAGL) 'partial' being delayed by the button's 'fast' highlight).
-        if isMk7 then
-            self.device.canHWDither = yes
+        if self.device:isMk7() then
             self.mech_refresh = refresh_kobo_mk7
             self.mech_wait_update_complete = kobo_mk7_mxc_wait_for_update_complete
 
