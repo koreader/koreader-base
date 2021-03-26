@@ -145,7 +145,7 @@ static int setTimer(lua_State* L)
     // Now we can store that in a new node in our list
     timerfd_node_t* restrict node = timerfd_list_grow(&timerfds);
     if (!node) {
-        fprintf(stderr, "failed to allocate a new node in the timerfd list\n");
+        fprintf(stderr, "Failed to allocate a new node in the timerfd list\n");
         // Cleanup
         close(fd);
         return 0;
@@ -158,7 +158,6 @@ static int setTimer(lua_State* L)
     }
 
     // Success!
-    fprintf(stdout, "setTimer: node is %p\n", node);
     lua_pushlightuserdata(L, (void*) node);
     return 1;  // node
 }
@@ -167,7 +166,6 @@ static int setTimer(lua_State* L)
 static int clearTimer(lua_State* L)
 {
     timerfd_node_t* restrict expired_node = (timerfd_node_t * restrict) lua_touserdata(L, 1);
-    fprintf(stdout, "clearTimer: node is %p\n", expired_node);
 
     timerfd_list_delete_node(&timerfds, expired_node);
 
