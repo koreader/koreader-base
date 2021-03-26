@@ -175,7 +175,7 @@ function input.waitForEvent(usecs)
                         android.lib.AInputQueue_finishEvent(android.app.inputQueue, event[0], handled)
                    end
                 end
-            elseif poll_state == C.ALOOPER_EVENT_FIFO_MESSAGE then
+            elseif poll_state == C.LOOPER_ID_USER then
 
                 local file = io.open(android.dir .. "/alooper.fifo", "rb")
                 local message = file:read(4)
