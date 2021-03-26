@@ -71,7 +71,7 @@ static int openInputDevice(lua_State* L)
 {
     const char* restrict inputdevice = luaL_checkstring(L, 1);
     if (num_fds >= NUM_FDS) {
-        return luaL_error(L, "no free slot for new input device <%s>", inputdevice);
+        return luaL_error(L, "No free slot for new input device <%s>", inputdevice);
     }
     // Otherwise, we're golden, and num_fds is the index of the next free slot in the inputfds array ;).
     const char* restrict ko_dont_grab_input = getenv("KO_DONT_GRAB_INPUT");
@@ -91,17 +91,17 @@ static int openInputDevice(lua_State* L)
 
         pid_t childpid;
         if ((childpid = fork()) == -1) {
-            return luaL_error(L, "cannot fork() fake event generator");
+            return luaL_error(L, "Cannot fork() fake event generator");
         }
         if (childpid == 0) {
-            // Deliver SIGTERM to child when parent crashes.
+            // Deliver SIGTERM to child when parent dies.
             prctl(PR_SET_PDEATHSIG, SIGTERM);
             // NOTE: This function needs to be implemented in each platform-specific input header.
             generateFakeEvent(pipefd);
             // We're done, go away :).
             _exit(EXIT_SUCCESS);
         } else {
-            printf("[ko-input] Forked off fake event generator (pid: %ld).\n", (long) childpid);
+            printf("[ko-input] Forked off fake event generator (pid: %ld)\n", (long) childpid);
             close(pipefd[1]);
             inputfds[num_fds]     = pipefd[0];
             fake_ev_generator_pid = childpid;
@@ -122,22 +122,21 @@ static int openInputDevice(lua_State* L)
             int fdflags = fcntl(inputfds[num_fds], F_GETFD);
             fcntl(inputfds[num_fds], F_SETFD, fdflags | FD_CLOEXEC);
 #endif
-
-            // Compute select's nfds argument.
-            // That's not the actual number of fds in the set, like poll(),
-            // but the highest fd number in the set + 1 (c.f., select(2)).
-            if (inputfds[num_fds] >= nfds) {
-                nfds = inputfds[num_fds] + 1;
-            }
-
-            // That, on the other hand, *is* the number of open fds ;).
-            num_fds++;
-
-            return 0;
         } else {
-            return luaL_error(L, "error opening input device <%s>: %d", inputdevice, errno);
+            return luaL_error(L, "Error opening input device <%s>: %d", inputdevice, errno);
         }
     }
+
+    // Compute select's nfds argument.
+    // That's not the actual number of fds in the set, like poll(),
+    // but the highest fd number in the set + 1 (c.f., select(2)).
+    if (inputfds[num_fds] >= nfds) {
+        nfds = inputfds[num_fds] + 1;
+    }
+
+    // That, on the other hand, *is* the number of open fds ;).
+    num_fds++;
+
     return 0;
 }
 
@@ -174,7 +173,7 @@ static int fakeTapInput(lua_State* L)
 
     int inputfd = open(inputdevice, O_WRONLY | O_NONBLOCK);
     if (inputfd == -1) {
-        return luaL_error(L, "cannot open input device <%s>", inputdevice);
+        return luaL_error(L, "Cannot open input device <%s>: %d", inputdevice, errno);
     }
 
     struct input_event ev = { 0 };
