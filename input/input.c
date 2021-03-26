@@ -90,7 +90,9 @@ static int openInputDevice(lua_State* L)
         int pipefd[2U];
 #if defined(KINDLE_LEGACY)
         // pipe2 requires Linux 2.6.27 & glibc 2.9...
-        pipe(pipefd);
+        if (pipe(pipefd) == -1) {
+            return luaL_error(L, "Cannot create fake event generator communication pipe (pipe(): %d)", errno);
+        }
 
         // Which means we need the fcntl dance like with open below...
         for (size_t i = 0U; i < 2U; i++) {
@@ -100,12 +102,14 @@ static int openInputDevice(lua_State* L)
             fcntl(pipefd[i], F_SETFD, fdflags | FD_CLOEXEC);
         }
 #else
-        pipe2(pipefd, O_NONBLOCK | O_CLOEXEC);
+        if (pipe2(pipefd, O_NONBLOCK | O_CLOEXEC) == -1) {
+            return luaL_error(L, "Cannot create fake event generator communication pipe (pipe2(): %d)", errno);
+        }
 #endif
 
         pid_t childpid;
         if ((childpid = fork()) == -1) {
-            return luaL_error(L, "Cannot fork() fake event generator");
+            return luaL_error(L, "Cannot fork() fake event generator (%d)", errno);
         }
         if (childpid == 0) {
             // Deliver SIGTERM to child when parent dies.
