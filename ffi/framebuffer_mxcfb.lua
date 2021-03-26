@@ -675,44 +675,7 @@ function framebuffer:init()
         self.waveform_flashnight = self.waveform_night
         self.night_is_reagl = false
 
-        -- New devices are REAGL-aware, default to REAGL
-        local isREAGL = true
-
-        -- Zelda uses a new eink driver, one that massively breaks backward compatibility.
-        local isZelda = false
-        -- And because that worked well enough the first time, lab126 did the same with Rex!
-        local isRex = false
-        -- But of course, some devices don't actually support all the features the kernel exposes...
-        local isNightModeChallenged = false
-
-        if self.device.model == "Kindle2" then
-            isREAGL = false
-        elseif self.device.model == "KindleDXG" then
-            isREAGL = false
-        elseif self.device.model == "Kindle3" then
-            isREAGL = false
-        elseif self.device.model == "Kindle4" then
-            isREAGL = false
-        elseif self.device.model == "KindleTouch" then
-            isREAGL = false
-        elseif self.device.model == "KindlePaperWhite" then
-            isREAGL = false
-        end
-
-        if self.device.model == "KindleOasis2" then
-            isZelda = true
-        end
-
-        if self.device.model == "KindlePaperWhite4" then
-            isRex = true
-        elseif self.device.model == "KindleBasic3" then
-            isRex = true
-            -- NOTE: Apparently, the KT4 doesn't actually support the fancy nightmode waveforms, c.f., ko/#5076
-            --       It also doesn't handle HW dithering, c.f., base/#1039
-            isNightModeChallenged = true
-        end
-
-        if isREAGL then
+        if self.device:isREAGL() then
             self.mech_wait_update_complete = kindle_carta_mxc_wait_for_update_complete
             self.waveform_fast = C.WAVEFORM_MODE_DU -- NOTE: DU, because A2 looks terrible on REAGL devices. Older devices/FW may be using AUTO in this instance.
             self.waveform_reagl = C.WAVEFORM_MODE_REAGL
@@ -727,13 +690,8 @@ function framebuffer:init()
         end
 
         -- NOTE: Devices on the Rex platform essentially use the same driver as the Zelda platform, they're just passing a slightly smaller mxcfb_update_data struct
-        if isZelda or isRex then
-            -- NOTE: Turns out, nope, it really doesn't work on *any* of 'em :/ (c.f., ko#5884).
-            --[[
-            self.device.canHWDither = yes
-            --]]
-
-            if isZelda then
+        if self.device:isZelda() or self.device:isRex() then
+            if self.device:isZelda() then
                 self.mech_refresh = refresh_zelda
             else
                 self.mech_refresh = refresh_rex
@@ -748,7 +706,7 @@ function framebuffer:init()
             self.waveform_reagl = C.WAVEFORM_MODE_ZELDA_GLR16
             self.waveform_partial = self.waveform_reagl
             -- NOTE: Because we can't have nice things, we have to account for devices that do not actuallly support the fancy inverted waveforms...
-            if isNightModeChallenged then
+            if self.device:isNightModeChallenged() then
                 self.waveform_night = C.WAVEFORM_MODE_ZELDA_GL16_INV -- NOTE: Currently points to the bog-standard GL16, but one can hope...
                 self.waveform_flashnight = C.WAVEFORM_MODE_GC16
             else
