@@ -33,21 +33,22 @@ static void sendEvent(int fd, struct input_event* ev)
 
 static void generateFakeEvent(int pipefd[2])
 {
-    struct uevent_listener listener;
-    struct uevent          uev;
-    struct input_event     ev;
-
     close(pipefd[0]);
 
-    ev.type  = EV_KEY;
-    ev.value = 1;
-
-    int re = ue_init_listener(&listener);
+    struct uevent_listener listener = { 0 };
+    int                    re       = ue_init_listener(&listener);
     if (re < 0) {
-        fprintf(stderr, "[ko-input]: Failed to initialize libue listener, err: %d\n", re);
+        fprintf(stderr, "[ko-input]: Failed to initialize libue listener (%d)\n", re);
         return;
     }
 
+    // NOTE: We leave the timestamp at zero, we don't know the system's evdev clock source right now,
+    //       and zero works just fine for EV_KEY events.
+    struct input_event ev = { 0 };
+    ev.type               = EV_KEY;
+    ev.value              = 1;
+
+    struct uevent uev;
     while ((re = ue_wait_for_event(&listener, &uev)) == 0) {
         if (uev.devpath && UE_STR_EQ(uev.devpath, USBPLUG_DEVPATH)) {
             switch (uev.action) {
