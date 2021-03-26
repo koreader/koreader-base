@@ -146,6 +146,7 @@ function input.waitForEvent(usecs)
         --       TL;DR: We don't actually use it here.        local poll_state = android.lib.ALooper_pollAll(timeout, nil, events, ffi.cast("void**", source))
         local source = ffi.new("struct android_poll_source*[1]")
         local poll_state = android.lib.ALooper_pollAll(timeout, fd, events, ffi.cast("void**", source))
+
         if poll_state >= 0 then
             -- NOTE: Since we actually want to process this in Lua-land (i.e., here), and not in C-land,
             --       we do *NOT* make use of the weird delayed-callback mechanism afforded by the android_poll_source struct
@@ -174,6 +175,20 @@ function input.waitForEvent(usecs)
                         android.lib.AInputQueue_finishEvent(android.app.inputQueue, event[0], handled)
                    end
                 end
+            elseif poll_state == C.ALOOPER_EVENT_FIFO_MESSAGE then
+
+                local file = io.open(android.dir .. "/alooper.fifo", "rb")
+                local message = file:read(4)
+                file:close()
+
+                local event = string.byte(message:sub(0,1))
+
+                if event == C.EVENT_POWER_CONNECTED then
+                    commandHandler(C.EVENT_POWER_CONNECTED , 0)
+                elseif event == C.EVENT_POWER_DISCONNECTED then
+                    commandHandler(C.EVENT_POWER_DISCONNECTED , 0)
+                end
+
             end
             if android.app.destroyRequested ~= 0 then
                 android.LOGI("Engine thread destroy requested!")
