@@ -172,7 +172,7 @@ function input.waitForEvent(sec, usec)
         local poll_state = android.lib.ALooper_pollAll(timeout, fd, events, ffi.cast("void**", source))
         if poll_state >= 0 then
             -- NOTE: Since we actually want to process this in Lua-land (i.e., here), and not in C-land,
-            --       we do *NOT* make use of the weird delayed-callback mechanism afforded by the android_poll_source struct
+            --       we do *NOT* make use of the weird delayed callback mechanism afforded by the android_poll_source struct
             --       we pass as the data pointer to ALooper in the glue code when registering a polling source.
             --       Instead, we do everything here, which is why this may look eerily like the C functions
             --       process_cmd & process_input in the glue code.
