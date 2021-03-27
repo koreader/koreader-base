@@ -5,6 +5,8 @@ local C = ffi.C
 local android = require("android")
 local dummy = require("ffi/linux_input_h")
 
+require("ffi/posix_h")
+
 local input = {
 -- to trigger refreshes for certain Android framework events:
     device = nil,
@@ -176,19 +178,13 @@ function input.waitForEvent(usecs)
                    end
                 end
             elseif poll_state == C.LOOPER_ID_USER then
-
-                local file = io.open(android.dir .. "/alooper.fifo", "rb")
-                local message = file:read(4)
-                file:close()
-
-                local event = string.byte(message:sub(0,1))
-
-                if event == C.EVENT_POWER_CONNECTED then
+                local message = ffi.new("unsigned char [4]")
+                C.read(fd[0], message, 4)
+                if message[0] == C.EVENT_POWER_CONNECTED then
                     commandHandler(C.EVENT_POWER_CONNECTED , 0)
-                elseif event == C.EVENT_POWER_DISCONNECTED then
+                elseif message[0] == C.EVENT_POWER_DISCONNECTED then
                     commandHandler(C.EVENT_POWER_DISCONNECTED , 0)
                 end
-
             end
             if android.app.destroyRequested ~= 0 then
                 android.LOGI("Engine thread destroy requested!")
