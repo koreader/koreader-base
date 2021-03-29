@@ -10,8 +10,8 @@ local ffi = require("ffi")
 local C = ffi.C
 local BB = require("ffi/blitbuffer")
 
-local _ = require("ffi/posix_h")
-local _ = require("ffi/turbojpeg_h")
+require("ffi/posix_h")
+require("ffi/turbojpeg_h")
 
 local turbojpeg
 if ffi.os == "Windows" then

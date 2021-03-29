@@ -1,5 +1,10 @@
 local ffi = require("ffi")
 
+-- clock_gettime & friends require librt on old glibc versions...
+if ffi.os == "Linux" then
+   pcall(ffi.load, "rt")
+end
+
 -- Handle arch-dependent typedefs...
 if ffi.arch == "x64" then
     require("ffi/posix_types_x64_h")
@@ -12,6 +17,16 @@ else
 end
 
 ffi.cdef[[
+static const int EINTR = 4;
+static const int ETIME = 62;
+static const int EAGAIN = 11;
+static const int EINVAL = 22;
+static const int ENOSYS = 38;
+static const int ETIMEDOUT = 110;
+struct timezone {
+  int tz_minuteswest;
+  int tz_dsttime;
+};
 int pipe(int *) __attribute__((nothrow, leaf));
 int fork(void) __attribute__((nothrow));
 int dup(int) __attribute__((nothrow, leaf));
@@ -24,23 +39,22 @@ static const int O_RDONLY = 0;
 static const int O_WRONLY = 1;
 static const int O_NONBLOCK = 2048;
 static const int O_CLOEXEC = 524288;
-static const int S_IRWXU = 448;
 static const int S_IRUSR = 256;
 static const int S_IWUSR = 128;
 static const int S_IXUSR = 64;
-static const int S_IRWXG = 56;
+static const int S_IRWXU = 448;
 static const int S_IRGRP = 32;
 static const int S_IWGRP = 16;
 static const int S_IXGRP = 8;
-static const int S_IRWX0 = 7;
+static const int S_IRWXG = 56;
 static const int S_IROTH = 4;
 static const int S_IWOTH = 2;
 static const int S_IXOTH = 1;
-
+static const int S_IRWXO = 7;
 int open(const char *, int, ...);
-int mq_open(const char *, int, ...);
-int mq_receive(int, char *, size_t, unsigned int *);
-int mq_close(int);
+int mq_open(const char *, int, ...) __attribute__((nothrow, leaf));
+ssize_t mq_receive(int, char *, size_t, unsigned int *);
+int mq_close(int) __attribute__((nothrow, leaf));
 int close(int);
 int fcntl(int, int, ...);
 int execl(const char *, const char *, ...) __attribute__((nothrow, leaf));
@@ -80,6 +94,17 @@ int gettimeofday(struct timeval *restrict, struct timezone *restrict) __attribut
 char *realpath(const char *restrict, char *restrict) __attribute__((nothrow, leaf));
 char *basename(char *) __attribute__((nothrow, leaf));
 char *dirname(char *) __attribute__((nothrow, leaf));
+typedef int clockid_t;
+static const int CLOCK_REALTIME = 0;
+static const int CLOCK_REALTIME_COARSE = 5;
+static const int CLOCK_MONOTONIC = 1;
+static const int CLOCK_MONOTONIC_COARSE = 6;
+static const int CLOCK_MONOTONIC_RAW = 4;
+static const int CLOCK_BOOTTIME = 7;
+static const int CLOCK_TAI = 11;
+int clock_getres(clockid_t, struct timespec *) __attribute__((nothrow, leaf));
+int clock_gettime(clockid_t, struct timespec *) __attribute__((nothrow, leaf));
+int clock_settime(clockid_t, const struct timespec *) __attribute__((nothrow, leaf));
 void *malloc(size_t) __attribute__((malloc, leaf, nothrow));
 void *calloc(size_t, size_t) __attribute__((malloc, leaf, nothrow));
 void free(void *) __attribute__((leaf, nothrow));
@@ -105,4 +130,33 @@ int fdatasync(int);
 int setenv(const char *, const char *, int) __attribute__((nothrow, leaf));
 int unsetenv(const char *) __attribute__((nothrow, leaf));
 int _putenv(const char *);
+typedef unsigned int id_t;
+enum __priority_which {
+  PRIO_PROCESS = 0,
+  PRIO_PGRP = 1,
+  PRIO_USER = 2,
+};
+typedef enum __priority_which __priority_which_t;
+int getpriority(__priority_which_t, id_t) __attribute__((nothrow, leaf));
+int setpriority(__priority_which_t, id_t, int) __attribute__((nothrow, leaf));
+typedef int pid_t;
+struct sched_param {
+  int sched_priority;
+};
+static const int SCHED_OTHER = 0;
+static const int SCHED_BATCH = 3;
+static const int SCHED_IDLE = 5;
+static const int SCHED_FIFO = 1;
+static const int SCHED_RR = 2;
+static const int SCHED_RESET_ON_FORK = 1073741824;
+int sched_getscheduler(int) __attribute__((nothrow, leaf));
+int sched_setscheduler(int, int, const struct sched_param *) __attribute__((nothrow, leaf));
+int sched_getparam(int, struct sched_param *) __attribute__((nothrow, leaf));
+int sched_setparam(int, const struct sched_param *) __attribute__((nothrow, leaf));
+typedef struct {
+  long unsigned int __bits[32];
+} cpu_set_t;
+int sched_getaffinity(int, size_t, cpu_set_t *) __attribute__((nothrow, leaf));
+int sched_setaffinity(int, size_t, const cpu_set_t *) __attribute__((nothrow, leaf));
+int sched_yield(void) __attribute__((nothrow, leaf));
 ]]

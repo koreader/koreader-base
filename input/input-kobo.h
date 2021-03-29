@@ -24,50 +24,59 @@
 
 #include "libue.h"
 
-static void sendEvent(int fd, struct input_event* ev) {
+static void sendEvent(int fd, struct input_event* ev)
+{
     if (write(fd, ev, sizeof(struct input_event)) == -1) {
         fprintf(stderr, "[ko-input]: Failed to generate fake event.\n");
     }
 }
 
-static void generateFakeEvent(int pipefd[2]) {
-    struct uevent_listener listener;
-    struct uevent uev;
-    struct input_event ev;
-
+static void generateFakeEvent(int pipefd[2])
+{
     close(pipefd[0]);
 
-    ev.type = EV_KEY;
-    ev.value = 1;
-
-    int re = ue_init_listener(&listener);
+    struct uevent_listener listener = { 0 };
+    int                    re       = ue_init_listener(&listener);
     if (re < 0) {
-        fprintf(stderr, "[ko-input]: Failed to initialize libue listener, err: %d\n", re);
+        fprintf(stderr, "[ko-input]: Failed to initialize libue listener (%d)\n", re);
         return;
     }
 
+    // NOTE: We leave the timestamp at zero, we don't know the system's evdev clock source right now,
+    //       and zero works just fine for EV_KEY events.
+    struct input_event ev = { 0 };
+    ev.type               = EV_KEY;
+    ev.value              = 1;
+
+    struct uevent uev;
     while ((re = ue_wait_for_event(&listener, &uev)) == 0) {
         if (uev.devpath && UE_STR_EQ(uev.devpath, USBPLUG_DEVPATH)) {
-            switch(uev.action) {
+            switch (uev.action) {
                 case UEVENT_ACTION_ADD:
                     ev.code = CODE_FAKE_CHARGING;
                     sendEvent(pipefd[1], &ev);
-                break;
+                    break;
                 case UEVENT_ACTION_REMOVE:
                     ev.code = CODE_FAKE_NOT_CHARGING;
                     sendEvent(pipefd[1], &ev);
-                break;
+                    break;
+                default:
+                    // NOP
+                    break;
             }
         } else if (uev.devpath && UE_STR_EQ(uev.devpath, USBHOST_DEVPATH)) {
-            switch(uev.action) {
+            switch (uev.action) {
                 case UEVENT_ACTION_ADD:
                     ev.code = CODE_FAKE_USB_PLUG_IN;
                     sendEvent(pipefd[1], &ev);
-                break;
+                    break;
                 case UEVENT_ACTION_REMOVE:
                     ev.code = CODE_FAKE_USB_PLUG_OUT;
                     sendEvent(pipefd[1], &ev);
-                break;
+                    break;
+                default:
+                    // NOP
+                    break;
             }
         }
     }

@@ -20,7 +20,7 @@
 
 local ffi = require("ffi")
 local C = ffi.C
-local posix = require("ffi/posix_h") -- luacheck: ignore 211
+require("ffi/posix_h")
 local bit = require("bit")
 
 -- CosminApreutesei's implementation from http://lua-users.org/wiki/SplitJoin
