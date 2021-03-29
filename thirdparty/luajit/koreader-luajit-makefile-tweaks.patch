@@ -1,5 +1,5 @@
 diff --git a/src/Makefile b/src/Makefile
-index e65b55e..4afb918 100644
+index ca4afeab..9bc109d8 100644
 --- a/src/Makefile
 +++ b/src/Makefile
 @@ -211,7 +211,8 @@ TARGET_CC= $(STATIC_CC)
@@ -12,7 +12,7 @@ index e65b55e..4afb918 100644
  TARGET_STRIP= $(CROSS)strip
  
  TARGET_LIBPATH= $(or $(PREFIX),/usr/local)/$(or $(MULTILIB),lib)
-@@ -343,6 +344,7 @@ else
+@@ -347,6 +348,7 @@ else
    endif
    ifeq (Linux,$(TARGET_SYS))
      TARGET_XLIBS+= -ldl
@@ -20,7 +20,7 @@ index e65b55e..4afb918 100644
    endif
    ifeq (GNU/kFreeBSD,$(TARGET_SYS))
      TARGET_XLIBS+= -ldl
-@@ -632,7 +634,7 @@ depend:
+@@ -638,7 +640,7 @@ depend:
  
  $(MINILUA_T): $(MINILUA_O)
  	$(E) "HOSTLINK  $@"
@@ -29,7 +29,7 @@ index e65b55e..4afb918 100644
  
  host/buildvm_arch.h: $(DASM_DASC) $(DASM_DEP) $(DASM_DIR)/*.lua lj_arch.h lua.h luaconf.h
  	$(E) "DYNASM    $@"
-@@ -642,7 +644,7 @@ host/buildvm.o: $(DASM_DIR)/dasm_*.h
+@@ -648,7 +650,7 @@ host/buildvm.o: $(DASM_DIR)/dasm_*.h
  
  $(BUILDVM_T): $(BUILDVM_O)
  	$(E) "HOSTLINK  $@"
@@ -38,7 +38,7 @@ index e65b55e..4afb918 100644
  
  $(LJVM_BOUT): $(BUILDVM_T)
  	$(E) "BUILDVM   $@"
-@@ -703,16 +705,17 @@ include Makefile.dep
+@@ -709,16 +711,17 @@ include Makefile.dep
  $(LUAJIT_A): $(LJVMCORE_O)
  	$(E) "AR        $@"
  	$(Q)$(TARGET_AR) $@ $(LJVMCORE_O)

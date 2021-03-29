@@ -71,12 +71,10 @@ set(BUILD_CMD sh -c "${BUILD_CMD_STR}")
 
 set(PATCH_CMD "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/koreader-luajit-makefile-tweaks.patch")
 
-# NOTE: Once the dust settles, all forks seem to lead to https://github.com/moonjit/moonjit
-#       Keep that in mind for later, if the need ever arise...
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
     https://github.com/LuaJIT/LuaJIT
-    1e66d0f9e6698fdee672c40a9a5b4159c9254091
+    9442226825e8e5be38474492adf7742dd47a4902
     ${SOURCE_DIR}
 )
 
