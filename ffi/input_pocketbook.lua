@@ -139,6 +139,7 @@ function input:open()
     compat.PrepareForLoop(translateEvent)
 end
 
+-- CLOCK_REALTIME value, in µs
 local function now()
     local s, u = util.gettime()
     return tonumber(s) * 1000000.0 + u
@@ -161,8 +162,8 @@ end
 
 local is_active = false
 local next_sleep = 0
-local function waitForEventRaw(t)
-    local expire = now() + t
+local function waitForEventRaw(timeout)
+    local expire = now() + timeout
     while true do
         local active = inkview.IsTaskActive() ~= 0
         -- Focus in/out transition, emit a synthetic event.
@@ -171,7 +172,7 @@ local function waitForEventRaw(t)
             -- so as to not accidentaly go sleeping mid fb refresh.
             next_sleep = now() + 10 * 1000 * 1000
             is_active = active
-            return {
+            return true, {
                 type = C.EV_MSC,
                 code = active and C.EVT_SHOW or C.EVT_HIDE,
                 value = 0,
@@ -197,7 +198,8 @@ local function waitForEventRaw(t)
 
         local remain = expire - now()
         if remain < 0 then
-            error("Waiting for input failed: timeout\n")
+            -- Timed out
+            return false, C.ETIME
         end
 
         local ms = math.max(math.min(remain / 1000, 1000), 20)
@@ -207,8 +209,11 @@ local function waitForEventRaw(t)
         end
         local res = C.poll(poll_fds, poll_fds_count, ms)
         if res < 0 then
-            error("poll(): " .. ffi.string(C.strerror(ffi.errno())))
+            return false, ffi.errno()
         end
+
+        --- @note: No poll timeout handling?
+        --         e.g., if res == 0 then return false, C.ETIME end
 
         -- Message from monitor. This sendss us both touch and key events, but not in a format
         -- thats particularly useful. Keys are nice as they have symbolic names already, but
@@ -237,19 +242,21 @@ local function waitForEventRaw(t)
                 end
             end
         end
-        if #eventq > 0 then return table.remove(eventq, 1) end
+        if #eventq > 0 then return true, table.remove(eventq, 1) end
     end
 end
 
-function input.waitForEvent(t)
-    t = t or 2000000
+function input.waitForEvent(sec, usec)
+    -- TimeVal's :tousecs if we were passed one to begin with, otherwise => 2s
+    --- @note: This is unlike every other platform, where the fallback is an infinite timeout!
+    local timeout = sec and math.floor(sec * 1000000 + usec + 0.5) or 2000000
     assert(eventq, "waitForEvent() invoked after device shutdown")
-    if #eventq > 0 then return table.remove(eventq, 1) end
+    if #eventq > 0 then return true, table.remove(eventq, 1) end
     if poll_fds then
         -- This variant uses low-level input I/O bypassing inkview for that entirely
-        return waitForEventRaw(t)
+        return waitForEventRaw(timeout)
     end
-    local expire = now() + t
+    local expire = now() + timeout
     while expire > now() do
         -- About ProcessEventLoop():
         -- When events are pending, translateEvent() cb is called for each here (it remembers what we've announced in PrepareForLoop).
@@ -257,9 +264,10 @@ function input.waitForEvent(t)
         -- The call holds for 20ms and returns control once no further input is seen during that time. If iv_sleepmode is 1 however, and
         -- no input is seen for >2 seconds (it keeps track across invocations), the call will perform full OS suspend ("autostandby").
         compat.ProcessEventLoop()
-        if #eventq > 0 then return table.remove(eventq, 1) end
+        if #eventq > 0 then return true, table.remove(eventq, 1) end
     end
-    error("Waiting for input failed: timeout\n")
+    -- Timed out
+    return false, C.ETIME
 end
 
 function input.fakeTapInput() end

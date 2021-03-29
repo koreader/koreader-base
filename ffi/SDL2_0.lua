@@ -14,8 +14,9 @@ local ffi = require("ffi")
 local util = require("ffi/util")
 local C = ffi.C
 
-local dummy = require("ffi/SDL2_0_h")
-local dummy = require("ffi/linux_input_h")
+require("ffi/posix_h")
+require("ffi/SDL2_0_h")
+require("ffi/linux_input_h")
 
 -----------------------------------------------------------------
 
@@ -41,9 +42,6 @@ end
 local function SDL_Linked_Version_AtLeast(x, y, z)
     return SDL_VersionNum(sdl_linked_ver[0].major, sdl_linked_ver[0].minor, sdl_linked_ver[0].patch) >= SDL_VersionNum(x, y, z)
 end
-
--- for frontend SDL event handling
-local EV_SDL = 53 -- ASCII code for S
 
 local S = {
     w = 0, h = 0,
@@ -87,6 +85,7 @@ function S.open(w, h, x, y)
     SDL.SDL_SetMainReady()
 
     if SDL.SDL_Init(bit.bor(SDL.SDL_INIT_VIDEO,
+                            SDL.SDL_INIT_EVENTS,
                             SDL.SDL_INIT_JOYSTICK,
                             SDL.SDL_INIT_GAMECONTROLLER)) ~= 0 then
         error("Cannot initialize SDL: " .. ffi.string(SDL.SDL_GetError()))
@@ -160,13 +159,21 @@ end
 local inputQueue = {}
 
 local function genEmuEvent(evtype, code, value)
-    local secs, usecs = util.gettime()
+    -- NOTE: SDL timestamps are in ms since application startup, which doesn't tell us anything useful,
+    --       so, use synthetic ones in the same timescale as the UI.
+    local timespec = ffi.new("struct timespec")
+    C.clock_gettime(C.CLOCK_MONOTONIC_COARSE, timespec)
+    local timev = {
+        sec = tonumber(timespec.tv_sec),
+        -- ns to µs
+        usec = math.floor(tonumber(timespec.tv_nsec / 1000)),
+    }
 
     local ev = {
         type = tonumber(evtype),
         code = tonumber(code),
         value = tonumber(value) or value,
-        time = { sec = secs, usec = usecs },
+        time = timev,
     }
     table.insert(inputQueue, ev)
 end
@@ -184,7 +191,7 @@ local function handleWindowEvent(event_window)
     elseif (event_window.event == SDL.SDL_WINDOWEVENT_RESIZED
              or event_window.event == SDL.SDL_WINDOWEVENT_SIZE_CHANGED
              or event_window.event == SDL.SDL_WINDOWEVENT_MOVED) then
-        genEmuEvent(EV_SDL, event_window.event, event_window)
+        genEmuEvent(C.EV_SDL, event_window.event, event_window)
     end
 end
 
@@ -246,38 +253,25 @@ local SDL_BUTTON_LEFT = 1
 
 local is_in_touch = false
 
-function S.waitForEvent(usecs)
-    usecs = usecs or -1
+function S.waitForEvent(sec, usec)
     local event = ffi.new("union SDL_Event")
-    local countdown = usecs
+    -- TimeVal's :tomsecs if we were passed one to begin with, otherwise, -1 => block
+    local timeout = sec and math.floor(sec * 1000000 + usec + 0.5) / 1000 or -1
     while true do
         -- check for queued events
         if #inputQueue > 0 then
             -- return oldest FIFO element
-            return table.remove(inputQueue, 1)
+            return true, table.remove(inputQueue, 1)
         end
 
         -- otherwise, wait for event
-        local got_event = 0
-        if usecs < 0 then
-            got_event = SDL.SDL_WaitEvent(event);
-        else
-            -- timeout mode - use polling
-            while countdown > 0 and got_event == 0 do
-                got_event = SDL.SDL_PollEvent(event)
-                if got_event == 0 then
-                    -- no event, wait 10 msecs before polling again
-                    SDL.SDL_Delay(10)
-                    countdown = countdown - 10000
-                end
-            end
-        end
+        local got_event = SDL.SDL_WaitEventTimeout(event, timeout)
         if got_event == 0 then
-            error("Waiting for input failed: timeout\n")
+            -- ETIME
+            return false, C.ETIME
         end
 
-        -- if we got an event, examine it here and generate
-        -- events for koreader
+        -- if we got an event, examine it here and generate events for koreader
         if ffi.os == "OSX" and (event.type == SDL.SDL_FINGERMOTION or
             event.type == SDL.SDL_FINGERDOWN or
             event.type == SDL.SDL_FINGERUP) then
@@ -288,7 +282,7 @@ function S.waitForEvent(usecs)
         elseif event.type == SDL.SDL_KEYUP then
             genEmuEvent(C.EV_KEY, event.key.keysym.sym, 0)
         elseif event.type == SDL.SDL_TEXTINPUT then
-            genEmuEvent(EV_SDL, SDL.SDL_TEXTINPUT, ffi.string(event.text.text))
+            genEmuEvent(C.EV_SDL, SDL.SDL_TEXTINPUT, ffi.string(event.text.text))
         elseif event.type == SDL.SDL_MOUSEMOTION
             or event.type == SDL.SDL_FINGERMOTION then
             local is_finger = event.type == SDL.SDL_FINGERMOTION
@@ -316,14 +310,15 @@ function S.waitForEvent(usecs)
             end
         elseif event.type == SDL.SDL_MOUSEBUTTONUP
             or event.type == SDL.SDL_FINGERUP then
-            is_in_touch = false;
+            is_in_touch = false
             genEmuEvent(C.EV_ABS, C.ABS_MT_TRACKING_ID, -1)
             genEmuEvent(C.EV_SYN, C.SYN_REPORT, 0)
         elseif event.type == SDL.SDL_MOUSEBUTTONDOWN
             or event.type == SDL.SDL_FINGERDOWN then
             local is_finger = event.type == SDL.SDL_FINGERDOWN
             if not is_finger and event.button.button ~= SDL_BUTTON_LEFT then
-                return
+                -- Not a left-click?
+                return false, C.ENOSYS
             end
             -- use mouse click to simulate single tap
             is_in_touch = true
@@ -334,15 +329,15 @@ function S.waitForEvent(usecs)
                 is_finger and event.tfinger.y * S.h or event.button.y)
             genEmuEvent(C.EV_SYN, C.SYN_REPORT, 0)
         elseif event.type == SDL.SDL_MULTIGESTURE then
-            genEmuEvent(EV_SDL, SDL.SDL_MULTIGESTURE, event.mgesture)
+            genEmuEvent(C.EV_SDL, SDL.SDL_MULTIGESTURE, event.mgesture)
         elseif event.type == SDL.SDL_MOUSEWHEEL then
-            genEmuEvent(EV_SDL, SDL.SDL_MOUSEWHEEL, event.wheel)
+            genEmuEvent(C.EV_SDL, SDL.SDL_MOUSEWHEEL, event.wheel)
         elseif event.type == SDL.SDL_DROPFILE then
             local dropped_file_path = ffi.string(event.drop.file)
-            genEmuEvent(EV_SDL, SDL.SDL_DROPFILE, dropped_file_path)
+            genEmuEvent(C.EV_SDL, SDL.SDL_DROPFILE, dropped_file_path)
         elseif event.type == SDL.SDL_DROPTEXT then
             local dropped_text = ffi.string(event.drop.file)
-            genEmuEvent(EV_SDL, SDL.SDL_DROPTEXT, dropped_text)
+            genEmuEvent(C.EV_SDL, SDL.SDL_DROPTEXT, dropped_text)
         elseif event.type == SDL.SDL_WINDOWEVENT then
             handleWindowEvent(event.window)
         --- Gamepad support ---
@@ -401,6 +396,7 @@ function S.waitForEvent(usecs)
                 genEmuEvent(C.EV_KEY, 1073741903, 1)
             end
         elseif event.type == SDL.SDL_QUIT then
+            -- NOTE: Generated on SIGTERM, among other things. (Not SIGINT, because LuaJIT already installs a handler for that).
             -- send Alt + F4
             genEmuEvent(C.EV_KEY, 1073742050, 1)
             genEmuEvent(C.EV_KEY, 1073741885, 1)

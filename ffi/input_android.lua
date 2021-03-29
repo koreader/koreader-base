@@ -3,7 +3,8 @@ local bit = require("bit")
 local C = ffi.C
 
 local android = require("android")
-local dummy = require("ffi/linux_input_h")
+require("ffi/posix_h")
+require("ffi/linux_input_h")
 
 local input = {
 -- to trigger refreshes for certain Android framework events:
@@ -15,14 +16,31 @@ end
 
 local inputQueue = {}
 
-local ev_time = ffi.new("struct timeval")
-local function genEmuEvent(evtype, code, value)
-    C.gettimeofday(ev_time, nil)
+local function genEmuEvent(evtype, code, value, ts)
+    local timev = { sec = 0, usec = 0 }
+    if ts then
+        -- If we've got one, trust the native event's timestamp, they're guaranteed to be in the CLOCK_MONOTONIC timebase.
+        -- ns to µs
+        -- NOTE: Unlike the Java APIs, this is in nanoseconds!
+        --       c.f., https://developer.android.com/ndk/reference/group/input#amotionevent_geteventtime
+        local us = ts / 1000
+        -- TimeVal, how I miss thee...
+        timev.sec = math.floor(tonumber(us / 1000000))
+        timev.usec = tonumber(us % 1000000)
+    else
+        -- Otherwise, synthetize one in the same time scale.
+        -- TimeVal probably ought to be in base...
+        local timespec = ffi.new("struct timespec")
+        C.clock_gettime(C.CLOCK_MONOTONIC, timespec)
+        timev.sec = tonumber(timespec.tv_sec)
+        -- ns to µs
+        timev.usec = math.floor(tonumber(timespec.tv_nsec / 1000))
+    end
     local ev = {
         type = tonumber(evtype),
         code = tonumber(code),
         value = tonumber(value),
-        time = { sec = tonumber(ev_time.tv_sec), usec = tonumber(ev_time.tv_usec) }
+        time = timev,
     }
     table.insert(inputQueue, ev)
 end
@@ -30,30 +48,33 @@ end
 local function genTouchDownEvent(event, id)
     local x = android.lib.AMotionEvent_getX(event, id)
     local y = android.lib.AMotionEvent_getY(event, id)
-    genEmuEvent(C.EV_ABS, C.ABS_MT_SLOT, id)
-    genEmuEvent(C.EV_ABS, C.ABS_MT_TRACKING_ID, id)
-    genEmuEvent(C.EV_ABS, C.ABS_MT_POSITION_X, x)
-    genEmuEvent(C.EV_ABS, C.ABS_MT_POSITION_Y, y)
-    genEmuEvent(C.EV_SYN, C.SYN_REPORT, 0)
+    local ts = android.lib.AMotionEvent_getEventTime(event)
+    genEmuEvent(C.EV_ABS, C.ABS_MT_SLOT, id, ts)
+    genEmuEvent(C.EV_ABS, C.ABS_MT_TRACKING_ID, id, ts)
+    genEmuEvent(C.EV_ABS, C.ABS_MT_POSITION_X, x, ts)
+    genEmuEvent(C.EV_ABS, C.ABS_MT_POSITION_Y, y, ts)
+    genEmuEvent(C.EV_SYN, C.SYN_REPORT, 0, ts)
 end
 
 local function genTouchUpEvent(event, id)
     local x = android.lib.AMotionEvent_getX(event, id)
     local y = android.lib.AMotionEvent_getY(event, id)
-    genEmuEvent(C.EV_ABS, C.ABS_MT_SLOT, id)
-    genEmuEvent(C.EV_ABS, C.ABS_MT_TRACKING_ID, -1)
-    genEmuEvent(C.EV_ABS, C.ABS_MT_POSITION_X, x)
-    genEmuEvent(C.EV_ABS, C.ABS_MT_POSITION_Y, y)
-    genEmuEvent(C.EV_SYN, C.SYN_REPORT, 0)
+    local ts = android.lib.AMotionEvent_getEventTime(event)
+    genEmuEvent(C.EV_ABS, C.ABS_MT_SLOT, id, ts)
+    genEmuEvent(C.EV_ABS, C.ABS_MT_TRACKING_ID, -1, ts)
+    genEmuEvent(C.EV_ABS, C.ABS_MT_POSITION_X, x, ts)
+    genEmuEvent(C.EV_ABS, C.ABS_MT_POSITION_Y, y, ts)
+    genEmuEvent(C.EV_SYN, C.SYN_REPORT, 0, ts)
 end
 
 local function genTouchMoveEvent(event, id, index)
     local x = android.lib.AMotionEvent_getX(event, index)
     local y = android.lib.AMotionEvent_getY(event, index)
-    genEmuEvent(C.EV_ABS, C.ABS_MT_SLOT, id)
-    genEmuEvent(C.EV_ABS, C.ABS_MT_POSITION_X, x)
-    genEmuEvent(C.EV_ABS, C.ABS_MT_POSITION_Y, y)
-    genEmuEvent(C.EV_SYN, C.SYN_REPORT, 0)
+    local ts = android.lib.AMotionEvent_getEventTime(event)
+    genEmuEvent(C.EV_ABS, C.ABS_MT_SLOT, id, ts)
+    genEmuEvent(C.EV_ABS, C.ABS_MT_POSITION_X, x, ts)
+    genEmuEvent(C.EV_ABS, C.ABS_MT_POSITION_Y, y, ts)
+    genEmuEvent(C.EV_SYN, C.SYN_REPORT, 0, ts)
 end
 
 local is_in_touch = false
@@ -117,9 +138,11 @@ local function keyEventHandler(key_event)
         return 1
     end
     if action == C.AKEY_EVENT_ACTION_DOWN then
-        genEmuEvent(C.EV_KEY, code, 1)
+        local ts = android.lib.AKeyEvent_getEventTime(key_event)
+        genEmuEvent(C.EV_KEY, code, 1, ts)
     elseif action == C.AKEY_EVENT_ACTION_UP then
-        genEmuEvent(C.EV_KEY, code, 0)
+        local ts = android.lib.AKeyEvent_getEventTime(key_event)
+        genEmuEvent(C.EV_KEY, code, 0, ts)
     end
     return 1 -- event consumed
 end
@@ -128,48 +151,65 @@ local function commandHandler(code, value)
     genEmuEvent(C.EV_MSC, code, value)
 end
 
-function input.waitForEvent(usecs)
-    local timeout = math.ceil(usecs and usecs/1000 or -1)
+function input.waitForEvent(sec, usec)
+    -- TimeVal's :tomsecs if we were passed one to begin with, otherwise, -1 => block
+    local timeout = sec and math.floor(sec * 1000000 + usec + 0.5) / 1000 or -1
     while true do
         -- check for queued events
         if #inputQueue > 0 then
             -- return oldest FIFO element
-            return table.remove(inputQueue, 1)
+            return true, table.remove(inputQueue, 1)
         end
+        -- Will point to the the raw fd number
+        local fd     = ffi.new("int[1]")
+        -- Will point to the poll events
         local events = ffi.new("int[1]")
+        -- Will point to the data passed at addFd/attachLooper time, c.f., the android_poll_source struct definition.
+        -- NOTE: Its id field is mostly redundant, as ALooper already returns the ident.
+        --       And its process function can be used as a weird delayed callback mechanism, but ALooper already has native callback handling :?.
+        --       TL;DR: We don't actually use it here.
         local source = ffi.new("struct android_poll_source*[1]")
-        local poll_state = android.lib.ALooper_pollAll(timeout, nil, events, ffi.cast("void**", source))
+        local poll_state = android.lib.ALooper_pollAll(timeout, fd, events, ffi.cast("void**", source))
         if poll_state >= 0 then
-            if source[0] ~= nil then
-                --source[0].process(android.app, source[0])
-                if source[0].id == C.LOOPER_ID_MAIN then
-                    local cmd = android.glue.android_app_read_cmd(android.app)
-                    android.glue.android_app_pre_exec_cmd(android.app, cmd)
-                    commandHandler(cmd, 1)
-                    android.glue.android_app_post_exec_cmd(android.app, cmd)
-                elseif source[0].id == C.LOOPER_ID_INPUT then
-                    local event = ffi.new("AInputEvent*[1]")
-                    while android.lib.AInputQueue_getEvent(android.app.inputQueue, event) >= 0 do
-                        if android.lib.AInputQueue_preDispatchEvent(android.app.inputQueue, event[0]) == 0 then
-                            local event_type = android.lib.AInputEvent_getType(event[0])
-                            local handled = 1
-                            if event_type == C.AINPUT_EVENT_TYPE_MOTION then
-                                motionEventHandler(event[0])
-                            elseif event_type == C.AINPUT_EVENT_TYPE_KEY then
-                                handled = keyEventHandler(event[0])
-                            end
-                            android.lib.AInputQueue_finishEvent(android.app.inputQueue, event[0], handled)
+            -- NOTE: Since we actually want to process this in Lua-land (i.e., here), and not in C-land,
+            --       we do *NOT* make use of the weird delayed callback mechanism afforded by the android_poll_source struct
+            --       we pass as the data pointer to ALooper in the glue code when registering a polling source.
+            --       Instead, we do everything here, which is why this may look eerily like the C functions
+            --       process_cmd & process_input in the glue code.
+            --       Sidebar: if you *actually* need to process stuff in C-land ASAP, use ALooper's native callback system.
+            if poll_state == C.LOOPER_ID_MAIN then
+                -- e.g., source[0].process(android.app, source[0]) where process would point to process_cmd
+                local cmd = android.glue.android_app_read_cmd(android.app)
+                android.glue.android_app_pre_exec_cmd(android.app, cmd)
+                commandHandler(cmd, 1)
+                android.glue.android_app_post_exec_cmd(android.app, cmd)
+            elseif poll_state == C.LOOPER_ID_INPUT then
+                -- e.g., source[0].process(android.app, source[0]) where process would point to process_input
+                local event = ffi.new("AInputEvent*[1]")
+                while android.lib.AInputQueue_getEvent(android.app.inputQueue, event) >= 0 do
+                    if android.lib.AInputQueue_preDispatchEvent(android.app.inputQueue, event[0]) == 0 then
+                        local event_type = android.lib.AInputEvent_getType(event[0])
+                        local handled = 1
+                        if event_type == C.AINPUT_EVENT_TYPE_MOTION then
+                            motionEventHandler(event[0])
+                        elseif event_type == C.AINPUT_EVENT_TYPE_KEY then
+                            handled = keyEventHandler(event[0])
                         end
+                        android.lib.AInputQueue_finishEvent(android.app.inputQueue, event[0], handled)
                     end
                 end
             end
             if android.app.destroyRequested ~= 0 then
                 android.LOGI("Engine thread destroy requested!")
-                return
+                -- Do nothing, if this is set, we've already pushed an APP_CMD_DESTROY event that'll get handled in front.
             end
         elseif poll_state == C.ALOOPER_POLL_TIMEOUT then
-            error("Waiting for input failed: timeout\n")
+            return false, C.ETIME
+        elseif poll_state == C.ALOOPER_POLL_ERROR then
+            android.LOGE("Encountered a polling error!")
+            return
         end
+        -- NOTE: We never set callbacks, and we never call wake, so no need to check for ALOOPER_POLL_CALLBACK & ALOOPER_POLL_WAKE
     end
 end
 

@@ -4,7 +4,7 @@ local ffiUtil = require("ffi/util")
 local BB = require("ffi/blitbuffer")
 local C = ffi.C
 
-local dummy = require("ffi/posix_h")
+require("ffi/posix_h")
 
 local band = bit.band
 local bor = bit.bor

@@ -23,7 +23,7 @@ local uint32pt = ffi.typeof("uint32_t*")
 local uint16pt = ffi.typeof("uint16_t*")
 local uint8pt = ffi.typeof("uint8_t*")
 local uint8pt_rodata = ffi.typeof("const uint8_t*")
-local posix = require("ffi/posix_h") -- luacheck: ignore 211
+require("ffi/posix_h")
 
 -- the following definitions are redundant.
 -- they need to be since only this way we can set

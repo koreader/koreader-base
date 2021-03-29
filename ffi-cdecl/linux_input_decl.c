@@ -19,11 +19,16 @@ cdecl_const(EV_FF)
 cdecl_const(EV_PWR)
 cdecl_const(EV_FF_STATUS)
 cdecl_const(EV_MAX)
+// We manually append an EV_SDL = 'S' constant.
 
 cdecl_const(SYN_REPORT)
 cdecl_const(SYN_CONFIG)
 cdecl_const(SYN_MT_REPORT)
 cdecl_const(SYN_DROPPED)
+
+cdecl_const(ABS_X)
+cdecl_const(ABS_Y)
+cdecl_const(ABS_PRESSURE)
 
 cdecl_const(ABS_MT_SLOT)
 cdecl_const(ABS_MT_TOUCH_MAJOR)
@@ -40,5 +45,7 @@ cdecl_const(ABS_MT_PRESSURE)
 cdecl_const(ABS_MT_DISTANCE)
 cdecl_const(ABS_MT_TOOL_X)
 cdecl_const(ABS_MT_TOOL_Y)
+
+cdecl_const(MSC_RAW)
 
 cdecl_struct(input_event)
