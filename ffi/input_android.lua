@@ -169,9 +169,7 @@ function input.waitForEvent(sec, usec)
         --       And its process function can be used as a weird delayed callback mechanism, but ALooper already has native callback handling :?.
         --       TL;DR: We don't actually use it here.
         local source = ffi.new("struct android_poll_source*[1]")
-
-        local poll_state = android.lib.ALooper_pollAll(timeout, nil, events, ffi.cast("void**", source))
-
+        local poll_state = android.lib.ALooper_pollAll(timeout, fd, events, ffi.cast("void**", source))
         if poll_state >= 0 then
             -- NOTE: Since we actually want to process this in Lua-land (i.e., here), and not in C-land,
             --       we do *NOT* make use of the weird delayed callback mechanism afforded by the android_poll_source struct
@@ -212,30 +210,6 @@ function input.waitForEvent(sec, usec)
             if android.app.destroyRequested ~= 0 then
                 android.LOGI("Engine thread destroy requested!")
                 -- Do nothing, if this is set, we've already pushed an APP_CMD_DESTROY event that'll get handled in front.
-            end
-        elseif poll_state == C.ALOOPER_POLL_WAKE then
-            -- this happens, when ALOOPER receives infos from the native_glue_fifo
-            android.LOGD("ALOOPER_POLL_WAKE")
-            if android.isCharging() then
-                commandHandler(C.MSC_CHARGE, 1)
-            else
-                commandHandler(C.MSC_CHARGE, 0)
-            end
-        elseif poll_state == C.ALOOPER_POLL_WAKE then
-            -- this happens, when ALOOPER receives infos from the native_glue_fifo.
-            -- For now the userData contains four bytes. The first one contains the message
-            -- the other three can be used vor additional values.
-            android.LOGD("ALOOPER_POLL_WAKE")
-            local message = ffi.cast("char*", android.app.userData)
-
-            android.LOGD("message received:" .. message[0])
-
-            if message[0] == C.EVENT_POWER_CONNECTED then
-                commandHandler(C.EVENT_POWER_CONNECTED , 0)
-            elseif message[0] == C.EVENT_POWER_DISCONNECTED then
-                commandHandler(C.EVENT_POWER_DISCONNECTED , 0)
-            else
-                android.LOGE("Unknown ALOOPER_POLL_WAKE message")
             end
         elseif poll_state == C.ALOOPER_POLL_TIMEOUT then
             return false, C.ETIME
