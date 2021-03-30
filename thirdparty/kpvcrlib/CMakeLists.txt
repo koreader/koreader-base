@@ -66,6 +66,7 @@ add_definitions(
     -DUSE_ZSTD=1
     -DALLOW_KERNING=1
     -DCR3_PATCH=1
+    -DMATHML_SUPPORT=1
 )
 
 if(${CMAKE_BUILD_TYPE} STREQUAL Debug)
@@ -163,6 +164,7 @@ set (CRENGINE_SOURCES
     ${CRE_DIR}/src/lvpagesplitter.cpp
     ${CRE_DIR}/src/lvtextfm.cpp
     ${CRE_DIR}/src/lvrend.cpp
+    ${CRE_DIR}/src/mathml.cpp
     ${CRE_DIR}/src/wolutil.cpp
     ${CRE_DIR}/src/hist.cpp
     ${CRE_DIR}/src/cri18n.cpp

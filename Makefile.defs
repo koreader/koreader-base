@@ -704,6 +704,8 @@ CRENGINE_DIR=$(CURDIR)/$(CRENGINE_BUILD_DIR)
 CRENGINE_SRC_DIR=$(CURDIR)/$(THIRDPARTY_DIR)/kpvcrlib/crengine
 CRENGINE_SRC_FILES=$(wildcard $(CRENGINE_SRC_DIR)/crengine/src/*.cpp)
 CRENGINE_SRC_FILES+=$(wildcard $(CRENGINE_SRC_DIR)/crengine/include/*.h)
+CRENGINE_SRC_FILES+=$(wildcard $(CRENGINE_SRC_DIR)/crengine/src/*.h)
+CRENGINE_SRC_FILES+=$(wildcard $(CRENGINE_SRC_DIR)/crengine/src/*_h.*)
 CRENGINE_LIB=$(OUTPUT_DIR)/libs/libcrengine$(LIB_EXT)
 
 LUAJIT_BUILD_DIR=$(THIRDPARTY_DIR)/luajit/build/$(MACHINE)
