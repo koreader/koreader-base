@@ -26,9 +26,17 @@ cdecl_const(SYN_CONFIG)
 cdecl_const(SYN_MT_REPORT)
 cdecl_const(SYN_DROPPED)
 
+cdecl_const(BTN_TOOL_PEN)
+cdecl_const(BTN_TOOL_FINGER)
+cdecl_const(BTN_TOOL_RUBBER)
+cdecl_const(BTN_TOUCH)
+cdecl_const(BTN_STYLUS)
+
 cdecl_const(ABS_X)
 cdecl_const(ABS_Y)
 cdecl_const(ABS_PRESSURE)
+cdecl_const(ABS_TILT_X)
+cdecl_const(ABS_TILT_Y)
 
 cdecl_const(ABS_MT_SLOT)
 cdecl_const(ABS_MT_TOUCH_MAJOR)
