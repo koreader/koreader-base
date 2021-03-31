@@ -1,10 +1,5 @@
 local ffi = require("ffi")
 
--- clock_gettime & friends require librt on old glibc versions...
-if ffi.os == "Linux" then
-   pcall(ffi.load, "rt")
-end
-
 -- Handle arch-dependent typedefs...
 if ffi.arch == "x64" then
     require("ffi/posix_types_x64_h")
@@ -160,3 +155,9 @@ int sched_getaffinity(int, size_t, cpu_set_t *) __attribute__((nothrow, leaf));
 int sched_setaffinity(int, size_t, const cpu_set_t *) __attribute__((nothrow, leaf));
 int sched_yield(void) __attribute__((nothrow, leaf));
 ]]
+
+-- clock_gettime & friends require librt on old glibc (< 2.17) versions...
+if ffi.os == "Linux" then
+    -- Load it in the global namespace to make it easier on callers...
+    pcall(ffi.load, "/lib/librt.so.1", true)
+end
