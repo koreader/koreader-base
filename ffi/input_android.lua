@@ -210,6 +210,12 @@ function input.waitForEvent(sec, usec)
             return
         end
         -- NOTE: We never set callbacks, and we never call wake, so no need to check for ALOOPER_POLL_CALLBACK & ALOOPER_POLL_WAKE
+
+        -- poll returned early with something we don't do anything with
+        if timeout ~= -1 and #inputQueue == 0 then
+            -- Back to Input:waitEvent to recompute the timeout
+            return false, C.EINTR
+        end
     end
 end
 
