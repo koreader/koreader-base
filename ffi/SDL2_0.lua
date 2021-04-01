@@ -401,6 +401,12 @@ function S.waitForEvent(sec, usec)
             genEmuEvent(C.EV_KEY, 1073742050, 1)
             genEmuEvent(C.EV_KEY, 1073741885, 1)
         end
+
+        -- We got an event we don't necessarily do anything with (e.g., SDL_MOUSEMOTION)
+        if timeout ~= -1 and #inputQueue == 0 then
+            -- Back to Input:waitEvent to recompute the timeout
+            return false, C.EINTR
+        end
     end
 end
 
