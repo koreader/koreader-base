@@ -325,13 +325,17 @@ static int waitForInput(lua_State* L)
             //       Better just move to libevdev if that ever strikes our fancy ;).
             while (read(inputfds[i], &input, sizeof(input)) == sizeof(input)) {
                 set_event_table(L, input);  // New ev table all filled up at the top of the stack (that's -1)
-                lua_rawseti(L, -2, ++j);    // table.insert(ev_array, ev) [, j] (i.e., insert -1 in -2 @ [j], which always points at the tail)
+                // NOTE: Here, rawseti basically inserts -1 in -2 @ [j]. We ensure that j always points at the tail.
+                lua_rawseti(L, -2, ++j);  // table.insert(ev_array, ev) [, j]
             }
-            printf("Read %zu events\n", j);
             if (j > 0) {
                 return 2;  // true, ev_array
             } else {
                 // Read failure?
+                // NOTE: Error handling could be a bit more fine-grained here, but, then again, this should really never happen,
+                //       and I'd rather we abort and get a bug report to investigate it properly,
+                //       rather than stash this behind nicer error handling that nobody will ever notice,
+                //       and could lead to much harder to debug issues with missing/dropped events ;).
                 lua_pop(L, 2);  // Kick our bogus bool & empty table from the stack
                 return 0;
             }
