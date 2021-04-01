@@ -257,156 +257,155 @@ function S.waitForEvent(sec, usec)
     local event = ffi.new("union SDL_Event")
     -- TimeVal's :tomsecs if we were passed one to begin with, otherwise, -1 => block
     local timeout = sec and math.floor(sec * 1000000 + usec + 0.5) / 1000 or -1
-    while true do
-        -- check for queued events
-        if #inputQueue > 0 then
-            -- return oldest FIFO element
-            return true, table.remove(inputQueue, 1)
-        end
 
-        -- otherwise, wait for event
-        local got_event = SDL.SDL_WaitEventTimeout(event, timeout)
-        if got_event == 0 then
-            -- ETIME
-            return false, C.ETIME
-        end
+    -- Reset the queue
+    inputQueue = {}
 
-        -- if we got an event, examine it here and generate events for koreader
-        if ffi.os == "OSX" and (event.type == SDL.SDL_FINGERMOTION or
-            event.type == SDL.SDL_FINGERDOWN or
-            event.type == SDL.SDL_FINGERUP) then
-            -- noop for trackpad finger inputs which interfere with emulated mouse inputs
-            do end -- luacheck: ignore 541
-        elseif event.type == SDL.SDL_KEYDOWN then
-            genEmuEvent(C.EV_KEY, event.key.keysym.sym, 1)
-        elseif event.type == SDL.SDL_KEYUP then
-            genEmuEvent(C.EV_KEY, event.key.keysym.sym, 0)
-        elseif event.type == SDL.SDL_TEXTINPUT then
-            genEmuEvent(C.EV_SDL, SDL.SDL_TEXTINPUT, ffi.string(event.text.text))
-        elseif event.type == SDL.SDL_MOUSEMOTION
-            or event.type == SDL.SDL_FINGERMOTION then
-            local is_finger = event.type == SDL.SDL_FINGERMOTION
-            if is_in_touch then
-                if is_finger then
-                    if event.tfinger.dx ~= 0 then
-                        genEmuEvent(C.EV_ABS, C.ABS_MT_POSITION_X,
-                            event.tfinger.x * S.w)
-                    end
-                    if event.tfinger.dy ~= 0 then
-                        genEmuEvent(C.EV_ABS, C.ABS_MT_POSITION_Y,
-                            event.tfinger.y * S.h)
-                    end
-                else
-                    if event.motion.xrel ~= 0 then
-                        genEmuEvent(C.EV_ABS, C.ABS_MT_POSITION_X,
-                            event.button.x)
-                    end
-                    if event.motion.yrel ~= 0 then
-                        genEmuEvent(C.EV_ABS, C.ABS_MT_POSITION_Y,
-                            event.button.y)
-                    end
+    -- Wait for event
+    local got_event = SDL.SDL_WaitEventTimeout(event, timeout)
+    if got_event == 0 then
+        -- ETIME
+        return false, C.ETIME
+    end
+
+    -- if we got an event, examine it here and generate events for koreader
+    if ffi.os == "OSX" and (event.type == SDL.SDL_FINGERMOTION or
+        event.type == SDL.SDL_FINGERDOWN or
+        event.type == SDL.SDL_FINGERUP) then
+        -- noop for trackpad finger inputs which interfere with emulated mouse inputs
+        do end -- luacheck: ignore 541
+    elseif event.type == SDL.SDL_KEYDOWN then
+        genEmuEvent(C.EV_KEY, event.key.keysym.sym, 1)
+    elseif event.type == SDL.SDL_KEYUP then
+        genEmuEvent(C.EV_KEY, event.key.keysym.sym, 0)
+    elseif event.type == SDL.SDL_TEXTINPUT then
+        genEmuEvent(C.EV_SDL, SDL.SDL_TEXTINPUT, ffi.string(event.text.text))
+    elseif event.type == SDL.SDL_MOUSEMOTION
+        or event.type == SDL.SDL_FINGERMOTION then
+        local is_finger = event.type == SDL.SDL_FINGERMOTION
+        if is_in_touch then
+            if is_finger then
+                if event.tfinger.dx ~= 0 then
+                    genEmuEvent(C.EV_ABS, C.ABS_MT_POSITION_X,
+                        event.tfinger.x * S.w)
                 end
-                genEmuEvent(C.EV_SYN, C.SYN_REPORT, 0)
+                if event.tfinger.dy ~= 0 then
+                    genEmuEvent(C.EV_ABS, C.ABS_MT_POSITION_Y,
+                        event.tfinger.y * S.h)
+                end
+            else
+                if event.motion.xrel ~= 0 then
+                    genEmuEvent(C.EV_ABS, C.ABS_MT_POSITION_X,
+                        event.button.x)
+                end
+                if event.motion.yrel ~= 0 then
+                    genEmuEvent(C.EV_ABS, C.ABS_MT_POSITION_Y,
+                        event.button.y)
+                end
             end
-        elseif event.type == SDL.SDL_MOUSEBUTTONUP
-            or event.type == SDL.SDL_FINGERUP then
-            is_in_touch = false
-            genEmuEvent(C.EV_ABS, C.ABS_MT_TRACKING_ID, -1)
             genEmuEvent(C.EV_SYN, C.SYN_REPORT, 0)
-        elseif event.type == SDL.SDL_MOUSEBUTTONDOWN
-            or event.type == SDL.SDL_FINGERDOWN then
-            local is_finger = event.type == SDL.SDL_FINGERDOWN
-            if not is_finger and event.button.button ~= SDL_BUTTON_LEFT then
-                -- Not a left-click?
-                return false, C.ENOSYS
-            end
-            -- use mouse click to simulate single tap
-            is_in_touch = true
-            genEmuEvent(C.EV_ABS, C.ABS_MT_TRACKING_ID, 0)
-            genEmuEvent(C.EV_ABS, C.ABS_MT_POSITION_X,
-                is_finger and event.tfinger.x * S.w or event.button.x)
-            genEmuEvent(C.EV_ABS, C.ABS_MT_POSITION_Y,
-                is_finger and event.tfinger.y * S.h or event.button.y)
-            genEmuEvent(C.EV_SYN, C.SYN_REPORT, 0)
-        elseif event.type == SDL.SDL_MULTIGESTURE then
-            genEmuEvent(C.EV_SDL, SDL.SDL_MULTIGESTURE, event.mgesture)
-        elseif event.type == SDL.SDL_MOUSEWHEEL then
-            genEmuEvent(C.EV_SDL, SDL.SDL_MOUSEWHEEL, event.wheel)
-        elseif event.type == SDL.SDL_DROPFILE then
-            local dropped_file_path = ffi.string(event.drop.file)
-            genEmuEvent(C.EV_SDL, SDL.SDL_DROPFILE, dropped_file_path)
-        elseif event.type == SDL.SDL_DROPTEXT then
-            local dropped_text = ffi.string(event.drop.file)
-            genEmuEvent(C.EV_SDL, SDL.SDL_DROPTEXT, dropped_text)
-        elseif event.type == SDL.SDL_WINDOWEVENT then
-            handleWindowEvent(event.window)
-        --- Gamepad support ---
-        -- For debugging it can be helpful to use:
-        -- print(ffi.string(SDL.SDL_GameControllerGetStringForButton(button)))
-        -- @TODO Proper support instead of faux keyboard presses
-        --
-        --- Controllers ---
-        elseif event.type == SDL.SDL_CONTROLLERDEVICEADDED
-               or event.type == SDL.SDL_CONTROLLERDEVICEREMOVED
-               or event.type == SDL.SDL_CONTROLLERDEVICEREMAPPED then
-            openGameController()
-        --- Sticks & triggers ---
-        elseif event.type == SDL.SDL_JOYAXISMOTION then
-            handleJoyAxisMotionEvent(event)
-        --- Buttons (such as A, B, X, Y) ---
-        elseif event.type == SDL.SDL_JOYBUTTONDOWN then
-            local button = event.cbutton.button
-
-            if button == SDL.SDL_CONTROLLER_BUTTON_A then
-                -- send enter
-                genEmuEvent(C.EV_KEY, 13, 1)
-                -- send end (bound to press)
-                genEmuEvent(C.EV_KEY, 1073741901, 1)
-            elseif button == SDL.SDL_CONTROLLER_BUTTON_B then
-                -- send escape
-                genEmuEvent(C.EV_KEY, 27, 1)
-            -- left bumper
-            elseif button == SDL.SDL_CONTROLLER_BUTTON_BACK then
-                -- send page up
-                genEmuEvent(C.EV_KEY, 1073741899, 1)
-            -- right bumper
-            elseif button == SDL.SDL_CONTROLLER_BUTTON_GUIDE then
-                -- send page down
-                genEmuEvent(C.EV_KEY, 1073741902, 1)
-            -- On the Xbox One controller, start = start but leftstick = menu button
-            elseif button == SDL.SDL_CONTROLLER_BUTTON_START or button == SDL.SDL_CONTROLLER_BUTTON_LEFTSTICK then
-                -- send F1 (bound to menu in front at the time of writing)
-                genEmuEvent(C.EV_KEY, 1073741882, 1)
-            end
-        --- D-pad ---
-        elseif event.type == SDL.SDL_JOYHATMOTION then
-            local hat_position = event.jhat.value
-
-            if hat_position == SDL.SDL_HAT_UP then
-                -- send up
-                genEmuEvent(C.EV_KEY, 1073741906, 1)
-            elseif hat_position == SDL.SDL_HAT_DOWN then
-                -- send down
-                genEmuEvent(C.EV_KEY, 1073741905, 1)
-            elseif hat_position == SDL.SDL_HAT_LEFT then
-                -- send left
-                genEmuEvent(C.EV_KEY, 1073741904, 1)
-            elseif hat_position == SDL.SDL_HAT_RIGHT then
-                -- send right
-                genEmuEvent(C.EV_KEY, 1073741903, 1)
-            end
-        elseif event.type == SDL.SDL_QUIT then
-            -- NOTE: Generated on SIGTERM, among other things. (Not SIGINT, because LuaJIT already installs a handler for that).
-            -- send Alt + F4
-            genEmuEvent(C.EV_KEY, 1073742050, 1)
-            genEmuEvent(C.EV_KEY, 1073741885, 1)
         end
-
-        -- We got an event we don't necessarily do anything with (e.g., SDL_MOUSEMOTION)
-        if timeout ~= -1 and #inputQueue == 0 then
-            -- Back to Input:waitEvent to recompute the timeout
-            return false, C.EINTR
+    elseif event.type == SDL.SDL_MOUSEBUTTONUP
+        or event.type == SDL.SDL_FINGERUP then
+        is_in_touch = false
+        genEmuEvent(C.EV_ABS, C.ABS_MT_TRACKING_ID, -1)
+        genEmuEvent(C.EV_SYN, C.SYN_REPORT, 0)
+    elseif event.type == SDL.SDL_MOUSEBUTTONDOWN
+        or event.type == SDL.SDL_FINGERDOWN then
+        local is_finger = event.type == SDL.SDL_FINGERDOWN
+        if not is_finger and event.button.button ~= SDL_BUTTON_LEFT then
+            -- Not a left-click?
+            return false, C.ENOSYS
         end
+        -- use mouse click to simulate single tap
+        is_in_touch = true
+        genEmuEvent(C.EV_ABS, C.ABS_MT_TRACKING_ID, 0)
+        genEmuEvent(C.EV_ABS, C.ABS_MT_POSITION_X,
+            is_finger and event.tfinger.x * S.w or event.button.x)
+        genEmuEvent(C.EV_ABS, C.ABS_MT_POSITION_Y,
+            is_finger and event.tfinger.y * S.h or event.button.y)
+        genEmuEvent(C.EV_SYN, C.SYN_REPORT, 0)
+    elseif event.type == SDL.SDL_MULTIGESTURE then
+        genEmuEvent(C.EV_SDL, SDL.SDL_MULTIGESTURE, event.mgesture)
+    elseif event.type == SDL.SDL_MOUSEWHEEL then
+        genEmuEvent(C.EV_SDL, SDL.SDL_MOUSEWHEEL, event.wheel)
+    elseif event.type == SDL.SDL_DROPFILE then
+        local dropped_file_path = ffi.string(event.drop.file)
+        genEmuEvent(C.EV_SDL, SDL.SDL_DROPFILE, dropped_file_path)
+    elseif event.type == SDL.SDL_DROPTEXT then
+        local dropped_text = ffi.string(event.drop.file)
+        genEmuEvent(C.EV_SDL, SDL.SDL_DROPTEXT, dropped_text)
+    elseif event.type == SDL.SDL_WINDOWEVENT then
+        handleWindowEvent(event.window)
+    --- Gamepad support ---
+    -- For debugging it can be helpful to use:
+    -- print(ffi.string(SDL.SDL_GameControllerGetStringForButton(button)))
+    -- @TODO Proper support instead of faux keyboard presses
+    --
+    --- Controllers ---
+    elseif event.type == SDL.SDL_CONTROLLERDEVICEADDED
+            or event.type == SDL.SDL_CONTROLLERDEVICEREMOVED
+            or event.type == SDL.SDL_CONTROLLERDEVICEREMAPPED then
+        openGameController()
+    --- Sticks & triggers ---
+    elseif event.type == SDL.SDL_JOYAXISMOTION then
+        handleJoyAxisMotionEvent(event)
+    --- Buttons (such as A, B, X, Y) ---
+    elseif event.type == SDL.SDL_JOYBUTTONDOWN then
+        local button = event.cbutton.button
+
+        if button == SDL.SDL_CONTROLLER_BUTTON_A then
+            -- send enter
+            genEmuEvent(C.EV_KEY, 13, 1)
+            -- send end (bound to press)
+            genEmuEvent(C.EV_KEY, 1073741901, 1)
+        elseif button == SDL.SDL_CONTROLLER_BUTTON_B then
+            -- send escape
+            genEmuEvent(C.EV_KEY, 27, 1)
+        -- left bumper
+        elseif button == SDL.SDL_CONTROLLER_BUTTON_BACK then
+            -- send page up
+            genEmuEvent(C.EV_KEY, 1073741899, 1)
+        -- right bumper
+        elseif button == SDL.SDL_CONTROLLER_BUTTON_GUIDE then
+            -- send page down
+            genEmuEvent(C.EV_KEY, 1073741902, 1)
+        -- On the Xbox One controller, start = start but leftstick = menu button
+        elseif button == SDL.SDL_CONTROLLER_BUTTON_START or button == SDL.SDL_CONTROLLER_BUTTON_LEFTSTICK then
+            -- send F1 (bound to menu in front at the time of writing)
+            genEmuEvent(C.EV_KEY, 1073741882, 1)
+        end
+    --- D-pad ---
+    elseif event.type == SDL.SDL_JOYHATMOTION then
+        local hat_position = event.jhat.value
+
+        if hat_position == SDL.SDL_HAT_UP then
+            -- send up
+            genEmuEvent(C.EV_KEY, 1073741906, 1)
+        elseif hat_position == SDL.SDL_HAT_DOWN then
+            -- send down
+            genEmuEvent(C.EV_KEY, 1073741905, 1)
+        elseif hat_position == SDL.SDL_HAT_LEFT then
+            -- send left
+            genEmuEvent(C.EV_KEY, 1073741904, 1)
+        elseif hat_position == SDL.SDL_HAT_RIGHT then
+            -- send right
+            genEmuEvent(C.EV_KEY, 1073741903, 1)
+        end
+    elseif event.type == SDL.SDL_QUIT then
+        -- NOTE: Generated on SIGTERM, among other things. (Not SIGINT, because LuaJIT already installs a handler for that).
+        -- send Alt + F4
+        genEmuEvent(C.EV_KEY, 1073742050, 1)
+        genEmuEvent(C.EV_KEY, 1073741885, 1)
+    end
+
+    if #inputQueue > 0 then
+        -- We generated some actionable events
+        return true, inputQueue
+    else
+        -- SDL returned early, but without an event we actually use.
+        -- Back to Input:waitEvent to recompute the timeout
+        return false, C.EINTR
     end
 end
 
