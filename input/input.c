@@ -253,30 +253,30 @@ static int fakeTapInput(lua_State* L)
 
 static inline void set_event_table(lua_State* L, struct input_event input)
 {
-    lua_newtable(L); // ev = {}
+    lua_newtable(L);  // ev = {}
     lua_pushstring(L, "type");
     lua_pushinteger(L, input.type);  // uint16_t
     // NOTE: rawset does t[k] = v, with v @ -1, k @ -2 and t at the specified index, here, that's ev @ -3.
     //       This is why we always follow the same pattern: push table, push key, push value, set table[key] = value (which pops key & value)
-    lua_rawset(L, -3); // ev.type = input.type
+    lua_rawset(L, -3);  // ev.type = input.type
     lua_pushstring(L, "code");
     lua_pushinteger(L, input.code);  // uint16_t
-    lua_rawset(L, -3); // ev.code = input.type
+    lua_rawset(L, -3);               // ev.code = input.type
     lua_pushstring(L, "value");
     lua_pushinteger(L, input.value);  // int32_t
-    lua_rawset(L, -3); // ev.value = input.value
+    lua_rawset(L, -3);                // ev.value = input.value
 
     lua_pushstring(L, "time");
     // NOTE: This is TimeVal-like, but it doesn't feature its metatable!
     //       The frontend (device/input.lua) will convert it to a proper TimeVal object.
-    lua_newtable(L); // time = {}
+    lua_newtable(L);  // time = {}
     lua_pushstring(L, "sec");
     lua_pushinteger(L, input.time.tv_sec);  // time_t
-    lua_rawset(L, -3); // time.sec = input.time.tv_sec
+    lua_rawset(L, -3);                      // time.sec = input.time.tv_sec
     lua_pushstring(L, "usec");
     lua_pushinteger(L, input.time.tv_usec);  // suseconds_t
-    lua_rawset(L, -3); // time.usec = input.time.tv_usec
-    lua_rawset(L, -3); // ev.time = time
+    lua_rawset(L, -3);                       // time.usec = input.time.tv_usec
+    lua_rawset(L, -3);                       // ev.time = time
 }
 
 static int waitForInput(lua_State* L)
@@ -318,19 +318,19 @@ static int waitForInput(lua_State* L)
     for (size_t i = 0U; i < num_fds; i++) {
         if (FD_ISSET(inputfds[i], &rfds)) {
             struct input_event input;
-            size_t j = 0U;
+            size_t             j = 0U;
             lua_pushboolean(L, true);
-            lua_newtable(L); // We return an *array* of events, ev_array = {}
+            lua_newtable(L);  // We return an *array* of events, ev_array = {}
             while (read(inputfds[i], &input, sizeof(input)) == sizeof(input)) {
-                set_event_table(L, input); // New ev table at the top of the stack (that's -1)
-                lua_rawseti(L, -2, ++j); // table.insert(ev_array, ev) [, j] (j always points at the tail)
+                set_event_table(L, input);  // New ev table all filled up at the top of the stack (that's -1)
+                lua_rawseti(L, -2, ++j);    // table.insert(ev_array, ev) [, j] (j always points at the tail)
             }
             printf("Read %zu events\n", j);
             if (j > 0) {
                 return 2;  // true, ev_array
             } else {
                 // Read failure?
-                lua_pop(L, 2); // Kick our bogus bool & empty table from the stack
+                lua_pop(L, 2);  // Kick our bogus bool & empty table from the stack
                 return 0;
             }
         }
