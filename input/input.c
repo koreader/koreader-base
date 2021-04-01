@@ -323,10 +323,16 @@ static int waitForInput(lua_State* L)
             lua_newtable(L); // We return an *array* of events, ev_array = {}
             while (read(inputfds[i], &input, sizeof(input)) == sizeof(input)) {
                 set_event_table(L, input); // New ev table at the top of the stack (that's -1)
-                lua_rawseti(L, -2, ++j); // table.insert(ev_array, ev) [, j]
+                lua_rawseti(L, -2, ++j); // table.insert(ev_array, ev) [, j] (j always points at the tail)
             }
             printf("Read %zu events\n", j);
-            return 2;  // true, ev
+            if (j > 0) {
+                return 2;  // true, ev_array
+            } else {
+                // Read failure?
+                lua_pop(L, 2); // Kick our bogus bool & empty table from the stack
+                return 0;
+            }
         }
     }
 
@@ -344,7 +350,7 @@ static int waitForInput(lua_State* L)
     }
 #endif
 
-    return 0;  // Unreachable (unless there was a read error)
+    return 0;  // Unreachable
 }
 
 static const struct luaL_Reg input_func[] = { { "open", openInputDevice },
