@@ -352,7 +352,7 @@ static int waitForInput(lua_State* L)
     }
 #endif
 
-    return 0;  // Unreachable
+    return 0;  // Unreachable (unless something is seriously screwy)
 }
 
 static const struct luaL_Reg input_func[] = { { "open", openInputDevice },
