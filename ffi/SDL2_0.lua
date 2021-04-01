@@ -257,6 +257,7 @@ function S.waitForEvent(sec, usec)
     local event = ffi.new("union SDL_Event")
     -- TimeVal's :tomsecs if we were passed one to begin with, otherwise, -1 => block
     local timeout = sec and math.floor(sec * 1000000 + usec + 0.5) / 1000 or -1
+    print("SDL:", timeout)
     while true do
         -- check for queued events
         if #inputQueue > 0 then
@@ -266,6 +267,7 @@ function S.waitForEvent(sec, usec)
 
         -- otherwise, wait for event
         local got_event = SDL.SDL_WaitEventTimeout(event, timeout)
+        print("got_event:", got_event)
         if got_event == 0 then
             -- ETIME
             return false, C.ETIME
@@ -400,6 +402,12 @@ function S.waitForEvent(sec, usec)
             -- send Alt + F4
             genEmuEvent(C.EV_KEY, 1073742050, 1)
             genEmuEvent(C.EV_KEY, 1073741885, 1)
+        end
+
+        -- We got an event we don't know how to handle
+        if #inputQueue == 0 then
+            -- Back to Input:waitEvent to recompute the timeout
+            return false, C.EINTR
         end
     end
 end
