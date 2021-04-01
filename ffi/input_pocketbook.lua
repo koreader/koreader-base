@@ -165,6 +165,9 @@ local next_sleep = 0
 local function waitForEventRaw(timeout)
     local expire = now() + timeout
     while true do
+        -- Reset event queue
+        eventq = {}
+
         local active = inkview.IsTaskActive() ~= 0
         -- Focus in/out transition, emit a synthetic event.
         if active ~= is_active then
@@ -242,7 +245,9 @@ local function waitForEventRaw(timeout)
                 end
             end
         end
-        if #eventq > 0 then return true, table.remove(eventq, 1) end
+        if #eventq > 0 then
+            return true, eventq
+        end
     end
 end
 
@@ -251,20 +256,23 @@ function input.waitForEvent(sec, usec)
     --- @note: This is unlike every other platform, where the fallback is an infinite timeout!
     local timeout = sec and math.floor(sec * 1000000 + usec + 0.5) or 2000000
     assert(eventq, "waitForEvent() invoked after device shutdown")
-    if #eventq > 0 then return true, table.remove(eventq, 1) end
     if poll_fds then
         -- This variant uses low-level input I/O bypassing inkview for that entirely
         return waitForEventRaw(timeout)
     end
     local expire = now() + timeout
     while expire > now() do
+        -- Reset event queue
+        eventq = {}
         -- About ProcessEventLoop():
         -- When events are pending, translateEvent() cb is called for each here (it remembers what we've announced in PrepareForLoop).
         -- Our callback then queues whatever events it collects, translating to linux evinput while doing so.
         -- The call holds for 20ms and returns control once no further input is seen during that time. If iv_sleepmode is 1 however, and
         -- no input is seen for >2 seconds (it keeps track across invocations), the call will perform full OS suspend ("autostandby").
         compat.ProcessEventLoop()
-        if #eventq > 0 then return true, table.remove(eventq, 1) end
+        if #eventq > 0 then
+            return true, eventq
+        end
     end
     -- Timed out
     return false, C.ETIME
