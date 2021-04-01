@@ -403,7 +403,7 @@ function S.waitForEvent(sec, usec)
         end
 
         -- We got an event we don't do anything with (e.g., SDL_MOUSEMOTION)
-        if #inputQueue == 0 then
+        if timeout ~= -1 and #inputQueue == 0 then
             -- Back to Input:waitEvent to recompute the timeout
             return false, C.EINTR
         end
