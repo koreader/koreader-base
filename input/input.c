@@ -316,12 +316,12 @@ static int waitForInput(lua_State* L)
     for (size_t i = 0U; i < num_fds; i++) {
         if (FD_ISSET(inputfds[i], &rfds)) {
             struct input_event input;
-            size_t j = 1U;
+            size_t j = 0U;
             lua_pushboolean(L, true);
             lua_newtable(L);
             while (read(inputfds[i], &input, sizeof(input)) == sizeof(input)) {
                 set_event_table(L, input);
-                lua_rawseti(L, -2, j++);
+                lua_rawseti(L, -2, ++j);
             }
             printf("Read %zu events\n", j);
             return 2;  // true, ev
