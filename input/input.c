@@ -316,8 +316,8 @@ static int waitForInput(lua_State* L)
     for (size_t i = 0U; i < num_fds; i++) {
         if (FD_ISSET(inputfds[i], &rfds)) {
             struct input_event input;
-            ssize_t            readsz = read(inputfds[i], &input, sizeof(struct input_event));
-            if (readsz == sizeof(struct input_event)) {
+            ssize_t            readsz = read(inputfds[i], &input, sizeof(input));
+            if (readsz == sizeof(input)) {
                 lua_pushboolean(L, true);
                 set_event_table(L, input);
                 return 2;  // true, ev
