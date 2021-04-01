@@ -256,13 +256,13 @@ static inline void set_event_table(lua_State* L, struct input_event input)
     lua_newtable(L);
     lua_pushstring(L, "type");
     lua_pushinteger(L, input.type);  // uint16_t
-    lua_settable(L, -3);
+    lua_rawset(L, -3);
     lua_pushstring(L, "code");
     lua_pushinteger(L, input.code);  // uint16_t
-    lua_settable(L, -3);
+    lua_rawset(L, -3);
     lua_pushstring(L, "value");
     lua_pushinteger(L, input.value);  // int32_t
-    lua_settable(L, -3);
+    lua_rawset(L, -3);
 
     lua_pushstring(L, "time");
     // NOTE: This is TimeVal-like, but it doesn't feature its metatable!
@@ -270,11 +270,11 @@ static inline void set_event_table(lua_State* L, struct input_event input)
     lua_newtable(L);
     lua_pushstring(L, "sec");
     lua_pushinteger(L, input.time.tv_sec);  // time_t
-    lua_settable(L, -3);
+    lua_rawset(L, -3);
     lua_pushstring(L, "usec");
     lua_pushinteger(L, input.time.tv_usec);  // suseconds_t
-    lua_settable(L, -3);
-    lua_settable(L, -3);
+    lua_rawset(L, -3);
+    lua_rawset(L, -3);
 }
 
 static int waitForInput(lua_State* L)
@@ -316,12 +316,15 @@ static int waitForInput(lua_State* L)
     for (size_t i = 0U; i < num_fds; i++) {
         if (FD_ISSET(inputfds[i], &rfds)) {
             struct input_event input;
-            ssize_t            readsz = read(inputfds[i], &input, sizeof(input));
-            if (readsz == sizeof(input)) {
-                lua_pushboolean(L, true);
+            size_t j = 1U;
+            lua_pushboolean(L, true);
+            lua_newtable(L);
+            while (read(inputfds[i], &input, sizeof(input)) == sizeof(input)) {
                 set_event_table(L, input);
-                return 2;  // true, ev
+                lua_rawseti(L, -2, j++);
             }
+            printf("Read %zu events\n", j);
+            return 2;  // true, ev
         }
     }
 
