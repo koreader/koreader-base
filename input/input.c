@@ -321,6 +321,8 @@ static int waitForInput(lua_State* L)
             size_t             j = 0U;
             lua_pushboolean(L, true);
             lua_newtable(L);  // We return an *array* of events, ev_array = {}
+            // NOTE: We could read the full queue at once, but this would require some buffer & queue handling in C.
+            //       Better just move to libevdev if that ever strikes our fancy ;).
             while (read(inputfds[i], &input, sizeof(input)) == sizeof(input)) {
                 set_event_table(L, input);  // New ev table all filled up at the top of the stack (that's -1)
                 lua_rawseti(L, -2, ++j);    // table.insert(ev_array, ev) [, j] (i.e., insert -1 in -2 @ [j], which always points at the tail)
