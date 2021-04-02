@@ -292,7 +292,6 @@ static inline size_t drain_input_queue(lua_State* L, struct input_event* input_q
         // That said, multiple calls should be extremely rare:
         // We'd need to have filled the input_queue buffer *during* a single batch of events on the same fd ;).
         lua_createtable(L, ev_count, 0); // We return an *array* of events, ev_array = {}
-        printf("Allocated array w/ %zu elements\n", ev_count);
     }
 
     // Iterate over every input event in the queue buffer
@@ -301,7 +300,6 @@ static inline size_t drain_input_queue(lua_State* L, struct input_event* input_q
         // NOTE: Here, rawseti basically inserts -1 in -2 @ [j]. We ensure that j always points at the tail.
         lua_rawseti(L, -2, ++j);  // table.insert(ev_array, ev) [, j]
     }
-    printf("Inserted %zu elements\n", j);
     return j;
 }
 
@@ -355,7 +353,6 @@ static int waitForInput(lua_State* L)
             struct input_event* queue_pos = input_queue;
             size_t queue_available_size = sizeof(input_queue);
             for (;;) {
-                printf("Available queue size in bytes: %zu\n", queue_available_size);
                 ssize_t len = read(inputfds[i], queue_pos, queue_available_size);
 
                 if (len < 0) {
@@ -385,13 +382,10 @@ static int waitForInput(lua_State* L)
 
                 // Okay, the read was sane, compute the amount of events we've just read
                 size_t n = len / sizeof(*input_queue);
-                printf("Read %zu events\n", n);
                 ev_count += n;
-                printf("Buffered event count now at %zu\n", ev_count);
 
                 if ((size_t) len == queue_available_size) {
                     // If we're out of buffer space in the queue, drain it *now*
-                    printf("queue full\n");
                     j = drain_input_queue(L, input_queue, ev_count, j);
                     // Rewind to the start of the queue to recycle the buffer
                     queue_pos = input_queue;
@@ -402,11 +396,9 @@ static int waitForInput(lua_State* L)
                     queue_pos += n;
                     queue_available_size = queue_available_size - (size_t) len;
                 }
-                printf("queue_pos: %p\n", queue_pos);
             }
             // We've drained the kernel's input queue, now drain our buffer
             j = drain_input_queue(L, input_queue, ev_count, j);
-            printf("Returning %zu elements\n", j);
             return 2;  // true, ev_array
         }
     }
