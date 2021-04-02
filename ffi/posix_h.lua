@@ -161,6 +161,6 @@ int sched_yield(void) __attribute__((nothrow, leaf));
 if ffi.os == "Linux" then
     -- Load it in the global namespace to make it easier on callers...
     -- NOTE: There's no librt.so symlink, so, specify the SOVER, but not the full path,
-    --       in order to let the dynamic loader figure it out on its own.
+    --       in order to let the dynamic loader figure it out on its own (e.g.,  multilib).
     pcall(ffi.load, "rt.so.1", true)
 end
