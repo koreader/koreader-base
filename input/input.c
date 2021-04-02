@@ -359,7 +359,7 @@ static int waitForInput(lua_State* L)
 
                 // Iterate over them
                 for (const struct input_event* event = input_queue; event < input_queue + ev_count; event++) {
-                    set_event_table(L, event);  // New ev table all filled up at the top of the stack (that's -1)
+                    set_event_table(L, event);  // Pushed a new ev table all filled up at the top of the stack (that's -1)
                     // NOTE: Here, rawseti basically inserts -1 in -2 @ [j]. We ensure that j always points at the tail.
                     lua_rawseti(L, -2, ++j);  // table.insert(ev_array, ev) [, j]
                 }
