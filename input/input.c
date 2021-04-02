@@ -253,7 +253,7 @@ static int fakeTapInput(lua_State* L)
 
 static inline void set_event_table(lua_State* L, const struct input_event* input)
 {
-    lua_newtable(L);  // ev = {}
+    lua_createtable(L, 0, 4);  // ev = {} (pre-allocated for its four fields)
     lua_pushstring(L, "type");
     lua_pushinteger(L, input->type);  // uint16_t
     // NOTE: rawset does t[k] = v, with v @ -1, k @ -2 and t at the specified index, here, that's ev @ -3.
@@ -269,7 +269,7 @@ static inline void set_event_table(lua_State* L, const struct input_event* input
     lua_pushstring(L, "time");
     // NOTE: This is TimeVal-like, but it doesn't feature its metatable!
     //       The frontend (device/input.lua) will convert it to a proper TimeVal object.
-    lua_newtable(L);  // time = {}
+    lua_createtable(L, 0, 2);  // time = {} (pre-allocated for its two fields)
     lua_pushstring(L, "sec");
     lua_pushinteger(L, input->time.tv_sec);  // time_t
     lua_rawset(L, -3);                       // time.sec = input.time.tv_sec
