@@ -343,7 +343,7 @@ static int waitForInput(lua_State* L)
             size_t ev_count = 0U;  // Amount of buffered events
             // NOTE: This should be more than enough ;).
             //       FWIW, this matches libevdev's default on most of our target devices,
-            //       because they don't support querying the exact slot count via ABS_MT_SLOT.
+            //       because they generally don't support querying the exact slot count via ABS_MT_SLOT.
             //       c.f., https://gitlab.freedesktop.org/libevdev/libevdev/-/blob/8d70f449892c6f7659e07bb0f06b8347677bb7d8/libevdev/libevdev.c#L66-101
             struct input_event input_queue[256U];  // 4K on 32-bit, 6K on 64-bit
             struct input_event* queue_pos = input_queue;
