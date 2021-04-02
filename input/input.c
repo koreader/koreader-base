@@ -353,13 +353,10 @@ static int waitForInput(lua_State* L)
             //       c.f., https://gitlab.freedesktop.org/libevdev/libevdev/-/blob/8d70f449892c6f7659e07bb0f06b8347677bb7d8/libevdev/libevdev.c#L66-101
             struct input_event input_queue[256U];  // 4K on 32-bit, 6K on 64-bit
             struct input_event* queue_pos = input_queue;
-            struct input_event* const queue_end = queue_pos + (sizeof(input_queue) / sizeof(*input_queue));
-            printf("queue_pos: %p\n", queue_pos);
-            printf("queue_end: %p\n", queue_end);
+            size_t queue_available_size = sizeof(input_queue);
             for (;;) {
-                size_t queue_available_size = (unsigned char *) queue_end - (unsigned char *) queue_pos;
                 printf("Available queue size in bytes: %zu\n", queue_available_size);
-                ssize_t            len = read(inputfds[i], queue_pos, queue_available_size);
+                ssize_t len = read(inputfds[i], queue_pos, queue_available_size);
 
                 if (len < 0) {
                     if (errno == EAGAIN) {
@@ -398,10 +395,12 @@ static int waitForInput(lua_State* L)
                     j = drain_input_queue(L, input_queue, ev_count, j);
                     // Rewind to the start of the queue
                     queue_pos = input_queue;
+                    queue_available_size = sizeof(input_queue);
                     ev_count = 0U;
                 } else {
                     // Update our position in the queue
                     queue_pos += n;
+                    queue_available_size = queue_available_size - (size_t) len;
                 }
                 printf("queue_pos: %p\n", queue_pos);
             }
