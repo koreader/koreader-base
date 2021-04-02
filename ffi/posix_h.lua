@@ -160,5 +160,7 @@ int sched_yield(void) __attribute__((nothrow, leaf));
 -- clock_gettime & friends require librt on old glibc (< 2.17) versions...
 if ffi.os == "Linux" then
     -- Load it in the global namespace to make it easier on callers...
-    pcall(ffi.load, "/lib/librt.so.1", true)
+    -- NOTE: There's no librt.so symlink, so, specify the SOVER, but not the full path,
+    --       in order to let the dynamic loader figure it out on its own.
+    pcall(ffi.load, "rt.so.1", true)
 end
