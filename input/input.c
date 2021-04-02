@@ -279,14 +279,14 @@ static inline void set_event_table(lua_State* L, const struct input_event* input
     lua_rawset(L, -3);                        // ev.time = time
 }
 
-static inline void drain_input_queue(lua_State* L, struct input_event* input_queue, size_t* ev_count, size_t* j) {
+static inline size_t drain_input_queue(lua_State* L, struct input_event* input_queue, size_t ev_count, size_t j) {
     if (!lua_istable(L, -1)) {
         // First call, create our array, pre-allocated to the necessary number of elements...
         // ...for this call, at least. Subsequent ones will insert event by event.
         // That said, multiple calls should be extremely rare:
         // We'd need to have filled the input_queue buffer *during* a single batch of events on the same fd ;).
-        lua_createtable(L, *ev_count, 0); // We return an *array* of events, ev_array = {}
-        printf("Allocated array w/ %zu elements\n", *ev_count);
+        lua_createtable(L, ev_count, 0); // We return an *array* of events, ev_array = {}
+        printf("Allocated array w/ %zu elements\n", ev_count);
     }
 
     if (lua_istable(L, -1)) {
@@ -294,13 +294,13 @@ static inline void drain_input_queue(lua_State* L, struct input_event* input_que
     }
 
     // Iterate over them
-    for (const struct input_event* event = input_queue; event < input_queue + *ev_count; event++) {
+    for (const struct input_event* event = input_queue; event < input_queue + ev_count; event++) {
         set_event_table(L, event);  // Pushed a new ev table all filled up at the top of the stack (that's -1)
         // NOTE: Here, rawseti basically inserts -1 in -2 @ [j]. We ensure that j always points at the tail.
-        lua_rawseti(L, -2, ++(*j));  // table.insert(ev_array, ev) [, j]
+        lua_rawseti(L, -2, ++j);  // table.insert(ev_array, ev) [, j]
     }
-    printf("Inserted %zu elements\n", *j);
-    *ev_count = 0U;
+    printf("Inserted %zu elements\n", j);
+    return j;
 }
 
 static int waitForInput(lua_State* L)
@@ -395,9 +395,10 @@ static int waitForInput(lua_State* L)
                 // If we're out of buffer space in the queue, drain it *now*
                 if ((size_t) len == queue_available_size) {
                     printf("queue full\n");
-                    drain_input_queue(L, input_queue, &ev_count, &j);
+                    j = drain_input_queue(L, input_queue, ev_count, j);
                     // Rewind to the start of the queue
                     queue_pos = input_queue;
+                    ev_count = 0U;
                 } else {
                     // Update our position in the queue
                     queue_pos += n;
@@ -405,7 +406,7 @@ static int waitForInput(lua_State* L)
                 printf("queue_pos: %p\n", queue_pos);
             }
             // We've drained the kernel's input queue, now drain our buffer
-            drain_input_queue(L, input_queue, &ev_count, &j);
+            j = drain_input_queue(L, input_queue, ev_count, j);
             printf("Returning %zu elements\n", j);
             return 2;  // true, ev_array
         }
