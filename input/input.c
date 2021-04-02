@@ -319,12 +319,13 @@ static int waitForInput(lua_State* L)
         if (FD_ISSET(inputfds[i], &rfds)) {
             lua_pushboolean(L, true);
             lua_newtable(L);  // We return an *array* of events, ev_array = {}
+            size_t j = 0U;    // Index of ev_array's tail
             for (;;) {
                 // NOTE: This should be more than enough ;).
                 //       FWIW, libevdev would default to 256 on most of our target devices,
                 //       because they don't support ABS_MT_SLOT.
                 //       c.f., https://gitlab.freedesktop.org/libevdev/libevdev/-/blob/8d70f449892c6f7659e07bb0f06b8347677bb7d8/libevdev/libevdev.c#L66-101
-                struct input_event input_queue[512U];
+                struct input_event input_queue[512U];  // 8K
                 ssize_t            len = read(inputfds[i], &input_queue, sizeof(input_queue));
 
                 if (len < 0) {
@@ -345,7 +346,7 @@ static int waitForInput(lua_State* L)
                     return 2;  // false, EPIPE
                 }
                 if (len > 0 && len % sizeof(*input_queue) != 0) {
-                    // Truncated read?! (not a multiple of input_event)
+                    // Truncated read?! (not a multiple of struct input_event)
                     lua_pop(L, 2);
                     lua_pushboolean(L, false);
                     lua_pushinteger(L, EINVAL);
@@ -357,13 +358,13 @@ static int waitForInput(lua_State* L)
                 printf("Read %zu events\n", ev_count);
 
                 // Iterate over them
-                size_t j = 0U;
                 for (const struct input_event* event = input_queue; event < input_queue + ev_count; event++) {
                     set_event_table(L, event);  // New ev table all filled up at the top of the stack (that's -1)
                     // NOTE: Here, rawseti basically inserts -1 in -2 @ [j]. We ensure that j always points at the tail.
                     lua_rawseti(L, -2, ++j);  // table.insert(ev_array, ev) [, j]
                 }
             }
+            printf("Pushed %zu events\n", lua_objlen(L, -1));
             return 2;  // true, ev_array
         }
     }
