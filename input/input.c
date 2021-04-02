@@ -281,8 +281,10 @@ static inline void set_event_table(lua_State* L, const struct input_event* input
 
 static inline void drain_input_queue(lua_State* L, struct input_event* input_queue, size_t* ev_count, size_t* j) {
     if (!lua_istable(L, -1)) {
-        // First iteration, create our array, pre-allocated to the necessary number of elements...
-        // ...for this iteration, at least. Subsequent ones will insert event by event.
+        // First call, create our array, pre-allocated to the necessary number of elements...
+        // ...for this call, at least. Subsequent ones will insert event by event.
+        // That said, multiple calls should be extremely rare:
+        // We'd need to have filled the input_queue buffer *during* a single batch of events on the same fd ;).
         lua_createtable(L, *ev_count, 0); // We return an *array* of events, ev_array = {}
         printf("Allocated array w/ %zu elements\n", *ev_count);
     }
@@ -351,7 +353,7 @@ static int waitForInput(lua_State* L)
             //       c.f., https://gitlab.freedesktop.org/libevdev/libevdev/-/blob/8d70f449892c6f7659e07bb0f06b8347677bb7d8/libevdev/libevdev.c#L66-101
             struct input_event input_queue[256U];  // 4K on 32-bit, 6K on 64-bit
             struct input_event* queue_pos = input_queue;
-            struct input_event* const queue_end = queue_pos + sizeof(input_queue) / sizeof(*input_queue);
+            struct input_event* const queue_end = queue_pos + (sizeof(input_queue) / sizeof(*input_queue));
             printf("queue_pos: %p\n", queue_pos);
             printf("queue_end: %p\n", queue_end);
             for (;;) {
@@ -394,6 +396,7 @@ static int waitForInput(lua_State* L)
                 if ((size_t) len == queue_available_size) {
                     printf("queue full\n");
                     drain_input_queue(L, input_queue, &ev_count, &j);
+                    // Rewind to the start of the queue
                     queue_pos = input_queue;
                 } else {
                     // Update our position in the queue
