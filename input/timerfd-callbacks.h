@@ -118,6 +118,7 @@ static int setTimer(lua_State* L)
     clockid_t   clock         = luaL_checkint(L, 1);
     time_t      deadline_sec  = luaL_checkinteger(L, 2);
     suseconds_t deadline_usec = luaL_checkinteger(L, 3);
+    lua_pop(L, lua_gettop(L));  // Pop function args
 
     // Unlike in input.c, we know we're running a kernel recent enough to support the flags
     int fd = timerfd_create(clock, TFD_NONBLOCK | TFD_CLOEXEC);
@@ -166,6 +167,7 @@ static int setTimer(lua_State* L)
 static int clearTimer(lua_State* L)
 {
     timerfd_node_t* restrict expired_node = (timerfd_node_t * restrict) lua_touserdata(L, 1);
+    lua_pop(L, lua_gettop(L));  // Pop function arg
 
     timerfd_list_delete_node(&timerfds, expired_node);
 

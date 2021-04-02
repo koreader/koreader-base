@@ -145,6 +145,9 @@ static int openInputDevice(lua_State* L)
         }
     }
 
+    // We're done w/ inputdevice, pop it
+    lua_pop(L, lua_gettop(L));
+
     // Compute select's nfds argument.
     // That's not the actual number of fds in the set, like poll(),
     // but the highest fd number in the set + 1 (c.f., select(2)).
@@ -193,6 +196,9 @@ static int fakeTapInput(lua_State* L)
     if (inputfd == -1) {
         return luaL_error(L, "Cannot open input device <%s>: %d", inputdevice, errno);
     }
+
+    // Pop function args, now that we're done w/ inputdevice
+    lua_pop(L, lua_gettop(L));
 
     struct input_event ev = { 0 };
     gettimeofday(&ev.time, NULL);
@@ -251,38 +257,58 @@ static int fakeTapInput(lua_State* L)
     return 0;
 }
 
-static inline void set_event_table(lua_State* L, struct input_event input)
+static inline void set_event_table(lua_State* L, const struct input_event* input)
 {
-    lua_newtable(L);  // ev = {}
+    lua_createtable(L, 0, 4);  // ev = {} (pre-allocated for its four fields)
     lua_pushstring(L, "type");
-    lua_pushinteger(L, input.type);  // uint16_t
+    lua_pushinteger(L, input->type);  // uint16_t
     // NOTE: rawset does t[k] = v, with v @ -1, k @ -2 and t at the specified index, here, that's ev @ -3.
     //       This is why we always follow the same pattern: push table, push key, push value, set table[key] = value (which pops key & value)
     lua_rawset(L, -3);  // ev.type = input.type
     lua_pushstring(L, "code");
-    lua_pushinteger(L, input.code);  // uint16_t
-    lua_rawset(L, -3);               // ev.code = input.type
+    lua_pushinteger(L, input->code);  // uint16_t
+    lua_rawset(L, -3);                // ev.code = input.type
     lua_pushstring(L, "value");
-    lua_pushinteger(L, input.value);  // int32_t
-    lua_rawset(L, -3);                // ev.value = input.value
+    lua_pushinteger(L, input->value);  // int32_t
+    lua_rawset(L, -3);                 // ev.value = input.value
 
     lua_pushstring(L, "time");
     // NOTE: This is TimeVal-like, but it doesn't feature its metatable!
     //       The frontend (device/input.lua) will convert it to a proper TimeVal object.
-    lua_newtable(L);  // time = {}
+    lua_createtable(L, 0, 2);  // time = {} (pre-allocated for its two fields)
     lua_pushstring(L, "sec");
-    lua_pushinteger(L, input.time.tv_sec);  // time_t
-    lua_rawset(L, -3);                      // time.sec = input.time.tv_sec
+    lua_pushinteger(L, input->time.tv_sec);  // time_t
+    lua_rawset(L, -3);                       // time.sec = input.time.tv_sec
     lua_pushstring(L, "usec");
-    lua_pushinteger(L, input.time.tv_usec);  // suseconds_t
-    lua_rawset(L, -3);                       // time.usec = input.time.tv_usec
-    lua_rawset(L, -3);                       // ev.time = time
+    lua_pushinteger(L, input->time.tv_usec);  // suseconds_t
+    lua_rawset(L, -3);                        // time.usec = input.time.tv_usec
+    lua_rawset(L, -3);                        // ev.time = time
+}
+
+static inline size_t drain_input_queue(lua_State* L, struct input_event* input_queue, size_t ev_count, size_t j)
+{
+    if (!lua_istable(L, -1)) {
+        // First call, create our array, pre-allocated to the necessary number of elements...
+        // ...for this call, at least. Subsequent ones will insert event by event.
+        // That said, multiple calls should be extremely rare:
+        // We'd need to have filled the input_queue buffer *during* a single batch of events on the same fd ;).
+        lua_createtable(L, ev_count, 0);  // We return an *array* of events, ev_array = {}
+    }
+
+    // Iterate over every input event in the queue buffer
+    for (const struct input_event* event = input_queue; event < input_queue + ev_count; event++) {
+        set_event_table(L, event);  // Pushed a new ev table all filled up at the top of the stack (that's -1)
+        // NOTE: Here, rawseti basically inserts -1 in -2 @ [j]. We ensure that j always points at the tail.
+        lua_rawseti(L, -2, ++j);  // table.insert(ev_array, ev) [, j]
+    }
+    return j;
 }
 
 static int waitForInput(lua_State* L)
 {
     lua_Integer sec  = luaL_optinteger(L, 1, -1);  // Fallback to -1 to handle detecting a nil
     lua_Integer usec = luaL_optinteger(L, 2, 0);
+    lua_pop(L, lua_gettop(L));  // Pop the function arguments
 
     struct timeval  timeout;
     struct timeval* timeout_ptr = NULL;
@@ -317,28 +343,64 @@ static int waitForInput(lua_State* L)
 
     for (size_t i = 0U; i < num_fds; i++) {
         if (FD_ISSET(inputfds[i], &rfds)) {
-            struct input_event input;
-            size_t             j = 0U;
             lua_pushboolean(L, true);
-            lua_newtable(L);  // We return an *array* of events, ev_array = {}
-            // NOTE: We could read the full queue at once, but this would require some buffer & queue handling in C.
-            //       Better just move to libevdev if that ever strikes our fancy ;).
-            while (read(inputfds[i], &input, sizeof(input)) == sizeof(input)) {
-                set_event_table(L, input);  // New ev table all filled up at the top of the stack (that's -1)
-                // NOTE: Here, rawseti basically inserts -1 in -2 @ [j]. We ensure that j always points at the tail.
-                lua_rawseti(L, -2, ++j);  // table.insert(ev_array, ev) [, j]
+            size_t j        = 0U;  // Index of ev_array's tail
+            size_t ev_count = 0U;  // Amount of buffered events
+            // NOTE: This should be more than enough ;).
+            //       FWIW, this matches libevdev's default on most of our target devices,
+            //       because they generally don't support querying the exact slot count via ABS_MT_SLOT.
+            //       c.f., https://gitlab.freedesktop.org/libevdev/libevdev/-/blob/8d70f449892c6f7659e07bb0f06b8347677bb7d8/libevdev/libevdev.c#L66-101
+            struct input_event  input_queue[256U];  // 4K on 32-bit, 6K on 64-bit
+            struct input_event* queue_pos            = input_queue;
+            size_t              queue_available_size = sizeof(input_queue);
+            for (;;) {
+                ssize_t len = read(inputfds[i], queue_pos, queue_available_size);
+
+                if (len < 0) {
+                    if (errno == EAGAIN) {
+                        // Kernel queue drained :)
+                        break;
+                    }
+                    lua_pop(L, lua_gettop(L));  // Kick our bogus bool (and potentially the ev_array table) from the stack
+                    lua_pushboolean(L, false);
+                    lua_pushinteger(L, errno);
+                    return 2;  // false, errno
+                }
+                if (len == 0) {
+                    // Should never happen
+                    lua_pop(L, lua_gettop(L));
+                    lua_pushboolean(L, false);
+                    lua_pushinteger(L, EPIPE);
+                    return 2;  // false, EPIPE
+                }
+                if (len > 0 && len % sizeof(*input_queue) != 0) {
+                    // Truncated read?! (not a multiple of struct input_event)
+                    lua_pop(L, lua_gettop(L));
+                    lua_pushboolean(L, false);
+                    lua_pushinteger(L, EINVAL);
+                    return 2;  // false, EINVAL
+                }
+
+                // Okay, the read was sane, compute the amount of events we've just read
+                size_t n = len / sizeof(*input_queue);
+                ev_count += n;
+
+                if ((size_t) len == queue_available_size) {
+                    // If we're out of buffer space in the queue, drain it *now*
+                    j = drain_input_queue(L, input_queue, ev_count, j);
+                    // Rewind to the start of the queue to recycle the buffer
+                    queue_pos            = input_queue;
+                    queue_available_size = sizeof(input_queue);
+                    ev_count             = 0U;
+                } else {
+                    // Otherwise, update our position in the queue buffer
+                    queue_pos += n;
+                    queue_available_size = queue_available_size - (size_t) len;
+                }
             }
-            if (j > 0) {
-                return 2;  // true, ev_array
-            } else {
-                // Read failure?
-                // NOTE: Error handling could be a bit more fine-grained here, but, then again, this should really never happen,
-                //       and I'd rather we abort and get a bug report to investigate it properly,
-                //       rather than stash this behind nicer error handling that nobody will ever notice,
-                //       and could lead to much harder to debug issues with missing/dropped events ;).
-                lua_pop(L, 2);  // Kick our bogus bool & empty table from the stack
-                return 0;
-            }
+            // We've drained the kernel's input queue, now drain our buffer
+            j = drain_input_queue(L, input_queue, ev_count, j);
+            return 2;  // true, ev_array
         }
     }
 
