@@ -390,7 +390,7 @@ static int waitForInput(lua_State* L)
                 ev_count += n;
                 printf("Event count now at %zu\n", ev_count);
 
-                // If we're out of buffer space in the queue, drain it
+                // If we're out of buffer space in the queue, drain it *now*
                 if ((size_t) len == queue_available_size) {
                     printf("queue full\n");
                     drain_input_queue(L, input_queue, &ev_count, &j);
@@ -401,6 +401,7 @@ static int waitForInput(lua_State* L)
                 }
                 printf("queue_pos: %p\n", queue_pos);
             }
+            // We've drained the kernel's input queue, now drain our buffer
             drain_input_queue(L, input_queue, &ev_count, &j);
             printf("Returning %zu elements\n", j);
             return 2;  // true, ev_array
