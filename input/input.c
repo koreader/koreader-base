@@ -289,11 +289,7 @@ static inline size_t drain_input_queue(lua_State* L, struct input_event* input_q
         printf("Allocated array w/ %zu elements\n", ev_count);
     }
 
-    if (lua_istable(L, -1)) {
-        printf("We have a table\n");
-    }
-
-    // Iterate over them
+    // Iterate over every input event in the queue buffer
     for (const struct input_event* event = input_queue; event < input_queue + ev_count; event++) {
         set_event_table(L, event);  // Pushed a new ev table all filled up at the top of the stack (that's -1)
         // NOTE: Here, rawseti basically inserts -1 in -2 @ [j]. We ensure that j always points at the tail.
@@ -381,22 +377,22 @@ static int waitForInput(lua_State* L)
                     return 2;  // false, EINVAL
                 }
 
-                // Okay, compute the amount of events we've just read
+                // Okay, the read was sane, compute the amount of events we've just read
                 size_t n = len / sizeof(*input_queue);
                 printf("Read %zu events\n", n);
                 ev_count += n;
-                printf("Event count now at %zu\n", ev_count);
+                printf("Buffered event count now at %zu\n", ev_count);
 
-                // If we're out of buffer space in the queue, drain it *now*
                 if ((size_t) len == queue_available_size) {
+                    // If we're out of buffer space in the queue, drain it *now*
                     printf("queue full\n");
                     j = drain_input_queue(L, input_queue, ev_count, j);
-                    // Rewind to the start of the queue
+                    // Rewind to the start of the queue to recycle the buffer
                     queue_pos = input_queue;
                     queue_available_size = sizeof(input_queue);
                     ev_count = 0U;
                 } else {
-                    // Update our position in the queue buffer
+                    // Otherwise, update our position in the queue buffer
                     queue_pos += n;
                     queue_available_size = queue_available_size - (size_t) len;
                 }
