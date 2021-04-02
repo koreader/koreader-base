@@ -145,6 +145,9 @@ static int openInputDevice(lua_State* L)
         }
     }
 
+    // We're done w/ inputdevice, pop it
+    lua_pop(L, lua_gettop(L));
+
     // Compute select's nfds argument.
     // That's not the actual number of fds in the set, like poll(),
     // but the highest fd number in the set + 1 (c.f., select(2)).
@@ -193,6 +196,9 @@ static int fakeTapInput(lua_State* L)
     if (inputfd == -1) {
         return luaL_error(L, "Cannot open input device <%s>: %d", inputdevice, errno);
     }
+
+    // Pop function args, now that we're done w/ inputdevice
+    lua_pop(L, lua_gettop(L));
 
     struct input_event ev = { 0 };
     gettimeofday(&ev.time, NULL);
