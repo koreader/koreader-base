@@ -283,6 +283,7 @@ static int waitForInput(lua_State* L)
 {
     lua_Integer sec  = luaL_optinteger(L, 1, -1);  // Fallback to -1 to handle detecting a nil
     lua_Integer usec = luaL_optinteger(L, 2, 0);
+    lua_pop(L, lua_gettop(L));  // Pop the function arguments
 
     struct timeval  timeout;
     struct timeval* timeout_ptr = NULL;
@@ -317,8 +318,9 @@ static int waitForInput(lua_State* L)
 
     for (size_t i = 0U; i < num_fds; i++) {
         if (FD_ISSET(inputfds[i], &rfds)) {
+            printf("gettop before: %d\n", lua_gettop(L));
             lua_pushboolean(L, true);
-            lua_newtable(L);  // We return an *array* of events, ev_array = {}
+            printf("gettop after: %d\n", lua_gettop(L));
             size_t j = 0U;    // Index of ev_array's tail
             for (;;) {
                 // NOTE: This should be more than enough ;).
@@ -333,21 +335,21 @@ static int waitForInput(lua_State* L)
                         // Queue drained :)
                         break;
                     }
-                    lua_pop(L, 2);  // Kick our bogus bool & empty table from the stack
+                    lua_pop(L, lua_gettop(L));  // Kick our bogus bool (and potentially the ev_array table) from the stack
                     lua_pushboolean(L, false);
                     lua_pushinteger(L, errno);
                     return 2;  // false, errno
                 }
                 if (len == 0) {
                     // Should never happen
-                    lua_pop(L, 2);
+                    lua_pop(L, lua_gettop(L));
                     lua_pushboolean(L, false);
                     lua_pushinteger(L, EPIPE);
                     return 2;  // false, EPIPE
                 }
                 if (len > 0 && len % sizeof(*input_queue) != 0) {
                     // Truncated read?! (not a multiple of struct input_event)
-                    lua_pop(L, 2);
+                    lua_pop(L, lua_gettop(L));
                     lua_pushboolean(L, false);
                     lua_pushinteger(L, EINVAL);
                     return 2;  // false, EINVAL
@@ -355,6 +357,17 @@ static int waitForInput(lua_State* L)
 
                 // Okay, compute the amount of events we've just read
                 size_t ev_count = len / sizeof(*input_queue);
+                printf("Read %zu events\n", ev_count);
+
+                if (!lua_istable(L, -1)) {
+                    // First iteration, create our array, pre-allocated to the necessary number of elements.
+                    lua_createtable(L, ev_count, 0); // We return an *array* of events, ev_array = {}
+                    printf("Allocated array w/ %zu elements\n", ev_count);
+                }
+
+                if (lua_istable(L, -1)) {
+                    printf("We have a table\n");
+                }
 
                 // Iterate over them
                 for (const struct input_event* event = input_queue; event < input_queue + ev_count; event++) {
@@ -362,7 +375,9 @@ static int waitForInput(lua_State* L)
                     // NOTE: Here, rawseti basically inserts -1 in -2 @ [j]. We ensure that j always points at the tail.
                     lua_rawseti(L, -2, ++j);  // table.insert(ev_array, ev) [, j]
                 }
+                printf("Inserted %zu elements\n", j);
             }
+            printf("Returning %zu elements\n", j);
             return 2;  // true, ev_array
         }
     }
