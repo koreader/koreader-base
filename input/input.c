@@ -322,8 +322,8 @@ static int waitForInput(lua_State* L)
             size_t j = 0U;    // Index of ev_array's tail
             for (;;) {
                 // NOTE: This should be more than enough ;).
-                //       FWIW, this matches libevdev's default nn most of our target devices,
-                //       because they don't support ABS_MT_SLOT.
+                //       FWIW, this matches libevdev's default on most of our target devices,
+                //       because they don't support querying the exact slot count via ABS_MT_SLOT.
                 //       c.f., https://gitlab.freedesktop.org/libevdev/libevdev/-/blob/8d70f449892c6f7659e07bb0f06b8347677bb7d8/libevdev/libevdev.c#L66-101
                 struct input_event input_queue[256U];  // 4K on 32-bit, 6K on 64-bit
                 ssize_t            len = read(inputfds[i], &input_queue, sizeof(input_queue));
