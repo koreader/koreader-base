@@ -364,7 +364,7 @@ static int waitForInput(lua_State* L)
                     lua_rawseti(L, -2, ++j);  // table.insert(ev_array, ev) [, j]
                 }
             }
-            printf("Pushed %zu events\n", lua_objlen(L, -1));
+            printf("Pushed %zu (%zu) events\n", lua_objlen(L, -1), j);
             return 2;  // true, ev_array
         }
     }
