@@ -360,7 +360,13 @@ static int waitForInput(lua_State* L)
                 printf("Read %zu events\n", ev_count);
 
                 if (!lua_istable(L, -1)) {
-                    // First iteration, create our array, pre-allocated to the necessary number of elements.
+                    // First iteration, create our array, pre-allocated to the necessary number of elements...
+                    // ...for this iteration, at least. Subsequent ones will insert event by event.
+                    // This isn't the end of the world:
+                    // * In *most* cases, we iterate only once.
+                    // * Buffering events across multiple iterations would require pointer shenanigans
+                    //   to keep track of our position inside input_queue, and handle filling/recycling the buffer,
+                    //   making this simple bit of code more complex.
                     lua_createtable(L, ev_count, 0); // We return an *array* of events, ev_array = {}
                     printf("Allocated array w/ %zu elements\n", ev_count);
                 }
