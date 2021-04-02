@@ -296,7 +296,6 @@ static inline void drain_input_queue(lua_State* L, struct input_event* input_que
         set_event_table(L, event);  // Pushed a new ev table all filled up at the top of the stack (that's -1)
         // NOTE: Here, rawseti basically inserts -1 in -2 @ [j]. We ensure that j always points at the tail.
         lua_rawseti(L, -2, ++(*j));  // table.insert(ev_array, ev) [, j]
-        printf("Inserted in %zu\n", *j);
     }
     printf("Inserted %zu elements\n", *j);
     *ev_count = 0U;
@@ -396,10 +395,10 @@ static int waitForInput(lua_State* L)
                     printf("queue full\n");
                     drain_input_queue(L, input_queue, &ev_count, &j);
                     queue_pos = input_queue;
+                } else {
+                    // Update our position in the queue
+                    queue_pos += n;
                 }
-
-                // Update our position in the queue
-                queue_pos += ev_count;
                 printf("queue_pos: %p\n", queue_pos);
             }
             drain_input_queue(L, input_queue, &ev_count, &j);
