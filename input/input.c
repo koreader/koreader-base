@@ -342,11 +342,9 @@ static int waitForInput(lua_State* L)
 
     for (size_t i = 0U; i < num_fds; i++) {
         if (FD_ISSET(inputfds[i], &rfds)) {
-            printf("gettop before: %d\n", lua_gettop(L));
             lua_pushboolean(L, true);
-            printf("gettop after: %d\n", lua_gettop(L));
-            size_t j = 0U;    // Index of ev_array's tail
-            size_t ev_count = 0U; // Amount of buffered events
+            size_t j = 0U;  // Index of ev_array's tail
+            size_t ev_count = 0U;  // Amount of buffered events
             // NOTE: This should be more than enough ;).
             //       FWIW, this matches libevdev's default on most of our target devices,
             //       because they don't support querying the exact slot count via ABS_MT_SLOT.
@@ -360,7 +358,7 @@ static int waitForInput(lua_State* L)
 
                 if (len < 0) {
                     if (errno == EAGAIN) {
-                        // Queue drained :)
+                        // Kernel queue drained :)
                         break;
                     }
                     lua_pop(L, lua_gettop(L));  // Kick our bogus bool (and potentially the ev_array table) from the stack
@@ -398,7 +396,7 @@ static int waitForInput(lua_State* L)
                     queue_available_size = sizeof(input_queue);
                     ev_count = 0U;
                 } else {
-                    // Update our position in the queue
+                    // Update our position in the queue buffer
                     queue_pos += n;
                     queue_available_size = queue_available_size - (size_t) len;
                 }
