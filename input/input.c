@@ -355,7 +355,6 @@ static int waitForInput(lua_State* L)
 
                 // Okay, compute the amount of events we've just read
                 size_t ev_count = len / sizeof(*input_queue);
-                printf("Read %zu events\n", ev_count);
 
                 // Iterate over them
                 for (const struct input_event* event = input_queue; event < input_queue + ev_count; event++) {
@@ -364,7 +363,6 @@ static int waitForInput(lua_State* L)
                     lua_rawseti(L, -2, ++j);  // table.insert(ev_array, ev) [, j]
                 }
             }
-            printf("Pushed %zu (%zu) events\n", lua_objlen(L, -1), j);
             return 2;  // true, ev_array
         }
     }
