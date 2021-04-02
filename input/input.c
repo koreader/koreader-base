@@ -285,13 +285,14 @@ static inline void set_event_table(lua_State* L, const struct input_event* input
     lua_rawset(L, -3);                        // ev.time = time
 }
 
-static inline size_t drain_input_queue(lua_State* L, struct input_event* input_queue, size_t ev_count, size_t j) {
+static inline size_t drain_input_queue(lua_State* L, struct input_event* input_queue, size_t ev_count, size_t j)
+{
     if (!lua_istable(L, -1)) {
         // First call, create our array, pre-allocated to the necessary number of elements...
         // ...for this call, at least. Subsequent ones will insert event by event.
         // That said, multiple calls should be extremely rare:
         // We'd need to have filled the input_queue buffer *during* a single batch of events on the same fd ;).
-        lua_createtable(L, ev_count, 0); // We return an *array* of events, ev_array = {}
+        lua_createtable(L, ev_count, 0);  // We return an *array* of events, ev_array = {}
     }
 
     // Iterate over every input event in the queue buffer
@@ -343,15 +344,15 @@ static int waitForInput(lua_State* L)
     for (size_t i = 0U; i < num_fds; i++) {
         if (FD_ISSET(inputfds[i], &rfds)) {
             lua_pushboolean(L, true);
-            size_t j = 0U;  // Index of ev_array's tail
+            size_t j        = 0U;  // Index of ev_array's tail
             size_t ev_count = 0U;  // Amount of buffered events
             // NOTE: This should be more than enough ;).
             //       FWIW, this matches libevdev's default on most of our target devices,
             //       because they generally don't support querying the exact slot count via ABS_MT_SLOT.
             //       c.f., https://gitlab.freedesktop.org/libevdev/libevdev/-/blob/8d70f449892c6f7659e07bb0f06b8347677bb7d8/libevdev/libevdev.c#L66-101
-            struct input_event input_queue[256U];  // 4K on 32-bit, 6K on 64-bit
-            struct input_event* queue_pos = input_queue;
-            size_t queue_available_size = sizeof(input_queue);
+            struct input_event  input_queue[256U];  // 4K on 32-bit, 6K on 64-bit
+            struct input_event* queue_pos            = input_queue;
+            size_t              queue_available_size = sizeof(input_queue);
             for (;;) {
                 ssize_t len = read(inputfds[i], queue_pos, queue_available_size);
 
@@ -388,9 +389,9 @@ static int waitForInput(lua_State* L)
                     // If we're out of buffer space in the queue, drain it *now*
                     j = drain_input_queue(L, input_queue, ev_count, j);
                     // Rewind to the start of the queue to recycle the buffer
-                    queue_pos = input_queue;
+                    queue_pos            = input_queue;
                     queue_available_size = sizeof(input_queue);
-                    ev_count = 0U;
+                    ev_count             = 0U;
                 } else {
                     // Otherwise, update our position in the queue buffer
                     queue_pos += n;
