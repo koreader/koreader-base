@@ -279,6 +279,29 @@ static inline void set_event_table(lua_State* L, const struct input_event* input
     lua_rawset(L, -3);                        // ev.time = time
 }
 
+static inline void drain_input_queue(lua_State* L, struct input_event* input_queue, size_t* ev_count, size_t* j) {
+    if (!lua_istable(L, -1)) {
+        // First iteration, create our array, pre-allocated to the necessary number of elements...
+        // ...for this iteration, at least. Subsequent ones will insert event by event.
+        lua_createtable(L, *ev_count, 0); // We return an *array* of events, ev_array = {}
+        printf("Allocated array w/ %zu elements\n", *ev_count);
+    }
+
+    if (lua_istable(L, -1)) {
+        printf("We have a table\n");
+    }
+
+    // Iterate over them
+    for (const struct input_event* event = input_queue; event < input_queue + *ev_count; event++) {
+        set_event_table(L, event);  // Pushed a new ev table all filled up at the top of the stack (that's -1)
+        // NOTE: Here, rawseti basically inserts -1 in -2 @ [j]. We ensure that j always points at the tail.
+        lua_rawseti(L, -2, ++(*j));  // table.insert(ev_array, ev) [, j]
+        printf("Inserted in %zu\n", *j);
+    }
+    printf("Inserted %zu elements\n", *j);
+    *ev_count = 0U;
+}
+
 static int waitForInput(lua_State* L)
 {
     lua_Integer sec  = luaL_optinteger(L, 1, -1);  // Fallback to -1 to handle detecting a nil
@@ -322,13 +345,20 @@ static int waitForInput(lua_State* L)
             lua_pushboolean(L, true);
             printf("gettop after: %d\n", lua_gettop(L));
             size_t j = 0U;    // Index of ev_array's tail
+            size_t ev_count = 0U; // Amount of buffered events
+            // NOTE: This should be more than enough ;).
+            //       FWIW, this matches libevdev's default on most of our target devices,
+            //       because they don't support querying the exact slot count via ABS_MT_SLOT.
+            //       c.f., https://gitlab.freedesktop.org/libevdev/libevdev/-/blob/8d70f449892c6f7659e07bb0f06b8347677bb7d8/libevdev/libevdev.c#L66-101
+            struct input_event input_queue[256U];  // 4K on 32-bit, 6K on 64-bit
+            struct input_event* queue_pos = input_queue;
+            struct input_event* const queue_end = queue_pos + 256U;
+            printf("queue_pos: %p\n", queue_pos);
+            printf("queue_end: %p\n", queue_end);
             for (;;) {
-                // NOTE: This should be more than enough ;).
-                //       FWIW, this matches libevdev's default on most of our target devices,
-                //       because they don't support querying the exact slot count via ABS_MT_SLOT.
-                //       c.f., https://gitlab.freedesktop.org/libevdev/libevdev/-/blob/8d70f449892c6f7659e07bb0f06b8347677bb7d8/libevdev/libevdev.c#L66-101
-                struct input_event input_queue[256U];  // 4K on 32-bit, 6K on 64-bit
-                ssize_t            len = read(inputfds[i], &input_queue, sizeof(input_queue));
+                size_t queue_available_size = (unsigned char *) queue_end - (unsigned char *) queue_pos;
+                printf("Available queue size in bytes: %zu\n", queue_available_size);
+                ssize_t            len = read(inputfds[i], queue_pos, queue_available_size);
 
                 if (len < 0) {
                     if (errno == EAGAIN) {
@@ -356,33 +386,23 @@ static int waitForInput(lua_State* L)
                 }
 
                 // Okay, compute the amount of events we've just read
-                size_t ev_count = len / sizeof(*input_queue);
-                printf("Read %zu events\n", ev_count);
+                size_t n = len / sizeof(*input_queue);
+                printf("Read %zu events\n", n);
+                ev_count += n;
+                printf("Event count now at %zu\n", ev_count);
 
-                if (!lua_istable(L, -1)) {
-                    // First iteration, create our array, pre-allocated to the necessary number of elements...
-                    // ...for this iteration, at least. Subsequent ones will insert event by event.
-                    // This isn't the end of the world:
-                    // * In *most* cases, we iterate only once.
-                    // * Buffering events across multiple iterations would require pointer shenanigans
-                    //   to keep track of our position inside input_queue, and handle filling/recycling the buffer,
-                    //   making this simple bit of code more complex.
-                    lua_createtable(L, ev_count, 0); // We return an *array* of events, ev_array = {}
-                    printf("Allocated array w/ %zu elements\n", ev_count);
+                // If we're out of buffer space in the queue, drain it
+                if ((size_t) len == queue_available_size) {
+                    printf("queue full\n");
+                    drain_input_queue(L, input_queue, &ev_count, &j);
+                    queue_pos = input_queue;
                 }
 
-                if (lua_istable(L, -1)) {
-                    printf("We have a table\n");
-                }
-
-                // Iterate over them
-                for (const struct input_event* event = input_queue; event < input_queue + ev_count; event++) {
-                    set_event_table(L, event);  // Pushed a new ev table all filled up at the top of the stack (that's -1)
-                    // NOTE: Here, rawseti basically inserts -1 in -2 @ [j]. We ensure that j always points at the tail.
-                    lua_rawseti(L, -2, ++j);  // table.insert(ev_array, ev) [, j]
-                }
-                printf("Inserted %zu elements\n", j);
+                // Update our position in the queue
+                queue_pos += ev_count;
+                printf("queue_pos: %p\n", queue_pos);
             }
+            drain_input_queue(L, input_queue, &ev_count, &j);
             printf("Returning %zu elements\n", j);
             return 2;  // true, ev_array
         }
