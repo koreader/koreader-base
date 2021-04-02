@@ -351,7 +351,7 @@ static int waitForInput(lua_State* L)
             //       c.f., https://gitlab.freedesktop.org/libevdev/libevdev/-/blob/8d70f449892c6f7659e07bb0f06b8347677bb7d8/libevdev/libevdev.c#L66-101
             struct input_event input_queue[256U];  // 4K on 32-bit, 6K on 64-bit
             struct input_event* queue_pos = input_queue;
-            struct input_event* const queue_end = queue_pos + 256U;
+            struct input_event* const queue_end = queue_pos + sizeof(input_queue) / sizeof(*input_queue);
             printf("queue_pos: %p\n", queue_pos);
             printf("queue_end: %p\n", queue_end);
             for (;;) {
