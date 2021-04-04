@@ -515,7 +515,7 @@ function util.fsyncDirectory(path)
             return false, err
         end
     end
-    local dirfd = C.open(ffi.cast("char *", path), C.O_RDONLY)
+    local dirfd = C.open(ffi.cast("char *", path), bit.bor(C.O_RDONLY, C.O_CLOEXEC))
     if dirfd == -1 then
         err = ffi.errno()
         return false, ffi.string(C.strerror(err))
