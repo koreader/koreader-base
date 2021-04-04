@@ -37,8 +37,8 @@ function kobolight.open(device)
 		light_fd = nil,
 	}
 
-	local ld = C.open(device or "/dev/ntx_io", bor(bor(C.O_RDONLY, C.O_NONBLOCK), C.O_CLOEXEC))
-	assert(ld ~= -1, "cannot open light device")
+	local ld = C.open(device or "/dev/ntx_io", bor(C.O_RDONLY, C.O_NONBLOCK, C.O_CLOEXEC))
+	assert(ld ~= -1, "cannot open ntx_io character device")
 	light.light_fd = ffi.gc(
 		ffi.new("light_fd", ld),
 		function (light_fd) C.close(light_fd.ld) end
