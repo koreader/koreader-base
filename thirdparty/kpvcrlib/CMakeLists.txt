@@ -55,6 +55,10 @@ else()
     add_definitions(-DLINUX=1 -D_LINUX=1)
 endif()
 
+if(DEFINED ENV{LEGACY})
+    add_definitions(-DDISABLE_CLOEXEC)
+endif()
+
 add_definitions(
     -DUSE_FONTCONFIG=0
     -DUSE_FREETYPE=1
