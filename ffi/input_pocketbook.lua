@@ -117,7 +117,7 @@ function input:open()
         -- You must chmod those to be readable by non-root somehow (or run as root)
         for i=1, max_fds-1 do
             local input_dev = "/dev/input/event"..tostring(i)
-            local fd = C.open(input_dev, C.O_RDONLY+C.O_NONBLOCK)
+            local fd = C.open(input_dev, bit.bor(C.O_RDONLY, C.O_NONBLOCK, C.O_CLOEXEC))
             if fd >= 0 then
                 poll_fds[poll_fds_count].fd = fd
                 poll_fds[poll_fds_count].events = C.POLLIN
