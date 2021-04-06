@@ -33,6 +33,8 @@ cdecl_const(EPIPE)
 cdecl_const(ENOSYS)
 cdecl_const(ETIMEDOUT)
 
+// NOTE: Let's hope we'll all have moved to 64-bit by the time Y2038 becomes an issue...
+//       c.f., https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit?id=152194fe9c3f
 cdecl_type(off_t)
 cdecl_type(time_t)
 cdecl_type(suseconds_t)
