@@ -101,6 +101,8 @@ static const int CLOCK_TAI = 11;
 int clock_getres(clockid_t, struct timespec *) __attribute__((nothrow, leaf));
 int clock_gettime(clockid_t, struct timespec *) __attribute__((nothrow, leaf));
 int clock_settime(clockid_t, const struct timespec *) __attribute__((nothrow, leaf));
+static const int TIMER_ABSTIME = 1;
+int clock_nanosleep(clockid_t, int, const struct timespec *, struct timespec *);
 void *malloc(size_t) __attribute__((malloc, leaf, nothrow));
 void *calloc(size_t, size_t) __attribute__((malloc, leaf, nothrow));
 void free(void *) __attribute__((leaf, nothrow));

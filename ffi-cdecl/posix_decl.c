@@ -124,6 +124,8 @@ cdecl_const(CLOCK_TAI)
 cdecl_func(clock_getres)
 cdecl_func(clock_gettime)
 cdecl_func(clock_settime)
+cdecl_const(TIMER_ABSTIME)
+cdecl_func(clock_nanosleep)
 
 cdecl_func(malloc)
 cdecl_func(calloc)
