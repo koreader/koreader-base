@@ -105,6 +105,7 @@ cdecl_func(ioctl)
 //cdecl_func(Sleep) // Win32
 cdecl_func(sleep)
 cdecl_func(usleep)
+cdecl_func(nanosleep)
 cdecl_func(statvfs)
 cdecl_func(gettimeofday)
 cdecl_func(realpath)

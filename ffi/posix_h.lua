@@ -85,6 +85,7 @@ int ioctl(int, long unsigned int, ...) __attribute__((nothrow, leaf));
 void Sleep(int ms);
 unsigned int sleep(unsigned int);
 int usleep(unsigned int);
+int nanosleep(const struct timespec *, struct timespec *);
 int statvfs(const char *restrict, struct statvfs *restrict) __attribute__((nothrow, leaf));
 int gettimeofday(struct timeval *restrict, struct timezone *restrict) __attribute__((nothrow, leaf));
 char *realpath(const char *restrict, char *restrict) __attribute__((nothrow, leaf));
