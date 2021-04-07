@@ -605,12 +605,11 @@ static int setGammaIndex(lua_State *L) {
 }
 
 static int getHyphDictList(lua_State *L) {
-	lua_newtable(L);
 	HyphDictionaryList *list = HyphMan::getDictList();
+	lua_createtable(L, list->length(), 0);
 	for(int i = 0; i < list->length(); i++) {
-		lua_pushnumber(L, i+1);
 		lua_pushstring(L, UnicodeToLocal(list->get(i)->getId()).c_str());
-		lua_settable(L, -3);
+		lua_rawseti(L, -2, i+i);
 	}
 	return 1;
 }
@@ -631,28 +630,28 @@ static int setHyphDictionary(lua_State *L) {
 static int getTextLangStatus(lua_State *L) {
 	lua_pushstring(L, UnicodeToLocal(TextLangMan::getMainLang()).c_str());
 	lua_pushstring(L, UnicodeToLocal(TextLangMan::getMainLangHyphMethod()->getId()).c_str());
-	lua_newtable(L);
 	LVPtrVector<TextLangCfg> *list = TextLangMan::getLangCfgList();
+	lua_createtable(L, 0, list->length());
 	for(int i = 0; i < list->length(); i++) {
                 TextLangCfg * lang_cfg = list->get(i);
 		// Key
 		lua_pushstring(L, UnicodeToLocal(lang_cfg->getLangTag()).c_str());
 		// Value: table
-		lua_newtable(L);
+		lua_createtable(L, 0, 3);
 
 		lua_pushstring(L, "hyph_dict_name");
 		lua_pushstring(L, UnicodeToLocal(lang_cfg->getDefaultHyphMethod()->getId()).c_str());
-		lua_settable(L, -3);
+		lua_rawset(L, -3);
 
 		lua_pushstring(L, "hyph_nb_patterns");
 		lua_pushinteger(L, lang_cfg->getDefaultHyphMethod()->getCount());
-		lua_settable(L, -3);
+		lua_rawset(L, -3);
 
 		lua_pushstring(L, "hyph_mem_size");
 		lua_pushinteger(L, lang_cfg->getDefaultHyphMethod()->getSize());
-		lua_settable(L, -3);
+		lua_rawset(L, -3);
 
-		lua_settable(L, -3);
+		lua_rawset(L, -3);
 	}
 	return 3;
 }
@@ -757,30 +756,30 @@ static int getDocumentFormat(lua_State *L) {
 static int getDocumentProps(lua_State *L) {
 	CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
 
-	lua_newtable(L);
+	lua_createtable(L, 0, 6);
 	lua_pushstring(L, "title");
 	lua_pushstring(L, UnicodeToLocal(doc->text_view->getTitle()).c_str());
-	lua_settable(L, -3);
+	lua_rawset(L, -3);
 
 	lua_pushstring(L, "authors");
 	lua_pushstring(L, UnicodeToLocal(doc->text_view->getAuthors()).c_str());
-	lua_settable(L, -3);
+	lua_rawset(L, -3);
 
 	lua_pushstring(L, "language");
 	lua_pushstring(L, UnicodeToLocal(doc->text_view->getLanguage()).c_str());
-	lua_settable(L, -3);
+	lua_rawset(L, -3);
 
 	lua_pushstring(L, "series");
 	lua_pushstring(L, UnicodeToLocal(doc->text_view->getSeries()).c_str());
-	lua_settable(L, -3);
+	lua_rawset(L, -3);
 
 	lua_pushstring(L, "description");
 	lua_pushstring(L, UnicodeToLocal(doc->text_view->getDescription()).c_str());
-	lua_settable(L, -3);
+	lua_rawset(L, -3);
 
 	lua_pushstring(L, "keywords");
 	lua_pushstring(L, UnicodeToLocal(doc->text_view->getKeywords()).c_str());
-	lua_settable(L, -3);
+	lua_rawset(L, -3);
 
 	return 1;
 }
@@ -983,18 +982,17 @@ static int getFontFace(lua_State *L) {
  */
 static int walkTableOfContent(lua_State *L, LVTocItem *toc, int *count) {
 	LVTocItem *toc_tmp = NULL;
-	int i = 0,
-		nr_child = toc->getChildCount();
+	int i = 0;
+	int nr_child = toc->getChildCount();
 
 	for (i = 0; i < nr_child; i++)  {
 		toc_tmp = toc->getChild(i);
-		lua_pushnumber(L, (*count)++);
 
 		/* set subtable, Toc entry */
-		lua_newtable(L);
+		lua_createtable(L, 0, 4);
 		lua_pushstring(L, "page");
 		lua_pushnumber(L, toc_tmp->getPage()+1);
-		lua_settable(L, -3);
+		lua_rawset(L, -3);
 
 		// Note: toc_tmp->getXPointer().toString() and toc_tmp->getPath() return
 		// the same xpath string. But when just loaded from cache, the XPointer
@@ -1003,19 +1001,18 @@ static int walkTableOfContent(lua_State *L, LVTocItem *toc, int *count) {
 		lua_pushstring(L, "xpointer");
 		// lua_pushstring(L, UnicodeToLocal( toc_tmp->getXPointer().toString()).c_str());
 		lua_pushstring(L, UnicodeToLocal(toc_tmp->getPath()).c_str());
-		lua_settable(L, -3);
+		lua_rawset(L, -3);
 
 		lua_pushstring(L, "depth");
 		lua_pushnumber(L, toc_tmp->getLevel());
-		lua_settable(L, -3);
+		lua_rawset(L, -3);
 
 		lua_pushstring(L, "title");
 		lua_pushstring(L, UnicodeToLocal(toc_tmp->getName()).c_str());
-		lua_settable(L, -3);
-
+		lua_rawset(L, -3);
 
 		/* set Toc entry to Toc table */
-		lua_settable(L, -3);
+		lua_rawseti(L, -2, (*count)++);
 
 		if (toc_tmp->getChildCount() > 0) {
 			walkTableOfContent(L, toc_tmp, count);
@@ -1048,7 +1045,7 @@ static int getTableOfContent(lua_State *L) {
 	LVTocItem * toc = doc->text_view->getToc();
 	int count = 1;
 
-	lua_newtable(L);
+	lua_createtable(L, toc->getChildCount(), 0);
 	walkTableOfContent(L, toc, &count);
 
 	return 1;
@@ -1087,17 +1084,16 @@ static int getPageMap(lua_State *L) {
     if ( !nb )
         return 0;
 
-    lua_newtable(L);
+    lua_createtable(L, nb, 0);
     for (int i = 0; i < nb; i++)  {
         LVPageMapItem * item = pagemap->getChild(i);
-        lua_pushnumber(L, i+1);
 
         // New table for item
-        lua_newtable(L);
+        lua_createtable(L, 0, 4);
 
         lua_pushstring(L, "page");
         lua_pushnumber(L, item->getPage()+1);
-        lua_settable(L, -3);
+        lua_rawset(L, -3);
 
         // Note: toc_tmp->getXPointer().toString() and toc_tmp->getPath() return
         // the same xpath string. But when just loaded from cache, the XPointer
@@ -1105,18 +1101,18 @@ static int getPageMap(lua_State *L) {
         // having to build the XPointers until they are needed to update page numbers.
         lua_pushstring(L, "xpointer");
         lua_pushstring(L, UnicodeToLocal(item->getPath()).c_str());
-        lua_settable(L, -3);
+        lua_rawset(L, -3);
 
         lua_pushstring(L, "doc_y");
         lua_pushnumber(L, item->getDocY());
-        lua_settable(L, -3);
+        lua_rawset(L, -3);
 
         lua_pushstring(L, "label");
         lua_pushstring(L, UnicodeToLocal(item->getLabel()).c_str());
-        lua_settable(L, -3);
+        lua_rawset(L, -3);
 
         // add item to returned table
-        lua_settable(L, -3);
+        lua_rawseti(L, -2, i+1);
     }
     return 1;
 }
@@ -1276,7 +1272,7 @@ static int getPageMapVisiblePageLabels(lua_State *L) {
     }
     int start = left;
 
-    lua_newtable(L);
+    lua_createtable(L, nb, 0);
     int count = 1;
     for (int i = start; i < nb; i++)  {
         LVPageMapItem * item = pagemap->getChild(i);
@@ -1293,37 +1289,35 @@ static int getPageMapVisiblePageLabels(lua_State *L) {
             screen_y = doc_y - page2_y + offset_y;
         }
 
-        lua_pushnumber(L, count++);
-
         // New table for item
-        lua_newtable(L);
+        lua_createtable(L, 0, 6);
 
         lua_pushstring(L, "screen_page");
         lua_pushnumber(L, screen_page);
-        lua_settable(L, -3);
+        lua_rawset(L, -3);
 
         lua_pushstring(L, "screen_y");
         lua_pushnumber(L, screen_y);
-        lua_settable(L, -3);
+        lua_rawset(L, -3);
 
         lua_pushstring(L, "page");
         lua_pushnumber(L, item->getPage()+1);
-        lua_settable(L, -3);
+        lua_rawset(L, -3);
 
         lua_pushstring(L, "xpointer");
         lua_pushstring(L, UnicodeToLocal(item->getPath()).c_str());
-        lua_settable(L, -3);
+        lua_rawset(L, -3);
 
         lua_pushstring(L, "doc_y");
         lua_pushnumber(L, item->getDocY());
-        lua_settable(L, -3);
+        lua_rawset(L, -3);
 
         lua_pushstring(L, "label");
         lua_pushstring(L, UnicodeToLocal(item->getLabel()).c_str());
-        lua_settable(L, -3);
+        lua_rawset(L, -3);
 
         // add item to returned table
-        lua_settable(L, -3);
+        lua_rawseti(L, -2, count++);
     }
     return 1;
 }
@@ -1343,12 +1337,11 @@ static int getFontFaces(lua_State *L) {
 
 	fontMan->getFaceList(face_list);
 
-	lua_newtable(L);
+	lua_createtable(L, face_list.length(), 0);
 	for (i = 0; i < face_list.length(); i++)
 	{
-		lua_pushnumber(L, i+1);
 		lua_pushstring(L, UnicodeToLocal(face_list[i]).c_str());
-		lua_settable(L, -3);
+		lua_rawseti(L, -2, i+1);
 	}
 
 	return 1;
@@ -1660,23 +1653,23 @@ static int getPageMargins(lua_State *L) {
 	CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
 	lvRect rc = doc->text_view->getPageMargins();
 
-	lua_newtable(L);
+	lua_createtable(L, 0, 4);
 
 	lua_pushstring(L, "left");
 	lua_pushnumber(L, rc.left);
-	lua_settable(L, -3);
+	lua_rawset(L, -3);
 
 	lua_pushstring(L, "top");
 	lua_pushnumber(L, rc.top);
-	lua_settable(L, -3);
+	lua_rawset(L, -3);
 
 	lua_pushstring(L, "right");
 	lua_pushnumber(L, rc.right);
-	lua_settable(L, -3);
+	lua_rawset(L, -3);
 
 	lua_pushstring(L, "bottom");
 	lua_pushnumber(L, rc.bottom);
-	lua_settable(L, -3);
+	lua_rawset(L, -3);
 
 	return 1;
 }
@@ -1769,27 +1762,32 @@ static int getWordFromPosition(lua_State *L) {
 	sel.selectWord(x - x_offset, y + y_offset);
 
 	ldomWordEx * word = sel.getSelectedWord();
-	lua_newtable(L); // new word box
 	if (word) {
 		lvRect rect;
 		ldomXRange range = word->getRange();
 		if (range.getRectEx(rect)) {
+			lua_createtable(L, 0, 5); // new word box
+
 			lua_pushstring(L, "word");
 			lua_pushstring(L, UnicodeToLocal(word->getText()).c_str());
-			lua_settable(L, -3);
+			lua_rawset(L, -3);
 			lua_pushstring(L, "x0");
 			lua_pushinteger(L, rect.left + x_offset);
-			lua_settable(L, -3);
+			lua_rawset(L, -3);
 			lua_pushstring(L, "y0");
 			lua_pushinteger(L, rect.top - y_offset);
-			lua_settable(L, -3);
+			lua_rawset(L, -3);
 			lua_pushstring(L, "x1");
 			lua_pushinteger(L, rect.right + x_offset);
-			lua_settable(L, -3);
+			lua_rawset(L, -3);
 			lua_pushstring(L, "y1");
 			lua_pushinteger(L, rect.bottom - y_offset);
-			lua_settable(L, -3);
+			lua_rawset(L, -3);
+		} else {
+			lua_newtable(L); // {}
 		}
+	} else {
+		lua_newtable(L); // {}
 	}
 	return 1;
 }
@@ -1850,7 +1848,7 @@ static int getTextFromPositions(lua_State *L) {
 	ldomXPointer startp = tv->getNodeByPoint(startpt);
 	ldomXPointer endp = tv->getNodeByPoint(endpt);
 	if (!startp.isNull() && !endp.isNull()) {
-	    lua_newtable(L); // new text boxes
+		lua_createtable(L, 0, 3); // new text boxes
 		ldomXRange r(startp, endp);
 		if (r.getStart().isNull() || r.getEnd().isNull())
 			return 0;
@@ -1894,25 +1892,25 @@ static int getTextFromPositions(lua_State *L) {
 
 		lua_pushstring(L, "text");
 		lua_pushstring(L, UnicodeToLocal(selText).c_str());
-		lua_settable(L, -3);
+		lua_rawset(L, -3);
 		lua_pushstring(L, "pos0");
 		lua_pushstring(L, UnicodeToLocal(r.getStart().toString()).c_str());
-		lua_settable(L, -3);
+		lua_rawset(L, -3);
 		lua_pushstring(L, "pos1");
 		lua_pushstring(L, UnicodeToLocal(r.getEnd().toString()).c_str());
-		lua_settable(L, -3);
+		lua_rawset(L, -3);
 		/* We don't need these:
 		lua_pushstring(L, "title");
 		lua_pushstring(L, UnicodeToLocal(titleText).c_str());
-		lua_settable(L, -3);
+		lua_rawset(L, -3);
 		lua_pushstring(L, "context");
 		lua_pushstring(L, UnicodeToLocal(posText).c_str());
-		lua_settable(L, -3);
+		lua_rawset(L, -3);
 		lua_pushstring(L, "percent");
 		lua_pushnumber(L, 1.0*page/(pages-1));
-		lua_settable(L, -3);
+		lua_rawset(L, -3);
 		*/
-	    return 1;
+		return 1;
 	}
     return 0;
 }
@@ -1920,16 +1918,17 @@ static int getTextFromPositions(lua_State *L) {
 void lua_pushLineRect(lua_State *L, int left, int top, int right, int bottom, int lcount) {
 	lua_pushstring(L, "x0");
 	lua_pushinteger(L, left);
-	lua_settable(L, -3);
+	lua_rawset(L, -3);
 	lua_pushstring(L, "y0");
 	lua_pushinteger(L, top);
-	lua_settable(L, -3);
+	lua_rawset(L, -3);
 	lua_pushstring(L, "x1");
 	lua_pushinteger(L, right);
-	lua_settable(L, -3);
+	lua_rawset(L, -3);
 	lua_pushstring(L, "y1");
 	lua_pushinteger(L, bottom);
-	lua_settable(L, -3);
+	lua_rawset(L, -3);
+
 	lua_rawseti(L, -2, lcount);
 }
 
@@ -1987,7 +1986,7 @@ void lua_pushSegmentsFromRange(lua_State *L, CreDocument *doc, ldomXRange *range
         lvRect r = rects[i];
         if (! r.isEmpty()) {
             if (docToWindowRect(tv, r)) { // it is in current showing page
-                lua_newtable(L); // new segment
+                lua_createtable(L, 0, 4); // new segment
                 lua_pushLineRect(L, r.left, r.top, r.right, r.bottom, lcount++);
             }
         }
@@ -2103,7 +2102,6 @@ static int getWordBoxesFromPositions(lua_State *L) {
 
 	ldomXPointer startp = dv->createXPointer(lString32(pos0));
 	ldomXPointer endp = dv->createXPointer(lString32(pos1));
-	lua_newtable(L); // new word boxes
 	if (!startp.isNull() && !endp.isNull()) {
 		ldomXRange r(startp, endp);
 		if (r.getStart().isNull() || r.getEnd().isNull())
@@ -2116,6 +2114,7 @@ static int getWordBoxesFromPositions(lua_State *L) {
 		// we make text selection work outside word boundaries
 		// (to select following puncutations, etc...)
 		if (getSegments) {
+			lua_newtable(L); // We may skip rects in the range, can't predict the pre-alloc size without overshot
 			lua_pushSegmentsFromRange(L, doc, &r);
 			return 1;
 		}
@@ -2151,14 +2150,15 @@ static int getWordBoxesFromPositions(lua_State *L) {
 		lvRect charRect, wordRect, lineRect;
 		int lcount = 1;
 		int lastx = -1;
-		lua_newtable(L); // first line box
+		lua_createtable(L, words.length(), 0); // new word boxes
+		lua_createtable(L, 0, 4); // first line box
 		for (int i=0; i<words.length(); i++) {
 			if (ldomXRange(words[i]).getRectEx(wordRect)) {
 				if (!docToWindowRect(tv, wordRect)) continue;//docToWindowRect returns false means it is not on current showing page.
 				if (wordRect.left < lastx) {
 					lua_pushLineRect(L, lineRect.left, lineRect.top,
 									    lineRect.right, lineRect.bottom, lcount++);
-					lua_newtable(L); // new line box
+					lua_createtable(L, 0, 4); // new line box
 					lineRect.clear();
 				}
 				lineRect.extend(wordRect);
@@ -2188,7 +2188,7 @@ static int getWordBoxesFromPositions(lua_State *L) {
 						if (charRect.left < lastx) {
 							lua_pushLineRect(L, lineRect.left, lineRect.top,
 												lineRect.right, lineRect.bottom, lcount++);
-							lua_newtable(L); // new line box
+							lua_createtable(L, 0, 4); // new line box
 							lineRect.clear();
 						}
 						lineRect.extend(charRect);
@@ -2199,6 +2199,8 @@ static int getWordBoxesFromPositions(lua_State *L) {
 		}
 		lua_pushLineRect(L, lineRect.left, lineRect.top,
 							lineRect.right, lineRect.bottom, lcount);
+	} else {
+		lua_newtable(L); // {}
 	}
 	return 1;
 }
@@ -2267,11 +2269,10 @@ static int getHTMLFromXPointer(lua_State *L) {
     lString32Collection cssFiles;
     lString8 html = nodep.getHtml(cssFiles, wflags);
     lua_pushstring(L, html.c_str());
-    lua_newtable(L);
+    lua_createtable(L, cssFiles.length(), 0);
     for (int i = 0; i < cssFiles.length(); i++) {
-        lua_pushnumber(L, i+1);
         lua_pushstring(L, UnicodeToLocal(cssFiles[i]).c_str());
-        lua_settable(L, -3);
+        lua_rawseti(L, -2, i+1);
     }
     return 2;
 }
@@ -2295,11 +2296,10 @@ static int getHTMLFromXPointers(lua_State *L) {
     lString32Collection cssFiles;
     lString8 html = r.getHtml(cssFiles, wflags, fromRootNode);
     lua_pushstring(L, html.c_str());
-    lua_newtable(L);
+    lua_createtable(L, cssFiles.length(), 0);
     for (int i = 0; i < cssFiles.length(); i++) {
-        lua_pushnumber(L, i+1);
         lua_pushstring(L, UnicodeToLocal(cssFiles[i]).c_str());
-        lua_settable(L, -3);
+        lua_rawseti(L, -2, i+1);
     }
     return 2;
 }
@@ -2311,7 +2311,7 @@ static int getPageLinks(lua_State *L) {
 		internalLinksOnly = lua_toboolean(L, 2);
 	}
 
-	lua_newtable(L); // all links
+	lua_newtable(L); // all links (actual entries may be less than links.length(), so, no pre-alloc)
 
 	ldomXRangeList links;
 	ldomXRangeList & sel = doc->text_view->getDocument()->getSelections();
@@ -2347,44 +2347,44 @@ static int getPageLinks(lua_State *L) {
 				txt8.c_str(), link8.c_str());
 			#endif
 
-			lua_newtable(L); // new link
+			lua_createtable(L, 0, 6); // new link
 
 			lua_pushstring(L, "start_x");
 			lua_pushinteger(L, start_pt.x + x_offset);
-			lua_settable(L, -3);
+			lua_rawset(L, -3);
 			lua_pushstring(L, "start_y");
 			lua_pushinteger(L, start_pt.y - y_offset);
-			lua_settable(L, -3);
+			lua_rawset(L, -3);
 			lua_pushstring(L, "end_x");
 			lua_pushinteger(L, end_pt.x + x_offset);
-			lua_settable(L, -3);
+			lua_rawset(L, -3);
 			lua_pushstring(L, "end_y");
 			lua_pushinteger(L, end_pt.y - y_offset);
-			lua_settable(L, -3);
+			lua_rawset(L, -3);
 
 			if (!a_xpointer.isNull()) { // xpointer to <a> itself
 				lua_pushstring(L, "a_xpointer");
 				lua_pushstring(L, UnicodeToLocal(a_xpointer.toString()).c_str());
-				lua_settable(L, -3);
+				lua_rawset(L, -3);
 			}
 
 			const char * link_to = link8.c_str();
 			if ( isInternal ) {
 				lua_pushstring(L, "section");
 				lua_pushstring(L, link_to);
-				lua_settable(L, -3);
+				lua_rawset(L, -3);
 			} else {
 				lua_pushstring(L, "uri");
 				lua_pushstring(L, link_to);
-				lua_settable(L, -3);
+				lua_rawset(L, -3);
 			}
 
 			// Add segments rects
 			ldomXRange *linkRange = new ldomXRange(*links[i]);
 			lua_pushstring(L, "segments");
-			lua_newtable(L); // all segments
+			lua_newtable(L); // all segments (again, we may skip rects in the range, so, no pre-alloc)
 			lua_pushSegmentsFromRange(L, doc, linkRange);
-			lua_settable(L, -3); // adds "segments" = table
+			lua_rawset(L, -3); // adds "segments" = table
 
 			lua_rawseti(L, -2, linkNum++);
 
@@ -3384,17 +3384,18 @@ static int findText(lua_State *L) {
         doc->text_view->selectWords( words );
         ldomMarkedRangeList * ranges = doc->text_view->getMarkedRanges();
         if ( ranges && ranges->length() > 0 ) {
-            lua_newtable(L); // hold all words
+            lua_createtable(L, words.length(), 0); // hold all words
             for (int i = 0; i < words.length(); i++) {
                 ldomWord word = words[i];
-                lua_newtable(L); // new word
+                lua_createtable(L, 0, 2); // new word
                 lua_pushstring(L, "start");
                 lua_pushstring(L, UnicodeToLocal(word.getStartXPointer().toString()).c_str());
-                lua_settable(L, -3);
+                lua_rawset(L, -3);
                 lua_pushstring(L, "end");
                 lua_pushstring(L, UnicodeToLocal(word.getEndXPointer().toString()).c_str());
-                lua_settable(L, -3);
-                lua_rawseti(L, -2, i + 1);
+                lua_rawset(L, -3);
+
+                lua_rawseti(L, -2, i+1);
             }
             return 1;
         }
