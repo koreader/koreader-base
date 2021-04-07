@@ -1141,50 +1141,50 @@ public:
         // We could have used some indirection to make that more
         // generic, but let's push a table suitable to be added
         // directly to TextBoxWidget.vertical_string_list
-        lua_newtable(m_L);
+        lua_createtable(m_L, 0, 5); // 5 hash fields for sure
 
         lua_pushstring(m_L, "offset");
         lua_pushinteger(m_L, start+1); // (Lua indices start at 1)
-        lua_settable(m_L, -3);
+        lua_rawset(m_L, -3);
 
         lua_pushstring(m_L, "end_offset");
         lua_pushinteger(m_L, candidate_end+1); // (Lua indices start at 1)
-        lua_settable(m_L, -3);
+        lua_rawset(m_L, -3);
 
         lua_pushstring(m_L, "can_be_justified");
         lua_pushboolean(m_L, can_be_justified);
-        lua_settable(m_L, -3);
+        lua_rawset(m_L, -3);
 
         lua_pushstring(m_L, "width");
         lua_pushinteger(m_L, candidate_line_width);
-        lua_settable(m_L, -3);
+        lua_rawset(m_L, -3);
 
         lua_pushstring(m_L, "targeted_width");
         lua_pushinteger(m_L, targeted_width);
-        lua_settable(m_L, -3);
+        lua_rawset(m_L, -3);
 
         if ( no_allowed_break_met ) {
             lua_pushstring(m_L, "no_allowed_break_met");
             lua_pushboolean(m_L, true);
-            lua_settable(m_L, -3);
+            lua_rawset(m_L, -3);
         }
 
         if ( has_tabs ) {
             lua_pushstring(m_L, "has_tabs");
             lua_pushboolean(m_L, true);
-            lua_settable(m_L, -3);
+            lua_rawset(m_L, -3);
         }
 
         if ( next_line_start_offset >= 0 && next_line_start_offset < m_length ) {
             // next_start_offset is to be nil if end of text
             lua_pushstring(m_L, "next_start_offset");
             lua_pushinteger(m_L, next_line_start_offset+1); // (Lua indices start at 1)
-            lua_settable(m_L, -3);
+            lua_rawset(m_L, -3);
         }
         else if ( forced_break && next_line_start_offset == m_length ) {
             lua_pushstring(m_L, "hard_newline_at_eot");
             lua_pushboolean(m_L, true);
-            lua_settable(m_L, -3);
+            lua_rawset(m_L, -3);
         }
     }
 
@@ -1431,7 +1431,7 @@ public:
         int nb_can_extend_fallback = 0;
         bool has_tabs = false;
 
-        lua_createtable(m_L, nb_glyphs, 0 ); // array of glyphs, pre-sized
+        lua_createtable(m_L, nb_glyphs, 0); // array of glyphs, pre-sized
         for(int i = 0; i < nb_glyphs; i++) {
             xtext_shapeinfo_t * s = &s_shape_result[i];
 
@@ -1441,62 +1441,62 @@ public:
             if (s->can_extend_fallback)
                 nb_can_extend_fallback++;
 
-            lua_newtable(m_L); // key/value table of info about a single glyph
+            lua_createtable(m_L, 0, 11); // key/value table of info about a single glyph, at least 11 fields
 
             lua_pushstring(m_L, "font_num");
             lua_pushinteger(m_L, s->font_num);
-            lua_settable(m_L, -3);
+            lua_rawset(m_L, -3);
 
             lua_pushstring(m_L, "glyph");
             lua_pushinteger(m_L, s->glyph);
-            lua_settable(m_L, -3);
+            lua_rawset(m_L, -3);
 
             lua_pushstring(m_L, "text_index");
             lua_pushinteger(m_L, s->text_index + 1); // (Lua indices start at 1)
-            lua_settable(m_L, -3);
+            lua_rawset(m_L, -3);
 
             lua_pushstring(m_L, "x_advance");
             lua_pushinteger(m_L, s->x_advance);
-            lua_settable(m_L, -3);
+            lua_rawset(m_L, -3);
 
             lua_pushstring(m_L, "x_offset");
             lua_pushinteger(m_L, s->x_offset);
-            lua_settable(m_L, -3);
+            lua_rawset(m_L, -3);
 
             lua_pushstring(m_L, "y_offset");
             lua_pushinteger(m_L, s->y_offset);
-            lua_settable(m_L, -3);
+            lua_rawset(m_L, -3);
 
             lua_pushstring(m_L, "is_rtl");
             lua_pushboolean(m_L, s->is_rtl);
-            lua_settable(m_L, -3);
+            lua_rawset(m_L, -3);
 
             if ( m_has_bidi ) {
                 lua_pushstring(m_L, "bidi_level");
                 lua_pushinteger(m_L, m_bidi_levels[s->text_index]);
-                lua_settable(m_L, -3);
+                lua_rawset(m_L, -3);
             }
 
             lua_pushstring(m_L, "is_cluster_start");
             lua_pushboolean(m_L, s->is_cluster_start);
-            lua_settable(m_L, -3);
+            lua_rawset(m_L, -3);
 
             lua_pushstring(m_L, "cluster_len");
             lua_pushinteger(m_L, s->cluster_len);
-            lua_settable(m_L, -3);
+            lua_rawset(m_L, -3);
 
             lua_pushstring(m_L, "can_extend");
             lua_pushboolean(m_L, s->can_extend);
-            lua_settable(m_L, -3);
+            lua_rawset(m_L, -3);
 
             lua_pushstring(m_L, "can_extend_fallback");
             lua_pushboolean(m_L, s->can_extend_fallback);
-            lua_settable(m_L, -3);
+            lua_rawset(m_L, -3);
 
             if ( s->is_tab ) {
                 lua_pushstring(m_L, "is_tab");
                 lua_pushboolean(m_L, true);
-                lua_settable(m_L, -3);
+                lua_rawset(m_L, -3);
                 has_tabs = true;
             }
 
