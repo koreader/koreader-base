@@ -348,7 +348,7 @@ public:
             return;
         lua_rawgeti(_L, LUA_REGISTRYINDEX, _r_cb);
         lua_pushstring(_L, event);
-        lua_pushnumber(_L, number);
+        lua_pushinteger(_L, number);
         lua_pcall(_L, 2, 0, 0);
     }
     void callback(const char * event, const char * str) {
@@ -535,12 +535,12 @@ static int saveDefaults(lua_State *L) {
 }
 
 static int getLatestDomVersion(lua_State *L) {
-    lua_pushnumber(L, gDOMVersionCurrent);
+    lua_pushinteger(L, gDOMVersionCurrent);
     return 1;
 }
 
 static int getDomVersionWithNormalizedXPointers(lua_State *L) {
-    lua_pushnumber(L, DOM_VERSION_WITH_NORMALIZED_XPOINTERS); // defined in lvtinydom.h
+    lua_pushinteger(L, DOM_VERSION_WITH_NORMALIZED_XPOINTERS); // defined in lvtinydom.h
     return 1;
 }
 
@@ -616,8 +616,8 @@ static int getHyphDictList(lua_State *L) {
 
 static int getSelectedHyphDict(lua_State *L) {
 	lua_pushstring(L, UnicodeToLocal(HyphMan::getSelectedDictionary()->getId()).c_str());
-	lua_pushnumber(L, TextLangMan::getMainLangHyphMethod()->getLeftHyphenMin());
-	lua_pushnumber(L, TextLangMan::getMainLangHyphMethod()->getRightHyphenMin());
+	lua_pushinteger(L, TextLangMan::getMainLangHyphMethod()->getLeftHyphenMin());
+	lua_pushinteger(L, TextLangMan::getMainLangHyphMethod()->getRightHyphenMin());
 	return 3;
 }
 
@@ -991,7 +991,7 @@ static int walkTableOfContent(lua_State *L, LVTocItem *toc, int *count) {
 		/* set subtable, Toc entry */
 		lua_createtable(L, 0, 4);
 		lua_pushstring(L, "page");
-		lua_pushnumber(L, toc_tmp->getPage()+1);
+		lua_pushinteger(L, toc_tmp->getPage()+1);
 		lua_rawset(L, -3);
 
 		// Note: toc_tmp->getXPointer().toString() and toc_tmp->getPath() return
@@ -1004,7 +1004,7 @@ static int walkTableOfContent(lua_State *L, LVTocItem *toc, int *count) {
 		lua_rawset(L, -3);
 
 		lua_pushstring(L, "depth");
-		lua_pushnumber(L, toc_tmp->getLevel());
+		lua_pushinteger(L, toc_tmp->getLevel());
 		lua_rawset(L, -3);
 
 		lua_pushstring(L, "title");
@@ -1092,7 +1092,7 @@ static int getPageMap(lua_State *L) {
         lua_createtable(L, 0, 4);
 
         lua_pushstring(L, "page");
-        lua_pushnumber(L, item->getPage()+1);
+        lua_pushinteger(L, item->getPage()+1);
         lua_rawset(L, -3);
 
         // Note: toc_tmp->getXPointer().toString() and toc_tmp->getPath() return
@@ -1104,7 +1104,7 @@ static int getPageMap(lua_State *L) {
         lua_rawset(L, -3);
 
         lua_pushstring(L, "doc_y");
-        lua_pushnumber(L, item->getDocY());
+        lua_pushinteger(L, item->getDocY());
         lua_rawset(L, -3);
 
         lua_pushstring(L, "label");
@@ -1293,15 +1293,15 @@ static int getPageMapVisiblePageLabels(lua_State *L) {
         lua_createtable(L, 0, 6);
 
         lua_pushstring(L, "screen_page");
-        lua_pushnumber(L, screen_page);
+        lua_pushinteger(L, screen_page);
         lua_rawset(L, -3);
 
         lua_pushstring(L, "screen_y");
-        lua_pushnumber(L, screen_y);
+        lua_pushinteger(L, screen_y);
         lua_rawset(L, -3);
 
         lua_pushstring(L, "page");
-        lua_pushnumber(L, item->getPage()+1);
+        lua_pushinteger(L, item->getPage()+1);
         lua_rawset(L, -3);
 
         lua_pushstring(L, "xpointer");
@@ -1309,7 +1309,7 @@ static int getPageMapVisiblePageLabels(lua_State *L) {
         lua_rawset(L, -3);
 
         lua_pushstring(L, "doc_y");
-        lua_pushnumber(L, item->getDocY());
+        lua_pushinteger(L, item->getDocY());
         lua_rawset(L, -3);
 
         lua_pushstring(L, "label");
@@ -1515,7 +1515,7 @@ static int zoomFont(lua_State *L) {
 
 	doc->text_view->ZoomFont(delta);
 
-	lua_pushnumber(L, doc->text_view->getFontSize());
+	lua_pushinteger(L, doc->text_view->getFontSize());
 	return 1;
 }
 
@@ -1656,19 +1656,19 @@ static int getPageMargins(lua_State *L) {
 	lua_createtable(L, 0, 4);
 
 	lua_pushstring(L, "left");
-	lua_pushnumber(L, rc.left);
+	lua_pushinteger(L, rc.left);
 	lua_rawset(L, -3);
 
 	lua_pushstring(L, "top");
-	lua_pushnumber(L, rc.top);
+	lua_pushinteger(L, rc.top);
 	lua_rawset(L, -3);
 
 	lua_pushstring(L, "right");
-	lua_pushnumber(L, rc.right);
+	lua_pushinteger(L, rc.right);
 	lua_rawset(L, -3);
 
 	lua_pushstring(L, "bottom");
-	lua_pushnumber(L, rc.bottom);
+	lua_pushinteger(L, rc.bottom);
 	lua_rawset(L, -3);
 
 	return 1;
