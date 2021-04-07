@@ -41,7 +41,7 @@
 #define lua_setkeyval(L, type, key, val) do { \
 	lua_pushstring(L, key); \
 	lua_push##type(L, val); \
-	lua_settable(L, LUA_SETTABLE_STACK_TOP); \
+	lua_rawset(L, LUA_SETTABLE_STACK_TOP); \
 } while(0)
 
 
@@ -237,7 +237,7 @@ static int getMetadata(lua_State *L) {
 		if (value) {
 			lua_pushstring(L, miniexp_to_name(keys[i]));
 			lua_pushstring(L, value);
-			lua_settable(L, -3);
+			lua_rawset(L, -3);
 		}
 	}
 
@@ -258,46 +258,39 @@ static int walkTableOfContent(lua_State *L, miniexp_t r, int *count, int depth) 
 
 	int length = miniexp_length(r);
 	int counter = 0;
-	const char* page_name;
-	int page_number;
-	uint32_t page_name_num_idx;
-
 	while(counter < length-1) {
-		lua_pushnumber(L, *count);
-		lua_newtable(L);
+		lua_createtable(L, 0, 3);
 
 		lua_pushstring(L, "page");
-		page_name = miniexp_to_str(miniexp_car(miniexp_cdr(miniexp_nth(counter, lista))));
+		const char* page_name = miniexp_to_str(miniexp_car(miniexp_cdr(miniexp_nth(counter, lista))));
 		if(page_name != NULL && page_name[0] == '#') {
 			errno = 0;
-			page_name_num_idx = 1;  /* skip leading # */
+			uint32_t page_name_num_idx = 1U;  /* skip leading # */
 			while (page_name[page_name_num_idx] && !isdigit(page_name[page_name_num_idx])) {
 				page_name_num_idx++;
 			}
-			page_number = strtol(page_name+page_name_num_idx, NULL, 10);
+			int page_number = (int) strtol(page_name+page_name_num_idx, NULL, 10);
 			if(!errno) {
-				lua_pushnumber(L, page_number);
+				lua_pushinteger(L, page_number);
 			} else {
 				/* we can not parse this as a number, TODO: parse page names */
-				lua_pushnumber(L, -1);
+				lua_pushinteger(L, -1);
 			}
 		} else {
 			/* something we did not expect here */
-			lua_pushnumber(L, -1);
+			lua_pushinteger(L, -1);
 		}
-		lua_settable(L, -3);
+		lua_rawset(L, -3);
 
 		lua_pushstring(L, "depth");
-		lua_pushnumber(L, depth);
-		lua_settable(L, -3);
+		lua_pushinteger(L, depth);
+		lua_rawset(L, -3);
 
 		lua_pushstring(L, "title");
 		lua_pushstring(L, miniexp_to_str(miniexp_car(miniexp_nth(counter, lista))));
-		lua_settable(L, -3);
+		lua_rawset(L, -3);
 
-		lua_settable(L, -3);
-
-		(*count)++;
+		lua_rawseti(L, -1, (*count)++);
 
 		if (miniexp_length(miniexp_cdr(miniexp_nth(counter, lista))) > 1) {
 			walkTableOfContent(L, miniexp_cdr(miniexp_nth(counter, lista)), count, depth);
@@ -317,7 +310,7 @@ static int getTableOfContent(lua_State *L) {
 
 	//printf("lista: %s\n", miniexp_to_str(miniexp_car(miniexp_nth(1, miniexp_cdr(r)))));
 
-	lua_newtable(L);
+	lua_createtable(L, miniexp_length(r), 0);
 	walkTableOfContent(L, r, &count, 0);
 
 	return 1;
@@ -388,8 +381,8 @@ static int getOriginalPageSize(lua_State *L) {
 		handle(L, doc->context, TRUE);
 	}
 
-	lua_pushnumber(L, info.width);
-	lua_pushnumber(L, info.height);
+	lua_pushinteger(L, info.width);
+	lua_pushinteger(L, info.height);
 
 	return 2;
 }
@@ -397,32 +390,28 @@ static int getOriginalPageSize(lua_State *L) {
 static int getPageInfo(lua_State *L) {
 	DjvuDocument *doc = (DjvuDocument*) luaL_checkudata(L, 1, "djvudocument");
 	int pageno = luaL_checkint(L, 2);
-	ddjvu_page_t *djvu_page;
-	int page_width, page_height, page_dpi;
-	double page_gamma;
-	ddjvu_page_type_t page_type;
-	char *page_type_str;
 
-	djvu_page = ddjvu_page_create_by_pageno(doc->doc_ref, pageno - 1);
+	ddjvu_page_t *djvu_page = ddjvu_page_create_by_pageno(doc->doc_ref, pageno - 1);
 	if (! djvu_page)
 		return luaL_error(L, "cannot create djvu_page #%d", pageno);
 
 	while (! ddjvu_page_decoding_done(djvu_page))
 		handle(L, doc->context, TRUE);
 
-	page_width = ddjvu_page_get_width(djvu_page);
-	lua_pushnumber(L, page_width);
+	int page_width = ddjvu_page_get_width(djvu_page);
+	lua_pushinteger(L, page_width);
 
-	page_height = ddjvu_page_get_height(djvu_page);
-	lua_pushnumber(L, page_height);
+	int page_height = ddjvu_page_get_height(djvu_page);
+	lua_pushinteger(L, page_height);
 
-	page_dpi = ddjvu_page_get_resolution(djvu_page);
-	lua_pushnumber(L, page_dpi);
+	int page_dpi = ddjvu_page_get_resolution(djvu_page);
+	lua_pushinteger(L, page_dpi);
 
-	page_gamma = ddjvu_page_get_gamma(djvu_page);
+	double page_gamma = ddjvu_page_get_gamma(djvu_page);
 	lua_pushnumber(L, page_gamma);
 
-	page_type = ddjvu_page_get_type(djvu_page);
+	const char *page_type_str;
+	ddjvu_page_type_t page_type = ddjvu_page_get_type(djvu_page);
 	switch (page_type) {
 		case DDJVU_PAGETYPE_UNKNOWN:
 			page_type_str = "UNKNOWN";
@@ -486,10 +475,9 @@ void lua_settable_djvu_anno(lua_State *L, miniexp_t anno, int yheight) {
 			const char *txt = miniexp_to_str(data);
 			lua_setkeyval(L, string, zname, txt);
 		} else {
-			lua_pushinteger(L, tindex);
 			lua_newtable(L);
 			lua_settable_djvu_anno(L, data, yheight);
-			lua_settable(L, LUA_SETTABLE_STACK_TOP);
+			lua_rawseti(L, -2, tindex);
 		}
 	}
 }
@@ -519,6 +507,9 @@ static int getPageText(lua_State *L) {
 		handle(L, doc->context, True);
 	}
 
+	// FIXME: hash vs. array parts is unclear. I feel like the table we create here should be an array,
+	//        and each element, hash-only, ought to be created *inside* (at the top of) lua_settable_djvu_anno...
+	//        i.e., return an array of hash-tables.
 	lua_newtable(L);
 	lua_settable_djvu_anno(L, sexp, info.height);
 	return 1;
@@ -721,7 +712,7 @@ static int getCacheSize(lua_State *L) {
 	DjvuDocument *doc = (DjvuDocument*) luaL_checkudata(L, 1, "djvudocument");
 	unsigned long size = ddjvu_cache_get_size(doc->context);
 	//printf("## ddjvu_cache_get_size = %d\n", (int)size);
-	lua_pushnumber(L, size);
+	lua_pushinteger(L, size);
 	return 1;
 }
 
