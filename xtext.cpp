@@ -1431,7 +1431,7 @@ public:
         int nb_can_extend_fallback = 0;
         bool has_tabs = false;
 
-        lua_createtable(m_L, nb_glyphs, 0); // array of glyphs, pre-sized
+        lua_createtable(m_L, nb_glyphs, 3); // array of glyphs, pre-sized
         for(int i = 0; i < nb_glyphs; i++) {
             xtext_shapeinfo_t * s = &s_shape_result[i];
 
