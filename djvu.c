@@ -16,6 +16,8 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include <stdint.h>
+#include <stdbool.h>
 #include <math.h>
 #include <string.h>
 #include <errno.h>
@@ -449,12 +451,21 @@ static int getPageInfo(lua_State *L) {
  * @param yheight  Page height. DjVu zones are origined at the bottom-left, but
  *                   koptinterface convention origins at top-left.
  */
-void lua_settable_djvu_anno(lua_State *L, miniexp_t anno, int yheight) {
-	if (!L) return;
-	if (!miniexp_consp(anno)) return;
+bool lua_settable_djvu_anno(lua_State *L, miniexp_t anno, int yheight) {
+	if (!L) {
+		return false;
+	}
+	if (!miniexp_consp(anno)) {
+		return false;
+	}
 
 	miniexp_t anno_type = miniexp_nth(SI_ZONE_NAME, anno);
-	if (!miniexp_symbolp(anno_type)) return;
+	if (!miniexp_symbolp(anno_type)) {
+		return false;
+	}
+
+	// New element in the array
+	lua_createtable(L, 0, 4); // At least 4 fields
 
 	int xmin = int_from_miniexp_nth(SI_ZONE_XMIN, anno);
 	int ymin = int_from_miniexp_nth(SI_ZONE_YMIN, anno);
@@ -475,11 +486,17 @@ void lua_settable_djvu_anno(lua_State *L, miniexp_t anno, int yheight) {
 			const char *txt = miniexp_to_str(data);
 			lua_setkeyval(L, string, zname, txt);
 		} else {
-			lua_newtable(L);
-			lua_settable_djvu_anno(L, data, yheight);
+			// We're done with this hash table, insert it in the array
 			lua_rawseti(L, -2, tindex);
+			// And onward to the next
+			lua_settable_djvu_anno(L, data, yheight);
 		}
 	}
+
+	// FIXME: Can we reach this without entering the loop?
+	//        Because that would leave us with a bogus hash table on top of the stack instead of the array...
+
+	return true;
 }
 
 static int getPageText(lua_State *L) {
@@ -507,10 +524,7 @@ static int getPageText(lua_State *L) {
 		handle(L, doc->context, True);
 	}
 
-	// FIXME: hash vs. array parts is unclear. I feel like the table we create here should be an array,
-	//        and each element, hash-only, ought to be created *inside* (at the top of) lua_settable_djvu_anno...
-	//        i.e., return an array of hash-tables.
-	lua_newtable(L);
+	lua_newtable(L); // Number of elements unclear, no pre-alloc
 	lua_settable_djvu_anno(L, sexp, info.height);
 	return 1;
 }
