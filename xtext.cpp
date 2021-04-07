@@ -1504,19 +1504,28 @@ public:
         }
 
         // Add some global line metrics as keys/values
+        lua_pushstring(m_L, "width");
         lua_pushinteger(m_L, total_advance);
-        lua_setfield(m_L, -2, "width");
+        lua_rawset(m_L, -3);
+
+        lua_pushstring(m_L, "nb_can_extend");
         lua_pushinteger(m_L, nb_can_extend);
-        lua_setfield(m_L, -2, "nb_can_extend");
+        lua_rawset(m_L, -3);
+
+        lua_pushstring(m_L, "nb_can_extend_fallback");
         lua_pushinteger(m_L, nb_can_extend_fallback);
-        lua_setfield(m_L, -2, "nb_can_extend_fallback");
+        lua_rawset(m_L, -3);
+
         if (m_charinfo[start].flags & CHAR_PARA_IS_RTL) {
+            lua_pushstring(m_L, "para_is_rtl");
             lua_pushboolean(m_L, true);
-            lua_setfield(m_L, -2, "para_is_rtl");
+            lua_rawset(m_L, -3);
         }
+
         if ( has_tabs ) {
+            lua_pushstring(m_L, "has_tabs");
             lua_pushboolean(m_L, true);
-            lua_setfield(m_L, -2, "has_tabs");
+            lua_rawset(m_L, -3);
         }
 
         // Note: instead of returning an array table, we could allocate
