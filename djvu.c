@@ -465,8 +465,8 @@ bool lua_settable_djvu_anno(lua_State *L, miniexp_t anno, int yheight) {
 	}
 
 	// New element in the array
-	lua_createtable(L, 0, 4); // At least 4 fields
-	printf("h = {} (#stack: %d)\n", lua_gettop(L));
+	lua_createtable(L, 0, 4); // line = {}, At least 4 fields
+	printf("line = {} (#stack: %d)\n", lua_gettop(L));
 
 	int xmin = int_from_miniexp_nth(SI_ZONE_XMIN, anno);
 	int ymin = int_from_miniexp_nth(SI_ZONE_YMIN, anno);
@@ -482,10 +482,11 @@ bool lua_settable_djvu_anno(lua_State *L, miniexp_t anno, int yheight) {
 	lua_setkeyval(L, integer, djvuZoneLuaKey[SI_ZONE_YMAX], yheight - ymax);
 	printf("h.%s=%d\n", djvuZoneLuaKey[SI_ZONE_YMAX], yheight - ymax);
 
+	printf("miniexp_length(anno): %d\n", miniexp_length(anno));
 	for (int i = SI_ZONE_DATA; i < miniexp_length(anno); i++) {
 		miniexp_t data = miniexp_nth(i, anno);
 		int tindex = i - SI_ZONE_DATA + 1; // Lua tables are 1-indexed
-		printf("tindex: %d\n", tindex);
+		printf("tindex: %d @ i: %d\n", tindex, i);
 
 		if (miniexp_stringp(data)) {
 			const char *zname = miniexp_to_name(anno_type);
@@ -493,10 +494,10 @@ bool lua_settable_djvu_anno(lua_State *L, miniexp_t anno, int yheight) {
 			lua_setkeyval(L, string, zname, txt);
 			printf("h.%s=%s\n", zname, txt);
 		} else {
-			// We're done with this hash table, insert it in the array
+			// We're done with this line, insert it in the array
 			lua_rawseti(L, -2, tindex);
-			printf("table.insert(a, h, %d) (#stack: %d)\n", tindex, lua_gettop(L));
-			// And onward to the next
+			printf("table.insert(lines, line, %d) (#stack: %d)\n", tindex, lua_gettop(L));
+			// And onward to the next line
 			lua_settable_djvu_anno(L, data, yheight);
 		}
 	}
@@ -535,8 +536,8 @@ static int getPageText(lua_State *L) {
 		handle(L, doc->context, True);
 	}
 
-	lua_newtable(L); // Number of elements unclear, no pre-alloc
-	printf("a = {}\n");
+	lua_newtable(L); // lines = {}; Number of elements unclear, no pre-alloc
+	printf("lines = {}\n");
 	printf("#stack: %d\n", lua_gettop(L));
 	lua_settable_djvu_anno(L, sexp, info.height);
 	printf("Final #stack: %d\n", lua_gettop(L));
