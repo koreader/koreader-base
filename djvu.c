@@ -17,7 +17,6 @@
 */
 
 #include <stdint.h>
-#include <stdbool.h>
 #include <math.h>
 #include <string.h>
 #include <errno.h>
@@ -292,7 +291,7 @@ static int walkTableOfContent(lua_State *L, miniexp_t r, int *count, int depth) 
 		lua_pushstring(L, miniexp_to_str(miniexp_car(miniexp_nth(counter, lista))));
 		lua_rawset(L, -3);
 
-		lua_rawseti(L, -1, (*count)++);
+		lua_rawseti(L, -2, (*count)++);
 
 		if (miniexp_length(miniexp_cdr(miniexp_nth(counter, lista))) > 1) {
 			walkTableOfContent(L, miniexp_cdr(miniexp_nth(counter, lista)), count, depth);
