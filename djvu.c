@@ -464,23 +464,19 @@ bool lua_settable_djvu_anno(lua_State *L, miniexp_t anno, int yheight) {
 		return false;
 	}
 
-	// New element in the array
-	lua_createtable(L, 0, 4); // line = {}, At least 4 fields
-	printf("line = {} (#stack: %d)\n", lua_gettop(L));
-
 	int xmin = int_from_miniexp_nth(SI_ZONE_XMIN, anno);
 	int ymin = int_from_miniexp_nth(SI_ZONE_YMIN, anno);
 	int xmax = int_from_miniexp_nth(SI_ZONE_XMAX, anno);
 	int ymax = int_from_miniexp_nth(SI_ZONE_YMAX, anno);
 
 	lua_setkeyval(L, integer, djvuZoneLuaKey[SI_ZONE_XMIN], xmin);
-	printf("h.%s=%d\n", djvuZoneLuaKey[SI_ZONE_XMIN], xmin);
+	printf(".%s=%d\n", djvuZoneLuaKey[SI_ZONE_XMIN], xmin);
 	lua_setkeyval(L, integer, djvuZoneLuaKey[SI_ZONE_YMIN], yheight - ymin);
-	printf("h.%s=%d\n", djvuZoneLuaKey[SI_ZONE_YMIN], yheight - ymin);
+	printf(".%s=%d\n", djvuZoneLuaKey[SI_ZONE_YMIN], yheight - ymin);
 	lua_setkeyval(L, integer, djvuZoneLuaKey[SI_ZONE_XMAX], xmax);
-	printf("h.%s=%d\n", djvuZoneLuaKey[SI_ZONE_XMAX], xmax);
+	printf(".%s=%d\n", djvuZoneLuaKey[SI_ZONE_XMAX], xmax);
 	lua_setkeyval(L, integer, djvuZoneLuaKey[SI_ZONE_YMAX], yheight - ymax);
-	printf("h.%s=%d\n", djvuZoneLuaKey[SI_ZONE_YMAX], yheight - ymax);
+	printf(".%s=%d\n", djvuZoneLuaKey[SI_ZONE_YMAX], yheight - ymax);
 
 	printf("miniexp_length(anno): %d\n", miniexp_length(anno));
 	for (int i = SI_ZONE_DATA; i < miniexp_length(anno); i++) {
@@ -492,13 +488,15 @@ bool lua_settable_djvu_anno(lua_State *L, miniexp_t anno, int yheight) {
 			const char *zname = miniexp_to_name(anno_type);
 			const char *txt = miniexp_to_str(data);
 			lua_setkeyval(L, string, zname, txt);
-			printf("h.%s=%s\n", zname, txt);
+			printf("line.%s=%s\n", zname, txt);
 		} else {
-			// We're done with this line, insert it in the array
+			// New line!
+			lua_createtable(L, 0, 4); // line = {}; number of array elements (words) unclear, but at least 4 fields for the box
+			printf("line = {} (#stack: %d)\n", lua_gettop(L));
+			lua_settable_djvu_anno(L, data, yheight);
+			// We're done with it, insert it in the lines array
 			lua_rawseti(L, -2, tindex);
 			printf("table.insert(lines, line, %d) (#stack: %d)\n", tindex, lua_gettop(L));
-			// And onward to the next line
-			lua_settable_djvu_anno(L, data, yheight);
 		}
 	}
 
@@ -536,7 +534,7 @@ static int getPageText(lua_State *L) {
 		handle(L, doc->context, True);
 	}
 
-	lua_newtable(L); // lines = {}; Number of elements unclear, no pre-alloc
+	lua_createtable(L, 0, 4); // lines = {}; number of array elements (lines) unclear, but it does have a page box
 	printf("lines = {}\n");
 	printf("#stack: %d\n", lua_gettop(L));
 	lua_settable_djvu_anno(L, sexp, info.height);
