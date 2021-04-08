@@ -1273,7 +1273,7 @@ static int getPageMapVisiblePageLabels(lua_State *L) {
     }
     int start = left;
 
-    lua_newtable(L); // We might end up w/ less that (nb - start) elements, so, don't overshot
+    lua_newtable(L); // We might end up w/ less than (nb - start) elements, so, don't overshot
     int count = 1;
     for (int i = start; i < nb; i++)  {
         LVPageMapItem * item = pagemap->getChild(i);
