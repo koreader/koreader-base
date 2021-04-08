@@ -491,10 +491,11 @@ bool lua_settable_djvu_anno(lua_State *L, miniexp_t anno, int yheight) {
 			printf("line.%s=%s\n", zname, txt);
 		} else {
 			// New line!
-			lua_createtable(L, 0, 4); // line = {}; number of array elements (words) unclear, but at least 4 fields for the box
-			printf("line = {} (#stack: %d)\n", lua_gettop(L));
+			lua_createtable(L, miniexp_length(data) - SI_ZONE_DATA, 4); // line = {}; pre-allocated to the correct amount of words and its line box
+			printf("line = {} (%u elems, #stack: %d)\n", miniexp_length(data) - SI_ZONE_DATA, lua_gettop(L));
 			lua_settable_djvu_anno(L, data, yheight);
 			// We're done with it, insert it in the lines array
+			printf("Line %d (%zu) had %zu words\n", tindex, lua_objlen(L, -2), lua_objlen(L, -1));
 			lua_rawseti(L, -2, tindex);
 			printf("table.insert(lines, line, %d) (#stack: %d)\n", tindex, lua_gettop(L));
 		}
@@ -534,11 +535,12 @@ static int getPageText(lua_State *L) {
 		handle(L, doc->context, True);
 	}
 
-	lua_createtable(L, 0, 4); // lines = {}; number of array elements (lines) unclear, but it does have a page box
-	printf("lines = {}\n");
+	lua_createtable(L, miniexp_length(sexp) - SI_ZONE_DATA, 4); // lines = {}; pre-allocated to the correct amount of lines and its page box
+	printf("lines = {} (%u elems)\n", miniexp_length(sexp) - SI_ZONE_DATA);
 	printf("#stack: %d\n", lua_gettop(L));
 	lua_settable_djvu_anno(L, sexp, info.height);
 	printf("Final #stack: %d\n", lua_gettop(L));
+	printf("#lines: %zu\n", lua_objlen(L, -1));
 	return 1;
 }
 
