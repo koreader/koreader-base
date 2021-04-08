@@ -252,26 +252,26 @@ static int getNumberOfPages(lua_State *L) {
 	return 1;
 }
 
-static int walkTableOfContent(lua_State *L, miniexp_t r, int *count, int depth) {
+static void walkTableOfContent(lua_State *L, miniexp_t r, int *count, int depth) {
 	depth++;
 
-	miniexp_t lista = miniexp_cdr(r); // go inside bookmars in the list
+	miniexp_t lista = miniexp_cdr(r); // go inside bookmarks in the list
 
-	int length = miniexp_length(r);
+	int length = miniexp_length(r) - 1; // Minus the sentinel NUL
 	int counter = 0;
-	while(counter < length-1) {
+	while (counter < length) {
 		lua_createtable(L, 0, 3);
 
 		lua_pushstring(L, "page");
 		const char* page_name = miniexp_to_str(miniexp_car(miniexp_cdr(miniexp_nth(counter, lista))));
-		if(page_name != NULL && page_name[0] == '#') {
+		if (page_name != NULL && page_name[0] == '#') {
 			errno = 0;
 			uint32_t page_name_num_idx = 1U;  /* skip leading # */
 			while (page_name[page_name_num_idx] && !isdigit(page_name[page_name_num_idx])) {
 				page_name_num_idx++;
 			}
 			int page_number = (int) strtol(page_name+page_name_num_idx, NULL, 10);
-			if(!errno) {
+			if (!errno) {
 				lua_pushinteger(L, page_number);
 			} else {
 				/* we can not parse this as a number, TODO: parse page names */
@@ -298,7 +298,6 @@ static int walkTableOfContent(lua_State *L, miniexp_t r, int *count, int depth) 
 		}
 		counter++;
 	}
-	return 0;
 }
 
 static int getTableOfContent(lua_State *L) {
@@ -311,7 +310,7 @@ static int getTableOfContent(lua_State *L) {
 
 	//printf("lista: %s\n", miniexp_to_str(miniexp_car(miniexp_nth(1, miniexp_cdr(r)))));
 
-	lua_createtable(L, miniexp_length(r), 0); // pre-alloc for top-level elements, at least
+	lua_createtable(L, miniexp_length(r) - 1, 0); // pre-alloc for top-level elements, at least
 	int count = 1;
 	walkTableOfContent(L, r, &count, 0);
 
