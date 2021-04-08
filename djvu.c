@@ -451,17 +451,17 @@ static int getPageInfo(lua_State *L) {
  * @param yheight  Page height. DjVu zones are origined at the bottom-left, but
  *                   koptinterface convention origins at top-left.
  */
-bool lua_settable_djvu_anno(lua_State *L, miniexp_t anno, int yheight) {
+void lua_settable_djvu_anno(lua_State *L, miniexp_t anno, int yheight) {
 	if (!L) {
-		return false;
+		return;
 	}
 	if (!miniexp_consp(anno)) {
-		return false;
+		return;
 	}
 
 	miniexp_t anno_type = miniexp_nth(SI_ZONE_NAME, anno);
 	if (!miniexp_symbolp(anno_type)) {
-		return false;
+		return;
 	}
 
 	int xmin = int_from_miniexp_nth(SI_ZONE_XMIN, anno);
@@ -484,14 +484,12 @@ bool lua_settable_djvu_anno(lua_State *L, miniexp_t anno, int yheight) {
 			lua_setkeyval(L, string, zname, txt);
 		} else {
 			// New line or word!
-			lua_createtable(L, miniexp_length(data) - SI_ZONE_DATA, 4); // line/word = {}; pre-allocated to the correct amount of elements and its box
+			lua_createtable(L, miniexp_length(data) - SI_ZONE_DATA, 4); // line/word = {}; pre-allocated to the correct amount of elements and its own box
 			lua_settable_djvu_anno(L, data, yheight);
 			// We're done with it, insert it in the page/line array
 			lua_rawseti(L, -2, tindex);
 		}
 	}
-
-	return true;
 }
 
 static int getPageText(lua_State *L) {
