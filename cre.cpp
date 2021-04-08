@@ -1045,7 +1045,7 @@ static int getTableOfContent(lua_State *L) {
 
 	LVTocItem * toc = doc->text_view->getToc();
 
-	lua_createtable(L, toc->getChildCount(), 0);
+	lua_createtable(L, toc->getChildCount(), 0); // pre-alloc for top-level elements, at least
 	int count = 1;
 	walkTableOfContent(L, toc, &count);
 
@@ -1273,7 +1273,7 @@ static int getPageMapVisiblePageLabels(lua_State *L) {
     }
     int start = left;
 
-    lua_createtable(L, nb, 0);
+    lua_newtable(L); // We might end up w/ less that (nb - start) elements, so, don't overshot
     int count = 1;
     for (int i = start; i < nb; i++)  {
         LVPageMapItem * item = pagemap->getChild(i);
@@ -2151,7 +2151,7 @@ static int getWordBoxesFromPositions(lua_State *L) {
 		lvRect charRect, wordRect, lineRect;
 		int lcount = 1;
 		int lastx = -1;
-		lua_createtable(L, words.length(), 0); // new word boxes
+		lua_createtable(L, words.length(), 0); // new array of word boxes
 		lua_createtable(L, 0, 4); // first line box
 		for (int i=0; i<words.length(); i++) {
 			if (ldomXRange(words[i]).getRectEx(wordRect)) {
