@@ -311,7 +311,7 @@ static int getTableOfContent(lua_State *L) {
 
 	//printf("lista: %s\n", miniexp_to_str(miniexp_car(miniexp_nth(1, miniexp_cdr(r)))));
 
-	lua_createtable(L, miniexp_length(r), 0);
+	lua_createtable(L, miniexp_length(r), 0); // pre-alloc for top-level elements, at least
 	int count = 1;
 	walkTableOfContent(L, r, &count, 0);
 
