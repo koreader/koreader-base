@@ -304,7 +304,7 @@ static int walkTableOfContent(lua_State *L, miniexp_t r, int *count, int depth) 
 
 static int getTableOfContent(lua_State *L) {
 	DjvuDocument *doc = (DjvuDocument*) luaL_checkudata(L, 1, "djvudocument");
-	lua_pop(L, lua_gettop(L)); // Pop function args
+	lua_settop(L, 0); // Pop function arg
 
 	miniexp_t r;
 	while ((r=ddjvu_document_get_outline(doc->doc_ref))==miniexp_dummy)
@@ -496,7 +496,7 @@ void lua_settable_djvu_anno(lua_State *L, miniexp_t anno, int yheight) {
 static int getPageText(lua_State *L) {
 	DjvuDocument *doc = (DjvuDocument*) luaL_checkudata(L, 1, "djvudocument");
 	int pageno = luaL_checkint(L, 2);
-	lua_pop(L, lua_gettop(L)); // Pop function args
+	lua_settop(L, 0); // Pop function args
 
 	/* get page height for coordinates transform */
 	ddjvu_pageinfo_t info;
