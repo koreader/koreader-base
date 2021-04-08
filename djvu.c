@@ -709,8 +709,10 @@ static int drawPage(lua_State *L) {
 	 * So we don't set rotation here.
 	 */
 
-	if (!ddjvu_page_render(page->page_ref, djvu_render_mode, &pagerect, &renderrect, page->doc->pixelformat, bb->w*page->doc->pixelsize, imagebuffer))
+	if (!ddjvu_page_render(page->page_ref, djvu_render_mode, &pagerect, &renderrect, page->doc->pixelformat, bb->w*page->doc->pixelsize, imagebuffer)) {
+		// Clear to white on failure
 		memset(imagebuffer, 0xFF, bbsize);
+	}
 
 	return 0;
 }
