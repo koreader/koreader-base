@@ -470,41 +470,26 @@ bool lua_settable_djvu_anno(lua_State *L, miniexp_t anno, int yheight) {
 	int ymax = int_from_miniexp_nth(SI_ZONE_YMAX, anno);
 
 	lua_setkeyval(L, integer, djvuZoneLuaKey[SI_ZONE_XMIN], xmin);
-	printf(".%s=%d\n", djvuZoneLuaKey[SI_ZONE_XMIN], xmin);
 	lua_setkeyval(L, integer, djvuZoneLuaKey[SI_ZONE_YMIN], yheight - ymin);
-	printf(".%s=%d\n", djvuZoneLuaKey[SI_ZONE_YMIN], yheight - ymin);
 	lua_setkeyval(L, integer, djvuZoneLuaKey[SI_ZONE_XMAX], xmax);
-	printf(".%s=%d\n", djvuZoneLuaKey[SI_ZONE_XMAX], xmax);
 	lua_setkeyval(L, integer, djvuZoneLuaKey[SI_ZONE_YMAX], yheight - ymax);
-	printf(".%s=%d\n", djvuZoneLuaKey[SI_ZONE_YMAX], yheight - ymax);
 
-	printf("miniexp_length(anno): %d\n", miniexp_length(anno));
 	for (int i = SI_ZONE_DATA; i < miniexp_length(anno); i++) {
 		miniexp_t data = miniexp_nth(i, anno);
 		int tindex = i - SI_ZONE_DATA + 1; // Lua tables are 1-indexed
-		printf("tindex: %d @ i: %d\n", tindex, i);
 
 		if (miniexp_stringp(data)) {
 			const char *zname = miniexp_to_name(anno_type);
 			const char *txt = miniexp_to_str(data);
 			lua_setkeyval(L, string, zname, txt);
-			printf("line.%s=%s\n", zname, txt);
 		} else {
-			// New line!
-			lua_createtable(L, miniexp_length(data) - SI_ZONE_DATA, 4); // line = {}; pre-allocated to the correct amount of words and its line box
-			printf("line = {} (%u elems, #stack: %d)\n", miniexp_length(data) - SI_ZONE_DATA, lua_gettop(L));
+			// New line or word!
+			lua_createtable(L, miniexp_length(data) - SI_ZONE_DATA, 4); // line/word = {}; pre-allocated to the correct amount of elements and its box
 			lua_settable_djvu_anno(L, data, yheight);
-			// We're done with it, insert it in the lines array
-			printf("Line %d (%zu) had %zu words\n", tindex, lua_objlen(L, -2), lua_objlen(L, -1));
+			// We're done with it, insert it in the page/line array
 			lua_rawseti(L, -2, tindex);
-			printf("table.insert(lines, line, %d) (#stack: %d)\n", tindex, lua_gettop(L));
 		}
 	}
-
-	// FIXME: Can we reach this without entering the loop?
-	//        Because that would leave us with a bogus hash table on top of the stack instead of the array...
-	//        Or abort early if miniexp_length(anno) is SI_ZONE_DATA - 1?
-	printf("lua_settable_djvu_anno: true (#stack: %d)\n", lua_gettop(L));
 
 	return true;
 }
@@ -535,12 +520,8 @@ static int getPageText(lua_State *L) {
 		handle(L, doc->context, True);
 	}
 
-	lua_createtable(L, miniexp_length(sexp) - SI_ZONE_DATA, 4); // lines = {}; pre-allocated to the correct amount of lines and its page box
-	printf("lines = {} (%u elems)\n", miniexp_length(sexp) - SI_ZONE_DATA);
-	printf("#stack: %d\n", lua_gettop(L));
+	lua_createtable(L, miniexp_length(sexp) - SI_ZONE_DATA, 4); // page = {}; pre-allocated to the correct amount of lines and its page box
 	lua_settable_djvu_anno(L, sexp, info.height);
-	printf("Final #stack: %d\n", lua_gettop(L));
-	printf("#lines: %zu\n", lua_objlen(L, -1));
 	return 1;
 }
 
