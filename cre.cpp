@@ -1041,11 +1041,12 @@ static int walkTableOfContent(lua_State *L, LVTocItem *toc, int *count) {
  */
 static int getTableOfContent(lua_State *L) {
 	CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
+	lua_pop(L, lua_gettop(L)); // Pop function args
 
 	LVTocItem * toc = doc->text_view->getToc();
-	int count = 1;
 
 	lua_createtable(L, toc->getChildCount(), 0);
+	int count = 1;
 	walkTableOfContent(L, toc, &count);
 
 	return 1;

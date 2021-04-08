@@ -304,15 +304,16 @@ static int walkTableOfContent(lua_State *L, miniexp_t r, int *count, int depth) 
 
 static int getTableOfContent(lua_State *L) {
 	DjvuDocument *doc = (DjvuDocument*) luaL_checkudata(L, 1, "djvudocument");
-	miniexp_t r;
-	int count = 1;
+	lua_pop(L, lua_gettop(L)); // Pop function args
 
+	miniexp_t r;
 	while ((r=ddjvu_document_get_outline(doc->doc_ref))==miniexp_dummy)
 		handle(L, doc->context, True);
 
 	//printf("lista: %s\n", miniexp_to_str(miniexp_car(miniexp_nth(1, miniexp_cdr(r)))));
 
 	lua_createtable(L, miniexp_length(r), 0);
+	int count = 1;
 	walkTableOfContent(L, r, &count, 0);
 
 	return 1;
