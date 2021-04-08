@@ -451,42 +451,33 @@ static int getPageInfo(lua_State *L) {
  * @param yheight  Page height. DjVu zones are origined at the bottom-left, but
  *                   koptinterface convention origins at top-left.
  */
-bool lua_settable_djvu_anno(lua_State *L, miniexp_t anno, int yheight) {
-	if (!L) {
-		return false;
-	}
-	if (!miniexp_consp(anno)) {
-		return false;
-	}
+void lua_settable_djvu_anno(lua_State *L, miniexp_t anno, int yheight) {
+	if (!L) return;
+	if (!miniexp_consp(anno)) return;
 
 	miniexp_t anno_type = miniexp_nth(SI_ZONE_NAME, anno);
-	if (!miniexp_symbolp(anno_type)) {
-		return false;
-	}
-
-	// New element in the array
-	lua_createtable(L, 0, 4); // line = {}, At least 4 fields
-	printf("line = {} (#stack: %d)\n", lua_gettop(L));
+	if (!miniexp_symbolp(anno_type)) return;
 
 	int xmin = int_from_miniexp_nth(SI_ZONE_XMIN, anno);
 	int ymin = int_from_miniexp_nth(SI_ZONE_YMIN, anno);
 	int xmax = int_from_miniexp_nth(SI_ZONE_XMAX, anno);
 	int ymax = int_from_miniexp_nth(SI_ZONE_YMAX, anno);
 
+	printf("#stack: %d\n", lua_gettop(L));
 	lua_setkeyval(L, integer, djvuZoneLuaKey[SI_ZONE_XMIN], xmin);
-	printf("h.%s=%d\n", djvuZoneLuaKey[SI_ZONE_XMIN], xmin);
+	printf("?.%s=%d\n", djvuZoneLuaKey[SI_ZONE_XMIN], xmin);
 	lua_setkeyval(L, integer, djvuZoneLuaKey[SI_ZONE_YMIN], yheight - ymin);
-	printf("h.%s=%d\n", djvuZoneLuaKey[SI_ZONE_YMIN], yheight - ymin);
+	printf("?.%s=%d\n", djvuZoneLuaKey[SI_ZONE_YMIN], yheight - ymin);
 	lua_setkeyval(L, integer, djvuZoneLuaKey[SI_ZONE_XMAX], xmax);
-	printf("h.%s=%d\n", djvuZoneLuaKey[SI_ZONE_XMAX], xmax);
+	printf("?.%s=%d\n", djvuZoneLuaKey[SI_ZONE_XMAX], xmax);
 	lua_setkeyval(L, integer, djvuZoneLuaKey[SI_ZONE_YMAX], yheight - ymax);
-	printf("h.%s=%d\n", djvuZoneLuaKey[SI_ZONE_YMAX], yheight - ymax);
+	printf("?.%s=%d\n", djvuZoneLuaKey[SI_ZONE_YMAX], yheight - ymax);
 
 	printf("miniexp_length(anno): %d\n", miniexp_length(anno));
 	for (int i = SI_ZONE_DATA; i < miniexp_length(anno); i++) {
 		miniexp_t data = miniexp_nth(i, anno);
 		int tindex = i - SI_ZONE_DATA + 1; // Lua tables are 1-indexed
-		printf("tindex: %d @ i: %d\n", tindex, i);
+		printf("tindex: %d @ i: %d (#stack: %d)\n", tindex, i, lua_gettop(L));
 
 		if (miniexp_stringp(data)) {
 			const char *zname = miniexp_to_name(anno_type);
@@ -494,26 +485,20 @@ bool lua_settable_djvu_anno(lua_State *L, miniexp_t anno, int yheight) {
 			lua_setkeyval(L, string, zname, txt);
 			printf("h.%s=%s\n", zname, txt);
 		} else {
-			// We're done with this line, insert it in the array
-			lua_rawseti(L, -2, tindex);
-			printf("table.insert(lines, line, %d) (#stack: %d)\n", tindex, lua_gettop(L));
-			// And onward to the next line
+			lua_pushinteger(L, tindex);
+			lua_newtable(L);
+			printf("line = {} (#stack: %d)\n", lua_gettop(L));
 			lua_settable_djvu_anno(L, data, yheight);
+			lua_settable(L, LUA_SETTABLE_STACK_TOP);
+			printf("table.insert(lines, line, %d) (#stack: %d)\n", tindex, lua_gettop(L));
 		}
 	}
-
-	// FIXME: Can we reach this without entering the loop?
-	//        Because that would leave us with a bogus hash table on top of the stack instead of the array...
-	//        Or abort early if miniexp_length(anno) is SI_ZONE_DATA - 1?
-	printf("lua_settable_djvu_anno: true (#stack: %d)\n", lua_gettop(L));
-
-	return true;
 }
 
 static int getPageText(lua_State *L) {
 	DjvuDocument *doc = (DjvuDocument*) luaL_checkudata(L, 1, "djvudocument");
 	int pageno = luaL_checkint(L, 2);
-	lua_pop(L, lua_gettop(L)); // Pop function args
+	lua_pop(L, lua_gettop(L));
 
 	/* get page height for coordinates transform */
 	ddjvu_pageinfo_t info;
@@ -536,7 +521,7 @@ static int getPageText(lua_State *L) {
 		handle(L, doc->context, True);
 	}
 
-	lua_newtable(L); // lines = {}; Number of elements unclear, no pre-alloc
+	lua_newtable(L);
 	printf("lines = {}\n");
 	printf("#stack: %d\n", lua_gettop(L));
 	lua_settable_djvu_anno(L, sexp, info.height);
