@@ -146,7 +146,7 @@ static int openInputDevice(lua_State* L)
     }
 
     // We're done w/ inputdevice, pop it
-    lua_pop(L, lua_gettop(L));
+    lua_settop(L, 0);
 
     // Compute select's nfds argument.
     // That's not the actual number of fds in the set, like poll(),
@@ -198,7 +198,7 @@ static int fakeTapInput(lua_State* L)
     }
 
     // Pop function args, now that we're done w/ inputdevice
-    lua_pop(L, lua_gettop(L));
+    lua_settop(L, 0);
 
     struct input_event ev = { 0 };
     gettimeofday(&ev.time, NULL);
@@ -287,8 +287,9 @@ static inline void set_event_table(lua_State* L, const struct input_event* input
 
 static inline size_t drain_input_queue(lua_State* L, struct input_event* input_queue, size_t ev_count, size_t j)
 {
-    if (!lua_istable(L, -1)) {
-        // First call, create our array, pre-allocated to the necessary number of elements...
+    if (lua_gettop(L) == 1) {
+        // Only a single element in the stack? (that would be our `true` bool)?
+        // That means this is the first call, create our array, pre-allocated to the necessary number of elements...
         // ...for this call, at least. Subsequent ones will insert event by event.
         // That said, multiple calls should be extremely rare:
         // We'd need to have filled the input_queue buffer *during* a single batch of events on the same fd ;).
@@ -308,7 +309,7 @@ static int waitForInput(lua_State* L)
 {
     lua_Integer sec  = luaL_optinteger(L, 1, -1);  // Fallback to -1 to handle detecting a nil
     lua_Integer usec = luaL_optinteger(L, 2, 0);
-    lua_pop(L, lua_gettop(L));  // Pop the function arguments
+    lua_settop(L, 0);  // Pop the function arguments
 
     struct timeval  timeout;
     struct timeval* timeout_ptr = NULL;
@@ -361,21 +362,21 @@ static int waitForInput(lua_State* L)
                         // Kernel queue drained :)
                         break;
                     }
-                    lua_pop(L, lua_gettop(L));  // Kick our bogus bool (and potentially the ev_array table) from the stack
+                    lua_settop(L, 0);  // Kick our bogus bool (and potentially the ev_array table) from the stack
                     lua_pushboolean(L, false);
                     lua_pushinteger(L, errno);
                     return 2;  // false, errno
                 }
                 if (len == 0) {
                     // Should never happen
-                    lua_pop(L, lua_gettop(L));
+                    lua_settop(L, 0);
                     lua_pushboolean(L, false);
                     lua_pushinteger(L, EPIPE);
                     return 2;  // false, EPIPE
                 }
                 if (len > 0 && len % sizeof(*input_queue) != 0) {
                     // Truncated read?! (not a multiple of struct input_event)
-                    lua_pop(L, lua_gettop(L));
+                    lua_settop(L, 0);
                     lua_pushboolean(L, false);
                     lua_pushinteger(L, EINVAL);
                     return 2;  // false, EINVAL
