@@ -287,8 +287,9 @@ static inline void set_event_table(lua_State* L, const struct input_event* input
 
 static inline size_t drain_input_queue(lua_State* L, struct input_event* input_queue, size_t ev_count, size_t j)
 {
-    if (!lua_istable(L, -1)) {
-        // First call, create our array, pre-allocated to the necessary number of elements...
+    if (lua_gettop(L) == 1) {
+        // Only a single element in the stack? (that would be our `true` bool)?
+        // That means this is the first call, create our array, pre-allocated to the necessary number of elements...
         // ...for this call, at least. Subsequent ones will insert event by event.
         // That said, multiple calls should be extremely rare:
         // We'd need to have filled the input_queue buffer *during* a single batch of events on the same fd ;).
