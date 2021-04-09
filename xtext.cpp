@@ -401,7 +401,7 @@ public:
     // both utf8 decoding algorithms (but we can aim later at having
     // a single good one).
     void setTextFromUTF8CharsLuaArray(lua_State * L, int n) {
-        m_length = lua_objlen(L, n);
+        m_length = (int) lua_objlen(L, n); // NOTE: size_t -> int, as that's what both FriBidi & HarfBuzz expect.
         m_text = (uint32_t *)malloc(m_length * sizeof(*m_text));
         m_is_valid = true; // assume it is valid if coming from Lua array
         m_has_rtl = false;
