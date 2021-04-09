@@ -1413,8 +1413,7 @@ static int setHeaderProgressMarks(lua_State *L) {
         if ( lua_istable(L, 3) ) {
             int len = lua_objlen(L, 3);
             for (int i = 1; i <= len; i++) {
-                lua_pushinteger(L, i);
-                lua_gettable(L, 3);
+                lua_rawgeti(L, 3, i);
                 if ( lua_isnumber(L, -1) ) {
                     int n = lua_tointeger(L, -1);
                     m_section_bounds.add( 10000 * (n-1) / pages);
