@@ -40,7 +40,7 @@ endif()
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
     https://github.com/xpol/lua-rapidjson
-    944e0f92beb8d10cf2a307dd4b2e4f31db3ce4e9
+    242b40c8eaceb0cc43bcab88309736461cac1234
     ${SOURCE_DIR}
 )
 
