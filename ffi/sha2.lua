@@ -49,6 +49,7 @@
 --     2     2018-10-07   Decreased module loading time in Lua 5.1 implementation branch (thanks to Peter Melnichenko for giving a hint)
 --     1     2018-10-06   First release (only SHA-2 functions)
 -----------------------------------------------------------------------------
+-- NOTE: This is https://github.com/Egor-Skriptunoff/pure_lua_SHA @ 304d4121f080e68ef209d3f5fe093e5a955a4978
 
 local print_debug_messages = false  -- set to true to view some messages about your system's abilities and implementation branch chosen for your system
 
