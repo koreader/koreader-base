@@ -28,6 +28,7 @@ static const int BTN_STYLUS = 331;
 static const int ABS_X = 0;
 static const int ABS_Y = 1;
 static const int ABS_PRESSURE = 24;
+static const int ABS_DISTANCE = 25;
 static const int ABS_TILT_X = 26;
 static const int ABS_TILT_Y = 27;
 static const int ABS_MT_SLOT = 47;

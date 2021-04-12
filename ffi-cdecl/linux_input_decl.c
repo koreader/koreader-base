@@ -35,6 +35,7 @@ cdecl_const(BTN_STYLUS)
 cdecl_const(ABS_X)
 cdecl_const(ABS_Y)
 cdecl_const(ABS_PRESSURE)
+cdecl_const(ABS_DISTANCE)
 cdecl_const(ABS_TILT_X)
 cdecl_const(ABS_TILT_Y)
 
