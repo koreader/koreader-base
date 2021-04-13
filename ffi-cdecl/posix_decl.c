@@ -155,6 +155,8 @@ cdecl_type(blkcnt_t)
 cdecl_struct(stat)
 
 cdecl_func(fopen)
+// NOTE: Requires a somewhat recent glibc to actually have those symbols, as, on older versions,
+//       they're simply macros redirecting to __xstat...
 cdecl_func(stat)
 cdecl_func(fstat)
 cdecl_func(lstat)
