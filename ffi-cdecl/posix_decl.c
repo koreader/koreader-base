@@ -4,6 +4,7 @@
 #include <sys/mman.h>
 //#include <stropts.h>
 #include <unistd.h>
+#include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <sys/wait.h>
@@ -142,7 +143,23 @@ cdecl_func(strcasecmp)
 cdecl_const(F_OK)
 cdecl_func(access)
 
+cdecl_type(FILE)
+cdecl_type(dev_t)
+cdecl_type(ino_t)
+cdecl_type(mode_t)
+cdecl_type(nlink_t)
+cdecl_type(uid_t)
+cdecl_type(gid_t)
+cdecl_type(blksize_t)
+cdecl_type(blkcnt_t)
+cdecl_struct(stat)
+
 cdecl_func(fopen)
+cdecl_func(stat)
+cdecl_func(fstat)
+cdecl_func(lstat)
+cdecl_func(fread)
+cdecl_func(fwrite)
 cdecl_func(fclose)
 cdecl_func(printf)
 cdecl_func(sprintf)
