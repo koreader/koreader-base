@@ -178,9 +178,13 @@ function input.waitForEvent(sec, usec)
         if poll_state == C.LOOPER_ID_MAIN then
             -- e.g., source[0].process(android.app, source[0]) where process would point to process_cmd
             local cmd = android.glue.android_app_read_cmd(android.app)
-            android.glue.android_app_pre_exec_cmd(android.app, cmd)
-            commandHandler(cmd, 1)
-            android.glue.android_app_post_exec_cmd(android.app, cmd)
+            while cmd ~= -1 do
+                android.glue.android_app_pre_exec_cmd(android.app, cmd)
+                commandHandler(cmd, 1)
+                android.glue.android_app_post_exec_cmd(android.app, cmd)
+
+                cmd = android.glue.android_app_read_cmd(android.app)
+            end
         elseif poll_state == C.LOOPER_ID_INPUT then
             -- e.g., source[0].process(android.app, source[0]) where process would point to process_input
             local event = ffi.new("AInputEvent*[1]")
