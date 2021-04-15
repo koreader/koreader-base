@@ -183,6 +183,7 @@ function input.waitForEvent(sec, usec)
                 commandHandler(cmd, 1)
                 android.glue.android_app_post_exec_cmd(android.app, cmd)
 
+                -- Should return -1 (EAGAIN) when we've drained the pipe
                 cmd = android.glue.android_app_read_cmd(android.app)
             end
         elseif poll_state == C.LOOPER_ID_INPUT then
@@ -202,6 +203,7 @@ function input.waitForEvent(sec, usec)
             end
         elseif poll_state == C.LOOPER_ID_USER then
             local message = ffi.new("unsigned char [4]")
+            -- Similarly, read will return -1 (EGAIN) when we've drained the pipe
             while C.read(fd[0], message, 4) == 4 do
                 if message[0] == C.AEVENT_POWER_CONNECTED then
                     commandHandler(C.AEVENT_POWER_CONNECTED, 0)
