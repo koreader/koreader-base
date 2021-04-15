@@ -202,7 +202,7 @@ function input.waitForEvent(sec, usec)
             end
         elseif poll_state == C.LOOPER_ID_USER then
             local message = ffi.new("unsigned char [4]")
-            while C.read(fd[0], message, 4) == 4 then
+            while C.read(fd[0], message, 4) == 4 do
                 if message[0] == C.AEVENT_POWER_CONNECTED then
                     commandHandler(C.AEVENT_POWER_CONNECTED, 0)
                 elseif message[0] == C.AEVENT_POWER_DISCONNECTED then
