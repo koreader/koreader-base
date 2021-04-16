@@ -167,6 +167,12 @@ function input.waitForEvent(sec, usec)
     --       And its process function can be used as a weird delayed callback mechanism, but ALooper already has native callback handling :?.
     --       TL;DR: We don't actually use it here.
     local source = ffi.new("struct android_poll_source*[1]")
+    --- @fixme: We don't use callbacks, so we'd be perfectly fine using pollOnce instead.
+    -- NOTE: Much like the C backend, we only process a *single* fd per waitForEvent iteration.
+    --       Although, in the Android case, things are a bit more complex, because this is a wrapper around epoll:
+    --       the backend actually accumulates every poll event in a single (inner) iteration, and enqueues those in a list.
+    --       That list is what the public function processes, and it processes it item by item, returning one item per call.
+    --       c.f., https://android.googlesource.com/platform/system/core/+/refs/heads/master/libutils/Looper.cpp
     local poll_state = android.lib.ALooper_pollAll(timeout, fd, events, ffi.cast("void**", source))
     if poll_state >= 0 then
         -- NOTE: Since we actually want to process this in Lua-land (i.e., here), and not in C-land,
@@ -223,6 +229,7 @@ function input.waitForEvent(sec, usec)
         return
     end
     -- NOTE: We never set callbacks, and we never call wake, so no need to check for ALOOPER_POLL_CALLBACK & ALOOPER_POLL_WAKE
+    --       Also, pollAll *never* returns ALOOPER_POLL_CALLBACK anyway.
 
     if #inputQueue > 0 then
         -- We generated some actionable events
