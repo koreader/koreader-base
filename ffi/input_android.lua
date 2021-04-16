@@ -167,6 +167,12 @@ function input.waitForEvent(sec, usec)
     --       And its process function can be used as a weird delayed callback mechanism, but ALooper already has native callback handling :?.
     --       TL;DR: We don't actually use it here.
     local source = ffi.new("struct android_poll_source*[1]")
+    --- @fixme: We don't use callbacks, so we'd be perfectly fine using pollOnce instead.
+    -- NOTE: Much like the C backend, we only process a *single* fd per waitForEvent iteration.
+    --       Although, in the Android case, things are a bit more complex, because this is a wrapper around epoll:
+    --       the backend actually accumulates every poll event in a single (inner) iteration, and enqueues those in a list.
+    --       That list is what the public function processes, and it processes it item by item, returning one item per call.
+    --       c.f., https://android.googlesource.com/platform/system/core/+/refs/heads/master/libutils/Looper.cpp
     local poll_state = android.lib.ALooper_pollAll(timeout, fd, events, ffi.cast("void**", source))
     if poll_state >= 0 then
         -- NOTE: Since we actually want to process this in Lua-land (i.e., here), and not in C-land,
@@ -178,9 +184,14 @@ function input.waitForEvent(sec, usec)
         if poll_state == C.LOOPER_ID_MAIN then
             -- e.g., source[0].process(android.app, source[0]) where process would point to process_cmd
             local cmd = android.glue.android_app_read_cmd(android.app)
-            android.glue.android_app_pre_exec_cmd(android.app, cmd)
-            commandHandler(cmd, 1)
-            android.glue.android_app_post_exec_cmd(android.app, cmd)
+            while cmd ~= -1 do
+                android.glue.android_app_pre_exec_cmd(android.app, cmd)
+                commandHandler(cmd, 1)
+                android.glue.android_app_post_exec_cmd(android.app, cmd)
+
+                -- Should return -1 (EAGAIN) when we've drained the pipe
+                cmd = android.glue.android_app_read_cmd(android.app)
+            end
         elseif poll_state == C.LOOPER_ID_INPUT then
             -- e.g., source[0].process(android.app, source[0]) where process would point to process_input
             local event = ffi.new("AInputEvent*[1]")
@@ -198,11 +209,13 @@ function input.waitForEvent(sec, usec)
             end
         elseif poll_state == C.LOOPER_ID_USER then
             local message = ffi.new("unsigned char [4]")
-            C.read(fd[0], message, 4)
-            if message[0] == C.AEVENT_POWER_CONNECTED then
-                commandHandler(C.AEVENT_POWER_CONNECTED, 0)
-            elseif message[0] == C.AEVENT_POWER_DISCONNECTED then
-                commandHandler(C.AEVENT_POWER_DISCONNECTED, 0)
+            -- Similarly, read will return -1 (EAGAIN) when we've drained the pipe
+            while C.read(fd[0], message, 4) == 4 do
+                if message[0] == C.AEVENT_POWER_CONNECTED then
+                    commandHandler(C.AEVENT_POWER_CONNECTED, 0)
+                elseif message[0] == C.AEVENT_POWER_DISCONNECTED then
+                    commandHandler(C.AEVENT_POWER_DISCONNECTED, 0)
+                end
             end
         end
         if android.app.destroyRequested ~= 0 then
@@ -216,6 +229,7 @@ function input.waitForEvent(sec, usec)
         return
     end
     -- NOTE: We never set callbacks, and we never call wake, so no need to check for ALOOPER_POLL_CALLBACK & ALOOPER_POLL_WAKE
+    --       Also, pollAll *never* returns ALOOPER_POLL_CALLBACK anyway.
 
     if #inputQueue > 0 then
         -- We generated some actionable events
