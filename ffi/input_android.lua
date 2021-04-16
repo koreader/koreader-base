@@ -68,6 +68,7 @@ local function genTouchUpEvent(event, id)
 end
 
 local function genTouchMoveEvent(event, id, index)
+    -- NOTE: May return a float for events w/ subpixel precision.
     local x = android.lib.AMotionEvent_getX(event, index)
     local y = android.lib.AMotionEvent_getY(event, index)
     local ts = android.lib.AMotionEvent_getEventTime(event)
