@@ -74,7 +74,7 @@ set(PATCH_CMD "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/koreader-luajit-makefile-
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
     https://github.com/LuaJIT/LuaJIT
-    20f556e53190ab9a735b932f5d868d45ec536a70
+    75ee3a6159f1831fa57992df3caf5a2c303c281a
     ${SOURCE_DIR}
 )
 
