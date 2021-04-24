@@ -207,9 +207,8 @@ static const int CLOCK_MONOTONIC_RAW = 4;
 static const int CLOCK_BOOTTIME = 7;
 static const int CLOCK_TAI = 11;
 ]]
-elseif ffi.os == "OSX" or ffi.os == "BSD" then
+elseif ffi.os == "OSX" then
     -- NOTE: Requires macOS 10.12
-    -- NOTE: Unverified on other BSDs
     ffi.cdef[[
 static const int CLOCK_REALTIME = 0;
 static const int CLOCK_REALTIME_COARSE = -1;
@@ -224,4 +223,18 @@ static const int CLOCK_TAI = -1;
     -- Unlike on Linux, MONO ticks during sleep.
     -- CLOCK_UPTIME_RAW (8) & CLOCK_UPTIME_RAW_APPROX (9) don't.
     -- (e.g., macOS UPTIME == Linux's MONO, and macOS's MONO == Linux's BOOTTIME)
+elseif ffi.os == "BSD" then
+    -- OpenBSD: https://github.com/openbsd/src/blob/master/sys/sys/_time.h
+    ffi.cdef[[
+static const int CLOCK_REALTIME = 0;
+static const int CLOCK_REALTIME_COARSE = -1;
+static const int CLOCK_MONOTONIC = 3;
+static const int CLOCK_MONOTONIC_COARSE = -1;
+static const int CLOCK_MONOTONIC_RAW = -1;
+static const int CLOCK_BOOTTIME = 6;
+static const int CLOCK_TAI = -1;
+]]
+    -- Various portability notes:
+    -- CLOCK_UPTIME (5)
+    -- UPTIME == Linux's MONOTONIC
 end
