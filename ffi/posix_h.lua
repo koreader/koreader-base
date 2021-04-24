@@ -224,7 +224,7 @@ elseif ffi.os == "OSX" then
     -- Portability notes:
     -- Unlike on Linux, MONO ticks during sleep (which is technically the POSIX-compliant behavior).
     -- CLOCK_UPTIME_* doesn't.
-    -- (e.g., macOS UPTIME == Linux's MONO, and macOS's MONO == Linux's BOOTTIME)
+    -- (e.g., macOS UPTIME == Linux MONO, and macOS MONO == Linux BOOTTIME)
 
     -- NOTE: Requires macOS 10.12
     ffi.cdef[[
@@ -248,7 +248,7 @@ elseif ffi.os == "BSD" then
     #define CLOCK_BOOTTIME           6
     --]]
     -- Portability notes:
-    -- UPTIME == Linux's MONOTONIC, BOOTTIME == Linux's BOOTTIME
+    -- OpenBSD UPTIME == Linux MONOTONIC, OpenBSD BOOTTIME == Linux BOOTTIME
     -- (Meaning MONOTONIC starts ticking at an *undefined* positive value).
 
     -- NetBSD
@@ -281,7 +281,7 @@ elseif ffi.os == "BSD" then
     #define CLOCK_PROCESS_CPUTIME_ID 15
     --]]
     -- Portability notes:
-    -- UPTIME == Linux's MONOTONIC
+    -- FreeBSD UPTIME == Linux MONOTONIC
     -- (I assume that, like on OpenBSD, this means MONOTONIC starts ticking at an *undefined* positive value).
 
     -- So, here comes probey-time!
