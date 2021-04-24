@@ -223,7 +223,7 @@ elseif ffi.os == "OSX" then
     --]]
     -- Portability notes:
     -- Unlike on Linux, MONO ticks during sleep (which is technically the POSIX-compliant behavior).
-    -- CLOCK_UPTIME_RAW & CLOCK_UPTIME_RAW_APPROX (9) don't.
+    -- CLOCK_UPTIME_* doesn't.
     -- (e.g., macOS UPTIME == Linux's MONO, and macOS's MONO == Linux's BOOTTIME)
 
     -- NOTE: Requires macOS 10.12
