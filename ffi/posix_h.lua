@@ -322,4 +322,25 @@ static const int CLOCK_TAI = -1;
 ]]
     end
     probe_ts = nil --luacheck: ignore
+else
+    -- Assume minimal Linux compat on other OSes.
+
+    -- This holds true for Windows via mingw,
+    -- c.f., https://github.com/mirror/mingw-w64/blob/master/mingw-w64-libraries/winpthreads/include/pthread_time.h
+    --[[
+    #define CLOCK_REALTIME           0
+    #define CLOCK_MONOTONIC          1
+    #define CLOCK_PROCESS_CPUTIME_ID 2
+    #define CLOCK_THREAD_CPUTIME_ID  3
+    --]]
+
+    ffi.cdef[[
+static const int CLOCK_REALTIME = 0;
+static const int CLOCK_REALTIME_COARSE = -1;
+static const int CLOCK_MONOTONIC = 1;
+static const int CLOCK_MONOTONIC_COARSE = -1;
+static const int CLOCK_MONOTONIC_RAW = -1;
+static const int CLOCK_BOOTTIME = -1;
+static const int CLOCK_TAI = -1;
+]]
 end
