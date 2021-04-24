@@ -251,16 +251,6 @@ elseif ffi.os == "BSD" then
     -- UPTIME == Linux's MONOTONIC, BOOTTIME == Linux's BOOTTIME
     -- (Meaning MONOTONIC starts ticking at an *undefined* positive value).
 
-    ffi.cdef[[
-static const int CLOCK_REALTIME = 0;
-static const int CLOCK_REALTIME_COARSE = -1;
-static const int CLOCK_MONOTONIC = 3;
-static const int CLOCK_MONOTONIC_COARSE = -1;
-static const int CLOCK_MONOTONIC_RAW = -1;
-static const int CLOCK_BOOTTIME = 6;
-static const int CLOCK_TAI = -1;
-]]
-
     -- NetBSD
     -- c.f., https://anonhg.netbsd.org/src/file/tip/sys/sys/time.h
     --[[
@@ -293,4 +283,43 @@ static const int CLOCK_TAI = -1;
     -- Portability notes:
     -- UPTIME == Linux's MONOTONIC
     -- (I assume that, like on OpenBSD, this means MONOTONIC starts ticking at an *undefined* positive value).
+
+    -- So, here comes probey-time!
+    local C = ffi.C
+    local probe_ts = ffi.new("struct timespec")
+    if C.clock_getres(15, probe_ts) == 0 then
+        -- FreeBSD
+        ffi.cdef[[
+static const int CLOCK_REALTIME = 0;
+static const int CLOCK_REALTIME_COARSE = 10;
+static const int CLOCK_MONOTONIC = 4;
+static const int CLOCK_MONOTONIC_COARSE = 12;
+static const int CLOCK_MONOTONIC_RAW = 11;
+static const int CLOCK_BOOTTIME = -1;
+static const int CLOCK_TAI = -1;
+]]
+    elseif C.clock_getres(0x40000000, probe_ts) == 0 then
+        -- NetBSD
+        ffi.cdef[[
+static const int CLOCK_REALTIME = 0;
+static const int CLOCK_REALTIME_COARSE = -1;
+static const int CLOCK_MONOTONIC = 3;
+static const int CLOCK_MONOTONIC_COARSE = -1;
+static const int CLOCK_MONOTONIC_RAW = -1;
+static const int CLOCK_BOOTTIME = -1;
+static const int CLOCK_TAI = -1;
+]]
+    else
+        -- OpenBSD
+        ffi.cdef[[
+static const int CLOCK_REALTIME = 0;
+static const int CLOCK_REALTIME_COARSE = -1;
+static const int CLOCK_MONOTONIC = 3;
+static const int CLOCK_MONOTONIC_COARSE = -1;
+static const int CLOCK_MONOTONIC_RAW = -1;
+static const int CLOCK_BOOTTIME = 6;
+static const int CLOCK_TAI = -1;
+]]
+    end
+    probe_ts = nil --luacheck: ignore
 end
