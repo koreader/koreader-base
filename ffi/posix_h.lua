@@ -208,6 +208,24 @@ static const int CLOCK_BOOTTIME = 7;
 static const int CLOCK_TAI = 11;
 ]]
 elseif ffi.os == "OSX" then
+    -- c.f., https://github.com/phracker/MacOSX-SDKs/blob/master/MacOSX10.12.sdk/usr/include/time.h
+    --[[
+    typedef enum {
+    _CLOCK_REALTIME             = 0,
+    _CLOCK_MONOTONIC            = 6,
+    _CLOCK_MONOTONIC_RAW        = 4,
+    _CLOCK_MONOTONIC_RAW_APPROX = 5,
+    _CLOCK_UPTIME_RAW           = 8,
+    _CLOCK_UPTIME_RAW_APPROX    = 9,
+    _CLOCK_PROCESS_CPUTIME_ID   = 12,
+    _CLOCK_THREAD_CPUTIME_ID    = 16
+    } clockid_t;
+    --]]
+    -- Portability notes:
+    -- Unlike on Linux, MONO ticks during sleep (which is technically the POSIX-compliant behavior).
+    -- CLOCK_UPTIME_RAW & CLOCK_UPTIME_RAW_APPROX (9) don't.
+    -- (e.g., macOS UPTIME == Linux's MONO, and macOS's MONO == Linux's BOOTTIME)
+
     -- NOTE: Requires macOS 10.12
     ffi.cdef[[
 static const int CLOCK_REALTIME = 0;
@@ -218,13 +236,21 @@ static const int CLOCK_MONOTONIC_RAW = 4;
 static const int CLOCK_BOOTTIME = -1;
 static const int CLOCK_TAI = -1;
 ]]
-    -- Various portability notes:
-    -- _COARSE is actually _RAW_APPROX
-    -- Unlike on Linux, MONO ticks during sleep.
-    -- CLOCK_UPTIME_RAW (8) & CLOCK_UPTIME_RAW_APPROX (9) don't.
-    -- (e.g., macOS UPTIME == Linux's MONO, and macOS's MONO == Linux's BOOTTIME)
 elseif ffi.os == "BSD" then
-    -- OpenBSD: https://github.com/openbsd/src/blob/master/sys/sys/_time.h
+    -- OpenBSD
+    -- c.f., https://github.com/openbsd/src/blob/master/sys/sys/_time.h
+    --[[
+    #define CLOCK_REALTIME           0
+    #define CLOCK_PROCESS_CPUTIME_ID 2
+    #define CLOCK_MONOTONIC          3
+    #define CLOCK_THREAD_CPUTIME_ID  4
+    #define CLOCK_UPTIME             5
+    #define CLOCK_BOOTTIME           6
+    --]]
+    -- Portability notes:
+    -- UPTIME == Linux's MONOTONIC, BOOTTIME == Linux's BOOTTIME
+    -- (Meaning MONOTONIC starts ticking at an *undefined* positive value).
+
     ffi.cdef[[
 static const int CLOCK_REALTIME = 0;
 static const int CLOCK_REALTIME_COARSE = -1;
@@ -234,7 +260,37 @@ static const int CLOCK_MONOTONIC_RAW = -1;
 static const int CLOCK_BOOTTIME = 6;
 static const int CLOCK_TAI = -1;
 ]]
-    -- Various portability notes:
-    -- CLOCK_UPTIME (5)
+
+    -- NetBSD
+    -- c.f., https://anonhg.netbsd.org/src/file/tip/sys/sys/time.h
+    --[[
+    #define CLOCK_REALTIME           0
+    #define CLOCK_VIRTUAL            1
+    #define CLOCK_PROF               2
+    #define CLOCK_MONOTONIC          3
+    #define CLOCK_THREAD_CPUTIME_ID  0x20000000
+    #define CLOCK_PROCESS_CPUTIME_ID 0x40000000
+    --]]
+
+    -- FreeBSD
+    -- c.f., https://github.com/freebsd/freebsd-src/blob/main/include/time.h
+    --[[
+    #define CLOCK_REALTIME           0
+    #define CLOCK_VIRTUAL            1
+    #define CLOCK_PROF               2
+    #define CLOCK_MONOTONIC          4
+    #define CLOCK_UPTIME             5 /* FreeBSD-specific. */
+    #define CLOCK_UPTIME_PRECISE     7 /* FreeBSD-specific. */
+    #define CLOCK_UPTIME_FAST        8 /* FreeBSD-specific. */
+    #define CLOCK_REALTIME_PRECISE   9 /* FreeBSD-specific. */
+    #define CLOCK_REALTIME_FAST      10 /* FreeBSD-specific. */
+    #define CLOCK_MONOTONIC_PRECISE  11 /* FreeBSD-specific. */
+    #define CLOCK_MONOTONIC_FAST     12 /* FreeBSD-specific. */
+    #define CLOCK_SECOND             13 /* FreeBSD-specific. */
+    #define CLOCK_THREAD_CPUTIME_ID  14
+    #define CLOCK_PROCESS_CPUTIME_ID 15
+    --]]
+    -- Portability notes:
     -- UPTIME == Linux's MONOTONIC
+    -- (I assume that, like on OpenBSD, this means MONOTONIC starts ticking at an *undefined* positive value).
 end
