@@ -92,13 +92,6 @@ char *realpath(const char *restrict, char *restrict) __attribute__((nothrow, lea
 char *basename(char *) __attribute__((nothrow, leaf));
 char *dirname(char *) __attribute__((nothrow, leaf));
 typedef int clockid_t;
-static const int CLOCK_REALTIME = 0;
-static const int CLOCK_REALTIME_COARSE = 5;
-static const int CLOCK_MONOTONIC = 1;
-static const int CLOCK_MONOTONIC_COARSE = 6;
-static const int CLOCK_MONOTONIC_RAW = 4;
-static const int CLOCK_BOOTTIME = 7;
-static const int CLOCK_TAI = 11;
 int clock_getres(clockid_t, struct timespec *) __attribute__((nothrow, leaf));
 int clock_gettime(clockid_t, struct timespec *) __attribute__((nothrow, leaf));
 int clock_settime(clockid_t, const struct timespec *) __attribute__((nothrow, leaf));
@@ -201,4 +194,34 @@ if ffi.os == "Linux" then
     -- NOTE: There's no librt.so symlink, so, specify the SOVER, but not the full path,
     --       in order to let the dynamic loader figure it out on its own (e.g.,  multilib).
     pcall(ffi.load, "rt.so.1", true)
+end
+
+-- The clockid_t constants are not portable :/.
+if ffi.os == "Linux" then
+    ffi.cdef[[
+static const int CLOCK_REALTIME = 0;
+static const int CLOCK_REALTIME_COARSE = 5;
+static const int CLOCK_MONOTONIC = 1;
+static const int CLOCK_MONOTONIC_COARSE = 6;
+static const int CLOCK_MONOTONIC_RAW = 4;
+static const int CLOCK_BOOTTIME = 7;
+static const int CLOCK_TAI = 11;
+]]
+elseif ffi.os == "OSX" or ffi.os == "BSD" then
+    -- NOTE: Requires macOS 10.12
+    -- NOTE: Unverified on other BSDs
+    ffi.cdef[[
+static const int CLOCK_REALTIME = 0;
+static const int CLOCK_REALTIME_COARSE = -1;
+static const int CLOCK_MONOTONIC = 6;
+static const int CLOCK_MONOTONIC_COARSE = 5;
+static const int CLOCK_MONOTONIC_RAW = 4;
+static const int CLOCK_BOOTTIME = -1;
+static const int CLOCK_TAI = -1;
+]]
+    -- Various portability notes:
+    -- _COARSE is actually _RAW_APPROX
+    -- Unlike on Linux, MONO ticks during sleep.
+    -- CLOCK_UPTIME_RAW (8) & CLOCK_UPTIME_RAW_APPROX (9) don't.
+    -- (e.g., macOS UPTIME == Linux's MONO, and macOS's MONO == Linux's BOOTTIME)
 end
