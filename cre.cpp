@@ -1371,6 +1371,19 @@ static int getFontFaceFilenameAndFaceIndex(lua_State *L) {
 	return 0;
 }
 
+static int getFontFaceAvailableWeights(lua_State *L) {
+	const char *facename = luaL_checkstring(L, 1);
+
+	LVArray<int> weights;
+	fontMan->GetAvailableFontWeights(weights, lString8(facename));
+	lua_createtable(L, weights.length(), 0);
+	for ( int i=0; i<weights.length(); i++ ) {
+		lua_pushinteger(L, weights[i]);
+		lua_rawseti(L, -2, i+1);
+	}
+	return 1;
+}
+
 static int setViewMode(lua_State *L) {
 	CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
 	LVDocViewMode view_mode = (LVDocViewMode)luaL_checkint(L, 2);
@@ -1693,14 +1706,6 @@ static int setEmbeddedFonts(lua_State *L) {
 	CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
 
 	doc->text_view->doCommand(DCMD_SET_DOC_FONTS, luaL_checkint(L, 2));
-
-	return 0;
-}
-
-static int toggleFontBolder(lua_State *L) {
-	CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
-
-	doc->text_view->doCommand(DCMD_TOGGLE_BOLD);
 
 	return 0;
 }
@@ -3304,6 +3309,15 @@ static int registerFont(lua_State *L) {
 	return 0;
 }
 
+static int regularizeRegisteredFontsWeights(lua_State *L) {
+	bool print_updates = false;
+	if (lua_isboolean(L, 1)) {
+		print_updates = lua_toboolean(L, 1);
+	}
+	fontMan->RegularizeRegisteredFontsWeights(print_updates);
+	return 0;
+}
+
 // ported from Android UI kpvcrlib/crengine/android/jni/docview.cpp
 
 static int findText(lua_State *L) {
@@ -3488,10 +3502,12 @@ static const struct luaL_Reg cre_func[] = {
     {"newDocView", newDocView},
     {"getFontFaces", getFontFaces},
     {"getFontFaceFilenameAndFaceIndex", getFontFaceFilenameAndFaceIndex},
+    {"getFontFaceAvailableWeights", getFontFaceAvailableWeights},
     {"getGammaLevel", getGammaLevel},
     {"getGammaIndex", getGammaIndex},
     {"setGammaIndex", setGammaIndex},
     {"registerFont", registerFont},
+    {"regularizeRegisteredFontsWeights", regularizeRegisteredFontsWeights},
     {"getHyphDictList", getHyphDictList},
     {"getSelectedHyphDict", getSelectedHyphDict},
     {"setHyphDictionary", setHyphDictionary},
@@ -3573,7 +3589,6 @@ static const struct luaL_Reg credocument_meth[] = {
     {"gotoPos", gotoPos},
     {"gotoXPointer", gotoXPointer},
     {"zoomFont", zoomFont},
-    {"toggleFontBolder", toggleFontBolder},
     //{"cursorLeft", cursorLeft},
     //{"cursorRight", cursorRight},
     {"drawCurrentPage", drawCurrentPage},
