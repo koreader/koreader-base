@@ -168,9 +168,9 @@ static int closeInputDevices(lua_State* L __attribute__((unused)))
             ioctl(inputfds[i], EVIOCGRAB, 0);
             close(inputfds[i]);
             inputfds[i] = -1;
-            num_fds--;
         }
     }
+    num_fds = 0;
 
 #if defined(WITH_TIMERFD)
     clearAllTimers();
