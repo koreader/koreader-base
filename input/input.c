@@ -163,7 +163,7 @@ static int openInputDevice(lua_State* L)
 
 static int closeInputDevices(lua_State* L __attribute__((unused)))
 {
-    for (size_t i = 0U; i < num_fds; i++) {
+    for (size_t i = num_fds - 1; i >= 0; i--) {
         if (inputfds[i] != -1) {
             ioctl(inputfds[i], EVIOCGRAB, 0);
             close(inputfds[i]);
