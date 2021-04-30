@@ -181,6 +181,7 @@ static int closeInputDevices(lua_State* L __attribute__((unused)))
         // Kill and wait to reap our child process.
         kill(fake_ev_generator_pid, SIGTERM);
         waitpid(-1, NULL, 0);
+        fake_ev_generator_pid = -1;
     }
 
     return 0;
