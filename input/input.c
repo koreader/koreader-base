@@ -165,7 +165,7 @@ static int closeInputDevices(lua_State* L __attribute__((unused)))
 {
     // Right now, we close everything, but, in the future, we may want to keep *some* slots open.
     // Note that doing that would (currently) require making sure those slots are at the start of the array,
-    // in fd number order, and that the array itself isn't sparse.
+    // in ascending fd number order, and that the array itself isn't sparse.
     for (ssize_t i = fd_idx - 1; i >= 0; i--) {
         if (inputfds[i] != -1) {
             ioctl(inputfds[i], EVIOCGRAB, 0);
