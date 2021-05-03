@@ -100,7 +100,7 @@ function KOPTContext_mt.__index:getWordBoxes(bmp, x, y, w, h, box_type)
 
     if boxa == nil or nai == nil then return end
 
-    --get number of lines in this area
+    -- get number of lines in this area
     nr_word = leptonica.boxaGetCount(boxa)
     assert(nr_word == leptonica.numaGetCount(nai))
 
@@ -109,14 +109,14 @@ function KOPTContext_mt.__index:getWordBoxes(bmp, x, y, w, h, box_type)
     while counter_w < nr_word do
         leptonica.numaGetIValue(nai, counter_w, counter_l)
         current_line = counter_l[0]
-        --sub-table that contains words in a line
+        -- sub-table that contains words in a line
         local lbox = {}
         boxes[counter_l[0]+1] = lbox
         counter_cw = 0
         l_x0, l_y0, l_x1, l_y1 = 9999, 9999, 0, 0
         while current_line == counter_l[0] and counter_w < nr_word do
             local box = leptonica.boxaGetBox(boxa, counter_w, C.L_CLONE)
-            --update line box
+            -- update line box
             l_x0 = box.x < l_x0 and box.x or l_x0
             l_y0 = box.y < l_y0 and box.y or l_y0
             l_x1 = box.x + box.w > l_x1 and box.x + box.w or l_x1
@@ -137,7 +137,7 @@ function KOPTContext_mt.__index:getWordBoxes(bmp, x, y, w, h, box_type)
         lbox.x0, lbox.y0, lbox.x1, lbox.y1 = l_x0, l_y0, l_x1, l_y1
         counter_w = counter_w + 1
     end
-    return boxes
+    return boxes, nr_word
 end
 
 function KOPTContext_mt.__index:getReflowedWordBoxes(bmp, x, y, w, h)
