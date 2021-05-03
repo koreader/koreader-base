@@ -17,6 +17,7 @@
 */
 
 #include <stdio.h>
+#include <stdbool.h>
 #include <stdlib.h>
 #include <math.h>
 #include <stddef.h>
@@ -34,33 +35,35 @@ typedef struct header {
     size_t sz;
 } header;
 
-static size_t msize=0;
+static size_t msize = 0U;
 static size_t msize_prev;
 static size_t msize_max;
 static size_t msize_min;
 static size_t msize_iniz;
-static int is_realloc=0;
+static bool is_realloc = false;
 
-static void resetMsize(){
+static void resetMsize() {
     msize_iniz = msize;
     msize_prev = 0;
     msize_max = 0;
-    msize_min = (size_t)-1;
+    msize_min = (size_t) -1;
 }
 
-static void showMsize(){
-    char buf[15],buf2[15],buf3[15],buf4[15];
-    //printf("§§§ now: %s was: %s - min: %s - max: %s\n",readable_fs(msize,buf),readable_fs(msize_iniz,buf2),readable_fs(msize_min,buf3),readable_fs(msize_max,buf4));
+static void showMsize() {
+    char buf[15], buf2[15], buf3[15], buf4[15];
+    //printf("§§§ now: %s was: %s - min: %s - max: %s\n", readable_fs(msize, buf), readable_fs(msize_iniz, buf2), readable_fs(msize_min, buf3), readable_fs(msize_max, buf4));
     resetMsize();
 }
 
-static void log_size(char *funcName){
-    if(msize_max < msize)
+static void log_size(char *funcName) {
+    if (msize_max < msize) {
         msize_max = msize;
-    if(msize_min > msize)
+    }
+    if (msize_min > msize) {
         msize_min = msize;
-    if(1==0 && abs(msize-msize_prev)>msize_prev*LOG_TRESHOLD_PERC){
-        char buf[15],buf2[15];
+    }
+    if (1==0 && abs(msize - msize_prev) > msize_prev * LOG_TRESHOLD_PERC) {
+        char buf[15], buf2[15];
         //printf("§§§ %s - total: %s (was %s)\n",funcName, readable_fs(msize,buf),readable_fs(msize_prev,buf2));
         msize_prev = msize;
     }
@@ -70,56 +73,59 @@ static void *
 my_malloc_default(void *opaque, size_t size)
 {
     struct header * h = malloc(size + sizeof(header));
-    if (h == NULL)
+    if (h == NULL) {
         return NULL;
+    }
 
-    h -> magic = MAGIC;
-    h -> sz = size;
+    h->magic = MAGIC;
+    h->sz = size;
     msize += size + sizeof(struct header);
-    if(is_realloc!=1)
+    if (!is_realloc) {
         log_size("alloc");
+    }
     return (void *)(h + 1);
 }
 
 static void
 my_free_default(void *opaque, void *ptr)
 {
-    fprintf(stderr, "free %p (%ld)\n", ptr, msize);
+    fprintf(stderr, "free %p (%zu)\n", ptr, msize);
     if (ptr != NULL) {
         struct header * h = ((struct header *)ptr) - 1;
-        if (h -> magic != MAGIC) { /* Not allocated by us */
+        if (h->magic != MAGIC) { /* Not allocated by us */
             fprintf(stderr, "attempt to free something that doesn't belong to us!\n");
         } else {
-            msize -= h -> sz + sizeof(struct header);
+            msize -= h->sz + sizeof(struct header);
             free(h);
         }
     }
-    if(is_realloc!=1)
+    if (!is_realloc) {
         log_size("free");
+    }
 }
 
 static void *
 my_realloc_default(void *opaque, void *old, size_t size)
 {
     void * newp;
-    if (old==NULL) { //practically, it's a malloc
+    if (old == NULL) { //practically, it's a malloc
         newp = my_malloc_default(opaque, size);
     } else {
         struct header * h = ((struct header *)old) - 1;
-        if (h -> magic != MAGIC) { // Not allocated by my_malloc_default
-            //printf("§§§ warn: not allocated by my_malloc_default, new size: %i\n",size);
-            newp = realloc(old,size);
+        if (h->magic != MAGIC) { // Not allocated by my_malloc_default
+            //printf("§§§ warn: not allocated by my_malloc_default, new size: %zu\n", size);
+            newp = realloc(old, size);
         } else { // malloc + free
-            is_realloc = 1;
-            size_t oldsize = h -> sz;
-            //printf("realloc %i -> %i\n",oldsize,size);
+            is_realloc = true;
+            size_t oldsize = h->sz;
+            //printf("realloc %zu -> %zu\n", oldsize, size);
             newp = my_malloc_default(opaque, size);
             if (NULL != newp) {
-                memcpy(newp, old, oldsize<size?oldsize:size);
+                memcpy(newp, old, oldsize < size ? oldsize : size);
                 my_free_default(opaque, old);
             }
             log_size("realloc");
-            is_realloc = 0;
+            is_realloc = false;
         }
     }
 
