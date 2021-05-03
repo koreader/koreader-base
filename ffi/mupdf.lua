@@ -37,9 +37,17 @@ local BlitBuffer = require("ffi/blitbuffer")
 
 local M = require("libs/libkoreader-mupdf")
 
+--- @fixme: Don't make cache_size too low, at least not until we bump MµPDF,
+---         as there's a pernicious issue that corrupts its store cache on overcommit on old versions.
+---         c.f., https://github.com/koreader/koreader/issues/7627
+---         (FZ_STORE_DEFAULT is 256MB, we used to set it to 8MB).
+---         And when we bump MµPDF, it'll likely have *more* stuff to store in there,
+--          so, don't make that too low, period ;).
+--          NOTE: Revisit when we bump MµPDF by doing a few tests with the tracing memory allocators,
+--                as even 32MB is likely to be too conservative.
 local mupdf = {
     debug_memory = false,
-    cache_size = 8*1024*1024,
+    cache_size = 32*1024*1024,
     color = false,
 }
 
@@ -66,8 +74,8 @@ local function context()
     -- ctx is a cdata<fz_context *>, attach a finalizer to it to release ressources on garbage collection
     ctx = ffi.gc(ctx, mupdf.fz_context_gc)
 
-    ctx:fz_register_document_handlers()
-    M.fz_install_external_font_funcs(ctx);
+    M.fz_install_external_font_funcs(ctx)
+    M.fz_register_document_handlers(ctx)
 
     save_ctx = ctx
     return ctx
@@ -94,9 +102,7 @@ end
 --[[--
 Opens a document.
 --]]
-function mupdf.openDocument(filename, cache_size)
-    local ctx = context()
-
+function mupdf.openDocument(filename)
     local mupdf_doc = {
         doc = ctx:fz_open_document(filename),
         filename = filename,
@@ -116,9 +122,7 @@ function mupdf.openDocument(filename, cache_size)
 end
 
 function mupdf.openDocumentFromText(text, magic)
-    local ctx = context()
-
-    local stream = ctx:fz_open_memory(ffi.cast("const unsigned char*", text), #text)
+    local stream = W.mupdf_open_memory(context(), ffi.cast("const unsigned char*", text), #text)
     local mupdf_doc = {
         doc = ctx:fz_open_document_with_stream(magic, stream),
         ctx = ctx,
@@ -147,6 +151,20 @@ function document_mt.__index:close()
         -- Clear the cdata finalizer to avoid a double-free
         self.doc = ffi.gc(self.doc, nil)
         self.doc = nil
+
+        -- Clear the context, too, in order to release memory *now*.
+        --- @note: This is mostly for testing the store memory corruption issues investigated in #7627.
+        ---        Otherwise, keeping the context around makes sense,
+        ---        as we use MµPDF in more places than simply as a Document engine...
+        --[[
+        if save_ctx then
+            print("MuPDF:close dropping context", save_ctx)
+            M.fz_drop_context(save_ctx)
+            -- Clear the cdata finalizer to avoid a double-free
+            save_ctx = ffi.gc(save_ctx, nil)
+            save_ctx = nil
+        end
+        --]]
     end
 end
 
