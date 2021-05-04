@@ -42,10 +42,13 @@
 #define CODE_FAKE_CHARGING     10020
 #define CODE_FAKE_NOT_CHARGING 10021
 
-#define NUM_FDS 4U
-int    nfds                  = 0;
-int    inputfds[NUM_FDS]     = { -1, -1, -1, -1 };
-size_t num_fds               = 0U;
+#ifndef ARRAY_SIZE
+#    define ARRAY_SIZE(x) (sizeof(x) / sizeof(*(x)))
+#endif
+
+int    nfds                  = 0;  // for select()
+int    inputfds[]            = { -1, -1, -1, -1 };
+size_t fd_idx                = 0U;  // index of the *next* fd in inputfds (also, *current* amount of open fds)
 pid_t  fake_ev_generator_pid = -1;
 
 #if defined(POCKETBOOK)
@@ -71,16 +74,16 @@ pid_t  fake_ev_generator_pid = -1;
 static int openInputDevice(lua_State* L)
 {
     const char* restrict inputdevice = luaL_checkstring(L, 1);
-    if (num_fds >= NUM_FDS) {
+    if (fd_idx >= ARRAY_SIZE(inputfds)) {
         return luaL_error(L, "No free slot for new input device <%s>", inputdevice);
     }
-    // Otherwise, we're golden, and num_fds is the index of the next free slot in the inputfds array ;).
+    // Otherwise, we're golden, and fd_idx is the index of the next free slot in the inputfds array ;).
     const char* restrict ko_dont_grab_input = getenv("KO_DONT_GRAB_INPUT");
 
 #if defined(POCKETBOOK)
     int inkview_events = luaL_checkint(L, 2);
     if (inkview_events == 1) {
-        startInkViewMain(L, num_fds, inputdevice);
+        startInkViewMain(L, fd_idx, inputdevice);
         return 0;
     }
 #endif
@@ -121,14 +124,14 @@ static int openInputDevice(lua_State* L)
         } else {
             printf("[ko-input] Forked off fake event generator (pid: %ld)\n", (long) childpid);
             close(pipefd[1]);
-            inputfds[num_fds]     = pipefd[0];
+            inputfds[fd_idx]      = pipefd[0];
             fake_ev_generator_pid = childpid;
         }
     } else {
-        inputfds[num_fds] = open(inputdevice, O_RDONLY | O_NONBLOCK | O_CLOEXEC);
-        if (inputfds[num_fds] != -1) {
+        inputfds[fd_idx] = open(inputdevice, O_RDONLY | O_NONBLOCK | O_CLOEXEC);
+        if (inputfds[fd_idx] != -1) {
             if (ko_dont_grab_input == NULL) {
-                ioctl(inputfds[num_fds], EVIOCGRAB, 1);
+                ioctl(inputfds[fd_idx], EVIOCGRAB, 1);
             }
 
             // Prevents our children from inheriting the fd, which is unnecessary here,
@@ -137,8 +140,8 @@ static int openInputDevice(lua_State* L)
             // NOTE: Legacy fcntl dance because open only supports O_CLOEXEC since Linux 2.6.23,
             //       and legacy Kindles run on 2.6.22...
             //       (It's silently ignored by open when unsupported).
-            int fdflags = fcntl(inputfds[num_fds], F_GETFD);
-            fcntl(inputfds[num_fds], F_SETFD, fdflags | FD_CLOEXEC);
+            int fdflags = fcntl(inputfds[fd_idx], F_GETFD);
+            fcntl(inputfds[fd_idx], F_SETFD, fdflags | FD_CLOEXEC);
 #endif
         } else {
             return luaL_error(L, "Error opening input device <%s>: %d", inputdevice, errno);
@@ -151,36 +154,47 @@ static int openInputDevice(lua_State* L)
     // Compute select's nfds argument.
     // That's not the actual number of fds in the set, like poll(),
     // but the highest fd number in the set + 1 (c.f., select(2)).
-    if (inputfds[num_fds] >= nfds) {
-        nfds = inputfds[num_fds] + 1;
+    if (inputfds[fd_idx] >= nfds) {
+        nfds = inputfds[fd_idx] + 1;
     }
 
     // That, on the other hand, *is* the number of open fds ;).
-    num_fds++;
+    fd_idx++;
 
     return 0;
 }
 
 static int closeInputDevices(lua_State* L __attribute__((unused)))
 {
-    for (size_t i = 0U; i < num_fds; i++) {
+    // Right now, we close everything, but, in the future, we may want to keep *some* slots open.
+    // Note that doing that would (currently) require making sure those slots are at the start of the array,
+    // in ascending fd number order, and that the array itself isn't sparse.
+    for (ssize_t i = fd_idx - 1; i >= 0; i--) {
         if (inputfds[i] != -1) {
             ioctl(inputfds[i], EVIOCGRAB, 0);
             close(inputfds[i]);
             inputfds[i] = -1;
-            num_fds--;
+            fd_idx--;
         }
     }
 
 #if defined(WITH_TIMERFD)
     clearAllTimers();
 #endif
-    nfds = 0;
 
     if (fake_ev_generator_pid != -1) {
         // Kill and wait to reap our child process.
         kill(fake_ev_generator_pid, SIGTERM);
         waitpid(-1, NULL, 0);
+        fake_ev_generator_pid = -1;
+    }
+
+    // Re-compute select's nfds
+    if (fd_idx == 0U) {
+        nfds = 0;
+    } else {
+        // The idea here being that we *may*, in the future, allow some early slots to stay put.
+        nfds = inputfds[fd_idx - 1U] + 1;
     }
 
     return 0;
@@ -322,7 +336,7 @@ static int waitForInput(lua_State* L)
 
     fd_set rfds;
     FD_ZERO(&rfds);
-    for (size_t i = 0U; i < num_fds; i++) {
+    for (size_t i = 0U; i < fd_idx; i++) {
         FD_SET(inputfds[i], &rfds);
     }
 #if defined(WITH_TIMERFD)
@@ -342,7 +356,7 @@ static int waitForInput(lua_State* L)
         return 2;  // false, errno
     }
 
-    for (size_t i = 0U; i < num_fds; i++) {
+    for (size_t i = 0U; i < fd_idx; i++) {
         if (FD_ISSET(inputfds[i], &rfds)) {
             lua_pushboolean(L, true);
             size_t j        = 0U;  // Index of ev_array's tail
