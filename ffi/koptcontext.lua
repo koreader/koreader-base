@@ -43,6 +43,7 @@ function KOPTContext_mt.__index:setContrast(contrast) self.contrast = contrast e
 function KOPTContext_mt.__index:setDefectSize(defect_size) self.defect_size = defect_size end
 function KOPTContext_mt.__index:setLineSpacing(line_spacing) self.line_spacing = line_spacing end
 function KOPTContext_mt.__index:setWordSpacing(word_spacing) self.word_spacing = word_spacing end
+--- @fixme: Update the APIs to make KOPTContext's language field a const char*, so that we can just pass it a Lua string.
 function KOPTContext_mt.__index:setLanguage(language)
     self.language = ffi.new("char[?]", #language + 1)
     ffi.copy(self.language, language)
