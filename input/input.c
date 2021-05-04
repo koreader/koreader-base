@@ -42,9 +42,12 @@
 #define CODE_FAKE_CHARGING     10020
 #define CODE_FAKE_NOT_CHARGING 10021
 
-#define NUM_FDS 4U
+#ifndef ARRAY_SIZE
+#    define ARRAY_SIZE(x) (sizeof(x) / sizeof(*(x)))
+#endif
+
 int    nfds                  = 0;  // for select()
-int    inputfds[NUM_FDS]     = { -1, -1, -1, -1 };
+int    inputfds[]            = { -1, -1, -1, -1 };
 size_t fd_idx                = 0U;  // index of the *next* fd in inputfds (also, *current* amount of open fds)
 pid_t  fake_ev_generator_pid = -1;
 
@@ -71,7 +74,7 @@ pid_t  fake_ev_generator_pid = -1;
 static int openInputDevice(lua_State* L)
 {
     const char* restrict inputdevice = luaL_checkstring(L, 1);
-    if (fd_idx >= NUM_FDS) {
+    if (fd_idx >= ARRAY_SIZE(inputfds)) {
         return luaL_error(L, "No free slot for new input device <%s>", inputdevice);
     }
     // Otherwise, we're golden, and fd_idx is the index of the next free slot in the inputfds array ;).
