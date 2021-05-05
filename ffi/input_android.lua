@@ -216,6 +216,8 @@ function input.waitForEvent(sec, usec)
                     commandHandler(C.AEVENT_POWER_CONNECTED, 0)
                 elseif message[0] == C.AEVENT_POWER_DISCONNECTED then
                     commandHandler(C.AEVENT_POWER_DISCONNECTED, 0)
+                elseif message[0] == C.AEVENT_DOWNLOAD_COMPLETE then
+                    commandHandler(C.AEVENT_DOWNLOAD_COMPLETE, 0)
                 end
             end
         end
