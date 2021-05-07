@@ -10,7 +10,7 @@
 
 local lru = {}
 
-function lru.new(max_size, max_bytes)
+function lru.new(max_size, max_bytes, enable_eviction_cb)
 
     assert(max_size >= 1, "max_size must be >= 1")
     assert(not max_bytes or max_bytes >= 1,
@@ -74,27 +74,64 @@ function lru.new(max_size, max_bytes)
         end
     end
 
-    local function del(key, tuple)
-        tuple[VALUE]:onFree() -- KOReader
-        map[key] = nil
-        cut(tuple)
-        size = size - 1
-        bytes_used = bytes_used - (tuple[BYTES] or 0)
-        removed_tuple = tuple
+    local del
+    if enable_eviction_cb then
+        if max_bytes then
+            del = function(key, tuple)
+                tuple[VALUE]:onFree()
+                map[key] = nil
+                cut(tuple)
+                size = size - 1
+                bytes_used = bytes_used - tuple[BYTES]
+                removed_tuple = tuple
+            end
+        else
+            del = function(key, tuple)
+                tuple[VALUE]:onFree()
+                map[key] = nil
+                cut(tuple)
+                size = size - 1
+                removed_tuple = tuple
+            end
+        end
+    else
+        if max_bytes then
+            del = function(key, tuple)
+                map[key] = nil
+                cut(tuple)
+                size = size - 1
+                bytes_used = bytes_used - tuple[BYTES]
+                removed_tuple = tuple
+            end
+        else
+            del = function(key, tuple)
+                map[key] = nil
+                cut(tuple)
+                size = size - 1
+                removed_tuple = tuple
+            end
+        end
     end
 
     -- removes elemenets to provide enough memory
     -- returns last removed element or nil
-    local function makeFreeSpace(bytes)
-        while size + 1 > max_size or
-            (max_bytes and bytes_used + bytes > max_bytes)
-        do
-            assert(oldest, "not enough storage for cache")
-            del(oldest[KEY], oldest)
+    local makeFreeSpace
+    if max_bytes then
+        makeFreeSpace = function(bytes)
+            while size + 1 > max_size or bytes_used + bytes > max_bytes do
+                assert(oldest, "not enough storage for cache")
+                del(oldest[KEY], oldest)
+            end
+        end
+    else
+        makeFreeSpace = function()
+            while size + 1 > max_size do
+                assert(oldest, "not enough storage for cache")
+                del(oldest[KEY], oldest)
+            end
         end
     end
 
-    -- KOReader
     local function clear()
         while size > 0 do
             del(oldest[KEY], oldest)
@@ -102,7 +139,6 @@ function lru.new(max_size, max_bytes)
         removed_tuple = nil
     end
 
-    -- KOReader
     local function chop()
         local half = size / 2
         while size > half do
@@ -120,27 +156,49 @@ function lru.new(max_size, max_bytes)
         return tuple[VALUE]
     end
 
-    local function set(_, key, value, bytes)
-        local tuple = map[key]
-        if tuple then
-            del(key, tuple)
+    local set
+    if max_bytes then
+        set = function(_, key, value, bytes)
+            local tuple = map[key]
+            if tuple then
+                del(key, tuple)
+            end
+            if value ~= nil then
+                -- the value is not removed
+                makeFreeSpace(bytes)
+                local tuple1 = removed_tuple or {}
+                map[key] = tuple1
+                tuple1[VALUE] = value
+                tuple1[KEY] = key
+                tuple1[BYTES] = bytes
+                size = size + 1
+                bytes_used = bytes_used + bytes
+                setNewest(tuple1)
+            else
+                assert(key ~= nil, "Key may not be nil")
+            end
+            removed_tuple = nil
         end
-        if value ~= nil then
-            -- the value is not removed
-            bytes = max_bytes and (bytes or #value) or 0
-            makeFreeSpace(bytes)
-            local tuple1 = removed_tuple or {}
-            map[key] = tuple1
-            tuple1[VALUE] = value
-            tuple1[KEY] = key
-            tuple1[BYTES] = max_bytes and bytes
-            size = size + 1
-            bytes_used = bytes_used + bytes
-            setNewest(tuple1)
-        else
-            assert(key ~= nil, "Key may not be nil")
+    else
+        set = function(_, key, value)
+            local tuple = map[key]
+            if tuple then
+                del(key, tuple)
+            end
+            if value ~= nil then
+                -- the value is not removed
+                makeFreeSpace()
+                local tuple1 = removed_tuple or {}
+                map[key] = tuple1
+                tuple1[VALUE] = value
+                tuple1[KEY] = key
+                size = size + 1
+                setNewest(tuple1)
+            else
+                assert(key ~= nil, "Key may not be nil")
+            end
+            removed_tuple = nil
         end
-        removed_tuple = nil
     end
 
     local function delete(_, key)
