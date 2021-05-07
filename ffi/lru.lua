@@ -99,6 +99,7 @@ function lru.new(max_size, max_bytes)
         while size > 0 do
             del(oldest[KEY], oldest)
         end
+        removed_tuple = nil
     end
 
     -- KOReader
