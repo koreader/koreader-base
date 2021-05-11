@@ -132,7 +132,7 @@ function fb:init()
     self.blitbuffer_rotation_mode = self.bb:getRotation()
     -- asking the framebuffer for orientation is error prone,
     -- so we do this simple heuristic (for now)
-    self.screen_size = self:getSize()
+    self.screen_size = self:getRawSize()
     if self.screen_size.w > self.screen_size.h and self.is_always_portrait then
         self.screen_size.w, self.screen_size.h = self.screen_size.h, self.screen_size.w
         -- some framebuffers need to be rotated counter-clockwise (they start in landscape mode)
@@ -307,7 +307,7 @@ function fb:calculateRealCoordinates(x, y, w, h)
     return x, y, w, h
 end
 
-function fb:getSize()
+function fb:getRawSize()
     return {w = self.bb:getWidth(), h = self.bb:getHeight()}
 end
 
