@@ -148,7 +148,7 @@ function framebuffer:reinit()
         self.bb:invert()
     end
 
-    self.screen_size = self:getSize()
+    self.screen_size = self:getRawSize()
     self.bb:fill(BB.COLOR_WHITE)
 end
 
