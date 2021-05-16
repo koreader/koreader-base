@@ -1,22 +1,22 @@
 diff --git a/lib/Makefile b/lib/Makefile
-index 39ff304..e605357 100644
+index 9109476..4ef5772 100644
 --- a/lib/Makefile
 +++ b/lib/Makefile
-@@ -258,7 +258,7 @@ else  # not Windows
- LIBZSTD = libzstd.$(SHARED_EXT_VER)
+@@ -272,7 +272,7 @@ LIBZSTD = libzstd.$(SHARED_EXT_VER)
  .PHONY: $(LIBZSTD)  # must be run every time
- $(LIBZSTD): CFLAGS += -fPIC -fvisibility=hidden
--$(LIBZSTD): LDFLAGS += -shared
-+$(LIBZSTD): LDFLAGS += -shared -Wl,-rpath,'\$$\\$$\$$ORIGIN/./libs'
+ $(LIBZSTD): CPPFLAGS += $(CPPFLAGS_DYNLIB)
+ $(LIBZSTD): CFLAGS   += -fPIC -fvisibility=hidden
+-$(LIBZSTD): LDFLAGS  += -shared $(LDFLAGS_DYNLIB)
++$(LIBZSTD): LDFLAGS  += -shared -Wl,-rpath,'\$$\\$$\$$ORIGIN/./libs' $(LDFLAGS_DYNLIB)
  
  ifndef BUILD_DIR
  # determine BUILD_DIR from compilation flags
-@@ -332,7 +332,7 @@ include $(wildcard $(DEPFILES))
- # Special case : building library in single-thread mode _and_ without zstdmt_compress.c
+@@ -357,7 +357,7 @@ include $(wildcard $(DEPFILES))
  ZSTDMT_FILES = compress/zstdmt_compress.c
  ZSTD_NOMT_FILES = $(filter-out $(ZSTDMT_FILES),$(ZSTD_FILES))
--libzstd-nomt: LDFLAGS += -shared -fPIC -fvisibility=hidden
-+libzstd-nomt: LDFLAGS += -shared -fPIC -fvisibility=hidden -Wl,-rpath,'\$$\\$$\$$ORIGIN/./libs'
+ libzstd-nomt: CFLAGS += -fPIC -fvisibility=hidden
+-libzstd-nomt: LDFLAGS += -shared
++libzstd-nomt: LDFLAGS += -shared -Wl,-rpath,'\$$\\$$\$$ORIGIN/./libs'
  libzstd-nomt: $(ZSTD_NOMT_FILES)
  	@echo compiling single-thread dynamic library $(LIBVER)
  	@echo files : $(ZSTD_NOMT_FILES)
