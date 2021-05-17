@@ -60,7 +60,7 @@ cdecl_func(fz_drop_buffer)
 /* context */
 cdecl_type(fz_colorspace)
 cdecl_func(fz_new_context_imp)
-cdecl_func(fz_drop_context) // NOTE: libk2pdfopt uses old fz_free_context symbol
+cdecl_func(fz_drop_context)
 cdecl_func(fz_register_document_handlers)
 
 /* images */
@@ -94,16 +94,16 @@ cdecl_func(fz_open_document_with_stream)
 cdecl_func(fz_is_document_reflowable)
 cdecl_func(fz_needs_password)
 cdecl_func(fz_authenticate_password)
-cdecl_func(fz_drop_document) // NOTE: libk2pdfopt uses old fz_free_document symbol
-cdecl_func(fz_count_pages)
-cdecl_func(fz_layout_document)
+cdecl_func(fz_drop_document)
+cdecl_func(mupdf_count_pages)
+cdecl_func(mupdf_layout_document)
 cdecl_func(fz_lookup_metadata)
 cdecl_func(fz_resolve_link)
 
 /* page */
 cdecl_func(fz_load_page)
 cdecl_func(fz_bound_page)
-cdecl_func(fz_drop_page) // NOTE: libk2pdfopt uses old fz_free_page symbol
+cdecl_func(fz_drop_page)
 
 /* links */
 //cdecl_struct(fz_link_s)
@@ -111,8 +111,8 @@ cdecl_func(fz_load_links)
 cdecl_func(fz_drop_link)
 
 /* outline */
-cdecl_func(fz_load_outline)
-cdecl_func(fz_drop_outline) // NOTE: libk2pdfopt uses old fz_free_outline symbol
+cdecl_func(fz_drop_outline)
+cdecl_func(mupdf_load_outline)
 
 /* stream */
 cdecl_func(fz_drop_stream)
@@ -130,9 +130,9 @@ cdecl_struct(fz_stext_block)
 cdecl_type(fz_stext_options)
 //cdecl_struct(fz_stext_options)
 cdecl_type(fz_stext_page)
-//cdecl_struct(fz_stext_page)
-cdecl_func(fz_new_stext_page_from_page)
-cdecl_func(fz_drop_stext_page) // NOTE: libk2pdfopt uses old fz_free_text_page symbol
+cdecl_struct(fz_stext_page_s)
+cdecl_func(mupdf_new_stext_page_from_page)
+cdecl_func(fz_drop_stext_page)
 
 /* pixmaps */
 cdecl_type(fz_color_params)
@@ -165,7 +165,7 @@ cdecl_func(fz_new_bbox_device)
 cdecl_type(fz_cookie)
 cdecl_func(fz_run_page)
 cdecl_func(fz_close_device)
-cdecl_func(fz_drop_device) // NOTE: libk2pdfopt uses old fz_free_device symbol
+cdecl_func(fz_drop_device)
 
 /* pdf specifics */
 cdecl_enum(pdf_annot_type)
