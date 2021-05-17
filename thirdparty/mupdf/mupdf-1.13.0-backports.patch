@@ -968,7 +968,7 @@ index e8ce2fabb..9db3d0bdd 100644
  	{
  		fz_try(ctx)
 diff --git a/source/pdf/pdf-write.c b/source/pdf/pdf-write.c
-index b4d519493..502993028 100644
+index b4d519493..0fa59a389 100644
 --- a/source/pdf/pdf-write.c
 +++ b/source/pdf/pdf-write.c
 @@ -122,6 +122,30 @@ enum
@@ -982,11 +982,11 @@ index b4d519493..502993028 100644
 +
 +	/* objects are numbered 0..num and maybe two additional objects for linearization */
 +	num += 3;
-+	opts->use_list = fz_resize_array(ctx, opts->use_list, num, int);
-+	opts->ofs_list = fz_resize_array(ctx, opts->ofs_list, num, int64_t);
-+	opts->gen_list = fz_resize_array(ctx, opts->gen_list, num, int);
-+	opts->renumber_map = fz_resize_array(ctx, opts->renumber_map, num, int);
-+	opts->rev_renumber_map = fz_resize_array(ctx, opts->rev_renumber_map, num, int);
++	opts->use_list = fz_resize_array(ctx, opts->use_list, num, sizeof(*opts->use_list));
++	opts->ofs_list = fz_resize_array(ctx, opts->ofs_list, num, sizeof(*opts->ofs_list));
++	opts->gen_list = fz_resize_array(ctx, opts->gen_list, num, sizeof(*opts->gen_list));
++	opts->renumber_map = fz_resize_array(ctx, opts->renumber_map, num, sizeof(*opts->renumber_map));
++	opts->rev_renumber_map = fz_resize_array(ctx, opts->rev_renumber_map, num, sizeof(*opts->rev_renumber_map));
 +
 +	for (i = opts->list_len; i < num; i++)
 +	{
