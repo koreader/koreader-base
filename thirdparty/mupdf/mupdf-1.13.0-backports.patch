@@ -395,10 +395,10 @@ index ca3425abb..a385f51fa 100644
  	dev->alpha = 1.0f;
  	dev->ctm = fz_identity;
 diff --git a/source/fitz/load-jpeg.c b/source/fitz/load-jpeg.c
-index 87b324310..a49078945 100644
+index 87b324310..3839197f5 100644
 --- a/source/fitz/load-jpeg.c
 +++ b/source/fitz/load-jpeg.c
-@@ -260,7 +260,8 @@ fz_load_jpeg(fz_context *ctx, const unsigned char *rbuf, size_t rlen)
+@@ -260,12 +260,14 @@ fz_load_jpeg(fz_context *ctx, const unsigned char *rbuf, size_t rlen)
  	struct jpeg_error_mgr err;
  	struct jpeg_source_mgr src;
  	unsigned char *row[1], *sp, *dp;
@@ -408,6 +408,12 @@ index 87b324310..a49078945 100644
  	unsigned int x;
  	int k, stride;
  	fz_pixmap *image = NULL;
+ 
+ 	fz_var(colorspace);
++	fz_var(icc);
+ 	fz_var(image);
+ 	fz_var(row);
+ 
 diff --git a/source/fitz/load-tiff.c b/source/fitz/load-tiff.c
 index 3dad8a82d..bfa66c045 100644
 --- a/source/fitz/load-tiff.c
