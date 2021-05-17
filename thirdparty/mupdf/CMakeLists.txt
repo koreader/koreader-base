@@ -123,6 +123,9 @@ set(PATCH_CMD7 "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/tar-fixes.patch")
 # https://github.com/ArtifexSoftware/mupdf/commit/49159d918e3c655c5a763053fc8eb348eee8b23d
 # https://github.com/ArtifexSoftware/mupdf/commit/e5a718dfa2fb5f1487151f2e99c1a29761cf8c67
 # https://github.com/ArtifexSoftware/mupdf/commit/6b187fa3ffe48943545cebb9a3daee4b414d289a
+
+# https://github.com/ArtifexSoftware/mupdf/commit/bc4ec04e21027e226052e0a4c767cbf09994552e
+# https://github.com/ArtifexSoftware/mupdf/commit/a7c435ac1836cc9e46ec4329c1543892148a7a0e
 set(PATCH_CMD8 "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/mupdf-1.13.0-backports.patch")
 
 # TODO: ignore shared git submodules built outside of mupdf by ourselves

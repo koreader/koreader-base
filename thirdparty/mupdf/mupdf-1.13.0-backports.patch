@@ -498,10 +498,18 @@ index a0abb5def..853e01df5 100644
  			fz_rethrow(ctx);
  		}
 diff --git a/source/fitz/store.c b/source/fitz/store.c
-index 33d9a8a85..92aa9a853 100644
+index 33d9a8a85..ce1ef07fe 100644
 --- a/source/fitz/store.c
 +++ b/source/fitz/store.c
-@@ -38,6 +38,7 @@ struct fz_store_s
+@@ -4,6 +4,7 @@
+ #include <assert.h>
+ #include <limits.h>
+ #include <stdio.h>
++#include <string.h>
+ 
+ typedef struct fz_item_s fz_item;
+ 
+@@ -38,6 +39,7 @@ struct fz_store_s
  
  	int defer_reap_count;
  	int needs_reaping;
@@ -509,73 +517,64 @@ index 33d9a8a85..92aa9a853 100644
  };
  
  void
-@@ -74,29 +75,53 @@ fz_keep_storable(fz_context *ctx, const fz_storable *sc)
+@@ -74,24 +76,6 @@ fz_keep_storable(fz_context *ctx, const fz_storable *sc)
  	return fz_keep_imp(ctx, s, &s->refs);
  }
  
-+void *fz_keep_key_storable(fz_context *ctx, const fz_key_storable *sc)
-+{
-+	return fz_keep_storable(ctx, &sc->storable);
-+}
-+
- void
- fz_drop_storable(fz_context *ctx, const fz_storable *sc)
- {
- 	/* Explicitly drop const to allow us to use const
- 	 * sanely throughout the code. */
- 	fz_storable *s = (fz_storable *)sc;
-+	int num;
- 
+-void
+-fz_drop_storable(fz_context *ctx, const fz_storable *sc)
+-{
+-	/* Explicitly drop const to allow us to use const
+-	 * sanely throughout the code. */
+-	fz_storable *s = (fz_storable *)sc;
+-
 -	/*
 -		If we are dropping the last reference to an object, then
 -		it cannot possibly be in the store (as the store always
 -		keeps a ref to everything in it, and doesn't drop via
 -		this method. So we can simply drop the storable object
 -		itself without any operations on the fz_store.
-+	if (s == NULL)
-+		return;
-+
-+	fz_lock(ctx, FZ_LOCK_ALLOC);
-+	/* Drop the ref, and leave num as being the number of
-+	 * refs left (-1 meaning, "statically allocated"). */
-+	if (s->refs > 0)
-+	{
-+		(void)Memento_dropIntRef(s);
-+		num = --s->refs;
-+	}
-+	else
-+		num = -1;
-+
-+	/* If we have just 1 ref left, it's possible that
-+	 * this ref is held by the store. If the store is
-+	 * oversized, we ought to throw any such references
-+	 * away to try to bring the store down to a "legal"
-+	 * size. Run a scavenge to check for this case. */
-+	if (ctx->store->max != FZ_STORE_UNLIMITED)
-+		if (num == 1 && ctx->store->size > ctx->store->max)
-+			scavenge(ctx, ctx->store->size - ctx->store->max);
-+	fz_unlock(ctx, FZ_LOCK_ALLOC);
-+
-+	/* If we have no references to an object left, then
-+	 * it cannot possibly be in the store (as the store always
-+	 * keeps a ref to everything in it, and doesn't drop via
-+	 * this method). So we can simply drop the storable object
-+	 * itself without any operations on the fz_store.
- 	 */
+-	 */
 -	if (fz_drop_imp(ctx, s, &s->refs))
-+	if (num == 0)
- 		s->drop(ctx, s);
- }
- 
--void *fz_keep_key_storable(fz_context *ctx, const fz_key_storable *sc)
--{
--	return fz_keep_storable(ctx, &sc->storable);
+-		s->drop(ctx, s);
 -}
 -
- /*
- 	Entered with FZ_LOCK_ALLOC held.
- 	Drops FZ_LOCK_ALLOC.
-@@ -773,35 +798,74 @@ fz_debug_store(fz_context *ctx)
+ void *fz_keep_key_storable(fz_context *ctx, const fz_key_storable *sc)
+ {
+ 	return fz_keep_storable(ctx, &sc->storable);
+@@ -186,6 +170,7 @@ void fz_drop_key_storable(fz_context *ctx, const fz_key_storable *sc)
+ 		return;
+ 
+ 	fz_lock(ctx, FZ_LOCK_ALLOC);
++	assert(s->storable.refs != 0);
+ 	if (s->storable.refs > 0)
+ 	{
+ 		(void)Memento_dropRef(s);
+@@ -439,19 +424,14 @@ fz_store_item(fz_context *ctx, void *key, void *val_, size_t itemsize, const fz_
+ 	if (!store)
+ 		return NULL;
+ 
+-	fz_var(item);
+-
+ 	/* If we fail for any reason, we swallow the exception and continue.
+ 	 * All that the above program will see is that we failed to store
+ 	 * the item. */
+-	fz_try(ctx)
+-	{
+-		item = fz_malloc_struct(ctx, fz_item);
+-	}
+-	fz_catch(ctx)
+-	{
++
++	item = fz_malloc_no_throw(ctx, sizeof (fz_item));
++	if (!item)
+ 		return NULL;
+-	}
++	memset(item, 0, sizeof (fz_item));
+ 
+ 	if (type->make_hash_key)
+ 	{
+@@ -773,35 +753,116 @@ fz_debug_store(fz_context *ctx)
  	fz_unlock(ctx, FZ_LOCK_ALLOC);
  }
  
@@ -665,6 +664,48 @@ index 33d9a8a85..92aa9a853 100644
  	/* Success is managing to evict any blocks */
 -	return count != 0;
 +	return freed != 0;
++}
++
++void
++fz_drop_storable(fz_context *ctx, const fz_storable *sc)
++{
++	/* Explicitly drop const to allow us to use const
++	 * sanely throughout the code. */
++	fz_storable *s = (fz_storable *)sc;
++	int num;
++
++	if (s == NULL)
++		return;
++
++	fz_lock(ctx, FZ_LOCK_ALLOC);
++	/* Drop the ref, and leave num as being the number of
++	 * refs left (-1 meaning, "statically allocated"). */
++	if (s->refs > 0)
++	{
++		(void)Memento_dropIntRef(s);
++		num = --s->refs;
++	}
++	else
++		num = -1;
++
++	/* If we have just 1 ref left, it's possible that
++	 * this ref is held by the store. If the store is
++	 * oversized, we ought to throw any such references
++	 * away to try to bring the store down to a "legal"
++	 * size. Run a scavenge to check for this case. */
++	if (ctx->store->max != FZ_STORE_UNLIMITED)
++		if (num == 1 && ctx->store->size > ctx->store->max)
++			scavenge(ctx, ctx->store->size - ctx->store->max);
++	fz_unlock(ctx, FZ_LOCK_ALLOC);
++
++	/* If we have no references to an object left, then
++	 * it cannot possibly be in the store (as the store always
++	 * keeps a ref to everything in it, and doesn't drop via
++	 * this method). So we can simply drop the storable object
++	 * itself without any operations on the fz_store.
++	 */
++	if (num == 0)
++		s->drop(ctx, s);
  }
  
  int fz_store_scavenge_external(fz_context *ctx, size_t size, int *phase)
