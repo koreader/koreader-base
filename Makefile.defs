@@ -663,6 +663,13 @@ ifneq (,$(findstring march=arm,$(CFLAGS)))
 		unexport WANT_SIMD
 	endif
 endif
+# ... ditto on Android x86, because the TC is old as hell, and that upsets libjpeg-turbo...
+ifeq ($(TARGET), android)
+	ifeq ($(ANDROID_ARCH), x86)
+		WANT_SIMD=
+		unexport WANT_SIMD
+	endif
+endif
 
 LIB_EXT=$(if $(WIN32),.dll,$(if $(DARWIN),.dylib,.so))
 
