@@ -607,7 +607,6 @@ function util.isPocketbook()
 end
 
 local haveSDL2 = nil
-
 --- Returns true if SDL2
 function util.haveSDL2()
     local err
@@ -635,6 +634,12 @@ function util.isSDL()
         isSDL = util.haveSDL2()
     end
     return isSDL
+end
+
+--- Silence the SDL checks (solely for front's frontend/device.lua usage!)
+function util.noSDL()
+    haveSDL2 = false
+    isSDL = false
 end
 
 --- Division with integer result.
