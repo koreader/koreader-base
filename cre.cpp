@@ -3510,6 +3510,15 @@ static int getHyphenation(lua_State *L) {
     return 1;
 }
 
+static int formatHyphenation(lua_State *L) {
+    CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
+    const char *hyphenation = luaL_checkstring(L, 2);
+    const char *word = luaL_checkstring(L, 3);
+    lString32 suggestion = UserHyphenDict::formatHyphenation(hyphenation, word);
+    lua_pushstring(L, UnicodeToLocal(suggestion).c_str());
+    return 1;
+}
+
 static const struct luaL_Reg cre_func[] = {
     {"initCache", initCache},
     {"initHyphDict", initHyphDict},
@@ -3643,6 +3652,7 @@ static const struct luaL_Reg credocument_meth[] = {
     {"__gc", closeDocument},
     {"setUserHyphenationDict", setUserHyphenationDict},
     {"getHyphenation", getHyphenation},
+    {"formatHyphenation", formatHyphenation},
     {NULL, NULL}
 };
 
