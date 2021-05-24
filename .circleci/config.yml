@@ -52,7 +52,7 @@ workflows:
 jobs:
   lint:
     docker:
-      - image: koreader/kobase:0.1.5
+      - image: koreader/kobase:0.2.0
     environment:
       BASH_ENV: "~/.bashrc"
     steps:
@@ -68,7 +68,7 @@ jobs:
 
   emu: &EMU_TPL
     docker:
-      - image: koreader/kobase:0.1.6
+      - image: koreader/kobase:0.2.0
     environment: &EMU_ENV_LST
       BASH_ENV: "~/.bashrc"
       EMULATE_READER: "1"
@@ -117,11 +117,11 @@ jobs:
   emu_clang_ninja:
     <<: *EMU_TPL
     docker:
-      - image: koreader/kobase-clang:0.1.5
+      - image: koreader/kobase-clang:0.2.0
     environment:
       <<: *EMU_ENV_LST
-      CC: "clang-10"
-      CXX: "clang++-10"
+      CC: "clang-12"
+      CXX: "clang++-12"
 
 
 
@@ -151,41 +151,41 @@ jobs:
     <<: *XCOMPILE_TPL
     environment:
       TARGET: "kindle"
-      DOCKER_IMG: koreader/kokindle:0.1.2
+      DOCKER_IMG: koreader/kokindle:0.2.0
 
   kobo:
     <<: *XCOMPILE_TPL
     environment:
       TARGET: "kobo"
-      DOCKER_IMG: koreader/kokobo:0.1.2
+      DOCKER_IMG: koreader/kokobo:0.2.0
 
   pocketbook:
     <<: *XCOMPILE_TPL
     environment:
       TARGET: "pocketbook"
-      DOCKER_IMG: koreader/kopb:0.2.0
+      DOCKER_IMG: koreader/kopb:0.3.0
 
   sony-prstux:
     <<: *XCOMPILE_TPL
     environment:
       TARGET: "sony-prstux"
-      DOCKER_IMG: koreader/kobase:0.1.5
+      DOCKER_IMG: koreader/kobase:0.2.0
 
   cervantes:
     <<: *XCOMPILE_TPL
     environment:
       TARGET: "cervantes"
-      DOCKER_IMG: koreader/kocervantes:0.1.2
+      DOCKER_IMG: koreader/kocervantes:0.2.0
 
   android-arm: &ANDROID_TPL
     <<: *XCOMPILE_TPL
     environment:
       TARGET: "android"
-      DOCKER_IMG: koreader/koandroid:0.3.1
+      DOCKER_IMG: koreader/koandroid:0.5.0
 
   android-x86:
     <<: *ANDROID_TPL
     environment:
       TARGET: "android"
       ANDROID_ARCH: "x86"
-      DOCKER_IMG: koreader/koandroid:0.3.1
+      DOCKER_IMG: koreader/koandroid:0.5.0
