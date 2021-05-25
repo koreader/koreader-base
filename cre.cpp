@@ -3498,11 +3498,12 @@ static int getImageDataFromPosition(lua_State *L) {
 static int setUserHyphenationDict(lua_State *L) {
     CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
     const char *filename = luaL_checkstring(L, 2);
-    UserHyphenDict::init(filename);
+    int no_sloppy_load = luaL_checkint(L, 3);
+    UserHyphenDict::init(filename, no_sloppy_load !=0);
     return 0;
 }
 
-static int getHyphenation(lua_State *L) {
+static int getHyphenationForWord(lua_State *L) {
     CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
     const char *word = luaL_checkstring(L, 2);
     lString32 hyphenation = UserHyphenDict::getHyphenation(word);
@@ -3518,7 +3519,7 @@ static int getLower(lua_State *L) {
     return 1;
 }
 
-static int formatHyphenation(lua_State *L) {
+static int formatHyphenationSuggestion(lua_State *L) {
     CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
     const char *hyphenation = luaL_checkstring(L, 2);
     const char *word = luaL_checkstring(L, 3);
@@ -3659,9 +3660,9 @@ static const struct luaL_Reg credocument_meth[] = {
     {"close", closeDocument},
     {"__gc", closeDocument},
     {"setUserHyphenationDict", setUserHyphenationDict},
-    {"getHyphenation", getHyphenation},
+    {"getHyphenationForWord", getHyphenationForWord},
     {"getLower", getLower},
-    {"formatHyphenation", formatHyphenation},
+    {"formatHyphenationSuggestion", formatHyphenationSuggestion},
     {NULL, NULL}
 };
 
