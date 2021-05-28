@@ -3500,7 +3500,7 @@ static int setUserHyphenationDict(lua_State *L) {
     CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
     const char *filename = luaL_checkstring(L, 2);
     bool reload = lua_toboolean(L, 3);
-    lua_pushinteger(L, UserHyphenDict::init(filename, reload));
+    lua_pushinteger(L, UserHyphDict::init(filename, reload));
     return 1;
 }
 
