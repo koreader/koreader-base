@@ -30,7 +30,6 @@ extern "C" {
 #include "crengine.h"
 #include "lvdocview.h"
 #include "lvimg.h"
-#include "hyphman.h"
 
 static void replaceColor( char * str, lUInt32 color ) {
 	// in line like "0 c #80000000",
