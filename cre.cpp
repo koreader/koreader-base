@@ -3507,7 +3507,7 @@ static int setUserHyphenationDict(lua_State *L) {
 static int getHyphenationForWord(lua_State *L) {
     CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
     const char *word = luaL_checkstring(L, 2);
-    lString32 hyphenation = UserHyphenDict::getHyphenation(word);
+    lString32 hyphenation = UserHyphDict::getHyphenation(word);
     lua_pushstring(L, UnicodeToLocal(hyphenation).c_str());
     return 1;
 }
