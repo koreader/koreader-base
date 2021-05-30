@@ -3495,6 +3495,29 @@ static int getImageDataFromPosition(lua_State *L) {
     return 0;
 }
 
+static int setUserHyphenationDict(lua_State *L) {
+    CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
+    const char *filename = luaL_checkstring(L, 2);
+    bool reload = lua_toboolean(L, 3);
+    lua_pushinteger(L, UserHyphDict::init(filename, reload));
+    return 1;
+}
+
+static int getHyphenationForWord(lua_State *L) {
+    CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
+    const char *word = luaL_checkstring(L, 2);
+    lString32 hyphenation = UserHyphDict::getHyphenation(word);
+    lua_pushstring(L, UnicodeToLocal(hyphenation).c_str());
+    return 1;
+}
+
+static int getLowercasedWord(lua_State *L) {
+    CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
+    const char *word = luaL_checkstring(L, 2);
+    lString32 word_str(word);
+    lua_pushstring(L, UnicodeToLocal(word_str.lowercase()).c_str());
+    return 1;
+}
 
 static const struct luaL_Reg cre_func[] = {
     {"initCache", initCache},
@@ -3623,6 +3646,9 @@ static const struct luaL_Reg credocument_meth[] = {
     {"getPageMapXPointerPageLabel", getPageMapXPointerPageLabel},
     {"getPageMapVisiblePageLabels", getPageMapVisiblePageLabels},
     {"hasNonLinearFlows", hasNonLinearFlows},
+    {"setUserHyphenationDict", setUserHyphenationDict},
+    {"getHyphenationForWord", getHyphenationForWord},
+    {"getLowercasedWord", getLowercasedWord},
     {"readDefaults", readDefaults},
     {"saveDefaults", saveDefaults},
     {"close", closeDocument},
