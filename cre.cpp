@@ -3327,6 +3327,7 @@ static int findText(lua_State *L) {
 	int origin				= luaL_checkint(L, 3);
 	bool reverse			= luaL_checkint(L, 4);
 	bool caseInsensitive	= luaL_checkint(L, 5);
+	bool useRegex          	= luaL_checkint(L, 6);
 
     if ( pattern.empty() )
         return 0;
@@ -3392,7 +3393,7 @@ static int findText(lua_State *L) {
     }
     CRLog::debug("CRViewDialog::findText: Current page: %d .. %d", rc.top, rc.bottom);
     CRLog::debug("CRViewDialog::findText: searching for text '%s' from %d to %d origin %d", LCSTR(pattern), start, end, origin );
-    if ( doc->text_view->getDocument()->findText( pattern, caseInsensitive, reverse, start, end, words, 200, searchHeight, searchHeightCheckStartY ) ) {
+    if ( doc->text_view->getDocument()->findText( pattern, caseInsensitive, reverse, start, end, words, 200, searchHeight, searchHeightCheckStartY, useRegex ) ) {
         CRLog::debug("CRViewDialog::findText: pattern found");
         doc->text_view->clearSelection();
         doc->text_view->selectWords( words );
