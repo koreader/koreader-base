@@ -927,6 +927,10 @@ NANOSVG_DIR=$(CURDIR)/$(NANOSVG_BUILD_DIR)/nanosvg-prefix/src
 NANOSVG_INCLUDE_DIR=$(CURDIR)/$(NANOSVG_BUILD_DIR)/include
 NANOSVG_HEADERS=$(addprefix $(NANOSVG_INCLUDE_DIR)/, $(NANOSVG_HEADER_FILES))
 
+# Srell headers (that include code)
+SRELL_DIR=$(CURDIR)/$(THIRDPARTY_DIR)/srell
+SRELL_INCLUDE_DIR=$(SRELL_DIR)
+
 # CFLAGS for the Lua/C/C++ modules:
 #
 # setting the rpath to '$ORIGIN' will make the dynamic linker search
