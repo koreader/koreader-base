@@ -3318,6 +3318,18 @@ static int regularizeRegisteredFontsWeights(lua_State *L) {
 	return 0;
 }
 
+static int checkRegex(lua_State *L) {
+	const char *l_pattern   = luaL_checkstring(L, 2);
+	lString32 pattern       = lString32(l_pattern);
+	lua_pushinteger(L, checkRegex(pattern));
+	return 1;
+}
+
+static int getAndClearRegexSearchError(lua_State *L) {
+	lua_pushinteger(L, getAndClearRegexSearchError());
+	return 1;
+}
+
 // ported from Android UI kpvcrlib/crengine/android/jni/docview.cpp
 
 static int findText(lua_State *L) {
@@ -3327,7 +3339,8 @@ static int findText(lua_State *L) {
 	int origin				= luaL_checkint(L, 3);
 	bool reverse			= luaL_checkint(L, 4);
 	bool caseInsensitive	= luaL_checkint(L, 5);
-	bool useRegex          	= luaL_checkint(L, 6);
+	bool patternIsRegex    	= luaL_checkint(L, 6);
+	int maxHits 			= luaL_checkint(L, 7);
 
     if ( pattern.empty() )
         return 0;
@@ -3393,7 +3406,7 @@ static int findText(lua_State *L) {
     }
     CRLog::debug("CRViewDialog::findText: Current page: %d .. %d", rc.top, rc.bottom);
     CRLog::debug("CRViewDialog::findText: searching for text '%s' from %d to %d origin %d", LCSTR(pattern), start, end, origin );
-    if ( doc->text_view->getDocument()->findText( pattern, caseInsensitive, reverse, start, end, words, 200, searchHeight, searchHeightCheckStartY, useRegex ) ) {
+    if ( doc->text_view->getDocument()->findText( pattern, caseInsensitive, reverse, start, end, words, maxHits, searchHeight, searchHeightCheckStartY, patternIsRegex ) ) {
         CRLog::debug("CRViewDialog::findText: pattern found");
         doc->text_view->clearSelection();
         doc->text_view->selectWords( words );
@@ -3412,7 +3425,8 @@ static int findText(lua_State *L) {
 
                 lua_rawseti(L, -2, i+1);
             }
-            return 1;
+            lua_pushinteger(L, ranges->length());
+            return 2;
         }
     }
     CRLog::debug("CRViewDialog::findText: pattern not found");
@@ -3650,6 +3664,8 @@ static const struct luaL_Reg credocument_meth[] = {
     {"setUserHyphenationDict", setUserHyphenationDict},
     {"getHyphenationForWord", getHyphenationForWord},
     {"getLowercasedWord", getLowercasedWord},
+    {"checkRegex", checkRegex},
+    {"getAndClearRegexSearchError", getAndClearRegexSearchError},
     {"readDefaults", readDefaults},
     {"saveDefaults", saveDefaults},
     {"close", closeDocument},
