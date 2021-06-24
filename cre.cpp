@@ -3327,7 +3327,7 @@ static int findText(lua_State *L) {
 	int origin				= luaL_checkint(L, 3);
 	bool reverse			= luaL_checkint(L, 4);
 	bool caseInsensitive	= luaL_checkint(L, 5);
-	bool useRegex          	= luaL_checkint(L, 6);
+	bool patternIsRegex    	= luaL_checkint(L, 6);
 
     if ( pattern.empty() )
         return 0;
