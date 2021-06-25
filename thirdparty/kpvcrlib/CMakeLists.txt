@@ -71,6 +71,7 @@ add_definitions(
     -DALLOW_KERNING=1
     -DCR3_PATCH=1
     -DMATHML_SUPPORT=1
+    -DUSE_STD_REGEX=1
 )
 
 if(${CMAKE_BUILD_TYPE} STREQUAL Debug)
