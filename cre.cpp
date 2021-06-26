@@ -3322,8 +3322,8 @@ static int checkRegex(lua_State *L) {
 	CreDocument *doc		= (CreDocument*) luaL_checkudata(L, 1, "credocument");
 	const char *l_pattern   = luaL_checkstring(L, 2);
 	lString32 pattern		= lString32(l_pattern);
-    lua_pushinteger(L, checkRegex(pattern));
-    return 1;
+	lua_pushinteger(L, checkRegex(pattern));
+	return 1;
 }
 
 // ported from Android UI kpvcrlib/crengine/android/jni/docview.cpp
