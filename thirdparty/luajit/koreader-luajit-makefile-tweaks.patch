@@ -1,18 +1,18 @@
 diff --git a/src/Makefile b/src/Makefile
-index ca4afeab..9bc109d8 100644
+index 2538503f..d1ea3f63 100644
 --- a/src/Makefile
 +++ b/src/Makefile
 @@ -211,7 +211,8 @@ TARGET_CC= $(STATIC_CC)
  TARGET_STCC= $(STATIC_CC)
  TARGET_DYNCC= $(DYNAMIC_CC)
  TARGET_LD= $(CROSS)$(CC)
--TARGET_AR= $(CROSS)ar rcus 2>/dev/null
+-TARGET_AR= $(CROSS)ar rcus
 +TARGET_AR= $(CROSS)ar rcus
 +TARGET_RANLIB= $(CROSS)ranlib
  TARGET_STRIP= $(CROSS)strip
  
  TARGET_LIBPATH= $(or $(PREFIX),/usr/local)/$(or $(MULTILIB),lib)
-@@ -347,6 +348,7 @@ else
+@@ -348,6 +349,7 @@ else
    endif
    ifeq (Linux,$(TARGET_SYS))
      TARGET_XLIBS+= -ldl
@@ -20,7 +20,7 @@ index ca4afeab..9bc109d8 100644
    endif
    ifeq (GNU/kFreeBSD,$(TARGET_SYS))
      TARGET_XLIBS+= -ldl
-@@ -638,7 +640,7 @@ depend:
+@@ -639,7 +641,7 @@ depend:
  
  $(MINILUA_T): $(MINILUA_O)
  	$(E) "HOSTLINK  $@"
@@ -29,7 +29,7 @@ index ca4afeab..9bc109d8 100644
  
  host/buildvm_arch.h: $(DASM_DASC) $(DASM_DEP) $(DASM_DIR)/*.lua lj_arch.h lua.h luaconf.h
  	$(E) "DYNASM    $@"
-@@ -648,7 +650,7 @@ host/buildvm.o: $(DASM_DIR)/dasm_*.h
+@@ -649,7 +651,7 @@ host/buildvm.o: $(DASM_DIR)/dasm_*.h
  
  $(BUILDVM_T): $(BUILDVM_O)
  	$(E) "HOSTLINK  $@"
@@ -38,7 +38,7 @@ index ca4afeab..9bc109d8 100644
  
  $(LJVM_BOUT): $(BUILDVM_T)
  	$(E) "BUILDVM   $@"
-@@ -709,16 +711,17 @@ include Makefile.dep
+@@ -710,16 +712,17 @@ include Makefile.dep
  $(LUAJIT_A): $(LJVMCORE_O)
  	$(E) "AR        $@"
  	$(Q)$(TARGET_AR) $@ $(LJVMCORE_O)
