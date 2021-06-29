@@ -47,6 +47,7 @@ include_directories(
     ${NANOSVG_INCLUDE_DIR}
     ${ZSTD_INCLUDE_DIR}
     ${CREGINE_INCLUDE_DIR}
+    ${SRELL_INCLUDE_DIR}
 )
 
 if(DEFINED ENV{WIN32})
