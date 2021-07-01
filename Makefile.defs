@@ -929,7 +929,7 @@ NANOSVG_HEADERS=$(addprefix $(NANOSVG_INCLUDE_DIR)/, $(NANOSVG_HEADER_FILES))
 
 # Srell headers (that include code)
 SRELL_DIR=$(CURDIR)/$(THIRDPARTY_DIR)/srell/
-SRELL_INCLUDE_DIR=$(SRELL_DIR)/single-header/
+SRELL_INCLUDE_DIR=$(SRELL_DIR)/
 SRELL_HEADER_FILES=$(SRELL_INCLUDE_DIR)/srell.hpp
 
 # CFLAGS for the Lua/C/C++ modules:
