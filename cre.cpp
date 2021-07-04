@@ -3319,10 +3319,14 @@ static int regularizeRegisteredFontsWeights(lua_State *L) {
 }
 
 static int checkRegex(lua_State *L) {
-	CreDocument *doc		= (CreDocument*) luaL_checkudata(L, 1, "credocument");
 	const char *l_pattern   = luaL_checkstring(L, 2);
 	lString32 pattern		= lString32(l_pattern);
 	lua_pushinteger(L, checkRegex(pattern));
+	return 1;
+}
+
+static int clearRegexSearchError(lua_State *L) {
+	lua_pushinteger(L, clearRegexSearchError());
 	return 1;
 }
 
@@ -3661,6 +3665,7 @@ static const struct luaL_Reg credocument_meth[] = {
     {"getHyphenationForWord", getHyphenationForWord},
     {"getLowercasedWord", getLowercasedWord},
     {"checkRegex", checkRegex},
+    {"clearRegexSearchError", clearRegexSearchError},
     {"readDefaults", readDefaults},
     {"saveDefaults", saveDefaults},
     {"close", closeDocument},
