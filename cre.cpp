@@ -3325,8 +3325,8 @@ static int checkRegex(lua_State *L) {
 	return 1;
 }
 
-static int clearRegexSearchError(lua_State *L) {
-	lua_pushinteger(L, clearRegexSearchError());
+static int getAndClearRegexSearchError(lua_State *L) {
+	lua_pushinteger(L, getAndClearRegexSearchError());
 	return 1;
 }
 
@@ -3665,7 +3665,7 @@ static const struct luaL_Reg credocument_meth[] = {
     {"getHyphenationForWord", getHyphenationForWord},
     {"getLowercasedWord", getLowercasedWord},
     {"checkRegex", checkRegex},
-    {"clearRegexSearchError", clearRegexSearchError},
+    {"getAndClearRegexSearchError", getAndClearRegexSearchError},
     {"readDefaults", readDefaults},
     {"saveDefaults", saveDefaults},
     {"close", closeDocument},
