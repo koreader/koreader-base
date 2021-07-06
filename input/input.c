@@ -351,6 +351,7 @@ static int waitForInput(lua_State* L)
         lua_pushinteger(L, ETIME);
         return 2;  // false, ETIME
     } else if (num < 0) {
+        // NOTE: The retry on EINTR is handled on the Lua side here.
         lua_pushboolean(L, false);
         lua_pushinteger(L, errno);
         return 2;  // false, errno
@@ -372,14 +373,17 @@ static int waitForInput(lua_State* L)
                 ssize_t len = read(inputfds[i], queue_pos, queue_available_size);
 
                 if (len < 0) {
-                    if (errno == EAGAIN) {
+                    if (errno == EINTR) {
+                        continue;
+                    } else if (errno == EAGAIN) {
                         // Kernel queue drained :)
                         break;
+                    } else {
+                        lua_settop(L, 0);  // Kick our bogus bool (and potentially the ev_array table) from the stack
+                        lua_pushboolean(L, false);
+                        lua_pushinteger(L, errno);
+                        return 2;  // false, errno
                     }
-                    lua_settop(L, 0);  // Kick our bogus bool (and potentially the ev_array table) from the stack
-                    lua_pushboolean(L, false);
-                    lua_pushinteger(L, errno);
-                    return 2;  // false, errno
                 }
                 if (len == 0) {
                     // Should never happen
