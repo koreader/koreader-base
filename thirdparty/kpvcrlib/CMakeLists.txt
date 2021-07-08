@@ -46,6 +46,7 @@ include_directories(
     ${JPEGLIB_INCLUDE_DIR}
     ${NANOSVG_INCLUDE_DIR}
     ${ZSTD_INCLUDE_DIR}
+    ${SRELL_INCLUDE_DIR}
     ${CREGINE_INCLUDE_DIR}
 )
 
@@ -68,6 +69,7 @@ add_definitions(
     -DUSE_UTF8PROC=1
     -DUSE_NANOSVG=1
     -DUSE_ZSTD=1
+    -DUSE_SRELL_REGEX=1
     -DALLOW_KERNING=1
     -DCR3_PATCH=1
     -DMATHML_SUPPORT=1
