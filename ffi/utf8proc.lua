@@ -5,6 +5,7 @@ This is a LuaJIT FFI wrapper for utf8proc.
 ]]
 
 local ffi = require("ffi")
+local C = ffi.C
 
 require("ffi/posix_h")
 require("ffi/utf8proc_h")
@@ -21,7 +22,10 @@ end
 local Utf8Proc = {}
 
 function Utf8Proc.lowercase(str)
-    return ffi.string(libutf8proc.utf8proc_NFKC_Casefold(str))
+    local folded_strz = libutf8proc.utf8proc_NFKC_Casefold(str)
+    local folded_str = ffi.string(folded_strz)
+    C.free(folded_strz)
+    return folded_str
 end
 
 return Utf8Proc
