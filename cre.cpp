@@ -558,13 +558,6 @@ static int getHyphenationForWord(lua_State *L) {
     return 1;
 }
 
-static int lowercaseString(lua_State *L) {
-    const char *word = luaL_checkstring(L, 1);
-    lString32 word_str(word);
-    lua_pushstring(L, UnicodeToLocal(word_str.lowercase()).c_str());
-    return 1;
-}
-
 static int getIntProperty(lua_State *L) {
     CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
     const char *propName = luaL_checkstring(L, 2);
@@ -3551,7 +3544,6 @@ static const struct luaL_Reg cre_func[] = {
     {"getDomVersionWithNormalizedXPointers", getDomVersionWithNormalizedXPointers},
     {"setUserHyphenationDict", setUserHyphenationDict},
     {"getHyphenationForWord", getHyphenationForWord},
-    {"lowercaseString", lowercaseString},
     {NULL, NULL}
 };
 
