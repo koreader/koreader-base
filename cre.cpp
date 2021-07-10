@@ -544,6 +544,20 @@ static int getDomVersionWithNormalizedXPointers(lua_State *L) {
     return 1;
 }
 
+static int setUserHyphenationDict(lua_State *L) {
+    const char *filename = luaL_checkstring(L, 1);
+    bool reload = lua_toboolean(L, 2);
+    lua_pushinteger(L, UserHyphDict::init(filename, reload));
+    return 1;
+}
+
+static int getHyphenationForWord(lua_State *L) {
+    const char *word = luaL_checkstring(L, 1);
+    lString32 hyphenation = UserHyphDict::getHyphenation(word);
+    lua_pushstring(L, UnicodeToLocal(hyphenation).c_str());
+    return 1;
+}
+
 static int lowercaseString(lua_State *L) {
     const char *word = luaL_checkstring(L, 1);
     lString32 word_str(word);
@@ -3517,20 +3531,6 @@ static int getImageDataFromPosition(lua_State *L) {
     return 0;
 }
 
-static int setUserHyphenationDict(lua_State *L) {
-    const char *filename = luaL_checkstring(L, 2);
-    bool reload = lua_toboolean(L, 3);
-    lua_pushinteger(L, UserHyphDict::init(filename, reload));
-    return 1;
-}
-
-static int getHyphenationForWord(lua_State *L) {
-    const char *word = luaL_checkstring(L, 2);
-    lString32 hyphenation = UserHyphDict::getHyphenation(word);
-    lua_pushstring(L, UnicodeToLocal(hyphenation).c_str());
-    return 1;
-}
-
 static const struct luaL_Reg cre_func[] = {
     {"initCache", initCache},
     {"initHyphDict", initHyphDict},
@@ -3549,6 +3549,8 @@ static const struct luaL_Reg cre_func[] = {
     {"getTextLangStatus", getTextLangStatus},
     {"getLatestDomVersion", getLatestDomVersion},
     {"getDomVersionWithNormalizedXPointers", getDomVersionWithNormalizedXPointers},
+    {"setUserHyphenationDict", setUserHyphenationDict},
+    {"getHyphenationForWord", getHyphenationForWord},
     {"lowercaseString", lowercaseString},
     {NULL, NULL}
 };
@@ -3659,8 +3661,6 @@ static const struct luaL_Reg credocument_meth[] = {
     {"getPageMapXPointerPageLabel", getPageMapXPointerPageLabel},
     {"getPageMapVisiblePageLabels", getPageMapVisiblePageLabels},
     {"hasNonLinearFlows", hasNonLinearFlows},
-    {"setUserHyphenationDict", setUserHyphenationDict},
-    {"getHyphenationForWord", getHyphenationForWord},
     {"checkRegex", checkRegex},
     {"getAndClearRegexSearchError", getAndClearRegexSearchError},
     {"readDefaults", readDefaults},
