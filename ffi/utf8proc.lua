@@ -1,5 +1,5 @@
 --[[--
-Module for utf8 string operations
+Module for utf8 string operations.
 
 This is a LuaJIT FFI wrapper for utf8proc.
 ]]
