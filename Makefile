@@ -29,7 +29,7 @@ all: $(OUTPUT_DIR)/libs $(if $(ANDROID),,$(LUAJIT)) \
 		$(LUA_RAPIDJSON_ROCK) \
 		$(LUA_SPORE_ROCK) \
 		$(if $(ANDROID),$(LPEG_DYNLIB) $(LPEG_RE),) \
-		$(if $(WIN32),,$(ZMQ_LIB) $(CZMQ_LIB) $(FILEMQ_LIB) $(ZYRE_LIB)) \
+		$(if $(WIN32),,$(ZMQ_LIB) $(CZMQ_LIB)) \
 		$(if $(WIN32),,$(OUTPUT_DIR)/sdcv) \
 		$(if $(MACOS),$(OUTPUT_DIR)/koreader,) \
 		$(if $(MACOS),$(SDL2_LIB),) \

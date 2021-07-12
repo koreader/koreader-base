@@ -678,32 +678,6 @@ $(CZMQ_LIB): $(ZMQ_LIB) $(THIRDPARTY_DIR)/czmq/*.*
 		$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS)
 	cp -fL $(CZMQ_DIR)/$(if $(WIN32),bin,lib)/$(notdir $(CZMQ_LIB)) $@
 
-$(FILEMQ_LIB): $(ZMQ_LIB) $(CZMQ_LIB) $(SSL_LIB) $(THIRDPARTY_DIR)/filemq/CMakeLists.txt
-	install -d $(FILEMQ_BUILD_DIR)
-	cd $(FILEMQ_BUILD_DIR) && \
-		$(CMAKE) $(CMAKE_FLAGS) -DCC="$(CC)" -DCFLAGS="$(CFLAGS) $(if $(CLANG),-O0,) -I$(OPENSSL_DIR)/include" \
-		-DLDFLAGS="$(LDFLAGS) -L$(OPENSSL_DIR) -Wl,-rpath,'${ORIGIN_CMAKE_TO_AUTOCFG}'" \
-		-DZMQ_DIR=$(ZMQ_DIR) -DCZMQ_DIR=$(CZMQ_DIR) -DHOST=$(CHOST) \
-		$(CURDIR)/$(THIRDPARTY_DIR)/filemq && \
-		$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS)
-	cp -fL $(FILEMQ_DIR)/$(if $(WIN32),bin,lib)/$(notdir $(FILEMQ_LIB)) $@
-ifdef DARWIN
-	install_name_tool -change \
-		`otool -L "$@" | grep "$(notdir $(CRYPTO_LIB)) " | awk '{print $$1}'` \
-		libs/$(notdir $(CRYPTO_LIB)) \
-		$@
-endif
-
-$(ZYRE_LIB): $(ZMQ_LIB) $(CZMQ_LIB) $(THIRDPARTY_DIR)/zyre/*.*
-	install -d $(ZYRE_BUILD_DIR)
-	cd $(ZYRE_BUILD_DIR) && \
-		$(CMAKE) $(CMAKE_FLAGS) -DCC="$(CC)" -DCFLAGS="$(CFLAGS) $(if $(CLANG),-O0,)" \
-		-DCXXFLAGS="$(CXXFLAGS)" -DLDFLAGS="$(LDFLAGS) -Wl,-rpath,'$(ORIGIN_CMAKE_TO_AUTOCFG)'" \
-		-DZMQ_DIR=$(ZMQ_DIR) -DCZMQ_DIR=$(CZMQ_DIR) -DHOST=$(CHOST) \
-		$(CURDIR)/$(THIRDPARTY_DIR)/zyre && \
-		$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS)
-	cp -fL $(ZYRE_DIR)/$(if $(WIN32),bin,lib)/$(notdir $(ZYRE_LIB)) $@
-
 # libtffi_wrap.so locates in koreader/common, but libssl.so and libcrypto.so
 # live in koreader/libs, so we need to set rpath accordingly
 $(TURBO_FFI_WRAP_LIB): $(SSL_LIB) $(THIRDPARTY_DIR)/turbo/*.*
