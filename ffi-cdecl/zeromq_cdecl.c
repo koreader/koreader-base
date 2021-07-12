@@ -1,9 +1,6 @@
 // CPPFLAGS="-I/var/tmp/niluje/zyre/include -I/var/tmp/niluje/libzmq/include -I/var/tmp/niluje/czmq/include -I/var/tmp/niluje/filemq/include"
-#include <zyre.h>
-#include <zre_msg.h>
 #include <zmq.h>
 #include <czmq.h>
-#include <fmq.h>
 
 #include "ffi-cdecl.h"
 
@@ -14,11 +11,7 @@ cdecl_type(zsock_t)
 cdecl_type(zframe_t)
 cdecl_type(zpoller_t)
 //cdecl_type(zsocket_t)
-cdecl_type(zyre_t)
-cdecl_type(zre_msg_t)
-cdecl_type(zyre_event_t)
 
-cdecl_type(zyre_event_type_t)
 //cdecl_type(zmq_socket_type_t) -> Was unrolled as a set of defines:
 cdecl_const(ZMQ_PAIR)
 cdecl_const(ZMQ_PUB)
@@ -92,36 +85,6 @@ cdecl_const(ZMQ_GSSAPI_PLAINTEXT)
 cdecl_const(ZMQ_HANDSHAKE_IVL)
 cdecl_const(ZMQ_IDENTITY_FD)
 
-cdecl_func(zyre_new)
-cdecl_func(zyre_destroy)
-cdecl_func(zyre_uuid)
-cdecl_func(zyre_name)
-cdecl_func(zyre_set_name)
-cdecl_func(zyre_set_header)
-cdecl_func(zyre_set_verbose)
-cdecl_func(zyre_set_port)
-cdecl_func(zyre_set_interval)
-cdecl_func(zyre_set_interface)
-cdecl_func(zyre_start)
-cdecl_func(zyre_stop)
-cdecl_func(zyre_join)
-cdecl_func(zyre_leave)
-cdecl_func(zyre_recv)
-cdecl_func(zyre_whisper)
-cdecl_func(zyre_shout)
-cdecl_func(zyre_whispers)
-cdecl_func(zyre_shouts)
-cdecl_func(zyre_socket)
-cdecl_func(zyre_dump)
-cdecl_func(zyre_event_new)
-cdecl_func(zyre_event_destroy)
-cdecl_func(zyre_event_type)
-cdecl_func(zyre_event_sender)
-cdecl_func(zyre_event_name)
-cdecl_func(zyre_event_address)
-cdecl_func(zyre_event_header)
-cdecl_func(zyre_event_group)
-
 cdecl_func(zmq_getsockopt)
 
 cdecl_func(zctx_new)
@@ -157,26 +120,3 @@ cdecl_func(zpoller_add)
 cdecl_func(zpoller_wait)
 cdecl_func(zpoller_expired)
 cdecl_func(zpoller_terminated)
-
-cdecl_type(fmq_server_t)
-cdecl_type(fmq_client_t)
-
-cdecl_func(fmq_server_new)
-cdecl_func(fmq_server_destroy)
-cdecl_func(fmq_server_configure)
-cdecl_func(fmq_server_setoption)
-cdecl_func(fmq_server_bind)
-//cdecl_func(fmq_server_recv)
-cdecl_func(fmq_server_publish)
-cdecl_func(fmq_server_set_anonymous)
-
-cdecl_func(fmq_client_new)
-cdecl_func(fmq_client_destroy)
-cdecl_func(fmq_client_configure)
-cdecl_func(fmq_client_setoption)
-cdecl_func(fmq_client_connect)
-cdecl_func(fmq_client_recv)
-cdecl_func(fmq_client_handle)
-cdecl_func(fmq_client_subscribe)
-cdecl_func(fmq_client_set_inbox)
-cdecl_func(fmq_client_set_resync)
