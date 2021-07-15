@@ -2,6 +2,8 @@
 Module for utf8 string operations.
 
 This is a LuaJIT FFI wrapper for utf8proc.
+
+@module ffi.utf8proc
 ]]
 
 local ffi = require("ffi")
