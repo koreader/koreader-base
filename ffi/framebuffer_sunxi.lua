@@ -274,6 +274,7 @@ function framebuffer:init()
         -- You can't make GL16 flash :/
         self.waveform_flashui = C.EINK_GC16_MODE
         self.waveform_full = C.EINK_GC16_MODE
+        -- TODO: Check if full-screen partials really need to be flagged RECT...
         self.waveform_partial = C.EINK_GLR16_MODE
         self.waveform_night = C.EINK_GLK16_MODE
         self.waveform_flashnight = C.EINK_GCK16_MODE
