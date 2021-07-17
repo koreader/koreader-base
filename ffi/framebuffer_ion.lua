@@ -111,9 +111,9 @@ local function setupSunxiLayer(layer, finfo, vinfo)
     layer.info.fb.align[1]      = 0
     layer.info.fb.align[2]      = 0
     layer.info.fb.format        = C.DISP_FORMAT_8BIT_GRAY
-    layer.info.fb.color_space   = C.DISP_GBR_F    -- Full-range RGB
+    layer.info.fb.color_space   = C.DISP_GBR_F  -- Full-range RGB
     layer.info.fb.trd_right_fd  = 0
-    layer.info.fb.pre_multiply  = true    -- Because we're using global alpha, I guess?
+    layer.info.fb.pre_multiply  = true  -- Because we're using global alpha, I guess?
     layer.info.fb.crop.x        = 0
     layer.info.fb.crop.y        = 0
     -- Don't ask me why this needs to be shifted 32 bits to the left... ¯\_(ツ)_/¯
@@ -121,7 +121,7 @@ local function setupSunxiLayer(layer, finfo, vinfo)
     layer.info.fb.crop.height   = bit.lshift(vinfo.yres, 32)
     layer.info.fb.flags         = C.DISP_BF_NORMAL
     layer.info.fb.scan          = C.DISP_SCAN_PROGRESSIVE
-    layer.info.fb.eotf          = C.DISP_EOTF_GAMMA22    -- SDR
+    layer.info.fb.eotf          = C.DISP_EOTF_GAMMA22  -- SDR
     layer.info.fb.depth         = 0
     layer.info.fb.fbd_en        = 0
     layer.info.fb.metadata_fd   = 0
