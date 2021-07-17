@@ -11,7 +11,7 @@ require("ffi/posix_h")
 local framebuffer = {
     fb_node = "/dev/fb0",
     ion_node = "/dev/ion",
-    disp_node = "/dev/disp"
+    disp_node = "/dev/disp",
     ion_fd = -1,
     fd = -1,
 
@@ -45,9 +45,9 @@ local function fbinfo_sunxi_fixup(finfo, vinfo)
     vinfo.rotate = C.FB_ROTATE_UR
 
     -- Handle Portrait/Landscape swaps
-    local xres = vnfo.xres
+    local xres = vinfo.xres
     local yres = vinfo.yres
-    if bit.band(vInfo.rotate, 1) == 1 then
+    if bit.band(vinfo.rotate, 1) == 1 then
         -- Odd, Landscape
         vinfo.xres = math.max(xres, yres)
         vinfo.yres = math.min(xres, yres)
@@ -226,7 +226,7 @@ function framebuffer:init()
 
     -- Make a few vInfo fields easier to access
     self.fb_bpp = bpp
-    self.fb_rota = vinfo.rotate
+    self.fb_rota = self._vinfo.rotate
 
     -- And finally, register as a DISP client, too
     self.fd = C.open(self.disp_node, bit.bor(C.O_RDONLY, C.O_NONBLOCK, C.O_CLOEXEC))

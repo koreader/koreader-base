@@ -98,8 +98,8 @@ end
 -- Kobo's Mk8 DISP_EINK_WAIT_FRAME_SYNC_COMPLETE
 local function kobo_sunxi_wait_for_update_complete(fb, marker)
     -- Wait for a specific update to be completed
-    self.ioc_cmd.wait_for.frame_id = marker
-    return C.ioctl(fb.fd, C.DISP_EINK_WAIT_FRAME_SYNC_COMPLETE, self.ioc_cmd)
+    fb.ioc_cmd.wait_for.frame_id = marker
+    return C.ioctl(fb.fd, C.DISP_EINK_WAIT_FRAME_SYNC_COMPLETE, fb.ioc_cmd)
 end
 
 -- Stub version that simply sleeps for 1ms
@@ -209,10 +209,10 @@ local function refresh_kobo_sunxi(fb, is_flashing, waveform_mode, x, y, w, h)
     end
     if waveform_mode == C.EINK_A2_MODE then
         -- NOTE: Unlike on mxcfb, this isn't HW assisted, this just uses the "simple" Y8->Y1 dither algorithm...
-        update_info = bor(update_info, EINK_MONOCHROME)
+        update_info = bor(update_info, C.EINK_MONOCHROME)
     end
 
-    return disp_update(fb, C.DISP_EINK_UPDATE2, self.update, is_flashing, waveform_mode, update_info, x, y, w, h)
+    return disp_update(fb, C.DISP_EINK_UPDATE2, fb.update, is_flashing, waveform_mode, update_info, x, y, w, h)
 end
 
 
