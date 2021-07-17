@@ -10,15 +10,6 @@
 cdecl_const(UPDATE_MODE_PARTIAL)
 cdecl_const(UPDATE_MODE_FULL)
 
-cdecl_const(NTX_WFM_MODE_INIT)
-cdecl_const(NTX_WFM_MODE_DU)
-cdecl_const(NTX_WFM_MODE_GC16)
-cdecl_const(NTX_WFM_MODE_GC4)
-cdecl_const(NTX_WFM_MODE_A2)
-cdecl_const(NTX_WFM_MODE_GL16)
-cdecl_const(NTX_WFM_MODE_GLR16)
-cdecl_const(NTX_WFM_MODE_GLD16)
-cdecl_const(NTX_WFM_MODE_TOTAL)
 cdecl_const(WAVEFORM_MODE_INIT)
 cdecl_const(WAVEFORM_MODE_DU)
 cdecl_const(WAVEFORM_MODE_GC16)
@@ -28,10 +19,6 @@ cdecl_const(WAVEFORM_MODE_GL16)
 cdecl_const(WAVEFORM_MODE_REAGL)
 cdecl_const(WAVEFORM_MODE_REAGLD)
 cdecl_const(WAVEFORM_MODE_AUTO)
-
-cdecl_const(WAVEFORM_MODE_GLR32)
-cdecl_const(WAVEFORM_MODE_GLR16)
-cdecl_const(WAVEFORM_MODE_GLD16)
 
 cdecl_const(TEMP_USE_AMBIENT)
 

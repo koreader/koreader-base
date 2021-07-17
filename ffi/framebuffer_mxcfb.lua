@@ -77,7 +77,7 @@ end
 
 -- Returns true if waveform_mode arg matches the REAGL waveform mode for the current device
 -- NOTE: This is to avoid explicit comparison against device-specific waveform constants in mxc_update()
---       Here, it's Kindle's various WAVEFORM_MODE_REAGL vs. Kobo's NTX_WFM_MODE_GLD16
+--       Here, it's Kindle's various WAVEFORM_MODE_REAGL vs. Kobo's WAVEFORM_MODE_REAGLD
 function framebuffer:_isREAGLWaveFormMode(waveform_mode)
     return waveform_mode == self.waveform_reagl
 end
@@ -510,8 +510,8 @@ local function refresh_kobo(fb, refreshtype, waveform_mode, x, y, w, h)
     refarea[0].alt_buffer_data.virt_addr = nil
     -- TEMP_USE_AMBIENT, not that there was ever any other choice on Kobo...
     refarea[0].temp = C.TEMP_USE_AMBIENT
-    -- Enable the appropriate flag when requesting a REAGLD waveform (NTX_WFM_MODE_GLD16 on the Aura)
-    if waveform_mode == C.NTX_WFM_MODE_GLD16 then
+    -- Enable the appropriate flag when requesting a REAGLD waveform (WAVEFORM_MODE_REAGLD on the Aura)
+    if waveform_mode == C.WAVEFORM_MODE_REAGLD then
         refarea[0].flags = C.EPDC_FLAG_USE_AAD
     elseif waveform_mode == C.WAVEFORM_MODE_A2 or waveform_mode == C.WAVEFORM_MODE_DU then
         -- As well as when requesting a 2bit waveform
@@ -722,20 +722,20 @@ function framebuffer:init()
         self.waveform_fast = C.WAVEFORM_MODE_DU
         self.waveform_ui = C.WAVEFORM_MODE_AUTO
         self.waveform_flashui = self.waveform_ui
-        self.waveform_full = C.NTX_WFM_MODE_GC16
+        self.waveform_full = C.WAVEFORM_MODE_GC16
         self.waveform_partial = C.WAVEFORM_MODE_AUTO
-        self.waveform_night = C.NTX_WFM_MODE_GC16
+        self.waveform_night = C.WAVEFORM_MODE_GC16
         self.waveform_flashnight = self.waveform_night
         self.night_is_reagl = false
 
         if self.device:isREAGL() then
-            self.waveform_reagl = C.NTX_WFM_MODE_GLD16
+            self.waveform_reagl = C.WAVEFORM_MODE_REAGLD
             self.waveform_partial = self.waveform_reagl
             self.waveform_fast = C.WAVEFORM_MODE_DU -- Mainly menu HLs, compare to Kindle's use of AUTO or DU also in these instances ;).
         end
 
         -- NOTE: There's a fun twist to Mark 7 devices:
-        --       they do use GLR16 update modes (i.e., REAGL), but they do NOT need/do the PARTIAL -> FULL trick...
+        --       They do use GLR16 update modes (i.e., REAGL), but they do NOT need/do the PARTIAL -> FULL trick...
         --       We handle that by NOT setting waveform_reagl (so _isREAGLWaveFormMode never matches), and just customizing waveform_partial.
         --       Nickel doesn't wait for completion of previous markers on those PARTIAL GLR16, so that's enough to keep our heuristics intact,
         --       while still doing the right thing everywhere ;).
@@ -747,7 +747,7 @@ function framebuffer:init()
             self.mech_refresh = refresh_kobo_mk7
             self.mech_wait_update_complete = kobo_mk7_mxc_wait_for_update_complete
 
-            self.waveform_partial = C.WAVEFORM_MODE_GLR16
+            self.waveform_partial = C.WAVEFORM_MODE_REAGL
             self.waveform_fast = C.WAVEFORM_MODE_DU -- A2 is much more prone to artifacts on Mk. 7 than before, because everything's faster.
                                                     -- Nickel sometimes uses DU, but never w/ the MONOCHROME flag, so, do the same.
                                                     -- Plus, DU + MONOCHROME + INVERT is much more prone to the Mk. 7 EPDC bug where some/all
