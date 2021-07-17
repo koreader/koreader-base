@@ -28,7 +28,7 @@ local framebuffer = {
     dont_wait_for_marker = nil,
 
     -- We recycle ffi cdata
-    marker = nil,
+    marker_data = nil,
     g2d_rota = nil,
     area = nil,
     update = nil,
@@ -137,7 +137,7 @@ local function disp_update(fb, ioc_cmd, ioc_data, is_flashing, waveform_mode, wa
     --         * GC16 update,
     --         * Full-screen, flashing UI update,
     --       then wait for completion of previous marker first.
-    local marker = fb.marker[0]
+    local marker = fb.marker_data[0]
     -- Make sure the marker is valid, too.
     if (fb:_isREAGLWaveFormMode(waveform_mode)
       or waveform_mode == C.EINK_GC16_MODE
@@ -189,7 +189,7 @@ local function disp_update(fb, ioc_cmd, ioc_data, is_flashing, waveform_mode, wa
     --       but will save us an ioctl before the next refresh, something which, even if it didn't block at all,
     --       would possibly end up being more detrimental to latency/reactivity.
     if is_flashing and fb.mech_wait_update_complete then
-        marker = fb.marker[0]
+        marker = fb.marker_data[0]
         fb.debug("refresh: wait for completion of marker", marker)
         if fb.mech_wait_update_complete(fb, marker) == -1 then
             local err = ffi.errno()
@@ -249,10 +249,10 @@ function framebuffer:refreshFastImp(x, y, w, h, dither)
 end
 
 function framebuffer:refreshWaitForLastImp()
-    if self.mech_wait_update_complete and self.dont_wait_for_marker ~= self.marker[0] then
-        self.debug("refresh: waiting for previous update", self.marker[0])
-        self:mech_wait_update_complete(self.marker[0])
-        self.dont_wait_for_marker = self.marker[0]
+    if self.mech_wait_update_complete and self.dont_wait_for_marker ~= self.marker_data[0] then
+        self.debug("refresh: waiting for previous update", self.marker_data[0])
+        self:mech_wait_update_complete(self.marker_data[0])
+        self.dont_wait_for_marker = self.marker_data[0]
     end
 end
 
@@ -285,7 +285,7 @@ function framebuffer:init()
         end
 
         -- Keep our data structures around
-        self.marker = ffi.new("uint32_t")
+        self.marker_data = ffi.new("uint32_t")
         self.g2d_rota = ffi.new("uint32_t", self.rota) -- From framebuffer_ion
         self.area = ffi.new("struct area_info")
         self.update = ffi.new("sunxi_disp_eink_update2")
@@ -295,7 +295,7 @@ function framebuffer:init()
         self.update.area = self.area
         self.update.layer_num = 1
         self.update.lyr_cfg2 = self.layer  -- From framebuffer_ion
-        self.update.frame_id = self.marker
+        self.update.frame_id = self.marker_data
         self.update.rotate = self.g2d_rota
         self.update.cfa_use = 0
     else
