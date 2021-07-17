@@ -271,7 +271,8 @@ function framebuffer:init()
 
         self.waveform_fast = C.EINK_DU_MODE
         self.waveform_ui = C.EINK_GL16_MODE
-        self.waveform_flashui = self.waveform_ui
+        -- You can't make GL16 flash :/
+        self.waveform_flashui = C.EINK_GC16_MODE
         self.waveform_full = C.EINK_GC16_MODE
         self.waveform_partial = C.EINK_GLR16_MODE
         self.waveform_night = C.EINK_GLK16_MODE
