@@ -1,6 +1,3 @@
-// standard Linux framebuffer headers
-#include <linux/fb.h>
-
 #include <linux/ioctl.h>
 // specialized eink framebuffer headers
 #include "include/mxcfb-kobo.h"
