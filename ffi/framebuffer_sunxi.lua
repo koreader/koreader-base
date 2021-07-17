@@ -8,7 +8,6 @@ require("ffi/posix_h")
 
 local band = bit.band
 local bor = bit.bor
-local bnot = bit.bnot
 
 local framebuffer = {
     -- pass device object here for proper model detection:
@@ -35,6 +34,7 @@ local framebuffer = {
     update = nil,
     ioc_cmd = nil,
 }
+
 
 --[[ refresh list management: --]]
 
@@ -92,29 +92,6 @@ function framebuffer:_isFullScreen(w, h)
     end
 end
 
--- Clamp w & h to the screen's physical dimensions
-function framebuffer:_clampToPhysicalDim(w, h)
-    -- NOTE: fb:getWidth() & fb:getHeight() return the viewport size, but obey rotation, which means we can't rely on them directly.
-    --       fb:getScreenWidth() & fb:getScreenHeight return the full screen size, without the viewport, and in the default rotation, which doesn't help either.
-    -- Settle for getWidth() & getHeight() w/ rotation handling, like what bb:getPhysicalRect() does...
-    local max_w, max_h
-    if band(self:getRotationMode(), 1) == 1 then
-        max_w = self:getHeight()
-        max_h = self:getWidth()
-    else
-        max_w = self:getWidth()
-        max_h = self:getHeight()
-    end
-
-    if w > max_w then
-        w = max_w
-    end
-    if h > max_h then
-        h = max_h
-    end
-
-    return w, h
-end
 
 --[[ handlers for the wait API of the eink driver --]]
 
@@ -130,10 +107,11 @@ local function stub_wait_for_update_complete()
     return ffiUtil.usleep(1000)
 end
 
+
 --[[ refresh functions ]]--
 
 -- NOTE: Heavily based on framebuffer_mxcfb's mxc_update ;)
-local function disp_update(fb, update_ioctl, update, refresh_type, waveform_mode, x, y, w, h)
+local function disp_update(fb, ioc_cmd, ioc_data, is_flashing, waveform_mode, waveform_info, x, y, w, h)
     local bb = fb.full_bb or fb.bb
     w, x = BB.checkBounds(w or bb:getWidth(), x or 0, 0, bb:getWidth(), 0xFFFF)
     h, y = BB.checkBounds(h or bb:getHeight(), y or 0, 0, bb:getHeight(), 0xFFFF)
@@ -148,6 +126,12 @@ local function disp_update(fb, update_ioctl, update, refresh_type, waveform_mode
         return
     end
 
+    -- We've got the final region, update the area_info struct
+    ioc_data.area.x_top = x
+    ioc_data.area.y_top = y
+    ioc_data.area.x_bottom = x + w - 1
+    ioc_data.area.y_bottom = y + h - 1
+
     -- NOTE: If we're trying to send a:
     --         * REAGL update,
     --         * GC16 update,
@@ -157,7 +141,7 @@ local function disp_update(fb, update_ioctl, update, refresh_type, waveform_mode
     -- Make sure the marker is valid, too.
     if (fb:_isREAGLWaveFormMode(waveform_mode)
       or waveform_mode == C.EINK_GC16_MODE
-      or (refresh_type == C.UPDATE_MODE_FULL and fb:_isFlashUIWaveFormMode(waveform_mode) and fb:_isFullScreen(w, h)))
+      or (is_flashing and fb:_isFlashUIWaveFormMode(waveform_mode) and fb:_isFullScreen(w, h)))
       and fb.mech_wait_update_complete
       and (marker ~= 0 and marker ~= fb.dont_wait_for_marker) then
         fb.debug("refresh: wait for completion of (previous) marker", marker)
@@ -167,36 +151,30 @@ local function disp_update(fb, update_ioctl, update, refresh_type, waveform_mode
         end
     end
 
-    -- area_info
-    fb.area.x_top = x
-    fb.area.y_top = y
-    fb.area.x_bottom = x + w - 1
-    fb.area.y_bottom = y + h - 1
-
-    update.update_mode = waveform_mode
-
     -- Handle night mode shenanigans
     if fb.night_mode then
         -- Enforce a nightmode-specific mode to limit ghosting, where appropriate (i.e., partial & flashes).
         if fb:_isPartialWaveFormMode(waveform_mode) then
             waveform_mode = fb:_getNightWaveFormMode()
-        elseif waveform_mode == C.EINK_GC16_MODE or refresh_type == C.UPDATE_MODE_FULL then
+        elseif waveform_mode == C.EINK_GC16_MODE or is_flashing then
             waveform_mode = fb:_getFlashNightWaveFormMode()
         end
     end
 
-    -- Handle the PARTIAL/FULL swap
-    -- FIXME: Switch to a flashing bool (%s), and pass an extra arg for the other update_mode flags...
-    if update_mode == C.UPDATE_MODE_PARTIAL and waveform_mode ~= C.EINK_AUTO_MODE then
+    -- Handle the !flashing flag
+    if not is_flashing and waveform_mode ~= C.EINK_AUTO_MODE then
         -- For some reason, AUTO shouldn't specify RECT...
         -- (it trips the unknown mode warning, which falls back to... plain AUTO ;)).
-        update.update_mode = bor(update.update_mode, C.EINK_RECT_MODE)
+        waveform_info = bor(waveform_info, C.EINK_RECT_MODE)
     end
 
-    -- Recap the actual details of the ioctl, vs. what UIManager asked for...
-    fb.debug(string.format("disp_update: %ux%u region @ (%u, %u) (WFM: %u & UPD: %u)", w, h, x, y, waveform_mode, update_mode))
+    -- And finally bake mode + info into the update_mode bitmask
+    ioc_data.update_mode = bor(waveform_mode, waveform_info)
 
-    if C.ioctl(fb.fd, update_ioctl, update) == -1 then
+    -- Recap the actual details of the ioctl, vs. what UIManager asked for...
+    fb.debug(string.format("disp_update: %ux%u region @ (%u, %u) (WFM: %u [flash: %s])", w, h, x, y, waveform_mode, is_flashing))
+
+    if C.ioctl(fb.fd, ioc_cmd, ioc_data) == -1 then
         local err = ffi.errno()
         fb.debug("DISP_EINK_UPDATE2 ioctl failed:", ffi.string(C.strerror(err)))
     end
@@ -210,8 +188,7 @@ local function disp_update(fb, update_ioctl, update, refresh_type, waveform_mode
     --       so we can instead afford to wait for it right now, which *will* block for a while,
     --       but will save us an ioctl before the next refresh, something which, even if it didn't block at all,
     --       would possibly end up being more detrimental to latency/reactivity.
-    if refarea.update_mode == C.UPDATE_MODE_FULL
-      and fb.mech_wait_update_complete then
+    if is_flashing and fb.mech_wait_update_complete then
         marker = fb.marker[0]
         fb.debug("refresh: wait for completion of marker", marker)
         if fb.mech_wait_update_complete(fb, marker) == -1 then
@@ -223,9 +200,9 @@ local function disp_update(fb, update_ioctl, update, refresh_type, waveform_mode
     end
 end
 
-local function refresh_kobo_sunxi(fb, refreshtype, waveform_mode, x, y, w, h)
-    -- Store the auxiliary update flags in a separate variable, we'll bake them in later,
-    -- it makes identifying waveform modes easier in disp_update
+local function refresh_kobo_sunxi(fb, is_flashing, waveform_mode, x, y, w, h)
+    -- Store the auxiliary update flags in a separate bitmask we'll bake in later,
+    -- as it makes identifying waveform modes easier in disp_update...
     local update_info = 0
     if waveform_mode == C.EINK_GLR16_MODE or waveform_mode == C.EINK_GLD16_MODE then
         update_info = bor(update_info, C.EINK_REGAL_MODE)
@@ -235,42 +212,40 @@ local function refresh_kobo_sunxi(fb, refreshtype, waveform_mode, x, y, w, h)
         update_info = bor(update_info, EINK_MONOCHROME)
     end
 
-    return mxc_update(fb, C.DISP_EINK_UPDATE2, self.update, refreshtype, waveform_mode, x, y, w, h)
+    return disp_update(fb, C.DISP_EINK_UPDATE2, self.update, is_flashing, waveform_mode, update_info, x, y, w, h)
 end
+
 
 --[[ framebuffer API ]]--
 
 function framebuffer:refreshPartialImp(x, y, w, h, dither)
     self.debug("refresh: partial", x, y, w, h, dither and "w/ HW dithering")
-    self:mech_refresh(C.UPDATE_MODE_PARTIAL, self.waveform_partial, x, y, w, h, dither)
+    self:mech_refresh(false, self.waveform_partial, x, y, w, h, dither)
 end
 
--- NOTE: UPDATE_MODE_FULL doesn't mean full screen or no region, it means ask for a black flash!
---       The only exception to that rule is with REAGL waveform modes, where it will *NOT* flash.
---       That's regardless of whether the REAGL waveform mode is of the "always enforce FULL" variety or not ;).
 function framebuffer:refreshFlashPartialImp(x, y, w, h, dither)
     self.debug("refresh: partial w/ flash", x, y, w, h, dither and "w/ HW dithering")
-    self:mech_refresh(C.UPDATE_MODE_FULL, self.waveform_partial, x, y, w, h, dither)
+    self:mech_refresh(true, self.waveform_partial, x, y, w, h, dither)
 end
 
 function framebuffer:refreshUIImp(x, y, w, h, dither)
     self.debug("refresh: ui-mode", x, y, w, h, dither and "w/ HW dithering")
-    self:mech_refresh(C.UPDATE_MODE_PARTIAL, self.waveform_ui, x, y, w, h, dither)
+    self:mech_refresh(false, self.waveform_ui, x, y, w, h, dither)
 end
 
 function framebuffer:refreshFlashUIImp(x, y, w, h, dither)
     self.debug("refresh: ui-mode w/ flash", x, y, w, h, dither and "w/ HW dithering")
-    self:mech_refresh(C.UPDATE_MODE_FULL, self.waveform_flashui, x, y, w, h, dither)
+    self:mech_refresh(true, self.waveform_flashui, x, y, w, h, dither)
 end
 
 function framebuffer:refreshFullImp(x, y, w, h, dither)
     self.debug("refresh: full", x, y, w, h, dither and "w/ HW dithering")
-    self:mech_refresh(C.UPDATE_MODE_FULL, self.waveform_full, x, y, w, h, dither)
+    self:mech_refresh(true, self.waveform_full, x, y, w, h, dither)
 end
 
 function framebuffer:refreshFastImp(x, y, w, h, dither)
     self.debug("refresh: fast", x, y, w, h, dither and "w/ HW dithering")
-    self:mech_refresh(C.UPDATE_MODE_PARTIAL, self.waveform_fast, x, y, w, h, dither)
+    self:mech_refresh(false, self.waveform_fast, x, y, w, h, dither)
 end
 
 function framebuffer:refreshWaitForLastImp()
@@ -280,6 +255,7 @@ function framebuffer:refreshWaitForLastImp()
         self.dont_wait_for_marker = self.marker
     end
 end
+
 
 function framebuffer:init()
     framebuffer.parent.init(self)
@@ -305,7 +281,7 @@ function framebuffer:init()
         -- If the user (or a device cap check) requested bypassing the MXCFB_WAIT_FOR_UPDATE_COMPLETE ioctls, do so.
         if bypass_wait_for then
             -- The stub implementation just fakes this ioctl by sleeping for a tiny amount of time instead... :/.
-            self.mech_wait_update_complete = stub_mxc_wait_for_update_complete
+            self.mech_wait_update_complete = stub_wait_for_update_complete
         end
 
         -- Keep our data structures around
