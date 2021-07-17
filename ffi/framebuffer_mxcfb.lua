@@ -555,6 +555,11 @@ local function refresh_kobo_mk7(fb, refreshtype, waveform_mode, x, y, w, h, dith
     return mxc_update(fb, C.MXCFB_SEND_UPDATE_V2, refarea, refreshtype, waveform_mode, x, y, w, h, dither)
 end
 
+local function refresh_kobo_sunxi(fb, refreshtype, waveform_mode, x, y, w, h)
+    -- TODO
+
+end
+
 local function refresh_pocketbook(fb, refreshtype, waveform_mode, x, y, w, h)
     local refarea = ffi.new("struct mxcfb_update_data[1]")
     -- TEMP_USE_AMBIENT, not that there was ever any other choice...
@@ -752,6 +757,18 @@ function framebuffer:init()
                                                     -- Nickel sometimes uses DU, but never w/ the MONOCHROME flag, so, do the same.
                                                     -- Plus, DU + MONOCHROME + INVERT is much more prone to the Mk. 7 EPDC bug where some/all
                                                     -- EPDC flags just randomly go bye-bye...
+        elseif self.device:isSunxi() then
+            -- No longer mxcfb...
+            self.mech_refresh = refresh_kobo_sunxi
+            self.mech_wait_update_complete = kobo_sunxi_wait_for_update_complete
+
+            self.waveform_fast = C.EINK_DU_MODE
+            self.waveform_ui = C.EINK_GL16_MODE
+            self.waveform_flashui = self.waveform_ui
+            self.waveform_full = C.EINK_GC16_MODE
+            self.waveform_partial = C.EINK_GLR16_MODE
+            self.waveform_night = C.EINK_GLK16_MODE
+            self.waveform_flashnight = C.EINK_GCK16_MODE
         end
 
         local bypass_wait_for = self:getMxcWaitForBypass()
