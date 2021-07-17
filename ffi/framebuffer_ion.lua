@@ -13,12 +13,16 @@ local framebuffer = {
     disp_node = "/dev/disp"
     ion_fd = -1,
     fd = -1,
+
     fb_size = nil,
-    alloc_size = nil,
     fb_bpp = 8,
     fb_rota = 0,
+
     data = nil,
+
+    alloc_size = nil,
     ion = nil,
+    layer = nil,
 
     _finfo = nil,
     _vinfo = nil,
@@ -115,6 +119,15 @@ function framebuffer:init()
     self.fb_bpp = bpp
     self.fb_rota = vinfo.rotate
 
+    -- And finally, register as a DISP client, too
+    self.fd = C.open(self.disp_node, bit.bor(C.O_RDONLY, C.O_NONBLOCK, C.O_CLOEXEC))
+    assert(self.fd ~= -1, "cannot open ION handle")
+
+    -- Setup the insanity that is the sunxi disp2 layer...
+    self.layer = ffi.new("struct disp_layer_config2")
+    self.layer.info.fb.fd    = 0
+    self.layer.info.fb.y8_fd = sunxiCtx.ion.fd
+
     -- And we're cooking with gas!
     self.screen_size = self:getRawSize()
     self.bb:fill(BB.COLOR_WHITE)
@@ -128,8 +141,23 @@ function framebuffer:close()
         self.bb = nil
     end
     if self.data then
-        C.munmap(self.data, PAGE_ALIGN(self.fb_size))
+        C.munmap(self.data, self.alloc_size)
         self.data = nil
+        self.alloc_size = nil
+    end
+    if self.ion and self.ion.fd ~= -1 then
+       C.close(self.ion.fd)
+       self.ion.fd = -1
+    end
+    if self.ion and self.ion.handle ~= 0 then
+        local handle = ffi.new("struct ion_handle_data")
+        handle.handle = self.ion.handle
+        assert(C.ioctl(self.ion_fd, C.ION_IOC_FREE, handle) == 0, "cannot release ION buffer")
+        self.ion.handle = 0
+    end
+    if self.ion_fd ~= -1 then
+        C.close(self.ion_fd)
+        self.ion_fd = -1
     end
     if self.fd ~= -1 then
         C.close(self.fd)
