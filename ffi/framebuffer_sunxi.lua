@@ -145,7 +145,7 @@ local function disp_update(fb, ioc_cmd, ioc_data, is_flashing, waveform_mode, wa
       and fb.mech_wait_update_complete
       and (marker ~= 0 and marker ~= fb.dont_wait_for_marker) then
         fb.debug("refresh: wait for completion of (previous) marker", marker)
-        if fb.mech_wait_update_complete(fb, marker) == -1 then
+        if fb:mech_wait_update_complete(marker) == -1 then
             local err = ffi.errno()
             fb.debug("DISP_EINK_WAIT_FRAME_SYNC_COMPLETE ioctl failed:", ffi.string(C.strerror(err)))
         end
@@ -191,7 +191,7 @@ local function disp_update(fb, ioc_cmd, ioc_data, is_flashing, waveform_mode, wa
     if is_flashing and fb.mech_wait_update_complete then
         marker = fb.marker_data[0]
         fb.debug("refresh: wait for completion of marker", marker)
-        if fb.mech_wait_update_complete(fb, marker) == -1 then
+        if fb:mech_wait_update_complete(marker) == -1 then
             local err = ffi.errno()
             fb.debug("DISP_EINK_WAIT_FRAME_SYNC_COMPLETE ioctl failed:", ffi.string(C.strerror(err)))
         end

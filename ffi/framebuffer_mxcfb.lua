@@ -298,7 +298,7 @@ local function mxc_update(fb, ioc_cmd, ioc_data, is_flashing, waveform_mode, x, 
       and (is_flashing or fb:_isUIWaveFormMode(waveform_mode))
       and (marker ~= 0 and marker ~= fb.dont_wait_for_marker) then
         fb.debug("refresh: wait for submission of (previous) marker", marker)
-        if fb.mech_wait_update_submission(fb, marker) == -1 then
+        if fb:mech_wait_update_submission(marker) == -1 then
             local err = ffi.errno()
             fb.debug("MXCFB_WAIT_FOR_UPDATE_SUBMISSION ioctl failed:", ffi.string(C.strerror(err)))
         end
@@ -318,7 +318,7 @@ local function mxc_update(fb, ioc_cmd, ioc_data, is_flashing, waveform_mode, x, 
       and fb.mech_wait_update_complete
       and (marker ~= 0 and marker ~= fb.dont_wait_for_marker) then
         fb.debug("refresh: wait for completion of (previous) marker", marker)
-        if fb.mech_wait_update_complete(fb, marker) == -1 then
+        if fb:mech_wait_update_complete(marker) == -1 then
             local err = ffi.errno()
             fb.debug("MXCFB_WAIT_FOR_UPDATE_COMPLETE ioctl failed:", ffi.string(C.strerror(err)))
         end
@@ -383,7 +383,7 @@ local function mxc_update(fb, ioc_cmd, ioc_data, is_flashing, waveform_mode, x, 
     if ioc_data.update_mode == C.UPDATE_MODE_FULL
       and fb.mech_wait_update_complete then
         fb.debug("refresh: wait for completion of marker", marker)
-        if fb.mech_wait_update_complete(fb, marker) == -1 then
+        if fb:mech_wait_update_complete(marker) == -1 then
             local err = ffi.errno()
             fb.debug("MXCFB_WAIT_FOR_UPDATE_COMPLETE ioctl failed:", ffi.string(C.strerror(err)))
         end
