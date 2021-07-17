@@ -117,8 +117,9 @@ local function setupSunxiLayer(layer, finfo, vinfo)
     layer.info.fb.crop.x        = 0
     layer.info.fb.crop.y        = 0
     -- Don't ask me why this needs to be shifted 32 bits to the left... ¯\_(ツ)_/¯
-    layer.info.fb.crop.width    = bit.lshift(vinfo.xres, 32)
-    layer.info.fb.crop.height   = bit.lshift(vinfo.yres, 32)
+    -- Although it apparently behaves without it, too...
+    layer.info.fb.crop.width    = bit.lshift(ffi.cast("uint64_t", vinfo.xres), 32)
+    layer.info.fb.crop.height   = bit.lshift(ffi.cast("uint64_t", vinfo.yres), 32)
     layer.info.fb.flags         = C.DISP_BF_NORMAL
     layer.info.fb.scan          = C.DISP_SCAN_PROGRESSIVE
     layer.info.fb.eotf          = C.DISP_EOTF_GAMMA22  -- SDR
