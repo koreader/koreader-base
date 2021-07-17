@@ -46,6 +46,10 @@ local framebuffer = {
     dont_wait_for_marker = nil,
     -- Set by frontend to 3 on Pocketbook Color Lux that refreshes based on bytes (not based on pixel)
     refresh_pixel_size = 1,
+
+    -- We recycle ffi cdata
+    marker_data = nil,
+    update_data = nil,
 }
 
 --[[ refresh list management: --]]
@@ -154,24 +158,25 @@ end
 -- Kindle's MXCFB_WAIT_FOR_UPDATE_COMPLETE_PEARL == 0x4004462f
 local function kindle_pearl_mxc_wait_for_update_complete(fb, marker)
     -- Wait for a specific update to be completed
-    return C.ioctl(fb.fd, C.MXCFB_WAIT_FOR_UPDATE_COMPLETE_PEARL, ffi.new("uint32_t[1]", marker))
+    fb.marker_data[0] = marker
+
+    return C.ioctl(fb.fd, C.MXCFB_WAIT_FOR_UPDATE_COMPLETE_PEARL, fb.marker_data)
 end
 
 -- Kobo's MXCFB_WAIT_FOR_UPDATE_COMPLETE_V1 == 0x4004462f
 local function kobo_mxc_wait_for_update_complete(fb, marker)
     -- Wait for a specific update to be completed
-    return C.ioctl(fb.fd, C.MXCFB_WAIT_FOR_UPDATE_COMPLETE_V1, ffi.new("uint32_t[1]", marker))
+    fb.marker_data[0] = marker
+
+    return C.ioctl(fb.fd, C.MXCFB_WAIT_FOR_UPDATE_COMPLETE_V1, fb.marker_data)
 end
 
 -- Kobo's Mk7 MXCFB_WAIT_FOR_UPDATE_COMPLETE_V3
 local function kobo_mk7_mxc_wait_for_update_complete(fb, marker)
     -- Wait for a specific update to be completed
-    local mk7_update_marker = ffi.new("struct mxcfb_update_marker_data")
-    mk7_update_marker.update_marker = marker
-    -- NOTE: 0 seems to be a fairly safe assumption for "we don't care about collisions".
-    --       On a slightly related note, the EPDC_FLAG_TEST_COLLISION flag is for dry-run collision tests, never set it.
-    mk7_update_marker.collision_test = 0
-    return C.ioctl(fb.fd, C.MXCFB_WAIT_FOR_UPDATE_COMPLETE_V3, mk7_update_marker)
+    fb.marker_data.update_marker = marker
+
+    return C.ioctl(fb.fd, C.MXCFB_WAIT_FOR_UPDATE_COMPLETE_V3, fb.marker_data)
 end
 
 -- Pocketbook's MXCFB_WAIT_FOR_UPDATE_COMPLETE_PB... with a twist.
@@ -182,52 +187,49 @@ local function pocketbook_mxc_wait_for_update_complete(fb, marker)
     --       So, account for that by always passing an address to a mxcfb_update_marker_data struct to make the write safe.
     --       Given the layout of said struct (marker first), this thankfully works out just fine...
     --       c.f., https://github.com/koreader/koreader/issues/6000 & https://github.com/koreader/koreader/pull/6669
-    local update_marker = ffi.new("struct mxcfb_update_marker_data")
-    update_marker.update_marker = marker
-    -- NOTE: 0 seems to be a fairly safe assumption for "we don't care about collisions".
-    --       On a slightly related note, the EPDC_FLAG_TEST_COLLISION flag is for dry-run collision tests, never set it.
-    update_marker.collision_test = 0
-    return C.ioctl(fb.fd, C.MXCFB_WAIT_FOR_UPDATE_COMPLETE_PB, update_marker)
+    fb.marker_data.update_marker = marker
+
+    return C.ioctl(fb.fd, C.MXCFB_WAIT_FOR_UPDATE_COMPLETE_PB, fb.marker_data)
 end
 
 -- Remarkable MXCFB_WAIT_FOR_UPDATE_COMPLETE
 local function remarkable_mxc_wait_for_update_complete(fb, marker)
     -- Wait for a specific update to be completed
-    local update_marker = ffi.new("struct mxcfb_update_marker_data")
-    update_marker.update_marker = marker
-    -- NOTE: 0 seems to be a fairly safe assumption for "we don't care about collisions".
-    --       On a slightly related note, the EPDC_FLAG_TEST_COLLISION flag is for dry-run collision tests, never set it.
-    update_marker.collision_test = 0
-    return C.ioctl(fb.fd, C.MXCFB_WAIT_FOR_UPDATE_COMPLETE, update_marker)
+    fb.marker_data.update_marker = marker
+
+    return C.ioctl(fb.fd, C.MXCFB_WAIT_FOR_UPDATE_COMPLETE, fb.marker_data)
 end
 
 -- Sony PRS MXCFB_WAIT_FOR_UPDATE_COMPLETE
 local function sony_prstux_mxc_wait_for_update_complete(fb, marker)
     -- Wait for a specific update to be completed
-    return C.ioctl(fb.fd, C.MXCFB_WAIT_FOR_UPDATE_COMPLETE, ffi.new("uint32_t[1]", marker))
+    fb.marker_data[0] = marker
+
+    return C.ioctl(fb.fd, C.MXCFB_WAIT_FOR_UPDATE_COMPLETE, fb.marker_data)
 end
 
 -- BQ Cervantes MXCFB_WAIT_FOR_UPDATE_COMPLETE == 0x4004462f
 local function cervantes_mxc_wait_for_update_complete(fb, marker)
     -- Wait for a specific update to be completed
-    return C.ioctl(fb.fd, C.MXCFB_WAIT_FOR_UPDATE_COMPLETE, ffi.new("uint32_t[1]", marker))
+    fb.marker_data[0] = marker
+
+    return C.ioctl(fb.fd, C.MXCFB_WAIT_FOR_UPDATE_COMPLETE, fb.marker_data)
 end
 
 -- Kindle's MXCFB_WAIT_FOR_UPDATE_COMPLETE == 0xc008462f
 local function kindle_carta_mxc_wait_for_update_complete(fb, marker)
     -- Wait for a specific update to be completed
-    local carta_update_marker = ffi.new("struct mxcfb_update_marker_data")
-    carta_update_marker.update_marker = marker
-    -- NOTE: 0 seems to be a fairly safe assumption for "we don't care about collisions".
-    --       On a slightly related note, the EPDC_FLAG_TEST_COLLISION flag is for dry-run collision tests, never set it.
-    carta_update_marker.collision_test = 0
-    return C.ioctl(fb.fd, C.MXCFB_WAIT_FOR_UPDATE_COMPLETE, carta_update_marker)
+    fb.marker_data.update_marker = marker
+
+    return C.ioctl(fb.fd, C.MXCFB_WAIT_FOR_UPDATE_COMPLETE, fb.marker_data)
 end
 
 -- Kindle's MXCFB_WAIT_FOR_UPDATE_SUBMISSION == 0x40044637
 local function kindle_mxc_wait_for_update_submission(fb, marker)
     -- Wait for a specific update to be submitted
-    return C.ioctl(fb.fd, C.MXCFB_WAIT_FOR_UPDATE_SUBMISSION, ffi.new("uint32_t[1]", marker))
+    fb.marker_data[0] = marker
+
+    return C.ioctl(fb.fd, C.MXCFB_WAIT_FOR_UPDATE_SUBMISSION, fb.marker_data)
 end
 
 -- Stub version that simply sleeps for 1ms
@@ -243,7 +245,7 @@ end
 -- Kobo's MXCFB_SEND_UPDATE == 0x4044462e
 -- Pocketbook's MXCFB_SEND_UPDATE == 0x4040462e
 -- Cervantes MXCFB_SEND_UPDATE == 0x4044462e
-local function mxc_update(fb, update_ioctl, refarea, refresh_type, waveform_mode, x, y, w, h, dither)
+local function mxc_update(fb, ioc_cmd, ioc_data, is_flashing, waveform_mode, x, y, w, h, dither)
     local bb = fb.full_bb or fb.bb
     w, x = BB.checkBounds(w or bb:getWidth(), x or 0, 0, bb:getWidth(), 0xFFFF)
     h, y = BB.checkBounds(h or bb:getHeight(), y or 0, 0, bb:getHeight(), 0xFFFF)
@@ -293,8 +295,7 @@ local function mxc_update(fb, update_ioctl, refarea, refresh_type, waveform_mode
     -- Make sure it's a valid marker, to avoid doing something stupid on our first update.
     -- Also make sure we haven't already waited on this marker ;).
     if fb.mech_wait_update_submission
-      and (refresh_type == C.UPDATE_MODE_FULL
-      or fb:_isUIWaveFormMode(waveform_mode))
+      and (is_flashing or fb:_isUIWaveFormMode(waveform_mode))
       and (marker ~= 0 and marker ~= fb.dont_wait_for_marker) then
         fb.debug("refresh: wait for submission of (previous) marker", marker)
         if fb.mech_wait_update_submission(fb, marker) == -1 then
@@ -313,7 +314,7 @@ local function mxc_update(fb, update_ioctl, refarea, refresh_type, waveform_mode
     -- Again, make sure the marker is valid, too.
     if (fb:_isREAGLWaveFormMode(waveform_mode)
       or waveform_mode == C.WAVEFORM_MODE_GC16
-      or (refresh_type == C.UPDATE_MODE_FULL and fb:_isFlashUIWaveFormMode(waveform_mode) and fb:_isFullScreen(w, h)))
+      or (is_flashing and fb:_isFlashUIWaveFormMode(waveform_mode) and fb:_isFullScreen(w, h)))
       and fb.mech_wait_update_complete
       and (marker ~= 0 and marker ~= fb.dont_wait_for_marker) then
         fb.debug("refresh: wait for completion of (previous) marker", marker)
@@ -323,28 +324,20 @@ local function mxc_update(fb, update_ioctl, refarea, refresh_type, waveform_mode
         end
     end
 
-    refarea.update_mode = refresh_type or C.UPDATE_MODE_PARTIAL
-    refarea.waveform_mode = waveform_mode or C.WAVEFORM_MODE_GC16
-    refarea.update_region.left = x
-    refarea.update_region.top = y
-    refarea.update_region.width = w
-    refarea.update_region.height = h
+    ioc_data.update_mode = is_flashing and C.UPDATE_MODE_FULL or C.UPDATE_MODE_PARTIAL
+    ioc_data.waveform_mode = waveform_mode or C.WAVEFORM_MODE_GC16
+    ioc_data.update_region.left = x
+    ioc_data.update_region.top = y
+    ioc_data.update_region.width = w
+    ioc_data.update_region.height = h
     marker = fb:_get_next_marker()
-    refarea.update_marker = marker
-    -- NOTE: We're not using EPDC_FLAG_USE_ALT_BUFFER
-    refarea.alt_buffer_data.phys_addr = 0
-    refarea.alt_buffer_data.width = 0
-    refarea.alt_buffer_data.height = 0
-    refarea.alt_buffer_data.alt_update_region.top = 0
-    refarea.alt_buffer_data.alt_update_region.left = 0
-    refarea.alt_buffer_data.alt_update_region.width = 0
-    refarea.alt_buffer_data.alt_update_region.height = 0
+    ioc_data.update_marker = marker
 
     -- Handle night mode shenanigans
     if fb.night_mode then
         -- We're in nightmode! If the device can do HW inversion safely, do that!
         if fb.device:canHWInvert() then
-            refarea.flags = bor(refarea.flags, C.EPDC_FLAG_ENABLE_INVERSION)
+            ioc_data.flags = bor(ioc_data.flags, C.EPDC_FLAG_ENABLE_INVERSION)
         end
 
         -- Enforce a nightmode-specific mode (usually, GC16), to limit ghosting, where appropriate (i.e., partial & flashes).
@@ -352,28 +345,28 @@ local function mxc_update(fb, update_ioctl, refarea, refresh_type, waveform_mode
         -- that's in the hands of the EPDC. Kindle PW2+ behave sanely, for instance, even when flashing on AUTO or GC16 ;).
         if fb:_isPartialWaveFormMode(waveform_mode) then
             waveform_mode = fb:_getNightWaveFormMode()
-            refarea.waveform_mode = waveform_mode
+            ioc_data.waveform_mode = waveform_mode
             -- And handle devices like the KOA2/PW4, where night is a REAGL waveform that needs to be FULL...
             if fb:_isNightREAGL() then
-                refarea.update_mode = C.UPDATE_MODE_FULL
+                ioc_data.update_mode = C.UPDATE_MODE_FULL
             end
-        elseif waveform_mode == C.WAVEFORM_MODE_GC16 or refresh_type == C.UPDATE_MODE_FULL then
+        elseif waveform_mode == C.WAVEFORM_MODE_GC16 or is_flashing then
             waveform_mode = fb:_getFlashNightWaveFormMode()
-            refarea.waveform_mode = waveform_mode
+            ioc_data.waveform_mode = waveform_mode
         end
     end
 
     -- Handle REAGL promotion...
-    -- NOTE: We need to do this here, because we rely on the pre-promotion actual refresh_type in previous heuristics.
+    -- NOTE: We need to do this here, because we rely on the pre-promotion actual is_flashing in previous heuristics.
     if fb:_isREAGLWaveFormMode(waveform_mode) then
         -- NOTE: REAGL updates always need to be full.
-        refarea.update_mode = C.UPDATE_MODE_FULL
+        ioc_data.update_mode = C.UPDATE_MODE_FULL
     end
 
     -- Recap the actual details of the ioctl, vs. what UIManager asked for...
-    fb.debug(string.format("mxc_update: %ux%u region @ (%u, %u) with marker %u (WFM: %u & UPD: %u)", w, h, x, y, marker, refarea.waveform_mode, refarea.update_mode))
+    fb.debug(string.format("mxc_update: %ux%u region @ (%u, %u) with marker %u (WFM: %u & UPD: %u)", w, h, x, y, marker, ioc_data.waveform_mode, ioc_data.update_mode))
 
-    if C.ioctl(fb.fd, update_ioctl, refarea) == -1 then
+    if C.ioctl(fb.fd, ioc_cmd, ioc_data) == -1 then
         local err = ffi.errno()
         fb.debug("MXCFB_SEND_UPDATE ioctl failed:", ffi.string(C.strerror(err)))
     end
@@ -387,7 +380,7 @@ local function mxc_update(fb, update_ioctl, refarea, refresh_type, waveform_mode
     --       so we can instead afford to wait for it right now, which *will* block for a while,
     --       but will save us an ioctl before the next refresh, something which, even if it didn't block at all,
     --       would possibly end up being more detrimental to latency/reactivity.
-    if refarea.update_mode == C.UPDATE_MODE_FULL
+    if ioc_data.update_mode == C.UPDATE_MODE_FULL
       and fb.mech_wait_update_complete then
         fb.debug("refresh: wait for completion of marker", marker)
         if fb.mech_wait_update_complete(fb, marker) == -1 then
@@ -399,145 +392,131 @@ local function mxc_update(fb, update_ioctl, refarea, refresh_type, waveform_mode
     end
 end
 
-local function refresh_k51(fb, refreshtype, waveform_mode, x, y, w, h)
-    local refarea = ffi.new("struct mxcfb_update_data")
+local function refresh_k51(fb, is_flashing, waveform_mode, x, y, w, h)
     -- only for Amazon's driver, try to mostly follow what the stock reader does...
     if waveform_mode == C.WAVEFORM_MODE_REAGL then
         -- If we're requesting WAVEFORM_MODE_REAGL, it's REAGL all around!
-        refarea.hist_bw_waveform_mode = waveform_mode
-        refarea.hist_gray_waveform_mode = waveform_mode
+        fb.update_data.hist_bw_waveform_mode = waveform_mode
+        fb.update_data.hist_gray_waveform_mode = waveform_mode
     else
-        refarea.hist_bw_waveform_mode = C.WAVEFORM_MODE_DU
-        refarea.hist_gray_waveform_mode = C.WAVEFORM_MODE_GC16_FAST
+        fb.update_data.hist_bw_waveform_mode = C.WAVEFORM_MODE_DU
+        fb.update_data.hist_gray_waveform_mode = C.WAVEFORM_MODE_GC16_FAST
     end
     -- And we're only left with true full updates to special-case.
     if waveform_mode == C.WAVEFORM_MODE_GC16 then
-        refarea.hist_gray_waveform_mode = waveform_mode
+        fb.update_data.hist_gray_waveform_mode = waveform_mode
     end
-    -- TEMP_USE_PAPYRUS on Touch/PW1, TEMP_USE_AUTO on PW2 (same value in both cases, 0x1001)
-    refarea.temp = C.TEMP_USE_AUTO
+
     -- Enable the appropriate flag when requesting a 2bit update
     if waveform_mode == C.WAVEFORM_MODE_A2 or waveform_mode == C.WAVEFORM_MODE_DU then
-        refarea.flags = C.EPDC_FLAG_FORCE_MONOCHROME
+        fb.update_data.flags = C.EPDC_FLAG_FORCE_MONOCHROME
     else
-        refarea.flags = 0
+        fb.update_data.flags = 0
     end
 
-    return mxc_update(fb, C.MXCFB_SEND_UPDATE, refarea, refreshtype, waveform_mode, x, y, w, h)
+    return mxc_update(fb, C.MXCFB_SEND_UPDATE, fb.update_data, is_flashing, waveform_mode, x, y, w, h)
 end
 
-local function refresh_zelda(fb, refreshtype, waveform_mode, x, y, w, h, dither)
-    local refarea = ffi.new("struct mxcfb_update_data_zelda")
-    -- only for Amazon's driver, try to mostly follow what the stock reader does...
+local function refresh_zelda(fb, is_flashing, waveform_mode, x, y, w, h, dither)
+    -- Only for Amazon's driver, try to mostly follow what the stock reader does...
     if waveform_mode == C.WAVEFORM_MODE_ZELDA_GLR16 or waveform_mode == C.WAVEFORM_MODE_ZELDA_GLD16 then
         -- If we're requesting WAVEFORM_MODE_ZELDA_GLR16, it's REAGL all around!
-        refarea.hist_bw_waveform_mode = waveform_mode
-        refarea.hist_gray_waveform_mode = waveform_mode
+        fb.update_data.hist_bw_waveform_mode = waveform_mode
+        fb.update_data.hist_gray_waveform_mode = waveform_mode
     else
-        refarea.hist_bw_waveform_mode = C.WAVEFORM_MODE_DU
-        refarea.hist_gray_waveform_mode = C.WAVEFORM_MODE_GC16 -- NOTE: GC16_FAST points to GC16
+        fb.update_data.hist_bw_waveform_mode = C.WAVEFORM_MODE_DU
+        fb.update_data.hist_gray_waveform_mode = C.WAVEFORM_MODE_GC16 -- NOTE: GC16_FAST points to GC16
     end
-    -- NOTE: Since there's no longer a distinction between GC16_FAST & GC16, we're done!
-    refarea.temp = C.TEMP_USE_AMBIENT
+
     -- Did we request HW dithering on a device where it works?
     if dither and fb.device:canHWDither() then
-        refarea.dither_mode = C.EPDC_FLAG_USE_DITHERING_ORDERED
+        fb.update_data.dither_mode = C.EPDC_FLAG_USE_DITHERING_ORDERED
         if waveform_mode == C.WAVEFORM_MODE_ZELDA_A2 or waveform_mode == C.WAVEFORM_MODE_DU then
-            refarea.quant_bit = 1;
+            fb.update_data.quant_bit = 1
         else
-            refarea.quant_bit = 7;
+            fb.update_data.quant_bit = 7
         end
     else
-        refarea.dither_mode = C.EPDC_FLAG_USE_DITHERING_PASSTHROUGH
-        refarea.quant_bit = 0;
+        fb.update_data.dither_mode = C.EPDC_FLAG_USE_DITHERING_PASSTHROUGH
+        fb.update_data.quant_bit = 0
     end
     -- Enable the REAGLD algo when requested
     if waveform_mode == C.WAVEFORM_MODE_ZELDA_GLD16 then
-        refarea.flags = C.EPDC_FLAG_USE_ZELDA_REGAL
+        fb.update_data.flags = C.EPDC_FLAG_USE_ZELDA_REGAL
     -- Enable the appropriate flag when requesting a 2bit update, provided we're not dithering.
     elseif waveform_mode == C.WAVEFORM_MODE_ZELDA_A2 and not dither then
-        refarea.flags = C.EPDC_FLAG_FORCE_MONOCHROME
+        fb.update_data.flags = C.EPDC_FLAG_FORCE_MONOCHROME
     else
-        refarea.flags = 0
+        fb.update_data.flags = 0
     end
     -- TODO: There's also the HW-backed NightMode which should be somewhat accessible...
 
-    return mxc_update(fb, C.MXCFB_SEND_UPDATE_ZELDA, refarea, refreshtype, waveform_mode, x, y, w, h, dither)
+    return mxc_update(fb, C.MXCFB_SEND_UPDATE_ZELDA, fb.update_data, is_flashing, waveform_mode, x, y, w, h, dither)
 end
 
-local function refresh_rex(fb, refreshtype, waveform_mode, x, y, w, h, dither)
-    local refarea = ffi.new("struct mxcfb_update_data_rex")
-    -- only for Amazon's driver, try to mostly follow what the stock reader does...
+local function refresh_rex(fb, is_flashing, waveform_mode, x, y, w, h, dither)
+    -- Only for Amazon's driver, try to mostly follow what the stock reader does...
     if waveform_mode == C.WAVEFORM_MODE_ZELDA_GLR16 or waveform_mode == C.WAVEFORM_MODE_ZELDA_GLD16 then
         -- If we're requesting WAVEFORM_MODE_ZELDA_GLR16, it's REAGL all around!
-        refarea.hist_bw_waveform_mode = waveform_mode
-        refarea.hist_gray_waveform_mode = waveform_mode
+        fb.update_data.hist_bw_waveform_mode = waveform_mode
+        fb.update_data.hist_gray_waveform_mode = waveform_mode
     else
-        refarea.hist_bw_waveform_mode = C.WAVEFORM_MODE_DU
-        refarea.hist_gray_waveform_mode = C.WAVEFORM_MODE_GC16 -- NOTE: GC16_FAST points to GC16
+        fb.update_data.hist_bw_waveform_mode = C.WAVEFORM_MODE_DU
+        fb.update_data.hist_gray_waveform_mode = C.WAVEFORM_MODE_GC16 -- NOTE: GC16_FAST points to GC16
     end
-    -- NOTE: Since there's no longer a distinction between GC16_FAST & GC16, we're done!
-    refarea.temp = C.TEMP_USE_AMBIENT
+
     -- Did we request HW dithering on a device where it works?
     if dither and fb.device:canHWDither() then
-        refarea.dither_mode = C.EPDC_FLAG_USE_DITHERING_ORDERED
+        fb.update_data.dither_mode = C.EPDC_FLAG_USE_DITHERING_ORDERED
         if waveform_mode == C.WAVEFORM_MODE_ZELDA_A2 or waveform_mode == C.WAVEFORM_MODE_DU then
-            refarea.quant_bit = 1
+            fb.update_data.quant_bit = 1
         else
-            refarea.quant_bit = 7
+            fb.update_data.quant_bit = 7
         end
     else
-        refarea.dither_mode = C.EPDC_FLAG_USE_DITHERING_PASSTHROUGH
-        refarea.quant_bit = 0
+        fb.update_data.dither_mode = C.EPDC_FLAG_USE_DITHERING_PASSTHROUGH
+        fb.update_data.quant_bit = 0
     end
     -- Enable the REAGLD algo when requested
     if waveform_mode == C.WAVEFORM_MODE_ZELDA_GLD16 then
-        refarea.flags = C.EPDC_FLAG_USE_ZELDA_REGAL
+        fb.update_data.flags = C.EPDC_FLAG_USE_ZELDA_REGAL
     -- Enable the appropriate flag when requesting a 2bit update, provided we're not dithering.
     elseif waveform_mode == C.WAVEFORM_MODE_ZELDA_A2 and not dither then
-        refarea.flags = C.EPDC_FLAG_FORCE_MONOCHROME
+        fb.update_data.flags = C.EPDC_FLAG_FORCE_MONOCHROME
     else
-        refarea.flags = 0
+        fb.update_data.flags = 0
     end
     -- TODO: There's also the HW-backed NightMode which should be somewhat accessible...
 
-    return mxc_update(fb, C.MXCFB_SEND_UPDATE_REX, refarea, refreshtype, waveform_mode, x, y, w, h, dither)
+    return mxc_update(fb, C.MXCFB_SEND_UPDATE_REX, fb.update_data, is_flashing, waveform_mode, x, y, w, h, dither)
 end
 
-local function refresh_kobo(fb, refreshtype, waveform_mode, x, y, w, h)
-    local refarea = ffi.new("struct mxcfb_update_data_v1_ntx")
-    -- only for Kobo's driver:
-    refarea.alt_buffer_data.virt_addr = nil
-    -- TEMP_USE_AMBIENT, not that there was ever any other choice on Kobo...
-    refarea.temp = C.TEMP_USE_AMBIENT
+local function refresh_kobo(fb, is_flashing, waveform_mode, x, y, w, h)
     -- Enable the appropriate flag when requesting a REAGLD waveform (WAVEFORM_MODE_REAGLD on the Aura)
     if waveform_mode == C.WAVEFORM_MODE_REAGLD then
-        refarea.flags = C.EPDC_FLAG_USE_AAD
+        fb.update_data.flags = C.EPDC_FLAG_USE_AAD
     elseif waveform_mode == C.WAVEFORM_MODE_A2 or waveform_mode == C.WAVEFORM_MODE_DU then
         -- As well as when requesting a 2bit waveform
-        refarea.flags = C.EPDC_FLAG_FORCE_MONOCHROME
+        fb.update_data.flags = C.EPDC_FLAG_FORCE_MONOCHROME
     else
-        refarea.flags = 0
+        fb.update_data.flags = 0
     end
 
-    return mxc_update(fb, C.MXCFB_SEND_UPDATE_V1_NTX, refarea, refreshtype, waveform_mode, x, y, w, h)
+    return mxc_update(fb, C.MXCFB_SEND_UPDATE_V1_NTX, fb.update_data, is_flashing, waveform_mode, x, y, w, h)
 end
 
-local function refresh_kobo_mk7(fb, refreshtype, waveform_mode, x, y, w, h, dither)
-    local refarea = ffi.new("struct mxcfb_update_data_v2")
-    -- TEMP_USE_AMBIENT, not that there was ever any other choice on Kobo...
-    refarea.temp = C.TEMP_USE_AMBIENT
+local function refresh_kobo_mk7(fb, is_flashing, waveform_mode, x, y, w, h, dither)
     -- Did we request HW dithering?
     if dither then
-        refarea.dither_mode = C.EPDC_FLAG_USE_DITHERING_ORDERED
+        fb.update_data.dither_mode = C.EPDC_FLAG_USE_DITHERING_ORDERED
         if waveform_mode == C.WAVEFORM_MODE_A2 or waveform_mode == C.WAVEFORM_MODE_DU then
-            refarea.quant_bit = 1
+            fb.update_data.quant_bit = 1
         else
-            refarea.quant_bit = 7
+            fb.update_data.quant_bit = 7
         end
     else
-        refarea.dither_mode = C.EPDC_FLAG_USE_DITHERING_PASSTHROUGH
-        refarea.quant_bit = 0
+        fb.update_data.dither_mode = C.EPDC_FLAG_USE_DITHERING_PASSTHROUGH
+        fb.update_data.quant_bit = 0
     end
     -- Enable the appropriate flag when requesting a 2bit update, provided we're not dithering.
     -- NOTE: As of right now (FW 4.9.x), WAVEFORM_MODE_GLD16 appears not to be used by Nickel,
@@ -547,59 +526,52 @@ local function refresh_kobo_mk7(fb, refreshtype, waveform_mode, x, y, w, h, dith
     --       because the kernel is buggy (c.f., https://github.com/NiLuJe/FBInk/blob/96a2cd6a93f5184c595c0e53a844fd883adfd75b/fbink.c#L2422-L2440).
     --       For our use-cases, FORCE_MONOCHROME is mostly unnecessary anyway (the effect being fuzzier text instead of blockier text, i.e., choose your poison ;p).
     if waveform_mode == C.WAVEFORM_MODE_A2 and not dither then
-        refarea.flags = C.EPDC_FLAG_FORCE_MONOCHROME
+        fb.update_data.flags = C.EPDC_FLAG_FORCE_MONOCHROME
     else
-        refarea.flags = 0
+        fb.update_data.flags = 0
     end
 
-    return mxc_update(fb, C.MXCFB_SEND_UPDATE_V2, refarea, refreshtype, waveform_mode, x, y, w, h, dither)
+    return mxc_update(fb, C.MXCFB_SEND_UPDATE_V2, fb.update_data, is_flashing, waveform_mode, x, y, w, h, dither)
 end
 
-local function refresh_pocketbook(fb, refreshtype, waveform_mode, x, y, w, h)
-    local refarea = ffi.new("struct mxcfb_update_data")
+local function refresh_pocketbook(fb, is_flashing, waveform_mode, x, y, w, h)
     -- TEMP_USE_AMBIENT, not that there was ever any other choice...
-    refarea.temp = C.TEMP_USE_AMBIENT
+    fb.update_data.temp = C.TEMP_USE_AMBIENT
     -- Enable the appropriate flag when requesting a REAGLD waveform (EPDC_WFTYPE_AAD on PB631)
     if waveform_mode == C.EPDC_WFTYPE_AAD then
-        refarea.flags = C.EPDC_FLAG_USE_AAD
+        fb.update_data.flags = C.EPDC_FLAG_USE_AAD
     elseif waveform_mode == C.WAVEFORM_MODE_A2 or waveform_mode == C.WAVEFORM_MODE_DU then
         -- As well as when requesting a 2bit waveform
         --- @note: Much like on rM, it appears faking 24°C instead of relying on ambient temp leads to lower latency
-        refarea.temp = 24
-        refarea.flags = C.EPDC_FLAG_FORCE_MONOCHROME
+        fb.update_data.temp = 24
+        fb.update_data.flags = C.EPDC_FLAG_FORCE_MONOCHROME
     else
-        refarea.flags = 0
+        fb.update_data.flags = 0
     end
 
-    return mxc_update(fb, C.MXCFB_SEND_UPDATE, refarea, refreshtype, waveform_mode, x, y, w, h)
+    return mxc_update(fb, C.MXCFB_SEND_UPDATE, fb.update_data, is_flashing, waveform_mode, x, y, w, h)
 end
 
-local function refresh_remarkable(fb, refreshtype, waveform_mode, x, y, w, h)
-    local refarea = ffi.new("struct mxcfb_update_data")
+local function refresh_remarkable(fb, is_flashing, waveform_mode, x, y, w, h)
     if waveform_mode == C.WAVEFORM_MODE_DU then
-       refarea.temp = C.TEMP_USE_REMARKABLE
+       fb.update_data.temp = C.TEMP_USE_REMARKABLE
     else
-       refarea.temp = C.TEMP_USE_AMBIENT
+       fb.update_data.temp = C.TEMP_USE_AMBIENT
     end
-    return mxc_update(fb, C.MXCFB_SEND_UPDATE, refarea, refreshtype, waveform_mode, x, y, w, h)
+    return mxc_update(fb, C.MXCFB_SEND_UPDATE, fb.update_data, is_flashing, waveform_mode, x, y, w, h)
 end
 
-local function refresh_sony_prstux(fb, refreshtype, waveform_mode, x, y, w, h)
-    local refarea = ffi.new("struct mxcfb_update_data")
-    refarea.temp = C.TEMP_USE_AMBIENT
-    return mxc_update(fb, C.MXCFB_SEND_UPDATE, refarea, refreshtype, waveform_mode, x, y, w, h)
+local function refresh_sony_prstux(fb, is_flashing, waveform_mode, x, y, w, h)
+    return mxc_update(fb, C.MXCFB_SEND_UPDATE, fb.update_data, is_flashing, waveform_mode, x, y, w, h)
 end
 
-local function refresh_cervantes(fb, refreshtype, waveform_mode, x, y, w, h)
-    local refarea = ffi.new("struct mxcfb_update_data")
-    refarea.temp = C.TEMP_USE_AMBIENT
-
+local function refresh_cervantes(fb, is_flashing, waveform_mode, x, y, w, h)
     if waveform_mode == C.WAVEFORM_MODE_A2 or waveform_mode == C.WAVEFORM_MODE_DU then
-        refarea.flags = C.EPDC_FLAG_FORCE_MONOCHROME
+        fb.update_data.flags = C.EPDC_FLAG_FORCE_MONOCHROME
     else
-        refarea.flags = 0
+        fb.update_data.flags = 0
     end
-    return mxc_update(fb, C.MXCFB_SEND_UPDATE, refarea, refreshtype, waveform_mode, x, y, w, h)
+    return mxc_update(fb, C.MXCFB_SEND_UPDATE, fb.update_data, is_flashing, waveform_mode, x, y, w, h)
 end
 
 
@@ -607,35 +579,32 @@ end
 
 function framebuffer:refreshPartialImp(x, y, w, h, dither)
     self.debug("refresh: partial", x, y, w, h, dither and "w/ HW dithering")
-    self:mech_refresh(C.UPDATE_MODE_PARTIAL, self.waveform_partial, x, y, w, h, dither)
+    self:mech_refresh(false, self.waveform_partial, x, y, w, h, dither)
 end
 
--- NOTE: UPDATE_MODE_FULL doesn't mean full screen or no region, it means ask for a black flash!
---       The only exception to that rule is with REAGL waveform modes, where it will *NOT* flash.
---       That's regardless of whether the REAGL waveform mode is of the "always enforce FULL" variety or not ;).
 function framebuffer:refreshFlashPartialImp(x, y, w, h, dither)
     self.debug("refresh: partial w/ flash", x, y, w, h, dither and "w/ HW dithering")
-    self:mech_refresh(C.UPDATE_MODE_FULL, self.waveform_partial, x, y, w, h, dither)
+    self:mech_refresh(true, self.waveform_partial, x, y, w, h, dither)
 end
 
 function framebuffer:refreshUIImp(x, y, w, h, dither)
     self.debug("refresh: ui-mode", x, y, w, h, dither and "w/ HW dithering")
-    self:mech_refresh(C.UPDATE_MODE_PARTIAL, self.waveform_ui, x, y, w, h, dither)
+    self:mech_refresh(false, self.waveform_ui, x, y, w, h, dither)
 end
 
 function framebuffer:refreshFlashUIImp(x, y, w, h, dither)
     self.debug("refresh: ui-mode w/ flash", x, y, w, h, dither and "w/ HW dithering")
-    self:mech_refresh(C.UPDATE_MODE_FULL, self.waveform_flashui, x, y, w, h, dither)
+    self:mech_refresh(true, self.waveform_flashui, x, y, w, h, dither)
 end
 
 function framebuffer:refreshFullImp(x, y, w, h, dither)
     self.debug("refresh: full", x, y, w, h, dither and "w/ HW dithering")
-    self:mech_refresh(C.UPDATE_MODE_FULL, self.waveform_full, x, y, w, h, dither)
+    self:mech_refresh(true, self.waveform_full, x, y, w, h, dither)
 end
 
 function framebuffer:refreshFastImp(x, y, w, h, dither)
     self.debug("refresh: fast", x, y, w, h, dither and "w/ HW dithering")
-    self:mech_refresh(C.UPDATE_MODE_PARTIAL, self.waveform_fast, x, y, w, h, dither)
+    self:mech_refresh(false, self.waveform_fast, x, y, w, h, dither)
 end
 
 function framebuffer:refreshWaitForLastImp()
@@ -713,6 +682,27 @@ function framebuffer:init()
                 self.waveform_flashnight = C.WAVEFORM_MODE_ZELDA_GCK16
             end
         end
+
+        -- Keep our data structures around, and setup constants
+        if self.mech_refresh == refresh_k51 then
+            self.update_data = ffi.new("struct mxcfb_update_data")
+            -- TEMP_USE_PAPYRUS on Touch/PW1, TEMP_USE_AUTO on PW2 (same value in both cases, 0x1001)
+            self.update_data.temp = C.TEMP_USE_AUTO
+        elseif self.mech_refresh == refresh_zelda then
+            self.update_data = ffi.new("struct mxcfb_update_data_zelda")
+            self.update_data.temp = C.TEMP_USE_AMBIENT
+        elseif self.mech_refresh == refresh_rex then
+            self.update_data = ffi.new("struct mxcfb_update_data_rex")
+            self.update_data.temp = C.TEMP_USE_AMBIENT
+        end
+        if self.mech_wait_update_complete == kindle_pearl_mxc_wait_for_update_complete then
+            self.marker_data = ffi.new("uint32_t[1]")
+        elseif self.mech_wait_update_complete == kindle_carta_mxc_wait_for_update_complete then
+            self.marker_data = ffi.new("struct mxcfb_update_marker_data")
+            -- NOTE: 0 seems to be a fairly safe assumption for "we don't care about collisions".
+            --       On a slightly related note, the EPDC_FLAG_TEST_COLLISION flag is for dry-run collision tests, never set it.
+            self.marker_data.collision_test = 0
+        end
     elseif self.device:isKobo() then
         require("ffi/mxcfb_kobo_h")
 
@@ -760,6 +750,26 @@ function framebuffer:init()
             -- The stub implementation just fakes this ioctl by sleeping for a tiny amount of time instead... :/.
             self.mech_wait_update_complete = stub_mxc_wait_for_update_complete
         end
+
+        -- Keep our data structures around, and setup constants
+        if self.mech_refresh == refresh_kobo then
+            self.update_data = ffi.new("struct mxcfb_update_data_v1_ntx")
+            self.update_data.alt_buffer_data.virt_addr = nil
+            -- TEMP_USE_AMBIENT, not that there was ever any other choice on Kobo...
+            self.update_data.temp = C.TEMP_USE_AMBIENT
+        elseif self.mech_refresh == refresh_kobo_mk7 then
+            self.update_data = ffi.new("struct mxcfb_update_data_v2")
+            -- TEMP_USE_AMBIENT, not that there was ever any other choice on Kobo...
+            self.update_data.temp = C.TEMP_USE_AMBIENT
+        end
+        if self.mech_wait_update_complete == kobo_mxc_wait_for_update_complete then
+            self.marker_data = ffi.new("uint32_t[1]")
+        elseif self.mech_wait_update_complete == kobo_mk7_mxc_wait_for_update_complete then
+            self.marker_data = ffi.new("struct mxcfb_update_marker_data")
+            -- NOTE: 0 seems to be a fairly safe assumption for "we don't care about collisions".
+            --       On a slightly related note, the EPDC_FLAG_TEST_COLLISION flag is for dry-run collision tests, never set it.
+            self.marker_data.collision_test = 0
+        end
     elseif self.device:isPocketBook() then
         require("ffi/mxcfb_pocketbook_h")
 
@@ -786,12 +796,21 @@ function framebuffer:init()
             self.waveform_fast = C.WAVEFORM_MODE_DU
             self.waveform_partial = C.WAVEFORM_MODE_GL16
         end
+
         self.waveform_ui = self.waveform_partial
         self.waveform_flashui = C.WAVEFORM_MODE_GC16
         self.waveform_full = C.WAVEFORM_MODE_GC16
         self.waveform_night = C.WAVEFORM_MODE_GC16
         self.waveform_flashnight = self.waveform_night
         self.night_is_reagl = false
+
+        -- Keep our data structures around, and setup constants
+        self.update_data = ffi.new("struct mxcfb_update_data")
+        -- NOTE: We update temp at runtime on PB
+        self.marker_data = ffi.new("struct mxcfb_update_marker_data")
+        -- NOTE: 0 seems to be a fairly safe assumption for "we don't care about collisions".
+        --       On a slightly related note, the EPDC_FLAG_TEST_COLLISION flag is for dry-run collision tests, never set it.
+        self.marker_data.collision_test = 0
     elseif self.device:isRemarkable() then
         require("ffi/mxcfb_remarkable_h")
 
@@ -806,6 +825,14 @@ function framebuffer:init()
         self.waveform_night = C.WAVEFORM_MODE_GC16
         self.waveform_flashnight = self.waveform_night
         self.night_is_reagl = false
+
+        -- Keep our data structures around
+        self.update_data = ffi.new("struct mxcfb_update_data")
+        -- NOTE: We update temp at runtime on rM
+        self.marker_data = ffi.new("struct mxcfb_update_marker_data")
+        -- NOTE: 0 seems to be a fairly safe assumption for "we don't care about collisions".
+        --       On a slightly related note, the EPDC_FLAG_TEST_COLLISION flag is for dry-run collision tests, never set it.
+        self.marker_data.collision_test = 0
     elseif self.device:isSonyPRSTUX() then
         require("ffi/mxcfb_sony_h")
 
@@ -820,6 +847,11 @@ function framebuffer:init()
         self.waveform_night = C.WAVEFORM_MODE_GC16
         self.waveform_flashnight = self.waveform_night
         self.night_is_reagl = false
+
+        -- Keep our data structures around, and setup constants
+        self.update_data = ffi.new("struct mxcfb_update_data")
+        self.update_data.temp = C.TEMP_USE_AMBIENT
+        self.marker_data = ffi.new("uint32_t[1]")
     elseif self.device:isCervantes() then
         require("ffi/mxcfb_cervantes_h")
 
@@ -834,6 +866,11 @@ function framebuffer:init()
         self.waveform_night = C.WAVEFORM_MODE_GC16
         self.waveform_flashnight = self.waveform_night
         self.night_is_reagl = false
+
+        -- Keep our data structures around, and setup constants
+        self.update_data = ffi.new("struct mxcfb_update_data")
+        self.update_data.temp = C.TEMP_USE_AMBIENT
+        self.marker_data = ffi.new("uint32_t[1]")
     else
         error("unknown device type")
     end
