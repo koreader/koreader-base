@@ -166,11 +166,11 @@ end
 -- Kobo's Mk7 MXCFB_WAIT_FOR_UPDATE_COMPLETE_V3
 local function kobo_mk7_mxc_wait_for_update_complete(fb, marker)
     -- Wait for a specific update to be completed
-    local mk7_update_marker = ffi.new("struct mxcfb_update_marker_data[1]")
-    mk7_update_marker[0].update_marker = marker
+    local mk7_update_marker = ffi.new("struct mxcfb_update_marker_data")
+    mk7_update_marker.update_marker = marker
     -- NOTE: 0 seems to be a fairly safe assumption for "we don't care about collisions".
     --       On a slightly related note, the EPDC_FLAG_TEST_COLLISION flag is for dry-run collision tests, never set it.
-    mk7_update_marker[0].collision_test = 0
+    mk7_update_marker.collision_test = 0
     return C.ioctl(fb.fd, C.MXCFB_WAIT_FOR_UPDATE_COMPLETE_V3, mk7_update_marker)
 end
 
@@ -182,22 +182,22 @@ local function pocketbook_mxc_wait_for_update_complete(fb, marker)
     --       So, account for that by always passing an address to a mxcfb_update_marker_data struct to make the write safe.
     --       Given the layout of said struct (marker first), this thankfully works out just fine...
     --       c.f., https://github.com/koreader/koreader/issues/6000 & https://github.com/koreader/koreader/pull/6669
-    local update_marker = ffi.new("struct mxcfb_update_marker_data[1]")
-    update_marker[0].update_marker = marker
+    local update_marker = ffi.new("struct mxcfb_update_marker_data")
+    update_marker.update_marker = marker
     -- NOTE: 0 seems to be a fairly safe assumption for "we don't care about collisions".
     --       On a slightly related note, the EPDC_FLAG_TEST_COLLISION flag is for dry-run collision tests, never set it.
-    update_marker[0].collision_test = 0
+    update_marker.collision_test = 0
     return C.ioctl(fb.fd, C.MXCFB_WAIT_FOR_UPDATE_COMPLETE_PB, update_marker)
 end
 
 -- Remarkable MXCFB_WAIT_FOR_UPDATE_COMPLETE
 local function remarkable_mxc_wait_for_update_complete(fb, marker)
     -- Wait for a specific update to be completed
-    local update_marker = ffi.new("struct mxcfb_update_marker_data[1]")
-    update_marker[0].update_marker = marker
+    local update_marker = ffi.new("struct mxcfb_update_marker_data")
+    update_marker.update_marker = marker
     -- NOTE: 0 seems to be a fairly safe assumption for "we don't care about collisions".
     --       On a slightly related note, the EPDC_FLAG_TEST_COLLISION flag is for dry-run collision tests, never set it.
-    update_marker[0].collision_test = 0
+    update_marker.collision_test = 0
     return C.ioctl(fb.fd, C.MXCFB_WAIT_FOR_UPDATE_COMPLETE, update_marker)
 end
 
@@ -216,11 +216,11 @@ end
 -- Kindle's MXCFB_WAIT_FOR_UPDATE_COMPLETE == 0xc008462f
 local function kindle_carta_mxc_wait_for_update_complete(fb, marker)
     -- Wait for a specific update to be completed
-    local carta_update_marker = ffi.new("struct mxcfb_update_marker_data[1]")
-    carta_update_marker[0].update_marker = marker
+    local carta_update_marker = ffi.new("struct mxcfb_update_marker_data")
+    carta_update_marker.update_marker = marker
     -- NOTE: 0 seems to be a fairly safe assumption for "we don't care about collisions".
     --       On a slightly related note, the EPDC_FLAG_TEST_COLLISION flag is for dry-run collision tests, never set it.
-    carta_update_marker[0].collision_test = 0
+    carta_update_marker.collision_test = 0
     return C.ioctl(fb.fd, C.MXCFB_WAIT_FOR_UPDATE_COMPLETE, carta_update_marker)
 end
 
@@ -323,28 +323,28 @@ local function mxc_update(fb, update_ioctl, refarea, refresh_type, waveform_mode
         end
     end
 
-    refarea[0].update_mode = refresh_type or C.UPDATE_MODE_PARTIAL
-    refarea[0].waveform_mode = waveform_mode or C.WAVEFORM_MODE_GC16
-    refarea[0].update_region.left = x
-    refarea[0].update_region.top = y
-    refarea[0].update_region.width = w
-    refarea[0].update_region.height = h
+    refarea.update_mode = refresh_type or C.UPDATE_MODE_PARTIAL
+    refarea.waveform_mode = waveform_mode or C.WAVEFORM_MODE_GC16
+    refarea.update_region.left = x
+    refarea.update_region.top = y
+    refarea.update_region.width = w
+    refarea.update_region.height = h
     marker = fb:_get_next_marker()
-    refarea[0].update_marker = marker
+    refarea.update_marker = marker
     -- NOTE: We're not using EPDC_FLAG_USE_ALT_BUFFER
-    refarea[0].alt_buffer_data.phys_addr = 0
-    refarea[0].alt_buffer_data.width = 0
-    refarea[0].alt_buffer_data.height = 0
-    refarea[0].alt_buffer_data.alt_update_region.top = 0
-    refarea[0].alt_buffer_data.alt_update_region.left = 0
-    refarea[0].alt_buffer_data.alt_update_region.width = 0
-    refarea[0].alt_buffer_data.alt_update_region.height = 0
+    refarea.alt_buffer_data.phys_addr = 0
+    refarea.alt_buffer_data.width = 0
+    refarea.alt_buffer_data.height = 0
+    refarea.alt_buffer_data.alt_update_region.top = 0
+    refarea.alt_buffer_data.alt_update_region.left = 0
+    refarea.alt_buffer_data.alt_update_region.width = 0
+    refarea.alt_buffer_data.alt_update_region.height = 0
 
     -- Handle night mode shenanigans
     if fb.night_mode then
         -- We're in nightmode! If the device can do HW inversion safely, do that!
         if fb.device:canHWInvert() then
-            refarea[0].flags = bor(refarea[0].flags, C.EPDC_FLAG_ENABLE_INVERSION)
+            refarea.flags = bor(refarea.flags, C.EPDC_FLAG_ENABLE_INVERSION)
         end
 
         -- Enforce a nightmode-specific mode (usually, GC16), to limit ghosting, where appropriate (i.e., partial & flashes).
@@ -352,14 +352,14 @@ local function mxc_update(fb, update_ioctl, refarea, refresh_type, waveform_mode
         -- that's in the hands of the EPDC. Kindle PW2+ behave sanely, for instance, even when flashing on AUTO or GC16 ;).
         if fb:_isPartialWaveFormMode(waveform_mode) then
             waveform_mode = fb:_getNightWaveFormMode()
-            refarea[0].waveform_mode = waveform_mode
+            refarea.waveform_mode = waveform_mode
             -- And handle devices like the KOA2/PW4, where night is a REAGL waveform that needs to be FULL...
             if fb:_isNightREAGL() then
-                refarea[0].update_mode = C.UPDATE_MODE_FULL
+                refarea.update_mode = C.UPDATE_MODE_FULL
             end
         elseif waveform_mode == C.WAVEFORM_MODE_GC16 or refresh_type == C.UPDATE_MODE_FULL then
             waveform_mode = fb:_getFlashNightWaveFormMode()
-            refarea[0].waveform_mode = waveform_mode
+            refarea.waveform_mode = waveform_mode
         end
     end
 
@@ -367,11 +367,11 @@ local function mxc_update(fb, update_ioctl, refarea, refresh_type, waveform_mode
     -- NOTE: We need to do this here, because we rely on the pre-promotion actual refresh_type in previous heuristics.
     if fb:_isREAGLWaveFormMode(waveform_mode) then
         -- NOTE: REAGL updates always need to be full.
-        refarea[0].update_mode = C.UPDATE_MODE_FULL
+        refarea.update_mode = C.UPDATE_MODE_FULL
     end
 
     -- Recap the actual details of the ioctl, vs. what UIManager asked for...
-    fb.debug(string.format("mxc_update: %ux%u region @ (%u, %u) with marker %u (WFM: %u & UPD: %u)", w, h, x, y, marker, refarea[0].waveform_mode, refarea[0].update_mode))
+    fb.debug(string.format("mxc_update: %ux%u region @ (%u, %u) with marker %u (WFM: %u & UPD: %u)", w, h, x, y, marker, refarea.waveform_mode, refarea.update_mode))
 
     if C.ioctl(fb.fd, update_ioctl, refarea) == -1 then
         local err = ffi.errno()
@@ -387,7 +387,7 @@ local function mxc_update(fb, update_ioctl, refarea, refresh_type, waveform_mode
     --       so we can instead afford to wait for it right now, which *will* block for a while,
     --       but will save us an ioctl before the next refresh, something which, even if it didn't block at all,
     --       would possibly end up being more detrimental to latency/reactivity.
-    if refarea[0].update_mode == C.UPDATE_MODE_FULL
+    if refarea.update_mode == C.UPDATE_MODE_FULL
       and fb.mech_wait_update_complete then
         fb.debug("refresh: wait for completion of marker", marker)
         if fb.mech_wait_update_complete(fb, marker) == -1 then
@@ -400,65 +400,65 @@ local function mxc_update(fb, update_ioctl, refarea, refresh_type, waveform_mode
 end
 
 local function refresh_k51(fb, refreshtype, waveform_mode, x, y, w, h)
-    local refarea = ffi.new("struct mxcfb_update_data[1]")
+    local refarea = ffi.new("struct mxcfb_update_data")
     -- only for Amazon's driver, try to mostly follow what the stock reader does...
     if waveform_mode == C.WAVEFORM_MODE_REAGL then
         -- If we're requesting WAVEFORM_MODE_REAGL, it's REAGL all around!
-        refarea[0].hist_bw_waveform_mode = waveform_mode
-        refarea[0].hist_gray_waveform_mode = waveform_mode
+        refarea.hist_bw_waveform_mode = waveform_mode
+        refarea.hist_gray_waveform_mode = waveform_mode
     else
-        refarea[0].hist_bw_waveform_mode = C.WAVEFORM_MODE_DU
-        refarea[0].hist_gray_waveform_mode = C.WAVEFORM_MODE_GC16_FAST
+        refarea.hist_bw_waveform_mode = C.WAVEFORM_MODE_DU
+        refarea.hist_gray_waveform_mode = C.WAVEFORM_MODE_GC16_FAST
     end
     -- And we're only left with true full updates to special-case.
     if waveform_mode == C.WAVEFORM_MODE_GC16 then
-        refarea[0].hist_gray_waveform_mode = waveform_mode
+        refarea.hist_gray_waveform_mode = waveform_mode
     end
     -- TEMP_USE_PAPYRUS on Touch/PW1, TEMP_USE_AUTO on PW2 (same value in both cases, 0x1001)
-    refarea[0].temp = C.TEMP_USE_AUTO
+    refarea.temp = C.TEMP_USE_AUTO
     -- Enable the appropriate flag when requesting a 2bit update
     if waveform_mode == C.WAVEFORM_MODE_A2 or waveform_mode == C.WAVEFORM_MODE_DU then
-        refarea[0].flags = C.EPDC_FLAG_FORCE_MONOCHROME
+        refarea.flags = C.EPDC_FLAG_FORCE_MONOCHROME
     else
-        refarea[0].flags = 0
+        refarea.flags = 0
     end
 
     return mxc_update(fb, C.MXCFB_SEND_UPDATE, refarea, refreshtype, waveform_mode, x, y, w, h)
 end
 
 local function refresh_zelda(fb, refreshtype, waveform_mode, x, y, w, h, dither)
-    local refarea = ffi.new("struct mxcfb_update_data_zelda[1]")
+    local refarea = ffi.new("struct mxcfb_update_data_zelda")
     -- only for Amazon's driver, try to mostly follow what the stock reader does...
     if waveform_mode == C.WAVEFORM_MODE_ZELDA_GLR16 or waveform_mode == C.WAVEFORM_MODE_ZELDA_GLD16 then
         -- If we're requesting WAVEFORM_MODE_ZELDA_GLR16, it's REAGL all around!
-        refarea[0].hist_bw_waveform_mode = waveform_mode
-        refarea[0].hist_gray_waveform_mode = waveform_mode
+        refarea.hist_bw_waveform_mode = waveform_mode
+        refarea.hist_gray_waveform_mode = waveform_mode
     else
-        refarea[0].hist_bw_waveform_mode = C.WAVEFORM_MODE_DU
-        refarea[0].hist_gray_waveform_mode = C.WAVEFORM_MODE_GC16 -- NOTE: GC16_FAST points to GC16
+        refarea.hist_bw_waveform_mode = C.WAVEFORM_MODE_DU
+        refarea.hist_gray_waveform_mode = C.WAVEFORM_MODE_GC16 -- NOTE: GC16_FAST points to GC16
     end
     -- NOTE: Since there's no longer a distinction between GC16_FAST & GC16, we're done!
-    refarea[0].temp = C.TEMP_USE_AMBIENT
+    refarea.temp = C.TEMP_USE_AMBIENT
     -- Did we request HW dithering on a device where it works?
     if dither and fb.device:canHWDither() then
-        refarea[0].dither_mode = C.EPDC_FLAG_USE_DITHERING_ORDERED
+        refarea.dither_mode = C.EPDC_FLAG_USE_DITHERING_ORDERED
         if waveform_mode == C.WAVEFORM_MODE_ZELDA_A2 or waveform_mode == C.WAVEFORM_MODE_DU then
-            refarea[0].quant_bit = 1;
+            refarea.quant_bit = 1;
         else
-            refarea[0].quant_bit = 7;
+            refarea.quant_bit = 7;
         end
     else
-        refarea[0].dither_mode = C.EPDC_FLAG_USE_DITHERING_PASSTHROUGH
-        refarea[0].quant_bit = 0;
+        refarea.dither_mode = C.EPDC_FLAG_USE_DITHERING_PASSTHROUGH
+        refarea.quant_bit = 0;
     end
     -- Enable the REAGLD algo when requested
     if waveform_mode == C.WAVEFORM_MODE_ZELDA_GLD16 then
-        refarea[0].flags = C.EPDC_FLAG_USE_ZELDA_REGAL
+        refarea.flags = C.EPDC_FLAG_USE_ZELDA_REGAL
     -- Enable the appropriate flag when requesting a 2bit update, provided we're not dithering.
     elseif waveform_mode == C.WAVEFORM_MODE_ZELDA_A2 and not dither then
-        refarea[0].flags = C.EPDC_FLAG_FORCE_MONOCHROME
+        refarea.flags = C.EPDC_FLAG_FORCE_MONOCHROME
     else
-        refarea[0].flags = 0
+        refarea.flags = 0
     end
     -- TODO: There's also the HW-backed NightMode which should be somewhat accessible...
 
@@ -466,38 +466,38 @@ local function refresh_zelda(fb, refreshtype, waveform_mode, x, y, w, h, dither)
 end
 
 local function refresh_rex(fb, refreshtype, waveform_mode, x, y, w, h, dither)
-    local refarea = ffi.new("struct mxcfb_update_data_rex[1]")
+    local refarea = ffi.new("struct mxcfb_update_data_rex")
     -- only for Amazon's driver, try to mostly follow what the stock reader does...
     if waveform_mode == C.WAVEFORM_MODE_ZELDA_GLR16 or waveform_mode == C.WAVEFORM_MODE_ZELDA_GLD16 then
         -- If we're requesting WAVEFORM_MODE_ZELDA_GLR16, it's REAGL all around!
-        refarea[0].hist_bw_waveform_mode = waveform_mode
-        refarea[0].hist_gray_waveform_mode = waveform_mode
+        refarea.hist_bw_waveform_mode = waveform_mode
+        refarea.hist_gray_waveform_mode = waveform_mode
     else
-        refarea[0].hist_bw_waveform_mode = C.WAVEFORM_MODE_DU
-        refarea[0].hist_gray_waveform_mode = C.WAVEFORM_MODE_GC16 -- NOTE: GC16_FAST points to GC16
+        refarea.hist_bw_waveform_mode = C.WAVEFORM_MODE_DU
+        refarea.hist_gray_waveform_mode = C.WAVEFORM_MODE_GC16 -- NOTE: GC16_FAST points to GC16
     end
     -- NOTE: Since there's no longer a distinction between GC16_FAST & GC16, we're done!
-    refarea[0].temp = C.TEMP_USE_AMBIENT
+    refarea.temp = C.TEMP_USE_AMBIENT
     -- Did we request HW dithering on a device where it works?
     if dither and fb.device:canHWDither() then
-        refarea[0].dither_mode = C.EPDC_FLAG_USE_DITHERING_ORDERED
+        refarea.dither_mode = C.EPDC_FLAG_USE_DITHERING_ORDERED
         if waveform_mode == C.WAVEFORM_MODE_ZELDA_A2 or waveform_mode == C.WAVEFORM_MODE_DU then
-            refarea[0].quant_bit = 1;
+            refarea.quant_bit = 1
         else
-            refarea[0].quant_bit = 7;
+            refarea.quant_bit = 7
         end
     else
-        refarea[0].dither_mode = C.EPDC_FLAG_USE_DITHERING_PASSTHROUGH
-        refarea[0].quant_bit = 0;
+        refarea.dither_mode = C.EPDC_FLAG_USE_DITHERING_PASSTHROUGH
+        refarea.quant_bit = 0
     end
     -- Enable the REAGLD algo when requested
     if waveform_mode == C.WAVEFORM_MODE_ZELDA_GLD16 then
-        refarea[0].flags = C.EPDC_FLAG_USE_ZELDA_REGAL
+        refarea.flags = C.EPDC_FLAG_USE_ZELDA_REGAL
     -- Enable the appropriate flag when requesting a 2bit update, provided we're not dithering.
     elseif waveform_mode == C.WAVEFORM_MODE_ZELDA_A2 and not dither then
-        refarea[0].flags = C.EPDC_FLAG_FORCE_MONOCHROME
+        refarea.flags = C.EPDC_FLAG_FORCE_MONOCHROME
     else
-        refarea[0].flags = 0
+        refarea.flags = 0
     end
     -- TODO: There's also the HW-backed NightMode which should be somewhat accessible...
 
@@ -505,39 +505,39 @@ local function refresh_rex(fb, refreshtype, waveform_mode, x, y, w, h, dither)
 end
 
 local function refresh_kobo(fb, refreshtype, waveform_mode, x, y, w, h)
-    local refarea = ffi.new("struct mxcfb_update_data_v1_ntx[1]")
+    local refarea = ffi.new("struct mxcfb_update_data_v1_ntx")
     -- only for Kobo's driver:
-    refarea[0].alt_buffer_data.virt_addr = nil
+    refarea.alt_buffer_data.virt_addr = nil
     -- TEMP_USE_AMBIENT, not that there was ever any other choice on Kobo...
-    refarea[0].temp = C.TEMP_USE_AMBIENT
+    refarea.temp = C.TEMP_USE_AMBIENT
     -- Enable the appropriate flag when requesting a REAGLD waveform (WAVEFORM_MODE_REAGLD on the Aura)
     if waveform_mode == C.WAVEFORM_MODE_REAGLD then
-        refarea[0].flags = C.EPDC_FLAG_USE_AAD
+        refarea.flags = C.EPDC_FLAG_USE_AAD
     elseif waveform_mode == C.WAVEFORM_MODE_A2 or waveform_mode == C.WAVEFORM_MODE_DU then
         -- As well as when requesting a 2bit waveform
-        refarea[0].flags = C.EPDC_FLAG_FORCE_MONOCHROME
+        refarea.flags = C.EPDC_FLAG_FORCE_MONOCHROME
     else
-        refarea[0].flags = 0
+        refarea.flags = 0
     end
 
     return mxc_update(fb, C.MXCFB_SEND_UPDATE_V1_NTX, refarea, refreshtype, waveform_mode, x, y, w, h)
 end
 
 local function refresh_kobo_mk7(fb, refreshtype, waveform_mode, x, y, w, h, dither)
-    local refarea = ffi.new("struct mxcfb_update_data_v2[1]")
+    local refarea = ffi.new("struct mxcfb_update_data_v2")
     -- TEMP_USE_AMBIENT, not that there was ever any other choice on Kobo...
-    refarea[0].temp = C.TEMP_USE_AMBIENT
+    refarea.temp = C.TEMP_USE_AMBIENT
     -- Did we request HW dithering?
     if dither then
-        refarea[0].dither_mode = C.EPDC_FLAG_USE_DITHERING_ORDERED
+        refarea.dither_mode = C.EPDC_FLAG_USE_DITHERING_ORDERED
         if waveform_mode == C.WAVEFORM_MODE_A2 or waveform_mode == C.WAVEFORM_MODE_DU then
-            refarea[0].quant_bit = 1;
+            refarea.quant_bit = 1
         else
-            refarea[0].quant_bit = 7;
+            refarea.quant_bit = 7
         end
     else
-        refarea[0].dither_mode = C.EPDC_FLAG_USE_DITHERING_PASSTHROUGH
-        refarea[0].quant_bit = 0;
+        refarea.dither_mode = C.EPDC_FLAG_USE_DITHERING_PASSTHROUGH
+        refarea.quant_bit = 0
     end
     -- Enable the appropriate flag when requesting a 2bit update, provided we're not dithering.
     -- NOTE: As of right now (FW 4.9.x), WAVEFORM_MODE_GLD16 appears not to be used by Nickel,
@@ -547,9 +547,9 @@ local function refresh_kobo_mk7(fb, refreshtype, waveform_mode, x, y, w, h, dith
     --       because the kernel is buggy (c.f., https://github.com/NiLuJe/FBInk/blob/96a2cd6a93f5184c595c0e53a844fd883adfd75b/fbink.c#L2422-L2440).
     --       For our use-cases, FORCE_MONOCHROME is mostly unnecessary anyway (the effect being fuzzier text instead of blockier text, i.e., choose your poison ;p).
     if waveform_mode == C.WAVEFORM_MODE_A2 and not dither then
-        refarea[0].flags = C.EPDC_FLAG_FORCE_MONOCHROME
+        refarea.flags = C.EPDC_FLAG_FORCE_MONOCHROME
     else
-        refarea[0].flags = 0
+        refarea.flags = 0
     end
 
     return mxc_update(fb, C.MXCFB_SEND_UPDATE_V2, refarea, refreshtype, waveform_mode, x, y, w, h, dither)
@@ -561,48 +561,48 @@ local function refresh_kobo_sunxi(fb, refreshtype, waveform_mode, x, y, w, h)
 end
 
 local function refresh_pocketbook(fb, refreshtype, waveform_mode, x, y, w, h)
-    local refarea = ffi.new("struct mxcfb_update_data[1]")
+    local refarea = ffi.new("struct mxcfb_update_data")
     -- TEMP_USE_AMBIENT, not that there was ever any other choice...
-    refarea[0].temp = C.TEMP_USE_AMBIENT
+    refarea.temp = C.TEMP_USE_AMBIENT
     -- Enable the appropriate flag when requesting a REAGLD waveform (EPDC_WFTYPE_AAD on PB631)
     if waveform_mode == C.EPDC_WFTYPE_AAD then
-        refarea[0].flags = C.EPDC_FLAG_USE_AAD
+        refarea.flags = C.EPDC_FLAG_USE_AAD
     elseif waveform_mode == C.WAVEFORM_MODE_A2 or waveform_mode == C.WAVEFORM_MODE_DU then
         -- As well as when requesting a 2bit waveform
         --- @note: Much like on rM, it appears faking 24°C instead of relying on ambient temp leads to lower latency
-        refarea[0].temp = 24
-        refarea[0].flags = C.EPDC_FLAG_FORCE_MONOCHROME
+        refarea.temp = 24
+        refarea.flags = C.EPDC_FLAG_FORCE_MONOCHROME
     else
-        refarea[0].flags = 0
+        refarea.flags = 0
     end
 
     return mxc_update(fb, C.MXCFB_SEND_UPDATE, refarea, refreshtype, waveform_mode, x, y, w, h)
 end
 
 local function refresh_remarkable(fb, refreshtype, waveform_mode, x, y, w, h)
-    local refarea = ffi.new("struct mxcfb_update_data[1]")
+    local refarea = ffi.new("struct mxcfb_update_data")
     if waveform_mode == C.WAVEFORM_MODE_DU then
-       refarea[0].temp = C.TEMP_USE_REMARKABLE
+       refarea.temp = C.TEMP_USE_REMARKABLE
     else
-       refarea[0].temp = C.TEMP_USE_AMBIENT
+       refarea.temp = C.TEMP_USE_AMBIENT
     end
     return mxc_update(fb, C.MXCFB_SEND_UPDATE, refarea, refreshtype, waveform_mode, x, y, w, h)
 end
 
 local function refresh_sony_prstux(fb, refreshtype, waveform_mode, x, y, w, h)
-    local refarea = ffi.new("struct mxcfb_update_data[1]")
-    refarea[0].temp = C.TEMP_USE_AMBIENT
+    local refarea = ffi.new("struct mxcfb_update_data")
+    refarea.temp = C.TEMP_USE_AMBIENT
     return mxc_update(fb, C.MXCFB_SEND_UPDATE, refarea, refreshtype, waveform_mode, x, y, w, h)
 end
 
 local function refresh_cervantes(fb, refreshtype, waveform_mode, x, y, w, h)
-    local refarea = ffi.new("struct mxcfb_update_data[1]")
-    refarea[0].temp = C.TEMP_USE_AMBIENT
+    local refarea = ffi.new("struct mxcfb_update_data")
+    refarea.temp = C.TEMP_USE_AMBIENT
 
     if waveform_mode == C.WAVEFORM_MODE_A2 or waveform_mode == C.WAVEFORM_MODE_DU then
-        refarea[0].flags = C.EPDC_FLAG_FORCE_MONOCHROME
+        refarea.flags = C.EPDC_FLAG_FORCE_MONOCHROME
     else
-        refarea[0].flags = 0
+        refarea.flags = 0
     end
     return mxc_update(fb, C.MXCFB_SEND_UPDATE, refarea, refreshtype, waveform_mode, x, y, w, h)
 end
