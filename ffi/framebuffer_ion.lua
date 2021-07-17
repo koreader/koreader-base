@@ -5,6 +5,7 @@ local C = ffi.C
 
 require("ffi/linux_fb_h")
 require("ffi/ion_kobo_h")
+require("ffi/sunxi_kobo_h")
 require("ffi/posix_h")
 
 local framebuffer = {
@@ -24,6 +25,8 @@ local framebuffer = {
     ion = nil,
     layer = nil,
 
+    rota = 0, -- MUST be specified by the caller: G2D rota angle for device @ UR.
+
     _finfo = nil,
     _vinfo = nil,
 }
@@ -34,6 +37,110 @@ This is roughly based on framebuffer_linux, and shares some of the logic with it
 
 -- Frontend driver should override this if they need to apply kludges on vinfo/finfo
 function framebuffer:fbinfoOverride(finfo, vinfo)
+end
+
+-- This, on the other hand, is a standard sunxi fixup we apply unconditionally
+local function fbinfo_sunxi_fixup(finfo, vinfo)
+    -- Enforce UR
+    vinfo.rotate = C.FB_ROTATE_UR
+
+    -- Handle Portrait/Landscape swaps
+    local xres = vnfo.xres
+    local yres = vinfo.yres
+    if bit.band(vInfo.rotate, 1) == 1 then
+        -- Odd, Landscape
+        vinfo.xres = math.max(xres, yres)
+        vinfo.yres = math.min(xres, yres)
+    else
+        -- Even, Portrait
+        vinfo.xres = math.min(xres, yres)
+        vinfo.yres = math.max(xres, yres)
+    end
+
+    -- We need a dumb unpadded pitch...
+    vinfo.xres_virtual = vinfo.xres
+    vinfo.yres_virtual = vinfo.yres
+
+    -- Make it grayscale...
+    vinfo.bits_per_pixel = 8
+    vinfo.grayscale      = 1
+
+    -- Stride & buffer size
+    finfo.line_length = vinfo.xres_virtual * bit.rshift(vinfo.bits_per_pixel, 3)
+    finfo.smem_len = finfo.line_length * vinfo.yres_virtual
+end
+
+-- And this to setup the insanity of the sunxi disp2 layer...
+function framebuffer:_setupSunxiLayer(layer)
+    -- disp_layer_info2
+    layer.info.mode        = C.LAYER_MODE_BUFFER
+    layer.info.zorder      = 0
+    -- NOTE: Ignore pixel alpha.
+    --       We actually *do* handle alpha sanely, so,
+    --       if we were actually using an RGB32 fb, we might want to tweak that & pre_multiply...
+    layer.info.alpha_mode  = 1
+    layer.info.alpha_value = 0xFF
+
+    -- disp_rect
+    layer.info.screen_win.x      = 0
+    layer.info.screen_win.y      = 0
+    layer.info.screen_win.width  = self._vinfo.xres
+    layer.info.screen_win.height = self._vinfo.yres
+
+    layer.info.b_trd_out    = false
+    layer.info.out_trd_mode = 0
+
+    -- disp_fb_info2
+    -- NOTE: fd & y8_fd are handled in framebuffer:init().
+    --       And they are *explicitly* set to 0 and not -1 when unused,
+    --       because that's what the disp code (mostly) expects (*sigh*).
+
+    -- disp_rectsz
+    -- NOTE: Used in conjunction with align below.
+    --       We obviously only have a single buffer, because we're not a 3D display...
+    layer.info.fb.size[0].width  = self._vinfo.xres_virtual
+    layer.info.fb.size[0].height = self._vinfo.yres_virtual
+    layer.info.fb.size[1].width  = 0
+    layer.info.fb.size[1].height = 0
+    layer.info.fb.size[2].width  = 0
+    layer.info.fb.size[2].height = 0
+
+    -- NOTE: Used to compute the scanline pitch in bytes (e.g., pitch = ALIGN(scanline_pixels * components, align).
+    --       This is set to 2 by Nickel, but we appear to go by without it just fine with a Y8 fb fd...
+    layer.info.fb.align[0]      = 0
+    layer.info.fb.align[1]      = 0
+    layer.info.fb.align[2]      = 0
+    layer.info.fb.format        = C.DISP_FORMAT_8BIT_GRAY
+    layer.info.fb.color_space   = C.DISP_GBR_F    -- Full-range RGB
+    layer.info.fb.trd_right_fd  = 0
+    layer.info.fb.pre_multiply  = true    -- Because we're using global alpha, I guess?
+    layer.info.fb.crop.x        = 0
+    layer.info.fb.crop.y        = 0
+    -- Don't ask me why this needs to be shifted 32 bits to the left... ¯\_(ツ)_/¯
+    layer.info.fb.crop.width    = bit.lshift(self._vinfo.xres, 32)
+    layer.info.fb.crop.height   = bit.lshift(self._vinfo.yres, 32)
+    layer.info.fb.flags         = C.DISP_BF_NORMAL
+    layer.info.fb.scan          = C.DISP_SCAN_PROGRESSIVE
+    layer.info.fb.eotf          = C.DISP_EOTF_GAMMA22    -- SDR
+    layer.info.fb.depth         = 0
+    layer.info.fb.fbd_en        = 0
+    layer.info.fb.metadata_fd   = 0
+    layer.info.fb.metadata_size = 0
+    layer.info.fb.metadata_flag = 0
+
+    layer.info.id = 0
+
+    -- disp_atw_info
+    layer.info.atw.used   = false
+    layer.info.atw.mode   = 0
+    layer.info.atw.b_row  = 0
+    layer.info.atw.b_col  = 0
+    layer.info.atw.cof_fd = 0
+
+    layer.enable   = true
+    layer.channel  = 0
+    -- NOTE: Nickel uses layer 0, pickel layer 1.
+    layer.layer_id = 1
 end
 
 -- We request PAGE-aligned addresses from ION, *and* PAGE-aligned allocation sizes.
@@ -56,6 +163,8 @@ function framebuffer:init()
     -- ... and we're actually done with the framebuffer device ;).
     C.close(fbfd)
 
+    -- Apply mandatory kludges
+    fbinfo_sunxi_fixup(self._finfo, self._vinfo)
     -- Apply frontend kludges
     self:fbinfoOverride(self._finfo, self._vinfo)
 
@@ -125,8 +234,11 @@ function framebuffer:init()
 
     -- Setup the insanity that is the sunxi disp2 layer...
     self.layer = ffi.new("struct disp_layer_config2")
+    self:_setupSunxiLayer(self.layer)
+
+    -- And update our layer config to use our dmabuff fd, as a grayscale buffer.
     self.layer.info.fb.fd    = 0
-    self.layer.info.fb.y8_fd = sunxiCtx.ion.fd
+    self.layer.info.fb.y8_fd = self.ion.fd
 
     -- And we're cooking with gas!
     self.screen_size = self:getRawSize()
