@@ -2,15 +2,15 @@
 
 #include "ffi-cdecl.h"
 
-cdecl_type(utf8proc_int8_t)
-cdecl_type(utf8proc_uint8_t)
-cdecl_type(utf8proc_int16_t)
-cdecl_type(utf8proc_uint16_t)
-cdecl_type(utf8proc_int32_t)
-cdecl_type(utf8proc_uint32_t)
-cdecl_type(utf8proc_ssize_t)
-cdecl_type(utf8proc_size_t)
-cdecl_type(utf8proc_bool)
+cdecl_c99_type(utf8proc_int8_t, int8_t)
+cdecl_c99_type(utf8proc_uint8_t, uint8_t)
+cdecl_c99_type(utf8proc_int16_t, int16_t)
+cdecl_c99_type(utf8proc_uint16_t, uint16_t)
+cdecl_c99_type(utf8proc_int32_t, int32_t)
+cdecl_c99_type(utf8proc_uint32_t, uint32_t)
+cdecl_c99_type(utf8proc_ssize_t, ssize_t)
+cdecl_c99_type(utf8proc_size_t, size_t)
+cdecl_c99_type(utf8proc_bool, bool)
 
 cdecl_type(utf8proc_option_t)
 
