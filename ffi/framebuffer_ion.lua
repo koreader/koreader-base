@@ -71,7 +71,7 @@ local function fbinfo_sunxi_fixup(finfo, vinfo)
 end
 
 -- And this to setup the insanity of the sunxi disp2 layer...
-function framebuffer:_setupSunxiLayer(layer)
+local function setupSunxiLayer(layer, finfo, vinfo)
     -- disp_layer_info2
     layer.info.mode        = C.LAYER_MODE_BUFFER
     layer.info.zorder      = 0
@@ -84,8 +84,8 @@ function framebuffer:_setupSunxiLayer(layer)
     -- disp_rect
     layer.info.screen_win.x      = 0
     layer.info.screen_win.y      = 0
-    layer.info.screen_win.width  = self._vinfo.xres
-    layer.info.screen_win.height = self._vinfo.yres
+    layer.info.screen_win.width  = vinfo.xres
+    layer.info.screen_win.height = vinfo.yres
 
     layer.info.b_trd_out    = false
     layer.info.out_trd_mode = 0
@@ -98,8 +98,8 @@ function framebuffer:_setupSunxiLayer(layer)
     -- disp_rectsz
     -- NOTE: Used in conjunction with align below.
     --       We obviously only have a single buffer, because we're not a 3D display...
-    layer.info.fb.size[0].width  = self._vinfo.xres_virtual
-    layer.info.fb.size[0].height = self._vinfo.yres_virtual
+    layer.info.fb.size[0].width  = vinfo.xres_virtual
+    layer.info.fb.size[0].height = vinfo.yres_virtual
     layer.info.fb.size[1].width  = 0
     layer.info.fb.size[1].height = 0
     layer.info.fb.size[2].width  = 0
@@ -117,8 +117,8 @@ function framebuffer:_setupSunxiLayer(layer)
     layer.info.fb.crop.x        = 0
     layer.info.fb.crop.y        = 0
     -- Don't ask me why this needs to be shifted 32 bits to the left... ¯\_(ツ)_/¯
-    layer.info.fb.crop.width    = bit.lshift(self._vinfo.xres, 32)
-    layer.info.fb.crop.height   = bit.lshift(self._vinfo.yres, 32)
+    layer.info.fb.crop.width    = bit.lshift(vinfo.xres, 32)
+    layer.info.fb.crop.height   = bit.lshift(vinfo.yres, 32)
     layer.info.fb.flags         = C.DISP_BF_NORMAL
     layer.info.fb.scan          = C.DISP_SCAN_PROGRESSIVE
     layer.info.fb.eotf          = C.DISP_EOTF_GAMMA22    -- SDR
@@ -234,7 +234,7 @@ function framebuffer:init()
 
     -- Setup the insanity that is the sunxi disp2 layer...
     self.layer = ffi.new("struct disp_layer_config2")
-    self:_setupSunxiLayer(self.layer)
+    setupSunxiLayer(self.layer, self._finfo, self._vinfo)
 
     -- And update our layer config to use our dmabuff fd, as a grayscale buffer.
     self.layer.info.fb.fd    = 0
