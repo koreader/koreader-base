@@ -288,8 +288,15 @@ function framebuffer:reinit()
     self.bb = BB.new(self._vinfo.xres, self._vinfo.yres, BB["TYPE_BB"..bpp] or BB["TYPE_BBRGB"..bpp], self.data, self._finfo.line_length, stride_pixels)
     self.fb_rota = self._vinfo.rotate
 
+    self.screen_size = self:getRawSize()
+    self.bb:fill(BB.COLOR_WHITE)
+
     -- Update the G2D rotation angle
     self:_computeG2DAngle()
+
+    -- Do a full-screen refresh to avoid layer blending glitches in case the first update after the rota isn't full-screen...
+    -- (e.g., CRe loading bar)
+    self:refreshUI()
 end
 
 -- The actual HW fb state is meaningless, just set/get our own internal state
