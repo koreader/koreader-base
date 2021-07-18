@@ -290,7 +290,6 @@ function framebuffer:init()
 
         -- Keep our data structures around
         self.marker_data = ffi.new("uint32_t[1]")
-        self.g2d_rota = ffi.new("uint32_t[1]", self.rota) -- From framebuffer_ion
         self.area = ffi.new("struct area_info")
         self.update = ffi.new("sunxi_disp_eink_update2")
         self.ioc_cmd = ffi.new("sunxi_disp_eink_ioctl")
@@ -300,7 +299,7 @@ function framebuffer:init()
         self.update.layer_num = 1
         self.update.lyr_cfg2 = self.layer  -- From framebuffer_ion
         self.update.frame_id = self.marker_data
-        self.update.rotate = self.g2d_rota
+        self.update.rotate = self.g2d_rota  -- From framebuffer_ion
         self.update.cfa_use = 0
     else
         error("unknown device type")

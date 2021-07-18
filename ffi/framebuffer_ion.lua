@@ -17,15 +17,16 @@ local framebuffer = {
 
     fb_size = nil,
     fb_bpp = 8,
-    fb_rota = 0,
+    fb_rota = C.FB_ROTATE_UR,
 
     data = nil,
 
     alloc_size = nil,
     ion = nil,
     layer = nil,
+    g2d_rota = nil,
 
-    rota = 0, -- MUST be specified by the caller: G2D rota angle for device @ UR.
+    boot_rota = nil, -- MUST be specified by the caller: "native" panel rotation.
 
     _finfo = nil,
     _vinfo = nil,
@@ -41,9 +42,6 @@ end
 
 -- This, on the other hand, is a standard sunxi fixup we apply unconditionally
 local function fbinfo_sunxi_fixup(finfo, vinfo)
-    -- Enforce UR
-    vinfo.rotate = C.FB_ROTATE_UR
-
     -- Handle Portrait/Landscape swaps
     local xres = vinfo.xres
     local yres = vinfo.yres
@@ -144,6 +142,12 @@ local function setupSunxiLayer(layer, finfo, vinfo)
     layer.layer_id = 1
 end
 
+-- Compute the G2D rotation angle for the current rotation
+function framebuffer:_computeG2DAngle()
+    -- c.f., FBInk's kobo_sunxi_fb_fixup
+    self.g2d_rota[0] = bit.bxor(self._vinfo.rotate, self.boot_rota) * 90
+end
+
 -- We request PAGE-aligned addresses from ION, *and* PAGE-aligned allocation sizes.
 local function PAGE_ALIGN(size)
     return bit.band(size + 4095, -4096)
@@ -163,6 +167,9 @@ function framebuffer:init()
 
     -- ... and we're actually done with the framebuffer device ;).
     C.close(fbfd)
+
+    -- fbdepth ensures we always start UR
+    self._vinfo.rotate = C.FB_ROTATE_UR
 
     -- Apply mandatory kludges
     fbinfo_sunxi_fixup(self._finfo, self._vinfo)
@@ -223,6 +230,7 @@ function framebuffer:init()
     assert(tonumber(ffi.cast("intptr_t", self.data)) ~= C.MAP_FAILED, "can not mmap() ION buffer")
 
     -- And point our screen BB at it
+    -- @warning Don't ever cache self.bb, as we may replace it at any time later due to rotation.
     self.bb = BB.new(self._vinfo.xres, self._vinfo.yres, BB["TYPE_BB"..bpp] or BB["TYPE_BBRGB"..bpp], self.data, self._finfo.line_length, stride_pixels)
 
     -- Make a few vInfo fields easier to access
@@ -246,6 +254,66 @@ function framebuffer:init()
     self.bb:fill(BB.COLOR_WHITE)
 
     framebuffer.parent.init(self)
+
+    -- fbdepth ensures we always start UR
+    self.native_rotation_mode = C.FB_ROTATE_UR
+    self.cur_rotation_mode = C.FB_ROTATE_UR
+
+    -- Setup the G2D rotation angle
+    self.g2d_rota = ffi.new("uint32_t[1]")
+    self:_computeG2DAngle()
+end
+
+function framebuffer:reinit()
+    -- The actual ION buffer doesn't need to change, as its size won't, since it's unpadded.
+    -- Which means we just need to update the Screen's BB layout ;).
+    if self.bb ~= nil then
+        self.bb:free()
+        self.bb = nil
+    end
+
+    -- Reapply the fbinfo kludges, as they do depend on layout
+    fbinfo_sunxi_fixup(self._finfo, self._vinfo)
+    self:fbinfoOverride(self._finfo, self._vinfo)
+
+    -- Update the layer's layout, too
+    setupSunxiLayer(self.layer, self._finfo, self._vinfo)
+
+    -- And recreate our Screen BB in the new layout
+    local bpp = self._vinfo.bits_per_pixel
+    local stride_pixels = self._finfo.line_length * 8
+    assert(stride_pixels % bpp == 0, "line_length doesn't end at pixel boundary")
+    stride_pixels = stride_pixels / bpp
+
+    self.bb = BB.new(self._vinfo.xres, self._vinfo.yres, BB["TYPE_BB"..bpp] or BB["TYPE_BBRGB"..bpp], self.data, self._finfo.line_length, stride_pixels)
+    self.fb_rota = self._vinfo.rotate
+
+    -- Update the G2D rotation angle
+    self:_computeG2DAngle()
+end
+
+-- The actual HW fb state is meaningless, just set/get our own internal state
+function framebuffer:setHWRotation(mode)
+    self._vinfo.rotate = mode
+end
+
+function framebuffer:getHWRotation()
+    return self._vinfo.rotate
+end
+
+-- Handle "HW" rotation, by simply recreating the buffer in the desired layout,
+-- and updating the G2D rota angle.
+function framebuffer:setRotationMode(mode)
+    self.debug("setRotationMode:", mode, "old:", self.cur_rotation_mode)
+    if mode ~= self.cur_rotation_mode then
+        -- Requested rotation has changed. Reinit our Screen BB to follow the new layout.
+        self.cur_rotation_mode = mode
+        self:setHWRotation(mode)
+        -- Remember the screen bb's invert flag, too
+        local inverse = self.bb:getInverse()
+        self:reinit()
+        self.bb:setInverse(inverse)
+    end
 end
 
 function framebuffer:close()
