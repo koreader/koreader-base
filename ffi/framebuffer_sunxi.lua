@@ -114,6 +114,16 @@ end
 -- NOTE: Heavily based on framebuffer_mxcfb's mxc_update ;)
 local function disp_update(fb, ioc_cmd, ioc_data, is_flashing, waveform_mode, waveform_info, x, y, w, h)
     local bb = fb.full_bb or fb.bb
+
+    -- If we're fresh off a rotation, make it full-screen to avoid layer blending glitches...
+    if fb._just_rotated then
+        x = 0
+        y = 0
+        w = nil
+        h = nil
+        fb._just_rotated = nil
+    end
+
     w, x = BB.checkBounds(w or bb:getWidth(), x or 0, 0, bb:getWidth(), 0xFFFF)
     h, y = BB.checkBounds(h or bb:getHeight(), y or 0, 0, bb:getHeight(), 0xFFFF)
     x, y, w, h = bb:getPhysicalRect(x, y, w, h)

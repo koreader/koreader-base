@@ -294,9 +294,9 @@ function framebuffer:reinit()
     -- Update the G2D rotation angle
     self:_computeG2DAngle()
 
-    -- Do a full-screen refresh to avoid layer blending glitches in case the first update after the rota isn't full-screen...
+    -- Ask framebuffer_sunxi to make sure the next update is full-screen, in order to avoid layer blending glitches...
     -- (e.g., CRe loading bar)
-    self:refreshUI()
+    self._just_rotated = true
 end
 
 -- The actual HW fb state is meaningless, just set/get our own internal state
