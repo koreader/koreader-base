@@ -302,6 +302,9 @@ end
 -- The actual HW fb state is meaningless, just set/get our own internal state
 function framebuffer:setHWRotation(mode)
     self._vinfo.rotate = mode
+
+    -- Tell FBInk about it, so the OTA prints follow suit
+    C.setenv("FBINK_FORCE_ROTA", tostring(mode), 1)
 end
 
 function framebuffer:getHWRotation()
