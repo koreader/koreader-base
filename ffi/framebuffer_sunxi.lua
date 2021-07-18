@@ -8,6 +8,7 @@ require("ffi/posix_h")
 
 local band = bit.band
 local bor = bit.bor
+local bnot = bit.bnot
 
 local framebuffer = {
     -- pass device object here for proper model detection:
@@ -156,8 +157,10 @@ local function disp_update(fb, ioc_cmd, ioc_data, is_flashing, waveform_mode, wa
         -- Enforce a nightmode-specific mode to limit ghosting, where appropriate (i.e., partial & flashes).
         if fb:_isPartialWaveFormMode(waveform_mode) then
             waveform_mode = fb:_getNightWaveFormMode()
+            waveform_info = band(waveform_info, bnot(C.EINK_REGAL_MODE))
         elseif waveform_mode == C.EINK_GC16_MODE or is_flashing then
             waveform_mode = fb:_getFlashNightWaveFormMode()
+            waveform_info = band(waveform_info, bnot(C.EINK_REGAL_MODE))
         end
     end
 
