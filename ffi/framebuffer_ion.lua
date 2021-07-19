@@ -145,7 +145,7 @@ end
 -- Compute the G2D rotation angle for the current rotation
 function framebuffer:_computeG2DAngle()
     -- c.f., FBInk's kobo_sunxi_fb_fixup
-    self.g2d_rota[0] = bit.bxor(self._vinfo.rotate, self.boot_rota) * 90
+    self.g2d_rota[0] = bit.band(self.boot_rota - self._vinfo.rotate, 3) * 90
 end
 
 -- We request PAGE-aligned addresses from ION, *and* PAGE-aligned allocation sizes.
