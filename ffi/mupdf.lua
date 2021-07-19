@@ -671,13 +671,23 @@ function page_mt.__index:addMarkupAnnotation(points, n, type)
         return
     end
 
-    local annot = self.ctx:pdf_create_annot(ffi.cast("pdf_page*", self.page), type)
-    for i=0, n-1 do
-        self.ctx:pdf_add_annot_quad_point(annot, points[i])
+    local doc = M.pdf_specifics(context(), self.doc.doc)
+    if doc == nil then merror("could not get pdf_specifics") end
+
+    local annot = W.mupdf_pdf_create_annot(context(), ffi.cast("pdf_page*", self.page), type)
+    if annot == nil then merror("could not create annotation") end
+
+    local ok = W.mupdf_pdf_set_annot_quad_points(context(), annot, n, points)
+    if ok == nil then merror("could not set markup annot quadpoints") end
+
+    ok = W.mupdf_pdf_set_markup_appearance(context(), doc, annot, color, alpha, line_thickness, line_height)
+    if ok == nil then merror("could not set markup appearance") end
+
+    -- Fetch back MuPDF's stored coordinates of all quadpoints, as they may have been modified/rounded
+    -- (we need the exact ones that were saved if we want to be able to find them for deletion/update)
+    for i = 0, n-1 do
+        W.mupdf_pdf_annot_quad_point(context(), annot, i, points+i*8)
     end
-    self.ctx:pdf_set_annot_color(annot, 3, color)
-    self.ctx:pdf_set_annot_opacity(annot, alpha)
-    self.ctx:pdf_update_appearance(annot)
 end
 
 function page_mt.__index:deleteMarkupAnnotation(annot)
@@ -698,8 +708,12 @@ function page_mt.__index:getMarkupAnnotation(points, n)
             for i = 0, n-1 do
                 W.mupdf_pdf_annot_quad_point(context(), annot, i, quadpoint)
                 for k = 0, 7 do
-                    if points[i*8 + k] ~= quadpoint[k] then match = false end
+                    if points[i*8 + k] ~= quadpoint[k] then
+                        match = false
+                        break
+                    end
                 end
+                if not match then break end
             end
             if match then return annot end
         end
