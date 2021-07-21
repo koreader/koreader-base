@@ -268,6 +268,7 @@ function framebuffer:reinit()
     -- The actual ION buffer doesn't need to change, as its size won't, since it's unpadded.
     -- Which means we just need to update the Screen's BB layout ;).
     if self.bb ~= nil then
+        -- Highly pedantic: it's mmap-backed, so this is a NOP.
         self.bb:free()
         self.bb = nil
     end
