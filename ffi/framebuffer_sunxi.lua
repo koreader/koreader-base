@@ -190,14 +190,9 @@ local function disp_update(fb, ioc_cmd, ioc_data, is_flashing, waveform_mode, wa
     end
 
     -- NOTE: We want to fence off FULL updates.
-    --       Mainly to mimic stock readers, but also because there's a good reason to do it:
-    --       forgoing that can yield slightly "jittery" looking screens when multiple flashes are shown on screen and not in sync.
-    --       To achieve that, we could simply store this marker, and wait for it on the *next* refresh,
-    --       ensuring the wait would potentially be shorter, or even null.
-    --       In practice, we won't actually be busy for a bit after most (if not all) flashing refresh calls,
-    --       so we can instead afford to wait for it right now, which *will* block for a while,
-    --       but will save us an ioctl before the next refresh, something which, even if it didn't block at all,
-    --       would possibly end up being more detrimental to latency/reactivity.
+    --       c.f., framebuffer_mxcfb for more details.
+    --       On sunxi, the actual update calls will block for sensibly longer than on mxcfb,
+    --       so these are likely to always return immediately.
     if is_flashing and fb.mech_wait_update_complete then
         marker = fb.marker_data[0]
         fb.debug("refresh: wait for completion of marker", marker)
