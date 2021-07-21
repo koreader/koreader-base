@@ -93,7 +93,7 @@ function framebuffer:reinit()
     self.fb_size = finfo.line_length * vinfo.yres
 
     local bpp = vinfo.bits_per_pixel
-    local stride_pixels = finfo.line_length * 8
+    local stride_pixels = bit.lshift(finfo.line_length, 3)
     assert(stride_pixels % bpp == 0, "line_length doesn't end at pixel boundary")
     stride_pixels = stride_pixels / bpp
 
