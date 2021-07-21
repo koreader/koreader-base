@@ -625,8 +625,6 @@ end
 function framebuffer:init()
     framebuffer.parent.init(self)
 
-    self.refresh_list = {}
-
     if self.device:isKindle() then
         require("ffi/mxcfb_kindle_h")
 

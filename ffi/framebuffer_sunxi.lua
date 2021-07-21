@@ -265,8 +265,6 @@ end
 function framebuffer:init()
     framebuffer.parent.init(self)
 
-    self.refresh_list = {}
-
     if self.device:isKobo() then
         require("ffi/sunxi_kobo_h")
 
