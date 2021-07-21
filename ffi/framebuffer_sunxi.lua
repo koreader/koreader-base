@@ -128,10 +128,7 @@ local function disp_update(fb, ioc_cmd, ioc_data, is_flashing, waveform_mode, wa
     h, y = BB.checkBounds(h or bb:getHeight(), y or 0, 0, bb:getHeight(), 0xFFFF)
     x, y, w, h = bb:getPhysicalRect(x, y, w, h)
 
-    -- NOTE: Discard empty or bogus regions, as they might murder some kernels with extreme prejudice...
-    -- (c.f., https://github.com/NiLuJe/FBInk/blob/5449a03d3be28823991b425cd20aa048d2d71845/fbink.c#L1755).
-    -- We have practical experience of that with 1x1 pixel blocks on Kindle PW2 and KV,
-    -- c.f., koreader/koreader#1299 and koreader/koreader#1486
+    -- Discard empty or bogus regions
     if w <= 1 or h <= 1 then
         fb.debug("discarding bogus refresh region, w:", w, "h:", h)
         return
