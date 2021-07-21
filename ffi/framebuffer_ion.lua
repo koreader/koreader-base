@@ -208,6 +208,7 @@ function framebuffer:init()
 
     -- And now we can start dealing with ION proper...
     self.ion = ffi.new("struct ion_fd_data")
+    self.ion.fd = -1
 
     -- Start by registering as an ION client
     self.ion_fd = C.open(self.ion_node, bit.bor(C.O_RDONLY, C.O_NONBLOCK, C.O_CLOEXEC))
