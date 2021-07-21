@@ -239,7 +239,7 @@ function framebuffer:init()
 
     -- And finally, register as a DISP client, too
     self.fd = C.open(self.disp_node, bit.bor(C.O_RDONLY, C.O_NONBLOCK, C.O_CLOEXEC))
-    assert(self.fd ~= -1, "cannot open ION handle")
+    assert(self.fd ~= -1, "cannot open DISP handle")
 
     -- Setup the insanity that is the sunxi disp2 layer...
     self.layer = ffi.new("struct disp_layer_config2")
