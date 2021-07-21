@@ -168,9 +168,6 @@ function framebuffer:init()
     -- ... and we're actually done with the framebuffer device ;).
     C.close(fbfd)
 
-    -- fbdepth ensures we always start UR
-    self._vinfo.rotate = C.FB_ROTATE_UR
-
     -- Apply mandatory kludges
     fbinfo_sunxi_fixup(self._finfo, self._vinfo)
     -- Apply frontend kludges
