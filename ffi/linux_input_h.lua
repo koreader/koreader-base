@@ -25,6 +25,7 @@ static const int BTN_TOOL_FINGER = 325;
 static const int BTN_TOOL_RUBBER = 321;
 static const int BTN_TOUCH = 330;
 static const int BTN_STYLUS = 331;
+static const int BTN_STYLUS2 = 332;
 static const int ABS_X = 0;
 static const int ABS_Y = 1;
 static const int ABS_PRESSURE = 24;

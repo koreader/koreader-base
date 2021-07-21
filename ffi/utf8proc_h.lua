@@ -1,14 +1,14 @@
 local ffi = require("ffi")
 
 ffi.cdef[[
-typedef signed char utf8proc_int8_t;
-typedef unsigned char utf8proc_uint8_t;
-typedef short int utf8proc_int16_t;
-typedef short unsigned int utf8proc_uint16_t;
-typedef int utf8proc_int32_t;
-typedef unsigned int utf8proc_uint32_t;
-typedef long int utf8proc_ssize_t;
-typedef long unsigned int utf8proc_size_t;
+typedef int8_t utf8proc_int8_t;
+typedef uint8_t utf8proc_uint8_t;
+typedef int16_t utf8proc_int16_t;
+typedef uint16_t utf8proc_uint16_t;
+typedef int32_t utf8proc_int32_t;
+typedef uint32_t utf8proc_uint32_t;
+typedef ssize_t utf8proc_ssize_t;
+typedef size_t utf8proc_size_t;
 typedef bool utf8proc_bool;
 typedef enum {
   UTF8PROC_NULLTERM = 1,

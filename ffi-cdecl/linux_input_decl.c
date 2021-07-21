@@ -31,6 +31,7 @@ cdecl_const(BTN_TOOL_FINGER)
 cdecl_const(BTN_TOOL_RUBBER)
 cdecl_const(BTN_TOUCH)
 cdecl_const(BTN_STYLUS)
+cdecl_const(BTN_STYLUS2)
 
 cdecl_const(ABS_X)
 cdecl_const(ABS_Y)
