@@ -64,7 +64,7 @@ local function fbinfo_sunxi_fixup(finfo, vinfo)
     vinfo.grayscale      = 1
 
     -- Stride & buffer size
-    finfo.line_length = vinfo.xres_virtual * bit.rshift(vinfo.bits_per_pixel, 3)
+    finfo.line_length = bit.rshift(vinfo.xres_virtual * vinfo.bits_per_pixel, 3)
     finfo.smem_len = finfo.line_length * vinfo.yres_virtual
 end
 
