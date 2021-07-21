@@ -285,7 +285,7 @@ function framebuffer:reinit()
 
     -- And recreate our Screen BB in the new layout
     local bpp = self._vinfo.bits_per_pixel
-    local stride_pixels = self._finfo.line_length * 8
+    local stride_pixels = bit.lshift(self._finfo.line_length, 3)
     assert(stride_pixels % bpp == 0, "line_length doesn't end at pixel boundary")
     stride_pixels = stride_pixels / bpp
 
