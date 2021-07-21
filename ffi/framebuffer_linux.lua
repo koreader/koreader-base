@@ -172,7 +172,7 @@ function framebuffer:setRotationMode(mode)
         return framebuffer.parent.setRotationMode(self, mode)
     end
     assert(not self._forced_rotation, "do not flip rotation modes mid-paint")
-    self.debug("setRotationMode:", mode, "old:",self.cur_rotation_mode)
+    self.debug("setRotationMode:", mode, "old:", self.cur_rotation_mode)
     if mode ~= self.cur_rotation_mode then
         -- Requested rotation has changed. Set the HW to it and then reinit FB to update dimensions, line width,
         -- as well as prod the driver via new mmap() as some do tie down rotation modes to each mapping.
