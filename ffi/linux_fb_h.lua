@@ -5,6 +5,10 @@ static const int FBIOGET_FSCREENINFO = 17922;
 static const int FBIOGET_VSCREENINFO = 17920;
 static const int FBIOPUT_VSCREENINFO = 17921;
 static const int FB_TYPE_PACKED_PIXELS = 0;
+static const int FB_ROTATE_UR = 0;
+static const int FB_ROTATE_CW = 1;
+static const int FB_ROTATE_UD = 2;
+static const int FB_ROTATE_CCW = 3;
 struct fb_bitfield {
   unsigned int offset;
   unsigned int length;

@@ -93,7 +93,7 @@ function framebuffer:reinit()
     self.fb_size = finfo.line_length * vinfo.yres
 
     local bpp = vinfo.bits_per_pixel
-    local stride_pixels = finfo.line_length * 8
+    local stride_pixels = bit.lshift(finfo.line_length, 3)
     assert(stride_pixels % bpp == 0, "line_length doesn't end at pixel boundary")
     stride_pixels = stride_pixels / bpp
 
@@ -115,8 +115,6 @@ function framebuffer:reinit()
           width_mm = vinfo.width,
           height_mm = vinfo.height,
     })
-
-    assert(vinfo.xres > 0 and vinfo.yres > 0, "invalid framebuffer resolution")
 
     -- Make sure we never try to map a larger memory region than the fb reports
     -- @warning Feel free to remove this check if it burns. There are chinese things out there that even happily report smem as 0x1000 and such.
@@ -174,7 +172,7 @@ function framebuffer:setRotationMode(mode)
         return framebuffer.parent.setRotationMode(self, mode)
     end
     assert(not self._forced_rotation, "do not flip rotation modes mid-paint")
-    self.debug("setRotationMode:", mode, "old:",self.cur_rotation_mode)
+    self.debug("setRotationMode:", mode, "old:", self.cur_rotation_mode)
     if mode ~= self.cur_rotation_mode then
         -- Requested rotation has changed. Set the HW to it and then reinit FB to update dimensions, line width,
         -- as well as prod the driver via new mmap() as some do tie down rotation modes to each mapping.

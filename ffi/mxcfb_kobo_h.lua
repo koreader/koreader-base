@@ -3,15 +3,6 @@ local ffi = require("ffi")
 ffi.cdef[[
 static const int UPDATE_MODE_PARTIAL = 0;
 static const int UPDATE_MODE_FULL = 1;
-static const int NTX_WFM_MODE_INIT = 0;
-static const int NTX_WFM_MODE_DU = 1;
-static const int NTX_WFM_MODE_GC16 = 2;
-static const int NTX_WFM_MODE_GC4 = 3;
-static const int NTX_WFM_MODE_A2 = 4;
-static const int NTX_WFM_MODE_GL16 = 5;
-static const int NTX_WFM_MODE_GLR16 = 6;
-static const int NTX_WFM_MODE_GLD16 = 7;
-static const int NTX_WFM_MODE_TOTAL = 8;
 static const int WAVEFORM_MODE_INIT = 0;
 static const int WAVEFORM_MODE_DU = 1;
 static const int WAVEFORM_MODE_GC16 = 2;
@@ -21,9 +12,6 @@ static const int WAVEFORM_MODE_GL16 = 5;
 static const int WAVEFORM_MODE_REAGL = 6;
 static const int WAVEFORM_MODE_REAGLD = 7;
 static const int WAVEFORM_MODE_AUTO = 257;
-static const int WAVEFORM_MODE_GLR32 = 6;
-static const int WAVEFORM_MODE_GLR16 = 6;
-static const int WAVEFORM_MODE_GLD16 = 7;
 static const int TEMP_USE_AMBIENT = 4096;
 static const int EPDC_FLAG_ENABLE_INVERSION = 1;
 static const int EPDC_FLAG_FORCE_MONOCHROME = 2;
@@ -45,47 +33,47 @@ enum mxcfb_dithering_mode {
   EPDC_FLAG_USE_DITHERING_MAX = 5,
 };
 struct mxcfb_rect {
-  unsigned int top;
-  unsigned int left;
-  unsigned int width;
-  unsigned int height;
+  uint32_t top;
+  uint32_t left;
+  uint32_t width;
+  uint32_t height;
 };
 struct mxcfb_alt_buffer_data_ntx {
   void *virt_addr;
-  unsigned int phys_addr;
-  unsigned int width;
-  unsigned int height;
+  uint32_t phys_addr;
+  uint32_t width;
+  uint32_t height;
   struct mxcfb_rect alt_update_region;
 };
 struct mxcfb_update_data_v1_ntx {
   struct mxcfb_rect update_region;
-  unsigned int waveform_mode;
-  unsigned int update_mode;
-  unsigned int update_marker;
+  uint32_t waveform_mode;
+  uint32_t update_mode;
+  uint32_t update_marker;
   int temp;
   unsigned int flags;
   struct mxcfb_alt_buffer_data_ntx alt_buffer_data;
 };
 struct mxcfb_alt_buffer_data {
-  unsigned int phys_addr;
-  unsigned int width;
-  unsigned int height;
+  uint32_t phys_addr;
+  uint32_t width;
+  uint32_t height;
   struct mxcfb_rect alt_update_region;
 };
 struct mxcfb_update_data_v1 {
   struct mxcfb_rect update_region;
-  unsigned int waveform_mode;
-  unsigned int update_mode;
-  unsigned int update_marker;
+  uint32_t waveform_mode;
+  uint32_t update_mode;
+  uint32_t update_marker;
   int temp;
   unsigned int flags;
   struct mxcfb_alt_buffer_data alt_buffer_data;
 };
 struct mxcfb_update_data_v2 {
   struct mxcfb_rect update_region;
-  unsigned int waveform_mode;
-  unsigned int update_mode;
-  unsigned int update_marker;
+  uint32_t waveform_mode;
+  uint32_t update_mode;
+  uint32_t update_marker;
   int temp;
   unsigned int flags;
   int dither_mode;
@@ -93,8 +81,8 @@ struct mxcfb_update_data_v2 {
   struct mxcfb_alt_buffer_data alt_buffer_data;
 };
 struct mxcfb_update_marker_data {
-  unsigned int update_marker;
-  unsigned int collision_test;
+  uint32_t update_marker;
+  uint32_t collision_test;
 };
 static const int MXCFB_SEND_UPDATE_V1_NTX = 1078216238;
 static const int MXCFB_WAIT_FOR_UPDATE_COMPLETE_V1 = 1074021935;
