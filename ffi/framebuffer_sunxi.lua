@@ -268,7 +268,6 @@ function framebuffer:init()
     if self.device:isKobo() then
         require("ffi/sunxi_kobo_h")
 
-        -- No longer mxcfb...
         self.mech_refresh = refresh_kobo_sunxi
         self.mech_wait_update_complete = kobo_sunxi_wait_for_update_complete
 
