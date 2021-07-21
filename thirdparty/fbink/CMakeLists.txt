@@ -55,7 +55,7 @@ endif()
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
     https://github.com/NiLuJe/FBInk.git
-    f495e6f992f6bb609f89c4167e0bb82621f26230
+    0540e7d9008d961d5c9ca5fa705e288d1c286dfd
     ${SOURCE_DIR}
 )
 
