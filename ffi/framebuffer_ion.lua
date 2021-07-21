@@ -249,6 +249,10 @@ function framebuffer:init()
     self.layer.info.fb.fd    = 0
     self.layer.info.fb.y8_fd = self.ion.fd
 
+    -- Setup the G2D rotation angle
+    self.g2d_rota = ffi.new("uint32_t[1]")
+    self:_computeG2DAngle()
+
     -- And we're cooking with gas!
     self.screen_size = self:getRawSize()
     self.bb:fill(BB.COLOR_WHITE)
@@ -258,10 +262,6 @@ function framebuffer:init()
     -- fbdepth ensures we always start UR
     self.native_rotation_mode = C.FB_ROTATE_UR
     self.cur_rotation_mode = C.FB_ROTATE_UR
-
-    -- Setup the G2D rotation angle
-    self.g2d_rota = ffi.new("uint32_t[1]")
-    self:_computeG2DAngle()
 end
 
 function framebuffer:reinit()
@@ -279,6 +279,9 @@ function framebuffer:reinit()
     -- Update the layer's layout, too
     setupSunxiLayer(self.layer, self._finfo, self._vinfo)
 
+    -- Update the G2D rotation angle
+    self:_computeG2DAngle()
+
     -- And recreate our Screen BB in the new layout
     local bpp = self._vinfo.bits_per_pixel
     local stride_pixels = self._finfo.line_length * 8
@@ -290,9 +293,6 @@ function framebuffer:reinit()
 
     self.screen_size = self:getRawSize()
     self.bb:fill(BB.COLOR_WHITE)
-
-    -- Update the G2D rotation angle
-    self:_computeG2DAngle()
 
     -- Ask framebuffer_sunxi to make sure the next update is full-screen, in order to avoid layer blending glitches...
     -- (e.g., CRe loading bar)
