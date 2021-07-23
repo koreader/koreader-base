@@ -14,9 +14,9 @@ require("ffi/utf8proc_h")
 
 local libutf8proc
 if ffi.os == "Windows" then
-    libutf8proc = ffi.load("libs/libutf8proc.dll")
+    libutf8proc = ffi.load("libs/libutf8proc-2.dll")
 elseif ffi.os == "OSX" then
-    libutf8proc = ffi.load("libs/libutf8proc.dylib")
+    libutf8proc = ffi.load("libs/libutf8proc.2.dylib")
 else
     libutf8proc = ffi.load("libs/libutf8proc.so.2")
 end
