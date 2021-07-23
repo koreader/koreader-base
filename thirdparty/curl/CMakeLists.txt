@@ -18,7 +18,7 @@ ep_get_binary_dir(BINARY_DIR)
 
 # NOTE: Because InkView is the worst, we rename our own cURL build on PocketBook.... (#5861)
 if(DEFINED ENV{POCKETBOOK})
-    set(PATCH_CMD0 "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/curl-7.68.0-pb-rename.patch")
+    set(PATCH_CMD0 "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/curl-7.78.0-pb-rename.patch")
 endif()
 
 set(PATCH_CMD1 sh -c "${ISED} '/LD_LIBRARY_PATH=/d' ${SOURCE_DIR}/configure.ac")
