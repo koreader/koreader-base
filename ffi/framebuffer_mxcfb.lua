@@ -50,6 +50,7 @@ local framebuffer = {
     -- We recycle ffi cdata
     marker_data = nil,
     update_data = nil,
+    submission_data = nil,
 }
 
 --[[ refresh list management: --]]
@@ -227,9 +228,9 @@ end
 -- Kindle's MXCFB_WAIT_FOR_UPDATE_SUBMISSION == 0x40044637
 local function kindle_mxc_wait_for_update_submission(fb, marker)
     -- Wait for a specific update to be submitted
-    fb.marker_data[0] = marker
+    fb.submission_data[0] = marker
 
-    return C.ioctl(fb.fd, C.MXCFB_WAIT_FOR_UPDATE_SUBMISSION, fb.marker_data)
+    return C.ioctl(fb.fd, C.MXCFB_WAIT_FOR_UPDATE_SUBMISSION, fb.submission_data)
 end
 
 -- Stub version that simply sleeps for 1ms
@@ -700,6 +701,9 @@ function framebuffer:init()
             -- NOTE: 0 seems to be a fairly safe assumption for "we don't care about collisions".
             --       On a slightly related note, the EPDC_FLAG_TEST_COLLISION flag is for dry-run collision tests, never set it.
             self.marker_data.collision_test = 0
+        end
+        if self.mech_wait_update_submission == kindle_mxc_wait_for_update_submission then
+            self.submission_data = ffi.new("uint32_t[1]")
         end
     elseif self.device:isKobo() then
         require("ffi/mxcfb_kobo_h")
