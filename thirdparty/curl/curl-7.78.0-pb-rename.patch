@@ -1,17 +1,17 @@
 diff --git a/lib/Makefile.am b/lib/Makefile.am
-index 516a2394d..61903e683 100644
+index b51796f91..fbc5d5cf8 100644
 --- a/lib/Makefile.am
 +++ b/lib/Makefile.am
-@@ -31,7 +31,7 @@ EXTRA_DIST = Makefile.m32 config-win32.h config-win32ce.h           \
-  config-tpf.h mk-ca-bundle.pl mk-ca-bundle.vbs $(CMAKE_DIST)        \
-  firefox-db2pem.sh config-vxworks.h Makefile.vxworks checksrc.pl
+@@ -32,7 +32,7 @@ EXTRA_DIST = Makefile.m32 config-win32.h config-win32ce.h           \
+  firefox-db2pem.sh config-vxworks.h Makefile.vxworks checksrc.pl    \
+  setup-win32.h
  
 -lib_LTLIBRARIES = libcurl.la
 +lib_LTLIBRARIES = libcurl_ko.la
  
  if BUILD_UNITTESTS
  noinst_LTLIBRARIES = libcurlu.la
-@@ -83,43 +83,43 @@ AM_CPPFLAGS += -DBUILDING_LIBCURL
+@@ -84,43 +84,43 @@ AM_CPPFLAGS += -DBUILDING_LIBCURL
  AM_LDFLAGS =
  AM_CFLAGS =
  
@@ -69,7 +69,7 @@ index 516a2394d..61903e683 100644
  
  libcurlu_la_CPPFLAGS = $(AM_CPPFLAGS) -DCURL_STATICLIB -DUNITTESTS
  libcurlu_la_LDFLAGS = $(AM_LDFLAGS) -static $(LIBCURL_LIBS)
-@@ -128,7 +128,7 @@ libcurlu_la_CFLAGS = $(AM_CFLAGS)
+@@ -129,7 +129,7 @@ libcurlu_la_CFLAGS = $(AM_CFLAGS)
  # Makefile.inc provides the CSOURCES and HHEADERS defines
  include Makefile.inc
  
@@ -79,18 +79,18 @@ index 516a2394d..61903e683 100644
  
  CHECKSRC = $(CS_$(V))
 diff --git a/src/Makefile.am b/src/Makefile.am
-index 90f156248..98ebd6284 100644
+index 734373187..4aca70c65 100644
 --- a/src/Makefile.am
 +++ b/src/Makefile.am
 @@ -61,9 +61,9 @@ CFLAGS += @CURL_CFLAG_EXTRAS@
  LIBS = $(BLANK_AT_MAKETIME)
  
  if USE_EXPLICIT_LIB_DEPS
--curl_LDADD = $(top_builddir)/lib/libcurl.la @LIBMETALINK_LIBS@ @LIBCURL_LIBS@
-+curl_LDADD = $(top_builddir)/lib/libcurl_ko.la @LIBMETALINK_LIBS@ @LIBCURL_LIBS@
+-curl_LDADD = $(top_builddir)/lib/libcurl.la @LIBCURL_LIBS@
++curl_LDADD = $(top_builddir)/lib/libcurl_ko.la @LIBCURL_LIBS@
  else
--curl_LDADD = $(top_builddir)/lib/libcurl.la @LIBMETALINK_LIBS@ @NSS_LIBS@ @SSL_LIBS@ @ZLIB_LIBS@ @CURL_NETWORK_AND_TIME_LIBS@
-+curl_LDADD = $(top_builddir)/lib/libcurl_ko.la @LIBMETALINK_LIBS@ @NSS_LIBS@ @SSL_LIBS@ @ZLIB_LIBS@ @CURL_NETWORK_AND_TIME_LIBS@
+-curl_LDADD = $(top_builddir)/lib/libcurl.la @NSS_LIBS@ @SSL_LIBS@ @ZLIB_LIBS@ @CURL_NETWORK_AND_TIME_LIBS@
++curl_LDADD = $(top_builddir)/lib/libcurl_ko.la @NSS_LIBS@ @SSL_LIBS@ @ZLIB_LIBS@ @CURL_NETWORK_AND_TIME_LIBS@
  endif
  
- curl_LDFLAGS = @LIBMETALINK_LDFLAGS@
+ # if unit tests are enabled, build a static library to link them with
