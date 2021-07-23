@@ -617,25 +617,6 @@ ifdef DARWIN
 		$(OUTPUT_DIR)/common/ssl.so
 endif
 
-$(LUASERIAL_LIB): $(THIRDPARTY_DIR)/lua-serialize/*.*
-	install -d $(LUASERIAL_BUILD_DIR)
-	-rm -f $(LUASERIAL_DIR)/../lua-serialize-stamp/lua-serialize-build
-	-rm -f $(LUASERIAL_LIB)
-	cd $(LUASERIAL_BUILD_DIR) && \
-		$(CMAKE) $(CMAKE_FLAGS) -DCC="$(CC) $(CFLAGS)" \
-		-DLDFLAGS="$(LDFLAGS) $(if $(or $(ANDROID),$(WIN32)), $(CURDIR)/$(LUAJIT_LIB),)" \
-		-DOUTPUT_DIR=$(CURDIR)/$(OUTPUT_DIR)/common \
-		$(CURDIR)/$(THIRDPARTY_DIR)/lua-serialize && \
-		$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS)
-
-# NOTE: We don't ship lua-serialize anymore, but the Evernote plugin still requires this.
-#       Both it and lua-serialize build an horribly outdated version of it.
-# FIXME: Someone who actually cares about this probably ought to bump the submodule.
-#        Ideally, in evernote-sdk-lua, since we control it, and update this to keep Evernote's copy,
-#        like LUALONGNUMBER does.
-$(LUACOMPAT52): $(LUASERIAL_LIB) $(THIRDPARTY_DIR)/lua-serialize/CMakeLists.txt
-	cp $(OUTPUT_DIR)/common/$(notdir $(LUACOMPAT52)) $(OUTPUT_DIR)/libs
-
 # zeromq should be compiled without optimization in clang 3.4
 # which otherwise may throw a warning saying "array index is past the end
 # of the array" for strcmp comparing a string with exactly 2 chars.
@@ -755,21 +736,6 @@ $(LPEG_DYNLIB) $(LPEG_RE): $(LUAJIT_LIB) $(THIRDPARTY_DIR)/lpeg/*.*
 		$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS)
 	cp -f $(LPEG_DIR)/lpeg.so $(OUTPUT_DIR)/rocks/lib/lua/5.1
 	cp -f $(LPEG_DIR)/re.lua $(OUTPUT_DIR)/rocks/share/lua/5.1
-
-$(EVERNOTE_LIB): $(THIRDPARTY_DIR)/evernote-sdk-lua/*.*
-	install -d $(EVERNOTE_SDK_BUILD_DIR)
-	-rm -f $(EVERNOTE_LIB) $(EVERNOTE_SDK_DIR)/../evernote-sdk-lua-stamp/evernote-sdk-lua-build
-	cd $(EVERNOTE_SDK_BUILD_DIR) && \
-		$(CMAKE) $(CMAKE_FLAGS) -DCC="$(CC) $(CFLAGS)" \
-		-DOUTPUT_DIR="$(CURDIR)/$(EVERNOTE_PLUGIN_DIR)/lib" \
-		-DLDFLAGS="$(LDFLAGS) $(if $(or $(ANDROID),$(WIN32)),$(CURDIR)/$(LUAJIT_LIB) -lm)" \
-		-DDYNLIB_CFLAGS="$(DYNLIB_CMAKE_CFLAGS)" \
-		$(CURDIR)/$(THIRDPARTY_DIR)/evernote-sdk-lua && \
-		$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS)
-
-$(LUALONGNUMBER): $(EVERNOTE_LIB) $(THIRDPARTY_DIR)/evernote-sdk-lua/*.*
-	cp $(CURDIR)/$(EVERNOTE_PLUGIN_DIR)/lib/liblualongnumber.so \
-		$(CURDIR)/$(OUTPUT_DIR)/libs
 
 $(SQLITE_LIB): $(THIRDPARTY_DIR)/sqlite/*.*
 	install -d $(SQLITE_BUILD_DIR)
