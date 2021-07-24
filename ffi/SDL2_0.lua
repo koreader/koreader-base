@@ -39,6 +39,14 @@ local function SDL_VersionNum(x, y, z)
     return x*1000 + y*100 + z
 end
 
+-- Quick and dirty way of checking if we're running on a ChromeOS container.
+-- see https://chromium.googlesource.com/chromiumos/docs/+/master/containers_and_vms.md#overview
+local function SDL_Runs_On_ChromeOS()
+    if jit.os ~= "Linux" then return false end
+    -- the sommelier binary is bind-mounted in every container
+    return os.execute("which sommelier >/dev/null 2>&1") == 0
+end
+
 local function SDL_Linked_Version_AtLeast(x, y, z)
     return SDL_VersionNum(sdl_linked_ver[0].major, sdl_linked_ver[0].minor, sdl_linked_ver[0].patch) >= SDL_VersionNum(x, y, z)
 end
@@ -458,7 +466,12 @@ function S.gameControllerRumble(left_intensity, right_intensity, duration)
 end
 
 function S.getPlatform()
-    return ffi.string(SDL.SDL_GetPlatform())
+    local detected = ffi.string(SDL.SDL_GetPlatform())
+    if detected == "Linux" and SDL_Runs_On_ChromeOS() then
+        return "Chrome OS"
+    else
+        return detected
+    end
 end
 
 function S.getBasePath()
@@ -472,6 +485,11 @@ function S.getPrefPath(organization, appname)
 end
 
 function S.getPowerInfo()
+    -- crostini/SDL bug: fails to retrieve battery charge.
+    if SDL_Runs_On_ChromeOS() then
+        return false, false, true, 0
+    end
+
     local batt, plugged, charging
     local ptr = ffi.new("int[1]", {0})
     local battery_info = SDL.SDL_GetPowerInfo(nil, ptr)
