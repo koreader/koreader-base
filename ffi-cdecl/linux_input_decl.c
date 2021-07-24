@@ -26,6 +26,8 @@ cdecl_const(SYN_CONFIG)
 cdecl_const(SYN_MT_REPORT)
 cdecl_const(SYN_DROPPED)
 
+cdecl_const(KEY_BATTERY)
+
 cdecl_const(BTN_TOOL_PEN)
 cdecl_const(BTN_TOOL_FINGER)
 cdecl_const(BTN_TOOL_RUBBER)
