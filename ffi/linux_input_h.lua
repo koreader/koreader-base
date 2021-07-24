@@ -20,6 +20,7 @@ static const int SYN_REPORT = 0;
 static const int SYN_CONFIG = 1;
 static const int SYN_MT_REPORT = 2;
 static const int SYN_DROPPED = 3;
+static const int KEY_BATTERY = 236;
 static const int BTN_TOOL_PEN = 320;
 static const int BTN_TOOL_FINGER = 325;
 static const int BTN_TOOL_RUBBER = 321;
