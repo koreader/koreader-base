@@ -47,6 +47,8 @@ local function SDL_Runs_On_ChromeOS()
     return os.execute("which sommelier >/dev/null 2>&1") == 0
 end
 
+local is_chromeos = SDL_Runs_On_ChromeOS()
+
 local function SDL_Linked_Version_AtLeast(x, y, z)
     return SDL_VersionNum(sdl_linked_ver[0].major, sdl_linked_ver[0].minor, sdl_linked_ver[0].patch) >= SDL_VersionNum(x, y, z)
 end
@@ -467,7 +469,7 @@ end
 
 function S.getPlatform()
     local detected = ffi.string(SDL.SDL_GetPlatform())
-    if detected == "Linux" and SDL_Runs_On_ChromeOS() then
+    if detected == "Linux" and is_chromeos then
         return "Chrome OS"
     else
         return detected
@@ -486,7 +488,7 @@ end
 
 function S.getPowerInfo()
     -- crostini/SDL bug: fails to retrieve battery charge.
-    if SDL_Runs_On_ChromeOS() then
+    if is_chromeos then
         return false, false, true, 0
     end
 
