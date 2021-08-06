@@ -95,14 +95,43 @@ function Jpeg.encodeToFile(filename, source_ptr, w, stride, h, quality, color_ty
     end
 end
 
-function Jpeg.writeBMP(filename, source_ptr, w, stride, h)
+-- convert rgb to grayscale
+-- gray = 0.299R+0.587G+0.114B
+-- https://www.dynamsoft.com/blog/insights/image-processing/image-processing-101-color-space-conversion/
+function Jpeg.convertToGray(source_ptr, w, stride, h)
+    for y = 0, h-1 do
+        local x_8bit = 0
+        local offs = y * stride
+        local offs_8bit = offs
+        for x = 0, tonumber(stride), 3 do
+            local r = .299 * source_ptr[offs]
+            offs = offs + 1
+            local g = .587 * source_ptr[offs]
+            offs = offs + 1
+            local b = .114 * source_ptr[offs]
+            offs = offs + 1
+            source_ptr[offs_8bit] = math.floor(r + g + b + 0.5)
+            offs_8bit = offs_8bit + 1
+        end
+    end
+end
+
+function Jpeg.writeBMP(filename, source_ptr, w, stride, h, grayscale)
+    local color
+    if grayscale then
+        color = turbojpeg.TJPF_GRAY
+        Jpeg.convertToGray(source_ptr, w, stride, h)
+    else
+        color = turbojpeg.TJPF_RGB
+    end
+
     -- if file extension is not ".bmp" tjSaveImage uses netpbm format!
     if filename:sub(-#".bmp") == ".bmp" then
-        turbojpeg.tjSaveImage(filename, source_ptr, w, stride, h, turbojpeg.TJPF_RGB, 0)
+        turbojpeg.tjSaveImage(filename, source_ptr, w, stride, h, color, 0)
     else
         os.remove(filename)
         local tmp_filename = filename .. ".tmp.bmp"
-        turbojpeg.tjSaveImage(tmp_filename, source_ptr, w, stride, h, turbojpeg.TJPF_RGB, 0)
+        turbojpeg.tjSaveImage(tmp_filename, source_ptr, w, stride, h, color, 0)
         os.rename(tmp_filename, filename)
     end
 end
