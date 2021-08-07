@@ -96,10 +96,10 @@ function Jpeg.encodeToFile(filename, source_ptr, w, stride, h, quality, color_ty
 end
 
 -- convert rgb to grayscale
--- gray = 0.299R+0.587G+0.114B
+-- gray = 0.299 R + 0.587 G + 0.114 B
 -- https://www.dynamsoft.com/blog/insights/image-processing/image-processing-101-color-space-conversion/
 function Jpeg.convertToGray(source_ptr, w, stride, h)
-    for y = 0, h-1 do
+    for y = 0, h - 1 do
         local offs = y * stride
         local offs_8bit = offs
         for _ = 0, tonumber(stride), 3 do
