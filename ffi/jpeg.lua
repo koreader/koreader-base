@@ -98,7 +98,7 @@ end
 -- convert rgb to grayscale
 -- gray = 0.299 R + 0.587 G + 0.114 B
 -- https://www.dynamsoft.com/blog/insights/image-processing/image-processing-101-color-space-conversion/
-function Jpeg.convertToGray(source_ptr, w, stride, h)
+function Jpeg.convertToGray(source_ptr, stride, h)
     for y = 0, h - 1 do
         local offs = y * stride
         local offs_8bit = offs
@@ -119,7 +119,7 @@ function Jpeg.writeBMP(filename, source_ptr, w, stride, h, grayscale)
     local pixel_format
     if grayscale then
         pixel_format = turbojpeg.TJPF_GRAY
-        Jpeg.convertToGray(source_ptr, w, stride, h)
+        Jpeg.convertToGray(source_ptr, stride, h)
     else
         pixel_format = turbojpeg.TJPF_RGB
     end
