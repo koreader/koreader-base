@@ -2051,12 +2051,12 @@ function BB_mt.__index:getBufferData()
     return bbdump, source_ptr, w, stride, h
 end
 
-function BB_mt.__index:writeBMP(filename)
+function BB_mt.__index:writeBMP(filename, grayscale)
     if not Jpeg then Jpeg = require("ffi/jpeg") end
 
     local bbdump, source_ptr, w, stride, h = self:getBufferData()
 
-    Jpeg.writeBMP(filename, source_ptr, w, stride, h)
+    Jpeg.writeBMP(filename, source_ptr, w, stride, h, grayscale)
 
     if bbdump then
         bbdump:free()
@@ -2075,13 +2075,13 @@ function BB_mt.__index:writeJPG(filename, quality)
     end
 end
 
-function BB_mt.__index:writeToFile(filename, format, quality)
+function BB_mt.__index:writeToFile(filename, format, quality, grayscale)
     format = format or "jpg" -- set default format
     format = format:lower()
     if format == "png" then
         return pcall(self.writePNG, self, filename)
     elseif format == "bmp" then
-        return pcall(self.writeBMP, self, filename)
+        return pcall(self.writeBMP, self, filename, grayscale)
     else -- default all other extensions to jpg
         return pcall(self.writeJPG, self, filename, quality)
     end
