@@ -74,7 +74,7 @@ set(CFLAGS "${CPPFLAGS} -DOPENSSL_RAND_SEED_DEVRANDOM_SHM_ID=-1 ${CFLAGS}")
 
 # NOTE: We need to pass $CFLAGS to OpenSSL's Configure script,
 # except it balks on a few exotic flags, so, filter those out...
-string(REGEX REPLACE "--sysroot [a-zA-Z0-9/_-]*" "" FILTERED_CFLAGS "${CFLAGS}")
+string(REGEX REPLACE "--sysroot [.a-zA-Z0-9/_-]*" "" FILTERED_CFLAGS "${CFLAGS}")
 if($ENV{ANDROID})
     string(REPLACE "-no-canonical-prefixes" "" FILTERED_CFLAGS "${FILTERED_CFLAGS}")
 endif()
