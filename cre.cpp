@@ -2546,7 +2546,7 @@ static bool _isLinkToFootnote(CreDocument *doc, const lString32 source_xpointer,
             types.parse(type, ' ', true);
             for (int i=0; i<types.length(); i++) {
                 lString32 type = types[i];
-                if (type == "note" || type == "footnote" || type == "rearnote" ) {
+                if (type == "note" || type == "footnote" || type == "rearnote" || type == "endnote") {
                     reason = "target has epub:type=" + type;
                     return true;
                 }
@@ -2559,7 +2559,7 @@ static bool _isLinkToFootnote(CreDocument *doc, const lString32 source_xpointer,
             roles.parse(role, ' ', true);
             for (int i=0; i<roles.length(); i++) {
                 lString32 role = roles[i];
-                if (role == "doc-note" || role == "doc-footnote" || role == "doc-rearnote") {
+                if (role == "doc-note" || role == "doc-footnote" || role == "doc-rearnote" || role == "doc-endnote") {
                     reason = "target has role=" + role;
                     return true;
                 }
