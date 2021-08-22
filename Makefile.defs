@@ -142,7 +142,7 @@ else ifeq ($(TARGET), android)
 	# Needed for OpenSSL, c.f., NOTES.ANDROID
 	export ANDROID_NDK_HOME=$(ANDROID_TOOLCHAIN)
 else ifeq ($(TARGET), win32)
-	CHOST?=i686-w64-mingw32
+	CHOST?=x86_64-w64-mingw32
 	export WIN32=1
 	export SDL=1
 else ifeq ($(TARGET), pocketbook)
