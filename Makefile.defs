@@ -859,18 +859,6 @@ LUASEC_DIR=$(CURDIR)/$(LUASEC_BUILD_DIR)/luasec-prefix/src/luasec
 LUASOCKET=$(OUTPUT_DIR)/common/socket
 LUASEC=$(OUTPUT_DIR)/common/ssl
 
-EVERNOTE_SDK_BUILD_DIR=$(THIRDPARTY_DIR)/evernote-sdk-lua/build/$(MACHINE)
-EVERNOTE_SDK_DIR=$(CURDIR)/$(EVERNOTE_SDK_BUILD_DIR)/evernote-sdk-lua-prefix/src/evernote-sdk-lua
-EVERNOTE_PLUGIN_DIR=$(OUTPUT_DIR)/plugins/evernote.koplugin
-EVERNOTE_THRIFT_DIR=$(EVERNOTE_PLUGIN_DIR)/thrift
-EVERNOTE_LIB=$(EVERNOTE_PLUGIN_DIR)/lib/libluasocket.so
-LUALONGNUMBER=$(CURDIR)/$(OUTPUT_DIR)/libs/liblualongnumber.so
-
-LUASERIAL_BUILD_DIR=$(THIRDPARTY_DIR)/lua-serialize/build/$(MACHINE)
-LUASERIAL_DIR=$(CURDIR)/$(LUASERIAL_BUILD_DIR)/lua-serialize-prefix/src/lua-serialize
-LUASERIAL_LIB=$(OUTPUT_DIR)/common/serialize.so
-LUACOMPAT52=$(CURDIR)/$(OUTPUT_DIR)/libs/libluacompat52.so
-
 ZMQ_BUILD_DIR=$(THIRDPARTY_DIR)/libzmq/build/$(MACHINE)
 ZMQ_DIR=$(CURDIR)/$(ZMQ_BUILD_DIR)/libzmq-prefix/src/libzmq-build
 ZMQ_LIB_EXT=$(if $(WIN32),.dll,$(if $(DARWIN),.4.dylib,.so.4))
@@ -1006,7 +994,7 @@ LPEG_DYNLIB=$(OUTPUT_DIR)/rocks/lib/lua/5.1/lpeg.so
 
 
 CMAKE_THIRDPARTY_LIBS := kpvcrlib,nanosvg,zstd
-CMAKE_THIRDPARTY_LIBS := $(CMAKE_THIRDPARTY_LIBS),evernote-sdk-lua,luajit,lpeg,turbo
+CMAKE_THIRDPARTY_LIBS := $(CMAKE_THIRDPARTY_LIBS),luajit,lpeg,turbo
 CMAKE_THIRDPARTY_LIBS := $(CMAKE_THIRDPARTY_LIBS),zyre,czmq,filemq,libzmq
 CMAKE_THIRDPARTY_LIBS := $(CMAKE_THIRDPARTY_LIBS),libk2pdfopt,tesseract,leptonica
 CMAKE_THIRDPARTY_LIBS := $(CMAKE_THIRDPARTY_LIBS),lj-wpaclient

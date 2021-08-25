@@ -16,8 +16,6 @@ all: $(OUTPUT_DIR)/libs $(if $(ANDROID),,$(LUAJIT)) \
 		$(OUTPUT_DIR)/plugins $(LUASOCKET) \
 		$(OUTPUT_DIR)/ffi $(OUTPUT_DIR)/data \
 		$(if $(WIN32),,$(LUASEC)) \
-		$(if $(ANDROID),$(LUACOMPAT52) $(LUALONGNUMBER),) \
-		$(if $(WIN32),,$(EVERNOTE_LIB)) \
 		$(TURBOJPEG_LIB) \
 		$(LODEPNG_LIB) \
 		$(MUPDF_LIB) \
@@ -55,7 +53,6 @@ ifeq ($(DO_STRIP),1)
 		$(if $(or $(KOBO),$(POCKETBOOK),$(REMARKABLE)),$(OUTPUT_DIR)/fbdepth,) \
 		$(if $(or $(CERVANTES),$(KINDLE),$(KOBO),$(POCKETBOOK),$(REMARKABLE),$(SONY_PRSTUX)),$(OUTPUT_DIR)/zsync2,) \
 		$(if $(ANDROID),,$(LUAJIT)) \
-		$(OUTPUT_DIR)/plugins/evernote.koplugin/lib/$(if $(WIN32),*.dll,*.so*) \
 		$(OUTPUT_DIR)/rocks/lib/lua/5.1/$(if $(WIN32),*.dll,*.so*) \
 		$(OUTPUT_DIR)/libs/$(if $(WIN32),*.dll,*.so*)" ;\
 	$(STRIP) --strip-unneeded $${STRIP_FILES} ;\
@@ -64,14 +61,8 @@ ifeq ($(DO_STRIP),1)
 		xargs $(STRIP) --strip-unneeded
 endif
 	# set up some needed paths and links
-	install -d $(OUTPUT_DIR)/{cache,history,clipboard,fonts} $(CURDIR)/$(EVERNOTE_THRIFT_DIR)
+	install -d $(OUTPUT_DIR)/{cache,history,clipboard,fonts}
 	ln -sf $(CURDIR)/$(THIRDPARTY_DIR)/kpvcrlib/cr3.css $(OUTPUT_DIR)/data/
-ifndef DARWIN
-	# setup Evernote SDK
-	cd $(EVERNOTE_SDK_DIR) && \
-		$(RCP) *.lua evernote $(CURDIR)/$(EVERNOTE_PLUGIN_DIR) && \
-		cp thrift/*.lua $(CURDIR)/$(EVERNOTE_THRIFT_DIR)
-endif
 	test -e $(LPEG_RE) && chmod 664 $(LPEG_RE) || true  # hot fix re.lua permission
 
 $(OUTPUT_DIR)/libs:
