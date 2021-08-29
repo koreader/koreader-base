@@ -21,41 +21,53 @@ elseif(DEFINED ENV{KINDLE})
 elseif(DEFINED ENV{CERVANTES})
     set(FBINK_TARGET "cervantes")
 elseif(DEFINED ENV{KOBO})
-    set(FBINK_TARGET "strip")
-    set(UTILS_TARGET "utils KOBO=1")
+    set(FBINK_TARGET "strip KOBO=1")
+    set(FBDEPTH_TARGET "fbdepth KOBO=1")
 elseif(DEFINED ENV{REMARKABLE})
     set(FBINK_TARGET "remarkable")
-    set(UTILS_TARGET "utils REMARKABLE=1")
+    set(FBDEPTH_TARGET "fbdepth REMARKABLE=1")
 elseif(DEFINED ENV{POCKETBOOK})
     set(FBINK_TARGET "pocketbook")
-    set(UTILS_TARGET "utils POCKETBOOK=1")
+    set(FBDEPTH_TARGET "fbdepth POCKETBOOK=1")
 else()
     set(FBINK_TARGET "strip")
 endif()
 
-# Minimal-ish, statically linked build, we don't care about image support
-set(BUILD_CMD1 sh -c "${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS} MINIMAL=1 FONTS=1 OPENTYPE=1 CFLAGS=\"${CFLAGS}\" LDFLAGS=\"${LDFLAGS}\" ${FBINK_TARGET}")
-if(UTILS_TARGET)
-    set(BUILD_CMD2 sh -c "${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS} CFLAGS=\"${CFLAGS}\" LDFLAGS=\"${LDFLAGS}\" ${UTILS_TARGET}")
+# FBDepth can afford to link to a very minimal library, so we need to start from scratch...
+if(FBDEPTH_TARGET)
+    set(BUILD_CMD1 sh -c "${KO_MAKE_RECURSIVE} clean")
+    set(BUILD_CMD2 sh -c "${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS} CFLAGS=\"${CFLAGS}\" LDFLAGS=\"${LDFLAGS}\" ${FBDEPTH_TARGET}")
+
+    # That does mean we need to stash the binary somewhere a clean won't scrap it, though...
+    if(DEFINED ENV{DEBUG})
+        set(BUILD_CMD3 ${CMAKE_COMMAND} -E rename ${SOURCE_DIR}/Debug/fbdepth ${SOURCE_DIR}/fbdepth)
+    else()
+        set(BUILD_CMD3 ${CMAKE_COMMAND} -E rename ${SOURCE_DIR}/Release/fbdepth ${SOURCE_DIR}/fbdepth)
+    endif()
 endif()
+
+# Minimal-ish, statically linked build, we don't care about image support
+set(BUILD_CMD4 sh -c "${KO_MAKE_RECURSIVE} clean")
+set(BUILD_CMD5 sh -c "${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS} MINIMAL=1 FONTS=1 OPENTYPE=1 CFLAGS=\"${CFLAGS}\" LDFLAGS=\"${LDFLAGS}\" ${FBINK_TARGET}")
+
 # We build in-tree...
 set(INSTALL_CMD1 ${CMAKE_COMMAND} -E make_directory ${BINARY_DIR})
 if(DEFINED ENV{DEBUG})
     set(INSTALL_CMD2 ${CMAKE_COMMAND} -E rename ${SOURCE_DIR}/Debug/fbink ${BINARY_DIR}/fbink)
-    if(UTILS_TARGET)
-        set(INSTALL_CMD3 ${CMAKE_COMMAND} -E rename ${SOURCE_DIR}/Debug/fbdepth ${BINARY_DIR}/fbdepth)
+    if(FBDEPTH_TARGET)
+        set(INSTALL_CMD3 ${CMAKE_COMMAND} -E rename ${SOURCE_DIR}/fbdepth ${BINARY_DIR}/fbdepth)
     endif()
 else()
     set(INSTALL_CMD2 ${CMAKE_COMMAND} -E rename ${SOURCE_DIR}/Release/fbink ${BINARY_DIR}/fbink)
-    if(UTILS_TARGET)
-        set(INSTALL_CMD3 ${CMAKE_COMMAND} -E rename ${SOURCE_DIR}/Release/fbdepth ${BINARY_DIR}/fbdepth)
+    if(FBDEPTH_TARGET)
+        set(INSTALL_CMD3 ${CMAKE_COMMAND} -E rename ${SOURCE_DIR}/fbdepth ${BINARY_DIR}/fbdepth)
     endif()
 endif()
 
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
     https://github.com/NiLuJe/FBInk.git
-    0540e7d9008d961d5c9ca5fa705e288d1c286dfd
+    tags/v1.24.0
     ${SOURCE_DIR}
 )
 
@@ -66,7 +78,7 @@ ExternalProject_Add(
     BUILD_IN_SOURCE 1
     PATCH_COMMAND ""
     CONFIGURE_COMMAND ""
-    BUILD_COMMAND COMMAND ${BUILD_CMD1} COMMAND ${BUILD_CMD2}
+    BUILD_COMMAND COMMAND ${BUILD_CMD1} COMMAND ${BUILD_CMD2} COMMAND ${BUILD_CMD3} COMMAND ${BUILD_CMD4} COMMAND ${BUILD_CMD5}
     # The buildsystem outputs binaries in a subdirectory...
     INSTALL_COMMAND COMMAND ${INSTALL_CMD1} COMMAND ${INSTALL_CMD2} COMMAND ${INSTALL_CMD3}
 )
