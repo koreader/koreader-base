@@ -1724,6 +1724,7 @@ static int setEmbeddedFonts(lua_State *L) {
 	return 0;
 }
 
+/*
 static int cursorRight(lua_State *L) {
 	//CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
 
@@ -1749,6 +1750,7 @@ static int cursorRight(lua_State *L) {
 
 	return 0;
 }
+*/
 
 static int getLinkFromPosition(lua_State *L) {
 	CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
@@ -3272,13 +3274,14 @@ static int drawCurrentPage(lua_State *L) {
 	return 2;
 }
 
+/*
 static int drawCoverPage(lua_State *L) {
 	CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
 	BlitBuffer *bb = (BlitBuffer*) lua_topointer(L, 2);
 
 	int w = bb->w,
 		h = bb->h;
-	/* Set DrawBuf to 8bpp */
+	// Set DrawBuf to 8bpp
 	LVGrayDrawBuf drawBuf(w, h, 8, bb->data);
 
 	LVImageSourceRef cover = doc->text_view->getCoverPageImage();
@@ -3286,11 +3289,12 @@ static int drawCoverPage(lua_State *L) {
 		printf("cover size:%d,%d\n", cover->GetWidth(), cover->GetHeight());
 	else
 		printf("cover page is null.\n");
-	LVDrawBookCover(drawBuf, cover, lString8("Droid Sans Mono"),
+	LVDrawBookCover(drawBuf, cover, true, lString8("Droid Sans Mono"),
 			lString32("test"), lString32("test"), lString32("test"), 0);
 
 	return 0;
 }
+*/
 
 static int getCoverPageImageData(lua_State *L) {
 	CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
