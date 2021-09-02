@@ -212,7 +212,6 @@ function document_mt.__index:isDocumentReflowable()
 end
 
 function document_mt.__index:layoutDocument(width, height, em)
-    print("layoutDocument", width, height, em)
     -- Reset the cache.
     self.number_of_pages = nil
 
@@ -366,25 +365,19 @@ function page_mt.__index:getSize(draw_context)
     local bbox = ffi.new("fz_irect[1]")
     local ctm = ffi.new("fz_matrix")
 
-    print("zoom:", draw_context.zoom)
-    print("rotate:", draw_context.rotate)
-
     M.fz_scale(ctm, draw_context.zoom, draw_context.zoom)
     M.fz_pre_rotate(ctm, draw_context.rotate)
 
     M.fz_bound_page(context(), self.page, bounds)
-
-    print("bounds:", bounds[0].x0, bounds[0].x1, bounds[0].y0, bounds[0].y1)
-
     M.fz_transform_rect(bounds, ctm)
 
-    print("post tr bounds:", bounds[0].x0, bounds[0].x1, bounds[0].y0, bounds[0].y1)
-
+    -- NOTE: fz_bound_page returns an internal representation computed @ 72dpi...
+    --       It is often superbly mysterious, even for images,
+    --       so we do *NOT* want to round it right now:
+    --       we're using it to compute our scaling factor,
+    --       so we do not want to introduce rounding errors this early...
     --[[
     M.fz_round_rect(bbox, bounds)
-
-    print("bbox:", bbox[0].x0, bbox[0].x1, bbox[0].y0, bbox[0].y1)
-
     return bbox[0].x1-bbox[0].x0, bbox[0].y1-bbox[0].y0
     --]]
 
@@ -403,8 +396,6 @@ function page_mt.__index:getUsedBBox()
     M.fz_close_device(context(), dev)
     M.fz_drop_device(context(), dev)
     if ok == nil then merror("cannot calculate bbox for page") end
-
-    print("getUsedBBox:", result[0].x0, result[0].x1, result[0].y0, result[0].y1)
 
     return result[0].x0, result[0].y0, result[0].x1, result[0].y1
 end
