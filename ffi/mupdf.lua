@@ -367,11 +367,23 @@ function page_mt.__index:getSize(draw_context)
     local ctm = M.fz_scale(draw_context.zoom, draw_context.zoom)
     ctm = M.fz_pre_rotate(ctm, draw_context.rotate)
 
-    local bounds = self.ctx:fz_bound_page(self.page)
-    bounds = M.fz_transform_rect(bounds, ctm)
-    local bbox = M.fz_round_rect(bounds)
+    -- Roygbyte: not sure, this might be supplied wrong arguments? drop bounds?
+    M.fz_bound_page(context(), self.page, bounds)
+    M.fz_transform_rect(bounds, ctm)
 
-    return bbox.x1-bbox.x0, bbox.y1-bbox.y0
+    -- NOTE: fz_bound_page returns an internal representation computed @ 72dpi...
+    --       It is often superbly mysterious, even for images,
+    --       so we do *NOT* want to round it right now,
+    --       as it would introduce rounding errors much too early in the pipeline...
+    -- NOTE: ReaderZooming uses it to compute the scale factor, where accuracy matters!
+    -- NOTE: This is also used in conjunction with getUsedBBox,
+    --       which also returns precise, floating point rectangles!
+    --[[
+    M.fz_round_rect(bbox, bounds)
+    return bbox[0].x1-bbox[0].x0, bbox[0].y1-bbox[0].y0
+    --]]
+
+    return bounds[0].x1 - bounds[0].x0, bounds[0].y1 - bounds[0].y0
 end
 
 --[[
