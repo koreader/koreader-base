@@ -373,9 +373,11 @@ function page_mt.__index:getSize(draw_context)
 
     -- NOTE: fz_bound_page returns an internal representation computed @ 72dpi...
     --       It is often superbly mysterious, even for images,
-    --       so we do *NOT* want to round it right now:
-    --       we're using it to compute our scaling factor,
-    --       so we do not want to introduce rounding errors this early...
+    --       so we do *NOT* want to round it right now,
+    --       as it would introduce rounding errors much too early in the pipeline...
+    -- NOTE: ReaderZooming uses it to compute the scale factor, where accuracy matters!
+    -- NOTE: This is also used in conjunction with getUsedBBox,
+    --       which also returns precise, floating point rectangles!
     --[[
     M.fz_round_rect(bbox, bounds)
     return bbox[0].x1-bbox[0].x0, bbox[0].y1-bbox[0].y0
