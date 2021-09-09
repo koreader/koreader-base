@@ -364,10 +364,12 @@ end
 calculate page size after applying DrawContext
 --]]
 function page_mt.__index:getSize(draw_context)
-    local ctm = M.fz_scale(draw_context.zoom, draw_context.zoom)
-    ctm = M.fz_pre_rotate(ctm, draw_context.rotate)
+    local bounds = ffi.new("fz_rect[1]")
+    -- local bbox = ffi.new("fz_irect[1]")
+    local ctm = ffi.new("fz_matrix")
 
-    -- Roygbyte: not sure, this might be supplied wrong arguments? drop bounds?
+    M.fz_scale(ctm, draw_context.zoom, draw_context.zoom)
+    M.fz_pre_rotate(ctm, draw_context.rotate)
     M.fz_bound_page(context(), self.page, bounds)
     M.fz_transform_rect(bounds, ctm)
 
