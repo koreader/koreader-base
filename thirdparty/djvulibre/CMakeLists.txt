@@ -34,6 +34,8 @@ endif()
 
 if(NOT $ENV{WIN32})
     set(PATCH_CMD sh -c "${ISED} \"s|-lstdc++||g\" libtool")
+else()
+    set(PATCH_CMD sh -c "true")
 endif()
 
 # Technically we don't need tools on any platform but they only cause issues on Android
