@@ -32,6 +32,8 @@ if($ENV{ANDROID})
     set(CFG_CMD "${CFG_CMD} && ${ISED} 's|soname_spec=.*|soname_spec=\"\\\\\$libname\\\\\$release\\\\\$shared_ext\\\\\$major\"|' libtool")
 endif()
 
+# Apparently CMake is scoped.
+set(PATCH_CMD sh -c "true")
 if(NOT $ENV{WIN32})
     set(PATCH_CMD sh -c "${ISED} \"s|-lstdc++||g\" libtool")
 endif()
