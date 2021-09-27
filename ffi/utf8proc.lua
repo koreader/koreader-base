@@ -36,7 +36,7 @@ function Utf8Proc.strlen(str)
     local retval = 0
     local pos = 0
     while str_buf[pos] ~= 0 do
-        pos = pos + libutf8proc.utf8proc_iterate(str_buf + pos, -1 , buffer)
+        pos = pos + libutf8proc.utf8proc_iterate(str_buf + pos, -1, buffer)
         retval = retval + 1
     end
     return retval
