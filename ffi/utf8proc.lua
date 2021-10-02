@@ -30,14 +30,19 @@ function Utf8Proc.lowercase(str)
     return folded_str
 end
 
-function Utf8Proc.strlen(str)
-    local str_buf = ffi.cast("const utf8proc_uint8_t *", str)
-    local buffer = ffi.new("utf8proc_int32_t[1]")
+function Utf8Proc.count(str)
+    local str_p = ffi.cast("const utf8proc_uint8_t *", str)
+    local codepoint = ffi.new("utf8proc_int32_t[1]")
     local count = 0
     local pos = 0
-    while str_buf[pos] ~= 0 do
-        count = count + 1
-        pos = pos + libutf8proc.utf8proc_iterate(str_buf + pos, -1, buffer)
+    while str_p[pos] ~= 0 do
+        local bytes = libutf8proc.utf8proc_iterate(str_p + pos, -1, codepoint)
+        if bytes > 0 then
+            count = count + 1
+            pos = pos + bytes
+        else
+            return count, false
+        end
     end
     return count
 end
