@@ -21,7 +21,7 @@ ep_get_binary_dir(BINARY_DIR)
 set(CFG_ENV_VAR "CC=\"${CC}\" CXX=\"${CXX}\" CFLAGS=\"${CFLAGS}\" CXXFLAGS=\"${CXXFLAGS} -Wno-unused-result\" LDFLAGS=\"${LDFLAGS}\" LIBS=\"${STATIC_LIBSTDCPP}\"")
 set(CFG_ENV_VAR "${CFG_ENV_VAR} libzmq_have_xmlto=no libzmq_have_asciidoc=no")
 
-set(CFG_OPTS "-q --prefix=${BINARY_DIR} --disable-static --enable-shared --without-documentation --host=\"${CHOST}\"")
+set(CFG_OPTS "-q --prefix=${BINARY_DIR} --libdir=${BINARY_DIR}/lib --disable-static --enable-shared --without-documentation --host=\"${CHOST}\"")
 if(DEFINED ENV{LEGACY} OR DEFINED ENV{POCKETBOOK})
     set(CFG_OPTS "${CFG_OPTS} --disable-eventfd")
 endif()
