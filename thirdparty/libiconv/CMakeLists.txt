@@ -12,7 +12,7 @@ ep_get_source_dir(SOURCE_DIR)
 ep_get_binary_dir(BINARY_DIR)
 
 set(CFG_ENV_VAR "CC=\"${CC}\" LD=\"${LD}\" AR=\"${AR}\" RANLIB=\"${RANLIB}\"")
-set(CFG_OPTS "-q --with-threads=none --prefix=${BINARY_DIR} --enable-shared=false --enable-static=true --host=\"${HOST}\"")
+set(CFG_OPTS "--with-threads=none --prefix=${BINARY_DIR} --libdir=${BINARY_DIR}/lib --enable-shared=false --enable-static=true --host=\"${HOST}\"")
 set(CFG_CMD sh -c "${CFG_ENV_VAR} ${SOURCE_DIR}/configure ${CFG_OPTS}")
 
 set(GETTEXT_VER "1.15")
