@@ -93,7 +93,7 @@ jobs:
       - save_cache:
           key: emu-{{ .Environment.CIRCLE_JOB }}-{{ epoch }}
           paths:
-            - "/home/ko/.ccache"
+            - "/root/.ccache"
 
   emu_gcc_ninja:
     <<: *EMU_TPL
