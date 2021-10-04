@@ -58,10 +58,6 @@ jobs:
     steps:
       - checkout
       - run:
-          name: install
-          command: |
-            source .ci/lint_install.sh
-      - run:
           name: lint
           command: |
             source .ci/lint_script.sh
