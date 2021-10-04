@@ -35,8 +35,10 @@ function Utf8Proc.count(str)
     local codepoint = ffi.new("utf8proc_int32_t[1]")
     local count = 0
     local pos = 0
-    while str_p[pos] ~= 0 do
-        local bytes = libutf8proc.utf8proc_iterate(str_p + pos, -1, codepoint)
+    local bytes = 1
+    local str_len = #str -- may contain NUL
+    while pos < str_len and bytes > 0 do
+        bytes = libutf8proc.utf8proc_iterate(str_p + pos, -1, codepoint)
         if bytes > 0 then
             count = count + 1
             pos = pos + bytes
@@ -44,7 +46,7 @@ function Utf8Proc.count(str)
             return count, false
         end
     end
-    return count
+    return count, true
 end
 
 return Utf8Proc
