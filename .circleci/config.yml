@@ -52,7 +52,7 @@ workflows:
 jobs:
   lint:
     docker:
-      - image: koreader/kobase:0.2.0
+      - image: koreader/kobase:0.3.0
     environment:
       BASH_ENV: "~/.bashrc"
     steps:
@@ -68,7 +68,7 @@ jobs:
 
   emu: &EMU_TPL
     docker:
-      - image: koreader/kobase:0.2.0
+      - image: koreader/kobase:0.3.0
     environment: &EMU_ENV_LST
       BASH_ENV: "~/.bashrc"
       EMULATE_READER: "1"
@@ -117,7 +117,7 @@ jobs:
   emu_clang_ninja:
     <<: *EMU_TPL
     docker:
-      - image: koreader/kobase-clang:0.2.0
+      - image: koreader/kobase-clang:0.3.0
     environment:
       <<: *EMU_ENV_LST
       CC: "clang-12"
