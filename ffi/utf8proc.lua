@@ -30,4 +30,11 @@ function Utf8Proc.lowercase(str)
     return folded_str
 end
 
+function Utf8Proc.normalise(str)
+    local normalised_strz = libutf8proc.utf8proc_NFC(str)
+    local normalised_str = ffi.string(normalised_strz)
+    C.free(normalised_strz)
+    return normalised_str
+end
+
 return Utf8Proc
