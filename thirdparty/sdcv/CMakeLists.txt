@@ -81,7 +81,7 @@ set(PATCH_CMD1 "${KO_PATCH_SH} ${CMAKE_CURRENT_SOURCE_DIR}/sdcv-locale-hack.patc
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
     https://github.com/Dushistov/sdcv.git
-    3963e358cd8f6e24e59916ead97bc47a1d932c8d
+    3d15ce3b0712cd4f7f466e26d1357d3347c260d5
     ${SOURCE_DIR}
 )
 
@@ -90,7 +90,7 @@ download_project(
     GIT_REPOSITORY
     https://github.com/Dushistov/sdcv.git
     GIT_TAG
-    4ae420734990ab9f5ccc038262368256b9323f4a
+    3d15ce3b0712cd4f7f466e26d1357d3347c260d5
     #DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
     PATCH_COMMAND COMMAND ${PATCH_CMD1}
 )
