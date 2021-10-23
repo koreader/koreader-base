@@ -178,6 +178,12 @@ local function disp_update(fb, ioc_cmd, ioc_data, is_flashing, waveform_mode, wa
         waveform_info = bor(waveform_info, C.EINK_RECT_MODE)
     end
 
+    -- Make sure we actually flash by bypassing the "working buffer was untouched" memcmp "optimization"...
+    -- NOTE: This appeared in the Sage kernel on FW 4.29.
+    if is_flashing then
+        waveform_info = bor(waveform_info, C.EINK_NO_MERGE)
+    end
+
     -- And finally bake mode + info into the update_mode bitmask
     ioc_data.update_mode = bor(waveform_mode, waveform_info)
 
