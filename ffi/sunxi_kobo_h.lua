@@ -22,17 +22,18 @@ enum eink_update_mode {
   EINK_CLEAR_MODE = 136,
   EINK_GC4L_MODE = 140,
   EINK_GCC16_MODE = 160,
+  EINK_PARTIAL_MODE = 1024,
   EINK_AUTO_MODE = 32768,
+  EINK_NEGATIVE_MODE = 65536,
+  EINK_REGAL_MODE = 524288,
+  EINK_GAMMA_CORRECT = 2097152,
+  EINK_MONOCHROME = 4194304,
   EINK_DITHERING_Y1 = 25165824,
   EINK_DITHERING_Y4 = 41943040,
   EINK_DITHERING_SIMPLE = 75497472,
   EINK_DITHERING_NTX_Y1 = 142606336,
-  EINK_GAMMA_CORRECT = 2097152,
-  EINK_MONOCHROME = 4194304,
-  EINK_REGAL_MODE = 524288,
   EINK_NO_MERGE = 2147483648,
 };
-static const int EINK_RECT_MODE = 1024;
 struct disp_rectsz {
   unsigned int width;
   unsigned int height;
@@ -241,6 +242,7 @@ static const int DISP_EINK_WAIT_BEFORE_LCD_INT_COMPLETE = 16402;
 static const int DISP_EINK_SET_UPDATE_CONTROL = 16403;
 static const int DISP_EINK_WAIT_FRAME_SYNC_COMPLETE = 16404;
 static const int DISP_EINK_SET_NTX_HANDWRITE_ONOFF = 16405;
+static const int DISP_EINK_SET_WAIT_MODE_ONOFF = 16406;
 typedef struct {
   long unsigned int u0;
   long unsigned int u1;
@@ -268,6 +270,9 @@ typedef struct {
 typedef struct {
   bool enable;
 } sunxi_disp_eink_set_ntx_handwrite_onoff;
+typedef struct {
+  bool enable;
+} sunxi_disp_eink_set_wait_mode_onoff;
 struct disp_fb_info {
   long long unsigned int addr[3];
   struct disp_rectsz size[3];
@@ -349,6 +354,7 @@ typedef union {
   sunxi_disp_eink_set_update_control upd_ctrl;
   sunxi_disp_eink_wait_frame_sync_complete wait_for;
   sunxi_disp_eink_set_ntx_handwrite_onoff toggle_handw;
+  sunxi_disp_eink_set_wait_mode_onoff toggle_wait;
   sunxi_disp_layer_get_config get_layer;
   sunxi_disp_layer_get_config2 get_layer2;
   sunxi_disp_layer_generic_get get;

@@ -746,6 +746,11 @@ function framebuffer:init()
                                                     -- EPDC flags just randomly go bye-bye...
         end
 
+        if self.device:hasEclipseWfm() then
+            self.waveform_night = C.WAVEFORM_MODE_GLKW16
+            self.waveform_flashnight = C.WAVEFORM_MODE_GCK16
+        end
+
         local bypass_wait_for = self:getMxcWaitForBypass()
         -- If the user (or a device cap check) requested bypassing the MXCFB_WAIT_FOR_UPDATE_COMPLETE ioctls, do so.
         if bypass_wait_for then
