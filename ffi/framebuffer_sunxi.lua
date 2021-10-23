@@ -173,9 +173,9 @@ local function disp_update(fb, ioc_cmd, ioc_data, is_flashing, waveform_mode, wa
 
     -- Handle the !flashing flag
     if not is_flashing and waveform_mode ~= C.EINK_AUTO_MODE then
-        -- For some reason, AUTO shouldn't specify RECT...
+        -- For some reason, AUTO shouldn't specify PARTIAL...
         -- (it trips the unknown mode warning, which falls back to... plain AUTO ;)).
-        waveform_info = bor(waveform_info, C.EINK_RECT_MODE)
+        waveform_info = bor(waveform_info, C.EINK_PARTIAL_MODE)
     end
 
     -- Make sure we actually flash by bypassing the "working buffer was untouched" memcmp "optimization"...
