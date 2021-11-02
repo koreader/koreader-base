@@ -933,7 +933,7 @@ LUA_LJ_SQLITE_INSTALL_DIR=$(OUTPUT_DIR)/common/lua-ljsqlite3
 LUA_LJ_SQLITE=$(LUA_LJ_SQLITE_INSTALL_DIR)/init.lua
 
 # pure LuaJIT module, so no need to separate build dir by MACHINE
-LJ_WPACLIENT_FILES=wpaclient.lua socket_h.lua consts_h.lua socket.lua wpa_ctrl.lua
+LJ_WPACLIENT_FILES=consts_h.lua poll_h.lua select_h.lua socket_h.lua socket.lua time_h.lua wpaclient.lua wpa_ctrl.lua
 LJ_WPACLIENT_BUILD_DIR=$(THIRDPARTY_DIR)/lj-wpaclient/build
 LJ_WPACLIENT_DIR=$(CURDIR)/$(LJ_WPACLIENT_BUILD_DIR)/lj-wpaclient-prefix/src/lj-wpaclient
 LJ_WPACLIENT=$(addprefix $(OUTPUT_DIR)/common/lj-wpaclient/, $(LJ_WPACLIENT_FILES))
