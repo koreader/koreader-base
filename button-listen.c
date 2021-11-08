@@ -14,44 +14,35 @@ static double timespec_diff(struct timespec const* start, struct timespec const*
     return s + (ns / 1e9);
 }
 
+static bool open_file(FILE **evf, fd_set* fd_set, const char *filename)
+{
+    FILE *file = NULL;
+    int fd = -1;
+    file = fopen(filename, "rb");
+    if(!file) {
+        fprintf(stderr, "Could not open %s\n", filename);
+        return false;
+    }
+    fd = fileno(file);
+    printf("Opened fd %d for %s\n", fd, filename);
+    if (fd < 0 || fd >= FD_SETSIZE) {
+        fprintf(stderr, "File descriptor for %s too large to handle (%d > %d)", filename, fd, FD_SETSIZE);
+        return false;
+    }
+    evf[fd] = file;
+    FD_SET(fd, fd_set);
+    return true;
+}
+
 int main(int argc, char** argv)
 {
     FILE *evf[FD_SETSIZE];
     fd_set evf_set;
     FD_ZERO(&evf_set);
-    FILE *file = NULL;
-    int fd = -1;
-    // Read from event2 if pre-firmware update
-    file = fopen("/dev/input/event2", "rb");
-    if(!file) {
-        fprintf(stderr, "Could not open /dev/input/event2\n");
+    if(!open_file(evf, &evf_set, "/dev/input/event2")) {
         return 1;
     }
-    fd = fileno(file);
-    printf("Opened fd %d for event 2\n", fd);
-    if (fd < 0 || fd >= FD_SETSIZE) {
-        fprintf(stderr, "File descriptor for /dev/input/event2 too large to handle (%d > %d)", fd, FD_SETSIZE);
-        return 1;
-    }
-    evf[fd] = file;
-    FD_SET(fd, &evf_set);
-
-    fd = -1;
-    file = NULL;
-    // Read from event1 if post-fireware update
-    file = fopen("/dev/input/event1", "rb");
-    if(!file) {
-        fprintf(stderr, "Could not open /dev/input/event1\n. Only required post firmware update, so non-fatal.");
-    }else {
-        fd = fileno(file);
-        printf("Opened fd %d for event 1\n", fd);fflush(stdout);
-        if (fd < 0 || fd >= FD_SETSIZE) {
-            fprintf(stderr, "File descriptor for /dev/input/event1 too large to handle (%d > %d)", fd, FD_SETSIZE);
-            return 1;
-        }
-        evf[fd] = file;
-        FD_SET(fd, &evf_set);
-    }
+    open_file(evf, &evf_set, "/dev/input/event1");
     struct input_event ev;
     struct timespec press_time = {0};
     bool pressed = false;
@@ -91,4 +82,3 @@ int main(int argc, char** argv)
         }
     }
 }
-
