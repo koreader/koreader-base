@@ -16,22 +16,41 @@ static double timespec_diff(struct timespec const* start, struct timespec const*
 
 int main(int argc, char** argv)
 {
-    FILE *evf[2];
+    FILE *evf[FD_SETSIZE];
     fd_set evf_set;
     FD_ZERO(&evf_set);
+    FILE *file = NULL;
+    int fd = -1;
     // Read from event2 if pre-firmware update
-    evf[0] = fopen("/dev/input/event2", "rb");
-    if(!evf[0]) {
+    file = fopen("/dev/input/event2", "rb");
+    if(!file) {
         fprintf(stderr, "Could not open /dev/input/event2\n");
         return 1;
     }
-    FD_SET(fileno(evf[0]), &evf_set);
+    fd = fileno(file);
+    printf("Opened fd %d for event 2\n", fd);
+    if (fd < 0 || fd >= FD_SETSIZE) {
+        fprintf(stderr, "File descriptor for /dev/input/event2 too large to handle (%d > %d)", fd, FD_SETSIZE);
+        return 1;
+    }
+    evf[fd] = file;
+    FD_SET(fd, &evf_set);
+
+    fd = -1;
+    file = NULL;
     // Read from event1 if post-fireware update
-    evf[1] = fopen("/dev/input/event1", "rb");
-    if(!evf[1]) {
+    file = fopen("/dev/input/event1", "rb");
+    if(!file) {
         fprintf(stderr, "Could not open /dev/input/event1\n. Only required post firmware update, so non-fatal.");
     }else {
-        FD_SET(fileno(evf[1]), &evf_set);
+        fd = fileno(file);
+        printf("Opened fd %d for event 1\n", fd);fflush(stdout);
+        if (fd < 0 || fd >= FD_SETSIZE) {
+            fprintf(stderr, "File descriptor for /dev/input/event1 too large to handle (%d > %d)", fd, FD_SETSIZE);
+            return 1;
+        }
+        evf[fd] = file;
+        FD_SET(fd, &evf_set);
     }
     struct input_event ev;
     struct timespec press_time = {0};
@@ -41,9 +60,12 @@ int main(int argc, char** argv)
             fprintf(stderr, "Failure in reading input event: %s\n", strerror(errno));
             return 1;
         }
+        printf("Waking...");fflush(stdout);
         for (int i = 0; i < FD_SETSIZE; i++){
             if(FD_ISSET(i, &evf_set)){
+                printf("Reading data %d of %d...", i, FD_SETSIZE); fflush(stdout);
                 size_t sz = fread(&ev, sizeof(ev), 1, evf[i]);
+                printf("Read data\n"); fflush(stdout);
                 if(sz == 0) {
                     return 1;
                 }
@@ -69,3 +91,4 @@ int main(int argc, char** argv)
         }
     }
 }
+
