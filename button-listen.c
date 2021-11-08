@@ -14,7 +14,7 @@ static double timespec_diff(struct timespec const* start, struct timespec const*
     return s + (ns / 1e9);
 }
 
-static bool open_file(FILE **evf, fd_set* fd_set, const char *filename)
+static bool open_file(FILE **evf, const char *filename)
 {
     FILE *file = NULL;
     int fd = -1;
@@ -24,39 +24,46 @@ static bool open_file(FILE **evf, fd_set* fd_set, const char *filename)
         return false;
     }
     fd = fileno(file);
-    printf("Opened fd %d for %s\n", fd, filename);
     if (fd < 0 || fd >= FD_SETSIZE) {
         fprintf(stderr, "File descriptor for %s too large to handle (%d > %d)", filename, fd, FD_SETSIZE);
         return false;
     }
     evf[fd] = file;
-    FD_SET(fd, fd_set);
     return true;
+}
+
+void prep_evf_set(FILE **evf, fd_set* fd_set) {
+    for (int i = 0; i < FD_SETSIZE; i++){
+        if(evf[i]) {
+            FD_SET(i, fd_set);
+        }
+    }
 }
 
 int main(int argc, char** argv)
 {
     FILE *evf[FD_SETSIZE];
-    fd_set evf_set;
-    FD_ZERO(&evf_set);
-    if(!open_file(evf, &evf_set, "/dev/input/event2")) {
+    for (int i =0; i < FD_SETSIZE; i++){
+        evf[i] = NULL;
+    }
+    if(!open_file(evf, "/dev/input/event2")) {
         return 1;
     }
-    open_file(evf, &evf_set, "/dev/input/event1");
+    open_file(evf, "/dev/input/event1");
     struct input_event ev;
     struct timespec press_time = {0};
     bool pressed = false;
     while(1) {
+        fd_set evf_set;
+        FD_ZERO(&evf_set);
+        prep_evf_set(evf, &evf_set);
         if(select(FD_SETSIZE, &evf_set, NULL, NULL, NULL) < 0){
             fprintf(stderr, "Failure in reading input event: %s\n", strerror(errno));
             return 1;
         }
-        printf("Waking...");fflush(stdout);
         for (int i = 0; i < FD_SETSIZE; i++){
             if(FD_ISSET(i, &evf_set)){
-                printf("Reading data %d of %d...", i, FD_SETSIZE); fflush(stdout);
                 size_t sz = fread(&ev, sizeof(ev), 1, evf[i]);
-                printf("Read data\n"); fflush(stdout);
                 if(sz == 0) {
                     return 1;
                 }
