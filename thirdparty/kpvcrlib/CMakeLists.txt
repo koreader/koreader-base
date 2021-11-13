@@ -58,6 +58,11 @@ endif()
 
 if(DEFINED ENV{LEGACY})
     add_definitions(-DDISABLE_CLOEXEC)
+else()
+    # Enable LFS Support in glibc
+    add_definitions(
+        -D_LARGEFILE64_SOURCE=1
+    )
 endif()
 
 add_definitions(
