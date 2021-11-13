@@ -436,7 +436,7 @@ static int setCallback(lua_State *L) {
 
 static int initCache(lua_State *L) {
     const char *cache_path = luaL_checkstring(L, 1);
-    int cache_size = luaL_checkint(L, 2);
+    unsigned long long int cache_size = luaL_checklong(L, 2);
     bool compress_cached_data = true;
     if (lua_isboolean(L, 3)) {
         compress_cached_data = lua_toboolean(L, 3);
