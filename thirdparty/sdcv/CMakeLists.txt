@@ -78,10 +78,12 @@ set(WITH_READLINE False CACHE BOOL "")
 # Force utf8 command line parsing, and accept not-found -u dictnames
 set(PATCH_CMD1 "${KO_PATCH_SH} ${CMAKE_CURRENT_SOURCE_DIR}/sdcv-locale-hack.patch")
 
+set(SDCV_GIT_COMMIT d054adb37c635ececabc31b147c968a480d1891a)
+
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
     https://github.com/Dushistov/sdcv.git
-    3d15ce3b0712cd4f7f466e26d1357d3347c260d5
+    ${SDCV_GIT_COMMIT}
     ${SOURCE_DIR}
 )
 
@@ -90,7 +92,7 @@ download_project(
     GIT_REPOSITORY
     https://github.com/Dushistov/sdcv.git
     GIT_TAG
-    3d15ce3b0712cd4f7f466e26d1357d3347c260d5
+    ${SDCV_GIT_COMMIT}
     #DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
     PATCH_COMMAND COMMAND ${PATCH_CMD1}
 )
