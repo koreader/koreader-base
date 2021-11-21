@@ -56,8 +56,19 @@ else()
     add_definitions(-DLINUX=1 -D_LINUX=1)
 endif()
 
+include(CheckTypeSize)
+
 if(DEFINED ENV{LEGACY})
     add_definitions(-DDISABLE_CLOEXEC)
+else()
+    # Test and Enable LFS Support in glibc, based on zlib
+    set(CMAKE_REQUIRED_DEFINITIONS -D_LARGEFILE64_SOURCE=1)
+    check_type_size(off64_t OFF64_T)
+    if(HAVE_OFF64_T)
+        add_definitions(-D_LARGEFILE64_SOURCE=1)
+        add_definitions(-DHAVE_STAT64=1)
+    endif()
+    set(CMAKE_REQUIRED_DEFINITIONS)
 endif()
 
 add_definitions(
