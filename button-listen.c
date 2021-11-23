@@ -1,47 +1,47 @@
-#include <linux/input.h>
-#include <stdio.h>
-#include <time.h>
-#include <stdlib.h>
-#include <stdbool.h>
-#include <poll.h>
-#include <string.h>
 #include <errno.h>
+#include <linux/input.h>
+#include <poll.h>
+#include <stdbool.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <time.h>
 
 static double timespec_diff(struct timespec const* start, struct timespec const* end)
 {
-    double s = difftime(end->tv_sec, (double)start->tv_sec);
-    double ns = (double)end->tv_nsec - (double)start->tv_nsec;
+    double s  = difftime(end->tv_sec, (double) start->tv_sec);
+    double ns = (double) end->tv_nsec - (double) start->tv_nsec;
     return s + (ns / 1e9);
 }
 
-static bool open_file(FILE **evf, struct pollfd *evf_poll, int file_idx, int expected_files, const char *filename)
+static bool open_file(FILE** evf, struct pollfd* evf_poll, int file_idx, int expected_files, const char* filename)
 {
     if (file_idx < 0 || file_idx >= expected_files) {
         fprintf(stderr, "Attempted to add file index %d, but only %d files are supported", file_idx, expected_files);
         return false;
     }
-    FILE *file = NULL;
-    int fd = -1;
-    file = fopen(filename, "re");
+    FILE* file = NULL;
+    int   fd   = -1;
+    file       = fopen(filename, "re");
     if (!file) {
         fprintf(stderr, "Could not open %s\n", filename);
         return false;
     }
-    fd = fileno(file);
-    evf[file_idx] = file;
+    fd                    = fileno(file);
+    evf[file_idx]         = file;
     evf_poll[file_idx].fd = fd;
     return true;
 }
 
 int main(int argc, char** argv)
 {
-    int num_input_files = 2;
-    FILE *evf[num_input_files];
+    int           num_input_files = 2;
+    FILE*         evf[num_input_files];
     struct pollfd evf_poll[num_input_files];
     for (int i = 0; i < num_input_files; i++) {
-        evf[i] = NULL;
-        evf_poll[i].fd = -1;
-        evf_poll[i].events = POLLIN;
+        evf[i]              = NULL;
+        evf_poll[i].fd      = -1;
+        evf_poll[i].events  = POLLIN;
         evf_poll[i].revents = 0;
     }
     if (!open_file(evf, evf_poll, 0, num_input_files, "/dev/input/event2")) {
@@ -49,8 +49,8 @@ int main(int argc, char** argv)
     }
     open_file(evf, evf_poll, 1, num_input_files, "/dev/input/event1");
     struct input_event ev;
-    struct timespec press_time = {0};
-    bool pressed = false;
+    struct timespec    press_time = { 0 };
+    bool               pressed    = false;
     while (1) {
         if (poll(evf_poll, num_input_files, -1) < 0) {
             fprintf(stderr, "Failure in reading input event: %s\n", strerror(errno));
@@ -74,8 +74,7 @@ int main(int argc, char** argv)
                         if (t >= 3.0) {
                             system("systemctl start koreader");
                         }
-                    }
-                    else if (ev.value == 1) { /* keypress */
+                    } else if (ev.value == 1) { /* keypress */
                         clock_gettime(CLOCK_BOOTTIME, &press_time);
                         pressed = true;
                     }
