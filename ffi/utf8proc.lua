@@ -30,6 +30,13 @@ function Utf8Proc.lowercase(str)
     return folded_str
 end
 
+function Utf8Proc.normalize_NFC(str)
+    local normalized_strz = libutf8proc.utf8proc_NFC(str)
+    local normalized_str = ffi.string(normalized_strz)
+    C.free(normalized_strz)
+    return normalized_str
+end
+
 function Utf8Proc.count(str)
     local str_p = ffi.cast("const utf8proc_uint8_t *", str)
     local codepoint = ffi.new("utf8proc_int32_t[1]")

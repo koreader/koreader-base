@@ -168,6 +168,9 @@ function framebuffer:init()
     -- ... and we're actually done with the framebuffer device ;).
     C.close(fbfd)
 
+    -- We enforce startup @ UR, the actual value returned by the ioctl is meaningless on sunxi.
+    self._vinfo.rotate = C.FB_ROTATE_UR
+
     -- Apply mandatory kludges
     fbinfo_sunxi_fixup(self._finfo, self._vinfo)
     -- Apply frontend kludges

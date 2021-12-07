@@ -1413,7 +1413,6 @@ static int setViewDimen(lua_State *L) {
 	int h = luaL_checkint(L, 3);
 
 	doc->text_view->Resize(w, h);
-	doc->text_view->Render();
 
 	return 0;
 }
@@ -1817,7 +1816,19 @@ static int getTextFromXPointers(lua_State *L) {
 	CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
 	const char* pos0 = luaL_checkstring(L, 2);
 	const char* pos1 = luaL_checkstring(L, 3);
+	// Default to no text selection for backwards compatibility (most callers
+	// just want to extract the text, not create a new selection) but if
+	// drawSelection is enabled default to enabling segmented selection.
+	bool drawSelection = false;
+	if (lua_isboolean(L, 4)) {
+		drawSelection = lua_toboolean(L, 4);
+	}
+	bool drawSegmentedSelection = drawSelection;
+	if (lua_isboolean(L, 5)) {
+		drawSegmentedSelection = lua_toboolean(L, 5);
+	}
 
+	LVDocView *tv = doc->text_view;
 	ldomDocument *dv = doc->dom_doc;
 
 	ldomXPointer startp = dv->createXPointer(lString32(pos0));
@@ -1837,7 +1848,13 @@ static int getTextFromXPointers(lua_State *L) {
 				r.getEnd().setOffset(offset + 1);
 		}
 
-		lString32 selText = r.getRangeText( '\n', 8192 );
+		if (drawSelection) {
+			int rangeFlags = drawSegmentedSelection ? 0x11 : 0x01;
+			r.setFlags(rangeFlags);
+			tv->selectRange(r);
+		}
+
+		lString32 selText = r.getRangeText('\n', 8192);
 		lua_pushstring(L, UnicodeToLocal(selText).c_str());
         return 1;
     }

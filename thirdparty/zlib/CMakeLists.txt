@@ -34,7 +34,7 @@ if($ENV{WIN32})
 else()
     # configure
     set(CFG_ENV_VAR "${CFG_ENV_VAR} CC=\"${CC}\" CFLAGS=\"${CFLAGS}\" LDFLAGS=\"${LDFLAGS}\"")
-    set(CFG_OPTS "${CFG_OPTS} --prefix=${SOURCE_DIR}")
+    set(CFG_OPTS "${CFG_OPTS} --prefix=${SOURCE_DIR} --libdir=${SOURCE_DIR}/lib")
     set(CFG_CMD sh -c "${CFG_ENV_VAR} ${SOURCE_DIR}/configure ${CFG_OPTS}")
     # build
     set(BUILD_CMD ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS} shared static)

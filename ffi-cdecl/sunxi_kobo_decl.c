@@ -6,7 +6,6 @@
 
 cdecl_struct(area_info)
 cdecl_enum(eink_update_mode)
-cdecl_const(EINK_RECT_MODE)
 cdecl_struct(disp_rectsz)
 cdecl_enum(disp_pixel_format)
 cdecl_enum(disp_color_space)
@@ -28,12 +27,14 @@ cdecl_const(DISP_EINK_WAIT_BEFORE_LCD_INT_COMPLETE)
 cdecl_const(DISP_EINK_SET_UPDATE_CONTROL)
 cdecl_const(DISP_EINK_WAIT_FRAME_SYNC_COMPLETE)
 cdecl_const(DISP_EINK_SET_NTX_HANDWRITE_ONOFF)
+cdecl_const(DISP_EINK_SET_WAIT_MODE_ONOFF)
 
 cdecl_type(sunxi_disp_raw_ioctl)
 cdecl_type(sunxi_disp_eink_update2)
 cdecl_type(sunxi_disp_eink_set_update_control)
 cdecl_type(sunxi_disp_eink_wait_frame_sync_complete)
 cdecl_type(sunxi_disp_eink_set_ntx_handwrite_onoff)
+cdecl_type(sunxi_disp_eink_set_wait_mode_onoff)
 
 cdecl_struct(disp_fb_info)
 cdecl_struct(disp_layer_info)
