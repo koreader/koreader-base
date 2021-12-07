@@ -1413,7 +1413,6 @@ static int setViewDimen(lua_State *L) {
 	int h = luaL_checkint(L, 3);
 
 	doc->text_view->Resize(w, h);
-	doc->text_view->Render();
 
 	return 0;
 }
