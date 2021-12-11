@@ -2148,11 +2148,17 @@ function BB.compat(oldbuffer)
     return ffi.cast("BlitBuffer4*", oldbuffer)[0]
 end
 
-function BB.fromstring(width, height, buffertype, str, stride)
+function BB.fromstring(width, height, buffertype, str, stride, rotation, inverse)
     local dataptr = C.malloc(#str)
     ffi.copy(dataptr, str, #str)
     local bb = BB.new(width, height, buffertype, dataptr, stride)
     bb:setAllocated(1)
+    if rotation ~= nil then
+        bb:setRotation(rotation)
+    end
+    if inverse ~= nil then
+        bb:setInverse(inverse)
+    end
     return bb
 end
 
