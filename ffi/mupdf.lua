@@ -824,14 +824,20 @@ end
 --[[--
 Scales a blitbuffer.
 
-Quality of scaling done by MuPDF is better than the one done in blitbuffer.lua
+MµPDF's scaling is of much better quality than the very naive implementation in blitbuffer.lua.
 (see fz_scale_pixmap_cached() in mupdf/source/fitz/draw-scale-simple.c).
 Same arguments as BlitBuffer:scale() for easy replacement.
+
+Unlike BlitBuffer:scale(), this *ignores* the blitbuffer's rotation
+(i.e., where possible, we simply wrap the BlitBuffer's data in a fitz pixmap,
+with no data copy, so the buffer's *native* memory layout is followed).
+If you actually want to preserve the rotation, you'll have to fudge
+with the width & height arguments and tweak the returned buffer's rotation flag,
+or go through a temporary copy to ensure that the buffer's memory is laid out accordingly.
 --]]
 function mupdf.scaleBlitBuffer(bb, width, height)
     local ctx = context()
     -- We need first to convert our BlitBuffer to a pixmap
-    local orig_w, orig_h = bb:getWidth(), bb:getHeight()
     local bbtype = bb:getType()
     local colorspace
     local converted_bb
@@ -861,15 +867,15 @@ function mupdf.scaleBlitBuffer(bb, width, height)
         end
         alpha = 1
     elseif bbtype == BlitBuffer.TYPE_BB4 then
-        converted_bb = BlitBuffer.new(orig_w, orig_h, BlitBuffer.TYPE_BB8)
-        converted_bb:blitFrom(bb, 0, 0, 0, 0, orig_w, orig_h)
+        converted_bb = BlitBuffer.new(bb.w, bb.h, BlitBuffer.TYPE_BB8)
+        converted_bb:blitFrom(bb, 0, 0, 0, 0, bb.w, bb.h)
         bb = converted_bb -- we don't free() the provided bb, but we'll have to free our converted_bb
         colorspace = ctx:fz_device_gray()
         alpha = 0
-        stride = orig_w
+        stride = bb.w
     else
-        converted_bb = BlitBuffer.new(orig_w, orig_h, BlitBuffer.TYPE_BBRGB32)
-        converted_bb:blitFrom(bb, 0, 0, 0, 0, orig_w, orig_h)
+        converted_bb = BlitBuffer.new(bb.w, bb.h, BlitBuffer.TYPE_BBRGB32)
+        converted_bb:blitFrom(bb, 0, 0, 0, 0, bb.w, bb.h)
         bb = converted_bb -- we don't free() the provided bb, but we'll have to free our converted_bb
         if mupdf.bgr then
             colorspace = ctx:fz_device_bgr()
@@ -879,8 +885,12 @@ function mupdf.scaleBlitBuffer(bb, width, height)
         alpha = 1
     end
     -- We can now create a pixmap from this bb of correct type
-    local pixmap = ctx:fz_new_pixmap_with_data(colorspace,
-                    orig_w, orig_h, nil, alpha, stride, ffi.cast("unsigned char*", bb.data))
+    local pixmap = W.mupdf_new_pixmap_with_data(context(), colorspace,
+                    bb.w, bb.h, nil, alpha, stride, ffi.cast("unsigned char*", bb.data))
+    if pixmap == nil then
+        if converted_bb then converted_bb:free() end -- free our home made bb
+        merror("could not create pixmap from blitbuffer")
+    end
     -- We can now scale the pixmap
     -- Better to ensure we give integer width and height, to avoid a black 1-pixel line at right and bottom of image.
     -- Also, fz_scale_pixmap enforces an alpha channel if w or h are floats...
