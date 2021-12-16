@@ -3484,7 +3484,11 @@ static int isXPointerInCurrentPage(lua_State *L) {
 	doc->dom_doc->createXPointer(lString32(xpointer)).getRect(xp_rect);
 	//CRLog::trace("page range: %d,%d - %d,%d", page_rect.left, page_rect.top, page_rect.right, page_rect.bottom);
 	//CRLog::trace("xp range: %d,%d - %d,%d", xp_rect.left, xp_rect.top, xp_rect.right, xp_rect.bottom);
-	lua_pushboolean(L, page_rect.isRectInside(xp_rect));
+	// lua_pushboolean(L, page_rect.isRectInside(xp_rect));
+	// Just check that the xpointer rect intersects with the page rect on the y-axis
+	// (as on the x-axis it may not, with hanging punctuation or negative margins)
+	bool res = (xp_rect.bottom > page_rect.top) && (xp_rect.top < page_rect.bottom);
+	lua_pushboolean(L, res);
 	return 1;
 }
 
@@ -3545,6 +3549,23 @@ static int getImageDataFromPosition(lua_State *L) {
     return 0;
 }
 
+/* This was added for testing and benchmarking purpose: do not use it.
+ * Note that this returns just the allocated pointer 'data': the caller
+ * is responsible for making it a BlitBuffer and mark it as allocated
+ * so it can be freed when no longer needed */
+static int smoothScaleBlitBuffer(lua_State *L) {
+    BlitBuffer *bb = (BlitBuffer*) lua_topointer(L, 1);
+    int dw = luaL_checkint(L, 2);
+    int dh = luaL_checkint(L, 3);
+    lUInt8* data = CRe::qSmoothScaleImage((const lUInt8*)bb->data, bb->w, bb->h, true, dw, dh);
+    if (!data)
+        return 0;
+    lua_pushlightuserdata(L, (void*)data);
+    lua_pushinteger(L, dw*dh*4);
+    return 2;
+}
+
+
 static const struct luaL_Reg cre_func[] = {
     {"initCache", initCache},
     {"initHyphDict", initHyphDict},
@@ -3565,6 +3586,7 @@ static const struct luaL_Reg cre_func[] = {
     {"getDomVersionWithNormalizedXPointers", getDomVersionWithNormalizedXPointers},
     {"setUserHyphenationDict", setUserHyphenationDict},
     {"getHyphenationForWord", getHyphenationForWord},
+    {"smoothScaleBlitBuffer", smoothScaleBlitBuffer},
     {NULL, NULL}
 };
 
