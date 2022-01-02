@@ -277,7 +277,7 @@ $(OUTPUT_DIR)/spec/base:
 
 test: $(OUTPUT_DIR)/spec $(OUTPUT_DIR)/.busted
 	cd $(OUTPUT_DIR) && \
-		./luajit $(shell which busted) \
+		$(shell which busted) --lua=./luajit \
 		--exclude-tags=notest \
 		-o gtest ./spec/base/unit
 
