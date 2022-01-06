@@ -345,7 +345,6 @@ static const int CLOCK_TAI = -1;
 ]]
 end
 
-
 -- for terminal emulator
 ffi.cdef[[
 static const int SIGTERM = 15;
