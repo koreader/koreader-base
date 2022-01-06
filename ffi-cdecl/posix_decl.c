@@ -23,6 +23,7 @@
 #include <sys/resource.h>
 #include <sched.h>
 #include <errno.h>
+#include <signal.h>
 
 #include "ffi-cdecl.h"
 
@@ -214,6 +215,8 @@ cdecl_func(sched_getaffinity)
 cdecl_func(sched_setaffinity)
 cdecl_func(sched_yield)
 
+// for terminal emulator
+cdecl_const(SIGTERM)
 cdecl_func(grantpt)
 cdecl_func(unlockpt)
 cdecl_func(ptsname)

@@ -53,10 +53,6 @@ ssize_t mq_receive(int, char *, size_t, unsigned int *);
 int mq_close(int) __attribute__((nothrow, leaf));
 int close(int);
 int fcntl(int, int, ...);
-int grantpt(int fd);
-int unlockpt(int fd);
-char *ptsname(int fd);
-int setsid(void);
 int execl(const char *, const char *, ...) __attribute__((nothrow, leaf));
 int execlp(const char *, const char *, ...) __attribute__((nothrow, leaf));
 int execv(const char *, char *const *) __attribute__((nothrow, leaf));
@@ -353,6 +349,12 @@ end
 -- for terminal emulator
 ffi.cdef[[
 static const int SIGTERM = 15;
-int tcdrain(int fd);
-int tcflush(int fd, int queue_selector);
+
+int grantpt(int fd) __attribute__((nothrow, leaf));
+int unlockpt(int fd) __attribute__((nothrow, leaf));
+char *ptsname(int fd) __attribute__((nothrow, leaf));
+pid_t setsid(void) __attribute__((nothrow, leaf));
+
+int tcdrain(int fd) __attribute__((nothrow, leaf));
+int tcflush(int fd, int queue_selector) __attribute__((nothrow, leaf));
 ]]
