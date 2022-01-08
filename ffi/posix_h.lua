@@ -354,6 +354,7 @@ int unlockpt(int fd) __attribute__((nothrow, leaf));
 char *ptsname(int fd) __attribute__((nothrow, leaf));
 pid_t setsid(void) __attribute__((nothrow, leaf));
 
+static const int TCIFLUSH = 0;
 int tcdrain(int fd) __attribute__((nothrow, leaf));
 int tcflush(int fd, int queue_selector) __attribute__((nothrow, leaf));
 ]]

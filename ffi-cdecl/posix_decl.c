@@ -221,5 +221,7 @@ cdecl_func(grantpt)
 cdecl_func(unlockpt)
 cdecl_func(ptsname)
 cdecl_func(setsid)
+
+cdecl_const(TCIFLUSH)
 cdecl_func(tcdrain)
 cdecl_func(tcflush)
