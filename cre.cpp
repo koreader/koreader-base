@@ -1904,13 +1904,46 @@ static int getTextFromPositions(lua_State *L) {
 		if (r.isNull())
 			return 0;
 
+		// A xpointer references a char in a text node; a char has a width, and getNodeByPoint()
+		// has a trick of returning a xpointer to this char when the point is in the left half of
+		// the glyph, or to the next char when the point is in the right half of the glyph, which
+		// feels clumsy but has the effect that it doesn't need to know nor care about whether the
+		// point references the start or the end of the selection.
+		// This is usually hidden by the above code that extends the selection to start and end
+		// of words. But with CJK chars, where each char is a word, this behaviour is noticable.
+		// It's usually OK with multiple chars selection, even if one needs to go over the further
+		// 2nd half of the glyph to have it included in the selection.
+		// But it is less OK with an initial long-press on a glyph, where we get a 50% chance of
+		// having the next char selected. Try to handle this case better:
 		if (r.getStart() == r.getEnd()) { // for single CJK character
+			bool grab_prev = false;
+			lvRect glyph_pt;
+			if ( tv->getCursorRect(r.getStart(), glyph_pt) ) {
+				// If the glyph left edge is after both start and end pt x, it's not the right one.
+				grab_prev = glyph_pt.left > startpt.x && glyph_pt.left > endpt.x;
+				if (!grab_prev) {
+					// If line wrapping, next char might start the next line, so also
+					// check y: if the glyph top is below our start and end pt, it is
+					// on the next line, and it's not the right one.
+					grab_prev = glyph_pt.top > startpt.y && glyph_pt.top > endpt.y;
+				}
+				printf("startpt %d/%d, endpt %d/%d, vs. glyphpt %d/%d => grab_prev=%d\n",
+				    startpt.x, startpt.y, endpt.x, endpt.y,  glyph_pt.left, glyph_pt.top, grab_prev);
+			}
 			ldomNode * node = r.getStart().getNode();
 			lString32 text = node->getText();
 			int textLen = text.length();
-			int offset = r.getEnd().getOffset();
-			if (offset < textLen - 1)
-				r.getEnd().setOffset(offset + 1);
+			if (grab_prev) {
+				int offset = r.getStart().getOffset();
+				if (offset > 0)
+					r.getStart().setOffset(offset - 1);
+			}
+			else {
+				int offset = r.getEnd().getOffset();
+				if (offset < textLen)
+					r.getEnd().setOffset(offset + 1);
+						// (offset can be 0 .. textlen, textlen means after the last char)
+			}
 		}
 
 		int rangeFlags = 0;
