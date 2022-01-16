@@ -289,11 +289,11 @@ function util.runInSubProcess(func, with_pipe, double_fork)
     if with_pipe then
         local pipe = ffi.new('int[2]', {-1, -1})
         if C.pipe(pipe) ~= 0 then -- failed creating pipe !
-            return false
+            return false, "failed creating pipe: "..ffi.string(C.strerror(ffi.errno()))
         end
         parent_read_fd, child_write_fd = pipe[0], pipe[1]
         if parent_read_fd == -1 or child_write_fd == -1 then
-            return false
+            return false, "failed getting pipe read or write fd: "..ffi.string(C.strerror(ffi.errno()))
         end
     end
     local pid = C.fork()
@@ -349,7 +349,7 @@ function util.runInSubProcess(func, with_pipe, double_fork)
     end
     -- parent/main process
     if pid < 0 then -- on failure, fork() returns -1
-        return false
+        return false, "fork failed: "..ffi.string(C.strerror(ffi.errno()))
     end
     -- If we double-fork, reap the outer fork now, since its only purpose is fork -> _exit
     if double_fork then
@@ -357,7 +357,7 @@ function util.runInSubProcess(func, with_pipe, double_fork)
         local ret = C.waitpid(pid, status, 0)
         -- Returns pid on success, -1 on failure
         if ret < 0 then
-            return false
+            return false, "double fork failed: "..ffi.string(C.strerror(ffi.errno()))
         end
     end
     if child_write_fd then
