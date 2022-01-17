@@ -493,4 +493,8 @@ function S.getPowerInfo()
     return batt, charging, plugged, percent
 end
 
+function S.getVersion()
+    return string.format("%d.%d.%d", sdl_linked_ver[0].major, sdl_linked_ver[0].minor, sdl_linked_ver[0].patch)
+end
+
 return S
