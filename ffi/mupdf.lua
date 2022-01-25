@@ -664,7 +664,7 @@ function page_mt.__index:draw_new(draw_context, width, height, offset_x, offset_
 end
 
 mupdf.STRIKE_HEIGHT = 0.375
-mupdf.UNDERLINE_HEIGHT = 0.01
+mupdf.UNDERLINE_HEIGHT = 0
 mupdf.LINE_THICKNESS = 0.05
 
 function page_mt.__index:addMarkupAnnotation(points, n, type)
