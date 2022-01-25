@@ -1577,7 +1577,7 @@ static int setStyleSheet(lua_State *L) {
 		css << "\r\n" << lString8(css_content);
 	}
 
-	doc->text_view->setStyleSheet(css);
+	doc->text_view->setStyleSheet(css, false); // Skip crengine substituteCssMacros()
 	return 0;
 }
 
