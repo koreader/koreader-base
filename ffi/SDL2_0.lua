@@ -33,6 +33,10 @@ local SDL = util.ffiLoadCandidates{
 local sdl_linked_ver = ffi.new("struct SDL_version[0]")
 SDL.SDL_GetVersion(sdl_linked_ver)
 
+local function getSDLVersion()
+    return sdl_linked_ver[0].major, sdl_linked_ver[0].minor, sdl_linked_ver[0].patch
+end
+
 -- Just a copy of a C macro that unfortunately can't be used through FFI.
 -- This assumes that there will never be more than 100 patchlevels.
 local function SDL_VersionNum(x, y, z)
@@ -40,7 +44,7 @@ local function SDL_VersionNum(x, y, z)
 end
 
 local function SDL_Linked_Version_AtLeast(x, y, z)
-    return SDL_VersionNum(sdl_linked_ver[0].major, sdl_linked_ver[0].minor, sdl_linked_ver[0].patch) >= SDL_VersionNum(x, y, z)
+    return SDL_VersionNum(getSDLVersion()) >= SDL_VersionNum(x, y, z)
 end
 
 local S = {
@@ -491,6 +495,10 @@ function S.getPowerInfo()
     end
     local percent = ptr[0]
     return batt, charging, plugged, percent
+end
+
+function S.getVersion()
+    return string.format("%d.%d.%d", getSDLVersion())
 end
 
 return S
