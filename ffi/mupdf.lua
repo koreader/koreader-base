@@ -665,6 +665,10 @@ function page_mt.__index:draw_new(draw_context, width, height, offset_x, offset_
     return bb
 end
 
+mupdf.STRIKE_HEIGHT = 0.375
+mupdf.UNDERLINE_HEIGHT = 0
+mupdf.LINE_THICKNESS = 0.05
+
 function page_mt.__index:addMarkupAnnotation(points, n, type)
     local color = ffi.new("float[3]")
     local alpha = 1.0
@@ -677,6 +681,8 @@ function page_mt.__index:addMarkupAnnotation(points, n, type)
         color[0] = 0.0
         color[1] = 0.0
         color[2] = 1.0
+        line_thickness = mupdf.LINE_THICKNESS
+        line_height = mupdf.UNDERLINE_HEIGHT
     elseif type == M.PDF_ANNOT_STRIKE_OUT then
         color[0] = 1.0
         color[1] = 0.0
