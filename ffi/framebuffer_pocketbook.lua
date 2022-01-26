@@ -58,7 +58,7 @@ function framebuffer:init()
         rotate = vinfo.rotate,
         width_mm = vinfo.width,
         height_mm = vinfo.height,
-  })
+    })
 end
 
 function framebuffer:close(reinit)
