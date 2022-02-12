@@ -9,6 +9,33 @@ local framebuffer = {
 
 }
 
+local function _toggleNightModeWhenEnabled(fb, x, y, w, h)
+    if fb.night_mode and fb.device:canHWInvert() then
+        inkview.InvertArea(x, y, w, h);
+    end
+end
+
+local function _updatePartial(fb, x, y, w, h)
+    fb.debug("refresh: inkview partial", x, y, w, h)
+
+    _toggleNightModeWhenEnabled(fb, x, y, w, h)
+    inkview.PartialUpdate(x, y, w, h)
+end
+
+local function _updateFull(fb, x, y, w, h)
+    fb.debug("refresh: inkview full", x, y, w, h)
+
+    _toggleNightModeWhenEnabled(fb, x, y, w, h)
+    inkview.FullUpdate()
+end
+
+local function _updateFast(fb, x, y, w, h)
+    fb.debug("refresh: inkview fast", x, y, w, h)
+
+    _toggleNightModeWhenEnabled(fb, x, y, w, h)
+    inkview.DynamicUpdate(x, y, w, h)
+end
+
 function framebuffer:init()
     self._finfo = ffi.new("struct fb_fix_screeninfo")
     self._vinfo = ffi.new("struct fb_var_screeninfo")
@@ -71,33 +98,27 @@ end
 --[[ framebuffer API ]]--
 
 function framebuffer:refreshPartialImp(x, y, w, h, dither)
-    self.debug("refresh: inkview partial", x, y, w, h)
-    inkview.PartialUpdate(x, y, w, h)
+    _updatePartial(self, x, y, w, h)
 end
 
 function framebuffer:refreshFlashPartialImp(x, y, w, h, dither)
-    self.debug("refresh: inkview partial", x, y, w, h)
-    inkview.PartialUpdate(x, y, w, h)
+    _updatePartial(self, x, y, w, h)
 end
 
 function framebuffer:refreshUIImp(x, y, w, h, dither)
-    self.debug("refresh: inkview partial", x, y, w, h)
-    inkview.PartialUpdate(x, y, w, h)
+    _updatePartial(self, x, y, w, h)
 end
 
 function framebuffer:refreshFlashUIImp(x, y, w, h, dither)
-    self.debug("refresh: inkview partial", x, y, w, h)
-    inkview.PartialUpdate(x, y, w, h)
+    _updatePartial(self, x, y, w, h)
 end
 
 function framebuffer:refreshFullImp(x, y, w, h, dither)
-    self.debug("refresh: inkview partial", x, y, w, h)
-    inkview.FullUpdate()
+    _updateFull(self, x, y, w, h)
 end
 
 function framebuffer:refreshFastImp(x, y, w, h, dither)
-    self.debug("refresh: inkview dynamic", x, y, w, h)
-    inkview.DynamicUpdate(x, y, w, h)
+    _updateFast(self, x, y, w, h)
 end
 
 function framebuffer:refreshWaitForLastImp()
