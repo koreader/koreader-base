@@ -4,6 +4,7 @@
 #include <linux/ioctl.h>
 // specialized eink framebuffer headers
 #include "include/mxcfb-kindle.h"
+#include "include/mtk-kindle.h"
 
 #include "ffi-cdecl.h"
 
@@ -87,3 +88,47 @@ cdecl_const(NIGHTMODE_STRIDE_DEFAULT)
 cdecl_const(NIGHTMODE_STRIDE_DEFAULT_REX)
 cdecl_struct(mxcfb_nightmode_ctrl)
 cdecl_const(MXCFB_SET_NIGHTMODE)
+
+// And now for MTK stuff
+cdecl_const(MTK_EPDC_FLAG_USE_DITHERING_Y4)
+cdecl_const(MTK_EPDC_FLAG_USE_REGAL)
+cdecl_const(MTK_EPDC_FLAG_ENABLE_SWIPE)
+
+cdecl_const(MTK_WAVEFORM_MODE_INIT)
+cdecl_const(MTK_WAVEFORM_MODE_DU)
+cdecl_const(MTK_WAVEFORM_MODE_GC16)
+cdecl_const(MTK_WAVEFORM_MODE_GC16_FAST)
+cdecl_const(MTK_WAVEFORM_MODE_GL16)
+cdecl_const(MTK_WAVEFORM_MODE_GL16_FAST)
+cdecl_const(MTK_WAVEFORM_MODE_GL4)
+cdecl_const(MTK_WAVEFORM_MODE_GL16_INV)
+cdecl_const(MTK_WAVEFORM_MODE_GLR16)
+cdecl_const(MTK_WAVEFORM_MODE_REAGL)
+cdecl_const(MTK_WAVEFORM_MODE_GLD16)
+cdecl_const(MTK_WAVEFORM_MODE_REAGLD)
+cdecl_const(MTK_WAVEFORM_MODE_A2)
+cdecl_const(MTK_WAVEFORM_MODE_DU4)
+cdecl_const(MTK_WAVEFORM_MODE_LAST)
+cdecl_const(MTK_WAVEFORM_MODE_GCK16)
+cdecl_const(MTK_WAVEFORM_MODE_GLKW16)
+cdecl_const(MTK_WAVEFORM_MODE_GC16_PARTIAL)
+cdecl_const(MTK_WAVEFORM_MODE_GCK16_PARTIAL)
+cdecl_const(MTK_WAVEFORM_MODE_DUNM)
+cdecl_const(MTK_WAVEFORM_MODE_P2SW)
+
+cdecl_enum(MTK_SWIPE_DIRECTION_ENUM)
+cdecl_struct(mxcfb_swipe_data)
+
+cdecl_struct(mxcfb_update_data_mtk)
+cdecl_struct(mxcfb_halftone_data)
+cdecl_type(mxcfb_markers_data)
+
+cdecl_const(UPDATE_FLAGS_FAST_MODE)
+cdecl_const(UPDATE_FLAGS_MODE_FAST_FLAG)
+
+cdecl_const(MXCFB_SEND_UPDATE_MTK)
+cdecl_const(MXCFB_SET_NIGHTMODE_MTK)
+cdecl_const(MXCFB_SET_HALFTONE_MTK)
+cdecl_const(MXCFB_WAIT_FOR_ANY_UPDATE_COMPLETE_MTK)
+cdecl_const(MXCFB_SET_UPDATE_FLAGS_MTK)
+cdecl_const(MXCFB_GET_UPDATE_FLAGS_MTK)
