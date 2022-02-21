@@ -504,7 +504,7 @@ local function refresh_mtk(fb, is_flashing, waveform_mode, x, y, w, h, dither)
     end
 
     -- Enable the appropriate flag when requesting a 2bit update, provided we're not dithering.
-    -- FIXME: See FBInk note about DITHER + MONOCHROME
+    -- NOTE: See FBInk note about DITHER + MONOCHROME
     if waveform_mode == C.MTK_WAVEFORM_MODE_A2 and not dither then
         fb.update_data.flags = C.EPDC_FLAG_FORCE_MONOCHROME
     else
@@ -512,7 +512,7 @@ local function refresh_mtk(fb, is_flashing, waveform_mode, x, y, w, h, dither)
     end
 
     -- Did we request HW dithering?
-    if dither then
+    if dither and fb.device:canHWDither() then
         fb.update_data.flags = bor(fb.update_data.flags, C.MTK_EPDC_FLAG_USE_DITHERING_Y4)
     end
 
@@ -730,7 +730,6 @@ function framebuffer:init()
             self.waveform_partial = self.waveform_reagl
             -- FIXME: Enable nightmode via grayscale fb flag
             self.waveform_night = C.MTK_WAVEFORM_MODE_GLKW16
-            -- FIXME: Double-check
             self.night_is_reagl = true
             self.waveform_flashnight = C.MTK_WAVEFORM_MODE_GCK16
 
