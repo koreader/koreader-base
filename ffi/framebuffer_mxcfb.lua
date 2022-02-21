@@ -492,6 +492,43 @@ local function refresh_rex(fb, is_flashing, waveform_mode, x, y, w, h, dither)
     return mxc_update(fb, C.MXCFB_SEND_UPDATE_REX, fb.update_data, is_flashing, waveform_mode, x, y, w, h, dither)
 end
 
+local function refresh_mtk(fb, is_flashing, waveform_mode, x, y, w, h, dither)
+    -- Actually unused by the driver...
+    if waveform_mode == C.MTK_WAVEFORM_MODE_GLR16 or waveform_mode == C.MTK_WAVEFORM_MODE_GLD16 then
+        -- If we're requesting MTK_WAVEFORM_MODE_GLR16, it's REAGL all around!
+        fb.update_data.hist_bw_waveform_mode = waveform_mode
+        fb.update_data.hist_gray_waveform_mode = waveform_mode
+    else
+        fb.update_data.hist_bw_waveform_mode = C.MTK_WAVEFORM_MODE_DU
+        fb.update_data.hist_gray_waveform_mode = C.MTK_WAVEFORM_MODE_GC16 -- NOTE: GC16_FAST points to GC16
+    end
+
+    -- Enable the appropriate flag when requesting a 2bit update, provided we're not dithering.
+    -- FIXME: See FBInk note about DITHER + MONOCHROME
+    if waveform_mode == C.MTK_WAVEFORM_MODE_A2 and not dither then
+        fb.update_data.flags = C.EPDC_FLAG_FORCE_MONOCHROME
+    else
+        fb.update_data.flags = 0
+    end
+
+    -- Did we request HW dithering?
+    if dither then
+        fb.update_data.flags = bor(fb.update_data.flags, C.MTK_EPDC_FLAG_USE_DITHERING_Y4)
+    end
+
+    return mxc_update(fb, C.MXCFB_SEND_UPDATE_MTK, fb.update_data, is_flashing, waveform_mode, x, y, w, h, dither)
+end
+
+-- Don't let the driver silently upgrade to REAGL
+local function set_mtk_flags(fb)
+    local flags = ffi.new("uint32_t[1]", bor(C.UPDATE_FLAGS_FAST_MODE, C.UPDATE_FLAGS_MODE_FAST_FLAG))
+
+    if C.ioctl(fb.fd, C.MXCFB_SET_UPDATE_FLAGS_MTK, flags) == -1 then
+        local err = ffi.errno()
+        fb.debug("MXCFB_SET_UPDATE_FLAGS_MTK ioctl failed:", ffi.string(C.strerror(err)))
+    end
+end
+
 local function refresh_kobo(fb, is_flashing, waveform_mode, x, y, w, h)
     -- Enable the appropriate flag when requesting a REAGLD waveform (WAVEFORM_MODE_REAGLD on the Aura)
     if waveform_mode == C.WAVEFORM_MODE_REAGLD then
@@ -682,6 +719,25 @@ function framebuffer:init()
             end
         end
 
+        -- NOTE: Despite the vastly different SoC, lab126 did the sane thing, and designed the new driver after the mxcfb API ;).
+        if self.device:isMTK() then
+            self.mech_refresh = refresh_mtk
+
+            self.waveform_fast = C.MTK_WAVEFORM_MODE_DU
+            self.waveform_ui = C.WAVEFORM_MODE_AUTO
+            self.waveform_flashui = self.waveform_ui
+            self.waveform_reagl = C.MTK_WAVEFORM_MODE_GLR16
+            self.waveform_partial = self.waveform_reagl
+            -- FIXME: Enable nightmode via grayscale fb flag
+            self.waveform_night = C.MTK_WAVEFORM_MODE_GLKW16
+            -- FIXME: Double-check
+            self.night_is_reagl = true
+            self.waveform_flashnight = C.MTK_WAVEFORM_MODE_GCK16
+
+            -- Don't let the driver silently update to REAGL
+            set_mtk_flags(self)
+        end
+
         -- Keep our data structures around, and setup constants
         if self.mech_refresh == refresh_k51 then
             self.update_data = ffi.new("struct mxcfb_update_data")
@@ -692,6 +748,9 @@ function framebuffer:init()
             self.update_data.temp = C.TEMP_USE_AMBIENT
         elseif self.mech_refresh == refresh_rex then
             self.update_data = ffi.new("struct mxcfb_update_data_rex")
+            self.update_data.temp = C.TEMP_USE_AMBIENT
+        elseif self.mech_refresh == refresh_mtk then
+            self.update_data = ffi.new("struct mxcfb_update_data_mtk")
             self.update_data.temp = C.TEMP_USE_AMBIENT
         end
         if self.mech_wait_update_complete == kindle_pearl_mxc_wait_for_update_complete then
