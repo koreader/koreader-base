@@ -17,6 +17,11 @@ if ($ENV{DARWIN})
     set(CFLAGS "${CFLAGS} -Wno-error=implicit-function-declaration")
 endif()
 
+if ($ENV{DARWIN})
+    #fix build error due to implicit declarations of function being invalid in C99 under macOS/XCode 12 
+    set(CFLAGS "${CFLAGS} -Wno-error=implicit-function-declaration")
+endif()
+
 ep_get_source_dir(SOURCE_DIR)
 
 if(NOT DEFINED ENV{DARWIN})

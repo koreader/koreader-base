@@ -132,6 +132,9 @@ function mupdf.openDocumentFromText(text, magic)
     -- doc is a cdata<fz_document *>, attach a finalizer to it to release ressources on garbage collection
     mupdf_doc.doc = ffi.gc(mupdf_doc.doc, mupdf.fz_document_gc)
 
+    -- doc is a cdata<fz_document *>, attach a finalizer to it to release ressources on garbage collection
+    mupdf_doc.doc = ffi.gc(mupdf_doc.doc, mupdf.fz_document_gc)
+
     setmetatable(mupdf_doc, document_mt)
 
     return mupdf_doc
