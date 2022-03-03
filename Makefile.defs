@@ -843,7 +843,7 @@ ZLIB=$(OUTPUT_DIR)/libs/$(if $(WIN32),zlib1.dll,$(if $(DARWIN),libz.1.dylib,libz
 
 LEPT_LIB_EXT=$(if $(WIN32),-5.dll,$(if $(DARWIN),.5.dylib,.so.5))
 LEPTONICA_LIB=$(OUTPUT_DIR)/libs/liblept$(LEPT_LIB_EXT)
-TESS_LIB_EXT=$(if $(WIN32),-3.dll,$(if $(DARWIN),.3.dylib,.so.3))
+TESS_LIB_EXT=$(if $(WIN32),-4.dll,$(if $(DARWIN),.4.dylib,.so.4))
 TESSERACT_LIB=$(OUTPUT_DIR)/libs/libtesseract$(TESS_LIB_EXT)
 
 OPENSSL_BUILD_DIR=$(THIRDPARTY_DIR)/openssl/build/$(MACHINE)
