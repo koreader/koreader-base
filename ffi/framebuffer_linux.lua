@@ -161,6 +161,11 @@ function framebuffer:setHWNightmode(toggle)
         return
     end
 
+    -- And on devices with the actual capability.
+    if not self.device:canHWInvert() then
+        return
+    end
+
     local vinfo = self._vinfo
     -- Just flip the grayscale flag.
     -- This shouldn't affect *anything* (layout-wise), which is why we don't touch the mmap or anything else, really.
@@ -172,6 +177,11 @@ end
 function framebuffer:getHWNightmode()
     -- Only makes sense @ 8bpp
     if self.fb_bpp ~= 8 then
+        return false
+    end
+
+    -- And on devices with the actual capability.
+    if not self.device:canHWInvert() then
         return false
     end
 

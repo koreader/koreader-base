@@ -337,8 +337,8 @@ local function mxc_update(fb, ioc_cmd, ioc_data, is_flashing, waveform_mode, x, 
     -- Handle night mode shenanigans
     if fb.night_mode then
         -- We're in nightmode!
-        -- If the device can do HW inversion safely, and doesn't already handle the flag automatically, do that!
-        if fb.device:canHWInvert() and not fb.device:canHWInvertInKernel() then
+        -- If the device can do HW inversion safely, and doesn't already handle setting the flag automatically, do that!
+        if fb.device:canHWInvert() and not fb:getHWNightmode() then
             ioc_data.flags = bor(ioc_data.flags, C.EPDC_FLAG_ENABLE_INVERSION)
         end
 
@@ -729,8 +729,8 @@ function framebuffer:init()
             self.waveform_flashui = self.waveform_ui
             self.waveform_reagl = C.MTK_WAVEFORM_MODE_GLR16
             self.waveform_partial = self.waveform_reagl
-            --- @todo: Ideally, we'd want to switch to nightmode globally, via the grayscale fb flag,
-            --         as the driver uses that to make a few nightmode-specific decisions:
+            -- NOTE: We switch to nightmode globally, via the grayscale vinfo fb flag,
+            --       as the driver uses that to make a few nightmode-specific decisions:
             --         * Proper pattern color for the halftone grid
             --         * Automatic GCK16/GLKW16/DUNM waveform mode selection
             --         * Disable the silent REAGL updates in nightmode

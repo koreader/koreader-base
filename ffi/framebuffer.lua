@@ -103,7 +103,7 @@ function fb:setHWRotation(canon)
 end
 
 -- To be overriden. Enable nightmode globally by switching the grayscale fb vinfo flag.
--- Requires the canHWInvertInKernel device cap.
+-- Requires the canHWInvert device cap.
 function fb:setHWNightmode(toggle)
 end
 -- To be overriden. Returns true if the grayscale flag is set to GRAYSCALE_8BIT_INVERTED on an 8bpp fb.
@@ -438,18 +438,16 @@ end
 
 function fb:toggleNightMode()
     self.night_mode = not self.night_mode
-    -- Only do SW inversion if the HW can't...
-    if not self.device:canHWInvert() then
+    if self.device:canHWInvert() then
+        -- If the device supports global inversion via the grayscale flag, do that.
+        self:setHWNightmode(self.night_mode)
+    else
+        -- Only do SW inversion if the HW can't...
         self.bb:invert()
         if self.viewport then
             -- invert and blank out the full framebuffer when we are working on a viewport
             self.full_bb:setInverse(self.bb:getInverse())
             self.full_bb:fill(Blitbuffer.COLOR_WHITE)
-        end
-    else
-        -- If the device supports global inversion via the grayscale flag, do that.
-        if self.device:canHWInvertInKernel() then
-            self:setHWNightmode(self.night_mode)
         end
     end
 end
