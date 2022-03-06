@@ -150,6 +150,29 @@ function framebuffer:reinit()
     self.bb:fill(BB.COLOR_WHITE)
 end
 
+function framebuffer:setNightmode(toggle)
+    -- Only makes sense @ 8bpp
+    if self.fb_bpp ~= 8 then
+        return
+    end
+
+    -- This is common across all mxcfb-like platforms.
+    local GRAYSCALE_8BIT = 0x1
+    local GRAYSCALE_8BIT_INVERTED = 0x2
+
+    -- Do not necessarily trust our own cached vinfo, as we may have tweaked it...
+    -- Instead, query the current state again...
+    local vinfo = ffi.new("struct fb_var_screeninfo")
+    assert(C.ioctl(self.fd, C.FBIOGET_VSCREENINFO, vinfo) == 0,
+           "cannot get variable screen info")
+
+    -- ...and just flip the grayscale flag.
+    -- This shouldn't affect *anything* (layout-wise), which is why we don't touch the mmap or anything else, really.
+    vinfo.grayscale = toggle and GRAYSCALE_8BIT_INVERTED or GRAYSCALE_8BIT
+    assert(C.ioctl(self.fd, C.FBIOPUT_VSCREENINFO, vinfo) == 0,
+           "cannot set variable screen info")
+end
+
 function framebuffer:setHWRotation(mode)
     local vinfo = self._vinfo
     vinfo.rotate = self.forced_rotation[mode+1] or mode
