@@ -336,8 +336,9 @@ local function mxc_update(fb, ioc_cmd, ioc_data, is_flashing, waveform_mode, x, 
 
     -- Handle night mode shenanigans
     if fb.night_mode then
-        -- We're in nightmode! If the device can do HW inversion safely, do that!
-        if fb.device:canHWInvert() then
+        -- We're in nightmode!
+        -- If the device can do HW inversion safely, and doesn't already handle the flag automatically, do that!
+        if fb.device:canHWInvert() and not fb.device:canHWInvertInKernel() then
             ioc_data.flags = bor(ioc_data.flags, C.EPDC_FLAG_ENABLE_INVERSION)
         end
 
