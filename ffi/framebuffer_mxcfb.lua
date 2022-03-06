@@ -728,7 +728,13 @@ function framebuffer:init()
             self.waveform_flashui = self.waveform_ui
             self.waveform_reagl = C.MTK_WAVEFORM_MODE_GLR16
             self.waveform_partial = self.waveform_reagl
-            -- FIXME: Enable nightmode via grayscale fb flag
+            --- @todo: Ideally, we'd want to switch to nightmode globally, via the grayscale fb flag,
+            --         as the driver uses that to make a few nightmode-specific decisions:
+            --         * Proper pattern color for the halftone grid
+            --         * Automatic GCK16/GLKW16/DUNM waveform mode selection
+            --         * Disable the silent REAGL updates in nightmode
+            --         * Use the proper waveform mode during animated swipes
+            --         * Make better decisions for AUTO in nightmode
             self.waveform_night = C.MTK_WAVEFORM_MODE_GLKW16
             self.night_is_reagl = true
             self.waveform_flashnight = C.MTK_WAVEFORM_MODE_GCK16
