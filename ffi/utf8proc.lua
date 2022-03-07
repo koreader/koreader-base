@@ -23,8 +23,22 @@ end
 
 local Utf8Proc = {}
 
+--- Lowercases an utf8-encoded string
+--- @string str string to lowercase
+--- @bool normalize normalizes the string during operation
+--- @treturn string the lowercased string
+function Utf8Proc.lowercase(str, normalize)
+    if normalize == nil then normalize = true end
+
+    if normalize then
+        return Utf8Proc.lowercase_NFKC_Casefold(str)
+    else
+        return Utf8Proc.lowercase_dumb(str)
+    end
+end
+
 -- with normalization
-function Utf8Proc.lowercase(str)
+function Utf8Proc.lowercase_NFKC_Casefold(str)
     local folded_strz = libutf8proc.utf8proc_NFKC_Casefold(str)
     local folded_str = ffi.string(folded_strz)
     C.free(folded_strz)
@@ -56,12 +70,15 @@ function Utf8Proc.lowercase_dumb(str)
             count = count + 1
             pos = pos + bytes
         else
-            return lowercased, false
+            return lowercased
         end
     end
-    return lowercased, true
+    return lowercased
 end
 
+--- Normalizes an utf8-encoded string
+--- @string str string to lowercase
+--- @treturn string the normalized string
 function Utf8Proc.normalize_NFC(str)
     local normalized_strz = libutf8proc.utf8proc_NFC(str)
     local normalized_str = ffi.string(normalized_strz)
@@ -69,6 +86,9 @@ function Utf8Proc.normalize_NFC(str)
     return normalized_str
 end
 
+--- Counts codepoints in an utf8-encoded string
+--- @string str to count codepoints in
+--- @return (int, bool) number of codepoints, operation successfull
 function Utf8Proc.count(str)
     local str_p = ffi.cast("const utf8proc_uint8_t *", str)
     local codepoint = ffi.new("utf8proc_int32_t[1]")
