@@ -2,174 +2,62 @@ diff --git a/include/mupdf/fitz/display-list.h b/include/mupdf/fitz/display-list
 index b6a23e436..42ef159f2 100644
 --- a/include/mupdf/fitz/display-list.h
 +++ b/include/mupdf/fitz/display-list.h
-@@ -44,7 +44,7 @@ fz_display_list *fz_new_display_list(fz_context *ctx, const fz_rect *mediabox);
+@@ -44,6 +44,6 @@ fz_display_list *fz_new_display_list(fz_context *ctx, const fz_rect *mediabox);
  	for each rendering. Once the device is no longer needed, free
  	it with fz_drop_device.
- 
+
 -	list: A display list that the list device takes ownership of.
 +	list: A display list that the list device takes a reference to.
  */
  fz_device *fz_new_list_device(fz_context *ctx, fz_display_list *list);
- 
+
 diff --git a/include/mupdf/fitz/filter.h b/include/mupdf/fitz/filter.h
 index 782c4d80d..4986e910d 100644
 --- a/include/mupdf/fitz/filter.h
 +++ b/include/mupdf/fitz/filter.h
-@@ -18,6 +18,7 @@ typedef struct
- fz_stream *fz_open_copy(fz_context *ctx, fz_stream *chain);
- fz_stream *fz_open_null_n(fz_context *ctx, fz_stream *chain, fz_range *ranges, int nranges);
- fz_stream *fz_open_null(fz_context *ctx, fz_stream *chain, int len, int64_t offset);
-+fz_stream *fz_open_pdf_stream(fz_context *ctx, fz_stream *chain, int len, int64_t offset);
- fz_stream *fz_open_concat(fz_context *ctx, int max, int pad);
- void fz_concat_push_drop(fz_context *ctx, fz_stream *concat, fz_stream *chain); /* Ownership of chain is passed in */
- fz_stream *fz_open_arc4(fz_context *ctx, fz_stream *chain, unsigned char *key, unsigned keylen);
-diff --git a/include/mupdf/fitz/system.h b/include/mupdf/fitz/system.h
-index c480bd7c0..cabbcc217 100644
---- a/include/mupdf/fitz/system.h
-+++ b/include/mupdf/fitz/system.h
-@@ -57,11 +57,13 @@ typedef unsigned __int64 uint64_t;
- 	Some differences in libc can be smoothed over
+@@ -43,6 +43,7 @@ typedef struct
  */
- 
--#ifdef __APPLE__
-+#ifndef __STRICT_ANSI__
-+#if defined(__APPLE__)
- #define HAVE_SIGSETJMP
--#elif defined(__unix) && !defined(__NACL__)
-+#elif defined(__unix)
- #define HAVE_SIGSETJMP
- #endif
-+#endif
- 
- /*
- 	Where possible (i.e. on platforms on which they are provided), use
-@@ -147,10 +149,10 @@ void fz_free_argv(int argc, char **argv);
- /* inline is standard in C++. For some compilers we can enable it within C too. */
- 
- #ifndef __cplusplus
--#if __STDC_VERSION__ == 199901L /* C99 */
--#elif _MSC_VER >= 1500 /* MSVC 9 or newer */
-+#if defined (__STDC_VERSION_) && (__STDC_VERSION__ >= 199901L) /* C99 */
-+#elif defined(_MSC_VER) && (_MSC_VER >= 1500) /* MSVC 9 or newer */
- #define inline __inline
--#elif __GNUC__ >= 3 /* GCC 3 or newer */
-+#elif defined(__GNUC__) && (__GNUC__ >= 3) /* GCC 3 or newer */
- #define inline __inline
- #else /* Unknown or ancient */
- #define inline
-@@ -158,10 +160,10 @@ void fz_free_argv(int argc, char **argv);
- #endif
- 
- /* restrict is standard in C99, but not in all C++ compilers. */
--#if __STDC_VERSION__ == 199901L /* C99 */
--#elif _MSC_VER >= 1600 /* MSVC 10 or newer */
-+#if defined (__STDC_VERSION_) && (__STDC_VERSION__ >= 199901L) /* C99 */
-+#elif defined(_MSC_VER) && (_MSC_VER >= 1600) /* MSVC 10 or newer */
- #define restrict __restrict
--#elif __GNUC__ >= 3 /* GCC 3 or newer */
-+#elif defined(__GNUC__) && (__GNUC__ >= 3) /* GCC 3 or newer */
- #define restrict __restrict
- #else /* Unknown or ancient */
- #define restrict
-@@ -179,7 +181,7 @@ void fz_free_argv(int argc, char **argv);
- #endif
- 
- /* Flag unused parameters, for use with 'static inline' functions in headers. */
--#if __GNUC__ > 2 || __GNUC__ == 2 && __GNUC_MINOR__ >= 7
-+#if defined(__GNUC__) && (__GNUC__ > 2 || __GNUC__ == 2 && __GNUC_MINOR__ >= 7)
- #define FZ_UNUSED __attribute__((__unused__))
- #else
- #define FZ_UNUSED
-@@ -189,7 +191,7 @@ void fz_free_argv(int argc, char **argv);
- #ifdef __printflike
- #define FZ_PRINTFLIKE(F,V) __printflike(F,V)
- #else
--#if __GNUC__ > 2 || __GNUC__ == 2 && __GNUC_MINOR__ >= 7
-+#if defined(__GNUC__) && (__GNUC__ > 2 || __GNUC__ == 2 && __GNUC_MINOR__ >= 7)
- #define FZ_PRINTFLIKE(F,V) __attribute__((__format__ (__printf__, F, V)))
- #else
- #define FZ_PRINTFLIKE(F,V)
-diff --git a/source/fitz/draw-affine.c b/source/fitz/draw-affine.c
-index c64411b4c..9c7e8aa72 100644
---- a/source/fitz/draw-affine.c
-+++ b/source/fitz/draw-affine.c
-@@ -164,7 +164,7 @@ template_affine_alpha_g2rgb_lerp(byte * restrict dp, int da, const byte * restri
- 					gp[0] = ya + fz_mul255(gp[0], t);
- 			}
- 		}
--		dp += 4;
-+		dp += 3+da;
- 		if (hp)
- 			hp++;
- 		if (gp)
-diff --git a/source/fitz/draw-blend.c b/source/fitz/draw-blend.c
-index e468690a0..c2ca4f1fe 100644
---- a/source/fitz/draw-blend.c
-+++ b/source/fitz/draw-blend.c
-@@ -446,10 +446,10 @@ fz_blend_nonseparable_gray(byte * restrict bp, int bal, const byte * restrict sp
- 				case FZ_BLEND_HUE:
- 				case FZ_BLEND_SATURATION:
- 				case FZ_BLEND_COLOR:
--					bp[0] = fz_mul255(bp[n], bg);
-+					bp[0] = bal ? fz_mul255(bp[n], bg) : bg;
- 					break;
- 				case FZ_BLEND_LUMINOSITY:
--					bp[0] = fz_mul255(bp[n], sg);
-+					bp[0] = bal ? fz_mul255(bp[n], sg) : sg;
- 					break;
- 				}
- 
-@@ -551,10 +551,10 @@ fz_blend_nonseparable(byte * restrict bp, int bal, const byte * restrict sp, int
- 					case FZ_BLEND_HUE:
- 					case FZ_BLEND_SATURATION:
- 					case FZ_BLEND_COLOR:
--						bp[3] = fz_mul255(bp[n], bk);
-+						bp[3] = bal ? fz_mul255(bp[n], bk) : bk;
- 						break;
- 					case FZ_BLEND_LUMINOSITY:
--						bp[3] = fz_mul255(bp[n], sk);
-+						bp[3] = bal ? fz_mul255(bp[n], sk) : sk;
- 						break;
- 					}
- 				}
+ fz_stream *fz_open_null_filter(fz_context *ctx, fz_stream *chain, int len, int64_t offset);
+
++fz_stream *fz_open_pdf_stream(fz_context *ctx, fz_stream *chain, int len, int64_t offset);
+ /**
+ 	The range filter copies data from specified ranges of the
+ 	chained stream.
+
 diff --git a/source/fitz/filter-basic.c b/source/fitz/filter-basic.c
 index f558f43b1..86ff5dcc8 100644
 --- a/source/fitz/filter-basic.c
 +++ b/source/fitz/filter-basic.c
-@@ -16,9 +16,12 @@ struct null_filter
+@@ -29,6 +29,9 @@
+ struct null_filter
  {
  	fz_stream *chain;
- 	fz_range *ranges;
 +	int look_for_endstream;
- 	int nranges;
- 	int next_range;
- 	size_t remain;
-+	unsigned int extras;
++	Int extras;
 +	unsigned int size;
+ 	size_t remain;
  	int64_t offset;
  	unsigned char buffer[4096];
- };
-@@ -27,7 +30,9 @@ static int
- next_null(fz_context *ctx, fz_stream *stm, size_t max)
+@@ -39,3 +42,6 @@ next_null(fz_context *ctx, fz_stream *stm, size_t max)
  {
  	struct null_filter *state = stm->state;
--	size_t n;
+ 	size_t n;
 +	size_t n, i, nbytes_in_buffer;
 +	const char *rp;
 +	unsigned int size;
- 
- 	while (state->remain == 0 && state->next_range < state->nranges)
- 	{
+
+ 	if (state->remain == 0)
+ 		return EOF;
 @@ -37,7 +42,7 @@ next_null(fz_context *ctx, fz_stream *stm, size_t max)
  	}
- 
+
  	if (state->remain == 0)
 -		return EOF;
 +		goto maybe_ended;
  	fz_seek(ctx, state->chain, state->offset, 0);
  	n = fz_available(ctx, state->chain, max);
  	if (n > state->remain)
-@@ -48,12 +53,88 @@ next_null(fz_context *ctx, fz_stream *stm, size_t max)
+@@ -48,10 +53,86 @@ next_null(fz_context *ctx, fz_stream *stm, size_t max)
  	stm->rp = state->buffer;
  	stm->wp = stm->rp + n;
  	if (n == 0)
@@ -257,19 +145,19 @@ index f558f43b1..86ff5dcc8 100644
 +		return EOF;
 +	return *stm->rp++;
  }
- 
+
  static void
 @@ -65,8 +146,8 @@ close_null(fz_context *ctx, void *state_)
  	fz_free(ctx, state);
  }
- 
+
 -fz_stream *
 -fz_open_null_n(fz_context *ctx, fz_stream *chain, fz_range *ranges, int nranges)
 +static fz_stream *
 +fz_open_null_n_terminator(fz_context *ctx, fz_stream *chain, fz_range *ranges, int nranges, int terminator)
  {
  	struct null_filter *state = NULL;
- 
+
 @@ -77,10 +158,13 @@ fz_open_null_n(fz_context *ctx, fz_stream *chain, fz_range *ranges, int nranges)
  		{
  			state->ranges = fz_calloc(ctx, nranges, sizeof(*ranges));
@@ -287,7 +175,7 @@ index f558f43b1..86ff5dcc8 100644
 @@ -102,6 +186,12 @@ fz_open_null_n(fz_context *ctx, fz_stream *chain, fz_range *ranges, int nranges)
  	return fz_new_stream(ctx, state, next_null, close_null);
  }
- 
+
 +fz_stream *
 +fz_open_null_n(fz_context *ctx, fz_stream *chain, fz_range *ranges, int nranges)
 +{
@@ -298,13 +186,13 @@ index f558f43b1..86ff5dcc8 100644
  fz_open_null(fz_context *ctx, fz_stream *chain, int len, int64_t offset)
  {
 @@ -112,9 +202,21 @@ fz_open_null(fz_context *ctx, fz_stream *chain, int len, int64_t offset)
- 
+
  	range.offset = offset;
  	range.len = len;
 -	return fz_open_null_n(ctx, chain, &range, 1);
 +	return fz_open_null_n_terminator(ctx, chain, &range, 1, 0);
  }
- 
+
 +fz_stream *
 +fz_open_pdf_stream(fz_context *ctx, fz_stream *chain, int len, int64_t offset)
 +{
@@ -317,9 +205,9 @@ index f558f43b1..86ff5dcc8 100644
 +	range.len = len;
 +	return fz_open_null_n_terminator(ctx, chain, &range, 1, 1);
 +}
- 
+
  /* Concat filter concatenates several streams into one */
- 
+
 diff --git a/source/fitz/filter-jbig2.c b/source/fitz/filter-jbig2.c
 index 0d581b95c..98320ff5b 100644
 --- a/source/fitz/filter-jbig2.c
@@ -339,7 +227,7 @@ index 43bade717..fdd7a1e11 100644
 @@ -313,22 +313,19 @@ fz_open_sgilog16(fz_context *ctx, fz_stream *chain, int w)
  {
  	fz_sgilog16 *state = NULL;
- 
+
 -	fz_var(state);
 -
 +	state = fz_malloc_struct(ctx, fz_sgilog16);
@@ -360,7 +248,7 @@ index 43bade717..fdd7a1e11 100644
 -		fz_drop_stream(ctx, chain);
  		fz_rethrow(ctx);
  	}
- 
+
 diff --git a/source/fitz/image.c b/source/fitz/image.c
 index 516997727..bd08c8757 100644
 --- a/source/fitz/image.c
@@ -372,7 +260,7 @@ index 516997727..bd08c8757 100644
 -		fz_free(ctx, samples);
  		fz_rethrow(ctx);
  	}
- 
+
 diff --git a/source/fitz/list-device.c b/source/fitz/list-device.c
 index ca3425abb..a385f51fa 100644
 --- a/source/fitz/list-device.c
@@ -383,12 +271,12 @@ index ca3425abb..a385f51fa 100644
  	fz_drop_path(ctx, writer->path);
 +	fz_drop_display_list(ctx, writer->list);
  }
- 
+
  fz_device *
 @@ -1352,7 +1353,7 @@ fz_new_list_device(fz_context *ctx, fz_display_list *list)
- 
+
  	dev->super.drop_device = fz_list_drop_device;
- 
+
 -	dev->list = list;
 +	dev->list = fz_keep_display_list(ctx, list);
  	dev->path = NULL;
@@ -408,19 +296,19 @@ index 87b324310..3839197f5 100644
  	unsigned int x;
  	int k, stride;
  	fz_pixmap *image = NULL;
- 
+
  	fz_var(colorspace);
 +	fz_var(icc);
  	fz_var(image);
  	fz_var(row);
- 
+
 diff --git a/source/fitz/load-tiff.c b/source/fitz/load-tiff.c
 index 3dad8a82d..bfa66c045 100644
 --- a/source/fitz/load-tiff.c
 +++ b/source/fitz/load-tiff.c
 @@ -875,6 +875,9 @@ tiff_read_tag(fz_context *ctx, struct tiff *tiff, unsigned offset)
  		break;
- 
+
  	case JPEGTables:
 +		/* Check both value and value + count to allow for overflow */
 +		if (value > tiff->ep - tiff->bp || value + count > tiff->ep - tiff->bp)
@@ -442,7 +330,7 @@ index a87b720dc..7b8e9bcfe 100644
 +            }
          }
      }
- 
+
 @@ -1638,6 +1640,13 @@ static int squeeze(void)
      if (pid == 0) {
          /* Child */
@@ -475,7 +363,7 @@ index ad5b69aa0..0c4279229 100644
 +		fz_unlock(ctx, FZ_LOCK_ALLOC);
 +	}
  }
- 
+
  char *
 diff --git a/source/fitz/output.c b/source/fitz/output.c
 index 4ee0023c6..3d3c6613d 100644
@@ -512,21 +400,21 @@ index 33d9a8a85..ce1ef07fe 100644
  #include <limits.h>
  #include <stdio.h>
 +#include <string.h>
- 
+
  typedef struct fz_item_s fz_item;
- 
+
 @@ -38,6 +39,7 @@ struct fz_store_s
- 
+
  	int defer_reap_count;
  	int needs_reaping;
 +	int scavenging;
  };
- 
+
  void
 @@ -74,24 +76,6 @@ fz_keep_storable(fz_context *ctx, const fz_storable *sc)
  	return fz_keep_imp(ctx, s, &s->refs);
  }
- 
+
 -void
 -fz_drop_storable(fz_context *ctx, const fz_storable *sc)
 -{
@@ -550,7 +438,7 @@ index 33d9a8a85..ce1ef07fe 100644
  	return fz_keep_storable(ctx, &sc->storable);
 @@ -186,6 +170,7 @@ void fz_drop_key_storable(fz_context *ctx, const fz_key_storable *sc)
  		return;
- 
+
  	fz_lock(ctx, FZ_LOCK_ALLOC);
 +	assert(s->storable.refs != 0);
  	if (s->storable.refs > 0)
@@ -559,7 +447,7 @@ index 33d9a8a85..ce1ef07fe 100644
 @@ -439,19 +424,14 @@ fz_store_item(fz_context *ctx, void *key, void *val_, size_t itemsize, const fz_
  	if (!store)
  		return NULL;
- 
+
 -	fz_var(item);
 -
  	/* If we fail for any reason, we swallow the exception and continue.
@@ -577,13 +465,13 @@ index 33d9a8a85..ce1ef07fe 100644
  		return NULL;
 -	}
 +	memset(item, 0, sizeof (fz_item));
- 
+
  	if (type->make_hash_key)
  	{
 @@ -773,35 +753,116 @@ fz_debug_store(fz_context *ctx)
  	fz_unlock(ctx, FZ_LOCK_ALLOC);
  }
- 
+
 -/* This is now an n^2 algorithm - not ideal, but it'll only be bad if we are
 - * actually managing to scavenge lots of blocks back. */
 +/*
@@ -617,7 +505,7 @@ index 33d9a8a85..ce1ef07fe 100644
 -	fz_item *item, *prev;
 +	size_t freed = 0;
 +	fz_item *item;
- 
+
 -	/* Free the items */
 -	for (item = store->tail; item; item = prev)
 +	if (store->scavenging)
@@ -649,13 +537,13 @@ index 33d9a8a85..ce1ef07fe 100644
 +					break;
 +			}
 +		}
- 
+
 -			if (count >= tofree)
 -				break;
 +		/* If there are no evictable blocks, we can't find anything to free. */
 +		if (largest == NULL)
 +			break;
- 
+
 -			/* Have to restart search again, as prev may no longer
 -			 * be valid due to release of lock in evict. */
 -			prev = store->tail;
@@ -713,7 +601,7 @@ index 33d9a8a85..ce1ef07fe 100644
 +	if (num == 0)
 +		s->drop(ctx, s);
  }
- 
+
  int fz_store_scavenge_external(fz_context *ctx, size_t size, int *phase)
 diff --git a/source/fitz/stream-open.c b/source/fitz/stream-open.c
 index 399942854..321cf9684 100644
@@ -728,7 +616,7 @@ index 399942854..321cf9684 100644
 +			drop(ctx, state);
  		fz_rethrow(ctx);
  	}
- 
+
 diff --git a/source/fitz/svg-device.c b/source/fitz/svg-device.c
 index c5905938f..feb21ffce 100644
 --- a/source/fitz/svg-device.c
@@ -748,7 +636,7 @@ index 4eb90ddaa..8cc5b07ee 100644
 @@ -246,7 +246,7 @@ static void ensure_zip_entries(fz_context *ctx, fz_zip_archive *zip)
  	maxback = fz_minz(size, 0xFFFF + sizeof buf);
  	back = fz_minz(maxback, sizeof buf);
- 
+
 -	while (back < maxback)
 +	while (back <= maxback)
  	{
@@ -761,14 +649,14 @@ index b7c89cf45..c7a5f290f 100644
 @@ -4,7 +4,7 @@
  #include <stdlib.h>
  #include <stdio.h>
- 
+
 -static const struct { const char *ent; int ucs; } html_entities[] = {
 +static const struct { const char *name; int c; } html_entities[] = {
  	{"nbsp",160}, {"iexcl",161}, {"cent",162}, {"pound",163},
  	{"curren",164}, {"yen",165}, {"brvbar",166}, {"sect",167},
  	{"uml",168}, {"copy",169}, {"ordf",170}, {"laquo",171},
 @@ -280,9 +280,9 @@ static size_t xml_parse_entity(int *c, char *a)
- 
+
  	/* We should only be doing this for XHTML, but it shouldn't be a problem. */
  	for (i = 0; i < nelem(html_entities); ++i) {
 -		size_t n = strlen(html_entities[i].ent);
@@ -782,7 +670,7 @@ index b7c89cf45..c7a5f290f 100644
  	}
 @@ -472,9 +472,11 @@ parse_element:
  	return "syntax error in element";
- 
+
  parse_comment:
 +	if (p[0]=='D' && p[1]=='O' && p[2]=='C' && p[3]=='T' && p[4]=='Y' && p[5]=='P' && p[6]=='E')
 +		goto parse_declaration;
@@ -805,7 +693,7 @@ index b7c89cf45..c7a5f290f 100644
 +	int dofree = 0;
  	unsigned char *s;
  	size_t n;
- 
+
 +	fz_var(dofree);
 +	fz_var(p);
 +
@@ -819,7 +707,7 @@ index 03c2eb350..4eef23fe7 100644
 @@ -1,20 +1,6 @@
  #include "mupdf/fitz.h"
  #include "mupdf/pdf.h"
- 
+
 -size_t
 -pdf_cmap_size(fz_context *ctx, pdf_cmap *cmap)
 -{
@@ -879,28 +767,28 @@ index db699dd07..b95a7d1b3 100644
 --- a/source/pdf/pdf-device.c
 +++ b/source/pdf/pdf-device.c
 @@ -66,7 +66,6 @@ struct pdf_device_s
- 
+
  	pdf_document *doc;
  	pdf_obj *resources;
 -	fz_buffer *buffer;
- 
+
  	int in_text;
- 
+
 @@ -1063,7 +1062,10 @@ pdf_dev_drop_device(fz_context *ctx, fz_device *dev)
  	int i;
- 
+
  	for (i = pdev->num_gstates-1; i >= 0; i--)
 +	{
 +		fz_drop_buffer(ctx, pdev->gstates[i].buf);
  		fz_drop_stroke_state(ctx, pdev->gstates[i].stroke_state);
 +	}
- 
+
  	for (i = pdev->num_cid_fonts-1; i >= 0; i--)
  		fz_drop_font(ctx, pdev->cid_fonts[i]);
 @@ -1071,7 +1073,6 @@ pdf_dev_drop_device(fz_context *ctx, fz_device *dev)
  	for (i = pdev->num_groups - 1; i >= 0; i--)
  		pdf_drop_obj(ctx, pdev->groups[i].ref);
- 
+
 -	fz_drop_buffer(ctx, pdev->buffer);
  	pdf_drop_obj(ctx, pdev->resources);
  	fz_free(ctx, pdev->cid_fonts);
@@ -908,7 +796,7 @@ index db699dd07..b95a7d1b3 100644
 @@ -1113,10 +1114,13 @@ fz_device *pdf_new_pdf_device(fz_context *ctx, pdf_document *doc, const fz_matri
  	dev->super.begin_tile = pdf_dev_begin_tile;
  	dev->super.end_tile = pdf_dev_end_tile;
- 
+
 +	fz_var(buf);
 +
  	fz_try(ctx)
@@ -938,7 +826,7 @@ index 148f4c292..319a03462 100644
 @@ -1701,9 +1701,11 @@ pdf_add_cid_font_widths(fz_context *ctx, pdf_document *doc, pdf_obj *fobj, fz_fo
  		prev_size = fz_advance_glyph(ctx, font, 0, 0) * 1000;
  		first_code = prev_code;
- 
+
 -		while (prev_code < face->num_glyphs)
 +		for (;;)
  		{
@@ -946,14 +834,14 @@ index 148f4c292..319a03462 100644
 +			if (curr_code >= face->num_glyphs)
 +				break;
  			curr_size = fz_advance_glyph(ctx, font, curr_code, 0) * 1000;
- 
+
  			switch (state)
 diff --git a/source/pdf/pdf-object.c b/source/pdf/pdf-object.c
 index bd68b761f..27f970c68 100644
 --- a/source/pdf/pdf-object.c
 +++ b/source/pdf/pdf-object.c
 @@ -1660,6 +1660,7 @@ void pdf_dirty_obj(fz_context *ctx, pdf_obj *obj)
- 
+
  void pdf_clean_obj(fz_context *ctx, pdf_obj *obj)
  {
 +	RESOLVE(obj);
@@ -965,7 +853,7 @@ index e8ce2fabb..9db3d0bdd 100644
 --- a/source/pdf/pdf-stream.c
 +++ b/source/pdf/pdf-stream.c
 @@ -295,7 +295,7 @@ pdf_open_raw_filter(fz_context *ctx, fz_stream *file_stm, pdf_document *doc, pdf
- 
+
  	hascrypt = pdf_stream_has_crypt(ctx, stmobj);
  	len = pdf_to_int(ctx, pdf_dict_get(ctx, stmobj, PDF_NAME_Length));
 -	null_stm = fz_open_null(ctx, file_stm, len, offset);
@@ -980,7 +868,7 @@ index b4d519493..0fa59a389 100644
 @@ -122,6 +122,30 @@ enum
  	USE_PAGE_SHIFT = 8
  };
- 
+
 +static void
 +expand_lists(fz_context *ctx, pdf_write_state *opts, int num)
 +{
@@ -1025,11 +913,11 @@ index b4d519493..0fa59a389 100644
 +		expand_lists(ctx, opts, object);
  	opts->page_object_lists->page[page]->page_object_number = object;
  }
- 
+
 @@ -630,30 +658,6 @@ static int markobj(fz_context *ctx, pdf_document *doc, pdf_write_state *opts, pd
  	return 0;
  }
- 
+
 -static void
 -expand_lists(fz_context *ctx, pdf_write_state *opts, int num)
 -{

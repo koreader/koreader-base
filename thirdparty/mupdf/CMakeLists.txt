@@ -49,24 +49,7 @@ set(BUILD_CMD sh -c "PKG_CONFIG_PATH=/var/nothanks ${MAKE_CMD} -j${PARALLEL_JOBS
 set(PATCH_CMD "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/mupdf-k2pdfopt.patch")
 
 set(SHARED_BUILD_CMD "${SHARED_BUILD_STR}")
-# use external fonts
-set(PATCH_CMD1 "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/external_fonts.patch")
-# add support for encryted zips
-set(PATCH_CMD2 "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/encrypted_zip.patch")
-# use libjpeg as a shared library
-set(PATCH_CMD3 "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/libjpeg_shared.patch")
-# Disable potentially crashy ARM ASM (it's 7 years old, and hell to debug)
-# NOTE: There's also a few ARCH_UNALIGNED_OK checks, but we never did pass that define.
-#       (FWIW, we *could*, on anything not kindle-legacy).
-set(PATCH_CMD4 "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/no_arm_asm.patch")
-# Honor CFLAGS
-set(PATCH_CMD5 "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/honor_cflags.patch")
-# Patch for https://bugs.ghostscript.com/show_bug.cgi?id=698877; should be in upstream from 1.15
-# cf. https://github.com/koreader/koreader/issues/5182
-set(PATCH_CMD6 "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/upstream-698877.patch")
-# Patch for tar/cbt support; should be in upstream from 1.17
-# cf. https://github.com/koreader/koreader-base/issues/1041
-set(PATCH_CMD7 "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/tar-fixes.patch")
+
 # Backport a metric shitton of fixes
 # https://github.com/ArtifexSoftware/mupdf/commit/9920e40365821fbef6c3050695b3dcf0fa5f512e
 # https://github.com/ArtifexSoftware/mupdf/commit/3a263069d58416c251ef9f6a100a54be1e90dc0b
@@ -110,13 +93,13 @@ set(PATCH_CMD7 "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/tar-fixes.patch")
 
 # https://github.com/ArtifexSoftware/mupdf/commit/bc4ec04e21027e226052e0a4c767cbf09994552e
 # https://github.com/ArtifexSoftware/mupdf/commit/a7c435ac1836cc9e46ec4329c1543892148a7a0e
-set(PATCH_CMD8 "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/mupdf-1.13.0-backports.patch")
+#set(PATCH_CMD1 "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/mupdf-1.13.0-backports.patch")
 
 # TODO: ignore *some* of the shared git submodules that are built outside of mupdf by us?
 ep_get_source_dir(SOURCE_DIR)
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
-    https://github.com/ezdiy/mupdf
+    https://github.com/roygbyte/mupdf
     koreader
     ${SOURCE_DIR}
 )
@@ -126,7 +109,7 @@ ExternalProject_Add(
     ${PROJECT_NAME}
     DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
     BUILD_IN_SOURCE 1
-    PATCH_COMMAND COMMAND ${PATCH_CMD} COMMAND ${PATCH_CMD1} COMMAND ${PATCH_CMD2} COMMAND ${PATCH_CMD3} COMMAND ${PATCH_CMD4} COMMAND ${PATCH_CMD5} COMMAND ${PATCH_CMD6} COMMAND ${PATCH_CMD7} COMMAND ${PATCH_CMD8}
+    PATCH_COMMAND COMMAND ${PATCH_CMD}#  COMMAND ${PATCH_CMD1}
     # skip configure
     CONFIGURE_COMMAND ""
     BUILD_COMMAND ${BUILD_CMD}
