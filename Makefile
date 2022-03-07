@@ -94,7 +94,7 @@ libs: \
 	$(OUTPUT_DIR)/libs/libkoreader-djvu.so \
 	$(OUTPUT_DIR)/libs/libkoreader-cre.so \
 	$(OUTPUT_DIR)/libs/libkoreader-xtext.so \
-	$(OUTPUT_DIR)/libs/libkoreader-mupdf.so \
+	$(OUTPUT_DIR)/libs/libmupdf.so \
 	$(OUTPUT_DIR)/libs/libkoreader-nnsvg.so
 
 $(OUTPUT_DIR)/libs/libinkview-compat.so: input/inkview-compat.c
