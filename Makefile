@@ -94,7 +94,7 @@ libs: \
 	$(OUTPUT_DIR)/libs/libkoreader-djvu.so \
 	$(OUTPUT_DIR)/libs/libkoreader-cre.so \
 	$(OUTPUT_DIR)/libs/libkoreader-xtext.so \
-	$(OUTPUT_DIR)/libs/libmupdf.so \
+	$(OUTPUT_DIR)/libs/libkoreader-mupdf.so \
 	$(OUTPUT_DIR)/libs/libkoreader-nnsvg.so
 
 $(OUTPUT_DIR)/libs/libinkview-compat.so: input/inkview-compat.c
@@ -199,7 +199,7 @@ $(OUTPUT_DIR)/libs/libblitbuffer.so: blitbuffer.c
 	$(CC) $(DYNLIB_CFLAGS) $(VECTO_CFLAGS) $(SYMVIS_FLAGS) -o $@ $^
 
 $(OUTPUT_DIR)/libs/libkoreader-mupdf.so: mupdf.c \
-			$(if $(USE_LUAJIT_LIB),$(LUAJIT_LIB),)
+			$(if $(USE_LUAJIT_LIB),$(LUAJIT_LIB),) \
 			$(MUPDF_LIB)
 	$(CC) -I$(MUPDF_DIR)/include $(DYNLIB_CFLAGS) -lmupdf $(SYMVIS_FLAGS) -o $@ $^
 

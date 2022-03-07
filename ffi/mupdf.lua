@@ -37,22 +37,15 @@ local BlitBuffer = require("ffi/blitbuffer")
 
 local M = require("libs/libkoreader-mupdf")
 
---- @fixme: Don't make cache_size too low, at least not until we bump MµPDF,
----         as there's a pernicious issue that corrupts its store cache on overcommit on old versions.
----         c.f., https://github.com/koreader/koreader/issues/7627
----         (FZ_STORE_DEFAULT is 256MB, we used to set it to 8MB).
----         And when we bump MµPDF, it'll likely have *more* stuff to store in there,
---          so, don't make that too low, period ;).
---          NOTE: Revisit when we bump MµPDF by doing a few tests with the tracing memory allocators,
---                as even 32MB is likely to be too conservative.
 local mupdf = {
     debug_memory = false,
-    cache_size = 32*1024*1024,
+    cache_size = 8*1024*1024,
     color = false,
 }
 
 local document_mt = { __index = {} }
 local page_mt = { __index = {} }
+local mupdf_mt = {}
 
 mupdf.debug = function() --[[ no debugging by default ]] end
 
@@ -71,50 +64,31 @@ local function context()
     if ctx == nil then
         error("cannot create fz_context for MuPDF")
     end
-    -- ctx is a cdata<fz_context *>, attach a finalizer to it to release ressources on garbage collection
-    ctx = ffi.gc(ctx, mupdf.fz_context_gc)
 
-    M.fz_install_external_font_funcs(ctx)
-    M.fz_register_document_handlers(ctx)
+    ctx:fz_register_document_handlers()
 
     save_ctx = ctx
     return ctx
 end
 
--- a wrapper for mupdf exception error messages
-local function merror(message)
-    if context() ~= nil then
-        error(string.format("%s: %s (%d)", message,
-            ffi.string(W.mupdf_error_message(context())),
-            W.mupdf_error_code(context())))
-    else
-        error(message)
-    end
-end
-
---
-function mupdf.fz_context_gc(ctx)
-    if ctx ~= nil then
-        M.fz_drop_context(ctx)
+function mupdf_mt.__gc()
+    if save_ctx ~= nil then
+        save_ctx:fz_drop_context()
+        save_ctx = nil
     end
 end
 
 --[[--
 Opens a document.
 --]]
-function mupdf.openDocument(filename)
+function mupdf.openDocument(filename, cache_size)
+    local ctx = context()
+
     local mupdf_doc = {
         doc = ctx:fz_open_document(filename),
         filename = filename,
         ctx = ctx,
     }
-
-    if mupdf_doc.doc == nil then
-        merror("MuPDF cannot open file.")
-    end
-
-    -- doc is a cdata<fz_document *>, attach a finalizer to it to release ressources on garbage collection
-    mupdf_doc.doc = ffi.gc(mupdf_doc.doc, mupdf.fz_document_gc)
 
     setmetatable(mupdf_doc, document_mt)
 
@@ -122,18 +96,14 @@ function mupdf.openDocument(filename)
 end
 
 function mupdf.openDocumentFromText(text, magic)
-    local stream = W.mupdf_open_memory(context(), ffi.cast("const unsigned char*", text), #text)
+    local ctx = context()
+
+    local stream = ctx:fz_open_memory(ffi.cast("const unsigned char*", text), #text)
     local mupdf_doc = {
         doc = ctx:fz_open_document_with_stream(magic, stream),
         ctx = ctx,
     }
     ctx:fz_drop_stream(stream)
-
-    -- doc is a cdata<fz_document *>, attach a finalizer to it to release ressources on garbage collection
-    mupdf_doc.doc = ffi.gc(mupdf_doc.doc, mupdf.fz_document_gc)
-
-    -- doc is a cdata<fz_document *>, attach a finalizer to it to release ressources on garbage collection
-    mupdf_doc.doc = ffi.gc(mupdf_doc.doc, mupdf.fz_document_gc)
 
     setmetatable(mupdf_doc, document_mt)
 
@@ -150,32 +120,11 @@ triggered explicitly
 --]]
 function document_mt.__index:close()
     if self.doc ~= nil then
-        M.fz_drop_document(context(), self.doc)
-        -- Clear the cdata finalizer to avoid a double-free
-        self.doc = ffi.gc(self.doc, nil)
+        self.ctx:fz_drop_document(self.doc)
         self.doc = nil
-
-        -- Clear the context, too, in order to release memory *now*.
-        --- @note: This is mostly for testing the store memory corruption issues investigated in #7627.
-        ---        Otherwise, keeping the context around makes sense,
-        ---        as we use MµPDF in more places than simply as a Document engine...
-        --[[
-        if save_ctx then
-            print("MuPDF:close dropping context", save_ctx)
-            M.fz_drop_context(save_ctx)
-            -- Clear the cdata finalizer to avoid a double-free
-            save_ctx = ffi.gc(save_ctx, nil)
-            save_ctx = nil
-        end
-        --]]
     end
 end
-
-function mupdf.fz_document_gc(doc)
-    if doc ~= nil then
-        M.fz_drop_document(context(), doc)
-    end
-end
+document_mt.__index.__gc = document_mt.__index.close
 
 --[[
 check if the document needs a password for access
@@ -265,16 +214,7 @@ function document_mt.__index:openPage(number)
         doc = self,
         ctx = self.ctx,
     }
-
-    if mupdf_page.page == nil then
-        merror("cannot open page #" .. number)
-    end
-
-    -- page is a cdata<fz_page *>, attach a finalizer to it to release ressources on garbage collection
-    mupdf_page.page = ffi.gc(mupdf_page.page, mupdf.fz_page_gc)
-
     setmetatable(mupdf_page, page_mt)
-
     return mupdf_page
 end
 
@@ -350,45 +290,24 @@ this is done implicitly by garbage collection, too.
 --]]
 function page_mt.__index:close()
     if self.page ~= nil then
-        M.fz_drop_page(context(), self.page)
-        -- Clear the cdata finalizer to avoid a double-free
-        self.page = ffi.gc(self.page, nil)
+        self.ctx:fz_drop_page(self.page)
         self.page = nil
     end
 end
-
-function mupdf.fz_page_gc(page)
-    if page ~= nil then
-        M.fz_drop_page(context(), page)
-    end
-end
+page_mt.__index.__gc = page_mt.__index.close
 
 --[[
 calculate page size after applying DrawContext
 --]]
 function page_mt.__index:getSize(draw_context)
-    local bounds = ffi.new("fz_rect[1]")
-    -- local bbox = ffi.new("fz_irect[1]")
-    local ctm = ffi.new("fz_matrix")
+    local ctm = M.fz_scale(draw_context.zoom, draw_context.zoom)
+    ctm = M.fz_pre_rotate(ctm, draw_context.rotate)
 
-    M.fz_scale(ctm, draw_context.zoom, draw_context.zoom)
-    M.fz_pre_rotate(ctm, draw_context.rotate)
-    M.fz_bound_page(context(), self.page, bounds)
-    M.fz_transform_rect(bounds, ctm)
+    local bounds = self.ctx:fz_bound_page(self.page)
+    bounds = M.fz_transform_rect(bounds, ctm)
+    local bbox = M.fz_round_rect(bounds)
 
-    -- NOTE: fz_bound_page returns an internal representation computed @ 72dpi...
-    --       It is often superbly mysterious, even for images,
-    --       so we do *NOT* want to round it right now,
-    --       as it would introduce rounding errors much too early in the pipeline...
-    -- NOTE: ReaderZooming uses it to compute the scale factor, where accuracy matters!
-    -- NOTE: This is also used in conjunction with getUsedBBox,
-    --       which also returns precise, floating point rectangles!
-    --[[
-    M.fz_round_rect(bbox, bounds)
-    return bbox[0].x1-bbox[0].x0, bbox[0].y1-bbox[0].y0
-    --]]
-
-    return bounds[0].x1 - bounds[0].x0, bounds[0].y1 - bounds[0].y0
+    return bbox.x1-bbox.x0, bbox.y1-bbox.y0
 end
 
 --[[
@@ -668,10 +587,6 @@ function page_mt.__index:draw_new(draw_context, width, height, offset_x, offset_
     return bb
 end
 
-mupdf.STRIKE_HEIGHT = 0.375
-mupdf.UNDERLINE_HEIGHT = 0
-mupdf.LINE_THICKNESS = 0.05
-
 function page_mt.__index:addMarkupAnnotation(points, n, type)
     local color = ffi.new("float[3]")
     local alpha = 1.0
@@ -684,8 +599,6 @@ function page_mt.__index:addMarkupAnnotation(points, n, type)
         color[0] = 0.0
         color[1] = 0.0
         color[2] = 1.0
-        line_thickness = mupdf.LINE_THICKNESS
-        line_height = mupdf.UNDERLINE_HEIGHT
     elseif type == M.PDF_ANNOT_STRIKE_OUT then
         color[0] = 1.0
         color[1] = 0.0
@@ -694,63 +607,15 @@ function page_mt.__index:addMarkupAnnotation(points, n, type)
         return
     end
 
-    local doc = M.pdf_specifics(context(), self.doc.doc)
-    if doc == nil then merror("could not get pdf_specifics") end
-
-    local annot = W.mupdf_pdf_create_annot(context(), ffi.cast("pdf_page*", self.page), type)
-    if annot == nil then merror("could not create annotation") end
-
-    local ok = W.mupdf_pdf_set_annot_quad_points(context(), annot, n, points)
-    if ok == nil then merror("could not set markup annot quadpoints") end
-
-    ok = W.mupdf_pdf_set_markup_appearance(context(), doc, annot, color, alpha, line_thickness, line_height)
-    if ok == nil then merror("could not set markup appearance") end
-
-    -- Fetch back MuPDF's stored coordinates of all quadpoints, as they may have been modified/rounded
-    -- (we need the exact ones that were saved if we want to be able to find them for deletion/update)
-    for i = 0, n-1 do
-        W.mupdf_pdf_annot_quad_point(context(), annot, i, points+i*8)
+    local annot = self.ctx:pdf_create_annot(ffi.cast("pdf_page*", self.page), type)
+    for i=0, n-1 do
+        self.ctx:pdf_add_annot_quad_point(annot, points[i])
     end
+    self.ctx:pdf_set_annot_color(annot, 3, color)
+    self.ctx:pdf_set_annot_opacity(annot, alpha)
+    self.ctx:pdf_update_appearance(annot)
 end
 
-function page_mt.__index:deleteMarkupAnnotation(annot)
-    local ok = W.mupdf_pdf_delete_annot(context(), ffi.cast("pdf_page*", self.page), annot)
-    if ok == nil then merror("could not delete markup annotation") end
-end
-
-function page_mt.__index:getMarkupAnnotation(points, n)
-    local doc = M.pdf_specifics(context(), self.doc.doc)
-    if doc == nil then merror("could not get pdf_specifics") end
-
-    local annot = W.mupdf_pdf_first_annot(context(), ffi.cast("pdf_page*", self.page))
-    while annot ~= nil do
-        local n2 = W.mupdf_pdf_annot_quad_point_count(context(), annot)
-        if n == n2 then
-            local quadpoint = ffi.new("float[?]", 8)
-            local match = true
-            for i = 0, n-1 do
-                W.mupdf_pdf_annot_quad_point(context(), annot, i, quadpoint)
-                for k = 0, 7 do
-                    if points[i*8 + k] ~= quadpoint[k] then
-                        match = false
-                        break
-                    end
-                end
-                if not match then break end
-            end
-            if match then return annot end
-        end
-        annot = W.mupdf_pdf_next_annot(context(), annot)
-    end
-    return nil
-end
-
-function page_mt.__index:updateMarkupAnnotation(annot, contents)
-    local doc = M.pdf_specifics(context(), self.doc.doc)
-    if doc == nil then merror("could not get pdf_specifics") end
-    local ok = W.mupdf_pdf_set_annot_contents(context(), annot, contents)
-    if ok == nil then merror("could not update markup annot contents") end
-end
 
 -- image loading via MuPDF:
 
@@ -833,20 +698,14 @@ end
 --[[--
 Scales a blitbuffer.
 
-MµPDF's scaling is of much better quality than the very naive implementation in blitbuffer.lua.
+Quality of scaling done by MuPDF is better than the one done in blitbuffer.lua
 (see fz_scale_pixmap_cached() in mupdf/source/fitz/draw-scale-simple.c).
 Same arguments as BlitBuffer:scale() for easy replacement.
-
-Unlike BlitBuffer:scale(), this *ignores* the blitbuffer's rotation
-(i.e., where possible, we simply wrap the BlitBuffer's data in a fitz pixmap,
-with no data copy, so the buffer's *native* memory layout is followed).
-If you actually want to preserve the rotation, you'll have to fudge
-with the width & height arguments and tweak the returned buffer's rotation flag,
-or go through a temporary copy to ensure that the buffer's memory is laid out accordingly.
 --]]
 function mupdf.scaleBlitBuffer(bb, width, height)
     local ctx = context()
     -- We need first to convert our BlitBuffer to a pixmap
+    local orig_w, orig_h = bb:getWidth(), bb:getHeight()
     local bbtype = bb:getType()
     local colorspace
     local converted_bb
@@ -876,15 +735,15 @@ function mupdf.scaleBlitBuffer(bb, width, height)
         end
         alpha = 1
     elseif bbtype == BlitBuffer.TYPE_BB4 then
-        converted_bb = BlitBuffer.new(bb.w, bb.h, BlitBuffer.TYPE_BB8)
-        converted_bb:blitFrom(bb, 0, 0, 0, 0, bb.w, bb.h)
+        converted_bb = BlitBuffer.new(orig_w, orig_h, BlitBuffer.TYPE_BB8)
+        converted_bb:blitFrom(bb, 0, 0, 0, 0, orig_w, orig_h)
         bb = converted_bb -- we don't free() the provided bb, but we'll have to free our converted_bb
         colorspace = ctx:fz_device_gray()
         alpha = 0
-        stride = bb.w
+        stride = orig_w
     else
-        converted_bb = BlitBuffer.new(bb.w, bb.h, BlitBuffer.TYPE_BBRGB32)
-        converted_bb:blitFrom(bb, 0, 0, 0, 0, bb.w, bb.h)
+        converted_bb = BlitBuffer.new(orig_w, orig_h, BlitBuffer.TYPE_BBRGB32)
+        converted_bb:blitFrom(bb, 0, 0, 0, 0, orig_w, orig_h)
         bb = converted_bb -- we don't free() the provided bb, but we'll have to free our converted_bb
         if mupdf.bgr then
             colorspace = ctx:fz_device_bgr()
@@ -894,12 +753,8 @@ function mupdf.scaleBlitBuffer(bb, width, height)
         alpha = 1
     end
     -- We can now create a pixmap from this bb of correct type
-    local pixmap = W.mupdf_new_pixmap_with_data(context(), colorspace,
-                    bb.w, bb.h, nil, alpha, stride, ffi.cast("unsigned char*", bb.data))
-    if pixmap == nil then
-        if converted_bb then converted_bb:free() end -- free our home made bb
-        merror("could not create pixmap from blitbuffer")
-    end
+    local pixmap = ctx:fz_new_pixmap_with_data(colorspace,
+                    orig_w, orig_h, nil, alpha, stride, ffi.cast("unsigned char*", bb.data))
     -- We can now scale the pixmap
     -- Better to ensure we give integer width and height, to avoid a black 1-pixel line at right and bottom of image.
     -- Also, fz_scale_pixmap enforces an alpha channel if w or h are floats...
@@ -1065,5 +920,7 @@ function page_mt.__index:toBmp(bmp, dpi, color)
 
     mupdf.color = color_save
 end
+
+setmetatable(mupdf, mupdf_mt)
 
 return mupdf
