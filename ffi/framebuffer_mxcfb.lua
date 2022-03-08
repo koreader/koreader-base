@@ -524,7 +524,7 @@ end
 function framebuffer:_MTK_ToggleFastMode(toggle)
     local flags = ffi.new("uint32_t[1]", bor(C.UPDATE_FLAGS_FAST_MODE, toggle and C.UPDATE_FLAGS_MODE_FAST_FLAG or 0))
 
-    if C.ioctl(fb.fd, C.MXCFB_SET_UPDATE_FLAGS_MTK, flags) == -1 then
+    if C.ioctl(self.fd, C.MXCFB_SET_UPDATE_FLAGS_MTK, flags) == -1 then
         local err = ffi.errno()
         self.debug("MXCFB_SET_UPDATE_FLAGS_MTK ioctl failed:", ffi.string(C.strerror(err)))
     end
