@@ -231,8 +231,8 @@ end
 
 -- Throw error for a given connection.
 local function E_conn(pconn, code)
-  local code, msg = codemsg(pconn, code)
-  err(code, msg)
+  local scode, msg = codemsg(pconn, code)
+  err(scode, msg)
 end
 
 -- Test code is OK or throw error for a given connection.
@@ -344,9 +344,9 @@ local function open(str, mode)
   connstmt[conn] = setmetatable({}, { __mode = "k" })
   conncb[conn] = { scalar = {}, step = {}, final = {} }
   if code ~= sql.SQLITE_OK then
-    local code, msg = codemsg(conn._ptr, code) -- Before closing!
+    local scode, msg = codemsg(conn._ptr, code) -- Before closing!
     conn:close() -- Free resources, should not fail here in this case!
-    err(code, msg)
+    err(scode, msg)
   end
   return conn
 end
