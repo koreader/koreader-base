@@ -6,6 +6,10 @@ local C = ffi.C
 require("ffi/linux_fb_h")
 require("ffi/posix_h")
 
+-- This is common across all mxcfb-like platforms.
+local GRAYSCALE_8BIT = 0x1
+local GRAYSCALE_8BIT_INVERTED = 0x2
+
 local framebuffer = {
     device_node = "/dev/fb0",
     fd = -1,
@@ -148,6 +152,41 @@ function framebuffer:reinit()
 
     self.screen_size = self:getRawSize()
     self.bb:fill(BB.COLOR_WHITE)
+end
+
+
+function framebuffer:setHWNightmode(toggle)
+    -- Only makes sense @ 8bpp
+    if self.fb_bpp ~= 8 then
+        return
+    end
+
+    -- And on devices with the actual capability.
+    if not self.device:canHWInvert() then
+        return
+    end
+
+    local vinfo = self._vinfo
+    -- Just flip the grayscale flag.
+    -- This shouldn't affect *anything* (layout-wise), which is why we don't touch the mmap or anything else, really.
+    vinfo.grayscale = toggle and GRAYSCALE_8BIT_INVERTED or GRAYSCALE_8BIT
+    assert(C.ioctl(self.fd, C.FBIOPUT_VSCREENINFO, vinfo) == 0,
+           "cannot set variable screen info")
+end
+
+function framebuffer:getHWNightmode()
+    -- Only makes sense @ 8bpp
+    if self.fb_bpp ~= 8 then
+        return false
+    end
+
+    -- And on devices with the actual capability.
+    if not self.device:canHWInvert() then
+        return false
+    end
+
+    local vinfo = self._vinfo
+    return vinfo.grayscale == GRAYSCALE_8BIT_INVERTED
 end
 
 function framebuffer:setHWRotation(mode)
