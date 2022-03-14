@@ -586,12 +586,16 @@ function page_mt.__index:getPageLinks()
             x0 = link.rect.x0, y0 = link.rect.y0,
             x1 = link.rect.x1, y1 = link.rect.y1,
         }
-        local page = M.fz_resolve_link(context(), link.doc, link.uri, nil, nil)
+        local pos = ffi.new("float[?]", 2)
+        local page = M.fz_resolve_link(context(), link.doc, link.uri, pos, pos+1)
         if page >= 0 then
             data.page = page -- FIXME page+1?
         else
             data.uri = ffi.string(link.uri)
         end
+        data.pos = {
+            x = pos[0], y = pos[1],
+        }
         table.insert(links, data)
         link = link.next
     end
