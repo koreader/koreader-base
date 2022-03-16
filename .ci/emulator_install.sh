@@ -8,8 +8,7 @@ test -d "${HOME}/.luarocks" || {
     mkdir "${HOME}/.luarocks"
     cp /etc/luarocks/config-5.1.lua "${HOME}/.luarocks/config.lua"
     echo "wrap_bin_scripts = false" >>"${HOME}/.luarocks/config.lua"
-    # XXX commented out for testing
-    # travis_retry luarocks --local install busted 2.0.0-1
+    travis_retry luarocks --local install busted 2.0.0-1
     # for verbose_print module
     travis_retry luarocks --local install ansicolors
 }
