@@ -1,14 +1,20 @@
-name: macos
+name: test
 
 on: [push, pull_request]
 
 jobs:
   build:
-    runs-on: macos-11
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        os: [macos-latest]
 
     steps:
-      - name: XCode version
-        run: xcode-select -p
+      - name: setup-xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: 11.3.1 # Use Xcode 11.3.1, because 11.4, 11.5, and 11.6 have a segfaulting clang.
 
       - name: Check out Git repository
         uses: actions/checkout@v2
@@ -27,10 +33,7 @@ jobs:
 
       - name: Homebrew install dependencies
         # Compared to the README, adds ccache for faster compilation times and removes sh5sum to prevent some conflict with coreutils, and gnu-getopt because we're not using kodev
-        run: brew install ccache nasm ragel binutils coreutils libtool autoconf automake cmake makedepend sdl2 lua@5.1 luarocks gettext pkg-config wget gnu-getopt grep bison
+        run: brew install ccache nasm ragel binutils coreutils libtool autoconf automake cmake makedepend sdl2 lua@5.1 luarocks gettext pkg-config wget bison
 
       - name: Building in progress…
-        run: |
-          export MACOSX_DEPLOYMENT_TARGET=11;
-          export PATH="$(brew --prefix)/opt/gettext/bin:$(brew --prefix)/opt/gnu-getopt/bin:$(brew --prefix)/opt/bison/bin:$(brew --prefix)/opt/grep/libexec/gnubin:${PATH}";
-          make fetchthirdparty && make
+        run: export MACOSX_DEPLOYMENT_TARGET=10.14 PATH="$(brew --prefix)/opt/gettext/bin:$(brew --prefix)/opt/bison/bin:${PATH}" && make fetchthirdparty && make
