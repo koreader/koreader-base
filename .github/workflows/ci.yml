@@ -48,7 +48,7 @@ jobs:
         run: echo "CC=clang-12" >> $GITHUB_ENV && echo "Cxx=clang++-12" >> $GITHUB_ENV
 
       - name: Install deps
-        run:  sudo apt-get install gettext ccache ninja-build libtool-bin
+        run:  sudo apt-get update && sudo apt-get install gettext ccache ninja-build libtool-bin
 
       - name: Install luarocks
         run:  curl -sSL "https://raw.githubusercontent.com/koreader/virdevenv/master/docker/ubuntu/baseimage/install_luarocks.sh" | sudo bash
@@ -91,7 +91,7 @@ jobs:
         run: echo ~/x-tools/arm-${{ matrix.name }}-linux-gnueabi${{ matrix.toolchain }}/bin >> $GITHUB_PATH
 
       - name: Install deps
-        run:  sudo apt-get install gettext ccache ninja-build gcc-multilib luarocks
+        run:  sudo apt-get update && sudo apt-get install gettext ccache ninja-build gcc-multilib luarocks
 
       - name: Cache
         uses: actions/cache@v2
