@@ -8,7 +8,8 @@ test -d "${HOME}/.luarocks" || {
     mkdir "${HOME}/.luarocks"
     cp /etc/luarocks/config-5.1.lua "${HOME}/.luarocks/config.lua"
     echo "wrap_bin_scripts = false" >>"${HOME}/.luarocks/config.lua"
-    travis_retry luarocks --local install busted 2.0.0-1
+    # Temporary workaround until upstream merges <https://github.com/Olivine-Labs/busted/pull/677>
+    travis_retry luarocks --local build https://raw.githubusercontent.com/Olivine-Labs/busted/14c69b8ececb4575869c5efc61cd54820332fabe/busted-scm-2.rockspec
     # for verbose_print module
     travis_retry luarocks --local install ansicolors
 }
