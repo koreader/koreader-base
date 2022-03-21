@@ -156,6 +156,12 @@ end
 
 
 function framebuffer:setHWNightmode(toggle)
+    -- On some devices, the fb driver does some funky post-processing with the values passed by userland...
+    -- This is catastrophically bad when this affects the rotate flag, so, don't do anything on those ;).
+    if not self.device:canModifyFBInfo() then
+        return
+    end
+
     -- Only makes sense @ 8bpp
     if self.fb_bpp ~= 8 then
         return
@@ -175,6 +181,10 @@ function framebuffer:setHWNightmode(toggle)
 end
 
 function framebuffer:getHWNightmode()
+    if not self.device:canModifyFBInfo() then
+        return false
+    end
+
     -- Only makes sense @ 8bpp
     if self.fb_bpp ~= 8 then
         return false
