@@ -1914,7 +1914,10 @@ static int getTextFromPositions(lua_State *L) {
 		// It's usually OK with multiple chars selection, even if one needs to go over the further
 		// 2nd half of the glyph to have it included in the selection.
 		// But it is less OK with an initial long-press on a glyph, where we get a 50% chance of
-		// having the next char selected. Try to handle this case better:
+		// having the next char selected. Try to handle this case better.
+		// It turns out this also happens when some CJK/symbol char is near a multi-alpha word,
+		// so, when grabbing prev or next below, we use prevVisibleWordStart()/nextVisibleWordEnd()
+		// instead of just moving offset by -1/1.
 		if (r.getStart() == r.getEnd()) { // for single CJK character
 			bool grab_prev = false;
 			lvRect glyph_pt;
@@ -1927,22 +1930,17 @@ static int getTextFromPositions(lua_State *L) {
 					// on the next line, and it's not the right one.
 					grab_prev = glyph_pt.top > startpt.y && glyph_pt.top > endpt.y;
 				}
-				printf("startpt %d/%d, endpt %d/%d, vs. glyphpt %d/%d => grab_prev=%d\n",
-				    startpt.x, startpt.y, endpt.x, endpt.y,  glyph_pt.left, glyph_pt.top, grab_prev);
+				// printf("startpt %d/%d, endpt %d/%d, vs. glyphpt %d/%d => grab_prev=%d\n",
+				//     startpt.x, startpt.y, endpt.x, endpt.y,  glyph_pt.left, glyph_pt.top, grab_prev);
 			}
 			ldomNode * node = r.getStart().getNode();
 			lString32 text = node->getText();
 			int textLen = text.length();
 			if (grab_prev) {
-				int offset = r.getStart().getOffset();
-				if (offset > 0)
-					r.getStart().setOffset(offset - 1);
+				r.getStart().prevVisibleWordStart();
 			}
 			else {
-				int offset = r.getEnd().getOffset();
-				if (offset < textLen)
-					r.getEnd().setOffset(offset + 1);
-						// (offset can be 0 .. textlen, textlen means after the last char)
+				r.getEnd().nextVisibleWordEnd();
 			}
 		}
 
