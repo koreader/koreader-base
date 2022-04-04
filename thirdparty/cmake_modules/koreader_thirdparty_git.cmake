@@ -176,8 +176,13 @@ function(ko_write_gitclone_script script_filename git_repository git_tag build_s
     endif()
 
     # create new gitinfo file if needed
+    if(${CMAKE_VERSION} VERSION_GREATER_EQUAL "3.23.0")
+        set(gitinfo_configure "${CMAKE_ROOT}/Modules/ExternalProject/RepositoryInfo.txt.in")
+    else()
+        set(gitinfo_configure "${CMAKE_ROOT}/Modules/RepositoryInfo.txt.in")
+    endif()
     configure_file(
-      "${CMAKE_ROOT}/Modules/RepositoryInfo.txt.in"
+      "${gitinfo_configure}"
       "${gitinfo_file}"
       @ONLY
     )
