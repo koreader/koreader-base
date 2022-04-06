@@ -9,6 +9,7 @@ require("ffi/posix_h")
 local band = bit.band
 local bor = bit.bor
 local bnot = bit.bnot
+local bxor = bit.bxor
 
 -- A couple helper functions to compute aligned values...
 -- c.f., <linux/kernel.h> & ffi/framebuffer_linux.lua
@@ -517,7 +518,43 @@ local function refresh_mtk(fb, is_flashing, waveform_mode, x, y, w, h, dither)
         fb.update_data.flags = bor(fb.update_data.flags, C.MTK_EPDC_FLAG_USE_DITHERING_Y4)
     end
 
+    if fb.swipe_animations then
+        fb.update_data.flags = bor(fb.update_data.flags, C.MTK_EPDC_FLAG_ENABLE_SWIPE)
+        fb.swipe_animations = false
+    end
+
     return mxc_update(fb, C.MXCFB_SEND_UPDATE_MTK, fb.update_data, is_flashing, waveform_mode, x, y, w, h, dither)
+end
+
+-- Enable swipe animations. They will be reset at the next refresh.
+function framebuffer:_MTK_SetSwipeAnimations(enabled)
+    self.swipe_animations = enabled
+end
+
+-- Set the swipe animation direction. This is sticky
+function framebuffer:_MTK_SetSwipeDirection(left)
+    local swipe_direction = left and C.MTK_SWIPE_LEFT or C.MTK_SWIPE_RIGHT
+    -- Account for Koreader rotation not matching the FB rotation with some bit trickery.
+    -- Alternatively here is a LUT:
+    -- local lut = { -- L R D U
+    --                { 2,3,0,1},
+    --                { 0,1,3,2},
+    --                { 3,2,1,0},
+    --                { 1,0,2,3}
+    --             }
+    -- swipe_direction = lut[self.cur_rotation_mode][swipe_direction]
+    local rota = self.cur_rotation_mode
+    if rota ~= self.ORIENTATION_PORTRAIT then
+        if rota == self.ORIENTATION_PORTRAIT_ROTATED then
+            swipe_direction = bxor(swipe_direction, 1)
+        elseif bor(swipe_direction, 1) == bor(rota, 1) then
+            swipe_direction = bxor(swipe_direction, 3)
+        else
+            swipe_direction = bxor(swipe_direction, 2)
+        end
+    end
+    --self.debug("MTK Rota:", rota, "Swipe:", swipe_direction, "Comp:", swipe_direction)
+    self.update_data.swipe_data.direction = swipe_direction
 end
 
 -- Don't let the driver silently upgrade to REAGL
@@ -739,6 +776,8 @@ function framebuffer:init()
             self.waveform_night = C.MTK_WAVEFORM_MODE_GLKW16
             self.night_is_reagl = true
             self.waveform_flashnight = C.MTK_WAVEFORM_MODE_GCK16
+            self.setSwipeAnimations = self._MTK_SetSwipeAnimations
+            self.setSwipeDirection = self._MTK_SetSwipeDirection
         end
 
         -- Keep our data structures around, and setup constants
@@ -755,6 +794,8 @@ function framebuffer:init()
         elseif self.mech_refresh == refresh_mtk then
             self.update_data = ffi.new("struct mxcfb_update_data_mtk")
             self.update_data.temp = C.TEMP_USE_AMBIENT
+            -- The stock reader uses 12. valid values are 1 - 60
+            self.update_data.swipe_data.steps = 12
         end
         if self.mech_wait_update_complete == kindle_pearl_mxc_wait_for_update_complete then
             self.marker_data = ffi.new("uint32_t[1]")
