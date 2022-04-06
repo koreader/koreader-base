@@ -22,6 +22,7 @@ local fb = {
     night_mode = false,
     hw_dithering = false, -- will be setup via setupDithering @ startup by reader.lua
     sw_dithering = false, -- will be setup via setupDithering @ startup by reader.lua
+    swipe_animations = false, -- will be toggled at page turn by the frontend
     is_always_portrait = false, -- true = SW flip landscape into portrait (historically a bit of misnomer)
     forced_rotation = nil, --[[{
         -- canonically the order below - but frontend may specify their own mapping
@@ -490,6 +491,14 @@ function fb:setupDithering()
             self.sw_dithering = false
         end
     end
+end
+
+-- To be overriden.
+function fb:setSwipeAnimations(enabled)
+end
+
+-- To be overriden.
+function fb:setSwipeDirection(direction)
 end
 
 function fb:getWaveformLevel()
