@@ -10,6 +10,7 @@ if [ "$TARGET" = "android" ]; then
         exit 1
     fi
 elif [ "$EMULATE_READER" = "1" ]; then
+    cp build/*/luajit "${HOME}/.luarocks/bin"
     # install tesseract trained language data for testing OCR functionality
     travis_retry wget https://src.fedoraproject.org/repo/pkgs/tesseract/tesseract-ocr-3.02.eng.tar.gz/3562250fe6f4e76229a329166b8ae853/tesseract-ocr-3.02.eng.tar.gz
     tar zxf tesseract-ocr-3.02.eng.tar.gz
