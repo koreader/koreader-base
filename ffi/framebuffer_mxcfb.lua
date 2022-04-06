@@ -516,8 +516,26 @@ local function refresh_mtk(fb, is_flashing, waveform_mode, x, y, w, h, dither)
     if dither and fb.device:canHWDither() then
         fb.update_data.flags = bor(fb.update_data.flags, C.MTK_EPDC_FLAG_USE_DITHERING_Y4)
     end
+    if fb.swipe_animations then
+        fb.update_data.flags = bor(fb.update_data.flags, C.MTK_EPDC_FLAG_ENABLE_SWIPE)
+        fb.swipe_animations = false
+    end
 
     return mxc_update(fb, C.MXCFB_SEND_UPDATE_MTK, fb.update_data, is_flashing, waveform_mode, x, y, w, h, dither)
+end
+
+-- Expose swipe animations
+function framebuffer:_MTK_ToggleSwipeAnimations(enabled)
+    if enabled then
+        self.swipe_animations = true
+    else
+        self.swipe_animations = false
+    end
+end
+
+function framebuffer:_MTK_SetSwipeDirection(left)
+    local swipe_direction = left and C.MTK_SWIPE_LEFT or C.MTK_SWIPE_RIGHT
+    self.update_data.swipe_data.direction = swipe_direction
 end
 
 -- Don't let the driver silently upgrade to REAGL
@@ -739,6 +757,8 @@ function framebuffer:init()
             self.waveform_night = C.MTK_WAVEFORM_MODE_GLKW16
             self.night_is_reagl = true
             self.waveform_flashnight = C.MTK_WAVEFORM_MODE_GCK16
+            self.toggleSwipeAnimations = self._MTK_ToggleSwipeAnimations
+            self.setSwipeDirection = self._MTK_SetSwipeDirection
         end
 
         -- Keep our data structures around, and setup constants
@@ -755,6 +775,7 @@ function framebuffer:init()
         elseif self.mech_refresh == refresh_mtk then
             self.update_data = ffi.new("struct mxcfb_update_data_mtk")
             self.update_data.temp = C.TEMP_USE_AMBIENT
+            self.update_data.swipe_data.steps = 12
         end
         if self.mech_wait_update_complete == kindle_pearl_mxc_wait_for_update_complete then
             self.marker_data = ffi.new("uint32_t[1]")
