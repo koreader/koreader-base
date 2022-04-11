@@ -150,6 +150,8 @@ static int openInputDevice(lua_State* L)
 
     // We're done w/ inputdevice, pop it
     lua_settop(L, 0);
+    // Pass the fd to Lua, we might need it for FFI ioctl shenanigans
+    lua_pushinteger(L, inputfds[fd_idx]);
 
     // Compute select's nfds argument.
     // That's not the actual number of fds in the set, like poll(),
@@ -161,7 +163,7 @@ static int openInputDevice(lua_State* L)
     // That, on the other hand, *is* the number of open fds ;).
     fd_idx++;
 
-    return 0;
+    return 1; // fd
 }
 
 static int closeInputDevices(lua_State* L __attribute__((unused)))
