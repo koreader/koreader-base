@@ -161,6 +161,7 @@ static int openInputDevice(lua_State* L)
     // That, on the other hand, *is* the number of open fds ;).
     fd_idx++;
 
+    lua_pushinteger(L, inputfds[fd_idx]);  // int
     return 0;
 }
 
