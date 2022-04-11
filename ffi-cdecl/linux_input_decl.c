@@ -5,6 +5,12 @@
 #include "ffi-cdecl.h"
 
 cdecl_const(EVIOCGRAB)
+cdecl_const(EVIOCGREP)
+cdecl_const(EVIOCSREP)
+
+cdecl_const(REP_CNT)
+cdecl_const(REP_DELAY)
+cdecl_const(REP_PERIOD)
 
 cdecl_const(EV_SYN)
 cdecl_const(EV_KEY)

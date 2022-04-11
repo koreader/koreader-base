@@ -2,6 +2,11 @@ local ffi = require("ffi")
 
 ffi.cdef[[
 static const int EVIOCGRAB = 1074021776;
+static const int EVIOCGREP = 2148025603;
+static const int EVIOCSREP = 1074283779;
+static const int REP_CNT = 2;
+static const int REP_DELAY = 0;
+static const int REP_PERIOD = 1;
 static const int EV_SYN = 0;
 static const int EV_KEY = 1;
 static const int EV_REL = 2;
