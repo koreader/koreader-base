@@ -162,7 +162,7 @@ static int openInputDevice(lua_State* L)
     fd_idx++;
 
     lua_pushinteger(L, inputfds[fd_idx]);  // int
-    return 0;
+    return 1;
 }
 
 static int closeInputDevices(lua_State* L __attribute__((unused)))
