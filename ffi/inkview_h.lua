@@ -1159,6 +1159,8 @@ void AddLastOpen(const char *);
 void AddScrolledArea(struct irect_s *, int);
 void AddTranslation(const char *, const char *);
 int AdjustDirectionKeys(int);
+void adjustAreaDefault(unsigned char* data, int scanline, int width, int height);
+void adjustAreaWithVibrance(unsigned char* data, int scanline, int width, int height, float vibrance);
 char *arc_filename(const char *);
 int base64_decode(const char *, unsigned char *, int);
 int base64_encode(const unsigned char *, int, char *);

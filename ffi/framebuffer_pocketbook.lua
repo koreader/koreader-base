@@ -16,15 +16,24 @@ local function _getPhysicalRect(fb, x, y, w, h)
     return bb:getPhysicalRect(x, y, w, h)
 end
 
+local function _adjustAreaColours(fb)
+    if fb.device.hasColorScreen and fb.device.color_vibrance then
+        fb.debug("adjusting image color vibrance", fb.device.color_vibrance)
+        inkview.adjustAreaWithVibrance(fb.data, fb._finfo.line_length, fb._vinfo.width, fb._vinfo.height, fb.device.color_vibrance)
+    end
+end
+
 local function _updatePartial(fb, x, y, w, h)
     x, y, w, h = _getPhysicalRect(fb, x, y, w, h)
 
     fb.debug("refresh: inkview partial", x, y, w, h)
+    _adjustAreaColours(fb)
     inkview.PartialUpdate(x, y, w, h)
 end
 
 local function _updateFull(fb, x, y, w, h)
     fb.debug("refresh: inkview full", x, y, w, h)
+    _adjustAreaColours(fb)
     inkview.FullUpdate()
 end
 
@@ -32,6 +41,7 @@ local function _updateFast(fb, x, y, w, h)
     x, y, w, h = _getPhysicalRect(fb, x, y, w, h)
 
     fb.debug("refresh: inkview fast", x, y, w, h)
+    _adjustAreaColours(fb)
     inkview.DynamicUpdate(x, y, w, h)
 end
 
