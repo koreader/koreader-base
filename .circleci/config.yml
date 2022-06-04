@@ -52,7 +52,7 @@ workflows:
 jobs:
   lint:
     docker:
-      - image: koreader/kobase:0.3.0
+      - image: koreader/kobase:0.2.2
     environment:
       BASH_ENV: "~/.bashrc"
     steps:
