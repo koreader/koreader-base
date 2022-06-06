@@ -218,7 +218,7 @@ local function handleJoyAxisMotionEvent(event)
 
     local axis = axis_ev.axis
 
-    if not ( since_last_ev > min_time_since_last_ev ) then return end
+    if since_last_ev <= min_time_since_last_ev then return end
 
     -- left stick 0/1
     if axis == 0 then
