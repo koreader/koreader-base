@@ -108,7 +108,7 @@ function mupdf.openDocument(filename)
 
     setmetatable(mupdf_doc, document_mt)
 
-    if not (mupdf_doc:getPages() > 0) then
+    if mupdf_doc:getPages() <= 0 then
         merror("MuPDF found no pages in file.")
     end
 

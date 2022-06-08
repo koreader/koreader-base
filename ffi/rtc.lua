@@ -256,11 +256,11 @@ function RTC:validateWakeupAlarmByProximity(task_alarm, proximity)
     end
 
     -- If our stored alarm and the system alarm don't match, we didn't set it.
-    if not (alarm == alarm_sys) then return end
+    if alarm ~= alarm_sys then return end
 
     -- If our stored alarm and the provided task alarm don't match,
     -- we're not talking about the same task. This should never happen.
-    if task_alarm and not (alarm == task_alarm) then return end
+    if task_alarm and alarm ~= task_alarm then return end
 
     local diff = now - alarm
     if diff >= 0 and diff < proximity then return true end
