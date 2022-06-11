@@ -699,7 +699,7 @@ static int closeDocument(lua_State *L) {
 
 	/* should be safe if called twice */
 	if(doc->text_view != NULL) {
-		// Call close() to have the cache explicitely saved now
+		// Call close() to have the cache explicitly saved now
 		// while we still have a callback (to show its progress).
 		doc->text_view->close();
 		// Remove any callback
@@ -989,6 +989,26 @@ static int getFontFace(lua_State *L) {
 	lua_pushstring(L, doc->text_view->getDefaultFontFace().c_str());
 
 	return 1;
+}
+
+static int getEmbeddedFontList(lua_State *L) {
+    CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
+
+    lString32Collection registered_list;
+    lString32Collection instantiated_list;
+    fontMan->getRegisteredDocumentFontList(doc->dom_doc->getDocIndex(), registered_list);
+    fontMan->getInstantiatedDocumentFontList(doc->dom_doc->getDocIndex(), instantiated_list);
+
+    lua_createtable(L, 0, registered_list.length());
+    for (int i = 0; i < registered_list.length(); i++) {
+        lString32 name = registered_list[i];
+        bool instantiated = instantiated_list.contains(name);
+        lua_pushstring(L, UnicodeToLocal(name).c_str());
+        lua_pushboolean(L, instantiated);
+        lua_rawset(L, -3);
+    }
+
+    return 1;
 }
 
 /*
@@ -1903,8 +1923,8 @@ static int getTextFromPositions(lua_State *L) {
 
 	lvPoint startpt(x0, y0);
 	lvPoint endpt(x1, y1);
-	ldomXPointer startp = tv->getNodeByPoint(startpt);
-	ldomXPointer endp = tv->getNodeByPoint(endpt);
+	ldomXPointer startp = tv->getNodeByPoint(startpt, false, true);
+	ldomXPointer endp = tv->getNodeByPoint(endpt, false, true);
 	if (!startp.isNull() && !endp.isNull()) {
 		lua_createtable(L, 0, 3); // new text boxes
 		ldomXRange r(startp, endp);
@@ -2002,6 +2022,104 @@ static int getTextFromPositions(lua_State *L) {
 		return 1;
 	}
     return 0;
+}
+
+static int extendXPointersToSentenceSegment(lua_State *L) {
+    CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
+    const char* pos0 = luaL_checkstring(L, 2);
+    const char* pos1 = luaL_checkstring(L, 3);
+
+    LVDocView *tv = doc->text_view;
+    ldomDocument *dv = doc->dom_doc;
+    ldomXPointerEx startp = dv->createXPointer(lString32(pos0));
+    ldomXPointerEx endp = dv->createXPointer(lString32(pos1));
+    if ( startp.isNull() || endp.isNull() )
+        return 0;
+
+    if (startp.compare(endp) > 0) {
+        ldomXPointer p1( startp );
+        ldomXPointer p2( endp );
+        startp = p2;
+        endp = p1;
+    }
+    // We want to select closing punctuation when a full sentence have been selected.
+    // But we also want to grab opening and closing quotes or parens around
+    // a sentence subpart, so the name "sentence segment" here.
+    // For now, we use punctuations categories to detect boundaries of such segments,
+    // which may cause dubious extension (ie. a selection after a comma will be
+    // considered the start of a sentence, and will grab any ending punctuation).
+    // We might want to distinguish better punctuations.
+    bool isSentenceSegment = true;
+    ldomXPointerEx tmp = startp;
+    bool grabbed_opening = false;
+    while (tmp.prevVisibleChar(true)) {
+        lChar32 c = tmp.getChar();
+        lUInt16 props = lGetCharProps(c);
+        if ( props & CH_PROP_SPACE ) // skip spaces when looking around
+            continue;
+        if ( CH_PROP_IS_PUNCT_OPENING(props) ) {
+            // Include opening punctuation at start of a sentence segment
+            startp = tmp;
+            grabbed_opening = true;
+            continue;
+        }
+        if ( CH_PROP_IS_PUNCT(props) ) {
+            // Current start follows a non-opening punctuation: it can be considered
+            // a sentence start.
+            break;
+        }
+        // Otherwise, it follows some other kind of chars and it is not a sentence
+        // segment start, unless we grabbed some opening punctuation.
+        if ( !grabbed_opening ) {
+            isSentenceSegment = false;
+        }
+        break;
+    }
+    // We explicitly don't want to grab anything at the end if the start is not
+    // detected as the start of a sentence segment.
+    if ( isSentenceSegment ) {
+        tmp = endp;
+        bool grabbed_closing = false;
+        tmp.prevVisibleChar(true); // endp's offset is excluding: we need to check it, so go back
+        while (tmp.nextVisibleChar(true)) {
+            lChar32 c = tmp.getChar();
+            if ( c == 0 ) // happens when offset after end of a text node: skip to next node
+                continue;
+            lUInt16 props = lGetCharProps(c);
+            if ( props & CH_PROP_SPACE ) // skip spaces when looking around
+                continue;
+            if ( CH_PROP_IS_PUNCT(props) && !CH_PROP_IS_PUNCT_OPENING(props) ) {
+                // Include non-opening punctuation at end of a sentence segment
+                endp = tmp;
+                endp.setOffset(endp.getOffset() + 1); // as end xpointer's offset is exclusive
+                grabbed_closing = true;
+                continue;
+            }
+            // Otherwise, it is followed by some other kind of char or some opening punctuation,
+            // and it is not a sentence segment end, unless we grabbe some closing punctuation.
+            if ( !grabbed_closing ) {
+                isSentenceSegment = false;
+            }
+            break;
+        }
+    }
+    if ( !isSentenceSegment )
+        return 0;
+
+    // Return updated text and xpointers
+    ldomXRange r(startp, endp);
+    lString32 text = r.getRangeText( '\n', 8192 );
+    lua_createtable(L, 0, 3);
+    lua_pushstring(L, "text");
+    lua_pushstring(L, UnicodeToLocal(text).c_str());
+    lua_rawset(L, -3);
+    lua_pushstring(L, "pos0");
+    lua_pushstring(L, UnicodeToLocal(r.getStart().toString()).c_str());
+    lua_rawset(L, -3);
+    lua_pushstring(L, "pos1");
+    lua_pushstring(L, UnicodeToLocal(r.getEnd().toString()).c_str());
+    lua_rawset(L, -3);
+    return 1;
 }
 
 void lua_pushLineRect(lua_State *L, int left, int top, int right, int bottom, int lcount) {
@@ -3664,6 +3782,7 @@ static const struct luaL_Reg credocument_meth[] = {
     {"getFullHeight", getFullHeight},
     {"getFontSize", getFontSize},
     {"getFontFace", getFontFace},
+    {"getEmbeddedFontList", getEmbeddedFontList},
     {"getPageMargins", getPageMargins},
     {"getHeaderHeight", getHeaderHeight},
     {"getToc", getTableOfContent},
@@ -3723,6 +3842,7 @@ static const struct luaL_Reg credocument_meth[] = {
     {"getLinkFromPosition", getLinkFromPosition},
     {"getWordFromPosition", getWordFromPosition},
     {"getTextFromPositions", getTextFromPositions},
+    {"extendXPointersToSentenceSegment", extendXPointersToSentenceSegment},
     {"getWordBoxesFromPositions", getWordBoxesFromPositions},
     {"getImageDataFromPosition", getImageDataFromPosition},
     {"getDocumentFileContent", getDocumentFileContent},
