@@ -107,6 +107,10 @@ function S.open(w, h, x, y)
         S.h = tonumber(os.getenv("EMULATE_READER_H")) or h or 800
     end
 
+    -- Disable to work around an SDL issue in 2.0.22.
+    -- See <https://github.com/libsdl-org/SDL/issues/5652> and <https://github.com/koreader/koreader/issues/9091>.
+    SDL.SDL_SetHint("SDL_HINT_TOUCH_MOUSE_EVENTS", "0")
+
     -- Enable screensaver and X11 composition.
     SDL.SDL_EnableScreenSaver()
     if SDL_Linked_Version_AtLeast(2, 0, 8) then
