@@ -153,6 +153,15 @@ function S.createTexture(w, h)
         w, h)
 end
 
+
+function S.setWindowFullscreen(full_screen)
+    local flags = full_screen and SDL.SDL_WINDOW_FULLSCREEN_DESKTOP or 0
+    if SDL.SDL_SetWindowFullscreen(S.screen, flags) ~= 0 then
+        return nil, ffi.string(SDL.SDL_GetError())
+    end
+    return true
+end
+
 function S.destroyTexture(texture)
     SDL.SDL_DestroyTexture(texture)
 end
