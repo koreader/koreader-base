@@ -519,7 +519,13 @@ local function refresh_mtk(fb, is_flashing, waveform_mode, x, y, w, h, dither)
     end
 
     if fb.swipe_animations then
-        fb.update_data.flags = bor(fb.update_data.flags, C.MTK_EPDC_FLAG_ENABLE_SWIPE)
+        -- The MTK Driver will crash if given a area smaller than the number of steps.
+        -- If direction is L/R and w is smaller or if it is U/D and h is smaller
+        -- Being as one genneraly will only want animations on a larger area, and I am too
+        -- lazy to test for direction, disable animations when w or h is less than steps.
+        if w >= fb.update_data.swipe_data.steps and h >= fb.update_data.swipe_data.steps then
+            fb.update_data.flags = bor(fb.update_data.flags, C.MTK_EPDC_FLAG_ENABLE_SWIPE)
+        end
         fb.swipe_animations = false
     end
 
