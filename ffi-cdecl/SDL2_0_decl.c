@@ -135,6 +135,7 @@ cdecl_func(SDL_SetSurfacePalette)
 cdecl_func(SDL_LockSurface)
 cdecl_func(SDL_UnlockSurface)
 cdecl_func(SDL_SetWindowIcon)
+cdecl_func(SDL_SetWindowFullscreen)
 
 cdecl_func(SDL_GetBasePath)
 cdecl_func(SDL_GetPrefPath)
