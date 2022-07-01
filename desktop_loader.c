@@ -75,18 +75,12 @@ char *executablePath() {
 int main(int argc, const char * argv[]) {
     int retval;
     char buffer[PATH_MAX];
-    char assetsPath[PATH_MAX];
     char *binPath;
     lua_State *L;
 
     binPath = executablePath();
     if (!(chdir(dirname(binPath)) == 0 && chdir(ASSETS_PATH) == 0)) {
         fprintf(stderr, "[%s]: chdir to koreader assets failed!\n", LOGNAME);
-        exit(EXIT_FAILURE);
-    }
-
-    if (getcwd(assetsPath, sizeof(assetsPath)) == NULL) {
-        fprintf(stderr, "[%s]: unable to obtain koreader assets path!\n", LOGNAME);
         exit(EXIT_FAILURE);
     }
 
