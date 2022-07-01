@@ -28,7 +28,7 @@ all: $(OUTPUT_DIR)/libs $(if $(ANDROID),,$(LUAJIT)) \
 		$(if $(ANDROID),$(LPEG_DYNLIB) $(LPEG_RE),) \
 		$(if $(WIN32),,$(ZMQ_LIB) $(CZMQ_LIB)) \
 		$(if $(WIN32),,$(OUTPUT_DIR)/sdcv) \
-		$(if $(MACOS),$(OUTPUT_DIR)/koreader,) \
+		$(if $(or $(MACOS),$(DEBIAN)),$(OUTPUT_DIR)/koreader,) \
 		$(if $(MACOS),$(SDL2_LIB),) \
 		$(if $(or $(CERVANTES),$(KINDLE),$(KOBO)),$(OUTPUT_DIR)/dropbear,) \
 		$(if $(or $(CERVANTES),$(KINDLE),$(KOBO)),$(OUTPUT_DIR)/sftp-server,) \
@@ -213,12 +213,17 @@ $(OUTPUT_DIR)/libs/libXss.so.1: libxss-dummy.c
 include Makefile.third
 
 # ===========================================================================
-# entry point for the application in OSX
+# entry point for the desktop/SDL application
 
-$(OUTPUT_DIR)/koreader: osx_loader.c
+ifdef DARWIN
+$(OUTPUT_DIR)/koreader: desktop_loader.c
 	$(CC) -pagezero_size 10000 -image_base 100000000 \
 	-I$(LUAJIT_DIR)/src $(LUAJIT_STATIC) -o $@ $^
-
+else
+$(OUTPUT_DIR)/koreader: desktop_loader.c $(LUAJIT_STATIC)
+	$(CC) -I$(LUAJIT_DIR)/src \
+	$(CFLAGS) -Wl,-E -o $@ $^ -lm -ldl
+endif
 # ===========================================================================
 # very simple "launcher" for koreader on the remarkable
 
