@@ -13,7 +13,7 @@ index efa69fc..b6ccfff
          int kill(pid_t pid, int sig);
          typedef struct {
              unsigned long int __val[%d];
-@@ -243,10 +243,12 @@ end
+@@ -243,6 +243,7 @@ end
          ffi.cdef[[
              typedef long suseconds_t;
              typedef long time_t;
@@ -21,11 +21,58 @@ index efa69fc..b6ccfff
              struct timeval{
                  time_t tv_sec;
                  suseconds_t tv_usec;
-             };
-+            */
-             struct timezone{
+@@ -251,6 +252,7 @@ end
                  int tz_minuteswest;
                  int tz_dsttime;
+             };
++            */
+         ]]
+     end
+     ffi.cdef([[
+@@ -292,11 +294,13 @@ if platform.__UNIX__ then
+     --- ******* RealTime (for Monotonic time) *******
+     if not S then
+         ffi.cdef[[
++            /*
+             struct timespec
+             {
+                 time_t tv_sec;
+                 long tv_nsec;
+             };
++            */
+         ]]
+     end
+     ffi.cdef[[
+@@ -301,10 +301,12 @@ if platform.__UNIX__ then
+     end
+     ffi.cdef[[
+         typedef unsigned int clockid_t;
++        /*
+         enum clock_ids{
+             CLOCK_REALTIME,
+             CLOCK_MONOTONIC
+         };
++        */
+ 
+         int clock_gettime(clockid_t clk_id, struct timespec *tp);
+     ]]
+@@ -396,6 +396,7 @@ if platform.__LINUX__ then
+ 
+     -- stat structure is architecture dependent in Linux
+     if not S then
++    --[=====[
+         if platform.__X86__ then
+             ffi.cdef[[
+               struct stat {
+@@ -534,6 +535,7 @@ if platform.__LINUX__ then
+               };
+             ]]
+         end
++    --]=====]
+     end
+
+
+
 diff --git a/turbo/signal.lua b/turbo/signal.lua
 old mode 100755
 new mode 100644
