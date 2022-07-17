@@ -1415,11 +1415,13 @@ static int getFontFaceFilenameAndFaceIndex(lua_State *L) {
 
 	lString8 filename;
 	int faceindex = -1;
-	bool found = fontMan->getFontFileNameAndFaceIndex(lString32(facename), bold, italic, filename, faceindex);
+	int family = -1;
+	bool found = fontMan->getFontFileNameAndFaceIndex(lString32(facename), bold, italic, filename, faceindex, family);
 	if (found) {
 		lua_pushstring(L, filename.c_str());
 		lua_pushinteger(L, faceindex);
-		return 2;
+		lua_pushboolean(L, family == css_ff_monospace);
+		return 3;
 	}
 
 	return 0;
@@ -1510,12 +1512,11 @@ static int setFontFace(lua_State *L) {
 }
 
 static int setAsPreferredFontWithBias(lua_State *L) {
-	CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
-	const char *face = luaL_checkstring(L, 2);
-	int bias = luaL_checkint(L, 3);
+	const char *face = luaL_checkstring(L, 1);
+	int bias = luaL_checkint(L, 2);
 	bool clearOthersBias = true;
-	if (lua_isboolean(L,4)) {
-		clearOthersBias = lua_toboolean(L, 4);
+	if (lua_isboolean(L,3)) {
+		clearOthersBias = lua_toboolean(L, 3);
 	}
 
 	fontMan->SetAsPreferredFontWithBias(lString8(face), bias, clearOthersBias);
@@ -3747,6 +3748,7 @@ static const struct luaL_Reg cre_func[] = {
     {"setGammaIndex", setGammaIndex},
     {"registerFont", registerFont},
     {"regularizeRegisteredFontsWeights", regularizeRegisteredFontsWeights},
+    {"setAsPreferredFontWithBias", setAsPreferredFontWithBias},
     {"getHyphDictList", getHyphDictList},
     {"getSelectedHyphDict", getSelectedHyphDict},
     {"setHyphDictionary", setHyphDictionary},
@@ -3805,7 +3807,6 @@ static const struct luaL_Reg credocument_meth[] = {
     {"setHeaderFont", setHeaderFont},
     {"setHeaderProgressMarks", setHeaderProgressMarks},
     {"setFontFace", setFontFace},
-    {"setAsPreferredFontWithBias", setAsPreferredFontWithBias},
     {"setFontSize", setFontSize},
     {"setDefaultInterlineSpace", setDefaultInterlineSpace},
     {"setStyleSheet", setStyleSheet},
