@@ -60,6 +60,8 @@ ExternalProject_Add(
     BUILD_IN_SOURCE 1
     PATCH_COMMAND COMMAND ${PATCH_CMD} COMMAND ${AUTOGEN_CMD}
     CONFIGURE_COMMAND ${CFG_CMD}
+    # Normally we would use -j${PARALLEL_JOBS}, which is math(${PROCESSOR_COUNT}+1)
+    # But on CircleCI that means 3 instead of 2 and a risk of OOM.
     BUILD_COMMAND ${KO_MAKE_RECURSIVE} -j${PROCESSOR_COUNT}
     INSTALL_COMMAND ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS} install
 )
