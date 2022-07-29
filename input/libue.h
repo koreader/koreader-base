@@ -172,6 +172,7 @@ static inline void
     ue_dump_event(struct uevent* uevp)
 {
 	UE_LOG(LOG_INFO, "%s %s", uev_action_str[uevp->action], uevp->devpath);
+	printf("%s %s\n", uev_action_str[uevp->action], uevp->devpath);
 }
 
 static inline void

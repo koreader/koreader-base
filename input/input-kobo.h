@@ -22,7 +22,23 @@
 #define USBPLUG_DEVPATH "/devices/platform/usb_plug"
 #define USBHOST_DEVPATH "/devices/platform/usb_host"
 
+#define USB_CONNECTED_FILE "/sys/class/misc/cilix/usb_conn"
+#define CHARGER_PRESENT_FILE "/sys/class/power_supply/battery/device/charger_type"
+
 #include "libue.h"
+
+static size_t read_file(char const* path, char* buf, size_t buflen)
+{
+    FILE* file = fopen(path, "r");
+    if (!file) {
+        fprintf(stderr, "Could not open '%s'\n", path);
+        return 0;
+    }
+    size_t n = fread(buf, 1, buflen - 1, file);
+    buf[n] = '\0';
+    fclose(file);
+    return n;
+}
 
 static void sendEvent(int fd, struct input_event* ev)
 {
@@ -50,33 +66,54 @@ static void generateFakeEvent(int pipefd[2])
 
     struct uevent uev;
     while ((re = ue_wait_for_event(&listener, &uev)) == 0) {
-        if (uev.devpath && UE_STR_EQ(uev.devpath, USBPLUG_DEVPATH)) {
-            switch (uev.action) {
-                case UEVENT_ACTION_ADD:
-                    ev.code = CODE_FAKE_CHARGING;
-                    sendEvent(pipefd[1], &ev);
-                    break;
-                case UEVENT_ACTION_REMOVE:
-                    ev.code = CODE_FAKE_NOT_CHARGING;
-                    sendEvent(pipefd[1], &ev);
-                    break;
-                default:
-                    // NOP
-                    break;
-            }
-        } else if (uev.devpath && UE_STR_EQ(uev.devpath, USBHOST_DEVPATH)) {
-            switch (uev.action) {
-                case UEVENT_ACTION_ADD:
-                    ev.code = CODE_FAKE_USB_PLUG_IN;
-                    sendEvent(pipefd[1], &ev);
-                    break;
-                case UEVENT_ACTION_REMOVE:
-                    ev.code = CODE_FAKE_USB_PLUG_OUT;
-                    sendEvent(pipefd[1], &ev);
-                    break;
-                default:
-                    // NOP
-                    break;
+        ue_dump_event(&uev);
+        if (uev.devpath) {
+            if (UE_STR_EQ(uev.devpath, USBPLUG_DEVPATH)) {
+                switch (uev.action) {
+                    case UEVENT_ACTION_ADD:
+                        ev.code = CODE_FAKE_CHARGING;
+                        sendEvent(pipefd[1], &ev);
+                        break;
+                    case UEVENT_ACTION_REMOVE:
+                        ev.code = CODE_FAKE_NOT_CHARGING;
+                        sendEvent(pipefd[1], &ev);
+                        break;
+                    default:
+                        // NOP
+                        break;
+                }
+            } else if (UE_STR_EQ(uev.devpath, USBHOST_DEVPATH)) {
+                switch (uev.action) {
+                    case UEVENT_ACTION_ADD:
+                        ev.code = CODE_FAKE_USB_PLUG_IN;
+                        sendEvent(pipefd[1], &ev);
+                        break;
+                    case UEVENT_ACTION_REMOVE:
+                        ev.code = CODE_FAKE_USB_PLUG_OUT;
+                        sendEvent(pipefd[1], &ev);
+                        break;
+                    default:
+                        // NOP
+                        break;
+                }
+            } else if (uev.action == UEVENT_ACTION_CHANGE) {
+                // detection of usb plub in, done in a different way by checking Kobo sysfs files
+                char fbuf[64];
+                if (read_file(CHARGER_PRESENT_FILE, fbuf, sizeof(fbuf))) {
+                    // Check fbuf for "NO"
+                    if (fbuf[0] != 'N' && fbuf[1] != 'O') {
+                        ev.code = CODE_FAKE_CHARGING;
+                        sendEvent(pipefd[1], &ev);
+                    }
+                    printf("xxxx CHARGER_PRESENT_FILE %s\n", fbuf);
+                }
+                if (read_file(USB_CONNECTED_FILE, fbuf, sizeof(fbuf))) {
+                    if (fbuf[0] != '0') {
+                        ev.code = CODE_FAKE_CHARGING
+                        sendEvent(pipefd[1], &ev);
+                    }
+                    printf("xxxx USB_CONNECTED_FILE %c\n", fbuf[0]);
+                }
             }
         }
     }
