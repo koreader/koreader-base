@@ -1,17 +1,5 @@
 local ffi = require("ffi")
 local BB = require("ffi/blitbuffer")
-local Png = require("ffi/png")
-local Jpeg = require("ffi/jpeg")
-
-require("ffi/giflib_h")
-local giflib
-if ffi.os == "Windows" then
-    giflib = ffi.load("libs/libgif-7.dll")
-elseif ffi.os == "OSX" then
-    giflib = ffi.load("libs/libgif.7.dylib")
-else
-    giflib = ffi.load("libs/libgif.so.7")
-end
 
 local Pic = {}
 
@@ -105,6 +93,22 @@ end
 PicDocument.__gc = PicDocument.close
 --]]
 
+--[[
+GIF handling (an animated GIF will make a document with multiple pages)
+--]]
+local giflib
+local ensure_giflib_loaded = function()
+    if giflib then return end
+    require("ffi/giflib_h")
+    if ffi.os == "Windows" then
+        giflib = ffi.load("libs/libgif-7.dll")
+    elseif ffi.os == "OSX" then
+        giflib = ffi.load("libs/libgif.7.dylib")
+    else
+        giflib = ffi.load("libs/libgif.so.7")
+    end
+end
+
 local GifPage = PicPage:new()
 function GifPage:close()
     -- with Gifs, the blitbuffers are per page
@@ -126,6 +130,7 @@ function GifDocument:getOriginalPageSize(number)
     return i.ImageDesc.Width, i.ImageDesc.Height, 4 -- components
 end
 function GifDocument:openPage(number)
+    ensure_giflib_loaded()
     -- If there are multiple frames (animated GIF), a standalone
     -- frame may not be enough (it may be smaller than the first frame,
     -- and have some transparency): we need to paste it (and all the
@@ -202,6 +207,7 @@ function GifDocument:openPage(number)
     return page
 end
 function GifDocument:close()
+    ensure_giflib_loaded()
     local err = ffi.new("int[1]")
     if giflib.DGifCloseFile(self.giffile, err) ~= giflib.GIF_OK then
         error(string.format("error closing/deallocating GIF: %s",
@@ -211,6 +217,7 @@ function GifDocument:close()
 end
 
 function Pic.openGIFDocument(filename)
+    ensure_giflib_loaded()
     local err = ffi.new("int[1]")
     local giffile = giflib.DGifOpenFileName(filename, err)
     if giffile == nil then
@@ -226,6 +233,7 @@ function Pic.openGIFDocument(filename)
 end
 
 function Pic.openGIFDocumentFromData(data, size)
+    ensure_giflib_loaded()
     -- Create GIF from data pointer (from https://github.com/luapower/giflib)
     local function data_reader(r_data, r_size)
         r_data = ffi.cast('unsigned char*', r_data)
@@ -256,6 +264,56 @@ function Pic.openGIFDocumentFromData(data, size)
     return GifDocument:new{giffile = giffile}
 end
 
+--[[
+WebP handling (an animated WebP will make a document with multiple pages)
+--]]
+local WebpPage = PicPage:new()
+function WebpPage:close()
+    -- with WebP, the blitbuffers are per page
+    if self.image_bb ~= nil then
+        self.image_bb:free()
+        self.image_bb = nil
+    end
+end
+
+local WebpDocument = PicDocument:new{
+    webp = nil, -- ffi/webp instance
+}
+function WebpDocument:getPages()
+    return self.webp.nb_frames
+end
+function WebpDocument:getOriginalPageSize(number)
+    return self.webp.width, self.webp.height, self.webp.components
+end
+function WebpDocument:openPage(number)
+    local bb = self.webp:getFrameImage(number)
+    local page = WebpPage:new{
+        width = self.webp.width,
+        height = self.webp.height,
+        image_bb = bb,
+        doc = self,
+    }
+    return page
+end
+function WebpDocument:close()
+    self.webp:close()
+end
+
+function Pic.openWebPDocument(filename)
+    local WebP = require("ffi/webp")
+    local webp = WebP.fromFile(filename)
+    return WebpDocument:new{ webp = webp }
+end
+
+function Pic.openWebPDocumentFromData(data, size)
+    local WebP = require("ffi/webp")
+    local webp = WebP.fromData(data, size)
+    return WebpDocument:new{ webp = webp }
+end
+
+--[[
+PNG handling
+--]]
 function Pic.openPNGDocument(filename)
     local req_n
     local bbtype
@@ -267,6 +325,7 @@ function Pic.openPNGDocument(filename)
         req_n = 1
     end
 
+    local Png = require("ffi/png")
     local ok, re = Png.decodeFromFile(filename, req_n)
     if not ok then error(re) end
 
@@ -290,7 +349,11 @@ function Pic.openPNGDocument(filename)
     return doc
 end
 
+--[[
+JPG handling
+--]]
 function Pic.openJPGDocument(filename)
+    local Jpeg = require("ffi/jpeg")
     local image, w, h, components = Jpeg.openDocument(filename, Pic.color)
 
     local doc = PicDocument:new{width=w, height=h}
@@ -301,6 +364,7 @@ function Pic.openJPGDocument(filename)
 end
 
 function Pic.openJPGDocumentFromMem(data)
+    local Jpeg = require("ffi/jpeg")
     local image, w, h, components = Jpeg.openDocumentFromMem(data, Pic.color)
 
     local doc = PicDocument:new{width=w, height=h}
@@ -321,6 +385,8 @@ function Pic.openDocument(filename)
         return Pic.openPNGDocument(filename)
     elseif extension == "gif" then
         return Pic.openGIFDocument(filename)
+    elseif extension == "webp" then
+        return Pic.openWebPDocument(filename)
     else
         error("Unsupported image format")
     end
