@@ -43,6 +43,8 @@ assert_var_defined(AES_LIB)
 assert_var_defined(JPEG_LIB)
 assert_var_defined(FREETYPE_LIB)
 assert_var_defined(HARFBUZZ_LIB)
+assert_var_defined(LIBWEBP_LIB)
+assert_var_defined(LIBWEBPDEMUX_LIB)
 assert_var_defined(MUPDF_LIB)
 assert_var_defined(RPATH)
 if($ENV{DARWIN})
@@ -57,7 +59,7 @@ else()
     set(LINK_OPTS "${LINK_OPTS} -Wl,-soname=${MUPDF_SONAME}")
     set(LINK_OPTS "${LINK_OPTS} build/${MUPDF_BUILD_TYPE}/libmupdfthird.a")
 endif()
-set(SHARED_BUILD_STR sh -c "${CC} -shared ${CFLAGS} ${LINK_OPTS} ${AES_LIB} ${ZLIB} ${JPEG_LIB} ${FREETYPE_LIB} ${HARFBUZZ_LIB} -o ${MUPDF_LIB} -lm")
+set(SHARED_BUILD_STR sh -c "${CC} -shared ${CFLAGS} ${LINK_OPTS} ${AES_LIB} ${ZLIB} ${JPEG_LIB} ${FREETYPE_LIB} ${HARFBUZZ_LIB} ${LIBWEBP_LIB} ${LIBWEBPDEMUX_LIB} -o ${MUPDF_LIB} -lm")
 
 # explictly use envs defined in Makefile.defs
 if($ENV{ANDROID})
@@ -128,6 +130,9 @@ set(PATCH_CMD7 "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/tar-fixes.patch")
 # https://github.com/ArtifexSoftware/mupdf/commit/a7c435ac1836cc9e46ec4329c1543892148a7a0e
 set(PATCH_CMD8 "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/mupdf-1.13.0-backports.patch")
 
+# Support for WebP images (unmerged-yet proposed upstream patch cleaned up of win32 stuff)
+set(PATCH_CMD9 "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/webp-upstream-697749.patch")
+
 # TODO: ignore shared git submodules built outside of mupdf by ourselves
 # https://git.ghostscript.com/mupdf.git is slow, so we use the official mirror on GitHub
 ep_get_source_dir(SOURCE_DIR)
@@ -143,7 +148,7 @@ ExternalProject_Add(
     ${PROJECT_NAME}
     DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
     BUILD_IN_SOURCE 1
-    PATCH_COMMAND COMMAND ${PATCH_CMD1} COMMAND ${PATCH_CMD2} COMMAND ${PATCH_CMD3} COMMAND ${PATCH_CMD4} COMMAND ${PATCH_CMD5} COMMAND ${PATCH_CMD6} COMMAND ${PATCH_CMD7} COMMAND ${PATCH_CMD8}
+    PATCH_COMMAND COMMAND ${PATCH_CMD1} COMMAND ${PATCH_CMD2} COMMAND ${PATCH_CMD3} COMMAND ${PATCH_CMD4} COMMAND ${PATCH_CMD5} COMMAND ${PATCH_CMD6} COMMAND ${PATCH_CMD7} COMMAND ${PATCH_CMD8} COMMAND ${PATCH_CMD9}
     # skip configure
     CONFIGURE_COMMAND ""
     BUILD_COMMAND ${BUILD_CMD_GENERATE} COMMAND ${STATIC_BUILD_CMD} COMMAND ${SHARED_BUILD_CMD}
