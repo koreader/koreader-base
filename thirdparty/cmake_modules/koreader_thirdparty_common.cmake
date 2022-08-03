@@ -3,11 +3,11 @@ if(NOT DEFINED PROCESSOR_COUNT)
     ProcessorCount(N)
     # 0 if unknown
     set(PROCESSOR_COUNT ${N})
+    set(CONSTRAINED_PROCESSOR_COUNT ${N})
 
-    # Some compilations (like harfbuzz) are known to OOM on memory-limited CI.
-    set(CIRCLECI_PROCESSOR_COUNT ${N})
+    # Some compilations (like harfbuzz) are known to OOM on memory-constrained CI.
     if($ENV{CIRCLECI})
-        set(CIRCLECI_PROCESSOR_COUNT 1)
+        set(CONSTRAINED_PROCESSOR_COUNT 1)
     endif()
 endif()
 
