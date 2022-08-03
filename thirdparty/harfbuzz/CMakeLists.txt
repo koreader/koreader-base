@@ -44,7 +44,7 @@ if($ENV{ANDROID})
     set(CFG_CMD "${CFG_CMD} && ${ISED} 's|soname_spec=.*|soname_spec=\"\\\\\$libname\\\\\$release\\\\\$shared_ext\\\\\$major\"|' libtool")
 endif()
 
-set(HB_VER 5.0.1)
+set(HB_VER 5.1.0)
 
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
@@ -60,8 +60,6 @@ ExternalProject_Add(
     BUILD_IN_SOURCE 1
     PATCH_COMMAND COMMAND ${PATCH_CMD} COMMAND ${AUTOGEN_CMD}
     CONFIGURE_COMMAND ${CFG_CMD}
-    # Normally we would use -j${PARALLEL_JOBS}, which is ${PROCESSOR_COUNT} + 1.
-    # But on CircleCI that means 3 instead of 2 and a risk of OOM.
-    BUILD_COMMAND ${KO_MAKE_RECURSIVE} -j${PROCESSOR_COUNT}
+    BUILD_COMMAND ${KO_MAKE_RECURSIVE} -j${CONSTRAINED_PARALLEL_JOBS}
     INSTALL_COMMAND ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS} install
 )
