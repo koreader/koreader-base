@@ -16,6 +16,9 @@ if(NOT DEFINED PARALLEL_JOBS)
 endif()
 
 if(NOT DEFINED CONSTRAINED_PARALLEL_JOBS)
+    # Default to ${PROCESSOR_COUNT} instead of ${PROCESSOR_COUNT}+1
+    set(CONSTRAINED_PARALLEL_JOBS ${PROCESSOR_COUNT})
+
     # Some compilations (like harfbuzz) are known to OOM on memory-constrained CI.
     if($ENV{CIRCLECI})
         set(CONSTRAINED_PARALLEL_JOBS 1)
