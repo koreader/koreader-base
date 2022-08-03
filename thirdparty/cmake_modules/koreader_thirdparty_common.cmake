@@ -13,7 +13,9 @@ endif()
 
 if(NOT DEFINED PARALLEL_JOBS)
     math(EXPR PARALLEL_JOBS "${PROCESSOR_COUNT}+1")
+endif()
 
+if(NOT DEFINED CONSTRAINED_PARALLEL_JOBS)
     # Some compilations (like harfbuzz) are known to OOM on memory-constrained CI.
     if($ENV{CIRCLECI})
         set(CONSTRAINED_PARALLEL_JOBS 1)
