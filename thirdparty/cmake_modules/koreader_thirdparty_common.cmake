@@ -3,12 +3,6 @@ if(NOT DEFINED PROCESSOR_COUNT)
     ProcessorCount(N)
     # 0 if unknown
     set(PROCESSOR_COUNT ${N})
-    set(CONSTRAINED_PROCESSOR_COUNT ${N})
-
-    # Some compilations (like harfbuzz) are known to OOM on memory-constrained CI.
-    if($ENV{CIRCLECI})
-        set(CONSTRAINED_PROCESSOR_COUNT 1)
-    endif()
 endif()
 
 if(APPLE)
@@ -19,6 +13,11 @@ endif()
 
 if(NOT DEFINED PARALLEL_JOBS)
     math(EXPR PARALLEL_JOBS "${PROCESSOR_COUNT}+1")
+
+    # Some compilations (like harfbuzz) are known to OOM on memory-constrained CI.
+    if($ENV{CIRCLECI})
+        set(CONSTRAINED_PARALLEL_JOBS 1)
+    endif()
 endif()
 
 # $(MAKE) is for recursive make invocations, but evidently when using another
