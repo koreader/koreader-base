@@ -16,7 +16,7 @@ end
 
 local inputQueue = {}
 
-local function genEmuEvent(evtype, code, value, ts)
+local function genInputTimeval(ts)
     local timev = { sec = 0, usec = 0 }
     if ts then
         -- If we've got one, trust the native event's timestamp, they're guaranteed to be in the CLOCK_MONOTONIC timebase.
@@ -36,78 +36,162 @@ local function genEmuEvent(evtype, code, value, ts)
         -- ns to µs
         timev.usec = math.floor(tonumber(timespec.tv_nsec / 1000))
     end
+
+    return timev
+end
+
+local function genEmuEvent(evtype, code, value, timev, ts)
     local ev = {
         type = tonumber(evtype),
         code = tonumber(code),
         value = tonumber(value),
-        time = timev,
+        time = timev or genInputTimeval(ts),
     }
     table.insert(inputQueue, ev)
 end
 
-local function genTouchDownEvent(event, id)
-    local x = android.lib.AMotionEvent_getX(event, id)
-    local y = android.lib.AMotionEvent_getY(event, id)
-    local ts = android.lib.AMotionEvent_getEventTime(event)
-    genEmuEvent(C.EV_ABS, C.ABS_MT_SLOT, id, ts)
-    genEmuEvent(C.EV_ABS, C.ABS_MT_TRACKING_ID, id, ts)
-    genEmuEvent(C.EV_ABS, C.ABS_MT_POSITION_X, x, ts)
-    genEmuEvent(C.EV_ABS, C.ABS_MT_POSITION_Y, y, ts)
-    genEmuEvent(C.EV_SYN, C.SYN_REPORT, 0, ts)
+-- Keep track of all the active pointers in the current gesture, key is a pointer *id* (i.e., its slot number),
+-- value is a pointer object, which is a hash with a few keys:
+-- down, a boolean denoting whether the pointer is currently down (e.g., in contact; mandatory).
+-- x & y, its last coordinates (used for delayed contact lifts; optional)
+-- ts, its last timestamp (ditto)
+local pointers = {}
+local function setPointerDownState(slot, down)
+    if not pointers[slot] then
+        pointers[slot] = { down = down }
+    else
+        pointers[slot].down = down
+    end
 end
 
-local function genTouchUpEvent(event, id)
-    local x = android.lib.AMotionEvent_getX(event, id)
-    local y = android.lib.AMotionEvent_getY(event, id)
-    local ts = android.lib.AMotionEvent_getEventTime(event)
-    genEmuEvent(C.EV_ABS, C.ABS_MT_SLOT, id, ts)
-    genEmuEvent(C.EV_ABS, C.ABS_MT_TRACKING_ID, -1, ts)
-    genEmuEvent(C.EV_ABS, C.ABS_MT_POSITION_X, x, ts)
-    genEmuEvent(C.EV_ABS, C.ABS_MT_POSITION_Y, y, ts)
-    genEmuEvent(C.EV_SYN, C.SYN_REPORT, 0, ts)
+local function genTouchDownEvent(event, slot, index)
+    local x = android.lib.AMotionEvent_getX(event, index)
+    local y = android.lib.AMotionEvent_getY(event, index)
+    local timev = genInputTimeval(android.lib.AMotionEvent_getEventTime(event))
+    genEmuEvent(C.EV_ABS, C.ABS_MT_SLOT, slot, timev)
+    genEmuEvent(C.EV_ABS, C.ABS_MT_TRACKING_ID, slot, timev)
+    genEmuEvent(C.EV_ABS, C.ABS_MT_POSITION_X, x, timev)
+    genEmuEvent(C.EV_ABS, C.ABS_MT_POSITION_Y, y, timev)
+    genEmuEvent(C.EV_SYN, C.SYN_REPORT, 0, timev)
 end
 
-local function genTouchMoveEvent(event, id, index)
+local function genTouchUpEvent(event, timev, slot, index)
+    local x = android.lib.AMotionEvent_getX(event, index)
+    local y = android.lib.AMotionEvent_getY(event, index)
+    genEmuEvent(C.EV_ABS, C.ABS_MT_SLOT, slot, timev)
+    genEmuEvent(C.EV_ABS, C.ABS_MT_TRACKING_ID, -1, timev)
+    genEmuEvent(C.EV_ABS, C.ABS_MT_POSITION_X, x, timev)
+    genEmuEvent(C.EV_ABS, C.ABS_MT_POSITION_Y, y, timev)
+end
+
+local function queueTouchUpEvent(event, slot, index)
+    pointers[slot].x = android.lib.AMotionEvent_getX(event, index)
+    pointers[slot].y = android.lib.AMotionEvent_getY(event, index)
+    pointers[slot].ts = android.lib.AMotionEvent_getEventTime(event)
+end
+
+local function drainTouchUpEvent(slot, pointer)
+    local timev = genInputTimeval(pointer.ts)
+    genEmuEvent(C.EV_ABS, C.ABS_MT_SLOT, slot, timev)
+    genEmuEvent(C.EV_ABS, C.ABS_MT_TRACKING_ID, -1, timev)
+    genEmuEvent(C.EV_ABS, C.ABS_MT_POSITION_X, pointer.x, timev)
+    genEmuEvent(C.EV_ABS, C.ABS_MT_POSITION_Y, pointer.y, timev)
+    -- Invalidate this pointer's state now that we're done with it
+    -- NOTE: As we only *remove* keys, this is safe to do during iteration because we use pairs, not ipairs.
+    pointers[slot] = nil
+end
+
+local function genTouchMoveEvent(event, timev, slot, index)
     -- NOTE: May return a float for events w/ subpixel precision.
     local x = android.lib.AMotionEvent_getX(event, index)
     local y = android.lib.AMotionEvent_getY(event, index)
-    local ts = android.lib.AMotionEvent_getEventTime(event)
-    genEmuEvent(C.EV_ABS, C.ABS_MT_SLOT, id, ts)
-    genEmuEvent(C.EV_ABS, C.ABS_MT_POSITION_X, x, ts)
-    genEmuEvent(C.EV_ABS, C.ABS_MT_POSITION_Y, y, ts)
-    genEmuEvent(C.EV_SYN, C.SYN_REPORT, 0, ts)
+    genEmuEvent(C.EV_ABS, C.ABS_MT_SLOT, slot, timev)
+    genEmuEvent(C.EV_ABS, C.ABS_MT_POSITION_X, x, timev)
+    genEmuEvent(C.EV_ABS, C.ABS_MT_POSITION_Y, y, timev)
 end
 
-local is_in_touch = false
+local function genEndTouchEvent(event, timev)
+    genEmuEvent(C.EV_SYN, C.SYN_REPORT, 0, timev)
+end
+
+-- NOTE: As far as AMotionEvent_getPointerId is concerned, keep in mind that while the id (e.g., slot) that it returns
+--       is constant across a pointer's lifetime (i.e., a single gesture), its index *can* and *will* vary across events!
+--       (As it's literally an index to the native MotionEvent array where the data is stored).
+-- NOTE: The documentation is not always super clear on the fact that the data is always at index 0 for
+--       AMOTION_EVENT_ACTION_DOWN & AMOTION_EVENT_ACTION_UP, so, use the source, Luke! c.f., TouchInputMapper::dispatchMotion @
+-- https://android.googlesource.com/platform//frameworks/native/+/master/services/inputflinger/reader/mapper/TouchInputMapper.cpp
 local function motionEventHandler(motion_event)
     if android.isTouchscreenIgnored() then
         return
     end
+
     local action = android.lib.AMotionEvent_getAction(motion_event)
-    local pointer_count = android.lib.AMotionEvent_getPointerCount(motion_event)
-    local pointer_index = bit.rshift(
-            bit.band(action, C.AMOTION_EVENT_ACTION_POINTER_INDEX_MASK),
-            C.AMOTION_EVENT_ACTION_POINTER_INDEX_SHIFT)
-    local id = android.lib.AMotionEvent_getPointerId(motion_event, pointer_index)
     local flags = bit.band(action, C.AMOTION_EVENT_ACTION_MASK)
     if flags == C.AMOTION_EVENT_ACTION_DOWN then
-        is_in_touch = true
-        genTouchDownEvent(motion_event, id)
+        -- Happens on the *first* contact of a gesture (data is always at index 0),
+        local slot = android.lib.AMotionEvent_getPointerId(motion_event, 0)
+        setPointerDownState(slot, true)
+        genTouchDownEvent(motion_event, slot, 0)
     elseif flags == C.AMOTION_EVENT_ACTION_POINTER_DOWN then
-        is_in_touch = true
-        genTouchDownEvent(motion_event, id)
+        local pointer_index = bit.rshift(
+                                        bit.band(action, C.AMOTION_EVENT_ACTION_POINTER_INDEX_MASK),
+                                        C.AMOTION_EVENT_ACTION_POINTER_INDEX_SHIFT)
+        local slot = android.lib.AMotionEvent_getPointerId(motion_event, pointer_index)
+        setPointerDownState(slot, true)
+        genTouchDownEvent(motion_event, slot, pointer_index)
     elseif flags == C.AMOTION_EVENT_ACTION_UP then
-        is_in_touch = false
-        genTouchUpEvent(motion_event, id)
-    elseif flags == C.AMOTION_EVENT_ACTION_POINTER_UP then
-        is_in_touch = false
-        genTouchUpEvent(motion_event, id)
-    elseif flags == C.AMOTION_EVENT_ACTION_MOVE then
-        if is_in_touch then
-            for index = 0, pointer_count - 1 do
-                id = android.lib.AMotionEvent_getPointerId(motion_event, index)
-                genTouchMoveEvent(motion_event, id, index)
+        -- NOTE: GestureDetector doesn't really deal well if multiple contact points are lifted in two different input frames.
+        --       To avoid confusing it, we delay the contact lifts from AMOTION_EVENT_ACTION_POINTER_UP 'til now,
+        --       in order to bundle everything in a single input frame.
+        --       Ideally, GestureDetector *should* handle this better. In the meantime, this is good enough for us...
+        for slot, pointer in pairs(pointers) do
+            if pointer.down == false then
+                drainTouchUpEvent(slot, pointer)
             end
+        end
+
+        -- Happens once the *last* contact of a gesture has been lifted (data is always at index 0)
+        local slot = android.lib.AMotionEvent_getPointerId(motion_event, 0)
+
+        -- Only request the ts once
+        local timev = genInputTimeval(android.lib.AMotionEvent_getEventTime(motion_event))
+        if pointers[slot] and pointers[slot].down then
+            genTouchUpEvent(motion_event, timev, slot, 0)
+        end
+        -- We're done with this pointer
+        pointers[slot] = nil
+
+        -- End the input frame w/ a SYN_REPORT
+        genEndTouchEvent(motion_event, timev)
+    elseif flags == C.AMOTION_EVENT_ACTION_POINTER_UP then
+        local pointer_index = bit.rshift(
+                                        bit.band(action, C.AMOTION_EVENT_ACTION_POINTER_INDEX_MASK),
+                                        C.AMOTION_EVENT_ACTION_POINTER_INDEX_SHIFT)
+        local slot = android.lib.AMotionEvent_getPointerId(motion_event, pointer_index)
+        setPointerDownState(slot, false)
+
+        -- NOTE: We're *not* actually sending the input event right now, we're delaying that until AMOTION_EVENT_ACTION_UP...
+        queueTouchUpEvent(motion_event, slot, pointer_index)
+    elseif flags == C.AMOTION_EVENT_ACTION_MOVE then
+        -- There may be multiple pointers involved, only request the ts once
+        local timev = genInputTimeval(android.lib.AMotionEvent_getEventTime(motion_event))
+
+        -- This effectively gives us the size of the current MotionEvent array...
+        local pointer_count = android.lib.AMotionEvent_getPointerCount(motion_event)
+        for i = 0, pointer_count - 1 do
+            -- So, loop through the array, and if that pointer is still down, move it
+            local slot = android.lib.AMotionEvent_getPointerId(motion_event, i)
+            if pointers[slot] and pointers[slot].down then
+                genTouchMoveEvent(motion_event, timev, slot, i)
+            end
+        end
+
+        -- Only generate a single SYN_REPORT, to avoid confusing GestureDetector...
+        genEndTouchEvent(motion_event, timev)
+    elseif flags == C.AMOTION_EVENT_ACTION_CANCEL then
+        -- Simply invalidate the pointers and hope for the best?
+        for slot, pointer in pairs(pointers) do
+            pointers[slot] = nil
         end
     end
 end
@@ -139,11 +223,9 @@ local function keyEventHandler(key_event)
         return 1
     end
     if action == C.AKEY_EVENT_ACTION_DOWN then
-        local ts = android.lib.AKeyEvent_getEventTime(key_event)
-        genEmuEvent(C.EV_KEY, code, 1, ts)
+        genEmuEvent(C.EV_KEY, code, 1, nil, android.lib.AKeyEvent_getEventTime(key_event))
     elseif action == C.AKEY_EVENT_ACTION_UP then
-        local ts = android.lib.AKeyEvent_getEventTime(key_event)
-        genEmuEvent(C.EV_KEY, code, 0, ts)
+        genEmuEvent(C.EV_KEY, code, 0, nil, android.lib.AKeyEvent_getEventTime(key_event))
     end
     return 1 -- event consumed
 end
