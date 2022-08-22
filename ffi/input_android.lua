@@ -7,7 +7,7 @@ require("ffi/posix_h")
 require("ffi/linux_input_h")
 
 local input = {
--- to trigger refreshes for certain Android framework events:
+    -- to trigger refreshes for certain Android framework events:
     device = nil,
 }
 
@@ -114,6 +114,13 @@ local function genEndTouchEvent(event, timev)
     genEmuEvent(C.EV_SYN, C.SYN_REPORT, 0, timev)
 end
 
+local function genAndroidCancelEvent(event)
+    local timev = genInputTimeval(android.lib.AMotionEvent_getEventTime(event))
+    -- We piggyback on this EV_MSC code, because our EV_MSC handler already handles it via Device.input:resetState(),
+    -- which is *exactly* what we want ;).
+    genEmuEvent(C.EV_MSC, C.APP_CMD_LOST_FOCUS, 42, timev)
+end
+
 -- NOTE: As far as AMotionEvent_getPointerId is concerned, keep in mind that while the id (e.g., slot) that it returns
 --       is constant across a pointer's lifetime (i.e., a single gesture), its index *can* and *will* vary across events!
 --       (As it's literally an index to the native MotionEvent array where the data is stored).
@@ -186,13 +193,14 @@ local function motionEventHandler(motion_event)
             end
         end
 
-        -- Only generate a single SYN_REPORT, to avoid confusing GestureDetector...
+        -- Bundle everything in a single input frame
         genEndTouchEvent(motion_event, timev)
     elseif flags == C.AMOTION_EVENT_ACTION_CANCEL then
-        -- Simply invalidate the pointers and hope for the best?
+        -- Invalidate the pointers, and push a custom event to notify front to do the same.
         for slot, pointer in pairs(pointers) do
             pointers[slot] = nil
         end
+        genAndroidCancelEvent(motion_event)
     end
 end
 
