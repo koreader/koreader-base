@@ -60,11 +60,11 @@ static void generateFakeEvent(int pipefd[2]) {
         } else if (uev.devpath && UE_STR_EQ(uev.devpath, USBHOST_DEVPATH)) {
             switch(uev.action) {
                 case UEVENT_ACTION_ADD:
-                    ev.code = CODE_FAKE_USB_PLUG_IN;
+                    ev.code = CODE_FAKE_USB_HOST_PLUG_IN;
                     sendEvent(pipefd[1], &ev);
                 break;
                 case UEVENT_ACTION_REMOVE:
-                    ev.code = CODE_FAKE_USB_PLUG_OUT;
+                    ev.code = CODE_FAKE_USB_HOST_PLUG_OUT;
                     sendEvent(pipefd[1], &ev);
                 break;
             }

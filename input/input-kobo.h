@@ -21,6 +21,7 @@
 
 #define USBPLUG_DEVPATH "/devices/platform/usb_plug"
 #define USBHOST_DEVPATH "/devices/platform/usb_host"
+#define PLATFORMSOC_DEVPATH "/devices/platform/soc"
 
 #include "libue.h"
 
@@ -67,11 +68,27 @@ static void generateFakeEvent(int pipefd[2])
         } else if (uev.devpath && UE_STR_EQ(uev.devpath, USBHOST_DEVPATH)) {
             switch (uev.action) {
                 case UEVENT_ACTION_ADD:
-                    ev.code = CODE_FAKE_USB_PLUG_IN;
+                    ev.code = CODE_FAKE_USB_HOST_PLUG_IN;
                     sendEvent(pipefd[1], &ev);
                     break;
                 case UEVENT_ACTION_REMOVE:
-                    ev.code = CODE_FAKE_USB_PLUG_OUT;
+                    ev.code = CODE_FAKE_USB_HOST_PLUG_OUT;
+                    sendEvent(pipefd[1], &ev);
+                    break;
+                default:
+                    // NOP
+                    break;
+            }
+        } else if (uev.devpath && (UE_STR_EQ(uev.devpath, PLATFORMSOC_DEVPATH) && strstr(uev.devpath, "/usb"))) {
+            // Issue usb fake events when an external device is connected through OTG. This is one example of a devpath:
+            // /devices/platform/soc/2100000.aips-bus/2184000.usb/ci_hdrc.0/usb1/1-1/1-1:1.0/0003:1532:021A.001C/input/input31/event4
+            switch (uev.action) {
+                case UEVENT_ACTION_ADD:
+                    ev.code = CODE_FAKE_USB_DEVICE_PLUG_IN;
+                    sendEvent(pipefd[1], &ev);
+                    break;
+                case UEVENT_ACTION_REMOVE:
+                    ev.code = CODE_FAKE_USB_DEVICE_PLUG_OUT;
                     sendEvent(pipefd[1], &ev);
                     break;
                 default:

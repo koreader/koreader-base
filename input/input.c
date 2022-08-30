@@ -37,12 +37,16 @@
 
 #define CODE_FAKE_IN_SAVER            10000
 #define CODE_FAKE_OUT_SAVER           10001
-#define CODE_FAKE_USB_PLUG_IN         10010
-#define CODE_FAKE_USB_PLUG_OUT        10011
+// Device is plugged to USB host
+#define CODE_FAKE_USB_HOST_PLUG_IN    10010
+#define CODE_FAKE_USB_HOST_PLUG_OUT   10011
 #define CODE_FAKE_CHARGING            10020
 #define CODE_FAKE_NOT_CHARGING        10021
 #define CODE_FAKE_WAKEUP_FROM_SUSPEND 10030
 #define CODE_FAKE_READY_TO_SUSPEND    10031
+// The device plays role of host. Another device is plugged into it.
+#define CODE_FAKE_USB_DEVICE_PLUG_IN  10040
+#define CODE_FAKE_USB_DEVICE_PLUG_OUT 10041
 
 #ifndef ARRAY_SIZE
 #    define ARRAY_SIZE(x) (sizeof(x) / sizeof(*(x)))

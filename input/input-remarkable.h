@@ -119,7 +119,7 @@ static void generateFakeEventRM1(int pipefd) {
                 if (read_file(CHARGER_ONLINE_PATH, fbuf, sizeof(fbuf))) {
                     int new_state = strcmp(fbuf, "1\n") == 0? 1 : 0;
                     if (new_state != charger_state) {
-                        input_write_event(pipefd, new_state? CODE_FAKE_USB_PLUG_IN : CODE_FAKE_USB_PLUG_OUT);
+                        input_write_event(pipefd, new_state? CODE_FAKE_USB_HOST_PLUG_IN : CODE_FAKE_USB_HOST_PLUG_OUT);
                     }
                     charger_state = new_state;
                 }
