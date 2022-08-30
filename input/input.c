@@ -77,6 +77,18 @@ pid_t  fake_ev_generator_pid = -1;
 #    include "timerfd-callbacks.h"
 #endif
 
+static int computeNfds() {
+    // Compute select's nfds argument.
+    // That's not the actual number of fds in the set, like poll(),
+    // but the highest fd number in the set + 1 (c.f., select(2)).
+    // The fd_idx must be set to the actual number before calling this.
+    if (fd_idx == 0U) {
+        nfds = 0;
+    } else if (inputfds[fd_idx] >= nfds) {
+        nfds = inputfds[fd_idx - 1U] + 1;
+    }
+}
+
 static int openInputDevice(lua_State* L)
 {
     const char* restrict inputdevice = luaL_checkstring(L, 1);
@@ -159,17 +171,37 @@ static int openInputDevice(lua_State* L)
     // Pass the fd to Lua, we might need it for FFI ioctl shenanigans
     lua_pushinteger(L, inputfds[fd_idx]);
 
-    // Compute select's nfds argument.
-    // That's not the actual number of fds in the set, like poll(),
-    // but the highest fd number in the set + 1 (c.f., select(2)).
-    if (inputfds[fd_idx] >= nfds) {
-        nfds = inputfds[fd_idx] + 1;
-    }
-
-    // That, on the other hand, *is* the number of open fds ;).
     fd_idx++;
 
+    computeNfds();
+
     return 1; // fd
+}
+
+static int closeInputDevice(size_t fd_idx_to_close)
+{
+    // Right now, we close everything, but, in the future, we may want to keep *some* slots open.
+    // Note that doing that would (currently) require making sure those slots are at the start of the array,
+    // in ascending fd number order, and that the array itself isn't sparse.
+    if (inputfds[fd_idx_to_close] == -1) {
+        // Device was not open
+        return -1;
+    }
+    ioctl(inputfds[fd_idx_to_close], EVIOCGRAB, 0);
+    close(inputfds[fd_idx_to_close]);
+
+    // Shift the fds after the closed ones backward
+    for (ssize_t i = fd_idx_to_close; i < fd_idx - 1; i++) {
+        inputfds[i] = inputfds[i + 1];
+    }
+
+    inputfds[fd_idx - 1] = -1;
+    fd_idx--;
+
+    computeNfds();
+    printf("[ko-input] Closed input device with idx=%d. fd_idx=%d, nfds=%d\n", fd_idx_to_close, fd_idx, nfds);
+
+    return 0;
 }
 
 static int closeInputDevices(lua_State* L __attribute__((unused)))
@@ -177,13 +209,9 @@ static int closeInputDevices(lua_State* L __attribute__((unused)))
     // Right now, we close everything, but, in the future, we may want to keep *some* slots open.
     // Note that doing that would (currently) require making sure those slots are at the start of the array,
     // in ascending fd number order, and that the array itself isn't sparse.
+    // Closing the fds in the reverse order helps to avoid extra work to keep the array dense, so that the complexity stays linear.
     for (ssize_t i = fd_idx - 1; i >= 0; i--) {
-        if (inputfds[i] != -1) {
-            ioctl(inputfds[i], EVIOCGRAB, 0);
-            close(inputfds[i]);
-            inputfds[i] = -1;
-            fd_idx--;
-        }
+        closeInputDevice(i);
     }
 
 #if defined(WITH_TIMERFD)
@@ -195,14 +223,6 @@ static int closeInputDevices(lua_State* L __attribute__((unused)))
         kill(fake_ev_generator_pid, SIGTERM);
         waitpid(-1, NULL, 0);
         fake_ev_generator_pid = -1;
-    }
-
-    // Re-compute select's nfds
-    if (fd_idx == 0U) {
-        nfds = 0;
-    } else {
-        // The idea here being that we *may*, in the future, allow some early slots to stay put.
-        nfds = inputfds[fd_idx - 1U] + 1;
     }
 
     return 0;
@@ -386,6 +406,13 @@ static int waitForInput(lua_State* L)
                     } else if (errno == EAGAIN) {
                         // Kernel queue drained :)
                         break;
+                    } else if (errno == ENODEV) {
+                        // Device was removed
+                        closeInputDevice(i);
+                        lua_settop(L, 0);  // Kick our bogus bool (and potentially the ev_array table) from the stack
+                        lua_pushboolean(L, false);
+                        lua_pushinteger(L, ENODEV);
+                        return 2;  // false, ENODEV
                     } else {
                         lua_settop(L, 0);  // Kick our bogus bool (and potentially the ev_array table) from the stack
                         lua_pushboolean(L, false);
