@@ -65,13 +65,7 @@ static void generateFakeEvent(int pipefd[2])
                     // NOP
                     break;
             }
-        } else if (uev.devpath &&
-            (UE_STR_EQ(uev.devpath, USBHOST_DEVPATH) ||
-                (UE_STR_EQ(uev.devpath, PLATFORMSOC_DEVPATH) && strstr(uev.devpath, ".usb/")))) {
-
-            fprintf(stderr, "[ko-input]: printing event buffer");
-            fprintf(stderr, "[ko-input]: event buffer: %.*s.\n", uev.buflen, uev.buf);
-
+        } else if (uev.devpath && UE_STR_EQ(uev.devpath, USBHOST_DEVPATH)) {
             switch (uev.action) {
                 case UEVENT_ACTION_ADD:
                     ev.code = CODE_FAKE_USB_HOST_PLUG_IN;

@@ -77,6 +77,11 @@ pid_t  fake_ev_generator_pid = -1;
 #    include "timerfd-callbacks.h"
 #endif
 
+static int logFdStuff() {
+    printf("nfds=%d fd_idx=%d\n", nfds, fd_idx);
+    printf("inputfds [%d, %d, %d, %d]\n", inputfds[0], inputfds[1], inputfds[2], inputfds[3]);
+}
+
 static int computeNfds() {
     // Compute select's nfds argument.
     // That's not the actual number of fds in the set, like poll(),
@@ -84,7 +89,7 @@ static int computeNfds() {
     // The fd_idx must be set to the actual number before calling this.
     if (fd_idx == 0U) {
         nfds = 0;
-    } else if (inputfds[fd_idx] >= nfds) {
+    } else if (inputfds[fd_idx - 1U] >= nfds) {
         nfds = inputfds[fd_idx - 1U] + 1;
     }
 }
@@ -174,6 +179,7 @@ static int openInputDevice(lua_State* L)
     fd_idx++;
 
     computeNfds();
+    logFdStuff();
 
     return 1; // fd
 }
@@ -199,7 +205,8 @@ static int closeInputDevice(size_t fd_idx_to_close)
     fd_idx--;
 
     computeNfds();
-    printf("[ko-input] Closed input device with idx=%d. fd_idx=%d, nfds=%d\n", fd_idx_to_close, fd_idx, nfds);
+    printf("[ko-input] Closed input device with idx=%d\n", fd_idx_to_close);
+    logFdStuff();
 
     return 0;
 }
