@@ -53,7 +53,7 @@
 #endif
 
 int    nfds                  = 0;  // for select()
-int    inputfds[]            = { -1, -1, -1, -1 };
+int    inputfds[]            = { -1, -1, -1, -1, -1, -1, -1, -1 };
 size_t fd_idx                = 0U;  // index of the *next* fd in inputfds (also, *current* amount of open fds)
 pid_t  fake_ev_generator_pid = -1;
 
@@ -76,11 +76,6 @@ pid_t  fake_ev_generator_pid = -1;
 #if !defined(KINDLE_LEGACY) && !defined(POCKETBOOK)
 #    include "timerfd-callbacks.h"
 #endif
-
-static int logFdStuff() {
-    printf("nfds=%d fd_idx=%d\n", nfds, fd_idx);
-    printf("inputfds [%d, %d, %d, %d]\n", inputfds[0], inputfds[1], inputfds[2], inputfds[3]);
-}
 
 static int computeNfds() {
     // Compute select's nfds argument.
@@ -179,7 +174,6 @@ static int openInputDevice(lua_State* L)
     fd_idx++;
 
     computeNfds();
-    logFdStuff();
 
     return 1; // fd
 }
@@ -206,7 +200,6 @@ static int closeInputDevice(size_t fd_idx_to_close)
 
     computeNfds();
     printf("[ko-input] Closed input device with idx=%d\n", fd_idx_to_close);
-    logFdStuff();
 
     return 0;
 }
