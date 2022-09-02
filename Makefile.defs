@@ -585,6 +585,8 @@ else
 	#unexport PKG_CONFIG
 	export PKG_CONFIG_PATH=""
 	export PKG_CONFIG_LIBDIR=""
+	# We'll want to ship the shared STL lib
+	SHIP_SHARED_STL:=true
 endif
 
 # not necessary to use PIC flag for win32 which has relocation table in dll
