@@ -440,9 +440,9 @@ $(OUTPUT_DIR)/sdcv: $(if $(ANDROID),$(GLIB_STATIC),$(GLIB)) $(if $(ANDROID),$(ZL
 		-DCFLAGS="$(CFLAGS)" \
 		-DCXXFLAGS="$(CXXFLAGS)" \
 		-DLDFLAGS="$(LDFLAGS)" \
-		-DGLIB="$(if $(ANDROID),$(GLIB_STATIC),$(GLIB))" \
+		-DGLIB="$(realpath $(if $(ANDROID),$(GLIB_STATIC),$(GLIB)))" \
 		-DGLIB_DIR="$(GLIB_DIR)" \
-		-DZLIB="$(if $(ANDROID),$(ZLIB_STATIC),$(ZLIB))" \
+		-DZLIB="$(realpath $(if $(ANDROID),$(ZLIB_STATIC),$(ZLIB)))" \
 		-DZLIB_DIR="$(ZLIB_DIR)" \
 		-DLIBICONV="$(LIBICONV)" \
 		-DLIBICONV_DIR="$(LIBICONV_DIR)" \
