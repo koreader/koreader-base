@@ -712,6 +712,9 @@ LUAJIT=$(OUTPUT_DIR)/$(if $(WIN32),luajit.exe,luajit)
 LUAJIT_JIT=$(OUTPUT_DIR)/jit
 LUAJIT_LIB=$(OUTPUT_DIR)/$(if $(WIN32),lua51.dll,libs/libluajit.so)
 LUAJIT_STATIC=$(LUAJIT_DIR)/src/libluajit.a
+ifdef USE_LUAJIT_LIB
+	LUAJIT_LIB_LINK_FLAG=$(if $(WIN32),-l:lua51.dll,-lluajit)
+endif
 
 POPEN_NOSHELL_BUILD_DIR=$(THIRDPARTY_DIR)/popen-noshell/build/$(MACHINE)
 POPEN_NOSHELL_DIR=$(CURDIR)/$(POPEN_NOSHELL_BUILD_DIR)/popen-noshell-prefix/src/popen-noshell
