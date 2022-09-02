@@ -432,7 +432,7 @@ $(ZSTD_LIB): $(THIRDPARTY_DIR)/zstd/*.*
 
 # ===========================================================================
 # console version of StarDict(sdcv)
-$(OUTPUT_DIR)/sdcv: $(if $(ANDROID),$(GLIB_STATIC),$(GLIB)) $(ZLIB_STATIC) $(THIRDPARTY_DIR)/sdcv/*.*
+$(OUTPUT_DIR)/sdcv: $(if $(ANDROID),$(GLIB_STATIC),$(GLIB)) $(if $(ANDROID),$(ZLIB_STATIC),$(ZLIB)) $(THIRDPARTY_DIR)/sdcv/*.*
 	install -d $(SDCV_BUILD_DIR)
 	cd $(SDCV_BUILD_DIR) && \
 		$(CMAKE) $(CMAKE_FLAGS) -DHOST="$(if $(EMULATE_READER),,$(CHOST))" \
@@ -442,7 +442,7 @@ $(OUTPUT_DIR)/sdcv: $(if $(ANDROID),$(GLIB_STATIC),$(GLIB)) $(ZLIB_STATIC) $(THI
 		-DLDFLAGS="$(LDFLAGS)" \
 		-DGLIB="$(if $(ANDROID),$(GLIB_STATIC),$(GLIB))" \
 		-DGLIB_DIR="$(GLIB_DIR)" \
-		-DZLIB="$(ZLIB_STATIC)" \
+		-DZLIB="$(if $(ANDROID),$(ZLIB_STATIC),$(ZLIB))" \
 		-DZLIB_DIR="$(ZLIB_DIR)" \
 		-DLIBICONV="$(LIBICONV)" \
 		-DLIBICONV_DIR="$(LIBICONV_DIR)" \
