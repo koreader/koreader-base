@@ -696,7 +696,7 @@ DJVULIBRE_DIR=$(CURDIR)/$(DJVULIBRE_BUILD_DIR)/djvulibre-prefix/src/djvulibre
 DJVULIBRE_LIB_EXT=$(if $(WIN32),-21.dll,$(if $(DARWIN),.21.dylib,.so.21))
 DJVULIBRE_LIB=$(OUTPUT_DIR)/libs/libdjvulibre$(DJVULIBRE_LIB_EXT)
 DJVULIBRE_LIB_DIR=$(DJVULIBRE_DIR)/libdjvu/.libs
-# We can't use -ldjvulibre because we don't ship the pain .so symlink in LIB_DIR,
+# We can't use -ldjvulibre because we don't ship the bare .so symlink in LIB_DIR,
 # we only keep the one with the SOVER that ends up in the DT_NEEDED entry...
 DJVULIBRE_LIB_LINK_FLAG=$(if $(WIN32),-l:libdjvulibre-21.dll,$(if $(DARWIN),-l:libdjvulibre.21.dylib,-l:libdjvulibre.so.21))
 
