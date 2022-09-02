@@ -12,7 +12,6 @@ assert_var_defined(CFLAGS)
 assert_var_defined(CXX)
 assert_var_defined(CXXFLAGS)
 assert_var_defined(LDFLAGS)
-assert_var_defined(LIBS)
 assert_var_defined(CHOST)
 
 ep_get_source_dir(SOURCE_DIR)
@@ -20,7 +19,7 @@ ep_get_source_dir(SOURCE_DIR)
 # fix build error due to -Werror under Fedora 26 (and potentially other systems)
 set(CFLAGS "${CFLAGS} -Wno-error")
 
-set(CFG_ENV_VAR "CC=\"${CC}\" CXX=\"${CXX}\" CFLAGS=\"${CFLAGS}\" CXXFLAGS=\"${CXXFLAGS}\" LDFLAGS=\"${LDFLAGS}\" LIBS=\"${LIBS}\"")
+set(CFG_ENV_VAR "CC=\"${CC}\" CXX=\"${CXX}\" CFLAGS=\"${CFLAGS}\" CXXFLAGS=\"${CXXFLAGS}\" LDFLAGS=\"${LDFLAGS}\"")
 set(CFG_OPTS "-q --disable-desktopfiles --disable-static --enable-shared --disable-xmltools --disable-largefile --without-jpeg --without-tiff -host=\"${CHOST}\"")
 set(CFG_CMD1 sh -c "${CFG_ENV_VAR} ${SOURCE_DIR}/configure ${CFG_OPTS}")
 
@@ -32,15 +31,11 @@ if(DEFINED ENV{ANDROID})
     set(CFG_CMD6 sh -c "${ISED} 's|soname_spec=.*|soname_spec=\"\\\\\$libname\\\\\$release\\\\\$shared_ext\\\\\$major\"|' libtool")
 endif()
 
-if(NOT DEFINED ENV{WIN32})
-    set(PATCH_CMD1 sh -c "${ISED} \"s|-lstdc++||g\" libtool")
-endif()
-
 # Technically we don't need tools on any platform but they only cause issues on Android
 if(DEFINED ENV{ANDROID})
-    set(PATCH_CMD2 sh -c "${ISED} \"s|DIST_SUBDIRS = libdjvu.*|DIST_SUBDIRS = libdjvu|g\" Makefile")
-    set(PATCH_CMD3 sh -c "${ISED} \"s|SUBDIRS = libdjvu tools share \\$(am__append_1) \\$(am__append_2)|SUBDIRS = libdjvu share \\$(am__append_1) \\$(am__append_2)|g\" Makefile")
-    set(PATCH_CMD4 "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/android.patch")
+    set(PATCH_CMD1 sh -c "${ISED} \"s|DIST_SUBDIRS = libdjvu.*|DIST_SUBDIRS = libdjvu|g\" Makefile")
+    set(PATCH_CMD2 sh -c "${ISED} \"s|SUBDIRS = libdjvu tools share \\$(am__append_1) \\$(am__append_2)|SUBDIRS = libdjvu share \\$(am__append_1) \\$(am__append_2)|g\" Makefile")
+    set(PATCH_CMD3 "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/android.patch")
 endif()
 
 ko_write_gitclone_script(
@@ -59,8 +54,7 @@ ExternalProject_Add(
     CONFIGURE_COMMAND
         COMMAND ${CFG_CMD1}
         COMMAND ${CFG_CMD2} COMMAND ${CFG_CMD3} COMMAND ${CFG_CMD4} COMMAND ${CFG_CMD5} COMMAND ${CFG_CMD6}
-        COMMAND ${PATCH_CMD1}
-        COMMAND ${PATCH_CMD2} COMMAND ${PATCH_CMD3} COMMAND ${PATCH_CMD4}
+        COMMAND ${PATCH_CMD1} COMMAND ${PATCH_CMD2} COMMAND ${PATCH_CMD3}
     BUILD_COMMAND ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS} SUBDIRS_FIRST=libdjvu
     # skip install
     INSTALL_COMMAND ""

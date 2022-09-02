@@ -147,7 +147,7 @@ $(OUTPUT_DIR)/libs/libkoreader-cre.so: cre.cpp \
 			$(CRENGINE_LIB)
 	$(CXX) -I$(CRENGINE_SRC_DIR)/crengine/include/ $(DYNLIB_CXXFLAGS) \
 		-DLDOM_USE_OWN_MEM_MAN=$(if $(WIN32),0,1) -DUSE_SRELL_REGEX=1 \
-		$(if $(WIN32),-DQT_GL=1) $(SYMVIS_FLAGS) -static-libstdc++ -o $@ $^
+		$(if $(WIN32),-DQT_GL=1) $(SYMVIS_FLAGS) -o $@ $^
 ifdef DARWIN
 	install_name_tool -change \
 		`otool -L "$@" | grep "libluajit" | awk '{print $$1}'` \
@@ -166,7 +166,7 @@ $(OUTPUT_DIR)/libs/libkoreader-xtext.so: xtext.cpp \
 	-I$(HARFBUZZ_DIR)/include/harfbuzz \
 	-I$(FRIBIDI_DIR)/include \
 	-I$(LIBUNIBREAK_DIR)/include \
-	$(DYNLIB_CXXFLAGS) $(SYMVIS_FLAGS) -static-libstdc++ -Wall -o $@ $^
+	$(DYNLIB_CXXFLAGS) $(SYMVIS_FLAGS) -Wall -o $@ $^
 ifdef DARWIN
 	install_name_tool -change \
 		`otool -L "$@" | grep "libluajit" | awk '{print $$1}'` \

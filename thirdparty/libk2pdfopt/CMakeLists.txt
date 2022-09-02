@@ -19,10 +19,9 @@ assert_var_defined(ZLIB_DIR)
 assert_var_defined(PNG_DIR)
 assert_var_defined(LEPTONICA_DIR)
 assert_var_defined(TESSERACT_DIR)
-assert_var_defined(STDCPPLIB)
 
 if ($ENV{DARWIN})
-    #fix build error due to implicit declarations of function being invalid in C99 under macOS/XCode 12 
+    #fix build error due to implicit declarations of function being invalid in C99 under macOS/XCode 12
     set(CFLAGS "${CFLAGS} -Wno-error=implicit-function-declaration")
 endif()
 
@@ -34,10 +33,10 @@ set(BUILD_CMD "${BUILD_CMD} TESSERACT_DIR=${TESSERACT_DIR} LEPTONICA_DIR=${LEPTO
 set(BUILD_CMD "${BUILD_CMD} LEPT_CFLAGS=\"${CFLAGS} -I${ZLIB_DIR} -I${PNG_DIR}/include\"")
 set(BUILD_CMD "${BUILD_CMD} LEPT_LDFLAGS=\"${LDFLAGS} -L${ZLIB_DIR} -L${PNG_DIR}/lib\"")
 if ($ENV{DARWIN})
-    set(BUILD_CMD "${BUILD_CMD} STDCPPLIB=\"${STDCPPLIB}\" ZLIB_LDFLAGS=\"-L${ZLIB_DIR}\"")
+    set(BUILD_CMD "${BUILD_CMD} ZLIB_LDFLAGS=\"-L${ZLIB_DIR}\"")
     set(BUILD_CMD "${BUILD_CMD} PNG_LDFLAGS=\"-L${PNG_DIR}/lib\" all")
 else()
-    set(BUILD_CMD "${BUILD_CMD} STDCPPLIB=\"${STDCPPLIB}\" ZLIB_LDFLAGS=\"-Wl,-rpath-link,${ZLIB_DIR}\"")
+    set(BUILD_CMD "${BUILD_CMD} ZLIB_LDFLAGS=\"-Wl,-rpath-link,${ZLIB_DIR}\"")
     set(BUILD_CMD "${BUILD_CMD} PNG_LDFLAGS=\"-Wl,-rpath-link,${PNG_DIR}/lib\" all")
 endif()
 

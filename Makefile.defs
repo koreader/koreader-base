@@ -277,16 +277,15 @@ HOSTRANLIB:=ranlib
 LIBTOOL:=$(if $(DARWIN),glibtool,libtool)
 LIBTOOLIZE:=$(if $(DARWIN),glibtoolize,libtoolize)
 
-# Static libstdc++, because libtool filters flags at link-time, and drops -static-libstdc++ on GNU/Linux...
-# NOTE: We default to libtool's preferred workaround of putting those extra flags we really want to keep in CC/CXX
-# But to add insult to injury, libtool also links with -nostdlib, which renders -static-lib* useless, so we
-# need this ugly workaround, even on recent (>= 4.5) GCC versions where any sane person would imagine -static-libstdc++ to be enough...
+# Path to the shared STL, because we need to ship it on most platforms.
+# We don't want to rely on -static-libstdc++, as it risks breaking the ODR.
+# (Also, it was a pain to deal with because of libtool,
+# c.f., https://www.gnu.org/software/libtool/manual/html_node/Stripped-link-flags.html#Stripped-link-flags).
 ifndef DARWIN
-	# we need to set PATH manually here because export PATH in gmake only takes
-	# effect for for sub shells
-	STATIC_LIBSTDCPP=$(shell PATH='$(PATH)' $(CC) -print-file-name=libstdc++.a)
+	# TODO: Detect/support libc++ Clang TCs?
+	SHARED_STL_LIB:=$(shell PATH='$(PATH)' $(CC) -print-file-name=libstdc++.so)
 else
-	STATIC_LIBSTDCPP=
+	SHARED_STL_LIB:=
 endif
 
 # Base CFLAGS, without arch. We'll need it for luajit, because its
@@ -502,7 +501,7 @@ CFLAGS:=$(BASE_CFLAGS) $(QFLAGS) $(CSTD_FLAGS)
 CXXFLAGS:=$(BASE_CFLAGS) $(QFLAGS) $(CXXSTD_FLAGS)
 
 ifndef DARWIN
-	LDFLAGS:=-Wl,-O1 -Wl,--as-needed -static-libstdc++
+	LDFLAGS:=-Wl,-O1 -Wl,--as-needed
 else
 	LDFLAGS:=
 endif
@@ -517,14 +516,6 @@ endif
 
 ifeq ($(TARGET), win32)
 	LDFLAGS+=-Wl,--allow-multiple-definition -static-libgcc
-endif
-
-# in case the libstdc++ is to be linked statically, the location of the static
-# library can be specified in the STATICLIBSTDCPP variable.
-# the default is to link a shared library:
-DYNAMICLIBSTDCPP:=-lstdc++
-ifdef STATICLIBSTDCPP
-	DYNAMICLIBSTDCPP:=
 endif
 
 # this will create a path named build/arm-none-linux-gnueabi or similar
@@ -578,14 +569,10 @@ else
 	endif
 	REALCC:=$(CC)
 	REALCXX:=$(CXX)
-	# Don't let libtool piss on our parade...
-	# See what was mentioned around STATIC_LIBSTDCPP on ~L#93 for more details
-	# (cf. https://www.gnu.org/software/libtool/manual/html_node/Stripped-link-flags.html#Stripped-link-flags)
-	CC:=$(CC) -static-libstdc++
-	CXX:=$(strip $(CCACHE) $(CXX)) -static-libstdc++
-	CFLAGS+=$(ARM_ARCH) $(COMPAT_CFLAGS) -static-libstdc++
-	CXXFLAGS+=$(ARM_ARCH) $(COMPAT_CXXFLAGS) -static-libstdc++
-	LDFLAGS+=-static-libstdc++
+	CC:=$(CC)
+	CXX:=$(strip $(CCACHE) $(CXX))
+	CFLAGS+=$(ARM_ARCH) $(COMPAT_CFLAGS)
+	CXXFLAGS+=$(ARM_ARCH) $(COMPAT_CXXFLAGS)
 	# Make sure we always have mmap() support.
 	# This is critical for FreeType, since the usage of platform-specific code depends on this,
 	# and without it, we don't get CLOEXEC handling, which is problematic on Kobos, where we spawn stuff that might
