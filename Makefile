@@ -112,7 +112,7 @@ $(OUTPUT_DIR)/libs/libkoreader-input.so: input/*.c input/*.h $(if $(or $(KINDLE)
 $(OUTPUT_DIR)/libs/libkoreader-lfs.so: \
 			$(if $(USE_LUAJIT_LIB),$(LUAJIT_LIB),) \
 			luafilesystem/src/lfs.c
-	$(CC) $(DYNLIB_CFLAGS) -c luafilesystem/src/lfs.c -o $@ $(LUAJIT_LIB_LINK_FLAG)
+	$(CC) $(DYNLIB_CFLAGS) -o $@ luafilesystem/src/lfs.c $(LUAJIT_LIB_LINK_FLAG)
 ifdef DARWIN
 	install_name_tool -change \
 		`otool -L "$@" | grep "libluajit" | awk '{print $$1}'` \
@@ -126,7 +126,8 @@ $(OUTPUT_DIR)/libs/libkoreader-djvu.so: djvu.c \
 			$(if $(USE_LUAJIT_LIB),$(LUAJIT_LIB),) \
 			$(DJVULIBRE_LIB) $(K2PDFOPT_LIB)
 	$(CC) -I$(DJVULIBRE_DIR) -I$(MUPDF_DIR)/include $(K2PDFOPT_CFLAGS) \
-		$(DYNLIB_CFLAGS) $(SYMVIS_FLAGS) -c djvu.c -o $@ $(LUAJIT_LIB_LINK_FLAG) -ldjavulibre -lk2pdfopt $(if $(ANDROID),,-lpthread)
+		$(DYNLIB_CFLAGS) $(SYMVIS_FLAGS) -o $@ djvu.c $(LUAJIT_LIB_LINK_FLAG) \
+		$(DJVULIBRE_LIB_LINK_FLAG) $(K2PDFOPT_LIB_LINK_FLAG) $(if $(ANDROID),,-lpthread)
 ifdef DARWIN
 	install_name_tool -change \
 		`otool -L "$@" | grep "libluajit" | awk '{print $$1}'` \
@@ -147,7 +148,7 @@ $(OUTPUT_DIR)/libs/libkoreader-cre.so: cre.cpp \
 			$(CRENGINE_LIB)
 	$(CXX) -I$(CRENGINE_SRC_DIR)/crengine/include/ $(DYNLIB_CXXFLAGS) \
 		-DLDOM_USE_OWN_MEM_MAN=$(if $(WIN32),0,1) -DUSE_SRELL_REGEX=1 \
-		$(if $(WIN32),-DQT_GL=1) $(SYMVIS_FLAGS) -c cre.cpp -o $@ $(LUAJIT_LIB_LINK_FLAG) -lcrengine
+		$(if $(WIN32),-DQT_GL=1) $(SYMVIS_FLAGS) -o $@ cre.cpp $(LUAJIT_LIB_LINK_FLAG) -lcrengine
 ifdef DARWIN
 	install_name_tool -change \
 		`otool -L "$@" | grep "libluajit" | awk '{print $$1}'` \
@@ -166,7 +167,8 @@ $(OUTPUT_DIR)/libs/libkoreader-xtext.so: xtext.cpp \
 	-I$(HARFBUZZ_DIR)/include/harfbuzz \
 	-I$(FRIBIDI_DIR)/include \
 	-I$(LIBUNIBREAK_DIR)/include \
-	$(DYNLIB_CXXFLAGS) $(SYMVIS_FLAGS) -Wall -c xtext.cpp -o $@ $(LUAJIT_LIB_LINK_FLAG) -lfreetype2 -lharfbuzz -lfribidi -lunibreak
+	$(DYNLIB_CXXFLAGS) $(SYMVIS_FLAGS) -Wall -o $@ xtext.cpp $(LUAJIT_LIB_LINK_FLAG) \
+	$(FREETYPE_LIB_LINK_FLAG) $(HARFBUZZ_LIB_LINK_FLAG) $(FRIBIDI_LIB_LINK_FLAG) $(LIBUNIBREAK_LIB_LINK_FLAG)
 ifdef DARWIN
 	install_name_tool -change \
 		`otool -L "$@" | grep "libluajit" | awk '{print $$1}'` \
@@ -186,7 +188,7 @@ $(OUTPUT_DIR)/libs/libkoreader-nnsvg.so: nnsvg.c \
 			$(if $(USE_LUAJIT_LIB),$(LUAJIT_LIB),) \
 			$(NANOSVG_HEADERS)
 	$(CC) -I$(NANOSVG_INCLUDE_DIR) \
-	$(DYNLIB_CFLAGS) -Wall $(SYMVIS_FLAGS) -c nnsvg.c -o $@ $(LUAJIT_LIB_LINK_FLAG) -lm
+	$(DYNLIB_CFLAGS) -Wall $(SYMVIS_FLAGS) -o $@ nnsvg.c $(LUAJIT_LIB_LINK_FLAG) -lm
 ifdef DARWIN
 	install_name_tool -change \
 		`otool -L "$@" | grep "libluajit" | awk '{print $$1}'` \
@@ -199,7 +201,7 @@ $(OUTPUT_DIR)/libs/libblitbuffer.so: blitbuffer.c
 
 $(OUTPUT_DIR)/libs/libwrap-mupdf.so: wrap-mupdf.c \
 			$(MUPDF_LIB)
-	$(CC) -I$(MUPDF_DIR)/include $(DYNLIB_CFLAGS) $(SYMVIS_FLAGS) -c wrap-mupdf.c -o $@ -lmupdf
+	$(CC) -I$(MUPDF_DIR)/include $(DYNLIB_CFLAGS) $(SYMVIS_FLAGS) -o $@ wrap-mupdf.c -lmupdf
 ifdef DARWIN
 	install_name_tool -id \
 		libs/libwrap-mupdf.so \
@@ -230,7 +232,8 @@ $(OUTPUT_DIR)/button-listen: button-listen.c
 
 $(OUTPUT_DIR)/extr: extr.c $(MUPDF_LIB) $(MUPDF_DIR)/include $(JPEG_LIB) $(FREETYPE_LIB)
 	$(CC) -I$(MUPDF_DIR) -I$(MUPDF_DIR)/include \
-		$(CFLAGS) -Wl,-rpath,'libs' -c extr.c -o $@ -lmupdf -ljpeg -lfreetype2
+		$(CFLAGS) -Wl,-rpath,'libs' -o $@ extr.c \
+		-lmupdf $(JPEG_LIB_LINK_FLAG) $(FREETYPE_LIB_LINK_FLAG)
 
 # ===========================================================================
 # helper target for creating standalone android toolchain from NDK
