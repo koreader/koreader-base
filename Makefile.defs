@@ -284,9 +284,12 @@ LIBTOOLIZE:=$(if $(DARWIN),glibtoolize,libtoolize)
 ifndef DARWIN
 	# TODO: Detect/support libc++ Clang TCs?
 	ifdef ANDROID
-		SHARED_STL_LIB:=$(shell PATH='$(PATH)' $(CC) -print-file-name=libstdc++.so)
+		# Oh, Android... (We'll adjust that later once we know where to look, arch-wise)
+		SHARED_STL_LIB:=$(shell PATH='$(PATH)' $(CC) -print-file-name=libgnustl_shared.so)
+		SHARED_STL_LINK_FLAG:=-lgnustl_shared
 	else
 		SHARED_STL_LIB:=$(shell PATH='$(PATH)' $(CC) -print-file-name=libstdc++.so.6)
+		SHARED_STL_LINK_FLAG:=-lstdc++
 	endif
 endif
 
@@ -354,7 +357,7 @@ ARMV7_A8_ARCH:=-march=armv7-a -mtune=cortex-a8 -mfpu=neon -mthumb
 ARMV7_A9_ARCH:=-march=armv7-a -mtune=cortex-a9 -mfpu=neon -mthumb
 # Android.
 ANDROID_COMPAT_CFLAGS:=--sysroot $(SYSROOT)
-ANDROID_COMPAT_CXXFLAGS:=--sysroot $(SYSROOT)
+ANDROID_COMPAT_CXXFLAGS:=--sysroot $(SYSROOT) -I$(NDK)/sources/cxx-stl/gnu-libstdc++/4.9/include
 # Mirror the NDK's armeabi-v7a APP_ABI (cf. #201)
 ifeq ($(ANDROID_ARCH), arm)
 	ANDROID_ARM_ARCH:=-march=armv7-a -mfpu=vfpv3-d16
@@ -424,7 +427,15 @@ else ifeq ($(TARGET), android)
 		ARM_ARCH:=$(ANDROID_ARM_ARCH)
 		ARM_ARCH+=-mfloat-abi=softfp
 		export ac_cv_type_in_port_t=yes
+		COMPAT_LDFLAGS:=-L$(NDK)/sources/cxx-stl/gnu-libstdc++/4.9/libs/armeabi-v7a
+		COMPAT_CXXFLAGS+=-I$(NDK)/sources/cxx-stl/gnu-libstdc++/4.9/libs/armeabi-v7a/include
 	endif
+	ifeq ($(ANDROID_ARCH), x86)
+		COMPAT_LDFLAGS:=-L$(NDK)/sources/cxx-stl/gnu-libstdc++/4.9/libs/x86
+		COMPAT_CXXFLAGS+=-I$(NDK)/sources/cxx-stl/gnu-libstdc++/4.9/libs/x86/include
+	endif
+	# Because everything is terrible...
+	SHARED_STL_LIB:=$(shell PATH='$(PATH)' $(CXX) $(COMPAT_CXXFLAGS) $(COMPAT_LDFLAGS) -print-file-name=libgnustl_shared.so)
 else ifeq ($(TARGET), remarkable)
 	ARM_ARCH:=$(ARMV7_A9_ARCH)
 	ARM_ARCH+=-mfloat-abi=hard
@@ -503,7 +514,7 @@ CFLAGS:=$(BASE_CFLAGS) $(QFLAGS) $(CSTD_FLAGS)
 CXXFLAGS:=$(BASE_CFLAGS) $(QFLAGS) $(CXXSTD_FLAGS)
 
 ifndef DARWIN
-	LDFLAGS:=-Wl,-O1 -Wl,--as-needed
+	LDFLAGS:=-Wl,-O1 -Wl,--as-needed $(COMPAT_LDFLAGS)
 else
 	LDFLAGS:=
 endif
@@ -588,11 +599,9 @@ else
 	export PKG_CONFIG_PATH=""
 	export PKG_CONFIG_LIBDIR=""
 	# We'll want to ship the shared STL lib
-	ifndef ANDROID
-		ifndef WIN32
-			ifdef SHARED_STL_LIB
-				SHIP_SHARED_STL:=true
-			endif
+	ifndef WIN32
+		ifdef SHARED_STL_LIB
+			SHIP_SHARED_STL:=true
 		endif
 	endif
 endif
