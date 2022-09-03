@@ -283,7 +283,11 @@ LIBTOOLIZE:=$(if $(DARWIN),glibtoolize,libtoolize)
 # c.f., https://www.gnu.org/software/libtool/manual/html_node/Stripped-link-flags.html#Stripped-link-flags).
 ifndef DARWIN
 	# TODO: Detect/support libc++ Clang TCs?
-	SHARED_STL_LIB:=$(shell PATH='$(PATH)' $(CC) -print-file-name=libstdc++.so.6)
+	ifdef ANDROID
+		SHARED_STL_LIB:=$(shell PATH='$(PATH)' $(CC) -print-file-name=libstdc++.so)
+	else
+		SHARED_STL_LIB:=$(shell PATH='$(PATH)' $(CC) -print-file-name=libstdc++.so.6)
+	endif
 endif
 
 # Base CFLAGS, without arch. We'll need it for luajit, because its
@@ -584,8 +588,12 @@ else
 	export PKG_CONFIG_PATH=""
 	export PKG_CONFIG_LIBDIR=""
 	# We'll want to ship the shared STL lib
-	ifdef SHARED_STL_LIB
-		SHIP_SHARED_STL:=true
+	ifndef ANDROID
+		ifndef WIN32
+			ifdef SHARED_STL_LIB
+				SHIP_SHARED_STL:=true
+			endif
+		endif
 	endif
 endif
 
