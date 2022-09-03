@@ -429,13 +429,12 @@ else ifeq ($(TARGET), android)
 		export ac_cv_type_in_port_t=yes
 		COMPAT_LDFLAGS:=-L$(NDK)/sources/cxx-stl/gnu-libstdc++/4.9/libs/armeabi-v7a
 		COMPAT_CXXFLAGS+=-I$(NDK)/sources/cxx-stl/gnu-libstdc++/4.9/libs/armeabi-v7a/include
+		SHARED_STL_LIB:=$(ANDROID_TOOLCHAIN)/arm-linux-androideabi/lib/armv7-a/thumb/libgnustl_shared.so
 	endif
 	ifeq ($(ANDROID_ARCH), x86)
 		COMPAT_LDFLAGS:=-L$(NDK)/sources/cxx-stl/gnu-libstdc++/4.9/libs/x86
 		COMPAT_CXXFLAGS+=-I$(NDK)/sources/cxx-stl/gnu-libstdc++/4.9/libs/x86/include
 	endif
-	# Because everything is terrible...
-	SHARED_STL_LIB:=$(shell PATH='$(PATH)' $(CXX) $(COMPAT_CXXFLAGS) $(COMPAT_LDFLAGS) -print-file-name=libgnustl_shared.so)
 else ifeq ($(TARGET), remarkable)
 	ARM_ARCH:=$(ARMV7_A9_ARCH)
 	ARM_ARCH+=-mfloat-abi=hard
