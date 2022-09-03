@@ -148,7 +148,8 @@ $(OUTPUT_DIR)/libs/libkoreader-cre.so: cre.cpp \
 			$(CRENGINE_LIB)
 	$(CXX) -I$(CRENGINE_SRC_DIR)/crengine/include/ $(DYNLIB_CXXFLAGS) \
 		-DLDOM_USE_OWN_MEM_MAN=$(if $(WIN32),0,1) -DUSE_SRELL_REGEX=1 \
-		$(if $(WIN32),-DQT_GL=1) $(SYMVIS_FLAGS) -o $@ cre.cpp $(LUAJIT_LIB_LINK_FLAG) -lcrengine
+		$(if $(WIN32),-DQT_GL=1) $(SYMVIS_FLAGS) -o $@ cre.cpp $(LUAJIT_LIB_LINK_FLAG) \
+		-lcrengine $(if $(ANDROID),$(SHARED_STL_LINK_FLAG),)
 ifdef DARWIN
 	install_name_tool -change \
 		`otool -L "$@" | grep "libluajit" | awk '{print $$1}'` \
@@ -168,7 +169,8 @@ $(OUTPUT_DIR)/libs/libkoreader-xtext.so: xtext.cpp \
 	-I$(FRIBIDI_DIR)/include \
 	-I$(LIBUNIBREAK_DIR)/include \
 	$(DYNLIB_CXXFLAGS) $(SYMVIS_FLAGS) -Wall -o $@ xtext.cpp $(LUAJIT_LIB_LINK_FLAG) \
-	$(FREETYPE_LIB_LINK_FLAG) $(HARFBUZZ_LIB_LINK_FLAG) $(FRIBIDI_LIB_LINK_FLAG) $(LIBUNIBREAK_LIB_LINK_FLAG)
+	$(FREETYPE_LIB_LINK_FLAG) $(HARFBUZZ_LIB_LINK_FLAG) $(FRIBIDI_LIB_LINK_FLAG) $(LIBUNIBREAK_LIB_LINK_FLAG) \
+	$(if $(ANDROID),$(SHARED_STL_LINK_FLAG),)
 ifdef DARWIN
 	install_name_tool -change \
 		`otool -L "$@" | grep "libluajit" | awk '{print $$1}'` \
