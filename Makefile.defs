@@ -287,6 +287,11 @@ ifndef DARWIN
 		# Oh, Android... (We'll adjust that later once we know where to look, arch-wise)
 		SHARED_STL_LIB:=$(shell PATH='$(PATH)' $(CC) -print-file-name=libgnustl_shared.so)
 		SHARED_STL_LINK_FLAG:=-lgnustl_shared
+		# NOTE: Speaking of libc++, when we switch to Clang/libc++, keep in mind that the lib is libc++_shared.so,
+		#       but that it has dependencies, c.f., the libc++.so linker script:
+		#       INPUT(-landroid_support -lunwind -latomic -lc++_shared)
+		#       This would probably best be handled in assets/android.lua @ android-luajit-launcher,
+		#       as it's mildly related to our ffi.load linker workarounds...
 	else
 		SHARED_STL_LIB:=$(shell PATH='$(PATH)' $(CC) -print-file-name=libstdc++.so.6)
 		SHARED_STL_LINK_FLAG:=-lstdc++
