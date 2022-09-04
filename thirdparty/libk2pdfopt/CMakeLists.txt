@@ -19,10 +19,10 @@ assert_var_defined(ZLIB_DIR)
 assert_var_defined(PNG_DIR)
 assert_var_defined(LEPTONICA_DIR)
 assert_var_defined(TESSERACT_DIR)
-assert_var_defined(STDCPPLIB)
+assert_var_defined(SHARED_STL_LINK_FLAG)
 
 if ($ENV{DARWIN})
-    #fix build error due to implicit declarations of function being invalid in C99 under macOS/XCode 12 
+    #fix build error due to implicit declarations of function being invalid in C99 under macOS/XCode 12
     set(CFLAGS "${CFLAGS} -Wno-error=implicit-function-declaration")
 endif()
 
@@ -33,18 +33,19 @@ set(BUILD_CMD "${BUILD_CMD} CXX=\"${CXX}\" CXXFLAGS=\"${CXXFLAGS}\" AR=\"${AR}\"
 set(BUILD_CMD "${BUILD_CMD} TESSERACT_DIR=${TESSERACT_DIR} LEPTONICA_DIR=${LEPTONICA_DIR}")
 set(BUILD_CMD "${BUILD_CMD} LEPT_CFLAGS=\"${CFLAGS} -I${ZLIB_DIR} -I${PNG_DIR}/include\"")
 set(BUILD_CMD "${BUILD_CMD} LEPT_LDFLAGS=\"${LDFLAGS} -L${ZLIB_DIR} -L${PNG_DIR}/lib\"")
+set(BUILD_CMD "${BUILD_CMD} SHARED_STL_LINK_FLAG=\"${SHARED_STL_LINK_FLAG}\"")
 if ($ENV{DARWIN})
-    set(BUILD_CMD "${BUILD_CMD} STDCPPLIB=\"${STDCPPLIB}\" ZLIB_LDFLAGS=\"-L${ZLIB_DIR}\"")
+    set(BUILD_CMD "${BUILD_CMD} ZLIB_LDFLAGS=\"-L${ZLIB_DIR}\"")
     set(BUILD_CMD "${BUILD_CMD} PNG_LDFLAGS=\"-L${PNG_DIR}/lib\" all")
 else()
-    set(BUILD_CMD "${BUILD_CMD} STDCPPLIB=\"${STDCPPLIB}\" ZLIB_LDFLAGS=\"-Wl,-rpath-link,${ZLIB_DIR}\"")
+    set(BUILD_CMD "${BUILD_CMD} ZLIB_LDFLAGS=\"-Wl,-rpath-link,${ZLIB_DIR}\"")
     set(BUILD_CMD "${BUILD_CMD} PNG_LDFLAGS=\"-Wl,-rpath-link,${PNG_DIR}/lib\" all")
 endif()
 
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
     https://github.com/koreader/libk2pdfopt.git
-    24b7e6bc136667c98feaa1b519a99dd880b05ebe
+    6f479e7d1df48df491ff2398388c562b7cd5bf30
     ${SOURCE_DIR}
 )
 

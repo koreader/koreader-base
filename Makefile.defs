@@ -277,16 +277,25 @@ HOSTRANLIB:=ranlib
 LIBTOOL:=$(if $(DARWIN),glibtool,libtool)
 LIBTOOLIZE:=$(if $(DARWIN),glibtoolize,libtoolize)
 
-# Static libstdc++, because libtool filters flags at link-time, and drops -static-libstdc++ on GNU/Linux...
-# NOTE: We default to libtool's preferred workaround of putting those extra flags we really want to keep in CC/CXX
-# But to add insult to injury, libtool also links with -nostdlib, which renders -static-lib* useless, so we
-# need this ugly workaround, even on recent (>= 4.5) GCC versions where any sane person would imagine -static-libstdc++ to be enough...
+# Path to the shared STL, because we need to ship it on most platforms.
+# We don't want to rely on -static-libstdc++, as it risks breaking the ODR.
+# (Also, it was a pain to deal with because of libtool,
+# c.f., https://www.gnu.org/software/libtool/manual/html_node/Stripped-link-flags.html#Stripped-link-flags).
 ifndef DARWIN
-	# we need to set PATH manually here because export PATH in gmake only takes
-	# effect for for sub shells
-	STATIC_LIBSTDCPP=$(shell PATH='$(PATH)' $(CC) -print-file-name=libstdc++.a)
-else
-	STATIC_LIBSTDCPP=
+	# TODO: Detect/support libc++ Clang TCs?
+	ifdef ANDROID
+		# Oh, Android... (We'll adjust that later once we know where to look, arch-wise)
+		SHARED_STL_LIB:=$(shell PATH='$(PATH)' $(CC) -print-file-name=libgnustl_shared.so)
+		SHARED_STL_LINK_FLAG:=-lgnustl_shared
+		# NOTE: Speaking of libc++, when we switch to Clang/libc++, keep in mind that the lib is libc++_shared.so,
+		#       but that it has dependencies, c.f., the libc++.so linker script:
+		#       INPUT(-landroid_support -lunwind -latomic -lc++_shared)
+		#       This would probably best be handled in assets/android.lua @ android-luajit-launcher,
+		#       as it's mildly related to our ffi.load linker workarounds...
+	else
+		SHARED_STL_LIB:=$(shell PATH='$(PATH)' $(CC) -print-file-name=libstdc++.so.6)
+		SHARED_STL_LINK_FLAG:=-lstdc++
+	endif
 endif
 
 # Base CFLAGS, without arch. We'll need it for luajit, because its
@@ -353,7 +362,7 @@ ARMV7_A8_ARCH:=-march=armv7-a -mtune=cortex-a8 -mfpu=neon -mthumb
 ARMV7_A9_ARCH:=-march=armv7-a -mtune=cortex-a9 -mfpu=neon -mthumb
 # Android.
 ANDROID_COMPAT_CFLAGS:=--sysroot $(SYSROOT)
-ANDROID_COMPAT_CXXFLAGS:=--sysroot $(SYSROOT)
+ANDROID_COMPAT_CXXFLAGS:=--sysroot $(SYSROOT) -I$(NDK)/sources/cxx-stl/gnu-libstdc++/4.9/include
 # Mirror the NDK's armeabi-v7a APP_ABI (cf. #201)
 ifeq ($(ANDROID_ARCH), arm)
 	ANDROID_ARM_ARCH:=-march=armv7-a -mfpu=vfpv3-d16
@@ -423,6 +432,13 @@ else ifeq ($(TARGET), android)
 		ARM_ARCH:=$(ANDROID_ARM_ARCH)
 		ARM_ARCH+=-mfloat-abi=softfp
 		export ac_cv_type_in_port_t=yes
+		COMPAT_LDFLAGS:=-L$(NDK)/sources/cxx-stl/gnu-libstdc++/4.9/libs/armeabi-v7a
+		COMPAT_CXXFLAGS+=-I$(NDK)/sources/cxx-stl/gnu-libstdc++/4.9/libs/armeabi-v7a/include
+		SHARED_STL_LIB:=$(ANDROID_TOOLCHAIN)/arm-linux-androideabi/lib/armv7-a/thumb/libgnustl_shared.so
+	endif
+	ifeq ($(ANDROID_ARCH), x86)
+		COMPAT_LDFLAGS:=-L$(NDK)/sources/cxx-stl/gnu-libstdc++/4.9/libs/x86
+		COMPAT_CXXFLAGS+=-I$(NDK)/sources/cxx-stl/gnu-libstdc++/4.9/libs/x86/include
 	endif
 else ifeq ($(TARGET), remarkable)
 	ARM_ARCH:=$(ARMV7_A9_ARCH)
@@ -502,7 +518,7 @@ CFLAGS:=$(BASE_CFLAGS) $(QFLAGS) $(CSTD_FLAGS)
 CXXFLAGS:=$(BASE_CFLAGS) $(QFLAGS) $(CXXSTD_FLAGS)
 
 ifndef DARWIN
-	LDFLAGS:=-Wl,-O1 -Wl,--as-needed -static-libstdc++
+	LDFLAGS:=-Wl,-O1 -Wl,--as-needed $(COMPAT_LDFLAGS)
 else
 	LDFLAGS:=
 endif
@@ -517,14 +533,6 @@ endif
 
 ifeq ($(TARGET), win32)
 	LDFLAGS+=-Wl,--allow-multiple-definition -static-libgcc
-endif
-
-# in case the libstdc++ is to be linked statically, the location of the static
-# library can be specified in the STATICLIBSTDCPP variable.
-# the default is to link a shared library:
-DYNAMICLIBSTDCPP:=-lstdc++
-ifdef STATICLIBSTDCPP
-	DYNAMICLIBSTDCPP:=
 endif
 
 # this will create a path named build/arm-none-linux-gnueabi or similar
@@ -578,14 +586,10 @@ else
 	endif
 	REALCC:=$(CC)
 	REALCXX:=$(CXX)
-	# Don't let libtool piss on our parade...
-	# See what was mentioned around STATIC_LIBSTDCPP on ~L#93 for more details
-	# (cf. https://www.gnu.org/software/libtool/manual/html_node/Stripped-link-flags.html#Stripped-link-flags)
-	CC:=$(CC) -static-libstdc++
-	CXX:=$(strip $(CCACHE) $(CXX)) -static-libstdc++
-	CFLAGS+=$(ARM_ARCH) $(COMPAT_CFLAGS) -static-libstdc++
-	CXXFLAGS+=$(ARM_ARCH) $(COMPAT_CXXFLAGS) -static-libstdc++
-	LDFLAGS+=-static-libstdc++
+	CC:=$(CC)
+	CXX:=$(strip $(CCACHE) $(CXX))
+	CFLAGS+=$(ARM_ARCH) $(COMPAT_CFLAGS)
+	CXXFLAGS+=$(ARM_ARCH) $(COMPAT_CXXFLAGS)
 	# Make sure we always have mmap() support.
 	# This is critical for FreeType, since the usage of platform-specific code depends on this,
 	# and without it, we don't get CLOEXEC handling, which is problematic on Kobos, where we spawn stuff that might
@@ -598,6 +602,12 @@ else
 	#unexport PKG_CONFIG
 	export PKG_CONFIG_PATH=""
 	export PKG_CONFIG_LIBDIR=""
+	# We'll want to ship the shared STL lib
+	ifndef WIN32
+		ifdef SHARED_STL_LIB
+			SHIP_SHARED_STL:=true
+		endif
+	endif
 endif
 
 # not necessary to use PIC flag for win32 which has relocation table in dll
@@ -707,6 +717,9 @@ DJVULIBRE_DIR=$(CURDIR)/$(DJVULIBRE_BUILD_DIR)/djvulibre-prefix/src/djvulibre
 DJVULIBRE_LIB_EXT=$(if $(WIN32),-21.dll,$(if $(DARWIN),.21.dylib,.so.21))
 DJVULIBRE_LIB=$(OUTPUT_DIR)/libs/libdjvulibre$(DJVULIBRE_LIB_EXT)
 DJVULIBRE_LIB_DIR=$(DJVULIBRE_DIR)/libdjvu/.libs
+# We can't use -ldjvulibre because we don't ship the bare .so symlink in LIB_DIR,
+# we only keep the one with the SOVER that ends up in the DT_NEEDED entry...
+DJVULIBRE_LIB_LINK_FLAG=$(if $(WIN32),-l:libdjvulibre-21.dll,$(if $(DARWIN),$(DJVULIBRE_LIB),-l:libdjvulibre.so.21))
 
 CRENGINE_BUILD_DIR=$(THIRDPARTY_DIR)/kpvcrlib/build/$(MACHINE)
 CRENGINE_DIR=$(CURDIR)/$(CRENGINE_BUILD_DIR)
@@ -723,6 +736,9 @@ LUAJIT=$(OUTPUT_DIR)/$(if $(WIN32),luajit.exe,luajit)
 LUAJIT_JIT=$(OUTPUT_DIR)/jit
 LUAJIT_LIB=$(OUTPUT_DIR)/$(if $(WIN32),lua51.dll,libs/libluajit.so)
 LUAJIT_STATIC=$(LUAJIT_DIR)/src/libluajit.a
+ifeq ($(USE_LUAJIT_LIB), 1)
+	LUAJIT_LIB_LINK_FLAG=$(if $(WIN32),-l:lua51.dll,-lluajit)
+endif
 
 POPEN_NOSHELL_BUILD_DIR=$(THIRDPARTY_DIR)/popen-noshell/build/$(MACHINE)
 POPEN_NOSHELL_DIR=$(CURDIR)/$(POPEN_NOSHELL_BUILD_DIR)/popen-noshell-prefix/src/popen-noshell
@@ -741,26 +757,31 @@ K2PDFOPT_LIB=$(OUTPUT_DIR)/libs/libk2pdfopt$(K2PDFOPT_LIB_EXT)
 K2PDFOPT_CFLAGS=-I$(K2PDFOPT_DIR)/willuslib \
 		-I$(K2PDFOPT_DIR)/k2pdfoptlib -I$(K2PDFOPT_DIR) \
 		-I$(K2PDFOPT_DIR)/include_mod
+K2PDFOPT_LIB_LINK_FLAG=$(if $(WIN32),-l:libk2pdfopt-2.dll,$(if $(DARWIN),$(K2PDFOPT_LIB),-l:libk2pdfopt.so.2))
 
 FREETYPE_LIB_EXT=$(if $(WIN32),-6.dll,$(if $(DARWIN),.6.dylib,.so.6))
 FREETYPE_LIB=$(OUTPUT_DIR)/libs/libfreetype$(FREETYPE_LIB_EXT)
 FREETYPE_BUILD_DIR=$(THIRDPARTY_DIR)/freetype2/build/$(MACHINE)
 FREETYPE_DIR=$(CURDIR)/$(FREETYPE_BUILD_DIR)/freetype2-prefix/src/freetype2-build
+FREETYPE_LIB_LINK_FLAG=$(if $(WIN32),-l:libfreetype-6.dll,$(if $(DARWIN),$(FREETYPE_LIB),-l:libfreetype.so.6))
 
 HARFBUZZ_LIB_EXT=$(if $(WIN32),-0.dll,$(if $(DARWIN),.0.dylib,.so.0))
 HARFBUZZ_LIB=$(OUTPUT_DIR)/libs/libharfbuzz$(HARFBUZZ_LIB_EXT)
 HARFBUZZ_BUILD_DIR=$(THIRDPARTY_DIR)/harfbuzz/build/$(MACHINE)
 HARFBUZZ_DIR=$(CURDIR)/$(HARFBUZZ_BUILD_DIR)/harfbuzz-prefix/src/harfbuzz-build
+HARFBUZZ_LIB_LINK_FLAG=$(if $(WIN32),-l:libharfbuzz-0.dll,$(if $(DARWIN),$(HARFBUZZ_LIB),-l:libharfbuzz.so.0))
 
 FRIBIDI_LIB_EXT=$(if $(WIN32),-0.dll,$(if $(DARWIN),.0.dylib,.so.0))
 FRIBIDI_LIB=$(OUTPUT_DIR)/libs/libfribidi$(FRIBIDI_LIB_EXT)
 FRIBIDI_BUILD_DIR=$(THIRDPARTY_DIR)/fribidi/build/$(MACHINE)
 FRIBIDI_DIR=$(CURDIR)/$(FRIBIDI_BUILD_DIR)/fribidi-prefix/src/fribidi-build
+FRIBIDI_LIB_LINK_FLAG=$(if $(WIN32),-l:libfribidi-0.dll,$(if $(DARWIN),$(FRIBIDI_LIB),-l:libfribidi.so.0))
 
 LIBUNIBREAK_LIB_EXT=$(if $(WIN32),-3.dll,$(if $(DARWIN),.3.dylib,.so.3))
 LIBUNIBREAK_LIB=$(OUTPUT_DIR)/libs/libunibreak$(LIBUNIBREAK_LIB_EXT)
 LIBUNIBREAK_BUILD_DIR=$(THIRDPARTY_DIR)/libunibreak/build/$(MACHINE)
 LIBUNIBREAK_DIR=$(CURDIR)/$(LIBUNIBREAK_BUILD_DIR)/libunibreak-prefix/src/libunibreak-build
+LIBUNIBREAK_LIB_LINK_FLAG=$(if $(WIN32),-l:libunibreak-3.dll,$(if $(DARWIN),$(LIBUNIBREAK_LIB),-l:libunibreak.so.3))
 
 UTF8PROC_LIB_EXT=$(if $(WIN32),-2.dll,$(if $(DARWIN),.2.dylib,.so.2))
 UTF8PROC_LIB=$(OUTPUT_DIR)/libs/libutf8proc$(UTF8PROC_LIB_EXT)
@@ -769,6 +790,7 @@ UTF8PROC_DIR=$(CURDIR)/$(UTF8PROC_BUILD_DIR)/utf8proc-prefix/src/utf8proc
 
 JPEG_LIB_EXT=$(if $(WIN32),-8.dll,$(if $(DARWIN),.8.dylib,.so.8))
 JPEG_LIB=$(OUTPUT_DIR)/libs/libjpeg$(JPEG_LIB_EXT)
+JPEG_LIB_LINK_FLAG=$(if $(WIN32),-l:libjpeg-8.dll,$(if $(DARWIN),$(JPEG_LIB),-l:libjpeg.so.8))
 TURBOJPEG_LIB=$(OUTPUT_DIR)/libs/libturbojpeg$(if $(WIN32),.dll,$(if $(DARWIN),.dylib,.so))
 JPEG_BUILD_DIR=$(THIRDPARTY_DIR)/libjpeg-turbo/build/$(MACHINE)
 JPEG_DIR=$(CURDIR)/$(JPEG_BUILD_DIR)/libjpeg-turbo-prefix/src/libjpeg-turbo-build

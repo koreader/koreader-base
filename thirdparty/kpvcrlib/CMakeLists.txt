@@ -32,6 +32,7 @@ assert_var_defined(JPEGLIB_INCLUDE_DIR)
 assert_var_defined(LIBWEBP_INCLUDE_DIR)
 assert_var_defined(NANOSVG_INCLUDE_DIR)
 assert_var_defined(ZSTD_INCLUDE_DIR)
+assert_var_defined(SHARED_STL_LIB)
 
 include_directories(
     ${JCONFIG_INCLUDE_DIR}
@@ -200,4 +201,8 @@ add_library(crengine SHARED ${CRENGINE_SOURCES})
 # Make sure we'll get C++11 support
 target_compile_features(crengine PRIVATE cxx_constexpr)
 
-target_link_libraries(crengine chmlib antiword ${THIRDPARTY_LIBS})
+target_link_libraries(crengine PRIVATE chmlib antiword)
+target_link_libraries(crengine PRIVATE ${THIRDPARTY_LIBS})
+if(DEFINED ENV{ANDROID})
+    target_link_libraries(crengine PRIVATE ${SHARED_STL_LIB})
+endif()
