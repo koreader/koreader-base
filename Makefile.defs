@@ -816,6 +816,11 @@ LIBWEBPDEMUX_LIB=$(OUTPUT_DIR)/libs/libwebpdemux$(LIBWEBPDEMUX_LIB_EXT)
 LIBWEBP_BUILD_DIR=$(THIRDPARTY_DIR)/libwebp/build/$(MACHINE)
 LIBWEBP_DIR=$(CURDIR)/$(LIBWEBP_BUILD_DIR)/libwebp-prefix/src/libwebp-build
 
+LUNASVG_LIB_EXT=$(if $(WIN32),.dll,$(if $(DARWIN),.dylib,.so))
+LUNASVG_LIB=$(OUTPUT_DIR)/libs/liblunasvg$(LUNASVG_LIB_EXT)
+LUNASVG_BUILD_DIR=$(THIRDPARTY_DIR)/lunasvg/build/$(MACHINE)
+LUNASVG_DIR=$(CURDIR)/$(LUNASVG_BUILD_DIR)/lunasvg-prefix/src/lunasvg-build
+
 LIBFFI_BUILD_DIR=$(THIRDPARTY_DIR)/libffi/build/$(MACHINE)
 LIBFFI_DIR=$(CURDIR)/$(LIBFFI_BUILD_DIR)/libffi-prefix/src/libffi-build
 
@@ -996,7 +1001,7 @@ CMAKE_THIRDPARTY_LIBS := $(CMAKE_THIRDPARTY_LIBS),zyre,czmq,filemq,libzmq
 CMAKE_THIRDPARTY_LIBS := $(CMAKE_THIRDPARTY_LIBS),libk2pdfopt,tesseract,leptonica
 CMAKE_THIRDPARTY_LIBS := $(CMAKE_THIRDPARTY_LIBS),lj-wpaclient
 CMAKE_THIRDPARTY_LIBS := $(CMAKE_THIRDPARTY_LIBS),lua-htmlparser,lua-rapidjson,lua-Spore,luasec,luasocket,libffi,glib,lodepng,minizip
-CMAKE_THIRDPARTY_LIBS := $(CMAKE_THIRDPARTY_LIBS),djvulibre,mupdf,freetype2,harfbuzz,giflib,libpng,zlib,libwebp,libwebpdemux
+CMAKE_THIRDPARTY_LIBS := $(CMAKE_THIRDPARTY_LIBS),djvulibre,mupdf,freetype2,harfbuzz,giflib,libpng,zlib,libwebp,lunasvg
 CMAKE_THIRDPARTY_LIBS := $(CMAKE_THIRDPARTY_LIBS),tar,sdcv,libiconv,gettext,libjpeg-turbo,popen-noshell,sqlite
 CMAKE_THIRDPARTY_LIBS := $(CMAKE_THIRDPARTY_LIBS),openssl,dropbear,openssh
 CMAKE_THIRDPARTY_LIBS := $(CMAKE_THIRDPARTY_LIBS),curl,zsync2
