@@ -12,16 +12,6 @@ ep_get_source_dir(SOURCE_DIR)
 ep_get_binary_dir(BINARY_DIR)
 
 list(APPEND CMAKE_ARGS "-DCMAKE_INSTALL_PREFIX=${BINARY_DIR}")
-
-# c.f., https://android.googlesource.com/platform/ndk/+/master/build/cmake/android.toolchain.cmake
-# and   https://github.com/taka-no-me/android-cmake
-# In the meantime, I'll be sitting in the corner, crying hysterically.
-# if(DEFINED ENV{ANDROID})
-# 	list(APPEND CMAKE_ARGS "-DCMAKE_SYSTEM_NAME=Linux")
-# 	# Magical value that inhibits all of CMake's own NDK handling code. (Or shit goes boom.)
-# 	list(APPEND CMAKE_ARGS "-DCMAKE_SYSTEM_VERSION=1")
-# endif()
-
 list(APPEND CMAKE_ARGS "-DBUILD_SHARED_LIBS=ON")
 
 set(PATCH_CMD1 "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/extended.patch")

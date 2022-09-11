@@ -48,4 +48,17 @@ struct external_context_t {
 
 } //namespace lunasvg
 
+// Avoid "error: 'to_string' is not a member of 'std'" on Android
+#ifdef __ANDROID__
+#include <string>
+#include <sstream>
+namespace std {
+    template <typename T> std::string to_string( const T& n ) {
+        std::ostringstream ss;
+        ss << n ;
+        return ss.str() ;
+    }
+}
+#endif
+
 #endif // XLUNASVG_H
