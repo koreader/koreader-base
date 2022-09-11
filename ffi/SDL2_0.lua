@@ -312,11 +312,11 @@ function S.waitForEvent(sec, usec)
             else
                 if event.motion.xrel ~= 0 then
                     genEmuEvent(C.EV_ABS, C.ABS_MT_POSITION_X,
-                        event.button.x)
+                        event.motion.x)
                 end
                 if event.motion.yrel ~= 0 then
                     genEmuEvent(C.EV_ABS, C.ABS_MT_POSITION_Y,
-                        event.button.y)
+                        event.motion.y)
                 end
             end
             genEmuEvent(C.EV_SYN, C.SYN_REPORT, 0)
