@@ -13,7 +13,7 @@ set(NO_POLICY_SCOPE NEW)
 set(CMAKE_SYSTEM_NAME Linux)
 # set target system processor, because we can't set CMAKE_SYSTEM_NAME without setting CMAKE_SYSTEM_PROCESSOR too...
 
-if($ENV{WIN32})
+if(DEFINED ENV{WIN32})
     set(CMAKE_SYSTEM_NAME Windows)
 endif()
 
@@ -40,6 +40,13 @@ endif()
 # set compiler name
 set(CMAKE_C_COMPILER $ENV{CROSS_TC}-gcc)
 set(CMAKE_CXX_COMPILER $ENV{CROSS_TC}-g++)
+
+# Choose the right STL on Android
+if(DEFINED ENV{ANDROID})
+    # NOTE: This is mostly for documentation purposes, if we ever switch to the NDK toolchain config file,
+    #       c.f., android-ndk-r15c/build/cmake/android.toolchain.cmake
+    set(ANDROID_STL gnustl_shared)
+endif()
 
 # set various other toolchain tools
 # NOTE: These apparently need to be cache values for arcane CMake reasons.

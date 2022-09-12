@@ -292,6 +292,7 @@ ifndef DARWIN
 		#       INPUT(-landroid_support -lunwind -latomic -lc++_shared)
 		#       This would probably best be handled in assets/android.lua @ android-luajit-launcher,
 		#       as it's mildly related to our ffi.load linker workarounds...
+		# NOTE: See also ANDROID_STL in thirdparty/cmake_modules/CMakeCross.cmake
 	else
 		SHARED_STL_LIB:=$(shell PATH='$(PATH)' $(CC) -print-file-name=libstdc++.so.6)
 		SHARED_STL_LINK_FLAG:=-lstdc++
