@@ -2,11 +2,11 @@ local ffi = require("ffi")
 
 ffi.cdef[[
 typedef int hb_bool_t;
-typedef unsigned int hb_codepoint_t;
-typedef int hb_position_t;
-typedef unsigned int hb_mask_t;
-typedef unsigned int hb_tag_t;
-typedef unsigned int hb_color_t;
+typedef uint32_t hb_codepoint_t;
+typedef int32_t hb_position_t;
+typedef uint32_t hb_mask_t;
+typedef uint32_t hb_tag_t;
+typedef uint32_t hb_color_t;
 union _hb_var_int_t {
   uint32_t u32;
   int32_t i32;
@@ -182,6 +182,12 @@ typedef enum {
   HB_SCRIPT_DIVES_AKURU = 1147756907,
   HB_SCRIPT_KHITAN_SMALL_SCRIPT = 1265202291,
   HB_SCRIPT_YEZIDI = 1499822697,
+  HB_SCRIPT_CYPRO_MINOAN = 1131441518,
+  HB_SCRIPT_OLD_UYGHUR = 1333094258,
+  HB_SCRIPT_TANGSA = 1416524641,
+  HB_SCRIPT_TOTO = 1416590447,
+  HB_SCRIPT_VITHKUQI = 1449751656,
+  HB_SCRIPT_MATH = 1517122664,
   HB_SCRIPT_INVALID = 0,
   _HB_SCRIPT_MAX_VALUE = 2147483647,
   _HB_SCRIPT_MAX_VALUE_SIGNED = 2147483647,
@@ -291,7 +297,9 @@ typedef struct hb_glyph_extents_t hb_glyph_extents_t;
 typedef struct hb_glyph_info_t hb_glyph_info_t;
 typedef enum {
   HB_GLYPH_FLAG_UNSAFE_TO_BREAK = 1,
-  HB_GLYPH_FLAG_DEFINED = 1,
+  HB_GLYPH_FLAG_UNSAFE_TO_CONCAT = 2,
+  HB_GLYPH_FLAG_SAFE_TO_INSERT_TATWEEL = 4,
+  HB_GLYPH_FLAG_DEFINED = 7,
 } hb_glyph_flags_t;
 typedef struct hb_glyph_position_t hb_glyph_position_t;
 typedef struct hb_segment_properties_t hb_segment_properties_t;
@@ -307,6 +315,10 @@ typedef enum {
   HB_BUFFER_FLAG_PRESERVE_DEFAULT_IGNORABLES = 4,
   HB_BUFFER_FLAG_REMOVE_DEFAULT_IGNORABLES = 8,
   HB_BUFFER_FLAG_DO_NOT_INSERT_DOTTED_CIRCLE = 16,
+  HB_BUFFER_FLAG_VERIFY = 32,
+  HB_BUFFER_FLAG_PRODUCE_UNSAFE_TO_CONCAT = 64,
+  HB_BUFFER_FLAG_PRODUCE_SAFE_TO_INSERT_TATWEEL = 128,
+  HB_BUFFER_FLAG_DEFINED = 255,
 } hb_buffer_flags_t;
 typedef enum {
   HB_BUFFER_CLUSTER_LEVEL_MONOTONE_GRAPHEMES = 0,
@@ -322,6 +334,7 @@ typedef enum {
   HB_BUFFER_SERIALIZE_FLAG_GLYPH_EXTENTS = 8,
   HB_BUFFER_SERIALIZE_FLAG_GLYPH_FLAGS = 16,
   HB_BUFFER_SERIALIZE_FLAG_NO_ADVANCES = 32,
+  HB_BUFFER_SERIALIZE_FLAG_DEFINED = 63,
 } hb_buffer_serialize_flags_t;
 typedef enum {
   HB_BUFFER_SERIALIZE_FORMAT_TEXT = 1413830740,
@@ -471,7 +484,7 @@ hb_blob_t *hb_blob_get_empty(void);
 hb_blob_t *hb_blob_reference(hb_blob_t *);
 void hb_blob_destroy(hb_blob_t *);
 hb_bool_t hb_blob_set_user_data(hb_blob_t *, hb_user_data_key_t *, void *, hb_destroy_func_t, hb_bool_t);
-void *hb_blob_get_user_data(hb_blob_t *, hb_user_data_key_t *);
+void *hb_blob_get_user_data(const hb_blob_t *, hb_user_data_key_t *);
 void hb_blob_make_immutable(hb_blob_t *);
 hb_bool_t hb_blob_is_immutable(hb_blob_t *);
 unsigned int hb_blob_get_length(hb_blob_t *);
@@ -483,7 +496,7 @@ hb_unicode_funcs_t *hb_unicode_funcs_get_empty(void);
 hb_unicode_funcs_t *hb_unicode_funcs_reference(hb_unicode_funcs_t *);
 void hb_unicode_funcs_destroy(hb_unicode_funcs_t *);
 hb_bool_t hb_unicode_funcs_set_user_data(hb_unicode_funcs_t *, hb_user_data_key_t *, void *, hb_destroy_func_t, hb_bool_t);
-void *hb_unicode_funcs_get_user_data(hb_unicode_funcs_t *, hb_user_data_key_t *);
+void *hb_unicode_funcs_get_user_data(const hb_unicode_funcs_t *, hb_user_data_key_t *);
 void hb_unicode_funcs_make_immutable(hb_unicode_funcs_t *);
 hb_bool_t hb_unicode_funcs_is_immutable(hb_unicode_funcs_t *);
 hb_unicode_funcs_t *hb_unicode_funcs_get_parent(hb_unicode_funcs_t *);
@@ -504,7 +517,7 @@ hb_set_t *hb_set_get_empty(void);
 hb_set_t *hb_set_reference(hb_set_t *);
 void hb_set_destroy(hb_set_t *);
 hb_bool_t hb_set_set_user_data(hb_set_t *, hb_user_data_key_t *, void *, hb_destroy_func_t, hb_bool_t);
-void *hb_set_get_user_data(hb_set_t *, hb_user_data_key_t *);
+void *hb_set_get_user_data(const hb_set_t *, hb_user_data_key_t *);
 hb_bool_t hb_set_allocation_successful(const hb_set_t *);
 void hb_set_clear(hb_set_t *);
 hb_bool_t hb_set_is_empty(const hb_set_t *);
@@ -556,7 +569,7 @@ hb_font_funcs_t *hb_font_funcs_get_empty(void);
 hb_font_funcs_t *hb_font_funcs_reference(hb_font_funcs_t *);
 void hb_font_funcs_destroy(hb_font_funcs_t *);
 hb_bool_t hb_font_funcs_set_user_data(hb_font_funcs_t *, hb_user_data_key_t *, void *, hb_destroy_func_t, hb_bool_t);
-void *hb_font_funcs_get_user_data(hb_font_funcs_t *, hb_user_data_key_t *);
+void *hb_font_funcs_get_user_data(const hb_font_funcs_t *, hb_user_data_key_t *);
 void hb_font_funcs_make_immutable(hb_font_funcs_t *);
 hb_bool_t hb_font_funcs_is_immutable(hb_font_funcs_t *);
 void hb_font_funcs_set_font_h_extents_func(hb_font_funcs_t *, hb_font_get_font_h_extents_func_t, void *, hb_destroy_func_t);
@@ -609,7 +622,7 @@ hb_font_t *hb_font_get_empty(void);
 hb_font_t *hb_font_reference(hb_font_t *);
 void hb_font_destroy(hb_font_t *);
 hb_bool_t hb_font_set_user_data(hb_font_t *, hb_user_data_key_t *, void *, hb_destroy_func_t, hb_bool_t);
-void *hb_font_get_user_data(hb_font_t *, hb_user_data_key_t *);
+void *hb_font_get_user_data(const hb_font_t *, hb_user_data_key_t *);
 void hb_font_make_immutable(hb_font_t *);
 hb_bool_t hb_font_is_immutable(hb_font_t *);
 void hb_font_set_parent(hb_font_t *, hb_font_t *);
@@ -637,28 +650,28 @@ hb_buffer_t *hb_buffer_get_empty(void);
 hb_buffer_t *hb_buffer_reference(hb_buffer_t *);
 void hb_buffer_destroy(hb_buffer_t *);
 hb_bool_t hb_buffer_set_user_data(hb_buffer_t *, hb_user_data_key_t *, void *, hb_destroy_func_t, hb_bool_t);
-void *hb_buffer_get_user_data(hb_buffer_t *, hb_user_data_key_t *);
+void *hb_buffer_get_user_data(const hb_buffer_t *, hb_user_data_key_t *);
 void hb_buffer_set_content_type(hb_buffer_t *, hb_buffer_content_type_t);
-hb_buffer_content_type_t hb_buffer_get_content_type(hb_buffer_t *);
+hb_buffer_content_type_t hb_buffer_get_content_type(const hb_buffer_t *);
 void hb_buffer_set_unicode_funcs(hb_buffer_t *, hb_unicode_funcs_t *);
-hb_unicode_funcs_t *hb_buffer_get_unicode_funcs(hb_buffer_t *);
+hb_unicode_funcs_t *hb_buffer_get_unicode_funcs(const hb_buffer_t *);
 void hb_buffer_set_direction(hb_buffer_t *, hb_direction_t);
-hb_direction_t hb_buffer_get_direction(hb_buffer_t *);
+hb_direction_t hb_buffer_get_direction(const hb_buffer_t *);
 void hb_buffer_set_script(hb_buffer_t *, hb_script_t);
-hb_script_t hb_buffer_get_script(hb_buffer_t *);
+hb_script_t hb_buffer_get_script(const hb_buffer_t *);
 void hb_buffer_set_language(hb_buffer_t *, hb_language_t);
-hb_language_t hb_buffer_get_language(hb_buffer_t *);
+hb_language_t hb_buffer_get_language(const hb_buffer_t *);
 void hb_buffer_set_segment_properties(hb_buffer_t *, const hb_segment_properties_t *);
-void hb_buffer_get_segment_properties(hb_buffer_t *, hb_segment_properties_t *);
+void hb_buffer_get_segment_properties(const hb_buffer_t *, hb_segment_properties_t *);
 void hb_buffer_guess_segment_properties(hb_buffer_t *);
 void hb_buffer_set_flags(hb_buffer_t *, hb_buffer_flags_t);
-hb_buffer_flags_t hb_buffer_get_flags(hb_buffer_t *);
+hb_buffer_flags_t hb_buffer_get_flags(const hb_buffer_t *);
 void hb_buffer_set_cluster_level(hb_buffer_t *, hb_buffer_cluster_level_t);
-hb_buffer_cluster_level_t hb_buffer_get_cluster_level(hb_buffer_t *);
+hb_buffer_cluster_level_t hb_buffer_get_cluster_level(const hb_buffer_t *);
 void hb_buffer_set_replacement_codepoint(hb_buffer_t *, hb_codepoint_t);
-hb_codepoint_t hb_buffer_get_replacement_codepoint(hb_buffer_t *);
+hb_codepoint_t hb_buffer_get_replacement_codepoint(const hb_buffer_t *);
 void hb_buffer_set_invisible_glyph(hb_buffer_t *, hb_codepoint_t);
-hb_codepoint_t hb_buffer_get_invisible_glyph(hb_buffer_t *);
+hb_codepoint_t hb_buffer_get_invisible_glyph(const hb_buffer_t *);
 void hb_buffer_reset(hb_buffer_t *);
 void hb_buffer_clear_contents(hb_buffer_t *);
 hb_bool_t hb_buffer_pre_allocate(hb_buffer_t *, unsigned int);
@@ -672,9 +685,9 @@ void hb_buffer_add_utf16(hb_buffer_t *, const uint16_t *, int, unsigned int, int
 void hb_buffer_add_utf32(hb_buffer_t *, const uint32_t *, int, unsigned int, int);
 void hb_buffer_add_latin1(hb_buffer_t *, const uint8_t *, int, unsigned int, int);
 void hb_buffer_add_codepoints(hb_buffer_t *, const hb_codepoint_t *, int, unsigned int, int);
-void hb_buffer_append(hb_buffer_t *, hb_buffer_t *, unsigned int, unsigned int);
+void hb_buffer_append(hb_buffer_t *, const hb_buffer_t *, unsigned int, unsigned int);
 hb_bool_t hb_buffer_set_length(hb_buffer_t *, unsigned int);
-unsigned int hb_buffer_get_length(hb_buffer_t *);
+unsigned int hb_buffer_get_length(const hb_buffer_t *);
 hb_glyph_info_t *hb_buffer_get_glyph_infos(hb_buffer_t *, unsigned int *);
 hb_glyph_position_t *hb_buffer_get_glyph_positions(hb_buffer_t *, unsigned int *);
 void hb_buffer_normalize_glyphs(hb_buffer_t *);
@@ -698,7 +711,7 @@ hb_map_t *hb_map_get_empty(void);
 hb_map_t *hb_map_reference(hb_map_t *);
 void hb_map_destroy(hb_map_t *);
 hb_bool_t hb_map_set_user_data(hb_map_t *, hb_user_data_key_t *, void *, hb_destroy_func_t, hb_bool_t);
-void *hb_map_get_user_data(hb_map_t *, hb_user_data_key_t *);
+void *hb_map_get_user_data(const hb_map_t *, hb_user_data_key_t *);
 hb_bool_t hb_map_allocation_successful(const hb_map_t *);
 void hb_map_clear(hb_map_t *);
 hb_bool_t hb_map_is_empty(const hb_map_t *);
@@ -718,7 +731,7 @@ hb_shape_plan_t *hb_shape_plan_get_empty(void);
 hb_shape_plan_t *hb_shape_plan_reference(hb_shape_plan_t *);
 void hb_shape_plan_destroy(hb_shape_plan_t *);
 hb_bool_t hb_shape_plan_set_user_data(hb_shape_plan_t *, hb_user_data_key_t *, void *, hb_destroy_func_t, hb_bool_t);
-void *hb_shape_plan_get_user_data(hb_shape_plan_t *, hb_user_data_key_t *);
+void *hb_shape_plan_get_user_data(const hb_shape_plan_t *, hb_user_data_key_t *);
 hb_bool_t hb_shape_plan_execute(hb_shape_plan_t *, hb_font_t *, hb_buffer_t *, const hb_feature_t *, unsigned int);
 const char *hb_shape_plan_get_shaper(hb_shape_plan_t *);
 void hb_version(unsigned int *, unsigned int *, unsigned int *);
@@ -802,8 +815,10 @@ typedef enum {
   HB_OT_LAYOUT_BASELINE_TAG_HANGING = 1751215719,
   HB_OT_LAYOUT_BASELINE_TAG_IDEO_FACE_BOTTOM_OR_LEFT = 1768121954,
   HB_OT_LAYOUT_BASELINE_TAG_IDEO_FACE_TOP_OR_RIGHT = 1768121972,
+  HB_OT_LAYOUT_BASELINE_TAG_IDEO_FACE_CENTRAL = 1231251043,
   HB_OT_LAYOUT_BASELINE_TAG_IDEO_EMBOX_BOTTOM_OR_LEFT = 1768187247,
   HB_OT_LAYOUT_BASELINE_TAG_IDEO_EMBOX_TOP_OR_RIGHT = 1768191088,
+  HB_OT_LAYOUT_BASELINE_TAG_IDEO_EMBOX_CENTRAL = 1231315813,
   HB_OT_LAYOUT_BASELINE_TAG_MATH = 1835103336,
   _HB_OT_LAYOUT_BASELINE_TAG_MAX_VALUE = 2147483647,
 } hb_ot_layout_baseline_tag_t;
