@@ -1,14 +1,16 @@
+// CPPFLAGS="-I/usr/include/freetype2"
+
 #include <harfbuzz/hb.h>
 #include <harfbuzz/hb-ft.h>
 #include <harfbuzz/hb-ot.h>
 #include "ffi-cdecl.h"
 
 cdecl_type(hb_bool_t)
-cdecl_type(hb_codepoint_t)
-cdecl_type(hb_position_t)
-cdecl_type(hb_mask_t)
-cdecl_type(hb_tag_t)
-cdecl_type(hb_color_t)
+cdecl_c99_type(hb_codepoint_t, uint32_t)
+cdecl_c99_type(hb_position_t, int32_t)
+cdecl_c99_type(hb_mask_t, uint32_t)
+cdecl_c99_type(hb_tag_t, uint32_t)
+cdecl_c99_type(hb_color_t, uint32_t)
 cdecl_union(_hb_var_int_t)
 cdecl_type(hb_var_int_t)
 cdecl_type(hb_direction_t)
