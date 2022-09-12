@@ -32,7 +32,8 @@ endif()
 
 if(DEFINED ENV{ANDROID})
     set(CMAKE_SYSTEM_NAME Android)
-    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${SHARED_STL_LINK_FLAG}")
+    # Android 5+ requires PIE (yum!)
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${SHARED_STL_LINK_FLAG} -pie -fPIE")
 endif()
 
 # took me an eternity to find $<SEMICOLON>
