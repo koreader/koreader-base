@@ -8,10 +8,33 @@ include("koreader_thirdparty_git")
 enable_language(C CXX)
 set(CMAKE_CXX_STANDARD 11)
 
+assert_var_defined(CPPFLAGS)
+assert_var_defined(CFLAGS)
+assert_var_defined(CXXFLAGS)
+assert_var_defined(LDFLAGS)
+
 ep_get_source_dir(SOURCE_DIR)
 ep_get_binary_dir(BINARY_DIR)
 
+# Make sure the daisy-chain once again picks up our toolchain file...
+if(DEFINED ENV{CMAKE_TCF})
+    list(APPEND CMAKE_ARGS "$ENV{CMAKE_TCF}")
+endif()
+# CMake hell.
+# We expect lib later on in Makefile.third, even on multilib systems...
 list(APPEND CMAKE_ARGS "-DCMAKE_INSTALL_PREFIX=${BINARY_DIR}")
+list(APPEND CMAKE_ARGS "-DCMAKE_INSTALL_LIBDIR=lib")
+list(APPEND CMAKE_ARGS "-DCMAKE_INSTALL_INCLUDEDIR=include")
+list(APPEND CMAKE_ARGS "-DCMAKE_SKIP_BUILD_RPATH:BOOL=True")
+#list(APPEND CMAKE_ARGS "-DCMAKE_VERBOSE_MAKEFILE:BOOL=ON")
+# Honor the env, dammit.
+list(APPEND CMAKE_ARGS "-DCMAKE_EXE_LINKER_FLAGS=${LDFLAGS}")
+list(APPEND CMAKE_ARGS "-DCMAKE_MODULE_LINKER_FLAGS=${LDFLAGS}")
+list(APPEND CMAKE_ARGS "-DCMAKE_SHARED_LINKER_FLAGS=${LDFLAGS}")
+list(APPEND CMAKE_ARGS "-DCMAKE_C_FLAGS=${CPPFLAGS} ${CFLAGS}")
+list(APPEND CMAKE_ARGS "-DCMAKE_CXX_FLAGS=${CPPFLAGS} ${CXXFLAGS}")
+
+# Actual LunaSVG build options
 list(APPEND CMAKE_ARGS "-DBUILD_SHARED_LIBS=ON")
 
 set(PATCH_CMD1 "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/extended.patch")
