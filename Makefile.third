@@ -455,6 +455,7 @@ $(OUTPUT_DIR)/sdcv: $(if $(ANDROID),$(GLIB_STATIC),$(GLIB)) $(if $(ANDROID),$(ZL
 		-DCFLAGS="$(CFLAGS)" \
 		-DCXXFLAGS="$(CXXFLAGS)" \
 		-DLDFLAGS="$(LDFLAGS) $(if $(ANDROID),$(SHARED_STL_LINK_FLAG),)" \
+		-DSHARED_STL_LINK_FLAG="${SHARED_STL_LINK_FLAG}" \
 		-DGLIB="$(realpath $(if $(ANDROID),$(GLIB_STATIC),$(GLIB)))" \
 		-DGLIB_DIR="$(GLIB_DIR)" \
 		-DZLIB="$(realpath $(if $(ANDROID),$(ZLIB_STATIC),$(ZLIB)))" \

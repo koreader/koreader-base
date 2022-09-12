@@ -20,6 +20,7 @@ assert_var_defined(GLIB)
 assert_var_defined(GLIB_DIR)
 assert_var_defined(ZLIB)
 assert_var_defined(ZLIB_DIR)
+assert_var_defined(SHARED_STL_LINK_FLAG)
 
 ep_get_source_dir(SOURCE_DIR)
 
@@ -31,6 +32,7 @@ endif()
 
 if(DEFINED ENV{ANDROID})
     set(CMAKE_SYSTEM_NAME Android)
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${SHARED_STL_LINK_FLAG}")
 endif()
 
 # took me an eternity to find $<SEMICOLON>
