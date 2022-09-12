@@ -31,7 +31,6 @@ endif()
 
 if(DEFINED ENV{ANDROID})
     set(CMAKE_SYSTEM_NAME Android)
-    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static-libgcc -static")
 endif()
 
 # took me an eternity to find $<SEMICOLON>
