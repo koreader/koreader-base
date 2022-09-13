@@ -4,9 +4,10 @@ Module for various utility functions.
 @module ffi.util
 ]]
 
-local bit = require "bit"
-local ffi = require "ffi"
+local bit = require("bit")
+local ffi = require("ffi")
 local C = ffi.C
+local lfs = require("libs/libkoreader-lfs")
 
 local lshift = bit.lshift
 local band = bit.band
@@ -195,11 +196,14 @@ end
 
 --- Copies file.
 function util.copyFile(from, to)
-    local ffp, err = io.open(from, "rb")
-    if err ~= nil then
-        return err
+    local ffp, ferr = io.open(from, "rb")
+    if not ffp then
+        return ferr
     end
-    local tfp = io.open(to, "wb")
+    local tfp, terr = io.open(to, "wb")
+    if not tfp then
+        return terr
+    end
     while true do
         local bytes = ffp:read(8192)
         if not bytes then
@@ -672,7 +676,7 @@ local function orderedNext(t, state)
         key = t.__orderedIndex[1]
     else
         -- fetch the next value
-        for i = 1,table.getn(t.__orderedIndex) do
+        for i = 1, #t.__orderedIndex do
             if t.__orderedIndex[i] == state then
                 key = t.__orderedIndex[i+1]
             end
@@ -685,7 +689,6 @@ local function orderedNext(t, state)
 
     -- no more value to return, cleanup
     t.__orderedIndex = nil
-    return
 end
 
 function util.orderedPairs(t)
