@@ -192,8 +192,21 @@ typedef enum {
   _HB_SCRIPT_MAX_VALUE = 2147483647,
   _HB_SCRIPT_MAX_VALUE_SIGNED = 2147483647,
 } hb_script_t;
+struct hb_user_data_key_t {
+  char unused;
+};
 typedef struct hb_user_data_key_t hb_user_data_key_t;
+struct hb_feature_t {
+  hb_tag_t tag;
+  uint32_t value;
+  unsigned int start;
+  unsigned int end;
+};
 typedef struct hb_feature_t hb_feature_t;
+struct hb_variation_t {
+  hb_tag_t tag;
+  float value;
+};
 typedef struct hb_variation_t hb_variation_t;
 typedef enum {
   HB_MEMORY_MODE_DUPLICATE = 0,
@@ -292,17 +305,12 @@ typedef enum {
   HB_UNICODE_COMBINING_CLASS_IOTA_SUBSCRIPT = 240,
   HB_UNICODE_COMBINING_CLASS_INVALID = 255,
 } hb_unicode_combining_class_t;
-typedef struct hb_font_extents_t hb_font_extents_t;
-typedef struct hb_glyph_extents_t hb_glyph_extents_t;
-typedef struct hb_glyph_info_t hb_glyph_info_t;
 typedef enum {
   HB_GLYPH_FLAG_UNSAFE_TO_BREAK = 1,
   HB_GLYPH_FLAG_UNSAFE_TO_CONCAT = 2,
   HB_GLYPH_FLAG_SAFE_TO_INSERT_TATWEEL = 4,
   HB_GLYPH_FLAG_DEFINED = 7,
 } hb_glyph_flags_t;
-typedef struct hb_glyph_position_t hb_glyph_position_t;
-typedef struct hb_segment_properties_t hb_segment_properties_t;
 typedef enum {
   HB_BUFFER_CONTENT_TYPE_INVALID = 0,
   HB_BUFFER_CONTENT_TYPE_UNICODE = 1,
@@ -352,30 +360,11 @@ typedef enum {
   HB_BUFFER_DIFF_FLAG_GLYPH_FLAGS_MISMATCH = 64,
   HB_BUFFER_DIFF_FLAG_POSITION_MISMATCH = 128,
 } hb_buffer_diff_flags_t;
-struct hb_user_data_key_t {
-  char unused;
-};
-struct hb_feature_t {
-  hb_tag_t tag;
-  uint32_t value;
-  unsigned int start;
-  unsigned int end;
-};
-struct hb_variation_t {
-  hb_tag_t tag;
-  float value;
-};
-struct hb_blob_t;
 typedef struct hb_blob_t hb_blob_t;
-struct hb_unicode_funcs_t;
 typedef struct hb_unicode_funcs_t hb_unicode_funcs_t;
-struct hb_set_t;
 typedef struct hb_set_t hb_set_t;
-struct hb_face_t;
 typedef struct hb_face_t hb_face_t;
-struct hb_font_t;
 typedef struct hb_font_t hb_font_t;
-struct hb_font_funcs_t;
 typedef struct hb_font_funcs_t hb_font_funcs_t;
 struct hb_font_extents_t {
   hb_position_t ascender;
@@ -391,12 +380,14 @@ struct hb_font_extents_t {
   hb_position_t reserved2;
   hb_position_t reserved1;
 };
+typedef struct hb_font_extents_t hb_font_extents_t;
 struct hb_glyph_extents_t {
   hb_position_t x_bearing;
   hb_position_t y_bearing;
   hb_position_t width;
   hb_position_t height;
 };
+typedef struct hb_glyph_extents_t hb_glyph_extents_t;
 struct hb_glyph_info_t {
   hb_codepoint_t codepoint;
   hb_mask_t mask;
@@ -404,6 +395,7 @@ struct hb_glyph_info_t {
   hb_var_int_t var1;
   hb_var_int_t var2;
 };
+typedef struct hb_glyph_info_t hb_glyph_info_t;
 struct hb_glyph_position_t {
   hb_position_t x_advance;
   hb_position_t y_advance;
@@ -411,6 +403,7 @@ struct hb_glyph_position_t {
   hb_position_t y_offset;
   hb_var_int_t var;
 };
+typedef struct hb_glyph_position_t hb_glyph_position_t;
 struct hb_segment_properties_t {
   hb_direction_t direction;
   hb_script_t script;
@@ -418,11 +411,9 @@ struct hb_segment_properties_t {
   void *reserved1;
   void *reserved2;
 };
-struct hb_buffer_t;
+typedef struct hb_segment_properties_t hb_segment_properties_t;
 typedef struct hb_buffer_t hb_buffer_t;
-struct hb_map_t;
 typedef struct hb_map_t hb_map_t;
-struct hb_shape_plan_t;
 typedef struct hb_shape_plan_t hb_shape_plan_t;
 typedef hb_bool_t (*hb_font_get_font_h_extents_func_t)(hb_font_t *, void *, hb_font_extents_t *, void *);
 typedef hb_bool_t (*hb_font_get_font_v_extents_func_t)(hb_font_t *, void *, hb_font_extents_t *, void *);
@@ -758,10 +749,12 @@ struct hb_ot_name_entry_t {
   hb_var_int_t var;
   hb_language_t language;
 };
+typedef struct hb_ot_name_entry_t hb_ot_name_entry_t;
 struct hb_ot_color_layer_t {
   hb_codepoint_t glyph;
   unsigned int color_index;
 };
+typedef struct hb_ot_color_layer_t hb_ot_color_layer_t;
 struct hb_ot_var_axis_t {
   hb_tag_t tag;
   hb_ot_name_id_t name_id;
@@ -769,10 +762,12 @@ struct hb_ot_var_axis_t {
   float default_value;
   float max_value;
 };
+typedef struct hb_ot_var_axis_t hb_ot_var_axis_t;
 struct hb_ot_math_glyph_variant_t {
   hb_codepoint_t glyph;
   hb_position_t advance;
 };
+typedef struct hb_ot_math_glyph_variant_t hb_ot_math_glyph_variant_t;
 struct hb_ot_math_glyph_part_t {
   hb_codepoint_t glyph;
   hb_position_t start_connector_length;
@@ -780,6 +775,7 @@ struct hb_ot_math_glyph_part_t {
   hb_position_t full_advance;
   hb_ot_math_glyph_part_flags_t flags;
 };
+typedef struct hb_ot_math_glyph_part_t hb_ot_math_glyph_part_t;
 struct hb_ot_var_axis_info_t {
   unsigned int axis_index;
   hb_tag_t tag;
@@ -790,14 +786,12 @@ struct hb_ot_var_axis_info_t {
   float max_value;
   unsigned int reserved;
 };
-typedef struct hb_ot_name_entry_t hb_ot_name_entry_t;
+typedef struct hb_ot_var_axis_info_t hb_ot_var_axis_info_t;
 typedef enum {
   HB_OT_COLOR_PALETTE_FLAG_DEFAULT = 0,
   HB_OT_COLOR_PALETTE_FLAG_USABLE_WITH_LIGHT_BACKGROUND = 1,
   HB_OT_COLOR_PALETTE_FLAG_USABLE_WITH_DARK_BACKGROUND = 2,
 } hb_ot_color_palette_flags_t;
-typedef struct hb_ot_color_layer_t hb_ot_color_layer_t;
-typedef struct hb_ot_var_axis_t hb_ot_var_axis_t;
 typedef enum {
   HB_OT_LAYOUT_GLYPH_CLASS_UNCLASSIFIED = 0,
   HB_OT_LAYOUT_GLYPH_CLASS_BASE_GLYPH = 1,
@@ -881,8 +875,6 @@ typedef enum {
   HB_OT_MATH_KERN_BOTTOM_RIGHT = 2,
   HB_OT_MATH_KERN_BOTTOM_LEFT = 3,
 } hb_ot_math_kern_t;
-typedef struct hb_ot_math_glyph_variant_t hb_ot_math_glyph_variant_t;
-typedef struct hb_ot_math_glyph_part_t hb_ot_math_glyph_part_t;
 typedef enum {
   HB_OT_META_TAG_DESIGN_LANGUAGES = 1684827751,
   HB_OT_META_TAG_SUPPORTED_LANGUAGES = 1936485991,
@@ -919,7 +911,6 @@ typedef enum {
   HB_OT_METRICS_TAG_UNDERLINE_OFFSET = 1970168943,
   _HB_OT_METRICS_TAG_MAX_VALUE = 2147483647,
 } hb_ot_metrics_tag_t;
-typedef struct hb_ot_var_axis_info_t hb_ot_var_axis_info_t;
 const hb_ot_name_entry_t *hb_ot_name_list_names(hb_face_t *, unsigned int *);
 unsigned int hb_ot_name_get_utf8(hb_face_t *, hb_ot_name_id_t, hb_language_t, unsigned int *, char *);
 unsigned int hb_ot_name_get_utf16(hb_face_t *, hb_ot_name_id_t, hb_language_t, unsigned int *, uint16_t *);
@@ -1026,4 +1017,96 @@ static const int HB_OT_NAME_ID_WWS_SUBFAMILY = 22;
 static const int HB_OT_NAME_ID_LIGHT_BACKGROUND = 23;
 static const int HB_OT_NAME_ID_DARK_BACKGROUND = 24;
 static const int HB_OT_NAME_ID_VARIATIONS_PS_PREFIX = 25;
+hb_bool_t hb_buffer_has_positions(hb_buffer_t *);
+unsigned int hb_buffer_serialize(hb_buffer_t *, unsigned int, unsigned int, char *, unsigned int, unsigned int *, hb_font_t *, hb_buffer_serialize_format_t, hb_buffer_serialize_flags_t);
+unsigned int hb_buffer_serialize_unicode(hb_buffer_t *, unsigned int, unsigned int, char *, unsigned int, unsigned int *, hb_buffer_serialize_format_t, hb_buffer_serialize_flags_t);
+hb_bool_t hb_buffer_deserialize_unicode(hb_buffer_t *, const char *, int, const char **, hb_buffer_serialize_format_t);
+hb_blob_t *hb_blob_create_or_fail(const char *, unsigned int, hb_memory_mode_t, void *, hb_destroy_func_t);
+hb_blob_t *hb_blob_create_from_file_or_fail(const char *);
+hb_set_t *hb_set_copy(const hb_set_t *);
+typedef enum {
+  HB_STYLE_TAG_ITALIC = 1769234796,
+  HB_STYLE_TAG_OPTICAL_SIZE = 1869640570,
+  HB_STYLE_TAG_SLANT_ANGLE = 1936486004,
+  HB_STYLE_TAG_SLANT_RATIO = 1399615092,
+  HB_STYLE_TAG_WIDTH = 2003072104,
+  HB_STYLE_TAG_WEIGHT = 2003265652,
+  _HB_STYLE_TAG_MAX_VALUE = 2147483647,
+} hb_style_tag_t;
+float hb_style_get_value(hb_font_t *, hb_style_tag_t);
+void hb_buffer_set_not_found_glyph(hb_buffer_t *, hb_codepoint_t);
+hb_codepoint_t hb_buffer_get_not_found_glyph(const hb_buffer_t *);
+void hb_segment_properties_overlay(hb_segment_properties_t *, const hb_segment_properties_t *);
+hb_buffer_t *hb_buffer_create_similar(const hb_buffer_t *);
+void hb_font_set_synthetic_slant(hb_font_t *, float);
+float hb_font_get_synthetic_slant(hb_font_t *);
+const float *hb_font_get_var_coords_design(hb_font_t *, unsigned int *);
+static const int HB_OT_TAG_MATH_SCRIPT = 1835103336;
+typedef struct {
+  hb_position_t max_correction_height;
+  hb_position_t kern_value;
+} hb_ot_math_kern_entry_t;
+unsigned int hb_ot_math_get_glyph_kernings(hb_font_t *, hb_codepoint_t, hb_ot_math_kern_t, unsigned int, unsigned int *, hb_ot_math_kern_entry_t *);
+union _hb_var_num_t {
+  float f;
+  uint32_t u32;
+  int32_t i32;
+  uint16_t u16[2];
+  int16_t i16[2];
+  uint8_t u8[4];
+  int8_t i8[4];
+};
+typedef union _hb_var_num_t hb_var_num_t;
+struct hb_draw_state_t {
+  hb_bool_t path_open;
+  float path_start_x;
+  float path_start_y;
+  float current_x;
+  float current_y;
+  hb_var_num_t reserved1;
+  hb_var_num_t reserved2;
+  hb_var_num_t reserved3;
+  hb_var_num_t reserved4;
+  hb_var_num_t reserved5;
+  hb_var_num_t reserved6;
+  hb_var_num_t reserved7;
+};
+typedef struct hb_draw_state_t hb_draw_state_t;
+typedef struct hb_draw_funcs_t hb_draw_funcs_t;
+hb_draw_funcs_t *hb_draw_funcs_create(void);
+hb_draw_funcs_t *hb_draw_funcs_reference(hb_draw_funcs_t *);
+void hb_draw_funcs_destroy(hb_draw_funcs_t *);
+hb_bool_t hb_draw_funcs_is_immutable(hb_draw_funcs_t *);
+void hb_draw_funcs_make_immutable(hb_draw_funcs_t *);
+typedef void (*hb_draw_move_to_func_t)(hb_draw_funcs_t *, void *, hb_draw_state_t *, float, float, void *);
+void hb_draw_funcs_set_move_to_func(hb_draw_funcs_t *, hb_draw_move_to_func_t, void *, hb_destroy_func_t);
+typedef void (*hb_draw_line_to_func_t)(hb_draw_funcs_t *, void *, hb_draw_state_t *, float, float, void *);
+void hb_draw_funcs_set_line_to_func(hb_draw_funcs_t *, hb_draw_line_to_func_t, void *, hb_destroy_func_t);
+typedef void (*hb_draw_quadratic_to_func_t)(hb_draw_funcs_t *, void *, hb_draw_state_t *, float, float, float, float, void *);
+void hb_draw_funcs_set_quadratic_to_func(hb_draw_funcs_t *, hb_draw_quadratic_to_func_t, void *, hb_destroy_func_t);
+typedef void (*hb_draw_cubic_to_func_t)(hb_draw_funcs_t *, void *, hb_draw_state_t *, float, float, float, float, float, float, void *);
+void hb_draw_funcs_set_cubic_to_func(hb_draw_funcs_t *, hb_draw_cubic_to_func_t, void *, hb_destroy_func_t);
+typedef void (*hb_draw_close_path_func_t)(hb_draw_funcs_t *, void *, hb_draw_state_t *, void *);
+void hb_draw_funcs_set_close_path_func(hb_draw_funcs_t *, hb_draw_close_path_func_t, void *, hb_destroy_func_t);
+void hb_draw_move_to(hb_draw_funcs_t *, void *, hb_draw_state_t *, float, float);
+void hb_draw_line_to(hb_draw_funcs_t *, void *, hb_draw_state_t *, float, float);
+void hb_draw_quadratic_to(hb_draw_funcs_t *, void *, hb_draw_state_t *, float, float, float, float);
+void hb_draw_cubic_to(hb_draw_funcs_t *, void *, hb_draw_state_t *, float, float, float, float, float, float);
+void hb_draw_close_path(hb_draw_funcs_t *, void *, hb_draw_state_t *);
+typedef void (*hb_font_get_glyph_shape_func_t)(hb_font_t *, void *, hb_codepoint_t, hb_draw_funcs_t *, void *, void *);
+void hb_font_funcs_set_glyph_shape_func(hb_font_funcs_t *, hb_font_get_glyph_shape_func_t, void *, hb_destroy_func_t);
+void hb_font_get_glyph_shape(hb_font_t *, hb_codepoint_t, hb_draw_funcs_t *, void *);
+hb_ot_layout_baseline_tag_t hb_ot_layout_get_horizontal_baseline_tag_for_script(hb_script_t);
+void hb_ot_layout_get_baseline_with_fallback(hb_font_t *, hb_ot_layout_baseline_tag_t, hb_direction_t, hb_tag_t, hb_tag_t, hb_position_t *);
+void hb_ot_metrics_get_position_with_fallback(hb_font_t *, hb_ot_metrics_tag_t, hb_position_t *);
+void hb_set_add_sorted_array(hb_set_t *, const hb_codepoint_t *, unsigned int);
+unsigned int hb_set_next_many(const hb_set_t *, hb_codepoint_t, hb_codepoint_t *, unsigned int);
+hb_bool_t hb_map_is_equal(const hb_map_t *, const hb_map_t *);
+void hb_font_changed(hb_font_t *);
+unsigned int hb_font_get_serial(hb_font_t *);
+hb_bool_t hb_ft_hb_font_changed(hb_font_t *);
+unsigned int hb_set_hash(const hb_set_t *);
+hb_map_t *hb_map_copy(const hb_map_t *);
+unsigned int hb_map_hash(const hb_map_t *);
+hb_bool_t hb_language_matches(hb_language_t, hb_language_t);
 ]]
