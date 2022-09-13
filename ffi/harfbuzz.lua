@@ -98,7 +98,7 @@ local function make_set(tab)
     local set = hb.hb_set_create()
     local first = 0
     local seen = 0
-    for i=1,#tab,2 do
+    for i=1, #tab, 2 do
         first = first + tab[i]
         local count = tab[i+1]
         seen = seen + count
