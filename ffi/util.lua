@@ -677,7 +677,7 @@ local function orderedNext(t, state)
     -- We use a temporary ordered key table that is stored in the table being iterated.
 
     local key = nil
-    --print("orderedNext: state = "..tostring(state))
+    -- print("orderedNext: state = "..tostring(state))
     if state == nil then
         -- the first time, generate the index
         t.__orderedIndex = __genOrderedIndex(t)
