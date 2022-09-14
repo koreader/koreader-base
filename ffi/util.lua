@@ -661,12 +661,12 @@ local function __genOrderedIndex(t)
         table.insert(orderedIndex, key)
     end
     table.sort(orderedIndex, function(v1, v2)
-        if type(v1) ~= type(v2) then
-            -- Handle type mismatches by squashing to string
-            return tostring(v1) < tostring(v2)
-        else
+        if type(v1) == type(v2) then
             -- Assumes said type supports the < comparison operator
             return v1 < v2
+        else
+            -- Handle type mismatches by squashing to string
+            return tostring(v1) < tostring(v2)
         end
     end)
     return orderedIndex
