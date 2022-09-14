@@ -655,12 +655,20 @@ end
 -- pairs(), but with *keys* sorted alphabetically.
 -- c.f., http://lua-users.org/wiki/SortedIteration
 -- See also http://lua-users.org/wiki/SortedIterationSimple
-local function __genOrderedIndex( t )
+local function __genOrderedIndex(t)
     local orderedIndex = {}
     for key in pairs(t) do
-        table.insert( orderedIndex, key )
+        table.insert(orderedIndex, key)
     end
-    table.sort( orderedIndex )
+    table.sort(orderedIndex, function(v1, v2)
+        if type(v1) ~= type(v2) then
+            -- Handle type mismatches by squashing to string
+            return tostring(v1) < tostring(v2)
+        else
+            -- Assumes said type supports the < comparison operator
+            return v1 < v2
+        end
+    end)
     return orderedIndex
 end
 
@@ -669,10 +677,10 @@ local function orderedNext(t, state)
     -- We use a temporary ordered key table that is stored in the table being iterated.
 
     local key = nil
-    --print("orderedNext: state = "..tostring(state) )
+    --print("orderedNext: state = "..tostring(state))
     if state == nil then
         -- the first time, generate the index
-        t.__orderedIndex = __genOrderedIndex( t )
+        t.__orderedIndex = __genOrderedIndex(t)
         key = t.__orderedIndex[1]
     else
         -- fetch the next value
