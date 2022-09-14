@@ -77,10 +77,14 @@ set(CMAKE_SKIP_BUILD_RPATH True)
 set(ENABLE_NLS False CACHE BOOL "")
 set(WITH_READLINE False CACHE BOOL "")
 
-# Force utf8 command line parsing, and accept not-found -u dictnames
-set(PATCH_CMD1 "${KO_PATCH_SH} ${CMAKE_CURRENT_SOURCE_DIR}/sdcv-locale-hack.patch")
+# Don't crash when passing unknown dicts to -u
+set(PATCH_CMD1 "${KO_PATCH_SH} ${CMAKE_CURRENT_SOURCE_DIR}/sdcv-pr91.patch")
+# Use proper types for off_t stuff so as not to upset large file support
+set(PATCH_CMD2 "${KO_PATCH_SH} ${CMAKE_CURRENT_SOURCE_DIR}/sdcv-pr90.patch")
+# Force utf8 command line parsing
+set(PATCH_CMD3 "${KO_PATCH_SH} ${CMAKE_CURRENT_SOURCE_DIR}/sdcv-locale-hack.patch")
 
-set(SDCV_GIT_COMMIT d054adb37c635ececabc31b147c968a480d1891a)
+set(SDCV_GIT_COMMIT tags/v0.5.4)
 
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
@@ -96,7 +100,7 @@ download_project(
     GIT_TAG
     ${SDCV_GIT_COMMIT}
     #DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
-    PATCH_COMMAND COMMAND ${PATCH_CMD1}
+    PATCH_COMMAND COMMAND ${PATCH_CMD1} COMMAND ${PATCH_CMD2} COMMAND ${PATCH_CMD3}
 )
 
 add_subdirectory("${CMAKE_BINARY_DIR}/sdcv-src"
