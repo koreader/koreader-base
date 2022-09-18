@@ -17,6 +17,7 @@ static const int ETIME = 62;
 static const int EAGAIN = 11;
 static const int EINVAL = 22;
 static const int EPIPE = 32;
+static const int ENODEV = 19;
 static const int ENOSYS = 38;
 static const int ETIMEDOUT = 110;
 struct timezone {
