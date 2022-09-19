@@ -183,12 +183,13 @@ static int closeInputDevice(size_t fd_idx_to_close)
     // Right now, we close everything, but, in the future, we may want to keep *some* slots open.
     // Note that doing that would (currently) require making sure those slots are at the start of the array,
     // in ascending fd number order, and that the array itself isn't sparse.
-    if (inputfds[fd_idx_to_close] == -1) {
+    int fd = inputfds[fd_idx_to_close];
+    if (fd == -1) {
         // Device was not open
         return -1;
     }
-    ioctl(inputfds[fd_idx_to_close], EVIOCGRAB, 0);
-    close(inputfds[fd_idx_to_close]);
+    ioctl(fd, EVIOCGRAB, 0);
+    close(fd);
 
     // Shift the fds after the closed ones backward
     for (ssize_t i = fd_idx_to_close; i < fd_idx - 1; i++) {
@@ -199,7 +200,7 @@ static int closeInputDevice(size_t fd_idx_to_close)
     fd_idx--;
 
     computeNfds();
-    printf("[ko-input] Closed input device with idx=%d\n", fd_idx_to_close);
+    printf("[ko-input] Closed input device with idx=%d, fd=%d\n", fd_idx_to_close, fd);
 
     return 0;
 }
