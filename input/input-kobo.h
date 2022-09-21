@@ -68,11 +68,11 @@ static void generateFakeEvent(int pipefd[2])
         } else if (uev.devpath && UE_STR_EQ(uev.devpath, USBHOST_DEVPATH)) {
             switch (uev.action) {
                 case UEVENT_ACTION_ADD:
-                    ev.code = CODE_FAKE_USB_HOST_PLUG_IN;
+                    ev.code = CODE_FAKE_USB_PLUGGED_IN_TO_HOST;
                     sendEvent(pipefd[1], &ev);
                     break;
                 case UEVENT_ACTION_REMOVE:
-                    ev.code = CODE_FAKE_USB_HOST_PLUG_OUT;
+                    ev.code = CODE_FAKE_USB_PLUGGED_OUT_OF_HOST;
                     sendEvent(pipefd[1], &ev);
                     break;
                 default:
@@ -84,11 +84,11 @@ static void generateFakeEvent(int pipefd[2])
             // /devices/platform/soc/2100000.aips-bus/2184000.usb/ci_hdrc.0/usb1/1-1/1-1:1.0/0003:1532:021A.001C/input/input31/event4
             switch (uev.action) {
                 case UEVENT_ACTION_ADD:
-                    ev.code = CODE_FAKE_USB_DEVICE_PLUG_IN;
+                    ev.code = CODE_FAKE_USB_DEVICE_PLUGGED_IN;
                     sendEvent(pipefd[1], &ev);
                     break;
                 case UEVENT_ACTION_REMOVE:
-                    ev.code = CODE_FAKE_USB_DEVICE_PLUG_OUT;
+                    ev.code = CODE_FAKE_USB_DEVICE_PLUGGED_OUT;
                     sendEvent(pipefd[1], &ev);
                     break;
                 default:

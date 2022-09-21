@@ -69,9 +69,9 @@ static void generateFakeEvent(int pipefd[2]) {
         } else if(std_out[0] == 'o') {
             ev.code = CODE_FAKE_OUT_SAVER;
         } else if((std_out[0] == 'u') && (std_out[7] == 'I')) {
-            ev.code = CODE_FAKE_USB_HOST_PLUG_IN;
+            ev.code = CODE_FAKE_USB_PLUGGED_IN_TO_HOST;
         } else if((std_out[0] == 'u') && (std_out[7] == 'O')) {
-            ev.code = CODE_FAKE_USB_HOST_PLUG_OUT;
+            ev.code = CODE_FAKE_USB_PLUGGED_OUT_OF_HOST;
         } else if(std_out[0] == 'c') {
             ev.code = CODE_FAKE_CHARGING;
         } else if(std_out[0] == 'n') {
