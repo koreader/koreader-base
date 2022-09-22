@@ -8,10 +8,6 @@ globals = {
     "G_defaults",
 }
 
-read_globals = {
-    "lfs",
-}
-
 exclude_files = {
     "build/*",
     "ffi/sha2.lua",
