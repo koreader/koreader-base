@@ -313,9 +313,7 @@ local function sql_format(s, variant, index)
 end
 
 local function loadcode(s, env)
-  local ret = assert(loadstring(s))
-  if env then setfenv(ret, env) end
-  return ret()
+  return assert(load(s, "LJSQLite3", "t", env))()
 end
 
 -- Must always be called from *:_* function due to error level 4.
