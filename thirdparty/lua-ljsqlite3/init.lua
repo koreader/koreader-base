@@ -107,6 +107,7 @@ end
 -- SQLITE_*, OPEN_*
 
 ffi.cdef(table.concat(sqlconstants))
+sqlconstants = nil
 
 -- sqlite3*, ljsqlite3_*
 ffi.cdef[[
