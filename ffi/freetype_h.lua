@@ -98,6 +98,7 @@ enum FT_Glyph_Format_ {
   FT_GLYPH_FORMAT_BITMAP = 1651078259,
   FT_GLYPH_FORMAT_OUTLINE = 1869968492,
   FT_GLYPH_FORMAT_PLOTTER = 1886154612,
+  FT_GLYPH_FORMAT_SVG = 1398163232,
 };
 typedef enum FT_Glyph_Format_ FT_Glyph_Format;
 struct FT_LibraryRec_;
@@ -230,31 +231,32 @@ struct FT_CharMapRec_ {
   FT_UShort platform_id;
   FT_UShort encoding_id;
 };
-FT_Error FT_Init_FreeType(FT_Library *);
-FT_Error FT_New_Face(FT_Library, const char *, FT_Long, FT_Face *);
-FT_Error FT_Set_Pixel_Sizes(FT_Face, FT_UInt, FT_UInt);
-FT_Error FT_Done_Face(FT_Face);
-FT_UInt FT_Get_Char_Index(FT_Face, FT_ULong);
-FT_Error FT_Load_Char(FT_Face, FT_ULong, int);
-FT_Error FT_Get_Kerning(FT_Face, FT_UInt, FT_UInt, FT_UInt, FT_Vector *);
-void FT_GlyphSlot_Embolden(FT_GlyphSlot);
-void FT_GlyphSlot_Oblique(FT_GlyphSlot);
+FT_Error FT_Init_FreeType(FT_Library *) __attribute__((visibility("default")));
+FT_Error FT_New_Face(FT_Library, const char *, FT_Long, FT_Face *) __attribute__((visibility("default")));
+FT_Error FT_Set_Pixel_Sizes(FT_Face, FT_UInt, FT_UInt) __attribute__((visibility("default")));
+FT_Error FT_Done_Face(FT_Face) __attribute__((visibility("default")));
+FT_UInt FT_Get_Char_Index(FT_Face, FT_ULong) __attribute__((visibility("default")));
+FT_Error FT_Load_Char(FT_Face, FT_ULong, int) __attribute__((visibility("default")));
+FT_Error FT_Get_Kerning(FT_Face, FT_UInt, FT_UInt, FT_UInt, FT_Vector *) __attribute__((visibility("default")));
+void FT_GlyphSlot_Embolden(FT_GlyphSlot) __attribute__((visibility("default")));
+void FT_GlyphSlot_Oblique(FT_GlyphSlot) __attribute__((visibility("default")));
 enum FT_Render_Mode_ {
   FT_RENDER_MODE_NORMAL = 0,
   FT_RENDER_MODE_LIGHT = 1,
   FT_RENDER_MODE_MONO = 2,
   FT_RENDER_MODE_LCD = 3,
   FT_RENDER_MODE_LCD_V = 4,
-  FT_RENDER_MODE_MAX = 5,
+  FT_RENDER_MODE_SDF = 5,
+  FT_RENDER_MODE_MAX = 6,
 };
 typedef enum FT_Render_Mode_ FT_Render_Mode;
-FT_Error FT_Load_Glyph(FT_Face, FT_UInt, int);
-FT_Error FT_Render_Glyph(FT_GlyphSlot, FT_Render_Mode);
-FT_Error FT_Outline_Embolden(FT_Outline *, FT_Pos);
-void FT_Outline_Translate(const FT_Outline *, FT_Pos, FT_Pos);
-FT_Long FT_MulFix(FT_Long, FT_Long);
-FT_ULong FT_Get_First_Char(FT_Face, FT_UInt *);
-FT_ULong FT_Get_Next_Char(FT_Face, FT_ULong, FT_UInt *);
+FT_Error FT_Load_Glyph(FT_Face, FT_UInt, int) __attribute__((visibility("default")));
+FT_Error FT_Render_Glyph(FT_GlyphSlot, FT_Render_Mode) __attribute__((visibility("default")));
+FT_Error FT_Outline_Embolden(FT_Outline *, FT_Pos) __attribute__((visibility("default")));
+void FT_Outline_Translate(const FT_Outline *, FT_Pos, FT_Pos) __attribute__((visibility("default")));
+FT_Long FT_MulFix(FT_Long, FT_Long) __attribute__((visibility("default")));
+FT_ULong FT_Get_First_Char(FT_Face, FT_UInt *) __attribute__((visibility("default")));
+FT_ULong FT_Get_Next_Char(FT_Face, FT_ULong, FT_UInt *) __attribute__((visibility("default")));
 static const int FT_LOAD_DEFAULT = 0;
 static const int FT_LOAD_NO_SCALE = 1;
 static const int FT_LOAD_NO_HINTING = 2;
@@ -346,7 +348,7 @@ enum FT_Sfnt_Tag_ {
   FT_SFNT_MAX = 7,
 };
 typedef enum FT_Sfnt_Tag_ FT_Sfnt_Tag;
-void *FT_Get_Sfnt_Table(FT_Face, FT_Sfnt_Tag);
+void *FT_Get_Sfnt_Table(FT_Face, FT_Sfnt_Tag) __attribute__((visibility("default")));
 struct FT_SfntName_ {
   FT_UShort platform_id;
   FT_UShort encoding_id;
@@ -378,6 +380,6 @@ static const int TT_NAME_ID_SAMPLE_TEXT = 19;
 static const int TT_NAME_ID_CID_FINDFONT_NAME = 20;
 static const int TT_NAME_ID_WWS_FAMILY = 21;
 static const int TT_NAME_ID_WWS_SUBFAMILY = 22;
-FT_UInt FT_Get_Sfnt_Name_Count(FT_Face);
-FT_Error FT_Get_Sfnt_Name(FT_Face, FT_UInt, FT_SfntName *);
+FT_UInt FT_Get_Sfnt_Name_Count(FT_Face) __attribute__((visibility("default")));
+FT_Error FT_Get_Sfnt_Name(FT_Face, FT_UInt, FT_SfntName *) __attribute__((visibility("default")));
 ]]
