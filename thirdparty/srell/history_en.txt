@@ -1,5 +1,87 @@
+20220529; version 3.010:
+  * Reduced the amount of memory used to hold a character class that
+    contains Unicode property escapes.
+  * Changed the value of error_type thrown when an invalid name or value
+    is specified in curly brackets of \p or \P, from
+    regex_constants::error_escape to newly-introduced
+    regex_constants::error_property.
+  * Other minor improvements.
+
+20220511; version 3.009:
+  * Fixed an optimisation bug that caused /abcd|ab/ not to match "abc".
+
+20220504; version 3.008:
+  * Fixed the behaviour of [^\P{...}] when the icase flag is set, as it
+    behaved similarly to the one in v-mode that has been proposed in
+    TC39.
+
+20220429; version 3.007:
+  * Further modification to the counter mechanism.
+
+20220428; version 3.006:
+  * Modified the mechanism of the counter used for repetition.
+  * Re-removed the implementation of linear search for small character
+    classes.
+
+20220424; version 3.005:
+  * Fixed a bug that caused /(?<=$.*)/ not to match the end of "a" when
+    the multiline flag is set
+  * Preparations for \A, \z, (?m:) that have been proposed in TC39.
+
+20220420; version 3.004:
+  * Added a new optimisation for /A*B/ and /A+B/ where a character class
+    A overlaps a character or character class B, such as /[A-Za-z]+ing/,
+    /".*"/.
+
+20220416; version 3.003:
+  * Combined two optimisation functions into one.
+  * Reduced the amount of code for lookaround (lookahead and lookbehind)
+    assertions.
+
+20220416; version 3.002:
+  * Fixed a bug that caused regex_match or regex_search with the
+    match_continuous flag being set to fail when the entry point
+    selector introduced in version 3.000 was used internally.
+
+20211025; version 3.001:
+  * Removed the code for splitting counter as it seemed to be no effect
+    or to make performance a bit worse.
+  * Fixed potential bugs.
+  * Minor improvements.
+
+20211023; version 3.000:
+  * Updated srell_ucfdata2.hpp and srell_updata.hpp to support Unicode
+    14.0.0.
+  * Updated unicode/updataout.cpp to support Unicode 14. (Support in
+    advance new script names that are expected to be available in RegExp
+    of ECMAScript 2022).
+  * Changed the type used to store a Unicode value when char32_t is not
+    available, from an "unsigned integer type with width of at least 21
+    bits" to a "one of at least 32 bits".
+  * Changed the type used to store a repetition count or character class
+    number when char32_t is not available, from "unsigned int" to
+    "unsigned integer type of at least 32-bit width".
+  * Added overflow check in the function that translates digits into a
+    numeric value. For example, while up to the previous version
+    /a{0,4294967297}/ was treated as /a{0,1}/ because of overflow when
+    the unsigned int type is 32-bit width, SRELL now throws error_brace
+    in cases like this.
+  * Fixed a bug that caused /[^;]*^;?/ not to match the beginning of an
+    input string when the multiline flag is not set.
+  * Implemented a very simple and limited entry point selector.
+
+20211004; version 2.930:
+  * Added new typedefs whose prefix is u1632w- and support UTF-16 or
+    UTF-32 depending on the value of WCHAR_MAX. (When 0xFFFF <=
+    WCHAR_MAX < 0x10FFFF, u1632w- types are aliases of u16w- types.
+    When 0x10FFFF <= WCHAR_MAX, u1632w- types are aliases of u32w-
+    types).
+  * Reduced the amount of memory used for Eytzinger layout search.
+  * Various improvements. (Some of them are based on suggestions to NIRE
+    by Marko Njezic).
+
 20210624; version 2.920:
-  * Added a new optimisation for the quantifier '?' ({0,1}).
+  * Added a new optimisation for the quantifier '?' (I.e., {0,1}).
   * Changed the version number of the ECMAScript specification
     referenced in misc/sample01.cpp to 2021.
 
