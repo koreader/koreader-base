@@ -27,7 +27,7 @@ endif()
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
     https://github.com/koreader/KoboUSBMS.git
-    349947a4bdf3ad7d86674e7ddec7c3b44e476e40
+    86132e4b0aa6d8e96ae1a56e258c1e0e39ccf2a9
     ${SOURCE_DIR}
 )
 
