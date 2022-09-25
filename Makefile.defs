@@ -778,11 +778,11 @@ FRIBIDI_BUILD_DIR=$(THIRDPARTY_DIR)/fribidi/build/$(MACHINE)
 FRIBIDI_DIR=$(CURDIR)/$(FRIBIDI_BUILD_DIR)/fribidi-prefix/src/fribidi-build
 FRIBIDI_LIB_LINK_FLAG=$(if $(WIN32),-l:libfribidi-0.dll,$(if $(DARWIN),$(FRIBIDI_LIB),-l:libfribidi.so.0))
 
-LIBUNIBREAK_LIB_EXT=$(if $(WIN32),-3.dll,$(if $(DARWIN),.3.dylib,.so.3))
+LIBUNIBREAK_LIB_EXT=$(if $(WIN32),-5.dll,$(if $(DARWIN),.5.dylib,.so.5))
 LIBUNIBREAK_LIB=$(OUTPUT_DIR)/libs/libunibreak$(LIBUNIBREAK_LIB_EXT)
 LIBUNIBREAK_BUILD_DIR=$(THIRDPARTY_DIR)/libunibreak/build/$(MACHINE)
 LIBUNIBREAK_DIR=$(CURDIR)/$(LIBUNIBREAK_BUILD_DIR)/libunibreak-prefix/src/libunibreak-build
-LIBUNIBREAK_LIB_LINK_FLAG=$(if $(WIN32),-l:libunibreak-3.dll,$(if $(DARWIN),$(LIBUNIBREAK_LIB),-l:libunibreak.so.3))
+LIBUNIBREAK_LIB_LINK_FLAG=$(if $(WIN32),-l:libunibreak-5.dll,$(if $(DARWIN),$(LIBUNIBREAK_LIB),-l:libunibreak.so.5))
 
 UTF8PROC_LIB_EXT=$(if $(WIN32),-2.dll,$(if $(DARWIN),.2.dylib,.so.2))
 UTF8PROC_LIB=$(OUTPUT_DIR)/libs/libutf8proc$(UTF8PROC_LIB_EXT)
