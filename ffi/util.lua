@@ -131,6 +131,7 @@ function util.strcoll(str1, str2)
         end
     end
 
+    local DALPHA_SORT_CASE_INSENSITIVE = G_defaults:readSetting("DALPHA_SORT_CASE_INSENSITIVE")
     -- patch real strcoll implementation
     util.strcoll = function(a, b)
         if a == nil and b == nil then

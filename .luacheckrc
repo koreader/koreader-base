@@ -4,10 +4,8 @@ std = "luajit"
 -- ignore implicit self
 self = false
 
-read_globals = {
-    "DALPHA_SORT_CASE_INSENSITIVE",
-    "DLANDSCAPE_CLOCKWISE_ROTATION",
-    "lfs",
+globals = {
+    "G_defaults",
 }
 
 exclude_files = {
