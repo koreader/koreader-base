@@ -93,13 +93,6 @@ function framebuffer:_isNightREAGL()
    return self.night_is_reagl
 end
 
--- Returns true if waveform_mode arg matches the fast waveform mode for the current device
--- NOTE: This is to avoid explicit comparison against device-specific waveform constants in mxc_update()
---       Here, it's because some devices use A2, while other prefer DU
-function framebuffer:_isFastWaveFormMode(waveform_mode)
-    return waveform_mode == self.waveform_fast
-end
-
 -- Returns true if waveform_mode arg matches the partial waveform mode for the current device
 -- NOTE: This is to avoid explicit comparison against device-specific waveform constants in mxc_update()
 --       Here, because of REAGL or device-specific quirks.
@@ -725,7 +718,7 @@ function framebuffer:init()
         self.mech_wait_update_submission = kindle_mxc_wait_for_update_submission
 
         self.waveform_a2 = C.WAVEFORM_MODE_A2
-        self.waveform_fast = C.WAVEFORM_MODE_A2 -- NOTE: Mostly here for archeological purposes, we switch to DU on every device right below this ;).
+        self.waveform_fast = C.WAVEFORM_MODE_DU
         self.waveform_ui = C.WAVEFORM_MODE_GC16_FAST
         self.waveform_flashui = self.waveform_ui
         self.waveform_full = C.WAVEFORM_MODE_GC16

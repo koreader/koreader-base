@@ -57,12 +57,6 @@ function framebuffer:_isREAGLWaveFormMode(waveform_mode)
     return waveform_mode == self.waveform_reagl
 end
 
--- Returns true if waveform_mode arg matches the fast waveform mode for the current device
--- NOTE: This is to avoid explicit comparison against device-specific waveform constants in disp_update()
-function framebuffer:_isFastWaveFormMode(waveform_mode)
-    return waveform_mode == self.waveform_fast
-end
-
 -- Returns true if waveform_mode arg matches the partial waveform mode for the current device
 -- NOTE: This is to avoid explicit comparison against device-specific waveform constants in disp_update()
 function framebuffer:_isPartialWaveFormMode(waveform_mode)
