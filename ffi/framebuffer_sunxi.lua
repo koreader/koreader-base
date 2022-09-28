@@ -222,8 +222,8 @@ local function refresh_kobo_sunxi(fb, no_merge, is_flashing, waveform_mode, x, y
     end
     --[[
     -- NOTE: Unlike on mxcfb, this isn't HW assisted, this just uses the "simple" Y8->Y1 dither algorithm...
-    --       As such, given the use-case for A2, this is wholly counter-productive ;).
-    if waveform_mode == C.EINK_A2_MODE then
+    --       As such, given the use-case for A2 (or DU, for that matter), this is wholly counter-productive ;).
+    if waveform_mode == C.EINK_DU_MODE then
         update_info = bor(update_info, C.EINK_MONOCHROME)
     end
     --]]
@@ -298,6 +298,7 @@ function framebuffer:init()
         self.mech_wait_update_complete = kobo_sunxi_wait_for_update_complete
 
         -- NOTE: Nickel uses a mix of A2 & DU for the keyboard (A2 on keys, DU on the input field).
+        --       We use A2 & GL16 to avoid losing AA on the input field.
         self.waveform_a2 = C.EINK_A2_MODE
         self.waveform_fast = C.EINK_DU_MODE
         self.waveform_ui = C.EINK_GL16_MODE
