@@ -410,8 +410,8 @@ local function refresh_k51(fb, is_flashing, waveform_mode, x, y, w, h)
     -- In the very few cases we use A2 (i.e., the keyboard), using FORCE_MONOCHROME would be actively harmful:
     -- we only highlight a border around the key, so we don't actually modify the glyph;
     -- since non-GC updates leave untouched pixels alone, we leave the glyph (and its AA!) alone.
-    -- If we used FORCE_MONOCHROME, it would crush the AA, and the A2 update would have to pick up the modified pixels,
-    -- leading to worse results.
+    -- If we used FORCE_MONOCHROME, it would affect the whole rectangle, crushing the AA,
+    -- and the A2 update would have to pick up the modified pixels, leading to worse results.
     if waveform_mode == C.WAVEFORM_MODE_DU then
         fb.update_data.flags = C.EPDC_FLAG_FORCE_MONOCHROME
     else
