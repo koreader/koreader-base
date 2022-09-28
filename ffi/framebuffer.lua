@@ -175,11 +175,19 @@ function fb:refreshPartialImp(x, y, w, h, d)
     -- default is fallback
     return self:refreshFullImp(x, y, w, h, d)
 end
+function fb:refreshNoMergePartialImp(x, y, w, h, d)
+    -- default is fallback
+    return self:refreshPartialImp(x, y, w, h, d)
+end
 function fb:refreshFlashPartialImp(x, y, w, h, d)
     -- default is fallback
     return self:refreshFullImp(x, y, w, h, d)
 end
 function fb:refreshUIImp(x, y, w, h, d)
+    -- default is fallback
+    return self:refreshPartialImp(x, y, w, h, d)
+end
+function fb:refreshNoMergeUIImp(x, y, w, h, d)
     -- default is fallback
     return self:refreshPartialImp(x, y, w, h, d)
 end
@@ -205,6 +213,10 @@ function fb:refreshPartial(x, y, w, h, d)
     x, y, w, h = self:calculateRealCoordinates(x, y, w, h)
     return self:refreshPartialImp(x, y, w, h, d)
 end
+function fb:refreshNoMergePartial(x, y, w, h, d)
+    x, y, w, h = self:calculateRealCoordinates(x, y, w, h)
+    return self:refreshNoMergePartialImp(x, y, w, h, d)
+end
 function fb:refreshFlashPartial(x, y, w, h, d)
     x, y, w, h = self:calculateRealCoordinates(x, y, w, h)
     return self:refreshFlashPartialImp(x, y, w, h, d)
@@ -212,6 +224,10 @@ end
 function fb:refreshUI(x, y, w, h, d)
     x, y, w, h = self:calculateRealCoordinates(x, y, w, h)
     return self:refreshUIImp(x, y, w, h, d)
+end
+function fb:refreshNoMergeUI(x, y, w, h, d)
+    x, y, w, h = self:calculateRealCoordinates(x, y, w, h)
+    return self:refreshNoMergeUIImp(x, y, w, h, d)
 end
 function fb:refreshFlashUI(x, y, w, h, d)
     x, y, w, h = self:calculateRealCoordinates(x, y, w, h)

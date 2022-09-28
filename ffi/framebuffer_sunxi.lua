@@ -112,7 +112,7 @@ end
 --[[ refresh functions ]]--
 
 -- NOTE: Heavily based on framebuffer_mxcfb's mxc_update ;)
-local function disp_update(fb, ioc_cmd, ioc_data, is_flashing, waveform_mode, waveform_info, x, y, w, h)
+local function disp_update(fb, ioc_cmd, ioc_data, no_merge, is_flashing, waveform_mode, waveform_info, x, y, w, h)
     local bb = fb.full_bb or fb.bb
 
     -- If we're fresh off a rotation, make it full-screen to avoid layer blending glitches...
@@ -180,7 +180,9 @@ local function disp_update(fb, ioc_cmd, ioc_data, is_flashing, waveform_mode, wa
 
     -- Make sure we actually flash by bypassing the "working buffer was untouched" memcmp "optimization"...
     -- NOTE: This appeared in the Sage kernel on FW 4.29.
-    if is_flashing then
+    -- NOTE: no_merge is always true if is_flashing is enabled, but we also have [ui] and [partial] modes
+    --       that will request NO_MERGE without flashing, to avoid some more kernel bugs around collision handling...
+    if no_merge then
         waveform_info = bor(waveform_info, C.EINK_NO_MERGE)
     end
 
@@ -231,32 +233,37 @@ end
 
 function framebuffer:refreshPartialImp(x, y, w, h, dither)
     self.debug("refresh: partial", x, y, w, h, dither and "w/ HW dithering")
-    self:mech_refresh(false, self.waveform_partial, x, y, w, h, dither)
+    self:mech_refresh(false, false, self.waveform_partial, x, y, w, h, dither)
 end
 
 function framebuffer:refreshFlashPartialImp(x, y, w, h, dither)
     self.debug("refresh: partial w/ flash", x, y, w, h, dither and "w/ HW dithering")
-    self:mech_refresh(true, self.waveform_partial, x, y, w, h, dither)
+    self:mech_refresh(true, true, self.waveform_partial, x, y, w, h, dither)
 end
 
 function framebuffer:refreshUIImp(x, y, w, h, dither)
     self.debug("refresh: ui-mode", x, y, w, h, dither and "w/ HW dithering")
-    self:mech_refresh(false, self.waveform_ui, x, y, w, h, dither)
+    self:mech_refresh(false, false, self.waveform_ui, x, y, w, h, dither)
+end
+
+function framebuffer:refreshFencedUIImp(x, y, w, h, dither)
+    self.debug("refresh: ui-mode w/ flash", x, y, w, h, dither and "w/ HW dithering")
+    self:mech_refresh(true, false, self.waveform_ui, x, y, w, h, dither)
 end
 
 function framebuffer:refreshFlashUIImp(x, y, w, h, dither)
     self.debug("refresh: ui-mode w/ flash", x, y, w, h, dither and "w/ HW dithering")
-    self:mech_refresh(true, self.waveform_flashui, x, y, w, h, dither)
+    self:mech_refresh(true, true, self.waveform_flashui, x, y, w, h, dither)
 end
 
 function framebuffer:refreshFullImp(x, y, w, h, dither)
     self.debug("refresh: full", x, y, w, h, dither and "w/ HW dithering")
-    self:mech_refresh(true, self.waveform_full, x, y, w, h, dither)
+    self:mech_refresh(true, true, self.waveform_full, x, y, w, h, dither)
 end
 
 function framebuffer:refreshFastImp(x, y, w, h, dither)
     self.debug("refresh: fast", x, y, w, h, dither and "w/ HW dithering")
-    self:mech_refresh(false, self.waveform_fast, x, y, w, h, dither)
+    self:mech_refresh(false, false, self.waveform_fast, x, y, w, h, dither)
 end
 
 function framebuffer:refreshWaitForLastImp()
