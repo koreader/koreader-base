@@ -172,36 +172,31 @@ function fb:refreshFullImp(x, y, w, h, d)
     -- the others default to fall back to this.
 end
 function fb:refreshPartialImp(x, y, w, h, d)
-    -- default is fallback
     return self:refreshFullImp(x, y, w, h, d)
 end
 function fb:refreshNoMergePartialImp(x, y, w, h, d)
-    -- default is fallback
     return self:refreshPartialImp(x, y, w, h, d)
 end
 function fb:refreshFlashPartialImp(x, y, w, h, d)
-    -- default is fallback
     return self:refreshFullImp(x, y, w, h, d)
 end
 function fb:refreshUIImp(x, y, w, h, d)
-    -- default is fallback
     return self:refreshPartialImp(x, y, w, h, d)
 end
 function fb:refreshNoMergeUIImp(x, y, w, h, d)
-    -- default is fallback
-    return self:refreshPartialImp(x, y, w, h, d)
+    return self:refreshUIImp(x, y, w, h, d)
 end
 function fb:refreshFlashUIImp(x, y, w, h, d)
-    -- default is fallback
     return self:refreshFullImp(x, y, w, h, d)
 end
 function fb:refreshFastImp(x, y, w, h, d)
-    -- default is fallback
     return self:refreshPartialImp(x, y, w, h, d)
+end
+function fb:refreshA2Imp(x, y, w, h, d)
+    return self:refreshFastImp(x, y, w, h, d)
 end
 function fb:refreshWaitForLastImp()
     -- default is NOP
-    return
 end
 
 -- these should not be overridden, they provide the external refresh API:
@@ -236,6 +231,10 @@ end
 function fb:refreshFast(x, y, w, h, d)
     x, y, w, h = self:calculateRealCoordinates(x, y, w, h)
     return self:refreshFastImp(x, y, w, h, d)
+end
+function fb:refreshA2(x, y, w, h, d)
+    x, y, w, h = self:calculateRealCoordinates(x, y, w, h)
+    return self:refreshA2Imp(x, y, w, h, d)
 end
 function fb:refreshWaitForLast()
     return self:refreshWaitForLastImp()

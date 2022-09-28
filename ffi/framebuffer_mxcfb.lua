@@ -603,7 +603,7 @@ local function refresh_kobo_mk7(fb, is_flashing, waveform_mode, x, y, w, h, dith
     -- Enable the appropriate flag when requesting a 2bit update, provided we're not dithering.
     -- NOTE: As of right now (FW 4.9.x), WAVEFORM_MODE_GLD16 appears not to be used by Nickel,
     --       so we don't have to care about EPDC_FLAG_USE_REGAL
-    -- NOTE: We never actually request A2 updates anymore (on any platform, actually), but,
+    -- NOTE: We barely ever actually request A2 updates anymore (on any platform, actually), but,
     --       on Mk. 7 specifically, we want to avoid stacking EPDC_FLAGs,
     --       because the kernel is buggy (c.f., https://github.com/NiLuJe/FBInk/blob/96a2cd6a93f5184c595c0e53a844fd883adfd75b/fbink.c#L2422-L2440).
     --       For our use-cases, FORCE_MONOCHROME is mostly unnecessary anyway (the effect being fuzzier text instead of blockier text, i.e., choose your poison ;p).
@@ -689,6 +689,11 @@ function framebuffer:refreshFastImp(x, y, w, h, dither)
     self:mech_refresh(false, self.waveform_fast, x, y, w, h, dither)
 end
 
+function framebuffer:refreshA2Imp(x, y, w, h, dither)
+    self.debug("refresh: A2", x, y, w, h, dither and "w/ HW dithering")
+    self:mech_refresh(false, self.waveform_a2, x, y, w, h, dither)
+end
+
 function framebuffer:refreshWaitForLastImp()
     if self.mech_wait_update_complete and self.dont_wait_for_marker ~= self.marker then
         self.debug("refresh: waiting for previous update", self.marker)
@@ -714,6 +719,7 @@ function framebuffer:init()
         self.mech_wait_update_complete = kindle_pearl_mxc_wait_for_update_complete
         self.mech_wait_update_submission = kindle_mxc_wait_for_update_submission
 
+        self.waveform_a2 = C.WAVEFORM_MODE_A2
         self.waveform_fast = C.WAVEFORM_MODE_A2 -- NOTE: Mostly here for archeological purposes, we switch to DU on every device right below this ;).
         self.waveform_ui = C.WAVEFORM_MODE_GC16_FAST
         self.waveform_flashui = self.waveform_ui
@@ -744,6 +750,7 @@ function framebuffer:init()
                 self.mech_refresh = refresh_rex
             end
 
+            self.waveform_a2 = C.WAVEFORM_MODE_ZELDA_A2
             self.waveform_fast = C.WAVEFORM_MODE_DU
             self.waveform_ui = C.WAVEFORM_MODE_AUTO
             -- NOTE: Possibly to bypass the possibility that AUTO, even when FULL, might not flash (something which holds true for a number of devices, especially on small regions),
@@ -767,6 +774,7 @@ function framebuffer:init()
         if self.device:isMTK() then
             self.mech_refresh = refresh_mtk
 
+            self.waveform_a2 = C.MTK_WAVEFORM_MODE_A2
             self.waveform_fast = C.MTK_WAVEFORM_MODE_DU
             self.waveform_ui = C.WAVEFORM_MODE_AUTO
             self.waveform_flashui = self.waveform_ui
@@ -820,6 +828,7 @@ function framebuffer:init()
         self.mech_refresh = refresh_kobo
         self.mech_wait_update_complete = kobo_mxc_wait_for_update_complete
 
+        self.waveform_a2 = C.WAVEFORM_MODE_A2
         self.waveform_fast = C.WAVEFORM_MODE_DU
         self.waveform_ui = C.WAVEFORM_MODE_AUTO
         self.waveform_flashui = self.waveform_ui
@@ -892,6 +901,7 @@ function framebuffer:init()
         self.mech_refresh = refresh_pocketbook
         self.mech_wait_update_complete = pocketbook_mxc_wait_for_update_complete
 
+        self.waveform_a2 = C.WAVEFORM_MODE_A2
         self.wf_level_max = 3
         local level = self:getWaveformLevel()
         -- Level 0 is most conservative.
@@ -933,6 +943,7 @@ function framebuffer:init()
         self.mech_refresh = refresh_remarkable
         self.mech_wait_update_complete = remarkable_mxc_wait_for_update_complete
 
+        self.waveform_a2 = C.WAVEFORM_MODE_A2
         self.waveform_fast = C.WAVEFORM_MODE_DU
         self.waveform_ui = C.WAVEFORM_MODE_GL16
         self.waveform_flashui = C.WAVEFORM_MODE_GC16
@@ -955,6 +966,7 @@ function framebuffer:init()
         self.mech_refresh = refresh_sony_prstux
         self.mech_wait_update_complete = sony_prstux_mxc_wait_for_update_complete
 
+        self.waveform_a2 = C.WAVEFORM_MODE_A2
         self.waveform_fast = C.WAVEFORM_MODE_DU
         self.waveform_ui = C.WAVEFORM_MODE_AUTO
         self.waveform_flashui = self.waveform_ui
@@ -974,6 +986,7 @@ function framebuffer:init()
         self.mech_refresh = refresh_cervantes
         self.mech_wait_update_complete = cervantes_mxc_wait_for_update_complete
 
+        self.waveform_a2 = C.WAVEFORM_MODE_A2
         self.waveform_fast = C.WAVEFORM_MODE_DU
         self.waveform_ui = C.WAVEFORM_MODE_AUTO
         self.waveform_flashui = self.waveform_ui

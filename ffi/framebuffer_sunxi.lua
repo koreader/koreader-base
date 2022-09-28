@@ -220,10 +220,13 @@ local function refresh_kobo_sunxi(fb, no_merge, is_flashing, waveform_mode, x, y
     if waveform_mode == C.EINK_GLR16_MODE or waveform_mode == C.EINK_GLD16_MODE then
         update_info = bor(update_info, C.EINK_REGAL_MODE)
     end
+    --[[
+    -- NOTE: Unlike on mxcfb, this isn't HW assisted, this just uses the "simple" Y8->Y1 dither algorithm...
+    --       As such, given the use-case for A2, this is wholly counter-productive ;).
     if waveform_mode == C.EINK_A2_MODE then
-        -- NOTE: Unlike on mxcfb, this isn't HW assisted, this just uses the "simple" Y8->Y1 dither algorithm...
         update_info = bor(update_info, C.EINK_MONOCHROME)
     end
+    --]]
 
     return disp_update(fb, C.DISP_EINK_UPDATE2, fb.update, no_merge, is_flashing, waveform_mode, update_info, x, y, w, h)
 end
@@ -271,6 +274,11 @@ function framebuffer:refreshFastImp(x, y, w, h, dither)
     self:mech_refresh(false, false, self.waveform_fast, x, y, w, h, dither)
 end
 
+function framebuffer:refreshA2Imp(x, y, w, h, dither)
+    self.debug("refresh: A2", x, y, w, h, dither and "w/ HW dithering")
+    self:mech_refresh(false, false, self.waveform_a2, x, y, w, h, dither)
+end
+
 function framebuffer:refreshWaitForLastImp()
     if self.mech_wait_update_complete and self.dont_wait_for_marker ~= self.marker_data[0] then
         self.debug("refresh: waiting for previous update", self.marker_data[0])
@@ -289,6 +297,8 @@ function framebuffer:init()
         self.mech_refresh = refresh_kobo_sunxi
         self.mech_wait_update_complete = kobo_sunxi_wait_for_update_complete
 
+        -- NOTE: Nickel uses a mix of A2 & DU for the keyboard (A2 on keys, DU on the input field).
+        self.waveform_a2 = C.EINK_A2_MODE
         self.waveform_fast = C.EINK_DU_MODE
         self.waveform_ui = C.EINK_GL16_MODE
         -- You can't make GL16 flash :/
