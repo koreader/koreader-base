@@ -213,7 +213,7 @@ local function disp_update(fb, ioc_cmd, ioc_data, no_merge, is_flashing, wavefor
     end
 end
 
-local function refresh_kobo_sunxi(fb, is_flashing, waveform_mode, x, y, w, h)
+local function refresh_kobo_sunxi(fb, no_merge, is_flashing, waveform_mode, x, y, w, h)
     -- Store the auxiliary update flags in a separate bitmask we'll bake in later,
     -- as it makes identifying waveform modes easier in disp_update...
     local update_info = 0
@@ -225,7 +225,7 @@ local function refresh_kobo_sunxi(fb, is_flashing, waveform_mode, x, y, w, h)
         update_info = bor(update_info, C.EINK_MONOCHROME)
     end
 
-    return disp_update(fb, C.DISP_EINK_UPDATE2, fb.update, is_flashing, waveform_mode, update_info, x, y, w, h)
+    return disp_update(fb, C.DISP_EINK_UPDATE2, fb.update, no_merge, is_flashing, waveform_mode, update_info, x, y, w, h)
 end
 
 
@@ -234,6 +234,11 @@ end
 function framebuffer:refreshPartialImp(x, y, w, h, dither)
     self.debug("refresh: partial", x, y, w, h, dither and "w/ HW dithering")
     self:mech_refresh(false, false, self.waveform_partial, x, y, w, h, dither)
+end
+
+function framebuffer:refreshNoMergePartialImp(x, y, w, h, dither)
+    self.debug("refresh: no-merge partial w/ flash", x, y, w, h, dither and "w/ HW dithering")
+    self:mech_refresh(true, false, self.waveform_partial, x, y, w, h, dither)
 end
 
 function framebuffer:refreshFlashPartialImp(x, y, w, h, dither)
@@ -246,8 +251,8 @@ function framebuffer:refreshUIImp(x, y, w, h, dither)
     self:mech_refresh(false, false, self.waveform_ui, x, y, w, h, dither)
 end
 
-function framebuffer:refreshFencedUIImp(x, y, w, h, dither)
-    self.debug("refresh: ui-mode w/ flash", x, y, w, h, dither and "w/ HW dithering")
+function framebuffer:refreshNoMergeUIImp(x, y, w, h, dither)
+    self.debug("refresh: no-merge ui-mode w/ flash", x, y, w, h, dither and "w/ HW dithering")
     self:mech_refresh(true, false, self.waveform_ui, x, y, w, h, dither)
 end
 
