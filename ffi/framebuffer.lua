@@ -145,9 +145,7 @@ function fb:init()
     if self.screen_size.w > self.screen_size.h and self.is_always_portrait then
         self.screen_size.w, self.screen_size.h = self.screen_size.h, self.screen_size.w
         -- some framebuffers need to be rotated counter-clockwise (they start in landscape mode)
-        io.flush()
         io.write("FB: Enforcing portrait mode by doing an initial BB rotation\n")
-        io.flush()
         self.debug("FB: This prevents the use of blitting optimizations. This should instead be fixed on the device's side on startup.")
         self.bb:rotate(-90)
         self.blitbuffer_rotation_mode = self.bb:getRotation()
