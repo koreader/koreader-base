@@ -100,7 +100,7 @@ you can process your value with @{secondsFromNowToEpoch}.
 function RTC:setWakeupAlarm(epoch, enabled)
     enabled = (enabled ~= nil) and enabled or true
 
-    self._wakeup_scheduled_tm = ffi.new("struct tm[1]")
+    self._wakeup_scheduled_tm = ffi.new("struct tm")
     local ptm = C.gmtime_r(ffi.new("time_t[1]", epoch), self._wakeup_scheduled_tm)
 
     local wake = ffi.new("struct rtc_wkalrm")
@@ -212,7 +212,7 @@ function RTC:getWakeupAlarmSys()
     -- Seed a struct tm with the current time, because not every field will be set in wake
     local t = ffi.new("time_t[1]")
     t[0] = C.time(nil)
-    local tm = ffi.new("struct tm[1]") -- luacheck: ignore
+    local tm = ffi.new("struct tm")
     local ptm = C.gmtime_r(t, tm)
     -- And now update it with the fields that *are* set by the ioctl
     ptm.tm_sec = wake.time.tm_sec
@@ -252,10 +252,10 @@ function RTC:readHardwareClock()
         return nil, re, err
     end
 
-    -- Seed a struct tm with the current time, because not every field will be set in wake
+    -- Seed a struct tm with the current time, because not every field will be set in rtc
     local t = ffi.new("time_t[1]")
     t[0] = C.time(nil)
-    local tm = ffi.new("struct tm[1]") -- luacheck: ignore
+    local tm = ffi.new("struct tm")
     local ptm = C.gmtime_r(t, tm)
     -- And now update it with the fields that *are* set by the ioctl
     ptm.tm_sec = rtc.tm_sec
