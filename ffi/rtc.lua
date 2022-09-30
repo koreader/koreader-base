@@ -292,11 +292,12 @@ function RTC:validateWakeupAlarmByProximity(task_alarm, proximity)
     local alarm_sys = tonumber(C.timegm(alarm_sys_tm))
 
     -- Everything's in UTC, ask Lua to convert that to a human-readable format in the local timezone
+    -- NOTE: Ideally, the first three entries should be identical.
     if task_alarm then
         print("validateWakeupAlarmByProximity:",
-            "\ntask              @ " .. task_alarm .. os.date(" (%F %T %z)", task_alarm),
-            "\nlast set alarm    @ " .. alarm .. os.date(" (%F %T %z)", alarm),
-            "\ncurrent rtc alarm @ " .. alarm_sys .. os.date(" (%F %T %z)", alarm_sys),
+            "\ntask              @ " .. task_alarm .. os.date(" (%F %T %z)", task_alarm), -- what we were asked to validate
+            "\nlast set alarm    @ " .. alarm .. os.date(" (%F %T %z)", alarm),           -- the last alarm *we* setup
+            "\ncurrent rtc alarm @ " .. alarm_sys .. os.date(" (%F %T %z)", alarm_sys),   -- the current rtc alarm
             "\ncurrent rtc time is " .. rtc_now .. os.date(" (%F %T %z)", rtc_now),
             "\ncurrent time is     " .. now .. os.date(" (%F %T %z)", now))
     end
