@@ -23,8 +23,8 @@ require("ffi/rtc_h")
 -----------------------------------------------------------------
 
 local RTC = {
-    _wakeup_scheduled = false,   -- Flipped in @{setWakeupAlarm} and @{unsetWakeupAlarm}.
-    _wakeup_scheduled_ptm = nil, -- Stores a reference to the time of the last scheduled wakeup alarm.
+    _wakeup_scheduled = false,  -- Flipped in @{setWakeupAlarm} and @{unsetWakeupAlarm}.
+    _wakeup_scheduled_tm = nil, -- The tm struct of the last scheduled wakeup alarm.
 }
 
 --[[--
@@ -100,8 +100,8 @@ you can process your value with @{secondsFromNowToEpoch}.
 function RTC:setWakeupAlarm(epoch, enabled)
     enabled = (enabled ~= nil) and enabled or true
 
-    local ptm = C.gmtime(ffi.new("time_t[1]", epoch))
-    self._wakeup_scheduled_ptm = ptm
+    self._wakeup_scheduled_tm = ffi.new("struct tm[1]")
+    local ptm = C.gmtime_r(ffi.new("time_t[1]", epoch), self._wakeup_scheduled_tm)
 
     local wake = ffi.new("struct rtc_wkalrm")
     wake.time.tm_sec = ptm.tm_sec
@@ -154,7 +154,7 @@ function RTC:unsetWakeupAlarm()
     --       c.f., toggleAlarmInterrupt for details.
     self:toggleAlarmInterrupt(false)
     self._wakeup_scheduled = false
-    self._wakeup_scheduled_ptm = nil
+    self._wakeup_scheduled_tm = nil
 end
 
 --[[--
@@ -165,7 +165,7 @@ This value is compared with @{getWakeupAlarmSys} in @{validateWakeupAlarmByProxi
 @treturn tm (time struct)
 --]]
 function RTC:getWakeupAlarm()
-    return self._wakeup_scheduled_ptm
+    return self._wakeup_scheduled_tm
 end
 
 --[[--
@@ -175,7 +175,7 @@ Return the timestamp of the alarm we set (if any).
 --]]
 function RTC:getWakeupAlarmEpoch()
     if self._wakeup_scheduled then
-        return tonumber(C.timegm(self._wakeup_scheduled_ptm))
+        return tonumber(C.timegm(self._wakeup_scheduled_tm))
     else
         return nil
     end
@@ -212,15 +212,15 @@ function RTC:getWakeupAlarmSys()
     -- Seed a struct tm with the current time, because not every field will be set in wake
     local t = ffi.new("time_t[1]")
     t[0] = C.time(nil)
-    local tm = ffi.new("struct tm") -- luacheck: ignore
-    tm = C.gmtime(t)
+    local tm = ffi.new("struct tm[1]") -- luacheck: ignore
+    local ptm = C.gmtime_r(t, tm)
     -- And now update it with the fields that *are* set by the ioctl
-    tm.tm_sec = wake.time.tm_sec
-    tm.tm_min = wake.time.tm_min
-    tm.tm_hour = wake.time.tm_hour
-    tm.tm_mday = wake.time.tm_mday
-    tm.tm_mon = wake.time.tm_mon
-    tm.tm_year = wake.time.tm_year
+    ptm.tm_sec = wake.time.tm_sec
+    ptm.tm_min = wake.time.tm_min
+    ptm.tm_hour = wake.time.tm_hour
+    ptm.tm_mday = wake.time.tm_mday
+    ptm.tm_mon = wake.time.tm_mon
+    ptm.tm_year = wake.time.tm_year
     return tm
 end
 
@@ -255,15 +255,15 @@ function RTC:readHardwareClock()
     -- Seed a struct tm with the current time, because not every field will be set in wake
     local t = ffi.new("time_t[1]")
     t[0] = C.time(nil)
-    local tm = ffi.new("struct tm") -- luacheck: ignore
-    tm = C.gmtime(t)
+    local tm = ffi.new("struct tm[1]") -- luacheck: ignore
+    local ptm = C.gmtime_r(t, tm)
     -- And now update it with the fields that *are* set by the ioctl
-    tm.tm_sec = rtc.tm_sec
-    tm.tm_min = rtc.tm_min
-    tm.tm_hour = rtc.tm_hour
-    tm.tm_mday = rtc.tm_mday
-    tm.tm_mon = rtc.tm_mon
-    tm.tm_year = rtc.tm_year
+    ptm.tm_sec = rtc.tm_sec
+    ptm.tm_min = rtc.tm_min
+    ptm.tm_hour = rtc.tm_hour
+    ptm.tm_mday = rtc.tm_mday
+    ptm.tm_mon = rtc.tm_mon
+    ptm.tm_year = rtc.tm_year
     return tm
 end
 
