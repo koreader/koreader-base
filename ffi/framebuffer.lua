@@ -145,9 +145,7 @@ function fb:init()
     if self.screen_size.w > self.screen_size.h and self.is_always_portrait then
         self.screen_size.w, self.screen_size.h = self.screen_size.h, self.screen_size.w
         -- some framebuffers need to be rotated counter-clockwise (they start in landscape mode)
-        io.flush()
         io.write("FB: Enforcing portrait mode by doing an initial BB rotation\n")
-        io.flush()
         self.debug("FB: This prevents the use of blitting optimizations. This should instead be fixed on the device's side on startup.")
         self.bb:rotate(-90)
         self.blitbuffer_rotation_mode = self.bb:getRotation()
@@ -172,28 +170,31 @@ function fb:refreshFullImp(x, y, w, h, d)
     -- the others default to fall back to this.
 end
 function fb:refreshPartialImp(x, y, w, h, d)
-    -- default is fallback
     return self:refreshFullImp(x, y, w, h, d)
 end
+function fb:refreshNoMergePartialImp(x, y, w, h, d)
+    return self:refreshPartialImp(x, y, w, h, d)
+end
 function fb:refreshFlashPartialImp(x, y, w, h, d)
-    -- default is fallback
     return self:refreshFullImp(x, y, w, h, d)
 end
 function fb:refreshUIImp(x, y, w, h, d)
-    -- default is fallback
     return self:refreshPartialImp(x, y, w, h, d)
 end
+function fb:refreshNoMergeUIImp(x, y, w, h, d)
+    return self:refreshUIImp(x, y, w, h, d)
+end
 function fb:refreshFlashUIImp(x, y, w, h, d)
-    -- default is fallback
     return self:refreshFullImp(x, y, w, h, d)
 end
 function fb:refreshFastImp(x, y, w, h, d)
-    -- default is fallback
     return self:refreshPartialImp(x, y, w, h, d)
+end
+function fb:refreshA2Imp(x, y, w, h, d)
+    return self:refreshFastImp(x, y, w, h, d)
 end
 function fb:refreshWaitForLastImp()
     -- default is NOP
-    return
 end
 
 -- these should not be overridden, they provide the external refresh API:
@@ -205,6 +206,10 @@ function fb:refreshPartial(x, y, w, h, d)
     x, y, w, h = self:calculateRealCoordinates(x, y, w, h)
     return self:refreshPartialImp(x, y, w, h, d)
 end
+function fb:refreshNoMergePartial(x, y, w, h, d)
+    x, y, w, h = self:calculateRealCoordinates(x, y, w, h)
+    return self:refreshNoMergePartialImp(x, y, w, h, d)
+end
 function fb:refreshFlashPartial(x, y, w, h, d)
     x, y, w, h = self:calculateRealCoordinates(x, y, w, h)
     return self:refreshFlashPartialImp(x, y, w, h, d)
@@ -213,6 +218,10 @@ function fb:refreshUI(x, y, w, h, d)
     x, y, w, h = self:calculateRealCoordinates(x, y, w, h)
     return self:refreshUIImp(x, y, w, h, d)
 end
+function fb:refreshNoMergeUI(x, y, w, h, d)
+    x, y, w, h = self:calculateRealCoordinates(x, y, w, h)
+    return self:refreshNoMergeUIImp(x, y, w, h, d)
+end
 function fb:refreshFlashUI(x, y, w, h, d)
     x, y, w, h = self:calculateRealCoordinates(x, y, w, h)
     return self:refreshFlashUIImp(x, y, w, h, d)
@@ -220,6 +229,10 @@ end
 function fb:refreshFast(x, y, w, h, d)
     x, y, w, h = self:calculateRealCoordinates(x, y, w, h)
     return self:refreshFastImp(x, y, w, h, d)
+end
+function fb:refreshA2(x, y, w, h, d)
+    x, y, w, h = self:calculateRealCoordinates(x, y, w, h)
+    return self:refreshA2Imp(x, y, w, h, d)
 end
 function fb:refreshWaitForLast()
     return self:refreshWaitForLastImp()

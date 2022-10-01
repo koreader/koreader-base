@@ -57,12 +57,6 @@ function framebuffer:_isREAGLWaveFormMode(waveform_mode)
     return waveform_mode == self.waveform_reagl
 end
 
--- Returns true if waveform_mode arg matches the fast waveform mode for the current device
--- NOTE: This is to avoid explicit comparison against device-specific waveform constants in disp_update()
-function framebuffer:_isFastWaveFormMode(waveform_mode)
-    return waveform_mode == self.waveform_fast
-end
-
 -- Returns true if waveform_mode arg matches the partial waveform mode for the current device
 -- NOTE: This is to avoid explicit comparison against device-specific waveform constants in disp_update()
 function framebuffer:_isPartialWaveFormMode(waveform_mode)
@@ -112,7 +106,7 @@ end
 --[[ refresh functions ]]--
 
 -- NOTE: Heavily based on framebuffer_mxcfb's mxc_update ;)
-local function disp_update(fb, ioc_cmd, ioc_data, is_flashing, waveform_mode, waveform_info, x, y, w, h)
+local function disp_update(fb, ioc_cmd, ioc_data, no_merge, is_flashing, waveform_mode, waveform_info, x, y, w, h)
     local bb = fb.full_bb or fb.bb
 
     -- If we're fresh off a rotation, make it full-screen to avoid layer blending glitches...
@@ -180,7 +174,9 @@ local function disp_update(fb, ioc_cmd, ioc_data, is_flashing, waveform_mode, wa
 
     -- Make sure we actually flash by bypassing the "working buffer was untouched" memcmp "optimization"...
     -- NOTE: This appeared in the Sage kernel on FW 4.29.
-    if is_flashing then
+    -- NOTE: no_merge is always true if is_flashing is enabled, but we also have [ui] and [partial] modes
+    --       that will request NO_MERGE without flashing, to avoid some more kernel bugs around collision handling...
+    if no_merge then
         waveform_info = bor(waveform_info, C.EINK_NO_MERGE)
     end
 
@@ -211,19 +207,22 @@ local function disp_update(fb, ioc_cmd, ioc_data, is_flashing, waveform_mode, wa
     end
 end
 
-local function refresh_kobo_sunxi(fb, is_flashing, waveform_mode, x, y, w, h)
+local function refresh_kobo_sunxi(fb, no_merge, is_flashing, waveform_mode, x, y, w, h)
     -- Store the auxiliary update flags in a separate bitmask we'll bake in later,
     -- as it makes identifying waveform modes easier in disp_update...
     local update_info = 0
     if waveform_mode == C.EINK_GLR16_MODE or waveform_mode == C.EINK_GLD16_MODE then
         update_info = bor(update_info, C.EINK_REGAL_MODE)
     end
-    if waveform_mode == C.EINK_A2_MODE then
-        -- NOTE: Unlike on mxcfb, this isn't HW assisted, this just uses the "simple" Y8->Y1 dither algorithm...
+    --[[
+    -- NOTE: Unlike on mxcfb, this isn't HW assisted, this just uses the "simple" Y8->Y1 dither algorithm...
+    --       As such, given the use-case for A2 (or DU, for that matter), this is wholly counter-productive ;).
+    if waveform_mode == C.EINK_DU_MODE then
         update_info = bor(update_info, C.EINK_MONOCHROME)
     end
+    --]]
 
-    return disp_update(fb, C.DISP_EINK_UPDATE2, fb.update, is_flashing, waveform_mode, update_info, x, y, w, h)
+    return disp_update(fb, C.DISP_EINK_UPDATE2, fb.update, no_merge, is_flashing, waveform_mode, update_info, x, y, w, h)
 end
 
 
@@ -231,32 +230,47 @@ end
 
 function framebuffer:refreshPartialImp(x, y, w, h, dither)
     self.debug("refresh: partial", x, y, w, h, dither and "w/ HW dithering")
-    self:mech_refresh(false, self.waveform_partial, x, y, w, h, dither)
+    self:mech_refresh(false, false, self.waveform_partial, x, y, w, h, dither)
+end
+
+function framebuffer:refreshNoMergePartialImp(x, y, w, h, dither)
+    self.debug("refresh: no-merge partial w/ flash", x, y, w, h, dither and "w/ HW dithering")
+    self:mech_refresh(true, false, self.waveform_partial, x, y, w, h, dither)
 end
 
 function framebuffer:refreshFlashPartialImp(x, y, w, h, dither)
     self.debug("refresh: partial w/ flash", x, y, w, h, dither and "w/ HW dithering")
-    self:mech_refresh(true, self.waveform_partial, x, y, w, h, dither)
+    self:mech_refresh(true, true, self.waveform_partial, x, y, w, h, dither)
 end
 
 function framebuffer:refreshUIImp(x, y, w, h, dither)
     self.debug("refresh: ui-mode", x, y, w, h, dither and "w/ HW dithering")
-    self:mech_refresh(false, self.waveform_ui, x, y, w, h, dither)
+    self:mech_refresh(false, false, self.waveform_ui, x, y, w, h, dither)
+end
+
+function framebuffer:refreshNoMergeUIImp(x, y, w, h, dither)
+    self.debug("refresh: no-merge ui-mode w/ flash", x, y, w, h, dither and "w/ HW dithering")
+    self:mech_refresh(true, false, self.waveform_ui, x, y, w, h, dither)
 end
 
 function framebuffer:refreshFlashUIImp(x, y, w, h, dither)
     self.debug("refresh: ui-mode w/ flash", x, y, w, h, dither and "w/ HW dithering")
-    self:mech_refresh(true, self.waveform_flashui, x, y, w, h, dither)
+    self:mech_refresh(true, true, self.waveform_flashui, x, y, w, h, dither)
 end
 
 function framebuffer:refreshFullImp(x, y, w, h, dither)
     self.debug("refresh: full", x, y, w, h, dither and "w/ HW dithering")
-    self:mech_refresh(true, self.waveform_full, x, y, w, h, dither)
+    self:mech_refresh(true, true, self.waveform_full, x, y, w, h, dither)
 end
 
 function framebuffer:refreshFastImp(x, y, w, h, dither)
     self.debug("refresh: fast", x, y, w, h, dither and "w/ HW dithering")
-    self:mech_refresh(false, self.waveform_fast, x, y, w, h, dither)
+    self:mech_refresh(false, false, self.waveform_fast, x, y, w, h, dither)
+end
+
+function framebuffer:refreshA2Imp(x, y, w, h, dither)
+    self.debug("refresh: A2", x, y, w, h, dither and "w/ HW dithering")
+    self:mech_refresh(false, false, self.waveform_a2, x, y, w, h, dither)
 end
 
 function framebuffer:refreshWaitForLastImp()
@@ -277,6 +291,9 @@ function framebuffer:init()
         self.mech_refresh = refresh_kobo_sunxi
         self.mech_wait_update_complete = kobo_sunxi_wait_for_update_complete
 
+        -- NOTE: Nickel uses a mix of A2 & DU for the keyboard (A2 on keys, DU on the input field).
+        --       We use A2 & GL16 to avoid losing AA on the input field.
+        self.waveform_a2 = C.EINK_A2_MODE
         self.waveform_fast = C.EINK_DU_MODE
         self.waveform_ui = C.EINK_GL16_MODE
         -- You can't make GL16 flash :/
