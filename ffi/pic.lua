@@ -8,12 +8,14 @@ start of pic page type
 --]]
 local PicPage = {}
 
-function PicPage:new(o)
+function PicPage:extend(o)
     o = o or {}
     setmetatable(o, self)
     self.__index = self
     return o
 end
+-- Keep to our usual semantics (extend for class definitions, new for new instances)
+PicPage.new = PicPage.extend
 
 function PicPage:getSize(dc)
     local zoom = dc:getZoom()
@@ -109,7 +111,7 @@ local ensure_giflib_loaded = function()
     end
 end
 
-local GifPage = PicPage:new()
+local GifPage = PicPage:extend{}
 function GifPage:close()
     -- with Gifs, the blitbuffers are per page
     if self.image_bb ~= nil then
@@ -118,7 +120,7 @@ function GifPage:close()
     end
 end
 
-local GifDocument = PicDocument:new{
+local GifDocument = PicDocument:extend{
     giffile = nil,
 }
 function GifDocument:getPages()
@@ -267,7 +269,7 @@ end
 --[[
 WebP handling (an animated WebP will make a document with multiple pages)
 --]]
-local WebpPage = PicPage:new()
+local WebpPage = PicPage:extend{}
 function WebpPage:close()
     -- with WebP, the blitbuffers are per page
     if self.image_bb ~= nil then
@@ -276,7 +278,7 @@ function WebpPage:close()
     end
 end
 
-local WebpDocument = PicDocument:new{
+local WebpDocument = PicDocument:extend{
     webp = nil, -- ffi/webp instance
 }
 function WebpDocument:getPages()
