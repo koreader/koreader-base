@@ -47,12 +47,13 @@ start of pic document
 --]]
 local PicDocument = {}
 
-function PicDocument:new(o)
+function PicDocument:extend(o)
     o = o or {}
     setmetatable(o, self)
     self.__index = self
     return o
 end
+PicDocument.new = PicDocument.extend
 
 function PicDocument:openPage()
     local page = PicPage:new{
