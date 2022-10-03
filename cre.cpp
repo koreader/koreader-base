@@ -1416,12 +1416,16 @@ static int getFontFaceFilenameAndFaceIndex(lua_State *L) {
 	lString8 filename;
 	int faceindex = -1;
 	int family = -1;
-	bool found = fontMan->getFontFileNameAndFaceIndex(lString32(facename), bold, italic, filename, faceindex, family);
+	bool has_ot_math = false;
+	bool has_emojis = false;
+	bool found = fontMan->getFontFileNameAndFaceIndex(lString32(facename), bold, italic, filename, faceindex, family, has_ot_math, has_emojis);
 	if (found) {
 		lua_pushstring(L, filename.c_str());
 		lua_pushinteger(L, faceindex);
 		lua_pushboolean(L, family == css_ff_monospace);
-		return 3;
+		lua_pushboolean(L, has_ot_math);
+		lua_pushboolean(L, has_emojis);
+		return 5;
 	}
 
 	return 0;
