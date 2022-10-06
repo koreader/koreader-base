@@ -33,7 +33,7 @@ function Utf8Proc.lowercase(str, normalize)
     if normalize then
         return Utf8Proc.lowercase_NFKC_Casefold(str)
     else
-        return Utf8Proc.lowercase_dumb(str)
+        return Utf8Proc.cased_dumb(str, true)
     end
 end
 
@@ -47,7 +47,15 @@ end
 
 -- no normalization here
 function Utf8Proc.lowercase_dumb(str)
-    local lowercased = ""
+    return Utf8Proc.cased_dumb(str, true)
+end
+
+function Utf8Proc.uppercase_dumb(str)
+    return Utf8Proc.cased_dumb(str, false)
+end
+
+function Utf8Proc.cased_dumb(str, is_lower)
+    local cased = ""
     local tmp_str = (" "):rep(10)
     local tmp_p = ffi.cast("utf8proc_uint8_t *", tmp_str)
     local str_p = ffi.cast("const utf8proc_uint8_t *", str)
@@ -58,22 +66,22 @@ function Utf8Proc.lowercase_dumb(str)
     while pos < str_len do
         -- get codepoint
         local bytes = libutf8proc.utf8proc_iterate(str_p + pos, -1, codepoint)
-        -- lowercase codepoint
-        local lower_cp = libutf8proc.utf8proc_tolower(codepoint[0])
-        -- encode lowercased codepoint and get length of new char*
-        local lower_len = libutf8proc.utf8proc_encode_char(lower_cp, tmp_p)
-        tmp_p[lower_len] = 0
+        -- cased codepoint
+        local cp = is_lower and libutf8proc.utf8proc_tolower(codepoint[0]) or libutf8proc.utf8proc_toupper(codepoint[0])
+        -- encode cased codepoint and get length of new char*
+        local len = libutf8proc.utf8proc_encode_char(cp, tmp_p)
+        tmp_p[len] = 0
         -- append
-        lowercased = lowercased .. ffi.string(tmp_p)
+        cased = cased .. ffi.string(tmp_p)
 
         if bytes > 0 then
             count = count + 1
             pos = pos + bytes
         else
-            return lowercased
+            return cased
         end
     end
-    return lowercased
+    return cased
 end
 
 --- Normalizes an utf8-encoded string
