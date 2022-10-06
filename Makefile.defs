@@ -1,4 +1,4 @@
-SHELL:=/usr/bin/env bash
+SHELL:=/bin/sh
 
 # Use ccache in build system by default. Define USE_NO_CCACHE=1 to force disable it.
 ifeq ($(USE_NO_CCACHE), 1)
