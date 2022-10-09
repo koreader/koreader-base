@@ -220,8 +220,7 @@ include Makefile.third
 # entry point for the application in OSX
 
 $(OUTPUT_DIR)/koreader: osx_loader.c
-	$(CC) -pagezero_size 10000 -image_base 100000000 \
-	-I$(LUAJIT_DIR)/src $(LUAJIT_STATIC) -o $@ $^
+	$(CC) -I$(LUAJIT_DIR)/src $(LUAJIT_STATIC) -o $@ $^
 
 # ===========================================================================
 # very simple "launcher" for koreader on the remarkable
