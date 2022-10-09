@@ -1,9 +1,10 @@
-diff -uNr a/src/video/cocoa/SDL_cocoaevents.m e/src/video/cocoa/SDL_cocoaevents.m
---- a/src/video/cocoa/SDL_cocoaevents.m	2020-03-11 02:36:18.000000000 +0100
-+++ e/src/video/cocoa/SDL_cocoaevents.m	2020-07-28 21:40:49.000000000 +0200
-@@ -34,6 +34,18 @@
- #define kIOPMAssertPreventUserIdleDisplaySleep kIOPMAssertionTypePreventUserIdleDisplaySleep
- #endif
+diff --git a/src/video/cocoa/SDL_cocoaevents.m b/src/video/cocoa/SDL_cocoaevents.m
+index 4903a8a04..28c4ea325 100644
+--- a/src/video/cocoa/SDL_cocoaevents.m
++++ b/src/video/cocoa/SDL_cocoaevents.m
+@@ -54,6 +54,18 @@ static SDL_Window *FindSDLWindowForNSWindow(NSWindow *win)
+     return sdlwindow;
+ }
  
 +static void _openUrl(NSString *url) {
 +    [[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:url]];
@@ -20,7 +21,7 @@ diff -uNr a/src/video/cocoa/SDL_cocoaevents.m e/src/video/cocoa/SDL_cocoaevents.
  @interface SDLApplication : NSApplication
  
  - (void)terminate:(id)sender;
-@@ -45,6 +57,23 @@
+@@ -65,6 +77,23 @@ static SDL_Window *FindSDLWindowForNSWindow(NSWindow *win)
  
  @implementation SDLApplication
  
@@ -44,7 +45,7 @@ diff -uNr a/src/video/cocoa/SDL_cocoaevents.m e/src/video/cocoa/SDL_cocoaevents.
  // Override terminate to handle Quit and System Shutdown smoothly.
  - (void)terminate:(id)sender
  {
-@@ -233,20 +262,7 @@
+@@ -281,20 +310,7 @@ static void Cocoa_DispatchEvent(NSEvent *theEvent)
  
  - (void)applicationDidFinishLaunching:(NSNotification *)notification
  {
@@ -66,7 +67,7 @@ diff -uNr a/src/video/cocoa/SDL_cocoaevents.m e/src/video/cocoa/SDL_cocoaevents.
  
      /* If we call this before NSApp activation, macOS might print a complaint
       * about ApplePersistenceIgnoreState. */
-@@ -424,12 +440,6 @@
+@@ -471,12 +487,6 @@ Cocoa_RegisterApp(void)
              }
          }
          [NSApp finishLaunching];
