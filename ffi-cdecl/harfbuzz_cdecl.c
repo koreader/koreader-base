@@ -676,4 +676,8 @@ cdecl_func(hb_map_hash)
 
 // HB 5.0.0
 cdecl_func(hb_language_matches)
+
+// HB 5.3.0
+cdecl_func(hb_ot_layout_lookup_get_optical_bound)
+cdecl_func(hb_face_builder_sort_tables)
 */
