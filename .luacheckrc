@@ -6,6 +6,8 @@ self = false
 
 globals = {
     "G_defaults",
+    "table.pack",
+    "table.unpack",
 }
 
 exclude_files = {
