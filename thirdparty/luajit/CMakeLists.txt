@@ -69,12 +69,14 @@ endif()
 
 set(BUILD_CMD sh -c "${BUILD_CMD_STR}")
 
-set(PATCH_CMD "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/koreader-luajit-makefile-tweaks.patch")
+set(PATCH_CMD1 "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/koreader-luajit-makefile-tweaks.patch")
+# Enable table.pack & table.unpack w/o the rest of the -DLUAJIT_ENABLE_LUA52COMPAT baggage...
+set(PATCH_CMD2 "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/koreader-luajit-enable-table_pack.patch")
 
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
     https://github.com/LuaJIT/LuaJIT
-    dad04f1754723e76ba9dcf9f401f3134a0cd3972
+    6c4826f12c4d33b8b978004bc681eb1eef2be977
     ${SOURCE_DIR}
 )
 
@@ -82,7 +84,7 @@ include(ExternalProject)
 ExternalProject_Add(
     ${PROJECT_NAME}
     DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
-    PATCH_COMMAND COMMAND ${PATCH_CMD}
+    PATCH_COMMAND COMMAND ${PATCH_CMD1} COMMAND ${PATCH_CMD2}
     BUILD_IN_SOURCE 1
     # skip configure
     CONFIGURE_COMMAND ""

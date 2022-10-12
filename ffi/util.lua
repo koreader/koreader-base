@@ -264,8 +264,8 @@ function util.execute(...)
     else
         local pid = C.fork()
         if pid == 0 then
-            local args = {...}
-            os.exit(C.execl(args[1], unpack(args, 1, #args+1)))
+            local args = table.pack(...)
+            os.exit(C.execl(args[1], unpack(args, 1, #args+1))) -- Last arg must be a NULL pointer
         end
         local status = ffi.new('int[1]')
         C.waitpid(pid, status, 0)
@@ -722,7 +722,7 @@ This function was inspired by Qt:
 <http://qt-project.org/doc/qt-4.8/internationalization.html#use-qstring-arg-for-dynamic-text>
 --]]
 function util.template(str, ...)
-    local params = {...}
+    local params = table.pack(...)
     -- shortcut:
     if #params == 0 then return str end
     local result = string.gsub(str, "%%([1-9][0-9]?)",
