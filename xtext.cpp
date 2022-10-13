@@ -1186,6 +1186,10 @@ public:
             lua_pushboolean(m_L, true);
             lua_rawset(m_L, -3);
         }
+
+        if (m_text[candidate_end] == 0xAD) {
+            m_text[candidate_end] = '-';
+        }
     }
 
     // Based on crengine/src/lvfntman.cpp drawTextString() with _kerningMode == KERNING_MODE_HARFBUZZ
