@@ -658,37 +658,37 @@ end
 --[[ framebuffer API ]]--
 
 function framebuffer:refreshPartialImp(x, y, w, h, dither)
-    self.debug("refresh: partial", x, y, w, h, dither and "w/ HW dithering")
+    self.debug("refresh: partial", x, y, w, h, dither)
     self:mech_refresh(false, self.waveform_partial, x, y, w, h, dither)
 end
 
 function framebuffer:refreshFlashPartialImp(x, y, w, h, dither)
-    self.debug("refresh: partial w/ flash", x, y, w, h, dither and "w/ HW dithering")
+    self.debug("refresh: partial w/ flash", x, y, w, h, dither)
     self:mech_refresh(true, self.waveform_partial, x, y, w, h, dither)
 end
 
 function framebuffer:refreshUIImp(x, y, w, h, dither)
-    self.debug("refresh: ui-mode", x, y, w, h, dither and "w/ HW dithering")
+    self.debug("refresh: ui-mode", x, y, w, h, dither)
     self:mech_refresh(false, self.waveform_ui, x, y, w, h, dither)
 end
 
 function framebuffer:refreshFlashUIImp(x, y, w, h, dither)
-    self.debug("refresh: ui-mode w/ flash", x, y, w, h, dither and "w/ HW dithering")
+    self.debug("refresh: ui-mode w/ flash", x, y, w, h, dither)
     self:mech_refresh(true, self.waveform_flashui, x, y, w, h, dither)
 end
 
 function framebuffer:refreshFullImp(x, y, w, h, dither)
-    self.debug("refresh: full", x, y, w, h, dither and "w/ HW dithering")
+    self.debug("refresh: full", x, y, w, h, dither)
     self:mech_refresh(true, self.waveform_full, x, y, w, h, dither)
 end
 
 function framebuffer:refreshFastImp(x, y, w, h, dither)
-    self.debug("refresh: fast", x, y, w, h, dither and "w/ HW dithering")
+    self.debug("refresh: fast", x, y, w, h, dither)
     self:mech_refresh(false, self.waveform_fast, x, y, w, h, dither)
 end
 
 function framebuffer:refreshA2Imp(x, y, w, h, dither)
-    self.debug("refresh: A2", x, y, w, h, dither and "w/ HW dithering")
+    self.debug("refresh: A2", x, y, w, h, dither)
     self:mech_refresh(false, self.waveform_a2, x, y, w, h, dither)
 end
 
