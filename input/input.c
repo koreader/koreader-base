@@ -169,20 +169,15 @@ static int openInputDevice(lua_State* L)
     // We're done w/ inputdevice, pop it
     lua_settop(L, 0);
     // Pass the fd to Lua, we might need it for FFI ioctl shenanigans
-    lua_pushinteger(L, inputfds[fd_idx]);
-
-    fd_idx++;
+    lua_pushinteger(L, inputfds[fd_idx++]);
 
     computeNfds();
 
     return 1; // fd
 }
 
-static int closeInputDevice(size_t fd_idx_to_close)
+static int closeInputDevice(ssize_t fd_idx_to_close)
 {
-    // Right now, we close everything, but, in the future, we may want to keep *some* slots open.
-    // Note that doing that would (currently) require making sure those slots are at the start of the array,
-    // in ascending fd number order, and that the array itself isn't sparse.
     int fd = inputfds[fd_idx_to_close];
     if (fd == -1) {
         // Device was not open
@@ -196,11 +191,10 @@ static int closeInputDevice(size_t fd_idx_to_close)
         inputfds[i] = inputfds[i + 1];
     }
 
-    inputfds[fd_idx - 1] = -1;
-    fd_idx--;
+    inputfds[--fd_idx] = -1;
 
     computeNfds();
-    printf("[ko-input] Closed input device with idx=%d, fd=%d\n", fd_idx_to_close, fd);
+    printf("[ko-input] Closed input device with idx=%zd, fd=%d\n", fd_idx_to_close, fd);
 
     return 0;
 }
@@ -208,8 +202,7 @@ static int closeInputDevice(size_t fd_idx_to_close)
 static int closeInputDevices(lua_State* L __attribute__((unused)))
 {
     // Right now, we close everything, but, in the future, we may want to keep *some* slots open.
-    // Note that doing that would (currently) require making sure those slots are at the start of the array,
-    // in ascending fd number order, and that the array itself isn't sparse.
+    // The function closeInputDevice ensures that the array does not become sparse.
     // Closing the fds in the reverse order helps to avoid extra work to keep the array dense, so that the complexity stays linear.
     for (ssize_t i = fd_idx - 1; i >= 0; i--) {
         closeInputDevice(i);
