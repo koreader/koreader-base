@@ -1,5 +1,7 @@
 https://github.com/madler/zlib/pull/599
 
+Rebased version of:
+
 From 37c9730ba474d274f4cc6a974943eef95087b9f6 Mon Sep 17 00:00:00 2001
 From: Khem Raj <raj.khem@gmail.com>
 Date: Tue, 8 Mar 2022 22:38:47 -0800
@@ -14,7 +16,7 @@ wrong confgure result, ending in miscompiling the package
 Signed-off-by: Khem Raj <raj.khem@gmail.com>
 --- a/configure
 +++ b/configure
-@@ -410,7 +410,7 @@ if test $shared -eq 1; then
+@@ -436,7 +436,7 @@ if test $shared -eq 1; then
    echo Checking for shared library support... | tee -a configure.log
    # we must test in two steps (cc then ld), required at least on SunOS 4.x
    if try $CC -w -c $SFLAGS $test.c &&
@@ -23,7 +25,7 @@ Signed-off-by: Khem Raj <raj.khem@gmail.com>
      echo Building shared library $SHAREDLIBV with $CC. | tee -a configure.log
    elif test -z "$old_cc" -a -z "$old_cflags"; then
      echo No shared library support. | tee -a configure.log
-@@ -492,7 +492,7 @@ int main(void) {
+@@ -498,7 +498,7 @@ int main(void) {
  }
  EOF
    fi
@@ -31,8 +33,8 @@ Signed-off-by: Khem Raj <raj.khem@gmail.com>
 +  if try $CC $CFLAGS $LDFLAGS -o $test $test.c; then
      sizet=`./$test`
      echo "Checking for a pointer-size integer type..." $sizet"." | tee -a configure.log
-   else
-@@ -530,7 +530,7 @@ int main(void) {
+     CFLAGS="${CFLAGS} -DNO_SIZE_T=${sizet}"
+@@ -532,7 +532,7 @@ int main(void) {
    return 0;
  }
  EOF
@@ -41,7 +43,7 @@ Signed-off-by: Khem Raj <raj.khem@gmail.com>
      echo "Checking for fseeko... Yes." | tee -a configure.log
    else
      CFLAGS="${CFLAGS} -DNO_FSEEKO"
-@@ -547,7 +547,7 @@ cat > $test.c <<EOF
+@@ -549,7 +549,7 @@ cat > $test.c <<EOF
  #include <errno.h>
  int main() { return strlen(strerror(errno)); }
  EOF
@@ -50,7 +52,7 @@ Signed-off-by: Khem Raj <raj.khem@gmail.com>
    echo "Checking for strerror... Yes." | tee -a configure.log
  else
    CFLAGS="${CFLAGS} -DNO_STRERROR"
-@@ -654,7 +654,7 @@ int main()
+@@ -656,7 +656,7 @@ int main()
    return (mytest("Hello%d\n", 1));
  }
  EOF
@@ -59,7 +61,7 @@ Signed-off-by: Khem Raj <raj.khem@gmail.com>
      echo "Checking for vsnprintf() in stdio.h... Yes." | tee -a configure.log
  
      echo >> configure.log
-@@ -744,7 +744,7 @@ int main()
+@@ -746,7 +746,7 @@ int main()
  }
  EOF
  
@@ -68,4 +70,3 @@ Signed-off-by: Khem Raj <raj.khem@gmail.com>
      echo "Checking for snprintf() in stdio.h... Yes." | tee -a configure.log
  
      echo >> configure.log
-
