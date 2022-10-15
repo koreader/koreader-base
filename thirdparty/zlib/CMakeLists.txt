@@ -45,21 +45,18 @@ endif()
 # Whelp, apparently the 1.2.12 release was a fun one, so apply the full Gentoo patchset...
 set(PATCH_CMD1 "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/zlib-1.2.11-minizip-drop-crypt-header.patch")
 set(PATCH_CMD2 "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/zlib-1.2.11-configure-fix-AR-RANLIB-NM-detection.patch")
-set(PATCH_CMD3 "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/zlib-1.2.12-use-LDFLAGS-in-configure.patch")
-set(PATCH_CMD4 "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/zlib-1.2.12-fix-CC-logic-in-configure.patch")
-set(PATCH_CMD5 "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/zlib-1.2.12-CRC-buggy-input.patch")
-set(PATCH_CMD6 "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/zlib-1.2.12-CVE-2022-37434.patch")
+set(PATCH_CMD3 "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/zlib-1.2.13-use-LDFLAGS-in-configure.patch")
 
 include(ExternalProject)
-set(ZLIB_VER "1.2.12")
-set(ZLIB_MD5 "5fc414a9726be31427b440b434d05f78")
+set(ZLIB_VER "1.2.13")
+set(ZLIB_MD5 "7d9fc1d78ae2fa3e84fe98b77d006c63")
 ExternalProject_Add(
     ${PROJECT_NAME}
     DOWNLOAD_DIR ${KO_DOWNLOAD_DIR}
-    URL http://gentoo.osuosl.org/distfiles/zlib-${ZLIB_VER}.tar.gz
+    URL http://gentoo.osuosl.org/distfiles/zlib-${ZLIB_VER}.tar.xz
     URL_MD5 ${ZLIB_MD5}
     BUILD_IN_SOURCE 1
-    PATCH_COMMAND COMMAND ${PATCH_CMD1} COMMAND ${PATCH_CMD2} COMMAND ${PATCH_CMD3} COMMAND ${PATCH_CMD4} COMMAND ${PATCH_CMD5} COMMAND ${PATCH_CMD6}
+    PATCH_COMMAND COMMAND ${PATCH_CMD1} COMMAND ${PATCH_CMD2} COMMAND ${PATCH_CMD3}
     CONFIGURE_COMMAND ${CFG_CMD}
     BUILD_COMMAND ${BUILD_CMD}
     INSTALL_COMMAND ${INSTALL_CMD}
