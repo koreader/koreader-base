@@ -18,8 +18,9 @@ ANDROID_TOOLCHAIN=$(TOOLCHAIN_DIR)/android-toolchain-$(ANDROID_ARCH)
 NDK?=$(TOOLCHAIN_DIR)/android-ndk-r15c
 ifeq ($(ANDROID_ARCH), arm64)
 	NDKABI?=21
+else
+	NDKABI?=14
 endif
-NDKABI?=14
 
 # Detect LuaRocks 3
 LR_VER_NUM := $(shell luarocks --version | grep -o [0-9].[0-9])
