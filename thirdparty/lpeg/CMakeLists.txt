@@ -21,10 +21,13 @@ ep_get_binary_dir(BINARY_DIR)
 # NOTE: Possibly needs a similar fix as LFS: https://github.com/keplerproject/luafilesystem/commit/a84d81bc52590f930e54f108099df5d155bdc8bf
 set(LUA_LPEG_ROCKSPEC lpeg-${LPEG_VER}.rockspec)
 
-# Move our custom rockspec to the build dir to fullfil build deps
-set(CONFIGURE_CMD ${CMAKE_COMMAND} -E copy ${SOURCE_DIR}/${LUA_LPEG_ROCKSPEC} ${BINARY_DIR}/${LUA_LPEG_ROCKSPEC})
+# Rewrite Makefile to behave sensibly w/ LuaRocks, and optionally allow linking to the lua lib...
+SET(PATCH_CMD "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/lpeg-1.0.2-standard-makefile.patch")
 
-set(BUILD_CMD sh -c "${LUAROCKS} make --tree=${OUTPUT_DIR}/rocks ${LUA_RAPIDJSON_ROCKSPEC}")
+# Move our custom rockspec to the build dir to fullfil build deps
+set(CONFIGURE_CMD ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/${LUA_LPEG_ROCKSPEC} ${SOURCE_DIR}/${LUA_LPEG_ROCKSPEC})
+
+set(BUILD_CMD sh -c "${LUAROCKS} make --tree=${OUTPUT_DIR}/rocks ${LUA_LPEG_ROCKSPEC}")
 set(BUILD_CMD "${BUILD_CMD} CC=\"${CC}\"")
 set(BUILD_CMD "${BUILD_CMD} CFLAGS=\"${CFLAGS}\" LDFLAGS=\"${LDFLAGS} ${LIBFLAG}\"")
 set(BUILD_CMD "${BUILD_CMD} LUA_INCDIR=\"${LUA_INCDIR}\" LUA_LIBDIR=\"${LUA_LIBDIR}\"")
@@ -38,11 +41,12 @@ endif()
 include(ExternalProject)
 ExternalProject_Add(
     ${PROJECT_NAME}
-    # skip download
-    DOWNLOAD_COMMAND ""
+    DOWNLOAD_DIR ${KO_DOWNLOAD_DIR}
+    URL http://distcache.FreeBSD.org/ports-distfiles/lpeg-1.0.2.tar.gz
+    URL_MD5 d342571886f1abcb7afe6a83d024d583
     BUILD_IN_SOURCE 1
-    # skip configure
-    CONFIGURE_COMMAND ${CONFIGURE_COMMAND}
+    PATCH_COMMAND COMMAND ${PATCH_CMD}
+    CONFIGURE_COMMAND ${CONFIGURE_CMD}
     BUILD_COMMAND ${BUILD_CMD}
     # skip install
     INSTALL_COMMAND ""

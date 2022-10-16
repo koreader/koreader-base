@@ -1,0 +1,96 @@
+diff -Nuarp lpeg-1.0.2-orig/makefile lpeg-1.0.2/makefile
+--- lpeg-1.0.2-orig/makefile	2019-03-11 15:08:29.000000000 +0100
++++ lpeg-1.0.2/makefile	2022-10-16 21:01:03.539866874 +0200
+@@ -1,10 +1,14 @@
+-LIBNAME = lpeg
+-LUADIR = ../lua/
++LIBNAME := lpeg
++LUADIR ?= ../lua/
+ 
+-COPT = -O2 -DNDEBUG
+-# COPT = -g
++INST_PREFIX = /usr/local
++INST_BINDIR = $(INST_PREFIX)/bin
++INST_LIBDIR = $(INST_PREFIX)/lib/lua/5.1
++INST_LUADIR = $(INST_PREFIX)/share/lua/5.1
++INST_CONFDIR = $(INST_PREFIX)/etc
+ 
+-CWARNS = -Wall -Wextra -pedantic \
++PROJ_CPPFLAGS := -DNDEBUG -I$(LUADIR)
++CWARNS := -Wall -Wextra -pedantic \
+ 	-Waggregate-return \
+ 	-Wcast-align \
+ 	-Wcast-qual \
+@@ -18,38 +22,54 @@ CWARNS = -Wall -Wextra -pedantic \
+ 	-Wdeclaration-after-statement \
+ 	-Wmissing-prototypes \
+ 	-Wnested-externs \
+-	-Wstrict-prototypes \
+-# -Wunreachable-code \
++	-Wstrict-prototypes
++COPT := -O2
++CSTD := -std=c99
+ 
++PROJ_CFLAGS := $(COPT) $(CSTD) $(CWARNS) -fPIC
++CC ?= gcc
+ 
+-CFLAGS = $(CWARNS) $(COPT) -std=c99 -I$(LUADIR) -fPIC
+-CC = gcc
++PROJ_SRCS := lpcap.c lpcode.c lpprint.c lptree.c lpvm.c
++PROJ_OBJS := $(PROJ_SRCS:.c=.o)
+ 
+-FILES = lpvm.o lpcap.o lptree.o lpcode.o lpprint.o
++%.o: %.c
++	$(CC) $(PROJ_CPPFLAGS) -I$(LUA_INCDIR) $(CPPFLAGS) $(PROJ_CFLAGS) $(CFLAGS) $(DLLFLAGS) $(LIBFLAG) $(LDFLAGS) $(FILES) -o $@ -c $<
+ 
+ # For Linux
+ linux:
+-	$(MAKE) lpeg.so "DLLFLAGS = -shared -fPIC"
++	@echo --- Linux build
++	@echo CFLAGS: $(CFLAGS)
++	@echo LIBFLAG: $(LIBFLAG)
++	@echo LUA_LIBDIR: $(LUA_LIBDIR)
++	@echo LUA_INCDIR: $(LUA_INCDIR)
++	$(MAKE) lpeg.so "DLLFLAGS = -shared"
+ 
+-# For Mac OS
++# For macOS
+ macosx:
++	@echo --- macOS build
++	@echo CFLAGS: $(CFLAGS)
++	@echo LIBFLAG: $(LIBFLAG)
++	@echo LUA_LIBDIR: $(LUA_LIBDIR)
++	@echo LUA_INCDIR: $(LUA_INCDIR)
+ 	$(MAKE) lpeg.so "DLLFLAGS = -bundle -undefined dynamic_lookup"
+ 
+-lpeg.so: $(FILES)
+-	env $(CC) $(DLLFLAGS) $(FILES) -o lpeg.so
++lpeg.so: $(PROJ_OBJS)
++	$(CC) $(PROJ_CPPFLAGS) -I$(LUA_INCDIR) $(CPPFLAGS) $(PROJ_CFLAGS) $(CFLAGS) $(DLLFLAGS) $(LIBFLAG) $(LDFLAGS) $(FILES) -o lpeg.so -L$(LUA_LIBDIR) $(LUALIB) $(LIBS)
+ 
+-$(FILES): makefile
++install: lpeg.so re.lua
++	@echo --- install
++	@echo INST_PREFIX: $(INST_PREFIX)
++	@echo INST_BINDIR: $(INST_BINDIR)
++	@echo INST_LIBDIR: $(INST_LIBDIR)
++	@echo INST_LUADIR: $(INST_LUADIR)
++	@echo INST_CONFDIR: $(INST_CONFDIR)
++	mkdir -p $(INST_LIBDIR)
++	cp lpeg.so $(INST_LIBDIR)
++	mkdir -p $(INST_LUADIR)
++	cp re.lua $(INST_LUADIR)
+ 
+ test: test.lua re.lua lpeg.so
+ 	./test.lua
+ 
+ clean:
+ 	rm -f $(FILES) lpeg.so
+-
+-
+-lpcap.o: lpcap.c lpcap.h lptypes.h
+-lpcode.o: lpcode.c lptypes.h lpcode.h lptree.h lpvm.h lpcap.h
+-lpprint.o: lpprint.c lptypes.h lpprint.h lptree.h lpvm.h lpcap.h
+-lptree.o: lptree.c lptypes.h lpcap.h lpcode.h lptree.h lpvm.h lpprint.h
+-lpvm.o: lpvm.c lpcap.h lptypes.h lpvm.h lpprint.h lptree.h
+-
