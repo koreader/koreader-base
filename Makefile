@@ -23,9 +23,9 @@ all: $(OUTPUT_DIR)/libs $(if $(ANDROID),,$(LUAJIT)) \
 		$(if $(USE_LJ_WPACLIENT),$(LJ_WPACLIENT),) \
 		$(TURBO_FFI_WRAP_LIB) \
 		$(LUA_HTMLPARSER_ROCK) \
+		$(LPEG_ROCK) \
 		$(LUA_RAPIDJSON_ROCK) \
 		$(LUA_SPORE_ROCK) \
-		$(if $(ANDROID),$(LPEG_DYNLIB) $(LPEG_RE),) \
 		$(if $(WIN32),,$(ZMQ_LIB) $(CZMQ_LIB)) \
 		$(if $(WIN32),,$(OUTPUT_DIR)/sdcv) \
 		$(if $(MACOS),$(OUTPUT_DIR)/koreader,) \
@@ -62,7 +62,6 @@ endif
 	# set up some needed paths and links
 	install -d $(OUTPUT_DIR)/{cache,history,clipboard,fonts}
 	ln -sf $(CURDIR)/$(THIRDPARTY_DIR)/kpvcrlib/cr3.css $(OUTPUT_DIR)/data/
-	test -e $(LPEG_RE) && chmod 664 $(LPEG_RE) || true  # hot fix re.lua permission
 
 $(OUTPUT_DIR)/libs:
 	install -d $(OUTPUT_DIR)/libs

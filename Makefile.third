@@ -712,6 +712,22 @@ ifdef DARWIN
 		$@
 endif
 
+$(LPEG_ROCK): $(THIRDPARTY_DIR)/lpeg/*.*
+	install -d $(LPEG_BUILD_DIR)
+	-rm -f $(LPEG_ROCK)
+	cd $(LPEG_BUILD_DIR) && \
+		$(CMAKE) $(CMAKE_FLAGS) -DOUTPUT_DIR="$(CURDIR)/$(OUTPUT_DIR)" \
+		-DLPEG_VER="$(LPEG_VER)" \
+		-DCC="$(CC)" \
+		-DCFLAGS="$(CFLAGS)" \
+		-DLDFLAGS="$(LDFLAGS)" \
+		-DLUAROCKS="$(LUAROCKS_BINARY)" \
+		-DLUA_INCDIR="$(LUA_INCDIR)" \
+		-DLUA_LIBDIR="$(LUA_LIBDIR)" \
+		$(if $(ANDROID),-DLUALIB="$(notdir $(LUAJIT_LIB))",) \
+		$(CURDIR)/$(THIRDPARTY_DIR)/lpeg && \
+		$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS)
+
 $(LUA_SPORE_ROCK): $(THIRDPARTY_DIR)/lua-Spore/*.*
 	install -d $(LUA_SPORE_BUILD_DIR)
 	-rm -f $(LUA_SPORE_DIR)/../lua-Spore-stamp/lua-Spore-build
@@ -726,9 +742,6 @@ $(LUA_SPORE_ROCK): $(THIRDPARTY_DIR)/lua-Spore/*.*
 		$(if $(ANDROID),-DLIBFLAG="$(LDFLAGS) $(CURDIR)/$(LUAJIT_LIB) -nostartfiles",) \
 		$(CURDIR)/$(THIRDPARTY_DIR)/lua-Spore && \
 		$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS)
-ifdef ANDROID
-	-rm -f $(LPEG_DYNLIB) # so that LPEG can be rebuilt in our control
-endif
 
 $(LUA_HTMLPARSER_ROCK): $(THIRDPARTY_DIR)/lua-htmlparser/*.*
 	install -d $(LUA_HTMLPARSER_BUILD_DIR)
@@ -762,18 +775,6 @@ $(LUA_RAPIDJSON_ROCK): $(THIRDPARTY_DIR)/lua-rapidjson/*.*
 		$(if $(ANDROID),-DLIBFLAG="$(CURDIR)/$(LUAJIT_LIB) -lm",) \
 		$(CURDIR)/$(THIRDPARTY_DIR)/lua-rapidjson && \
 		$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS)
-
-# override lpeg built by luarocks, this is only necessary for Android
-$(LPEG_DYNLIB) $(LPEG_RE): $(LUAJIT_LIB) $(THIRDPARTY_DIR)/lpeg/*.*
-	install -d $(OUTPUT_DIR)/rocks/lib/lua/5.1
-	install -d $(OUTPUT_DIR)/rocks/share/lua/5.1
-	install -d $(LPEG_BUILD_DIR)
-	cd $(LPEG_BUILD_DIR) && \
-		$(CMAKE) $(CMAKE_FLAGS) -DCC="$(CC)" -DDYNLIB_CFLAGS="$(DYNLIB_CFLAGS)" \
-		-DLUA_DIR="$(LUAJIT_DIR)" $(CURDIR)/$(THIRDPARTY_DIR)/lpeg && \
-		$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS)
-	cp -f $(LPEG_DIR)/lpeg.so $(OUTPUT_DIR)/rocks/lib/lua/5.1
-	cp -f $(LPEG_DIR)/re.lua $(OUTPUT_DIR)/rocks/share/lua/5.1
 
 $(SQLITE_LIB): $(THIRDPARTY_DIR)/sqlite/*.*
 	install -d $(SQLITE_BUILD_DIR)

@@ -917,6 +917,11 @@ LUA_HTMLPARSER_VER=scm-0
 LUA_HTMLPARSER_BUILD_DIR=$(THIRDPARTY_DIR)/lua-htmlparser/build/$(MACHINE)
 LUA_HTMLPARSER_ROCK=$(LUAROCKS_DIR)/htmlparser/$(LUA_HTMLPARSER_VER)/htmlparser-$(LUA_HTMLPARSER_VER).rockspec
 
+LPEG_VER=1.0.2-2
+LPEG_BUILD_DIR=$(THIRDPARTY_DIR)/lpeg/build/$(MACHINE)
+LPEG_DIR=$(CURDIR)/$(LPEG_BUILD_DIR)/lpeg-prefix/src/lpeg-build
+LPEG_ROCK=$(LPEG_DIR)/lpeg-$(LPEG_VER).rockspec
+
 LUA_RAPIDJSON_VER=0.7.1-1
 LUA_RAPIDJSON_BUILD_DIR=$(THIRDPARTY_DIR)/lua-rapidjson/build/$(MACHINE)
 LUA_RAPIDJSON_ROCK=$(LUAROCKS_DIR)/rapidjson/$(LUA_RAPIDJSON_VER)/rapidjson-$(LUA_RAPIDJSON_VER).rockspec
@@ -989,12 +994,6 @@ endif
 
 # Used by our custom Lua modules, where we want to hide private symbols by default
 SYMVIS_FLAGS+=-fvisibility=hidden
-
-LPEG_BUILD_DIR=$(THIRDPARTY_DIR)/lpeg/build/$(MACHINE)
-LPEG_DIR=$(CURDIR)/$(LPEG_BUILD_DIR)/lpeg-prefix/src/lpeg
-LPEG_RE=$(OUTPUT_DIR)/rocks/share/lua/5.1/re.lua
-LPEG_DYNLIB=$(OUTPUT_DIR)/rocks/lib/lua/5.1/lpeg.so
-
 
 CMAKE_THIRDPARTY_LIBS := kpvcrlib,nanosvg,zstd
 CMAKE_THIRDPARTY_LIBS := $(CMAKE_THIRDPARTY_LIBS),luajit,lpeg,turbo
