@@ -24,6 +24,7 @@ dependencies = {
 build = {
    type = "make",
    makefile = "makefile",
+   build_target = "lpeg.so",
    -- This is dumb as... rocks.
    variables = {
       CFLAGS = "$(CFLAGS)",
