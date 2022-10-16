@@ -16,12 +16,12 @@ assert_var_defined(HOST)
 ep_get_source_dir(SOURCE_DIR)
 ep_get_binary_dir(BINARY_DIR)
 
-if(DEFINED ENV{ANDROID})
-    set(ZeroMQ_LIBS="-lm")
-endif()
-
 #-Wno-error so we can build on glibc 2.24 in spite of readdir_r
 set(CFG_ENV_VAR "CC=\"${CC}\" LDFLAGS=\"${LDFLAGS}\" CFLAGS=\"-Wno-error ${CFLAGS}\" czmq_have_xmlto=no czmq_have_asciidoc=no")
+if(DEFINED ENV{ANDROID})
+    # Configure has trouble comprehending DT_NEEDED entries, apparently...
+    set(CFG_ENV_VAR "${CFG_ENV_VAR} ZeroMQ_LIBS=\"-lm\"")
+endif()
 set(CFG_OPTS "-q --prefix=${BINARY_DIR} --libdir=${BINARY_DIR}/lib --with-gnu-ld --with-libzmq=${ZMQ_DIR} --disable-static --enable-shared --host=${HOST}")
 set(CFG_CMD sh -c "${CFG_ENV_VAR} ${SOURCE_DIR}/configure ${CFG_OPTS}")
 
