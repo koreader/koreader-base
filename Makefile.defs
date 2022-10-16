@@ -16,6 +16,9 @@ TOOLCHAIN_DIR=$(MAKEFILE_DIR)toolchain
 ANDROID_ARCH?=arm
 ANDROID_TOOLCHAIN=$(TOOLCHAIN_DIR)/android-toolchain-$(ANDROID_ARCH)
 NDK?=$(TOOLCHAIN_DIR)/android-ndk-r15c
+ifeq ($(ANDROID_ARCH), arm64)
+	NDKABI?=21
+endif
 NDKABI?=14
 
 # Detect LuaRocks 3
@@ -136,6 +139,8 @@ else ifeq ($(TARGET), android)
 	export SYSROOT=$(NDK)/platforms/android-$(NDKABI)/arch-$(ANDROID_ARCH)
 	ifeq ($(ANDROID_ARCH), x86)
 		CHOST?=i686-linux-android
+	else ifeq ($(ANDROID_ARCH), arm64)
+		CHOST?=aarch64-linux-android
 	else
 		CHOST?=arm-linux-androideabi
 	endif
@@ -368,7 +373,9 @@ ANDROID_COMPAT_CXXFLAGS:=--sysroot $(SYSROOT) -I$(NDK)/sources/cxx-stl/gnu-libst
 ifeq ($(ANDROID_ARCH), arm)
 	ANDROID_ARM_ARCH:=-march=armv7-a -mfpu=vfpv3-d16
 	ANDROID_ARM_ARCH+=-mthumb
-	ANDROID_ARM_ARCH+=-ffunction-sections -funwind-tables -fstack-protector -no-canonical-prefixes
+	ANDROID_ARM_ARCH+=-ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes
+else ifeq ($(ANDROID_ARCH), arm64)
+	ANDROID_ARM_ARCH:=-ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes
 endif
 
 # Use target-specific CFLAGS
@@ -436,8 +443,12 @@ else ifeq ($(TARGET), android)
 		COMPAT_LDFLAGS:=-L$(NDK)/sources/cxx-stl/gnu-libstdc++/4.9/libs/armeabi-v7a
 		COMPAT_CXXFLAGS+=-I$(NDK)/sources/cxx-stl/gnu-libstdc++/4.9/libs/armeabi-v7a/include
 		SHARED_STL_LIB:=$(ANDROID_TOOLCHAIN)/arm-linux-androideabi/lib/armv7-a/thumb/libgnustl_shared.so
-	endif
-	ifeq ($(ANDROID_ARCH), x86)
+	else ifeq ($(ANDROID_ARCH), arm64)
+		ARM_ARCH:=$(ANDROID_ARM_ARCH)
+		export ac_cv_type_in_port_t=yes
+		COMPAT_LDFLAGS:=-L$(NDK)/sources/cxx-stl/gnu-libstdc++/4.9/libs/arm64-v8a
+		COMPAT_CXXFLAGS+=-I$(NDK)/sources/cxx-stl/gnu-libstdc++/4.9/libs/arm64-v8a/include
+	else ifeq ($(ANDROID_ARCH), x86)
 		COMPAT_LDFLAGS:=-L$(NDK)/sources/cxx-stl/gnu-libstdc++/4.9/libs/x86
 		COMPAT_CXXFLAGS+=-I$(NDK)/sources/cxx-stl/gnu-libstdc++/4.9/libs/x86/include
 	endif
@@ -526,9 +537,9 @@ endif
 
 # NOTE: Follow the NDK's lead
 ifeq ($(TARGET), android)
-	LDFLAGS+=-no-canonical-prefixes -Wl,--fix-cortex-a8
+	LDFLAGS+=-no-canonical-prefixes
 	ifeq ($(ANDROID_ARCH), arm)
-		LDFLAGS+=-march=armv7-a
+		LDFLAGS+=-Wl,--fix-cortex-a8 -march=armv7-a
 	endif
 endif
 

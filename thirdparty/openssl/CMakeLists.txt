@@ -41,6 +41,8 @@ if($ENV{ANDROID})
     # If we're on ARM, make it so
     if (${CHOST} MATCHES "^arm-.*")
         set(CFG_OPTS "android-arm ${CFG_OPTS}")
+    elseif (${CHOST} MATCHES "^aarch64-.*")
+        set(CFG_OPTS "android-arm64 ${CFG_OPTS}")
     else()
         set(CFG_OPTS "android-x86 ${CFG_OPTS}")
     endif()
