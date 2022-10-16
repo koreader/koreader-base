@@ -18,7 +18,6 @@ assert_var_defined(LUAROCKS)
 ep_get_source_dir(SOURCE_DIR)
 ep_get_binary_dir(BINARY_DIR)
 
-# NOTE: Possibly needs a similar fix as LFS: https://github.com/keplerproject/luafilesystem/commit/a84d81bc52590f930e54f108099df5d155bdc8bf
 set(LUA_LPEG_ROCKSPEC lpeg-${LPEG_VER}.rockspec)
 
 # Rewrite Makefile to behave sensibly w/ LuaRocks, and optionally allow linking to the lua lib...
