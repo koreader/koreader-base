@@ -374,9 +374,10 @@ ANDROID_COMPAT_CXXFLAGS:=--sysroot $(SYSROOT) -I$(NDK)/sources/cxx-stl/gnu-libst
 ifeq ($(ANDROID_ARCH), arm)
 	ANDROID_ARM_ARCH:=-march=armv7-a -mfpu=vfpv3-d16
 	ANDROID_ARM_ARCH+=-mthumb
-	ANDROID_ARM_ARCH+=-ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes
+	# NOTE: NDK15c actually uses -fstack-protector-strong
+	ANDROID_ARM_ARCH+=-ffunction-sections -funwind-tables -fstack-protector -no-canonical-prefixes
 else ifeq ($(ANDROID_ARCH), arm64)
-	ANDROID_ARM_ARCH:=-ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes
+	ANDROID_ARM_ARCH:=-ffunction-sections -funwind-tables -fstack-protector -no-canonical-prefixes
 endif
 
 # Use target-specific CFLAGS
