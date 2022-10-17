@@ -1,6 +1,6 @@
 diff -Nuarp lpeg-1.0.2-orig/lptree.c lpeg-1.0.2/lptree.c
 --- lpeg-1.0.2-orig/lptree.c	2019-03-11 15:08:29.000000000 +0100
-+++ lpeg-1.0.2/lptree.c	2022-10-17 01:36:45.302330508 +0200
++++ lpeg-1.0.2/lptree.c	2022-10-17 05:12:24.958098423 +0200
 @@ -21,7 +21,7 @@
  /* number of siblings for each tree */
  const byte numsiblings[] = {
@@ -30,7 +30,7 @@ diff -Nuarp lpeg-1.0.2-orig/lptree.c lpeg-1.0.2/lptree.c
    return 1;
 diff -Nuarp lpeg-1.0.2-orig/lptypes.h lpeg-1.0.2/lptypes.h
 --- lpeg-1.0.2-orig/lptypes.h	2019-03-11 15:08:29.000000000 +0100
-+++ lpeg-1.0.2/lptypes.h	2022-10-17 01:36:05.122331811 +0200
++++ lpeg-1.0.2/lptypes.h	2022-10-17 05:12:24.958098423 +0200
 @@ -33,9 +33,16 @@
  #define lua_setuservalue	lua_setfenv
  
@@ -52,7 +52,7 @@ diff -Nuarp lpeg-1.0.2-orig/lptypes.h lpeg-1.0.2/lptypes.h
  
 diff -Nuarp lpeg-1.0.2-orig/makefile lpeg-1.0.2/makefile
 --- lpeg-1.0.2-orig/makefile	2019-03-11 15:08:29.000000000 +0100
-+++ lpeg-1.0.2/makefile	2022-10-17 01:52:49.461299246 +0200
++++ lpeg-1.0.2/makefile	2022-10-17 05:12:38.777097975 +0200
 @@ -1,10 +1,14 @@
 -LIBNAME = lpeg
 -LUADIR = ../lua/
@@ -95,7 +95,7 @@ diff -Nuarp lpeg-1.0.2-orig/makefile lpeg-1.0.2/makefile
 +default: lpeg.so
 +
 +%.o: %.c
-+	$(CC) $(PROJ_CPPFLAGS) -I$(LUA_INCDIR) $(CPPFLAGS) $(PROJ_CFLAGS) $(CFLAGS) $(DLLFLAGS) $(LIBFLAG) $(LDFLAGS)  -o $@ -c $<
++	$(CC) $(PROJ_CPPFLAGS) -I$(LUA_INCDIR) $(CPPFLAGS) $(PROJ_CFLAGS) $(CFLAGS) $(DLLFLAGS) $(LIBFLAG) $(LDFLAGS) -o $@ -c $<
  
  # For Linux
  linux:
