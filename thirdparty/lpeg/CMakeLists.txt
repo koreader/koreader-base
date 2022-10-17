@@ -16,7 +16,6 @@ assert_var_defined(OUTPUT_DIR)
 assert_var_defined(LUAROCKS)
 
 ep_get_source_dir(SOURCE_DIR)
-ep_get_binary_dir(BINARY_DIR)
 
 set(LUA_LPEG_ROCKSPEC lpeg-${LPEG_VER}.rockspec)
 
@@ -28,7 +27,7 @@ set(CONFIGURE_CMD ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/${LUA_LPE
 
 set(BUILD_CMD sh -c "${LUAROCKS} make --tree=${OUTPUT_DIR}/rocks ${LUA_LPEG_ROCKSPEC}")
 set(BUILD_CMD "${BUILD_CMD} CC=\"${CC}\"")
-set(BUILD_CMD "${BUILD_CMD} CFLAGS=\"${CFLAGS}\" LDFLAGS=\"${LDFLAGS} ${LIBFLAG}\"")
+set(BUILD_CMD "${BUILD_CMD} CFLAGS=\"${CFLAGS}\" LDFLAGS=\"${LDFLAGS}\"")
 set(BUILD_CMD "${BUILD_CMD} LUA_INCDIR=\"${LUA_INCDIR}\" LUA_LIBDIR=\"${LUA_LIBDIR}\"")
 if(DEFINED LUALIB)
     set(BUILD_CMD "${BUILD_CMD} LUALIB=\"${LUALIB}\"")
