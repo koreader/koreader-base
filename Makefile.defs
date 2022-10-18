@@ -18,6 +18,8 @@ ANDROID_TOOLCHAIN=$(TOOLCHAIN_DIR)/android-toolchain-$(ANDROID_ARCH)
 NDK?=$(TOOLCHAIN_DIR)/android-ndk-r15c
 ifeq ($(ANDROID_ARCH), arm64)
 	NDKABI?=21
+else ifeq ($(ANDROID_ARCH), x86_64)
+	NDKABI?=21
 else
 	NDKABI?=14
 endif
