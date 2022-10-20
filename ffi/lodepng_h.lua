@@ -126,6 +126,11 @@ struct LodePNGInfo {
   char *iccp_name;
   unsigned char *iccp_profile;
   unsigned int iccp_profile_size;
+  unsigned int sbit_defined;
+  unsigned int sbit_r;
+  unsigned int sbit_g;
+  unsigned int sbit_b;
+  unsigned int sbit_a;
   unsigned char *unknown_chunks_data[3];
   size_t unknown_chunks_size[3];
 };

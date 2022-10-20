@@ -1416,12 +1416,16 @@ static int getFontFaceFilenameAndFaceIndex(lua_State *L) {
 	lString8 filename;
 	int faceindex = -1;
 	int family = -1;
-	bool found = fontMan->getFontFileNameAndFaceIndex(lString32(facename), bold, italic, filename, faceindex, family);
+	bool has_ot_math = false;
+	bool has_emojis = false;
+	bool found = fontMan->getFontFileNameAndFaceIndex(lString32(facename), bold, italic, filename, faceindex, family, has_ot_math, has_emojis);
 	if (found) {
 		lua_pushstring(L, filename.c_str());
 		lua_pushinteger(L, faceindex);
 		lua_pushboolean(L, family == css_ff_monospace);
-		return 3;
+		lua_pushboolean(L, has_ot_math);
+		lua_pushboolean(L, has_emojis);
+		return 5;
 	}
 
 	return 0;
@@ -2588,10 +2592,10 @@ static int getPageLinks(lua_State *L) {
 			}
 
 			// Add segments rects
-			ldomXRange *linkRange = new ldomXRange(*links[i]);
+			ldomXRange linkRange = ldomXRange(*links[i]);
 			lua_pushstring(L, "segments");
 			lua_newtable(L); // all segments (again, we may skip rects in the range, so, no pre-alloc)
-			lua_pushSegmentsFromRange(L, doc, linkRange);
+			lua_pushSegmentsFromRange(L, doc, &linkRange);
 			lua_rawset(L, -3); // adds "segments" = table
 
 			lua_rawseti(L, -2, linkNum++);
@@ -3676,10 +3680,30 @@ static int getImageDataFromPosition(lua_State *L) {
     CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
     int x = luaL_checkint(L, 2);
     int y = luaL_checkint(L, 3);
+    bool accept_cre_scalable_image = false;
+    if (lua_isboolean(L, 4)) {
+            accept_cre_scalable_image = lua_toboolean(L, 4);
+    }
     lvPoint pt(x, y);
     ldomXPointer ptr = doc->text_view->getNodeByPoint(pt);
     if (ptr.isNull())
         return 0;
+    LVImageSourceRef proxy = ptr.getNode()->getObjectImageSource();
+    if ( accept_cre_scalable_image && !proxy.isNull() && proxy->IsScalable() ) {
+        // This image is scalable (a SVG image): don't return any data,
+        // but the CRE image object, wrapped as a userdata: ImageViewer
+        // will then be able to request a nice new bb at each scale_factor.
+        lua_pushboolean(L, false);
+        lua_pushinteger(L, 0);
+        LVImageSourceRef ** udata = (LVImageSourceRef **)lua_newuserdata(L, sizeof(LVImageSourceRef *));
+        luaL_getmetatable(L, "creimage");
+        lua_setmetatable(L, -2);
+        *udata = new LVImageSourceRef();
+        **udata = proxy->GetImageSource();
+        return 3;
+    }
+    // Return image original data: frontend may draw these images better
+    // than crengine (ie. animated GIF and WebP)
     LVStreamRef stream = ptr.getNode()->getObjectImageStream();
     if (!stream.isNull()) {
         unsigned size = stream->GetSize();
@@ -3691,25 +3715,6 @@ static int getImageDataFromPosition(lua_State *L) {
         if (buffer != NULL) {
             stream->Read(buffer, size, &read_size);
             if (read_size == size) {
-                // buffer may be SVG data, that MuPDF does not support yet (20170429)
-                // But crengine (with nanosvg code) can convert SVG to PNG, so let's do that here
-                unsigned char *cbuf = (unsigned char*) buffer; // cast same void pointer to char pointer
-                // if buffer starts with <?xml or <svg, it's probably SVG
-                if ( (size > 5 && cbuf[0]=='<' && cbuf[1]=='?' && (cbuf[2]=='x' || cbuf[2] == 'X') && (cbuf[3]=='m' || cbuf[3] == 'M') && (cbuf[4]=='l' || cbuf[4] == 'L')) ||
-                     (size > 4 && cbuf[0]=='<' && (cbuf[1]=='s' || cbuf[1] == 'S') && (cbuf[2]=='v' || cbuf[2] == 'V') && (cbuf[3]=='g' || cbuf[3] == 'G')) ) {
-                    unsigned char *pngbuf;
-                    int pngbuflen;
-                    // We use a zoom_factor of 4 to return a higher quality rasterized image from the SVG vector image
-                    pngbuf = convertSVGtoPNG(cbuf, size, 4, &pngbuflen); // provided by crengine/src/lvimg.cpp
-                    if (pngbuf != NULL) {
-                        // free SVG data, and return PNG data instead
-                        free(buffer);
-                        lua_pushlightuserdata(L, (void*)pngbuf);
-                        lua_pushinteger(L, pngbuflen);
-                        return 2;
-                    }
-                    // if it failed, go on returning original data
-                }
                 lua_pushlightuserdata(L, buffer);
                 lua_pushinteger(L, size);
                 return 2;
@@ -3717,6 +3722,45 @@ static int getImageDataFromPosition(lua_State *L) {
         }
     }
     return 0;
+}
+
+static int renderImageData(lua_State *L) {
+    size_t size = luaL_checkint(L, 2);
+    const char * idata;
+    if ( lua_islightuserdata(L, 1) )
+        idata = (const char*)lua_touserdata(L, 1);
+    else if ( lua_isstring(L, 1) ) {
+        idata = (const char*)lua_tolstring(L, 1, &size);
+    }
+    LVStreamRef stream = LVCreateMemoryStream((void*)idata, size);
+    LVImageSourceRef img = LVCreateStreamImageSource(stream);
+    if ( img.isNull() )
+        return 0;
+    // ->Render() is only implemented for scalable image formats (SVG)
+    if ( !img->IsScalable() )
+        return 0;
+    float scale = 1;
+    if ( lua_isnumber(L, 3) && lua_isnumber(L, 4) ) {
+        int w = (int) lua_tointeger(L, 3);
+        int h = (int) lua_tointeger(L, 4);
+        // Keep aspect ratio
+        float scale_w = w / img->GetWidth();
+        float scale_h = h / img->GetHeight();
+        scale = scale_w < scale_h ? scale_w : scale_h;
+    }
+    int width = img->GetWidth() * scale;
+    int height = img->GetHeight() * scale;
+    // Our current usage wants it on a white background
+    lUInt8 * rdata = img->Render(width, height, 0xFFFFFFFF);
+    if ( !rdata )
+        return 0;
+    // rdata is held into img, which will be gone: make a copy
+    lUInt8 * odata = (lUInt8 *)malloc(width*height*4);
+    memcpy(odata, rdata, width*height*4);
+    lua_pushlightuserdata(L, (void*)odata);
+    lua_pushinteger(L, width);
+    lua_pushinteger(L, height);
+    return 3;
 }
 
 /* This was added for testing and benchmarking purpose: do not use it.
@@ -3735,6 +3779,40 @@ static int smoothScaleBlitBuffer(lua_State *L) {
     return 2;
 }
 
+static int renderScaled(lua_State *L) {
+    // This is made ready to use by ImageViewer
+    LVImageSourceRef * img = *((LVImageSourceRef **)luaL_checkudata(L, 1, "creimage"));
+    float scale = (float)luaL_optnumber(L, 2, 1.0);
+    int width, height;
+    if ( scale <= 0 ) { // Use provided width/height
+        width = luaL_checkint(L, 3);
+        height = luaL_checkint(L, 4);
+        // Keep aspect ratio
+        float scale_w = 1.0 * width / img->get()->GetWidth();
+        float scale_h = 1.0 * height / img->get()->GetHeight();
+        scale = scale_w < scale_h ? scale_w : scale_h;
+    }
+    width = img->get()->GetWidth() * scale;
+    height = img->get()->GetHeight() * scale;
+    // ImageViewer is fine with premultiplied alpha
+    lUInt8 * data = img->get()->Render(width, height);
+    // We can't create a BlitBuffer from here, so the caller will have
+    // to build it with this
+    lua_pushlightuserdata(L, (void*)data);
+    lua_pushinteger(L, width);
+    lua_pushinteger(L, height);
+    lua_pushnumber(L, scale);
+    return 4;
+}
+
+static int freeImage(lua_State *L) {
+    LVImageSourceRef ** pimg = (LVImageSourceRef**)luaL_checkudata(L, 1, "creimage");
+    if ( *pimg ) {
+        delete *pimg;
+        *pimg = NULL;
+    }
+    return 0;
+}
 
 static const struct luaL_Reg cre_func[] = {
     {"initCache", initCache},
@@ -3757,6 +3835,7 @@ static const struct luaL_Reg cre_func[] = {
     {"getDomVersionWithNormalizedXPointers", getDomVersionWithNormalizedXPointers},
     {"setUserHyphenationDict", setUserHyphenationDict},
     {"getHyphenationForWord", getHyphenationForWord},
+    {"renderImageData", renderImageData},
     {"smoothScaleBlitBuffer", smoothScaleBlitBuffer},
     {NULL, NULL}
 };
@@ -3879,6 +3958,13 @@ static const struct luaL_Reg credocument_meth[] = {
     {NULL, NULL}
 };
 
+static const struct luaL_Reg creimage_meth[] = {
+    {"renderScaled", renderScaled},
+    {"free", freeImage},
+    {"__gc", freeImage},
+    {NULL, NULL}
+};
+
 int luaopen_cre(lua_State *L) {
 	luaL_newmetatable(L, "credocument");
 	lua_pushstring(L, "__index");
@@ -3886,6 +3972,14 @@ int luaopen_cre(lua_State *L) {
 	lua_settable(L, -3);
 	luaL_register(L, NULL, credocument_meth);
 	lua_pop(L, 1);
+
+	luaL_newmetatable(L, "creimage");
+	lua_pushstring(L, "__index");
+	lua_pushvalue(L, -2);
+	lua_settable(L, -3);
+	luaL_register(L, NULL, creimage_meth);
+	lua_pop(L, 1);
+
 	luaL_register(L, "cre", cre_func);
 
 	/* initialize font manager for CREngine */

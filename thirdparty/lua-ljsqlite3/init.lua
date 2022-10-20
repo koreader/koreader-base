@@ -73,40 +73,41 @@ do
   local types = { "INTEGER", "FLOAT", "TEXT", "BLOB", "NULL" } -- From 1 to 5.
 
   local opens = {
-    READONLY =        0x00000001;
-    READWRITE =       0x00000002;
-    CREATE =          0x00000004;
-    DELETEONCLOSE =   0x00000008;
-    EXCLUSIVE =       0x00000010;
-    AUTOPROXY =       0x00000020;
-    URI =             0x00000040;
-    MAIN_DB =         0x00000100;
-    TEMP_DB =         0x00000200;
-    TRANSIENT_DB =    0x00000400;
-    MAIN_JOURNAL =    0x00000800;
-    TEMP_JOURNAL =    0x00001000;
-    SUBJOURNAL =      0x00002000;
-    MASTER_JOURNAL =  0x00004000;
-    NOMUTEX =         0x00008000;
-    FULLMUTEX =       0x00010000;
-    SHAREDCACHE =     0x00020000;
-    PRIVATECACHE =    0x00040000;
-    WAL =             0x00080000;
+    READONLY =        0x00000001,
+    READWRITE =       0x00000002,
+    CREATE =          0x00000004,
+    DELETEONCLOSE =   0x00000008,
+    EXCLUSIVE =       0x00000010,
+    AUTOPROXY =       0x00000020,
+    URI =             0x00000040,
+    MAIN_DB =         0x00000100,
+    TEMP_DB =         0x00000200,
+    TRANSIENT_DB =    0x00000400,
+    MAIN_JOURNAL =    0x00000800,
+    TEMP_JOURNAL =    0x00001000,
+    SUBJOURNAL =      0x00002000,
+    MASTER_JOURNAL =  0x00004000,
+    NOMUTEX =         0x00008000,
+    FULLMUTEX =       0x00010000,
+    SHAREDCACHE =     0x00020000,
+    PRIVATECACHE =    0x00040000,
+    WAL =             0x00080000,
   }
 
   local t = sqlconstants
   local pre = "static const int32_t SQLITE_"
-  for i=0,26    do t[#t+1] = pre..codes[i].."="..i..";\n" end
-  for i=100,101 do t[#t+1] = pre..codes[i].."="..i..";\n" end
-  for i=1,5     do t[#t+1] = pre..types[i].."="..i..";\n" end
+  for i=0,26    do t[#t+1] = pre..codes[i].." = "..i..";\n" end
+  for i=100,101 do t[#t+1] = pre..codes[i].." = "..i..";\n" end
+  for i=1,5     do t[#t+1] = pre..types[i].." = "..i..";\n" end
   pre = pre.."OPEN_"
-  for k,v in pairs(opens) do t[#t+1] = pre..k.."="..bit.tobit(v)..";\n" end
+  for k,v in pairs(opens) do t[#t+1] = pre..k.." = "..bit.tobit(v)..";\n" end
 end
 
 -- Cdef ------------------------------------------------------------------------
 -- SQLITE_*, OPEN_*
 
 ffi.cdef(table.concat(sqlconstants))
+sqlconstants = nil
 
 -- sqlite3*, ljsqlite3_*
 ffi.cdef[[
@@ -312,9 +313,7 @@ local function sql_format(s, variant, index)
 end
 
 local function loadcode(s, env)
-  local ret = assert(loadstring(s))
-  if env then setfenv(ret, env) end
-  return ret()
+  return assert(load(s, "LJSQLite3", "t", env))()
 end
 
 -- Must always be called from *:_* function due to error level 4.

@@ -1,5 +1,5 @@
 //
-//  updataout.cpp: version 1.300 (2020/05/13).
+//  updataout.cpp: version 1.400 (2021/10/10).
 //
 //  This is a program that generates srell_updata.hpp from:
 //    DerivedCoreProperties.txt
@@ -59,6 +59,7 @@ static const char *const binary_property_names[] = {	//  53 (52+1)
 	"Emoji_Modifier:EMod",					//  emoji-data.txt
 	"Emoji_Modifier_Base:EBase",			//  emoji-data.txt
 	"Emoji_Presentation:EPres",				//  emoji-data.txt
+	"Extended_Pictographic:ExtPict",		//  emoji-data.txt
 	"Extender:Ext",							//  PropList.txt
 	"Grapheme_Base:Gr_Base",				//  DerivedCoreProperties.txt
 	"Grapheme_Extend:Gr_Ext",				//  DerivedCoreProperties.txt
@@ -87,10 +88,10 @@ static const char *const binary_property_names[] = {	//  53 (52+1)
 	"White_Space:space",					//  PropList.txt
 	"XID_Continue:XIDC",					//  DerivedCoreProperties.txt
 	"XID_Start:XIDS",						//  DerivedCoreProperties.txt
-	//  ECMAScript 2019/Unicode 11
-	"Extended_Pictographic:ExtPict",		//  emoji-data.txt
+	//  ECMAScript 2019/Unicode 11:
+	//    "Extended_Pictographic:ExtPict",
 	//  ECMAScript 2021/Unicode 13:
-	//  Aliases: EComp, EMod, EBase, EPres, and ExtPict
+	//    Aliases: EComp, EMod, EBase, EPres, and ExtPict
 	""
 };
 static const char *const gc_values[] = {	//  38
@@ -105,50 +106,58 @@ static const char *const gc_values[] = {	//  38
 	"Math_Symbol:Sm", "Other_Symbol:So", "Separator:Z", "Line_Separator:Zl",
 	"Paragraph_Separator:Zp", "Space_Separator:Zs", ""
 };
-static const char *const script_names[] = {	//  156 (141+7+4+4)
+static const char *const script_names[] = {	//  161 (141+7+4+4+5)
 	"Adlam:Adlm", "Ahom:Ahom", "Anatolian_Hieroglyphs:Hluw", "Arabic:Arab",
 	"Armenian:Armn", "Avestan:Avst", "Balinese:Bali", "Bamum:Bamu",
 	"Bassa_Vah:Bass", "Batak:Batk", "Bengali:Beng", "Bhaiksuki:Bhks",
 	"Bopomofo:Bopo", "Brahmi:Brah", "Braille:Brai", "Buginese:Bugi",
 	"Buhid:Buhd", "Canadian_Aboriginal:Cans", "Carian:Cari", "Caucasian_Albanian:Aghb",
-	"Chakma:Cakm", "Cham:Cham", "Cherokee:Cher", "Common:Zyyy",
-	"Coptic:Copt:Qaac", "Cuneiform:Xsux", "Cypriot:Cprt", "Cyrillic:Cyrl",
-	"Deseret:Dsrt", "Devanagari:Deva", "Duployan:Dupl", "Egyptian_Hieroglyphs:Egyp",
-	"Elbasan:Elba", "Ethiopic:Ethi", "Georgian:Geor", "Glagolitic:Glag",
-	"Gothic:Goth", "Grantha:Gran", "Greek:Grek", "Gujarati:Gujr",
-	"Gurmukhi:Guru", "Han:Hani", "Hangul:Hang", "Hanunoo:Hano",
-	"Hatran:Hatr", "Hebrew:Hebr", "Hiragana:Hira", "Imperial_Aramaic:Armi",
-	"Inherited:Zinh:Qaai", "Inscriptional_Pahlavi:Phli", "Inscriptional_Parthian:Prti", "Javanese:Java",
-	"Kaithi:Kthi", "Kannada:Knda", "Katakana:Kana", "Kayah_Li:Kali",
-	"Kharoshthi:Khar", "Khmer:Khmr", "Khojki:Khoj", "Khudawadi:Sind",
+	"Chakma:Cakm", "Cham:Cham", "Cherokee:Cher", "Chorasmian:Chrs",
+	"Common:Zyyy", "Coptic:Copt:Qaac", "Cypro_Minoan:Cpmn", "Cuneiform:Xsux",
+	"Cypriot:Cprt", "Cyrillic:Cyrl", "Deseret:Dsrt", "Devanagari:Deva",
+	"Dives_Akuru:Diak", "Dogra:Dogr", "Duployan:Dupl", "Egyptian_Hieroglyphs:Egyp",
+	"Elbasan:Elba", "Elymaic:Elym", "Ethiopic:Ethi", "Georgian:Geor",
+	"Glagolitic:Glag", "Gothic:Goth", "Grantha:Gran", "Greek:Grek",
+	"Gujarati:Gujr", "Gunjala_Gondi:Gong", "Gurmukhi:Guru", "Han:Hani",
+	"Hangul:Hang", "Hanifi_Rohingya:Rohg", "Hanunoo:Hano", "Hatran:Hatr",
+	"Hebrew:Hebr", "Hiragana:Hira", "Imperial_Aramaic:Armi", "Inherited:Zinh:Qaai",
+	"Inscriptional_Pahlavi:Phli", "Inscriptional_Parthian:Prti", "Javanese:Java", "Kaithi:Kthi",
+	"Kannada:Knda", "Katakana:Kana", "Kayah_Li:Kali", "Kharoshthi:Khar",
+	"Khitan_Small_Script:Kits", "Khmer:Khmr", "Khojki:Khoj", "Khudawadi:Sind",
 	"Lao:Laoo", "Latin:Latn", "Lepcha:Lepc", "Limbu:Limb",
 	"Linear_A:Lina", "Linear_B:Linb", "Lisu:Lisu", "Lycian:Lyci",
-	"Lydian:Lydi", "Mahajani:Mahj", "Malayalam:Mlym", "Mandaic:Mand",
-	"Manichaean:Mani", "Marchen:Marc", "Masaram_Gondi:Gonm", "Meetei_Mayek:Mtei",
-	"Mende_Kikakui:Mend", "Meroitic_Cursive:Merc", "Meroitic_Hieroglyphs:Mero", "Miao:Plrd",
-	"Modi:Modi", "Mongolian:Mong", "Mro:Mroo", "Multani:Mult",
-	"Myanmar:Mymr", "Nabataean:Nbat", "New_Tai_Lue:Talu", "Newa:Newa",
-	"Nko:Nkoo", "Nushu:Nshu", "Ogham:Ogam", "Ol_Chiki:Olck",
+	"Lydian:Lydi", "Mahajani:Mahj", "Makasar:Maka", "Malayalam:Mlym",
+	"Mandaic:Mand", "Manichaean:Mani", "Marchen:Marc", "Masaram_Gondi:Gonm",
+	"Medefaidrin:Medf", "Meetei_Mayek:Mtei", "Mende_Kikakui:Mend", "Meroitic_Cursive:Merc",
+	"Meroitic_Hieroglyphs:Mero", "Miao:Plrd", "Modi:Modi", "Mongolian:Mong",
+	"Mro:Mroo", "Multani:Mult", "Myanmar:Mymr", "Nabataean:Nbat",
+	"Nandinagari:Nand", "New_Tai_Lue:Talu", "Newa:Newa", "Nko:Nkoo",
+	"Nushu:Nshu", "Nyiakeng_Puachue_Hmong:Hmnp", "Ogham:Ogam", "Ol_Chiki:Olck",
 	"Old_Hungarian:Hung", "Old_Italic:Ital", "Old_North_Arabian:Narb", "Old_Permic:Perm",
-	"Old_Persian:Xpeo", "Old_South_Arabian:Sarb", "Old_Turkic:Orkh", "Oriya:Orya",
-	"Osage:Osge", "Osmanya:Osma", "Pahawh_Hmong:Hmng", "Palmyrene:Palm",
-	"Pau_Cin_Hau:Pauc", "Phags_Pa:Phag", "Phoenician:Phnx", "Psalter_Pahlavi:Phlp",
-	"Rejang:Rjng", "Runic:Runr", "Samaritan:Samr", "Saurashtra:Saur",
-	"Sharada:Shrd", "Shavian:Shaw", "Siddham:Sidd", "SignWriting:Sgnw",
-	"Sinhala:Sinh", "Sora_Sompeng:Sora", "Soyombo:Soyo", "Sundanese:Sund",
-	"Syloti_Nagri:Sylo", "Syriac:Syrc", "Tagalog:Tglg", "Tagbanwa:Tagb",
-	"Tai_Le:Tale", "Tai_Tham:Lana", "Tai_Viet:Tavt", "Takri:Takr",
-	"Tamil:Taml", "Tangut:Tang", "Telugu:Telu", "Thaana:Thaa",
+	"Old_Persian:Xpeo", "Old_Sogdian:Sogo", "Old_South_Arabian:Sarb", "Old_Turkic:Orkh",
+	"Old_Uyghur:Ougr", "Oriya:Orya", "Osage:Osge", "Osmanya:Osma",
+	"Pahawh_Hmong:Hmng", "Palmyrene:Palm", "Pau_Cin_Hau:Pauc", "Phags_Pa:Phag",
+	"Phoenician:Phnx", "Psalter_Pahlavi:Phlp", "Rejang:Rjng", "Runic:Runr",
+	"Samaritan:Samr", "Saurashtra:Saur", "Sharada:Shrd", "Shavian:Shaw",
+	"Siddham:Sidd", "SignWriting:Sgnw", "Sinhala:Sinh", "Sogdian:Sogd",
+	"Sora_Sompeng:Sora", "Soyombo:Soyo", "Sundanese:Sund", "Syloti_Nagri:Sylo",
+	"Syriac:Syrc", "Tagalog:Tglg", "Tagbanwa:Tagb", "Tai_Le:Tale",
+	"Tai_Tham:Lana", "Tai_Viet:Tavt", "Takri:Takr", "Tamil:Taml",
+	"Tangsa:Tnsa", "Tangut:Tang", "Telugu:Telu", "Thaana:Thaa",
 	"Thai:Thai", "Tibetan:Tibt", "Tifinagh:Tfng", "Tirhuta:Tirh",
-	"Ugaritic:Ugar", "Vai:Vaii", "Warang_Citi:Wara", "Yi:Yiii",
+	"Toto", "Ugaritic:Ugar", "Vai:Vaii", "Vithkuqi:Vith",
+	"Wancho:Wcho", "Warang_Citi:Wara", "Yezidi:Yezi", "Yi:Yiii",
 	"Zanabazar_Square:Zanb",
-	//  ECMAScript 2019/Unicode 11
-	"Dogra:Dogr", "Gunjala_Gondi:Gong", "Hanifi_Rohingya:Rohg",
-	"Makasar:Maka", "Medefaidrin:Medf", "Old_Sogdian:Sogo", "Sogdian:Sogd",
+	//  ECMAScript 2019/Unicode 11:
+	//    "Dogra:Dogr", "Gunjala_Gondi:Gong", "Hanifi_Rohingya:Rohg",
+	//    "Makasar:Maka", "Medefaidrin:Medf", "Old_Sogdian:Sogo", "Sogdian:Sogd",
 	//  ECMAScript 2020/Unicode 12
-	"Elymaic:Elym", "Nandinagari:Nand", "Nyiakeng_Puachue_Hmong:Hmnp", "Wancho:Wcho",
+	//    "Elymaic:Elym", "Nandinagari:Nand", "Nyiakeng_Puachue_Hmong:Hmnp", "Wancho:Wcho",
 	//  ECMAScript 2021/Unicode 13
-	"Chorasmian:Chrs", "Dives_Akuru:Diak", "Khitan_Small_Script:Kits", "Yezidi:Yezi",
+	//    "Chorasmian:Chrs", "Dives_Akuru:Diak", "Khitan_Small_Script:Kits", "Yezidi:Yezi",
+	//  ECMAScript 2022/Unicode 14:
+	//    "Cypro_Minoan:Cpmn", "Old_Uyghur:Ougr", "Tangsa:Tnsa", "Toto",
+	//    "Vithkuqi:Vith"
 	""
 };
 }	//  namespace updata
@@ -351,18 +360,18 @@ public:
 
 private:
 
-	typedef srell::regex_internal::uchar21 uchar21;
+	typedef srell::regex_internal::uchar32 uchar32;
 	typedef srell::regex_internal::range_pairs ucprange_array;
 	typedef srell::regex_internal::range_pair ucprange;
 	typedef srell::regex_internal::range_pair_helper ucprange_helper;
 	typedef std::map<std::string, ucprange_array> rangeholder;
 //	typedef srell::regex_internal::bitset<0x110000> ucsset;
 	typedef std::vector<std::string> strings_type;
-	typedef std::map<uchar21, std::string> scriptnameholder;
+	typedef std::map<uchar32, std::string> scriptnameholder;
 	typedef std::map<std::string, std::string> name_mapper;
 	typedef name_mapper canonicalname_mapper;
-	static const uchar21 invalid_u21value = srell::regex_internal::constants::invalid_u21value;
-	static const uchar21 compositeclass = invalid_u21value;
+	static const uchar32 invalid_u32value = srell::regex_internal::constants::invalid_u32value;
+	static const uchar32 compositeclass = invalid_u32value;
 
 	struct sorted_name_and_ranges
 	{
@@ -416,14 +425,14 @@ private:
 
 		const std::string stringY("Y");
 		const std::string stringN("N");
-		uchar21 prevucp = invalid_u21value;
+		uchar32 prevucp = invalid_u32value;
 		std::string data;
 		strings_type lines;
 		srell::cmatch cmatch;
 //		strings_type parts;
 		std::string rangename;
 		std::string rangefirstproperty;
-		uchar21 rangefirstcp = 0;
+		uchar32 rangefirstcp = 0;
 		ucprange range;
 		ucprange_array bidi_mirrored_ranges;
 
@@ -442,9 +451,9 @@ private:
 				const std::string name_string(name.str());
 				const std::string property(cmatch[3].str());
 
-				range.first = range.second = static_cast<uchar21>(std::strtol(codepoint.first, NULL, 16));
+				range.first = range.second = static_cast<uchar32>(std::strtol(codepoint.first, NULL, 16));
 
-				if (prevucp >= range.first && prevucp != invalid_u21value)
+				if (prevucp >= range.first && prevucp != invalid_u32value)
 					unishared::throw_error("out of order: %.4lX >= %.4lX", prevucp, range.first);
 
 //				parts.clear();
@@ -517,14 +526,14 @@ private:
 	void create_compositecategory(rangeholder &gc, const char *const newname, const char *const *categories)
 	{
 		ucprange_array array;
-		uchar21 total = 0;
+		uchar32 total = 0;
 
 		array.append_newpair(ucprange_helper(compositeclass, 0));
 
 		for (; **categories; ++categories)
 		{
 			const char *const c = *categories;
-			const uchar21 count = static_cast<uchar21>(gc[*categories].size());
+			const uchar32 count = static_cast<uchar32>(gc[*categories].size());
 
 			array.append_newpair(ucprange_helper(c[0], c[1]));
 			array.append_newpair(ucprange_helper(count, 0));
@@ -610,9 +619,9 @@ private:
 				const srell::cmatch::value_type &property = cmatch[3];
 //				const srell::cmatch::value_type &comment = cmatch[4];
 
-				range.first = static_cast<uchar21>(std::strtol(begin.first, NULL, 16));
+				range.first = static_cast<uchar32>(std::strtol(begin.first, NULL, 16));
 				if (end.matched)
-					range.second = static_cast<uchar21>(std::strtol(end.first, NULL, 16));
+					range.second = static_cast<uchar32>(std::strtol(end.first, NULL, 16));
 				else
 					range.second = range.first;
 
@@ -660,9 +669,9 @@ private:
 				const srell::cmatch::value_type &scriptname = cmatch[3];
 //				const srell::cmatch::value_type &comment = cmatch[4];
 
-				range.first = static_cast<uchar21>(std::strtol(begin.first, NULL, 16));
+				range.first = static_cast<uchar32>(std::strtol(begin.first, NULL, 16));
 				if (end.matched)
-					range.second = static_cast<uchar21>(std::strtol(end.first, NULL, 16));
+					range.second = static_cast<uchar32>(std::strtol(end.first, NULL, 16));
 				else
 					range.second = range.first;
 
@@ -735,9 +744,9 @@ private:
 				const srell::cmatch::value_type &scxnames = cmatch[3];
 //				const srell::cmatch::value_type &comment = cmatch[4];
 
-				range.first = static_cast<uchar21>(std::strtol(begin.first, NULL, 16));
+				range.first = static_cast<uchar32>(std::strtol(begin.first, NULL, 16));
 				if (end.matched)
-					range.second = static_cast<uchar21>(std::strtol(end.first, NULL, 16));
+					range.second = static_cast<uchar32>(std::strtol(end.first, NULL, 16));
 				else
 					range.second = range.first;
 

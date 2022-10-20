@@ -38,7 +38,9 @@ struct tm {
 };
 time_t time(time_t *) __attribute__((nothrow, leaf));
 struct tm *gmtime(const time_t *) __attribute__((nothrow, leaf));
+struct tm *gmtime_r(const time_t *restrict, struct tm *restrict) __attribute__((nothrow, leaf));
 struct tm *localtime(const time_t *) __attribute__((nothrow, leaf));
+struct tm *localtime_r(const time_t *restrict, struct tm *restrict) __attribute__((nothrow, leaf));
 time_t timegm(struct tm *) __attribute__((nothrow, leaf));
 time_t mktime(struct tm *) __attribute__((nothrow, leaf));
 int settimeofday(const struct timeval *, const struct timezone *) __attribute__((nothrow, leaf));

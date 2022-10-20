@@ -30,8 +30,9 @@ assert_var_defined(PNG_INCLUDE_DIR)
 assert_var_defined(ZLIB_INCLUDE_DIR)
 assert_var_defined(JPEGLIB_INCLUDE_DIR)
 assert_var_defined(LIBWEBP_INCLUDE_DIR)
-assert_var_defined(NANOSVG_INCLUDE_DIR)
+assert_var_defined(LUNASVG_INCLUDE_DIR)
 assert_var_defined(ZSTD_INCLUDE_DIR)
+assert_var_defined(SHARED_STL_LIB)
 
 include_directories(
     ${JCONFIG_INCLUDE_DIR}
@@ -46,7 +47,7 @@ include_directories(
     ${ZLIB_INCLUDE_DIR}
     ${JPEGLIB_INCLUDE_DIR}
     ${LIBWEBP_INCLUDE_DIR}
-    ${NANOSVG_INCLUDE_DIR}
+    ${LUNASVG_INCLUDE_DIR}
     ${ZSTD_INCLUDE_DIR}
     ${SRELL_INCLUDE_DIR}
     ${CREGINE_INCLUDE_DIR}
@@ -80,7 +81,8 @@ add_definitions(
     -DUSE_FRIBIDI=1
     -DUSE_LIBUNIBREAK=1
     -DUSE_UTF8PROC=1
-    -DUSE_NANOSVG=1
+    -DUSE_NANOSVG=0 # better SVG support via LunaSVG
+    -DUSE_LUNASVG=1
     -DUSE_LIBWEBP=1
     -DUSE_ZSTD=1
     -DUSE_SRELL_REGEX=1
@@ -107,12 +109,13 @@ if(DEFINED ENV{WIN32})
     find_library(FREETYPE_LIB NAMES "freetype-6" PATHS $ENV{LIBS_DIR})
     find_library(HARFBUZZ_LIB NAMES "harfbuzz-0" PATHS $ENV{LIBS_DIR})
     find_library(FRIBIDI_LIB NAMES "fribidi-0" PATHS $ENV{LIBS_DIR})
-    find_library(LIBUNIBREAK_LIB NAMES "libunibreak-3" PATHS $ENV{LIBS_DIR})
+    find_library(LIBUNIBREAK_LIB NAMES "libunibreak-5" PATHS $ENV{LIBS_DIR})
     find_library(UTF8PROC_LIB NAMES "utf8proc-2" PATHS $ENV{LIBS_DIR})
     find_library(JPEG_LIB NAMES "jpeg-8" PATHS $ENV{LIBS_DIR})
+    find_library(LUNASVG_LIB NAMES "lunasvg" PATHS $ENV{LIBS_DIR})
     find_library(LIBWEBP_LIB NAMES "webp-7" PATHS $ENV{LIBS_DIR})
     find_library(LIBWEBPDEMUX_LIB NAMES "webpdemux-2" PATHS $ENV{LIBS_DIR})
-    set(THIRDPARTY_LIBS ${ZLIB} ${ZSTD} ${FREETYPE_LIB} ${HARFBUZZ_LIB} ${FRIBIDI_LIB} ${LIBUNIBREAK_LIB} ${UTF8PROC_LIB} ${JPEG_LIB} ${PNG_LIB} ${LIBWEBP_LIB} ${LIBWEBPDEMUX_LIB})
+    set(THIRDPARTY_LIBS ${ZLIB} ${ZSTD} ${FREETYPE_LIB} ${HARFBUZZ_LIB} ${FRIBIDI_LIB} ${LIBUNIBREAK_LIB} ${UTF8PROC_LIB} ${JPEG_LIB} ${PNG_LIB} ${LIBWEBP_LIB} ${LIBWEBPDEMUX_LIB} ${LUNASVG_LIB})
 else()
     add_library(PNG_LIB SHARED IMPORTED)
     set_target_properties(PNG_LIB PROPERTIES IMPORTED_LOCATION $ENV{PNG_LIB})
@@ -132,11 +135,13 @@ else()
     set_target_properties(LIBWEBP_LIB PROPERTIES IMPORTED_LOCATION $ENV{LIBWEBP_LIB})
     add_library(LIBWEBPDEMUX_LIB SHARED IMPORTED)
     set_target_properties(LIBWEBPDEMUX_LIB PROPERTIES IMPORTED_LOCATION $ENV{LIBWEBPDEMUX_LIB})
+    add_library(LUNASVG_LIB SHARED IMPORTED)
+    set_target_properties(LUNASVG_LIB PROPERTIES IMPORTED_LOCATION $ENV{LUNASVG_LIB})
     add_library(ZLIB SHARED IMPORTED)
     set_target_properties(ZLIB PROPERTIES IMPORTED_LOCATION $ENV{ZLIB})
     add_library(ZSTD SHARED IMPORTED)
     set_target_properties(ZSTD PROPERTIES IMPORTED_LOCATION $ENV{ZSTD_LIB})
-    set(THIRDPARTY_LIBS ZLIB ZSTD FREETYPE_LIB HARFBUZZ_LIB FRIBIDI_LIB LIBUNIBREAK_LIB UTF8PROC_LIB JPEG_LIB PNG_LIB LIBWEBP_LIB LIBWEBPDEMUX_LIB)
+    set(THIRDPARTY_LIBS ZLIB ZSTD FREETYPE_LIB HARFBUZZ_LIB FRIBIDI_LIB LIBUNIBREAK_LIB UTF8PROC_LIB JPEG_LIB PNG_LIB LIBWEBP_LIB LIBWEBPDEMUX_LIB LUNASVG_LIB)
 endif()
 
 message("Will build LIBCHM library")
@@ -200,4 +205,8 @@ add_library(crengine SHARED ${CRENGINE_SOURCES})
 # Make sure we'll get C++11 support
 target_compile_features(crengine PRIVATE cxx_constexpr)
 
-target_link_libraries(crengine chmlib antiword ${THIRDPARTY_LIBS})
+target_link_libraries(crengine PRIVATE chmlib antiword)
+target_link_libraries(crengine PRIVATE ${THIRDPARTY_LIBS})
+if(DEFINED ENV{ANDROID})
+    target_link_libraries(crengine PRIVATE ${SHARED_STL_LIB})
+endif()

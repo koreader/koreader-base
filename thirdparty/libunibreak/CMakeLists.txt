@@ -31,7 +31,7 @@ endif()
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
     https://github.com/adah1972/libunibreak.git
-    tags/libunibreak_4_3
+    tags/libunibreak_5_0
     ${SOURCE_DIR}
 )
 

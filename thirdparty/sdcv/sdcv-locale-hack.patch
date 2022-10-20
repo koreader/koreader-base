@@ -1,5 +1,5 @@
 diff --git a/src/sdcv.cpp b/src/sdcv.cpp
-index 60a21ad..8b585b4 100644
+index 3a10e3c..df29b36 100644
 --- a/src/sdcv.cpp
 +++ b/src/sdcv.cpp
 @@ -63,7 +63,10 @@ static void list_dicts(const std::list<std::string> &dicts_dir_list, bool use_js
@@ -35,7 +35,7 @@ index 60a21ad..8b585b4 100644
            _("for search use only dictionary with this bookname"),
            _("bookname") },
          { "non-interactive", 'n', 0, G_OPTION_ARG_NONE, &non_interactive,
-@@ -103,7 +113,7 @@ try {
+@@ -105,7 +115,7 @@ try {
            _("output must be in utf8"), nullptr },
          { "utf8-input", '1', 0, G_OPTION_ARG_NONE, &utf8_input,
            _("input of sdcv in utf8"), nullptr },
@@ -44,14 +44,3 @@ index 60a21ad..8b585b4 100644
            _("use this directory as path to stardict data directory"),
            _("path/to/dir") },
          { "only-data-dir", 'x', 0, G_OPTION_ARG_NONE, &only_data_dir,
-@@ -186,7 +196,9 @@ try {
-         // add bookname to list
-         gchar **p = get_impl(use_dict_list);
-         while (*p) {
--            order_list.push_back(bookname_to_ifo.at(*p));
-+            if (bookname_to_ifo.count(*p) > 0) { // don't fail if -u <bookname> is not found
-+                order_list.push_back(bookname_to_ifo.at(*p));
-+            }
-             ++p;
-         }
-     } else {

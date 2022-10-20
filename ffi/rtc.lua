@@ -23,8 +23,8 @@ require("ffi/rtc_h")
 -----------------------------------------------------------------
 
 local RTC = {
-    _wakeup_scheduled = false,   -- Flipped in @{setWakeupAlarm} and @{unsetWakeupAlarm}.
-    _wakeup_scheduled_ptm = nil, -- Stores a reference to the time of the last scheduled wakeup alarm.
+    _wakeup_scheduled = false,  -- Flipped in @{setWakeupAlarm} and @{unsetWakeupAlarm}.
+    _wakeup_scheduled_tm = nil, -- The tm struct of the last scheduled wakeup alarm.
 }
 
 --[[--
@@ -100,8 +100,8 @@ you can process your value with @{secondsFromNowToEpoch}.
 function RTC:setWakeupAlarm(epoch, enabled)
     enabled = (enabled ~= nil) and enabled or true
 
-    local ptm = C.gmtime(ffi.new("time_t[1]", epoch))
-    self._wakeup_scheduled_ptm = ptm
+    self._wakeup_scheduled_tm = ffi.new("struct tm")
+    local ptm = C.gmtime_r(ffi.new("time_t[1]", epoch), self._wakeup_scheduled_tm)
 
     local wake = ffi.new("struct rtc_wkalrm")
     wake.time.tm_sec = ptm.tm_sec
@@ -154,7 +154,7 @@ function RTC:unsetWakeupAlarm()
     --       c.f., toggleAlarmInterrupt for details.
     self:toggleAlarmInterrupt(false)
     self._wakeup_scheduled = false
-    self._wakeup_scheduled_ptm = nil
+    self._wakeup_scheduled_tm = nil
 end
 
 --[[--
@@ -165,7 +165,7 @@ This value is compared with @{getWakeupAlarmSys} in @{validateWakeupAlarmByProxi
 @treturn tm (time struct)
 --]]
 function RTC:getWakeupAlarm()
-    return self._wakeup_scheduled_ptm
+    return self._wakeup_scheduled_tm
 end
 
 --[[--
@@ -175,7 +175,7 @@ Return the timestamp of the alarm we set (if any).
 --]]
 function RTC:getWakeupAlarmEpoch()
     if self._wakeup_scheduled then
-        return tonumber(C.timegm(self._wakeup_scheduled_ptm))
+        return tonumber(C.timegm(self._wakeup_scheduled_tm))
     else
         return nil
     end
@@ -212,15 +212,58 @@ function RTC:getWakeupAlarmSys()
     -- Seed a struct tm with the current time, because not every field will be set in wake
     local t = ffi.new("time_t[1]")
     t[0] = C.time(nil)
-    local tm = ffi.new("struct tm") -- luacheck: ignore
-    tm = C.gmtime(t)
+    local tm = ffi.new("struct tm")
+    local ptm = C.gmtime_r(t, tm)
     -- And now update it with the fields that *are* set by the ioctl
-    tm.tm_sec = wake.time.tm_sec
-    tm.tm_min = wake.time.tm_min
-    tm.tm_hour = wake.time.tm_hour
-    tm.tm_mday = wake.time.tm_mday
-    tm.tm_mon = wake.time.tm_mon
-    tm.tm_year = wake.time.tm_year
+    ptm.tm_sec = wake.time.tm_sec
+    ptm.tm_min = wake.time.tm_min
+    ptm.tm_hour = wake.time.tm_hour
+    ptm.tm_mday = wake.time.tm_mday
+    ptm.tm_mon = wake.time.tm_mon
+    ptm.tm_year = wake.time.tm_year
+    return tm
+end
+
+--[[--
+Get RTC clock from system.
+
+@treturn tm (time struct)
+--]]
+function RTC:readHardwareClock()
+    local rtc = ffi.new("struct rtc_time")
+
+    local err, re
+    local rtc0 = C.open("/dev/rtc0", bor(C.O_RDONLY, C.O_NONBLOCK, C.O_CLOEXEC))
+    if rtc0 == -1 then
+        err = ffi.string(C.strerror(ffi.errno()))
+        print("readHardwareClock open /dev/rtc0", rtc0, err)
+        return nil, rtc0, err
+    end
+    re = C.ioctl(rtc0, C.RTC_RD_TIME, rtc)
+    if re == -1 then
+        err = ffi.string(C.strerror(ffi.errno()))
+        print("readHardwareClock ioctl RTC_RD_TIME", re, err)
+        return nil, re, err
+    end
+    re = C.close(rtc0)
+    if re == -1 then
+        err = ffi.string(C.strerror(ffi.errno()))
+        print("readHardwareClock close /dev/rtc0", re, err)
+        return nil, re, err
+    end
+
+    -- Seed a struct tm with the current time, because not every field will be set in rtc
+    local t = ffi.new("time_t[1]")
+    t[0] = C.time(nil)
+    local tm = ffi.new("struct tm")
+    local ptm = C.gmtime_r(t, tm)
+    -- And now update it with the fields that *are* set by the ioctl
+    ptm.tm_sec = rtc.tm_sec
+    ptm.tm_min = rtc.tm_min
+    ptm.tm_hour = rtc.tm_hour
+    ptm.tm_mday = rtc.tm_mday
+    ptm.tm_mon = rtc.tm_mon
+    ptm.tm_year = rtc.tm_year
     return tm
 end
 
@@ -242,16 +285,20 @@ function RTC:validateWakeupAlarmByProximity(task_alarm, proximity)
 
     -- We want everything in UTC time_t (i.e. a Posix epoch).
     local now = os.time()
+    local rtc_now_tm = self:readHardwareClock()
     -- time_t may be 64-bit, cast to a Lua number
+    local rtc_now = tonumber(C.timegm(rtc_now_tm))
     local alarm = tonumber(C.timegm(alarm_tm))
     local alarm_sys = tonumber(C.timegm(alarm_sys_tm))
 
     -- Everything's in UTC, ask Lua to convert that to a human-readable format in the local timezone
+    -- NOTE: Ideally, the first three entries should be identical.
     if task_alarm then
         print("validateWakeupAlarmByProximity:",
-            "\ntask              @ " .. task_alarm .. os.date(" (%F %T %z)", task_alarm),
-            "\nlast set alarm    @ " .. alarm .. os.date(" (%F %T %z)", alarm),
-            "\ncurrent rtc alarm @ " .. alarm_sys .. os.date(" (%F %T %z)", alarm_sys),
+            "\ntask              @ " .. task_alarm .. os.date(" (%F %T %z)", task_alarm), -- what we were asked to validate
+            "\nlast set alarm    @ " .. alarm .. os.date(" (%F %T %z)", alarm),           -- the last alarm *we* setup
+            "\ncurrent rtc alarm @ " .. alarm_sys .. os.date(" (%F %T %z)", alarm_sys),   -- the current rtc alarm
+            "\ncurrent rtc time is " .. rtc_now .. os.date(" (%F %T %z)", rtc_now),
             "\ncurrent time is     " .. now .. os.date(" (%F %T %z)", now))
     end
 
@@ -303,7 +350,7 @@ function RTC:HCToSys()
     end
 
     -- Read the hardware clock
-    local tm = ffi.new("struct tm")
+    local tm = ffi.new("struct tm") -- tm is a superset of rtc_time, so we're good.
     re = C.ioctl(rtc0, C.RTC_RD_TIME, tm)
     if re == -1 then
         err = ffi.string(C.strerror(ffi.errno()))

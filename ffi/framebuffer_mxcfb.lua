@@ -93,13 +93,6 @@ function framebuffer:_isNightREAGL()
    return self.night_is_reagl
 end
 
--- Returns true if waveform_mode arg matches the fast waveform mode for the current device
--- NOTE: This is to avoid explicit comparison against device-specific waveform constants in mxc_update()
---       Here, it's because some devices use A2, while other prefer DU
-function framebuffer:_isFastWaveFormMode(waveform_mode)
-    return waveform_mode == self.waveform_fast
-end
-
 -- Returns true if waveform_mode arg matches the partial waveform mode for the current device
 -- NOTE: This is to avoid explicit comparison against device-specific waveform constants in mxc_update()
 --       Here, because of REAGL or device-specific quirks.
@@ -410,8 +403,16 @@ local function refresh_k51(fb, is_flashing, waveform_mode, x, y, w, h)
         fb.update_data.hist_gray_waveform_mode = waveform_mode
     end
 
-    -- Enable the appropriate flag when requesting a 2bit update
-    if waveform_mode == C.WAVEFORM_MODE_A2 or waveform_mode == C.WAVEFORM_MODE_DU then
+    -- NOTE: Enable the appropriate flag when requesting an any->2bit update.
+    -- Since we mainly use DU for highlights, the color decimation quantization will effectively crush antialiasing on text,
+    -- avoiding making the text look fuzzy during the refresh (it'll instead look blockier, because of the lack of AA).
+    -- The higher density the screen is, the better this approach will look vs. fuzzy refresh artifacts ;).
+    -- In the very few cases we use A2 (i.e., the keyboard), using FORCE_MONOCHROME would be actively harmful:
+    -- we only highlight a border around the key, so we don't actually modify the glyph;
+    -- since non-GC updates leave untouched pixels alone, we leave the glyph (and its AA!) alone.
+    -- If we used FORCE_MONOCHROME, it would affect the whole rectangle, crushing the AA,
+    -- and the A2 update would have to pick up the modified pixels, leading to worse results.
+    if waveform_mode == C.WAVEFORM_MODE_DU then
         fb.update_data.flags = C.EPDC_FLAG_FORCE_MONOCHROME
     else
         fb.update_data.flags = 0
@@ -446,13 +447,12 @@ local function refresh_zelda(fb, is_flashing, waveform_mode, x, y, w, h, dither)
     -- Enable the REAGLD algo when requested
     if waveform_mode == C.WAVEFORM_MODE_ZELDA_GLD16 then
         fb.update_data.flags = C.EPDC_FLAG_USE_ZELDA_REGAL
-    -- Enable the appropriate flag when requesting a 2bit update, provided we're not dithering.
-    elseif waveform_mode == C.WAVEFORM_MODE_ZELDA_A2 and not dither then
+    -- Enable the appropriate flag when requesting an any->2bit update, provided we're not dithering.
+    elseif waveform_mode == C.WAVEFORM_MODE_DU and not dither then
         fb.update_data.flags = C.EPDC_FLAG_FORCE_MONOCHROME
     else
         fb.update_data.flags = 0
     end
-    -- TODO: There's also the HW-backed NightMode which should be somewhat accessible...
 
     return mxc_update(fb, C.MXCFB_SEND_UPDATE_ZELDA, fb.update_data, is_flashing, waveform_mode, x, y, w, h, dither)
 end
@@ -483,13 +483,12 @@ local function refresh_rex(fb, is_flashing, waveform_mode, x, y, w, h, dither)
     -- Enable the REAGLD algo when requested
     if waveform_mode == C.WAVEFORM_MODE_ZELDA_GLD16 then
         fb.update_data.flags = C.EPDC_FLAG_USE_ZELDA_REGAL
-    -- Enable the appropriate flag when requesting a 2bit update, provided we're not dithering.
-    elseif waveform_mode == C.WAVEFORM_MODE_ZELDA_A2 and not dither then
+    -- Enable the appropriate flag when requesting an any->2bit update, provided we're not dithering.
+    elseif waveform_mode == C.WAVEFORM_MODE_DU and not dither then
         fb.update_data.flags = C.EPDC_FLAG_FORCE_MONOCHROME
     else
         fb.update_data.flags = 0
     end
-    -- TODO: There's also the HW-backed NightMode which should be somewhat accessible...
 
     return mxc_update(fb, C.MXCFB_SEND_UPDATE_REX, fb.update_data, is_flashing, waveform_mode, x, y, w, h, dither)
 end
@@ -505,9 +504,9 @@ local function refresh_mtk(fb, is_flashing, waveform_mode, x, y, w, h, dither)
         fb.update_data.hist_gray_waveform_mode = C.MTK_WAVEFORM_MODE_GC16 -- NOTE: GC16_FAST points to GC16
     end
 
-    -- Enable the appropriate flag when requesting a 2bit update, provided we're not dithering.
+    -- Enable the appropriate flag when requesting an any->2bit update, provided we're not dithering.
     -- NOTE: See FBInk note about DITHER + MONOCHROME
-    if waveform_mode == C.MTK_WAVEFORM_MODE_A2 and not dither then
+    if waveform_mode == C.MTK_WAVEFORM_MODE_DU and not dither then
         fb.update_data.flags = C.EPDC_FLAG_FORCE_MONOCHROME
     else
         fb.update_data.flags = 0
@@ -577,8 +576,8 @@ local function refresh_kobo(fb, is_flashing, waveform_mode, x, y, w, h)
     -- Enable the appropriate flag when requesting a REAGLD waveform (WAVEFORM_MODE_REAGLD on the Aura)
     if waveform_mode == C.WAVEFORM_MODE_REAGLD then
         fb.update_data.flags = C.EPDC_FLAG_USE_AAD
-    elseif waveform_mode == C.WAVEFORM_MODE_A2 or waveform_mode == C.WAVEFORM_MODE_DU then
-        -- As well as when requesting a 2bit waveform
+    elseif waveform_mode == C.WAVEFORM_MODE_DU then
+        -- As well as when requesting an any->2bit waveform
         fb.update_data.flags = C.EPDC_FLAG_FORCE_MONOCHROME
     else
         fb.update_data.flags = 0
@@ -600,14 +599,13 @@ local function refresh_kobo_mk7(fb, is_flashing, waveform_mode, x, y, w, h, dith
         fb.update_data.dither_mode = C.EPDC_FLAG_USE_DITHERING_PASSTHROUGH
         fb.update_data.quant_bit = 0
     end
-    -- Enable the appropriate flag when requesting a 2bit update, provided we're not dithering.
+    -- Enable the appropriate flag when requesting an any->2bit update, provided we're not dithering.
     -- NOTE: As of right now (FW 4.9.x), WAVEFORM_MODE_GLD16 appears not to be used by Nickel,
     --       so we don't have to care about EPDC_FLAG_USE_REGAL
-    -- NOTE: We never actually request A2 updates anymore (on any platform, actually), but,
+    -- NOTE: We barely ever actually request A2 updates anymore (on any platform, actually), but,
     --       on Mk. 7 specifically, we want to avoid stacking EPDC_FLAGs,
     --       because the kernel is buggy (c.f., https://github.com/NiLuJe/FBInk/blob/96a2cd6a93f5184c595c0e53a844fd883adfd75b/fbink.c#L2422-L2440).
-    --       For our use-cases, FORCE_MONOCHROME is mostly unnecessary anyway (the effect being fuzzier text instead of blockier text, i.e., choose your poison ;p).
-    if waveform_mode == C.WAVEFORM_MODE_A2 and not dither then
+    if waveform_mode == C.WAVEFORM_MODE_DU and not dither then
         fb.update_data.flags = C.EPDC_FLAG_FORCE_MONOCHROME
     else
         fb.update_data.flags = 0
@@ -622,8 +620,8 @@ local function refresh_pocketbook(fb, is_flashing, waveform_mode, x, y, w, h)
     -- Enable the appropriate flag when requesting a REAGLD waveform (EPDC_WFTYPE_AAD on PB631)
     if waveform_mode == C.EPDC_WFTYPE_AAD then
         fb.update_data.flags = C.EPDC_FLAG_USE_AAD
-    elseif waveform_mode == C.WAVEFORM_MODE_A2 or waveform_mode == C.WAVEFORM_MODE_DU then
-        -- As well as when requesting a 2bit waveform
+    elseif waveform_mode == C.WAVEFORM_MODE_DU then
+        -- As well as when requesting an any->2bit waveform
         --- @note: Much like on rM, it appears faking 24°C instead of relying on ambient temp leads to lower latency
         fb.update_data.temp = 24
         fb.update_data.flags = C.EPDC_FLAG_FORCE_MONOCHROME
@@ -648,7 +646,7 @@ local function refresh_sony_prstux(fb, is_flashing, waveform_mode, x, y, w, h)
 end
 
 local function refresh_cervantes(fb, is_flashing, waveform_mode, x, y, w, h)
-    if waveform_mode == C.WAVEFORM_MODE_A2 or waveform_mode == C.WAVEFORM_MODE_DU then
+    if waveform_mode == C.WAVEFORM_MODE_DU then
         fb.update_data.flags = C.EPDC_FLAG_FORCE_MONOCHROME
     else
         fb.update_data.flags = 0
@@ -660,33 +658,38 @@ end
 --[[ framebuffer API ]]--
 
 function framebuffer:refreshPartialImp(x, y, w, h, dither)
-    self.debug("refresh: partial", x, y, w, h, dither and "w/ HW dithering")
+    self.debug("refresh: partial", x, y, w, h, dither)
     self:mech_refresh(false, self.waveform_partial, x, y, w, h, dither)
 end
 
 function framebuffer:refreshFlashPartialImp(x, y, w, h, dither)
-    self.debug("refresh: partial w/ flash", x, y, w, h, dither and "w/ HW dithering")
+    self.debug("refresh: partial w/ flash", x, y, w, h, dither)
     self:mech_refresh(true, self.waveform_partial, x, y, w, h, dither)
 end
 
 function framebuffer:refreshUIImp(x, y, w, h, dither)
-    self.debug("refresh: ui-mode", x, y, w, h, dither and "w/ HW dithering")
+    self.debug("refresh: ui-mode", x, y, w, h, dither)
     self:mech_refresh(false, self.waveform_ui, x, y, w, h, dither)
 end
 
 function framebuffer:refreshFlashUIImp(x, y, w, h, dither)
-    self.debug("refresh: ui-mode w/ flash", x, y, w, h, dither and "w/ HW dithering")
+    self.debug("refresh: ui-mode w/ flash", x, y, w, h, dither)
     self:mech_refresh(true, self.waveform_flashui, x, y, w, h, dither)
 end
 
 function framebuffer:refreshFullImp(x, y, w, h, dither)
-    self.debug("refresh: full", x, y, w, h, dither and "w/ HW dithering")
+    self.debug("refresh: full", x, y, w, h, dither)
     self:mech_refresh(true, self.waveform_full, x, y, w, h, dither)
 end
 
 function framebuffer:refreshFastImp(x, y, w, h, dither)
-    self.debug("refresh: fast", x, y, w, h, dither and "w/ HW dithering")
+    self.debug("refresh: fast", x, y, w, h, dither)
     self:mech_refresh(false, self.waveform_fast, x, y, w, h, dither)
+end
+
+function framebuffer:refreshA2Imp(x, y, w, h, dither)
+    self.debug("refresh: A2", x, y, w, h, dither)
+    self:mech_refresh(false, self.waveform_a2, x, y, w, h, dither)
 end
 
 function framebuffer:refreshWaitForLastImp()
@@ -714,7 +717,8 @@ function framebuffer:init()
         self.mech_wait_update_complete = kindle_pearl_mxc_wait_for_update_complete
         self.mech_wait_update_submission = kindle_mxc_wait_for_update_submission
 
-        self.waveform_fast = C.WAVEFORM_MODE_A2 -- NOTE: Mostly here for archeological purposes, we switch to DU on every device right below this ;).
+        self.waveform_a2 = C.WAVEFORM_MODE_A2
+        self.waveform_fast = C.WAVEFORM_MODE_DU
         self.waveform_ui = C.WAVEFORM_MODE_GC16_FAST
         self.waveform_flashui = self.waveform_ui
         self.waveform_full = C.WAVEFORM_MODE_GC16
@@ -744,6 +748,7 @@ function framebuffer:init()
                 self.mech_refresh = refresh_rex
             end
 
+            self.waveform_a2 = C.WAVEFORM_MODE_ZELDA_A2
             self.waveform_fast = C.WAVEFORM_MODE_DU
             self.waveform_ui = C.WAVEFORM_MODE_AUTO
             -- NOTE: Possibly to bypass the possibility that AUTO, even when FULL, might not flash (something which holds true for a number of devices, especially on small regions),
@@ -767,6 +772,7 @@ function framebuffer:init()
         if self.device:isMTK() then
             self.mech_refresh = refresh_mtk
 
+            self.waveform_a2 = C.MTK_WAVEFORM_MODE_A2
             self.waveform_fast = C.MTK_WAVEFORM_MODE_DU
             self.waveform_ui = C.WAVEFORM_MODE_AUTO
             self.waveform_flashui = self.waveform_ui
@@ -820,6 +826,7 @@ function framebuffer:init()
         self.mech_refresh = refresh_kobo
         self.mech_wait_update_complete = kobo_mxc_wait_for_update_complete
 
+        self.waveform_a2 = C.WAVEFORM_MODE_A2
         self.waveform_fast = C.WAVEFORM_MODE_DU
         self.waveform_ui = C.WAVEFORM_MODE_AUTO
         self.waveform_flashui = self.waveform_ui
@@ -892,6 +899,7 @@ function framebuffer:init()
         self.mech_refresh = refresh_pocketbook
         self.mech_wait_update_complete = pocketbook_mxc_wait_for_update_complete
 
+        self.waveform_a2 = C.WAVEFORM_MODE_A2
         self.wf_level_max = 3
         local level = self:getWaveformLevel()
         -- Level 0 is most conservative.
@@ -933,6 +941,7 @@ function framebuffer:init()
         self.mech_refresh = refresh_remarkable
         self.mech_wait_update_complete = remarkable_mxc_wait_for_update_complete
 
+        self.waveform_a2 = C.WAVEFORM_MODE_A2
         self.waveform_fast = C.WAVEFORM_MODE_DU
         self.waveform_ui = C.WAVEFORM_MODE_GL16
         self.waveform_flashui = C.WAVEFORM_MODE_GC16
@@ -955,6 +964,7 @@ function framebuffer:init()
         self.mech_refresh = refresh_sony_prstux
         self.mech_wait_update_complete = sony_prstux_mxc_wait_for_update_complete
 
+        self.waveform_a2 = C.WAVEFORM_MODE_A2
         self.waveform_fast = C.WAVEFORM_MODE_DU
         self.waveform_ui = C.WAVEFORM_MODE_AUTO
         self.waveform_flashui = self.waveform_ui
@@ -974,6 +984,7 @@ function framebuffer:init()
         self.mech_refresh = refresh_cervantes
         self.mech_wait_update_complete = cervantes_mxc_wait_for_update_complete
 
+        self.waveform_a2 = C.WAVEFORM_MODE_A2
         self.waveform_fast = C.WAVEFORM_MODE_DU
         self.waveform_ui = C.WAVEFORM_MODE_AUTO
         self.waveform_flashui = self.waveform_ui

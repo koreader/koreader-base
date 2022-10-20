@@ -20,6 +20,7 @@ assert_var_defined(GLIB)
 assert_var_defined(GLIB_DIR)
 assert_var_defined(ZLIB)
 assert_var_defined(ZLIB_DIR)
+assert_var_defined(SHARED_STL_LINK_FLAG)
 
 ep_get_source_dir(SOURCE_DIR)
 
@@ -31,7 +32,8 @@ endif()
 
 if(DEFINED ENV{ANDROID})
     set(CMAKE_SYSTEM_NAME Android)
-    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static-libgcc -static")
+    # Android 5+ requires PIE (yum!)
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${SHARED_STL_LINK_FLAG} -pie -fPIE")
 endif()
 
 # took me an eternity to find $<SEMICOLON>
@@ -75,10 +77,12 @@ set(CMAKE_SKIP_BUILD_RPATH True)
 set(ENABLE_NLS False CACHE BOOL "")
 set(WITH_READLINE False CACHE BOOL "")
 
-# Force utf8 command line parsing, and accept not-found -u dictnames
-set(PATCH_CMD1 "${KO_PATCH_SH} ${CMAKE_CURRENT_SOURCE_DIR}/sdcv-locale-hack.patch")
+# Revert 6e36e7730caf07b6cd0bfa265cdf9b5e31e7acad, because it's not helpful in our workflow, and just causes logging noise.
+set(PATCH_CMD1 "${KO_PATCH_SH} ${CMAKE_CURRENT_SOURCE_DIR}/sdcv-no-unknown-dict-warning.patch")
+# Force utf8 command line parsing
+set(PATCH_CMD2 "${KO_PATCH_SH} ${CMAKE_CURRENT_SOURCE_DIR}/sdcv-locale-hack.patch")
 
-set(SDCV_GIT_COMMIT d054adb37c635ececabc31b147c968a480d1891a)
+set(SDCV_GIT_COMMIT 6e36e7730caf07b6cd0bfa265cdf9b5e31e7acad)
 
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
@@ -94,7 +98,7 @@ download_project(
     GIT_TAG
     ${SDCV_GIT_COMMIT}
     #DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
-    PATCH_COMMAND COMMAND ${PATCH_CMD1}
+    PATCH_COMMAND COMMAND ${PATCH_CMD1} COMMAND ${PATCH_CMD2}
 )
 
 add_subdirectory("${CMAKE_BINARY_DIR}/sdcv-src"

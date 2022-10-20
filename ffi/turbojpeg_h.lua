@@ -19,36 +19,20 @@ enum TJPF {
 };
 enum TJSAMP {
   TJSAMP_444 = 0,
-  TJSAMP_422,
-  TJSAMP_420,
-  TJSAMP_GRAY,
-  TJSAMP_440,
-  TJSAMP_411
+  TJSAMP_422 = 1,
+  TJSAMP_420 = 2,
+  TJSAMP_GRAY = 3,
+  TJSAMP_440 = 4,
+  TJSAMP_411 = 5,
 };
-
-int tjDestroy(tjhandle handle);
-
+int tjDestroy(tjhandle);
 tjhandle tjInitDecompress(void);
-
-int tjDecompressHeader2(tjhandle handle, unsigned char *jpegBuf, unsigned long jpegSize,
-                        int *width, int *height, int *jpegSubsamp);
-
-int tjDecompressHeader3(tjhandle handle, const unsigned char *jpegBuf, unsigned long jpegSize,
-                        int *width, int *height, int *jpegSubsamp, int *jpegColorspace);
-
-int tjDecompress2(tjhandle handle, const unsigned char *jpegBuf, unsigned long jpegSize,
-                  unsigned char *dstBuf, int width, int pitch, int height, int pixelFormat,
-                  int flags);
-
-int tjDecompressToYUV2(tjhandle handle, const unsigned char *jpegBuf, unsigned long jpegSize,
-                       unsigned char *dstBuf, int width, int pad, int height, int flags);
-
+int tjDecompressHeader2(tjhandle, unsigned char *, long unsigned int, int *, int *, int *);
+int tjDecompressHeader3(tjhandle, const unsigned char *, long unsigned int, int *, int *, int *, int *);
+int tjDecompress2(tjhandle, const unsigned char *, long unsigned int, unsigned char *, int, int, int, int, int);
+int tjDecompressToYUV2(tjhandle, const unsigned char *, long unsigned int, unsigned char *, int, int, int, int);
 tjhandle tjInitCompress(void);
-void tjFree(unsigned char *buffer);
-int tjCompress2(tjhandle handle, const unsigned char *srcBuf, int width, int pitch, int height,
-                int pixelFormat, unsigned char **jpegBuf, unsigned long *jpegSize, int jpegSubsamp,
-                int jpegQual, int flags);
-
-int tjSaveImage(const char *filename, unsigned char *buffer, int width, int pitch, int height,
-                int pixelFormat, int flags);
+void tjFree(unsigned char *);
+int tjCompress2(tjhandle, const unsigned char *, int, int, int, int, unsigned char **, long unsigned int *, int, int, int);
+int tjSaveImage(const char *, unsigned char *, int, int, int, int, int);
 ]]

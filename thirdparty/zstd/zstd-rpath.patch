@@ -1,8 +1,8 @@
 diff --git a/lib/Makefile b/lib/Makefile
-index 9109476..4ef5772 100644
+index ef202183..a7035f2c 100644
 --- a/lib/Makefile
 +++ b/lib/Makefile
-@@ -272,7 +272,7 @@ LIBZSTD = libzstd.$(SHARED_EXT_VER)
+@@ -139,7 +139,7 @@ LIBZSTD = libzstd.$(SHARED_EXT_VER)
  .PHONY: $(LIBZSTD)  # must be run every time
  $(LIBZSTD): CPPFLAGS += $(CPPFLAGS_DYNLIB)
  $(LIBZSTD): CFLAGS   += -fPIC -fvisibility=hidden
@@ -11,7 +11,7 @@ index 9109476..4ef5772 100644
  
  ifndef BUILD_DIR
  # determine BUILD_DIR from compilation flags
-@@ -357,7 +357,7 @@ include $(wildcard $(DEPFILES))
+@@ -232,7 +232,7 @@ include $(wildcard $(DEPFILES))
  ZSTDMT_FILES = compress/zstdmt_compress.c
  ZSTD_NOMT_FILES = $(filter-out $(ZSTDMT_FILES),$(ZSTD_FILES))
  libzstd-nomt: CFLAGS += -fPIC -fvisibility=hidden

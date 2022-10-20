@@ -4,9 +4,10 @@ Module for various utility functions.
 @module ffi.util
 ]]
 
-local bit = require "bit"
-local ffi = require "ffi"
+local bit = require("bit")
+local ffi = require("ffi")
 local C = ffi.C
+local lfs = require("libs/libkoreader-lfs")
 
 local lshift = bit.lshift
 local band = bit.band
@@ -130,6 +131,7 @@ function util.strcoll(str1, str2)
         end
     end
 
+    local DALPHA_SORT_CASE_INSENSITIVE = G_defaults:readSetting("DALPHA_SORT_CASE_INSENSITIVE")
     -- patch real strcoll implementation
     util.strcoll = function(a, b)
         if a == nil and b == nil then
@@ -195,11 +197,14 @@ end
 
 --- Copies file.
 function util.copyFile(from, to)
-    local ffp, err = io.open(from, "rb")
-    if err ~= nil then
-        return err
+    local ffp, ferr = io.open(from, "rb")
+    if not ffp then
+        return ferr
     end
-    local tfp = io.open(to, "wb")
+    local tfp, terr = io.open(to, "wb")
+    if not tfp then
+        return terr
+    end
     while true do
         local bytes = ffp:read(8192)
         if not bytes then
@@ -259,8 +264,8 @@ function util.execute(...)
     else
         local pid = C.fork()
         if pid == 0 then
-            local args = {...}
-            os.exit(C.execl(args[1], unpack(args, 1, #args+1)))
+            local args = table.pack(...)
+            os.exit(C.execl(args[1], unpack(args, 1, #args+1))) -- Last arg must be a NULL pointer
         end
         local status = ffi.new('int[1]')
         C.waitpid(pid, status, 0)
@@ -651,12 +656,20 @@ end
 -- pairs(), but with *keys* sorted alphabetically.
 -- c.f., http://lua-users.org/wiki/SortedIteration
 -- See also http://lua-users.org/wiki/SortedIterationSimple
-local function __genOrderedIndex( t )
+local function __genOrderedIndex(t)
     local orderedIndex = {}
     for key in pairs(t) do
-        table.insert( orderedIndex, key )
+        table.insert(orderedIndex, key)
     end
-    table.sort( orderedIndex )
+    table.sort(orderedIndex, function(v1, v2)
+        if type(v1) == type(v2) then
+            -- Assumes said type supports the < comparison operator
+            return v1 < v2
+        else
+            -- Handle type mismatches by squashing to string
+            return tostring(v1) < tostring(v2)
+        end
+    end)
     return orderedIndex
 end
 
@@ -665,14 +678,14 @@ local function orderedNext(t, state)
     -- We use a temporary ordered key table that is stored in the table being iterated.
 
     local key = nil
-    --print("orderedNext: state = "..tostring(state) )
+    -- print("orderedNext: state = "..tostring(state))
     if state == nil then
         -- the first time, generate the index
-        t.__orderedIndex = __genOrderedIndex( t )
+        t.__orderedIndex = __genOrderedIndex(t)
         key = t.__orderedIndex[1]
     else
         -- fetch the next value
-        for i = 1,table.getn(t.__orderedIndex) do
+        for i = 1, #t.__orderedIndex do
             if t.__orderedIndex[i] == state then
                 key = t.__orderedIndex[i+1]
             end
@@ -685,7 +698,6 @@ local function orderedNext(t, state)
 
     -- no more value to return, cleanup
     t.__orderedIndex = nil
-    return
 end
 
 function util.orderedPairs(t)
@@ -710,7 +722,7 @@ This function was inspired by Qt:
 <http://qt-project.org/doc/qt-4.8/internationalization.html#use-qstring-arg-for-dynamic-text>
 --]]
 function util.template(str, ...)
-    local params = {...}
+    local params = table.pack(...)
     -- shortcut:
     if #params == 0 then return str end
     local result = string.gsub(str, "%%([1-9][0-9]?)",

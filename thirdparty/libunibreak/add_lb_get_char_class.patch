@@ -1,8 +1,8 @@
 diff --git a/src/linebreak.c b/src/linebreak.c
-index c2ccdda..45afba2 100644
+index 0c6514f..b1ecf3d 100644
 --- a/src/linebreak.c
 +++ b/src/linebreak.c
-@@ -751,6 +751,12 @@ int lb_process_next_char(
+@@ -744,6 +744,12 @@ int lb_process_next_char(
  
      return brk;
  }
@@ -16,13 +16,15 @@ index c2ccdda..45afba2 100644
  /**
   * Sets the line breaking information for a generic input string.
 diff --git a/src/linebreakdef.h b/src/linebreakdef.h
-index 5bb8838..8db80a6 100644
+index 8ef012a..03c1805 100644
 --- a/src/linebreakdef.h
 +++ b/src/linebreakdef.h
-@@ -169,3 +169,6 @@ void set_linebreaks(
-         const char *lang,
+@@ -179,5 +179,8 @@ size_t set_linebreaks(
+         enum BreakOutputType outputType,
          char *brks,
          get_next_char_t get_next_char);
 +enum LineBreakClass lb_get_char_class(
 +        struct LineBreakContext *lbpCtx,
 +        utf32_t ch);
+ 
+ #endif /* LINEBREAKDEF_H */
