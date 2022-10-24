@@ -20,12 +20,12 @@ if(DEFINED SYSROOT)
 endif()
 
 include(ExternalProject)
-set(LIBFFI_VER "3.4.3")
+set(LIBFFI_VER "3.4.4")
 ExternalProject_Add(
     ${PROJECT_NAME}
     DOWNLOAD_DIR ${KO_DOWNLOAD_DIR}
-    URL https://sourceware.org/pub/libffi/libffi-${LIBFFI_VER}.tar.gz
-    URL_MD5 b57b0ac1d1072681cee9148a417bd2ec
+    URL https://github.com/libffi/libffi/releases/download/v${LIBFFI_VER}/libffi-${LIBFFI_VER}.tar.gz
+    URL_MD5 0da1a5ed7786ac12dcbaf0d499d8a049
     CONFIGURE_COMMAND ${CFG_CMD}
     # skip the rest, we only need the header for glib
     BUILD_COMMAND ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS}
