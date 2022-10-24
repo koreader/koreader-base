@@ -270,6 +270,12 @@ local SDL_BUTTON_LEFT = 1
 local is_in_touch = false
 
 function S.waitForEvent(sec, usec)
+    -- If we're asking to sleep for a non-zero amount of time, but for less than 1ms (i.e., below our precision),
+    -- round *up*, to avoid a bunch of roundtrips during that fractional ms.
+    if sec == 0 and usec ~= 0 and usec < 1000 then
+        usec = 1000
+    end
+
     local event = ffi.new("union SDL_Event")
     -- TimeVal's :tomsecs if we were passed one to begin with, otherwise, -1 => block
     local timeout = sec and math.floor((sec * 1000000 + usec) / 1000 + 0.5) or -1
