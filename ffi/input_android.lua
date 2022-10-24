@@ -146,7 +146,7 @@ local function motionEventHandler(motion_event)
         local timev = genInputTimeval(android.lib.AMotionEvent_getEventTime(motion_event))
 
         -- This effectively gives us the size of the current MotionEvent array...
-        local pointer_count = android.lib.AMotionEvent_getPointerCount(motion_event)
+        local pointer_count = tonumber(android.lib.AMotionEvent_getPointerCount(motion_event))
         for i = 0, pointer_count - 1 do
             -- So, loop through the array, and if that pointer is still down, move it
             local slot = android.lib.AMotionEvent_getPointerId(motion_event, i)
