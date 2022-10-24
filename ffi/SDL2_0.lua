@@ -270,15 +270,17 @@ local SDL_BUTTON_LEFT = 1
 local is_in_touch = false
 
 function S.waitForEvent(sec, usec)
+    print("S.waitForEvent", sec, usec)
     local event = ffi.new("union SDL_Event")
     -- TimeVal's :tomsecs if we were passed one to begin with, otherwise, -1 => block
-    local timeout = sec and math.floor(sec * 1000000 + usec + 0.5) / 1000 or -1
+    local timeout = sec and math.floor((sec * 1000000 + usec) / 1000 + 0.5) or -1
 
     -- Reset the queue
     inputQueue = {}
 
     -- Wait for event
     local got_event = SDL.SDL_WaitEventTimeout(event, timeout)
+    print("SDL.SDL_WaitEventTimeout", timeout, "returned", got_event)
     if got_event == 0 then
         -- ETIME
         return false, C.ETIME
@@ -413,6 +415,8 @@ function S.waitForEvent(sec, usec)
         -- send Alt + F4
         genEmuEvent(C.EV_KEY, 1073742050, 1)
         genEmuEvent(C.EV_KEY, 1073741885, 1)
+    else
+        print("Unhandled event.type:", event.type)
     end
 
     if #inputQueue > 0 then
@@ -421,6 +425,7 @@ function S.waitForEvent(sec, usec)
     else
         -- SDL returned early, but without an event we actually use.
         -- Back to Input:waitEvent to recompute the timeout
+        print("returned EINTR")
         return false, C.EINTR
     end
 end
