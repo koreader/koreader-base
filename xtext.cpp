@@ -291,6 +291,13 @@ static bool default_para_direction_rtl = false;
 static char * default_lang = NULL;
 static hb_language_t default_lang_hb_language = HB_LANGUAGE_INVALID;
 
+// Default tuning for avoiding soft hyphens: when about to wrap on a soft hyphen,
+// if a wrap on a previous non-hyphen candidate would get justification to expand
+// the spaces by less than 100% (so, at most double width spaces), consider this
+// expansion admissible and better than this hyphen (which would probably make a
+// small part of a word hyphenated at end of this line).
+static int expansion_pct_rather_than_hyphen = 100;
+
 // ==============================================
 // Our main class
 // (We would have liked to have it pure C++, but we do use and push
@@ -1102,6 +1109,8 @@ public:
         int next_line_start_offset = -1;
         int candidate_end = -1;
         int candidate_line_width = 0;
+        int extendable_width = 0;
+        bool candidate_is_soft_hyphen = true; // If the first candidate is a soft-hyphen allow it to be used
         bool forced_break = false;
         bool has_tabs = false;
         int line_width = 0;
@@ -1110,7 +1119,7 @@ public:
             forced_break = false;
             int flags;
             if ( no_line_breaking_rules )
-                flags = CHAR_CAN_WRAP_AFTER; // Allow cutting on any char
+                flags = m_charinfo[i].flags | CHAR_CAN_WRAP_AFTER; // Allow cutting on any char
             else
                 flags = m_charinfo[i].flags;
             int new_line_width = line_width + m_charinfo[i].width;
@@ -1132,13 +1141,28 @@ public:
                     candidate_line_width = line_width;
                     candidate_end = i > start ? i-1 : start;
                     next_line_start_offset = i+1;
+                    candidate_is_soft_hyphen = false;
                 }
                 else if ( m_text[i] == SOFTHYPHEN_CHAR ) {
+                    bool avoid = false;
+                    if ( !exceeding && expansion_pct_rather_than_hyphen > 0 ) {
+                        // We consider a soft-hyphen a candidate only if:
+                        // - the previous candidate is not a soft-hyphen, and its width with all
+                        //   spaces expanded by this percent would be exceeding (meaning we will
+                        //   be fine with this candidate and justification will expand the spaces
+                        //   but not too much)
+                        // - or previous candidate is a soft-hyphen, and as we have already
+                        //   started hyphenating, we don't need to avoid a better one.
+                        if ( !candidate_is_soft_hyphen &&
+                                candidate_line_width + extendable_width * expansion_pct_rather_than_hyphen / 100 >= targeted_width ) {
+                            avoid = true;
+                        }
+                    }
                     // A soft-hyphen has a width of 0. But if we end this line on it,
                     // it should be rendered as a real hyphen with a width.
                     // So, to consider it a candidate for end, be sure we still won't
                     // exceed the targeted width when it is replaced.
-                    if ( !exceeding ) {
+                    if ( !exceeding && !avoid ) {
                         int hyphen_width = getHyphenWidth();
                         exceeding = new_line_width + hyphen_width > targeted_width;
                         if ( !exceeding ) {
@@ -1149,6 +1173,7 @@ public:
                             candidate_line_width = new_line_width + hyphen_width;
                             candidate_end = i;
                             next_line_start_offset = i+1;
+                            candidate_is_soft_hyphen = true;
                         }
                     }
                 }
@@ -1157,6 +1182,7 @@ public:
                         candidate_line_width = new_line_width;
                         candidate_end = i;
                         next_line_start_offset = i+1;
+                        candidate_is_soft_hyphen = false;
                     }
                 }
                 if ( flags & CHAR_MUST_BREAK_AFTER ) {
@@ -1172,6 +1198,9 @@ public:
                 break;
             }
             line_width = new_line_width;
+            if ( flags & CHAR_CAN_EXTEND_WIDTH ) {
+                extendable_width += m_charinfo[i].width;
+            }
             i += 1;
             // printf("%d < %d && %d <= %d ?\n", i, m_length, line_width, targeted_width);
         }
@@ -2139,6 +2168,13 @@ static int xtext_setDefaultLang(lua_State *L) {
     return 0;
 }
 
+static int xtext_setExpansionPercentageRatherThanHyphen(lua_State *L) {
+    if (lua_isnumber(L,1)) {
+        expansion_pct_rather_than_hyphen = luaL_checkint(L, 1);
+    }
+    return 0;
+}
+
 // Create a new XText C++ class instance and wrap it into a Lua userdata.
 // Started from these examples on how to wrap a C++ class:
 //  https://gist.github.com/kizzx2/1594905 XText.cpp
@@ -2460,6 +2496,7 @@ static int XText_getSelectedWords(lua_State *L) {
 static const struct luaL_Reg xtext_func[] = {
     {"setDefaultParaDirection", xtext_setDefaultParaDirection}, // false: LTR / true: RTL
     {"setDefaultLang", xtext_setDefaultLang},
+    {"setExpansionPercentageRatherThanHyphen", xtext_setExpansionPercentageRatherThanHyphen},
     {"new", xtext_new},
     {NULL, NULL}
 };
