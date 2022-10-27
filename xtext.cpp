@@ -66,6 +66,7 @@ extern "C"
 #define NOT_MEASURED INT_MIN
 #define REPLACEMENT_CHAR 0xFFFD
 #define ELLIPSIS_CHAR 0x2026
+#define ZERO_WIDTH_JOINER_CHAR 0x200D
 #define SOFTHYPHEN_CHAR 0x00AD
 #define REALHYPHEN_CHAR 0x002D
 
@@ -248,6 +249,8 @@ int Utf8ToUnicode(const char * src,  int srclen, uint32_t * dst, int dstlen, boo
 #define CHAR_IS_PARA_END                 0x0200
 #define CHAR_PARA_IS_RTL                 0x0400 /// to know the line with this char is part
                                                 /// of a paragraph with main dir RTL
+#define CHAR_IS_UNSAFE_TO_BREAK_BEFORE   0x0800 /// from HarfBuzz (set when kerning or on arabic when
+                                                /// initial/medial/final char forms are involved)
 #define CHAR_IS_TAB                      0x1000 /// char is '\t'
 
 // Info, after measure(), about each m_text char
@@ -351,11 +354,15 @@ public:
     }
 
     void allocate() {
-        m_charinfo = (xtext_charinfo_t *)calloc(m_length, sizeof(*m_charinfo)); // set all flags to 0
+        // We allocate one slot more than m_length, for the case we would have to
+        // truncate with an ellipsis the last char and we need to actually use a
+        // ZERO_WIDTH_JOINER before the ELLIPSIS (which might be needed with Arabic)
+        size_t size = m_length + 1;
+        m_charinfo = (xtext_charinfo_t *)calloc(size, sizeof(*m_charinfo)); // set all flags to 0
         if ( m_has_rtl ) {
-            m_bidi_ctypes = (FriBidiCharType *)malloc(m_length * sizeof(*m_bidi_ctypes));
-            m_bidi_btypes = (FriBidiBracketType *)malloc(m_length * sizeof(*m_bidi_btypes));
-            m_bidi_levels = (FriBidiLevel *)malloc(m_length * sizeof(*m_bidi_levels));
+            m_bidi_ctypes = (FriBidiCharType *)malloc(size * sizeof(*m_bidi_ctypes));
+            m_bidi_btypes = (FriBidiBracketType *)malloc(size * sizeof(*m_bidi_btypes));
+            m_bidi_levels = (FriBidiLevel *)malloc(size * sizeof(*m_bidi_levels));
         }
     }
     void deallocate() {
@@ -380,7 +387,8 @@ public:
         // count the number of unicode codepoints, before allocating m_text,
         // and a 2nd to actually do the conversion and fill m_text.
         m_length = Utf8ToUnicode(utf8_text, utf8_len, NULL, 0, m_is_valid, m_has_rtl);
-        m_text = (uint32_t *)malloc(m_length * sizeof(*m_text));
+        size_t size = m_length + 1; // (one slot more, see above)
+        m_text = (uint32_t *)malloc(size * sizeof(*m_text));
 
         // m_has_rtl is only detected in the 2nd phase.
         // If m_para_direction_rtl is true, set m_has_rtl=true in all case
@@ -406,7 +414,8 @@ public:
     // a single good one).
     void setTextFromUTF8CharsLuaArray(lua_State * L, int n) {
         m_length = (int) lua_objlen(L, n); // NOTE: size_t -> int, as that's what both FriBidi & HarfBuzz expect.
-        m_text = (uint32_t *)malloc(m_length * sizeof(*m_text));
+        size_t size = m_length + 1; // (one slot more, see above)
+        m_text = (uint32_t *)malloc(size * sizeof(*m_text));
         m_is_valid = true; // assume it is valid if coming from Lua array
         m_has_rtl = false;
         // If m_para_direction_rtl is true, set m_has_rtl=true in all case
@@ -930,6 +939,7 @@ public:
         int cur_cluster = 0;
         int hg = 0;  // index in glyph_info/glyph_pos
         int hcl = 0; // cluster number of glyph at hg
+        bool cur_cluster_unsafe_to_break = false;
         int t_notdef_start = -1;
         int t_notdef_end = -1;
         int notdef_width = 0;
@@ -1001,6 +1011,8 @@ public:
                     #endif
                     cur_width += advance;
                     cur_cluster = hcl;
+                    hb_glyph_flags_t flags = hb_glyph_info_get_glyph_flags(&glyph_info[hg]);
+                    cur_cluster_unsafe_to_break = flags & HB_GLYPH_FLAG_UNSAFE_TO_BREAK;
                     hg++;
                     continue; // keep grabbing glyphs
                 }
@@ -1031,6 +1043,8 @@ public:
             }
             if ( is_rtl )
                 m_charinfo[t].flags |= CHAR_IS_RTL;
+            if ( cur_cluster_unsafe_to_break )
+                m_charinfo[t].flags |= CHAR_IS_UNSAFE_TO_BREAK_BEFORE;
 
             #ifdef DEBUG_MEASURE_TEXT
                 printf("=> %d (flags=%d) => W=%d\n", cur_width, m_charinfo[t].flags, final_width);
@@ -1268,33 +1282,94 @@ public:
         unsigned short orig_idx_charinfo_flags; // .width is not used, no need to update it
         FriBidiCharType orig_idx_bidi_ctype = 0;
         FriBidiLevel orig_idx_bidi_level = 0;
+        // We may have to substitute a second char (ZWJ + Eliipsis)
+        int idx2_substituted = -1;
+        uint32_t orig_idx2_char;
+        unsigned short orig_idx2_charinfo_flags; // .width is not used, no need to update it
+        FriBidiCharType orig_idx2_bidi_ctype = 0;
+        FriBidiLevel orig_idx2_bidi_level = 0;
+
         if ( idx_to_substitute_with_ellipsis >= 0 && idx_to_substitute_with_ellipsis < m_length ) {
+            // If the char we're substituting has "unsafe to break (from previous char)", there
+            // may be some kerning between these chars (which is not an issue), or it could be
+            // some arabic (or other script) char: the previous char (that we are not replacing)
+            // may have an arabic initial or medial form because it is not final; when replacing
+            // the next one with an ellipsis, it could get an isolated or final form, which could
+            // change the meaning of the truncated word, or make it longer (and have the ellipsis
+            // overflowing the target width).
+            // To avoid this, we need to add a ZERO WIDTH JOINER before the ellipsis (we hope
+            // this won't cause any issue with other scripts or occurences of "unsafe to break").
+            // (All this applies similarly with an ellipsis at start, considering the next char.)
+            bool ellipsis_at_end = idx_to_substitute_with_ellipsis == end-1 && end-2 >= start;
+            bool ellipsis_at_start = idx_to_substitute_with_ellipsis == start && start+1 <= end-1;
+            int idx_to_mimic_bidi = -1;
+            int idx_to_substitute_with_zwj = -1;
+            if ( ellipsis_at_end ) {
+                // Set the bidi level of our ellipsis (and our zwj) to be the same as the
+                // neighbour we keep, so it's not moved away from it
+                idx_to_mimic_bidi = idx_to_substitute_with_ellipsis - 1;
+                if ( m_charinfo[idx_to_substitute_with_ellipsis].flags & CHAR_IS_UNSAFE_TO_BREAK_BEFORE ) {
+                    idx_to_substitute_with_zwj = idx_to_substitute_with_ellipsis;
+                    idx_to_substitute_with_ellipsis = idx_to_substitute_with_ellipsis + 1;
+                    end = end + 1; // include that additional replaced char in the segment to shape
+                    // We made sure to have all our buffers be m_length+1, so we can hack one slot
+                    // away from m_length if idx_to_substitute_with_ellipsis = end-1 = m_length-1
+                }
+            }
+            else if ( ellipsis_at_start ) {
+                idx_to_mimic_bidi = idx_to_substitute_with_ellipsis + 1;
+                if ( m_charinfo[idx_to_mimic_bidi].flags & CHAR_IS_UNSAFE_TO_BREAK_BEFORE ) {
+                    // Unlike when at end, we don't have a slot to add both the ellipsis
+                    // and a zwj if start=0, so don't add it (this is rather rarely used
+                    // by frontend, so we should be fine).
+                    if ( idx_to_substitute_with_ellipsis > 0 ) {
+                        idx_to_substitute_with_zwj = idx_to_substitute_with_ellipsis;
+                        idx_to_substitute_with_ellipsis = idx_to_substitute_with_ellipsis - 1;
+                        start = start - 1;
+                    }
+                }
+            }
+            else {
+                // Standalone ellipsis: just substitute it, nothing else special to do
+            }
+
+            // Substitute the ellipsis
             idx_substituted = idx_to_substitute_with_ellipsis;
             orig_idx_char = m_text[idx_substituted];
             orig_idx_charinfo_flags = m_charinfo[idx_substituted].flags;
             m_text[idx_substituted] = ELLIPSIS_CHAR;
             m_charinfo[idx_substituted].flags &= ~CHAR_CAN_EXTEND_WIDTH;
             m_charinfo[idx_substituted].flags &= ~CHAR_CAN_EXTEND_WIDTH_FALLBACK;
-            m_charinfo[idx_substituted].flags &= ~CHAR_IS_CLUSTER_TAIL;
             m_charinfo[idx_substituted].flags &= ~CHAR_SCRIPT_CHANGE; // ellipsis is script neutral
                                                 // Looks like we can keep all other flags as is
             if ( m_has_bidi ) {
-                // Be sure UAX#9 rules I1, I2, L1 to L4 don't move the ellipsis away
-                // from its neighbours
+                // Be sure UAX#9 rules I1, I2, L1 to L4 don't move the ellipsis away from its neighbour
                 orig_idx_bidi_ctype = m_bidi_ctypes[idx_substituted];
                 orig_idx_bidi_level = m_bidi_levels[idx_substituted];
-                // If we're substituting start or end (which is what we do in frontend),
-                // set the bidi level of our ellipsis to be start+1 or end-1, so
-                // it's not moved away from next or previous char.
-                if ( idx_substituted == end-1 && end-1 >= start)
-                    m_bidi_levels[idx_substituted] = m_bidi_levels[end-1];
-                else if ( idx_substituted == start && start+1 < end)
-                    m_bidi_levels[idx_substituted] = m_bidi_levels[start+1];
+                m_bidi_levels[idx_substituted] = m_bidi_levels[idx_to_mimic_bidi];
                 // Also get the real bidi type of our ellipsis (if it is replacing a space,
                 // we don't want it to be FRIBIDI_MASK_WS as fribidi_reorder_line() could
                 // then move it at start or end in visual order)
                 fribidi_get_bidi_types((const FriBidiChar*)(m_text+idx_substituted), 1,
                                          (FriBidiCharType*)(m_bidi_ctypes+idx_substituted));
+            }
+
+            // Substitute the zwj if any
+            if ( idx_to_substitute_with_zwj >= 0 ) {
+                idx2_substituted = idx_to_substitute_with_zwj;
+                orig_idx2_char = m_text[idx2_substituted];
+                orig_idx2_charinfo_flags = m_charinfo[idx2_substituted].flags;
+                m_text[idx2_substituted] = ZERO_WIDTH_JOINER_CHAR;
+                m_charinfo[idx2_substituted].flags &= ~CHAR_CAN_EXTEND_WIDTH;
+                m_charinfo[idx2_substituted].flags &= ~CHAR_CAN_EXTEND_WIDTH_FALLBACK;
+                m_charinfo[idx2_substituted].flags &= ~CHAR_SCRIPT_CHANGE;
+                if ( m_has_bidi ) {
+                    orig_idx2_bidi_ctype = m_bidi_ctypes[idx2_substituted];
+                    orig_idx2_bidi_level = m_bidi_levels[idx2_substituted];
+                    m_bidi_levels[idx2_substituted] = m_bidi_levels[idx_to_mimic_bidi];
+                    fribidi_get_bidi_types((const FriBidiChar*)(m_text+idx2_substituted), 1,
+                                             (FriBidiCharType*)(m_bidi_ctypes+idx2_substituted));
+                }
             }
         }
         else if ( m_text[end-1] == SOFTHYPHEN_CHAR ) {
@@ -1508,14 +1583,21 @@ public:
         // and provide a width_without_trailing_spaces, so text justification
         // can ignore them.
 
-        // Restore the char (and its properties) that we replaced with
-        // an ellipsis or a real hyphen
+        // Restore the char(s) (and their properties) that we replaced
         if ( idx_substituted >=0 ) {
             m_text[idx_substituted] = orig_idx_char;
             m_charinfo[idx_substituted].flags = orig_idx_charinfo_flags;
             if ( m_has_bidi ) {
                 m_bidi_ctypes[idx_substituted] = orig_idx_bidi_ctype;
                 m_bidi_levels[idx_substituted] = orig_idx_bidi_level;
+            }
+        }
+        if ( idx2_substituted >=0 ) {
+            m_text[idx2_substituted] = orig_idx2_char;
+            m_charinfo[idx2_substituted].flags = orig_idx2_charinfo_flags;
+            if ( m_has_bidi ) {
+                m_bidi_ctypes[idx2_substituted] = orig_idx2_bidi_ctype;
+                m_bidi_levels[idx2_substituted] = orig_idx2_bidi_level;
             }
         }
 
@@ -1665,7 +1747,8 @@ public:
         // for (int i = start; i < end; i++) {
         //     hb_buffer_add(_hb_buffer, (hb_codepoint_t)(m_text[i]), i);
         // }
-        hb_buffer_add_codepoints(_hb_buffer, (hb_codepoint_t*)m_text, m_length, start, end-start);
+        int extra = (end == m_length) ? 1 : 0; // in case we added ZWJ+Ellipsis at end
+        hb_buffer_add_codepoints(_hb_buffer, (hb_codepoint_t*)m_text, m_length+extra, start, end-start);
         hb_buffer_set_content_type(_hb_buffer, HB_BUFFER_CONTENT_TYPE_UNICODE);
 
         // If we are provided with direction and hints, let harfbuzz know
