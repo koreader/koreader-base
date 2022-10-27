@@ -558,6 +558,18 @@ static int getHyphenationForWord(lua_State *L) {
     return 1;
 }
 
+static int softHyphenateText(lua_State *L) {
+    const char *lang = luaL_checkstring(L, 1);
+    const char *text = luaL_checkstring(L, 2);
+    TextLangCfg * lang_cfg = TextLangMan::getTextLangCfg( lString32(lang) );
+    lString32 utext = Utf8ToUnicode(text);
+    // We provide use_default_hyph_method=true, to use the hyph dict for
+    // that language, even if hyphenation is disabled in crengine
+    lString32 hyphenated_text = lang_cfg->softHyphenateText(utext, true);
+    lua_pushstring(L, UnicodeToLocal(hyphenated_text).c_str());
+    return 1;
+}
+
 static int getIntProperty(lua_State *L) {
     CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
     const char *propName = luaL_checkstring(L, 2);
@@ -3835,6 +3847,7 @@ static const struct luaL_Reg cre_func[] = {
     {"getDomVersionWithNormalizedXPointers", getDomVersionWithNormalizedXPointers},
     {"setUserHyphenationDict", setUserHyphenationDict},
     {"getHyphenationForWord", getHyphenationForWord},
+    {"softHyphenateText", softHyphenateText},
     {"renderImageData", renderImageData},
     {"smoothScaleBlitBuffer", smoothScaleBlitBuffer},
     {NULL, NULL}
