@@ -143,6 +143,7 @@ int lstat(const char *restrict, struct stat *restrict) __attribute__((nothrow, l
 size_t fread(void *restrict, size_t, size_t, FILE *restrict);
 size_t fwrite(const void *restrict, size_t, size_t, FILE *restrict);
 int fclose(FILE *);
+int fflush(FILE *);
 int feof(FILE *) __attribute__((nothrow, leaf));
 int ferror(FILE *) __attribute__((nothrow, leaf));
 int printf(const char *, ...);
