@@ -56,10 +56,10 @@ local framebuffer = {
 
 --[[ refresh list management: --]]
 
--- Returns an incrementing marker value, w/ a sane wraparound.
+-- Returns an incrementing marker value, w/ a sane wraparound for an uint32_t.
 function framebuffer:_get_next_marker()
     local marker = self.marker + 1
-    if marker > 128 then
+    if marker > 0xFFFFFFFF then
         marker = 1
     end
 
