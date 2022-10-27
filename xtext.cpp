@@ -66,6 +66,8 @@ extern "C"
 #define NOT_MEASURED INT_MIN
 #define REPLACEMENT_CHAR 0xFFFD
 #define ELLIPSIS_CHAR 0x2026
+#define SOFTHYPHEN_CHAR 0x00AD
+#define REALHYPHEN_CHAR 0x002D
 
 // Helpers with font metrics (units are 1/64 px)
 // #define FONT_METRIC_FLOOR(x)    ((x) & -64)
@@ -311,6 +313,7 @@ public:
     hb_language_t m_hb_language;
 
     int m_width; // measured full width
+    int m_hyphen_width; // width of the hyphen char found first among the fonts
     uint32_t *           m_text;        // array of unicode chars
     xtext_charinfo_t *   m_charinfo;    // info about each of these unicode chars
     FriBidiCharType *    m_bidi_ctypes; // FriBiDi internal helper structures
@@ -331,6 +334,7 @@ public:
        ,m_lang(NULL)
        ,m_hb_language(HB_LANGUAGE_INVALID)
        ,m_width(NOT_MEASURED)
+       ,m_hyphen_width(NOT_MEASURED)
        ,m_text(NULL)
        ,m_charinfo(NULL)
        ,m_bidi_ctypes(NULL)
@@ -609,6 +613,27 @@ public:
 
         lua_settop(m_L, stack_orig_top); // restore stack / drop our added work stuff
         return hb_data;
+    }
+
+    int getHyphenWidth() {
+        if ( m_hyphen_width != NOT_MEASURED )
+            return m_hyphen_width;
+        for ( int font_num=0; font_num < MAX_FONT_NUM; font_num++ ) {
+            xtext_hb_font_data * hb_data = getHbFontData(font_num);
+            if ( !hb_data ) { // No such font (so, no more fallback font)
+                m_hyphen_width = 0;
+                break;
+            }
+            hb_font_t * _hb_font = hb_data->hb_font;
+            hb_codepoint_t glyph_id;
+            if ( hb_font_get_glyph(_hb_font, REALHYPHEN_CHAR, 0, &glyph_id) ) {
+                hb_position_t x, y;
+                hb_font_get_glyph_advance_for_direction(_hb_font, glyph_id, HB_DIRECTION_LTR, &x, &y);
+                m_hyphen_width = FONT_METRIC_TO_PX(x);
+                break;
+            }
+        }
+        return m_hyphen_width;
     }
 
     void measure() {
@@ -1094,6 +1119,25 @@ public:
                     candidate_end = i > start ? i-1 : start;
                     next_line_start_offset = i+1;
                 }
+                else if ( m_text[i] == SOFTHYPHEN_CHAR ) {
+                    // A soft-hyphen has a width of 0. But if we end this line on it,
+                    // it should be rendered as a real hyphen with a width.
+                    // So, to consider it a candidate for end, be sure we still won't
+                    // exceed the targeted width when it is replaced.
+                    if ( !exceeding ) {
+                        int hyphen_width = getHyphenWidth();
+                        exceeding = new_line_width + hyphen_width > targeted_width;
+                        if ( !exceeding ) {
+                            // If we really end this line with this, the line width will include
+                            // a visible hyphen (but we don't touch line_width / new_line_width,
+                            // measured with the 0-width softhyphen, which will be used when
+                            // processing next chars).
+                            candidate_line_width = new_line_width + hyphen_width;
+                            candidate_end = i;
+                            next_line_start_offset = i+1;
+                        }
+                    }
+                }
                 else { // CJK char, or non-last space in a sequence of consecutive spaces
                     if ( !exceeding ) {
                         candidate_line_width = new_line_width;
@@ -1195,43 +1239,71 @@ public:
     //   on it in logical order, and we'll give it segments of consecutive chars in
     //   the same level
     void shapeLine(int start, int end, int idx_to_substitute_with_ellipsis=-1) {
-        // Temporarily substitute a char from text with an ellipsis if requested.
-        // We'll restore the original item from m_text and m_charinfo when done.
-        bool orig_idx_substituted = false;
-        // Backups, to be restored when done
+        // We may substitute a char from text with an ellipsis or a real hyphen.
+        // We'll backup and restore the original item from m_text and m_charinfo when done.
+        int idx_substituted = -1;
         uint32_t orig_idx_char;
         unsigned short orig_idx_charinfo_flags; // .width is not used, no need to update it
         FriBidiCharType orig_idx_bidi_ctype = 0;
         FriBidiLevel orig_idx_bidi_level = 0;
         if ( idx_to_substitute_with_ellipsis >= 0 && idx_to_substitute_with_ellipsis < m_length ) {
-            orig_idx_substituted = true;
-            orig_idx_char = m_text[idx_to_substitute_with_ellipsis];
-            orig_idx_charinfo_flags = m_charinfo[idx_to_substitute_with_ellipsis].flags;
-            m_text[idx_to_substitute_with_ellipsis] = ELLIPSIS_CHAR;
-            m_charinfo[idx_to_substitute_with_ellipsis].flags &= ~CHAR_CAN_EXTEND_WIDTH;
-            m_charinfo[idx_to_substitute_with_ellipsis].flags &= ~CHAR_CAN_EXTEND_WIDTH_FALLBACK;
-            m_charinfo[idx_to_substitute_with_ellipsis].flags &= ~CHAR_IS_CLUSTER_TAIL;
-            m_charinfo[idx_to_substitute_with_ellipsis].flags &= ~CHAR_SCRIPT_CHANGE; // ellipsis is script neutral
+            idx_substituted = idx_to_substitute_with_ellipsis;
+            orig_idx_char = m_text[idx_substituted];
+            orig_idx_charinfo_flags = m_charinfo[idx_substituted].flags;
+            m_text[idx_substituted] = ELLIPSIS_CHAR;
+            m_charinfo[idx_substituted].flags &= ~CHAR_CAN_EXTEND_WIDTH;
+            m_charinfo[idx_substituted].flags &= ~CHAR_CAN_EXTEND_WIDTH_FALLBACK;
+            m_charinfo[idx_substituted].flags &= ~CHAR_IS_CLUSTER_TAIL;
+            m_charinfo[idx_substituted].flags &= ~CHAR_SCRIPT_CHANGE; // ellipsis is script neutral
                                                 // Looks like we can keep all other flags as is
             if ( m_has_bidi ) {
                 // Be sure UAX#9 rules I1, I2, L1 to L4 don't move the ellipsis away
                 // from its neighbours
-                orig_idx_bidi_ctype = m_bidi_ctypes[idx_to_substitute_with_ellipsis];
-                orig_idx_bidi_level = m_bidi_levels[idx_to_substitute_with_ellipsis];
+                orig_idx_bidi_ctype = m_bidi_ctypes[idx_substituted];
+                orig_idx_bidi_level = m_bidi_levels[idx_substituted];
                 // If we're substituting start or end (which is what we do in frontend),
                 // set the bidi level of our ellipsis to be start+1 or end-1, so
                 // it's not moved away from next or previous char.
-                if ( idx_to_substitute_with_ellipsis == end-1 && end-1 >= start)
-                    m_bidi_levels[idx_to_substitute_with_ellipsis] = m_bidi_levels[end-1];
-                else if ( idx_to_substitute_with_ellipsis == start && start+1 < end)
-                    m_bidi_levels[idx_to_substitute_with_ellipsis] = m_bidi_levels[start+1];
+                if ( idx_substituted == end-1 && end-1 >= start)
+                    m_bidi_levels[idx_substituted] = m_bidi_levels[end-1];
+                else if ( idx_substituted == start && start+1 < end)
+                    m_bidi_levels[idx_substituted] = m_bidi_levels[start+1];
                 // Also get the real bidi type of our ellipsis (if it is replacing a space,
                 // we don't want it to be FRIBIDI_MASK_WS as fribidi_reorder_line() could
                 // then move it at start or end in visual order)
-                fribidi_get_bidi_types((const FriBidiChar*)(m_text+idx_to_substitute_with_ellipsis), 1,
-                                         (FriBidiCharType*)(m_bidi_ctypes+idx_to_substitute_with_ellipsis));
+                fribidi_get_bidi_types((const FriBidiChar*)(m_text+idx_substituted), 1,
+                                         (FriBidiCharType*)(m_bidi_ctypes+idx_substituted));
             }
         }
+        else if ( m_text[end-1] == SOFTHYPHEN_CHAR ) {
+            // If the last char in logical order is a soft hyphen, we had the line cut
+            // here and we should show a real hyphen. This is also what we have to do
+            // if this logical end is not the visual end (a LTR word hyphenated among
+            // RTL text may happen in the middle of a line, and the hyphen should show
+            // there).
+            idx_substituted = end-1;
+            orig_idx_char = m_text[idx_substituted];
+            orig_idx_charinfo_flags = m_charinfo[idx_substituted].flags;
+            m_text[idx_substituted] = REALHYPHEN_CHAR;
+            m_charinfo[idx_substituted].flags &= ~CHAR_SCRIPT_CHANGE; // have it script neutral
+            if ( m_has_bidi ) {
+                // Mostly as done above for the ellipsis
+                orig_idx_bidi_ctype = m_bidi_ctypes[idx_substituted];
+                orig_idx_bidi_level = m_bidi_levels[idx_substituted];
+                // Be sure the real hyphen has the bidi level of its preceding character
+                if ( idx_substituted > 0 )
+                    m_bidi_levels[idx_substituted] = m_bidi_levels[idx_substituted-1];
+                // Looks like we can't keep the bidi type (control char, boundary neutral)
+                // of the soft hyphen, as it could be forwarded to start/end of line.
+                // We could pick the type of the previous char, but it could be anything.
+                // It may be safer to get the bidi type of the real hyphen (European
+                // Number Separator), even if it is ambiguous: the BiDi algo may just do
+                // the right/best thing with it.
+                fribidi_get_bidi_types((const FriBidiChar*)(m_text+idx_substituted), 1,
+                                         (FriBidiCharType*)(m_bidi_ctypes+idx_substituted));
+            }
+        }
+
         // If m_has_bidi, we need the help of fribidi to visually reorder
         // the text, before feeding segments (of possible different
         // directions) to Harfbuzz.
@@ -1414,13 +1486,14 @@ public:
         // and provide a width_without_trailing_spaces, so text justification
         // can ignore them.
 
-        // Restore the char that we replaced with an ellipsis
-        if ( orig_idx_substituted ) {
-            m_text[idx_to_substitute_with_ellipsis] = orig_idx_char;
-            m_charinfo[idx_to_substitute_with_ellipsis].flags = orig_idx_charinfo_flags;
+        // Restore the char (and its properties) that we replaced with
+        // an ellipsis or a real hyphen
+        if ( idx_substituted >=0 ) {
+            m_text[idx_substituted] = orig_idx_char;
+            m_charinfo[idx_substituted].flags = orig_idx_charinfo_flags;
             if ( m_has_bidi ) {
-                m_bidi_ctypes[idx_to_substitute_with_ellipsis] = orig_idx_bidi_ctype;
-                m_bidi_levels[idx_to_substitute_with_ellipsis] = orig_idx_bidi_level;
+                m_bidi_ctypes[idx_substituted] = orig_idx_bidi_ctype;
+                m_bidi_levels[idx_substituted] = orig_idx_bidi_level;
             }
         }
 
