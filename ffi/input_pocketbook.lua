@@ -34,7 +34,7 @@ end
 
 local eventq
 -- Make emulated event and add it to the queue (ts presumed updated beforehand)
-local function genEmuEvent(t,c,v)
+local function genEmuEvent(t, c, v)
     table.insert(eventq, {
         type = tonumber(t),
         code = tonumber(c),
@@ -87,6 +87,18 @@ local function translateEvent(t, par1, par2)
             genEmuEvent(C.EV_ABS, C.ABS_MT_TRACKING_ID, -1)
         end
         num_touch = 0
+    elseif t == C.EVT_KEYDOWN then
+        genEmuEvent(C.EV_KEY, par1, 1)
+    elseif t == C.EVT_KEYREPEAT then
+        genEmuEvent(C.EV_KEY, par1, 2)
+    elseif t == C.EVT_KEYUP then
+        genEmuEvent(C.EV_KEY, par1, 0)
+    elseif t == C.EVT_BACKGROUND or t == C.EVT_FOREGROUND
+        or t == C.EVT_SHOW or t == C.EVT_HIDE
+        or t == C.EVT_EXIT then
+        -- Handle those as MiscEvent as this makes it easy to return a string directly,
+        -- which can be used in uimanager.lua as an event_handler index.
+        genEmuEvent(C.EV_MSC, t, nil)
     else
         genEmuEvent(t, par1, par2)
     end
@@ -227,7 +239,7 @@ local function waitForEventRaw(timeout)
             while rt.mq_receive(poll_fds[0].fd, ffi.cast("char*", hwmsg), hwmsg_len, nil) > 0 do
                 local m = hwmsg[0]
                 -- If there's no raw keymapping, emit this one instead
-                if (m.type == C.EVT_KEYDOWN or m.type == C.EVT_KEYUP) and not raw_keymap then
+                if (m.type == C.EVT_KEYDOWN or m.type == C.EVT_KEYUP or m.type == C.EVT_KEYREPEAT) and not raw_keymap then
                     genEmuEvent(m.type, m.common.par1, m.common.par2)
                 end
             end
