@@ -135,6 +135,10 @@ static int openInputDevice(lua_State* L)
         if (childpid == 0) {
             // Deliver SIGTERM to child when parent dies.
             prctl(PR_SET_PDEATHSIG, SIGTERM);
+            // Close any fd that isn't standard or our pipe
+            for (int fd = 3; fd < pipefd[0]; fd++) {
+                close(fd);
+            }
             // NOTE: This function needs to be implemented in each platform-specific input header.
             generateFakeEvent(pipefd);
             // We're done, go away :).
