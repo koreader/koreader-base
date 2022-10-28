@@ -98,7 +98,7 @@ local function translateEvent(t, par1, par2)
         or t == C.EVT_EXIT then
         -- Handle those as MiscEvent as this makes it easy to return a string directly,
         -- which can be used in uimanager.lua as an event_handler index.
-        genEmuEvent(C.EV_MSC, t, nil)
+        genEmuEvent(C.EV_MSC, t, 0)
     else
         genEmuEvent(t, par1, par2)
     end

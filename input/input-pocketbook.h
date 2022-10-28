@@ -40,7 +40,7 @@ typedef struct real_iv_mtinfo_s {
  * when indexing iv_mtinfo in the second slot the x and y will be wrong
  * we currently fix this by making a real iv_mtinfo struct, this is dirty hack
  * because of the lame API design of GetTouchInfo. It could be better to pass
- * the slot paramter to GetTouchInfo which returns only one iv_mtinfo for that slot. */
+ * the slot parameter to GetTouchInfo which returns only one iv_mtinfo for that slot. */
 #define iv_mtinfo real_iv_mtinfo
 
 static inline void genEmuEvent(int fd, int type, int code, int value) {
@@ -114,32 +114,33 @@ static inline void debug_mtinfo(iv_mtinfo *mti) {
 
 /* callback to disable suspension */
 void disable_suspend(void) {
-	iv_sleepmode(0);
+    iv_sleepmode(0);
 }
 
 /* callback to enable suspension */
 void enable_suspend(void) {
-	iv_sleepmode(1);
+    iv_sleepmode(1);
 }
 
 static int external_suspend_control = 0;
 
 void fallback_enable_suspend(void) {
-	if (external_suspend_control == 0)
-		enable_suspend();
+    if (external_suspend_control == 0) {
+        enable_suspend();
+    }
 }
 
 static int send_to_event_handler(int type, int par1, int par2) {
-	SendEventTo(GetCurrentTask(), type, par1, par2);
+    SendEventTo(GetCurrentTask(), type, par1, par2);
 }
 
 
 static int setSuspendState(lua_State *L) {
-	send_to_event_handler(
-			PB_SPECIAL_SUSPEND,
-			luaL_checkint(L, 1),
-			luaL_checkint(L,2)
-			);
+    send_to_event_handler(
+        PB_SPECIAL_SUSPEND,
+        luaL_checkint(L, 1),
+        luaL_checkint(L, 2)
+    );
 }
 
 int touch_pointers = 0;
@@ -153,15 +154,15 @@ static int pb_event_handler(int type, int par1, int par2) {
     if (type == EVT_INIT) {
         SetPanelType(PANEL_DISABLED);
         get_gti_pointer();
-	/* disable suspend to make uninterrupted loading possible. */
-	disable_suspend();
-	/*
-	 * re-enable suspending after a minute. This is normally handled by a
-	 * plugin on onReaderReady(). However, if loading of the plugin fails
-	 * for some reason, suspension would stay inactive consuming a lot of
-	 * power
-	 */
-	SetHardTimer("fallback_enable_suspend", fallback_enable_suspend, 1000 * 60);
+        /* disable suspend to make uninterrupted loading possible. */
+        disable_suspend();
+        /*
+        * re-enable suspending after a minute. This is normally handled by a
+        * plugin on onReaderReady(). However, if loading of the plugin fails
+        * for some reason, suspension would stay inactive consuming a lot of
+        * power
+        */
+        SetHardTimer("fallback_enable_suspend", fallback_enable_suspend, 1000 * 60);
     }
 
     if (type == EVT_POINTERDOWN) {
@@ -205,12 +206,25 @@ static int pb_event_handler(int type, int par1, int par2) {
             genEmuEvent(inputfds[0], EV_ABS, ABS_MT_TRACKING_ID, -1);
         }
         touch_pointers = 0;
+    } else if (type == EVT_KEYDOWN) {
+        genEmuEvent(inputfds[0], EV_KEY, par1, 1);
+    } else if (type == EVT_KEYREPEAT) {
+        genEmuEvent(inputfds[0], EV_KEY, par1, 2);
+    } else if (type == EVT_KEYUP) {
+        genEmuEvent(inputfds[0], EV_KEY, par1, 0);
+    } else if (type == EVT_BACKGROUND || type == EVT_FOREGROUND ||
+               type == EVT_SHOW || type == EVT_HIDE ||
+               type == EVT_EXIT) {
+        /* Handle those as MiscEvent as this makes it easy to return a string directly,
+         * which can be used in uimanager.lua as an event_handler index. */
+        genEmuEvent(inputfds[0], EV_MSC, type, 0);
     } else if (type == PB_SPECIAL_SUSPEND) {
-	external_suspend_control = 1;
-	if (par1 == 0)
-		SetHardTimer("disable_suspend", disable_suspend, par2);
-	else
-		SetHardTimer("enable_suspend", enable_suspend, par2);
+        external_suspend_control = 1;
+        if (par1 == 0) {
+            SetHardTimer("disable_suspend", disable_suspend, par2);
+        } else {
+            SetHardTimer("enable_suspend", enable_suspend, par2);
+        }
     } else {
         genEmuEvent(inputfds[0], type, par1, par2);
     }
