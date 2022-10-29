@@ -77,7 +77,7 @@ pid_t  fake_ev_generator_pid = -1;
 #    include "timerfd-callbacks.h"
 #endif
 
-static int computeNfds() {
+static void computeNfds(void) {
     // Compute select's nfds argument.
     // That's not the actual number of fds in the set, like poll(),
     // but the highest fd number in the set + 1 (c.f., select(2)).
@@ -191,7 +191,7 @@ static int closeInputDevice(ssize_t fd_idx_to_close)
     close(fd);
 
     // Shift the fds after the closed ones backward
-    for (ssize_t i = fd_idx_to_close; i < fd_idx - 1; i++) {
+    for (ssize_t i = fd_idx_to_close; i < (ssize_t) fd_idx - 1; i++) {
         inputfds[i] = inputfds[i + 1];
     }
 
