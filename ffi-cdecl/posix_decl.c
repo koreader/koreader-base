@@ -26,12 +26,13 @@
 
 #include "ffi-cdecl.h"
 
-cdecl_const(EINTR)
-cdecl_const(ETIME)
 cdecl_const(EAGAIN)
+cdecl_const(EINTR)
 cdecl_const(EINVAL)
-cdecl_const(EPIPE)
+cdecl_const(ENODEV)
 cdecl_const(ENOSYS)
+cdecl_const(EPIPE)
+cdecl_const(ETIME)
 cdecl_const(ETIMEDOUT)
 
 // NOTE: Let's hope we'll all have moved to 64-bit by the time Y2038 becomes an issue...

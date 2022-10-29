@@ -109,6 +109,7 @@ struct uevent
 	char*              devpath;
 	char*              subsystem;
 	char*              modalias;
+	char*              devname;
 	char   buf[PIPE_BUF];    // i.e., 4*1024, which is between busybox's mdev (3kB, stack) and uevent (16kB, mmap).
 	size_t buflen;
 };
@@ -161,6 +162,8 @@ static int
 			uevp->subsystem = p + sizeof("SUBSYSTEM");
 		} else if (UE_STR_EQ(p, "MODALIAS")) {
 			uevp->modalias = p + sizeof("MODALIAS");
+		} else if (UE_STR_EQ(p, "DEVNAME")) {
+			uevp->devname = p + sizeof("DEVNAME");
 		}
 		/* proceed to next line */
 		i += strlen(cur_line) + 1U;
@@ -181,6 +184,7 @@ static inline void
 	uevp->devpath   = NULL;
 	uevp->subsystem = NULL;
 	uevp->modalias  = NULL;
+	uevp->devname   = NULL;
 	uevp->buflen    = 0U;
 }
 

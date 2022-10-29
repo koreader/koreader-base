@@ -21,6 +21,7 @@
 
 #define USBPLUG_DEVPATH "/devices/platform/usb_plug"
 #define USBHOST_DEVPATH "/devices/platform/usb_host"
+#define PLATFORMSOC_DEVPATH "/devices/platform/soc"
 
 #include "libue.h"
 
@@ -29,6 +30,20 @@ static void sendEvent(int fd, struct input_event* ev)
     if (write(fd, ev, sizeof(struct input_event)) == -1) {
         fprintf(stderr, "[ko-input]: Failed to generate fake event.\n");
     }
+}
+
+// Using strtol right is *fun*...
+static int safe_strtol(const char* str)
+{
+    char* endptr;
+    errno = 0;
+    long int val = strtol(str, &endptr, 10);
+    if (errno || endptr == str || *endptr || (int) val != val) {
+        // strtol failure || no digits were found || trailing garbage || cast truncation
+        return -1;
+    }
+
+    return (int) val;
 }
 
 static void generateFakeEvent(int pipefd[2])
@@ -67,11 +82,34 @@ static void generateFakeEvent(int pipefd[2])
         } else if (uev.devpath && UE_STR_EQ(uev.devpath, USBHOST_DEVPATH)) {
             switch (uev.action) {
                 case UEVENT_ACTION_ADD:
-                    ev.code = CODE_FAKE_USB_PLUG_IN;
+                    ev.code = CODE_FAKE_USB_PLUGGED_IN_TO_HOST;
                     sendEvent(pipefd[1], &ev);
                     break;
                 case UEVENT_ACTION_REMOVE:
-                    ev.code = CODE_FAKE_USB_PLUG_OUT;
+                    ev.code = CODE_FAKE_USB_PLUGGED_OUT_OF_HOST;
+                    sendEvent(pipefd[1], &ev);
+                    break;
+                default:
+                    // NOP
+                    break;
+            }
+        } else if (uev.subsystem && (UE_STR_EQ(uev.subsystem, "input")) &&
+                   uev.devname && (UE_STR_EQ(uev.devname, "input/event")) &&
+                   uev.devpath && (UE_STR_EQ(uev.devpath, PLATFORMSOC_DEVPATH))) {
+            // Issue usb fake events when an external evdev input device is connected through OTG. Such a devpath mike look like:
+            // /devices/platform/soc/2100000.aips-bus/2184000.usb/ci_hdrc.0/usb1/1-1/1-1:1.0/0003:1532:021A.001C/input/input31/event4 (on a Libra 2)
+            // /devices/platform/soc/5101000.ohci0-controller/usb2/2-1/2-1:1.0/0003:1532:0118.0004/input/input7/event4 (on an Elipsa)
+            // c.f., https://github.com/koreader/koreader-base/pull/1520
+            switch (uev.action) {
+                case UEVENT_ACTION_ADD:
+                    ev.code = CODE_FAKE_USB_DEVICE_PLUGGED_IN;
+                    // Pass along the evdev number
+                    ev.value = safe_strtol(uev.devname + sizeof("input/event") - 1U); // i.e., start right after the t of event
+                    sendEvent(pipefd[1], &ev);
+                    break;
+                case UEVENT_ACTION_REMOVE:
+                    ev.code = CODE_FAKE_USB_DEVICE_PLUGGED_OUT;
+                    ev.value = safe_strtol(uev.devname + sizeof("input/event") - 1U);
                     sendEvent(pipefd[1], &ev);
                     break;
                 default:

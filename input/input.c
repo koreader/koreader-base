@@ -37,19 +37,23 @@
 
 #define CODE_FAKE_IN_SAVER            10000
 #define CODE_FAKE_OUT_SAVER           10001
-#define CODE_FAKE_USB_PLUG_IN         10010
-#define CODE_FAKE_USB_PLUG_OUT        10011
+// Device is plugged to USB host
+#define CODE_FAKE_USB_PLUGGED_IN_TO_HOST    10010
+#define CODE_FAKE_USB_PLUGGED_OUT_OF_HOST   10011
 #define CODE_FAKE_CHARGING            10020
 #define CODE_FAKE_NOT_CHARGING        10021
 #define CODE_FAKE_WAKEUP_FROM_SUSPEND 10030
 #define CODE_FAKE_READY_TO_SUSPEND    10031
+// The device plays role of host. Another device is plugged into it.
+#define CODE_FAKE_USB_DEVICE_PLUGGED_IN  10040
+#define CODE_FAKE_USB_DEVICE_PLUGGED_OUT 10041
 
 #ifndef ARRAY_SIZE
 #    define ARRAY_SIZE(x) (sizeof(x) / sizeof(*(x)))
 #endif
 
 int    nfds                  = 0;  // for select()
-int    inputfds[]            = { -1, -1, -1, -1 };
+int    inputfds[]            = { -1, -1, -1, -1, -1, -1, -1, -1 };
 size_t fd_idx                = 0U;  // index of the *next* fd in inputfds (also, *current* amount of open fds)
 pid_t  fake_ev_generator_pid = -1;
 
@@ -72,6 +76,18 @@ pid_t  fake_ev_generator_pid = -1;
 #if !defined(KINDLE_LEGACY) && !defined(POCKETBOOK)
 #    include "timerfd-callbacks.h"
 #endif
+
+static void computeNfds(void) {
+    // Compute select's nfds argument.
+    // That's not the actual number of fds in the set, like poll(),
+    // but the highest fd number in the set + 1 (c.f., select(2)).
+    // The fd_idx must be set to the actual number before calling this.
+    if (fd_idx == 0U) {
+        nfds = 0;
+    } else if (inputfds[fd_idx - 1U] >= nfds) {
+        nfds = inputfds[fd_idx - 1U] + 1;
+    }
+}
 
 static int openInputDevice(lua_State* L)
 {
@@ -119,6 +135,10 @@ static int openInputDevice(lua_State* L)
         if (childpid == 0) {
             // Deliver SIGTERM to child when parent dies.
             prctl(PR_SET_PDEATHSIG, SIGTERM);
+            // Close any fd that isn't standard or our pipe
+            for (int fd = 3; fd < pipefd[0]; fd++) {
+                close(fd);
+            }
             // NOTE: This function needs to be implemented in each platform-specific input header.
             generateFakeEvent(pipefd);
             // We're done, go away :).
@@ -153,33 +173,43 @@ static int openInputDevice(lua_State* L)
     // We're done w/ inputdevice, pop it
     lua_settop(L, 0);
     // Pass the fd to Lua, we might need it for FFI ioctl shenanigans
-    lua_pushinteger(L, inputfds[fd_idx]);
+    lua_pushinteger(L, inputfds[fd_idx++]);
 
-    // Compute select's nfds argument.
-    // That's not the actual number of fds in the set, like poll(),
-    // but the highest fd number in the set + 1 (c.f., select(2)).
-    if (inputfds[fd_idx] >= nfds) {
-        nfds = inputfds[fd_idx] + 1;
-    }
-
-    // That, on the other hand, *is* the number of open fds ;).
-    fd_idx++;
+    computeNfds();
 
     return 1; // fd
+}
+
+static int closeInputDevice(ssize_t fd_idx_to_close)
+{
+    int fd = inputfds[fd_idx_to_close];
+    if (fd == -1) {
+        // Device was not open
+        return -1;
+    }
+    ioctl(fd, EVIOCGRAB, 0);
+    close(fd);
+
+    // Shift the fds after the closed ones backward
+    for (ssize_t i = fd_idx_to_close; i < (ssize_t) fd_idx - 1; i++) {
+        inputfds[i] = inputfds[i + 1];
+    }
+
+    inputfds[--fd_idx] = -1;
+
+    computeNfds();
+    printf("[ko-input] Closed input device with idx=%zd, fd=%d\n", fd_idx_to_close, fd);
+
+    return 0;
 }
 
 static int closeInputDevices(lua_State* L __attribute__((unused)))
 {
     // Right now, we close everything, but, in the future, we may want to keep *some* slots open.
-    // Note that doing that would (currently) require making sure those slots are at the start of the array,
-    // in ascending fd number order, and that the array itself isn't sparse.
+    // The function closeInputDevice ensures that the array does not become sparse.
+    // Closing the fds in the reverse order helps to avoid extra work to keep the array dense, so that the complexity stays linear.
     for (ssize_t i = fd_idx - 1; i >= 0; i--) {
-        if (inputfds[i] != -1) {
-            ioctl(inputfds[i], EVIOCGRAB, 0);
-            close(inputfds[i]);
-            inputfds[i] = -1;
-            fd_idx--;
-        }
+        closeInputDevice(i);
     }
 
 #if defined(WITH_TIMERFD)
@@ -191,14 +221,6 @@ static int closeInputDevices(lua_State* L __attribute__((unused)))
         kill(fake_ev_generator_pid, SIGTERM);
         waitpid(-1, NULL, 0);
         fake_ev_generator_pid = -1;
-    }
-
-    // Re-compute select's nfds
-    if (fd_idx == 0U) {
-        nfds = 0;
-    } else {
-        // The idea here being that we *may*, in the future, allow some early slots to stay put.
-        nfds = inputfds[fd_idx - 1U] + 1;
     }
 
     return 0;
@@ -382,6 +404,13 @@ static int waitForInput(lua_State* L)
                     } else if (errno == EAGAIN) {
                         // Kernel queue drained :)
                         break;
+                    } else if (errno == ENODEV) {
+                        // Device was removed
+                        closeInputDevice(i);
+                        lua_settop(L, 0);  // Kick our bogus bool (and potentially the ev_array table) from the stack
+                        lua_pushboolean(L, false);
+                        lua_pushinteger(L, ENODEV);
+                        return 2;  // false, ENODEV
                     } else {
                         lua_settop(L, 0);  // Kick our bogus bool (and potentially the ev_array table) from the stack
                         lua_pushboolean(L, false);
