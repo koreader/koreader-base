@@ -93,9 +93,9 @@ static void generateFakeEvent(int pipefd[2])
                     // NOP
                     break;
             }
-        } else if (uev.devpath && (UE_STR_EQ(uev.devpath, PLATFORMSOC_DEVPATH)) &&
-                   uev.subsystem && (UE_STR_EQ(uev.subsystem, "input")) &&
-                   uev.devname && (UE_STR_EQ(uev.devname, "input/event"))) {
+        } else if (uev.subsystem && (UE_STR_EQ(uev.subsystem, "input")) &&
+                   uev.devname && (UE_STR_EQ(uev.devname, "input/event")) &&
+                   uev.devpath && (UE_STR_EQ(uev.devpath, PLATFORMSOC_DEVPATH))) {
             // Issue usb fake events when an external evdev input device is connected through OTG. Such a devpath mike look like:
             // /devices/platform/soc/2100000.aips-bus/2184000.usb/ci_hdrc.0/usb1/1-1/1-1:1.0/0003:1532:021A.001C/input/input31/event4 (on a Libra 2)
             // /devices/platform/soc/5101000.ohci0-controller/usb2/2-1/2-1:1.0/0003:1532:0118.0004/input/input7/event4 (on an Elipsa)
