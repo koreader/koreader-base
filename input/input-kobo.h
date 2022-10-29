@@ -38,24 +38,8 @@ static int safe_strtol(const char* str)
     char* endptr;
     errno = 0;
     long int val = strtol(str, &endptr, 10);
-
-    if (errno != 0) {
-        // strtol failure
-        return -1;
-    }
-
-    if (endptr == str) {
-        // no digits were found
-        return -1;
-    }
-
-    if (*endptr != '\0') {
-        // there was trailing garbage
-        return -1;
-    }
-
-    if ((int) val != val) {
-        // value doesn't fit our final type
+    if (errno || endptr == str || *endptr || (int) val != val) {
+        // strtol failure || no digits were found || trailing garbage || cast truncation
         return -1;
     }
 
