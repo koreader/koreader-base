@@ -2175,14 +2175,22 @@ function BB.gray(level)
     return Color8(bxor(floor(0xFF * level), 0xFF))
 end
 
--- some generic color values:
+-- the full eInk palette:
 BB.COLOR_WHITE = Color8(0xFF)
 BB.COLOR_GRAY_E = Color8(0xEE)
+BB.COLOR_GRAY_D = Color8(0xDD)
 BB.COLOR_LIGHT_GRAY = Color8(0xCC)
+BB.COLOR_GRAY_B = Color8(0xBB)
 BB.COLOR_GRAY = Color8(0xAA)
-BB.COLOR_WEB_GRAY = Color8(0x99)
+BB.COLOR_GRAY_9 = Color8(0x99) -- was COLOR_WEB_GRAY
 BB.COLOR_DARK_GRAY = Color8(0x88)
-BB.COLOR_DIM_GRAY = Color8(0x55)
+BB.COLOR_GRAY_7 = Color8(0x77)
+BB.COLOR_GRAY_6 = Color8(0x66)
+BB.COLOR_GRAY_5 = Color8(0x55) -- was COLOR_DIM_GRAY
+BB.COLOR_GRAY_4 = Color8(0x44)
+BB.COLOR_GRAY_3 = Color8(0x33)
+BB.COLOR_GRAY_2 = Color8(0x22)
+BB.COLOR_GRAY_1 = Color8(0x11)
 BB.COLOR_BLACK = Color8(0)
 
 -- accessors for color types:
