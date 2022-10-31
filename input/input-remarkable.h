@@ -105,7 +105,7 @@ static void generateFakeEventRM1(int pipefd) {
 
     re = ue_init_listener(&listener);
     if (re < 0) {
-        fprintf(stderr, "[remarkable-fake-event] Failed to initilize libue listener, err: %d\n", re);
+        fprintf(stderr, "[remarkable-fake-event] Failed to initilize libue listener (%d)\n", re);
         return;
     }
 

@@ -242,16 +242,16 @@ static int startInkViewMain(lua_State *L, size_t fd_idx, const char *inputdevice
 
     inputfds[fd_idx] = open(inputdevice, O_RDWR | O_NONBLOCK);
     if (inputfds[fd_idx] == -1) {
-        return luaL_error(L, "error opening input device <%s>: %d\n", inputdevice, errno);
+        return luaL_error(L, "Error opening input device <%s>: %s", inputdevice, strerror(errno));
     }
 
     if (pthread_attr_init(&thread_attr) != 0) {
-        return luaL_error(L, "error initializing event listener thread attributes: %d", errno);
+        return luaL_error(L, "Error initializing event listener thread attributes: %s", strerror(errno));
     }
 
     pthread_attr_setdetachstate(&thread_attr, PTHREAD_CREATE_DETACHED);
     if (pthread_create(&thread, &thread_attr, runInkViewThread, 0) == -1) {
-        return luaL_error(L, "error creating event listener thread: %d", errno);
+        return luaL_error(L, "Error creating event listener thread: %s", strerror(errno));
     }
     pthread_attr_destroy(&thread_attr);
     return 0;
