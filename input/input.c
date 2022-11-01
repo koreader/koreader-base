@@ -112,7 +112,7 @@ static int openInputDevice(lua_State* L)
 #if defined(KINDLE_LEGACY)
         // pipe2 requires Linux 2.6.27 & glibc 2.9...
         if (pipe(pipefd) == -1) {
-            return luaL_error(L, "Cannot create fake event generator communication pipe (pipe(): %d)", errno);
+            return luaL_error(L, "Cannot create fake event generator communication pipe (pipe(): %s)", strerror(errno));
         }
 
         // Which means we need the fcntl dance like with open below...
@@ -124,13 +124,13 @@ static int openInputDevice(lua_State* L)
         }
 #else
         if (pipe2(pipefd, O_NONBLOCK | O_CLOEXEC) == -1) {
-            return luaL_error(L, "Cannot create fake event generator communication pipe (pipe2(): %d)", errno);
+            return luaL_error(L, "Cannot create fake event generator communication pipe (pipe2(): %s)", strerror(errno));
         }
 #endif
 
         pid_t childpid;
         if ((childpid = fork()) == -1) {
-            return luaL_error(L, "Cannot fork() fake event generator (%d)", errno);
+            return luaL_error(L, "Cannot fork() fake event generator: %s", strerror(errno));
         }
         if (childpid == 0) {
             // Deliver SIGTERM to child when parent dies.
@@ -166,7 +166,7 @@ static int openInputDevice(lua_State* L)
             fcntl(inputfds[fd_idx], F_SETFD, fdflags | FD_CLOEXEC);
 #endif
         } else {
-            return luaL_error(L, "Error opening input device <%s>: %d", inputdevice, errno);
+            return luaL_error(L, "Error opening input device <%s>: %s", inputdevice, strerror(errno));
         }
     }
 
@@ -198,7 +198,7 @@ static int closeInputDevice(ssize_t fd_idx_to_close)
     inputfds[--fd_idx] = -1;
 
     computeNfds();
-    printf("[ko-input] Closed input device with idx=%zd, fd=%d\n", fd_idx_to_close, fd);
+    printf("[ko-input] Closed input device with fd: %d @ idx: %zd\n", fd, fd_idx_to_close);
 
     return 0;
 }
@@ -234,7 +234,7 @@ static int fakeTapInput(lua_State* L)
 
     int inputfd = open(inputdevice, O_WRONLY | O_NONBLOCK);
     if (inputfd == -1) {
-        return luaL_error(L, "Cannot open input device <%s>: %d", inputdevice, errno);
+        return luaL_error(L, "Error opening tap injection input device <%s>: %s", inputdevice, strerror(errno));
     }
 
     // Pop function args, now that we're done w/ inputdevice

@@ -78,7 +78,7 @@ static void generateFakeEvent(int pipefd[2]) {
 
     re = ue_init_listener(&listener);
     if (re < 0) {
-        fprintf(stderr, "[sony-prstux-fake-event] Failed to initilize libue listener, err: %d\n", re);
+        fprintf(stderr, "[sony-prstux-fake-event] Failed to initilize libue listener (%d)\n", re);
         return;
     }
 

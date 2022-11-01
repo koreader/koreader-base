@@ -41,7 +41,7 @@ static void generateFakeEvent(int pipefd[2]) {
 
     int re = ue_init_listener(&listener);
     if (re < 0) {
-        fprintf(stderr, "[ko-input]: Failed to initialize libue listener, err: %d\n", re);
+        fprintf(stderr, "[ko-input]: Failed to initialize libue listener (%d)\n", re);
         return;
     }
 
