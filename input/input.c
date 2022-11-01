@@ -234,7 +234,7 @@ static int fakeTapInput(lua_State* L)
 
     int inputfd = open(inputdevice, O_WRONLY | O_NONBLOCK);
     if (inputfd == -1) {
-        return luaL_error(L, "Cannot open input device <%s>: %s", inputdevice, strerror(errno));
+        return luaL_error(L, "Error opening tap injection input device <%s>: %s", inputdevice, strerror(errno));
     }
 
     // Pop function args, now that we're done w/ inputdevice
