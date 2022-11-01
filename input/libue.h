@@ -88,6 +88,7 @@ struct uevent_listener
 #define ERR_LISTENER_RECV         -4
 #define ERR_PARSE_UDEV            -1
 #define ERR_PARSE_INVALID_HDR     -2
+// NOTE: This is a *prefix* match, str just needs to *begin* with const_str for it to match!
 #define UE_STR_EQ(str, const_str) (strncmp((str), (const_str), sizeof(const_str) - 1U) == 0)
 
 enum uevent_action

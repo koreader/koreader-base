@@ -33,14 +33,14 @@ static void sendEvent(int fd, struct input_event* ev)
 }
 
 // Using strtol right is *fun*...
-static int safe_strtol(const char* str)
+static int strtol_d(const char* str)
 {
     char* endptr;
     errno = 0;
     long int val = strtol(str, &endptr, 10);
     if (errno || endptr == str || *endptr || (int) val != val) {
         // strtol failure || no digits were found || trailing garbage || cast truncation
-        return -1;
+        return -1; // this will conveniently never match a real evdev number ;).
     }
 
     return (int) val;
@@ -104,12 +104,12 @@ static void generateFakeEvent(int pipefd[2])
                 case UEVENT_ACTION_ADD:
                     ev.code = CODE_FAKE_USB_DEVICE_PLUGGED_IN;
                     // Pass along the evdev number
-                    ev.value = safe_strtol(uev.devname + sizeof("input/event") - 1U); // i.e., start right after the t of event
+                    ev.value = strtol_d(uev.devname + sizeof("input/event") - 1U); // i.e., start right after the t of event
                     sendEvent(pipefd[1], &ev);
                     break;
                 case UEVENT_ACTION_REMOVE:
                     ev.code = CODE_FAKE_USB_DEVICE_PLUGGED_OUT;
-                    ev.value = safe_strtol(uev.devname + sizeof("input/event") - 1U);
+                    ev.value = strtol_d(uev.devname + sizeof("input/event") - 1U);
                     sendEvent(pipefd[1], &ev);
                     break;
                 default:
