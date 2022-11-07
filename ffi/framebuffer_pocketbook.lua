@@ -111,24 +111,24 @@ function framebuffer:refreshPartialImp(x, y, w, h, dither)
     _updatePartial(self, x, y, w, h, dither)
 end
 
-function framebuffer:refreshFlashPartialImp(x, y, w, h, d)
-    _updatePartial(self, x, y, w, h, d)
+function framebuffer:refreshFlashPartialImp(x, y, w, h, dither)
+    _updatePartial(self, x, y, w, h, dither)
 end
 
-function framebuffer:refreshUIImp(x, y, w, h, d)
-    _updatePartial(self, x, y, w, h, d)
+function framebuffer:refreshUIImp(x, y, w, h, dither)
+    _updatePartial(self, x, y, w, h, dither)
 end
 
-function framebuffer:refreshFlashUIImp(x, y, w, h, d)
-    _updatePartial(self, x, y, w, h, d)
+function framebuffer:refreshFlashUIImp(x, y, w, h, dither)
+    _updatePartial(self, x, y, w, h, dither)
 end
 
-function framebuffer:refreshFullImp(x, y, w, h, d)
-    _updateFull(self, x, y, w, h, d)
+function framebuffer:refreshFullImp(x, y, w, h, dither)
+    _updateFull(self, x, y, w, h, dither)
 end
 
-function framebuffer:refreshFastImp(x, y, w, h, d)
-    _updateFast(self, x, y, w, h, d)
+function framebuffer:refreshFastImp(x, y, w, h, dither)
+    _updateFast(self, x, y, w, h, dither)
 end
 
 function framebuffer:refreshWaitForLastImp()
