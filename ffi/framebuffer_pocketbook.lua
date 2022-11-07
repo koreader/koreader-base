@@ -17,13 +17,14 @@ local function _getPhysicalRect(fb, x, y, w, h)
 end
 
 local function _adjustAreaColours(fb)
-    if fb.device.hasColorScreen and fb.device.color_vibrance then
-        fb.debug("adjusting image color vibrance", fb.device.color_vibrance)
-        inkview.adjustAreaWithVibrance(fb.data, fb._finfo.line_length, fb._vinfo.width, fb._vinfo.height, fb.device.color_vibrance)
+    if fb.device.hasColorScreen and fb.device.color_saturation then
+        fb.debug("adjusting image color saturation", fb.device.color_saturation)
+
+        inkview.adjustAreaWithLabColorsSaturation(fb.data, fb._finfo.line_length, fb._vinfo.width, fb._vinfo.height, fb.device.color_saturation)
     end
 end
 
-local function _updatePartial(fb, x, y, w, h)
+local function _updatePartial(fb, x, y, w, h, dither)
     x, y, w, h = _getPhysicalRect(fb, x, y, w, h)
 
     fb.debug("refresh: inkview partial", x, y, w, h)
@@ -31,13 +32,13 @@ local function _updatePartial(fb, x, y, w, h)
     inkview.PartialUpdate(x, y, w, h)
 end
 
-local function _updateFull(fb, x, y, w, h)
+local function _updateFull(fb, x, y, w, h, dither)
     fb.debug("refresh: inkview full", x, y, w, h)
     _adjustAreaColours(fb)
     inkview.FullUpdate()
 end
 
-local function _updateFast(fb, x, y, w, h)
+local function _updateFast(fb, x, y, w, h, dither)
     x, y, w, h = _getPhysicalRect(fb, x, y, w, h)
 
     fb.debug("refresh: inkview fast", x, y, w, h)
@@ -107,27 +108,27 @@ end
 --[[ framebuffer API ]]--
 
 function framebuffer:refreshPartialImp(x, y, w, h, dither)
-    _updatePartial(self, x, y, w, h)
+    _updatePartial(self, x, y, w, h, dither)
 end
 
-function framebuffer:refreshFlashPartialImp(x, y, w, h, dither)
-    _updatePartial(self, x, y, w, h)
+function framebuffer:refreshFlashPartialImp(x, y, w, h, d)
+    _updatePartial(self, x, y, w, h, d)
 end
 
-function framebuffer:refreshUIImp(x, y, w, h, dither)
-    _updatePartial(self, x, y, w, h)
+function framebuffer:refreshUIImp(x, y, w, h, d)
+    _updatePartial(self, x, y, w, h, d)
 end
 
-function framebuffer:refreshFlashUIImp(x, y, w, h, dither)
-    _updatePartial(self, x, y, w, h)
+function framebuffer:refreshFlashUIImp(x, y, w, h, d)
+    _updatePartial(self, x, y, w, h, d)
 end
 
-function framebuffer:refreshFullImp(x, y, w, h, dither)
-    _updateFull(self, x, y, w, h)
+function framebuffer:refreshFullImp(x, y, w, h, d)
+    _updateFull(self, x, y, w, h, d)
 end
 
-function framebuffer:refreshFastImp(x, y, w, h, dither)
-    _updateFast(self, x, y, w, h)
+function framebuffer:refreshFastImp(x, y, w, h, d)
+    _updateFast(self, x, y, w, h, d)
 end
 
 function framebuffer:refreshWaitForLastImp()
