@@ -27,22 +27,34 @@ end
 local function _updatePartial(fb, x, y, w, h, dither)
     x, y, w, h = _getPhysicalRect(fb, x, y, w, h)
 
-    fb.debug("refresh: inkview partial", x, y, w, h)
-    _adjustAreaColours(fb)
+    fb.debug("refresh: inkview partial", x, y, w, h, dither)
+
+    if dither then
+        _adjustAreaColours(fb)
+    end
+
     inkview.PartialUpdate(x, y, w, h)
 end
 
 local function _updateFull(fb, x, y, w, h, dither)
-    fb.debug("refresh: inkview full", x, y, w, h)
-    _adjustAreaColours(fb)
+    fb.debug("refresh: inkview full", x, y, w, h, dither)
+
+    if dither then
+        _adjustAreaColours(fb)
+    end
+
     inkview.FullUpdate()
 end
 
 local function _updateFast(fb, x, y, w, h, dither)
     x, y, w, h = _getPhysicalRect(fb, x, y, w, h)
 
-    fb.debug("refresh: inkview fast", x, y, w, h)
-    _adjustAreaColours(fb)
+    fb.debug("refresh: inkview fast", x, y, w, h, dither)
+
+    if dither then
+        _adjustAreaColours(fb)
+    end
+
     inkview.DynamicUpdate(x, y, w, h)
 end
 
