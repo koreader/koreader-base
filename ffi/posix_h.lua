@@ -137,6 +137,7 @@ struct stat {
   long unsigned int __glibc_reserved4;
   long unsigned int __glibc_reserved5;
 };
+unsigned int getuid(void) __attribute__((nothrow, leaf));
 FILE *fopen(const char *restrict, const char *restrict);
 int stat(const char *restrict, struct stat *restrict) __attribute__((nothrow, leaf));
 int fstat(int, struct stat *) __attribute__((nothrow, leaf));
