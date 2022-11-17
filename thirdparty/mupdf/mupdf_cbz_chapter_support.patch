@@ -1,0 +1,120 @@
+commit bfae5958ba7ebeb7bb58c0a0e56bb6e521ef6d9f
+Author: Marcel Röthke <marcel@roethke.info>
+Date:   Sun Nov 13 22:10:06 2022 +0100
+
+    add support for chapters in cbz
+
+diff --git a/source/cbz/mucbz.c b/source/cbz/mucbz.c
+index 0c93aa458..316509a90 100644
+--- a/source/cbz/mucbz.c
++++ b/source/cbz/mucbz.c
+@@ -233,6 +233,101 @@ cbz_lookup_metadata(fz_context *ctx, fz_document *doc_, const char *key, char *b
+ 	return -1;
+ }
+ 
++static fz_outline *
++cbz_load_outline(fz_context *ctx, fz_document *doc_)
++{
++	cbz_document *doc = (cbz_document *) doc_;
++	fz_outline *outline = fz_new_outline(ctx);
++	size_t max_chapter_stack_depth = 10;
++	fz_outline *chapter_stack[max_chapter_stack_depth];
++	size_t chapter_stack_depth = 0;
++
++	for (int i = 0; i < doc->page_count; i++)
++	{
++		const char *pagename = doc->page[i];
++		const char *next_seperator;
++		const char *chapter_name_base;
++		size_t depth = 1;
++
++		if (pagename[0] == '.')
++			pagename = &pagename[1];
++		if (pagename[0] == '/')
++			pagename = &pagename[1];
++		next_seperator = pagename;
++		chapter_name_base = pagename;
++		while (depth <= max_chapter_stack_depth && (next_seperator = strchr(next_seperator, '/')))
++		{
++			size_t chapter_name_len = next_seperator - chapter_name_base;
++			fz_outline *current_chapter = NULL;
++
++			if (chapter_stack_depth == 0)
++			{
++				chapter_stack[0] = outline;
++				chapter_stack_depth = 1;
++				current_chapter = outline;
++
++			}
++			else if (depth > chapter_stack_depth)
++			{
++				fz_try(ctx)
++				{
++					current_chapter = fz_new_outline(ctx);
++				}
++				fz_catch(ctx)
++				{
++					fz_drop_outline(ctx, outline);
++					fz_rethrow(ctx);
++				}
++				chapter_stack[depth - 1] = current_chapter;
++				chapter_stack[depth - 2]->down = current_chapter;
++				chapter_stack_depth = depth;
++
++			}
++			else
++			{
++				current_chapter = chapter_stack[depth - 1];
++				if (strncmp(chapter_name_base, current_chapter->title, chapter_name_len) == 0)
++				{
++
++					next_seperator = chapter_name_base = next_seperator + 1;
++					depth += 1;
++					continue;
++				}
++
++				chapter_stack_depth = depth;
++				fz_try(ctx)
++				{
++					current_chapter = fz_new_outline(ctx);
++				}
++				fz_catch(ctx)
++				{
++					fz_drop_outline(ctx, outline);
++					fz_rethrow(ctx);
++				}
++				chapter_stack[depth - 1]->next = current_chapter;
++				chapter_stack[depth - 1] = current_chapter;
++			}
++
++			fz_try(ctx)
++			{
++				current_chapter->title = fz_malloc(ctx, chapter_name_len + 1);
++			}
++			fz_catch(ctx)
++			{
++				fz_drop_outline(ctx, outline);
++				fz_rethrow(ctx);
++			}
++			fz_strlcpy(current_chapter->title, chapter_name_base, chapter_name_len + 1);
++			current_chapter->page = i;
++
++			depth += 1;
++			next_seperator = chapter_name_base = next_seperator + 1;
++		}
++	}
++
++	return outline;
++}
++
+ static fz_document *
+ cbz_open_document_with_stream(fz_context *ctx, fz_stream *file)
+ {
+@@ -246,6 +341,7 @@ cbz_open_document_with_stream(fz_context *ctx, fz_stream *file)
+ 	doc->super.lookup_metadata = cbz_lookup_metadata;
+ 	doc->super.needs_password = cbz_needs_password;
+ 	doc->super.authenticate_password = cbz_authenticate_password;
++	doc->super.load_outline = cbz_load_outline;
+ 
+ 	fz_try(ctx)
+ 	{
