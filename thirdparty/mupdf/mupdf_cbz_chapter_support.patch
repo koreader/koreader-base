@@ -1,0 +1,126 @@
+commit b15ca8974ab7a686c09f70a0025ddda8097d0194
+Author: Marcel Röthke <marcel@roethke.info>
+Date:   Sun Nov 13 22:10:06 2022 +0100
+
+    add support for chapters in comic book (cbz/cbt) archive
+    
+    Chapters can be created in a comic book archive by putting the images in
+    directories. The directory names will be the chapter names. They can be
+    nested up to 10 times. This not a technical limitation, but it does not
+    really make sense to nest chapters arbitrarily deep. Ordering of
+    chapters will abide by the same rules as the ordering for other files in
+    a comic book archive.
+
+diff --git a/source/cbz/mucbz.c b/source/cbz/mucbz.c
+index 0c93aa458..413205fdf 100644
+--- a/source/cbz/mucbz.c
++++ b/source/cbz/mucbz.c
+@@ -233,6 +233,100 @@ cbz_lookup_metadata(fz_context *ctx, fz_document *doc_, const char *key, char *b
+ 	return -1;
+ }
+ 
++static fz_outline *
++cbz_load_outline(fz_context *ctx, fz_document *doc_)
++{
++	cbz_document *doc = (cbz_document *) doc_;
++	fz_outline *outline = fz_new_outline(ctx);
++	size_t max_chapter_stack_depth = 10;
++	fz_outline *chapter_stack[max_chapter_stack_depth];
++	size_t chapter_stack_depth = 0;
++
++	for (int i = 0; i < doc->page_count; i++)
++	{
++		const char *pagename = doc->page[i];
++		const char *next_separator;
++		const char *chapter_name_base;
++		size_t depth = 1;
++
++		if (pagename[0] == '.')
++			pagename = &pagename[1];
++		if (pagename[0] == '/')
++			pagename = &pagename[1];
++		next_separator = pagename;
++		chapter_name_base = pagename;
++		while (depth <= max_chapter_stack_depth && (next_separator = strchr(next_separator, '/')))
++		{
++			size_t chapter_name_len = next_separator - chapter_name_base;
++			fz_outline *current_chapter = NULL;
++
++			if (chapter_stack_depth == 0)
++			{
++				chapter_stack[0] = outline;
++				chapter_stack_depth = 1;
++				current_chapter = outline;
++
++			}
++			else if (depth > chapter_stack_depth)
++			{
++				fz_try(ctx)
++				{
++					current_chapter = fz_new_outline(ctx);
++				}
++				fz_catch(ctx)
++				{
++					fz_drop_outline(ctx, outline);
++					fz_rethrow(ctx);
++				}
++				chapter_stack[depth - 1] = current_chapter;
++				chapter_stack[depth - 2]->down = current_chapter;
++				chapter_stack_depth = depth;
++
++			}
++			else
++			{
++				current_chapter = chapter_stack[depth - 1];
++				if (strncmp(chapter_name_base, current_chapter->title, chapter_name_len) == 0)
++				{
++					next_separator = chapter_name_base = next_separator + 1;
++					depth += 1;
++					continue;
++				}
++
++				chapter_stack_depth = depth;
++				fz_try(ctx)
++				{
++					current_chapter = fz_new_outline(ctx);
++				}
++				fz_catch(ctx)
++				{
++					fz_drop_outline(ctx, outline);
++					fz_rethrow(ctx);
++				}
++				chapter_stack[depth - 1]->next = current_chapter;
++				chapter_stack[depth - 1] = current_chapter;
++			}
++
++			fz_try(ctx)
++			{
++				current_chapter->title = fz_malloc(ctx, chapter_name_len + 1);
++			}
++			fz_catch(ctx)
++			{
++				fz_drop_outline(ctx, outline);
++				fz_rethrow(ctx);
++			}
++			fz_strlcpy(current_chapter->title, chapter_name_base, chapter_name_len + 1);
++			current_chapter->page = i;
++
++			depth += 1;
++			next_separator = chapter_name_base = next_separator + 1;
++		}
++	}
++
++	return outline;
++}
++
+ static fz_document *
+ cbz_open_document_with_stream(fz_context *ctx, fz_stream *file)
+ {
+@@ -246,6 +340,7 @@ cbz_open_document_with_stream(fz_context *ctx, fz_stream *file)
+ 	doc->super.lookup_metadata = cbz_lookup_metadata;
+ 	doc->super.needs_password = cbz_needs_password;
+ 	doc->super.authenticate_password = cbz_authenticate_password;
++	doc->super.load_outline = cbz_load_outline;
+ 
+ 	fz_try(ctx)
+ 	{
