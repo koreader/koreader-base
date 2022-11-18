@@ -1,4 +1,4 @@
-commit b15ca8974ab7a686c09f70a0025ddda8097d0194
+commit f03e781d1926171ea417c23a3f63bf0a89e34388
 Author: Marcel Röthke <marcel@roethke.info>
 Date:   Sun Nov 13 22:10:06 2022 +0100
 
@@ -12,10 +12,10 @@ Date:   Sun Nov 13 22:10:06 2022 +0100
     a comic book archive.
 
 diff --git a/source/cbz/mucbz.c b/source/cbz/mucbz.c
-index 0c93aa458..413205fdf 100644
+index 0c93aa458..05540ff47 100644
 --- a/source/cbz/mucbz.c
 +++ b/source/cbz/mucbz.c
-@@ -233,6 +233,100 @@ cbz_lookup_metadata(fz_context *ctx, fz_document *doc_, const char *key, char *b
+@@ -233,6 +233,109 @@ cbz_lookup_metadata(fz_context *ctx, fz_document *doc_, const char *key, char *b
  	return -1;
  }
  
@@ -23,7 +23,7 @@ index 0c93aa458..413205fdf 100644
 +cbz_load_outline(fz_context *ctx, fz_document *doc_)
 +{
 +	cbz_document *doc = (cbz_document *) doc_;
-+	fz_outline *outline = fz_new_outline(ctx);
++	fz_outline *outline = NULL;
 +	size_t max_chapter_stack_depth = 10;
 +	fz_outline *chapter_stack[max_chapter_stack_depth];
 +	size_t chapter_stack_depth = 0;
@@ -48,6 +48,15 @@ index 0c93aa458..413205fdf 100644
 +
 +			if (chapter_stack_depth == 0)
 +			{
++				fz_try(ctx)
++				{
++					outline = fz_new_outline(ctx);
++				}
++				fz_catch(ctx)
++				{
++					fz_drop_outline(ctx, outline);
++					fz_rethrow(ctx);
++				}
 +				chapter_stack[0] = outline;
 +				chapter_stack_depth = 1;
 +				current_chapter = outline;
@@ -116,7 +125,7 @@ index 0c93aa458..413205fdf 100644
  static fz_document *
  cbz_open_document_with_stream(fz_context *ctx, fz_stream *file)
  {
-@@ -246,6 +340,7 @@ cbz_open_document_with_stream(fz_context *ctx, fz_stream *file)
+@@ -246,6 +349,7 @@ cbz_open_document_with_stream(fz_context *ctx, fz_stream *file)
  	doc->super.lookup_metadata = cbz_lookup_metadata;
  	doc->super.needs_password = cbz_needs_password;
  	doc->super.authenticate_password = cbz_authenticate_password;
