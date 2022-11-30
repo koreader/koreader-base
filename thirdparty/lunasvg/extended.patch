@@ -226,7 +226,7 @@ index 4da1304..2bdef6e 100644
          return nullptr;
  
 diff --git a/source/parser.cpp b/source/parser.cpp
-index a5d09c5..80a7263 100644
+index a5d09c5..dc8ff18 100644
 --- a/source/parser.cpp
 +++ b/source/parser.cpp
 @@ -14,6 +14,9 @@
@@ -338,7 +338,33 @@ index a5d09c5..80a7263 100644
      {"visibility", PropertyID::Visibility}
  };
  
-@@ -1685,6 +1711,14 @@ static inline std::unique_ptr<Element> createElement(ElementID id)
+@@ -1256,8 +1282,12 @@ bool RuleData::matchPseudoClassSelector(const PseudoClassSelector& selector, con
+ 
+     if(selector.type == PseudoClassSelector::Type::Is)
+     {
++        /* Our Android toolchain can't deduce these 'auto'
+         for(auto& selector : selector.subSelectors) {
+             for(auto& sel : selector) {
++        */
++        for(const Selector& selector : selector.subSelectors) {
++            for(const SimpleSelector& sel : selector) {
+                 if(!matchSimpleSelector(sel, element)) {
+                     return false;
+                 }
+@@ -1269,8 +1299,12 @@ bool RuleData::matchPseudoClassSelector(const PseudoClassSelector& selector, con
+ 
+     if(selector.type == PseudoClassSelector::Type::Not)
+     {
++        /* Our Android toolchain can't deduce these 'auto'
+         for(auto& selector : selector.subSelectors) {
+             for(auto& sel : selector) {
++        */
++        for(const Selector& selector : selector.subSelectors) {
++            for(const SimpleSelector& sel : selector) {
+                 if(matchSimpleSelector(sel, element)) {
+                     return false;
+                 }
+@@ -1685,6 +1719,14 @@ static inline std::unique_ptr<Element> createElement(ElementID id)
          return std::make_unique<MarkerElement>();
      case ElementID::Style:
          return std::make_unique<StyleElement>();
@@ -353,7 +379,7 @@ index a5d09c5..80a7263 100644
      default:
          break;
      }
-@@ -1824,7 +1858,34 @@ bool TreeBuilder::parse(const char* data, std::size_t size)
+@@ -1824,7 +1866,34 @@ bool TreeBuilder::parse(const char* data, std::size_t size)
      };
  
      auto handle_text = [&](const char* start, const char* end, bool in_cdata) {
