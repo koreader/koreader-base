@@ -7,7 +7,7 @@
 namespace lunasvg {
 
 ImageElement::ImageElement()
-    : GraphicsElement(ElementId::Image)
+    : GraphicsElement(ElementID::Image)
 {
 }
 
@@ -21,18 +21,18 @@ void ImageElement::layout(LayoutContext* context, LayoutContainer* current) cons
     if (isDisplayNone())
         return;
 
-    auto x = Parser::parseLength(get(PropertyId::X), AllowNegativeLengths, Length::Zero);
-    auto y = Parser::parseLength(get(PropertyId::Y), AllowNegativeLengths, Length::Zero);
-    auto width = Parser::parseLength(get(PropertyId::Width), ForbidNegativeLengths, Length::Zero);
-    auto height = Parser::parseLength(get(PropertyId::Height), ForbidNegativeLengths, Length::Zero);
-    auto preserveAspectRatio = Parser::parsePreserveAspectRatio(get(PropertyId::PreserveAspectRatio));
+    auto x = Parser::parseLength(get(PropertyID::X), AllowNegativeLengths, Length::Zero);
+    auto y = Parser::parseLength(get(PropertyID::Y), AllowNegativeLengths, Length::Zero);
+    auto width = Parser::parseLength(get(PropertyID::Width), ForbidNegativeLengths, Length::Zero);
+    auto height = Parser::parseLength(get(PropertyID::Height), ForbidNegativeLengths, Length::Zero);
+    auto preserveAspectRatio = Parser::parsePreserveAspectRatio(get(PropertyID::PreserveAspectRatio));
 
     if(width.isZero() || height.isZero())
         return;
 
     // No need to parse "url(...)", a href is directly a url (Firefox and Edge
     // don't expect it and fail handling it)
-    auto& href = get(PropertyId::Href);
+    auto& href = get(PropertyID::Href);
     if ( href.empty() )
         return;
 

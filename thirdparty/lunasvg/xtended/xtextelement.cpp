@@ -6,7 +6,7 @@
 namespace lunasvg {
 
 TextElement::TextElement()
-    : GraphicsElement(ElementId::Text)
+    : GraphicsElement(ElementID::Text)
 {
 }
 
@@ -20,7 +20,7 @@ void TextElement::layout(LayoutContext* context, LayoutContainer* current) const
     if (isDisplayNone())
         return;
 
-    auto text = properties.get(PropertyId::_Text_Internal);
+    auto text = properties.get(PropertyID::_Text_Internal);
     if (text != nullptr) {
         // <text> shouldn't have any text: we have put it into an added <tspan>
         printf("UNEXPECTED <text> text string: %s\n", text->value.c_str());
@@ -38,22 +38,22 @@ void TextElement::layout(LayoutContext* context, LayoutContainer* current) const
     text_state.is_vertical_rl = false;
 
     LengthContext lengthContext(this);
-    if (has(PropertyId::X)) {
+    if (has(PropertyID::X)) {
         // x= can be a list of x, see https://svgwg.org/svg2-draft/text.html#TextElementXAttribute
         // We handle only the first value
-        LengthList xs = Parser::parseLengthList(get(PropertyId::X), AllowNegativeLengths);
+        LengthList xs = Parser::parseLengthList(get(PropertyID::X), AllowNegativeLengths);
         if (not xs.empty()) {
             text_state.cursor_x = lengthContext.valueForLength(xs[0], LengthMode::Width);
         }
     }
-    if (has(PropertyId::Y)) {
-        LengthList ys = Parser::parseLengthList(get(PropertyId::Y), AllowNegativeLengths);
+    if (has(PropertyID::Y)) {
+        LengthList ys = Parser::parseLengthList(get(PropertyID::Y), AllowNegativeLengths);
         if (not ys.empty()) {
             text_state.cursor_y = lengthContext.valueForLength(ys[0], LengthMode::Height);
         }
     }
 
-    auto text_anchor = find(PropertyId::Text_Anchor);
+    auto text_anchor = find(PropertyID::Text_Anchor);
     if (text_anchor.compare("end") == 0)
         text_state.text_anchor = TextAnchor::End;
     else if (text_anchor.compare("middle") == 0)
@@ -61,11 +61,11 @@ void TextElement::layout(LayoutContext* context, LayoutContainer* current) const
     else
         text_state.text_anchor = TextAnchor::Start;
 
-    if (has(PropertyId::TextLength)) {
-        auto text_length = Parser::parseLength(get(PropertyId::TextLength), ForbidNegativeLengths, Length::Zero);
+    if (has(PropertyID::TextLength)) {
+        auto text_length = Parser::parseLength(get(PropertyID::TextLength), ForbidNegativeLengths, Length::Zero);
         text_state.current_adjust_text_length = lengthContext.valueForLength(text_length, LengthMode::Width);
         if ( text_state.current_adjust_text_length != 0 ) {
-            auto length_adjust = get(PropertyId::LengthAdjust);
+            auto length_adjust = get(PropertyID::LengthAdjust);
             if (length_adjust.compare("spacingAndGlyphs") == 0)
                 text_state.current_length_adjust = LengthAdjust::SpacingAndGlyphs;
             else
@@ -76,7 +76,7 @@ void TextElement::layout(LayoutContext* context, LayoutContainer* current) const
     // Try to handle vertical text at minima just so we lay it out in the expected
     // area (CJK glyphs should not be rotated, but we will; also, the baseline,
     // which should be central, will be a bit off).
-    auto writing_mode = find(PropertyId::Writing_Mode);
+    auto writing_mode = find(PropertyID::Writing_Mode);
     if ( writing_mode.compare("tb") == 0 ||
          writing_mode.compare("tb-rl") == 0 ||
          writing_mode.compare("vertical-rl") == 0 ) {
@@ -86,8 +86,8 @@ void TextElement::layout(LayoutContext* context, LayoutContainer* current) const
     // We can't directly use find() to look at ancestors, because there are 2 possible
     // attributes, and we wouldn't know which was found the nearest.
     bool space_prop_found = false;
-    if (has(PropertyId::White_Space)) {
-        auto white_space = get(PropertyId::White_Space);
+    if (has(PropertyID::White_Space)) {
+        auto white_space = get(PropertyID::White_Space);
         if (white_space.compare("normal") == 0 || white_space.compare("nowrap") == 0 || white_space.compare("pre-line") == 0) {
             text_state.is_pre = false;
             space_prop_found = true;
@@ -97,9 +97,9 @@ void TextElement::layout(LayoutContext* context, LayoutContainer* current) const
             space_prop_found = true;
         }
     }
-    if ( !space_prop_found && has(PropertyId::XMLSpace) ) {
+    if ( !space_prop_found && has(PropertyID::XMLSpace) ) {
         // Legacy xml:space="preserve|default"
-        auto xml_space = get(PropertyId::XMLSpace);
+        auto xml_space = get(PropertyID::XMLSpace);
         if (xml_space.compare("default") == 0) {
             text_state.is_pre = false;
             space_prop_found = true;
@@ -111,7 +111,7 @@ void TextElement::layout(LayoutContext* context, LayoutContainer* current) const
     }
     // If none found, use find() to get it from ancestors
     if ( !space_prop_found ) {
-        auto white_space = find(PropertyId::White_Space);
+        auto white_space = find(PropertyID::White_Space);
         if (white_space.compare("normal") == 0 || white_space.compare("nowrap") == 0 || white_space.compare("pre-line") == 0) {
             text_state.is_pre = false;
             space_prop_found = true;
@@ -122,7 +122,7 @@ void TextElement::layout(LayoutContext* context, LayoutContainer* current) const
         }
     }
     if ( !space_prop_found ) {
-        auto xml_space = find(PropertyId::XMLSpace);
+        auto xml_space = find(PropertyID::XMLSpace);
         if (xml_space.compare("default") == 0) {
             text_state.is_pre = false;
         }

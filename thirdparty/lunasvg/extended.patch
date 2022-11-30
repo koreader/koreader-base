@@ -1,5 +1,30 @@
+diff --git a/3rdparty/plutovg/plutovg-blend.c b/3rdparty/plutovg/plutovg-blend.c
+index 6cbe76e..7a21cb6 100644
+--- a/3rdparty/plutovg/plutovg-blend.c
++++ b/3rdparty/plutovg/plutovg-blend.c
+@@ -523,9 +523,20 @@ static void blend_transformed_argb(plutovg_surface_t* surface, plutovg_operator_
+             uint32_t* b = buffer;
+             while(b < end)
+             {
++                /*
+                 int px = plutovg_clamp(x >> 16, 0, image_width - 1);
+                 int py = plutovg_clamp(y >> 16, 0, image_height - 1);
+                 *b = ((const uint32_t*)(texture->data + py * texture->stride))[px];
++                */
++                // The above would make edge pixels bleed on the outside area if blending a smaller image.
++                // When this function is used to draw a SVG <image>, and ensuring preserveAspectRatio="meet",
++                // we want the outside empty and to stay blank/transparent.
++                int px = x >> 16;
++                int py = y >> 16;
++                if ( px >= 0 && py >= 0 && px < image_width && py < image_height )
++                    *b = ((const uint32_t*)(texture->data + py * texture->stride))[px];
++                else
++                    *b = 0x00000000; // transparent alpha
+ 
+                 x += fdx;
+                 y += fdy;
 diff --git a/CMakeLists.txt b/CMakeLists.txt
-index b9bf46a..6e949a0 100755
+index b2f07dc..98ec528 100755
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
 @@ -12,6 +12,7 @@ add_library(lunasvg)
@@ -7,10 +32,10 @@ index b9bf46a..6e949a0 100755
  add_subdirectory(include)
  add_subdirectory(source)
 +add_subdirectory(xtended)
- add_subdirectory(3rdparty/software)
  add_subdirectory(3rdparty/plutovg)
  
-@@ -29,6 +30,7 @@ set(LUNASVG_INCDIR ${CMAKE_INSTALL_PREFIX}/include)
+ if(BUILD_SHARED_LIBS)
+@@ -28,6 +29,7 @@ set(LUNASVG_INCDIR ${CMAKE_INSTALL_PREFIX}/include)
  
  install(FILES
      include/lunasvg.h
@@ -40,10 +65,10 @@ index ae44b75..5f293f5 100644
      /**
       * @brief Creates a document from a null terminated string data
 diff --git a/source/element.h b/source/element.h
-index f94f927..ec13f91 100644
+index e6c6689..6e56af2 100644
 --- a/source/element.h
 +++ b/source/element.h
-@@ -17,6 +17,7 @@ enum class ElementId
+@@ -17,6 +17,7 @@ enum class ElementID
      Defs,
      Ellipse,
      G,
@@ -51,7 +76,7 @@ index f94f927..ec13f91 100644
      Line,
      LinearGradient,
      Marker,
-@@ -32,12 +33,16 @@ enum class ElementId
+@@ -32,12 +33,16 @@ enum class ElementID
      Style,
      Svg,
      Symbol,
@@ -61,14 +86,14 @@ index f94f927..ec13f91 100644
      Use
  };
  
- enum class PropertyId
+ enum class PropertyID
  {
      Unknown = 0,
 +    _Text_Internal,
      Class,
      Clip_Path,
      Clip_Rule,
-@@ -47,9 +52,16 @@ enum class PropertyId
+@@ -47,9 +52,16 @@ enum class PropertyID
      Cy,
      D,
      Display,
@@ -85,7 +110,7 @@ index f94f927..ec13f91 100644
      Fx,
      Fy,
      GradientTransform,
-@@ -57,6 +69,9 @@ enum class PropertyId
+@@ -57,6 +69,9 @@ enum class PropertyID
      Height,
      Href,
      Id,
@@ -95,7 +120,7 @@ index f94f927..ec13f91 100644
      Marker_End,
      Marker_Mid,
      Marker_Start,
-@@ -70,6 +85,7 @@ enum class PropertyId
+@@ -70,6 +85,7 @@ enum class PropertyID
      Opacity,
      Orient,
      Overflow,
@@ -103,7 +128,7 @@ index f94f927..ec13f91 100644
      PatternContentUnits,
      PatternTransform,
      PatternUnits,
-@@ -78,6 +94,7 @@ enum class PropertyId
+@@ -78,6 +94,7 @@ enum class PropertyID
      R,
      RefX,
      RefY,
@@ -111,7 +136,7 @@ index f94f927..ec13f91 100644
      Rx,
      Ry,
      Solid_Color,
-@@ -94,13 +111,19 @@ enum class PropertyId
+@@ -94,13 +111,19 @@ enum class PropertyID
      Stroke_Opacity,
      Stroke_Width,
      Style,
@@ -131,7 +156,7 @@ index f94f927..ec13f91 100644
      Y,
      Y1,
      Y2
-@@ -140,6 +163,7 @@ public:
+@@ -141,6 +164,7 @@ public:
      virtual bool isText() const { return false; }
      virtual bool isPaint() const { return false; }
      virtual bool isGeometry() const { return false; }
@@ -140,21 +165,21 @@ index f94f927..ec13f91 100644
      virtual std::unique_ptr<Node> clone() const = 0;
  
 diff --git a/source/layoutcontext.cpp b/source/layoutcontext.cpp
-index 5b92c87..a97a311 100644
+index 24f4d0f..493e02b 100644
 --- a/source/layoutcontext.cpp
 +++ b/source/layoutcontext.cpp
 @@ -489,6 +489,9 @@ Element* LayoutContext::getElementById(const std::string& id) const
-     return m_document->getElementById(id);
+     return m_builder->getElementById(id);
  }
  
-+bool LayoutContext::hasExternalContext() const { return m_document->hasExternalContext(); }
-+external_context_t * LayoutContext::getExternalContext() const { return m_document->getExternalContext(); }
++bool LayoutContext::hasExternalContext() const { return m_builder->hasExternalContext(); }
++external_context_t * LayoutContext::getExternalContext() const { return m_builder->getExternalContext(); }
 +
  LayoutObject* LayoutContext::getResourcesById(const std::string& id) const
  {
      auto it = m_resourcesCache.find(id);
 diff --git a/source/layoutcontext.h b/source/layoutcontext.h
-index 13c3d3c..3c39e23 100644
+index e81be5a..629e80d 100644
 --- a/source/layoutcontext.h
 +++ b/source/layoutcontext.h
 @@ -1,6 +1,7 @@
@@ -181,10 +206,10 @@ index 13c3d3c..3c39e23 100644
 +    external_context_t * getExternalContext() const;
 +
  private:
-     const ParseDocument* m_document;
+     const TreeBuilder* m_builder;
      LayoutSymbol* m_root;
 diff --git a/source/lunasvg.cpp b/source/lunasvg.cpp
-index 2a75aa3..bb409b5 100644
+index 4da1304..2bdef6e 100644
 --- a/source/lunasvg.cpp
 +++ b/source/lunasvg.cpp
 @@ -290,9 +290,11 @@ std::unique_ptr<Document> Document::loadFromData(const std::string& string)
@@ -194,14 +219,14 @@ index 2a75aa3..bb409b5 100644
 -std::unique_ptr<Document> Document::loadFromData(const char* data, std::size_t size)
 +std::unique_ptr<Document> Document::loadFromData(const char* data, std::size_t size, external_context_t * xcontext)
  {
-     ParseDocument parser;
-+    parser.setExternalContext(xcontext);
+     TreeBuilder builder;
++    builder.setExternalContext(xcontext);
 +
-     if(!parser.parse(data, size))
+     if(!builder.parse(data, size))
          return nullptr;
  
 diff --git a/source/parser.cpp b/source/parser.cpp
-index cda095a..5379085 100644
+index a5d09c5..80a7263 100644
 --- a/source/parser.cpp
 +++ b/source/parser.cpp
 @@ -14,6 +14,9 @@
@@ -214,180 +239,171 @@ index cda095a..5379085 100644
  
  namespace lunasvg {
  
-@@ -915,7 +918,7 @@ bool Parser::parseColorComponent(const char*& ptr, const char* end, double& valu
-     if(Utils::skipDesc(ptr, end, '%'))
+@@ -892,7 +895,7 @@ bool Parser::parseColorComponent(const char*& ptr, const char* end, int& compone
          value *= 2.55;
  
--    value = (value < 0.0) ? 0.0 : (value > 255.0) ? 255.0 : std::round(value);
-+    value = (value < 0.0) ? 0.0 : (value > 255.0) ? 255.0 : ::round(value); // 'std::round(value)' not available on some toolchains
+     value = std::clamp(value, 0.0, 255.0);
+-    component = static_cast<int>(std::round(value));
++    component = static_cast<int>(::round(value)); // 'std::round(value)' not available on some toolchains
      return true;
  }
  
-@@ -1030,6 +1033,7 @@ static const std::map<std::string, ElementId> elementmap = {
-     {"defs", ElementId::Defs},
-     {"ellipse", ElementId::Ellipse},
-     {"g", ElementId::G},
-+    {"image", ElementId::Image},
-     {"line", ElementId::Line},
-     {"linearGradient", ElementId::LinearGradient},
-     {"marker", ElementId::Marker},
-@@ -1045,6 +1049,9 @@ static const std::map<std::string, ElementId> elementmap = {
-     {"solidColor", ElementId::SolidColor},
-     {"svg", ElementId::Svg},
-     {"symbol", ElementId::Symbol},
-+    {"text", ElementId::Text},
-+    {"textPath", ElementId::TextPath},
-+    {"tspan", ElementId::TSpan},
-     {"use", ElementId::Use}
+@@ -1007,6 +1010,7 @@ static const std::map<std::string, ElementID> elementmap = {
+     {"defs", ElementID::Defs},
+     {"ellipse", ElementID::Ellipse},
+     {"g", ElementID::G},
++    {"image", ElementID::Image},
+     {"line", ElementID::Line},
+     {"linearGradient", ElementID::LinearGradient},
+     {"marker", ElementID::Marker},
+@@ -1022,6 +1026,9 @@ static const std::map<std::string, ElementID> elementmap = {
+     {"solidColor", ElementID::SolidColor},
+     {"svg", ElementID::Svg},
+     {"symbol", ElementID::Symbol},
++    {"text", ElementID::Text},
++    {"textPath", ElementID::TextPath},
++    {"tspan", ElementID::TSpan},
+     {"use", ElementID::Use}
  };
  
-@@ -1054,6 +1061,8 @@ static const std::map<std::string, PropertyId> propertymap = {
-     {"cx", PropertyId::Cx},
-     {"cy", PropertyId::Cy},
-     {"d", PropertyId::D},
-+    {"dx", PropertyId::Dx},
-+    {"dy", PropertyId::Dy},
-     {"fx", PropertyId::Fx},
-     {"fy", PropertyId::Fy},
-     {"gradientTransform", PropertyId::GradientTransform},
-@@ -1061,6 +1070,8 @@ static const std::map<std::string, PropertyId> propertymap = {
-     {"height", PropertyId::Height},
-     {"href", PropertyId::Href},
-     {"id", PropertyId::Id},
-+    {"lang", PropertyId::Lang},
-+    {"lengthAdjust", PropertyId::LengthAdjust},
-     {"markerHeight", PropertyId::MarkerHeight},
-     {"markerUnits", PropertyId::MarkerUnits},
-     {"markerWidth", PropertyId::MarkerWidth},
-@@ -1068,6 +1079,7 @@ static const std::map<std::string, PropertyId> propertymap = {
-     {"maskUnits", PropertyId::MaskUnits},
-     {"offset", PropertyId::Offset},
-     {"orient", PropertyId::Orient},
-+    {"path", PropertyId::Path},
-     {"patternContentUnits", PropertyId::PatternContentUnits},
-     {"patternTransform", PropertyId::PatternTransform},
-     {"patternUnits", PropertyId::PatternUnits},
-@@ -1076,10 +1088,12 @@ static const std::map<std::string, PropertyId> propertymap = {
-     {"r", PropertyId::R},
-     {"refX", PropertyId::RefX},
-     {"refY", PropertyId::RefY},
-+    {"rotate", PropertyId::Rotate},
-     {"rx", PropertyId::Rx},
-     {"ry", PropertyId::Ry},
-     {"spreadMethod", PropertyId::SpreadMethod},
-     {"style", PropertyId::Style},
-+    {"textLength", PropertyId::TextLength},
-     {"transform", PropertyId::Transform},
-     {"viewBox", PropertyId::ViewBox},
-     {"width", PropertyId::Width},
-@@ -1087,6 +1101,8 @@ static const std::map<std::string, PropertyId> propertymap = {
-     {"x1", PropertyId::X1},
-     {"x2", PropertyId::X2},
-     {"xlink:href", PropertyId::Href},
-+    {"xml:lang", PropertyId::Lang},
-+    {"xml:space", PropertyId::XMLSpace},
-     {"y", PropertyId::Y},
-     {"y1", PropertyId::Y1},
-     {"y2", PropertyId::Y2}
-@@ -1100,6 +1116,12 @@ static const std::map<std::string, PropertyId> csspropertymap = {
-     {"fill", PropertyId::Fill},
-     {"fill-opacity", PropertyId::Fill_Opacity},
-     {"fill-rule", PropertyId::Fill_Rule},
-+    {"font-family", PropertyId::Font_Family},
-+    {"font-size", PropertyId::Font_Size},
-+    {"font-style", PropertyId::Font_Style},
-+    {"font-variant", PropertyId::Font_Variant},
-+    {"font-weight", PropertyId::Font_Weight},
-+    {"letter-spacing", PropertyId::Letter_Spacing},
-     {"marker-end", PropertyId::Marker_End},
-     {"marker-mid", PropertyId::Marker_Mid},
-     {"marker-start", PropertyId::Marker_Start},
-@@ -1118,6 +1140,10 @@ static const std::map<std::string, PropertyId> csspropertymap = {
-     {"stroke-miterlimit", PropertyId::Stroke_Miterlimit},
-     {"stroke-opacity", PropertyId::Stroke_Opacity},
-     {"stroke-width", PropertyId::Stroke_Width},
-+    {"text-anchor", PropertyId::Text_Anchor},
-+    {"text-decoration", PropertyId::Text_Decoration},
-+    {"white-space", PropertyId::White_Space},
-+    {"writing-mode", PropertyId::Writing_Mode},
-     {"visibility", PropertyId::Visibility}
+@@ -1031,6 +1038,8 @@ static const std::map<std::string, PropertyID> propertymap = {
+     {"cx", PropertyID::Cx},
+     {"cy", PropertyID::Cy},
+     {"d", PropertyID::D},
++    {"dx", PropertyID::Dx},
++    {"dy", PropertyID::Dy},
+     {"fx", PropertyID::Fx},
+     {"fy", PropertyID::Fy},
+     {"gradientTransform", PropertyID::GradientTransform},
+@@ -1038,6 +1047,8 @@ static const std::map<std::string, PropertyID> propertymap = {
+     {"height", PropertyID::Height},
+     {"href", PropertyID::Href},
+     {"id", PropertyID::Id},
++    {"lang", PropertyID::Lang},
++    {"lengthAdjust", PropertyID::LengthAdjust},
+     {"markerHeight", PropertyID::MarkerHeight},
+     {"markerUnits", PropertyID::MarkerUnits},
+     {"markerWidth", PropertyID::MarkerWidth},
+@@ -1045,6 +1056,7 @@ static const std::map<std::string, PropertyID> propertymap = {
+     {"maskUnits", PropertyID::MaskUnits},
+     {"offset", PropertyID::Offset},
+     {"orient", PropertyID::Orient},
++    {"path", PropertyID::Path},
+     {"patternContentUnits", PropertyID::PatternContentUnits},
+     {"patternTransform", PropertyID::PatternTransform},
+     {"patternUnits", PropertyID::PatternUnits},
+@@ -1053,10 +1065,12 @@ static const std::map<std::string, PropertyID> propertymap = {
+     {"r", PropertyID::R},
+     {"refX", PropertyID::RefX},
+     {"refY", PropertyID::RefY},
++    {"rotate", PropertyID::Rotate},
+     {"rx", PropertyID::Rx},
+     {"ry", PropertyID::Ry},
+     {"spreadMethod", PropertyID::SpreadMethod},
+     {"style", PropertyID::Style},
++    {"textLength", PropertyID::TextLength},
+     {"transform", PropertyID::Transform},
+     {"viewBox", PropertyID::ViewBox},
+     {"width", PropertyID::Width},
+@@ -1064,6 +1078,8 @@ static const std::map<std::string, PropertyID> propertymap = {
+     {"x1", PropertyID::X1},
+     {"x2", PropertyID::X2},
+     {"xlink:href", PropertyID::Href},
++    {"xml:lang", PropertyID::Lang},
++    {"xml:space", PropertyID::XMLSpace},
+     {"y", PropertyID::Y},
+     {"y1", PropertyID::Y1},
+     {"y2", PropertyID::Y2}
+@@ -1077,6 +1093,12 @@ static const std::map<std::string, PropertyID> csspropertymap = {
+     {"fill", PropertyID::Fill},
+     {"fill-opacity", PropertyID::Fill_Opacity},
+     {"fill-rule", PropertyID::Fill_Rule},
++    {"font-family", PropertyID::Font_Family},
++    {"font-size", PropertyID::Font_Size},
++    {"font-style", PropertyID::Font_Style},
++    {"font-variant", PropertyID::Font_Variant},
++    {"font-weight", PropertyID::Font_Weight},
++    {"letter-spacing", PropertyID::Letter_Spacing},
+     {"marker-end", PropertyID::Marker_End},
+     {"marker-mid", PropertyID::Marker_Mid},
+     {"marker-start", PropertyID::Marker_Start},
+@@ -1095,6 +1117,10 @@ static const std::map<std::string, PropertyID> csspropertymap = {
+     {"stroke-miterlimit", PropertyID::Stroke_Miterlimit},
+     {"stroke-opacity", PropertyID::Stroke_Opacity},
+     {"stroke-width", PropertyID::Stroke_Width},
++    {"text-anchor", PropertyID::Text_Anchor},
++    {"text-decoration", PropertyID::Text_Decoration},
++    {"white-space", PropertyID::White_Space},
++    {"writing-mode", PropertyID::Writing_Mode},
+     {"visibility", PropertyID::Visibility}
  };
  
-@@ -1164,7 +1190,7 @@ static inline bool readIdentifier(const char*& ptr, const char* end, std::string
-     return true;
- }
- 
--#define IS_CSS_STARTNAMECHAR(c) (IS_ALPHA(c) || (c) == '_')
-+#define IS_CSS_STARTNAMECHAR(c) (IS_ALPHA(c) || (c) == '_' || (c) == '-')
- #define IS_CSS_NAMECHAR(c) (IS_CSS_STARTNAMECHAR(c) || IS_NUM(c) || (c) == '-')
- static inline bool readCSSIdentifier(const char*& ptr, const char* end, std::string& value)
- {
-@@ -1682,6 +1708,14 @@ static inline std::unique_ptr<Element> createElement(ElementId id)
+@@ -1685,6 +1711,14 @@ static inline std::unique_ptr<Element> createElement(ElementID id)
          return std::make_unique<MarkerElement>();
-     case ElementId::Style:
+     case ElementID::Style:
          return std::make_unique<StyleElement>();
-+    case ElementId::Text:
++    case ElementID::Text:
 +        return std::make_unique<TextElement>();
-+    case ElementId::TSpan:
++    case ElementID::TSpan:
 +        return std::make_unique<TSpanElement>();
-+    case ElementId::TextPath: // limited support, handled mostly as a TSpan
-+        return std::make_unique<TSpanElement>(ElementId::TextPath);
-+    case ElementId::Image:
++    case ElementID::TextPath: // limited support, handled mostly as a TSpan
++        return std::make_unique<TSpanElement>(ElementID::TextPath);
++    case ElementID::Image:
 +        return std::make_unique<ImageElement>();
      default:
          break;
      }
-@@ -1825,7 +1859,34 @@ bool ParseDocument::parse(const char* data, std::size_t size)
+@@ -1824,7 +1858,34 @@ bool TreeBuilder::parse(const char* data, std::size_t size)
      };
  
      auto handle_text = [&](const char* start, const char* end, bool in_cdata) {
--        if(ignoring > 0 || current == nullptr || current->id != ElementId::Style)
+-        if(ignoring > 0 || current == nullptr || current->id != ElementID::Style)
 +        if(ignoring > 0 || current == nullptr)
 +            return;
 +
-+        if ( current->id == ElementId::Text || current->id == ElementId::TSpan || current->id == ElementId::TextPath ) {
++        if ( current->id == ElementID::Text || current->id == ElementID::TSpan || current->id == ElementID::TextPath ) {
 +            if(in_cdata)
 +                value.assign(start, end);
 +            else
 +                decodeText(start, end, value);
 +            if ( value.empty() )
 +                return;
-+            if ( current->id == ElementId::Text || current->children.size() > 0 ) {
++            if ( current->id == ElementID::Text || current->children.size() > 0 ) {
 +                // We don't let Text have its text: we wrap it in an added TSpan.
 +                // Otherwise, if this real Text has TSpans children, and we see
 +                // some text between TSpans, we would overwrite any previous
 +                // leading text - and only the last text fragment would be drawn.
 +                // We also do this for TSpans themselves, if this text fragment
 +                // is met after we already have added children (sub-TSpans).
-+                auto child = createElement(ElementId::TSpan);
-+                child->set(PropertyId::_Text_Internal, value, 0X0);
++                auto child = createElement(ElementID::TSpan);
++                child->set(PropertyID::_Text_Internal, value, 0X0);
 +                current->addChild(std::move(child));
 +            }
 +            else {
 +                // Text fragment in an yet empty TSpan
-+                current->set(PropertyId::_Text_Internal, value, 0X0);
++                current->set(PropertyID::_Text_Internal, value, 0X0);
 +            }
 +            return;
 +        }
-+        if ( current->id != ElementId::Style )
++        if ( current->id != ElementID::Style )
              return;
  
          if(in_cdata)
 diff --git a/source/parser.h b/source/parser.h
-index 6ced83e..f85b55b 100644
+index 76864d3..74f588e 100644
 --- a/source/parser.h
 +++ b/source/parser.h
-@@ -3,6 +3,7 @@
- 
+@@ -4,6 +4,7 @@
  #include <map>
+ #include <set>
  
 +#include "xlunasvg.h"
  #include "property.h"
  #include "element.h"
  
-@@ -185,7 +186,12 @@ public:
+@@ -204,7 +205,12 @@ public:
      Element* getElementById(const std::string& id) const;
-     std::unique_ptr<LayoutSymbol> layout() const;
+     std::unique_ptr<LayoutSymbol> build() const;
  
 +    void setExternalContext(external_context_t * xcontext) { m_external_context = xcontext; }
 +    bool hasExternalContext() const { return m_external_context != nullptr; }
@@ -399,10 +415,17 @@ index 6ced83e..f85b55b 100644
      std::map<std::string, Element*> m_idCache;
  };
 diff --git a/source/property.cpp b/source/property.cpp
-index 97ddf37..c887ca4 100644
+index 6dd4e2c..df0975c 100644
 --- a/source/property.cpp
 +++ b/source/property.cpp
-@@ -560,7 +560,7 @@ Length::Length(double value, LengthUnits units)
+@@ -1,5 +1,6 @@
+ #include "property.h"
+ #include "element.h"
++#include "styledelement.h"
+ #include "lunasvg.h"
+ 
+ #include <algorithm>
+@@ -565,7 +566,7 @@ Length::Length(double value, LengthUnits units)
  
  static const double dpi = 96.0;
  
@@ -411,7 +434,7 @@ index 97ddf37..c887ca4 100644
  {
      switch(m_units) {
      case LengthUnits::Number:
-@@ -578,6 +578,14 @@ double Length::value(double max) const
+@@ -583,6 +584,14 @@ double Length::value(double max) const
          return m_value * dpi / 6.0;
      case LengthUnits::Percent:
          return m_value * max / 100.0;
@@ -426,7 +449,7 @@ index 97ddf37..c887ca4 100644
      default:
          break;
      }
-@@ -597,6 +605,13 @@ double Length::value(const Element* element, LengthMode mode) const
+@@ -602,6 +611,13 @@ double Length::value(const Element* element, LengthMode mode) const
          auto max = (mode == LengthMode::Width) ? w : (mode == LengthMode::Height) ? h : std::sqrt(w*w+h*h) / sqrt2;
          return m_value * max / 100.0;
      }
@@ -441,10 +464,10 @@ index 97ddf37..c887ca4 100644
      return value(1.0);
  }
 diff --git a/source/property.h b/source/property.h
-index 52a07e5..d886fe1 100644
+index cdbff73..0fa3895 100644
 --- a/source/property.h
 +++ b/source/property.h
-@@ -271,12 +271,13 @@ public:
+@@ -275,12 +275,13 @@ public:
      Length(double value);
      Length(double value, LengthUnits units);
  
@@ -460,10 +483,10 @@ index 52a07e5..d886fe1 100644
      static const Length Unknown;
      static const Length Zero;
 diff --git a/source/styledelement.cpp b/source/styledelement.cpp
-index bfb5ad8..1c49878 100644
+index fda779d..eb86efc 100644
 --- a/source/styledelement.cpp
 +++ b/source/styledelement.cpp
-@@ -8,6 +8,35 @@ StyledElement::StyledElement(ElementId id)
+@@ -8,6 +8,35 @@ StyledElement::StyledElement(ElementID id)
  {
  }
  
@@ -474,7 +497,7 @@ index bfb5ad8..1c49878 100644
 +    double factor = 1.0;
 +    auto element = (Element*)this;
 +    do {
-+        auto& value = element->get(PropertyId::Font_Size);
++        auto& value = element->get(PropertyID::Font_Size);
 +        if (!value.empty()) {
 +            Length size = Parser::parseLength(value, ForbidNegativeLengths, Length::Unknown);
 +            if ( size.isValid() ) {
@@ -498,14 +521,14 @@ index bfb5ad8..1c49878 100644
 +
  Paint StyledElement::fill() const
  {
-     auto& value = find(PropertyId::Fill);
+     auto& value = find(PropertyID::Fill);
 diff --git a/source/styledelement.h b/source/styledelement.h
-index 1257548..d3ee608 100644
+index 4d0ceb0..f67dad2 100644
 --- a/source/styledelement.h
 +++ b/source/styledelement.h
 @@ -10,6 +10,10 @@ class StyledElement : public Element
  public:
-     StyledElement(ElementId id);
+     StyledElement(ElementID id);
  
 +    bool isStyled() const { return true; }
 +
@@ -515,27 +538,47 @@ index 1257548..d3ee608 100644
      Paint stroke() const;
  
 diff --git a/source/svgelement.cpp b/source/svgelement.cpp
-index 1468045..b91853f 100644
+index 865d184..f68aac3 100644
 --- a/source/svgelement.cpp
 +++ b/source/svgelement.cpp
 @@ -45,7 +45,7 @@ PreserveAspectRatio SVGElement::preserveAspectRatio() const
      return Parser::parsePreserveAspectRatio(value);
  }
  
--std::unique_ptr<LayoutSymbol> SVGElement::layoutDocument(const ParseDocument* document) const
-+std::unique_ptr<LayoutSymbol> SVGElement::layoutDocument(const ParseDocument* document)
+-std::unique_ptr<LayoutSymbol> SVGElement::build(const TreeBuilder* builder) const
++std::unique_ptr<LayoutSymbol> SVGElement::build(const TreeBuilder* builder)
  {
      if(isDisplayNone())
          return nullptr;
-@@ -62,6 +62,42 @@ std::unique_ptr<LayoutSymbol> SVGElement::layoutDocument(const ParseDocument* do
+@@ -62,6 +62,62 @@ std::unique_ptr<LayoutSymbol> SVGElement::build(const TreeBuilder* builder) cons
      auto _h = lengthContext.valueForLength(h, LengthMode::Height);
  
      auto viewBox = this->viewBox();
 +
-+    if ( document->hasExternalContext() ) {
-+        external_context_t * xcontext = document->getExternalContext();
++    if ( builder->hasExternalContext() ) {
++        external_context_t * xcontext = builder->getExternalContext();
 +        if ( xcontext->target_width >= 0 && xcontext->target_height >= 0) {
 +            // Force this SVG to have the requested width and height
++            if ((w.isRelative() || h.isRelative()) && !has(PropertyID::ViewBox)) {
++                // For this edge case (no width/height/viewBox), the code at the bottom of
++                // this function will compute the advertised native width and height from
++                // the stroke bounding box. For our target size tweaks to work, we need
++                // to use these same values to create the missing viewBox.
++                // A little hacky solution, that seems to work without side effects, is
++                // to just call again this here function without having it going through
++                // this target sizes tweaks. (This will double the time needed to build
++                // this SVG, but it should be fine with small ones, which are the ones
++                // that may make that edge case.)
++                int target_width = xcontext->target_width; // backup target sizes
++                int target_height = xcontext->target_height;
++                xcontext->target_width = -1; // pretend we don't request them
++                xcontext->target_height = -1;
++                auto tmproot = build(builder); // rebuild (this should work with another local set of temp objects)
++                _w = tmproot->width; // use the computed stroke bounding box sizes as the native sizes
++                _h = tmproot->height;
++                xcontext->target_width = target_width; // restore target sizes
++                xcontext->target_height = target_height;
++            }
 +            if ( viewBox.empty() ) {
 +                // If no viewBox= was present, the original width/height would be used as
 +                // the viewbox and all coordinates would relate to them.
@@ -552,7 +595,7 @@ index 1468045..b91853f 100644
 +                vb += std::to_string(_w);
 +                vb += ' ';
 +                vb += std::to_string(_h);
-+                set(PropertyId::ViewBox, vb, 0x10);
++                set(PropertyID::ViewBox, vb, 0x10);
 +                viewBox = this->viewBox();
 +            }
 +            _w = xcontext->target_width;
@@ -560,10 +603,10 @@ index 1468045..b91853f 100644
 +            _x = 0;
 +            _y = 0;
 +            // Not sure if setting these as properties is needed, but let's be safe
-+            set(PropertyId::X, std::to_string(_x), 0x10);
-+            set(PropertyId::Y, std::to_string(_y), 0x10);
-+            set(PropertyId::Width, std::to_string(_w), 0x10);
-+            set(PropertyId::Height, std::to_string(_h), 0x10);
++            set(PropertyID::X, std::to_string(_x), 0x10);
++            set(PropertyID::Y, std::to_string(_y), 0x10);
++            set(PropertyID::Width, std::to_string(_w), 0x10);
++            set(PropertyID::Height, std::to_string(_h), 0x10);
 +        }
 +    }
 +
@@ -571,15 +614,15 @@ index 1468045..b91853f 100644
      auto viewTranslation = Transform::translated(_x, _y);
      auto viewTransform = preserveAspectRatio.getMatrix(_w, _h, viewBox);
 diff --git a/source/svgelement.h b/source/svgelement.h
-index b6e6234..24a0ecc 100644
+index 789a7ca..c6a19ba 100644
 --- a/source/svgelement.h
 +++ b/source/svgelement.h
 @@ -20,7 +20,7 @@ public:
  
      Rect viewBox() const;
      PreserveAspectRatio preserveAspectRatio() const;
--    std::unique_ptr<LayoutSymbol> layoutDocument(const ParseDocument* document) const;
-+    std::unique_ptr<LayoutSymbol> layoutDocument(const ParseDocument* document);
+-    std::unique_ptr<LayoutSymbol> build(const TreeBuilder* builder) const;
++    std::unique_ptr<LayoutSymbol> build(const TreeBuilder* builder);
  
      void layout(LayoutContext* context, LayoutContainer* current) const;
      std::unique_ptr<Node> clone() const;

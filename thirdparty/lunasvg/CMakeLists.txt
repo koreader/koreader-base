@@ -6,7 +6,7 @@ include("koreader_thirdparty_common")
 include("koreader_thirdparty_git")
 
 enable_language(C CXX)
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 17)
 
 assert_var_defined(CPPFLAGS)
 assert_var_defined(CFLAGS)
@@ -43,7 +43,7 @@ set(PATCH_CMD2 sh -c "cp -rp -v ${CMAKE_CURRENT_SOURCE_DIR}/xtended ${SOURCE_DIR
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
     https://github.com/sammycage/lunasvg.git
-    637121f89218544ec2f154ae6949ab0ea9b47898
+    585d61eef24510bc0b7fe3d9e768d0675d4b5a6f
     ${SOURCE_DIR}
 )
 

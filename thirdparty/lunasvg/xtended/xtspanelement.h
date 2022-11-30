@@ -42,8 +42,8 @@ typedef struct {
 class TSpanElement : public GeometryElement
 {
 public:
-    // Limited support for <textPath>, that we make just a special kind of <tspan> with TSpanElement(ElementId::TextPath)
-    TSpanElement(ElementId id=ElementId::TSpan);
+    // Limited support for <textPath>, that we make just a special kind of <tspan> with TSpanElement(ElementID::TextPath)
+    TSpanElement(ElementID id=ElementID::TSpan);
 
     static void addCurrentGroup(LayoutGroup* parent, text_state_t &text_state);
 
