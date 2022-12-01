@@ -226,7 +226,7 @@ index 4da1304..2bdef6e 100644
          return nullptr;
  
 diff --git a/source/parser.cpp b/source/parser.cpp
-index a5d09c5..5988ab6 100644
+index a5d09c5..6418394 100644
 --- a/source/parser.cpp
 +++ b/source/parser.cpp
 @@ -14,6 +14,9 @@
@@ -346,8 +346,8 @@ index a5d09c5..5988ab6 100644
          for(auto& selector : selector.subSelectors) {
              for(auto& sel : selector) {
 +        */
-+        for(const Selector& selector : static_cast<PseudoClassSelector>(selector).subSelectors) {
-+            for(const SimpleSelector& sel : selector) {
++        for(const Selector& subselector : selector.subSelectors) {
++            for(const SimpleSelector& sel : subselector) {
                  if(!matchSimpleSelector(sel, element)) {
                      return false;
                  }
@@ -359,8 +359,8 @@ index a5d09c5..5988ab6 100644
          for(auto& selector : selector.subSelectors) {
              for(auto& sel : selector) {
 +        */
-+        for(const Selector& selector : static_cast<PseudoClassSelector>(selector).subSelectors) {
-+            for(const SimpleSelector& sel : selector) {
++        for(const Selector& subselector : selector.subSelectors) {
++            for(const SimpleSelector& sel : subselector) {
                  if(matchSimpleSelector(sel, element)) {
                      return false;
                  }
