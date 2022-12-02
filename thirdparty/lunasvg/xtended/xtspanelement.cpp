@@ -7,7 +7,7 @@
 
 namespace lunasvg {
 
-// Extend LayoutShape just to have an added flag
+// Extend LayoutShape just to have some added flags
 class LayoutGlyphShape : public LayoutShape
 {
 public:
@@ -17,7 +17,7 @@ public:
 };
 
 
-TSpanElement::TSpanElement(ElementId id)
+TSpanElement::TSpanElement(ElementID id)
     : GeometryElement(id)
 {
 }
@@ -121,27 +121,27 @@ void TSpanElement::layoutText(LayoutContext* context, LayoutGroup* parent, text_
     LengthContext lengthContext(this);
 
     bool absolute_position_reset = false;
-    if (has(PropertyId::X)) {
+    if (has(PropertyID::X)) {
         // x= can be a list of x, see https://svgwg.org/svg2-draft/text.html#TextElementXAttribute
         // We handle only the first value (it feels it would be easy to handle others by just poping
         // after each glyph path got, but https://svgwg.org/svg2-draft/text.html#TSpanNotes shows
         // it might be more complicated).
         // This comment also applies to next properties
-        LengthList xs = Parser::parseLengthList(get(PropertyId::X), AllowNegativeLengths);
+        LengthList xs = Parser::parseLengthList(get(PropertyID::X), AllowNegativeLengths);
         if (not xs.empty()) {
             text_state.cursor_x = lengthContext.valueForLength(xs[0], LengthMode::Width);
             absolute_position_reset = true;
         }
     }
-    if (has(PropertyId::Y)) {
-        LengthList ys = Parser::parseLengthList(get(PropertyId::Y), AllowNegativeLengths);
+    if (has(PropertyID::Y)) {
+        LengthList ys = Parser::parseLengthList(get(PropertyID::Y), AllowNegativeLengths);
         if (not ys.empty()) {
             text_state.cursor_y = lengthContext.valueForLength(ys[0], LengthMode::Height);
             absolute_position_reset = true;
         }
     }
-    if (has(PropertyId::Dx)) {
-        LengthList dxs = Parser::parseLengthList(get(PropertyId::Dx), AllowNegativeLengths);
+    if (has(PropertyID::Dx)) {
+        LengthList dxs = Parser::parseLengthList(get(PropertyID::Dx), AllowNegativeLengths);
         if (not dxs.empty()) {
             if ( text_state.is_vertical_rl )
                 text_state.cursor_y -= lengthContext.valueForLength(dxs[0], LengthMode::Height);
@@ -149,8 +149,8 @@ void TSpanElement::layoutText(LayoutContext* context, LayoutGroup* parent, text_
                 text_state.cursor_x += lengthContext.valueForLength(dxs[0], LengthMode::Width);
         }
     }
-    if (has(PropertyId::Dy)) {
-        LengthList dys = Parser::parseLengthList(get(PropertyId::Dy), AllowNegativeLengths);
+    if (has(PropertyID::Dy)) {
+        LengthList dys = Parser::parseLengthList(get(PropertyID::Dy), AllowNegativeLengths);
         if (not dys.empty()) {
             if ( text_state.is_vertical_rl )
                 text_state.cursor_x += lengthContext.valueForLength(dys[0], LengthMode::Width);
@@ -160,17 +160,17 @@ void TSpanElement::layoutText(LayoutContext* context, LayoutGroup* parent, text_
     }
     // Also handle any inherited single value rotate= attribute,
     // which only apply its rotation on each individual glyph
-    auto rotate = Parser::parseAngle(find(PropertyId::Rotate));
+    auto rotate = Parser::parseAngle(find(PropertyID::Rotate));
 
     // Limited support for <textPath>: gather the path to use
     Path text_path;
     Transform text_path_transform;
-    if ( id == ElementId::TextPath ) {
-        if (has(PropertyId::Path)) {
-             text_path = Parser::parsePath(get(PropertyId::Path));
+    if ( id == ElementID::TextPath ) {
+        if (has(PropertyID::Path)) {
+             text_path = Parser::parsePath(get(PropertyID::Path));
         }
-        else if (has(PropertyId::Href)) {
-            auto href = Parser::parseHref(get(PropertyId::Href));
+        else if (has(PropertyID::Href)) {
+            auto href = Parser::parseHref(get(PropertyID::Href));
             auto ref = context->getElementById(href);
             if ( ref != nullptr && ref->isGeometry() ) {
                 auto gref = (static_cast<const GeometryElement*>(ref));
@@ -185,8 +185,8 @@ void TSpanElement::layoutText(LayoutContext* context, LayoutGroup* parent, text_
     }
 
     auto prev_text_anchor = text_state.text_anchor;
-    if (has(PropertyId::Text_Anchor)) {
-        auto text_anchor = get(PropertyId::Text_Anchor);
+    if (has(PropertyID::Text_Anchor)) {
+        auto text_anchor = get(PropertyID::Text_Anchor);
         if (text_anchor.compare("end") == 0)
             text_state.text_anchor = TextAnchor::End;
         else if (text_anchor.compare("middle") == 0)
@@ -218,11 +218,11 @@ void TSpanElement::layoutText(LayoutContext* context, LayoutGroup* parent, text_
 
     if ( absolute_position_reset ) {
         // Onlyl handle textLength when a new position has been set
-        if (has(PropertyId::TextLength)) {
-            auto text_length = Parser::parseLength(get(PropertyId::TextLength), ForbidNegativeLengths, Length::Zero);
+        if (has(PropertyID::TextLength)) {
+            auto text_length = Parser::parseLength(get(PropertyID::TextLength), ForbidNegativeLengths, Length::Zero);
             text_state.current_adjust_text_length = lengthContext.valueForLength(text_length, LengthMode::Width);
             if ( text_state.current_adjust_text_length != 0 ) {
-                auto length_adjust = get(PropertyId::LengthAdjust);
+                auto length_adjust = get(PropertyID::LengthAdjust);
                 if (length_adjust.compare("spacingAndGlyphs") == 0)
                     text_state.current_length_adjust = LengthAdjust::SpacingAndGlyphs;
                 else
@@ -232,7 +232,7 @@ void TSpanElement::layoutText(LayoutContext* context, LayoutGroup* parent, text_
     }
 
     // Limited support for <textPath>
-    if ( id == ElementId::TextPath ) {
+    if ( id == ElementID::TextPath ) {
         // We will not follow the full path. We will just draw its text along
         // a straight line in the direction of the first 2 points on the path.
         // (Rather show something even if truncated or ugly, than not showing
@@ -251,8 +251,8 @@ void TSpanElement::layoutText(LayoutContext* context, LayoutGroup* parent, text_
 
     auto prev_is_pre = text_state.is_pre;
     bool space_prop_found = false;
-    if (has(PropertyId::White_Space)) {
-        auto white_space = get(PropertyId::White_Space);
+    if (has(PropertyID::White_Space)) {
+        auto white_space = get(PropertyID::White_Space);
         if (white_space.compare("normal") == 0 || white_space.compare("nowrap") == 0 || white_space.compare("pre-line") == 0) {
             text_state.is_pre = false;
             space_prop_found = true;
@@ -262,9 +262,9 @@ void TSpanElement::layoutText(LayoutContext* context, LayoutGroup* parent, text_
             space_prop_found = true;
         }
     }
-    if ( !space_prop_found && has(PropertyId::XMLSpace) ) {
+    if ( !space_prop_found && has(PropertyID::XMLSpace) ) {
         // Legacy xml:space="preserve|default"
-        auto xml_space = get(PropertyId::XMLSpace);
+        auto xml_space = get(PropertyID::XMLSpace);
         if (xml_space.compare("default") == 0)
             text_state.is_pre = false;
         else if (xml_space.compare("preserve") == 0)
@@ -276,7 +276,7 @@ void TSpanElement::layoutText(LayoutContext* context, LayoutGroup* parent, text_
     // We don't strictly do as https://svgwg.org/svg2-draft/text.html#WhiteSpace
     // For example, Firefox doesn't remove newlines, but consider them as space,
     // which feels more logical.
-    auto source_text = get(PropertyId::_Text_Internal);
+    auto source_text = get(PropertyID::_Text_Internal);
     std::string text;
     if ( text_state.is_pre ) {
         for (char const &c: source_text) {
@@ -320,17 +320,17 @@ void TSpanElement::layoutText(LayoutContext* context, LayoutGroup* parent, text_
         external_font_spec_t font_spec;
         font_spec.size = fontsize;
 
-        std::string font_family = find(PropertyId::Font_Family);
+        std::string font_family = find(PropertyID::Font_Family);
         font_spec.family = font_family.c_str();
 
         font_spec.italic = false;
-        auto style = find(PropertyId::Font_Style);
+        auto style = find(PropertyID::Font_Style);
         if (style == "italic" || style == "oblique") {
             font_spec.italic = true;
         }
 
         font_spec.weight = 400;
-        auto weight = find(PropertyId::Font_Weight);
+        auto weight = find(PropertyID::Font_Weight);
         if (weight == "normal") {
             font_spec.weight = 400;
         }
@@ -355,18 +355,18 @@ void TSpanElement::layoutText(LayoutContext* context, LayoutGroup* parent, text_
         }
 
         font_spec.features = 0; // crengine's lvfntman.h LFNT_OT_FEATURES_*
-        auto variant = find(PropertyId::Font_Variant);
+        auto variant = find(PropertyID::Font_Variant);
         if (variant == "small-caps") {
             font_spec.features = 0x00000100; // LFNT_OT_FEATURES_P_SMCP
         }
 
-        std::string lang = find(PropertyId::Lang);
+        std::string lang = find(PropertyID::Lang);
         if ( !lang.empty() ) {
             font_spec.lang = lang.c_str();
         }
 
         double letter_spacing = 0;
-        auto letterspacing = Parser::parseLength(find(PropertyId::Letter_Spacing), AllowNegativeLengths, Length::Zero);
+        auto letterspacing = Parser::parseLength(find(PropertyID::Letter_Spacing), AllowNegativeLengths, Length::Zero);
         if ( letterspacing.isValid() && !letterspacing.isZero() ) {
             letter_spacing = letterspacing.value(fontsize, fontsize);
         }
@@ -436,7 +436,7 @@ void TSpanElement::layoutText(LayoutContext* context, LayoutGroup* parent, text_
             // This is not really per-specs (color, thickness should be picked from the
             // upper node carrying the text-decoration), but even Firefox does not really
             // do it per-specs. Anyway, better something that no underline at all.
-            auto text_decoration = find(PropertyId::Text_Decoration);
+            auto text_decoration = find(PropertyID::Text_Decoration);
             // These values should normally be asked to the font...
             // Do simpler, with hand picked values that should be fine with most fonts.
             double thickness = fontsize / 28;

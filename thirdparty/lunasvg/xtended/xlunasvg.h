@@ -49,7 +49,9 @@ struct external_context_t {
 } //namespace lunasvg
 
 // Avoid "error: 'to_string' is not a member of 'std'" on Android
+// Avoid "error: 'clamp' is not a member of 'std'" on Android
 #ifdef __ANDROID__
+
 #include <string>
 #include <sstream>
 namespace std {
@@ -59,6 +61,14 @@ namespace std {
         return ss.str() ;
     }
 }
-#endif
+
+#include <algorithm>
+namespace std {
+    template <typename T> T clamp( const T& v, const T& lo, const T& hi ) {
+        return std::max(lo, std::min(v, hi));
+    }
+}
+
+#endif // __ANDROID__
 
 #endif // XLUNASVG_H
