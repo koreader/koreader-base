@@ -561,7 +561,7 @@ static int getHyphenationForWord(lua_State *L) {
 static int softHyphenateText(lua_State *L) {
     const char *lang = luaL_checkstring(L, 1);
     const char *text = luaL_checkstring(L, 2);
-    TextLangCfg * lang_cfg = TextLangMan::getTextLangCfg( lString32(lang) );
+    TextLangCfg * lang_cfg = TextLangMan::getTextLangCfg( lString32(lang), true );
     lString32 utext = Utf8ToUnicode(text);
     // We provide use_default_hyph_method=true, to use the hyph dict for
     // that language, even if hyphenation is disabled in crengine
