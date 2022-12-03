@@ -276,8 +276,14 @@ function document_mt.__index:openPage(number)
 end
 
 local function getMetadataInfo(doc, info)
-    local buf = ffi.new("char[?]", 255)
-    local res = M.fz_lookup_metadata(context(), doc, info, buf, 255)
+    local bufsize = 255
+    local buf = ffi.new("char[?]", bufsize)
+    local res = M.fz_lookup_metadata(context(), doc, info, buf, bufsize)
+    if res > bufsize then
+        bufsize = res + 1
+        buf = ffi.new("char[?]", bufsize)
+        res = M.fz_lookup_metadata(context(), doc, info, buf, bufsize)
+    end
     if res > -1 then
         return ffi.string(buf, res)
     end
