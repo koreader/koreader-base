@@ -2180,6 +2180,14 @@ bool docToWindowRect(LVDocView *tv, lvRect &rc) {
         // get top truncated/clipped to current page top
         topLeft = rc.topLeft();
         if (tv->docToWindowPoint(topLeft, false, true)) {
+            // Bottom might be just outside the page, and if top is capped
+            // to bottom, it means the full rect was outside the page
+            if ( bottomRight.y - topLeft.y <= 0 ) { // zero-height rect
+                if (!tv->docToWindowPoint(bottomRight)) {
+                    // bottom was indeed outside the page: so is this rect
+                    return false;
+                }
+            }
             rc.setTopLeft(topLeft);
             return true;
         }
