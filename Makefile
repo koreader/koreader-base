@@ -111,7 +111,10 @@ $(OUTPUT_DIR)/libs/libkoreader-input.so: input/*.c input/*.h $(if $(or $(KINDLE)
 $(OUTPUT_DIR)/libs/libkoreader-lfs.so: \
 			$(if $(USE_LUAJIT_LIB),$(LUAJIT_LIB),) \
 			luafilesystem/src/lfs.c
+	# Avoid precision loss on 32-bit arches (LFS is always built w/ LARGEFILE support, but lua_Integer is always a ptrdiff_t, which is not wide enough).
+	-patch -d luafilesystem -t -N --no-backup-if-mismatch -r - -p1 < patches/lfs-pushnumber-for-wide-types.patch
 	$(CC) $(DYNLIB_CFLAGS) -o $@ luafilesystem/src/lfs.c $(LUAJIT_LIB_LINK_FLAG)
+	-patch -d luafilesystem -t -R --no-backup-if-mismatch -r - -p1 < patches/lfs-pushnumber-for-wide-types.patch
 ifdef DARWIN
 	install_name_tool -change \
 		`otool -L "$@" | grep "libluajit" | awk '{print $$1}'` \
