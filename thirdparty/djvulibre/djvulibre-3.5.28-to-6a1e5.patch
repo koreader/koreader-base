@@ -1,0 +1,351 @@
+diff --git a/doc/djvuchanges.txt b/doc/djvuchanges.txt
+index 1d4ba44..e0ac501 100644
+--- a/doc/djvuchanges.txt
++++ b/doc/djvuchanges.txt
+@@ -245,17 +245,39 @@ This can cause portability problems because different djvu
+ viewers support different sets of CGI style options.
+ 
+ 
+-
+-6- THE "SECURE DJVU" FORMAT.
+-
+-Recently Lizardtech introduced an incompatible "Secure DJVU" format.
+-This format encrypt djvu data in the hope of controlling
+-whether users can use, copy or print djvu documents.
+-A recent specification describes the container format
+-but does not provide enough information to decode the content.
+-Providing such an information would obviously provide
+-a means to avoid the usage restrictions. In fact there is no durable 
+-way to enforce such constraints besides "security through obscurity".
++6- DOCUMENT OUTLINE
++
++The NAVM chunk format specification (section 8.3.3) states that each
++bookmark encoding starts with a single byte specifying the number of
++child bookmarks followed by three bytes specifying the bookmark
++description text length in big-endian order. In order to allow more
++complex document outlines, this format has been subtly changed: the
++number of child bookmarks is now encoded as two bytes in small-endian
++order, and the length of the description text is encoded as two bytes
++in big-endian order.
++
++This change results in the same encoding as long as there are less
++than 256 child bookmarks and less that 65536 bytes in the bookmark
++description text. Since it is unlikely that a description text
++contains more than 64k characters, djvu files created with the
++specified NAVM format are read correctly by a program implementing the
++new NAVM format. However, djvu files created with the new NAVM format
++and containing bookmark entries with more than 256 children will be
++read incorrectly by a program that strictly implements the
++specification.
++
++
++
++7- THE "SECURE DJVU" FORMAT.
++
++Around 2010, Lizardtech introduced an incompatible "Secure DJVU"
++format.  This format encrypt djvu data in the hope of controlling
++whether users can use, copy or print djvu documents.  A recent
++specification describes the container format but does not provide
++enough information to decode the content.  Providing such an
++information would obviously provide a means to avoid the usage
++restrictions. In fact there is no durable way to enforce such
++constraints besides "security through obscurity".
+ 
+ The current djvulibre library simply emits an 
+ error message when encountering such files.
+diff --git a/libdjvu/DataPool.cpp b/libdjvu/DataPool.cpp
+index 5fcbedf..b58fc45 100644
+--- a/libdjvu/DataPool.cpp
++++ b/libdjvu/DataPool.cpp
+@@ -790,7 +790,8 @@ DataPool::create(const GP<DataPool> & pool, int start, int length)
+ {
+   DEBUG_MSG("DataPool::DataPool: pool=" << (void *)((DataPool *)pool) << " start=" << start << " length= " << length << "\n");
+   DEBUG_MAKE_INDENT(3);
+-
++  if (!pool)
++    G_THROW( ERR_MSG("DataPool.zero_DataPool") );
+   DataPool *xpool=new DataPool();
+   GP<DataPool> retval=xpool;
+   xpool->init();
+diff --git a/libdjvu/DjVuFile.cpp b/libdjvu/DjVuFile.cpp
+index 143346b..2587491 100644
+--- a/libdjvu/DjVuFile.cpp
++++ b/libdjvu/DjVuFile.cpp
+@@ -576,6 +576,8 @@ DjVuFile::process_incl_chunk(ByteStream & str, int file_num)
+     GURL incl_url=pcaster->id_to_url(this, incl_str);
+     if (incl_url.is_empty())	// Fallback. Should never be used.
+       incl_url=GURL::UTF8(incl_str,url.base());
++    if (incl_url == url)        // Infinite loop avoidance
++      G_THROW( ERR_MSG("DjVuFile.malformed") );
+     
+     // Now see if there is already a file with this *name* created
+     {
+diff --git a/libdjvu/DjVuText.cpp b/libdjvu/DjVuText.cpp
+index 60a4f39..caf418f 100644
+--- a/libdjvu/DjVuText.cpp
++++ b/libdjvu/DjVuText.cpp
+@@ -345,9 +345,9 @@ DjVuTXT::decode(const GP<ByteStream> &gbs)
+   int textsize = bs.read24();
+   char *buffer = textUTF8.getbuf(textsize);
+   int readsize = bs.read(buffer,textsize);
+-  buffer[readsize] = 0;
+-  if (readsize < textsize)
++  if (readsize < textsize || textsize <= 0)
+     G_THROW( ERR_MSG("DjVuText.corrupt_chunk") );
++  buffer[readsize] = 0;
+   // Try reading zones
+   unsigned char version;
+   if ( bs.read( (void*) &version, 1 ) == 1) 
+diff --git a/libdjvu/DjVuToPS.cpp b/libdjvu/DjVuToPS.cpp
+index f72a4c9..1d58f13 100644
+--- a/libdjvu/DjVuToPS.cpp
++++ b/libdjvu/DjVuToPS.cpp
+@@ -1276,9 +1276,9 @@ print_bg(ByteStream &str,
+   int ps_chunk_height = 30960/prn_rect.width()+1;
+   buffer_size = buffer_size*23/10;
+   bool do_color = options.get_color();
+-  if ((!dimg->is_legal_photo() &&
+-       !dimg->is_legal_compound())
+-      || options.get_mode()==Options::BW)
++  if (//(!dimg->is_legal_photo() &&
++      // !dimg->is_legal_compound()) ||
++      options.get_mode()==Options::BW)
+     do_color = false;
+   if (do_color) 
+     buffer_size *= 3;
+diff --git a/libdjvu/GBitmap.cpp b/libdjvu/GBitmap.cpp
+index c2fdbe4..8ad64b2 100644
+--- a/libdjvu/GBitmap.cpp
++++ b/libdjvu/GBitmap.cpp
+@@ -1284,6 +1284,8 @@ GBitmap::decode(unsigned char *runs)
+   // initialize pixel array
+   if (nrows==0 || ncolumns==0)
+     G_THROW( ERR_MSG("GBitmap.not_init") );
++  if (ncolumns + border != (unsigned short)(ncolumns+border))
++    G_THROW("GBitmap: image size exceeds maximum (corrupted file?)");
+   bytes_per_row = ncolumns + border;
+   if (runs==0)
+     G_THROW( ERR_MSG("GBitmap.null_arg") );
+diff --git a/libdjvu/IW44Image.cpp b/libdjvu/IW44Image.cpp
+index e8d4b44..4a1797e 100644
+--- a/libdjvu/IW44Image.cpp
++++ b/libdjvu/IW44Image.cpp
+@@ -676,9 +676,13 @@ IW44Image::Map::image(signed char *img8, int rowsize, int pixsep, int fast)
+   // Allocate reconstruction buffer
+   short *data16;
+   size_t sz = bw * bh;
++  if (sz == 0)
++    G_THROW("IW44Image: image size is zero (corrupted file?)");
+   if (sz / (size_t)bw != (size_t)bh) // multiplication overflow
+     G_THROW("IW44Image: image size exceeds maximum (corrupted file?)");
+   GPBuffer<short> gdata16(data16,sz);
++  if (data16 == 0)
++    G_THROW("IW44Image: unable to allocate image buffer");
+   // Copy coefficients
+   int i;
+   short *p = data16;
+diff --git a/tools/c44.cpp b/tools/c44.cpp
+index 60be497..df73468 100644
+--- a/tools/c44.cpp
++++ b/tools/c44.cpp
+@@ -327,7 +327,7 @@ parse_bpp(const char *q)
+         G_THROW( ERR_MSG("c44.bitrate_comma_expected") );
+       q = (*ptr ? ptr+1 : ptr);
+       argv_bpp[argc_bpp++] = (float)x;
+-      if (argc_bpp>MAXCHUNKS)
++      if (argc_bpp>=MAXCHUNKS)
+         G_THROW( ERR_MSG("c44.bitrate_too_many") );
+     }
+   if (argc_bpp < 1)
+diff --git a/tools/cjb2.cpp b/tools/cjb2.cpp
+index 701238d..817bc79 100644
+--- a/tools/cjb2.cpp
++++ b/tools/cjb2.cpp
+@@ -452,6 +452,41 @@ CCImage::erase_tiny_ccs()
+ }
+  
+ 
++// -- Helper for merge_and_split_ccs
++struct Grid_x_CCid 
++{
++  short gridi;
++  short gridj;
++  int ccid;
++};
++
++
++// -- Helper for merge_and_split_ccs
++static inline unsigned int
++hash(const Grid_x_CCid &x) 
++{
++  return (x.gridi<<16) ^ (x.gridj<<8) ^ x.ccid;
++}
++
++
++// -- Helper for merge_and_split_ccs
++static inline bool
++operator==(const Grid_x_CCid &x, const Grid_x_CCid &y)
++{
++  return (x.gridi==y.gridi) && (x.gridj==y.gridj) && (x.ccid==y.ccid);
++}
++
++
++// -- Helper for merge_and_split_ccs
++static int
++makeccid(const Grid_x_CCid &x, GMap<Grid_x_CCid,int> &map, int &ncc)
++{
++  GPosition p = map.contains(x);
++  if (p) return map[p];
++  return map[x] = ncc++;
++}
++
++
+ // -- Merges small ccs and split large ccs
+ void
+ CCImage::merge_and_split_ccs()
+@@ -460,64 +495,61 @@ CCImage::merge_and_split_ccs()
+   int nruns = runs.size();
+   int splitsize = largesize;
+   if (ncc <= 0) return;
+-  // Grid of special components
+-  int gridwidth = (width+splitsize-1)/splitsize;
++    // Associative map for storing merged ccids
++  GMap<Grid_x_CCid,int> map;
+   nregularccs = ncc;
+   // Set the correct ccids for the runs
+-  for (int ccid=0; ccid<ncc; ccid++)
++  for (int ccid=0; ccid<ccs.size(); ccid++)
+     {
+       CC* cc = &ccs[ccid];
+       if (cc->nrun <= 0) continue;
++      Grid_x_CCid key;
+       int ccheight = cc->bb.height();
+       int ccwidth = cc->bb.width();
+       if (ccheight<=smallsize && ccwidth<=smallsize)
+         {
+-          int gridi = (cc->bb.ymin+cc->bb.ymax)/splitsize/2;
+-          int gridj = (cc->bb.xmin+cc->bb.xmax)/splitsize/2;
+-          int newccid = ncc + gridi*gridwidth + gridj;
++          key.ccid = -1;
++          key.gridi = (cc->bb.ymin+cc->bb.ymax)/splitsize/2;
++          key.gridj = (cc->bb.xmin+cc->bb.xmax)/splitsize/2;
++          int newccid = makeccid(key, map, ncc);
+           for(int runid=cc->frun; runid<cc->frun+cc->nrun; runid++)
+             runs[runid].ccid = newccid;
+         }
+       else if (ccheight>=largesize || ccwidth>=largesize)
+         {
++          key.ccid = ccid;
+           for(int runid=cc->frun; runid<cc->frun+cc->nrun; runid++)
+             {
+-              Run& r = runs[runid];
+-              int y = r.y;
+-              int x_start = r.x1;
+-              int x_end = r.x2;
+-              int gridi = y/splitsize;
+-              int gridj_start = x_start/splitsize;
+-              int gridj_end = x_end/splitsize;
+-              int gridj_span = gridj_end-gridj_start;
+-              int newccid = ncc + gridi*gridwidth + gridj_start;
+-              if (! gridj_span)
+-                {
+-                  r.ccid = newccid;
+-                }
+-              else // gridj_span>0
++              Run *r = & runs[runid];
++              key.gridi = r->y/splitsize;
++              key.gridj = r->x1/splitsize;
++              int gridj_end = r->x2/splitsize;
++              int gridj_span = gridj_end - key.gridj;
++              r->ccid = makeccid(key, map, ncc);
++              if (gridj_span>0)
+                 {
+-                  // truncate the current run 
+-                  r.ccid = newccid++;
+-                  int x = (gridj_start+1)*splitsize;
+-                  r.x2 = x-1;
++                  // truncate current run 
+                   runs.touch(nruns+gridj_span-1);
++                  r = &runs[runid];
++                  int x = key.gridj*splitsize + splitsize;
++                  int x_end = r->x2;
++                  r->x2 = x-1;
+                   // append additional runs to the runs array
+-                  for(int gridj=gridj_start+1; gridj<gridj_end; gridj++)
++                  while (++key.gridj < gridj_end)
+                     {
+                       Run& newrun = runs[nruns++];
+-                      newrun.y = y;
++                      newrun.y = r->y;
+                       newrun.x1 = x;
+                       x += splitsize;
+                       newrun.x2 = x-1;
+-                      newrun.ccid = newccid++;
++                      newrun.ccid = makeccid(key, map, ncc);
+                     }
+                   // append last run to the run array
+                   Run& newrun = runs[nruns++];
+-                  newrun.y = y;
++                  newrun.y = r->y;
+                   newrun.x1 = x;
+                   newrun.x2 = x_end;
+-                  newrun.ccid = newccid++;                      
++                  newrun.ccid = makeccid(key, map, ncc);
+                 }
+             }
+         }
+diff --git a/tools/cpaldjvu.cpp b/tools/cpaldjvu.cpp
+index 5f2179e..336c388 100644
+--- a/tools/cpaldjvu.cpp
++++ b/tools/cpaldjvu.cpp
+@@ -415,11 +415,11 @@ CCImage::merge_and_split_ccs(int smallsize, int largesize)
+       CC* cc = &ccs[ccid];
+       if (cc->nrun <= 0) continue;
+       Grid_x_Color key;
+-      key.color = cc->color;
+       int ccheight = cc->bb.height();
+       int ccwidth = cc->bb.width();
+       if (ccheight<=smallsize && ccwidth<=smallsize)
+         {
++          key.color = cc->color;
+           key.gridi = (cc->bb.ymin+cc->bb.ymax)/splitsize/2;
+           key.gridj = (cc->bb.xmin+cc->bb.xmax)/splitsize/2;
+           int newccid = makeccid(key, map, ncc);
+@@ -428,6 +428,7 @@ CCImage::merge_and_split_ccs(int smallsize, int largesize)
+         }
+       else if (ccheight>=largesize || ccwidth>=largesize)
+         {
++          key.color = -ccid;
+           for(int runid=cc->frun; runid<cc->frun+cc->nrun; runid++)
+             {
+               Run *r = & runs[runid];
+diff --git a/tools/ddjvu.cpp b/tools/ddjvu.cpp
+index 7109952..a7465a2 100644
+--- a/tools/ddjvu.cpp
++++ b/tools/ddjvu.cpp
+@@ -393,8 +393,11 @@ render(ddjvu_page_t *page, int pageno)
+   } else if (style == DDJVU_FORMAT_GREY8)
+     rowsize = rrect.w;
+   else
+-    rowsize = rrect.w * 3; 
+-  if (! (image = (char*)malloc(rowsize * rrect.h)))
++    rowsize = rrect.w * 3;
++  size_t bufsize = (size_t)rowsize * rrect.h;
++  if (bufsize / rowsize != rrect.h)
++    die(i18n("Integer overflow when allocating image buffer for page %d"), pageno);
++  if (! (image = (char*)malloc(bufsize)))
+     die(i18n("Cannot allocate image buffer for page %d"), pageno);
+ 
+   /* Render */
+@@ -483,9 +486,9 @@ render(ddjvu_page_t *page, int pageno)
+         TIFFSetField(tiff, TIFFTAG_IMAGEWIDTH, (uint32)rrect.w);
+         TIFFSetField(tiff, TIFFTAG_IMAGELENGTH, (uint32)rrect.h);
+         TIFFSetField(tiff, TIFFTAG_XRESOLUTION, 
+-		     (float)((dpi*rrect.w+iw/2)/iw));
++		     (float)((dpi*prect.w+iw/2)/iw));
+         TIFFSetField(tiff, TIFFTAG_YRESOLUTION, 
+-		     (float)((dpi*rrect.h+ih/2)/ih));
++		     (float)((dpi*prect.h+ih/2)/ih));
+         TIFFSetField(tiff, TIFFTAG_PLANARCONFIG, PLANARCONFIG_CONTIG);
+         TIFFSetField(tiff, TIFFTAG_ORIENTATION, ORIENTATION_TOPLEFT);
+ # ifdef CCITT_SUPPORT
