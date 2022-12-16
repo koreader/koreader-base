@@ -1,0 +1,62 @@
+diff --git a/libdjvu/GString.cpp b/libdjvu/GString.cpp
+index b17ed2a..5f844bd 100644
+--- a/libdjvu/GString.cpp
++++ b/libdjvu/GString.cpp
+@@ -88,14 +88,7 @@
+ #endif
+ #include <ctype.h>
+ 
+-#ifndef LC_NUMERIC          //MingW
+-# undef DO_CHANGELOCALE
+-# define LC_NUMERIC 0
+-#endif
+-#ifndef DO_CHANGELOCALE
+-# define DO_CHANGELOCALE 0
+-#endif
+-
++#undef DO_CHANGELOCALE
+ 
+ #ifdef HAVE_NAMESPACES
+ namespace DJVU {
+@@ -241,11 +234,6 @@ GStringRep::UTF8::create(const char fmt[],va_list& args)
+ 
+ #define NATIVE_CREATE(x) UTF8::create( x );
+ 
+-#ifdef LC_ALL
+-#undef LC_ALL
+-#endif
+-#define LC_ALL 0
+-
+ class GStringRep::ChangeLocale
+ {
+ public:
+diff --git a/libdjvu/ddjvuapi.cpp b/libdjvu/ddjvuapi.cpp
+index c6cecfe..c0fef7d 100644
+--- a/libdjvu/ddjvuapi.cpp
++++ b/libdjvu/ddjvuapi.cpp
+@@ -358,12 +358,6 @@ ddjvu_context_create(const char *programname)
+   ddjvu_context_t *ctx = 0;
+   G_TRY
+     {
+-#ifdef LC_ALL
+-      setlocale(LC_ALL,"");
+-# ifdef LC_NUMERIC
+-      setlocale(LC_NUMERIC, "C");
+-# endif
+-#endif
+       if (programname)
+         djvu_programname(programname);
+       DjVuMessage::use_language();
+diff --git a/tools/common.h b/tools/common.h
+index e28fb58..873fbb7 100644
+--- a/tools/common.h
++++ b/tools/common.h
+@@ -76,8 +76,6 @@
+        djvu_programname(argv[0]); } while (0)
+ #else
+ # define DJVU_LOCALE do {          \
+-       setlocale(LC_ALL,"");       \
+-       setlocale(LC_NUMERIC,"C");  \
+        djvu_programname(argv[0]); } while (0)
+ #endif
+ 

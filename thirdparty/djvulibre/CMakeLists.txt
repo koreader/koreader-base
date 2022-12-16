@@ -38,10 +38,15 @@ if(DEFINED ENV{ANDROID})
     set(PATCH_CMD3 "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/android.patch")
 endif()
 
+# Never *ever* call setlocale, for any reason.
+# Most of our target platforms have custom/broken/incomplete locales, don't screw with it.
+# And this runs in our main thread, so this is Very Bad(TM).
+set(PATCH_CMD4 "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/djvulibre-no-locale-mangling.patch")
+
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
     https://gitlab.com/koreader/djvulibre.git
-    tags/release.3.5.28
+    6a1e5ba1c9ef81c205a4b270c3f121a1e106f4fc
     ${SOURCE_DIR}
 )
 
@@ -54,7 +59,7 @@ ExternalProject_Add(
     CONFIGURE_COMMAND
         COMMAND ${CFG_CMD1}
         COMMAND ${CFG_CMD2} COMMAND ${CFG_CMD3} COMMAND ${CFG_CMD4} COMMAND ${CFG_CMD5} COMMAND ${CFG_CMD6}
-        COMMAND ${PATCH_CMD1} COMMAND ${PATCH_CMD2} COMMAND ${PATCH_CMD3}
+        COMMAND ${PATCH_CMD1} COMMAND ${PATCH_CMD2} COMMAND ${PATCH_CMD3} COMMAND ${PATCH_CMD4}
     BUILD_COMMAND ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS} SUBDIRS_FIRST=libdjvu
     # skip install
     INSTALL_COMMAND ""
