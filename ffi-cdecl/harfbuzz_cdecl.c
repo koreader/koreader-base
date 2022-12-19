@@ -680,4 +680,9 @@ cdecl_func(hb_language_matches)
 // HB 5.3.0
 cdecl_func(hb_ot_layout_lookup_get_optical_bound)
 cdecl_func(hb_face_builder_sort_tables)
+
+// HB 6.0.0
+cdecl_func(hb_subset_input_pin_axis_location)
+cdecl_func(hb_subset_input_pin_axis_to_default)
+cdecl_func(hb_subset_preprocess)
 */
