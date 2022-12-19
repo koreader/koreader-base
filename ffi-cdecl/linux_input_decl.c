@@ -8,10 +8,6 @@ cdecl_const(EVIOCGRAB)
 cdecl_const(EVIOCGREP)
 cdecl_const(EVIOCSREP)
 
-cdecl_const(REP_CNT)
-cdecl_const(REP_DELAY)
-cdecl_const(REP_PERIOD)
-
 cdecl_const(EV_SYN)
 cdecl_const(EV_KEY)
 cdecl_const(EV_REL)
@@ -40,6 +36,7 @@ cdecl_const(BTN_TOOL_RUBBER)
 cdecl_const(BTN_TOUCH)
 cdecl_const(BTN_STYLUS)
 cdecl_const(BTN_STYLUS2)
+cdecl_const(BTN_TOOL_DOUBLETAP)
 
 cdecl_const(ABS_X)
 cdecl_const(ABS_Y)
@@ -64,6 +61,14 @@ cdecl_const(ABS_MT_DISTANCE)
 cdecl_const(ABS_MT_TOOL_X)
 cdecl_const(ABS_MT_TOOL_Y)
 
+cdecl_const(SW_ROTATE_LOCK)
+cdecl_const(SW_MACHINE_COVER)
+
+cdecl_const(MSC_GESTURE)
 cdecl_const(MSC_RAW)
+
+cdecl_const(REP_DELAY)
+cdecl_const(REP_PERIOD)
+cdecl_const(REP_CNT)
 
 cdecl_struct(input_event)
