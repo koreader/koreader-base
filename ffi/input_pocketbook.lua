@@ -104,15 +104,15 @@ local function translateEvent(t, par1, par2)
         if par1 == 0 then
             -- i.e., UR
             genEmuEvent(C.EV_MSC, C.MSC_GYRO, C.DEVICE_ROTATED_UPRIGHT)
-        elseif par1 == 1 then
-            -- i.e., CCW
-            genEmuEvent(C.EV_MSC, C.MSC_GYRO, C.DEVICE_ROTATED_COUNTER_CLOCKWISE)
         elseif par1 == 2 then
             -- i.e., CW
             genEmuEvent(C.EV_MSC, C.MSC_GYRO, C.DEVICE_ROTATED_CLOCKWISE)
         elseif par1 == 3 then
             -- i.e., UD
             genEmuEvent(C.EV_MSC, C.MSC_GYRO, C.DEVICE_ROTATED_UPSIDE_DOWN)
+        elseif par1 == 1 then
+            -- i.e., CCW
+            genEmuEvent(C.EV_MSC, C.MSC_GYRO, C.DEVICE_ROTATED_COUNTER_CLOCKWISE)
         end
     else
         genEmuEvent(t, par1, par2)
