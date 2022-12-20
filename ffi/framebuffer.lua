@@ -68,12 +68,15 @@ i.e., this matches <linux/fb.h> FB_ROTATE_* constants ;).
 
 This corresponds to the user-facing *physical device* rotation (in 90° CW steps).
 
+NOTE: The fact that we tend to make strong assumptions about UPRIGHT being a Portrait orientation
+      is simply based on the fact that it currently matches the form-factor of our target platforms.
+      But if you were to take a widescreen TV/monitor, its UPRIGHT orientation would be a Landscape one...
+
 --]]
-fb.ORIENTATION_PORTRAIT = 0
-fb.ORIENTATION_LANDSCAPE = 1
--- And now for Inverted orientations...
-fb.ORIENTATION_PORTRAIT_ROTATED = 2
-fb.ORIENTATION_LANDSCAPE_ROTATED = 3
+fb.DEVICE_ROTATED_UPRIGHT           = 0 -- UR, Portait
+fb.DEVICE_ROTATED_CLOCKWISE         = 1 -- CW, Landscape
+fb.DEVICE_ROTATED_UPSIDE_DOWN       = 2 -- UD, Inverted Portrait
+fb.DEVICE_ROTATED_COUNTER_CLOCKWISE = 3 -- CCW, Inverted Landscape
 
 --[[
 Rotation modes are not guaranteed to be canonical however, as HW driver may interpret the value as CW or CCW, as well
