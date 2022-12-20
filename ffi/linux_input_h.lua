@@ -64,3 +64,6 @@ struct input_event {
   int value;
 };
 ]]
+
+-- Include our custom stuff, too
+require("ffi/custom_input_h")
