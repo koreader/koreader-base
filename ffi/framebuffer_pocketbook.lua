@@ -86,7 +86,7 @@ function framebuffer:init()
 
     self.blitbuffer_rotation_mode = self.bb:getRotation()
     self.screen_size = self:getRawSize()
-    self.native_rotation_mode = self.forced_rotation and self.forced_rotation.default or self.ORIENTATION_PORTRAIT
+    self.native_rotation_mode = self.forced_rotation and self.forced_rotation.default or self.DEVICE_ROTATED_UPRIGHT
     self.cur_rotation_mode = self.native_rotation_mode
 
 
