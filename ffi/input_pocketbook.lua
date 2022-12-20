@@ -100,7 +100,7 @@ local function translateEvent(t, par1, par2)
         -- which can be used in uimanager.lua as an event_handler index.
         genEmuEvent(C.EV_MSC, t, 0)
     elseif t == C.EVT_ORIENTATION then
-        -- Translate those to our standard EV_MSC:MSC_GYRO proto
+        -- Translate those to our own EV_MSC:MSC_GYRO proto
         if par1 == 0 then
             -- i.e., UR
             genEmuEvent(C.EV_MSC, C.MSC_GYRO, C.DEVICE_ORIENTATION_UPRIGHT)
