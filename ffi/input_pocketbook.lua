@@ -99,6 +99,21 @@ local function translateEvent(t, par1, par2)
         -- Handle those as MiscEvent as this makes it easy to return a string directly,
         -- which can be used in uimanager.lua as an event_handler index.
         genEmuEvent(C.EV_MSC, t, 0)
+    elseif t == C.EVT_ORIENTATION then
+        -- Translate those to our standard EV_MSC:MSC_GYRO proto
+        if par1 == 0 then
+            -- i.e., UR
+            genEmuEvent(C.EV_MSC, C.MSC_GYRO, C.DEVICE_ORIENTATION_UPRIGHT)
+        elseif par1 == 1 then
+            -- i.e., CCW
+            genEmuEvent(C.EV_MSC, C.MSC_GYRO, C.DEVICE_ORIENTATION_COUNTER_CLOCKWISE)
+        elseif par1 == 2 then
+            -- i.e., CW
+            genEmuEvent(C.EV_MSC, C.MSC_GYRO, C.DEVICE_ORIENTATION_CLOCKWISE)
+        elseif par1 == 3 then
+            -- i.e., UD
+            genEmuEvent(C.EV_MSC, C.MSC_GYRO, C.DEVICE_ORIENTATION_UPSIDE_DOWN)
+        end
     else
         genEmuEvent(t, par1, par2)
     end
