@@ -4,9 +4,6 @@ ffi.cdef[[
 static const int EVIOCGRAB = 1074021776;
 static const int EVIOCGREP = 2148025603;
 static const int EVIOCSREP = 1074283779;
-static const int REP_CNT = 2;
-static const int REP_DELAY = 0;
-static const int REP_PERIOD = 1;
 static const int EV_SYN = 0;
 static const int EV_KEY = 1;
 static const int EV_REL = 2;
@@ -20,7 +17,6 @@ static const int EV_FF = 21;
 static const int EV_PWR = 22;
 static const int EV_FF_STATUS = 23;
 static const int EV_MAX = 31;
-static const int EV_SDL = 83;
 static const int SYN_REPORT = 0;
 static const int SYN_CONFIG = 1;
 static const int SYN_MT_REPORT = 2;
@@ -32,6 +28,7 @@ static const int BTN_TOOL_RUBBER = 321;
 static const int BTN_TOUCH = 330;
 static const int BTN_STYLUS = 331;
 static const int BTN_STYLUS2 = 332;
+static const int BTN_TOOL_DOUBLETAP = 333;
 static const int ABS_X = 0;
 static const int ABS_Y = 1;
 static const int ABS_PRESSURE = 24;
@@ -53,7 +50,13 @@ static const int ABS_MT_PRESSURE = 58;
 static const int ABS_MT_DISTANCE = 59;
 static const int ABS_MT_TOOL_X = 60;
 static const int ABS_MT_TOOL_Y = 61;
+static const int SW_ROTATE_LOCK = 12;
+static const int SW_MACHINE_COVER = 16;
+static const int MSC_GESTURE = 2;
 static const int MSC_RAW = 3;
+static const int REP_DELAY = 0;
+static const int REP_PERIOD = 1;
+static const int REP_CNT = 2;
 struct input_event {
   struct timeval time;
   short unsigned int type;
@@ -61,3 +64,6 @@ struct input_event {
   int value;
 };
 ]]
+
+-- Include our custom stuff, too
+require("ffi/custom_input_h")

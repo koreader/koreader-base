@@ -26,10 +26,10 @@ local fb = {
     is_always_portrait = false, -- true = SW flip landscape into portrait (historically a bit of misnomer)
     forced_rotation = nil, --[[{
         -- canonically the order below - but frontend may specify their own mapping
-        fb.ORIENTATION_PORTRAIT,
-        fb.ORIENTATION_LANDSCAPE,
-        fb.ORIENTATION_PORTRAIT_ROTATED,
-        fb.ORIENTATION_LANDSCAPE_ROTATED,
+        fb.DEVICE_ROTATED_UPRIGHT,
+        fb.DEVICE_ROTATED_CLOCKWISE,
+        fb.DEVICE_ROTATED_UPSIDE_DOWN,
+        fb.DEVICE_ROTATED_COUNTER_CLOCKWISE,
         restore = false, -- true if hw rot mode is to be restored after painting, see framebuffer_linux:afterPaint()
         default = nil, -- if not nil, use this as default rotation value (this one is canonical, not HW)
         every_paint = false, -- true if HW mode should be enforced for every paint batch
@@ -68,12 +68,15 @@ i.e., this matches <linux/fb.h> FB_ROTATE_* constants ;).
 
 This corresponds to the user-facing *physical device* rotation (in 90° CW steps).
 
+NOTE: The fact that we tend to make strong assumptions about UPRIGHT being a Portrait orientation
+      is simply based on the fact that it currently matches the form-factor of our target platforms.
+      But if you were to take a widescreen TV/monitor, its UPRIGHT orientation would be a Landscape one...
+
 --]]
-fb.ORIENTATION_PORTRAIT = 0
-fb.ORIENTATION_LANDSCAPE = 1
--- And now for Inverted orientations...
-fb.ORIENTATION_PORTRAIT_ROTATED = 2
-fb.ORIENTATION_LANDSCAPE_ROTATED = 3
+fb.DEVICE_ROTATED_UPRIGHT           = 0 -- UR, Portait
+fb.DEVICE_ROTATED_CLOCKWISE         = 1 -- CW, Landscape
+fb.DEVICE_ROTATED_UPSIDE_DOWN       = 2 -- UD, Inverted Portrait
+fb.DEVICE_ROTATED_COUNTER_CLOCKWISE = 3 -- CCW, Inverted Landscape
 
 --[[
 Rotation modes are not guaranteed to be canonical however, as HW driver may interpret the value as CW or CCW, as well
@@ -99,7 +102,7 @@ end
 
 -- To be overridden. Set HW rotation of the FB. Note that the argument is canonical value, ie this
 -- call should do translation from forced_rotation[] table - or any other necessary dance to convert
--- canonical fb.ORIENTATION_ mode to HW reality.
+-- canonical fb.DEVICE_ROTATED_ mode to HW reality.
 function fb:setHWRotation(canon)
 end
 
@@ -151,7 +154,7 @@ function fb:init()
         self.blitbuffer_rotation_mode = self.bb:getRotation()
         assert(not self.forced_rotation, "If forced HW rotation is used, isAlwaysPortrait should not be set.")
     end
-    self.native_rotation_mode = self.forced_rotation and self.forced_rotation.default or self.ORIENTATION_PORTRAIT
+    self.native_rotation_mode = self.forced_rotation and self.forced_rotation.default or self.DEVICE_ROTATED_UPRIGHT
     self.cur_rotation_mode = self.native_rotation_mode
 end
 
@@ -309,19 +312,19 @@ function fb:calculateRealCoordinates(x, y, w, h)
     local vx2 = self.screen_size.w - (self.viewport.x + self.viewport.w)
     local vy2 = self.screen_size.h - (self.viewport.y + self.viewport.h)
 
-    if mode == self.ORIENTATION_PORTRAIT then
+    if mode == self.DEVICE_ROTATED_UPRIGHT then
         -- (0,0) is at top left of screen
         x = x + self.viewport.x
         y = y + self.viewport.y
-    elseif mode == self.ORIENTATION_LANDSCAPE then
+    elseif mode == self.DEVICE_ROTATED_CLOCKWISE then
         -- (0,0) is at bottom left of screen
         x = x + vy2
         y = y + self.viewport.x
-    elseif mode == self.ORIENTATION_PORTRAIT_ROTATED then
+    elseif mode == self.DEVICE_ROTATED_UPSIDE_DOWN then
         -- (0,0) is at bottom right of screen
         x = x + vx2
         y = y + vy2
-    else -- self.ORIENTATION_LANDSCAPE_ROTATED
+    else -- self.DEVICE_ROTATED_COUNTER_CLOCKWISE
         -- (0,0) is at top right of screen
         x = x + self.viewport.y
         y = y + vx2
@@ -430,7 +433,7 @@ end
 -- may implement rotation via hardware (android with hasNativeRotation, linuxfb with forced_rotation).
 function fb:setRotationMode(mode)
     -- This, on the other hand, is responsible for the internal *buffer* rotation,
-    -- as such, it's inverted compared to the ORIENTATION_ constants; i.e., it's in 90° CCW steps).
+    -- as such, it's inverted compared to the DEVICE_ROTATED_ constants; i.e., it's in 90° CCW steps).
     self.bb:rotateAbsolute(-90 * (mode - self.native_rotation_mode - self.blitbuffer_rotation_mode))
     if self.viewport then
         self.full_bb:setRotation(self.bb:getRotation())

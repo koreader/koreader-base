@@ -539,7 +539,7 @@ end
 -- Set the swipe animation direction. This is sticky
 function framebuffer:_MTK_SetSwipeDirection(left)
     local swipe_direction = left and C.MTK_SWIPE_LEFT or C.MTK_SWIPE_RIGHT
-    -- Account for Koreader rotation not matching the FB rotation with some bit trickery.
+    -- Account for KOReader rotation not matching the FB rotation with some bit trickery.
     -- Alternatively here is a LUT:
     -- local lut = { -- L R D U
     --                { 2,3,0,1},
@@ -549,8 +549,8 @@ function framebuffer:_MTK_SetSwipeDirection(left)
     --             }
     -- swipe_direction = lut[self.cur_rotation_mode][swipe_direction]
     local rota = self.cur_rotation_mode
-    if rota ~= self.ORIENTATION_PORTRAIT then
-        if rota == self.ORIENTATION_PORTRAIT_ROTATED then
+    if rota ~= self.DEVICE_ROTATED_UPRIGHT then
+        if rota == self.DEVICE_ROTATED_UPSIDE_DOWN then
             swipe_direction = bxor(swipe_direction, 1)
         elseif bor(swipe_direction, 1) == bor(rota, 1) then
             swipe_direction = bxor(swipe_direction, 3)
