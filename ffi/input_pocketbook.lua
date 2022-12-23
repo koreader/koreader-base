@@ -162,6 +162,10 @@ function input:open()
         inkview.iv_setup_gsensor()
         return
     end
+
+    -- This enables the inkview orientation events to be sent to translateEvent
+    C.setenv("SUPPORT_EVT_ORIENTATION", "YES", 1)
+
     -- Initialize inkview ordinarily.
     compat.PrepareForLoop(translateEvent)
 end
