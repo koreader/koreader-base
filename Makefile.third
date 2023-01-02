@@ -610,7 +610,7 @@ $(OPENSSL_LIB) $(OPENSSL_DIR): $(THIRDPARTY_DIR)/openssl/*.*
 		-DRANLIB="$(RANLIB)" \
 		-DCHOST="$(CHOST)" \
 		$(if $(ANDROID),-DNDKABI=$(NDKABI),) \
-		-DCONFIG_SCRIPT="$(if $(EMULATE_READER),$(if $(DARWIN),Configure darwin64-x86_64-cc,config),Configure $(if $(WIN32),mingw,))" \
+		-DCONFIG_SCRIPT="$(if $(EMULATE_READER),$(if $(DARWIN),Configure $(if $(DARWIN_M1),darwin64-arm64-cc,darwin64-x86_64-cc),config),Configure $(if $(WIN32),mingw,))" \
 		$(CURDIR)/$(THIRDPARTY_DIR)/openssl && \
 		$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS)
 

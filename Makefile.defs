@@ -8,6 +8,7 @@ else
 endif
 
 UNAME:=$(shell uname -s)
+UNAME_ARCH:=$(shell uname -m)
 
 # use MAKEFILE_DIR instead of CURDIR for variables that are exported through -include
 MAKEFILE_DIR=$(dir $(abspath $(lastword $(MAKEFILE_LIST))))
@@ -189,8 +190,14 @@ endif
 
 ifneq (,$(filter $(UNAME), Darwin))
 	export DARWINHOST=1
+	ifneq (,$(filter $(UNAME_ARCH), arm64))
+		export DARWINM1HOST=1
+	endif
 	ifdef EMULATE_READER
 		export DARWIN=1
+		ifdef DARWINM1HOST
+			export DARWIN_M1=1
+		endif
 	endif
 endif
 
@@ -498,6 +505,10 @@ endif
 
 ifdef MACOS
 	HOST_ARCH:=-mtune=generic
+endif
+
+ifdef DARWINM1HOST
+	HOST_ARCH:=-mcpu=apple-m1
 endif
 
 # Anything below GCC 6 gets to be forcefully switched to decent standards, because some of our deps require C11 & C++11 support.
