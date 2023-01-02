@@ -619,7 +619,7 @@ function util.haveSDL2()
     if haveSDL2 == nil then
         local candidates
         if jit.os == "OSX" then
-            candidates = {"libs/libSDL2.dylib", "SDL2"}
+            candidates = {"/opt/homebrew/lib/libSDL2.dylib", "SDL2"}
         else
             candidates = {"SDL2", "libSDL2-2.0.so", "libSDL2-2.0.so.0"}
         end
