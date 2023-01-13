@@ -235,6 +235,18 @@ function lru.new(max_size, max_bytes, enable_eviction_cb)
     end
 
     -- KOReader
+    local sizeof
+    if max_bytes then
+        sizeof = function(_)
+            return max_bytes
+        end
+    else
+        sizeof = function(_)
+            return max_size
+        end
+    end
+
+    -- KOReader
     local grow
     if max_bytes then
         grow = function(_, new_size)
@@ -258,6 +270,7 @@ function lru.new(max_size, max_bytes, enable_eviction_cb)
             chop = chop,
             used_slots = used_slots,
             used_size = used_size,
+            length = sizeof,
             grow = grow,
         },
         __pairs = lru_pairs,
