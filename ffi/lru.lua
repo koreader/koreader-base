@@ -113,7 +113,7 @@ function lru.new(max_size, max_bytes, enable_eviction_cb)
         end
     end
 
-    -- removes elemenets to provide enough memory
+    -- removes elements to provide enough memory
     -- returns last removed element or nil
     local makeFreeSpace
     if max_bytes then
@@ -234,6 +234,51 @@ function lru.new(max_size, max_bytes, enable_eviction_cb)
         return bytes_used
     end
 
+    -- KOReader
+    local function total_slots()
+        return max_size
+    end
+
+    -- KOReader
+    local function total_size()
+        return max_bytes
+    end
+
+    -- KOReader
+    local function resize_slots(_, new_size)
+        if new_size > max_size then
+            max_size = new_size
+        elseif new_size < max_size then
+            while size > new_size do
+                del(oldest[KEY], oldest)
+            end
+            max_size = new_size
+        else
+            return
+        end
+    end
+
+    -- KOReader
+    local resize_bytes
+    if max_bytes then
+        resize_bytes = function(_, new_bytes)
+            if new_bytes > max_bytes then
+                max_bytes = new_bytes
+            elseif new_bytes < max_bytes then
+                while bytes_used > new_bytes do
+                    del(oldest[KEY], oldest)
+                end
+                max_bytes = new_bytes
+            else
+                return
+            end
+        end
+    else
+        resize_bytes = function()
+            error("Cannot resize a slot-bound cache")
+        end
+    end
+
     local mt = {
         __index = {
             get = get,
@@ -244,6 +289,10 @@ function lru.new(max_size, max_bytes, enable_eviction_cb)
             chop = chop,
             used_slots = used_slots,
             used_size = used_size,
+            total_slots = total_slots,
+            total_size = total_size,
+            resize_slots = resize_slots,
+            resize_bytes = resize_bytes,
         },
         __pairs = lru_pairs,
     }
