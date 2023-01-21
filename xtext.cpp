@@ -1747,7 +1747,7 @@ public:
         // for (int i = start; i < end; i++) {
         //     hb_buffer_add(_hb_buffer, (hb_codepoint_t)(m_text[i]), i);
         // }
-        int extra = (end == m_length) ? 1 : 0; // in case we added ZWJ+Ellipsis at end
+        int extra = (end > m_length) ? 1 : 0; // in case we added ZWJ+Ellipsis at end
         hb_buffer_add_codepoints(_hb_buffer, (hb_codepoint_t*)m_text, m_length+extra, start, end-start);
         hb_buffer_set_content_type(_hb_buffer, HB_BUFFER_CONTENT_TYPE_UNICODE);
 
