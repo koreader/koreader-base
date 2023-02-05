@@ -1,24 +1,28 @@
 find_package(Git)
 
 function(_ko_write_gitclone_script script_filename git_EXECUTABLE git_repository git_tag git_submodules src_name work_dir build_source_dir gitclone_infofile gitclone_stampfile)
+
+# Default depth
+set(git_clone_depth 50)
+
+set(clone_checkout "${work_dir}/${src_name}")
+
   file(WRITE ${script_filename}
 "if(\"${git_tag}\" STREQUAL \"\")
   message(FATAL_ERROR \"Tag for git checkout should not be empty.\")
 endif()
 
-# Default depth
-set(git_clone_depth 50)
+######################################################################
+# 1. if not cloned before, do it
+# 2. try to checkout the requested revision 3 times:
+#   - if the 1st try fails: try to fetch only the requested revision
+#   - if the 2nd try fails: try to unshallow the repository
+#   - if the 3rd try fails: game over…
+# 3. update the requested sub-modules
+# 4. copy everything over to source directory
+######################################################################
 
 set(run 0)
-
-######################################################################
-# 1. if not cloned before, do a git clone
-# 2. are we already at the given commit hash?
-#   2.1. checkout to the given commit hash
-#   2.2. if checkout failed, git fetch && checkout again
-# 4. git submodules update
-# 5. copy everything over to source directory
-######################################################################
 
 if(\"${gitclone_infofile}\" IS_NEWER_THAN \"${gitclone_stampfile}\")
   set(run 1)
@@ -32,32 +36,19 @@ endif()
 set(should_clone 1)
 if(EXISTS \"${work_dir}\")
   if(EXISTS \"${work_dir}/${src_name}\")
-    execute_process(
-      COMMAND \"${git_EXECUTABLE}\" rev-parse HEAD
-      WORKING_DIRECTORY \"${work_dir}/${src_name}\"
-      RESULT_VARIABLE error_code
-      OUTPUT_VARIABLE output
-    )
-    if(error_code)
-      message(\"Failed to read current tag, recloning the repo...\")
-      file(REMOVE_RECURSE \"${work_dir}/${src_name}\")
-    else()
-      string(STRIP \"\${output}\" curr_tag)
-      set(should_clone 0)
-    endif()
+    set(should_clone 0)
   endif()
 else()
   make_directory(\"${work_dir}\")
 endif()
 
 if(should_clone)
-  # try the clone 3 times incase there is an odd git clone issue
+  # try the clone 3 times in case there is an odd git clone issue
   set(error_code 1)
   set(number_of_tries 0)
   while(error_code AND number_of_tries LESS 3)
     execute_process(
-      COMMAND \"${git_EXECUTABLE}\" clone --depth \${git_clone_depth} \"${git_repository}\" \"${src_name}\"
-      WORKING_DIRECTORY \"${work_dir}\"
+      COMMAND \"${git_EXECUTABLE}\" clone --depth ${git_clone_depth} \"${git_repository}\" \"${clone_checkout}\"
       RESULT_VARIABLE error_code
     )
     math(EXPR number_of_tries \"\${number_of_tries} + 1\")
@@ -69,71 +60,69 @@ if(should_clone)
   if(error_code)
     message(FATAL_ERROR \"Failed to clone repository: '${git_repository}'\")
   endif()
-endif()
-
-if(NOT \"\${curr_tag}\" STREQUAL \"${git_tag}\")
   execute_process(
-    COMMAND \"${git_EXECUTABLE}\" checkout -f ${git_tag}
-    WORKING_DIRECTORY \"${work_dir}/${src_name}\"
+    COMMAND \"${git_EXECUTABLE}\" -C \"${clone_checkout}\" sparse-checkout init
     RESULT_VARIABLE error_code
   )
   if(error_code)
-    execute_process(
-      COMMAND \"${git_EXECUTABLE}\" remote rm origin
-      WORKING_DIRECTORY \"${work_dir}/${src_name}\"
-    )
-    execute_process(
-      COMMAND \"${git_EXECUTABLE}\" remote add origin \"${git_repository}\"
-      WORKING_DIRECTORY \"${work_dir}/${src_name}\"
-    )
-    execute_process(
-      COMMAND \"${git_EXECUTABLE}\" fetch
-      WORKING_DIRECTORY \"${work_dir}/${src_name}\"
-      RESULT_VARIABLE error_code
-    )
-    if(error_code)
-      message(FATAL_ERROR \"Failed to fetch update from origin\")
-    endif()
-    execute_process(
-      COMMAND \"${git_EXECUTABLE}\" checkout -f ${git_tag}
-      WORKING_DIRECTORY \"${work_dir}/${src_name}\"
-      RESULT_VARIABLE error_code
-    )
-    if(error_code)
-      message(STATUS \"Fetching full repo\")
-      execute_process(
-        COMMAND \"${git_EXECUTABLE}\" fetch --unshallow --tags
-        WORKING_DIRECTORY \"${work_dir}/${src_name}\"
-      )
-      execute_process(
-        COMMAND \"${git_EXECUTABLE}\" checkout -f ${git_tag}
-        WORKING_DIRECTORY \"${work_dir}/${src_name}\"
-        RESULT_VARIABLE error_code
-      )
-      if(error_code)
-        message(FATAL_ERROR \"Failed to checkout tag: '${git_tag}'\")
-      endif()
-    endif()
+    message(WARNING \"Failed to enable sparse checkout in: '${clone_checkout}'\")
   endif()
 endif()
 
-# checkout all submodules
-execute_process(
-  COMMAND \"${git_EXECUTABLE}\" submodule init ${git_submodules}
-  WORKING_DIRECTORY \"${work_dir}/${src_name}\"
-  RESULT_VARIABLE error_code
-)
-if(error_code)
-  message(FATAL_ERROR \"Failed to init submodules in: '${work_dir}/${src_name}'\")
-endif()
+# checkout the requested revision
+foreach(TRY RANGE 1 3)
+  execute_process(
+    COMMAND \"${git_EXECUTABLE}\" -C \"${clone_checkout}\" checkout -f \"${git_tag}\" --
+    RESULT_VARIABLE error_code
+  )
+  if(NOT error_code)
+    break()
+  endif()
+  if(TRY EQUAL 1)
+    message(STATUS \"Fetching revision: '${git_tag}'\")
+    execute_process(
+      COMMAND \"${git_EXECUTABLE}\" -C \"${clone_checkout}\" fetch --recurse-submodules=no --depth ${git_clone_depth} origin \"+${git_tag}:refs/remotes/origin/${git_tag}\"
+      RESULT_VARIABLE error_code
+    )
+    if(error_code)
+      message(WARNING \"Failed to fetch revision from origin: '${git_tag}'\")
+    endif()
+  elseif(TRY EQUAL 2)
+    message(STATUS \"Fetching full repo\")
+    execute_process(
+      COMMAND \"${git_EXECUTABLE}\" -C \"${clone_checkout}\" remote rm origin
+    )
+    execute_process(
+      COMMAND \"${git_EXECUTABLE}\" -C \"${clone_checkout}\" remote add origin \"${git_repository}\"
+    )
+    execute_process(
+      COMMAND \"${git_EXECUTABLE}\" -C \"${clone_checkout}\" fetch --unshallow --tags
+      RESULT_VARIABLE error_code
+    )
+    if(error_code)
+      message(WARNING \"Failed to unshallow repo\")
+    endif()
+  elseif(TRY EQUAL 3)
+    message(FATAL_ERROR \"Failed to checkout revision: '${git_tag}'\")
+  endif()
+endforeach()
 
-execute_process(
-  COMMAND \"${git_EXECUTABLE}\" submodule update --recursive ${git_submodules}
-  WORKING_DIRECTORY \"${work_dir}/${src_name}\"
-  RESULT_VARIABLE error_code
-)
-if(error_code)
-  message(FATAL_ERROR \"Failed to update submodules in: '${work_dir}/${src_name}'\")
+# Update sub-modules
+if(NOT \"${git_submodules}\" STREQUAL \"none\")
+  execute_process(
+    COMMAND \"${git_EXECUTABLE}\" -C \"${clone_checkout}\" submodule update --depth ${git_clone_depth} --force --init --recursive ${git_submodules}
+    RESULT_VARIABLE error_code
+  )
+  if(error_code)
+    message(FATAL_ERROR \"Failed to update submodules in: '${clone_checkout}'\")
+  endif()
+  execute_process(
+    COMMAND \"${git_EXECUTABLE}\" -C \"${clone_checkout}\" submodule foreach --recursive git sparse-checkout init
+    RESULT_VARIABLE error_code
+  )
+  if(error_code)
+    message(WARNING \"Failed to enable submodules sparse checkouts in: '${clone_checkout}'\")
+  endif()
 endif()
 
 # Complete success, update the script-last-run stamp file:
@@ -141,7 +130,6 @@ execute_process(
   COMMAND \${CMAKE_COMMAND} -E copy
     \"${gitclone_infofile}\"
     \"${gitclone_stampfile}\"
-  WORKING_DIRECTORY \"${work_dir}/${src_name}\"
   RESULT_VARIABLE error_code
 )
 if(error_code)
@@ -153,7 +141,26 @@ get_filename_component(destination_dir \"${build_source_dir}\" PATH)
 if(EXISTS ${build_source_dir})
   file(REMOVE_RECURSE ${build_source_dir})
 endif()
-file(COPY ${work_dir}/${src_name} DESTINATION \${destination_dir})
+file(COPY \"${clone_checkout}\" DESTINATION \${destination_dir})
+
+execute_process(
+  COMMAND \"${git_EXECUTABLE}\" -C \"${build_source_dir}\" sparse-checkout disable
+  RESULT_VARIABLE error_code
+)
+if(error_code)
+  message(WARNING \"Failed to disable sparse checkout in: '${build_source_dir}'\")
+endif()
+
+if(NOT \"${git_submodules}\" STREQUAL \"none\")
+  execute_process(
+    COMMAND \"${git_EXECUTABLE}\" -C \"${build_source_dir}\" submodule foreach --recursive git sparse-checkout disable
+    RESULT_VARIABLE error_code
+  )
+  if(error_code)
+    message(WARNING \"Failed to disable submodules sparse checkouts in: '${build_source_dir}'\")
+  endif()
+endif()
+
 "
 )
 endfunction()
@@ -200,3 +207,4 @@ function(ko_write_gitclone_script script_filename git_repository git_tag build_s
         ${stamp_dir}/${PROJECT_NAME}-gitclone-lastrun.txt
     )
 endfunction()
+
