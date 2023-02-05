@@ -144,6 +144,7 @@ ko_write_gitclone_script(
     https://github.com/ArtifexSoftware/mupdf.git
     tags/1.13.0
     ${SOURCE_DIR}
+    "thirdparty/jbig2dec thirdparty/mujs thirdparty/openjpeg"
 )
 
 include(ExternalProject)
