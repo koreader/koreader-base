@@ -98,6 +98,7 @@ ko_write_gitclone_script(
     https://github.com/openssl/openssl.git
     OpenSSL_1_1_1t
     ${SOURCE_DIR}
+    none
 )
 
 include(ExternalProject)
