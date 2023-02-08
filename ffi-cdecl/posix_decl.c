@@ -22,6 +22,11 @@
 #include <sys/time.h>
 #include <sys/resource.h>
 #include <sched.h>
+#include <arpa/inet.h>
+#include <sys/socket.h>
+#include <netdb.h>
+#include <ifaddrs.h>
+#include <linux/if_link.h>
 #include <errno.h>
 
 #include "ffi-cdecl.h"
@@ -217,3 +222,17 @@ cdecl_type(cpu_set_t)
 cdecl_func(sched_getaffinity)
 cdecl_func(sched_setaffinity)
 cdecl_func(sched_yield)
+
+cdecl_struct(sockaddr)
+cdecl_struct(ifaddrs)
+cdecl_const(NI_MAXHOST)
+cdecl_func(getifaddrs)
+cdecl_const(AF_INET)
+cdecl_const(AF_INET6)
+cdecl_func(getnameinfo)
+cdecl_struct(in_addr)
+cdecl_struct(sockaddr_in)
+cdecl_struct(in6_addr)
+cdecl_struct(sockaddr_in6)
+cdecl_const(NI_NUMERICHOST)
+cdecl_func(freeifaddrs)
