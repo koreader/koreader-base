@@ -390,6 +390,7 @@ struct sockaddr_in6 {
   uint32_t sin6_scope_id;
 };
 static const int NI_NUMERICHOST = 1;
+const char *gai_strerror(int) __attribute__((nothrow, leaf));
 void freeifaddrs(struct ifaddrs *) __attribute__((nothrow, leaf));
 ]]
 end
