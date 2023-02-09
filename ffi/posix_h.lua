@@ -189,10 +189,15 @@ typedef struct {
 int sched_getaffinity(int, size_t, cpu_set_t *) __attribute__((nothrow, leaf));
 int sched_setaffinity(int, size_t, const cpu_set_t *) __attribute__((nothrow, leaf));
 int sched_yield(void) __attribute__((nothrow, leaf));
+]]
+-- lj-wpaclient already defines this, but we only ship it on *some* platforms...
+pcall(ffi.cdef, [[
 struct sockaddr {
   short unsigned int sa_family;
   char sa_data[14];
 };
+]])
+ffi.cdef[[
 struct ifaddrs {
   struct ifaddrs *ifa_next;
   char *ifa_name;

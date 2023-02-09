@@ -223,7 +223,7 @@ cdecl_func(sched_getaffinity)
 cdecl_func(sched_setaffinity)
 cdecl_func(sched_yield)
 
-cdecl_struct(sockaddr)
+cdecl_struct(sockaddr) // May be provided by lj-wpaclient (... which is platform-specific)
 cdecl_struct(ifaddrs)
 cdecl_const(NI_MAXHOST)
 cdecl_func(getifaddrs)
