@@ -189,6 +189,53 @@ typedef struct {
 int sched_getaffinity(int, size_t, cpu_set_t *) __attribute__((nothrow, leaf));
 int sched_setaffinity(int, size_t, const cpu_set_t *) __attribute__((nothrow, leaf));
 int sched_yield(void) __attribute__((nothrow, leaf));
+struct sockaddr {
+  short unsigned int sa_family;
+  char sa_data[14];
+};
+struct ifaddrs {
+  struct ifaddrs *ifa_next;
+  char *ifa_name;
+  unsigned int ifa_flags;
+  struct sockaddr *ifa_addr;
+  struct sockaddr *ifa_netmask;
+  union {
+    struct sockaddr *ifu_broadaddr;
+    struct sockaddr *ifu_dstaddr;
+  } ifa_ifu;
+  void *ifa_data;
+};
+static const int NI_MAXHOST = 1025;
+int getifaddrs(struct ifaddrs **) __attribute__((nothrow, leaf));
+static const int AF_INET = 2;
+static const int AF_INET6 = 10;
+int getnameinfo(const struct sockaddr *restrict, unsigned int, char *restrict, unsigned int, char *restrict, unsigned int, int);
+struct in_addr {
+  unsigned int s_addr;
+};
+struct sockaddr_in {
+  short unsigned int sin_family;
+  short unsigned int sin_port;
+  struct in_addr sin_addr;
+  unsigned char sin_zero[8];
+};
+struct in6_addr {
+  union {
+    uint8_t __u6_addr8[16];
+    uint16_t __u6_addr16[8];
+    uint32_t __u6_addr32[4];
+  } __in6_u;
+};
+struct sockaddr_in6 {
+  short unsigned int sin6_family;
+  short unsigned int sin6_port;
+  uint32_t sin6_flowinfo;
+  struct in6_addr sin6_addr;
+  uint32_t sin6_scope_id;
+};
+static const int NI_NUMERICHOST = 1;
+const char *gai_strerror(int) __attribute__((nothrow, leaf));
+void freeifaddrs(struct ifaddrs *) __attribute__((nothrow, leaf));
 ]]
 
 -- clock_gettime & friends require librt on old glibc (< 2.17) versions...
