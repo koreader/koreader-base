@@ -29,7 +29,7 @@ endif()
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
     https://gitlab.com/koreader/freetype2.git
-    VER-2-12-1
+    VER-2-13-0
     ${SOURCE_DIR}
 )
 
