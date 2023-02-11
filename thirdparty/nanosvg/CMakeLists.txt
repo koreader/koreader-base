@@ -10,7 +10,7 @@ ep_get_source_dir(SOURCE_DIR)
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
     https://github.com/memononen/nanosvg.git
-    bd16c4e6b2842e1f0286dc374d21f85c659862e5
+    9da543e8329fdd81b64eb48742d8ccb09377aed1
     ${SOURCE_DIR}
 )
 
