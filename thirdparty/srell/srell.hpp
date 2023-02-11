@@ -1,8 +1,8 @@
 /*****************************************************************************
 **
-**  SRELL (std::regex-like library) version 3.010
+**  SRELL (std::regex-like library) version 3.018
 **
-**  Copyright (c) 2012-2022, Nozomu Katoo. All rights reserved.
+**  Copyright (c) 2012-2023, Nozomu Katoo. All rights reserved.
 **
 **  Redistribution and use in source and binary forms, with or without
 **  modification, are permitted provided that the following conditions are
@@ -1584,13 +1584,13 @@ public:
 
 	bitset &reset(const std::size_t bit)
 	{
-		buffer_[bit / bits_per_elem_] &= ~(1 << (bit & bitmask_));
+		buffer_[bit / bits_per_elem_] &= ~(1ul << (bit & bitmask_));
 		return *this;
 	}
 
 	bitset &set(const std::size_t bit)
 	{
-		buffer_[bit / bits_per_elem_] |= (1 << (bit & bitmask_));
+		buffer_[bit / bits_per_elem_] |= (1ul << (bit & bitmask_));
 		return *this;
 	}
 
@@ -1618,12 +1618,12 @@ public:
 
 	bool test(const std::size_t bit) const
 	{
-		return (buffer_[bit / bits_per_elem_] & (1 << (bit & bitmask_))) != 0;
+		return (buffer_[bit / bits_per_elem_] & (1ul << (bit & bitmask_))) != 0;
 	}
 
 	bool operator[](const std::size_t bit) const
 	{
-		return (buffer_[bit / bits_per_elem_] & (1 << (bit & bitmask_))) != 0;
+		return (buffer_[bit / bits_per_elem_] & (1ul << (bit & bitmask_))) != 0;
 	}
 
 	bitset<Bits> &flip()
@@ -3207,7 +3207,7 @@ struct re_quantifier
 
 	bool is_valid() const
 	{
-		return atleast <= atmost && atmost > 0;
+		return atleast <= atmost;
 	}
 
 	void set_infinity()
@@ -3352,7 +3352,7 @@ struct re_state
 		//  is_not/dont_push:   -
 
 	//  st_epsilon,                 //  0x02
-		//  char/number:        -
+		//  char/number:        - (some symbols used only in compiler).
 		//  next1:              gen.
 		//  next2:              alt.
 		//  quantifiers:        -
@@ -3534,6 +3534,11 @@ struct re_state
 	{
 		return type == st_epsilon && next2 != 0 && character == meta_char::mc_bar;	//  '|'
 	}
+
+	bool is_asterisk_or_plus_for_onelen_atom() const
+	{
+		return type == st_epsilon && ((next1 == 1 && next2 == 2) || (next1 == 2 && next2 == 1)) && quantifier.is_asterisk_or_plus();
+	}
 };
 //  re_state
 
@@ -3549,9 +3554,6 @@ struct re_compiler_state
 	bool back;
 #endif
 
-	bool backref_used;
-
-	simple_array<uint_l32> atleast_widths_of_brackets;
 #if !defined(SRELL_NO_NAMEDCAPTURE)
 	groupname_mapper<charT> unresolved_gnames;
 #endif
@@ -3569,9 +3571,6 @@ struct re_compiler_state
 #if !defined(SRELL_FIXEDWIDTHLOOKBEHIND)
 		back = false;
 #endif
-
-		backref_used = false;
-		atleast_widths_of_brackets.clear();
 
 #if !defined(SRELL_NO_NAMEDCAPTURE)
 		unresolved_gnames.clear();
@@ -4666,7 +4665,7 @@ private:
 		state_array branch;
 		re_quantifier branchsize;
 
-		piecesize.reset(0);
+		piecesize.set(re_quantifier::infinity, 0u);
 
 		for (;;)
 		{
@@ -4675,9 +4674,7 @@ private:
 			if (!make_branch(branch, branchsize, curpos, end, cstate))
 				return false;
 
-			//  For piecesize.atleast, 0 as the initial value and 0 as an
-			//  actual value must be distinguished.
-			if (piecesize.atmost == 0 || piecesize.atleast > branchsize.atleast)
+			if (!piecesize.is_valid() || piecesize.atleast > branchsize.atleast)
 				piecesize.atleast = branchsize.atleast;
 
 			if (piecesize.atmost < branchsize.atmost)
@@ -5042,7 +5039,7 @@ private:
 		piece.push_back(atom);
 	}
 
-	void set_bracket_close(state_array &piece, state_type &atom, const re_quantifier &piecesize, re_compiler_state<charT> &cstate)
+	void set_bracket_close(state_array &piece, state_type &atom, const re_quantifier & /* piecesize */, re_compiler_state<charT> & /* cstate */)
 	{
 //		uint_l32 max_bracketno = atom.number;
 
@@ -5064,11 +5061,6 @@ private:
 
 		rb_open.atleast = rb_pop.atleast = atom.number + 1;
 		rb_open.atmost = rb_pop.atmost = this->number_of_brackets - 1;	//  max_bracketno;
-
-		if (cstate.atleast_widths_of_brackets.size() < atom.number)
-			cstate.atleast_widths_of_brackets.resize(atom.number, 0);
-
-		cstate.atleast_widths_of_brackets[atom.number - 1] = piecesize.atleast;
 	}
 
 	void combine_piece_with_quantifier(state_array &piece_with_quantifier, state_array &piece, const re_quantifier &quantifier, const re_quantifier &piecesize)
@@ -5104,7 +5096,6 @@ private:
 					firstatom.quantifier = quantifier;
 
 				piece_with_quantifier.push_back(atom);
-				//      (push)
 			}
 
 			if (piece.size() >= 2 && firstatom.type == st_roundbracket_open && piece[1].type == st_roundbracket_pop)
@@ -5826,9 +5817,7 @@ private:
 	{
 		atom.next2 = 1;
 		atom.type = st_backreference;
-
-//		atom.quantifier.atleast = cstate.atleast_widths_of_brackets[atom.number - 1];
-			//  Moved to check_backreferences().
+		atom.quantifier.atleast = 0;
 
 		return true;
 	}
@@ -6045,26 +6034,22 @@ private:
 
 						if (rbcs.type == st_roundbracket_close && rbcs.number == backrefno)
 						{
-							if (roundbracket_closepos < backrefpos)
+							if (roundbracket_closepos > backrefpos)
 							{
-//								brs.quantifier.atleast = cstate.atleast_widths_of_brackets[backrefno - 1];
-								//  20210429: It was reported that clang-tidy was dissatisfied with this code.
-								//  20211006: Replaced with the following code:
+								if (brs.next1 == -1)
+								{
+									state_type &prevstate = this->NFA_states[backrefpos + brs.next1];
 
-								const uint_l32 backrefnoindex = backrefno - 1;
+									if (prevstate.is_asterisk_or_plus_for_onelen_atom())
+									{
+										prevstate.next1 = 2;
+										prevstate.next2 = 0;
+									}
+								}
 
-								//  This can never be true. Added only for satisfying clang-tidy.
-								if (backrefnoindex >= cstate.atleast_widths_of_brackets.size())
-									return false;
-
-								brs.quantifier.atleast = cstate.atleast_widths_of_brackets[backrefnoindex];
-
-								cstate.backref_used = true;
-							}
-							else
-							{
 								brs.type = st_epsilon;
 								brs.next2 = 0;
+								brs.character = meta_char::mc_escape;
 							}
 							break;
 						}
@@ -6163,7 +6148,7 @@ private:
 					&& (state.type != st_roundbracket_open)
 					&& (state.type != st_roundbracket_close || state.number != bracket_number)
 					&& (state.type != st_repeat_in_push)
-					&& (state.type != st_backreference || (state.quantifier.atleast == 0 && state.next1 != state.next2))
+					&& (state.type != st_backreference || (state.next1 != state.next2))
 					&& (state.type != st_lookaround_open))
 				if (gather_nextchars(nextcharclass, pos + state.next2, checked, bracket_number, subsequent))
 					canbe0length = true;
@@ -6193,10 +6178,7 @@ private:
 				{
 					const typename state_array::size_type nextpos = find_next1_of_bracketopen(state.number);
 
-					const bool length0 = gather_nextchars(nextcharclass, nextpos, state.number, subsequent);
-
-					if (!length0)
-						return canbe0length;
+					gather_nextchars(nextcharclass, nextpos, state.number, subsequent);
 				}
 				break;
 
@@ -7020,6 +7002,12 @@ public:
 	int compare(const value_type *const s) const
 	{
 		return str().compare(s);
+	}
+
+	void swap(sub_match &s)
+	{
+		this->std::pair<BidirectionalIterator, BidirectionalIterator>::swap(s);
+		std::swap(matched, s.matched);
 	}
 };
 
@@ -7930,6 +7918,7 @@ public:	//  For internal.
 	void set_prefix_first_(const BidirectionalIterator pf)
 	{
 		prefix_.first = pf;
+		prefix_.matched = prefix_.first != prefix_.second;
 	}
 
 	bool mark_as_failed_()
@@ -8084,13 +8073,13 @@ class regex_object : public re_compiler<charT, traits>
 {
 public:
 
-	template <typename BidirectionalIterator>
+	template <typename BidirectionalIterator, typename Allocator>
 	bool search
 	(
 		const BidirectionalIterator begin,
 		const BidirectionalIterator end,
 		const BidirectionalIterator lookbehind_limit,
-		match_results<BidirectionalIterator> &results,
+		match_results<BidirectionalIterator, Allocator> &results,
 		const regex_constants::match_flag_type flags /* = regex_constants::match_default */
 	) const
 	{
@@ -8147,10 +8136,10 @@ private:
 
 	typedef typename traits::utf_traits utf_traits;
 
-	template <const bool icase, typename BidirectionalIterator>
+	template <const bool icase, typename BidirectionalIterator, typename Allocator>
 	bool do_search
 	(
-		match_results<BidirectionalIterator> &results
+		match_results<BidirectionalIterator, Allocator> &results
 	) const
 	{
 		re_search_state</*charT, */BidirectionalIterator> &sstate = results.sstate_;
@@ -9382,8 +9371,8 @@ typedef regex_iterator<std::wstring::const_iterator> wsregex_iterator;
 	typedef regex_iterator<std::u8string::const_iterator> u8sregex_iterator;
 #endif
 
-typedef regex_iterator<const char *, std::iterator_traits<const char *>::value_type, u8regex_traits<std::iterator_traits<const char *>::value_type> > u8ccregex_iterator;
-typedef regex_iterator<std::string::const_iterator, std::iterator_traits<std::string::const_iterator>::value_type, u8regex_traits<std::iterator_traits<std::string::const_iterator>::value_type> > u8csregex_iterator;
+typedef regex_iterator<const char *, typename std::iterator_traits<const char *>::value_type, u8regex_traits<typename std::iterator_traits<const char *>::value_type> > u8ccregex_iterator;
+typedef regex_iterator<std::string::const_iterator, typename std::iterator_traits<std::string::const_iterator>::value_type, u8regex_traits<typename std::iterator_traits<std::string::const_iterator>::value_type> > u8csregex_iterator;
 #if !defined(SRELL_CPP20_CHAR8_ENABLED)
 	typedef u8ccregex_iterator u8cregex_iterator;
 #endif
@@ -9398,8 +9387,8 @@ typedef regex_iterator<std::string::const_iterator, std::iterator_traits<std::st
 		typedef u32wcregex_iterator u1632wcregex_iterator;
 		typedef u32wsregex_iterator u1632wsregex_iterator;
 	#elif WCHAR_MAX >= 0xffff
-		typedef regex_iterator<const wchar_t *, std::iterator_traits<const wchar_t *>::value_type, u16regex_traits<std::iterator_traits<const wchar_t *>::value_type> > u16wcregex_iterator;
-		typedef regex_iterator<std::wstring::const_iterator, std::iterator_traits<std::wstring::const_iterator>::value_type, u16regex_traits<std::iterator_traits<std::wstring::const_iterator>::value_type> > u16wsregex_iterator;
+		typedef regex_iterator<const wchar_t *, typename std::iterator_traits<const wchar_t *>::value_type, u16regex_traits<typename std::iterator_traits<const wchar_t *>::value_type> > u16wcregex_iterator;
+		typedef regex_iterator<std::wstring::const_iterator, typename std::iterator_traits<std::wstring::const_iterator>::value_type, u16regex_traits<typename std::iterator_traits<std::wstring::const_iterator>::value_type> > u16wsregex_iterator;
 		typedef u16wcregex_iterator u1632wcregex_iterator;
 		typedef u16wsregex_iterator u1632wsregex_iterator;
 	#endif
@@ -9932,8 +9921,8 @@ typedef regex_token_iterator<std::wstring::const_iterator> wsregex_token_iterato
 	typedef regex_token_iterator<std::u8string::const_iterator> u8sregex_token_iterator;
 #endif
 
-typedef regex_token_iterator<const char *, std::iterator_traits<const char *>::value_type, u8regex_traits<std::iterator_traits<const char *>::value_type> > u8ccregex_token_iterator;
-typedef regex_token_iterator<std::string::const_iterator, std::iterator_traits<std::string::const_iterator>::value_type, u8regex_traits<std::iterator_traits<std::string::const_iterator>::value_type> > u8csregex_token_iterator;
+typedef regex_token_iterator<const char *, typename std::iterator_traits<const char *>::value_type, u8regex_traits<typename std::iterator_traits<const char *>::value_type> > u8ccregex_token_iterator;
+typedef regex_token_iterator<std::string::const_iterator, typename std::iterator_traits<std::string::const_iterator>::value_type, u8regex_traits<typename std::iterator_traits<std::string::const_iterator>::value_type> > u8csregex_token_iterator;
 #if !defined(SRELL_CPP20_CHAR8_ENABLED)
 	typedef u8ccregex_token_iterator u8cregex_token_iterator;
 #endif
@@ -9948,8 +9937,8 @@ typedef regex_token_iterator<std::string::const_iterator, std::iterator_traits<s
 		typedef u32wcregex_token_iterator u1632wcregex_token_iterator;
 		typedef u32wsregex_token_iterator u1632wsregex_token_iterator;
 	#elif WCHAR_MAX >= 0xffff
-		typedef regex_token_iterator<const wchar_t *, std::iterator_traits<const wchar_t *>::value_type, u16regex_traits<std::iterator_traits<const wchar_t *>::value_type> > u16wcregex_token_iterator;
-		typedef regex_token_iterator<std::wstring::const_iterator, std::iterator_traits<std::wstring::const_iterator>::value_type, u16regex_traits<std::iterator_traits<std::wstring::const_iterator>::value_type> > u16wsregex_token_iterator;
+		typedef regex_token_iterator<const wchar_t *, typename std::iterator_traits<const wchar_t *>::value_type, u16regex_traits<typename std::iterator_traits<const wchar_t *>::value_type> > u16wcregex_token_iterator;
+		typedef regex_token_iterator<std::wstring::const_iterator, typename std::iterator_traits<std::wstring::const_iterator>::value_type, u16regex_traits<typename std::iterator_traits<std::wstring::const_iterator>::value_type> > u16wsregex_token_iterator;
 		typedef u16wcregex_token_iterator u1632wcregex_token_iterator;
 		typedef u16wsregex_token_iterator u1632wsregex_token_iterator;
 	#endif
