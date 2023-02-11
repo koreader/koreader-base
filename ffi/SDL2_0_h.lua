@@ -474,6 +474,8 @@ struct SDL_MouseWheelEvent {
   Uint32 direction;
   float preciseX;
   float preciseY;
+  Sint32 mouseX;
+  Sint32 mouseY;
 };
 typedef struct SDL_MouseWheelEvent SDL_MouseWheelEvent;
 struct SDL_JoyAxisEvent {
@@ -578,6 +580,7 @@ struct SDL_ControllerSensorEvent {
   SDL_JoystickID which;
   Sint32 sensor;
   float data[3];
+  Uint64 timestamp_us;
 };
 typedef struct SDL_ControllerSensorEvent SDL_ControllerSensorEvent;
 struct SDL_AudioDeviceEvent {
@@ -595,6 +598,7 @@ struct SDL_SensorEvent {
   Uint32 timestamp;
   Sint32 which;
   float data[6];
+  Uint64 timestamp_us;
 };
 typedef struct SDL_SensorEvent SDL_SensorEvent;
 struct SDL_QuitEvent {
