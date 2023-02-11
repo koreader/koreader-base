@@ -30,7 +30,7 @@ endif()
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
     https://github.com/glennrp/libpng.git
-    v1.6.38
+    v1.6.39
     ${SOURCE_DIR}
 )
 
