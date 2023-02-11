@@ -1,3 +1,128 @@
+20230106; version 4.016/3.018 (@ only):
+  * Merged four automata into two (preparation for i-modifier support).
+  @ Fixed the pattern compiler not to treat /a{0,0}/ as an error.
+  @ Other minor fixes.
+
+20221227; version 4.015:
+  * Fixed a minor issue in regex_iterator2 that was treated as an error
+    by VC when _ITERATOR_DEBUG_LEVEL >= 1.
+  * Other improvements.
+
+20221220; version 4.014:
+  * Supplemented some member functions that were missing accidentally
+    from match_results in the previous release.
+  * Simplified regex_token_iterator.
+
+20221220; version 4.013:
+  * Fixed a minor issue in split(). When splitting "abc" by /$/, split()
+    returned {"abc", ""} instead of {"abc"} that is correct.
+  * Reduced the number of overload functions of replace(). Now when the
+    lambda expression is used, the type of match_results that will be
+    passed to a callback function needs specifying explicitly as the
+    template argument.
+  * Added regex_iterator2.
+
+20221216; version 4.012:
+  * Fixed replace(). VC2005 could not compile it.
+
+20221214; version 4.011/3.017 (@ only):
+  @ [LWG Issue 3204] Added swap() to sub_match.
+  * Modified replace() so that it can replace any container type that
+    looks like std::basic_string.
+  * Added srell::str_clip.
+  * Added overload functions to split() that support a pair of iterators
+    and a pointer.
+
+20221212; version 4.010:
+  * Adjusted the behaviour of split() in accordance with the document.
+    While the document says sub_match is pushed to a list container,
+    in the code basic_string was pushed to the list container.
+  * Added overloads to the sub_match class that support implicit and
+    explcit converting to std::basic_string instantiated with a custom
+    traits/allocator.
+
+20221210; version 4.009/3.016 (@ only):
+  @ Fixed a problem so that regex_iterator.prefix().matched can be set
+    to true in incrementing after it matched an empty sequence.
+  @ Fixed the core of algorithm functions not to cause compilation error
+    when an object of match_results instantiated with a custom allocator
+    is provided.
+  * Added new member functions to basic_regex as API extensions.
+
+20221130; version 4.008:
+  * Priority was given back to the BMH matcher from the finder
+    introduced in 4.006.
+  * Minor improvements of ^ and $ in the multiline mode and \b, \B.
+
+20221124; version 4.007:
+  * Added support for the un-bounded flag modifiers ((?ims-ims)), which
+    are available only at the beginning of a regular expression (the
+    same as Python 3.11).
+    Note: This feature is not defined in the ECMAScript specification
+    nor compatible with the regexp-modifiers proposal. This feature can
+    be disabled by defining SRELL_NO_UBMOD.
+
+20221123; version 4.006:
+  * Added a new entry point finder for expressions whose first matching
+    character is a single character.
+
+20221030; version 4.005/3.015 (@ only):
+  @ Fixed a problem that caused undefined behaviour in conditions where
+    sizeof (int) != sizeof (long), e.g. LP64 (4/8/8). (Thanks to Travers
+    Ching for the report).
+  * Updated unicode/ucfdataout2.cpp and updataout2.cpp. Now they can
+    compile even without srell_ucfdata2.hpp and srell_updata2.hpp.
+  * Some clean-ups.
+
+20221022; version 4.004/3.014:
+  * Updated srell_ucfdata2.hpp and srell_updata2.hpp to support Unicode
+    15.0.0.
+  * Updated unicode/updataout2.cpp to support Unicode 15. (Support in
+    advance new script names that are expected to be available in RegExp
+    of ECMAScript 2023).
+  * Removed some code that had become unused or meaningless as a result
+    of the previous backreference bug fixes.
+
+20221012; version 4.003/3.013:
+  * Re-refixed the backreference bug. Incidentally, this bug was
+    introduced along with the addition of the variable-length lookbehind
+    feature. Therefore, SRELL versions 2.000- have this bug.
+    (It originated from the fact that in a variable length lookbehind
+    assertion, it is possible that the parser encounters a backreference
+    prior to the corresponding bracket pair, such as /(?<=\1\s+(\d+))/,
+    and the parser cannot know immediately whether the corresponding
+    capturing bracket pair really exists in the expression).
+
+20221012; version 4.002/3.012:
+  * Refixed the backreference bug in a different way because the fix of
+    20221011 did not cover the problem caused by such an expression as
+    /(?:\1+)*()/. Fixed also an infinite loop caused by an expression
+    like /()(?:\1+)*/.
+
+20221011; version 4.001/3.011 (@ only):
+  @ Fixed a bug that caused dereferencing a null pointer or infinite
+    loop when a backreference is followed by * or +, and the
+    backreference appears prior to the close bracket of the
+    corresponding pair of capturing brackets, such as /\1*()/, /(\1+)/.
+    (Thanks to @datadiode, the author of srellcom, for finding the bug).
+  * In accordance with the ECMAScript specification, restricted
+    positions where '-' can be written without escaping in character
+    classes. Now '-' following a predefined character class such as \d,
+    \s causes an error, unless it is the final character in a character
+    class. ([\s-0] causes an error, [\s-] is accepted).
+  * Adjusted internal UTF-8 iterators.
+
+20220618; version 4.000:
+  * Added support for the v-flag mode that is expected to be added to
+    a future version of ECMAScript.
+  * Changed the format of srell_updata.hpp and renamed to
+    srell_updata2.hpp.
+  * In accordance with the change above, unicode/updataout.cpp was
+    updated and renamed to updataout2.cpp.
+  * Fixed an issue of a struct layout that clang-tidy warns as
+    "excessive padding" on 64-bit systems (Thanks for the report).
+  * Updated unicode/ucfdataout2.cpp.
+
 20220529; version 3.010:
   * Reduced the amount of memory used to hold a character class that
     contains Unicode property escapes.
@@ -242,9 +367,8 @@
     instead of creating them from case folding data when its instance is
     first created.
   * In accordance with the change above, srell_ucfdata.hpp and
-    ucfdataout.cpp that outputs the former were replaced with
-    srell_ucfdata2.hpp that holds precomputed tables and ucfdataout2.cpp
-    that outputs the former.
+    ucfdataout.cpp were replaced with srell_ucfdata2.hpp and
+    ucfdataout2.cpp, accordingly.
   * Changed the method of character class matching from linear search to
     binary search.
   * Changed the timing of optimisation of a character class from "when a
@@ -318,7 +442,7 @@
 
 20190714: version 2.230:
   * Improved the performance of searching when regular expressions begin
-    with a character or character class followed by a '*' or '+'. (E.g.,
+    with a character or character class followed by a '*' or '+'. (E.g.
     /[A-Za-z]+ing/).
 
 20190707: version 2.221:
@@ -327,7 +451,7 @@
   * When icase specified, if all characters in a character class become
     the same character as a result of case-folding, the pattern compiler
     has been changed to convert the character class to the character
-    literal (e.g., /r[Ss\u017F]t/i -> /rst/i).
+    literal (e.g. /r[Ss\u017F]t/i -> /rst/i).
   * Fixed a minor issue.
 
 20190617: version 2.220:
@@ -359,7 +483,7 @@
   * Fixed a bug that caused failure of capturing when 1) a pair of
     capturing brackets exists in a lookbehind assertion, and 2) variable
     length expressions exist in both the left side of and the inside of
-    the pair of brackets. E.g., given "1053" =~ /(?<=(\d+)(\d+))$/, no
+    the pair of brackets. E.g. given "1053" =~ /(?<=(\d+)(\d+))$/, no
     appropriate string was set for $2.
   * Updated srell_ucfdata.hpp and srell_updata.hpp to support Unicode
     12.1.0.

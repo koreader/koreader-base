@@ -1,5 +1,5 @@
 //
-//  updataout.cpp: version 1.400 (2021/10/10).
+//  updataout.cpp: version 1.401 (2022/10/22).
 //
 //  This is a program that generates srell_updata.hpp from:
 //    DerivedCoreProperties.txt
@@ -106,7 +106,7 @@ static const char *const gc_values[] = {	//  38
 	"Math_Symbol:Sm", "Other_Symbol:So", "Separator:Z", "Line_Separator:Zl",
 	"Paragraph_Separator:Zp", "Space_Separator:Zs", ""
 };
-static const char *const script_names[] = {	//  161 (141+7+4+4+5)
+static const char *const script_names[] = {	//  163 (141+7+4+4+5+2)
 	"Adlam:Adlm", "Ahom:Ahom", "Anatolian_Hieroglyphs:Hluw", "Arabic:Arab",
 	"Armenian:Armn", "Avestan:Avst", "Balinese:Bali", "Bamum:Bamu",
 	"Bassa_Vah:Bass", "Batak:Batk", "Bengali:Beng", "Bhaiksuki:Bhks",
@@ -122,32 +122,32 @@ static const char *const script_names[] = {	//  161 (141+7+4+4+5)
 	"Hangul:Hang", "Hanifi_Rohingya:Rohg", "Hanunoo:Hano", "Hatran:Hatr",
 	"Hebrew:Hebr", "Hiragana:Hira", "Imperial_Aramaic:Armi", "Inherited:Zinh:Qaai",
 	"Inscriptional_Pahlavi:Phli", "Inscriptional_Parthian:Prti", "Javanese:Java", "Kaithi:Kthi",
-	"Kannada:Knda", "Katakana:Kana", "Kayah_Li:Kali", "Kharoshthi:Khar",
-	"Khitan_Small_Script:Kits", "Khmer:Khmr", "Khojki:Khoj", "Khudawadi:Sind",
-	"Lao:Laoo", "Latin:Latn", "Lepcha:Lepc", "Limbu:Limb",
-	"Linear_A:Lina", "Linear_B:Linb", "Lisu:Lisu", "Lycian:Lyci",
-	"Lydian:Lydi", "Mahajani:Mahj", "Makasar:Maka", "Malayalam:Mlym",
-	"Mandaic:Mand", "Manichaean:Mani", "Marchen:Marc", "Masaram_Gondi:Gonm",
-	"Medefaidrin:Medf", "Meetei_Mayek:Mtei", "Mende_Kikakui:Mend", "Meroitic_Cursive:Merc",
-	"Meroitic_Hieroglyphs:Mero", "Miao:Plrd", "Modi:Modi", "Mongolian:Mong",
-	"Mro:Mroo", "Multani:Mult", "Myanmar:Mymr", "Nabataean:Nbat",
-	"Nandinagari:Nand", "New_Tai_Lue:Talu", "Newa:Newa", "Nko:Nkoo",
-	"Nushu:Nshu", "Nyiakeng_Puachue_Hmong:Hmnp", "Ogham:Ogam", "Ol_Chiki:Olck",
-	"Old_Hungarian:Hung", "Old_Italic:Ital", "Old_North_Arabian:Narb", "Old_Permic:Perm",
-	"Old_Persian:Xpeo", "Old_Sogdian:Sogo", "Old_South_Arabian:Sarb", "Old_Turkic:Orkh",
-	"Old_Uyghur:Ougr", "Oriya:Orya", "Osage:Osge", "Osmanya:Osma",
-	"Pahawh_Hmong:Hmng", "Palmyrene:Palm", "Pau_Cin_Hau:Pauc", "Phags_Pa:Phag",
-	"Phoenician:Phnx", "Psalter_Pahlavi:Phlp", "Rejang:Rjng", "Runic:Runr",
-	"Samaritan:Samr", "Saurashtra:Saur", "Sharada:Shrd", "Shavian:Shaw",
-	"Siddham:Sidd", "SignWriting:Sgnw", "Sinhala:Sinh", "Sogdian:Sogd",
-	"Sora_Sompeng:Sora", "Soyombo:Soyo", "Sundanese:Sund", "Syloti_Nagri:Sylo",
-	"Syriac:Syrc", "Tagalog:Tglg", "Tagbanwa:Tagb", "Tai_Le:Tale",
-	"Tai_Tham:Lana", "Tai_Viet:Tavt", "Takri:Takr", "Tamil:Taml",
-	"Tangsa:Tnsa", "Tangut:Tang", "Telugu:Telu", "Thaana:Thaa",
-	"Thai:Thai", "Tibetan:Tibt", "Tifinagh:Tfng", "Tirhuta:Tirh",
-	"Toto", "Ugaritic:Ugar", "Vai:Vaii", "Vithkuqi:Vith",
-	"Wancho:Wcho", "Warang_Citi:Wara", "Yezidi:Yezi", "Yi:Yiii",
-	"Zanabazar_Square:Zanb",
+	"Kannada:Knda", "Katakana:Kana", "Kawi:Kawi", "Kayah_Li:Kali",
+	"Kharoshthi:Khar", "Khitan_Small_Script:Kits", "Khmer:Khmr", "Khojki:Khoj",
+	"Khudawadi:Sind", "Lao:Laoo", "Latin:Latn", "Lepcha:Lepc",
+	"Limbu:Limb", "Linear_A:Lina", "Linear_B:Linb", "Lisu:Lisu",
+	"Lycian:Lyci", "Lydian:Lydi", "Mahajani:Mahj", "Makasar:Maka",
+	"Malayalam:Mlym", "Mandaic:Mand", "Manichaean:Mani", "Marchen:Marc",
+	"Masaram_Gondi:Gonm", "Medefaidrin:Medf", "Meetei_Mayek:Mtei", "Mende_Kikakui:Mend",
+	"Meroitic_Cursive:Merc", "Meroitic_Hieroglyphs:Mero", "Miao:Plrd", "Modi:Modi",
+	"Mongolian:Mong", "Mro:Mroo", "Multani:Mult", "Myanmar:Mymr",
+	"Nabataean:Nbat", "Nag_Mundari:Nagm", "Nandinagari:Nand", "New_Tai_Lue:Talu",
+	"Newa:Newa", "Nko:Nkoo", "Nushu:Nshu", "Nyiakeng_Puachue_Hmong:Hmnp",
+	"Ogham:Ogam", "Ol_Chiki:Olck", "Old_Hungarian:Hung", "Old_Italic:Ital",
+	"Old_North_Arabian:Narb", "Old_Permic:Perm", "Old_Persian:Xpeo", "Old_Sogdian:Sogo",
+	"Old_South_Arabian:Sarb", "Old_Turkic:Orkh", "Old_Uyghur:Ougr", "Oriya:Orya",
+	"Osage:Osge", "Osmanya:Osma", "Pahawh_Hmong:Hmng", "Palmyrene:Palm",
+	"Pau_Cin_Hau:Pauc", "Phags_Pa:Phag", "Phoenician:Phnx", "Psalter_Pahlavi:Phlp",
+	"Rejang:Rjng", "Runic:Runr", "Samaritan:Samr", "Saurashtra:Saur",
+	"Sharada:Shrd", "Shavian:Shaw", "Siddham:Sidd", "SignWriting:Sgnw",
+	"Sinhala:Sinh", "Sogdian:Sogd", "Sora_Sompeng:Sora", "Soyombo:Soyo",
+	"Sundanese:Sund", "Syloti_Nagri:Sylo", "Syriac:Syrc", "Tagalog:Tglg",
+	"Tagbanwa:Tagb", "Tai_Le:Tale", "Tai_Tham:Lana", "Tai_Viet:Tavt",
+	"Takri:Takr", "Tamil:Taml", "Tangsa:Tnsa", "Tangut:Tang",
+	"Telugu:Telu", "Thaana:Thaa", "Thai:Thai", "Tibetan:Tibt",
+	"Tifinagh:Tfng", "Tirhuta:Tirh", "Toto", "Ugaritic:Ugar",
+	"Vai:Vaii", "Vithkuqi:Vith", "Wancho:Wcho", "Warang_Citi:Wara",
+	"Yezidi:Yezi", "Yi:Yiii", "Zanabazar_Square:Zanb",
 	//  ECMAScript 2019/Unicode 11:
 	//    "Dogra:Dogr", "Gunjala_Gondi:Gong", "Hanifi_Rohingya:Rohg",
 	//    "Makasar:Maka", "Medefaidrin:Medf", "Old_Sogdian:Sogo", "Sogdian:Sogd",
@@ -157,7 +157,9 @@ static const char *const script_names[] = {	//  161 (141+7+4+4+5)
 	//    "Chorasmian:Chrs", "Dives_Akuru:Diak", "Khitan_Small_Script:Kits", "Yezidi:Yezi",
 	//  ECMAScript 2022/Unicode 14:
 	//    "Cypro_Minoan:Cpmn", "Old_Uyghur:Ougr", "Tangsa:Tnsa", "Toto",
-	//    "Vithkuqi:Vith"
+	//    "Vithkuqi:Vith",
+	//  ECMAScript 2023/Unicode 15:
+	//    "Kawi:Kawi", "Nag_Mundari:Nagm",
 	""
 };
 }	//  namespace updata

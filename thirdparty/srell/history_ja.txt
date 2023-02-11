@@ -1,3 +1,109 @@
+20230106; version 4.016/3.018（＊のみ）:
+  ・4つのオートマタを2つに統合（i-modifier対応の下準備）。
+  ＊/a{0,0}/がエラー扱いになっていた問題を修正。
+  ＊その他細かい修正など。
+
+20221227; version 4.015:
+  ・VCで_ITERATOR_DEBUG_LEVELを1以上にすると、エラー扱いされる
+    regex_iterator2中のコードを修正。
+  ・その他改良など。
+
+20221220; version 4.014:
+  ・誤って前版で抜けていたmatch_resultsのメンバ函数を補充。
+  ・regex_token_iteratorの簡素化。
+
+20221220; version 4.013:
+  ・"abc"を/$/でsplit()すると、{"abc"}となるべきところが{"abc", ""}にな
+    ってしまっていた問題を修正。
+  ・replace()のoverload函数の数を減らし、ラムダ使用時は常にコールバック
+    函数で受け取りたいmatch_resultsの型をテンプレート実引数で明示するよ
+    うに。
+  ・regex_iterator2を追加。
+
+20221216; version 4.012:
+  ・コンパイラによってreplace()のコンパイルに失敗する問題を修正。
+
+20221214; version 4.011/3.017（＊のみ）:
+  ＊[LWG Issue 3204] sub_matchにswap()を追加。
+  ・replace()の仕様変更。std::basic_string風のコンテナ型なら何でも置換で
+    きるように。
+  ・srell::str_clipを追加。
+  ・split()にイテレータ、ポインタに対応するoverloadを追加。
+
+20221212; version 4.010:
+  ・split()の実装が説明文と合うように修正。文ではsub_matchがリストコンテ
+    ナにpushされるとなっているのに対して、コードではbasic_stringがpushさ
+    れていました。
+  ・sub_matchクラスのbasic_stringへの変換函数（キャスト及びstr()）に、カ
+    スタムtraits/allocator対応版を追加。
+
+20221210; version 4.009/3.016（＊のみ）:
+  ＊regex_iteratorのiterator (it) が0幅にマッチすると、次に++した時に
+    it->prefix().matchedがtrueにならなかった問題を修正。
+  ＊match_resultsのテンプレート引数にカスタムallocatorを渡すとコンパイル
+    できなかった問題を修正。
+  ・basic_regexに新しいメンバ函数（拡張API）を追加。
+
+20221130; version 4.008:
+  ・4.006で導入したfinderよりもBMHの優先度が上になるよう調整。
+  ・\b/\Bおよびmultilineモードにおける^, $の改良。
+
+20221124; version 4.007:
+  ・正規表現の最初でのみ使える埋込フラグ (?ims-ims) に対応（Python 3.11
+    と同様）。
+    註：この機能は独自拡張で、ECMAScriptの仕様にはありません。また
+    regexp-modifiers提案とも異なっています。この機能はSRELL_NO_UBMODを定
+    義することにより、無効にできます。
+
+20221123; version 4.006:
+  ・最初にマッチする文字が一種類である表現用のfinderを追加。
+
+20221030; version 4.005/3.015（＊のみ）:
+  ＊int型とlong型とでビット幅が異なる環境（LP64, 4/8/8等）で未定義動作と
+    なるコードを修正（報告してくださったTravers Ching氏に感謝します）。
+  ・unicode/ucfdataout2.cpp, updataout2.cppを更新。Unicodeデータファイル
+    (srell_ucfdata2.hpp, srell_updata2.hpp) なしでもコンパイルできるよう
+    に。
+  ・その他コードの整理など。
+
+20221022; version 4.004/3.014:
+  ・srell_ucfdata2.hppとsrell_updata2.hppとをUnicode 15.0.0対応に更新。
+  ・unicode/updataout2.cppをUnicode 15対応に更新（ECMAScript 2023で対応
+    される見込みのスクリプト名の先行対応）。
+  ・先の後方参照バグを直した結果、無意味になったコードを削除。
+
+20221012; version 4.003/3.013:
+  ・後方参照バグを再々修正。ちなみにこのバグは可変幅の戻り読みに対応した
+    ことに付随するものであるため、version 2.000以降のSRELL全版に存在しま
+    す。
+    （可変幅の戻り読みでは/(?<=\1\s+(\d+))/のように、パーザが捕獲括弧よ
+    りも先に後方参照に出合ってしまうことがあるため、対応する括弧がその正
+    規表現中に実在するのかすぐに判断できないことに由来しています）
+
+20221012; version 4.002/3.012:
+  ・前版の後方参照バグを違う方法で再修正。20221011の修正では/(?:\1+)*()/
+    のような表現に対応できていなかったため。同時に/()(?:\1+)*/のような表
+    現が無限ループに陥るのも修正。
+
+20221011; version 4.001/3.011（＊のみ）:
+  ＊/\1*()/や/(\1+)/のように、対応する捕獲括弧の閉じ括弧よりも先に出現す
+    る後方参照に*または+が付いているとnullポインタを参照してしまう、もし
+    くは無限ループに陥るバグを修正（バグを見つけてくださったsrellcomの作
+    者、@datadiode氏に感謝します）。
+  ・ECMAScriptの仕様に従い、[]内で'-'をエスケープせず書ける位置のチェッ
+    クを厳密に行うよう変更。定義済み文字クラス（\d, \s等）直後の'-'は、
+    それが文字クラス最後の文字でない限りはエラーに（[\s-\d]はエラー、
+    [\s-]はOK）。
+  ・UTF-8用内部iteratorの調整。
+
+20220618; version 4.000:
+  ・ECMAScriptに追加される見込みのvフラグモードに対応。
+  ・srell_updata.hppの仕様変更。srell_updata2.hppに。
+  ・上記変更に併せてunicode/updataout.cppを更新し、updataout2.cppに。
+  ・64ビット環境でclang-tidyが "excessive padding" と警告する問題に対応
+    するため構造体メンバの順番を変更（ご報告に感謝します）。
+  ・unicode/ucfdataout2.cppを更新。
+
 20220529; version 3.010:
   ・\pや\Pを含む文字クラスのメモリ使用量を削減。
   ・\pや\Pの{}内が不正の時にthrowされるエラーの種類を、
