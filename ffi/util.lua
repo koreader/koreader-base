@@ -373,11 +373,11 @@ function util.runInSubProcess(func, with_pipe, double_fork)
 end
 
 --- Collect subprocess so it does not become a zombie.
--- This does not block. Returns true if process was collected or was already
--- no more running, false if process is still running
-function util.isSubProcessDone(pid)
+-- This does not block, unless `wait` is `true`.
+-- Returns true if process was collected or has already exited, false if process is still running.
+function util.isSubProcessDone(pid, wait)
     local status = ffi.new('int[1]')
-    local ret = C.waitpid(pid, status, 1) -- 1 = WNOHANG : don't wait, just tell
+    local ret = C.waitpid(pid, status, wait and 0 or C.WNOHANG)
     -- status = tonumber(status[0])
     -- If still running: ret = 0 , status = 0
     -- If exited: ret = pid , status = 0 or 9 if killed
