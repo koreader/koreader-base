@@ -741,6 +741,12 @@ static int hasCacheFile(lua_State *L) {
     return 1;
 }
 
+static int isCacheFileStale(lua_State *L) {
+    CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
+    lua_pushboolean(L, doc->dom_doc->isCacheFileStale());
+    return 1;
+}
+
 static int invalidateCacheFile(lua_State *L) {
     CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
     doc->dom_doc->invalidateCacheFile();
@@ -812,10 +818,58 @@ static int getDocumentProps(lua_State *L) {
 
 static int getDocumentRenderingHash(lua_State *L) {
 	CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
+	bool extended = false;
+	if (lua_isboolean(L, 2)) {
+		extended = lua_toboolean(L, 2);
+	}
 
-	lua_pushinteger(L, doc->text_view->getDocumentRenderingHash());
+	lua_pushinteger(L, doc->text_view->getDocumentRenderingHash(extended));
 
 	return 1;
+}
+
+// Partial rerendering support
+static int canBePartiallyRerendered(lua_State *L) {
+	CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
+	if (doc->dom_doc) {
+            lua_pushboolean(L, doc->dom_doc->canBePartiallyRerendered());
+            return 1;
+        }
+	return 0;
+}
+static int isPartialRerenderingEnabled(lua_State *L) {
+	CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
+	if (doc->dom_doc) {
+            lua_pushboolean(L, doc->dom_doc->isPartialRerenderingEnabled());
+            return 1;
+        }
+	return 0;
+}
+static int enablePartialRerendering(lua_State *L) {
+	CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
+        bool enable = lua_toboolean(L, 2);
+	if (doc->dom_doc) {
+            bool ret = doc->dom_doc->enablePartialRerendering(enable);
+            lua_pushboolean(L, ret);
+            return 1;
+        }
+	return 0;
+}
+static int getPartialRerenderingsCount(lua_State *L) {
+	CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
+	if (doc->dom_doc) {
+            lua_pushinteger(L, doc->dom_doc->getPartialRerenderingsCount());
+            return 1;
+        }
+	return 0;
+}
+static int isRerenderingDelayed(lua_State *L) {
+	CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
+	if (doc->dom_doc) {
+            lua_pushboolean(L, doc->dom_doc->isRerenderingDelayed(lua_toboolean(L, 2)));
+            return 1;
+        }
+	return 0;
 }
 
 static int getPages(lua_State *L) {
@@ -1111,6 +1165,15 @@ static int buildAlternativeToc(lua_State *L) {
 	if (doc->dom_doc) {
             doc->dom_doc->buildAlternativeToc();
         }
+	return 0;
+}
+
+// To be used only after background rerendering to update ToC
+// and PageMap page numbers before saving cache.
+static int updateTocAndPageMap(lua_State *L) {
+	CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
+        doc->text_view->getToc();
+        doc->text_view->getPageMap();
 	return 0;
 }
 
@@ -3870,6 +3933,11 @@ static const struct luaL_Reg credocument_meth[] = {
     {"getDocumentFormat", getDocumentFormat},
     {"getDocumentProps", getDocumentProps},
     {"getDocumentRenderingHash", getDocumentRenderingHash},
+    {"canBePartiallyRerendered", canBePartiallyRerendered},
+    {"isPartialRerenderingEnabled", isPartialRerenderingEnabled},
+    {"enablePartialRerendering", enablePartialRerendering},
+    {"getPartialRerenderingsCount", getPartialRerenderingsCount},
+    {"isRerenderingDelayed", isRerenderingDelayed},
     {"getPages", getPages},
     {"getCurrentPage", getCurrentPage},
     {"getPageFlow", getPageFlow},
@@ -3922,8 +3990,10 @@ static const struct luaL_Reg credocument_meth[] = {
     /* --- control methods ---*/
     {"isBuiltDomStale", isBuiltDomStale},
     {"hasCacheFile", hasCacheFile},
+    {"isCacheFileStale", isCacheFileStale},
     {"invalidateCacheFile", invalidateCacheFile},
     {"getCacheFilePath", getCacheFilePath},
+    {"updateTocAndPageMap", updateTocAndPageMap},
     {"getStatistics", getStatistics},
     {"getUnknownEntities", getUnknownEntities},
     {"buildAlternativeToc", buildAlternativeToc},
