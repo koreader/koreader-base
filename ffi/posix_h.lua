@@ -61,8 +61,10 @@ int execvp(const char *, char *const *) __attribute__((nothrow, leaf));
 ssize_t write(int, const void *, size_t);
 ssize_t read(int, void *, size_t);
 int kill(int, int) __attribute__((nothrow, leaf));
+static const int WNOHANG = 1;
 int waitpid(int, int *, int);
 int getpid(void) __attribute__((nothrow, leaf));
+int getppid(void) __attribute__((nothrow, leaf));
 int setpgid(int, int) __attribute__((nothrow, leaf));
 struct pollfd {
   int fd;
@@ -77,6 +79,7 @@ int poll(struct pollfd *, long unsigned int, int);
 static const int PROT_READ = 1;
 static const int PROT_WRITE = 2;
 static const int MAP_SHARED = 1;
+static const int MAP_ANONYMOUS = 32;
 static const int MAP_FAILED = -1;
 static const int PATH_MAX = 4096;
 int memcmp(const void *, const void *, size_t) __attribute__((pure, leaf, nothrow));
