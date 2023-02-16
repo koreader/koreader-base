@@ -187,8 +187,8 @@ end
 if ffi.os == "Windows" then
     function util.dirname(in_path)
         --[[
-        Both PathRemoveFileSpec and dirname will change original input string, so
-        we need to make a copy.
+        Both PathRemoveFileSpec and dirname will change original input string,
+        so we need to make a copy.
         --]]
         local path = ffi.new("char[?]", #in_path + 1, in_path)
         if C.PathRemoveFileSpec(path) then
