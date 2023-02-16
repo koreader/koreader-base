@@ -175,9 +175,11 @@ if ffi.os == "Windows" then
         return ffi.string(C.PathFindFileNameA(ptr))
     end
 else
-    function util.basename(path)
-        local ptr = ffi.cast("uint8_t *", path)
-        return ffi.string(C.basename(ptr))
+    function util.basename(in_path)
+        -- We have no guarantee of getting a GNU implementation of basename;
+        -- POSIX compliant implementations *will* modify input, so, always make a copy.
+        local path = ffi.new("char[?]", #in_path + 1, in_path)
+        return ffi.string(C.basename(path))
     end
 end
 
