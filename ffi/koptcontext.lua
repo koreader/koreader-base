@@ -45,8 +45,7 @@ function KOPTContext_mt.__index:setLineSpacing(line_spacing) self.line_spacing =
 function KOPTContext_mt.__index:setWordSpacing(word_spacing) self.word_spacing = word_spacing end
 --- @fixme: Update the APIs to make KOPTContext's language field a const char*, so that we can just pass it a Lua string.
 function KOPTContext_mt.__index:setLanguage(language)
-    self.language = ffi.new("char[?]", #language + 1)
-    ffi.copy(self.language, language)
+    self.language = ffi.new("char[?]", #language + 1, language)
 end
 
 function KOPTContext_mt.__index:setDebug() self.debug = 1 end
@@ -732,8 +731,7 @@ function KOPTContext.fromtable(context)
                 context.nnai.array), context.nnai.n, C.L_COPY)
     end
     if context.language then
-        kc.language = ffi.new("char[?]", #context.language + 1)
-        ffi.copy(kc.language, context.language)
+        kc.language = ffi.new("char[?]", #context.language + 1, context.language)
     end
 
     k2pdfopt.bmp_init(kc.src)
