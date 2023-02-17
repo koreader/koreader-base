@@ -125,7 +125,7 @@ function util.strcoll(str1, str2)
     local strcoll_func = strcoll
 
     -- Some devices lack compiled locales (Hi, Kobo!), preventing strcoll from behaving sanely. See issue koreader/koreader#686
-    if jit.os == "Linux" and C.access("/usr/lib/locale/locale-archive", C.F_OK) ~= 0 then
+    if ffi.os == "Linux" and C.access("/usr/lib/locale/locale-archive", C.F_OK) ~= 0 then
         strcoll_func = function(a, b)
             return a < b
         end
@@ -152,13 +152,16 @@ function util.strcoll(str1, str2)
 end
 
 --- Wrapper for C.realpath.
-function util.realpath(path)
-    local buffer = ffi.new("char[?]", C.PATH_MAX)
-    if ffi.os == "Windows" then
+if ffi.os == "Windows" then
+    function util.realpath(path)
+        local buffer = ffi.new("char[?]", C.PATH_MAX)
         if C.GetFullPathNameA(path, C.PATH_MAX, buffer, nil) ~= 0 then
             return ffi.string(buffer)
         end
-    else
+    end
+else
+    function util.realpath(path)
+        local buffer = ffi.new("char[?]", C.PATH_MAX)
         if C.realpath(path, buffer) ~= nil then
             return ffi.string(buffer)
         end
@@ -166,32 +169,38 @@ function util.realpath(path)
 end
 
 --- Wrapper for C.basename.
-function util.basename(path)
-    local ptr = ffi.cast("uint8_t *", path)
-    if ffi.os == "Windows" then
+if ffi.os == "Windows" then
+    function util.basename(path)
+        local ptr = ffi.cast("uint8_t *", path)
         return ffi.string(C.PathFindFileNameA(ptr))
-    else
-        return ffi.string(C.basename(ptr))
+    end
+else
+    function util.basename(in_path)
+        -- We have no guarantee of getting a GNU implementation of basename;
+        -- POSIX compliant implementations *will* modify input, so, always make a copy.
+        local path = ffi.new("char[?]", #in_path + 1, in_path)
+        return ffi.string(C.basename(path))
     end
 end
 
 --- Wrapper for C.dirname.
-function util.dirname(in_path)
-    --[[
-    Both PathRemoveFileSpec and dirname will change original input string, so
-    we need to make a copy.
-    --]]
-    local path = ffi.new("char[?]", #in_path + 1)
-    ffi.copy(path, in_path)
-    local ptr = ffi.cast("uint8_t *", path)
-    if ffi.os == "Windows" then
-        if C.PathRemoveFileSpec(ptr) then
-            return ffi.string(ptr)
+if ffi.os == "Windows" then
+    function util.dirname(in_path)
+        --[[
+        Both PathRemoveFileSpec and dirname will change original input string,
+        so we need to make a copy.
+        --]]
+        local path = ffi.new("char[?]", #in_path + 1, in_path)
+        if C.PathRemoveFileSpec(path) then
+            return ffi.string(path)
         else
             return path
         end
-    else
-        return ffi.string(C.dirname(ptr))
+    end
+else
+    function util.dirname(in_path)
+        local path = ffi.new("char[?]", #in_path + 1, in_path)
+        return ffi.string(C.dirname(path))
     end
 end
 
@@ -593,8 +602,14 @@ function util.ffiLoadCandidates(candidates)
 end
 
 --- Returns true if isWindows…
-function util.isWindows()
-    return ffi.os == "Windows"
+if ffi.os == "Windows" then
+    function util.isWindows()
+        return true
+    end
+else
+    function util.isWindows()
+        return false
+    end
 end
 
 local isAndroid = nil
@@ -618,7 +633,7 @@ function util.haveSDL2()
 
     if haveSDL2 == nil then
         local candidates
-        if jit.os == "OSX" then
+        if ffi.os == "OSX" then
             candidates = {"libs/libSDL2.dylib", "SDL2"}
         else
             candidates = {"SDL2", "libSDL2-2.0.so", "libSDL2-2.0.so.0"}
