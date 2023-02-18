@@ -282,6 +282,25 @@ static const int RTF_ADDRCONF = 262144;
 static const int RTF_CACHE = 16777216;
 static const int RTF_REJECT = 512;
 static const int RTF_NONEXTHOP = 2097152;
+static const int IFF_UP = 1;
+static const int IFF_BROADCAST = 2;
+static const int IFF_DEBUG = 4;
+static const int IFF_LOOPBACK = 8;
+static const int IFF_POINTOPOINT = 16;
+static const int IFF_RUNNING = 64;
+static const int IFF_NOARP = 128;
+static const int IFF_PROMISC = 256;
+static const int IFF_NOTRAILERS = 32;
+static const int IFF_ALLMULTI = 512;
+static const int IFF_MASTER = 1024;
+static const int IFF_SLAVE = 2048;
+static const int IFF_MULTICAST = 4096;
+static const int IFF_PORTSEL = 8192;
+static const int IFF_AUTOMEDIA = 16384;
+static const int IFF_DYNAMIC = 32768;
+static const int IFF_LOWER_UP = 65536;
+static const int IFF_DORMANT = 131072;
+static const int IFF_ECHO = 262144;
 ]]
 
 -- clock_gettime & friends require librt on old glibc (< 2.17) versions...

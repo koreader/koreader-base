@@ -30,6 +30,7 @@
 #include <net/if.h>
 #include <linux/in.h>
 #include <net/route.h>
+#include <linux/if.h>
 #include <errno.h>
 
 #include "ffi-cdecl.h"
@@ -261,3 +262,22 @@ cdecl_const(RTF_ADDRCONF)
 cdecl_const(RTF_CACHE)
 cdecl_const(RTF_REJECT)
 cdecl_const(RTF_NONEXTHOP)
+cdecl_const(IFF_UP)
+cdecl_const(IFF_BROADCAST)
+cdecl_const(IFF_DEBUG)
+cdecl_const(IFF_LOOPBACK)
+cdecl_const(IFF_POINTOPOINT)
+cdecl_const(IFF_RUNNING)
+cdecl_const(IFF_NOARP)
+cdecl_const(IFF_PROMISC)
+cdecl_const(IFF_NOTRAILERS)
+cdecl_const(IFF_ALLMULTI)
+cdecl_const(IFF_MASTER)
+cdecl_const(IFF_SLAVE)
+cdecl_const(IFF_MULTICAST)
+cdecl_const(IFF_PORTSEL)
+cdecl_const(IFF_AUTOMEDIA)
+cdecl_const(IFF_DYNAMIC)
+cdecl_const(IFF_LOWER_UP)
+cdecl_const(IFF_DORMANT)
+cdecl_const(IFF_ECHO)
