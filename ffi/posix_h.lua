@@ -239,6 +239,7 @@ struct sockaddr_in6 {
 static const int NI_NUMERICHOST = 1;
 const char *gai_strerror(int) __attribute__((nothrow, leaf));
 void freeifaddrs(struct ifaddrs *) __attribute__((nothrow, leaf));
+int socket(int, int, int) __attribute__((nothrow, leaf));
 static const int PF_INET = 2;
 static const int SOCK_DGRAM = 2;
 static const int IPPROTO_IP = 0;
