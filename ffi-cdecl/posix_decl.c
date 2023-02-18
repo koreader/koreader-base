@@ -29,6 +29,7 @@
 #include <linux/if_link.h>
 #include <net/if.h>
 #include <linux/in.h>
+#include <net/route.h>
 #include <errno.h>
 
 #include "ffi-cdecl.h"
@@ -249,3 +250,14 @@ cdecl_const(IFNAMSIZ)
 cdecl_struct(ifmap)
 cdecl_struct(ifreq)
 cdecl_const(SIOCGIFHWADDR)
+cdecl_const(RTF_UP)
+cdecl_const(RTF_GATEWAY)
+cdecl_const(RTF_HOST)
+cdecl_const(RTF_REINSTATE)
+cdecl_const(RTF_DYNAMIC)
+cdecl_const(RTF_MODIFIED)
+cdecl_const(RTF_DEFAULT)
+cdecl_const(RTF_ADDRCONF)
+cdecl_const(RTF_CACHE)
+cdecl_const(RTF_REJECT)
+cdecl_const(RTF_NONEXTHOP)

@@ -271,6 +271,17 @@ struct ifreq {
   } ifr_ifru;
 };
 static const int SIOCGIFHWADDR = 35111;
+static const int RTF_UP = 1;
+static const int RTF_GATEWAY = 2;
+static const int RTF_HOST = 4;
+static const int RTF_REINSTATE = 8;
+static const int RTF_DYNAMIC = 16;
+static const int RTF_MODIFIED = 32;
+static const int RTF_DEFAULT = 65536;
+static const int RTF_ADDRCONF = 262144;
+static const int RTF_CACHE = 16777216;
+static const int RTF_REJECT = 512;
+static const int RTF_NONEXTHOP = 2097152;
 ]]
 
 -- clock_gettime & friends require librt on old glibc (< 2.17) versions...
