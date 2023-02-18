@@ -27,6 +27,8 @@
 #include <netdb.h>
 #include <ifaddrs.h>
 #include <linux/if_link.h>
+#include <net/if.h>
+#include <linux/in.h>
 #include <errno.h>
 
 #include "ffi-cdecl.h"
@@ -240,3 +242,10 @@ cdecl_struct(sockaddr_in6)
 cdecl_const(NI_NUMERICHOST)
 cdecl_func(gai_strerror)
 cdecl_func(freeifaddrs)
+cdecl_const(PF_INET)
+cdecl_const(SOCK_DGRAM)
+cdecl_const(IPPROTO_IP)
+cdecl_const(IFNAMSIZ)
+cdecl_struct(ifmap)
+cdecl_struct(ifreq)
+cdecl_const(SIOCGIFHWADDR)

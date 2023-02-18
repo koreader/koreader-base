@@ -239,6 +239,38 @@ struct sockaddr_in6 {
 static const int NI_NUMERICHOST = 1;
 const char *gai_strerror(int) __attribute__((nothrow, leaf));
 void freeifaddrs(struct ifaddrs *) __attribute__((nothrow, leaf));
+static const int PF_INET = 2;
+static const int SOCK_DGRAM = 2;
+static const int IPPROTO_IP = 0;
+static const int IFNAMSIZ = 16;
+struct ifmap {
+  long unsigned int mem_start;
+  long unsigned int mem_end;
+  short unsigned int base_addr;
+  unsigned char irq;
+  unsigned char dma;
+  unsigned char port;
+};
+struct ifreq {
+  union {
+    char ifrn_name[16];
+  } ifr_ifrn;
+  union {
+    struct sockaddr ifru_addr;
+    struct sockaddr ifru_dstaddr;
+    struct sockaddr ifru_broadaddr;
+    struct sockaddr ifru_netmask;
+    struct sockaddr ifru_hwaddr;
+    short int ifru_flags;
+    int ifru_ivalue;
+    int ifru_mtu;
+    struct ifmap ifru_map;
+    char ifru_slave[16];
+    char ifru_newname[16];
+    char *ifru_data;
+  } ifr_ifru;
+};
+static const int SIOCGIFHWADDR = 35111;
 ]]
 
 -- clock_gettime & friends require librt on old glibc (< 2.17) versions...
