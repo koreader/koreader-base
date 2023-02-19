@@ -30,11 +30,11 @@ local SDL = util.ffiLoadCandidates{
 -- Some features (like SDL_GameControllerRumble) may require a minimum version
 -- of SDL. These helper functions allow us to prevent any issues with calling
 -- undefined symbols.
-local sdl_linked_ver = ffi.new("struct SDL_version[0]")
+local sdl_linked_ver = ffi.new("struct SDL_version")
 SDL.SDL_GetVersion(sdl_linked_ver)
 
 local function getSDLVersion()
-    return sdl_linked_ver[0].major, sdl_linked_ver[0].minor, sdl_linked_ver[0].patch
+    return sdl_linked_ver.major, sdl_linked_ver.minor, sdl_linked_ver.patch
 end
 
 -- Just a copy of a C macro that unfortunately can't be used through FFI.
