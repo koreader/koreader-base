@@ -33,6 +33,9 @@
 #include <linux/if.h>
 #include <linux/wireless.h>
 #include <linux/types.h>
+#include <arpa/inet.h>
+#include <netinet/in.h>
+#include <netinet/ip_icmp.h>
 #include <errno.h>
 
 #include "ffi-cdecl.h"
@@ -249,7 +252,11 @@ cdecl_func(freeifaddrs)
 cdecl_func(socket)
 cdecl_const(PF_INET)
 cdecl_const(SOCK_DGRAM)
+cdecl_const(SOCK_RAW)
+cdecl_const(SOCK_NONBLOCK)
+cdecl_const(SOCK_CLOEXEC)
 cdecl_const(IPPROTO_IP)
+cdecl_const(IPPROTO_ICMP)
 cdecl_const(IFNAMSIZ)
 cdecl_struct(ifmap)
 cdecl_struct(ifreq)
@@ -301,3 +308,15 @@ cdecl_const(SIOCGIWESSID)
 cdecl_type(caddr_t)
 cdecl_const(IW_ESSID_MAX_SIZE)
 cdecl_const(IW_ENCODE_INDEX)
+cdecl_struct(ih_idseq)
+cdecl_struct(ih_pmtu)
+cdecl_struct(ih_rtradv)
+cdecl_struct(ip)
+cdecl_struct(icmp_ra_addr)
+cdecl_struct(icmp)
+cdecl_const(ICMP_ECHO)
+cdecl_const(ICMP_ECHOREPLY)
+cdecl_func(sendto)
+cdecl_func(recv)
+cdecl_struct(iphdr)
+cdecl_func(htons)
