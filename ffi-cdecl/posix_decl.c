@@ -40,8 +40,9 @@
 
 #include "ffi-cdecl.h"
 
-cdecl_const(EAGAIN)
+cdecl_const(EPERM)
 cdecl_const(EINTR)
+cdecl_const(EAGAIN)
 cdecl_const(EINVAL)
 cdecl_const(ENODEV)
 cdecl_const(ENOSYS)

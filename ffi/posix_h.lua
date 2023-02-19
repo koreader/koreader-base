@@ -12,8 +12,9 @@ else
 end
 
 ffi.cdef[[
-static const int EAGAIN = 11;
+static const int EPERM = 1;
 static const int EINTR = 4;
+static const int EAGAIN = 11;
 static const int EINVAL = 22;
 static const int ENODEV = 19;
 static const int ENOSYS = 38;
