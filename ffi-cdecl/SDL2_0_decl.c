@@ -258,3 +258,5 @@ cdecl_const(SDL_PIXELFORMAT_ABGR32)
 
 cdecl_struct(SDL_version)
 cdecl_func(SDL_GetVersion)
+
+cdecl_func(SDL_free)
