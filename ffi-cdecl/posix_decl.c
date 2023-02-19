@@ -31,6 +31,7 @@
 #include <linux/in.h>
 #include <net/route.h>
 #include <linux/if.h>
+#include <linux/wireless.h>
 #include <errno.h>
 
 #include "ffi-cdecl.h"
@@ -254,6 +255,7 @@ cdecl_struct(ifreq)
 cdecl_const(SIOCGIFHWADDR)
 cdecl_const(RTF_UP)
 cdecl_const(RTF_GATEWAY)
+/*
 cdecl_const(RTF_HOST)
 cdecl_const(RTF_REINSTATE)
 cdecl_const(RTF_DYNAMIC)
@@ -263,10 +265,14 @@ cdecl_const(RTF_ADDRCONF)
 cdecl_const(RTF_CACHE)
 cdecl_const(RTF_REJECT)
 cdecl_const(RTF_NONEXTHOP)
+*/
 cdecl_const(IFF_UP)
+/*
 cdecl_const(IFF_BROADCAST)
 cdecl_const(IFF_DEBUG)
+*/
 cdecl_const(IFF_LOOPBACK)
+/*
 cdecl_const(IFF_POINTOPOINT)
 cdecl_const(IFF_RUNNING)
 cdecl_const(IFF_NOARP)
@@ -282,3 +288,12 @@ cdecl_const(IFF_DYNAMIC)
 cdecl_const(IFF_LOWER_UP)
 cdecl_const(IFF_DORMANT)
 cdecl_const(IFF_ECHO)
+*/
+cdecl_struct(iw_point)
+cdecl_struct(iw_param)
+cdecl_struct(iw_freq)
+cdecl_struct(iw_quality)
+cdecl_union(iwreq_data)
+cdecl_struct(iwreq)
+cdecl_const(SIOCGIWNAME)
+cdecl_const(SIOCGIWESSID)

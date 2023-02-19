@@ -274,34 +274,59 @@ struct ifreq {
 static const int SIOCGIFHWADDR = 35111;
 static const int RTF_UP = 1;
 static const int RTF_GATEWAY = 2;
-static const int RTF_HOST = 4;
-static const int RTF_REINSTATE = 8;
-static const int RTF_DYNAMIC = 16;
-static const int RTF_MODIFIED = 32;
-static const int RTF_DEFAULT = 65536;
-static const int RTF_ADDRCONF = 262144;
-static const int RTF_CACHE = 16777216;
-static const int RTF_REJECT = 512;
-static const int RTF_NONEXTHOP = 2097152;
 static const int IFF_UP = 1;
-static const int IFF_BROADCAST = 2;
-static const int IFF_DEBUG = 4;
 static const int IFF_LOOPBACK = 8;
-static const int IFF_POINTOPOINT = 16;
-static const int IFF_RUNNING = 64;
-static const int IFF_NOARP = 128;
-static const int IFF_PROMISC = 256;
-static const int IFF_NOTRAILERS = 32;
-static const int IFF_ALLMULTI = 512;
-static const int IFF_MASTER = 1024;
-static const int IFF_SLAVE = 2048;
-static const int IFF_MULTICAST = 4096;
-static const int IFF_PORTSEL = 8192;
-static const int IFF_AUTOMEDIA = 16384;
-static const int IFF_DYNAMIC = 32768;
-static const int IFF_LOWER_UP = 65536;
-static const int IFF_DORMANT = 131072;
-static const int IFF_ECHO = 262144;
+struct iw_point {
+  void *pointer;
+  short unsigned int length;
+  short unsigned int flags;
+};
+struct iw_param {
+  int value;
+  unsigned char fixed;
+  unsigned char disabled;
+  short unsigned int flags;
+};
+struct iw_freq {
+  int m;
+  short int e;
+  unsigned char i;
+  unsigned char flags;
+};
+struct iw_quality {
+  unsigned char qual;
+  unsigned char level;
+  unsigned char noise;
+  unsigned char updated;
+};
+union iwreq_data {
+  char name[16];
+  struct iw_point essid;
+  struct iw_param nwid;
+  struct iw_freq freq;
+  struct iw_param sens;
+  struct iw_param bitrate;
+  struct iw_param txpower;
+  struct iw_param rts;
+  struct iw_param frag;
+  unsigned int mode;
+  struct iw_param retry;
+  struct iw_point encoding;
+  struct iw_param power;
+  struct iw_quality qual;
+  struct sockaddr ap_addr;
+  struct sockaddr addr;
+  struct iw_param param;
+  struct iw_point data;
+};
+struct iwreq {
+  union {
+    char ifrn_name[16];
+  } ifr_ifrn;
+  union iwreq_data u;
+};
+static const int SIOCGIWNAME = 35585;
+static const int SIOCGIWESSID = 35611;
 ]]
 
 -- clock_gettime & friends require librt on old glibc (< 2.17) versions...
