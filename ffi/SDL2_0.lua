@@ -33,6 +33,12 @@ local SDL = util.ffiLoadCandidates{
 local sdl_linked_ver = ffi.new("struct SDL_version")
 SDL.SDL_GetVersion(sdl_linked_ver)
 
+local function toluastring(cstr)
+    local lstr = ffi.string(cstr)
+    SDL.SDL_free(cstr)
+    return lstr
+end
+
 local function getSDLVersion()
     return sdl_linked_ver.major, sdl_linked_ver.minor, sdl_linked_ver.patch
 end
@@ -431,7 +437,7 @@ function S.hasClipboardText()
 end
 
 function S.getClipboardText()
-    return ffi.string(SDL.SDL_GetClipboardText())
+    return toluastring(SDL.SDL_GetClipboardText())
 end
 
 function S.setClipboardText(text)
@@ -479,13 +485,13 @@ function S.getPlatform()
 end
 
 function S.getBasePath()
-    return ffi.string(SDL.SDL_GetBasePath())
+    return toluastring(SDL.SDL_GetBasePath())
 end
 
 function S.getPrefPath(organization, appname)
     if not organization then organization = "dummy" end
     if not appname then appname = "application" end
-    return ffi.string(SDL.SDL_GetPrefPath(organization, appname))
+    return toluastring(SDL.SDL_GetPrefPath(organization, appname))
 end
 
 function S.getPowerInfo()
