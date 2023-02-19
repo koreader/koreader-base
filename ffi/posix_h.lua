@@ -426,6 +426,8 @@ struct iphdr {
   uint32_t saddr;
   uint32_t daddr;
 };
+int inet_aton(const char *, struct in_addr *) __attribute__((nothrow, leaf));
+uint32_t htonl(uint32_t) __attribute__((nothrow, leaf, const));
 uint16_t htons(uint16_t) __attribute__((nothrow, leaf, const));
 ]]
 
