@@ -327,6 +327,9 @@ struct iwreq {
 };
 static const int SIOCGIWNAME = 35585;
 static const int SIOCGIWESSID = 35611;
+typedef char *caddr_t;
+static const int IW_ESSID_MAX_SIZE = 32;
+static const int IW_ENCODE_INDEX = 255;
 ]]
 
 -- clock_gettime & friends require librt on old glibc (< 2.17) versions...

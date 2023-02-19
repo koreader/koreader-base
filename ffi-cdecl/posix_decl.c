@@ -32,6 +32,7 @@
 #include <net/route.h>
 #include <linux/if.h>
 #include <linux/wireless.h>
+#include <linux/types.h>
 #include <errno.h>
 
 #include "ffi-cdecl.h"
@@ -297,3 +298,6 @@ cdecl_union(iwreq_data)
 cdecl_struct(iwreq)
 cdecl_const(SIOCGIWNAME)
 cdecl_const(SIOCGIWESSID)
+cdecl_type(caddr_t)
+cdecl_const(IW_ESSID_MAX_SIZE)
+cdecl_const(IW_ENCODE_INDEX)
