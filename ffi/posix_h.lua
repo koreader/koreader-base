@@ -335,6 +335,23 @@ static const int SIOCGIWESSID = 35611;
 typedef char *caddr_t;
 static const int IW_ESSID_MAX_SIZE = 32;
 static const int IW_ENCODE_INDEX = 255;
+typedef unsigned int socklen_t;
+struct icmphdr {
+  uint8_t type;
+  uint8_t code;
+  uint16_t checksum;
+  union {
+    struct {
+      uint16_t id;
+      uint16_t sequence;
+    } echo;
+    uint32_t gateway;
+    struct {
+      uint16_t __glibc_reserved;
+      uint16_t mtu;
+    } frag;
+  } un;
+};
 struct ih_idseq {
   uint16_t icd_id;
   uint16_t icd_seq;
@@ -391,6 +408,7 @@ struct icmp {
     uint8_t id_data[1];
   } icmp_dun;
 };
+static const int ICMP_MINLEN = 8;
 static const int ICMP_ECHO = 8;
 static const int ICMP_ECHOREPLY = 0;
 ssize_t sendto(int, const void *, size_t, int, const struct sockaddr *, unsigned int);
