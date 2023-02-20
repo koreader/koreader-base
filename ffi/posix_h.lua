@@ -12,8 +12,9 @@ else
 end
 
 ffi.cdef[[
-static const int EAGAIN = 11;
+static const int EPERM = 1;
 static const int EINTR = 4;
+static const int EAGAIN = 11;
 static const int EINVAL = 22;
 static const int ENODEV = 19;
 static const int ENOSYS = 38;
@@ -239,6 +240,195 @@ struct sockaddr_in6 {
 static const int NI_NUMERICHOST = 1;
 const char *gai_strerror(int) __attribute__((nothrow, leaf));
 void freeifaddrs(struct ifaddrs *) __attribute__((nothrow, leaf));
+int socket(int, int, int) __attribute__((nothrow, leaf));
+static const int PF_INET = 2;
+static const int SOCK_DGRAM = 2;
+static const int SOCK_RAW = 3;
+static const int SOCK_NONBLOCK = 2048;
+static const int SOCK_CLOEXEC = 524288;
+static const int IPPROTO_IP = 0;
+static const int IPPROTO_ICMP = 1;
+static const int IFNAMSIZ = 16;
+struct ifmap {
+  long unsigned int mem_start;
+  long unsigned int mem_end;
+  short unsigned int base_addr;
+  unsigned char irq;
+  unsigned char dma;
+  unsigned char port;
+};
+struct ifreq {
+  union {
+    char ifrn_name[16];
+  } ifr_ifrn;
+  union {
+    struct sockaddr ifru_addr;
+    struct sockaddr ifru_dstaddr;
+    struct sockaddr ifru_broadaddr;
+    struct sockaddr ifru_netmask;
+    struct sockaddr ifru_hwaddr;
+    short int ifru_flags;
+    int ifru_ivalue;
+    int ifru_mtu;
+    struct ifmap ifru_map;
+    char ifru_slave[16];
+    char ifru_newname[16];
+    char *ifru_data;
+  } ifr_ifru;
+};
+static const int SIOCGIFHWADDR = 35111;
+static const int RTF_UP = 1;
+static const int RTF_GATEWAY = 2;
+static const int IFF_UP = 1;
+static const int IFF_LOOPBACK = 8;
+struct iw_point {
+  void *pointer;
+  short unsigned int length;
+  short unsigned int flags;
+};
+struct iw_param {
+  int value;
+  unsigned char fixed;
+  unsigned char disabled;
+  short unsigned int flags;
+};
+struct iw_freq {
+  int m;
+  short int e;
+  unsigned char i;
+  unsigned char flags;
+};
+struct iw_quality {
+  unsigned char qual;
+  unsigned char level;
+  unsigned char noise;
+  unsigned char updated;
+};
+union iwreq_data {
+  char name[16];
+  struct iw_point essid;
+  struct iw_param nwid;
+  struct iw_freq freq;
+  struct iw_param sens;
+  struct iw_param bitrate;
+  struct iw_param txpower;
+  struct iw_param rts;
+  struct iw_param frag;
+  unsigned int mode;
+  struct iw_param retry;
+  struct iw_point encoding;
+  struct iw_param power;
+  struct iw_quality qual;
+  struct sockaddr ap_addr;
+  struct sockaddr addr;
+  struct iw_param param;
+  struct iw_point data;
+};
+struct iwreq {
+  union {
+    char ifrn_name[16];
+  } ifr_ifrn;
+  union iwreq_data u;
+};
+static const int SIOCGIWNAME = 35585;
+static const int SIOCGIWESSID = 35611;
+typedef char *caddr_t;
+static const int IW_ESSID_MAX_SIZE = 32;
+static const int IW_ENCODE_INDEX = 255;
+typedef unsigned int socklen_t;
+struct icmphdr {
+  uint8_t type;
+  uint8_t code;
+  uint16_t checksum;
+  union {
+    struct {
+      uint16_t id;
+      uint16_t sequence;
+    } echo;
+    uint32_t gateway;
+    struct {
+      uint16_t __glibc_reserved;
+      uint16_t mtu;
+    } frag;
+  } un;
+};
+struct ih_idseq {
+  uint16_t icd_id;
+  uint16_t icd_seq;
+};
+struct ih_pmtu {
+  uint16_t ipm_void;
+  uint16_t ipm_nextmtu;
+};
+struct ih_rtradv {
+  uint8_t irt_num_addrs;
+  uint8_t irt_wpa;
+  uint16_t irt_lifetime;
+};
+struct ip {
+  unsigned int ip_hl : 4;
+  unsigned int ip_v : 4;
+  uint8_t ip_tos;
+  short unsigned int ip_len;
+  short unsigned int ip_id;
+  short unsigned int ip_off;
+  uint8_t ip_ttl;
+  uint8_t ip_p;
+  short unsigned int ip_sum;
+  struct in_addr ip_src;
+  struct in_addr ip_dst;
+};
+struct icmp_ra_addr {
+  uint32_t ira_addr;
+  uint32_t ira_preference;
+};
+struct icmp {
+  uint8_t icmp_type;
+  uint8_t icmp_code;
+  uint16_t icmp_cksum;
+  union {
+    unsigned char ih_pptr;
+    struct in_addr ih_gwaddr;
+    struct ih_idseq ih_idseq;
+    uint32_t ih_void;
+    struct ih_pmtu ih_pmtu;
+    struct ih_rtradv ih_rtradv;
+  } icmp_hun;
+  union {
+    struct {
+      uint32_t its_otime;
+      uint32_t its_rtime;
+      uint32_t its_ttime;
+    } id_ts;
+    struct {
+      struct ip idi_ip;
+    } id_ip;
+    struct icmp_ra_addr id_radv;
+    uint32_t id_mask;
+    uint8_t id_data[1];
+  } icmp_dun;
+};
+static const int ICMP_MINLEN = 8;
+static const int ICMP_ECHO = 8;
+static const int ICMP_ECHOREPLY = 0;
+ssize_t sendto(int, const void *, size_t, int, const struct sockaddr *, unsigned int);
+ssize_t recv(int, void *, size_t, int);
+struct iphdr {
+  unsigned int ihl : 4;
+  unsigned int version : 4;
+  uint8_t tos;
+  uint16_t tot_len;
+  uint16_t id;
+  uint16_t frag_off;
+  uint8_t ttl;
+  uint8_t protocol;
+  uint16_t check;
+  uint32_t saddr;
+  uint32_t daddr;
+};
+int inet_aton(const char *, struct in_addr *) __attribute__((nothrow, leaf));
+uint32_t htonl(uint32_t) __attribute__((nothrow, leaf, const));
+uint16_t htons(uint16_t) __attribute__((nothrow, leaf, const));
 ]]
 
 -- clock_gettime & friends require librt on old glibc (< 2.17) versions...

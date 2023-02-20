@@ -27,12 +27,22 @@
 #include <netdb.h>
 #include <ifaddrs.h>
 #include <linux/if_link.h>
+#include <net/if.h>
+#include <linux/in.h>
+#include <net/route.h>
+#include <linux/if.h>
+#include <linux/wireless.h>
+#include <linux/types.h>
+#include <arpa/inet.h>
+#include <netinet/in.h>
+#include <netinet/ip_icmp.h>
 #include <errno.h>
 
 #include "ffi-cdecl.h"
 
-cdecl_const(EAGAIN)
+cdecl_const(EPERM)
 cdecl_const(EINTR)
+cdecl_const(EAGAIN)
 cdecl_const(EINVAL)
 cdecl_const(ENODEV)
 cdecl_const(ENOSYS)
@@ -240,3 +250,79 @@ cdecl_struct(sockaddr_in6)
 cdecl_const(NI_NUMERICHOST)
 cdecl_func(gai_strerror)
 cdecl_func(freeifaddrs)
+cdecl_func(socket)
+cdecl_const(PF_INET)
+cdecl_const(SOCK_DGRAM)
+cdecl_const(SOCK_RAW)
+cdecl_const(SOCK_NONBLOCK)
+cdecl_const(SOCK_CLOEXEC)
+cdecl_const(IPPROTO_IP)
+cdecl_const(IPPROTO_ICMP)
+cdecl_const(IFNAMSIZ)
+cdecl_struct(ifmap)
+cdecl_struct(ifreq)
+cdecl_const(SIOCGIFHWADDR)
+cdecl_const(RTF_UP)
+cdecl_const(RTF_GATEWAY)
+/*
+cdecl_const(RTF_HOST)
+cdecl_const(RTF_REINSTATE)
+cdecl_const(RTF_DYNAMIC)
+cdecl_const(RTF_MODIFIED)
+cdecl_const(RTF_DEFAULT)
+cdecl_const(RTF_ADDRCONF)
+cdecl_const(RTF_CACHE)
+cdecl_const(RTF_REJECT)
+cdecl_const(RTF_NONEXTHOP)
+*/
+cdecl_const(IFF_UP)
+/*
+cdecl_const(IFF_BROADCAST)
+cdecl_const(IFF_DEBUG)
+*/
+cdecl_const(IFF_LOOPBACK)
+/*
+cdecl_const(IFF_POINTOPOINT)
+cdecl_const(IFF_RUNNING)
+cdecl_const(IFF_NOARP)
+cdecl_const(IFF_PROMISC)
+cdecl_const(IFF_NOTRAILERS)
+cdecl_const(IFF_ALLMULTI)
+cdecl_const(IFF_MASTER)
+cdecl_const(IFF_SLAVE)
+cdecl_const(IFF_MULTICAST)
+cdecl_const(IFF_PORTSEL)
+cdecl_const(IFF_AUTOMEDIA)
+cdecl_const(IFF_DYNAMIC)
+cdecl_const(IFF_LOWER_UP)
+cdecl_const(IFF_DORMANT)
+cdecl_const(IFF_ECHO)
+*/
+cdecl_struct(iw_point)
+cdecl_struct(iw_param)
+cdecl_struct(iw_freq)
+cdecl_struct(iw_quality)
+cdecl_union(iwreq_data)
+cdecl_struct(iwreq)
+cdecl_const(SIOCGIWNAME)
+cdecl_const(SIOCGIWESSID)
+cdecl_type(caddr_t)
+cdecl_const(IW_ESSID_MAX_SIZE)
+cdecl_const(IW_ENCODE_INDEX)
+cdecl_type(socklen_t)
+cdecl_struct(icmphdr)
+cdecl_struct(ih_idseq)
+cdecl_struct(ih_pmtu)
+cdecl_struct(ih_rtradv)
+cdecl_struct(ip)
+cdecl_struct(icmp_ra_addr)
+cdecl_struct(icmp)
+cdecl_const(ICMP_MINLEN)
+cdecl_const(ICMP_ECHO)
+cdecl_const(ICMP_ECHOREPLY)
+cdecl_func(sendto)
+cdecl_func(recv)
+cdecl_struct(iphdr)
+cdecl_func(inet_aton)
+cdecl_func(htonl)
+cdecl_func(htons)
