@@ -32,14 +32,18 @@ set(CFG_CMD "${CFG_CMD} --disable-editline")
 set(CFG_CMD "${CFG_CMD} --disable-readline")
 set(CFG_CMD "${CFG_CMD} --disable-static-shell")
 
+# Bring in upstream fixes because Android is terrible
+set(PATCH_CMD "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/sqlite-72e2aa50968f0846f8738208b8770088bf280f25.patch")
+
 include(ExternalProject)
-set(SQLITE_VER "3400100")
+set(SQLITE_VER "3410000")
 ExternalProject_Add(
     ${PROJECT_NAME}
     DOWNLOAD_DIR ${KO_DOWNLOAD_DIR}
-    URL https://www.sqlite.org/2022/sqlite-autoconf-${SQLITE_VER}.tar.gz
-    URL_MD5 42175b1a1d23529cb133bbd2b5900afd
+    URL https://www.sqlite.org/2023/sqlite-autoconf-${SQLITE_VER}.tar.gz
+    URL_MD5 ff001143636ee7cf899020abdbc8cb89
     BUILD_IN_SOURCE 1
+    PATCH_COMMAND COMMAND ${PATCH_CMD}
     CONFIGURE_COMMAND ${CFG_CMD}
     BUILD_COMMAND ${KO_MAKE_RECURSIVE} -j1
 )
