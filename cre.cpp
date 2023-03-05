@@ -2562,14 +2562,16 @@ static int getHTMLFromXPointer(lua_State *L) {
     }
     nodep = ldomXPointer(node, 0); // reset offset to 0, to get the full text of text nodes
     lString32Collection cssFiles;
-    lString8 html = nodep.getHtml(cssFiles, wflags);
+    lString8 extra;
+    lString8 html = nodep.getHtml(cssFiles, extra, wflags);
     lua_pushstring(L, html.c_str());
     lua_createtable(L, cssFiles.length(), 0);
     for (int i = 0; i < cssFiles.length(); i++) {
         lua_pushstring(L, UnicodeToLocal(cssFiles[i]).c_str());
         lua_rawseti(L, -2, i+1);
     }
-    return 2;
+    lua_pushstring(L, extra.c_str());
+    return 3;
 }
 
 static int getHTMLFromXPointers(lua_State *L) {
@@ -2589,14 +2591,29 @@ static int getHTMLFromXPointers(lua_State *L) {
     if (r.getStart().isNull() || r.getEnd().isNull())
         return 0;
     lString32Collection cssFiles;
-    lString8 html = r.getHtml(cssFiles, wflags, fromRootNode);
+    lString8 extra;
+    lString8 html = r.getHtml(cssFiles, extra, wflags, fromRootNode);
     lua_pushstring(L, html.c_str());
     lua_createtable(L, cssFiles.length(), 0);
     for (int i = 0; i < cssFiles.length(); i++) {
         lua_pushstring(L, UnicodeToLocal(cssFiles[i]).c_str());
         lua_rawseti(L, -2, i+1);
     }
-    return 2;
+    lua_pushstring(L, extra.c_str());
+    return 3;
+}
+
+static int getStylesheetsMatchingRulesets(lua_State *L) {
+    CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
+    lUInt32 nodeDataIndex = (lUInt32) lua_tointeger(L, 2);
+    lString8Collection matches;
+    doc->text_view->gatherStylesheetsMatchingRulesets(nodeDataIndex, matches);
+    lua_createtable(L, matches.length(), 0);
+    for (int i = 0; i < matches.length(); i++) {
+        lua_pushstring(L, matches[i].c_str());
+        lua_rawseti(L, -2, i+1);
+    }
+    return 1;
 }
 
 static int getPageLinks(lua_State *L) {
@@ -4020,6 +4037,7 @@ static const struct luaL_Reg credocument_meth[] = {
     {"getTextFromXPointer", getTextFromXPointer},
     {"getHTMLFromXPointer", getHTMLFromXPointer},
     {"getHTMLFromXPointers", getHTMLFromXPointers},
+    {"getStylesheetsMatchingRulesets", getStylesheetsMatchingRulesets},
     {"getPageLinks", getPageLinks},
     {"isLinkToFootnote", isLinkToFootnote},
     {"highlightXPointer", highlightXPointer},
