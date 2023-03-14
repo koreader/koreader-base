@@ -1003,6 +1003,19 @@ static int getXPointer(lua_State *L) {
 	return 1;
 }
 
+static int getPageXPointer(lua_State *L) {
+	CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
+	int pageno = luaL_checkint(L, 2);
+	bool internal = false;
+	if (lua_isboolean(L, 3)) {
+		internal = lua_toboolean(L, 3);
+	}
+	ldomXPointer xp = doc->text_view->getPageBookmark(pageno - 1, true, internal);
+	lua_pushstring(L, UnicodeToLocal(xp.toString()).c_str());
+
+	return 1;
+}
+
 static int getFullHeight(lua_State *L) {
 	CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
 
@@ -3963,6 +3976,7 @@ static const struct luaL_Reg credocument_meth[] = {
     {"getCurrentPos", getCurrentPos},
     {"getCurrentPercent", getCurrentPercent},
     {"getXPointer", getXPointer},
+    {"getPageXPointer", getPageXPointer},
     {"getPageOffsetX", getPageOffsetX},
     {"getPageStartY", getPageStartY},
     {"getPageHeight", getPageHeight},
