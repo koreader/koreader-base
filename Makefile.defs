@@ -191,11 +191,11 @@ endif
 ifneq (,$(filter $(UNAME), Darwin))
 	export DARWINHOST=1
 	ifneq (,$(filter $(UNAME_ARCH), arm64))
-		export DARWINM1HOST=1
+		export DARWIN_AARCH64_HOST=1
 	endif
 	ifdef EMULATE_READER
 		export DARWIN=1
-		ifdef DARWINM1HOST
+		ifdef DARWIN_AARCH64_HOST
 			export DARWIN_M1=1
 		endif
 	endif
@@ -507,7 +507,7 @@ ifdef MACOS
 	HOST_ARCH:=-mtune=generic
 endif
 
-ifdef DARWINM1HOST
+ifdef DARWIN_AARCH64_HOST
 	HOST_ARCH:=-mcpu=apple-m1
 endif
 

@@ -63,7 +63,7 @@ int WideCharToMultiByte(
 local getlibprefix = function()
     -- Apple M1 homebrew installs libraries outside of default searchpaths,
     -- and dyld environment variables are sip-protected on MacOS, cf. https://github.com/Homebrew/brew/issues/13481#issuecomment-1181592842
-    local libprefix = os.getenv("KO_DYLD_PREFIX");
+    local libprefix = os.getenv("KO_DYLD_PREFIX")
 
     if not libprefix then
         local std_out = io.popen("brew --prefix", "r")
@@ -73,7 +73,7 @@ local getlibprefix = function()
             end
     end
 
-    return libprefix or "";
+    return libprefix;
 end
 
 require("ffi/posix_h")
