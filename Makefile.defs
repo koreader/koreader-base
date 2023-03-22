@@ -196,7 +196,7 @@ ifneq (,$(filter $(UNAME), Darwin))
 	ifdef EMULATE_READER
 		export DARWIN=1
 		ifdef DARWIN_AARCH64_HOST
-			export DARWIN_M1=1
+			export DARWIN_AARCH64=1
 		endif
 	endif
 endif
@@ -509,6 +509,11 @@ endif
 
 ifdef DARWIN_AARCH64_HOST
 	HOST_ARCH:=-mcpu=apple-m1
+	BREW_PREFIX:=$(shell command brew --prefix 2>/dev/null)
+	ifneq (,$(BREW_PREFIX))
+		export DARWIN_AARCH64_HOST_CFLAG:=-I$(BREW_PREFIX)/include
+		export DARWIN_AARCH64_HOST_LDFLAG:=-L$(BREW_PREFIX)/lib
+	endif
 endif
 
 # Anything below GCC 6 gets to be forcefully switched to decent standards, because some of our deps require C11 & C++11 support.
