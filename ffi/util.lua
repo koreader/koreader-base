@@ -73,7 +73,7 @@ local getlibprefix = function()
             end
     end
 
-    return libprefix;
+    return libprefix
 end
 
 require("ffi/posix_h")

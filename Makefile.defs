@@ -508,6 +508,7 @@ ifdef MACOS
 endif
 
 ifdef DARWIN_AARCH64_HOST
+# At the moment of writing, apple-m1 is the lowest common denominator for Apple silicon chips. Should work for M2 as well
 	HOST_ARCH:=-mcpu=apple-m1
 	BREW_PREFIX:=$(shell command brew --prefix 2>/dev/null)
 	ifneq (,$(BREW_PREFIX))
