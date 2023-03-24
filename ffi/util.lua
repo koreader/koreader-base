@@ -60,10 +60,27 @@ int WideCharToMultiByte(
 );
 ]]
 
+local getlibprefix = function()
+    -- Apple M1 homebrew installs libraries outside of default searchpaths,
+    -- and dyld environment variables are sip-protected on MacOS, cf. https://github.com/Homebrew/brew/issues/13481#issuecomment-1181592842
+    local libprefix = os.getenv("KO_DYLD_PREFIX")
+
+    if not libprefix then
+        local std_out = io.popen("brew --prefix", "r")
+            if std_out then
+                libprefix = std_out:read("*line")
+                std_out:close()
+            end
+    end
+
+    return libprefix
+end
+
 require("ffi/posix_h")
 
 local util = {}
 
+util.KO_DYLD_PREFIX = getlibprefix()
 
 if ffi.os == "Windows" then
     util.gettime = function()
@@ -634,7 +651,7 @@ function util.haveSDL2()
     if haveSDL2 == nil then
         local candidates
         if ffi.os == "OSX" then
-            candidates = {"libs/libSDL2.dylib", "SDL2"}
+            candidates = {"libs/libSDL2.dylib", "SDL2", util.KO_DYLD_PREFIX .. "/lib/libSDL2.dylib"}
         else
             candidates = {"SDL2", "libSDL2-2.0.so", "libSDL2-2.0.so.0"}
         end

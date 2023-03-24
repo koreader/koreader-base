@@ -8,6 +8,7 @@ else
 endif
 
 UNAME:=$(shell uname -s)
+UNAME_ARCH:=$(shell uname -m)
 
 # use MAKEFILE_DIR instead of CURDIR for variables that are exported through -include
 MAKEFILE_DIR=$(dir $(abspath $(lastword $(MAKEFILE_LIST))))
@@ -189,8 +190,14 @@ endif
 
 ifneq (,$(filter $(UNAME), Darwin))
 	export DARWINHOST=1
+	ifneq (,$(filter $(UNAME_ARCH), arm64))
+		export DARWIN_AARCH64_HOST=1
+	endif
 	ifdef EMULATE_READER
 		export DARWIN=1
+		ifdef DARWIN_AARCH64_HOST
+			export DARWIN_AARCH64=1
+		endif
 	endif
 endif
 
@@ -498,6 +505,16 @@ endif
 
 ifdef MACOS
 	HOST_ARCH:=-mtune=generic
+endif
+
+ifdef DARWIN_AARCH64_HOST
+# At the moment of writing, apple-m1 is the lowest common denominator for Apple silicon chips. Should work for M2 as well
+	HOST_ARCH:=-mcpu=apple-m1
+	BREW_PREFIX:=$(shell command brew --prefix 2>/dev/null)
+	ifneq (,$(BREW_PREFIX))
+		export DARWIN_AARCH64_HOST_CFLAG:=-I$(BREW_PREFIX)/include
+		export DARWIN_AARCH64_HOST_LDFLAG:=-L$(BREW_PREFIX)/lib
+	endif
 endif
 
 # Anything below GCC 6 gets to be forcefully switched to decent standards, because some of our deps require C11 & C++11 support.
