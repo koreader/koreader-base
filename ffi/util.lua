@@ -80,7 +80,9 @@ require("ffi/posix_h")
 
 local util = {}
 
-util.KO_DYLD_PREFIX = getlibprefix()
+if ffi.os == "OSX" then
+    util.KO_DYLD_PREFIX = getlibprefix()
+end
 
 if ffi.os == "Windows" then
     util.gettime = function()
