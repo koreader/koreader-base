@@ -510,12 +510,6 @@ endif
 ifdef DARWIN_AARCH64_HOST
 # At the moment of writing, apple-m1 is the lowest common denominator for Apple silicon chips. Should work for M2 as well
 	HOST_ARCH:=-mcpu=apple-m1
-
-	# Darwin 22.4 (Ventura 13.3), and presumably later kernels don't support ifr_netmask
-	ifneq ("$(shell echo -e `uname -r`"\n22.3" | sort -Vr | head -1)", "22.3")
-		export DARWIN_AARCH64_HOST_NO_IFR_NETMASK:=1
-	endif
-
 	BREW_PREFIX:=$(shell command brew --prefix 2>/dev/null)
 	ifneq (,$(BREW_PREFIX))
 		export DARWIN_AARCH64_HOST_CFLAG:=-I$(BREW_PREFIX)/include

@@ -33,15 +33,11 @@ endif()
 set(SED_CMD1 sh -c "${ISED} 's|^hardcode_libdir_flag_spec=.*|hardcode_libdir_flag_spec=\"\"|g' libtool")
 set(SED_CMD2 sh -c "${ISED} 's|^runpath_var=LD_RUN_PATH|runpath_var=DIE_RPATH_DIE|g' libtool")
 
-# patch: ignore limited broadcast address
-set(PATCH_CMD1 "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/zbeacon.patch")
-# patch: add _DEFAULT_SOURCE define for glibc starting at version 2.20
-set(PATCH_CMD2 "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/czmq_default_source_define.patch")
-
-if ($ENV{DARWIN_AARCH64_HOST_NO_IFR_NETMASK})
-    set(PATCH_CMD ./autogen.sh COMMAND ${PATCH_CMD2})
-else()
-    set(PATCH_CMD ./autogen.sh COMMAND ${PATCH_CMD1} COMMAND ${PATCH_CMD2})
+if(NOT DEFINED ENV{DARWIN})
+    # patch: ignore limited broadcast address
+    set(PATCH_CMD1 "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/zbeacon.patch")
+    # patch: add _DEFAULT_SOURCE define for glibc starting at version 2.20
+    set(PATCH_CMD2 "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/czmq_default_source_define.patch")
 endif()
 
 ko_write_gitclone_script(
@@ -55,7 +51,7 @@ include(ExternalProject)
 ExternalProject_Add(
     ${PROJECT_NAME}
     DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
-    PATCH_COMMAND ${PATCH_CMD}
+    PATCH_COMMAND ./autogen.sh COMMAND ${PATCH_CMD1} COMMAND ${PATCH_CMD2}
     CONFIGURE_COMMAND COMMAND ${CFG_CMD} COMMAND ${SED_CMD1} COMMAND ${SED_CMD2}
     BUILD_COMMAND ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS}
     INSTALL_COMMAND ${KO_MAKE_RECURSIVE} installdirs uninstall install
