@@ -38,6 +38,12 @@ set(PATCH_CMD1 "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/zbeacon.patch")
 # patch: add _DEFAULT_SOURCE define for glibc starting at version 2.20
 set(PATCH_CMD2 "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/czmq_default_source_define.patch")
 
+if ($ENV{DARWIN_AARCH64_HOST_NO_IFR_NETMASK})
+    set(PATCH_CMD ./autogen.sh COMMAND ${PATCH_CMD2})
+else()
+    set(PATCH_CMD ./autogen.sh COMMAND ${PATCH_CMD1} COMMAND ${PATCH_CMD2})
+endif()
+
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
     https://github.com/zeromq/czmq.git
@@ -49,7 +55,7 @@ include(ExternalProject)
 ExternalProject_Add(
     ${PROJECT_NAME}
     DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
-    PATCH_COMMAND ./autogen.sh COMMAND ${PATCH_CMD1} COMMAND ${PATCH_CMD2}
+    PATCH_COMMAND ${PATCH_CMD}
     CONFIGURE_COMMAND COMMAND ${CFG_CMD} COMMAND ${SED_CMD1} COMMAND ${SED_CMD2}
     BUILD_COMMAND ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS}
     INSTALL_COMMAND ${KO_MAKE_RECURSIVE} installdirs uninstall install
