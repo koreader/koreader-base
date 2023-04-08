@@ -177,11 +177,11 @@ jobs:
     <<: *XCOMPILE_TPL
     environment:
       TARGET: "android"
-      DOCKER_IMG: koreader/koandroid:0.5.2
+      DOCKER_IMG: koreader/koandroid:0.6.0
 
   android-x86:
     <<: *ANDROID_TPL
     environment:
       TARGET: "android"
       ANDROID_ARCH: "x86"
-      DOCKER_IMG: koreader/koandroid:0.5.2
+      DOCKER_IMG: koreader/koandroid:0.6.0
