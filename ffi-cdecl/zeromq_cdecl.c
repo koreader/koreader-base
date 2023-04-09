@@ -65,7 +65,7 @@ cdecl_const(ZMQ_PLAIN_USERNAME)
 cdecl_const(ZMQ_PLAIN_PASSWORD)
 cdecl_const(ZMQ_CURVE_SERVER)
 cdecl_const(ZMQ_CURVE_PUBLICKEY)
-cdecl_const(ZMQ_CURVE_SECRETKEY)zmq
+cdecl_const(ZMQ_CURVE_SECRETKEY)
 cdecl_const(ZMQ_CURVE_SERVERKEY)
 cdecl_const(ZMQ_PROBE_ROUTER)
 cdecl_const(ZMQ_REQ_CORRELATE)
