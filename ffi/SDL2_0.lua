@@ -348,12 +348,7 @@ function S.waitForEvent(sec, usec)
     end
 
     -- if we got an event, examine it here and generate events for koreader
-    if ffi.os == "OSX" and (event.type == SDL.SDL_FINGERMOTION or
-        event.type == SDL.SDL_FINGERDOWN or
-        event.type == SDL.SDL_FINGERUP) then
-        -- noop for trackpad finger inputs which interfere with emulated mouse inputs
-        do end -- luacheck: ignore 541
-    elseif event.type == SDL.SDL_KEYDOWN then
+    if event.type == SDL.SDL_KEYDOWN then
         genEmuEvent(C.EV_KEY, event.key.keysym.sym, 1)
     elseif event.type == SDL.SDL_KEYUP then
         genEmuEvent(C.EV_KEY, event.key.keysym.sym, 0)
