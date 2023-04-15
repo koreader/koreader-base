@@ -331,8 +331,6 @@ end
 local SDL_BUTTON_LEFT = 1
 local SDL_BUTTON_RIGHT = 3
 
-local is_in_touch = false
-
 function S.waitForEvent(sec, usec)
     local event = ffi.new("union SDL_Event")
     -- TimeVal to ms if we were passed one to begin with, otherwise, -1 => block.
