@@ -54,6 +54,10 @@ local function SDL_Linked_Version_AtLeast(x, y, z)
     return SDL_VersionNum(getSDLVersion()) >= SDL_VersionNum(x, y, z)
 end
 
+-- Used as the device ID for mouse events simulated with touch input.
+-- Defined in SDL_touch.h as #define SDL_TOUCH_MOUSEID ((Uint32)-1)
+local SDL_TOUCH_MOUSEID = ffi.cast('uint32_t', -1);
+
 local S = {
     w = 0, h = 0,
     screen = nil,
@@ -201,6 +205,58 @@ local function genEmuEvent(evtype, code, value)
     table.insert(inputQueue, ev)
 end
 
+-- Keep track of active pointers so we can feed ABS_MT_SLOT 0 and 1 to the frontend for multitouch to work.
+-- down, a boolean denoting whether the pointer is currently down for tracking mouse button status.
+local pointers = {}
+local function setPointerDownState(slot, down)
+    if not pointers[slot] then
+        pointers[slot] = { down = down }
+    else
+        pointers[slot].down = down
+    end
+end
+
+-- For the moment we pretend there can only be one touchscreen/trackpad/whatever at a time.
+-- It's probably close enough to the truth unless you run into a tester.
+local function getFingerSlot(event)
+    if not pointers[tonumber(event.tfinger.fingerId)] then
+        local num_touch_fingers = SDL.SDL_GetNumTouchFingers(event.tfinger.touchId)
+        if num_touch_fingers > 1 then
+            for i=0,num_touch_fingers-1 do
+                if SDL.SDL_GetTouchFinger(event.tfinger.touchId, i).id == event.tfinger.fingerId then
+                    pointers[tonumber(event.tfinger.fingerId)] = { slot = i }
+                end
+            end
+        else
+            pointers[tonumber(event.tfinger.fingerId)] = { slot = 0 }
+        end
+    end
+    return pointers[tonumber(event.tfinger.fingerId)].slot
+end
+
+local function genTouchDownEvent(event, slot, x, y)
+    genEmuEvent(C.EV_ABS, C.ABS_MT_SLOT, slot)
+    genEmuEvent(C.EV_ABS, C.ABS_MT_TRACKING_ID, tonumber(event.tfinger.fingerId))
+    genEmuEvent(C.EV_ABS, C.ABS_MT_POSITION_X, x)
+    genEmuEvent(C.EV_ABS, C.ABS_MT_POSITION_Y, y)
+    genEmuEvent(C.EV_SYN, C.SYN_REPORT, 0)
+end
+
+local function genTouchUpEvent(event, slot, x, y)
+    genEmuEvent(C.EV_ABS, C.ABS_MT_SLOT, slot)
+    genEmuEvent(C.EV_ABS, C.ABS_MT_TRACKING_ID, -1)
+    genEmuEvent(C.EV_ABS, C.ABS_MT_POSITION_X, x)
+    genEmuEvent(C.EV_ABS, C.ABS_MT_POSITION_Y, y)
+    genEmuEvent(C.EV_SYN, C.SYN_REPORT, 0)
+end
+
+local function genTouchMoveEvent(event, slot, x, y)
+    genEmuEvent(C.EV_ABS, C.ABS_MT_SLOT, slot)
+    genEmuEvent(C.EV_ABS, C.ABS_MT_POSITION_X, x)
+    genEmuEvent(C.EV_ABS, C.ABS_MT_POSITION_Y, y)
+    genEmuEvent(C.EV_SYN, C.SYN_REPORT, 0)
+end
+
 local function handleWindowEvent(event_window)
     -- The next buffer might always contain garbage, and on X11 without
     -- compositing the buffers will be damaged just by moving the window
@@ -273,6 +329,7 @@ local function handleJoyAxisMotionEvent(event)
 end
 
 local SDL_BUTTON_LEFT = 1
+local SDL_BUTTON_RIGHT = 3
 
 local is_in_touch = false
 
@@ -304,53 +361,68 @@ function S.waitForEvent(sec, usec)
         genEmuEvent(C.EV_KEY, event.key.keysym.sym, 0)
     elseif event.type == SDL.SDL_TEXTINPUT then
         genEmuEvent(C.EV_SDL, SDL.SDL_TEXTINPUT, ffi.string(event.text.text))
-    elseif event.type == SDL.SDL_MOUSEMOTION
+    elseif event.type == SDL.SDL_MOUSEMOTION --and event.motion.which ~= SDL_TOUCH_MOUSEID
         or event.type == SDL.SDL_FINGERMOTION then
         local is_finger = event.type == SDL.SDL_FINGERMOTION
-        if is_in_touch then
-            if is_finger then
-                if event.tfinger.dx ~= 0 then
-                    genEmuEvent(C.EV_ABS, C.ABS_MT_POSITION_X,
-                        event.tfinger.x * S.w)
-                end
-                if event.tfinger.dy ~= 0 then
-                    genEmuEvent(C.EV_ABS, C.ABS_MT_POSITION_Y,
-                        event.tfinger.y * S.h)
-                end
-            else
-                if event.motion.xrel ~= 0 then
-                    genEmuEvent(C.EV_ABS, C.ABS_MT_POSITION_X,
-                        event.motion.x)
-                end
-                if event.motion.yrel ~= 0 then
-                    genEmuEvent(C.EV_ABS, C.ABS_MT_POSITION_Y,
-                        event.motion.y)
-                end
+        local slot
+
+        if is_finger then
+            slot = getFingerSlot(event)
+            genTouchMoveEvent(event, slot, event.tfinger.x * S.w, event.tfinger.y * S.h)
+        else
+            if pointers[0] and pointers[0].down then
+                slot = 0 -- left mouse button down
+                genTouchMoveEvent(event, slot, event.motion.x, event.motion.y)
             end
-            genEmuEvent(C.EV_SYN, C.SYN_REPORT, 0)
+            if pointers[1] and pointers[1].down then
+                slot = 1 -- right mouse button down
+                genTouchMoveEvent(event, slot, event.motion.x, event.motion.y)
+            end
         end
-    elseif event.type == SDL.SDL_MOUSEBUTTONUP
+    elseif event.type == SDL.SDL_MOUSEBUTTONUP and event.button.which ~= SDL_TOUCH_MOUSEID
         or event.type == SDL.SDL_FINGERUP then
-        is_in_touch = false
-        genEmuEvent(C.EV_ABS, C.ABS_MT_TRACKING_ID, -1)
-        genEmuEvent(C.EV_SYN, C.SYN_REPORT, 0)
-    elseif event.type == SDL.SDL_MOUSEBUTTONDOWN
+        local is_finger = event.type == SDL.SDL_FINGERUP
+        local slot
+        if is_finger then
+            slot = getFingerSlot(event)
+        elseif event.button.button == SDL_BUTTON_RIGHT then
+            slot = 1
+        else -- SDL_BUTTON_LEFT
+            slot = 0
+        end
+
+        local x = is_finger and event.tfinger.x * S.w or event.button.x
+        local y = is_finger and event.tfinger.y * S.h or event.button.y
+        genTouchUpEvent(event, slot, x, y)
+        if is_finger then
+            pointers[tonumber(event.tfinger.fingerId)] = nil
+        else
+            pointers[slot] = nil
+        end
+    elseif event.type == SDL.SDL_MOUSEBUTTONDOWN and event.button.which ~= SDL_TOUCH_MOUSEID
         or event.type == SDL.SDL_FINGERDOWN then
         local is_finger = event.type == SDL.SDL_FINGERDOWN
-        if not is_finger and event.button.button ~= SDL_BUTTON_LEFT then
-            -- Not a left-click?
+        if not is_finger and not (event.button.button == SDL_BUTTON_LEFT or event.button.button == SDL_BUTTON_RIGHT) then
+            -- We don't do anything with extra buttons for now.
             return false, C.ENOSYS
         end
+
         -- use mouse click to simulate single tap
-        is_in_touch = true
-        genEmuEvent(C.EV_ABS, C.ABS_MT_TRACKING_ID, 0)
-        genEmuEvent(C.EV_ABS, C.ABS_MT_POSITION_X,
-            is_finger and event.tfinger.x * S.w or event.button.x)
-        genEmuEvent(C.EV_ABS, C.ABS_MT_POSITION_Y,
-            is_finger and event.tfinger.y * S.h or event.button.y)
-        genEmuEvent(C.EV_SYN, C.SYN_REPORT, 0)
+        local slot
+        if is_finger then
+            slot = getFingerSlot(event)
+        elseif event.button.button == SDL_BUTTON_RIGHT then
+            slot = 1
+        else -- SDL_BUTTON_LEFT
+            slot = 0
+        end
+        local x = is_finger and event.tfinger.x * S.w or event.button.x
+        local y = is_finger and event.tfinger.y * S.h or event.button.y
+        setPointerDownState(slot, true)
+        genTouchDownEvent(event, slot, x, y)
     elseif event.type == SDL.SDL_MULTIGESTURE then
         genEmuEvent(C.EV_SDL, SDL.SDL_MULTIGESTURE, event.mgesture)
+        genEmuEvent(C.EV_SYN, C.SYN_REPORT, 0)
     elseif event.type == SDL.SDL_MOUSEWHEEL then
         genEmuEvent(C.EV_SDL, SDL.SDL_MOUSEWHEEL, event.wheel)
     elseif event.type == SDL.SDL_DROPFILE then
