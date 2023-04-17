@@ -235,8 +235,9 @@ local function getFingerSlot(event)
 end
 
 local function genTouchDownEvent(event, slot, x, y)
+    local is_finger = event.type == SDL.SDL_FINGERDOWN
     genEmuEvent(C.EV_ABS, C.ABS_MT_SLOT, slot)
-    genEmuEvent(C.EV_ABS, C.ABS_MT_TRACKING_ID, tonumber(event.tfinger.fingerId))
+    genEmuEvent(C.EV_ABS, C.ABS_MT_TRACKING_ID, is_finger and tonumber(event.tfinger.fingerId) or slot)
     genEmuEvent(C.EV_ABS, C.ABS_MT_POSITION_X, x)
     genEmuEvent(C.EV_ABS, C.ABS_MT_POSITION_Y, y)
     genEmuEvent(C.EV_SYN, C.SYN_REPORT, 0)
