@@ -122,6 +122,11 @@ function S.open(w, h, x, y)
     -- See <https://github.com/libsdl-org/SDL/issues/5652> and <https://github.com/koreader/koreader/issues/9091>.
     SDL.SDL_SetHint("SDL_HINT_TOUCH_MOUSE_EVENTS", "0")
 
+    -- Modern trackpads are multitouch capable, but SDL treats them as mice instead of synthetic mice by default.
+    -- Only works on macOS at the time of writing.
+    -- See <https://github.com/libsdl-org/SDL/commit/bdc7f958fda50305744dcefdccac29373da97d01>.
+    SDL.SDL_SetHint("SDL_HINT_TRACKPAD_IS_TOUCH_ONLY", "1")
+
     -- Enable screensaver and X11 composition.
     SDL.SDL_EnableScreenSaver()
     if SDL_Linked_Version_AtLeast(2, 0, 8) then
