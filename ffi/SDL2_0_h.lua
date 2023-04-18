@@ -716,6 +716,15 @@ struct SDL_Window;
 typedef struct SDL_Window SDL_Window;
 struct SDL_Renderer;
 typedef struct SDL_Renderer SDL_Renderer;
+struct SDL_RendererInfo {
+  const char *name;
+  Uint32 flags;
+  Uint32 num_texture_formats;
+  Uint32 texture_formats[16];
+  int max_texture_width;
+  int max_texture_height;
+};
+typedef struct SDL_RendererInfo SDL_RendererInfo;
 struct SDL_Texture;
 typedef struct SDL_Texture SDL_Texture;
 struct SDL_Color {
@@ -785,6 +794,8 @@ void SDL_EnableScreenSaver(void) __attribute__((visibility("default")));
 SDL_Window *SDL_CreateWindow(const char *, int, int, int, int, Uint32) __attribute__((visibility("default")));
 SDL_Renderer *SDL_CreateRenderer(SDL_Window *, int, Uint32) __attribute__((visibility("default")));
 int SDL_CreateWindowAndRenderer(int, int, Uint32, SDL_Window **, SDL_Renderer **) __attribute__((visibility("default")));
+int SDL_GetRendererInfo(SDL_Renderer *, SDL_RendererInfo *) __attribute__((visibility("default")));
+int SDL_GetRendererOutputSize(SDL_Renderer *, int *, int *) __attribute__((visibility("default")));
 int SDL_SetRenderDrawColor(SDL_Renderer *, Uint8, Uint8, Uint8, Uint8) __attribute__((visibility("default")));
 int SDL_RenderClear(SDL_Renderer *) __attribute__((visibility("default")));
 void SDL_RenderPresent(SDL_Renderer *) __attribute__((visibility("default")));
