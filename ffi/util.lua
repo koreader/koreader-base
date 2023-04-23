@@ -291,7 +291,7 @@ function util.execute(...)
         local pid = C.fork()
         if pid == 0 then
             local args = table.pack(...)
-            os.exit(C.execl(args[1], unpack(args, 1, #args+1))) -- Last arg must be a NULL pointer
+            os.exit(C.execl(args[1], unpack(args, 1, args.n+1))) -- Last arg must be a NULL pointer
         end
         local status = ffi.new('int[1]')
         C.waitpid(pid, status, 0)
@@ -756,7 +756,7 @@ This function was inspired by Qt:
 function util.template(str, ...)
     local params = table.pack(...)
     -- shortcut:
-    if #params == 0 then return str end
+    if params.n == 0 then return str end
     local result = string.gsub(str, "%%([1-9][0-9]?)",
         function(i)
             return params[tonumber(i)]
