@@ -24,9 +24,15 @@ index 64cb79d..3fd4680 100644
                  x += fdx;
                  y += fdy;
 diff --git a/CMakeLists.txt b/CMakeLists.txt
-index 0903cc5..9b1a495 100755
+index 0903cc5..dc2a8d8 100755
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
+@@ -1,4 +1,4 @@
+-cmake_minimum_required(VERSION 3.13)
++cmake_minimum_required(VERSION 3.10)
+ 
+ project(lunasvg VERSION 2.3.5 LANGUAGES CXX C)
+ 
 @@ -10,6 +10,10 @@ set(CMAKE_C_VISIBILITY_PRESET hidden)
  set(CMAKE_CXX_VISIBILITY_PRESET hidden)
  set(CMAKE_VISIBILITY_INLINES_HIDDEN 1)
