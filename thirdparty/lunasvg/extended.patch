@@ -24,16 +24,17 @@ index 64cb79d..3fd4680 100644
                  x += fdx;
                  y += fdy;
 diff --git a/CMakeLists.txt b/CMakeLists.txt
-index 0903cc5..dc2a8d8 100755
+index 0903cc5..1eec89f 100755
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
-@@ -1,4 +1,4 @@
+@@ -1,4 +1,5 @@
 -cmake_minimum_required(VERSION 3.13)
++# Our Android toolchain only has CMake 3.10.2
 +cmake_minimum_required(VERSION 3.10)
  
  project(lunasvg VERSION 2.3.5 LANGUAGES CXX C)
  
-@@ -10,6 +10,10 @@ set(CMAKE_C_VISIBILITY_PRESET hidden)
+@@ -10,6 +11,10 @@ set(CMAKE_C_VISIBILITY_PRESET hidden)
  set(CMAKE_CXX_VISIBILITY_PRESET hidden)
  set(CMAKE_VISIBILITY_INLINES_HIDDEN 1)
  
@@ -44,7 +45,7 @@ index 0903cc5..dc2a8d8 100755
  option(BUILD_SHARED_LIBS "Builds as shared library" OFF)
  option(LUNASVG_BUILD_EXAMPLES "Builds examples" OFF)
  
-@@ -17,6 +21,7 @@ add_library(lunasvg)
+@@ -17,6 +22,7 @@ add_library(lunasvg)
  
  add_subdirectory(include)
  add_subdirectory(source)
@@ -52,7 +53,7 @@ index 0903cc5..dc2a8d8 100755
  add_subdirectory(3rdparty/plutovg)
  
  set_target_properties(lunasvg
-@@ -43,6 +48,7 @@ include(GNUInstallDirs)
+@@ -43,6 +49,7 @@ include(GNUInstallDirs)
  install(
      FILES
      ${CMAKE_CURRENT_SOURCE_DIR}/include/lunasvg.h
