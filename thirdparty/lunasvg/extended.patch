@@ -24,10 +24,21 @@ index 64cb79d..3fd4680 100644
                  x += fdx;
                  y += fdy;
 diff --git a/CMakeLists.txt b/CMakeLists.txt
-index 0903cc5..4385e0a 100755
+index 0903cc5..9b1a495 100755
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
-@@ -17,6 +17,7 @@ add_library(lunasvg)
+@@ -10,6 +10,10 @@ set(CMAKE_C_VISIBILITY_PRESET hidden)
+ set(CMAKE_CXX_VISIBILITY_PRESET hidden)
+ set(CMAKE_VISIBILITY_INLINES_HIDDEN 1)
+ 
++# When cross-compiling, avoid installation in a
++# "build/staging-arm-linux-gnueabihf/" subdirectory
++set(CMAKE_STAGING_PREFIX "${CMAKE_INSTALL_PREFIX}")
++
+ option(BUILD_SHARED_LIBS "Builds as shared library" OFF)
+ option(LUNASVG_BUILD_EXAMPLES "Builds examples" OFF)
+ 
+@@ -17,6 +21,7 @@ add_library(lunasvg)
  
  add_subdirectory(include)
  add_subdirectory(source)
@@ -35,7 +46,7 @@ index 0903cc5..4385e0a 100755
  add_subdirectory(3rdparty/plutovg)
  
  set_target_properties(lunasvg
-@@ -43,6 +44,7 @@ include(GNUInstallDirs)
+@@ -43,6 +48,7 @@ include(GNUInstallDirs)
  install(
      FILES
      ${CMAKE_CURRENT_SOURCE_DIR}/include/lunasvg.h
