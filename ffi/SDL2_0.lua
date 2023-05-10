@@ -219,11 +219,12 @@ end
 -- Keep track of active pointers so we can feed ABS_MT_SLOT 0 and 1 to the frontend for multitouch to work.
 -- down, a boolean denoting whether the pointer is currently down for tracking mouse button status.
 local pointers = {}
-local function setPointerDownState(slot, down)
+local function setPointerDownState(slot, down, is_finger)
     if not pointers[slot] then
-        pointers[slot] = { down = down }
+        pointers[slot] = { down = down , is_finger = is_finger }
     else
         pointers[slot].down = down
+        pointers[slot].is_finger = is_finger
     end
 end
 
@@ -375,11 +376,11 @@ function S.waitForEvent(sec, usec)
             slot = getFingerSlot(event)
             genTouchMoveEvent(event, slot, event.tfinger.x * S.w, event.tfinger.y * S.h)
         else
-            if pointers[0] and pointers[0].down then
+            if pointers[0] and pointers[0].down and not pointers[0].is_finger then
                 slot = 0 -- left mouse button down
                 genTouchMoveEvent(event, slot, event.motion.x, event.motion.y)
             end
-            if pointers[1] and pointers[1].down then
+            if pointers[1] and pointers[1].down and not pointers[1].is_finger then
                 slot = 1 -- right mouse button down
                 genTouchMoveEvent(event, slot, event.motion.x, event.motion.y)
             end
@@ -423,7 +424,7 @@ function S.waitForEvent(sec, usec)
         end
         local x = is_finger and event.tfinger.x * S.w or event.button.x
         local y = is_finger and event.tfinger.y * S.h or event.button.y
-        setPointerDownState(slot, true)
+        setPointerDownState(slot, true, is_finger)
         genTouchDownEvent(event, slot, x, y)
     elseif event.type == SDL.SDL_MULTIGESTURE then
         genEmuEvent(C.EV_SDL, SDL.SDL_MULTIGESTURE, event.mgesture)
