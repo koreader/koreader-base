@@ -218,6 +218,7 @@ end
 
 -- Keep track of active pointers so we can feed ABS_MT_SLOT 0 and 1 to the frontend for multitouch to work.
 -- down, a boolean denoting whether the pointer is currently down for tracking mouse button status.
+-- is_finger is currently only used to work around a bug in sway, cf. <https://github.com/koreader/koreader/issues/10417>
 local pointers = {}
 local function setPointerDownState(slot, down, is_finger)
     if not pointers[slot] then
