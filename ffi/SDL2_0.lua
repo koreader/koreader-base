@@ -366,7 +366,7 @@ function S.waitForEvent(sec, usec)
         genEmuEvent(C.EV_KEY, event.key.keysym.sym, 0)
     elseif event.type == SDL.SDL_TEXTINPUT then
         genEmuEvent(C.EV_SDL, SDL.SDL_TEXTINPUT, ffi.string(event.text.text))
-    elseif event.type == SDL.SDL_MOUSEMOTION --and event.motion.which ~= SDL_TOUCH_MOUSEID
+    elseif event.type == SDL.SDL_MOUSEMOTION and event.motion.which ~= SDL_TOUCH_MOUSEID
         or event.type == SDL.SDL_FINGERMOTION then
         local is_finger = event.type == SDL.SDL_FINGERMOTION
         local slot
