@@ -112,10 +112,10 @@ function S.open(w, h, x, y)
         if SDL.SDL_GetCurrentDisplayMode(0, mode) ~= 0 then
             error("SDL cannot get current display mode.")
         end
-        S.w, S.h = mode.w, mode.h
+        S.win_w, S.win_h = mode.w, mode.h
     else
-        S.w = tonumber(os.getenv("EMULATE_READER_W")) or w or 600
-        S.h = tonumber(os.getenv("EMULATE_READER_H")) or h or 800
+        S.win_w = tonumber(os.getenv("EMULATE_READER_W")) or w or 600
+        S.win_h = tonumber(os.getenv("EMULATE_READER_H")) or h or 800
     end
 
     -- Disable to work around an SDL issue in 2.0.22.
@@ -132,7 +132,7 @@ function S.open(w, h, x, y)
     S.screen = SDL.SDL_CreateWindow("KOReader",
         tonumber(os.getenv("KOREADER_WINDOW_POS_X")) or x or SDL.SDL_WINDOWPOS_UNDEFINED,
         tonumber(os.getenv("KOREADER_WINDOW_POS_Y")) or y or SDL.SDL_WINDOWPOS_UNDEFINED,
-        S.w, S.h,
+        S.win_w, S.win_h,
         bit.bor(full_screen and 1 or 0, SDL.SDL_WINDOW_RESIZABLE, SDL.SDL_WINDOW_ALLOW_HIGHDPI)
     )
 
@@ -147,6 +147,9 @@ function S.open(w, h, x, y)
         -- tl;dr Use Windows or X11 if you value your eyes and sanity. Or *gulp* Android. And Sailfish of course.
         S.w = tonumber(output_w[0])
         S.h = tonumber(output_h[0])
+    else
+        S.w = S.win_w
+        S.h = S.win_h
     end
     S.texture = S.createTexture()
 
@@ -359,6 +362,10 @@ function S.waitForEvent(sec, usec)
         return false, C.ETIME
     end
 
+    -- Used to scale coordinates of pointer events if ouput scaling is used
+    local scale_x = S.w / S.win_w
+    local scale_y = S.h / S.win_h
+
     -- if we got an event, examine it here and generate events for koreader
     if event.type == SDL.SDL_KEYDOWN then
         genEmuEvent(C.EV_KEY, event.key.keysym.sym, 1)
@@ -377,11 +384,11 @@ function S.waitForEvent(sec, usec)
         else
             if pointers[0] and pointers[0].down then
                 slot = 0 -- left mouse button down
-                genTouchMoveEvent(event, slot, event.motion.x, event.motion.y)
+                genTouchMoveEvent(event, slot, event.motion.x * scale_x, event.motion.y * scale_y)
             end
             if pointers[1] and pointers[1].down then
                 slot = 1 -- right mouse button down
-                genTouchMoveEvent(event, slot, event.motion.x, event.motion.y)
+                genTouchMoveEvent(event, slot, event.motion.x * scale_x, event.motion.y * scale_y)
             end
         end
     elseif event.type == SDL.SDL_MOUSEBUTTONUP and event.button.which ~= SDL_TOUCH_MOUSEID
@@ -396,8 +403,8 @@ function S.waitForEvent(sec, usec)
             slot = 0
         end
 
-        local x = is_finger and event.tfinger.x * S.w or event.button.x
-        local y = is_finger and event.tfinger.y * S.h or event.button.y
+        local x = is_finger and event.tfinger.x * S.w or event.button.x * scale_x
+        local y = is_finger and event.tfinger.y * S.h or event.button.y * scale_y
         genTouchUpEvent(event, slot, x, y)
         if is_finger then
             pointers[tonumber(event.tfinger.fingerId)] = nil
@@ -421,8 +428,8 @@ function S.waitForEvent(sec, usec)
         else -- SDL_BUTTON_LEFT
             slot = 0
         end
-        local x = is_finger and event.tfinger.x * S.w or event.button.x
-        local y = is_finger and event.tfinger.y * S.h or event.button.y
+        local x = is_finger and event.tfinger.x * S.w or event.button.x * scale_x
+        local y = is_finger and event.tfinger.y * S.h or event.button.y * scale_y
         setPointerDownState(slot, true)
         genTouchDownEvent(event, slot, x, y)
     elseif event.type == SDL.SDL_MULTIGESTURE then
