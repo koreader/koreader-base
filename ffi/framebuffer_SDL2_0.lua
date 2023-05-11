@@ -10,7 +10,7 @@ local framebuffer = {
 
 function framebuffer:init()
     if not self.dummy then
-        SDL.open(self.w, self.h, self.x, self.y)
+        SDL.open(self.win_w, self.win_h, self.x, self.y)
         self:_newBB()
     else
         self.bb = BB.new(600, 800)
@@ -27,11 +27,14 @@ function framebuffer:init()
 end
 
 function framebuffer:resize(w, h)
-    w = w or SDL.w
-    h = h or SDL.h
     local output_w = ffi.new("int[1]", 0)
     local output_h = ffi.new("int[1]", 0)
-    if SDL.SDL.SDL_GetRendererOutputSize(SDL.renderer, output_w, output_h) == 0 and tonumber(output_w[0]) ~= w then
+
+    SDL.SDL.SDL_GetWindowSize(SDL.screen, output_w, output_h)
+    SDL.win_w = w or tonumber(output_w[0])
+    SDL.win_h = h or tonumber(output_h[0])
+
+    if SDL.SDL.SDL_GetRendererOutputSize(SDL.renderer, output_w, output_h) == 0 then
         -- This is a workaround to obtain a simulacrum of real pixels in scenarios that marketing likes to refer to as "HiDPI".
         -- The utterly deranged idea is to render things at 2x or 3x, so it can subsequently be scaled down in order to assure everything will always be at least a little bit blurry unless you happen to use exactly 2x or 3x, instead of the traditional methods of just rendering at the desired DPI that have worked perfectly fine in Windows and X11 for decades.
         -- Contrary to claims by the blind that macOS is sharp, it's not.
@@ -39,6 +42,9 @@ function framebuffer:resize(w, h)
         -- tl;dr Use Windows or X11 if you value your eyes and sanity. Or *gulp* Android. And Sailfish of course.
         w = tonumber(output_w[0])
         h = tonumber(output_h[0])
+    else
+        w = SDL.win_w
+        h = SDL.win_h
     end
 
     if not self.dummy then
