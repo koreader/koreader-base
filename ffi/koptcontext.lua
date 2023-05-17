@@ -43,9 +43,16 @@ function KOPTContext_mt.__index:setContrast(contrast) self.contrast = contrast e
 function KOPTContext_mt.__index:setDefectSize(defect_size) self.defect_size = defect_size end
 function KOPTContext_mt.__index:setLineSpacing(line_spacing) self.line_spacing = line_spacing end
 function KOPTContext_mt.__index:setWordSpacing(word_spacing) self.word_spacing = word_spacing end
---- @fixme: Update the APIs to make KOPTContext's language field a const char*, so that we can just pass it a Lua string.
 function KOPTContext_mt.__index:setLanguage(language)
-    self.language = ffi.new("char[?]", #language + 1, language)
+    if self.language then
+        C.free(self.language)
+        self.language = nil
+    end
+    if language then
+        -- As `self` is a struct, and `self.language` a `char *`,
+        -- we need to make a C copy of the language string.
+        self.language = C.strdup(language)
+    end
 end
 
 function KOPTContext_mt.__index:setDebug() self.debug = 1 end
@@ -476,6 +483,8 @@ function KOPTContext_mt.__index:free()
         self.nboxa = nboxa_pptr[0]
     end
 
+    self:setLanguage(nil)
+
     -- Already guards against NULL data pointers
     k2pdfopt.bmp_free(self.src)
     -- Already guards against NULL data pointers
@@ -731,7 +740,7 @@ function KOPTContext.fromtable(context)
                 context.nnai.array), context.nnai.n, C.L_COPY)
     end
     if context.language then
-        kc.language = ffi.new("char[?]", #context.language + 1, context.language)
+        kc:setLanguage(context.language)
     end
 
     k2pdfopt.bmp_init(kc.src)
