@@ -496,6 +496,7 @@ function page_mt.__index:getPageText()
     -- now we analyze the data returned by the device and bring it
     -- into the format we want to return
     local lines = {}
+    local size = 0
 
     local block = text_page.first_block
     while block ~= nil do
@@ -550,6 +551,7 @@ function page_mt.__index:getPageText()
                             x0 = word_bbox[0].x0, y0 = word_bbox[0].y0,
                             x1 = word_bbox[0].x1, y1 = word_bbox[0].y1,
                         })
+                        size = size + 5 * 8 + textlen
 
                         if ch == nil then
                             break
@@ -560,6 +562,7 @@ function page_mt.__index:getPageText()
 
                     line.x0, line.y0 = line_bbox[0].x0, line_bbox[0].y0
                     line.x1, line.y1 = line_bbox[0].x1, line_bbox[0].y1
+                    size = size + 5 * 8
 
                     table.insert(lines, line)
                 end
@@ -570,6 +573,9 @@ function page_mt.__index:getPageText()
 
         block = block.next
     end
+
+    -- Rough approximation of size for caching
+    lines.size = size
 
     M.fz_drop_stext_page(context(), text_page)
 
