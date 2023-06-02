@@ -34,6 +34,8 @@ static const int TEMP_USE_AMBIENT = 4096;
 static const int TEMP_USE_PAPYRUS = 4097;
 static const int TEMP_USE_AUTO = 4097;
 static const int TEMP_USE_ZELDA_AUTO = 4096;
+static const int MXCFB_SET_TEMPERATURE = 1074021932;
+static const int MXCFB_GET_TEMPERATURE = 2147763768;
 static const int EPDC_FLAG_ENABLE_INVERSION = 1;
 static const int EPDC_FLAG_FORCE_MONOCHROME = 2;
 static const int EPDC_FLAG_USE_CMAP = 4;
@@ -176,6 +178,12 @@ struct mxcfb_update_data_mtk {
   uint32_t ts_pxp;
   uint32_t ts_epdc;
 };
+struct mxcfb_panel_info {
+  char wf_file_name[100];
+  int vcom_value;
+  int temp;
+  int temp_zone;
+};
 struct mxcfb_halftone_data {
   struct mxcfb_rect region[2];
   int halftone_mode;
@@ -188,6 +196,7 @@ static const int UPDATE_FLAGS_FAST_MODE = -2147483648;
 static const int UPDATE_FLAGS_MODE_FAST_FLAG = 1;
 static const int MXCFB_SEND_UPDATE_MTK = 1080051246;
 static const int MXCFB_SET_NIGHTMODE_MTK = 2148550218;
+static const int MXCFB_GET_PANEL_INFO_MTK = 2154841904;
 static const int MXCFB_SET_HALFTONE_MTK = 1076119115;
 static const int MXCFB_WAIT_FOR_ANY_UPDATE_COMPLETE_MTK = 3221505591;
 static const int MXCFB_SET_UPDATE_FLAGS_MTK = 1074021947;
