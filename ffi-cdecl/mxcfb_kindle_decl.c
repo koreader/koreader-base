@@ -46,6 +46,9 @@ cdecl_const(TEMP_USE_AUTO)
 
 cdecl_const(TEMP_USE_ZELDA_AUTO)
 
+cdecl_const(MXCFB_SET_TEMPERATURE)
+cdecl_const(MXCFB_GET_TEMPERATURE)
+
 cdecl_const(EPDC_FLAG_ENABLE_INVERSION)
 cdecl_const(EPDC_FLAG_FORCE_MONOCHROME)
 cdecl_const(EPDC_FLAG_USE_CMAP)
@@ -120,6 +123,7 @@ cdecl_enum(MTK_SWIPE_DIRECTION_ENUM)
 cdecl_struct(mxcfb_swipe_data)
 
 cdecl_struct(mxcfb_update_data_mtk)
+cdecl_struct(mxcfb_panel_info)
 cdecl_struct(mxcfb_halftone_data)
 cdecl_type(mxcfb_markers_data)
 
@@ -128,6 +132,7 @@ cdecl_const(UPDATE_FLAGS_MODE_FAST_FLAG)
 
 cdecl_const(MXCFB_SEND_UPDATE_MTK)
 cdecl_const(MXCFB_SET_NIGHTMODE_MTK)
+cdecl_const(MXCFB_GET_PANEL_INFO_MTK)
 cdecl_const(MXCFB_SET_HALFTONE_MTK)
 cdecl_const(MXCFB_WAIT_FOR_ANY_UPDATE_COMPLETE_MTK)
 cdecl_const(MXCFB_SET_UPDATE_FLAGS_MTK)
