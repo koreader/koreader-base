@@ -23,6 +23,9 @@ extern "C"
 // FriBiDi
 #include <fribidi/fribidi.h>
 
+// Freetype
+#include <freetype/ftmodapi.h>
+
 // libunibreak
 #include <wordbreak.h>
 #include <linebreak.h>
@@ -574,7 +577,7 @@ public:
             luaL_typerror(m_L, -1, "cdata");
         }
         // Get the usable (for Harfbuzz) FT_Face object
-        FT_Face * face = (FT_Face *)lua_topointer(m_L, -1);
+        FT_Face face = *(FT_Face *)lua_topointer(m_L, -1);
         lua_pop(m_L, 1); // remove ftface object
 
         // Create a Lua userdata that will keep the reference to our hb_data
@@ -588,7 +591,8 @@ public:
         // Set this userdata as the '_hb_font_data' key of our Lua font table
         lua_setfield(m_L, -2, XTEXT_LUA_HB_FONT_DATA_TABLE_KEY_NAME);
 
-        hb_data->hb_font = hb_ft_font_create_referenced(*face);
+        hb_data->hb_font = hb_ft_font_create_referenced(face);
+        FT_Reference_Library((FT_Library)face->generic.data);
         // These flags should be sync'ed with freetype.lua FT_Load_Glyph_flags:
         // hb_ft_font_set_load_flags(hb_data->hb_font, FT_LOAD_TARGET_LIGHT | FT_LOAD_FORCE_AUTOHINT);
         // No hinting, as it would mess synthetized bold.
@@ -2280,12 +2284,15 @@ XText * check_XText(lua_State * L, int n, bool replace_with_uservalue=true, bool
 static int xtext_hb_font_data_destroy(lua_State *L) {
     // printf("xtext_hb_font_data_destroy called\n");
     xtext_hb_font_data * hb_data = (xtext_hb_font_data *)luaL_checkudata(L, -1, XTEXT_HB_FONT_DATA_METATABLE_NAME);
+    FT_Library ft_lib = (FT_Library)hb_ft_font_get_face(hb_data->hb_font)->generic.data;
     hb_font_destroy(hb_data->hb_font);
+    FT_Done_Library(ft_lib);
     hb_buffer_destroy(hb_data->hb_buffer);
     if ( hb_data->hb_features )
         free(hb_data->hb_features);
     hb_data->hb_font = NULL;
     hb_data->hb_buffer = NULL;
+    hb_data->hb_features = NULL;
     return 0;
 }
 
