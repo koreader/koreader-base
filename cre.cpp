@@ -4116,16 +4116,10 @@ int luaopen_cre(lua_State *L) {
 	return 1;
 }
 
-#if DEBUG_CRENGINE
 // Library finalizer (c.f., dlopen(3)). This serves no real purpose except making Valgrind's output slightly more useful.
 __attribute__((destructor)) static void cre_teardown(void) {
-    printf("cre_teardown\n");
-    // Since HyphMan::uninit implodes, run that ourselves.
-    TextLangMan::uninit();
-    // Crashes on the first delete pair->value...
-    //HyphMan::uninit();
+    HyphMan::uninit();
     ShutdownFontManager();
     CRLog::setLogger( NULL );
     ldomDocCache::close();
 }
-#endif
