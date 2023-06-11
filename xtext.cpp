@@ -21,7 +21,7 @@ extern "C"
 #include <hb-ft.h>
 
 // FriBiDi
-#include <fribidi/fribidi.h>
+#include <fribidi.h>
 
 // libunibreak
 #include <wordbreak.h>

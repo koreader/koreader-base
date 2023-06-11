@@ -168,7 +168,7 @@ $(OUTPUT_DIR)/libs/libkoreader-xtext.so: xtext.cpp \
 			$(FREETYPE_LIB) $(HARFBUZZ_LIB) $(FRIBIDI_LIB) $(LIBUNIBREAK_LIB)
 	$(CXX) -I$(FREETYPE_DIR)/include/freetype2 \
 	-I$(HARFBUZZ_DIR)/include/harfbuzz \
-	-I$(FRIBIDI_DIR)/include \
+	-I$(FRIBIDI_DIR)/include/fribidi \
 	-I$(LIBUNIBREAK_DIR)/include \
 	$(DYNLIB_CXXFLAGS) $(SYMVIS_FLAGS) -Wall -o $@ xtext.cpp $(LUAJIT_LIB_LINK_FLAG) \
 	$(FREETYPE_LIB_LINK_FLAG) $(HARFBUZZ_LIB_LINK_FLAG) $(FRIBIDI_LIB_LINK_FLAG) $(LIBUNIBREAK_LIB_LINK_FLAG) \
