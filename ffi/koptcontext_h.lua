@@ -1,5 +1,4 @@
 local ffi = require("ffi")
-require("ffi/leptonica_h")
 
 ffi.cdef[[
 typedef struct {
@@ -8,6 +7,9 @@ typedef struct {
   float x1;
   float y1;
 } BBox;
+typedef struct Boxa BOXA;
+typedef struct Numa NUMA;
+typedef struct Pix PIX;
 typedef struct {
   double x;
   double y;
@@ -132,10 +134,10 @@ struct KOPTContext {
   int precache;
   int debug;
   int cjkchar;
-  BOXA* rboxa;
-  NUMA* rnai;
-  BOXA* nboxa;
-  NUMA* nnai;
+  BOXA *rboxa;
+  NUMA *rnai;
+  BOXA *nboxa;
+  NUMA *nnai;
   WRECTMAPS rectmaps;
   PAGEREGIONS pageregions;
   BBox bbox;
@@ -162,5 +164,5 @@ void pageregions_free(PAGEREGIONS *);
 void k2pdfopt_crop_bmp(KOPTContext *);
 void k2pdfopt_optimize_bmp(KOPTContext *);
 void pixmap_to_bmp(WILLUSBITMAP *, unsigned char *, int);
-PIX* bitmap2pix(WILLUSBITMAP *, int, int, int, int);
+PIX *bitmap2pix(WILLUSBITMAP *, int, int, int, int);
 ]]

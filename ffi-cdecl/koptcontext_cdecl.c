@@ -10,6 +10,9 @@
 #include "ffi-cdecl.h"
 
 cdecl_type(BBox)
+cdecl_type(BOXA)
+cdecl_type(NUMA)
+cdecl_type(PIX)
 cdecl_type(POINT2D)
 cdecl_type(WRECTMAP)
 cdecl_type(WRECTMAPS)

@@ -2,6 +2,7 @@ local ffi = require("ffi")
 local C = ffi.C
 
 require("ffi/koptcontext_h")
+require("ffi/leptonica_h")
 local Blitbuffer = require("ffi/blitbuffer")
 local leptonica, k2pdfopt
 if ffi.os == "Windows" then
