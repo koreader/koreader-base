@@ -11,11 +11,7 @@ Zip packing workflow & code from luarocks' zip.lua :
 -- We only need a few functions from zlib
 local bit = require "bit"
 local ffi = require "ffi"
-ffi.cdef([[
-unsigned long crc32(unsigned long crc, const char *buf, unsigned len);
-unsigned long compressBound(unsigned long sourceLen);
-int compress2(uint8_t *dest, unsigned long *destLen, const uint8_t *source, unsigned long sourceLen, int level);
-]])
+require "ffi/zlib_h"
 
 -- We only need to wrap 2 zlib functions to make a zip file
 local _zlib = ffi.load(ffi.os == "Windows" and "zlib1" or "z")
