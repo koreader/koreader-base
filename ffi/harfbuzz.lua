@@ -95,7 +95,7 @@ end
 
 -- preprocess the script/language tables into HB range sets
 local function make_set(tab)
-    local set = hb.hb_set_create()
+    local set = ffi.gc(hb.hb_set_create(), hb.hb_set_destroy)
     local first = 0
     local seen = 0
     for i=1, #tab, 2 do

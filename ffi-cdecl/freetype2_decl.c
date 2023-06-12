@@ -3,12 +3,13 @@
 #include "ffi-cdecl.h"
 
 #include <freetype/freetype.h>
-#include <freetype/ftsynth.h>
+#include <freetype/ftmodapi.h>
 #include <freetype/ftoutln.h>
 #include <freetype/ftsnames.h>
+#include <freetype/ftsynth.h>
+#include <freetype/ttnameid.h>
 #include <freetype/tttables.h>
 #include <freetype/tttags.h>
-#include <freetype/ttnameid.h>
 
 cdecl_type(FT_String)
 cdecl_type(FT_Byte)
@@ -94,6 +95,8 @@ cdecl_type(FT_Encoding)
 cdecl_struct(FT_CharMapRec_)
 
 cdecl_func(FT_Init_FreeType)
+cdecl_func(FT_Reference_Library)
+cdecl_func(FT_Done_Library)
 
 cdecl_func(FT_New_Face)
 cdecl_func(FT_Set_Pixel_Sizes)

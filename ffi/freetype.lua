@@ -22,7 +22,25 @@ end
 
 local freetypelib = ffi.new("FT_Library[1]")
 assert(ft2.FT_Init_FreeType(freetypelib) == 0, "Couldn't initialize Freetype!")
-freetypelib = freetypelib[0]
+freetypelib = ffi.gc(freetypelib[0], ft2.FT_Done_Library)
+
+local function done_face(face)
+    local lib = face.generic.data
+    assert(ft2.FT_Done_Face(face) == 0, "freetype error when freeing face")
+    ft2.FT_Done_Library(lib)
+end
+
+local function new_face(filename, faceindex)
+    local facept = ffi.new("FT_Face[1]")
+    local err = ft2.FT_New_Face(freetypelib, filename, faceindex, facept)
+    if err ~= 0 then
+        error("Failed to load font '"..filename.."', freetype error code: "..err)
+    end
+    local face = ffi.gc(facept[0], done_face)
+    ft2.FT_Reference_Library(freetypelib)
+    face.generic.data = freetypelib
+    return face
+end
 
 local FT = {}
 
@@ -125,8 +143,8 @@ function FTFace_mt.__index:getHeightAndAscender()
 end
 
 function FTFace_mt.__index:done()
-    -- Note that past this point, accessing self is illegal, FT2 frees the pointer
-    assert(ft2.FT_Done_Face(self) == 0, "freetype error when freeing face")
+    ffi.gc(self, nil)
+    done_face(self)
 end
 
 function FTFace_mt.__index:getInfo()
@@ -171,35 +189,23 @@ local FTFaceType = ffi.metatype("struct FT_FaceRec_", FTFace_mt) -- luacheck: ig
 function FT.newFace(filename, pxsize, faceindex)
     if pxsize == nil then pxsize = 16*64 end
     if faceindex == nil then faceindex = 0 end
-
-    local facept = ffi.new("FT_Face[1]")
-
-    local err = ft2.FT_New_Face(freetypelib, filename, faceindex, facept)
-    if err ~= 0 then
-        error("Failed to load font '"..filename.."', freetype error code: "..err)
-    end
-
-    local face = facept[0]
-
+    local face = new_face(filename, faceindex)
     if ft2.FT_Set_Pixel_Sizes(face, 0, pxsize) ~= 0 then
-        ft2.FT_Done_Face(face)
+        face:done()
         error("freetype error")
     end
-
     -- if face.charmap == nil then
         --TODO
     -- end
-
     return face
 end
 
 function FT.getFaceCount(filename, info)
     -- Probes number of faces available within the font file
-    local ftface = ffi.new("FT_Face[1]")
-    if ft2.FT_New_Face(freetypelib, filename, -1, ftface) ~= 0 then return nil end
-    local fp = ftface[0]
-    local nfaces = tonumber(ftface[0].num_faces)
-    fp:done()
+    local success, face = pcall(new_face, filename, -1)
+    if not success then return nil end
+    local nfaces = tonumber(face.num_faces)
+    face:done()
     return nfaces
 end
 

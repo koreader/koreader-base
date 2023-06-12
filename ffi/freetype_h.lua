@@ -232,6 +232,8 @@ struct FT_CharMapRec_ {
   FT_UShort encoding_id;
 };
 FT_Error FT_Init_FreeType(FT_Library *) __attribute__((visibility("default")));
+FT_Error FT_Reference_Library(FT_Library) __attribute__((visibility("default")));
+FT_Error FT_Done_Library(FT_Library) __attribute__((visibility("default")));
 FT_Error FT_New_Face(FT_Library, const char *, FT_Long, FT_Face *) __attribute__((visibility("default")));
 FT_Error FT_Set_Pixel_Sizes(FT_Face, FT_UInt, FT_UInt) __attribute__((visibility("default")));
 FT_Error FT_Done_Face(FT_Face) __attribute__((visibility("default")));
