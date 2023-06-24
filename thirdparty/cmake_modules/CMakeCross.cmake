@@ -33,7 +33,7 @@ if($ENV{CROSS_TC} MATCHES "^x86_64-.*")
 endif()
 
 # Otherwise, we should mostly be targeting ARM ;).
-if($ENV{CROSS_TC} MATCHES "^armv7a-.*")
+if(($ENV{CROSS_TC} MATCHES "^arm-.*") OR ($ENV{CROSS_TC} MATCHES "^armv7a-.*"))
 	set(CMAKE_SYSTEM_PROCESSOR arm)
 endif()
 

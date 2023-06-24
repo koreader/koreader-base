@@ -24,7 +24,7 @@ assert_var_defined(XCFLAGS)
 # disable a couple of things to save a small bit of space
 # CMYK plotter only 100 kB
 # javascript (for form data validation) close to 800 kB
-set(XCFLAGS "${XCFLAGS} -DFZ_PLOTTERS_CMYK=0 -DFZ_ENABLE_JS=0 -D_FILE_OFFSET_BITS=32")
+set(XCFLAGS "${XCFLAGS} -DFZ_PLOTTERS_CMYK=0 -DFZ_ENABLE_JS=0")
 if(($ENV{ANDROID}) AND (${CHOST} MATCHES "^armv7a-.*"))
     set(XCFLAGS "${XCFLAGS} -D_FILE_OFFSET_BITS=32")
 endif()
