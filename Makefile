@@ -273,4 +273,4 @@ test: $(OUTPUT_DIR)/spec $(OUTPUT_DIR)/.busted
 		--exclude-tags=notest \
 		-o gtest ./spec/base/unit
 
-.PHONY: all android-toolchain clean distclean dist-clean test
+.PHONY: all clean distclean dist-clean test

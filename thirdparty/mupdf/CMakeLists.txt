@@ -25,7 +25,7 @@ assert_var_defined(XCFLAGS)
 # CMYK plotter only 100 kB
 # javascript (for form data validation) close to 800 kB
 set(XCFLAGS "${XCFLAGS} -DFZ_PLOTTERS_CMYK=0 -DFZ_ENABLE_JS=0 -D_FILE_OFFSET_BITS=32")
-if($ENV{ANDROID} AND (${CHOST} MATCHES "^armv7a-.*"))
+if(($ENV{ANDROID}) AND (${CHOST} MATCHES "^armv7a-.*"))
     set(XCFLAGS "${XCFLAGS} -D_FILE_OFFSET_BITS=32")
 endif()
 set(STATIC_BUILD_CMD sh -c "${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS}")
