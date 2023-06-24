@@ -57,7 +57,7 @@ if(DEFINED ENV{ANDROID})
 else()
     # set compiler name
     set(CMAKE_C_COMPILER $ENV{CROSS_TC}-gcc)
-    set(CMAKE_CXX_COMPILER $ENV{CROSS_TC}-gcc++)
+    set(CMAKE_CXX_COMPILER $ENV{CROSS_TC}-g++)
     # set various other toolchain tools
     # NOTE: These apparently need to be cache values for arcane CMake reasons.
     #       Should also apparently be fully resolved absolute paths,
