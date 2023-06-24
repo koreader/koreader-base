@@ -151,7 +151,7 @@ $(OUTPUT_DIR)/libs/libkoreader-cre.so: cre.cpp \
 	$(CXX) -I$(CRENGINE_SRC_DIR)/crengine/include/ $(DYNLIB_CXXFLAGS) \
 		-DLDOM_USE_OWN_MEM_MAN=$(if $(WIN32),0,1) -DUSE_SRELL_REGEX=1 \
 		$(if $(WIN32),-DQT_GL=1) $(SYMVIS_FLAGS) -o $@ cre.cpp $(LUAJIT_LIB_LINK_FLAG) \
-		-lcrengine $(if $(ANDROID),$(SHARED_STL_LINK_FLAG),)
+		-lcrengine
 ifdef DARWIN
 	install_name_tool -change \
 		`otool -L "$@" | grep "libluajit" | awk '{print $$1}'` \
@@ -170,9 +170,13 @@ $(OUTPUT_DIR)/libs/libkoreader-xtext.so: xtext.cpp \
 	-I$(HARFBUZZ_DIR)/include/harfbuzz \
 	-I$(FRIBIDI_DIR)/include/fribidi \
 	-I$(LIBUNIBREAK_DIR)/include \
-	$(DYNLIB_CXXFLAGS) $(SYMVIS_FLAGS) -Wall -o $@ xtext.cpp $(LUAJIT_LIB_LINK_FLAG) \
-	$(FREETYPE_LIB_LINK_FLAG) $(HARFBUZZ_LIB_LINK_FLAG) $(FRIBIDI_LIB_LINK_FLAG) $(LIBUNIBREAK_LIB_LINK_FLAG) \
-	$(if $(ANDROID),$(SHARED_STL_LINK_FLAG),)
+	$(DYNLIB_CXXFLAGS) $(SYMVIS_FLAGS) \
+	$(FREETYPE_LIB_LINK_FLAG) \
+	$(FRIBIDI_LIB_LINK_FLAG) \
+	$(HARFBUZZ_LIB_LINK_FLAG) \
+	$(LIBUNIBREAK_LIB_LINK_FLAG) \
+	$(LUAJIT_LIB_LINK_FLAG) \
+	-Wall -o $@ xtext.cpp
 ifdef DARWIN
 	install_name_tool -change \
 		`otool -L "$@" | grep "libluajit" | awk '{print $$1}'` \
@@ -237,20 +241,6 @@ $(OUTPUT_DIR)/extr: extr.c $(MUPDF_LIB) $(MUPDF_DIR)/include $(JPEG_LIB) $(FREET
 	$(CC) -I$(MUPDF_DIR) -I$(MUPDF_DIR)/include \
 		$(CFLAGS) -Wl,-rpath,'libs' -o $@ extr.c \
 		-lmupdf $(JPEG_LIB_LINK_FLAG) $(FREETYPE_LIB_LINK_FLAG)
-
-# ===========================================================================
-# helper target for creating standalone android toolchain from NDK
-# NDK variable should be set in your environment and it should point to
-# the root directory of the NDK
-#
-# --deprecated-headers is necessary in NDK 15, but will fail in 12-14
-android-toolchain:
-ifneq ($(wildcard $(NDK)/build/tools),)
-	$(NDK)/build/tools/make_standalone_toolchain.py --force --install-dir=$(ANDROID_TOOLCHAIN) \
-		--arch $(ANDROID_ARCH) --api $(NDKABI) --deprecated-headers || \
-	$(NDK)/build/tools/make_standalone_toolchain.py --force --install-dir=$(ANDROID_TOOLCHAIN) \
-		--arch $(ANDROID_ARCH) --api $(NDKABI)
-endif
 
 # ===========================================================================
 # helper target for initializing third-party code

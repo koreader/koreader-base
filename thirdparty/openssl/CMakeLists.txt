@@ -30,16 +30,14 @@ endif()
 if (NOT "${CHOST}" STREQUAL "")
     # NOTE: We bypass ccache for the Configure script, in the hope that it'll help the whole makedepend detection.
     #       At least OpenSSL 1.1.x now drops it instead of trying to call a nonexistent binary, so it's less annoying than before.
-    if($ENV{ANDROID})
-        set(CFG_ENV_VAR "CC=\"gcc\"")
-    else()
-        set(CFG_ENV_VAR "CROSS_COMPILE=\"${CHOST}-\" CC=\"${REALCC}\"")
-    endif()
+    set(CFG_ENV_VAR "CROSS_COMPILE=\"${CHOST}-\" CC=\"${REALCC}\"")
 endif()
 
 if($ENV{ANDROID})
+    assert_var_defined(NDKABI)
+    set(CFG_OPTS "-D__ANDROID_API__=${NDKABI} ${CFG_OPTS}")
     # If we're on ARM, make it so
-    if (${CHOST} MATCHES "^arm-.*")
+    if (${CHOST} MATCHES "^armv7a-.*")
         set(CFG_OPTS "android-arm ${CFG_OPTS}")
     elseif (${CHOST} MATCHES "^aarch64-.*")
         set(CFG_OPTS "android-arm64 ${CFG_OPTS}")

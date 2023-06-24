@@ -33,7 +33,7 @@ if($ENV{CROSS_TC} MATCHES "^x86_64-.*")
 endif()
 
 # Otherwise, we should mostly be targeting ARM ;).
-if($ENV{CROSS_TC} MATCHES "^arm-.*")
+if($ENV{CROSS_TC} MATCHES "^armv7a-.*")
 	set(CMAKE_SYSTEM_PROCESSOR arm)
 endif()
 
@@ -42,27 +42,33 @@ if(DEFINED ENV{CCACHE})
     set(CMAKE_CXX_COMPILER_LAUNCHER $ENV{CCACHE})
 endif()
 
-# set compiler name
-set(CMAKE_C_COMPILER $ENV{CROSS_TC}-gcc)
-set(CMAKE_CXX_COMPILER $ENV{CROSS_TC}-g++)
-
-# Choose the right STL on Android
 if(DEFINED ENV{ANDROID})
-    # NOTE: This is mostly for documentation purposes, if we ever switch to the NDK toolchain config file,
-    #       c.f., android-ndk-r15c/build/cmake/android.toolchain.cmake
-    set(ANDROID_STL gnustl_shared)
+    # set compiler name
+    set(CMAKE_C_COMPILER $ENV{CROSS_TC}-clang)
+    set(CMAKE_CXX_COMPILER $ENV{CROSS_TC}-clang++)
+    # set various other toolchain tools
+    # NOTE: see below.
+    set(CMAKE_STRIP "llvm-strip" CACHE FILEPATH "Strip")
+    set(CMAKE_AR "llvm-ar" CACHE FILEPATH "Archive")
+    set(CMAKE_RANLIB "llvm-ranlib" CACHE FILEPATH "RanLib")
+    set(CMAKE_NM "llvm-nm" CACHE FILEPATH "NM")
+    # Choose the right STL on Android
+    set(ANDROID_STL c++_shared)
+else()
+    # set compiler name
+    set(CMAKE_C_COMPILER $ENV{CROSS_TC}-gcc)
+    set(CMAKE_CXX_COMPILER $ENV{CROSS_TC}-gcc++)
+    # set various other toolchain tools
+    # NOTE: These apparently need to be cache values for arcane CMake reasons.
+    #       Should also apparently be fully resolved absolute paths,
+    #       but that lead to weird expansion and hilarious warnings last time I tried...
+    #       If all else fails, comment out, and hope just export AR & co will do the job.
+    #       That, or directly including this in a toplevel CmakeFile.txt...
+    set(CMAKE_STRIP "$ENV{CROSS_TC}-strip" CACHE FILEPATH "Strip")
+    set(CMAKE_AR "$ENV{CROSS_TC}-ar" CACHE FILEPATH "Archive")
+    set(CMAKE_RANLIB "$ENV{CROSS_TC}-ranlib" CACHE FILEPATH "RanLib")
+    set(CMAKE_NM "$ENV{CROSS_TC}-nm" CACHE FILEPATH "NM")
 endif()
-
-# set various other toolchain tools
-# NOTE: These apparently need to be cache values for arcane CMake reasons.
-#       Should also apparently be fully resolved absolute paths,
-#       but that lead to weird expansion and hilarious warnings last time I tried...
-#       If all else fails, comment out, and hope just export AR & co will do the job.
-#       That, or directly including this in a toplevel CmakeFile.txt...
-set(CMAKE_STRIP "$ENV{CROSS_TC}-strip" CACHE FILEPATH "Strip")
-set(CMAKE_AR "$ENV{CROSS_TC}-ar" CACHE FILEPATH "Archive")
-set(CMAKE_RANLIB "$ENV{CROSS_TC}-ranlib" CACHE FILEPATH "RanLib")
-set(CMAKE_NM "$ENV{CROSS_TC}-nm" CACHE FILEPATH "NM")
 
 # Set path(s) to search for libraries/binaries/headers
 set(CMAKE_SYSROOT $ENV{SYSROOT})
