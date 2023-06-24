@@ -23,10 +23,6 @@ if(DEFINED ENV{ANDROID})
 endif()
 
 set(CFG_ENV_VAR "CC=\"${CC}\" AR=\"${AR}\" RANLIB=\"${RANLIB}\" CPPFLAGS=\"${CPPFLAGS}\" LDFLAGS=\"${LDFLAGS}\"")
-if(DEFINED ENV{ANDROID})
-    # workaround of 'undefined reference to getdtablesize' for NDK-r11c
-    set(CFG_ENV_VAR "${CFG_ENV_VAR} ac_cv_member_struct_lconv_decimal_point=no LDFLAGS=\"${LDFLAGS} -lc\" LIBS=${NDK}/platforms/android-${NDKABI}/arch-arm/usr/lib/libc.a")
-endif()
 set(CFG_OPTS "--enable-silent-rules --with-threads=none --disable-acl --disable-curses --disable-openmp --disable-native-java --disable-java")
 set(CFG_OPTS "${CFG_OPTS} --prefix=${BINARY_DIR} --libdir=${BINARY_DIR}/lib --with-libiconv-prefix=${LIBICONV_PREFIX} --with-included-libunistring --with-included-libxml --with-included-gettext")
 set(CFG_OPTS "${CFG_OPTS} --enable-shared=false --enable-static=true ${CHOST_OPTS}")
@@ -34,7 +30,8 @@ set(CFG_CMD sh -c "${CFG_ENV_VAR} ${SOURCE_DIR}/configure ${CFG_OPTS}")
 
 # remove HAVE_PWD_H for android build
 if(DEFINED ENV{ANDROID})
-    set(CFG_CMD "${CFG_CMD} && ${ISED} \"s|#define HAVE_PWD_H 1||\" gettext-tools/config.h")
+    # Tools? Where we're going we don't need tools.
+    set(CFG_CMD "${CFG_CMD} && ${ISED} 's/^\\(subdirs\\|SUBDIRS\\)\\( = .*\\) gettext-tools\$/\\1\\2/' Makefile")
 endif()
 
 set(GETTEXT_VER "0.21")

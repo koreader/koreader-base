@@ -13,16 +13,21 @@ UNAME_ARCH:=$(shell uname -m)
 # use MAKEFILE_DIR instead of CURDIR for variables that are exported through -include
 MAKEFILE_DIR=$(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 TOOLCHAIN_DIR=$(MAKEFILE_DIR)toolchain
-# Android API level 14 is the minimum target for NDK 15
 ANDROID_ARCH?=arm
-ANDROID_TOOLCHAIN=$(TOOLCHAIN_DIR)/android-toolchain-$(ANDROID_ARCH)
-NDK?=$(TOOLCHAIN_DIR)/android-ndk-r15c
+export ANDROID_HOME := $(or $(ANDROID_HOME),$(ANDROID_SDK_ROOT),$(TOOLCHAIN_DIR)/android-sdk-linux)
+export ANDROID_SDK_ROOT := $(ANDROID_HOME)
+export ANDROID_NDK_HOME := $(or $(ANDROID_NDK_HOME),$(ANDROID_NDK_ROOT),$(TOOLCHAIN_DIR)/android-ndk-r23c)
+export ANDROID_NDK_ROOT := $(ANDROID_NDK_HOME)
+ANDROID_TOOLCHAIN := $(ANDROID_NDK_HOME)/toolchains/llvm/prebuilt/linux-x86_64
 ifeq ($(ANDROID_ARCH), arm64)
-	NDKABI?=21
+	# 64bit arches require at least ABI 21.
+	export NDKABI?=21
 else ifeq ($(ANDROID_ARCH), x86_64)
-	NDKABI?=21
+	# Ditto.
+	export NDKABI?=21
 else
-	NDKABI?=14
+	# Android 4.3 (Jelly Bean MR2); our minimal supported version.
+	export NDKABI?=18
 endif
 
 # Detect LuaRocks 3
@@ -140,16 +145,18 @@ else ifeq ($(TARGET), macos)
 else ifeq ($(TARGET), android)
 	export ANDROID=1
 	export PATH:=$(ANDROID_TOOLCHAIN)/bin:$(PATH)
-	export SYSROOT=$(NDK)/platforms/android-$(NDKABI)/arch-$(ANDROID_ARCH)
+	export SYSROOT=$(ANDROID_TOOLCHAIN)/sysroot
 	ifeq ($(ANDROID_ARCH), x86)
-		CHOST?=i686-linux-android
+		CHOST?=i686-linux-android$(NDKABI)
+	else ifeq ($(ANDROID_ARCH), x86_64)
+		CHOST?=x86_64-linux-android$(NDKABI)
 	else ifeq ($(ANDROID_ARCH), arm64)
-		CHOST?=aarch64-linux-android
+		CHOST?=aarch64-linux-android$(NDKABI)
 	else
-		CHOST?=arm-linux-androideabi
+		CHOST?=armv7a-linux-androideabi$(NDKABI)
 	endif
-	# Needed for OpenSSL, c.f., NOTES.ANDROID
-	export ANDROID_NDK_HOME=$(ANDROID_TOOLCHAIN)
+	export CC=clang
+	export CXX=clang++
 else ifeq ($(TARGET), win32)
 	CHOST?=x86_64-w64-mingw32
 	export WIN32=1
@@ -275,7 +282,12 @@ else
 endif
 
 # set cross-compiler/host AR LD RANLIB
-ifdef CHOST
+ifeq ($(TARGET), android)
+	STRIP:=llvm-strip
+	AR:=llvm-ar
+	LD:=ld
+	RANLIB:=llvm-ranlib
+else ifdef CHOST
 	STRIP:=$(CHOST)-strip
 	AR:=$(CHOST)-ar
 	LD:=$(CHOST)-ld
@@ -303,18 +315,9 @@ LIBTOOLIZE:=$(if $(DARWIN),glibtoolize,libtoolize)
 ifndef DARWIN
 	# TODO: Detect/support libc++ Clang TCs?
 	ifdef ANDROID
-		# Oh, Android... (We'll adjust that later once we know where to look, arch-wise)
-		SHARED_STL_LIB:=$(shell PATH='$(PATH)' $(CC) -print-file-name=libgnustl_shared.so)
-		SHARED_STL_LINK_FLAG:=-lgnustl_shared
-		# NOTE: Speaking of libc++, when we switch to Clang/libc++, keep in mind that the lib is libc++_shared.so,
-		#       but that it has dependencies, c.f., the libc++.so linker script:
-		#       INPUT(-landroid_support -lunwind -latomic -lc++_shared)
-		#       This would probably best be handled in assets/android.lua @ android-luajit-launcher,
-		#       as it's mildly related to our ffi.load linker workarounds...
-		# NOTE: See also ANDROID_STL in thirdparty/cmake_modules/CMakeCross.cmake
+		SHARED_STL_LIB:=$(shell PATH='$(PATH)' $(CC) -print-file-name=libc++_shared.so)
 	else
 		SHARED_STL_LIB:=$(shell PATH='$(PATH)' $(CC) -print-file-name=libstdc++.so.6)
-		SHARED_STL_LINK_FLAG:=-lstdc++
 	endif
 endif
 
@@ -380,9 +383,6 @@ ARM64_GENERIC_ARCH:=-march=armv8-a
 ARMV7_A8_ARCH:=-march=armv7-a -mtune=cortex-a8 -mfpu=neon -mthumb
 # Cortex A9 (Kindle PW2)
 ARMV7_A9_ARCH:=-march=armv7-a -mtune=cortex-a9 -mfpu=neon -mthumb
-# Android.
-ANDROID_COMPAT_CFLAGS:=--sysroot $(SYSROOT)
-ANDROID_COMPAT_CXXFLAGS:=--sysroot $(SYSROOT) -I$(NDK)/sources/cxx-stl/gnu-libstdc++/4.9/include
 # Mirror the NDK's armeabi-v7a APP_ABI (cf. #201)
 ifeq ($(ANDROID_ARCH), arm)
 	ANDROID_ARM_ARCH:=-march=armv7-a -mfpu=vfpv3-d16
@@ -449,23 +449,20 @@ else ifeq ($(TARGET), kindle-legacy)
 	export ac_cv_func_utimensat=no
 	export ac_cv_func_futimens=no
 else ifeq ($(TARGET), android)
-	COMPAT_CFLAGS:=$(ANDROID_COMPAT_CFLAGS)
-	COMPAT_CXXFLAGS:=$(ANDROID_COMPAT_CXXFLAGS)
 	ifeq ($(ANDROID_ARCH), arm)
 		ARM_ARCH:=$(ANDROID_ARM_ARCH)
 		ARM_ARCH+=-mfloat-abi=softfp
-		export ac_cv_type_in_port_t=yes
-		COMPAT_LDFLAGS:=-L$(NDK)/sources/cxx-stl/gnu-libstdc++/4.9/libs/armeabi-v7a
-		COMPAT_CXXFLAGS+=-I$(NDK)/sources/cxx-stl/gnu-libstdc++/4.9/libs/armeabi-v7a/include
-		SHARED_STL_LIB:=$(ANDROID_TOOLCHAIN)/arm-linux-androideabi/lib/armv7-a/thumb/libgnustl_shared.so
 	else ifeq ($(ANDROID_ARCH), arm64)
 		ARM_ARCH:=$(ANDROID_ARM_ARCH)
-		export ac_cv_type_in_port_t=yes
-		COMPAT_LDFLAGS:=-L$(NDK)/sources/cxx-stl/gnu-libstdc++/4.9/libs/arm64-v8a
-		COMPAT_CXXFLAGS+=-I$(NDK)/sources/cxx-stl/gnu-libstdc++/4.9/libs/arm64-v8a/include
 	else ifeq ($(ANDROID_ARCH), x86)
-		COMPAT_LDFLAGS:=-L$(NDK)/sources/cxx-stl/gnu-libstdc++/4.9/libs/x86
-		COMPAT_CXXFLAGS+=-I$(NDK)/sources/cxx-stl/gnu-libstdc++/4.9/libs/x86/include
+	endif
+	ifneq (,$(filter arm%,$(ANDROID_ARCH)))
+		export ac_cv_type_in_port_t=yes
+	endif
+	ifneq (,$(filter arm x86,$(ANDROID_ARCH)))
+		# NOTE: to be removed when upgrading the minimal supported API level to 24.
+		# (https://android.googlesource.com/platform/bionic/+/master/docs/32-bit-abi.md)
+		export ac_cv_sys_file_offset_bits=32
 	endif
 else ifeq ($(TARGET), remarkable)
 	ARM_ARCH:=$(ARMV7_A9_ARCH)
@@ -564,8 +561,11 @@ endif
 ifeq ($(TARGET), android)
 	LDFLAGS+=-no-canonical-prefixes
 	ifeq ($(ANDROID_ARCH), arm)
+		# FIXME: `--Wl,--fix-cortex-a8` still needed?
 		LDFLAGS+=-Wl,--fix-cortex-a8 -march=armv7-a
 	endif
+	# Fix https://github.com/android/ndk/issues/1615
+	LDFLAGS+=$(shell $(CC) -print-libgcc-file-name)
 endif
 
 ifeq ($(TARGET), win32)
