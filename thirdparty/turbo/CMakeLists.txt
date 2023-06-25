@@ -33,8 +33,8 @@ ExternalProject_Add(
     ${PROJECT_NAME}
     DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
     BUILD_IN_SOURCE 1
-    # Patch turbo to specify path of libssl and libcrypto and to remove -Werror flag from turbo/deps/http_parser/Makefile
-    PATCH_COMMAND COMMAND "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/turbo.patch"
+    # Drop duplicate cdefs, make sure turbo find its libtffi_wrap library, and pull in upstream fixes
+    PATCH_COMMAND COMMAND "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/turbo.patch" COMMAND "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/d7a8a247a4a2689b0f207162eb804141c87c4899.patch"
     CONFIGURE_COMMAND COMMAND ${PATCH_CMD}
     BUILD_COMMAND ${BUILD_CMD}
     # skip install
