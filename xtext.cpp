@@ -8,6 +8,8 @@
 // For many links and notes about the concepts and libraries used,
 // see: https://github.com/koreader/crengine/issues/307
 
+#include <assert.h>
+
 extern "C"
 {
 #include <lua.h>
@@ -25,6 +27,7 @@ extern "C"
 
 // Freetype
 #include <freetype/ftmodapi.h>
+#include <freetype/ftsizes.h>
 
 // libunibreak
 #include <wordbreak.h>
@@ -283,6 +286,7 @@ typedef struct {
 // Holder of HB data structures per font, to be stored as a userdata
 // in the Lua font table
 typedef struct {
+    FT_Size        ft_size;
     hb_font_t *    hb_font;
     hb_buffer_t *  hb_buffer;
     hb_feature_t * hb_features;
@@ -568,17 +572,17 @@ public:
 
         // Not previously stored: we have to create it and store it
 
-        // Get the 'ftface' Freetype FFI wrapped object
-        lua_getfield(m_L, -1, "ftface");
+        // Get the 'ftsize' Freetype FFI wrapped object
+        lua_getfield(m_L, -1, "ftsize");
         // printf("face type: %d %s\n", lua_type(m_L, -1), lua_typename(m_L, lua_type(m_L, -1)));
         // We expect it to be a luajit ffi cdata, but the C API does not have a #define for
         // that type. But it looks like its value is higher than the greatest LUA_T* type.
         if ( lua_type(m_L, -1) <= LUA_TTHREAD ) {// Higher plain Lua datatype (lua.h)
             luaL_typerror(m_L, -1, "cdata");
         }
-        // Get the usable (for Harfbuzz) FT_Face object
-        FT_Face face = *(FT_Face *)lua_topointer(m_L, -1);
-        lua_pop(m_L, 1); // remove ftface object
+        // Get the usable (for Harfbuzz) FT_Size object
+        FT_Size size = *(FT_Size *)lua_topointer(m_L, -1);
+        lua_pop(m_L, 1); // remove ftsize object
 
         // Create a Lua userdata that will keep the reference to our hb_data
         // (alloc/free of this userdata is managed by Lua, but not the cleanup
@@ -591,8 +595,11 @@ public:
         // Set this userdata as the '_hb_font_data' key of our Lua font table
         lua_setfield(m_L, -2, XTEXT_LUA_HB_FONT_DATA_TABLE_KEY_NAME);
 
-        hb_data->hb_font = hb_ft_font_create_referenced(face);
-        FT_Reference_Library((FT_Library)face->generic.data);
+        ++*(int *)size->generic.data;
+        FT_Activate_Size(size);
+        hb_data->ft_size = size;
+        FT_Reference_Library((FT_Library)size->face->generic.data);
+        hb_data->hb_font = hb_ft_font_create_referenced(size->face);
         // These flags should be sync'ed with freetype.lua FT_Load_Glyph_flags:
         // hb_ft_font_set_load_flags(hb_data->hb_font, FT_LOAD_TARGET_LIGHT | FT_LOAD_FORCE_AUTOHINT);
         // No hinting, as it would mess synthetized bold.
@@ -637,6 +644,7 @@ public:
                 m_hyphen_width = 0;
                 break;
             }
+            FT_Activate_Size(hb_data->ft_size);
             hb_font_t * _hb_font = hb_data->hb_font;
             hb_codepoint_t glyph_id;
             if ( hb_font_get_glyph(_hb_font, REALHYPHEN_CHAR, 0, &glyph_id) ) {
@@ -836,6 +844,8 @@ public:
         xtext_hb_font_data * hb_data = getHbFontData(font_num);
         if ( !hb_data ) // No such font (so, no more fallback font)
             return NOT_MEASURED;
+
+        FT_Activate_Size(hb_data->ft_size);
 
         hb_font_t *    _hb_font     = hb_data->hb_font;
         hb_buffer_t *  _hb_buffer   = hb_data->hb_buffer;
@@ -1741,6 +1751,8 @@ public:
         if ( !hb_data ) // No such font (so, no more fallback font)
             return;
 
+        FT_Activate_Size(hb_data->ft_size);
+
         hb_font_t *    _hb_font     = hb_data->hb_font;
         hb_buffer_t *  _hb_buffer   = hb_data->hb_buffer;
         hb_feature_t * _hb_features = hb_data->hb_features;
@@ -2284,12 +2296,22 @@ XText * check_XText(lua_State * L, int n, bool replace_with_uservalue=true, bool
 static int xtext_hb_font_data_destroy(lua_State *L) {
     // printf("xtext_hb_font_data_destroy called\n");
     xtext_hb_font_data * hb_data = (xtext_hb_font_data *)luaL_checkudata(L, -1, XTEXT_HB_FONT_DATA_METATABLE_NAME);
-    FT_Library ft_lib = (FT_Library)hb_ft_font_get_face(hb_data->hb_font)->generic.data;
+    FT_Face ft_face = hb_data->ft_size->face;
+    FT_Library ft_lib = (FT_Library)ft_face->generic.data;
+    int *refcount = (int *)hb_data->ft_size->generic.data;
+    assert(*refcount > 0);
+    if (!--*refcount) {
+        free(refcount);
+        FT_Done_Size(hb_data->ft_size);
+        FT_Done_Face(ft_face);
+        FT_Done_Library(ft_lib);
+    }
     hb_font_destroy(hb_data->hb_font);
     FT_Done_Library(ft_lib);
     hb_buffer_destroy(hb_data->hb_buffer);
     if ( hb_data->hb_features )
         free(hb_data->hb_features);
+    hb_data->ft_size = NULL;
     hb_data->hb_font = NULL;
     hb_data->hb_buffer = NULL;
     hb_data->hb_features = NULL;

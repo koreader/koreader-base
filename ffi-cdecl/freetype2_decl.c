@@ -5,6 +5,7 @@
 #include <freetype/freetype.h>
 #include <freetype/ftmodapi.h>
 #include <freetype/ftoutln.h>
+#include <freetype/ftsizes.h>
 #include <freetype/ftsnames.h>
 #include <freetype/ftsynth.h>
 #include <freetype/ttnameid.h>
@@ -100,7 +101,12 @@ cdecl_func(FT_Done_Library)
 
 cdecl_func(FT_New_Face)
 cdecl_func(FT_Set_Pixel_Sizes)
+cdecl_func(FT_Reference_Face)
 cdecl_func(FT_Done_Face)
+
+cdecl_func(FT_New_Size)
+cdecl_func(FT_Done_Size)
+cdecl_func(FT_Activate_Size)
 
 cdecl_func(FT_Get_Char_Index)
 cdecl_func(FT_Load_Char)
@@ -160,10 +166,8 @@ cdecl_const(FT_FACE_FLAG_EXTERNAL_STREAM)
 cdecl_const(FT_FACE_FLAG_FAST_GLYPHS)
 cdecl_const(FT_FACE_FLAG_HINTER)
 
-
 cdecl_const(FT_STYLE_FLAG_BOLD)
 cdecl_const(FT_STYLE_FLAG_ITALIC)
-
 
 cdecl_const(FT_KERNING_DEFAULT)
 cdecl_const(FT_KERNING_UNFITTED)
@@ -178,8 +182,6 @@ cdecl_func(FT_Get_Sfnt_Table)
 
 cdecl_struct(FT_SfntName_)
 cdecl_type(FT_SfntName)
-
-
 
 cdecl_const(TT_NAME_ID_COPYRIGHT)
 cdecl_const(TT_NAME_ID_FONT_FAMILY)
