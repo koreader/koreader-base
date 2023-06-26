@@ -236,7 +236,11 @@ FT_Error FT_Reference_Library(FT_Library) __attribute__((visibility("default")))
 FT_Error FT_Done_Library(FT_Library) __attribute__((visibility("default")));
 FT_Error FT_New_Face(FT_Library, const char *, FT_Long, FT_Face *) __attribute__((visibility("default")));
 FT_Error FT_Set_Pixel_Sizes(FT_Face, FT_UInt, FT_UInt) __attribute__((visibility("default")));
+FT_Error FT_Reference_Face(FT_Face) __attribute__((visibility("default")));
 FT_Error FT_Done_Face(FT_Face) __attribute__((visibility("default")));
+FT_Error FT_New_Size(FT_Face, FT_Size *) __attribute__((visibility("default")));
+FT_Error FT_Done_Size(FT_Size) __attribute__((visibility("default")));
+FT_Error FT_Activate_Size(FT_Size) __attribute__((visibility("default")));
 FT_UInt FT_Get_Char_Index(FT_Face, FT_ULong) __attribute__((visibility("default")));
 FT_Error FT_Load_Char(FT_Face, FT_ULong, int) __attribute__((visibility("default")));
 FT_Error FT_Get_Kerning(FT_Face, FT_UInt, FT_UInt, FT_UInt, FT_Vector *) __attribute__((visibility("default")));
