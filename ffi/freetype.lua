@@ -42,9 +42,38 @@ local function new_face(filename, faceindex)
     return face
 end
 
+local function done_size(size)
+    local face = size.face
+    local refcount = ffi.cast("int *", size.generic.data)
+    assert(refcount[0] > 0)
+    refcount[0] = refcount[0] - 1
+    if refcount[0] > 0 then
+        return
+    end
+    ffi.C.free(refcount)
+    assert(ft2.FT_Done_Size(size) == 0, "freetype error when freeing size")
+    local lib = face.generic.data
+    ft2.FT_Done_Face(face)
+    ft2.FT_Done_Library(lib)
+end
+
+local function new_size(face)
+    local sizept = ffi.new("FT_Size[1]")
+    local err = ft2.FT_New_Size(face, sizept)
+    if err ~= 0 then
+        error("Failed to create font size, freetype error code: "..err)
+    end
+    ft2.FT_Reference_Face(face)
+    ft2.FT_Reference_Library(face.generic.data)
+    local size = ffi.gc(sizept[0], done_size)
+    local refcount = ffi.cast("int *", ffi.C.malloc(ffi.sizeof("int")))
+    size.generic.data = refcount
+    refcount[0] = 1;
+    return size
+end
+
 local FT = {}
 
--- metatable for BlitBuffer objects:
 local FTFace_mt = {__index={}}
 
 function FTFace_mt.__index:checkGlyph(char)
@@ -186,18 +215,71 @@ end
 
 local FTFaceType = ffi.metatype("struct FT_FaceRec_", FTFace_mt) -- luacheck: ignore 211
 
+local FTSize_mt = {__index={}}
+
+function FTSize_mt.__index:checkGlyph(char)
+    assert(ft2.FT_Activate_Size(self) == 0, "failed to activate font size")
+    return self.face:checkGlyph(char)
+end
+
+function FTSize_mt.__index:renderGlyph(char, bold)
+    assert(ft2.FT_Activate_Size(self) == 0, "failed to activate font size")
+    local glyph = self.face:renderGlyph(char, bold)
+    return glyph
+end
+
+function FTSize_mt.__index:renderGlyphByIndex(index, embolden_half_strength)
+    assert(ft2.FT_Activate_Size(self) == 0, "failed to activate font size")
+    return self.face:renderGlyphByIndex(index, embolden_half_strength)
+end
+
+function FTSize_mt.__index:getEmboldenHalfStrength(factor)
+    assert(ft2.FT_Activate_Size(self) == 0, "failed to activate font size")
+    return self.face:getEmboldenHalfStrength(factor)
+end
+
+function FTSize_mt.__index:getHeightAndAscender()
+    assert(ft2.FT_Activate_Size(self) == 0, "failed to activate font size")
+    return self.face:getHeightAndAscender()
+end
+
+function FTSize_mt.__index:getInfo()
+    assert(ft2.FT_Activate_Size(self) == 0, "failed to activate font size")
+    return self.face:getInfo()
+end
+
+function FTSize_mt.__index:getKerning(leftcharcode, rightcharcode)
+    assert(ft2.FT_Activate_Size(self) == 0, "failed to activate font size")
+    return self.face:getKerning(leftcharcode, rightcharcode)
+end
+
+function FTSize_mt.__index:done()
+    ffi.gc(self, nil)
+    done_size(self)
+end
+
+local FTSizeType = ffi.metatype("struct FT_SizeRec_", FTSize_mt) -- luacheck: ignore 211
+
+local faces_cache = setmetatable({}, {__mode="v"})
+
 function FT.newFace(filename, pxsize, faceindex)
     if pxsize == nil then pxsize = 16*64 end
     if faceindex == nil then faceindex = 0 end
-    local face = new_face(filename, faceindex)
-    if ft2.FT_Set_Pixel_Sizes(face, 0, pxsize) ~= 0 then
-        face:done()
+    local cache_key = string.format('%s:%d', filename, faceindex)
+    local face = faces_cache[cache_key]
+    if not face then
+        face = new_face(filename, faceindex)
+        faces_cache[cache_key] = face
+    end
+    local size = new_size(face)
+    if ft2.FT_Activate_Size(size) ~= 0 or ft2.FT_Set_Pixel_Sizes(face, 0, pxsize) ~= 0 then
+        size:done()
         error("freetype error")
     end
     -- if face.charmap == nil then
         --TODO
     -- end
-    return face
+    return size
 end
 
 function FT.getFaceCount(filename, info)
