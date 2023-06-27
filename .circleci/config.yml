@@ -32,9 +32,6 @@ workflows:
       - pocketbook:
           requires:
             - emu_gcc_ninja_debug
-      - sony-prstux:
-          requires:
-            - emu_gcc_ninja_debug
       - cervantes:
           requires:
             - emu_gcc_ninja_debug
