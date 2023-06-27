@@ -60,6 +60,7 @@ local SDL_TOUCH_MOUSEID = ffi.cast('uint32_t', -1);
 
 local S = {
     w = 0, h = 0,
+    win_w = 0, win_h = 0,
     screen = nil,
     renderer = nil,
     texture = nil,
@@ -67,8 +68,6 @@ local S = {
 }
 
 local function openGameController()
-    print("openGameController")
-    print(debug.traceback())
     local num_joysticks = SDL.SDL_NumJoysticks()
 
     if num_joysticks < 1 then
@@ -94,7 +93,6 @@ end
 
 -- initialization for both input and eink output
 function S.open(w, h, x, y)
-    print("S.open", w, h, x, y)
     if SDL.SDL_WasInit(SDL.SDL_INIT_VIDEO) ~= 0 then
         -- already initialized
         return true
@@ -117,13 +115,8 @@ function S.open(w, h, x, y)
         end
         S.win_w, S.win_h = mode.w, mode.h
     else
-        -- FIXME
-        --[[
         S.win_w = tonumber(os.getenv("EMULATE_READER_W")) or w or 600
         S.win_h = tonumber(os.getenv("EMULATE_READER_H")) or h or 800
-        --]]
-        S.win_w = w or 600
-        S.win_h = h or 800
     end
 
     -- Disable to work around an SDL issue in 2.0.22.
@@ -144,8 +137,8 @@ function S.open(w, h, x, y)
         S.win_w, S.win_h,
         bit.bor(full_screen and SDL.SDL_WINDOW_FULLSCREEN or 0, SDL.SDL_WINDOW_RESIZABLE, SDL.SDL_WINDOW_ALLOW_HIGHDPI)
     )
-    print("CreateWindow @", pos_x, pos_y)
     -- For some mysterious reason, CreateWindow doesn't give a damn about the initial position, and will enforce top-left (we get an SDL_WINDOWEVENT_MOVED), so, force its hand...
+    -- What's even more curious is that we still only get a single SDL_WINDOWEVENT_MOVED on startup, except that way it's at the requested coordinates...
     SDL.SDL_SetWindowPosition(S.screen, pos_x, pos_y)
 
     S.renderer = SDL.SDL_CreateRenderer(S.screen, -1, 0)
