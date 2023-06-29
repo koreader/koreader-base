@@ -142,6 +142,8 @@ cdecl_func(SDL_CreateTexture)
 cdecl_func(SDL_UpdateTexture)
 cdecl_func(SDL_DestroyTexture)
 cdecl_func(SDL_SetWindowTitle)
+cdecl_func(SDL_GetWindowPosition)
+cdecl_func(SDL_SetWindowPosition)
 
 cdecl_type(SDL_blit)
 cdecl_func(SDL_CreateRGBSurface)

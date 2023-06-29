@@ -10,7 +10,10 @@ local framebuffer = {
 
 function framebuffer:init()
     if not self.dummy then
-        SDL.open(self.win_w, self.win_h, self.x, self.y)
+        -- Input dimensions are *window* sizes
+        SDL.open(self.w, self.h, self.x, self.y)
+        -- Open might fudge them a bit on the emu, so, resync
+        self.w, self.h = SDL.win_w, SDL.win_h
         self:_newBB()
     else
         self.bb = BB.new(600, 800)

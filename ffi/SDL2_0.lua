@@ -60,6 +60,7 @@ local SDL_TOUCH_MOUSEID = ffi.cast('uint32_t', -1);
 
 local S = {
     w = 0, h = 0,
+    win_w = 0, win_h = 0,
     screen = nil,
     renderer = nil,
     texture = nil,
@@ -129,12 +130,16 @@ function S.open(w, h, x, y)
     end
 
     -- set up screen (window)
+    local pos_x = tonumber(os.getenv("KOREADER_WINDOW_POS_X")) or x or SDL.SDL_WINDOWPOS_UNDEFINED
+    local pos_y = tonumber(os.getenv("KOREADER_WINDOW_POS_Y")) or y or SDL.SDL_WINDOWPOS_UNDEFINED
     S.screen = SDL.SDL_CreateWindow("KOReader",
-        tonumber(os.getenv("KOREADER_WINDOW_POS_X")) or x or SDL.SDL_WINDOWPOS_UNDEFINED,
-        tonumber(os.getenv("KOREADER_WINDOW_POS_Y")) or y or SDL.SDL_WINDOWPOS_UNDEFINED,
+        pos_x, pos_y,
         S.win_w, S.win_h,
-        bit.bor(full_screen and 1 or 0, SDL.SDL_WINDOW_RESIZABLE, SDL.SDL_WINDOW_ALLOW_HIGHDPI)
+        bit.bor(full_screen and SDL.SDL_WINDOW_FULLSCREEN or 0, SDL.SDL_WINDOW_RESIZABLE, SDL.SDL_WINDOW_ALLOW_HIGHDPI)
     )
+    -- For some mysterious reason, CreateWindow doesn't give a damn about the initial position, and will enforce top-left (we get an SDL_WINDOWEVENT_MOVED), so, force its hand...
+    -- What's even more curious is that we still only get a single SDL_WINDOWEVENT_MOVED on startup, except that way it's at the requested coordinates...
+    SDL.SDL_SetWindowPosition(S.screen, pos_x, pos_y)
 
     S.renderer = SDL.SDL_CreateRenderer(S.screen, -1, 0)
     local output_w = ffi.new("int[1]", 0)
@@ -152,8 +157,6 @@ function S.open(w, h, x, y)
         S.h = S.win_h
     end
     S.texture = S.createTexture()
-
-    openGameController()
 end
 
 function S:startTextInput()
