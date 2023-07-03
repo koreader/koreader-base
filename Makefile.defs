@@ -208,6 +208,10 @@ ifdef DARWINHOST
 	endif
 endif
 
+ifneq ($(CCACHE),)
+	export CCACHE
+endif
+
 # NOTE: This is necessary (at least on Android), because some early API levels will not put DT_NEEDED libraries in the global namespace.
 #       Ensuring Lua/C modules have their own DT_NEEDED entry to the shared LuaJIT library works around this quirk (and is otherwise mostly harmless).
 #       Saner APIs behave like Linux, and wouldn't require this hack.
@@ -613,13 +617,9 @@ else
 	export CROSS_STAGING:=$(CMAKE_STAGING_DIR)
 	export CMAKE_TCF:=-DCMAKE_TOOLCHAIN_FILE=$(CURDIR)/thirdparty/cmake_modules/CMakeCross.cmake
 	CMAKE+=$(CMAKE_TCF)
-	ifdef CCACHE
-		CMAKE_C_COMPILER_LAUNCHER:=$(CCACHE)
-		CMAKE_CXX_COMPILER_LAUNCHER:=$(CCACHE)
-	endif
 	REALCC:=$(CC)
 	REALCXX:=$(CXX)
-	CC:=$(CC)
+	CC:=$(strip $(CCACHE) $(CC))
 	CXX:=$(strip $(CCACHE) $(CXX))
 	CFLAGS+=$(ARM_ARCH) $(COMPAT_CFLAGS)
 	CXXFLAGS+=$(ARM_ARCH) $(COMPAT_CXXFLAGS)
