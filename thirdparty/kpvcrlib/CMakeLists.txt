@@ -201,8 +201,8 @@ set (CRENGINE_SOURCES
     ${CRE_DIR}/src/crconcurrent.cpp
 )
 add_library(crengine SHARED ${CRENGINE_SOURCES})
-# Make sure we'll get C++11 support
-target_compile_features(crengine PRIVATE cxx_constexpr)
+# Make sure we get full `constexpr` support.
+target_compile_features(crengine PRIVATE cxx_std_17)
 
 target_link_libraries(crengine PRIVATE chmlib antiword)
 target_link_libraries(crengine PRIVATE ${THIRDPARTY_LIBS})

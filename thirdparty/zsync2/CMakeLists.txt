@@ -55,6 +55,9 @@ else()
 endif()
 #list(APPEND CMAKE_ARGS "-DCURL_INCLUDE_DIRS=${CURL_DIR}/include")
 
+# Fix build with old TCs (kindle & pocketbook).
+set(PATCH_CMD1 "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/fix-old-tc-build.patch")
+
 # NOTE: We're currently using our own fork instead of upstream's (https://github.com/AppImage/zsync2):
 ## * Enable range requests optimizations on the CLI
 ## * Re-implement the -u flag for compatibility w/ the old zsync CLI
@@ -80,7 +83,7 @@ include(ExternalProject)
 ExternalProject_Add(
     zsync2
     DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
-    PATCH_COMMAND ""
+    PATCH_COMMAND COMMAND ${PATCH_CMD1}
     CMAKE_ARGS "${CMAKE_ARGS}"
     CMAKE_GENERATOR "Unix Makefiles"
     BUILD_COMMAND ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS}
