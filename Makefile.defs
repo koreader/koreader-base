@@ -518,32 +518,15 @@ ifdef DARWIN_AARCH64_HOST
 	endif
 endif
 
-# Anything below GCC 6 gets to be forcefully switched to decent standards, because some of our deps require C11 & C++11 support.
-# NOTE: Technically, this also means we require Clang >= 3.2, but that should more or less hold true on our end, because that's truly ancient.
-# Tests heavily inspired from Linux's build system ;).
-CC_IS_CLANG:=$(shell PATH='$(PATH)' $(CC) -v 2>&1 | grep -q "clang version" && echo 1 || echo 0)
-CC_VERSION:=$(shell PATH='$(PATH)' printf "%02d%02d%02d" `echo __GNUC__ | $(CC) -E -x c - | tail -n 1` `echo __GNUC_MINOR__ | $(CC) -E -x c - | tail -n 1` `echo __GNUC_PATCHLEVEL__ | $(CC) -E -x c - | tail -n 1`)
-# Detect Clang's SA, too...
-ifeq "$(CC_IS_CLANG)" "0"
-	ifeq "$(lastword $(subst /, ,$(CC)))" "ccc-analyzer"
-		CC_IS_CLANG:=1
-	endif
+# Some of our deps require C11 & C++17 support.
+# NOTE: Technically, this also means we require GCC >= 8.0 (2018) or Clang >= 5.0.0 (2017),
+hashsign := \#
+hasminstd = $(shell printf '%s\n' '$(hashsign)if $3 >= $4L' 'yes' '$(hashsign)else' 'no' '$(hashsign)endif' '$3' | $1 -x $2 -P -E -)
+ifneq (yes,$(firstword $(call hasminstd,$(CC),c,__STDC_VERSION__,201100)))
+	CSTD_FLAGS := -std=gnu11
 endif
-ifeq "$(CC_IS_CLANG)" "0"
-	# NOTE: GCC 6.1.0 switched to gnu11 & gnu++14, so only tweak older ones.
-	#       c.f., https://stackoverflow.com/q/14737104 for a nice recap.
-	ifeq "$(shell expr $(CC_VERSION) \< 060100)" "1"
-		CSTD_FLAGS:=-std=gnu11
-		CXXSTD_FLAGS:=-std=gnu++11
-	endif
-else
-	# NOTE: Enforce the current default everywhere, otherwise XCode does stupid things on Darwin.
-	#       c.f., https://clang.llvm.org/docs/CommandGuide/clang.html#language-selection-and-mode-options
-	#          &  https://github.com/llvm/llvm-project/blob/1c4b5a8dfed853ca8cbee98f274ff0a173186586/clang/lib/Frontend/CompilerInvocation.cpp#L2136-L2164
-	#       FWIW, the C++ move to gnu++14 by default dates back to Clang 6:
-	#       c.f., https://github.com/llvm-mirror/clang/commit/466d8da5f89b1a780f735c86f414fa69ce63221b
-	CSTD_FLAGS:=-std=gnu11
-	CXXSTD_FLAGS:=-std=gnu++14
+ifneq (yes,$(firstword $(call hasminstd,$(CXX),c++,__cplusplus,201700)))
+	CXXSTD_FLAGS := -std=gnu++17
 endif
 
 HOSTCFLAGS:=$(HOST_ARCH) $(BASE_CFLAGS) $(QFLAGS)
