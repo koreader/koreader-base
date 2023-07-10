@@ -1,4 +1,4 @@
-SHELL:=/usr/bin/env bash
+SHELL = env PATH='$(PATH)' bash
 
 # Use ccache in build system by default. Define USE_NO_CCACHE=1 to force disable it.
 ifeq ($(USE_NO_CCACHE), 1)
@@ -313,12 +313,15 @@ LIBTOOLIZE:=$(if $(DARWIN),glibtoolize,libtoolize)
 # (Also, it was a pain to deal with because of libtool,
 # c.f., https://www.gnu.org/software/libtool/manual/html_node/Stripped-link-flags.html#Stripped-link-flags).
 ifndef DARWIN
-	# TODO: Detect/support libc++ Clang TCs?
-	ifdef ANDROID
-		SHARED_STL_LIB:=$(shell PATH='$(PATH)' $(CC) -print-file-name=libc++_shared.so)
-	else
-		SHARED_STL_LIB:=$(shell PATH='$(PATH)' $(CC) -print-file-name=libstdc++.so.6)
-	endif
+  # TODO: Detect/support libc++ Clang TCs?
+  ifdef ANDROID
+    SHARED_STL_LIB:=$(shell $(CC) -print-file-name=libc++_shared.so)
+  else
+    SHARED_STL_LIB:=$(shell $(CC) -print-file-name=libstdc++.so.6)
+  endif
+  ifeq (,$(wildcard $(SHARED_STL_LIB)))
+    $(error could not determine the path to the shared STL)
+  endif
 endif
 
 # Base CFLAGS, without arch. We'll need it for luajit, because its
@@ -398,7 +401,7 @@ ifeq ($(TARGET), kobo)
 	# NOTE: If we only care about Kobos w/ a Touch screen, we're good.
 	ARM_ARCH:=$(ARMV7_A8_ARCH)
 	ARM_ARCH+=-mfloat-abi=hard
-	ifeq ($(shell PATH='$(PATH)' $(CC) -dumpmachine 2>/dev/null), arm-linux-gnueabihf)
+	ifeq ($(shell $(CC) -dumpmachine 2>/dev/null), arm-linux-gnueabihf)
 		COMPAT_CFLAGS:=$(UBUNTU_COMPAT_CFLAGS)
 		COMPAT_CXXFLAGS:=$(UBUNTU_COMPAT_CFLAGS)
 	endif
@@ -416,28 +419,28 @@ else ifeq ($(TARGET), pocketbook)
 	#       so, ideally, we shouldn't be using this on those newer devices...
 	COMPAT_CFLAGS:=$(STLABI_COMPAT_CFLAGS) $(PB_COMPAT_CFLAGS)
 	COMPAT_CXXFLAGS:=$(STLABI_COMPAT_CFLAGS) $(PB_COMPAT_CFLAGS)
-	ifeq ($(shell PATH='$(PATH)' $(CC) -dumpmachine 2>/dev/null), arm-linux-gnueabi)
+	ifeq ($(shell $(CC) -dumpmachine 2>/dev/null), arm-linux-gnueabi)
 		COMPAT_CFLAGS+=$(UBUNTU_COMPAT_CFLAGS)
 		COMPAT_CXXFLAGS+=$(UBUNTU_COMPAT_CFLAGS)
 	endif
 else ifeq ($(TARGET), kindle)
 	ARM_ARCH:=$(ARMV7_A8_ARCH)
 	ARM_ARCH+=-mfloat-abi=softfp
-	ifeq ($(shell PATH='$(PATH)' $(CC) -dumpmachine 2>/dev/null), arm-linux-gnueabi)
+	ifeq ($(shell $(CC) -dumpmachine 2>/dev/null), arm-linux-gnueabi)
 		COMPAT_CFLAGS:=$(UBUNTU_COMPAT_CFLAGS)
 		COMPAT_CXXFLAGS:=$(UBUNTU_COMPAT_CFLAGS)
 	endif
 else ifeq ($(TARGET), kindlepw2)
 	ARM_ARCH:=$(ARMV7_A9_ARCH)
 	ARM_ARCH+=-mfloat-abi=softfp
-	ifeq ($(shell PATH='$(PATH)' $(CC) -dumpmachine 2>/dev/null), arm-linux-gnueabi)
+	ifeq ($(shell $(CC) -dumpmachine 2>/dev/null), arm-linux-gnueabi)
 		COMPAT_CFLAGS:=$(UBUNTU_COMPAT_CFLAGS)
 		COMPAT_CXXFLAGS:=$(UBUNTU_COMPAT_CFLAGS)
 	endif
 else ifeq ($(TARGET), kindle-legacy)
 	ARM_ARCH:=$(ARMV6_1136_ARCH)
 	ARM_ARCH+=-mfloat-abi=softfp
-	ifeq ($(shell PATH='$(PATH)' $(CC) -dumpmachine 2>/dev/null), arm-linux-gnueabi)
+	ifeq ($(shell $(CC) -dumpmachine 2>/dev/null), arm-linux-gnueabi)
 		COMPAT_CFLAGS:=$(MG2K12_COMPAT_CFLAGS)
 		COMPAT_CXXFLAGS:=$(MG2K12_COMPAT_CXXFLAGS)
 	endif
@@ -473,7 +476,7 @@ else ifeq ($(TARGET), sony-prstux)
 else ifeq ($(TARGET), cervantes)
 	ARM_ARCH:=$(ARMV7_GENERIC_ARCH)
 	ARM_ARCH+=-mfloat-abi=softfp
-	ifeq ($(shell PATH='$(PATH)' $(CC) -dumpmachine 2>/dev/null), arm-linux-gnueabi)
+	ifeq ($(shell $(CC) -dumpmachine 2>/dev/null), arm-linux-gnueabi)
 		COMPAT_CFLAGS:=$(UBUNTU_COMPAT_CFLAGS)
 		COMPAT_CXXFLAGS:=$(UBUNTU_COMPAT_CFLAGS)
 	endif
@@ -556,7 +559,10 @@ ifeq ($(TARGET), win32)
 endif
 
 # this will create a path named build/arm-none-linux-gnueabi or similar
-TARGET_MARCHINE:=$(shell PATH='$(PATH)' $(CC) -dumpmachine 2>/dev/null)
+TARGET_MARCHINE:=$(shell $(CC) -dumpmachine)
+ifeq (,$(TARGET_MARCHINE))
+  $(error could not determine the target machine)
+endif
 ifdef KODEBUG
 	MACHINE=$(TARGET_MARCHINE)-debug
 else
@@ -595,7 +601,7 @@ else
 	# Use a CMake toolchain file to avoid all kinds of CMake insanity
 	export CROSS_TC:=$(CHOST)
 	ifndef SYSROOT
-		export SYSROOT:=$(shell PATH='$(PATH)' $(CC) -print-sysroot)
+		export SYSROOT:=$(shell $(CC) -print-sysroot)
 	endif
 	export CROSS_STAGING:=$(CMAKE_STAGING_DIR)
 	export CMAKE_TCF:=-DCMAKE_TOOLCHAIN_FILE=$(CURDIR)/thirdparty/cmake_modules/CMakeCross.cmake
@@ -665,7 +671,7 @@ ifndef WIN32
 	# We only care about that on non-emulated builds (i.e., arm), because compat symbols may be pinned
 	# to different versions on different arches, and we only account for arm in our patches.
 	ifndef EMULATE_READER
-		GLIBC_FILE=$(basename $(notdir $(realpath $(shell PATH='$(PATH)' $(CC) -print-file-name=libc.so.6))))
+		GLIBC_FILE=$(basename $(notdir $(realpath $(shell $(CC) -print-file-name=libc.so.6))))
 		GLIBC_VER=$(shell echo $(GLIBC_FILE) | cut -f2 -d'-')
 		GLIBC_2_22_SORT=$(shell echo -e "$(GLIBC_VER)\n2.22" | sort -V | head -n1)
 		ifeq ($(GLIBC_2_22_SORT), 2.22)
