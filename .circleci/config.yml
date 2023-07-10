@@ -165,7 +165,7 @@ jobs:
     <<: *XCOMPILE_TPL
     environment:
       TARGET: "sony-prstux"
-      DOCKER_IMG: koreader/kobase-18.04:0.3.0
+      DOCKER_IMG: koreader/kobase-22.04:0.3.0
 
   cervantes:
     <<: *XCOMPILE_TPL
