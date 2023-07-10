@@ -171,12 +171,12 @@ $(OUTPUT_DIR)/libs/libkoreader-xtext.so: xtext.cpp \
 	-I$(FRIBIDI_DIR)/include/fribidi \
 	-I$(LIBUNIBREAK_DIR)/include \
 	$(DYNLIB_CXXFLAGS) $(SYMVIS_FLAGS) \
+	-Wall -o $@ xtext.cpp \
 	$(FREETYPE_LIB_LINK_FLAG) \
 	$(FRIBIDI_LIB_LINK_FLAG) \
 	$(HARFBUZZ_LIB_LINK_FLAG) \
 	$(LIBUNIBREAK_LIB_LINK_FLAG) \
-	$(LUAJIT_LIB_LINK_FLAG) \
-	-Wall -o $@ xtext.cpp
+	$(LUAJIT_LIB_LINK_FLAG)
 ifdef DARWIN
 	install_name_tool -change \
 		`otool -L "$@" | grep "libluajit" | awk '{print $$1}'` \
