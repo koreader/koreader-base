@@ -25,6 +25,10 @@ if ($ENV{DARWIN})
     set(CFLAGS "${CFLAGS} -Wno-error=implicit-function-declaration")
 endif()
 
+# Fix build error when compiling with -std=gnu++17: ISO
+# C++17 does not allow 'register' storage class specifier.
+set(CXXFLAGS "${CXXFLAGS} -Wno-error=register")
+
 ep_get_source_dir(SOURCE_DIR)
 
 set(BUILD_CMD sh -c "${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS} BUILDMODE=shared HOST=${HOST} CC=\"${CC}\" CFLAGS=\"${CFLAGS} -O3\"")

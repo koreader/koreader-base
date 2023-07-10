@@ -19,6 +19,10 @@ ep_get_source_dir(SOURCE_DIR)
 # fix build error due to -Werror under Fedora 26 (and potentially other systems)
 set(CFLAGS "${CFLAGS} -Wno-error")
 
+# Fix build error when compiling with -std=gnu++17: ISO
+# C++17 does not allow 'register' storage class specifier.
+set(CXXFLAGS "${CXXFLAGS} -Wno-error=register")
+
 set(CFG_ENV_VAR "CC=\"${CC}\" CXX=\"${CXX}\" CFLAGS=\"${CFLAGS}\" CXXFLAGS=\"${CXXFLAGS}\" LDFLAGS=\"${LDFLAGS}\"")
 set(CFG_OPTS "-q --disable-desktopfiles --disable-static --enable-shared --disable-xmltools --disable-largefile --without-jpeg --without-tiff -host=\"${CHOST}\"")
 set(CFG_CMD1 sh -c "${CFG_ENV_VAR} ${SOURCE_DIR}/configure ${CFG_OPTS}")
