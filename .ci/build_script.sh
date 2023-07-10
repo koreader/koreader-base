@@ -15,7 +15,7 @@ if [ "$TARGET" = "android" ] && [ -n "${DOCKER_IMG}" ]; then
     docker run -t \
         -v "${HOME}/.ccache:${DOCKER_HOME}/.ccache" \
         -v "$(pwd):${DOCKER_HOME}/base" "${DOCKER_IMG}" \
-        /bin/bash -c 'source /home/ko/.bashrc && cd /home/ko/base && sudo chown -R ko:ko . && make android-toolchain && make TARGET=android all'
+        /bin/bash -c 'source /home/ko/.bashrc && cd /home/ko/base && sudo chown -R ko:ko . && make TARGET=android all'
 elif [ "$TARGET" = "cervantes" ]; then
     sudo chmod -R 777 "${HOME}/.ccache"
     docker run -t \

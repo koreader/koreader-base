@@ -25,6 +25,9 @@ assert_var_defined(XCFLAGS)
 # CMYK plotter only 100 kB
 # javascript (for form data validation) close to 800 kB
 set(XCFLAGS "${XCFLAGS} -DFZ_PLOTTERS_CMYK=0 -DFZ_ENABLE_JS=0")
+if(DEFINED ENV{ANDROID} AND "$ENV{CROSS_TC}" MATCHES "^armv7a-.*")
+    set(XCFLAGS "${XCFLAGS} -D_FILE_OFFSET_BITS=32")
+endif()
 set(STATIC_BUILD_CMD sh -c "${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS}")
 set(STATIC_BUILD_CMD "${STATIC_BUILD_CMD} LDFLAGS=\"${LDFLAGS}\" XCFLAGS=\"${XCFLAGS}\"")
 set(STATIC_BUILD_CMD "${STATIC_BUILD_CMD} CC=\"${CC}\" CXX=\"${CXX}\" AR=\"${AR}\" build=\"${MUPDF_BUILD_TYPE}\" MUDRAW= MUTOOL= CURL_LIB= OS=${OS}")
