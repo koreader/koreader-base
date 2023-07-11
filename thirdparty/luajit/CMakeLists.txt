@@ -76,7 +76,7 @@ set(PATCH_CMD2 "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/koreader-luajit-enable-t
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
     https://github.com/LuaJIT/LuaJIT
-    ff6c496ba1b51ed360065cbc5259f62becd70daa
+    8fbd576fb9414a5fa70dfa6069733d3416a78269
     ${SOURCE_DIR}
 )
 
