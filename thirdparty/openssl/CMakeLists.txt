@@ -90,7 +90,7 @@ set(BUILD_CMD2 sh -c "${MAKE_CMD} -j${PARALLEL_JOBS} build_libs")
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
     https://github.com/openssl/openssl.git
-    OpenSSL_1_1_1t
+    OpenSSL_1_1_1u
     ${SOURCE_DIR}
     none
 )
