@@ -34,6 +34,8 @@ set(CFG_ENV_VAR "${CFG_ENV_VAR} FREETYPE_LIBS=\"-L${FREETYPE_DIR} -lfreetype\"")
 set(CFG_OPTS "--prefix=\"${BINARY_DIR}\" --libdir=\"${BINARY_DIR}/lib\" --enable-shared --disable-static --with-freetype --without-glib --without-gobject --without-cairo --without-fontconfig --without-icu --without-graphite2 --without-uniscribe --without-directwrite --without-coretext --host=\"${CHOST}\"")
 set(CFG_CMD sh -c "${CFG_ENV_VAR} ${SOURCE_DIR}/configure ${CFG_OPTS}")
 
+set(PATCH_CMD "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/harfbuzz-8.0.0-arm-cast-align.patch")
+
 set(AUTOGEN_CMD sh -c "env NOCONFIGURE=1 ./autogen.sh")
 
 if($ENV{ANDROID})
@@ -44,7 +46,7 @@ if($ENV{ANDROID})
     set(CFG_CMD "${CFG_CMD} && ${ISED} 's|soname_spec=.*|soname_spec=\"\\\\\$libname\\\\\$release\\\\\$shared_ext\\\\\$major\"|' libtool")
 endif()
 
-set(HB_VER 5.3.1)
+set(HB_VER 8.0.0)
 
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
