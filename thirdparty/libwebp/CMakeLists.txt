@@ -36,7 +36,7 @@ endif()
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
     https://github.com/webmproject/libwebp.git
-    v1.2.4
+    v1.3.1
     ${SOURCE_DIR}
 )
 
