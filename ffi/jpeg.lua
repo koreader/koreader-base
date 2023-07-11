@@ -95,9 +95,8 @@ function Jpeg.encodeToFile(filename, source_ptr, w, stride, h, quality, color_ty
     end
 
     turbojpeg.tj3Destroy(handle)
-    if jpeg_image[0] ~= nil then
-        turbojpeg.tj3Free(jpeg_image[0])
-    end
+    -- Handles NULL pointers sanely
+    turbojpeg.tj3Free(jpeg_image[0])
 end
 
 -- convert rgb to grayscale
