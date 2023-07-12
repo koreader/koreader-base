@@ -831,6 +831,8 @@ LIBWEBP_LIB_EXT=$(if $(WIN32),-7.dll,$(if $(DARWIN),.7.dylib,.so.7))
 LIBWEBP_LIB=$(OUTPUT_DIR)/libs/libwebp$(LIBWEBP_LIB_EXT)
 LIBWEBPDEMUX_LIB_EXT=$(if $(WIN32),-2.dll,$(if $(DARWIN),.2.dylib,.so.2))
 LIBWEBPDEMUX_LIB=$(OUTPUT_DIR)/libs/libwebpdemux$(LIBWEBPDEMUX_LIB_EXT)
+LIBSHARPYUV_LIB_EXT=$(if $(WIN32),-0.dll,$(if $(DARWIN),.0.dylib,.so.0))
+LIBSHARPYUV_LIB=$(OUTPUT_DIR)/libs/libsharpyuv$(LIBSHARPYUV_LIB_EXT)
 LIBWEBP_BUILD_DIR=$(THIRDPARTY_DIR)/libwebp/build/$(MACHINE)
 LIBWEBP_DIR=$(CURDIR)/$(LIBWEBP_BUILD_DIR)/libwebp-prefix/src/libwebp-build
 
