@@ -5,11 +5,7 @@ if(NOT DEFINED PROCESSOR_COUNT)
     set(PROCESSOR_COUNT ${N})
 endif()
 
-if(APPLE)
-    set(ISED "sed -i '' -e")
-else()
-    set(ISED "sed -i -e")
-endif()
+set(ISED "sed -ie")
 
 if(NOT DEFINED PARALLEL_JOBS)
     math(EXPR PARALLEL_JOBS "${PROCESSOR_COUNT}+1")
