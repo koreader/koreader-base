@@ -770,7 +770,7 @@ $(LUA_RAPIDJSON_ROCK): $(THIRDPARTY_DIR)/lua-rapidjson/*.*
 		-DCXX="$(CXX)" \
 		-DCFLAGS="$(CFLAGS)" \
 		-DCXXFLAGS="$(CXXFLAGS)" \
-		-DLDFLAGS="$(LDFLAGS) -Wl,-rpath,'$(ORIGIN_CMAKE_TO_AUTOCFG)/../../../../libs'" \
+		-DLDFLAGS="$(LDFLAGS)" \
 		-DLUAROCKS="$(LUAROCKS_BINARY)" \
 		-DLUA_INCDIR="$(LUA_INCDIR)" \
 		-DLUA_LIBDIR="$(LUA_LIBDIR)" \
