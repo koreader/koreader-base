@@ -17,7 +17,7 @@ ep_get_source_dir(SOURCE_DIR)
 ep_get_binary_dir(BINARY_DIR)
 
 # Because escaping rpath is even more hellish than usual, for some reason...
-# NOTE: In ZSH, passing MOREFLAGS="-Wl,-rpath,'\\\$$\\\$\$ORIGIN/./libs'" works, too.
+# NOTE: In ZSH, passing MOREFLAGS="-Wl,-rpath,'\\\$$\\\$\$ORIGIN'" works, too.
 set(PATCH_CMD "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/zstd-rpath.patch")
 
 # This a pure Makefile buildsystem, don't enforce CFLAGS via command line args, the buildsystem needs to be able to modify it.
