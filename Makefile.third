@@ -165,9 +165,11 @@ $(GIF_LIB): $(THIRDPARTY_DIR)/giflib/*.*
 $(LIBWEBP_LIB) $(LIBWEBP_DIR): $(THIRDPARTY_DIR)/libwebp/*.*
 	install -d $(LIBWEBP_BUILD_DIR)
 	cd $(LIBWEBP_BUILD_DIR) && \
-		$(CMAKE) $(CMAKE_FLAGS) -DCC="$(CC)" -DCXX="$(CXX)" -DCFLAGS="$(CFLAGS)" \
-		-DCXXFLAGS="$(CXXFLAGS)" -DLDFLAGS="$(LDFLAGS)" -DCHOST=$(CHOST) \
+		$(CMAKE) $(CMAKE_FLAGS) -DCC="$(CC)" -DCXX="$(CXX)" -DCHOST="$(CHOST)" \
 		-DCPPFLAGS="$(CPPFLAGS)" \
+		-DCFLAGS="$(CFLAGS)" \
+		-DCXXFLAGS="$(CXXFLAGS)" \
+		-DLDFLAGS="$(LDFLAGS) -Wl,-rpath,'$(ORIGIN_CMAKE_TO_AUTOCFG)'" \
 		$(CURDIR)/$(THIRDPARTY_DIR)/libwebp && \
 		$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS)
 	cp -fL $(LIBWEBP_DIR)/lib/$(notdir $(LIBWEBP_LIB)) $@
@@ -808,7 +810,7 @@ $(CURL_LIB): $(THIRDPARTY_DIR)/curl/*.*
 			-DCC="$(CC)" \
 			-DCPPFLAGS="$(CPPFLAGS) -I$(ZLIB_DIR)/include -I$(OPENSSL_DIR)/include" \
 			-DCFLAGS="$(CFLAGS)" \
-			-DLDFLAGS="$(LDFLAGS) -L$(ZLIB_DIR) -L$(OPENSSL_DIR) -Wl,-rpath,'$(ORIGIN_CMAKE_TO_AUTOCFG)/../libs' -lssl -lcrypto -lz -lrt" \
+			-DLDFLAGS="$(LDFLAGS) -L$(ZLIB_DIR) -L$(OPENSSL_DIR) -Wl,-rpath,'$(ORIGIN_CMAKE_TO_AUTOCFG)' -lssl -lcrypto -lz -lrt" \
 		$(CURDIR)/thirdparty/curl && \
 		$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS)
 	cp -fL $(CURL_DIR)/lib/$(notdir $(CURL_LIB)) $(OUTPUT_DIR)/libs

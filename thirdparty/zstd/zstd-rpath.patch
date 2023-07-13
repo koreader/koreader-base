@@ -1,5 +1,5 @@
 diff --git a/lib/Makefile b/lib/Makefile
-index ef202183..a7035f2c 100644
+index a4cf61ab..bd16e3c2 100644
 --- a/lib/Makefile
 +++ b/lib/Makefile
 @@ -139,7 +139,7 @@ LIBZSTD = libzstd.$(SHARED_EXT_VER)
@@ -7,7 +7,7 @@ index ef202183..a7035f2c 100644
  $(LIBZSTD): CPPFLAGS += $(CPPFLAGS_DYNLIB)
  $(LIBZSTD): CFLAGS   += -fPIC -fvisibility=hidden
 -$(LIBZSTD): LDFLAGS  += -shared $(LDFLAGS_DYNLIB)
-+$(LIBZSTD): LDFLAGS  += -shared -Wl,-rpath,'\$$\\$$\$$ORIGIN/./libs' $(LDFLAGS_DYNLIB)
++$(LIBZSTD): LDFLAGS  += -shared -Wl,-rpath,'\$$\\$$\$$ORIGIN' $(LDFLAGS_DYNLIB)
  
  ifndef BUILD_DIR
  # determine BUILD_DIR from compilation flags
@@ -16,7 +16,7 @@ index ef202183..a7035f2c 100644
  ZSTD_NOMT_FILES = $(filter-out $(ZSTDMT_FILES),$(ZSTD_FILES))
  libzstd-nomt: CFLAGS += -fPIC -fvisibility=hidden
 -libzstd-nomt: LDFLAGS += -shared
-+libzstd-nomt: LDFLAGS += -shared -Wl,-rpath,'\$$\\$$\$$ORIGIN/./libs'
++libzstd-nomt: LDFLAGS += -shared -Wl,-rpath,'\$$\\$$\$$ORIGIN'
  libzstd-nomt: $(ZSTD_NOMT_FILES)
  	@echo compiling single-thread dynamic library $(LIBVER)
  	@echo files : $(ZSTD_NOMT_FILES)
