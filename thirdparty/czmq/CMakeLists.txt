@@ -18,7 +18,7 @@ ep_get_binary_dir(BINARY_DIR)
 
 #-Wno-error so we can build on glibc 2.24 in spite of readdir_r
 set(CFG_ENV_VAR "CC=\"${CC}\" LDFLAGS=\"${LDFLAGS}\" CFLAGS=\"-Wno-error ${CFLAGS}\" czmq_have_xmlto=no czmq_have_asciidoc=no")
-set(CFG_OPTS "-q --prefix=${BINARY_DIR} --libdir=${BINARY_DIR}/lib --with-gnu-ld --with-libzmq=${ZMQ_DIR} --disable-static --enable-shared --host=${HOST}")
+set(CFG_OPTS "-q --prefix=${BINARY_DIR} --libdir=${BINARY_DIR}/lib --with-gnu-ld --with-libzmq=${ZMQ_DIR} --disable-static --enable-shared --host=${CHOST}")
 set(CFG_CMD sh -c "${CFG_ENV_VAR} ${SOURCE_DIR}/configure ${CFG_OPTS}")
 
 if(DEFINED ENV{ANDROID})
