@@ -36,14 +36,14 @@ set(BUILD_CMD sh -c "${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS} BUILDMODE=shared HO
 set(BUILD_CMD "${BUILD_CMD} CXX=\"${CXX}\" CXXFLAGS=\"${CXXFLAGS}\" AR=\"${AR}\" RANLIB=\"${RANLIB}\" ZLIB=${ZLIB}")
 set(BUILD_CMD "${BUILD_CMD} TESSERACT_DIR=${TESSERACT_DIR} LEPTONICA_DIR=${LEPTONICA_DIR}")
 set(BUILD_CMD "${BUILD_CMD} LEPT_CFLAGS=\"-I${ZLIB_DIR} -I${PNG_DIR}/include\"")
-set(BUILD_CMD "${BUILD_CMD} LEPT_LDFLAGS=\"-L${K2PDFOPT_DIR}\"")
+set(BUILD_CMD "${BUILD_CMD} LEPT_LDFLAGS=\"-L${K2PDFOPT_DIR} -lpng -lz\"")
 set(BUILD_CMD "${BUILD_CMD} ZLIB_LDFLAGS=\"-L${ZLIB_DIR}\"")
 set(BUILD_CMD "${BUILD_CMD} PNG_LDFLAGS=\"-L${PNG_DIR}/lib\" all")
 
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
     https://github.com/koreader/libk2pdfopt.git
-    c2a4f7326ec1ead6570de8550aebef9e737ce67b
+    c32740a
     ${SOURCE_DIR}
 )
 
