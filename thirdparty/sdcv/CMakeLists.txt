@@ -71,6 +71,7 @@ set(ZLIB_LIBRARIES "${ZLIB}")
 set(ZLIB_LIBRARY_RELEASE "${ZLIB}")
 
 ### Use a sensible RPATH
+set(CMAKE_SKIP_RPATH True)
 set(CMAKE_BUILD_RPATH "$ORIGIN/./libs")
 
 set(ENABLE_NLS False CACHE BOOL "")
