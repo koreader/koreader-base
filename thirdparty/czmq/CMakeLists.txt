@@ -11,7 +11,7 @@ assert_var_defined(CC)
 assert_var_defined(CFLAGS)
 assert_var_defined(LDFLAGS)
 assert_var_defined(ZMQ_DIR)
-assert_var_defined(HOST)
+assert_var_defined(CHOST)
 
 ep_get_source_dir(SOURCE_DIR)
 ep_get_binary_dir(BINARY_DIR)

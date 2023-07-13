@@ -678,7 +678,7 @@ $(ZMQ_LIB): $(THIRDPARTY_DIR)/libzmq/*.*
 $(CZMQ_LIB): $(ZMQ_LIB) $(THIRDPARTY_DIR)/czmq/*.*
 	install -d $(CZMQ_BUILD_DIR)
 	cd $(CZMQ_BUILD_DIR) && \
-		$(CMAKE) $(CMAKE_FLAGS) -DCC="$(CC)" \ -DHOST="$(CHOST)" \
+		$(CMAKE) $(CMAKE_FLAGS) -DCC="$(CC)" -DCHOST="$(CHOST)" \
 		-DCFLAGS="$(CFLAGS) $(if $(CLANG),-O0,) $(if $(WIN32),-DLIBCZMQ_EXPORTS)" \
 		-DLDFLAGS="$(LDFLAGS) -Wl,-rpath,'$(ORIGIN_CMAKE_TO_AUTOCFG)'" \
 		-DZMQ_DIR=$(ZMQ_DIR) \
