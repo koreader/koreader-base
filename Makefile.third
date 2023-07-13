@@ -197,8 +197,10 @@ endif
 $(DJVULIBRE_LIB): $(JPEG_LIB) $(THIRDPARTY_DIR)/djvulibre/*.*
 	install -d $(DJVULIBRE_BUILD_DIR)
 	cd $(DJVULIBRE_BUILD_DIR) && \
-		$(CMAKE) $(CMAKE_FLAGS) -DCC="$(CC)" -DCXX="$(CXX)" -DCFLAGS="$(CFLAGS)" \
-		-DCXXFLAGS="$(CXXFLAGS)" -DLDFLAGS="$(LDFLAGS)" \
+		$(CMAKE) $(CMAKE_FLAGS) -DCC="$(CC)" -DCXX="$(CXX)" \
+		-DCFLAGS="$(CFLAGS)" \
+		-DCXXFLAGS="$(CXXFLAGS)" \
+		-DLDFLAGS="$(LDFLAGS) -Wl,-rpath,'$(ORIGIN_CMAKE_TO_AUTOCFG)'" \
 		-DCHOST="$(if $(EMULATE_READER),,$(CHOST))" \
 		$(CURDIR)/$(THIRDPARTY_DIR)/djvulibre && \
 		$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS)
@@ -667,7 +669,7 @@ $(ZMQ_LIB): $(THIRDPARTY_DIR)/libzmq/*.*
 		$(CMAKE) $(CMAKE_FLAGS) -DCC="$(CC)" -DCXX="$(CXX)" \
 		-DCFLAGS="$(CFLAGS) $(if $(CLANG),-O0,)" \
 		-DCXXFLAGS="$(CXXFLAGS) $(if $(CLANG),-O0,)" \
-		-DLDFLAGS="$(LDFLAGS)" \
+		-DLDFLAGS="$(LDFLAGS) -Wl,-rpath,'$(ORIGIN_CMAKE_TO_AUTOCFG)'" \
 		$(if $(LEGACY),-DLEGACY:BOOL=ON,) -DCHOST=$(CHOST) \
 		$(CURDIR)/$(THIRDPARTY_DIR)/libzmq && \
 		$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS)
@@ -757,6 +759,7 @@ $(LUA_HTMLPARSER_ROCK): $(THIRDPARTY_DIR)/lua-htmlparser/*.*
 		$(CURDIR)/$(THIRDPARTY_DIR)/lua-htmlparser && \
 		$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS)
 
+# rapidjson.so lives in rocks/lib/lua/5.1/ and we want it to look for the STL in libs/, hence the funky rpath
 $(LUA_RAPIDJSON_ROCK): $(THIRDPARTY_DIR)/lua-rapidjson/*.*
 	install -d $(LUA_RAPIDJSON_BUILD_DIR)
 	-rm -f $(LUA_RAPIDJSON_ROCK)
@@ -767,7 +770,7 @@ $(LUA_RAPIDJSON_ROCK): $(THIRDPARTY_DIR)/lua-rapidjson/*.*
 		-DCXX="$(CXX)" \
 		-DCFLAGS="$(CFLAGS)" \
 		-DCXXFLAGS="$(CXXFLAGS)" \
-		-DLDFLAGS="$(LDFLAGS)" \
+		-DLDFLAGS="$(LDFLAGS) -Wl,-rpath,'$(ORIGIN_CMAKE_TO_AUTOCFG)/../../../../libs'" \
 		-DLUAROCKS="$(LUAROCKS_BINARY)" \
 		-DLUA_INCDIR="$(LUA_INCDIR)" \
 		-DLUA_LIBDIR="$(LUA_LIBDIR)" \
