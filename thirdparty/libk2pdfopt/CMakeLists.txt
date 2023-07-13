@@ -43,7 +43,7 @@ set(BUILD_CMD "${BUILD_CMD} PNG_LDFLAGS=\"-L${PNG_DIR}/lib\" all")
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
     https://github.com/koreader/libk2pdfopt.git
-    c32740a
+    2a0f3ab6ce64022b5bcc135888dccb01026818e8
     ${SOURCE_DIR}
 )
 
