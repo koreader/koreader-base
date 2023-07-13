@@ -36,13 +36,8 @@ set(BUILD_CMD "${BUILD_CMD} CXX=\"${CXX}\" CXXFLAGS=\"${CXXFLAGS}\" AR=\"${AR}\"
 set(BUILD_CMD "${BUILD_CMD} TESSERACT_DIR=${TESSERACT_DIR} LEPTONICA_DIR=${LEPTONICA_DIR}")
 set(BUILD_CMD "${BUILD_CMD} LEPT_CFLAGS=\"${CFLAGS} -I${ZLIB_DIR} -I${PNG_DIR}/include\"")
 set(BUILD_CMD "${BUILD_CMD} LEPT_LDFLAGS=\"${LDFLAGS} -L${ZLIB_DIR} -L${PNG_DIR}/lib\"")
-if ($ENV{DARWIN})
-    set(BUILD_CMD "${BUILD_CMD} ZLIB_LDFLAGS=\"-L${ZLIB_DIR}\"")
-    set(BUILD_CMD "${BUILD_CMD} PNG_LDFLAGS=\"-L${PNG_DIR}/lib\" all")
-else()
-    set(BUILD_CMD "${BUILD_CMD} ZLIB_LDFLAGS=\"-Wl,-rpath-link,${ZLIB_DIR}\"")
-    set(BUILD_CMD "${BUILD_CMD} PNG_LDFLAGS=\"-Wl,-rpath-link,${PNG_DIR}/lib\" all")
-endif()
+set(BUILD_CMD "${BUILD_CMD} ZLIB_LDFLAGS=\"-L${ZLIB_DIR}\"")
+set(BUILD_CMD "${BUILD_CMD} PNG_LDFLAGS=\"-L${PNG_DIR}/lib\" all")
 
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
