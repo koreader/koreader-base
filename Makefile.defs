@@ -994,9 +994,6 @@ DYNLIB_CXXFLAGS=-L$(CURDIR)/$(OUTPUT_DIR)/libs $(CXXFLAGS) -I$(LUAJIT_DIR)/src -
 ifdef DARWIN
 	DYNLIB_CFLAGS+=-dynamiclib -undefined dynamic_lookup
 	DYNLIB_CXXFLAGS+=-dynamiclib -undefined dynamic_lookup
-else
-	DYNLIB_CFLAGS+=-Wl,-E -Wl,-rpath,'$$ORIGIN'
-	DYNLIB_CXXFLAGS+=-Wl,-E -Wl,-rpath,'$$ORIGIN'
 endif
 
 # Used by our custom Lua modules, where we want to hide private symbols by default

@@ -96,11 +96,11 @@ libs: \
 	$(OUTPUT_DIR)/libs/libwrap-mupdf.so
 
 $(OUTPUT_DIR)/libs/libinkview-compat.so: input/inkview-compat.c
-	$(CC) $(DYNLIB_CFLAGS) -linkview -o $@ $<
+	$(CC) $(DYNLIB_CFLAGS) $(LDFLAGS) -linkview -o $@ $<
 
 $(OUTPUT_DIR)/libs/libkoreader-input.so: input/*.c input/*.h $(if $(or $(KINDLE),$(REMARKABLE)),$(POPEN_NOSHELL_LIB),)
 	@echo "Building koreader input module..."
-	$(CC) $(DYNLIB_CFLAGS) $(SYMVIS_FLAGS) -I$(POPEN_NOSHELL_DIR) -I./input \
+	$(CC) $(DYNLIB_CFLAGS) $(SYMVIS_FLAGS) $(LDFLAGS) -I$(POPEN_NOSHELL_DIR) -I./input \
 		$(if $(CERVANTES),-DCERVANTES,) $(if $(KOBO),-DKOBO,) $(if $(KINDLE),-DKINDLE,) $(if $(LEGACY),-DKINDLE_LEGACY,) $(if $(POCKETBOOK),-DPOCKETBOOK,) $(if $(REMARKABLE),-DREMARKABLE,) $(if $(SONY_PRSTUX),-DSONY_PRSTUX,) \
 		-o $@ \
 		input/input.c \
@@ -113,7 +113,7 @@ $(OUTPUT_DIR)/libs/libkoreader-lfs.so: \
 			luafilesystem/src/lfs.c
 	# Avoid precision loss on 32-bit arches (LFS is always built w/ LARGEFILE support, but lua_Integer is always a ptrdiff_t, which is not wide enough).
 	-patch -d luafilesystem -t -N --no-backup-if-mismatch -r - -p1 < patches/lfs-pushnumber-for-wide-types.patch
-	$(CC) $(DYNLIB_CFLAGS) -o $@ luafilesystem/src/lfs.c $(LUAJIT_LIB_LINK_FLAG)
+	$(CC) $(DYNLIB_CFLAGS) $(LDFLAGS) -o $@ luafilesystem/src/lfs.c $(LUAJIT_LIB_LINK_FLAG)
 	-patch -d luafilesystem -t -R --no-backup-if-mismatch -r - -p1 < patches/lfs-pushnumber-for-wide-types.patch
 ifdef DARWIN
 	install_name_tool -change \
@@ -128,7 +128,7 @@ $(OUTPUT_DIR)/libs/libkoreader-djvu.so: djvu.c \
 			$(if $(USE_LUAJIT_LIB),$(LUAJIT_LIB),) \
 			$(DJVULIBRE_LIB) $(K2PDFOPT_LIB)
 	$(CC) -I$(DJVULIBRE_DIR) -I$(MUPDF_DIR)/include $(K2PDFOPT_CFLAGS) \
-		$(DYNLIB_CFLAGS) $(SYMVIS_FLAGS) -o $@ djvu.c $(LUAJIT_LIB_LINK_FLAG) \
+		$(DYNLIB_CFLAGS) $(SYMVIS_FLAGS) $(LDFLAGS) -o $@ djvu.c $(LUAJIT_LIB_LINK_FLAG) \
 		$(DJVULIBRE_LIB_LINK_FLAG) $(K2PDFOPT_LIB_LINK_FLAG) $(if $(ANDROID),,-lpthread)
 ifdef DARWIN
 	install_name_tool -change \
@@ -150,7 +150,7 @@ $(OUTPUT_DIR)/libs/libkoreader-cre.so: cre.cpp \
 			$(CRENGINE_LIB)
 	$(CXX) -I$(CRENGINE_SRC_DIR)/crengine/include/ $(DYNLIB_CXXFLAGS) \
 		-DLDOM_USE_OWN_MEM_MAN=$(if $(WIN32),0,1) -DUSE_SRELL_REGEX=1 \
-		$(if $(WIN32),-DQT_GL=1) $(SYMVIS_FLAGS) -o $@ cre.cpp $(LUAJIT_LIB_LINK_FLAG) \
+		$(if $(WIN32),-DQT_GL=1) $(SYMVIS_FLAGS) $(LDFLAGS) -o $@ cre.cpp $(LUAJIT_LIB_LINK_FLAG) \
 		-lcrengine
 ifdef DARWIN
 	install_name_tool -change \
@@ -170,7 +170,7 @@ $(OUTPUT_DIR)/libs/libkoreader-xtext.so: xtext.cpp \
 	-I$(HARFBUZZ_DIR)/include/harfbuzz \
 	-I$(FRIBIDI_DIR)/include/fribidi \
 	-I$(LIBUNIBREAK_DIR)/include \
-	$(DYNLIB_CXXFLAGS) $(SYMVIS_FLAGS) \
+	$(DYNLIB_CXXFLAGS) $(SYMVIS_FLAGS) $(LDFLAGS) \
 	-Wall -o $@ xtext.cpp \
 	$(FREETYPE_LIB_LINK_FLAG) \
 	$(FRIBIDI_LIB_LINK_FLAG) \
@@ -196,7 +196,7 @@ $(OUTPUT_DIR)/libs/libkoreader-nnsvg.so: nnsvg.c \
 			$(if $(USE_LUAJIT_LIB),$(LUAJIT_LIB),) \
 			$(NANOSVG_HEADERS)
 	$(CC) -I$(NANOSVG_INCLUDE_DIR) \
-	$(DYNLIB_CFLAGS) -Wall $(SYMVIS_FLAGS) -o $@ nnsvg.c $(LUAJIT_LIB_LINK_FLAG) -lm
+	$(DYNLIB_CFLAGS) -Wall $(SYMVIS_FLAGS) $(LDFLAGS) -o $@ nnsvg.c $(LUAJIT_LIB_LINK_FLAG) -lm
 ifdef DARWIN
 	install_name_tool -change \
 		`otool -L "$@" | grep "libluajit" | awk '{print $$1}'` \
@@ -205,11 +205,11 @@ ifdef DARWIN
 endif
 
 $(OUTPUT_DIR)/libs/libblitbuffer.so: blitbuffer.c
-	$(CC) $(DYNLIB_CFLAGS) $(VECTO_CFLAGS) $(SYMVIS_FLAGS) -o $@ $^
+	$(CC) $(DYNLIB_CFLAGS) $(VECTO_CFLAGS) $(SYMVIS_FLAGS) $(LDFLAGS) -o $@ $^
 
 $(OUTPUT_DIR)/libs/libwrap-mupdf.so: wrap-mupdf.c \
 			$(MUPDF_LIB)
-	$(CC) -I$(MUPDF_DIR)/include $(DYNLIB_CFLAGS) $(SYMVIS_FLAGS) -o $@ wrap-mupdf.c -lmupdf
+	$(CC) -I$(MUPDF_DIR)/include $(DYNLIB_CFLAGS) $(SYMVIS_FLAGS) $(LDFLAGS) -o $@ wrap-mupdf.c -lmupdf
 ifdef DARWIN
 	install_name_tool -id \
 		libs/libwrap-mupdf.so \
@@ -217,7 +217,7 @@ ifdef DARWIN
 endif
 
 $(OUTPUT_DIR)/libs/libXss.so.1: libxss-dummy.c
-	$(CC) $(DYNLIB_CFLAGS) -o $@ $^
+	$(CC) $(DYNLIB_CFLAGS) $(LDFLAGS) -o $@ $^
 
 # include all third party libs
 include Makefile.third
