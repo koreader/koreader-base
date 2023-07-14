@@ -561,7 +561,10 @@ $(SDL2_LIB): $(THIRDPARTY_DIR)/sdl2/*.*
 	cd $(SDL2_BUILD_DIR) && \
 		$(CMAKE) $(CMAKE_FLAGS) \
 		-DCMAKE_BUILD_TYPE=$(CMAKE_BUILD_TYPE) \
-		-DSDL_TEST=OFF -DSDL_SHARED=ON -DSDL_STATIC=OFF -DSDL_AUDIO=OFF \
+		-DSDL_TEST=OFF \
+		-DSDL_SHARED=ON \
+		-DSDL_STATIC=OFF \
+		-DSDL_AUDIO=OFF \
 		$(CURDIR)/$(THIRDPARTY_DIR)/sdl2 && \
 		$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS)
 	cp -fL $(SDL2_DIR)/$(notdir $(SDL2_LIB_ORIG)) $(SDL2_LIB)
@@ -573,12 +576,12 @@ $(OUTPUT_DIR)/dropbear: $(ZLIB) $(THIRDPARTY_DIR)/dropbear/*.*
 	install -d $(DROPBEAR_BUILD_DIR)
 	cd $(DROPBEAR_BUILD_DIR) && \
 		$(CMAKE) $(CMAKE_FLAGS) \
-		-DCC="$(CC)" \
-		-DCPPFLAGS="$(CPPFLAGS) -I$(ZLIB_DIR)" \
-		-DCFLAGS="$(CFLAGS)" \
-		-DLIBS="$(if $(ANDROID),-static,)" \
-		-DLDFLAGS="$(LDFLAGS) -L$(ZLIB_DIR) -Wl,-rpath,'$(ORIGIN_CMAKE_TO_AUTOCFG)/./libs'" \
-		-DCHOST="$(if $(EMULATE_READER),,$(CHOST))" \
+		-DCC='$(CC)' \
+		-DCHOST='$(if $(EMULATE_READER),,$(CHOST))' \
+		-DCPPFLAGS='$(CPPFLAGS) -I$(ZLIB_DIR)' \
+		-DCFLAGS='$(CFLAGS)' \
+		-DLIBS='$(if $(ANDROID),-static,)' \
+		-DLDFLAGS='$(LDFLAGS) -L$(ZLIB_DIR)' \
 		$(CURDIR)/$(THIRDPARTY_DIR)/dropbear && \
 		$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS)
 	cp $(DROPBEAR_DIR)/dropbear $(OUTPUT_DIR)/
@@ -590,11 +593,11 @@ $(OUTPUT_DIR)/sftp-server: $(ZLIB) $(SSL_LIB) $(THIRDPARTY_DIR)/openssh/*.*
 	install -d $(OPENSSH_BUILD_DIR)
 	cd $(OPENSSH_BUILD_DIR) && \
 		$(CMAKE) $(CMAKE_FLAGS) \
-		-DCC="$(CC)" \
-		-DCPPFLAGS="$(CPPFLAGS) -I$(ZLIB_DIR) -I$(OPENSSL_DIR)/include" \
-		-DCFLAGS="$(CFLAGS)" \
-		-DLDFLAGS="$(LDFLAGS) -L$(ZLIB_DIR) -L$(OPENSSL_DIR) -Wl,-rpath,'$(ORIGIN_CMAKE_TO_AUTOCFG)/./libs'" \
-		-DCHOST="$(if $(EMULATE_READER),,$(CHOST))" \
+		-DCC='$(CC)' \
+		-DCHOST='$(if $(EMULATE_READER),,$(CHOST))' \
+		-DCPPFLAGS='$(CPPFLAGS) -I$(ZLIB_DIR) -I$(OPENSSL_DIR)/include' \
+		-DCFLAGS='$(CFLAGS)' \
+		-DLDFLAGS='$(LDFLAGS) -L$(ZLIB_DIR) -L$(OPENSSL_DIR)' \
 		$(CURDIR)/$(THIRDPARTY_DIR)/openssh && \
 		$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS)
 	cp $(OPENSSH_DIR)/sftp-server $(OUTPUT_DIR)/
@@ -606,16 +609,17 @@ $(OUTPUT_DIR)/sftp-server: $(ZLIB) $(SSL_LIB) $(THIRDPARTY_DIR)/openssh/*.*
 $(OUTPUT_DIR)/tar: $(THIRDPARTY_DIR)/tar/*.*
 	install -d $(TAR_BUILD_DIR)
 	cd $(TAR_BUILD_DIR) && \
-		$(CMAKE) $(CMAKE_FLAGS) -DCC="$(CC)" \
-		-DCFLAGS="$(CFLAGS)" \
-		-DLDFLAGS="$(LDFLAGS)" \
-		-DLIBS="$(if $(or $(ANDROID),$(WIN32),$(DARWIN)),,-lrt) $(if $(ANDROID),-static,)" \
-		-DCHOST="$(if $(EMULATE_READER),,$(CHOST))" \
+		$(CMAKE) $(CMAKE_FLAGS) \
+		-DCC='$(CC)' \
+		-DCHOST='$(if $(EMULATE_READER),,$(CHOST))' \
+		-DCFLAGS='$(CFLAGS)' \
+		-DLDFLAGS='$(LDFLAGS)' \
+		-DLIBS='$(if $(or $(ANDROID),$(WIN32),$(DARWIN)),,-lrt) $(if $(ANDROID),-static,)' \
 		$(CURDIR)/$(THIRDPARTY_DIR)/tar && \
 		$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS)
 	cp $(TAR_DIR)/tar $(OUTPUT_DIR)/
 ifdef ANDROID
-	readelf -d $@ | grep "no dynamic" \
+	readelf -d $@ | grep 'no dynamic' \
 		|| echo "warning: Android L+ support only PIE binary and can't run this"
 endif
 
@@ -626,8 +630,8 @@ $(OUTPUT_DIR)/fbink: $(THIRDPARTY_DIR)/fbink/*.*
 	install -d $(FBINK_BUILD_DIR)
 	cd $(FBINK_BUILD_DIR) && \
 		$(CMAKE) $(CMAKE_FLAGS) \
-		-DCFLAGS="$(CFLAGS)" \
-		-DLDFLAGS="$(LDFLAGS)" \
+		-DCFLAGS='$(CFLAGS)' \
+		-DLDFLAGS='$(LDFLAGS)' \
 		$(CURDIR)/$(THIRDPARTY_DIR)/fbink && \
 		$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS)
 	cp $(FBINK_DIR)/fbink $(OUTPUT_DIR)/
