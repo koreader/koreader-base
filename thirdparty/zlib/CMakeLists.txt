@@ -12,30 +12,29 @@ assert_var_defined(LDFLAGS)
 
 ep_get_source_dir(SOURCE_DIR)
 
-if($ENV{ANDROID})
+if(DEFINED ENV{ANDROID})
     assert_var_defined(CHOST)
 
-    set(LDFLAGS "${LDFLAGS} -shared -Wl,-soname,libz.so.1")
+    set(LDFLAGS ${LDFLAGS} -shared -Wl,-soname,libz.so.1)
     # Only set CHOST for Android.
     # This can't be done generically because otherwise you have to specify soname as well.
     # See <https://github.com/koreader/koreader/issues/3523>.
-    set(CFG_ENV_VAR "${CFG_ENV_VAR} CHOST=\"${CHOST}\"")
+    set(CFG_ENV_VAR ${CFG_ENV_VAR} "CHOST=${CHOST}")
 endif()
 
-if($ENV{WIN32})
+if(DEFINED ENV{WIN32})
     # configure
     # build
     set(BUILD_VARS DESTDIR=${SOURCE_DIR} INCLUDE_PATH=include LIBRARY_PATH=lib BIN_PATH=bin)
     set(BUILD_ARGS CC="${CC}" CFLAGS="${CFLAGS}" RC="${CHOST}-windres" SHARED_MODE=1)
-    # TODO: also use -j for windows?
     set(BUILD_CMD ${BUILD_VARS} ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS} -f win32/Makefile.gcc ${BUILD_ARGS})
     # install
     set(INSTALL_CMD ${BUILD_VARS} ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS} -f win32/Makefile.gcc ${BUILD_ARGS} install)
 else()
     # configure
-    set(CFG_ENV_VAR "${CFG_ENV_VAR} CC=\"${CC}\" CFLAGS=\"${CFLAGS}\" LDFLAGS=\"${LDFLAGS}\"")
-    set(CFG_OPTS "${CFG_OPTS} --prefix=${SOURCE_DIR} --libdir=${SOURCE_DIR}/lib")
-    set(CFG_CMD sh -c "${CFG_ENV_VAR} ${SOURCE_DIR}/configure ${CFG_OPTS}")
+    set(CFG_ENV_VAR ${CFG_ENV_VAR} "CC=${CC}" "CFLAGS=${CFLAGS}" "LDFLAGS=${LDFLAGS}")
+    set(CFG_OPTS ${CFG_OPTS} --prefix=${SOURCE_DIR} --libdir=${SOURCE_DIR}/lib)
+    set(CFG_CMD env ${CFG_ENV_VAR} ${SOURCE_DIR}/configure ${CFG_OPTS})
     # build
     set(BUILD_CMD ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS} shared static)
     # install
