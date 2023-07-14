@@ -316,9 +316,7 @@ $(LUAJIT) $(LUAJIT_LIB) $(LUAJIT_JIT): $(THIRDPARTY_DIR)/luajit/*.*
 		-DXCOMPILE:BOOL=$(if $(EMULATE_READER),off,on) \
 		-DBASE_CFLAGS='$(BASE_CFLAGS)' \
 		-DHOST_CFLAGS='$(HOSTCFLAGS)' \
-		-DLDFLAGS='$(LDFLAGS)' \
-		$(if $(WIN32),-DTARGET_SYS=Windows,) \
-		$(if $(ANDROID),-DTARGET_SYS=Linux,) \
+		-DLDFLAGS='$(LDFLAGS)' $(if $(WIN32),-DTARGET_SYS=Windows,) $(if $(ANDROID),-DTARGET_SYS=Linux,) \
 		-DTARGET_SONAME='$(notdir $(LUAJIT_LIB))' \
 		-DTARGET_CFLAGS='$(CFLAGS) -DLUAJIT_SECURITY_STRHASH=0 -DLUAJIT_SECURITY_STRID=0' \
 		-DCROSS='$(strip $(CCACHE) $(CHOST))-' \
@@ -485,10 +483,8 @@ $(GLIB_STATIC): $(LIBICONV) $(LIBGETTEXT) $(LIBFFI_DIR)/include $(THIRDPARTY_DIR
 	cd $(GLIB_BUILD_DIR) && \
 		$(CMAKE) $(CMAKE_FLAGS) \
 		-DCC='$(CC)' \
-		-DLDFLAGS='$(LDFLAGS) $(if $(ANDROID), \
-			-L$(LIBICONV_DIR)/lib -L$(GETTEXT_DIR)/lib,)' \
-		-DCFLAGS='$(CFLAGS) $(if $(ANDROID), -L$(LIBICONV_DIR)/lib -L$(GETTEXT_DIR)/lib \
-			-I$(LIBICONV_DIR)/include -I$(GETTEXT_DIR)/include,)' \
+		-DLDFLAGS='$(LDFLAGS) $(if $(ANDROID), -L$(LIBICONV_DIR)/lib -L$(GETTEXT_DIR)/lib,)' \
+		-DCFLAGS='$(CFLAGS) $(if $(ANDROID), -L$(LIBICONV_DIR)/lib -L$(GETTEXT_DIR)/lib -I$(LIBICONV_DIR)/include -I$(GETTEXT_DIR)/include,)' \
  		-DLIBFFI_DIR='$(LIBFFI_DIR)' -DZLIB_DIR='$(ZLIB_DIR)' \
 		-DWITH_LIBICONV='gnu' \
 		-DENABLE_SHARED='false' \
@@ -772,10 +768,7 @@ $(TURBO_FFI_WRAP_LIB): $(SSL_LIB) $(THIRDPARTY_DIR)/turbo/*.*
 		$(CMAKE) $(CMAKE_FLAGS) \
 		-DCC='$(CC)' \
 		-DCFLAGS='$(CFLAGS) -I$(OPENSSL_DIR)/include' \
-		-DLDFLAGS='$(LDFLAGS) -lcrypto -lssl \
-			$(if $(ANDROID),$(CURDIR)/$(LUAJIT_LIB),) \
-			$(if $(WIN32),$(CURDIR)/$(LUAJIT_LIB),) \
-			-L$(OPENSSL_DIR)' \
+		-DLDFLAGS='$(LDFLAGS) -lcrypto -lssl $(if $(ANDROID),$(CURDIR)/$(LUAJIT_LIB),) $(if $(WIN32),$(CURDIR)/$(LUAJIT_LIB),) -L$(OPENSSL_DIR)' \
 		$(CURDIR)/$(THIRDPARTY_DIR)/turbo && \
 		$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS)
 	cp -fL $(TURBO_DIR)/$(notdir $(TURBO_FFI_WRAP_LIB)) $@
