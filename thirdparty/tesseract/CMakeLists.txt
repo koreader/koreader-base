@@ -7,7 +7,7 @@ include("koreader_thirdparty_git")
 
 ep_get_source_dir(SOURCE_DIR)
 
-if ("$ENV{ANDROID}" STREQUAL "1")
+if (DEFINED ENV{ANDROID})
     set(PATCH_CMD "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/tesseract-android.patch")
 endif()
 
