@@ -413,8 +413,11 @@ $(LIBICONV): $(THIRDPARTY_DIR)/libiconv/*.*
 	install -d $(LIBICONV_BUILD_DIR)
 	cd $(LIBICONV_BUILD_DIR) && \
 		$(CMAKE) $(CMAKE_FLAGS) \
-		-DCC="$(CC)" -DLD="$(LD)" -DAR="$(AR)" -DRANLIB="$(RANLIB)" \
-		-DHOST="$(if $(EMULATE_READER),,$(if $(ANDROID),"arm-linux",$(CHOST)))" \
+		-DHOST='$(if $(EMULATE_READER),,$(if $(ANDROID),'arm-linux',$(CHOST)))' \
+		-DCC='$(CC)' \
+		-DLD='$(LD)' \
+		-DAR='$(AR)' \
+		-DRANLIB='$(RANLIB)' \
 		$(CURDIR)/$(THIRDPARTY_DIR)/libiconv && \
 		$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS)
 
@@ -422,11 +425,14 @@ $(LIBICONV): $(THIRDPARTY_DIR)/libiconv/*.*
 $(LIBGETTEXT): $(LIBICONV) $(THIRDPARTY_DIR)/gettext/*.*
 	install -d $(GETTEXT_BUILD_DIR)
 	cd $(GETTEXT_BUILD_DIR) && \
-		$(CMAKE) $(CMAKE_FLAGS) -DCC="$(CC)" -DAR="$(AR)" -DRANLIB="$(RANLIB)" \
-		-DCPPFLAGS="$(CPPFLAGS) -I$(LIBICONV_DIR)/include" \
-		-DLDFLAGS="$(LDFLAGS) -L$(LIBICONV_DIR)/lib" \
-		-DCHOST_OPTS="$(if $(EMULATE_READER),,--host=$(if $(ANDROID),arm-linux,$(CHOST)))" \
-		-DLIBICONV_PREFIX=$(LIBICONV_DIR) \
+		$(CMAKE) $(CMAKE_FLAGS) \
+		-DCHOST_OPTS='$(if $(EMULATE_READER),,--host=$(if $(ANDROID),arm-linux,$(CHOST)))' \
+		-DCC='$(CC)' \
+		-DAR='$(AR)' \
+		-DRANLIB='$(RANLIB)' \
+		-DCPPFLAGS='$(CPPFLAGS) -I$(LIBICONV_DIR)/include' \
+		-DLDFLAGS='$(LDFLAGS) -L$(LIBICONV_DIR)/lib' \
+		-DLIBICONV_PREFIX='$(LIBICONV_DIR)' \
 		$(if $(ANDROID),-DNDK=$(NDK),) \
 		$(if $(ANDROID),-DNDKABI=$(NDKABI),) \
 		$(CURDIR)/thirdparty/gettext && \
@@ -436,10 +442,12 @@ $(LIBFFI_DIR)/include: $(THIRDPARTY_DIR)/libffi/*.*
 	install -d $(LIBFFI_BUILD_DIR)
 	-rm -rf $(LIBFFI_DIR)/include $(LIBFFI_DIR)/../libffi-stamp
 	cd $(LIBFFI_BUILD_DIR) && \
-		$(CMAKE) $(CMAKE_FLAGS) -DCC="$(CC)" -DHOST="$(CHOST)" \
-		-DCFLAGS="$(CFLAGS)" \
-		-DLDFLAGS="$(LDFLAGS)" \
-		$(if $(ANDROID),-DSYSROOT="$(SYSROOT)",) \
+		$(CMAKE) $(CMAKE_FLAGS) \
+		-DHOST='$(CHOST)' \
+		-DCC='$(CC)' \
+		-DCFLAGS='$(CFLAGS)' \
+		-DLDFLAGS='$(LDFLAGS)' \
+		$(if $(ANDROID),-DSYSROOT='$(SYSROOT)',) \
 		$(CURDIR)/$(THIRDPARTY_DIR)/libffi && \
 		$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS)
 
