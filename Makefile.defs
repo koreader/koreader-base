@@ -538,6 +538,8 @@ CFLAGS:=$(BASE_CFLAGS) $(QFLAGS) $(CSTD_FLAGS)
 CXXFLAGS:=$(BASE_CFLAGS) $(QFLAGS) $(CXXSTD_FLAGS)
 
 ifndef DARWIN
+	# To prefer our shipped libraries over the system's,
+	# we set a couple rpath via an include file to make sure it goes through buildsystem indirection unscathed...
 	LDFLAGS:=-Wl,-O1 -Wl,--as-needed -Wl,@$(MAKEFILE_DIR)origin.ldflags $(COMPAT_LDFLAGS)
 else
 	LDFLAGS:=
