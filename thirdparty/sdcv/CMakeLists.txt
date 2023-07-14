@@ -70,8 +70,8 @@ set(ZLIB_LIBRARIES "${ZLIB}")
 # I just want to be able to -I and -L and have things work. CMake, CMake...
 set(ZLIB_LIBRARY_RELEASE "${ZLIB}")
 
-### Use a sensible RPATH (well, almost, we still get the build rpaths appended. And using any of the SKIP_RPATH combinations gets rid of *all of it*).
-#set(CMAKE_BUILD_RPATH "$ORIGIN/./libs")
+### Use our sensible RPATH
+set(CMAKE_SKIP_RPATH True)
 
 set(ENABLE_NLS False CACHE BOOL "")
 set(WITH_READLINE False CACHE BOOL "")
