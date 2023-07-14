@@ -12,7 +12,7 @@ assert_var_defined(LDFLAGS)
 
 ep_get_source_dir(SOURCE_DIR)
 
-set(BUILD_CMD sh -c "${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS} CC=\"${CC}\" CFLAGS=\"${CFLAGS}\" LDFLAGS=\"${LDFLAGS}\" all")
+set(BUILD_CMD ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS} "CC=${CC}" "CFLAGS=${CFLAGS}" "LDFLAGS=${LDFLAGS}" all)
 
 # Remove the 7 years-old copy of a CA bundle that turbo doesn't actually use.
 set(PATCH_CMD sh -c "rm -f ${SOURCE_DIR}/turbo/ca-certificates.crt && ${ISED} 's|CC=|CC:=|' ${SOURCE_DIR}/Makefile")
