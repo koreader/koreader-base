@@ -29,7 +29,7 @@ if(DEFINED ENV{ANDROID})
     set(SED_CMD "${SED_CMD} && ${ISED} 's|soname_spec=.*|soname_spec=\"\\\\\$libname\\\\\$release\\\\\$shared_ext\\\\\$major\"|' libtool")
 endif()
 
-# hack to remove hardcoded rpath
+# Hack to remove hardcoded rpath
 set(SED_CMD1 sh -c "${ISED} 's|^hardcode_libdir_flag_spec=.*|hardcode_libdir_flag_spec=\"\"|g' libtool")
 set(SED_CMD2 sh -c "${ISED} 's|^runpath_var=LD_RUN_PATH|runpath_var=DIE_RPATH_DIE|g' libtool")
 
