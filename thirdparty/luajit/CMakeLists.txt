@@ -10,17 +10,17 @@ enable_language(C)
 ep_get_source_dir(SOURCE_DIR)
 assert_var_defined(XCOMPILE)
 
-if($ENV{KODEBUG})
+if(DEFINED ENV{KODEBUG})
     # Debugging is a go!
     set(DBG_CMD "${ISED} 's|#CCDEBUG= -g|CCDEBUG= -g|' ${SOURCE_DIR}/src/Makefile")
     # To-do: make this auto-trigger when Valgrind is installed
     #set(DBG_CMD "${DBG_CMD} && ${ISED} 's|#XCFLAGS+= -DLUAJIT_USE_VALGRIND|XCFLAGS+= -DLUAJIT_USE_VALGRIND|' ${SOURCE_DIR}/src/Makefile")
-    if($ENV{KODEBUG_LUAJIT_USE_SYSMALLOC})
+    if(DEFINED ENV{KODEBUG_LUAJIT_USE_SYSMALLOC})
         # Could this be helpful on Android?
         set(DBG_CMD "${DBG_CMD} && ${ISED} 's|#XCFLAGS+= -DLUAJIT_USE_SYSMALLOC|XCFLAGS+= -DLUAJIT_USE_SYSMALLOC|' ${SOURCE_DIR}/src/Makefile")
     endif()
     # Performance impact; not recommended unless required for something specific
-    if($ENV{KODEBUG_LUAJIT})
+    if(DEFINED ENV{KODEBUG_LUAJIT})
         set(DBG_CMD "${DBG_CMD} && ${ISED} 's|#XCFLAGS+= -DLUAJIT_USE_GDBJIT|XCFLAGS+= -DLUAJIT_USE_GDBJIT|' ${SOURCE_DIR}/src/Makefile")
         set(DBG_CMD "${DBG_CMD} && ${ISED} 's|#XCFLAGS+= -DLUA_USE_APICHECK|XCFLAGS+= -DLUA_USE_APICHECK|' ${SOURCE_DIR}/src/Makefile")
         set(DBG_CMD "${DBG_CMD} && ${ISED} 's|#XCFLAGS+= -DLUA_USE_ASSERT|XCFLAGS+= -DLUA_USE_ASSERT|' ${SOURCE_DIR}/src/Makefile")
@@ -31,7 +31,7 @@ else()
     set(BUILD_CMD_STR "${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS}")
 endif()
 
-if(${XCOMPILE})
+if(DEFINED XCOMPILE)
     assert_var_defined(HOST_CFLAGS)
     assert_var_defined(CC)
     assert_var_defined(BASE_CFLAGS)

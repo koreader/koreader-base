@@ -22,7 +22,7 @@ set(CFG_CMD env ${CFG_ENV_VAR} ${SOURCE_DIR}/configure ${CFG_OPTS})
 # Disable building docs, as it requires c2man
 set(SED_CMD sh -c "${ISED} 's|SUBDIRS = gen.tab lib bin doc test|SUBDIRS = gen.tab lib bin test|g' Makefile")
 
-if($ENV{ANDROID})
+if(DEFINED ENV{ANDROID})
     set(SED_CMD "${SED_CMD} && ${ISED} 's|version_type=none|version_type=linux|' libtool")
     set(SED_CMD "${SED_CMD} && ${ISED} 's|need_lib_prefix=no|need_lib_prefix=yes|' libtool")
     set(SED_CMD "${SED_CMD} && ${ISED} 's|need_version=no|need_version=yes|' libtool")

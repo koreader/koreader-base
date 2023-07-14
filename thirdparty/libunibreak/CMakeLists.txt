@@ -20,7 +20,7 @@ set(CFG_OPTS --prefix=${BINARY_DIR} --libdir=${BINARY_DIR}/lib --disable-static 
 set(CFG_CMD env ${CFG_ENV_VAR} ${SOURCE_DIR}/configure ${CFG_OPTS})
 set(PATCH_CMD1 "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/add_lb_get_char_class.patch")
 
-if($ENV{ANDROID})
+if(DEFINED ENV{ANDROID})
     set(SED_CMD sh -c "${ISED} 's|version_type=none|version_type=linux|' libtool")
     set(SED_CMD "${SED_CMD} && ${ISED} 's|need_lib_prefix=no|need_lib_prefix=yes|' libtool")
     set(SED_CMD "${SED_CMD} && ${ISED} 's|need_version=no|need_version=yes|' libtool")

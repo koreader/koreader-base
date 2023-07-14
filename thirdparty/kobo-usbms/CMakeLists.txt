@@ -18,7 +18,7 @@ set(BUILD_CMD ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS} CFLAGS="${CFLAGS}" LDFLAGS
 
 # We build in-tree...
 set(INSTALL_CMD1 ${CMAKE_COMMAND} -E make_directory ${BINARY_DIR})
-if($ENV{DEBUG})
+if(DEFINED ENV{DEBUG})
     set(INSTALL_CMD2 ${CMAKE_COMMAND} -E rename ${SOURCE_DIR}/Debug/KoboUSBMS.tar.gz ${BINARY_DIR}/KoboUSBMS.tar.gz)
 else()
     set(INSTALL_CMD2 ${CMAKE_COMMAND} -E rename ${SOURCE_DIR}/Release/KoboUSBMS.tar.gz ${BINARY_DIR}/KoboUSBMS.tar.gz)

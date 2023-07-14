@@ -15,7 +15,7 @@ set(CFG_OPTS -q --prefix=${BINARY_DIR} --libdir=${BINARY_DIR}/lib --disable-stat
 set(CFG_CMD env ${CFG_ENV_VAR} ${SOURCE_DIR}/configure ${CFG_OPTS})
 
 # use limits.h instead of stdint.h for android build
-if($ENV{ANDROID})
+if(DEFINED ENV{ANDROID})
     set(SED_CMD sh -c "${ISED} \"s|stdint.h|limits.h|g\" ${SOURCE_DIR}/lib/openbsd-reallocarray.c")
 
     set(SED_CMD "${SED_CMD} && ${ISED} 's|version_type=none|version_type=linux|' libtool")
