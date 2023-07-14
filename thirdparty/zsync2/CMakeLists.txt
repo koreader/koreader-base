@@ -18,7 +18,7 @@ ep_get_binary_dir(BINARY_DIR)
 
 # Make sure the daisy-chain once again picks up our toolchain file...
 if(DEFINED ENV{CMAKE_TCF})
-	list(APPEND CMAKE_ARGS "$ENV{CMAKE_TCF}")
+    list(APPEND CMAKE_ARGS "$ENV{CMAKE_TCF}")
 endif()
 
 # CMake hell.

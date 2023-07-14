@@ -898,11 +898,12 @@ $(NANOSVG_HEADERS): $(THIRDPARTY_DIR)/nanosvg/*.*
 $(CURL_LIB): $(THIRDPARTY_DIR)/curl/*.*
 	install -d $(CURL_BUILD_DIR)
 	cd $(CURL_BUILD_DIR) && \
-		$(CMAKE) $(CMAKE_FLAGS) -DCHOST="$(CHOST)" \
-			-DCC="$(CC)" \
-			-DCPPFLAGS="$(CPPFLAGS) -I$(ZLIB_DIR)/include -I$(OPENSSL_DIR)/include" \
-			-DCFLAGS="$(CFLAGS)" \
-			-DLDFLAGS="$(LDFLAGS) -L$(ZLIB_DIR) -L$(OPENSSL_DIR) -Wl,-rpath,'$(ORIGIN_CMAKE_TO_AUTOCFG)' -lssl -lcrypto -lz -lrt" \
+		$(CMAKE) $(CMAKE_FLAGS) \
+		-DCC='$(CC)' \
+		-DCHOST='$(CHOST)' \
+		-DCPPFLAGS='$(CPPFLAGS) -I$(ZLIB_DIR)/include -I$(OPENSSL_DIR)/include' \
+		-DCFLAGS='$(CFLAGS)' \
+		-DLDFLAGS='$(LDFLAGS) -L$(ZLIB_DIR) -L$(OPENSSL_DIR) -lssl -lcrypto -lz -lrt' \
 		$(CURDIR)/thirdparty/curl && \
 		$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS)
 	cp -fL $(CURL_DIR)/lib/$(notdir $(CURL_LIB)) $(OUTPUT_DIR)/libs
@@ -913,11 +914,11 @@ $(OUTPUT_DIR)/zsync2: $(THIRDPARTY_DIR)/zsync2/*.*
 	install -d $(ZSYNC2_BUILD_DIR)
 	cd $(ZSYNC2_BUILD_DIR) && \
 		$(CMAKE) $(CMAKE_FLAGS) \
-		-DCPPFLAGS="$(CPPFLAGS) -I$(ZLIB_DIR)/include -I$(OPENSSL_DIR)/include" \
-		-DCFLAGS="$(CFLAGS)" \
-		-DCXXFLAGS="$(CXXFLAGS)" \
-		-DLDFLAGS="$(LDFLAGS) -L$(CURL_DIR)/lib -L$(OPENSSL_DIR) -Wl,-rpath,'\\\$$ORIGIN/./libs' -lssl -lcrypto" \
-		-DCURL_DIR="$(CURL_DIR)" \
+		-DCPPFLAGS='$(CPPFLAGS) -I$(ZLIB_DIR)/include -I$(OPENSSL_DIR)/include' \
+		-DCFLAGS='$(CFLAGS)' \
+		-DCXXFLAGS='$(CXXFLAGS)' \
+		-DLDFLAGS='$(LDFLAGS) -L$(CURL_DIR)/lib -L$(OPENSSL_DIR) -lssl -lcrypto' \
+		-DCURL_DIR='$(CURL_DIR)' \
 		$(CURDIR)/$(THIRDPARTY_DIR)/zsync2 && \
 		$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS)
 	cp $(ZSYNC2_DIR)/src/zsync2 $(OUTPUT_DIR)/
