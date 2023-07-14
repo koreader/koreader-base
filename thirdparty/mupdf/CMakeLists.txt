@@ -24,11 +24,12 @@ assert_var_defined(XCFLAGS)
 # disable a couple of things to save a small bit of space
 # CMYK plotter only 100 kB
 # javascript (for form data validation) close to 800 kB
-set(XCFLAGS ${XCFLAGS} -DFZ_PLOTTERS_CMYK=0 -DFZ_ENABLE_JS=0)
+# NOTE: Don't let CMake split this up.
+set(XCFLAGS "${XCFLAGS} -DFZ_PLOTTERS_CMYK=0 -DFZ_ENABLE_JS=0")
 if(DEFINED ENV{ANDROID} AND "$ENV{CROSS_TC}" MATCHES "^armv7a-.*")
-    set(XCFLAGS ${XCFLAGS} -D_FILE_OFFSET_BITS=32)
+    set(XCFLAGS "${XCFLAGS} -D_FILE_OFFSET_BITS=32")
 endif()
-set(STATIC_BUILD_CMD env ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS})
+set(STATIC_BUILD_CMD ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS})
 set(STATIC_BUILD_CMD ${STATIC_BUILD_CMD} "LDFLAGS=${LDFLAGS}" "XCFLAGS=${XCFLAGS}")
 set(STATIC_BUILD_CMD ${STATIC_BUILD_CMD} "CC=${CC}" "CXX=${CXX}" "AR=${AR}" "build=${MUPDF_BUILD_TYPE}" MUDRAW= MUTOOL= CURL_LIB= "OS=${OS}")
 set(STATIC_BUILD_CMD ${STATIC_BUILD_CMD} verbose=no FREETYPE_DIR=nonexisting HARFBUZZ_DIR=nonexisting LIBJPEG_DIR=nonexisting ZLIB_DIR=nonexisting CROSSCOMPILE=yes)
