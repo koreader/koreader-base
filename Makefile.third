@@ -175,17 +175,23 @@ $(LODEPNG_LIB) $(LODEPNG_DIR): $(THIRDPARTY_DIR)/lodepng/*.*
 	install -d $(LODEPNG_BUILD_DIR)
 	-rm -f $(LODEPNG_DIR)/../lodepng-stamp/lodepng-build
 	cd $(LODEPNG_BUILD_DIR) && \
-		$(CMAKE) $(CMAKE_FLAGS) -DCC="$(CC)" -DCFLAGS="$(CFLAGS)" -DLDFLAGS="$(LDFLAGS)" \
-		-DSONAME="$(notdir $(LODEPNG_LIB))" \
-		-DOUTPUT_PATH="$(CURDIR)/$(dir $(LODEPNG_LIB))" \
+		$(CMAKE) $(CMAKE_FLAGS) \
+		-DCC='$(CC)' \
+		-DCFLAGS='$(CFLAGS)' \
+		-DLDFLAGS='$(LDFLAGS)' \
+		-DSONAME='$(notdir $(LODEPNG_LIB))' \
+		-DOUTPUT_PATH='$(CURDIR)/$(dir $(LODEPNG_LIB))' \
 		$(CURDIR)/$(THIRDPARTY_DIR)/lodepng && \
 		$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS)
 
 $(GIF_LIB): $(THIRDPARTY_DIR)/giflib/*.*
 	install -d $(GIF_BUILD_DIR)
 	cd $(GIF_BUILD_DIR) && \
-		$(CMAKE) $(CMAKE_FLAGS) -DCC="$(CC) $(if $(ANDROID),-DS_IREAD=S_IRUSR -DS_IWRITE=S_IWUSR,)" \
-		-DCFLAGS="$(CFLAGS)" -DLDFLAGS="$(LDFLAGS)" -DCHOST="$(CHOST)" \
+		$(CMAKE) $(CMAKE_FLAGS) \
+		-DCC='$(CC) $(if $(ANDROID),-DS_IREAD=S_IRUSR -DS_IWRITE=S_IWUSR,)' \
+		-DCHOST='$(CHOST)' \
+		-DCFLAGS='$(CFLAGS)' \
+		-DLDFLAGS='$(LDFLAGS)' \
 		$(CURDIR)/thirdparty/giflib && \
 		$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS)
 	cp -fL $(GIF_DIR)/lib/$(notdir $(GIF_LIB)) $@
@@ -193,11 +199,14 @@ $(GIF_LIB): $(THIRDPARTY_DIR)/giflib/*.*
 $(LIBWEBP_LIB) $(LIBWEBP_DIR): $(THIRDPARTY_DIR)/libwebp/*.*
 	install -d $(LIBWEBP_BUILD_DIR)
 	cd $(LIBWEBP_BUILD_DIR) && \
-		$(CMAKE) $(CMAKE_FLAGS) -DCC="$(CC)" -DCXX="$(CXX)" -DCHOST="$(CHOST)" \
-		-DCPPFLAGS="$(CPPFLAGS)" \
-		-DCFLAGS="$(CFLAGS)" \
-		-DCXXFLAGS="$(CXXFLAGS)" \
-		-DLDFLAGS="$(LDFLAGS) -Wl,-rpath,'$(ORIGIN_CMAKE_TO_AUTOCFG)'" \
+		$(CMAKE) $(CMAKE_FLAGS) \
+		-DCC='$(CC)' \
+		-DCXX='$(CXX)' \
+		-DCHOST='$(CHOST)' \
+		-DCPPFLAGS='$(CPPFLAGS)' \
+		-DCFLAGS='$(CFLAGS)' \
+		-DCXXFLAGS='$(CXXFLAGS)' \
+		-DLDFLAGS='$(LDFLAGS)' \
 		$(CURDIR)/$(THIRDPARTY_DIR)/libwebp && \
 		$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS)
 	cp -fL $(LIBWEBP_DIR)/lib/$(notdir $(LIBWEBP_LIB)) $@
