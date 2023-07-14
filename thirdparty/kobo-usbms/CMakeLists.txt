@@ -14,7 +14,7 @@ ep_get_source_dir(SOURCE_DIR)
 ep_get_binary_dir(BINARY_DIR)
 
 set(PREPARE_CMD sh -c "cd FBInk && git submodule init && git submodule update && cd -")
-set(BUILD_CMD sh -c "${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS} CFLAGS=\"${CFLAGS}\" LDFLAGS=\"${LDFLAGS}\" kobo")
+set(BUILD_CMD ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS} CFLAGS="${CFLAGS}" LDFLAGS="${LDFLAGS}" kobo)
 
 # We build in-tree...
 set(INSTALL_CMD1 ${CMAKE_COMMAND} -E make_directory ${BINARY_DIR})

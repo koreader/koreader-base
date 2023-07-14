@@ -652,8 +652,8 @@ $(OUTPUT_DIR)/data/KoboUSBMS.tar.gz: $(THIRDPARTY_DIR)/kobo-usbms/*.*
 	install -d $(KOBO_USBMS_BUILD_DIR)
 	cd $(KOBO_USBMS_BUILD_DIR) && \
 		$(CMAKE) $(CMAKE_FLAGS) \
-		-DCFLAGS="$(CFLAGS)" \
-		-DLDFLAGS="$(LDFLAGS)" \
+		-DCFLAGS='$(CFLAGS)' \
+		-DLDFLAGS='$(LDFLAGS)' \
 		$(CURDIR)/$(THIRDPARTY_DIR)/kobo-usbms && \
 		$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS)
 	cp $(KOBO_USBMS_DIR)/KoboUSBMS.tar.gz $(OUTPUT_DIR)/data/KoboUSBMS.tar.gz
@@ -664,12 +664,13 @@ $(LUASOCKET): $(THIRDPARTY_DIR)/luasocket/*.*
 	-rm -rf $(LUASOCKET) $(LUASOCKET_BUILD_DIR)
 	install -d $(LUASOCKET_BUILD_DIR)
 	cd $(LUASOCKET_BUILD_DIR) && \
-		$(CMAKE) $(CMAKE_FLAGS) -DPLAT="$(if $(WIN32),mingw,$(if $(DARWIN),macosx,linux))" \
-		-DCC="$(CC) $(CFLAGS)" \
-		$(if $(ANDROID),-DMYLDFLAGS="$(LDFLAGS) $(CURDIR)/$(LUAJIT_LIB)",) \
-		$(if $(WIN32),-DLUALIB_mingw="$(CURDIR)/$(LUAJIT_LIB)",) \
-		-DLUAINC="$(LUAJIT_DIR)/src" \
-		-DINSTALL_DIR="$(CURDIR)/$(OUTPUT_DIR)/common" \
+		$(CMAKE) $(CMAKE_FLAGS) \
+		-DPLAT='$(if $(WIN32),mingw,$(if $(DARWIN),macosx,linux))' \
+		-DCC='$(CC) $(CFLAGS)' \
+		$(if $(ANDROID),-DMYLDFLAGS='$(LDFLAGS) $(CURDIR)/$(LUAJIT_LIB)',) \
+		$(if $(WIN32),-DLUALIB_mingw='$(CURDIR)/$(LUAJIT_LIB)',) \
+		-DLUAINC='$(LUAJIT_DIR)/src' \
+		-DINSTALL_DIR='$(CURDIR)/$(OUTPUT_DIR)/common' \
 		$(CURDIR)/$(THIRDPARTY_DIR)/luasocket && \
 		$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS)
 
@@ -679,17 +680,17 @@ $(OPENSSL_LIB) $(OPENSSL_DIR): $(THIRDPARTY_DIR)/openssl/*.*
 	-rm -f $(OPENSSL_DIR)/../openssl-stamp/openssl-build
 	cd $(OPENSSL_BUILD_DIR) && \
 		$(CMAKE) $(CMAKE_FLAGS) \
-		-DREALCC="$(REALCC) $(if $(DARWIN),$(DYNLIB_CFLAGS),$(CFLAGS))" \
-		-DCC="$(CC) $(if $(DARWIN),$(DYNLIB_CFLAGS),$(CFLAGS))" \
-		-DCPPFLAGS="$(CPPFLAGS)" \
-		-DCFLAGS="$(CFLAGS)" \
-		-DSHARED_LDFLAGS="$(LDFLAGS)" \
-		-DLD="$(LD)" \
-		-DAR="$(AR)" \
-		-DRANLIB="$(RANLIB)" \
-		-DCHOST="$(CHOST)" \
+		-DREALCC='$(REALCC) $(if $(DARWIN),$(DYNLIB_CFLAGS),$(CFLAGS))' \
+		-DCC='$(CC) $(if $(DARWIN),$(DYNLIB_CFLAGS),$(CFLAGS))' \
+		-DCHOST='$(CHOST)' \
+		-DCPPFLAGS='$(CPPFLAGS)' \
+		-DCFLAGS='$(CFLAGS)' \
+		-DSHARED_LDFLAGS='$(LDFLAGS)' \
+		-DLD='$(LD)' \
+		-DAR='$(AR)' \
+		-DRANLIB='$(RANLIB)' \
 		$(if $(ANDROID),-DNDKABI=$(NDKABI),) \
-		-DCONFIG_SCRIPT="$(if $(EMULATE_READER),$(if $(DARWIN),Configure $(if $(DARWIN_AARCH64),darwin64-arm64-cc,darwin64-x86_64-cc),config),Configure $(if $(WIN32),mingw,))" \
+		-DCONFIG_SCRIPT='$(if $(EMULATE_READER),$(if $(DARWIN),Configure $(if $(DARWIN_AARCH64),darwin64-arm64-cc,darwin64-x86_64-cc),config),Configure $(if $(WIN32),mingw,))' \
 		$(CURDIR)/$(THIRDPARTY_DIR)/openssl && \
 		$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS)
 
@@ -701,7 +702,7 @@ ifdef DARWIN
 		libs/$(notdir $(SSL_LIB)) \
 		$@
 	install_name_tool -change \
-		`otool -L "$@" | grep "$(notdir $(CRYPTO_LIB)) " | awk '{print $$1}'` \
+		`otool -L '$@' | grep '$(notdir $(CRYPTO_LIB)) ' | awk '{print $$1}'` \
 		libs/$(notdir $(CRYPTO_LIB)) \
 		$@
 	install_name_tool -id \
@@ -715,21 +716,24 @@ $(LUASEC): $(SSL_LIB) $(THIRDPARTY_DIR)/luasec/*.*
 	install -d $(LUASEC_BUILD_DIR)
 	-rm -f $(LUASEC_DIR)/../luasec-stamp/luasec-install
 	cd $(LUASEC_BUILD_DIR) && \
-		$(CMAKE) $(CMAKE_FLAGS) -DCC="$(CC) $(CFLAGS)" -DLD="$(CC) -Wl,-rpath,'$(ORIGIN_CMAKE_TO_AUTOCFG)/../libs'" \
-		-DAR="$(AR)" -DRANLIB="$(RANLIB)" \
-		$(if $(ANDROID),-DLIBS="$(CURDIR)/$(SSL_LIB) $(CURDIR)/$(CRYPTO_LIB) $(CURDIR)/$(LUASEC_BUILD_DIR)/luasec-prefix/src/luasec/src/luasocket/libluasocket.a $(CURDIR)/$(LUAJIT_LIB)",) \
-		-DINC_PATH="-I$(LUAJIT_DIR)/src -I$(OPENSSL_DIR)/include" \
-		-DLIB_PATH="-L$(OPENSSL_DIR)" \
-		-DLUAPATH="$(CURDIR)/$(OUTPUT_DIR)/common" \
+		$(CMAKE) $(CMAKE_FLAGS) \
+		-DCC='$(CC) $(CFLAGS)' \
+		-DLD='$(CC)' \
+		-DAR='$(AR)' \
+		-DRANLIB='$(RANLIB)' \
+		$(if $(ANDROID),-DLIBS='$(CURDIR)/$(SSL_LIB) $(CURDIR)/$(CRYPTO_LIB) $(CURDIR)/$(LUASEC_BUILD_DIR)/luasec-prefix/src/luasec/src/luasocket/libluasocket.a $(CURDIR)/$(LUAJIT_LIB)',) \
+		-DINC_PATH='-I$(LUAJIT_DIR)/src -I$(OPENSSL_DIR)/include' \
+		-DLIB_PATH='-L$(OPENSSL_DIR)' \
+		-DLUAPATH='$(CURDIR)/$(OUTPUT_DIR)/common' \
 		$(CURDIR)/$(THIRDPARTY_DIR)/luasec && \
 		$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS)
 ifdef DARWIN
 	install_name_tool -change \
-		`otool -L "$(OUTPUT_DIR)/common/ssl.so" | grep "$(notdir $(CRYPTO_LIB)) " | awk '{print $$1}'` \
+		`otool -L '$(OUTPUT_DIR)/common/ssl.so' | grep '$(notdir $(CRYPTO_LIB)) ' | awk '{print $$1}'` \
 		libs/$(notdir $(CRYPTO_LIB)) \
 		$(OUTPUT_DIR)/common/ssl.so
 	install_name_tool -change \
-		`otool -L "$(OUTPUT_DIR)/common/ssl.so" | grep "$(notdir $(SSL_LIB)) " | awk '{print $$1}'` \
+		`otool -L '$(OUTPUT_DIR)/common/ssl.so' | grep '$(notdir $(SSL_LIB)) ' | awk '{print $$1}'` \
 		libs/$(notdir $(SSL_LIB)) \
 		$(OUTPUT_DIR)/common/ssl.so
 endif
