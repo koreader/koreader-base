@@ -71,7 +71,7 @@ set(ZLIB_LIBRARIES "${ZLIB}")
 set(ZLIB_LIBRARY_RELEASE "${ZLIB}")
 
 ### Use a sensible RPATH (well, almost, we still get the build rpaths appended. And using any of the SKIP_RPATH combinations gets rid of *all of it*).
-set(CMAKE_BUILD_RPATH "$ORIGIN/./libs")
+#set(CMAKE_BUILD_RPATH "$ORIGIN/./libs")
 
 set(ENABLE_NLS False CACHE BOOL "")
 set(WITH_READLINE False CACHE BOOL "")

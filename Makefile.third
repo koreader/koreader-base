@@ -527,29 +527,29 @@ $(ZSTD_LIB): $(THIRDPARTY_DIR)/zstd/*.*
 	cp -fL $(ZSTD_DIR)/lib/$(notdir $(ZSTD_LIB)) $@
 
 # ===========================================================================
-# console version of StarDict(sdcv)
+# console version of StarDict (sdcv)
 $(OUTPUT_DIR)/sdcv: $(if $(ANDROID),$(GLIB_STATIC),$(GLIB)) $(if $(ANDROID),$(ZLIB_STATIC),$(ZLIB)) $(THIRDPARTY_DIR)/sdcv/*.*
 	install -d $(SDCV_BUILD_DIR)
 	cd $(SDCV_BUILD_DIR) && \
-		$(CMAKE) $(CMAKE_FLAGS) -DHOST="$(if $(EMULATE_READER),,$(CHOST))" \
-		$(PAGE_SIZE_CFG) \
-		-DCFLAGS="$(CFLAGS) $(if $(ANDROID),-fPIC -fPIE,)" \
-		-DCXXFLAGS="$(CXXFLAGS) $(if $(ANDROID),-fPIC -fPIE,)" \
-		-DLDFLAGS="$(LDFLAGS) $(if $(ANDROID),-fPIC -fPIE,)" \
-		-DGLIB="$(realpath $(if $(ANDROID),$(GLIB_STATIC),$(GLIB)))" \
-		-DGLIB_DIR="$(GLIB_DIR)" \
-		-DZLIB="$(realpath $(if $(ANDROID),$(ZLIB_STATIC),$(ZLIB)))" \
-		-DZLIB_DIR="$(ZLIB_DIR)" \
-		-DLIBICONV="$(LIBICONV)" \
-		-DLIBICONV_DIR="$(LIBICONV_DIR)" \
-		-DGETTEXT="$(LIBGETTEXT)" \
-		-DGETTEXT_DIR="$(GETTEXT_DIR)" \
-		-DCMAKE_BUILD_TYPE=$(CMAKE_BUILD_TYPE) \
+		$(CMAKE) $(CMAKE_FLAGS) \
+		-DHOST='$(if $(EMULATE_READER),,$(CHOST))' \
+		-DCFLAGS='$(CFLAGS) $(if $(ANDROID),-fPIC -fPIE,)' \
+		-DCXXFLAGS='$(CXXFLAGS) $(if $(ANDROID),-fPIC -fPIE,)' \
+		-DLDFLAGS='$(LDFLAGS) $(if $(ANDROID),-fPIC -fPIE,)' \
+		-DGLIB='$(realpath $(if $(ANDROID),$(GLIB_STATIC),$(GLIB)))' \
+		-DGLIB_DIR='$(GLIB_DIR)' \
+		-DZLIB='$(realpath $(if $(ANDROID),$(ZLIB_STATIC),$(ZLIB)))' \
+		-DZLIB_DIR='$(ZLIB_DIR)' \
+		-DLIBICONV='$(LIBICONV)' \
+		-DLIBICONV_DIR='$(LIBICONV_DIR)' \
+		-DGETTEXT='$(LIBGETTEXT)' \
+		-DGETTEXT_DIR='$(GETTEXT_DIR)' \
+		-DCMAKE_BUILD_TYPE='$(CMAKE_BUILD_TYPE)' \
 		$(CURDIR)/$(THIRDPARTY_DIR)/sdcv && \
 		$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS)
 	cp $(SDCV_DIR)/sdcv $(OUTPUT_DIR)/
 ifdef ANDROID
-	readelf -d $@ | grep "no dynamic" \
+	readelf -d $@ | grep 'no dynamic' \
 		|| echo "warning: Android L+ support only PIE binary and can't run this"
 endif
 
