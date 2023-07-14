@@ -28,15 +28,18 @@ SET(PATCH_CMD "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/lpeg-${LPEG_RELEASE}-stan
 # Move our custom rockspec to the build dir to fullfil build deps
 set(CONFIGURE_CMD ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/${LUA_LPEG_ROCKSPEC} ${SOURCE_DIR}/${LUA_LPEG_ROCKSPEC})
 
-set(BUILD_CMD ${LUAROCKS} make --tree=${OUTPUT_DIR}/rocks ${LUA_LPEG_ROCKSPEC})
-set(BUILD_CMD ${BUILD_CMD} CC="${CC}")
-set(BUILD_CMD ${BUILD_CMD} CFLAGS="${CFLAGS}" LDFLAGS="${LDFLAGS}")
-set(BUILD_CMD ${BUILD_CMD} LUA_INCDIR="${LUA_INCDIR}" LUA_LIBDIR="${LUA_LIBDIR}")
+# We want to run luarocks --version=5.1, not "luarocks --version=5.1"...
+separate_arguments(ROCKS_CMD NATIVE_COMMAND PROGRAM SEPARATE_ARGS "${LUAROCKS}")
+
+set(BUILD_CMD ${ROCKS_CMD} make --tree=${OUTPUT_DIR}/rocks ${LUA_LPEG_ROCKSPEC})
+set(BUILD_CMD ${BUILD_CMD} "CC=${CC}")
+set(BUILD_CMD ${BUILD_CMD} "CFLAGS=${CFLAGS}" "LDFLAGS=${LDFLAGS}")
+set(BUILD_CMD ${BUILD_CMD} "LUA_INCDIR=${LUA_INCDIR}" "LUA_LIBDIR=${LUA_LIBDIR}")
 if(DEFINED LUALIB)
-    set(BUILD_CMD ${BUILD_CMD} LUALIB="${LUALIB}")
+    set(BUILD_CMD ${BUILD_CMD} "LUALIB=${LUALIB}")
 endif()
 if(DEFINED LIBS)
-    set(BUILD_CMD ${BUILD_CMD} LIBS="${LIBS}")
+    set(BUILD_CMD ${BUILD_CMD} "LIBS=${LIBS}")
 endif()
 
 include(ExternalProject)

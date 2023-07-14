@@ -21,7 +21,8 @@ ep_get_source_dir(SOURCE_DIR)
 set(LUA_HTMLPARSER_ROCKSPEC rockspecs/htmlparser-${LUA_HTMLPARSER_VER}.rockspec)
 
 # We want to run luarocks --version=5.1, not "luarocks --version=5.1"...
-separate_arguments(ROCKS_CMD UNIX_COMMAND PROGRAM SEPARATE_ARGS "${LUAROCKS}")
+# NOTE: CMake 3.19+, can't get the older variants to work, deal with it.
+separate_arguments(ROCKS_CMD NATIVE_COMMAND PROGRAM SEPARATE_ARGS "${LUAROCKS}")
 
 set(BUILD_CMD ${ROCKS_CMD} make --tree=${OUTPUT_DIR}/rocks ${LUA_HTMLPARSER_ROCKSPEC})
 set(BUILD_CMD ${BUILD_CMD} "CC=${CC}" "CFLAGS=${CFLAGS}" "LD=${LD}")
