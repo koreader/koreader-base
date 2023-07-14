@@ -869,11 +869,12 @@ $(LUA_RAPIDJSON_ROCK): $(THIRDPARTY_DIR)/lua-rapidjson/*.*
 $(SQLITE_LIB): $(THIRDPARTY_DIR)/sqlite/*.*
 	install -d $(SQLITE_BUILD_DIR)
 	cd $(SQLITE_BUILD_DIR) && \
-		$(CMAKE) $(CMAKE_FLAGS) -DCHOST="$(CHOST)" \
-			-DCC="$(CC)" \
-			-DCPPFLAGS="$(CPPFLAGS) $(if $(ANDROID),-DHAVE_LOG2=0,)" \
-			-DCFLAGS="$(CFLAGS)" \
-			-DLDFLAGS="$(LDFLAGS)" \
+		$(CMAKE) $(CMAKE_FLAGS) \
+		-DCC='$(CC)' \
+		-DCHOST='$(CHOST)' \
+		-DCPPFLAGS='$(CPPFLAGS) $(if $(ANDROID),-DHAVE_LOG2=0,)' \
+		-DCFLAGS='$(CFLAGS)' \
+		-DLDFLAGS='$(LDFLAGS)' \
 		$(CURDIR)/thirdparty/sqlite && \
 		$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS)
 	cp $(SQLITE_DIR)/lib/$(notdir $(SQLITE_LIB)) $(OUTPUT_DIR)/libs
