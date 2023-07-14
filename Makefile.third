@@ -707,8 +707,6 @@ ifdef DARWIN
 		$(CRYPTO_LIB)
 endif
 
-# ssl.so locates in koreader/common, but libssl.so and libcrypto.so live
-# in koreader/libs, so we need to set rpath accordingly
 $(LUASEC): $(SSL_LIB) $(THIRDPARTY_DIR)/luasec/*.*
 	install -d $(LUASEC_BUILD_DIR)
 	-rm -f $(LUASEC_DIR)/../luasec-stamp/luasec-install
