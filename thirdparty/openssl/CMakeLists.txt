@@ -67,7 +67,7 @@ set(PATCH_CMD2 "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/openssl-origin-rpath.pat
 
 # NOTE: Disable https://github.com/openssl/openssl/pull/9595 as it's causing stalls long after the early boot on devices without the getrandom() syscall, which is pretty much all of them, because it's a Linux 3.17+ & glibc 2.25+ feature.
 #       This is most easily reproduced with scp transfers that will block on the initial select on /dev/random. Since those devices are low-power, UP, and mostly idle, it can take a fairly noticeable amount of time for entropy to be generated...
-set(CFLAGS ${CPPFLAGS} -DOPENSSL_RAND_SEED_DEVRANDOM_SHM_ID=-1 ${CFLAGS})
+set(CFLAGS "${CPPFLAGS} -DOPENSSL_RAND_SEED_DEVRANDOM_SHM_ID=-1 ${CFLAGS}")
 
 # NOTE: We need to pass $CFLAGS to OpenSSL's Configure script,
 # except it balks on a few exotic flags, so, filter those out...
@@ -76,13 +76,13 @@ if(DEFINED ENV{ANDROID})
     string(REPLACE "-no-canonical-prefixes" "" FILTERED_CFLAGS "${FILTERED_CFLAGS}")
 endif()
 
-set(CFG_OPTS ${CFG_OPTS} ${FILTERED_CFLAGS} ${ASM_OPT} no-idea no-mdc2 no-rc5)
+set(CFG_OPTS ${CFG_OPTS} ${ASM_OPT} no-idea no-mdc2 no-rc5)
 set(CFG_CMD env ${CFG_ENV_VAR} ${SOURCE_DIR}/${CONFIG_SCRIPT} ${CFG_OPTS})
 
 if(DEFINED ENV{ANDROID})
-    set(MAKE_CMD ${KO_MAKE_RECURSIVE} SHARED_LDFLAGS="${SHARED_LDFLAGS}" LD="${LD}" AR="${AR}" RANLIB="${RANLIB}")
+    set(MAKE_CMD ${KO_MAKE_RECURSIVE} "CFLAGS=${FILTERED_CFLAGS}" "SHARED_LDFLAGS=${SHARED_LDFLAGS}" "LD=${LD}" "AR=${AR}" "RANLIB=${RANLIB}")
 else()
-    set(MAKE_CMD ${KO_MAKE_RECURSIVE} CC="${CC}" SHARED_LDFLAGS="${SHARED_LDFLAGS}" LD="${LD}" AR="${AR}" RANLIB="${RANLIB}")
+    set(MAKE_CMD ${KO_MAKE_RECURSIVE} "CC=${CC}" "CFLAGS=${FILTERED_CFLAGS}" "SHARED_LDFLAGS=${SHARED_LDFLAGS}" "LD=${LD}" "AR=${AR}" "RANLIB=${RANLIB}")
 endif()
 # NOTE: Make depend may fail when using ccache, and may fail when // (on some OpenSSL versions, at least)
 set(BUILD_CMD1 ${MAKE_CMD} -j1 depend)
