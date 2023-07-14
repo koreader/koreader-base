@@ -8,6 +8,7 @@ include("koreader_thirdparty_git")
 enable_language(C CXX)
 
 assert_var_defined(CC)
+assert_var_defined(CHOST)
 assert_var_defined(CFLAGS)
 assert_var_defined(LDFLAGS)
 assert_var_defined(HOST_OPTS)
@@ -72,7 +73,7 @@ if(DEFINED ENV{DARWIN})
 endif()
 set(CFG_ENV_VAR ${CFG_ENV_VAR} "CFLAGS=${CFLAGS}" "LDFLAGS=${LDFLAGS}")
 
-set(CFG_OPTS ${CFG_OPTS} ${HOST_OPTS})
+set(CFG_OPTS ${CFG_OPTS} --host=${CHOST} ${HOST_OPTS})
 set(CFG_CMD env ${CFG_ENV_VAR} ${SOURCE_DIR}/configure ${CFG_OPTS})
 
 ko_write_gitclone_script(

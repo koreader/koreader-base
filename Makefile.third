@@ -457,6 +457,7 @@ $(GLIB): $(if $(DARWIN),$(LIBICONV) $(LIBGETTEXT),) $(LIBFFI_DIR)/include $(THIR
 	cd $(GLIB_BUILD_DIR) && \
 		$(CMAKE) $(CMAKE_FLAGS) \
 		-DCC='$(CC)' \
+		-DCHOST='$(CHOST)' \
 		-DAR='$(AR)' \
 		-DRANLIB='$(RANLIB)' \
 		-DCFLAGS='$(CFLAGS)' \
@@ -466,7 +467,7 @@ $(GLIB): $(if $(DARWIN),$(LIBICONV) $(LIBGETTEXT),) $(LIBFFI_DIR)/include $(THIR
 		-DZLIB_DIR='$(ZLIB_DIR)' \
 		-DWITH_LIBICONV='$(if $(DARWIN),gnu,no)' \
 		-DENABLE_SHARED='glib' \
-		-DHOST_OPTS='$(if $(EMULATE_READER),,--host=$(CHOST) --cache-file=arm_cache.conf)' \
+		-DHOST_OPTS='$(if $(EMULATE_READER),,--cache-file=arm_cache.conf)' \
 		$(CURDIR)/$(THIRDPARTY_DIR)/glib && \
 		$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS)
 # NOTE: We link against a static glib on Android
