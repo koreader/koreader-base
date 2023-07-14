@@ -33,7 +33,7 @@ set(CXXFLAGS "${CXXFLAGS} -Wno-error=register")
 ep_get_source_dir(SOURCE_DIR)
 
 # NOTE: This is dangerously close to being too long (and as such, iis at risk of random failure if your base path is even halfway long-ish)...
-set(BUILD_CMD ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS} BUILDMODE=shared HOST=${HOST} CC=${CC} "CFLAGS=${CFLAGS}")
+set(BUILD_CMD ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS} BUILDMODE=shared HOST=${HOST} CC=${CC} "CFLAGS=${CFLAGS}" "LDFLAGS=${LDFLAGS}")
 set(BUILD_CMD ${BUILD_CMD} CXX=${CXX} "CXXFLAGS=${CXXFLAGS}" AR=${AR} RANLIB=${RANLIB} ZLIB=${ZLIB})
 set(BUILD_CMD ${BUILD_CMD} TESSERACT_DIR=${TESSERACT_DIR} LEPTONICA_DIR=${LEPTONICA_DIR})
 set(BUILD_CMD ${BUILD_CMD} "LEPT_CFLAGS=-I${ZLIB_DIR} -I${PNG_DIR}/include")
