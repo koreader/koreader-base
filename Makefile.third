@@ -457,13 +457,18 @@ $(GLIB): $(if $(DARWIN),$(LIBICONV) $(LIBGETTEXT),) $(LIBFFI_DIR)/include $(THIR
 	# to update mtime for all the binaries
 	-rm -rf $(GLIB_DIR)/lib $(GLIB_DIR)/../glib-stamp/glib-install
 	cd $(GLIB_BUILD_DIR) && \
-		$(CMAKE) $(CMAKE_FLAGS) -DCC="$(CC)" \
-		-DAR="$(AR)" -DRANLIB="$(RANLIB)" \
-		-DCFLAGS="$(CFLAGS)" -DLDFLAGS="$(LDFLAGS)" \
-		-DLIBICONV_DIR="$(LIBICONV_DIR)" \
-		-DLIBFFI_DIR="$(LIBFFI_DIR)" -DZLIB_DIR="$(ZLIB_DIR)" \
-		-DWITH_LIBICONV="$(if $(DARWIN),gnu,no)" -DENABLE_SHARED="glib" \
-		-DHOST_OPTS="$(if $(EMULATE_READER),,--host=$(CHOST) --cache-file=arm_cache.conf)" \
+		$(CMAKE) $(CMAKE_FLAGS) \
+		-DCC='$(CC)' \
+		-DAR='$(AR)' \
+		-DRANLIB='$(RANLIB)' \
+		-DCFLAGS='$(CFLAGS)' \
+		-DLDFLAGS='$(LDFLAGS)' \
+		-DLIBICONV_DIR='$(LIBICONV_DIR)' \
+		-DLIBFFI_DIR='$(LIBFFI_DIR)' \
+		-DZLIB_DIR='$(ZLIB_DIR)' \
+		-DWITH_LIBICONV='$(if $(DARWIN),gnu,no)' \
+		-DENABLE_SHARED='glib' \
+		-DHOST_OPTS='$(if $(EMULATE_READER),,--host=$(CHOST) --cache-file=arm_cache.conf)' \
 		$(CURDIR)/$(THIRDPARTY_DIR)/glib && \
 		$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS)
 # NOTE: We link against a static glib on Android
@@ -478,14 +483,16 @@ $(GLIB_STATIC): $(LIBICONV) $(LIBGETTEXT) $(LIBFFI_DIR)/include $(THIRDPARTY_DIR
 	install -d $(GLIB_BUILD_DIR)
 	-rm -f $(GLIB_DIR)/../glib-stamp/glib-install
 	cd $(GLIB_BUILD_DIR) && \
-		$(CMAKE) $(CMAKE_FLAGS) -DCC="$(CC)" \
-		-DLDFLAGS="$(LDFLAGS) $(if $(ANDROID), \
-			-L$(LIBICONV_DIR)/lib -L$(GETTEXT_DIR)/lib,)" \
-		-DCFLAGS="$(CFLAGS) $(if $(ANDROID), -L$(LIBICONV_DIR)/lib -L$(GETTEXT_DIR)/lib \
-			-I$(LIBICONV_DIR)/include -I$(GETTEXT_DIR)/include,)" \
- 		-DLIBFFI_DIR="$(LIBFFI_DIR)" -DZLIB_DIR="$(ZLIB_DIR)" \
-		-DWITH_LIBICONV="gnu" -DENABLE_SHARED="false" \
-		-DHOST_OPTS="$(if $(EMULATE_READER),,--host=$(CHOST) --cache-file=arm_cache.conf)" \
+		$(CMAKE) $(CMAKE_FLAGS) \
+		-DCC='$(CC)' \
+		-DLDFLAGS='$(LDFLAGS) $(if $(ANDROID), \
+			-L$(LIBICONV_DIR)/lib -L$(GETTEXT_DIR)/lib,)' \
+		-DCFLAGS='$(CFLAGS) $(if $(ANDROID), -L$(LIBICONV_DIR)/lib -L$(GETTEXT_DIR)/lib \
+			-I$(LIBICONV_DIR)/include -I$(GETTEXT_DIR)/include,)' \
+ 		-DLIBFFI_DIR='$(LIBFFI_DIR)' -DZLIB_DIR='$(ZLIB_DIR)' \
+		-DWITH_LIBICONV='gnu' \
+		-DENABLE_SHARED='false' \
+		-DHOST_OPTS='$(if $(EMULATE_READER),,--host=$(CHOST) --cache-file=arm_cache.conf)' \
 		$(CURDIR)/$(THIRDPARTY_DIR)/glib && \
 		$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS)
 
