@@ -41,7 +41,7 @@ set(AUTOGEN_CMD sh -c "env NOCONFIGURE=1 ./autogen.sh")
 # No build rpath
 set(STUPID_CMD sh -c "${ISED} 's/\\(hardcode_into_libs\\)=.*\$/\\1=no/' configure")
 
-if($ENV{ANDROID})
+if(DEFINED ENV{ANDROID})
     set(SED_CMD sh -c "${ISED} 's|version_type=none|version_type=linux|' libtool")
     set(SED_CMD "${SED_CMD} && ${ISED} 's|need_lib_prefix=no|need_lib_prefix=yes|' libtool")
     set(SED_CMD "${SED_CMD} && ${ISED} 's|need_version=no|need_version=yes|' libtool")
