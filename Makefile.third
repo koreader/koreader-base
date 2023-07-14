@@ -16,8 +16,13 @@ fetchthirdparty:
 $(FREETYPE_LIB) $(FREETYPE_DIR)/include: $(THIRDPARTY_DIR)/freetype2/*.*
 	install -d $(FREETYPE_BUILD_DIR)
 	cd $(FREETYPE_BUILD_DIR) && \
-		$(CMAKE) $(CMAKE_FLAGS) -DCC="$(CC)" -DCXX="$(CXX)" -DCFLAGS="$(CFLAGS)"\
-		-DCXXFLAGS="$(CXXFLAGS)" -DLDFLAGS="$(LDFLAGS)" -DCHOST=$(CHOST) \
+		$(CMAKE) $(CMAKE_FLAGS) \
+		-DCC='$(CC)' \
+		-DCXX='$(CXX)' \
+		-DCHOST='$(CHOST)' \
+		-DCFLAGS='$(CFLAGS)'\
+		-DCXXFLAGS='$(CXXFLAGS)' \
+		-DLDFLAGS='$(LDFLAGS)' \
 		$(CURDIR)/$(THIRDPARTY_DIR)/freetype2 && \
 		$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS)
 	cp -fL $(FREETYPE_DIR)/$(if $(WIN32),bin,lib)/$(notdir $(FREETYPE_LIB)) $@
@@ -26,14 +31,14 @@ $(HARFBUZZ_LIB) $(HARFBUZZ_DIR)/include: $(THIRDPARTY_DIR)/harfbuzz/*.*
 	install -d $(HARFBUZZ_BUILD_DIR)
 	cd $(HARFBUZZ_BUILD_DIR) && \
 		$(CMAKE) $(CMAKE_FLAGS) \
-		-DCC="$(CC)" \
-		-DCXX="$(CXX)" \
-		-DCHOST=$(CHOST) \
-		-DCPPFLAGS="$(CPPFLAGS)" \
-		-DCFLAGS="$(CFLAGS)"\
-		-DCXXFLAGS="$(CXXFLAGS)" \
-		-DLDFLAGS="$(LDFLAGS) -Wl,-rpath,'$(ORIGIN_CMAKE_TO_AUTOCFG)'" \
-		-DFREETYPE_DIR="$(FREETYPE_DIR)" \
+		-DCC='$(CC)' \
+		-DCXX='$(CXX)' \
+		-DCHOST='$(CHOST)' \
+		-DCPPFLAGS='$(CPPFLAGS)' \
+		-DCFLAGS='$(CFLAGS)'\
+		-DCXXFLAGS='$(CXXFLAGS)' \
+		-DLDFLAGS='$(LDFLAGS)' \
+		-DFREETYPE_DIR='$(FREETYPE_DIR)' \
 		$(CURDIR)/$(THIRDPARTY_DIR)/harfbuzz && \
 		$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS)
 	cp -fL $(HARFBUZZ_DIR)/lib/$(notdir $(HARFBUZZ_LIB)) $@

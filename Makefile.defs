@@ -12,9 +12,10 @@ endif
 UNAME:=$(shell uname -s)
 UNAME_ARCH:=$(shell uname -m)
 
-# use MAKEFILE_DIR instead of CURDIR for variables that are exported through -include
-MAKEFILE_DIR=$(dir $(abspath $(lastword $(MAKEFILE_LIST))))
-TOOLCHAIN_DIR=$(MAKEFILE_DIR)toolchain
+# Use MAKEFILE_DIR instead of CURDIR for variables that are exported through -include
+# NOTE: Will only behave as long as there aren't any spaces in the paths involved!
+MAKEFILE_DIR:=$(dir $(realpath $(lastword $(MAKEFILE_LIST))))
+TOOLCHAIN_DIR:=$(MAKEFILE_DIR)toolchain
 ANDROID_ARCH?=arm
 export ANDROID_HOME := $(or $(ANDROID_HOME),$(ANDROID_SDK_ROOT),$(TOOLCHAIN_DIR)/android-sdk-linux)
 export ANDROID_SDK_ROOT := $(ANDROID_HOME)
@@ -537,7 +538,7 @@ CFLAGS:=$(BASE_CFLAGS) $(QFLAGS) $(CSTD_FLAGS)
 CXXFLAGS:=$(BASE_CFLAGS) $(QFLAGS) $(CXXSTD_FLAGS)
 
 ifndef DARWIN
-	LDFLAGS:=-Wl,-O1 -Wl,--as-needed $(COMPAT_LDFLAGS)
+	LDFLAGS:=-Wl,-O1 -Wl,--as-needed -Wl,@$(MAKEFILE_DIR)origin.ldflags $(COMPAT_LDFLAGS)
 else
 	LDFLAGS:=
 endif
