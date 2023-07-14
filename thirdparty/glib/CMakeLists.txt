@@ -38,18 +38,18 @@ set(gen_arm_config "${gen_arm_config}glib_cv_stack_grows=no\\n")
 set(gen_arm_config "${gen_arm_config}glib_cv_uscore=no\\n")
 # In order to support legacy PocketBook 4.x firmware we should get rid of eventfd@GLIBC_2.7 and pipe2@GLIBC_2.9
 if(DEFINED ENV{LEGACY} OR DEFINED ENV{POCKETBOOK})
-	set(gen_arm_config "${gen_arm_config}glib_cv_eventfd=no\\n")
-	set(gen_arm_config "${gen_arm_config}ac_cv_func_pipe2=no\\n")
-	# As well as mkostemp@GLIBC_2.7
-	set(gen_arm_config "${gen_arm_config}ac_cv_func_mkostemp=no\\n")
+    set(gen_arm_config "${gen_arm_config}glib_cv_eventfd=no\\n")
+    set(gen_arm_config "${gen_arm_config}ac_cv_func_pipe2=no\\n")
+    # As well as mkostemp@GLIBC_2.7
+    set(gen_arm_config "${gen_arm_config}ac_cv_func_mkostemp=no\\n")
 endif()
 if(DEFINED ENV{ANDROID})
-	# disable getpwuid, getgrgid and timegm for > android-12
-	set(gen_arm_config "${gen_arm_config}ac_cv_func_posix_getpwuid_r=no\\n")
-	set(gen_arm_config "${gen_arm_config}ac_cv_func_posix_getgrgid_r=no\\n")
-	set(gen_arm_config "${gen_arm_config}ac_cv_func_getpwuid_r=no\\n")
-	set(gen_arm_config "${gen_arm_config}ac_cv_func_getgrgid_r=no\\n")
-	set(gen_arm_config "${gen_arm_config}ac_cv_func_timegm=no\\n")
+    # disable getpwuid, getgrgid and timegm for > android-12
+    set(gen_arm_config "${gen_arm_config}ac_cv_func_posix_getpwuid_r=no\\n")
+    set(gen_arm_config "${gen_arm_config}ac_cv_func_posix_getgrgid_r=no\\n")
+    set(gen_arm_config "${gen_arm_config}ac_cv_func_getpwuid_r=no\\n")
+    set(gen_arm_config "${gen_arm_config}ac_cv_func_getgrgid_r=no\\n")
+    set(gen_arm_config "${gen_arm_config}ac_cv_func_timegm=no\\n")
 endif()
 
 set(gen_arm_config sh -c "printf \"${gen_arm_config}\" > arm_cache.conf")
@@ -66,14 +66,13 @@ else()
     set(CFG_OPTS ${CFG_OPTS} --disable-static)
 endif()
 
-if(NOT DEFINED ENV{DARWIN})
-    set(LDFLAGS ${LDFLAGS} -Wl,-rpath-link,${ZLIB_DIR}/lib -Wl,-rpath-link,${LIBFFI_DIR}/.libs -Wl,-rpath-link,${BINARY_DIR}/gmodule/.libs)
-else()
-    set(CFLAGS -I/usr/local/opt/gettext/include $ENV{DARWIN_AARCH64_HOST_CFLAG} ${CFLAGS})
-    set(LDFLAGS ${LDFLAGS} -L/usr/local/opt/gettext/lib $ENV{DARWIN_AARCH64_HOST_LDFLAG} -L${LIBICONV_DIR}/lib -L${ZLIB_DIR}/lib -L${LIBFFI_DIR}/.libs -L${BINARY_DIR}/gmodule/.libs)
+if(DEFINED ENV{DARWIN})
+    set(CFLAGS "-I/usr/local/opt/gettext/include $ENV{DARWIN_AARCH64_HOST_CFLAG} ${CFLAGS}")
+    set(LDFLAGS "${LDFLAGS} -L/usr/local/opt/gettext/lib $ENV{DARWIN_AARCH64_HOST_LDFLAG} -L${LIBICONV_DIR}/lib -L${ZLIB_DIR}/lib -L${LIBFFI_DIR}/.libs -L${BINARY_DIR}/gmodule/.libs")
 endif()
+set(CFG_ENV_VAR ${CFG_ENV_VAR} "CFLAGS=${CFLAGS}" "LDFLAGS=${LDFLAGS}")
 
-set(CFG_OPTS ${CFG_OPTS} "CFLAGS=${CFLAGS}" "LDFLAGS=${LDFLAGS}" ${HOST_OPTS})
+set(CFG_OPTS ${CFG_OPTS} ${HOST_OPTS})
 set(CFG_CMD env ${CFG_ENV_VAR} ${SOURCE_DIR}/configure ${CFG_OPTS})
 
 ko_write_gitclone_script(
