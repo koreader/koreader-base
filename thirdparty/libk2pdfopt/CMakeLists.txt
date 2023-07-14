@@ -21,7 +21,7 @@ assert_var_defined(LEPTONICA_DIR)
 assert_var_defined(TESSERACT_DIR)
 assert_var_defined(K2PDFOPT_DIR)
 
-if ($ENV{DARWIN})
+if (DEFINED ENV{DARWIN})
     #fix build error due to implicit declarations of function being invalid in C99 under macOS/XCode 12
     set(CFLAGS "${CFLAGS} -Wno-error=implicit-function-declaration")
 endif()
@@ -32,7 +32,7 @@ set(CXXFLAGS "${CXXFLAGS} -Wno-error=register")
 
 ep_get_source_dir(SOURCE_DIR)
 
-set(BUILD_CMD sh -c "${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS} BUILDMODE=shared HOST=${HOST} CC=\"${CC}\" CFLAGS=\"${CFLAGS} -O3\"")
+set(BUILD_CMD "${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS} BUILDMODE=shared HOST=${HOST} CC=\"${CC}\" CFLAGS=\"${CFLAGS} -O3\"")
 set(BUILD_CMD "${BUILD_CMD} CXX=\"${CXX}\" CXXFLAGS=\"${CXXFLAGS}\" AR=\"${AR}\" RANLIB=\"${RANLIB}\" ZLIB=${ZLIB}")
 set(BUILD_CMD "${BUILD_CMD} TESSERACT_DIR=${TESSERACT_DIR} LEPTONICA_DIR=${LEPTONICA_DIR}")
 set(BUILD_CMD "${BUILD_CMD} LEPT_CFLAGS=\"-I${ZLIB_DIR} -I${PNG_DIR}/include\"")
