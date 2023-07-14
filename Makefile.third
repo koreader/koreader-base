@@ -256,33 +256,33 @@ $(CRENGINE_LIB): $(ZLIB) $(ZSTD_LIB) $(PNG_LIB) $(FREETYPE_LIB) $(HARFBUZZ_LIB) 
 		$(CRENGINE_SRC_FILES) $(THIRDPARTY_DIR)/kpvcrlib/*.*
 	install -d $(CRENGINE_BUILD_DIR)
 	cd $(CRENGINE_BUILD_DIR) && \
-		JPEG_LIB="$(CURDIR)/$(JPEG_LIB)" \
-		PNG_LIB="$(CURDIR)/$(PNG_LIB)" \
-		FREETYPE_LIB="$(CURDIR)/$(FREETYPE_LIB)" \
-		HARFBUZZ_LIB="$(CURDIR)/$(HARFBUZZ_LIB)" \
-		FRIBIDI_LIB="$(CURDIR)/$(FRIBIDI_LIB)" \
-		LIBWEBP_LIB="$(CURDIR)/$(LIBWEBP_LIB)" \
-		LIBWEBPDEMUX_LIB="$(CURDIR)/$(LIBWEBPDEMUX_LIB)" \
-		LUNASVG_LIB="$(CURDIR)/$(LUNASVG_LIB)" \
-		LIBUNIBREAK_LIB="$(CURDIR)/$(LIBUNIBREAK_LIB)" \
-		UTF8PROC_LIB="$(CURDIR)/$(UTF8PROC_LIB)" \
-		ZLIB="$(CURDIR)/$(ZLIB)" \
-		ZSTD_LIB="$(CURDIR)/$(ZSTD_LIB)" \
-		LIBS_DIR="$(CURDIR)/$(OUTPUT_DIR)/libs" \
+		JPEG_LIB='$(CURDIR)/$(JPEG_LIB)' \
+		PNG_LIB='$(CURDIR)/$(PNG_LIB)' \
+		FREETYPE_LIB='$(CURDIR)/$(FREETYPE_LIB)' \
+		HARFBUZZ_LIB='$(CURDIR)/$(HARFBUZZ_LIB)' \
+		FRIBIDI_LIB='$(CURDIR)/$(FRIBIDI_LIB)' \
+		LIBWEBP_LIB='$(CURDIR)/$(LIBWEBP_LIB)' \
+		LIBWEBPDEMUX_LIB='$(CURDIR)/$(LIBWEBPDEMUX_LIB)' \
+		LUNASVG_LIB='$(CURDIR)/$(LUNASVG_LIB)' \
+		LIBUNIBREAK_LIB='$(CURDIR)/$(LIBUNIBREAK_LIB)' \
+		UTF8PROC_LIB='$(CURDIR)/$(UTF8PROC_LIB)' \
+		ZLIB='$(CURDIR)/$(ZLIB)' \
+		ZSTD_LIB='$(CURDIR)/$(ZSTD_LIB)' \
+		LIBS_DIR='$(CURDIR)/$(OUTPUT_DIR)/libs' \
 		$(CMAKE) $(CMAKE_FLAGS) \
 		-DJPEGLIB_INCLUDE_DIR=$(JPEG_DIR)/include \
-		-DJCONFIG_INCLUDE_DIR="$(MUPDF_DIR)/scripts" \
-		-DPNG_INCLUDE_DIR="$(PNG_DIR)/include" \
-		-DLUNASVG_INCLUDE_DIR="$(LUNASVG_DIR)/include/lunasvg" \
-		-DZLIB_INCLUDE_DIR="$(ZLIB_DIR)/include" \
-		-DFREETYPE_INCLUDE_DIR="$(FREETYPE_DIR)/include/freetype2" \
-		-DHARFBUZZ_INCLUDE_DIR="$(HARFBUZZ_DIR)/include/harfbuzz" \
-		-DFRIBIDI_INCLUDE_DIR="$(FRIBIDI_DIR)/include/fribidi" \
-		-DLIBWEBP_INCLUDE_DIR="$(LIBWEBP_DIR)/include" \
-		-DLIBUNIBREAK_INCLUDE_DIR="$(LIBUNIBREAK_DIR)/include" \
-		-DUTF8PROC_INCLUDE_DIR="$(UTF8PROC_DIR)" \
-		-DZSTD_INCLUDE_DIR="$(ZSTD_DESTDIR)/include" \
-		-DSRELL_INCLUDE_DIR="${SRELL_INCLUDE_DIR}" \
+		-DJCONFIG_INCLUDE_DIR='$(MUPDF_DIR)/scripts' \
+		-DPNG_INCLUDE_DIR='$(PNG_DIR)/include' \
+		-DLUNASVG_INCLUDE_DIR='$(LUNASVG_DIR)/include/lunasvg' \
+		-DZLIB_INCLUDE_DIR='$(ZLIB_DIR)/include' \
+		-DFREETYPE_INCLUDE_DIR='$(FREETYPE_DIR)/include/freetype2' \
+		-DHARFBUZZ_INCLUDE_DIR='$(HARFBUZZ_DIR)/include/harfbuzz' \
+		-DFRIBIDI_INCLUDE_DIR='$(FRIBIDI_DIR)/include/fribidi' \
+		-DLIBWEBP_INCLUDE_DIR='$(LIBWEBP_DIR)/include' \
+		-DLIBUNIBREAK_INCLUDE_DIR='$(LIBUNIBREAK_DIR)/include' \
+		-DUTF8PROC_INCLUDE_DIR='$(UTF8PROC_DIR)' \
+		-DZSTD_INCLUDE_DIR='$(ZSTD_DESTDIR)/include' \
+		-DSRELL_INCLUDE_DIR='${SRELL_INCLUDE_DIR}' \
 		-DCMAKE_BUILD_TYPE=$(CMAKE_BUILD_TYPE) \
 		$(if $(WIN32),-DCMAKE_SYSTEM_NAME=Windows,) \
 		$(if $(ANDROID),-DCMAKE_SYSTEM_NAME=Android,) \
@@ -295,15 +295,15 @@ ifdef DARWIN
 		libs/$(notdir $(CRENGINE_LIB)) \
 		$@
 	install_name_tool -change \
-		`otool -L "$@" | grep "$(notdir $(UTF8PROC_LIB)) " | awk '{print $$1}'` \
+		`otool -L '$@' | grep '$(notdir $(UTF8PROC_LIB)) ' | awk '{print $$1}'` \
 		libs/$(notdir $(UTF8PROC_LIB)) \
 		$@
 	install_name_tool -change \
-		`otool -L "$@" | grep "$(notdir $(JPEG_LIB)) " | awk '{print $$1}'` \
+		`otool -L '$@' | grep '$(notdir $(JPEG_LIB)) ' | awk '{print $$1}'` \
 		libs/$(notdir $(JPEG_LIB)) \
 		$@
 	install_name_tool -change \
-		`otool -L "$@" | grep "$(notdir $(ZSTD_LIB)) " | awk '{print $$1}'` \
+		`otool -L '$@' | grep '$(notdir $(ZSTD_LIB)) ' | awk '{print $$1}'` \
 		libs/$(notdir $(ZSTD_LIB)) \
 		$@
 endif
