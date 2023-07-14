@@ -108,9 +108,12 @@ endif
 $(PNG_LIB): $(ZLIB) $(THIRDPARTY_DIR)/libpng/*.*
 	install -d $(PNG_BUILD_DIR)
 	cd $(PNG_BUILD_DIR) && \
-		$(CMAKE) $(CMAKE_FLAGS) -DCC="$(CC)" -DCXX="$(CXX)" -DCHOST="$(CHOST)" \
-		-DCPPFLAGS="$(CFLAGS) -I$(ZLIB_DIR)" \
-		-DLDFLAGS="$(LDFLAGS) -L$(ZLIB_DIR) -Wl,-rpath,'$(ORIGIN_CMAKE_TO_AUTOCFG)'" \
+		$(CMAKE) $(CMAKE_FLAGS) \
+		-DCC='$(CC)' \
+		-DCXX='$(CXX)' \
+		-DCHOST='$(CHOST)' \
+		-DCPPFLAGS='$(CFLAGS) -I$(ZLIB_DIR)' \
+		-DLDFLAGS='$(LDFLAGS) -L$(ZLIB_DIR)' \
 		$(CURDIR)/$(THIRDPARTY_DIR)/libpng && \
 		$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS)
 	cp -fL $(PNG_DIR)/.libs/$(notdir $(PNG_LIB)) $@
@@ -119,8 +122,11 @@ $(AES_LIB): $(THIRDPARTY_DIR)/minizip/*.*
 	install -d $(MINIZIP_BUILD_DIR)
 	-rm -f $(MINIZIP_DIR)/../minizip-stamp/minizip-build
 	cd $(MINIZIP_BUILD_DIR) && \
-		$(CMAKE) $(CMAKE_FLAGS) -DCC="$(CC) $(CFLAGS)" -DLDFLAGS="$(LDFLAGS)" \
-		-DAR="$(AR)" -DRANLIB="$(RANLIB)" \
+		$(CMAKE) $(CMAKE_FLAGS) \
+		-DCC='$(CC) $(CFLAGS)' \
+		-DLDFLAGS='$(LDFLAGS)' \
+		-DAR='$(AR)' \
+		-DRANLIB='$(RANLIB)' \
 		$(CURDIR)/$(THIRDPARTY_DIR)/minizip && \
 		$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS)
 
@@ -134,25 +140,33 @@ $(MUPDF_LIB) $(MUPDF_DIR)/include: $(JPEG_LIB) \
 	-rm -rf $(MUPDF_BUILD_DIR)
 	install -d $(MUPDF_BUILD_DIR)
 	cd $(MUPDF_BUILD_DIR) && \
-		$(CMAKE) $(CMAKE_FLAGS) -DHOSTCFLAGS="$(HOSTCFLAGS)" -DHOSTCC="$(HOSTCC)" \
-		-DCC="$(CC)" -DCFLAGS="$(CFLAGS)" -DCXX="$(CXX)" -DCXXFLAGS="$(CXXFLAGS)" -DOS="$(if $(WIN32),,Other)" \
-		-DAR="$(AR)" -DLDFLAGS="$(LDFLAGS) -L$(CURDIR)/$(OUTPUT_DIR)" \
-		-DXCFLAGS="$(CFLAGS) -DNOBUILTINFONT -DNO_ICC -I$(JPEG_DIR)/include -I$(FREETYPE_DIR)/include/freetype2 -I$(HARFBUZZ_DIR)/include/harfbuzz -I$(ZLIB_DIR) -I$(MINIZIP_DIR) -I$(LIBWEBP_DIR)/include" \
-		-DMUPDF_LIB_STATIC=$(MUPDF_LIB_STATIC) \
-		-DMUPDF_THIRDPARTY_LIBS=$(MUPDF_THIRDPARTY_LIBS) \
-		-DMUPDF_LIB=$(CURDIR)/$(MUPDF_LIB) \
-		-DMUPDF_SONAME=$(notdir $(MUPDF_LIB)) \
-		-DAES_LIB=$(AES_LIB) -DRPATH="\$$ORIGIN" \
-		-DZLIB=$(CURDIR)/$(ZLIB) -DJPEG_LIB=$(CURDIR)/$(JPEG_LIB) \
-		-DFREETYPE_LIB=$(CURDIR)/$(FREETYPE_LIB) \
-		-DHARFBUZZ_LIB=$(CURDIR)/$(HARFBUZZ_LIB) \
-		-DLIBWEBP_LIB=$(CURDIR)/$(LIBWEBP_LIB) \
-		-DLIBWEBPDEMUX_LIB=$(CURDIR)/$(LIBWEBPDEMUX_LIB) \
+		$(CMAKE) $(CMAKE_FLAGS) \
+		-DHOSTCFLAGS='$(HOSTCFLAGS)' \
+		-DHOSTCC='$(HOSTCC)' \
+		-DCC='$(CC)' \
+		-DCXX='$(CXX)' \
+		-DCFLAGS='$(CFLAGS)' \
+		-DCXXFLAGS='$(CXXFLAGS)' \
+		-DOS='$(if $(WIN32),,Other)' \
+		-DAR='$(AR)' \
+		-DLDFLAGS='$(LDFLAGS) -L$(CURDIR)/$(OUTPUT_DIR)' \
+		-DXCFLAGS='$(CFLAGS) -DNOBUILTINFONT -DNO_ICC -I$(JPEG_DIR)/include -I$(FREETYPE_DIR)/include/freetype2 -I$(HARFBUZZ_DIR)/include/harfbuzz -I$(ZLIB_DIR) -I$(MINIZIP_DIR) -I$(LIBWEBP_DIR)/include' \
+		-DMUPDF_LIB_STATIC='$(MUPDF_LIB_STATIC)' \
+		-DMUPDF_THIRDPARTY_LIBS='$(MUPDF_THIRDPARTY_LIBS)' \
+		-DMUPDF_LIB='$(CURDIR)/$(MUPDF_LIB)' \
+		-DMUPDF_SONAME='$(notdir $(MUPDF_LIB))' \
+		-DAES_LIB='$(AES_LIB)' \
+		-DZLIB='$(CURDIR)/$(ZLIB)' \
+		-DJPEG_LIB='$(CURDIR)/$(JPEG_LIB)' \
+		-DFREETYPE_LIB='$(CURDIR)/$(FREETYPE_LIB)' \
+		-DHARFBUZZ_LIB='$(CURDIR)/$(HARFBUZZ_LIB)' \
+		-DLIBWEBP_LIB='$(CURDIR)/$(LIBWEBP_LIB)' \
+		-DLIBWEBPDEMUX_LIB='$(CURDIR)/$(LIBWEBPDEMUX_LIB)' \
 		$(CURDIR)/$(THIRDPARTY_DIR)/mupdf && \
 		$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS)
 ifdef DARWIN
 	install_name_tool -change \
-		`otool -L "$(MUPDF_LIB)" | grep "$(notdir $(JPEG_LIB)) " | awk '{print $$1}'` \
+		`otool -L '$(MUPDF_LIB)' | grep '$(notdir $(JPEG_LIB)) ' | awk '{print $$1}'` \
 		libs/$(notdir $(JPEG_LIB)) \
 		$(MUPDF_LIB)
 endif
