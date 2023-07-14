@@ -226,20 +226,20 @@ include Makefile.third
 # entry point for the application in OSX
 
 $(OUTPUT_DIR)/koreader: osx_loader.c
-	$(CC) -I$(LUAJIT_DIR)/src $(LUAJIT_STATIC) -o $@ $^
+	$(CC) -I$(LUAJIT_DIR)/src $(LUAJIT_STATIC) $(LDFLAGS) -o $@ $^
 
 # ===========================================================================
 # very simple "launcher" for koreader on the remarkable
 
 $(OUTPUT_DIR)/button-listen: button-listen.c
-	$(CC) $(CFLAGS) -o $@ $^
+	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $^
 
 # ===========================================================================
 # the attachment extraction tool:
 
 $(OUTPUT_DIR)/extr: extr.c $(MUPDF_LIB) $(MUPDF_DIR)/include $(JPEG_LIB) $(FREETYPE_LIB)
 	$(CC) -I$(MUPDF_DIR) -I$(MUPDF_DIR)/include \
-		$(CFLAGS) -Wl,-rpath,'libs' -o $@ extr.c \
+		$(CFLAGS) $(LDFLAGS) -o $@ extr.c \
 		-lmupdf $(JPEG_LIB_LINK_FLAG) $(FREETYPE_LIB_LINK_FLAG)
 
 # ===========================================================================
