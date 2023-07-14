@@ -36,7 +36,7 @@ endif()
 # FBDepth can afford to link to a very minimal library, so we need to start from scratch...
 if(FBDEPTH_TARGET)
     set(BUILD_CMD1 ${KO_MAKE_RECURSIVE} clean)
-    set(BUILD_CMD2 ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS} CFLAGS="${CFLAGS}" LDFLAGS="${LDFLAGS}" ${FBDEPTH_TARGET})
+    set(BUILD_CMD2 ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS} "CFLAGS=${CFLAGS}" "LDFLAGS=${LDFLAGS}" ${FBDEPTH_TARGET})
 
     # That does mean we need to stash the binary somewhere a clean won't scrap it, though...
     if(DEFINED ENV{DEBUG})
@@ -48,7 +48,7 @@ endif()
 
 # Minimal-ish, statically linked build, we don't care about image support
 set(BUILD_CMD4 ${KO_MAKE_RECURSIVE} clean)
-set(BUILD_CMD5 ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS} MINIMAL=1 FONTS=1 OPENTYPE=1 CFLAGS="${CFLAGS}" LDFLAGS="${LDFLAGS}" ${FBINK_TARGET})
+set(BUILD_CMD5 ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS} MINIMAL=1 FONTS=1 OPENTYPE=1 "CFLAGS=${CFLAGS}" "LDFLAGS=${LDFLAGS}" ${FBINK_TARGET})
 
 # We build in-tree...
 set(INSTALL_CMD1 ${CMAKE_COMMAND} -E make_directory ${BINARY_DIR})
