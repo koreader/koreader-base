@@ -11,7 +11,7 @@ ep_get_source_dir(SOURCE_DIR)
 assert_var_defined(XCOMPILE)
 
 if($ENV{KODEBUG})
-    # Debugging is go!
+    # Debugging is a go!
     set(DBG_CMD "${ISED} 's|#CCDEBUG= -g|CCDEBUG= -g|' ${SOURCE_DIR}/src/Makefile")
     # To-do: make this auto-trigger when Valgrind is installed
     #set(DBG_CMD "${DBG_CMD} && ${ISED} 's|#XCFLAGS+= -DLUAJIT_USE_VALGRIND|XCFLAGS+= -DLUAJIT_USE_VALGRIND|' ${SOURCE_DIR}/src/Makefile")
@@ -59,7 +59,7 @@ if(${XCOMPILE})
     set(BUILD_CMD_STR "${BUILD_CMD_STR} CC=\"${CC}\" HOST_CC=\"${HOST_CC}\"")
     set(BUILD_CMD_STR "${BUILD_CMD_STR} CFLAGS=\"${BASE_CFLAGS}\" HOST_CFLAGS=\"${HOST_CFLAGS}\"")
     if(DEFINED LDFLAGS)
-        set(BUILD_CMD_STR "${BUILD_CMD_STR} LDFLAGS=\"\" HOST_LDFLAGS=\"\" TARGET_LDFLAGS=\"${LDFLAGS}\"")
+        set(BUILD_CMD_STR "${BUILD_CMD_STR} LDFLAGS= HOST_LDFLAGS= TARGET_LDFLAGS=\"${LDFLAGS}\"")
     endif()
     if(DEFINED TARGET_SYS)
         set(BUILD_CMD_STR "${BUILD_CMD_STR} TARGET_SYS=\"${TARGET_SYS}\"")
