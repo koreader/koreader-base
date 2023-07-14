@@ -20,9 +20,9 @@ ep_get_source_dir(SOURCE_DIR)
 
 set(LUA_HTMLPARSER_ROCKSPEC rockspecs/htmlparser-${LUA_HTMLPARSER_VER}.rockspec)
 
-set(BUILD_CMD sh -c "${LUAROCKS} make --tree=${OUTPUT_DIR}/rocks ${LUA_HTMLPARSER_ROCKSPEC}")
-set(BUILD_CMD "${BUILD_CMD} CC=\"${CC}\" CFLAGS=\"${CFLAGS}\" LD=\"${LD}\"")
-set(BUILD_CMD "${BUILD_CMD} LUA_INCDIR=\"${LUA_INCDIR}\" LUA_LIBDIR=\"${LUA_LIBDIR}\"")
+set(BUILD_CMD ${LUAROCKS} make --tree=${OUTPUT_DIR}/rocks ${LUA_HTMLPARSER_ROCKSPEC})
+set(BUILD_CMD ${BUILD_CMD} CC="${CC}" CFLAGS="${CFLAGS}" LD="${LD}")
+set(BUILD_CMD ${BUILD_CMD} LUA_INCDIR="${LUA_INCDIR}" LUA_LIBDIR="${LUA_LIBDIR}")
 
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME

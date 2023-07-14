@@ -766,16 +766,16 @@ $(CZMQ_LIB): $(ZMQ_LIB) $(THIRDPARTY_DIR)/czmq/*.*
 		$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS)
 	cp -fL $(CZMQ_DIR)/$(if $(WIN32),bin,lib)/$(notdir $(CZMQ_LIB)) $@
 
-# libtffi_wrap.so locates in koreader/common, but libssl.so and libcrypto.so
-# live in koreader/libs, so we need to set rpath accordingly
 $(TURBO_FFI_WRAP_LIB): $(SSL_LIB) $(THIRDPARTY_DIR)/turbo/*.*
 	install -d $(TURBO_BUILD_DIR)
 	cd $(TURBO_BUILD_DIR) && \
-		$(CMAKE) $(CMAKE_FLAGS) -DCC="$(CC)" -DCFLAGS="$(CFLAGS) -I$(OPENSSL_DIR)/include" \
-		-DLDFLAGS="$(LDFLAGS) -lcrypto -lssl \
+		$(CMAKE) $(CMAKE_FLAGS) \
+		-DCC='$(CC)' \
+		-DCFLAGS='$(CFLAGS) -I$(OPENSSL_DIR)/include' \
+		-DLDFLAGS='$(LDFLAGS) -lcrypto -lssl \
 			$(if $(ANDROID),$(CURDIR)/$(LUAJIT_LIB),) \
 			$(if $(WIN32),$(CURDIR)/$(LUAJIT_LIB),) \
-			-L$(OPENSSL_DIR) -Wl,-rpath,'$(ORIGIN_CMAKE_TO_AUTOCFG)/../libs'" \
+			-L$(OPENSSL_DIR)' \
 		$(CURDIR)/$(THIRDPARTY_DIR)/turbo && \
 		$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS)
 	cp -fL $(TURBO_DIR)/$(notdir $(TURBO_FFI_WRAP_LIB)) $@
@@ -787,11 +787,11 @@ ifdef DARWIN
 		common/$(notdir $(TURBO_FFI_WRAP_LIB)) \
 		$@
 	install_name_tool -change \
-		`otool -L "$@" | grep "$(notdir $(CRYPTO_LIB)) " | awk '{print $$1}'` \
+		`otool -L '$@' | grep '$(notdir $(CRYPTO_LIB)) ' | awk '{print $$1}'` \
 		libs/$(notdir $(CRYPTO_LIB)) \
 		$@
 	install_name_tool -change \
-		`otool -L "$@" | grep "$(notdir $(SSL_LIB)) " | awk '{print $$1}'` \
+		`otool -L '$@' | grep '$(notdir $(SSL_LIB)) ' | awk '{print $$1}'` \
 		libs/$(notdir $(SSL_LIB)) \
 		$@
 endif
@@ -800,15 +800,16 @@ $(LPEG_ROCK): $(THIRDPARTY_DIR)/lpeg/*.*
 	install -d $(LPEG_BUILD_DIR)
 	-rm -f $(LPEG_ROCK)
 	cd $(LPEG_BUILD_DIR) && \
-		$(CMAKE) $(CMAKE_FLAGS) -DOUTPUT_DIR="$(CURDIR)/$(OUTPUT_DIR)" \
-		-DLPEG_VER="$(LPEG_VER)" \
-		-DCC="$(CC)" \
-		-DCFLAGS="$(CFLAGS)" \
-		-DLDFLAGS="$(LDFLAGS)" \
-		-DLUAROCKS="$(LUAROCKS_BINARY)" \
-		-DLUA_INCDIR="$(LUA_INCDIR)" \
-		-DLUA_LIBDIR="$(LUA_LIBDIR)" \
-		$(if $(USE_LUAJIT_LIB),-DLUALIB="-lluajit",) \
+		$(CMAKE) $(CMAKE_FLAGS) \
+		-DOUTPUT_DIR='$(CURDIR)/$(OUTPUT_DIR)' \
+		-DLPEG_VER='$(LPEG_VER)' \
+		-DCC='$(CC)' \
+		-DCFLAGS='$(CFLAGS)' \
+		-DLDFLAGS='$(LDFLAGS)' \
+		-DLUAROCKS='$(LUAROCKS_BINARY)' \
+		-DLUA_INCDIR='$(LUA_INCDIR)' \
+		-DLUA_LIBDIR='$(LUA_LIBDIR)' \
+		$(if $(USE_LUAJIT_LIB),-DLUALIB='-lluajit',) \
 		$(CURDIR)/$(THIRDPARTY_DIR)/lpeg && \
 		$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS)
 
@@ -817,12 +818,15 @@ $(LUA_SPORE_ROCK): $(THIRDPARTY_DIR)/lua-Spore/*.*
 	-rm -f $(LUA_SPORE_DIR)/../lua-Spore-stamp/lua-Spore-build
 	-rm -f $(LUA_SPORE_ROCK)
 	cd $(LUA_SPORE_BUILD_DIR) && \
-		$(CMAKE) $(CMAKE_FLAGS) -DOUTPUT_DIR="$(CURDIR)/$(OUTPUT_DIR)" \
-		-DLUA_SPORE_VER=$(LUA_SPORE_VER) -DLD="$(CC)" \
-		-DCC="$(CC)" -DCFLAGS="$(CFLAGS) -I$(LUAJIT_DIR)/src" \
-		-DLUAROCKS="$(LUAROCKS_BINARY)" \
-		-DLUA_INCDIR="$(LUA_INCDIR)" \
-		-DLUA_LIBDIR="$(LUA_LIBDIR)" \
+		$(CMAKE) $(CMAKE_FLAGS) \
+		-DOUTPUT_DIR='$(CURDIR)/$(OUTPUT_DIR)' \
+		-DLUA_SPORE_VER='$(LUA_SPORE_VER)' \
+		-DCC='$(CC)' \
+		-DLD='$(CC)' \
+		-DCFLAGS='$(CFLAGS) -I$(LUAJIT_DIR)/src' \
+		-DLUAROCKS='$(LUAROCKS_BINARY)' \
+		-DLUA_INCDIR='$(LUA_INCDIR)' \
+		-DLUA_LIBDIR='$(LUA_LIBDIR)' \
 		$(CURDIR)/$(THIRDPARTY_DIR)/lua-Spore && \
 		$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS)
 
@@ -830,32 +834,35 @@ $(LUA_HTMLPARSER_ROCK): $(THIRDPARTY_DIR)/lua-htmlparser/*.*
 	install -d $(LUA_HTMLPARSER_BUILD_DIR)
 	-rm -f $(LUA_HTMLPARSER_ROCK)
 	cd $(LUA_HTMLPARSER_BUILD_DIR) && \
-		$(CMAKE) $(CMAKE_FLAGS) -DOUTPUT_DIR="$(CURDIR)/$(OUTPUT_DIR)" \
-		-DLUA_HTMLPARSER_VER=$(LUA_HTMLPARSER_VER) -DLD="$(CC)" \
-		-DCC="$(CC)" -DCFLAGS="$(CFLAGS) -I$(LUAJIT_DIR)/src" \
-		-DLUAROCKS="$(LUAROCKS_BINARY)" \
-		-DLUA_INCDIR="$(LUA_INCDIR)" \
-		-DLUA_LIBDIR="$(LUA_LIBDIR)" \
+		$(CMAKE) $(CMAKE_FLAGS) \
+		-DOUTPUT_DIR='$(CURDIR)/$(OUTPUT_DIR)' \
+		-DLUA_HTMLPARSER_VER='$(LUA_HTMLPARSER_VER)' \
+		-DCC='$(CC)' \
+		-DLD='$(CC)' \
+		-DCFLAGS='$(CFLAGS) -I$(LUAJIT_DIR)/src' \
+		-DLUAROCKS='$(LUAROCKS_BINARY)' \
+		-DLUA_INCDIR='$(LUA_INCDIR)' \
+		-DLUA_LIBDIR='$(LUA_LIBDIR)' \
 		$(CURDIR)/$(THIRDPARTY_DIR)/lua-htmlparser && \
 		$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS)
 
-# rapidjson.so lives in rocks/lib/lua/5.1/ and we want it to look for the STL in libs/, hence the funky rpath
 $(LUA_RAPIDJSON_ROCK): $(THIRDPARTY_DIR)/lua-rapidjson/*.*
 	install -d $(LUA_RAPIDJSON_BUILD_DIR)
 	-rm -f $(LUA_RAPIDJSON_ROCK)
 	cd $(LUA_RAPIDJSON_BUILD_DIR) && \
-		$(CMAKE) $(CMAKE_FLAGS) -DOUTPUT_DIR="$(CURDIR)/$(OUTPUT_DIR)" \
-		-DLUA_RAPIDJSON_VER=$(LUA_RAPIDJSON_VER) \
-		-DCC="$(CC)" \
-		-DCXX="$(CXX)" \
-		-DCFLAGS="$(CFLAGS)" \
-		-DCXXFLAGS="$(CXXFLAGS)" \
-		-DLDFLAGS="$(LDFLAGS)" \
-		-DLUAROCKS="$(LUAROCKS_BINARY)" \
-		-DLUA_INCDIR="$(LUA_INCDIR)" \
-		-DLUA_LIBDIR="$(LUA_LIBDIR)" \
-		$(if $(ANDROID),-DLUALIB="$(notdir $(LUAJIT_LIB))",) \
-		$(if $(ANDROID),-DLIBFLAG="$(CURDIR)/$(LUAJIT_LIB) -lm",) \
+		$(CMAKE) $(CMAKE_FLAGS) \
+		-DOUTPUT_DIR='$(CURDIR)/$(OUTPUT_DIR)' \
+		-DLUA_RAPIDJSON_VER='$(LUA_RAPIDJSON_VER)' \
+		-DCC='$(CC)' \
+		-DCXX='$(CXX)' \
+		-DCFLAGS='$(CFLAGS)' \
+		-DCXXFLAGS='$(CXXFLAGS)' \
+		-DLDFLAGS='$(LDFLAGS)' \
+		-DLUAROCKS='$(LUAROCKS_BINARY)' \
+		-DLUA_INCDIR='$(LUA_INCDIR)' \
+		-DLUA_LIBDIR='$(LUA_LIBDIR)' \
+		$(if $(ANDROID),-DLUALIB='$(notdir $(LUAJIT_LIB))',) \
+		$(if $(ANDROID),-DLIBFLAG='$(CURDIR)/$(LUAJIT_LIB) -lm',) \
 		$(CURDIR)/$(THIRDPARTY_DIR)/lua-rapidjson && \
 		$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS)
 

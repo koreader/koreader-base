@@ -20,9 +20,9 @@ ep_get_source_dir(SOURCE_DIR)
 
 set(LUA_SPORE_ROCKSPEC rockspec/lua-spore-${LUA_SPORE_VER}.rockspec)
 
-set(BUILD_CMD sh -c "${LUAROCKS} make --tree=${OUTPUT_DIR}/rocks ${LUA_SPORE_ROCKSPEC}")
-set(BUILD_CMD "${BUILD_CMD} CC=\"${CC}\" CFLAGS=\"${CFLAGS}\" LD=\"${LD}\"")
-set(BUILD_CMD "${BUILD_CMD} LUA_INCDIR=\"${LUA_INCDIR}\" LUA_LIBDIR=\"${LUA_LIBDIR}\"")
+set(BUILD_CMD ${LUAROCKS} make --tree=${OUTPUT_DIR}/rocks ${LUA_SPORE_ROCKSPEC})
+set(BUILD_CMD ${BUILD_CMD} CC="${CC}" CFLAGS="${CFLAGS}" LD="${LD}")
+set(BUILD_CMD ${BUILD_CMD} LUA_INCDIR="${LUA_INCDIR}" LUA_LIBDIR="${LUA_LIBDIR}")
 
 set(PATCH_CMD sh -c "mkdir -p doc && ${ISED} \"s| 'luasocket|--'luasocket|g\" ${LUA_SPORE_ROCKSPEC}")
 
