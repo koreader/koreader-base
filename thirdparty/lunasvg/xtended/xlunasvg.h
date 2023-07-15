@@ -8,7 +8,7 @@ namespace lunasvg {
 typedef struct external_context_t external_context_t;
 
 // Font specification, given to external text to glyph SVG paths converter
-typedef struct {
+typedef struct external_font_spec_t {
     const char * family = nullptr;
     double size = 16;
     short weight = 400;

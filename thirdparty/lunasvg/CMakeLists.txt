@@ -43,7 +43,7 @@ set(PATCH_CMD2 sh -c "cp -rp -v ${CMAKE_CURRENT_SOURCE_DIR}/xtended ${SOURCE_DIR
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
     https://github.com/sammycage/lunasvg.git
-    f924651b85cac47dbe15f51a4aa320461fc1d07b
+    906d326b29177a175200d4189c3858f68b4e401a
     ${SOURCE_DIR}
 )
 
