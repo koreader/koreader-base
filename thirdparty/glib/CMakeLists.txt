@@ -68,10 +68,13 @@ else()
 endif()
 
 if(DEFINED ENV{DARWIN})
+    # FIXME: Use our own gettext install, we build it and ship it!
     set(CFLAGS "-I/usr/local/opt/gettext/include $ENV{DARWIN_AARCH64_HOST_CFLAG} ${CFLAGS}")
     set(LDFLAGS "${LDFLAGS} -L/usr/local/opt/gettext/lib $ENV{DARWIN_AARCH64_HOST_LDFLAG} -L${LIBICONV_DIR}/lib -L${ZLIB_DIR}/lib -L${LIBFFI_DIR}/.libs -L${BINARY_DIR}/gmodule/.libs")
 else()
     set(LDFLAGS "${LDFLAGS} -L${ZLIB_DIR}/lib -L${LIBFFI_DIR}/.libs -L${BINARY_DIR}/gmodule/.libs")
+    # Apparently, the CI needs some extra clunky help...
+    set(LDFLAGS "${LDFLAGS} -Wl,-rpath-link,${ZLIB_DIR}/lib -Wl,-rpath-link,${LIBFFI_DIR}/.libs -Wl,-rpath-link,${BINARY_DIR}/gmodule/.libs")
 endif()
 set(CFG_ENV_VAR ${CFG_ENV_VAR} "CFLAGS=${CFLAGS}" "LDFLAGS=${LDFLAGS}")
 

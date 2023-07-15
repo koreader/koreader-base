@@ -419,7 +419,7 @@ $(LIBICONV): $(THIRDPARTY_DIR)/libiconv/*.*
 		$(CURDIR)/$(THIRDPARTY_DIR)/libiconv && \
 		$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS)
 
-# libgettext for glib on android
+# libgettext for glib on android & macOS
 $(LIBGETTEXT): $(LIBICONV) $(THIRDPARTY_DIR)/gettext/*.*
 	install -d $(GETTEXT_BUILD_DIR)
 	cd $(GETTEXT_BUILD_DIR) && \
