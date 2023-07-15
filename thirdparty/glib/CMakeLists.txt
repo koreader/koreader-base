@@ -70,6 +70,8 @@ endif()
 if(DEFINED ENV{DARWIN})
     set(CFLAGS "-I/usr/local/opt/gettext/include $ENV{DARWIN_AARCH64_HOST_CFLAG} ${CFLAGS}")
     set(LDFLAGS "${LDFLAGS} -L/usr/local/opt/gettext/lib $ENV{DARWIN_AARCH64_HOST_LDFLAG} -L${LIBICONV_DIR}/lib -L${ZLIB_DIR}/lib -L${LIBFFI_DIR}/.libs -L${BINARY_DIR}/gmodule/.libs")
+else()
+    set(LDFLAGS "${LDFLAGS} -L${ZLIB_DIR}/lib -L${LIBFFI_DIR}/.libs -L${BINARY_DIR}/gmodule/.libs")
 endif()
 set(CFG_ENV_VAR ${CFG_ENV_VAR} "CFLAGS=${CFLAGS}" "LDFLAGS=${LDFLAGS}")
 
