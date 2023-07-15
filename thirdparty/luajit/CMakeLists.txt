@@ -27,7 +27,7 @@ if(DEFINED ENV{KODEBUG})
     endif()
 endif()
 
-if(DEFINED XCOMPILE)
+if(XCOMPILE)
     assert_var_defined(HOST_CFLAGS)
     assert_var_defined(CC)
     assert_var_defined(BASE_CFLAGS)
