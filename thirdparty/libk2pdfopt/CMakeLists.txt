@@ -28,7 +28,7 @@ endif()
 
 # Fix build error when compiling with -std=gnu++17: ISO
 # C++17 does not allow 'register' storage class specifier.
-set(CXXFLAGS "${CXXFLAGS} -Wno-error=register")
+set(CXXFLAGS "${CXXFLAGS} -Wno-register -Wno-error=register")
 
 ep_get_source_dir(SOURCE_DIR)
 
@@ -45,7 +45,7 @@ set(BUILD_CMD ${BUILD_CMD} "PNG_LDFLAGS=-L${PNG_DIR}/lib" all)
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
     https://github.com/NiLuJe/libk2pdfopt.git
-    cc31b55
+    d5bcaba
     ${SOURCE_DIR}
 )
 

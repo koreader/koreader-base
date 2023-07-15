@@ -21,7 +21,7 @@ set(CFLAGS "${CFLAGS} -Wno-error")
 
 # Fix build error when compiling with -std=gnu++17: ISO
 # C++17 does not allow 'register' storage class specifier.
-set(CXXFLAGS "${CXXFLAGS} -Wno-error=register")
+set(CXXFLAGS "${CXXFLAGS} -Wno-register -Wno-error=register")
 
 set(CFG_ENV_VAR "CC=${CC}" "CXX=${CXX}" "CFLAGS=${CFLAGS}" "CXXFLAGS=${CXXFLAGS}" "LDFLAGS=${LDFLAGS}")
 set(CFG_OPTS -q --disable-desktopfiles --disable-static --enable-shared --disable-xmltools --disable-largefile --without-jpeg --without-tiff -host=${CHOST})
