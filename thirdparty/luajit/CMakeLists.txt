@@ -12,7 +12,7 @@ assert_var_defined(XCOMPILE)
 
 if(DEFINED ENV{KODEBUG})
     # Debugging is a go!
-    set(DBG_CMD "${ISED} 's|#CCDEBUG= -g|CCDEBUG= -g|' ${SOURCE_DIR}/src/Makefile")
+    set(DBG_CMD sh -c "${ISED} 's|#CCDEBUG= -g|CCDEBUG= -g|' ${SOURCE_DIR}/src/Makefile")
     # To-do: make this auto-trigger when Valgrind is installed
     #set(DBG_CMD "${DBG_CMD} && ${ISED} 's|#XCFLAGS+= -DLUAJIT_USE_VALGRIND|XCFLAGS+= -DLUAJIT_USE_VALGRIND|' ${SOURCE_DIR}/src/Makefile")
     if(DEFINED ENV{KODEBUG_LUAJIT_USE_SYSMALLOC})
