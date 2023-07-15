@@ -24,7 +24,7 @@ set(CFLAGS "${CFLAGS} -Wno-error")
 set(CXXFLAGS "${CXXFLAGS} -Wno-register -Wno-error=register")
 
 set(CFG_ENV_VAR "CC=${CC}" "CXX=${CXX}" "CFLAGS=${CFLAGS}" "CXXFLAGS=${CXXFLAGS}" "LDFLAGS=${LDFLAGS}")
-set(CFG_OPTS -q --disable-desktopfiles --disable-static --enable-shared --disable-xmltools --disable-largefile --without-jpeg --without-tiff -host=${CHOST})
+set(CFG_OPTS --disable-desktopfiles --disable-static --enable-shared --disable-xmltools --disable-largefile --without-jpeg --without-tiff -host=${CHOST})
 set(CFG_CMD env ${CFG_ENV_VAR} ${SOURCE_DIR}/configure ${CFG_OPTS})
 
 # Never *ever* call setlocale, for any reason.

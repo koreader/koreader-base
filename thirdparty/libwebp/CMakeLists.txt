@@ -22,7 +22,7 @@ set(CFG_ENV_VAR "CC=${CC}" "CXX=${CXX}" "CPPFLAGS=${CPPFLAGS}" "LDFLAGS=${LDFLAG
 # images. But it fails on animated webp images, not even rendering the first frame.
 # We need the regular libraries (libwebp.so and libwebpdemux.so) to handle them
 # (but we can left out the encoder, libwebpmux.so).
-set(CFG_OPTS -q --prefix=${BINARY_DIR} --libdir=${BINARY_DIR}/lib --disable-static --enable-shared --host=${CHOST} --disable-libwebpmux)
+set(CFG_OPTS --prefix=${BINARY_DIR} --libdir=${BINARY_DIR}/lib --disable-static --enable-shared --host=${CHOST} --disable-libwebpmux)
 set(CFG_CMD env ${CFG_ENV_VAR} ${SOURCE_DIR}/configure ${CFG_OPTS})
 
 # No build rpath
