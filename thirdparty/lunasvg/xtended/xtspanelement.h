@@ -51,9 +51,9 @@ public:
 
     void layout(LayoutContext* context, LayoutContainer* current) const override; // not used
 
-    Path path() const { return Path{}; } // not used
+    Path path() const override { return Path{}; } // not used
 
-    std::unique_ptr<Node> clone() const;
+    std::unique_ptr<Node> clone() const override;
 };
 
 } // namespace lunasvg

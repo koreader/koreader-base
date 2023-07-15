@@ -24,45 +24,27 @@ index 64cb79d..3fd4680 100644
                  x += fdx;
                  y += fdy;
 diff --git a/CMakeLists.txt b/CMakeLists.txt
-index 0903cc5..1eec89f 100755
+index b2f07dc..98ec528 100755
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
-@@ -1,4 +1,5 @@
--cmake_minimum_required(VERSION 3.13)
-+# Our Android toolchain only has CMake 3.10.2
-+cmake_minimum_required(VERSION 3.10)
- 
- project(lunasvg VERSION 2.3.5 LANGUAGES CXX C)
- 
-@@ -10,6 +11,10 @@ set(CMAKE_C_VISIBILITY_PRESET hidden)
- set(CMAKE_CXX_VISIBILITY_PRESET hidden)
- set(CMAKE_VISIBILITY_INLINES_HIDDEN 1)
- 
-+# When cross-compiling, avoid installation in a
-+# "build/staging-arm-linux-gnueabihf/" subdirectory
-+set(CMAKE_STAGING_PREFIX "${CMAKE_INSTALL_PREFIX}")
-+
- option(BUILD_SHARED_LIBS "Builds as shared library" OFF)
- option(LUNASVG_BUILD_EXAMPLES "Builds examples" OFF)
- 
-@@ -17,6 +22,7 @@ add_library(lunasvg)
+@@ -12,6 +12,7 @@ add_library(lunasvg)
  
  add_subdirectory(include)
  add_subdirectory(source)
 +add_subdirectory(xtended)
  add_subdirectory(3rdparty/plutovg)
  
- set_target_properties(lunasvg
-@@ -43,6 +49,7 @@ include(GNUInstallDirs)
- install(
-     FILES
-     ${CMAKE_CURRENT_SOURCE_DIR}/include/lunasvg.h
-+    ${CMAKE_CURRENT_SOURCE_DIR}/xtended/xlunasvg.h
-     ${CMAKE_CURRENT_BINARY_DIR}/include/lunasvg_export.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/lunasvg
+ if(BUILD_SHARED_LIBS)
+@@ -28,6 +29,7 @@ set(LUNASVG_INCDIR ${CMAKE_INSTALL_PREFIX}/include)
+ 
+ install(FILES
+     include/lunasvg.h
++    xtended/xlunasvg.h
+     DESTINATION ${LUNASVG_INCDIR}
  )
- install(
+ 
 diff --git a/include/lunasvg.h b/include/lunasvg.h
-index 687b572..e6bfc74 100644
+index d19325c..abc6479 100644
 --- a/include/lunasvg.h
 +++ b/include/lunasvg.h
 @@ -23,6 +23,7 @@
@@ -73,7 +55,7 @@ index 687b572..e6bfc74 100644
  #include <memory>
  #include <string>
  #include <cstdint>
-@@ -146,7 +147,7 @@ public:
+@@ -153,7 +154,7 @@ public:
       * @param size - size of the data to load, in bytes
       * @return pointer to document on success, otherwise nullptr
       */
@@ -244,7 +226,7 @@ index 4da1304..2bdef6e 100644
          return nullptr;
  
 diff --git a/source/parser.cpp b/source/parser.cpp
-index a5d09c5..38d532b 100644
+index a5d09c5..80a7263 100644
 --- a/source/parser.cpp
 +++ b/source/parser.cpp
 @@ -14,6 +14,9 @@
@@ -356,33 +338,7 @@ index a5d09c5..38d532b 100644
      {"visibility", PropertyID::Visibility}
  };
  
-@@ -1256,8 +1282,12 @@ bool RuleData::matchPseudoClassSelector(const PseudoClassSelector& selector, con
- 
-     if(selector.type == PseudoClassSelector::Type::Is)
-     {
-+        /* Our Android toolchain can't deduce these 'auto', and is confused with the reuse of the name 'selector'
-         for(auto& selector : selector.subSelectors) {
-             for(auto& sel : selector) {
-+        */
-+        for(const Selector& subselectors : selector.subSelectors) {
-+            for(const SimpleSelector& sel : subselectors) {
-                 if(!matchSimpleSelector(sel, element)) {
-                     return false;
-                 }
-@@ -1269,8 +1299,12 @@ bool RuleData::matchPseudoClassSelector(const PseudoClassSelector& selector, con
- 
-     if(selector.type == PseudoClassSelector::Type::Not)
-     {
-+        /* Our Android toolchain can't deduce these 'auto', and is confused with the reuse of the name 'selector'
-         for(auto& selector : selector.subSelectors) {
-             for(auto& sel : selector) {
-+        */
-+        for(const Selector& subselectors : selector.subSelectors) {
-+            for(const SimpleSelector& sel : subselectors) {
-                 if(matchSimpleSelector(sel, element)) {
-                     return false;
-                 }
-@@ -1685,6 +1719,14 @@ static inline std::unique_ptr<Element> createElement(ElementID id)
+@@ -1685,6 +1711,14 @@ static inline std::unique_ptr<Element> createElement(ElementID id)
          return std::make_unique<MarkerElement>();
      case ElementID::Style:
          return std::make_unique<StyleElement>();
@@ -397,7 +353,7 @@ index a5d09c5..38d532b 100644
      default:
          break;
      }
-@@ -1824,7 +1866,34 @@ bool TreeBuilder::parse(const char* data, std::size_t size)
+@@ -1824,7 +1858,34 @@ bool TreeBuilder::parse(const char* data, std::size_t size)
      };
  
      auto handle_text = [&](const char* start, const char* end, bool in_cdata) {
