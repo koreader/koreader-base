@@ -270,7 +270,7 @@ $(CRENGINE_LIB): $(ZLIB) $(ZSTD_LIB) $(PNG_LIB) $(FREETYPE_LIB) $(HARFBUZZ_LIB) 
 		ZSTD_LIB='$(CURDIR)/$(ZSTD_LIB)' \
 		LIBS_DIR='$(CURDIR)/$(OUTPUT_DIR)/libs' \
 		$(CMAKE) $(CMAKE_FLAGS) \
-		-DJPEGLIB_INCLUDE_DIR=$(JPEG_DIR)/include \
+		-DJPEGLIB_INCLUDE_DIR='$(JPEG_DIR)/include' \
 		-DJCONFIG_INCLUDE_DIR='$(MUPDF_DIR)/scripts' \
 		-DPNG_INCLUDE_DIR='$(PNG_DIR)/include' \
 		-DLUNASVG_INCLUDE_DIR='$(LUNASVG_DIR)/include/lunasvg' \
@@ -283,7 +283,7 @@ $(CRENGINE_LIB): $(ZLIB) $(ZSTD_LIB) $(PNG_LIB) $(FREETYPE_LIB) $(HARFBUZZ_LIB) 
 		-DUTF8PROC_INCLUDE_DIR='$(UTF8PROC_DIR)' \
 		-DZSTD_INCLUDE_DIR='$(ZSTD_DESTDIR)/include' \
 		-DSRELL_INCLUDE_DIR='${SRELL_INCLUDE_DIR}' \
-		-DCMAKE_BUILD_TYPE=$(CMAKE_BUILD_TYPE) \
+		-DCMAKE_BUILD_TYPE='$(CMAKE_BUILD_TYPE)' \
 		$(if $(WIN32),-DCMAKE_SYSTEM_NAME=Windows,) \
 		$(if $(ANDROID),-DCMAKE_SYSTEM_NAME=Android,) \
 		$(if $(ANDROID),-DCMAKE_SYSTEM_VERSION=1,) \
@@ -371,7 +371,7 @@ $(K2PDFOPT_LIB) $(LEPTONICA_LIB) $(TESSERACT_LIB): $(PNG_LIB) $(ZLIB) \
 	install -d $(K2PDFOPT_BUILD_DIR)
 	cd $(K2PDFOPT_BUILD_DIR) && \
 		$(CMAKE) $(CMAKE_FLAGS) \
-		$(if $(EMULATE_READER),,-DHOST='$(if $(ANDROID),'arm-linux',$(CHOST))') \
+		$(if $(EMULATE_READER),,-DHOST='$(if $(ANDROID),arm-linux,$(CHOST))') \
 		-DCC='$(CC)' \
 		-DCXX='$(CXX)' \
 		-DCFLAGS='$(CFLAGS)' \
@@ -411,7 +411,7 @@ $(LIBICONV): $(THIRDPARTY_DIR)/libiconv/*.*
 	install -d $(LIBICONV_BUILD_DIR)
 	cd $(LIBICONV_BUILD_DIR) && \
 		$(CMAKE) $(CMAKE_FLAGS) \
-		-DHOST='$(if $(EMULATE_READER),,$(if $(ANDROID),'arm-linux',$(CHOST)))' \
+		-DHOST='$(if $(EMULATE_READER),,$(if $(ANDROID),arm-linux,$(CHOST)))' \
 		-DCC='$(CC)' \
 		-DLD='$(LD)' \
 		-DAR='$(AR)' \
@@ -564,7 +564,7 @@ $(SDL2_LIB): $(THIRDPARTY_DIR)/sdl2/*.*
 	install -d $(SDL2_BUILD_DIR)
 	cd $(SDL2_BUILD_DIR) && \
 		$(CMAKE) $(CMAKE_FLAGS) \
-		-DCMAKE_BUILD_TYPE=$(CMAKE_BUILD_TYPE) \
+		-DCMAKE_BUILD_TYPE='$(CMAKE_BUILD_TYPE)' \
 		-DSDL_TEST=OFF \
 		-DSDL_SHARED=ON \
 		-DSDL_STATIC=OFF \
@@ -744,12 +744,12 @@ $(ZMQ_LIB): $(THIRDPARTY_DIR)/libzmq/*.*
 	install -d $(ZMQ_BUILD_DIR)
 	cd $(ZMQ_BUILD_DIR) && \
 		$(CMAKE) $(CMAKE_FLAGS) \
-		-DCC="$(CC)" \
-		-DCXX="$(CXX)" \
-		-DCHOST="$(CHOST)" \
-		-DCFLAGS="$(CFLAGS)" \
-		-DCXXFLAGS="$(CXXFLAGS)" \
-		-DLDFLAGS="$(LDFLAGS)" \
+		-DCC='$(CC)' \
+		-DCXX='$(CXX)' \
+		-DCHOST='$(CHOST)' \
+		-DCFLAGS='$(CFLAGS)' \
+		-DCXXFLAGS='$(CXXFLAGS)' \
+		-DLDFLAGS='$(LDFLAGS)' \
 		$(if $(LEGACY),-DLEGACY:BOOL=ON,) \
 		$(CURDIR)/$(THIRDPARTY_DIR)/libzmq && \
 		$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS)
@@ -759,11 +759,11 @@ $(CZMQ_LIB): $(ZMQ_LIB) $(THIRDPARTY_DIR)/czmq/*.*
 	install -d $(CZMQ_BUILD_DIR)
 	cd $(CZMQ_BUILD_DIR) && \
 		$(CMAKE) $(CMAKE_FLAGS) \
-		-DCC="$(CC)" \
-		-DCHOST="$(CHOST)" \
-		-DCFLAGS="$(CFLAGS) $(if $(WIN32),-DLIBCZMQ_EXPORTS)" \
-		-DLDFLAGS="$(LDFLAGS)" \
-		-DZMQ_DIR=$(ZMQ_DIR) \
+		-DCC='$(CC)' \
+		-DCHOST='$(CHOST)' \
+		-DCFLAGS='$(CFLAGS) $(if $(WIN32),-DLIBCZMQ_EXPORTS)' \
+		-DLDFLAGS='$(LDFLAGS)' \
+		-DZMQ_DIR='$(ZMQ_DIR)' \
 		$(CURDIR)/$(THIRDPARTY_DIR)/czmq && \
 		$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS)
 	cp -fL $(CZMQ_DIR)/$(if $(WIN32),bin,lib)/$(notdir $(CZMQ_LIB)) $@
