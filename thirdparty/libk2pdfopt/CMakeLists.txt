@@ -33,6 +33,7 @@ set(CXXFLAGS "${CXXFLAGS} -Wno-register -Wno-error=register")
 ep_get_source_dir(SOURCE_DIR)
 
 # NOTE: This is dangerously close to being too long (and as such, iis at risk of random failure if your base path is even halfway long-ish)...
+# FIXME: Horrible nastiness on *native* builds happens if we set LDFLAGS here...
 set(BUILD_CMD ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS} BUILDMODE=shared HOST=${HOST} CC=${CC} "CFLAGS=${CFLAGS}")
 set(BUILD_CMD ${BUILD_CMD} CXX=${CXX} "CXXFLAGS=${CXXFLAGS}" AR=${AR} RANLIB=${RANLIB} ZLIB=${ZLIB})
 set(BUILD_CMD ${BUILD_CMD} TESSERACT_DIR=${TESSERACT_DIR} LEPTONICA_DIR=${LEPTONICA_DIR} K2PDFOPT_DIR=${K2PDFOPT_DIR})
