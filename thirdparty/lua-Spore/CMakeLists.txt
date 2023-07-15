@@ -21,7 +21,9 @@ ep_get_source_dir(SOURCE_DIR)
 set(LUA_SPORE_ROCKSPEC rockspec/lua-spore-${LUA_SPORE_VER}.rockspec)
 
 # We want to run luarocks --version=5.1, not "luarocks --version=5.1"...
-separate_arguments(ROCKS_CMD NATIVE_COMMAND PROGRAM SEPARATE_ARGS "${LUAROCKS}")
+#separate_arguments(ROCKS_CMD NATIVE_COMMAND PROGRAM SEPARATE_ARGS "${LUAROCKS}")
+set(ROCKS_CMD ${LUAROCKS})
+separate_arguments(ROCKS_CMD)
 
 set(BUILD_CMD ${ROCKS_CMD} make --tree=${OUTPUT_DIR}/rocks ${LUA_SPORE_ROCKSPEC})
 set(BUILD_CMD ${BUILD_CMD} "CC=${CC}" "CFLAGS=${CFLAGS}" "LD=${LD}")

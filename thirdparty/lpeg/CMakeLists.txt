@@ -29,7 +29,9 @@ SET(PATCH_CMD "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/lpeg-${LPEG_RELEASE}-stan
 set(CONFIGURE_CMD ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/${LUA_LPEG_ROCKSPEC} ${SOURCE_DIR}/${LUA_LPEG_ROCKSPEC})
 
 # We want to run luarocks --version=5.1, not "luarocks --version=5.1"...
-separate_arguments(ROCKS_CMD NATIVE_COMMAND PROGRAM SEPARATE_ARGS "${LUAROCKS}")
+#separate_arguments(ROCKS_CMD NATIVE_COMMAND PROGRAM SEPARATE_ARGS "${LUAROCKS}")
+set(ROCKS_CMD ${LUAROCKS})
+separate_arguments(ROCKS_CMD)
 
 set(BUILD_CMD ${ROCKS_CMD} make --tree=${OUTPUT_DIR}/rocks ${LUA_LPEG_ROCKSPEC})
 set(BUILD_CMD ${BUILD_CMD} "CC=${CC}")
