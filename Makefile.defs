@@ -540,6 +540,10 @@ CXXFLAGS:=$(BASE_CFLAGS) $(QFLAGS) $(CXXSTD_FLAGS)
 ifndef DARWIN
 	# To prefer our shipped libraries over the system's,
 	# we set a couple rpath via an include file to make sure it goes through buildsystem indirection unscathed...
+	# NOTE: We enforce DT_RPATH over DT_RUNPATH because DT_RUNPATH is *not* honored for *transitive* dependencies,
+	#       which can lead to hilarious catastrophy if such a dependeny pulls a SONAME identical to something we ship,
+	#       because it will *not* load ours, but still let ours be loaded after that...
+	#       c.f., https://github.com/koreader/koreader-base/pull/1638#issuecomment-1636725691
 	LDFLAGS:=-Wl,-O1 -Wl,--as-needed -Wl,@$(MAKEFILE_DIR)origin.ldflags $(COMPAT_LDFLAGS)
 else
 	LDFLAGS:=

@@ -1,1 +1,1 @@
--rpath $ORIGIN -rpath $ORIGIN/libs
+--disable-new-dtags -rpath $ORIGIN -rpath $ORIGIN/libs
