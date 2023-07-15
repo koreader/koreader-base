@@ -496,7 +496,7 @@ $(GLIB_STATIC): $(LIBICONV) $(LIBGETTEXT) $(LIBFFI_DIR)/include $(THIRDPARTY_DIR
 		-DGETTEXT_DIR='$(GETTEXT_DIR)' \
 		-DWITH_LIBICONV='gnu' \
 		-DENABLE_SHARED='false' \
-		-DHOST_OPTS='$(if $(EMULATE_READER),,--host=$(CHOST) --cache-file=arm_cache.conf)' \
+		-DHOST_OPTS='$(if $(EMULATE_READER),,--cache-file=arm_cache.conf)' \
 		$(CURDIR)/$(THIRDPARTY_DIR)/glib && \
 		$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS)
 
