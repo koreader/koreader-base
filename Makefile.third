@@ -485,9 +485,15 @@ $(GLIB_STATIC): $(LIBICONV) $(LIBGETTEXT) $(LIBFFI_DIR)/include $(THIRDPARTY_DIR
 	cd $(GLIB_BUILD_DIR) && \
 		$(CMAKE) $(CMAKE_FLAGS) \
 		-DCC='$(CC)' \
-		-DLDFLAGS='$(LDFLAGS) $(if $(ANDROID), -L$(LIBICONV_DIR)/lib -L$(GETTEXT_DIR)/lib,)' \
+		-DCHOST='$(CHOST)' \
+		-DAR='$(AR)' \
+		-DRANLIB='$(RANLIB)' \
 		-DCFLAGS='$(CFLAGS) $(if $(ANDROID), -L$(LIBICONV_DIR)/lib -L$(GETTEXT_DIR)/lib -I$(LIBICONV_DIR)/include -I$(GETTEXT_DIR)/include,)' \
- 		-DLIBFFI_DIR='$(LIBFFI_DIR)' -DZLIB_DIR='$(ZLIB_DIR)' \
+		-DLDFLAGS='$(LDFLAGS) $(if $(ANDROID), -L$(LIBICONV_DIR)/lib -L$(GETTEXT_DIR)/lib,)' \
+		-DLIBICONV_DIR='$(LIBICONV_DIR)' \
+		-DLIBFFI_DIR='$(LIBFFI_DIR)' \
+		-DZLIB_DIR='$(ZLIB_DIR)' \
+		-DGETTEXT_DIR='$(GETTEXT_DIR)' \
 		-DWITH_LIBICONV='gnu' \
 		-DENABLE_SHARED='false' \
 		-DHOST_OPTS='$(if $(EMULATE_READER),,--host=$(CHOST) --cache-file=arm_cache.conf)' \
