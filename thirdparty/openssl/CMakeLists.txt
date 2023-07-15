@@ -75,8 +75,12 @@ if(DEFINED ENV{ANDROID})
     string(REPLACE "-no-canonical-prefixes" "" FILTERED_CFLAGS "${FILTERED_CFLAGS}")
 endif()
 
+# May have an arg, split it
+set(CONFIGURE_CMD ${CONFIG_SCRIPT})
+separate_arguments(CONFIGURE_CMD)
+
 set(CFG_OPTS ${CFG_OPTS} ${ASM_OPT} no-idea no-mdc2 no-rc5)
-set(CFG_CMD env ${CFG_ENV_VAR} ${SOURCE_DIR}/${CONFIG_SCRIPT} ${CFG_OPTS})
+set(CFG_CMD env ${CFG_ENV_VAR} ${SOURCE_DIR}/${CONFIGURE_CMD} ${CFG_OPTS})
 
 if(DEFINED ENV{ANDROID})
     set(MAKE_CMD ${KO_MAKE_RECURSIVE} "CFLAGS=${FILTERED_CFLAGS}" "SHARED_LDFLAGS=${SHARED_LDFLAGS}" "LD=${LD}" "AR=${AR}" "RANLIB=${RANLIB}")
