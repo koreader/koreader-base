@@ -12,7 +12,8 @@ endif
 UNAME:=$(shell uname -s)
 UNAME_ARCH:=$(shell uname -m)
 
-# Use MAKEFILE_DIR instead of CURDIR for variables that are exported through -include
+# Should point at the actual directory in which *this* makefile resides, as opposed to $(CURDIR),
+# which is simply $PWD *at the time of the original make call*, which is not necessarily the same thing.
 # NOTE: Will only behave as long as there aren't any spaces in the paths involved!
 MAKEFILE_DIR:=$(dir $(realpath $(lastword $(MAKEFILE_LIST))))
 TOOLCHAIN_DIR:=$(MAKEFILE_DIR)toolchain
