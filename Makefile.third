@@ -465,6 +465,7 @@ $(GLIB): $(if $(DARWIN),$(LIBICONV) $(LIBGETTEXT),) $(LIBFFI_DIR)/include $(THIR
 		-DLIBICONV_DIR='$(LIBICONV_DIR)' \
 		-DLIBFFI_DIR='$(LIBFFI_DIR)' \
 		-DZLIB_DIR='$(ZLIB_DIR)' \
+		-DGETTEXT_DIR='$(GETTEXT_DIR)' \
 		-DWITH_LIBICONV='$(if $(DARWIN),gnu,no)' \
 		-DENABLE_SHARED='glib' \
 		-DHOST_OPTS='$(if $(EMULATE_READER),,--cache-file=arm_cache.conf)' \

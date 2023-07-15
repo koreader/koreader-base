@@ -16,6 +16,7 @@ assert_var_defined(WITH_LIBICONV)
 assert_var_defined(ENABLE_SHARED)
 assert_var_defined(LIBFFI_DIR)
 assert_var_defined(ZLIB_DIR)
+assert_var_defined(GETTEXT_DIR)
 
 ep_get_source_dir(SOURCE_DIR)
 ep_get_binary_dir(BINARY_DIR)
@@ -68,9 +69,9 @@ else()
 endif()
 
 if(DEFINED ENV{DARWIN})
-    # FIXME: Use our own gettext install, we build it and ship it!
-    set(CFLAGS "-I/usr/local/opt/gettext/include $ENV{DARWIN_AARCH64_HOST_CFLAG} ${CFLAGS}")
-    set(LDFLAGS "${LDFLAGS} -L/usr/local/opt/gettext/lib $ENV{DARWIN_AARCH64_HOST_LDFLAG} -L${LIBICONV_DIR}/lib -L${ZLIB_DIR}/lib -L${LIBFFI_DIR}/.libs -L${BINARY_DIR}/gmodule/.libs")
+    # FIXME: Drop brew's libintl from the mac bundle script
+    set(CFLAGS "$ENV{DARWIN_AARCH64_HOST_CFLAG} ${CFLAGS} -I${GETTEXT_DIR}/include")
+    set(LDFLAGS "${LDFLAGS} $ENV{DARWIN_AARCH64_HOST_LDFLAG} -L${GETTEXT_DIR}/lib -L${LIBICONV_DIR}/lib -L${ZLIB_DIR}/lib -L${LIBFFI_DIR}/.libs -L${BINARY_DIR}/gmodule/.libs")
 else()
     set(LDFLAGS "${LDFLAGS} -L${ZLIB_DIR}/lib -L${LIBFFI_DIR}/.libs -L${BINARY_DIR}/gmodule/.libs")
     # Apparently, the CI needs some extra clunky help...
