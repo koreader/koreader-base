@@ -984,15 +984,11 @@ SRELL_INCLUDE_DIR=$(SRELL_DIR)
 # CFLAGS for the Lua/C/C++ modules:
 #
 # Ddynamic libraries must be compiled with "-shared" and "-fPIC".
-# Having all symbols included (-E) won't hurt, too.
 DYNLIB_CFLAGS=-L$(CURDIR)/$(OUTPUT_DIR)/libs $(CFLAGS) -I$(LUAJIT_DIR)/src -shared
 DYNLIB_CXXFLAGS=-L$(CURDIR)/$(OUTPUT_DIR)/libs $(CXXFLAGS) -I$(LUAJIT_DIR)/src -shared
 ifdef DARWIN
 	DYNLIB_CFLAGS+=-dynamiclib -undefined dynamic_lookup
 	DYNLIB_CXXFLAGS+=-dynamiclib -undefined dynamic_lookup
-else
-	DYNLIB_CFLAGS+=-Wl,-E
-	DYNLIB_CXXFLAGS+=-Wl,-E
 endif
 
 # Used by our custom Lua modules, where we want to hide private symbols by default
