@@ -23,7 +23,7 @@ endif()
 
 set(PATCH_CMD1 sh -c "${ISED} '/LD_LIBRARY_PATH=/d' ${SOURCE_DIR}/configure.ac")
 set(PATCH_CMD2 sh -c "${ISED} '/CURL_MAC_CFLAGS/d' ${SOURCE_DIR}/configure.ac")
-set(PATCH_CMD3 sh -c "./buildconf")
+set(PATCH_CMD3 "./buildconf")
 
 set(CFG_ENV_VAR "CC=${CC}" "CPPFLAGS=${CPPFLAGS}" "CFLAGS=${CFLAGS}" "LDFLAGS=${LDFLAGS}")
 # Take a deep breath...

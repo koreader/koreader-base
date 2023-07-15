@@ -33,7 +33,7 @@ if(DEFINED ENV{ANDROID})
     set(PATCH_CMD2 "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/glib-2.58.2-android-linux-syscalls.patch")
 endif()
 
-set(PATCH_CMD3 sh -c "NOCONFIGURE=1 ./autogen.sh")
+set(PATCH_CMD3 env NOCONFIGURE=1 ./autogen.sh)
 
 # Autotools needs some hints when x-compiling
 set(gen_arm_config "${gen_arm_config}glib_cv_stack_grows=no\\n")

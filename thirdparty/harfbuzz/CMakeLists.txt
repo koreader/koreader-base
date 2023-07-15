@@ -36,7 +36,7 @@ set(CFG_CMD env ${CFG_ENV_VAR} ${SOURCE_DIR}/configure ${CFG_OPTS})
 
 # Leaving PATCH_CMD unset appears to be perfectly fine, yay.
 
-set(AUTOGEN_CMD sh -c "env NOCONFIGURE=1 ./autogen.sh")
+set(AUTOGEN_CMD env NOCONFIGURE=1 ./autogen.sh)
 
 # No build rpath
 set(STUPID_CMD sh -c "${ISED} 's/\\(hardcode_into_libs\\)=.*\$/\\1=no/' configure")
