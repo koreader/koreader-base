@@ -43,11 +43,10 @@ set(BUILD_CMD ${BUILD_CMD} "LEPT_LDFLAGS=-L${K2PDFOPT_DIR} -lpng -lz")
 set(BUILD_CMD ${BUILD_CMD} "ZLIB_LDFLAGS=-L${ZLIB_DIR}")
 set(BUILD_CMD ${BUILD_CMD} "PNG_LDFLAGS=-L${PNG_DIR}/lib" all)
 
-# FIXME: Point to the right tree & commit
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
-    https://github.com/NiLuJe/libk2pdfopt.git
-    e0d8a97
+    https://github.com/koreader/libk2pdfopt.git
+    60b82eeecf71d1776951da970fe8cd2cc5735ded
     ${SOURCE_DIR}
 )
 
