@@ -544,6 +544,7 @@ ifndef DARWIN
 	#       which can lead to hilarious catastrophy if such a dependeny pulls a SONAME identical to something we ship,
 	#       because it will *not* load ours, but still let ours be loaded after that...
 	#       c.f., https://github.com/koreader/koreader-base/pull/1638#issuecomment-1636725691
+	#       And https://bugs.launchpad.net/ubuntu/+source/eglibc/+bug/1253638/comments/5 for a nice recap.
 	LDFLAGS:=-Wl,-O1 -Wl,--as-needed -Wl,@$(MAKEFILE_DIR)origin.ldflags $(COMPAT_LDFLAGS)
 else
 	LDFLAGS:=
