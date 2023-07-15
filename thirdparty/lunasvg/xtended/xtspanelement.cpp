@@ -210,7 +210,7 @@ void TSpanElement::layoutText(LayoutContext* context, LayoutGroup* parent, text_
         // (this will get us take the next 'if')
     }
     if ( text_state.current_group == nullptr ) {
-        text_state.current_group = std::make_unique<LayoutGroup>();
+        text_state.current_group = makeUnique<LayoutGroup>();
         text_state.current_started = false;
         text_state.current_text_anchor = text_state.text_anchor;
         // We don't reset text_state.current_length_adjust: it may be set on/by the upper <text>
@@ -397,7 +397,7 @@ void TSpanElement::layoutText(LayoutContext* context, LayoutGroup* parent, text_
                     text_state.current_end_y = text_state.cursor_y;
                 }
                 if ( path.points().size() > 0 ) {
-                    auto shape = std::make_unique<LayoutGlyphShape>();
+                    auto shape = makeUnique<LayoutGlyphShape>();
                     shape->path = std::move(path);
                     shape->can_adjust_from_previous = can_adjust_from_previous;
                     // Firefox and Edge don't handle a transform= on a <tspan>, so we can just set ours
@@ -454,7 +454,7 @@ void TSpanElement::layoutText(LayoutContext* context, LayoutGroup* parent, text_
                 draw_text_decoration = false;
             }
             if ( draw_text_decoration ) {
-                auto shape = std::make_unique<LayoutGlyphShape>();
+                auto shape = makeUnique<LayoutGlyphShape>();
                 shape->is_decoration = true;
                 double x_start = text_decoration_start_x - text_state.current_start_x;
                 double w = text_state.cursor_x - text_decoration_start_x;

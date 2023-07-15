@@ -38,7 +38,7 @@ void ImageElement::layout(LayoutContext* context, LayoutContainer* current) cons
 
     LengthContext lengthContext(this);
 
-    auto image = std::make_unique<LayoutImage>();
+    auto image = makeUnique<LayoutImage>();
     image->external_context = context->getExternalContext();
     image->href = href;
     image->x = lengthContext.valueForLength(x, LengthMode::Width);

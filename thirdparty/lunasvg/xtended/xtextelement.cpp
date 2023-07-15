@@ -20,10 +20,9 @@ void TextElement::layout(LayoutContext* context, LayoutContainer* current) const
     if (isDisplayNone())
         return;
 
-    auto text = properties.get(PropertyID::_Text_Internal);
-    if (text != nullptr) {
+    if ( has(PropertyID::_Text_Internal) ) {
         // <text> shouldn't have any text: we have put it into an added <tspan>
-        printf("UNEXPECTED <text> text string: %s\n", text->value.c_str());
+        printf("UNEXPECTED <text> text string: %s\n", get(PropertyID::_Text_Internal).c_str());
     }
 
     // This text drawing state will be passed to/by all sub-<tspans>
@@ -132,7 +131,7 @@ void TextElement::layout(LayoutContext* context, LayoutContainer* current) const
     }
 
     // This <text> element can be handled just like a <g>
-    auto group = std::make_unique<LayoutGroup>();
+    auto group = makeUnique<LayoutGroup>();
     group->transform = transform();
     group->opacity = opacity();
     group->masker = context->getMasker(mask());
