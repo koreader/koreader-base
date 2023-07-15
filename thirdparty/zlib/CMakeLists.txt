@@ -15,7 +15,7 @@ ep_get_source_dir(SOURCE_DIR)
 if(DEFINED ENV{ANDROID})
     assert_var_defined(CHOST)
 
-    set(LDFLAGS ${LDFLAGS} -shared -Wl,-soname,libz.so.1)
+    set(LDFLAGS "${LDFLAGS} -shared -Wl,-soname,libz.so.1")
     # Only set CHOST for Android.
     # This can't be done generically because otherwise you have to specify soname as well.
     # See <https://github.com/koreader/koreader/issues/3523>.
