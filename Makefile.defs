@@ -542,7 +542,7 @@ ifndef DARWIN
 	# To prefer our shipped libraries over the system's,
 	# we set a couple rpath via an include file to make sure it goes through buildsystem indirection unscathed...
 	# NOTE: We enforce DT_RPATH over DT_RUNPATH because DT_RUNPATH is *not* honored for *transitive* dependencies,
-	#       which can lead to hilarious catastrophy if such a dependeny pulls a SONAME identical to something we ship,
+	#       which can lead to hilarious catastrophe if such a dependency pulls a SONAME identical to something we ship,
 	#       because it will *not* load ours, but still let ours be loaded after that...
 	#       (Assuming no LD_LIBRARY_PATH are set, since the search order is basically RPATH -> LD_LIBRARY_PATH -> RUNPATH).
 	#       c.f., https://github.com/koreader/koreader-base/pull/1638#issuecomment-1636725691
