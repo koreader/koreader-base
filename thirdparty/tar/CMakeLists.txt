@@ -30,22 +30,21 @@ endif()
 
 # Avoid pulling > GLIBC_2.4 symbols on crappy platforms
 if(DEFINED ENV{LEGACY} OR DEFINED ENV{POCKETBOOK})
-    set(CFG_ENV_VAR "ac_cv_func_utimensat=no ac_cv_func_futimens=no")
+    set(CFG_ENV_VAR ac_cv_func_utimensat=no ac_cv_func_futimens=no)
 endif()
 
-set(CFG_ENV_VAR "${CFG_ENV_VAR} CC=\"${CC} -DHAVE_MKFIFO=1\" CFLAGS=\"${CFLAGS}\" LDFLAGS=\"${LDFLAGS}\"")
-set(CFG_OPTS "-q LIBS=\"${LIBS}\" --host=\"${CHOST}\"")
+set(CFG_ENV_VAR ${CFG_ENV_VAR} "CC=${CC} -DHAVE_MKFIFO=1" "CFLAGS=${CFLAGS}" "LDFLAGS=${LDFLAGS}" "LIBS=${LIBS}")
+set(CFG_OPTS --host=${CHOST})
 
 if(DEFINED ENV{LEGACY} OR DEFINED ENV{POCKETBOOK})
-    set(CFG_OPTS "${CFG_OPTS} --disable-largefile")
+    set(CFG_OPTS ${CFG_OPTS} --disable-largefile)
 endif()
-set(CFG_CMD "${CFG_ENV_VAR} ${SOURCE_DIR}/configure --disable-nls --disable-gcc-warnings --disable-acl --without-xattrs --without-posix-acls ${CFG_OPTS}")
+set(CFG_CMD env ${CFG_ENV_VAR} ${SOURCE_DIR}/configure --disable-nls --disable-gcc-warnings --disable-acl --without-xattrs --without-posix-acls ${CFG_OPTS})
 
 if(DEFINED ENV{LEGACY} OR DEFINED ENV{POCKETBOOK})
     # Forcibly disable FORTIFY on legacy devices...
-    set(CFG_CMD "${CFG_CMD} && ${ISED} 's/# define _FORTIFY_SOURCE 2/#undef _FORTIFY_SOURCE/' config.h")
+    set(SED_CMD sh -c "${ISED} 's/# define _FORTIFY_SOURCE 2/#undef _FORTIFY_SOURCE/' config.h")
 endif()
-set(CFG_CMD sh -c "${CFG_CMD}")
 
 # We build in-tree...
 set(INSTALL_CMD1 ${CMAKE_COMMAND} -E rename ${BINARY_DIR}/src/tar ${BINARY_DIR}/tar)
@@ -70,7 +69,7 @@ ExternalProject_Add(
     #DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
     #BUILD_IN_SOURCE 1
     #PATCH_COMMAND COMMAND ${PATCH_CMD1} COMMAND ${PATCH_CMD2} COMMAND ${PATCH_CMD3} COMMAND ${PATCH_CMD4}
-    CONFIGURE_COMMAND ${CFG_CMD}
+    CONFIGURE_COMMAND COMMAND ${CFG_CMD} COMMAND ${SED_CMD}
     BUILD_COMMAND ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS}
     # The buildsystem outputs binaries in a subdirectory...
     INSTALL_COMMAND COMMAND ${INSTALL_CMD1}

@@ -19,35 +19,34 @@ assert_var_defined(ZLIB_DIR)
 assert_var_defined(PNG_DIR)
 assert_var_defined(LEPTONICA_DIR)
 assert_var_defined(TESSERACT_DIR)
+assert_var_defined(K2PDFOPT_DIR)
 
-if ($ENV{DARWIN})
+if (DEFINED ENV{DARWIN})
     #fix build error due to implicit declarations of function being invalid in C99 under macOS/XCode 12
     set(CFLAGS "${CFLAGS} -Wno-error=implicit-function-declaration")
 endif()
 
 # Fix build error when compiling with -std=gnu++17: ISO
 # C++17 does not allow 'register' storage class specifier.
-set(CXXFLAGS "${CXXFLAGS} -Wno-error=register")
+set(CXXFLAGS "${CXXFLAGS} -Wno-register -Wno-error=register")
 
 ep_get_source_dir(SOURCE_DIR)
 
-set(BUILD_CMD sh -c "${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS} BUILDMODE=shared HOST=${HOST} CC=\"${CC}\" CFLAGS=\"${CFLAGS} -O3\"")
-set(BUILD_CMD "${BUILD_CMD} CXX=\"${CXX}\" CXXFLAGS=\"${CXXFLAGS}\" AR=\"${AR}\" RANLIB=\"${RANLIB}\" ZLIB=${ZLIB}")
-set(BUILD_CMD "${BUILD_CMD} TESSERACT_DIR=${TESSERACT_DIR} LEPTONICA_DIR=${LEPTONICA_DIR}")
-set(BUILD_CMD "${BUILD_CMD} LEPT_CFLAGS=\"${CFLAGS} -I${ZLIB_DIR} -I${PNG_DIR}/include\"")
-set(BUILD_CMD "${BUILD_CMD} LEPT_LDFLAGS=\"${LDFLAGS} -L${ZLIB_DIR} -L${PNG_DIR}/lib\"")
-if ($ENV{DARWIN})
-    set(BUILD_CMD "${BUILD_CMD} ZLIB_LDFLAGS=\"-L${ZLIB_DIR}\"")
-    set(BUILD_CMD "${BUILD_CMD} PNG_LDFLAGS=\"-L${PNG_DIR}/lib\" all")
-else()
-    set(BUILD_CMD "${BUILD_CMD} ZLIB_LDFLAGS=\"-Wl,-rpath-link,${ZLIB_DIR}\"")
-    set(BUILD_CMD "${BUILD_CMD} PNG_LDFLAGS=\"-Wl,-rpath-link,${PNG_DIR}/lib\" all")
-endif()
+# NOTE: This may be dangerously close to being too long (and as such, is at risk of random failure if your base path is even halfway long-ish)...
+# FIXME: Horrible nastiness on *native* builds happens if we set LDFLAGS here...
+#        (Namely, one of the libtool linking stage for tesseract fails to pickup the -L flags necessary to find liblept. Cross builds work fine. Yay, libtool).
+set(BUILD_CMD ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS} BUILDMODE=shared HOST=${HOST} CC=${CC} "CFLAGS=${CFLAGS}")
+set(BUILD_CMD ${BUILD_CMD} CXX=${CXX} "CXXFLAGS=${CXXFLAGS}" AR=${AR} RANLIB=${RANLIB} ZLIB=${ZLIB})
+set(BUILD_CMD ${BUILD_CMD} TESSERACT_DIR=${TESSERACT_DIR} LEPTONICA_DIR=${LEPTONICA_DIR} K2PDFOPT_DIR=${K2PDFOPT_DIR})
+set(BUILD_CMD ${BUILD_CMD} "LEPT_CFLAGS=-I${ZLIB_DIR} -I${PNG_DIR}/include")
+set(BUILD_CMD ${BUILD_CMD} "LEPT_LDFLAGS=-L${K2PDFOPT_DIR} -lpng -lz")
+set(BUILD_CMD ${BUILD_CMD} "ZLIB_LDFLAGS=-L${ZLIB_DIR}")
+set(BUILD_CMD ${BUILD_CMD} "PNG_LDFLAGS=-L${PNG_DIR}/lib" all)
 
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
     https://github.com/koreader/libk2pdfopt.git
-    c2a4f7326ec1ead6570de8550aebef9e737ce67b
+    60b82eeecf71d1776951da970fe8cd2cc5735ded
     ${SOURCE_DIR}
 )
 

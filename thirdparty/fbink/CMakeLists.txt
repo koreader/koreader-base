@@ -15,28 +15,28 @@ ep_get_binary_dir(BINARY_DIR)
 
 # Choose your own adventure!
 if(DEFINED ENV{LEGACY})
-    set(FBINK_TARGET "legacy")
+    set(FBINK_TARGET legacy)
 elseif(DEFINED ENV{KINDLE})
-    set(FBINK_TARGET "kindle")
+    set(FBINK_TARGET kindle)
 elseif(DEFINED ENV{CERVANTES})
-    set(FBINK_TARGET "cervantes")
+    set(FBINK_TARGET cervantes)
 elseif(DEFINED ENV{KOBO})
-    set(FBINK_TARGET "strip KOBO=1")
-    set(FBDEPTH_TARGET "fbdepth KOBO=1")
+    set(FBINK_TARGET strip KOBO=1)
+    set(FBDEPTH_TARGET fbdepth KOBO=1)
 elseif(DEFINED ENV{REMARKABLE})
-    set(FBINK_TARGET "remarkable")
-    set(FBDEPTH_TARGET "fbdepth REMARKABLE=1")
+    set(FBINK_TARGET remarkable)
+    set(FBDEPTH_TARGET fbdepth REMARKABLE=1)
 elseif(DEFINED ENV{POCKETBOOK})
-    set(FBINK_TARGET "pocketbook")
-    set(FBDEPTH_TARGET "fbdepth POCKETBOOK=1")
+    set(FBINK_TARGET pocketbook)
+    set(FBDEPTH_TARGET fbdepth POCKETBOOK=1)
 else()
-    set(FBINK_TARGET "strip")
+    set(FBINK_TARGET strip)
 endif()
 
 # FBDepth can afford to link to a very minimal library, so we need to start from scratch...
 if(FBDEPTH_TARGET)
-    set(BUILD_CMD1 sh -c "${KO_MAKE_RECURSIVE} clean")
-    set(BUILD_CMD2 sh -c "${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS} CFLAGS=\"${CFLAGS}\" LDFLAGS=\"${LDFLAGS}\" ${FBDEPTH_TARGET}")
+    set(BUILD_CMD1 ${KO_MAKE_RECURSIVE} clean)
+    set(BUILD_CMD2 ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS} "CFLAGS=${CFLAGS}" "LDFLAGS=${LDFLAGS}" ${FBDEPTH_TARGET})
 
     # That does mean we need to stash the binary somewhere a clean won't scrap it, though...
     if(DEFINED ENV{DEBUG})
@@ -47,8 +47,8 @@ if(FBDEPTH_TARGET)
 endif()
 
 # Minimal-ish, statically linked build, we don't care about image support
-set(BUILD_CMD4 sh -c "${KO_MAKE_RECURSIVE} clean")
-set(BUILD_CMD5 sh -c "${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS} MINIMAL=1 FONTS=1 OPENTYPE=1 CFLAGS=\"${CFLAGS}\" LDFLAGS=\"${LDFLAGS}\" ${FBINK_TARGET}")
+set(BUILD_CMD4 ${KO_MAKE_RECURSIVE} clean)
+set(BUILD_CMD5 ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS} MINIMAL=1 FONTS=1 OPENTYPE=1 "CFLAGS=${CFLAGS}" "LDFLAGS=${LDFLAGS}" ${FBINK_TARGET})
 
 # We build in-tree...
 set(INSTALL_CMD1 ${CMAKE_COMMAND} -E make_directory ${BINARY_DIR})

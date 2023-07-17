@@ -5,11 +5,7 @@ if(NOT DEFINED PROCESSOR_COUNT)
     set(PROCESSOR_COUNT ${N})
 endif()
 
-if(APPLE)
-    set(ISED "sed -i '' -e")
-else()
-    set(ISED "sed -i -e")
-endif()
+set(ISED "sed -ie")
 
 if(NOT DEFINED PARALLEL_JOBS)
     math(EXPR PARALLEL_JOBS "${PROCESSOR_COUNT}+1")
@@ -20,7 +16,7 @@ if(NOT DEFINED CONSTRAINED_PARALLEL_JOBS)
     set(CONSTRAINED_PARALLEL_JOBS ${PROCESSOR_COUNT})
 
     # Some compilations (like harfbuzz) are known to OOM on memory-constrained CI.
-    if($ENV{CIRCLECI})
+    if(DEFINED ENV{CIRCLECI})
         set(CONSTRAINED_PARALLEL_JOBS 1)
     endif()
 endif()

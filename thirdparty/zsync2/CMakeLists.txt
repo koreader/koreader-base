@@ -18,7 +18,7 @@ ep_get_binary_dir(BINARY_DIR)
 
 # Make sure the daisy-chain once again picks up our toolchain file...
 if(DEFINED ENV{CMAKE_TCF})
-	list(APPEND CMAKE_ARGS "$ENV{CMAKE_TCF}")
+    list(APPEND CMAKE_ARGS "$ENV{CMAKE_TCF}")
 endif()
 
 # CMake hell.
@@ -26,7 +26,7 @@ endif()
 list(APPEND CMAKE_ARGS "-DCMAKE_INSTALL_PREFIX=${BINARY_DIR}")
 list(APPEND CMAKE_ARGS "-DCMAKE_INSTALL_LIBDIR=lib")
 list(APPEND CMAKE_ARGS "-DCMAKE_INSTALL_INCLUDEDIR=include")
-list(APPEND CMAKE_ARGS "-DCMAKE_SKIP_BUILD_RPATH:BOOL=True")
+list(APPEND CMAKE_ARGS "-DCMAKE_SKIP_RPATH=TRUE")
 #list(APPEND CMAKE_ARGS "-DCMAKE_VERBOSE_MAKEFILE:BOOL=ON")
 
 # Honor the env, dammit.

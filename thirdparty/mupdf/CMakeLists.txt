@@ -10,30 +10,31 @@ enable_language(C)
 assert_var_defined(HOSTCFLAGS)
 assert_var_defined(HOSTCC)
 assert_var_defined(OS)
-if($ENV{KODEBUG})
+if(DEFINED ENV{KODEBUG})
     set(MUPDF_BUILD_TYPE "debug")
 else()
     set(MUPDF_BUILD_TYPE "release")
 endif()
 
 # There's some headers to generate on the host's side first, before we run our actual build (where we enforce CROSSCOMPILE to avoid trying to regen those).
-set(BUILD_CMD_GENERATE sh -c "env CFLAGS=\"${HOSTCFLAGS}\" ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS} generate build=\"${MUPDF_BUILD_TYPE}\" CC=\"${HOSTCC}\" LDFLAGS=\"\" verbose=\"no\"")
+set(BUILD_CMD_GENERATE env "CFLAGS=${HOSTCFLAGS}" ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS} generate "build=${MUPDF_BUILD_TYPE}" "CC=${HOSTCC}" LDFLAGS= verbose=no)
 
 assert_var_defined(LDFLAGS)
 assert_var_defined(XCFLAGS)
 # disable a couple of things to save a small bit of space
 # CMYK plotter only 100 kB
 # javascript (for form data validation) close to 800 kB
+# NOTE: Don't let CMake split this up.
 set(XCFLAGS "${XCFLAGS} -DFZ_PLOTTERS_CMYK=0 -DFZ_ENABLE_JS=0")
 if(DEFINED ENV{ANDROID} AND "$ENV{CROSS_TC}" MATCHES "^armv7a-.*")
     set(XCFLAGS "${XCFLAGS} -D_FILE_OFFSET_BITS=32")
 endif()
-set(STATIC_BUILD_CMD sh -c "${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS}")
-set(STATIC_BUILD_CMD "${STATIC_BUILD_CMD} LDFLAGS=\"${LDFLAGS}\" XCFLAGS=\"${XCFLAGS}\"")
-set(STATIC_BUILD_CMD "${STATIC_BUILD_CMD} CC=\"${CC}\" CXX=\"${CXX}\" AR=\"${AR}\" build=\"${MUPDF_BUILD_TYPE}\" MUDRAW= MUTOOL= CURL_LIB= OS=${OS}")
-set(STATIC_BUILD_CMD "${STATIC_BUILD_CMD} verbose=\"no\" FREETYPE_DIR=nonexisting HARFBUZZ_DIR=nonexisting LIBJPEG_DIR=nonexisting ZLIB_DIR=nonexisting CROSSCOMPILE=\"yes\"")
-set(STATIC_BUILD_CMD "${STATIC_BUILD_CMD} SYS_HARFBUZZ_CFLAGS=\"\" SYS_HARFBUZZ_LIBS=\"-lharfbuzz\"")
-set(STATIC_BUILD_CMD "${STATIC_BUILD_CMD} third libs")
+set(STATIC_BUILD_CMD ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS})
+set(STATIC_BUILD_CMD ${STATIC_BUILD_CMD} "LDFLAGS=${LDFLAGS}" "XCFLAGS=${XCFLAGS}")
+set(STATIC_BUILD_CMD ${STATIC_BUILD_CMD} "CC=${CC}" "CXX=${CXX}" "AR=${AR}" "build=${MUPDF_BUILD_TYPE}" MUDRAW= MUTOOL= CURL_LIB= "OS=${OS}")
+set(STATIC_BUILD_CMD ${STATIC_BUILD_CMD} verbose=no FREETYPE_DIR=nonexisting HARFBUZZ_DIR=nonexisting LIBJPEG_DIR=nonexisting ZLIB_DIR=nonexisting CROSSCOMPILE=yes)
+set(STATIC_BUILD_CMD ${STATIC_BUILD_CMD} SYS_HARFBUZZ_CFLAGS= SYS_HARFBUZZ_LIBS=-lharfbuzz)
+set(STATIC_BUILD_CMD ${STATIC_BUILD_CMD} third libs)
 
 # by default, mupdf compiles to a static library:
 # we generate a dynamic library from the static library:
@@ -49,23 +50,20 @@ assert_var_defined(HARFBUZZ_LIB)
 assert_var_defined(LIBWEBP_LIB)
 assert_var_defined(LIBWEBPDEMUX_LIB)
 assert_var_defined(MUPDF_LIB)
-assert_var_defined(RPATH)
-if($ENV{DARWIN})
-    set(LINK_OPTS "-Wl,-rpath,'${RPATH}'")
+if(DEFINED ENV{DARWIN})
     set(LINK_OPTS "${LINK_OPTS} -Wl,-all_load ${MUPDF_LIB_STATIC}")
     set(LINK_OPTS "${LINK_OPTS} -Wl,-all_load ${MUPDF_THIRDPARTY_LIBS}")
     set(LINK_OPTS "${LINK_OPTS} -dynamiclib -undefined dynamic_lookup")
 else()
-    set(LINK_OPTS "-Wl,-E -Wl,-rpath,'${RPATH}'")
     set(LINK_OPTS "${LINK_OPTS} -Wl,--whole-archive ${MUPDF_LIB_STATIC}")
     set(LINK_OPTS "${LINK_OPTS} -Wl,--no-whole-archive ${MUPDF_THIRDPARTY_LIBS}")
     set(LINK_OPTS "${LINK_OPTS} -Wl,-soname=${MUPDF_SONAME}")
     set(LINK_OPTS "${LINK_OPTS} build/${MUPDF_BUILD_TYPE}/libmupdfthird.a")
 endif()
-set(SHARED_BUILD_STR sh -c "${CC} -shared ${CFLAGS} ${LINK_OPTS} ${AES_LIB} ${ZLIB} ${JPEG_LIB} ${FREETYPE_LIB} ${HARFBUZZ_LIB} ${LIBWEBP_LIB} ${LIBWEBPDEMUX_LIB} -o ${MUPDF_LIB} -lm")
+set(SHARED_BUILD_STR sh -c "${CC} -shared ${CFLAGS} ${LDFLAGS} ${LINK_OPTS} ${AES_LIB} ${ZLIB} ${JPEG_LIB} ${FREETYPE_LIB} ${HARFBUZZ_LIB} ${LIBWEBP_LIB} ${LIBWEBPDEMUX_LIB} -o ${MUPDF_LIB} -lm")
 
 # explictly use envs defined in Makefile.defs
-if($ENV{ANDROID})
+if(DEFINED ENV{ANDROID})
     set(SHARED_BUILD_STR "${SHARED_BUILD_STR} -llog")
 endif()
 

@@ -23,7 +23,7 @@ set(PATCH_CMD sh -c "${ISED} \"s|^CC=|#CC=|g\" aes/Makefile && ${ISED} \"s|^CFLA
 
 #fix build error due to implicit declarations of function being invalid in C99 under macOS/XCode 12 
 set(CC "${CC} -Wno-error=implicit-function-declaration")
-set(BUILD_CMD_STR -j${PARALLEL_JOBS} -C aes CC=${CC} LDFLAGS=${LDFLAGS} AR=${AR} RANLIB=${RANLIB})
+set(BUILD_CMD_STR -j${PARALLEL_JOBS} -C aes "CC=${CC}" "LDFLAGS=${LDFLAGS}" "AR=${AR}" "RANLIB=${RANLIB}")
 
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME

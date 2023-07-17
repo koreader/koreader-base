@@ -26,15 +26,20 @@ if(DEFINED ENV{ANDROID})
     set(PATCH_CMD2 "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/lua-rapidjson-android-link-to-lua.patch")
 endif()
 
-set(BUILD_CMD sh -c "${LUAROCKS} make --tree=${OUTPUT_DIR}/rocks ${LUA_RAPIDJSON_ROCKSPEC}")
-set(BUILD_CMD "${BUILD_CMD} CC=\"${CC}\" CXX=\"${CXX}\"")
-set(BUILD_CMD "${BUILD_CMD} CFLAGS=\"${CFLAGS}\" CXXFLAGS=\"${CXXFLAGS}\" LDFLAGS=\"${LDFLAGS} ${LIBFLAG}\"")
-set(BUILD_CMD "${BUILD_CMD} LUA_INCDIR=\"${LUA_INCDIR}\" LUA_LIBDIR=\"${LUA_LIBDIR}\"")
+# We want to run luarocks --version=5.1, not "luarocks --version=5.1"...
+#separate_arguments(ROCKS_CMD NATIVE_COMMAND PROGRAM SEPARATE_ARGS "${LUAROCKS}")
+set(ROCKS_CMD ${LUAROCKS})
+separate_arguments(ROCKS_CMD)
+
+set(BUILD_CMD ${ROCKS_CMD} make --tree=${OUTPUT_DIR}/rocks ${LUA_RAPIDJSON_ROCKSPEC})
+set(BUILD_CMD ${BUILD_CMD} "CC=${CC}" "CXX=${CXX}")
+set(BUILD_CMD ${BUILD_CMD} "CFLAGS=${CFLAGS}" "CXXFLAGS=${CXXFLAGS}" "LDFLAGS=${LDFLAGS} ${LIBFLAG}")
+set(BUILD_CMD ${BUILD_CMD} "LUA_INCDIR=${LUA_INCDIR}" "LUA_LIBDIR=${LUA_LIBDIR}")
 if(DEFINED LUALIB)
-    set(BUILD_CMD "${BUILD_CMD} LUALIB=\"${LUALIB}\"")
+    set(BUILD_CMD ${BUILD_CMD} "LUALIB=${LUALIB}")
 endif()
 if(DEFINED LIBFLAG)
-    set(BUILD_CMD "${BUILD_CMD} LIBFLAG=\"${LIBFLAG}\"")
+    set(BUILD_CMD ${BUILD_CMD} "LIBFLAG=${LIBFLAG}")
 endif()
 
 ko_write_gitclone_script(

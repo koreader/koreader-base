@@ -12,9 +12,11 @@ endif
 UNAME:=$(shell uname -s)
 UNAME_ARCH:=$(shell uname -m)
 
-# use MAKEFILE_DIR instead of CURDIR for variables that are exported through -include
-MAKEFILE_DIR=$(dir $(abspath $(lastword $(MAKEFILE_LIST))))
-TOOLCHAIN_DIR=$(MAKEFILE_DIR)toolchain
+# Should point at the actual directory in which *this* makefile resides, as opposed to $(CURDIR),
+# which is simply $PWD *at the time of the original make call*, which is not necessarily the same thing.
+# NOTE: Will only behave as long as there aren't any spaces in the paths involved!
+MAKEFILE_DIR:=$(dir $(realpath $(lastword $(MAKEFILE_LIST))))
+TOOLCHAIN_DIR:=$(MAKEFILE_DIR)toolchain
 ANDROID_ARCH?=arm
 export ANDROID_HOME := $(or $(ANDROID_HOME),$(ANDROID_SDK_ROOT),$(TOOLCHAIN_DIR)/android-sdk-linux)
 export ANDROID_SDK_ROOT := $(ANDROID_HOME)
@@ -537,7 +539,15 @@ CFLAGS:=$(BASE_CFLAGS) $(QFLAGS) $(CSTD_FLAGS)
 CXXFLAGS:=$(BASE_CFLAGS) $(QFLAGS) $(CXXSTD_FLAGS)
 
 ifndef DARWIN
-	LDFLAGS:=-Wl,-O1 -Wl,--as-needed $(COMPAT_LDFLAGS)
+	# To prefer our shipped libraries over the system's,
+	# we set a couple rpath via an include file to make sure it goes through buildsystem indirection unscathed...
+	# NOTE: We enforce DT_RPATH over DT_RUNPATH because DT_RUNPATH is *not* honored for *transitive* dependencies,
+	#       which can lead to hilarious catastrophe if such a dependency pulls a SONAME identical to something we ship,
+	#       because it will *not* load ours, but still let ours be loaded after that...
+	#       (Assuming no LD_LIBRARY_PATH are set, since the search order is basically RPATH -> LD_LIBRARY_PATH -> RUNPATH).
+	#       c.f., https://github.com/koreader/koreader-base/pull/1638#issuecomment-1636725691
+	#       And https://bugs.launchpad.net/ubuntu/+source/eglibc/+bug/1253638/comments/5 for a nice recap.
+	LDFLAGS:=-Wl,-O1 -Wl,--as-needed -Wl,@$(MAKEFILE_DIR)origin.ldflags $(COMPAT_LDFLAGS)
 else
 	LDFLAGS:=
 endif
@@ -980,35 +990,13 @@ SRELL_INCLUDE_DIR=$(SRELL_DIR)
 
 # CFLAGS for the Lua/C/C++ modules:
 #
-# setting the rpath to '$ORIGIN' will make the dynamic linker search
-# for the library in the same path as the executable that references
-# them.
-#
-# also, dynamic libraries must be compiled with "-shared" and "-fPIC".
-# having all symbols included (-E) won't hurt, too.
+# Dynamic libraries must be compiled with "-shared" and "-fPIC".
+# (And we enforce PIC everywhere via CFLAGS/CXXFLAGS).
 DYNLIB_CFLAGS=-L$(CURDIR)/$(OUTPUT_DIR)/libs $(CFLAGS) -I$(LUAJIT_DIR)/src -shared
 DYNLIB_CXXFLAGS=-L$(CURDIR)/$(OUTPUT_DIR)/libs $(CXXFLAGS) -I$(LUAJIT_DIR)/src -shared
-DYNLIB_CMAKE_CFLAGS=-L$(CURDIR)/$(OUTPUT_DIR)/libs $(CFLAGS) -I$(LUAJIT_DIR)/src -shared
-DYNLIB_CMAKE_CXXFLAGS=-L$(CURDIR)/$(OUTPUT_DIR)/libs $(CXXFLAGS) -I$(LUAJIT_DIR)/src -shared
 ifdef DARWIN
 	DYNLIB_CFLAGS+=-dynamiclib -undefined dynamic_lookup
 	DYNLIB_CXXFLAGS+=-dynamiclib -undefined dynamic_lookup
-else
-	DYNLIB_CFLAGS+=-Wl,-E -Wl,-rpath,'$$ORIGIN'
-	DYNLIB_CXXFLAGS+=-Wl,-E -Wl,-rpath,'$$ORIGIN'
-endif
-
-# RPATH for all libraries in koreader/libs. The expand path looks like below:
-# make            -> shell         -> cmake     -> configure -> make    -> linker
-# \\\$$\\\$$ORIGIN   \\\$\\\$ORIGIN   \$\$ORIGIN   $$ORIGIN     $$ORIGIN   $ORIGIN
-ORIGIN_CMAKE_TO_AUTOCFG=\\\$$\\\$$ORIGIN
-
-ifdef DARWIN
-	DYNLIB_CMAKE_CFLAGS+=-dynamiclib -undefined dynamic_lookup
-	DYNLIB_CMAKE_CXXFLAGS+=-dynamiclib -undefined dynamic_lookup
-else
-	DYNLIB_CMAKE_CFLAGS+=-Wl,-E -Wl,-rpath,'$(ORIGIN_CMAKE_TO_AUTOCFG)'
-	DYNLIB_CMAKE_CXXFLAGS+=-Wl,-E -Wl,-rpath,'$(ORIGIN_CMAKE_TO_AUTOCFG)'
 endif
 
 # Used by our custom Lua modules, where we want to hide private symbols by default

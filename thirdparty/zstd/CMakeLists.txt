@@ -16,15 +16,11 @@ assert_var_defined(LDFLAGS)
 ep_get_source_dir(SOURCE_DIR)
 ep_get_binary_dir(BINARY_DIR)
 
-# Because escaping rpath is even more hellish than usual, for some reason...
-# NOTE: In ZSH, passing MOREFLAGS="-Wl,-rpath,'\\\$$\\\$\$ORIGIN'" works, too.
-set(PATCH_CMD "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/zstd-rpath.patch")
-
 # This a pure Makefile buildsystem, don't enforce CFLAGS via command line args, the buildsystem needs to be able to modify it.
-set(BUILD_ENV "env CFLAGS=\"${CFLAGS}\" LDFLAGS=\"${LDFLAGS}\"")
+set(BUILD_ENV "CFLAGS=${CFLAGS}" "LDFLAGS=${LDFLAGS}")
 
-set(BUILD_CMD sh -c "${BUILD_ENV} ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS} V=1 CC=\"${CC}\" CXX=\"${CXX}\" AR=\"${AR}\" lib-release")
-set(INSTALL_CMD sh -c "${BUILD_ENV} ${KO_MAKE_RECURSIVE} -C lib -j${PARALLEL_JOBS} V=1 CC=\"${CC}\" CXX=\"${CXX}\" AR=\"${AR}\" prefix=\"${BINARY_DIR}\" install")
+set(BUILD_CMD env ${BUILD_ENV} ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS} V=1 "CC=${CC}" "CXX=${CXX}" "AR=${AR}" lib-release)
+set(INSTALL_CMD env ${BUILD_ENV} ${KO_MAKE_RECURSIVE} -C lib -j${PARALLEL_JOBS} V=1 "CC=${CC}" "CXX=${CXX}" "AR=${AR}" "prefix=${BINARY_DIR}" install)
 
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME

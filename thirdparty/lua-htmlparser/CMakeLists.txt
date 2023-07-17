@@ -20,9 +20,16 @@ ep_get_source_dir(SOURCE_DIR)
 
 set(LUA_HTMLPARSER_ROCKSPEC rockspecs/htmlparser-${LUA_HTMLPARSER_VER}.rockspec)
 
-set(BUILD_CMD sh -c "${LUAROCKS} make --tree=${OUTPUT_DIR}/rocks ${LUA_HTMLPARSER_ROCKSPEC}")
-set(BUILD_CMD "${BUILD_CMD} CC=\"${CC}\" CFLAGS=\"${CFLAGS}\" LD=\"${LD}\"")
-set(BUILD_CMD "${BUILD_CMD} LUA_INCDIR=\"${LUA_INCDIR}\" LUA_LIBDIR=\"${LUA_LIBDIR}\"")
+# We want to run luarocks --version=5.1, not "luarocks --version=5.1"...
+# NOTE: The CMake 3.19+ variant is much nicer, but the CI run an older version...
+#separate_arguments(ROCKS_CMD NATIVE_COMMAND PROGRAM SEPARATE_ARGS "${LUAROCKS}")
+# And that's the poor man's version.
+set(ROCKS_CMD ${LUAROCKS})
+separate_arguments(ROCKS_CMD)
+
+set(BUILD_CMD ${ROCKS_CMD} make --tree=${OUTPUT_DIR}/rocks ${LUA_HTMLPARSER_ROCKSPEC})
+set(BUILD_CMD ${BUILD_CMD} "CC=${CC}" "CFLAGS=${CFLAGS}" "LD=${LD}")
+set(BUILD_CMD ${BUILD_CMD} "LUA_INCDIR=${LUA_INCDIR}" "LUA_LIBDIR=${LUA_LIBDIR}")
 
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME

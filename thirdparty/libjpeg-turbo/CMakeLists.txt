@@ -20,7 +20,7 @@ endif()
 list(APPEND CMAKE_ARGS "-DCMAKE_INSTALL_PREFIX=${BINARY_DIR}")
 list(APPEND CMAKE_ARGS "-DCMAKE_INSTALL_LIBDIR=lib")
 list(APPEND CMAKE_ARGS "-DCMAKE_INSTALL_INCLUDEDIR=include")
-list(APPEND CMAKE_ARGS "-DCMAKE_SKIP_BUILD_RPATH:BOOL=True")
+list(APPEND CMAKE_ARGS "-DCMAKE_SKIP_RPATH=TRUE")
 
 # c.f., https://android.googlesource.com/platform/ndk/+/master/build/cmake/android.toolchain.cmake
 # and   https://github.com/taka-no-me/android-cmake
