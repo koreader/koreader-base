@@ -104,7 +104,7 @@ enum MTK_WAVEFORM_MODE_ENUM
 	MTK_WAVEFORM_MODE_DU4           = 7,
 	MTK_WAVEFORM_MODE_LAST          = 7,
 	MTK_WAVEFORM_MODE_GCK16         = 8,
-	MTK_WAVEFORM_MODE_GLKW16        = 9,
+	MTK_WAVEFORM_MODE_GLKW16        = 9,    // AKA. GCKW16
 	// New with MTK
 	MTK_WAVEFORM_MODE_GC16_PARTIAL  = 10,
 	MTK_WAVEFORM_MODE_GCK16_PARTIAL = 11,
@@ -475,5 +475,18 @@ typedef union
 #define UPDATE_FLAGS_MODE_FAST_FLAG_HL   (UPDATE_FLAGS_MODE_FAST_FLAG << 5) /*< 0b0000000000100000 */
 
 #define MXC_UPDATE_FAST_MODE_FLAG 0x1
+
+// NOTE: Stylus mode stuff was added in Bellatrix3
+// NOTE: As properly documented (unlike on sunxi...), pen mode updates must *not* coexist with standard updates.
+//       This no-collision constraint *has* to be enforced by userland!
+#define MXCFB_SET_STYLUS_MODE           _IOW(HWTCON_IOCTL_MAGIC_NUMBER, 0x4C, uint32_t)
+#define EPDC_STYLUS_MODE_DISABLED       0x0
+#define EPDC_STYLUS_MODE_WITH_NO_TPS    0x01
+// NOTE: The following are unsupported on Barolo
+#define EPDC_STYLUS_MODE_WITH_BLACK_TPS 0x02
+#define EPDC_STYLUS_MODE_WITH_WHITE_TPS 0x03
+
+// See also eink/stylus-kindle.h for a couple of ioctls that will lock/unlock the stylus (whatever that actually means :D).
+// (c.f., drivers/misc/eink_stylus.c, which also handles pen detection (lift/contact) events).
 
 #endif /* __HWTCON_IOCTL_CMD_H__ */
