@@ -60,7 +60,7 @@ ifeq ($(DO_STRIP),1)
 		xargs $(STRIP) --strip-unneeded
 endif
 	# set up some needed paths and links
-	install -d $(OUTPUT_DIR)/{cache,history,clipboard,fonts}
+	install -d $(OUTPUT_DIR)/{cache,clipboard,fonts}
 	ln -sf $(CURDIR)/$(THIRDPARTY_DIR)/kpvcrlib/cr3.css $(OUTPUT_DIR)/data/
 
 $(OUTPUT_DIR)/libs:
