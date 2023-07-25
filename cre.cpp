@@ -2619,8 +2619,12 @@ static int getHTMLFromXPointers(lua_State *L) {
 static int getStylesheetsMatchingRulesets(lua_State *L) {
     CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
     lUInt32 nodeDataIndex = (lUInt32) lua_tointeger(L, 2);
+    bool with_m_stylesheet = true;
+    if (lua_isboolean(L, 3)) {
+        with_m_stylesheet = lua_toboolean(L, 3);
+    }
     lString8Collection matches;
-    doc->text_view->gatherStylesheetsMatchingRulesets(nodeDataIndex, matches);
+    doc->text_view->gatherStylesheetsMatchingRulesets(nodeDataIndex, matches, with_m_stylesheet);
     lua_createtable(L, matches.length(), 0);
     for (int i = 0; i < matches.length(); i++) {
         lua_pushstring(L, matches[i].c_str());
