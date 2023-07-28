@@ -999,7 +999,7 @@ function framebuffer:init()
             -- TEMP_USE_AMBIENT, not that there was ever any other choice on Kobo...
             self.update_data.temp = C.TEMP_USE_AMBIENT
         elseif self.mech_refresh == refresh_kobo_mtk then
-            self.update_data = ffi.new("hwtcon_update_data")
+            self.update_data = ffi.new("struct hwtcon_update_data")
         end
         if self.mech_wait_update_complete == kobo_mxc_wait_for_update_complete or self.mech_wait_update_complete == kobo_mtk_wait_for_update_complete then
             self.marker_data = ffi.new("uint32_t[1]")
