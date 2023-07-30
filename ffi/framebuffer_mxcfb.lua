@@ -730,34 +730,6 @@ function framebuffer:refreshPartialImp(x, y, w, h, dither)
     self:mech_refresh(false, self.waveform_partial, x, y, w, h, dither)
 end
 
-function framebuffer:refreshNoMergePartialImp(x, y, w, h, dither)
-    self.debug("refresh: no-merge partial w/ flash", x, y, w, h, dither)
-
-    -- Unlike on sunxi, there is no "no merge" flag (instead, there's the various UPDATE_SCHEME modes).
-    -- Since we don't really want to affect the global update scheme mode, we'll fake it via explicit fences around this update.
-    -- We'll also force a 250ms sleep on devices with an unreliable ioctl, in an attempt to workaround fatal EPDC races...
-    if self.mech_wait_update_complete and self.marker ~= self.dont_wait_for_marker then
-        self.debug("refresh: wait for completion of marker", self.marker)
-        if self:mech_wait_update_complete(self.marker, 250000) == -1 then
-            local err = ffi.errno()
-            self.debug("MXCFB_WAIT_FOR_UPDATE_COMPLETE ioctl failed:", ffi.string(C.strerror(err)))
-        end
-        self.dont_wait_for_marker = self.marker
-    end
-
-    self:mech_refresh(false, self.waveform_partial, x, y, w, h, dither)
-
-    -- On both sides ;).
-    if self.mech_wait_update_complete and self.marker ~= self.dont_wait_for_marker then
-        self.debug("refresh: wait for completion of marker", self.marker)
-        if self:mech_wait_update_complete(self.marker) == -1 then
-            local err = ffi.errno()
-            self.debug("MXCFB_WAIT_FOR_UPDATE_COMPLETE ioctl failed:", ffi.string(C.strerror(err)))
-        end
-        self.dont_wait_for_marker = self.marker
-    end
-end
-
 function framebuffer:refreshFlashPartialImp(x, y, w, h, dither)
     self.debug("refresh: partial w/ flash", x, y, w, h, dither)
     self:mech_refresh(true, self.waveform_partial, x, y, w, h, dither)
@@ -766,30 +738,6 @@ end
 function framebuffer:refreshUIImp(x, y, w, h, dither)
     self.debug("refresh: ui-mode", x, y, w, h, dither)
     self:mech_refresh(false, self.waveform_ui, x, y, w, h, dither)
-end
-
-function framebuffer:refreshNoMergeUIImp(x, y, w, h, dither)
-    self.debug("refresh: no-merge ui-mode w/ flash", x, y, w, h, dither)
-
-    if self.mech_wait_update_complete and self.marker ~= self.dont_wait_for_marker then
-        self.debug("refresh: wait for completion of marker", self.marker)
-        if self:mech_wait_update_complete(self.marker, 250000) == -1 then
-            local err = ffi.errno()
-            self.debug("MXCFB_WAIT_FOR_UPDATE_COMPLETE ioctl failed:", ffi.string(C.strerror(err)))
-        end
-        self.dont_wait_for_marker = self.marker
-    end
-
-    self:mech_refresh(false, self.waveform_ui, x, y, w, h, dither)
-
-    if self.mech_wait_update_complete and self.marker ~= self.dont_wait_for_marker then
-        self.debug("refresh: wait for completion of marker", self.marker)
-        if self:mech_wait_update_complete(self.marker) == -1 then
-            local err = ffi.errno()
-            self.debug("MXCFB_WAIT_FOR_UPDATE_COMPLETE ioctl failed:", ffi.string(C.strerror(err)))
-        end
-        self.dont_wait_for_marker = self.marker
-    end
 end
 
 function framebuffer:refreshFlashUIImp(x, y, w, h, dither)
