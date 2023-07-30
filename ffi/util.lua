@@ -26,8 +26,8 @@ typedef LPSTR LPTSTR;
 typedef int BOOL;
 
 typedef struct _FILETIME {
-	DWORD dwLowDateTime;
-	DWORD dwHighDateTime;
+    DWORD dwLowDateTime;
+    DWORD dwHighDateTime;
 } FILETIME, *PFILETIME;
 
 void GetSystemTimeAsFileTime(FILETIME*);
@@ -484,7 +484,7 @@ function util.readAllFromFD(fd)
         local bytes_read = tonumber(C.read(fd, ffi.cast('void*', buffer), chunksize))
         if bytes_read < 0 then
             local err = ffi.errno()
-            print("readFromFD() error: "..ffi.string(C.strerror(err)))
+            print("readAllFromFD() error: "..ffi.string(C.strerror(err)))
             break
         elseif bytes_read == 0 then -- EOF, no more data to read
             break
