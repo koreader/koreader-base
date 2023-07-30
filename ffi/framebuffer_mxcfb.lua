@@ -25,6 +25,27 @@ local function ALIGN_UP(x, a)
     return band(x + mask, bnot(mask))
 end
 
+-- FIXME: This is front's util.writeToSysfs, but tweaked so as not to require logger...
+function writeToSysfs(val, file)
+    -- NOTE: We do things by hand via ffi, because io.write uses fwrite,
+    --       which isn't a great fit for procfs/sysfs (e.g., we lose failure cases like EBUSY,
+    --       as it only reports failures to write to the *stream*, not to the disk/file!).
+    local fd = C.open(file, bit.bor(C.O_WRONLY, C.O_CLOEXEC)) -- procfs/sysfs, we shouldn't need O_TRUNC
+    if fd == -1 then
+        print("Cannot open file `" .. file .. "`:", ffi.string(C.strerror(ffi.errno())))
+        return
+    end
+    val = tostring(val)
+    local bytes = #val
+    local nw = C.write(fd, val, bytes)
+    if nw == -1 then
+        print("Cannot write `" .. val .. "` to file `" .. file .. "`:", ffi.string(C.strerror(ffi.errno())))
+    end
+    C.close(fd)
+    -- NOTE: Allows the caller to possibly handle short writes (not that these should ever happen here).
+    return nw == bytes
+end
+
 local framebuffer = {
     -- pass device object here for proper model detection:
     device = nil,
@@ -294,6 +315,10 @@ local function mxc_update(fb, ioc_cmd, ioc_data, is_flashing, waveform_mode, x, 
     end
 
     w = w * fb.refresh_pixel_size
+
+    -- Wake the EPDC up manually (don't ask me why this would make any sort of sense, it's simply what Nickel does on devices where we *can* do it...)
+    -- FIXME: PoC, only available on Mk.8+ (implement properly for sunxi & MTK, plus auto-detection on mxcfb)
+    writeToSysfs("1,0", "/sys/class/graphics/fb0/power_state")
 
     -- NOTE: If we're trying to send a:
     --         * true FULL update,
