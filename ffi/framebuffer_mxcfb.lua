@@ -292,6 +292,17 @@ local function mxc_update(fb, ioc_cmd, ioc_data, is_flashing, waveform_mode, x, 
         return
     end
 
+    -- Wake the EPDC up manually (don't ask me why this would make any sort of sense, it's simply what Nickel does on devices where we *can* do it...)
+    -- NOTE: Technically, it makes a little more sense when you put it in context of *how* Nickel does that: it's not actually tied to the refresh or the wait there,
+    --       but to *touch* input: on any registered *touch* (i.e., physical buttons are exempt, for some reason), Nickel will force awaken the EPDC
+    --       (unless that was already done less than roughly 1.5s ago).
+    --       In practice, that still trips *very* close to the ioctl (but may not always come *before* a [wait -> refresh -> wait] sandwich;
+    --       e.g., I mostly see it before the refresh on NXP & sunxi, but I mostly see it in front of everything on MTK).
+    --       TL;DR: Because we were seeing issues with refreshes that aren't necessarily tied to input (and for simplicty's sake),
+    --       we simply unconditionally do this here as early possible.
+    -- FIXME: PoC, only available on Mk.8+ (implement properly for sunxi & MTK, plus auto-detection on mxcfb)
+    writeToSysfs("1,0", "/sys/class/graphics/fb0/power_state")
+
     -- NOTE: If we're requesting hardware dithering on a partial update, make sure the rectangle is using
     --       coordinates aligned to the previous multiple of 8, and dimensions aligned to the next multiple of 8.
     --       Otherwise, some unlucky coordinates will play badly with the PxP's own alignment constraints,
@@ -315,10 +326,6 @@ local function mxc_update(fb, ioc_cmd, ioc_data, is_flashing, waveform_mode, x, 
     end
 
     w = w * fb.refresh_pixel_size
-
-    -- Wake the EPDC up manually (don't ask me why this would make any sort of sense, it's simply what Nickel does on devices where we *can* do it...)
-    -- FIXME: PoC, only available on Mk.8+ (implement properly for sunxi & MTK, plus auto-detection on mxcfb)
-    writeToSysfs("1,0", "/sys/class/graphics/fb0/power_state")
 
     -- NOTE: If we're trying to send a:
     --         * true FULL update,
