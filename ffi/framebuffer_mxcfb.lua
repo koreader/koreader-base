@@ -153,7 +153,7 @@ end
 --[[ handlers for the power management API of the eink driver --]]
 
 local function kobo_nxp_wakeup_epdc()
-    -- First integer is the toggle, second is the poweroff delay in ms (only relevant when toggling power *off*, not on).
+    -- First integer is the toggle, second is the poweroff delay in ms (only relevant when toggling power *off*, we just need it to make sscanf happy).
     ffiUtil.writeToSysfs("1,0", "/sys/class/graphics/fb0/power_state")
 end
 
