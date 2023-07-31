@@ -187,6 +187,24 @@ local function kobo_mk7_mxc_wait_for_update_complete(fb, marker)
     return C.ioctl(fb.fd, C.MXCFB_WAIT_FOR_UPDATE_COMPLETE_V3, fb.marker_data)
 end
 
+-- Specialized variant for funky devices with an unreliable ioctl, where doing this in pairs *might* help...
+local function kobo_mk7_unreliable_mxc_wait_for_update_complete(fb, marker)
+    -- If we can, wait for the *previous* marker first...
+    if marker > 1 then
+        fb.debug("refresh: wait for completion of buddy marker", marker - 1)
+        fb.marker_data.update_marker = marker - 1
+        if C.ioctl(fb.fd, C.MXCFB_WAIT_FOR_UPDATE_COMPLETE_V3, fb.marker_data) == -1 then
+            local err = ffi.errno()
+            fb.debug("MXCFB_WAIT_FOR_UPDATE_COMPLETE ioctl failed:", ffi.string(C.strerror(err)))
+        end
+    end
+
+    -- Wait for a specific update to be completed
+    fb.marker_data.update_marker = marker
+
+    return C.ioctl(fb.fd, C.MXCFB_WAIT_FOR_UPDATE_COMPLETE_V3, fb.marker_data)
+end
+
 -- Kobo's HWTCON_WAIT_FOR_UPDATE_COMPLETE
 local function kobo_mtk_wait_for_update_complete(fb, marker)
     -- Wait for a specific update to be completed
@@ -922,7 +940,12 @@ function framebuffer:init()
         --       and then fence *that batch* manually to avoid the (REAGL) 'partial' being delayed by the button's 'fast' highlight).
         if self.device:isMk7() then
             self.mech_refresh = refresh_kobo_mk7
-            self.mech_wait_update_complete = kobo_mk7_mxc_wait_for_update_complete
+            if self.device:hasReliableMxcWaitFor() then
+                self.mech_wait_update_complete = kobo_mk7_mxc_wait_for_update_complete
+            else
+                -- Funky variant that will do this in pairs, like Nickel itself...
+                self.mech_wait_update_complete = kobo_mk7_unreliable_mxc_wait_for_update_complete
+            end
 
             self.waveform_partial = C.WAVEFORM_MODE_REAGL
             self.waveform_fast = C.WAVEFORM_MODE_DU -- A2 is much more prone to artifacts on Mk. 7 than before, because everything's faster.
