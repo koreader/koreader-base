@@ -296,6 +296,7 @@ local function mxc_update(fb, ioc_cmd, ioc_data, is_flashing, waveform_mode, x, 
     -- NOTE: Technically, it makes a little more sense when you put it in context of *how* Nickel does that: it's not actually tied to the refresh or the wait there,
     --       but to *touch* input: on any registered *touch* (i.e., physical buttons are exempt, for some reason), Nickel will force awaken the EPDC
     --       (unless that was already done less than roughly 1.5s ago).
+    --       Think of something like some properly implemented & tuned kernels with the interactive cpufreq governor that will boost on touch input, for instance.
     --       In practice, that still trips *very* close to the ioctl (but may not always come *before* a [wait -> refresh -> wait] sandwich;
     --       e.g., I mostly see it before the refresh on NXP & sunxi, but I mostly see it in front of everything on MTK).
     --       TL;DR: Because we were seeing issues with refreshes that aren't necessarily tied to input (and for simplicty's sake),
