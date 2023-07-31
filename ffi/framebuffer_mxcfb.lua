@@ -1009,7 +1009,7 @@ function framebuffer:init()
         end
         if self.mech_wait_update_complete == kobo_mxc_wait_for_update_complete or self.mech_wait_update_complete == kobo_mtk_wait_for_update_complete then
             self.marker_data = ffi.new("uint32_t[1]")
-        elseif self.mech_wait_update_complete == kobo_mk7_mxc_wait_for_update_complete then
+        elseif self.mech_wait_update_complete == kobo_mk7_mxc_wait_for_update_complete or self.mech_wait_update_complete == kobo_mk7_unreliable_mxc_wait_for_update_complete then
             self.marker_data = ffi.new("struct mxcfb_update_marker_data")
             -- NOTE: 0 seems to be a fairly safe assumption for "we don't care about collisions".
             --       On a slightly related note, the EPDC_FLAG_TEST_COLLISION flag is for dry-run collision tests, never set it.
