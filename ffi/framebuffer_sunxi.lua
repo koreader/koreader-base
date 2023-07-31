@@ -14,6 +14,7 @@ local framebuffer = {
     -- pass device object here for proper model detection:
     device = nil,
 
+    mech_poweron = nil,
     mech_wait_update_complete = nil,
     mech_wait_update_submission = nil,
     waveform_partial = nil,
@@ -87,6 +88,13 @@ function framebuffer:_isFullScreen(w, h)
     end
 end
 
+--[[ handlers for the power management API of the eink driver --]]
+
+local function kobo_sunxi_wakeup_epdc()
+    ffiUtil.writeToSysfs("lcd0",   "/sys/kernel/debug/dispdbg/name")
+    ffiUtil.writeToSysfs("enable", "/sys/kernel/debug/dispdbg/command")
+    ffiUtil.writeToSysfs("1",      "/sys/kernel/debug/dispdbg/start")
+end
 
 --[[ handlers for the wait API of the eink driver --]]
 
@@ -126,6 +134,11 @@ local function disp_update(fb, ioc_cmd, ioc_data, no_merge, is_flashing, wavefor
     if w <= 1 or h <= 1 then
         fb.debug("discarding bogus refresh region, w:", w, "h:", h)
         return
+    end
+
+    -- Wake the EPDC up manually, in the vague hope it'll help with missed refreshes after a wakeup from standby...
+    if fb.mech_poweron then
+        fb:mech_poweron()
     end
 
     -- We've got the final region, update the area_info struct
@@ -302,6 +315,8 @@ function framebuffer:init()
         self.waveform_partial = C.EINK_GLR16_MODE
         self.waveform_night = C.EINK_GLK16_MODE
         self.waveform_flashnight = C.EINK_GCK16_MODE
+
+        self.mech_poweron = kobo_sunxi_wakeup_epdc
 
         local bypass_wait_for = self:getMxcWaitForBypass()
         -- If the user (or a device cap check) requested bypassing the WAIT_FOR ioctls, do so.

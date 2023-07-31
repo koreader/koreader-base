@@ -1,5 +1,6 @@
 local bit = require("bit")
 local ffi = require("ffi")
+local lfs = require("libs/libkoreader-lfs")
 local ffiUtil = require("ffi/util")
 local BB = require("ffi/blitbuffer")
 local C = ffi.C
@@ -29,6 +30,7 @@ local framebuffer = {
     -- pass device object here for proper model detection:
     device = nil,
 
+    mech_poweron = nil,
     mech_wait_update_complete = nil,
     mech_wait_update_submission = nil,
     waveform_partial = nil,
@@ -146,6 +148,17 @@ function framebuffer:_clampToPhysicalDim(w, h)
     end
 
     return w, h
+end
+
+--[[ handlers for the power management API of the eink driver --]]
+
+local function kobo_nxp_wakeup_epdc()
+    -- First integer is the toggle, second is the poweroff delay in ms (only relevant when toggling power *off*, not on).
+    ffiUtil.writeToSysfs("1,0", "/sys/class/graphics/fb0/power_state")
+end
+
+local function kobo_mtk_wakeup_epdc()
+    ffiUtil.writeToSysfs("fiti_power 1", "/proc/hwtcon/cmd")
 end
 
 --[[ handlers for the wait API of the eink driver --]]
@@ -278,10 +291,11 @@ local function mxc_update(fb, ioc_cmd, ioc_data, is_flashing, waveform_mode, x, 
     --       Think of something like some properly implemented & tuned kernels with the interactive cpufreq governor that will boost on touch input, for instance.
     --       In practice, that still trips *very* close to the ioctl (but may not always come *before* a [wait -> refresh -> wait] sandwich;
     --       e.g., I mostly see it before the refresh on NXP & sunxi, but I mostly see it in front of everything on MTK).
-    --       TL;DR: Because we were seeing issues with refreshes that aren't necessarily tied to input (and for simplicity's sake),
-    --       we simply unconditionally do this here as early possible.
-    -- FIXME: PoC, only available on Mk.8+ (implement properly for sunxi & MTK, plus auto-detection on mxcfb)
-    ffiUtil.writeToSysfs("1,0", "/sys/class/graphics/fb0/power_state")
+    --       TL;DR: Because, on devices flagged !hasReliableMxcWaitFor, we were seeing issues with refreshes that aren't necessarily tied to input,
+    --       (and for simplicity's sake), we simply unconditionally do this here as early possible.
+    if fb.mech_poweron then
+        fb:mech_poweron()
+    end
 
     -- NOTE: If we're requesting hardware dithering on a partial update, make sure the rectangle is using
     --       coordinates aligned to the previous multiple of 8, and dimensions aligned to the next multiple of 8.
@@ -922,6 +936,13 @@ function framebuffer:init()
             self.waveform_flashnight = C.WAVEFORM_MODE_GCK16
         end
 
+        -- If the (NXP) device has a sysfs knob to control the EPDC power, use it
+        if lfs.attributes("/sys/class/graphics/fb0/power_state", "mode") ~= nil then
+            -- Conditional, because it's only availale on some of the later boards with NXP SoCs...
+            -- (Usually, those boards are flagged !hasReliableMxcWaitFor...)
+            self.mech_poweron = kobo_nxp_wakeup_epdc
+        end
+
         -- Do the right thing on MTK, which exposes fairly similar APIs.
         if self.device:isMTK() then
             self.mech_refresh = refresh_kobo_mtk
@@ -939,6 +960,8 @@ function framebuffer:init()
             -- Eclipse waveform modes are *always* available
             self.waveform_night = C.HWTCON_WAVEFORM_MODE_GLKW16
             self.waveform_flashnight = C.HWTCON_WAVEFORM_MODE_GCK16
+
+            self.mech_poweron = kobo_mtk_wakeup_epdc
         end
 
         local bypass_wait_for = self:getMxcWaitForBypass()
