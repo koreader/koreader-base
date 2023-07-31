@@ -938,7 +938,7 @@ function framebuffer:init()
 
         -- If the (NXP) device has a sysfs knob to control the EPDC power, use it
         if lfs.attributes("/sys/class/graphics/fb0/power_state", "mode") ~= nil then
-            -- Conditional, because it's only availale on some of the later boards with NXP SoCs...
+            -- Conditional, because it's only available on some of the later boards with NXP SoCs (ca., Mk. 9 & 10)...
             -- (Usually, those boards are flagged !hasReliableMxcWaitFor...)
             self.mech_poweron = kobo_nxp_wakeup_epdc
         end
