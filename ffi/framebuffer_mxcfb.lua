@@ -194,6 +194,7 @@ end
 local function kobo_mk7_unreliable_mxc_wait_for_update_complete(fb, marker)
     -- If we can, wait for the *previous* marker first...
     if marker > 1 then
+        -- Marker sanity check (the driver handles that, too, but it'll throw an EINVAL)
         fb.debug("refresh: wait for completion of buddy marker", marker - 1)
         fb.marker_data.update_marker = marker - 1
         if C.ioctl(fb.fd, C.MXCFB_WAIT_FOR_UPDATE_COMPLETE_V3, fb.marker_data) == -1 then
@@ -314,6 +315,7 @@ local function mxc_update(fb, ioc_cmd, ioc_data, is_flashing, waveform_mode, x, 
     --       e.g., I mostly see it before the refresh on NXP & sunxi, but I mostly see it in front of everything on MTK).
     --       TL;DR: Because, on devices flagged !hasReliableMxcWaitFor, we were seeing deadlock issues with refreshes that aren't necessarily tied to input,
     --       (and for simplicity's sake), we simply unconditionally do this here as early possible.
+    -- NOTE: This might be a gigantic red herring, and simply a case of the very few extra cpu cycles involved throwing off the race...
     if fb.mech_poweron then
         fb:mech_poweron()
     end
