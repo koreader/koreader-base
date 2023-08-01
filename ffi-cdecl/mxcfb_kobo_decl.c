@@ -1,6 +1,7 @@
 #include <linux/ioctl.h>
 // specialized eink framebuffer headers
 #include "include/mxcfb-kobo.h"
+#include "include/mtk-kobo.h"
 
 #include "ffi-cdecl.h"
 
@@ -53,3 +54,27 @@ cdecl_const(MXCFB_WAIT_FOR_UPDATE_COMPLETE_V1)
 cdecl_const(MXCFB_SEND_UPDATE_V1)		// Aura
 cdecl_const(MXCFB_SEND_UPDATE_V2)		// Mark 7
 cdecl_const(MXCFB_WAIT_FOR_UPDATE_COMPLETE_V3)	// Mark 7
+
+cdecl_const(MXCFB_SET_PWRDOWN_DELAY)
+cdecl_const(MXCFB_GET_PWRDOWN_DELAY)
+
+// And now for MTK stuff
+cdecl_const(HWTCON_FLAG_USE_DITHERING)
+cdecl_const(HWTCON_FLAG_FORCE_A2_OUTPUT)
+cdecl_const(HWTCON_FLAG_FORCE_A2_OUTPUT_WHITE)
+cdecl_const(HWTCON_FLAG_FORCE_A2_OUTPUT_BLACK)
+
+cdecl_const(TEMP_USE_SENSOR)
+
+cdecl_enum(HWTCON_WAVEFORM_MODE_ENUM)
+
+cdecl_enum(hwtcon_dithering_mode)
+
+cdecl_struct(hwtcon_rect)
+cdecl_struct(hwtcon_update_marker_data)
+cdecl_struct(hwtcon_update_data)
+
+cdecl_const(HWTCON_SET_TEMPERATURE)
+cdecl_const(HWTCON_SEND_UPDATE)
+cdecl_const(HWTCON_WAIT_FOR_UPDATE_SUBMISSION)
+cdecl_const(HWTCON_WAIT_FOR_UPDATE_COMPLETE)
