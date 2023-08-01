@@ -947,6 +947,7 @@ function framebuffer:init()
                 self.mech_wait_update_complete = kobo_mk7_mxc_wait_for_update_complete
             else
                 -- Funky variant that will do this in pairs, like Nickel itself...
+                -- Spoiler alert: doesn't actually prevent timeouts.
                 self.mech_wait_update_complete = kobo_mk7_unreliable_mxc_wait_for_update_complete
             end
 
