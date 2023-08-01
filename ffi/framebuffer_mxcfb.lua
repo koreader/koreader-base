@@ -1,5 +1,6 @@
 local bit = require("bit")
 local ffi = require("ffi")
+local lfs = require("libs/libkoreader-lfs")
 local ffiUtil = require("ffi/util")
 local BB = require("ffi/blitbuffer")
 local C = ffi.C
@@ -29,6 +30,7 @@ local framebuffer = {
     -- pass device object here for proper model detection:
     device = nil,
 
+    mech_poweron = nil,
     mech_wait_update_complete = nil,
     mech_wait_update_submission = nil,
     waveform_partial = nil,
@@ -148,6 +150,17 @@ function framebuffer:_clampToPhysicalDim(w, h)
     return w, h
 end
 
+--[[ handlers for the power management API of the eink driver --]]
+
+local function kobo_nxp_wakeup_epdc()
+    -- First integer is the toggle, second is the poweroff delay in ms (only relevant when toggling power *off*, we just need it to make sscanf happy).
+    ffiUtil.writeToSysfs("1,0", "/sys/class/graphics/fb0/power_state")
+end
+
+local function kobo_mtk_wakeup_epdc()
+    ffiUtil.writeToSysfs("fiti_power 1", "/proc/hwtcon/cmd")
+end
+
 --[[ handlers for the wait API of the eink driver --]]
 
 -- Kindle's MXCFB_WAIT_FOR_UPDATE_COMPLETE_PEARL == 0x4004462f
@@ -168,6 +181,28 @@ end
 
 -- Kobo's Mk7 MXCFB_WAIT_FOR_UPDATE_COMPLETE_V3
 local function kobo_mk7_mxc_wait_for_update_complete(fb, marker)
+    -- Wait for a specific update to be completed
+    fb.marker_data.update_marker = marker
+
+    return C.ioctl(fb.fd, C.MXCFB_WAIT_FOR_UPDATE_COMPLETE_V3, fb.marker_data)
+end
+
+-- Specialized variant for funky devices with an unreliable ioctl, where we're hoping doing this in pairs like Nickel *might* help...
+-- NOTE: This is yet another attempt at dealing with those spurious timeouts...
+--       FWIW, I can still randomly encounter those, even when doing this.
+--       Which makes sense, as I have actually reproduced these in Nickel myself...
+local function kobo_mk7_unreliable_mxc_wait_for_update_complete(fb, marker)
+    -- If we can, wait for the *previous* marker first...
+    if marker > 1 then
+        -- Marker sanity check (the driver handles that, too, but it'll throw an EINVAL)
+        fb.debug("refresh: wait for completion of buddy marker", marker - 1)
+        fb.marker_data.update_marker = marker - 1
+        if C.ioctl(fb.fd, C.MXCFB_WAIT_FOR_UPDATE_COMPLETE_V3, fb.marker_data) == -1 then
+            local err = ffi.errno()
+            fb.debug("MXCFB_WAIT_FOR_UPDATE_COMPLETE ioctl failed:", ffi.string(C.strerror(err)))
+        end
+    end
+
     -- Wait for a specific update to be completed
     fb.marker_data.update_marker = marker
 
@@ -247,7 +282,7 @@ end
 -- This is roughly ten times the amount of time a real *NOP* WAIT_FOR_UPDATE_COMPLETE would take.
 -- An effective one could block for ~150ms to north of 500ms, depending on the waveform mode of the waited on marker.
 local function stub_mxc_wait_for_update_complete(fb, marker, us)
-    return ffiUtil.usleep(us or 2500)
+    return C.usleep(us or 2500)
 end
 
 --[[ refresh functions ]]--
@@ -269,6 +304,20 @@ local function mxc_update(fb, ioc_cmd, ioc_data, is_flashing, waveform_mode, x, 
     if w <= 1 or h <= 1 then
         fb.debug("discarding bogus refresh region, w:", w, "h:", h)
         return
+    end
+
+    -- Wake the EPDC up manually (don't ask me why this would make any sort of sense, it's simply what Nickel does on devices where we *can* do it...)
+    -- NOTE: Technically, it makes a little more sense when you put it in context of *how* Nickel does that: it's not actually tied to the refresh or the wait there,
+    --       but to *touch* input: on any registered *touch* input (physical buttons are exempt, for some reason), Nickel will forcibly awaken the EPDC,
+    --       unless that was already done less than roughly 1.5s ago.
+    --       Think of something like some properly implemented & tuned kernels with the interactive cpufreq governor that will boost on touch input, for instance.
+    --       In practice, that still trips *very* close to the ioctl (but may not always come *before* a [wait -> refresh -> wait] sandwich;
+    --       e.g., I mostly see it before the refresh on NXP & sunxi, but I mostly see it in front of everything on MTK).
+    --       TL;DR: Because, on devices flagged !hasReliableMxcWaitFor, we were seeing deadlock issues with refreshes that aren't necessarily tied to input,
+    --       (and for simplicity's sake), we simply unconditionally do this here as early possible.
+    -- NOTE: This might be a gigantic red herring, and simply a case of the very few extra cpu cycles involved throwing off the race...
+    if fb.mech_poweron then
+        fb:mech_poweron()
     end
 
     -- NOTE: If we're requesting hardware dithering on a partial update, make sure the rectangle is using
@@ -705,34 +754,6 @@ function framebuffer:refreshPartialImp(x, y, w, h, dither)
     self:mech_refresh(false, self.waveform_partial, x, y, w, h, dither)
 end
 
-function framebuffer:refreshNoMergePartialImp(x, y, w, h, dither)
-    self.debug("refresh: no-merge partial w/ flash", x, y, w, h, dither)
-
-    -- Unlike on sunxi, there is no "no merge" flag (instead, there's the various UPDATE_SCHEME modes).
-    -- Since we don't really want to affect the global update scheme mode, we'll fake it via explicit fences around this update.
-    -- We'll also force a 250ms sleep on devices with an unreliable ioctl, in an attempt to workaround fatal EPDC races...
-    if self.mech_wait_update_complete and self.marker ~= self.dont_wait_for_marker then
-        self.debug("refresh: wait for completion of marker", self.marker)
-        if self:mech_wait_update_complete(self.marker, 250000) == -1 then
-            local err = ffi.errno()
-            self.debug("MXCFB_WAIT_FOR_UPDATE_COMPLETE ioctl failed:", ffi.string(C.strerror(err)))
-        end
-        self.dont_wait_for_marker = self.marker
-    end
-
-    self:mech_refresh(false, self.waveform_partial, x, y, w, h, dither)
-
-    -- On both sides ;).
-    if self.mech_wait_update_complete and self.marker ~= self.dont_wait_for_marker then
-        self.debug("refresh: wait for completion of marker", self.marker)
-        if self:mech_wait_update_complete(self.marker) == -1 then
-            local err = ffi.errno()
-            self.debug("MXCFB_WAIT_FOR_UPDATE_COMPLETE ioctl failed:", ffi.string(C.strerror(err)))
-        end
-        self.dont_wait_for_marker = self.marker
-    end
-end
-
 function framebuffer:refreshFlashPartialImp(x, y, w, h, dither)
     self.debug("refresh: partial w/ flash", x, y, w, h, dither)
     self:mech_refresh(true, self.waveform_partial, x, y, w, h, dither)
@@ -741,30 +762,6 @@ end
 function framebuffer:refreshUIImp(x, y, w, h, dither)
     self.debug("refresh: ui-mode", x, y, w, h, dither)
     self:mech_refresh(false, self.waveform_ui, x, y, w, h, dither)
-end
-
-function framebuffer:refreshNoMergeUIImp(x, y, w, h, dither)
-    self.debug("refresh: no-merge ui-mode w/ flash", x, y, w, h, dither)
-
-    if self.mech_wait_update_complete and self.marker ~= self.dont_wait_for_marker then
-        self.debug("refresh: wait for completion of marker", self.marker)
-        if self:mech_wait_update_complete(self.marker, 250000) == -1 then
-            local err = ffi.errno()
-            self.debug("MXCFB_WAIT_FOR_UPDATE_COMPLETE ioctl failed:", ffi.string(C.strerror(err)))
-        end
-        self.dont_wait_for_marker = self.marker
-    end
-
-    self:mech_refresh(false, self.waveform_ui, x, y, w, h, dither)
-
-    if self.mech_wait_update_complete and self.marker ~= self.dont_wait_for_marker then
-        self.debug("refresh: wait for completion of marker", self.marker)
-        if self:mech_wait_update_complete(self.marker) == -1 then
-            local err = ffi.errno()
-            self.debug("MXCFB_WAIT_FOR_UPDATE_COMPLETE ioctl failed:", ffi.string(C.strerror(err)))
-        end
-        self.dont_wait_for_marker = self.marker
-    end
 end
 
 function framebuffer:refreshFlashUIImp(x, y, w, h, dither)
@@ -948,7 +945,15 @@ function framebuffer:init()
         --       and then fence *that batch* manually to avoid the (REAGL) 'partial' being delayed by the button's 'fast' highlight).
         if self.device:isMk7() then
             self.mech_refresh = refresh_kobo_mk7
-            self.mech_wait_update_complete = kobo_mk7_mxc_wait_for_update_complete
+            if self.device:hasReliableMxcWaitFor() then
+                self.mech_wait_update_complete = kobo_mk7_mxc_wait_for_update_complete
+            else
+                -- Funky variant that will do this in pairs, like Nickel itself...
+                -- Spoiler alert: doesn't actually prevent timeouts.
+                -- Which means this branch and imp is basically for show,
+                -- as it'll be replaced by stub_mxc_wait_for_update_complete below...
+                self.mech_wait_update_complete = kobo_mk7_unreliable_mxc_wait_for_update_complete
+            end
 
             self.waveform_partial = C.WAVEFORM_MODE_REAGL
             self.waveform_fast = C.WAVEFORM_MODE_DU -- A2 is much more prone to artifacts on Mk. 7 than before, because everything's faster.
@@ -960,6 +965,13 @@ function framebuffer:init()
         if self.device:hasEclipseWfm() then
             self.waveform_night = C.WAVEFORM_MODE_GLKW16
             self.waveform_flashnight = C.WAVEFORM_MODE_GCK16
+        end
+
+        -- If the (NXP) device has a sysfs knob to control the EPDC power, use it
+        if lfs.attributes("/sys/class/graphics/fb0/power_state", "mode") ~= nil then
+            -- Conditional, because it's only available on some of the later boards with NXP SoCs (ca., Mk. 9 & 10)...
+            -- (Usually, those boards are flagged !hasReliableMxcWaitFor...)
+            self.mech_poweron = kobo_nxp_wakeup_epdc
         end
 
         -- Do the right thing on MTK, which exposes fairly similar APIs.
@@ -979,6 +991,8 @@ function framebuffer:init()
             -- Eclipse waveform modes are *always* available
             self.waveform_night = C.HWTCON_WAVEFORM_MODE_GLKW16
             self.waveform_flashnight = C.HWTCON_WAVEFORM_MODE_GCK16
+
+            self.mech_poweron = kobo_mtk_wakeup_epdc
         end
 
         local bypass_wait_for = self:getMxcWaitForBypass()
@@ -1003,7 +1017,7 @@ function framebuffer:init()
         end
         if self.mech_wait_update_complete == kobo_mxc_wait_for_update_complete or self.mech_wait_update_complete == kobo_mtk_wait_for_update_complete then
             self.marker_data = ffi.new("uint32_t[1]")
-        elseif self.mech_wait_update_complete == kobo_mk7_mxc_wait_for_update_complete then
+        elseif self.mech_wait_update_complete == kobo_mk7_mxc_wait_for_update_complete or self.mech_wait_update_complete == kobo_mk7_unreliable_mxc_wait_for_update_complete then
             self.marker_data = ffi.new("struct mxcfb_update_marker_data")
             -- NOTE: 0 seems to be a fairly safe assumption for "we don't care about collisions".
             --       On a slightly related note, the EPDC_FLAG_TEST_COLLISION flag is for dry-run collision tests, never set it.
