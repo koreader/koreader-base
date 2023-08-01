@@ -281,7 +281,7 @@ end
 -- This is roughly ten times the amount of time a real *NOP* WAIT_FOR_UPDATE_COMPLETE would take.
 -- An effective one could block for ~150ms to north of 500ms, depending on the waveform mode of the waited on marker.
 local function stub_mxc_wait_for_update_complete(fb, marker, us)
-    return ffiUtil.usleep(us or 2500)
+    return C.usleep(us or 2500)
 end
 
 --[[ refresh functions ]]--
@@ -948,6 +948,8 @@ function framebuffer:init()
             else
                 -- Funky variant that will do this in pairs, like Nickel itself...
                 -- Spoiler alert: doesn't actually prevent timeouts.
+                -- Which means this branch and imp is basically for show,
+                -- as it'll be replaced by stub_mxc_wait_for_update_complete below...
                 self.mech_wait_update_complete = kobo_mk7_unreliable_mxc_wait_for_update_complete
             end
 

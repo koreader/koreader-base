@@ -107,7 +107,7 @@ end
 
 -- Stub version that simply sleeps for 1ms
 local function stub_wait_for_update_complete()
-    return ffiUtil.usleep(1000)
+    return C.usleep(1000)
 end
 
 
