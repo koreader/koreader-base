@@ -798,4 +798,7 @@ cdecl_func(hb_subset_preprocess)
 +hb_ot_layout_get_font_extents()
 +hb_ot_layout_get_font_extents2()
 +hb_subset_input_set_axis_range()
+
+// HB 8.1.0
++hb_ot_layout_collect_features_map()
 */
