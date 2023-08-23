@@ -140,6 +140,9 @@ set(PATCH_CMD10 "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/mupdf_cbz_chapter_suppo
 # don't try link with libraries when building generator helpers…
 set(PATCH_CMD11 "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/fix_link_cmd.patch")
 
+# Backport https://github.com/ArtifexSoftware/mupdf/commit/50d80e509356784720ba8a7def5359f2673697ea (handle > 2GB Zop64) to fix #10829
+set(PATCH_CMD12 "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/read_large_zip.patch")
+
 # TODO: ignore shared git submodules built outside of mupdf by ourselves
 # https://git.ghostscript.com/mupdf.git is slow, so we use the official mirror on GitHub
 ep_get_source_dir(SOURCE_DIR)
@@ -156,7 +159,7 @@ ExternalProject_Add(
     ${PROJECT_NAME}
     DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
     BUILD_IN_SOURCE 1
-    PATCH_COMMAND COMMAND ${PATCH_CMD1} COMMAND ${PATCH_CMD2} COMMAND ${PATCH_CMD3} COMMAND ${PATCH_CMD4} COMMAND ${PATCH_CMD5} COMMAND ${PATCH_CMD6} COMMAND ${PATCH_CMD7} COMMAND ${PATCH_CMD8} COMMAND ${PATCH_CMD9} COMMAND ${PATCH_CMD10} COMMAND ${PATCH_CMD11}
+    PATCH_COMMAND COMMAND ${PATCH_CMD1} COMMAND ${PATCH_CMD2} COMMAND ${PATCH_CMD3} COMMAND ${PATCH_CMD4} COMMAND ${PATCH_CMD5} COMMAND ${PATCH_CMD6} COMMAND ${PATCH_CMD7} COMMAND ${PATCH_CMD8} COMMAND ${PATCH_CMD9} COMMAND ${PATCH_CMD10} COMMAND ${PATCH_CMD11} COMMAND ${PATCH_CMD12}
     # skip configure
     CONFIGURE_COMMAND ""
     BUILD_COMMAND ${BUILD_CMD_GENERATE} COMMAND ${STATIC_BUILD_CMD} COMMAND ${SHARED_BUILD_CMD}
