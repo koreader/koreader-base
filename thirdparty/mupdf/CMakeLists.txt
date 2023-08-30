@@ -140,7 +140,7 @@ set(PATCH_CMD10 "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/mupdf_cbz_chapter_suppo
 # don't try link with libraries when building generator helpers…
 set(PATCH_CMD11 "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/fix_link_cmd.patch")
 
-# Backport https://github.com/ArtifexSoftware/mupdf/commit/50d80e509356784720ba8a7def5359f2673697ea (handle > 2GB Zop64) to fix #10829
+# Backport https://github.com/ArtifexSoftware/mupdf/commit/50d80e509356784720ba8a7def5359f2673697ea (handle > 2GB Zip64)
 set(PATCH_CMD12 "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/read_large_zip.patch")
 
 # TODO: ignore shared git submodules built outside of mupdf by ourselves
