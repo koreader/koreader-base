@@ -175,6 +175,8 @@ local function keyEventHandler(key_event)
             return 0 -- event not consumed
         end
     elseif code == C.AKEYCODE_MEDIA_PLAY_PAUSE
+    or code == C.AKEYCODE_MEDIA_PLAY
+    or code == C.AKEYCODE_MEDIA_PAUSE
     or code == C.AKEYCODE_MEDIA_STOP
     or code == C.AKEYCODE_MEDIA_NEXT
     or code == C.AKEYCODE_MEDIA_PREVIOUS
