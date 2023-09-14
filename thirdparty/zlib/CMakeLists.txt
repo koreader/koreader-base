@@ -52,7 +52,7 @@ set(ZLIB_MD5 "7d9fc1d78ae2fa3e84fe98b77d006c63")
 ExternalProject_Add(
     ${PROJECT_NAME}
     DOWNLOAD_DIR ${KO_DOWNLOAD_DIR}
-    URL http://gentoo.osuosl.org/distfiles/zlib-${ZLIB_VER}.tar.xz
+    URL https://github.com/madler/zlib/releases/download/v${ZLIB_VER}/zlib-${ZLIB_VER}.tar.xz
     URL_MD5 ${ZLIB_MD5}
     BUILD_IN_SOURCE 1
     PATCH_COMMAND COMMAND ${PATCH_CMD1} COMMAND ${PATCH_CMD2} COMMAND ${PATCH_CMD3}
