@@ -49,7 +49,7 @@ if(DEFINED ENV{ANDROID})
     set(SED_CMD "${SED_CMD} && ${ISED} 's|soname_spec=.*|soname_spec=\"\\\\\$libname\\\\\$release\\\\\$shared_ext\\\\\$major\"|' libtool")
 endif()
 
-set(HB_VER 8.2.0)
+set(HB_VER 8.2.1)
 
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
