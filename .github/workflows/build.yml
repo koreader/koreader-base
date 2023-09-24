@@ -27,7 +27,7 @@ jobs:
 
       - name: Homebrew install dependencies
         # Compared to the README, adds ccache for faster compilation times and removes sh5sum to prevent some conflict with coreutils, and gnu-getopt because we're not using kodev
-        run: brew install ccache nasm ragel binutils coreutils libtool autoconf automake cmake makedepend sdl2 lua@5.1 luarocks gettext pkg-config wget gnu-getopt grep bison
+        run: brew install ccache nasm ragel binutils coreutils libtool autoconf automake cmake makedepend lua@5.1 luarocks gettext pkg-config wget gnu-getopt grep bison
 
       - name: Building in progress…
         run: |
