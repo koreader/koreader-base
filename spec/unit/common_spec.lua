@@ -9,7 +9,7 @@ local buffer = require("string.buffer")
 local Blitbuffer = require("ffi/blitbuffer")
 
 describe("Common modules", function()
-    it("should get response from HTTP request", function()
+    it("should get response from HTTP request #internet", function()
         local urls = {
             "http://www.example.com",
             "https://www.example.com",
