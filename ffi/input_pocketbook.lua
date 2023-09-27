@@ -43,7 +43,7 @@ local function genEmuEvent(t, c, v)
     })
 end
 
-local num_touch = 0
+local contact_count = 0
 -- Translate event from inkview EVT_* into emulated linuxev EV_
 local function translateEvent(t, par1, par2)
     if eventq == nil then
@@ -53,40 +53,46 @@ local function translateEvent(t, par1, par2)
     if t == C.EVT_INIT then
         inkview.SetPanelType(C.PANEL_DISABLED);
     elseif t == C.EVT_POINTERDOWN then
-        num_touch = 1
+        contact_count = 1
         genEmuEvent(C.EV_ABS, C.ABS_MT_TRACKING_ID, 0)
         genEmuEvent(C.EV_ABS, C.ABS_MT_POSITION_X, par1)
         genEmuEvent(C.EV_ABS, C.ABS_MT_POSITION_Y, par2)
     elseif t == C.EVT_MTSYNC then
-        if num_touch > 0 and par2 == 2 then
-            num_touch = 2
-            for i = 0, 1 do
-                genEmuEvent(C.EV_ABS, C.ABS_MT_SLOT, i);
-                genEmuEvent(C.EV_ABS, C.ABS_MT_TRACKING_ID, i);
+        if par2 > 1 then
+            contact_count = par2
+            for i = 0, par2 - 1 do
                 local mt = compat2.GetTouchInfoI(i)
-                genEmuEvent(C.EV_ABS, C.ABS_MT_POSITION_X, mt.x)
-                genEmuEvent(C.EV_ABS, C.ABS_MT_POSITION_Y, mt.y)
-                genEmuEvent(C.EV_SYN, C.SYN_REPORT, 0)
+                -- GetTouchInfoI may mysteriously fail, try to handle it to avoid spitting out a (0, 0) contact...
+                if mt.active ~= 0 then
+                    genEmuEvent(C.EV_ABS, C.ABS_MT_SLOT, i);
+                    genEmuEvent(C.EV_ABS, C.ABS_MT_TRACKING_ID, i);
+                    genEmuEvent(C.EV_ABS, C.ABS_MT_POSITION_X, mt.x)
+                    genEmuEvent(C.EV_ABS, C.ABS_MT_POSITION_Y, mt.y)
+                    genEmuEvent(C.EV_SYN, C.SYN_REPORT, 0)
+                end
             end
         elseif par2 == 0 then
-            for i = 0, 1 do
+            for i = 0, contact_count - 1 do
                 genEmuEvent(C.EV_ABS, C.ABS_MT_SLOT, i);
                 genEmuEvent(C.EV_ABS, C.ABS_MT_TRACKING_ID, -1);
                 genEmuEvent(C.EV_SYN, C.SYN_REPORT, 0)
             end
+            contact_count = 0
         else
+            -- When we only have a single contact, we prefer the EVT_POINTER* events, and only use this one to report the end of frame...
+            contact_count = 1
             genEmuEvent(C.EV_SYN, C.SYN_REPORT, 0)
         end
     elseif t == C.EVT_POINTERMOVE then
-        if num_touch == 1 then
+        if contact_count == 1 then
             genEmuEvent(C.EV_ABS, C.ABS_MT_POSITION_X, par1)
             genEmuEvent(C.EV_ABS, C.ABS_MT_POSITION_Y, par2)
         end
     elseif t == C.EVT_POINTERUP then
-        if num_touch == 1 then
+        if contact_count == 1 then
             genEmuEvent(C.EV_ABS, C.ABS_MT_TRACKING_ID, -1)
         end
-        num_touch = 0
+        contact_count = 0
     elseif t == C.EVT_KEYDOWN then
         genEmuEvent(C.EV_KEY, par1, 1)
     elseif t == C.EVT_KEYREPEAT then
