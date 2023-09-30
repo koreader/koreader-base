@@ -135,7 +135,7 @@ local pb_event_map = {
 }
 
 local contact_count = 0
--- Translate event from inkview EVT_* into emulated linuxev EV_
+-- Translate event from inkview EVT_* into emulated linux evdev events
 local function translateEvent(t, par1, par2)
     -- Much like Input does, detail what we catch when verbose debug mode is enabled
     if DEBUG.is_on then
@@ -143,7 +143,7 @@ local function translateEvent(t, par1, par2)
     end
 
     if not eventq then
-        -- Caught something post closeAll?
+        -- Caught something post closeAll? (We're an InkView callback, remember).
         return 0
     end
     updateTimestamp()
