@@ -173,6 +173,7 @@ local function translateEvent(t, par1, par2)
             end
             genEmuEvent(C.EV_SYN, C.SYN_REPORT, 0)
         elseif par2 == 0 then
+            -- Maybe only if contact_count is > 1? Otherwise might end up with duplicated lifts for slot 0 w/ EVT_POINTERUP, assuming both fire...
             for i = 0, contact_count - 1 do
                 genEmuEvent(C.EV_ABS, C.ABS_MT_SLOT, i)
                 genEmuEvent(C.EV_ABS, C.ABS_MT_TRACKING_ID, -1)
