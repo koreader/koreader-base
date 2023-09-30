@@ -154,6 +154,7 @@ local function translateEvent(t, par1, par2)
         inkview.SetPanelType(C.PANEL_DISABLED)
     elseif t == C.EVT_POINTERDOWN then
         contact_count = 1
+        genEmuEvent(C.EV_ABS, C.ABS_MT_SLOT, 0)
         genEmuEvent(C.EV_ABS, C.ABS_MT_TRACKING_ID, 0)
         genEmuEvent(C.EV_ABS, C.ABS_MT_POSITION_X, par1)
         genEmuEvent(C.EV_ABS, C.ABS_MT_POSITION_Y, par2)
@@ -169,15 +170,15 @@ local function translateEvent(t, par1, par2)
                     genEmuEvent(C.EV_ABS, C.ABS_MT_TRACKING_ID, i)
                     genEmuEvent(C.EV_ABS, C.ABS_MT_POSITION_X, mt.x)
                     genEmuEvent(C.EV_ABS, C.ABS_MT_POSITION_Y, mt.y)
-                    genEmuEvent(C.EV_SYN, C.SYN_REPORT, 0)
                 end
             end
+            genEmuEvent(C.EV_SYN, C.SYN_REPORT, 0)
         elseif par2 == 0 then
             for i = 0, contact_count - 1 do
                 genEmuEvent(C.EV_ABS, C.ABS_MT_SLOT, i)
                 genEmuEvent(C.EV_ABS, C.ABS_MT_TRACKING_ID, -1)
-                genEmuEvent(C.EV_SYN, C.SYN_REPORT, 0)
             end
+            genEmuEvent(C.EV_SYN, C.SYN_REPORT, 0)
             contact_count = 0
         else
             -- When we only have a single contact, we prefer the EVT_POINTER* events,
@@ -186,12 +187,14 @@ local function translateEvent(t, par1, par2)
         end
     elseif t == C.EVT_POINTERMOVE then
         if contact_count == 1 then
+            genEmuEvent(C.EV_ABS, C.ABS_MT_SLOT, 0)
             genEmuEvent(C.EV_ABS, C.ABS_MT_POSITION_X, par1)
             genEmuEvent(C.EV_ABS, C.ABS_MT_POSITION_Y, par2)
             genEmuEvent(C.EV_SYN, C.SYN_REPORT, 0)
         end
     elseif t == C.EVT_POINTERUP then
         if contact_count == 1 then
+            genEmuEvent(C.EV_ABS, C.ABS_MT_SLOT, 0)
             genEmuEvent(C.EV_ABS, C.ABS_MT_TRACKING_ID, -1)
             genEmuEvent(C.EV_SYN, C.SYN_REPORT, 0)
         end
