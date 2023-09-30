@@ -176,18 +176,20 @@ local function translateEvent(t, par1, par2)
             end
             contact_count = 0
         else
-            -- When we only have a single contact, we prefer the EVT_POINTER* events, and only use this one to report the end of frame...
+            -- When we only have a single contact, we prefer the EVT_POINTER* events,
+            -- as we don't need an etxra function call to get the coordinates
             contact_count = 1
-            genEmuEvent(C.EV_SYN, C.SYN_REPORT, 0)
         end
     elseif t == C.EVT_POINTERMOVE then
         if contact_count == 1 then
             genEmuEvent(C.EV_ABS, C.ABS_MT_POSITION_X, par1)
             genEmuEvent(C.EV_ABS, C.ABS_MT_POSITION_Y, par2)
+            genEmuEvent(C.EV_SYN, C.SYN_REPORT, 0)
         end
     elseif t == C.EVT_POINTERUP then
         if contact_count == 1 then
             genEmuEvent(C.EV_ABS, C.ABS_MT_TRACKING_ID, -1)
+            genEmuEvent(C.EV_SYN, C.SYN_REPORT, 0)
         end
         contact_count = 0
     elseif t == C.EVT_KEYDOWN then
