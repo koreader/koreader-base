@@ -46,7 +46,8 @@ end
 local contact_count = 0
 -- Translate event from inkview EVT_* into emulated linuxev EV_
 local function translateEvent(t, par1, par2)
-    if eventq == nil then
+    if not eventq then
+        -- Caught something post closeAll?
         return 0
     end
     updateTimestamp()
