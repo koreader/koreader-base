@@ -43,9 +43,105 @@ local function genEmuEvent(t, c, v)
     })
 end
 
+-- For debug logging
+local DEBUG
+local logger
+local pb_event_map = {
+    [C.EVT_INIT] = "EVT_INIT",
+    [C.EVT_EXIT] = "EVT_EXIT",
+    [C.EVT_SHOW] = "EVT_SHOW",
+    [C.EVT_REPAINT] = "EVT_REPAINT",
+    [C.EVT_HIDE] = "EVT_HIDE",
+    [C.EVT_KEYDOWN] = "EVT_KEYDOWN",
+    [C.EVT_KEYPRESS] = "EVT_KEYPRESS",
+    [C.EVT_KEYUP] = "EVT_KEYUP",
+    [C.EVT_KEYRELEASE] = "EVT_KEYRELEASE",
+    [C.EVT_KEYREPEAT] = "EVT_KEYREPEAT",
+    [C.EVT_POINTERUP] = "EVT_POINTERUP",
+    [C.EVT_POINTERDOWN] = "EVT_POINTERDOWN",
+    [C.EVT_POINTERMOVE] = "EVT_POINTERMOVE",
+    [C.EVT_POINTERLONG] = "EVT_POINTERLONG",
+    [C.EVT_POINTERHOLD] = "EVT_POINTERHOLD",
+    [C.EVT_POINTERDRAG] = "EVT_POINTERDRAG",
+    [C.EVT_POINTERCANCEL] = "EVT_POINTERCANCEL",
+    [C.EVT_ORIENTATION] = "EVT_ORIENTATION",
+    [C.EVT_FOCUS] = "EVT_FOCUS",
+    [C.EVT_UNFOCUS] = "EVT_UNFOCUS",
+    [C.EVT_ACTIVATE] = "EVT_ACTIVATE",
+    [C.EVT_MTSYNC] = "EVT_MTSYNC",
+    [C.EVT_TOUCHUP] = "EVT_TOUCHUP",
+    [C.EVT_TOUCHDOWN] = "EVT_TOUCHDOWN",
+    [C.EVT_TOUCHMOVE] = "EVT_TOUCHMOVE",
+    [C.EVT_QN_MOVE] = "EVT_QN_MOVE",
+    [C.EVT_QN_RELEASE] = "EVT_QN_RELEASE",
+    [C.EVT_QN_BORDER] = "EVT_QN_BORDER",
+    [C.EVT_SNAPSHOT] = "EVT_SNAPSHOT",
+    [C.EVT_FSINCOMING] = "EVT_FSINCOMING",
+    [C.EVT_FSCHANGED] = "EVT_FSCHANGED",
+    [C.EVT_MP_STATECHANGED] = "EVT_MP_STATECHANGED",
+    [C.EVT_MP_TRACKCHANGED] = "EVT_MP_TRACKCHANGED",
+    [C.EVT_PREVPAGE] = "EVT_PREVPAGE",
+    [C.EVT_NEXTPAGE] = "EVT_NEXTPAGE",
+    [C.EVT_OPENDIC] = "EVT_OPENDIC",
+    [C.EVT_CONTROL_PANEL_ABOUT_TO_OPEN] = "EVT_CONTROL_PANEL_ABOUT_TO_OPEN",
+    [C.EVT_PANEL_BLUETOOTH_A2DP] = "EVT_PANEL_BLUETOOTH_A2DP",
+    [C.EVT_TAB] = "EVT_TAB",
+    [C.EVT_PANEL] = "EVT_PANEL",
+    [C.EVT_PANEL_ICON] = "EVT_PANEL_ICON",
+    [C.EVT_PANEL_TEXT] = "EVT_PANEL_TEXT",
+    [C.EVT_PANEL_PROGRESS] = "EVT_PANEL_PROGRESS",
+    [C.EVT_PANEL_MPLAYER] = "EVT_PANEL_MPLAYER",
+    [C.EVT_PANEL_USBDRIVE] = "EVT_PANEL_USBDRIVE",
+    [C.EVT_PANEL_NETWORK] = "EVT_PANEL_NETWORK",
+    [C.EVT_PANEL_CLOCK] = "EVT_PANEL_CLOCK",
+    [C.EVT_PANEL_BLUETOOTH] = "EVT_PANEL_BLUETOOTH",
+    [C.EVT_PANEL_TASKLIST] = "EVT_PANEL_TASKLIST",
+    [C.EVT_PANEL_OBREEY_SYNC] = "EVT_PANEL_OBREEY_SYNC",
+    [C.EVT_PANEL_SETREADINGMODE] = "EVT_PANEL_SETREADINGMODE",
+    [C.EVT_PANEL_SETREADINGMODE_INVERT] = "EVT_PANEL_SETREADINGMODE_INVERT",
+    [C.EVT_PANEL_FRONT_LIGHT] = "EVT_PANEL_FRONT_LIGHT",
+    [C.EVT_GLOBALREQUEST] = "EVT_GLOBALREQUEST",
+    [C.EVT_GLOBALACTION] = "EVT_GLOBALACTION",
+    [C.EVT_FOREGROUND] = "EVT_FOREGROUND",
+    [C.EVT_BACKGROUND] = "EVT_BACKGROUND",
+    [C.EVT_SUBTASKCLOSE] = "EVT_SUBTASKCLOSE",
+    [C.EVT_CONFIGCHANGED] = "EVT_CONFIGCHANGED",
+    [C.EVT_SAVESTATE] = "EVT_SAVESTATE",
+    [C.EVT_OBREEY_CONFIG_CHANGED] = "EVT_OBREEY_CONFIG_CHANGED",
+    [C.EVT_SDIN] = "EVT_SDIN",
+    [C.EVT_SDOUT] = "EVT_SDOUT",
+    [C.EVT_BT_RXCOMPLETE] = "EVT_BT_RXCOMPLETE",
+    [C.EVT_BT_TXCOMPLETE] = "EVT_BT_TXCOMPLETE",
+    [C.EVT_SYNTH_ENDED] = "EVT_SYNTH_ENDED",
+    [C.EVT_DIC_CLOSED] = "EVT_DIC_CLOSED",
+    [C.EVT_SHOW_KEYBOARD] = "EVT_SHOW_KEYBOARD",
+    [C.EVT_TEXTCLEAR] = "EVT_TEXTCLEAR",
+    [C.EVT_EXT_KB] = "EVT_EXT_KB",
+    [C.EVT_LETTER] = "EVT_LETTER",
+    [C.EVT_CALLBACK] = "EVT_CALLBACK",
+    [C.EVT_SCANPROGRESS] = "EVT_SCANPROGRESS",
+    [C.EVT_STOPSCAN] = "EVT_STOPSCAN",
+    [C.EVT_STARTSCAN] = "EVT_STARTSCAN",
+    [C.EVT_SCANSTOPPED] = "EVT_SCANSTOPPED",
+    [C.EVT_POSTPONE_TIMED_POWEROFF] = "EVT_POSTPONE_TIMED_POWEROFF",
+    [C.EVT_FRAME_ACTIVATED] = "EVT_FRAME_ACTIVATED",
+    [C.EVT_FRAME_DEACTIVATED] = "EVT_FRAME_DEACTIVATED",
+    [C.EVT_READ_PROGRESS_CHANGED] = "EVT_READ_PROGRESS_CHANGED",
+    [C.EVT_DUMP_BITMAPS_DEBUG_INFO] = "EVT_DUMP_BITMAPS_DEBUG_INFO",
+    [C.EVT_NET_CONNECTED] = "EVT_NET_CONNECTED",
+    [C.EVT_NET_DISCONNECTED] = "EVT_NET_DISCONNECTED",
+    [C.EVT_NET_FOUND_NEW_FW] = "EVT_NET_FOUND_NEW_FW",
+    [C.EVT_SYNTH_POSITION] = "EVT_SYNTH_POSITION",
+}
+
 local contact_count = 0
 -- Translate event from inkview EVT_* into emulated linuxev EV_
 local function translateEvent(t, par1, par2)
+    -- Much like Input does, detail what we catch when verbose debug mode is enabled
+    if DEBUG.is_on then
+        logger.dbg(string.format("PB event => %d (%s), par1: %s, par2: %s", t, pb_event_map[t], par1, par2))
+    end
+
     if not eventq then
         -- Caught something post closeAll?
         return 0
@@ -130,6 +226,10 @@ end
 local raw_keymap -- [EV_KEY] = "Action" supplied by frontend
 local poll_fds, poll_fds_count = nil, 0
 function input:open()
+    -- Don't do this at home, kids, these belong to front.
+    DEBUG = require("dbg")
+    logger = require("logger")
+
     eventq = {}
     -- Have all the necessary bits to run in raw mode without inkview interfering
     poll_fds = nil
