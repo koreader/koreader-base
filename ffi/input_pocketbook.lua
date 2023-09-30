@@ -148,7 +148,7 @@ local function translateEvent(t, par1, par2)
     end
     updateTimestamp()
     if t == C.EVT_INIT then
-        inkview.SetPanelType(C.PANEL_DISABLED);
+        inkview.SetPanelType(C.PANEL_DISABLED)
     elseif t == C.EVT_POINTERDOWN then
         contact_count = 1
         genEmuEvent(C.EV_ABS, C.ABS_MT_TRACKING_ID, 0)
@@ -162,8 +162,8 @@ local function translateEvent(t, par1, par2)
                 local mt = compat2.GetTouchInfoI(i)
                 -- GetTouchInfoI may mysteriously fail, try to handle it to avoid spitting out a (0, 0) contact...
                 if mt.active ~= 0 then
-                    genEmuEvent(C.EV_ABS, C.ABS_MT_SLOT, i);
-                    genEmuEvent(C.EV_ABS, C.ABS_MT_TRACKING_ID, i);
+                    genEmuEvent(C.EV_ABS, C.ABS_MT_SLOT, i)
+                    genEmuEvent(C.EV_ABS, C.ABS_MT_TRACKING_ID, i)
                     genEmuEvent(C.EV_ABS, C.ABS_MT_POSITION_X, mt.x)
                     genEmuEvent(C.EV_ABS, C.ABS_MT_POSITION_Y, mt.y)
                     genEmuEvent(C.EV_SYN, C.SYN_REPORT, 0)
@@ -171,8 +171,8 @@ local function translateEvent(t, par1, par2)
             end
         elseif par2 == 0 then
             for i = 0, contact_count - 1 do
-                genEmuEvent(C.EV_ABS, C.ABS_MT_SLOT, i);
-                genEmuEvent(C.EV_ABS, C.ABS_MT_TRACKING_ID, -1);
+                genEmuEvent(C.EV_ABS, C.ABS_MT_SLOT, i)
+                genEmuEvent(C.EV_ABS, C.ABS_MT_TRACKING_ID, -1)
                 genEmuEvent(C.EV_SYN, C.SYN_REPORT, 0)
             end
             contact_count = 0
