@@ -178,7 +178,7 @@ local function translateEvent(t, par1, par2)
             contact_count = 0
         else
             -- When we only have a single contact, we prefer the EVT_POINTER* events,
-            -- as we don't need an etxra function call to get the coordinates
+            -- as we don't need an extra function call to get to the coordinates...
             contact_count = 1
         end
     elseif t == C.EVT_POINTERMOVE then
