@@ -217,8 +217,6 @@ local function translateEvent(t, par1, par2)
             -- i.e., CCW
             genEmuEvent(C.EV_MSC, C.MSC_GYRO, C.DEVICE_ROTATED_COUNTER_CLOCKWISE)
         end
-    else
-        genEmuEvent(t, par1, par2)
     end
     return 0
 end
