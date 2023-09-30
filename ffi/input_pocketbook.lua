@@ -146,7 +146,10 @@ local function translateEvent(t, par1, par2)
         -- Caught something post closeAll? (We're an InkView callback, remember).
         return 0
     end
+
+    -- Refresh the timestamp genEmuEvent will use
     updateTimestamp()
+
     if t == C.EVT_INIT then
         inkview.SetPanelType(C.PANEL_DISABLED)
     elseif t == C.EVT_POINTERDOWN then
