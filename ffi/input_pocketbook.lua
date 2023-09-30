@@ -161,7 +161,6 @@ local function translateEvent(t, par1, par2)
         genEmuEvent(C.EV_SYN, C.SYN_REPORT, 0)
     elseif t == C.EVT_MTSYNC then
         if par2 > 1 then
-            contact_count = par2
             for i = 0, par2 - 1 do
                 local mt = compat2.GetTouchInfoI(i)
                 -- GetTouchInfoI may mysteriously fail, try to handle it to avoid spitting out a (0, 0) contact...
@@ -179,12 +178,10 @@ local function translateEvent(t, par1, par2)
                 genEmuEvent(C.EV_ABS, C.ABS_MT_TRACKING_ID, -1)
             end
             genEmuEvent(C.EV_SYN, C.SYN_REPORT, 0)
-            contact_count = 0
-        else
-            -- When we only have a single contact, we prefer the EVT_POINTER* events,
-            -- as we don't need an extra function call to get to the coordinates...
-            contact_count = 1
         end
+        contact_count = par2
+        -- NOTE: When we only have a single contact, we prefer the EVT_POINTER* events,
+        --       as we don't need an extra function call to get to the coordinates...
     elseif t == C.EVT_POINTERMOVE then
         if contact_count == 1 then
             genEmuEvent(C.EV_ABS, C.ABS_MT_SLOT, 0)
