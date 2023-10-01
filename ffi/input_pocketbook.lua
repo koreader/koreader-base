@@ -134,7 +134,26 @@ local pb_event_map = {
     [C.EVT_SYNTH_POSITION] = "EVT_SYNTH_POSITION",
 }
 
+-- Keep track of all the active contact points, key is a contact *id* (i.e., its slot number),
+-- value is a contact object, which is a hash with a single key:
+-- down, a boolean denoting whether the contact is currently down (e.g., in contact; mandatory).
+-- Returns true if the state actually changed.
 local contact_count = 0
+local contacts = {}
+local function setContactDown(slot, down)
+    if not contacts[slot] then
+        contacts[slot] = { down = down }
+        return true
+    else
+        if contacts[slot].down ~= down then
+            contacts[slot].down = down
+            return true
+        end
+    end
+
+    return false
+end
+
 -- Translate event from inkview EVT_* into emulated linux evdev events
 local function translateEvent(t, par1, par2)
     -- Much like Input does, detail what we catch when verbose debug mode is enabled
@@ -153,14 +172,15 @@ local function translateEvent(t, par1, par2)
     if t == C.EVT_INIT then
         inkview.SetPanelType(C.PANEL_DISABLED)
     elseif t == C.EVT_POINTERDOWN then
-        contact_count = 1
-        genEmuEvent(C.EV_ABS, C.ABS_MT_SLOT, 0)
-        genEmuEvent(C.EV_ABS, C.ABS_MT_TRACKING_ID, 0)
-        genEmuEvent(C.EV_ABS, C.ABS_MT_POSITION_X, par1)
-        genEmuEvent(C.EV_ABS, C.ABS_MT_POSITION_Y, par2)
-        genEmuEvent(C.EV_SYN, C.SYN_REPORT, 0)
+        if setContactDown(0, true) then
+            genEmuEvent(C.EV_ABS, C.ABS_MT_SLOT, 0)
+            genEmuEvent(C.EV_ABS, C.ABS_MT_TRACKING_ID, 0)
+            genEmuEvent(C.EV_ABS, C.ABS_MT_POSITION_X, par1)
+            genEmuEvent(C.EV_ABS, C.ABS_MT_POSITION_Y, par2)
+            genEmuEvent(C.EV_SYN, C.SYN_REPORT, 0)
+        end
     elseif t == C.EVT_MTSYNC then
-        if par2 > 1 then
+        if par2 ~= 0 then
             for i = 0, par2 - 1 do
                 local mt = compat2.GetTouchInfoI(i)
                 -- GetTouchInfoI may mysteriously fail, try to handle it to avoid spitting out a (0, 0) contact...
@@ -168,37 +188,39 @@ local function translateEvent(t, par1, par2)
                 --       which means we have no way of detecting a lift on slot > 0 until *all* contacts are lifted...
                 if mt.active ~= 0 then
                     genEmuEvent(C.EV_ABS, C.ABS_MT_SLOT, i)
-                    genEmuEvent(C.EV_ABS, C.ABS_MT_TRACKING_ID, i)
+                    if setContactDown(i, true) then
+                        genEmuEvent(C.EV_ABS, C.ABS_MT_TRACKING_ID, i)
+                    end
                     genEmuEvent(C.EV_ABS, C.ABS_MT_POSITION_X, mt.x)
                     genEmuEvent(C.EV_ABS, C.ABS_MT_POSITION_Y, mt.y)
                 end
             end
             genEmuEvent(C.EV_SYN, C.SYN_REPORT, 0)
-        elseif par2 == 0 then
-            -- Maybe only if contact_count is > 1? Otherwise might end up with duplicated lifts for slot 0 w/ EVT_POINTERUP, assuming both fire...
+        else
             for i = 0, contact_count - 1 do
-                genEmuEvent(C.EV_ABS, C.ABS_MT_SLOT, i)
-                genEmuEvent(C.EV_ABS, C.ABS_MT_TRACKING_ID, -1)
+                if contacts[i] and contacts[i].down then
+                    genEmuEvent(C.EV_ABS, C.ABS_MT_SLOT, i)
+                    genEmuEvent(C.EV_ABS, C.ABS_MT_TRACKING_ID, -1)
+                end
+                setContactDown(i, false)
             end
             genEmuEvent(C.EV_SYN, C.SYN_REPORT, 0)
         end
         contact_count = par2
-        -- NOTE: When we only have a single contact, we prefer the EVT_POINTER* events,
-        --       as we don't need an extra function call to get to the coordinates...
     elseif t == C.EVT_POINTERMOVE then
-        if contact_count == 1 then
+        if contacts[0] and contacts[0].down then
             genEmuEvent(C.EV_ABS, C.ABS_MT_SLOT, 0)
             genEmuEvent(C.EV_ABS, C.ABS_MT_POSITION_X, par1)
             genEmuEvent(C.EV_ABS, C.ABS_MT_POSITION_Y, par2)
             genEmuEvent(C.EV_SYN, C.SYN_REPORT, 0)
         end
     elseif t == C.EVT_POINTERUP then
-        if contact_count == 1 then
+        if contacts[0] and contacts[0].down then
             genEmuEvent(C.EV_ABS, C.ABS_MT_SLOT, 0)
             genEmuEvent(C.EV_ABS, C.ABS_MT_TRACKING_ID, -1)
             genEmuEvent(C.EV_SYN, C.SYN_REPORT, 0)
         end
-        contact_count = 0
+        setContactDown(0, false)
     elseif t == C.EVT_KEYDOWN then
         genEmuEvent(C.EV_KEY, par1, 1)
     elseif t == C.EVT_KEYREPEAT then
