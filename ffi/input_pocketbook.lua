@@ -164,6 +164,8 @@ local function translateEvent(t, par1, par2)
             for i = 0, par2 - 1 do
                 local mt = compat2.GetTouchInfoI(i)
                 -- GetTouchInfoI may mysteriously fail, try to handle it to avoid spitting out a (0, 0) contact...
+                -- NOTE: That does not seem to be indicative of a contact lift,
+                --       which means we have no way of detecting a lift on slot > 0 until *all* contacts are lifted...
                 if mt.active ~= 0 then
                     genEmuEvent(C.EV_ABS, C.ABS_MT_SLOT, i)
                     genEmuEvent(C.EV_ABS, C.ABS_MT_TRACKING_ID, i)
