@@ -172,13 +172,13 @@ local function translateEvent(t, par1, par2)
     if t == C.EVT_INIT then
         inkview.SetPanelType(C.PANEL_DISABLED)
     elseif t == C.EVT_POINTERDOWN then
+        genEmuEvent(C.EV_ABS, C.ABS_MT_SLOT, 0)
         if setContactDown(0, true) then
-            genEmuEvent(C.EV_ABS, C.ABS_MT_SLOT, 0)
             genEmuEvent(C.EV_ABS, C.ABS_MT_TRACKING_ID, 0)
-            genEmuEvent(C.EV_ABS, C.ABS_MT_POSITION_X, par1)
-            genEmuEvent(C.EV_ABS, C.ABS_MT_POSITION_Y, par2)
-            genEmuEvent(C.EV_SYN, C.SYN_REPORT, 0)
         end
+        genEmuEvent(C.EV_ABS, C.ABS_MT_POSITION_X, par1)
+        genEmuEvent(C.EV_ABS, C.ABS_MT_POSITION_Y, par2)
+        genEmuEvent(C.EV_SYN, C.SYN_REPORT, 0)
     elseif t == C.EVT_MTSYNC then
         if par2 ~= 0 then
             for i = 0, par2 - 1 do
