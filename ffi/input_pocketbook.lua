@@ -197,9 +197,10 @@ local function translateEvent(t, par1, par2)
                 if contacts[i] then
                     genEmuEvent(C.EV_ABS, C.ABS_MT_SLOT, i)
                     genEmuEvent(C.EV_ABS, C.ABS_MT_TRACKING_ID, -1)
+                    setContactDown(i, false)
+
                     stuff_happened = true
                 end
-                setContactDown(i, false)
             end
             -- Only send a report if we actually generated lift events...
             if stuff_happened then
@@ -219,8 +220,8 @@ local function translateEvent(t, par1, par2)
             genEmuEvent(C.EV_ABS, C.ABS_MT_SLOT, 0)
             genEmuEvent(C.EV_ABS, C.ABS_MT_TRACKING_ID, -1)
             genEmuEvent(C.EV_SYN, C.SYN_REPORT, 0)
+            setContactDown(0, false)
         end
-        setContactDown(0, false)
     elseif t == C.EVT_KEYDOWN then
         genEmuEvent(C.EV_KEY, par1, 1)
     elseif t == C.EVT_KEYREPEAT then
