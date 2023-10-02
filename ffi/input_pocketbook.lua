@@ -134,21 +134,15 @@ local pb_event_map = {
     [C.EVT_SYNTH_POSITION] = "EVT_SYNTH_POSITION",
 }
 
--- Keep track of all the active contact points, key is a contact *id* (i.e., its slot number),
--- value is a contact object, which is a hash with a single key:
--- down, a boolean denoting whether the contact is currently down (e.g., in contact; mandatory).
+-- Keep track of all the active contact points in a *hash*, key is a contact *id* (i.e., its slot number),
+-- value is a boolean, denoting whether the contact is currently down (true), up (false) or inactive (nil).
 -- Returns true if the state actually changed.
 local contact_count = 0
 local contacts = {}
 local function setContactDown(slot, down)
-    if not contacts[slot] then
-        contacts[slot] = { down = down }
+    if contacts[slot] ~= down then
+        contacts[slot] = down
         return true
-    else
-        if contacts[slot].down ~= down then
-            contacts[slot].down = down
-            return true
-        end
     end
 
     return false
@@ -199,7 +193,7 @@ local function translateEvent(t, par1, par2)
         else
             local stuff_happened = false
             for i = 0, contact_count - 1 do
-                if contacts[i] and contacts[i].down then
+                if contacts[i] then
                     genEmuEvent(C.EV_ABS, C.ABS_MT_SLOT, i)
                     genEmuEvent(C.EV_ABS, C.ABS_MT_TRACKING_ID, -1)
                     stuff_happened = true
@@ -213,14 +207,14 @@ local function translateEvent(t, par1, par2)
         end
         contact_count = par2
     elseif t == C.EVT_POINTERMOVE then
-        if contacts[0] and contacts[0].down then
+        if contacts[0] then
             genEmuEvent(C.EV_ABS, C.ABS_MT_SLOT, 0)
             genEmuEvent(C.EV_ABS, C.ABS_MT_POSITION_X, par1)
             genEmuEvent(C.EV_ABS, C.ABS_MT_POSITION_Y, par2)
             genEmuEvent(C.EV_SYN, C.SYN_REPORT, 0)
         end
     elseif t == C.EVT_POINTERUP then
-        if contacts[0] and contacts[0].down then
+        if contacts[0] then
             genEmuEvent(C.EV_ABS, C.ABS_MT_SLOT, 0)
             genEmuEvent(C.EV_ABS, C.ABS_MT_TRACKING_ID, -1)
             genEmuEvent(C.EV_SYN, C.SYN_REPORT, 0)
