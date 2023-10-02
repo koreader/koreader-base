@@ -134,7 +134,8 @@ local pb_event_map = {
     [C.EVT_SYNTH_POSITION] = "EVT_SYNTH_POSITION",
 }
 
--- Keep track of all the active contact points in a *hash*, key is a contact *id* (i.e., its slot number),
+-- Keep track of all the active contact points.
+-- *hash*, key is a contact *id* (i.e., its slot number),
 -- value is a boolean, denoting whether the contact is currently down (true), up (false) or inactive (nil).
 -- Returns true if the state actually changed.
 local contact_count = 0
