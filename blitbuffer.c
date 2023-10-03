@@ -643,8 +643,7 @@ void BB_hatch_rect(BlitBuffer * restrict bb, unsigned int x, unsigned int y, uns
                         }
                     }
                 }
-            }
-            else {
+            } else {
                 for (unsigned int d_y = 0; d_y < h; d_y++) {
                     for (unsigned int d_x = 0; d_x < w; d_x++) {
                         if ((d_x + d_y) % sw2 < stripe_width) {
@@ -667,8 +666,7 @@ void BB_hatch_rect(BlitBuffer * restrict bb, unsigned int x, unsigned int y, uns
                         }
                     }
                 }
-            }
-            else {
+            } else {
                 for (unsigned int d_y = 0; d_y < h; d_y++) {
                     for (unsigned int d_x = 0; d_x < w; d_x++) {
                         if ((d_x + d_y) % sw2 < stripe_width) {
@@ -691,8 +689,7 @@ void BB_hatch_rect(BlitBuffer * restrict bb, unsigned int x, unsigned int y, uns
                         }
                     }
                 }
-            }
-            else {
+            } else {
                 for (unsigned int d_y = 0; d_y < h; d_y++) {
                     for (unsigned int d_x = 0; d_x < w; d_x++) {
                         if ((d_x + d_y) % sw2 < stripe_width) {
@@ -720,8 +717,7 @@ void BB_hatch_rect(BlitBuffer * restrict bb, unsigned int x, unsigned int y, uns
                         }
                     }
                 }
-            }
-            else {
+            } else {
                 for (unsigned int d_y = 0; d_y < h; d_y++) {
                     for (unsigned int d_x = 0; d_x < w; d_x++) {
                         if ((d_x + d_y) % sw2 < stripe_width) {
@@ -749,8 +745,7 @@ void BB_hatch_rect(BlitBuffer * restrict bb, unsigned int x, unsigned int y, uns
                         }
                     }
                 }
-            }
-            else {
+            } else {
                 for (unsigned int d_y = 0; d_y < h; d_y++) {
                     for (unsigned int d_x = 0; d_x < w; d_x++) {
                         if ((d_x + d_y) % sw2 < stripe_width) {
