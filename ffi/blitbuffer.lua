@@ -120,6 +120,7 @@ void BB_fill(BlitBuffer * restrict bb, uint8_t v);
 void BB_fill_rect(BlitBuffer * restrict bb, unsigned int x, unsigned int y, unsigned int w, unsigned int h, uint8_t v);
 void BB_blend_rect(BlitBuffer * restrict bb, unsigned int x, unsigned int y, unsigned int w, unsigned int h, Color8A * restrict color);
 void BB_invert_rect(BlitBuffer * restrict bb, unsigned int x, unsigned int y, unsigned int w, unsigned int h);
+void BB_hatch_rect(BlitBuffer * restrict bb, unsigned int x, unsigned int y, unsigned int w, unsigned int h, unsigned int stripe_width, Color8 * restrict color, uint8_t alpha);
 void BB_blit_to(const BlitBuffer * restrict source, BlitBuffer * restrict dest, unsigned int dest_x, unsigned int dest_y,
                 unsigned int offs_x, unsigned int offs_y, unsigned int w, unsigned int h);
 void BB_dither_blit_to(const BlitBuffer * restrict source, BlitBuffer * restrict dest, unsigned int dest_x, unsigned int dest_y,
@@ -1827,6 +1828,50 @@ function BB_mt.__index:paintRoundedRect(x, y, w, h, c, r)
         if w < 2*r then r = floor(w/2) end
         self:paintBorder(x, y, w, h, r, c, r)
         self:paintRect(x+r, y+r, w-2*r, h-2*r, c)
+    end
+end
+
+
+--[[
+Paint hatches in a rectangle
+
+@x:  start position in x axis
+@y:  start position in y axis
+@w:  width of the area
+@h:  height of the area
+@sw: stripe width
+@c:  color used to fill the area
+@a:  alpha
+--]]
+function BB_mt.__index:hatchRect(x, y, w, h, sw, c, a)
+    w, x = BB.checkBounds(w, x, 0, self:getWidth(), 0xFFFF)
+    h, y = BB.checkBounds(h, y, 0, self:getHeight(), 0xFFFF)
+    if w <= 0 or h <= 0 then return end
+    a = (a or 1)*0xFF
+    if a <= 0 then return end -- fully transparent
+    c = c or Color8(0)
+    sw = ceil(sw)
+    if self:canUseCbb() then
+        cblitbuffer.BB_hatch_rect(ffi.cast(P_BlitBuffer, self), x, y, w, h, sw, c, a)
+    else
+        local sw2 = sw*2
+        if a < 0xFF then
+            for tmp_y = 0, h-1 do
+                for tmp_x = 0, w-1 do
+                    if (tmp_x + tmp_y) % sw2 < sw then
+                        self:setPixelAdd(x+tmp_x, y+tmp_y, c, a)
+                    end
+                end
+            end
+        else
+            for tmp_y = 0, h-1 do
+                for tmp_x = 0, w-1 do
+                    if (tmp_x + tmp_y) % sw2 < sw then
+                        self:setPixel(x+tmp_x, y+tmp_y, c)
+                    end
+                end
+            end
+        end
     end
 end
 

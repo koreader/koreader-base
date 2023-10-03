@@ -145,13 +145,13 @@ static const char*
 #define BB_GET_PIXEL(bb, rotation, COLOR, x, y, pptr) \
 ({ \
     if (rotation == 0) { \
-        *pptr = (COLOR*)(bb->data + y * bb->stride) + x; \
+        *pptr = (COLOR*)(bb->data + (y) * bb->stride) + (x); \
     } else if (rotation == 1) { \
-        *pptr = (COLOR*)(bb->data + x * bb->stride) + bb->w - y - 1; \
+        *pptr = (COLOR*)(bb->data + (x) * bb->stride) + bb->w - (y) - 1; \
     } else if (rotation == 2) { \
-        *pptr = (COLOR*)(bb->data + (bb->h - y - 1) * bb->stride) + bb->w - x - 1; \
+        *pptr = (COLOR*)(bb->data + (bb->h - (y) - 1) * bb->stride) + bb->w - (x) - 1; \
     } else if (rotation == 3) { \
-        *pptr = (COLOR*)(bb->data + (bb->h - x - 1) * bb->stride) + y; \
+        *pptr = (COLOR*)(bb->data + (bb->h - (x) - 1) * bb->stride) + (y); \
     } \
 })
 
@@ -616,6 +616,151 @@ void BB_invert_rect(BlitBuffer * restrict bb, unsigned int x, unsigned int y, un
                     size_t px_count = rw;
                     while (px_count--) {
                         *p++ ^= 0x00FFFFFF;
+                    }
+                }
+            }
+            break;
+    }
+}
+
+void BB_hatch_rect(BlitBuffer * restrict bb, unsigned int x, unsigned int y, unsigned int w, unsigned int h, unsigned int stripe_width, Color8 * restrict color, uint8_t alpha) {
+    if (alpha == 0) { // NOP
+        return;
+    }
+    const uint8_t ainv = alpha ^ 0xFF;
+    const int bb_type = GET_BB_TYPE(bb);
+    const int rotation = GET_BB_ROTATION(bb);
+    const int sw2 = stripe_width * 2;
+    switch (bb_type) {
+        case TYPE_BB8:
+            if (alpha == 0xFF) {
+                for (unsigned int d_y = 0; d_y < h; d_y++) {
+                    for (unsigned int d_x = 0; d_x < w; d_x++) {
+                        if ((d_x + d_y) % sw2 < stripe_width) {
+                            Color8 * restrict dstptr;
+                            BB_GET_PIXEL(bb, rotation, Color8, x+d_x, y+d_y, &dstptr);
+                            *dstptr = *color;
+                        }
+                    }
+                }
+            }
+            else {
+                for (unsigned int d_y = 0; d_y < h; d_y++) {
+                    for (unsigned int d_x = 0; d_x < w; d_x++) {
+                        if ((d_x + d_y) % sw2 < stripe_width) {
+                            Color8 * restrict dstptr;
+                            BB_GET_PIXEL(bb, rotation, Color8, x+d_x, y+d_y, &dstptr);
+                            dstptr->a = (uint8_t) DIV_255(dstptr->a * ainv + color->a * alpha);
+                        }
+                    }
+                }
+            }
+            break;
+        case TYPE_BB8A:
+            if (alpha == 0xFF) {
+                for (unsigned int d_y = 0; d_y < h; d_y++) {
+                    for (unsigned int d_x = 0; d_x < w; d_x++) {
+                        if ((d_x + d_y) % sw2 < stripe_width) {
+                            Color8A * restrict dstptr;
+                            BB_GET_PIXEL(bb, rotation, Color8A, x+d_x, y+d_y, &dstptr);
+                            dstptr->a = color->a;
+                        }
+                    }
+                }
+            }
+            else {
+                for (unsigned int d_y = 0; d_y < h; d_y++) {
+                    for (unsigned int d_x = 0; d_x < w; d_x++) {
+                        if ((d_x + d_y) % sw2 < stripe_width) {
+                            Color8A * restrict dstptr;
+                            BB_GET_PIXEL(bb, rotation, Color8A, x+d_x, y+d_y, &dstptr);
+                            dstptr->a = (uint8_t) DIV_255(dstptr->a * ainv + color->a * alpha);
+                        }
+                    }
+                }
+            }
+            break;
+        case TYPE_BBRGB16:
+            if (alpha == 0xFF) {
+                for (unsigned int d_y = 0; d_y < h; d_y++) {
+                    for (unsigned int d_x = 0; d_x < w; d_x++) {
+                        if ((d_x + d_y) % sw2 < stripe_width) {
+                            ColorRGB16 * restrict dstptr;
+                            BB_GET_PIXEL(bb, rotation, ColorRGB16, x + d_x, y + d_y, &dstptr);
+                            dstptr->v = (uint16_t) RGB_To_RGB16(color->a, color->a, color->a);
+                        }
+                    }
+                }
+            }
+            else {
+                for (unsigned int d_y = 0; d_y < h; d_y++) {
+                    for (unsigned int d_x = 0; d_x < w; d_x++) {
+                        if ((d_x + d_y) % sw2 < stripe_width) {
+                            ColorRGB16 * restrict dstptr;
+                            BB_GET_PIXEL(bb, rotation, ColorRGB16, x + d_x, y + d_y, &dstptr);
+                            const uint8_t r = (uint8_t) DIV_255(ColorRGB16_GetR(dstptr->v) * ainv + color->a * alpha);
+                            const uint8_t g = (uint8_t) DIV_255(ColorRGB16_GetG(dstptr->v) * ainv + color->a * alpha);
+                            const uint8_t b = (uint8_t) DIV_255(ColorRGB16_GetB(dstptr->v) * ainv + color->a * alpha);
+                            dstptr->v = (uint16_t) RGB_To_RGB16(r, g, b);
+                        }
+                    }
+                }
+            }
+            break;
+        case TYPE_BBRGB24:
+            if (alpha == 0xFF) {
+                for (unsigned int d_y = 0; d_y < h; d_y++) {
+                    for (unsigned int d_x = 0; d_x < w; d_x++) {
+                        if ((d_x + d_y) % sw2 < stripe_width) {
+                            ColorRGB24 * restrict dstptr;
+                            BB_GET_PIXEL(bb, rotation, ColorRGB24, x + d_x, y + d_y, &dstptr);
+                            dstptr->r = color->a;
+                            dstptr->g = color->a;
+                            dstptr->b = color->a;
+                        }
+                    }
+                }
+            }
+            else {
+                for (unsigned int d_y = 0; d_y < h; d_y++) {
+                    for (unsigned int d_x = 0; d_x < w; d_x++) {
+                        if ((d_x + d_y) % sw2 < stripe_width) {
+                            ColorRGB24 * restrict dstptr;
+                            BB_GET_PIXEL(bb, rotation, ColorRGB24, x + d_x, y + d_y, &dstptr);
+                            dstptr->r = (uint8_t) DIV_255(dstptr->r * ainv + color->a * alpha);
+                            dstptr->g = (uint8_t) DIV_255(dstptr->g * ainv + color->a * alpha);
+                            dstptr->b = (uint8_t) DIV_255(dstptr->b * ainv + color->a * alpha);
+                        }
+                    }
+                }
+            }
+            break;
+        case TYPE_BBRGB32:
+            if (alpha == 0xFF) {
+                for (unsigned int d_y = 0; d_y < h; d_y++) {
+                    for (unsigned int d_x = 0; d_x < w; d_x++) {
+                        if ((d_x + d_y) % sw2 < stripe_width) {
+                            ColorRGB32 * restrict dstptr;
+                            BB_GET_PIXEL(bb, rotation, ColorRGB32, x + d_x, y + d_y, &dstptr);
+                            dstptr->r = (uint8_t) color->a;
+                            dstptr->g = (uint8_t) color->a;
+                            dstptr->b = (uint8_t) color->a;
+                            // dstptr->alpha = 0xFF;
+                        }
+                    }
+                }
+            }
+            else {
+                for (unsigned int d_y = 0; d_y < h; d_y++) {
+                    for (unsigned int d_x = 0; d_x < w; d_x++) {
+                        if ((d_x + d_y) % sw2 < stripe_width) {
+                            ColorRGB32 * restrict dstptr;
+                            BB_GET_PIXEL(bb, rotation, ColorRGB32, x + d_x, y + d_y, &dstptr);
+                            dstptr->r = (uint8_t) DIV_255(dstptr->r * ainv + color->a * alpha);
+                            dstptr->g = (uint8_t) DIV_255(dstptr->g * ainv + color->a * alpha);
+                            dstptr->b = (uint8_t) DIV_255(dstptr->b * ainv + color->a * alpha);
+                            // dstptr->alpha = 0xFF;
+                        }
                     }
                 }
             }
