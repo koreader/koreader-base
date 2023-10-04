@@ -176,7 +176,12 @@ local function translateEvent(t, par1, par2)
         genEmuEvent(C.EV_SYN, C.SYN_REPORT, 0)
     elseif t == C.EVT_MTSYNC then
         if par2 ~= 0 then
-            for i = 0, par2 - 1 do
+            -- NOTE: Never query slot 0, we rely on the POINTER* events for it instead.
+            --       There are a couple of reasons for that:
+            --       * we don't need a function call to get at the coordinates with the POINTER events
+            --       * GetTouchInfoI appears to report slightly *stale* data (i.e., the *previous* coordinates),
+            --         which is obviously not great, especially if we were to mix the two...
+            for i = 1, par2 - 1 do
                 local mt = compat2.GetTouchInfoI(i)
                 -- GetTouchInfoI may mysteriously fail, try to handle it to avoid spitting out a (0, 0) contact...
                 -- NOTE: That does not seem to be indicative of a contact lift,
