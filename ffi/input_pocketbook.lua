@@ -179,7 +179,7 @@ local function translateEvent(t, par1, par2)
             -- NOTE: Never query slot 0, we rely on the POINTER* events for it instead.
             --       There are a couple of reasons for that:
             --       * we don't need a function call to get at the coordinates with the POINTER events
-            --       * GetTouchInfoI appears to report slightly *stale* data (i.e., the *previous* coordinates),
+            --       * GetTouchInfoI appears to report slightly *stale* data,
             --         which is obviously not great, especially if we were to mix the two...
             for i = 1, par2 - 1 do
                 local mt = compat2.GetTouchInfoI(i)
