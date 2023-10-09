@@ -50,15 +50,13 @@ local function genEmuEvent(evtype, code, value, timev, ts)
     table.insert(inputQueue, ev)
 end
 
--- Keep track of all the active pointers in the current gesture, key is a pointer *id* (i.e., its slot number),
--- value is a pointer object, which is a hash with a single key:
--- down, a boolean denoting whether the pointer is currently down (e.g., in contact; mandatory).
+-- Keep track of all the active pointers in the current gesture.
+-- *hash*, key is a pointer *id* (i.e., its slot number),
+-- value is a boolean, denoting whether the pointer is currently down (e.g., in contact) (true), up (false) or inactive (nil).
 local pointers = {}
-local function setPointerDownState(slot, down)
-    if not pointers[slot] then
-        pointers[slot] = { down = down }
-    else
-        pointers[slot].down = down
+local function setPointerDown(slot, down)
+    if pointers[slot] ~= down then
+        pointers[slot] = down
     end
 end
 
@@ -120,26 +118,26 @@ local function motionEventHandler(motion_event)
     if flags == C.AMOTION_EVENT_ACTION_DOWN then
         -- Happens on the *first* contact of a gesture (data is always at index 0),
         local slot = android.lib.AMotionEvent_getPointerId(motion_event, 0)
-        setPointerDownState(slot, true)
+        setPointerDown(slot, true)
         genTouchDownEvent(motion_event, slot, 0)
     elseif flags == C.AMOTION_EVENT_ACTION_POINTER_DOWN then
         local pointer_index = bit.rshift(
                                         bit.band(action, C.AMOTION_EVENT_ACTION_POINTER_INDEX_MASK),
                                         C.AMOTION_EVENT_ACTION_POINTER_INDEX_SHIFT)
         local slot = android.lib.AMotionEvent_getPointerId(motion_event, pointer_index)
-        setPointerDownState(slot, true)
+        setPointerDown(slot, true)
         genTouchDownEvent(motion_event, slot, pointer_index)
     elseif flags == C.AMOTION_EVENT_ACTION_UP then
         -- Happens once the *last* contact of a gesture has been lifted (data is always at index 0)
         local slot = android.lib.AMotionEvent_getPointerId(motion_event, 0)
-        setPointerDownState(slot, false)
+        setPointerDown(slot, false)
         genTouchUpEvent(motion_event, slot, 0)
     elseif flags == C.AMOTION_EVENT_ACTION_POINTER_UP then
         local pointer_index = bit.rshift(
                                         bit.band(action, C.AMOTION_EVENT_ACTION_POINTER_INDEX_MASK),
                                         C.AMOTION_EVENT_ACTION_POINTER_INDEX_SHIFT)
         local slot = android.lib.AMotionEvent_getPointerId(motion_event, pointer_index)
-        setPointerDownState(slot, false)
+        setPointerDown(slot, false)
         genTouchUpEvent(motion_event, slot, pointer_index)
     elseif flags == C.AMOTION_EVENT_ACTION_MOVE then
         -- There may be multiple pointers involved, only request the ts once
@@ -150,7 +148,7 @@ local function motionEventHandler(motion_event)
         for i = 0, pointer_count - 1 do
             -- So, loop through the array, and if that pointer is still down, move it
             local slot = android.lib.AMotionEvent_getPointerId(motion_event, i)
-            if pointers[slot] and pointers[slot].down then
+            if pointers[slot] then
                 genTouchMoveEvent(motion_event, timev, slot, i)
             end
         end
@@ -159,6 +157,8 @@ local function motionEventHandler(motion_event)
         genEndTouchEvent(motion_event, timev)
     elseif flags == C.AMOTION_EVENT_ACTION_CANCEL then
         -- Invalidate the pointers, and push a custom event to notify front to do the same.
+        -- NOTE: We preserve the actual table object to avoid garbage churn,
+        --       as we're liable to see a similar amount of slots show up again later.
         for slot, _ in pairs(pointers) do
             pointers[slot] = nil
         end
