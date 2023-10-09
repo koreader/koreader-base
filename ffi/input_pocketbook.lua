@@ -161,12 +161,12 @@ local function translateEvent(t, par1, par2)
         return 0
     end
 
-    -- Refresh the timestamp genEmuEvent will use
-    updateTimestamp()
-
     if t == C.EVT_INIT then
         inkview.SetPanelType(C.PANEL_DISABLED)
     elseif t == C.EVT_POINTERDOWN then
+        -- Refresh the timestamp genEmuEvent will use
+        updateTimestamp()
+
         genEmuEvent(C.EV_ABS, C.ABS_MT_SLOT, 0)
         if setContactDown(0, true) then
             genEmuEvent(C.EV_ABS, C.ABS_MT_TRACKING_ID, 0)
@@ -175,6 +175,8 @@ local function translateEvent(t, par1, par2)
         genEmuEvent(C.EV_ABS, C.ABS_MT_POSITION_Y, par2)
         genEmuEvent(C.EV_SYN, C.SYN_REPORT, 0)
     elseif t == C.EVT_MTSYNC then
+        updateTimestamp()
+
         if par2 ~= 0 then
             -- NOTE: Never query slot 0, we rely on the POINTER* events for it instead.
             --       There are a couple of reasons for that:
@@ -215,6 +217,8 @@ local function translateEvent(t, par1, par2)
         contact_count = par2
     elseif t == C.EVT_POINTERMOVE then
         if contacts[0] then
+            updateTimestamp()
+
             genEmuEvent(C.EV_ABS, C.ABS_MT_SLOT, 0)
             genEmuEvent(C.EV_ABS, C.ABS_MT_POSITION_X, par1)
             genEmuEvent(C.EV_ABS, C.ABS_MT_POSITION_Y, par2)
@@ -222,24 +226,36 @@ local function translateEvent(t, par1, par2)
         end
     elseif t == C.EVT_POINTERUP then
         if contacts[0] then
+            updateTimestamp()
+
             genEmuEvent(C.EV_ABS, C.ABS_MT_SLOT, 0)
             genEmuEvent(C.EV_ABS, C.ABS_MT_TRACKING_ID, -1)
             genEmuEvent(C.EV_SYN, C.SYN_REPORT, 0)
             setContactDown(0, false)
         end
     elseif t == C.EVT_KEYDOWN then
+        updateTimestamp()
+
         genEmuEvent(C.EV_KEY, par1, 1)
     elseif t == C.EVT_KEYREPEAT then
+        updateTimestamp()
+
         genEmuEvent(C.EV_KEY, par1, 2)
     elseif t == C.EVT_KEYUP then
+        updateTimestamp()
+
         genEmuEvent(C.EV_KEY, par1, 0)
     elseif t == C.EVT_BACKGROUND or t == C.EVT_FOREGROUND
         or t == C.EVT_SHOW or t == C.EVT_HIDE
         or t == C.EVT_EXIT then
+        updateTimestamp()
+
         -- Handle those as MiscEvent as this makes it easy to return a string directly,
         -- which can be used in uimanager.lua as an event_handler index.
         genEmuEvent(C.EV_MSC, t, 0)
     elseif t == C.EVT_ORIENTATION then
+        updateTimestamp()
+
         -- Translate those to our own EV_MSC:MSC_GYRO proto
         if par1 == 0 then
             -- i.e., UR
