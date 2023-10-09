@@ -151,7 +151,7 @@ end
 
 -- Translate event from inkview EVT_* into emulated linux evdev events
 local function translateEvent(t, par1, par2)
-    -- Much like Input does, detail what we catch when verbose debug mode is enabled
+    -- Much like Input does, detail what we catch when debug logging is enabled
     if DEBUG.is_on then
         logger.dbg(string.format("PB event => %d (%s), par1: %s, par2: %s", t, pb_event_map[t], par1, par2))
     end
