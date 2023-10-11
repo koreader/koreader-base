@@ -4122,6 +4122,10 @@ int luaopen_cre(lua_State *L) {
 
 // Library finalizer (c.f., dlopen(3)). This serves no real purpose except making Valgrind's output slightly more useful.
 __attribute__((destructor)) static void cre_teardown(void) {
+    if (cre_callback_forwarder) {
+        delete cre_callback_forwarder;
+        cre_callback_forwarder = NULL;
+    }
     HyphMan::uninit();
     ShutdownFontManager();
     CRLog::setLogger( NULL );
