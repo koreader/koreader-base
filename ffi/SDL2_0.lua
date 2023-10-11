@@ -141,7 +141,7 @@ function S.open(w, h, x, y)
     -- What's even more curious is that we still only get a single SDL_WINDOWEVENT_MOVED on startup, except that way it's at the requested coordinates...
     SDL.SDL_SetWindowPosition(S.screen, pos_x, pos_y)
 
-    S.renderer = SDL.SDL_CreateRenderer(S.screen, -1, 0)
+    S.renderer = ffi.gc(SDL.SDL_CreateRenderer(S.screen, -1, 0), SDL.SDL_DestroyRenderer)
     local output_w = ffi.new("int[1]", 0)
     local output_h = ffi.new("int[1]", 0)
     if SDL.SDL_GetRendererOutputSize(S.renderer, output_w, output_h) == 0 and tonumber(output_w[0]) ~= w then
@@ -190,6 +190,7 @@ function S.setWindowFullscreen(full_screen)
 end
 
 function S.destroyTexture(texture)
+    ffi.gc(texture, nil)
     SDL.SDL_DestroyTexture(texture)
 end
 

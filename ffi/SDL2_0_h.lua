@@ -794,6 +794,7 @@ void SDL_EnableScreenSaver(void) __attribute__((visibility("default")));
 SDL_Window *SDL_CreateWindow(const char *, int, int, int, int, Uint32) __attribute__((visibility("default")));
 void SDL_GetWindowSize(SDL_Window *, int *, int *) __attribute__((visibility("default")));
 SDL_Renderer *SDL_CreateRenderer(SDL_Window *, int, Uint32) __attribute__((visibility("default")));
+void SDL_DestroyRenderer(SDL_Renderer *) __attribute__((visibility("default")));
 int SDL_CreateWindowAndRenderer(int, int, Uint32, SDL_Window **, SDL_Renderer **) __attribute__((visibility("default")));
 int SDL_GetRendererInfo(SDL_Renderer *, SDL_RendererInfo *) __attribute__((visibility("default")));
 int SDL_GetRendererOutputSize(SDL_Renderer *, int *, int *) __attribute__((visibility("default")));
