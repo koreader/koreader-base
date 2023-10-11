@@ -29,7 +29,10 @@ function zstd.zstd_compress(ptr, size)
     assert(cbuff ~= nil, "Failed to allocate ZSTD compression buffer (" .. tonumber(n) .. " bytes)")
     -- NOTE: We should be quite all right with the default (3), which will most likely trounce zlib's 9 in every respect...
     local clen = zst.ZSTD_compress(cbuff, n, ptr, size, zst.ZSTD_CLEVEL_DEFAULT)
-    assert(zst.ZSTD_isError(clen) == 0, ffi.string(zst.ZSTD_getErrorName(clen)))
+    if zst.ZSTD_isError(clen) ~= 0 then
+        C.free(cbuff)
+        error(ffi.string(zst.ZSTD_getErrorName(clen)))
+    end
     return cbuff, clen
 end
 
@@ -40,7 +43,10 @@ function zstd.zstd_uncompress(ptr, size)
     local buff = C.calloc(n, 1)
     assert(buff ~= nil, "Failed to allocate ZSTD decompression buffer (" .. tonumber(n) .. " bytes)")
     local ulen = zst.ZSTD_decompress(buff, n, ptr, size)
-    assert(zst.ZSTD_isError(ulen) == 0, ffi.string(zst.ZSTD_getErrorName(ulen)))
+    if zst.ZSTD_isError(ulen) ~= 0 then
+        C.free(buff)
+        error(ffi.string(zst.ZSTD_getErrorName(ulen)))
+    end
     return buff, ulen
 end
 
