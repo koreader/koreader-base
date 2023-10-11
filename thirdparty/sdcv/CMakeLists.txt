@@ -81,7 +81,7 @@ set(PATCH_CMD1 "${KO_PATCH_SH} ${CMAKE_CURRENT_SOURCE_DIR}/sdcv-no-unknown-dict-
 # Force utf8 command line parsing
 set(PATCH_CMD2 "${KO_PATCH_SH} ${CMAKE_CURRENT_SOURCE_DIR}/sdcv-locale-hack.patch")
 
-set(SDCV_GIT_COMMIT 6e36e7730caf07b6cd0bfa265cdf9b5e31e7acad)
+set(SDCV_GIT_COMMIT v0.5.5)
 
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
