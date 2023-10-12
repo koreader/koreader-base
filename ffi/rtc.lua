@@ -22,9 +22,6 @@ require("ffi/rtc_h")
 
 -----------------------------------------------------------------
 
--- Custom errors
-local RTC_BOGUS_ALARM_READ = "RTC reports bogus alarm on read"
-
 local RTC = {
     dev_rtc = "/dev/rtc0",
     dodgy_rtc = false,
@@ -214,24 +211,6 @@ function RTC:getWakeupAlarmSys()
         return nil, re, err
     end
 
-    -- On dodgy RTCs, some aging batteries are (supposedly) causing reads to report a bogus value...
-    -- c.f., https://github.com/koreader/koreader/issues/7994 & https://github.com/koreader/koreader/issues/10996
-    if self.dodgy_rtc then
-        local e = ffi.new("struct tm")
-        e.tm_sec = wake.time.tm_sec
-        e.tm_min = wake.time.tm_min
-        e.tm_hour = wake.time.tm_hour
-        e.tm_mday = wake.time.tm_mday
-        e.tm_mon = wake.time.tm_mon
-        e.tm_year = wake.time.tm_year
-        local alarm_time = tonumber(C.mktime(e))
-        print("RTC:getWakeupAlarmSys:", alarm_time) -- FIXME: Debugging
-        if alarm_time <= 1 then
-            -- Epoch-like, sounds fishy...
-            return nil, alarm_time, RTC_BOGUS_ALARM_READ
-        end
-    end
-
     -- Seed a struct tm with the current time, because not every field will be set in wake
     local t = ffi.new("time_t[1]")
     t[0] = C.time(nil)
@@ -302,14 +281,7 @@ function RTC:validateWakeupAlarmByProximity(task_alarm, proximity)
 
     -- Those are in UTC broken down time format (struct tm)
     local alarm_tm = self:getWakeupAlarm()
-    local alarm_sys_tm, val, err = self:getWakeupAlarmSys()
-    if alarm_tm and not alarm_sys_tm and err == RTC_BOGUS_ALARM_READ then
-        -- NOTE: If we've previously set an alarm, but reading it back produced something completely bogus,
-        --       assume nothing actually overrode it, and there's still a chance it'll fire properly.
-        --       We've seen this behavior on aging NTX devices...
-        print("getWakeupAlarmSys: Read back a bogus value (" .. val .. "), assuming our previously set alarm will fire as expected anyway")
-        alarm_sys_tm = alarm_tm
-    end
+    local alarm_sys_tm = self:getWakeupAlarmSys()
 
     if not (alarm_tm and alarm_sys_tm) then return end
 
@@ -330,6 +302,13 @@ function RTC:validateWakeupAlarmByProximity(task_alarm, proximity)
             "\ncurrent rtc alarm @ " .. alarm_sys .. os.date(" (%F %T %z)", alarm_sys),   -- the current rtc alarm
             "\ncurrent rtc time is " .. rtc_now .. os.date(" (%F %T %z)", rtc_now),
             "\ncurrent time is     " .. now .. os.date(" (%F %T %z)", now))
+    end
+
+    -- On dodgy RTCs, some aging batteries are (supposedly) causing reads to report a bogus value...
+    -- c.f., https://github.com/koreader/koreader/issues/7994 & https://github.com/koreader/koreader/issues/10996
+    if self.dodgy_rtc and alarm_sys <= 1 then
+        print("Read back a bogus alarm value from RTC, assuming our previously set alarm will fire as expected anyway")
+        alarm_sys = alarm
     end
 
     -- If our stored alarm and the system alarm don't match, we didn't set it.
