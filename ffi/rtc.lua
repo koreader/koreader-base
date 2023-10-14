@@ -307,7 +307,7 @@ function RTC:validateWakeupAlarmByProximity(task_alarm, proximity)
     -- On dodgy RTCs, some aging batteries are (supposedly) causing reads to report a bogus value...
     -- c.f., https://github.com/koreader/koreader/issues/7994 & https://github.com/koreader/koreader/issues/10996
     if self.dodgy_rtc and alarm_sys <= 1 then
-        print("Read back a bogus alarm value from a dodgy RTC, assuming our previously set alarm fired as expected anyway")
+        print("A dodgy RTC reported a bogus alarm value, assuming our previously set alarm fired as expected anyway")
         alarm_sys = alarm
     end
 
