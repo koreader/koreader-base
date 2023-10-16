@@ -23,6 +23,8 @@ require("ffi/rtc_h")
 -----------------------------------------------------------------
 
 local RTC = {
+    dev_rtc = "/dev/rtc0",
+    dodgy_rtc = false,
     _wakeup_scheduled = false,  -- Flipped in @{setWakeupAlarm} and @{unsetWakeupAlarm}.
     _wakeup_scheduled_tm = nil, -- The tm struct of the last scheduled wakeup alarm.
 }
@@ -58,13 +60,13 @@ function RTC:toggleAlarmInterrupt(enabled)
     enabled = (enabled ~= nil) and enabled or true
 
     local err
-    local rtc0 = C.open("/dev/rtc0", bor(C.O_RDONLY, C.O_NONBLOCK, C.O_CLOEXEC))
-    if rtc0 == -1 then
+    local fd = C.open(self.dev_rtc, bor(C.O_RDONLY, C.O_NONBLOCK, C.O_CLOEXEC))
+    if fd == -1 then
         err = ffi.string(C.strerror(ffi.errno()))
-        print("toggleAlarmInterrupt open /dev/rtc0", rtc0, err)
-        return nil, rtc0, err
+        print("toggleAlarmInterrupt open " .. self.dev_rtc, fd, err)
+        return nil, fd, err
     end
-    local re = C.ioctl(rtc0, enabled and C.RTC_AIE_ON or C.RTC_AIE_OFF, 0)
+    local re = C.ioctl(fd, enabled and C.RTC_AIE_ON or C.RTC_AIE_OFF, 0)
     if re == -1 then
         err = ffi.string(C.strerror(ffi.errno()))
         if enabled then
@@ -74,10 +76,10 @@ function RTC:toggleAlarmInterrupt(enabled)
         end
         return nil, re, err
     end
-    re = C.close(rtc0)
+    re = C.close(fd)
     if re == -1 then
         err = ffi.string(C.strerror(ffi.errno()))
-        print("toggleAlarmInterrupt close /dev/rtc0", re, err)
+        print("toggleAlarmInterrupt close " .. self.dev_rtc, re, err)
         return nil, re, err
     end
 
@@ -118,22 +120,22 @@ function RTC:setWakeupAlarm(epoch, enabled)
     wake.enabled = enabled and 1 or 0
 
     local err
-    local rtc0 = C.open("/dev/rtc0", bor(C.O_RDONLY, C.O_NONBLOCK, C.O_CLOEXEC))
-    if rtc0 == -1 then
+    local fd = C.open(self.dev_rtc, bor(C.O_RDONLY, C.O_NONBLOCK, C.O_CLOEXEC))
+    if fd == -1 then
         err = ffi.string(C.strerror(ffi.errno()))
-        print("setWakeupAlarm open /dev/rtc0", rtc0, err)
-        return nil, rtc0, err
+        print("setWakeupAlarm open " .. self.dev_rtc, fd, err)
+        return nil, fd, err
     end
-    local re = C.ioctl(rtc0, C.RTC_WKALM_SET, wake)
+    local re = C.ioctl(fd, C.RTC_WKALM_SET, wake)
     if re == -1 then
         err = ffi.string(C.strerror(ffi.errno()))
         print("setWakeupAlarm ioctl RTC_WKALM_SET", re, err)
         return nil, re, err
     end
-    re = C.close(rtc0)
+    re = C.close(fd)
     if re == -1 then
         err = ffi.string(C.strerror(ffi.errno()))
-        print("setWakeupAlarm close /dev/rtc0", re, err)
+        print("setWakeupAlarm close " .. self.dev_rtc, re, err)
         return nil, re, err
     end
 
@@ -190,22 +192,22 @@ function RTC:getWakeupAlarmSys()
     local wake = ffi.new("struct rtc_wkalrm")
 
     local err, re
-    local rtc0 = C.open("/dev/rtc0", bor(C.O_RDONLY, C.O_NONBLOCK, C.O_CLOEXEC))
-    if rtc0 == -1 then
+    local fd = C.open(self.dev_rtc, bor(C.O_RDONLY, C.O_NONBLOCK, C.O_CLOEXEC))
+    if fd == -1 then
         err = ffi.string(C.strerror(ffi.errno()))
-        print("getWakeupAlarm open /dev/rtc0", rtc0, err)
-        return nil, rtc0, err
+        print("getWakeupAlarm open " .. self.dev_rtc, fd, err)
+        return nil, fd, err
     end
-    re = C.ioctl(rtc0, C.RTC_WKALM_RD, wake)
+    re = C.ioctl(fd, C.RTC_WKALM_RD, wake)
     if re == -1 then
         err = ffi.string(C.strerror(ffi.errno()))
         print("getWakeupAlarm ioctl RTC_WKALM_RD", re, err)
         return nil, re, err
     end
-    re = C.close(rtc0)
+    re = C.close(fd)
     if re == -1 then
         err = ffi.string(C.strerror(ffi.errno()))
-        print("getWakeupAlarm close /dev/rtc0", re, err)
+        print("getWakeupAlarm close " .. self.dev_rtc, re, err)
         return nil, re, err
     end
 
@@ -233,22 +235,22 @@ function RTC:readHardwareClock()
     local rtc = ffi.new("struct rtc_time")
 
     local err, re
-    local rtc0 = C.open("/dev/rtc0", bor(C.O_RDONLY, C.O_NONBLOCK, C.O_CLOEXEC))
-    if rtc0 == -1 then
+    local fd = C.open(self.dev_rtc, bor(C.O_RDONLY, C.O_NONBLOCK, C.O_CLOEXEC))
+    if fd == -1 then
         err = ffi.string(C.strerror(ffi.errno()))
-        print("readHardwareClock open /dev/rtc0", rtc0, err)
-        return nil, rtc0, err
+        print("readHardwareClock open " .. self.dev_rtc, fd, err)
+        return nil, fd, err
     end
-    re = C.ioctl(rtc0, C.RTC_RD_TIME, rtc)
+    re = C.ioctl(fd, C.RTC_RD_TIME, rtc)
     if re == -1 then
         err = ffi.string(C.strerror(ffi.errno()))
         print("readHardwareClock ioctl RTC_RD_TIME", re, err)
         return nil, re, err
     end
-    re = C.close(rtc0)
+    re = C.close(fd)
     if re == -1 then
         err = ffi.string(C.strerror(ffi.errno()))
-        print("readHardwareClock close /dev/rtc0", re, err)
+        print("readHardwareClock close " .. self.dev_rtc, re, err)
         return nil, re, err
     end
 
@@ -302,6 +304,13 @@ function RTC:validateWakeupAlarmByProximity(task_alarm, proximity)
             "\ncurrent time is     " .. now .. os.date(" (%F %T %z)", now))
     end
 
+    -- On dodgy RTCs, some aging batteries are (supposedly) causing reads to report a bogus value...
+    -- c.f., https://github.com/koreader/koreader/issues/7994 & https://github.com/koreader/koreader/issues/10996
+    if self.dodgy_rtc and alarm_sys <= 1 then
+        print("A dodgy RTC reported a bogus alarm value, assuming our previously set alarm fired as expected anyway")
+        alarm_sys = alarm
+    end
+
     -- If our stored alarm and the system alarm don't match, we didn't set it.
     if alarm ~= alarm_sys then return end
 
@@ -342,25 +351,25 @@ Heavily inspired by busybox's hwclock applet.
 --]]
 function RTC:HCToSys()
     local ok, err, re
-    local rtc0 = C.open("/dev/rtc0", bor(C.O_RDONLY, C.O_NONBLOCK, C.O_CLOEXEC))
-    if rtc0 == -1 then
+    local fd = C.open(self.dev_rtc, bor(C.O_RDONLY, C.O_NONBLOCK, C.O_CLOEXEC))
+    if fd == -1 then
         err = ffi.string(C.strerror(ffi.errno()))
-        print("HCToSys open /dev/rtc0", rtc0, err)
-        return nil, rtc0, err
+        print("HCToSys open " .. self.dev_rtc, fd, err)
+        return nil, fd, err
     end
 
     -- Read the hardware clock
     local tm = ffi.new("struct tm") -- tm is a superset of rtc_time, so we're good.
-    re = C.ioctl(rtc0, C.RTC_RD_TIME, tm)
+    re = C.ioctl(fd, C.RTC_RD_TIME, tm)
     if re == -1 then
         err = ffi.string(C.strerror(ffi.errno()))
         print("HCToSys ioctl RTC_RD_TIME", re, err)
         return nil, re, err
     end
-    re = C.close(rtc0)
+    re = C.close(fd)
     if re == -1 then
         err = ffi.string(C.strerror(ffi.errno()))
-        print("HCToSys close /dev/rtc0", re, err)
+        print("HCToSys close ".. self.dev_rtc, re, err)
         return nil, re, err
     end
 
