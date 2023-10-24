@@ -180,21 +180,17 @@ set (CRENGINE_SOURCES
     ${CRE_DIR}/src/fb3fmt.cpp
     ${CRE_DIR}/src/lvstsheet.cpp
     ${CRE_DIR}/src/txtselector.cpp
-    ${CRE_DIR}/src/crtest.cpp
-    ${CRE_DIR}/src/lvbmpbuf.cpp
     ${CRE_DIR}/src/lvfnt.cpp
     ${CRE_DIR}/src/hyphman.cpp
     ${CRE_DIR}/src/textlang.cpp
     ${CRE_DIR}/src/lvfntman.cpp
     ${CRE_DIR}/src/lvimg.cpp
-    ${CRE_DIR}/src/crskin.cpp
     ${CRE_DIR}/src/lvdrawbuf.cpp
     ${CRE_DIR}/src/lvdocview.cpp
     ${CRE_DIR}/src/lvpagesplitter.cpp
     ${CRE_DIR}/src/lvtextfm.cpp
     ${CRE_DIR}/src/lvrend.cpp
     ${CRE_DIR}/src/mathml.cpp
-    ${CRE_DIR}/src/wolutil.cpp
     ${CRE_DIR}/src/hist.cpp
     ${CRE_DIR}/src/cri18n.cpp
     ${CRE_DIR}/src/crconcurrent.cpp
