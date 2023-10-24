@@ -147,19 +147,30 @@ endif
 
 $(OUTPUT_DIR)/libs/libkoreader-cre.so: cre.cpp \
 			$(if $(USE_LUAJIT_LIB),$(LUAJIT_LIB),) \
-			$(CRENGINE_LIB)
-	$(CXX) -I$(CRENGINE_SRC_DIR)/crengine/include/ $(DYNLIB_CXXFLAGS) \
-		-DLDOM_USE_OWN_MEM_MAN=$(if $(WIN32),0,1) -DUSE_SRELL_REGEX=1 \
-		$(if $(WIN32),-DQT_GL=1) $(SYMVIS_FLAGS) $(LDFLAGS) -o $@ cre.cpp $(LUAJIT_LIB_LINK_FLAG) \
-		-lcrengine
+			$(CRENGINE_LIB) $(CRENGINE_THIRDPARTY_LIBS) \
+			$(FREETYPE_LIB) $(FRIBIDI_LIB) $(HARFBUZZ_LIB) \
+			$(JPEG_LIB) $(LIBWEBP_LIB) $(LIBWEBPDEMUX_LIB) \
+			$(LIBUNIBREAK_LIB) $(LUNASVG_LIB) $(PNG_LIB) \
+			$(UTF8PROC_LIB) $(ZLIB) $(ZSTD_LIB)
+	$(CXX) \
+		-I$(CRENGINE_SRC_DIR)/crengine/include/ \
+		-I$(FREETYPE_DIR)/include/freetype2 \
+		-I$(HARFBUZZ_DIR)/include/harfbuzz \
+		-I$(LIBUNIBREAK_DIR)/include \
+		$(CRENGINE_FLAGS) \
+		$(DYNLIB_CXXFLAGS) \
+		$(SYMVIS_FLAGS) \
+		$(LDFLAGS) -o $@ cre.cpp \
+		$(CRENGINE_LIB) $(CRENGINE_THIRDPARTY_LIBS) $(FREETYPE_LIB_LINK_FLAG) \
+		$(FRIBIDI_LIB) $(HARFBUZZ_LIB_LINK_FLAG) $(JPEG_LIB_LINK_FLAG) \
+		$(LIBWEBP_LIB) $(LIBWEBPDEMUX_LIB) $(LIBUNIBREAK_LIB_LINK_FLAG) \
+		$(LUNASVG_LIB) $(PNG_LIB) $(UTF8PROC_LIB) $(ZLIB) $(ZSTD_LIB) \
+		$(LUAJIT_LIB_LINK_FLAG) \
+		$(if $(ANDROID),$(SHARED_STL_LINK_FLAG),)
 ifdef DARWIN
 	install_name_tool -change \
 		`otool -L "$@" | grep "libluajit" | awk '{print $$1}'` \
 		libs/$(notdir $(LUAJIT_LIB)) \
-		$@
-	install_name_tool -change \
-		`otool -L "$@" | grep "$(notdir $(CRENGINE_LIB)) " | awk '{print $$1}'` \
-		libs/$(notdir $(CRENGINE_LIB)) \
 		$@
 endif
 
@@ -170,7 +181,9 @@ $(OUTPUT_DIR)/libs/libkoreader-xtext.so: xtext.cpp \
 	-I$(HARFBUZZ_DIR)/include/harfbuzz \
 	-I$(FRIBIDI_DIR)/include/fribidi \
 	-I$(LIBUNIBREAK_DIR)/include \
-	$(DYNLIB_CXXFLAGS) $(SYMVIS_FLAGS) $(LDFLAGS) \
+	$(DYNLIB_CXXFLAGS) \
+	$(SYMVIS_FLAGS) \
+	$(LDFLAGS) \
 	-Wall -o $@ xtext.cpp \
 	$(FREETYPE_LIB_LINK_FLAG) \
 	$(FRIBIDI_LIB_LINK_FLAG) \

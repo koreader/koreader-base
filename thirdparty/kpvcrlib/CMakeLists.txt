@@ -31,6 +31,7 @@ assert_var_defined(JPEGLIB_INCLUDE_DIR)
 assert_var_defined(LIBWEBP_INCLUDE_DIR)
 assert_var_defined(LUNASVG_INCLUDE_DIR)
 assert_var_defined(ZSTD_INCLUDE_DIR)
+assert_var_defined(CRENGINE_FLAGS)
 
 include_directories(
     ${JCONFIG_INCLUDE_DIR}
@@ -72,22 +73,8 @@ else()
     set(CMAKE_REQUIRED_DEFINITIONS)
 endif()
 
-add_definitions(
-    -DUSE_FONTCONFIG=0
-    -DUSE_FREETYPE=1
-    -DUSE_HARFBUZZ=1
-    -DUSE_FRIBIDI=1
-    -DUSE_LIBUNIBREAK=1
-    -DUSE_UTF8PROC=1
-    -DUSE_NANOSVG=0 # better SVG support via LunaSVG
-    -DUSE_LUNASVG=1
-    -DUSE_LIBWEBP=1
-    -DUSE_ZSTD=1
-    -DUSE_SRELL_REGEX=1
-    -DALLOW_KERNING=1
-    -DCR3_PATCH=1
-    -DMATHML_SUPPORT=1
-)
+separate_arguments(CRENGINE_FLAGS UNIX_COMMAND ${CRENGINE_FLAGS})
+add_definitions(${CRENGINE_FLAGS})
 
 if(${CMAKE_BUILD_TYPE} STREQUAL Debug)
     add_definitions(
@@ -98,48 +85,6 @@ else()
     add_definitions(
         -DNDEBUG=1
     )
-endif()
-
-if(DEFINED ENV{WIN32})
-    find_library(ZLIB NAMES "zlib1" PATHS $ENV{LIBS_DIR})
-    find_library(ZSTD NAMES "zstd" PATHS $ENV{LIBS_DIR})
-    find_library(PNG_LIB NAMES "png16-16" PATHS $ENV{LIBS_DIR})
-    find_library(FREETYPE_LIB NAMES "freetype-6" PATHS $ENV{LIBS_DIR})
-    find_library(HARFBUZZ_LIB NAMES "harfbuzz-0" PATHS $ENV{LIBS_DIR})
-    find_library(FRIBIDI_LIB NAMES "fribidi-0" PATHS $ENV{LIBS_DIR})
-    find_library(LIBUNIBREAK_LIB NAMES "libunibreak-5" PATHS $ENV{LIBS_DIR})
-    find_library(UTF8PROC_LIB NAMES "utf8proc-2" PATHS $ENV{LIBS_DIR})
-    find_library(JPEG_LIB NAMES "jpeg-8" PATHS $ENV{LIBS_DIR})
-    find_library(LUNASVG_LIB NAMES "lunasvg" PATHS $ENV{LIBS_DIR})
-    find_library(LIBWEBP_LIB NAMES "webp-7" PATHS $ENV{LIBS_DIR})
-    find_library(LIBWEBPDEMUX_LIB NAMES "webpdemux-2" PATHS $ENV{LIBS_DIR})
-    set(THIRDPARTY_LIBS ${ZLIB} ${ZSTD} ${FREETYPE_LIB} ${HARFBUZZ_LIB} ${FRIBIDI_LIB} ${LIBUNIBREAK_LIB} ${UTF8PROC_LIB} ${JPEG_LIB} ${PNG_LIB} ${LIBWEBP_LIB} ${LIBWEBPDEMUX_LIB} ${LUNASVG_LIB})
-else()
-    add_library(PNG_LIB SHARED IMPORTED)
-    set_target_properties(PNG_LIB PROPERTIES IMPORTED_LOCATION $ENV{PNG_LIB})
-    add_library(FREETYPE_LIB SHARED IMPORTED)
-    set_target_properties(FREETYPE_LIB PROPERTIES IMPORTED_LOCATION $ENV{FREETYPE_LIB})
-    add_library(HARFBUZZ_LIB SHARED IMPORTED)
-    set_target_properties(HARFBUZZ_LIB PROPERTIES IMPORTED_LOCATION $ENV{HARFBUZZ_LIB})
-    add_library(FRIBIDI_LIB SHARED IMPORTED)
-    set_target_properties(FRIBIDI_LIB PROPERTIES IMPORTED_LOCATION $ENV{FRIBIDI_LIB})
-    add_library(LIBUNIBREAK_LIB SHARED IMPORTED)
-    set_target_properties(LIBUNIBREAK_LIB PROPERTIES IMPORTED_LOCATION $ENV{LIBUNIBREAK_LIB})
-    add_library(UTF8PROC_LIB SHARED IMPORTED)
-    set_target_properties(UTF8PROC_LIB PROPERTIES IMPORTED_LOCATION $ENV{UTF8PROC_LIB})
-    add_library(JPEG_LIB SHARED IMPORTED)
-    set_target_properties(JPEG_LIB PROPERTIES IMPORTED_LOCATION $ENV{JPEG_LIB})
-    add_library(LIBWEBP_LIB SHARED IMPORTED)
-    set_target_properties(LIBWEBP_LIB PROPERTIES IMPORTED_LOCATION $ENV{LIBWEBP_LIB})
-    add_library(LIBWEBPDEMUX_LIB SHARED IMPORTED)
-    set_target_properties(LIBWEBPDEMUX_LIB PROPERTIES IMPORTED_LOCATION $ENV{LIBWEBPDEMUX_LIB})
-    add_library(LUNASVG_LIB SHARED IMPORTED)
-    set_target_properties(LUNASVG_LIB PROPERTIES IMPORTED_LOCATION $ENV{LUNASVG_LIB})
-    add_library(ZLIB SHARED IMPORTED)
-    set_target_properties(ZLIB PROPERTIES IMPORTED_LOCATION $ENV{ZLIB})
-    add_library(ZSTD SHARED IMPORTED)
-    set_target_properties(ZSTD PROPERTIES IMPORTED_LOCATION $ENV{ZSTD_LIB})
-    set(THIRDPARTY_LIBS ZLIB ZSTD FREETYPE_LIB HARFBUZZ_LIB FRIBIDI_LIB LIBUNIBREAK_LIB UTF8PROC_LIB JPEG_LIB PNG_LIB LIBWEBP_LIB LIBWEBPDEMUX_LIB LUNASVG_LIB)
 endif()
 
 message("Will build LIBCHM library")
@@ -199,9 +144,6 @@ set (CRENGINE_SOURCES
     ${CRE_DIR}/src/cri18n.cpp
     ${CRE_DIR}/src/crconcurrent.cpp
 )
-add_library(crengine SHARED ${CRENGINE_SOURCES})
+add_library(crengine STATIC ${CRENGINE_SOURCES})
 # Make sure we get full `constexpr` support.
 target_compile_features(crengine PRIVATE cxx_std_17)
-
-target_link_libraries(crengine PRIVATE chmlib antiword)
-target_link_libraries(crengine PRIVATE ${THIRDPARTY_LIBS})
