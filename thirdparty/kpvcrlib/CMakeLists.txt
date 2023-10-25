@@ -51,54 +51,26 @@ include_directories(
     ${CREGINE_INCLUDE_DIR}
 )
 
-if(DEFINED ENV{WIN32})
-    add_definitions(-DWIN32=1 -D_WIN32=1 -DQT_GL=1 -DMINGW -DHAVE_BOOLEAN)
-else()
-    add_definitions(-DLINUX=1 -D_LINUX=1)
-endif()
-
 include(CheckTypeSize)
 
 if(DEFINED ENV{LEGACY})
-    add_definitions(-DDISABLE_CLOEXEC)
+    set(DISABLE_CLOEXEC 1)
 else()
     # Test and Enable LFS Support in glibc, based on zlib
     set(CMAKE_REQUIRED_DEFINITIONS -D_LARGEFILE64_SOURCE=1)
     check_type_size(off64_t OFF64_T)
-    if(HAVE_OFF64_T)
-        add_definitions(-D_LARGEFILE64_SOURCE=1)
-        add_definitions(-DHAVE_STAT64=1)
-    endif()
     set(CMAKE_REQUIRED_DEFINITIONS)
 endif()
 
-add_definitions(
-    -DUSE_FONTCONFIG=0
-    -DUSE_FREETYPE=1
-    -DUSE_HARFBUZZ=1
-    -DUSE_FRIBIDI=1
-    -DUSE_LIBUNIBREAK=1
-    -DUSE_UTF8PROC=1
-    -DUSE_NANOSVG=0 # better SVG support via LunaSVG
-    -DUSE_LUNASVG=1
-    -DUSE_LIBWEBP=1
-    -DUSE_ZSTD=1
-    -DUSE_SRELL_REGEX=1
-    -DALLOW_KERNING=1
-    -DCR3_PATCH=1
-    -DMATHML_SUPPORT=1
-)
-
 if(${CMAKE_BUILD_TYPE} STREQUAL Debug)
-    add_definitions(
-        -D_DEBUG=1
-        -DDEBUG=1
-    )
-else()
-    add_definitions(
-        -DNDEBUG=1
-    )
+    set(_DEBUG 1)
 endif()
+
+configure_file(crsetup.h.cmake crsetup.h)
+# Some source files use `#include "crsetup.h"`, others
+# `#include "../include/crsetup.h"`, so use the brute
+# force approach…
+add_definitions(--include "${CMAKE_CURRENT_BINARY_DIR}/crsetup.h")
 
 if(DEFINED ENV{WIN32})
     find_library(ZLIB NAMES "zlib1" PATHS $ENV{LIBS_DIR})
@@ -143,19 +115,12 @@ else()
 endif()
 
 message("Will build LIBCHM library")
-add_definitions(-DCHM_SUPPORT_ENABLED=1)
 add_subdirectory(${CR_3RDPARTY_DIR}/chmlib)
 
 message("Will build ANTIWORD library")
-add_definitions(-DENABLE_ANTIWORD=1)
-add_definitions(-DCR3_ANTIWORD_PATCH=1)
 add_subdirectory(${CR_3RDPARTY_DIR}/antiword)
 
 message("Will build crengine library")
-add_definitions(-DHAVE_PROTOTYPES)
-add_definitions(-DHAVE_UNSIGNED_CHAR)
-add_definitions(-DCR_EMULATE_GETTEXT)
-add_definitions(-Dmain=xxxmain)
 set (CRENGINE_SOURCES
     ${CRE_DIR}/qimagescale/qimagescale.cpp
     ${CRE_DIR}/src/cp_stats.cpp
