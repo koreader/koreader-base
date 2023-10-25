@@ -251,24 +251,23 @@ ifdef DARWIN
 endif
 
 # crengine, fetched via GIT as a submodule
-$(CRENGINE_LIB): $(ZLIB) $(ZSTD_LIB) $(PNG_LIB) $(FREETYPE_LIB) $(HARFBUZZ_LIB) $(FRIBIDI_LIB) \
-		$(LIBUNIBREAK_LIB) $(UTF8PROC_LIB) $(JPEG_LIB) $(LIBWEBP_LIB) $(LUNASVG_LIB) \
-		$(CRENGINE_SRC_FILES) $(THIRDPARTY_DIR)/kpvcrlib/*.*
+$(CRENGINE_LIB) $(CRENGINE_THIRDPARTY_LIBS): $(CRENGINE_SRC_FILES) \
+		$(FREETYPE_DIR)/include \
+		$(FRIBIDI_DIR)/include \
+		$(HARFBUZZ_DIR)/include \
+		$(JPEG_DIR)/include \
+		$(LIBUNIBREAK_DIR)/include \
+		$(LIBWEBP_DIR)/include \
+		$(LUNASVG_DIR)/include \
+		$(MUPDF_DIR)/scripts \
+		$(PNG_DIR)/include \
+		$(SRELL_INCLUDE_DIR) \
+		$(UTF8PROC_DIR) \
+		$(ZLIB_DIR)/include \
+		$(ZSTD_DESTDIR)/include \
+		$(THIRDPARTY_DIR)/kpvcrlib/*.*
 	install -d $(CRENGINE_BUILD_DIR)
 	cd $(CRENGINE_BUILD_DIR) && \
-		JPEG_LIB='$(CURDIR)/$(JPEG_LIB)' \
-		PNG_LIB='$(CURDIR)/$(PNG_LIB)' \
-		FREETYPE_LIB='$(CURDIR)/$(FREETYPE_LIB)' \
-		HARFBUZZ_LIB='$(CURDIR)/$(HARFBUZZ_LIB)' \
-		FRIBIDI_LIB='$(CURDIR)/$(FRIBIDI_LIB)' \
-		LIBWEBP_LIB='$(CURDIR)/$(LIBWEBP_LIB)' \
-		LIBWEBPDEMUX_LIB='$(CURDIR)/$(LIBWEBPDEMUX_LIB)' \
-		LUNASVG_LIB='$(CURDIR)/$(LUNASVG_LIB)' \
-		LIBUNIBREAK_LIB='$(CURDIR)/$(LIBUNIBREAK_LIB)' \
-		UTF8PROC_LIB='$(CURDIR)/$(UTF8PROC_LIB)' \
-		ZLIB='$(CURDIR)/$(ZLIB)' \
-		ZSTD_LIB='$(CURDIR)/$(ZSTD_LIB)' \
-		LIBS_DIR='$(CURDIR)/$(OUTPUT_DIR)/libs' \
 		$(CMAKE) $(CMAKE_FLAGS) \
 		-DJPEGLIB_INCLUDE_DIR='$(JPEG_DIR)/include' \
 		-DJCONFIG_INCLUDE_DIR='$(MUPDF_DIR)/scripts' \
@@ -289,24 +288,6 @@ $(CRENGINE_LIB): $(ZLIB) $(ZSTD_LIB) $(PNG_LIB) $(FREETYPE_LIB) $(HARFBUZZ_LIB) 
 		$(if $(ANDROID),-DCMAKE_SYSTEM_VERSION=1,) \
 		$(CURDIR)/$(THIRDPARTY_DIR)/kpvcrlib && \
 		$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS)
-	cp -fL $(CRENGINE_DIR)/$(notdir $(CRENGINE_LIB)) $(CRENGINE_LIB)
-ifdef DARWIN
-	install_name_tool -id \
-		libs/$(notdir $(CRENGINE_LIB)) \
-		$@
-	install_name_tool -change \
-		`otool -L '$@' | grep '$(notdir $(UTF8PROC_LIB)) ' | awk '{print $$1}'` \
-		libs/$(notdir $(UTF8PROC_LIB)) \
-		$@
-	install_name_tool -change \
-		`otool -L '$@' | grep '$(notdir $(JPEG_LIB)) ' | awk '{print $$1}'` \
-		libs/$(notdir $(JPEG_LIB)) \
-		$@
-	install_name_tool -change \
-		`otool -L '$@' | grep '$(notdir $(ZSTD_LIB)) ' | awk '{print $$1}'` \
-		libs/$(notdir $(ZSTD_LIB)) \
-		$@
-endif
 
 $(LUAJIT) $(LUAJIT_LIB) $(LUAJIT_JIT): $(THIRDPARTY_DIR)/luajit/*.*
 	install -d $(LUAJIT_BUILD_DIR)
