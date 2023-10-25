@@ -25,7 +25,7 @@ $(FREETYPE_LIB) $(FREETYPE_DIR)/include: $(THIRDPARTY_DIR)/freetype2/*.*
 		-DLDFLAGS='$(LDFLAGS)' \
 		$(CURDIR)/$(THIRDPARTY_DIR)/freetype2 && \
 		$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS)
-	cp -fL $(FREETYPE_DIR)/$(if $(WIN32),bin,lib)/$(notdir $(FREETYPE_LIB)) $@
+	cp -fL $(FREETYPE_DIR)/$(if $(WIN32),bin,lib)/$(notdir $(FREETYPE_LIB)) $(FREETYPE_LIB)
 
 $(HARFBUZZ_LIB) $(HARFBUZZ_DIR)/include: $(THIRDPARTY_DIR)/harfbuzz/*.*
 	install -d $(HARFBUZZ_BUILD_DIR)
@@ -41,7 +41,7 @@ $(HARFBUZZ_LIB) $(HARFBUZZ_DIR)/include: $(THIRDPARTY_DIR)/harfbuzz/*.*
 		-DFREETYPE_DIR='$(FREETYPE_DIR)' \
 		$(CURDIR)/$(THIRDPARTY_DIR)/harfbuzz && \
 		$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS)
-	cp -fL $(HARFBUZZ_DIR)/lib/$(notdir $(HARFBUZZ_LIB)) $@
+	cp -fL $(HARFBUZZ_DIR)/lib/$(notdir $(HARFBUZZ_LIB)) $(HARFBUZZ_LIB)
 
 $(UTF8PROC_LIB) $(UTF8PROC_DIR): $(THIRDPARTY_DIR)/utf8proc/*.*
 	install -d $(UTF8PROC_BUILD_DIR)
@@ -53,15 +53,15 @@ $(UTF8PROC_LIB) $(UTF8PROC_DIR): $(THIRDPARTY_DIR)/utf8proc/*.*
 		-DLDFLAGS='$(LDFLAGS)' \
 		$(CURDIR)/$(THIRDPARTY_DIR)/utf8proc && \
 		$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS)
-	cp -fL $(UTF8PROC_DIR)/$(notdir $(UTF8PROC_LIB)) $@
-	chmod 755 $@
+	cp -fL $(UTF8PROC_DIR)/$(notdir $(UTF8PROC_LIB)) $(UTF8PROC_LIB)
+	chmod 755 $(UTF8PROC_LIB)
 ifdef DARWIN
 	install_name_tool -id \
 		libs/$(notdir $(UTF8PROC_LIB)) \
 		$(UTF8PROC_LIB)
 endif
 
-$(FRIBIDI_LIB) $(FRIBIDI_DIR): $(THIRDPARTY_DIR)/fribidi/*.*
+$(FRIBIDI_LIB) $(FRIBIDI_DIR)/include: $(THIRDPARTY_DIR)/fribidi/*.*
 	install -d $(FRIBIDI_BUILD_DIR)
 	cd $(FRIBIDI_BUILD_DIR) && \
 		$(CMAKE) $(CMAKE_FLAGS) \
@@ -71,10 +71,10 @@ $(FRIBIDI_LIB) $(FRIBIDI_DIR): $(THIRDPARTY_DIR)/fribidi/*.*
 		-DLDFLAGS='$(LDFLAGS)' \
 		$(CURDIR)/$(THIRDPARTY_DIR)/fribidi && \
 		$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS)
-	cp -fL $(FRIBIDI_DIR)/lib/$(notdir $(FRIBIDI_LIB)) $@
-	chmod 755 $@
+	cp -fL $(FRIBIDI_DIR)/lib/$(notdir $(FRIBIDI_LIB)) $(FRIBIDI_LIB)
+	chmod 755 $(FRIBIDI_LIB)
 
-$(LIBUNIBREAK_LIB) $(LIBUNIBREAK_DIR): $(THIRDPARTY_DIR)/libunibreak/*.*
+$(LIBUNIBREAK_LIB) $(LIBUNIBREAK_DIR)/include: $(THIRDPARTY_DIR)/libunibreak/*.*
 	install -d $(LIBUNIBREAK_BUILD_DIR)
 	cd $(LIBUNIBREAK_BUILD_DIR) && \
 		$(CMAKE) $(CMAKE_FLAGS) \
@@ -84,11 +84,11 @@ $(LIBUNIBREAK_LIB) $(LIBUNIBREAK_DIR): $(THIRDPARTY_DIR)/libunibreak/*.*
 		-DLDFLAGS='$(LDFLAGS)' \
 		$(CURDIR)/$(THIRDPARTY_DIR)/libunibreak && \
 		$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS)
-	cp -fL $(LIBUNIBREAK_DIR)/lib/$(notdir $(LIBUNIBREAK_LIB)) $@
-	chmod 755 $@
+	cp -fL $(LIBUNIBREAK_DIR)/lib/$(notdir $(LIBUNIBREAK_LIB)) $(LIBUNIBREAK_LIB)
+	chmod 755 $(LIBUNIBREAK_LIB)
 
 # libjpeg-turbo and libjpeg
-$(TURBOJPEG_LIB) $(JPEG_LIB): $(THIRDPARTY_DIR)/libjpeg-turbo/*.*
+$(TURBOJPEG_LIB) $(JPEG_LIB) $(JPEG_DIR)/include: $(THIRDPARTY_DIR)/libjpeg-turbo/*.*
 	install -d $(JPEG_BUILD_DIR)
 	cd $(JPEG_BUILD_DIR) && \
 		$(CMAKE) $(CMAKE_FLAGS) \
@@ -105,7 +105,7 @@ ifdef DARWIN
 		$(TURBOJPEG_LIB)
 endif
 
-$(PNG_LIB): $(ZLIB) $(THIRDPARTY_DIR)/libpng/*.*
+$(PNG_LIB) $(PNG_DIR)/include: $(ZLIB) $(THIRDPARTY_DIR)/libpng/*.*
 	install -d $(PNG_BUILD_DIR)
 	cd $(PNG_BUILD_DIR) && \
 		$(CMAKE) $(CMAKE_FLAGS) \
@@ -116,7 +116,7 @@ $(PNG_LIB): $(ZLIB) $(THIRDPARTY_DIR)/libpng/*.*
 		-DLDFLAGS='$(LDFLAGS) -L$(ZLIB_DIR)' \
 		$(CURDIR)/$(THIRDPARTY_DIR)/libpng && \
 		$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS)
-	cp -fL $(PNG_DIR)/.libs/$(notdir $(PNG_LIB)) $@
+	cp -fL $(PNG_DIR)/.libs/$(notdir $(PNG_LIB)) $(PNG_LIB)
 
 $(AES_LIB): $(THIRDPARTY_DIR)/minizip/*.*
 	install -d $(MINIZIP_BUILD_DIR)
@@ -132,7 +132,7 @@ $(AES_LIB): $(THIRDPARTY_DIR)/minizip/*.*
 
 # by default, mupdf compiles to a static library:
 # we generate a dynamic library from the static library:
-$(MUPDF_LIB) $(MUPDF_DIR)/include: $(JPEG_LIB) \
+$(MUPDF_LIB) $(MUPDF_DIR)/include $(MUPDF_DIR)/scripts: $(JPEG_LIB) \
 		$(FREETYPE_LIB) $(FREETYPE_DIR)/include \
 		$(HARFBUZZ_LIB) $(HARFBUZZ_DIR)/include \
 		$(LIBWEBP_LIB) $(LIBWEBP_DIR)/include \
@@ -196,7 +196,7 @@ $(GIF_LIB): $(THIRDPARTY_DIR)/giflib/*.*
 		$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS)
 	cp -fL $(GIF_DIR)/lib/$(notdir $(GIF_LIB)) $@
 
-$(LIBWEBP_LIB) $(LIBWEBP_DIR): $(THIRDPARTY_DIR)/libwebp/*.*
+$(LIBWEBP_LIB) $(LIBWEBPDEMUX_LIB) $(LIBSHARPYUV_LIB) $(LIBWEBP_DIR)/include: $(THIRDPARTY_DIR)/libwebp/*.*
 	install -d $(LIBWEBP_BUILD_DIR)
 	cd $(LIBWEBP_BUILD_DIR) && \
 		$(CMAKE) $(CMAKE_FLAGS) \
@@ -209,12 +209,12 @@ $(LIBWEBP_LIB) $(LIBWEBP_DIR): $(THIRDPARTY_DIR)/libwebp/*.*
 		-DLDFLAGS='$(LDFLAGS)' \
 		$(CURDIR)/$(THIRDPARTY_DIR)/libwebp && \
 		$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS)
-	cp -fL $(LIBWEBP_DIR)/lib/$(notdir $(LIBWEBP_LIB)) $@
+	cp -fL $(LIBWEBP_DIR)/lib/$(notdir $(LIBWEBP_LIB)) $(LIBWEBP_LIB)
 	cp -fL $(LIBWEBP_DIR)/lib/$(notdir $(LIBWEBPDEMUX_LIB)) $(LIBWEBPDEMUX_LIB)
 	cp -fL $(LIBWEBP_DIR)/lib/$(notdir $(LIBSHARPYUV_LIB)) $(LIBSHARPYUV_LIB)
-	chmod 755 $@
+	chmod 755 $(LIBWEBP_LIB) $(LIBWEBPDEMUX_LIB) $(LIBSHARPYUV_LIB)
 
-$(LUNASVG_LIB): $(THIRDPARTY_DIR)/lunasvg/*.*
+$(LUNASVG_LIB) $(LUNASVG_DIR)/include: $(THIRDPARTY_DIR)/lunasvg/*.*
 	install -d $(LUNASVG_BUILD_DIR)
 	cd $(LUNASVG_BUILD_DIR) && \
 		$(CMAKE) $(CMAKE_FLAGS) \
@@ -517,7 +517,7 @@ else
 	cp -fL $(ZLIB_DIR)/lib/$(notdir $(ZLIB)) $(ZLIB)
 endif
 
-$(ZSTD_LIB): $(THIRDPARTY_DIR)/zstd/*.*
+$(ZSTD_LIB) $(ZSTD_DESTDIR)/include: $(THIRDPARTY_DIR)/zstd/*.*
 	install -d $(ZSTD_BUILD_DIR)
 	cd $(ZSTD_BUILD_DIR) && \
 		$(CMAKE) $(CMAKE_FLAGS) \
@@ -528,7 +528,7 @@ $(ZSTD_LIB): $(THIRDPARTY_DIR)/zstd/*.*
 		-DLDFLAGS='$(LDFLAGS)' \
 		$(CURDIR)/$(THIRDPARTY_DIR)/zstd && \
 		$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS)
-	cp -fL $(ZSTD_DIR)/lib/$(notdir $(ZSTD_LIB)) $@
+	cp -fL $(ZSTD_DIR)/lib/$(notdir $(ZSTD_LIB)) $(ZSTD_LIB)
 
 # ===========================================================================
 # console version of StarDict (sdcv)
