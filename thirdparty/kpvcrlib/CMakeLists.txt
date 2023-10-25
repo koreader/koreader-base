@@ -121,3 +121,4 @@ set (CRENGINE_SOURCES
 add_library(crengine STATIC ${CRENGINE_SOURCES})
 # Make sure we get full `constexpr` support.
 target_compile_features(crengine PRIVATE cxx_std_17)
+set_target_properties(crengine PROPERTIES VISIBILITY_INLINES_HIDDEN TRUE)
