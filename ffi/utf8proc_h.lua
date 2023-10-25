@@ -51,7 +51,8 @@ struct utf8proc_property_struct {
   unsigned int control_boundary : 1;
   unsigned int charwidth : 2;
   unsigned int pad : 2;
-  unsigned char boundclass;
+  unsigned int boundclass : 6;
+  unsigned int indic_conjunct_break : 2;
 };
 typedef struct utf8proc_property_struct utf8proc_property_t;
 typedef enum {
