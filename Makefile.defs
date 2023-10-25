@@ -756,7 +756,8 @@ CRENGINE_SRC_FILES=$(wildcard $(CRENGINE_SRC_DIR)/crengine/src/*.cpp)
 CRENGINE_SRC_FILES+=$(wildcard $(CRENGINE_SRC_DIR)/crengine/include/*.h)
 CRENGINE_SRC_FILES+=$(wildcard $(CRENGINE_SRC_DIR)/crengine/src/*.h)
 CRENGINE_SRC_FILES+=$(wildcard $(CRENGINE_SRC_DIR)/crengine/src/*_h.*)
-CRENGINE_LIB=$(OUTPUT_DIR)/libs/libcrengine$(LIB_EXT)
+CRENGINE_LIB = $(CRENGINE_BUILD_DIR)/libcrengine.a
+CRENGINE_THIRDPARTY_LIBS = $(addprefix $(CRENGINE_BUILD_DIR)/crengine/thirdparty/, antiword/libantiword.a chmlib/libchmlib.a)
 CRENGINE_CFLAGS = \
 		--include '$(CRENGINE_BUILD_DIR)/crsetup.h' \
 		'-I$(CRENGINE_SRC_DIR)/crengine/include' \
