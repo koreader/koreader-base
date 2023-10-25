@@ -148,9 +148,8 @@ endif
 $(OUTPUT_DIR)/libs/libkoreader-cre.so: cre.cpp \
 			$(if $(USE_LUAJIT_LIB),$(LUAJIT_LIB),) \
 			$(CRENGINE_LIB)
-	$(CXX) -I$(CRENGINE_SRC_DIR)/crengine/include/ $(DYNLIB_CXXFLAGS) \
-		-DLDOM_USE_OWN_MEM_MAN=$(if $(WIN32),0,1) -DUSE_SRELL_REGEX=1 \
-		$(if $(WIN32),-DQT_GL=1) $(SYMVIS_FLAGS) $(LDFLAGS) -o $@ cre.cpp $(LUAJIT_LIB_LINK_FLAG) \
+	$(CXX) $(CRENGINE_CFLAGS) $(DYNLIB_CXXFLAGS) \
+		$(SYMVIS_FLAGS) $(LDFLAGS) -o $@ cre.cpp $(LUAJIT_LIB_LINK_FLAG) \
 		-lcrengine
 ifdef DARWIN
 	install_name_tool -change \
