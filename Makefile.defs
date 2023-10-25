@@ -757,6 +757,12 @@ CRENGINE_SRC_FILES+=$(wildcard $(CRENGINE_SRC_DIR)/crengine/include/*.h)
 CRENGINE_SRC_FILES+=$(wildcard $(CRENGINE_SRC_DIR)/crengine/src/*.h)
 CRENGINE_SRC_FILES+=$(wildcard $(CRENGINE_SRC_DIR)/crengine/src/*_h.*)
 CRENGINE_LIB=$(OUTPUT_DIR)/libs/libcrengine$(LIB_EXT)
+CRENGINE_CFLAGS = \
+		--include '$(CRENGINE_BUILD_DIR)/crsetup.h' \
+		'-I$(CRENGINE_SRC_DIR)/crengine/include' \
+		'-I$(FREETYPE_DIR)/include/freetype2' \
+		'-I$(HARFBUZZ_DIR)/include/harfbuzz' \
+		'-I$(LIBUNIBREAK_DIR)/include' \
 
 LUAJIT_BUILD_DIR=$(THIRDPARTY_DIR)/luajit/build/$(MACHINE)
 LUAJIT_DIR=$(CURDIR)/$(LUAJIT_BUILD_DIR)/luajit-prefix/src/luajit
