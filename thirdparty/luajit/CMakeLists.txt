@@ -10,7 +10,7 @@ enable_language(C)
 ep_get_source_dir(SOURCE_DIR)
 assert_var_defined(XCOMPILE)
 
-if(DEFINED ENV{KODEBUG})
+if($ENV{KODEBUG})
     # Debugging is a go!
     set(DBG_CMD sh -c "${ISED} 's|#CCDEBUG= -g|CCDEBUG= -g|' ${SOURCE_DIR}/src/Makefile")
     # To-do: make this auto-trigger when Valgrind is installed
