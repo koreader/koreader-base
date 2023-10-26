@@ -118,7 +118,9 @@ typedef struct BlitBufferRGB32 {
 
 void BB_fill(BlitBuffer * restrict bb, uint8_t v);
 void BB_fill_rect(BlitBuffer * restrict bb, unsigned int x, unsigned int y, unsigned int w, unsigned int h, uint8_t v);
+void BB_fill_rect_color(BlitBuffer * restrict bb, unsigned int x, unsigned int y, unsigned int w, unsigned int h, ColorRGB32 * restrict color);
 void BB_blend_rect(BlitBuffer * restrict bb, unsigned int x, unsigned int y, unsigned int w, unsigned int h, Color8A * restrict color);
+void BB_blend_rect_color(BlitBuffer * restrict bb, unsigned int x, unsigned int y, unsigned int w, unsigned int h, ColorRGB32 * restrict color);
 void BB_invert_rect(BlitBuffer * restrict bb, unsigned int x, unsigned int y, unsigned int w, unsigned int h);
 void BB_hatch_rect(BlitBuffer * restrict bb, unsigned int x, unsigned int y, unsigned int w, unsigned int h, unsigned int stripe_width, Color8 * restrict color, uint8_t alpha);
 void BB_blit_to(const BlitBuffer * restrict source, BlitBuffer * restrict dest, unsigned int dest_x, unsigned int dest_y,
@@ -1497,8 +1499,13 @@ function BB_mt.__index:paintRect(x, y, w, h, value, setter)
     h, y = BB.checkBounds(h, y, 0, self:getHeight(), 0xFFFF)
     if w <= 0 or h <= 0 then return end
     if self:canUseCbb() and setter == self.setPixel then
-        cblitbuffer.BB_fill_rect(ffi.cast(P_BlitBuffer, self),
-            x, y, w, h, value:getColor8().a)
+        if ffi.istype(ColorRGB32, value) then
+            cblitbuffer.BB_fill_rect_color(ffi.cast(P_BlitBuffer, self),
+                x, y, w, h, value:getColorRGB32())
+        else
+            cblitbuffer.BB_fill_rect(ffi.cast(P_BlitBuffer, self),
+                x, y, w, h, value:getColor8().a)
+        end
     else
         -- We can only do fast filling when there's no complex processing involved (i.e., simple setPixel only)
         if setter == self.setPixel then
@@ -1926,16 +1933,21 @@ lighten color values in rectangular area
 @param y Y coordinate
 @param w width
 @param h height
-@param by lighten by this factor (default: 0.5)
+@param color color to overlay (default: 0x80, 50% gray)
 --]]
-function BB_mt.__index:lightenRect(x, y, w, h, by)
-    local color = Color8A(0, 0xFF*(by or 0.5))
+function BB_mt.__index:lightenRect(x, y, w, h, color)
+    color = color or Color8A(0xFF, 0x80)
     if self:canUseCbb() then
         w, x = BB.checkBounds(w, x, 0, self:getWidth(), 0xFFFF)
         h, y = BB.checkBounds(h, y, 0, self:getHeight(), 0xFFFF)
         if w <= 0 or h <= 0 then return end
-        cblitbuffer.BB_blend_rect(ffi.cast(P_BlitBuffer, self),
-            x, y, w, h, color)
+        if ffi.istype(ColorRGB32, color) then
+            cblitbuffer.BB_blend_rect_color(ffi.cast(P_BlitBuffer, self),
+                x, y, w, h, color)
+        else
+            cblitbuffer.BB_blend_rect(ffi.cast(P_BlitBuffer, self),
+                x, y, w, h, color)
+        end
     else
         self:paintRect(x, y, w, h, color, self.setPixelBlend)
     end
@@ -2218,6 +2230,40 @@ return a Color value resembling a given level of blackness/gray
 --]]
 function BB.gray(level)
     return Color8(bxor(floor(0xFF * level), 0xFF))
+end
+
+--[[
+return a Color value resembling a given hex string
+---]]
+function BB.colorFromString(value)
+    value = value:gsub('#','')
+    -- #rrggbbaa
+    if(string.len(value) == 8) then
+        return ColorRGB32(
+            tonumber(value:sub(1,2), 16),
+            tonumber(value:sub(3,4), 16),
+            tonumber(value:sub(5,6), 16),
+            tonumber(value:sub(7,8), 16)
+        )
+    -- #rrggbb
+    elseif(string.len(value) == 6) then
+        return ColorRGB32(
+            tonumber(value:sub(1,2), 16),
+            tonumber(value:sub(3,4), 16),
+            tonumber(value:sub(5,6), 16),
+            0xFF
+        )
+    -- #vv
+    elseif(string.len(value) == 2) then
+        return ColorRGB32(
+            tonumber(value:sub(1,2), 16),
+            tonumber(value:sub(1,2), 16),
+            tonumber(value:sub(1,2), 16),
+            0xFF
+        )
+    else
+        return nil
+    end
 end
 
 -- the full eInk palette:

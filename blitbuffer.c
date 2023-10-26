@@ -416,6 +416,89 @@ void BB_fill_rect(BlitBuffer * restrict bb, unsigned int x, unsigned int y, unsi
     }
 }
 
+void BB_fill_rect_color(BlitBuffer * restrict bb, unsigned int x, unsigned int y, unsigned int w, unsigned int h, ColorRGB32 * restrict color) {
+    const int rotation = GET_BB_ROTATION(bb);
+    unsigned int rx, ry, rw, rh;
+    // Compute rotated rectangle coordinates & size
+    switch (rotation) {
+        case 0:
+                rx = x;
+                ry = y;
+                rw = w;
+                rh = h;
+                break;
+        case 1:
+                rx = bb->w - (y + h);
+                ry = x;
+                rw = h;
+                rh = w;
+                break;
+        case 2:
+                rx = bb->w - (x + w);
+                ry = bb->h - (y + h);
+                rw = w;
+                rh = h;
+                break;
+        case 3:
+                rx = y;
+                ry = bb->h - (x + w);
+                rw = h;
+                rh = w;
+                break;
+    }
+
+    // Handle any target pitch properly
+    const int bb_type = GET_BB_TYPE(bb);
+    switch (bb_type) {
+        case TYPE_BBRGB16:
+            // we want to preserve the alpha byte
+            if (rx == 0 && rw == bb->w) {
+                // Single step for contiguous scanlines
+                const uint16_t src = *((uint16_t*) &ColorRGB32_To_Color16(color));
+                uint16_t * restrict p = (uint16_t *) (bb->data + bb->stride*ry);
+                size_t px_count = bb->pixel_stride*rh;
+                while (px_count--) {
+                    *p++ = src;
+                }
+            } else {
+                // Scanline per scanline
+                const uint16_t src = *((uint16_t*) &ColorRGB32_To_Color16(color));
+                for (unsigned int j = ry; j < ry+rh; j++) {
+                    uint16_t * restrict p = (uint16_t *) (bb->data + bb->stride*j) + rx;
+                    size_t px_count = rw;
+                    while (px_count--) {
+                        *p++ = src;
+                    }
+                }
+            }
+            break;
+        case TYPE_BBRGB24:
+            {
+                // Scanline per scanline
+                const ColorRGB24 src = ColorRGB32_To_Color24(color);
+                for (unsigned int j = ry; j < ry+rh; j++) {
+                    for (unsigned int k = rx; k < rx+rw; k++) {
+                        uint8_t * restrict p = bb->data + bb->stride*j + (k * 3U);
+                        memcpy(p, &src, 3);
+                    }
+                }
+            }
+            break;
+        case TYPE_BBRGB32:
+            {
+                // Scanline per scanline
+                const uint32_t* src = (uint32_t*) &color;
+                for (unsigned int j = ry; j < ry+rh; j++) {
+                    for (unsigned int k = rx; k < rx+rw; k++) {
+                        uint8_t * restrict p = bb->data + bb->stride*j + (k * 3U);
+                        memcpy(p, src, 3);
+                    }
+                }
+            }
+            break;
+    }
+}
+
 void BB_blend_rect(BlitBuffer * restrict bb, unsigned int x, unsigned int y, unsigned int w, unsigned int h, Color8A * restrict color) {
     const int bb_type = GET_BB_TYPE(bb);
     const int bb_rotation = GET_BB_ROTATION(bb);
@@ -471,6 +554,56 @@ void BB_blend_rect(BlitBuffer * restrict bb, unsigned int x, unsigned int y, uns
                     dstptr->r = (uint8_t) DIV_255(dstptr->r * ainv + color->a * alpha);
                     dstptr->g = (uint8_t) DIV_255(dstptr->g * ainv + color->a * alpha);
                     dstptr->b = (uint8_t) DIV_255(dstptr->b * ainv + color->a * alpha);
+                }
+            }
+            break;
+    }
+}
+
+void BB_blend_rect_color(BlitBuffer * restrict bb, unsigned int x, unsigned int y, unsigned int w, unsigned int h, ColorRGB32 * restrict color) {
+    const int bb_type = GET_BB_TYPE(bb);
+    const int bb_rotation = GET_BB_ROTATION(bb);
+    const uint8_t alpha = color->alpha;
+    const uint8_t ainv = alpha ^ 0xFF;
+    switch (bb_type) {
+        case TYPE_BBRGB16:
+            for (unsigned int j = y; j < y + h; j++) {
+                for (unsigned int i = x; i < x + w; i++) {
+                    ColorRGB16 * restrict dstptr;
+                    BB_GET_PIXEL(bb, bb_rotation, ColorRGB16, i, j, &dstptr);
+                    // Only edit light colors and leave blacks alone. This avoids whitewashing text.
+                    const uint8_t r = (uint8_t) DIV_255(ColorRGB16_GetR(dstptr->v) * ainv + color->r * alpha);
+                    const uint8_t g = (uint8_t) DIV_255(ColorRGB16_GetG(dstptr->v) * ainv + color->g * alpha);
+                    const uint8_t b = (uint8_t) DIV_255(ColorRGB16_GetB(dstptr->v) * ainv + color->b * alpha);
+                    dstptr->v = (uint16_t) RGB_To_RGB16(r, g, b);
+                }
+            }
+            break;
+        case TYPE_BBRGB24:
+            for (unsigned int j = y; j < y + h; j++) {
+                for (unsigned int i = x; i < x + w; i++) {
+                    ColorRGB24 * restrict dstptr;
+                    BB_GET_PIXEL(bb, bb_rotation, ColorRGB24, i, j, &dstptr);
+                    if (dstptr->r > 30 && dstptr->g > 30 && dstptr->b > 30) {
+                        // Only edit light colors and leave blacks alone. This avoids whitewashing text.
+                        dstptr->r = (uint8_t) DIV_255(dstptr->r * ainv + color->r * alpha);
+                        dstptr->g = (uint8_t) DIV_255(dstptr->g * ainv + color->r * alpha);
+                        dstptr->b = (uint8_t) DIV_255(dstptr->b * ainv + color->r * alpha);
+                    }
+                }
+            }
+            break;
+        case TYPE_BBRGB32:
+            for (unsigned int j = y; j < y + h; j++) {
+                for (unsigned int i = x; i < x + w; i++) {
+                    ColorRGB32 * restrict dstptr;
+                    BB_GET_PIXEL(bb, bb_rotation, ColorRGB32, i, j, &dstptr);
+                    if (dstptr->r > 30 && dstptr->g > 30 && dstptr->b > 30) {
+                        // Only edit light colors and leave blacks alone. This avoids whitewashing text.
+                        dstptr->r = (uint8_t) DIV_255(dstptr->r * ainv + color->r * alpha);
+                        dstptr->g = (uint8_t) DIV_255(dstptr->g * ainv + color->g * alpha);
+                        dstptr->b = (uint8_t) DIV_255(dstptr->b * ainv + color->b * alpha);
+                    }
                 }
             }
             break;
