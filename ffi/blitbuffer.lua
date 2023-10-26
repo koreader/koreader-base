@@ -118,7 +118,9 @@ typedef struct BlitBufferRGB32 {
 
 void BB_fill(BlitBuffer * restrict bb, uint8_t v);
 void BB_fill_rect(BlitBuffer * restrict bb, unsigned int x, unsigned int y, unsigned int w, unsigned int h, uint8_t v);
+void BB_fill_rect_color(BlitBuffer * restrict bb, unsigned int x, unsigned int y, unsigned int w, unsigned int h, ColorRGB32 * restrict color);
 void BB_blend_rect(BlitBuffer * restrict bb, unsigned int x, unsigned int y, unsigned int w, unsigned int h, Color8A * restrict color);
+void BB_blend_rect_color(BlitBuffer * restrict bb, unsigned int x, unsigned int y, unsigned int w, unsigned int h, ColorRGB32 * restrict color);
 void BB_invert_rect(BlitBuffer * restrict bb, unsigned int x, unsigned int y, unsigned int w, unsigned int h);
 void BB_hatch_rect(BlitBuffer * restrict bb, unsigned int x, unsigned int y, unsigned int w, unsigned int h, unsigned int stripe_width, Color8 * restrict color, uint8_t alpha);
 void BB_blit_to(const BlitBuffer * restrict source, BlitBuffer * restrict dest, unsigned int dest_x, unsigned int dest_y,
@@ -170,13 +172,13 @@ local P_BlitBuffer = ffi.typeof("BlitBuffer*")
 local P_BlitBuffer_ROData = ffi.typeof("const BlitBuffer*")
 
 -- metatables for color types:
-local Color4L_mt = {__index={}}
-local Color4U_mt = {__index={}}
-local Color8_mt = {__index={}}
-local Color8A_mt = {__index={}}
-local ColorRGB16_mt = {__index={}}
-local ColorRGB24_mt = {__index={}}
-local ColorRGB32_mt = {__index={}}
+local Color4L_mt = {__index={ is_rgb=false }}
+local Color4U_mt = {__index={ is_rgb=false }}
+local Color8_mt = {__index={ is_rgb=false }}
+local Color8A_mt = {__index={ is_rgb=false }}
+local ColorRGB16_mt = {__index={ is_rgb=false }}
+local ColorRGB24_mt = {__index={ is_rgb=false }}
+local ColorRGB32_mt = {__index={ is_rgb=true }}
 
 -- color setting
 function Color4L_mt.__index:set(color)
@@ -1497,8 +1499,13 @@ function BB_mt.__index:paintRect(x, y, w, h, value, setter)
     h, y = BB.checkBounds(h, y, 0, self:getHeight(), 0xFFFF)
     if w <= 0 or h <= 0 then return end
     if self:canUseCbb() and setter == self.setPixel then
-        cblitbuffer.BB_fill_rect(ffi.cast(P_BlitBuffer, self),
-            x, y, w, h, value:getColor8().a)
+        if value.is_rgb then
+            cblitbuffer.BB_fill_rect_color(ffi.cast(P_BlitBuffer, self),
+                x, y, w, h, value:getColorRGB32())
+        else
+            cblitbuffer.BB_fill_rect(ffi.cast(P_BlitBuffer, self),
+                x, y, w, h, value:getColor8().a)
+        end
     else
         -- We can only do fast filling when there's no complex processing involved (i.e., simple setPixel only)
         if setter == self.setPixel then
@@ -1926,16 +1933,21 @@ lighten color values in rectangular area
 @param y Y coordinate
 @param w width
 @param h height
-@param by lighten by this factor (default: 0.5)
+@param color color to overlay (default: 0x80, 50% gray)
 --]]
-function BB_mt.__index:lightenRect(x, y, w, h, by)
-    local color = Color8A(0, 0xFF*(by or 0.5))
+function BB_mt.__index:lightenRect(x, y, w, h, color)
+    color = color or Color8A(0xFF, 0x80)
     if self:canUseCbb() then
         w, x = BB.checkBounds(w, x, 0, self:getWidth(), 0xFFFF)
         h, y = BB.checkBounds(h, y, 0, self:getHeight(), 0xFFFF)
         if w <= 0 or h <= 0 then return end
-        cblitbuffer.BB_blend_rect(ffi.cast(P_BlitBuffer, self),
-            x, y, w, h, color)
+        if color.is_rgb then
+            cblitbuffer.BB_blend_rect_color(ffi.cast(P_BlitBuffer, self),
+                x, y, w, h, color)
+        else
+            cblitbuffer.BB_blend_rect(ffi.cast(P_BlitBuffer, self),
+                x, y, w, h, color)
+        end
     else
         self:paintRect(x, y, w, h, color, self.setPixelBlend)
     end

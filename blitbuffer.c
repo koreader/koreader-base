@@ -76,6 +76,7 @@ static const char*
 // Helpers to pack pixels manually, without going through the Color structs.
 #define Y8_To_Y8A(v) (0xFFu << 8U | v)
 #define RGB_To_RGB32(r, g, b) ((uint32_t) (0xFFu << 24U) | (uint32_t) (b << 16U) | (uint32_t) (g << 8U) | r)
+#define RGBA_To_RGB32(r, g, b, a) ((uint32_t) (a << 24U) | (uint32_t) (b << 16U) | (uint32_t) (g << 8U) | r)
 #define Y8_To_RGB32(v) ((uint32_t) (0xFFu << 24U) | (uint32_t) (v << 16U) | (uint32_t) (v << 8U) | v)
 
 // __auto_type was introduced in GCC 4.9 (and Clang ~3.8)...
@@ -416,6 +417,65 @@ void BB_fill_rect(BlitBuffer * restrict bb, unsigned int x, unsigned int y, unsi
     }
 }
 
+void BB_fill_rect_color(BlitBuffer * restrict bb, unsigned int x, unsigned int y, unsigned int w, unsigned int h, ColorRGB32 * restrict color) {
+    const int rotation = GET_BB_ROTATION(bb);
+    unsigned int rx, ry, rw, rh;
+    // Compute rotated rectangle coordinates & size
+    switch (rotation) {
+        case 0:
+                rx = x;
+                ry = y;
+                rw = w;
+                rh = h;
+                break;
+        case 1:
+                rx = bb->w - (y + h);
+                ry = x;
+                rw = h;
+                rh = w;
+                break;
+        case 2:
+                rx = bb->w - (x + w);
+                ry = bb->h - (y + h);
+                rw = w;
+                rh = h;
+                break;
+        case 3:
+                rx = y;
+                ry = bb->h - (x + w);
+                rw = h;
+                rh = w;
+                break;
+    }
+
+    // Handle any target pitch properly
+    const int bb_type = GET_BB_TYPE(bb);
+    switch (bb_type) {
+        case TYPE_BBRGB32:
+            // And here either, as we want to preserve the alpha byte
+            if (rx == 0 && rw == bb->w) {
+                // Single step for contiguous scanlines
+                const uint32_t src = (uint32_t) RGBA_To_RGB32(color->r, color->g, color->b, color->alpha);
+                uint32_t * restrict p = (uint32_t *) (bb->data + bb->stride*ry);
+                size_t px_count = bb->pixel_stride*rh;
+                while (px_count--) {
+                    *p++ = src;
+                }
+            } else {
+                // Scanline per scanline
+                const uint32_t src = (uint32_t) RGBA_To_RGB32(color->r, color->g, color->b, color->alpha);
+                for (unsigned int j = ry; j < ry+rh; j++) {
+                    uint32_t * restrict p = (uint32_t *) (bb->data + bb->stride*j) + rx;
+                    size_t px_count = rw;
+                    while (px_count--) {
+                        *p++ = src;
+                    }
+                }
+            }
+            break;
+    }
+}
+
 void BB_blend_rect(BlitBuffer * restrict bb, unsigned int x, unsigned int y, unsigned int w, unsigned int h, Color8A * restrict color) {
     const int bb_type = GET_BB_TYPE(bb);
     const int bb_rotation = GET_BB_ROTATION(bb);
@@ -471,6 +531,25 @@ void BB_blend_rect(BlitBuffer * restrict bb, unsigned int x, unsigned int y, uns
                     dstptr->r = (uint8_t) DIV_255(dstptr->r * ainv + color->a * alpha);
                     dstptr->g = (uint8_t) DIV_255(dstptr->g * ainv + color->a * alpha);
                     dstptr->b = (uint8_t) DIV_255(dstptr->b * ainv + color->a * alpha);
+                }
+            }
+            break;
+    }
+}
+
+void BB_blend_rect_color(BlitBuffer * restrict bb, unsigned int x, unsigned int y, unsigned int w, unsigned int h, ColorRGB32 * restrict color) {
+    const int bb_type = GET_BB_TYPE(bb);
+    const int bb_rotation = GET_BB_ROTATION(bb);
+    switch (bb_type) {
+        case TYPE_BBRGB32:
+            for (unsigned int j = y; j < y + h; j++) {
+                for (unsigned int i = x; i < x + w; i++) {
+                    ColorRGB32 * restrict dstptr;
+                    BB_GET_PIXEL(bb, bb_rotation, ColorRGB32, i, j, &dstptr);
+                    dstptr->r = (uint8_t) MAX(color->r - (255 - dstptr->r), 0);
+                    dstptr->g = (uint8_t) MAX(color->g - (255 - dstptr->g), 0);
+                    dstptr->b = (uint8_t) MAX(color->b - (255 - dstptr->b), 0);
+                    dstptr->alpha = 0xFF;
                 }
             }
             break;
