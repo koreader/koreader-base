@@ -676,23 +676,44 @@ end
 mupdf.STRIKE_HEIGHT = 0.375
 mupdf.UNDERLINE_HEIGHT = 0
 mupdf.LINE_THICKNESS = 0.05
+mupdf.HIGHLIGHT_COLOR = {1.0, 1.0, 0.0}
+mupdf.UNDERLINE_COLOR = {0.0, 0.0, 1.0}
+mupdf.STRIKE_OUT_COLOR = {1.0, 0.0, 0.0}
 
-function page_mt.__index:addMarkupAnnotation(points, n, type)
+function page_mt.__index:addMarkupAnnotation(points, n, type, bb_color)
     local color = ffi.new("float[3]")
     local alpha = 1.0
     if type == M.PDF_ANNOT_HIGHLIGHT then
-        color[0] = 1.0
-        color[1] = 1.0
-        color[2] = 0.0
+        if bb_color then
+            color[0] = bb_color.r / 255
+            color[1] = bb_color.g / 255
+            color[2] = bb_color.b / 255
+        else
+            color[0] = mupdf.HIGHLIGHT_COLOR[1]
+            color[1] = mupdf.HIGHLIGHT_COLOR[2]
+            color[2] = mupdf.HIGHLIGHT_COLOR[3]
+        end
         alpha = 0.5
     elseif type == M.PDF_ANNOT_UNDERLINE then
-        color[0] = 0.0
-        color[1] = 0.0
-        color[2] = 1.0
+        if bb_color then
+            color[0] = bb_color.r / 255
+            color[1] = bb_color.g / 255
+            color[2] = bb_color.b / 255
+        else
+            color[0] = mupdf.UNDERLINE_COLOR[1]
+            color[1] = mupdf.UNDERLINE_COLOR[2]
+            color[2] = mupdf.UNDERLINE_COLOR[3]
+        end
     elseif type == M.PDF_ANNOT_STRIKE_OUT then
-        color[0] = 1.0
-        color[1] = 0.0
-        color[2] = 0.0
+        if bb_color then
+            color[0] = bb_color.r / 255
+            color[1] = bb_color.g / 255
+            color[2] = bb_color.b / 255
+        else
+            color[0] = mupdf.STRIKE_OUT_COLOR[1]
+            color[1] = mupdf.STRIKE_OUT_COLOR[2]
+            color[2] = mupdf.STRIKE_OUT_COLOR[3]
+        end
     else
         return
     end
