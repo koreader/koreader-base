@@ -14,23 +14,26 @@ assert_var_defined(INSTALL_DIR)
 
 ep_get_source_dir(SOURCE_DIR)
 
-set(PATCH_CMD sh -c "${ISED} 's|socket\\.core|socket\\.score|' src/*")
-set(PATCH_CMD "${PATCH_CMD} && ${ISED} 's|socket_core|socket_score|' src/*")
-set(PATCH_CMD "${PATCH_CMD} && ${ISED} 's|mime\\.core|mime\\.mcore|' src/*")
-set(PATCH_CMD "${PATCH_CMD} && ${ISED} 's|mime_core|mime_mcore|' src/*")
-set(PATCH_CMD "${PATCH_CMD} && ${ISED} 's|SOCKET_CDIR)/core|SOCKET_CDIR)/score|' src/*")
-set(PATCH_CMD "${PATCH_CMD} && ${ISED} 's|MIME_CDIR)/core|MIME_CDIR)/mcore|' src/*")
+list(APPEND PATCH_CMD COMMAND sh -c "\"\$@\" src/*" --
+  ${ISED} " "
+  -e "s|socket\\.core|socket.score|"
+  -e "s|socket_core|socket_score|"
+  -e "s|mime\\.core|mime.mcore|"
+  -e "s|mime_core|mime_mcore|"
+  -e "s|socket_cdir)/core|socket_cdir)/score|"
+  -e "s|mime_cdir)/core|mime_cdir)/mcore|"
+)
 # Don't enforce CFLAGS
-set(PATCH_CMD "${PATCH_CMD} && ${ISED} 's|-O2 -ggdb3 ||g' src/makefile")
+list(APPEND PATCH_CMD COMMAND ${ISED} "s|-O2 -ggdb3 ||g" src/makefile)
 
-set(BUILD_CMD_STR ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS} "PLAT=${PLAT}" "CC=${CC}" "LD=${CC}")
+list(APPEND BUILD_CMD COMMAND ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS} "PLAT=${PLAT}" "CC=${CC}" "LD=${CC}")
 if(DEFINED MYLDFLAGS)
-    set(BUILD_CMD_STR ${BUILD_CMD_STR} "MYLDFLAGS=${MYLDFLAGS}")
+  list(APPEND BUILD_CMD "MYLDFLAGS=${MYLDFLAGS}")
 endif()
 if(DEFINED LUALIB_mingw)
-    set(BUILD_CMD_STR ${BUILD_CMD_STR} "LUALIB_mingw=${LUALIB_mingw}")
+  list(APPEND BUILD_CMD "LUALIB_mingw=${LUALIB_mingw}")
 endif()
-set(BUILD_CMD ${BUILD_CMD_STR} "LUAINC=${LUAINC}" -j${PARALLEL_JOBS} all)
+list(APPEND BUILD_CMD "LUAINC=${LUAINC}" -j${PARALLEL_JOBS} all)
 
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME

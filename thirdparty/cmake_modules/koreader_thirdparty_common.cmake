@@ -5,7 +5,11 @@ if(NOT DEFINED PROCESSOR_COUNT)
     set(PROCESSOR_COUNT ${N})
 endif()
 
-set(ISED "sed -ie")
+if (DEFINED ENV{DARWIN})
+    set(ISED sed -i "" -e)
+else()
+    set(ISED sed -i -e)
+endif()
 
 if(NOT DEFINED PARALLEL_JOBS)
     math(EXPR PARALLEL_JOBS "${PROCESSOR_COUNT}+1")
@@ -30,10 +34,7 @@ else()
     set(KO_MAKE_RECURSIVE make)
 endif()
 
-set(KO_PATCH sh -c "${CMAKE_MODULE_PATH}/patch-wrapper.sh")
-# DownloadProject somehow faceplants with the variant above...
-# Plus, we need that one for inlined shell calls anyway.
-set(KO_PATCH_SH "sh ${CMAKE_MODULE_PATH}/patch-wrapper.sh")
+set(KO_PATCH ${CMAKE_MODULE_PATH}/patch-wrapper.sh)
 
 macro(assert_var_defined varName)
     if(NOT DEFINED ${varName})
@@ -50,3 +51,13 @@ macro(ep_get_binary_dir varName)
 endmacro()
 
 set(KO_DOWNLOAD_DIR "${CMAKE_CURRENT_SOURCE_DIR}/build/downloads")
+
+if(DEFINED ENV{ANDROID})
+    list(APPEND ANDROID_LIBTOOL_FIX_CMD ${ISED} $<SEMICOLON>
+        -e "s|version_type=none|version_type=linux|"
+        -e "s|need_lib_prefix=no|need_lib_prefix=yes|"
+        -e "s|need_version=no|need_version=yes|"
+        -e "s|library_names_spec=.*|library_names_spec=\"\\\\$libname\\\\$release\\\\$shared_ext\\\\$versuffix \\\\$libname\\\\$release\\\\$shared_ext\\\\$major \\\\$libname\\\\$shared_ext\"|"
+        -e "s|soname_spec=.*|soname_spec=\"\\\\$libname\\\\$release\\\\$shared_ext\\\\$major\"|"
+        libtool)
+endif()

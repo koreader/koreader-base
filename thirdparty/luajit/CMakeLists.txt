@@ -12,18 +12,18 @@ assert_var_defined(XCOMPILE)
 
 if($ENV{KODEBUG})
     # Debugging is a go!
-    set(DBG_CMD sh -c "${ISED} 's|#CCDEBUG= -g|CCDEBUG= -g|' ${SOURCE_DIR}/src/Makefile")
+    list(APPEND PATCH_CMD COMMAND ${ISED} "s|#CCDEBUG= -g|CCDEBUG= -g|" ${SOURCE_DIR}/src/Makefile)
     # To-do: make this auto-trigger when Valgrind is installed
-    #set(DBG_CMD "${DBG_CMD} && ${ISED} 's|#XCFLAGS+= -DLUAJIT_USE_VALGRIND|XCFLAGS+= -DLUAJIT_USE_VALGRIND|' ${SOURCE_DIR}/src/Makefile")
+    #list(APPEND PATCH_CMD COMMAND ${ISED} "s|#XCFLAGS+= -DLUAJIT_USE_VALGRIND|XCFLAGS+= -DLUAJIT_USE_VALGRIND|" ${SOURCE_DIR}/src/Makefile)
     if(DEFINED ENV{KODEBUG_LUAJIT_USE_SYSMALLOC})
         # Could this be helpful on Android?
-        set(DBG_CMD "${DBG_CMD} && ${ISED} 's|#XCFLAGS+= -DLUAJIT_USE_SYSMALLOC|XCFLAGS+= -DLUAJIT_USE_SYSMALLOC|' ${SOURCE_DIR}/src/Makefile")
+        list(APPEND PATCH_CMD COMMAND ${ISED} "s|#XCFLAGS+= -DLUAJIT_USE_SYSMALLOC|XCFLAGS+= -DLUAJIT_USE_SYSMALLOC|" ${SOURCE_DIR}/src/Makefile)
     endif()
     # Performance impact; not recommended unless required for something specific
     if(DEFINED ENV{KODEBUG_LUAJIT})
-        set(DBG_CMD "${DBG_CMD} && ${ISED} 's|#XCFLAGS+= -DLUAJIT_USE_GDBJIT|XCFLAGS+= -DLUAJIT_USE_GDBJIT|' ${SOURCE_DIR}/src/Makefile")
-        set(DBG_CMD "${DBG_CMD} && ${ISED} 's|#XCFLAGS+= -DLUA_USE_APICHECK|XCFLAGS+= -DLUA_USE_APICHECK|' ${SOURCE_DIR}/src/Makefile")
-        set(DBG_CMD "${DBG_CMD} && ${ISED} 's|#XCFLAGS+= -DLUA_USE_ASSERT|XCFLAGS+= -DLUA_USE_ASSERT|' ${SOURCE_DIR}/src/Makefile")
+        list(APPEND PATCH_CMD COMMAND ${ISED} "s|#XCFLAGS+= -DLUAJIT_USE_GDBJIT|XCFLAGS+= -DLUAJIT_USE_GDBJIT|" ${SOURCE_DIR}/src/Makefile)
+        list(APPEND PATCH_CMD COMMAND ${ISED} "s|#XCFLAGS+= -DLUA_USE_APICHECK|XCFLAGS+= -DLUA_USE_APICHECK|" ${SOURCE_DIR}/src/Makefile)
+        list(APPEND PATCH_CMD COMMAND ${ISED} "s|#XCFLAGS+= -DLUA_USE_ASSERT|XCFLAGS+= -DLUA_USE_ASSERT|" ${SOURCE_DIR}/src/Makefile)
     endif()
 endif()
 
@@ -71,9 +71,9 @@ endif()
 
 set(BUILD_CMD ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS} ${BUILD_ARGS})
 
-set(PATCH_CMD1 "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/koreader-luajit-makefile-tweaks.patch")
+list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/koreader-luajit-makefile-tweaks.patch)
 # Enable table.pack & table.unpack w/o the rest of the -DLUAJIT_ENABLE_LUA52COMPAT baggage...
-set(PATCH_CMD2 "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/koreader-luajit-enable-table_pack.patch")
+list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/koreader-luajit-enable-table_pack.patch)
 
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
@@ -86,7 +86,7 @@ include(ExternalProject)
 ExternalProject_Add(
     ${PROJECT_NAME}
     DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
-    PATCH_COMMAND COMMAND ${DBG_CMD} COMMAND ${PATCH_CMD1} COMMAND ${PATCH_CMD2}
+    PATCH_COMMAND ${PATCH_CMD}
     BUILD_IN_SOURCE 1
     # skip configure
     CONFIGURE_COMMAND ""

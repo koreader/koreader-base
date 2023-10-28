@@ -26,35 +26,35 @@ ep_get_binary_dir(BINARY_DIR)
 # sometimes just hoping there's a python binary somewhere in $PATH (which, granted, there should be)...
 # Enforce that to python3 for containers where that's the only available Python version.
 if(DEFINED ENV{APPIMAGE} OR DEFINED ENV{CERVANTES} OR DEFINED ENV{KINDLE} OR DEFINED ENV{KOBO})
-    set(PATCH_CMD1 "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/glib-2.56.2-python3.patch")
+    list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/glib-2.56.2-python3.patch)
 endif()
 # Android makes Linux syscalls hard to get to... Fix pilfered from Python.
 if(DEFINED ENV{ANDROID})
-    set(PATCH_CMD2 "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/glib-2.58.2-android-linux-syscalls.patch")
+    list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/glib-2.58.2-android-linux-syscalls.patch)
 endif()
 
-set(PATCH_CMD3 env NOCONFIGURE=1 ./autogen.sh)
+list(APPEND PATCH_CMD COMMAND env NOCONFIGURE=1 ./autogen.sh)
 
 # Autotools needs some hints when x-compiling
-set(gen_arm_config "${gen_arm_config}glib_cv_stack_grows=no\\n")
-set(gen_arm_config "${gen_arm_config}glib_cv_uscore=no\\n")
+list(APPEND gen_arm_config "glib_cv_stack_grows=no")
+list(APPEND gen_arm_config "glib_cv_uscore=no")
 # In order to support legacy PocketBook 4.x firmware we should get rid of eventfd@GLIBC_2.7 and pipe2@GLIBC_2.9
 if(DEFINED ENV{LEGACY} OR DEFINED ENV{POCKETBOOK})
-    set(gen_arm_config "${gen_arm_config}glib_cv_eventfd=no\\n")
-    set(gen_arm_config "${gen_arm_config}ac_cv_func_pipe2=no\\n")
+    list(APPEND gen_arm_config "glib_cv_eventfd=no")
+    list(APPEND gen_arm_config "ac_cv_func_pipe2=no")
     # As well as mkostemp@GLIBC_2.7
-    set(gen_arm_config "${gen_arm_config}ac_cv_func_mkostemp=no\\n")
+    list(APPEND gen_arm_config "ac_cv_func_mkostemp=no")
 endif()
 if(DEFINED ENV{ANDROID})
     # disable getpwuid, getgrgid and timegm for > android-12
-    set(gen_arm_config "${gen_arm_config}ac_cv_func_posix_getpwuid_r=no\\n")
-    set(gen_arm_config "${gen_arm_config}ac_cv_func_posix_getgrgid_r=no\\n")
-    set(gen_arm_config "${gen_arm_config}ac_cv_func_getpwuid_r=no\\n")
-    set(gen_arm_config "${gen_arm_config}ac_cv_func_getgrgid_r=no\\n")
-    set(gen_arm_config "${gen_arm_config}ac_cv_func_timegm=no\\n")
+    list(APPEND gen_arm_config "ac_cv_func_posix_getpwuid_r=no")
+    list(APPEND gen_arm_config "ac_cv_func_posix_getgrgid_r=no")
+    list(APPEND gen_arm_config "ac_cv_func_getpwuid_r=no")
+    list(APPEND gen_arm_config "ac_cv_func_getgrgid_r=no")
+    list(APPEND gen_arm_config "ac_cv_func_timegm=no")
 endif()
 
-set(gen_arm_config sh -c "printf \"${gen_arm_config}\" > arm_cache.conf")
+list(APPEND CFG_CMD COMMAND sh -c "printf '%s\\n' \"$@\" >arm_cache.conf" -- ${gen_arm_config})
 
 set(CFG_ENV_VAR "CC=${CC}" "AR=${AR}" "RANLIB=${RANLIB}")
 set(CFG_ENV_VAR ${CFG_ENV_VAR} "LIBFFI_CFLAGS=-I${LIBFFI_DIR}/include")
@@ -80,7 +80,7 @@ endif()
 set(CFG_ENV_VAR ${CFG_ENV_VAR} "CFLAGS=${CFLAGS}" "LDFLAGS=${LDFLAGS}")
 
 set(CFG_OPTS ${CFG_OPTS} --host=${CHOST} ${HOST_OPTS})
-set(CFG_CMD env ${CFG_ENV_VAR} ${SOURCE_DIR}/configure ${CFG_OPTS})
+list(APPEND CFG_CMD COMMAND env ${CFG_ENV_VAR} ${SOURCE_DIR}/configure ${CFG_OPTS})
 
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
@@ -93,8 +93,8 @@ include(ExternalProject)
 ExternalProject_Add(
     ${PROJECT_NAME}
     DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
-    PATCH_COMMAND COMMAND ${PATCH_CMD1} COMMAND ${PATCH_CMD2} COMMAND ${PATCH_CMD3}
-    CONFIGURE_COMMAND COMMAND ${gen_arm_config} COMMAND ${CFG_CMD}
+    PATCH_COMMAND ${PATCH_CMD}
+    CONFIGURE_COMMAND ${CFG_CMD}
     BUILD_COMMAND ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS}
     INSTALL_COMMAND ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS} install
 )
