@@ -10,9 +10,13 @@ enable_language(C CXX ASM)
 
 ep_get_source_dir(SOURCE_DIR)
 
+# Make it build on recent TCs, and implement a
+# simple Makefile for building it as a static lib
+list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/popen_noshell.patch)
+
 if(${LEGACY})
     # Revert 8d7a98d on legacy devices, pipe2 was introduced in Linux 2.6.27 & glibc 2.9
-    set(EXTRA_PATCH_CMD "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/kindle_legacy.patch")
+    list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/kindle_legacy.patch)
 endif()
 
 assert_var_defined(CC)
@@ -36,9 +40,7 @@ ExternalProject_Add(
     popen-noshell
     BUILD_IN_SOURCE 1
     DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
-    # popen_noshell patch: Make it build on recent TCs, and implement
-    # a simple Makefile for building it as a static lib
-    PATCH_COMMAND COMMAND "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/popen_noshell.patch" COMMAND ${EXTRA_PATCH_CMD}
+    PATCH_COMMAND ${PATCH_CMD}
     # skip configure
     CONFIGURE_COMMAND ""
     BUILD_COMMAND ${BUILD_CMD}

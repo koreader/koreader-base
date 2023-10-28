@@ -25,11 +25,12 @@ set(LUA_SPORE_ROCKSPEC rockspec/lua-spore-${LUA_SPORE_VER}.rockspec)
 set(ROCKS_CMD ${LUAROCKS})
 separate_arguments(ROCKS_CMD)
 
-set(BUILD_CMD ${ROCKS_CMD} make --tree=${OUTPUT_DIR}/rocks ${LUA_SPORE_ROCKSPEC})
-set(BUILD_CMD ${BUILD_CMD} "CC=${CC}" "CFLAGS=${CFLAGS}" "LD=${LD}")
-set(BUILD_CMD ${BUILD_CMD} "LUA_INCDIR=${LUA_INCDIR}" "LUA_LIBDIR=${LUA_LIBDIR}")
+list(APPEND BUILD_CMD COMMAND ${ROCKS_CMD} make --tree=${OUTPUT_DIR}/rocks ${LUA_SPORE_ROCKSPEC})
+list(APPEND BUILD_CMD "CC=${CC}" "CFLAGS=${CFLAGS}" "LD=${LD}")
+list(APPEND BUILD_CMD "LUA_INCDIR=${LUA_INCDIR}" "LUA_LIBDIR=${LUA_LIBDIR}")
 
-set(PATCH_CMD sh -c "mkdir -p doc && ${ISED} \"s| 'luasocket|--'luasocket|g\" ${LUA_SPORE_ROCKSPEC}")
+list(APPEND PATCH_CMD COMMAND mkdir -p doc)
+list(APPEND PATCH_CMD COMMAND ${ISED} "s| 'luasocket|--&|g" ${LUA_SPORE_ROCKSPEC})
 
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME

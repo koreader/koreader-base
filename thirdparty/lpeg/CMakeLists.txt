@@ -23,7 +23,7 @@ set(LPEG_RELEASE "1.0.2")
 set(LUA_LPEG_ROCKSPEC lpeg-${LPEG_VER}.rockspec)
 
 # Rewrite Makefile to behave sensibly w/ LuaRocks, and optionally allow linking to the lua lib...
-SET(PATCH_CMD "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/lpeg-${LPEG_RELEASE}-standard-makefile.patch")
+list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/lpeg-${LPEG_RELEASE}-standard-makefile.patch)
 
 # Move our custom rockspec to the build dir to fullfil build deps
 set(CONFIGURE_CMD ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/${LUA_LPEG_ROCKSPEC} ${SOURCE_DIR}/${LUA_LPEG_ROCKSPEC})
@@ -51,7 +51,7 @@ ExternalProject_Add(
     URL http://distcache.FreeBSD.org/ports-distfiles/lpeg-${LPEG_RELEASE}.tar.gz
     URL_MD5 d342571886f1abcb7afe6a83d024d583
     BUILD_IN_SOURCE 1
-    PATCH_COMMAND COMMAND ${PATCH_CMD}
+    PATCH_COMMAND ${PATCH_CMD}
     CONFIGURE_COMMAND ${CONFIGURE_CMD}
     BUILD_COMMAND ${BUILD_CMD}
     # skip install

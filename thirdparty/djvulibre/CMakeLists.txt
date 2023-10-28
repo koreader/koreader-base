@@ -16,6 +16,17 @@ assert_var_defined(CHOST)
 
 ep_get_source_dir(SOURCE_DIR)
 
+list(APPEND PATCH_CMD COMMAND env NOCONFIGURE=1 ./autogen.sh)
+
+# Never *ever* call setlocale, for any reason.
+# Most of our target platforms have custom/broken/incomplete locales, don't screw with it.
+# And this runs in our main thread, so this is Very Bad(TM).
+list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/djvulibre-no-locale-mangling.patch)
+
+if(DEFINED ENV{ANDROID})
+    list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/android.patch)
+endif()
+
 # fix build error due to -Werror under Fedora 26 (and potentially other systems)
 set(CFLAGS "${CFLAGS} -Wno-error")
 
@@ -25,24 +36,13 @@ set(CXXFLAGS "${CXXFLAGS} -Wno-register -Wno-error=register")
 
 set(CFG_ENV_VAR "CC=${CC}" "CXX=${CXX}" "CFLAGS=${CFLAGS}" "CXXFLAGS=${CXXFLAGS}" "LDFLAGS=${LDFLAGS}")
 set(CFG_OPTS --disable-desktopfiles --disable-static --enable-shared --disable-xmltools --disable-largefile --without-jpeg --without-tiff -host=${CHOST})
-set(CFG_CMD env ${CFG_ENV_VAR} ${SOURCE_DIR}/configure ${CFG_OPTS})
-
-# Never *ever* call setlocale, for any reason.
-# Most of our target platforms have custom/broken/incomplete locales, don't screw with it.
-# And this runs in our main thread, so this is Very Bad(TM).
-set(PATCH_CMD1 "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/djvulibre-no-locale-mangling.patch")
+list(APPEND CFG_CMD COMMAND env ${CFG_ENV_VAR} ${SOURCE_DIR}/configure ${CFG_OPTS})
 
 if(DEFINED ENV{ANDROID})
-    set(SED_CMD sh -c "${ISED} 's|version_type=none|version_type=linux|' libtool")
-    set(SED_CMD "${SED_CMD} && ${ISED} 's|need_lib_prefix=no|need_lib_prefix=yes|' libtool")
-    set(SED_CMD "${SED_CMD} && ${ISED} 's|need_version=no|need_version=yes|' libtool")
-    set(SED_CMD "${SED_CMD} && ${ISED} 's|library_names_spec=.*|library_names_spec=\"\\\\\$libname\\\\\$release\\\\\$shared_ext\\\\\$versuffix \\\\\$libname\\\\\$release\\\\\$shared_ext\\\\\$major \\\\\$libname\\\\\$shared_ext\"|' libtool")
-    set(SED_CMD "${SED_CMD} && ${ISED} 's|soname_spec=.*|soname_spec=\"\\\\\$libname\\\\\$release\\\\\$shared_ext\\\\\$major\"|' libtool")
-
+    list(APPEND CFG_CMD COMMAND ${ANDROID_LIBTOOL_FIX_CMD})
     # Technically we don't need tools on any platform but they only cause issues on Android
-    set(SED_CMD "${SED_CMD} && ${ISED} \"s|DIST_SUBDIRS = libdjvu.*|DIST_SUBDIRS = libdjvu|g\" Makefile")
-    set(SED_CMD "${SED_CMD} && ${ISED} \"s|SUBDIRS = libdjvu tools share \\$(am__append_1) \\$(am__append_2)|SUBDIRS = libdjvu share \\$(am__append_1) \\$(am__append_2)|g\" Makefile")
-    set(PATCH_CMD2 "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/android.patch")
+    list(APPEND CFG_CMD COMMAND ${ISED} "s|DIST_SUBDIRS = libdjvu.*|DIST_SUBDIRS = libdjvu|g" Makefile)
+    list(APPEND CFG_CMD COMMAND ${ISED} "s|SUBDIRS = libdjvu tools share \\$(am__append_1) \\$(am__append_2)|SUBDIRS = libdjvu share \\$(am__append_1) \\$(am__append_2)|g" Makefile)
 endif()
 
 ko_write_gitclone_script(
@@ -56,12 +56,9 @@ include(ExternalProject)
 ExternalProject_Add(
     ${PROJECT_NAME}
     DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
-    PATCH_COMMAND NOCONFIGURE=1 ./autogen.sh
+    PATCH_COMMAND ${PATCH_CMD}
     BUILD_IN_SOURCE 1
-    CONFIGURE_COMMAND
-        COMMAND ${CFG_CMD}
-        COMMAND ${SED_CMD}
-        COMMAND ${PATCH_CMD1} COMMAND ${PATCH_CMD2}
+    CONFIGURE_COMMAND ${CFG_CMD}
     BUILD_COMMAND ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS} SUBDIRS_FIRST=libdjvu
     # skip install
     INSTALL_COMMAND ""

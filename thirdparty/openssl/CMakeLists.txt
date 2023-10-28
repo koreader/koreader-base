@@ -64,7 +64,7 @@ else()
     set(ASM_OPT no-asm)
 endif()
 
-set(PATCH_CMD1 "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/openssl-1.1.0j-parallel_install_fix.patch")
+list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/openssl-1.1.0j-parallel_install_fix.patch)
 
 # NOTE: Disable https://github.com/openssl/openssl/pull/9595 as it's causing stalls long after the early boot on devices without the getrandom() syscall, which is pretty much all of them, because it's a Linux 3.17+ & glibc 2.25+ feature.
 #       This is most easily reproduced with scp transfers that will block on the initial select on /dev/random. Since those devices are low-power, UP, and mostly idle, it can take a fairly noticeable amount of time for entropy to be generated...
@@ -90,8 +90,8 @@ else()
     set(MAKE_CMD ${KO_MAKE_RECURSIVE} "CC=${CC}" "CFLAGS=${FILTERED_CFLAGS}" "SHARED_LDFLAGS=${SHARED_LDFLAGS}" "LD=${LD}" "AR=${AR}" "RANLIB=${RANLIB}")
 endif()
 # NOTE: Make depend may fail when using ccache, and may fail when // (on some OpenSSL versions, at least)
-set(BUILD_CMD1 ${MAKE_CMD} -j1 depend)
-set(BUILD_CMD2 ${MAKE_CMD} -j${PARALLEL_JOBS} build_libs)
+list(APPEND BUILD_CMD COMMAND ${MAKE_CMD} -j1 depend)
+list(APPEND BUILD_CMD COMMAND ${MAKE_CMD} -j${PARALLEL_JOBS} build_libs)
 
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
@@ -105,10 +105,10 @@ include(ExternalProject)
 ExternalProject_Add(
     ${PROJECT_NAME}
     DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
-    PATCH_COMMAND COMMAND ${PATCH_CMD1}
+    PATCH_COMMAND COMMAND ${PATCH_CMD}
     CONFIGURE_COMMAND ${CFG_CMD}
     BUILD_IN_SOURCE 1
-    BUILD_COMMAND COMMAND ${BUILD_CMD1} COMMAND ${BUILD_CMD2}
+    BUILD_COMMAND COMMAND ${BUILD_CMD}
     # skip install
     INSTALL_COMMAND ""
 )
