@@ -172,11 +172,11 @@ static int openInputDevice(lua_State* L)
 
     // NOTE: Make sure the top member has the highest fd number, for clearTimer's sake when it recomputes nfds
     if (fd_idx > 0) {
+        int prev_fd   = inputfds[fd_idx - 1];
         int opened_fd = inputfds[fd_idx];
-        int top_fd    = inputfds[fd_idx - 1];
-        if (opened_fd < top_fd) {
+        if (opened_fd < prev_fd) {
             inputfds[fd_idx - 1] = opened_fd;
-            inputfds[fd_idx]     = top_fd;
+            inputfds[fd_idx]     = prev_fd;
         }
     }
 
