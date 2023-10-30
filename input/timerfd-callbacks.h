@@ -172,8 +172,9 @@ static int clearTimer(lua_State* L)
     timerfd_list_delete_node(&timerfds, expired_node);
 
     // Re-compute nfds...
-    // FIXME: This assumes that inputfds are *sorted* in increasing order...
-    nfds = inputfds[fd_idx - 1U] + 1;  // NOTE: Assumes that we've got at least one fd open, which should always hold true.
+    // NOTE: Assumes that we've got at least one fd open, which should always hold true.
+    // NOTE: Also assumes that the top fd in the array is the one with the highest fd number, which openInputDevice makes sure of.
+    nfds = inputfds[fd_idx - 1U] + 1;
     for (timerfd_node_t* restrict node = timerfds.head; node != NULL; node = node->next) {
         if (node->fd >= nfds) {
             nfds = node->fd + 1;
