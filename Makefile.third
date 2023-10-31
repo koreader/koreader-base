@@ -417,50 +417,7 @@ $(LIBGETTEXT): $(LIBICONV) $(THIRDPARTY_DIR)/gettext/*.*
 		$(CURDIR)/thirdparty/gettext && \
 		$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS)
 
-$(LIBFFI_DIR)/include: $(THIRDPARTY_DIR)/libffi/*.*
-	install -d $(LIBFFI_BUILD_DIR)
-	-rm -rf $(LIBFFI_DIR)/include $(LIBFFI_DIR)/../libffi-stamp
-	cd $(LIBFFI_BUILD_DIR) && \
-		$(CMAKE) $(CMAKE_FLAGS) \
-		-DHOST='$(CHOST)' \
-		-DCC='$(CC)' \
-		-DCFLAGS='$(CFLAGS)' \
-		-DLDFLAGS='$(LDFLAGS)' \
-		$(if $(ANDROID),-DSYSROOT='$(SYSROOT)',) \
-		$(CURDIR)/$(THIRDPARTY_DIR)/libffi && \
-		$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS)
-
-$(GLIB): $(if $(DARWIN),$(LIBICONV) $(LIBGETTEXT),) $(LIBFFI_DIR)/include $(THIRDPARTY_DIR)/glib/*.*
-	install -d $(GLIB_BUILD_DIR)
-	# make install sometimes only update symlink, so purge lib dir here
-	# to update mtime for all the binaries
-	-rm -rf $(GLIB_DIR)/lib $(GLIB_DIR)/../glib-stamp/glib-install
-	cd $(GLIB_BUILD_DIR) && \
-		$(CMAKE) $(CMAKE_FLAGS) \
-		-DCC='$(CC)' \
-		-DCHOST='$(CHOST)' \
-		-DAR='$(AR)' \
-		-DRANLIB='$(RANLIB)' \
-		-DCFLAGS='$(CFLAGS)' \
-		-DLDFLAGS='$(LDFLAGS)' \
-		-DLIBICONV_DIR='$(LIBICONV_DIR)' \
-		-DLIBFFI_DIR='$(LIBFFI_DIR)' \
-		-DZLIB_DIR='$(ZLIB_DIR)' \
-		-DGETTEXT_DIR='$(GETTEXT_DIR)' \
-		-DWITH_LIBICONV='$(if $(DARWIN),gnu,no)' \
-		-DENABLE_SHARED='glib' \
-		-DHOST_OPTS='$(if $(EMULATE_READER),,--cache-file=arm_cache.conf)' \
-		$(CURDIR)/$(THIRDPARTY_DIR)/glib && \
-		$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS)
-# NOTE: We link against a static glib on Android
-ifndef ANDROID
-# NOTE: Don't ship our own glib on Kindle, it'll clash with liblipc, which depends on it *and* gthread :/.
-ifndef KINDLE
-	cp -fL $(GLIB_DIR)/lib/$(notdir $(GLIB)) $(OUTPUT_DIR)/libs/$(notdir $(GLIB))
-endif
-endif
-
-$(GLIB_STATIC): $(LIBICONV) $(LIBGETTEXT) $(LIBFFI_DIR)/include $(THIRDPARTY_DIR)/glib/*.*
+$(GLIB): $(LIBICONV) $(LIBGETTEXT) $(THIRDPARTY_DIR)/glib/*.*
 	install -d $(GLIB_BUILD_DIR)
 	-rm -f $(GLIB_DIR)/../glib-stamp/glib-install
 	cd $(GLIB_BUILD_DIR) && \
@@ -469,14 +426,10 @@ $(GLIB_STATIC): $(LIBICONV) $(LIBGETTEXT) $(LIBFFI_DIR)/include $(THIRDPARTY_DIR
 		-DCHOST='$(CHOST)' \
 		-DAR='$(AR)' \
 		-DRANLIB='$(RANLIB)' \
-		-DCFLAGS='$(CFLAGS) $(if $(ANDROID), -L$(LIBICONV_DIR)/lib -L$(GETTEXT_DIR)/lib -I$(LIBICONV_DIR)/include -I$(GETTEXT_DIR)/include,)' \
-		-DLDFLAGS='$(LDFLAGS) $(if $(ANDROID), -L$(LIBICONV_DIR)/lib -L$(GETTEXT_DIR)/lib,)' \
-		-DLIBICONV_DIR='$(LIBICONV_DIR)' \
-		-DLIBFFI_DIR='$(LIBFFI_DIR)' \
-		-DZLIB_DIR='$(ZLIB_DIR)' \
+		-DCFLAGS='$(CFLAGS)' \
+		-DLDFLAGS='$(LDFLAGS)' \
 		-DGETTEXT_DIR='$(GETTEXT_DIR)' \
-		-DWITH_LIBICONV='gnu' \
-		-DENABLE_SHARED='false' \
+		-DLIBICONV_DIR='$(LIBICONV_DIR)' -DWITH_LIBICONV='gnu' \
 		-DHOST_OPTS='$(if $(EMULATE_READER),,--cache-file=arm_cache.conf)' \
 		$(CURDIR)/$(THIRDPARTY_DIR)/glib && \
 		$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS)
@@ -513,15 +466,11 @@ $(ZSTD_LIB) $(ZSTD_DESTDIR)/include: $(THIRDPARTY_DIR)/zstd/*.*
 
 # ===========================================================================
 # console version of StarDict (sdcv)
-$(OUTPUT_DIR)/sdcv: $(if $(ANDROID),$(GLIB_STATIC),$(GLIB)) $(if $(ANDROID),$(ZLIB_STATIC),$(ZLIB)) $(THIRDPARTY_DIR)/sdcv/*.*
+$(OUTPUT_DIR)/sdcv: $(GLIB) $(if $(ANDROID),$(ZLIB_STATIC),$(ZLIB)) $(THIRDPARTY_DIR)/sdcv/*.*
 	install -d $(SDCV_BUILD_DIR)
 	cd $(SDCV_BUILD_DIR) && \
 		$(CMAKE) $(CMAKE_FLAGS) \
-		-DHOST='$(if $(EMULATE_READER),,$(CHOST))' \
-		-DCFLAGS='$(CFLAGS) $(if $(ANDROID),-fPIC -fPIE,)' \
-		-DCXXFLAGS='$(CXXFLAGS) $(if $(ANDROID),-fPIC -fPIE,)' \
-		-DLDFLAGS='$(LDFLAGS) $(if $(ANDROID),-fPIC -fPIE,)' \
-		-DGLIB='$(realpath $(if $(ANDROID),$(GLIB_STATIC),$(GLIB)))' \
+		-DGLIB='$(realpath $(GLIB))' \
 		-DGLIB_DIR='$(GLIB_DIR)' \
 		-DZLIB='$(realpath $(if $(ANDROID),$(ZLIB_STATIC),$(ZLIB)))' \
 		-DZLIB_DIR='$(ZLIB_DIR)' \

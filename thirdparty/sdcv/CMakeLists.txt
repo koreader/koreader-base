@@ -8,10 +8,6 @@ include("DownloadProject")
 
 enable_language(C CXX)
 
-assert_var_defined(CFLAGS)
-assert_var_defined(CXXFLAGS)
-assert_var_defined(LDFLAGS)
-assert_var_defined(HOST)
 assert_var_defined(GETTEXT)
 assert_var_defined(GETTEXT_DIR)
 assert_var_defined(LIBICONV)
@@ -26,7 +22,7 @@ ep_get_source_dir(SOURCE_DIR)
 # because cmake needs all kinds of annoying special cmake variables
 # Compiler and linker flags
 if(DEFINED ENV{DARWIN})
-    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -framework CoreFoundation -framework Security")
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -framework CoreFoundation -framework CoreServices -framework Security")
 endif()
 
 if(DEFINED ENV{ANDROID})
@@ -49,22 +45,25 @@ set(CMAKE_PREFIX_PATH "${GLIB2_INCLUDE_DIRS}$<SEMICOLON>${GETTEXT_DIR}$<SEMICOLO
 # For some reason this doesn't actually work and CMake keeps finding mostly .so
 # Which is funny, because the .a is in the *same* directory. Just saying.
 # Instead we add semi-hardcoded references to the right libraries in GLIB2_LIBRARIES
-if(DEFINED ENV{ANDROID} OR DEFINED ENV{DARWIN})
-    # glib2 also needs to link with libiconv and gettext
-    # this is a fairly clean hack
-    # CMAKE_CXX_FLAGS with -I and -L doesn't seem to have much of an effect
-    set(GLIB2_LIBRARIES "${GLIB2_LIBRARIES}$<SEMICOLON>${GETTEXT_DIR}/lib/libintl.a$<SEMICOLON>${LIBICONV_DIR}/lib/libiconv.a")
+# glib2 also needs to link with libiconv and gettext
+# this is a fairly clean hack
+# CMAKE_CXX_FLAGS with -I and -L doesn't seem to have much of an effect
+set(GLIB2_LIBRARIES "${GLIB2_LIBRARIES}$<SEMICOLON>${GETTEXT_DIR}/lib/libintl.a$<SEMICOLON>${LIBICONV_DIR}/lib/libiconv.a")
+
+# Need pthread library and rt library on old glibc (for `clock_gettime`).
+if(NOT DEFINED ENV{DARWIN})
+    set(GLIB2_LIBRARIES "${GLIB2_LIBRARIES}$<SEMICOLON>-pthread")
+    if(NOT DEFINED ENV{ANDROID})
+        set(GLIB2_LIBRARIES "${GLIB2_LIBRARIES}$<SEMICOLON>-lrt")
+    endif()
 endif()
 
 # NOTE: This is all good and well, but it's unclear whether these actually end up as target_link_libraries, unlike GLIB2_LIBRARIES,
 #       hence the hack above...
-if(DEFINED ENV{DARWIN})
-    set(ICONV_INCLUDE_DIR "${LIBICONV_DIR}/include")
-    set(ICONV_LIBRARIES "${LIBICONV}")
-    set(LIBINTL_LIBRARIES "${GETTEXT}")
-    set(LIBINTL_FOUND True)
-endif()
-
+set(ICONV_INCLUDE_DIR "${LIBICONV_DIR}/include")
+set(ICONV_LIBRARIES "${LIBICONV}")
+set(LIBINTL_LIBRARIES "${GETTEXT}")
+set(LIBINTL_FOUND True)
 set(ZLIB_INCLUDE_DIR "${ZLIB_DIR}/include")
 set(ZLIB_LIBRARIES "${ZLIB}")
 # I just want to be able to -I and -L and have things work. CMake, CMake...
