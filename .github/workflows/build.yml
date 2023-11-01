@@ -15,7 +15,12 @@ jobs:
         run: xcode-select -p
 
       - name: Check out Git repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
+        with:
+          clean: false
+          fetch-depth: 0
+          filter: tree:0
+          show-progress: false
 
       - name: Cache for ccache
         uses: actions/cache@v2
