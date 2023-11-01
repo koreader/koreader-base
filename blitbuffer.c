@@ -454,17 +454,17 @@ void BB_fill_rect_color(BlitBuffer * restrict bb, unsigned int x, unsigned int y
             // we want to preserve the alpha byte
             if (rx == 0 && rw == bb->w) {
                 // Single step for contiguous scanlines
-                const uint16_t src = *((uint16_t*) &ColorRGB32_To_Color16(color));
-                uint16_t * restrict p = (uint16_t *) (bb->data + bb->stride*ry);
+                const ColorRGB16 src = ColorRGB32_To_Color16(color);
+                ColorRGB16 * restrict p = (ColorRGB16 *) (bb->data + bb->stride*ry);
                 size_t px_count = bb->pixel_stride*rh;
                 while (px_count--) {
                     *p++ = src;
                 }
             } else {
                 // Scanline per scanline
-                const uint16_t src = *((uint16_t*) &ColorRGB32_To_Color16(color));
+                const ColorRGB16 src = ColorRGB32_To_Color16(color);
                 for (unsigned int j = ry; j < ry+rh; j++) {
-                    uint16_t * restrict p = (uint16_t *) (bb->data + bb->stride*j) + rx;
+                    ColorRGB16 * restrict p = (ColorRGB16 *) (bb->data + bb->stride*j) + rx;
                     size_t px_count = rw;
                     while (px_count--) {
                         *p++ = src;
@@ -485,15 +485,21 @@ void BB_fill_rect_color(BlitBuffer * restrict bb, unsigned int x, unsigned int y
             }
             break;
         case TYPE_BBRGB32:
-            {
+            // we want to preserve the alpha byte
+            if (rx == 0 && rw == bb->w) {
+                // Single step for contiguous scanlines
+                ColorRGB32 * restrict p = (ColorRGB32 *) (bb->data + bb->stride*ry);
+                size_t px_count = bb->pixel_stride*rh;
+                while (px_count--) {
+                    *p++ = *color;
+                }
+            } else {
                 // Scanline per scanline
-                //const uint32_t src = *((uint32_t*) &color); // This causes odd colors
-                const uint32_t src = RGB_To_RGB32(color->r, color->g, color->b);
                 for (unsigned int j = ry; j < ry+rh; j++) {
-                    uint32_t * restrict p = (uint32_t *) (bb->data + bb->stride*j) + rx;
+                    ColorRGB32 * restrict p = (ColorRGB32 *) (bb->data + bb->stride*j) + rx;
                     size_t px_count = rw;
                     while (px_count--) {
-                        *p++ = src;
+                        *p++ = *color;
                     }
                 }
             }
