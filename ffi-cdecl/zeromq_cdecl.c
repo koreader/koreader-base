@@ -1,4 +1,4 @@
-// CPPFLAGS="-I/var/tmp/niluje/zyre/include -I/var/tmp/niluje/libzmq/include -I/var/tmp/niluje/czmq/include -I/var/tmp/niluje/filemq/include"
+// CPPFLAGS="-I/var/tmp/niluje/libzmq/include -I/var/tmp/niluje/czmq/include"
 #include <zmq.h>
 #include <czmq.h>
 
