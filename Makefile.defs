@@ -230,14 +230,7 @@ USE_LUAJIT_LIB=$(or $(DARWIN),$(ANDROID),$(WIN32))
 
 SKIP_LUAJIT_BIN=$(or $(ANDROID),$(MACOS))
 
-# handle utility params on different host systems
-ifdef DARWINHOST
-	RCP:=cp -R
-	ISED:=sed -i '' -e
-else
-	RCP:=cp -r
-	ISED:=sed -i -e
-endif
+RCP := cp -R
 
 # unknown device
 ifdef SBOX_UNAME_MACHINE
