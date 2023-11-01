@@ -2330,7 +2330,7 @@ return a Color value resembling a given hex string
 function BB.colorFromString(value)
     value = value:gsub('#','')
     -- #rrggbbaa
-    if(string.len(value) == 8) then
+    if(#value == 8) then
         return ColorRGB32(
             tonumber(value:sub(1,2), 16),
             tonumber(value:sub(3,4), 16),
@@ -2338,7 +2338,7 @@ function BB.colorFromString(value)
             tonumber(value:sub(7,8), 16)
         )
     -- #rrggbb
-    elseif(string.len(value) == 6) then
+    elseif(#value == 6) then
         return ColorRGB32(
             tonumber(value:sub(1,2), 16),
             tonumber(value:sub(3,4), 16),
@@ -2346,7 +2346,7 @@ function BB.colorFromString(value)
             0xFF
         )
     -- #vv
-    elseif(string.len(value) == 2) then
+    elseif(#value == 2) then
         return ColorRGB32(
             tonumber(value:sub(1,2), 16),
             tonumber(value:sub(1,2), 16),
