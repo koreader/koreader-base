@@ -22,24 +22,46 @@ jobs:
           filter: tree:0
           show-progress: false
 
-      - name: Cache for ccache
-        uses: actions/cache@v2
-        env:
-          cache-name: cache-ccache
-        with:
-          path: ~/.ccache # ccache cache files are stored in `~/.ccache` on Linux/macOS
-          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('Makefile', 'Makefile.defs', 'Makefile.third', '**/CMakeLists.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-build-${{ env.cache-name }}-
-            ${{ runner.os }}-build-
-            ${{ runner.os }}-
-
       - name: Homebrew install dependencies
         # Compared to the README, adds ccache for faster compilation times and removes sh5sum to prevent some conflict with coreutils, and gnu-getopt because we're not using kodev
         run: brew install ccache nasm ragel binutils coreutils libtool autoconf automake cmake makedepend lua@5.1 luarocks gettext pkg-config wget gnu-getopt grep bison
 
+      - name: Build cache restore
+        id: build-cache-restore
+        uses: actions/cache/restore@v3
+        with:
+          path: /Users/runner/Library/Caches/ccache
+          key: ${{ runner.os }}-build-cache-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-build-cache-${{ github.sha }}-
+            ${{ runner.os }}-build-cache-
+
+      - name: Build cache post-restore
+        run: |
+          set -x
+          which ccache
+          ccache --version
+          ccache --zero-stats
+          ccache --max-size=256M
+          ccache --show-config
+
       - name: Building in progress…
+        id: build
         run: |
           export MACOSX_DEPLOYMENT_TARGET=11;
           export PATH="$(brew --prefix)/opt/gettext/bin:$(brew --prefix)/opt/gnu-getopt/bin:$(brew --prefix)/opt/bison/bin:$(brew --prefix)/opt/grep/libexec/gnubin:${PATH}";
           make fetchthirdparty && make
+
+      - name: Build cache pre-save
+        if: always()
+        run: |
+          set -x
+          ccache --cleanup >/dev/null
+          ccache --show-stats --verbose
+
+      - name: Build cache save
+        uses: actions/cache/save@v3
+        if: always() && steps.build-cache-restore.outputs.cache-hit != 'true'
+        with:
+          path: /Users/runner/Library/Caches/ccache
+          key: ${{ steps.build-cache-restore.outputs.cache-primary-key }}${{ steps.build.outcome != 'success' && format('-{0}', github.run_attempt) || '' }}
