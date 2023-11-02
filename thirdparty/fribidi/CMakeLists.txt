@@ -17,17 +17,13 @@ ep_get_binary_dir(BINARY_DIR)
 
 set(CFG_ENV_VAR "CC=${CC}" "CFLAGS=${CFLAGS}" "LDFLAGS=${LDFLAGS}")
 set(CFG_OPTS --prefix=${BINARY_DIR} --libdir=${BINARY_DIR}/lib --disable-static --enable-shared --host=${CHOST})
-set(CFG_CMD env ${CFG_ENV_VAR} ${SOURCE_DIR}/configure ${CFG_OPTS})
+list(APPEND CFG_CMD COMMAND env ${CFG_ENV_VAR} ${SOURCE_DIR}/autogen.sh ${CFG_OPTS})
 
 # Disable building docs, as it requires c2man
-set(SED_CMD sh -c "${ISED} 's|SUBDIRS = gen.tab lib bin doc test|SUBDIRS = gen.tab lib bin test|g' Makefile")
+list(APPEND CFG_CMD COMMAND ${ISED} "s|SUBDIRS = gen.tab lib bin doc test|SUBDIRS = gen.tab lib bin test|g" Makefile)
 
 if(DEFINED ENV{ANDROID})
-    set(SED_CMD "${SED_CMD} && ${ISED} 's|version_type=none|version_type=linux|' libtool")
-    set(SED_CMD "${SED_CMD} && ${ISED} 's|need_lib_prefix=no|need_lib_prefix=yes|' libtool")
-    set(SED_CMD "${SED_CMD} && ${ISED} 's|need_version=no|need_version=yes|' libtool")
-    set(SED_CMD "${SED_CMD} && ${ISED} 's|library_names_spec=.*|library_names_spec=\"\\\\\$libname\\\\\$release\\\\\$shared_ext\\\\\$versuffix \\\\\$libname\\\\\$release\\\\\$shared_ext\\\\\$major \\\\\$libname\\\\\$shared_ext\"|' libtool")
-    set(SED_CMD "${SED_CMD} && ${ISED} 's|soname_spec=.*|soname_spec=\"\\\\\$libname\\\\\$release\\\\\$shared_ext\\\\\$major\"|' libtool")
+    list(APPEND CFG_CMD COMMAND ${ANDROID_LIBTOOL_FIX_CMD})
 endif()
 
 ko_write_gitclone_script(
@@ -41,9 +37,8 @@ include(ExternalProject)
 ExternalProject_Add(
     ${PROJECT_NAME}
     DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
-    PATCH_COMMAND NOCONFIGURE=1 ./autogen.sh
     BUILD_IN_SOURCE 1
-    CONFIGURE_COMMAND COMMAND ${CFG_CMD} COMMAND ${SED_CMD}
+    CONFIGURE_COMMAND ${CFG_CMD}
     BUILD_COMMAND ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS}
     INSTALL_COMMAND ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS} install
 )

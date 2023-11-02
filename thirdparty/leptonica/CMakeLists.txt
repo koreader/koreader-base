@@ -23,17 +23,17 @@ ko_write_gitclone_script(
 # and not only when glibc >= 2.22, but since we now have the code to make the check, keep it,
 # that ensures a vanilla build with sane TCs ;).
 if((${ARM_GLIBC_GTE_2_22}) AND (NOT CMAKE_SYSTEM_PROCESSOR MATCHES ".+64$"))
-    set(PATCH_CMD "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/leptonica-1.74.1-fmemopen-arm-compat-symbol.patch")
+    list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/leptonica-1.74.1-fmemopen-arm-compat-symbol.patch)
 endif()
 
 # We apparently need a rebuild of the configure on macOS (https://github.com/koreader/koreader/issues/4448#issuecomment-522363325)
-set(RECONF_CMD sh -c "autoreconf -fi")
+list(APPEND PATCH_CMD COMMAND autoreconf -fi)
 
 include(ExternalProject)
 ExternalProject_Add(
     ${PROJECT_NAME}
     DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
-    PATCH_COMMAND COMMAND ${PATCH_CMD} COMMAND ${RECONF_CMD}
+    PATCH_COMMAND ${PATCH_CMD}
     CONFIGURE_COMMAND ""
     # skip build and install, libk2pdfopt will build it
     BUILD_COMMAND ""

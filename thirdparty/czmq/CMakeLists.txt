@@ -19,25 +19,22 @@ ep_get_binary_dir(BINARY_DIR)
 # -Wno-error so we can build on glibc 2.24 in spite of readdir_r
 set(CFG_ENV_VAR "CC=${CC}" "LDFLAGS=${LDFLAGS}" "CFLAGS=${CFLAGS} -Wno-error" czmq_have_xmlto=no czmq_have_asciidoc=no)
 set(CFG_OPTS --prefix=${BINARY_DIR} --libdir=${BINARY_DIR}/lib --with-gnu-ld --with-libzmq=${ZMQ_DIR} --disable-static --enable-shared --host=${CHOST})
-set(CFG_CMD env ${CFG_ENV_VAR} ${SOURCE_DIR}/configure ${CFG_OPTS})
+list(APPEND CFG_CMD COMMAND env ${CFG_ENV_VAR} ${SOURCE_DIR}/configure ${CFG_OPTS})
 
 if(DEFINED ENV{ANDROID})
-    set(SED_CMD sh -c "${ISED} 's|version_type=none|version_type=linux|' libtool")
-    set(SED_CMD "${SED_CMD} && ${ISED} 's|need_lib_prefix=no|need_lib_prefix=yes|' libtool")
-    set(SED_CMD "${SED_CMD} && ${ISED} 's|need_version=no|need_version=yes|' libtool")
-    set(SED_CMD "${SED_CMD} && ${ISED} 's|library_names_spec=.*|library_names_spec=\"\\\\\$libname\\\\\$release\\\\\$shared_ext\\\\\$versuffix \\\\\$libname\\\\\$release\\\\\$shared_ext\\\\\$major \\\\\$libname\\\\\$shared_ext\"|' libtool")
-    set(SED_CMD "${SED_CMD} && ${ISED} 's|soname_spec=.*|soname_spec=\"\\\\\$libname\\\\\$release\\\\\$shared_ext\\\\\$major\"|' libtool")
+    list(APPEND CFG_CMD COMMAND ${ANDROID_LIBTOOL_FIX_CMD})
 endif()
 
 # Hack to remove hardcoded rpath
-set(SED_CMD1 sh -c "${ISED} 's|^hardcode_libdir_flag_spec=.*|hardcode_libdir_flag_spec=\"\"|g' libtool")
-set(SED_CMD2 sh -c "${ISED} 's|^runpath_var=LD_RUN_PATH|runpath_var=DIE_RPATH_DIE|g' libtool")
+list(APPEND CFG_CMD COMMAND ${ISED} "s|^hardcode_libdir_flag_spec=.*|hardcode_libdir_flag_spec=\"\"|g" libtool)
+list(APPEND CFG_CMD COMMAND ${ISED} "s|^runpath_var=LD_RUN_PATH|runpath_var=DIE_RPATH_DIE|g" libtool)
 
+list(APPEND PATCH_CMD COMMAND ./autogen.sh)
 if(NOT DEFINED ENV{DARWIN})
     # patch: ignore limited broadcast address
-    set(PATCH_CMD1 "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/zbeacon.patch")
+    list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/zbeacon.patch)
     # patch: add _DEFAULT_SOURCE define for glibc starting at version 2.20
-    set(PATCH_CMD2 "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/czmq_default_source_define.patch")
+    list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/czmq_default_source_define.patch)
 endif()
 
 ko_write_gitclone_script(
@@ -51,8 +48,8 @@ include(ExternalProject)
 ExternalProject_Add(
     ${PROJECT_NAME}
     DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
-    PATCH_COMMAND ./autogen.sh COMMAND ${PATCH_CMD1} COMMAND ${PATCH_CMD2}
-    CONFIGURE_COMMAND COMMAND ${CFG_CMD} COMMAND ${SED_CMD} COMMAND ${SED_CMD1} COMMAND ${SED_CMD2}
+    PATCH_COMMAND ${PATCH_CMD}
+    CONFIGURE_COMMAND ${CFG_CMD}
     BUILD_COMMAND ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS}
     INSTALL_COMMAND ${KO_MAKE_RECURSIVE} installdirs uninstall install
 )

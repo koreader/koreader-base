@@ -10,6 +10,7 @@ enable_language(C)
 assert_var_defined(HOSTCFLAGS)
 assert_var_defined(HOSTCC)
 assert_var_defined(OS)
+
 if($ENV{KODEBUG})
     set(MUPDF_BUILD_TYPE "debug")
 else()
@@ -69,23 +70,23 @@ endif()
 
 set(SHARED_BUILD_CMD "${SHARED_BUILD_STR}")
 # use external fonts
-set(PATCH_CMD1 "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/external_fonts.patch")
+list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/external_fonts.patch)
 # add support for encryted zips
-set(PATCH_CMD2 "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/encrypted_zip.patch")
+list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/encrypted_zip.patch)
 # use libjpeg as a shared library
-set(PATCH_CMD3 "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/libjpeg_shared.patch")
+list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/libjpeg_shared.patch)
 # Disable potentially crashy ARM ASM (it's 7 years old, and hell to debug)
 # NOTE: There's also a few ARCH_UNALIGNED_OK checks, but we never did pass that define.
 #       (FWIW, we *could*, on anything not kindle-legacy).
-set(PATCH_CMD4 "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/no_arm_asm.patch")
+list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/no_arm_asm.patch)
 # Honor CFLAGS
-set(PATCH_CMD5 "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/honor_cflags.patch")
+list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/honor_cflags.patch)
 # Patch for https://bugs.ghostscript.com/show_bug.cgi?id=698877; should be in upstream from 1.15
 # cf. https://github.com/koreader/koreader/issues/5182
-set(PATCH_CMD6 "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/upstream-698877.patch")
+list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/upstream-698877.patch)
 # Patch for tar/cbt support; should be in upstream from 1.17
 # cf. https://github.com/koreader/koreader-base/issues/1041
-set(PATCH_CMD7 "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/tar-fixes.patch")
+list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/tar-fixes.patch)
 # Backport a metric shitton of fixes
 # https://github.com/ArtifexSoftware/mupdf/commit/9920e40365821fbef6c3050695b3dcf0fa5f512e
 # https://github.com/ArtifexSoftware/mupdf/commit/3a263069d58416c251ef9f6a100a54be1e90dc0b
@@ -129,22 +130,22 @@ set(PATCH_CMD7 "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/tar-fixes.patch")
 
 # https://github.com/ArtifexSoftware/mupdf/commit/bc4ec04e21027e226052e0a4c767cbf09994552e
 # https://github.com/ArtifexSoftware/mupdf/commit/a7c435ac1836cc9e46ec4329c1543892148a7a0e
-set(PATCH_CMD8 "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/mupdf-1.13.0-backports.patch")
+list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/mupdf-1.13.0-backports.patch)
 
 # Support for WebP images (unmerged-yet proposed upstream patch cleaned up of win32 stuff)
-set(PATCH_CMD9 "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/webp-upstream-697749.patch")
+list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/webp-upstream-697749.patch)
 
 # add support for cbz chapters
-set(PATCH_CMD10 "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/mupdf_cbz_chapter_support.patch")
+list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/mupdf_cbz_chapter_support.patch)
 
 # don't try link with libraries when building generator helpers…
-set(PATCH_CMD11 "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/fix_link_cmd.patch")
+list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/fix_link_cmd.patch)
 
 # Backport https://github.com/ArtifexSoftware/mupdf/commit/50d80e509356784720ba8a7def5359f2673697ea (handle > 2GB Zip64)
-set(PATCH_CMD12 "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/read_large_zip.patch")
+list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/read_large_zip.patch)
 
 # Ensure an HTML document fonts are freed on close.
-set(PATCH_CMD13 "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/free-html-doc-fonts-on-close.patch")
+list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/free-html-doc-fonts-on-close.patch)
 
 # TODO: ignore shared git submodules built outside of mupdf by ourselves
 # https://git.ghostscript.com/mupdf.git is slow, so we use the official mirror on GitHub
@@ -162,7 +163,7 @@ ExternalProject_Add(
     ${PROJECT_NAME}
     DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
     BUILD_IN_SOURCE 1
-    PATCH_COMMAND COMMAND ${PATCH_CMD1} COMMAND ${PATCH_CMD2} COMMAND ${PATCH_CMD3} COMMAND ${PATCH_CMD4} COMMAND ${PATCH_CMD5} COMMAND ${PATCH_CMD6} COMMAND ${PATCH_CMD7} COMMAND ${PATCH_CMD8} COMMAND ${PATCH_CMD9} COMMAND ${PATCH_CMD10} COMMAND ${PATCH_CMD11} COMMAND ${PATCH_CMD12} COMMAND ${PATCH_CMD13}
+    PATCH_COMMAND ${PATCH_CMD}
     # skip configure
     CONFIGURE_COMMAND ""
     BUILD_COMMAND ${BUILD_CMD_GENERATE} COMMAND ${STATIC_BUILD_CMD} COMMAND ${SHARED_BUILD_CMD}

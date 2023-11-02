@@ -16,18 +16,18 @@ assert_var_defined(LUAPATH)
 ep_get_source_dir(SOURCE_DIR)
 
 # Don't enforce CFLAGS
-set(PATCH_CMD sh -c "${ISED} 's|-O2 ||g' src/Makefile")
+list(APPEND PATCH_CMD COMMAND ${ISED} "s|-O2 ||g" src/Makefile)
 
-set(BUILD_CMD_STR ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS} "CC=${CC}" "CCLD=${LD}" "AR=${AR}" "RANLIB=${RANLIB}" "INC_PATH=${INC_PATH}" "LIB_PATH=${LIB_PATH}" "LUAPATH=${LUAPATH}" "LUACPATH=${LUAPATH}")
+list(APPEND MAKE_CMD COMMAND ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS} "CC=${CC}" "CCLD=${LD}" "AR=${AR}" "RANLIB=${RANLIB}" "INC_PATH=${INC_PATH}" "LIB_PATH=${LIB_PATH}" "LUAPATH=${LUAPATH}" "LUACPATH=${LUAPATH}")
 if(DEFINED LIBS)
-    set(BUILD_CMD_STR ${BUILD_CMD_STR} "LIBS=${LIBS}")
+    list(APPEND MAKE_CMD "LIBS=${LIBS}")
 endif()
 if (DEFINED ENV{DARWIN})
-    set(INSTALL_CMD ${BUILD_CMD_STR} macosx install)
-    set(BUILD_CMD ${BUILD_CMD_STR} macosx)
+    set(INSTALL_CMD ${MAKE_CMD} macosx install)
+    set(BUILD_CMD ${MAKE_CMD} macosx)
 else()
-    set(INSTALL_CMD ${BUILD_CMD_STR} linux install)
-    set(BUILD_CMD ${BUILD_CMD_STR} linux)
+    set(INSTALL_CMD ${MAKE_CMD} linux install)
+    set(BUILD_CMD ${MAKE_CMD} linux)
 endif()
 
 ko_write_gitclone_script(
@@ -42,7 +42,7 @@ ExternalProject_Add(
     ${PROJECT_NAME}
     DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
     BUILD_IN_SOURCE 1
-    PATCH_COMMAND COMMAND ${PATCH_CMD}
+    PATCH_COMMAND ${PATCH_CMD}
     CONFIGURE_COMMAND ""
     BUILD_COMMAND ${BUILD_CMD}
     INSTALL_COMMAND ${INSTALL_CMD}

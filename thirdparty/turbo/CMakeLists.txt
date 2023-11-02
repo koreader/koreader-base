@@ -14,11 +14,15 @@ ep_get_source_dir(SOURCE_DIR)
 
 set(BUILD_CMD ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS} "CC=${CC}" "CFLAGS=${CFLAGS}" "LDFLAGS=${LDFLAGS}" all)
 
+# Drop duplicate cdefs, make sure turbo find its libtffi_wrap library, and pull in upstream fixes
+list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/turbo.patch)
+list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/d7a8a247a4a2689b0f207162eb804141c87c4899.patch)
 # Remove the 7 years-old copy of a CA bundle that turbo doesn't actually use.
-set(PATCH_CMD sh -c "rm -f ${SOURCE_DIR}/turbo/ca-certificates.crt && ${ISED} 's|CC=|CC:=|' ${SOURCE_DIR}/Makefile")
+list(APPEND PATCH_CMD COMMAND rm -f ${SOURCE_DIR}/turbo/ca-certificates.crt)
+list(APPEND PATCH_CMD COMMAND ${ISED} "s|CC=|CC:=|" ${SOURCE_DIR}/Makefile)
 if (APPLE AND DEFINED ENV{ANDROID})
     # makefile of turbo hardcodes the shared library filename on darwin
-    set(PATCH_CMD "${PATCH_CMD} && ${ISED} 's|libtffi_wrap.dylib|libtffi_wrap.so|' ${SOURCE_DIR}/Makefile")
+    list(APPEND PATCH_CMD COMMAND ${ISED} "s|libtffi_wrap.dylib|libtffi_wrap.so|" ${SOURCE_DIR}/Makefile)
 endif()
 
 ko_write_gitclone_script(
@@ -33,9 +37,8 @@ ExternalProject_Add(
     ${PROJECT_NAME}
     DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
     BUILD_IN_SOURCE 1
-    # Drop duplicate cdefs, make sure turbo find its libtffi_wrap library, and pull in upstream fixes
-    PATCH_COMMAND COMMAND "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/turbo.patch" COMMAND "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/d7a8a247a4a2689b0f207162eb804141c87c4899.patch"
-    CONFIGURE_COMMAND COMMAND ${PATCH_CMD}
+    PATCH_COMMAND ${PATCH_CMD}
+    CONFIGURE_COMMAND ""
     BUILD_COMMAND ${BUILD_CMD}
     # skip install
     INSTALL_COMMAND ""

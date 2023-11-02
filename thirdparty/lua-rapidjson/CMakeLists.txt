@@ -21,9 +21,10 @@ assert_var_defined(LUAROCKS)
 ep_get_source_dir(SOURCE_DIR)
 
 set(LUA_RAPIDJSON_ROCKSPEC rapidjson-${LUA_RAPIDJSON_VER}.rockspec)
-set(PATCH_CMD "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/lua-rapidjson-never-native.patch")
+
+list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/lua-rapidjson-never-native.patch)
 if(DEFINED ENV{ANDROID})
-    set(PATCH_CMD2 "${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/lua-rapidjson-android-link-to-lua.patch")
+    list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/lua-rapidjson-android-link-to-lua.patch)
 endif()
 
 # We want to run luarocks --version=5.1, not "luarocks --version=5.1"...
@@ -31,15 +32,15 @@ endif()
 set(ROCKS_CMD ${LUAROCKS})
 separate_arguments(ROCKS_CMD)
 
-set(BUILD_CMD ${ROCKS_CMD} make --tree=${OUTPUT_DIR}/rocks ${LUA_RAPIDJSON_ROCKSPEC})
-set(BUILD_CMD ${BUILD_CMD} "CC=${CC}" "CXX=${CXX}")
-set(BUILD_CMD ${BUILD_CMD} "CFLAGS=${CFLAGS}" "CXXFLAGS=${CXXFLAGS}" "LDFLAGS=${LDFLAGS} ${LIBFLAG}")
-set(BUILD_CMD ${BUILD_CMD} "LUA_INCDIR=${LUA_INCDIR}" "LUA_LIBDIR=${LUA_LIBDIR}")
+list(APPEND BUILD_CMD COMMAND ${ROCKS_CMD} make --tree=${OUTPUT_DIR}/rocks ${LUA_RAPIDJSON_ROCKSPEC})
+list(APPEND BUILD_CMD "CC=${CC}" "CXX=${CXX}")
+list(APPEND BUILD_CMD "CFLAGS=${CFLAGS}" "CXXFLAGS=${CXXFLAGS}" "LDFLAGS=${LDFLAGS} ${LIBFLAG}")
+list(APPEND BUILD_CMD "LUA_INCDIR=${LUA_INCDIR}" "LUA_LIBDIR=${LUA_LIBDIR}")
 if(DEFINED LUALIB)
-    set(BUILD_CMD ${BUILD_CMD} "LUALIB=${LUALIB}")
+    list(APPEND BUILD_CMD "LUALIB=${LUALIB}")
 endif()
 if(DEFINED LIBFLAG)
-    set(BUILD_CMD ${BUILD_CMD} "LIBFLAG=${LIBFLAG}")
+    list(APPEND BUILD_CMD "LIBFLAG=${LIBFLAG}")
 endif()
 
 ko_write_gitclone_script(
@@ -53,7 +54,7 @@ include(ExternalProject)
 ExternalProject_Add(
     ${PROJECT_NAME}
     DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
-    PATCH_COMMAND COMMAND ${PATCH_CMD} COMMAND ${PATCH_CMD2}
+    PATCH_COMMAND ${PATCH_CMD}
     BUILD_IN_SOURCE 1
     CONFIGURE_COMMAND ""
     BUILD_COMMAND ${BUILD_CMD}
