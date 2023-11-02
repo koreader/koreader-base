@@ -22,6 +22,11 @@ jobs:
           filter: tree:0
           show-progress: false
 
+      - uses: actions/setup-python@v4
+        with:
+          # Note: Python 3.12 removal of `distutils` breaks GLib's build.
+          python-version: '3.11'
+
       - name: Homebrew install dependencies
         # Compared to the README, adds ccache for faster compilation times and removes sh5sum to prevent some conflict with coreutils, and gnu-getopt because we're not using kodev
         run: brew install ccache nasm ragel binutils coreutils libtool autoconf automake cmake makedepend lua@5.1 luarocks gettext pkg-config wget gnu-getopt grep bison
