@@ -70,7 +70,7 @@ configure_file(crsetup.h.cmake crsetup.h)
 # Some source files use `#include "crsetup.h"`, others
 # `#include "../include/crsetup.h"`, so use the brute
 # force approach…
-add_definitions(--include "${CMAKE_CURRENT_BINARY_DIR}/crsetup.h")
+add_definitions(-include "${CMAKE_CURRENT_BINARY_DIR}/crsetup.h")
 
 message("Will build LIBCHM library")
 add_subdirectory(${CR_3RDPARTY_DIR}/chmlib)
