@@ -12,22 +12,16 @@ assert_var_defined(CHOST)
 assert_var_defined(CFLAGS)
 assert_var_defined(LDFLAGS)
 assert_var_defined(HOST_OPTS)
-assert_var_defined(WITH_LIBICONV)
-assert_var_defined(ENABLE_SHARED)
-assert_var_defined(LIBFFI_DIR)
-assert_var_defined(ZLIB_DIR)
 assert_var_defined(GETTEXT_DIR)
+assert_var_defined(LIBICONV_DIR)
+assert_var_defined(WITH_LIBICONV)
 
 ep_get_source_dir(SOURCE_DIR)
 ep_get_binary_dir(BINARY_DIR)
 
-# The build system (even the legacy autoconf one) has a hard dependency on Python,
-# but fails to actually honor the specified/detected Python version in every cases,
-# sometimes just hoping there's a python binary somewhere in $PATH (which, granted, there should be)...
-# Enforce that to python3 for containers where that's the only available Python version.
-if(DEFINED ENV{APPIMAGE} OR DEFINED ENV{CERVANTES} OR DEFINED ENV{KINDLE} OR DEFINED ENV{KOBO})
-    list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/glib-2.56.2-python3.patch)
-endif()
+# We only care about `libglib-2.0.a`.
+list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/glib-libglib-only.patch)
+
 # Android makes Linux syscalls hard to get to... Fix pilfered from Python.
 if(DEFINED ENV{ANDROID})
     list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/glib-2.58.2-android-linux-syscalls.patch)
@@ -57,28 +51,9 @@ endif()
 list(APPEND CFG_CMD COMMAND sh -c "printf '%s\\n' \"$@\" >arm_cache.conf" -- ${gen_arm_config})
 
 set(CFG_ENV_VAR "CC=${CC}" "AR=${AR}" "RANLIB=${RANLIB}")
-set(CFG_ENV_VAR ${CFG_ENV_VAR} "LIBFFI_CFLAGS=-I${LIBFFI_DIR}/include")
-set(CFG_ENV_VAR ${CFG_ENV_VAR} "LIBFFI_LIBS=-L${LIBFFI_DIR}/.libs -lffi")
-set(CFG_ENV_VAR ${CFG_ENV_VAR} "ZLIB_CFLAGS=-I${ZLIB_DIR}/include")
-set(CFG_ENV_VAR ${CFG_ENV_VAR} "ZLIB_LIBS=-L${ZLIB_DIR} -lz")
-set(CFG_OPTS --with-libiconv=${WITH_LIBICONV} --with-threads=posix --prefix=${BINARY_DIR} --libdir=${BINARY_DIR}/lib --enable-shared=${ENABLE_SHARED} --disable-libelf --with-pcre=internal --disable-selinux --disable-compile-warnings --enable-libmount=no)
-if("${ENABLE_SHARED}" STREQUAL "false")
-    set(CFG_OPTS ${CFG_OPTS} --enable-static=true)
-else()
-    set(CFG_OPTS ${CFG_OPTS} --disable-static)
-endif()
-
-if(DEFINED ENV{DARWIN})
-    # FIXME: Drop brew's libintl from the mac bundle script
-    set(CFLAGS "$ENV{DARWIN_AARCH64_HOST_CFLAG} ${CFLAGS} -I${GETTEXT_DIR}/include")
-    set(LDFLAGS "${LDFLAGS} $ENV{DARWIN_AARCH64_HOST_LDFLAG} -L${GETTEXT_DIR}/lib -L${LIBICONV_DIR}/lib -L${ZLIB_DIR}/lib -L${LIBFFI_DIR}/.libs -L${BINARY_DIR}/gmodule/.libs")
-else()
-    set(LDFLAGS "${LDFLAGS} -L${ZLIB_DIR}/lib -L${LIBFFI_DIR}/.libs -L${BINARY_DIR}/gmodule/.libs")
-    # Apparently, the CI needs some extra clunky help...
-    set(LDFLAGS "${LDFLAGS} -Wl,-rpath-link,${ZLIB_DIR}/lib -Wl,-rpath-link,${LIBFFI_DIR}/.libs -Wl,-rpath-link,${BINARY_DIR}/gmodule/.libs")
-endif()
-set(CFG_ENV_VAR ${CFG_ENV_VAR} "CFLAGS=${CFLAGS}" "LDFLAGS=${LDFLAGS}")
-
+set(CFG_ENV_VAR ${CFG_ENV_VAR} "CFLAGS=${CFLAGS} -I${LIBICONV_DIR}/include -I${GETTEXT_DIR}/include" "LDFLAGS=${LDFLAGS} -L${GETTEXT_DIR}/lib -L${LIBICONV_DIR}/lib")
+set(CFG_OPTS --with-libiconv=${WITH_LIBICONV} --with-threads=posix --prefix=${BINARY_DIR} --libdir=${BINARY_DIR}/lib --disable-libelf --with-pcre=internal --disable-selinux --disable-compile-warnings --enable-libmount=no)
+set(CFG_OPTS ${CFG_OPTS} --enable-static=true --enable-shared=false)
 set(CFG_OPTS ${CFG_OPTS} --host=${CHOST} ${HOST_OPTS})
 list(APPEND CFG_CMD COMMAND env ${CFG_ENV_VAR} ${SOURCE_DIR}/configure ${CFG_OPTS})
 
@@ -95,6 +70,6 @@ ExternalProject_Add(
     DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
     PATCH_COMMAND ${PATCH_CMD}
     CONFIGURE_COMMAND ${CFG_CMD}
-    BUILD_COMMAND ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS}
-    INSTALL_COMMAND ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS} install
+    BUILD_COMMAND ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS} -C glib
+    INSTALL_COMMAND ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS} -C glib install
 )

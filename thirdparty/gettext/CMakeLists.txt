@@ -17,16 +17,11 @@ assert_var_defined(CHOST_OPTS)
 ep_get_source_dir(SOURCE_DIR)
 ep_get_binary_dir(BINARY_DIR)
 
-# Android doesn't have a decimal_point member in the lconf struct before API 21
-if(DEFINED ENV{ANDROID})
-    list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/gettext-0.21-android-pre21-build.patch)
-endif()
-
 set(CFG_ENV_VAR "CC=${CC}" "AR=${AR}" "RANLIB=${RANLIB}" "CPPFLAGS=${CPPFLAGS}" "LDFLAGS=${LDFLAGS}")
-set(CFG_OPTS --enable-silent-rules --with-threads=none --disable-acl --disable-curses --disable-openmp --disable-native-java --disable-java)
-set(CFG_OPTS ${CFG_OPTS} --prefix=${BINARY_DIR} --libdir=${BINARY_DIR}/lib --with-libiconv-prefix=${LIBICONV_PREFIX} --with-included-libunistring --with-included-libxml --with-included-gettext)
+set(CFG_OPTS --enable-silent-rules --disable-threads --disable-java)
+set(CFG_OPTS ${CFG_OPTS} --prefix=${BINARY_DIR} --libdir=${BINARY_DIR}/lib --with-libiconv-prefix=${LIBICONV_PREFIX} --with-included-gettext)
 set(CFG_OPTS ${CFG_OPTS} --enable-shared=false --enable-static=true ${CHOST_OPTS})
-list(APPEND CFG_CMD COMMAND env ${CFG_ENV_VAR} ${SOURCE_DIR}/configure ${CFG_OPTS})
+list(APPEND CFG_CMD COMMAND env ${CFG_ENV_VAR} ${SOURCE_DIR}/gettext-runtime/configure ${CFG_OPTS})
 
 if(DEFINED ENV{ANDROID})
     # Tools? Where we're going we don't need tools.
@@ -42,6 +37,6 @@ ExternalProject_Add(
     DOWNLOAD_DIR ${KO_DOWNLOAD_DIR}
     PATCH_COMMAND ${PATCH_CMD}
     CONFIGURE_COMMAND ${CFG_CMD}
-    BUILD_COMMAND ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS}
-    INSTALL_COMMAND ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS} install
+    BUILD_COMMAND ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS} -C intl
+    INSTALL_COMMAND ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS} -C intl install
 )

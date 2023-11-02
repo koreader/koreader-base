@@ -713,6 +713,7 @@ LUAFILESYSTEM_DIR=luafilesystem
 ZLIB_BUILD_DIR=$(THIRDPARTY_DIR)/zlib/build/$(MACHINE)
 ZLIB_DIR=$(CURDIR)/$(ZLIB_BUILD_DIR)/zlib-prefix/src/zlib
 ZLIB_STATIC=$(ZLIB_DIR)/libz.a
+ZLIB=$(OUTPUT_DIR)/libs/$(if $(WIN32),zlib1.dll,$(if $(DARWIN),libz.1.dylib,libz.so.1))
 
 ZSTD_BUILD_DIR=$(THIRDPARTY_DIR)/zstd/build/$(MACHINE)
 ZSTD_DIR=$(CURDIR)/$(ZSTD_BUILD_DIR)/zstd-prefix/src/zstd
@@ -851,28 +852,25 @@ LUNASVG_LIB=$(OUTPUT_DIR)/libs/liblunasvg$(LUNASVG_LIB_EXT)
 LUNASVG_BUILD_DIR=$(THIRDPARTY_DIR)/lunasvg/build/$(MACHINE)
 LUNASVG_DIR=$(CURDIR)/$(LUNASVG_BUILD_DIR)/lunasvg-prefix/src/lunasvg-build
 
-LIBFFI_BUILD_DIR=$(THIRDPARTY_DIR)/libffi/build/$(MACHINE)
-LIBFFI_DIR=$(CURDIR)/$(LIBFFI_BUILD_DIR)/libffi-prefix/src/libffi-build
-
 SDCV_BUILD_DIR=$(THIRDPARTY_DIR)/sdcv/build/$(MACHINE)
 SDCV_DIR=$(CURDIR)/$(SDCV_BUILD_DIR)/sdcv-build
+
 GLIB_BUILD_DIR=$(THIRDPARTY_DIR)/glib/build/$(MACHINE)
 GLIB_DIR=$(CURDIR)/$(GLIB_BUILD_DIR)/glib-prefix/src/glib-build
+GLIB=$(GLIB_DIR)/lib/libglib-2.0.a
+
 LIBICONV_BUILD_DIR=$(THIRDPARTY_DIR)/libiconv/build/$(MACHINE)
 LIBICONV_DIR=$(CURDIR)/$(LIBICONV_BUILD_DIR)/libiconv-prefix/src/libiconv-build
+LIBICONV=$(LIBICONV_DIR)/lib/libiconv.a
+
 GETTEXT_BUILD_DIR=$(THIRDPARTY_DIR)/gettext/build/$(MACHINE)
 GETTEXT_DIR=$(CURDIR)/$(GETTEXT_BUILD_DIR)/gettext-prefix/src/gettext-build
+LIBGETTEXT=$(GETTEXT_DIR)/lib/libintl.a
 
 SDL2_BUILD_DIR=$(THIRDPARTY_DIR)/sdl2/build/$(MACHINE)
 SDL2_DIR=$(CURDIR)/$(SDL2_BUILD_DIR)/sdl2-build
 SDL2_LIB_ORIG=$(OUTPUT_DIR)/libs/libSDL2-2.0$(if $(KODEBUG),d,)$(LIB_EXT)
 SDL2_LIB=$(OUTPUT_DIR)/libs/libSDL2$(LIB_EXT)
-
-LIBICONV=$(LIBICONV_DIR)/lib/libiconv.a
-LIBGETTEXT=$(GETTEXT_DIR)/lib/libintl.a
-GLIB=$(GLIB_DIR)/lib/libglib-2.0$(if $(DARWIN),.dylib,.so.0)
-GLIB_STATIC=$(GLIB_DIR)/lib/libglib-2.0.a
-ZLIB=$(OUTPUT_DIR)/libs/$(if $(WIN32),zlib1.dll,$(if $(DARWIN),libz.1.dylib,libz.so.1))
 
 LEPT_LIB_EXT=$(if $(WIN32),-5.dll,$(if $(DARWIN),.5.dylib,.so.5))
 LEPTONICA_LIB=$(OUTPUT_DIR)/libs/liblept$(LEPT_LIB_EXT)
@@ -1001,7 +999,7 @@ CMAKE_THIRDPARTY_LIBS := $(CMAKE_THIRDPARTY_LIBS),luajit,lpeg,turbo
 CMAKE_THIRDPARTY_LIBS := $(CMAKE_THIRDPARTY_LIBS),czmq,libzmq
 CMAKE_THIRDPARTY_LIBS := $(CMAKE_THIRDPARTY_LIBS),libk2pdfopt,tesseract,leptonica
 CMAKE_THIRDPARTY_LIBS := $(CMAKE_THIRDPARTY_LIBS),lj-wpaclient
-CMAKE_THIRDPARTY_LIBS := $(CMAKE_THIRDPARTY_LIBS),lua-htmlparser,lua-rapidjson,lua-Spore,luasec,luasocket,libffi,glib,lodepng,minizip
+CMAKE_THIRDPARTY_LIBS := $(CMAKE_THIRDPARTY_LIBS),lua-htmlparser,lua-rapidjson,lua-Spore,luasec,luasocket,glib,lodepng,minizip
 CMAKE_THIRDPARTY_LIBS := $(CMAKE_THIRDPARTY_LIBS),djvulibre,mupdf,freetype2,harfbuzz,giflib,libpng,zlib,libwebp,lunasvg
 CMAKE_THIRDPARTY_LIBS := $(CMAKE_THIRDPARTY_LIBS),tar,sdcv,libiconv,gettext,libjpeg-turbo,popen-noshell,sqlite
 CMAKE_THIRDPARTY_LIBS := $(CMAKE_THIRDPARTY_LIBS),openssl,dropbear,openssh

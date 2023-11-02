@@ -1,0 +1,116 @@
+ Makefile.am  |  2 +-
+ configure.ac | 71 ------------------------------------------------------------
+ 2 files changed, 1 insertion(+), 72 deletions(-)
+
+diff --git i/Makefile.am w/Makefile.am
+index a888e6d..fd3a71d 100644
+--- i/Makefile.am
++++ w/Makefile.am
+@@ -6,7 +6,7 @@ include $(top_srcdir)/glib.mk
+ 
+ ACLOCAL_AMFLAGS = -I m4macros ${ACLOCAL_FLAGS}
+ 
+-SUBDIRS = . m4macros glib gmodule gthread gobject gio po docs tests subprojects
++SUBDIRS = . glib
+ DIST_SUBDIRS = $(SUBDIRS) build
+ 
+ bin_SCRIPTS = glib-gettextize
+diff --git i/configure.ac w/configure.ac
+index e18345d..2d6ac82 100644
+--- i/configure.ac
++++ w/configure.ac
+@@ -392,23 +392,6 @@ AS_IF([ test x"$glib_native_win32" = xyes], [
+   fi
+ ])
+ 
+-dnl
+-dnl zlib support
+-dnl
+-PKG_CHECK_MODULES([ZLIB], [zlib], [found_zlib=yes], [found_zlib=no])
+-AS_IF([test "x$found_zlib" = "xno"], [
+-  AC_CHECK_LIB(z, inflate, [AC_CHECK_HEADER(zlib.h, found_zlib=yes)])
+-  if test "x$found_zlib" = "xno" ; then
+-    AC_MSG_ERROR([*** Working zlib library and headers not found ***])
+-  fi
+-  ZLIB_LIBS='-lz'
+-  AC_SUBST(ZLIB_LIBS)
+-])
+-
+-PKG_CHECK_MODULES(LIBFFI, [libffi >= 3.0.0])
+-AC_SUBST(LIBFFI_CFLAGS)
+-AC_SUBST(LIBFFI_LIBS)
+-
+ dnl
+ dnl gettext support
+ dnl
+@@ -3453,70 +3436,16 @@ AC_SUBST(gio_INCLUDES)
+ 
+ 
+ AC_CONFIG_FILES([
+-glib-2.0.pc
+-gmodule-2.0.pc
+-gmodule-export-2.0.pc
+-gmodule-no-export-2.0.pc
+-gthread-2.0.pc
+-gobject-2.0.pc
+-gio-2.0.pc
+-gio-unix-2.0.pc
+-gio-windows-2.0.pc
+-glib-gettextize
+ Makefile
+ build/Makefile
+-build/win32/Makefile
+-build/win32/dirent/Makefile
+ glib/Makefile
+ glib/libcharset/Makefile
+ glib/gnulib/Makefile
+ glib/pcre/Makefile
+ glib/update-pcre/Makefile
+ glib/tests/Makefile
+-gmodule/Makefile
+-gmodule/gmoduleconf.h
+-gobject/Makefile
+-gobject/glib-genmarshal
+-gobject/glib-mkenums
+-gobject/tests/Makefile
+-gthread/Makefile
+-gio/Makefile
+-gio/gdbus-2.0/codegen/Makefile
+-gio/gdbus-2.0/codegen/config.py
+-gio/gnetworking.h
+-gio/xdgmime/Makefile
+-gio/inotify/Makefile
+-gio/kqueue/Makefile
+-gio/fam/Makefile
+-gio/win32/Makefile
+-gio/tests/Makefile
+-gio/tests/gdbus-object-manager-example/Makefile
+-gio/tests/services/Makefile
+-gio/tests/services/org.gtk.GDBus.Examples.ObjectManager.service
+-gio/tests/modules/Makefile
+-po/Makefile.in
+-docs/Makefile
+-docs/reference/Makefile
+-docs/reference/glib/Makefile
+-docs/reference/glib/version.xml
+-docs/reference/gobject/Makefile
+-docs/reference/gobject/version.xml
+-docs/reference/gio/Makefile
+-docs/reference/gio/version.xml
+-tests/Makefile
+-tests/gobject/Makefile
+-tests/refcount/Makefile
+-m4macros/Makefile
+-subprojects/Makefile
+ ])
+ 
+-# We need this command because the configure script will not preserve
+-# the same attributes of the template files
+-AC_CONFIG_COMMANDS([chmod-scripts],
+-[chmod 0755 glib-gettextize
+-chmod 0755 gobject/glib-genmarshal
+-chmod 0755 gobject/glib-mkenums])
+-
+ # we want to invoke this macro solely so that the config.status script
+ # and automake generated makefiles know about these generated files.
+ # They are only needed to distcheck the package
