@@ -747,6 +747,12 @@ static int isCacheFileStale(lua_State *L) {
     return 1;
 }
 
+static int setCacheFileStale(lua_State *L) {
+    CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
+    doc->dom_doc->setCacheFileStale(lua_toboolean(L, 2));
+    return 0;
+}
+
 static int invalidateCacheFile(lua_State *L) {
     CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
     doc->dom_doc->invalidateCacheFile();
@@ -4026,6 +4032,7 @@ static const struct luaL_Reg credocument_meth[] = {
     {"isBuiltDomStale", isBuiltDomStale},
     {"hasCacheFile", hasCacheFile},
     {"isCacheFileStale", isCacheFileStale},
+    {"setCacheFileStale", setCacheFileStale},
     {"invalidateCacheFile", invalidateCacheFile},
     {"getCacheFilePath", getCacheFilePath},
     {"updateTocAndPageMap", updateTocAndPageMap},
