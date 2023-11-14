@@ -1,47 +1,46 @@
-cmake_minimum_required(VERSION 3.5.1)
-project(libk2pdfopt)
+project(k2pdfopt LANGUAGES)
 
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_LIST_DIR}/../cmake_modules")
-include("koreader_thirdparty_common")
-include("koreader_thirdparty_asm")
-include("koreader_thirdparty_git")
+# Build in source tree.
+set(BINARY_DIR "${SOURCE_DIR}")
 
-enable_language(C CXX ASM)
+# list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/leptonica-without-libwebp.patch)
+list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/slightly-less-fuglyness.patch)
 
-assert_var_defined(CC)
-assert_var_defined(CFLAGS)
-assert_var_defined(CXX)
-assert_var_defined(CXXFLAGS)
-assert_var_defined(AR)
-assert_var_defined(LDFLAGS)
-assert_var_defined(ZLIB)
-assert_var_defined(ZLIB_DIR)
-assert_var_defined(PNG_DIR)
-assert_var_defined(LEPTONICA_DIR)
-assert_var_defined(TESSERACT_DIR)
-assert_var_defined(K2PDFOPT_DIR)
+list(APPEND PATCH_CMD COMMAND mv tesseract_mod/tesscapi.cpp tesscapi.cpp)
+list(APPEND PATCH_CMD COMMAND mv include_mod/tesseract.h tesseract.h)
+list(APPEND PATCH_CMD COMMAND sh -c "printf '#pragma once\\n#include <allheaders.h>' >leptonica.h")
 
-if (DEFINED ENV{DARWIN})
+if (DARWIN)
     #fix build error due to implicit declarations of function being invalid in C99 under macOS/XCode 12
     set(CFLAGS "${CFLAGS} -Wno-error=implicit-function-declaration")
 endif()
 
-# Fix build error when compiling with -std=gnu++17: ISO
-# C++17 does not allow 'register' storage class specifier.
-set(CXXFLAGS "${CXXFLAGS} -Wno-register -Wno-error=register")
-
-ep_get_source_dir(SOURCE_DIR)
+set(CPPFLAGS "-I${STAGING_DIR}/leptonica/include -I${STAGING_DIR}/tesseract/include -I.")
+set(CFLAGS "${CFLAGS} ${CPPFLAGS}")
+set(CXXFLAGS "${CXXFLAGS} ${CPPFLAGS}")
 
 # NOTE: This may be dangerously close to being too long (and as such, is at risk of random failure if your base path is even halfway long-ish)...
 # FIXME: Horrible nastiness on *native* builds happens if we set LDFLAGS here...
 #        (Namely, one of the libtool linking stage for tesseract fails to pickup the -L flags necessary to find liblept. Cross builds work fine. Yay, libtool).
-set(BUILD_CMD ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS} BUILDMODE=shared HOST=${HOST} CC=${CC} "CFLAGS=${CFLAGS}")
-set(BUILD_CMD ${BUILD_CMD} CXX=${CXX} "CXXFLAGS=${CXXFLAGS}" AR=${AR} RANLIB=${RANLIB} ZLIB=${ZLIB})
-set(BUILD_CMD ${BUILD_CMD} TESSERACT_DIR=${TESSERACT_DIR} LEPTONICA_DIR=${LEPTONICA_DIR} K2PDFOPT_DIR=${K2PDFOPT_DIR})
-set(BUILD_CMD ${BUILD_CMD} "LEPT_CFLAGS=-I${ZLIB_DIR} -I${PNG_DIR}/include")
-set(BUILD_CMD ${BUILD_CMD} "LEPT_LDFLAGS=-L${K2PDFOPT_DIR} -lpng -lz")
-set(BUILD_CMD ${BUILD_CMD} "ZLIB_LDFLAGS=-L${ZLIB_DIR}")
-set(BUILD_CMD ${BUILD_CMD} "PNG_LDFLAGS=-L${PNG_DIR}/lib" all)
+list(APPEND BUILD_CMD COMMAND ${KO_MAKE_RECURSIVE})
+append_autotools_vars(BUILD_CMD)
+list(APPEND BUILD_CMD
+    "ANDROID=${ANDROID}" "DARWIN=${DARWIN}" "MOD_INC=." "TESSERACT_MOD=." "TESSCAPI_CFLAGS="
+    "LIBS=-L${STAGING_DIR}/leptonica/shared -L${STAGING_DIR}/tesseract/shared -llept -ltesseract"
+)
+
+set(LIB_SPEC k2pdfopt VERSION 2)
+set_libname(LIB ${LIB_SPEC})
+
+# Install shared lib.
+append_shared_lib_install_command(INSTALL_CMD ${LIB} ${LIB_SPEC})
+
+# Install headers.
+append_headers_install_command(
+    INSTALL_CMD
+    FROM "${SOURCE_DIR}"
+    *.h k2pdfoptlib/k2pdfopt.h willuslib/willus.h
+)
 
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
@@ -50,13 +49,12 @@ ko_write_gitclone_script(
     ${SOURCE_DIR}
 )
 
-include(ExternalProject)
-ExternalProject_Add(
-    ${PROJECT_NAME}
+thirdparty_project(
+    BUILD_ALWAYS
     DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
-    BUILD_IN_SOURCE 1
-    CONFIGURE_COMMAND ""
+    PATCH_COMMAND ${PATCH_CMD}
+    CONFIGURE_COMMAND COMMAND
     BUILD_COMMAND ${BUILD_CMD}
-    # skip install
-    INSTALL_COMMAND ""
+    INSTALL_COMMAND ${INSTALL_CMD}
+    INSTALL_BYPRODUCTS ${STAGING_DIR}/${PROJECT_NAME}/shared/libk2pdfopt${LIB_EXT}
 )

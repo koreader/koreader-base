@@ -1,29 +1,34 @@
-cmake_minimum_required(VERSION 3.5.1)
-project(turbo)
+project(turbo LANGUAGES)
 
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_LIST_DIR}/../cmake_modules")
-include("koreader_thirdparty_common")
-include("koreader_thirdparty_git")
-
-enable_language(C)
-
-assert_var_defined(CC)
-assert_var_defined(LDFLAGS)
-
-ep_get_source_dir(SOURCE_DIR)
-
-set(BUILD_CMD ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS} "CC=${CC}" "CFLAGS=${CFLAGS}" "LDFLAGS=${LDFLAGS}" all)
+# Build in source tree.
+set(BINARY_DIR "${SOURCE_DIR}")
 
 # Drop duplicate cdefs, make sure turbo find its libtffi_wrap library, and pull in upstream fixes
 list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/turbo.patch)
+# Don't recreate `libtffi_wrap.so` every time.
+list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/no_phony_business.patch)
 list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/d7a8a247a4a2689b0f207162eb804141c87c4899.patch)
 # Remove the 7 years-old copy of a CA bundle that turbo doesn't actually use.
-list(APPEND PATCH_CMD COMMAND rm -f ${SOURCE_DIR}/turbo/ca-certificates.crt)
-list(APPEND PATCH_CMD COMMAND ${ISED} "s|CC=|CC:=|" ${SOURCE_DIR}/Makefile)
-if (APPLE AND DEFINED ENV{ANDROID})
+list(APPEND PATCH_CMD COMMAND rm turbo/ca-certificates.crt)
+list(APPEND PATCH_CMD COMMAND ${ISED} "s|CC=|CC:=|" Makefile)
+if (APPLE AND ANDROID)
     # makefile of turbo hardcodes the shared library filename on darwin
-    list(APPEND PATCH_CMD COMMAND ${ISED} "s|libtffi_wrap.dylib|libtffi_wrap.so|" ${SOURCE_DIR}/Makefile)
+    list(APPEND PATCH_CMD COMMAND ${ISED} "s|libtffi_wrap.dylib|libtffi_wrap.so|" Makefile)
 endif()
+
+string(APPEND CFLAGS " -I${STAGING_DIR}/openssl/include")
+string(APPEND LDFLAGS " -L${STAGING_DIR}/openssl/shared")
+
+list(APPEND BUILD_CMD COMMAND ${KO_MAKE_RECURSIVE} "CC=${CC}" "CFLAGS=${CFLAGS}" "LDFLAGS=${LDFLAGS}" all)
+
+list(APPEND INSTALL_CMD COMMAND cd "${SOURCE_DIR}")
+
+# Install shared library.
+append_install_command(INSTALL_CMD "libtffi_wrap${LIB_EXT}" DESTINATION common/)
+
+# Install LUA code.
+append_install_command(INSTALL_CMD turbo.lua turbovisor.lua DESTINATION common/)
+append_tree_install_command(INSTALL_CMD turbo common/turbo)
 
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
@@ -32,14 +37,11 @@ ko_write_gitclone_script(
     ${SOURCE_DIR}
 )
 
-include(ExternalProject)
-ExternalProject_Add(
-    ${PROJECT_NAME}
+thirdparty_project(
+    BUILD_ALWAYS
     DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
-    BUILD_IN_SOURCE 1
     PATCH_COMMAND ${PATCH_CMD}
-    CONFIGURE_COMMAND ""
+    CONFIGURE_COMMAND COMMAND
     BUILD_COMMAND ${BUILD_CMD}
-    # skip install
-    INSTALL_COMMAND ""
+    INSTALL_COMMAND ${INSTALL_CMD}
 )

@@ -1,27 +1,42 @@
-cmake_minimum_required(VERSION 3.5.1)
-project(giflib)
+project(giflib LANGUAGES)
 
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_LIST_DIR}/../cmake_modules")
-include("koreader_thirdparty_common")
-include("koreader_thirdparty_git")
-
-enable_language(C)
-
-ep_get_source_dir(SOURCE_DIR)
-ep_get_binary_dir(BINARY_DIR)
-
-list(APPEND PATCH_CMD ${ISED} "s|\\$srcdir/configure \\$\\*||g" autogen.sh)
+if(ANDROID)
+    # use limits.h instead of stdint.h
+    list(APPEND PATCH_CMD COMMAND ${ISED} "s|stdint.h|limits.h|g" ${SOURCE_DIR}/lib/openbsd-reallocarray.c)
+endif()
+list(APPEND PATCH_CMD COMMAND ${ISED} "s|\\$srcdir/configure \\$\\*||g" autogen.sh)
 list(APPEND PATCH_CMD COMMAND ./autogen.sh)
 
-set(CFG_ENV_VAR ac_cv_prog_have_xmlto=no "CC=${CC}" "CFLAGS=${CFLAGS}" "LDFLAGS=${LDFLAGS}")
-set(CFG_OPTS --prefix=${BINARY_DIR} --libdir=${BINARY_DIR}/lib --disable-static --enable-shared --host=${CHOST})
-list(APPEND CFG_CMD COMMAND env ${CFG_ENV_VAR} ${SOURCE_DIR}/configure ${CFG_OPTS})
+if(ANDROID)
+    set(CPPFLAGS "-DS_IREAD=S_IRUSR -DS_IWRITE=S_IWUSR")
+endif()
 
-# use limits.h instead of stdint.h for android build
-if(DEFINED ENV{ANDROID})
-    list(APPEND CFG_CMD COMMAND ${ISED} "s|stdint.h|limits.h|g" ${SOURCE_DIR}/lib/openbsd-reallocarray.c)
+list(APPEND CFG_CMD COMMAND env)
+append_autotools_vars(CFG_CMD)
+list(APPEND CFG_CMD
+    "CPPFLAGS=${CPPFLAGS}"
+    ac_cv_prog_have_xmlto=no
+    ${SOURCE_DIR}/configure --host=${CHOST} --prefix=${INSTALL_DIR}
+    --disable-static --enable-shared
+)
+
+if(ANDROID)
     list(APPEND CFG_CMD COMMAND ${ANDROID_LIBTOOL_FIX_CMD})
 endif()
+
+list(APPEND BUILD_CMD COMMAND ${KO_MAKE_RECURSIVE} -C lib)
+
+set(LIB_SPEC gif VERSION 7)
+set_libname(LIB ${LIB_SPEC})
+
+# Install shared lib.
+append_shared_lib_install_command(INSTALL_CMD lib/.libs/${LIB} ${LIB_SPEC})
+
+# Install headers.
+append_headers_install_command(
+    INSTALL_CMD
+    "${SOURCE_DIR}/lib/gif_lib.h"
+)
 
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
@@ -30,12 +45,11 @@ ko_write_gitclone_script(
     ${SOURCE_DIR}
 )
 
-include(ExternalProject)
-ExternalProject_Add(
-    ${PROJECT_NAME}
+thirdparty_project(
+    BUILD_ALWAYS
     DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
     PATCH_COMMAND ${PATCH_CMD}
     CONFIGURE_COMMAND ${CFG_CMD}
-    BUILD_COMMAND ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS}
-    INSTALL_COMMAND ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS} install
+    BUILD_COMMAND ${BUILD_CMD}
+    INSTALL_COMMAND ${INSTALL_CMD}
 )

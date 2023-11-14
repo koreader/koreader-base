@@ -1,27 +1,33 @@
-cmake_minimum_required(VERSION 3.5.1)
-project(libpng)
+project(libpng LANGUAGES)
 
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/../cmake_modules")
-include("koreader_thirdparty_common")
-include("koreader_thirdparty_git")
+list(APPEND CFG_CMD COMMAND env)
+append_autotools_vars(CFG_CMD)
+list(APPEND CFG_CMD
+    "CPPFLAGS=-I${STAGING_DIR}/zlib/include"
+    "LIBS=-L${STAGING_DIR}/zlib/shared"
+    ${SOURCE_DIR}/configure --host=${CHOST}
+    --prefix=${BINARY_DIR} --libdir=${BINARY_DIR}/lib
+    --disable-static --enable-shared
+)
 
-enable_language(C CXX)
-
-assert_var_defined(CC)
-assert_var_defined(CXX)
-assert_var_defined(CPPFLAGS)
-assert_var_defined(LDFLAGS)
-
-ep_get_source_dir(SOURCE_DIR)
-ep_get_binary_dir(BINARY_DIR)
-
-set(CFG_ENV_VAR "CC=${CC}" "CXX=${CXX}" "CPPFLAGS=${CPPFLAGS}" "LDFLAGS=${LDFLAGS}")
-set(CFG_OPTS --prefix=${BINARY_DIR} --libdir=${BINARY_DIR}/lib --disable-static --enable-shared --host=${CHOST})
-list(APPEND CFG_CMD COMMAND env ${CFG_ENV_VAR} ${SOURCE_DIR}/configure ${CFG_OPTS})
-
-if(DEFINED ENV{ANDROID})
+if(ANDROID)
     list(APPEND CFG_CMD COMMAND ${ANDROID_LIBTOOL_FIX_CMD})
 endif()
+
+list(APPEND BUILD_CMD COMMAND ${KO_MAKE_RECURSIVE})
+
+set(LIB_SPEC png16 VERSION 16)
+set_libname(LIB ${LIB_SPEC})
+
+# Install shared lib.
+append_shared_lib_install_command(INSTALL_CMD .libs/${LIB} ${LIB_SPEC})
+
+append_headers_install_command(
+    INSTALL_CMD
+    "${BINARY_DIR}/pnglibconf.h"
+    FROM "${SOURCE_DIR}"
+    png.h pngconf.h
+)
 
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
@@ -30,12 +36,11 @@ ko_write_gitclone_script(
     ${SOURCE_DIR}
 )
 
-include(ExternalProject)
-ExternalProject_Add(
-    ${PROJECT_NAME}
+thirdparty_project(
+    BUILD_ALWAYS
     DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
-    PATCH_COMMAND ""
     CONFIGURE_COMMAND ${CFG_CMD}
-    BUILD_COMMAND ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS}
-    INSTALL_COMMAND ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS} install
+    BUILD_COMMAND ${BUILD_CMD}
+    INSTALL_COMMAND ${INSTALL_CMD}
+    INSTALL_BYPRODUCTS ${STAGING_DIR}/${PROJECT_NAME}/shared/libpng16${LIB_EXT}
 )

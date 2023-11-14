@@ -1,0 +1,38 @@
+ CMakeLists.txt           | 2 ++
+ sharedlib/CMakeLists.txt | 2 ++
+ 2 files changed, 4 insertions(+)
+
+diff --git i/CMakeLists.txt w/CMakeLists.txt
+index 5ad0718..786c3d2 100644
+--- i/CMakeLists.txt
++++ w/CMakeLists.txt
+@@ -1699,6 +1699,7 @@ endif()
+ ###############################################################################
+ # INSTALLATION
+ ###############################################################################
++if()
+ 
+ set(EXE ${CMAKE_EXECUTABLE_SUFFIX})
+ 
+@@ -1800,3 +1801,4 @@ configure_file("${CMAKE_CURRENT_SOURCE_DIR}/cmakescripts/cmake_uninstall.cmake.i
+   "cmake_uninstall.cmake" IMMEDIATE @ONLY)
+ 
+ add_custom_target(uninstall COMMAND ${CMAKE_COMMAND} -P cmake_uninstall.cmake)
++endif()
+diff --git i/sharedlib/CMakeLists.txt w/sharedlib/CMakeLists.txt
+index 8e94256..3a743ef 100644
+--- i/sharedlib/CMakeLists.txt
++++ w/sharedlib/CMakeLists.txt
+@@ -106,6 +106,7 @@ target_link_libraries(example jpeg)
+ add_executable(jcstest ../jcstest.c)
+ target_link_libraries(jcstest jpeg)
+ 
++if()
+ install(TARGETS jpeg EXPORT ${CMAKE_PROJECT_NAME}Targets
+   INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+   ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+@@ -118,3 +119,4 @@ if(NOT CMAKE_VERSION VERSION_LESS "3.1" AND MSVC AND
+   install(FILES "$<TARGET_PDB_FILE:jpeg>"
+     DESTINATION ${CMAKE_INSTALL_BINDIR} OPTIONAL)
+ endif()
++endif()

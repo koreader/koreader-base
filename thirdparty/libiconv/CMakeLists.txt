@@ -1,28 +1,32 @@
-cmake_minimum_required(VERSION 3.5.1)
-project(libiconv)
+project(libiconv LANGUAGES)
 
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_LIST_DIR}/../cmake_modules")
-include("koreader_thirdparty_common")
+list(APPEND CFG_CMD COMMAND env)
+append_autotools_vars(CFG_CMD)
+list(APPEND CFG_CMD
+    ${SOURCE_DIR}/configure --host=${CHOST} --prefix=${INSTALL_DIR}
+    --enable-shared=false --enable-static=true
+    --with-threads=none
+)
 
-enable_language(C)
+list(APPEND BUILD_CMD COMMAND ${KO_MAKE_RECURSIVE} lib/localcharset.h)
+list(APPEND BUILD_CMD COMMAND ${KO_MAKE_RECURSIVE} -C lib)
 
-assert_var_defined(HOST)
+# Install static lib.
+append_static_lib_install_command(INSTALL_CMD lib/.libs/libiconv.a iconv)
 
-ep_get_source_dir(SOURCE_DIR)
-ep_get_binary_dir(BINARY_DIR)
+# Install headers.
+append_headers_install_command(
+    INSTALL_CMD
+    "${BINARY_DIR}/include/iconv.h"
+)
 
-set(CFG_ENV_VAR "CC=${CC}" "LD=${LD}" "AR=${AR}" "RANLIB=${RANLIB}")
-set(CFG_OPTS --with-threads=none --prefix=${BINARY_DIR} --libdir=${BINARY_DIR}/lib --enable-shared=false --enable-static=true --host=${HOST})
-set(CFG_CMD env ${CFG_ENV_VAR} ${SOURCE_DIR}/configure ${CFG_OPTS})
+set(LIBICONV_VER "1.15")
 
-set(GETTEXT_VER "1.15")
-include(ExternalProject)
-ExternalProject_Add(
-    libiconv
-    URL http://ftpmirror.gnu.org/libiconv/libiconv-${GETTEXT_VER}.tar.gz
+thirdparty_project(
+    BUILD_ALWAYS
+    URL http://ftpmirror.gnu.org/libiconv/libiconv-${LIBICONV_VER}.tar.gz
     URL_MD5 ace8b5f2db42f7b3b3057585e80d9808
-    DOWNLOAD_DIR ${KO_DOWNLOAD_DIR}
     CONFIGURE_COMMAND ${CFG_CMD}
-    BUILD_COMMAND ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS}
-    INSTALL_COMMAND ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS} install
+    BUILD_COMMAND ${BUILD_CMD}
+    INSTALL_COMMAND ${INSTALL_CMD}
 )

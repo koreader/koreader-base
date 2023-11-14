@@ -1,41 +1,110 @@
-cmake_minimum_required(VERSION 3.5.1)
-project(curl)
+project(curl LANGUAGES)
 
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_LIST_DIR}/../cmake_modules")
-include("koreader_thirdparty_common")
-include("koreader_thirdparty_git")
-
-enable_language(C)
-
-assert_var_defined(CC)
-assert_var_defined(CPPFLAGS)
-assert_var_defined(CFLAGS)
-assert_var_defined(LDFLAGS)
-assert_var_defined(CHOST)
-
-ep_get_source_dir(SOURCE_DIR)
-ep_get_binary_dir(BINARY_DIR)
-
-# NOTE: Because InkView is the worst, we rename our own cURL build on PocketBook.... (#5861)
-if(DEFINED ENV{POCKETBOOK})
-    list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/curl-7.78.0-pb-rename.patch)
-endif()
-
+# Don't recreate `ca-bundle.crt` every time.
+list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/no_phony_business.patch)
 list(APPEND PATCH_CMD COMMAND ${ISED} "/LD_LIBRARY_PATH=/d" ${SOURCE_DIR}/configure.ac)
 list(APPEND PATCH_CMD COMMAND ${ISED} "/CURL_MAC_CFLAGS/d" ${SOURCE_DIR}/configure.ac)
-list(APPEND PATCH_CMD COMMAND ./buildconf)
+list(APPEND PATCH_CMD COMMAND autoreconf -fi)
 
-set(CFG_ENV_VAR "CC=${CC}" "CPPFLAGS=${CPPFLAGS}" "CFLAGS=${CFLAGS}" "LDFLAGS=${LDFLAGS}")
 # Take a deep breath...
 # TODO: Flip to --with-zstd? We currently only use cURL for zsync2, so, obviously, not necessary right now...
-set(CFG_OPTS --prefix=${BINARY_DIR} --libdir=${BINARY_DIR}/lib --host=${CHOST} --enable-shared=yes --enable-static=no --without-gnutls --without-mbedtls --without-nss --without-polarssl --without-winssl --with-ca-fallback --with-ca-bundle=./data/ca-bundle.crt --with-ssl --with-ca-path=/etc/ssl/certs --with-default-ssl-backend=openssl --disable-alt-svc --enable-crypto-auth --enable-dict --disable-ech --enable-file --enable-ftp --enable-gopher --enable-hsts --enable-http --enable-imap --disable-ldap --disable-ldaps --disable-ntlm-wb --enable-pop3 --enable-rt --enable-rtsp --disable-smb --without-libssh2 --enable-smtp --enable-telnet -enable-tftp --enable-tls-srp --disable-ares --enable-cookies --enable-dateparse --enable-dnsshuffle --enable-doh --enable-symbol-hiding --enable-http-auth --disable-ipv6 --enable-largefile --enable-manual --enable-mime --enable-netrc --enable-progress-meter --enable-proxy --disable-sspi --enable-threaded-resolver --enable-pthreads --enable-versioned-symbols --without-amissl --without-bearssl --without-brotli --without-cyassl --without-fish-functions-dir --without-nghttp2 --without-hyper --without-libidn2 --without-gssapi --without-libgsasl --without-libpsl --without-nghttp3 --without-ngtcp2 --without-quiche --without-librtmp --without-rustls --without-schannel --without-secure-transport --without-spnego --without-winidn --without-wolfssl --with-zlib --without-zstd)
-list(APPEND CFG_CMD COMMAND env ${CFG_ENV_VAR} ${SOURCE_DIR}/configure ${CFG_OPTS})
+list(APPEND CFG_CMD COMMAND env)
+append_autotools_vars(CFG_CMD)
+list(APPEND CFG_CMD
+    "CPPFLAGS=-I${STAGING_DIR}/openssl/include -I${STAGING_DIR}/zlib/include"
+    "LIBS=-L${STAGING_DIR}/openssl/shared -L${STAGING_DIR}/zlib/shared"
+    ${SOURCE_DIR}/configure --host=${CHOST} --prefix=${INSTALL_DIR}
+    --prefix=${BINARY_DIR} --libdir=${BINARY_DIR}/lib
+    --enable-shared=no --enable-static=yes
+    --disable-alt-svc
+    --disable-ares
+    --disable-ech
+    --disable-ipv6
+    --disable-ldap
+    --disable-ldaps
+    --disable-ntlm-wb
+    --disable-smb
+    --disable-sspi
+    --enable-cookies
+    --enable-crypto-auth
+    --enable-dateparse
+    --enable-dict
+    --enable-dnsshuffle
+    --enable-doh
+    --enable-file
+    --enable-ftp
+    --enable-gopher
+    --enable-hsts
+    --enable-http
+    --enable-http-auth
+    --enable-imap
+    --enable-largefile
+    --enable-manual
+    --enable-mime
+    --enable-netrc
+    --enable-pop3
+    --enable-progress-meter
+    --enable-proxy
+    --enable-pthreads
+    --enable-rt
+    --enable-rtsp
+    --enable-smtp
+    --enable-symbol-hiding
+    --enable-telnet -enable-tftp
+    --enable-threaded-resolver
+    --enable-tls-srp
+    --enable-versioned-symbols
+    --with-ca-bundle=./data/ca-bundle.crt
+    --with-ca-fallback
+    --with-ca-path=/etc/ssl/certs
+    --with-default-ssl-backend=openssl
+    --with-ssl
+    --with-zlib
+    --without-amissl
+    --without-bearssl
+    --without-brotli
+    --without-cyassl
+    --without-fish-functions-dir
+    --without-gnutls
+    --without-gssapi
+    --without-hyper
+    --without-libgsasl
+    --without-libidn2
+    --without-libpsl
+    --without-librtmp
+    --without-libssh2
+    --without-mbedtls
+    --without-nghttp2
+    --without-nghttp3
+    --without-ngtcp2
+    --without-nss
+    --without-polarssl
+    --without-quiche
+    --without-rustls
+    --without-schannel
+    --without-secure-transport
+    --without-spnego
+    --without-winidn
+    --without-winssl
+    --without-wolfssl
+    --without-zstd
+)
 
-list(APPEND BUILD_CMD COMMAND ${KO_MAKE_RECURSIVE} ca-bundle)
-list(APPEND BUILD_CMD COMMAND ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS})
+list(APPEND BUILD_CMD COMMAND ${KO_MAKE_RECURSIVE} lib/ca-bundle.crt)
+list(APPEND BUILD_CMD COMMAND ${KO_MAKE_RECURSIVE} -C lib)
 
-list(APPEND INSTALL_CMD COMMAND ${KO_MAKE_RECURSIVE} install)
-list(APPEND INSTALL_CMD COMMAND ${CMAKE_COMMAND} -E rename ${SOURCE_DIR}/lib/ca-bundle.crt ${BINARY_DIR}/ca-bundle.crt)
+# Install certificates bundle.
+append_install_command(INSTALL_CMD "lib/ca-bundle.crt" DESTINATION data/)
+
+# Install static lib.
+append_static_lib_install_command(INSTALL_CMD lib/.libs/libcurl.a curl)
+
+# Install headers.
+append_headers_install_command(
+    INSTALL_CMD
+    SUBDIR curl
+    "${SOURCE_DIR}/include/curl/*.h"
+)
 
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
@@ -44,13 +113,11 @@ ko_write_gitclone_script(
     ${SOURCE_DIR}
 )
 
-include(ExternalProject)
-ExternalProject_Add(
-    ${PROJECT_NAME}
+thirdparty_project(
+    BUILD_ALWAYS
     DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
-    BUILD_IN_SOURCE 1
     PATCH_COMMAND ${PATCH_CMD}
     CONFIGURE_COMMAND ${CFG_CMD}
-    BUILD_COMMAND COMMAND ${BUILD_CMD}
-    INSTALL_COMMAND COMMAND ${INSTALL_CMD}
+    BUILD_COMMAND ${BUILD_CMD}
+    INSTALL_COMMAND ${INSTALL_CMD}
 )

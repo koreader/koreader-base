@@ -1,0 +1,17 @@
+ Makefile.am | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git i/Makefile.am w/Makefile.am
+index 3e55230..22d2490 100644
+--- i/Makefile.am
++++ w/Makefile.am
+@@ -318,6 +318,9 @@ uninstall-hook:
+ 	(cd docs && $(MAKE) uninstall)
+ 	(cd docs/libcurl && $(MAKE) uninstall)
+ 
++lib/ca-bundle.crt: lib/mk-ca-bundle.pl
++	@perl $< -b -l -u lib/ca-bundle.crt
++
+ ca-bundle: lib/mk-ca-bundle.pl
+ 	@echo "generating a fresh ca-bundle.crt"
+ 	@perl $< -b -l -u lib/ca-bundle.crt

@@ -29,7 +29,7 @@ jobs:
 
       - name: Homebrew install dependencies
         # Compared to the README, adds ccache for faster compilation times and removes sh5sum to prevent some conflict with coreutils, and gnu-getopt because we're not using kodev
-        run: brew install ccache nasm ragel binutils coreutils libtool autoconf automake cmake makedepend lua@5.1 luarocks gettext pkg-config wget gnu-getopt grep bison
+        run: brew install ccache nasm ragel binutils coreutils libtool autoconf automake cmake makedepend lua@5.1 luarocks gettext pkg-config wget gnu-getopt grep bison make
 
       - name: Build cache restore
         id: build-cache-restore
@@ -54,8 +54,14 @@ jobs:
         id: build
         run: |
           export MACOSX_DEPLOYMENT_TARGET=11;
-          export PATH="$(brew --prefix)/opt/gettext/bin:$(brew --prefix)/opt/gnu-getopt/bin:$(brew --prefix)/opt/bison/bin:$(brew --prefix)/opt/grep/libexec/gnubin:${PATH}";
-          make fetchthirdparty && make
+          export PATH="$(brew --prefix)/opt/make/libexec/gnubin:$(brew --prefix)/opt/gettext/bin:$(brew --prefix)/opt/gnu-getopt/bin:$(brew --prefix)/opt/bison/bin:$(brew --prefix)/opt/grep/libexec/gnubin:${PATH}";
+          make --version
+          PROCS="$(getconf _NPROCESSORS_ONLN)"
+          PARALLEL_JOBS="$((PROCS * 2))"
+          PARALLEL_LOAD="${PROCS}"
+          export MAKEFLAGS=--debug=print
+          export VERBOSE=1
+          make fetchthirdparty && make "-j${PARALLEL_JOBS}" "-l${PARALLEL_LOAD}"
 
       - name: Build cache pre-save
         if: always()

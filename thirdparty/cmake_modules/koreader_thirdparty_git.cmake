@@ -1,3 +1,5 @@
+include_guard(GLOBAL)
+
 find_package(Git)
 
 function(_ko_write_gitclone_script script_filename git_EXECUTABLE git_repository git_tag git_submodules src_name work_dir build_source_dir gitclone_infofile gitclone_stampfile)
@@ -5,7 +7,7 @@ function(_ko_write_gitclone_script script_filename git_EXECUTABLE git_repository
 # Default depth
 set(git_clone_depth 50)
 
-set(clone_checkout "${work_dir}/${src_name}")
+set(clone_checkout "${work_dir}")
 
   file(WRITE ${script_filename}
 "if(\"${git_tag}\" STREQUAL \"\")
@@ -35,11 +37,7 @@ endif()
 
 set(should_clone 1)
 if(EXISTS \"${work_dir}\")
-  if(EXISTS \"${work_dir}/${src_name}\")
-    set(should_clone 0)
-  endif()
-else()
-  make_directory(\"${work_dir}\")
+  set(should_clone 0)
 endif()
 
 if(should_clone)
@@ -137,9 +135,14 @@ if(error_code)
 endif()
 
 # Copy everything over to source directory
-get_filename_component(destination_dir \"${build_source_dir}\" PATH)
 if(EXISTS ${build_source_dir})
   file(REMOVE_RECURSE ${build_source_dir})
+endif()
+get_filename_component(destination_dir \"${build_source_dir}\" DIRECTORY)
+get_filename_component(destination_name \"${build_source_dir}\" NAME)
+get_filename_component(source_name \"${clone_checkout}\" NAME)
+if (NOT \${source_name\} STREQUAL \${destination_name})
+    message(FATAL_ERROR \"source / destination basenames don't match: ${clone_checkout} / ${build_source_dir}\")
 endif()
 file(COPY \"${clone_checkout}\" DESTINATION \${destination_dir})
 
@@ -166,11 +169,13 @@ endif()
 endfunction()
 
 function(ko_write_gitclone_script script_filename git_repository git_tag build_source_dir)
-    set(clone_dir ${CMAKE_CURRENT_SOURCE_DIR}/build/git_checkout)
-    set(work_dir ${CMAKE_CURRENT_BINARY_DIR}/git_checkout)
-    set(tmp_dir ${work_dir}/tmp)
-    set(stamp_dir ${work_dir}/stamp)
-    set(git_submodules ${ARGV4})
+    set(clone_dir ${CMAKE_CURRENT_SOURCE_DIR}/build/source)
+    set(tmp_dir ${CMAKE_CURRENT_BINARY_DIR}/tmp/git)
+    set(stamp_dir ${CMAKE_CURRENT_BINARY_DIR}/stamp/git)
+    if(ARGC GREATER 4)
+        set(git_submodules ${ARGV4})
+    endif()
+    message(STATUS "clone_dir=${clone_dir} / tmp_dir=${tmp_dir} / stamp_dir=${stamp_dir}")
 
     set(${script_filename} ${tmp_dir}/${PROJECT_NAME}-gitclone-${git_tag}.cmake)
     set(${script_filename} ${${script_filename}} PARENT_SCOPE)

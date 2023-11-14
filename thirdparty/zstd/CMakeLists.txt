@@ -1,26 +1,25 @@
-cmake_minimum_required(VERSION 3.5.1)
-project(zstd)
+project(zstd LANGUAGES)
 
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_LIST_DIR}/../cmake_modules")
-include("koreader_thirdparty_common")
-include("koreader_thirdparty_git")
+list(APPEND CMAKE_ARGS "-DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE}")
 
-enable_language(C)
+list(APPEND CMAKE_ARGS "-DZSTD_BUILD_PROGRAMS=FALSE")
+list(APPEND CMAKE_ARGS "-DZSTD_BUILD_SHARED=TRUE")
+list(APPEND CMAKE_ARGS "-DZSTD_BUILD_STATIC=FALSE")
 
-assert_var_defined(CC)
-assert_var_defined(CXX)
-assert_var_defined(AR)
-assert_var_defined(CFLAGS)
-assert_var_defined(LDFLAGS)
+list(APPEND BUILD_CMD ${KO_MAKE_PROGRAM})
 
-ep_get_source_dir(SOURCE_DIR)
-ep_get_binary_dir(BINARY_DIR)
+set(LIB_SPEC zstd VERSION 1)
+set_libname(LIB ${LIB_SPEC})
 
-# This a pure Makefile buildsystem, don't enforce CFLAGS via command line args, the buildsystem needs to be able to modify it.
-set(BUILD_ENV "CFLAGS=${CFLAGS}" "LDFLAGS=${LDFLAGS}")
+# Install shared lib.
+append_shared_lib_install_command(INSTALL_CMD lib/${LIB} ${LIB_SPEC})
 
-set(BUILD_CMD env ${BUILD_ENV} ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS} V=1 "CC=${CC}" "CXX=${CXX}" "AR=${AR}" lib-release)
-set(INSTALL_CMD env ${BUILD_ENV} ${KO_MAKE_RECURSIVE} -C lib -j${PARALLEL_JOBS} V=1 "CC=${CC}" "CXX=${CXX}" "AR=${AR}" "prefix=${BINARY_DIR}" install)
+# Install headers.
+append_headers_install_command(
+    INSTALL_CMD
+    FROM "${SOURCE_DIR}/lib"
+    zdict.h zstd.h zstd_errors.h
+)
 
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
@@ -29,12 +28,12 @@ ko_write_gitclone_script(
     ${SOURCE_DIR}
 )
 
-include(ExternalProject)
-ExternalProject_Add(
-    ${PROJECT_NAME}
+thirdparty_project(
+    BUILD_ALWAYS
     DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
-    BUILD_IN_SOURCE 1
-    CONFIGURE_COMMAND ""
-    BUILD_COMMAND COMMAND ${BUILD_CMD}
-    INSTALL_COMMAND COMMAND ${INSTALL_CMD}
+    SOURCE_SUBDIR "build/cmake"
+    CMAKE_ARGS "${CMAKE_ARGS}"
+    BUILD_COMMAND ${BUILD_CMD}
+    INSTALL_COMMAND ${INSTALL_CMD}
+    INSTALL_BYPRODUCTS ${STAGING_DIR}/${PROJECT_NAME}/shared/libzstd${LIB_EXT}
 )

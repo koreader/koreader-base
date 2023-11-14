@@ -1,62 +1,37 @@
-cmake_minimum_required(VERSION 3.5.1)
-project(zsync2)
-
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_LIST_DIR}/../cmake_modules")
-include("koreader_thirdparty_common")
-include("koreader_thirdparty_git")
-
-enable_language(C)
-
-assert_var_defined(CPPFLAGS)
-assert_var_defined(CFLAGS)
-assert_var_defined(CXXFLAGS)
-assert_var_defined(LDFLAGS)
-assert_var_defined(CURL_DIR)
-
-ep_get_source_dir(SOURCE_DIR)
-ep_get_binary_dir(BINARY_DIR)
-
-# Make sure the daisy-chain once again picks up our toolchain file...
-if(DEFINED ENV{CMAKE_TCF})
-    list(APPEND CMAKE_ARGS "$ENV{CMAKE_TCF}")
-endif()
-
-# CMake hell.
-# We expect lib later on in Makefile.third, even on multilib systems...
-list(APPEND CMAKE_ARGS "-DCMAKE_INSTALL_PREFIX=${BINARY_DIR}")
-list(APPEND CMAKE_ARGS "-DCMAKE_INSTALL_LIBDIR=lib")
-list(APPEND CMAKE_ARGS "-DCMAKE_INSTALL_INCLUDEDIR=include")
-list(APPEND CMAKE_ARGS "-DCMAKE_SKIP_RPATH=TRUE")
-#list(APPEND CMAKE_ARGS "-DCMAKE_VERBOSE_MAKEFILE:BOOL=ON")
-
-# Honor the env, dammit.
-list(APPEND CMAKE_ARGS "-DCMAKE_EXE_LINKER_FLAGS=${LDFLAGS}")
-list(APPEND CMAKE_ARGS "-DCMAKE_MODULE_LINKER_FLAGS=${LDFLAGS}")
-list(APPEND CMAKE_ARGS "-DCMAKE_SHARED_LINKER_FLAGS=${LDFLAGS}")
-list(APPEND CMAKE_ARGS "-DCMAKE_C_FLAGS=${CPPFLAGS} ${CFLAGS}")
-list(APPEND CMAKE_ARGS "-DCMAKE_CXX_FLAGS=${CPPFLAGS} ${CXXFLAGS}")
-
-# And, finally, the actual zsync2 build options
-list(APPEND CMAKE_ARGS "-DBUILD_CPR_TESTS=0")
-list(APPEND CMAKE_ARGS "-DUSE_SYSTEM_CURL=1")
-list(APPEND CMAKE_ARGS "-DCURL_INCLUDE_DIR=${CURL_DIR}/include")
-# NOTE: Because InkView apparently requires & initializes cURL on init, we rename our own on PB to avoid ABI mishaps... (#5861)
-if(DEFINED ENV{POCKETBOOK})
-    list(APPEND CMAKE_ARGS "-DCURL_LIBRARY=curl_ko")
-else()
-    list(APPEND CMAKE_ARGS "-DCURL_LIBRARY=curl")
-endif()
-# And because CMake is being stupid on the bots...
-#list(APPEND CMAKE_ARGS "-DCURL_FOUND=1")
-if(DEFINED ENV{POCKETBOOK})
-    list(APPEND CMAKE_ARGS "-DCURL_LIBRARIES=curl_ko")
-else()
-    list(APPEND CMAKE_ARGS "-DCURL_LIBRARIES=curl")
-endif()
-#list(APPEND CMAKE_ARGS "-DCURL_INCLUDE_DIRS=${CURL_DIR}/include")
+project(zsync2 LANGUAGES)
 
 # Fix build with old TCs (kindle & pocketbook).
 list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/fix-old-tc-build.patch)
+
+list(APPEND CMAKE_ARGS "-DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE}")
+
+string(APPEND CURL_LIBRARIES
+    "${STAGING_DIR}/curl/static/libcurl.a"
+    $<SEMICOLON>
+    "-L${STAGING_DIR}/openssl/shared"
+    $<SEMICOLON>
+    "-lcrypto"
+    $<SEMICOLON>
+    "-lssl"
+)
+if(NOT DARWIN)
+    string(APPEND CURL_LIBRARIES $<SEMICOLON> "-pthread")
+    if(NOT ANDROID)
+        string(APPEND CURL_LIBRARIES $<SEMICOLON> "-lrt")
+    endif()
+endif()
+
+# And, finally, the actual zsync2 build options
+list(APPEND CMAKE_ARGS "-DBUILD_CPR_TESTS=0")
+list(APPEND CMAKE_ARGS "-DCURL_INCLUDE_DIR=${STAGING_DIR}/curl/include$<SEMICOLON>${STAGING_DIR}/zlib/include")
+list(APPEND CMAKE_ARGS "-DCURL_LIBRARIES=${CURL_LIBRARIES}")
+list(APPEND CMAKE_ARGS "-DCURL_LIBRARY=curl")
+list(APPEND CMAKE_ARGS "-DUSE_SYSTEM_CURL=1")
+
+list(APPEND BUILD_CMD ${KO_MAKE_PROGRAM})
+
+# Install executable.
+append_install_command(INSTALL_CMD src/zsync2)
 
 # NOTE: We're currently using our own fork instead of upstream's (https://github.com/AppImage/zsync2):
 ## * Enable range requests optimizations on the CLI
@@ -79,13 +54,10 @@ ko_write_gitclone_script(
     ${SOURCE_DIR}
 )
 
-include(ExternalProject)
-ExternalProject_Add(
-    zsync2
+thirdparty_project(
     DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
     PATCH_COMMAND ${PATCH_CMD}
-    CMAKE_ARGS "${CMAKE_ARGS}"
-    CMAKE_GENERATOR "Unix Makefiles"
-    BUILD_COMMAND ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS}
-    INSTALL_COMMAND ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS} install
+    CMAKE_ARGS ${CMAKE_ARGS}
+    BUILD_COMMAND ${BUILD_CMD}
+    INSTALL_COMMAND ${INSTALL_CMD}
 )

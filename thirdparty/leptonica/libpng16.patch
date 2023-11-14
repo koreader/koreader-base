@@ -1,0 +1,18 @@
+ configure.ac | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git i/configure.ac w/configure.ac
+index e64cde6..136e49a 100644
+--- i/configure.ac
++++ w/configure.ac
+@@ -43,8 +43,8 @@ AS_IF([test "x$with_zlib" != xno],
+ )
+ 
+ AS_IF([test "x$with_libpng" != xno],
+-  AC_CHECK_LIB([png], [png_read_png],
+-    AC_DEFINE([HAVE_LIBPNG], 1, [Define to 1 if you have libpng.]) AC_SUBST([LIBPNG_LIBS], [-lpng]),
++  AC_CHECK_LIB([png16], [png_read_png],
++    AC_DEFINE([HAVE_LIBPNG], 1, [Define to 1 if you have libpng.]) AC_SUBST([LIBPNG_LIBS], [-lpng16]),
+     AS_IF([test "x$with_libpng" = xyes], AC_MSG_ERROR([libpng support requested but library not found])),
+     ${LIBM} ${ZLIB_LIBS}
+   )

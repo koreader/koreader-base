@@ -1,0 +1,16 @@
+ Makefile | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git i/Makefile w/Makefile
+index ad24e65..0335a9f 100644
+--- i/Makefile
++++ w/Makefile
+@@ -92,7 +92,7 @@ $(LEPTONICA_LIB):
+ 		./configure $(if $(EMULATE_READER),,--host $(HOST)) \
+ 		--prefix=$(LEPTONICA_DIR) \
+ 		--disable-static --enable-shared \
+-		--with-zlib --with-libpng --without-jpeg --without-giflib --without-libtiff --without-libopenjpeg
++		--with-zlib --with-libpng --without-jpeg --without-giflib --without-libtiff --without-libopenjpeg --without-libwebp
+ 	# fix cannot find library -lc on mingw-w64
+ 	cd $(LEPTONICA_DIR) && sed -ie "s|archive_cmds_need_lc='yes'|archive_cmds_need_lc='no'|" config.status
+ 	# fix Permission denied on OSX

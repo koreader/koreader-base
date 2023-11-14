@@ -1,0 +1,68 @@
+diff --git i/tesseract_mod/tesscapi.cpp w/tesseract_mod/tesscapi.cpp
+index 3d0805b..71ea627 100644
+--- i/tesseract_mod/tesscapi.cpp
++++ w/tesseract_mod/tesscapi.cpp
+@@ -44,11 +44,6 @@
+ 
+ #include "allheaders.h"
+ #include "baseapi.h"
+-#include "strngs.h"
+-#include "params.h"
+-#include "blobs.h"
+-// For our try/catch block
+-#include <stdexcept>
+ /*
+ #include "notdll.h"
+ */
+@@ -56,6 +51,9 @@
+ /* C Wrappers */
+ #include "tesseract.h"
+ 
++// For our try/catch block
++#include <stdexcept>
++
+ // static tesseract::TessBaseAPI api[4];
+ 
+ /*
+ Makefile | 14 ++++++++++----
+ 1 file changed, 10 insertions(+), 4 deletions(-)
+
+diff --git i/Makefile w/Makefile
+index ad24e65..672cb75 100644
+--- i/Makefile
++++ w/Makefile
+@@ -65,6 +65,10 @@ LEPTONICA_LIB= liblept$(if $(WIN32),-5.dll,$(if $(DARWIN),.dylib,.so))
+ TESSERACT_LIB= libtesseract$(if $(WIN32),-3.dll,$(if $(DARWIN),.dylib,.so))
+ K2PDFOPT_LIB= libk2pdfopt$(if $(WIN32),-$(MAJVER).dll,$(if $(DARWIN),.$(MAJVER).dylib,.so.$(MAJVER)))
+ 
++LEPTONICA_LIB := 
++TESSERACT_LIB := 
++libk2pdfopt: $(K2PDFOPT_LIB)
++
+ ##############################################################################
+ # Object file rules.
+ ##############################################################################
+@@ -131,17 +135,19 @@ else
+ 	cp -a $(TESSERACT_DIR)/api/.libs/libtesseract$(if $(DARWIN),*.dylib,.so*) ./
+ endif
+ 
+-tesseract_capi: $(TESSERACT_MOD)/tesscapi.cpp $(TESSERACT_LIB)
++$(TESSERACT_API_O): $(TESSERACT_MOD)/tesscapi.cpp
+ 	$(TARGET_CXX) $(CXXFLAGS) -c $(TESSCAPI_CFLAGS) -o $(TESSERACT_API_O) $<
++
++$(TESSERACT_API_DYNO): $(TESSERACT_MOD)/tesscapi.cpp
+ 	$(TARGET_DYNCXX) $(CXXFLAGS) -c $(TESSCAPI_CFLAGS) -o $(TESSERACT_API_DYNO) $<
+ 
+-$(K2PDFOPT_A): $(K2PDFOPT_O) tesseract_capi
++$(K2PDFOPT_A): $(K2PDFOPT_O) $(TESSERACT_API_O)
+ 	$(AR) rcs $@ $(K2PDFOPT_O) $(TESSERACT_API_O)
+ 
+-$(K2PDFOPT_LIB): $(K2PDFOPT_O) tesseract_capi
++$(K2PDFOPT_LIB): $(K2PDFOPT_O) $(TESSERACT_API_DYNO)
+ 	$(CXX) $(CXXFLAGS) $(TARGET_ASHLDFLAGS) -o $@ \
+ 		$(K2PDFOPT_DYNO) $(TESSERACT_API_DYNO) $(TARGET_ALIBS) \
+-		$(TESSERACT_LIB) $(LEPTONICA_LIB)
++		$(TESSERACT_LIB) $(LEPTONICA_LIB) $(LIBS)
+ ifndef WIN32
+ 	ln -sf $(K2PDFOPT_LIB) libk2pdfopt$(if $(DARWIN),.dylib,.so)
+ endif

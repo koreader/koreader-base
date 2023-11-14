@@ -1,0 +1,19 @@
+ cmake/FindGLIB2.cmake | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git i/cmake/FindGLIB2.cmake w/cmake/FindGLIB2.cmake
+index db8d759..2801bb2 100644
+--- i/cmake/FindGLIB2.cmake
++++ w/cmake/FindGLIB2.cmake
+@@ -209,9 +209,9 @@ ENDIF (GLIB2_LIBRARIES AND GLIB2_INCLUDE_DIRS)
+ IF ( GLIB2_FOUND )
+   # Check if system has a newer version of glib
+   # which supports g_regex_match_simple
+-  INCLUDE( CheckIncludeFiles )
++  INCLUDE( CheckSymbolExists )
+   SET( CMAKE_REQUIRED_INCLUDES ${GLIB2_INCLUDE_DIRS} )
+-  CHECK_INCLUDE_FILES ( glib/gregex.h HAVE_GLIB_GREGEX_H )
++  check_symbol_exists ( g_regex_match_simple glib.h HAVE_GLIB_GREGEX_H )
+   # Reset CMAKE_REQUIRED_INCLUDES
+   SET( CMAKE_REQUIRED_INCLUDES "" )
+ ENDIF( GLIB2_FOUND )

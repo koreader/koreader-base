@@ -1,34 +1,26 @@
-cmake_minimum_required(VERSION 3.5.1)
-project(openssh)
-
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_LIST_DIR}/../cmake_modules")
-include("koreader_thirdparty_common")
-include("koreader_thirdparty_git")
-
-enable_language(C)
-
-assert_var_defined(CC)
-assert_var_defined(CPPFLAGS)
-assert_var_defined(CFLAGS)
-assert_var_defined(LDFLAGS)
-assert_var_defined(CHOST)
-
-ep_get_source_dir(SOURCE_DIR)
-ep_get_binary_dir(BINARY_DIR)
+project(openssh LANGUAGES)
 
 set(PATCH_CMD sh -c "autoreconf -fi")
 
-set(CFG_ENV_VAR "CC=${CC}" "CPPFLAGS=${CPPFLAGS} -I${SOURCE_DIR}" "CFLAGS=${CFLAGS}" "LIBS=${LIBS}" "LDFLAGS=${LDFLAGS}")
-set(CFG_OPTS --host=${CHOST} --without-hardening --without-stackprotect --disable-etc-default-login --disable-lastlog --with-openssl --with-md5-passwords --with-ssl-engine)
-set(CFG_CMD ${CFG_ENV_VAR} ${SOURCE_DIR}/configure ${CFG_OPTS})
-set(CFG_CMD env ${CFG_CMD})
+list(APPEND CFG_CMD COMMAND env)
+append_autotools_vars(CFG_CMD)
+list(APPEND CFG_CMD
+    "CPPFLAGS=-I${STAGING_DIR}/openssl/include -I${STAGING_DIR}/zlib/include"
+    "LIBS=${LDFLAGS} -L${STAGING_DIR}/openssl/shared -L${STAGING_DIR}/zlib/shared"
+    ${SOURCE_DIR}/configure --host=${CHOST} --prefix=${INSTALL_DIR}
+    --disable-etc-default-login
+    --disable-lastlog
+    --with-md5-passwords
+    --with-openssl
+    --with-ssl-engine
+    --without-hardening
+    --without-stackprotect
+)
 
-set(BUILD_CMD ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS} sftp-server scp)
+list(APPEND BUILD_CMD COMMAND ${KO_MAKE_RECURSIVE} sftp-server scp)
 
-# We build in-tree...
-set(INSTALL_CMD1 ${CMAKE_COMMAND} -E make_directory ${BINARY_DIR})
-set(INSTALL_CMD2 ${CMAKE_COMMAND} -E rename ${SOURCE_DIR}/sftp-server ${BINARY_DIR}/sftp-server)
-set(INSTALL_CMD3 ${CMAKE_COMMAND} -E rename ${SOURCE_DIR}/scp ${BINARY_DIR}/scp)
+# Install executables.
+append_install_command(INSTALL_CMD scp sftp-server)
 
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
@@ -37,13 +29,11 @@ ko_write_gitclone_script(
     ${SOURCE_DIR}
 )
 
-include(ExternalProject)
-ExternalProject_Add(
-    ${PROJECT_NAME}
+thirdparty_project(
+    BUILD_ALWAYS
     DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
-    BUILD_IN_SOURCE 1
-    PATCH_COMMAND COMMAND ${PATCH_CMD}
+    PATCH_COMMAND ${PATCH_CMD}
     CONFIGURE_COMMAND ${CFG_CMD}
     BUILD_COMMAND ${BUILD_CMD}
-    INSTALL_COMMAND COMMAND ${INSTALL_CMD1} COMMAND ${INSTALL_CMD2} COMMAND ${INSTALL_CMD3}
+    INSTALL_COMMAND ${INSTALL_CMD}
 )

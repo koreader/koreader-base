@@ -1,26 +1,45 @@
-cmake_minimum_required(VERSION 3.5.1)
-project(freetype2)
+project(freetype LANGUAGES)
 
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_LIST_DIR}/../cmake_modules")
-include("koreader_thirdparty_common")
-include("koreader_thirdparty_git")
+list(APPEND PATCH_CMD COMMAND ./autogen.sh)
 
-enable_language(C CXX)
+list(APPEND CFG_CMD COMMAND env)
+append_autotools_vars(CFG_CMD)
+list(APPEND CFG_CMD
+    ${SOURCE_DIR}/configure --host=${CHOST}
+    --prefix=${BINARY_DIR} --libdir=${BINARY_DIR}/lib
+    --disable-static --enable-shared
+    --with-brotli=no
+    --with-bzip2=no
+    --with-harfbuzz=no
+    --with-png=no
+    --with-zlib=no
+)
 
-assert_var_defined(CXX)
-assert_var_defined(CXXFLAGS)
-assert_var_defined(LDFLAGS)
-
-ep_get_source_dir(SOURCE_DIR)
-ep_get_binary_dir(BINARY_DIR)
-
-set(CFG_ENV_VAR "CC=${CC}" "CXX=${CXX}" "CFLAGS=${CFLAGS}" "CXXFLAGS=${CXXFLAGS}" "LDFLAGS=${LDFLAGS}")
-set(CFG_OPTS --prefix=${BINARY_DIR} --libdir=${BINARY_DIR}/lib --disable-static --enable-shared --with-zlib=no --with-bzip2=no --with-brotli=no --with-png=no --with-harfbuzz=no --host=${CHOST})
-list(APPEND CFG_CMD COMMAND env ${CFG_ENV_VAR} ${SOURCE_DIR}/configure ${CFG_OPTS})
-
-if(DEFINED ENV{ANDROID})
+if(ANDROID)
     list(APPEND CFG_CMD COMMAND ${ANDROID_LIBTOOL_FIX_CMD})
 endif()
+
+list(APPEND BUILD_CMD COMMAND ${KO_MAKE_RECURSIVE})
+
+set(LIB_SPEC freetype VERSION 6)
+set_libname(LIB ${LIB_SPEC})
+
+# Install shared lib.
+append_shared_lib_install_command(INSTALL_CMD .libs/${LIB} ${LIB_SPEC})
+
+# Install headers.
+append_headers_install_command(
+    INSTALL_CMD
+    "${SOURCE_DIR}/include/ft2build.h"
+)
+append_headers_install_command(
+    INSTALL_CMD SUBDIR freetype
+    "${SOURCE_DIR}/include/freetype/*.h"
+)
+append_headers_install_command(
+    INSTALL_CMD SUBDIR freetype/config
+    "${SOURCE_DIR}/include/freetype/config/*.h"
+)
 
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
@@ -29,12 +48,12 @@ ko_write_gitclone_script(
     ${SOURCE_DIR}
 )
 
-include(ExternalProject)
-ExternalProject_Add(
-    ${PROJECT_NAME}
+thirdparty_project(
+    BUILD_ALWAYS
     DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
-    PATCH_COMMAND ./autogen.sh
+    PATCH_COMMAND ${PATCH_CMD}
     CONFIGURE_COMMAND ${CFG_CMD}
-    BUILD_COMMAND ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS}
-    INSTALL_COMMAND ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS} install
+    BUILD_COMMAND ${BUILD_CMD}
+    INSTALL_COMMAND ${INSTALL_CMD}
+    INSTALL_BYPRODUCTS ${STAGING_DIR}/${PROJECT_NAME}/shared/libfreetype${LIB_EXT}
 )

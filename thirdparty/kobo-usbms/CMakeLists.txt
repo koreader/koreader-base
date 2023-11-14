@@ -1,28 +1,21 @@
-cmake_minimum_required(VERSION 3.5.1)
-project(kobo-usbms)
+project(kobo-usbms LANGUAGES)
 
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_LIST_DIR}/../cmake_modules")
-include("koreader_thirdparty_common")
-include("koreader_thirdparty_git")
+# Build in source tree.
+set(BINARY_DIR "${SOURCE_DIR}")
 
-enable_language(C)
+set(PATCH_CMD git -C FBInk submodule update --init --depth=1)
 
-assert_var_defined(CFLAGS)
-assert_var_defined(LDFLAGS)
+list(APPEND BUILD_CMD COMMAND env "CROSS_TC=${CHOST}")
+append_autotools_vars(BUILD_CMD)
+list(APPEND BUILD_CMD ${KO_MAKE_RECURSIVE} kobo)
 
-ep_get_source_dir(SOURCE_DIR)
-ep_get_binary_dir(BINARY_DIR)
-
-set(PREPARE_CMD sh -c "cd FBInk && git submodule init && git submodule update && cd -")
-set(BUILD_CMD ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS} "CFLAGS=${CFLAGS}" "LDFLAGS=${LDFLAGS}" kobo)
-
-# We build in-tree...
-set(INSTALL_CMD1 ${CMAKE_COMMAND} -E make_directory ${BINARY_DIR})
-if(DEFINED ENV{DEBUG})
-    set(INSTALL_CMD2 ${CMAKE_COMMAND} -E rename ${SOURCE_DIR}/Debug/KoboUSBMS.tar.gz ${BINARY_DIR}/KoboUSBMS.tar.gz)
+if(CMAKE_BUILD_TYPE STREQUAL Debug)
+    set(BUILD_DIR Debug)
 else()
-    set(INSTALL_CMD2 ${CMAKE_COMMAND} -E rename ${SOURCE_DIR}/Release/KoboUSBMS.tar.gz ${BINARY_DIR}/KoboUSBMS.tar.gz)
+    set(BUILD_DIR Release)
 endif()
+
+append_install_command(INSTALL_CMD "${BUILD_DIR}/KoboUSBMS.tar.gz" DESTINATION data/)
 
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
@@ -31,14 +24,10 @@ ko_write_gitclone_script(
     ${SOURCE_DIR}
 )
 
-include(ExternalProject)
-ExternalProject_Add(
-    ${PROJECT_NAME}
+thirdparty_project(
     DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
-    BUILD_IN_SOURCE 1
-    PATCH_COMMAND ""
-    CONFIGURE_COMMAND ""
-    BUILD_COMMAND COMMAND ${PREPARE_CMD} COMMAND ${BUILD_CMD}
-    # The buildsystem outputs binaries in a subdirectory...
-    INSTALL_COMMAND COMMAND ${INSTALL_CMD1} COMMAND ${INSTALL_CMD2}
+    PATCH_COMMAND ${PATCH_CMD}
+    CONFIGURE_COMMAND COMMAND
+    BUILD_COMMAND ${BUILD_CMD}
+    INSTALL_COMMAND ${INSTALL_CMD}
 )

@@ -1,0 +1,33 @@
+ Makefile.am  | 4 +---
+ configure.ac | 3 +--
+ 2 files changed, 2 insertions(+), 5 deletions(-)
+
+diff --git i/Makefile.am w/Makefile.am
+index e1c1dd4..352fe4a 100644
+--- i/Makefile.am
++++ w/Makefile.am
+@@ -1,9 +1,7 @@
+ ACLOCAL_AMFLAGS = -I m4
+-SUBDIRS = sharpyuv src imageio man
++SUBDIRS = sharpyuv src
+ EXTRA_DIST = COPYING autogen.sh
+ 
+ if BUILD_EXTRAS
+   SUBDIRS += extras
+ endif
+-
+-SUBDIRS += examples
+diff --git i/configure.ac w/configure.ac
+index 2216e4a..f83187a 100644
+--- i/configure.ac
++++ w/configure.ac
+@@ -753,8 +753,7 @@ dnl Add an empty webp_libname_prefix variable for use in *.pc.in.
+ AC_SUBST([webp_libname_prefix])
+ AC_CONFIG_MACRO_DIR([m4])
+ AC_CONFIG_HEADERS([src/webp/config.h])
+-AC_CONFIG_FILES([Makefile src/Makefile man/Makefile \
+-                 examples/Makefile extras/Makefile imageio/Makefile \
++AC_CONFIG_FILES([Makefile src/Makefile \
+                  sharpyuv/Makefile sharpyuv/libsharpyuv.pc \
+                  src/dec/Makefile src/enc/Makefile src/dsp/Makefile \
+                  src/demux/Makefile src/mux/Makefile \

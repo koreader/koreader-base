@@ -1,0 +1,18 @@
+diff --git a/Makefile b/Makefile
+index 974ff69..df03d81 100755
+--- a/Makefile
++++ b/Makefile
+@@ -84,8 +84,11 @@ ifeq ($(SSL), openssl)
+ endif
+ 
+ all:
+-	$(MAKE) -C deps/http-parser library
+-	$(CC) $(INC) -shared $(MYCFLAGS) $(MYCPPFLAGS) $(HTTP_PARSERDIR)/libhttp_parser.o $(TDEPS)/turbo_ffi_wrap.c -o $(INSTALL_TFFI_WRAP_SOSHORT) $(MYLDFLAGS)
++	$(MAKE) -C $(HTTP_PARSERDIR) libhttp_parser.o
++	$(MAKE) $(INSTALL_TFFI_WRAP_SOSHORT)
++
++$(INSTALL_TFFI_WRAP_SOSHORT): $(HTTP_PARSERDIR)/libhttp_parser.o $(TDEPS)/turbo_ffi_wrap.c
++	$(CC) $(INC) -shared $(MYCFLAGS) $(MYCPPFLAGS) $^ -o $@ $(MYLDFLAGS)
+ 
+ clean:
+ 	$(MAKE) -C deps/http-parser clean

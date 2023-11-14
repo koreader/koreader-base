@@ -118,7 +118,7 @@ diff -Nuarp lpeg-1.0.2-orig/makefile lpeg-1.0.2/makefile
 +	@echo DLLFLAGS: $(DLLFLAGS)
 +	@echo LUA_LIBDIR: $(LUA_LIBDIR)
 +	@echo LUA_INCDIR: $(LUA_INCDIR)
-+	$(CC) $(PROJ_CPPFLAGS) -I$(LUA_INCDIR) $(CPPFLAGS) $(PROJ_CFLAGS) $(CFLAGS) $(DLLFLAGS) $(LIBFLAG) $(LDFLAGS) $(PROJ_OBJS) -o lpeg.so -L$(LUA_LIBDIR) $(LUALIB) $(LIBS)
++	$(CC) $(PROJ_CPPFLAGS) -I$(LUA_INCDIR) $(CPPFLAGS) $(PROJ_CFLAGS) $(CFLAGS) $(DLLFLAGS) $(LIBFLAG) $(LDFLAGS) $(PROJ_OBJS) -o lpeg.so $(if $(LUALIB),$(LUA_LIBDIR)/$(LUALIB)) $(LIBS)
 +
 +install: lpeg.so re.lua
 +	@echo --- install
