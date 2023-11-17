@@ -5,24 +5,32 @@ function(add_project NAME)
     cmake_parse_arguments("" "INTERNAL" "DIRECTORY" "DEPENDS" ${ARGN})
     # Handle optional DIRECTORY argument.
     if(NOT _DIRECTORY)
-        set(_DIRECTORY "${NAME}")
+        set(_DIRECTORY ${NAME})
     endif()
     # Set global variables for later setup stage (inter-project dependencies).
     set("${NAME}_DEPENDS" ${_DEPENDS} PARENT_SCOPE)
     set("${NAME}_DIR" ${_DIRECTORY} PARENT_SCOPE)
     set("${NAME}_INTERNAL" ${_INTERNAL} PARENT_SCOPE)
-    set(PROJECTS ${PROJECTS} "${NAME}" PARENT_SCOPE)
+    set(PROJECTS ${PROJECTS} ${NAME} PARENT_SCOPE)
     # Setup directory variables.
     set(KO_DOWNLOAD_DIR "${CMAKE_CURRENT_SOURCE_DIR}/${_DIRECTORY}/build/downloads")
-    set(SOURCE_DIR "${CMAKE_CURRENT_BINARY_DIR}/${_DIRECTORY}/source")
-    set(BINARY_DIR "${CMAKE_CURRENT_BINARY_DIR}/${_DIRECTORY}/build")
-    set(INSTALL_DIR "${CMAKE_CURRENT_BINARY_DIR}/${_DIRECTORY}/install")
+    set(BASE_DIR "${CMAKE_CURRENT_BINARY_DIR}/${_DIRECTORY}")
+    set(SOURCE_DIR "${BASE_DIR}/source")
+    set(BINARY_DIR "${BASE_DIR}/build")
+    set(INSTALL_DIR "${BASE_DIR}/install")
     # Add project directory.
     add_subdirectory("${_DIRECTORY}")
+    # Add clean target.
+    add_custom_target(${NAME}-clean
+        # Remove base build directory.
+        COMMAND rm -rf "${BASE_DIR}"
+        # And trigger regenerating it the next time.
+        COMMAND touch "${CMAKE_CURRENT_SOURCE_DIR}/${_DIRECTORY}/CMakeLists.txt"
+    )
     # Add dependency to global targets.
     if(NOT _INTERNAL)
-        add_dependencies(download "${NAME}-download")
-        add_dependencies(patch "${NAME}-patch")
+        add_dependencies(download ${NAME}-download)
+        add_dependencies(patch ${NAME}-patch)
     endif()
 endfunction()
 

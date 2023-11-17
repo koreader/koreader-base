@@ -9,7 +9,7 @@ $(info ************ PATH: "$(PATH)" **********)
 $(info ************ CHOST: "$(CHOST)" **********)
 endif
 
-PHONY = all clean distclean fetch-cmake fetchthirdparty re skeleton test test-data 
+PHONY = all clean distclean fetch-cmake fetchthirdparty %-re re skeleton test test-data 
 
 .PHONY: $(PHONY)
 
@@ -25,6 +25,10 @@ distclean:
 
 re: clean
 	$(MAKE) all
+
+%-re:
+	$(MAKE) $*-clean
+	$(MAKE) $*
 
 # }}}
 
