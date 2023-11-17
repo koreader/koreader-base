@@ -13,9 +13,9 @@ elif [ "$EMULATE_READER" = "1" ]; then
     export OUTPUT_DIR
     for OUTPUT_DIR in build/*; do
         case "${OUTPUT_DIR}" in
-            build/cmake-*) ;;
-            build/staging-*) ;;
-            *) break ;;
+        build/cmake-*) ;;
+        build/staging-*) ;;
+        *) break ;;
         esac
     done
     cp "${OUTPUT_DIR}/luajit" "${HOME}/.luarocks/bin/"

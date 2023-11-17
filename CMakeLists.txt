@@ -192,6 +192,7 @@ endif()
 
 if(DARWIN)
     add_executable(koreader osx_loader.c)
+    add_dependencies(koreader luajit)
     target_include_directories(koreader PRIVATE "${STAGING_DIR}/luajit/include")
     target_link_libraries(koreader "${STAGING_DIR}/luajit/static/libluajit.a" m)
 endif()
