@@ -235,7 +235,13 @@ function(thirdparty_project)
     # Dowload parameters.
     if(_URL)
         list(APPEND PARAMS DOWNLOAD_DIR "${KO_DOWNLOAD_DIR}")
-        list(APPEND PARAMS URL "${_URL}" URL_MD5 "${_URL_MD5}")
+        list(APPEND PARAMS URL "${_URL}")
+        if(_URL MATCHES "http://ftpmirror\.gnu\.org/")
+            # Duplicate URL on flaky GNU FTP server as a form of retry
+            # (since each connection may result in a different mirror).
+            list(APPEND PARAMS "${_URL}" "${_URL}")
+        endif()
+        list(APPEND PARAMS URL_MD5 "${_URL_MD5}")
     else()
         if(NOT DEFINED _DOWNLOAD_COMMAND)
             message(FATAL_ERROR "no URL, and no DOWNLOAD_COMMAND!")
