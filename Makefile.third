@@ -61,7 +61,7 @@ ifdef DARWIN
 		$(UTF8PROC_LIB)
 endif
 
-$(FRIBIDI_LIB) $(FRIBIDI_DIR)/include: $(THIRDPARTY_DIR)/fribidi/*.*
+$(FRIBIDI_LIB) $(FRIBIDI_DIR)/include/fribidi: $(THIRDPARTY_DIR)/fribidi/*.*
 	install -d $(FRIBIDI_BUILD_DIR)
 	cd $(FRIBIDI_BUILD_DIR) && \
 		$(CMAKE) $(CMAKE_FLAGS) \
@@ -253,7 +253,7 @@ endif
 # crengine, fetched via GIT as a submodule
 $(CRENGINE_LIB) $(CRENGINE_THIRDPARTY_LIBS): $(CRENGINE_SRC_FILES) \
 		$(FREETYPE_DIR)/include \
-		$(FRIBIDI_DIR)/include \
+		$(FRIBIDI_DIR)/include/fribidi \
 		$(HARFBUZZ_DIR)/include \
 		$(JPEG_DIR)/include \
 		$(LIBUNIBREAK_DIR)/include \
