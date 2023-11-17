@@ -239,7 +239,7 @@ function(thirdparty_project)
         if(_URL MATCHES "http://ftpmirror\.gnu\.org/")
             # Duplicate URL on flaky GNU FTP server as a form of retry
             # (since each connection may result in a different mirror).
-            list(APPEND PARAMS "${_URL}" "${_URL}")
+            list(APPEND PARAMS "${_URL}\\#second-attempt" "${_URL}\\#third-time-is-the-charm")
         endif()
         list(APPEND PARAMS URL_MD5 "${_URL_MD5}")
     else()
