@@ -843,7 +843,7 @@ $(OUTPUT_DIR)/zsync2: $(THIRDPARTY_DIR)/zsync2/*.*
 	install -d $(ZSYNC2_BUILD_DIR)
 	cd $(ZSYNC2_BUILD_DIR) && \
 		$(CMAKE) $(CMAKE_FLAGS) \
-		-DCPPFLAGS='$(CPPFLAGS) -I$(ZLIB_DIR)/include -I$(OPENSSL_DIR)/includeg' \
+		-DCPPFLAGS='$(CPPFLAGS) -I$(ZLIB_DIR)/include -I$(OPENSSL_DIR)/include' \
 		-DCFLAGS='$(CFLAGS)' \
 		-DCXXFLAGS='$(CXXFLAGS)' \
 		-DLDFLAGS='$(LDFLAGS) -L$(CURL_DIR)/lib -L$(OPENSSL_DIR) -lssl -lcrypto' \
