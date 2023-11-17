@@ -22,16 +22,16 @@ echo "PARALLEL_JOBS: ${PARALLEL_JOBS}"
 echo "PARALLEL_LOAD: ${PARALLEL_LOAD}"
 
 travis_retry make fetchthirdparty PARALLEL_JOBS=1 PARALLEL_LOAD=1 TARGET=
+travis_retry make fetch-cmake PARALLEL_JOBS=1 PARALLEL_LOAD=1 TARGET=
 
 docker-make() {
-    travis_retry make fetch-cmake PARALLEL_JOBS=1 PARALLEL_LOAD=1 TARGET=
     local cmdlist=(
         'source /home/ko/.bashrc'
         'cd /home/ko/base'
         'sudo chown -R ko:ko .'
         'ccache -sz'
         "trap 'ccache -s' EXIT"
-        "make CMAKE=cmake/bin/cmake $(printf '%q ' "$@")"
+        "make $(printf '%q ' "$@")"
     )
     sudo chmod -R 777 "${HOME}/.ccache"
     docker run --rm -t \
@@ -46,6 +46,7 @@ makeargs=(
     # versions who don't advertise -j/-l in MAKEFLAGS.
     "-j${PARALLEL_JOBS}" PARALLEL_JOBS="${PARALLEL_JOBS}"
     "-l${PARALLEL_LOAD}" PARALLEL_LOAD="${PARALLEL_LOAD}"
+    CMAKE=cmake/bin/cmake
     TARGET="${TARGET}"
 )
 if [[ -z "${DOCKER_IMG}" ]]; then
