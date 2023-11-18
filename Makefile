@@ -147,11 +147,7 @@ endif
 
 $(OUTPUT_DIR)/libs/libkoreader-cre.so: cre.cpp \
 			$(if $(USE_LUAJIT_LIB),$(LUAJIT_LIB),) \
-			$(CRENGINE_LIB) $(CRENGINE_THIRDPARTY_LIBS) \
-			$(FREETYPE_LIB) $(FRIBIDI_LIB) $(HARFBUZZ_LIB) \
-			$(JPEG_LIB) $(LIBWEBP_LIB) $(LIBWEBPDEMUX_LIB) \
-			$(LIBUNIBREAK_LIB) $(LUNASVG_LIB) $(PNG_LIB) \
-			$(UTF8PROC_LIB) $(ZLIB) $(ZSTD_LIB)
+			$(CRENGINE_LIB) $(CRENGINE_THIRDPARTY_LIBS) $(CRENGINE_NEEDED_LIBS)
 	$(CXX) $(CRENGINE_CFLAGS) $(DYNLIB_CXXFLAGS) \
 		$(SYMVIS_FLAGS) $(LDFLAGS) -o $@ cre.cpp $(LUAJIT_LIB_LINK_FLAG) \
 		$(CRENGINE_LIB) $(CRENGINE_THIRDPARTY_LIBS) $(FREETYPE_LIB_LINK_FLAG) \
@@ -241,7 +237,7 @@ $(OUTPUT_DIR)/button-listen: button-listen.c
 # ===========================================================================
 # the attachment extraction tool:
 
-$(OUTPUT_DIR)/extr: extr.c $(MUPDF_LIB) $(MUPDF_DIR)/include $(JPEG_LIB) $(FREETYPE_LIB)
+$(OUTPUT_DIR)/extr: extr.c $(MUPDF_LIB) $(JPEG_LIB) $(FREETYPE_LIB)
 	$(CC) -I$(MUPDF_DIR) -I$(MUPDF_DIR)/include \
 		$(CFLAGS) $(LDFLAGS) -o $@ extr.c \
 		-lmupdf $(JPEG_LIB_LINK_FLAG) $(FREETYPE_LIB_LINK_FLAG)

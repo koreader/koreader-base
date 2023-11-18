@@ -752,6 +752,10 @@ CRENGINE_SRC_FILES+=$(wildcard $(CRENGINE_SRC_DIR)/crengine/src/*.h)
 CRENGINE_SRC_FILES+=$(wildcard $(CRENGINE_SRC_DIR)/crengine/src/*_h.*)
 CRENGINE_LIB = $(CRENGINE_BUILD_DIR)/libcrengine.a
 CRENGINE_THIRDPARTY_LIBS = $(addprefix $(CRENGINE_BUILD_DIR)/crengine/thirdparty/, antiword/libantiword.a chmlib/libchmlib.a)
+CRENGINE_NEEDED_LIBS =  $(FREETYPE_LIB) $(FRIBIDI_LIB) $(HARFBUZZ_LIB) \
+			$(JPEG_LIB) $(LIBUNIBREAK_LIB) $(LIBWEBP_LIB) \
+			$(LIBWEBPDEMUX_LIB) $(LUNASVG_LIB) $(PNG_LIB) \
+			$(UTF8PROC_LIB) $(ZLIB) $(ZSTD_LIB)
 CRENGINE_CFLAGS = \
 		-include '$(CRENGINE_BUILD_DIR)/crsetup.h' \
 		'-I$(CRENGINE_SRC_DIR)/crengine/include' \
