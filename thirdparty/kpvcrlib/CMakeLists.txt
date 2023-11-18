@@ -19,7 +19,6 @@ set(ANTIWORD_INCLUDE_DIR ${CR_3RDPARTY_DIR}/antiword)
 set(CHM_INCLUDE_DIRS ${CR_3RDPARTY_DIR}/chmlib/src)
 set(CREGINE_INCLUDE_DIR ${CRE_DIR}/include)
 
-assert_var_defined(JCONFIG_INCLUDE_DIR)
 assert_var_defined(FREETYPE_INCLUDE_DIR)
 assert_var_defined(HARFBUZZ_INCLUDE_DIR)
 assert_var_defined(FRIBIDI_INCLUDE_DIR)
@@ -33,7 +32,6 @@ assert_var_defined(LUNASVG_INCLUDE_DIR)
 assert_var_defined(ZSTD_INCLUDE_DIR)
 
 include_directories(
-    ${JCONFIG_INCLUDE_DIR}
     ${FREETYPE_INCLUDE_DIR}
     ${HARFBUZZ_INCLUDE_DIR}
     ${FRIBIDI_INCLUDE_DIR}
