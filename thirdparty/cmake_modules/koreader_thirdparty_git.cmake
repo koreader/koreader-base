@@ -170,7 +170,9 @@ function(ko_write_gitclone_script script_filename git_repository git_tag build_s
     set(work_dir ${CMAKE_CURRENT_BINARY_DIR}/git_checkout)
     set(tmp_dir ${work_dir}/tmp)
     set(stamp_dir ${work_dir}/stamp)
-    set(git_submodules ${ARGV4})
+    if(ARGC GREATER 4)
+        set(git_submodules ${ARGV4})
+    endif()
 
     set(${script_filename} ${tmp_dir}/${PROJECT_NAME}-gitclone-${git_tag}.cmake)
     set(${script_filename} ${${script_filename}} PARENT_SCOPE)
