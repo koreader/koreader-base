@@ -790,7 +790,7 @@ $(SQLITE_LIB): $(THIRDPARTY_DIR)/sqlite/*.*
 		$(CMAKE) $(CMAKE_FLAGS) \
 		-DCC='$(CC)' \
 		-DCHOST='$(CHOST)' \
-		-DCPPFLAGS='$(CPPFLAGS) $(if $(ANDROID),-DHAVE_LOG2=0,)' \
+		-DCPPFLAGS='$(CPPFLAGS)' \
 		-DCFLAGS='$(CFLAGS)' \
 		-DLDFLAGS='$(LDFLAGS)' \
 		$(CURDIR)/thirdparty/sqlite && \
