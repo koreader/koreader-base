@@ -13,7 +13,7 @@ fetchthirdparty:
 		&& (cd thirdparty/kpvcrlib/crengine; git checkout .) \
 		|| echo warn: crengine folder not found
 
-$(FREETYPE_LIB) $(FREETYPE_DIR)/include: $(THIRDPARTY_DIR)/freetype2/*.*
+$(FREETYPE_LIB): $(THIRDPARTY_DIR)/freetype2/*.*
 	install -d $(FREETYPE_BUILD_DIR)
 	cd $(FREETYPE_BUILD_DIR) && \
 		$(CMAKE) $(CMAKE_FLAGS) \
@@ -27,7 +27,7 @@ $(FREETYPE_LIB) $(FREETYPE_DIR)/include: $(THIRDPARTY_DIR)/freetype2/*.*
 		$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS)
 	cp -fL $(FREETYPE_DIR)/$(if $(WIN32),bin,lib)/$(notdir $(FREETYPE_LIB)) $(FREETYPE_LIB)
 
-$(HARFBUZZ_LIB) $(HARFBUZZ_DIR)/include: $(THIRDPARTY_DIR)/harfbuzz/*.*
+$(HARFBUZZ_LIB): $(THIRDPARTY_DIR)/harfbuzz/*.*
 	install -d $(HARFBUZZ_BUILD_DIR)
 	cd $(HARFBUZZ_BUILD_DIR) && \
 		$(CMAKE) $(CMAKE_FLAGS) \
@@ -61,7 +61,7 @@ ifdef DARWIN
 		$(UTF8PROC_LIB)
 endif
 
-$(FRIBIDI_LIB) $(FRIBIDI_DIR)/include: $(THIRDPARTY_DIR)/fribidi/*.*
+$(FRIBIDI_LIB): $(THIRDPARTY_DIR)/fribidi/*.*
 	install -d $(FRIBIDI_BUILD_DIR)
 	cd $(FRIBIDI_BUILD_DIR) && \
 		$(CMAKE) $(CMAKE_FLAGS) \
@@ -74,7 +74,7 @@ $(FRIBIDI_LIB) $(FRIBIDI_DIR)/include: $(THIRDPARTY_DIR)/fribidi/*.*
 	cp -fL $(FRIBIDI_DIR)/lib/$(notdir $(FRIBIDI_LIB)) $(FRIBIDI_LIB)
 	chmod 755 $(FRIBIDI_LIB)
 
-$(LIBUNIBREAK_LIB) $(LIBUNIBREAK_DIR)/include: $(THIRDPARTY_DIR)/libunibreak/*.*
+$(LIBUNIBREAK_LIB): $(THIRDPARTY_DIR)/libunibreak/*.*
 	install -d $(LIBUNIBREAK_BUILD_DIR)
 	cd $(LIBUNIBREAK_BUILD_DIR) && \
 		$(CMAKE) $(CMAKE_FLAGS) \
@@ -88,7 +88,7 @@ $(LIBUNIBREAK_LIB) $(LIBUNIBREAK_DIR)/include: $(THIRDPARTY_DIR)/libunibreak/*.*
 	chmod 755 $(LIBUNIBREAK_LIB)
 
 # libjpeg-turbo and libjpeg
-$(TURBOJPEG_LIB) $(JPEG_LIB) $(JPEG_DIR)/include: $(THIRDPARTY_DIR)/libjpeg-turbo/*.*
+$(TURBOJPEG_LIB) $(JPEG_LIB): $(THIRDPARTY_DIR)/libjpeg-turbo/*.*
 	install -d $(JPEG_BUILD_DIR)
 	cd $(JPEG_BUILD_DIR) && \
 		$(CMAKE) $(CMAKE_FLAGS) \
@@ -105,7 +105,7 @@ ifdef DARWIN
 		$(TURBOJPEG_LIB)
 endif
 
-$(PNG_LIB) $(PNG_DIR)/include: $(ZLIB) $(THIRDPARTY_DIR)/libpng/*.*
+$(PNG_LIB): $(ZLIB) $(THIRDPARTY_DIR)/libpng/*.*
 	install -d $(PNG_BUILD_DIR)
 	cd $(PNG_BUILD_DIR) && \
 		$(CMAKE) $(CMAKE_FLAGS) \
@@ -132,11 +132,12 @@ $(AES_LIB): $(THIRDPARTY_DIR)/minizip/*.*
 
 # by default, mupdf compiles to a static library:
 # we generate a dynamic library from the static library:
-$(MUPDF_LIB) $(MUPDF_DIR)/include $(MUPDF_DIR)/scripts: $(JPEG_LIB) \
-		$(FREETYPE_LIB) $(FREETYPE_DIR)/include \
-		$(HARFBUZZ_LIB) $(HARFBUZZ_DIR)/include \
-		$(LIBWEBP_LIB) $(LIBWEBP_DIR)/include \
-		$(ZLIB) $(AES_LIB) $(THIRDPARTY_DIR)/mupdf/*.*
+$(MUPDF_LIB): $(JPEG_LIB) \
+		$(FREETYPE_LIB) \
+		$(HARFBUZZ_LIB) \
+		$(LIBWEBP_LIB) \
+		$(ZLIB) $(AES_LIB) \
+		$(THIRDPARTY_DIR)/mupdf/*.*
 	-rm -rf $(MUPDF_BUILD_DIR)
 	install -d $(MUPDF_BUILD_DIR)
 	cd $(MUPDF_BUILD_DIR) && \
@@ -196,7 +197,7 @@ $(GIF_LIB): $(THIRDPARTY_DIR)/giflib/*.*
 		$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS)
 	cp -fL $(GIF_DIR)/lib/$(notdir $(GIF_LIB)) $@
 
-$(LIBWEBP_LIB) $(LIBWEBPDEMUX_LIB) $(LIBSHARPYUV_LIB) $(LIBWEBP_DIR)/include: $(THIRDPARTY_DIR)/libwebp/*.*
+$(LIBWEBP_LIB) $(LIBWEBPDEMUX_LIB) $(LIBSHARPYUV_LIB): $(THIRDPARTY_DIR)/libwebp/*.*
 	install -d $(LIBWEBP_BUILD_DIR)
 	cd $(LIBWEBP_BUILD_DIR) && \
 		$(CMAKE) $(CMAKE_FLAGS) \
@@ -214,7 +215,7 @@ $(LIBWEBP_LIB) $(LIBWEBPDEMUX_LIB) $(LIBSHARPYUV_LIB) $(LIBWEBP_DIR)/include: $(
 	cp -fL $(LIBWEBP_DIR)/lib/$(notdir $(LIBSHARPYUV_LIB)) $(LIBSHARPYUV_LIB)
 	chmod 755 $(LIBWEBP_LIB) $(LIBWEBPDEMUX_LIB) $(LIBSHARPYUV_LIB)
 
-$(LUNASVG_LIB) $(LUNASVG_DIR)/include: $(THIRDPARTY_DIR)/lunasvg/*.*
+$(LUNASVG_LIB): $(THIRDPARTY_DIR)/lunasvg/*.*
 	install -d $(LUNASVG_BUILD_DIR)
 	cd $(LUNASVG_BUILD_DIR) && \
 		$(CMAKE) $(CMAKE_FLAGS) \
@@ -252,18 +253,7 @@ endif
 
 # crengine, fetched via GIT as a submodule
 $(CRENGINE_LIB) $(CRENGINE_THIRDPARTY_LIBS): $(CRENGINE_SRC_FILES) \
-		$(FREETYPE_DIR)/include \
-		$(FRIBIDI_DIR)/include \
-		$(HARFBUZZ_DIR)/include \
-		$(JPEG_DIR)/include \
-		$(LIBUNIBREAK_DIR)/include \
-		$(LIBWEBP_DIR)/include \
-		$(LUNASVG_DIR)/include \
-		$(PNG_DIR)/include \
-		$(SRELL_INCLUDE_DIR) \
-		$(UTF8PROC_DIR) \
-		$(ZLIB_DIR)/include \
-		$(ZSTD_DESTDIR)/include \
+		$(CRENGINE_NEEDED_LIBS) \
 		$(THIRDPARTY_DIR)/kpvcrlib/*.*
 	install -d $(CRENGINE_BUILD_DIR)
 	cd $(CRENGINE_BUILD_DIR) && \
@@ -286,6 +276,7 @@ $(CRENGINE_LIB) $(CRENGINE_THIRDPARTY_LIBS): $(CRENGINE_SRC_FILES) \
 		$(if $(ANDROID),-DCMAKE_SYSTEM_VERSION=1,) \
 		$(CURDIR)/$(THIRDPARTY_DIR)/kpvcrlib && \
 		$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS)
+	touch $(CRENGINE_LIB) $(CRENGINE_THIRDPARTY_LIBS)
 
 $(LUAJIT) $(LUAJIT_LIB) $(LUAJIT_JIT): $(THIRDPARTY_DIR)/luajit/*.*
 	install -d $(LUAJIT_BUILD_DIR)
