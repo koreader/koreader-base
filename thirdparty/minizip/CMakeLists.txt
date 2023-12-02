@@ -3,7 +3,6 @@ project(minizip LANGUAGES)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_LIST_DIR}/../cmake_modules")
 include("koreader_thirdparty_common")
-include("koreader_thirdparty_asm")
 include("koreader_thirdparty_git")
 
 assert_var_defined(CC)
