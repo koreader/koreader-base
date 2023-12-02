@@ -85,15 +85,16 @@ jobs:
           name: build
           command: |
             source .ci/build_script.sh
-      - run:
-          name: test
-          command: |
-            source .ci/test_script.sh
 
       - save_cache:
           key: emu-{{ .Environment.CIRCLE_JOB }}-{{ epoch }}
           paths:
             - "/home/ko/.ccache"
+
+      - run:
+          name: test
+          command: |
+            source .ci/test_script.sh
 
   emu_gcc_ninja:
     <<: *EMU_TPL
@@ -125,6 +126,7 @@ jobs:
     machine: true
     steps:
       - checkout
+
       - restore_cache:
           keys:
             - xcompile-{{ .Environment.CIRCLE_JOB }}-
@@ -133,15 +135,16 @@ jobs:
           name: build
           command: |
             source .ci/build_script.sh
-      - run:
-          name: test
-          command: |
-            source .ci/test_script.sh
 
       - save_cache:
           key: xcompile-{{ .Environment.CIRCLE_JOB }}-{{ epoch }}
           paths:
             - "/home/circleci/.ccache"
+
+      - run:
+          name: test
+          command: |
+            source .ci/test_script.sh
 
   kindle:
     <<: *XCOMPILE_TPL
