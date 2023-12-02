@@ -562,6 +562,11 @@ endif
 
 # this will create a path named build/arm-none-linux-gnueabi or similar
 TARGET_MARCHINE:=$(shell $(CC) -dumpmachine)
+ifeq (,$(TARGET_MARCHINE))
+  ifneq (,$(filter-out distclean fetch%,$(or $(MAKECMDGOALS),all)))
+    $(error failed to retrieve target machine)
+  endif
+endif
 ifdef KODEBUG
 	MACHINE=$(TARGET_MARCHINE)-debug
 else
