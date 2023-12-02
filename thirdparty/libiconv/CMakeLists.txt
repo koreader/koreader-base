@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.5.1)
+cmake_minimum_required(VERSION 3.7)
 project(libiconv LANGUAGES)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_LIST_DIR}/../cmake_modules")
@@ -18,6 +18,7 @@ include(ExternalProject)
 ExternalProject_Add(
     libiconv
     URL http://ftpmirror.gnu.org/libiconv/libiconv-${GETTEXT_VER}.tar.gz
+    http://ftp.gnu.org/pub/gnu/libiconv/libiconv-${GETTEXT_VER}.tar.gz
     URL_MD5 ace8b5f2db42f7b3b3057585e80d9808
     DOWNLOAD_DIR ${KO_DOWNLOAD_DIR}
     CONFIGURE_COMMAND ${CFG_CMD}

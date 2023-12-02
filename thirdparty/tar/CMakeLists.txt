@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.5.1)
+cmake_minimum_required(VERSION 3.7)
 project(tar LANGUAGES)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_LIST_DIR}/../cmake_modules")
@@ -53,6 +53,7 @@ set(TAR_VER "1.34")
 ExternalProject_Add(
     ${PROJECT_NAME}
     URL http://ftpmirror.gnu.org/tar/tar-${TAR_VER}.tar.gz
+    http://ftp.gnu.org/pub/gnu/tar/tar-${TAR_VER}.tar.gz
     URL_MD5 9d5949e4c2d9665546ac65dafc0e726a
     DOWNLOAD_DIR ${KO_DOWNLOAD_DIR}
     PATCH_COMMAND ${PATCH_CMD}
