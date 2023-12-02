@@ -1,11 +1,9 @@
 cmake_minimum_required(VERSION 3.5.1)
-project(libjpeg-turbo)
+project(libjpeg-turbo LANGUAGES)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_LIST_DIR}/../cmake_modules")
 include("koreader_thirdparty_common")
 include("koreader_thirdparty_git")
-
-enable_language(C)
 
 ep_get_source_dir(SOURCE_DIR)
 ep_get_binary_dir(BINARY_DIR)

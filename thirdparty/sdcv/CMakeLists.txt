@@ -1,12 +1,10 @@
 cmake_minimum_required(VERSION 3.5.1)
-project(sdcv)
+project(sdcv LANGUAGES)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_LIST_DIR}/../cmake_modules")
 include("koreader_thirdparty_common")
 include("koreader_thirdparty_git")
 include("DownloadProject")
-
-enable_language(C CXX)
 
 assert_var_defined(GETTEXT)
 assert_var_defined(GETTEXT_DIR)
