@@ -282,7 +282,8 @@ $(LUAJIT) $(LUAJIT_LIB) $(LUAJIT_JIT): $(THIRDPARTY_DIR)/luajit/*.*
 	install -d $(LUAJIT_BUILD_DIR)
 	cd $(LUAJIT_BUILD_DIR) && \
 		$(CMAKE) $(CMAKE_FLAGS) \
-		-DCC='$(HOSTCC)' \
+		-DCCACHE='$(CCACHE)' \
+		-DCC='$(filter-out $(CCACHE),$(HOSTCC))' \
 		-DXCOMPILE:BOOL=$(if $(EMULATE_READER),off,on) \
 		-DBASE_CFLAGS='$(BASE_CFLAGS)' \
 		-DHOST_CFLAGS='$(HOSTCFLAGS)' \
