@@ -177,23 +177,16 @@ local function translateEvent(t, par1, par2)
     elseif t == C.EVT_MTSYNC then
         updateTimestamp()
 
-        if par2 ~= 0 then
-            -- NOTE: Never query slot 0, we rely on the POINTER* events for it instead.
-            --       There are a couple of reasons for that:
-            --       * we don't need a function call to get at the coordinates with the POINTER events
-            --       * GetTouchInfoI appears to report slightly *stale* data,
-            --         which is obviously not great, especially if we were to mix the two...
+        if par2 > 1 then
+            -- NOTE: Never query slot 0, we rely on the POINTER* events for it instead,
+            --       as we don't need an extra function call to get at the coordinates with the POINTER events.
+            -- NOTE: Apparently, the first parameter is the index to the base pointer or something...
+            local mtp = compat2.GetTouchInfoI(par1)
             for i = 1, par2 - 1 do
-                local mt = compat2.GetTouchInfoI(i)
-                -- GetTouchInfoI may mysteriously fail, try to handle it to avoid spitting out a (0, 0) contact...
+                local mt = mtp + i
+                -- GetTouchInfoI may fail or return a !active contact, try to handle it to avoid spitting out a (0, 0) contact...
                 -- NOTE: That does not seem to be indicative of a contact lift,
                 --       which means we have no way of detecting a lift on slot > 0 until *all* contacts are lifted...
-                -- NOTE: That doesn't seem to be working as intended,
-                --       someone with a device will have to figure out how MTSYNC events are actually supposed to be used
-                --       in order to actually get at contact data for non-pointer contacts (i.e., slot > 0).
-                --       Right now, this instead seems to report past contact data,
-                --       possibly always for the same contact point (i.e., slot 0, pointer)...
-                --       This behavior *might* be specific to InkView 6...
                 if mt.active ~= 0 then
                     genEmuEvent(C.EV_ABS, C.ABS_MT_SLOT, i)
                     if setContactDown(i, true) then
@@ -204,7 +197,7 @@ local function translateEvent(t, par1, par2)
                 end
             end
             genEmuEvent(C.EV_SYN, C.SYN_REPORT, 0)
-        else
+        elseif par2 == 0 then
             local stuff_happened = false
             for i = 0, contact_count - 1 do
                 if contacts[i] then
