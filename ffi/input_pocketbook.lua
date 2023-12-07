@@ -147,7 +147,7 @@ local function setContactDown(slot, down)
 
     return false
 end
--- Since we take the cautious approach of assuming our contacts table will be a hash (or a sparse array),
+-- Since our contacts table is a hash (mainly because of slot 0, but it could also be sparse-array like even if Lua were 0 indexed),
 -- we need to keep a counter of the amount of in-flight contacts, so we don't have to resort to pairs later.
 -- (Because I like lifts happening in ascending order, and don't really want to go ham with orderedPairs for this).
 local contact_count = 0
