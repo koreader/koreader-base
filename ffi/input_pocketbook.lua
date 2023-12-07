@@ -138,7 +138,6 @@ local pb_event_map = {
 -- *hash*, key is a contact *id* (i.e., its slot number),
 -- value is a boolean, denoting whether the contact is currently down (true), up (false) or inactive (nil).
 -- Returns true if the state actually changed.
-local contact_count = 0
 local contacts = {}
 local function setContactDown(slot, down)
     if contacts[slot] ~= down then
@@ -148,6 +147,10 @@ local function setContactDown(slot, down)
 
     return false
 end
+-- Since we take the cautious approach of assuming our contacts table will be a hash (or a sparse array),
+-- we need to keep a counter of the amount of in-flight contacts, so we don't have to resort to pairs later.
+-- (Because I like lifts happening in ascending order, and don't really want to go ham with orderedPairs for this).
+local contact_count = 0
 
 -- Translate event from inkview EVT_* into emulated linux evdev events
 local function translateEvent(t, par1, par2)
@@ -176,6 +179,10 @@ local function translateEvent(t, par1, par2)
         genEmuEvent(C.EV_SYN, C.SYN_REPORT, 0)
     elseif t == C.EVT_MTSYNC then
         updateTimestamp()
+        -- Remember the maximum amount of in-flight contacts, so we can properly lift them all later.
+        -- (Because we might see fewer contacts for a while before the ultimate lift,
+        -- we don't want to "forget" about a contact just because of how the events came in, e.g., 2 -> 2 -> 1 -> 0).
+        contact_count = math.max(contact_count, par2)
 
         if par2 > 1 then
             -- NOTE: Never query slot 0, we rely on the POINTER* events for it instead,
@@ -212,9 +219,10 @@ local function translateEvent(t, par1, par2)
             -- Only send a report if we actually generated lift events...
             if stuff_happened then
                 genEmuEvent(C.EV_SYN, C.SYN_REPORT, 0)
+                -- We lifted all of 'em, back to square one
+                contact_count = 0
             end
         end
-        contact_count = par2
     elseif t == C.EVT_POINTERMOVE then
         if contacts[0] then
             updateTimestamp()
