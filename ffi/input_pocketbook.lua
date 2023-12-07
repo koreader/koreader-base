@@ -179,11 +179,12 @@ local function translateEvent(t, par1, par2)
         -- par2 is the contact count for the *current* frame (amount may fluctuate before the final lift at 0).
         if par2 > 1 then
             -- NOTE: Never query slot 0, we rely on the POINTER* events for it instead,
-            --       as we don't need an extra function call to get at the coordinates with the POINTER events.
+            --       as we don't need an extra function call to get at the coordinates with those.
             -- par1 is the index to the base pointer for the current frame, as InkView seems to be keeping a number of past frames in memory...
             local mtp = compat2.GetTouchInfoI(par1)
             for i = 1, par2 - 1 do
-                -- NOTE: We're making a very shaky assumption that POINTER events are always at 0, which is why we're skipping it...
+                -- NOTE: We're making a very shaky assumption that the index here roughly translates to a *stable* slot number,
+                --       and as such that POINTER events are always at 0, which is why we're skipping it...
                 local mt = mtp + i
                 -- GetTouchInfoI may fail or return a !active contact, try to handle it to avoid spitting out a (0, 0) contact...
                 -- NOTE: That does not seem to be indicative of a contact lift,
