@@ -147,10 +147,6 @@ local function setContactDown(slot, down)
 
     return false
 end
--- Since our contacts table is a hash (mainly because of slot 0, but it could also be sparse-array like even if Lua were 0 indexed),
--- we need to keep a counter of the amount of in-flight contacts, so we don't have to resort to pairs later.
--- (Because I like lifts happening in ascending order, and don't really want to go ham with orderedPairs for this).
-local contact_count = 0
 
 -- Translate event from inkview EVT_* into emulated linux evdev events
 local function translateEvent(t, par1, par2)
@@ -179,15 +175,12 @@ local function translateEvent(t, par1, par2)
         genEmuEvent(C.EV_SYN, C.SYN_REPORT, 0)
     elseif t == C.EVT_MTSYNC then
         updateTimestamp()
-        -- Remember the maximum amount of in-flight contacts, so we can properly lift them all later.
-        -- (Because we might see fewer contacts for a while before the ultimate lift,
-        -- we don't want to "forget" about a contact just because of how the events came in, e.g., 2 -> 2 -> 1 -> 0).
-        contact_count = math.max(contact_count, par2)
 
+        -- par2 is the contact count for the *current* frame (amount may fluctuate before the final lift at 0).
         if par2 > 1 then
             -- NOTE: Never query slot 0, we rely on the POINTER* events for it instead,
             --       as we don't need an extra function call to get at the coordinates with the POINTER events.
-            -- NOTE: Apparently, the first parameter is the index to the base pointer or something...
+            -- par1 is the index to the base pointer for the current frame, as InkView seems to be keeping a number of past frames in memory...
             local mtp = compat2.GetTouchInfoI(par1)
             for i = 1, par2 - 1 do
                 -- NOTE: We're making a very shaky assumption that POINTER events are always at 0, which is why we're skipping it...
@@ -207,11 +200,11 @@ local function translateEvent(t, par1, par2)
             genEmuEvent(C.EV_SYN, C.SYN_REPORT, 0)
         elseif par2 == 0 then
             local stuff_happened = false
-            for i = 0, contact_count - 1 do
-                if contacts[i] then
-                    genEmuEvent(C.EV_ABS, C.ABS_MT_SLOT, i)
+            for slot, down in pairs(contacts) do
+                if down then
+                    genEmuEvent(C.EV_ABS, C.ABS_MT_SLOT, slot)
                     genEmuEvent(C.EV_ABS, C.ABS_MT_TRACKING_ID, -1)
-                    setContactDown(i, false)
+                    setContactDown(slot, false)
 
                     stuff_happened = true
                 end
@@ -219,8 +212,6 @@ local function translateEvent(t, par1, par2)
             -- Only send a report if we actually generated lift events...
             if stuff_happened then
                 genEmuEvent(C.EV_SYN, C.SYN_REPORT, 0)
-                -- We lifted all of 'em, back to square one
-                contact_count = 0
             end
         end
     elseif t == C.EVT_POINTERMOVE then
