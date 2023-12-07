@@ -138,7 +138,6 @@ local pb_event_map = {
 -- *hash*, key is a contact *id* (i.e., its slot number),
 -- value is a boolean, denoting whether the contact is currently down (true), up (false) or inactive (nil).
 -- Returns true if the state actually changed.
-local contact_count = 0
 local contacts = {}
 local function setContactDown(slot, down)
     if contacts[slot] ~= down then
@@ -177,23 +176,19 @@ local function translateEvent(t, par1, par2)
     elseif t == C.EVT_MTSYNC then
         updateTimestamp()
 
-        if par2 ~= 0 then
-            -- NOTE: Never query slot 0, we rely on the POINTER* events for it instead.
-            --       There are a couple of reasons for that:
-            --       * we don't need a function call to get at the coordinates with the POINTER events
-            --       * GetTouchInfoI appears to report slightly *stale* data,
-            --         which is obviously not great, especially if we were to mix the two...
+        -- par2 is the contact count for the *current* frame (amount may fluctuate before the final lift at 0).
+        if par2 > 1 then
+            -- NOTE: Never query slot 0, we rely on the POINTER* events for it instead,
+            --       as we don't need an extra function call to get at the coordinates with those.
+            -- par1 is the index to the base pointer for the current frame, as InkView seems to be keeping a number of past frames in memory...
+            local mtp = compat2.GetTouchInfoI(par1)
             for i = 1, par2 - 1 do
-                local mt = compat2.GetTouchInfoI(i)
-                -- GetTouchInfoI may mysteriously fail, try to handle it to avoid spitting out a (0, 0) contact...
+                -- NOTE: We're making a very shaky assumption that the index here roughly translates to a *stable* slot number,
+                --       and as such that POINTER events are always at 0, which is why we're skipping it...
+                local mt = mtp + i
+                -- GetTouchInfoI may fail or return a !active contact, try to handle it to avoid spitting out a (0, 0) contact...
                 -- NOTE: That does not seem to be indicative of a contact lift,
                 --       which means we have no way of detecting a lift on slot > 0 until *all* contacts are lifted...
-                -- NOTE: That doesn't seem to be working as intended,
-                --       someone with a device will have to figure out how MTSYNC events are actually supposed to be used
-                --       in order to actually get at contact data for non-pointer contacts (i.e., slot > 0).
-                --       Right now, this instead seems to report past contact data,
-                --       possibly always for the same contact point (i.e., slot 0, pointer)...
-                --       This behavior *might* be specific to InkView 6...
                 if mt.active ~= 0 then
                     genEmuEvent(C.EV_ABS, C.ABS_MT_SLOT, i)
                     if setContactDown(i, true) then
@@ -204,13 +199,13 @@ local function translateEvent(t, par1, par2)
                 end
             end
             genEmuEvent(C.EV_SYN, C.SYN_REPORT, 0)
-        else
+        elseif par2 == 0 then
             local stuff_happened = false
-            for i = 0, contact_count - 1 do
-                if contacts[i] then
-                    genEmuEvent(C.EV_ABS, C.ABS_MT_SLOT, i)
+            for slot, down in pairs(contacts) do
+                if down then
+                    genEmuEvent(C.EV_ABS, C.ABS_MT_SLOT, slot)
                     genEmuEvent(C.EV_ABS, C.ABS_MT_TRACKING_ID, -1)
-                    setContactDown(i, false)
+                    setContactDown(slot, false)
 
                     stuff_happened = true
                 end
@@ -220,7 +215,6 @@ local function translateEvent(t, par1, par2)
                 genEmuEvent(C.EV_SYN, C.SYN_REPORT, 0)
             end
         end
-        contact_count = par2
     elseif t == C.EVT_POINTERMOVE then
         if contacts[0] then
             updateTimestamp()
