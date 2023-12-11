@@ -35,6 +35,9 @@ local framebuffer = {
     area = nil,
     update = nil,
     ioc_cmd = nil,
+
+    -- Used to arbitrarily request an EINK_NO_MERGE update
+    no_merge_next_update = false,
 }
 
 
@@ -117,13 +120,14 @@ end
 local function disp_update(fb, ioc_cmd, ioc_data, no_merge, is_flashing, waveform_mode, waveform_info, x, y, w, h)
     local bb = fb.full_bb or fb.bb
 
-    -- If we're fresh off a rotation, make it full-screen to avoid layer blending glitches...
+    -- If we're fresh off a rotation, make it full-screen and no_merge to avoid layer blending glitches...
     if fb._just_rotated then
         x = 0
         y = 0
         w = nil
         h = nil
         fb._just_rotated = nil
+        no_merge = true
     end
 
     w, x = BB.checkBounds(w or bb:getWidth(), x or 0, 0, bb:getWidth(), 0xFFFF)
@@ -139,6 +143,12 @@ local function disp_update(fb, ioc_cmd, ioc_data, no_merge, is_flashing, wavefor
     -- Wake the EPDC up manually, in the vague hope it'll help with missed refreshes after a wakeup from standby...
     if fb.mech_poweron then
         fb:mech_poweron()
+    end
+
+    -- If we've requested no_merge for the next update, regardless of its actual mode, do that.
+    if fb.no_merge_next_update then
+        no_merge = true
+        fb.no_merge_next_update = false
     end
 
     -- We've got the final region, update the area_info struct

@@ -30,6 +30,8 @@ local framebuffer = {
 
     _finfo = nil,
     _vinfo = nil,
+
+    _just_rotated = nil,
 }
 
 --[[
@@ -297,7 +299,13 @@ function framebuffer:reinit()
     self.bb:fill(BB.COLOR_WHITE)
 
     -- Ask framebuffer_sunxi to make sure the next update is full-screen, in order to avoid layer blending glitches...
-    -- (e.g., CRe loading bar)
+    -- (e.g., CRe loading bar, a very small refresh region, into the actual full-screen page refresh at the end).
+    -- NOTE: This cannot be reproduced with Wi-Fi enabled, in yet another weird EPDC power management quirk...
+    -- NOTE: It will *not* prevent tripping the "refresh in staggered quadrants" issue on the actual page refresh,
+    --       but at least the actual page content will not be garbled ;).
+    --       (Fun fact: much like the above, the staggered refresh thing doesn't happen with Wi-Fi enabled...)
+    -- The good news is that this scenario doesn't really happen anymore with CRe progressive rendering,
+    -- as a rotation is now very unlikely to require a progress bar, so the first refresh is natively full-screen already ;).
     self._just_rotated = true
 end
 
