@@ -439,6 +439,10 @@ else ifeq ($(TARGET), kindle-legacy)
 		COMPAT_CXXFLAGS:=$(MG2K12_COMPAT_CXXFLAGS)
 	endif
 	COMPAT_CFLAGS:=$(NILUJE_COMPAT_CFLAGS)
+	# Works around potential deadlocks with local statics in LunaSVG (cxa_guard -> futex)
+	# We're not multi-threaded, so, whatever.
+	# c.f., https://github.com/koreader/koreader/discussions/11246
+        COMPAT_CXXFLAGS+=-fno-threadsafe-statics
 	# Avoid pulling stuff from GLIBC_2.7 & 2.9 in glib
 	export glib_cv_eventfd=no
 	export ac_cv_func_pipe2=no
