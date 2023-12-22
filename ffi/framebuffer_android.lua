@@ -28,7 +28,6 @@ end
 
 -- update the entire screen
 function framebuffer:_updateFull()
-    if not has_eink_screen then return end
     if eink_platform == "rockchip" then
         android.einkUpdate(full)
     else
@@ -149,7 +148,9 @@ end
 
 function framebuffer:refreshFullImp(x, y, w, h) -- luacheck: ignore
     self:_updateWindow()
-    self:_updateFull()
+    if has_eink_screen then
+        self:_updateFull()
+    end
 end
 
 function framebuffer:refreshPartialImp(x, y, w, h)
