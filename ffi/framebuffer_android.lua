@@ -28,19 +28,10 @@ end
 
 -- update the entire screen
 function framebuffer:_updateFull()
-    -- freescale ntx platform
-    if has_eink_screen and (eink_platform == "freescale" or eink_platform == "qualcomm") then
-        if has_eink_full_support then
-            -- we handle the screen entirely
-            self:_updatePartial(full, delay_page)
-        else
-            -- we're racing against system driver. Let the system win and apply
-            -- a full update after it.
-            self:_updatePartial(full, 500)
-        end
-    -- rockchip rk3x platform
-    elseif has_eink_screen and (eink_platform == "rockchip") then
+    if eink_platform == "rockchip" then
         android.einkUpdate(full)
+    else
+        self:_updatePartial(full, delay_page)
     end
 end
 
@@ -157,7 +148,9 @@ end
 
 function framebuffer:refreshFullImp(x, y, w, h) -- luacheck: ignore
     self:_updateWindow()
-    self:_updateFull()
+    if has_eink_screen then
+        self:_updateFull()
+    end
 end
 
 function framebuffer:refreshPartialImp(x, y, w, h)
