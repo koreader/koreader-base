@@ -117,13 +117,14 @@ end
 local function disp_update(fb, ioc_cmd, ioc_data, no_merge, is_flashing, waveform_mode, waveform_info, x, y, w, h)
     local bb = fb.full_bb or fb.bb
 
-    -- If we're fresh off a rotation, make it full-screen to avoid layer blending glitches...
+    -- If we're fresh off a rotation, make it full-screen and no_merge to avoid layer blending glitches...
     if fb._just_rotated then
         x = 0
         y = 0
         w = nil
         h = nil
         fb._just_rotated = nil
+        no_merge = true
     end
 
     w, x = BB.checkBounds(w or bb:getWidth(), x or 0, 0, bb:getWidth(), 0xFFFF)
