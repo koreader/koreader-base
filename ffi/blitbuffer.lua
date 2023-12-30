@@ -1122,7 +1122,6 @@ function BB_mt.__index:getBoundedRect(x, y, w, h, alignment)
     return x, y, w, h
 end
 
-
 function BB_mt.__index:blitDefault(dest, dest_x, dest_y, offs_x, offs_y, width, height, setter, set_param)
     -- slow default variant:
     local o_y = offs_y
