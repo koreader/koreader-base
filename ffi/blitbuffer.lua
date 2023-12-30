@@ -1468,8 +1468,7 @@ invert a rectangle within the buffer
 @param h height
 --]]
 function BB_mt.__index:invertRect(x, y, w, h)
-    w, x = BB.checkBounds(w, x, 0, self:getWidth(), 0xFFFF)
-    h, y = BB.checkBounds(h, y, 0, self:getHeight(), 0xFFFF)
+    x, y, w, h = self:getBoundedRect(x, y, w, h)
     if w <= 0 or h <= 0 then return end
     if self:canUseCbb() then
         cblitbuffer.BB_invert_rect(ffi.cast(P_BlitBuffer, self),
@@ -1575,8 +1574,7 @@ paint a rectangle onto this buffer
 function BB_mt.__index:paintRect(x, y, w, h, value, setter)
     setter = setter or self.setPixel
     value = value or Color8(0)
-    w, x = BB.checkBounds(w, x, 0, self:getWidth(), 0xFFFF)
-    h, y = BB.checkBounds(h, y, 0, self:getHeight(), 0xFFFF)
+    x, y, w, h = self:getBoundedRect(x, y, w, h)
     if w <= 0 or h <= 0 then return end
     if self:canUseCbb() and setter == self.setPixel then
         cblitbuffer.BB_fill_rect(ffi.cast(P_BlitBuffer, self),
@@ -1684,8 +1682,7 @@ end
 function BB4_mt.__index:paintRect(x, y, w, h, value, setter)
     setter = setter or self.setPixel
     value = value or Color8(0)
-    w, x = BB.checkBounds(w, x, 0, self:getWidth(), 0xFFFF)
-    h, y = BB.checkBounds(h, y, 0, self:getHeight(), 0xFFFF)
+    x, y, w, h = self:getBoundedRect(x, y, w, h)
     if w <= 0 or h <= 0 then return end
     for tmp_y = y, y+h-1 do
         for tmp_x = x, x+w-1 do
@@ -1926,8 +1923,7 @@ Paint hatches in a rectangle
 @a:  alpha
 --]]
 function BB_mt.__index:hatchRect(x, y, w, h, sw, c, a)
-    w, x = BB.checkBounds(w, x, 0, self:getWidth(), 0xFFFF)
-    h, y = BB.checkBounds(h, y, 0, self:getHeight(), 0xFFFF)
+    x, y, w, h = self:getBoundedRect(x, y, w, h)
     if w <= 0 or h <= 0 then return end
     a = (a or 1)*0xFF
     if a <= 0 then return end -- fully transparent
@@ -1991,8 +1987,7 @@ dim color values in rectangular area
 function BB_mt.__index:dimRect(x, y, w, h, by)
     local color = Color8A(0xFF, 0xFF*(by or 0.5))
     if self:canUseCbb() then
-        w, x = BB.checkBounds(w, x, 0, self:getWidth(), 0xFFFF)
-        h, y = BB.checkBounds(h, y, 0, self:getHeight(), 0xFFFF)
+        x, y, w, h = self:getBoundedRect(x, y, w, h)
         if w <= 0 or h <= 0 then return end
         cblitbuffer.BB_blend_rect(ffi.cast(P_BlitBuffer, self),
             x, y, w, h, color)
@@ -2013,8 +2008,7 @@ lighten color values in rectangular area
 function BB_mt.__index:lightenRect(x, y, w, h, by)
     local color = Color8A(0, 0xFF*(by or 0.5))
     if self:canUseCbb() then
-        w, x = BB.checkBounds(w, x, 0, self:getWidth(), 0xFFFF)
-        h, y = BB.checkBounds(h, y, 0, self:getHeight(), 0xFFFF)
+        x, y, w, h = self:getBoundedRect(x, y, w, h)
         if w <= 0 or h <= 0 then return end
         cblitbuffer.BB_blend_rect(ffi.cast(P_BlitBuffer, self),
             x, y, w, h, color)
