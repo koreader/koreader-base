@@ -105,8 +105,7 @@ function framebuffer:_newBB(w, h)
 end
 
 function framebuffer:_render(bb, x, y, w, h)
-    w, x = BB.checkBounds(w or bb:getWidth(), x or 0, 0, bb:getWidth(), 0xFFFF)
-    h, y = BB.checkBounds(h or bb:getHeight(), y or 0, 0, bb:getHeight(), 0xFFFF)
+    x, y, w, h = bb:getBoundedRect(x, y, w, h)
 
     -- x, y, w, h without rotation for SDL rectangle
     local px, py, pw, ph = bb:getPhysicalRect(x, y, w, h)

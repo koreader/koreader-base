@@ -1,7 +1,6 @@
 local bit = require("bit")
 local ffi = require("ffi")
 local ffiUtil = require("ffi/util")
-local BB = require("ffi/blitbuffer")
 local C = ffi.C
 
 require("ffi/posix_h")
@@ -127,8 +126,8 @@ local function disp_update(fb, ioc_cmd, ioc_data, no_merge, is_flashing, wavefor
         no_merge = true
     end
 
-    w, x = BB.checkBounds(w or bb:getWidth(), x or 0, 0, bb:getWidth(), 0xFFFF)
-    h, y = BB.checkBounds(h or bb:getHeight(), y or 0, 0, bb:getHeight(), 0xFFFF)
+    -- Sanitize refresh rect
+    x, y, w, h = bb:getBoundedRect(x, y, w, h)
     x, y, w, h = bb:getPhysicalRect(x, y, w, h)
 
     -- Discard empty or bogus regions

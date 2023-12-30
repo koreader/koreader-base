@@ -1,5 +1,4 @@
 local ffi = require("ffi")
-local BB = require("ffi/blitbuffer")
 require("ffi/posix_h")
 require("ffi/einkfb_h")
 local C = ffi.C
@@ -7,8 +6,7 @@ local C = ffi.C
 local framebuffer = {}
 
 local function einkfb_update(fb, refreshtype, x, y, w, h)
-    w, x = BB.checkBounds(w or fb.bb:getWidth(), x or 0, 0, fb.bb:getWidth(), 0xFFFF)
-    h, y = BB.checkBounds(h or fb.bb:getHeight(), y or 0, 0, fb.bb:getHeight(), 0xFFFF)
+    x, y, w, h = fb.bb:getBoundedRect(x, y, w, h)
     x, y, w, h = fb.bb:getPhysicalRect(x, y, w, h)
 
     local refarea = ffi.new("struct update_area_t[1]")
