@@ -1097,7 +1097,8 @@ function BB_mt:getBoundedRect(x, y, w, h, alignment)
     w = ceil(w)
     h = ceil(h)
 
-    -- Honor alignment constraints, if any
+    -- Honor alignment constraints, if any.
+    -- coordinates can only go down, but never below 0, so there's no risk of it invalidating our previous OOB checks.
     -- NOTE: c.f., dithering comments in framebuffer_mxcfb for a potential use-case
     if alignment then
         local x_orig = x
@@ -1110,7 +1111,7 @@ function BB_mt:getBoundedRect(x, y, w, h, alignment)
         h = ALIGN_UP(h + y_fixup, alignment)
     end
 
-    -- Make sure the rect still fits strictly inside the bb
+    -- Make sure the rect fits strictly inside the bb
     if x + w > max_w then
         w = max_w - x
     end
