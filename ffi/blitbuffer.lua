@@ -1067,7 +1067,7 @@ i.e., make sure that x & y don't go OOB on either side, and that x+w & y+h don't
 
 @return rect strictly bounded inside the bb
 --]]
-function BB_mt:getBoundedRect(x, y, w, h, alignment)
+function BB_mt.__index:getBoundedRect(x, y, w, h, alignment)
     local max_w = self:getWidth()
     local max_h = self:getHeight()
 
