@@ -13,7 +13,7 @@ local fb = {
     debug = function(...) --[[ NOP ]] end,
 
     bb = nil, -- should be set by implementations
-    full_bb = nil, -- will hold a saved reference when a viewport is set
+    full_bb = nil, -- will hold a reference to the full-size native buffer when a viewport is set
     viewport = nil,
     screen_size = nil,
     native_rotation_mode = nil,
