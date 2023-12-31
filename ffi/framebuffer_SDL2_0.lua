@@ -24,7 +24,7 @@ function framebuffer:init()
     end
 
     self.bb:fill(BB.COLOR_WHITE)
-    self:refreshFull()
+    self:refreshFull(0, 0, self:getWidth(), self:getHeight())
 
     framebuffer.parent.init(self)
 end
@@ -63,7 +63,7 @@ function framebuffer:resize(w, h)
     SDL.texture = SDL.createTexture(w, h)
 
     self.bb:fill(BB.COLOR_WHITE)
-    self:refreshFull()
+    self:refreshFull(0, 0, self:getWidth(), self:getHeight())
 end
 
 local bb_emu = os.getenv("EMULATE_BB_TYPE")

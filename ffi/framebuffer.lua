@@ -201,6 +201,7 @@ function fb:refreshWaitForLastImp()
 end
 
 -- these should not be overridden, they provide the external refresh API:
+--- @note: x, y, w, h are *mandatory*, even for refreshFull! (UIManager guarantees it).
 function fb:refreshFull(x, y, w, h, d)
     x, y, w, h = self:calculateRealCoordinates(x, y, w, h)
     return self:refreshFullImp(x, y, w, h, d)
@@ -270,18 +271,15 @@ function fb:setViewport(viewport)
         viewport.w, viewport.h)
     self.viewport = viewport
     self.full_bb:fill(Blitbuffer.COLOR_WHITE)
-    self:refreshFull()
+    -- We want the *viewport's* dimensions, as calculateRealCoordinates will adjust the coordinates later.
+    self:refreshFull(0, 0, self:getWidth(), self:getHeight())
 end
 
 function fb:calculateRealCoordinates(x, y, w, h)
-    local mode = self:getRotationMode()
-    if not (x and y and w and h) then return end
-
-    -- TODO: May need to implement refresh translations for HW rotate on broken drivers.
-    -- For now those should just avoid using HW mode altogether.
-
     if not self.viewport then return x, y, w, h end
 
+    -- TODO: May need to implement refresh translations for HW rotate on broken drivers.
+    --       For now those should just avoid using HW mode altogether.
     --[[
         we need to adapt the coordinates when we have a viewport.
         this adaptation depends on the rotation:
@@ -309,23 +307,24 @@ function fb:calculateRealCoordinates(x, y, w, h)
         recalculate the offsets.
     --]]
 
+    local mode = self:getRotationMode()
     local vx2 = self.screen_size.w - (self.viewport.x + self.viewport.w)
     local vy2 = self.screen_size.h - (self.viewport.y + self.viewport.h)
 
     if mode == self.DEVICE_ROTATED_UPRIGHT then
-        -- (0,0) is at top left of screen
+        -- (0, 0) is at top left of screen
         x = x + self.viewport.x
         y = y + self.viewport.y
     elseif mode == self.DEVICE_ROTATED_CLOCKWISE then
-        -- (0,0) is at bottom left of screen
+        -- (0, 0) is at bottom left of screen
         x = x + vy2
         y = y + self.viewport.x
     elseif mode == self.DEVICE_ROTATED_UPSIDE_DOWN then
-        -- (0,0) is at bottom right of screen
+        -- (0, 0) is at bottom right of screen
         x = x + vx2
         y = y + vy2
     else -- self.DEVICE_ROTATED_COUNTER_CLOCKWISE
-        -- (0,0) is at top right of screen
+        -- (0, 0) is at top right of screen
         x = x + self.viewport.y
         y = y + vx2
     end
