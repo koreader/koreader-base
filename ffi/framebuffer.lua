@@ -275,6 +275,7 @@ function fb:setViewport(viewport)
     self:refreshFull(0, 0, self:getWidth(), self:getHeight())
 end
 
+-- If there is a viewport in place, spit out adjusted coordinates for the native buffer that account for it
 function fb:calculateRealCoordinates(x, y)
     if not self.viewport then return x, y end
 
