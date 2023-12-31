@@ -421,10 +421,22 @@ function fb:getRotationMode()
     return self.cur_rotation_mode
 end
 
+--- This reflects how the screen *looks* like, not the screen layout relative to its native orientation...
 function fb:getScreenMode()
     if self:getWidth() > self:getHeight() then
         return "landscape"
     else
+        return "portrait"
+    end
+end
+
+--- This reflects the current layout in terms of *rotation* modes
+function fb:getScreenOrientation()
+    if bit.band(self:getRotationMode(), 1) == 1 then
+        -- LinuxFB constants, Landscapes are odds
+        return "landscape"
+    else
+        -- And Portraits are even
         return "portrait"
     end
 end
