@@ -203,39 +203,39 @@ end
 -- these should not be overridden, they provide the external refresh API:
 --- @note: x, y, w, h are *mandatory*, even for refreshFull! (UIManager guarantees it).
 function fb:refreshFull(x, y, w, h, d)
-    x, y, w, h = self:calculateRealCoordinates(x, y, w, h)
+    x, y = self:calculateRealCoordinates(x, y)
     return self:refreshFullImp(x, y, w, h, d)
 end
 function fb:refreshPartial(x, y, w, h, d)
-    x, y, w, h = self:calculateRealCoordinates(x, y, w, h)
+    x, y = self:calculateRealCoordinates(x, y)
     return self:refreshPartialImp(x, y, w, h, d)
 end
 function fb:refreshNoMergePartial(x, y, w, h, d)
-    x, y, w, h = self:calculateRealCoordinates(x, y, w, h)
+    x, y = self:calculateRealCoordinates(x, y)
     return self:refreshNoMergePartialImp(x, y, w, h, d)
 end
 function fb:refreshFlashPartial(x, y, w, h, d)
-    x, y, w, h = self:calculateRealCoordinates(x, y, w, h)
+    x, y = self:calculateRealCoordinates(x, y)
     return self:refreshFlashPartialImp(x, y, w, h, d)
 end
 function fb:refreshUI(x, y, w, h, d)
-    x, y, w, h = self:calculateRealCoordinates(x, y, w, h)
+    x, y = self:calculateRealCoordinates(x, y)
     return self:refreshUIImp(x, y, w, h, d)
 end
 function fb:refreshNoMergeUI(x, y, w, h, d)
-    x, y, w, h = self:calculateRealCoordinates(x, y, w, h)
+    x, y = self:calculateRealCoordinates(x, y)
     return self:refreshNoMergeUIImp(x, y, w, h, d)
 end
 function fb:refreshFlashUI(x, y, w, h, d)
-    x, y, w, h = self:calculateRealCoordinates(x, y, w, h)
+    x, y = self:calculateRealCoordinates(x, y)
     return self:refreshFlashUIImp(x, y, w, h, d)
 end
 function fb:refreshFast(x, y, w, h, d)
-    x, y, w, h = self:calculateRealCoordinates(x, y, w, h)
+    x, y = self:calculateRealCoordinates(x, y)
     return self:refreshFastImp(x, y, w, h, d)
 end
 function fb:refreshA2(x, y, w, h, d)
-    x, y, w, h = self:calculateRealCoordinates(x, y, w, h)
+    x, y = self:calculateRealCoordinates(x, y)
     return self:refreshA2Imp(x, y, w, h, d)
 end
 function fb:refreshWaitForLast()
@@ -275,8 +275,8 @@ function fb:setViewport(viewport)
     self:refreshFull(0, 0, self:getWidth(), self:getHeight())
 end
 
-function fb:calculateRealCoordinates(x, y, w, h)
-    if not self.viewport then return x, y, w, h end
+function fb:calculateRealCoordinates(x, y)
+    if not self.viewport then return x, y end
 
     -- TODO: May need to implement refresh translations for HW rotate on broken drivers.
     --       For now those should just avoid using HW mode altogether.
@@ -329,7 +329,7 @@ function fb:calculateRealCoordinates(x, y, w, h)
         y = y + vx2
     end
 
-    return x, y, w, h
+    return x, y
 end
 
 function fb:getRawSize()
