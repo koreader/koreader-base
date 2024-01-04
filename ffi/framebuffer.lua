@@ -312,12 +312,15 @@ function fb:calculateRealCoordinates(x, y, w, h)
     -- NOTE: This is duplicated here, instead of calling getBoundedRect on the *viewport* in the public refresh*() methods,
     --       because implementations may prefer to bound to the *full* screen, instead of the viewport's dimensions,
     --       especially if an alignment constraint is at play...
+    -- NOTE: We need rotation-aware dimensions, not the cached screen_size/viewport table...
+    local max_w = self.bb:getWidth()
+    local max_h = self.bb:getHeight()
     -- Deal with OOB coordinates
-    if x >= self.viewport.w then
+    if x >= max_w then
         x = 0
         w = 0
     end
-    if y >= self.viewport.h then
+    if y >= max_h then
         y = 0
         h = 0
     end
@@ -333,13 +336,12 @@ function fb:calculateRealCoordinates(x, y, w, h)
     end
 
     -- Make sure the rect fits strictly inside the viewport
-    if x + w > self.viewport.w then
-        w = self.viewport.w - x
+    if x + w > max_w then
+        w = max_w - x
     end
-    if y + h > self.viewport.h then
-        h = self.viewport.h - y
+    if y + h > max_h then
+        h = max_h - y
     end
-
 
     local mode = self:getRotationMode()
     local vx2 = self.screen_size.w - (self.viewport.x + self.viewport.w)
