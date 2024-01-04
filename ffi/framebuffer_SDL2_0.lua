@@ -105,8 +105,6 @@ function framebuffer:_newBB(w, h)
 end
 
 function framebuffer:_render(bb, x, y, w, h)
-    x, y, w, h = bb:getBoundedRect(x, y, w, h)
-
     -- x, y, w, h without rotation for SDL rectangle
     local px, py, pw, ph = bb:getPhysicalRect(x, y, w, h)
 
@@ -137,16 +135,21 @@ end
 
 function framebuffer:refreshFullImp(x, y, w, h)
     if self.dummy then return end
-    self.debug("refresh on physical rectangle", x, y, w, h)
 
     local bb = self.full_bb or self.bb
+    x, y, w, h = bb:getBoundedRect(x, y, w, h)
+    self.debug(string.format("refresh on logical rectangle %dx%d+%d+%d", w, h, x, y))
+
     local flash = os.getenv("EMULATE_READER_FLASH")
     if flash then
+        -- Match the rotation of the screen buffer now
         self.sdl_bb:setRotation(bb:getRotation())
         self.sdl_bb:setInverse(bb:getInverse())
+        -- This ensures invertRect will not paint to now potentially off-screen regions (e.g., because of a viewport)
         self.sdl_bb:invertRect(x, y, w, h)
         self:_render(self.sdl_bb, x, y, w, h)
         util.usleep(tonumber(flash)*1000)
+        -- Resync the shadow buffer with the new content
         self.sdl_bb:blitFrom(bb, x, y, x, y, w, h)
     end
     self:_render(bb, x, y, w, h)
