@@ -203,39 +203,39 @@ end
 -- these should not be overridden, they provide the external refresh API:
 --- @note: x, y, w, h are *mandatory*, even for refreshFull! (UIManager guarantees it).
 function fb:refreshFull(x, y, w, h, d)
-    x, y = self:calculateRealCoordinates(x, y)
+    x, y, w, h = self:calculateRealCoordinates(x, y, w, h)
     return self:refreshFullImp(x, y, w, h, d)
 end
 function fb:refreshPartial(x, y, w, h, d)
-    x, y = self:calculateRealCoordinates(x, y)
+    x, y, w, h = self:calculateRealCoordinates(x, y, w, h)
     return self:refreshPartialImp(x, y, w, h, d)
 end
 function fb:refreshNoMergePartial(x, y, w, h, d)
-    x, y = self:calculateRealCoordinates(x, y)
+    x, y, w, h = self:calculateRealCoordinates(x, y, w, h)
     return self:refreshNoMergePartialImp(x, y, w, h, d)
 end
 function fb:refreshFlashPartial(x, y, w, h, d)
-    x, y = self:calculateRealCoordinates(x, y)
+    x, y, w, h = self:calculateRealCoordinates(x, y, w, h)
     return self:refreshFlashPartialImp(x, y, w, h, d)
 end
 function fb:refreshUI(x, y, w, h, d)
-    x, y = self:calculateRealCoordinates(x, y)
+    x, y, w, h = self:calculateRealCoordinates(x, y, w, h)
     return self:refreshUIImp(x, y, w, h, d)
 end
 function fb:refreshNoMergeUI(x, y, w, h, d)
-    x, y = self:calculateRealCoordinates(x, y)
+    x, y, w, h = self:calculateRealCoordinates(x, y, w, h)
     return self:refreshNoMergeUIImp(x, y, w, h, d)
 end
 function fb:refreshFlashUI(x, y, w, h, d)
-    x, y = self:calculateRealCoordinates(x, y)
+    x, y, w, h = self:calculateRealCoordinates(x, y, w, h)
     return self:refreshFlashUIImp(x, y, w, h, d)
 end
 function fb:refreshFast(x, y, w, h, d)
-    x, y = self:calculateRealCoordinates(x, y)
+    x, y, w, h = self:calculateRealCoordinates(x, y, w, h)
     return self:refreshFastImp(x, y, w, h, d)
 end
 function fb:refreshA2(x, y, w, h, d)
-    x, y = self:calculateRealCoordinates(x, y)
+    x, y, w, h = self:calculateRealCoordinates(x, y, w, h)
     return self:refreshA2Imp(x, y, w, h, d)
 end
 function fb:refreshWaitForLast()
@@ -276,8 +276,8 @@ function fb:setViewport(viewport)
 end
 
 -- If there is a viewport in place, spit out adjusted coordinates for the native buffer that account for it
-function fb:calculateRealCoordinates(x, y)
-    if not self.viewport then return x, y end
+function fb:calculateRealCoordinates(x, y, w, h)
+    if not self.viewport then return x, y, w, h end
 
     -- TODO: May need to implement refresh translations for HW rotate on broken drivers.
     --       For now those should just avoid using HW mode altogether.
@@ -308,6 +308,39 @@ function fb:calculateRealCoordinates(x, y)
         recalculate the offsets.
     --]]
 
+    -- Do a lite version of getBoundedRect, to ensure OOB coordinates do not allow requesting a refresh large enough to spill *outside* of the viewport...
+    -- NOTE: This is duplicated here, instead of calling getBoundedRect on the *viewport* in the public refresh*() methods,
+    --       because implementations may prefer to bound to the *full* screen, instead of the viewport's dimensions,
+    --       especially if an alignment constraint is at play...
+    -- Deal with OOB coordinates
+    if x >= self.viewport.w then
+        x = 0
+        w = 0
+    end
+    if y >= self.viewport.h then
+        y = 0
+        h = 0
+    end
+
+    -- Deal with negative coordinates
+    if x < 0 then
+        w = w + x
+        x = 0
+    end
+    if y < 0 then
+        h = h + y
+        y = 0
+    end
+
+    -- Make sure the rect fits strictly inside the viewport
+    if x + w > self.viewport.w then
+        w = self.viewport.w - x
+    end
+    if y + h > self.viewport.h then
+        h = self.viewport.h - y
+    end
+
+
     local mode = self:getRotationMode()
     local vx2 = self.screen_size.w - (self.viewport.x + self.viewport.w)
     local vy2 = self.screen_size.h - (self.viewport.y + self.viewport.h)
@@ -330,7 +363,7 @@ function fb:calculateRealCoordinates(x, y)
         y = y + vx2
     end
 
-    return x, y
+    return x, y, w, h
 end
 
 function fb:getRawSize()
