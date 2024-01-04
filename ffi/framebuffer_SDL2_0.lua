@@ -137,25 +137,16 @@ end
 
 function framebuffer:refreshFullImp(x, y, w, h)
     if self.dummy then return end
-
-    local bb = self.full_bb or self.bb
-
-    if not (x and y and w and h) then
-        x = 0
-        y = 0
-        w = bb:getWidth()
-        h = bb:getHeight()
-    end
-
     self.debug("refresh on physical rectangle", x, y, w, h)
 
+    local bb = self.full_bb or self.bb
     local flash = os.getenv("EMULATE_READER_FLASH")
     if flash then
+        self.sdl_bb:setRotation(bb:getRotation())
+        self.sdl_bb:setInverse(bb:getInverse())
         self.sdl_bb:invertRect(x, y, w, h)
         self:_render(self.sdl_bb, x, y, w, h)
         util.usleep(tonumber(flash)*1000)
-        self.sdl_bb:setRotation(bb:getRotation())
-        self.sdl_bb:setInverse(bb:getInverse())
         self.sdl_bb:blitFrom(bb, x, y, x, y, w, h)
     end
     self:_render(bb, x, y, w, h)
