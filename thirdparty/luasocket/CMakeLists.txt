@@ -36,7 +36,7 @@ list(APPEND BUILD_CMD "LUAINC=${LUAINC}" -j${PARALLEL_JOBS} all)
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
     https://github.com/lunarmodules/luasocket
-    8c2ff7217e2a205eb107a6f48b04ff1b2b3090a1
+    fa69770e52ba869feb8339d49e7c3c536953fbde
     ${SOURCE_DIR}
 )
 
