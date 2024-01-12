@@ -11,8 +11,7 @@ local framebuffer = {
 
 local function _getPhysicalRect(fb, x, y, w, h)
     local bb = fb.full_bb or fb.bb
-    w, x = BB.checkBounds(w or bb:getWidth(), x or 0, 0, bb:getWidth(), 0xFFFF)
-    h, y = BB.checkBounds(h or bb:getHeight(), y or 0, 0, bb:getHeight(), 0xFFFF)
+    x, y, w, h = bb:getBoundedRect(x, y, w, h)
     return bb:getPhysicalRect(x, y, w, h)
 end
 

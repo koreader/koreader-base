@@ -13,7 +13,7 @@ local fb = {
     debug = function(...) --[[ NOP ]] end,
 
     bb = nil, -- should be set by implementations
-    full_bb = nil, -- will hold a saved reference when a viewport is set
+    full_bb = nil, -- will hold a reference to the full-size native buffer when a viewport is set
     viewport = nil,
     screen_size = nil,
     native_rotation_mode = nil,
@@ -201,6 +201,7 @@ function fb:refreshWaitForLastImp()
 end
 
 -- these should not be overridden, they provide the external refresh API:
+--- @note: x, y, w, h are *mandatory*, even for refreshFull! (UIManager guarantees it).
 function fb:refreshFull(x, y, w, h, d)
     x, y, w, h = self:calculateRealCoordinates(x, y, w, h)
     return self:refreshFullImp(x, y, w, h, d)
@@ -270,18 +271,16 @@ function fb:setViewport(viewport)
         viewport.w, viewport.h)
     self.viewport = viewport
     self.full_bb:fill(Blitbuffer.COLOR_WHITE)
-    self:refreshFull()
+    -- We want the *viewport's* dimensions, as calculateRealCoordinates will adjust the coordinates later.
+    self:refreshFull(0, 0, self:getWidth(), self:getHeight())
 end
 
+-- If there is a viewport in place, spit out adjusted coordinates for the native buffer that account for it
 function fb:calculateRealCoordinates(x, y, w, h)
-    local mode = self:getRotationMode()
-    if not (x and y and w and h) then return end
-
-    -- TODO: May need to implement refresh translations for HW rotate on broken drivers.
-    -- For now those should just avoid using HW mode altogether.
-
     if not self.viewport then return x, y, w, h end
 
+    -- TODO: May need to implement refresh translations for HW rotate on broken drivers.
+    --       For now those should just avoid using HW mode altogether.
     --[[
         we need to adapt the coordinates when we have a viewport.
         this adaptation depends on the rotation:
@@ -309,23 +308,30 @@ function fb:calculateRealCoordinates(x, y, w, h)
         recalculate the offsets.
     --]]
 
+    -- Ensure OOB coordinates do not allow requesting a refresh large enough to spill *outside* of the viewport...
+    -- NOTE: This is done here, instead of in the public refresh*() methods (where we'd explicitly run it on the viewport bb),
+    --       because implementations may prefer to bound to the *full* screen, instead of the viewport's dimensions,
+    --       especially if an alignment constraint is at play...
+    x, y, w, h = self.bb:getBoundedRect(x, y, w, h)
+
+    local mode = self:getRotationMode()
     local vx2 = self.screen_size.w - (self.viewport.x + self.viewport.w)
     local vy2 = self.screen_size.h - (self.viewport.y + self.viewport.h)
 
     if mode == self.DEVICE_ROTATED_UPRIGHT then
-        -- (0,0) is at top left of screen
+        -- (0, 0) is at top left of screen
         x = x + self.viewport.x
         y = y + self.viewport.y
     elseif mode == self.DEVICE_ROTATED_CLOCKWISE then
-        -- (0,0) is at bottom left of screen
+        -- (0, 0) is at bottom left of screen
         x = x + vy2
         y = y + self.viewport.x
     elseif mode == self.DEVICE_ROTATED_UPSIDE_DOWN then
-        -- (0,0) is at bottom right of screen
+        -- (0, 0) is at bottom right of screen
         x = x + vx2
         y = y + vy2
     else -- self.DEVICE_ROTATED_COUNTER_CLOCKWISE
-        -- (0,0) is at top right of screen
+        -- (0, 0) is at top right of screen
         x = x + self.viewport.y
         y = y + vx2
     end
@@ -421,10 +427,22 @@ function fb:getRotationMode()
     return self.cur_rotation_mode
 end
 
+--- This reflects how the screen *looks* like, not the screen layout relative to its native orientation...
 function fb:getScreenMode()
     if self:getWidth() > self:getHeight() then
         return "landscape"
     else
+        return "portrait"
+    end
+end
+
+--- This reflects the current layout in terms of *rotation* modes
+function fb:getScreenOrientation()
+    if bit.band(self:getRotationMode(), 1) == 1 then
+        -- LinuxFB constants, Landscapes are odds
+        return "landscape"
+    else
+        -- And Portraits are even
         return "portrait"
     end
 end

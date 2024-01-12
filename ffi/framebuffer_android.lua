@@ -19,8 +19,7 @@ local framebuffer = {}
 -- update a region of the screen
 function framebuffer:_updatePartial(mode, delay, x, y, w, h)
     local bb = self.full_bb or self.bb
-    w, x = BB.checkBounds(w or bb:getWidth(), x or 0, 0, bb:getWidth(), 0xFFFF)
-    h, y = BB.checkBounds(h or bb:getHeight(), y or 0, 0, bb:getHeight(), 0xFFFF)
+    x, y, w, h = bb:getBoundedRect(x, y, w, h)
     x, y, w, h = bb:getPhysicalRect(x, y, w, h)
 
     android.einkUpdate(mode, delay, x, y, (x + w), (y + h))

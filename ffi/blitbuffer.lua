@@ -16,6 +16,7 @@ local min = math.min
 local rshift = bit.rshift
 local lshift = bit.lshift
 local band = bit.band
+local bnot = bit.bnot
 local bor = bit.bor
 local bxor = bit.bxor
 
@@ -1032,12 +1033,93 @@ function BB.checkBounds(length, target_offset, source_offset, target_size, sourc
         -- length is the smallest value
         return floor(length), floor(target_offset), floor(source_offset)
     elseif target_left < length and target_left < source_left then
-        -- target_left is the smalles value
+        -- target_left is the smallest value
         return floor(target_left), floor(target_offset), floor(source_offset)
     else
         -- source_left must be the smallest value
         return floor(source_left), floor(target_offset), floor(source_offset)
     end
+end
+
+-- A couple helper functions to compute aligned values...
+-- c.f., <linux/kernel.h> & ffi/framebuffer_linux.lua
+local function ALIGN_DOWN(x, a)
+    -- x & ~(a-1)
+    local mask = a - 1
+    return band(x, bnot(mask))
+end
+
+local function ALIGN_UP(x, a)
+    -- (x + (a-1)) & ~(a-1)
+    local mask = a - 1
+    return band(x + mask, bnot(mask))
+end
+
+--[[
+More specific checkBounds variant that will return the specified rect bounded inside the blitbuffer.
+i.e., make sure that x & y don't go OOB on either side, and that x+w & y+h don't go over their respective dimensions.
+
+@param x coordinate
+@param y coordinate
+@param w dimension
+@param h dimension
+@param alignment *optional* alignment constraint, if not nil, *must* be > 0 and a power of two!
+
+@return rect strictly bounded inside the bb
+--]]
+function BB_mt.__index:getBoundedRect(x, y, w, h, alignment)
+    local max_w = self:getWidth()
+    local max_h = self:getHeight()
+
+    -- Deal with OOB coordinates
+    if x >= max_w then
+        x = 0
+        w = 0
+    end
+    if y >= max_h then
+        y = 0
+        h = 0
+    end
+
+    -- Deal with negative coordinates
+    if x < 0 then
+        w = w + x
+        x = 0
+    end
+    if y < 0 then
+        h = h + y
+        y = 0
+    end
+
+    -- Align to pixel grid
+    x = floor(x)
+    y = floor(y)
+    w = ceil(w)
+    h = ceil(h)
+
+    -- Honor alignment constraints, if any.
+    -- coordinates can only go down, but never below 0, so there's no risk of it invalidating our previous OOB checks.
+    -- NOTE: c.f., dithering comments in framebuffer_mxcfb for a potential use-case
+    if alignment then
+        local x_orig = x
+        x = ALIGN_DOWN(x_orig, alignment)
+        local x_fixup = x_orig - x
+        w = ALIGN_UP(w + x_fixup, alignment)
+        local y_orig = y
+        y = ALIGN_DOWN(y_orig, alignment)
+        local y_fixup = y_orig - y
+        h = ALIGN_UP(h + y_fixup, alignment)
+    end
+
+    -- Make sure the rect fits strictly inside the bb
+    if x + w > max_w then
+        w = max_w - x
+    end
+    if y + h > max_h then
+        h = max_h - y
+    end
+
+    return x, y, w, h
 end
 
 function BB_mt.__index:blitDefault(dest, dest_x, dest_y, offs_x, offs_y, width, height, setter, set_param)
@@ -1386,8 +1468,7 @@ invert a rectangle within the buffer
 @param h height
 --]]
 function BB_mt.__index:invertRect(x, y, w, h)
-    w, x = BB.checkBounds(w, x, 0, self:getWidth(), 0xFFFF)
-    h, y = BB.checkBounds(h, y, 0, self:getHeight(), 0xFFFF)
+    x, y, w, h = self:getBoundedRect(x, y, w, h)
     if w <= 0 or h <= 0 then return end
     if self:canUseCbb() then
         cblitbuffer.BB_invert_rect(ffi.cast(P_BlitBuffer, self),
@@ -1493,8 +1574,7 @@ paint a rectangle onto this buffer
 function BB_mt.__index:paintRect(x, y, w, h, value, setter)
     setter = setter or self.setPixel
     value = value or Color8(0)
-    w, x = BB.checkBounds(w, x, 0, self:getWidth(), 0xFFFF)
-    h, y = BB.checkBounds(h, y, 0, self:getHeight(), 0xFFFF)
+    x, y, w, h = self:getBoundedRect(x, y, w, h)
     if w <= 0 or h <= 0 then return end
     if self:canUseCbb() and setter == self.setPixel then
         cblitbuffer.BB_fill_rect(ffi.cast(P_BlitBuffer, self),
@@ -1602,8 +1682,7 @@ end
 function BB4_mt.__index:paintRect(x, y, w, h, value, setter)
     setter = setter or self.setPixel
     value = value or Color8(0)
-    w, x = BB.checkBounds(w, x, 0, self:getWidth(), 0xFFFF)
-    h, y = BB.checkBounds(h, y, 0, self:getHeight(), 0xFFFF)
+    x, y, w, h = self:getBoundedRect(x, y, w, h)
     if w <= 0 or h <= 0 then return end
     for tmp_y = y, y+h-1 do
         for tmp_x = x, x+w-1 do
@@ -1844,8 +1923,7 @@ Paint hatches in a rectangle
 @a:  alpha
 --]]
 function BB_mt.__index:hatchRect(x, y, w, h, sw, c, a)
-    w, x = BB.checkBounds(w, x, 0, self:getWidth(), 0xFFFF)
-    h, y = BB.checkBounds(h, y, 0, self:getHeight(), 0xFFFF)
+    x, y, w, h = self:getBoundedRect(x, y, w, h)
     if w <= 0 or h <= 0 then return end
     a = (a or 1)*0xFF
     if a <= 0 then return end -- fully transparent
@@ -1909,8 +1987,7 @@ dim color values in rectangular area
 function BB_mt.__index:dimRect(x, y, w, h, by)
     local color = Color8A(0xFF, 0xFF*(by or 0.5))
     if self:canUseCbb() then
-        w, x = BB.checkBounds(w, x, 0, self:getWidth(), 0xFFFF)
-        h, y = BB.checkBounds(h, y, 0, self:getHeight(), 0xFFFF)
+        x, y, w, h = self:getBoundedRect(x, y, w, h)
         if w <= 0 or h <= 0 then return end
         cblitbuffer.BB_blend_rect(ffi.cast(P_BlitBuffer, self),
             x, y, w, h, color)
@@ -1931,8 +2008,7 @@ lighten color values in rectangular area
 function BB_mt.__index:lightenRect(x, y, w, h, by)
     local color = Color8A(0, 0xFF*(by or 0.5))
     if self:canUseCbb() then
-        w, x = BB.checkBounds(w, x, 0, self:getWidth(), 0xFFFF)
-        h, y = BB.checkBounds(h, y, 0, self:getHeight(), 0xFFFF)
+        x, y, w, h = self:getBoundedRect(x, y, w, h)
         if w <= 0 or h <= 0 then return end
         cblitbuffer.BB_blend_rect(ffi.cast(P_BlitBuffer, self),
             x, y, w, h, color)
