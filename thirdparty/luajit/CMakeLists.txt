@@ -78,7 +78,7 @@ list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/koreader-l
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
     https://github.com/LuaJIT/LuaJIT
-    29b0b282f59ac533313199f4f7be79490b7eee51
+    c525bcb9024510cad9e170e12b6209aedb330f83
     ${SOURCE_DIR}
 )
 
