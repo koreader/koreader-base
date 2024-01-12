@@ -13,8 +13,8 @@ ep_get_source_dir(SOURCE_DIR)
 
 list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/cocoa.patch)
 
-set(SDL2_VER "2.28.1")
-set(SDL2_MD5 "ccd2cd02b2ad4f71c2588747028953c3")
+set(SDL2_VER "2.28.5")
+set(SDL2_MD5 "a344eb827a03045c9b399e99af4af13d")
 download_project(
     PROJ ${PROJECT_NAME}
     URL https://github.com/libsdl-org/SDL/releases/download/release-${SDL2_VER}/SDL2-${SDL2_VER}.tar.gz
