@@ -31,21 +31,39 @@ static void slider_handler(int sig)
     }
 }
 
+// Using strtol right is *fun*...
+static int strtol_d(const char* str)
+{
+    char* endptr;
+    errno = 0;
+    long int val = strtol(str, &endptr, 10);
+    // NOTE: The string we're fed will have trailing garbage (a space followed by an LF) (because lipc & fgets), so ignore endptr...
+    if (errno || endptr == str || (int) val != val) {
+        // strtol failure || no digits were found || trailing garbage || cast truncation
+        return -1; // this will conveniently never match a real powerd constant ;).
+    }
+
+    return (int) val;
+}
+
+static void sendEvent(int fd, struct input_event* ev)
+{
+    if (write(fd, ev, sizeof(struct input_event)) == -1) {
+        fprintf(stderr, "[ko-input]: Failed to generate fake event.\n");
+    }
+}
+
 static void generateFakeEvent(int pipefd[2]) {
     /* We send a SIGTERM to this child on exit, trap it to kill lipc properly. */
     signal(SIGTERM, slider_handler);
 
-    FILE *fp;
-    char std_out[256];
-    int status;
-    struct input_event ev;
-    __u16 key_code = CODE_FAKE_IN_SAVER;
-
     close(pipefd[0]);
 
-    ev.type = EV_KEY;
-    ev.code = key_code;
-    ev.value = 1;
+    // NOTE: We leave the timestamp at zero, we don't know the system's evdev clock source right now,
+    //       and zero works just fine for EV_KEY events.
+    struct input_event ev = { 0 };
+    ev.type               = EV_KEY;
+    ev.value              = 1;
 
     /* listen power slider events (listen for ever for multiple events) */
     char *argv[] = {
@@ -55,7 +73,7 @@ static void generateFakeEvent(int pipefd[2]) {
     /* @TODO  07.06 2012 (houqp)
      * plugin and out event can only be watched by:
      * lipc-wait-event com.lab126.hal usbPlugOut,usbPlugIn */
-    fp = popen_noshell("lipc-wait-event", (const char * const *)argv, "r", &pclose_arg, 0);
+    FILE *fp = popen_noshell("lipc-wait-event", (const char * const *)argv, "r", &pclose_arg, 0);
     if (!fp) {
         err(EXIT_FAILURE, "popen_noshell()");
     }
@@ -63,35 +81,44 @@ static void generateFakeEvent(int pipefd[2]) {
     /* Flush to get rid of buffering issues? */
     fflush(fp);
 
-    while (fgets(std_out, sizeof(std_out)-1, fp)) {
+    char std_out[256];
+    while (fgets(std_out, sizeof(std_out), fp)) {
         if (std_out[0] == 'g') {
             ev.code = CODE_FAKE_IN_SAVER;
+            // Pass along the source constant
+            ev.value = strtol_d(std_out + sizeof("goingToScreenSaver"));
+            sendEvent(pipefd[1], &ev);
+            ev.value = 1;
         } else if(std_out[0] == 'o') {
             ev.code = CODE_FAKE_OUT_SAVER;
+            // Pass along the source constant
+            ev.value = strtol_d(std_out + sizeof("outOfScreenSaver"));
+            sendEvent(pipefd[1], &ev);
+            ev.value = 1;
         } else if((std_out[0] == 'u') && (std_out[7] == 'I')) {
             ev.code = CODE_FAKE_USB_PLUGGED_IN_TO_HOST;
+            sendEvent(pipefd[1], &ev);
         } else if((std_out[0] == 'u') && (std_out[7] == 'O')) {
             ev.code = CODE_FAKE_USB_PLUGGED_OUT_OF_HOST;
+            sendEvent(pipefd[1], &ev);
         } else if(std_out[0] == 'c') {
             ev.code = CODE_FAKE_CHARGING;
+            sendEvent(pipefd[1], &ev);
         } else if(std_out[0] == 'n') {
             ev.code = CODE_FAKE_NOT_CHARGING;
+            sendEvent(pipefd[1], &ev);
         } else if(std_out[0] == 'w') {
             ev.code = CODE_FAKE_WAKEUP_FROM_SUSPEND;
+            sendEvent(pipefd[1], &ev);
         } else if(std_out[0] == 'r') {
             ev.code = CODE_FAKE_READY_TO_SUSPEND;
+            sendEvent(pipefd[1], &ev);
         } else {
-            fprintf(stderr, "Unrecognized event.\n");
-        }
-        /* fill event struct */
-        gettimeofday(&ev.time, NULL);
-        /* generate event */
-        if (write(pipefd[1], &ev, sizeof(struct input_event)) == -1) {
-            fprintf(stderr, "Failed to generate event.\n");
+            fprintf(stderr, "[ko-input]: Unrecognized powerd event: `%.*s`.\n", (int) (sizeof(std_out) - 1U), std_out);
         }
     }
 
-    status = pclose_noshell(&pclose_arg);
+    int status = pclose_noshell(&pclose_arg);
     if (status == -1) {
         err(EXIT_FAILURE, "pclose_noshell()");
     } else {

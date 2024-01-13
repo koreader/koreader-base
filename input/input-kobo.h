@@ -106,11 +106,13 @@ static void generateFakeEvent(int pipefd[2])
                     // Pass along the evdev number
                     ev.value = strtol_d(uev.devname + sizeof("input/event") - 1U); // i.e., start right after the t of event
                     sendEvent(pipefd[1], &ev);
+                    ev.value = 1;
                     break;
                 case UEVENT_ACTION_REMOVE:
                     ev.code = CODE_FAKE_USB_DEVICE_PLUGGED_OUT;
                     ev.value = strtol_d(uev.devname + sizeof("input/event") - 1U);
                     sendEvent(pipefd[1], &ev);
+                    ev.value = 1;
                     break;
                 default:
                     // NOP
