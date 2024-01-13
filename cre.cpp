@@ -3663,9 +3663,9 @@ static int findText(lua_State *L) {
 	const char *l_pattern   = luaL_checkstring(L, 2);
 	lString32 pattern		= lString32(l_pattern);
 	int origin				= luaL_checkint(L, 3);
-	bool reverse			= luaL_checkint(L, 4);
-	bool caseInsensitive	= luaL_checkint(L, 5);
-	bool patternIsRegex    	= luaL_checkint(L, 6);
+	bool reverse			= lua_toboolean(L, 4);
+	bool caseInsensitive	= lua_toboolean(L, 5);
+	bool patternIsRegex		= lua_toboolean(L, 6);
 	int maxHits 			= luaL_checkint(L, 7);
 
     if ( pattern.empty() )
@@ -3756,6 +3756,94 @@ static int findText(lua_State *L) {
         }
     }
     CRLog::debug("CRViewDialog::findText: pattern not found");
+    return 0;
+}
+
+static int findAllText(lua_State *L) {
+    CreDocument *doc        = (CreDocument*) luaL_checkudata(L, 1, "credocument");
+    const char *l_pattern   = luaL_checkstring(L, 2);
+    lString32 pattern       = lString32(l_pattern);
+    bool caseInsensitive    = lua_toboolean(L, 3);
+    bool patternIsRegex     = lua_toboolean(L, 4);
+    int maxHits             = luaL_checkint(L, 5);
+    bool getMatchedText     = lua_toboolean(L, 6);
+    int nbWordsContext      = (int)luaL_optint(L, 7, 0);
+
+    if ( pattern.empty() )
+        return 0;
+
+    LVArray<ldomWord> words;
+    if ( doc->text_view->getDocument()->findText( pattern, caseInsensitive, false, -1, -1, words, maxHits, -1, -1, patternIsRegex ) ) {
+        doc->text_view->clearSelection();
+        doc->text_view->selectWords( words );
+        ldomMarkedRangeList * ranges = doc->text_view->getMarkedRanges();
+        if ( ranges && ranges->length() > 0 ) {
+            lua_createtable(L, words.length(), 0); // hold all words
+            for (int i = 0; i < words.length(); i++) {
+                ldomWord word = words[i];
+                lua_createtable(L, 0, 7); // new match
+                lua_pushstring(L, "start");
+                lua_pushstring(L, UnicodeToLocal(word.getStartXPointer().toString()).c_str());
+                lua_rawset(L, -3);
+                lua_pushstring(L, "end");
+                lua_pushstring(L, UnicodeToLocal(word.getEndXPointer().toString()).c_str());
+                lua_rawset(L, -3);
+                if ( getMatchedText ) {
+                    lua_pushstring(L, "matched_text");
+                    lua_pushstring(L, UnicodeToLocal(word.getText()).c_str());
+                    lua_rawset(L, -3);
+
+                    ldomXPointerEx start = word.getStartXPointer();
+                    if ( !start.isVisibleWordStart() ) {
+                        start.prevVisibleWordStart();
+                        ldomXRange rp(start, (ldomXPointerEx)word.getStartXPointer());
+                        lString32 prefix = rp.getRangeText('\n', 8192);
+                        lua_pushstring(L, "matched_word_prefix");
+                        lua_pushstring(L, UnicodeToLocal(prefix).c_str());
+                        lua_rawset(L, -3);
+                    }
+
+                    ldomXPointerEx end = word.getEndXPointer();
+                    if ( !end.isVisibleWordEnd() ) {
+                        end.nextVisibleWordEnd();
+                        ldomXRange rn((ldomXPointerEx)word.getEndXPointer(), end);
+                        lString32 suffix = rn.getRangeText('\n', 8192);
+                        lua_pushstring(L, "matched_word_suffix");
+                        lua_pushstring(L, UnicodeToLocal(suffix).c_str());
+                        lua_rawset(L, -3);
+                    }
+
+                    if ( nbWordsContext > 0 ) {
+                        ldomXPointerEx prev = start;
+                        for (int i=0; i<nbWordsContext; i++) {
+                            prev.prevVisibleWordStart();
+                        }
+                        ldomXRange rp(prev, start);
+                        lString32 prevText = rp.getRangeText('\n', 8192);
+                        lua_pushstring(L, "prev_text");
+                        lua_pushstring(L, UnicodeToLocal(prevText).c_str());
+                        lua_rawset(L, -3);
+
+                        ldomXPointerEx next = end;
+                        for (int i=0; i<nbWordsContext; i++) {
+                            next.nextVisibleWordEnd();
+                        }
+                        ldomXRange rn(end, next);
+                        lString32 nextText = rn.getRangeText('\n', 8192);
+                        lua_pushstring(L, "next_text");
+                        lua_pushstring(L, UnicodeToLocal(nextText).c_str());
+                        lua_rawset(L, -3);
+                    }
+                }
+                lua_rawseti(L, -2, i+1);
+            }
+            lua_pushinteger(L, ranges->length());
+            // Clear highlights (could also be prevented by tweaking "ldomXRange( const ldomWord & word )"
+            // so it does not force-set _flags(1) which causes the drawing)
+            doc->text_view->clearSelection();
+            return 2;
+        }
+    }
     return 0;
 }
 
@@ -4043,6 +4131,7 @@ static const struct luaL_Reg credocument_meth[] = {
     {"drawCurrentPage", drawCurrentPage},
     //{"drawCoverPage", drawCoverPage},
     {"findText", findText},
+    {"findAllText", findAllText},
     {"isXPointerInCurrentPage", isXPointerInCurrentPage},
     {"isXPointerInDocument", isXPointerInDocument},
     {"getLinkFromPosition", getLinkFromPosition},
