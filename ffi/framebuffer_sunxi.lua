@@ -120,8 +120,8 @@ local function disp_update(fb, ioc_cmd, ioc_data, no_merge, is_flashing, wavefor
     if fb._just_rotated then
         x = 0
         y = 0
-        w = fb:getWidth()
-        h = fb:getHeight()
+        w = bb:getWidth()
+        h = bb:getHeight()
         fb._just_rotated = nil
         no_merge = true
     end
