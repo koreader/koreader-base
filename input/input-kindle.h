@@ -37,9 +37,9 @@ static int strtol_d(const char* str)
     char* endptr;
     errno = 0;
     long int val = strtol(str, &endptr, 10);
-    // NOTE: The string we're fed will have trailing garbage (a space followed by an LF) (because lipc & fgets), so ignore endptr...
+    // NOTE: The string we're fed will have trailing garbage (a space followed by an LF) (because lipc & fgets), so we mostly ignore endptr...
     if (errno || endptr == str || (int) val != val) {
-        // strtol failure || no digits were found || trailing garbage || cast truncation
+        // strtol failure || no digits were found || cast truncation
         return -1; // this will conveniently never match a real powerd constant ;).
     }
 
