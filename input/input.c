@@ -37,6 +37,7 @@
 
 #define CODE_FAKE_IN_SAVER            10000
 #define CODE_FAKE_OUT_SAVER           10001
+#define CODE_FAKE_EXIT_SAVER          10002  // For Kindle's exitingScreenSaver
 // Device is plugged to USB host
 #define CODE_FAKE_USB_PLUGGED_IN_TO_HOST    10010
 #define CODE_FAKE_USB_PLUGGED_OUT_OF_HOST   10011
