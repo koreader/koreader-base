@@ -68,7 +68,7 @@ static void generateFakeEvent(int pipefd[2]) {
     /* listen power slider events (listen for ever for multiple events) */
     char *argv[] = {
         "lipc-wait-event", "-m", "-s", "0", "com.lab126.powerd",
-        "goingToScreenSaver,outOfScreenSaver,charging,notCharging,wakeupFromSuspend,readyToSuspend", (char *)NULL
+        "goingToScreenSaver,outOfScreenSaver,exitingScreenSaver,charging,notCharging,wakeupFromSuspend,readyToSuspend", (char *)NULL
     };
     /* @TODO  07.06 2012 (houqp)
      * plugin and out event can only be watched by:
@@ -95,6 +95,9 @@ static void generateFakeEvent(int pipefd[2]) {
             ev.value = strtol_d(std_out + sizeof("outOfScreenSaver"));
             sendEvent(pipefd[1], &ev);
             ev.value = 1;
+        } else if(std_out[0] == 'e') {
+            ev.code = CODE_FAKE_EXIT_SAVER;
+            sendEvent(pipefd[1], &ev);
         } else if((std_out[0] == 'u') && (std_out[7] == 'I')) {
             ev.code = CODE_FAKE_USB_PLUGGED_IN_TO_HOST;
             sendEvent(pipefd[1], &ev);
