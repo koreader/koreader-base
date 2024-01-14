@@ -73,7 +73,7 @@ static void generateFakeEventRM2(int pipefd) {
 
     fflush(fp);
 
-    while (fgets(std_out, sizeof(std_out)-1, fp)) {
+    while (fgets(std_out, sizeof(std_out), fp)) {
         if (!strncmp(std_out, "   boolean false", 16)) {
             gettimeofday(&ev.time, NULL);
             if (write(pipefd, &ev, sizeof(struct input_event)) == -1) {
@@ -105,7 +105,7 @@ static void generateFakeEventRM1(int pipefd) {
 
     re = ue_init_listener(&listener);
     if (re < 0) {
-        fprintf(stderr, "[remarkable-fake-event] Failed to initilize libue listener (%d)\n", re);
+        fprintf(stderr, "[remarkable-fake-event] Failed to initialize libue listener (%d)\n", re);
         return;
     }
 
