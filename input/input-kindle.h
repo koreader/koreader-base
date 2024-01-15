@@ -112,7 +112,7 @@ static void generateFakeEvent(int pipefd[2]) {
             sendEvent(pipefd[1], &ev);
         } else if(std_out[0] == 'w') {
             ev.code = CODE_FAKE_WAKEUP_FROM_SUSPEND;
-            // Pass along the timestamp
+            // Pass along the time spent in suspend
             ev.value = strtol_d(std_out + sizeof("wakeupFromSuspend"));
             sendEvent(pipefd[1], &ev);
             ev.value = 1;
