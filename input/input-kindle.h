@@ -112,10 +112,16 @@ static void generateFakeEvent(int pipefd[2]) {
             sendEvent(pipefd[1], &ev);
         } else if(std_out[0] == 'w') {
             ev.code = CODE_FAKE_WAKEUP_FROM_SUSPEND;
+            // Pass along the timestamp
+            ev.value = strtol_d(std_out + sizeof("wakeupFromSuspend"));
             sendEvent(pipefd[1], &ev);
+            ev.value = 1;
         } else if(std_out[0] == 'r') {
             ev.code = CODE_FAKE_READY_TO_SUSPEND;
+            // Pass along the delay
+            ev.value = strtol_d(std_out + sizeof("readyToSuspend"));
             sendEvent(pipefd[1], &ev);
+            ev.value = 1;
         } else {
             fprintf(stderr, "[ko-input]: Unrecognized powerd event: `%.*s`.\n", (int) (sizeof(std_out) - 1U), std_out);
         }
