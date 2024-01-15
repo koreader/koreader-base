@@ -201,7 +201,7 @@ end
 
 function framebuffer:setHWRotation(mode)
     local vinfo = self._vinfo
-    vinfo.rotate = self.forced_rotation[mode+1] or mode
+    vinfo.rotate = self.forced_rotation and self.forced_rotation[mode+1] or mode
     assert(C.ioctl(self.fd, C.FBIOPUT_VSCREENINFO, vinfo) == 0,
            "cannot set variable screen info")
 end
