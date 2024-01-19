@@ -1,8 +1,8 @@
-diff --git i/lib/hashlib/CMakeLists.txt w/lib/hashlib/CMakeLists.txt
-index 63d3852..2f7880c 100644
---- i/lib/hashlib/CMakeLists.txt
-+++ w/lib/hashlib/CMakeLists.txt
-@@ -11,7 +11,6 @@ include_directories(${PROJECT_SOURCE_DIR}/include)
+diff --git a/lib/hashlib/CMakeLists.txt b/lib/hashlib/CMakeLists.txt
+index 11baa61..a51af8b 100644
+--- a/lib/hashlib/CMakeLists.txt
++++ b/lib/hashlib/CMakeLists.txt
+@@ -12,7 +12,6 @@ include_directories(${PROJECT_SOURCE_DIR}/include)
  
  set(HASHLIB_SRCS
      ${PROJECT_SOURCE_DIR}/src/crc32.cpp

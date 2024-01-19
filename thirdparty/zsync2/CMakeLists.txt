@@ -10,6 +10,10 @@ assert_var_defined(CFLAGS)
 assert_var_defined(CXXFLAGS)
 assert_var_defined(LDFLAGS)
 assert_var_defined(CURL_DIR)
+assert_var_defined(CURL_LIB)
+assert_var_defined(OPENSSL_DIR)
+assert_var_defined(CRYPTO_LIB)
+assert_var_defined(SSL_LIB)
 
 ep_get_source_dir(SOURCE_DIR)
 ep_get_binary_dir(BINARY_DIR)
@@ -35,23 +39,20 @@ list(APPEND CMAKE_ARGS "-DCMAKE_C_FLAGS=${CPPFLAGS} ${CFLAGS}")
 list(APPEND CMAKE_ARGS "-DCMAKE_CXX_FLAGS=${CPPFLAGS} ${CXXFLAGS}")
 
 # And, finally, the actual zsync2 build options
+list(APPEND CMAKE_ARGS "-DBUILD_TESTING=0")
 list(APPEND CMAKE_ARGS "-DBUILD_CPR_TESTS=0")
 list(APPEND CMAKE_ARGS "-DUSE_SYSTEM_CURL=1")
 list(APPEND CMAKE_ARGS "-DCURL_INCLUDE_DIR=${CURL_DIR}/include")
-# NOTE: Because InkView apparently requires & initializes cURL on init, we rename our own on PB to avoid ABI mishaps... (#5861)
-if(DEFINED ENV{POCKETBOOK})
-    list(APPEND CMAKE_ARGS "-DCURL_LIBRARY=curl_ko")
-else()
-    list(APPEND CMAKE_ARGS "-DCURL_LIBRARY=curl")
-endif()
-# And because CMake is being stupid on the bots...
-#list(APPEND CMAKE_ARGS "-DCURL_FOUND=1")
-if(DEFINED ENV{POCKETBOOK})
-    list(APPEND CMAKE_ARGS "-DCURL_LIBRARIES=curl_ko")
-else()
-    list(APPEND CMAKE_ARGS "-DCURL_LIBRARIES=curl")
-endif()
-#list(APPEND CMAKE_ARGS "-DCURL_INCLUDE_DIRS=${CURL_DIR}/include")
+list(APPEND CMAKE_ARGS "-DCURL_LIBRARY=${CURL_LIB}")
+# For old CMake? (prstux)
+list(APPEND CMAKE_ARGS "-DCURL_LIBRARIES=${CURL_LIB}")
+list(APPEND CMAKE_ARGS "-DOPENSSL_INCLUDE_DIR=${OPENSSL_DIR}/include")
+list(APPEND CMAKE_ARGS "-DOPENSSL_CRYPTO_LIBRARY=${CRYPTO_LIB}")
+list(APPEND CMAKE_ARGS "-DOPENSSL_SSL_LIBRARY=${SSL_LIB}")
+
+# We don't actually install OpenSSL, meaning we can't use OPENSSL_ROOT_DIR to help find_package,
+# so CMake needs a push to look for both SSL & Cyrpto components...
+#list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/mangle-cpr-openssl-search.patch)
 
 # Fix build with old TCs (kindle & pocketbook).
 list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/fix-old-tc-build.patch)
@@ -64,7 +65,7 @@ list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/fix-old-tc
 ## * Prevent passing a malformed referer URL
 ## * Don't print seven billion progress bars
 ## * Rebase against zsync master (c.f., rebase-zsync-libs branch)
-## * Rebase against zlib 1.2.11 (c.f., rebase-zlib branch)
+## * Rebase against zlib 1.3.0.1 (c.f., rebase-zlib branch)
 ## * Workaround potential download loops, like what happened w/ the 2019.12 -> 2020.01 update.
 ## * Mangle logging to play nice w/ FBInk
 ## * Plug memory leaks
@@ -73,7 +74,7 @@ list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/fix-old-tc
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
     https://github.com/NiLuJe/zsync2.git
-    e618d18f6a7cbf350cededa17ddfe8f76bdf0b5c
+    b4953c95611d9507bd6c7b94dd8447ae87ead734
     ${SOURCE_DIR}
 )
 
