@@ -836,8 +836,12 @@ $(OUTPUT_DIR)/zsync2: $(THIRDPARTY_DIR)/zsync2/*.*
 		-DCPPFLAGS='$(CPPFLAGS) -I$(ZLIB_DIR)/include -I$(OPENSSL_DIR)/include' \
 		-DCFLAGS='$(CFLAGS)' \
 		-DCXXFLAGS='$(CXXFLAGS)' \
-		-DLDFLAGS='$(LDFLAGS) -L$(CURL_DIR)/lib -L$(OPENSSL_DIR) -lssl -lcrypto' \
+		-DLDFLAGS='$(LDFLAGS) -L$(CURL_DIR)/lib -L$(OPENSSL_DIR) -lssl -lcrypto -pthread' \
 		-DCURL_DIR='$(CURL_DIR)' \
+		-DOPENSSL_DIR='$(OPENSSL_DIR)' \
+		-DCRYPTO_LIB='$(CURDIR)/$(CRYPTO_LIB)' \
+		-DSSL_LIB='$(CURDIR)/$(SSL_LIB)' \
+		-DCURL_LIB='$(CURDIR)/$(CURL_LIB)' \
 		$(CURDIR)/$(THIRDPARTY_DIR)/zsync2 && \
 		$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS)
 	cp $(ZSYNC2_DIR)/src/zsync2 $(OUTPUT_DIR)/
