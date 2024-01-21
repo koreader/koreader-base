@@ -569,6 +569,7 @@ void BB_blend_rect(BlitBuffer * restrict bb, unsigned int x, unsigned int y, uns
 }
 
 // FIXME: Rename to MUL blend and move to a dedicated API that doesn't clash with lighten/darkenRect
+//        Or, rather, duplicate to a MUL blend version, as I guess the OVER variant could come in handy, one day.
 void BB_blend_rect_color(BlitBuffer * restrict bb, unsigned int x, unsigned int y, unsigned int w, unsigned int h, ColorRGB32 * restrict color) {
     const int bb_type = GET_BB_TYPE(bb);
     const int bb_rotation = GET_BB_ROTATION(bb);
