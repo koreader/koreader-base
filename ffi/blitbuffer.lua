@@ -2028,7 +2028,9 @@ lighten color values in rectangular area
 @param color color to overlay (default: 0x80, 50% gray)
 --]]
 function BB_mt.__index:lightenRect(x, y, w, h, color)
-    color = color or Color8A(0xFF, 0x80)
+    --- @fixme: Don't break the weird and confusing dim/lightenRect API,
+    ---         just add a new blendRect that does what the color stuff wants it to do without screwing up everything else.
+    color = color or Color8A(0, 0x80)
     if self:canUseCbb() then
         x, y, w, h = self:getBoundedRect(x, y, w, h)
         if w <= 0 or h <= 0 then return end
