@@ -686,6 +686,12 @@ void BB_blend_rect_color(BlitBuffer * restrict bb, unsigned int x, unsigned int 
                     dstptr->g = (uint8_t) DIV_255(dstptr->g * ainv + DIV_255(dstptr->g * color->g) * alpha);
                     dstptr->b = (uint8_t) DIV_255(dstptr->b * ainv + DIV_255(dstptr->b * color->b) * alpha);
                     */
+                    // Or simply MUL w/ a PMULed source (except this darkens color because we lose the emission value from alpha)
+                    /*
+                    dstptr->r = (uint8_t) DIV_255(dstptr->r * pcolor.r);
+                    dstptr->g = (uint8_t) DIV_255(dstptr->g * pcolor.g);
+                    dstptr->b = (uint8_t) DIV_255(dstptr->b * pcolor.b);
+                    */
                     // PMUL, we assume dst is fully opaque
                     /*
                     dstptr->r = (uint8_t) DIV_255(dstptr->r * ainv + pcolor.r * 0xFF);
