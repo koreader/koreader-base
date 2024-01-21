@@ -2865,13 +2865,59 @@ void BB_color_blit_from(BlitBuffer * restrict dst, const BlitBuffer * restrict s
     }
 }
 
-void BB_color_blit_from_rgb(BlitBuffer * restrict dst, const BlitBuffer * restrict src,
+void BB_color_blit_from_RGB32(BlitBuffer * restrict dst, const BlitBuffer * restrict src,
         unsigned int dest_x, unsigned int dest_y, unsigned int offs_x, unsigned int offs_y, unsigned int w, unsigned int h, ColorRGB32 * restrict color) {
     const int dbb_type = GET_BB_TYPE(dst);
     const int sbb_type = GET_BB_TYPE(src);
     const int sbb_rotation = GET_BB_ROTATION(src);
     const int dbb_rotation = GET_BB_ROTATION(dst);
     switch (dbb_type) {
+        case TYPE_BB8:
+            {
+                const uint8_t source_y8 = RGB_To_A(color->r, color->g, color->b);
+                for (unsigned int d_y = dest_y, o_y = offs_y; d_y < dest_y + h; d_y++, o_y++) {
+                    for (unsigned int d_x = dest_x, o_x = offs_x; d_x < dest_x + w; d_x++, o_x++) {
+                        uint8_t alpha;
+                        SET_ALPHA_FROM_A(src, sbb_type, sbb_rotation, o_x, o_y, &alpha);
+                        if (alpha == 0) {
+                            // NOP
+                        } else if (alpha == 0xFF) {
+                            Color8 * restrict dstptr;
+                            BB_GET_PIXEL(dst, dbb_rotation, Color8, d_x, d_y, &dstptr);
+                            dstptr->a = source_y8;
+                        } else {
+                            const uint8_t ainv = alpha ^ 0xFF;
+                            Color8 * restrict dstptr;
+                            BB_GET_PIXEL(dst, dbb_rotation, Color8, d_x, d_y, &dstptr);
+                            dstptr->a = (uint8_t) DIV_255(dstptr->a * ainv + source_y8 * alpha);
+                        }
+                    }
+                }
+            }
+            break;
+        case TYPE_BB8A:
+            {
+                const uint8_t source_y8 = RGB_To_A(color->r, color->g, color->b);
+                for (unsigned int d_y = dest_y, o_y = offs_y; d_y < dest_y + h; d_y++, o_y++) {
+                    for (unsigned int d_x = dest_x, o_x = offs_x; d_x < dest_x + w; d_x++, o_x++) {
+                        uint8_t alpha;
+                        SET_ALPHA_FROM_A(src, sbb_type, sbb_rotation, o_x, o_y, &alpha);
+                        if (alpha == 0) {
+                            // NOP
+                        } else if (alpha == 0xFF) {
+                            Color8A * restrict dstptr;
+                            BB_GET_PIXEL(dst, dbb_rotation, Color8A, d_x, d_y, &dstptr);
+                            dstptr->a = source_y8;
+                        } else {
+                            const uint8_t ainv = alpha ^ 0xFF;
+                            Color8A * restrict dstptr;
+                            BB_GET_PIXEL(dst, dbb_rotation, Color8A, d_x, d_y, &dstptr);
+                            dstptr->a = (uint8_t) DIV_255(dstptr->a * ainv + source_y8 * alpha);
+                        }
+                    }
+                }
+            }
+            break;
         case TYPE_BBRGB16:
             for (unsigned int d_y = dest_y, o_y = offs_y; d_y < dest_y + h; d_y++, o_y++) {
                 for (unsigned int d_x = dest_x, o_x = offs_x; d_x < dest_x + w; d_x++, o_x++) {
