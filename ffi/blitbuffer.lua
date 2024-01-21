@@ -119,9 +119,11 @@ typedef struct BlitBufferRGB32 {
 
 void BB_fill(BlitBuffer * restrict bb, uint8_t v);
 void BB_fill_rect(BlitBuffer * restrict bb, unsigned int x, unsigned int y, unsigned int w, unsigned int h, uint8_t v);
-void BB_fill_rect_color(BlitBuffer * restrict bb, unsigned int x, unsigned int y, unsigned int w, unsigned int h, ColorRGB32 * restrict color);
+void BB_fill_rect_RGB32(BlitBuffer * restrict bb, unsigned int x, unsigned int y, unsigned int w, unsigned int h, const ColorRGB32 * restrict color);
 void BB_blend_rect(BlitBuffer * restrict bb, unsigned int x, unsigned int y, unsigned int w, unsigned int h, Color8A * restrict color);
-void BB_blend_rect_color(BlitBuffer * restrict bb, unsigned int x, unsigned int y, unsigned int w, unsigned int h, ColorRGB32 * restrict color);
+void BB_blend_RGB32_over_rect(BlitBuffer * restrict bb, unsigned int x, unsigned int y, unsigned int w, unsigned int h, ColorRGB32 * restrict color);
+void BB_blend_RGB_multiply_rect(BlitBuffer * restrict bb, unsigned int x, unsigned int y, unsigned int w, unsigned int h, ColorRGB24 * restrict color);
+void BB_blend_RGB32_multiply_rect(BlitBuffer * restrict bb, unsigned int x, unsigned int y, unsigned int w, unsigned int h, ColorRGB32 * restrict color);
 void BB_invert_rect(BlitBuffer * restrict bb, unsigned int x, unsigned int y, unsigned int w, unsigned int h);
 void BB_hatch_rect(BlitBuffer * restrict bb, unsigned int x, unsigned int y, unsigned int w, unsigned int h, unsigned int stripe_width, Color8 * restrict color, uint8_t alpha);
 void BB_blit_to(const BlitBuffer * restrict source, BlitBuffer * restrict dest, unsigned int dest_x, unsigned int dest_y,
@@ -142,8 +144,8 @@ void BB_invert_blit_from(BlitBuffer * restrict dest, const BlitBuffer * restrict
                          unsigned int offs_x, unsigned int offs_y, unsigned int w, unsigned int h);
 void BB_color_blit_from(BlitBuffer * restrict dest, const BlitBuffer * restrict source, unsigned int dest_x, unsigned int dest_y,
                         unsigned int offs_x, unsigned int offs_y, unsigned int w, unsigned int h, Color8A * restrict color);
-void BB_color_blit_from_rgb(BlitBuffer * restrict dest, const BlitBuffer * restrict source, unsigned int dest_x, unsigned int dest_y,
-                        unsigned int offs_x, unsigned int offs_y, unsigned int w, unsigned int h, ColorRGB32 * restrict color);
+void BB_color_blit_from_RGB32(BlitBuffer * restrict dest, const BlitBuffer * restrict source, unsigned int dest_x, unsigned int dest_y,
+                        unsigned int offs_x, unsigned int offs_y, unsigned int w, unsigned int h, const ColorRGB32 * restrict color);
 void BB_paint_rounded_corner(BlitBuffer * restrict bb, unsigned int off_x, unsigned int off_y, unsigned int w, unsigned int h,
                         unsigned int bw, unsigned int r, uint8_t c, int anti_alias);
 ]]
@@ -267,6 +269,7 @@ local function dither_o8x8(x, y, v)
     end
 end
 
+-- FIXME: Need variants that will grayscale input color!
 -- Straight alpha blending (8bit alpha value)
 function Color4L_mt.__index:blend(color, coverage)
     local alpha = coverage or color:getAlpha()
@@ -1328,23 +1331,36 @@ end
 -- colorize area using source blitbuffer as a alpha-map
 function BB_mt.__index:colorblitFrom(source, dest_x, dest_y, offs_x, offs_y, width, height, color)
     -- we need color with alpha later:
+    local c = color:getColor8A()
     if self:canUseCbbTogether(source) then
         width, height = width or source:getWidth(), height or source:getHeight()
         width, dest_x, offs_x = BB.checkBounds(width, dest_x or 0, offs_x or 0, self:getWidth(), source:getWidth())
         height, dest_y, offs_y = BB.checkBounds(height, dest_y or 0, offs_y or 0, self:getHeight(), source:getHeight())
         if width <= 0 or height <= 0 then return end
-        if ffi.istype(ColorRGB32, color) then
-            cblitbuffer.BB_color_blit_from_rgb(ffi.cast(P_BlitBuffer, self),
-                ffi.cast(P_BlitBuffer_ROData, source),
-                dest_x, dest_y, offs_x, offs_y, width, height, color:getColorRGB32())
-        else
-            cblitbuffer.BB_color_blit_from(ffi.cast(P_BlitBuffer, self),
-                ffi.cast(P_BlitBuffer_ROData, source),
-                dest_x, dest_y, offs_x, offs_y, width, height, color:getColor8A())
-        end
+        cblitbuffer.BB_color_blit_from(ffi.cast(P_BlitBuffer, self),
+            ffi.cast(P_BlitBuffer_ROData, source),
+            dest_x, dest_y, offs_x, offs_y, width, height, c)
     else
-        local c = color:getColor8A()
         if self:getInverse() == 1 then c = c:invert() end
+        self:blitFrom(source, dest_x, dest_y, offs_x, offs_y, width, height, self.setPixelColorize, c)
+    end
+end
+
+function BB_mt.__index:colorblitFromRGB32(source, dest_x, dest_y, offs_x, offs_y, width, height, color)
+    -- Caller guarantees passing a ColorRGB32
+    if self:canUseCbbTogether(source) then
+        width, height = width or source:getWidth(), height or source:getHeight()
+        width, dest_x, offs_x = BB.checkBounds(width, dest_x or 0, offs_x or 0, self:getWidth(), source:getWidth())
+        height, dest_y, offs_y = BB.checkBounds(height, dest_y or 0, offs_y or 0, self:getHeight(), source:getHeight())
+        if width <= 0 or height <= 0 then return end
+        cblitbuffer.BB_color_blit_from_RGB32(ffi.cast(P_BlitBuffer, self),
+            ffi.cast(P_BlitBuffer_ROData, source),
+            dest_x, dest_y, offs_x, offs_y, width, height, color)
+    else
+        -- We might invert it, so we need a copy
+        local c = color:getColorRGB32()
+        if self:getInverse() == 1 then c = c:invert() end
+        -- FIXME: Need a dedicated variant that grayscales input color for blend to grayscale BB types..
         self:blitFrom(source, dest_x, dest_y, offs_x, offs_y, width, height, self.setPixelColorize, c)
     end
 end
@@ -1414,19 +1430,12 @@ PAINTING
 --]]
 
 --[[
-fill the whole blitbuffer with a given (grayscale or color) value
+fill the whole blitbuffer with a given (grayscale) value
 --]]
 function BB_mt.__index:fill(value)
     if self:canUseCbb() then
-        if ffi.istype(ColorRGB32, value) then
-            local x, y = 0, 0
-            local w, h = self:getWidth(), self:getHeight()
-            cblitbuffer.BB_fill_rect_color(ffi.cast(P_BlitBuffer, self),
-                x, y, w, h, value:getColorRGB32())
-        else
-            cblitbuffer.BB_fill(ffi.cast(P_BlitBuffer, self),
-                value:getColor8().a)
-        end
+        cblitbuffer.BB_fill(ffi.cast(P_BlitBuffer, self),
+            value:getColor8().a)
     else
         -- While we could use a plain ffi.fill, there are a few BB types where we do not want to stomp on the alpha byte...
         local bbtype = self:getType()
@@ -1594,13 +1603,8 @@ function BB_mt.__index:paintRect(x, y, w, h, value, setter)
     x, y, w, h = self:getBoundedRect(x, y, w, h)
     if w <= 0 or h <= 0 then return end
     if self:canUseCbb() and setter == self.setPixel then
-        if ffi.istype(ColorRGB32, value) then
-            cblitbuffer.BB_fill_rect_color(ffi.cast(P_BlitBuffer, self),
-                x, y, w, h, value:getColorRGB32())
-        else
-            cblitbuffer.BB_fill_rect(ffi.cast(P_BlitBuffer, self),
-                x, y, w, h, value:getColor8().a)
-        end
+        cblitbuffer.BB_fill_rect(ffi.cast(P_BlitBuffer, self),
+            x, y, w, h, value:getColor8().a)
     else
         -- We can only do fast filling when there's no complex processing involved (i.e., simple setPixel only)
         if setter == self.setPixel then
@@ -1709,6 +1713,122 @@ function BB4_mt.__index:paintRect(x, y, w, h, value, setter)
     for tmp_y = y, y+h-1 do
         for tmp_x = x, x+w-1 do
             setter(self, tmp_x, tmp_y, value)
+        end
+    end
+end
+
+--[[
+paintRect variant that takes a ColorRGB32 instead of a luminance value
+--]]
+function BB_mt.__index:paintRectRGB32(x, y, w, h, color, setter)
+    setter = setter or self.setPixel
+    color = color or ColorRGB32(0, 0, 0, 0xFF)
+    x, y, w, h = self:getBoundedRect(x, y, w, h)
+    if w <= 0 or h <= 0 then return end
+    if self:canUseCbb() and setter == self.setPixel then
+        cblitbuffer.BB_fill_rect_RGB32(ffi.cast(P_BlitBuffer, self),
+            x, y, w, h, color)
+    else
+        -- We can only do fast filling when there's no complex processing involved (i.e., simple setPixel only)
+        local bbtype = self:getType()
+        if setter == self.setPixel and bbtype ~= TYPE_BBRGB24 then
+            -- Handle rotation...
+            x, y, w, h = self:getPhysicalRect(x, y, w, h)
+
+            -- We might invert, so we need a copy...
+            local c = color:getColorRGB32()
+            if self:getInverse() == 1 then c = c:invert() end
+
+            -- We check against the BB's unrotated coordinates (i.e., self.w and not self:getWidth()),
+            -- as our memory region has a fixed layout, too!
+            if x == 0 and w == self.w then
+                -- Single step for contiguous scanlines
+                --print("Single fill paintRect")
+                if bbtype == TYPE_BBRGB32 then
+                    local src = c
+                    local p = ffi.cast(P_ColorRGB32, ffi.cast(uint8pt, self.data) + self.stride*y)
+                    for i = 1, self.pixel_stride*h do
+                        p[0] = src
+                        p = p+1
+                    end
+                elseif bbtype == TYPE_BBRGB16 then
+                    local src = c:getColorRGB16()
+                    local p = ffi.cast(P_ColorRGB16, ffi.cast(uint8pt, self.data) + self.stride*y)
+                    for i = 1, self.pixel_stride*h do
+                        p[0] = src
+                        p = p+1
+                    end
+                elseif bbtype == TYPE_BB8A then
+                    local src = c:getColor8A()
+                    local p = ffi.cast(P_Color8A, ffi.cast(uint8pt, self.data) + self.stride*y)
+                    for i = 1, self.pixel_stride*h do
+                        p[0] = src
+                        p = p+1
+                    end
+                else
+                    -- BB8, where we can just use ffi.fill
+                    local p = ffi.cast(uint8pt, self.data) + self.stride*y
+                    ffi.fill(p, self.stride*h, c:getColor8().a)
+                end
+            else
+                -- Scanline per scanline fill
+                --print("Scanline fill paintRect")
+                if bbtype == TYPE_BBRGB32 then
+                    local src = c
+                    for j = y, y+h-1 do
+                        local p = ffi.cast(P_ColorRGB32, ffi.cast(uint8pt, self.data) + self.stride*j) + x
+                        for i = 0, w-1 do
+                            p[0] = src
+                            p = p+1
+                        end
+                    end
+                elseif bbtype == TYPE_BBRGB16 then
+                    local src = c:getColorRGB16()
+                    for j = y, y+h-1 do
+                        local p = ffi.cast(P_ColorRGB16, ffi.cast(uint8pt, self.data) + self.stride*j) + x
+                        for i = 0, w-1 do
+                            p[0] = src
+                            p = p+1
+                        end
+                    end
+                elseif bbtype == TYPE_BB8A then
+                    local src = c:getColor8A()
+                    for j = y, y+h-1 do
+                        local p = ffi.cast(P_Color8A, ffi.cast(uint8pt, self.data) + self.stride*j) + x
+                        for i = 0, w-1 do
+                            p[0] = src
+                            p = p+1
+                        end
+                    end
+                else
+                    -- BB8
+                    for j = y, y+h-1 do
+                        local p = ffi.cast(uint8pt, self.data) + self.stride*j + x
+                        ffi.fill(p, w, c:getColor8().a)
+                    end
+                end
+            end
+        else
+            --print("Old-style paintRect pixel loop")
+            for tmp_y = y, y+h-1 do
+                for tmp_x = x, x+w-1 do
+                    setter(self, tmp_x, tmp_y, color)
+                end
+            end
+        end
+    end
+end
+
+-- BB4 version, identical if not for the lack of fast filling, because nibbles aren't addressable...
+-- Also, no cbb branch, as cbb doesn't handle 4bpp targets at all.
+function BB4_mt.__index:paintRectRGB32(x, y, w, h, color, setter)
+    setter = setter or self.setPixel
+    color = color:getColor8() or Color8(0)
+    x, y, w, h = self:getBoundedRect(x, y, w, h)
+    if w <= 0 or h <= 0 then return end
+    for tmp_y = y, y+h-1 do
+        for tmp_x = x, x+w-1 do
+            setter(self, tmp_x, tmp_y, color)
         end
     end
 end
@@ -2186,11 +2306,11 @@ local Jpeg -- lazy load ffi/jpeg
 function BB_mt.__index:getBufferData()
     local w, h = self:getWidth(), self:getHeight()
     local bbdump, source_ptr, stride
-    if self:getType() == BB.TYPE_BBRGB24 then
+    if self:getType() == TYPE_BBRGB24 then
         source_ptr = ffi.cast(uint8pt, self.data)
         stride = self.stride
     else
-        bbdump = BB.new(w, h, BB.TYPE_BBRGB24, nil)
+        bbdump = BB.new(w, h, TYPE_BBRGB24, nil)
         bbdump:blitFrom(self)
         source_ptr = ffi.cast(uint8pt, bbdump.data)
         stride = bbdump.stride

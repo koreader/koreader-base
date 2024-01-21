@@ -488,7 +488,7 @@ void BB_fill_rect(BlitBuffer * restrict bb, unsigned int x, unsigned int y, unsi
     }
 }
 
-void BB_fill_rect_RGB32(BlitBuffer * restrict bb, unsigned int x, unsigned int y, unsigned int w, unsigned int h, ColorRGB32 * restrict color) {
+void BB_fill_rect_RGB32(BlitBuffer * restrict bb, unsigned int x, unsigned int y, unsigned int w, unsigned int h, const ColorRGB32 * restrict color) {
     const int rotation = GET_BB_ROTATION(bb);
     unsigned int rx, ry, rw, rh;
     // Compute rotated rectangle coordinates & size
@@ -588,9 +588,9 @@ void BB_fill_rect_RGB32(BlitBuffer * restrict bb, unsigned int x, unsigned int y
             break;
         case TYPE_BBRGB24:
             {
-                // Scanline per scanline
+                // Pixel per pixel
                 const ColorRGB24 src = ColorRGB32_To_Color24(color);
-                //fprintf(stdout, "%s: Scanline BBRGB24 paintRect\n", __FUNCTION__);
+                //fprintf(stdout, "%s: Pixel BBRGB24 paintRect\n", __FUNCTION__);
                 for (unsigned int j = ry; j < ry+rh; j++) {
                     for (unsigned int k = rx; k < rx+rw; k++) {
                         uint8_t * restrict p = bb->data + bb->stride*j + (k * 3U);
@@ -2741,6 +2741,7 @@ void BB_invert_blit_from(BlitBuffer * restrict dst, const BlitBuffer * restrict 
     }
 }
 
+// FIXME: constify color across the codebase
 void BB_color_blit_from(BlitBuffer * restrict dst, const BlitBuffer * restrict src,
         unsigned int dest_x, unsigned int dest_y, unsigned int offs_x, unsigned int offs_y, unsigned int w, unsigned int h, Color8A * restrict color) {
     const int dbb_type = GET_BB_TYPE(dst);
@@ -2866,7 +2867,7 @@ void BB_color_blit_from(BlitBuffer * restrict dst, const BlitBuffer * restrict s
 }
 
 void BB_color_blit_from_RGB32(BlitBuffer * restrict dst, const BlitBuffer * restrict src,
-        unsigned int dest_x, unsigned int dest_y, unsigned int offs_x, unsigned int offs_y, unsigned int w, unsigned int h, ColorRGB32 * restrict color) {
+        unsigned int dest_x, unsigned int dest_y, unsigned int offs_x, unsigned int offs_y, unsigned int w, unsigned int h, const ColorRGB32 * restrict color) {
     const int dbb_type = GET_BB_TYPE(dst);
     const int sbb_type = GET_BB_TYPE(src);
     const int sbb_rotation = GET_BB_ROTATION(src);
