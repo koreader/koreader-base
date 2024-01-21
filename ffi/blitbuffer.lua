@@ -2119,7 +2119,7 @@ function BB_mt.__index:progressBar(x, y, w, h, load_m_w, load_m_h, load_percent,
 end
 
 --[[
-Ligthen color values in rectangular area
+Ligthen color values in a rectangular area
 (i.e., blend pure white at the requested opacity OVER rect).
 NOTE: Used to be called dimRect because it effectively makes black text dimmer.
 
@@ -2142,7 +2142,7 @@ function BB_mt.__index:lightenRect(x, y, w, h, by)
 end
 
 --[[
-Darken color values in rectangular area
+Darken color values in a rectangular area
 (i.e., blend pure black at the requested opacity OVER rect).
 
 @param x X coordinate
@@ -2160,6 +2160,30 @@ function BB_mt.__index:darkenRect(x, y, w, h, by)
             x, y, w, h, color)
     else
         self:paintRect(x, y, w, h, color, self.setPixelBlend)
+    end
+end
+
+--[[
+Multiply color values in a rectangular area by a given source color.
+(i.e., blend color MUL rect).
+Mainly used to emulate a highlighter pen over a text buffer.
+
+@param x X coordinate
+@param y Y coordinate
+@param w width
+@param h height
+@param color source color (alpha is ignored)
+--]]
+function BB_mt.__index:multiplyRectRGB(x, y, w, h, color)
+    local c = color:getColorRGB24()
+    if self:canUseCbb() then
+        x, y, w, h = self:getBoundedRect(x, y, w, h)
+        if w <= 0 or h <= 0 then return end
+        cblitbuffer.BB_blend_RGB_multiply_rect(ffi.cast(P_BlitBuffer, self),
+            x, y, w, h, c)
+    else
+        -- FIXME: Implement setPixelMultiply
+        self:paintRect(x, y, w, h, c, self.setPixelMultiply)
     end
 end
 
