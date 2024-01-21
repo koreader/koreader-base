@@ -672,9 +672,15 @@ void BB_blend_rect_color(BlitBuffer * restrict bb, unsigned int x, unsigned int 
                 for (unsigned int i = x; i < x + w; i++) {
                     ColorRGB32 * restrict dstptr;
                     BB_GET_PIXEL(bb, bb_rotation, ColorRGB32, i, j, &dstptr);
+                    /*
                     dstptr->r = (uint8_t) DIV_255(dstptr->r * color->r);
                     dstptr->g = (uint8_t) DIV_255(dstptr->g * color->g);
                     dstptr->b = (uint8_t) DIV_255(dstptr->b * color->b);
+                    */
+                    // OVER + MUL, if we actually end up taking a ColorRGB32 and not a ColorRGB24...
+                    dstptr->r = (uint8_t) DIV_255(dstptr->r * ainv + DIV_255(dstptr->r * color->r) * alpha);
+                    dstptr->g = (uint8_t) DIV_255(dstptr->g * ainv + DIV_255(dstptr->g * color->g) * alpha);
+                    dstptr->b = (uint8_t) DIV_255(dstptr->b * ainv + DIV_255(dstptr->b * color->b) * alpha);
                 }
             }
             break;
