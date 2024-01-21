@@ -640,15 +640,31 @@ void BB_blend_rect(BlitBuffer * restrict bb, unsigned int x, unsigned int y, uns
     }
 }
 
-// FIXME: Rename to MUL blend and move to a dedicated API that doesn't clash with lighten/darkenRect
-//        Or, rather, duplicate to a MUL blend version, as I guess the OVER variant could come in handy, one day.
-void BB_blend_rect_color(BlitBuffer * restrict bb, unsigned int x, unsigned int y, unsigned int w, unsigned int h, ColorRGB32 * restrict color) {
+void BB_blend_RGB32_over_rect(BlitBuffer * restrict bb, unsigned int x, unsigned int y, unsigned int w, unsigned int h, ColorRGB32 * restrict color) {
     const int bb_type = GET_BB_TYPE(bb);
     const int bb_rotation = GET_BB_ROTATION(bb);
     const uint8_t alpha = color->alpha;
     const uint8_t ainv = alpha ^ 0xFF;
-    const ColorRGB32 pcolor = ColorRGB32_To_PMUL(color);
+    const uint8_t source_y8 = RGB_To_A(color->r, color->g, color->b);
     switch (bb_type) {
+        case TYPE_BB8:
+            for (unsigned int j = y; j < y + h; j++) {
+                for (unsigned int i = x; i < x + w; i++) {
+                    Color8 * restrict dstptr;
+                    BB_GET_PIXEL(bb, bb_rotation, Color8, i, j, &dstptr);
+                    dstptr->a = (uint8_t) DIV_255(dstptr->a * ainv + source_y8 * alpha);
+                }
+            }
+            break;
+        case TYPE_BB8A:
+            for (unsigned int j = y; j < y + h; j++) {
+                for (unsigned int i = x; i < x + w; i++) {
+                    Color8A * restrict dstptr;
+                    BB_GET_PIXEL(bb, bb_rotation, Color8A, i, j, &dstptr);
+                    dstptr->a = (uint8_t) DIV_255(dstptr->a * ainv + source_y8 * alpha);
+                }
+            }
+            break;
         case TYPE_BBRGB16:
             for (unsigned int j = y; j < y + h; j++) {
                 for (unsigned int i = x; i < x + w; i++) {
@@ -677,33 +693,137 @@ void BB_blend_rect_color(BlitBuffer * restrict bb, unsigned int x, unsigned int 
                 for (unsigned int i = x; i < x + w; i++) {
                     ColorRGB32 * restrict dstptr;
                     BB_GET_PIXEL(bb, bb_rotation, ColorRGB32, i, j, &dstptr);
-                    dstptr->r = (uint8_t) DIV_255(dstptr->r * color->r);
-                    dstptr->g = (uint8_t) DIV_255(dstptr->g * color->g);
-                    dstptr->b = (uint8_t) DIV_255(dstptr->b * color->b);
-                    // OVER + MUL, if we actually end up taking a ColorRGB32 and not a ColorRGB24...
-                    /*
-                    dstptr->r = (uint8_t) DIV_255(dstptr->r * ainv + DIV_255(dstptr->r * color->r) * alpha);
-                    dstptr->g = (uint8_t) DIV_255(dstptr->g * ainv + DIV_255(dstptr->g * color->g) * alpha);
-                    dstptr->b = (uint8_t) DIV_255(dstptr->b * ainv + DIV_255(dstptr->b * color->b) * alpha);
-                    */
-                    // Or simply MUL w/ a PMULed source (except this darkens color because we lose the emission value from alpha)
-                    /*
-                    dstptr->r = (uint8_t) DIV_255(dstptr->r * pcolor.r);
-                    dstptr->g = (uint8_t) DIV_255(dstptr->g * pcolor.g);
-                    dstptr->b = (uint8_t) DIV_255(dstptr->b * pcolor.b);
-                    */
-                    // PMUL, we assume dst is fully opaque
-                    /*
-                    dstptr->r = (uint8_t) DIV_255(dstptr->r * ainv + pcolor.r * 0xFF);
-                    dstptr->g = (uint8_t) DIV_255(dstptr->g * ainv + pcolor.g * 0xFF);
-                    dstptr->b = (uint8_t) DIV_255(dstptr->b * ainv + pcolor.b * 0xFF);
-                    */
-                    // Straight OVER
-                    /*
                     dstptr->r = (uint8_t) DIV_255(dstptr->r * ainv + color->r * alpha);
                     dstptr->g = (uint8_t) DIV_255(dstptr->g * ainv + color->g * alpha);
                     dstptr->b = (uint8_t) DIV_255(dstptr->b * ainv + color->b * alpha);
-                    */
+                }
+            }
+            break;
+    }
+}
+
+// Dumb Multiply blending mode (used for painting book highlights)
+void BB_blend_RGB_multiply_rect(BlitBuffer * restrict bb, unsigned int x, unsigned int y, unsigned int w, unsigned int h, ColorRGB24 * restrict color) {
+    const int bb_type = GET_BB_TYPE(bb);
+    const int bb_rotation = GET_BB_ROTATION(bb);
+    const uint8_t source_y8 = RGB_To_A(color->r, color->g, color->b);
+    switch (bb_type) {
+        case TYPE_BB8:
+            for (unsigned int j = y; j < y + h; j++) {
+                for (unsigned int i = x; i < x + w; i++) {
+                    Color8 * restrict dstptr;
+                    BB_GET_PIXEL(bb, bb_rotation, Color8, i, j, &dstptr);
+                    dstptr->a = (uint8_t) DIV_255(dstptr->a * source_y8);
+                }
+            }
+            break;
+        case TYPE_BB8A:
+            for (unsigned int j = y; j < y + h; j++) {
+                for (unsigned int i = x; i < x + w; i++) {
+                    Color8A * restrict dstptr;
+                    BB_GET_PIXEL(bb, bb_rotation, Color8A, i, j, &dstptr);
+                    dstptr->a = (uint8_t) DIV_255(dstptr->a * source_y8);
+                }
+            }
+            break;
+        case TYPE_BBRGB16:
+            for (unsigned int j = y; j < y + h; j++) {
+                for (unsigned int i = x; i < x + w; i++) {
+                    ColorRGB16 * restrict dstptr;
+                    BB_GET_PIXEL(bb, bb_rotation, ColorRGB16, i, j, &dstptr);
+                    const uint8_t r = (uint8_t) DIV_255(ColorRGB16_GetR(dstptr->v) * color->r);
+                    const uint8_t g = (uint8_t) DIV_255(ColorRGB16_GetG(dstptr->v) * color->g);
+                    const uint8_t b = (uint8_t) DIV_255(ColorRGB16_GetB(dstptr->v) * color->b);
+                    dstptr->v = (uint16_t) RGB_To_RGB16(r, g, b);
+                }
+            }
+            break;
+        case TYPE_BBRGB24:
+            for (unsigned int j = y; j < y + h; j++) {
+                for (unsigned int i = x; i < x + w; i++) {
+                    ColorRGB24 * restrict dstptr;
+                    BB_GET_PIXEL(bb, bb_rotation, ColorRGB24, i, j, &dstptr);
+                    dstptr->r = (uint8_t) DIV_255(dstptr->r * color->r);
+                    dstptr->g = (uint8_t) DIV_255(dstptr->g * color->g);
+                    dstptr->b = (uint8_t) DIV_255(dstptr->b * color->b);
+                }
+            }
+            break;
+        case TYPE_BBRGB32:
+            for (unsigned int j = y; j < y + h; j++) {
+                for (unsigned int i = x; i < x + w; i++) {
+                    ColorRGB32 * restrict dstptr;
+                    BB_GET_PIXEL(bb, bb_rotation, ColorRGB32, i, j, &dstptr);
+                    dstptr->r = (uint8_t) DIV_255(dstptr->r * color->r);
+                    dstptr->g = (uint8_t) DIV_255(dstptr->g * color->g);
+                    dstptr->b = (uint8_t) DIV_255(dstptr->b * color->b);
+                }
+            }
+            break;
+    }
+}
+
+// Fancier variant if we ever want to honor color's alpha...
+// Function name is a slight misnommer, as we're essentially doing (color MUL rect) OVER rect
+void BB_blend_RGB32_multiply_rect(BlitBuffer * restrict bb, unsigned int x, unsigned int y, unsigned int w, unsigned int h, ColorRGB32 * restrict color) {
+    const int bb_type = GET_BB_TYPE(bb);
+    const int bb_rotation = GET_BB_ROTATION(bb);
+    const uint8_t alpha = color->alpha;
+    const uint8_t ainv = alpha ^ 0xFF;
+    const uint8_t source_y8 = RGB_To_A(color->r, color->g, color->b);
+    switch (bb_type) {
+        case TYPE_BB8:
+            for (unsigned int j = y; j < y + h; j++) {
+                for (unsigned int i = x; i < x + w; i++) {
+                    Color8 * restrict dstptr;
+                    BB_GET_PIXEL(bb, bb_rotation, Color8, i, j, &dstptr);
+                    dstptr->a = (uint8_t) DIV_255(dstptr->a * ainv + DIV_255(dstptr->a * source_y8) * alpha);
+                }
+            }
+            break;
+        case TYPE_BB8A:
+            for (unsigned int j = y; j < y + h; j++) {
+                for (unsigned int i = x; i < x + w; i++) {
+                    Color8A * restrict dstptr;
+                    BB_GET_PIXEL(bb, bb_rotation, Color8A, i, j, &dstptr);
+                    dstptr->a = (uint8_t) DIV_255(dstptr->a * ainv + DIV_255(dstptr->a * source_y8) * alpha);
+                }
+            }
+            break;
+        case TYPE_BBRGB16:
+            for (unsigned int j = y; j < y + h; j++) {
+                for (unsigned int i = x; i < x + w; i++) {
+                    ColorRGB16 * restrict dstptr;
+                    BB_GET_PIXEL(bb, bb_rotation, ColorRGB16, i, j, &dstptr);
+                    const uint8_t dr = ColorRGB16_GetR(dstptr->v);
+                    const uint8_t dg = ColorRGB16_GetR(dstptr->v);
+                    const uint8_t db = ColorRGB16_GetR(dstptr->v);
+                    const uint8_t r = (uint8_t) DIV_255(dr * ainv + DIV_255(dr * color->r) * alpha);
+                    const uint8_t g = (uint8_t) DIV_255(dg * ainv + DIV_255(dg * color->g) * alpha);
+                    const uint8_t b = (uint8_t) DIV_255(db * ainv + DIV_255(db * color->b) * alpha);
+                    dstptr->v = (uint16_t) RGB_To_RGB16(r, g, b);
+                }
+            }
+            break;
+        case TYPE_BBRGB24:
+            for (unsigned int j = y; j < y + h; j++) {
+                for (unsigned int i = x; i < x + w; i++) {
+                    ColorRGB24 * restrict dstptr;
+                    BB_GET_PIXEL(bb, bb_rotation, ColorRGB24, i, j, &dstptr);
+                    dstptr->r = (uint8_t) DIV_255(dstptr->r * ainv + DIV_255(dstptr->r * color->r) * alpha);
+                    dstptr->g = (uint8_t) DIV_255(dstptr->g * ainv + DIV_255(dstptr->g * color->g) * alpha);
+                    dstptr->b = (uint8_t) DIV_255(dstptr->b * ainv + DIV_255(dstptr->b * color->b) * alpha);
+                }
+            }
+            break;
+        case TYPE_BBRGB32:
+            for (unsigned int j = y; j < y + h; j++) {
+                for (unsigned int i = x; i < x + w; i++) {
+                    ColorRGB32 * restrict dstptr;
+                    BB_GET_PIXEL(bb, bb_rotation, ColorRGB32, i, j, &dstptr);
+                    dstptr->r = (uint8_t) DIV_255(dstptr->r * ainv + DIV_255(dstptr->r * color->r) * alpha);
+                    dstptr->g = (uint8_t) DIV_255(dstptr->g * ainv + DIV_255(dstptr->g * color->g) * alpha);
+                    dstptr->b = (uint8_t) DIV_255(dstptr->b * ainv + DIV_255(dstptr->b * color->b) * alpha);
                 }
             }
             break;
