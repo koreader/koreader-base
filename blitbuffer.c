@@ -568,6 +568,7 @@ void BB_blend_rect(BlitBuffer * restrict bb, unsigned int x, unsigned int y, uns
     }
 }
 
+// FIXME: Rename to MUL blend and move to a dedicated API that doesn't clash with lighten/darkenRect
 void BB_blend_rect_color(BlitBuffer * restrict bb, unsigned int x, unsigned int y, unsigned int w, unsigned int h, ColorRGB32 * restrict color) {
     const int bb_type = GET_BB_TYPE(bb);
     const int bb_rotation = GET_BB_ROTATION(bb);
@@ -602,9 +603,9 @@ void BB_blend_rect_color(BlitBuffer * restrict bb, unsigned int x, unsigned int 
                 for (unsigned int i = x; i < x + w; i++) {
                     ColorRGB32 * restrict dstptr;
                     BB_GET_PIXEL(bb, bb_rotation, ColorRGB32, i, j, &dstptr);
-                    dstptr->r = (uint8_t) DIV_255(dstptr->r * ainv + color->r * alpha);
-                    dstptr->g = (uint8_t) DIV_255(dstptr->g * ainv + color->g * alpha);
-                    dstptr->b = (uint8_t) DIV_255(dstptr->b * ainv + color->b * alpha);
+                    dstptr->r = (uint8_t) DIV_255(dstptr->r * color->r);
+                    dstptr->g = (uint8_t) DIV_255(dstptr->g * color->g);
+                    dstptr->b = (uint8_t) DIV_255(dstptr->b * color->b);
                 }
             }
             break;
