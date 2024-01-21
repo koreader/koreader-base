@@ -2331,36 +2331,53 @@ end
 
 --[[
 return a Color value resembling a given hex string
----]]
+--]]
 function BB.colorFromString(value)
     value = value:gsub('#','')
     -- #rrggbbaa
     if(#value == 8) then
         return ColorRGB32(
-            tonumber(value:sub(1,2), 16),
-            tonumber(value:sub(3,4), 16),
-            tonumber(value:sub(5,6), 16),
-            tonumber(value:sub(7,8), 16)
+            tonumber(value:sub(1, 2), 16),
+            tonumber(value:sub(3, 4), 16),
+            tonumber(value:sub(5, 6), 16),
+            tonumber(value:sub(7, 8), 16)
         )
     -- #rrggbb
     elseif(#value == 6) then
         return ColorRGB32(
-            tonumber(value:sub(1,2), 16),
-            tonumber(value:sub(3,4), 16),
-            tonumber(value:sub(5,6), 16),
+            tonumber(value:sub(1, 2), 16),
+            tonumber(value:sub(3, 4), 16),
+            tonumber(value:sub(5, 6), 16),
             0xFF
         )
     -- #vv
     elseif(#value == 2) then
         return ColorRGB32(
-            tonumber(value:sub(1,2), 16),
-            tonumber(value:sub(1,2), 16),
-            tonumber(value:sub(1,2), 16),
+            tonumber(value:sub(1, 2), 16),
+            tonumber(value:sub(1, 2), 16),
+            tonumber(value:sub(1, 2), 16),
             0xFF
         )
     else
         return nil
     end
+end
+
+-- Common color names used for highlights
+BB.HIGHLIGHT_COLORS = {
+    ["red"]    = "#fe4400",
+    ["orange"] = "#ff8800",
+    ["yellow"] = "#fdff32",
+    ["green"]  = "#00ad65",
+    ["blue"]   = "#00f2ff",
+    ["purple"] = "#ee00ff",
+    ["gray"]   = "#808080",
+}
+--[[
+return a Color value given a common color name (fall back to gray for unknown colors)
+--]]
+function BB.colorFromName(name)
+    return BB.colorFromString(BB.HIGHLIGHT_COLORS[name:lower()] or "#808080")
 end
 
 -- the full eInk palette:

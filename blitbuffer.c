@@ -747,7 +747,7 @@ void BB_blend_RGB32_over_rect(BlitBuffer * restrict bb, unsigned int x, unsigned
     }
 }
 
-// Dumb Multiply blending mode (used for painting book highlights)
+// Dumb multiply blending mode (used for painting book highlights)
 void BB_blend_RGB_multiply_rect(BlitBuffer * restrict bb, unsigned int x, unsigned int y, unsigned int w, unsigned int h, ColorRGB24 * restrict color) {
     const int bb_type = GET_BB_TYPE(bb);
     const int bb_rotation = GET_BB_ROTATION(bb);
