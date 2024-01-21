@@ -678,6 +678,7 @@ void BB_blend_rect_color(BlitBuffer * restrict bb, unsigned int x, unsigned int 
                     dstptr->b = (uint8_t) DIV_255(dstptr->b * color->b);
                     */
                     // OVER + MUL, if we actually end up taking a ColorRGB32 and not a ColorRGB24...
+                    // PMUL color?
                     dstptr->r = (uint8_t) DIV_255(dstptr->r * ainv + DIV_255(dstptr->r * color->r) * alpha);
                     dstptr->g = (uint8_t) DIV_255(dstptr->g * ainv + DIV_255(dstptr->g * color->g) * alpha);
                     dstptr->b = (uint8_t) DIV_255(dstptr->b * ainv + DIV_255(dstptr->b * color->b) * alpha);

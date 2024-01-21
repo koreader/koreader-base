@@ -1998,6 +1998,9 @@ function BB_mt.__index:progressBar(x, y, w, h, load_m_w, load_m_h, load_percent,
     (w-2*load_m_w)*load_percent, (h-2*load_m_h), c)
 end
 
+--- @fixme: Properly rename those to ligtenRect & darkenRect, respectively.
+---         Because currently dim lightens and lighten darkens, which is nuts.
+---         10 years late, but at least we knew about it from the start... (2cb2e404f6fcea4535690e08483af0e7f00cff23)
 --[[
 dim color values in rectangular area
 
