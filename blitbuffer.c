@@ -72,6 +72,7 @@ static const char*
       39185*ColorRGB16_GetG(v) + \
       15220*ColorRGB16_GetB(v)) >> 14U)
 #define RGB_To_RGB16(r, g, b) (((r & 0xF8) << 8U) + ((g & 0xFC) << 3U) + (b >> 3U))
+// NOTE: `A` was a *terrible* variable name to settle on. It's actually luminance, e.g., grayscale, a.k.a., Y8.
 #define RGB_To_A(r, g, b) ((4898U*r + 9618U*g + 1869U*b) >> 14U)
 
 // Helpers to pack pixels manually, without going through the Color structs.
@@ -91,6 +92,9 @@ static const char*
     __auto_type _v = (V) + 128;                                                                      \
     (((_v >> 8U) + _v) >> 8U);                                                                       \
 })
+
+#define ColorRGB32_To_PMUL(color) \
+    (ColorRGB32){DIV_255(color->r * color->alpha), DIV_255(color->g * color->alpha), DIV_255(color->b * color->alpha), color->alpha}
 
 // MIN/MAX with no side-effects,
 // c.f., https://gcc.gnu.org/onlinedocs/cpp/Duplication-of-Side-Effects.html#Duplication-of-Side-Effects
@@ -643,6 +647,7 @@ void BB_blend_rect_color(BlitBuffer * restrict bb, unsigned int x, unsigned int 
     const int bb_rotation = GET_BB_ROTATION(bb);
     const uint8_t alpha = color->alpha;
     const uint8_t ainv = alpha ^ 0xFF;
+    const ColorRGB32 pcolor = ColorRGB32_To_PMUL(color);
     switch (bb_type) {
         case TYPE_BBRGB16:
             for (unsigned int j = y; j < y + h; j++) {
@@ -672,16 +677,27 @@ void BB_blend_rect_color(BlitBuffer * restrict bb, unsigned int x, unsigned int 
                 for (unsigned int i = x; i < x + w; i++) {
                     ColorRGB32 * restrict dstptr;
                     BB_GET_PIXEL(bb, bb_rotation, ColorRGB32, i, j, &dstptr);
-                    /*
                     dstptr->r = (uint8_t) DIV_255(dstptr->r * color->r);
                     dstptr->g = (uint8_t) DIV_255(dstptr->g * color->g);
                     dstptr->b = (uint8_t) DIV_255(dstptr->b * color->b);
-                    */
                     // OVER + MUL, if we actually end up taking a ColorRGB32 and not a ColorRGB24...
-                    // PMUL color?
+                    /*
                     dstptr->r = (uint8_t) DIV_255(dstptr->r * ainv + DIV_255(dstptr->r * color->r) * alpha);
                     dstptr->g = (uint8_t) DIV_255(dstptr->g * ainv + DIV_255(dstptr->g * color->g) * alpha);
                     dstptr->b = (uint8_t) DIV_255(dstptr->b * ainv + DIV_255(dstptr->b * color->b) * alpha);
+                    */
+                    // PMUL, we assume dst is fully opaque
+                    /*
+                    dstptr->r = (uint8_t) DIV_255(dstptr->r * ainv + pcolor.r * 0xFF);
+                    dstptr->g = (uint8_t) DIV_255(dstptr->g * ainv + pcolor.g * 0xFF);
+                    dstptr->b = (uint8_t) DIV_255(dstptr->b * ainv + pcolor.b * 0xFF);
+                    */
+                    // Straight OVER
+                    /*
+                    dstptr->r = (uint8_t) DIV_255(dstptr->r * ainv + color->r * alpha);
+                    dstptr->g = (uint8_t) DIV_255(dstptr->g * ainv + color->g * alpha);
+                    dstptr->b = (uint8_t) DIV_255(dstptr->b * ainv + color->b * alpha);
+                    */
                 }
             }
             break;
