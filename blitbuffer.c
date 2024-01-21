@@ -624,7 +624,7 @@ void BB_fill_rect_RGB32(BlitBuffer * restrict bb, unsigned int x, unsigned int y
     }
 }
 
-void BB_blend_rect(BlitBuffer * restrict bb, unsigned int x, unsigned int y, unsigned int w, unsigned int h, Color8A * restrict color) {
+void BB_blend_rect(BlitBuffer * restrict bb, unsigned int x, unsigned int y, unsigned int w, unsigned int h, const Color8A * restrict color) {
     const int bb_type = GET_BB_TYPE(bb);
     const int bb_rotation = GET_BB_ROTATION(bb);
     const uint8_t alpha = color->alpha;
@@ -685,7 +685,7 @@ void BB_blend_rect(BlitBuffer * restrict bb, unsigned int x, unsigned int y, uns
     }
 }
 
-void BB_blend_RGB32_over_rect(BlitBuffer * restrict bb, unsigned int x, unsigned int y, unsigned int w, unsigned int h, ColorRGB32 * restrict color) {
+void BB_blend_RGB32_over_rect(BlitBuffer * restrict bb, unsigned int x, unsigned int y, unsigned int w, unsigned int h, const ColorRGB32 * restrict color) {
     const int bb_type = GET_BB_TYPE(bb);
     const int bb_rotation = GET_BB_ROTATION(bb);
     const uint8_t alpha = color->alpha;
@@ -748,7 +748,7 @@ void BB_blend_RGB32_over_rect(BlitBuffer * restrict bb, unsigned int x, unsigned
 }
 
 // Dumb multiply blending mode (used for painting book highlights)
-void BB_blend_RGB_multiply_rect(BlitBuffer * restrict bb, unsigned int x, unsigned int y, unsigned int w, unsigned int h, ColorRGB24 * restrict color) {
+void BB_blend_RGB_multiply_rect(BlitBuffer * restrict bb, unsigned int x, unsigned int y, unsigned int w, unsigned int h, const ColorRGB24 * restrict color) {
     const int bb_type = GET_BB_TYPE(bb);
     const int bb_rotation = GET_BB_ROTATION(bb);
     const uint8_t source_y8 = RGB_To_A(color->r, color->g, color->b);
@@ -810,7 +810,7 @@ void BB_blend_RGB_multiply_rect(BlitBuffer * restrict bb, unsigned int x, unsign
 
 // Fancier variant if we ever want to honor color's alpha...
 // Function name is a slight misnommer, as we're essentially doing (color MUL rect) OVER rect
-void BB_blend_RGB32_multiply_rect(BlitBuffer * restrict bb, unsigned int x, unsigned int y, unsigned int w, unsigned int h, ColorRGB32 * restrict color) {
+void BB_blend_RGB32_multiply_rect(BlitBuffer * restrict bb, unsigned int x, unsigned int y, unsigned int w, unsigned int h, const ColorRGB32 * restrict color) {
     const int bb_type = GET_BB_TYPE(bb);
     const int bb_rotation = GET_BB_ROTATION(bb);
     const uint8_t alpha = color->alpha;
@@ -1021,7 +1021,7 @@ void BB_invert_rect(BlitBuffer * restrict bb, unsigned int x, unsigned int y, un
     }
 }
 
-void BB_hatch_rect(BlitBuffer * restrict bb, unsigned int x, unsigned int y, unsigned int w, unsigned int h, unsigned int stripe_width, Color8 * restrict color, uint8_t alpha) {
+void BB_hatch_rect(BlitBuffer * restrict bb, unsigned int x, unsigned int y, unsigned int w, unsigned int h, unsigned int stripe_width, const Color8 * restrict color, uint8_t alpha) {
     if (alpha == 0) { // NOP
         return;
     }
@@ -2741,9 +2741,8 @@ void BB_invert_blit_from(BlitBuffer * restrict dst, const BlitBuffer * restrict 
     }
 }
 
-// FIXME: constify color across the codebase
 void BB_color_blit_from(BlitBuffer * restrict dst, const BlitBuffer * restrict src,
-        unsigned int dest_x, unsigned int dest_y, unsigned int offs_x, unsigned int offs_y, unsigned int w, unsigned int h, Color8A * restrict color) {
+        unsigned int dest_x, unsigned int dest_y, unsigned int offs_x, unsigned int offs_y, unsigned int w, unsigned int h, const Color8A * restrict color) {
     const int dbb_type = GET_BB_TYPE(dst);
     const int sbb_type = GET_BB_TYPE(src);
     const int sbb_rotation = GET_BB_ROTATION(src);
