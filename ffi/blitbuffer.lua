@@ -2380,6 +2380,16 @@ function BB.colorFromName(name)
     return BB.colorFromString(BB.HIGHLIGHT_COLORS[name:lower()] or "#808080")
 end
 
+--[[
+Test whether a Color is a Luminance-only type.
+Technically that would mean anything <= Color8A,
+but, in practice, since we care about the constants defined below,
+we only check against Color8.
+--]]
+function BB.isColor8(color)
+    return ffi.istype(Color8, color)
+end
+
 -- the full eInk palette:
 BB.COLOR_WHITE = Color8(0xFF)
 BB.COLOR_GRAY_E = Color8(0xEE)
