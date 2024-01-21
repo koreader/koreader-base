@@ -519,9 +519,6 @@ void BB_fill_rect_RGB32(BlitBuffer * restrict bb, unsigned int x, unsigned int y
                 break;
     }
 
-    // For grayscale targets
-    const uint8_t source_y8 = RGB_To_A(color->r, color->g, color->b);
-
     // Handle any target pitch properly
     const int bb_type = GET_BB_TYPE(bb);
     switch (bb_type) {
@@ -530,10 +527,11 @@ void BB_fill_rect_RGB32(BlitBuffer * restrict bb, unsigned int x, unsigned int y
                 // Single step for contiguous scanlines (e.g., BB_fill())
                 //fprintf(stdout, "%s: Full BB8 paintRect\n", __FUNCTION__);
                 uint8_t * restrict p = bb->data + bb->stride*ry;
-                memset(p, source_y8, bb->stride*rh);
+                memset(p, RGB_To_A(color->r, color->g, color->b), bb->stride*rh);
             } else {
                 // Scanline per scanline
                 //fprintf(stdout, "%s: Scanline BB8 paintRect\n", __FUNCTION__);
+                const uint8_t source_y8 = RGB_To_A(color->r, color->g, color->b);
                 for (unsigned int j = ry; j < ry+rh; j++) {
                     uint8_t * restrict p = bb->data + bb->stride*j + rx;
                     memset(p, source_y8, rw);
@@ -544,7 +542,7 @@ void BB_fill_rect_RGB32(BlitBuffer * restrict bb, unsigned int x, unsigned int y
             // We do NOT want to stomp on the alpha byte here...
             if (rx == 0 && rw == bb->w) {
                 // Single step for contiguous scanlines
-                const uint16_t src = (uint16_t) Y8_To_Y8A(source_y8);
+                const uint16_t src = (uint16_t) Y8_To_Y8A(RGB_To_A(color->r, color->g, color->b));
                 //fprintf(stdout, "%s: Full BB8A paintRect\n", __FUNCTION__);
                 uint16_t * restrict p = (uint16_t *) (bb->data + bb->stride*ry);
                 size_t px_count = bb->pixel_stride*rh;
@@ -553,7 +551,7 @@ void BB_fill_rect_RGB32(BlitBuffer * restrict bb, unsigned int x, unsigned int y
                 }
             } else {
                 // Scanline per scanline
-                const uint16_t src = (uint16_t) Y8_To_Y8A(source_y8);
+                const uint16_t src = (uint16_t) Y8_To_Y8A(RGB_To_A(color->r, color->g, color->b));
                 //fprintf(stdout, "%s: Scanline BB8A paintRect\n", __FUNCTION__);
                 for (unsigned int j = ry; j < ry+rh; j++) {
                     uint16_t * restrict p = (uint16_t *) (bb->data + bb->stride*j) + rx;
