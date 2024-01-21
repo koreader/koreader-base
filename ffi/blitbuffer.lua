@@ -1998,19 +1998,18 @@ function BB_mt.__index:progressBar(x, y, w, h, load_m_w, load_m_h, load_percent,
     (w-2*load_m_w)*load_percent, (h-2*load_m_h), c)
 end
 
---- @fixme: Properly rename those to ligtenRect & darkenRect, respectively.
----         Because currently dim lightens and lighten darkens, which is nuts.
----         10 years late, but at least we knew about it from the start... (2cb2e404f6fcea4535690e08483af0e7f00cff23)
 --[[
-dim color values in rectangular area
+Ligthen color values in rectangular area
+(i.e., blend pure white at the requested opacity OVER rect).
+NOTE: Used to be called dimRect because it effectively makes black text dimmer.
 
 @param x X coordinate
 @param y Y coordinate
 @param w width
 @param h height
-@param by dim by this factor (default: 0.5)
+@param by lighten by this factor (default: 0.5)
 --]]
-function BB_mt.__index:dimRect(x, y, w, h, by)
+function BB_mt.__index:lightenRect(x, y, w, h, by)
     local color = Color8A(0xFF, 0xFF*(by or 0.5))
     if self:canUseCbb() then
         x, y, w, h = self:getBoundedRect(x, y, w, h)
@@ -2023,28 +2022,22 @@ function BB_mt.__index:dimRect(x, y, w, h, by)
 end
 
 --[[
-lighten color values in rectangular area
+Darken color values in rectangular area
+(i.e., blend pure black at the requested opacity OVER rect).
 
 @param x X coordinate
 @param y Y coordinate
 @param w width
 @param h height
-@param color color to overlay (default: 0x80, 50% gray)
+@param by darken by this factor (default: 0.5)
 --]]
-function BB_mt.__index:lightenRect(x, y, w, h, color)
-    --- @fixme: Don't break the weird and confusing dim/lightenRect API,
-    ---         just add a new blendRect that does what the color stuff wants it to do without screwing up everything else.
-    color = color or Color8A(0, 0x80)
+function BB_mt.__index:darkenRect(x, y, w, h, by)
+    local color = Color8A(0, 0xFF*(by or 0.5))
     if self:canUseCbb() then
         x, y, w, h = self:getBoundedRect(x, y, w, h)
         if w <= 0 or h <= 0 then return end
-        if ffi.istype(ColorRGB32, color) then
-            cblitbuffer.BB_blend_rect_color(ffi.cast(P_BlitBuffer, self),
-                x, y, w, h, color)
-        else
-            cblitbuffer.BB_blend_rect(ffi.cast(P_BlitBuffer, self),
-                x, y, w, h, color)
-        end
+        cblitbuffer.BB_blend_rect(ffi.cast(P_BlitBuffer, self),
+            x, y, w, h, color)
     else
         self:paintRect(x, y, w, h, color, self.setPixelBlend)
     end
