@@ -579,13 +579,10 @@ void BB_blend_rect_color(BlitBuffer * restrict bb, unsigned int x, unsigned int 
                 for (unsigned int i = x; i < x + w; i++) {
                     ColorRGB16 * restrict dstptr;
                     BB_GET_PIXEL(bb, bb_rotation, ColorRGB16, i, j, &dstptr);
-                    if (ColorRGB16_GetR(dstptr->v) > 30 && ColorRGB16_GetG(dstptr->v) > 30 && ColorRGB16_GetB(dstptr->v) > 30) {
-                        // Only edit light colors and leave blacks alone. This avoids whitewashing text.
-                        const uint8_t r = (uint8_t) DIV_255(ColorRGB16_GetR(dstptr->v) * ainv + color->r * alpha);
-                        const uint8_t g = (uint8_t) DIV_255(ColorRGB16_GetG(dstptr->v) * ainv + color->g * alpha);
-                        const uint8_t b = (uint8_t) DIV_255(ColorRGB16_GetB(dstptr->v) * ainv + color->b * alpha);
-                        dstptr->v = (uint16_t) RGB_To_RGB16(r, g, b);
-                    }
+                    const uint8_t r = (uint8_t) DIV_255(ColorRGB16_GetR(dstptr->v) * ainv + color->r * alpha);
+                    const uint8_t g = (uint8_t) DIV_255(ColorRGB16_GetG(dstptr->v) * ainv + color->g * alpha);
+                    const uint8_t b = (uint8_t) DIV_255(ColorRGB16_GetB(dstptr->v) * ainv + color->b * alpha);
+                    dstptr->v = (uint16_t) RGB_To_RGB16(r, g, b);
                 }
             }
             break;
@@ -594,12 +591,9 @@ void BB_blend_rect_color(BlitBuffer * restrict bb, unsigned int x, unsigned int 
                 for (unsigned int i = x; i < x + w; i++) {
                     ColorRGB24 * restrict dstptr;
                     BB_GET_PIXEL(bb, bb_rotation, ColorRGB24, i, j, &dstptr);
-                    if (dstptr->r > 30 && dstptr->g > 30 && dstptr->b > 30) {
-                        // Only edit light colors and leave blacks alone. This avoids whitewashing text.
-                        dstptr->r = (uint8_t) DIV_255(dstptr->r * ainv + color->r * alpha);
-                        dstptr->g = (uint8_t) DIV_255(dstptr->g * ainv + color->r * alpha);
-                        dstptr->b = (uint8_t) DIV_255(dstptr->b * ainv + color->r * alpha);
-                    }
+                    dstptr->r = (uint8_t) DIV_255(dstptr->r * ainv + color->r * alpha);
+                    dstptr->g = (uint8_t) DIV_255(dstptr->g * ainv + color->g * alpha);
+                    dstptr->b = (uint8_t) DIV_255(dstptr->b * ainv + color->b * alpha);
                 }
             }
             break;
@@ -608,12 +602,9 @@ void BB_blend_rect_color(BlitBuffer * restrict bb, unsigned int x, unsigned int 
                 for (unsigned int i = x; i < x + w; i++) {
                     ColorRGB32 * restrict dstptr;
                     BB_GET_PIXEL(bb, bb_rotation, ColorRGB32, i, j, &dstptr);
-                    if (dstptr->r > 30 && dstptr->g > 30 && dstptr->b > 30) {
-                        // Only edit light colors and leave blacks alone. This avoids whitewashing text.
-                        dstptr->r = (uint8_t) DIV_255(dstptr->r * ainv + color->r * alpha);
-                        dstptr->g = (uint8_t) DIV_255(dstptr->g * ainv + color->g * alpha);
-                        dstptr->b = (uint8_t) DIV_255(dstptr->b * ainv + color->b * alpha);
-                    }
+                    dstptr->r = (uint8_t) DIV_255(dstptr->r * ainv + color->r * alpha);
+                    dstptr->g = (uint8_t) DIV_255(dstptr->g * ainv + color->g * alpha);
+                    dstptr->b = (uint8_t) DIV_255(dstptr->b * ainv + color->b * alpha);
                 }
             }
             break;
