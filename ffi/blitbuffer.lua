@@ -2598,8 +2598,8 @@ BB.HIGHLIGHT_COLORS = {
     ["orange"] = "#FF8800",
     ["yellow"] = "#FFFF33",
     ["green"]  = "#00AA66",
-    ["blue"]   = "#0066FF",
     ["cyan"]   = "#00FFEE",
+    ["blue"]   = "#0066FF",
     ["purple"] = "#EE00FF",
     ["gray"]   = "#CCCCCC", -- Matches the default highlight style on grayscale screens (i.e., darkenRect by 0.2)
 }
