@@ -2593,11 +2593,12 @@ end
 
 -- Common color names used for highlights
 BB.HIGHLIGHT_COLORS = {
-    ["red"]    = "#FF2200",
+    ["red"]    = "#FF3300",
     ["orange"] = "#FF8800",
-    ["yellow"] = "#FDFF32",
-    ["green"]  = "#00AD65",
-    ["blue"]   = "#00F2FF",
+    ["yellow"] = "#FFFF33",
+    ["green"]  = "#00AA66",
+    ["blue"]   = "#0066FF",
+    ["cyan"]   = "#00FFEE",
     ["purple"] = "#EE00FF",
     ["gray"]   = "#CCCCCC", -- Matches the default highlight style on grayscale screens (i.e., darkenRect by 0.2)
 }
