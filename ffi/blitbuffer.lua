@@ -2281,9 +2281,9 @@ function BB_mt.__index:blendRectRGB32(x, y, w, h, color)
         x, y, w, h = self:getBoundedRect(x, y, w, h)
         if w <= 0 or h <= 0 then return end
         cblitbuffer.BB_blend_RGB32_over_rect(ffi.cast(P_BlitBuffer, self),
-            x, y, w, h, color)
+            x, y, w, h, c)
     else
-        self:paintRect(x, y, w, h, color, self.setPixelBlend)
+        self:paintRect(x, y, w, h, c, self.setPixelBlend)
     end
 end
 
