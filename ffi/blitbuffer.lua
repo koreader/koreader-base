@@ -1419,7 +1419,8 @@ function BB_mt.__index:colorblitFrom(source, dest_x, dest_y, offs_x, offs_y, wid
 end
 
 function BB_mt.__index:colorblitFromRGB32(source, dest_x, dest_y, offs_x, offs_y, width, height, color)
-    -- Caller guarantees passing a ColorRGB32
+    -- Enforce type coercion for safety (plus, we might need a copy for inversion anyway)
+    local c = color:getColorRGB32()
     if self:canUseCbbTogether(source) then
         width, height = width or source:getWidth(), height or source:getHeight()
         width, dest_x, offs_x = BB.checkBounds(width, dest_x or 0, offs_x or 0, self:getWidth(), source:getWidth())
@@ -1427,10 +1428,8 @@ function BB_mt.__index:colorblitFromRGB32(source, dest_x, dest_y, offs_x, offs_y
         if width <= 0 or height <= 0 then return end
         cblitbuffer.BB_color_blit_from_RGB32(ffi.cast(P_BlitBuffer, self),
             ffi.cast(P_BlitBuffer_ROData, source),
-            dest_x, dest_y, offs_x, offs_y, width, height, color)
+            dest_x, dest_y, offs_x, offs_y, width, height, c)
     else
-        -- We might invert it, so we need a copy
-        local c = color:getColorRGB32()
         if self:getInverse() == 1 then c = c:invert() end
         self:blitFrom(source, dest_x, dest_y, offs_x, offs_y, width, height, self.setPixelColorizeRGB32, c)
     end
