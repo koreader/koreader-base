@@ -2266,6 +2266,28 @@ function BB_mt.__index:multiplyRectRGB(x, y, w, h, color)
 end
 
 --[[
+Blend color values in a rectangular area
+(i.e., blend color OVER rect).
+
+@param x X coordinate
+@param y Y coordinate
+@param w width
+@param h height
+@param color source color
+--]]
+function BB_mt.__index:blendRectRGB32(x, y, w, h, color)
+    local c = color:getColorRGB32()
+    if self:canUseCbb() then
+        x, y, w, h = self:getBoundedRect(x, y, w, h)
+        if w <= 0 or h <= 0 then return end
+        cblitbuffer.BB_blend_RGB32_over_rect(ffi.cast(P_BlitBuffer, self),
+            x, y, w, h, color)
+    else
+        self:paintRect(x, y, w, h, color, self.setPixelBlend)
+    end
+end
+
+--[[
 make a full copy of the current buffer, with its own memory
 --]]
 function BB_mt.__index:copy()
