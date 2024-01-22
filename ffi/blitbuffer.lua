@@ -2508,7 +2508,7 @@ BB.HIGHLIGHT_COLORS = {
     ["green"]  = "#00AD65",
     ["blue"]   = "#00F2FF",
     ["purple"] = "#EE00FF",
-    ["gray"]   = "#CCCCCC",
+    ["gray"]   = "#CCCCCC", -- Matches the default highlight style on grayscale screens (i.e., darkenRect by 0.2)
 }
 --[[
 return a Color value given a common color name (fall back to gray for unknown colors)
