@@ -2559,7 +2559,7 @@ function BB.gray(level)
 end
 
 --[[
-return a Color value resembling a given hex string
+return a Color value resembling a given hex string (nil on failure)
 --]]
 function BB.colorFromString(value)
     value = value:gsub('#','')
@@ -2601,13 +2601,14 @@ BB.HIGHLIGHT_COLORS = {
     ["cyan"]   = "#00FFEE",
     ["blue"]   = "#0066FF",
     ["purple"] = "#EE00FF",
-    ["gray"]   = "#CCCCCC", -- Matches the default highlight style on grayscale screens (i.e., darkenRect by 0.2)
 }
 --[[
-return a Color value given a common color name (fall back to gray for unknown colors)
+return a Color value given a common color name (nil for unknown colors)
 --]]
 function BB.colorFromName(name)
-    return BB.colorFromString(BB.HIGHLIGHT_COLORS[name:lower()] or "#808080")
+    local color_hash = BB.HIGHLIGHT_COLORS[name:lower()]
+    if not color_hash then return nil end
+    return BB.colorFromString(color_hash)
 end
 
 --[[
