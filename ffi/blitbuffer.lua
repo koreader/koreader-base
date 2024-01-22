@@ -396,6 +396,36 @@ end
 ColorRGB16_mt.__index.blendRGB32 = ColorRGB16_mt.__index.blend
 ColorRGB24_mt.__index.blendRGB32 = ColorRGB24_mt.__index.blend
 ColorRGB32_mt.__index.blendRGB32 = ColorRGB32_mt.__index.blend
+-- Dumb multiply blendingn RGB24 color (will be grayscaled when targeting grayscale BBs)
+function Color4L_mt.__index:mul(color)
+    local value = div255(self:getColor8() * color:getColor8())
+    self:set(Color4L(value))
+end
+function Color4U_mt.__index:mul(color)
+local value = div255(self:getColor8() * color:getColor8())
+    self:set(Color4U(value))
+end
+function Color8_mt.__index:mul(color)
+    local value = div255(self.a * color:getColor8())
+    self:set(Color8(value))
+end
+function Color8A_mt.__index:mul(color)
+    local value = div255(self.a * color:getColor8())
+    self:set(Color8A(value, self:getAlpha()))
+end
+function ColorRGB16_mt.__index:mul(color)
+    local r = div255(self:getR() * color:getR())
+    local g = div255(self:getG() * color:getG())
+    local b = div255(self:getB() * color:getB())
+    self:set(ColorRGB24(r, g, b))
+end
+ColorRGB24_mt.__index.mul = ColorRGB16_mt.__index.mul
+function ColorRGB32_mt.__index:mul(color)
+    local r = div255(self:getR() * color:getR())
+    local g = div255(self:getG() * color:getG())
+    local b = div255(self:getB() * color:getB())
+    self:set(ColorRGB32(r, g, b, self:getAlpha()))
+end
 
 -- color conversions:
 -- NOTE: These *always* return a new Color? object, even when no conversion is needed.
@@ -537,7 +567,7 @@ end
 function ColorRGB24_mt.__index:getColorRGB32() return ColorRGB32(self.r, self.g, self.b, 0xFF) end
 function ColorRGB32_mt.__index:getColorRGB32() return ColorRGB32(self.r, self.g, self.b, self.alpha) end
 
--- RGB getters (special case for 4bpp mode)
+-- RGB getters (with the necessary trickery for non-RGB color types)
 function Color4L_mt.__index:getR() return self:getColor8().a end
 Color4L_mt.__index.getG = Color4L_mt.__index.getR
 Color4L_mt.__index.getB = Color4L_mt.__index.getR
@@ -877,6 +907,14 @@ function BBRGB16_mt.__index:setPixelAdd(x, y, color, alpha)
 end
 BBRGB24_mt.__index.setPixelAdd = BBRGB16_mt.__index.setPixelAdd
 BBRGB32_mt.__index.setPixelAdd = BBRGB16_mt.__index.setPixelAdd
+-- Multiply
+function BB_mt.__index:setPixelMultiply(x, y, color)
+    -- this method uses an RGB24 color value
+    local px, py = self:getPhysicalCoordinates(x, y)
+    local c = color:getColorRGB24()
+    if self:getInverse() == 1 then c = c:invert() end
+    self:getPixelP(px, py)[0]:mul(c)
+end
 -- Straight alpha blending
 function BB_mt.__index:setPixelBlend(x, y, color)
     -- fast path:
@@ -2223,7 +2261,6 @@ function BB_mt.__index:multiplyRectRGB(x, y, w, h, color)
         cblitbuffer.BB_blend_RGB_multiply_rect(ffi.cast(P_BlitBuffer, self),
             x, y, w, h, c)
     else
-        -- FIXME: Implement setPixelMultiply
         self:paintRect(x, y, w, h, c, self.setPixelMultiply)
     end
 end
