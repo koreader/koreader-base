@@ -2502,13 +2502,13 @@ end
 
 -- Common color names used for highlights
 BB.HIGHLIGHT_COLORS = {
-    ["red"]    = "#fe4400",
-    ["orange"] = "#ff8800",
-    ["yellow"] = "#fdff32",
-    ["green"]  = "#00ad65",
-    ["blue"]   = "#00f2ff",
-    ["purple"] = "#ee00ff",
-    ["gray"]   = "#808080",
+    ["red"]    = "#FE4400",
+    ["orange"] = "#FF8800",
+    ["yellow"] = "#FDFF32",
+    ["green"]  = "#00AD65",
+    ["blue"]   = "#00F2FF",
+    ["purple"] = "#EE00FF",
+    ["gray"]   = "#CCCCCC",
 }
 --[[
 return a Color value given a common color name (fall back to gray for unknown colors)
