@@ -269,7 +269,6 @@ local function dither_o8x8(x, y, v)
     end
 end
 
--- FIXME: Need variants that will grayscale input color!
 -- Straight alpha blending (8bit alpha value)
 function Color4L_mt.__index:blend(color, coverage)
     local alpha = coverage or color:getAlpha()
@@ -372,6 +371,31 @@ function Color8_mt.__index:ditherpmulblend(x, y, color)
     value = dither_o8x8(x, y, value)
     self:set(Color8(value))
 end
+-- Straight alpha blending, RGB32 color (will be grayscaled when targeting grayscale BBs)
+function Color4L_mt.__index:blendRGB32(color, coverage)
+    local alpha = coverage or color:getAlpha()
+    local value = div4080(band(self.a, 0x0F) * 0x11 * bxor(alpha, 0xFF) + color:getColor8() * alpha)
+    self:set(Color4L(value))
+end
+function Color4U_mt.__index:blendRGB32(color, coverage)
+    local alpha = coverage or color:getAlpha()
+    local orig = band(self.a, 0xF0)
+    local value = div255((orig + rshift(orig, 4)) * bxor(alpha, 0xFF) + color:getColor8() * alpha)
+    self:set(Color4U(value))
+end
+function Color8_mt.__index:blendRGB32(color, coverage)
+    local alpha = coverage or color:getAlpha()
+    local value = div255(self.a * bxor(alpha, 0xFF) + color:getColor8() * alpha)
+    self:set(Color8(value))
+end
+function Color8A_mt.__index:blendRGB32(color, coverage)
+    local alpha = coverage or color:getAlpha()
+    local value = div255(self.a * bxor(alpha, 0xFF) + color:getColor8() * alpha)
+    self:set(Color8A(value, self:getAlpha()))
+end
+ColorRGB16_mt.__index.blendRGB32 = ColorRGB16_mt.__index.blend
+ColorRGB24_mt.__index.blendRGB32 = ColorRGB24_mt.__index.blend
+ColorRGB32_mt.__index.blendRGB32 = ColorRGB32_mt.__index.blend
 
 -- color conversions:
 -- NOTE: These *always* return a new Color? object, even when no conversion is needed.
@@ -967,6 +991,24 @@ function BB_mt.__index:setPixelColorize(x, y, mask, color)
         self:getPixelP(px, py)[0]:blend(color, alpha)
     end
 end
+-- Colorize in an RGB32 color (NOTE: colorblitFrom has already handled inversion for us)
+function BB_mt.__index:setPixelColorizeRGB32(x, y, mask, color)
+    -- use 8bit grayscale pixel value as alpha for blitting
+    local alpha = mask:getColor8().a
+    -- fast path:
+    if alpha == 0 then
+        return
+    end
+    local px, py = self:getPhysicalCoordinates(x, y)
+    if alpha == 0xFF then
+        self:getPixelP(px, py)[0]:set(color)
+    else
+        -- NOTE: We're using an alpha mask, not color's actual alpha value, which we don't want to mess with,
+        --       as that's a pointer to our set_param...
+        --       Avoids screwing with alpha when blitting to 8A or RGB32 bbs (c.f., #3949).
+        self:getPixelP(px, py)[0]:blendRGB32(color, alpha)
+    end
+end
 -- Invert
 function BB_mt.__index:setPixelInverted(x, y, color)
     self:setPixel(x, y, color:invert())
@@ -1360,8 +1402,7 @@ function BB_mt.__index:colorblitFromRGB32(source, dest_x, dest_y, offs_x, offs_y
         -- We might invert it, so we need a copy
         local c = color:getColorRGB32()
         if self:getInverse() == 1 then c = c:invert() end
-        -- FIXME: Need a dedicated variant that grayscales input color for blend to grayscale BB types..
-        self:blitFrom(source, dest_x, dest_y, offs_x, offs_y, width, height, self.setPixelColorize, c)
+        self:blitFrom(source, dest_x, dest_y, offs_x, offs_y, width, height, self.setPixelColorizeRGB32, c)
     end
 end
 
