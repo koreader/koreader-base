@@ -2593,7 +2593,7 @@ end
 
 -- Common color names used for highlights
 BB.HIGHLIGHT_COLORS = {
-    ["red"]    = "#FE4400",
+    ["red"]    = "#FF2200",
     ["orange"] = "#FF8800",
     ["yellow"] = "#FDFF32",
     ["green"]  = "#00AD65",
