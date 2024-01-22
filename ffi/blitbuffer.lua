@@ -371,7 +371,7 @@ function Color8_mt.__index:ditherpmulblend(x, y, color)
     value = dither_o8x8(x, y, value)
     self:set(Color8(value))
 end
--- Dumb multiply blendingn RGB24 color (will be grayscaled when targeting grayscale BBs)
+-- Dumb multiply blending with an RGB24 color (will be grayscaled when targeting grayscale BBs)
 function Color4L_mt.__index:mul(color)
     local value = div255(self:getColor8() * color:getColor8())
     self:set(Color4L(value))
@@ -1792,12 +1792,13 @@ paintRect variant that takes a ColorRGB32 instead of a luminance value
 --]]
 function BB_mt.__index:paintRectRGB32(x, y, w, h, color, setter)
     setter = setter or self.setPixel
-    color = color or ColorRGB32(0, 0, 0, 0xFF)
     x, y, w, h = self:getBoundedRect(x, y, w, h)
     if w <= 0 or h <= 0 then return end
+    -- Type coercion for safety
+    local c = color and color:getColorRGB32() or ColorRGB32(0x80, 0x80, 0x80, 0xFF)
     if self:canUseCbb() and setter == self.setPixel then
         cblitbuffer.BB_fill_rect_RGB32(ffi.cast(P_BlitBuffer, self),
-            x, y, w, h, color)
+            x, y, w, h, c)
     else
         -- We can only do fast filling when there's no complex processing involved (i.e., simple setPixel only)
         local bbtype = self:getType()
@@ -1805,8 +1806,6 @@ function BB_mt.__index:paintRectRGB32(x, y, w, h, color, setter)
             -- Handle rotation...
             x, y, w, h = self:getPhysicalRect(x, y, w, h)
 
-            -- We might invert, so we need a copy...
-            local c = color:getColorRGB32()
             if self:getInverse() == 1 then c = c:invert() end
 
             -- We check against the BB's unrotated coordinates (i.e., self.w and not self:getWidth()),
@@ -1893,7 +1892,7 @@ end
 -- Also, no cbb branch, as cbb doesn't handle 4bpp targets at all.
 function BB4_mt.__index:paintRectRGB32(x, y, w, h, color, setter)
     setter = setter or self.setPixel
-    color = color:getColor8() or Color8(0)
+    color = color and color:getColor8() or Color8(0x80)
     x, y, w, h = self:getBoundedRect(x, y, w, h)
     if w <= 0 or h <= 0 then return end
     for tmp_y = y, y+h-1 do
@@ -2245,7 +2244,8 @@ Mainly used to emulate a highlighter pen over a text buffer.
 @param color source color (alpha is ignored)
 --]]
 function BB_mt.__index:multiplyRectRGB(x, y, w, h, color)
-    local c = color:getColorRGB24()
+    -- Type coercion for safety
+    local c = color and color:getColorRGB24() or ColorRGB24(0x80, 0x80, 0x80)
     if self:canUseCbb() then
         x, y, w, h = self:getBoundedRect(x, y, w, h)
         if w <= 0 or h <= 0 then return end
@@ -2267,7 +2267,8 @@ Blend color values in a rectangular area
 @param color source color
 --]]
 function BB_mt.__index:blendRectRGB32(x, y, w, h, color)
-    local c = color:getColorRGB32()
+    -- Type coercion for safety
+    local c = color and color:getColorRGB32() or ColorRGB32(0x80, 0x80, 0x80, 0xFF)
     if self:canUseCbb() then
         x, y, w, h = self:getBoundedRect(x, y, w, h)
         if w <= 0 or h <= 0 then return end
@@ -2611,8 +2612,9 @@ end
 
 --[[
 Test whether a Color is a Luminance-only type.
+
 Technically that would mean anything <= Color8A,
-but, in practice, since we care about the constants defined below,
+but, in practice, since we only care about the constants defined below,
 we only check against Color8.
 --]]
 function BB.isColor8(color)
