@@ -1,7 +1,7 @@
 include Makefile.defs
 
 DO_STRIP := $(if $(or $(EMULATE_READER),$(KODEBUG)),,1)
-DO_STRIP := $(if $(or $(DO_STRIP),$(APPIMAGE),$(DEBIAN)),1,)
+DO_STRIP := $(if $(or $(DO_STRIP),$(APPIMAGE),$(LINUX)),1,)
 
 $(info ************ Building for MACHINE: "$(MACHINE)" **********)
 $(info ************ PATH: "$(PATH)" **********)
