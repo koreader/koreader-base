@@ -96,7 +96,7 @@ libs: \
 	$(OUTPUT_DIR)/libs/libwrap-mupdf.so
 
 $(OUTPUT_DIR)/libs/libinkview-compat.so: input/inkview-compat.c
-	$(CC) $(DYNLIB_CFLAGS) $(LDFLAGS) -linkview -o $@ $<
+	$(CC) $(DYNLIB_CFLAGS) -linkview $(LDFLAGS) -o $@ $<
 
 $(OUTPUT_DIR)/libs/libkoreader-input.so: input/*.c input/*.h $(if $(or $(KINDLE),$(REMARKABLE)),$(POPEN_NOSHELL_LIB),)
 	@echo "Building koreader input module..."
