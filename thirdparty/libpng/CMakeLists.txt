@@ -24,7 +24,7 @@ endif()
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
     https://github.com/glennrp/libpng.git
-    v1.6.40
+    v1.6.41
     ${SOURCE_DIR}
 )
 
