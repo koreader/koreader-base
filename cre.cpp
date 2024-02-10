@@ -816,6 +816,14 @@ static int getDocumentProps(lua_State *L) {
 	return 1;
 }
 
+static int overrideDocumentProp(lua_State *L) {
+    CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
+    const char *prop = luaL_checkstring(L, 2);
+    const char *value = luaL_checkstring(L, 3);
+    doc->text_view->getDocProps()->setString(prop, value);
+    return 0;
+}
+
 static int getDocumentRenderingHash(lua_State *L) {
 	CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
 	bool extended = false;
@@ -4054,6 +4062,7 @@ static const struct luaL_Reg credocument_meth[] = {
     {"getStringProperty", getStringProperty},
     {"getDocumentFormat", getDocumentFormat},
     {"getDocumentProps", getDocumentProps},
+    {"overrideDocumentProp", overrideDocumentProp},
     {"getDocumentRenderingHash", getDocumentRenderingHash},
     {"canBePartiallyRerendered", canBePartiallyRerendered},
     {"isPartialRerenderingEnabled", isPartialRerenderingEnabled},
