@@ -2992,8 +2992,27 @@ static bool _isLinkToFootnote(CreDocument *doc, const lString32 source_xpointer,
             // This will also discard a link containing a single image pointing
             // to a bigger size image (it could also be a small image linking
             // to a footnote, but well...)
-            reason = "source has no text content";
-            return false;
+            // Anyway, as it happens many Chinese books use an image as the footnote
+            // link, check if it may be an image, and so non-empty (other checks
+            // targetting text below won't check anymore for that, but it might
+            // be enough to accept it if some other conditions are met, or
+            // if likelyFootnote=true provided)
+            ldomXPointerEx sourceEndXP = sourceXP;
+            // This should pass over an image
+            while (true) {
+                if ( sourceEndXP.nextSibling() )
+                    break;
+                if ( !sourceEndXP.parent() )
+                    break;
+            }
+            ldomXRange fullNodeRange(sourceXP, sourceEndXP);
+            sourceText = fullNodeRange.getRangeText( '\n', 8192, 'Z');
+                // We force-provide some imageReplacement char, so we get a char where
+                // there is an image, which makes sourceText not empty
+            if ( sourceText.empty() ) {
+                reason = "source has no text nor image content";
+                return false;
+            }
         }
         if ( finalNode && !finalNode->isNull() ) {
             if ( sourceText == finalNode->getText() ) {
