@@ -1958,6 +1958,18 @@ static int getWordFromPosition(lua_State *L) {
 	return 1;
 }
 
+// Unicode codepoint to use as the image placeholder when includeImages requested when getting text.
+// (passed to ldomXRange::getRangeText(), 0 means no inclusion of images even if requested)
+// This is set as a global variable so all functions use the same char.
+static lChar32 imageReplacementChar = 0;
+
+static int setImageReplacementChar(lua_State *L) {
+    int codepoint = luaL_checkint(L, 1);
+    imageReplacementChar = codepoint;
+    return 0;
+}
+
+
 static int getTextFromXPointers(lua_State *L) {
 	CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
 	const char* pos0 = luaL_checkstring(L, 2);
@@ -1972,6 +1984,12 @@ static int getTextFromXPointers(lua_State *L) {
 	bool drawSegmentedSelection = drawSelection;
 	if (lua_isboolean(L, 5)) {
 		drawSegmentedSelection = lua_toboolean(L, 5);
+	}
+	// If includeImages, the drawn segments will include areas with images,
+	// and the text will have imageReplacementChar as images placeholders.
+	bool includeImages = false;
+	if (lua_isboolean(L, 6)) {
+		includeImages = lua_toboolean(L, 6);
 	}
 
 	LVDocView *tv = doc->text_view;
@@ -1994,13 +2012,15 @@ static int getTextFromXPointers(lua_State *L) {
 				r.getEnd().setOffset(offset + 1);
 		}
 
+		int rangeFlags = 0;
 		if (drawSelection) {
-			int rangeFlags = drawSegmentedSelection ? 0x11 : 0x01;
-			r.setFlags(rangeFlags);
-			tv->selectRange(r);
+			rangeFlags = drawSegmentedSelection ? 0x11 : 0x01;
+			if (includeImages)
+				rangeFlags |= 0x100;
 		}
-
-		lString32 selText = r.getRangeText('\n', 8192);
+		r.setFlags(rangeFlags);
+		tv->selectRange(r);
+		lString32 selText = r.getRangeText('\n', 8192, includeImages?imageReplacementChar:0);
 		lua_pushstring(L, UnicodeToLocal(selText).c_str());
         return 1;
     }
@@ -2022,6 +2042,12 @@ static int getTextFromPositions(lua_State *L) {
 	bool drawSegmentedSelection = true;
 	if (lua_isboolean(L, 7)) {
 		drawSegmentedSelection = lua_toboolean(L, 7);
+	}
+	// If includeImages, the drawn segments will include areas with images,
+	// and the text will have imageReplacementChar as images placeholders.
+	bool includeImages = false;
+	if (lua_isboolean(L, 8)) {
+		includeImages = lua_toboolean(L, 8);
 	}
 
 	LVDocView *tv = doc->text_view;
@@ -2091,8 +2117,11 @@ static int getTextFromPositions(lua_State *L) {
 		}
 
 		int rangeFlags = 0;
-		if (drawSelection) // have crengine do native highlight of selection
+		if (drawSelection) { // have crengine do native highlight of selection
 			rangeFlags = drawSegmentedSelection ? 0x11 : 0x01;
+			if (includeImages)
+				rangeFlags |= 0x100;
+		}
 		r.setFlags(rangeFlags);
 		tv->selectRange(r);
 
@@ -2103,7 +2132,10 @@ static int getTextFromPositions(lua_State *L) {
 		lString32 posText;
 		tv->getBookmarkPosText(startp, titleText, posText);
 		*/
-		lString32 selText = r.getRangeText( '\n', 8192 );
+
+		// If requested, include image placeholders in the text, and gather image nodes
+		LVArray<ldomNode*> imageNodes;
+		lString32 selText = r.getRangeText( '\n', 8192, includeImages?imageReplacementChar:0, &imageNodes);
 
 		lua_pushstring(L, "text");
 		lua_pushstring(L, UnicodeToLocal(selText).c_str());
@@ -2125,6 +2157,18 @@ static int getTextFromPositions(lua_State *L) {
 		lua_pushnumber(L, 1.0*page/(pages-1));
 		lua_rawset(L, -3);
 		*/
+
+		// If we got image nodes, return a list of their xpointers
+		if ( imageNodes.length() > 0 ) {
+			lua_pushstring(L, "images");
+			lua_createtable(L, imageNodes.length(), 0);
+			for (int i = 0; i < imageNodes.length(); i++) {
+				ldomNode * node = imageNodes[i];
+				lua_pushstring(L, UnicodeToLocal(ldomXPointerEx(node, 0).toString()).c_str());
+				lua_rawseti(L, -2, i+1);
+			}
+			lua_rawset(L, -3);
+		}
 		return 1;
 	}
     return 0;
@@ -2134,6 +2178,10 @@ static int extendXPointersToSentenceSegment(lua_State *L) {
     CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
     const char* pos0 = luaL_checkstring(L, 2);
     const char* pos1 = luaL_checkstring(L, 3);
+    bool includeImages = false;
+    if (lua_isboolean(L, 4)) {
+        includeImages = lua_toboolean(L, 4);
+    }
 
     LVDocView *tv = doc->text_view;
     ldomDocument *dv = doc->dom_doc;
@@ -2214,7 +2262,7 @@ static int extendXPointersToSentenceSegment(lua_State *L) {
 
     // Return updated text and xpointers
     ldomXRange r(startp, endp);
-    lString32 text = r.getRangeText( '\n', 8192 );
+    lString32 text = r.getRangeText( '\n', 8192, includeImages?imageReplacementChar:0);
     lua_createtable(L, 0, 3);
     lua_pushstring(L, "text");
     lua_pushstring(L, UnicodeToLocal(text).c_str());
@@ -2298,10 +2346,10 @@ bool docToWindowRect(LVDocView *tv, lvRect &rc) {
 // that a ldomXRange spans on the page.
 // Each segment is pushed as a table {x0=, y0=, x1=, y1=}.
 // The Lua stack must be prepared as a table to receive them.
-void lua_pushSegmentsFromRange(lua_State *L, CreDocument *doc, ldomXRange *range) {
+void lua_pushSegmentsFromRange(lua_State *L, CreDocument *doc, ldomXRange *range, bool includeImages=false) {
     LVDocView *tv = doc->text_view;
     LVArray<lvRect> rects;
-    range->getSegmentRects(rects);
+    range->getSegmentRects(rects, includeImages);
     int lcount = 1;
     for (int i=0; i<rects.length(); i++) {
         lvRect r = rects[i];
@@ -2417,6 +2465,11 @@ static int getWordBoxesFromPositions(lua_State *L) {
 		// lines, which makes out a nicer display of text selection.
 		getSegments = lua_toboolean(L, 4);
 	}
+	// If includeImages, the returned segments will include areas with images.
+	bool includeImages = false;
+	if (lua_isboolean(L, 5)) {
+		includeImages = lua_toboolean(L, 5);
+	}
 
 	LVDocView *tv = doc->text_view;
 	ldomDocument *dv = doc->dom_doc;
@@ -2436,7 +2489,7 @@ static int getWordBoxesFromPositions(lua_State *L) {
 		// (to select following puncutations, etc...)
 		if (getSegments) {
 			lua_newtable(L); // We may skip rects in the range, can't predict the pre-alloc size without overshot
-			lua_pushSegmentsFromRange(L, doc, &r);
+			lua_pushSegmentsFromRange(L, doc, &r, includeImages);
 			return 1;
 		}
 
@@ -2725,7 +2778,7 @@ static int getPageLinks(lua_State *L) {
 			ldomXRange linkRange = ldomXRange(*links[i]);
 			lua_pushstring(L, "segments");
 			lua_newtable(L); // all segments (again, we may skip rects in the range, so, no pre-alloc)
-			lua_pushSegmentsFromRange(L, doc, &linkRange);
+			lua_pushSegmentsFromRange(L, doc, &linkRange, true); // include images
 			lua_rawset(L, -3); // adds "segments" = table
 
 			lua_rawseti(L, -2, linkNum++);
@@ -3482,7 +3535,7 @@ static int highlightXPointer(lua_State *L) {
         if (node->isNull())
             return 0;
         ldomXRange * fullNodeRange = new ldomXRange(node, true);
-        fullNodeRange->setFlags(0x11); // draw segmented adjusted selection
+        fullNodeRange->setFlags(0x111); // draw segmented adjusted selection and include images
         sel.add( fullNodeRange ); // highlight it
         lua_pushboolean(L, true);
         return 1;
@@ -4075,6 +4128,7 @@ static const struct luaL_Reg cre_func[] = {
     {"softHyphenateText", softHyphenateText},
     {"renderImageData", renderImageData},
     {"smoothScaleBlitBuffer", smoothScaleBlitBuffer},
+    {"setImageReplacementChar", setImageReplacementChar},
     {NULL, NULL}
 };
 
