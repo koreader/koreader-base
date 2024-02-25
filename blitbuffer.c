@@ -19,6 +19,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include <string.h>
 #include "blitbuffer.h"
 
@@ -2476,48 +2477,94 @@ void BB_paint_rounded_corner(BlitBuffer * restrict bb, unsigned int off_x, unsig
     */
 
     r = MIN(r, MIN(h, w));
+
     if (bw > r) {
         bw = r;
     }
 
-    // for outer circle
-    unsigned int x = 0U;
-    unsigned int y = r;
-    float delta = 5.f/4.f - r;
-
-    // for inner circle
-    const unsigned int r2 = r - bw;
-    unsigned int x2 = 0U;
-    unsigned int y2 = r2;
-    float delta2 = 5.f/4.f - r;
+    const int AliasGray = 0xCC;
+    uint8_t alias_c = (((int)c-128) * c  + 128)/ 255 + AliasGray;
 
     const int bb_type = GET_BB_TYPE(bb);
     const int bb_rotation = GET_BB_ROTATION(bb);
     const unsigned int bb_width = BB_GET_WIDTH(bb);
     const unsigned int bb_height = BB_GET_HEIGHT(bb);
 
-    while (x < y) {
-        // decrease y if we are out of circle
-        x++;
-        if (delta > 0.f) {
-            y--;
-            delta = delta + 2U*x - 2U*y + 2U;
-        } else {
-            delta = delta + 2U*x + 1U;
+    /* The used algorithm is described in
+     * https://de.wikipedia.org/wiki/Bresenham-Algorithmus#Kreisvariante_des_Algorithmus
+     */
+
+    // r ... radius of outer circle
+    int x = 0;
+    int y = r;
+    int f = 1 - r;
+    int ddF_x = 0;
+    int ddF_y = -2 * r;
+
+    // r2 ... radius of inner circle; might be zero
+    const unsigned int r2 = r - bw;
+
+    int x2 = 0;
+    int y2 = r2;
+
+    int f2 = 1 - r2;
+    int ddF2_x = 0;
+    int ddF2_y = -2 * r2;
+
+    int old_y = y;
+    int old_x = x;
+    while(x <= y)
+    {
+        if (f >= 0) {
+            --y;
+            ddF_y += 2;
+            f += ddF_y;
+        }
+        ++x;
+        ddF_x += 2;
+        f += ddF_x + 1;
+
+        if (r2 != 0 ) {
+            if (f2 >= 0)
+            {
+                --y2;
+                ddF2_y += 2;
+                f2 += ddF2_y;
+            }
+            ++x2;
+            ddF2_x += 2;
+            f2 += ddF2_x + 1;
         }
 
-        // inner circle finished drawing, increase y linearly for filling
-        if (x2 > y2) {
-            y2++;
-            x2++;
-        } else {
-            x2++;
-            if (delta2 > 0.f) {
-                y2--;
-                delta2 = delta2 + 2U*x2 - 2U*y2 + 2U;
-            } else {
-                delta2 = delta2 + 2U*x2 + 1U;
+        if (y != old_y) {
+            if (old_y != r) {
+                int alias_step = 0xff / (x-old_x+6) ;
+                int alias_v = c + 6*alias_step;
+                if (x-old_x == 1)
+                    alias_v = c + 0xCC;
+
+                while (old_x < x) {
+                    uint8_t alias_c = (((int)c-alias_v) * c  + 128)/ 255 + alias_v;
+                    alias_v += alias_step;
+
+                    const ColorRGB32 color = { .r = alias_c, .g = alias_c, .b = alias_c, .alpha = 0xFF };
+
+                    BBRGB32_SET_PIXEL_CLAMPED(bb, bb_rotation, (w-r)+off_x+old_x-1, (h-r)+off_y+old_y-0, bb_width, bb_height, &color); // 7.quadrant
+                    BBRGB32_SET_PIXEL_CLAMPED(bb, bb_rotation, (w-r)+off_x+old_y-0, (h-r)+off_y+old_x-1, bb_width, bb_height, &color); // 8.quadrant
+
+                    BBRGB32_SET_PIXEL_CLAMPED(bb, bb_rotation, (w-r)+off_x+old_y-0, (r)+off_y-old_x, bb_width, bb_height, &color); // 1. quadrant
+                    BBRGB32_SET_PIXEL_CLAMPED(bb, bb_rotation, (w-r)+off_x+old_x-1, (r)+off_y-old_y-1, bb_width, bb_height, &color); // 2. quadrant
+
+                    BBRGB32_SET_PIXEL_CLAMPED(bb, bb_rotation, (r)+off_x-old_x-0, (r)+off_y-old_y-1, bb_width, bb_height, &color); // 3. quadrant
+                    BBRGB32_SET_PIXEL_CLAMPED(bb, bb_rotation, (r)+off_x-old_y-1, (r)+off_y-old_x, bb_width, bb_height, &color); // 4. quadrant
+
+                    BBRGB32_SET_PIXEL_CLAMPED(bb, bb_rotation, (r)+off_x-old_y-1, (h-r)+off_y+old_x-1, bb_width, bb_height, &color); // 5. quadrant
+                    BBRGB32_SET_PIXEL_CLAMPED(bb, bb_rotation, (r)+off_x-old_x-0, (h-r)+off_y+old_y-1, bb_width, bb_height, &color); // 6. quadrant
+                    ++old_x;
+                }
             }
+            old_y = y;
+            old_x = x;
         }
 
         for (unsigned int tmp_y = y; tmp_y > y2; tmp_y--) {

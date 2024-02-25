@@ -1778,6 +1778,7 @@ function BB_mt.__index:paintRoundedCorner(off_x, off_y, w, h, bw, r, c)
         cblitbuffer.BB_paint_rounded_corner(ffi.cast(P_BlitBuffer, self),
             off_x, off_y, w, h, bw, r, c:getColor8().a)
     else
+        -- Could be optimized like in 'blitbuffer.c'
         r = min(r, h, w)
         if bw > r then
             bw = r
@@ -1849,6 +1850,7 @@ Draw a border
 function BB_mt.__index:paintBorder(x, y, w, h, bw, c, r)
     x, y = ceil(x), ceil(y)
     h, w = ceil(h), ceil(w)
+    print(string.format("xxx %d %d %d %d %d %d\n", x, y, w, h, bw, r or -1))
     if not r or r == 0 then
         self:paintRect(x, y, w, bw, c)
         self:paintRect(x, y+h-bw, w, bw, c)
