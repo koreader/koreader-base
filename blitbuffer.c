@@ -2533,19 +2533,103 @@ void BB_paint_rounded_corner(BlitBuffer * restrict bb, unsigned int off_x, unsig
             f2 += ddF2_x + 1;
         }
 
+        // Fill between inner and outer circle.
+        for (unsigned int tmp_y = y; tmp_y > y2; tmp_y--) {
+            if (bb_type == TYPE_BB8) {
+                const Color8 color = { .a = c };
+
+                BB8_SET_PIXEL_CLAMPED(bb, bb_rotation, (w-r)+off_x+x-1, (h-r)+off_y+tmp_y-1, bb_width, bb_height, &color);
+                BB8_SET_PIXEL_CLAMPED(bb, bb_rotation, (w-r)+off_x+tmp_y-1, (h-r)+off_y+x-1, bb_width, bb_height, &color);
+
+                BB8_SET_PIXEL_CLAMPED(bb, bb_rotation, (w-r)+off_x+tmp_y-1, (r)+off_y-x, bb_width, bb_height, &color);
+                BB8_SET_PIXEL_CLAMPED(bb, bb_rotation, (w-r)+off_x+x-1, (r)+off_y-tmp_y, bb_width, bb_height, &color);
+
+                BB8_SET_PIXEL_CLAMPED(bb, bb_rotation, (r)+off_x-x, (r)+off_y-tmp_y, bb_width, bb_height, &color);
+                BB8_SET_PIXEL_CLAMPED(bb, bb_rotation, (r)+off_x-tmp_y, (r)+off_y-x, bb_width, bb_height, &color);
+
+                BB8_SET_PIXEL_CLAMPED(bb, bb_rotation, (r)+off_x-tmp_y, (h-r)+off_y+x-1, bb_width, bb_height, &color);
+                BB8_SET_PIXEL_CLAMPED(bb, bb_rotation, (r)+off_x-x, (h-r)+off_y+tmp_y-1, bb_width, bb_height, &color);
+            } else if (bb_type == TYPE_BB8A) {
+                const Color8A color = { .a = c, .alpha = 0xFF };
+
+                BB8A_SET_PIXEL_CLAMPED(bb, bb_rotation, (w-r)+off_x+x-1, (h-r)+off_y+tmp_y-1, bb_width, bb_height, &color);
+                BB8A_SET_PIXEL_CLAMPED(bb, bb_rotation, (w-r)+off_x+tmp_y-1, (h-r)+off_y+x-1, bb_width, bb_height, &color);
+
+                BB8A_SET_PIXEL_CLAMPED(bb, bb_rotation, (w-r)+off_x+tmp_y-1, (r)+off_y-x, bb_width, bb_height, &color);
+                BB8A_SET_PIXEL_CLAMPED(bb, bb_rotation, (w-r)+off_x+x-1, (r)+off_y-tmp_y, bb_width, bb_height, &color);
+
+                BB8A_SET_PIXEL_CLAMPED(bb, bb_rotation, (r)+off_x-x, (r)+off_y-tmp_y, bb_width, bb_height, &color);
+                BB8A_SET_PIXEL_CLAMPED(bb, bb_rotation, (r)+off_x-tmp_y, (r)+off_y-x, bb_width, bb_height, &color);
+
+                BB8A_SET_PIXEL_CLAMPED(bb, bb_rotation, (r)+off_x-tmp_y, (h-r)+off_y+x-1, bb_width, bb_height, &color);
+                BB8A_SET_PIXEL_CLAMPED(bb, bb_rotation, (r)+off_x-x, (h-r)+off_y+tmp_y-1, bb_width, bb_height, &color);
+            } else if (bb_type == TYPE_BBRGB16) {
+                const ColorRGB16 color = { .v = RGB_To_RGB16(c, c, c) };
+
+                BBRGB16_SET_PIXEL_CLAMPED(bb, bb_rotation, (w-r)+off_x+x-1, (h-r)+off_y+tmp_y-1, bb_width, bb_height, &color);
+                BBRGB16_SET_PIXEL_CLAMPED(bb, bb_rotation, (w-r)+off_x+tmp_y-1, (h-r)+off_y+x-1, bb_width, bb_height, &color);
+
+                BBRGB16_SET_PIXEL_CLAMPED(bb, bb_rotation, (w-r)+off_x+tmp_y-1, (r)+off_y-x, bb_width, bb_height, &color);
+                BBRGB16_SET_PIXEL_CLAMPED(bb, bb_rotation, (w-r)+off_x+x-1, (r)+off_y-tmp_y, bb_width, bb_height, &color);
+
+                BBRGB16_SET_PIXEL_CLAMPED(bb, bb_rotation, (r)+off_x-x, (r)+off_y-tmp_y, bb_width, bb_height, &color);
+                BBRGB16_SET_PIXEL_CLAMPED(bb, bb_rotation, (r)+off_x-tmp_y, (r)+off_y-x, bb_width, bb_height, &color);
+
+                BBRGB16_SET_PIXEL_CLAMPED(bb, bb_rotation, (r)+off_x-tmp_y, (h-r)+off_y+x-1, bb_width, bb_height, &color);
+                BBRGB16_SET_PIXEL_CLAMPED(bb, bb_rotation, (r)+off_x-x, (h-r)+off_y+tmp_y-1, bb_width, bb_height, &color);
+            } else if (bb_type == TYPE_BBRGB24) {
+                const ColorRGB24 color = { .r = c, .g = c, .b = c };
+
+                BBRGB24_SET_PIXEL_CLAMPED(bb, bb_rotation, (w-r)+off_x+x-1, (h-r)+off_y+tmp_y-1, bb_width, bb_height, &color);
+                BBRGB24_SET_PIXEL_CLAMPED(bb, bb_rotation, (w-r)+off_x+tmp_y-1, (h-r)+off_y+x-1, bb_width, bb_height, &color);
+
+                BBRGB24_SET_PIXEL_CLAMPED(bb, bb_rotation, (w-r)+off_x+tmp_y-1, (r)+off_y-x, bb_width, bb_height, &color);
+                BBRGB24_SET_PIXEL_CLAMPED(bb, bb_rotation, (w-r)+off_x+x-1, (r)+off_y-tmp_y, bb_width, bb_height, &color);
+
+                BBRGB24_SET_PIXEL_CLAMPED(bb, bb_rotation, (r)+off_x-x, (r)+off_y-tmp_y, bb_width, bb_height, &color);
+                BBRGB24_SET_PIXEL_CLAMPED(bb, bb_rotation, (r)+off_x-tmp_y, (r)+off_y-x, bb_width, bb_height, &color);
+
+                BBRGB24_SET_PIXEL_CLAMPED(bb, bb_rotation, (r)+off_x-tmp_y, (h-r)+off_y+x-1, bb_width, bb_height, &color);
+                BBRGB24_SET_PIXEL_CLAMPED(bb, bb_rotation, (r)+off_x-x, (h-r)+off_y+tmp_y-1, bb_width, bb_height, &color);
+            } else if (bb_type == TYPE_BBRGB32) {
+                const ColorRGB32 color = { .r = c, .g = c, .b = c, .alpha = 0xFF };
+
+                BBRGB32_SET_PIXEL_CLAMPED(bb, bb_rotation, (w-r)+off_x+x-1, (h-r)+off_y+tmp_y-1, bb_width, bb_height, &color);  // 7.
+                BBRGB32_SET_PIXEL_CLAMPED(bb, bb_rotation, (w-r)+off_x+tmp_y-1, (h-r)+off_y+x-1, bb_width, bb_height, &color);  // 8.
+
+                BBRGB32_SET_PIXEL_CLAMPED(bb, bb_rotation, (w-r)+off_x+tmp_y-1, (r)+off_y-x, bb_width, bb_height, &color); // 1.
+                BBRGB32_SET_PIXEL_CLAMPED(bb, bb_rotation, (w-r)+off_x+x-1, (r)+off_y-tmp_y, bb_width, bb_height, &color); // 2.
+
+                BBRGB32_SET_PIXEL_CLAMPED(bb, bb_rotation, (r)+off_x-x, (r)+off_y-tmp_y, bb_width, bb_height, &color);  // 3.
+                BBRGB32_SET_PIXEL_CLAMPED(bb, bb_rotation, (r)+off_x-tmp_y, (r)+off_y-x, bb_width, bb_height, &color);  // 4.
+
+                BBRGB32_SET_PIXEL_CLAMPED(bb, bb_rotation, (r)+off_x-tmp_y, (h-r)+off_y+x-1, bb_width, bb_height, &color); // 5.
+                BBRGB32_SET_PIXEL_CLAMPED(bb, bb_rotation, (r)+off_x-x, (h-r)+off_y+tmp_y-1, bb_width, bb_height, &color); // 6.
+            }
+        }
+
+
 #ifdef DO_ANTIALIASING
         // Do the outer aliasing
         if (y != old_y) {
             if (old_y != r) {
-                int alias_step = 0xff / (x-old_x+8);
-                int alias_v = c + 8*alias_step;
+                int alias_step = 0xff / (x - old_x + 1);
+                int alias_v = c + alias_step * (x - old_x + 2)/2 ;
+
+                printf("\nxxx r=%d, c=%x, x=%d, old_x=%d, alias_step=%x, alias_v=%x\n\n", r, c, x, old_x, alias_step, alias_v);
 
                 // Antialias only the first half
                 int end_x = (x + old_x + 1) / 2;
                 while (old_x < end_x) {
-                    uint8_t alias_c = (((int)c-alias_v) * c  + 128)/255 + alias_v;
+                    int ac = (((int)c-alias_v) * c  + 128)/255 + alias_v;
                     alias_v += alias_step;
-                    if (alias_c < c) alias_c = c;
+                printf("xxx r=%d, c=%x, x=%d, old_x=%d, alias_step=%x, alias_v=%x\n, ac=%x\n", r, c, x, old_x, alias_step, alias_v, ac);
+                    uint8_t alias_c;
+                    if (ac <= 0xff)
+                        alias_c = ac;
+                    else
+                        alias_c = 0xff;
+
 
                     if (bb_type == TYPE_BB8) {
                         const Color8 color = { .a = alias_c };
@@ -2628,14 +2712,15 @@ void BB_paint_rounded_corner(BlitBuffer * restrict bb, unsigned int off_x, unsig
         // Do the inner aliasing
         if (y2 != old_y2) {
             if (old_y2 != 0) {
-                int alias_step = 0xff / (x2-old_x2+8);
-                int alias_v = c - alias_step;
+                int alias_step = 0xff / (x2-old_x2+r2);
+                int alias_v = 0xff - alias_step;
 
                 // Antialias only the last half
                 old_x2 = (old_x2 + x2) / 2;
                 while (old_x2 < x2) {
-                    uint8_t alias_c = (((int)c-alias_v) * c  + 128)/ 255 + alias_v;
+                    uint8_t alias_c = (((int)0xff-alias_v) * c  + 128)/ 255 + alias_v;
                     alias_v -= alias_step;
+
                     if (alias_c < c) alias_c = c;
 
                     if (bb_type == TYPE_BB8) {
@@ -2681,7 +2766,7 @@ void BB_paint_rounded_corner(BlitBuffer * restrict bb, unsigned int off_x, unsig
                         BBRGB16_SET_PIXEL_CLAMPED(bb, bb_rotation, (w-r)+off_x+old_x2, (h-r)+off_y+old_y2-1, bb_width, bb_height, &color); // 7.quadrant
                         BBRGB16_SET_PIXEL_CLAMPED(bb, bb_rotation, (w-r)+off_x+old_y2-1, (h-r)+off_y+old_x2-1, bb_width, bb_height, &color); // 8.quadrant
                     } else if (bb_type == TYPE_BBRGB24) {
-                        const ColorRGB24 color = { .r = alias_c, .g = 0, .b = alias_c };
+                        const ColorRGB24 color = { .r = alias_c, .g = alias_c, .b = alias_c };
 
                         BBRGB24_SET_PIXEL_CLAMPED(bb, bb_rotation, (w-r)+off_x+old_y2-1, (r)+off_y-old_x2, bb_width, bb_height, &color); // 1. quadrant
                         BBRGB24_SET_PIXEL_CLAMPED(bb, bb_rotation, (w-r)+off_x+old_x2-1, (r)+off_y-old_y2, bb_width, bb_height, &color); // 2. quadrant
@@ -2717,79 +2802,5 @@ void BB_paint_rounded_corner(BlitBuffer * restrict bb, unsigned int off_x, unsig
         }
 #endif // ifdef DO_ANTIALIASING
 
-        // Fill between inner and outer circle.
-        for (unsigned int tmp_y = y; tmp_y > y2; tmp_y--) {
-            if (bb_type == TYPE_BB8) {
-                const Color8 color = { .a = c };
-
-                BB8_SET_PIXEL_CLAMPED(bb, bb_rotation, (w-r)+off_x+x-1, (h-r)+off_y+tmp_y-1, bb_width, bb_height, &color);
-                BB8_SET_PIXEL_CLAMPED(bb, bb_rotation, (w-r)+off_x+tmp_y-1, (h-r)+off_y+x-1, bb_width, bb_height, &color);
-
-                BB8_SET_PIXEL_CLAMPED(bb, bb_rotation, (w-r)+off_x+tmp_y-1, (r)+off_y-x, bb_width, bb_height, &color);
-                BB8_SET_PIXEL_CLAMPED(bb, bb_rotation, (w-r)+off_x+x-1, (r)+off_y-tmp_y, bb_width, bb_height, &color);
-
-                BB8_SET_PIXEL_CLAMPED(bb, bb_rotation, (r)+off_x-x, (r)+off_y-tmp_y, bb_width, bb_height, &color);
-                BB8_SET_PIXEL_CLAMPED(bb, bb_rotation, (r)+off_x-tmp_y, (r)+off_y-x, bb_width, bb_height, &color);
-
-                BB8_SET_PIXEL_CLAMPED(bb, bb_rotation, (r)+off_x-tmp_y, (h-r)+off_y+x-1, bb_width, bb_height, &color);
-                BB8_SET_PIXEL_CLAMPED(bb, bb_rotation, (r)+off_x-x, (h-r)+off_y+tmp_y-1, bb_width, bb_height, &color);
-            } else if (bb_type == TYPE_BB8A) {
-                const Color8A color = { .a = c, .alpha = 0xFF };
-
-                BB8A_SET_PIXEL_CLAMPED(bb, bb_rotation, (w-r)+off_x+x-1, (h-r)+off_y+tmp_y-1, bb_width, bb_height, &color);
-                BB8A_SET_PIXEL_CLAMPED(bb, bb_rotation, (w-r)+off_x+tmp_y-1, (h-r)+off_y+x-1, bb_width, bb_height, &color);
-
-                BB8A_SET_PIXEL_CLAMPED(bb, bb_rotation, (w-r)+off_x+tmp_y-1, (r)+off_y-x, bb_width, bb_height, &color);
-                BB8A_SET_PIXEL_CLAMPED(bb, bb_rotation, (w-r)+off_x+x-1, (r)+off_y-tmp_y, bb_width, bb_height, &color);
-
-                BB8A_SET_PIXEL_CLAMPED(bb, bb_rotation, (r)+off_x-x, (r)+off_y-tmp_y, bb_width, bb_height, &color);
-                BB8A_SET_PIXEL_CLAMPED(bb, bb_rotation, (r)+off_x-tmp_y, (r)+off_y-x, bb_width, bb_height, &color);
-
-                BB8A_SET_PIXEL_CLAMPED(bb, bb_rotation, (r)+off_x-tmp_y, (h-r)+off_y+x-1, bb_width, bb_height, &color);
-                BB8A_SET_PIXEL_CLAMPED(bb, bb_rotation, (r)+off_x-x, (h-r)+off_y+tmp_y-1, bb_width, bb_height, &color);
-            } else if (bb_type == TYPE_BBRGB16) {
-                const ColorRGB16 color = { .v = RGB_To_RGB16(c, c, c) };
-
-                BBRGB16_SET_PIXEL_CLAMPED(bb, bb_rotation, (w-r)+off_x+x-1, (h-r)+off_y+tmp_y-1, bb_width, bb_height, &color);
-                BBRGB16_SET_PIXEL_CLAMPED(bb, bb_rotation, (w-r)+off_x+tmp_y-1, (h-r)+off_y+x-1, bb_width, bb_height, &color);
-
-                BBRGB16_SET_PIXEL_CLAMPED(bb, bb_rotation, (w-r)+off_x+tmp_y-1, (r)+off_y-x, bb_width, bb_height, &color);
-                BBRGB16_SET_PIXEL_CLAMPED(bb, bb_rotation, (w-r)+off_x+x-1, (r)+off_y-tmp_y, bb_width, bb_height, &color);
-
-                BBRGB16_SET_PIXEL_CLAMPED(bb, bb_rotation, (r)+off_x-x, (r)+off_y-tmp_y, bb_width, bb_height, &color);
-                BBRGB16_SET_PIXEL_CLAMPED(bb, bb_rotation, (r)+off_x-tmp_y, (r)+off_y-x, bb_width, bb_height, &color);
-
-                BBRGB16_SET_PIXEL_CLAMPED(bb, bb_rotation, (r)+off_x-tmp_y, (h-r)+off_y+x-1, bb_width, bb_height, &color);
-                BBRGB16_SET_PIXEL_CLAMPED(bb, bb_rotation, (r)+off_x-x, (h-r)+off_y+tmp_y-1, bb_width, bb_height, &color);
-            } else if (bb_type == TYPE_BBRGB24) {
-                const ColorRGB24 color = { .r = c, .g = c, .b = c };
-
-                BBRGB24_SET_PIXEL_CLAMPED(bb, bb_rotation, (w-r)+off_x+x-1, (h-r)+off_y+tmp_y-1, bb_width, bb_height, &color);
-                BBRGB24_SET_PIXEL_CLAMPED(bb, bb_rotation, (w-r)+off_x+tmp_y-1, (h-r)+off_y+x-1, bb_width, bb_height, &color);
-
-                BBRGB24_SET_PIXEL_CLAMPED(bb, bb_rotation, (w-r)+off_x+tmp_y-1, (r)+off_y-x, bb_width, bb_height, &color);
-                BBRGB24_SET_PIXEL_CLAMPED(bb, bb_rotation, (w-r)+off_x+x-1, (r)+off_y-tmp_y, bb_width, bb_height, &color);
-
-                BBRGB24_SET_PIXEL_CLAMPED(bb, bb_rotation, (r)+off_x-x, (r)+off_y-tmp_y, bb_width, bb_height, &color);
-                BBRGB24_SET_PIXEL_CLAMPED(bb, bb_rotation, (r)+off_x-tmp_y, (r)+off_y-x, bb_width, bb_height, &color);
-
-                BBRGB24_SET_PIXEL_CLAMPED(bb, bb_rotation, (r)+off_x-tmp_y, (h-r)+off_y+x-1, bb_width, bb_height, &color);
-                BBRGB24_SET_PIXEL_CLAMPED(bb, bb_rotation, (r)+off_x-x, (h-r)+off_y+tmp_y-1, bb_width, bb_height, &color);
-            } else if (bb_type == TYPE_BBRGB32) {
-                const ColorRGB32 color = { .r = c, .g = c, .b = c, .alpha = 0xFF };
-
-                BBRGB32_SET_PIXEL_CLAMPED(bb, bb_rotation, (w-r)+off_x+x-1, (h-r)+off_y+tmp_y-1, bb_width, bb_height, &color);  // 7.
-                BBRGB32_SET_PIXEL_CLAMPED(bb, bb_rotation, (w-r)+off_x+tmp_y-1, (h-r)+off_y+x-1, bb_width, bb_height, &color);  // 8.
-
-                BBRGB32_SET_PIXEL_CLAMPED(bb, bb_rotation, (w-r)+off_x+tmp_y-1, (r)+off_y-x, bb_width, bb_height, &color); // 1.
-                BBRGB32_SET_PIXEL_CLAMPED(bb, bb_rotation, (w-r)+off_x+x-1, (r)+off_y-tmp_y, bb_width, bb_height, &color); // 2.
-
-                BBRGB32_SET_PIXEL_CLAMPED(bb, bb_rotation, (r)+off_x-x, (r)+off_y-tmp_y, bb_width, bb_height, &color);  // 3.
-                BBRGB32_SET_PIXEL_CLAMPED(bb, bb_rotation, (r)+off_x-tmp_y, (r)+off_y-x, bb_width, bb_height, &color);  // 4.
-
-                BBRGB32_SET_PIXEL_CLAMPED(bb, bb_rotation, (r)+off_x-tmp_y, (h-r)+off_y+x-1, bb_width, bb_height, &color); // 5.
-                BBRGB32_SET_PIXEL_CLAMPED(bb, bb_rotation, (r)+off_x-x, (h-r)+off_y+tmp_y-1, bb_width, bb_height, &color); // 6.
-            }
-        }
     }
 }
