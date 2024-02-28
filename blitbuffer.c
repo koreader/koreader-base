@@ -182,7 +182,7 @@ static const char*
 })
 
 static inline void BB8_SET_PIXEL_CLAMPED(BlitBuffer * restrict bb, int rotation, unsigned int x, unsigned int y, unsigned int width, unsigned int height, const Color8 * restrict color) {
-    if (likely(x >= 0U && x < width && y >= 0 && y < height)) {
+    if (likely(x >= 0U && x < width && y >= 0U && y < height)) {
         Color8 * restrict pixel;
         BB_GET_PIXEL(bb, rotation, Color8, x, y, &pixel);
         *pixel = *color;
@@ -218,6 +218,73 @@ static inline void BBRGB32_SET_PIXEL_CLAMPED(BlitBuffer * restrict bb, int rotat
         ColorRGB32 * restrict pixel;
         BB_GET_PIXEL(bb, rotation, ColorRGB32, x, y, &pixel);
         *pixel = *color;
+    }
+}
+
+static inline void BB8_BLEND_PIXEL_CLAMPED(BlitBuffer * restrict bb, int rotation, unsigned int x, unsigned int y, unsigned int width, unsigned int height, const Color8A * restrict color) {
+    if (likely(x >= 0U && x < width && y >= 0U && y < height)) {
+        Color8 * restrict pixel;
+        BB_GET_PIXEL(bb, rotation, Color8, x, y, &pixel);
+
+        const uint8_t alpha = color->alpha;
+        const uint8_t ainv = alpha ^ 0xff;
+
+        pixel->a = (uint8_t) DIV_255(alpha * color->a + ainv * pixel->a);
+    }
+}
+static inline void BB8A_BLEND_PIXEL_CLAMPED(BlitBuffer * restrict bb, int rotation, unsigned int x, unsigned int y, unsigned int width, unsigned int height, const Color8A * restrict color) {
+    if (likely(x >= 0U && x < width && y >= 0U && y < height)) {
+        Color8A * restrict pixel;
+        BB_GET_PIXEL(bb, rotation, Color8A, x, y, &pixel);
+
+        const uint8_t alpha = color->alpha;
+        const uint8_t ainv = alpha ^ 0xff;
+
+        pixel->a = (uint8_t) DIV_255(alpha * color->a + ainv * pixel->a);
+        pixel->alpha = 0xff;
+    }
+}
+static inline void BBRGB16_BLEND_PIXEL_CLAMPED(BlitBuffer * restrict bb, int rotation, unsigned int x, unsigned int y, unsigned int width, unsigned int height, const Color8A * restrict color) {
+    if (likely(x >= 0U && x < width && y >= 0U && y < height)) {
+        ColorRGB16 * restrict pixel;
+        BB_GET_PIXEL(bb, rotation, ColorRGB16, x, y, &pixel);
+
+        const uint8_t alpha = color->alpha;
+        const uint8_t ainv = alpha ^ 0xff;
+
+        const uint8_t r = (uint8_t) DIV_255(alpha * color->a + ainv * ColorRGB16_GetR(pixel->v));
+        const uint8_t g = (uint8_t) DIV_255(alpha * color->a + ainv * ColorRGB16_GetG(pixel->v));
+        const uint8_t b = (uint8_t) DIV_255(alpha * color->a + ainv * ColorRGB16_GetB(pixel->v));
+        pixel->v = (uint16_t) RGB_To_RGB16(r, g, b);
+    }
+}
+
+static inline void BBRGB24_BLEND_PIXEL_CLAMPED(BlitBuffer * restrict bb, int rotation, unsigned int x, unsigned int y, unsigned int width, unsigned int height, const ColorRGB32 * restrict color) {
+    if (likely(x >= 0U && x < width && y >= 0U && y < height)) {
+        ColorRGB24 * restrict pixel;
+        BB_GET_PIXEL(bb, rotation, ColorRGB24, x, y, &pixel);
+
+        const uint8_t alpha = color->alpha;
+        const uint8_t ainv = alpha ^ 0xff;
+
+        pixel->r = (uint8_t) DIV_255(alpha * color->r + ainv * pixel->r);
+        pixel->g = (uint8_t) DIV_255(alpha * color->g + ainv * pixel->g);
+        pixel->b = (uint8_t) DIV_255(alpha * color->b + ainv * pixel->b);
+    }
+}
+
+static inline void BBRGB32_BLEND_PIXEL_CLAMPED(BlitBuffer * restrict bb, int rotation, unsigned int x, unsigned int y, unsigned int width, unsigned int height, const ColorRGB32 * restrict color) {
+    if (likely(x >= 0U && x < width && y >= 0U && y < height)) {
+        ColorRGB32 * restrict pixel;
+        BB_GET_PIXEL(bb, rotation, ColorRGB32, x, y, &pixel);
+
+        const uint8_t alpha = color->alpha;
+        const uint8_t ainv = alpha ^ 0xff;
+
+        pixel->r = (uint8_t) DIV_255(alpha * color->r + ainv * pixel->r);
+        pixel->g = (uint8_t) DIV_255(alpha * color->g + ainv * pixel->g);
+        pixel->b = (uint8_t) DIV_255(alpha * color->b + ainv * pixel->b);
+        pixel->alpha = (uint8_t) 0xff;
     }
 }
 
@@ -2468,8 +2535,12 @@ void BB_color_blit_from(BlitBuffer * restrict dst, const BlitBuffer * restrict s
     }
 }
 
-#define DO_ANTIALIASING
-void BB_paint_rounded_corner(BlitBuffer * restrict bb, unsigned int off_x, unsigned int off_y, unsigned int w, unsigned int h, unsigned int bw, unsigned int r, uint8_t c) {
+// Information about those three algorithms can be found on http://members.chello.at/~easyfilter/ (Zingl Alois)
+void BB_paint_rounded_corner_noAA(BlitBuffer * restrict bb, unsigned int off_x, unsigned int off_y, unsigned int w, unsigned int h, int bw, int r, uint8_t c);
+void BB_paint_rounded_corner_AA(BlitBuffer * restrict bb, unsigned int off_x, unsigned int off_y, unsigned int w, unsigned int h, int bw, int r, uint8_t c);
+void BB_paint_rounded_corner_AA_1px(BlitBuffer * restrict bb, unsigned int off_x, unsigned int off_y, unsigned int w, unsigned int h, int bw, int r, uint8_t c);
+
+void BB_paint_rounded_corner(BlitBuffer * restrict bb, unsigned int off_x, unsigned int off_y, unsigned int w, unsigned int h, unsigned int bw, unsigned int r, uint8_t c, int anti_aliasing) {
     /*
     if (2*r > h || 2*r > w || r == 0) {
         // NOP
@@ -2481,6 +2552,18 @@ void BB_paint_rounded_corner(BlitBuffer * restrict bb, unsigned int off_x, unsig
     if (bw > r) {
         bw = r;
     }
+
+    if (!anti_aliasing)
+        BB_paint_rounded_corner_noAA(bb, off_x, off_y, w, h, bw, r, c);
+    else {
+        if (bw == 1)
+            BB_paint_rounded_corner_AA_1px(bb, off_x, off_y, w, h, 1, r, c);
+        else
+            BB_paint_rounded_corner_AA(bb, off_x, off_y, w, h, bw, r, c);
+    }
+}
+
+void BB_paint_rounded_corner_noAA(BlitBuffer * restrict bb, unsigned int off_x, unsigned int off_y, unsigned int w, unsigned int h, int bw, int r, uint8_t c) {
 
     const int bb_type = GET_BB_TYPE(bb);
     const int bb_rotation = GET_BB_ROTATION(bb);
@@ -2508,8 +2591,6 @@ void BB_paint_rounded_corner(BlitBuffer * restrict bb, unsigned int off_x, unsig
     int ddF2_x = 0;
     int ddF2_y = -2 * r2;
 
-    int old_x  = x,  old_y  = y;
-    int old_x2 = x2, old_y2 = y2;
     while(x < y)
     {
         if (f >= 0) {
@@ -2594,213 +2675,304 @@ void BB_paint_rounded_corner(BlitBuffer * restrict bb, unsigned int off_x, unsig
             } else if (bb_type == TYPE_BBRGB32) {
                 const ColorRGB32 color = { .r = c, .g = c, .b = c, .alpha = 0xFF };
 
-                BBRGB32_SET_PIXEL_CLAMPED(bb, bb_rotation, (w-r)+off_x+x-1, (h-r)+off_y+tmp_y-1, bb_width, bb_height, &color);  // 7.
-                BBRGB32_SET_PIXEL_CLAMPED(bb, bb_rotation, (w-r)+off_x+tmp_y-1, (h-r)+off_y+x-1, bb_width, bb_height, &color);  // 8.
+                BBRGB32_SET_PIXEL_CLAMPED(bb, bb_rotation, (w-r)+off_x+x-1, (h-r)+off_y+tmp_y-1, bb_width, bb_height, &color);  // 7. octant
+                BBRGB32_SET_PIXEL_CLAMPED(bb, bb_rotation, (w-r)+off_x+tmp_y-1, (h-r)+off_y+x-1, bb_width, bb_height, &color);  // 8. octant
 
-                BBRGB32_SET_PIXEL_CLAMPED(bb, bb_rotation, (w-r)+off_x+tmp_y-1, (r)+off_y-x, bb_width, bb_height, &color); // 1.
-                BBRGB32_SET_PIXEL_CLAMPED(bb, bb_rotation, (w-r)+off_x+x-1, (r)+off_y-tmp_y, bb_width, bb_height, &color); // 2.
+                BBRGB32_SET_PIXEL_CLAMPED(bb, bb_rotation, (w-r)+off_x+tmp_y-1, (r)+off_y-x, bb_width, bb_height, &color); // 1. octant
+                BBRGB32_SET_PIXEL_CLAMPED(bb, bb_rotation, (w-r)+off_x+x-1, (r)+off_y-tmp_y, bb_width, bb_height, &color); // 2. octant
 
-                BBRGB32_SET_PIXEL_CLAMPED(bb, bb_rotation, (r)+off_x-x, (r)+off_y-tmp_y, bb_width, bb_height, &color);  // 3.
-                BBRGB32_SET_PIXEL_CLAMPED(bb, bb_rotation, (r)+off_x-tmp_y, (r)+off_y-x, bb_width, bb_height, &color);  // 4.
+                BBRGB32_SET_PIXEL_CLAMPED(bb, bb_rotation, (r)+off_x-x, (r)+off_y-tmp_y, bb_width, bb_height, &color);  // 3. octant
+                BBRGB32_SET_PIXEL_CLAMPED(bb, bb_rotation, (r)+off_x-tmp_y, (r)+off_y-x, bb_width, bb_height, &color);  // 4. octant
 
-                BBRGB32_SET_PIXEL_CLAMPED(bb, bb_rotation, (r)+off_x-tmp_y, (h-r)+off_y+x-1, bb_width, bb_height, &color); // 5.
-                BBRGB32_SET_PIXEL_CLAMPED(bb, bb_rotation, (r)+off_x-x, (h-r)+off_y+tmp_y-1, bb_width, bb_height, &color); // 6.
+                BBRGB32_SET_PIXEL_CLAMPED(bb, bb_rotation, (r)+off_x-tmp_y, (h-r)+off_y+x-1, bb_width, bb_height, &color); // 5. octant
+                BBRGB32_SET_PIXEL_CLAMPED(bb, bb_rotation, (r)+off_x-x, (h-r)+off_y+tmp_y-1, bb_width, bb_height, &color); // 6. octant
             }
         }
+    }
+}
 
+#define setPixelAA_BB8(x, y)     BB8_BLEND_PIXEL_CLAMPED(bb, bb_rotation, x, y, bb_width, bb_height, &color);
+#define setPixelAA_BB8A(x, y)    BB8A_BLEND_PIXEL_CLAMPED(bb, bb_rotation, x, y, bb_width, bb_height, &color);
+#define setPixelAA_BBRGB16(x, y) BBRGB16_BLEND_PIXEL_CLAMPED(bb, bb_rotation, x, y, bb_width, bb_height, &color);
+#define setPixelAA_BBRGB24(x, y) BBRGB24_BLEND_PIXEL_CLAMPED(bb, bb_rotation, x, y, bb_width, bb_height, &color);
+#define setPixelAA_BBRGB32(x, y) BBRGB32_BLEND_PIXEL_CLAMPED(bb, bb_rotation, x, y, bb_width, bb_height, &color);
 
-#ifdef DO_ANTIALIASING
-        // Do the outer aliasing
-        if (y != old_y) {
-            if (old_y != r) {
-                int alias_step = 0xff / (x - old_x + 1);
-                int alias_v = c + alias_step * (x - old_x + 2)/2 ;
+#define BB8_SET_ALL_QUADRANTS(x0, y0, x1, y1)      \
+    setPixelAA_BB8(off_x+w-r-1+x1,off_y+r+y1);     \
+    setPixelAA_BB8(off_x+r+x0,    off_y+r+y1);     \
+    setPixelAA_BB8(off_x+r+x0,    off_y+h-r-1+y0); \
+    setPixelAA_BB8(off_x+w-r-1+x1,off_y+h-r-1+y0);
 
-                printf("\nxxx r=%d, c=%x, x=%d, old_x=%d, alias_step=%x, alias_v=%x\n\n", r, c, x, old_x, alias_step, alias_v);
+#define BB8A_SET_ALL_QUADRANTS(x0, y0, x1, y1)      \
+    setPixelAA_BB8A(off_x+w-r-1+x1,off_y+r+y1);     \
+    setPixelAA_BB8A(off_x+r+x0,    off_y+r+y1);     \
+    setPixelAA_BB8A(off_x+r+x0,    off_y+h-r-1+y0); \
+    setPixelAA_BB8A(off_x+w-r-1+x1,off_y+h-r-1+y0);
 
-                // Antialias only the first half
-                int end_x = (x + old_x + 1) / 2;
-                while (old_x < end_x) {
-                    int ac = (((int)c-alias_v) * c  + 128)/255 + alias_v;
-                    alias_v += alias_step;
-                printf("xxx r=%d, c=%x, x=%d, old_x=%d, alias_step=%x, alias_v=%x\n, ac=%x\n", r, c, x, old_x, alias_step, alias_v, ac);
-                    uint8_t alias_c;
-                    if (ac <= 0xff)
-                        alias_c = ac;
-                    else
-                        alias_c = 0xff;
+#define BBRGB16_SET_ALL_QUADRANTS(x0, y0, x1, y1)      \
+    setPixelAA_BBRGB16(off_x+w-r-1+x1,off_y+r+y1);     \
+    setPixelAA_BBRGB16(off_x+r+x0,    off_y+r+y1);     \
+    setPixelAA_BBRGB16(off_x+r+x0,    off_y+h-r-1+y0); \
+    setPixelAA_BBRGB16(off_x+w-r-1+x1,off_y+h-r-1+y0);
 
+#define BBRGB24_SET_ALL_QUADRANTS(x0, y0, x1, y1)      \
+    setPixelAA_BBRGB24(off_x+w-r-1+x1,off_y+r+y1);     \
+    setPixelAA_BBRGB24(off_x+r+x0,    off_y+r+y1);     \
+    setPixelAA_BBRGB24(off_x+r+x0,    off_y+h-r-1+y0); \
+    setPixelAA_BBRGB24(off_x+w-r-1+x1,off_y+h-r-1+y0);
 
-                    if (bb_type == TYPE_BB8) {
-                        const Color8 color = { .a = alias_c };
+#define BBRGB32_SET_ALL_QUADRANTS(x0, y0, x1, y1)      \
+    setPixelAA_BBRGB32(off_x+w-r-1+x1,off_y+r+y1);     \
+    setPixelAA_BBRGB32(off_x+r+x0,    off_y+r+y1);     \
+    setPixelAA_BBRGB32(off_x+r+x0,    off_y+h-r-1+y0); \
+    setPixelAA_BBRGB32(off_x+w-r-1+x1,off_y+h-r-1+y0);
 
-                        BB8_SET_PIXEL_CLAMPED(bb, bb_rotation, (w-r)+off_x+old_y, (r)+off_y-old_x, bb_width, bb_height, &color); // 1. quadrant
-                        BB8_SET_PIXEL_CLAMPED(bb, bb_rotation, (w-r)+off_x+old_x-1, (r)+off_y-old_y-1, bb_width, bb_height, &color); // 2. quadrant
+void BB_paint_rounded_corner_AA_1px(BlitBuffer * restrict bb, unsigned int off_x, unsigned int off_y, unsigned int w, unsigned int h, int bw, int r, uint8_t c) { // draw a black anti-aliased circle with thickness 1
+    const int bb_type = GET_BB_TYPE(bb);
+    const int bb_rotation = GET_BB_ROTATION(bb);
+    const unsigned int bb_width = BB_GET_WIDTH(bb);
+    const unsigned int bb_height = BB_GET_HEIGHT(bb);
 
-                        BB8_SET_PIXEL_CLAMPED(bb, bb_rotation, (r)+off_x-old_x, (r)+off_y-old_y-1, bb_width, bb_height, &color); // 3. quadrant
-                        BB8_SET_PIXEL_CLAMPED(bb, bb_rotation, (r)+off_x-old_y-1, (r)+off_y-old_x, bb_width, bb_height, &color); // 4. quadrant
+    int x = -r, y = 0;
+    int i, err = 2-2*r;                             // error of 1.step
+    int x2, e2;
+    r = 1-err;
+    do {
+        i = 255*abs(err-2*(x+y)-2)/r;               // get blend value of pixel
 
-                        BB8_SET_PIXEL_CLAMPED(bb, bb_rotation, (r)+off_x-old_y-1, (h-r)+off_y+old_x-1, bb_width, bb_height, &color); // 5. quadrant
-                        BB8_SET_PIXEL_CLAMPED(bb, bb_rotation, (r)+off_x-old_x, (h-r)+off_y+old_y, bb_width, bb_height, &color); // 6. quadrant
-
-                        BB8_SET_PIXEL_CLAMPED(bb, bb_rotation, (w-r)+off_x+old_x-1, (h-r)+off_y+old_y, bb_width, bb_height, &color); // 7.quadrant
-                        BB8_SET_PIXEL_CLAMPED(bb, bb_rotation, (w-r)+off_x+old_y, (h-r)+off_y+old_x-1, bb_width, bb_height, &color); // 8.quadrant
-                    } else if (bb_type == TYPE_BB8A) {
-                        const Color8A color = { .a = alias_c, .alpha = 0xFF };
-
-                        BB8A_SET_PIXEL_CLAMPED(bb, bb_rotation, (w-r)+off_x+old_y, (r)+off_y-old_x, bb_width, bb_height, &color); // 1. quadrant
-                        BB8A_SET_PIXEL_CLAMPED(bb, bb_rotation, (w-r)+off_x+old_x-1, (r)+off_y-old_y-1, bb_width, bb_height, &color); // 2. quadrant
-
-                        BB8A_SET_PIXEL_CLAMPED(bb, bb_rotation, (r)+off_x-old_x, (r)+off_y-old_y-1, bb_width, bb_height, &color); // 3. quadrant
-                        BB8A_SET_PIXEL_CLAMPED(bb, bb_rotation, (r)+off_x-old_y-1, (r)+off_y-old_x, bb_width, bb_height, &color); // 4. quadrant
-
-                        BB8A_SET_PIXEL_CLAMPED(bb, bb_rotation, (r)+off_x-old_y-1, (h-r)+off_y+old_x-1, bb_width, bb_height, &color); // 5. quadrant
-                        BB8A_SET_PIXEL_CLAMPED(bb, bb_rotation, (r)+off_x-old_x, (h-r)+off_y+old_y, bb_width, bb_height, &color); // 6. quadrant
-
-                        BB8A_SET_PIXEL_CLAMPED(bb, bb_rotation, (w-r)+off_x+old_x-1, (h-r)+off_y+old_y, bb_width, bb_height, &color); // 7.quadrant
-                        BB8A_SET_PIXEL_CLAMPED(bb, bb_rotation, (w-r)+off_x+old_y, (h-r)+off_y+old_x-1, bb_width, bb_height, &color); // 8.quadrant
-                    } else if (bb_type == TYPE_BBRGB16) {
-                        const ColorRGB16 color = { .v = RGB_To_RGB16(alias_c, alias_c, alias_c) };
-
-                        BBRGB16_SET_PIXEL_CLAMPED(bb, bb_rotation, (w-r)+off_x+old_y, (r)+off_y-old_x, bb_width, bb_height, &color); // 1. quadrant
-                        BBRGB16_SET_PIXEL_CLAMPED(bb, bb_rotation, (w-r)+off_x+old_x-1, (r)+off_y-old_y-1, bb_width, bb_height, &color); // 2. quadrant
-
-                        BBRGB16_SET_PIXEL_CLAMPED(bb, bb_rotation, (r)+off_x-old_x, (r)+off_y-old_y-1, bb_width, bb_height, &color); // 3. quadrant
-                        BBRGB16_SET_PIXEL_CLAMPED(bb, bb_rotation, (r)+off_x-old_y-1, (r)+off_y-old_x, bb_width, bb_height, &color); // 4. quadrant
-
-                        BBRGB16_SET_PIXEL_CLAMPED(bb, bb_rotation, (r)+off_x-old_y-1, (h-r)+off_y+old_x-1, bb_width, bb_height, &color); // 5. quadrant
-                        BBRGB16_SET_PIXEL_CLAMPED(bb, bb_rotation, (r)+off_x-old_x, (h-r)+off_y+old_y, bb_width, bb_height, &color); // 6. quadrant
-
-                        BBRGB16_SET_PIXEL_CLAMPED(bb, bb_rotation, (w-r)+off_x+old_x-1, (h-r)+off_y+old_y, bb_width, bb_height, &color); // 7.quadrant
-                        BBRGB16_SET_PIXEL_CLAMPED(bb, bb_rotation, (w-r)+off_x+old_y, (h-r)+off_y+old_x-1, bb_width, bb_height, &color); // 8.quadrant
-                    } else if (bb_type == TYPE_BBRGB24) {
-                        const ColorRGB24 color = { .r = alias_c, .g = alias_c, .b = alias_c };
-
-                        BBRGB24_SET_PIXEL_CLAMPED(bb, bb_rotation, (w-r)+off_x+old_y, (r)+off_y-old_x, bb_width, bb_height, &color); // 1. quadrant
-                        BBRGB24_SET_PIXEL_CLAMPED(bb, bb_rotation, (w-r)+off_x+old_x-1, (r)+off_y-old_y-1, bb_width, bb_height, &color); // 2. quadrant
-
-                        BBRGB24_SET_PIXEL_CLAMPED(bb, bb_rotation, (r)+off_x-old_x, (r)+off_y-old_y-1, bb_width, bb_height, &color); // 3. quadrant
-                        BBRGB24_SET_PIXEL_CLAMPED(bb, bb_rotation, (r)+off_x-old_y-1, (r)+off_y-old_x, bb_width, bb_height, &color); // 4. quadrant
-
-                        BBRGB24_SET_PIXEL_CLAMPED(bb, bb_rotation, (r)+off_x-old_y-1, (h-r)+off_y+old_x-1, bb_width, bb_height, &color); // 5. quadrant
-                        BBRGB24_SET_PIXEL_CLAMPED(bb, bb_rotation, (r)+off_x-old_x, (h-r)+off_y+old_y, bb_width, bb_height, &color); // 6. quadrant
-
-                        BBRGB24_SET_PIXEL_CLAMPED(bb, bb_rotation, (w-r)+off_x+old_x-1, (h-r)+off_y+old_y, bb_width, bb_height, &color); // 7.quadrant
-                        BBRGB24_SET_PIXEL_CLAMPED(bb, bb_rotation, (w-r)+off_x+old_y, (h-r)+off_y+old_x-1, bb_width, bb_height, &color); // 8.quadrant
-                    } else if (bb_type == TYPE_BBRGB32) {
-                        const ColorRGB32 color = { .r = alias_c, .g = alias_c, .b = alias_c, .alpha = 0xFF };
-
-                        BBRGB32_SET_PIXEL_CLAMPED(bb, bb_rotation, (w-r)+off_x+old_y, (r)+off_y-old_x, bb_width, bb_height, &color); // 1. quadrant
-                        BBRGB32_SET_PIXEL_CLAMPED(bb, bb_rotation, (w-r)+off_x+old_x-1, (r)+off_y-old_y-1, bb_width, bb_height, &color); // 2. quadrant
-
-                        BBRGB32_SET_PIXEL_CLAMPED(bb, bb_rotation, (r)+off_x-old_x, (r)+off_y-old_y-1, bb_width, bb_height, &color); // 3. quadrant
-                        BBRGB32_SET_PIXEL_CLAMPED(bb, bb_rotation, (r)+off_x-old_y-1, (r)+off_y-old_x, bb_width, bb_height, &color); // 4. quadrant
-
-                        BBRGB32_SET_PIXEL_CLAMPED(bb, bb_rotation, (r)+off_x-old_y-1, (h-r)+off_y+old_x-1, bb_width, bb_height, &color); // 5. quadrant
-                        BBRGB32_SET_PIXEL_CLAMPED(bb, bb_rotation, (r)+off_x-old_x, (h-r)+off_y+old_y, bb_width, bb_height, &color); // 6. quadrant
-
-                        BBRGB32_SET_PIXEL_CLAMPED(bb, bb_rotation, (w-r)+off_x+old_x-1, (h-r)+off_y+old_y, bb_width, bb_height, &color); // 7.quadrant
-                        BBRGB32_SET_PIXEL_CLAMPED(bb, bb_rotation, (w-r)+off_x+old_y, (h-r)+off_y+old_x-1, bb_width, bb_height, &color); // 8.quadrant
-                    }
-                    ++old_x;
-                } // end while
-            }
-            old_y = y;
-            old_x = x;
+        if (bb_type == TYPE_BB8) {
+            const Color8A color = { .a = c, .alpha = 255-i };
+            BB8_SET_ALL_QUADRANTS(-(r/2)+x, (r/2)+y, (r/2)-x, -(r/2)-y);
+        } else if (bb_type == TYPE_BB8A) {
+            const Color8A color = { .a = c, .alpha = 255-i };
+            BB8A_SET_ALL_QUADRANTS(-(r/2)+x, (r/2)+y, (r/2)-x, -(r/2)-y);
+        } else if (bb_type == TYPE_BBRGB16) {
+            const Color8A color = { .a = c, .alpha = 255-i };
+            BBRGB16_SET_ALL_QUADRANTS(-(r/2)+x, (r/2)+y, (r/2)-x, -(r/2)-y);
+        } else if (bb_type == TYPE_BBRGB24) {
+            const ColorRGB32 color = { .r = c, .g = c, .b = c, .alpha = 255-i };
+            BBRGB24_SET_ALL_QUADRANTS(-(r/2)+x, (r/2)+y, (r/2)-x, -(r/2)-y);
+        } else if (bb_type == TYPE_BBRGB32) {
+            const ColorRGB32 color = { .r = c, .g = c, .b = c, .alpha = 255-i };
+            BBRGB32_SET_ALL_QUADRANTS(-(r/2)+x, (r/2)+y, (r/2)-x, -(r/2)-y);
         }
-
-        // Do the inner aliasing
-        if (y2 != old_y2) {
-            if (old_y2 != 0) {
-                int alias_step = 0xff / (x2-old_x2+r2);
-                int alias_v = 0xff - alias_step;
-
-                // Antialias only the last half
-                old_x2 = (old_x2 + x2) / 2;
-                while (old_x2 < x2) {
-                    uint8_t alias_c = (((int)0xff-alias_v) * c  + 128)/ 255 + alias_v;
-                    alias_v -= alias_step;
-
-                    if (alias_c < c) alias_c = c;
-
-                    if (bb_type == TYPE_BB8) {
-                        const Color8 color = { .a = alias_c };
-
-                        BB8_SET_PIXEL_CLAMPED(bb, bb_rotation, (w-r)+off_x+old_y2-1, (r)+off_y-old_x2, bb_width, bb_height, &color); // 1. quadrant
-                        BB8_SET_PIXEL_CLAMPED(bb, bb_rotation, (w-r)+off_x+old_x2-1, (r)+off_y-old_y2, bb_width, bb_height, &color); // 2. quadrant
-
-                        BB8_SET_PIXEL_CLAMPED(bb, bb_rotation, (r)+off_x-old_x2, (r)+off_y-old_y2, bb_width, bb_height, &color); // 3. quadrant
-                        BB8_SET_PIXEL_CLAMPED(bb, bb_rotation, (r)+off_x-old_y2, (r)+off_y-old_x2, bb_width, bb_height, &color); // 4. quadrant
-
-                        BB8_SET_PIXEL_CLAMPED(bb, bb_rotation, (r)+off_x-old_y2, (h-r)+off_y+old_x2-1, bb_width, bb_height, &color); // 5. quadrant
-                        BB8_SET_PIXEL_CLAMPED(bb, bb_rotation, (r)+off_x-old_x2, (h-r)+off_y+old_y2-1, bb_width, bb_height, &color); // 6. quadrant
-
-                        BB8_SET_PIXEL_CLAMPED(bb, bb_rotation, (w-r)+off_x+old_x2, (h-r)+off_y+old_y2-1, bb_width, bb_height, &color); // 7.quadrant
-                        BB8_SET_PIXEL_CLAMPED(bb, bb_rotation, (w-r)+off_x+old_y2-1, (h-r)+off_y+old_x2-1, bb_width, bb_height, &color); // 8.quadrant
-                    } else if (bb_type == TYPE_BB8A) {
-                        const Color8A color = { .a = alias_c, .alpha = 0xFF };
-
-                        BB8A_SET_PIXEL_CLAMPED(bb, bb_rotation, (w-r)+off_x+old_y2-1, (r)+off_y-old_x2, bb_width, bb_height, &color); // 1. quadrant
-                        BB8A_SET_PIXEL_CLAMPED(bb, bb_rotation, (w-r)+off_x+old_x2-1, (r)+off_y-old_y2, bb_width, bb_height, &color); // 2. quadrant
-
-                        BB8A_SET_PIXEL_CLAMPED(bb, bb_rotation, (r)+off_x-old_x2, (r)+off_y-old_y2, bb_width, bb_height, &color); // 3. quadrant
-                        BB8A_SET_PIXEL_CLAMPED(bb, bb_rotation, (r)+off_x-old_y2, (r)+off_y-old_x2, bb_width, bb_height, &color); // 4. quadrant
-
-                        BB8A_SET_PIXEL_CLAMPED(bb, bb_rotation, (r)+off_x-old_y2, (h-r)+off_y+old_x2-1, bb_width, bb_height, &color); // 5. quadrant
-                        BB8A_SET_PIXEL_CLAMPED(bb, bb_rotation, (r)+off_x-old_x2, (h-r)+off_y+old_y2-1, bb_width, bb_height, &color); // 6. quadrant
-
-                        BB8A_SET_PIXEL_CLAMPED(bb, bb_rotation, (w-r)+off_x+old_x2, (h-r)+off_y+old_y2-1, bb_width, bb_height, &color); // 7.quadrant
-                        BB8A_SET_PIXEL_CLAMPED(bb, bb_rotation, (w-r)+off_x+old_y2-1, (h-r)+off_y+old_x2-1, bb_width, bb_height, &color); // 8.quadrant
-                    } else if (bb_type == TYPE_BBRGB16) {
-                        const ColorRGB16 color = { .v = RGB_To_RGB16(alias_c, alias_c, alias_c) };
-
-                        BBRGB16_SET_PIXEL_CLAMPED(bb, bb_rotation, (w-r)+off_x+old_y2-1, (r)+off_y-old_x2, bb_width, bb_height, &color); // 1. quadrant
-                        BBRGB16_SET_PIXEL_CLAMPED(bb, bb_rotation, (w-r)+off_x+old_x2-1, (r)+off_y-old_y2, bb_width, bb_height, &color); // 2. quadrant
-
-                        BBRGB16_SET_PIXEL_CLAMPED(bb, bb_rotation, (r)+off_x-old_x2, (r)+off_y-old_y2, bb_width, bb_height, &color); // 3. quadrant
-                        BBRGB16_SET_PIXEL_CLAMPED(bb, bb_rotation, (r)+off_x-old_y2, (r)+off_y-old_x2, bb_width, bb_height, &color); // 4. quadrant
-
-                        BBRGB16_SET_PIXEL_CLAMPED(bb, bb_rotation, (r)+off_x-old_y2, (h-r)+off_y+old_x2-1, bb_width, bb_height, &color); // 5. quadrant
-                        BBRGB16_SET_PIXEL_CLAMPED(bb, bb_rotation, (r)+off_x-old_x2, (h-r)+off_y+old_y2-1, bb_width, bb_height, &color); // 6. quadrant
-
-                        BBRGB16_SET_PIXEL_CLAMPED(bb, bb_rotation, (w-r)+off_x+old_x2, (h-r)+off_y+old_y2-1, bb_width, bb_height, &color); // 7.quadrant
-                        BBRGB16_SET_PIXEL_CLAMPED(bb, bb_rotation, (w-r)+off_x+old_y2-1, (h-r)+off_y+old_x2-1, bb_width, bb_height, &color); // 8.quadrant
-                    } else if (bb_type == TYPE_BBRGB24) {
-                        const ColorRGB24 color = { .r = alias_c, .g = alias_c, .b = alias_c };
-
-                        BBRGB24_SET_PIXEL_CLAMPED(bb, bb_rotation, (w-r)+off_x+old_y2-1, (r)+off_y-old_x2, bb_width, bb_height, &color); // 1. quadrant
-                        BBRGB24_SET_PIXEL_CLAMPED(bb, bb_rotation, (w-r)+off_x+old_x2-1, (r)+off_y-old_y2, bb_width, bb_height, &color); // 2. quadrant
-
-                        BBRGB24_SET_PIXEL_CLAMPED(bb, bb_rotation, (r)+off_x-old_x2, (r)+off_y-old_y2, bb_width, bb_height, &color); // 3. quadrant
-                        BBRGB24_SET_PIXEL_CLAMPED(bb, bb_rotation, (r)+off_x-old_y2, (r)+off_y-old_x2, bb_width, bb_height, &color); // 4. quadrant
-
-                        BBRGB24_SET_PIXEL_CLAMPED(bb, bb_rotation, (r)+off_x-old_y2, (h-r)+off_y+old_x2-1, bb_width, bb_height, &color); // 5. quadrant
-                        BBRGB24_SET_PIXEL_CLAMPED(bb, bb_rotation, (r)+off_x-old_x2, (h-r)+off_y+old_y2-1, bb_width, bb_height, &color); // 6. quadrant
-
-                        BBRGB24_SET_PIXEL_CLAMPED(bb, bb_rotation, (w-r)+off_x+old_x2, (h-r)+off_y+old_y2-1, bb_width, bb_height, &color); // 7.quadrant
-                        BBRGB24_SET_PIXEL_CLAMPED(bb, bb_rotation, (w-r)+off_x+old_y2-1, (h-r)+off_y+old_x2-1, bb_width, bb_height, &color); // 8.quadrant
-                    } else if (bb_type == TYPE_BBRGB32) {
-                        const ColorRGB32 color = { .r = alias_c, .g = alias_c, .b = alias_c, .alpha = 0xFF };
-
-                        BBRGB32_SET_PIXEL_CLAMPED(bb, bb_rotation, (w-r)+off_x+old_y2-1, (r)+off_y-old_x2, bb_width, bb_height, &color); // 1. quadrant
-                        BBRGB32_SET_PIXEL_CLAMPED(bb, bb_rotation, (w-r)+off_x+old_x2-1, (r)+off_y-old_y2, bb_width, bb_height, &color); // 2. quadrant
-
-                        BBRGB32_SET_PIXEL_CLAMPED(bb, bb_rotation, (r)+off_x-old_x2, (r)+off_y-old_y2, bb_width, bb_height, &color); // 3. quadrant
-                        BBRGB32_SET_PIXEL_CLAMPED(bb, bb_rotation, (r)+off_x-old_y2, (r)+off_y-old_x2, bb_width, bb_height, &color); // 4. quadrant
-
-                        BBRGB32_SET_PIXEL_CLAMPED(bb, bb_rotation, (r)+off_x-old_y2, (h-r)+off_y+old_x2-1, bb_width, bb_height, &color); // 5. quadrant
-                        BBRGB32_SET_PIXEL_CLAMPED(bb, bb_rotation, (r)+off_x-old_x2, (h-r)+off_y+old_y2-1, bb_width, bb_height, &color); // 6. quadrant
-
-                        BBRGB32_SET_PIXEL_CLAMPED(bb, bb_rotation, (w-r)+off_x+old_x2, (h-r)+off_y+old_y2-1, bb_width, bb_height, &color); // 7.quadrant
-                        BBRGB32_SET_PIXEL_CLAMPED(bb, bb_rotation, (w-r)+off_x+old_y2-1, (h-r)+off_y+old_x2-1, bb_width, bb_height, &color); // 8.quadrant
-                    }
-                    ++old_x2;
-                } // end while
+        e2 = err;
+        x2 = x; // remember values
+        if (err+y > 0) {
+            i = 255*(err-2*x-1)/r; // outward pixel
+            if (i < 256) {
+                if (bb_type == TYPE_BB8) {
+                    const Color8A color = { .a = c, .alpha = 255-i };
+                    BB8_SET_ALL_QUADRANTS(-(r/2)+x, (r/2)+1+y, (r/2)-x, -(r/2)-1-y);
+                } else if (bb_type == TYPE_BB8A) {
+                    const Color8A color = { .a = c, .alpha = 255-i };
+                    BB8A_SET_ALL_QUADRANTS(-(r/2)+x, (r/2)+1+y, (r/2)-x, -(r/2)-1-y);
+                } else if (bb_type == TYPE_BBRGB16) {
+                    const Color8A color = { .a = c, .alpha = 255-i };
+                    BBRGB16_SET_ALL_QUADRANTS(-(r/2)+x, (r/2)+1+y, (r/2)-x, -(r/2)-1-y);
+                } else if (bb_type == TYPE_BBRGB24) {
+                    const ColorRGB32 color = { .r = c, .g = c, .b = c, .alpha = 255-i };
+                    BBRGB24_SET_ALL_QUADRANTS(-(r/2)+x, (r/2)+1+y, (r/2)-x, -(r/2)-1-y);
+                } else if (bb_type == TYPE_BBRGB32) {
+                    const ColorRGB32 color = { .r = c, .g = c, .b = c, .alpha = 255-i };
+                    BBRGB32_SET_ALL_QUADRANTS(-(r/2)+x, (r/2)+1+y, (r/2)-x, -(r/2)-1-y);
+                }
             }
-            old_y2 = y2;
-            old_x2 = x2;
+            ++x;
+            err += x*2+1;
         }
-#endif // ifdef DO_ANTIALIASING
+        if (e2+x2 <= 0) { // y step
+            i = 255*(2*y+3-e2)/r; // inward pixel
+            if (i < 256) {
+                if (bb_type == TYPE_BB8) {
+                    const Color8A color = { .a = c, .alpha = 255-i };
+                    BB8_SET_ALL_QUADRANTS(-(r/2)+x, (r/2)+y, (r/2)-x, -(r/2)-y);
+                } else if (bb_type == TYPE_BB8A) {
+                    const Color8A color = { .a = c, .alpha = 255-i };
+                    BB8A_SET_ALL_QUADRANTS(-(r/2)+x, (r/2)+y, (r/2)-x, -(r/2)-y);
+                } else if (bb_type == TYPE_BBRGB16) {
+                    const Color8A color = { .a = c, .alpha = 255-i };
+                    BBRGB16_SET_ALL_QUADRANTS(-(r/2)+x, (r/2)+y, (r/2)-x, -(r/2)-y);
+                } else if (bb_type == TYPE_BBRGB24) {
+                    const ColorRGB32 color = { .r = c, .g = c, .b = c, .alpha = 255-i };
+                    BBRGB24_SET_ALL_QUADRANTS(-(r/2)+x, (r/2)+y, (r/2)-x, -(r/2)-y);
+                } else if (bb_type == TYPE_BBRGB32) {
+                    const ColorRGB32 color = { .r = c, .g = c, .b = c, .alpha = 255-i };
+                    BBRGB32_SET_ALL_QUADRANTS(-(r/2)+x, (r/2)+y, (r/2)-x, -(r/2)-y);
+                }
+            }
+            ++y;
+            err += y*2+1;
+        }
+    } while (x < 0);
+}
 
+void BB_paint_rounded_corner_AA(BlitBuffer * restrict bb, unsigned int off_x, unsigned int off_y, unsigned int w, unsigned int h, int bw, int r, uint8_t c )
+{        // draw a black anti-aliased circle with width bw
+    const int bb_type = GET_BB_TYPE(bb);
+    const int bb_rotation = GET_BB_ROTATION(bb);
+    const unsigned int bb_width = BB_GET_WIDTH(bb);
+    const unsigned int bb_height = BB_GET_HEIGHT(bb);
+
+    int x0 = -r;
+    int y0 = -r;
+    int x1 = r;
+    int y1 = r;
+
+    int o_diam = 2*r; // outer diameter
+    int odd_diam = o_diam&1; // odd diameter
+    int a2 = 2*r-2*bw;
+    int dx = 4*(o_diam-1)*o_diam*o_diam;
+    int dy = 4*(odd_diam-1)*o_diam*o_diam;                // error increment
+    int i = o_diam+a2;
+    int err = odd_diam*o_diam*o_diam;
+    int dx2, dy2, e2, ed;
+
+    if ((bw-1)*(2*o_diam-bw) > o_diam*o_diam) {
+        a2 = 0;
+        bw = o_diam/2;
+    }
+
+    if (x0 > x1) {
+        x0 = x1;
+        x1 += o_diam;
+    }        // if called with swapped points
+    if (y0 > y1)
+        y0 = y1;                                  // .. exchange them
+    if (a2 <= 0)
+        bw = o_diam;                                     // filled ellipse
+    e2 = bw;
+    bw = x0+bw-e2;
+    dx2 = 4*(a2+2*e2-1)*a2*a2;
+    dy2 = 4*(odd_diam-1)*a2*a2;
+    e2 = dx2*e2;
+    y0 += (o_diam+1)>>1;
+    y1 = y0-odd_diam;                              // starting pixel
+    int a1;
+    a1 = 8*o_diam*o_diam;
+    a2 = 8*a2*a2;
+
+    do {
+        for (;;) {
+            if (err < 0 || x0 > x1) {
+                i = x0;
+                break;
+            }
+            i = MIN(dx,dy);
+            ed = MAX(dx,dy);
+
+            ed += 2*ed*i*i/(4*ed*ed+i*i+1)+1;// approx ed=sqrt(dx*dx+dy*dy)
+
+            i = 255*err/ed;                             // outside anti-aliasing
+            if (bb_type == TYPE_BB8) {
+                const Color8A color = { .a = c, .alpha = 255-i };
+                BB8_SET_ALL_QUADRANTS(x0, y0, x1, y1);
+            } else if (bb_type == TYPE_BB8A) {
+                const Color8A color = { .a = c, .alpha = 255-i };
+                BB8A_SET_ALL_QUADRANTS(x0, y0, x1, y1);
+            } else if (bb_type == TYPE_BBRGB16) {
+                const Color8A color = { .a = c, .alpha = 255-i };
+                BBRGB16_SET_ALL_QUADRANTS(x0, y0, x1, y1);
+            } else if (bb_type == TYPE_BBRGB24) {
+                const ColorRGB32 color = { .r = c, .g = c, .b = c, .alpha = 255-i };
+                BBRGB24_SET_ALL_QUADRANTS(x0, y0, x1, y1);
+            } else if (bb_type == TYPE_BBRGB32) {
+                const ColorRGB32 color = { .r = c, .g = c, .b = c, .alpha = 255-i };
+                BBRGB32_SET_ALL_QUADRANTS(x0, y0, x1, y1);
+            }
+
+            if (err+dy+a1 < dx) {
+                i = x0+1;
+                break;
+            }
+            x0++;
+            x1--;
+            err -= dx;
+            dx -= a1;  // x error increment
+        }
+        for (; i < bw && 2*i <= x0+x1; i++) {  // fill line pixel
+            if (bb_type == TYPE_BB8) {
+                const Color8A color = { .a = c, .alpha = 255 };
+                BB8_SET_ALL_QUADRANTS(i, y0, x0+x1-i, y1);
+            } else if (bb_type == TYPE_BB8A) {
+                const Color8A color = { .a = c, .alpha = 255 };
+                BB8A_SET_ALL_QUADRANTS(i, y0, x0+x1-i, y1);
+            } else if (bb_type == TYPE_BBRGB16) {
+                const Color8A color = { .a = c, .alpha = 255 };
+                BBRGB16_SET_ALL_QUADRANTS(i, y0, x0+x1-i, y1);
+            } else if (bb_type == TYPE_BBRGB24) {
+                const ColorRGB32 color = { .r = c, .g = c, .b = c, .alpha = 255};
+                BBRGB24_SET_ALL_QUADRANTS(i, y0, x0+x1-i, y1);
+            } else if (bb_type == TYPE_BBRGB32) {
+                const ColorRGB32 color = { .r = c, .g = c, .b = c, .alpha = 255};
+                BBRGB32_SET_ALL_QUADRANTS(i, y0, x0+x1-i, y1);
+            }
+        }
+        while (e2 > 0 && x0+x1 >= 2*bw) {               // inside anti-aliasing
+            i = MIN(dx2,dy2);
+            ed = MAX(dx2,dy2);
+
+            ed += 2*ed*i*i/(4*ed*ed+i*i);                 // approximation
+
+            i = 255-255*e2/ed;             // get intensity value by pixel error
+            if (bb_type == TYPE_BB8) {
+                const Color8A color = { .a = c, .alpha = 255-i };
+                BB8_SET_ALL_QUADRANTS(bw, y0, x0+x1-bw, y1);
+            } else if (bb_type == TYPE_BB8A) {
+                const Color8A color = { .a = c, .alpha = 255-i };
+                BB8A_SET_ALL_QUADRANTS(bw, y0, x0+x1-bw, y1);
+            } else if (bb_type == TYPE_BBRGB16) {
+                const Color8A color = { .a = c, .alpha = 255-i };
+                BBRGB16_SET_ALL_QUADRANTS(bw, y0, x0+x1-bw, y1);
+            } else if (bb_type == TYPE_BBRGB24) {
+                const ColorRGB32 color = { .r = c, .g = c, .b = c, .alpha = 255-i };
+                BBRGB24_SET_ALL_QUADRANTS(bw, y0, x0+x1-bw, y1);
+            } else if (bb_type == TYPE_BBRGB32) {
+                const ColorRGB32 color = { .r = c, .g = c, .b = c, .alpha = 255-i };
+                BBRGB32_SET_ALL_QUADRANTS(bw, y0, x0+x1-bw, y1);
+            }
+            if (e2+dy2+a2 < dx2)
+                break;
+            bw++;
+            e2 -= dx2;
+            dx2 -= a2; // x error increment
+        }
+        dy2 += a2;
+        e2 += dy2;
+        dy += a1;    // y step
+        err += dy;
+        y0++;
+        y1--;
+    } while (x0 < x1);
+
+    if (y0-y1 <= o_diam)
+    {
+        if (err > dy+a1) {
+            y0--;
+            y1++;
+            dy -= a1;
+            err -= dy;
+        }
+        for (; y0-y1 <= o_diam; err += dy += a1) { // too early stop of flat ellipses
+            i = 255*4*err/a1;  // -> finish tip of ellipse
+            if (bb_type == TYPE_BB8) {
+                const Color8A color = { .a = c, .alpha = 255-i };
+                BB8_SET_ALL_QUADRANTS(x0, y0, x1, y1);
+            } else if (bb_type == TYPE_BB8A) {
+                const Color8A color = { .a = c, .alpha = 255-i };
+                BB8A_SET_ALL_QUADRANTS(x0, y0, x1, y1);
+            } else if (bb_type == TYPE_BBRGB16) {
+            const Color8A color = { .a = c, .alpha = 255-i };
+                BBRGB16_SET_ALL_QUADRANTS(x0, y0, x1, y1);
+            } else if (bb_type == TYPE_BBRGB24) {
+                const ColorRGB32 color = { .r = c, .g = c, .b = c, .alpha = 255-i };
+                BBRGB24_SET_ALL_QUADRANTS(x0, y0, x1, y1);
+            } else if (bb_type == TYPE_BBRGB32) {
+                const ColorRGB32 color = { .r = c, .g = c, .b = c, .alpha = 255-i };
+                BBRGB32_SET_ALL_QUADRANTS(x0, y0, x1, y1);
+            }
+            ++y0;
+            --y1;
+        }
     }
 }

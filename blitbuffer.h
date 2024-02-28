@@ -166,5 +166,5 @@ DLL_PUBLIC void BB_invert_blit_from(BlitBuffer * restrict dest, const BlitBuffer
 DLL_PUBLIC void BB_color_blit_from(BlitBuffer * restrict dest, const BlitBuffer * restrict source, unsigned int dest_x, unsigned int dest_y,
                         unsigned int offs_x, unsigned int offs_y, unsigned int w, unsigned int h, Color8A * restrict color);
 DLL_PUBLIC void BB_paint_rounded_corner(BlitBuffer * restrict bb, unsigned int off_x, unsigned int off_y, unsigned int w, unsigned int h,
-                        unsigned int bw, unsigned int r, uint8_t c);
+                        unsigned int bw, unsigned int r, uint8_t c, int anti_aliasing);
 #endif
