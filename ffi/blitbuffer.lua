@@ -141,7 +141,7 @@ void BB_invert_blit_from(BlitBuffer * restrict dest, const BlitBuffer * restrict
 void BB_color_blit_from(BlitBuffer * restrict dest, const BlitBuffer * restrict source, unsigned int dest_x, unsigned int dest_y,
                         unsigned int offs_x, unsigned int offs_y, unsigned int w, unsigned int h, Color8A * restrict color);
 void BB_paint_rounded_corner(BlitBuffer * restrict bb, unsigned int off_x, unsigned int off_y, unsigned int w, unsigned int h,
-                        unsigned int bw, unsigned int r, uint8_t c);
+                        unsigned int bw, unsigned int r, uint8_t c, int anti_alias);
 ]]
 
 -- We'll load it later
@@ -1768,7 +1768,7 @@ function BB_mt.__index:paintCircle(center_x, center_y, r, c, w)
     end
 end
 
-function BB_mt.__index:paintRoundedCorner(off_x, off_y, w, h, bw, r, c)
+function BB_mt.__index:paintRoundedCorner(off_x, off_y, w, h, bw, r, c, anti_alias)
     if 2*r > h or 2*r > w or r == 0 then
         -- no operation
         return
@@ -1776,8 +1776,9 @@ function BB_mt.__index:paintRoundedCorner(off_x, off_y, w, h, bw, r, c)
 
     if self:canUseCbb() then
         cblitbuffer.BB_paint_rounded_corner(ffi.cast(P_BlitBuffer, self),
-            off_x, off_y, w, h, bw, r, c:getColor8().a)
+            off_x, off_y, w, h, bw, r, c:getColor8().a, anti_alias or 0)
     else
+        -- Could be optimized like in 'blitbuffer.c'
         r = min(r, h, w)
         if bw > r then
             bw = r
@@ -1846,7 +1847,7 @@ Draw a border
 @c:  color for loading bar
 @r:  radius of for border's corner (nil or 0 means right corner border)
 --]]
-function BB_mt.__index:paintBorder(x, y, w, h, bw, c, r)
+function BB_mt.__index:paintBorder(x, y, w, h, bw, c, r, anti_alias)
     x, y = ceil(x), ceil(y)
     h, w = ceil(h), ceil(w)
     if not r or r == 0 then
@@ -1857,7 +1858,7 @@ function BB_mt.__index:paintBorder(x, y, w, h, bw, c, r)
     else
         if h < 2*r then r = floor(h/2) end
         if w < 2*r then r = floor(w/2) end
-        self:paintRoundedCorner(x, y, w, h, bw, r, c)
+        self:paintRoundedCorner(x, y, w, h, bw, r, c, anti_alias or 0)
         self:paintRect(r+x, y, w-2*r, bw, c)
         self:paintRect(r+x, y+h-bw, w-2*r, bw, c)
         self:paintRect(x, r+y, bw, h-2*r, c)
