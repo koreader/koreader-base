@@ -4,6 +4,41 @@ new mode 100644
 index efa69fc..b6ccfff
 --- a/turbo/cdef.lua
 +++ b/turbo/cdef.lua
+@@ -58,34 +58,11 @@ end
+
+ if not S then
+     ffi.cdef [[
+-        struct sockaddr{
+-            unsigned short sa_family;
+-            char sa_data[14];
+-        };
+         struct sockaddr_storage{
+             unsigned short int ss_family;
+             unsigned long int __ss_align;
+             char __ss_padding[128 - (2 *sizeof(unsigned long int))];
+         };
+-        struct in_addr{
+-            unsigned long s_addr;
+-        };
+-        struct in6_addr{
+-            unsigned char s6_addr[16];
+-        };
+-        struct sockaddr_in{
+-            short sin_family;
+-            unsigned short sin_port;
+-            struct in_addr sin_addr;
+-            char sin_zero[8];
+-        } __attribute__ ((__packed__));
+-        struct sockaddr_in6{
+-            unsigned short sin6_family;
+-            unsigned short sin6_port;
+-            unsigned int sin6_flowinfo;
+-            struct in6_addr sin6_addr;
+-            unsigned int sin6_scope_id;
+-        };
+         typedef unsigned short  sa_family_t;
+         struct sockaddr_un {
+             sa_family_t sun_family;
 @@ -222,7 +222,7 @@ end
      end
      ffi.cdef(string.format([[
@@ -53,11 +88,11 @@ index efa69fc..b6ccfff
              CLOCK_MONOTONIC
          };
 +        */
- 
+
          int clock_gettime(clockid_t clk_id, struct timespec *tp);
      ]]
 @@ -396,6 +396,7 @@ if platform.__LINUX__ then
- 
+
      -- stat structure is architecture dependent in Linux
      if not S then
 +    --[=====[
@@ -80,7 +115,7 @@ index 7edb21a..834c12c
 --- a/turbo/signal.lua
 +++ b/turbo/signal.lua
 @@ -26,7 +26,7 @@ local platform = require "turbo.platform"
- 
+
  if ffi.arch == "mipsel" then
  return {
 -	signal = ffi.C.signal
