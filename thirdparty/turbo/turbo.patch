@@ -88,11 +88,11 @@ index efa69fc..b6ccfff
              CLOCK_MONOTONIC
          };
 +        */
-
+ 
          int clock_gettime(clockid_t clk_id, struct timespec *tp);
      ]]
 @@ -396,6 +396,7 @@ if platform.__LINUX__ then
-
+ 
      -- stat structure is architecture dependent in Linux
      if not S then
 +    --[=====[
@@ -115,7 +115,7 @@ index 7edb21a..834c12c
 --- a/turbo/signal.lua
 +++ b/turbo/signal.lua
 @@ -26,7 +26,7 @@ local platform = require "turbo.platform"
-
+ 
  if ffi.arch == "mipsel" then
  return {
 -	signal = ffi.C.signal
