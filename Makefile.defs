@@ -35,7 +35,7 @@ else
 endif
 
 # Detect LuaRocks 3
-LR_VER_NUM := $(shell luarocks --version | grep -o [0-9].[0-9])
+LR_VER_NUM := $(shell luarocks --version | grep -Eo '[0-9]+.[0-9]+')
 LR_GT_3_0 := $(shell awk -v LR_VER_NUM=$(LR_VER_NUM) 'BEGIN { print (LR_VER_NUM >= 3.0); }')
 
 # Some CMake flags
