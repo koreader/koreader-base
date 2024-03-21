@@ -41,7 +41,7 @@ if(DEFINED ENV{ANDROID})
     list(APPEND CFG_CMD COMMAND ${ANDROID_LIBTOOL_FIX_CMD})
 endif()
 
-set(HB_VER 8.3.0)
+set(HB_VER 8.3.1)
 
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
