@@ -263,8 +263,6 @@ ifneq (,$(findstring clang, $(CC)))
 	QFLAGS+=-Wno-parentheses-equality
 	# For dropbear's libtom...
 	QFLAGS+=-Wno-macro-redefined
-	# Note that things appear to be better with Clang >= 6 ;).
-	export CLANG=1
 else
 	ifdef CHOST
 		CC:=$(CHOST)-gcc
@@ -302,8 +300,6 @@ HOSTSTRIP:=strip
 HOSTAR:=ar
 HOSTLD:=ld
 HOSTRANLIB:=ranlib
-LIBTOOL:=$(if $(DARWIN),glibtool,libtool)
-LIBTOOLIZE:=$(if $(DARWIN),glibtoolize,libtoolize)
 
 # Path to the shared STL, because we need to ship it on most platforms.
 # We don't want to rely on -static-libstdc++, as it risks breaking the ODR.
@@ -512,11 +508,6 @@ endif
 ifdef DARWIN_AARCH64_HOST
 # At the moment of writing, apple-m1 is the lowest common denominator for Apple silicon chips. Should work for M2 as well
 	HOST_ARCH:=-mcpu=apple-m1
-	BREW_PREFIX:=$(shell command brew --prefix 2>/dev/null)
-	ifneq (,$(BREW_PREFIX))
-		export DARWIN_AARCH64_HOST_CFLAG:=-I$(BREW_PREFIX)/include
-		export DARWIN_AARCH64_HOST_LDFLAG:=-L$(BREW_PREFIX)/lib
-	endif
 endif
 
 # Some of our deps require C11 & C++17 (`if constexpr (…)`) support.
@@ -585,13 +576,6 @@ CMAKE_STAGING_DIR=build/staging-$(MACHINE)
 # in that case.
 
 ifdef EMULATE_READER
-	# CMake is difficult about CC and CXX, especially when it's not just a full path
-	CMAKE_C_COMPILER:=$(shell command -v $(strip $(HOSTCC)))
-	CMAKE_CXX_COMPILER:=$(shell command -v $(strip $(HOSTCXX)))
-	ifdef CCACHE
-		CMAKE_C_COMPILER_LAUNCHER:=$(CCACHE)
-		CMAKE_CXX_COMPILER_LAUNCHER:=$(CCACHE)
-	endif
 	# Regular
 	REALCC:=$(HOSTCC)
 	REALCXX:=$(HOSTCXX)
