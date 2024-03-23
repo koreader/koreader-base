@@ -12,7 +12,7 @@ all: $(OUTPUT_DIR)/libs $(if $(ANDROID),,$(LUAJIT)) \
 		$(if $(USE_LUAJIT_LIB),$(LUAJIT_LIB),) \
 		$(LUAJIT_JIT) \
 		libs $(K2PDFOPT_LIB) \
-		$(OUTPUT_DIR)/spec/base $(OUTPUT_DIR)/common $(OUTPUT_DIR)/rocks \
+		$(OUTPUT_DIR)/common $(OUTPUT_DIR)/rocks \
 		$(OUTPUT_DIR)/plugins $(LUASOCKET) \
 		$(OUTPUT_DIR)/ffi $(OUTPUT_DIR)/data \
 		$(if $(WIN32),,$(LUASEC)) \
@@ -62,6 +62,12 @@ endif
 	# set up some needed paths and links
 	install -d $(OUTPUT_DIR)/{cache,clipboard,fonts}
 	ln -sf $(CURDIR)/$(THIRDPARTY_DIR)/kpvcrlib/cr3.css $(OUTPUT_DIR)/data/
+
+$(OUTPUT_DIR)/:
+	mkdir -p $@
+
+$(OUTPUT_DIR)/%/:
+	mkdir -p $@
 
 $(OUTPUT_DIR)/libs:
 	install -d $(OUTPUT_DIR)/libs
@@ -255,22 +261,54 @@ distclean:
 
 dist-clean: distclean
 
-# ===========================================================================
-# start of unit tests section
+# Testsuite support. {{{
 
-$(OUTPUT_DIR)/.busted:
-	test -e $(OUTPUT_DIR)/.busted || \
-		ln -sf ../../.busted $(OUTPUT_DIR)/
+ifneq (,$(EMULATE_READER))
 
-$(OUTPUT_DIR)/spec/base:
-	install -d $(OUTPUT_DIR)/spec
-	test -e $(OUTPUT_DIR)/spec/base || \
-		ln -sf ../../../spec $(OUTPUT_DIR)/spec/base
+all: $(OUTPUT_DIR)/spec/base
 
-test: $(OUTPUT_DIR)/spec $(OUTPUT_DIR)/.busted
-	cd $(OUTPUT_DIR) && \
-		./luajit $(shell which busted) \
+$(OUTPUT_DIR)/.busted: | $(OUTPUT_DIR)/
+	ln -sf ../../.busted $(OUTPUT_DIR)/
+
+$(OUTPUT_DIR)/spec/base: | $(OUTPUT_DIR)/spec/
+	ln -sf ../../../spec $(OUTPUT_DIR)/spec/base
+
+test: all test-data
+	eval "$$($(LUAROCKS_BINARY) path)" && cd $(OUTPUT_DIR) && \
+		env TESSDATA_DIR=$(OUTPUT_DIR)/data \
+		./luajit "$$(which busted)" \
 		--exclude-tags=notest \
 		-o gtest ./spec/base/unit
 
+test-data: $(OUTPUT_DIR)/.busted $(OUTPUT_DIR)/data/tessdata/eng.traineddata $(OUTPUT_DIR)/spec/base $(OUTPUT_DIR)/fonts/droid/DroidSansMono.ttf
+
+TESSDATA_DIST = thirdparty/tesseract/build/downloads/tesseract-ocr-3.02.eng.tar.gz
+TESSDATA_DIST_URL = https://src.fedoraproject.org/repo/pkgs/tesseract/$(notdir $(TESSDATA_DIST))/3562250fe6f4e76229a329166b8ae853/$(notdir $(TESSDATA_DIST))
+TESSDATA_DIST_SHA1 = 989ed4c3a5b246d7353893e466c353099d8b73a1
+
+$(OUTPUT_DIR)/data/tessdata/eng.traineddata: $(TESSDATA_DIST) | $(OUTPUT_DIR)/data
+	tar xzf $(TESSDATA_DIST) --strip-components=1 -C $(OUTPUT_DIR)/data
+	touch $@
+
+$(TESSDATA_DIST):
+	mkdir -p $(dir $(TESSDATA_DIST))
+	$(call wget_and_validate,$(TESSDATA_DIST),$(TESSDATA_DIST_URL),$(TESSDATA_DIST_SHA1))
+
+DROID_FONT = thirdparty/fonts/build/downloads/DroidSansMono.ttf
+DROID_FONT_URL = https://github.com/koreader/koreader-fonts/raw/master/droid/$(notdir $(DROID_FONT))
+DROID_FONT_SHA1 = 0b75601f8ef8e111babb6ed11de6573f7178ce44
+
+$(OUTPUT_DIR)/fonts/droid/DroidSansMono.ttf: $(DROID_FONT) | $(OUTPUT_DIR)/fonts/droid/
+	cp $^ $@
+
+$(DROID_FONT):
+	mkdir -p $(dir $(DROID_FONT))
+	$(call wget_and_validate,$(DROID_FONT),$(DROID_FONT_URL),$(DROID_FONT_SHA1))
+
+endif
+
+# }}}
+
 .PHONY: all clean distclean dist-clean test
+
+# vim: foldmethod=marker foldlevel=0
