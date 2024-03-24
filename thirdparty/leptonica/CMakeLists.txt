@@ -5,9 +5,7 @@ include("koreader_thirdparty_common")
 include("koreader_thirdparty_git")
 
 assert_var_defined(PNG_DIR)
-assert_var_defined(PNG_LIB)
 assert_var_defined(ZLIB_DIR)
-assert_var_defined(ZLIB)
 
 # Make sure we use the old fmemopen symbol on ARM Linux when building against
 # glibc >= 2.22 (c.f. base#421 & #2188).
@@ -54,11 +52,9 @@ list(APPEND CMAKE_ARGS "-DCMAKE_DISABLE_FIND_PACKAGE_JPEG=TRUE")
 list(APPEND CMAKE_ARGS "-DCMAKE_DISABLE_FIND_PACKAGE_PkgConfig=TRUE")
 list(APPEND CMAKE_ARGS "-DCMAKE_DISABLE_FIND_PACKAGE_TIFF=TRUE")
 # PNG.
-list(APPEND CMAKE_ARGS "-DPNG_LIBRARY=${PNG_LIB}")
-list(APPEND CMAKE_ARGS "-DPNG_PNG_INCLUDE_DIR=${PNG_DIR}/include")
+list(APPEND CMAKE_ARGS "-DPNG_ROOT=${PNG_DIR}")
 # ZLIB.
-list(APPEND CMAKE_ARGS "-DZLIB_INCLUDE_DIR=${ZLIB_DIR}/include")
-list(APPEND CMAKE_ARGS "-DZLIB_LIBRARY=${ZLIB}")
+list(APPEND CMAKE_ARGS "-DZLIB_ROOT=${ZLIB_DIR}")
 
 list(APPEND BUILD_CMD COMMAND ${KO_MAKE_PROGRAM})
 

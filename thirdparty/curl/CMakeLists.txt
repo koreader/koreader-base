@@ -8,7 +8,6 @@ assert_var_defined(OPENSSL_DIR)
 assert_var_defined(CRYPTO_LIB)
 assert_var_defined(SSL_LIB)
 assert_var_defined(ZLIB_DIR)
-assert_var_defined(ZLIB)
 
 # Gentoo patchset
 list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/curl-8.5.0-mpd-stream-http-adjust_pollset.patch)
@@ -51,8 +50,7 @@ list(APPEND CMAKE_ARGS "-DOPENSSL_SSL_LIBRARY=${SSL_LIB}")
 
 # ZLIB.
 list(APPEND CMAKE_ARGS "-DCURL_ZLIB=TRUE")
-list(APPEND CMAKE_ARGS "-DZLIB_INCLUDE_DIR=${ZLIB_DIR}/include")
-list(APPEND CMAKE_ARGS "-DZLIB_LIBRARY=${ZLIB}")
+list(APPEND CMAKE_ARGS "-DZLIB_ROOT=${ZLIB_DIR}")
 
 list(APPEND BUILD_CMD COMMAND ${KO_MAKE_PROGRAM} ca-bundle lib/all)
 

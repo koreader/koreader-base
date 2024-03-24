@@ -5,12 +5,10 @@ include("koreader_thirdparty_common")
 include("koreader_thirdparty_git")
 
 assert_var_defined(CURL_DIR)
-assert_var_defined(CURL_LIB)
 assert_var_defined(OPENSSL_DIR)
 assert_var_defined(CRYPTO_LIB)
 assert_var_defined(SSL_LIB)
 assert_var_defined(ZLIB_DIR)
-assert_var_defined(ZLIB)
 
 # Fix build with old TCs (kindle & pocketbook).
 list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/fix-old-tc-build.patch)
@@ -31,17 +29,14 @@ list(APPEND CMAKE_ARGS "-DCMAKE_TOOLCHAIN_FILE=${CMAKE_TCF}")
 list(APPEND CMAKE_ARGS "-DBUILD_CPR_TESTS=FALSE")
 list(APPEND CMAKE_ARGS "-DBUILD_TESTING=FALSE")
 # cURL.
-list(APPEND CMAKE_ARGS "-DCURL_FOUND=TRUE")
-list(APPEND CMAKE_ARGS "-DCURL_INCLUDE_DIR=${CURL_DIR}/include")
-list(APPEND CMAKE_ARGS "-DCURL_LIBRARY=${CURL_LIB}")
+list(APPEND CMAKE_ARGS "-DCURL_ROOT=${CURL_DIR}")
 list(APPEND CMAKE_ARGS "-DUSE_SYSTEM_CURL=TRUE")
 # OpenSSL.
 list(APPEND CMAKE_ARGS "-DOPENSSL_CRYPTO_LIBRARY=${CRYPTO_LIB}")
 list(APPEND CMAKE_ARGS "-DOPENSSL_INCLUDE_DIR=${OPENSSL_DIR}/include")
 list(APPEND CMAKE_ARGS "-DOPENSSL_SSL_LIBRARY=${SSL_LIB}")
 # ZLIB.
-list(APPEND CMAKE_ARGS "-DZLIB_INCLUDE_DIR=${ZLIB_DIR}/include")
-list(APPEND CMAKE_ARGS "-DZLIB_LIBRARY=${ZLIB}")
+list(APPEND CMAKE_ARGS "-DZLIB_ROOT=${ZLIB_DIR}")
 
 list(APPEND BUILD_CMD COMMAND ${KO_MAKE_PROGRAM} zsync2)
 

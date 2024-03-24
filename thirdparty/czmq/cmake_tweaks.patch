@@ -1,5 +1,14 @@
 --- i/CMakeLists.txt
 +++ w/CMakeLists.txt
+@@ -6,7 +6,7 @@
+ ########################################################################
+ # Project setup
+ ########################################################################
+-cmake_minimum_required(VERSION 2.8)
++cmake_minimum_required(VERSION 3.12)
+ project(czmq)
+ enable_language(C)
+ enable_testing()
 @@ -103,7 +103,7 @@ set (czmq_headers
      include/zstr.h
      include/zsys.h
