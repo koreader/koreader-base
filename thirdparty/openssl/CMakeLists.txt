@@ -106,6 +106,8 @@ list(APPEND MAKE_CMD COMMAND
     "LD=${LD}"
     "MAKEDEPEND=${CC}"
     "RANLIB=${RANLIB}"
+    # Reproducible builds.
+    "SOURCE_DATE_EPOCH=1694383200 UTC"
 )
 
 # NOTE: Make depend may fail when using ccache, and may fail when // (on some OpenSSL versions, at least)
