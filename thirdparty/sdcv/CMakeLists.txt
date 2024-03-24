@@ -21,18 +21,6 @@ list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/sdcv-local
 # Make sure the daisy-chain once again picks up our toolchain file...
 list(APPEND CMAKE_ARGS "-DCMAKE_TOOLCHAIN_FILE=${CMAKE_TCF}")
 
-# because cmake needs all kinds of annoying special cmake variables
-# Compiler and linker flags
-if(DARWIN)
-    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -framework CoreFoundation -framework CoreServices -framework Security")
-endif()
-
-if(ANDROID)
-    # Android 5+ requires PIE (yum!)
-    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -pie -fPIE")
-endif()
-list(APPEND CMAKE_ARGS "-DCMAKE_EXE_LINKER_FLAGS=${CMAKE_EXE_LINKER_FLAGS}")
-
 # took me an eternity to find $<SEMICOLON>
 # important docs here https://cmake.org/cmake/help/v2.8.11/cmake.html#command:add_custom_command
 string(APPEND GLIB2_INCLUDE_DIRS
@@ -59,8 +47,14 @@ string(APPEND GLIB2_LIBRARIES
     $<SEMICOLON>
     "${LIBICONV}"
 )
-# Need pthread library and rt library on old glibc (for `clock_gettime`).
-if(NOT DARWIN)
+if(DARWIN)
+    string(APPEND GLIB2_LIBRARIES
+        $<SEMICOLON> "-framework CoreFoundation"
+        $<SEMICOLON> "-framework CoreServices"
+        $<SEMICOLON> "-framework Security"
+    )
+else()
+    # Need pthread library and rt library on old glibc (for `clock_gettime`).
     string(APPEND GLIB2_LIBRARIES $<SEMICOLON> -pthread)
     if(NOT ANDROID)
         string(APPEND GLIB2_LIBRARIES $<SEMICOLON> -lrt)
