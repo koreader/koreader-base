@@ -17,6 +17,9 @@ assert_var_defined(SSL_LIB)
 # Fix build with old TCs (kindle & pocketbook).
 list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/fix-old-tc-build.patch)
 
+# Reproducible builds (don't set BUILD_DATE to configure time).
+list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/reproducible-builds.patch)
+
 # Make sure the daisy-chain once again picks up our toolchain file...
 list(APPEND CMAKE_ARGS "-DCMAKE_TOOLCHAIN_FILE=${CMAKE_TCF}")
 
