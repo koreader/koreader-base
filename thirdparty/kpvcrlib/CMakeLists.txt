@@ -1,15 +1,7 @@
 cmake_minimum_required(VERSION 3.5.1)
 project(kpvcrlib LANGUAGES C CXX)
 
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/../cmake_modules")
 include("koreader_thirdparty_common")
-
-set(CMAKE_ASM_COMPILER ${CMAKE_CXX_COMPILER})
-set(CMAKE_ASM_COMPILER_ARG1 ${CMAKE_CXX_COMPILER_ARG1})
-set(CMAKE_ASM_FLAGS ${CMAKE_CXX_FLAGS})
-set(CMAKE_ASM_FLAGS_RELEASE "")
-
-set(CMAKE_SKIP_RPATH TRUE)
 
 set(CR_3RDPARTY_DIR ${CMAKE_CURRENT_SOURCE_DIR}/crengine/thirdparty)
 set(CRE_DIR crengine/crengine)

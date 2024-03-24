@@ -8,7 +8,7 @@ $(info ************ PATH: "$(PATH)" **********)
 $(info ************ CHOST: "$(CHOST)" **********)
 
 # main target
-all: $(OUTPUT_DIR)/libs $(if $(ANDROID),,$(LUAJIT)) \
+all: $(CMAKE_KO) $(CMAKE_TCF) $(OUTPUT_DIR)/libs $(if $(ANDROID),,$(LUAJIT)) \
 		$(if $(USE_LUAJIT_LIB),$(LUAJIT_LIB),) \
 		$(LUAJIT_JIT) \
 		libs $(K2PDFOPT_LIB) \
@@ -68,6 +68,12 @@ $(OUTPUT_DIR)/:
 
 $(OUTPUT_DIR)/%/:
 	mkdir -p $@
+
+$(CMAKE_KO): Makefile.defs | $(CMAKE_DIR)/
+	$(file > $(CMAKE_KO),$(cmake_koreader))
+
+$(CMAKE_TCF): Makefile.defs | $(CMAKE_DIR)/
+	$(file > $(CMAKE_TCF),$(if $(EMULATE_READER),$(cmake_toolchain),$(cmake_cross_toolchain)))
 
 $(OUTPUT_DIR)/libs:
 	install -d $(OUTPUT_DIR)/libs

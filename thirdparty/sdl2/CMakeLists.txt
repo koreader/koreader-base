@@ -1,7 +1,6 @@
 cmake_minimum_required(VERSION 3.5.1)
 project(sdl2 LANGUAGES)
 
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_LIST_DIR}/../cmake_modules")
 include("koreader_thirdparty_common")
 include("koreader_thirdparty_git")
 
@@ -10,15 +9,11 @@ include("koreader_thirdparty_git")
 list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/cocoa.patch)
 
 # Make sure the daisy-chain once again picks up our toolchain file...
-if(DEFINED ENV{CMAKE_TCF})
-    list(APPEND CMAKE_ARGS "$ENV{CMAKE_TCF}")
-endif()
-list(APPEND CMAKE_ARGS "-DCMAKE_SKIP_RPATH=TRUE")
+list(APPEND CMAKE_ARGS "-DCMAKE_TOOLCHAIN_FILE=${CMAKE_TCF}")
 
 # Project options.
 list(APPEND CMAKE_ARGS
     -DSDL_AUDIO=OFF
-    -DSDL_CMAKE_DEBUG_POSTFIX=
     -DSDL_SHARED=ON
     -DSDL_STATIC=OFF
     -DSDL_TEST=OFF

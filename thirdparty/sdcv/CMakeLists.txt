@@ -1,7 +1,6 @@
 cmake_minimum_required(VERSION 3.5.1)
 project(sdcv LANGUAGES)
 
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_LIST_DIR}/../cmake_modules")
 include("koreader_thirdparty_common")
 include("koreader_thirdparty_git")
 
@@ -20,10 +19,7 @@ list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/sdcv-no-un
 list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/sdcv-locale-hack.patch)
 
 # Make sure the daisy-chain once again picks up our toolchain file...
-if(DEFINED ENV{CMAKE_TCF})
-    list(APPEND CMAKE_ARGS "$ENV{CMAKE_TCF}")
-endif()
-list(APPEND CMAKE_ARGS "-DCMAKE_SKIP_RPATH=TRUE")
+list(APPEND CMAKE_ARGS "-DCMAKE_TOOLCHAIN_FILE=${CMAKE_TCF}")
 
 # because cmake needs all kinds of annoying special cmake variables
 # Compiler and linker flags
@@ -32,7 +28,6 @@ if(DEFINED ENV{DARWIN})
 endif()
 
 if(DEFINED ENV{ANDROID})
-    set(CMAKE_SYSTEM_NAME Android)
     # Android 5+ requires PIE (yum!)
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -pie -fPIE")
 endif()
