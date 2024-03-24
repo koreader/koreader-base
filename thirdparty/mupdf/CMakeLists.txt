@@ -203,9 +203,16 @@ list(APPEND BUILD_CMD COMMAND
     shared
 )
 
+list(APPEND INSTALL_CMD COMMAND mkdir -p "${INSTALL_DIR}/include/mupdf/fitz" "${INSTALL_DIR}/include/mupdf/pdf" "${INSTALL_DIR}/lib")
+list(APPEND INSTALL_CMD COMMAND sh -c "cd \"$1\" && shift && cp *.h \"$@\"" -- "${SOURCE_DIR}/include/mupdf" "${INSTALL_DIR}/include/mupdf/")
+list(APPEND INSTALL_CMD COMMAND sh -c "cd \"$1\" && shift && cp *.h \"$@\"" -- "${SOURCE_DIR}/include/mupdf/fitz" "${INSTALL_DIR}/include/mupdf/fitz/")
+list(APPEND INSTALL_CMD COMMAND sh -c "cd \"$1\" && shift && cp *.h \"$@\"" -- "${SOURCE_DIR}/include/mupdf/pdf" "${INSTALL_DIR}/include/mupdf/pdf/")
+list(APPEND INSTALL_CMD COMMAND cp libmupdf${LIB_EXT} "${INSTALL_DIR}/lib/")
+
 thirdparty_project(
     URL https://mupdf.com/downloads/archive/mupdf-1.13.0-source.tar.xz
     URL_MD5 0b567ae03d7a94321134dfcde95210cf
     PATCH_COMMAND ${PATCH_CMD}
     BUILD_COMMAND ${BUILD_CMD}
+    INSTALL_COMMAND ${INSTALL_CMD}
 )
