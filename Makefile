@@ -142,7 +142,7 @@ $(OUTPUT_DIR)/libs/libkoreader-djvu.so: djvu.c \
 			$(DJVULIBRE_LIB) $(K2PDFOPT_LIB)
 	$(CC) -I$(STAGING_DIR)/include $(K2PDFOPT_CFLAGS) \
 		$(DYNLIB_CFLAGS) $(SYMVIS_FLAGS) $(LDFLAGS) -o $@ djvu.c \
-		$(DJVULIBRE_LIB_LINK_FLAG) $(K2PDFOPT_LIB_LINK_FLAG) $(LUAJIT_LIB_LINK_FLAG)
+		$(DJVULIBRE_LIB) $(K2PDFOPT_LIB) $(LUAJIT_LIB_LINK_FLAG)
 ifdef DARWIN
 	install_name_tool -change \
 		`otool -L "$@" | grep "libluajit" | awk '{print $$1}'` \
@@ -163,11 +163,8 @@ $(OUTPUT_DIR)/libs/libkoreader-cre.so: cre.cpp \
 			$(CRENGINE_LIB) $(CRENGINE_THIRDPARTY_LIBS) $(CRENGINE_NEEDED_LIBS)
 	$(CXX) $(CRENGINE_CFLAGS) $(DYNLIB_CXXFLAGS) \
 		$(SYMVIS_FLAGS) $(LDFLAGS) -o $@ cre.cpp \
-		$(CRENGINE_LIB) $(CRENGINE_THIRDPARTY_LIBS) $(FREETYPE_LIB_LINK_FLAG) \
-		$(FRIBIDI_LIB) $(HARFBUZZ_LIB_LINK_FLAG) $(JPEG_LIB_LINK_FLAG) \
-		$(PNG_LIB) $(LIBUNIBREAK_LIB_LINK_FLAG) $(LIBWEBP_LIB) \
-		$(LIBWEBPDEMUX_LIB) $(LUNASVG_LIB) $(UTF8PROC_LIB) $(ZLIB) \
-		$(ZSTD_LIB) $(LUAJIT_LIB_LINK_FLAG)
+		$(CRENGINE_LIB) $(CRENGINE_THIRDPARTY_LIBS) $(CRENGINE_NEEDED_LIBS) \
+		$(LUAJIT_LIB_LINK_FLAG)
 ifdef DARWIN
 	install_name_tool -change \
 		`otool -L "$@" | grep "libluajit" | awk '{print $$1}'` \
@@ -185,10 +182,10 @@ $(OUTPUT_DIR)/libs/libkoreader-xtext.so: xtext.cpp \
 	-I$(STAGING_DIR)/include \
 	$(DYNLIB_CXXFLAGS) $(SYMVIS_FLAGS) $(LDFLAGS) \
 	-Wall -o $@ xtext.cpp \
-	$(FREETYPE_LIB_LINK_FLAG) \
-	$(FRIBIDI_LIB_LINK_FLAG) \
-	$(HARFBUZZ_LIB_LINK_FLAG) \
-	$(LIBUNIBREAK_LIB_LINK_FLAG) \
+	$(FREETYPE_LIB) \
+	$(FRIBIDI_LIB) \
+	$(HARFBUZZ_LIB) \
+	$(LIBUNIBREAK_LIB) \
 	$(LUAJIT_LIB_LINK_FLAG)
 ifdef DARWIN
 	install_name_tool -change \
@@ -251,7 +248,7 @@ $(OUTPUT_DIR)/button-listen: button-listen.c
 
 $(OUTPUT_DIR)/extr: extr.c $(MUPDF_LIB) $(JPEG_LIB) $(FREETYPE_LIB)
 	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ extr.c \
-		-lmupdf $(JPEG_LIB_LINK_FLAG) $(FREETYPE_LIB_LINK_FLAG)
+		-lmupdf $(JPEG_LIB) $(FREETYPE_LIB)
 
 # ===========================================================================
 # helper target for initializing third-party code
