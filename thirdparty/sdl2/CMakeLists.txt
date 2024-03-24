@@ -19,7 +19,7 @@ list(APPEND CMAKE_ARGS
     -DSDL_TEST=OFF
 )
 
-list(APPEND BUILD_CMD COMMAND ${KO_MAKE_RECURSIVE})
+list(APPEND BUILD_CMD COMMAND ${KO_MAKE_PROGRAM})
 
 set(SDL2_VER "2.28.5")
 set(SDL2_MD5 "a344eb827a03045c9b399e99af4af13d")
@@ -28,7 +28,6 @@ thirdparty_project(
     URL https://github.com/libsdl-org/SDL/releases/download/release-${SDL2_VER}/SDL2-${SDL2_VER}.tar.gz
     URL_MD5 ${SDL2_MD5}
     PATCH_COMMAND ${PATCH_CMD}
-    CMAKE_GENERATOR "Unix Makefiles"
     CMAKE_ARGS ${CMAKE_ARGS}
     BUILD_COMMAND ${BUILD_CMD}
 )
