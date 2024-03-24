@@ -1,0 +1,13 @@
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -269,10 +269,6 @@ endif()
+ report_option(ENABLE_SHARED "Shared libraries")
+ report_option(ENABLE_STATIC "Static libraries")
+ 
+-if(ENABLE_SHARED)
+-  set(CMAKE_INSTALL_RPATH ${CMAKE_INSTALL_FULL_LIBDIR})
+-endif()
+-
+ if(WITH_JPEG8 OR WITH_JPEG7)
+   set(WITH_ARITH_ENC 1)
+   set(WITH_ARITH_DEC 1)
