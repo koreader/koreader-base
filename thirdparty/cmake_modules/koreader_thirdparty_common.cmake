@@ -343,6 +343,18 @@ function(thirdparty_project)
     list(APPEND PARAMS LOG_OUTPUT_ON_FAILURE TRUE)
     # Merge stdout & stderr output when logging.
     list(APPEND PARAMS LOG_MERGED_STDOUTERR TRUE)
+    # Add clean target.
+    add_custom_target(${PROJECT_NAME}-clean
+        # Remove build directory and by-products.
+        COMMAND rm -rf "${CMAKE_CURRENT_BINARY_DIR}" ${_BYPRODUCTS}
+        # And trigger reconfigure the build the next time.
+        COMMAND touch "${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt"
+        WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+    )
+    # Add uninstall target.
+    add_custom_target(${PROJECT_NAME}-uninstall
+        COMMAND rm -rf ${_BYPRODUCTS}
+    )
     ExternalProject_Add(${PARAMS} ${_UNPARSED_ARGUMENTS})
     # By-products (CMake < 3.26).
     if(CMAKE_VERSION VERSION_LESS "3.26")
