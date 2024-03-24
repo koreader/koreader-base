@@ -119,7 +119,7 @@ declare_project(fbink ${EXCLUDE_FROM_ALL})
 
 # freetype
 declare_project(freetype2)
-declare_dependency(freetype2::freetype SHARED freetype)
+declare_dependency(freetype2::freetype INCLUDES freetype2 SHARED freetype)
 
 # fribidi
 declare_project(fribidi)

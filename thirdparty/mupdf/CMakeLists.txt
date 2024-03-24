@@ -118,7 +118,7 @@ if(ANDROID AND "${CHOST}" MATCHES "^armv7a-.*")
     # (https://android.googlesource.com/platform/bionic/+/master/docs/32-bit-abi.md)
     string(APPEND XCFLAGS " -D_FILE_OFFSET_BITS=32")
 endif()
-string(APPEND XCFLAGS " -I${STAGING_DIR}/include")
+string(APPEND XCFLAGS " -I${STAGING_DIR}/include -I${STAGING_DIR}/include/freetype2")
 
 string(APPEND LINK_OPTS " ${DYNLIB_LDFLAGS}")
 if(DARWIN)
