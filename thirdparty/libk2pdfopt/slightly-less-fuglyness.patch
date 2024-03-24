@@ -1,25 +1,6 @@
 --- a/Makefile
 +++ b/Makefile
-@@ -11,7 +11,7 @@ WILLUSLIB_SRC = $(wildcard $(WILLUSLIB_DIR)/*.c)
- K2PDFOPTLIB_SRC = $(wildcard $(K2PDFOPTLIB_DIR)/*.c)
- KOPT_SRC = setting.c koptreflow.c koptcrop.c koptocr.c koptimize.c
- 
--TESSCAPI_CFLAGS = -I$(MOD_INC) -I$(LEPTONICA_DIR)/src \
-+TESSCAPI_CFLAGS = -I$(MOD_INC) -I$(LEPTONICA_DIR)/include/leptonica \
- 	-I$(TESSERACT_DIR) -I$(TESSERACT_DIR)/api \
- 	-I$(TESSERACT_DIR)/ccutil -I$(TESSERACT_DIR)/ccstruct \
- 	-I$(TESSERACT_DIR)/image -I$(TESSERACT_DIR)/viewer \
-@@ -72,14 +72,15 @@ K2PDFOPT_LIB= libk2pdfopt$(if $(WIN32),-$(MAJVER).dll,$(if $(DARWIN),.$(MAJVER).
- 	@echo "BUILD    $@"
- 	@$(TARGET_CC) $(CFLAGS) -c -DK2PDFOPT_KINDLEPDFVIEWER \
- 		$(if $(ANDROID),-DANDROID,) $(if $(DARWIN),-DDARWIN,) \
--		-I$(MOD_INC) -I$(WILLUSLIB_DIR) -I$(K2PDFOPTLIB_DIR) -o $@ $<
-+		-I$(MOD_INC) -I$(LEPTONICA_DIR)/include/leptonica -I$(WILLUSLIB_DIR) -I$(K2PDFOPTLIB_DIR) -o $@ $<
- 	@$(TARGET_DYNCC) $(CFLAGS) -c -DK2PDFOPT_KINDLEPDFVIEWER \
- 		$(if $(ANDROID),-DANDROID,) $(if $(DARWIN),-DDARWIN,) \
--		-I$(MOD_INC) -I$(WILLUSLIB_DIR) -I$(K2PDFOPTLIB_DIR) -o $(@:.o=_dyn.o) $<
-+		-I$(MOD_INC) -I$(LEPTONICA_DIR)/include/leptonica -I$(WILLUSLIB_DIR) -I$(K2PDFOPTLIB_DIR) -o $(@:.o=_dyn.o) $<
- 
+@@ -80,6 +80,7 @@ K2PDFOPT_LIB= libk2pdfopt$(if $(WIN32),-$(MAJVER).dll,$(if $(DARWIN),.$(MAJVER).
  ##############################################################################
  # Target file rules.
  ##############################################################################

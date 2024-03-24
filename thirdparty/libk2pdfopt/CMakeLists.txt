@@ -21,16 +21,19 @@ if (DARWIN)
     set(CFLAGS "${CFLAGS} -Wno-error=implicit-function-declaration")
 endif()
 
+set(CPPFLAGS "-I${LEPTONICA_DIR}/include/leptonica -I${TESSERACT_DIR}/include/tesseract -I.")
+set(CFLAGS "${CFLAGS} ${CPPFLAGS}")
+set(CXXFLAGS "${CXXFLAGS} ${CPPFLAGS}")
+
 list(APPEND BUILD_CMD COMMAND ${KO_MAKE_RECURSIVE})
 append_autotools_vars(BUILD_CMD)
 list(APPEND BUILD_CMD
     "ANDROID=${ANDROID}"
     "BUILDMODE=shared"
     "DARWIN=${DARWIN}"
-    "LEPTONICA_DIR=${LEPTONICA_DIR}"
     "LEPTONICA_LIB=${LEPTONICA_LIB}"
     "MOD_INC=."
-    "TESSERACT_DIR=${TESSERACT_DIR}"
+    "TESSCAPI_CFLAGS="
     "TESSERACT_LIB=${TESSERACT_LIB}"
     "TESSERACT_MOD=."
     all)
