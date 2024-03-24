@@ -571,7 +571,7 @@ ifndef DARWIN
 	#       And https://bugs.launchpad.net/ubuntu/+source/eglibc/+bug/1253638/comments/5 for a nice recap.
 	LDFLAGS:=-Wl,-O1 -Wl,--as-needed -Wl,@$(MAKEFILE_DIR)origin.ldflags $(COMPAT_LDFLAGS)
 else
-	LDFLAGS:=
+	LDFLAGS:=-Wl,-rpath,@executable_path/libs,-rpath,@executable_path/../koreader/libs
 endif
 
 # NOTE: Follow the NDK's lead
