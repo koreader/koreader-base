@@ -1,5 +1,5 @@
-package.path = "rocks/share/lua/5.1/?.lua;common/?.lua;" .. package.path
-package.cpath = "rocks/lib/lua/5.1/?.so;common/?.so;" .. package.cpath
+package.path = "common/?.lua;" .. package.path
+package.cpath = "common/?.so;" .. package.cpath
 
 local service = [[
 {
