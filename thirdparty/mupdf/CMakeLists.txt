@@ -4,71 +4,29 @@ project(mupdf LANGUAGES)
 include("koreader_thirdparty_common")
 include("koreader_thirdparty_git")
 
-assert_var_defined(HOSTCFLAGS)
+assert_var_defined(AES_LIB)
+assert_var_defined(CFLAGS)
+assert_var_defined(FREETYPE_DIR)
+assert_var_defined(FREETYPE_LIB)
+assert_var_defined(HARFBUZZ_DIR)
+assert_var_defined(HARFBUZZ_LIB)
 assert_var_defined(HOSTCC)
-assert_var_defined(OS)
+assert_var_defined(HOSTCFLAGS)
+assert_var_defined(JPEG_DIR)
+assert_var_defined(JPEG_LIB)
+assert_var_defined(LDFLAGS)
+assert_var_defined(LIBWEBPDEMUX_LIB)
+assert_var_defined(LIBWEBP_DIR)
+assert_var_defined(LIBWEBP_LIB)
+assert_var_defined(MINIZIP_DIR)
+assert_var_defined(MUPDF_LIB)
+assert_var_defined(MUPDF_SONAME)
+assert_var_defined(ZLIB)
+assert_var_defined(ZLIB_DIR)
 
 # Build in source tree.
 set(BINARY_DIR "${SOURCE_DIR}")
 
-if($ENV{KODEBUG})
-    set(MUPDF_BUILD_TYPE "debug")
-else()
-    set(MUPDF_BUILD_TYPE "release")
-endif()
-
-# There's some headers to generate on the host's side first, before we run our actual build (where we enforce CROSSCOMPILE to avoid trying to regen those).
-set(BUILD_CMD_GENERATE env "CFLAGS=${HOSTCFLAGS}" ${KO_MAKE_RECURSIVE} generate "build=${MUPDF_BUILD_TYPE}" "CC=${HOSTCC}" LDFLAGS= verbose=no)
-
-assert_var_defined(LDFLAGS)
-assert_var_defined(XCFLAGS)
-# disable a couple of things to save a small bit of space
-# CMYK plotter only 100 kB
-# javascript (for form data validation) close to 800 kB
-# NOTE: Don't let CMake split this up.
-set(XCFLAGS "${XCFLAGS} -DFZ_PLOTTERS_CMYK=0 -DFZ_ENABLE_JS=0")
-if(ANDROID AND "${CHOST}" MATCHES "^armv7a-.*")
-    set(XCFLAGS "${XCFLAGS} -D_FILE_OFFSET_BITS=32")
-endif()
-set(STATIC_BUILD_CMD ${KO_MAKE_RECURSIVE})
-set(STATIC_BUILD_CMD ${STATIC_BUILD_CMD} "LDFLAGS=${LDFLAGS}" "XCFLAGS=${XCFLAGS}")
-set(STATIC_BUILD_CMD ${STATIC_BUILD_CMD} "CC=${CC}" "CXX=${CXX}" "AR=${AR}" "build=${MUPDF_BUILD_TYPE}" MUDRAW= MUTOOL= CURL_LIB= "OS=${OS}")
-set(STATIC_BUILD_CMD ${STATIC_BUILD_CMD} verbose=no FREETYPE_DIR=nonexisting HARFBUZZ_DIR=nonexisting LIBJPEG_DIR=nonexisting ZLIB_DIR=nonexisting CROSSCOMPILE=yes)
-set(STATIC_BUILD_CMD ${STATIC_BUILD_CMD} SYS_HARFBUZZ_CFLAGS= SYS_HARFBUZZ_LIBS=-lharfbuzz)
-set(STATIC_BUILD_CMD ${STATIC_BUILD_CMD} third libs)
-
-# by default, mupdf compiles to a static library:
-# we generate a dynamic library from the static library:
-assert_var_defined(CFLAGS)
-assert_var_defined(MUPDF_LIB_STATIC)
-assert_var_defined(MUPDF_THIRDPARTY_LIBS)
-assert_var_defined(MUPDF_SONAME)
-assert_var_defined(ZLIB)
-assert_var_defined(AES_LIB)
-assert_var_defined(JPEG_LIB)
-assert_var_defined(FREETYPE_LIB)
-assert_var_defined(HARFBUZZ_LIB)
-assert_var_defined(LIBWEBP_LIB)
-assert_var_defined(LIBWEBPDEMUX_LIB)
-assert_var_defined(MUPDF_LIB)
-if(DARWIN)
-    set(LINK_OPTS "${LINK_OPTS} -Wl,-all_load ${MUPDF_LIB_STATIC}")
-    set(LINK_OPTS "${LINK_OPTS} -Wl,-all_load ${MUPDF_THIRDPARTY_LIBS}")
-    set(LINK_OPTS "${LINK_OPTS} -dynamiclib -undefined dynamic_lookup")
-else()
-    set(LINK_OPTS "${LINK_OPTS} -Wl,--whole-archive ${MUPDF_LIB_STATIC}")
-    set(LINK_OPTS "${LINK_OPTS} -Wl,--no-whole-archive ${MUPDF_THIRDPARTY_LIBS}")
-    set(LINK_OPTS "${LINK_OPTS} -Wl,-soname=${MUPDF_SONAME}")
-    set(LINK_OPTS "${LINK_OPTS} build/${MUPDF_BUILD_TYPE}/libmupdfthird.a")
-endif()
-set(SHARED_BUILD_STR sh -c "${CC} -shared ${CFLAGS} ${LDFLAGS} ${LINK_OPTS} ${AES_LIB} ${ZLIB} ${JPEG_LIB} ${FREETYPE_LIB} ${HARFBUZZ_LIB} ${LIBWEBP_LIB} ${LIBWEBPDEMUX_LIB} -o ${MUPDF_LIB} -lm")
-
-# explictly use envs defined in Makefile.defs
-if(ANDROID)
-    set(SHARED_BUILD_STR "${SHARED_BUILD_STR} -llog")
-endif()
-
-set(SHARED_BUILD_CMD "${SHARED_BUILD_STR}")
 # use external fonts
 list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/external_fonts.patch)
 # add support for encryted zips
@@ -138,18 +96,124 @@ list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/webp-upstr
 # add support for cbz chapters
 list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/mupdf_cbz_chapter_support.patch)
 
-# don't try link with libraries when building generator helpers…
-list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/fix_link_cmd.patch)
-
 # Backport https://github.com/ArtifexSoftware/mupdf/commit/50d80e509356784720ba8a7def5359f2673697ea (handle > 2GB Zip64)
 list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/read_large_zip.patch)
 
 # Ensure an HTML document fonts are freed on close.
 list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/free-html-doc-fonts-on-close.patch)
 
+# By default, mupdf compiles to a static library: we want a shared library.
+list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/shared-libmupdf.patch)
+
+string(TOLOWER "${CMAKE_BUILD_TYPE}" MUPDF_BUILD_TYPE)
+
+# There's some headers to generate on the host's side first, before we run our actual build (where we enforce CROSSCOMPILE to avoid trying to regen those).
+list(APPEND BUILD_CMD COMMAND
+    env
+    -u CFLAGS
+    -u LDFLAGS
+    ${KO_MAKE_RECURSIVE}
+    "CC=${HOSTCC}"
+    "LIBS=" # don't try to link with system libraries when building generator helpers…
+    "XCFLAGS=${HOSTCFLAGS}"
+    "build=${MUPDF_BUILD_TYPE}"
+    "verbose=no"
+    generate
+)
+
+if(WIN32)
+    set(OS "")
+else()
+    set(OS "Other")
+endif()
+
+string(APPEND XCFLAGS
+    " ${CFLAGS}"
+    # Disable a couple of things to save a small bit of space:
+    # - builtin fonts
+    # - color profile support
+    # - CMYK plotter only 100 kB
+    # - javascript (for form data validation) close to 800 kB
+    " -DNOBUILTINFONT"
+    " -DNO_ICC"
+    " -DFZ_PLOTTERS_CMYK=0"
+    " -DFZ_ENABLE_JS=0"
+)
+if(ANDROID AND "${CHOST}" MATCHES "^armv7a-.*")
+    # NOTE: to be removed when upgrading the minimal supported API level to 24.
+    # (https://android.googlesource.com/platform/bionic/+/master/docs/32-bit-abi.md)
+    string(APPEND XCFLAGS " -D_FILE_OFFSET_BITS=32")
+endif()
+string(APPEND XCFLAGS
+    " -I${FREETYPE_DIR}/include/freetype2"
+    " -I${HARFBUZZ_DIR}/include/harfbuzz"
+    " -I${JPEG_DIR}/include"
+    " -I${LIBWEBP_DIR}/include"
+    " -I${MINIZIP_DIR}"
+    " -I${ZLIB_DIR}/include"
+)
+
+string(APPEND LINK_OPTS " ${LDFLAGS} -shared")
+if(DARWIN)
+    string(APPEND LINK_OPTS
+        " -dynamiclib -undefined dynamic_lookup"
+        " -Wl,-force_load build/${MUPDF_BUILD_TYPE}/libmupdf.a"
+    )
+else()
+    string(APPEND LINK_OPTS
+        " -Wl,-soname=${MUPDF_SONAME}"
+        " -Wl,--whole-archive build/${MUPDF_BUILD_TYPE}/libmupdf.a -Wl,--no-whole-archive"
+    )
+endif()
+string(APPEND LINK_OPTS " build/${MUPDF_BUILD_TYPE}/libmupdfthird.a -lm")
+if(ANDROID)
+    string(APPEND LINK_OPTS " -llog")
+endif()
+
+string(APPEND LIBS
+    " ${AES_LIB}"
+    " ${FREETYPE_LIB}"
+    " ${HARFBUZZ_LIB}"
+    " ${JPEG_LIB}"
+    " ${LIBWEBP_LIB}"
+    " ${LIBWEBPDEMUX_LIB}"
+    " ${ZLIB}"
+)
+
+list(APPEND BUILD_CMD COMMAND
+    env
+    -u CFLAGS
+    -u LDFLAGS
+    ${KO_MAKE_RECURSIVE}
+    # Compilation flags.
+    "AR=${AR}"
+    "CC=${CC}"
+    "CXX=${CXX}"
+    "LDFLAGS="
+    "XCFLAGS=${XCFLAGS}"
+    # Disable some vendored libraries.
+    "CURL_DIR=nonexisting"
+    "FREETYPE_DIR=nonexisting"
+    "HARFBUZZ_DIR=nonexisting"
+    "LIBJPEG_DIR=nonexisting"
+    "ZLIB_DIR=nonexisting"
+    # Other.
+    "CROSSCOMPILE=yes"
+    "MUDRAW="
+    "MUTOOL="
+    "OS=${OS}"
+    "build=${MUPDF_BUILD_TYPE}"
+    "verbose=no"
+    # Final shared library.
+    "LIBS=${LIBS}"
+    "LINK_OPTS=${LINK_OPTS}"
+    "MUPDF_SHLIB=${MUPDF_LIB}"
+    shared
+)
+
 thirdparty_project(
     URL https://mupdf.com/downloads/archive/mupdf-1.13.0-source.tar.xz
     URL_MD5 0b567ae03d7a94321134dfcde95210cf
     PATCH_COMMAND ${PATCH_CMD}
-    BUILD_COMMAND ${BUILD_CMD_GENERATE} COMMAND ${STATIC_BUILD_CMD} COMMAND ${SHARED_BUILD_CMD}
+    BUILD_COMMAND ${BUILD_CMD}
 )
