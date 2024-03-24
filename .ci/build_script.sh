@@ -28,6 +28,8 @@ docker-make() {
         'source /home/ko/.bashrc'
         'cd /home/ko/base'
         'sudo chown -R ko:ko .'
+        'ccache -sz'
+        "trap 'ccache -s' EXIT"
         "make $(printf '%q ' "$@")"
     )
     sudo chmod -R 777 "${HOME}/.ccache"
