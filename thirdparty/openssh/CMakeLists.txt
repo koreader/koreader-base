@@ -5,16 +5,16 @@ include("koreader_thirdparty_common")
 include("koreader_thirdparty_git")
 
 assert_var_defined(CC)
-assert_var_defined(CPPFLAGS)
 assert_var_defined(CFLAGS)
 assert_var_defined(LDFLAGS)
+assert_var_defined(OPENSSL_DIR)
+assert_var_defined(ZLIB_DIR)
 
 list(APPEND CFG_CMD COMMAND env
     "CC=${CC}"
     "CFLAGS=${CFLAGS}"
-    "CPPFLAGS=${CPPFLAGS} -I${SOURCE_DIR}"
-    "LDFLAGS=${LDFLAGS}"
-    "LIBS=${LIBS}"
+    "CPPFLAGS=-I${OPENSSL_DIR}/include -I${ZLIB_DIR}/include"
+    "LDFLAGS=${LDFLAGS} -L${OPENSSL_DIR} -L${ZLIB_DIR}/lib"
     "${SOURCE_DIR}/configure" --host=${CHOST}
     --disable-etc-default-login
     --disable-lastlog
