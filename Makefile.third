@@ -404,19 +404,19 @@ endif
 
 $(OUTPUT_DIR)/fbink: $(THIRDPARTY_DIR)/fbink/*.*
 	$(CMAKE) $(CMAKE_FLAGS) \
+		-DAR='$(AR)' \
+		-DCC='$(CC)' \
 		-DCFLAGS='$(CFLAGS)' \
+		-DCXX='$(CXX)' \
+		-DCXXFLAGS='$(CXXFLAGS)' \
 		-DLDFLAGS='$(LDFLAGS)' \
+		-DRANLIB='$(RANLIB)' \
+		-DSTRIP='$(STRIP)' \
 		-S $(CURDIR)/$(THIRDPARTY_DIR)/fbink -B $(FBINK_BUILD_DIR)
 	$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS) -C $(FBINK_BUILD_DIR)
-	cp $(FBINK_DIR)/fbink $(OUTPUT_DIR)/
-ifdef KOBO
-	cp $(FBINK_DIR)/fbdepth $(OUTPUT_DIR)/
-endif
-ifdef POCKETBOOK
-	cp $(FBINK_DIR)/fbdepth $(OUTPUT_DIR)/
-endif
-ifdef REMARKABLE
-	cp $(FBINK_DIR)/fbdepth $(OUTPUT_DIR)/
+	cp $(FBINK_DIR)/fbink/fbink $(OUTPUT_DIR)/
+ifneq (,$(KOBO)$(POCKETBOOK)$(REMARKABLE))
+	cp $(FBINK_DIR)/fbdepth/fbdepth $(OUTPUT_DIR)/
 endif
 
 # ===========================================================================

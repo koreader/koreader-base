@@ -7,8 +7,8 @@ include("koreader_thirdparty_git")
 assert_var_defined(CFLAGS)
 assert_var_defined(LDFLAGS)
 
-# Build in source tree.
-set(BINARY_DIR "${SOURCE_DIR}")
+list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/fix_toolchain_vars_forwarding.patch)
+list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/better_outdir.patch)
 
 # Choose your own adventure!
 if(LEGACY)
@@ -30,29 +30,37 @@ else()
     set(FBINK_TARGET strip)
 endif()
 
-# FBDepth can afford to link to a very minimal library, so we need to start from scratch...
+set(MAKE_CMD
+    ${KO_MAKE_RECURSIVE} -C "${SOURCE_DIR}"
+    "CROSS_TC=${CHOST}"
+    "AR=${AR}"
+    "CC=${CC}"
+    "CFLAGS=${CFLAGS}"
+    "CXX=${CXX}"
+    "CXXFLAGS=${CXXFLAGS}"
+    "LDFLAGS=${LDFLAGS}"
+    "RANLIB=${RANLIB}"
+    "STRIP=${STRIP}"
+)
+
 if(FBDEPTH_TARGET)
-    list(APPEND BUILD_CMD COMMAND ${KO_MAKE_RECURSIVE} clean)
-    list(APPEND BUILD_CMD COMMAND ${KO_MAKE_RECURSIVE} "CROSS_TC=${CHOST}" "CFLAGS=${CFLAGS}" "LDFLAGS=${LDFLAGS}" ${FBDEPTH_TARGET})
-
-    # That does mean we need to stash the binary somewhere a clean won't scrap it, though...
-    if(DEFINED ENV{DEBUG})
-        list(APPEND BUILD_CMD COMMAND ${CMAKE_COMMAND} -E rename ${SOURCE_DIR}/Debug/fbdepth ${INSTALL_DIR}/fbdepth)
-    else()
-        list(APPEND BUILD_CMD COMMAND ${CMAKE_COMMAND} -E rename ${SOURCE_DIR}/Release/fbdepth ${INSTALL_DIR}/fbdepth)
-    endif()
+    list(APPEND BUILD_CMD COMMAND
+        ${MAKE_CMD}
+        "OUT_DIR=${BINARY_DIR}/fbdepth"
+        ${FBDEPTH_TARGET}
+    )
 endif()
 
-# Minimal-ish, statically linked build, we don't care about image support
-list(APPEND BUILD_CMD COMMAND ${KO_MAKE_RECURSIVE} clean)
-list(APPEND BUILD_CMD COMMAND ${KO_MAKE_RECURSIVE} MINIMAL=1 FONTS=1 OPENTYPE=1 "CROSS_TC=${CHOST}" "CFLAGS=${CFLAGS}" "LDFLAGS=${LDFLAGS}" ${FBINK_TARGET})
-
-# We build in-tree...
-if(DEFINED ENV{DEBUG})
-    list(APPEND BUILD_CMD COMMAND ${CMAKE_COMMAND} -E rename ${SOURCE_DIR}/Debug/fbink ${INSTALL_DIR}/fbink)
-else()
-    list(APPEND BUILD_CMD COMMAND ${CMAKE_COMMAND} -E rename ${SOURCE_DIR}/Release/fbink ${INSTALL_DIR}/fbink)
-endif()
+list(APPEND BUILD_CMD COMMAND
+    ${MAKE_CMD}
+    "OUT_DIR=${BINARY_DIR}/fbink"
+    # Minimal-ish, statically linked build,
+    # we don't care about image support.
+    "FONTS=1"
+    "MINIMAL=1"
+    "OPENTYPE=1"
+    ${FBINK_TARGET}
+)
 
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
@@ -63,5 +71,6 @@ ko_write_gitclone_script(
 
 thirdparty_project(
     DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
+    PATCH_COMMAND ${PATCH_CMD}
     BUILD_COMMAND ${BUILD_CMD}
 )
