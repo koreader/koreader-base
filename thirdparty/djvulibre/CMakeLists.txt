@@ -38,6 +38,10 @@ list(APPEND BUILD_CMD COMMAND ${KO_MAKE_RECURSIVE} -C libdjvu)
 set(LIB_SPEC djvulibre VERSION 21)
 set_libname(LIB ${LIB_SPEC})
 
+if(DARWIN)
+    list(APPEND BUILD_CMD COMMAND install_name_tool -id "@rpath/${LIB}" "libdjvu/.libs/${LIB}")
+endif()
+
 # Install shared lib.
 append_shared_lib_install_command(INSTALL_CMD BYPRODUCTS "libdjvu/.libs/${LIB}" ${LIB_SPEC})
 
