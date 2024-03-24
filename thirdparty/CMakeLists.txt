@@ -125,21 +125,13 @@ declare_dependency(freetype2::freetype INCLUDES freetype2 SHARED freetype)
 declare_project(fribidi)
 declare_dependency(fribidi::fribidi SHARED fribidi)
 
-# gettext
-if(ANDROID OR DARWIN)
-    set(DEPENDS libiconv)
-else()
-    set(DEPENDS)
-endif()
-declare_project(gettext DEPENDS ${DEPENDS} EXCLUDE_FROM_ALL)
-
 # giflib
 declare_project(giflib)
 
 # glib
 set(DEPENDS)
 if(ANDROID OR DARWIN)
-    list(APPEND DEPENDS gettext libiconv)
+    list(APPEND DEPENDS libiconv proxy-libintl)
 endif()
 declare_project(glib DEPENDS ${DEPENDS} EXCLUDE_FROM_ALL)
 
@@ -261,6 +253,9 @@ declare_project(openssl)
 # popen-noshell
 declare_project(popen-noshell EXCLUDE_FROM_ALL)
 declare_dependency(popen-noshell::popen-noshell STATIC popen_noshell)
+
+# proxy-libintl
+declare_project(proxy-libintl EXCLUDE_FROM_ALL)
 
 # sdcv
 declare_project(sdcv DEPENDS glib zlib)
