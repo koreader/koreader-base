@@ -46,7 +46,7 @@ string(APPEND LDFLAGS " -L${GETTEXT_DIR}/lib -L${LIBICONV_DIR}/lib")
 list(APPEND CFG_CMD COMMAND env)
 append_autotools_vars(CFG_CMD)
 list(APPEND CFG_CMD
-    "${SOURCE_DIR}/configure" --host=${CHOST} --cache-file=cache.conf "--prefix=${INSTALL_DIR}"
+    "${SOURCE_DIR}/configure" --host=${CHOST} --cache-file=cache.conf "--prefix=/"
     --enable-static=true --enable-shared=false
     --disable-compile-warnings
     --disable-libelf
@@ -59,7 +59,7 @@ list(APPEND CFG_CMD
 
 list(APPEND BUILD_CMD COMMAND ${KO_MAKE_RECURSIVE} -C glib)
 
-list(APPEND INSTALL_CMD COMMAND ${KO_MAKE_RECURSIVE} -C glib install)
+list(APPEND INSTALL_CMD COMMAND ${KO_MAKE_RECURSIVE} -C glib "DESTDIR=${INSTALL_DIR}" install)
 
 thirdparty_project(
     URL https://download.gnome.org/sources/glib/2.58/glib-2.58.3.tar.xz
