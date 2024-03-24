@@ -8,6 +8,18 @@ assert_var_defined(FREETYPE_DIR)
 
 list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/soversion.patch)
 
+# Get rid of a bunch of `#line` directives that trip ccache 4.9.1.
+list(APPEND PATCH_CMD COMMAND ${ISED} "/^#line/d"
+    src/hb-ot-shaper-khmer-machine.hh
+    src/hb-ot-shaper-use-machine.hh
+    src/hb-ot-shaper-myanmar-machine.hh
+    src/hb-buffer-deserialize-json.hh
+    src/hb-buffer-deserialize-text-glyphs.hh
+    src/hb-number-parser.hh
+    src/hb-ot-shaper-indic-machine.hh
+    src/hb-buffer-deserialize-text-unicode.hh
+)
+
 # We've apparently hit a weird corner-case w/ XText where GCC/STL atomics *sometimes* horribly blow up on an ARM1136JF-S CPU w/ GCC 7.5...
 # c.f., https://github.com/koreader/koreader/issues/5780 & https://github.com/koreader/koreader/issues/6024
 # NOTE: Our initial approach was to only disable atomics in a very dirty manner, which only helped with the first issue.
