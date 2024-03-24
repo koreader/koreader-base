@@ -1,0 +1,88 @@
+--- a/Makefile
++++ b/Makefile
+@@ -11,7 +11,7 @@ WILLUSLIB_SRC = $(wildcard $(WILLUSLIB_DIR)/*.c)
+ K2PDFOPTLIB_SRC = $(wildcard $(K2PDFOPTLIB_DIR)/*.c)
+ KOPT_SRC = setting.c koptreflow.c koptcrop.c koptocr.c koptimize.c
+ 
+-TESSCAPI_CFLAGS = -I$(MOD_INC) -I$(LEPTONICA_DIR)/src \
++TESSCAPI_CFLAGS = -I$(MOD_INC) -I$(LEPTONICA_DIR)/include/leptonica \
+ 	-I$(TESSERACT_DIR) -I$(TESSERACT_DIR)/api \
+ 	-I$(TESSERACT_DIR)/ccutil -I$(TESSERACT_DIR)/ccstruct \
+ 	-I$(TESSERACT_DIR)/image -I$(TESSERACT_DIR)/viewer \
+@@ -72,14 +72,15 @@ K2PDFOPT_LIB= libk2pdfopt$(if $(WIN32),-$(MAJVER).dll,$(if $(DARWIN),.$(MAJVER).
+ 	@echo "BUILD    $@"
+ 	@$(TARGET_CC) $(CFLAGS) -c -DK2PDFOPT_KINDLEPDFVIEWER \
+ 		$(if $(ANDROID),-DANDROID,) $(if $(DARWIN),-DDARWIN,) \
+-		-I$(MOD_INC) -I$(WILLUSLIB_DIR) -I$(K2PDFOPTLIB_DIR) -o $@ $<
++		-I$(MOD_INC) -I$(LEPTONICA_DIR)/include/leptonica -I$(WILLUSLIB_DIR) -I$(K2PDFOPTLIB_DIR) -o $@ $<
+ 	@$(TARGET_DYNCC) $(CFLAGS) -c -DK2PDFOPT_KINDLEPDFVIEWER \
+ 		$(if $(ANDROID),-DANDROID,) $(if $(DARWIN),-DDARWIN,) \
+-		-I$(MOD_INC) -I$(WILLUSLIB_DIR) -I$(K2PDFOPTLIB_DIR) -o $(@:.o=_dyn.o) $<
++		-I$(MOD_INC) -I$(LEPTONICA_DIR)/include/leptonica -I$(WILLUSLIB_DIR) -I$(K2PDFOPTLIB_DIR) -o $(@:.o=_dyn.o) $<
+ 
+ ##############################################################################
+ # Target file rules.
+ ##############################################################################
++ifneq (,)
+ $(LEPTONICA_LIB):
+ 	cp -f $(LEPTONICA_MOD)/dewarp2.c $(LEPTONICA_DIR)/src/dewarp2.c
+ 	# leptonica 1.73 and up requires to run autobuild first
+@@ -130,15 +131,18 @@ ifdef WIN32
+ else
+ 	cp -a $(TESSERACT_DIR)/api/.libs/libtesseract$(if $(DARWIN),*.dylib,.so*) ./
+ endif
++endif
+ 
+-tesseract_capi: $(TESSERACT_MOD)/tesscapi.cpp $(TESSERACT_LIB)
++$(TESSERACT_API_O): $(TESSERACT_MOD)/tesscapi.cpp
+ 	$(TARGET_CXX) $(CXXFLAGS) -c $(TESSCAPI_CFLAGS) -o $(TESSERACT_API_O) $<
++
++$(TESSERACT_API_DYNO): $(TESSERACT_MOD)/tesscapi.cpp
+ 	$(TARGET_DYNCXX) $(CXXFLAGS) -c $(TESSCAPI_CFLAGS) -o $(TESSERACT_API_DYNO) $<
+ 
+-$(K2PDFOPT_A): $(K2PDFOPT_O) tesseract_capi
++$(K2PDFOPT_A): $(K2PDFOPT_O) $(TESSERACT_API_O)
+ 	$(AR) rcs $@ $(K2PDFOPT_O) $(TESSERACT_API_O)
+ 
+-$(K2PDFOPT_LIB): $(K2PDFOPT_O) tesseract_capi
++$(K2PDFOPT_LIB): $(K2PDFOPT_O) $(TESSERACT_API_DYNO) $(LEPTONICA_LIB) $(TESSERACT_LIB)
+ 	$(CXX) $(CXXFLAGS) $(TARGET_ASHLDFLAGS) -o $@ \
+ 		$(K2PDFOPT_DYNO) $(TESSERACT_API_DYNO) $(TARGET_ALIBS) \
+ 		$(TESSERACT_LIB) $(LEPTONICA_LIB)
+--- a/tesseract_mod/tesscapi.cpp
++++ b/tesseract_mod/tesscapi.cpp
+@@ -1,4 +1,3 @@
+-#include "config_auto.h"
+ /*
+ ** tesscapi.cpp    willus.com attempt at C wrapper for tesseract.
+ **                 (Butchered from tesseractmain.cpp)
+@@ -21,7 +20,6 @@
+ **
+ */
+ 
+-#include "config_auto.h"
+ /*
+ #include "mfcpch.h"
+ */
+@@ -44,11 +42,6 @@
+ 
+ #include "allheaders.h"
+ #include "baseapi.h"
+-#include "strngs.h"
+-#include "params.h"
+-#include "blobs.h"
+-// For our try/catch block
+-#include <stdexcept>
+ /*
+ #include "notdll.h"
+ */
+@@ -56,6 +49,9 @@
+ /* C Wrappers */
+ #include "tesseract.h"
+ 
++// For our try/catch block
++#include <stdexcept>
++
+ // static tesseract::TessBaseAPI api[4];
+ 
+ /*
