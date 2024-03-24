@@ -1,9 +1,3 @@
-cmake_minimum_required(VERSION 3.15)
-project(minizip LANGUAGES)
-
-include("koreader_thirdparty_common")
-include("koreader_thirdparty_git")
-
 # Build in source tree.
 set(BINARY_DIR "${SOURCE_DIR}")
 
@@ -19,14 +13,18 @@ string(APPEND CFLAGS " -DHAVE_AES")
 list(APPEND BUILD_CMD COMMAND ${KO_MAKE_RECURSIVE} -C aes)
 append_autotools_vars(BUILD_CMD)
 
-list(APPEND INSTALL_CMD COMMAND mkdir -p "${INSTALL_DIR}/include/aes" "${INSTALL_DIR}/lib")
-list(APPEND INSTALL_CMD COMMAND sh -c "cd \"$1\" && shift && cp \"$@\"" -- "${SOURCE_DIR}/aes"
+# Install static lib.
+append_static_lib_install_command(INSTALL_CMD BYPRODUCTS "${SOURCE_DIR}/aes/libaes.a" aes)
+
+# Install headers.
+append_headers_install_command(
+    INSTALL_CMD BYPRODUCTS
+    SUBDIR aes
+    FROM "${SOURCE_DIR}/aes"
     aes.h aes_via_ace.h aesopt.h aestab.h
     brg_endian.h brg_types.h entropy.h fileenc.h
     hmac.h prng.h pwd2key.h sha1.h
-    "${INSTALL_DIR}/include/aes/"
 )
-list(APPEND INSTALL_CMD COMMAND cp aes/libaes.a "${INSTALL_DIR}/lib/")
 
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
@@ -40,4 +38,5 @@ thirdparty_project(
     PATCH_COMMAND ${PATCH_CMD}
     BUILD_COMMAND ${BUILD_CMD}
     INSTALL_COMMAND ${INSTALL_CMD}
+    BYPRODUCTS ${BYPRODUCTS}
 )

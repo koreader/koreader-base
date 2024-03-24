@@ -1,9 +1,3 @@
-cmake_minimum_required(VERSION 3.15)
-project(curl LANGUAGES)
-
-include("koreader_thirdparty_common")
-include("koreader_thirdparty_git")
-
 # Gentoo patchset
 list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/curl-8.5.0-mpd-stream-http-adjust_pollset.patch)
 # NOTE: Because InkView is the worst, we rename our own cURL build on PocketBook.... (#5861)
@@ -17,7 +11,6 @@ list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/ca_bundle.
 
 # Make sure the daisy-chain once again picks up our toolchain file...
 list(APPEND CMAKE_ARGS "-DCMAKE_TOOLCHAIN_FILE=${CMAKE_TCF}")
-list(APPEND CMAKE_ARGS "-DCMAKE_INSTALL_PREFIX=${INSTALL_DIR}")
 
 # Features.
 # TODO: Enable ZSTD support? We currently only use cURL for zsync2, so, obviously, not necessary right now…
@@ -45,8 +38,32 @@ list(APPEND CMAKE_ARGS "-DCURL_ZLIB=TRUE")
 
 list(APPEND BUILD_CMD COMMAND ${KO_MAKE_PROGRAM} ca-bundle lib/all)
 
-list(APPEND INSTALL_CMD COMMAND ${KO_MAKE_PROGRAM} install)
-list(APPEND INSTALL_CMD COMMAND ${CMAKE_COMMAND} -E copy ${BINARY_DIR}/ca-bundle.crt ${INSTALL_DIR}/ca-bundle.crt)
+# Install certificates bundle.
+append_install_commands(INSTALL_CMD BYPRODUCTS ca-bundle.crt DESTINATION data/)
+
+if(POCKETBOOK)
+    set(LIB_SPEC curl_ko VERSION 4)
+else()
+    set(LIB_SPEC curl VERSION 4)
+endif()
+set_libname(LIB ${LIB_SPEC})
+
+# Install shared lib.
+append_shared_lib_install_command(INSTALL_CMD BYPRODUCTS lib/${LIB} ${LIB_SPEC})
+
+# For pocketbook, add a symlink so dependent packages find our renamed version.
+if(POCKETBOOK)
+    list(APPEND INSTALL_CMD COMMAND ln -snf ${LIB} "${STAGING_DIR}/lib/libcurl${LIB_EXT}")
+endif()
+
+# Install headers.
+append_headers_install_command(
+    INSTALL_CMD BYPRODUCTS
+    SUBDIR curl
+    FROM "${SOURCE_DIR}/include/curl"
+    curl.h curlver.h easy.h header.h mprintf.h multi.h options.h
+    stdcheaders.h system.h typecheck-gcc.h urlapi.h websockets.h
+)
 
 thirdparty_project(
     URL https://github.com/curl/curl/releases/download/curl-8_5_0/curl-8.5.0.tar.xz
@@ -55,4 +72,5 @@ thirdparty_project(
     CMAKE_ARGS ${CMAKE_ARGS}
     BUILD_COMMAND ${BUILD_CMD}
     INSTALL_COMMAND ${INSTALL_CMD}
+    BYPRODUCTS ${BYPRODUCTS}
 )

@@ -1,9 +1,3 @@
-cmake_minimum_required(VERSION 3.15)
-project(fbink LANGUAGES)
-
-include("koreader_thirdparty_common")
-include("koreader_thirdparty_git")
-
 list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/fix_toolchain_vars_forwarding.patch)
 list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/better_outdir.patch)
 
@@ -49,6 +43,12 @@ list(APPEND BUILD_CMD COMMAND
     ${FBINK_TARGET}
 )
 
+# Install executables.
+append_binary_install_command(INSTALL_CMD BYPRODUCTS fbink/fbink)
+if(FBDEPTH_TARGET)
+    append_binary_install_command(INSTALL_CMD BYPRODUCTS fbdepth/fbdepth)
+endif()
+
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
     https://github.com/NiLuJe/FBInk.git
@@ -60,4 +60,6 @@ thirdparty_project(
     DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
     PATCH_COMMAND ${PATCH_CMD}
     BUILD_COMMAND ${BUILD_CMD}
+    INSTALL_COMMAND ${INSTALL_CMD}
+    BYPRODUCTS ${BYPRODUCTS}
 )

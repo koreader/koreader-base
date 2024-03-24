@@ -1,9 +1,3 @@
-cmake_minimum_required(VERSION 3.15)
-project(djvulibre LANGUAGES)
-
-include("koreader_thirdparty_common")
-include("koreader_thirdparty_git")
-
 # Never *ever* call setlocale, for any reason.
 # Most of our target platforms have custom/broken/incomplete locales, don't screw with it.
 # And this runs in our main thread, so this is Very Bad(TM).
@@ -26,7 +20,7 @@ set(CXXFLAGS "${CXXFLAGS} -Wno-register -Wno-error=register")
 list(APPEND CFG_CMD COMMAND env)
 append_autotools_vars(CFG_CMD)
 list(APPEND CFG_CMD
-    "${SOURCE_DIR}/configure" --host=${CHOST} "--prefix=/"
+    "${SOURCE_DIR}/configure" --host=${CHOST}
     --disable-static --enable-shared
     --disable-desktopfiles
     --disable-largefile
@@ -41,7 +35,19 @@ endif()
 
 list(APPEND BUILD_CMD COMMAND ${KO_MAKE_RECURSIVE} -C libdjvu)
 
-list(APPEND INSTALL_CMD COMMAND ${KO_MAKE_RECURSIVE} -C libdjvu "DESTDIR=${INSTALL_DIR}" install)
+set(LIB_SPEC djvulibre VERSION 21)
+set_libname(LIB ${LIB_SPEC})
+
+# Install shared lib.
+append_shared_lib_install_command(INSTALL_CMD BYPRODUCTS "libdjvu/.libs/${LIB}" ${LIB_SPEC})
+
+# Install headers.
+append_headers_install_command(
+    INSTALL_CMD BYPRODUCTS
+    SUBDIR libdjvu
+    FROM "${SOURCE_DIR}/libdjvu"
+    ddjvuapi.h miniexp.h
+)
 
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
@@ -56,4 +62,5 @@ thirdparty_project(
     CONFIGURE_COMMAND ${CFG_CMD}
     BUILD_COMMAND ${BUILD_CMD}
     INSTALL_COMMAND ${INSTALL_CMD}
+    BYPRODUCTS ${BYPRODUCTS}
 )

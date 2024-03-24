@@ -1,9 +1,3 @@
-cmake_minimum_required(VERSION 3.15)
-project(luajit LANGUAGES)
-
-include("koreader_thirdparty_common")
-include("koreader_thirdparty_git")
-
 # Build in source tree.
 set(BINARY_DIR "${SOURCE_DIR}")
 
@@ -86,12 +80,31 @@ endif()
 
 list(APPEND BUILD_CMD COMMAND ${KO_MAKE_RECURSIVE} ${BUILD_ARGS} amalg)
 
-list(APPEND INSTALL_CMD COMMAND mkdir -p "${INSTALL_DIR}/include" "${INSTALL_DIR}/lib")
-list(APPEND INSTALL_CMD COMMAND sh -c "cd \"$1\" && shift && cp \"$@\"" -- "${SOURCE_DIR}/src"
+# Install executable.
+if(NOT SKIP_LUAJIT_BIN)
+    append_binary_install_command(INSTALL_CMD BYPRODUCTS src/luajit)
+endif()
+
+set(LIB_SPEC luajit)
+set_libname(LIB ${LIB_SPEC})
+
+# Install shared lib.
+if(USE_LUAJIT_LIB)
+    append_shared_lib_install_command(INSTALL_CMD BYPRODUCTS src/libluajit.so ${LIB_SPEC})
+endif()
+
+# Install static lib.
+append_static_lib_install_command(INSTALL_CMD BYPRODUCTS src/libluajit.a ${LIB_SPEC})
+
+# Install headers.
+append_headers_install_command(
+    INSTALL_CMD BYPRODUCTS
+    FROM src
     lauxlib.h luaconf.h lua.h lua.hpp luajit.h lualib.h
-    "${INSTALL_DIR}/include/"
 )
-list(APPEND INSTALL_CMD COMMAND sh -c "cp src/libluajit.a src/libluajit${LIB_EXT}* \"$1\"" -- "${INSTALL_DIR}/lib/")
+
+# Install JIT files.
+append_tree_install_commands(INSTALL_CMD BYPRODUCTS src/jit jit)
 
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
@@ -105,4 +118,5 @@ thirdparty_project(
     PATCH_COMMAND ${PATCH_CMD}
     BUILD_COMMAND ${BUILD_CMD}
     INSTALL_COMMAND ${INSTALL_CMD}
+    BYPRODUCTS ${BYPRODUCTS}
 )

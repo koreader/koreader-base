@@ -1,9 +1,3 @@
-cmake_minimum_required(VERSION 3.15)
-project(sdl2 LANGUAGES)
-
-include("koreader_thirdparty_common")
-include("koreader_thirdparty_git")
-
 # remove workarounds for standalone applications and add a couple of actions
 # to be used from the osx main menu.
 list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/cocoa.patch)
@@ -26,10 +20,18 @@ list(APPEND CMAKE_ARGS
 
 list(APPEND BUILD_CMD COMMAND ${KO_MAKE_PROGRAM})
 
+set(LIB_SPEC SDL2)
+set_libname(LIB ${LIB_SPEC})
+
+# Install shared lib.
+append_shared_lib_install_command(INSTALL_CMD BYPRODUCTS ${LIB} ${LIB_SPEC})
+
 thirdparty_project(
     URL https://github.com/libsdl-org/SDL/releases/download/release-2.28.5/SDL2-2.28.5.tar.gz
     URL_MD5 a344eb827a03045c9b399e99af4af13d
     PATCH_COMMAND ${PATCH_CMD}
     CMAKE_ARGS ${CMAKE_ARGS}
     BUILD_COMMAND ${BUILD_CMD}
+    INSTALL_COMMAND ${INSTALL_CMD}
+    BYPRODUCTS ${BYPRODUCTS}
 )

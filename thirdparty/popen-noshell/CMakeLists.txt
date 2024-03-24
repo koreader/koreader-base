@@ -1,9 +1,3 @@
-cmake_minimum_required(VERSION 3.15)
-project(popen-noshell LANGUAGES)
-
-include("koreader_thirdparty_common")
-include("koreader_thirdparty_git")
-
 # Build in source tree.
 set(BINARY_DIR "${SOURCE_DIR}")
 
@@ -23,8 +17,14 @@ endif()
 list(APPEND BUILD_CMD COMMAND ${KO_MAKE_RECURSIVE})
 append_autotools_vars(BUILD_CMD)
 
-# NOTE: we always update lib timestamp to notify Make for a fresh build
-list(APPEND BUILD_CMD COMMAND ${CMAKE_COMMAND} -E touch ${SOURCE_DIR}/libpopen_noshell.a)
+# Install static lib.
+append_static_lib_install_command(INSTALL_CMD BYPRODUCTS "${SOURCE_DIR}/libpopen_noshell.a" popen_noshell)
+
+# Install headers.
+append_headers_install_command(
+    INSTALL_CMD BYPRODUCTS
+    "${SOURCE_DIR}/popen_noshell.h"
+)
 
 # NOTE: As of right now (1f9eaf4eeef348d1efe0f3c7fe8ab670653cfbb1), wait until stuff settles down before bumping this.
 ko_write_gitclone_script(
@@ -38,4 +38,6 @@ thirdparty_project(
     DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
     PATCH_COMMAND ${PATCH_CMD}
     BUILD_COMMAND ${BUILD_CMD}
+    INSTALL_COMMAND ${INSTALL_CMD}
+    BYPRODUCTS ${BYPRODUCTS}
 )

@@ -1,18 +1,21 @@
-cmake_minimum_required(VERSION 3.15)
-project(utf8proc LANGUAGES)
-
-include("koreader_thirdparty_common")
-include("koreader_thirdparty_git")
-
 # Make sure the daisy-chain once again picks up our toolchain file...
 list(APPEND CMAKE_ARGS "-DCMAKE_TOOLCHAIN_FILE=${CMAKE_TCF}")
-list(APPEND CMAKE_ARGS "-DCMAKE_INSTALL_PREFIX=${INSTALL_DIR}")
 
 list(APPEND CMAKE_ARGS "-DBUILD_SHARED_LIBS=ON")
 
 list(APPEND BUILD_CMD COMMAND ${KO_MAKE_PROGRAM})
 
-list(APPEND INSTALL_CMD COMMAND ${KO_MAKE_PROGRAM} install)
+set(LIB_SPEC utf8proc VERSION 3)
+set_libname(LIB ${LIB_SPEC})
+
+# Install shared lib.
+append_shared_lib_install_command(INSTALL_CMD BYPRODUCTS ${LIB} ${LIB_SPEC})
+
+# Install headers.
+append_headers_install_command(
+    INSTALL_CMD BYPRODUCTS
+    "${SOURCE_DIR}/utf8proc.h"
+)
 
 thirdparty_project(
     URL https://github.com/JuliaStrings/utf8proc/releases/download/v2.9.0/utf8proc-2.9.0.tar.gz
@@ -20,4 +23,5 @@ thirdparty_project(
     CMAKE_ARGS ${CMAKE_ARGS}
     BUILD_COMMAND ${BUILD_CMD}
     INSTALL_COMMAND ${INSTALL_CMD}
+    BYPRODUCTS ${BYPRODUCTS}
 )

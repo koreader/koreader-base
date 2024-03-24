@@ -1,8 +1,3 @@
-cmake_minimum_required(VERSION 3.15)
-project(lpeg LANGUAGES)
-
-include("koreader_thirdparty_common")
-
 # Build in source tree.
 set(BINARY_DIR "${SOURCE_DIR}")
 
@@ -22,9 +17,14 @@ list(APPEND BUILD_CMD
     lpeg.so
 )
 
+append_binary_install_command(INSTALL_CMD BYPRODUCTS lpeg.so common/)
+append_install_commands(INSTALL_CMD BYPRODUCTS re.lua DESTINATION common/)
+
 thirdparty_project(
     URL http://distcache.FreeBSD.org/ports-distfiles/lpeg-1.0.2.tar.gz
     URL_MD5 d342571886f1abcb7afe6a83d024d583
     PATCH_COMMAND ${PATCH_CMD}
     BUILD_COMMAND ${BUILD_CMD}
+    INSTALL_COMMAND ${INSTALL_CMD}
+    BYPRODUCTS ${BYPRODUCTS}
 )

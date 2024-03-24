@@ -1,8 +1,3 @@
-cmake_minimum_required(VERSION 3.15)
-project(kpvcrlib LANGUAGES C CXX)
-
-include("koreader_thirdparty_common")
-
 set(CRE_3RDPARTY_DIR ${CMAKE_CURRENT_SOURCE_DIR}/crengine/thirdparty)
 set(CRE_DIR crengine/crengine)
 
@@ -68,19 +63,30 @@ add_library(crengine STATIC
     ${CRE_DIR}/src/crconcurrent.cpp
 )
 # Make sure we get full `constexpr` support.
-target_compile_features(crengine PRIVATE cxx_std_17)
+set_property(TARGET crengine PROPERTY CXX_STANDARD 17)
 set_target_properties(crengine PROPERTIES VISIBILITY_INLINES_HIDDEN TRUE)
-target_include_directories(crengine PUBLIC
-    ${CRE_DIR}/include
-    ${STAGING_DIR}/include
-    ${STAGING_DIR}/include/freetype2
-    ${STAGING_DIR}/include/harfbuzz
-)
+target_include_directories(crengine PUBLIC ${CRE_DIR}/include)
 target_include_directories(crengine PRIVATE
     ${CRE_3RDPARTY_DIR}/antiword
     ${CRE_3RDPARTY_DIR}/chmlib/src
-    ${STAGING_DIR}/include/fribidi
-    ${THIRDPARTY_DIR}/srell
+)
+target_link_libraries(crengine PUBLIC
+    antiword
+    chmlib
+    freetype2::freetype
+    harfbuzz::harfbuzz
+    libunibreak::unibreak
+)
+target_link_libraries(crengine PRIVATE
+    fribidi::fribidi
+    libjpeg-turbo::jpeg
+    libpng::png16
+    libwebp::webpdemux
+    lunasvg::lunasvg
+    srell::srell
+    utf8proc::utf8proc
+    zlib::z
+    zstd::zstd
 )
 
 configure_file(crsetup.h.cmake crsetup.h)

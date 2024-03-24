@@ -1,9 +1,3 @@
-cmake_minimum_required(VERSION 3.15)
-project(mupdf LANGUAGES)
-
-include("koreader_thirdparty_common")
-include("koreader_thirdparty_git")
-
 # Build in source tree.
 set(BINARY_DIR "${SOURCE_DIR}")
 
@@ -104,6 +98,9 @@ else()
     set(OS "Other")
 endif()
 
+set(LIB_SPEC mupdf)
+set_libname(MUPDF_LIB ${LIB_SPEC})
+
 string(APPEND XCFLAGS
     " ${CFLAGS}"
     # Disable a couple of things to save a small bit of space:
@@ -121,11 +118,7 @@ if(ANDROID AND "${CHOST}" MATCHES "^armv7a-.*")
     # (https://android.googlesource.com/platform/bionic/+/master/docs/32-bit-abi.md)
     string(APPEND XCFLAGS " -D_FILE_OFFSET_BITS=32")
 endif()
-string(APPEND XCFLAGS
-    " -I${STAGING_DIR}/include"
-    " -I${STAGING_DIR}/include/freetype2"
-    " -I${STAGING_DIR}/include/harfbuzz"
-)
+string(APPEND XCFLAGS " -I${STAGING_DIR}/include")
 
 string(APPEND LINK_OPTS " ${DYNLIB_LDFLAGS}")
 if(DARWIN)
@@ -155,9 +148,6 @@ string(APPEND LIBS
 )
 
 list(APPEND BUILD_CMD COMMAND
-    env
-    -u CFLAGS
-    -u LDFLAGS
     ${KO_MAKE_RECURSIVE}
     # Compilation flags.
     "AR=${AR}"
@@ -182,15 +172,42 @@ list(APPEND BUILD_CMD COMMAND
     # Final shared library.
     "LIBS=${LIBS}"
     "LINK_OPTS=${LINK_OPTS}"
-    "MUPDF_SHLIB=libmupdf${LIB_EXT}"
+    "MUPDF_SHLIB=${MUPDF_LIB}"
     shared
 )
 
-list(APPEND INSTALL_CMD COMMAND mkdir -p "${INSTALL_DIR}/include/mupdf/fitz" "${INSTALL_DIR}/include/mupdf/pdf" "${INSTALL_DIR}/lib")
-list(APPEND INSTALL_CMD COMMAND sh -c "cd \"$1\" && shift && cp *.h \"$@\"" -- "${SOURCE_DIR}/include/mupdf" "${INSTALL_DIR}/include/mupdf/")
-list(APPEND INSTALL_CMD COMMAND sh -c "cd \"$1\" && shift && cp *.h \"$@\"" -- "${SOURCE_DIR}/include/mupdf/fitz" "${INSTALL_DIR}/include/mupdf/fitz/")
-list(APPEND INSTALL_CMD COMMAND sh -c "cd \"$1\" && shift && cp *.h \"$@\"" -- "${SOURCE_DIR}/include/mupdf/pdf" "${INSTALL_DIR}/include/mupdf/pdf/")
-list(APPEND INSTALL_CMD COMMAND cp libmupdf${LIB_EXT} "${INSTALL_DIR}/lib/")
+# Install shared lib.
+append_shared_lib_install_command(INSTALL_CMD BYPRODUCTS ${MUPDF_LIB} ${LIB_SPEC})
+
+# Install headers.
+append_headers_install_command(
+    INSTALL_CMD BYPRODUCTS
+    SUBDIR mupdf
+    FROM "${SOURCE_DIR}/include/mupdf"
+    fitz.h memento.h pdf.h pdf-tools.h ucdn.h
+)
+append_headers_install_command(
+    INSTALL_CMD BYPRODUCTS
+    SUBDIR mupdf/fitz
+    FROM "${SOURCE_DIR}/include/mupdf/fitz"
+    annotation.h archive.h archive.h.orig band-writer.h bidi.h bitmap.h
+    buffer.h color-management.h colorspace.h compressed-buffer.h compress.h
+    config.h context.h crypt.h device.h display-list.h document.h filter.h
+    font.h font.h.orig geometry.h getopt.h glyph-cache.h glyph.h hash.h image.h
+    link.h outline.h output.h output-pcl.h output-pclm.h output-png.h
+    output-pnm.h output-psd.h output-ps.h output-pwg.h output-svg.h
+    output-tga.h path.h pixmap.h pool.h separation.h shade.h store.h stream.h
+    string-util.h structured-text.h system.h system.h.orig text.h track-usage.h
+    transition.h tree.h util.h version.h writer.h xml.h
+)
+append_headers_install_command(
+    INSTALL_CMD BYPRODUCTS
+    SUBDIR mupdf/pdf
+    FROM "${SOURCE_DIR}/include/mupdf/pdf"
+    annot.h appearance.h clean.h cmap.h crypt.h document.h event.h field.h
+    font.h interpret.h javascript.h name-table.h object.h output-pdf.h page.h
+    parse.h resource.h widget.h xref.h
+)
 
 thirdparty_project(
     URL https://mupdf.com/downloads/archive/mupdf-1.13.0-source.tar.xz
@@ -198,4 +215,5 @@ thirdparty_project(
     PATCH_COMMAND ${PATCH_CMD}
     BUILD_COMMAND ${BUILD_CMD}
     INSTALL_COMMAND ${INSTALL_CMD}
+    BYPRODUCTS ${BYPRODUCTS}
 )

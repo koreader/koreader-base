@@ -1,12 +1,5 @@
-cmake_minimum_required(VERSION 3.15)
-project(zstd LANGUAGES)
-
-include("koreader_thirdparty_common")
-include("koreader_thirdparty_git")
-
 # Make sure the daisy-chain once again picks up our toolchain file...
 list(APPEND CMAKE_ARGS "-DCMAKE_TOOLCHAIN_FILE=${CMAKE_TCF}")
-list(APPEND CMAKE_ARGS "-DCMAKE_INSTALL_PREFIX=${INSTALL_DIR}")
 
 list(APPEND CMAKE_ARGS "-DZSTD_BUILD_PROGRAMS=FALSE")
 list(APPEND CMAKE_ARGS "-DZSTD_BUILD_SHARED=TRUE")
@@ -14,7 +7,18 @@ list(APPEND CMAKE_ARGS "-DZSTD_BUILD_STATIC=FALSE")
 
 list(APPEND BUILD_CMD COMMAND ${KO_MAKE_PROGRAM})
 
-list(APPEND INSTALL_CMD COMMAND ${KO_MAKE_PROGRAM} install)
+set(LIB_SPEC zstd VERSION 1)
+set_libname(LIB ${LIB_SPEC})
+
+# Install shared lib.
+append_shared_lib_install_command(INSTALL_CMD BYPRODUCTS lib/${LIB} ${LIB_SPEC})
+
+# Install headers.
+append_headers_install_command(
+    INSTALL_CMD BYPRODUCTS
+    FROM "${SOURCE_DIR}/lib"
+    zdict.h zstd.h zstd_errors.h
+)
 
 thirdparty_project(
     URL https://github.com/facebook/zstd/releases/download/v1.5.5/zstd-1.5.5.tar.gz
@@ -23,4 +27,5 @@ thirdparty_project(
     CMAKE_ARGS "${CMAKE_ARGS}"
     BUILD_COMMAND ${BUILD_CMD}
     INSTALL_COMMAND ${INSTALL_CMD}
+    BYPRODUCTS ${BYPRODUCTS}
 )

@@ -1,8 +1,3 @@
-cmake_minimum_required(VERSION 3.15)
-project(libiconv LANGUAGES)
-
-include("koreader_thirdparty_common")
-
 list(APPEND CFG_CMD COMMAND env)
 append_autotools_vars(CFG_CMD)
 list(APPEND CFG_CMD
@@ -13,9 +8,14 @@ list(APPEND CFG_CMD
 
 list(APPEND BUILD_CMD COMMAND ${KO_MAKE_RECURSIVE})
 
-list(APPEND INSTALL_CMD COMMAND ${KO_MAKE_RECURSIVE} "DESTDIR=${INSTALL_DIR}" install)
-# Fucking libtool crap…
-list(APPEND INSTALL_CMD COMMAND ${ISED} "s|^libdir='//lib'\$|libdir='${INSTALL_DIR}/lib'|" "${INSTALL_DIR}/lib/libiconv.la" "${INSTALL_DIR}/lib/libcharset.la")
+# Install static lib.
+append_static_lib_install_command(INSTALL_CMD BYPRODUCTS lib/.libs/libiconv.a iconv)
+
+# Install headers.
+append_headers_install_command(
+    INSTALL_CMD BYPRODUCTS
+    "${BINARY_DIR}/include/iconv.h"
+)
 
 thirdparty_project(
     URL http://ftpmirror.gnu.org/libiconv/libiconv-1.15.tar.gz
@@ -24,4 +24,5 @@ thirdparty_project(
     CONFIGURE_COMMAND ${CFG_CMD}
     BUILD_COMMAND ${BUILD_CMD}
     INSTALL_COMMAND ${INSTALL_CMD}
+    BYPRODUCTS ${BYPRODUCTS}
 )

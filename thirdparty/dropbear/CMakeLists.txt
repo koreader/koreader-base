@@ -1,8 +1,3 @@
-cmake_minimum_required(VERSION 3.15)
-project(dropbear LANGUAGES)
-
-include("koreader_thirdparty_common")
-
 list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/dropbear-2018.76-kindle-nopasswd-hack.patch)
 list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/dropbear-2018.76-kindle-pubkey-hack.patch)
 list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/dropbear-2018.76-kindle-pubkey-gen-hack.patch)
@@ -42,6 +37,9 @@ list(APPEND CFG_CMD
 
 list(APPEND BUILD_CMD COMMAND ${KO_MAKE_RECURSIVE} strip PROGRAMS=dropbear)
 
+# Install executable.
+append_binary_install_command(INSTALL_CMD BYPRODUCTS dropbear)
+
 set(DROPBEAR_VER "2018.76")
 
 thirdparty_project(
@@ -50,4 +48,6 @@ thirdparty_project(
     PATCH_COMMAND ${PATCH_CMD}
     CONFIGURE_COMMAND ${CFG_CMD}
     BUILD_COMMAND ${BUILD_CMD}
+    INSTALL_COMMAND ${INSTALL_CMD}
+    BYPRODUCTS ${BYPRODUCTS}
 )

@@ -1,9 +1,3 @@
-cmake_minimum_required(VERSION 3.15)
-project(luasocket LANGUAGES)
-
-include("koreader_thirdparty_common")
-include("koreader_thirdparty_git")
-
 # Build in source tree.
 set(BINARY_DIR "${SOURCE_DIR}")
 
@@ -36,9 +30,7 @@ if(USE_LUAJIT_LIB)
     string(APPEND MYLDFLAGS " ${STAGING_DIR}/lib/libluajit${LIB_EXT}")
 endif()
 
-set(LUAPATH "${OUTPUT_DIR}/common")
-
-list(APPEND BUILD_CMD COMMAND
+list(APPEND BUILD_CMD
     ${KO_MAKE_RECURSIVE}
     "CC=${CC} ${CFLAGS}"
     "LD=${CC} ${CFLAGS}"
@@ -47,11 +39,24 @@ list(APPEND BUILD_CMD COMMAND
     "PLAT=${PLAT}"
 )
 
-list(APPEND INSTALL_CMD COMMAND
-    ${KO_MAKE_RECURSIVE}
-    "INSTALL_TOP_LDIR=${LUAPATH}"
-    "INSTALL_TOP_CDIR=${LUAPATH}"
-    install
+append_install_commands(
+    INSTALL_CMD BYPRODUCTS
+    src/ltn12.lua src/mime.lua src/socket.lua
+    DESTINATION common/
+)
+append_install_commands(
+    INSTALL_CMD BYPRODUCTS
+    src/ftp.lua src/headers.lua src/http.lua
+    src/smtp.lua src/tp.lua src/url.lua
+    DESTINATION common/socket/
+)
+append_binary_install_command(
+    INSTALL_CMD BYPRODUCTS
+    src/socket-3.1.0.so common/socket/score.so
+)
+append_binary_install_command(
+    INSTALL_CMD BYPRODUCTS
+    src/mime-1.0.3.so common/mime/mcore.so
 )
 
 ko_write_gitclone_script(
@@ -66,4 +71,5 @@ thirdparty_project(
     PATCH_COMMAND ${PATCH_CMD}
     BUILD_COMMAND ${BUILD_CMD}
     INSTALL_COMMAND ${INSTALL_CMD}
+    BYPRODUCTS ${BYPRODUCTS}
 )

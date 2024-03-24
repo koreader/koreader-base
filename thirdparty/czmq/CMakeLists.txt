@@ -1,9 +1,3 @@
-cmake_minimum_required(VERSION 3.15)
-project(czmq LANGUAGES)
-
-include("koreader_thirdparty_common")
-include("koreader_thirdparty_git")
-
 list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake_tweaks.patch)
 if(NOT DARWIN)
     # patch: ignore limited broadcast address
@@ -14,11 +8,25 @@ endif()
 
 # Make sure the daisy-chain once again picks up our toolchain file...
 list(APPEND CMAKE_ARGS "-DCMAKE_TOOLCHAIN_FILE=${CMAKE_TCF}")
-list(APPEND CMAKE_ARGS "-DCMAKE_INSTALL_PREFIX=${INSTALL_DIR}")
 
 list(APPEND BUILD_CMD COMMAND ${KO_MAKE_PROGRAM} czmq)
 
-list(APPEND INSTALL_CMD COMMAND ${KO_MAKE_PROGRAM} install)
+set(LIB_SPEC czmq VERSION 1)
+set_libname(LIB ${LIB_SPEC})
+
+# Install shared lib.
+append_shared_lib_install_command(INSTALL_CMD BYPRODUCTS ${LIB} ${LIB_SPEC})
+
+# Install headers.
+append_headers_install_command(
+    INSTALL_CMD BYPRODUCTS
+    FROM "${SOURCE_DIR}/include"
+    czmq.h czmq_prelude.h zactor.h zauth.h zbeacon.h zcert.h zcertstore.h
+    zchunk.h zclock.h zconfig.h zctx.h zdigest.h zdir.h zdir_patch.h zfile.h
+    zframe.h zgossip.h zhash.h zlist.h zloop.h zmonitor.h zmsg.h zmutex.h
+    zpoller.h zproxy.h zrex.h zsocket.h zsock.h zsock_monitor.h zsockopt.h
+    zsock_option.h zstr.h zsys.h zthread.h zuuid.h
+)
 
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
@@ -33,4 +41,5 @@ thirdparty_project(
     CMAKE_ARGS ${CMAKE_ARGS}
     BUILD_COMMAND ${BUILD_CMD}
     INSTALL_COMMAND ${INSTALL_CMD}
+    BYPRODUCTS ${BYPRODUCTS}
 )

@@ -1,9 +1,3 @@
-cmake_minimum_required(VERSION 3.15)
-project(leptonica LANGUAGES)
-
-include("koreader_thirdparty_common")
-include("koreader_thirdparty_git")
-
 # Make sure we use the old fmemopen symbol on ARM Linux when building against
 # glibc >= 2.22 (c.f. base#421 & #2188).
 #
@@ -51,16 +45,23 @@ list(APPEND CMAKE_ARGS "-DCMAKE_DISABLE_FIND_PACKAGE_TIFF=TRUE")
 
 list(APPEND BUILD_CMD COMMAND ${KO_MAKE_PROGRAM})
 
-list(APPEND INSTALL_CMD COMMAND mkdir -p "${INSTALL_DIR}/include/leptonica" "${INSTALL_DIR}/lib")
-list(APPEND INSTALL_CMD COMMAND sh -c "cd \"$1\" && shift && cp \"$@\"" -- "${SOURCE_DIR}/src"
+set(LIB_SPEC lept VERSION 5)
+set_libname(LIB ${LIB_SPEC})
+
+# Install shared lib.
+append_shared_lib_install_command(INSTALL_CMD BYPRODUCTS src/${LIB} ${LIB_SPEC})
+
+# Install headers.
+append_headers_install_command(
+    INSTALL_CMD BYPRODUCTS
+    SUBDIR leptonica
     "${BINARY_DIR}/src/endianness.h"
+    FROM "${SOURCE_DIR}/src"
     allheaders.h alltypes.h array.h arrayaccess.h bbuffer.h bilateral.h bmf.h
     bmfdata.h bmp.h ccbord.h dewarp.h environ.h gplot.h heap.h imageio.h
     jbclass.h leptwin.h list.h morph.h pix.h ptra.h queue.h rbtree.h
     readbarcode.h recog.h regutils.h stack.h stringcode.h sudoku.h watershed.h
-    "${INSTALL_DIR}/include/leptonica/"
 )
-list(APPEND INSTALL_CMD COMMAND sh -c "cp src/liblept${LIB_EXT}* \"$1\"" -- "${INSTALL_DIR}/lib/")
 
 thirdparty_project(
     # NOTE: Needs to match the version used by whatever version of libk2pdfopt we're currently using...
@@ -71,4 +72,5 @@ thirdparty_project(
     CMAKE_ARGS ${CMAKE_ARGS}
     BUILD_COMMAND ${BUILD_CMD}
     INSTALL_COMMAND ${INSTALL_CMD}
+    BYPRODUCTS ${BYPRODUCTS}
 )

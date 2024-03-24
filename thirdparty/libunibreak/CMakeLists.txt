@@ -1,13 +1,7 @@
-cmake_minimum_required(VERSION 3.15)
-project(libunibreak LANGUAGES)
-
-include("koreader_thirdparty_common")
-include("koreader_thirdparty_git")
-
 list(APPEND CFG_CMD COMMAND env)
 append_autotools_vars(CFG_CMD)
 list(APPEND CFG_CMD
-    "${SOURCE_DIR}/configure" --host=${CHOST} "--prefix=${INSTALL_DIR}"
+    ${SOURCE_DIR}/configure --host=${CHOST}
     --disable-static --enable-shared
     --enable-silent-rules
 )
@@ -18,7 +12,22 @@ endif()
 
 list(APPEND BUILD_CMD COMMAND ${KO_MAKE_RECURSIVE})
 
-list(APPEND INSTALL_CMD COMMAND ${KO_MAKE_RECURSIVE} install)
+set(LIB_SPEC unibreak VERSION 6)
+set_libname(LIB ${LIB_SPEC})
+
+# Install shared lib.
+append_shared_lib_install_command(INSTALL_CMD BYPRODUCTS src/.libs/${LIB} ${LIB_SPEC})
+
+# Install headers.
+append_headers_install_command(
+    INSTALL_CMD BYPRODUCTS
+    FROM "${SOURCE_DIR}/src"
+    eastasianwidthdef.h
+    graphemebreak.h
+    linebreak.h linebreakdef.h
+    unibreakbase.h unibreakdef.h
+    wordbreak.h
+)
 
 thirdparty_project(
     URL https://github.com/adah1972/libunibreak/releases/download/libunibreak_6_1/libunibreak-6.1.tar.gz
@@ -26,4 +35,5 @@ thirdparty_project(
     CONFIGURE_COMMAND ${CFG_CMD}
     BUILD_COMMAND ${BUILD_CMD}
     INSTALL_COMMAND ${INSTALL_CMD}
+    BYPRODUCTS ${BYPRODUCTS}
 )

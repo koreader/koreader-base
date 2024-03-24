@@ -1,9 +1,3 @@
-cmake_minimum_required(VERSION 3.15)
-project(tesseract LANGUAGES)
-
-include("koreader_thirdparty_common")
-include("koreader_thirdparty_git")
-
 list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake_tweaks.patch)
 
 # Make sure the daisy-chain once again picks up our toolchain file...
@@ -15,14 +9,24 @@ endif()
 
 list(APPEND BUILD_CMD COMMAND ${KO_MAKE_PROGRAM})
 
-list(APPEND BUILD_CMD COMMAND mkdir -p "${INSTALL_DIR}/include/tesseract" "${INSTALL_DIR}/lib")
-list(APPEND INSTALL_CMD COMMAND sh -c "cp libtesseract.* \"$1\"" -- "${INSTALL_DIR}/lib/")
-list(APPEND INSTALL_CMD COMMAND sh -c "cd \"$1\" && shift && cp \"$@\"" -- "${SOURCE_DIR}"
-    api/apitypes.h api/baseapi.h api/capi.h
-    ccmain/ltrresultiterator.h ccmain/pageiterator.h ccmain/resultiterator.h ccmain/thresholder.h
-    ccstruct/publictypes.h
-    ccutil/host.h ccutil/platform.h ccutil/tesscallback.h ccutil/unichar.h
-    "${INSTALL_DIR}/include/tesseract/"
+set(LIB_SPEC tesseract VERSION 3)
+set_libname(LIB ${LIB_SPEC})
+
+# Install shared lib.
+append_shared_lib_install_command(INSTALL_CMD BYPRODUCTS ${LIB} ${LIB_SPEC})
+
+# Install headers.
+append_headers_install_command(
+    INSTALL_CMD BYPRODUCTS
+    SUBDIR tesseract
+    FROM "${SOURCE_DIR}/api"
+    apitypes.h baseapi.h capi.h
+    FROM "${SOURCE_DIR}/ccmain"
+    ltrresultiterator.h pageiterator.h resultiterator.h thresholder.h
+    FROM "${SOURCE_DIR}/ccstruct"
+    publictypes.h
+    FROM "${SOURCE_DIR}/ccutil"
+    host.h platform.h tesscallback.h unichar.h
 )
 
 ko_write_gitclone_script(
@@ -38,4 +42,5 @@ thirdparty_project(
     CMAKE_ARGS ${CMAKE_ARGS}
     BUILD_COMMAND ${BUILD_CMD}
     INSTALL_COMMAND ${INSTALL_CMD}
+    BYPRODUCTS ${BYPRODUCTS}
 )

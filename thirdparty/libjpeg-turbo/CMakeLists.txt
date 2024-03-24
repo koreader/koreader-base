@@ -1,18 +1,7 @@
-cmake_minimum_required(VERSION 3.15)
-project(libjpeg-turbo LANGUAGES)
-
-include("koreader_thirdparty_common")
-include("koreader_thirdparty_git")
-
 list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/no_cmake_rpath_shenanigans.patch)
 
 # Make sure the daisy-chain once again picks up our toolchain file...
 list(APPEND CMAKE_ARGS "-DCMAKE_TOOLCHAIN_FILE=${CMAKE_TCF}")
-
-# We expect lib later on in Makefile.third, even on multilib systems...
-list(APPEND CMAKE_ARGS "-DCMAKE_INSTALL_PREFIX=${INSTALL_DIR}")
-list(APPEND CMAKE_ARGS "-DCMAKE_INSTALL_LIBDIR=${INSTALL_DIR}/lib")
-list(APPEND CMAKE_ARGS "-DCMAKE_INSTALL_INCLUDEDIR=${INSTALL_DIR}/include")
 
 # And, finally, the actual libjpeg-turbo build options.
 list(APPEND CMAKE_ARGS "-DENABLE_STATIC=OFF")
@@ -30,7 +19,23 @@ endif()
 
 list(APPEND BUILD_CMD COMMAND ${KO_MAKE_PROGRAM})
 
-list(APPEND INSTALL_CMD COMMAND ${KO_MAKE_PROGRAM} install)
+set(JPEG_LIB_SPEC jpeg VERSION 8)
+set_libname(JPEG_LIB ${JPEG_LIB_SPEC})
+set(TURBOJPEG_LIB_SPEC turbojpeg)
+set_libname(TURBOJPEG_LIB ${TURBOJPEG_LIB_SPEC})
+
+# Install shared libs.
+append_shared_lib_install_command(INSTALL_CMD BYPRODUCTS ${JPEG_LIB} ${JPEG_LIB_SPEC})
+append_shared_lib_install_command(INSTALL_CMD BYPRODUCTS ${TURBOJPEG_LIB} ${TURBOJPEG_LIB_SPEC})
+
+# Install headers.
+append_headers_install_command(
+    INSTALL_CMD BYPRODUCTS
+    FROM "${BINARY_DIR}"
+    jconfig.h jconfigint.h
+    FROM "${SOURCE_DIR}"
+    jerror.h jmorecfg.h jpegint.h jpeglib.h turbojpeg.h
+)
 
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
@@ -45,4 +50,5 @@ thirdparty_project(
     CMAKE_ARGS ${CMAKE_ARGS}
     BUILD_COMMAND ${BUILD_CMD}
     INSTALL_COMMAND ${INSTALL_CMD}
+    BYPRODUCTS ${BYPRODUCTS}
 )

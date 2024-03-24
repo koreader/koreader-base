@@ -1,9 +1,3 @@
-cmake_minimum_required(VERSION 3.15)
-project(harfbuzz LANGUAGES)
-
-include("koreader_thirdparty_common")
-include("koreader_thirdparty_git")
-
 list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/soversion.patch)
 
 # Get rid of a bunch of `#line` directives that trip ccache 4.9.1.
@@ -28,7 +22,6 @@ endif()
 
 # Make sure the daisy-chain once again picks up our toolchain file...
 list(APPEND CMAKE_ARGS "-DCMAKE_TOOLCHAIN_FILE=${CMAKE_TCF}")
-list(APPEND CMAKE_ARGS "-DCMAKE_INSTALL_PREFIX=${INSTALL_DIR}")
 
 list(APPEND CMAKE_ARGS "-DBUILD_SHARED_LIBS=TRUE")
 list(APPEND CMAKE_ARGS "-DHB_BUILD_SUBSET=FALSE")
@@ -45,7 +38,26 @@ list(APPEND CMAKE_ARGS "-DPYTHON_EXECUTABLE=")
 
 list(APPEND BUILD_CMD COMMAND ${KO_MAKE_PROGRAM})
 
-list(APPEND INSTALL_CMD COMMAND ${KO_MAKE_PROGRAM} install)
+set(LIB_SPEC harfbuzz VERSION 0)
+set_libname(LIB ${LIB_SPEC})
+
+# Install shared lib.
+append_shared_lib_install_command(INSTALL_CMD BYPRODUCTS ${LIB} ${LIB_SPEC})
+
+# Install headers.
+# NOTE: to get an updated list, check the contents
+# of `cmake_install.cmake` in the build directory.
+append_headers_install_command(
+    INSTALL_CMD BYPRODUCTS
+    FROM "${SOURCE_DIR}/src"
+    hb-aat-layout.h hb-aat.h hb-blob.h hb-buffer.h hb-common.h
+    hb-cplusplus.hh hb-deprecated.h hb-draw.h hb-face.h hb-font.h
+    hb-map.h hb-ot-color.h hb-ot-deprecated.h hb-ot-font.h
+    hb-ot-layout.h hb-ot-math.h hb-ot-meta.h hb-ot-metrics.h
+    hb-ot-name.h hb-ot-shape.h hb-ot-var.h hb-ot.h hb-paint.h
+    hb-set.h hb-shape-plan.h hb-shape.h hb-style.h hb-unicode.h
+    hb-version.h hb.h hb-ft.h hb-subset.h
+)
 
 thirdparty_project(
     URL https://github.com/harfbuzz/harfbuzz/releases/download/8.3.1/harfbuzz-8.3.1.tar.xz
@@ -54,4 +66,5 @@ thirdparty_project(
     CMAKE_ARGS ${CMAKE_ARGS}
     BUILD_COMMAND ${BUILD_CMD}
     INSTALL_COMMAND ${INSTALL_CMD}
+    BYPRODUCTS ${BYPRODUCTS}
 )

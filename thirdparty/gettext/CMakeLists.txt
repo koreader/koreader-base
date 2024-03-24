@@ -1,8 +1,3 @@
-cmake_minimum_required(VERSION 3.15)
-project(gettext LANGUAGES)
-
-include("koreader_thirdparty_common")
-
 string(APPEND CPPFLAGS " -I${STAGING_DIR}/include")
 string(APPEND LDFLAGS " -L${STAGING_DIR}/lib")
 
@@ -24,7 +19,14 @@ endif()
 
 list(APPEND BUILD_CMD COMMAND ${KO_MAKE_RECURSIVE} -C intl)
 
-list(APPEND INSTALL_CMD COMMAND ${KO_MAKE_RECURSIVE} -C intl "DESTDIR=${INSTALL_DIR}" install)
+# Install static lib.
+append_static_lib_install_command(INSTALL_CMD BYPRODUCTS intl/.libs/libintl.a intl)
+
+# Install headers.
+append_headers_install_command(
+    INSTALL_CMD BYPRODUCTS
+    "${BINARY_DIR}/intl/libintl.h"
+)
 
 thirdparty_project(
     URL http://ftpmirror.gnu.org/gettext/gettext-0.21.tar.xz
@@ -33,4 +35,5 @@ thirdparty_project(
     CONFIGURE_COMMAND ${CFG_CMD}
     BUILD_COMMAND ${BUILD_CMD}
     INSTALL_COMMAND ${INSTALL_CMD}
+    BYPRODUCTS ${BYPRODUCTS}
 )

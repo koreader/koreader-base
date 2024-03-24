@@ -1,9 +1,3 @@
-cmake_minimum_required(VERSION 3.15)
-project(lua-rapidjson LANGUAGES)
-
-include("koreader_thirdparty_common")
-include("koreader_thirdparty_git")
-
 list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake_tweaks.patch)
 
 # Make sure the daisy-chain once again picks up our toolchain file...
@@ -15,6 +9,8 @@ if(USE_LUAJIT_LIB)
 endif()
 
 list(APPEND BUILD_CMD COMMAND ${KO_MAKE_PROGRAM})
+
+append_binary_install_command(INSTALL_CMD BYPRODUCTS rapidjson.so common/)
 
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
@@ -28,4 +24,6 @@ thirdparty_project(
     PATCH_COMMAND ${PATCH_CMD}
     CMAKE_ARGS ${CMAKE_ARGS}
     BUILD_COMMAND ${BUILD_CMD}
+    INSTALL_COMMAND ${INSTALL_CMD}
+    BYPRODUCTS ${BYPRODUCTS}
 )
