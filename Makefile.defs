@@ -857,7 +857,7 @@ LUNASVG_BUILD_DIR=$(THIRDPARTY_DIR)/lunasvg/build/$(MACHINE)
 LUNASVG_DIR=$(CURDIR)/$(LUNASVG_BUILD_DIR)/lunasvg-prefix/src/lunasvg-build
 
 SDCV_BUILD_DIR=$(THIRDPARTY_DIR)/sdcv/build/$(MACHINE)
-SDCV_DIR=$(CURDIR)/$(SDCV_BUILD_DIR)/sdcv-build
+SDCV_DIR=$(CURDIR)/$(SDCV_BUILD_DIR)/sdcv-prefix/src/sdcv-build
 
 GLIB_BUILD_DIR=$(THIRDPARTY_DIR)/glib/build/$(MACHINE)
 GLIB_DIR=$(CURDIR)/$(GLIB_BUILD_DIR)/glib-prefix/src/glib-build
