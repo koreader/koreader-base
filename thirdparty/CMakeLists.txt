@@ -126,13 +126,22 @@ declare_project(fribidi)
 declare_dependency(fribidi::fribidi SHARED fribidi)
 
 # gettext
-declare_project(gettext DEPENDS libiconv EXCLUDE_FROM_ALL)
+if(ANDROID OR DARWIN)
+    set(DEPENDS libiconv)
+else()
+    set(DEPENDS)
+endif()
+declare_project(gettext DEPENDS ${DEPENDS} EXCLUDE_FROM_ALL)
 
 # giflib
 declare_project(giflib)
 
 # glib
-declare_project(glib DEPENDS gettext libiconv EXCLUDE_FROM_ALL)
+set(DEPENDS gettext)
+if(ANDROID OR DARWIN)
+    list(APPEND DEPENDS libiconv)
+endif()
+declare_project(glib DEPENDS ${DEPENDS} EXCLUDE_FROM_ALL)
 
 # harfbuzz
 declare_project(harfbuzz DEPENDS freetype2)

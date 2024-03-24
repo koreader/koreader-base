@@ -47,10 +47,12 @@ list(APPEND CFG_CMD
     --disable-libelf
     --disable-selinux
     --enable-libmount=no
-    --with-libiconv=gnu
     --with-pcre=internal
     --with-threads=posix
 )
+if(ANDROID OR DARWIN)
+    list(APPEND CFG_CMD --with-libiconv=gnu)
+endif()
 
 list(APPEND BUILD_CMD COMMAND ${KO_MAKE_RECURSIVE} -C glib)
 

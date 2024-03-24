@@ -9,10 +9,11 @@ list(APPEND CMAKE_ARGS "-DCMAKE_TOOLCHAIN_FILE=${CMAKE_TCF}")
 string(APPEND GLIB2_LIBRARIES
     "${STAGING_DIR}/lib/libglib-2.0.a"
     $<SEMICOLON>
-    "${STAGING_DIR}/lib/libiconv.a"
-    $<SEMICOLON>
     "${STAGING_DIR}/lib/libintl.a"
 )
+if(ANDROID OR DARWIN)
+    string(APPEND GLIB2_LIBRARIES $<SEMICOLON> "${STAGING_DIR}/lib/libiconv.a")
+endif()
 if(DARWIN)
     string(APPEND GLIB2_LIBRARIES
         $<SEMICOLON> "-framework CoreFoundation"
