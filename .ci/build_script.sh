@@ -32,6 +32,7 @@ docker-make() {
     local cmdlist=(
         'source /home/ko/.bashrc'
         'cd /home/ko/base'
+        'set -x'
         'sudo apt-get -qq update'
         'sudo apt-get -qq install --no-install-recommends chrpath python3-minimal python3-pip'
         'python3 -m pip install meson'
