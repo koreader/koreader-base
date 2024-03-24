@@ -24,9 +24,14 @@ echo "PARALLEL_LOAD: ${PARALLEL_LOAD}"
 travis_retry make fetchthirdparty TARGET=
 
 docker-make() {
+    # shellcheck disable=SC2016
     local cmdlist=(
         'source /home/ko/.bashrc'
         'cd /home/ko/base'
+        'sudo apt-get -qq update'
+        'sudo apt-get -qq install --no-install-recommends chrpath python3-minimal python3-pip'
+        'python3 -m pip install meson'
+        'export PATH="$HOME/.local/bin:$PATH"'
         'sudo chown -R ko:ko .'
         'ccache -sz'
         "trap 'ccache -s' EXIT"

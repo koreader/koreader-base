@@ -33,6 +33,9 @@ jobs:
           tar xf ccache-4.9.1-darwin.tar.gz
           printf '%s\n' "$PWD/ccache-4.9.1-darwin" >>"${GITHUB_PATH}"
 
+      - name: Install meson
+        run: python -m pip --disable-pip-version-check install 'meson==1.4.0'
+
       - name: Homebrew install dependencies
         uses: ./.github/actions/brew_cache
         with:
