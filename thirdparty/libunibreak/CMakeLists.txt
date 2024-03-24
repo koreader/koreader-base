@@ -15,6 +15,10 @@ list(APPEND BUILD_CMD COMMAND ${KO_MAKE_RECURSIVE})
 set(LIB_SPEC unibreak VERSION 6)
 set_libname(LIB ${LIB_SPEC})
 
+if(DARWIN)
+    list(APPEND BUILD_CMD COMMAND install_name_tool -id "@rpath/${LIB}" "src/.libs/${LIB}")
+endif()
+
 # Install shared lib.
 append_shared_lib_install_command(INSTALL_CMD BYPRODUCTS src/.libs/${LIB} ${LIB_SPEC})
 
