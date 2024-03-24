@@ -4,40 +4,41 @@ project(harfbuzz LANGUAGES)
 include("koreader_thirdparty_common")
 include("koreader_thirdparty_git")
 
-assert_var_defined(CC)
-assert_var_defined(CXX)
-assert_var_defined(CFLAGS)
-assert_var_defined(CXXFLAGS)
-assert_var_defined(LDFLAGS)
 assert_var_defined(FREETYPE_DIR)
 
-list(APPEND PATCH_CMD COMMAND env NOCONFIGURE=1 ./autogen.sh)
-
-# No build rpath
-list(APPEND PATCH_CMD COMMAND ${ISED} "s/\\(hardcode_into_libs\\)=.*$/\\1=no/" configure)
+list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/soversion.patch)
 
 # We've apparently hit a weird corner-case w/ XText where GCC/STL atomics *sometimes* horribly blow up on an ARM1136JF-S CPU w/ GCC 7.5...
 # c.f., https://github.com/koreader/koreader/issues/5780 & https://github.com/koreader/koreader/issues/6024
 # NOTE: Our initial approach was to only disable atomics in a very dirty manner, which only helped with the first issue.
 #       This, on the other hand, appears to help with both.
 if(LEGACY OR POCKETBOOK)
-	# NOTE: This ends up in CPPFLAGS!
-	set(HB_CUSTOM_CFG "-DHB_NO_MT")
+    list(APPEND PATCH_CMD COMMAND ${ISED} "/^#define HB_CONFIG_HH\$/{p$<SEMICOLON>s//#define HB_NO_MT/}" src/hb-config.hh)
 endif()
 
-set(CFG_ENV_VAR "CC=${CC}" "CXX=${CXX}" "CPPFLAGS=${HB_CUSTOM_CFG}" "CFLAGS=${CFLAGS}" "CXXFLAGS=${CXXFLAGS}" "LDFLAGS=${LDFLAGS}")
-set(CFG_ENV_VAR ${CFG_ENV_VAR} "FREETYPE_CFLAGS=-I${FREETYPE_DIR}/include/freetype2")
-set(CFG_ENV_VAR ${CFG_ENV_VAR} "FREETYPE_LIBS=-L${FREETYPE_DIR}/lib -lfreetype")
-set(CFG_OPTS "--prefix=${INSTALL_DIR}" --enable-shared --disable-static --with-freetype --without-glib --without-gobject --without-cairo --without-fontconfig --without-icu --without-graphite2 --without-uniscribe --without-directwrite --without-coretext --host=${CHOST})
-list(APPEND CFG_CMD COMMAND env ${CFG_ENV_VAR} "${SOURCE_DIR}/configure" ${CFG_OPTS})
+# Make sure the daisy-chain once again picks up our toolchain file...
+list(APPEND CMAKE_ARGS "-DCMAKE_TOOLCHAIN_FILE=${CMAKE_TCF}")
+list(APPEND CMAKE_ARGS "-DCMAKE_INSTALL_PREFIX=${INSTALL_DIR}")
 
-if(ANDROID)
-    list(APPEND CFG_CMD COMMAND ${ANDROID_LIBTOOL_FIX_CMD})
+list(APPEND CMAKE_ARGS "-DBUILD_SHARED_LIBS=TRUE")
+list(APPEND CMAKE_ARGS "-DHB_BUILD_SUBSET=FALSE")
+list(APPEND CMAKE_ARGS "-DHB_HAVE_FREETYPE=TRUE")
+list(APPEND CMAKE_ARGS "-DHB_HAVE_GLIB=FALSE")
+list(APPEND CMAKE_ARGS "-DHB_HAVE_GRAPHITE2=FALSE")
+list(APPEND CMAKE_ARGS "-DHB_HAVE_ICU=FALSE")
+if(DARWIN)
+    list(APPEND CMAKE_ARGS "-DHB_HAVE_CORETEXT=FALSE")
 endif()
+# Of course, `FindFreetype` does not honor `FREETYPE_ROOT`.
+list(APPEND CMAKE_ARGS "-DFREETYPE_INCLUDE_DIRS=${FREETYPE_DIR}/include/freetype2")
+list(APPEND CMAKE_ARGS "-DFREETYPE_LIBRARY=-L${FREETYPE_DIR}/lib$<SEMICOLON>freetype")
+# Disable Python support.
+list(APPEND CMAKE_ARGS "-DPYTHONINTERP_FOUND=FALSE")
+list(APPEND CMAKE_ARGS "-DPYTHON_EXECUTABLE=")
 
-list(APPEND BUILD_CMD COMMAND ${KO_MAKE_RECURSIVE})
+list(APPEND BUILD_CMD COMMAND ${KO_MAKE_PROGRAM})
 
-list(APPEND INSTALL_CMD COMMAND ${KO_MAKE_RECURSIVE} install)
+list(APPEND INSTALL_CMD COMMAND ${KO_MAKE_PROGRAM} install)
 
 set(HB_VER 8.3.1)
 
@@ -51,7 +52,7 @@ ko_write_gitclone_script(
 thirdparty_project(
     DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
     PATCH_COMMAND ${PATCH_CMD}
-    CONFIGURE_COMMAND ${CFG_CMD}
+    CMAKE_ARGS ${CMAKE_ARGS}
     BUILD_COMMAND ${BUILD_CMD}
     INSTALL_COMMAND ${INSTALL_CMD}
 )
