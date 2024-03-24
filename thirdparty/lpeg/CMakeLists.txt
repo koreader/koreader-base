@@ -3,9 +3,6 @@ project(lpeg LANGUAGES)
 
 include("koreader_thirdparty_common")
 
-assert_var_defined(CC)
-assert_var_defined(CFLAGS)
-assert_var_defined(DYNLIB_LDFLAGS)
 assert_var_defined(LUAINC)
 assert_var_defined(LUALIB)
 

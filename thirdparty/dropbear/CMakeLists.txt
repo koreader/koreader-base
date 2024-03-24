@@ -3,9 +3,6 @@ project(dropbear LANGUAGES)
 
 include("koreader_thirdparty_common")
 
-assert_var_defined(CC)
-assert_var_defined(CFLAGS)
-assert_var_defined(LDFLAGS)
 assert_var_defined(ZLIB_DIR)
 
 list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/dropbear-2018.76-kindle-nopasswd-hack.patch)
@@ -32,11 +29,9 @@ else()
     set(LIBS "")
 endif()
 
-list(APPEND CFG_CMD COMMAND env
-    "CC=${CC}"
-    "CFLAGS=${CFLAGS}"
-    "LDFLAGS=${LDFLAGS}"
-    "LIBS=${LIBS}"
+list(APPEND CFG_CMD COMMAND env)
+append_autotools_vars(CFG_CMD)
+list(APPEND CFG_CMD
     "${SOURCE_DIR}/configure" --host=${CHOST}
     --disable-harden
     --disable-lastlog

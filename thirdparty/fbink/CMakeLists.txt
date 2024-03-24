@@ -4,9 +4,6 @@ project(fbink LANGUAGES)
 include("koreader_thirdparty_common")
 include("koreader_thirdparty_git")
 
-assert_var_defined(CFLAGS)
-assert_var_defined(LDFLAGS)
-
 list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/fix_toolchain_vars_forwarding.patch)
 list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/better_outdir.patch)
 
@@ -30,18 +27,8 @@ else()
     set(FBINK_TARGET strip)
 endif()
 
-set(MAKE_CMD
-    ${KO_MAKE_RECURSIVE} -C "${SOURCE_DIR}"
-    "CROSS_TC=${CHOST}"
-    "AR=${AR}"
-    "CC=${CC}"
-    "CFLAGS=${CFLAGS}"
-    "CXX=${CXX}"
-    "CXXFLAGS=${CXXFLAGS}"
-    "LDFLAGS=${LDFLAGS}"
-    "RANLIB=${RANLIB}"
-    "STRIP=${STRIP}"
-)
+set(MAKE_CMD ${KO_MAKE_RECURSIVE} -C "${SOURCE_DIR}" "CROSS_TC=${CHOST}")
+append_autotools_vars(MAKE_CMD)
 
 if(FBDEPTH_TARGET)
     list(APPEND BUILD_CMD COMMAND

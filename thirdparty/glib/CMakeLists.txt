@@ -4,9 +4,6 @@ project(glib LANGUAGES)
 include("koreader_thirdparty_common")
 include("koreader_thirdparty_git")
 
-assert_var_defined(CC)
-assert_var_defined(CFLAGS)
-assert_var_defined(LDFLAGS)
 assert_var_defined(GETTEXT_DIR)
 assert_var_defined(LIBICONV_DIR)
 
@@ -43,12 +40,12 @@ endif()
 
 list(APPEND CFG_CMD COMMAND sh -c "printf '%s\\n' \"$@\" >cache.conf" -- ${gen_cache_config})
 
-list(APPEND CFG_CMD COMMAND env
-    "CC=${CC}"
-    "AR=${AR}"
-    "RANLIB=${RANLIB}"
-    "CFLAGS=${CFLAGS} -I${LIBICONV_DIR}/include -I${GETTEXT_DIR}/include"
-    "LDFLAGS=${LDFLAGS} -L${GETTEXT_DIR}/lib -L${LIBICONV_DIR}/lib"
+string(APPEND CPPFLAGS " -I${GETTEXT_DIR}/include -I${LIBICONV_DIR}/include")
+string(APPEND LDFLAGS " -L${GETTEXT_DIR}/lib -L${LIBICONV_DIR}/lib")
+
+list(APPEND CFG_CMD COMMAND env)
+append_autotools_vars(CFG_CMD)
+list(APPEND CFG_CMD
     "${SOURCE_DIR}/configure" --host=${CHOST} --cache-file=cache.conf "--prefix=${INSTALL_DIR}"
     --enable-static=true --enable-shared=false
     --disable-compile-warnings

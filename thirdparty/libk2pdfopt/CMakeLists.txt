@@ -4,11 +4,6 @@ project(libk2pdfopt LANGUAGES)
 include("koreader_thirdparty_common")
 include("koreader_thirdparty_git")
 
-assert_var_defined(CC)
-assert_var_defined(CFLAGS)
-assert_var_defined(CXX)
-assert_var_defined(CXXFLAGS)
-assert_var_defined(LDFLAGS)
 assert_var_defined(LEPTONICA_DIR)
 assert_var_defined(TESSERACT_DIR)
 
@@ -26,15 +21,12 @@ if (DARWIN)
     set(CFLAGS "${CFLAGS} -Wno-error=implicit-function-declaration")
 endif()
 
-list(APPEND BUILD_CMD COMMAND
-    ${KO_MAKE_RECURSIVE}
-    "ANDROID=${ANDROID}" "DARWIN=${DARWIN}"
+list(APPEND BUILD_CMD COMMAND ${KO_MAKE_RECURSIVE})
+append_autotools_vars(BUILD_CMD)
+list(APPEND BUILD_CMD
+    "ANDROID=${ANDROID}"
     "BUILDMODE=shared"
-    "CC=${CC}"
-    "CFLAGS=${CFLAGS}"
-    "CXX=${CXX}"
-    "CXXFLAGS=${CXXFLAGS}"
-    "LDFLAGS=${LDFLAGS}"
+    "DARWIN=${DARWIN}"
     "LEPTONICA_DIR=${LEPTONICA_DIR}"
     "LEPTONICA_LIB=${LEPTONICA_LIB}"
     "MOD_INC=."
