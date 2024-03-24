@@ -4,8 +4,6 @@ project(luasec LANGUAGES)
 include("koreader_thirdparty_common")
 include("koreader_thirdparty_git")
 
-assert_var_defined(LUAPATH)
-
 # Build in source tree.
 set(BINARY_DIR "${SOURCE_DIR}")
 
@@ -15,6 +13,8 @@ set(LIBS "luasocket/libluasocket.a ${STAGING_DIR}/lib/libcrypto${LIB_EXT} ${STAG
 if(USE_LUAJIT_LIB)
     string(APPEND LIBS " ${STAGING_DIR}/lib/libluajit${LIB_EXT}")
 endif()
+
+set(LUAPATH "${OUTPUT_DIR}/common")
 
 set(MAKE_CMD
     ${KO_MAKE_RECURSIVE}
