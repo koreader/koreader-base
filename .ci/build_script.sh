@@ -5,8 +5,12 @@ DOCKER_HOME=/home/ko
 # shellcheck source=/dev/null
 source "${CI_DIR}/common.sh"
 
-test -d "${HOME}/.ccache" || mkdir "${HOME}/.ccache"
-echo "using cache dir: ${HOME}/.ccache."
+if [[ -z "${CCACHE_DIR}" ]]; then
+    CCACHE_DIR="${HOME}/.ccache"
+fi
+
+mkdir -p "${CCACHE_DIR}"
+echo "using cache dir: ${CCACHE_DIR}"
 
 PROCS="$(getconf _NPROCESSORS_ONLN)"
 if [[ -r /sys/fs/cgroup/cpu/cpu.shares ]]; then
@@ -37,9 +41,9 @@ docker-make() {
         "trap 'ccache -s' EXIT"
         "make $(printf '%q ' "$@")"
     )
-    sudo chmod -R 777 "${HOME}/.ccache"
+    sudo chmod -R 777 "${CCACHE_DIR}"
     docker run --rm -t \
-        -v "${HOME}/.ccache:${DOCKER_HOME}/.ccache" \
+        -v "${CCACHE_DIR}:${DOCKER_HOME}/.ccache" \
         -v "$(pwd):${DOCKER_HOME}/base" "${DOCKER_IMG}" \
         /bin/bash -c "$(printf '%s && ' "${cmdlist[@]}")true"
 }
