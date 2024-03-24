@@ -68,10 +68,16 @@ elseif(POCKETBOOK)
 endif()
 
 # koreader-lfs
+#  
+# Ensure only the right symbols are exported.
 add_custom_command(
     COMMAND
-    ${CMAKE_COMMAND} -E copy "${CMAKE_SOURCE_DIR}/luafilesystem/src/lfs.h" lfs.h
+    patch -p1
+    "--directory=${CMAKE_SOURCE_DIR}/luafilesystem"
+    "--input=${CMAKE_SOURCE_DIR}/patches/lfs-visibility.patch"
+    "--output=${CMAKE_BINARY_DIR}/lfs.h"
     OUTPUT lfs.h
+    DEPENDS patches/lfs-visibility.patch
     MAIN_DEPENDENCY luafilesystem/src/lfs.h
 )
 # Avoid precision loss on 32-bit arches (LFS is always built w/ LARGEFILE
@@ -88,7 +94,6 @@ add_custom_command(
 )
 add_koreader_library(koreader-lfs lfs.c lfs.h DEPENDS luajit::luajit)
 set_target_properties(koreader-lfs PROPERTIES SUFFIX .so)
-set_target_properties(koreader-lfs PROPERTIES C_VISIBILITY_PRESET default)
 
 # koreader-nnsvg
 add_koreader_library(koreader-nnsvg nnsvg.c DEPENDS luajit::luajit nanosvg::nanosvg)
