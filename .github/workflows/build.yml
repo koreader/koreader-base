@@ -39,31 +39,24 @@ jobs:
       - name: Homebrew install dependencies
         uses: ./.github/actions/brew_cache
         with:
-          # Compared to the README, removes sh5sum to prevent some conflict with coreutils, and gnu-getopt because we're not using kodev.
           packages: >
             autoconf
             automake
             binutils
-            bison
             cmake
             coreutils
             gettext
             gnu-getopt
             grep
             libtool
-            lua@5.1
-            luarocks
             make
-            makedepend
             nasm
             pkg-config
-            ragel
             wget
 
       - name: Update PATH
         run: |
           printf '%s\n' \
-            "$(brew --prefix)/opt/bison/bin" \
             "$(brew --prefix)/opt/gettext/bin" \
             "$(brew --prefix)/opt/gnu-getopt/bin" \
             "$(brew --prefix)/opt/grep/libexec/gnubin" \
