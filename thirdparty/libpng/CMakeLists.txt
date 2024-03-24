@@ -4,22 +4,25 @@ project(libpng LANGUAGES)
 include("koreader_thirdparty_common")
 include("koreader_thirdparty_git")
 
-assert_var_defined(CC)
-assert_var_defined(CXX)
-assert_var_defined(CPPFLAGS)
-assert_var_defined(LDFLAGS)
+assert_var_defined(ZLIB)
+assert_var_defined(ZLIB_DIR)
 
-set(CFG_ENV_VAR "CC=${CC}" "CXX=${CXX}" "CPPFLAGS=${CPPFLAGS}" "LDFLAGS=${LDFLAGS}")
-set(CFG_OPTS "--prefix=${INSTALL_DIR}" --disable-static --enable-shared --host=${CHOST})
-list(APPEND CFG_CMD COMMAND env ${CFG_ENV_VAR} "${SOURCE_DIR}/configure" ${CFG_OPTS})
+list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/math_library.patch)
 
-if(ANDROID)
-    list(APPEND CFG_CMD COMMAND ${ANDROID_LIBTOOL_FIX_CMD})
-endif()
+# Make sure the daisy-chain once again picks up our toolchain file...
+list(APPEND CMAKE_ARGS "-DCMAKE_TOOLCHAIN_FILE=${CMAKE_TCF}")
+list(APPEND CMAKE_ARGS "-DCMAKE_INSTALL_PREFIX=${INSTALL_DIR}")
 
-list(APPEND BUILD_CMD COMMAND ${KO_MAKE_RECURSIVE})
+list(APPEND CMAKE_ARGS "-DPNG_DEBUG_POSTFIX=")
+list(APPEND CMAKE_ARGS "-DPNG_TOOLS=FALSE")
+list(APPEND CMAKE_ARGS "-DPNG_STATIC=FALSE")
+list(APPEND CMAKE_ARGS "-DPNG_TESTS=FALSE")
+list(APPEND CMAKE_ARGS "-DZLIB_INCLUDE_DIR=${ZLIB_DIR}/include")
+list(APPEND CMAKE_ARGS "-DZLIB_LIBRARY=${ZLIB}")
 
-list(APPEND INSTALL_CMD COMMAND ${KO_MAKE_RECURSIVE} install)
+list(APPEND BUILD_CMD COMMAND ${KO_MAKE_PROGRAM})
+
+list(APPEND INSTALL_CMD COMMAND ${KO_MAKE_PROGRAM} install)
 
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
@@ -30,7 +33,8 @@ ko_write_gitclone_script(
 
 thirdparty_project(
     DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
-    CONFIGURE_COMMAND ${CFG_CMD}
+    PATCH_COMMAND ${PATCH_CMD}
+    CMAKE_ARGS ${CMAKE_ARGS}
     BUILD_COMMAND ${BUILD_CMD}
     INSTALL_COMMAND ${INSTALL_CMD}
 )
