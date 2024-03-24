@@ -19,6 +19,8 @@ list(APPEND CMAKE_ARGS "-DENABLE_STATIC=OFF")
 list(APPEND CMAKE_ARGS "-DENABLE_SHARED=ON")
 list(APPEND CMAKE_ARGS "-DWITH_JAVA=OFF")
 list(APPEND CMAKE_ARGS "-DWITH_JPEG8=ON")
+# Reproducible builds: use release date.
+list(APPEND CMAKE_ARGS "-DBUILD=20240124")
 
 # Make sure we disable ASM if we don't support SIMD.
 if(NOT DEFINED ENV{WANT_SIMD})
