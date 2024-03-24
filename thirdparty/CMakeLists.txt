@@ -12,6 +12,7 @@ macro(add_project NAME)
         # Dependencies must be setup first.
         foreach(PRJ IN LISTS ${NAME}_DEPENDS)
             add_project(${PRJ})
+            list(APPEND ${NAME}_BUILD_DEPENDS ${${PRJ}_BYPRODUCTS})
         endforeach()
         # Setup project variables.
         set(PROJECT_NAME "${NAME}")
@@ -21,6 +22,7 @@ macro(add_project NAME)
         set(INSTALL_DIR "${STAGING_DIR}")
         # Add project directory.
         add_subdirectory(${NAME} ${${NAME}_EXCLUDE_FROM_ALL})
+        get_property(${NAME}_BYPRODUCTS DIRECTORY ${NAME} PROPERTY ${NAME}_BYPRODUCTS)
         # Add dependency to global targets.
         if(${NAME}_EXCLUDE_FROM_ALL)
             add_dependencies(download-all ${NAME}-download)

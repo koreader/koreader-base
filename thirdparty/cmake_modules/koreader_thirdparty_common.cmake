@@ -335,6 +335,7 @@ function(thirdparty_project)
     if(NOT DEFINED _BYPRODUCTS)
         message(FATAL_ERROR "external project ̈́“${PROJECT_NAME}” does not declare any by-products")
     endif()
+    set_property(DIRECTORY PROPERTY ${PROJECT_NAME}_BYPRODUCTS ${_BYPRODUCTS})
     # By-products (CMake >= 3.26)
     if(CMAKE_VERSION VERSION_GREATER_EQUAL "3.26")
         list(APPEND PARAMS INSTALL_BYPRODUCTS ${_BYPRODUCTS})
@@ -356,6 +357,13 @@ function(thirdparty_project)
         COMMAND rm -rf ${_BYPRODUCTS}
     )
     ExternalProject_Add(${PARAMS} ${_UNPARSED_ARGUMENTS})
+    # Build dependencies.
+    set(BUILD_DEPS "${${PROJECT_NAME}_BUILD_DEPENDS}")
+    ExternalProject_Add_Step(${PROJECT_NAME} build_deps
+        COMMENT "Completed build dependencies for '${PROJECT_NAME}'"
+        DEPENDERS build
+        DEPENDS "${BUILD_DEPS}"
+    )
     # By-products (CMake < 3.26).
     if(CMAKE_VERSION VERSION_LESS "3.26")
         # No `INSTALL_BYPRODUCTS` support: use a custom intermediate step.
