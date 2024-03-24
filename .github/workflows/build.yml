@@ -27,9 +27,43 @@ jobs:
           # Note: Python 3.12 removal of `distutils` breaks GLib's build.
           python-version: '3.11'
 
+      - name: Install ccache
+        run: |
+          wget --progress=dot:mega https://github.com/ccache/ccache/releases/download/v4.9.1/ccache-4.9.1-darwin.tar.gz
+          tar xf ccache-4.9.1-darwin.tar.gz
+          printf '%s\n' "$PWD/ccache-4.9.1-darwin" >>"${GITHUB_PATH}"
+
       - name: Homebrew install dependencies
-        # Compared to the README, adds ccache for faster compilation times and removes sh5sum to prevent some conflict with coreutils, and gnu-getopt because we're not using kodev
-        run: brew install ccache nasm ragel binutils coreutils libtool autoconf automake cmake makedepend lua@5.1 luarocks gettext pkg-config wget gnu-getopt grep bison
+        uses: ./.github/actions/brew_cache
+        with:
+          # Compared to the README, removes sh5sum to prevent some conflict with coreutils, and gnu-getopt because we're not using kodev.
+          packages: >
+            autoconf
+            automake
+            binutils
+            bison
+            cmake
+            coreutils
+            gettext
+            gnu-getopt
+            grep
+            libtool
+            lua@5.1
+            luarocks
+            makedepend
+            nasm
+            pkg-config
+            ragel
+            wget
+
+      - name: Update PATH
+        run: |
+          printf '%s\n' \
+            "$(brew --prefix)/opt/bison/bin" \
+            "$(brew --prefix)/opt/gettext/bin" \
+            "$(brew --prefix)/opt/gnu-getopt/bin" \
+            "$(brew --prefix)/opt/grep/libexec/gnubin" \
+            >>"${GITHUB_PATH}"
 
       - name: Build cache restore
         id: build-cache-restore
@@ -54,7 +88,6 @@ jobs:
         id: build
         run: |
           export MACOSX_DEPLOYMENT_TARGET=11;
-          export PATH="$(brew --prefix)/opt/gettext/bin:$(brew --prefix)/opt/gnu-getopt/bin:$(brew --prefix)/opt/bison/bin:$(brew --prefix)/opt/grep/libexec/gnubin:${PATH}";
           make fetchthirdparty && make
 
       - name: Build cache pre-save
