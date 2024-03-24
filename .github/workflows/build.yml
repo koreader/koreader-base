@@ -50,6 +50,7 @@ jobs:
             libtool
             lua@5.1
             luarocks
+            make
             makedepend
             nasm
             pkg-config
@@ -63,6 +64,7 @@ jobs:
             "$(brew --prefix)/opt/gettext/bin" \
             "$(brew --prefix)/opt/gnu-getopt/bin" \
             "$(brew --prefix)/opt/grep/libexec/gnubin" \
+            "$(brew --prefix)/opt/make/libexec/gnubin" \
             >>"${GITHUB_PATH}"
 
       - name: Build cache restore
