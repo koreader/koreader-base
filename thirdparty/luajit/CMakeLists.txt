@@ -86,6 +86,13 @@ endif()
 
 list(APPEND BUILD_CMD COMMAND ${KO_MAKE_RECURSIVE} ${BUILD_ARGS} amalg)
 
+list(APPEND INSTALL_CMD COMMAND mkdir -p "${INSTALL_DIR}/include" "${INSTALL_DIR}/lib")
+list(APPEND INSTALL_CMD COMMAND sh -c "cd \"$1\" && shift && cp \"$@\"" -- "${SOURCE_DIR}/src"
+    lauxlib.h luaconf.h lua.h lua.hpp luajit.h lualib.h
+    "${INSTALL_DIR}/include/"
+)
+list(APPEND INSTALL_CMD COMMAND sh -c "cp src/libluajit.a src/libluajit${LIB_EXT}* \"$1\"" -- "${INSTALL_DIR}/lib/")
+
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
     https://github.com/LuaJIT/LuaJIT
@@ -97,4 +104,5 @@ thirdparty_project(
     DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
     PATCH_COMMAND ${PATCH_CMD}
     BUILD_COMMAND ${BUILD_CMD}
+    INSTALL_COMMAND ${INSTALL_CMD}
 )

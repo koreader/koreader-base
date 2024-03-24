@@ -170,13 +170,13 @@ $(LUAJIT) $(LUAJIT_LIB) $(LUAJIT_JIT): $(THIRDPARTY_DIR)/luajit/*.*
 	$(CMAKE) $(CMAKE_FLAGS) -S $(THIRDPARTY_DIR)/luajit -B $(LUAJIT_BUILD_DIR)
 	$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS) -C $(LUAJIT_BUILD_DIR)
 ifneq ($(USE_LUAJIT_LIB),)
-	cp -fL $(LUAJIT_DIR)/src/$(notdir $(LUAJIT_LIB)) $(LUAJIT_LIB)
+	cp -fL $(LUAJIT_BUILD_DIR)/source/src/$(notdir $(LUAJIT_LIB)) $(LUAJIT_LIB)
 endif
 ifeq ($(SKIP_LUAJIT_BIN),)
-	cp -fL $(LUAJIT_DIR)/src/$(notdir $(LUAJIT)) $(LUAJIT)
+	cp -fL $(LUAJIT_BUILD_DIR)/source/src/$(notdir $(LUAJIT)) $(LUAJIT)
 endif
 	-rm -rf $(LUAJIT_JIT)
-	$(RCP) -fL $(LUAJIT_DIR)/src/jit $(OUTPUT_DIR)
+	$(RCP) -fL $(LUAJIT_BUILD_DIR)/source/src/jit $(OUTPUT_DIR)
 
 $(POPEN_NOSHELL_LIB): $(THIRDPARTY_DIR)/popen-noshell/*.*
 	$(CMAKE) $(CMAKE_FLAGS) -S $(THIRDPARTY_DIR)/popen-noshell -B $(POPEN_NOSHELL_BUILD_DIR)
@@ -344,7 +344,7 @@ $(OUTPUT_DIR)/data/KoboUSBMS.tar.gz: $(THIRDPARTY_DIR)/kobo-usbms/*.*
 # common lua library for networking
 $(LUASOCKET): $(THIRDPARTY_DIR)/luasocket/*.*
 	$(CMAKE) $(CMAKE_FLAGS) \
-		-DLUAINC='$(LUAJIT_DIR)/src' \
+		-DLUAINC='$(LUA_INCDIR)' \
 		-DLUALIB='$(if $(USE_LUAJIT_LIB),$(abspath $(LUAJIT_LIB)))' \
 		-DLUAPATH='$(abspath $(OUTPUT_DIR)/common)' \
 		-S $(THIRDPARTY_DIR)/luasocket -B $(LUASOCKET_BUILD_DIR)
