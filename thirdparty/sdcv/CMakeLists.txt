@@ -14,8 +14,6 @@ assert_var_defined(GLIB_DIR)
 assert_var_defined(ZLIB)
 assert_var_defined(ZLIB_DIR)
 
-ep_get_source_dir(SOURCE_DIR)
-
 # Revert 6e36e7730caf07b6cd0bfa265cdf9b5e31e7acad, because it's not helpful in our workflow, and just causes logging noise.
 list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/sdcv-no-unknown-dict-warning.patch)
 # Force utf8 command line parsing
@@ -94,13 +92,10 @@ ko_write_gitclone_script(
     ${SOURCE_DIR}
 )
 
-include(ExternalProject)
-ExternalProject_Add(
-    ${PROJECT_NAME}
+thirdparty_project(
     DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
     CMAKE_ARGS ${CMAKE_ARGS}
     PATCH_COMMAND ${PATCH_CMD}
     CMAKE_GENERATOR "Unix Makefiles"
     BUILD_COMMAND ${BUILD_CMD}
-    INSTALL_COMMAND COMMAND
 )

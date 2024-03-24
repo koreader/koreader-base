@@ -11,8 +11,6 @@ assert_var_defined(LIBS)
 assert_var_defined(LDFLAGS)
 assert_var_defined(CHOST)
 
-ep_get_source_dir(SOURCE_DIR)
-
 list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/dropbear-2018.76-kindle-nopasswd-hack.patch)
 list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/dropbear-2018.76-kindle-pubkey-hack.patch)
 list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/dropbear-2018.76-kindle-pubkey-gen-hack.patch)
@@ -33,19 +31,16 @@ list(APPEND PATCH_CMD COMMAND autoreconf -fi)
 
 set(CFG_ENV_VAR "CC=${CC}" "CPPFLAGS=${CPPFLAGS} -I${SOURCE_DIR}" "CFLAGS=${CFLAGS}" "LIBS=${LIBS}" "LDFLAGS=${LDFLAGS}")
 set(CFG_OPTS --host=${CHOST} --disable-lastlog --enable-zlib --enable-openpty --enable-shadow --enable-syslog --disable-harden)
-set(CFG_CMD env ${CFG_ENV_VAR} ${SOURCE_DIR}/configure ${CFG_OPTS})
+set(CFG_CMD env ${CFG_ENV_VAR} "${SOURCE_DIR}/configure" ${CFG_OPTS})
 
 set(BUILD_CMD ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS} strip PROGRAMS=dropbear)
 
-include(ExternalProject)
 set(DROPBEAR_VER "2018.76")
-ExternalProject_Add(
-    ${PROJECT_NAME}
+
+thirdparty_project(
     URL http://deb.debian.org/debian/pool/main/d/dropbear/dropbear_${DROPBEAR_VER}.orig.tar.bz2
     URL_MD5 c3912f7fcdcc57c99937e4a79480d2c2
-    DOWNLOAD_DIR ${KO_DOWNLOAD_DIR}
     PATCH_COMMAND ${PATCH_CMD}
     CONFIGURE_COMMAND ${CFG_CMD}
     BUILD_COMMAND ${BUILD_CMD}
-    INSTALL_COMMAND ""
 )

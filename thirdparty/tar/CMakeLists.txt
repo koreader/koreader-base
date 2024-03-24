@@ -3,15 +3,11 @@ project(tar LANGUAGES)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_LIST_DIR}/../cmake_modules")
 include("koreader_thirdparty_common")
-#include("koreader_thirdparty_git")
 
 assert_var_defined(CC)
 assert_var_defined(CFLAGS)
 assert_var_defined(LDFLAGS)
 assert_var_defined(LIBS)
-
-ep_get_source_dir(SOURCE_DIR)
-ep_get_binary_dir(BINARY_DIR)
 
 # O_PATH may be defined in our ToolChains, but older devices actually run kernels where it's not entirely usable...
 # (Usage in tar via gnulib's https://git.savannah.gnu.org/cgit/gnulib.git/log/lib/fchmodat.c)
@@ -38,26 +34,20 @@ set(CFG_OPTS --host=${CHOST})
 if(DEFINED ENV{LEGACY} OR DEFINED ENV{POCKETBOOK})
     set(CFG_OPTS ${CFG_OPTS} --disable-largefile)
 endif()
-list(APPEND CFG_CMD COMMAND env ${CFG_ENV_VAR} ${SOURCE_DIR}/configure --disable-nls --disable-gcc-warnings --disable-acl --without-xattrs --without-posix-acls ${CFG_OPTS})
+list(APPEND CFG_CMD COMMAND env ${CFG_ENV_VAR} "${SOURCE_DIR}/configure" --disable-nls --disable-gcc-warnings --disable-acl --without-xattrs --without-posix-acls ${CFG_OPTS})
 
 if(DEFINED ENV{LEGACY} OR DEFINED ENV{POCKETBOOK})
     # Forcibly disable FORTIFY on legacy devices...
     list(APPEND CFG_CMD COMMAND ${ISED} "s/# define _FORTIFY_SOURCE 2/#undef _FORTIFY_SOURCE/" config.h)
 endif()
 
-# We build in-tree...
-list(APPEND INSTALL_CMD COMMAND ${CMAKE_COMMAND} -E copy ${BINARY_DIR}/src/tar ${BINARY_DIR}/tar)
-
-include(ExternalProject)
 set(TAR_VER "1.34")
-ExternalProject_Add(
-    ${PROJECT_NAME}
+
+thirdparty_project(
     URL http://ftpmirror.gnu.org/tar/tar-${TAR_VER}.tar.gz
     http://ftp.gnu.org/pub/gnu/tar/tar-${TAR_VER}.tar.gz
     URL_MD5 9d5949e4c2d9665546ac65dafc0e726a
-    DOWNLOAD_DIR ${KO_DOWNLOAD_DIR}
     PATCH_COMMAND ${PATCH_CMD}
     CONFIGURE_COMMAND ${CFG_CMD}
     BUILD_COMMAND ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS}
-    INSTALL_COMMAND COMMAND ${INSTALL_CMD}
 )
