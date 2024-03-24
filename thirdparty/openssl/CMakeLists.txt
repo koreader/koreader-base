@@ -15,6 +15,8 @@ assert_var_defined(RANLIB)
 # Build in source tree.
 set(BINARY_DIR "${SOURCE_DIR}")
 
+list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/openssl-1.1.0j-parallel_install_fix.patch)
+
 # FIXME: Orphaned, MINGW is never set anywhere
 if(${MINGW})
     set(CFG_OPTS no-shared)
@@ -58,8 +60,6 @@ if(DEFINED ENV{WANT_SIMD})
 else()
     set(ASM_OPT no-asm)
 endif()
-
-list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/openssl-1.1.0j-parallel_install_fix.patch)
 
 # NOTE: Disable https://github.com/openssl/openssl/pull/9595 as it's causing stalls long after the early boot on devices without the getrandom() syscall, which is pretty much all of them, because it's a Linux 3.17+ & glibc 2.25+ feature.
 #       This is most easily reproduced with scp transfers that will block on the initial select on /dev/random. Since those devices are low-power, UP, and mostly idle, it can take a fairly noticeable amount of time for entropy to be generated...
