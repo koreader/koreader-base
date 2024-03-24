@@ -50,17 +50,11 @@ list(APPEND INSTALL_CMD COMMAND sh -c "cd \"$1\" && shift && cp \"$@\"" -- "${SO
 )
 list(APPEND INSTALL_CMD COMMAND sh -c "cp src/liblept${LIB_EXT}* \"$1\"" -- "${INSTALL_DIR}/lib/")
 
-# NOTE: Needs to match the version used by whatever version of libk2pdfopt we're currently using...
-#       Probably applies to mupdf & tesseract, too...
-ko_write_gitclone_script(
-    GIT_CLONE_SCRIPT_FILENAME
-    https://github.com/DanBloomberg/leptonica.git
-    1.74.1
-    ${SOURCE_DIR}
-)
-
 thirdparty_project(
-    DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
+    # NOTE: Needs to match the version used by whatever version of libk2pdfopt we're currently using...
+    #       Probably applies to mupdf & tesseract, too...
+    URL https://github.com/DanBloomberg/leptonica/archive/refs/tags/1.74.1.tar.gz
+    URL_MD5 b3de9ae35976fd4fc3f6dae5a4368bca
     PATCH_COMMAND ${PATCH_CMD}
     CMAKE_ARGS ${CMAKE_ARGS}
     BUILD_COMMAND ${BUILD_CMD}
