@@ -309,24 +309,28 @@ ifeq ($(TARGET), android)
 	AR:=llvm-ar
 	LD:=ld
 	RANLIB:=llvm-ranlib
+	READELF:=llvm-readelf
 else ifdef CHOST
 	STRIP:=$(CHOST)-strip
 	AR:=$(CHOST)-ar
 	LD:=$(CHOST)-ld
 	RC:=$(CHOST)-windres
 	RANLIB:=$(CHOST)-ranlib
+	READELF:=$(CHOST)-readelf
 else
 	STRIP:=strip
 	AR:=ar
 	LD:=ld
 	RC:=windres
 	RANLIB:=ranlib
+	READELF:=readelf
 endif
 
 HOSTSTRIP:=strip
 HOSTAR:=ar
 HOSTLD:=ld
 HOSTRANLIB:=ranlib
+HOSTREADELF:=readelf
 
 # Path to the shared STL, because we need to ship it on most platforms.
 # We don't want to rely on -static-libstdc++, as it risks breaking the ODR.
@@ -622,6 +626,7 @@ ifdef EMULATE_READER
 	AR:=$(HOSTAR)
 	LD:=$(HOSTLD)
 	RANLIB:=$(HOSTRANLIB)
+	READELF:=$(HOSTREADELF)
 	CFLAGS+=$(HOST_ARCH)
 	CXXFLAGS+=$(HOST_ARCH)
 else
@@ -1091,6 +1096,7 @@ set(CMAKE_MODULE_LINKER_FLAGS_INIT "$${CMAKE_SHARED_LINKER_FLAGS_INIT}")
 set(CMAKE_AR "$(strip $(AR))" CACHE FILEPATH "Archive")
 set(CMAKE_LD "$(strip $(LD))" CACHE FILEPATH "LD")
 set(CMAKE_RANLIB "$(strip $(RANLIB))" CACHE FILEPATH "RanLib")
+set(CMAKE_READELF "$(strip $(READELF))" CACHE FILEPATH "ReadELF")
 $(if $(WIN32),set(CMAKE_RC_COMPILER "$(strip $(RC))" CACHE FILEPATH "Resource Compiler"))
 set(CMAKE_STRIP "$(strip $(STRIP))" CACHE FILEPATH "Strip")
 
