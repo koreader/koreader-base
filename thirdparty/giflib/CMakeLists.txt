@@ -17,8 +17,8 @@ list(APPEND CMAKE_ARGS "-DCMAKE_TOOLCHAIN_FILE=${CMAKE_TCF}")
 list(APPEND BUILD_CMD COMMAND ${KO_MAKE_PROGRAM})
 
 thirdparty_project(
-    URL https://gitlab.com/koreader/giflib/-/archive/5.2.1/giflib-5.2.1.tar.gz
-    URL_MD5 42d799430fa6412b32c694955af4a98e
+    URL https://sourceforge.net/projects/giflib/files/giflib-5.2.2.tar.gz
+    URL_MD5 913dd251492134e235ee3c9a91987a4d
     DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
     PATCH_COMMAND ${PATCH_CMD}
     CMAKE_ARGS "${CMAKE_ARGS}"
