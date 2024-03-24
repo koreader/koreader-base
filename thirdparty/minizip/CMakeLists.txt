@@ -19,6 +19,15 @@ string(APPEND CFLAGS " -DHAVE_AES")
 list(APPEND BUILD_CMD COMMAND ${KO_MAKE_RECURSIVE} -C aes)
 append_autotools_vars(BUILD_CMD)
 
+list(APPEND INSTALL_CMD COMMAND mkdir -p "${INSTALL_DIR}/include/aes" "${INSTALL_DIR}/lib")
+list(APPEND INSTALL_CMD COMMAND sh -c "cd \"$1\" && shift && cp \"$@\"" -- "${SOURCE_DIR}/aes"
+    aes.h aes_via_ace.h aesopt.h aestab.h
+    brg_endian.h brg_types.h entropy.h fileenc.h
+    hmac.h prng.h pwd2key.h sha1.h
+    "${INSTALL_DIR}/include/aes/"
+)
+list(APPEND INSTALL_CMD COMMAND cp aes/libaes.a "${INSTALL_DIR}/lib/")
+
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
     https://github.com/nmoinvaz/minizip
@@ -30,4 +39,5 @@ thirdparty_project(
     DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
     PATCH_COMMAND ${PATCH_CMD}
     BUILD_COMMAND ${BUILD_CMD}
+    INSTALL_COMMAND ${INSTALL_CMD}
 )
