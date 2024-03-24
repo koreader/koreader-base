@@ -12,7 +12,7 @@ list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake_twea
 # Make sure the daisy-chain once again picks up our toolchain file...
 list(APPEND CMAKE_ARGS "-DCMAKE_TOOLCHAIN_FILE=${CMAKE_TCF}")
 
-if (DEFINED ENV{ANDROID})
+if(ANDROID)
     list(APPEND CMAKE_ARGS "-DANDROID=TRUE")
 endif()
 

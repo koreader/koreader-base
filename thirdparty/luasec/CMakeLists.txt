@@ -20,7 +20,7 @@ list(APPEND MAKE_CMD COMMAND ${KO_MAKE_RECURSIVE} "CC=${CC}" "CCLD=${LD}" "AR=${
 if(DEFINED LIBS)
     list(APPEND MAKE_CMD "LIBS=${LIBS}")
 endif()
-if (DEFINED ENV{DARWIN})
+if (DARWIN)
     set(INSTALL_CMD ${MAKE_CMD} macosx install)
     set(BUILD_CMD ${MAKE_CMD} macosx)
 else()

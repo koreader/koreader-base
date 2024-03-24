@@ -42,7 +42,7 @@ include_directories(
 
 include(CheckTypeSize)
 
-if(DEFINED ENV{LEGACY})
+if(LEGACY)
     set(DISABLE_CLOEXEC 1)
 else()
     # Test and Enable LFS Support in glibc, based on zlib

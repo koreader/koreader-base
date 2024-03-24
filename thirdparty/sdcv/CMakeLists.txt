@@ -23,11 +23,11 @@ list(APPEND CMAKE_ARGS "-DCMAKE_TOOLCHAIN_FILE=${CMAKE_TCF}")
 
 # because cmake needs all kinds of annoying special cmake variables
 # Compiler and linker flags
-if(DEFINED ENV{DARWIN})
+if(DARWIN)
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -framework CoreFoundation -framework CoreServices -framework Security")
 endif()
 
-if(DEFINED ENV{ANDROID})
+if(ANDROID)
     # Android 5+ requires PIE (yum!)
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -pie -fPIE")
 endif()
@@ -60,9 +60,9 @@ string(APPEND GLIB2_LIBRARIES
     "${LIBICONV}"
 )
 # Need pthread library and rt library on old glibc (for `clock_gettime`).
-if(NOT DEFINED ENV{DARWIN})
+if(NOT DARWIN)
     string(APPEND GLIB2_LIBRARIES $<SEMICOLON> -pthread)
-    if(NOT DEFINED ENV{ANDROID})
+    if(NOT ANDROID)
         string(APPEND GLIB2_LIBRARIES $<SEMICOLON> -lrt)
     endif()
 endif()

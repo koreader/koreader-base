@@ -8,7 +8,6 @@ assert_var_defined(CC)
 assert_var_defined(CPPFLAGS)
 assert_var_defined(CFLAGS)
 assert_var_defined(LDFLAGS)
-assert_var_defined(CHOST)
 
 set(PATCH_CMD sh -c "autoreconf -fi")
 

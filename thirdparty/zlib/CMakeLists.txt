@@ -10,9 +10,7 @@ assert_var_defined(LDFLAGS)
 # Build in source tree.
 set(BINARY_DIR "${SOURCE_DIR}")
 
-if(DEFINED ENV{ANDROID})
-    assert_var_defined(CHOST)
-
+if(ANDROID)
     set(LDFLAGS "${LDFLAGS} -shared -Wl,-soname,libz.so.1")
     # Only set CHOST for Android.
     # This can't be done generically because otherwise you have to specify soname as well.
