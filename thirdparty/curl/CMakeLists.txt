@@ -11,6 +11,7 @@ list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/ca_bundle.
 
 # Make sure the daisy-chain once again picks up our toolchain file...
 list(APPEND CMAKE_ARGS "-DCMAKE_TOOLCHAIN_FILE=${CMAKE_TCF}")
+list(APPEND CMAKE_ARGS "-DCMAKE_INSTALL_PREFIX=${INSTALL_DIR}")
 
 # Features.
 # TODO: Enable ZSTD support? We currently only use cURL for zsync2, so, obviously, not necessary right now…
@@ -51,7 +52,9 @@ set_libname(LIB ${LIB_SPEC})
 # Install shared lib.
 append_shared_lib_install_command(INSTALL_CMD BYPRODUCTS lib/${LIB} ${LIB_SPEC})
 
-# For pocketbook, add a symlink so dependent packages find our renamed version.
+# Even with after installing a patched pkg-config entry, we still need to add a symlink
+# with the canonical library name or the mess that is CMake's FindCURl module will fail
+# at detecting our renamed library…
 if(POCKETBOOK)
     list(APPEND INSTALL_CMD COMMAND ln -snf ${LIB} "${STAGING_DIR}/lib/libcurl${LIB_EXT}")
 endif()
@@ -64,6 +67,9 @@ append_headers_install_command(
     curl.h curlver.h easy.h header.h mprintf.h multi.h options.h
     stdcheaders.h system.h typecheck-gcc.h urlapi.h websockets.h
 )
+
+# Install pkg-config entry (needed for curl components detection by CMake's FindCURl).
+append_install_commands(INSTALL_CMD BYPRODUCTS libcurl.pc DESTINATION "${STAGING_DIR}/lib/pkgconfig/")
 
 thirdparty_project(
     URL https://github.com/curl/curl/releases/download/curl-8_5_0/curl-8.5.0.tar.xz
