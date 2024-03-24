@@ -4,21 +4,21 @@ project(freetype2 LANGUAGES)
 include("koreader_thirdparty_common")
 include("koreader_thirdparty_git")
 
-assert_var_defined(CXX)
-assert_var_defined(CXXFLAGS)
-assert_var_defined(LDFLAGS)
+# Make sure the daisy-chain once again picks up our toolchain file...
+list(APPEND CMAKE_ARGS "-DCMAKE_TOOLCHAIN_FILE=${CMAKE_TCF}")
+list(APPEND CMAKE_ARGS "-DCMAKE_INSTALL_PREFIX=${INSTALL_DIR}")
 
-set(CFG_ENV_VAR "CC=${CC}" "CXX=${CXX}" "CFLAGS=${CFLAGS}" "CXXFLAGS=${CXXFLAGS}" "LDFLAGS=${LDFLAGS}")
-set(CFG_OPTS "--prefix=${INSTALL_DIR}" --disable-static --enable-shared --with-zlib=no --with-bzip2=no --with-brotli=no --with-png=no --with-harfbuzz=no --host=${CHOST})
-list(APPEND CFG_CMD COMMAND env ${CFG_ENV_VAR} "${SOURCE_DIR}/configure" ${CFG_OPTS})
+list(APPEND CMAKE_ARGS "-DBUILD_SHARED_LIBS=TRUE")
+list(APPEND CMAKE_ARGS "-DDISABLE_FORCE_DEBUG_POSTFIX=TRUE")
+list(APPEND CMAKE_ARGS "-DFT_DISABLE_BROTLI=TRUE")
+list(APPEND CMAKE_ARGS "-DFT_DISABLE_BZIP2=TRUE")
+list(APPEND CMAKE_ARGS "-DFT_DISABLE_HARFBUZZ=TRUE")
+list(APPEND CMAKE_ARGS "-DFT_DISABLE_PNG=TRUE")
+list(APPEND CMAKE_ARGS "-DFT_DISABLE_ZLIB=TRUE")
 
-if(ANDROID)
-    list(APPEND CFG_CMD COMMAND ${ANDROID_LIBTOOL_FIX_CMD})
-endif()
+list(APPEND BUILD_CMD COMMAND ${KO_MAKE_PROGRAM})
 
-list(APPEND BUILD_CMD COMMAND ${KO_MAKE_RECURSIVE})
-
-list(APPEND INSTALL_CMD COMMAND ${KO_MAKE_RECURSIVE} install)
+list(APPEND INSTALL_CMD COMMAND ${KO_MAKE_PROGRAM} install)
 
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
@@ -29,8 +29,7 @@ ko_write_gitclone_script(
 
 thirdparty_project(
     DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
-    PATCH_COMMAND ./autogen.sh
-    CONFIGURE_COMMAND ${CFG_CMD}
+    CMAKE_ARGS ${CMAKE_ARGS}
     BUILD_COMMAND ${BUILD_CMD}
     INSTALL_COMMAND ${INSTALL_CMD}
 )
