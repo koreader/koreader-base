@@ -872,8 +872,7 @@ GETTEXT_DIR=$(CURDIR)/$(GETTEXT_BUILD_DIR)/gettext-prefix/src/gettext-build
 LIBGETTEXT=$(GETTEXT_DIR)/lib/libintl.a
 
 SDL2_BUILD_DIR=$(THIRDPARTY_DIR)/sdl2/build/$(MACHINE)
-SDL2_DIR=$(CURDIR)/$(SDL2_BUILD_DIR)/sdl2-build
-SDL2_LIB_ORIG=$(OUTPUT_DIR)/libs/libSDL2-2.0$(if $(KODEBUG),d,)$(LIB_EXT)
+SDL2_DIR=$(CURDIR)/$(SDL2_BUILD_DIR)/sdl2-prefix/src/sdl2-build
 SDL2_LIB=$(OUTPUT_DIR)/libs/libSDL2$(LIB_EXT)
 
 LEPT_LIB_EXT=$(if $(WIN32),-5.dll,$(if $(DARWIN),.5.dylib,.so.5))
