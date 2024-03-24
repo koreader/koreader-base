@@ -28,11 +28,22 @@ elseif(DEFINED ENV{POCKETBOOK})
 endif()
 list(APPEND PATCH_CMD COMMAND autoreconf -fi)
 
-set(CFG_ENV_VAR "CC=${CC}" "CPPFLAGS=${CPPFLAGS} -I${SOURCE_DIR}" "CFLAGS=${CFLAGS}" "LIBS=${LIBS}" "LDFLAGS=${LDFLAGS}")
-set(CFG_OPTS --host=${CHOST} --disable-lastlog --enable-zlib --enable-openpty --enable-shadow --enable-syslog --disable-harden)
-set(CFG_CMD env ${CFG_ENV_VAR} "${SOURCE_DIR}/configure" ${CFG_OPTS})
+list(APPEND CFG_CMD COMMAND env
+    "CC=${CC}"
+    "CPPFLAGS=${CPPFLAGS} -I${SOURCE_DIR}"
+    "CFLAGS=${CFLAGS}"
+    "LIBS=${LIBS}"
+    "LDFLAGS=${LDFLAGS}"
+    "${SOURCE_DIR}/configure" --host=${CHOST}
+    --disable-harden
+    --disable-lastlog
+    --enable-openpty
+    --enable-shadow
+    --enable-syslog
+    --enable-zlib
+)
 
-set(BUILD_CMD ${KO_MAKE_RECURSIVE} strip PROGRAMS=dropbear)
+list(APPEND BUILD_CMD COMMAND ${KO_MAKE_RECURSIVE} strip PROGRAMS=dropbear)
 
 set(DROPBEAR_VER "2018.76")
 
