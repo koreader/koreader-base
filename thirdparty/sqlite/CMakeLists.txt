@@ -23,6 +23,10 @@ list(APPEND BUILD_CMD COMMAND ${KO_MAKE_RECURSIVE} libsqlite3.la)
 set(LIB_SPEC sqlite3)
 set_libname(LIB ${LIB_SPEC})
 
+if(DARWIN)
+    list(APPEND BUILD_CMD COMMAND install_name_tool -id "@rpath/${LIB}" ".libs/${LIB}")
+endif()
+
 # Install shared lib.
 append_shared_lib_install_command(INSTALL_CMD BYPRODUCTS .libs/${LIB} ${LIB_SPEC})
 
