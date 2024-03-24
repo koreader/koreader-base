@@ -4,36 +4,18 @@ project(libk2pdfopt LANGUAGES)
 include("koreader_thirdparty_common")
 include("koreader_thirdparty_git")
 
-# Build in source tree.
-set(BINARY_DIR "${SOURCE_DIR}")
-
-list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/slightly-less-fuglyness.patch)
+list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/fix_willuslib_platform_checks.patch)
 list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/reproducible-builds.patch)
+list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/slightly-less-fuglyness.patch)
+list(APPEND PATCH_CMD COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/build.cmake CMakeLists.txt)
 list(APPEND PATCH_CMD COMMAND mv tesseract_mod/tesscapi.cpp tesscapi.cpp)
 list(APPEND PATCH_CMD COMMAND mv include_mod/tesseract.h tesseract.h)
 list(APPEND PATCH_CMD COMMAND sh -c "printf '#pragma once\\n#include <allheaders.h>' >leptonica.h")
 
-if (DARWIN)
-    #fix build error due to implicit declarations of function being invalid in C99 under macOS/XCode 12
-    set(CFLAGS "${CFLAGS} -Wno-error=implicit-function-declaration")
-endif()
+# Make sure the daisy-chain once again picks up our toolchain file...
+list(APPEND CMAKE_ARGS "-DCMAKE_TOOLCHAIN_FILE=${CMAKE_TCF}")
 
-set(CPPFLAGS "-I${STAGING_DIR}/include/leptonica -I${STAGING_DIR}/include/tesseract -I.")
-set(CFLAGS "${CFLAGS} ${CPPFLAGS}")
-set(CXXFLAGS "${CXXFLAGS} ${CPPFLAGS}")
-
-list(APPEND BUILD_CMD COMMAND ${KO_MAKE_RECURSIVE})
-append_autotools_vars(BUILD_CMD)
-list(APPEND BUILD_CMD
-    "ANDROID=${ANDROID}"
-    "BUILDMODE=shared"
-    "DARWIN=${DARWIN}"
-    "LEPTONICA_LIB=${STAGING_DIR}/lib/liblept${LIB_EXT}"
-    "MOD_INC=."
-    "TESSCAPI_CFLAGS="
-    "TESSERACT_LIB=${STAGING_DIR}/lib/libtesseract${LIB_EXT}"
-    "TESSERACT_MOD=."
-    all)
+list(APPEND BUILD_CMD COMMAND ${KO_MAKE_PROGRAM})
 
 list(APPEND INSTALL_CMD COMMAND mkdir -p "${INSTALL_DIR}/include/k2pdfopt" "${INSTALL_DIR}/lib")
 list(APPEND INSTALL_CMD COMMAND sh -c "cd \"$1\" && shift && cp \"$@\"" -- "${SOURCE_DIR}"
@@ -53,6 +35,7 @@ ko_write_gitclone_script(
 thirdparty_project(
     DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
     PATCH_COMMAND ${PATCH_CMD}
+    CMAKE_ARGS ${CMAKE_ARGS}
     BUILD_COMMAND ${BUILD_CMD}
     INSTALL_COMMAND ${INSTALL_CMD}
 )
