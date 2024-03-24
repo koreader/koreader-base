@@ -6,7 +6,6 @@ include("koreader_thirdparty_git")
 
 assert_var_defined(CC)
 assert_var_defined(CXX)
-assert_var_defined(CPPFLAGS)
 assert_var_defined(LDFLAGS)
 
 list(APPEND PATCH_CMD COMMAND ./autogen.sh)
