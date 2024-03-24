@@ -22,7 +22,7 @@ jobs:
           filter: tree:0
           show-progress: false
 
-      - uses: actions/setup-python@v4
+      - uses: actions/setup-python@v5
         with:
           # Note: Python 3.12 removal of `distutils` breaks GLib's build.
           python-version: '3.11'
@@ -33,7 +33,7 @@ jobs:
 
       - name: Build cache restore
         id: build-cache-restore
-        uses: actions/cache/restore@v3
+        uses: actions/cache/restore@v4
         with:
           path: /Users/runner/Library/Caches/ccache
           key: ${{ runner.os }}-build-cache-${{ github.sha }}
@@ -65,7 +65,7 @@ jobs:
           ccache --show-stats --verbose
 
       - name: Build cache save
-        uses: actions/cache/save@v3
+        uses: actions/cache/save@v4
         if: always() && steps.build-cache-restore.outputs.cache-hit != 'true'
         with:
           path: /Users/runner/Library/Caches/ccache
