@@ -6,13 +6,12 @@ list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/sdcv-local
 # Make sure the daisy-chain once again picks up our toolchain file...
 list(APPEND CMAKE_ARGS "-DCMAKE_TOOLCHAIN_FILE=${CMAKE_TCF}")
 
-string(APPEND GLIB2_LIBRARIES
-    "${STAGING_DIR}/lib/libglib-2.0.a"
-    $<SEMICOLON>
-    "${STAGING_DIR}/lib/libintl.a"
-)
+set(GLIB2_LIBRARIES "${STAGING_DIR}/lib/libglib-2.0.a")
 if(ANDROID OR DARWIN)
-    string(APPEND GLIB2_LIBRARIES $<SEMICOLON> "${STAGING_DIR}/lib/libiconv.a")
+    string(APPEND GLIB2_LIBRARIES
+        $<SEMICOLON> "${STAGING_DIR}/lib/libiconv.a"
+        $<SEMICOLON> "${STAGING_DIR}/lib/libintl.a"
+    )
 endif()
 if(DARWIN)
     string(APPEND GLIB2_LIBRARIES

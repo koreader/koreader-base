@@ -137,9 +137,9 @@ declare_project(gettext DEPENDS ${DEPENDS} EXCLUDE_FROM_ALL)
 declare_project(giflib)
 
 # glib
-set(DEPENDS gettext)
+set(DEPENDS)
 if(ANDROID OR DARWIN)
-    list(APPEND DEPENDS libiconv)
+    list(APPEND DEPENDS gettext libiconv)
 endif()
 declare_project(glib DEPENDS ${DEPENDS} EXCLUDE_FROM_ALL)
 
