@@ -1,3 +1,4 @@
+list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/macos_rpath.patch)
 list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/reduce_build_verbosity.patch)
 
 # FIXME: Orphaned, MINGW is never set anywhere
