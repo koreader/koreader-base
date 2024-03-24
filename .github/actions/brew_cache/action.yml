@@ -1,0 +1,89 @@
+inputs:
+
+  packages:
+    required: true
+
+  # Internal.
+
+  cache_epoch:
+    default: '1' # increment to reset cache
+
+  shell:
+    default: bash --noprofile --norc -e {0}
+
+runs:
+
+  using: "composite"
+
+  steps:
+
+    - shell: ${{ inputs.shell }}
+      run: |
+        # Setup working directory.
+        export BREW_CACHE_DIR="$PWD/brew_cache"
+        mkdir "$BREW_CACHE_DIR"
+        cd "$BREW_CACHE_DIR"
+        # Silence deprecation warning…
+        export HOMEBREW_DEVELOPER=1
+        # List of packages we want to install.
+        packages=(${{ inputs.packages }})
+        # Expand list to include dependencies and ignore already installed packages.
+        env HOMEBREW_NO_COLOR=1 brew install --build-bottle --dry-run --formula --quiet "${packages[@]}" >solution
+        echo 'solution:'; cat solution
+        sed -i '' -e '/^==>/d' solution
+        read -d '' -r -a packages < <(tail -r <solution | xargs -n1) || true
+        echo 'packages:'; printf '%s\n' "${packages[@]}"
+        # Disable auto-updating so things don't change below us.
+        export HOMEBREW_NO_AUTO_UPDATE=1
+        # Convert list of packages into a list of bottle names.
+        brew info --formula --json "${packages[@]}" >info
+        jq -r '.[] | ( .name + "--" + .versions.stable + (if .revision != 0 then "_" + (.revision|tostring) else "" end) + ".big_sur.bottle.tar.gz" )' <info >bottles
+        read -d '' -r -a bottles <bottles || true
+        echo 'bottles:'; printf '%s\n' "${bottles[@]}"
+        # Setup cache key.
+        read BREW_CACHE_KEY < <({ brew --version; cat bottles; } | shasum | cut -d ' ' -f1)
+        # Forward relevant environment variables to next steps.
+        printf '%s\n' \
+          "BREW_CACHE_DIR=$BREW_CACHE_DIR" \
+          "BREW_CACHE_KEY=$BREW_CACHE_KEY" \
+          "HOMEBREW_DEVELOPER=$HOMEBREW_DEVELOPER" \
+          "HOMEBREW_NO_AUTO_UPDATE=${HOMEBREW_NO_AUTO_UPDATE}" \
+          >>"$GITHUB_ENV"
+
+    - id: cache-restore
+      uses: actions/cache/restore@v4
+      with:
+        path: ${{ env.BREW_CACHE_DIR }}/cache
+        key: ${{ inputs.cache_epoch }}-${{ runner.os }}-brew-cache-${{ env.BREW_CACHE_KEY }}
+        restore-keys: |
+          ${{ inputs.cache_epoch }}-${{ runner.os }}-brew-cache-
+
+    - shell: ${{ inputs.shell }}
+      run: |
+        cd "$BREW_CACHE_DIR"
+        read -d '' -r -a bottles <bottles || true
+        if [[ -d cache ]]; then
+          mv cache old
+        fi
+        mkdir cache
+        # Install each bottle, building it first if missing.
+        for b in "${bottles[@]}"; do
+          if [[ -r "old/$b" ]]; then
+            mv "old/$b" cache/
+            brew install "cache/$b"
+            continue
+          fi
+          p="${b%--*}"
+          brew install --build-bottle "$p"
+          brew postinstall "$p"
+          brew bottle --no-rebuild "$p"
+          mv "$b" cache/
+        done
+
+    - uses: actions/cache/save@v4
+      if: steps.cache-restore.outputs.cache-hit != 'true'
+      with:
+        path: ${{ env.BREW_CACHE_DIR }}/cache
+        key: ${{ steps.cache-restore.outputs.cache-primary-key }}
+
+# vim: foldmethod=marker ft=bash
