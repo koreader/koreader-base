@@ -25,7 +25,7 @@ set(LUA_HTMLPARSER_ROCKSPEC rockspecs/htmlparser-${LUA_HTMLPARSER_VER}.rockspec)
 set(ROCKS_CMD ${LUAROCKS})
 separate_arguments(ROCKS_CMD)
 
-set(BUILD_CMD ${ROCKS_CMD} make --tree=${OUTPUT_DIR}/rocks ${LUA_HTMLPARSER_ROCKSPEC})
+set(BUILD_CMD ${ROCKS_CMD} make --deps-mode=none --tree=${OUTPUT_DIR}/rocks ${LUA_HTMLPARSER_ROCKSPEC})
 set(BUILD_CMD ${BUILD_CMD} "CC=${CC}" "CFLAGS=${CFLAGS}" "LD=${LD}")
 set(BUILD_CMD ${BUILD_CMD} "LUA_INCDIR=${LUA_INCDIR}" "LUA_LIBDIR=${LUA_LIBDIR}")
 
