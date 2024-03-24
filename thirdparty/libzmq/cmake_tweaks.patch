@@ -1,5 +1,13 @@
 --- i/CMakeLists.txt
 +++ w/CMakeLists.txt
+@@ -1,6 +1,6 @@
+ # CMake build script for ZeroMQ
+ 
+-cmake_minimum_required(VERSION 2.8)
++cmake_minimum_required(VERSION 3.15)
+ project(ZeroMQ)
+ 
+ option(WITH_OPENPGM "Build with support for OpenPGM" OFF)
 @@ -266,10 +266,6 @@ elseif(CMAKE_SYSTEM_NAME MATCHES "Darwin")
    add_definitions(-D_DARWIN_C_SOURCE)
  endif()
