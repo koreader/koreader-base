@@ -17,7 +17,7 @@ set(CFG_OPTS --host=${CHOST} --without-hardening --without-stackprotect --disabl
 set(CFG_CMD ${CFG_ENV_VAR} "${SOURCE_DIR}/configure" ${CFG_OPTS})
 set(CFG_CMD env ${CFG_CMD})
 
-set(BUILD_CMD ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS} sftp-server scp)
+set(BUILD_CMD ${KO_MAKE_RECURSIVE} sftp-server scp)
 
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME

@@ -25,7 +25,7 @@ set(CFG_ENV_VAR ${CFG_ENV_VAR} "CC=${CC}" "CFLAGS=${CFLAGS}" "LDFLAGS=${LDFLAGS}
 set(CFG_OPTS ${CFG_OPTS} --prefix=${INSTALL_DIR})
 set(CFG_CMD env ${CFG_ENV_VAR} ${SOURCE_DIR}/configure ${CFG_OPTS})
 # build
-set(BUILD_CMD ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS} shared static)
+set(BUILD_CMD ${KO_MAKE_RECURSIVE} shared static)
 
 # install
 list(APPEND INSTALL_CMD COMMAND ${KO_MAKE_RECURSIVE} install)

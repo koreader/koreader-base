@@ -1,5 +1,9 @@
 include Makefile.defs
 
+# Since top-level rules' dependencies are not
+# properly declared, disable parallelisation.
+.NOTPARALLEL:
+
 DO_STRIP := $(if $(or $(EMULATE_READER),$(KODEBUG)),,1)
 DO_STRIP := $(if $(or $(DO_STRIP),$(APPIMAGE),$(DEBIAN)),1,)
 

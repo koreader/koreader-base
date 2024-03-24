@@ -51,6 +51,10 @@ set(CFG_OPTS ${CFG_OPTS} --enable-static=true --enable-shared=false)
 set(CFG_OPTS ${CFG_OPTS} --host=${CHOST} ${HOST_OPTS})
 list(APPEND CFG_CMD COMMAND env ${CFG_ENV_VAR} "${SOURCE_DIR}/configure" ${CFG_OPTS})
 
+list(APPEND BUILD_CMD COMMAND ${KO_MAKE_RECURSIVE} -C glib)
+
+list(APPEND INSTALL_CMD COMMAND ${KO_MAKE_RECURSIVE} -C glib install)
+
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
     https://github.com/GNOME/glib.git
@@ -62,6 +66,6 @@ thirdparty_project(
     DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
     PATCH_COMMAND ${PATCH_CMD}
     CONFIGURE_COMMAND ${CFG_CMD}
-    BUILD_COMMAND ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS} -C glib
-    INSTALL_COMMAND ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS} -C glib install
+    BUILD_COMMAND ${BUILD_CMD}
+    INSTALL_COMMAND ${INSTALL_CMD}
 )

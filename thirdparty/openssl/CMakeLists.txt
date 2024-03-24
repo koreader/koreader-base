@@ -89,7 +89,7 @@ else()
 endif()
 # NOTE: Make depend may fail when using ccache, and may fail when // (on some OpenSSL versions, at least)
 list(APPEND BUILD_CMD COMMAND ${MAKE_CMD} -j1 depend)
-list(APPEND BUILD_CMD COMMAND ${MAKE_CMD} -j${PARALLEL_JOBS} build_libs)
+list(APPEND BUILD_CMD COMMAND ${MAKE_CMD} build_libs)
 
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME

@@ -48,6 +48,8 @@ list(APPEND CMAKE_ARGS "-DOPENSSL_SSL_LIBRARY=${SSL_LIB}")
 # so CMake needs a push to look for both SSL & Cyrpto components...
 #list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/mangle-cpr-openssl-search.patch)
 
+list(APPEND BUILD_CMD COMMAND ${KO_MAKE_RECURSIVE})
+
 # NOTE: We're currently using our own fork instead of upstream's (https://github.com/AppImage/zsync2):
 ## * Enable range requests optimizations on the CLI
 ## * Re-implement the -u flag for compatibility w/ the old zsync CLI
@@ -74,5 +76,5 @@ thirdparty_project(
     PATCH_COMMAND ${PATCH_CMD}
     CMAKE_ARGS ${CMAKE_ARGS}
     CMAKE_GENERATOR "Unix Makefiles"
-    BUILD_COMMAND ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS}
+    BUILD_COMMAND ${BUILD_CMD}
 )

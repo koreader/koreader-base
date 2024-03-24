@@ -31,6 +31,10 @@ if(NOT DEFINED ENV{DARWIN})
     list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/czmq_default_source_define.patch)
 endif()
 
+list(APPEND BUILD_CMD COMMAND ${KO_MAKE_RECURSIVE})
+
+list(APPEND INSTALL_CMD COMMAND ${KO_MAKE_RECURSIVE} -j1 installdirs uninstall install)
+
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
     https://github.com/zeromq/czmq.git
@@ -42,6 +46,6 @@ thirdparty_project(
     DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
     PATCH_COMMAND ${PATCH_CMD}
     CONFIGURE_COMMAND ${CFG_CMD}
-    BUILD_COMMAND ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS}
-    INSTALL_COMMAND ${KO_MAKE_RECURSIVE} installdirs uninstall install
+    BUILD_COMMAND ${BUILD_CMD}
+    INSTALL_COMMAND ${INSTALL_CMD}
 )

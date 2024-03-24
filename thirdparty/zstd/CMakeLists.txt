@@ -16,8 +16,8 @@ set(BINARY_DIR "${SOURCE_DIR}")
 # This a pure Makefile buildsystem, don't enforce CFLAGS via command line args, the buildsystem needs to be able to modify it.
 set(BUILD_ENV "CFLAGS=${CFLAGS}" "LDFLAGS=${LDFLAGS}")
 
-set(BUILD_CMD env ${BUILD_ENV} ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS} V=1 "CC=${CC}" "CXX=${CXX}" "AR=${AR}" lib-release)
-set(INSTALL_CMD env ${BUILD_ENV} ${KO_MAKE_RECURSIVE} -C lib -j${PARALLEL_JOBS} V=1 "CC=${CC}" "CXX=${CXX}" "AR=${AR}" "prefix=${INSTALL_DIR}" install)
+set(BUILD_CMD env ${BUILD_ENV} ${KO_MAKE_RECURSIVE} V=1 "CC=${CC}" "CXX=${CXX}" "AR=${AR}" lib-release)
+set(INSTALL_CMD env ${BUILD_ENV} ${KO_MAKE_RECURSIVE} -C lib V=1 "CC=${CC}" "CXX=${CXX}" "AR=${AR}" "prefix=${INSTALL_DIR}" install)
 
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME

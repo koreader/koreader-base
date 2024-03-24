@@ -43,6 +43,8 @@ if(DEFINED ENV{ANDROID})
     list(APPEND CFG_CMD COMMAND ${ISED} "s|SUBDIRS = libdjvu tools share \\$(am__append_1) \\$(am__append_2)|SUBDIRS = libdjvu share \\$(am__append_1) \\$(am__append_2)|g" Makefile)
 endif()
 
+list(APPEND BUILD_CMD COMMAND ${KO_MAKE_RECURSIVE} SUBDIRS_FIRST=libdjvu)
+
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
     https://gitlab.com/koreader/djvulibre.git
@@ -54,5 +56,5 @@ thirdparty_project(
     DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
     PATCH_COMMAND ${PATCH_CMD}
     CONFIGURE_COMMAND ${CFG_CMD}
-    BUILD_COMMAND ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS} SUBDIRS_FIRST=libdjvu
+    BUILD_COMMAND ${BUILD_CMD}
 )

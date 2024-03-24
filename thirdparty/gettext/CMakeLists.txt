@@ -22,6 +22,10 @@ if(DEFINED ENV{ANDROID})
     list(APPEND CFG_CMD COMMAND ${ISED} "s/^\\(subdirs\\|SUBDIRS\\)\\( = .*\\) gettext-tools$/\\1\\2/" Makefile)
 endif()
 
+list(APPEND BUILD_CMD COMMAND ${KO_MAKE_RECURSIVE} -C intl)
+
+list(APPEND INSTALL_CMD COMMAND ${KO_MAKE_RECURSIVE} -C intl install)
+
 set(GETTEXT_VER "0.21")
 
 thirdparty_project(
@@ -30,6 +34,6 @@ thirdparty_project(
     URL_MD5 28b1cd4c94a74428723ed966c38cf479
     PATCH_COMMAND ${PATCH_CMD}
     CONFIGURE_COMMAND ${CFG_CMD}
-    BUILD_COMMAND ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS} -C intl
-    INSTALL_COMMAND ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS} -C intl install
+    BUILD_COMMAND ${BUILD_CMD}
+    INSTALL_COMMAND ${INSTALL_CMD}
 )

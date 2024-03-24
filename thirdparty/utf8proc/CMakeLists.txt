@@ -7,6 +7,8 @@ include("koreader_thirdparty_git")
 assert_var_defined(CC)
 assert_var_defined(LDFLAGS)
 
+list(APPEND BUILD_CMD COMMAND ${KO_MAKE_RECURSIVE})
+
 # Build in source tree.
 set(BINARY_DIR "${SOURCE_DIR}")
 
@@ -19,5 +21,5 @@ ko_write_gitclone_script(
 
 thirdparty_project(
     DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
-    BUILD_COMMAND ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS}
+    BUILD_COMMAND ${BUILD_CMD}
 )

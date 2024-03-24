@@ -1,39 +1,9 @@
-if(NOT DEFINED PROCESSOR_COUNT)
-    include(ProcessorCount)
-    ProcessorCount(N)
-    # 0 if unknown
-    set(PROCESSOR_COUNT ${N})
-endif()
-
 if (DEFINED ENV{DARWIN})
     # Note: can't use `sed -i "" -e`, because cmake "helpfully"
     # filter-out the empty argument during command invocation…
     set(ISED sh -c "sed -i '' -e \"$@\"" --)
 else()
     set(ISED sed -i -e)
-endif()
-
-if(NOT DEFINED PARALLEL_JOBS)
-    math(EXPR PARALLEL_JOBS "${PROCESSOR_COUNT}+1")
-endif()
-
-if(NOT DEFINED CONSTRAINED_PARALLEL_JOBS)
-    # Default to ${PROCESSOR_COUNT} instead of ${PROCESSOR_COUNT}+1
-    set(CONSTRAINED_PARALLEL_JOBS ${PROCESSOR_COUNT})
-
-    # Some compilations (like harfbuzz) are known to OOM on memory-constrained CI.
-    if(DEFINED ENV{CIRCLECI})
-        set(CONSTRAINED_PARALLEL_JOBS 1)
-    endif()
-endif()
-
-# $(MAKE) is for recursive make invocations, but evidently when using another
-# generator there's no recursion. For us that other generator is ninja, but
-# maybe one day also Visual Studio or Xcode…
-if(CMAKE_GENERATOR MATCHES Makefiles)
-    set(KO_MAKE_RECURSIVE "$(MAKE)")
-else()
-    set(KO_MAKE_RECURSIVE make)
 endif()
 
 macro(assert_var_defined varName)
