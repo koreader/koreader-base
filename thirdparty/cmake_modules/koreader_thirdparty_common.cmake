@@ -225,6 +225,10 @@ include(ExternalProject)
 if(POLICY CMP0114)
     cmake_policy(SET CMP0114 NEW)
 endif()
+# Transform paths in depfiles to be absolute.
+if(POLICY CMP0116)
+    cmake_policy(SET CMP0116 NEW)
+endif()
 # When extracting an archive, preserve the timestamps (old behavior):
 # new behavior set the timestamps to the time of extraction instead,
 # which can break some builds (e.g. gettext: autotools fails to
@@ -359,6 +363,27 @@ function(thirdparty_project)
     ExternalProject_Add(${PARAMS} ${_UNPARSED_ARGUMENTS})
     # Build dependencies.
     set(BUILD_DEPS "${${PROJECT_NAME}_BUILD_DEPENDS}")
+    if(CMAKE_GENERATOR MATCHES "^Ninja" OR CMAKE_VERSION VERSION_GREATER_EQUAL "3.20")
+        set(SOURCE_D "${CMAKE_CURRENT_BINARY_DIR}/source.d")
+        list(APPEND BUILD_DEPS "${SOURCE_D}")
+        if(POLICY CMP0116)
+            set(SOURCE_D_TARGET source.d)
+            set(SOURCE_D_DIR source)
+            set(SOURCE_D_CWD "${CMAKE_CURRENT_BINARY_DIR}")
+        else()
+            file(RELATIVE_PATH SOURCE_D_TARGET "${CMAKE_BINARY_DIR}" "${CMAKE_CURRENT_BINARY_DIR}/source.d")
+            file(RELATIVE_PATH SOURCE_D_DIR "${CMAKE_BINARY_DIR}" "${SOURCE_DIR}")
+            set(SOURCE_D_CWD "${CMAKE_BINARY_DIR}")
+        endif()
+        add_custom_command(
+            COMMAND "${THIRDPARTY_DIR}/cmake_modules/mk-source-deps.sh" "${SOURCE_D}" "${SOURCE_D_TARGET}" "${SOURCE_D_DIR}"
+            DEPENDS ${PROJECT_NAME}-configure
+            DEPFILE "${SOURCE_D}"
+            OUTPUT "${SOURCE_D}"
+            VERBATIM
+            WORKING_DIRECTORY "${SOURCE_D_CWD}"
+        )
+    endif()
     ExternalProject_Add_Step(${PROJECT_NAME} build_deps
         COMMENT "Completed build dependencies for '${PROJECT_NAME}'"
         DEPENDERS build
