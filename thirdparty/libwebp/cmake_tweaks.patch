@@ -1,0 +1,35 @@
+--- i/cmake/deps.cmake
++++ w/cmake/deps.cmake
+@@ -52,20 +52,8 @@ endif()
+ set(LT_OBJDIR ".libs/")
+ 
+ # Only useful for vwebp, so useless for now.
+-find_package(OpenGL)
+-set(WEBP_HAVE_GL ${OPENGL_FOUND})
+-
+-# Check if we need to link to the C math library. We do not look for it as it is
+-# not found when cross-compiling, while it is here.
+-check_c_source_compiles(
+-  "
+-    #include <math.h>
+-    int main(int argc, char** argv) {
+-      return (int)pow(argc, 2.5);
+-    }
+-  "
+-  HAVE_MATH_LIBRARY)
+-if(NOT HAVE_MATH_LIBRARY)
++check_library_exists(m floor "" HAVE_MATH_LIBRARY)
++if(HAVE_MATH_LIBRARY)
+   message(STATUS "Adding -lm flag.")
+   list(APPEND SHARPYUV_DEP_LIBRARIES m)
+   list(APPEND WEBP_DEP_LIBRARIES m)
+@@ -128,9 +116,6 @@ endif()
+ 
+ # Check for specific headers.
+ include(CheckIncludeFiles)
+-check_include_files(GLUT/glut.h HAVE_GLUT_GLUT_H)
+-check_include_files(GL/glut.h HAVE_GL_GLUT_H)
+-check_include_files(OpenGL/glut.h HAVE_OPENGL_GLUT_H)
+ check_include_files(shlwapi.h HAVE_SHLWAPI_H)
+ check_include_files(unistd.h HAVE_UNISTD_H)
+ check_include_files(wincodec.h HAVE_WINCODEC_H)
