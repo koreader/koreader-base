@@ -89,7 +89,7 @@ jobs:
           PROCS="$(getconf _NPROCESSORS_ONLN)"
           export PARALLEL_JOBS="$((PROCS + (PROCS + 1) / 2))"
           export PARALLEL_LOAD="${PROCS}"
-          make fetchthirdparty && make
+          make fetchthirdparty && make VERBOSE=1
 
       - name: Build cache pre-save
         if: always()
