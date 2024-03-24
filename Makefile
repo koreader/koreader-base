@@ -50,7 +50,7 @@ fetchthirdparty:
 
 # CMake build interface. {{{
 
-$(BUILD_ENTRYPOINT): $(CMAKE_KO) $(CMAKE_TCF)
+$(BUILD_ENTRYPOINT): $(CMAKE_KO) $(CMAKE_TCF) $(MESON_CROSS_TOOLCHAIN) $(MESON_HOST_TOOLCHAIN)
 	$(CMAKE) $(CMAKE_FLAGS) -S . -B $(CMAKE_DIR)
 
 define newline
@@ -67,6 +67,9 @@ $(CMAKE_KO): Makefile.defs | $(CMAKE_DIR)/
 
 $(CMAKE_TCF): Makefile.defs | $(CMAKE_DIR)/
 	@printf '%s\n' $(call escape,$(if $(EMULATE_READER),cmake_toolchain,cmake_cross_toolchain)) >'$@'
+
+$(CMAKE_DIR)/meson_%.ini: Makefile.defs | $(CMAKE_DIR)/
+	@printf '%s\n' $(call escape,meson_$*) >'$@'
 
 # Forward unknown targets to the CMake build system.
 LEFTOVERS = $(filter-out $(PHONY) build/%,$(MAKECMDGOALS))

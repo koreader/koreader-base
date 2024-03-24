@@ -1,3 +1,12 @@
+set(MESON_SETUP
+    meson setup ${MESON_TOOLCHAINS}
+    --auto-features=disabled
+    --bindir=
+    --libdir=lib
+    --prefix=${STAGING_DIR}
+    --wrap-mode=nodownload
+)
+
 if (DARWIN)
     # Note: can't use `sed -i "" -e`, because cmake "helpfully"
     # filter-out the empty argument during command invocation…
