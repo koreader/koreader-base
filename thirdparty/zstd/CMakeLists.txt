@@ -4,20 +4,17 @@ project(zstd LANGUAGES)
 include("koreader_thirdparty_common")
 include("koreader_thirdparty_git")
 
-assert_var_defined(CC)
-assert_var_defined(CXX)
-assert_var_defined(AR)
-assert_var_defined(CFLAGS)
-assert_var_defined(LDFLAGS)
+# Make sure the daisy-chain once again picks up our toolchain file...
+list(APPEND CMAKE_ARGS "-DCMAKE_TOOLCHAIN_FILE=${CMAKE_TCF}")
+list(APPEND CMAKE_ARGS "-DCMAKE_INSTALL_PREFIX=${INSTALL_DIR}")
 
-# Build in source tree.
-set(BINARY_DIR "${SOURCE_DIR}")
+list(APPEND CMAKE_ARGS "-DZSTD_BUILD_PROGRAMS=FALSE")
+list(APPEND CMAKE_ARGS "-DZSTD_BUILD_SHARED=TRUE")
+list(APPEND CMAKE_ARGS "-DZSTD_BUILD_STATIC=FALSE")
 
-# This a pure Makefile buildsystem, don't enforce CFLAGS via command line args, the buildsystem needs to be able to modify it.
-set(BUILD_ENV "CFLAGS=${CFLAGS}" "LDFLAGS=${LDFLAGS}")
+list(APPEND BUILD_CMD COMMAND ${KO_MAKE_PROGRAM})
 
-set(BUILD_CMD env ${BUILD_ENV} ${KO_MAKE_RECURSIVE} V=1 "CC=${CC}" "CXX=${CXX}" "AR=${AR}" lib-release)
-set(INSTALL_CMD env ${BUILD_ENV} ${KO_MAKE_RECURSIVE} -C lib V=1 "CC=${CC}" "CXX=${CXX}" "AR=${AR}" "prefix=${INSTALL_DIR}" install)
+list(APPEND INSTALL_CMD COMMAND ${KO_MAKE_PROGRAM} install)
 
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
@@ -28,6 +25,8 @@ ko_write_gitclone_script(
 
 thirdparty_project(
     DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
-    BUILD_COMMAND COMMAND ${BUILD_CMD}
-    INSTALL_COMMAND COMMAND ${INSTALL_CMD}
+    SOURCE_SUBDIR "build/cmake"
+    CMAKE_ARGS "${CMAKE_ARGS}"
+    BUILD_COMMAND ${BUILD_CMD}
+    INSTALL_COMMAND ${INSTALL_CMD}
 )
