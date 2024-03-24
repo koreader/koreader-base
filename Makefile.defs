@@ -975,6 +975,8 @@ endif
 # Native & cross definitions.
 define cmake_toolchain
 
+list(INSERT CMAKE_MODULE_PATH 0 "$(abspath $(THIRDPARTY_DIR)/cmake_modules)")
+
 # CMake Cross ToolChain config file. Adapted from Debian's dpkg-cross ;).
 # c.f., https://cmake.org/cmake/help/latest/manual/cmake-toolchains.7.html#cross-compiling-toolchain
 # NOTE: Remember that CMake is a special snowflake that completely *ignores* CPPFLAGS,
@@ -1090,8 +1092,6 @@ set(KO_MAKE_RECURSIVE "$(MAKE)" $(if $(PARALLEL_JOBS),"-j$(PARALLEL_JOBS)") $(if
 set(KO_MAKE_RECURSIVE sh -c "exec \"$$0\" \$${PARALLEL_JOBS:+-j}\$${PARALLEL_JOBS}  \$${PARALLEL_LOAD:+-l}\$${PARALLEL_LOAD} \"$$@\"" "$(MAKE)")
 set(KO_NINJA_RECURSIVE sh -c "exec \"$$0\" \$${NINJAFLAGS} \"$$@\"" "$(NINJA)")
 set(KO_MAKE_PROGRAM $(if $(USE_NINJA),$${KO_NINJA_RECURSIVE},$${KO_MAKE_RECURSIVE}))
-
-list(INSERT CMAKE_MODULE_PATH 0 "$${THIRDPARTY_DIR}/cmake_modules")
 
 # Convenience autotools-like variables.
 set(CC             "$(strip $(CC))")

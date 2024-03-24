@@ -9,10 +9,12 @@
  
  # In-source builds are disabled.
  if (${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_BINARY_DIR})
-@@ -46,16 +46,6 @@ set(VERSION_PLAIN ${VERSION_MAJOR}.${VERSION_MINOR})
+@@ -44,17 +44,7 @@ set(VERSION_MAJOR 3)
+ set(VERSION_MINOR 05)
+ set(VERSION_PLAIN ${VERSION_MAJOR}.${VERSION_MINOR})
  
- set(MINIMUM_LEPTONICA_VERSION 1.71)
- 
+-set(MINIMUM_LEPTONICA_VERSION 1.71)
+-
 -if (NOT Leptonica_DIR AND NOT MSVC)
 -find_package(PkgConfig REQUIRED)
 -pkg_check_modules(Leptonica REQUIRED lept)
@@ -22,10 +24,10 @@
 -
 -find_package(OpenCL QUIET)
 -find_package(PkgConfig)
--
++find_package(Leptonica REQUIRED)
+ 
  ###############################################################################
  #
- # compiler and linker
 @@ -84,7 +74,11 @@ endif()
  if (UNIX)
      set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --std=c++11")

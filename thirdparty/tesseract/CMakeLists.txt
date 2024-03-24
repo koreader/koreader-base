@@ -13,9 +13,6 @@ if(ANDROID)
     list(APPEND CMAKE_ARGS "-DANDROID=TRUE")
 endif()
 
-list(APPEND CMAKE_ARGS "-DLeptonica_INCLUDE_DIRS=${STAGING_DIR}/include/leptonica")
-list(APPEND CMAKE_ARGS "-DLeptonica_LIBRARIES=${STAGING_DIR}/lib/liblept${LIB_EXT}")
-
 list(APPEND BUILD_CMD COMMAND ${KO_MAKE_PROGRAM})
 
 list(APPEND BUILD_CMD COMMAND mkdir -p "${INSTALL_DIR}/include/tesseract" "${INSTALL_DIR}/lib")
