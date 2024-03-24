@@ -333,7 +333,7 @@ endif
 # libiconv for glib on android
 $(LIBICONV): $(THIRDPARTY_DIR)/libiconv/*.*
 	$(CMAKE) $(CMAKE_FLAGS) \
-		-DHOST='$(if $(EMULATE_READER),,$(if $(ANDROID),arm-linux,$(CHOST)))' \
+		-DHOST='$(if $(EMULATE_READER),,$(CHOST))' \
 		-DCC='$(CC)' \
 		-DLD='$(LD)' \
 		-DAR='$(AR)' \
@@ -344,7 +344,7 @@ $(LIBICONV): $(THIRDPARTY_DIR)/libiconv/*.*
 # libgettext for glib on android & macOS
 $(LIBGETTEXT): $(LIBICONV) $(THIRDPARTY_DIR)/gettext/*.*
 	$(CMAKE) $(CMAKE_FLAGS) \
-		-DCHOST_OPTS='$(if $(EMULATE_READER),,--host=$(if $(ANDROID),arm-linux,$(CHOST)))' \
+		-DCHOST_OPTS='$(if $(EMULATE_READER),,--host=$(CHOST))' \
 		-DCC='$(CC)' \
 		-DAR='$(AR)' \
 		-DRANLIB='$(RANLIB)' \
