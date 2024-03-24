@@ -29,6 +29,10 @@ if(NOT "${CHOST}" STREQUAL "")
     endif()
 endif()
 
+# Fool configure's test for `msgfmt` (we don't
+# need it for building the parts we care about).
+list(APPEND gen_cache_config "ac_cv_path_MSGFMT=/bin/true")
+
 list(APPEND CFG_CMD COMMAND sh -c "printf '%s\\n' \"$@\" >cache.conf" -- ${gen_cache_config})
 
 string(APPEND CPPFLAGS " -I${STAGING_DIR}/include")
