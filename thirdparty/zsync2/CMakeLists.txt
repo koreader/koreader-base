@@ -6,8 +6,6 @@ include("koreader_thirdparty_git")
 
 assert_var_defined(CURL_DIR)
 assert_var_defined(OPENSSL_DIR)
-assert_var_defined(CRYPTO_LIB)
-assert_var_defined(SSL_LIB)
 assert_var_defined(ZLIB_DIR)
 
 # Fix build with old TCs (kindle & pocketbook).
@@ -32,9 +30,7 @@ list(APPEND CMAKE_ARGS "-DBUILD_TESTING=FALSE")
 list(APPEND CMAKE_ARGS "-DCURL_ROOT=${CURL_DIR}")
 list(APPEND CMAKE_ARGS "-DUSE_SYSTEM_CURL=TRUE")
 # OpenSSL.
-list(APPEND CMAKE_ARGS "-DOPENSSL_CRYPTO_LIBRARY=${CRYPTO_LIB}")
-list(APPEND CMAKE_ARGS "-DOPENSSL_INCLUDE_DIR=${OPENSSL_DIR}/include")
-list(APPEND CMAKE_ARGS "-DOPENSSL_SSL_LIBRARY=${SSL_LIB}")
+list(APPEND CMAKE_ARGS "-DOpenSSL_ROOT=${OPENSSL_DIR}")
 # ZLIB.
 list(APPEND CMAKE_ARGS "-DZLIB_ROOT=${ZLIB_DIR}")
 
