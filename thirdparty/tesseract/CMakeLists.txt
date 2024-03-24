@@ -4,9 +4,6 @@ project(tesseract LANGUAGES)
 include("koreader_thirdparty_common")
 include("koreader_thirdparty_git")
 
-assert_var_defined(LEPTONICA_DIR)
-assert_var_defined(LEPTONICA_LIB)
-
 list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake_tweaks.patch)
 
 # Make sure the daisy-chain once again picks up our toolchain file...
@@ -16,8 +13,8 @@ if(ANDROID)
     list(APPEND CMAKE_ARGS "-DANDROID=TRUE")
 endif()
 
-list(APPEND CMAKE_ARGS "-DLeptonica_INCLUDE_DIRS=${LEPTONICA_DIR}/include/leptonica")
-list(APPEND CMAKE_ARGS "-DLeptonica_LIBRARIES=${LEPTONICA_LIB}")
+list(APPEND CMAKE_ARGS "-DLeptonica_INCLUDE_DIRS=${STAGING_DIR}/include/leptonica")
+list(APPEND CMAKE_ARGS "-DLeptonica_LIBRARIES=${STAGING_DIR}/lib/liblept${LIB_EXT}")
 
 list(APPEND BUILD_CMD COMMAND ${KO_MAKE_PROGRAM})
 

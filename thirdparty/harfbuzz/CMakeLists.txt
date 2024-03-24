@@ -4,8 +4,6 @@ project(harfbuzz LANGUAGES)
 include("koreader_thirdparty_common")
 include("koreader_thirdparty_git")
 
-assert_var_defined(FREETYPE_DIR)
-
 list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/soversion.patch)
 
 # Get rid of a bunch of `#line` directives that trip ccache 4.9.1.
@@ -41,9 +39,6 @@ list(APPEND CMAKE_ARGS "-DHB_HAVE_ICU=FALSE")
 if(DARWIN)
     list(APPEND CMAKE_ARGS "-DHB_HAVE_CORETEXT=FALSE")
 endif()
-# Of course, `FindFreetype` does not honor `FREETYPE_ROOT`.
-list(APPEND CMAKE_ARGS "-DFREETYPE_INCLUDE_DIRS=${FREETYPE_DIR}/include/freetype2")
-list(APPEND CMAKE_ARGS "-DFREETYPE_LIBRARY=-L${FREETYPE_DIR}/lib$<SEMICOLON>freetype")
 # Disable Python support.
 list(APPEND CMAKE_ARGS "-DPYTHONINTERP_FOUND=FALSE")
 list(APPEND CMAKE_ARGS "-DPYTHON_EXECUTABLE=")

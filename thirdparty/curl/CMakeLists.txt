@@ -4,9 +4,6 @@ project(curl LANGUAGES)
 include("koreader_thirdparty_common")
 include("koreader_thirdparty_git")
 
-assert_var_defined(OPENSSL_DIR)
-assert_var_defined(ZLIB_DIR)
-
 # Gentoo patchset
 list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/curl-8.5.0-mpd-stream-http-adjust_pollset.patch)
 # NOTE: Because InkView is the worst, we rename our own cURL build on PocketBook.... (#5861)
@@ -42,11 +39,9 @@ list(APPEND CMAKE_ARGS "-DUSE_LIBIDN2=FALSE")
 # OpenSSL.
 list(APPEND CMAKE_ARGS "-DCURL_DEFAULT_SSL_BACKEND=openssl")
 list(APPEND CMAKE_ARGS "-DCURL_USE_OPENSSL=TRUE")
-list(APPEND CMAKE_ARGS "-DOpenSSL_ROOT=${OPENSSL_DIR}")
 
 # ZLIB.
 list(APPEND CMAKE_ARGS "-DCURL_ZLIB=TRUE")
-list(APPEND CMAKE_ARGS "-DZLIB_ROOT=${ZLIB_DIR}")
 
 list(APPEND BUILD_CMD COMMAND ${KO_MAKE_PROGRAM} ca-bundle lib/all)
 

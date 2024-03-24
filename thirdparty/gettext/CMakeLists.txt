@@ -3,10 +3,8 @@ project(gettext LANGUAGES)
 
 include("koreader_thirdparty_common")
 
-assert_var_defined(LIBICONV_DIR)
-
-string(APPEND CPPFLAGS " -I${LIBICONV_DIR}/include")
-string(APPEND LDFLAGS " -L${LIBICONV_DIR}/lib")
+string(APPEND CPPFLAGS " -I${STAGING_DIR}/include")
+string(APPEND LDFLAGS " -L${STAGING_DIR}/lib")
 
 list(APPEND CFG_CMD COMMAND env)
 append_autotools_vars(CFG_CMD)

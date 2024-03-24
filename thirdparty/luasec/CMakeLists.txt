@@ -4,21 +4,16 @@ project(luasec LANGUAGES)
 include("koreader_thirdparty_common")
 include("koreader_thirdparty_git")
 
-assert_var_defined(CRYPTO_LIB)
-assert_var_defined(LUAINC)
-assert_var_defined(LUALIB)
 assert_var_defined(LUAPATH)
-assert_var_defined(OPENSSL_DIR)
-assert_var_defined(SSL_LIB)
 
 # Build in source tree.
 set(BINARY_DIR "${SOURCE_DIR}")
 
-string(APPEND CFLAGS " -DWITH_LUASOCKET -I. -I${LUAINC} -I${OPENSSL_DIR}/include")
+string(APPEND CFLAGS " -DWITH_LUASOCKET -I. -I${STAGING_DIR}/include")
 
-set(LIBS "luasocket/libluasocket.a ${CRYPTO_LIB} ${SSL_LIB}")
-if(LUALIB)
-    string(APPEND LIBS " ${LUALIB}")
+set(LIBS "luasocket/libluasocket.a ${STAGING_DIR}/lib/libcrypto${LIB_EXT} ${STAGING_DIR}/lib/libssl${LIB_EXT}")
+if(USE_LUAJIT_LIB)
+    string(APPEND LIBS " ${STAGING_DIR}/lib/libluajit${LIB_EXT}")
 endif()
 
 set(MAKE_CMD

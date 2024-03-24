@@ -4,9 +4,6 @@ project(glib LANGUAGES)
 include("koreader_thirdparty_common")
 include("koreader_thirdparty_git")
 
-assert_var_defined(GETTEXT_DIR)
-assert_var_defined(LIBICONV_DIR)
-
 # We only care about `libglib-2.0.a`.
 list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/glib-libglib-only.patch)
 
@@ -40,8 +37,8 @@ endif()
 
 list(APPEND CFG_CMD COMMAND sh -c "printf '%s\\n' \"$@\" >cache.conf" -- ${gen_cache_config})
 
-string(APPEND CPPFLAGS " -I${GETTEXT_DIR}/include -I${LIBICONV_DIR}/include")
-string(APPEND LDFLAGS " -L${GETTEXT_DIR}/lib -L${LIBICONV_DIR}/lib")
+string(APPEND CPPFLAGS " -I${STAGING_DIR}/include")
+string(APPEND LDFLAGS " -L${STAGING_DIR}/lib")
 
 list(APPEND CFG_CMD COMMAND env)
 append_autotools_vars(CFG_CMD)

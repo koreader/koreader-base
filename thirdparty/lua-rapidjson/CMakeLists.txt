@@ -4,17 +4,14 @@ project(lua-rapidjson LANGUAGES)
 include("koreader_thirdparty_common")
 include("koreader_thirdparty_git")
 
-assert_var_defined(LUAINC)
-assert_var_defined(LUALIB)
-
 list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake_tweaks.patch)
 
 # Make sure the daisy-chain once again picks up our toolchain file...
 list(APPEND CMAKE_ARGS "-DCMAKE_TOOLCHAIN_FILE=${CMAKE_TCF}")
 
-list(APPEND CMAKE_ARGS "-DLUA_INCLUDE_DIR=${LUAINC}")
-if(LUALIB)
-    list(APPEND CMAKE_ARGS "-DLUA_LIBRARIES=${LUALIB}")
+list(APPEND CMAKE_ARGS "-DLUA_INCLUDE_DIR=${STAGING_DIR}/include")
+if(USE_LUAJIT_LIB)
+    list(APPEND CMAKE_ARGS "-DLUA_LIBRARIES=${STAGING_DIR}/lib/libluajit${LIB_EXT}")
 endif()
 
 list(APPEND BUILD_CMD COMMAND ${KO_MAKE_PROGRAM})

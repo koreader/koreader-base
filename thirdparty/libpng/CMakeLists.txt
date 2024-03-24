@@ -4,8 +4,6 @@ project(libpng LANGUAGES)
 include("koreader_thirdparty_common")
 include("koreader_thirdparty_git")
 
-assert_var_defined(ZLIB_DIR)
-
 list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/math_library.patch)
 
 # Make sure the daisy-chain once again picks up our toolchain file...
@@ -16,7 +14,6 @@ list(APPEND CMAKE_ARGS "-DPNG_DEBUG_POSTFIX=")
 list(APPEND CMAKE_ARGS "-DPNG_TOOLS=FALSE")
 list(APPEND CMAKE_ARGS "-DPNG_STATIC=FALSE")
 list(APPEND CMAKE_ARGS "-DPNG_TESTS=FALSE")
-list(APPEND CMAKE_ARGS "-DZLIB_ROOT=${ZLIB_DIR}")
 
 list(APPEND BUILD_CMD COMMAND ${KO_MAKE_PROGRAM})
 

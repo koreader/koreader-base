@@ -140,7 +140,7 @@ endif
 $(OUTPUT_DIR)/libs/libkoreader-djvu.so: djvu.c \
 			$(if $(USE_LUAJIT_LIB),$(LUAJIT_LIB),) \
 			$(DJVULIBRE_LIB) $(K2PDFOPT_LIB)
-	$(CC) -I$(DJVULIBRE_DIR)/include -I$(MUPDF_DIR)/include $(K2PDFOPT_CFLAGS) \
+	$(CC) -I$(STAGING_DIR)/include $(K2PDFOPT_CFLAGS) \
 		$(DYNLIB_CFLAGS) $(SYMVIS_FLAGS) $(LDFLAGS) -o $@ djvu.c \
 		$(DJVULIBRE_LIB_LINK_FLAG) $(K2PDFOPT_LIB_LINK_FLAG) $(LUAJIT_LIB_LINK_FLAG)
 ifdef DARWIN
@@ -179,10 +179,11 @@ endif
 $(OUTPUT_DIR)/libs/libkoreader-xtext.so: xtext.cpp \
 			$(if $(USE_LUAJIT_LIB),$(LUAJIT_LIB),) \
 			$(FREETYPE_LIB) $(HARFBUZZ_LIB) $(FRIBIDI_LIB) $(LIBUNIBREAK_LIB)
-	$(CXX) -I$(FREETYPE_DIR)/include/freetype2 \
-	-I$(HARFBUZZ_DIR)/include/harfbuzz \
-	-I$(FRIBIDI_DIR)/include/fribidi \
-	-I$(LIBUNIBREAK_DIR)/include \
+	$(CXX) \
+	-I$(STAGING_DIR)/include/freetype2 \
+	-I$(STAGING_DIR)/include/harfbuzz \
+	-I$(STAGING_DIR)/include/fribidi \
+	-I$(STAGING_DIR)/include \
 	$(DYNLIB_CXXFLAGS) $(SYMVIS_FLAGS) $(LDFLAGS) \
 	-Wall -o $@ xtext.cpp \
 	$(FREETYPE_LIB_LINK_FLAG) \
@@ -208,8 +209,7 @@ endif
 $(OUTPUT_DIR)/libs/libkoreader-nnsvg.so: nnsvg.c \
 			$(if $(USE_LUAJIT_LIB),$(LUAJIT_LIB),) \
 			$(NANOSVG_HEADERS)
-	$(CC) -I$(NANOSVG_INCLUDE_DIR) \
-	$(DYNLIB_CFLAGS) -Wall $(SYMVIS_FLAGS) $(LDFLAGS) -o $@ nnsvg.c $(LUAJIT_LIB_LINK_FLAG) -lm
+	$(CC) $(DYNLIB_CFLAGS) -Wall $(SYMVIS_FLAGS) $(LDFLAGS) -o $@ nnsvg.c $(LUAJIT_LIB_LINK_FLAG) -lm
 ifdef DARWIN
 	install_name_tool -change \
 		`otool -L "$@" | grep "libluajit" | awk '{print $$1}'` \
@@ -222,7 +222,7 @@ $(OUTPUT_DIR)/libs/libblitbuffer.so: blitbuffer.c
 
 $(OUTPUT_DIR)/libs/libwrap-mupdf.so: wrap-mupdf.c \
 			$(MUPDF_LIB)
-	$(CC) -I$(MUPDF_DIR)/include $(DYNLIB_CFLAGS) $(SYMVIS_FLAGS) $(LDFLAGS) -o $@ wrap-mupdf.c -lmupdf
+	$(CC) $(DYNLIB_CFLAGS) $(SYMVIS_FLAGS) $(LDFLAGS) -o $@ wrap-mupdf.c -lmupdf
 ifdef DARWIN
 	install_name_tool -id \
 		libs/libwrap-mupdf.so \
@@ -251,8 +251,7 @@ $(OUTPUT_DIR)/button-listen: button-listen.c
 # the attachment extraction tool:
 
 $(OUTPUT_DIR)/extr: extr.c $(MUPDF_LIB) $(JPEG_LIB) $(FREETYPE_LIB)
-	$(CC) -I$(MUPDF_DIR)/include \
-		$(CFLAGS) $(LDFLAGS) -o $@ extr.c \
+	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ extr.c \
 		-lmupdf $(JPEG_LIB_LINK_FLAG) $(FREETYPE_LIB_LINK_FLAG)
 
 # ===========================================================================

@@ -4,15 +4,6 @@ project(sdcv LANGUAGES)
 include("koreader_thirdparty_common")
 include("koreader_thirdparty_git")
 
-assert_var_defined(GETTEXT)
-assert_var_defined(GETTEXT_DIR)
-assert_var_defined(LIBICONV)
-assert_var_defined(LIBICONV_DIR)
-assert_var_defined(GLIB)
-assert_var_defined(GLIB_DIR)
-assert_var_defined(ZLIB)
-assert_var_defined(ZLIB_DIR)
-
 # Revert 6e36e7730caf07b6cd0bfa265cdf9b5e31e7acad, because it's not helpful in our workflow, and just causes logging noise.
 list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/sdcv-no-unknown-dict-warning.patch)
 # Force utf8 command line parsing
@@ -24,13 +15,9 @@ list(APPEND CMAKE_ARGS "-DCMAKE_TOOLCHAIN_FILE=${CMAKE_TCF}")
 # took me an eternity to find $<SEMICOLON>
 # important docs here https://cmake.org/cmake/help/v2.8.11/cmake.html#command:add_custom_command
 string(APPEND GLIB2_INCLUDE_DIRS
-    "${GLIB_DIR}/include/glib-2.0"
+    "${STAGING_DIR}/include/glib-2.0"
     $<SEMICOLON>
-    "${GLIB_DIR}/lib/glib-2.0/include"
-    $<SEMICOLON>
-    "${GETTEXT_DIR}/include"
-    $<SEMICOLON>
-    "${LIBICONV_DIR}/include"
+    "${STAGING_DIR}/lib/glib-2.0/include"
 )
 list(APPEND CMAKE_ARGS "-DGLIB2_INCLUDE_DIRS=${GLIB2_INCLUDE_DIRS}")
 
@@ -41,11 +28,11 @@ list(APPEND CMAKE_ARGS "-DGLIB2_INCLUDE_DIRS=${GLIB2_INCLUDE_DIRS}")
 # this is a fairly clean hack
 # CMAKE_CXX_FLAGS with -I and -L doesn't seem to have much of an effect
 string(APPEND GLIB2_LIBRARIES
-    "${GLIB}"
+    "${STAGING_DIR}/lib/libglib-2.0.a"
     $<SEMICOLON>
-    "${GETTEXT}"
+    "${STAGING_DIR}/lib/libiconv.a"
     $<SEMICOLON>
-    "${LIBICONV}"
+    "${STAGING_DIR}/lib/libintl.a"
 )
 if(DARWIN)
     string(APPEND GLIB2_LIBRARIES
@@ -65,8 +52,9 @@ list(APPEND CMAKE_ARGS "-DGLIB2_LIBRARIES=${GLIB2_LIBRARIES}")
 list(APPEND CMAKE_ARGS "-DENABLE_NLS=False")
 list(APPEND CMAKE_ARGS "-DWITH_READLINE=False")
 
-list(APPEND CMAKE_ARGS "-DZLIB_ROOT=${ZLIB_DIR}")
-list(APPEND CMAKE_ARGS "-DZLIB_LIBRARY_RELEASE=${ZLIB}")
+if(ANDROID)
+    list(APPEND CMAKE_ARGS "-DZLIB_LIBRARY_RELEASE=${STAGING_DIR}/lib/libz.a")
+endif()
 
 list(APPEND BUILD_CMD COMMAND ${KO_MAKE_PROGRAM})
 

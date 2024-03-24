@@ -3,17 +3,14 @@ project(lpeg LANGUAGES)
 
 include("koreader_thirdparty_common")
 
-assert_var_defined(LUAINC)
-assert_var_defined(LUALIB)
-
 # Build in source tree.
 set(BINARY_DIR "${SOURCE_DIR}")
 
 list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/luajit.patch)
 
 set(DLLFLAGS "${DYNLIB_LDFLAGS}")
-if(LUALIB)
-    string(APPEND DLLFLAGS " ${LUALIB}")
+if(USE_LUAJIT_LIB)
+    string(APPEND DLLFLAGS " ${STAGING_DIR}/lib/libluajit${LIB_EXT}")
 endif()
 
 list(APPEND BUILD_CMD
@@ -21,7 +18,7 @@ list(APPEND BUILD_CMD
     "CC=${CC}"
     "COPT=${CFLAGS}"
     "DLLFLAGS=${DLLFLAGS}"
-    "LUADIR=${LUAINC}"
+    "LUADIR=${STAGING_DIR}/include"
     lpeg.so
 )
 

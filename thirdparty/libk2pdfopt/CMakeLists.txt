@@ -4,9 +4,6 @@ project(libk2pdfopt LANGUAGES)
 include("koreader_thirdparty_common")
 include("koreader_thirdparty_git")
 
-assert_var_defined(LEPTONICA_DIR)
-assert_var_defined(TESSERACT_DIR)
-
 # Build in source tree.
 set(BINARY_DIR "${SOURCE_DIR}")
 
@@ -21,7 +18,7 @@ if (DARWIN)
     set(CFLAGS "${CFLAGS} -Wno-error=implicit-function-declaration")
 endif()
 
-set(CPPFLAGS "-I${LEPTONICA_DIR}/include/leptonica -I${TESSERACT_DIR}/include/tesseract -I.")
+set(CPPFLAGS "-I${STAGING_DIR}/include/leptonica -I${STAGING_DIR}/include/tesseract -I.")
 set(CFLAGS "${CFLAGS} ${CPPFLAGS}")
 set(CXXFLAGS "${CXXFLAGS} ${CPPFLAGS}")
 
@@ -31,10 +28,10 @@ list(APPEND BUILD_CMD
     "ANDROID=${ANDROID}"
     "BUILDMODE=shared"
     "DARWIN=${DARWIN}"
-    "LEPTONICA_LIB=${LEPTONICA_LIB}"
+    "LEPTONICA_LIB=${STAGING_DIR}/lib/liblept${LIB_EXT}"
     "MOD_INC=."
     "TESSCAPI_CFLAGS="
-    "TESSERACT_LIB=${TESSERACT_LIB}"
+    "TESSERACT_LIB=${STAGING_DIR}/lib/libtesseract${LIB_EXT}"
     "TESSERACT_MOD=."
     all)
 
