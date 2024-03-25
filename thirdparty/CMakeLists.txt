@@ -98,7 +98,7 @@ endif()
 declare_project(czmq DEPENDS libzmq ${EXCLUDE_FROM_ALL})
 
 # djvulibre
-declare_project(djvulibre)
+declare_project(djvulibre DEPENDS libjpeg-turbo)
 declare_dependency(djvulibre::djvulibre SHARED djvulibre)
 
 # dropbear
