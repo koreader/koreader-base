@@ -1,41 +1,39 @@
-cmake_minimum_required(VERSION 3.7)
-project(gettext LANGUAGES)
+string(APPEND CPPFLAGS " -I${STAGING_DIR}/include")
+string(APPEND LDFLAGS " -L${STAGING_DIR}/lib")
 
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_LIST_DIR}/../cmake_modules")
-include("koreader_thirdparty_common")
+list(APPEND CFG_CMD COMMAND env)
+append_autotools_vars(CFG_CMD)
+list(APPEND CFG_CMD
+    "${SOURCE_DIR}/gettext-runtime/configure" --host=${CHOST} "--prefix=/"
+    --enable-shared=false --enable-static=true
+    --disable-java
+    --disable-threads
+    --enable-silent-rules
+    --with-included-gettext
+)
 
-assert_var_defined(CC)
-assert_var_defined(AR)
-assert_var_defined(RANLIB)
-assert_var_defined(CPPFLAGS)
-assert_var_defined(LDFLAGS)
-assert_var_defined(LIBICONV_PREFIX)
-assert_var_defined(CHOST_OPTS)
-
-ep_get_source_dir(SOURCE_DIR)
-ep_get_binary_dir(BINARY_DIR)
-
-set(CFG_ENV_VAR "CC=${CC}" "AR=${AR}" "RANLIB=${RANLIB}" "CPPFLAGS=${CPPFLAGS}" "LDFLAGS=${LDFLAGS}")
-set(CFG_OPTS --enable-silent-rules --disable-threads --disable-java)
-set(CFG_OPTS ${CFG_OPTS} --prefix=${BINARY_DIR} --libdir=${BINARY_DIR}/lib --with-libiconv-prefix=${LIBICONV_PREFIX} --with-included-gettext)
-set(CFG_OPTS ${CFG_OPTS} --enable-shared=false --enable-static=true ${CHOST_OPTS})
-list(APPEND CFG_CMD COMMAND env ${CFG_ENV_VAR} ${SOURCE_DIR}/gettext-runtime/configure ${CFG_OPTS})
-
-if(DEFINED ENV{ANDROID})
+if(ANDROID)
     # Tools? Where we're going we don't need tools.
     list(APPEND CFG_CMD COMMAND ${ISED} "s/^\\(subdirs\\|SUBDIRS\\)\\( = .*\\) gettext-tools$/\\1\\2/" Makefile)
 endif()
 
-set(GETTEXT_VER "0.21")
-include(ExternalProject)
-ExternalProject_Add(
-    ${PROJECT_NAME}
-    URL http://ftpmirror.gnu.org/gettext/gettext-${GETTEXT_VER}.tar.gz
-    http://ftp.gnu.org/pub/gnu/gettext/gettext-${GETTEXT_VER}.tar.gz
-    URL_MD5 28b1cd4c94a74428723ed966c38cf479
-    DOWNLOAD_DIR ${KO_DOWNLOAD_DIR}
-    PATCH_COMMAND ${PATCH_CMD}
+list(APPEND BUILD_CMD COMMAND ${KO_MAKE_RECURSIVE} -C intl)
+
+# Install static lib.
+append_static_lib_install_command(INSTALL_CMD BYPRODUCTS intl/.libs/libintl.a intl)
+
+# Install headers.
+append_headers_install_command(
+    INSTALL_CMD BYPRODUCTS
+    "${BINARY_DIR}/intl/libintl.h"
+)
+
+thirdparty_project(
+    URL http://ftpmirror.gnu.org/gettext/gettext-0.21.tar.xz
+    http://ftp.gnu.org/pub/gnu/gettext/gettext-0.21.tar.xz
+    URL_MD5 40996bbaf7d1356d3c22e33a8b255b31
     CONFIGURE_COMMAND ${CFG_CMD}
-    BUILD_COMMAND ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS} -C intl
-    INSTALL_COMMAND ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS} -C intl install
+    BUILD_COMMAND ${BUILD_CMD}
+    INSTALL_COMMAND ${INSTALL_CMD}
+    BYPRODUCTS ${BYPRODUCTS}
 )

@@ -1,0 +1,14 @@
+--- a/lib/cpr/cpr/CMakeLists.txt
++++ b/lib/cpr/cpr/CMakeLists.txt
+@@ -40,6 +40,11 @@ if(SSL_BACKEND_USED STREQUAL "OpenSSL")
+         target_include_directories(cpr PRIVATE ${OPENSSL_INCLUDE_DIR})
+ endif()
+ 
++find_package(Threads)
++if(CMAKE_USE_PTHREADS_INIT)
++    target_link_libraries(cpr PRIVATE -pthread)
++endif()
++
+ # Set version for shared libraries.
+ set_target_properties(cpr
+         PROPERTIES

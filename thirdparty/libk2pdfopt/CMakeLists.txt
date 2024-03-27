@@ -1,44 +1,29 @@
-cmake_minimum_required(VERSION 3.5.1)
-project(libk2pdfopt LANGUAGES)
+list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/fix_willuslib_platform_checks.patch)
+list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/reproducible-builds.patch)
+list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/slightly-less-fuglyness.patch)
+list(APPEND PATCH_CMD COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/build.cmake CMakeLists.txt)
+list(APPEND PATCH_CMD COMMAND mv tesseract_mod/tesscapi.cpp tesscapi.cpp)
+list(APPEND PATCH_CMD COMMAND mv include_mod/tesseract.h tesseract.h)
+list(APPEND PATCH_CMD COMMAND sh -c "printf '#pragma once\\n#include <allheaders.h>' >leptonica.h")
 
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_LIST_DIR}/../cmake_modules")
-include("koreader_thirdparty_common")
-include("koreader_thirdparty_git")
+# Make sure the daisy-chain once again picks up our toolchain file...
+list(APPEND CMAKE_ARGS "-DCMAKE_TOOLCHAIN_FILE=${CMAKE_TCF}")
 
-assert_var_defined(CC)
-assert_var_defined(CFLAGS)
-assert_var_defined(CXX)
-assert_var_defined(CXXFLAGS)
-assert_var_defined(AR)
-assert_var_defined(LDFLAGS)
-assert_var_defined(ZLIB)
-assert_var_defined(ZLIB_DIR)
-assert_var_defined(PNG_DIR)
-assert_var_defined(LEPTONICA_DIR)
-assert_var_defined(TESSERACT_DIR)
-assert_var_defined(K2PDFOPT_DIR)
+list(APPEND BUILD_CMD COMMAND ${KO_MAKE_PROGRAM})
 
-if (DEFINED ENV{DARWIN})
-    #fix build error due to implicit declarations of function being invalid in C99 under macOS/XCode 12
-    set(CFLAGS "${CFLAGS} -Wno-error=implicit-function-declaration")
-endif()
+set(LIB_SPEC k2pdfopt VERSION 2)
+set_libname(LIB ${LIB_SPEC})
 
-# Fix build error when compiling with -std=gnu++17: ISO
-# C++17 does not allow 'register' storage class specifier.
-set(CXXFLAGS "${CXXFLAGS} -Wno-register -Wno-error=register")
+# Install shared lib.
+append_shared_lib_install_command(INSTALL_CMD BYPRODUCTS ${LIB} ${LIB_SPEC})
 
-ep_get_source_dir(SOURCE_DIR)
-
-# NOTE: This may be dangerously close to being too long (and as such, is at risk of random failure if your base path is even halfway long-ish)...
-# FIXME: Horrible nastiness on *native* builds happens if we set LDFLAGS here...
-#        (Namely, one of the libtool linking stage for tesseract fails to pickup the -L flags necessary to find liblept. Cross builds work fine. Yay, libtool).
-set(BUILD_CMD ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS} BUILDMODE=shared HOST=${HOST} CC=${CC} "CFLAGS=${CFLAGS}")
-set(BUILD_CMD ${BUILD_CMD} CXX=${CXX} "CXXFLAGS=${CXXFLAGS}" AR=${AR} RANLIB=${RANLIB} ZLIB=${ZLIB})
-set(BUILD_CMD ${BUILD_CMD} TESSERACT_DIR=${TESSERACT_DIR} LEPTONICA_DIR=${LEPTONICA_DIR} K2PDFOPT_DIR=${K2PDFOPT_DIR})
-set(BUILD_CMD ${BUILD_CMD} "LEPT_CFLAGS=-I${ZLIB_DIR} -I${PNG_DIR}/include")
-set(BUILD_CMD ${BUILD_CMD} "LEPT_LDFLAGS=-L${K2PDFOPT_DIR} -lpng -lz")
-set(BUILD_CMD ${BUILD_CMD} "ZLIB_LDFLAGS=-L${ZLIB_DIR}")
-set(BUILD_CMD ${BUILD_CMD} "PNG_LDFLAGS=-L${PNG_DIR}/lib" all)
+# Install headers.
+append_headers_install_command(
+    INSTALL_CMD BYPRODUCTS
+    FROM "${SOURCE_DIR}"
+    context.h koptcrop.h koptimize.h koptocr.h koptreflow.h leptonica.h setting.h
+    tesseract.h k2pdfoptlib/k2pdfopt.h willuslib/willus.h
+)
 
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
@@ -47,13 +32,11 @@ ko_write_gitclone_script(
     ${SOURCE_DIR}
 )
 
-include(ExternalProject)
-ExternalProject_Add(
-    ${PROJECT_NAME}
+thirdparty_project(
     DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
-    BUILD_IN_SOURCE 1
-    CONFIGURE_COMMAND ""
+    PATCH_COMMAND ${PATCH_CMD}
+    CMAKE_ARGS ${CMAKE_ARGS}
     BUILD_COMMAND ${BUILD_CMD}
-    # skip install
-    INSTALL_COMMAND ""
+    INSTALL_COMMAND ${INSTALL_CMD}
+    BYPRODUCTS ${BYPRODUCTS}
 )

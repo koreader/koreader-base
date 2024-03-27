@@ -1,11 +1,13 @@
-cmake_minimum_required(VERSION 3.5.1)
-project(nanosvg LANGUAGES)
+# Build in source tree.
+set(BINARY_DIR "${SOURCE_DIR}")
 
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_LIST_DIR}/../cmake_modules")
-include("koreader_thirdparty_common")
-include("koreader_thirdparty_git")
-
-ep_get_source_dir(SOURCE_DIR)
+# Install headers.
+append_headers_install_command(
+    INSTALL_CMD BYPRODUCTS
+    FROM "${SOURCE_DIR}/src"
+    nanosvg.h nanosvgrast.h
+    "${THIRDPARTY_DIR}/nanosvg/stb_image_write.h"
+)
 
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
@@ -14,12 +16,8 @@ ko_write_gitclone_script(
     ${SOURCE_DIR}
 )
 
-include(ExternalProject)
-ExternalProject_Add(
-    ${PROJECT_NAME}
+thirdparty_project(
     DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
-    BUILD_IN_SOURCE 1
-    CONFIGURE_COMMAND ""
-    BUILD_COMMAND ""
-    INSTALL_COMMAND ""
+    INSTALL_COMMAND ${INSTALL_CMD}
+    BYPRODUCTS ${BYPRODUCTS}
 )

@@ -1,62 +1,69 @@
-cmake_minimum_required(VERSION 3.5.1)
-project(harfbuzz LANGUAGES)
+# Get rid of a bunch of `#line` directives that trip ccache 4.9.1.
+list(APPEND PATCH_CMD COMMAND ${ISED} "/^#line/d"
+    src/hb-ot-shaper-khmer-machine.hh
+    src/hb-ot-shaper-use-machine.hh
+    src/hb-ot-shaper-myanmar-machine.hh
+    src/hb-buffer-deserialize-json.hh
+    src/hb-buffer-deserialize-text-glyphs.hh
+    src/hb-number-parser.hh
+    src/hb-ot-shaper-indic-machine.hh
+    src/hb-buffer-deserialize-text-unicode.hh
+)
 
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_LIST_DIR}/../cmake_modules")
-include("koreader_thirdparty_common")
-include("koreader_thirdparty_git")
+list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/android.patch)
 
-assert_var_defined(CC)
-assert_var_defined(CXX)
-assert_var_defined(CHOST)
-assert_var_defined(CPPFLAGS)
-assert_var_defined(CFLAGS)
-assert_var_defined(CXXFLAGS)
-assert_var_defined(LDFLAGS)
-assert_var_defined(FREETYPE_DIR)
-
-ep_get_source_dir(SOURCE_DIR)
-ep_get_binary_dir(BINARY_DIR)
-
-list(APPEND PATCH_CMD COMMAND env NOCONFIGURE=1 ./autogen.sh)
-
-# No build rpath
-list(APPEND PATCH_CMD COMMAND ${ISED} "s/\\(hardcode_into_libs\\)=.*$/\\1=no/" configure)
+list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/optional-ragel.patch)
 
 # We've apparently hit a weird corner-case w/ XText where GCC/STL atomics *sometimes* horribly blow up on an ARM1136JF-S CPU w/ GCC 7.5...
 # c.f., https://github.com/koreader/koreader/issues/5780 & https://github.com/koreader/koreader/issues/6024
 # NOTE: Our initial approach was to only disable atomics in a very dirty manner, which only helped with the first issue.
 #       This, on the other hand, appears to help with both.
-if(DEFINED ENV{LEGACY} OR DEFINED ENV{POCKETBOOK})
-	# NOTE: This ends up in CPPFLAGS!
-	set(HB_CUSTOM_CFG "-DHB_NO_MT")
+if(LEGACY OR POCKETBOOK)
+    list(APPEND PATCH_CMD COMMAND ${ISED} "/^#define HB_CONFIG_HH\$/{p$<SEMICOLON>s//#define HB_NO_MT/}" src/hb-config.hh)
 endif()
 
-set(CFG_ENV_VAR "CC=${CC}" "CXX=${CXX}" "CPPFLAGS=${CPPFLAGS} ${HB_CUSTOM_CFG}" "CFLAGS=${CFLAGS}" "CXXFLAGS=${CXXFLAGS}" "LDFLAGS=${LDFLAGS}")
-set(CFG_ENV_VAR ${CFG_ENV_VAR} "FREETYPE_CFLAGS=-I${FREETYPE_DIR}/include/freetype2")
-set(CFG_ENV_VAR ${CFG_ENV_VAR} "FREETYPE_LIBS=-L${FREETYPE_DIR} -lfreetype")
-set(CFG_OPTS --prefix=${BINARY_DIR} --libdir=${BINARY_DIR}/lib --enable-shared --disable-static --with-freetype --without-glib --without-gobject --without-cairo --without-fontconfig --without-icu --without-graphite2 --without-uniscribe --without-directwrite --without-coretext --host=${CHOST})
-list(APPEND CFG_CMD COMMAND env ${CFG_ENV_VAR} ${SOURCE_DIR}/configure ${CFG_OPTS})
-
-if(DEFINED ENV{ANDROID})
-    list(APPEND CFG_CMD COMMAND ${ANDROID_LIBTOOL_FIX_CMD})
-endif()
-
-set(HB_VER 8.3.1)
-
-ko_write_gitclone_script(
-    GIT_CLONE_SCRIPT_FILENAME
-    https://github.com/harfbuzz/harfbuzz.git
-    ${HB_VER}
-    ${SOURCE_DIR}
+list(APPEND CFG_CMD COMMAND env
+    ${MESON_SETUP} --default-library=shared
+    -Dfreetype=enabled
+    -Dtests=disabled
+    -Dutilities=disabled
+    "${SOURCE_DIR}"
 )
 
-include(ExternalProject)
-ExternalProject_Add(
-    ${PROJECT_NAME}
-    DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
-    BUILD_IN_SOURCE 1
+list(APPEND BUILD_CMD COMMAND ${KO_MAKE_PROGRAM} lib)
+
+set(LIB_SPEC harfbuzz VERSION 0)
+set_libname(LIB ${LIB_SPEC})
+
+# Remove extranenous build-time rpath entries.
+if(NOT DARWIN AND NOT WIN32)
+    list(APPEND BUILD_CMD COMMAND chrpath -r "$ORIGIN:$ORIGIN/libs" src/${LIB})
+endif()
+
+# Install shared lib.
+append_shared_lib_install_command(INSTALL_CMD BYPRODUCTS src/${LIB} ${LIB_SPEC})
+
+# Install headers.
+# NOTE: to get an updated list, check the contents
+# of `cmake_install.cmake` in the build directory.
+append_headers_install_command(
+    INSTALL_CMD BYPRODUCTS
+    FROM "${SOURCE_DIR}/src"
+    hb-aat-layout.h hb-aat.h hb-blob.h hb-buffer.h hb-common.h
+    hb-cplusplus.hh hb-deprecated.h hb-draw.h hb-face.h hb-font.h
+    hb-map.h hb-ot-color.h hb-ot-deprecated.h hb-ot-font.h
+    hb-ot-layout.h hb-ot-math.h hb-ot-meta.h hb-ot-metrics.h
+    hb-ot-name.h hb-ot-shape.h hb-ot-var.h hb-ot.h hb-paint.h
+    hb-set.h hb-shape-plan.h hb-shape.h hb-style.h hb-unicode.h
+    hb-version.h hb.h hb-ft.h hb-subset.h
+)
+
+thirdparty_project(
+    URL https://github.com/harfbuzz/harfbuzz/releases/download/8.3.1/harfbuzz-8.3.1.tar.xz
+    URL_MD5 fc4c1c0cb2e8a190db5007936f290047
     PATCH_COMMAND ${PATCH_CMD}
     CONFIGURE_COMMAND ${CFG_CMD}
-    BUILD_COMMAND ${KO_MAKE_RECURSIVE} -j${CONSTRAINED_PARALLEL_JOBS}
-    INSTALL_COMMAND ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS} install
+    BUILD_COMMAND ${BUILD_CMD}
+    INSTALL_COMMAND ${INSTALL_CMD}
+    BYPRODUCTS ${BYPRODUCTS}
 )

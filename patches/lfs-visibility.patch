@@ -1,0 +1,11 @@
+--- a/src/lfs.h
++++ b/src/lfs.h
+@@ -24,7 +24,7 @@
+ #define fileno(f) (_fileno(f))
+ #endif
+ #else
+-#define LFS_EXPORT
++#define LFS_EXPORT __attribute__((visibility("default")))
+ #endif
+ 
+ #ifdef __cplusplus

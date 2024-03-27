@@ -1,45 +1,41 @@
-cmake_minimum_required(VERSION 3.5.1)
-project(libjpeg-turbo LANGUAGES)
-
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_LIST_DIR}/../cmake_modules")
-include("koreader_thirdparty_common")
-include("koreader_thirdparty_git")
-
-ep_get_source_dir(SOURCE_DIR)
-ep_get_binary_dir(BINARY_DIR)
+list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/no_cmake_rpath_shenanigans.patch)
 
 # Make sure the daisy-chain once again picks up our toolchain file...
-if(DEFINED ENV{CMAKE_TCF})
-	list(APPEND CMAKE_ARGS "$ENV{CMAKE_TCF}")
-endif()
+list(APPEND CMAKE_ARGS "-DCMAKE_TOOLCHAIN_FILE=${CMAKE_TCF}")
 
-# CMake hell.
-# We expect lib later on in Makefile.third, even on multilib systems...
-list(APPEND CMAKE_ARGS "-DCMAKE_INSTALL_PREFIX=${BINARY_DIR}")
-list(APPEND CMAKE_ARGS "-DCMAKE_INSTALL_LIBDIR=${BINARY_DIR}/lib")
-list(APPEND CMAKE_ARGS "-DCMAKE_INSTALL_INCLUDEDIR=${BINARY_DIR}/include")
-list(APPEND CMAKE_ARGS "-DCMAKE_SKIP_RPATH=TRUE")
-
-# c.f., https://android.googlesource.com/platform/ndk/+/master/build/cmake/android.toolchain.cmake
-# and   https://github.com/taka-no-me/android-cmake
-# In the meantime, I'll be sitting in the corner, crying hysterically.
-if(DEFINED ENV{ANDROID})
-	list(APPEND CMAKE_ARGS "-DCMAKE_SYSTEM_NAME=Linux")
-	# Magical value that inhibits all of CMake's own NDK handling code. (Or shit goes boom.)
-	list(APPEND CMAKE_ARGS "-DCMAKE_SYSTEM_VERSION=1")
-endif()
-
-# And, finally, the actual libjpeg-turbo build options
+# And, finally, the actual libjpeg-turbo build options.
 list(APPEND CMAKE_ARGS "-DENABLE_STATIC=OFF")
 list(APPEND CMAKE_ARGS "-DENABLE_SHARED=ON")
 list(APPEND CMAKE_ARGS "-DWITH_JAVA=OFF")
 list(APPEND CMAKE_ARGS "-DWITH_JPEG8=ON")
+# Reproducible builds: use release date.
+list(APPEND CMAKE_ARGS "-DBUILD=20240124")
 
-# make sure we disable ASM if we don't support SIMD
-if(NOT DEFINED ENV{WANT_SIMD})
+# Make sure we disable ASM if we don't support SIMD.
+if(NOT WANT_SIMD)
     list(APPEND CMAKE_ARGS "-DREQUIRE_SIMD=OFF")
     list(APPEND CMAKE_ARGS "-DWITH_SIMD=OFF")
 endif()
+
+list(APPEND BUILD_CMD COMMAND ${KO_MAKE_PROGRAM} libturbojpeg${LIB_EXT} libjpeg${LIB_EXT})
+
+set(JPEG_LIB_SPEC jpeg VERSION 8)
+set_libname(JPEG_LIB ${JPEG_LIB_SPEC})
+set(TURBOJPEG_LIB_SPEC turbojpeg)
+set_libname(TURBOJPEG_LIB ${TURBOJPEG_LIB_SPEC})
+
+# Install shared libs.
+append_shared_lib_install_command(INSTALL_CMD BYPRODUCTS ${JPEG_LIB} ${JPEG_LIB_SPEC})
+append_shared_lib_install_command(INSTALL_CMD BYPRODUCTS ${TURBOJPEG_LIB} ${TURBOJPEG_LIB_SPEC})
+
+# Install headers.
+append_headers_install_command(
+    INSTALL_CMD BYPRODUCTS
+    FROM "${BINARY_DIR}"
+    jconfig.h jconfigint.h
+    FROM "${SOURCE_DIR}"
+    jerror.h jmorecfg.h jpegint.h jpeglib.h turbojpeg.h
+)
 
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
@@ -48,13 +44,11 @@ ko_write_gitclone_script(
     ${SOURCE_DIR}
 )
 
-include(ExternalProject)
-ExternalProject_Add(
-    libjpeg-turbo
+thirdparty_project(
     DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
-    PATCH_COMMAND ""
-    CMAKE_ARGS "${CMAKE_ARGS}"
-    CMAKE_GENERATOR "Unix Makefiles"
-    BUILD_COMMAND ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS}
-    INSTALL_COMMAND ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS} install
+    PATCH_COMMAND ${PATCH_CMD}
+    CMAKE_ARGS ${CMAKE_ARGS}
+    BUILD_COMMAND ${BUILD_CMD}
+    INSTALL_COMMAND ${INSTALL_CMD}
+    BYPRODUCTS ${BYPRODUCTS}
 )

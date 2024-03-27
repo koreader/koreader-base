@@ -1,30 +1,27 @@
-cmake_minimum_required(VERSION 3.5.1)
-project(utf8proc LANGUAGES)
+# Make sure the daisy-chain once again picks up our toolchain file...
+list(APPEND CMAKE_ARGS "-DCMAKE_TOOLCHAIN_FILE=${CMAKE_TCF}")
 
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/../cmake_modules")
-include("koreader_thirdparty_common")
-include("koreader_thirdparty_git")
+list(APPEND CMAKE_ARGS "-DBUILD_SHARED_LIBS=ON")
 
-assert_var_defined(CC)
-assert_var_defined(LDFLAGS)
+list(APPEND BUILD_CMD COMMAND ${KO_MAKE_PROGRAM})
 
-ep_get_source_dir(SOURCE_DIR)
-ep_get_binary_dir(BINARY_DIR)
+set(LIB_SPEC utf8proc VERSION 3)
+set_libname(LIB ${LIB_SPEC})
 
-ko_write_gitclone_script(
-    GIT_CLONE_SCRIPT_FILENAME
-    https://github.com/JuliaStrings/utf8proc.git
-    v2.9.0
-    ${SOURCE_DIR}
+# Install shared lib.
+append_shared_lib_install_command(INSTALL_CMD BYPRODUCTS ${LIB} ${LIB_SPEC})
+
+# Install headers.
+append_headers_install_command(
+    INSTALL_CMD BYPRODUCTS
+    "${SOURCE_DIR}/utf8proc.h"
 )
 
-include(ExternalProject)
-ExternalProject_Add(
-    ${PROJECT_NAME}
-    DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
-    BUILD_IN_SOURCE 1
-    PATCH_COMMAND ""
-    CONFIGURE_COMMAND ""
-    BUILD_COMMAND ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS}
-    INSTALL_COMMAND ""
+thirdparty_project(
+    URL https://github.com/JuliaStrings/utf8proc/releases/download/v2.9.0/utf8proc-2.9.0.tar.gz
+    URL_MD5 a4895a4b0940e91bace9afede4f9c76b
+    CMAKE_ARGS ${CMAKE_ARGS}
+    BUILD_COMMAND ${BUILD_CMD}
+    INSTALL_COMMAND ${INSTALL_CMD}
+    BYPRODUCTS ${BYPRODUCTS}
 )

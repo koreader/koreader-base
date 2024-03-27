@@ -1,37 +1,63 @@
-cmake_minimum_required(VERSION 3.5.1)
-project(luasocket LANGUAGES)
+# Build in source tree.
+set(BINARY_DIR "${SOURCE_DIR}")
 
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_LIST_DIR}/../cmake_modules")
-include("koreader_thirdparty_common")
-include("koreader_thirdparty_git")
-
-assert_var_defined(CC)
-assert_var_defined(PLAT)
-assert_var_defined(LUAINC)
-assert_var_defined(INSTALL_DIR)
-
-ep_get_source_dir(SOURCE_DIR)
-
+# Rename modules:
+# `mime.core` → `mime.mcore`
+# `socket.core` → `socket.score`
 list(APPEND PATCH_CMD COMMAND sh -c "\"\$@\" src/*" --
-  ${ISED} " "
-  -e "s|socket\\.core|socket.score|"
-  -e "s|socket_core|socket_score|"
-  -e "s|mime\\.core|mime.mcore|"
-  -e "s|mime_core|mime_mcore|"
-  -e "s|SOCKET_CDIR)/core|SOCKET_CDIR)/score|"
-  -e "s|MIME_CDIR)/core|MIME_CDIR)/mcore|"
+    ${ISED} " "
+    -e "s|socket\\.core|socket.score|g"
+    -e "s|socket_core|socket_score|g"
+    -e "s|mime\\.core|mime.mcore|g"
+    -e "s|mime_core|mime_mcore|g"
+    -e "s|SOCKET_CDIR)/core|SOCKET_CDIR)/score|"
+    -e "s|MIME_CDIR)/core|MIME_CDIR)/mcore|"
 )
-# Don't enforce CFLAGS
+
+# Don't enforce CFLAGS.
 list(APPEND PATCH_CMD COMMAND ${ISED} "s|-O2 -ggdb3 ||g" src/makefile)
 
-list(APPEND BUILD_CMD COMMAND ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS} "PLAT=${PLAT}" "CC=${CC}" "LD=${CC}")
-if(DEFINED MYLDFLAGS)
-  list(APPEND BUILD_CMD "MYLDFLAGS=${MYLDFLAGS}")
+if(DARWIN)
+    set(PLAT "macosx")
+elseif(WIN32)
+    set(PLAT "mingw")
+else()
+    set(PLAT "linux")
 endif()
-if(DEFINED LUALIB_mingw)
-  list(APPEND BUILD_CMD "LUALIB_mingw=${LUALIB_mingw}")
+
+set(MYLDFLAGS "${LDFLAGS}")
+if(USE_LUAJIT_LIB)
+    string(APPEND MYLDFLAGS " ${STAGING_DIR}/lib/libluajit${LIB_EXT}")
 endif()
-list(APPEND BUILD_CMD "LUAINC=${LUAINC}" -j${PARALLEL_JOBS} all)
+
+list(APPEND BUILD_CMD
+    ${KO_MAKE_RECURSIVE}
+    "CC=${CC} ${CFLAGS}"
+    "LD=${CC} ${CFLAGS}"
+    "LUAINC=${STAGING_DIR}/include"
+    "MYLDFLAGS=${MYLDFLAGS}"
+    "PLAT=${PLAT}"
+)
+
+append_install_commands(
+    INSTALL_CMD BYPRODUCTS
+    src/ltn12.lua src/mime.lua src/socket.lua
+    DESTINATION common/
+)
+append_install_commands(
+    INSTALL_CMD BYPRODUCTS
+    src/ftp.lua src/headers.lua src/http.lua
+    src/smtp.lua src/tp.lua src/url.lua
+    DESTINATION common/socket/
+)
+append_binary_install_command(
+    INSTALL_CMD BYPRODUCTS
+    src/socket-3.1.0.so common/socket/score.so
+)
+append_binary_install_command(
+    INSTALL_CMD BYPRODUCTS
+    src/mime-1.0.3.so common/mime/mcore.so
+)
 
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
@@ -40,13 +66,10 @@ ko_write_gitclone_script(
     ${SOURCE_DIR}
 )
 
-include(ExternalProject)
-ExternalProject_Add(
-    ${PROJECT_NAME}
+thirdparty_project(
     DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
-    BUILD_IN_SOURCE 1
     PATCH_COMMAND ${PATCH_CMD}
-    CONFIGURE_COMMAND ""
     BUILD_COMMAND ${BUILD_CMD}
-    INSTALL_COMMAND ${KO_MAKE_RECURSIVE} INSTALL_TOP_LDIR=${INSTALL_DIR} INSTALL_TOP_CDIR=${INSTALL_DIR} install
+    INSTALL_COMMAND ${INSTALL_CMD}
+    BYPRODUCTS ${BYPRODUCTS}
 )

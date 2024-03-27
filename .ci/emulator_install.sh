@@ -14,6 +14,8 @@ test -d "${HOME}/.luarocks" || {
 }
 eval "$(luarocks path --bin)"
 
+sudo apt-get update
+
 # install clang for clang build
 if [ "$CC" = "clang" ]; then
     wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
@@ -23,6 +25,12 @@ deb http://apt.llvm.org/xenial/ llvm-toolchain-xenial-11 main
 deb-src http://apt.llvm.org/xenial/ llvm-toolchain-xenial-11 main
 EOF
 
-    sudo apt-get update
     sudo apt-get install -y clang-11
 fi
+
+# Install chrpath and a python interpreter for meson.
+sudo apt-get install -y --no-install-recommends chrpath python3-minimal python3-pip
+# Install meson.
+python3 -m pip install meson
+# shellcheck disable=SC2016
+echo 'export PATH="$HOME/.local/bin:$PATH"' >>~/.bashrc

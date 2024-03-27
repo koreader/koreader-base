@@ -1,51 +1,53 @@
-cmake_minimum_required(VERSION 3.5.1)
-project(libwebp LANGUAGES)
+list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake_tweaks.patch)
 
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/../cmake_modules")
-include("koreader_thirdparty_common")
-include("koreader_thirdparty_git")
+# Make sure the daisy-chain once again picks up our toolchain file...
+list(APPEND CMAKE_ARGS "-DCMAKE_TOOLCHAIN_FILE=${CMAKE_TCF}")
 
-assert_var_defined(CC)
-assert_var_defined(CXX)
-assert_var_defined(CPPFLAGS)
-assert_var_defined(LDFLAGS)
-assert_var_defined(CHOST)
+# Note: we could build libwebpdecoder.so only, which would be smaller and fine
+# decoding single frame webp images. But it fails on animated webp images, not
+# even rendering the first frame.  We need the regular libraries (`libwebp.so`
+# and `libwebpdemux.so`) to handle them (but we can left out the encoder,
+# `libwebpmux.so`).
+list(APPEND CMAKE_ARGS "-DBUILD_SHARED_LIBS=TRUE")
+list(APPEND CMAKE_ARGS "-DWEBP_BUILD_ANIM_UTILS=FALSE")
+list(APPEND CMAKE_ARGS "-DWEBP_BUILD_CWEBP=FALSE")
+list(APPEND CMAKE_ARGS "-DWEBP_BUILD_DWEBP=FALSE")
+list(APPEND CMAKE_ARGS "-DWEBP_BUILD_EXTRAS=FALSE")
+list(APPEND CMAKE_ARGS "-DWEBP_BUILD_GIF2WEBP=FALSE")
+list(APPEND CMAKE_ARGS "-DWEBP_BUILD_IMG2WEBP=FALSE")
+list(APPEND CMAKE_ARGS "-DWEBP_BUILD_LIBWEBPMUX=FALSE")
+list(APPEND CMAKE_ARGS "-DWEBP_BUILD_VWEBP=FALSE")
+list(APPEND CMAKE_ARGS "-DWEBP_BUILD_WEBPINFO=FALSE")
+list(APPEND CMAKE_ARGS "-DWEBP_BUILD_WEBPMUX=FALSE")
 
-ep_get_source_dir(SOURCE_DIR)
-ep_get_binary_dir(BINARY_DIR)
+list(APPEND BUILD_CMD COMMAND ${KO_MAKE_PROGRAM})
 
-list(APPEND PATCH_CMD COMMAND ./autogen.sh)
+set(SHARPYUV_LIB_SPEC sharpyuv VERSION 0)
+set(WEBPDEMUX_LIB_SPEC webpdemux VERSION 2)
+set(WEBP_LIB_SPEC webp VERSION 7)
+set_libname(SHARPYUV_LIB ${SHARPYUV_LIB_SPEC})
+set_libname(WEBPDEMUX_LIB ${WEBPDEMUX_LIB_SPEC})
+set_libname(WEBP_LIB ${WEBP_LIB_SPEC})
 
-# No build rpath
-list(APPEND PATCH_CMD COMMAND ${ISED} "s/\\(hardcode_into_libs\\)=.*$/\\1=no/" configure)
+# Install shared libs.
+append_shared_lib_install_command(INSTALL_CMD BYPRODUCTS ${SHARPYUV_LIB} ${SHARPYUV_LIB_SPEC})
+append_shared_lib_install_command(INSTALL_CMD BYPRODUCTS ${WEBPDEMUX_LIB} ${WEBPDEMUX_LIB_SPEC})
+append_shared_lib_install_command(INSTALL_CMD BYPRODUCTS ${WEBP_LIB} ${WEBP_LIB_SPEC})
 
-set(CFG_ENV_VAR "CC=${CC}" "CXX=${CXX}" "CPPFLAGS=${CPPFLAGS}" "LDFLAGS=${LDFLAGS}")
-# Note: with "--disable-libwebpmux --disable-libwebpdemux --enable-libwebpdecoder", we could
-# build libwebpdecoder.so only, which would be smaller and fine decoding single frame webp
-# images. But it fails on animated webp images, not even rendering the first frame.
-# We need the regular libraries (libwebp.so and libwebpdemux.so) to handle them
-# (but we can left out the encoder, libwebpmux.so).
-set(CFG_OPTS --prefix=${BINARY_DIR} --libdir=${BINARY_DIR}/lib --disable-static --enable-shared --host=${CHOST} --disable-libwebpmux)
-list(APPEND CFG_CMD COMMAND env ${CFG_ENV_VAR} ${SOURCE_DIR}/configure ${CFG_OPTS})
-
-if(DEFINED ENV{ANDROID})
-    list(APPEND CFG_CMD COMMAND ${ANDROID_LIBTOOL_FIX_CMD})
-endif()
-
-ko_write_gitclone_script(
-    GIT_CLONE_SCRIPT_FILENAME
-    https://github.com/webmproject/libwebp.git
-    v1.3.2
-    ${SOURCE_DIR}
+# Install headers.
+append_headers_install_command(
+    INSTALL_CMD BYPRODUCTS
+    SUBDIR webp
+    FROM "${SOURCE_DIR}/src/webp"
+    decode.h demux.h mux_types.h types.h
 )
 
-include(ExternalProject)
-ExternalProject_Add(
-    ${PROJECT_NAME}
-    DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
+thirdparty_project(
+    URL https://storage.googleapis.com/downloads.webmproject.org/releases/webp/libwebp-1.3.2.tar.gz
+    URL_MD5 34869086761c0e2da6361035f7b64771
     PATCH_COMMAND ${PATCH_CMD}
-    CONFIGURE_COMMAND ${CFG_CMD}
-    BUILD_IN_SOURCE 1
-    BUILD_COMMAND ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS}
-    INSTALL_COMMAND ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS} install
+    CMAKE_ARGS ${CMAKE_ARGS}
+    BUILD_COMMAND ${BUILD_CMD}
+    INSTALL_COMMAND ${INSTALL_CMD}
+    BYPRODUCTS ${BYPRODUCTS}
 )

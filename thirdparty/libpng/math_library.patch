@@ -1,0 +1,22 @@
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -100,15 +100,12 @@ elseif(POLICY CMP0074)
+   endif()
+ endif()
+ 
+-if(UNIX AND NOT APPLE AND NOT BEOS AND NOT HAIKU AND NOT EMSCRIPTEN)
+-  find_library(M_LIBRARY m)
+-  if(M_LIBRARY)
++include(CheckLibraryExists)
++check_library_exists(m floor "" M_LIBRARY)
++if(M_LIBRARY)
+     set(M_LIBRARY m)
+-  else()
+-    set(M_LIBRARY "")
+-  endif()
+ else()
+-  # libm is not available or not needed.
++    set(M_LIBRARY "")
+ endif()
+ 
+ # CMake currently sets CMAKE_SYSTEM_PROCESSOR to one of x86_64 or arm64 on macOS,

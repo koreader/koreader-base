@@ -1,41 +1,44 @@
-cmake_minimum_required(VERSION 3.5.1)
-project(libzmq LANGUAGES)
+list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/android.patch)
+list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake_tweaks.patch)
 
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_LIST_DIR}/../cmake_modules")
-include("koreader_thirdparty_common")
-include("koreader_thirdparty_git")
+# Make sure the daisy-chain once again picks up our toolchain file...
+list(APPEND CMAKE_ARGS "-DCMAKE_TOOLCHAIN_FILE=${CMAKE_TCF}")
 
-assert_var_defined(CC)
-assert_var_defined(CXX)
-assert_var_defined(CFLAGS)
-assert_var_defined(CXXFLAGS)
-assert_var_defined(LDFLAGS)
-
-ep_get_source_dir(SOURCE_DIR)
-ep_get_binary_dir(BINARY_DIR)
-
-list(APPEND PATCH_CMD COMMAND ./autogen.sh)
-# Force dynamic lib version.
-list(APPEND PATCH_CMD COMMAND ${ISED} "s|-avoid-version||g" src/Makefile.am)
-# Skip tests.
-list(APPEND PATCH_CMD COMMAND ${ISED} "s|tests||g" Makefile.am)
-# Clear build dir every time so make install won't fail.
-list(APPEND PATCH_CMD COMMAND ${CMAKE_COMMAND} -E remove_directory ${BINARY_DIR} COMMAND ${CMAKE_COMMAND} -E make_directory ${BINARY_DIR})
-
-# added -Wno-unused-result in CXXFLAGS to ignore sodium_init() warning
-list(APPEND CFG_ENV_VAR "CC=${CC}" "CXX=${CXX}" "CFLAGS=${CFLAGS}" "CXXFLAGS=${CXXFLAGS} -Wno-unused-result" "LDFLAGS=${LDFLAGS}")
-list(APPEND CFG_ENV_VAR libzmq_have_xmlto=no libzmq_have_asciidoc=no)
-
-list(APPEND CFG_OPTS --prefix=${BINARY_DIR} --libdir=${BINARY_DIR}/lib --disable-static --enable-shared --without-documentation --host=${CHOST})
-if(DEFINED ENV{LEGACY} OR DEFINED ENV{POCKETBOOK})
-    list(APPEND CFG_OPTS --disable-eventfd)
+list(APPEND CMAKE_ARGS "-DWITH_DOC=FALSE")
+list(APPEND CMAKE_ARGS "-DWITH_TWEETNACL=TRUE")
+list(APPEND CMAKE_ARGS "-DZMQ_BUILD_TESTS=FALSE")
+if(DARWIN)
+    list(APPEND CMAKE_ARGS "-DZMQ_BUILD_FRAMEWORK=FALSE")
+elseif(LEGACY OR POCKETBOOK)
+    list(APPEND CMAKE_ARGS "-DENABLE_EVENTFD=FALSE")
+endif()
+if(NOT EMULATE_READER)
+    list(APPEND CMAKE_ARGS "-DZMQ_HAVE_SOCK_CLOEXEC_EXITCODE=1")
+    list(APPEND CMAKE_ARGS "-DZMQ_HAVE_SOCK_CLOEXEC_EXITCODE__TRYRUN_OUTPUT=")
+    list(APPEND CMAKE_ARGS "-DZMQ_HAVE_SO_KEEPALIVE_EXITCODE=1")
+    list(APPEND CMAKE_ARGS "-DZMQ_HAVE_SO_KEEPALIVE_EXITCODE__TRYRUN_OUTPUT=")
+    list(APPEND CMAKE_ARGS "-DZMQ_HAVE_TCP_KEEPCNT_EXITCODE=1")
+    list(APPEND CMAKE_ARGS "-DZMQ_HAVE_TCP_KEEPCNT_EXITCODE__TRYRUN_OUTPUT=")
+    list(APPEND CMAKE_ARGS "-DZMQ_HAVE_TCP_KEEPIDLE_EXITCODE=1")
+    list(APPEND CMAKE_ARGS "-DZMQ_HAVE_TCP_KEEPIDLE_EXITCODE__TRYRUN_OUTPUT=")
+    list(APPEND CMAKE_ARGS "-DZMQ_HAVE_TCP_KEEPINTVL_EXITCODE=1")
+    list(APPEND CMAKE_ARGS "-DZMQ_HAVE_TCP_KEEPINTVL_EXITCODE__TRYRUN_OUTPUT=")
 endif()
 
-list(APPEND CFG_CMD COMMAND env ${CFG_ENV_VAR} ${SOURCE_DIR}/configure ${CFG_OPTS})
+list(APPEND BUILD_CMD COMMAND ${KO_MAKE_PROGRAM} libzmq)
 
-if(DEFINED ENV{ANDROID})
-    list(APPEND CFG_CMD COMMAND ${ANDROID_LIBTOOL_FIX_CMD})
-endif()
+set(LIB_SPEC zmq VERSION 4)
+set_libname(LIB ${LIB_SPEC})
+
+# Install shared lib.
+append_shared_lib_install_command(INSTALL_CMD BYPRODUCTS lib/${LIB} ${LIB_SPEC})
+
+# Install headers.
+append_headers_install_command(
+    INSTALL_CMD BYPRODUCTS
+    FROM "${SOURCE_DIR}/include"
+    zmq.h zmq_utils.h
+)
 
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
@@ -44,12 +47,11 @@ ko_write_gitclone_script(
     ${SOURCE_DIR}
 )
 
-include(ExternalProject)
-ExternalProject_Add(
-    ${PROJECT_NAME}
+thirdparty_project(
     DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
     PATCH_COMMAND ${PATCH_CMD}
-    CONFIGURE_COMMAND ${CFG_CMD}
-    BUILD_COMMAND ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS}
-    INSTALL_COMMAND ${KO_MAKE_RECURSIVE} installdirs uninstall install
+    CMAKE_ARGS ${CMAKE_ARGS}
+    BUILD_COMMAND ${BUILD_CMD}
+    INSTALL_COMMAND ${INSTALL_CMD}
+    BYPRODUCTS ${BYPRODUCTS}
 )

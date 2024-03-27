@@ -1,0 +1,33 @@
+--- a/willuslib/ansi.c
++++ b/willuslib/ansi.c
+@@ -41,7 +41,7 @@
+ #include <sys/ioctl.h>
+ #endif
+ 
+-#ifdef ANDROID
++#ifdef __ANDROID__
+ #include <asm/termios.h>
+ #endif
+ 
+--- a/willuslib/linux.c
++++ b/willuslib/linux.c
+@@ -31,7 +31,7 @@
+ #include <ctype.h>
+ #include <time.h>
+ #include <unistd.h>
+-#ifndef ANDROID
++#ifndef __ANDROID__
+ #include <sys/termios.h>
+ #else
+ #include <asm/termios.h>
+--- a/willuslib/willus.h
++++ b/willuslib/willus.h
+@@ -183,7 +183,7 @@ typedef double  real;
+ #endif
+ #endif
+ 
+-#if (defined(ANDROID) || defined(DARWIN))
++#if (defined(__ANDROID__) || defined(__APPLE__))
+ #undef WILLUS_HAVE_FILE64
+ #endif
+ 

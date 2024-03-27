@@ -1,0 +1,19 @@
+--- i/CMakeLists.txt
++++ w/CMakeLists.txt
+@@ -6,7 +6,7 @@
+ ########################################################################
+ # Project setup
+ ########################################################################
+-cmake_minimum_required(VERSION 2.8)
++cmake_minimum_required(VERSION 3.15)
+ project(czmq)
+ enable_language(C)
+ enable_testing()
+@@ -159,6 +159,7 @@ set (czmq_sources
+ source_group ("Source Files" FILES ${czmq_sources})
+ add_library(czmq SHARED ${czmq_sources})
+ set_target_properties(czmq PROPERTIES DEFINE_SYMBOL "LIBCZMQ_EXPORTS")
++set_target_properties(czmq PROPERTIES VERSION 1)
+ target_link_libraries(czmq ${ZEROMQ_LIBRARIES} ${MORE_LIBRARIES})
+ 
+ install(TARGETS czmq

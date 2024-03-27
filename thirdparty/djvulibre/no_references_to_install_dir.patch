@@ -1,0 +1,20 @@
+--- a/libdjvu/DjVuMessage.cpp
++++ b/libdjvu/DjVuMessage.cpp
+@@ -117,7 +117,7 @@ static const char localestring[]="locale";
+ 
+ 
+ // directory names for searching messages
+-#ifdef AUTOCONF
++#if 0//def AUTOCONF
+ static const char DjVuDataDir[] = DIR_DATADIR "/djvu/osi";
+ #endif /* AUTOCONF */
+ static const char ModuleDjVuDir[] ="share/djvu/osi";
+@@ -291,7 +291,7 @@ DjVuMessage::GetProfilePaths(void)
+       appendPath(GURL::UTF8(ProfilesDjVuDir,mpath),pathsmap,paths);
+     }
+ #endif
+-#if defined(AUTOCONF)
++#if 0//defined(AUTOCONF)
+     GURL dpath = GURL::Filename::UTF8(DjVuDataDir);
+     appendPath(dpath,pathsmap,paths);
+ #endif

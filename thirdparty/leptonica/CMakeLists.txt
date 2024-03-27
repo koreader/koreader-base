@@ -1,41 +1,76 @@
-cmake_minimum_required(VERSION 3.5.1)
-project(leptonica LANGUAGES)
-
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_LIST_DIR}/../cmake_modules")
-include("koreader_thirdparty_common")
-include("koreader_thirdparty_git")
-
-ep_get_source_dir(SOURCE_DIR)
-
-# NOTE: Needs to match the version used by whatever version of libk2pdfopt we're currently using...
-#       Probably applies to mupdf & tesseract, too...
-ko_write_gitclone_script(
-    GIT_CLONE_SCRIPT_FILENAME
-    https://github.com/DanBloomberg/leptonica.git
-    1.74.1
-    ${SOURCE_DIR}
-)
-
 # Make sure we use the old fmemopen symbol on ARM Linux when building against
 # glibc >= 2.22 (c.f. base#421 & #2188).
 #
 # NOTE: Technically, provided we're targeting ARM, we could probably apply the patch unilaterally,
 # and not only when glibc >= 2.22, but since we now have the code to make the check, keep it,
 # that ensures a vanilla build with sane TCs ;).
-if((${ARM_GLIBC_GTE_2_22}) AND (NOT CMAKE_SYSTEM_PROCESSOR MATCHES ".+64$"))
-    list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/leptonica-1.74.1-fmemopen-arm-compat-symbol.patch)
+if(NOT ANDROID AND NOT DARWIN AND NOT WIN32 AND NOT EMULATE_READER)
+    execute_process(COMMAND "${CMAKE_C_COMPILER}" -print-file-name=libc.so.6 OUTPUT_VARIABLE GLIBC_FILE OUTPUT_STRIP_TRAILING_WHITESPACE RESULT_VARIABLE EXIT_CODE)
+    if(EXIT_CODE)
+        message(FATAL_ERROR "could not determine GLIBC version: ${EXIT_CODE}")
+    endif()
+    execute_process(COMMAND "${CMAKE_READELF}" --version-info "${GLIBC_FILE}" OUTPUT_VARIABLE GLIBC_VERSION_INFO RESULT_VARIABLE EXIT_CODE)
+    if(EXIT_CODE)
+        message(FATAL_ERROR "could not determine GLIBC version: ${EXIT_CODE}")
+    endif()
+    string(REPLACE "\n" ";" LINES ${GLIBC_VERSION_INFO})
+    set(GLIBC_VERSION)
+    foreach(L IN LISTS LINES)
+        string(REGEX MATCH " GLIBC_([0-9.]+)$" M "${L}")
+        if(M AND NOT GLIBC_VERSION OR GLIBC_VERSION VERSION_LESS CMAKE_MATCH_1)
+            set(GLIBC_VERSION "${CMAKE_MATCH_1}")
+        endif()
+    endforeach()
+    if(NOT GLIBC_VERSION)
+        message(FATAL_ERROR "could not determine GLIBC version!")
+    endif()
+    message(STATUS "detected GLIBC version: ${GLIBC_VERSION}")
+    if(GLIBC_VERSION VERSION_GREATER_EQUAL "2.22")
+        list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/leptonica-1.74.1-fmemopen-arm-compat-symbol.patch)
+    endif()
 endif()
+list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/fix-uninitialized-memory-access.patch)
+list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/k2pdfopt.patch)
+list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake_tweaks.patch)
 
-# We apparently need a rebuild of the configure on macOS (https://github.com/koreader/koreader/issues/4448#issuecomment-522363325)
-list(APPEND PATCH_CMD COMMAND autoreconf -fi)
+# Make sure the daisy-chain once again picks up our toolchain file...
+list(APPEND CMAKE_ARGS "-DCMAKE_TOOLCHAIN_FILE=${CMAKE_TCF}")
 
-include(ExternalProject)
-ExternalProject_Add(
-    ${PROJECT_NAME}
-    DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
+list(APPEND CMAKE_ARGS "-DBUILD_PROG=FALSE")
+list(APPEND CMAKE_ARGS "-DCMAKE_DISABLE_FIND_PACKAGE_GIF=TRUE")
+list(APPEND CMAKE_ARGS "-DCMAKE_DISABLE_FIND_PACKAGE_JPEG=TRUE")
+# This takes care of disabling JP2K and WebP support.
+list(APPEND CMAKE_ARGS "-DCMAKE_DISABLE_FIND_PACKAGE_PkgConfig=TRUE")
+list(APPEND CMAKE_ARGS "-DCMAKE_DISABLE_FIND_PACKAGE_TIFF=TRUE")
+
+list(APPEND BUILD_CMD COMMAND ${KO_MAKE_PROGRAM})
+
+set(LIB_SPEC lept VERSION 5)
+set_libname(LIB ${LIB_SPEC})
+
+# Install shared lib.
+append_shared_lib_install_command(INSTALL_CMD BYPRODUCTS src/${LIB} ${LIB_SPEC})
+
+# Install headers.
+append_headers_install_command(
+    INSTALL_CMD BYPRODUCTS
+    SUBDIR leptonica
+    "${BINARY_DIR}/src/endianness.h"
+    FROM "${SOURCE_DIR}/src"
+    allheaders.h alltypes.h array.h arrayaccess.h bbuffer.h bilateral.h bmf.h
+    bmfdata.h bmp.h ccbord.h dewarp.h environ.h gplot.h heap.h imageio.h
+    jbclass.h leptwin.h list.h morph.h pix.h ptra.h queue.h rbtree.h
+    readbarcode.h recog.h regutils.h stack.h stringcode.h sudoku.h watershed.h
+)
+
+thirdparty_project(
+    # NOTE: Needs to match the version used by whatever version of libk2pdfopt we're currently using...
+    #       Probably applies to mupdf & tesseract, too...
+    URL https://github.com/DanBloomberg/leptonica/archive/refs/tags/1.74.1.tar.gz
+    URL_MD5 b3de9ae35976fd4fc3f6dae5a4368bca
     PATCH_COMMAND ${PATCH_CMD}
-    CONFIGURE_COMMAND ""
-    # skip build and install, libk2pdfopt will build it
-    BUILD_COMMAND ""
-    INSTALL_COMMAND ""
+    CMAKE_ARGS ${CMAKE_ARGS}
+    BUILD_COMMAND ${BUILD_CMD}
+    INSTALL_COMMAND ${INSTALL_CMD}
+    BYPRODUCTS ${BYPRODUCTS}
 )

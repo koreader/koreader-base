@@ -1,15 +1,33 @@
-cmake_minimum_required(VERSION 3.5.1)
-project(tesseract LANGUAGES)
+list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake_tweaks.patch)
 
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_LIST_DIR}/../cmake_modules")
-include("koreader_thirdparty_common")
-include("koreader_thirdparty_git")
+# Make sure the daisy-chain once again picks up our toolchain file...
+list(APPEND CMAKE_ARGS "-DCMAKE_TOOLCHAIN_FILE=${CMAKE_TCF}")
 
-ep_get_source_dir(SOURCE_DIR)
-
-if (DEFINED ENV{ANDROID})
-    list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/tesseract-android.patch)
+if(ANDROID)
+    list(APPEND CMAKE_ARGS "-DANDROID=TRUE")
 endif()
+
+list(APPEND BUILD_CMD COMMAND ${KO_MAKE_PROGRAM})
+
+set(LIB_SPEC tesseract VERSION 3)
+set_libname(LIB ${LIB_SPEC})
+
+# Install shared lib.
+append_shared_lib_install_command(INSTALL_CMD BYPRODUCTS ${LIB} ${LIB_SPEC})
+
+# Install headers.
+append_headers_install_command(
+    INSTALL_CMD BYPRODUCTS
+    SUBDIR tesseract
+    FROM "${SOURCE_DIR}/api"
+    apitypes.h baseapi.h capi.h
+    FROM "${SOURCE_DIR}/ccmain"
+    ltrresultiterator.h pageiterator.h resultiterator.h thresholder.h
+    FROM "${SOURCE_DIR}/ccstruct"
+    publictypes.h
+    FROM "${SOURCE_DIR}/ccutil"
+    host.h platform.h tesscallback.h unichar.h
+)
 
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
@@ -18,13 +36,11 @@ ko_write_gitclone_script(
     ${SOURCE_DIR}
 )
 
-include(ExternalProject)
-ExternalProject_Add(
-    ${PROJECT_NAME}
+thirdparty_project(
     DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
     PATCH_COMMAND ${PATCH_CMD}
-    CONFIGURE_COMMAND ""
-    # skip build and install, libk2pdfopt will build it
-    BUILD_COMMAND ""
-    INSTALL_COMMAND ""
+    CMAKE_ARGS ${CMAKE_ARGS}
+    BUILD_COMMAND ${BUILD_CMD}
+    INSTALL_COMMAND ${INSTALL_CMD}
+    BYPRODUCTS ${BYPRODUCTS}
 )

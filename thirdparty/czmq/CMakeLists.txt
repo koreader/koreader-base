@@ -1,39 +1,32 @@
-cmake_minimum_required(VERSION 3.5.1)
-project(czmq LANGUAGES)
-
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_LIST_DIR}/../cmake_modules")
-include("koreader_thirdparty_common")
-include("koreader_thirdparty_git")
-
-assert_var_defined(CC)
-assert_var_defined(CFLAGS)
-assert_var_defined(LDFLAGS)
-assert_var_defined(ZMQ_DIR)
-assert_var_defined(CHOST)
-
-ep_get_source_dir(SOURCE_DIR)
-ep_get_binary_dir(BINARY_DIR)
-
-# -Wno-error so we can build on glibc 2.24 in spite of readdir_r
-set(CFG_ENV_VAR "CC=${CC}" "LDFLAGS=${LDFLAGS}" "CFLAGS=${CFLAGS} -Wno-error" czmq_have_xmlto=no czmq_have_asciidoc=no)
-set(CFG_OPTS --prefix=${BINARY_DIR} --libdir=${BINARY_DIR}/lib --with-gnu-ld --with-libzmq=${ZMQ_DIR} --disable-static --enable-shared --host=${CHOST})
-list(APPEND CFG_CMD COMMAND env ${CFG_ENV_VAR} ${SOURCE_DIR}/configure ${CFG_OPTS})
-
-if(DEFINED ENV{ANDROID})
-    list(APPEND CFG_CMD COMMAND ${ANDROID_LIBTOOL_FIX_CMD})
-endif()
-
-# Hack to remove hardcoded rpath
-list(APPEND CFG_CMD COMMAND ${ISED} "s|^hardcode_libdir_flag_spec=.*|hardcode_libdir_flag_spec=\"\"|g" libtool)
-list(APPEND CFG_CMD COMMAND ${ISED} "s|^runpath_var=LD_RUN_PATH|runpath_var=DIE_RPATH_DIE|g" libtool)
-
-list(APPEND PATCH_CMD COMMAND ./autogen.sh)
-if(NOT DEFINED ENV{DARWIN})
+list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake_tweaks.patch)
+if(NOT DARWIN)
     # patch: ignore limited broadcast address
     list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/zbeacon.patch)
     # patch: add _DEFAULT_SOURCE define for glibc starting at version 2.20
     list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/czmq_default_source_define.patch)
 endif()
+
+# Make sure the daisy-chain once again picks up our toolchain file...
+list(APPEND CMAKE_ARGS "-DCMAKE_TOOLCHAIN_FILE=${CMAKE_TCF}")
+
+list(APPEND BUILD_CMD COMMAND ${KO_MAKE_PROGRAM} czmq)
+
+set(LIB_SPEC czmq VERSION 1)
+set_libname(LIB ${LIB_SPEC})
+
+# Install shared lib.
+append_shared_lib_install_command(INSTALL_CMD BYPRODUCTS ${LIB} ${LIB_SPEC})
+
+# Install headers.
+append_headers_install_command(
+    INSTALL_CMD BYPRODUCTS
+    FROM "${SOURCE_DIR}/include"
+    czmq.h czmq_prelude.h zactor.h zauth.h zbeacon.h zcert.h zcertstore.h
+    zchunk.h zclock.h zconfig.h zctx.h zdigest.h zdir.h zdir_patch.h zfile.h
+    zframe.h zgossip.h zhash.h zlist.h zloop.h zmonitor.h zmsg.h zmutex.h
+    zpoller.h zproxy.h zrex.h zsocket.h zsock.h zsock_monitor.h zsockopt.h
+    zsock_option.h zstr.h zsys.h zthread.h zuuid.h
+)
 
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
@@ -42,12 +35,11 @@ ko_write_gitclone_script(
     ${SOURCE_DIR}
 )
 
-include(ExternalProject)
-ExternalProject_Add(
-    ${PROJECT_NAME}
+thirdparty_project(
     DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
     PATCH_COMMAND ${PATCH_CMD}
-    CONFIGURE_COMMAND ${CFG_CMD}
-    BUILD_COMMAND ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS}
-    INSTALL_COMMAND ${KO_MAKE_RECURSIVE} installdirs uninstall install
+    CMAKE_ARGS ${CMAKE_ARGS}
+    BUILD_COMMAND ${BUILD_CMD}
+    INSTALL_COMMAND ${INSTALL_CMD}
+    BYPRODUCTS ${BYPRODUCTS}
 )

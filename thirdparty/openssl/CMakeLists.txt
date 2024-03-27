@@ -1,22 +1,5 @@
-cmake_minimum_required(VERSION 3.5.1)
-project(openssl LANGUAGES)
-
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/../cmake_modules")
-include("koreader_thirdparty_common")
-include("koreader_thirdparty_git")
-
-assert_var_defined(CONFIG_SCRIPT)
-assert_var_defined(CHOST)
-assert_var_defined(REALCC)
-assert_var_defined(CC)
-assert_var_defined(CPPFLAGS)
-assert_var_defined(CFLAGS)
-assert_var_defined(SHARED_LDFLAGS)
-assert_var_defined(LD)
-assert_var_defined(AR)
-assert_var_defined(RANLIB)
-
-ep_get_source_dir(SOURCE_DIR)
+list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/macos_rpath.patch)
+list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/reduce_build_verbosity.patch)
 
 # FIXME: Orphaned, MINGW is never set anywhere
 if(${MINGW})
@@ -25,16 +8,29 @@ else()
     set(CFG_OPTS shared)
 endif()
 
+list(APPEND CFG_ENV_VAR
+    "CC=${HOSTCC}"
+    "CXX=${HOSTCXX}"
+    # NOTE: Disable https://github.com/openssl/openssl/pull/9595 as it's causing
+    # stalls long after the early boot on devices without the getrandom() syscall,
+    # which is pretty much all of them, because it's a Linux 3.17+ & glibc 2.25+
+    # feature.  This is most easily reproduced with scp transfers that will block
+    # on the initial select on /dev/random.  Since those devices are low-power, UP,
+    # and mostly idle, it can take a fairly noticeable amount of time for entropy
+    # to be generated...
+    "CPPFLAGS=-DOPENSSL_RAND_SEED_DEVRANDOM_SHM_ID=-1"
+    "CFLAGS=${CFLAGS}"
+    "CXXFLAGS=${CXXFLAGS}"
+    "LDFLAGS=${LDFLAGS}"
+)
 # If we have a CHOST set, use it
 if (NOT "${CHOST}" STREQUAL "")
-    # NOTE: We bypass ccache for the Configure script, in the hope that it'll help the whole makedepend detection.
-    #       At least OpenSSL 1.1.x now drops it instead of trying to call a nonexistent binary, so it's less annoying than before.
-    set(CFG_ENV_VAR "CROSS_COMPILE=${CHOST}-" "CC=${REALCC}")
+    list(APPEND CFG_ENV_VAR "CROSS_COMPILE=${CHOST}-")
 endif()
 
-if(DEFINED ENV{ANDROID})
-    assert_var_defined(NDKABI)
-    set(CFG_OPTS -D__ANDROID_API__=${NDKABI} ${CFG_OPTS})
+if(ANDROID)
+    assert_var_defined(ENV{NDKABI})
+    set(CFG_OPTS -D__ANDROID_API__=$ENV{NDKABI} ${CFG_OPTS})
     # If we're on ARM, make it so
     if (${CHOST} MATCHES "^armv7a-.*")
         set(CFG_OPTS android-arm ${CFG_OPTS})
@@ -56,57 +52,83 @@ else()
 endif()
 
 # Do we support SIMD?
-if(DEFINED ENV{WANT_SIMD})
+if(WANT_SIMD)
     set(ASM_OPT enable-asm)
 else()
     set(ASM_OPT no-asm)
 endif()
 
-list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/openssl-1.1.0j-parallel_install_fix.patch)
-
-# NOTE: Disable https://github.com/openssl/openssl/pull/9595 as it's causing stalls long after the early boot on devices without the getrandom() syscall, which is pretty much all of them, because it's a Linux 3.17+ & glibc 2.25+ feature.
-#       This is most easily reproduced with scp transfers that will block on the initial select on /dev/random. Since those devices are low-power, UP, and mostly idle, it can take a fairly noticeable amount of time for entropy to be generated...
-set(CFLAGS "${CPPFLAGS} -DOPENSSL_RAND_SEED_DEVRANDOM_SHM_ID=-1 ${CFLAGS}")
-
-# NOTE: We need to pass $CFLAGS to OpenSSL's Configure script,
-# except it balks on a few exotic flags, so, filter those out...
-string(REGEX REPLACE "--sysroot [.a-zA-Z0-9/_-]*" "" FILTERED_CFLAGS "${CFLAGS}")
-if(DEFINED ENV{ANDROID})
-    string(REPLACE "-no-canonical-prefixes" "" FILTERED_CFLAGS "${FILTERED_CFLAGS}")
+if(DARWIN)
+    list(APPEND CONFIGURE_CMD "${SOURCE_DIR}/Configure")
+    if (DARWIN_AARCH64)
+        list(APPEND CONFIGURE_CMD darwin64-arm64-cc)
+    else()
+        list(APPEND CONFIGURE_CMD darwin64-x86_64-cc)
+    endif()
+elseif(WIN32)
+    list(APPEND CONFIGURE_CMD "${SOURCE_DIR}/Configure" mingw)
+elseif(EMULATE_READER)
+    list(APPEND CONFIGURE_CMD "${SOURCE_DIR}/config")
+else()
+    list(APPEND CONFIGURE_CMD "${SOURCE_DIR}/Configure")
 endif()
-
-# May have an arg, split it
-set(CONFIGURE_CMD ${CONFIG_SCRIPT})
-separate_arguments(CONFIGURE_CMD)
 
 set(CFG_OPTS ${CFG_OPTS} ${ASM_OPT} no-idea no-mdc2 no-rc5)
-set(CFG_CMD env ${CFG_ENV_VAR} ${SOURCE_DIR}/${CONFIGURE_CMD} ${CFG_OPTS})
-
-if(DEFINED ENV{ANDROID})
-    set(MAKE_CMD ${KO_MAKE_RECURSIVE} "CFLAGS=${FILTERED_CFLAGS}" "SHARED_LDFLAGS=${SHARED_LDFLAGS}" "LD=${LD}" "AR=${AR}" "RANLIB=${RANLIB}")
-else()
-    set(MAKE_CMD ${KO_MAKE_RECURSIVE} "CC=${CC}" "CFLAGS=${FILTERED_CFLAGS}" "SHARED_LDFLAGS=${SHARED_LDFLAGS}" "LD=${LD}" "AR=${AR}" "RANLIB=${RANLIB}")
-endif()
-# NOTE: Make depend may fail when using ccache, and may fail when // (on some OpenSSL versions, at least)
-list(APPEND BUILD_CMD COMMAND ${MAKE_CMD} -j1 depend)
-list(APPEND BUILD_CMD COMMAND ${MAKE_CMD} -j${PARALLEL_JOBS} build_libs)
-
-ko_write_gitclone_script(
-    GIT_CLONE_SCRIPT_FILENAME
-    https://github.com/openssl/openssl.git
-    OpenSSL_1_1_1w
-    ${SOURCE_DIR}
-    none
+list(APPEND CFG_CMD COMMAND
+    env ${CFG_ENV_VAR}
+    ${CONFIGURE_CMD}
+    ${CFG_OPTS}
 )
 
-include(ExternalProject)
-ExternalProject_Add(
-    ${PROJECT_NAME}
-    DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
-    PATCH_COMMAND COMMAND ${PATCH_CMD}
+list(APPEND BUILD_CMD COMMAND
+    ${KO_MAKE_RECURSIVE}
+    "AR=${AR}"
+    "CC=${CC}"
+    "CXX=${CXX}"
+    "LD=${LD}"
+    "MAKEDEPEND=${CC}"
+    "RANLIB=${RANLIB}"
+    # Reproducible builds.
+    "SOURCE_DATE_EPOCH=1694383200 UTC"
+    build_libs
+)
+
+set(CRYPTO_LIB_SPEC ssl VERSION 1.1)
+set_libname(CRYPTO_LIB ${CRYPTO_LIB_SPEC})
+set(SSL_LIB_SPEC crypto VERSION 1.1)
+set_libname(SSL_LIB ${SSL_LIB_SPEC})
+
+# Install shared libs.
+append_shared_lib_install_command(INSTALL_CMD BYPRODUCTS ${CRYPTO_LIB} ${CRYPTO_LIB_SPEC})
+append_shared_lib_install_command(INSTALL_CMD BYPRODUCTS ${SSL_LIB} ${SSL_LIB_SPEC})
+
+# Install headers.
+append_headers_install_command(
+    INSTALL_CMD BYPRODUCTS
+    SUBDIR openssl
+    include/openssl/opensslconf.h
+    FROM "${SOURCE_DIR}/include/openssl"
+    aes.h asn1err.h asn1.h asn1_mac.h asn1t.h asyncerr.h async.h bioerr.h bio.h
+    blowfish.h bnerr.h bn.h buffererr.h buffer.h camellia.h cast.h cmac.h
+    cmserr.h cms.h comperr.h comp.h conf_api.h conferr.h conf.h cryptoerr.h
+    crypto.h cterr.h ct.h des.h dherr.h dh.h dsaerr.h dsa.h dtls1.h ebcdic.h
+    ecdh.h ecdsa.h ecerr.h ec.h engineerr.h engine.h e_os2.h err.h evperr.h
+    evp.h hmac.h idea.h kdferr.h kdf.h lhash.h md2.h md4.h md5.h mdc2.h modes.h
+    objectserr.h objects.h obj_mac.h ocsperr.h ocsp.h opensslv.h
+    ossl_typ.h pem2.h pemerr.h pem.h pkcs12err.h pkcs12.h pkcs7err.h pkcs7.h
+    rand_drbg.h randerr.h rand.h rc2.h rc4.h rc5.h ripemd.h rsaerr.h rsa.h
+    safestack.h seed.h sha.h srp.h srtp.h ssl2.h ssl3.h sslerr.h ssl.h stack.h
+    storeerr.h store.h symhacks.h tls1.h tserr.h ts.h txt_db.h uierr.h ui.h
+    whrlpool.h x509err.h x509.h x509v3err.h x509v3.h x509_vfy.h
+)
+
+thirdparty_project(
+    URL https://github.com/openssl/openssl/releases/download/OpenSSL_1_1_1w/openssl-1.1.1w.tar.gz
+    https://www.openssl.org/source/old/1.1.1/openssl-1.1.1w.tar.gz
+    URL_MD5 3f76825f195e52d4b10c70040681a275
+    PATCH_COMMAND ${PATCH_CMD}
     CONFIGURE_COMMAND ${CFG_CMD}
-    BUILD_IN_SOURCE 1
-    BUILD_COMMAND COMMAND ${BUILD_CMD}
-    # skip install
-    INSTALL_COMMAND ""
+    BUILD_COMMAND ${BUILD_CMD}
+    INSTALL_COMMAND ${INSTALL_CMD}
+    BYPRODUCTS ${BYPRODUCTS}
 )

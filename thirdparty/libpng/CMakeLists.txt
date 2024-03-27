@@ -1,39 +1,39 @@
-cmake_minimum_required(VERSION 3.5.1)
-project(libpng LANGUAGES)
+list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/math_library.patch)
 
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/../cmake_modules")
-include("koreader_thirdparty_common")
-include("koreader_thirdparty_git")
+# Make sure the daisy-chain once again picks up our toolchain file...
+list(APPEND CMAKE_ARGS "-DCMAKE_TOOLCHAIN_FILE=${CMAKE_TCF}")
 
-assert_var_defined(CC)
-assert_var_defined(CXX)
-assert_var_defined(CPPFLAGS)
-assert_var_defined(LDFLAGS)
+list(APPEND CMAKE_ARGS "-DPNG_DEBUG_POSTFIX=")
+list(APPEND CMAKE_ARGS "-DPNG_TOOLS=FALSE")
+list(APPEND CMAKE_ARGS "-DPNG_STATIC=FALSE")
+list(APPEND CMAKE_ARGS "-DPNG_TESTS=FALSE")
 
-ep_get_source_dir(SOURCE_DIR)
-ep_get_binary_dir(BINARY_DIR)
+list(APPEND BUILD_CMD COMMAND ${KO_MAKE_PROGRAM})
 
-set(CFG_ENV_VAR "CC=${CC}" "CXX=${CXX}" "CPPFLAGS=${CPPFLAGS}" "LDFLAGS=${LDFLAGS}")
-set(CFG_OPTS --prefix=${BINARY_DIR} --libdir=${BINARY_DIR}/lib --disable-static --enable-shared --host=${CHOST})
-list(APPEND CFG_CMD COMMAND env ${CFG_ENV_VAR} ${SOURCE_DIR}/configure ${CFG_OPTS})
+set(LIB_SPEC png16 VERSION 16)
+set_libname(LIB ${LIB_SPEC})
 
-if(DEFINED ENV{ANDROID})
-    list(APPEND CFG_CMD COMMAND ${ANDROID_LIBTOOL_FIX_CMD})
-endif()
+# Install shared lib.
+append_shared_lib_install_command(INSTALL_CMD BYPRODUCTS ${LIB} ${LIB_SPEC})
 
-ko_write_gitclone_script(
-    GIT_CLONE_SCRIPT_FILENAME
-    https://github.com/glennrp/libpng.git
-    v1.6.41
-    ${SOURCE_DIR}
+# CMake <= 3.20 `FindPNG` module is bugged: install a `libpng16d.so` symlink
+# so our version is picked up over the system one when compiling the emulator.
+list(APPEND INSTALL_CMD COMMAND ln -snf ${LIB} "${STAGING_DIR}/lib/libpng16d${LIB_EXT}")
+
+# Install headers.
+append_headers_install_command(
+    INSTALL_CMD BYPRODUCTS
+    "${BINARY_DIR}/pnglibconf.h"
+    FROM "${SOURCE_DIR}"
+    png.h pngconf.h
 )
 
-include(ExternalProject)
-ExternalProject_Add(
-    ${PROJECT_NAME}
-    DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
-    PATCH_COMMAND ""
-    CONFIGURE_COMMAND ${CFG_CMD}
-    BUILD_COMMAND ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS}
-    INSTALL_COMMAND ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS} install
+thirdparty_project(
+    URL https://github.com/pnggroup/libpng/archive/refs/tags/v1.6.41.tar.gz
+    URL_MD5 ea2484c0d6845e937bd03aefe33f15eb
+    PATCH_COMMAND ${PATCH_CMD}
+    CMAKE_ARGS ${CMAKE_ARGS}
+    BUILD_COMMAND ${BUILD_CMD}
+    INSTALL_COMMAND ${INSTALL_CMD}
+    BYPRODUCTS ${BYPRODUCTS}
 )

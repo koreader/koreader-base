@@ -1,0 +1,20 @@
+--- a/src/pix2.c
++++ b/src/pix2.c
+@@ -1838,7 +1838,7 @@ PIX     *pixd;
+     pixGetDimensions(pixs, &ws, &hs, &d);
+     wd = ws + left + right;
+     hd = hs + top + bot;
+-    if ((pixd = pixCreateNoInit(wd, hd, d)) == NULL)
++    if ((pixd = pixCreate(wd, hd, d)) == NULL)
+         return (PIX *)ERROR_PTR("pixd not made", procName, NULL);
+     pixCopyResolution(pixd, pixs);
+     pixCopyColormap(pixd, pixs);
+@@ -1917,7 +1917,7 @@ PIX     *pixd;
+         return (PIX *)ERROR_PTR("width must be > 0", procName, NULL);
+     if (hd <= 0)
+         return (PIX *)ERROR_PTR("height must be > 0", procName, NULL);
+-    if ((pixd = pixCreateNoInit(wd, hd, d)) == NULL)
++    if ((pixd = pixCreate(wd, hd, d)) == NULL)
+         return (PIX *)ERROR_PTR("pixd not made", procName, NULL);
+     pixCopyResolution(pixd, pixs);
+     pixCopySpp(pixd, pixs);

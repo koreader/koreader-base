@@ -1,26 +1,30 @@
-cmake_minimum_required(VERSION 3.5.1)
-project(minizip LANGUAGES)
-
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_LIST_DIR}/../cmake_modules")
-include("koreader_thirdparty_common")
-include("koreader_thirdparty_git")
-
-assert_var_defined(CC)
-assert_var_defined(AR)
-assert_var_defined(LDFLAGS)
-assert_var_defined(RANLIB)
-
-ep_get_source_dir(SOURCE_DIR)
+# Build in source tree.
+set(BINARY_DIR "${SOURCE_DIR}")
 
 # NOTE: 53a657318af1fccc4bac7ed230729302b2391d1d is the tip of the 1.2 branch. The fcrypt API we need is gone in master.
 # FIXME: Even then, something in said branch seems to upset MuPDF with our custom patch as-is, so keep using the old code...
 # list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/minizip-libaes-makefile.patch)
 
-list(APPEND PATCH_CMD COMMAND ${ISED} "s|^CC=|#CC=|g" -e "s|^CFLAGS=|#CFLAGS=|g" aes/Makefile)
+list(APPEND PATCH_CMD COMMAND ${ISED} "s|\\.\\./libaes.a|libaes.a|" aes/Makefile)
 
-#fix build error due to implicit declarations of function being invalid in C99 under macOS/XCode 12 
-set(CC "${CC} -Wno-error=implicit-function-declaration")
-set(BUILD_CMD_STR -j${PARALLEL_JOBS} -C aes "CC=${CC}" "LDFLAGS=${LDFLAGS}" "AR=${AR}" "RANLIB=${RANLIB}")
+# Fix build error due to implicit declarations of function being invalid in C99 under macOS/XCode 12.
+string(APPEND CFLAGS " -Wno-error=implicit-function-declaration")
+string(APPEND CFLAGS " -DHAVE_AES")
+list(APPEND BUILD_CMD COMMAND ${KO_MAKE_RECURSIVE} -C aes)
+append_autotools_vars(BUILD_CMD)
+
+# Install static lib.
+append_static_lib_install_command(INSTALL_CMD BYPRODUCTS "${SOURCE_DIR}/aes/libaes.a" aes)
+
+# Install headers.
+append_headers_install_command(
+    INSTALL_CMD BYPRODUCTS
+    SUBDIR aes
+    FROM "${SOURCE_DIR}/aes"
+    aes.h aes_via_ace.h aesopt.h aestab.h
+    brg_endian.h brg_types.h entropy.h fileenc.h
+    hmac.h prng.h pwd2key.h sha1.h
+)
 
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
@@ -29,14 +33,10 @@ ko_write_gitclone_script(
     ${SOURCE_DIR}
 )
 
-include(ExternalProject)
-ExternalProject_Add(
-    ${PROJECT_NAME}
+thirdparty_project(
     DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
-    BUILD_IN_SOURCE 1
     PATCH_COMMAND ${PATCH_CMD}
-    CONFIGURE_COMMAND ""
-    BUILD_COMMAND ${KO_MAKE_RECURSIVE} ${BUILD_CMD_STR}
-    # skip install
-    INSTALL_COMMAND ""
+    BUILD_COMMAND ${BUILD_CMD}
+    INSTALL_COMMAND ${INSTALL_CMD}
+    BYPRODUCTS ${BYPRODUCTS}
 )
