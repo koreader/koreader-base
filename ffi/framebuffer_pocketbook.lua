@@ -42,7 +42,11 @@ local function _updateFull(fb, x, y, w, h, dither)
         _adjustAreaColours(fb)
     end
 
-    inkview.FullUpdate()
+    if fb.device.hasColorScreen then
+        inkview.FullUpdateHQ()
+    else
+        inkview.FullUpdate()
+    end
 end
 
 local function _updateFast(fb, x, y, w, h, dither)
