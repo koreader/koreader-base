@@ -407,7 +407,7 @@ $(LIBGETTEXT): $(LIBICONV) $(THIRDPARTY_DIR)/gettext/*.*
 		$(CURDIR)/thirdparty/gettext && \
 		$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS)
 
-$(GLIB): $(LIBICONV) $(LIBGETTEXT) $(THIRDPARTY_DIR)/glib/*.*
+$(GLIB): $(if $(or $(ANDROID),$(DARWIN)),$(LIBICONV) $(LIBGETTEXT)) $(THIRDPARTY_DIR)/glib/*.*
 	install -d $(GLIB_BUILD_DIR)
 	-rm -f $(GLIB_DIR)/../glib-stamp/glib-install
 	cd $(GLIB_BUILD_DIR) && \
@@ -419,7 +419,8 @@ $(GLIB): $(LIBICONV) $(LIBGETTEXT) $(THIRDPARTY_DIR)/glib/*.*
 		-DCFLAGS='$(CFLAGS)' \
 		-DLDFLAGS='$(LDFLAGS)' \
 		-DGETTEXT_DIR='$(GETTEXT_DIR)' \
-		-DLIBICONV_DIR='$(LIBICONV_DIR)' -DWITH_LIBICONV='gnu' \
+		-DLIBICONV_DIR='$(LIBICONV_DIR)' \
+		-DWITH_LIBICONV='$(if $(or $(ANDROID),$(DARWIN)),gnu,no)' \
 		-DHOST_OPTS='$(if $(EMULATE_READER),,--cache-file=arm_cache.conf)' \
 		$(CURDIR)/$(THIRDPARTY_DIR)/glib && \
 		$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS)
