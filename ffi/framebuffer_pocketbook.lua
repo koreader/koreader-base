@@ -19,7 +19,7 @@ local function _adjustAreaColours(fb)
     if fb.device.hasColorScreen and fb.device.color_saturation then
         fb.debug("adjusting image color saturation", fb.device.color_saturation)
 
-        inkview.adjustAreaWithLabColorsSaturation(fb.data, fb._finfo.line_length, fb._vinfo.width, fb._vinfo.height, fb.device.color_saturation)
+        inkview.adjustAreaDefault(fb.data, fb._finfo.line_length, fb._vinfo.width, fb._vinfo.height)
     end
 end
 
