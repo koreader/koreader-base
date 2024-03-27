@@ -42,7 +42,7 @@ local function _updateFull(fb, x, y, w, h, dither)
         _adjustAreaColours(fb)
     end
 
-    inkview.FullUpdate()
+    inkview.FullUpdateHQ()
 end
 
 local function _updateFast(fb, x, y, w, h, dither)
