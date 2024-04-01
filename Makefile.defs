@@ -1010,3 +1010,23 @@ CMAKE_THIRDPARTY_LIBS := $(CMAKE_THIRDPARTY_LIBS),curl,zsync2
 CMAKE_THIRDPARTY_LIBS := $(CMAKE_THIRDPARTY_LIBS),fbink
 CMAKE_THIRDPARTY_LIBS := $(CMAKE_THIRDPARTY_LIBS),kobo-usbms
 CMAKE_THIRDPARTY_LIBS := $(CMAKE_THIRDPARTY_LIBS),fribidi,libunibreak,utf8proc
+
+# Testing support.
+
+ifneq (,$(EMULATE_READER))
+
+define busted_fn
+busted() {(
+eval "$$($(LUAROCKS_BINARY) path)";
+export TESSDATA_DIR="$$PWD/data";
+./luajit -e 'require "busted.runner" {standalone = false}' /dev/null
+--exclude-tags=notest
+--output=gtest
+--sort-files
+"$$@";
+)}
+endef
+
+BUSTED_LUAJIT = $(strip $(busted_fn)); busted
+
+endif
