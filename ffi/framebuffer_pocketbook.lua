@@ -33,7 +33,7 @@ local function _updatePartial(fb, x, y, w, h, dither, hq)
         _adjustAreaColours(fb)
     end
 
-    if fb.device.hasColorScreen and hq then
+    if fb.device.hasColorScreen() and hq then
         inkview.PartialUpdateHQ(x, y, w, h)
     else
         inkview.PartialUpdate(x, y, w, h)
