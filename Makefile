@@ -274,11 +274,7 @@ $(OUTPUT_DIR)/spec/base: | $(OUTPUT_DIR)/spec/
 	ln -sf ../../../spec $(OUTPUT_DIR)/spec/base
 
 test: all test-data
-	eval "$$($(LUAROCKS_BINARY) path)" && cd $(OUTPUT_DIR) && \
-		env TESSDATA_DIR=$(OUTPUT_DIR)/data \
-		./luajit "$$(which busted)" \
-		--exclude-tags=notest \
-		-o gtest ./spec/base/unit
+	cd $(OUTPUT_DIR) && $(BUSTED_LUAJIT) ./spec/base/unit
 
 test-data: $(OUTPUT_DIR)/.busted $(OUTPUT_DIR)/data/tessdata/eng.traineddata $(OUTPUT_DIR)/spec/base $(OUTPUT_DIR)/fonts/droid/DroidSansMono.ttf
 
