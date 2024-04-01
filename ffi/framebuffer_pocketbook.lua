@@ -16,7 +16,7 @@ local function _getPhysicalRect(fb, x, y, w, h)
 end
 
 local function _adjustAreaColours(fb)
-    if fb.device.hasColorScreen then
+    if fb.device.hasColorScreen() then
         fb.debug("adjusting image color saturation")
 
         inkview.adjustAreaDefault(fb.data, fb._finfo.line_length, fb._vinfo.width, fb._vinfo.height)
@@ -42,7 +42,7 @@ local function _updateFull(fb, x, y, w, h, dither)
         _adjustAreaColours(fb)
     end
 
-    if fb.device.hasColorScreen then
+    if fb.device.hasColorScreen() then
         inkview.FullUpdateHQ()
     else
         inkview.FullUpdate()
