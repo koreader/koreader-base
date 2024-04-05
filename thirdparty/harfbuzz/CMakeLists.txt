@@ -17,6 +17,21 @@ assert_var_defined(FREETYPE_DIR)
 ep_get_source_dir(SOURCE_DIR)
 ep_get_binary_dir(BINARY_DIR)
 
+# Get rid of a bunch of `#line` directives that trip ccache 4.9.1.
+# NOTE: this has also the nice effect of "touching" each file, so
+# the build system does not try to regenerate them (and building
+# without ragel is consistently possible).
+list(APPEND PATCH_CMD COMMAND ${ISED} "/^#line/d"
+    src/hb-ot-shaper-khmer-machine.hh
+    src/hb-ot-shaper-use-machine.hh
+    src/hb-ot-shaper-myanmar-machine.hh
+    src/hb-buffer-deserialize-json.hh
+    src/hb-buffer-deserialize-text-glyphs.hh
+    src/hb-number-parser.hh
+    src/hb-ot-shaper-indic-machine.hh
+    src/hb-buffer-deserialize-text-unicode.hh
+)
+
 list(APPEND PATCH_CMD COMMAND env NOCONFIGURE=1 ./autogen.sh)
 
 # No build rpath
