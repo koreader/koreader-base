@@ -813,6 +813,10 @@ static int getDocumentProps(lua_State *L) {
 	lua_pushstring(L, UnicodeToLocal(doc->text_view->getKeywords()).c_str());
 	lua_rawset(L, -3);
 
+    lua_pushstring(L, "isbn");
+    lua_pushstring(L, UnicodeToLocal(doc->text_view->getIdentifiers()).c_str());
+    lua_rawset(L, -3);
+
 	return 1;
 }
 
