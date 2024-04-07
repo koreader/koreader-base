@@ -11,6 +11,8 @@ assert_var_defined(LDFLAGS)
 ep_get_source_dir(SOURCE_DIR)
 ep_get_binary_dir(BINARY_DIR)
 
+list(APPEND BUILD_CMD COMMAND ${KO_MAKE_RECURSIVE})
+
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
     https://github.com/JuliaStrings/utf8proc.git
@@ -25,6 +27,6 @@ ExternalProject_Add(
     BUILD_IN_SOURCE 1
     PATCH_COMMAND ""
     CONFIGURE_COMMAND ""
-    BUILD_COMMAND ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS}
+    BUILD_COMMAND ${BUILD_CMD}
     INSTALL_COMMAND ""
 )

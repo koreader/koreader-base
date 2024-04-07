@@ -1,10 +1,3 @@
-if(NOT DEFINED PROCESSOR_COUNT)
-    include(ProcessorCount)
-    ProcessorCount(N)
-    # 0 if unknown
-    set(PROCESSOR_COUNT ${N})
-endif()
-
 if (DEFINED ENV{DARWIN})
     # Note: can't use `sed -i "" -e`, because cmake "helpfully"
     # filter-out the empty argument during command invocation…
@@ -13,27 +6,12 @@ else()
     set(ISED sed -i -e)
 endif()
 
-if(NOT DEFINED PARALLEL_JOBS)
-    math(EXPR PARALLEL_JOBS "${PROCESSOR_COUNT}+1")
-endif()
-
-if(NOT DEFINED CONSTRAINED_PARALLEL_JOBS)
-    # Default to ${PROCESSOR_COUNT} instead of ${PROCESSOR_COUNT}+1
-    set(CONSTRAINED_PARALLEL_JOBS ${PROCESSOR_COUNT})
-
-    # Some compilations (like harfbuzz) are known to OOM on memory-constrained CI.
-    if(DEFINED ENV{CIRCLECI})
-        set(CONSTRAINED_PARALLEL_JOBS 1)
-    endif()
-endif()
-
-# $(MAKE) is for recursive make invocations, but evidently when using another
-# generator there's no recursion. For us that other generator is ninja, but
-# maybe one day also Visual Studio or Xcode…
-if(CMAKE_GENERATOR MATCHES Makefiles)
-    set(KO_MAKE_RECURSIVE "$(MAKE)")
+set(KO_MAKE_RECURSIVE sh -c "exec \"\$0\" \${PARALLEL_JOBS:+-j}\${PARALLEL_JOBS} \${PARALLEL_LOAD:+-l}\${PARALLEL_LOAD} \"$@\"" ${MAKE})
+set(KO_NINJA_RECURSIVE sh -c "exec \"\$0\" \${NINJAFLAGS} \"\$@\"" ${NINJA})
+if(CMAKE_GENERATOR MATCHES "Ninja")
+    set(KO_MAKE_PROGRAM ${KO_NINJA_RECURSIVE})
 else()
-    set(KO_MAKE_RECURSIVE make)
+    set(KO_MAKE_PROGRAM ${KO_MAKE_RECURSIVE})
 endif()
 
 set(KO_PATCH ${CMAKE_MODULE_PATH}/patch-wrapper.sh)

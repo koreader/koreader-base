@@ -41,6 +41,10 @@ if(NOT DEFINED ENV{WANT_SIMD})
     list(APPEND CMAKE_ARGS "-DWITH_SIMD=OFF")
 endif()
 
+list(APPEND BUILD_CMD COMMAND ${KO_MAKE_RECURSIVE})
+
+list(APPEND INSTALL_CMD COMMAND ${KO_MAKE_RECURSIVE} install)
+
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
     https://github.com/libjpeg-turbo/libjpeg-turbo.git
@@ -55,6 +59,6 @@ ExternalProject_Add(
     PATCH_COMMAND ""
     CMAKE_ARGS "${CMAKE_ARGS}"
     CMAKE_GENERATOR "Unix Makefiles"
-    BUILD_COMMAND ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS}
-    INSTALL_COMMAND ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS} install
+    BUILD_COMMAND ${BUILD_CMD}
+    INSTALL_COMMAND ${INSTALL_CMD}
 )

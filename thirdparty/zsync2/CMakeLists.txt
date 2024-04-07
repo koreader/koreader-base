@@ -18,6 +18,13 @@ assert_var_defined(SSL_LIB)
 ep_get_source_dir(SOURCE_DIR)
 ep_get_binary_dir(BINARY_DIR)
 
+# Fix build with old TCs (kindle & pocketbook).
+list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/fix-old-tc-build.patch)
+
+# We don't actually install OpenSSL, meaning we can't use OPENSSL_ROOT_DIR to help find_package,
+# so CMake needs a push to look for both SSL & Cyrpto components...
+#list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/mangle-cpr-openssl-search.patch)
+
 # Make sure the daisy-chain once again picks up our toolchain file...
 if(DEFINED ENV{CMAKE_TCF})
     list(APPEND CMAKE_ARGS "$ENV{CMAKE_TCF}")
@@ -48,12 +55,9 @@ list(APPEND CMAKE_ARGS "-DOPENSSL_INCLUDE_DIR=${OPENSSL_DIR}/include")
 list(APPEND CMAKE_ARGS "-DOPENSSL_CRYPTO_LIBRARY=${CRYPTO_LIB}")
 list(APPEND CMAKE_ARGS "-DOPENSSL_SSL_LIBRARY=${SSL_LIB}")
 
-# We don't actually install OpenSSL, meaning we can't use OPENSSL_ROOT_DIR to help find_package,
-# so CMake needs a push to look for both SSL & Cyrpto components...
-#list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/mangle-cpr-openssl-search.patch)
+list(APPEND BUILD_CMD COMMAND ${KO_MAKE_RECURSIVE})
 
-# Fix build with old TCs (kindle & pocketbook).
-list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/fix-old-tc-build.patch)
+list(APPEND INSTALL_CMD COMMAND ${KO_MAKE_RECURSIVE} install)
 
 # NOTE: We're currently using our own fork instead of upstream's (https://github.com/AppImage/zsync2):
 ## * Enable range requests optimizations on the CLI
@@ -83,6 +87,6 @@ ExternalProject_Add(
     PATCH_COMMAND ${PATCH_CMD}
     CMAKE_ARGS "${CMAKE_ARGS}"
     CMAKE_GENERATOR "Unix Makefiles"
-    BUILD_COMMAND ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS}
-    INSTALL_COMMAND ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS} install
+    BUILD_COMMAND ${BUILD_CMD}
+    INSTALL_COMMAND ${INSTALL_CMD}
 )

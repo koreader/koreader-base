@@ -20,7 +20,7 @@ list(APPEND PATCH_CMD COMMAND ${ISED} "s|^CC=|#CC=|g" -e "s|^CFLAGS=|#CFLAGS=|g"
 
 #fix build error due to implicit declarations of function being invalid in C99 under macOS/XCode 12 
 set(CC "${CC} -Wno-error=implicit-function-declaration")
-set(BUILD_CMD_STR -j${PARALLEL_JOBS} -C aes "CC=${CC}" "LDFLAGS=${LDFLAGS}" "AR=${AR}" "RANLIB=${RANLIB}")
+list(APPEND BUILD_CMD COMMAND ${KO_MAKE_RECURSIVE} -C aes "CC=${CC}" "LDFLAGS=${LDFLAGS}" "AR=${AR}" "RANLIB=${RANLIB}")
 
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
@@ -36,7 +36,7 @@ ExternalProject_Add(
     BUILD_IN_SOURCE 1
     PATCH_COMMAND ${PATCH_CMD}
     CONFIGURE_COMMAND ""
-    BUILD_COMMAND ${KO_MAKE_RECURSIVE} ${BUILD_CMD_STR}
+    BUILD_COMMAND ${BUILD_CMD}
     # skip install
     INSTALL_COMMAND ""
 )

@@ -30,6 +30,8 @@ set(CFG_CMD ${CFG_CMD} --disable-editline)
 set(CFG_CMD ${CFG_CMD} --disable-readline)
 set(CFG_CMD ${CFG_CMD} --disable-static-shell)
 
+list(APPEND BUILD_CMD COMMAND ${KO_MAKE_RECURSIVE})
+
 include(ExternalProject)
 set(SQLITE_VER "3450000")
 ExternalProject_Add(
@@ -39,5 +41,5 @@ ExternalProject_Add(
     URL_MD5 d6150f5dc837ae94b7d735f1b611b634
     BUILD_IN_SOURCE 1
     CONFIGURE_COMMAND ${CFG_CMD}
-    BUILD_COMMAND ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS}
+    BUILD_COMMAND ${BUILD_CMD}
 )
