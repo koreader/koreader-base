@@ -35,7 +35,7 @@ set(CFG_ENV_VAR "CC=${CC}" "CPPFLAGS=${CPPFLAGS} -I${SOURCE_DIR}" "CFLAGS=${CFLA
 set(CFG_OPTS --host=${CHOST} --disable-lastlog --enable-zlib --enable-openpty --enable-shadow --enable-syslog --disable-harden)
 set(CFG_CMD env ${CFG_ENV_VAR} ${SOURCE_DIR}/configure ${CFG_OPTS})
 
-set(BUILD_CMD ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS} strip PROGRAMS=dropbear)
+set(BUILD_CMD ${KO_MAKE_RECURSIVE} strip PROGRAMS=dropbear)
 
 include(ExternalProject)
 set(DROPBEAR_VER "2018.76")

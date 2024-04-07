@@ -24,14 +24,14 @@ list(APPEND PATCH_CMD COMMAND sh -c "\"\$@\" src/*" --
 # Don't enforce CFLAGS
 list(APPEND PATCH_CMD COMMAND ${ISED} "s|-O2 -ggdb3 ||g" src/makefile)
 
-list(APPEND BUILD_CMD COMMAND ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS} "PLAT=${PLAT}" "CC=${CC}" "LD=${CC}")
+list(APPEND BUILD_CMD COMMAND ${KO_MAKE_RECURSIVE} "PLAT=${PLAT}" "CC=${CC}" "LD=${CC}")
 if(DEFINED MYLDFLAGS)
   list(APPEND BUILD_CMD "MYLDFLAGS=${MYLDFLAGS}")
 endif()
 if(DEFINED LUALIB_mingw)
   list(APPEND BUILD_CMD "LUALIB_mingw=${LUALIB_mingw}")
 endif()
-list(APPEND BUILD_CMD "LUAINC=${LUAINC}" -j${PARALLEL_JOBS} all)
+list(APPEND BUILD_CMD "LUAINC=${LUAINC}" all)
 
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME

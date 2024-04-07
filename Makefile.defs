@@ -2,6 +2,15 @@
 # `$(shell …)` invocations when using older (<4.4) make versions.
 SHELL = env PATH='$(PATH)' bash
 
+ifeq (,$(PARALLEL_JOBS))
+  PARALLEL_JOBS := $(or $(patsubst -j%,%,$(filter -j%,$(MAKEFLAGS))),$(shell getconf _NPROCESSORS_ONLN))
+endif
+ifeq (,$(PARALLEL_LOAD))
+  PARALLEL_LOAD := $(or $(patsubst -l%,%,$(filter -l%,$(MAKEFLAGS))),$(shell getconf _NPROCESSORS_ONLN))
+endif
+export PARALLEL_JOBS
+export PARALLEL_LOAD
+
 # Use ccache in build system by default. Define USE_NO_CCACHE=1 to force disable it.
 ifeq ($(USE_NO_CCACHE), 1)
 	CCACHE:=
@@ -58,30 +67,45 @@ ifdef VERBOSE
 endif
 CMAKE+=$(CMAKE_ARGS)
 
-NINJA := $(shell command -v ninja)
+ifeq ($(NINJA),)
+  NINJA := $(shell command -v ninja)
+endif
 
 ifneq ($(NINJA),)
-	ifeq ($(USE_MAKE),)
-		USE_NINJA := 1
-	endif
+  ifeq ($(USE_MAKE),)
+    USE_NINJA := 1
+  endif
 endif
 
 ifneq ($(USE_NINJA),)
-	CMAKE_FLAGS := -G Ninja
-	CMAKE_MAKE_PROGRAM := $(NINJA)
-	ifdef VERBOSE
-		NINJA_FLAGS := -v
-	endif
-	CMAKE_MAKE_PROGRAM_FLAGS ?= $(NINJA_FLAGS)
+  CMAKE_FLAGS = -G Ninja
+  CMAKE_MAKE_PROGRAM := $(NINJA)
+  ifdef VERBOSE
+    NINJAFLAGS := -v
+  endif
+  ifneq (,$(PARALLEL_JOBS))
+    NINJAFLAGS += -j$(PARALLEL_JOBS)
+  endif
+  ifneq (,$(PARALLEL_LOAD))
+    NINJAFLAGS += -l$(PARALLEL_LOAD)
+  endif
+  CMAKE_MAKE_PROGRAM_FLAGS ?= $(NINJAFLAGS)
 else
-	CMAKE_MAKE_PROGRAM := $(MAKE)
-	ifdef VERBOSE
-		MAKE_FLAGS := VERBOSE=1
-	endif
-	CMAKE_MAKE_PROGRAM_FLAGS ?= $(MAKE_FLAGS)
+  CMAKE_MAKE_PROGRAM := $(MAKE)
+  CMAKE_MAKE_PROGRAM_FLAGS ?= $(MAKEFLAGS)
 endif
 
-$(info ************ CMAKE_MAKE_PROGRAM: "$(CMAKE_MAKE_PROGRAM)" **********)
+CMAKE_FLAGS += -DMAKE=$(MAKE) -DNINJA=$(NINJA)
+
+ifdef VERBOSE
+  MAKEFLAGS += VERBOSE=1
+endif
+
+export NINJAFLAGS
+
+$(info ************ CMAKE_MAKE_PROGRAM: $(strip $(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS)) **********)
+$(info ************ NINJA: $(strip $(NINJA) $(NINJAFLAGS)) **********)
+$(info ************ MAKE: $(strip $(MAKE) $(PARALLEL_JOBS:%=-j%) $(PARALLEL_LOAD:%=-l%) $(MAKEFLAGS)) **********)
 
 # set this to your ARM cross compiler:
 # set CC CXX AR LD RANLIB

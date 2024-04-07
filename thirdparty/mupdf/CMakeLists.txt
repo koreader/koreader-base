@@ -16,7 +16,7 @@ else()
 endif()
 
 # There's some headers to generate on the host's side first, before we run our actual build (where we enforce CROSSCOMPILE to avoid trying to regen those).
-set(BUILD_CMD_GENERATE env "CFLAGS=${HOSTCFLAGS}" ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS} generate "build=${MUPDF_BUILD_TYPE}" "CC=${HOSTCC}" LDFLAGS= verbose=no)
+set(BUILD_CMD_GENERATE env "CFLAGS=${HOSTCFLAGS}" ${KO_MAKE_RECURSIVE} generate "build=${MUPDF_BUILD_TYPE}" "CC=${HOSTCC}" LDFLAGS= verbose=no)
 
 assert_var_defined(LDFLAGS)
 assert_var_defined(XCFLAGS)
@@ -28,7 +28,7 @@ set(XCFLAGS "${XCFLAGS} -DFZ_PLOTTERS_CMYK=0 -DFZ_ENABLE_JS=0")
 if(DEFINED ENV{ANDROID} AND "$ENV{CROSS_TC}" MATCHES "^armv7a-.*")
     set(XCFLAGS "${XCFLAGS} -D_FILE_OFFSET_BITS=32")
 endif()
-set(STATIC_BUILD_CMD ${KO_MAKE_RECURSIVE} -j${PARALLEL_JOBS})
+set(STATIC_BUILD_CMD ${KO_MAKE_RECURSIVE})
 set(STATIC_BUILD_CMD ${STATIC_BUILD_CMD} "LDFLAGS=${LDFLAGS}" "XCFLAGS=${XCFLAGS}")
 set(STATIC_BUILD_CMD ${STATIC_BUILD_CMD} "CC=${CC}" "CXX=${CXX}" "AR=${AR}" "build=${MUPDF_BUILD_TYPE}" MUDRAW= MUTOOL= CURL_LIB= "OS=${OS}")
 set(STATIC_BUILD_CMD ${STATIC_BUILD_CMD} verbose=no FREETYPE_DIR=nonexisting HARFBUZZ_DIR=nonexisting LIBJPEG_DIR=nonexisting ZLIB_DIR=nonexisting CROSSCOMPILE=yes)
