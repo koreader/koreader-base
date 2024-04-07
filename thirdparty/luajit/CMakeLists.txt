@@ -78,7 +78,7 @@ list(APPEND BUILD_CMD COMMAND ${KO_MAKE_RECURSIVE} ${BUILD_ARGS})
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
     https://github.com/LuaJIT/LuaJIT
-    c525bcb9024510cad9e170e12b6209aedb330f83
+    d06beb0480c5d1eb53b3343e78063950275aa281
     ${SOURCE_DIR}
 )
 
