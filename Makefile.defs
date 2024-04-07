@@ -3,10 +3,25 @@
 SHELL = env PATH='$(PATH)' bash
 
 ifeq (,$(PARALLEL_JOBS))
-  PARALLEL_JOBS := $(or $(patsubst -j%,%,$(filter -j%,$(MAKEFLAGS))),$(shell getconf _NPROCESSORS_ONLN))
+  PARALLEL_JOBS := $(or $(patsubst -j%,%,$(filter -j%,$(MAKEFLAGS))))
 endif
 ifeq (,$(PARALLEL_LOAD))
-  PARALLEL_LOAD := $(or $(patsubst -l%,%,$(filter -l%,$(MAKEFLAGS))),$(shell getconf _NPROCESSORS_ONLN))
+  PARALLEL_LOAD := $(or $(patsubst -l%,%,$(filter -l%,$(MAKEFLAGS))))
+endif
+ifeq (,$(and $(PARALLEL_JOBS),$(PARALLEL_LOAD)))
+  CORES := $(shell getconf _NPROCESSORS_ONLN)
+  ALLOCATED_CORES := $(CORES)
+  # Detect when running under cgroups, so we don't try
+  # to run with `make/ninja -j36 …` on some CI workers.
+  ifneq (,$(wildcard /sys/fs/cgroup/cpu/cpu.shares))
+    ALLOCATED_CORES := $(shell echo $$(($$(cat /sys/fs/cgroup/cpu/cpu.shares) / 1024)))
+  endif
+  ifeq (,$(PARALLEL_JOBS))
+    PARALLEL_JOBS := $(if $(CI),$(shell echo $$(($(ALLOCATED_CORES) + ($(ALLOCATED_CORES) + 1) / 2))),$(ALLOCATED_CORES))
+  endif
+  ifeq (,$(PARALLEL_LOAD))
+    PARALLEL_LOAD := $(CORES)
+  endif
 endif
 export PARALLEL_JOBS
 export PARALLEL_LOAD

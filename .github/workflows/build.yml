@@ -90,9 +90,6 @@ jobs:
         id: build
         run: |
           export MACOSX_DEPLOYMENT_TARGET=11;
-          PROCS="$(getconf _NPROCESSORS_ONLN)"
-          export PARALLEL_JOBS="$((PROCS + (PROCS + 1) / 2))"
-          export PARALLEL_LOAD="${PROCS}"
           make fetchthirdparty && make
 
       - name: Build cache pre-save
