@@ -12,6 +12,19 @@ fi
 mkdir -p "${CCACHE_DIR}"
 echo "using cache dir: ${CCACHE_DIR}"
 
+PROCS="$(getconf _NPROCESSORS_ONLN)"
+if [[ -r /sys/fs/cgroup/cpu/cpu.shares ]]; then
+    CG_PROCS=$(($(cat /sys/fs/cgroup/cpu/cpu.shares) / 1024))
+    echo "running under cgroups, allocated vs physical cores: ${CG_PROCS} / ${PROCS}"
+    PARALLEL_JOBS=$((CG_PROCS + (CG_PROCS + 1) / 2))
+    PARALLEL_LOAD="${PROCS}"
+else
+    PARALLEL_JOBS=$((PROCS + (PROCS + 1) / 2))
+    PARALLEL_LOAD="${PROCS}"
+fi
+echo "PARALLEL_JOBS: ${PARALLEL_JOBS}"
+echo "PARALLEL_LOAD: ${PARALLEL_LOAD}"
+
 travis_retry make fetchthirdparty TARGET=
 
 docker-make() {
@@ -31,6 +44,8 @@ docker-make() {
 }
 
 makeargs=(
+    PARALLEL_JOBS="${PARALLEL_JOBS}"
+    PARALLEL_LOAD="${PARALLEL_LOAD}"
     TARGET="${TARGET}"
 )
 if [[ -z "${DOCKER_IMG}" ]]; then
