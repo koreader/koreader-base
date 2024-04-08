@@ -4108,6 +4108,13 @@ static int freeImage(lua_State *L) {
     return 0;
 }
 
+static bool skip_teardown = false;
+
+static int setSkipTearDown(lua_State *L) {
+    skip_teardown = lua_toboolean(L, 1);
+    return 0;
+}
+
 static const struct luaL_Reg cre_func[] = {
     {"initCache", initCache},
     {"initHyphDict", initHyphDict},
@@ -4133,6 +4140,7 @@ static const struct luaL_Reg cre_func[] = {
     {"renderImageData", renderImageData},
     {"smoothScaleBlitBuffer", smoothScaleBlitBuffer},
     {"setImageReplacementChar", setImageReplacementChar},
+    {"setSkipTearDown", setSkipTearDown},
     {NULL, NULL}
 };
 
@@ -4302,6 +4310,8 @@ int luaopen_cre(lua_State *L) {
 
 // Library finalizer (c.f., dlopen(3)). This serves no real purpose except making Valgrind's output slightly more useful.
 __attribute__((destructor)) static void cre_teardown(void) {
+    if (skip_teardown)
+        return;
     if (cre_callback_forwarder) {
         delete cre_callback_forwarder;
         cre_callback_forwarder = NULL;
