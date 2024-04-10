@@ -71,10 +71,6 @@ jobs:
       CC: "gcc"
     steps:
       - checkout
-      - run:
-          name: install
-          command: |
-            source .ci/emulator_install.sh
 
       - restore_cache:
           keys:
