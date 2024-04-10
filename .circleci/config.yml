@@ -52,7 +52,7 @@ workflows:
 jobs:
   lint:
     docker:
-      - image: koreader/kobase:0.3.0
+      - image: koreader/kobase:0.3.1-20.04
     environment:
       BASH_ENV: "~/.bashrc"
     steps:
@@ -64,7 +64,7 @@ jobs:
 
   emu: &EMU_TPL
     docker:
-      - image: koreader/kobase:0.3.0
+      - image: koreader/kobase:0.3.1-20.04
     environment: &EMU_ENV_LST
       BASH_ENV: "~/.bashrc"
       EMULATE_READER: "1"
@@ -114,11 +114,13 @@ jobs:
   emu_clang_ninja:
     <<: *EMU_TPL
     docker:
+      # FIXME: need to update glib before an update
+      # to `kobase-clang:0.3.1-20.04` is possible.
       - image: koreader/kobase-clang:0.3.0
     environment:
       <<: *EMU_ENV_LST
-      CC: "clang-16"
-      CXX: "clang++-16"
+      CC: "clang"
+      CXX: "clang++"
 
 
 
@@ -150,19 +152,19 @@ jobs:
     <<: *XCOMPILE_TPL
     environment:
       TARGET: "kindle"
-      DOCKER_IMG: koreader/kokindle:0.2.3
+      DOCKER_IMG: koreader/kokindle:0.3.1-20.04
 
   kobo:
     <<: *XCOMPILE_TPL
     environment:
       TARGET: "kobo"
-      DOCKER_IMG: koreader/kokobo:0.2.3
+      DOCKER_IMG: koreader/kokobo:0.3.1-20.04
 
   pocketbook:
     <<: *XCOMPILE_TPL
     environment:
       TARGET: "pocketbook"
-      DOCKER_IMG: koreader/kopb:0.3.3
+      DOCKER_IMG: koreader/kopb:0.4.0-20.04
 
   sony-prstux:
     <<: *XCOMPILE_TPL
@@ -174,17 +176,17 @@ jobs:
     <<: *XCOMPILE_TPL
     environment:
       TARGET: "cervantes"
-      DOCKER_IMG: koreader/kocervantes:0.2.3
+      DOCKER_IMG: koreader/kocervantes:0.3.1-20.04
 
   android-arm: &ANDROID_TPL
     <<: *XCOMPILE_TPL
     environment:
       TARGET: "android"
-      DOCKER_IMG: koreader/koandroid:0.5.3
+      DOCKER_IMG: koreader/koandroid:0.7.0-20.04
 
   android-x86:
     <<: *ANDROID_TPL
     environment:
       TARGET: "android"
       ANDROID_ARCH: "x86"
-      DOCKER_IMG: koreader/koandroid:0.5.3
+      DOCKER_IMG: koreader/koandroid:0.7.0-20.04
