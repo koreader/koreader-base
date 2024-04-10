@@ -299,6 +299,16 @@ function util.execute(...)
     end
 end
 
+-- Frontend can register functions to be run in all subprocesses
+-- just after the fork, ie. for some cleanup work.
+local _run_in_subprocess_after_fork_funcs = {}
+function util.addRunInSubProcessAfterForkFunc(id, func)
+    _run_in_subprocess_after_fork_funcs[id] = func
+end
+function util.removeRunInSubProcessAfterForkFunc(id)
+    _run_in_subprocess_after_fork_funcs[id] = nil
+end
+
 --- Run lua code (func) in a forked subprocess
 --
 -- With with_pipe=true, sets up a pipe for communication
@@ -329,6 +339,9 @@ function util.runInSubProcess(func, with_pipe, double_fork)
     end
     local pid = C.fork()
     if pid == 0 then -- child process
+        for _, f in pairs(_run_in_subprocess_after_fork_funcs) do
+            f()
+        end
         if double_fork then
             pid = C.fork()
             if pid ~= 0 then
