@@ -935,8 +935,8 @@ function framebuffer:init()
             -- REAGL is *always* available
             self.waveform_partial = C.HWTCON_WAVEFORM_MODE_GLR16
             -- Eclipse waveform modes are *always* available
-            self.waveform_night = C.HWTCON_WAVEFORM_MODE_GLKW16
-            self.waveform_flashnight = C.HWTCON_WAVEFORM_MODE_GCK16
+            self.waveform_night = C.HWTCON_WAVEFORM_MODE_AUTO
+            self.waveform_flashnight = C.HWTCON_WAVEFORM_MODE_AUTO
 
             self.mech_poweron = kobo_mtk_wakeup_epdc
         end
