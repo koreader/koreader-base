@@ -181,7 +181,8 @@ local function keyEventHandler(key_event)
     or code == C.AKEYCODE_MEDIA_NEXT
     or code == C.AKEYCODE_MEDIA_PREVIOUS
     or code == C.AKEYCODE_MEDIA_REWIND
-    or code == C.AKEYCODE_MEDIA_FAST_FORWARD then
+    or code == C.AKEYCODE_MEDIA_FAST_FORWARD
+    or code == C.AKEYCODE_HEADSETHOOK then
         return 0 -- event not consumed
     elseif code == C.AKEYCODE_MUTE
     or code == C.AKEYCODE_VOLUME_MUTE then
