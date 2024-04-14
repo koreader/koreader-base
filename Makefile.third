@@ -6,7 +6,7 @@ fetchthirdparty:
 	git submodule init
 	git submodule sync
 	git submodule foreach --recursive git reset --hard
-	git submodule update
+	git submodule update --jobs 3 $(if $(CI),--depth 1)
 	@echo "cleaning up crengine checkout..."
 	@rm -rf thirdparty/kpvcrlib/crengine/thirdparty
 	@test -d thirdparty/kpvcrlib/crengine \
