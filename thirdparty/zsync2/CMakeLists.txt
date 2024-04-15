@@ -1,57 +1,48 @@
 cmake_minimum_required(VERSION 3.5.1)
 project(zsync2 LANGUAGES)
 
-include("koreader_thirdparty_common")
-include("koreader_thirdparty_git")
+include(koreader_thirdparty_common)
+include(koreader_thirdparty_git)
 
-assert_var_defined(CPPFLAGS)
-assert_var_defined(CFLAGS)
-assert_var_defined(CXXFLAGS)
-assert_var_defined(LDFLAGS)
 assert_var_defined(CURL_DIR)
 assert_var_defined(CURL_LIB)
 assert_var_defined(OPENSSL_DIR)
 assert_var_defined(CRYPTO_LIB)
 assert_var_defined(SSL_LIB)
+assert_var_defined(ZLIB_DIR)
+assert_var_defined(ZLIB)
 
-# Fix build with old TCs (kindle & pocketbook).
-list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/fix-old-tc-build.patch)
+list(APPEND PATCH_CMD COMMAND ${KO_PATCH}
+    # Fix build with old TCs (kindle & pocketbook).
+    ${CMAKE_CURRENT_SOURCE_DIR}/fix-old-tc-build.patch
+    # Reproducible builds (don't set BUILD_DATE to configure time).
+    ${CMAKE_CURRENT_SOURCE_DIR}/reproducible-builds.patch
+    # CPR need `-pthread`.
+    ${CMAKE_CURRENT_SOURCE_DIR}/cpr_need_pthread.patch
+    # Need another zlib (beside the internal patched one) for compiling the client.
+    ${CMAKE_CURRENT_SOURCE_DIR}/need_zlib.patch
+)
 
-# Reproducible builds (don't set BUILD_DATE to configure time).
-list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/reproducible-builds.patch)
+list(APPEND CMAKE_ARGS
+    -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TCF}
+    # Options.
+    -DBUILD_CPR_TESTS=FALSE
+    -DBUILD_TESTING=FALSE
+    # cURL.
+    -DCURL_FOUND=TRUE
+    -DCURL_INCLUDE_DIR=${CURL_DIR}/include
+    -DCURL_LIBRARY=${CURL_LIB}
+    -DUSE_SYSTEM_CURL=TRUE
+    # OpenSSL.
+    -DOPENSSL_CRYPTO_LIBRARY=${CRYPTO_LIB}
+    -DOPENSSL_INCLUDE_DIR=${OPENSSL_DIR}/include
+    -DOPENSSL_SSL_LIBRARY=${SSL_LIB}
+    # ZLIB.
+    -DZLIB_INCLUDE_DIR=${ZLIB_DIR}/include
+    -DZLIB_LIBRARY=${ZLIB}
+)
 
-# We don't actually install OpenSSL, meaning we can't use OPENSSL_ROOT_DIR to help find_package,
-# so CMake needs a push to look for both SSL & Cyrpto components...
-#list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/mangle-cpr-openssl-search.patch)
-
-# Make sure the daisy-chain once again picks up our toolchain file...
-list(APPEND CMAKE_ARGS "-DCMAKE_TOOLCHAIN_FILE=${CMAKE_TCF}")
-
-# CMake hell.
-# We expect lib later on in Makefile.third, even on multilib systems...
-list(APPEND CMAKE_ARGS "-DCMAKE_INSTALL_PREFIX=${INSTALL_DIR}")
-list(APPEND CMAKE_ARGS "-DCMAKE_INSTALL_LIBDIR=lib")
-list(APPEND CMAKE_ARGS "-DCMAKE_INSTALL_INCLUDEDIR=include")
-#list(APPEND CMAKE_ARGS "-DCMAKE_VERBOSE_MAKEFILE:BOOL=ON")
-
-# Honor the env, dammit.
-list(APPEND CMAKE_ARGS "-DCMAKE_EXE_LINKER_FLAGS=${LDFLAGS}")
-list(APPEND CMAKE_ARGS "-DCMAKE_MODULE_LINKER_FLAGS=${LDFLAGS}")
-list(APPEND CMAKE_ARGS "-DCMAKE_SHARED_LINKER_FLAGS=${LDFLAGS}")
-list(APPEND CMAKE_ARGS "-DCMAKE_C_FLAGS=${CPPFLAGS} ${CFLAGS}")
-list(APPEND CMAKE_ARGS "-DCMAKE_CXX_FLAGS=${CPPFLAGS} ${CXXFLAGS}")
-
-# And, finally, the actual zsync2 build options
-list(APPEND CMAKE_ARGS "-DBUILD_TESTING=0")
-list(APPEND CMAKE_ARGS "-DBUILD_CPR_TESTS=0")
-list(APPEND CMAKE_ARGS "-DUSE_SYSTEM_CURL=1")
-list(APPEND CMAKE_ARGS "-DCURL_INCLUDE_DIR=${CURL_DIR}/include")
-list(APPEND CMAKE_ARGS "-DCURL_LIBRARY=${CURL_LIB}")
-list(APPEND CMAKE_ARGS "-DOPENSSL_INCLUDE_DIR=${OPENSSL_DIR}/include")
-list(APPEND CMAKE_ARGS "-DOPENSSL_CRYPTO_LIBRARY=${CRYPTO_LIB}")
-list(APPEND CMAKE_ARGS "-DOPENSSL_SSL_LIBRARY=${SSL_LIB}")
-
-list(APPEND BUILD_CMD COMMAND ${KO_MAKE_PROGRAM})
+list(APPEND BUILD_CMD COMMAND ${KO_MAKE_PROGRAM} zsync2)
 
 # NOTE: We're currently using our own fork instead of upstream's (https://github.com/AppImage/zsync2):
 ## * Enable range requests optimizations on the CLI
