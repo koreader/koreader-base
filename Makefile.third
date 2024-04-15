@@ -420,13 +420,21 @@ $(OUTPUT_DIR)/fbdepth $(OUTPUT_DIR)/fbink: $(THIRDPARTY_DIR)/fbink/*.*
 # ===========================================================================
 # KoboUSBMS: Guess what?
 
-$(OUTPUT_DIR)/data/KoboUSBMS.tar.gz: $(THIRDPARTY_DIR)/kobo-usbms/*.*
+$(KOBO_USBMS_DIR)/KoboUSBMS.tar.gz: $(THIRDPARTY_DIR)/kobo-usbms/*.*
 	$(CMAKE) $(CMAKE_FLAGS) \
+		-DAR='$(AR)' \
+		-DCC='$(CC)' \
 		-DCFLAGS='$(CFLAGS)' \
+		-DCXX='$(CXX)' \
+		-DCXXFLAGS='$(CXXFLAGS)' \
 		-DLDFLAGS='$(LDFLAGS)' \
+		-DRANLIB='$(RANLIB)' \
+		-DSTRIP='$(STRIP)' \
 		-S $(CURDIR)/$(THIRDPARTY_DIR)/kobo-usbms -B $(KOBO_USBMS_BUILD_DIR)
 	$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS) -C $(KOBO_USBMS_BUILD_DIR)
-	cp $(KOBO_USBMS_DIR)/KoboUSBMS.tar.gz $(OUTPUT_DIR)/data/KoboUSBMS.tar.gz
+
+$(OUTPUT_DIR)/data/KoboUSBMS.tar.gz: $(KOBO_USBMS_DIR)/KoboUSBMS.tar.gz
+	cp $< $@
 
 # ===========================================================================
 # common lua library for networking

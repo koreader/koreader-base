@@ -44,7 +44,7 @@ else()
 endif()
 
 list(APPEND BUILD_CMD COMMAND
-    ${KO_MAKE_RECURSIVE} -C ${SOURCE_DIR}
+    ${KO_MAKE_RECURSIVE}
     CROSS_TC=${CHOST}
     AR=${AR}
     CC=${CC}
