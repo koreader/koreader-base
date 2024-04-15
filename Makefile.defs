@@ -26,6 +26,8 @@ endif
 export PARALLEL_JOBS
 export PARALLEL_LOAD
 
+DRY_RUN := $(findstring n,$(firstword -$(MAKEFLAGS)))
+
 # Use ccache in build system by default. Define USE_NO_CCACHE=1 to force disable it.
 ifeq ($(USE_NO_CCACHE), 1)
 	CCACHE:=
@@ -97,6 +99,9 @@ ifneq ($(USE_NINJA),)
   ifneq (,$(PARALLEL_LOAD))
     NINJAFLAGS += -l$(PARALLEL_LOAD)
   endif
+  ifneq (,$(DRY_RUN))
+    NINJAFLAGS += -nv
+  endif
   CMAKE_MAKE_PROGRAM_FLAGS ?= $(NINJAFLAGS)
 else
   CMAKE_MAKE_PROGRAM := $(MAKE)
@@ -105,6 +110,9 @@ endif
 
 ifdef VERBOSE
   MAKEFLAGS += VERBOSE=1
+endif
+ifneq (,$(DRY_RUN))
+  MAKEFLAGS += -n
 endif
 
 export NINJAFLAGS
