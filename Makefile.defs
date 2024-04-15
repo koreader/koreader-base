@@ -231,7 +231,7 @@ else ifndef TARGET
 	EMULATE_READER=1
 	SDL=1
 else
-	$(error Invalid TARGET: "$(TARGET)")
+  $(error Invalid TARGET: "$(TARGET)")
 endif
 
 ifneq (,$(filter $(UNAME), Darwin))
