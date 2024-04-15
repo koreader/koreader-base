@@ -35,7 +35,6 @@ else()
     assert_var_defined(BASE_CFLAGS)
     assert_var_defined(HOSTCC)
     assert_var_defined(HOSTCFLAGS)
-    assert_var_defined(TARGET_SONAME)
 
     # To recap, luajit builds:
     # - its TARGET_CC from CROSS+CC, so CC need to be set to HOSTCC.
@@ -66,7 +65,6 @@ else()
         "TARGET_CFLAGS=${CFLAGS} -DLUAJIT_SECURITY_STRHASH=0 -DLUAJIT_SECURITY_STRID=0"
         TARGET_LDFLAGS=${LDFLAGS}
         TARGET_RANLIB=${RANLIB}
-        TARGET_SONAME=${TARGET_SONAME}
     )
     if(ANDROID)
         list(APPEND BUILD_ARGS TARGET_SYS=Linux)
@@ -78,6 +76,12 @@ else()
     else()
         list(APPEND BUILD_ARGS "TARGET_STRIP=${STRIP} --strip-unneeded")
     endif()
+endif()
+
+if(DARWIN)
+    list(APPEND BUILD_ARGS TARGET_DYLIBPATH=@rpath/libluajit${LIB_EXT})
+else()
+    list(APPEND BUILD_ARGS TARGET_SONAME=libluajit${LIB_EXT})
 endif()
 
 list(APPEND BUILD_CMD COMMAND ${KO_MAKE_RECURSIVE} ${BUILD_ARGS} amalg)
