@@ -81,7 +81,8 @@ $(PNG_LIB): $(ZLIB) $(THIRDPARTY_DIR)/libpng/*.*
 
 $(AES_LIB): $(THIRDPARTY_DIR)/minizip/*.*
 	$(CMAKE) $(CMAKE_FLAGS) \
-		-DCC='$(CC) $(CFLAGS)' \
+		-DCC='$(CC)' \
+		-DCFLAGS='$(CFLAGS)' \
 		-DLDFLAGS='$(LDFLAGS)' \
 		-DAR='$(AR)' \
 		-DRANLIB='$(RANLIB)' \
