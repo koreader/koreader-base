@@ -169,7 +169,6 @@ $(OUTPUT_DIR)/libs/libkoreader-cre.so: cre.cpp \
 		$(PNG_LIB) $(LIBUNIBREAK_LIB_LINK_FLAG) $(LIBWEBP_LIB) \
 		$(LIBWEBPDEMUX_LIB) $(LUNASVG_LIB) $(UTF8PROC_LIB) $(ZLIB) \
 		$(ZSTD_LIB) $(LUAJIT_LIB) \
-		$(if $(ANDROID),$(SHARED_STL_LINK_FLAG),)
 ifdef DARWIN
 	install_name_tool -change \
 		`otool -L "$@" | grep "libluajit" | awk '{print $$1}'` \
