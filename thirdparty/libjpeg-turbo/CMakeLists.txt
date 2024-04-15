@@ -17,6 +17,8 @@ list(APPEND CMAKE_ARGS
     -DENABLE_SHARED=ON
     -DWITH_JAVA=OFF
     -DWITH_JPEG8=ON
+    # Reproducible builds: use release date.
+    -DBUILD=20240124
 )
 # Make sure we disable ASM if we don't support SIMD.
 if(NOT DEFINED ENV{WANT_SIMD})
