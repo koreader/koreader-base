@@ -83,8 +83,6 @@ $(MUPDF_LIB): $(JPEG_LIB) \
 		$(ZLIB) $(AES_LIB) \
 		$(THIRDPARTY_DIR)/mupdf/*.*
 	$(CMAKE) $(CMAKE_FLAGS) \
-		-DMUPDF_LIB='$(abspath $(MUPDF_LIB))' \
-		-DMUPDF_SONAME='$(notdir $(MUPDF_LIB))' \
 		-DAES_LIB='$(abspath $(AES_LIB))' \
 		-DFREETYPE_DIR='$(abspath $(FREETYPE_DIR))' \
 		-DFREETYPE_LIB='$(abspath $(FREETYPE_LIB))' \
@@ -100,6 +98,7 @@ $(MUPDF_LIB): $(JPEG_LIB) \
 		-DZLIB_DIR='$(abspath $(ZLIB_DIR))' \
 		-S $(CURDIR)/$(THIRDPARTY_DIR)/mupdf -B $(MUPDF_BUILD_DIR)
 	$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS) -C $(MUPDF_BUILD_DIR)
+	cp -fL $(MUPDF_DIR)/$(notdir $(MUPDF_LIB)) $@
 ifdef DARWIN
 	install_name_tool -change \
 		`otool -L '$(MUPDF_LIB)' | grep '$(notdir $(JPEG_LIB)) ' | awk '{print $$1}'` \
