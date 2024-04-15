@@ -98,7 +98,7 @@ $(MUPDF_LIB): $(JPEG_LIB) \
 		-DZLIB_DIR='$(abspath $(ZLIB_DIR))' \
 		-S $(CURDIR)/$(THIRDPARTY_DIR)/mupdf -B $(MUPDF_BUILD_DIR)
 	$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS) -C $(MUPDF_BUILD_DIR)
-	cp -fL $(MUPDF_DIR)/$(notdir $(MUPDF_LIB)) $@
+	cp -fL $(MUPDF_DIR)/lib/$(notdir $(MUPDF_LIB)) $@
 ifdef DARWIN
 	install_name_tool -change \
 		`otool -L '$(MUPDF_LIB)' | grep '$(notdir $(JPEG_LIB)) ' | awk '{print $$1}'` \

@@ -252,7 +252,7 @@ $(OUTPUT_DIR)/button-listen: button-listen.c
 # the attachment extraction tool:
 
 $(OUTPUT_DIR)/extr: extr.c $(MUPDF_LIB) $(JPEG_LIB) $(FREETYPE_LIB)
-	$(CC) -I$(MUPDF_DIR) -I$(MUPDF_DIR)/include \
+	$(CC) -I$(MUPDF_DIR)/include \
 		$(CFLAGS) $(LDFLAGS) -o $@ extr.c \
 		-lmupdf $(JPEG_LIB_LINK_FLAG) $(FREETYPE_LIB_LINK_FLAG)
 
