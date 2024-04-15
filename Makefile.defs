@@ -32,8 +32,8 @@ DRY_RUN := $(findstring n,$(firstword -$(MAKEFLAGS)))
 # Use ccache in build system by default. Define USE_NO_CCACHE=1 to force disable it.
 ifeq ($(USE_NO_CCACHE), 1)
 	CCACHE:=
-else
-	CCACHE?=$(shell command -v ccache)
+else ifeq (,$(CCACHE))
+	CCACHE:=$(shell command -v ccache)
 endif
 
 UNAME:=$(shell uname -s)
@@ -444,12 +444,24 @@ else ifeq ($(ANDROID_ARCH), arm64)
 	ANDROID_ARM_ARCH:=-ffunction-sections -funwind-tables -fstack-protector -no-canonical-prefixes
 endif
 
+TARGET_MACHINE:=$(shell $(CC) -dumpmachine)
+ifeq (,$(TARGET_MACHINE))
+  ifneq (,$(filter-out distclean fetch%,$(or $(MAKECMDGOALS),all)))
+    $(error failed to retrieve target machine)
+  endif
+endif
+ifdef KODEBUG
+  MACHINE=$(TARGET_MACHINE)-debug
+else
+  MACHINE=$(TARGET_MACHINE)
+endif
+
 # Use target-specific CFLAGS
 ifeq ($(TARGET), kobo)
 	# NOTE: If we only care about Kobos w/ a Touch screen, we're good.
 	ARM_ARCH:=$(ARMV7_A8_ARCH)
 	ARM_ARCH+=-mfloat-abi=hard
-	ifeq ($(shell $(CC) -dumpmachine 2>/dev/null), arm-linux-gnueabihf)
+	ifeq ($(TARGET_MACHINE), arm-linux-gnueabihf)
 		COMPAT_CFLAGS:=$(UBUNTU_COMPAT_CFLAGS)
 		COMPAT_CXXFLAGS:=$(UBUNTU_COMPAT_CFLAGS)
 	endif
@@ -467,28 +479,28 @@ else ifeq ($(TARGET), pocketbook)
 	#       so, ideally, we shouldn't be using this on those newer devices...
 	COMPAT_CFLAGS:=$(STLABI_COMPAT_CFLAGS) $(PB_COMPAT_CFLAGS)
 	COMPAT_CXXFLAGS:=$(STLABI_COMPAT_CFLAGS) $(PB_COMPAT_CFLAGS)
-	ifeq ($(shell $(CC) -dumpmachine 2>/dev/null), arm-linux-gnueabi)
+	ifeq ($(TARGET_MACHINE), arm-linux-gnueabi)
 		COMPAT_CFLAGS+=$(UBUNTU_COMPAT_CFLAGS)
 		COMPAT_CXXFLAGS+=$(UBUNTU_COMPAT_CFLAGS)
 	endif
 else ifeq ($(TARGET), kindle)
 	ARM_ARCH:=$(ARMV7_A8_ARCH)
 	ARM_ARCH+=-mfloat-abi=softfp
-	ifeq ($(shell $(CC) -dumpmachine 2>/dev/null), arm-linux-gnueabi)
+	ifeq ($(TARGET_MACHINE), arm-linux-gnueabi)
 		COMPAT_CFLAGS:=$(UBUNTU_COMPAT_CFLAGS)
 		COMPAT_CXXFLAGS:=$(UBUNTU_COMPAT_CFLAGS)
 	endif
 else ifeq ($(TARGET), kindlepw2)
 	ARM_ARCH:=$(ARMV7_A9_ARCH)
 	ARM_ARCH+=-mfloat-abi=softfp
-	ifeq ($(shell $(CC) -dumpmachine 2>/dev/null), arm-linux-gnueabi)
+	ifeq ($(TARGET_MACHINE), arm-linux-gnueabi)
 		COMPAT_CFLAGS:=$(UBUNTU_COMPAT_CFLAGS)
 		COMPAT_CXXFLAGS:=$(UBUNTU_COMPAT_CFLAGS)
 	endif
 else ifeq ($(TARGET), kindle-legacy)
 	ARM_ARCH:=$(ARMV6_1136_ARCH)
 	ARM_ARCH+=-mfloat-abi=softfp
-	ifeq ($(shell $(CC) -dumpmachine 2>/dev/null), arm-linux-gnueabi)
+	ifeq ($(TARGET_MACHINE), arm-linux-gnueabi)
 		COMPAT_CFLAGS:=$(MG2K12_COMPAT_CFLAGS)
 		COMPAT_CXXFLAGS:=$(MG2K12_COMPAT_CXXFLAGS)
 	endif
@@ -525,7 +537,7 @@ else ifeq ($(TARGET), sony-prstux)
 else ifeq ($(TARGET), cervantes)
 	ARM_ARCH:=$(ARMV7_GENERIC_ARCH)
 	ARM_ARCH+=-mfloat-abi=softfp
-	ifeq ($(shell $(CC) -dumpmachine 2>/dev/null), arm-linux-gnueabi)
+	ifeq ($(TARGET_MACHINE), arm-linux-gnueabi)
 		COMPAT_CFLAGS:=$(UBUNTU_COMPAT_CFLAGS)
 		COMPAT_CXXFLAGS:=$(UBUNTU_COMPAT_CFLAGS)
 	endif
@@ -616,18 +628,6 @@ ifeq ($(TARGET), win32)
 endif
 
 # this will create a path named build/arm-none-linux-gnueabi or similar
-TARGET_MARCHINE:=$(shell $(CC) -dumpmachine)
-ifeq (,$(TARGET_MARCHINE))
-  ifneq (,$(filter-out distclean fetch%,$(or $(MAKECMDGOALS),all)))
-    $(error failed to retrieve target machine)
-  endif
-endif
-ifdef KODEBUG
-	MACHINE=$(TARGET_MARCHINE)-debug
-else
-	MACHINE=$(TARGET_MARCHINE)
-endif
-
 OUTPUT_DIR = build/$(MACHINE)
 CMAKE_DIR = build/$(MACHINE)/cmake
 THIRDPARTY_BUILD = $(OUTPUT_DIR)/thirdparty
