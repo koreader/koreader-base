@@ -391,10 +391,11 @@ $(OUTPUT_DIR)/dropbear: $(ZLIB) $(THIRDPARTY_DIR)/dropbear/*.*
 $(OUTPUT_DIR)/sftp-server: $(ZLIB) $(SSL_LIB) $(THIRDPARTY_DIR)/openssh/*.*
 	$(CMAKE) $(CMAKE_FLAGS) \
 		-DCC='$(CC)' \
-		-DCPPFLAGS='-I$(ZLIB_DIR)/include -I$(OPENSSL_DIR)/include' \
 		-DCFLAGS='$(CFLAGS)' \
-		-DLDFLAGS='$(LDFLAGS) -L$(ZLIB_DIR)/lib -L$(OPENSSL_DIR)' \
-		-S $(CURDIR)/$(THIRDPARTY_DIR)/openssh -B $(OPENSSH_BUILD_DIR)
+		-DLDFLAGS='$(LDFLAGS)' \
+		-DOPENSSL_DIR='$(abspath $(OPENSSL_DIR))' \
+		-DZLIB_DIR='$(abspath $(ZLIB_DIR))' \
+		-S $(THIRDPARTY_DIR)/openssh -B $(OPENSSH_BUILD_DIR)
 	$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS) -C $(OPENSSH_BUILD_DIR)
 	cp $(OPENSSH_DIR)/sftp-server $(OUTPUT_DIR)/
 	cp $(OPENSSH_DIR)/scp $(OUTPUT_DIR)/
