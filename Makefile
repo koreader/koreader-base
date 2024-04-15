@@ -30,7 +30,7 @@ all: $(CMAKE_KO) $(CMAKE_TCF) $(OUTPUT_DIR)/libs $(if $(ANDROID),,$(LUAJIT)) \
 		$(LPEG_ROCK) \
 		$(LUAJSON_ROCK) \
 		$(LUA_RAPIDJSON_ROCK) \
-		$(LUA_SPORE_ROCK) \
+		$(LUA_SPORE_MOD) \
 		$(if $(WIN32),,$(ZMQ_LIB) $(CZMQ_LIB)) \
 		$(if $(WIN32),,$(OUTPUT_DIR)/sdcv) \
 		$(if $(MACOS),$(OUTPUT_DIR)/koreader,) \
