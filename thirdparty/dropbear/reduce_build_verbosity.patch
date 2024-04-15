@@ -1,0 +1,22 @@
+--- i/Makefile.in
++++ w/Makefile.in
+@@ -125,7 +125,7 @@
+ # for simplicity assume all source depends on all headers
+ HEADERS=$(wildcard $(srcdir)/*.h *.h) $(OPTION_HEADERS)
+ %.o : %.c $(HEADERS)
+-	$(CC) -c $(CFLAGS) $(CPPFLAGS) $< -o $@
++	$(if $V,,@echo "   * ${CC} $@"; )$(CC) -c $(CFLAGS) $(CPPFLAGS) $< -o $@
+ 
+ default_options_guard.h: default_options.h
+ 	@echo Creating $@
+--- i/libtomcrypt/Makefile.in
++++ w/libtomcrypt/Makefile.in
+@@ -243,7 +243,7 @@
+ #This is necessary for compatibility with BSD make (namely on OpenBSD)
+ .SUFFIXES: .o .c
+ .c.o:
+-	$(CC) $(LTC_CFLAGS) -c $< -o $@
++	$(if $V,,@echo "   * ${CC} $@"; )$(CC) $(LTC_CFLAGS) -c $< -o $@
+ 
+ #Create libtomcrypt.a
+ $(LIBMAIN_S): $(OBJECTS)

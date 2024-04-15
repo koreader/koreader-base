@@ -10,6 +10,7 @@ list(APPEND PATCH_CMD COMMAND ${KO_PATCH}
     ${CMAKE_CURRENT_SOURCE_DIR}/dropbear-2018.76-kindle-nochdir-hack.patch
     ${CMAKE_CURRENT_SOURCE_DIR}/dropbear-2018.76-kindle-options-hack.patch
     ${CMAKE_CURRENT_SOURCE_DIR}/dropbear-2018.76-upstream-fixes.patch
+    ${CMAKE_CURRENT_SOURCE_DIR}/reduce_build_verbosity.patch
 )
 # This is pretty much platform-specific... Hard-coded paths and all that...
 foreach(PLATFORM CERVANTES KINDLE KOBO POCKETBOOK)
