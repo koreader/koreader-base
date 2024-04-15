@@ -4,21 +4,19 @@ project(minizip LANGUAGES)
 include(koreader_thirdparty_common)
 include(koreader_thirdparty_git)
 
-# Build in source tree.
-set(BINARY_DIR ${SOURCE_DIR})
+list(APPEND PATCH_CMD COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/build.cmake CMakeLists.txt)
+
+list(APPEND CMAKE_ARGS
+    -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TCF}
+    -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR}
+)
+
+list(APPEND BUILD_CMD COMMAND ${KO_MAKE_PROGRAM})
+
+list(APPEND INSTALL_CMD COMMAND ${CMAKE_COMMAND} --install .)
 
 # NOTE: 53a657318af1fccc4bac7ed230729302b2391d1d is the tip of the 1.2 branch. The fcrypt API we need is gone in master.
 # FIXME: Even then, something in said branch seems to upset MuPDF with our custom patch as-is, so keep using the old code...
-# list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/minizip-libaes-makefile.patch)
-
-list(APPEND PATCH_CMD COMMAND ${ISED} "s|\\.\\./libaes.a|libaes.a|" aes/Makefile)
-
-# Fix build error due to implicit declarations of function being invalid in C99 under macOS/XCode 12.
-string(APPEND CFLAGS " -Wno-error=implicit-function-declaration")
-string(APPEND CFLAGS " -DHAVE_AES")
-list(APPEND BUILD_CMD COMMAND ${KO_MAKE_RECURSIVE} -C aes)
-append_autotools_vars(BUILD_CMD)
-
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
     https://github.com/nmoinvaz/minizip
@@ -29,5 +27,7 @@ ko_write_gitclone_script(
 external_project(
     DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
     PATCH_COMMAND ${PATCH_CMD}
+    CMAKE_ARGS ${CMAKE_ARGS}
     BUILD_COMMAND ${BUILD_CMD}
+    INSTALL_COMMAND ${INSTALL_CMD}
 )

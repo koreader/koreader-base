@@ -138,7 +138,7 @@ string(APPEND XCFLAGS
     " -I${HARFBUZZ_DIR}/include/harfbuzz"
     " -I${JPEG_DIR}/include"
     " -I${LIBWEBP_DIR}/include"
-    " -I${MINIZIP_DIR}"
+    " -I${MINIZIP_DIR}/include"
     " -I${ZLIB_DIR}/include"
 )
 
