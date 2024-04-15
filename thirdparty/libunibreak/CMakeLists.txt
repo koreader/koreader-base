@@ -12,7 +12,7 @@ list(APPEND CFG_CMD COMMAND env
     CC=${CC}
     CFLAGS=${CFLAGS}
     LDFLAGS=${LDFLAGS}
-    ${SOURCE_DIR}/autogen.sh --host=${CHOST} --prefix=${INSTALL_DIR}
+    ${SOURCE_DIR}/configure --host=${CHOST} --prefix=${INSTALL_DIR}
     --disable-static --enable-shared
     --enable-silent-rules
 )
@@ -25,15 +25,9 @@ list(APPEND BUILD_CMD COMMAND ${KO_MAKE_RECURSIVE})
 
 list(APPEND INSTALL_CMD COMMAND ${KO_MAKE_RECURSIVE} install)
 
-ko_write_gitclone_script(
-    GIT_CLONE_SCRIPT_FILENAME
-    https://github.com/adah1972/libunibreak.git
-    tags/libunibreak_6_1
-    ${SOURCE_DIR}
-)
-
 external_project(
-    DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
+    URL https://github.com/adah1972/libunibreak/releases/download/libunibreak_6_1/libunibreak-6.1.tar.gz
+    URL_MD5 8df410d010e03de1a339a400a920335e
     CONFIGURE_COMMAND ${CFG_CMD}
     BUILD_COMMAND ${BUILD_CMD}
     INSTALL_COMMAND ${INSTALL_CMD}
