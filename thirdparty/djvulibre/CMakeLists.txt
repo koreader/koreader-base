@@ -26,7 +26,7 @@ string(APPEND CXXFLAGS " -Wno-register -Wno-error=register")
 list(APPEND CFG_CMD COMMAND env)
 append_autotools_vars(CFG_CMD)
 list(APPEND CFG_CMD
-    ${SOURCE_DIR}/configure --host=${CHOST} --prefix=${INSTALL_DIR}
+    ${SOURCE_DIR}/configure --host=${CHOST} --prefix=/
     --disable-static --enable-shared
     --disable-desktopfiles
     --disable-largefile
@@ -41,7 +41,7 @@ endif()
 
 list(APPEND BUILD_CMD COMMAND ${KO_MAKE_RECURSIVE} -C libdjvu)
 
-list(APPEND INSTALL_CMD COMMAND ${KO_MAKE_RECURSIVE} -C libdjvu install)
+list(APPEND INSTALL_CMD COMMAND ${KO_MAKE_RECURSIVE} -C libdjvu DESTDIR=${INSTALL_DIR} install)
 
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
