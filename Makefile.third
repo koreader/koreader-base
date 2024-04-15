@@ -58,8 +58,7 @@ $(LIBUNIBREAK_LIB): $(THIRDPARTY_DIR)/libunibreak/*.*
 
 # libjpeg-turbo and libjpeg
 $(TURBOJPEG_LIB) $(JPEG_LIB): $(THIRDPARTY_DIR)/libjpeg-turbo/*.*
-	$(CMAKE) $(CMAKE_FLAGS) \
-		-S $(CURDIR)/$(THIRDPARTY_DIR)/libjpeg-turbo -B $(JPEG_BUILD_DIR)
+	$(CMAKE) $(CMAKE_FLAGS) -S $(THIRDPARTY_DIR)/libjpeg-turbo -B $(JPEG_BUILD_DIR)
 	$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS) -C $(JPEG_BUILD_DIR)
 	cp -fL $(JPEG_DIR)/$(if $(WIN32),,lib)/$(notdir $(TURBOJPEG_LIB)) $(TURBOJPEG_LIB)
 	cp -fL $(JPEG_DIR)/$(if $(WIN32),,lib)/$(notdir $(JPEG_LIB)) $(JPEG_LIB)
