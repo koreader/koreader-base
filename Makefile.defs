@@ -671,6 +671,10 @@ ifneq ($(TARGET), win32)
 	CXXFLAGS+=-fPIC
 endif
 
+CFLAGS := $(strip $(CFLAGS))
+CXXFLAGS := $(strip $(CXXFLAGS))
+LDFLAGS := $(strip $(LDFLAGS))
+
 # Try to make sure CMake picks up our flags...
 export CFLAGS
 export CXXFLAGS
