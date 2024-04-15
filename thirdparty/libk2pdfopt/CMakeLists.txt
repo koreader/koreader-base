@@ -15,7 +15,10 @@ assert_var_defined(TESSERACT_DIR)
 # Build in source tree.
 set(BINARY_DIR ${SOURCE_DIR})
 
-list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/slightly-less-fuglyness.patch)
+list(APPEND PATCH_CMD COMMAND ${KO_PATCH}
+    ${CMAKE_CURRENT_SOURCE_DIR}/slightly-less-fuglyness.patch
+    ${CMAKE_CURRENT_SOURCE_DIR}/reproducible-builds.patch
+)
 list(APPEND PATCH_CMD COMMAND mv tesseract_mod/tesscapi.cpp tesscapi.cpp)
 list(APPEND PATCH_CMD COMMAND mv include_mod/tesseract.h tesseract.h)
 list(APPEND PATCH_CMD COMMAND sh -c "printf '#pragma once\\n#include <allheaders.h>' >leptonica.h")
