@@ -49,6 +49,13 @@ endfunction()
 
 # Improved external projects support.
 include(ExternalProject)
+# When extracting an archive, preserve the timestamps (old behavior):
+# new behavior set the timestamps to the time of extraction instead,
+# which can break some builds (e.g. gettext: autotools fails to
+# re-generate `configure` because `configure.ac` is missing).
+if(POLICY CMP0135)
+    cmake_policy(SET CMP0135 OLD)
+endif()
 function(external_project)
     cmake_parse_arguments(
         # Prefix.
