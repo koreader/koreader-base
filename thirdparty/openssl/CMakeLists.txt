@@ -16,7 +16,8 @@ assert_var_defined(LD)
 assert_var_defined(AR)
 assert_var_defined(RANLIB)
 
-ep_get_source_dir(SOURCE_DIR)
+# Build in source tree.
+set(BINARY_DIR ${SOURCE_DIR})
 
 # FIXME: Orphaned, MINGW is never set anywhere
 if(${MINGW})
@@ -99,14 +100,10 @@ ko_write_gitclone_script(
     none
 )
 
-include(ExternalProject)
-ExternalProject_Add(
-    ${PROJECT_NAME}
+external_project(
     DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
-    PATCH_COMMAND COMMAND ${PATCH_CMD}
+    PATCH_COMMAND ${PATCH_CMD}
     CONFIGURE_COMMAND ${CFG_CMD}
-    BUILD_IN_SOURCE 1
-    BUILD_COMMAND COMMAND ${BUILD_CMD}
-    # skip install
-    INSTALL_COMMAND ""
+    BUILD_COMMAND ${BUILD_CMD}
+    INSTALL_COMMAND ${INSTALL_CMD}
 )
