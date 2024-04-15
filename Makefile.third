@@ -296,7 +296,7 @@ endif
 $(SDL2_LIB): $(THIRDPARTY_DIR)/sdl2/*.*
 	$(CMAKE) $(CMAKE_FLAGS) -S $(THIRDPARTY_DIR)/sdl2 -B $(SDL2_BUILD_DIR)
 	$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS) -C $(SDL2_BUILD_DIR)
-	cp -fL $(SDL2_DIR)/libSDL2-2.0$(LIB_EXT) $(SDL2_LIB)
+	cp -fL $(SDL2_DIR)/$(notdir $(SDL2_LIB)) $(SDL2_LIB)
 
 # ===========================================================================
 # dropbear
