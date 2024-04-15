@@ -276,9 +276,7 @@ $(OUTPUT_DIR)/data/KoboUSBMS.tar.gz: $(KOBO_USBMS_DIR)/KoboUSBMS.tar.gz
 # ===========================================================================
 # common lua library for networking
 $(LUASOCKET): $(THIRDPARTY_DIR)/luasocket/*.*
-	$(CMAKE) $(CMAKE_FLAGS) \
-		-DLUAPATH='$(abspath $(OUTPUT_DIR)/common)' \
-		-S $(THIRDPARTY_DIR)/luasocket -B $(LUASOCKET_BUILD_DIR)
+	$(CMAKE) $(CMAKE_FLAGS) -S $(THIRDPARTY_DIR)/luasocket -B $(LUASOCKET_BUILD_DIR)
 	$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS) -C $(LUASOCKET_BUILD_DIR)
 
 $(CRYPTO_LIB) $(SSL_LIB): $(THIRDPARTY_DIR)/openssl/*.*
@@ -300,9 +298,7 @@ ifdef DARWIN
 endif
 
 $(LUASEC): $(SSL_LIB) $(THIRDPARTY_DIR)/luasec/*.*
-	$(CMAKE) $(CMAKE_FLAGS) \
-		-DLUAPATH='$(abspath $(OUTPUT_DIR)/common)' \
-		-S $(THIRDPARTY_DIR)/luasec -B $(LUASEC_BUILD_DIR)
+	$(CMAKE) $(CMAKE_FLAGS) -S $(THIRDPARTY_DIR)/luasec -B $(LUASEC_BUILD_DIR)
 	$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS) -C $(LUASEC_BUILD_DIR)
 ifdef DARWIN
 	install_name_tool -change \

@@ -1109,6 +1109,7 @@ set(HOSTCFLAGS     "$(strip $(HOSTCFLAGS))")
 set(HOSTCXX        "$(strip $(HOSTCXX))")
 set(LIB_EXT        $(LIB_EXT))
 
+set(OUTPUT_DIR     $(abspath $(OUTPUT_DIR)))
 set(STAGING_DIR    $(abspath $(STAGING_DIR)))
 set(THIRDPARTY_DIR $(abspath $(THIRDPARTY_DIR)))
 
