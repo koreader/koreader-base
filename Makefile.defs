@@ -689,35 +689,6 @@ CFLAGS := $(strip $(CFLAGS))
 CXXFLAGS := $(strip $(CXXFLAGS))
 LDFLAGS := $(strip $(LDFLAGS))
 
-# FIXME: If we cared, we'd probably need to do something to convince libzmq not
-# to enable support for eventfd [@GLIBC_2.7]
-# FIXED: To cross compile libzmq for GLIBC_2.4 you need to configure with the
-# option '--disable-eventfd'
-#
-# In the same vein, see base#421 for how to deal with an updated glibc symbol
-# for a function which did NOT change its signature, and where we don't have
-# access to a public definition of the old implementation, only a compat
-# versioned symbol.
-# With the added confusing quirk that the compat symbol (here, fmemopen) is
-# pinned to a different GLIBC version on arm than on x86... (cf. #2188).
-ifndef DARWIN
-ifndef ANDROID
-ifndef WIN32
-	# We're a glibc system... Find the actual libc used by our TC, and check if it's >= 2.22...
-	# We only care about that on non-emulated builds (i.e., arm), because compat symbols may be pinned
-	# to different versions on different arches, and we only account for arm in our patches.
-	ifndef EMULATE_READER
-		GLIBC_FILE=$(basename $(notdir $(realpath $(shell $(CC) -print-file-name=libc.so.6))))
-		GLIBC_VER=$(shell echo $(GLIBC_FILE) | cut -f2 -d'-')
-		GLIBC_2_22_SORT=$(shell echo -e "$(GLIBC_VER)\n2.22" | sort -V | head -n1)
-		ifeq ($(GLIBC_2_22_SORT), 2.22)
-			ARM_GLIBC_GTE_2_22=1
-		endif
-	endif
-endif
-endif
-endif
-
 # NOTE: We generally want SIMD/ASM juicy stuff everywhere
 export WANT_SIMD=1
 # ... but on ARM targets that are not NEON capable, that obviously won't fly...
