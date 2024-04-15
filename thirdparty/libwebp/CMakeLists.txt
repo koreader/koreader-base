@@ -11,9 +11,6 @@ assert_var_defined(CPPFLAGS)
 assert_var_defined(LDFLAGS)
 assert_var_defined(CHOST)
 
-ep_get_source_dir(SOURCE_DIR)
-ep_get_binary_dir(BINARY_DIR)
-
 list(APPEND PATCH_CMD COMMAND ./autogen.sh)
 
 # No build rpath
@@ -25,7 +22,7 @@ set(CFG_ENV_VAR "CC=${CC}" "CXX=${CXX}" "CPPFLAGS=${CPPFLAGS}" "LDFLAGS=${LDFLAG
 # images. But it fails on animated webp images, not even rendering the first frame.
 # We need the regular libraries (libwebp.so and libwebpdemux.so) to handle them
 # (but we can left out the encoder, libwebpmux.so).
-set(CFG_OPTS --prefix=${BINARY_DIR} --libdir=${BINARY_DIR}/lib --disable-static --enable-shared --host=${CHOST} --disable-libwebpmux)
+set(CFG_OPTS --prefix=${INSTALL_DIR} --disable-static --enable-shared --host=${CHOST} --disable-libwebpmux)
 list(APPEND CFG_CMD COMMAND env ${CFG_ENV_VAR} ${SOURCE_DIR}/configure ${CFG_OPTS})
 
 if(DEFINED ENV{ANDROID})
@@ -43,13 +40,10 @@ ko_write_gitclone_script(
     ${SOURCE_DIR}
 )
 
-include(ExternalProject)
-ExternalProject_Add(
-    ${PROJECT_NAME}
+external_project(
     DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
     PATCH_COMMAND ${PATCH_CMD}
     CONFIGURE_COMMAND ${CFG_CMD}
-    BUILD_IN_SOURCE 1
     BUILD_COMMAND ${BUILD_CMD}
     INSTALL_COMMAND ${INSTALL_CMD}
 )

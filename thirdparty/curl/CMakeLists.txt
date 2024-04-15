@@ -11,9 +11,6 @@ assert_var_defined(CFLAGS)
 assert_var_defined(LDFLAGS)
 assert_var_defined(CHOST)
 
-ep_get_source_dir(SOURCE_DIR)
-ep_get_binary_dir(BINARY_DIR)
-
 # Gentoo patchset
 list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/curl-respect-cflags-3.patch)
 list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/curl-8.5.0-ipv6-configure-c99.patch)
@@ -30,7 +27,7 @@ list(APPEND PATCH_CMD COMMAND autoreconf -fi)
 set(CFG_ENV_VAR "CC=${CC}" "CPPFLAGS=${CPPFLAGS}" "CFLAGS=${CFLAGS}" "LDFLAGS=${LDFLAGS}")
 
 # Take a deep breath...
-list(APPEND CFG_OPTS --prefix=${BINARY_DIR} --libdir=${BINARY_DIR}/lib --host=${CHOST} --enable-shared=yes --enable-static=no)
+list(APPEND CFG_OPTS --prefix=${INSTALL_DIR} --host=${CHOST} --enable-shared=yes --enable-static=no)
 list(APPEND CFG_OPTS --with-ca-fallback --with-ca-bundle=./data/ca-bundle.crt)
 list(APPEND CFG_OPTS --without-gnutls --without-mbedtls --without-rustls)
 list(APPEND CFG_OPTS --with-ssl --with-ca-path=/etc/ssl/certs)
@@ -116,7 +113,7 @@ list(APPEND BUILD_CMD COMMAND ${KO_MAKE_RECURSIVE} ca-bundle)
 list(APPEND BUILD_CMD COMMAND ${KO_MAKE_RECURSIVE})
 
 list(APPEND INSTALL_CMD COMMAND ${KO_MAKE_RECURSIVE} install)
-list(APPEND INSTALL_CMD COMMAND ${CMAKE_COMMAND} -E rename ${SOURCE_DIR}/lib/ca-bundle.crt ${BINARY_DIR}/ca-bundle.crt)
+list(APPEND INSTALL_CMD COMMAND ${CMAKE_COMMAND} -E rename ${BINARY_DIR}/lib/ca-bundle.crt ${INSTALL_DIR}/ca-bundle.crt)
 
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
@@ -125,13 +122,10 @@ ko_write_gitclone_script(
     ${SOURCE_DIR}
 )
 
-include(ExternalProject)
-ExternalProject_Add(
-    ${PROJECT_NAME}
+external_project(
     DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
-    BUILD_IN_SOURCE 1
     PATCH_COMMAND ${PATCH_CMD}
     CONFIGURE_COMMAND ${CFG_CMD}
-    BUILD_COMMAND COMMAND ${BUILD_CMD}
-    INSTALL_COMMAND COMMAND ${INSTALL_CMD}
+    BUILD_COMMAND ${BUILD_CMD}
+    INSTALL_COMMAND ${INSTALL_CMD}
 )

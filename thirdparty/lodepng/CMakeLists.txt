@@ -11,7 +11,8 @@ assert_var_defined(LDFLAGS)
 assert_var_defined(SONAME)
 assert_var_defined(OUTPUT_PATH)
 
-ep_get_source_dir(SOURCE_DIR)
+# Build in source tree.
+set(BINARY_DIR ${SOURCE_DIR})
 
 if (APPLE)
     set(BUILD_CMD sh -c "${CC} -shared ${CFLAGS} ${LDFLAGS} lodepng.c -o ${OUTPUT_PATH}/${SONAME}")
@@ -26,14 +27,8 @@ ko_write_gitclone_script(
     ${SOURCE_DIR}
 )
 
-include(ExternalProject)
-ExternalProject_Add(
-    ${PROJECT_NAME}
+external_project(
     DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
-    BUILD_IN_SOURCE 1
     PATCH_COMMAND ${CMAKE_COMMAND} -E copy lodepng.cpp lodepng.c
-    CONFIGURE_COMMAND ""
     BUILD_COMMAND ${BUILD_CMD}
-    # skip install
-    INSTALL_COMMAND ""
 )

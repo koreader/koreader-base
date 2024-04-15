@@ -8,19 +8,10 @@ include("koreader_thirdparty_git")
 assert_var_defined(CFLAGS)
 assert_var_defined(LDFLAGS)
 
-ep_get_source_dir(SOURCE_DIR)
-ep_get_binary_dir(BINARY_DIR)
+# Build in source tree.
+set(BINARY_DIR ${SOURCE_DIR})
 
-set(PREPARE_CMD sh -c "cd FBInk && git submodule init && git submodule update && cd -")
-set(BUILD_CMD ${KO_MAKE_RECURSIVE} "CFLAGS=${CFLAGS}" "LDFLAGS=${LDFLAGS}" kobo)
-
-# We build in-tree...
-set(INSTALL_CMD1 ${CMAKE_COMMAND} -E make_directory ${BINARY_DIR})
-if(DEFINED ENV{DEBUG})
-    set(INSTALL_CMD2 ${CMAKE_COMMAND} -E rename ${SOURCE_DIR}/Debug/KoboUSBMS.tar.gz ${BINARY_DIR}/KoboUSBMS.tar.gz)
-else()
-    set(INSTALL_CMD2 ${CMAKE_COMMAND} -E rename ${SOURCE_DIR}/Release/KoboUSBMS.tar.gz ${BINARY_DIR}/KoboUSBMS.tar.gz)
-endif()
+list(APPEND BUILD_CMD COMMAND ${KO_MAKE_RECURSIVE} "CFLAGS=${CFLAGS}" "LDFLAGS=${LDFLAGS}" kobo)
 
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
@@ -29,14 +20,7 @@ ko_write_gitclone_script(
     ${SOURCE_DIR}
 )
 
-include(ExternalProject)
-ExternalProject_Add(
-    ${PROJECT_NAME}
+external_project(
     DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
-    BUILD_IN_SOURCE 1
-    PATCH_COMMAND ""
-    CONFIGURE_COMMAND ""
-    BUILD_COMMAND COMMAND ${PREPARE_CMD} COMMAND ${BUILD_CMD}
-    # The buildsystem outputs binaries in a subdirectory...
-    INSTALL_COMMAND COMMAND ${INSTALL_CMD1} COMMAND ${INSTALL_CMD2}
+    BUILD_COMMAND ${BUILD_CMD}
 )

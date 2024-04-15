@@ -11,9 +11,6 @@ assert_var_defined(CFLAGS)
 assert_var_defined(LDFLAGS)
 assert_var_defined(CHOST)
 
-ep_get_source_dir(SOURCE_DIR)
-ep_get_binary_dir(BINARY_DIR)
-
 set(PATCH_CMD sh -c "autoreconf -fi")
 
 set(CFG_ENV_VAR "CC=${CC}" "CPPFLAGS=${CPPFLAGS} -I${SOURCE_DIR}" "CFLAGS=${CFLAGS}" "LIBS=${LIBS}" "LDFLAGS=${LDFLAGS}")
@@ -23,11 +20,6 @@ set(CFG_CMD env ${CFG_CMD})
 
 set(BUILD_CMD ${KO_MAKE_RECURSIVE} sftp-server scp)
 
-# We build in-tree...
-set(INSTALL_CMD1 ${CMAKE_COMMAND} -E make_directory ${BINARY_DIR})
-set(INSTALL_CMD2 ${CMAKE_COMMAND} -E rename ${SOURCE_DIR}/sftp-server ${BINARY_DIR}/sftp-server)
-set(INSTALL_CMD3 ${CMAKE_COMMAND} -E rename ${SOURCE_DIR}/scp ${BINARY_DIR}/scp)
-
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
     https://github.com/openssh/openssh-portable.git
@@ -35,13 +27,9 @@ ko_write_gitclone_script(
     ${SOURCE_DIR}
 )
 
-include(ExternalProject)
-ExternalProject_Add(
-    ${PROJECT_NAME}
+external_project(
     DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
-    BUILD_IN_SOURCE 1
     PATCH_COMMAND COMMAND ${PATCH_CMD}
     CONFIGURE_COMMAND ${CFG_CMD}
     BUILD_COMMAND ${BUILD_CMD}
-    INSTALL_COMMAND COMMAND ${INSTALL_CMD1} COMMAND ${INSTALL_CMD2} COMMAND ${INSTALL_CMD3}
 )

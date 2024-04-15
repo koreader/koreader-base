@@ -256,8 +256,7 @@ $(OUTPUT_DIR)/extr: extr.c $(MUPDF_LIB) $(JPEG_LIB) $(FREETYPE_LIB)
 # helper target for initializing third-party code
 
 clean:
-	-rm -rf $(OUTPUT_DIR)/*
-	-rm -rf $(THIRDPARTY_DIR)/{$(CMAKE_THIRDPARTY_LIBS)}/build/$(MACHINE)
+	-rm -rf $(OUTPUT_DIR)
 
 distclean:
 	-rm -rf build
