@@ -15,15 +15,9 @@ list(APPEND CMAKE_ARGS -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TCF})
 
 list(APPEND BUILD_CMD COMMAND ${KO_MAKE_PROGRAM})
 
-ko_write_gitclone_script(
-    GIT_CLONE_SCRIPT_FILENAME
-    https://gitlab.com/koreader/giflib.git
-    5.1.4
-    ${SOURCE_DIR}
-)
-
 external_project(
-    DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
+    URL https://gitlab.com/koreader/giflib/-/archive/5.1.4/giflib-5.1.4.tar.gz
+    URL_MD5 f0011445f6c261aa78df502e6825896a
     PATCH_COMMAND ${PATCH_CMD}
     CMAKE_ARGS ${CMAKE_ARGS}
     BUILD_COMMAND ${BUILD_CMD}
