@@ -1,20 +1,30 @@
 cmake_minimum_required(VERSION 3.7)
 project(gettext LANGUAGES)
 
-include("koreader_thirdparty_common")
+include(koreader_thirdparty_common)
 
 assert_var_defined(CC)
 assert_var_defined(AR)
 assert_var_defined(RANLIB)
-assert_var_defined(CPPFLAGS)
 assert_var_defined(LDFLAGS)
-assert_var_defined(LIBICONV_PREFIX)
+assert_var_defined(LIBICONV_DIR)
 
-set(CFG_ENV_VAR "CC=${CC}" "AR=${AR}" "RANLIB=${RANLIB}" "CPPFLAGS=${CPPFLAGS}" "LDFLAGS=${LDFLAGS}")
-set(CFG_OPTS --enable-silent-rules --disable-threads --disable-java)
-set(CFG_OPTS ${CFG_OPTS} --prefix=${INSTALL_DIR} --with-libiconv-prefix=${LIBICONV_PREFIX} --with-included-gettext)
-set(CFG_OPTS ${CFG_OPTS} --enable-shared=false --enable-static=true --host=${CHOST})
-list(APPEND CFG_CMD COMMAND env ${CFG_ENV_VAR} ${SOURCE_DIR}/gettext-runtime/configure ${CFG_OPTS})
+string(APPEND CPPFLAGS " -I${LIBICONV_DIR}/include")
+string(APPEND LDFLAGS " -L${LIBICONV_DIR}/lib")
+
+list(APPEND CFG_CMD COMMAND env
+    AR=${AR}
+    CC=${CC}
+    CPPFLAGS=${CPPFLAGS}
+    LDFLAGS=${LDFLAGS}
+    RANLIB=${RANLIB}
+    ${SOURCE_DIR}/gettext-runtime/configure --host=${CHOST} --prefix=${INSTALL_DIR}
+    --enable-shared=false --enable-static=true
+    --disable-java
+    --disable-threads
+    --enable-silent-rules
+    --with-included-gettext
+)
 
 if(ANDROID)
     # Tools? Where we're going we don't need tools.
@@ -25,13 +35,10 @@ list(APPEND BUILD_CMD COMMAND ${KO_MAKE_RECURSIVE} -C intl)
 
 list(APPEND INSTALL_CMD COMMAND ${KO_MAKE_RECURSIVE} -C intl install)
 
-set(GETTEXT_VER "0.21")
-
 external_project(
-    URL http://ftpmirror.gnu.org/gettext/gettext-${GETTEXT_VER}.tar.gz
-    http://ftp.gnu.org/pub/gnu/gettext/gettext-${GETTEXT_VER}.tar.gz
-    URL_MD5 28b1cd4c94a74428723ed966c38cf479
-    PATCH_COMMAND ${PATCH_CMD}
+    URL http://ftpmirror.gnu.org/gettext/gettext-0.21.tar.xz
+    http://ftp.gnu.org/pub/gnu/gettext/gettext-0.21.tar.xz
+    URL_MD5 40996bbaf7d1356d3c22e33a8b255b31
     CONFIGURE_COMMAND ${CFG_CMD}
     BUILD_COMMAND ${BUILD_CMD}
     INSTALL_COMMAND ${INSTALL_CMD}
