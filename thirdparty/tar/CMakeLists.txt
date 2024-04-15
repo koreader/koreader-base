@@ -42,11 +42,9 @@ endif()
 
 list(APPEND BUILD_CMD COMMAND ${KO_MAKE_RECURSIVE})
 
-set(TAR_VER "1.34")
-
 external_project(
-    URL http://ftpmirror.gnu.org/tar/tar-${TAR_VER}.tar.gz
-    http://ftp.gnu.org/pub/gnu/tar/tar-${TAR_VER}.tar.gz
+    URL http://ftpmirror.gnu.org/tar/tar-1.34.tar.gz
+    http://ftp.gnu.org/pub/gnu/tar/tar-1.34.tar.gz
     URL_MD5 9d5949e4c2d9665546ac65dafc0e726a
     PATCH_COMMAND ${PATCH_CMD}
     CONFIGURE_COMMAND ${CFG_CMD}
