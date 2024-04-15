@@ -25,15 +25,9 @@ list(APPEND BUILD_CMD COMMAND ${KO_MAKE_PROGRAM})
 
 list(APPEND INSTALL_CMD COMMAND ${CMAKE_COMMAND} --install .)
 
-ko_write_gitclone_script(
-    GIT_CLONE_SCRIPT_FILENAME
-    https://github.com/glennrp/libpng.git
-    v1.6.41
-    ${SOURCE_DIR}
-)
-
 external_project(
-    DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
+    URL https://github.com/pnggroup/libpng/archive/refs/tags/v1.6.41.tar.gz
+    URL_MD5 ea2484c0d6845e937bd03aefe33f15eb
     PATCH_COMMAND ${PATCH_CMD}
     CMAKE_ARGS ${CMAKE_ARGS}
     BUILD_COMMAND ${BUILD_CMD}
