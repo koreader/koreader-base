@@ -36,6 +36,17 @@ if(ANDROID)
         libtool)
 endif()
 
+# Append autotools variables ("VAR=value") to `list`.
+function(append_autotools_vars list)
+    foreach(var CC CFLAGS CPPFLAGS CXX CXXFLAGS LD LDFLAGS LIBS AR NM RANLIB RC STRIP)
+        if(DEFINED ${var})
+            string(STRIP "${${var}}" value)
+            list(APPEND ${list} "${var}=${value}")
+        endif()
+    endforeach()
+    set(${list} ${${list}} PARENT_SCOPE)
+endfunction()
+
 # Improved external projects support.
 include(ExternalProject)
 function(external_project)

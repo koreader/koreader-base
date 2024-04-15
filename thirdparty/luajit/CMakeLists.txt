@@ -29,14 +29,11 @@ if(CMAKE_BUILD_TYPE STREQUAL Debug)
 endif()
 
 if(EMULATE_READER)
-    list(APPEND BUILD_ARGS "CC=${CCACHE} ${CC}")
+    append_autotools_vars(BUILD_ARGS)
 else()
     assert_var_defined(BASE_CFLAGS)
-    assert_var_defined(CC)
-    assert_var_defined(CFLAGS)
-    assert_var_defined(LDFLAGS)
-    assert_var_defined(HOST_CFLAGS)
-    assert_var_defined(HOST_CFLAGS)
+    assert_var_defined(HOSTCC)
+    assert_var_defined(HOSTCFLAGS)
     assert_var_defined(TARGET_SONAME)
 
     # To recap, luajit builds:
@@ -47,27 +44,27 @@ else()
     # Add -m32 when cross compile on 64 bit host for 32bit target,
     # (Per: http://luajit.org/install.html#cross).
     execute_process(
-        COMMAND ${CC} -dumpmachine
+        COMMAND ${HOSTCC} -dumpmachine
         OUTPUT_VARIABLE HOST_CC_MACHINE
     )
     if((HOST_CC_MACHINE MATCHES "^.+64-.+$") AND (NOT CMAKE_SYSTEM_PROCESSOR MATCHES ".+64$"))
-        set(HOST_CC "${CC} -m32")
+        set(HOST_CC "${HOSTCC} -m32")
     else()
-        set(HOST_CC ${CC})
+        set(HOST_CC ${HOSTCC})
     endif()
 
     list(APPEND BUILD_ARGS
         "CROSS=${CCACHE} ${CHOST}-"
-        CC=${CC}
+        CC=${HOSTCC}
         CFLAGS=${BASE_CFLAGS}
         LDFLAGS=
         "HOST_CC=${CCACHE} ${HOST_CC}"
-        HOST_CFLAGS=${HOST_CFLAGS}
+        HOST_CFLAGS=${HOSTCFLAGS}
         HOST_LDFLAGS=
-        "TARGET_AR=$ENV{AR} rcus"
+        "TARGET_AR=${AR} rcus"
         "TARGET_CFLAGS=${CFLAGS} -DLUAJIT_SECURITY_STRHASH=0 -DLUAJIT_SECURITY_STRID=0"
         TARGET_LDFLAGS=${LDFLAGS}
-        TARGET_RANLIB=$ENV{RANLIB}
+        TARGET_RANLIB=${RANLIB}
         TARGET_SONAME=${TARGET_SONAME}
     )
     if(ANDROID)
@@ -76,9 +73,9 @@ else()
         list(APPEND BUILD_ARGS TARGET_SYS=Windows)
     endif()
     if(DARWIN)
-        list(APPEND BUILD_ARGS TARGET_STRIP=$ENV{STRIP})
+        list(APPEND BUILD_ARGS TARGET_STRIP=${STRIP})
     else()
-        list(APPEND BUILD_ARGS "TARGET_STRIP=$ENV{STRIP} --strip-unneeded")
+        list(APPEND BUILD_ARGS "TARGET_STRIP=${STRIP} --strip-unneeded")
     endif()
 endif()
 

@@ -4,16 +4,6 @@ project(${TOOL} LANGUAGES)
 include("koreader_thirdparty_common")
 include("koreader_thirdparty_git")
 
-assert_var_defined(AR)
-assert_var_defined(CC)
-assert_var_defined(CFLAGS)
-assert_var_defined(CXX)
-assert_var_defined(CXXFLAGS)
-assert_var_defined(LDFLAGS)
-assert_var_defined(RANLIB)
-assert_var_defined(STRIP)
-assert_var_defined(TOOL)
-
 # Build in source tree.
 set(BINARY_DIR ${SOURCE_DIR})
 
@@ -43,18 +33,8 @@ else()
     set(FBINK_TARGET strip)
 endif()
 
-list(APPEND BUILD_CMD COMMAND
-    ${KO_MAKE_RECURSIVE}
-    CROSS_TC=${CHOST}
-    AR=${AR}
-    CC=${CC}
-    CFLAGS=${CFLAGS}
-    CXX=${CXX}
-    CXXFLAGS=${CXXFLAGS}
-    LDFLAGS=${LDFLAGS}
-    RANLIB=${RANLIB}
-    STRIP=${STRIP}
-)
+list(APPEND BUILD_CMD COMMAND ${KO_MAKE_RECURSIVE} CROSS_TC=${CHOST})
+append_autotools_vars(BUILD_CMD)
 
 if(TOOL STREQUAL "fbdepth")
     list(APPEND BUILD_CMD ${FBDEPTH_TARGET})

@@ -194,8 +194,8 @@ else ifeq ($(TARGET), android)
 	else
 		CHOST?=armv7a-linux-androideabi$(NDKABI)
 	endif
-	export CC=clang
-	export CXX=clang++
+	CC=clang
+	CXX=clang++
 else ifeq ($(TARGET), win32)
 	CHOST?=x86_64-w64-mingw32
 	WIN32=1
@@ -675,21 +675,6 @@ CFLAGS := $(strip $(CFLAGS))
 CXXFLAGS := $(strip $(CXXFLAGS))
 LDFLAGS := $(strip $(LDFLAGS))
 
-# Try to make sure CMake picks up our flags...
-export CFLAGS
-export CXXFLAGS
-export LDFLAGS
-# And that our TC is honored
-export CC
-export CXX
-export AR
-export RANLIB
-export LD
-export STRIP
-ifdef WIN32
-	export RC
-endif
-
 # FIXME: If we cared, we'd probably need to do something to convince libzmq not
 # to enable support for eventfd [@GLIBC_2.7]
 # FIXED: To cross compile libzmq for GLIBC_2.4 you need to configure with the
@@ -1016,12 +1001,12 @@ SRELL_INCLUDE_DIR=$(SRELL_DIR)
 #
 # Dynamic libraries must be compiled with "-shared" and "-fPIC".
 # (And we enforce PIC everywhere via CFLAGS/CXXFLAGS).
-DYNLIB_CFLAGS=-L$(CURDIR)/$(OUTPUT_DIR)/libs $(CFLAGS) -I$(LUAJIT_DIR)/src -shared
-DYNLIB_CXXFLAGS=-L$(CURDIR)/$(OUTPUT_DIR)/libs $(CXXFLAGS) -I$(LUAJIT_DIR)/src -shared
+DYNLIB_LDFLAGS = -shared
 ifdef DARWIN
-	DYNLIB_CFLAGS+=-dynamiclib -undefined dynamic_lookup
-	DYNLIB_CXXFLAGS+=-dynamiclib -undefined dynamic_lookup
+	DYNLIB_LDFLAGS += -dynamiclib -undefined dynamic_lookup
 endif
+DYNLIB_CFLAGS=-L$(CURDIR)/$(OUTPUT_DIR)/libs $(CFLAGS) -I$(LUAJIT_DIR)/src $(DYNLIB_LDFLAGS)
+DYNLIB_CXXFLAGS=-L$(CURDIR)/$(OUTPUT_DIR)/libs $(CXXFLAGS) -I$(LUAJIT_DIR)/src $(DYNLIB_LDFLAGS)
 
 # Used by our custom Lua modules, where we want to hide private symbols by default
 SYMVIS_FLAGS+=-fvisibility=hidden
@@ -1081,10 +1066,12 @@ set(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
 # C language.
 $(if $(CCACHE),set(CMAKE_C_COMPILER_LAUNCHER $(CCACHE)))
 set(CMAKE_C_COMPILER $(REALCC))
+set(CMAKE_C_FLAGS_INIT "$(strip $(CFLAGS))")
 
 # C++ language.
 $(if $(CCACHE),set(CMAKE_CXX_COMPILER_LAUNCHER $(CCACHE)))
 set(CMAKE_CXX_COMPILER $(REALCXX))
+set(CMAKE_CXX_FLAGS_INIT "$(strip $(CXXFLAGS))")
 
 # OBJC language (for SDL2 on macOS).
 $(if $(CCACHE),set(CMAKE_OBJC_COMPILER_LAUNCHER $(CCACHE)))
@@ -1092,6 +1079,8 @@ set(CMAKE_OBJC_COMPILER $(REALCC))
 
 # Linker.
 set(CMAKE_EXE_LINKER_FLAGS_INIT "$(strip $(LDFLAGS))")
+set(CMAKE_SHARED_LINKER_FLAGS_INIT "$(strip $(filter-out -shared -dynamiclib,$(LDFLAGS) $(DYNLIB_LDFLAGS)))")
+set(CMAKE_MODULE_LINKER_FLAGS_INIT $${CMAKE_SHARED_LINKER_FLAGS_INIT})
 
 # Tools.
 set(CMAKE_AR $(AR) CACHE FILEPATH "Archive")
@@ -1147,8 +1136,13 @@ set(CMAKE_TCF $(abspath $(CMAKE_TCF)))
 # Ensure the real toolchain is included.
 include($${CMAKE_TCF})
 
+set(BASE_CFLAGS    "$(strip $(BASE_CFLAGS))")
+set(CCACHE         "$(strip $(CCACHE))")
 set(CHOST          $(CHOST))
 set(EMULATE_READER $(EMULATE_READER))
+set(HOSTCC         "$(strip $(HOSTCC))")
+set(HOSTCFLAGS     "$(strip $(HOSTCFLAGS))")
+set(HOSTCXX        "$(strip $(HOSTCXX))")
 set(LIB_EXT        $(LIB_EXT))
 
 set(THIRDPARTY_DIR $(abspath $(THIRDPARTY_DIR)))
@@ -1157,6 +1151,19 @@ set(MAKE $(MAKE))
 set(NINJA $(NINJA))
 
 list(INSERT CMAKE_MODULE_PATH 0 $${THIRDPARTY_DIR}/cmake_modules)
+
+# Convenience autotools-like variables.
+set(CC             "$(strip $(CC))")
+set(CFLAGS         "$(strip $(CFLAGS))")
+set(CXX            "$(strip $(CXX))")
+set(CXXFLAGS       "$(strip $(CXXFLAGS))")
+set(LD             "$(strip $(LD))")
+set(LDFLAGS        "$(strip $(LDFLAGS))")
+set(DYNLIB_LDFLAGS "$(strip $(LDFLAGS) $(DYNLIB_LDFLAGS))")
+set(AR             "$(strip $(AR))")
+set(RANLIB         "$(strip $(RANLIB))")
+set(RC             "$(strip $(RC))")
+set(STRIP          "$(strip $(STRIP))")
 
 # Platform flags.
 set(ANDROID        $(ANDROID))

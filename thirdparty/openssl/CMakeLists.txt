@@ -4,16 +4,6 @@ project(openssl LANGUAGES)
 include(koreader_thirdparty_common)
 include(koreader_thirdparty_git)
 
-assert_var_defined(CC)
-assert_var_defined(CFLAGS)
-assert_var_defined(CXX)
-assert_var_defined(CXXFLAGS)
-assert_var_defined(HOSTCC)
-assert_var_defined(HOSTCXX)
-assert_var_defined(LDFLAGS)
-assert_var_defined(AR)
-assert_var_defined(RANLIB)
-
 # Build in source tree.
 set(BINARY_DIR ${SOURCE_DIR})
 

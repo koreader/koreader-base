@@ -3,15 +3,12 @@ project(sqlite LANGUAGES)
 
 include(koreader_thirdparty_common)
 
-assert_var_defined(CC)
-assert_var_defined(CFLAGS)
-assert_var_defined(LDFLAGS)
+string(APPEND CFLAGS " -fno-fast-math")
+string(APPEND CPPFLAGS " -DNDEBUG -DSQLITE_DEFAULT_MEMSTATUS=0 -DSQLITE_DEFAULT_WAL_SYNCHRONOUS=1 -DSQLITE_LIKE_DOESNT_MATCH_BLOBS -DSQLITE_MAX_EXPR_DEPTH=0 -DSQLITE_OMIT_DECLTYPE -DSQLITE_OMIT_DEPRECATED -DSQLITE_OMIT_PROGRESS_CALLBACK -DSQLITE_OMIT_SHARED_CACHE -DSQLITE_USE_ALLOCA")
 
-list(APPEND CFG_CMD env
-    CC=${CC}
-    "CPPFLAGS=-DNDEBUG -DSQLITE_DEFAULT_MEMSTATUS=0 -DSQLITE_DEFAULT_WAL_SYNCHRONOUS=1 -DSQLITE_LIKE_DOESNT_MATCH_BLOBS -DSQLITE_MAX_EXPR_DEPTH=0 -DSQLITE_OMIT_DECLTYPE -DSQLITE_OMIT_DEPRECATED -DSQLITE_OMIT_PROGRESS_CALLBACK -DSQLITE_OMIT_SHARED_CACHE -DSQLITE_USE_ALLOCA"
-    "CFLAGS=${CFLAGS} -fno-fast-math"
-    LDFLAGS=${LDFLAGS}
+list(APPEND CFG_CMD env)
+append_autotools_vars(CFG_CMD)
+list(APPEND CFG_CMD
     # Explicitly disable zlib, because it's only optionally used by the shell & extensions, and we disable both of those.
     # This should hopefully prevent Android from picking it up...
     ac_cv_header_zlib_h=no
