@@ -55,7 +55,7 @@ else()
 endif()
 
 # Do we support SIMD?
-if(DEFINED ENV{WANT_SIMD})
+if(WANT_SIMD)
     set(ASM_OPT enable-asm)
 else()
     set(ASM_OPT no-asm)

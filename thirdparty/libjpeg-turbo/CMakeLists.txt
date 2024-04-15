@@ -17,7 +17,7 @@ list(APPEND CMAKE_ARGS
     -DBUILD=20240124
 )
 # Make sure we disable ASM if we don't support SIMD.
-if(NOT DEFINED ENV{WANT_SIMD})
+if(NOT WANT_SIMD)
     list(APPEND CMAKE_ARGS
         -DREQUIRE_SIMD=OFF
         -DWITH_SIMD=OFF
