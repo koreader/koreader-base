@@ -1,0 +1,10 @@
+--- i/Configurations/unix-Makefile.tmpl
++++ w/Configurations/unix-Makefile.tmpl
+@@ -1117,6 +1123,7 @@
+               bin => '$(BIN_CFLAGS) $(BIN_CPPFLAGS)'
+           } -> {$args{intent}};
+       }
++      $cmd = '@$(ECHO) $@; '.$cmd;
+       my $recipe;
+       # extension-specific rules
+       if (grep /\.s$/, @srcs) {
