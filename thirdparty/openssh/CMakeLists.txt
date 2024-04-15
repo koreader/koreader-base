@@ -4,9 +4,6 @@ project(openssh LANGUAGES)
 include(koreader_thirdparty_common)
 include(koreader_thirdparty_git)
 
-assert_var_defined(OPENSSL_DIR)
-assert_var_defined(ZLIB_DIR)
-
 list(APPEND CFG_CMD COMMAND env)
 append_autotools_vars(CFG_CMD)
 list(APPEND CFG_CMD
@@ -18,8 +15,8 @@ list(APPEND CFG_CMD
     --with-ssl-engine
     --without-hardening
     --without-stackprotect
-    --with-ssl-dir=${OPENSSL_DIR}
-    --with-zlib=${ZLIB_DIR}
+    --with-ssl-dir=${STAGING_DIR}
+    --with-zlib=${STAGING_DIR}
 )
 
 list(APPEND BUILD_CMD COMMAND ${KO_MAKE_RECURSIVE} sftp-server scp)

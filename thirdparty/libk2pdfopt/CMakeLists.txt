@@ -4,9 +4,6 @@ project(libk2pdfopt LANGUAGES)
 include(koreader_thirdparty_common)
 include(koreader_thirdparty_git)
 
-assert_var_defined(LEPTONICA_DIR)
-assert_var_defined(TESSERACT_DIR)
-
 # Build in source tree.
 set(BINARY_DIR ${SOURCE_DIR})
 
@@ -23,7 +20,7 @@ if (DARWIN)
     set(CFLAGS "${CFLAGS} -Wno-error=implicit-function-declaration")
 endif()
 
-set(CPPFLAGS "-I${LEPTONICA_DIR}/include/leptonica -I${TESSERACT_DIR}/include/tesseract -I.")
+set(CPPFLAGS "-I${STAGING_DIR}/include/leptonica -I${STAGING_DIR}/include/tesseract -I.")
 set(CFLAGS "${CFLAGS} ${CPPFLAGS}")
 set(CXXFLAGS "${CXXFLAGS} ${CPPFLAGS}")
 
@@ -33,20 +30,20 @@ list(APPEND BUILD_CMD
     ANDROID=${ANDROID}
     BUILDMODE=shared
     DARWIN=${DARWIN}
-    LEPTONICA_LIB=${LEPTONICA_LIB}
+    LEPTONICA_LIB=${STAGING_DIR}/lib/liblept${LIB_EXT}
     MOD_INC=.
     TESSCAPI_CFLAGS=
-    TESSERACT_LIB=${TESSERACT_LIB}
+    TESSERACT_LIB=${STAGING_DIR}/lib/libtesseract${LIB_EXT}
     TESSERACT_MOD=.
     all)
 
-list(APPEND INSTALL_CMD COMMAND mkdir -p "${INSTALL_DIR}/include/k2pdfopt" "${INSTALL_DIR}/lib")
+list(APPEND INSTALL_CMD COMMAND mkdir -p "${STAGING_DIR}/include/k2pdfopt" "${STAGING_DIR}/lib")
 list(APPEND INSTALL_CMD COMMAND sh -c "cd \"$1\" && shift && cp \"$@\"" -- ${SOURCE_DIR}
     context.h koptcrop.h koptimize.h koptocr.h koptreflow.h leptonica.h setting.h
     tesseract.h k2pdfoptlib/k2pdfopt.h willuslib/willus.h
-    ${INSTALL_DIR}/include/k2pdfopt/
+    ${STAGING_DIR}/include/k2pdfopt/
 )
-list(APPEND INSTALL_CMD COMMAND sh -c "cp libk2pdfopt${LIB_EXT}* \"$1\"" -- ${INSTALL_DIR}/lib/)
+list(APPEND INSTALL_CMD COMMAND sh -c "cp libk2pdfopt${LIB_EXT}* \"$1\"" -- ${STAGING_DIR}/lib/)
 
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME

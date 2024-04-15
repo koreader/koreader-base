@@ -24,7 +24,6 @@ endmacro()
 
 set(SOURCE_DIR ${CMAKE_CURRENT_BINARY_DIR}/source)
 set(BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/build)
-set(INSTALL_DIR ${STAGING_DIR}/${PROJECT_NAME})
 
 if(ANDROID)
     set(ANDROID_LIBTOOL_FIX_CMD ${ISED} $<SEMICOLON>
@@ -100,7 +99,7 @@ function(external_project)
     # build directory with the standard naming scheme.
     list(APPEND PARAMS BINARY_DIR ${BINARY_DIR})
     # Install dir.
-    list(APPEND PARAMS INSTALL_DIR ${INSTALL_DIR})
+    list(APPEND PARAMS INSTALL_DIR ${STAGING_DIR})
     # Other directories.
     list(APPEND PARAMS PREFIX .)
     list(APPEND PARAMS LOG_DIR log)

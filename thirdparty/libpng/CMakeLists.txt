@@ -4,19 +4,15 @@ project(libpng LANGUAGES)
 include("koreader_thirdparty_common")
 include("koreader_thirdparty_git")
 
-assert_var_defined(ZLIB_DIR)
-
 list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/math_library.patch)
 
 list(APPEND CMAKE_ARGS
     -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TCF}
-    -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR}
     # Project options.
     -DPNG_DEBUG_POSTFIX=
     -DPNG_TOOLS=FALSE
     -DPNG_STATIC=FALSE
     -DPNG_TESTS=FALSE
-    -DZLIB_ROOT=${ZLIB_DIR}
 )
 
 list(APPEND BUILD_CMD COMMAND ${KO_MAKE_PROGRAM})

@@ -4,20 +4,6 @@ project(mupdf LANGUAGES)
 include(koreader_thirdparty_common)
 include(koreader_thirdparty_git)
 
-assert_var_defined(AES_LIB)
-assert_var_defined(FREETYPE_DIR)
-assert_var_defined(FREETYPE_LIB)
-assert_var_defined(HARFBUZZ_DIR)
-assert_var_defined(HARFBUZZ_LIB)
-assert_var_defined(JPEG_DIR)
-assert_var_defined(JPEG_LIB)
-assert_var_defined(LIBWEBPDEMUX_LIB)
-assert_var_defined(LIBWEBP_DIR)
-assert_var_defined(LIBWEBP_LIB)
-assert_var_defined(MINIZIP_DIR)
-assert_var_defined(ZLIB)
-assert_var_defined(ZLIB_DIR)
-
 # Build in source tree.
 set(BINARY_DIR ${SOURCE_DIR})
 
@@ -136,12 +122,9 @@ if(ANDROID AND CHOST MATCHES "^armv7a-.*")
     string(APPEND XCFLAGS " -D_FILE_OFFSET_BITS=32")
 endif()
 string(APPEND XCFLAGS
-    " -I${FREETYPE_DIR}/include/freetype2"
-    " -I${HARFBUZZ_DIR}/include/harfbuzz"
-    " -I${JPEG_DIR}/include"
-    " -I${LIBWEBP_DIR}/include"
-    " -I${MINIZIP_DIR}/include"
-    " -I${ZLIB_DIR}/include"
+    " -I${STAGING_DIR}/include"
+    " -I${STAGING_DIR}/include/freetype2"
+    " -I${STAGING_DIR}/include/harfbuzz"
 )
 
 string(APPEND LINK_OPTS " ${DYNLIB_LDFLAGS}")
@@ -162,13 +145,13 @@ if(ANDROID)
 endif()
 
 string(APPEND LIBS
-    " ${AES_LIB}"
-    " ${FREETYPE_LIB}"
-    " ${HARFBUZZ_LIB}"
-    " ${JPEG_LIB}"
-    " ${LIBWEBP_LIB}"
-    " ${LIBWEBPDEMUX_LIB}"
-    " ${ZLIB}"
+    " ${STAGING_DIR}/lib/libaes.a"
+    " ${STAGING_DIR}/lib/libfreetype${LIB_EXT}"
+    " ${STAGING_DIR}/lib/libharfbuzz${LIB_EXT}"
+    " ${STAGING_DIR}/lib/libjpeg${LIB_EXT}"
+    " ${STAGING_DIR}/lib/libwebp${LIB_EXT}"
+    " ${STAGING_DIR}/lib/libwebpdemux${LIB_EXT}"
+    " ${STAGING_DIR}/lib/libz${LIB_EXT}"
 )
 
 set(MAKE_CMD
@@ -205,7 +188,7 @@ set(MAKE_CMD
 list(APPEND BUILD_CMD COMMAND ${MAKE_CMD} shared)
 
 list(APPEND INSTALL_CMD COMMAND ${MAKE_CMD} install
-    DESTDIR=${INSTALL_DIR}
+    DESTDIR=${STAGING_DIR}
     INSTALL_APPS=
     INSTALL_LIBS=${MUPDF_LIB}
     prefix=/

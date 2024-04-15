@@ -4,10 +4,6 @@ project(turbo LANGUAGES)
 include(koreader_thirdparty_common)
 include(koreader_thirdparty_git)
 
-assert_var_defined(OPENSSL_DIR)
-assert_var_defined(CRYPTO_LIB)
-assert_var_defined(SSL_LIB)
-
 # Build in source tree.
 set(BINARY_DIR ${SOURCE_DIR})
 
@@ -24,8 +20,8 @@ if (APPLE AND ANDROID)
     list(APPEND PATCH_CMD COMMAND ${ISED} "s|libtffi_wrap.dylib|libtffi_wrap.so|" Makefile)
 endif()
 
-set(MYCFLAGS "${CFLAGS} -I${OPENSSL_DIR}/include")
-string(REPLACE "${CFLAGS}" "" MYLDFLAGS "${DYNLIB_LDFLAGS} ${CRYPTO_LIB} ${SSL_LIB}")
+set(MYCFLAGS "${CFLAGS} -I${STAGING_DIR}/include")
+string(REPLACE "${CFLAGS}" "" MYLDFLAGS "${DYNLIB_LDFLAGS} ${STAGING_DIR}/lib/libcrypto${LIB_EXT} ${STAGING_DIR}/lib/libssl${LIB_EXT}")
 
 list(APPEND BUILD_CMD COMMAND
     ${KO_MAKE_RECURSIVE}

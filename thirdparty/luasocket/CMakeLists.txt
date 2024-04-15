@@ -4,8 +4,6 @@ project(luasocket LANGUAGES)
 include(koreader_thirdparty_common)
 include(koreader_thirdparty_git)
 
-assert_var_defined(LUAINC)
-assert_var_defined(LUALIB)
 assert_var_defined(LUAPATH)
 
 # Build in source tree.
@@ -35,16 +33,13 @@ else()
     set(PLAT linux)
 endif()
 
-set(MYLDFLAGS ${LDFLAGS})
-if(LUALIB)
-    string(APPEND MYLDFLAGS " ${LUALIB}")
-endif()
+string(JOIN " " MYLDFLAGS ${LDFLAGS} ${LUAJIT_LIB})
 
 list(APPEND BUILD_CMD COMMAND
     ${KO_MAKE_RECURSIVE}
     "CC=${CC} ${CFLAGS}"
     "LD=${CC} ${CFLAGS}"
-    LUAINC=${LUAINC}
+    LUAINC=${LUAJIT_INC}
     MYLDFLAGS=${MYLDFLAGS}
     PLAT=${PLAT}
 )

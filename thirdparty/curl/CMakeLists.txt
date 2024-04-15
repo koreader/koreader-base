@@ -4,9 +4,6 @@ project(curl LANGUAGES)
 include(koreader_thirdparty_common)
 include(koreader_thirdparty_git)
 
-assert_var_defined(OPENSSL_DIR)
-assert_var_defined(ZLIB_DIR)
-
 list(APPEND PATCH_CMD COMMAND ${KO_PATCH}
     # Gentoo patchset
     ${CMAKE_CURRENT_SOURCE_DIR}/curl-8.5.0-mpd-stream-http-adjust_pollset.patch
@@ -22,7 +19,6 @@ endif()
 
 list(APPEND CMAKE_ARGS
     -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TCF}
-    -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR}
     # Project options.
     # TODO: Enable ZSTD support? We currently only use cURL
     # for zsync2, so, obviously, not necessary right now…
@@ -43,17 +39,15 @@ list(APPEND CMAKE_ARGS
     # OpenSSL.
     -DCURL_DEFAULT_SSL_BACKEND=openssl
     -DCURL_USE_OPENSSL=TRUE
-    -DOpenSSL_ROOT=${OPENSSL_DIR}
     # ZLIB.
     -DCURL_ZLIB=TRUE
-    -DZLIB_ROOT=${ZLIB_DIR}
 )
 
 list(APPEND BUILD_CMD COMMAND ${KO_MAKE_PROGRAM} ca-bundle lib/all)
 
 list(APPEND INSTALL_CMD COMMAND ${CMAKE_COMMAND} --install .)
 
-list(APPEND INSTALL_CMD COMMAND ${CMAKE_COMMAND} -E copy ${BINARY_DIR}/ca-bundle.crt ${INSTALL_DIR}/ca-bundle.crt)
+list(APPEND INSTALL_CMD COMMAND ${CMAKE_COMMAND} -E copy ${BINARY_DIR}/ca-bundle.crt ${STAGING_DIR}/ca-bundle.crt)
 
 external_project(
     URL https://github.com/curl/curl/releases/download/curl-8_5_0/curl-8.5.0.tar.xz

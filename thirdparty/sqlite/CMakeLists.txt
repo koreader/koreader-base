@@ -12,7 +12,7 @@ list(APPEND CFG_CMD
     # Explicitly disable zlib, because it's only optionally used by the shell & extensions, and we disable both of those.
     # This should hopefully prevent Android from picking it up...
     ac_cv_header_zlib_h=no
-    ${SOURCE_DIR}/configure --host=${CHOST} --prefix=${INSTALL_DIR}
+    ${SOURCE_DIR}/configure --host=${CHOST} --prefix=${STAGING_DIR}
     --disable-static --enable-shared
     --disable-dynamic-extensions
     --disable-editline

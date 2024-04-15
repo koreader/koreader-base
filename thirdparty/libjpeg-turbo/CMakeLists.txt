@@ -8,10 +8,6 @@ list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/no_cmake_r
 
 list(APPEND CMAKE_ARGS
     -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TCF}
-    # We expect lib later on in Makefile.third, even on multilib systems...
-    -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR}
-    -DCMAKE_INSTALL_LIBDIR=${INSTALL_DIR}/lib
-    -DCMAKE_INSTALL_INCLUDEDIR=${INSTALL_DIR}/include
     # Project options.
     -DENABLE_STATIC=OFF
     -DENABLE_SHARED=ON
