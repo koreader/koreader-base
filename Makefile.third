@@ -634,11 +634,11 @@ $(NANOSVG_HEADERS): $(THIRDPARTY_DIR)/nanosvg/*.*
 # cURL
 $(CURL_LIB): $(THIRDPARTY_DIR)/curl/*.*
 	$(CMAKE) $(CMAKE_FLAGS) \
-		-DCC='$(CC)' \
-		-DCFLAGS='$(CFLAGS)' \
-		-DLDFLAGS='$(LDFLAGS)' \
 		-DOPENSSL_DIR='$(abspath $(OPENSSL_DIR))' \
+		-DCRYPTO_LIB='$(abspath $(CRYPTO_LIB))' \
+		-DSSL_LIB='$(abspath $(SSL_LIB))' \
 		-DZLIB_DIR='$(abspath $(ZLIB_DIR))' \
+		-DZLIB='$(abspath $(ZLIB))' \
 		-S $(THIRDPARTY_DIR)/curl -B $(CURL_BUILD_DIR)
 	$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS) -C $(CURL_BUILD_DIR)
 	cp -fL $(CURL_DIR)/lib/$(notdir $(CURL_LIB)) $(OUTPUT_DIR)/libs

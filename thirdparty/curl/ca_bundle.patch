@@ -1,0 +1,9 @@
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -1784,3 +1784,6 @@ if(NOT CURL_DISABLE_INSTALL)
+         ${CMAKE_CURRENT_BINARY_DIR}/CMake/cmake_uninstall.cmake)
+   endif()
+ endif()
++
++add_custom_command(OUTPUT ca-bundle.crt COMMAND perl "${CMAKE_CURRENT_SOURCE_DIR}/scripts/mk-ca-bundle.pl" -b -l -u ca-bundle.crt)
++add_custom_target(ca-bundle DEPENDS ca-bundle.crt)
