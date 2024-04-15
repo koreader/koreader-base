@@ -26,6 +26,7 @@ endif
 export PARALLEL_JOBS
 export PARALLEL_LOAD
 
+KEEP_GOING := $(findstring k,$(firstword -$(MAKEFLAGS)))
 DRY_RUN := $(findstring n,$(firstword -$(MAKEFLAGS)))
 
 # Use ccache in build system by default. Define USE_NO_CCACHE=1 to force disable it.
@@ -72,10 +73,6 @@ endif
 
 # CMAKE:=cmake --no-warn-unused-cli
 CMAKE := cmake
-ifdef VERBOSE
-	CMAKE_ARGS := -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON
-endif
-CMAKE+=$(CMAKE_ARGS)
 
 ifeq ($(NINJA),)
   NINJA := $(shell command -v ninja)
@@ -90,7 +87,7 @@ endif
 ifneq ($(USE_NINJA),)
   CMAKE_FLAGS = -G Ninja
   CMAKE_MAKE_PROGRAM := $(NINJA)
-  ifdef VERBOSE
+  ifneq (,$(or $(VERBOSE),$(V)))
     NINJAFLAGS := -v
   endif
   ifneq (,$(PARALLEL_JOBS))
@@ -98,6 +95,9 @@ ifneq ($(USE_NINJA),)
   endif
   ifneq (,$(PARALLEL_LOAD))
     NINJAFLAGS += -l$(PARALLEL_LOAD)
+  endif
+  ifneq (,$(KEEP_GOING))
+    NINJAFLAGS += -k0
   endif
   ifneq (,$(DRY_RUN))
     NINJAFLAGS += -nv
@@ -108,8 +108,15 @@ else
   CMAKE_MAKE_PROGRAM_FLAGS ?=
 endif
 
-ifdef VERBOSE
-  MAKEFLAGS += VERBOSE=1
+ifneq (,$(or $(VERBOSE),$(V)))
+  ifeq (4.4,$(firstword $(sort $(MAKE_VERSION) 4.4)))
+    MAKEFLAGS += --debug=print
+  else
+    MAKEFLAGS += --trace
+  endif
+endif
+ifneq (,$(KEEP_GOING))
+  MAKEFLAGS += -k
 endif
 ifneq (,$(DRY_RUN))
   MAKEFLAGS += -n
