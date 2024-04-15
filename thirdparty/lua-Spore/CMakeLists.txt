@@ -23,7 +23,7 @@ set(LUA_SPORE_ROCKSPEC rockspec/lua-spore-${LUA_SPORE_VER}.rockspec)
 set(ROCKS_CMD ${LUAROCKS})
 separate_arguments(ROCKS_CMD)
 
-list(APPEND BUILD_CMD COMMAND ${ROCKS_CMD} make --tree=${OUTPUT_DIR}/rocks ${LUA_SPORE_ROCKSPEC})
+list(APPEND BUILD_CMD COMMAND ${ROCKS_CMD} make --deps-mode=none --tree=${OUTPUT_DIR}/rocks ${LUA_SPORE_ROCKSPEC})
 list(APPEND BUILD_CMD "CC=${CC}" "CFLAGS=${CFLAGS}" "LD=${LD}")
 list(APPEND BUILD_CMD "LUA_INCDIR=${LUA_INCDIR}" "LUA_LIBDIR=${LUA_LIBDIR}")
 
