@@ -9,6 +9,9 @@ assert_var_defined(HOSTCFLAGS)
 assert_var_defined(HOSTCC)
 assert_var_defined(OS)
 
+# Build in source tree.
+set(BINARY_DIR ${SOURCE_DIR})
+
 if($ENV{KODEBUG})
     set(MUPDF_BUILD_TYPE "debug")
 else()
@@ -147,7 +150,6 @@ list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/free-html-
 
 # TODO: ignore shared git submodules built outside of mupdf by ourselves
 # https://git.ghostscript.com/mupdf.git is slow, so we use the official mirror on GitHub
-ep_get_source_dir(SOURCE_DIR)
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
     https://github.com/ArtifexSoftware/mupdf.git
@@ -156,15 +158,8 @@ ko_write_gitclone_script(
     "thirdparty/jbig2dec thirdparty/mujs thirdparty/openjpeg"
 )
 
-include(ExternalProject)
-ExternalProject_Add(
-    ${PROJECT_NAME}
+external_project(
     DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
-    BUILD_IN_SOURCE 1
     PATCH_COMMAND ${PATCH_CMD}
-    # skip configure
-    CONFIGURE_COMMAND ""
     BUILD_COMMAND ${BUILD_CMD_GENERATE} COMMAND ${STATIC_BUILD_CMD} COMMAND ${SHARED_BUILD_CMD}
-    # skip install
-    INSTALL_COMMAND ""
 )

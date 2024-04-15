@@ -3,15 +3,11 @@ project(tar LANGUAGES)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_LIST_DIR}/../cmake_modules")
 include("koreader_thirdparty_common")
-#include("koreader_thirdparty_git")
 
 assert_var_defined(CC)
 assert_var_defined(CFLAGS)
 assert_var_defined(LDFLAGS)
 assert_var_defined(LIBS)
-
-ep_get_source_dir(SOURCE_DIR)
-ep_get_binary_dir(BINARY_DIR)
 
 # O_PATH may be defined in our ToolChains, but older devices actually run kernels where it's not entirely usable...
 # (Usage in tar via gnulib's https://git.savannah.gnu.org/cgit/gnulib.git/log/lib/fchmodat.c)
@@ -47,19 +43,13 @@ endif()
 
 list(APPEND BUILD_CMD COMMAND ${KO_MAKE_RECURSIVE})
 
-# We build in-tree...
-list(APPEND INSTALL_CMD COMMAND ${CMAKE_COMMAND} -E copy ${BINARY_DIR}/src/tar ${BINARY_DIR}/tar)
-
-include(ExternalProject)
 set(TAR_VER "1.34")
-ExternalProject_Add(
-    ${PROJECT_NAME}
+
+external_project(
     URL http://ftpmirror.gnu.org/tar/tar-${TAR_VER}.tar.gz
     http://ftp.gnu.org/pub/gnu/tar/tar-${TAR_VER}.tar.gz
     URL_MD5 9d5949e4c2d9665546ac65dafc0e726a
-    DOWNLOAD_DIR ${KO_DOWNLOAD_DIR}
     PATCH_COMMAND ${PATCH_CMD}
     CONFIGURE_COMMAND ${CFG_CMD}
     BUILD_COMMAND ${BUILD_CMD}
-    INSTALL_COMMAND COMMAND ${INSTALL_CMD}
 )

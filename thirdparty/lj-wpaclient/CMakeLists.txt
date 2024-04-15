@@ -5,7 +5,8 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_LIST_DIR}/../cmake_m
 include("koreader_thirdparty_common")
 include("koreader_thirdparty_git")
 
-ep_get_source_dir(SOURCE_DIR)
+# Build in source tree.
+set(BINARY_DIR ${SOURCE_DIR})
 
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
@@ -14,12 +15,7 @@ ko_write_gitclone_script(
     ${SOURCE_DIR}
 )
 
-include(ExternalProject)
-ExternalProject_Add(
-    ${PROJECT_NAME}
+external_project(
     DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
-    BUILD_IN_SOURCE 1
-    CONFIGURE_COMMAND ""
-    BUILD_COMMAND ""
-    INSTALL_COMMAND ""
+    BUILD_COMMAND COMMAND
 )
