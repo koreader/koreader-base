@@ -1,16 +1,20 @@
 cmake_minimum_required(VERSION 3.5.1)
 project(fribidi LANGUAGES)
 
-include("koreader_thirdparty_common")
-include("koreader_thirdparty_git")
+include(koreader_thirdparty_common)
+include(koreader_thirdparty_git)
 
 assert_var_defined(CC)
 assert_var_defined(CFLAGS)
 assert_var_defined(LDFLAGS)
 
-set(CFG_ENV_VAR "CC=${CC}" "CFLAGS=${CFLAGS}" "LDFLAGS=${LDFLAGS}")
-set(CFG_OPTS --prefix=${INSTALL_DIR} --disable-static --enable-shared --host=${CHOST})
-list(APPEND CFG_CMD COMMAND env ${CFG_ENV_VAR} ${SOURCE_DIR}/configure ${CFG_OPTS})
+list(APPEND CFG_CMD env
+    CC=${CC}
+    CFLAGS=${CFLAGS}
+    LDFLAGS=${LDFLAGS}
+    ${SOURCE_DIR}/configure --host=${CHOST} --prefix=${INSTALL_DIR}
+    --disable-static --enable-shared
+)
 
 if(ANDROID)
     list(APPEND CFG_CMD COMMAND ${ANDROID_LIBTOOL_FIX_CMD})
