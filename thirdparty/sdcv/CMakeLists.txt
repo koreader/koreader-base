@@ -29,7 +29,7 @@ string(APPEND GLIB2_INCLUDE_DIRS
     ${GLIB_DIR}/lib/glib-2.0/include
 )
 string(APPEND GLIB2_LIBRARIES ${GLIB})
-if(DEFINED ENV{ANDROID} OR DEFINED ENV{DARWIN})
+if(ANDROID OR DARWIN)
     string(APPEND GLIB2_INCLUDE_DIRS
         $<SEMICOLON> ${GETTEXT_DIR}/include
         $<SEMICOLON> ${LIBICONV_DIR}/include
@@ -39,7 +39,7 @@ if(DEFINED ENV{ANDROID} OR DEFINED ENV{DARWIN})
         $<SEMICOLON> ${LIBICONV}
     )
 endif()
-if(DEFINED ENV{DARWIN})
+if(DARWIN)
     string(APPEND GLIB2_LIBRARIES
         $<SEMICOLON> "-framework CoreFoundation"
         $<SEMICOLON> "-framework CoreServices"
@@ -48,7 +48,7 @@ if(DEFINED ENV{DARWIN})
 else()
     # Need pthread library and rt library on old glibc (for `clock_gettime`).
     string(APPEND GLIB2_LIBRARIES $<SEMICOLON> -pthread)
-    if(NOT DEFINED ENV{ANDROID})
+    if(NOT ANDROID)
         string(APPEND GLIB2_LIBRARIES $<SEMICOLON> -lrt)
     endif()
 endif()

@@ -1,4 +1,4 @@
-if (DEFINED ENV{DARWIN})
+if (DARWIN)
     # Note: can't use `sed -i "" -e`, because cmake "helpfully"
     # filter-out the empty argument during command invocation…
     set(ISED sh -c "sed -i '' -e \"$@\"" --)
@@ -26,7 +26,7 @@ set(SOURCE_DIR ${CMAKE_CURRENT_BINARY_DIR}/source)
 set(BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/build)
 set(INSTALL_DIR ${CMAKE_CURRENT_BINARY_DIR}/install)
 
-if(DEFINED ENV{ANDROID})
+if(ANDROID)
     list(APPEND ANDROID_LIBTOOL_FIX_CMD ${ISED} $<SEMICOLON>
         -e "s|version_type=none|version_type=linux|"
         -e "s|need_lib_prefix=no|need_lib_prefix=yes|"

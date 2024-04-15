@@ -6,7 +6,6 @@ include("koreader_thirdparty_git")
 
 assert_var_defined(CC)
 assert_var_defined(CFLAGS)
-assert_var_defined(CHOST)
 assert_var_defined(LDFLAGS)
 
 set(CFG_ENV_VAR "CC=${CC}" "CFLAGS=${CFLAGS}" "LDFLAGS=${LDFLAGS}")
@@ -16,7 +15,7 @@ list(APPEND CFG_CMD COMMAND env ${CFG_ENV_VAR} ${SOURCE_DIR}/autogen.sh ${CFG_OP
 # Disable building docs, as it requires c2man
 list(APPEND CFG_CMD COMMAND ${ISED} "s|SUBDIRS = gen.tab lib bin doc test|SUBDIRS = gen.tab lib bin test|g" Makefile)
 
-if(DEFINED ENV{ANDROID})
+if(ANDROID)
     list(APPEND CFG_CMD COMMAND ${ANDROID_LIBTOOL_FIX_CMD})
 endif()
 

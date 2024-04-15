@@ -6,7 +6,6 @@ include("koreader_thirdparty_git")
 
 assert_var_defined(CC)
 assert_var_defined(CXX)
-assert_var_defined(CHOST)
 assert_var_defined(CPPFLAGS)
 assert_var_defined(CFLAGS)
 assert_var_defined(CXXFLAGS)
@@ -37,7 +36,7 @@ list(APPEND PATCH_CMD COMMAND ${ISED} "s/\\(hardcode_into_libs\\)=.*$/\\1=no/" c
 # c.f., https://github.com/koreader/koreader/issues/5780 & https://github.com/koreader/koreader/issues/6024
 # NOTE: Our initial approach was to only disable atomics in a very dirty manner, which only helped with the first issue.
 #       This, on the other hand, appears to help with both.
-if(DEFINED ENV{LEGACY} OR DEFINED ENV{POCKETBOOK})
+if(LEGACY OR POCKETBOOK)
 	# NOTE: This ends up in CPPFLAGS!
 	set(HB_CUSTOM_CFG "-DHB_NO_MT")
 endif()
@@ -48,7 +47,7 @@ set(CFG_ENV_VAR ${CFG_ENV_VAR} "FREETYPE_LIBS=-L${FREETYPE_DIR}/lib -lfreetype")
 set(CFG_OPTS --prefix=${INSTALL_DIR} --enable-shared --disable-static --with-freetype --without-glib --without-gobject --without-cairo --without-fontconfig --without-icu --without-graphite2 --without-uniscribe --without-directwrite --without-coretext --host=${CHOST})
 list(APPEND CFG_CMD COMMAND env ${CFG_ENV_VAR} ${SOURCE_DIR}/configure ${CFG_OPTS})
 
-if(DEFINED ENV{ANDROID})
+if(ANDROID)
     list(APPEND CFG_CMD COMMAND ${ANDROID_LIBTOOL_FIX_CMD})
 endif()
 

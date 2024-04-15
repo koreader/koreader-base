@@ -15,9 +15,7 @@ list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/zlib-1.2.1
 list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/zlib-1.2.11-configure-fix-AR-RANLIB-NM-detection.patch)
 list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/zlib-1.2.13-use-LDFLAGS-in-configure.patch)
 
-if(DEFINED ENV{ANDROID})
-    assert_var_defined(CHOST)
-
+if(ANDROID)
     set(LDFLAGS "${LDFLAGS} -shared -Wl,-soname,libz.so.1")
     # Only set CHOST for Android.
     # This can't be done generically because otherwise you have to specify soname as well.

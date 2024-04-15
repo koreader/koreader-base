@@ -17,7 +17,6 @@ $(FREETYPE_LIB): $(THIRDPARTY_DIR)/freetype2/*.*
 	$(CMAKE) $(CMAKE_FLAGS) \
 		-DCC='$(CC)' \
 		-DCXX='$(CXX)' \
-		-DCHOST='$(CHOST)' \
 		-DCFLAGS='$(CFLAGS)'\
 		-DCXXFLAGS='$(CXXFLAGS)' \
 		-DLDFLAGS='$(LDFLAGS)' \
@@ -29,7 +28,6 @@ $(HARFBUZZ_LIB): $(THIRDPARTY_DIR)/harfbuzz/*.*
 	$(CMAKE) $(CMAKE_FLAGS) \
 		-DCC='$(CC)' \
 		-DCXX='$(CXX)' \
-		-DCHOST='$(CHOST)' \
 		-DCPPFLAGS='$(CPPFLAGS)' \
 		-DCFLAGS='$(CFLAGS)'\
 		-DCXXFLAGS='$(CXXFLAGS)' \
@@ -42,7 +40,6 @@ $(HARFBUZZ_LIB): $(THIRDPARTY_DIR)/harfbuzz/*.*
 $(UTF8PROC_LIB): $(THIRDPARTY_DIR)/utf8proc/*.*
 	$(CMAKE) $(CMAKE_FLAGS) \
 		-DCC='$(CC)' \
-		-DCHOST='$(CHOST)' \
 		-DCFLAGS='$(CFLAGS)' \
 		-DLDFLAGS='$(LDFLAGS)' \
 		-S $(CURDIR)/$(THIRDPARTY_DIR)/utf8proc -B $(UTF8PROC_BUILD_DIR)
@@ -58,7 +55,6 @@ endif
 $(FRIBIDI_LIB): $(THIRDPARTY_DIR)/fribidi/*.*
 	$(CMAKE) $(CMAKE_FLAGS) \
 		-DCC='$(CC)' \
-		-DCHOST='$(CHOST)' \
 		-DCFLAGS='$(CFLAGS)' \
 		-DLDFLAGS='$(LDFLAGS)' \
 		-S $(CURDIR)/$(THIRDPARTY_DIR)/fribidi -B $(FRIBIDI_BUILD_DIR)
@@ -69,7 +65,6 @@ $(FRIBIDI_LIB): $(THIRDPARTY_DIR)/fribidi/*.*
 $(LIBUNIBREAK_LIB): $(THIRDPARTY_DIR)/libunibreak/*.*
 	$(CMAKE) $(CMAKE_FLAGS) \
 		-DCC='$(CC)' \
-		-DCHOST='$(CHOST)' \
 		-DCFLAGS='$(CFLAGS)' \
 		-DLDFLAGS='$(LDFLAGS)' \
 		-S $(CURDIR)/$(THIRDPARTY_DIR)/libunibreak -B $(LIBUNIBREAK_BUILD_DIR)
@@ -97,7 +92,6 @@ $(PNG_LIB): $(ZLIB) $(THIRDPARTY_DIR)/libpng/*.*
 	$(CMAKE) $(CMAKE_FLAGS) \
 		-DCC='$(CC)' \
 		-DCXX='$(CXX)' \
-		-DCHOST='$(CHOST)' \
 		-DCPPFLAGS='$(CFLAGS) -I$(ZLIB_DIR)/include' \
 		-DLDFLAGS='$(LDFLAGS) -L$(ZLIB_DIR)/lib' \
 		-S $(CURDIR)/$(THIRDPARTY_DIR)/libpng -B $(PNG_BUILD_DIR)
@@ -165,7 +159,6 @@ $(LODEPNG_LIB): $(THIRDPARTY_DIR)/lodepng/*.*
 $(GIF_LIB): $(THIRDPARTY_DIR)/giflib/*.*
 	$(CMAKE) $(CMAKE_FLAGS) \
 		-DCC='$(CC) $(if $(ANDROID),-DS_IREAD=S_IRUSR -DS_IWRITE=S_IWUSR,)' \
-		-DCHOST='$(CHOST)' \
 		-DCFLAGS='$(CFLAGS)' \
 		-DLDFLAGS='$(LDFLAGS)' \
 		-S $(CURDIR)/thirdparty/giflib -B $(GIF_BUILD_DIR)
@@ -176,7 +169,6 @@ $(LIBWEBP_LIB) $(LIBWEBPDEMUX_LIB) $(LIBSHARPYUV_LIB): $(THIRDPARTY_DIR)/libwebp
 	$(CMAKE) $(CMAKE_FLAGS) \
 		-DCC='$(CC)' \
 		-DCXX='$(CXX)' \
-		-DCHOST='$(CHOST)' \
 		-DCPPFLAGS='$(CPPFLAGS)' \
 		-DCFLAGS='$(CFLAGS)' \
 		-DCXXFLAGS='$(CXXFLAGS)' \
@@ -207,7 +199,6 @@ $(DJVULIBRE_LIB): $(THIRDPARTY_DIR)/djvulibre/*.*
 	$(CMAKE) $(CMAKE_FLAGS) \
 		-DCC='$(CC)' \
 		-DCXX='$(CXX)' \
-		-DCHOST='$(if $(EMULATE_READER),,$(CHOST))' \
 		-DCFLAGS='$(CFLAGS)' \
 		-DCXXFLAGS='$(CXXFLAGS)' \
 		-DLDFLAGS='$(LDFLAGS)' \
@@ -245,7 +236,6 @@ $(LUAJIT) $(LUAJIT_LIB) $(LUAJIT_JIT): $(THIRDPARTY_DIR)/luajit/*.*
 	$(CMAKE) $(CMAKE_FLAGS) \
 		-DCCACHE='$(CCACHE)' \
 		-DCC='$(filter-out $(CCACHE),$(HOSTCC))' \
-		-DXCOMPILE:BOOL=$(if $(EMULATE_READER),off,on) \
 		-DBASE_CFLAGS='$(BASE_CFLAGS)' \
 		-DHOST_CFLAGS='$(HOSTCFLAGS)' \
 		-DLDFLAGS='$(LDFLAGS)' $(if $(WIN32),-DTARGET_SYS=Windows,) $(if $(ANDROID),-DTARGET_SYS=Linux,) \
@@ -270,7 +260,6 @@ endif
 
 $(POPEN_NOSHELL_LIB): $(THIRDPARTY_DIR)/popen-noshell/*.*
 	$(CMAKE) $(CMAKE_FLAGS) \
-		$(if $(LEGACY),-DLEGACY:BOOL=ON,) \
 		-DCC='$(CC)' \
 		-DAR='$(AR)' \
 		-DCFLAGS='$(CFLAGS) $(if $(ANDROID),--sysroot=$(SYSROOT),)' \
@@ -333,7 +322,6 @@ endif
 # libiconv for glib on android
 $(LIBICONV): $(THIRDPARTY_DIR)/libiconv/*.*
 	$(CMAKE) $(CMAKE_FLAGS) \
-		-DHOST='$(if $(EMULATE_READER),,$(CHOST))' \
 		-DCC='$(CC)' \
 		-DLD='$(LD)' \
 		-DAR='$(AR)' \
@@ -344,7 +332,6 @@ $(LIBICONV): $(THIRDPARTY_DIR)/libiconv/*.*
 # libgettext for glib on android & macOS
 $(LIBGETTEXT): $(LIBICONV) $(THIRDPARTY_DIR)/gettext/*.*
 	$(CMAKE) $(CMAKE_FLAGS) \
-		-DCHOST_OPTS='$(if $(EMULATE_READER),,--host=$(CHOST))' \
 		-DCC='$(CC)' \
 		-DAR='$(AR)' \
 		-DRANLIB='$(RANLIB)' \
@@ -359,7 +346,6 @@ $(LIBGETTEXT): $(LIBICONV) $(THIRDPARTY_DIR)/gettext/*.*
 $(GLIB): $(if $(or $(ANDROID),$(DARWIN)),$(LIBICONV) $(LIBGETTEXT)) $(THIRDPARTY_DIR)/glib/*.*
 	$(CMAKE) $(CMAKE_FLAGS) \
 		-DCC='$(CC)' \
-		-DCHOST='$(CHOST)' \
 		-DAR='$(AR)' \
 		-DRANLIB='$(RANLIB)' \
 		-DCFLAGS='$(CFLAGS)' \
@@ -374,7 +360,6 @@ $(GLIB): $(if $(or $(ANDROID),$(DARWIN)),$(LIBICONV) $(LIBGETTEXT)) $(THIRDPARTY
 $(ZLIB) $(ZLIB_STATIC): $(THIRDPARTY_DIR)/zlib/*.*
 	$(CMAKE) $(CMAKE_FLAGS) \
 		-DCC='$(CC)' \
-		-DCHOST='$(CHOST)' \
 		-DCFLAGS='$(CFLAGS)' \
 		-DLDFLAGS='$(LDFLAGS)' \
 		-S $(CURDIR)/thirdparty/zlib -B $(ZLIB_BUILD_DIR)
@@ -430,7 +415,6 @@ $(SDL2_LIB): $(THIRDPARTY_DIR)/sdl2/*.*
 $(OUTPUT_DIR)/dropbear: $(ZLIB) $(THIRDPARTY_DIR)/dropbear/*.*
 	$(CMAKE) $(CMAKE_FLAGS) \
 		-DCC='$(CC)' \
-		-DCHOST='$(if $(EMULATE_READER),,$(CHOST))' \
 		-DCPPFLAGS='$(CPPFLAGS) -I$(ZLIB_DIR)/include' \
 		-DCFLAGS='$(CFLAGS)' \
 		-DLIBS='$(if $(ANDROID),-static,)' \
@@ -445,7 +429,6 @@ $(OUTPUT_DIR)/dropbear: $(ZLIB) $(THIRDPARTY_DIR)/dropbear/*.*
 $(OUTPUT_DIR)/sftp-server: $(ZLIB) $(SSL_LIB) $(THIRDPARTY_DIR)/openssh/*.*
 	$(CMAKE) $(CMAKE_FLAGS) \
 		-DCC='$(CC)' \
-		-DCHOST='$(if $(EMULATE_READER),,$(CHOST))' \
 		-DCPPFLAGS='$(CPPFLAGS) -I$(ZLIB_DIR)/include -I$(OPENSSL_DIR)/include' \
 		-DCFLAGS='$(CFLAGS)' \
 		-DLDFLAGS='$(LDFLAGS) -L$(ZLIB_DIR)/lib -L$(OPENSSL_DIR)' \
@@ -460,7 +443,6 @@ $(OUTPUT_DIR)/sftp-server: $(ZLIB) $(SSL_LIB) $(THIRDPARTY_DIR)/openssh/*.*
 $(OUTPUT_DIR)/tar: $(THIRDPARTY_DIR)/tar/*.*
 	$(CMAKE) $(CMAKE_FLAGS) \
 		-DCC='$(CC)' \
-		-DCHOST='$(if $(EMULATE_READER),,$(CHOST))' \
 		-DCFLAGS='$(CFLAGS)' \
 		-DLDFLAGS='$(LDFLAGS)' \
 		-DLIBS='$(if $(or $(ANDROID),$(WIN32),$(DARWIN)),,-lrt) $(if $(ANDROID),-static,)' \
@@ -521,7 +503,6 @@ $(OPENSSL_LIB): $(THIRDPARTY_DIR)/openssl/*.*
 	$(CMAKE) $(CMAKE_FLAGS) \
 		-DREALCC='$(REALCC) $(if $(DARWIN),$(DYNLIB_CFLAGS),$(CFLAGS))' \
 		-DCC='$(CC) $(if $(DARWIN),$(DYNLIB_CFLAGS),$(CFLAGS))' \
-		-DCHOST='$(CHOST)' \
 		-DCPPFLAGS='$(CPPFLAGS)' \
 		-DCFLAGS='$(CFLAGS)' \
 		-DSHARED_LDFLAGS='$(LDFLAGS)' \
@@ -529,7 +510,6 @@ $(OPENSSL_LIB): $(THIRDPARTY_DIR)/openssl/*.*
 		-DAR='$(AR)' \
 		-DRANLIB='$(RANLIB)' \
 		$(if $(ANDROID),-DNDKABI=$(NDKABI),) \
-		-DCONFIG_SCRIPT='$(if $(EMULATE_READER),$(if $(DARWIN),Configure $(if $(DARWIN_AARCH64),darwin64-arm64-cc,darwin64-x86_64-cc),config),Configure $(if $(WIN32),mingw,))' \
 		-S $(CURDIR)/$(THIRDPARTY_DIR)/openssl -B $(OPENSSL_BUILD_DIR)
 	$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS) -C $(OPENSSL_BUILD_DIR)
 
@@ -576,11 +556,9 @@ $(ZMQ_LIB): $(THIRDPARTY_DIR)/libzmq/*.*
 	$(CMAKE) $(CMAKE_FLAGS) \
 		-DCC='$(CC)' \
 		-DCXX='$(CXX)' \
-		-DCHOST='$(CHOST)' \
 		-DCFLAGS='$(CFLAGS)' \
 		-DCXXFLAGS='$(CXXFLAGS)' \
 		-DLDFLAGS='$(LDFLAGS)' \
-		$(if $(LEGACY),-DLEGACY:BOOL=ON,) \
 		-S $(CURDIR)/$(THIRDPARTY_DIR)/libzmq -B $(ZMQ_BUILD_DIR)
 	$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS) -C $(ZMQ_BUILD_DIR)
 	cp -fL $(ZMQ_DIR)/$(if $(WIN32),bin,lib)/$(notdir $(ZMQ_LIB)) $@
@@ -588,7 +566,6 @@ $(ZMQ_LIB): $(THIRDPARTY_DIR)/libzmq/*.*
 $(CZMQ_LIB): $(ZMQ_LIB) $(THIRDPARTY_DIR)/czmq/*.*
 	$(CMAKE) $(CMAKE_FLAGS) \
 		-DCC='$(CC)' \
-		-DCHOST='$(CHOST)' \
 		-DCFLAGS='$(CFLAGS) $(if $(WIN32),-DLIBCZMQ_EXPORTS)' \
 		-DLDFLAGS='$(LDFLAGS)' \
 		-DZMQ_DIR='$(ZMQ_DIR)' \
@@ -698,7 +675,6 @@ $(LUA_RAPIDJSON_ROCK): $(THIRDPARTY_DIR)/lua-rapidjson/*.*
 $(SQLITE_LIB): $(THIRDPARTY_DIR)/sqlite/*.*
 	$(CMAKE) $(CMAKE_FLAGS) \
 		-DCC='$(CC)' \
-		-DCHOST='$(CHOST)' \
 		-DCPPFLAGS='$(CPPFLAGS)' \
 		-DCFLAGS='$(CFLAGS)' \
 		-DLDFLAGS='$(LDFLAGS)' \
@@ -722,7 +698,6 @@ $(NANOSVG_HEADERS): $(THIRDPARTY_DIR)/nanosvg/*.*
 $(CURL_LIB): $(THIRDPARTY_DIR)/curl/*.*
 	$(CMAKE) $(CMAKE_FLAGS) \
 		-DCC='$(CC)' \
-		-DCHOST='$(CHOST)' \
 		-DCFLAGS='$(CFLAGS)' \
 		-DLDFLAGS='$(LDFLAGS)' \
 		-DOPENSSL_DIR='$(abspath $(OPENSSL_DIR))' \
