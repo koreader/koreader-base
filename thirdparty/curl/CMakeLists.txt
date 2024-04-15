@@ -8,7 +8,6 @@ assert_var_defined(OPENSSL_DIR)
 assert_var_defined(CRYPTO_LIB)
 assert_var_defined(SSL_LIB)
 assert_var_defined(ZLIB_DIR)
-assert_var_defined(ZLIB)
 
 list(APPEND PATCH_CMD COMMAND ${KO_PATCH}
     # Gentoo patchset
@@ -51,8 +50,7 @@ list(APPEND CMAKE_ARGS
     -DOPENSSL_SSL_LIBRARY=${SSL_LIB}
     # ZLIB.
     -DCURL_ZLIB=TRUE
-    -DZLIB_INCLUDE_DIR=${ZLIB_DIR}/include
-    -DZLIB_LIBRARY=${ZLIB}
+    -DZLIB_ROOT=${ZLIB_DIR}
 )
 
 list(APPEND BUILD_CMD COMMAND ${KO_MAKE_PROGRAM} ca-bundle lib/all)

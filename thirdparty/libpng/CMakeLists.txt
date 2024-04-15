@@ -4,7 +4,6 @@ project(libpng LANGUAGES)
 include("koreader_thirdparty_common")
 include("koreader_thirdparty_git")
 
-assert_var_defined(ZLIB)
 assert_var_defined(ZLIB_DIR)
 
 list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/math_library.patch)
@@ -17,8 +16,7 @@ list(APPEND CMAKE_ARGS
     -DPNG_TOOLS=FALSE
     -DPNG_STATIC=FALSE
     -DPNG_TESTS=FALSE
-    -DZLIB_INCLUDE_DIR=${ZLIB_DIR}/include
-    -DZLIB_LIBRARY=${ZLIB}
+    -DZLIB_ROOT=${ZLIB_DIR}
 )
 
 list(APPEND BUILD_CMD COMMAND ${KO_MAKE_PROGRAM})

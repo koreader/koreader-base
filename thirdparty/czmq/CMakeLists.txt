@@ -5,7 +5,6 @@ include("koreader_thirdparty_common")
 include("koreader_thirdparty_git")
 
 assert_var_defined(ZMQ_DIR)
-assert_var_defined(ZMQ_LIB)
 
 list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake_tweaks.patch)
 if(NOT DARWIN)
@@ -19,9 +18,7 @@ list(APPEND CMAKE_ARGS
     -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TCF}
     -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR}
     # Options.
-    -DZEROMQ_FOUND=TRUE
-    -DZEROMQ_INCLUDE_DIRS=${ZMQ_DIR}/include
-    -DZEROMQ_LIBRARIES=${ZMQ_LIB}
+    -DZeroMQ_ROOT=${ZMQ_DIR}
 )
 
 list(APPEND BUILD_CMD COMMAND ${KO_MAKE_PROGRAM} czmq)

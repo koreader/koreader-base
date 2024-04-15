@@ -1,5 +1,14 @@
 --- i/CMakeLists.txt
 +++ w/CMakeLists.txt
+@@ -8,7 +8,7 @@
+ #
+ ###############################################################################
+ 
+-cmake_minimum_required(VERSION 2.8.11)
++cmake_minimum_required(VERSION 3.12)
+ 
+ # In-source builds are disabled.
+ if (${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_BINARY_DIR})
 @@ -47,9 +47,9 @@ set(VERSION_PLAIN ${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH})
  
  find_package(GIF)
