@@ -1,0 +1,10 @@
+--- a/ccutil/tessdatamanager.cpp
++++ b/ccutil/tessdatamanager.cpp
+@@ -139,6 +142,7 @@
+   if (fseek(output_file,
+             sizeof(inT32) + sizeof(inT64) * TESSDATA_NUM_ENTRIES, SEEK_SET)) {
+     tprintf("Error seeking %s\n", output_filename);
++    fclose(output_file);
+     return false;
+   }
+ 
