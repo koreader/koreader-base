@@ -526,10 +526,8 @@ $(ZMQ_LIB): $(THIRDPARTY_DIR)/libzmq/*.*
 
 $(CZMQ_LIB): $(ZMQ_LIB) $(THIRDPARTY_DIR)/czmq/*.*
 	$(CMAKE) $(CMAKE_FLAGS) \
-		-DCC='$(CC)' \
-		-DCFLAGS='$(CFLAGS) $(if $(WIN32),-DLIBCZMQ_EXPORTS)' \
-		-DLDFLAGS='$(LDFLAGS)' \
 		-DZMQ_DIR='$(ZMQ_DIR)' \
+		-DZMQ_LIB='$(abspath $(ZMQ_LIB))' \
 		-S $(CURDIR)/$(THIRDPARTY_DIR)/czmq -B $(CZMQ_BUILD_DIR)
 	$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS) -C $(CZMQ_BUILD_DIR)
 	cp -fL $(CZMQ_DIR)/$(if $(WIN32),bin,lib)/$(notdir $(CZMQ_LIB)) $@

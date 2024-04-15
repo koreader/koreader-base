@@ -1,0 +1,19 @@
+--- i/CMakeLists.txt
++++ w/CMakeLists.txt
+@@ -103,7 +103,7 @@ set (czmq_headers
+     include/zstr.h
+     include/zsys.h
+     include/zuuid.h
+-    include/zgossip_msg.h
++    src/zgossip_msg.h
+     include/zctx.h
+     include/zmonitor.h
+     include/zmutex.h
+@@ -159,6 +159,7 @@ set (czmq_sources
+ source_group ("Source Files" FILES ${czmq_sources})
+ add_library(czmq SHARED ${czmq_sources})
+ set_target_properties(czmq PROPERTIES DEFINE_SYMBOL "LIBCZMQ_EXPORTS")
++set_target_properties(czmq PROPERTIES VERSION 1)
+ target_link_libraries(czmq ${ZEROMQ_LIBRARIES} ${MORE_LIBRARIES})
+ 
+ install(TARGETS czmq
