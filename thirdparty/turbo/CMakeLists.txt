@@ -8,7 +8,8 @@ include("koreader_thirdparty_git")
 assert_var_defined(CC)
 assert_var_defined(LDFLAGS)
 
-ep_get_source_dir(SOURCE_DIR)
+# Build in source tree.
+set(BINARY_DIR ${SOURCE_DIR})
 
 set(BUILD_CMD ${KO_MAKE_RECURSIVE} "CC=${CC}" "CFLAGS=${CFLAGS}" "LDFLAGS=${LDFLAGS}" all)
 
@@ -30,14 +31,8 @@ ko_write_gitclone_script(
     ${SOURCE_DIR}
 )
 
-include(ExternalProject)
-ExternalProject_Add(
-    ${PROJECT_NAME}
+external_project(
     DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
-    BUILD_IN_SOURCE 1
     PATCH_COMMAND ${PATCH_CMD}
-    CONFIGURE_COMMAND ""
     BUILD_COMMAND ${BUILD_CMD}
-    # skip install
-    INSTALL_COMMAND ""
 )

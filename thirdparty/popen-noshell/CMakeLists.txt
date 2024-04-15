@@ -5,7 +5,8 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/../cmake
 include("koreader_thirdparty_common")
 include("koreader_thirdparty_git")
 
-ep_get_source_dir(SOURCE_DIR)
+# Build in source tree.
+set(BINARY_DIR ${SOURCE_DIR})
 
 # Make it build on recent TCs, and implement a
 # simple Makefile for building it as a static lib
@@ -32,16 +33,10 @@ ko_write_gitclone_script(
     ${SOURCE_DIR}
 )
 
-include(ExternalProject)
-ExternalProject_Add(
-    popen-noshell
-    BUILD_IN_SOURCE 1
+external_project(
     DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
     PATCH_COMMAND ${PATCH_CMD}
-    # skip configure
-    CONFIGURE_COMMAND ""
     BUILD_COMMAND ${BUILD_CMD}
-    # skip install
     # NOTE: we always update lib timestamp to notify Make for a fresh build
     INSTALL_COMMAND ${CMAKE_COMMAND} -E touch ${SOURCE_DIR}/libpopen_noshell.a
 )

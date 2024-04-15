@@ -11,14 +11,14 @@ assert_var_defined(AR)
 assert_var_defined(CFLAGS)
 assert_var_defined(LDFLAGS)
 
-ep_get_source_dir(SOURCE_DIR)
-ep_get_binary_dir(BINARY_DIR)
+# Build in source tree.
+set(BINARY_DIR ${SOURCE_DIR})
 
 # This a pure Makefile buildsystem, don't enforce CFLAGS via command line args, the buildsystem needs to be able to modify it.
 set(BUILD_ENV "CFLAGS=${CFLAGS}" "LDFLAGS=${LDFLAGS}")
 
 set(BUILD_CMD env ${BUILD_ENV} ${KO_MAKE_RECURSIVE} V=1 "CC=${CC}" "CXX=${CXX}" "AR=${AR}" lib-release)
-set(INSTALL_CMD env ${BUILD_ENV} ${KO_MAKE_RECURSIVE} -C lib V=1 "CC=${CC}" "CXX=${CXX}" "AR=${AR}" "prefix=${BINARY_DIR}" install)
+set(INSTALL_CMD env ${BUILD_ENV} ${KO_MAKE_RECURSIVE} -C lib V=1 "CC=${CC}" "CXX=${CXX}" "AR=${AR}" "prefix=${INSTALL_DIR}" install)
 
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
@@ -27,12 +27,8 @@ ko_write_gitclone_script(
     ${SOURCE_DIR}
 )
 
-include(ExternalProject)
-ExternalProject_Add(
-    ${PROJECT_NAME}
+external_project(
     DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
-    BUILD_IN_SOURCE 1
-    CONFIGURE_COMMAND ""
     BUILD_COMMAND COMMAND ${BUILD_CMD}
     INSTALL_COMMAND COMMAND ${INSTALL_CMD}
 )

@@ -256,7 +256,6 @@ $(OUTPUT_DIR)/extr: extr.c $(MUPDF_LIB) $(JPEG_LIB) $(FREETYPE_LIB)
 
 clean:
 	-rm -rf $(OUTPUT_DIR)
-	-rm -rf $(THIRDPARTY_DIR)/{$(CMAKE_THIRDPARTY_LIBS)}/build/$(MACHINE)
 
 distclean:
 	-rm -rf build

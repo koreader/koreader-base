@@ -5,9 +5,6 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_LIST_DIR}/../cmake_m
 include("koreader_thirdparty_common")
 include("koreader_thirdparty_git")
 
-ep_get_source_dir(SOURCE_DIR)
-ep_get_binary_dir(BINARY_DIR)
-
 # Make sure the daisy-chain once again picks up our toolchain file...
 if(DEFINED ENV{CMAKE_TCF})
 	list(APPEND CMAKE_ARGS "$ENV{CMAKE_TCF}")
@@ -15,9 +12,9 @@ endif()
 
 # CMake hell.
 # We expect lib later on in Makefile.third, even on multilib systems...
-list(APPEND CMAKE_ARGS "-DCMAKE_INSTALL_PREFIX=${BINARY_DIR}")
-list(APPEND CMAKE_ARGS "-DCMAKE_INSTALL_LIBDIR=${BINARY_DIR}/lib")
-list(APPEND CMAKE_ARGS "-DCMAKE_INSTALL_INCLUDEDIR=${BINARY_DIR}/include")
+list(APPEND CMAKE_ARGS "-DCMAKE_INSTALL_PREFIX=${INSTALL_DIR}")
+list(APPEND CMAKE_ARGS "-DCMAKE_INSTALL_LIBDIR=${INSTALL_DIR}/lib")
+list(APPEND CMAKE_ARGS "-DCMAKE_INSTALL_INCLUDEDIR=${INSTALL_DIR}/include")
 list(APPEND CMAKE_ARGS "-DCMAKE_SKIP_RPATH=TRUE")
 
 # c.f., https://android.googlesource.com/platform/ndk/+/master/build/cmake/android.toolchain.cmake
@@ -52,11 +49,8 @@ ko_write_gitclone_script(
     ${SOURCE_DIR}
 )
 
-include(ExternalProject)
-ExternalProject_Add(
-    libjpeg-turbo
+external_project(
     DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
-    PATCH_COMMAND ""
     CMAKE_ARGS "${CMAKE_ARGS}"
     BUILD_COMMAND ${BUILD_CMD}
     INSTALL_COMMAND ${INSTALL_CMD}

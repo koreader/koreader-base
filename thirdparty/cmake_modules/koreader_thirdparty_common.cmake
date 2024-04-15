@@ -22,15 +22,10 @@ macro(assert_var_defined varName)
     endif()
 endmacro()
 
-macro(ep_get_source_dir varName)
-    set(${varName} "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}-prefix/src/${PROJECT_NAME}")
-endmacro()
-
-macro(ep_get_binary_dir varName)
-    set(${varName} "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}-prefix/src/${PROJECT_NAME}-build")
-endmacro()
-
-set(KO_DOWNLOAD_DIR "${CMAKE_CURRENT_SOURCE_DIR}/build/downloads")
+set(DOWNLOAD_DIR ${CMAKE_CURRENT_SOURCE_DIR}/build/downloads)
+set(SOURCE_DIR ${CMAKE_CURRENT_BINARY_DIR}/source)
+set(BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/build)
+set(INSTALL_DIR ${CMAKE_CURRENT_BINARY_DIR}/install)
 
 if(DEFINED ENV{ANDROID})
     list(APPEND ANDROID_LIBTOOL_FIX_CMD ${ISED} $<SEMICOLON>
@@ -41,3 +36,84 @@ if(DEFINED ENV{ANDROID})
         -e "s|soname_spec=.*|soname_spec=\"\\\\$libname\\\\$release\\\\$shared_ext\\\\$major\"|"
         libtool)
 endif()
+
+# Improved external projects support.
+include(ExternalProject)
+function(external_project)
+    cmake_parse_arguments(
+        # Prefix.
+        ""
+        # Options.
+        "BUILD_ALWAYS"
+        # One value keywords.
+        "URL_MD5;SOURCE_SUBDIR"
+        # Multi-value keywords.
+        "CMAKE_ARGS;DOWNLOAD_COMMAND;PATCH_COMMAND;CONFIGURE_COMMAND;BUILD_COMMAND;INSTALL_COMMAND;URL"
+        ${ARGN}
+    )
+    if(_UNPARSED_ARGUMENTS)
+        message(FATAL_ERROR "unparsed arguments: ${_UNPARSED_ARGUMENTS}")
+    endif()
+    # Project name.
+    list(APPEND PARAMS ${PROJECT_NAME})
+    # Options.
+    if(_BUILD_ALWAYS)
+        list(APPEND PARAMS BUILD_ALWAYS TRUE)
+    endif()
+    # Dowload parameters.
+    if(_URL)
+        list(APPEND PARAMS DOWNLOAD_DIR ${DOWNLOAD_DIR})
+        list(APPEND PARAMS URL ${_URL})
+        list(APPEND PARAMS URL_MD5 ${_URL_MD5})
+    else()
+        list(APPEND PARAMS DOWNLOAD_DIR .)
+        if(NOT DEFINED _DOWNLOAD_COMMAND)
+            message(FATAL_ERROR "no URL, and no DOWNLOAD_COMMAND!")
+        endif()
+        list(APPEND PARAMS DOWNLOAD_COMMAND ${_DOWNLOAD_COMMAND})
+    endif()
+    # Source dir.
+    list(APPEND PARAMS SOURCE_DIR ${SOURCE_DIR})
+    if(DEFINED _SOURCE_SUBDIR)
+        list(APPEND PARAMS SOURCE_SUBDIR ${_SOURCE_SUBDIR})
+    endif()
+    # Build dir.
+    # NOTE: don't use `BUILD_IN_SOURCE` when doing an in-source
+    # build as for some reason CMake will still create an empty
+    # build directory with the standard naming scheme.
+    list(APPEND PARAMS BINARY_DIR ${BINARY_DIR})
+    # Install dir.
+    list(APPEND PARAMS INSTALL_DIR ${INSTALL_DIR})
+    # Other directories.
+    list(APPEND PARAMS PREFIX .)
+    list(APPEND PARAMS LOG_DIR log)
+    list(APPEND PARAMS TMP_DIR tmp)
+    list(APPEND PARAMS STAMP_DIR stamp)
+    # CMake arguments, patch / configure commands.
+    foreach(VAR CMAKE_ARGS PATCH_COMMAND CONFIGURE_COMMAND)
+        if(DEFINED _${VAR})
+            list(APPEND PARAMS ${VAR} ${_${VAR}})
+        endif()
+    endforeach()
+    # Configure command.
+    if(NOT DEFINED _CMAKE_ARGS AND NOT DEFINED _CONFIGURE_COMMAND)
+        list(APPEND PARAMS CONFIGURE_COMMAND COMMAND)
+    endif()
+    # Build command.
+    if(DEFINED _BUILD_COMMAND)
+        list(APPEND PARAMS BUILD_COMMAND ${_BUILD_COMMAND})
+    else()
+        list(APPEND PARAMS BUILD_COMMAND COMMAND)
+    endif()
+    # Show build step output for CMake builds.
+    if(DEFINED _CMAKE_ARGS)
+        list(APPEND PARAMS USES_TERMINAL_BUILD TRUE)
+    endif()
+    # Install command.
+    if(NOT DEFINED _INSTALL_COMMAND)
+        set(_INSTALL_COMMAND COMMAND)
+    endif()
+    list(APPEND PARAMS INSTALL_COMMAND ${_INSTALL_COMMAND})
+    # message(STATUS "ExternalProject_Add(${PARAMS})")
+    ExternalProject_Add(${PARAMS})
+endfunction()

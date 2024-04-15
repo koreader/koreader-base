@@ -10,20 +10,16 @@ assert_var_defined(CFLAGS)
 assert_var_defined(CXXFLAGS)
 assert_var_defined(LDFLAGS)
 
-ep_get_source_dir(SOURCE_DIR)
-ep_get_binary_dir(BINARY_DIR)
-
 # Make sure the daisy-chain once again picks up our toolchain file...
 if(DEFINED ENV{CMAKE_TCF})
     list(APPEND CMAKE_ARGS "$ENV{CMAKE_TCF}")
 endif()
 # CMake hell.
 # We expect lib later on in Makefile.third, even on multilib systems...
-list(APPEND CMAKE_ARGS "-DCMAKE_INSTALL_PREFIX=${BINARY_DIR}")
+list(APPEND CMAKE_ARGS "-DCMAKE_INSTALL_PREFIX=${INSTALL_DIR}")
 list(APPEND CMAKE_ARGS "-DCMAKE_INSTALL_LIBDIR=lib")
 list(APPEND CMAKE_ARGS "-DCMAKE_INSTALL_INCLUDEDIR=include")
 list(APPEND CMAKE_ARGS "-DCMAKE_SKIP_RPATH=TRUE")
-#list(APPEND CMAKE_ARGS "-DCMAKE_VERBOSE_MAKEFILE:BOOL=ON")
 # Honor the env, dammit.
 list(APPEND CMAKE_ARGS "-DCMAKE_EXE_LINKER_FLAGS=${LDFLAGS}")
 list(APPEND CMAKE_ARGS "-DCMAKE_MODULE_LINKER_FLAGS=${LDFLAGS}")
@@ -48,9 +44,7 @@ ko_write_gitclone_script(
     ${SOURCE_DIR}
 )
 
-include(ExternalProject)
-ExternalProject_Add(
-    lunasvg
+external_project(
     DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
     PATCH_COMMAND COMMAND ${PATCH_CMD}
     CMAKE_ARGS "${CMAKE_ARGS}"

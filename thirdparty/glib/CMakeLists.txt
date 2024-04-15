@@ -14,9 +14,6 @@ assert_var_defined(GETTEXT_DIR)
 assert_var_defined(LIBICONV_DIR)
 assert_var_defined(WITH_LIBICONV)
 
-ep_get_source_dir(SOURCE_DIR)
-ep_get_binary_dir(BINARY_DIR)
-
 # We only care about `libglib-2.0.a`.
 list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/glib-libglib-only.patch)
 
@@ -50,7 +47,7 @@ list(APPEND CFG_CMD COMMAND sh -c "printf '%s\\n' \"$@\" >arm_cache.conf" -- ${g
 
 set(CFG_ENV_VAR "CC=${CC}" "AR=${AR}" "RANLIB=${RANLIB}")
 set(CFG_ENV_VAR ${CFG_ENV_VAR} "CFLAGS=${CFLAGS} -I${LIBICONV_DIR}/include -I${GETTEXT_DIR}/include" "LDFLAGS=${LDFLAGS} -L${GETTEXT_DIR}/lib -L${LIBICONV_DIR}/lib")
-set(CFG_OPTS --with-libiconv=${WITH_LIBICONV} --with-threads=posix --prefix=${BINARY_DIR} --libdir=${BINARY_DIR}/lib --disable-libelf --with-pcre=internal --disable-selinux --disable-compile-warnings --enable-libmount=no)
+set(CFG_OPTS --with-libiconv=${WITH_LIBICONV} --with-threads=posix --prefix=${INSTALL_DIR} --disable-libelf --with-pcre=internal --disable-selinux --disable-compile-warnings --enable-libmount=no)
 set(CFG_OPTS ${CFG_OPTS} --enable-static=true --enable-shared=false)
 set(CFG_OPTS ${CFG_OPTS} --host=${CHOST} ${HOST_OPTS})
 list(APPEND CFG_CMD COMMAND env ${CFG_ENV_VAR} ${SOURCE_DIR}/configure ${CFG_OPTS})
@@ -66,9 +63,7 @@ ko_write_gitclone_script(
     ${SOURCE_DIR}
 )
 
-include(ExternalProject)
-ExternalProject_Add(
-    ${PROJECT_NAME}
+external_project(
     DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
     PATCH_COMMAND ${PATCH_CMD}
     CONFIGURE_COMMAND ${CFG_CMD}
