@@ -768,7 +768,7 @@ MUPDF_THIRDPARTY_LIBS=$(MUPDF_LIB_DIR)/libmupdfthird.a \
 MUPDF_LIB=$(OUTPUT_DIR)/libs/libmupdf$(LIB_EXT)
 
 DJVULIBRE_BUILD_DIR=$(THIRDPARTY_BUILD)/djvulibre
-DJVULIBRE_DIR=$(CURDIR)/$(DJVULIBRE_BUILD_DIR)/source
+DJVULIBRE_DIR=$(CURDIR)/$(DJVULIBRE_BUILD_DIR)/install
 DJVULIBRE_LIB_EXT=$(if $(WIN32),-21.dll,$(if $(DARWIN),.21.dylib,.so.21))
 DJVULIBRE_LIB=$(OUTPUT_DIR)/libs/libdjvulibre$(DJVULIBRE_LIB_EXT)
 # We can't use -ldjvulibre because we don't ship the bare .so symlink in LIB_DIR,
