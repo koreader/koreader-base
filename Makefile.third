@@ -14,13 +14,7 @@ fetchthirdparty:
 		|| echo warn: crengine folder not found
 
 $(FREETYPE_LIB): $(THIRDPARTY_DIR)/freetype2/*.*
-	$(CMAKE) $(CMAKE_FLAGS) \
-		-DCC='$(CC)' \
-		-DCXX='$(CXX)' \
-		-DCFLAGS='$(CFLAGS)'\
-		-DCXXFLAGS='$(CXXFLAGS)' \
-		-DLDFLAGS='$(LDFLAGS)' \
-		-S $(CURDIR)/$(THIRDPARTY_DIR)/freetype2 -B $(FREETYPE_BUILD_DIR)
+	$(CMAKE) $(CMAKE_FLAGS) -S $(THIRDPARTY_DIR)/freetype2 -B $(FREETYPE_BUILD_DIR)
 	$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS) -C $(FREETYPE_BUILD_DIR)
 	cp -fL $(FREETYPE_DIR)/$(if $(WIN32),bin,lib)/$(notdir $(FREETYPE_LIB)) $(FREETYPE_LIB)
 

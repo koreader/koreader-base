@@ -4,21 +4,22 @@ project(freetype2 LANGUAGES)
 include("koreader_thirdparty_common")
 include("koreader_thirdparty_git")
 
-assert_var_defined(CXX)
-assert_var_defined(CXXFLAGS)
-assert_var_defined(LDFLAGS)
+list(APPEND CMAKE_ARGS
+    -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TCF}
+    -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR}
+    # Options.
+    -DBUILD_SHARED_LIBS=TRUE
+    -DDISABLE_FORCE_DEBUG_POSTFIX=TRUE
+    -DFT_DISABLE_BROTLI=TRUE
+    -DFT_DISABLE_BZIP2=TRUE
+    -DFT_DISABLE_HARFBUZZ=TRUE
+    -DFT_DISABLE_PNG=TRUE
+    -DFT_DISABLE_ZLIB=TRUE
+)
 
-set(CFG_ENV_VAR "CC=${CC}" "CXX=${CXX}" "CFLAGS=${CFLAGS}" "CXXFLAGS=${CXXFLAGS}" "LDFLAGS=${LDFLAGS}")
-set(CFG_OPTS --prefix=${INSTALL_DIR} --disable-static --enable-shared --with-zlib=no --with-bzip2=no --with-brotli=no --with-png=no --with-harfbuzz=no --host=${CHOST})
-list(APPEND CFG_CMD COMMAND env ${CFG_ENV_VAR} ${SOURCE_DIR}/configure ${CFG_OPTS})
+list(APPEND BUILD_CMD COMMAND ${KO_MAKE_PROGRAM})
 
-if(ANDROID)
-    list(APPEND CFG_CMD COMMAND ${ANDROID_LIBTOOL_FIX_CMD})
-endif()
-
-list(APPEND BUILD_CMD COMMAND ${KO_MAKE_RECURSIVE})
-
-list(APPEND INSTALL_CMD COMMAND ${KO_MAKE_RECURSIVE} install)
+list(APPEND INSTALL_CMD COMMAND ${CMAKE_COMMAND} --install .)
 
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
@@ -29,8 +30,7 @@ ko_write_gitclone_script(
 
 external_project(
     DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
-    PATCH_COMMAND ./autogen.sh
-    CONFIGURE_COMMAND ${CFG_CMD}
+    CMAKE_ARGS ${CMAKE_ARGS}
     BUILD_COMMAND ${BUILD_CMD}
     INSTALL_COMMAND ${INSTALL_CMD}
 )
