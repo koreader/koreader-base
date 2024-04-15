@@ -102,22 +102,23 @@ $(MUPDF_LIB): $(JPEG_LIB) \
 		-DCC='$(CC)' \
 		-DCXX='$(CXX)' \
 		-DCFLAGS='$(CFLAGS)' \
-		-DCXXFLAGS='$(CXXFLAGS)' \
-		-DOS='$(if $(WIN32),,Other)' \
 		-DAR='$(AR)' \
-		-DLDFLAGS='$(LDFLAGS) -L$(CURDIR)/$(OUTPUT_DIR)' \
-		-DXCFLAGS='$(CFLAGS) -DNOBUILTINFONT -DNO_ICC -I$(JPEG_DIR)/include -I$(FREETYPE_DIR)/include/freetype2 -I$(HARFBUZZ_DIR)/include/harfbuzz -I$(ZLIB_DIR)/include -I$(MINIZIP_DIR) -I$(LIBWEBP_DIR)/include' \
-		-DMUPDF_LIB_STATIC='$(MUPDF_LIB_STATIC)' \
-		-DMUPDF_THIRDPARTY_LIBS='$(MUPDF_THIRDPARTY_LIBS)' \
-		-DMUPDF_LIB='$(CURDIR)/$(MUPDF_LIB)' \
+		-DLDFLAGS='$(LDFLAGS)' \
+		-DMUPDF_LIB='$(abspath $(MUPDF_LIB))' \
 		-DMUPDF_SONAME='$(notdir $(MUPDF_LIB))' \
 		-DAES_LIB='$(AES_LIB)' \
-		-DZLIB='$(CURDIR)/$(ZLIB)' \
-		-DJPEG_LIB='$(CURDIR)/$(JPEG_LIB)' \
-		-DFREETYPE_LIB='$(CURDIR)/$(FREETYPE_LIB)' \
-		-DHARFBUZZ_LIB='$(CURDIR)/$(HARFBUZZ_LIB)' \
-		-DLIBWEBP_LIB='$(CURDIR)/$(LIBWEBP_LIB)' \
-		-DLIBWEBPDEMUX_LIB='$(CURDIR)/$(LIBWEBPDEMUX_LIB)' \
+		-DFREETYPE_DIR='$(abspath $(FREETYPE_DIR))' \
+		-DFREETYPE_LIB='$(abspath $(FREETYPE_LIB))' \
+		-DHARFBUZZ_DIR='$(abspath $(HARFBUZZ_DIR))' \
+		-DHARFBUZZ_LIB='$(abspath $(HARFBUZZ_LIB))' \
+		-DJPEG_DIR='$(abspath $(JPEG_DIR))' \
+		-DJPEG_LIB='$(abspath $(JPEG_LIB))' \
+		-DLIBWEBPDEMUX_LIB='$(abspath $(LIBWEBPDEMUX_LIB))' \
+		-DLIBWEBP_DIR='$(abspath $(LIBWEBP_DIR))' \
+		-DLIBWEBP_LIB='$(abspath $(LIBWEBP_LIB))' \
+		-DMINIZIP_DIR='$(abspath $(MINIZIP_DIR))' \
+		-DZLIB='$(abspath $(ZLIB))' \
+		-DZLIB_DIR='$(abspath $(ZLIB_DIR))' \
 		-S $(CURDIR)/$(THIRDPARTY_DIR)/mupdf -B $(MUPDF_BUILD_DIR)
 	$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS) -C $(MUPDF_BUILD_DIR)
 ifdef DARWIN
