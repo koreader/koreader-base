@@ -1,19 +1,22 @@
 cmake_minimum_required(VERSION 3.5.1)
 project(curl LANGUAGES)
 
-include("koreader_thirdparty_common")
-include("koreader_thirdparty_git")
+include(koreader_thirdparty_common)
+include(koreader_thirdparty_git)
 
 assert_var_defined(CC)
-assert_var_defined(CPPFLAGS)
 assert_var_defined(CFLAGS)
 assert_var_defined(LDFLAGS)
 assert_var_defined(CHOST)
+assert_var_defined(OPENSSL_DIR)
+assert_var_defined(ZLIB_DIR)
 
 # Gentoo patchset
-list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/curl-respect-cflags-3.patch)
-list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/curl-8.5.0-ipv6-configure-c99.patch)
-list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/curl-8.5.0-mpd-stream-http-adjust_pollset.patch)
+list(APPEND PATCH_CMD COMMAND ${KO_PATCH}
+    ${CMAKE_CURRENT_SOURCE_DIR}/curl-respect-cflags-3.patch
+    ${CMAKE_CURRENT_SOURCE_DIR}/curl-8.5.0-ipv6-configure-c99.patch
+    ${CMAKE_CURRENT_SOURCE_DIR}/curl-8.5.0-mpd-stream-http-adjust_pollset.patch
+)
 # NOTE: Because InkView is the worst, we rename our own cURL build on PocketBook.... (#5861)
 if(DEFINED ENV{POCKETBOOK})
     list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/curl-8.5.0-pb-rename.patch)
@@ -23,90 +26,98 @@ list(APPEND PATCH_CMD COMMAND ${ISED} "/LD_LIBRARY_PATH=/d" ${SOURCE_DIR}/config
 list(APPEND PATCH_CMD COMMAND ${ISED} "/CURL_MAC_CFLAGS/d" ${SOURCE_DIR}/configure.ac)
 list(APPEND PATCH_CMD COMMAND autoreconf -fi)
 
-set(CFG_ENV_VAR "CC=${CC}" "CPPFLAGS=${CPPFLAGS}" "CFLAGS=${CFLAGS}" "LDFLAGS=${LDFLAGS}")
-
 # Take a deep breath...
-list(APPEND CFG_OPTS --prefix=${INSTALL_DIR} --host=${CHOST} --enable-shared=yes --enable-static=no)
-list(APPEND CFG_OPTS --with-ca-fallback --with-ca-bundle=./data/ca-bundle.crt)
-list(APPEND CFG_OPTS --without-gnutls --without-mbedtls --without-rustls)
-list(APPEND CFG_OPTS --with-ssl --with-ca-path=/etc/ssl/certs)
-list(APPEND CFG_OPTS --with-default-ssl-backend=openssl)
-list(APPEND CFG_OPTS --enable-alt-svc)
-list(APPEND CFG_OPTS --enable-basic-auth)
-list(APPEND CFG_OPTS --enable-bearer-auth)
-list(APPEND CFG_OPTS --enable-digest-auth)
-list(APPEND CFG_OPTS --enable-kerberos-auth)
-list(APPEND CFG_OPTS --enable-negotiate-auth)
-list(APPEND CFG_OPTS --enable-aws)
-list(APPEND CFG_OPTS --enable-dict)
-list(APPEND CFG_OPTS --disable-ech)
-list(APPEND CFG_OPTS --enable-file)
-list(APPEND CFG_OPTS --enable-ftp)
-list(APPEND CFG_OPTS --disable-gopher)
-list(APPEND CFG_OPTS --enable-hsts)
-list(APPEND CFG_OPTS --enable-http)
-list(APPEND CFG_OPTS --enable-imap)
-list(APPEND CFG_OPTS --disable-ldap)
-list(APPEND CFG_OPTS --disable-ldaps)
-list(APPEND CFG_OPTS --disable-ntlm)
-list(APPEND CFG_OPTS --disable-ntlm-wb)
-list(APPEND CFG_OPTS --enable-pop3)
-list(APPEND CFG_OPTS --enable-rt)
-list(APPEND CFG_OPTS --enable-rtsp)
-list(APPEND CFG_OPTS --disable-smb)
-list(APPEND CFG_OPTS --without-libssh2)
-list(APPEND CFG_OPTS --enable-smtp)
-list(APPEND CFG_OPTS --enable-telnet)
-list(APPEND CFG_OPTS --enable-tftp)
-list(APPEND CFG_OPTS --enable-tls-srp)
-list(APPEND CFG_OPTS --disable-ares)
-list(APPEND CFG_OPTS --enable-cookies)
-list(APPEND CFG_OPTS --enable-dateparse)
-list(APPEND CFG_OPTS --enable-dnsshuffle)
-list(APPEND CFG_OPTS --enable-doh)
-list(APPEND CFG_OPTS --enable-symbol-hiding)
-list(APPEND CFG_OPTS --enable-http-auth)
-list(APPEND CFG_OPTS --enable-ipv6)
-list(APPEND CFG_OPTS --enable-largefile)
-list(APPEND CFG_OPTS --enable-manual)
-list(APPEND CFG_OPTS --enable-mime)
-list(APPEND CFG_OPTS --enable-netrc)
-list(APPEND CFG_OPTS --enable-progress-meter)
-list(APPEND CFG_OPTS --enable-proxy)
-list(APPEND CFG_OPTS --enable-socketpair)
-list(APPEND CFG_OPTS --disable-sspi)
-list(APPEND CFG_OPTS --enable-pthreads)
-list(APPEND CFG_OPTS --enable-threaded-resolver)
-list(APPEND CFG_OPTS --enable-versioned-symbols)
-list(APPEND CFG_OPTS --without-amissl)
-list(APPEND CFG_OPTS --without-bearssl)
-list(APPEND CFG_OPTS --without-brotli)
-list(APPEND CFG_OPTS --without-fish-functions-dir)
-list(APPEND CFG_OPTS --without-nghttp2)
-list(APPEND CFG_OPTS --without-hyper)
-list(APPEND CFG_OPTS --without-libidn2)
-list(APPEND CFG_OPTS --without-gssapi)
-list(APPEND CFG_OPTS --without-libgsasl)
-list(APPEND CFG_OPTS --without-libpsl)
-list(APPEND CFG_OPTS --without-msh3)
-list(APPEND CFG_OPTS --without-nghttp3)
-list(APPEND CFG_OPTS --without-ngtcp2)
-list(APPEND CFG_OPTS --without-quiche)
-list(APPEND CFG_OPTS --without-librtmp)
-list(APPEND CFG_OPTS --without-schannel)
-list(APPEND CFG_OPTS --without-secure-transport)
-list(APPEND CFG_OPTS --without-test-caddy)
-list(APPEND CFG_OPTS --without-test-httpd)
-list(APPEND CFG_OPTS --without-test-nghttpx)
-list(APPEND CFG_OPTS --without-websockets)
-list(APPEND CFG_OPTS --without-winidn)
-list(APPEND CFG_OPTS --without-wolfssl)
-list(APPEND CFG_OPTS --with-zlib)
 # TODO: Flip to --with-zstd? We currently only use cURL for zsync2, so, obviously, not necessary right now...
-list(APPEND CFG_OPTS --without-zstd)
-list(APPEND CFG_OPTS --without-zsh-functions-dir)
-
-list(APPEND CFG_CMD COMMAND env ${CFG_ENV_VAR} ${SOURCE_DIR}/configure ${CFG_OPTS})
+list(APPEND CFG_CMD COMMAND env
+    CC=${CC}
+    "CPPFLAGS=-I${ZLIB_DIR}/include -I${OPENSSL_DIR}/include"
+    CFLAGS=${CFLAGS}
+    "LDFLAGS=${LDFLAGS} -L${ZLIB_DIR}/lib -L${OPENSSL_DIR}"
+    "LIBS=-lssl -lcrypto -lz -lrt"
+    ${SOURCE_DIR}/configure --host=${CHOST} --prefix=${INSTALL_DIR}
+    --enable-shared=yes --enable-static=no
+    --disable-ares
+    --disable-ech
+    --disable-gopher
+    --disable-ldap
+    --disable-ldaps
+    --disable-ntlm
+    --disable-ntlm-wb
+    --disable-smb
+    --disable-sspi
+    --enable-alt-svc
+    --enable-aws
+    --enable-basic-auth
+    --enable-bearer-auth
+    --enable-cookies
+    --enable-dateparse
+    --enable-dict
+    --enable-digest-auth
+    --enable-dnsshuffle
+    --enable-doh
+    --enable-file
+    --enable-ftp
+    --enable-hsts
+    --enable-http
+    --enable-http-auth
+    --enable-imap
+    --enable-ipv6
+    --enable-kerberos-auth
+    --enable-largefile
+    --enable-manual
+    --enable-mime
+    --enable-negotiate-auth
+    --enable-netrc
+    --enable-pop3
+    --enable-progress-meter
+    --enable-proxy
+    --enable-pthreads
+    --enable-rt
+    --enable-rtsp
+    --enable-smtp
+    --enable-socketpair
+    --enable-symbol-hiding
+    --enable-telnet
+    --enable-tftp
+    --enable-threaded-resolver
+    --enable-tls-srp
+    --enable-versioned-symbols
+    --with-ca-bundle=./data/ca-bundle.crt
+    --with-ca-fallback
+    --with-ca-path=/etc/ssl/certs
+    --with-default-ssl-backend=openssl
+    --with-ssl
+    --with-zlib
+    --without-amissl
+    --without-bearssl
+    --without-brotli
+    --without-fish-functions-dir
+    --without-gnutls
+    --without-gssapi
+    --without-hyper
+    --without-libgsasl
+    --without-libidn2
+    --without-libpsl
+    --without-librtmp
+    --without-libssh2
+    --without-mbedtls
+    --without-msh3
+    --without-nghttp2
+    --without-nghttp3
+    --without-ngtcp2
+    --without-quiche
+    --without-rustls
+    --without-schannel
+    --without-secure-transport
+    --without-test-caddy
+    --without-test-httpd
+    --without-test-nghttpx
+    --without-websockets
+    --without-winidn
+    --without-wolfssl
+    --without-zsh-functions-dir
+    --without-zstd
+)
 
 list(APPEND BUILD_CMD COMMAND ${KO_MAKE_RECURSIVE} ca-bundle)
 list(APPEND BUILD_CMD COMMAND ${KO_MAKE_RECURSIVE})
