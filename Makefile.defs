@@ -737,9 +737,6 @@ MUPDF_LIB=$(OUTPUT_DIR)/libs/libmupdf$(LIB_EXT)
 DJVULIBRE_BUILD_DIR=$(THIRDPARTY_BUILD)/djvulibre
 DJVULIBRE_LIB_EXT=$(if $(WIN32),-21.dll,$(if $(DARWIN),.21.dylib,.so.21))
 DJVULIBRE_LIB=$(OUTPUT_DIR)/libs/libdjvulibre$(DJVULIBRE_LIB_EXT)
-# We can't use -ldjvulibre because we don't ship the bare .so symlink in LIB_DIR,
-# we only keep the one with the SOVER that ends up in the DT_NEEDED entry...
-DJVULIBRE_LIB_LINK_FLAG=$(if $(WIN32),-l:libdjvulibre-21.dll,$(if $(DARWIN),$(DJVULIBRE_LIB),-l:libdjvulibre.so.21))
 
 CRENGINE_BUILD_DIR=$(THIRDPARTY_BUILD)/crengine
 CRENGINE_DIR=$(CURDIR)/$(CRENGINE_BUILD_DIR)
@@ -751,8 +748,8 @@ CRENGINE_SRC_FILES+=$(wildcard $(CRENGINE_SRC_DIR)/crengine/src/*_h.*)
 CRENGINE_LIB = $(CRENGINE_BUILD_DIR)/libcrengine.a
 CRENGINE_THIRDPARTY_LIBS = $(addprefix $(CRENGINE_BUILD_DIR)/crengine/thirdparty/, antiword/libantiword.a chmlib/libchmlib.a)
 CRENGINE_NEEDED_LIBS =  $(FREETYPE_LIB) $(FRIBIDI_LIB) $(HARFBUZZ_LIB) \
-			$(JPEG_LIB) $(LIBUNIBREAK_LIB) $(LIBWEBP_LIB) \
-			$(LIBWEBPDEMUX_LIB) $(LUNASVG_LIB) $(PNG_LIB) \
+			$(JPEG_LIB) $(PNG_LIB) $(LIBUNIBREAK_LIB) \
+			$(LIBWEBP_LIB) $(LIBWEBPDEMUX_LIB) $(LUNASVG_LIB) \
 			$(UTF8PROC_LIB) $(ZLIB) $(ZSTD_LIB)
 CRENGINE_CFLAGS = \
 		-include '$(CRENGINE_BUILD_DIR)/crsetup.h' \
@@ -768,7 +765,7 @@ LUAJIT_JIT = $(OUTPUT_DIR)/jit
 LUAJIT_LIB = $(if $(USE_LUAJIT_LIB),$(OUTPUT_DIR)/$(if $(WIN32),lua51.dll,libs/libluajit.so))
 LUAJIT_STATIC = $(STAGING_DIR)/lib/libluajit.a
 ifeq ($(USE_LUAJIT_LIB), 1)
-	LUAJIT_LIB_LINK_FLAG=$(if $(WIN32),-l:lua51.dll,-lluajit)
+	LUAJIT_LIB_LINK_FLAG=$(LUAJIT_LIB)
 endif
 
 POPEN_NOSHELL_BUILD_DIR=$(THIRDPARTY_BUILD)/popen-noshell
@@ -787,27 +784,22 @@ K2PDFOPT_BUILD_DIR=$(THIRDPARTY_BUILD)/libk2pdfopt
 K2PDFOPT_LIB_EXT=$(if $(WIN32),-2.dll,$(if $(DARWIN),.2.dylib,.so.2))
 K2PDFOPT_LIB=$(OUTPUT_DIR)/libs/libk2pdfopt$(K2PDFOPT_LIB_EXT)
 K2PDFOPT_CFLAGS=-I$(STAGING_DIR)/include/k2pdfopt -I$(STAGING_DIR)/include/leptonica
-K2PDFOPT_LIB_LINK_FLAG=$(if $(WIN32),-l:libk2pdfopt-2.dll,$(if $(DARWIN),$(K2PDFOPT_LIB),-l:libk2pdfopt.so.2))
 
 FREETYPE_LIB_EXT=$(if $(WIN32),-6.dll,$(if $(DARWIN),.6.dylib,.so.6))
 FREETYPE_LIB=$(OUTPUT_DIR)/libs/libfreetype$(FREETYPE_LIB_EXT)
 FREETYPE_BUILD_DIR=$(THIRDPARTY_BUILD)/freetype2
-FREETYPE_LIB_LINK_FLAG=$(if $(WIN32),-l:libfreetype-6.dll,$(if $(DARWIN),$(FREETYPE_LIB),-l:libfreetype.so.6))
 
 HARFBUZZ_LIB_EXT=$(if $(WIN32),-0.dll,$(if $(DARWIN),.0.dylib,.so.0))
 HARFBUZZ_LIB=$(OUTPUT_DIR)/libs/libharfbuzz$(HARFBUZZ_LIB_EXT)
 HARFBUZZ_BUILD_DIR=$(THIRDPARTY_BUILD)/harfbuzz
-HARFBUZZ_LIB_LINK_FLAG=$(if $(WIN32),-l:libharfbuzz-0.dll,$(if $(DARWIN),$(HARFBUZZ_LIB),-l:libharfbuzz.so.0))
 
 FRIBIDI_LIB_EXT=$(if $(WIN32),-0.dll,$(if $(DARWIN),.0.dylib,.so.0))
 FRIBIDI_LIB=$(OUTPUT_DIR)/libs/libfribidi$(FRIBIDI_LIB_EXT)
 FRIBIDI_BUILD_DIR=$(THIRDPARTY_BUILD)/fribidi
-FRIBIDI_LIB_LINK_FLAG=$(if $(WIN32),-l:libfribidi-0.dll,$(if $(DARWIN),$(FRIBIDI_LIB),-l:libfribidi.so.0))
 
 LIBUNIBREAK_LIB_EXT=$(if $(WIN32),-6.dll,$(if $(DARWIN),.6.dylib,.so.6))
 LIBUNIBREAK_LIB=$(OUTPUT_DIR)/libs/libunibreak$(LIBUNIBREAK_LIB_EXT)
 LIBUNIBREAK_BUILD_DIR=$(THIRDPARTY_BUILD)/libunibreak
-LIBUNIBREAK_LIB_LINK_FLAG=$(if $(WIN32),-l:libunibreak-6.dll,$(if $(DARWIN),$(LIBUNIBREAK_LIB),-l:libunibreak.so.6))
 
 UTF8PROC_LIB_EXT=$(if $(WIN32),-3.dll,$(if $(DARWIN),.3.dylib,.so.3))
 UTF8PROC_LIB=$(OUTPUT_DIR)/libs/libutf8proc$(UTF8PROC_LIB_EXT)
@@ -815,7 +807,6 @@ UTF8PROC_BUILD_DIR=$(THIRDPARTY_BUILD)/utf8proc
 
 JPEG_LIB_EXT=$(if $(WIN32),-8.dll,$(if $(DARWIN),.8.dylib,.so.8))
 JPEG_LIB=$(OUTPUT_DIR)/libs/libjpeg$(JPEG_LIB_EXT)
-JPEG_LIB_LINK_FLAG=$(if $(WIN32),-l:libjpeg-8.dll,$(if $(DARWIN),$(JPEG_LIB),-l:libjpeg.so.8))
 TURBOJPEG_LIB=$(OUTPUT_DIR)/libs/libturbojpeg$(if $(WIN32),.dll,$(if $(DARWIN),.dylib,.so))
 JPEG_BUILD_DIR=$(THIRDPARTY_BUILD)/libjpeg-turbo
 
