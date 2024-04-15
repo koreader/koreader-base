@@ -21,6 +21,7 @@ endif()
 list(APPEND PATCH_CMD COMMAND ${KO_PATCH}
     ${CMAKE_CURRENT_SOURCE_DIR}/k2pdfopt.patch
     ${CMAKE_CURRENT_SOURCE_DIR}/cmake_tweaks.patch
+    ${CMAKE_CURRENT_SOURCE_DIR}/fix-uninitialized-memory-access.patch
 )
 
 list(APPEND CMAKE_ARGS
