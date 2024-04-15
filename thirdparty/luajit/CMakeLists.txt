@@ -5,8 +5,10 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/../cmake
 include("koreader_thirdparty_common")
 include("koreader_thirdparty_git")
 
-ep_get_source_dir(SOURCE_DIR)
 assert_var_defined(XCOMPILE)
+
+# Build in source tree.
+set(BINARY_DIR ${SOURCE_DIR})
 
 list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/koreader-luajit-makefile-tweaks.patch)
 # Enable table.pack & table.unpack w/o the rest of the -DLUAJIT_ENABLE_LUA52COMPAT baggage...
@@ -82,15 +84,8 @@ ko_write_gitclone_script(
     ${SOURCE_DIR}
 )
 
-include(ExternalProject)
-ExternalProject_Add(
-    ${PROJECT_NAME}
+external_project(
     DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
     PATCH_COMMAND ${PATCH_CMD}
-    BUILD_IN_SOURCE 1
-    # skip configure
-    CONFIGURE_COMMAND ""
     BUILD_COMMAND ${BUILD_CMD}
-    # skip install
-    INSTALL_COMMAND ""
 )

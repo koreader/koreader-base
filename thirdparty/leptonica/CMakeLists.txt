@@ -5,16 +5,8 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_LIST_DIR}/../cmake_m
 include("koreader_thirdparty_common")
 include("koreader_thirdparty_git")
 
-ep_get_source_dir(SOURCE_DIR)
-
-# NOTE: Needs to match the version used by whatever version of libk2pdfopt we're currently using...
-#       Probably applies to mupdf & tesseract, too...
-ko_write_gitclone_script(
-    GIT_CLONE_SCRIPT_FILENAME
-    https://github.com/DanBloomberg/leptonica.git
-    1.74.1
-    ${SOURCE_DIR}
-)
+# Build in source tree.
+set(BINARY_DIR ${SOURCE_DIR})
 
 # Make sure we use the old fmemopen symbol on ARM Linux when building against
 # glibc >= 2.22 (c.f. base#421 & #2188).
@@ -29,13 +21,19 @@ endif()
 # We apparently need a rebuild of the configure on macOS (https://github.com/koreader/koreader/issues/4448#issuecomment-522363325)
 list(APPEND PATCH_CMD COMMAND autoreconf -fi)
 
-include(ExternalProject)
-ExternalProject_Add(
-    ${PROJECT_NAME}
+# NOTE: Needs to match the version used by whatever version of libk2pdfopt we're currently using...
+#       Probably applies to mupdf & tesseract, too...
+ko_write_gitclone_script(
+    GIT_CLONE_SCRIPT_FILENAME
+    https://github.com/DanBloomberg/leptonica.git
+    1.74.1
+    ${SOURCE_DIR}
+)
+
+external_project(
     DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
     PATCH_COMMAND ${PATCH_CMD}
-    CONFIGURE_COMMAND ""
     # skip build and install, libk2pdfopt will build it
-    BUILD_COMMAND ""
-    INSTALL_COMMAND ""
+    CONFIGURE_COMMAND COMMAND
+    BUILD_COMMAND COMMAND
 )

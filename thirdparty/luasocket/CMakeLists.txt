@@ -8,9 +8,10 @@ include("koreader_thirdparty_git")
 assert_var_defined(CC)
 assert_var_defined(PLAT)
 assert_var_defined(LUAINC)
-assert_var_defined(INSTALL_DIR)
+assert_var_defined(LUAPATH)
 
-ep_get_source_dir(SOURCE_DIR)
+# Build in source tree.
+set(BINARY_DIR ${SOURCE_DIR})
 
 list(APPEND PATCH_CMD COMMAND sh -c "\"\$@\" src/*" --
   ${ISED} " "
@@ -40,13 +41,9 @@ ko_write_gitclone_script(
     ${SOURCE_DIR}
 )
 
-include(ExternalProject)
-ExternalProject_Add(
-    ${PROJECT_NAME}
+external_project(
     DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
-    BUILD_IN_SOURCE 1
     PATCH_COMMAND ${PATCH_CMD}
-    CONFIGURE_COMMAND ""
     BUILD_COMMAND ${BUILD_CMD}
-    INSTALL_COMMAND ${KO_MAKE_RECURSIVE} INSTALL_TOP_LDIR=${INSTALL_DIR} INSTALL_TOP_CDIR=${INSTALL_DIR} install
+    INSTALL_COMMAND ${KO_MAKE_RECURSIVE} INSTALL_TOP_LDIR=${LUAPATH} INSTALL_TOP_CDIR=${LUAPATH} install
 )

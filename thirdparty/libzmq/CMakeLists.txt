@@ -11,9 +11,6 @@ assert_var_defined(CFLAGS)
 assert_var_defined(CXXFLAGS)
 assert_var_defined(LDFLAGS)
 
-ep_get_source_dir(SOURCE_DIR)
-ep_get_binary_dir(BINARY_DIR)
-
 list(APPEND PATCH_CMD COMMAND ./autogen.sh)
 # Force dynamic lib version.
 list(APPEND PATCH_CMD COMMAND ${ISED} "s|-avoid-version||g" src/Makefile.am)
@@ -26,7 +23,7 @@ list(APPEND PATCH_CMD COMMAND ${CMAKE_COMMAND} -E remove_directory ${BINARY_DIR}
 list(APPEND CFG_ENV_VAR "CC=${CC}" "CXX=${CXX}" "CFLAGS=${CFLAGS}" "CXXFLAGS=${CXXFLAGS} -Wno-unused-result" "LDFLAGS=${LDFLAGS}")
 list(APPEND CFG_ENV_VAR libzmq_have_xmlto=no libzmq_have_asciidoc=no)
 
-list(APPEND CFG_OPTS --prefix=${BINARY_DIR} --libdir=${BINARY_DIR}/lib --disable-static --enable-shared --without-documentation --host=${CHOST})
+list(APPEND CFG_OPTS --prefix=${INSTALL_DIR} --disable-static --enable-shared --without-documentation --host=${CHOST})
 if(DEFINED ENV{LEGACY} OR DEFINED ENV{POCKETBOOK})
     list(APPEND CFG_OPTS --disable-eventfd)
 endif()
@@ -48,9 +45,7 @@ ko_write_gitclone_script(
     ${SOURCE_DIR}
 )
 
-include(ExternalProject)
-ExternalProject_Add(
-    ${PROJECT_NAME}
+external_project(
     DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
     PATCH_COMMAND ${PATCH_CMD}
     CONFIGURE_COMMAND ${CFG_CMD}

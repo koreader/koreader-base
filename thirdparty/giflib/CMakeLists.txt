@@ -5,14 +5,11 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_LIST_DIR}/../cmake_m
 include("koreader_thirdparty_common")
 include("koreader_thirdparty_git")
 
-ep_get_source_dir(SOURCE_DIR)
-ep_get_binary_dir(BINARY_DIR)
-
 list(APPEND PATCH_CMD ${ISED} "s|\\$srcdir/configure \\$\\*||g" autogen.sh)
 list(APPEND PATCH_CMD COMMAND ./autogen.sh)
 
 set(CFG_ENV_VAR ac_cv_prog_have_xmlto=no "CC=${CC}" "CFLAGS=${CFLAGS}" "LDFLAGS=${LDFLAGS}")
-set(CFG_OPTS --prefix=${BINARY_DIR} --libdir=${BINARY_DIR}/lib --disable-static --enable-shared --host=${CHOST})
+set(CFG_OPTS --prefix=${INSTALL_DIR} --disable-static --enable-shared --host=${CHOST})
 list(APPEND CFG_CMD COMMAND env ${CFG_ENV_VAR} ${SOURCE_DIR}/configure ${CFG_OPTS})
 
 # use limits.h instead of stdint.h for android build
@@ -32,9 +29,7 @@ ko_write_gitclone_script(
     ${SOURCE_DIR}
 )
 
-include(ExternalProject)
-ExternalProject_Add(
-    ${PROJECT_NAME}
+external_project(
     DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
     PATCH_COMMAND ${PATCH_CMD}
     CONFIGURE_COMMAND ${CFG_CMD}

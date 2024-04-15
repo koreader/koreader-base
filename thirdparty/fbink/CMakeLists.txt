@@ -8,8 +8,8 @@ include("koreader_thirdparty_git")
 assert_var_defined(CFLAGS)
 assert_var_defined(LDFLAGS)
 
-ep_get_source_dir(SOURCE_DIR)
-ep_get_binary_dir(BINARY_DIR)
+# Build in source tree.
+set(BINARY_DIR ${SOURCE_DIR})
 
 # Choose your own adventure!
 if(DEFINED ENV{LEGACY})
@@ -33,33 +33,26 @@ endif()
 
 # FBDepth can afford to link to a very minimal library, so we need to start from scratch...
 if(FBDEPTH_TARGET)
-    set(BUILD_CMD1 ${KO_MAKE_RECURSIVE} clean)
-    set(BUILD_CMD2 ${KO_MAKE_RECURSIVE} "CFLAGS=${CFLAGS}" "LDFLAGS=${LDFLAGS}" ${FBDEPTH_TARGET})
+    list(APPEND BUILD_CMD COMMAND ${KO_MAKE_RECURSIVE} clean)
+    list(APPEND BUILD_CMD COMMAND ${KO_MAKE_RECURSIVE} "CFLAGS=${CFLAGS}" "LDFLAGS=${LDFLAGS}" ${FBDEPTH_TARGET})
 
     # That does mean we need to stash the binary somewhere a clean won't scrap it, though...
     if(DEFINED ENV{DEBUG})
-        set(BUILD_CMD3 ${CMAKE_COMMAND} -E rename ${SOURCE_DIR}/Debug/fbdepth ${SOURCE_DIR}/fbdepth)
+        list(APPEND BUILD_CMD COMMAND ${CMAKE_COMMAND} -E rename ${SOURCE_DIR}/Debug/fbdepth ${INSTALL_DIR}/fbdepth)
     else()
-        set(BUILD_CMD3 ${CMAKE_COMMAND} -E rename ${SOURCE_DIR}/Release/fbdepth ${SOURCE_DIR}/fbdepth)
+        list(APPEND BUILD_CMD COMMAND ${CMAKE_COMMAND} -E rename ${SOURCE_DIR}/Release/fbdepth ${INSTALL_DIR}/fbdepth)
     endif()
 endif()
 
 # Minimal-ish, statically linked build, we don't care about image support
-set(BUILD_CMD4 ${KO_MAKE_RECURSIVE} clean)
-set(BUILD_CMD5 ${KO_MAKE_RECURSIVE} MINIMAL=1 FONTS=1 OPENTYPE=1 "CFLAGS=${CFLAGS}" "LDFLAGS=${LDFLAGS}" ${FBINK_TARGET})
+list(APPEND BUILD_CMD COMMAND ${KO_MAKE_RECURSIVE} clean)
+list(APPEND BUILD_CMD COMMAND ${KO_MAKE_RECURSIVE} MINIMAL=1 FONTS=1 OPENTYPE=1 "CFLAGS=${CFLAGS}" "LDFLAGS=${LDFLAGS}" ${FBINK_TARGET})
 
 # We build in-tree...
-set(INSTALL_CMD1 ${CMAKE_COMMAND} -E make_directory ${BINARY_DIR})
 if(DEFINED ENV{DEBUG})
-    set(INSTALL_CMD2 ${CMAKE_COMMAND} -E rename ${SOURCE_DIR}/Debug/fbink ${BINARY_DIR}/fbink)
-    if(FBDEPTH_TARGET)
-        set(INSTALL_CMD3 ${CMAKE_COMMAND} -E rename ${SOURCE_DIR}/fbdepth ${BINARY_DIR}/fbdepth)
-    endif()
+    list(APPEND BUILD_CMD COMMAND ${CMAKE_COMMAND} -E rename ${SOURCE_DIR}/Debug/fbink ${INSTALL_DIR}/fbink)
 else()
-    set(INSTALL_CMD2 ${CMAKE_COMMAND} -E rename ${SOURCE_DIR}/Release/fbink ${BINARY_DIR}/fbink)
-    if(FBDEPTH_TARGET)
-        set(INSTALL_CMD3 ${CMAKE_COMMAND} -E rename ${SOURCE_DIR}/fbdepth ${BINARY_DIR}/fbdepth)
-    endif()
+    list(APPEND BUILD_CMD COMMAND ${CMAKE_COMMAND} -E rename ${SOURCE_DIR}/Release/fbink ${INSTALL_DIR}/fbink)
 endif()
 
 ko_write_gitclone_script(
@@ -69,14 +62,7 @@ ko_write_gitclone_script(
     ${SOURCE_DIR}
 )
 
-include(ExternalProject)
-ExternalProject_Add(
-    ${PROJECT_NAME}
+external_project(
     DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
-    BUILD_IN_SOURCE 1
-    PATCH_COMMAND ""
-    CONFIGURE_COMMAND ""
-    BUILD_COMMAND COMMAND ${BUILD_CMD1} COMMAND ${BUILD_CMD2} COMMAND ${BUILD_CMD3} COMMAND ${BUILD_CMD4} COMMAND ${BUILD_CMD5}
-    # The buildsystem outputs binaries in a subdirectory...
-    INSTALL_COMMAND COMMAND ${INSTALL_CMD1} COMMAND ${INSTALL_CMD2} COMMAND ${INSTALL_CMD3}
+    BUILD_COMMAND ${BUILD_CMD}
 )
