@@ -1009,6 +1009,13 @@ ifdef DARWIN
 endif
 DYNLIB_CFLAGS=-L$(CURDIR)/$(OUTPUT_DIR)/libs $(CFLAGS) -I$(LUAJIT_DIR)/src $(DYNLIB_LDFLAGS)
 DYNLIB_CXXFLAGS=-L$(CURDIR)/$(OUTPUT_DIR)/libs $(CXXFLAGS) -I$(LUAJIT_DIR)/src $(DYNLIB_LDFLAGS)
+ifdef DARWIN
+  DYNLIB_CFLAGS += -install_name '@rpath/$(notdir $@)'
+  DYNLIB_CXXFLAGS += -install_name '@rpath/$(notdir $@)'
+else
+  DYNLIB_CFLAGS += -Wl,-soname,'$(notdir $@)'
+  DYNLIB_CXXFLAGS += -Wl,-soname,'$(notdir $@)'
+endif
 
 # Used by our custom Lua modules, where we want to hide private symbols by default
 SYMVIS_FLAGS+=-fvisibility=hidden
