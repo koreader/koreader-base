@@ -28,7 +28,7 @@ all: $(CMAKE_KO) $(CMAKE_TCF) $(OUTPUT_DIR)/libs $(if $(ANDROID),,$(LUAJIT)) \
 		$(TURBO_FFI_WRAP_LIB) \
 		$(LUA_HTMLPARSER_ROCK) \
 		$(LPEG_MOD) \
-		$(LUAJSON_ROCK) \
+		$(LUAJSON_MOD) \
 		$(LUA_RAPIDJSON_ROCK) \
 		$(LUA_SPORE_MOD) \
 		$(if $(WIN32),,$(ZMQ_LIB) $(CZMQ_LIB)) \
