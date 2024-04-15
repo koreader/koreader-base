@@ -29,7 +29,7 @@ all: $(CMAKE_KO) $(CMAKE_TCF) $(OUTPUT_DIR)/libs $(if $(ANDROID),,$(LUAJIT)) \
 		$(LUA_HTMLPARSER_ROCK) \
 		$(LPEG_MOD) \
 		$(LUAJSON_MOD) \
-		$(LUA_RAPIDJSON_ROCK) \
+		$(LUA_RAPIDJSON_MOD) \
 		$(LUA_SPORE_MOD) \
 		$(if $(WIN32),,$(ZMQ_LIB) $(CZMQ_LIB)) \
 		$(if $(WIN32),,$(OUTPUT_DIR)/sdcv) \
