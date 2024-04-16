@@ -74,8 +74,8 @@ jobs:
 
       - restore_cache:
           keys:
-            - emu-{{ .Environment.CIRCLE_JOB }}-
-            - emu-
+            - "{{ .Branch }}-{{ .Environment.CIRCLE_JOB }}-"
+            - "master-{{ .Environment.CIRCLE_JOB }}-"
 
       - run:
           name: build
@@ -83,7 +83,7 @@ jobs:
             source .ci/build_script.sh
 
       - save_cache:
-          key: emu-{{ .Environment.CIRCLE_JOB }}-{{ epoch }}
+          key: "{{ .Branch }}-{{ .Environment.CIRCLE_JOB }}-{{ epoch }}"
           paths:
             - "/home/ko/.ccache"
 
@@ -127,7 +127,8 @@ jobs:
 
       - restore_cache:
           keys:
-            - xcompile-{{ .Environment.CIRCLE_JOB }}-
+            - "{{ .Branch }}-{{ .Environment.CIRCLE_JOB }}-"
+            - "master-{{ .Environment.CIRCLE_JOB }}-"
 
       - run:
           name: build
@@ -135,7 +136,7 @@ jobs:
             source .ci/build_script.sh
 
       - save_cache:
-          key: xcompile-{{ .Environment.CIRCLE_JOB }}-{{ epoch }}
+          key: "{{ .Branch }}-{{ .Environment.CIRCLE_JOB }}-{{ epoch }}"
           paths:
             - "/home/circleci/.ccache"
 
