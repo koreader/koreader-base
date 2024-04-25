@@ -31,7 +31,7 @@ list(APPEND INSTALL_CMD COMMAND ${KO_MAKE_RECURSIVE} install)
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
     https://github.com/fribidi/fribidi.git
-    tags/v1.0.13
+    tags/v1.0.14
     ${SOURCE_DIR}
 )
 
