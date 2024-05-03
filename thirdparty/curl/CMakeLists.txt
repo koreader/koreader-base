@@ -112,11 +112,15 @@ list(APPEND CFG_OPTS --without-zsh-functions-dir)
 
 list(APPEND CFG_CMD COMMAND env ${CFG_ENV_VAR} ${SOURCE_DIR}/configure ${CFG_OPTS})
 
-list(APPEND BUILD_CMD COMMAND ${KO_MAKE_RECURSIVE} ca-bundle)
+# Don't use the default build system rule to create the certificates
+# bundle: connections to `hg.mozilla.org` from CIs seem to be flaky,
+# resulting in regular failures.
+set(CA_BUNDLE_CMD ${CMAKE_CURRENT_LIST_DIR}/fetch-ca-bundle.sh ${KO_DOWNLOAD_DIR}/ca-bundle.crt)
+
 list(APPEND BUILD_CMD COMMAND ${KO_MAKE_RECURSIVE})
 
 list(APPEND INSTALL_CMD COMMAND ${KO_MAKE_RECURSIVE} install)
-list(APPEND INSTALL_CMD COMMAND ${CMAKE_COMMAND} -E rename ${SOURCE_DIR}/lib/ca-bundle.crt ${BINARY_DIR}/ca-bundle.crt)
+list(APPEND INSTALL_CMD COMMAND ${CMAKE_COMMAND} -E copy ${KO_DOWNLOAD_DIR}/ca-bundle.crt ${BINARY_DIR}/ca-bundle.crt)
 
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
@@ -128,7 +132,7 @@ ko_write_gitclone_script(
 include(ExternalProject)
 ExternalProject_Add(
     ${PROJECT_NAME}
-    DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
+    DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME} COMMAND ${CA_BUNDLE_CMD}
     BUILD_IN_SOURCE 1
     PATCH_COMMAND ${PATCH_CMD}
     CONFIGURE_COMMAND ${CFG_CMD}
