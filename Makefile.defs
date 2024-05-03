@@ -118,10 +118,6 @@ endif
 
 export NINJAFLAGS
 
-$(info ************ CMAKE_MAKE_PROGRAM: $(strip $(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS)) **********)
-$(info ************ NINJA: $(strip $(NINJA) $(NINJAFLAGS)) **********)
-$(info ************ MAKE: $(strip $(MAKE) $(PARALLEL_JOBS:%=-j%) $(PARALLEL_LOAD:%=-l%) $(MAKEFLAGS)) **********)
-
 # set this to your ARM cross compiler:
 # set CC CXX AR LD RANLIB
 ifeq ($(TARGET), arm-generic)
