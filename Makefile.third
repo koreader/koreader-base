@@ -5,13 +5,7 @@
 fetchthirdparty:
 	git submodule init
 	git submodule sync
-	git submodule foreach --recursive git reset --hard
 	git submodule update --jobs 3 $(if $(CI),--depth 1)
-	@echo "cleaning up crengine checkout..."
-	@rm -rf thirdparty/kpvcrlib/crengine/thirdparty
-	@test -d thirdparty/kpvcrlib/crengine \
-		&& (cd thirdparty/kpvcrlib/crengine; git checkout .) \
-		|| echo warn: crengine folder not found
 
 $(FREETYPE_LIB): $(THIRDPARTY_DIR)/freetype2/*.*
 	install -d $(FREETYPE_BUILD_DIR)
