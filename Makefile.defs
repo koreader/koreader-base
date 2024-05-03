@@ -984,7 +984,7 @@ LUA_HTMLPARSER_ROCK=$(LUAROCKS_DIR)/htmlparser/$(LUA_HTMLPARSER_VER)/htmlparser-
 
 LPEG_VER=1.0.2-2
 LPEG_BUILD_DIR=$(THIRDPARTY_DIR)/lpeg/build/$(MACHINE)
-LPEG_DIR=$(CURDIR)/$(LPEG_BUILD_DIR)/lpeg-prefix/src/lpeg-build
+LPEG_DIR=$(CURDIR)/$(LPEG_BUILD_DIR)/lpeg-prefix/src/lpeg
 LPEG_ROCK=$(LPEG_DIR)/lpeg-$(LPEG_VER).rockspec
 
 LUA_RAPIDJSON_VER=0.7.1-1
