@@ -10,6 +10,9 @@ DO_STRIP := $(if $(or $(DO_STRIP),$(APPIMAGE),$(DEBIAN)),1,)
 $(info ************ Building for MACHINE: "$(MACHINE)" **********)
 $(info ************ PATH: "$(PATH)" **********)
 $(info ************ CHOST: "$(CHOST)" **********)
+$(info ************ CMAKE_MAKE_PROGRAM: $(strip $(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS)) **********)
+$(info ************ NINJA: $(strip $(NINJA) $(NINJAFLAGS)) **********)
+$(info ************ MAKE: $(strip $(MAKE) $(PARALLEL_JOBS:%=-j%) $(PARALLEL_LOAD:%=-l%) $(MAKEFLAGS)) **********)
 
 # main target
 all: $(OUTPUT_DIR)/libs $(if $(ANDROID),,$(LUAJIT)) \
