@@ -90,8 +90,6 @@ else
     k2pdfopt = ffi.load("libs/libk2pdfopt.so.2")
 end
 
-
-
 local KOPTContext = {
     k2pdfopt = k2pdfopt -- offer the libraries' functions to other users
 }
