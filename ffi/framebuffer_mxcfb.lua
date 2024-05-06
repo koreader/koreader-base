@@ -922,8 +922,7 @@ function framebuffer:init()
         if self.device:isMTK() then
             self.mech_refresh = refresh_kobo_mtk
             self.mech_wait_update_complete = kobo_mtk_wait_for_update_complete
-            -- FIXME: Enable this, assuming it behaves...
-            --self.mech_wait_update_submission = kobo_mtk_wait_for_update_submission
+            self.mech_wait_update_submission = kobo_mtk_wait_for_update_submission
 
             self.waveform_a2 = C.HWTCON_WAVEFORM_MODE_A2
             self.waveform_fast = C.HWTCON_WAVEFORM_MODE_DU
@@ -937,6 +936,21 @@ function framebuffer:init()
             self.waveform_flashnight = C.HWTCON_WAVEFORM_MODE_GCK16
 
             self.mech_poweron = kobo_mtk_wakeup_epdc
+
+            -- The Elipsa 2E was the first MTK device, and it does... a few things differently :/.
+            if self.device.model == "Kobo_condor" then
+                -- It doesn't use WAIT_FOR_UPDATE_SUBMISSION
+                self.mech_wait_update_submission = nil
+                -- It does *NOT* enforce FULL on REAGL updates
+                self.waveform_reagl = nil
+                -- For some mysterious reason, Eclipse waveform modes are completely broken outside of 32bpp.
+                -- (This is no longer a concern on later devices, as they no longer allow switching to 8bpp at all).
+                if self.fb_bb ~= 32 then
+                    -- Trust @katadelos and let AUTO figure it out (https://github.com/koreader/koreader-base/pull/1768)
+                    self.waveform_night = C.HWTCON_WAVEFORM_MODE_AUTO
+                    self.waveform_flashnight = C.HWTCON_WAVEFORM_MODE_AUTO
+                end
+            end
         end
 
         local bypass_wait_for = self:getMxcWaitForBypass()
