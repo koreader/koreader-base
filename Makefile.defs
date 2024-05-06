@@ -58,6 +58,8 @@ else
 	export NDKABI?=18
 endif
 
+LINUX_ARCH?=native
+
 # Detect LuaRocks 3
 LR_VER_NUM := $(shell luarocks --version | grep -Eo '[0-9]+.[0-9]+')
 LR_GT_3_0 := $(shell awk -v LR_VER_NUM=$(LR_VER_NUM) 'BEGIN { print (LR_VER_NUM >= 3.0); }')
@@ -165,22 +167,16 @@ else ifeq ($(TARGET), appimage)
 	export EMULATE_READER=1
 	export SDL=1
 	export APPIMAGE=1
-else ifeq ($(TARGET), debian)
+else ifeq ($(TARGET), linux)
 	export SDL=1
-	export DEBIAN=1
-	export EMULATE_READER=1
-else ifeq ($(TARGET), debian-armel)
-	CHOST?=arm-linux-gnueabi
-	export SDL=1
-	export DEBIAN_CROSS=1
-else ifeq ($(TARGET), debian-armhf)
-	CHOST?=arm-linux-gnueabihf
-	export SDL=1
-	export DEBIAN_CROSS=1
-else ifeq ($(TARGET), debian-arm64)
-	CHOST?=aarch64-linux-gnu
-	export SDL=1
-	export DEBIAN_CROSS=1
+	ifeq ($(LINUX_ARCH), arm)
+		CHOST?=arm-linux-gnueabihf
+	else ifeq ($(LINUX_ARCH), arm64)
+		CHOST?=aarch64-linux-gnu
+	else
+		LINUX=1
+		export EMULATE_READER=1
+	endif
 else ifeq ($(TARGET), macos)
 	export SDL=1
 	export MACOS=1
@@ -524,14 +520,13 @@ else ifeq ($(TARGET), arm-generic)
 	# Defaults to generic crap
 	ARM_ARCH:=$(ARMV6_GENERIC_ARCH)
 	ARM_ARCH+=-mfloat-abi=softfp
-else ifeq ($(TARGET), debian-armel)
-	ARM_ARCH:=$(ARMV7_GENERIC_ARCH)
-	ARM_ARCH+=-mfloat-abi=softfp
-else ifeq ($(TARGET), debian-armhf)
-	ARM_ARCH:=$(ARMV7_GENERIC_ARCH)
-	ARM_ARCH+=-mfloat-abi=hard
-else ifeq ($(TARGET), debian-arm64)
-	ARM_ARCH:=$(ARM64_GENERIC_ARCH)
+else ifeq ($(TARGET), linux)
+	ifeq ($(LINUX_ARCH), arm)
+		ARM_ARCH:=$(ARMV7_GENERIC_ARCH)
+		ARM_ARCH+=-mfloat-abi=hard
+	else ifeq ($(LINUX_ARCH), arm64)
+		ARM_ARCH:=$(ARM64_GENERIC_ARCH)
+	endif
 else
 	# else, we are compiling emulator on x86
 	ARM_ARCH:=
@@ -543,7 +538,7 @@ ifdef APPIMAGE
 	HOST_ARCH:=-mtune=generic -march=x86-64
 endif
 
-ifdef DEBIAN
+ifdef LINUX
 	HOST_ARCH:=-mtune=generic
 endif
 
