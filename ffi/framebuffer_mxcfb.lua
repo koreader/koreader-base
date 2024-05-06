@@ -456,6 +456,7 @@ local function mxc_update(fb, ioc_cmd, ioc_data, is_flashing, waveform_mode, x, 
     --       but is also obviously not desirable latency-wise.
     --       Interestingly enough, lab126 devices are affected the *other* way around:
     --       they tend to optimize *out* the highlight, instead of having trouble dealing with the unhighlight...
+    -- In a fun twist, the flickers are gone in night mode -_-".
 end
 
 local function refresh_k51(fb, is_flashing, waveform_mode, x, y, w, h)
