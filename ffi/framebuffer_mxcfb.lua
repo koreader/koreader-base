@@ -26,6 +26,7 @@ local framebuffer = {
     waveform_flashui = nil,
     waveform_full = nil,
     waveform_color = nil,
+    waveform_color_reagl = nil,
     waveform_reagl = nil,
     waveform_night = nil,
     waveform_flashnight = nil,
@@ -94,6 +95,12 @@ end
 -- NOTE: This is to avoid explicit comparison against device-specific waveform constants in mxc_update()
 function framebuffer:_isNotFastWaveFormMode(waveform_mode)
     return waveform_mode ~= self.waveform_a2 and waveform_mode ~= self.waveform_fast
+end
+
+-- Returns true if waveform_mode arg matches a Kaleido-specific waveform mode for the current device
+-- NOTE: This is to avoid explicit comparison against device-specific waveform constants in mxc_update()
+function framebuffer:_isKaleidoWaveFormMode(waveform_mode)
+    return waveform_mode == self.waveform_color or waveform_mode == self.waveform_color_reagl
 end
 
 -- Returns the device-specific nightmode waveform mode
@@ -374,10 +381,10 @@ local function mxc_update(fb, ioc_cmd, ioc_data, is_flashing, waveform_mode, x, 
         end
     end
 
-    -- Handle REAGL promotion...
+    -- Handle promotion to FULL for the specific waveform modes that require it...
     -- NOTE: We need to do this here, because we rely on the pre-promotion actual is_flashing in previous heuristics.
-    if fb:_isREAGLWaveFormMode(waveform_mode) then
-        -- NOTE: REAGL updates always need to be full.
+    if fb:_isREAGLWaveFormMode(waveform_mode) or fb:_isKaleidoWaveFormMode(waveform_mode) then
+        -- NOTE: REAGL & Kaleido updates (almost) always need to be full.
         ioc_data.update_mode = C.UPDATE_MODE_FULL
     end
 
@@ -750,6 +757,11 @@ function framebuffer:refreshColorImp(x, y, w, h, dither)
     self:mech_refresh(false, self.waveform_color, x, y, w, h, dither)
 end
 
+function framebuffer:refreshColorTextImp(x, y, w, h, dither)
+    self.debug("refresh: color text", x, y, w, h, dither)
+    self:mech_refresh(false, self.waveform_color_reagl, x, y, w, h, dither)
+end
+
 function framebuffer:refreshWaitForLastImp()
     if self.mech_wait_update_complete and self.dont_wait_for_marker ~= self.marker then
         self.debug("refresh: waiting for previous update", self.marker)
@@ -962,6 +974,9 @@ function framebuffer:init()
             self.waveform_night = C.HWTCON_WAVEFORM_MODE_GLKW16
             self.waveform_flashnight = C.HWTCON_WAVEFORM_MODE_GCK16
             self.night_is_reagl = true
+            -- Kaleido waveform modes are only ever used *conditionally*
+            self.waveform_color = C.HWTCON_WAVEFORM_MODE_GCC16
+            self.waveform_color_reagl = C.HWTCON_WAVEFORM_MODE_GLRC16
 
             self.mech_poweron = kobo_mtk_wakeup_epdc
 

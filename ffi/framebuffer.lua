@@ -199,6 +199,9 @@ end
 function fb:refreshColorImp(x, y, w, h, d)
     return self:refreshPartialImp(x, y, w, h, d)
 end
+function fb:refreshColorTextImp(x, y, w, h, d)
+    return self:refreshPartialImp(x, y, w, h, d)
+end
 function fb:refreshWaitForLastImp()
     -- default is NOP
 end
@@ -244,6 +247,10 @@ end
 function fb:refreshColor(x, y, w, h, d)
     x, y, w, h = self:calculateRealCoordinates(x, y, w, h)
     return self:refreshColorImp(x, y, w, h, d)
+end
+function fb:refreshColorText(x, y, w, h, d)
+    x, y, w, h = self:calculateRealCoordinates(x, y, w, h)
+    return self:refreshColorTextImp(x, y, w, h, d)
 end
 function fb:refreshWaitForLast()
     return self:refreshWaitForLastImp()
