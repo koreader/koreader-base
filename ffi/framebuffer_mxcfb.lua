@@ -98,10 +98,16 @@ function framebuffer:_isFastWaveFormMode(waveform_mode)
     return waveform_mode == self.waveform_fast
 end
 
--- Returns true if waveform_mode arg does *NOT* matches the A2 or fast waveform mode for the current device
+-- Returns true if waveform_mode arg does *NOT* match the A2 or fast waveform mode for the current device
 -- NOTE: This is to avoid explicit comparison against device-specific waveform constants in mxc_update()
 function framebuffer:_isNotFastWaveFormMode(waveform_mode)
     return waveform_mode ~= self.waveform_a2 and waveform_mode ~= self.waveform_fast
+end
+
+-- Returns true if waveform_mode arg does *NOT* match the A2 waveform mode for the current device
+-- NOTE: This is to avoid explicit comparison against device-specific waveform constants in mxc_update()
+function framebuffer:_isNotA2WaveFormMode(waveform_mode)
+    return waveform_mode ~= self.waveform_a2
 end
 
 -- Returns true if waveform_mode arg matches a Kaleido-specific waveform mode for the current device
@@ -436,20 +442,13 @@ local function mxc_update(fb, ioc_cmd, ioc_data, is_flashing, waveform_mode, x, 
         end
     end
 
-    --[[
-    -- Fencing DU highlights prevents the flickering, but, eeh, obviously tanks latency... :/.
-    if fb.wait_for_submission_after
-      and fb:_isFastWaveFormMode(waveform_mode)
-      and fb.mech_wait_update_complete then
-        fb.debug("refresh: wait for completion of marker", marker)
-        if fb:mech_wait_update_complete(marker) == -1 then
-            local err = ffi.errno()
-            fb.debug("MXCFB_WAIT_FOR_UPDATE_COMPLETE ioctl failed:", ffi.string(C.strerror(err)))
-        end
-        -- And make sure we won't wait for it again, in case the next refresh trips one of our wait_for_*  heuristics ;).
-        fb.dont_wait_for_marker = marker
-    end
-    --]]
+    -- NOTE: Jotting down some notes about the flickering of highlights on Kobo MTK:
+    -- * Waiting for complete *before* Fast helps when we do HL -> UnHL -> UI
+    -- * Waiting for complete *before* UI helps when we do HL -> UI (i.e., when we elide the UnHL)
+    -- Both are... pretty bad for latency, though.
+    -- * Waiting for submission *after* Fast doesn't help.
+    -- * Waiting for complete *after* Fast helps everywhere, but obviously murders latency, too.
+    -- FWIW, Nickel does (using AUTO everywhere): Complete -> HL -> Submission -> UI -> Complete -> UnHL -> Submission
 end
 
 local function refresh_k51(fb, is_flashing, waveform_mode, x, y, w, h)
