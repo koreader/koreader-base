@@ -69,7 +69,8 @@ Leptonica cheatsheet:
 
     -- converts float_array to NUMA, flag is either C.L_INSERT or C.L_COPY
     numaCreateFromFArray(float_array, size, flag)
-    @module ffi.koptcontext
+
+@module ffi.koptcontext
 ]]
 
 local ffi = require("ffi")
