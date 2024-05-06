@@ -12,51 +12,82 @@ Leptonica cheatsheet:
 
     -- Functions:
     -- note that all of them take/return pointers, or null/nil on failure
-    boxaGetCount(boxa) -- get number of elements in boxa array
-    boxaGetBox(boxa, index, flag) -- flag can be C.L_COPY (creates new copy)
-                                  -- or C.L_CLONE (returns ref-counted handle)
-    pixThresholdToBinary(pix, threshold) -- returns new black-white PIX,
-                                         -- if the source pixel is < threshold,
-                                         -- resulting pixel is 1 (black),
-                                         -- otherwise 0 (white)
+
+    -- get number of elements in boxa array
+    boxaGetCount(boxa)
+
+    -- flag can be C.L_COPY (creates new copy) or
+    -- C.L_CLONE (returns ref-counted handle)
+    boxaGetBox(boxa, index, flag)
+
+    -- returns new black-white PIX,
+    -- if the source pixel is < threshold,
+    -- resulting pixel is 1 (black),
+    -- otherwise 0 (white)
+    pixThresholdToBinary(pix, threshold)
+
+
+    -- returns 0 on success and 1 on failure, output_* are PIX
     pixGetRegionsBinary(input_pix,
                         output_halftonemask,
                         output_textline_mask,
                         output_textblock_mask,
-                        debug) -- returns 0 on success and 1 on failure,
-                               -- output_* are PIX
-    pixDestroy(pix) -- free memory from PIX
-    boxDestroy(box) -- free memory from BOX
-    selDestroy(sel) -- free memory from SEL
-    pixaDestroy(pixa) -- free memory from PIXA
-    boxaDestroy(boxa) -- free memory from BOXA
-    selaDestroy(sela) -- free memory from SELA
+                        debug)
 
-    numaGetIValue(nai, counter_w, counter_l) -- returns int value from NUMA
-    numaGetFValue(nai, counter_w, counter_l) -- returns float value from NUMA
+    -- free memory from PIX
+    pixDestroy(pix)
+    -- free memory from BOX
+    boxDestroy(box)
+    -- free memory from SEL
+    selDestroy(sel)
 
-    pixGetWidth(pix) -- return pix width
-    pixGetHeight(pix) -- return pix height
+    -- free memory from PIXA
+    pixaDestroy(pixa)
+    -- free memory from BOXA
+    boxaDestroy(boxa)
+    -- free memory from SELA
+    selaDestroy(sela)
+
+    -- returns int value from NUMA
+    numaGetIValue(nai, counter_w, counter_l)
+    -- returns float value from NUMA
+    numaGetFValue(nai, counter_w, counter_l)
+
+    -- return pix width
+    pixGetWidth(pix)
+
+    -- return pix height
+    pixGetHeight(pix)
 
     -- adjust boxs size by given deltas and write it to boxd
     boxAdjustSides(boxd, boxs, d_left, d_right, d_top, d_bottom)
-    boxaCombineOverlaps(boxa) -- return intersection of all box in a boxa
-    boxCreate(x, y, w, h) -- create box with given dimensions
-    boxaClipToBox(boxa, box) -- returns boxa where each element intersects
-                             -- with box, or is removed if it doesn't intersect
-    boxOverlapRegion(box, box) -- returns intersection of both box, or null
-                               -- if they don't intersect
-    boxaAddBox(boxa, box, flag) -- add box to boxa array, flag can be
-                                -- C.L_INSERT, or C.L_COPY
+    -- return intersection of all box in a boxa
+    boxaCombineOverlaps(boxa)
+    -- create box with given dimensions
+    boxCreate(x, y, w, h)
+
+    -- returns boxa where each element intersects with box, or is removed if it doesn't intersect
+    boxaClipToBox(boxa, box)
+
+    -- returns intersection of both box, or null if they don't intersect
+    boxOverlapRegion(box, box)
+
+    -- add box to boxa array, flag can be C.L_INSERT, or C.L_COPY
+    boxaAddBox(boxa, box, flag)
+
     pixDrawBoxaRandom()
-    pixWritePng(path, pix, gamma) -- creates png from pix, useful for debugging
-    pixConvertTo32(pix) -- converts pix to 32bpp
-    pixMultiplyByColor(pixd, pixs, box, color) -- multiplies box part of pixs
-                                               -- by color and
-                                               -- writes it to pixd
-    numaCreateFromFArray(float_array, size, flag) -- converts float_array to
-                                                  -- NUMA, flag is either
-                                                  -- C.L_INSERT or C.L_COPY
+
+    -- creates png from pix, useful for debugging
+    pixWritePng(path, pix, gamma)
+
+    -- converts pix to 32bpp
+    pixConvertTo32(pix)
+
+    -- multiplies box part of pixs by color and writes it to pixd
+    pixMultiplyByColor(pixd, pixs, box, color)
+
+    -- converts float_array to NUMA, flag is either C.L_INSERT or C.L_COPY
+    numaCreateFromFArray(float_array, size, flag)
     @module ffi.koptcontext
 ]]
 
