@@ -91,6 +91,13 @@ function framebuffer:_isPartialWaveFormMode(waveform_mode)
     return waveform_mode == self.waveform_partial
 end
 
+-- Returns true if waveform_mode arg matches the fast waveform mode for the current device
+-- NOTE: This is to avoid explicit comparison against device-specific waveform constants in mxc_update()
+--       Here, because of REAGL or device-specific quirks.
+function framebuffer:_isFastWaveFormMode(waveform_mode)
+    return waveform_mode == self.waveform_fast
+end
+
 -- Returns true if waveform_mode arg does *NOT* matches the A2 or fast waveform mode for the current device
 -- NOTE: This is to avoid explicit comparison against device-specific waveform constants in mxc_update()
 function framebuffer:_isNotFastWaveFormMode(waveform_mode)
@@ -428,6 +435,21 @@ local function mxc_update(fb, ioc_cmd, ioc_data, is_flashing, waveform_mode, x, 
             fb.debug("MXCFB_WAIT_FOR_UPDATE_SUBMISSION ioctl failed:", ffi.string(C.strerror(err)))
         end
     end
+
+    --[[
+    -- Fencing DU highlights prevents the flickering, but, eeh, obviously tanks latency... :/.
+    if fb.wait_for_submission_after
+      and fb:_isFastWaveFormMode(waveform_mode)
+      and fb.mech_wait_update_complete then
+        fb.debug("refresh: wait for completion of marker", marker)
+        if fb:mech_wait_update_complete(marker) == -1 then
+            local err = ffi.errno()
+            fb.debug("MXCFB_WAIT_FOR_UPDATE_COMPLETE ioctl failed:", ffi.string(C.strerror(err)))
+        end
+        -- And make sure we won't wait for it again, in case the next refresh trips one of our wait_for_*  heuristics ;).
+        fb.dont_wait_for_marker = marker
+    end
+    --]]
 end
 
 local function refresh_k51(fb, is_flashing, waveform_mode, x, y, w, h)
