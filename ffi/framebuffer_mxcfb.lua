@@ -960,6 +960,7 @@ function framebuffer:init()
             -- Eclipse waveform modes are *always* available
             self.waveform_night = C.HWTCON_WAVEFORM_MODE_GLKW16
             self.waveform_flashnight = C.HWTCON_WAVEFORM_MODE_GCK16
+            self.night_is_reagl = true
 
             self.mech_poweron = kobo_mtk_wakeup_epdc
 
@@ -969,6 +970,7 @@ function framebuffer:init()
                 self.wait_for_submission_after = false
                 -- It does *NOT* enforce FULL on REAGL updates
                 self.waveform_reagl = nil
+                self.night_is_reagl = false
                 -- For some mysterious reason, Eclipse waveform modes are completely broken outside of 32bpp.
                 -- (This is no longer a concern on later devices, as they no longer allow switching to 8bpp at all).
                 if self.fb_bb ~= 32 then
