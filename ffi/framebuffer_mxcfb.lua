@@ -956,7 +956,8 @@ function framebuffer:init()
             self.waveform_flashui = self.waveform_ui
             self.waveform_full = C.HWTCON_WAVEFORM_MODE_GC16
             -- REAGL is *always* available
-            self.waveform_partial = C.HWTCON_WAVEFORM_MODE_GLR16
+            self.waveform_reagl = C.HWTCON_WAVEFORM_MODE_GLR16
+            self.waveform_partial = self.waveform_reagl
             -- Eclipse waveform modes are *always* available
             self.waveform_night = C.HWTCON_WAVEFORM_MODE_GLKW16
             self.waveform_flashnight = C.HWTCON_WAVEFORM_MODE_GCK16
