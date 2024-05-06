@@ -38,6 +38,8 @@ local framebuffer = {
     dont_wait_for_marker = nil,
     -- Set by frontend to 3 on Pocketbook Color Lux that refreshes based on bytes (not based on pixel)
     refresh_pixel_size = 1,
+    -- Used to enforce an alignment constraint on devices with quirky drivers
+    alignment_contraint = nil,
 
     -- We recycle ffi cdata
     marker_data = nil,
@@ -291,7 +293,7 @@ local function mxc_update(fb, ioc_cmd, ioc_data, is_flashing, waveform_mode, x, 
     --       (Sidebar: this is probably a kernel issue, the EPDC driver is responsible for the alignment fixup,
     --       c.f., epdc_process_update @ drivers/video/fbdev/mxc/mxc_epdc_v2_fb.c on a Kobo Mk. 7 kernel...).
     -- And regardless of alignment constraints, make sure the rectangle is strictly bounded inside the screen.
-    x, y, w, h = bb:getBoundedRect(x, y, w, h, dither and 8)
+    x, y, w, h = bb:getBoundedRect(x, y, w, h, dither and 8 or fb.alignment_contraint)
     -- The ioctl operates in the native rotation, so, make sure we rotate the rectangle as needed
     x, y, w, h = bb:getPhysicalRect(x, y, w, h)
 
@@ -988,6 +990,12 @@ function framebuffer:init()
             self.mech_wait_update_submission = kobo_mtk_wait_for_update_submission
             -- Kobos wait for submission of the *just sent* marker
             self.wait_for_submission_after = true
+
+            -- Regardless of dithering, there appears to be an off-by-one issue somewhere in the driver,
+            -- so partial refreshes at exact coordinates will sometime be cut-off one pixel short...
+            -- That can obviously lead to leftover stale content visible on screen,
+            -- so, just enforce larger refresh regions on our side...
+            self.alignment_contraint = 8
 
             self.waveform_a2 = C.HWTCON_WAVEFORM_MODE_A2
             self.waveform_fast = C.HWTCON_WAVEFORM_MODE_DU
