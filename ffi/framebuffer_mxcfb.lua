@@ -995,6 +995,12 @@ function framebuffer:init()
                     self.waveform_flashnight = C.HWTCON_WAVEFORM_MODE_AUTO
                 end
             end
+
+            -- Disable Kaleido refresh imps when it's unsupported
+            if not self.device:hasColorScreen() then
+                self.refreshColorImp = self.refreshPartialImp
+                self.refreshColorTextImp = self.refreshPartialImp
+            end
         end
 
         local bypass_wait_for = self:getMxcWaitForBypass()
