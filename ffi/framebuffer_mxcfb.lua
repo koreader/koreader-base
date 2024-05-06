@@ -17,6 +17,8 @@ local framebuffer = {
     mech_poweron = nil,
     mech_wait_update_complete = nil,
     mech_wait_update_submission = nil,
+    wait_for_submission_before = false,
+    wait_for_submission_after = false,
     waveform_a2 = nil,
     waveform_fast = nil,
     waveform_ui = nil,
@@ -86,6 +88,12 @@ end
 --       Here, because of REAGL or device-specific quirks.
 function framebuffer:_isPartialWaveFormMode(waveform_mode)
     return waveform_mode == self.waveform_partial
+end
+
+-- Returns true if waveform_mode arg does *NOT* matches the A2 or fast waveform mode for the current device
+-- NOTE: This is to avoid explicit comparison against device-specific waveform constants in mxc_update()
+function framebuffer:_isNotFastWaveFormMode(waveform_mode)
+    return waveform_mode ~= self.waveform_a2 and waveform_mode ~= self.waveform_fast
 end
 
 -- Returns the device-specific nightmode waveform mode
@@ -296,13 +304,14 @@ local function mxc_update(fb, ioc_cmd, ioc_data, is_flashing, waveform_mode, x, 
     --         * true FULL update,
     --         * GC16_FAST update (i.e., popping-up a menu),
     --       then wait for submission of previous marker first.
+    -- NOTE: This is mainly used on Kindles
     local marker = fb.marker
     -- NOTE: Technically, we might not always want to wait for *exactly* the previous marker
     --       (we might actually want the one before that), but in the vast majority of cases, that's good enough,
     --       and saves us a lot of annoying and hard-to-get-right heuristics anyway ;).
     -- Make sure it's a valid marker, to avoid doing something stupid on our first update.
     -- Also make sure we haven't already waited on this marker ;).
-    if fb.mech_wait_update_submission
+    if fb.wait_for_submission_before
       and (is_flashing or fb:_isUIWaveFormMode(waveform_mode))
       and (marker ~= 0 and marker ~= fb.dont_wait_for_marker) then
         fb.debug("refresh: wait for submission of (previous) marker", marker)
@@ -398,6 +407,19 @@ local function mxc_update(fb, ioc_cmd, ioc_data, is_flashing, waveform_mode, x, 
         end
         -- And make sure we won't wait for it again, in case the next refresh trips one of our wait_for_*  heuristics ;).
         fb.dont_wait_for_marker = marker
+    end
+
+    -- NOTE: For PARTIAL, as long as they're not DU/A2, we'll instead just wait for the update's submission, if that's available.
+    -- NOTE: This is mainly used on (MTK) Kobos.
+    if fb.wait_for_submission_after
+      and ioc_data.update_mode == C.UPDATE_MODE_PARTIAL
+      and fb:_isNotFastWaveFormMode(waveform_mode)
+      and (marker ~= 0 and marker ~= fb.dont_wait_for_marker) then
+        fb.debug("refresh: wait for submission of marker", marker)
+        if fb:mech_wait_update_submission(marker) == -1 then
+            local err = ffi.errno()
+            fb.debug("MXCFB_WAIT_FOR_UPDATE_SUBMISSION ioctl failed:", ffi.string(C.strerror(err)))
+        end
     end
 end
 
@@ -752,6 +774,8 @@ function framebuffer:init()
         self.mech_refresh = refresh_k51
         self.mech_wait_update_complete = kindle_pearl_mxc_wait_for_update_complete
         self.mech_wait_update_submission = kindle_mxc_wait_for_update_submission
+        -- Kindles wait for submission of the *previous* marker
+        self.wait_for_submission_before = true
 
         self.waveform_a2 = C.WAVEFORM_MODE_A2
         self.waveform_fast = C.WAVEFORM_MODE_DU
@@ -923,6 +947,8 @@ function framebuffer:init()
             self.mech_refresh = refresh_kobo_mtk
             self.mech_wait_update_complete = kobo_mtk_wait_for_update_complete
             self.mech_wait_update_submission = kobo_mtk_wait_for_update_submission
+            -- Kobos wait for submission of the *just sent* marker
+            self.wait_for_submission_after = true
 
             self.waveform_a2 = C.HWTCON_WAVEFORM_MODE_A2
             self.waveform_fast = C.HWTCON_WAVEFORM_MODE_DU
@@ -940,7 +966,7 @@ function framebuffer:init()
             -- The Elipsa 2E was the first MTK device, and it does... a few things differently :/.
             if self.device.model == "Kobo_condor" then
                 -- It doesn't use WAIT_FOR_UPDATE_SUBMISSION
-                self.mech_wait_update_submission = nil
+                self.wait_for_submission_after = false
                 -- It does *NOT* enforce FULL on REAGL updates
                 self.waveform_reagl = nil
                 -- For some mysterious reason, Eclipse waveform modes are completely broken outside of 32bpp.
