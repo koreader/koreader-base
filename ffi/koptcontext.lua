@@ -1,3 +1,78 @@
+--[[--
+Leptonica cheatsheet:
+    -- Data structures:
+    PIX -- basic data structure - stores image
+    PIXA - array of PIX
+    BOX -- stores rectangle (x, y, w, h)
+    BOXA -- array of BOX
+    SEL -- selector for morphological operations
+    SELA -- array of SEL
+    SELA -- array of SEL
+    NUMA -- array of numbers
+
+    -- Functions:
+    -- note that all of them take/return pointers, or null/nil on failure
+
+    pixDestroy(pix) -- free memory from PIX
+    boxDestroy(box) -- free memory from BOX
+    selDestroy(sel) -- free memory from SEL
+    pixaDestroy(pixa) -- free memory from PIXA
+    boxaDestroy(boxa) -- free memory from BOXA
+    selaDestroy(sela) -- free memory from SELA
+    numaGetIValue(nai, counter_w, counter_l) -- returns int value from NUMA
+    numaGetFValue(nai, counter_w, counter_l) -- returns float value from NUMA
+    pixGetWidth(pix) -- return pix width
+    pixGetHeight(pix) -- return pix height
+    pixConvertTo32(pix) -- converts pix to 32bpp
+    boxaCombineOverlaps(boxa) -- return intersection of all box in a boxa
+    boxCreate(x, y, w, h) -- create box with given dimensions
+    boxaGetCount(boxa) -- get number of elements in boxa array
+
+    -- get element from BOXA flag can be C.L_COPY (creates new copy) or
+    -- C.L_CLONE (returns ref-counted handle)
+    boxaGetBox(boxa, index, flag)
+
+    -- add box to boxa array, flag can be C.L_INSERT, or C.L_COPY
+    boxaAddBox(boxa, box, flag)
+
+    -- adjust box's size by given deltas and write it to boxd
+    boxAdjustSides(boxd, boxs, d_left, d_right, d_top, d_bottom)
+
+    -- returns boxa where each element intersects with box,
+    -- or is removed if it doesn't intersect
+    boxaClipToBox(boxa, box)
+
+    -- returns intersection of both box, or null if they don't intersect
+    boxOverlapRegion(box, box)
+
+    -- returns new black-white PIX,
+    -- if the source pixel is < threshold,
+    -- resulting pixel is 1 (black),
+    -- otherwise 0 (white)
+    pixThresholdToBinary(pix, threshold)
+
+    -- returns 0 on success and 1 on failure, output_* are PIX
+    pixGetRegionsBinary(input_pix,
+                        output_halftonemask,
+                        output_textline_mask,
+                        output_textblock_mask,
+                        debug)
+
+    -- draw boxa elements in random color with given width
+    pixDrawBoxaRandom(pix, boxa, width)
+
+    -- creates png from pix, useful for debugging
+    pixWritePng(path, pix, gamma)
+
+    -- multiplies box part of pixs by color and writes it to pixd
+    pixMultiplyByColor(pixd, pixs, box, color)
+
+    -- converts float_array to NUMA, flag is either C.L_INSERT or C.L_COPY
+    numaCreateFromFArray(float_array, size, flag)
+
+@module ffi.koptcontext
+]]
+
 local ffi = require("ffi")
 local C = ffi.C
 
