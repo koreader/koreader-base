@@ -17,11 +17,13 @@ local framebuffer = {
     mech_poweron = nil,
     mech_wait_update_complete = nil,
     mech_wait_update_submission = nil,
-    waveform_partial = nil,
+    waveform_a2 = nil,
+    waveform_fast = nil,
     waveform_ui = nil,
+    waveform_partial = nil,
     waveform_flashui = nil,
     waveform_full = nil,
-    waveform_fast = nil,
+    waveform_color = nil,
     waveform_reagl = nil,
     waveform_night = nil,
     waveform_flashnight = nil,
@@ -728,6 +730,11 @@ end
 function framebuffer:refreshA2Imp(x, y, w, h, dither)
     self.debug("refresh: A2", x, y, w, h, dither)
     self:mech_refresh(false, self.waveform_a2, x, y, w, h, dither)
+end
+
+function framebuffer:refreshColorImp(x, y, w, h, dither)
+    self.debug("refresh: color", x, y, w, h, dither)
+    self:mech_refresh(false, self.waveform_color, x, y, w, h, dither)
 end
 
 function framebuffer:refreshWaitForLastImp()

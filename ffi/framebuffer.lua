@@ -196,6 +196,9 @@ end
 function fb:refreshA2Imp(x, y, w, h, d)
     return self:refreshFastImp(x, y, w, h, d)
 end
+function fb:refreshColorImp(x, y, w, h, d)
+    return self:refreshPartialImp(x, y, w, h, d)
+end
 function fb:refreshWaitForLastImp()
     -- default is NOP
 end
@@ -237,6 +240,10 @@ end
 function fb:refreshA2(x, y, w, h, d)
     x, y, w, h = self:calculateRealCoordinates(x, y, w, h)
     return self:refreshA2Imp(x, y, w, h, d)
+end
+function fb:refreshColor(x, y, w, h, d)
+    x, y, w, h = self:calculateRealCoordinates(x, y, w, h)
+    return self:refreshColorImp(x, y, w, h, d)
 end
 function fb:refreshWaitForLast()
     return self:refreshWaitForLastImp()
