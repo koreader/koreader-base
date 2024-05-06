@@ -628,23 +628,14 @@ local function refresh_kobo_mk7(fb, is_flashing, waveform_mode, x, y, w, h, dith
 end
 
 local function refresh_kobo_mtk(fb, is_flashing, waveform_mode, x, y, w, h, dither)
-    -- FIXME: Enable this, assuming it actually fits our purpose.
-    -- Enable the appropriate flag when requesting an any->2bit update, provided we're not dithering.
-    -- NOTE: See FBInk note about DITHER + MONOCHROME
-    --[[
-    if waveform_mode == C.HWTCON_WAVEFORM_MODE_DU and not dither then
-        fb.update_data.flags = C.HWTCON_FLAG_FORCE_A2_OUTPUT
-    else
-        fb.update_data.flags = 0
-    end
-    --]]
     fb.update_data.flags = 0
 
     -- Did we request HW dithering?
     if dither and fb.device:canHWDither() then
         fb.update_data.flags = bor(fb.update_data.flags, C.HWTCON_FLAG_USE_DITHERING)
 
-        if waveform_mode == C.HWTCON_WAVEFORM_MODE_DU or waveform_mode == C.HWTCON_WAVEFORM_MODE_A2 then
+        -- NOTE: We only use A2 for the virtual keyboard, and Nickel forgoes dithering in that context.
+        if waveform_mode == C.HWTCON_WAVEFORM_MODE_DU then
             fb.update_data.dither_mode = C.HWTCON_FLAG_USE_DITHERING_Y8_Y1_S
         else
             fb.update_data.dither_mode = C.HWTCON_FLAG_USE_DITHERING_Y8_Y4_S
