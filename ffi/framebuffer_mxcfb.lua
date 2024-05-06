@@ -657,8 +657,6 @@ local function refresh_kobo_mk7(fb, is_flashing, waveform_mode, x, y, w, h, dith
 end
 
 local function refresh_kobo_mtk(fb, is_flashing, waveform_mode, x, y, w, h, dither)
-    fb.update_data.flags = 0
-
     -- Did we request HW dithering?
     if dither and fb.device:canHWDither() then
         fb.update_data.flags = bor(fb.update_data.flags, C.HWTCON_FLAG_USE_DITHERING)
@@ -669,6 +667,9 @@ local function refresh_kobo_mtk(fb, is_flashing, waveform_mode, x, y, w, h, dith
         else
             fb.update_data.dither_mode = C.HWTCON_FLAG_USE_DITHERING_Y8_Y4_S
         end
+    else
+        fb.update_data.flags = 0
+        fb.update_data.dither_mode = 0
     end
 
     return mxc_update(fb, C.HWTCON_SEND_UPDATE, fb.update_data, is_flashing, waveform_mode, x, y, w, h, dither)
