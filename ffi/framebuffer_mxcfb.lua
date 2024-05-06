@@ -429,16 +429,28 @@ local function mxc_update(fb, ioc_cmd, ioc_data, is_flashing, waveform_mode, x, 
         fb.dont_wait_for_marker = marker
     end
 
-    -- NOTE: For PARTIAL, as long as they're not DU/A2, we'll instead just wait for the update's submission, if that's available.
+    -- NOTE: For PARTIAL, as long as they're not A2, we'll instead just wait for the update's submission, if that's available.
     -- NOTE: This is mainly used on (MTK) Kobos.
-    if fb.wait_for_submission_after
-      and ioc_data.update_mode == C.UPDATE_MODE_PARTIAL
-      and fb:_isNotFastWaveFormMode(waveform_mode)
-      and (marker ~= 0 and marker ~= fb.dont_wait_for_marker) then
-        fb.debug("refresh: wait for submission of marker", marker)
-        if fb:mech_wait_update_submission(marker) == -1 then
-            local err = ffi.errno()
-            fb.debug("MXCFB_WAIT_FOR_UPDATE_SUBMISSION ioctl failed:", ffi.string(C.strerror(err)))
+    if fb.wait_for_submission_after then
+        if ioc_data.update_mode == C.UPDATE_MODE_PARTIAL
+          and fb:_isNotA2WaveFormMode(waveform_mode)
+          and (marker ~= 0 and marker ~= fb.dont_wait_for_marker) then
+            fb.debug("refresh: wait for submission of marker", marker)
+            if fb:mech_wait_update_submission(marker) == -1 then
+                local err = ffi.errno()
+                fb.debug("MXCFB_WAIT_FOR_UPDATE_SUBMISSION ioctl failed:", ffi.string(C.strerror(err)))
+            end
+        end
+
+        -- Also wait for *completion* of UI updates
+        if fb:_isUIWaveFormMode(waveform_mode)
+          and (marker ~= 0 and marker ~= fb.dont_wait_for_marker) then
+            fb.debug("refresh: wait for completion of marker", marker)
+            if fb:mech_wait_update_complete(marker) == -1 then
+                local err = ffi.errno()
+                fb.debug("MXCFB_WAIT_FOR_UPDATE_COMPLETE ioctl failed:", ffi.string(C.strerror(err)))
+            end
+            fb.dont_wait_for_marker = marker
         end
     end
 
@@ -449,6 +461,7 @@ local function mxc_update(fb, ioc_cmd, ioc_data, is_flashing, waveform_mode, x, 
     -- * Waiting for submission *after* Fast doesn't help.
     -- * Waiting for complete *after* Fast helps everywhere, but obviously murders latency, too.
     -- FWIW, Nickel does (using AUTO everywhere): Complete -> HL -> Submission -> UI -> Complete -> UnHL -> Submission
+    -- * Doing something similar with our usual DU + AUTO combos doesn't help.
 end
 
 local function refresh_k51(fb, is_flashing, waveform_mode, x, y, w, h)
