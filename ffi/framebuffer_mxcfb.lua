@@ -444,7 +444,7 @@ local function mxc_update(fb, ioc_cmd, ioc_data, is_flashing, waveform_mode, x, 
         end
     end
 
-    -- NOTE: Jotting down some notes about the flickering of highlights on Kobo MTK:
+    -- NOTE: Jotting down some notes about the flickering of disappearing highlights on Kobo MTK:
     -- * Waiting for complete *before* Fast helps when we do HL -> UnHL -> UI
     -- * Waiting for complete *before* UI helps when we do HL -> UI (i.e., when we elide the UnHL)
     -- Both are... pretty bad for latency, though.
