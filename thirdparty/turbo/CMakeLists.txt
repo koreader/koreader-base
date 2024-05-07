@@ -10,6 +10,9 @@ assert_var_defined(LDFLAGS)
 
 ep_get_source_dir(SOURCE_DIR)
 
+# Some of the LUA files are executables for no good reason.
+list(APPEND PATCH_CMD COMMAND chmod a-x turbo/platform.lua turbo/socket_ffi.lua turbo/syscall.lua)
+
 set(BUILD_CMD ${KO_MAKE_RECURSIVE} "CC=${CC}" "CFLAGS=${CFLAGS}" "LDFLAGS=${LDFLAGS}" all)
 
 # Drop duplicate cdefs, make sure turbo find its libtffi_wrap library, and pull in upstream fixes
