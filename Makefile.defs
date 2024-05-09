@@ -77,10 +77,6 @@ export CMAKE_BUILD_TYPE
 
 # CMAKE:=cmake --no-warn-unused-cli
 CMAKE := cmake
-ifdef VERBOSE
-	CMAKE_ARGS := -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON
-endif
-CMAKE+=$(CMAKE_ARGS)
 
 ifeq ($(NINJA),)
   NINJA := $(shell command -v ninja)
@@ -95,7 +91,7 @@ endif
 ifneq ($(USE_NINJA),)
   CMAKE_FLAGS = -G Ninja
   CMAKE_MAKE_PROGRAM := $(NINJA)
-  ifdef VERBOSE
+  ifneq (,$(or $(VERBOSE),$(V)))
     NINJAFLAGS := -v
   endif
   ifneq (,$(PARALLEL_JOBS))
@@ -112,8 +108,12 @@ endif
 
 CMAKE_FLAGS += -DMAKE=$(MAKE) -DNINJA=$(NINJA)
 
-ifdef VERBOSE
-  MAKEFLAGS += VERBOSE=1
+ifneq (,$(or $(VERBOSE),$(V)))
+  ifeq (4.4,$(firstword $(sort $(MAKE_VERSION) 4.4)))
+    MAKEFLAGS += --debug=print
+  else
+    MAKEFLAGS += --trace
+  endif
 endif
 
 export NINJAFLAGS
