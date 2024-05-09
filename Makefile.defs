@@ -90,7 +90,7 @@ endif
 
 ifneq ($(USE_NINJA),)
   CMAKE_FLAGS = -G Ninja
-  CMAKE_MAKE_PROGRAM := $(NINJA)
+  CMAKE_MAKE_PROGRAM = $(abspath $(THIRDPARTY_DIR)/cmake_modules/koninja.sh) $(NINJA)
   ifneq (,$(or $(VERBOSE),$(V)))
     NINJAFLAGS := -v
   endif
@@ -100,9 +100,9 @@ ifneq ($(USE_NINJA),)
   ifneq (,$(PARALLEL_LOAD))
     NINJAFLAGS += -l$(PARALLEL_LOAD)
   endif
-  CMAKE_MAKE_PROGRAM_FLAGS ?= $(NINJAFLAGS)
+  CMAKE_MAKE_PROGRAM_FLAGS ?=
 else
-  CMAKE_MAKE_PROGRAM := $(MAKE)
+  CMAKE_MAKE_PROGRAM = $(abspath $(THIRDPARTY_DIR)/cmake_modules/komake.sh) $(MAKE)
   CMAKE_MAKE_PROGRAM_FLAGS ?=
 endif
 
