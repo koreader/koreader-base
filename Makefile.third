@@ -144,19 +144,19 @@ $(MUPDF_LIB): $(JPEG_LIB) \
 		-DCXXFLAGS='$(CXXFLAGS)' \
 		-DOS='$(if $(WIN32),,Other)' \
 		-DAR='$(AR)' \
-		-DLDFLAGS='$(LDFLAGS) -L$(CURDIR)/$(OUTPUT_DIR)' \
+		-DLDFLAGS='$(LDFLAGS) -L$(abspath $(OUTPUT_DIR))' \
 		-DXCFLAGS='$(CFLAGS) -DNOBUILTINFONT -DNO_ICC -I$(JPEG_DIR)/include -I$(FREETYPE_DIR)/include/freetype2 -I$(HARFBUZZ_DIR)/include/harfbuzz -I$(ZLIB_DIR) -I$(MINIZIP_DIR) -I$(LIBWEBP_DIR)/include' \
 		-DMUPDF_LIB_STATIC='$(MUPDF_LIB_STATIC)' \
 		-DMUPDF_THIRDPARTY_LIBS='$(MUPDF_THIRDPARTY_LIBS)' \
-		-DMUPDF_LIB='$(CURDIR)/$(MUPDF_LIB)' \
+		-DMUPDF_LIB='$(abspath $(MUPDF_LIB))' \
 		-DMUPDF_SONAME='$(notdir $(MUPDF_LIB))' \
 		-DAES_LIB='$(AES_LIB)' \
-		-DZLIB='$(CURDIR)/$(ZLIB)' \
-		-DJPEG_LIB='$(CURDIR)/$(JPEG_LIB)' \
-		-DFREETYPE_LIB='$(CURDIR)/$(FREETYPE_LIB)' \
-		-DHARFBUZZ_LIB='$(CURDIR)/$(HARFBUZZ_LIB)' \
-		-DLIBWEBP_LIB='$(CURDIR)/$(LIBWEBP_LIB)' \
-		-DLIBWEBPDEMUX_LIB='$(CURDIR)/$(LIBWEBPDEMUX_LIB)' \
+		-DZLIB='$(abspath $(ZLIB))' \
+		-DJPEG_LIB='$(abspath $(JPEG_LIB))' \
+		-DFREETYPE_LIB='$(abspath $(FREETYPE_LIB))' \
+		-DHARFBUZZ_LIB='$(abspath $(HARFBUZZ_LIB))' \
+		-DLIBWEBP_LIB='$(abspath $(LIBWEBP_LIB))' \
+		-DLIBWEBPDEMUX_LIB='$(abspath $(LIBWEBPDEMUX_LIB))' \
 		$(CURDIR)/$(THIRDPARTY_DIR)/mupdf && \
 		$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS)
 ifdef DARWIN
@@ -175,7 +175,7 @@ $(LODEPNG_LIB) $(LODEPNG_DIR): $(THIRDPARTY_DIR)/lodepng/*.*
 		-DCFLAGS='$(CFLAGS)' \
 		-DLDFLAGS='$(LDFLAGS)' \
 		-DSONAME='$(notdir $(LODEPNG_LIB))' \
-		-DOUTPUT_PATH='$(CURDIR)/$(dir $(LODEPNG_LIB))' \
+		-DOUTPUT_PATH='$(abspath $(dir $(LODEPNG_LIB)))' \
 		$(CURDIR)/$(THIRDPARTY_DIR)/lodepng && \
 		$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS)
 
@@ -345,7 +345,7 @@ $(K2PDFOPT_LIB) $(LEPTONICA_LIB) $(TESSERACT_LIB): $(PNG_LIB) $(ZLIB) \
 		-DRANLIB='$(RANLIB)' \
 		-DLDFLAGS='$(LDFLAGS)' \
 		-DZLIB_DIR='$(ZLIB_DIR)' \
-		-DZLIB='$(CURDIR)/$(ZLIB)' \
+		-DZLIB='$(abspath $(ZLIB))' \
 		-DPNG_DIR='$(PNG_DIR)' \
 		-DLEPTONICA_DIR='$(LEPTONICA_DIR)' \
 		-DTESSERACT_DIR='$(TESSERACT_DIR)' \
@@ -581,10 +581,10 @@ $(LUASOCKET): $(THIRDPARTY_DIR)/luasocket/*.*
 		$(CMAKE) $(CMAKE_FLAGS) \
 		-DPLAT='$(if $(WIN32),mingw,$(if $(DARWIN),macosx,linux))' \
 		-DCC='$(CC) $(CFLAGS)' \
-		$(if $(ANDROID),-DMYLDFLAGS='$(LDFLAGS) $(CURDIR)/$(LUAJIT_LIB)',) \
-		$(if $(WIN32),-DLUALIB_mingw='$(CURDIR)/$(LUAJIT_LIB)',) \
+		$(if $(ANDROID),-DMYLDFLAGS='$(LDFLAGS) $(abspath $(LUAJIT_LIB))',) \
+		$(if $(WIN32),-DLUALIB_mingw='$(abspath $(LUAJIT_LIB))',) \
 		-DLUAINC='$(LUAJIT_DIR)/src' \
-		-DINSTALL_DIR='$(CURDIR)/$(OUTPUT_DIR)/common' \
+		-DINSTALL_DIR='$(abspath $(OUTPUT_DIR)/common)' \
 		$(CURDIR)/$(THIRDPARTY_DIR)/luasocket && \
 		$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS)
 
@@ -633,10 +633,10 @@ $(LUASEC): $(SSL_LIB) $(THIRDPARTY_DIR)/luasec/*.*
 		-DLD='$(CC)' \
 		-DAR='$(AR)' \
 		-DRANLIB='$(RANLIB)' \
-		$(if $(ANDROID),-DLIBS='$(CURDIR)/$(SSL_LIB) $(CURDIR)/$(CRYPTO_LIB) $(CURDIR)/$(LUASEC_BUILD_DIR)/luasec-prefix/src/luasec/src/luasocket/libluasocket.a $(CURDIR)/$(LUAJIT_LIB)',) \
+		$(if $(ANDROID),-DLIBS='$(abspath $(SSL_LIB) $(CRYPTO_LIB) $(LUASEC_BUILD_DIR)/luasec-prefix/src/luasec/src/luasocket/libluasocket.a $(LUAJIT_LIB))',) \
 		-DINC_PATH='-I$(LUAJIT_DIR)/src -I$(OPENSSL_DIR)/include' \
 		-DLIB_PATH='-L$(OPENSSL_DIR)' \
-		-DLUAPATH='$(CURDIR)/$(OUTPUT_DIR)/common' \
+		-DLUAPATH='$(abspath $(OUTPUT_DIR)/common)' \
 		$(CURDIR)/$(THIRDPARTY_DIR)/luasec && \
 		$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS)
 ifdef DARWIN
@@ -684,7 +684,7 @@ $(TURBO_FFI_WRAP_LIB): $(SSL_LIB) $(THIRDPARTY_DIR)/turbo/*.*
 		$(CMAKE) $(CMAKE_FLAGS) \
 		-DCC='$(CC)' \
 		-DCFLAGS='$(CFLAGS) -I$(OPENSSL_DIR)/include' \
-		-DLDFLAGS='$(LDFLAGS) -lcrypto -lssl $(if $(ANDROID),$(CURDIR)/$(LUAJIT_LIB),) $(if $(WIN32),$(CURDIR)/$(LUAJIT_LIB),) -L$(OPENSSL_DIR)' \
+		-DLDFLAGS='$(LDFLAGS) -lcrypto -lssl $(if $(ANDROID)$(WIN32),$(abspath $(LUAJIT_LIB))) -L$(OPENSSL_DIR)' \
 		$(CURDIR)/$(THIRDPARTY_DIR)/turbo && \
 		$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS)
 	cp -fL $(TURBO_DIR)/$(notdir $(TURBO_FFI_WRAP_LIB)) $@
@@ -710,7 +710,7 @@ $(LPEG_ROCK): $(THIRDPARTY_DIR)/lpeg/*.*
 	-rm -f $(LPEG_ROCK)
 	cd $(LPEG_BUILD_DIR) && \
 		$(CMAKE) $(CMAKE_FLAGS) \
-		-DOUTPUT_DIR='$(CURDIR)/$(OUTPUT_DIR)' \
+		-DOUTPUT_DIR='$(abspath $(OUTPUT_DIR))' \
 		-DLPEG_VER='$(LPEG_VER)' \
 		-DCC='$(CC)' \
 		-DCFLAGS='$(CFLAGS)' \
@@ -728,7 +728,7 @@ $(LUA_SPORE_ROCK): $(THIRDPARTY_DIR)/lua-Spore/*.*
 	-rm -f $(LUA_SPORE_ROCK)
 	cd $(LUA_SPORE_BUILD_DIR) && \
 		$(CMAKE) $(CMAKE_FLAGS) \
-		-DOUTPUT_DIR='$(CURDIR)/$(OUTPUT_DIR)' \
+		-DOUTPUT_DIR='$(abspath $(OUTPUT_DIR))' \
 		-DLUA_SPORE_VER='$(LUA_SPORE_VER)' \
 		-DCC='$(CC)' \
 		-DLD='$(CC)' \
@@ -744,7 +744,7 @@ $(LUA_HTMLPARSER_ROCK): $(THIRDPARTY_DIR)/lua-htmlparser/*.*
 	-rm -f $(LUA_HTMLPARSER_ROCK)
 	cd $(LUA_HTMLPARSER_BUILD_DIR) && \
 		$(CMAKE) $(CMAKE_FLAGS) \
-		-DOUTPUT_DIR='$(CURDIR)/$(OUTPUT_DIR)' \
+		-DOUTPUT_DIR='$(abspath $(OUTPUT_DIR))' \
 		-DLUA_HTMLPARSER_VER='$(LUA_HTMLPARSER_VER)' \
 		-DCC='$(CC)' \
 		-DLD='$(CC)' \
@@ -760,7 +760,7 @@ $(LUA_RAPIDJSON_ROCK): $(THIRDPARTY_DIR)/lua-rapidjson/*.*
 	-rm -f $(LUA_RAPIDJSON_ROCK)
 	cd $(LUA_RAPIDJSON_BUILD_DIR) && \
 		$(CMAKE) $(CMAKE_FLAGS) \
-		-DOUTPUT_DIR='$(CURDIR)/$(OUTPUT_DIR)' \
+		-DOUTPUT_DIR='$(abspath $(OUTPUT_DIR))' \
 		-DLUA_RAPIDJSON_VER='$(LUA_RAPIDJSON_VER)' \
 		-DCC='$(CC)' \
 		-DCXX='$(CXX)' \
@@ -771,7 +771,7 @@ $(LUA_RAPIDJSON_ROCK): $(THIRDPARTY_DIR)/lua-rapidjson/*.*
 		-DLUA_INCDIR='$(LUA_INCDIR)' \
 		-DLUA_LIBDIR='$(LUA_LIBDIR)' \
 		$(if $(ANDROID),-DLUALIB='$(notdir $(LUAJIT_LIB))',) \
-		$(if $(ANDROID),-DLIBFLAG='$(CURDIR)/$(LUAJIT_LIB) -lm',) \
+		$(if $(ANDROID),-DLIBFLAG='$(abspath $(LUAJIT_LIB)) -lm',) \
 		$(CURDIR)/$(THIRDPARTY_DIR)/lua-rapidjson && \
 		$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS)
 
@@ -829,9 +829,9 @@ $(OUTPUT_DIR)/zsync2: $(THIRDPARTY_DIR)/zsync2/*.*
 		-DLDFLAGS='$(LDFLAGS) -L$(CURL_DIR)/lib -L$(OPENSSL_DIR) -lssl -lcrypto -pthread' \
 		-DCURL_DIR='$(CURL_DIR)' \
 		-DOPENSSL_DIR='$(OPENSSL_DIR)' \
-		-DCRYPTO_LIB='$(CURDIR)/$(CRYPTO_LIB)' \
-		-DSSL_LIB='$(CURDIR)/$(SSL_LIB)' \
-		-DCURL_LIB='$(CURDIR)/$(CURL_LIB)' \
+		-DCRYPTO_LIB='$(abspath $(CRYPTO_LIB))' \
+		-DSSL_LIB='$(abspath $(SSL_LIB))' \
+		-DCURL_LIB='$(abspath $(CURL_LIB))' \
 		$(CURDIR)/$(THIRDPARTY_DIR)/zsync2 && \
 		$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS)
 	cp $(ZSYNC2_DIR)/src/zsync2 $(OUTPUT_DIR)/
