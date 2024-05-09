@@ -20,7 +20,7 @@ all: $(OUTPUT_DIR)/libs $(if $(ANDROID),,$(LUAJIT)) \
 		$(LUAJIT_JIT) \
 		libs $(K2PDFOPT_LIB) \
 		$(OUTPUT_DIR)/common $(OUTPUT_DIR)/rocks \
-		$(OUTPUT_DIR)/plugins $(LUASOCKET) \
+		$(LUASOCKET) \
 		$(OUTPUT_DIR)/ffi $(OUTPUT_DIR)/data \
 		$(if $(WIN32),,$(LUASEC)) \
 		$(TURBOJPEG_LIB) \
@@ -84,9 +84,6 @@ $(OUTPUT_DIR)/common:
 
 $(OUTPUT_DIR)/rocks:
 	install -d $(OUTPUT_DIR)/rocks
-
-$(OUTPUT_DIR)/plugins:
-	install -d $(OUTPUT_DIR)/plugins
 
 $(OUTPUT_DIR)/ffi:
 	$(SYMLINK) $(abspath ffi) $@
