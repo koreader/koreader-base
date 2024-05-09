@@ -68,7 +68,7 @@ ifeq ($(DO_STRIP),1)
 endif
 	# set up some needed paths and links
 	install -d $(OUTPUT_DIR)/{cache,clipboard,fonts}
-	ln -sf $(CURDIR)/$(THIRDPARTY_DIR)/kpvcrlib/cr3.css $(OUTPUT_DIR)/data/
+	$(SYMLINK) $(abspath $(THIRDPARTY_DIR)/kpvcrlib/cr3.css) $(OUTPUT_DIR)/data/
 
 $(OUTPUT_DIR)/:
 	mkdir -p $@
@@ -89,10 +89,10 @@ $(OUTPUT_DIR)/plugins:
 	install -d $(OUTPUT_DIR)/plugins
 
 $(OUTPUT_DIR)/ffi:
-	ln -sf ../../ffi $(OUTPUT_DIR)/
+	$(SYMLINK) $(abspath ffi) $@
 
 $(OUTPUT_DIR)/data:
-	ln -sf $(CRENGINE_SRC_DIR)/cr3gui/data $(OUTPUT_DIR)/data
+	$(SYMLINK) $(abspath $(CRENGINE_SRC_DIR)/cr3gui/data) $@
 
 # our own Lua/C/C++ interfacing:
 
@@ -258,7 +258,7 @@ $(OUTPUT_DIR)/extr: extr.c $(MUPDF_LIB) $(JPEG_LIB) $(FREETYPE_LIB)
 # helper target for initializing third-party code
 
 clean:
-	-rm -rf $(OUTPUT_DIR)/*
+	-rm -rf $(OUTPUT_DIR)
 	-rm -rf $(THIRDPARTY_DIR)/{$(CMAKE_THIRDPARTY_LIBS)}/build/$(MACHINE)
 
 distclean:
@@ -274,10 +274,10 @@ ifneq (,$(EMULATE_READER))
 all: $(OUTPUT_DIR)/spec/base
 
 $(OUTPUT_DIR)/.busted: | $(OUTPUT_DIR)/
-	ln -sf ../../.busted $(OUTPUT_DIR)/
+	$(SYMLINK) $(abspath .busted) $@
 
 $(OUTPUT_DIR)/spec/base: | $(OUTPUT_DIR)/spec/
-	ln -sf ../../../spec $(OUTPUT_DIR)/spec/base
+	$(SYMLINK) $(abspath spec) $@
 
 test: all test-data
 	cd $(OUTPUT_DIR) && $(BUSTED_LUAJIT) ./spec/base/unit
