@@ -62,21 +62,16 @@ end
 
 -- Returns true if waveform_mode arg matches the UI waveform mode for the current device
 -- NOTE: This is to avoid explicit comparison against device-specific waveform constants in mxc_update()
---       Here, it's because of the Kindle-specific WAVEFORM_MODE_GC16_FAST
 function framebuffer:_isUIWaveFormMode(waveform_mode)
     return waveform_mode == self.waveform_ui
 end
 
 -- Returns true if waveform_mode arg matches the FlashUI waveform mode for the current device
--- NOTE: This is to avoid explicit comparison against device-specific waveform constants in mxc_update()
---       Here, it's because of the Kindle-specific WAVEFORM_MODE_GC16_FAST
 function framebuffer:_isFlashUIWaveFormMode(waveform_mode)
     return waveform_mode == self.waveform_flashui
 end
 
 -- Returns true if waveform_mode arg matches the REAGL waveform mode for the current device
--- NOTE: This is to avoid explicit comparison against device-specific waveform constants in mxc_update()
---       Here, it's Kindle's various WAVEFORM_MODE_REAGL vs. Kobo's WAVEFORM_MODE_REAGLD
 function framebuffer:_isREAGLWaveFormMode(waveform_mode)
     return waveform_mode == self.waveform_reagl
 end
@@ -87,32 +82,26 @@ function framebuffer:_isNightREAGL()
 end
 
 -- Returns true if waveform_mode arg matches the partial waveform mode for the current device
--- NOTE: This is to avoid explicit comparison against device-specific waveform constants in mxc_update()
---       Here, because of REAGL or device-specific quirks.
 function framebuffer:_isPartialWaveFormMode(waveform_mode)
     return waveform_mode == self.waveform_partial
 end
 
 -- Returns true if waveform_mode arg matches the fast waveform mode for the current device
--- NOTE: This is to avoid explicit comparison against device-specific waveform constants in mxc_update()
 function framebuffer:_isFastWaveFormMode(waveform_mode)
     return waveform_mode == self.waveform_fast
 end
 
 -- Returns true if waveform_mode arg does *NOT* match the A2 or fast waveform mode for the current device
--- NOTE: This is to avoid explicit comparison against device-specific waveform constants in mxc_update()
 function framebuffer:_isNotFastWaveFormMode(waveform_mode)
     return waveform_mode ~= self.waveform_a2 and waveform_mode ~= self.waveform_fast
 end
 
 -- Returns true if waveform_mode arg does *NOT* match the A2 waveform mode for the current device
--- NOTE: This is to avoid explicit comparison against device-specific waveform constants in mxc_update()
 function framebuffer:_isNotA2WaveFormMode(waveform_mode)
     return waveform_mode ~= self.waveform_a2
 end
 
 -- Returns true if waveform_mode arg matches a Kaleido-specific waveform mode for the current device
--- NOTE: This is to avoid explicit comparison against device-specific waveform constants in mxc_update()
 function framebuffer:_isKaleidoWaveFormMode(waveform_mode)
     return waveform_mode == self.waveform_color or waveform_mode == self.waveform_color_reagl
 end
