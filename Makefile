@@ -297,8 +297,8 @@ DROID_FONT = thirdparty/fonts/build/downloads/DroidSansMono.ttf
 DROID_FONT_URL = https://github.com/koreader/koreader-fonts/raw/master/droid/$(notdir $(DROID_FONT))
 DROID_FONT_SHA1 = 0b75601f8ef8e111babb6ed11de6573f7178ce44
 
-$(OUTPUT_DIR)/fonts/droid/DroidSansMono.ttf: $(DROID_FONT) | $(OUTPUT_DIR)/fonts/droid/
-	cp $^ $@
+$(OUTPUT_DIR)/fonts/droid/DroidSansMono.ttf: $(DROID_FONT) | $(OUTPUT_DIR)/fonts/
+	$(SYMLINK) $(abspath $(dir $(DROID_FONT))) $(OUTPUT_DIR)/fonts/droid
 
 $(DROID_FONT):
 	mkdir -p $(dir $(DROID_FONT))
