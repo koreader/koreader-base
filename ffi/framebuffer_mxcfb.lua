@@ -95,7 +95,6 @@ end
 
 -- Returns true if waveform_mode arg matches the fast waveform mode for the current device
 -- NOTE: This is to avoid explicit comparison against device-specific waveform constants in mxc_update()
---       Here, because of REAGL or device-specific quirks.
 function framebuffer:_isFastWaveFormMode(waveform_mode)
     return waveform_mode == self.waveform_fast
 end
