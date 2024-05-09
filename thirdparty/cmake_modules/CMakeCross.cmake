@@ -72,9 +72,6 @@ endif()
 
 # Set path(s) to search for libraries/binaries/headers
 set(CMAKE_SYSROOT $ENV{SYSROOT})
-set(CMAKE_STAGING_PREFIX $ENV{CROSS_STAGING})
-# NOTE: CMAKE_SYSROOT should take precedence over this (... hopefully).
-set(CMAKE_FIND_ROOT_PATH $ENV{CROSS_STAGING})
 # Ensure only cross-dirs are searched
 set(ONLY_CMAKE_FIND_ROOT_PATH TRUE)
 # Search for programs in the build host directories

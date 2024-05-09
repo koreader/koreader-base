@@ -615,9 +615,6 @@ endif
 # this will create a path named build/arm-none-linux-gnueabi or similar
 OUTPUT_DIR ?= build/$(MACHINE)
 
-# We'll want a machine-specific staging directory *outside* of OUTPUT_DIR, so we don't pickup random build artifacts in packages...
-CMAKE_STAGING_DIR=build/staging-$(MACHINE)
-
 # you can configure an emulation for the (eink) framebuffer here.
 # the application won't use the framebuffer (and the special e-ink ioctls)
 # in that case.
@@ -642,7 +639,6 @@ else
 	ifndef SYSROOT
 		export SYSROOT:=$(shell $(CC) -print-sysroot)
 	endif
-	export CROSS_STAGING:=$(CMAKE_STAGING_DIR)
 	export CMAKE_TCF:=-DCMAKE_TOOLCHAIN_FILE=$(CURDIR)/thirdparty/cmake_modules/CMakeCross.cmake
 	CMAKE+=$(CMAKE_TCF)
 	REALCC:=$(CC)
