@@ -3,10 +3,10 @@ inputs:
   packages:
     required: true
 
-  # Internal.
-
   cache_epoch:
     default: '1' # increment to reset cache
+
+  # Internal.
 
   shell:
     default: bash --noprofile --norc -e {0}
@@ -55,8 +55,7 @@ runs:
       with:
         path: ${{ env.BREW_CACHE_DIR }}/cache
         key: ${{ inputs.cache_epoch }}-${{ runner.os }}-brew-cache-${{ env.BREW_CACHE_KEY }}
-        restore-keys: |
-          ${{ inputs.cache_epoch }}-${{ runner.os }}-brew-cache-
+        restore-keys: ${{ inputs.cache_epoch }}-${{ runner.os }}-brew-cache-
 
     - shell: ${{ inputs.shell }}
       run: |

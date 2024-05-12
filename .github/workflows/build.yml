@@ -11,14 +11,24 @@ defaults:
     shell: bash
 
 jobs:
-  build:
+
+  macos:
+
     runs-on: macos-11
+
+    env:
+      # Bump number to reset all caches.
+      CACHE_EPOCH: '0'
+      MACOSX_DEPLOYMENT_TARGET: '11'
+      MAKEFLAGS: 'OUTPUT_DIR=build'
 
     steps:
       - name: XCode version
         run: xcode-select -p
 
-      - name: Check out Git repository
+      # Checkout / fetch. {{{
+
+      - name: Checkout
         uses: actions/checkout@v4
         with:
           clean: false
@@ -26,20 +36,59 @@ jobs:
           filter: tree:0
           show-progress: false
 
-      - uses: actions/setup-python@v5
+      - name: Fetch
+        run: make fetchthirdparty
+
+      # }}}
+
+      # Restore / setup caches. {{{
+
+      - name: Generate cache key
+        run: make TARGET= cache-key
+
+      # Note: if we get a hit on the primary key, then the rest of the job can be skipped:
+      # there's no point in building the same version, and we don't have any tests to run.
+      - name: Restore build cache
+        id: ccache-restore
+        uses: actions/cache/restore@v4
         with:
-          # Note: Python 3.12 removal of `distutils` breaks GLib's build.
-          python-version: '3.11'
+          path: /Users/runner/Library/Caches/ccache
+          key: ${{ env.CACHE_EPOCH }}-${{ runner.os }}-ccache-${{ hashFiles('cache-key') }}
+          restore-keys: ${{ env.CACHE_EPOCH }}-${{ runner.os }}-ccache-
 
       - name: Install ccache
+        if: steps.ccache-restore.outputs.cache-hit != 'true'
         run: |
           wget --progress=dot:mega https://github.com/ccache/ccache/releases/download/v4.9.1/ccache-4.9.1-darwin.tar.gz
           tar xf ccache-4.9.1-darwin.tar.gz
           printf '%s\n' "$PWD/ccache-4.9.1-darwin" >>"${GITHUB_PATH}"
 
-      - name: Homebrew install dependencies
+      - name: Setup build cache
+        if: steps.ccache-restore.outputs.cache-hit != 'true'
+        run: |
+          set -x
+          which ccache
+          ccache --version
+          ccache --zero-stats
+          ccache --max-size=256M
+          ccache --show-config
+
+      # }}}
+
+      # Install dependencies. {{{
+
+      - name: Setup Python
+        if: steps.ccache-restore.outputs.cache-hit != 'true'
+        uses: actions/setup-python@v5
+        with:
+          # Note: Python 3.12 removal of `distutils` breaks GLib's build.
+          python-version: '3.11'
+
+      - name: Install homebrew dependencies
+        if: steps.ccache-restore.outputs.cache-hit != 'true'
         uses: ./.github/actions/brew_cache
         with:
+          cache_epoch: '${{ env.CACHE_EPOCH }}'
           # Compared to the README, removes sh5sum to prevent some conflict with coreutils, and gnu-getopt because we're not using kodev.
           packages: >
             autoconf
@@ -61,50 +110,42 @@ jobs:
             wget
 
       - name: Update PATH
-        run: |
-          printf '%s\n' \
-            "$(brew --prefix)/opt/bison/bin" \
-            "$(brew --prefix)/opt/gettext/bin" \
-            "$(brew --prefix)/opt/gnu-getopt/bin" \
-            "$(brew --prefix)/opt/grep/libexec/gnubin" \
-            "$(brew --prefix)/opt/make/libexec/gnubin" \
-            >>"${GITHUB_PATH}"
+        if: steps.ccache-restore.outputs.cache-hit != 'true'
+        run: >
+          printf '%s\n'
+          "$(brew --prefix)/opt/bison/bin"
+          "$(brew --prefix)/opt/gettext/bin"
+          "$(brew --prefix)/opt/gnu-getopt/bin"
+          "$(brew --prefix)/opt/grep/libexec/gnubin"
+          "$(brew --prefix)/opt/make/libexec/gnubin"
+          | tee "${GITHUB_PATH}"
 
-      - name: Build cache restore
-        id: build-cache-restore
-        uses: actions/cache/restore@v4
-        with:
-          path: /Users/runner/Library/Caches/ccache
-          key: ${{ runner.os }}-build-cache-${{ github.sha }}
-          restore-keys: |
-            ${{ runner.os }}-build-cache-${{ github.sha }}-
-            ${{ runner.os }}-build-cache-
+      # }}}
 
-      - name: Build cache post-restore
-        run: |
-          set -x
-          which ccache
-          ccache --version
-          ccache --zero-stats
-          ccache --max-size=256M
-          ccache --show-config
+      # Build. {{{
 
-      - name: Building in progress…
-        id: build
-        run: |
-          export MACOSX_DEPLOYMENT_TARGET=11;
-          make fetchthirdparty && make
+      - name: Build
+        if: steps.ccache-restore.outputs.cache-hit != 'true'
+        run: make
 
-      - name: Build cache pre-save
-        if: always()
+      # }}}
+
+      # Clean / save caches. {{{
+
+      - name: Clean build cache
+        if: steps.ccache-restore.outputs.cache-hit != 'true' && always()
         run: |
           set -x
           ccache --cleanup >/dev/null
           ccache --show-stats --verbose
 
-      - name: Build cache save
+      - name: Save build cache
         uses: actions/cache/save@v4
-        if: always() && steps.build-cache-restore.outputs.cache-hit != 'true'
+        if: steps.ccache-restore.outputs.cache-hit != 'true'
         with:
           path: /Users/runner/Library/Caches/ccache
-          key: ${{ steps.build-cache-restore.outputs.cache-primary-key }}${{ steps.build.outcome != 'success' && format('-{0}', github.run_attempt) || '' }}
+          key: ${{ steps.ccache-restore.outputs.cache-primary-key }}
+
+      # }}}
+
+# vim: foldmethod=marker foldlevel=0
