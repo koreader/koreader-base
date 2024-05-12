@@ -141,12 +141,27 @@ jobs:
           keys:
             - &CACHE_KEY_BUILD_CACHE '<< pipeline.parameters.cache_epoch >>-{{ .Environment.CIRCLE_JOB }}-ccache-{{ arch }}-{{ checksum "cache-key" }}'
             - '<< pipeline.parameters.cache_epoch >>-{{ .Environment.CIRCLE_JOB }}-ccache-{{ arch }}-'
+      - run:
+          name: Setup build cache
+          command: |
+            set -x
+            which ccache
+            ccache --version
+            ccache --zero-stats
+            ccache --show-config
       # }}}
       # Build.
       - run:
           name: Build
           command: source .ci/build_script.sh
       # Clean / save cache. {{{
+      - run:
+          name: Clean build cache
+          when: always
+          command: |
+            set -x
+            ccache --cleanup >/dev/null
+            ccache --show-stats
       - save_cache:
           name: Save build cache
           key: *CACHE_KEY_BUILD_CACHE

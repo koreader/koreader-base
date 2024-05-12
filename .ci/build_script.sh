@@ -19,8 +19,6 @@ docker-make() {
         'source /home/ko/.bashrc'
         'cd /home/ko/base'
         'sudo chown -R ko:ko .'
-        './.ci/cache_restore_post.sh'
-        "trap './.ci/cache_save_pre.sh' EXIT"
         "env MAKEFLAGS='${MAKEFLAGS}' make $(printf '%q ' "$@")"
     )
     sudo chmod -R 777 "${CCACHE_DIR}"
@@ -31,8 +29,6 @@ docker-make() {
 }
 
 if [[ -z "${DOCKER_IMG}" ]]; then
-    './.ci/cache_restore_post.sh'
-    trap './.ci/cache_save_pre.sh' EXIT
     make TARGET="${TARGET}" "$@"
 else
     docker-make TARGET="${TARGET}" VERBOSE=1 "$@"
