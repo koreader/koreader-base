@@ -307,6 +307,25 @@ endif
 
 # }}}
 
+# CI helpers. {{{
+
+define cache_key_ignores
+':!*.lua'
+':!*/.*'
+':!/.*'
+':!/COPYING'
+':!/README.md'
+':!/ffi-cdecl/*'
+':!/spec/*'
+':!/toolchain/*'
+':!/utils/*'
+endef
+
+cache-key: Makefile
+	git ls-files -z $(strip $(cache_key_ignores)) | xargs -0 git ls-tree @ | tee $@
+
+# }}}
+
 .PHONY: all clean distclean dist-clean test
 
 # vim: foldmethod=marker foldlevel=0

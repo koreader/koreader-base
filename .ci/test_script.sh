@@ -5,12 +5,12 @@ CI_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${CI_DIR}/common.sh"
 
 if [ "$TARGET" = "android" ]; then
-    if [ -f build/arm-linux-androideabi/luajit ]; then
+    if [ -f build/luajit ]; then
         echo "ERROR: android build should not include luajit binary."
         exit 1
     fi
 elif [ "$EMULATE_READER" = "1" ]; then
-    cp build/*/luajit "${HOME}/.luarocks/bin/"
+    cp build/luajit "${HOME}/.luarocks/bin/"
     # install test data
     travis_retry make test-data
     # finally make test
