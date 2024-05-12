@@ -133,6 +133,7 @@ jobs:
     environment:
       BASH_ENV: "~/.bashrc"
       CCACHE_MAXSIZE: << parameters.ccache_maxsize >>
+      CLICOLOR_FORCE: "1"
       MAKEFLAGS: "OUTPUT_DIR=build"
     steps:
       # Checkout / fetch. {{{
