@@ -105,6 +105,7 @@ jobs:
 
   lint:
     executor: base
+    resource_class: small
     environment:
       BASH_ENV: "~/.bashrc"
     steps:
@@ -125,6 +126,7 @@ jobs:
         type: string
         default: "256M"
     executor: << parameters.executor >>
+    resource_class: medium
     environment:
       BASH_ENV: "~/.bashrc"
       CCACHE_MAXSIZE: << parameters.ccache_maxsize >>
