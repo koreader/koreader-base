@@ -125,6 +125,9 @@ jobs:
       ccache_maxsize:
         type: string
         default: "256M"
+      always_test:
+        type: boolean
+        default: false
     executor: << parameters.executor >>
     resource_class: medium
     environment:
@@ -132,12 +135,28 @@ jobs:
       CCACHE_MAXSIZE: << parameters.ccache_maxsize >>
       MAKEFLAGS: "OUTPUT_DIR=build"
     steps:
-      # Checkout.
+      # Checkout / fetch. {{{
       - checkout
-      # Restore / setup cache. {{{
+      - run:
+          name: Fetch
+          command: make fetchthirdparty
+      # }}}
+      # Restore / setup caches. {{{
       - run:
           name: Generate cache key
           command: make TARGET= cache-key
+      - restore_cache:
+          name: Restore build directory
+          keys:
+            - &CACHE_KEY_BUILD_DIR '<< pipeline.parameters.cache_epoch >>-{{ .Environment.CIRCLE_JOB }}-build-{{ arch }}-{{ checksum "cache-key" }}'
+      # If we already have a build, and nothing
+      # to test, just skip the rest of the job.
+      - unless:
+          condition: << parameters.always_test >>
+          steps:
+              - run:
+                  name: Skip job?
+                  command: if test -d build; then circleci-agent step halt; fi
       - restore_cache:
           name: Restore build cache
           keys:
@@ -155,13 +174,15 @@ jobs:
       # Build.
       - run:
           name: Build
-          command: source .ci/build_script.sh
-      # Clean / save cache. {{{
+          command: test -d build || source .ci/build_script.sh
+      # Clean / save caches. {{{
       - run:
-          name: Clean build cache
+          name: Clean caches
           when: always
           command: |
             set -x
+            # Trim the build directory.
+            rm -rf build/thirdparty
             ccache --cleanup >/dev/null
             ccache --show-stats
       - save_cache:
@@ -169,6 +190,11 @@ jobs:
           key: *CACHE_KEY_BUILD_CACHE
           paths:
             - /home/ko/.ccache
+      - save_cache:
+          name: Save build directory
+          key: *CACHE_KEY_BUILD_DIR
+          paths:
+            - build
       # }}}
       # Tests. {{{
       - run:
@@ -202,6 +228,7 @@ workflows:
               only: master
           requires:
             - lint
+          always_test: true
 
       - build_and_test:
           name: emu_gcc_ninja_debug
@@ -211,6 +238,7 @@ workflows:
           # TODO: reduce once a more recent version of ccache with
           # zstd support and compression enabled by default is used.
           ccache_maxsize: "1G"
+          always_test: true
 
       - build_and_test:
           name: emu_gcc_make
@@ -220,12 +248,14 @@ workflows:
               only: master
           requires:
             - lint
+          always_test: true
 
       - build_and_test:
           name: emu_clang_ninja
           executor: emu_clang_ninja
           requires:
             - lint
+          always_test: true
 
       # }}}
 
