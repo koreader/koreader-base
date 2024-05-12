@@ -15,16 +15,85 @@ parameters:
 
 executors:
 
-  base:
+  base: &BASE_EXE
     docker:
       - image: koreader/kobase:0.3.2-20.04
 
-  base-clang:
+  # Emulators. {{{
+
+  emu_gcc_ninja:
+    <<: *BASE_EXE
+    environment: &EMU_ENV_LST
+      EMULATE_READER: "1"
+      CC: "gcc"
+
+  emu_gcc_ninja_debug:
+    <<: *BASE_EXE
+    environment:
+      <<: *EMU_ENV_LST
+      KODEBUG: "1"
+
+  emu_gcc_make:
+    <<: *BASE_EXE
+    environment:
+      <<: *EMU_ENV_LST
+      USE_MAKE: "1"
+
+  emu_clang_ninja:
     docker:
       - image: koreader/kobase-clang:0.3.3-20.04
+    environment:
+      <<: *EMU_ENV_LST
+      CC: "clang"
+      CXX: "clang++"
 
-  xcompile:
-    machine: true
+  # }}}
+
+  # Platforms. {{{
+
+  android-arm: &ANDROID_EXE
+    docker:
+      - image: koreader/koandroid:0.8.1-20.04
+    environment:
+      TARGET: "android"
+
+  android-x86:
+    <<: *ANDROID_EXE
+    environment:
+      TARGET: "android"
+      ANDROID_ARCH: "x86"
+
+  cervantes:
+    docker:
+      - image: koreader/kocervantes:0.3.2-20.04
+    environment:
+      TARGET: "cervantes"
+
+  kindle:
+    docker:
+      - image: koreader/kokindle:0.3.2-20.04
+    environment:
+      TARGET: "kindle"
+
+  kobo:
+    docker:
+      - image: koreader/kokobo:0.3.2-20.04
+    environment:
+      TARGET: "kobo"
+
+  pocketbook:
+    docker:
+      - image: koreader/kopb:0.4.1-20.04
+    environment:
+      TARGET: "pocketbook"
+
+  sony-prstux:
+    docker:
+      - image: koreader/kobase-22.04:0.3.0
+    environment:
+      TARGET: "sony-prstux"
+
+  # }}}
 
 # }}}
 
@@ -48,18 +117,22 @@ jobs:
 
   # Build & Test. {{{
 
-  build: &BUILD_TPL
-    executor: base
-    environment: &BUILD_ENV_LST
-      BASH_ENV: "~/.bashrc"
-      CCACHE_MAXSIZE: "256M"
-      MAKEFLAGS: "OUTPUT_DIR=build"
+  build_and_test:
     parameters:
-      cache_path:
+      executor:
+        type: executor
+      ccache_maxsize:
         type: string
-        default: "/home/ko/.ccache"
+        default: "256M"
+    executor: << parameters.executor >>
+    environment:
+      BASH_ENV: "~/.bashrc"
+      CCACHE_MAXSIZE: << parameters.ccache_maxsize >>
+      MAKEFLAGS: "OUTPUT_DIR=build"
     steps:
+      # Checkout.
       - checkout
+      # Restore / setup cache. {{{
       - run:
           name: Generate cache key
           command: make TARGET= cache-key
@@ -68,116 +141,23 @@ jobs:
           keys:
             - &CACHE_KEY_BUILD_CACHE '<< pipeline.parameters.cache_epoch >>-{{ .Environment.CIRCLE_JOB }}-ccache-{{ arch }}-{{ checksum "cache-key" }}'
             - '<< pipeline.parameters.cache_epoch >>-{{ .Environment.CIRCLE_JOB }}-ccache-{{ arch }}-'
+      # }}}
+      # Build.
       - run:
           name: Build
           command: source .ci/build_script.sh
+      # Clean / save cache. {{{
       - save_cache:
           name: Save build cache
           key: *CACHE_KEY_BUILD_CACHE
           paths:
-            - << parameters.cache_path >>
+            - /home/ko/.ccache
+      # }}}
+      # Tests. {{{
       - run:
           name: Test
           command: source .ci/test_script.sh
-
-  # }}}
-
-  # Emulator. {{{
-
-  emu: &EMU_TPL
-    <<: *BUILD_TPL
-    environment: &EMU_ENV_LST
-      <<: *BUILD_ENV_LST
-      EMULATE_READER: "1"
-      CC: "gcc"
-
-  emu_gcc_ninja:
-    <<: *EMU_TPL
-
-  emu_gcc_ninja_debug:
-    <<: *EMU_TPL
-    environment:
-      <<: *EMU_ENV_LST
-      KODEBUG: "1"
-      # TODO: reduce once a more recent version of ccache with
-      # zstd support and compression enabled by default is used.
-      CCACHE_MAXSIZE: "1G"
-
-  emu_gcc_make:
-    <<: *EMU_TPL
-    environment:
-      <<: *EMU_ENV_LST
-      USE_MAKE: "1"
-
-  emu_clang_ninja:
-    <<: *EMU_TPL
-    executor: base-clang
-    environment:
-      <<: *EMU_ENV_LST
-      CC: "clang"
-      CXX: "clang++"
-
-  # }}}
-
-  # Platforms. {{{
-
-  xcompile: &XCOMPILE_TPL
-    <<: *BUILD_TPL
-    executor: xcompile
-    parameters:
-      cache_path:
-        type: string
-        default: "/home/circleci/.ccache"
-
-  android-arm: &ANDROID_TPL
-    <<: *XCOMPILE_TPL
-    environment:
-      <<: *BUILD_ENV_LST
-      TARGET: "android"
-      DOCKER_IMG: koreader/koandroid:0.8.1-20.04
-
-  android-x86:
-    <<: *ANDROID_TPL
-    environment:
-      <<: *BUILD_ENV_LST
-      TARGET: "android"
-      ANDROID_ARCH: "x86"
-      DOCKER_IMG: koreader/koandroid:0.8.1-20.04
-
-  cervantes:
-    <<: *XCOMPILE_TPL
-    environment:
-      <<: *BUILD_ENV_LST
-      TARGET: "cervantes"
-      DOCKER_IMG: koreader/kocervantes:0.3.2-20.04
-
-  kindle:
-    <<: *XCOMPILE_TPL
-    environment:
-      <<: *BUILD_ENV_LST
-      TARGET: "kindle"
-      DOCKER_IMG: koreader/kokindle:0.3.2-20.04
-
-  kobo:
-    <<: *XCOMPILE_TPL
-    environment:
-      <<: *BUILD_ENV_LST
-      TARGET: "kobo"
-      DOCKER_IMG: koreader/kokobo:0.3.2-20.04
-
-  pocketbook:
-    <<: *XCOMPILE_TPL
-    environment:
-      <<: *BUILD_ENV_LST
-      TARGET: "pocketbook"
-      DOCKER_IMG: koreader/kopb:0.4.1-20.04
-
-  sony-prstux:
-    <<: *XCOMPILE_TPL
-    environment:
-      <<: *BUILD_ENV_LST
-      TARGET: "sony-prstux"
-      DOCKER_IMG: koreader/kobase-22.04:0.3.0
+      # }}}
 
   # }}}
 
@@ -197,25 +177,36 @@ workflows:
 
       # Emulators. {{{
 
-      - emu_gcc_ninja:
+      - build_and_test:
+          name: emu_gcc_ninja
+          executor: emu_gcc_ninja
           filters:
             branches:
               only: master
           requires:
             - lint
 
-      - emu_gcc_ninja_debug:
+      - build_and_test:
+          name: emu_gcc_ninja_debug
+          executor: emu_gcc_ninja_debug
           requires:
             - lint
+          # TODO: reduce once a more recent version of ccache with
+          # zstd support and compression enabled by default is used.
+          ccache_maxsize: "1G"
 
-      - emu_gcc_make:
+      - build_and_test:
+          name: emu_gcc_make
+          executor: emu_gcc_make
           filters:
             branches:
               only: master
           requires:
             - lint
 
-      - emu_clang_ninja:
+      - build_and_test:
+          name: emu_clang_ninja
+          executor: emu_clang_ninja
           requires:
             - lint
 
@@ -223,34 +214,48 @@ workflows:
 
       # Platforms. {{{
 
-      - android-arm:
+      - build_and_test:
+          name: android-arm
+          executor: android-arm
           requires:
             - emu_gcc_ninja_debug
 
-      - android-x86:
+      - build_and_test:
+          name: android-x86
+          executor: android-x86
           filters:
             branches:
               only: master
           requires:
             - emu_gcc_ninja_debug
 
-      - cervantes:
+      - build_and_test:
+          name: cervantes
+          executor: cervantes
           requires:
             - emu_gcc_ninja_debug
 
-      - kindle:
+      - build_and_test:
+          name: kindle
+          executor: kindle
           requires:
             - emu_gcc_ninja_debug
 
-      - kobo:
+      - build_and_test:
+          name: kobo
+          executor: kobo
           requires:
             - emu_gcc_ninja_debug
 
-      - pocketbook:
+      - build_and_test:
+          name: pocketbook
+          executor: pocketbook
           requires:
             - emu_gcc_ninja_debug
 
-      - sony-prstux:
+      - build_and_test:
+          name: sony-prstux
+          executor: sony-prstux
           requires:
             - emu_gcc_ninja_debug
 
