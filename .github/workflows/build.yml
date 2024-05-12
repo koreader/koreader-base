@@ -6,6 +6,10 @@ concurrency:
 
 on: [push, pull_request]
 
+defaults:
+  run:
+    shell: bash
+
 jobs:
   build:
     runs-on: macos-11
