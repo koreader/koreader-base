@@ -21,6 +21,7 @@ typedef enum {
   INPUT_MENU_BUTTON = 2097152,
   INPUT_DPAD = 4194304,
   INPUT_ROTATION_EVENT = 8388608,
+  INPUT_SCALED_TABLET = 16777216,
 } __attribute__((packed)) INPUT_DEVICE_TYPE_E;
 typedef uint32_t INPUT_DEVICE_TYPE_T;
 typedef enum {
