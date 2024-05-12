@@ -21,7 +21,7 @@ docker-make() {
         'sudo chown -R ko:ko .'
         './.ci/cache_restore_post.sh'
         "trap './.ci/cache_save_pre.sh' EXIT"
-        "make $(printf '%q ' "$@")"
+        "env MAKEFLAGS='${MAKEFLAGS}' make $(printf '%q ' "$@")"
     )
     sudo chmod -R 777 "${CCACHE_DIR}"
     docker run --rm -t \
