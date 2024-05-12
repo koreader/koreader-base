@@ -12,8 +12,6 @@ fi
 mkdir -p "${CCACHE_DIR}"
 echo "using cache dir: ${CCACHE_DIR}"
 
-travis_retry make fetchthirdparty TARGET=
-
 docker-make() {
     local cmdlist=(
         'source /home/ko/.bashrc'
