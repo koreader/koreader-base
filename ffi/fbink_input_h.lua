@@ -29,6 +29,7 @@ typedef enum {
   OPEN_BLOCKING = 2,
   MATCH_ALL = 4,
   EXCLUDE_ALL = 8,
+  NO_RECAP = 16,
 } __attribute__((packed)) INPUT_SETTINGS_TYPE_E;
 typedef uint32_t INPUT_SETTINGS_TYPE_T;
 typedef struct {
