@@ -16,7 +16,7 @@ list(APPEND BUILD_CMD COMMAND ${KO_MAKE_RECURSIVE} "CFLAGS=${CFLAGS}" "LDFLAGS=$
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
     https://github.com/koreader/KoboUSBMS.git
-    ef5b3a4f13565b0b282ce377517b6da252884597
+    b847b3c32e932937278c9e7db0a1a3778ee59ffb
     ${SOURCE_DIR}
 )
 

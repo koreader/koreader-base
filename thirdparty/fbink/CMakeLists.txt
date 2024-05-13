@@ -14,21 +14,42 @@ set(BINARY_DIR ${SOURCE_DIR})
 # Choose your own adventure!
 if(DEFINED ENV{LEGACY})
     set(FBINK_TARGET legacy)
+    set(INPUT_TARGET inputlib KINDLE=1 LEGACY=1)
 elseif(DEFINED ENV{KINDLE})
     set(FBINK_TARGET kindle)
+    set(INPUT_TARGET inputlib KINDLE=1)
 elseif(DEFINED ENV{CERVANTES})
     set(FBINK_TARGET cervantes)
+    set(INPUT_TARGET inputlib CERVANTES=1)
 elseif(DEFINED ENV{KOBO})
     set(FBINK_TARGET strip KOBO=1)
     set(FBDEPTH_TARGET fbdepth KOBO=1)
+    set(INPUT_TARGET inputlib KOBO=1)
 elseif(DEFINED ENV{REMARKABLE})
     set(FBINK_TARGET remarkable)
     set(FBDEPTH_TARGET fbdepth REMARKABLE=1)
+    set(INPUT_TARGET inputlib REMARKABLE=1)
 elseif(DEFINED ENV{POCKETBOOK})
     set(FBINK_TARGET pocketbook)
     set(FBDEPTH_TARGET fbdepth POCKETBOOK=1)
+    set(INPUT_TARGET inputlib POCKETBOOK=1)
 else()
     set(FBINK_TARGET strip)
+    # Would technically run just fine on plain Linux...
+    #set(INPUT_TARGET inputlib LINUX=1)
+endif()
+
+# The input lib can be built standalone, so start with that
+if(INPUT_TARGET)
+    list(APPEND BUILD_CMD COMMAND ${KO_MAKE_RECURSIVE} clean)
+    list(APPEND BUILD_CMD COMMAND ${KO_MAKE_RECURSIVE} "CFLAGS=${CFLAGS}" "LDFLAGS=${LDFLAGS}" ${INPUT_TARGET})
+
+    # That does mean we need to stash it somewhere a clean won't scrap it, though...
+    if(DEFINED ENV{DEBUG})
+        list(APPEND BUILD_CMD COMMAND ${CMAKE_COMMAND} -E rename ${SOURCE_DIR}/Debug/libfbink_input.so.1.0.0 ${INSTALL_DIR}/libfbink_input.so.1)
+    else()
+        list(APPEND BUILD_CMD COMMAND ${CMAKE_COMMAND} -E rename ${SOURCE_DIR}/Release/libfbink_input.so.1.0.0 ${INSTALL_DIR}/libfbink_input.so.1)
+    endif()
 endif()
 
 # FBDepth can afford to link to a very minimal library, so we need to start from scratch...
@@ -58,7 +79,7 @@ endif()
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
     https://github.com/NiLuJe/FBInk.git
-    a60c6c814b910d24be5b9be43d1b4514a8ef6aef
+    365b119a71f0c5739d9971028bde32f5808a5767
     ${SOURCE_DIR}
 )
 

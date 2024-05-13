@@ -479,6 +479,7 @@ $(OUTPUT_DIR)/fbink: $(THIRDPARTY_DIR)/fbink/*.*
 		-S $(THIRDPARTY_DIR)/fbink -B $(FBINK_BUILD_DIR)
 	$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS) -C $(FBINK_BUILD_DIR)
 	cp $(FBINK_DIR)/fbink $(OUTPUT_DIR)/
+	cp $(FBINK_DIR)/libfbink_input.so.1 $(OUTPUT_DIR)/libs
 ifdef KOBO
 	cp $(FBINK_DIR)/fbdepth $(OUTPUT_DIR)/
 endif
