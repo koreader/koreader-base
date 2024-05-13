@@ -253,7 +253,7 @@ static int closeByFd(int fd)
     return 0;
 }
 
-static int closeInputDevices(lua_State* L __attribute__((unused)))
+static int closeAllInputDevices(lua_State* L __attribute__((unused)))
 {
     // Right now, we close everything, but, in the future, we may want to keep *some* slots open.
     // The function `repackFdArray` (via `closeByIndex`) ensures that the array does not become sparse.
@@ -526,7 +526,7 @@ static int waitForInput(lua_State* L)
 static const struct luaL_Reg input_func[] = {
                                                 { "open", openInputDevice },
                                                 { "close", closeByFd },
-                                                { "closeAll", closeInputDevices },
+                                                { "closeAll", closeAllInputDevices },
                                                 { "waitForEvent", waitForInput },
                                                 { "fakeTapInput", fakeTapInput },
 #if defined(POCKETBOOK)
