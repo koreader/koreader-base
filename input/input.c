@@ -232,8 +232,10 @@ static int closeByIndex(ssize_t fd_idx_to_close)
 }
 
 // Close a device by fd number (for public use)
-static int closeByFd(int fd)
+static int closeByFd(lua_State* L)
 {
+    int fd = luaL_checkint(L, 1);
+
     // Check that we've actually still got this one open'ed
     ssize_t fd_idx_to_close = -1;
     for (size_t i = 0U; i < fd_idx; i++) {
