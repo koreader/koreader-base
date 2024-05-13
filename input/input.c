@@ -100,6 +100,9 @@ static int openInputDevice(lua_State* L)
     const char* restrict ko_dont_grab_input = getenv("KO_DONT_GRAB_INPUT");
 
 #if defined(POCKETBOOK)
+    // NOTE: This is for the deprecated Lua/C PB input implementation (c.f., "input-pocketbook.h").
+    //       The frontend code (e.g., device/input's open wrapper) no longer uses nor supports this,
+    //       as we've unconditionally moved to using the newer Lua/FFI implementation (c.f., ffi/input_pocketbook).
     int inkview_events = luaL_checkint(L, 2);
     if (inkview_events == 1) {
         startInkViewMain(L, fd_idx, inputdevice);
