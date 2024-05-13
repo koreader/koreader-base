@@ -6,9 +6,9 @@ return {
     waitForEvent = SDL.waitForEvent,
     -- NOP:
     fakeTapInput = function() end,
-    -- NOP (Input & Output are handled as one, and we call SDL_Quit in fb:close):
-    close = function() end,
     -- NOP:
+    close = function() end,
+    -- NOP: Input & Output are handled as one, and we call SDL_Quit in fb:close already)
     closeAll = function() end,
     hasClipboardText = SDL.hasClipboardText,
     getClipboardText = SDL.getClipboardText,
