@@ -196,7 +196,8 @@ static int openInputDevice(lua_State* L)
 }
 
 // Make sure our inputfds array is never sparse after closing one
-static void repackFdArray(ssize_t fd_idx_to_close) {
+static void repackFdArray(ssize_t fd_idx_to_close)
+{
     // Shift the fds after the closed ones backward
     for (ssize_t i = fd_idx_to_close; i < (ssize_t) fd_idx - 1; i++) {
         inputfds[i] = inputfds[i + 1];
@@ -205,6 +206,14 @@ static void repackFdArray(ssize_t fd_idx_to_close) {
     inputfds[--fd_idx] = -1;
 
     computeNfds();
+}
+
+static void closeInputDevice(int fd, ssize_t fd_idx_to_close)
+{
+    ioctl(fd, EVIOCGRAB, 0);
+    close(fd);
+
+    repackFdArray(fd_idx_to_close);
 }
 
 // Close a device by fd_idx (for internal use)
@@ -216,11 +225,7 @@ static int closeByIndex(ssize_t fd_idx_to_close)
         return -1;
     }
 
-    ioctl(fd, EVIOCGRAB, 0);
-    close(fd);
-
-    repackFdArray(fd_idx_to_close);
-
+    closeInputDevice(fd, fd_idx_to_close);
     printf("[ko-input] Closed input device with fd: %d @ idx: %zd (matched by idx)\n", fd, fd_idx_to_close);
 
     return 0;
@@ -242,11 +247,7 @@ static int closeByFd(int fd)
         return -1;
     }
 
-    ioctl(fd, EVIOCGRAB, 0);
-    close(fd);
-
-    repackFdArray(fd_idx_to_close);
-
+    closeInputDevice(fd, fd_idx_to_close);
     printf("[ko-input] Closed input device with fd: %d @ idx: %zd (matched by fd)\n", fd, fd_idx_to_close);
 
     return 0;
