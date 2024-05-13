@@ -716,22 +716,18 @@ endif
 # NOTE: We generally want SIMD/ASM juicy stuff everywhere
 export WANT_SIMD=1
 # ... but on ARM targets that are not NEON capable, that obviously won't fly...
-ifneq (,$(findstring march=arm,$(CFLAGS)))
-	# We're on ARM
-	ifeq (,$(findstring fpu=neon,$(CFLAGS)))
-		# We don't support NEON
-		# NOTE: undefine is new to GNU make 3.82, so, do without because Android...
-		#undefine WANT_SIMD
-		WANT_SIMD=
-		unexport WANT_SIMD
-	endif
+ifneq (,$(filter -march=arm%,$(CFLAGS)))
+  # We're on ARM.
+  ifeq (,$(filter -march=armv8-a -mfpu=neon,$(CFLAGS)))
+    # We don't support NEON.
+    WANT_SIMD=
+  endif
 endif
 # ... ditto on Android x86, because the TC is old as hell, and that upsets libjpeg-turbo...
 ifeq ($(TARGET), android)
-	ifeq ($(ANDROID_ARCH), x86)
-		WANT_SIMD=
-		unexport WANT_SIMD
-	endif
+  ifeq ($(ANDROID_ARCH), x86)
+    WANT_SIMD=
+  endif
 endif
 
 LIB_EXT=$(if $(WIN32),.dll,$(if $(DARWIN),.dylib,.so))
