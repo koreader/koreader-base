@@ -21,7 +21,12 @@ elseif not pcall(function() local _ = inkview.GetTouchInfoI end) then
     compat2 = ffi.load("inkview-compat")
 end
 
-local input = {}
+local input = {
+    -- NOP
+    fakeTapInput = function() end,
+    -- our open implementation doesn't exactly allow for a 1:1 match to the standard API...
+    close = function() end,
+}
 
 local ts
 -- Create new 'ts' with current timestamp.
@@ -466,8 +471,6 @@ function input.waitForEvent(sec, usec)
     -- Timed out
     return false, C.ETIME
 end
-
-function input.fakeTapInput() end
 
 function input.closeAll()
     eventq = nil

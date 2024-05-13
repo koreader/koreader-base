@@ -9,10 +9,12 @@ require("ffi/linux_input_h")
 local input = {
     -- to trigger refreshes for certain Android framework events:
     device = nil,
+    -- NOPs
+    open = function() end,
+    close = function() end,
+    closeAll = function() end,
+    fakeTapInput = function() end,
 }
-
-function input.open()
-end
 
 local inputQueue = {}
 
@@ -297,8 +299,5 @@ function input.waitForEvent(sec, usec)
         return false, C.EINTR
     end
 end
-
-function input.fakeTapInput() end
-function input.closeAll() end
 
 return input
