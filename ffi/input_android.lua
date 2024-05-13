@@ -14,6 +14,8 @@ local input = {
     close = function() end,
     closeAll = function() end,
     fakeTapInput = function() end,
+    -- Tell front that we're a custom imp with no concept of paths/fd
+    is_ffi = true,
 }
 
 local inputQueue = {}

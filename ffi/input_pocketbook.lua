@@ -26,6 +26,8 @@ local input = {
     fakeTapInput = function() end,
     -- our open implementation doesn't exactly allow for a 1:1 match to the standard API...
     close = function() end,
+    -- Tell front that we're a custom imp with no concept of paths/fd
+    is_ffi = true,
 }
 
 local ts
