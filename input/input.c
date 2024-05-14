@@ -245,14 +245,17 @@ static int closeByFd(lua_State* L)
         }
     }
     if (fd_idx_to_close == -1) {
-        // fd was not open
-        return -1;
+        // fd was not open, tell front (likely we ate an ENODEV in waitForInput already)
+        lua_pushboolean(L, false);
+        lua_pushinteger(L, ENODEV);
+        return 2;
     }
 
     closeInputDevice(fd, fd_idx_to_close);
     printf("[ko-input] Closed input device with fd: %d @ idx: %zd (matched by fd)\n", fd, fd_idx_to_close);
 
-    return 0;
+    lua_pushboolean(L, true);
+    return 1;
 }
 
 static int closeAllInputDevices(lua_State* L __attribute__((unused)))
