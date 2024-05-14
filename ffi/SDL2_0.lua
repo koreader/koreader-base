@@ -485,6 +485,18 @@ function S.waitForEvent(sec, usec)
         elseif button == SDL.SDL_CONTROLLER_BUTTON_START or button == SDL.SDL_CONTROLLER_BUTTON_LEFTSTICK then
             -- send F1 (bound to menu in front at the time of writing)
             genEmuEvent(C.EV_KEY, 1073741882, 1)
+        elseif button == SDL.SDL_CONTROLLER_BUTTON_DPAD_UP then
+            -- send up
+            genEmuEvent(C.EV_KEY, 1073741906, 1)
+        elseif button == SDL.SDL_CONTROLLER_BUTTON_DPAD_DOWN then
+            -- send down
+            genEmuEvent(C.EV_KEY, 1073741905, 1)
+        elseif button == SDL.SDL_CONTROLLER_BUTTON_DPAD_LEFT then
+            -- send left
+            genEmuEvent(C.EV_KEY, 1073741904, 1)
+        elseif button == SDL.SDL_CONTROLLER_BUTTON_DPAD_RIGHT then
+            -- send right
+            genEmuEvent(C.EV_KEY, 1073741903, 1)
         end
     --- D-pad ---
     elseif event.type == SDL.SDL_JOYHATMOTION then
