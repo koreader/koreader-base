@@ -100,6 +100,9 @@ static int openInputDevice(lua_State* L)
     const char* restrict ko_dont_grab_input = getenv("KO_DONT_GRAB_INPUT");
 
 #if defined(POCKETBOOK)
+    // NOTE: This is for the deprecated Lua/C PB input implementation (c.f., "input-pocketbook.h").
+    //       The frontend code (e.g., device/input's open wrapper) no longer uses nor supports this,
+    //       as we've unconditionally moved to using the newer Lua/FFI implementation (c.f., ffi/input_pocketbook).
     int inkview_events = luaL_checkint(L, 2);
     if (inkview_events == 1) {
         startInkViewMain(L, fd_idx, inputdevice);
@@ -183,7 +186,8 @@ static int openInputDevice(lua_State* L)
 
     // We're done w/ inputdevice, pop it
     lua_settop(L, 0);
-    // Pass the fd to Lua, we might need it for FFI ioctl shenanigans
+    // Pass the fd to Lua, front makes use of it to track what was open'ed,
+    // and might need it for further FFI ioctl shenanigans.
     lua_pushinteger(L, inputfds[fd_idx++]);
 
     computeNfds();
@@ -191,16 +195,9 @@ static int openInputDevice(lua_State* L)
     return 1; // fd
 }
 
-static int closeInputDevice(ssize_t fd_idx_to_close)
+// Make sure our inputfds array is never sparse after closing one
+static void repackFdArray(ssize_t fd_idx_to_close)
 {
-    int fd = inputfds[fd_idx_to_close];
-    if (fd == -1) {
-        // Device was not open
-        return -1;
-    }
-    ioctl(fd, EVIOCGRAB, 0);
-    close(fd);
-
     // Shift the fds after the closed ones backward
     for (ssize_t i = fd_idx_to_close; i < (ssize_t) fd_idx - 1; i++) {
         inputfds[i] = inputfds[i + 1];
@@ -209,18 +206,66 @@ static int closeInputDevice(ssize_t fd_idx_to_close)
     inputfds[--fd_idx] = -1;
 
     computeNfds();
-    printf("[ko-input] Closed input device with fd: %d @ idx: %zd\n", fd, fd_idx_to_close);
+}
+
+static void closeInputDevice(int fd, ssize_t fd_idx_to_close)
+{
+    ioctl(fd, EVIOCGRAB, 0);
+    close(fd);
+
+    repackFdArray(fd_idx_to_close);
+}
+
+// Close a device by fd_idx (for internal use)
+static int closeByIndex(ssize_t fd_idx_to_close)
+{
+    int fd = inputfds[fd_idx_to_close];
+    if (fd == -1) {
+        // Device was not open
+        return -1;
+    }
+
+    closeInputDevice(fd, fd_idx_to_close);
+    printf("[ko-input] Closed input device with fd: %d @ idx: %zd (matched by idx)\n", fd, fd_idx_to_close);
 
     return 0;
 }
 
-static int closeInputDevices(lua_State* L __attribute__((unused)))
+// Close a device by fd number (for public use)
+static int closeByFd(lua_State* L)
+{
+    int fd = luaL_checkint(L, 1);
+    lua_settop(L, 0);  // Pop function arg
+
+    // Check that we've actually still got this one open'ed
+    ssize_t fd_idx_to_close = -1;
+    for (size_t i = 0U; i < fd_idx; i++) {
+        if (inputfds[i] == fd) {
+            fd_idx_to_close = i;
+            break;
+        }
+    }
+    if (fd_idx_to_close == -1) {
+        // fd was not open, tell front (likely we ate an ENODEV in waitForInput already)
+        lua_pushboolean(L, false);
+        lua_pushinteger(L, ENODEV);
+        return 2;
+    }
+
+    closeInputDevice(fd, fd_idx_to_close);
+    printf("[ko-input] Closed input device with fd: %d @ idx: %zd (matched by fd)\n", fd, fd_idx_to_close);
+
+    lua_pushboolean(L, true);
+    return 1;
+}
+
+static int closeAllInputDevices(lua_State* L __attribute__((unused)))
 {
     // Right now, we close everything, but, in the future, we may want to keep *some* slots open.
-    // The function closeInputDevice ensures that the array does not become sparse.
+    // The function `repackFdArray` (via `closeByIndex`) ensures that the array does not become sparse.
     // Closing the fds in the reverse order helps to avoid extra work to keep the array dense, so that the complexity stays linear.
     for (ssize_t i = fd_idx - 1; i >= 0; i--) {
-        closeInputDevice(i);
+        closeByIndex(i);
     }
 
 #if defined(WITH_TIMERFD)
@@ -417,7 +462,7 @@ static int waitForInput(lua_State* L)
                         break;
                     } else if (errno == ENODEV) {
                         // Device was removed
-                        closeInputDevice(i);
+                        closeByIndex(i);
                         lua_settop(L, 0);  // Kick our bogus bool (and potentially the ev_array table) from the stack
                         lua_pushboolean(L, false);
                         lua_pushinteger(L, ENODEV);
@@ -484,18 +529,21 @@ static int waitForInput(lua_State* L)
     return 0;  // Unreachable (unless something is seriously screwy)
 }
 
-static const struct luaL_Reg input_func[] = { { "open", openInputDevice },
-                                              { "closeAll", closeInputDevices },
-                                              { "waitForEvent", waitForInput },
-                                              { "fakeTapInput", fakeTapInput },
+static const struct luaL_Reg input_func[] = {
+                                                { "open", openInputDevice },
+                                                { "close", closeByFd },
+                                                { "closeAll", closeAllInputDevices },
+                                                { "waitForEvent", waitForInput },
+                                                { "fakeTapInput", fakeTapInput },
 #if defined(POCKETBOOK)
-                                              { "setSuspendState", setSuspendState },
+                                                { "setSuspendState", setSuspendState },
 #endif
 #if defined(WITH_TIMERFD)
-                                              { "setTimer", setTimer },
-                                              { "clearTimer", clearTimer },
+                                                { "setTimer", setTimer },
+                                                { "clearTimer", clearTimer },
 #endif
-                                              { NULL, NULL } };
+                                                { NULL, NULL }
+};
 
 int luaopen_input(lua_State* L)
 {
