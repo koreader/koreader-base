@@ -235,6 +235,7 @@ static int closeByIndex(ssize_t fd_idx_to_close)
 static int closeByFd(lua_State* L)
 {
     int fd = luaL_checkint(L, 1);
+    lua_settop(L, 0);  // Pop function arg
 
     // Check that we've actually still got this one open'ed
     ssize_t fd_idx_to_close = -1;
