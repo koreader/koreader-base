@@ -80,6 +80,7 @@ set(CFG_OPTS ${CFG_OPTS} ${ASM_OPT} no-idea no-mdc2 no-rc5)
 list(APPEND CFG_CMD COMMAND
     env ${CFG_ENV_VAR}
     ${CONFIGURE_CMD}
+    --prefix=${INSTALL_DIR}
     ${CFG_OPTS}
 )
 
@@ -99,6 +100,8 @@ set(MAKE_CMD
 list(APPEND BUILD_CMD COMMAND ${MAKE_CMD} -j1 depend)
 list(APPEND BUILD_CMD COMMAND ${MAKE_CMD} build_libs)
 
+list(APPEND INSTALL_CMD COMMAND ${MAKE_CMD} install_dev)
+
 external_project(
     URL https://github.com/openssl/openssl/releases/download/OpenSSL_1_1_1w/openssl-1.1.1w.tar.gz
     https://www.openssl.org/source/old/1.1.1/openssl-1.1.1w.tar.gz
@@ -106,4 +109,5 @@ external_project(
     PATCH_COMMAND ${PATCH_CMD}
     CONFIGURE_COMMAND ${CFG_CMD}
     BUILD_COMMAND ${BUILD_CMD}
+    INSTALL_COMMAND ${INSTALL_CMD}
 )

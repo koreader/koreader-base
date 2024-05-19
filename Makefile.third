@@ -352,13 +352,11 @@ $(LUASOCKET): $(THIRDPARTY_DIR)/luasocket/*.*
 		-S $(THIRDPARTY_DIR)/luasocket -B $(LUASOCKET_BUILD_DIR)
 	$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS) -C $(LUASOCKET_BUILD_DIR)
 
-$(OPENSSL_LIB): $(THIRDPARTY_DIR)/openssl/*.*
+$(CRYPTO_LIB) $(SSL_LIB): $(THIRDPARTY_DIR)/openssl/*.*
 	$(CMAKE) $(CMAKE_FLAGS) -S $(THIRDPARTY_DIR)/openssl -B $(OPENSSL_BUILD_DIR)
 	$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS) -C $(OPENSSL_BUILD_DIR)
-
-$(SSL_LIB): $(OPENSSL_LIB)
-	cp -fL $(OPENSSL_DIR)/$(notdir $(SSL_LIB)) $(SSL_LIB)
-	cp -fL $(OPENSSL_DIR)/$(notdir $(CRYPTO_LIB)) $(CRYPTO_LIB)
+	cp -fL $(OPENSSL_DIR)/lib/$(notdir $(SSL_LIB)) $(SSL_LIB)
+	cp -fL $(OPENSSL_DIR)/lib/$(notdir $(CRYPTO_LIB)) $(CRYPTO_LIB)
 ifdef DARWIN
 	install_name_tool -id \
 		libs/$(notdir $(SSL_LIB)) \
@@ -482,8 +480,6 @@ $(NANOSVG_HEADERS): $(THIRDPARTY_DIR)/nanosvg/*.*
 $(CURL_LIB): $(THIRDPARTY_DIR)/curl/*.*
 	$(CMAKE) $(CMAKE_FLAGS) \
 		-DOPENSSL_DIR='$(abspath $(OPENSSL_DIR))' \
-		-DCRYPTO_LIB='$(abspath $(CRYPTO_LIB))' \
-		-DSSL_LIB='$(abspath $(SSL_LIB))' \
 		-DZLIB_DIR='$(abspath $(ZLIB_DIR))' \
 		-S $(THIRDPARTY_DIR)/curl -B $(CURL_BUILD_DIR)
 	$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS) -C $(CURL_BUILD_DIR)
@@ -495,8 +491,6 @@ $(OUTPUT_DIR)/zsync2: $(THIRDPARTY_DIR)/zsync2/*.*
 	$(CMAKE) $(CMAKE_FLAGS) \
 		-DCURL_DIR='$(abspath $(CURL_DIR))' \
 		-DOPENSSL_DIR='$(abspath $(OPENSSL_DIR))' \
-		-DCRYPTO_LIB='$(abspath $(CRYPTO_LIB))' \
-		-DSSL_LIB='$(abspath $(SSL_LIB))' \
 		-DZLIB_DIR='$(abspath $(ZLIB_DIR))' \
 		-S $(THIRDPARTY_DIR)/zsync2 -B $(ZSYNC2_BUILD_DIR)
 	$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS) -C $(ZSYNC2_BUILD_DIR)
