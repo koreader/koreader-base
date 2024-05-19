@@ -574,6 +574,11 @@ ifneq (yes,$(firstword $(call hasminstd,$(CXX),c++,__cplusplus,201700)))
 	CXXSTD_FLAGS := -std=gnu++17
 endif
 
+# Improve reproducibility (disabled on pocketbook due to the ancient toolchain).
+ifneq ($(TARGET),pocketbook)
+  BASE_CFLAGS += -ffile-prefix-map=$(CURDIR)/=
+endif
+
 HOSTCFLAGS:=$(HOST_ARCH) $(BASE_CFLAGS) $(QFLAGS)
 
 CFLAGS:=$(BASE_CFLAGS) $(QFLAGS) $(CSTD_FLAGS)
