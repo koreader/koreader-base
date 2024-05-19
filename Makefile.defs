@@ -673,6 +673,11 @@ ifneq ($(TARGET), win32)
 	CXXFLAGS+=-fPIC
 endif
 
+# Improve reproducibility.
+ifndef DARWIN
+LDFLAGS += -Wl,--build-id=none
+endif
+
 CFLAGS := $(strip $(CFLAGS))
 CXXFLAGS := $(strip $(CXXFLAGS))
 LDFLAGS := $(strip $(LDFLAGS))
