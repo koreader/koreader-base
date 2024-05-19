@@ -27,10 +27,8 @@ list(APPEND CFG_CMD env
 
 list(APPEND BUILD_CMD COMMAND ${KO_MAKE_RECURSIVE})
 
-set(SQLITE_VER 3450000)
-
 external_project(
-    URL https://www.sqlite.org/2024/sqlite-autoconf-${SQLITE_VER}.tar.gz
+    URL https://www.sqlite.org/2024/sqlite-autoconf-3450000.tar.gz
     URL_MD5 d6150f5dc837ae94b7d735f1b611b634
     CONFIGURE_COMMAND ${CFG_CMD}
     BUILD_COMMAND ${BUILD_CMD}
