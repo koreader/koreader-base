@@ -24,7 +24,7 @@ endif()
 
 list(APPEND PATCH_CMD COMMAND ${ISED} "/LD_LIBRARY_PATH=/d" ${SOURCE_DIR}/configure.ac)
 list(APPEND PATCH_CMD COMMAND ${ISED} "/CURL_MAC_CFLAGS/d" ${SOURCE_DIR}/configure.ac)
-list(APPEND PATCH_CMD COMMAND autoreconf -fi)
+list(APPEND PATCH_CMD COMMAND autoreconf -v)
 
 # Take a deep breath...
 # TODO: Flip to --with-zstd? We currently only use cURL for zsync2, so, obviously, not necessary right now...
@@ -129,17 +129,18 @@ list(APPEND BUILD_CMD COMMAND ${KO_MAKE_RECURSIVE} -C lib)
 list(APPEND INSTALL_CMD COMMAND ${KO_MAKE_RECURSIVE} install)
 list(APPEND INSTALL_CMD COMMAND ${CMAKE_COMMAND} -E copy ${DOWNLOAD_DIR}/ca-bundle.crt ${INSTALL_DIR}/ca-bundle.crt)
 
-ko_write_gitclone_script(
-    GIT_CLONE_SCRIPT_FILENAME
-    https://github.com/curl/curl.git
-    tags/curl-8_5_0
-    ${SOURCE_DIR}
-)
-
 external_project(
-    DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME} COMMAND ${CA_BUNDLE_CMD}
+    URL https://github.com/curl/curl/releases/download/curl-8_5_0/curl-8.5.0.tar.xz
+    URL_MD5 3e9e5c2db494e7dbd4e7024b149021c9
     PATCH_COMMAND ${PATCH_CMD}
     CONFIGURE_COMMAND ${CFG_CMD}
     BUILD_COMMAND ${BUILD_CMD}
     INSTALL_COMMAND ${INSTALL_CMD}
+)
+
+ExternalProject_Add_Step(
+    curl ca-bundle-download
+    COMMAND ${CA_BUNDLE_CMD}
+    COMMENT "Performing ca-bundle-download step for 'curl'"
+    DEPENDERS download
 )
