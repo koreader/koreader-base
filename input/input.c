@@ -90,6 +90,18 @@ static void computeNfds(void) {
     }
 }
 
+// NOTE: Make sure the top member has the highest fd number, for clearTimer's sake when it recomputes nfds
+static void reorderArray(void) {
+    if (fd_idx > 0) {
+        int prev_fd   = inputfds[fd_idx - 1];
+        int opened_fd = inputfds[fd_idx];
+        if (opened_fd < prev_fd) {
+            inputfds[fd_idx - 1] = opened_fd;
+            inputfds[fd_idx]     = prev_fd;
+        }
+    }
+}
+
 static int openInputDevice(lua_State* L)
 {
     const char* restrict inputdevice = luaL_checkstring(L, 1);
@@ -174,15 +186,8 @@ static int openInputDevice(lua_State* L)
         }
     }
 
-    // NOTE: Make sure the top member has the highest fd number, for clearTimer's sake when it recomputes nfds
-    if (fd_idx > 0) {
-        int prev_fd   = inputfds[fd_idx - 1];
-        int opened_fd = inputfds[fd_idx];
-        if (opened_fd < prev_fd) {
-            inputfds[fd_idx - 1] = opened_fd;
-            inputfds[fd_idx]     = prev_fd;
-        }
-    }
+    // Reorder the array to match clearTimer's expectations
+    reorderArray();
 
     // We're done w/ inputdevice, pop it
     lua_settop(L, 0);
@@ -193,6 +198,33 @@ static int openInputDevice(lua_State* L)
     computeNfds();
 
     return 1; // fd
+}
+
+static int openInputFD(lua_State* L)
+{
+    int fd = luaL_checkint(L, 1);
+    lua_settop(L, 0); // pop arg
+
+    if (fd == -1) {
+        return luaL_error(L, "Passed an invalid fd number to input.fdopen");
+    }
+    if (fd_idx >= ARRAY_SIZE(inputfds)) {
+        return luaL_error(L, "No free slot for new input fd <%d>", fd);
+    }
+    // Otherwise, we're golden, and fd_idx is the index of the next free slot in the inputfds array ;).
+    const char* restrict ko_dont_grab_input = getenv("KO_DONT_GRAB_INPUT");
+
+    inputfds[fd_idx] = fd;
+    if (ko_dont_grab_input == NULL) {
+        ioctl(inputfds[fd_idx], EVIOCGRAB, 1);
+    }
+
+    // Update our state for the new input slot...
+    reorderArray();
+    fd_idx++;
+    computeNfds();
+
+    return 0;
 }
 
 // Make sure our inputfds array is never sparse after closing one
@@ -531,6 +563,7 @@ static int waitForInput(lua_State* L)
 
 static const struct luaL_Reg input_func[] = {
                                                 { "open", openInputDevice },
+                                                { "fdopen", openInputFD },
                                                 { "close", closeByFd },
                                                 { "closeAll", closeAllInputDevices },
                                                 { "waitForEvent", waitForInput },
