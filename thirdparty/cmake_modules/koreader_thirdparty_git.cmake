@@ -1,3 +1,5 @@
+include_guard(GLOBAL)
+
 find_package(Git)
 
 function(_ko_write_gitclone_script script_filename git_EXECUTABLE git_repository git_tag git_submodules src_name clone_checkout build_source_dir gitclone_infofile gitclone_stampfile)

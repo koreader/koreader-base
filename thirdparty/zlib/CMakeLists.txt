@@ -1,16 +1,11 @@
-cmake_minimum_required(VERSION 3.15)
-project(zlib LANGUAGES)
-
-include("koreader_thirdparty_common")
-
 list(APPEND CMAKE_ARGS -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TCF})
 
 list(APPEND BUILD_CMD COMMAND ${KO_MAKE_PROGRAM} zlib zlibstatic)
 
 list(APPEND INSTALL_CMD COMMAND ${CMAKE_COMMAND} --install .)
 
-list(APPEND INSTALL_CMD COMMAND mkdir -p ${STAGING_DIR}/include/contrib/minizip)
-list(APPEND INSTALL_CMD COMMAND cp ${SOURCE_DIR}/contrib/minizip/crypt.h ${STAGING_DIR}/include/contrib/minizip/)
+append_install_commands(INSTALL_CMD ${SOURCE_DIR}/contrib/minizip/crypt.h DESTINATION ${STAGING_DIR}/include/contrib/minizip)
+append_shared_lib_install_commands(INSTALL_CMD z VERSION 1)
 
 external_project(
     URL https://github.com/madler/zlib/releases/download/v1.3/zlib-1.3.tar.xz

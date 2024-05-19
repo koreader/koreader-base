@@ -1,9 +1,3 @@
-cmake_minimum_required(VERSION 3.15)
-project(curl LANGUAGES)
-
-include(koreader_thirdparty_common)
-include(koreader_thirdparty_git)
-
 list(APPEND PATCH_CMD COMMAND ${KO_PATCH}
     # Gentoo patchset
     ${CMAKE_CURRENT_SOURCE_DIR}/curl-8.5.0-mpd-stream-http-adjust_pollset.patch
@@ -41,15 +35,19 @@ list(APPEND CMAKE_ARGS
     -DCURL_ZLIB=TRUE
 )
 
-# Don't use the default build system rule to create the certificates
-# bundle: connections to `hg.mozilla.org` from CIs seem to be flaky,
-# resulting in regular failures.
-set(CA_BUNDLE_CMD ${CMAKE_CURRENT_LIST_DIR}/fetch-ca-bundle.sh ${DOWNLOAD_DIR}/ca-bundle.crt)
-
 list(APPEND BUILD_CMD COMMAND ${KO_MAKE_PROGRAM} lib/all)
 
 list(APPEND INSTALL_CMD COMMAND ${CMAKE_COMMAND} --install .)
-list(APPEND INSTALL_CMD COMMAND ${CMAKE_COMMAND} -E copy ${DOWNLOAD_DIR}/ca-bundle.crt ${STAGING_DIR}/ca-bundle.crt)
+
+append_install_commands(INSTALL_CMD ${DOWNLOAD_DIR}/ca-bundle.crt DESTINATION data)
+
+if(POCKETBOOK)
+    set(LIB_NAME curl_ko)
+else()
+    set(LIB_NAME curl)
+endif()
+append_shared_lib_install_commands(INSTALL_CMD ${LIB_NAME} VERSION 4)
+
 # Even after installing a patched pkg-config entry, we still need to add a symlink
 # with the canonical library name or the mess that is CMake's FindCURl module will
 # fail to detect our renamed library…
@@ -66,9 +64,14 @@ external_project(
     INSTALL_COMMAND ${INSTALL_CMD}
 )
 
+# Don't use the default build system rule to create the certificates
+# bundle: connections to `hg.mozilla.org` from CIs seem to be flaky,
+# resulting in regular failures.
 ExternalProject_Add_Step(
-    curl ca-bundle-download
-    COMMAND ${CA_BUNDLE_CMD}
-    COMMENT "Performing ca-bundle-download step for 'curl'"
+    ${PROJECT_NAME} ca-bundle-download
+    COMMAND ${CMAKE_CURRENT_LIST_DIR}/fetch-ca-bundle.sh ${DOWNLOAD_DIR}/ca-bundle.crt
+    COMMENT "Fetching certificates bundles for '${PROJECT_NAME}'"
     DEPENDERS download
+    USES_TERMINAL FALSE
+    INDEPENDENT TRUE
 )

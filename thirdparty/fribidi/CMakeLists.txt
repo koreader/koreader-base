@@ -1,9 +1,3 @@
-cmake_minimum_required(VERSION 3.15)
-project(fribidi LANGUAGES)
-
-include(koreader_thirdparty_common)
-include(koreader_thirdparty_git)
-
 list(APPEND CFG_CMD COMMAND env)
 append_autotools_vars(CFG_CMD)
 list(APPEND CFG_CMD
@@ -18,6 +12,12 @@ endif()
 list(APPEND BUILD_CMD COMMAND ${KO_MAKE_RECURSIVE} -C lib)
 
 list(APPEND INSTALL_CMD COMMAND ${KO_MAKE_RECURSIVE} -C lib install)
+
+set(LIB_SPEC fribidi VERSION 0)
+if(DARWIN)
+    append_shared_lib_fix_commands(INSTALL_CMD ${LIB_SPEC} ID)
+endif()
+append_shared_lib_install_commands(INSTALL_CMD ${LIB_SPEC})
 
 external_project(
     URL https://github.com/fribidi/fribidi/releases/download/v1.0.14/fribidi-1.0.14.tar.xz
