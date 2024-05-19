@@ -110,6 +110,7 @@ string(APPEND XCFLAGS
     " -DNO_ICC"
     " -DFZ_PLOTTERS_CMYK=0"
     " -DFZ_ENABLE_JS=0"
+    " -DHAVE_LIBAES=1"
     " -DHAVE_WEBP=1"
 )
 if(ANDROID AND CHOST MATCHES "^armv7a-.*")

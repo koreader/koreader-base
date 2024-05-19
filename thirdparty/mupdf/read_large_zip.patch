@@ -2,16 +2,16 @@ diff --git a/source/fitz/unzip.c b/source/fitz/unzip.c
 index 720b5505b..6fc80218f 100644
 --- a/source/fitz/unzip.c
 +++ b/source/fitz/unzip.c
-@@ -47,7 +47,7 @@ typedef struct fz_zip_archive_s fz_zip_archive;
+@@ -46,7 +46,7 @@ typedef struct fz_zip_archive_s fz_zip_archive;
  struct zip_entry_s
  {
  	char *name;
 -	int offset, csize, usize;
 +	uint64_t offset, csize, usize;
+ #ifdef HAVE_LIBAES
  	int crypted;
- };
- 
-@@ -55,7 +55,7 @@ struct fz_zip_archive_s
+ #endif
+@@ -56,7 +56,7 @@ struct fz_zip_archive_s
  {
  	fz_archive super;
  
@@ -19,8 +19,8 @@ index 720b5505b..6fc80218f 100644
 +	uint64_t count;
  	zip_entry *entries;
  
- 	int crypted;
-@@ -87,12 +87,14 @@ static void drop_zip_archive(fz_context *ctx, fz_archive *arch)
+ #ifdef HAVE_LIBAES
+@@ -90,12 +90,14 @@ static void drop_zip_archive(fz_context *ctx, fz_archive *arch)
  	fz_free(ctx, zip->entries);
  }
  
@@ -38,7 +38,7 @@ index 720b5505b..6fc80218f 100644
  	char *name;
  	size_t n;
  	int general;
-@@ -101,16 +103,16 @@ static void read_zip_dir_imp(fz_context *ctx, fz_zip_archive *zip, int start_off
+@@ -104,16 +106,16 @@ static void read_zip_dir_imp(fz_context *ctx, fz_zip_archive *zip, int start_off
  
  	fz_seek(ctx, file, start_offset, 0);
  
@@ -62,7 +62,7 @@ index 720b5505b..6fc80218f 100644
  
  	/* ZIP64 */
  	if (count == 0xFFFF || offset == 0xFFFFFFFF)
-@@ -119,30 +121,28 @@ static void read_zip_dir_imp(fz_context *ctx, fz_zip_archive *zip, int start_off
+@@ -122,30 +124,28 @@ static void read_zip_dir_imp(fz_context *ctx, fz_zip_archive *zip, int start_off
  
  		fz_seek(ctx, file, start_offset - 20, 0);
  
@@ -106,7 +106,7 @@ index 720b5505b..6fc80218f 100644
  
  		if (count == 0xFFFF)
  		{
-@@ -152,8 +152,6 @@ static void read_zip_dir_imp(fz_context *ctx, fz_zip_archive *zip, int start_off
+@@ -155,8 +155,6 @@ static void read_zip_dir_imp(fz_context *ctx, fz_zip_archive *zip, int start_off
  		}
  		if (offset == 0xFFFFFFFF)
  		{
@@ -115,7 +115,7 @@ index 720b5505b..6fc80218f 100644
  			offset = offset64;
  		}
  	}
-@@ -162,26 +160,26 @@ static void read_zip_dir_imp(fz_context *ctx, fz_zip_archive *zip, int start_off
+@@ -165,26 +163,26 @@ static void read_zip_dir_imp(fz_context *ctx, fz_zip_archive *zip, int start_off
  
  	for (i = 0; i < count; i++)
  	{
@@ -159,7 +159,7 @@ index 720b5505b..6fc80218f 100644
  
  		if (namesize < 0 || metasize < 0 || commentsize < 0)
  			fz_throw(ctx, FZ_ERROR_GENERIC, "invalid size in zip entry");
-@@ -194,24 +192,25 @@ static void read_zip_dir_imp(fz_context *ctx, fz_zip_archive *zip, int start_off
+@@ -197,24 +195,25 @@ static void read_zip_dir_imp(fz_context *ctx, fz_zip_archive *zip, int start_off
  
  		while (metasize > 0)
  		{
@@ -193,17 +193,17 @@ index 720b5505b..6fc80218f 100644
  					sizeleft -= 8;
  				}
  				fz_seek(ctx, file, sizeleft - size, 1);
-@@ -245,7 +244,8 @@ static void read_zip_dir_imp(fz_context *ctx, fz_zip_archive *zip, int start_off
+@@ -250,7 +249,8 @@ static void read_zip_dir_imp(fz_context *ctx, fz_zip_archive *zip, int start_off
  static int read_zip_entry_header(fz_context *ctx, fz_zip_archive *zip, zip_entry *ent)
  {
  	fz_stream *file = zip->super.file;
 -	int sig, general, method, namelength, extralength;
 +	uint32_t sig;
 +	int general, method, namelength, extralength;
- 	int i, headerid, datasize, crc32, modtime, chk;
- 
- 	unsigned char source[12];
-@@ -253,20 +253,20 @@ static int read_zip_entry_header(fz_context *ctx, fz_zip_archive *zip, zip_entry
+ 	int crc32, modtime;
+ #ifdef HAVE_LIBAES
+ 	int i, headerid, datasize, chk;
+@@ -260,11 +260,11 @@ static int read_zip_entry_header(fz_context *ctx, fz_zip_archive *zip, zip_entry
  
  	fz_seek(ctx, file, ent->offset, 0);
  
@@ -216,6 +216,10 @@ index 720b5505b..6fc80218f 100644
 +	(void) fz_read_uint16_le(ctx, file); /* version */
  	general = fz_read_uint16_le(ctx, file); /* general */
  	method = fz_read_uint16_le(ctx, file);
+ #if !defined(HAVE_LIBAES)
+@@ -272,12 +272,12 @@ static int read_zip_entry_header(fz_context *ctx, fz_zip_archive *zip, zip_entry
+ 		fz_throw(ctx, FZ_ERROR_GENERIC, "zip content is encrypted");
+ #endif
  	modtime = fz_read_uint16_le(ctx, file); /* file time */
 -	(void) fz_read_int16_le(ctx, file); /* file date */
 +	(void) fz_read_uint16_le(ctx, file); /* file date */
@@ -229,9 +233,9 @@ index 720b5505b..6fc80218f 100644
 +	namelength = fz_read_uint16_le(ctx, file);
 +	extralength = fz_read_uint16_le(ctx, file);
  
- 	fz_seek(ctx, file, namelength, 1);
- 
-@@ -276,10 +276,10 @@ static int read_zip_entry_header(fz_context *ctx, fz_zip_archive *zip, zip_entry
+ #if !defined(HAVE_LIBAES)
+ 	fz_seek(ctx, file, namelength + extralength, 1);
+@@ -290,10 +290,10 @@ static int read_zip_entry_header(fz_context *ctx, fz_zip_archive *zip, zip_entry
  				headerid = fz_read_uint16_le(ctx, file);
  				datasize = fz_read_uint16_le(ctx, file);
  				if (headerid == 0x9901) {
@@ -245,7 +249,7 @@ index 720b5505b..6fc80218f 100644
  				}
  				extralength -= 2 + 2 + datasize;
  			}
-@@ -345,7 +345,7 @@ static void ensure_zip_entries(fz_context *ctx, fz_zip_archive *zip)
+@@ -360,7 +360,7 @@ static void ensure_zip_entries(fz_context *ctx, fz_zip_archive *zip)
  		for (i = n - 4; i > 0; i--)
  			if (!memcmp(buf + i, "PK\5\6", 4))
  			{
