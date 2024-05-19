@@ -134,6 +134,8 @@ ifdef DARWIN
 		`otool -L "$@" | grep "libluajit" | awk '{print $$1}'` \
 		libs/$(notdir $(LUAJIT_LIB)) \
 		$@
+else
+	touch $@
 endif
 
 # put all the libs to the end of compile command to make ubuntu's tool chain
