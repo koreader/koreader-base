@@ -3,11 +3,9 @@ project(libiconv LANGUAGES)
 
 include(koreader_thirdparty_common)
 
-list(APPEND CFG_CMD COMMAND env
-    AR=${AR}
-    CC=${CC}
-    LD=${LD}
-    RANLIB=${RANLIB}
+list(APPEND CFG_CMD COMMAND env)
+append_autotools_vars(CFG_CMD)
+list(APPEND CFG_CMD
     ${SOURCE_DIR}/configure --host=${CHOST} --prefix=${INSTALL_DIR}
     --enable-shared=false --enable-static=true
     --with-threads=none

@@ -4,14 +4,9 @@ project(libunibreak LANGUAGES)
 include(koreader_thirdparty_common)
 include(koreader_thirdparty_git)
 
-assert_var_defined(CC)
-assert_var_defined(CFLAGS)
-assert_var_defined(LDFLAGS)
-
-list(APPEND CFG_CMD COMMAND env
-    CC=${CC}
-    CFLAGS=${CFLAGS}
-    LDFLAGS=${LDFLAGS}
+list(APPEND CFG_CMD COMMAND env)
+append_autotools_vars(CFG_CMD)
+list(APPEND CFG_CMD
     ${SOURCE_DIR}/configure --host=${CHOST} --prefix=${INSTALL_DIR}
     --disable-static --enable-shared
     --enable-silent-rules
