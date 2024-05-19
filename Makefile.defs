@@ -507,9 +507,6 @@ else ifeq ($(TARGET), android)
 		ARM_ARCH:=$(ANDROID_ARM_ARCH)
 	else ifeq ($(ANDROID_ARCH), x86)
 	endif
-	ifneq (,$(filter arm%,$(ANDROID_ARCH)))
-		export ac_cv_type_in_port_t=yes
-	endif
 	ifneq (,$(filter arm x86,$(ANDROID_ARCH)))
 		# NOTE: to be removed when upgrading the minimal supported API level to 24.
 		# (https://android.googlesource.com/platform/bionic/+/master/docs/32-bit-abi.md)
