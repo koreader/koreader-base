@@ -86,13 +86,6 @@ ifneq ($(NINJA),)
   endif
 endif
 
-ifneq ($(USE_NINJA),)
-  CMAKE_FLAGS = -G Ninja
-  CMAKE_MAKE_PROGRAM = $(abspath $(THIRDPARTY_DIR)/cmake_modules/koninja.sh) $(NINJA)
-else
-  CMAKE_MAKE_PROGRAM = $(abspath $(THIRDPARTY_DIR)/cmake_modules/komake.sh) $(MAKE)
-endif
-
 ifneq (,$(or $(VERBOSE),$(V)))
   ifeq (4.4,$(firstword $(sort $(MAKE_VERSION) 4.4)))
     MAKEFLAGS += --debug=print
@@ -116,7 +109,20 @@ ifneq (,$(DRY_RUN))
   NINJAFLAGS += -nv
 endif
 
+ifneq ($(or $(CLICOLOR_FORCE),$(MAKE_TERMOUT)),)
+  NINJA_STATUS := $(shell printf '\33[32;1m▸%%p\33[0m | ')
+else
+  NINJA_STATUS := $(empty) %p | $(empty)
+endif
+export NINJA_STATUS
 export NINJAFLAGS
+
+ifneq ($(USE_NINJA),)
+  CMAKE_FLAGS = -G Ninja
+  CMAKE_MAKE_PROGRAM = $(NINJA) $(NINJAFLAGS)
+else
+  CMAKE_MAKE_PROGRAM = $(abspath $(THIRDPARTY_DIR)/cmake_modules/komake.sh) $(MAKE)
+endif
 
 # set this to your ARM cross compiler:
 # set CC CXX AR LD RANLIB
