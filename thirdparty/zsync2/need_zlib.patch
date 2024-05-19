@@ -1,3 +1,11 @@
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -1,4 +1,4 @@
+-cmake_minimum_required(VERSION 3.2)
++cmake_minimum_required(VERSION 3.12)
+ 
+ project(zsync2)
+ 
 diff --git i/src/CMakeLists.txt w/src/CMakeLists.txt
 index 46267e2..b06a2b1 100644
 --- i/src/CMakeLists.txt
