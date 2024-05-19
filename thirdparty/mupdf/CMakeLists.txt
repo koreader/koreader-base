@@ -80,7 +80,7 @@ list(APPEND PATCH_CMD COMMAND ${KO_PATCH}
 string(TOLOWER ${CMAKE_BUILD_TYPE} MUPDF_BUILD_TYPE)
 
 # There's some headers to generate on the host's side first, before we run our actual build (where we enforce CROSSCOMPILE to avoid trying to regen those).
-list(APPEND PATCH_CMD COMMAND
+list(APPEND GENERATE_CMD COMMAND
     ${KO_MAKE_RECURSIVE}
     "CC=${CCACHE} ${HOSTCC}"
     LIBS= # don't try to link with system libraries when building generator helpers…
@@ -194,4 +194,11 @@ external_project(
     PATCH_COMMAND ${PATCH_CMD}
     BUILD_COMMAND ${BUILD_CMD}
     INSTALL_COMMAND ${INSTALL_CMD}
+)
+
+external_project_step(
+    generate
+    COMMAND ${GENERATE_CMD}
+    DEPENDEES patch
+    DEPENDERS build
 )
