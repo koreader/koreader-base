@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.5.1)
+cmake_minimum_required(VERSION 3.15)
 project(kpvcrlib LANGUAGES C CXX)
 
 include(koreader_thirdparty_common)
@@ -77,7 +77,7 @@ add_library(crengine STATIC
     ${CRE_DIR}/src/crconcurrent.cpp
 )
 # Make sure we get full `constexpr` support.
-target_compile_features(crengine PRIVATE cxx_std_17)
+set_target_properties(crengine PROPERTIES CXX_STANDARD 17 CMAKE_CXX_STANDARD_REQUIRED TRUE)
 set_target_properties(crengine PROPERTIES VISIBILITY_INLINES_HIDDEN TRUE)
 target_include_directories(crengine PUBLIC
     ${CRE_DIR}/include
