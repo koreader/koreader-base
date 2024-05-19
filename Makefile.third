@@ -715,9 +715,10 @@ $(CURL_LIB): $(THIRDPARTY_DIR)/curl/*.*
 	$(CMAKE) $(CMAKE_FLAGS) \
 		-DCC='$(CC)' \
 		-DCHOST='$(CHOST)' \
-		-DCPPFLAGS='$(CPPFLAGS) -I$(ZLIB_DIR)/include -I$(OPENSSL_DIR)/include' \
 		-DCFLAGS='$(CFLAGS)' \
-		-DLDFLAGS='$(LDFLAGS) -L$(ZLIB_DIR)/lib -L$(OPENSSL_DIR) -lssl -lcrypto -lz -lrt' \
+		-DLDFLAGS='$(LDFLAGS)' \
+		-DOPENSSL_DIR='$(abspath $(OPENSSL_DIR))' \
+		-DZLIB_DIR='$(abspath $(ZLIB_DIR))' \
 		-S $(THIRDPARTY_DIR)/curl -B $(CURL_BUILD_DIR)
 	$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS) -C $(CURL_BUILD_DIR)
 	cp -fL $(CURL_DIR)/lib/$(notdir $(CURL_LIB)) $(OUTPUT_DIR)/libs
