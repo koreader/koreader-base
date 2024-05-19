@@ -1,8 +1,8 @@
 cmake_minimum_required(VERSION 3.5.1)
 project(luajit LANGUAGES)
 
-include("koreader_thirdparty_common")
-include("koreader_thirdparty_git")
+include(koreader_thirdparty_common)
+include(koreader_thirdparty_git)
 
 # Build in source tree.
 set(BINARY_DIR ${SOURCE_DIR})
@@ -11,68 +11,78 @@ list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/koreader-l
 # Enable table.pack & table.unpack w/o the rest of the -DLUAJIT_ENABLE_LUA52COMPAT baggage...
 list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/koreader-luajit-enable-table_pack.patch)
 
-if($ENV{KODEBUG})
+if(CMAKE_BUILD_TYPE STREQUAL Debug)
     # Debugging is a go!
-    list(APPEND PATCH_CMD COMMAND ${ISED} "s|#CCDEBUG= -g|CCDEBUG= -g|" ${SOURCE_DIR}/src/Makefile)
+    list(APPEND PATCH_CMD COMMAND ${ISED} "s|#CCDEBUG= -g|CCDEBUG= -g|" src/Makefile)
     # To-do: make this auto-trigger when Valgrind is installed
-    #list(APPEND PATCH_CMD COMMAND ${ISED} "s|#XCFLAGS+= -DLUAJIT_USE_VALGRIND|XCFLAGS+= -DLUAJIT_USE_VALGRIND|" ${SOURCE_DIR}/src/Makefile)
+    #list(APPEND PATCH_CMD COMMAND ${ISED} "s|#XCFLAGS+= -DLUAJIT_USE_VALGRIND|XCFLAGS+= -DLUAJIT_USE_VALGRIND|" src/Makefile)
     if(DEFINED ENV{KODEBUG_LUAJIT_USE_SYSMALLOC})
         # Could this be helpful on Android?
-        list(APPEND PATCH_CMD COMMAND ${ISED} "s|#XCFLAGS+= -DLUAJIT_USE_SYSMALLOC|XCFLAGS+= -DLUAJIT_USE_SYSMALLOC|" ${SOURCE_DIR}/src/Makefile)
+        list(APPEND PATCH_CMD COMMAND ${ISED} "s|#XCFLAGS+= -DLUAJIT_USE_SYSMALLOC|XCFLAGS+= -DLUAJIT_USE_SYSMALLOC|" src/Makefile)
     endif()
     # Performance impact; not recommended unless required for something specific
     if(DEFINED ENV{KODEBUG_LUAJIT})
-        list(APPEND PATCH_CMD COMMAND ${ISED} "s|#XCFLAGS+= -DLUAJIT_USE_GDBJIT|XCFLAGS+= -DLUAJIT_USE_GDBJIT|" ${SOURCE_DIR}/src/Makefile)
-        list(APPEND PATCH_CMD COMMAND ${ISED} "s|#XCFLAGS+= -DLUA_USE_APICHECK|XCFLAGS+= -DLUA_USE_APICHECK|" ${SOURCE_DIR}/src/Makefile)
-        list(APPEND PATCH_CMD COMMAND ${ISED} "s|#XCFLAGS+= -DLUA_USE_ASSERT|XCFLAGS+= -DLUA_USE_ASSERT|" ${SOURCE_DIR}/src/Makefile)
+        list(APPEND PATCH_CMD COMMAND ${ISED} "s|#XCFLAGS+= -DLUAJIT_USE_GDBJIT|XCFLAGS+= -DLUAJIT_USE_GDBJIT|" src/Makefile)
+        list(APPEND PATCH_CMD COMMAND ${ISED} "s|#XCFLAGS+= -DLUA_USE_APICHECK|XCFLAGS+= -DLUA_USE_APICHECK|" src/Makefile)
+        list(APPEND PATCH_CMD COMMAND ${ISED} "s|#XCFLAGS+= -DLUA_USE_ASSERT|XCFLAGS+= -DLUA_USE_ASSERT|" src/Makefile)
     endif()
 endif()
 
 if(EMULATE_READER)
-    set(BUILD_ARGS "CC=${CCACHE} ${CC}")
+    list(APPEND BUILD_ARGS "CC=${CCACHE} ${CC}")
 else()
-    assert_var_defined(HOST_CFLAGS)
-    assert_var_defined(CC)
     assert_var_defined(BASE_CFLAGS)
-    assert_var_defined(HOST_CFLAGS)
+    assert_var_defined(CC)
+    assert_var_defined(CFLAGS)
     assert_var_defined(LDFLAGS)
+    assert_var_defined(HOST_CFLAGS)
+    assert_var_defined(HOST_CFLAGS)
     assert_var_defined(TARGET_SONAME)
-    assert_var_defined(TARGET_CFLAGS)
-    assert_var_defined(CROSS)
 
-    # To recap: build its TARGET_CC from CROSS+CC, so we need HOSTCC in CC.
-    # Build its HOST/TARGET_CFLAGS based on CFLAGS, so we need
-    # a neutral CFLAGS without arch
+    # To recap, luajit builds:
+    # - its TARGET_CC from CROSS+CC, so CC need to be set to HOSTCC.
+    # - its HOST/TARGET_CFLAGS based on CFLAGS, so we need a neutral
+    #   CFLAGS without arch.
+
+    # Add -m32 when cross compile on 64 bit host for 32bit target,
+    # (Per: http://luajit.org/install.html#cross).
     execute_process(
-        COMMAND "${CC}" -dumpmachine
+        COMMAND ${CC} -dumpmachine
         OUTPUT_VARIABLE HOST_CC_MACHINE
     )
     if((HOST_CC_MACHINE MATCHES "^.+64-.+$") AND (NOT CMAKE_SYSTEM_PROCESSOR MATCHES ".+64$"))
-        # Add -m32 when cross compile on 64 bit host for 32bit target, Per:
-        # http://luajit.org/install.html#cross
         set(HOST_CC "${CC} -m32")
     else()
-        set(HOST_CC "${CC}")
+        set(HOST_CC ${CC})
     endif()
 
-    set(BUILD_ARGS "CC=${CC}" "HOST_CC=${CCACHE} ${HOST_CC}")
-    set(BUILD_ARGS ${BUILD_ARGS} "CFLAGS=${BASE_CFLAGS}" "HOST_CFLAGS=${HOST_CFLAGS}")
-    if(DEFINED LDFLAGS)
-        set(BUILD_ARGS ${BUILD_ARGS} LDFLAGS= HOST_LDFLAGS= "TARGET_LDFLAGS=${LDFLAGS}")
+    list(APPEND BUILD_ARGS
+        "CROSS=${CCACHE} ${CHOST}-"
+        CC=${CC}
+        CFLAGS=${BASE_CFLAGS}
+        LDFLAGS=
+        "HOST_CC=${CCACHE} ${HOST_CC}"
+        HOST_CFLAGS=${HOST_CFLAGS}
+        HOST_LDFLAGS=
+        "TARGET_AR=$ENV{AR} rcus"
+        "TARGET_CFLAGS=${CFLAGS} -DLUAJIT_SECURITY_STRHASH=0 -DLUAJIT_SECURITY_STRID=0"
+        TARGET_LDFLAGS=${LDFLAGS}
+        TARGET_RANLIB=$ENV{RANLIB}
+        TARGET_SONAME=${TARGET_SONAME}
+    )
+    if(ANDROID)
+        list(APPEND BUILD_ARGS TARGET_SYS=Linux)
+    elseif(WIN32)
+        list(APPEND BUILD_ARGS TARGET_SYS=Windows)
     endif()
-    if(DEFINED TARGET_SYS)
-        set(BUILD_ARGS ${BUILD_ARGS} "TARGET_SYS=${TARGET_SYS}")
-    endif()
-    set(BUILD_ARGS ${BUILD_ARGS} "TARGET_AR=$ENV{AR} rcus" "TARGET_RANLIB=$ENV{RANLIB}")
     if(DARWIN)
-        set(BUILD_ARGS ${BUILD_ARGS} "TARGET_STRIP=$ENV{STRIP}")
+        list(APPEND BUILD_ARGS TARGET_STRIP=$ENV{STRIP})
     else()
-        set(BUILD_ARGS ${BUILD_ARGS} "TARGET_STRIP=$ENV{STRIP} --strip-unneeded")
+        list(APPEND BUILD_ARGS "TARGET_STRIP=$ENV{STRIP} --strip-unneeded")
     endif()
-    set(BUILD_ARGS ${BUILD_ARGS} "TARGET_SONAME=${TARGET_SONAME}" "TARGET_CFLAGS=${TARGET_CFLAGS}" "CROSS=${CCACHE} ${CROSS}" amalg)
 endif()
 
-list(APPEND BUILD_CMD COMMAND ${KO_MAKE_RECURSIVE} ${BUILD_ARGS})
+list(APPEND BUILD_CMD COMMAND ${KO_MAKE_RECURSIVE} ${BUILD_ARGS} amalg)
 
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
