@@ -1,11 +1,17 @@
 cmake_minimum_required(VERSION 3.7)
 project(libiconv LANGUAGES)
 
-include("koreader_thirdparty_common")
+include(koreader_thirdparty_common)
 
-set(CFG_ENV_VAR "CC=${CC}" "LD=${LD}" "AR=${AR}" "RANLIB=${RANLIB}")
-set(CFG_OPTS --with-threads=none --prefix=${INSTALL_DIR} --enable-shared=false --enable-static=true --host=${CHOST})
-set(CFG_CMD env ${CFG_ENV_VAR} ${SOURCE_DIR}/configure ${CFG_OPTS})
+list(APPEND CFG_CMD COMMAND env
+    AR=${AR}
+    CC=${CC}
+    LD=${LD}
+    RANLIB=${RANLIB}
+    ${SOURCE_DIR}/configure --host=${CHOST} --prefix=${INSTALL_DIR}
+    --enable-shared=false --enable-static=true
+    --with-threads=none
+)
 
 list(APPEND BUILD_CMD COMMAND ${KO_MAKE_RECURSIVE})
 
