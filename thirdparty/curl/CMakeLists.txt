@@ -67,11 +67,9 @@ external_project(
 # Don't use the default build system rule to create the certificates
 # bundle: connections to `hg.mozilla.org` from CIs seem to be flaky,
 # resulting in regular failures.
-ExternalProject_Add_Step(
-    ${PROJECT_NAME} ca-bundle-download
+external_project_step(
+    ca-bundle-download
     COMMAND ${CMAKE_CURRENT_LIST_DIR}/fetch-ca-bundle.sh ${DOWNLOAD_DIR}/ca-bundle.crt
     COMMENT "Fetching certificates bundles for '${PROJECT_NAME}'"
     DEPENDERS download
-    USES_TERMINAL FALSE
-    INDEPENDENT TRUE
 )
