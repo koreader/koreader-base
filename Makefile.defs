@@ -89,25 +89,8 @@ endif
 ifneq ($(USE_NINJA),)
   CMAKE_FLAGS = -G Ninja
   CMAKE_MAKE_PROGRAM = $(abspath $(THIRDPARTY_DIR)/cmake_modules/koninja.sh) $(NINJA)
-  ifneq (,$(or $(VERBOSE),$(V)))
-    NINJAFLAGS := -v
-  endif
-  ifneq (,$(PARALLEL_JOBS))
-    NINJAFLAGS += -j$(PARALLEL_JOBS)
-  endif
-  ifneq (,$(PARALLEL_LOAD))
-    NINJAFLAGS += -l$(PARALLEL_LOAD)
-  endif
-  ifneq (,$(KEEP_GOING))
-    NINJAFLAGS += -k0
-  endif
-  ifneq (,$(DRY_RUN))
-    NINJAFLAGS += -nv
-  endif
-  CMAKE_MAKE_PROGRAM_FLAGS ?=
 else
   CMAKE_MAKE_PROGRAM = $(abspath $(THIRDPARTY_DIR)/cmake_modules/komake.sh) $(MAKE)
-  CMAKE_MAKE_PROGRAM_FLAGS ?=
 endif
 
 ifneq (,$(or $(VERBOSE),$(V)))
@@ -116,12 +99,21 @@ ifneq (,$(or $(VERBOSE),$(V)))
   else
     MAKEFLAGS += --trace
   endif
+  NINJAFLAGS := -v
+endif
+ifneq (,$(PARALLEL_JOBS))
+  NINJAFLAGS += -j$(PARALLEL_JOBS)
+endif
+ifneq (,$(PARALLEL_LOAD))
+  NINJAFLAGS += -l$(PARALLEL_LOAD)
 endif
 ifneq (,$(KEEP_GOING))
   MAKEFLAGS += -k
+  NINJAFLAGS += -k0
 endif
 ifneq (,$(DRY_RUN))
   MAKEFLAGS += -n
+  NINJAFLAGS += -nv
 endif
 
 export NINJAFLAGS

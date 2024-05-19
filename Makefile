@@ -11,7 +11,6 @@ DO_STRIP := $(if $(or $(DO_STRIP),$(APPIMAGE),$(LINUX)),1,)
 $(info ************ Building for MACHINE: "$(MACHINE)" **********)
 $(info ************ PATH: "$(PATH)" **********)
 $(info ************ CHOST: "$(CHOST)" **********)
-$(info ************ CMAKE_MAKE_PROGRAM: $(strip $(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS)) **********)
 $(info ************ NINJA: $(strip $(NINJA) $(PARALLEL_JOBS:%=-j%) $(PARALLEL_LOAD:%=-l%)) **********)
 $(info ************ MAKE: $(strip $(MAKE) $(PARALLEL_JOBS:%=-j%) $(PARALLEL_LOAD:%=-l%)) **********)
 
@@ -69,9 +68,7 @@ $(CMAKE_TCF): Makefile.defs | $(CMAKE_DIR)/
 LEFTOVERS = $(filter-out $(PHONY) cache-key build/%,$(MAKECMDGOALS))
 .PHONY: $(LEFTOVERS)
 all $(LEFTOVERS): skeleton $(BUILD_ENTRYPOINT)
-	$(and $(DRY_RUN),$(wildcard $(BUILD_ENTRYPOINT)),+)$(strip \
-		$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS) \
-		-C $(CMAKE_DIR) $@)
+	$(and $(DRY_RUN),$(wildcard $(BUILD_ENTRYPOINT)),+)$(strip $(CMAKE_MAKE_PROGRAM) -C $(CMAKE_DIR) $@)
 
 # }}}
 
