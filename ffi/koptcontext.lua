@@ -2,12 +2,8 @@
 Leptonica cheatsheet:
     -- Data structures:
     PIX -- basic data structure - stores image
-    PIXA - array of PIX
     BOX -- stores rectangle (x, y, w, h)
     BOXA -- array of BOX
-    SEL -- selector for morphological operations
-    SELA -- array of SEL
-    SELA -- array of SEL
     NUMA -- array of numbers
 
     -- Functions:
@@ -16,11 +12,8 @@ Leptonica cheatsheet:
     pixDestroy(pix) -- free memory from PIX
     boxDestroy(box) -- free memory from BOX
     selDestroy(sel) -- free memory from SEL
-    pixaDestroy(pixa) -- free memory from PIXA
     boxaDestroy(boxa) -- free memory from BOXA
-    selaDestroy(sela) -- free memory from SELA
     numaGetIValue(nai, counter_w, counter_l) -- returns int value from NUMA
-    numaGetFValue(nai, counter_w, counter_l) -- returns float value from NUMA
     pixGetWidth(pix) -- return pix width
     pixGetHeight(pix) -- return pix height
     pixConvertTo32(pix) -- converts pix to 32bpp
@@ -96,7 +89,98 @@ local KOPTContext = {
 }
 local KOPTContext_mt = {__index={}}
 
-local __VERSION__ = "1.0.0"
+local __VERSION__ = "1.0.1"
+
+local function _gc_ptr(p, destructor)
+    return p and ffi.gc(p, destructor)
+end
+
+local function boxDestroy(box)
+    leptonica.boxDestroy(ffi.new('BOX *[1]', box))
+    ffi.gc(box, nil)
+end
+
+local function boxCreate(...)
+    return _gc_ptr(leptonica.boxCreate(...), boxDestroy)
+end
+
+local function boxGetGeometry(box)
+    local geo = ffi.new('l_int32[4]')
+    leptonica.boxGetGeometry(box, geo, geo + 1, geo + 2, geo + 3)
+    return tonumber(geo[0]), tonumber(geo[1]), tonumber(geo[2]), tonumber(geo[3])
+end
+
+local function boxaDestroy(boxa)
+    leptonica.boxaDestroy(ffi.new('BOXA *[1]', boxa))
+    ffi.gc(boxa, nil)
+end
+
+local function boxaIterBoxes(boxa, count)
+    count = count or leptonica.boxaGetCount(boxa)
+    local index = 0
+    return function ()
+        if index < count then
+            local box = _gc_ptr(leptonica.boxaGetBox(boxa, index, leptonica.L_CLONE), boxDestroy)
+            index = index + 1
+            return box
+        end
+    end
+end
+
+local function boxaIterBoxGeometries(boxa)
+    local count = leptonica.boxaGetCount(boxa)
+    local geo = ffi.new('l_int32[4]')
+    local index = 0
+    return function ()
+        if index < count then
+            leptonica.boxaGetBoxGeometry(boxa, index, geo, geo + 1, geo + 2, geo + 3)
+            index = index + 1
+            return tonumber(geo[0]), tonumber(geo[1]), tonumber(geo[2]), tonumber(geo[3])
+        end
+    end
+end
+
+local function boxa_to_table(boxa)
+    local boxes = {}
+    for box_x, box_y, box_w, box_h in boxaIterBoxGeometries(boxa) do
+        table.insert(boxes, {box_x, box_y, box_w, box_h})
+    end
+    return boxes
+end
+
+local function boxa_from_table(t)
+    local rboxa = leptonica.boxaCreate(#t)
+    for i, box in ipairs(t) do
+        leptonica.boxaAddBox(rboxa, leptonica.boxCreate(table.unpack(box)), leptonica.L_NOCOPY)
+    end
+    return rboxa
+end
+
+local function pixDestroy(pix)
+    leptonica.pixDestroy(ffi.new('PIX *[1]', pix))
+    ffi.gc(pix, nil)
+end
+
+local function bitmap2pix(...)
+    return _gc_ptr(k2pdfopt.bitmap2pix(...), pixDestroy)
+end
+
+local function numaDestroy(numa)
+    leptonica.numaDestroy(ffi.new('NUMA *[1]', numa))
+    ffi.gc(numa, nil)
+end
+
+local function numa_to_string(numa)
+    local count = leptonica.numaGetCount(numa)
+    if count == 0 then
+        return
+    end
+    return ffi.string(leptonica.numaGetFArray(numa, leptonica.L_NOCOPY), 4 * count)
+end
+
+local function numa_from_string(s)
+    return leptonica.numaCreateFromFArray(ffi.cast("l_float32*", s), #s / 4, leptonica.L_COPY)
+end
 
 function KOPTContext_mt.__index:setBBox(x0, y0, x1, y1)
     self.bbox.x0, self.bbox.y0, self.bbox.x1, self.bbox.y1 = x0, y0, x1, y1
@@ -162,12 +246,8 @@ function KOPTContext_mt.__index:dstToBlitBuffer()
 end
 
 function KOPTContext_mt.__index:getWordBoxes(bmp, x, y, w, h, box_type)
-    local boxa = ffi.new("BOXA[1]")
-    local nai = ffi.new("NUMA[1]")
-    local counter_l = ffi.new("int[1]")
-    local nr_word, current_line
-    local counter_w, counter_cw
-    local l_x0, l_y0, l_x1, l_y1
+    local boxa
+    local nai
 
     if box_type == 0 then
         k2pdfopt.k2pdfopt_get_reflowed_word_boxes(self,
@@ -183,43 +263,46 @@ function KOPTContext_mt.__index:getWordBoxes(bmp, x, y, w, h, box_type)
 
     if boxa == nil or nai == nil then return end
 
-    -- get number of lines in this area
-    nr_word = leptonica.boxaGetCount(boxa)
+    -- get number of words in this area
+    local nr_word = leptonica.boxaGetCount(boxa)
     assert(nr_word == leptonica.numaGetCount(nai))
 
     local boxes = {}
-    counter_w = 0
-    while counter_w < nr_word do
+    local lbox, current_line
+    local counter_w = 0
+    local l_x0, l_y0, l_x1, l_y1
+    local counter_l = ffi.new("int[1]")
+
+    for box_x, box_y, box_w, box_h in boxaIterBoxGeometries(boxa) do
         leptonica.numaGetIValue(nai, counter_w, counter_l)
-        current_line = counter_l[0]
-        -- sub-table that contains words in a line
-        local lbox = {}
-        boxes[counter_l[0]+1] = lbox
-        counter_cw = 0
-        l_x0, l_y0, l_x1, l_y1 = 9999, 9999, 0, 0
-        while current_line == counter_l[0] and counter_w < nr_word do
-            local box = leptonica.boxaGetBox(boxa, counter_w, C.L_CLONE)
-            -- update line box
-            l_x0 = box.x < l_x0 and box.x or l_x0
-            l_y0 = box.y < l_y0 and box.y or l_y0
-            l_x1 = box.x + box.w > l_x1 and box.x + box.w or l_x1
-            l_y1 = box.y + box.h > l_y1 and box.y + box.h or l_y1
-            -- box for a single word
-            lbox[counter_cw+1] = {
-                x0 = box.x, y0 = box.y,
-                x1 = box.x + box.w,
-                y1 = box.y + box.h,
-            }
-            counter_w, counter_cw = counter_w + 1, counter_cw + 1
-            if counter_w < nr_word then
-                leptonica.numaGetIValue(nai, counter_w, counter_l)
+        if current_line ~= counter_l[0] then
+            if lbox then
+                -- box for the whole line
+                lbox.x0, lbox.y0, lbox.x1, lbox.y1 = l_x0, l_y0, l_x1, l_y1
             end
+            l_x0, l_y0, l_x1, l_y1 = 9999, 9999, 0, 0
+            current_line = counter_l[0]
+            lbox = {}
+            table.insert(boxes, lbox)
         end
-        if current_line ~= counter_l[0] then counter_w = counter_w - 1 end
-        -- box for a whole line
-        lbox.x0, lbox.y0, lbox.x1, lbox.y1 = l_x0, l_y0, l_x1, l_y1
+        l_x0 = box_x < l_x0 and box_x or l_x0
+        l_y0 = box_y < l_y0 and box_y or l_y0
+        l_x1 = box_x + box_w > l_x1 and box_x + box_w or l_x1
+        l_y1 = box_y + box_h > l_y1 and box_y + box_h or l_y1
+        -- box for a single word
+        table.insert(lbox, {
+            x0 = box_x, y0 = box_y,
+            x1 = box_x + box_w,
+            y1 = box_y + box_h,
+        })
         counter_w = counter_w + 1
     end
+
+    if lbox then
+        -- box for the whole line
+        lbox.x0, lbox.y0, lbox.x1, lbox.y1 = l_x0, l_y0, l_x1, l_y1
+    end
+
     return boxes, nr_word
 end
 
@@ -315,29 +398,23 @@ end
 
 function KOPTContext_mt.__index:findPageBlocks()
     if self.src.data then
-        local pixs = k2pdfopt.bitmap2pix(self.src,
-            0, 0, self.src.width, self.src.height)
-        local pixr = leptonica.pixThresholdToBinary(pixs, 128)
-        leptonica.pixDestroy(ffi.new('PIX *[1]', pixs))
-
+        local pixs = bitmap2pix(self.src, 0, 0, self.src.width, self.src.height)
+        local pixr = _gc_ptr(leptonica.pixThresholdToBinary(pixs, 128), pixDestroy)
         local pixtb = ffi.new("PIX *[1]")
         local status = leptonica.pixGetRegionsBinary(pixr, nil, nil, pixtb, nil)
+        pixtb = _gc_ptr(pixtb[0], pixDestroy)
         if status == 0 then
-            self.nboxa = leptonica.pixSplitIntoBoxa(pixtb[0], 5, 10, 20, 80, 10, 0)
-            for i = 0, leptonica.boxaGetCount(self.nboxa) - 1 do
-                local box = leptonica.boxaGetBox(self.nboxa, i, C.L_CLONE)
+            assert(self.nboxa == nil and self.rboxa == nil)
+            self.nboxa = leptonica.pixSplitIntoBoxa(pixtb, 5, 10, 20, 80, 10, 0)
+            for box in boxaIterBoxes(self.nboxa) do
                 leptonica.boxAdjustSides(box, box, -1, 0, -1, 0)
             end
             self.rboxa = leptonica.boxaCombineOverlaps(self.nboxa)
             self.page_width = leptonica.pixGetWidth(pixr)
             self.page_height = leptonica.pixGetHeight(pixr)
-
             -- uncomment this to show text blocks in situ
-            --leptonica.pixWritePng("textblock-mask.png", pixtb[0], 0.0)
-
-            leptonica.pixDestroy(ffi.new('PIX *[1]', pixtb))
+            --leptonica.pixWritePng("textblock-mask.png", pixtb, 0.0)
         end
-        leptonica.pixDestroy(ffi.new('PIX *[1]', pixr))
     end
 end
 
@@ -347,57 +424,47 @@ function KOPTContext_mt.__index:getPanelFromPage(pos)
     end
 
     if self.src.data then
-        local pixs = k2pdfopt.bitmap2pix(self.src, 0, 0, self.src.width, self.src.height)
+        local pixs = bitmap2pix(self.src, 0, 0, self.src.width, self.src.height)
         local pixg
         if leptonica.pixGetDepth(pixs) == 32 then
             pixg = leptonica.pixConvertRGBToGrayFast(pixs)
         else
             pixg = leptonica.pixClone(pixs)
         end
+        pixg = _gc_ptr(pixg, pixDestroy)
 
         -- leptonica's threshold gets pixels lighter than X, we want to get
         -- pixels darker than X, to do that we invert the image, threshold it,
         -- and invert the result back. Math: ~(~img < X) <=> img > X
-        local pix_inverted = leptonica.pixInvert(nil, pixg)
-        local pix_thresholded = leptonica.pixThresholdToBinary(pix_inverted, 50)
+        local pix_inverted = _gc_ptr(leptonica.pixInvert(nil, pixg), pixDestroy)
+        local pix_thresholded = _gc_ptr(leptonica.pixThresholdToBinary(pix_inverted, 50), pixDestroy)
         leptonica.pixInvert(pix_thresholded, pix_thresholded)
 
         -- find connected components (in our case panels)
-        local bb = leptonica.pixConnCompBB(pix_thresholded, 8)
+        local bb = _gc_ptr(leptonica.pixConnCompBB(pix_thresholded, 8), boxaDestroy)
 
         local img_w = leptonica.pixGetWidth(pixs)
         local img_h = leptonica.pixGetHeight(pixs)
         local res
 
-        for i = 0, leptonica.boxaGetCount(bb) - 1 do
-            local box = leptonica.boxaGetBox(bb, i, C.L_CLONE)
-            local pix_tmp = leptonica.pixClipRectangle(pixs, box, nil)
+        for box in boxaIterBoxes(bb) do
+            local pix_tmp = _gc_ptr(leptonica.pixClipRectangle(pixs, box, nil), pixDestroy)
             local w = leptonica.pixGetWidth(pix_tmp)
             local h = leptonica.pixGetHeight(pix_tmp)
             -- check if it's panel or part of the panel, if it's part of the panel skip
             if w >= img_w / 8 and h >= img_h / 8 then
-                if isInRect(box.x, box.y, box.w, box.h, pos.x, pos.y) then
+                local box_x, box_y, box_w, box_h = boxGetGeometry(box)
+                if isInRect(box_x, box_y, box_w, box_h, pos.x, pos.y) then
                     res = {
-                        x = box.x,
-                        y = box.y,
-                        w = box.w,
-                        h = box.h,
+                        x = box_x,
+                        y = box_y,
+                        w = box_w,
+                        h = box_h,
                     }
-                    leptonica.pixDestroy(ffi.new("PIX *[1]", pix_tmp))
-                    leptonica.boxDestroy(ffi.new("BOX *[1]", box))
                     break -- we found panel, exit the loop and clean up memory
                 end
             end
-            leptonica.pixDestroy(ffi.new("PIX *[1]", pix_tmp))
-            leptonica.boxDestroy(ffi.new("BOX *[1]", box))
         end
-
-        -- free up memory
-        leptonica.boxaDestroy(ffi.new("BOXA *[1]", bb))
-        leptonica.pixDestroy(ffi.new("PIX *[1]", pixg))
-        leptonica.pixDestroy(ffi.new("PIX *[1]", pix_thresholded))
-        leptonica.pixDestroy(ffi.new("PIX *[1]", pix_inverted))
-        leptonica.pixDestroy(ffi.new("PIX *[1]", pixs))
         return res
     end
 end
@@ -410,70 +477,52 @@ function KOPTContext_mt.__index:getPageBlock(x_rel, y_rel)
     local block = nil
     if self.src.data and self.nboxa ~= nil and self.rboxa ~= nil then
         local w, h = self:getPageDim()
-        local tbox = leptonica.boxCreate(0, y_rel * h, w, 2)
-        local boxa = leptonica.boxaClipToBox(self.nboxa, tbox)
-        leptonica.boxDestroy(ffi.new('BOX *[1]', tbox))
-        for i = 0, leptonica.boxaGetCount(boxa) - 1 do
-            local box = leptonica.boxaGetBox(boxa, i, C.L_CLONE)
+        local tbox = boxCreate(0, y_rel * h, w, 2)
+        local boxa = _gc_ptr(leptonica.boxaClipToBox(self.nboxa, tbox), boxaDestroy)
+        for box in boxaIterBoxes(boxa) do
             leptonica.boxAdjustSides(box, box, -1, 0, -1, 0)
         end
-        local boxatb = leptonica.boxaCombineOverlaps(boxa)
-        leptonica.boxaDestroy(ffi.new('BOXA *[1]', boxa))
+        local boxatb = _gc_ptr(leptonica.boxaCombineOverlaps(boxa), boxaDestroy)
         local clipped_box, unclipped_box
-        for i = 0, leptonica.boxaGetCount(boxatb) - 1 do
-            local box = leptonica.boxaGetBox(boxatb, i, C.L_CLONE)
-            if box.x / w <= x_rel and (box.x + box.w) / w >= x_rel then
-                clipped_box = leptonica.boxCreate(box.x, 0, box.w, h)
+        for box_x, box_y, box_w, box_h in boxaIterBoxGeometries(boxatb) do
+            if box_x / w <= x_rel and (box_x + box_w) / w >= x_rel then
+                clipped_box = boxCreate(box_x, 0, box_w, h)
+                if clipped_box ~= nil then break end
             end
-            leptonica.boxDestroy(ffi.new('BOX *[1]', box))
-            if clipped_box ~= nil then break end
         end
-        for i = 0, leptonica.boxaGetCount(self.rboxa) - 1 do
-            local box = leptonica.boxaGetBox(self.rboxa, i, C.L_CLONE)
-            if box.x / w <= x_rel and (box.x + box.w) / w >= x_rel
-                and box.y / h <= y_rel and (box.y + box.h) / h >= y_rel then
-                unclipped_box = leptonica.boxCreate(box.x, box.y, box.w, box.h)
+        for box_x, box_y, box_w, box_h in boxaIterBoxGeometries(self.rboxa) do
+            if box_x / w <= x_rel and (box_x + box_w) / w >= x_rel
+                and box_y / h <= y_rel and (box_y + box_h) / h >= y_rel then
+                unclipped_box = boxCreate(box_x, box_y, box_w, box_h)
+                if unclipped_box ~= nil then break end
             end
-            leptonica.boxDestroy(ffi.new('BOX *[1]', box))
-            if unclipped_box ~= nil then break end
         end
         if clipped_box ~= nil and unclipped_box ~= nil then
-            local box = leptonica.boxOverlapRegion(clipped_box, unclipped_box)
+            local box = _gc_ptr(leptonica.boxOverlapRegion(clipped_box, unclipped_box), boxDestroy)
             if box ~= nil then
+                local box_x, box_y, box_w, box_h = boxGetGeometry(box)
                 block = {
-                    x0 = box.x / w, y0 = box.y / h,
-                    x1 = (box.x + box.w) / w,
-                    y1 = (box.y + box.h) / h,
+                    x0 = box_x / w, y0 = box_y / h,
+                    x1 = (box_x + box_w) / w,
+                    y1 = (box_y + box_h) / h,
                 }
             end
-            leptonica.boxDestroy(ffi.new('BOX *[1]', box))
-        end
-        if clipped_box ~= nil then
-            leptonica.boxDestroy(ffi.new('BOX *[1]', clipped_box))
-        end
-        if unclipped_box ~= nil then
-            leptonica.boxDestroy(ffi.new('BOX *[1]', unclipped_box))
         end
 
         -- uncomment this to show text blocks in situ
         --[[
         if block then
             local w, h = self.src.width, self.src.height
-            local box = leptonica.boxCreate(block.x0*w, block.y0*h,
+            local box = boxCreate(block.x0*w, block.y0*h,
                 (block.x1-block.x0)*w, (block.y1-block.y0)*h)
-            local boxa = leptonica.boxaCreate(1)
+            local boxa = _gc_ptr(leptonica.boxaCreate(1), boxaDestroy)
             leptonica.boxaAddBox(boxa, box, C.L_COPY)
-            local pixs = k2pdfopt.bitmap2pix(self.src,
+            local pixs = bitmap2pix(self.src,
                 0, 0, self.src.width, self.src.height)
-            local pixc = leptonica.pixDrawBoxaRandom(pixs, boxa, 8)
+            local pixc = _gc_ptr(pixDrawBoxaRandom(pixs, boxa, 8), pixDestroy)
             leptonica.pixWritePng("textblock.png", pixc, 0.0)
-            leptonica.pixDestroy(ffi.new('PIX *[1]', pixc))
-            leptonica.boxaDestroy(ffi.new('BOXA *[1]', boxa))
-            leptonica.boxDestroy(ffi.new('BOX *[1]', box))
         end
         --]]
-
-        leptonica.boxaDestroy(ffi.new('BOXA *[1]', boxatb))
     end
 
     return block
@@ -484,20 +533,14 @@ end
 --]]
 function KOPTContext_mt.__index:getSrcPix(pboxes, drawer)
     if self.src.data ~= nil then
-        local pix1 = k2pdfopt.bitmap2pix(self.src,
-            0, 0, self.src.width, self.src.height)
+        local pix1 = bitmap2pix(self.src, 0, 0, self.src.width, self.src.height)
         if pboxes and drawer == "lighten" then
             local color = 0xFFFF0000
             local bbox = self.bbox
-            local pix2 = leptonica.pixConvertTo32(pix1)
-            leptonica.pixDestroy(ffi.new('PIX *[1]', pix1))
+            local pix2 = _gc_ptr(leptonica.pixConvertTo32(pix1), pixDestroy)
             for _, pbox in ipairs(pboxes) do
-                local box = ffi.new("BOX[1]")
-                box[0].x = pbox.x - bbox.x0
-                box[0].y = pbox.y - bbox.y0
-                box[0].w, box[0].h = pbox.w, pbox.h
-                leptonica.pixMultiplyByColor(pix2, pix2, box,
-                        ffi.new("uint32_t", color))
+                local box = boxCreate(pbox.x - bbox.x0, pbox.y - bbox.y0, pbox.w, pbox.h)
+                leptonica.pixMultiplyByColor(pix2, pix2, box, ffi.new("uint32_t", color))
             end
             return pix2
         else
@@ -510,7 +553,6 @@ function KOPTContext_mt.__index:exportSrcPNGFile(pboxes, drawer, filename)
     local pix = self:getSrcPix(pboxes, drawer)
     if pix ~= nil then
         leptonica.pixWritePng(filename, pix, ffi.new("float", 0.0))
-        leptonica.pixDestroy(ffi.new('PIX *[1]', pix))
     end
 end
 
@@ -520,7 +562,6 @@ function KOPTContext_mt.__index:exportSrcPNGString(pboxes, drawer)
         local pdata = ffi.new("char *[1]")
         local psize = ffi.new("size_t[1]")
         leptonica.pixWriteMemPng(pdata, psize, pix, 0.0)
-        leptonica.pixDestroy(ffi.new('PIX *[1]', pix))
         if pdata[0] ~= nil then
            local pngstr = ffi.string(pdata[0], psize[0])
            C.free(pdata[0])
@@ -538,34 +579,15 @@ function KOPTContext_mt.__index:free()
     --       now that __gc may actually call us on collection long after an earlier explicit free...
     --- @fixme: Invest in a saner KOPTContext struct, possibly with a private bool to store the free state,
     ---         àla BlitBuffer/lj-sqlite3...
-    if self.rnai ~= nil then
-        local rnai_pptr = ffi.new('NUMA *[1]', self.rnai)
-        leptonica.numaDestroy(rnai_pptr)
-        self.rnai = rnai_pptr[0]
-    end
-    if self.nnai ~= nil then
-        local nnai_pptr = ffi.new('NUMA *[1]', self.nnai)
-        leptonica.numaDestroy(nnai_pptr)
-        self.nnai = nnai_pptr[0]
-    end
-    if self.rboxa ~= nil then
-        local rboxa_pptr = ffi.new('BOXA *[1]', self.rboxa)
-        leptonica.boxaDestroy(rboxa_pptr)
-        self.rboxa = rboxa_pptr[0]
-    end
-    if self.nboxa ~= nil then
-        local nboxa_pptr = ffi.new('BOXA *[1]', self.nboxa)
-        leptonica.boxaDestroy(nboxa_pptr)
-        self.nboxa = nboxa_pptr[0]
-    end
-
+    self.rnai = numaDestroy(self.rnai)
+    self.nnai = numaDestroy(self.nnai)
+    self.rboxa = boxaDestroy(self.rboxa)
+    self.nboxa = boxaDestroy(self.nboxa)
     self:setLanguage(nil)
-
     -- Already guards against NULL data pointers
     k2pdfopt.bmp_free(self.src)
     -- Already guards against NULL data pointers
     k2pdfopt.bmp_free(self.dst)
-
     if self.rectmaps.n ~= 0 then
         k2pdfopt.wrectmaps_free(self.rectmaps)
     end
@@ -687,41 +709,11 @@ function KOPTContext.totable(kc)
     -- struct
     context.bbox = ffi.string(kc.bbox, ffi.sizeof(kc.bbox))
     -- pointers
-    if kc.rboxa ~= nil and kc.rboxa.n > 0 then
-        context.rboxa = {
-            n = kc.rboxa.n,
-            box = {}
-        }
-        for i=0, kc.rboxa.n - 1 do
-            table.insert(context.rboxa.box,
-                    ffi.string(kc.rboxa.box[i], ffi.sizeof("BOX")))
-        end
-    end
-    if kc.rnai ~= nil and kc.rnai.n > 0 then
-        context.rnai = {
-            n = kc.rnai.n,
-            array = ffi.string(kc.rnai.array, ffi.sizeof("float")*kc.rnai.n)
-        }
-    end
-    if kc.nboxa ~= nil and kc.nboxa.n > 0 then
-        context.nboxa = {
-            n = kc.nboxa.n,
-            box = {}
-        }
-        for i=0, kc.nboxa.n - 1 do
-            table.insert(context.nboxa.box,
-                    ffi.string(kc.nboxa.box[i], ffi.sizeof("BOX")))
-        end
-    end
-    if kc.nnai ~= nil and kc.nnai.n > 0 then
-        context.nnai = {
-            n = kc.nnai.n,
-            array = ffi.string(kc.nnai.array, ffi.sizeof("float")*kc.nnai.n)
-        }
-    end
-    if kc.language ~= nil then
-        context.language = ffi.string(kc.language)
-    end
+    context.rboxa = kc.rboxa and boxa_to_table(kc.rboxa)
+    context.rnai = numa_to_string(kc.rnai)
+    context.nboxa = kc.nboxa and boxa_to_table(kc.nboxa)
+    context.nnai = numa_to_string(kc.nnai)
+    context.language = kc.language and ffi.string(kc.language)
     -- bmp structs
     context.src = ffi.string(kc.src, ffi.sizeof(kc.src))
     if kc.src.size_allocated > 0 then
@@ -789,35 +781,11 @@ function KOPTContext.fromtable(context)
         ffi.copy(kc.bbox, context.bbox, ffi.sizeof(kc.bbox))
     end
     -- pointers
-    if context.rboxa and context.rboxa.n > 0 then
-        kc.rboxa = leptonica.boxaCreate(context.rboxa.n)
-        for i=0, context.rboxa.n - 1 do
-            leptonica.boxaAddBox(kc.rboxa, ffi.new("BOX[1]"), C.L_COPY)
-            ffi.copy(kc.rboxa.box[i], context.rboxa.box[i+1], ffi.sizeof("BOX"))
-        end
-    else
-        kc.rboxa = nil
-    end
-    if context.rnai and context.rnai.n > 0 then
-        kc.rnai = leptonica.numaCreateFromFArray(ffi.cast("float*",
-                context.rnai.array), context.rnai.n, C.L_COPY)
-    end
-    if context.nboxa and context.nboxa.n > 0 then
-        kc.nboxa = leptonica.boxaCreate(context.nboxa.n)
-        for i=0, context.nboxa.n - 1 do
-            leptonica.boxaAddBox(kc.nboxa, ffi.new("BOX[1]"), C.L_COPY)
-            ffi.copy(kc.nboxa.box[i], context.nboxa.box[i+1], ffi.sizeof("BOX"))
-        end
-    else
-        kc.nboxa = nil
-    end
-    if context.nnai and context.nnai.n > 0 then
-        kc.nnai = leptonica.numaCreateFromFArray(ffi.cast("float*",
-                context.nnai.array), context.nnai.n, C.L_COPY)
-    end
-    if context.language then
-        kc:setLanguage(context.language)
-    end
+    kc.rboxa = context.rboxa and boxa_from_table(context.rboxa)
+    kc.rnai = context.rnai and numa_from_string(context.rnai)
+    kc.nboxa = context.nboxa and boxa_from_table(context.nboxa)
+    kc.nnai = context.nnai and numa_from_string(context.nnai)
+    kc:setLanguage(context.language)
 
     k2pdfopt.bmp_init(kc.src)
     ffi.copy(kc.src, context.src, ffi.sizeof(kc.src))
