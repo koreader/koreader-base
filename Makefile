@@ -11,8 +11,8 @@ $(info ************ Building for MACHINE: "$(MACHINE)" **********)
 $(info ************ PATH: "$(PATH)" **********)
 $(info ************ CHOST: "$(CHOST)" **********)
 $(info ************ CMAKE_MAKE_PROGRAM: $(strip $(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS)) **********)
-$(info ************ NINJA: $(strip $(NINJA) $(NINJAFLAGS)) **********)
-$(info ************ MAKE: $(strip $(MAKE) $(PARALLEL_JOBS:%=-j%) $(PARALLEL_LOAD:%=-l%) $(MAKEFLAGS)) **********)
+$(info ************ NINJA: $(strip $(NINJA) $(PARALLEL_JOBS:%=-j%) $(PARALLEL_LOAD:%=-l%)) **********)
+$(info ************ MAKE: $(strip $(MAKE) $(PARALLEL_JOBS:%=-j%) $(PARALLEL_LOAD:%=-l%)) **********)
 
 # main target
 all: $(CMAKE_KO) $(CMAKE_TCF) $(OUTPUT_DIR)/libs $(if $(ANDROID),,$(LUAJIT)) \
@@ -78,10 +78,10 @@ $(OUTPUT_DIR)/%/:
 	mkdir -p $@
 
 $(CMAKE_KO): Makefile.defs | $(CMAKE_DIR)/
-	$(file > $(CMAKE_KO),$(cmake_koreader))
+	$(if $(DRY_RUN),: $@,$(file > $(CMAKE_KO),$(cmake_koreader)))
 
 $(CMAKE_TCF): Makefile.defs | $(CMAKE_DIR)/
-	$(file > $(CMAKE_TCF),$(if $(EMULATE_READER),$(cmake_toolchain),$(cmake_cross_toolchain)))
+	$(if $(DRY_RUN),: $@,$(file > $(CMAKE_TCF),$(if $(EMULATE_READER),$(cmake_toolchain),$(cmake_cross_toolchain))))
 
 $(OUTPUT_DIR)/libs:
 	install -d $(OUTPUT_DIR)/libs
