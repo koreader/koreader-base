@@ -706,12 +706,10 @@ THIRDPARTY_DIR=thirdparty
 LUAFILESYSTEM_DIR=luafilesystem
 
 ZLIB_BUILD_DIR=$(THIRDPARTY_BUILD)/zlib
-ZLIB_DIR=$(abspath $(STAGING_DIR)/zlib)
-ZLIB_STATIC=$(ZLIB_DIR)/lib/libz.a
+ZLIB_STATIC=$(STAGING_DIR)/lib/libz.a
 ZLIB=$(OUTPUT_DIR)/libs/$(if $(WIN32),zlib1.dll,$(if $(DARWIN),libz.1.dylib,libz.so.1))
 
 ZSTD_BUILD_DIR=$(THIRDPARTY_BUILD)/zstd
-ZSTD_DIR=$(abspath $(STAGING_DIR)/zstd)
 ZSTD_LIB_EXT=$(if $(WIN32),.dll,$(if $(DARWIN),.1.dylib,.so.1))
 ZSTD_LIB=$(OUTPUT_DIR)/libs/libzstd$(ZSTD_LIB_EXT)
 
@@ -720,11 +718,9 @@ MINIZIP_DIR = $(STAGING_DIR)/minizip
 AES_LIB = $(MINIZIP_DIR)/lib/libaes.a
 
 MUPDF_BUILD_DIR=$(THIRDPARTY_BUILD)/mupdf
-MUPDF_DIR=$(STAGING_DIR)/mupdf
 MUPDF_LIB=$(OUTPUT_DIR)/libs/libmupdf$(LIB_EXT)
 
 DJVULIBRE_BUILD_DIR=$(THIRDPARTY_BUILD)/djvulibre
-DJVULIBRE_DIR=$(abspath $(STAGING_DIR)/djvulibre)
 DJVULIBRE_LIB_EXT=$(if $(WIN32),-21.dll,$(if $(DARWIN),.21.dylib,.so.21))
 DJVULIBRE_LIB=$(OUTPUT_DIR)/libs/libdjvulibre$(DJVULIBRE_LIB_EXT)
 # We can't use -ldjvulibre because we don't ship the bare .so symlink in LIB_DIR,
@@ -732,7 +728,6 @@ DJVULIBRE_LIB=$(OUTPUT_DIR)/libs/libdjvulibre$(DJVULIBRE_LIB_EXT)
 DJVULIBRE_LIB_LINK_FLAG=$(if $(WIN32),-l:libdjvulibre-21.dll,$(if $(DARWIN),$(DJVULIBRE_LIB),-l:libdjvulibre.so.21))
 
 CRENGINE_BUILD_DIR=$(THIRDPARTY_BUILD)/crengine
-CRENGINE_DIR=$(abspath $(CRENGINE_BUILD_DIR))
 CRENGINE_SRC_DIR=$(abspath $(THIRDPARTY_DIR)/kpvcrlib/crengine)
 CRENGINE_SRC_FILES=$(wildcard $(CRENGINE_SRC_DIR)/crengine/src/*.cpp)
 CRENGINE_SRC_FILES+=$(wildcard $(CRENGINE_SRC_DIR)/crengine/include/*.h)
@@ -747,17 +742,16 @@ CRENGINE_NEEDED_LIBS =  $(FREETYPE_LIB) $(FRIBIDI_LIB) $(HARFBUZZ_LIB) \
 CRENGINE_CFLAGS = \
 		-include '$(CRENGINE_BUILD_DIR)/crsetup.h' \
 		'-I$(CRENGINE_SRC_DIR)/crengine/include' \
-		'-I$(FREETYPE_DIR)/include/freetype2' \
-		'-I$(HARFBUZZ_DIR)/include/harfbuzz' \
-		'-I$(LIBUNIBREAK_DIR)/include' \
+		'-I$(STAGING_DIR)/include/freetype2' \
+		'-I$(STAGING_DIR)/include/harfbuzz' \
+		'-I$(STAGING_DIR)/include' \
 
 LUAJIT_BUILD_DIR = $(THIRDPARTY_BUILD)/luajit
-LUAJIT_DIR = $(abspath $(STAGING_DIR)/luajit)
 LUAJIT = $(OUTPUT_DIR)/$(if $(WIN32),luajit.exe,luajit)
-LUAJIT_INC = $(LUAJIT_DIR)/include/luajit-2.1
+LUAJIT_INC = $(STAGING_DIR)/include/luajit-2.1
 LUAJIT_JIT = $(OUTPUT_DIR)/jit
 LUAJIT_LIB = $(if $(USE_LUAJIT_LIB),$(OUTPUT_DIR)/$(if $(WIN32),lua51.dll,libs/libluajit.so))
-LUAJIT_STATIC = $(LUAJIT_DIR)/lib/libluajit.a
+LUAJIT_STATIC = $(STAGING_DIR)/lib/libluajit.a
 ifeq ($(USE_LUAJIT_LIB), 1)
 	LUAJIT_LIB_LINK_FLAG=$(if $(WIN32),-l:lua51.dll,-lluajit)
 endif
@@ -767,62 +761,52 @@ POPEN_NOSHELL_DIR=$(POPEN_NOSHELL_BUILD_DIR)/source
 POPEN_NOSHELL_LIB=$(POPEN_NOSHELL_DIR)/libpopen_noshell.a
 
 LEPTONICA_BUILD_DIR = $(THIRDPARTY_BUILD)/leptonica
-LEPTONICA_DIR = $(STAGING_DIR)/leptonica
 LEPT_LIB_EXT = $(if $(WIN32),-5.dll,$(if $(DARWIN),.5.dylib,.so.5))
 LEPTONICA_LIB = $(OUTPUT_DIR)/libs/liblept$(LEPT_LIB_EXT)
 
 TESSERACT_BUILD_DIR = $(THIRDPARTY_BUILD)/tesseract
-TESSERACT_DIR = $(STAGING_DIR)/tesseract
 TESS_LIB_EXT = $(if $(WIN32),-3.dll,$(if $(DARWIN),.3.dylib,.so.3))
 TESSERACT_LIB = $(OUTPUT_DIR)/libs/libtesseract$(TESS_LIB_EXT)
 
 K2PDFOPT_BUILD_DIR=$(THIRDPARTY_BUILD)/libk2pdfopt
-K2PDFOPT_DIR=$(STAGING_DIR)/libk2pdfopt
 K2PDFOPT_LIB_EXT=$(if $(WIN32),-2.dll,$(if $(DARWIN),.2.dylib,.so.2))
 K2PDFOPT_LIB=$(OUTPUT_DIR)/libs/libk2pdfopt$(K2PDFOPT_LIB_EXT)
-K2PDFOPT_CFLAGS=-I$(K2PDFOPT_DIR)/include/k2pdfopt -I$(LEPTONICA_DIR)/include/leptonica
+K2PDFOPT_CFLAGS=-I$(STAGING_DIR)/include/k2pdfopt -I$(STAGING_DIR)/include/leptonica
 K2PDFOPT_LIB_LINK_FLAG=$(if $(WIN32),-l:libk2pdfopt-2.dll,$(if $(DARWIN),$(K2PDFOPT_LIB),-l:libk2pdfopt.so.2))
 
 FREETYPE_LIB_EXT=$(if $(WIN32),-6.dll,$(if $(DARWIN),.6.dylib,.so.6))
 FREETYPE_LIB=$(OUTPUT_DIR)/libs/libfreetype$(FREETYPE_LIB_EXT)
 FREETYPE_BUILD_DIR=$(THIRDPARTY_BUILD)/freetype2
-FREETYPE_DIR=$(abspath $(STAGING_DIR)/freetype2)
 FREETYPE_LIB_LINK_FLAG=$(if $(WIN32),-l:libfreetype-6.dll,$(if $(DARWIN),$(FREETYPE_LIB),-l:libfreetype.so.6))
 
 HARFBUZZ_LIB_EXT=$(if $(WIN32),-0.dll,$(if $(DARWIN),.0.dylib,.so.0))
 HARFBUZZ_LIB=$(OUTPUT_DIR)/libs/libharfbuzz$(HARFBUZZ_LIB_EXT)
 HARFBUZZ_BUILD_DIR=$(THIRDPARTY_BUILD)/harfbuzz
-HARFBUZZ_DIR=$(abspath $(STAGING_DIR)/harfbuzz)
 HARFBUZZ_LIB_LINK_FLAG=$(if $(WIN32),-l:libharfbuzz-0.dll,$(if $(DARWIN),$(HARFBUZZ_LIB),-l:libharfbuzz.so.0))
 
 FRIBIDI_LIB_EXT=$(if $(WIN32),-0.dll,$(if $(DARWIN),.0.dylib,.so.0))
 FRIBIDI_LIB=$(OUTPUT_DIR)/libs/libfribidi$(FRIBIDI_LIB_EXT)
 FRIBIDI_BUILD_DIR=$(THIRDPARTY_BUILD)/fribidi
-FRIBIDI_DIR=$(abspath $(STAGING_DIR)/fribidi)
 FRIBIDI_LIB_LINK_FLAG=$(if $(WIN32),-l:libfribidi-0.dll,$(if $(DARWIN),$(FRIBIDI_LIB),-l:libfribidi.so.0))
 
 LIBUNIBREAK_LIB_EXT=$(if $(WIN32),-6.dll,$(if $(DARWIN),.6.dylib,.so.6))
 LIBUNIBREAK_LIB=$(OUTPUT_DIR)/libs/libunibreak$(LIBUNIBREAK_LIB_EXT)
 LIBUNIBREAK_BUILD_DIR=$(THIRDPARTY_BUILD)/libunibreak
-LIBUNIBREAK_DIR=$(abspath $(STAGING_DIR)/libunibreak)
 LIBUNIBREAK_LIB_LINK_FLAG=$(if $(WIN32),-l:libunibreak-6.dll,$(if $(DARWIN),$(LIBUNIBREAK_LIB),-l:libunibreak.so.6))
 
 UTF8PROC_LIB_EXT=$(if $(WIN32),-3.dll,$(if $(DARWIN),.3.dylib,.so.3))
 UTF8PROC_LIB=$(OUTPUT_DIR)/libs/libutf8proc$(UTF8PROC_LIB_EXT)
 UTF8PROC_BUILD_DIR=$(THIRDPARTY_BUILD)/utf8proc
-UTF8PROC_DIR=$(abspath $(STAGING_DIR)/utf8proc)
 
 JPEG_LIB_EXT=$(if $(WIN32),-8.dll,$(if $(DARWIN),.8.dylib,.so.8))
 JPEG_LIB=$(OUTPUT_DIR)/libs/libjpeg$(JPEG_LIB_EXT)
 JPEG_LIB_LINK_FLAG=$(if $(WIN32),-l:libjpeg-8.dll,$(if $(DARWIN),$(JPEG_LIB),-l:libjpeg.so.8))
 TURBOJPEG_LIB=$(OUTPUT_DIR)/libs/libturbojpeg$(if $(WIN32),.dll,$(if $(DARWIN),.dylib,.so))
 JPEG_BUILD_DIR=$(THIRDPARTY_BUILD)/libjpeg-turbo
-JPEG_DIR=$(abspath $(STAGING_DIR)/libjpeg-turbo)
 
 PNG_LIB_EXT=$(if $(WIN32),-16.dll,$(if $(DARWIN),.16.dylib,.so.16))
 PNG_LIB=$(OUTPUT_DIR)/libs/libpng16$(PNG_LIB_EXT)
 PNG_BUILD_DIR=$(THIRDPARTY_BUILD)/libpng
-PNG_DIR=$(abspath $(STAGING_DIR)/libpng)
 
 LODEPNG_LIB=$(OUTPUT_DIR)/libs/liblodepng$(LIB_EXT)
 LODEPNG_BUILD_DIR=$(THIRDPARTY_BUILD)/lodepng
@@ -840,34 +824,28 @@ LIBWEBPDEMUX_LIB=$(OUTPUT_DIR)/libs/libwebpdemux$(LIBWEBPDEMUX_LIB_EXT)
 LIBSHARPYUV_LIB_EXT=$(if $(WIN32),-0.dll,$(if $(DARWIN),.0.dylib,.so.0))
 LIBSHARPYUV_LIB=$(OUTPUT_DIR)/libs/libsharpyuv$(LIBSHARPYUV_LIB_EXT)
 LIBWEBP_BUILD_DIR=$(THIRDPARTY_BUILD)/libwebp
-LIBWEBP_DIR=$(abspath $(STAGING_DIR)/libwebp)
 
 LUNASVG_LIB_EXT=$(if $(WIN32),.dll,$(if $(DARWIN),.dylib,.so))
 LUNASVG_LIB=$(OUTPUT_DIR)/libs/liblunasvg$(LUNASVG_LIB_EXT)
 LUNASVG_BUILD_DIR=$(THIRDPARTY_BUILD)/lunasvg
-LUNASVG_DIR=$(abspath $(STAGING_DIR)/lunasvg)
 
 SDCV_BUILD_DIR=$(THIRDPARTY_BUILD)/sdcv
 SDCV_DIR=$(abspath $(SDCV_BUILD_DIR)/build)
 
 GLIB_BUILD_DIR=$(THIRDPARTY_BUILD)/glib
-GLIB_DIR=$(abspath $(STAGING_DIR)/glib)
-GLIB=$(GLIB_DIR)/lib/libglib-2.0.a
+GLIB=$(STAGING_DIR)/lib/libglib-2.0.a
 
 LIBICONV_BUILD_DIR=$(THIRDPARTY_BUILD)/libiconv
-LIBICONV_DIR=$(abspath $(STAGING_DIR)/libiconv)
-LIBICONV=$(LIBICONV_DIR)/lib/libiconv.a
+LIBICONV=$(STAGING_DIR)/lib/libiconv.a
 
 GETTEXT_BUILD_DIR=$(THIRDPARTY_BUILD)/gettext
-GETTEXT_DIR=$(abspath $(STAGING_DIR)/gettext)
-LIBGETTEXT=$(GETTEXT_DIR)/lib/libintl.a
+LIBGETTEXT=$(STAGING_DIR)/lib/libintl.a
 
 SDL2_BUILD_DIR=$(THIRDPARTY_BUILD)/sdl2
 SDL2_DIR=$(abspath $(SDL2_BUILD_DIR)/build)
 SDL2_LIB=$(OUTPUT_DIR)/libs/libSDL2$(LIB_EXT)
 
 OPENSSL_BUILD_DIR=$(THIRDPARTY_BUILD)/openssl
-OPENSSL_DIR=$(abspath $(STAGING_DIR)/openssl)
 SSL_LIB=$(OUTPUT_DIR)/libs/libssl$(if $(WIN32),-1.dll,$(if $(DARWIN),.1.1.dylib,.so.1.1))
 CRYPTO_LIB=$(OUTPUT_DIR)/libs/libcrypto$(if $(WIN32),-1.dll,$(if $(DARWIN),.1.1.dylib,.so.1.1))
 
@@ -877,12 +855,10 @@ LUASOCKET=$(OUTPUT_DIR)/common/socket
 LUASEC=$(OUTPUT_DIR)/common/ssl
 
 ZMQ_BUILD_DIR=$(THIRDPARTY_BUILD)/libzmq
-ZMQ_DIR=$(abspath $(STAGING_DIR)/libzmq)
 ZMQ_LIB_EXT=$(if $(WIN32),.dll,$(if $(DARWIN),.4.dylib,.so.4))
 ZMQ_LIB=$(OUTPUT_DIR)/libs/libzmq$(ZMQ_LIB_EXT)
 
 CZMQ_BUILD_DIR=$(THIRDPARTY_BUILD)/czmq
-CZMQ_DIR=$(abspath $(STAGING_DIR)/czmq)
 CZMQ_LIB_EXT=$(if $(WIN32),.dll,$(if $(DARWIN),.1.dylib,.so.1))
 CZMQ_LIB=$(OUTPUT_DIR)/libs/libczmq$(CZMQ_LIB_EXT)
 
@@ -898,7 +874,6 @@ KOBO_USBMS_BUILD_DIR = $(THIRDPARTY_BUILD)/kobo-usbms
 KOBO_USBMS_DIR = $(abspath $(KOBO_USBMS_BUILD_DIR)/source/$(if $(KODEBUG),Debug,Release))
 
 CURL_BUILD_DIR=$(THIRDPARTY_BUILD)/curl
-CURL_DIR=$(abspath $(STAGING_DIR)/curl)
 # NOTE: We rename cURL on PB because everything is terrible (c.f., #5861)
 CURL_LIB_EXT=$(if $(WIN32),.dll,$(if $(DARWIN),.dylib,$(if $(POCKETBOOK),_ko.so.4,.so.4)))
 CURL_LIB=$(OUTPUT_DIR)/libs/libcurl$(CURL_LIB_EXT)
@@ -956,13 +931,7 @@ LJ_WPACLIENT=$(addprefix $(OUTPUT_DIR)/common/lj-wpaclient/, $(LJ_WPACLIENT_FILE
 # Nanosvg headers (that include code)
 NANOSVG_HEADER_FILES=nanosvg.h nanosvgrast.h stb_image_write.h
 NANOSVG_BUILD_DIR=$(THIRDPARTY_BUILD)/nanosvg
-NANOSVG_DIR=$(abspath $(NANOSVG_BUILD_DIR)/source)
-NANOSVG_INCLUDE_DIR=$(abspath $(NANOSVG_BUILD_DIR)/include)
-NANOSVG_HEADERS=$(addprefix $(NANOSVG_INCLUDE_DIR)/, $(NANOSVG_HEADER_FILES))
-
-# Srell headers (that include code)
-SRELL_DIR=$(abspath $(THIRDPARTY_DIR)/srell)
-SRELL_INCLUDE_DIR=$(SRELL_DIR)
+NANOSVG_HEADERS=$(addprefix $(STAGING_DIR)/include/, $(NANOSVG_HEADER_FILES))
 
 # CFLAGS for the Lua/C/C++ modules:
 #
@@ -972,8 +941,8 @@ DYNLIB_LDFLAGS = -shared
 ifdef DARWIN
 	DYNLIB_LDFLAGS += -dynamiclib -undefined dynamic_lookup
 endif
-DYNLIB_CFLAGS=-L$(abspath $(OUTPUT_DIR)/libs) $(CFLAGS) -I$(LUAJIT_INC) $(DYNLIB_LDFLAGS)
-DYNLIB_CXXFLAGS=-L$(abspath $(OUTPUT_DIR)/libs) $(CXXFLAGS) -I$(LUAJIT_INC) $(DYNLIB_LDFLAGS)
+DYNLIB_CFLAGS=-L$(STAGING_DIR)/lib $(CFLAGS) -I$(STAGING_DIR)/include -I$(LUAJIT_INC) $(DYNLIB_LDFLAGS)
+DYNLIB_CXXFLAGS=-L$(STAGING_DIR)/lib $(CXXFLAGS) -I$(STAGING_DIR)/include -I$(LUAJIT_INC) $(DYNLIB_LDFLAGS)
 ifdef DARWIN
   DYNLIB_CFLAGS += -install_name '@rpath/$(notdir $@)'
   DYNLIB_CXXFLAGS += -install_name '@rpath/$(notdir $@)'
@@ -1073,6 +1042,17 @@ set(CMAKE_READELF $(READELF) CACHE FILEPATH "ReadELF")
 $(if $(WIN32),set(CMAKE_RC_COMPILER $(RC) CACHE FILEPATH "Resource Compiler"))
 set(CMAKE_STRIP $(STRIP) CACHE FILEPATH "Strip")
 
+# Set path(s) to search for libraries/binaries/headers.
+set(CMAKE_FIND_ROOT_PATH $(abspath $(STAGING_DIR)))
+
+# Install directories.
+set(CMAKE_INSTALL_PREFIX $(abspath $(STAGING_DIR)) CACHE FILEPATH "install prefix")
+# NOTE: can't use a relative paths (as recommended in the documentation)
+# because libjpeg-turbo only configures successfully with absolute paths.
+set(CMAKE_INSTALL_BINDIR     $${CMAKE_INSTALL_PREFIX}/bin     CACHE FILEPATH "install directory: binaries")
+set(CMAKE_INSTALL_INCLUDEDIR $${CMAKE_INSTALL_PREFIX}/include CACHE FILEPATH "install directory: includes")
+set(CMAKE_INSTALL_LIBDIR     $${CMAKE_INSTALL_PREFIX}/lib     CACHE FILEPATH "install directory: libraries")
+
 endef
 
 # Cross-compile only definitions.
@@ -1093,8 +1073,6 @@ $(if $(ANDROID),set(ANDROID_STL c++_shared))
 # Target architecture.
 set(CMAKE_SYSTEM_PROCESSOR $(CMAKE_SYSTEM_PROCESSOR))
 
-# Set path(s) to search for libraries/binaries/headers.
-set(CMAKE_FIND_ROOT_PATH $(abspath $(STAGING_DIR)))
 # Search for programs in the build host directories.
 set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)
 # For libraries and headers in the target directories.
@@ -1163,7 +1141,8 @@ set(REMARKABLE     $(REMARKABLE))
 set(SONY_PRSTUX    $(SONY_PRSTUX))
 set(WIN32          $(WIN32))
 
-set(USE_LUAJIT_LIB $(USE_LUAJIT_LIB))
+set(LUAJIT_INC $(abspath $(LUAJIT_INC)))
+set(LUAJIT_LIB $(if $(USE_LUAJIT_LIB),$(abspath $(LUAJIT_LIB))))
 
 endef
 

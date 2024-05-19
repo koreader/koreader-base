@@ -4,9 +4,6 @@ project(curl LANGUAGES)
 include(koreader_thirdparty_common)
 include(koreader_thirdparty_git)
 
-assert_var_defined(OPENSSL_DIR)
-assert_var_defined(ZLIB_DIR)
-
 list(APPEND PATCH_CMD COMMAND ${KO_PATCH}
     # Gentoo patchset
     ${CMAKE_CURRENT_SOURCE_DIR}/curl-8.5.0-mpd-stream-http-adjust_pollset.patch
@@ -20,7 +17,6 @@ endif()
 
 list(APPEND CMAKE_ARGS
     -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TCF}
-    -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR}
     # Project options.
     # TODO: Enable ZSTD support? We currently only use cURL
     # for zsync2, so, obviously, not necessary right now…
@@ -41,10 +37,8 @@ list(APPEND CMAKE_ARGS
     # OpenSSL.
     -DCURL_DEFAULT_SSL_BACKEND=openssl
     -DCURL_USE_OPENSSL=TRUE
-    -DOpenSSL_ROOT=${OPENSSL_DIR}
     # ZLIB.
     -DCURL_ZLIB=TRUE
-    -DZLIB_ROOT=${ZLIB_DIR}
 )
 
 # Don't use the default build system rule to create the certificates
@@ -55,12 +49,12 @@ set(CA_BUNDLE_CMD ${CMAKE_CURRENT_LIST_DIR}/fetch-ca-bundle.sh ${DOWNLOAD_DIR}/c
 list(APPEND BUILD_CMD COMMAND ${KO_MAKE_PROGRAM} lib/all)
 
 list(APPEND INSTALL_CMD COMMAND ${CMAKE_COMMAND} --install .)
-list(APPEND INSTALL_CMD COMMAND ${CMAKE_COMMAND} -E copy ${DOWNLOAD_DIR}/ca-bundle.crt ${INSTALL_DIR}/ca-bundle.crt)
+list(APPEND INSTALL_CMD COMMAND ${CMAKE_COMMAND} -E copy ${DOWNLOAD_DIR}/ca-bundle.crt ${STAGING_DIR}/ca-bundle.crt)
 # Even after installing a patched pkg-config entry, we still need to add a symlink
 # with the canonical library name or the mess that is CMake's FindCURl module will
 # fail to detect our renamed library…
 if(POCKETBOOK)
-    list(APPEND INSTALL_CMD COMMAND ${CMAKE_COMMAND} -E create_symlink libcurl_ko${LIB_EXT} ${INSTALL_DIR}/lib/libcurl${LIB_EXT})
+    list(APPEND INSTALL_CMD COMMAND ${CMAKE_COMMAND} -E create_symlink libcurl_ko${LIB_EXT} ${STAGING_DIR}/lib/libcurl${LIB_EXT})
 endif()
 
 external_project(

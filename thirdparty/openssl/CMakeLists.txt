@@ -80,7 +80,7 @@ set(CFG_OPTS ${CFG_OPTS} ${ASM_OPT} no-idea no-mdc2 no-rc5)
 list(APPEND CFG_CMD COMMAND
     env ${CFG_ENV_VAR}
     ${CONFIGURE_CMD}
-    --prefix=${INSTALL_DIR}
+    --prefix=${STAGING_DIR}
     ${CFG_OPTS}
 )
 

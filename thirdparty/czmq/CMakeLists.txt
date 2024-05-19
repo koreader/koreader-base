@@ -4,8 +4,6 @@ project(czmq LANGUAGES)
 include("koreader_thirdparty_common")
 include("koreader_thirdparty_git")
 
-assert_var_defined(ZMQ_DIR)
-
 list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake_tweaks.patch)
 if(NOT DARWIN)
     # patch: ignore limited broadcast address
@@ -14,12 +12,7 @@ if(NOT DARWIN)
     list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/czmq_default_source_define.patch)
 endif()
 
-list(APPEND CMAKE_ARGS
-    -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TCF}
-    -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR}
-    # Options.
-    -DZeroMQ_ROOT=${ZMQ_DIR}
-)
+list(APPEND CMAKE_ARGS -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TCF})
 
 list(APPEND BUILD_CMD COMMAND ${KO_MAKE_PROGRAM} czmq)
 
