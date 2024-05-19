@@ -12,16 +12,14 @@ set(CFG_ENV_VAR "CC=${CC}" "CFLAGS=${CFLAGS}" "LDFLAGS=${LDFLAGS}")
 set(CFG_OPTS --prefix=${INSTALL_DIR} --disable-static --enable-shared --host=${CHOST})
 list(APPEND CFG_CMD COMMAND env ${CFG_ENV_VAR} ${SOURCE_DIR}/autogen.sh ${CFG_OPTS})
 
-# Disable building docs, as it requires c2man
-list(APPEND CFG_CMD COMMAND ${ISED} "s|SUBDIRS = gen.tab lib bin doc test|SUBDIRS = gen.tab lib bin test|g" Makefile)
-
 if(ANDROID)
     list(APPEND CFG_CMD COMMAND ${ANDROID_LIBTOOL_FIX_CMD})
 endif()
 
-list(APPEND BUILD_CMD COMMAND ${KO_MAKE_RECURSIVE})
+list(APPEND BUILD_CMD COMMAND ${KO_MAKE_RECURSIVE} -C lib fribidi-unicode-version.h)
+list(APPEND BUILD_CMD COMMAND ${KO_MAKE_RECURSIVE} -C lib)
 
-list(APPEND INSTALL_CMD COMMAND ${KO_MAKE_RECURSIVE} install)
+list(APPEND INSTALL_CMD COMMAND ${KO_MAKE_RECURSIVE} -C lib install)
 
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
