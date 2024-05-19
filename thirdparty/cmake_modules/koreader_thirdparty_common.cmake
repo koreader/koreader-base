@@ -28,7 +28,7 @@ set(BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/build)
 set(INSTALL_DIR ${CMAKE_CURRENT_BINARY_DIR}/install)
 
 if(ANDROID)
-    list(APPEND ANDROID_LIBTOOL_FIX_CMD ${ISED} $<SEMICOLON>
+    set(ANDROID_LIBTOOL_FIX_CMD ${ISED} $<SEMICOLON>
         -e "s|version_type=none|version_type=linux|"
         -e "s|need_lib_prefix=no|need_lib_prefix=yes|"
         -e "s|need_version=no|need_version=yes|"
