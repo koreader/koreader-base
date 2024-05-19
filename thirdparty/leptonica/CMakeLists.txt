@@ -15,8 +15,24 @@ assert_var_defined(ZLIB)
 # NOTE: Technically, provided we're targeting ARM, we could probably apply the patch unilaterally,
 # and not only when glibc >= 2.22, but since we now have the code to make the check, keep it,
 # that ensures a vanilla build with sane TCs ;).
-if((${ARM_GLIBC_GTE_2_22}) AND (NOT CMAKE_SYSTEM_PROCESSOR MATCHES ".+64$"))
-    list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/leptonica-1.74.1-fmemopen-arm-compat-symbol.patch)
+if(NOT ANDROID AND NOT DARWIN AND NOT WIN32 AND NOT EMULATE_READER)
+    enable_language(C)
+    include(CheckCSourceCompiles)
+    check_c_source_compiles([==[
+        #include <limits.h>
+        #if __GNUC_PREREQ (2, 22)
+            __asm__(".symver fmemopen,fmemopen@GLIBC_2.4");
+        #else
+            #error glibc < 2.22
+        #endif
+        char fmemopen(void);
+        int main(void) {
+            return fmemopen();
+        }
+        ]==] HAS_FMEMOPEN_2_4)
+    if(HAS_FMEMOPEN_2_4)
+        list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/leptonica-1.74.1-fmemopen-arm-compat-symbol.patch)
+    endif()
 endif()
 list(APPEND PATCH_CMD COMMAND ${KO_PATCH}
     ${CMAKE_CURRENT_SOURCE_DIR}/k2pdfopt.patch
