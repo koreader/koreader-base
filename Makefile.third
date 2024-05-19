@@ -470,14 +470,17 @@ endif
 
 $(LUASEC): $(SSL_LIB) $(THIRDPARTY_DIR)/luasec/*.*
 	$(CMAKE) $(CMAKE_FLAGS) \
-		-DCC='$(CC) $(CFLAGS)' \
-		-DLD='$(CC)' \
 		-DAR='$(AR)' \
-		-DRANLIB='$(RANLIB)' \
-		$(if $(ANDROID),-DLIBS='-lssl -lcrypto -lluasocket $(abspath $(LUAJIT_LIB))',) \
-		-DINC_PATH='-I$(LUAJIT_DIR)/src -I$(OPENSSL_DIR)/include' \
-		-DLIB_PATH='-L$(OPENSSL_DIR)' \
+		-DCC='$(CC)' \
+		-DCFLAGS='$(CFLAGS)' \
+		-DCRYPTO_LIB='$(abspath $(CRYPTO_LIB))' \
+		-DDYNLIB_LDFLAGS='$(LDFLAGS) $(DYNLIB_CFLAGS)' \
+		-DLUAINC='$(LUA_INCDIR)' \
+		-DLUALIB='$(if $(USE_LUAJIT_LIB),$(abspath $(LUAJIT_LIB)))' \
 		-DLUAPATH='$(abspath $(OUTPUT_DIR)/common)' \
+		-DOPENSSL_DIR='$(abspath $(OPENSSL_DIR))' \
+		-DRANLIB='$(RANLIB)' \
+		-DSSL_LIB='$(abspath $(SSL_LIB))' \
 		-S $(THIRDPARTY_DIR)/luasec -B $(LUASEC_BUILD_DIR)
 	$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS) -C $(LUASEC_BUILD_DIR)
 ifdef DARWIN
