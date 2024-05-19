@@ -1,9 +1,3 @@
-cmake_minimum_required(VERSION 3.15)
-project(djvulibre LANGUAGES)
-
-include(koreader_thirdparty_common)
-include(koreader_thirdparty_git)
-
 # Never *ever* call setlocale, for any reason.
 # Most of our target platforms have custom/broken/incomplete locales, don't screw with it.
 # And this runs in our main thread, so this is Very Bad(TM).
@@ -42,6 +36,12 @@ endif()
 list(APPEND BUILD_CMD COMMAND ${KO_MAKE_RECURSIVE} -C libdjvu)
 
 list(APPEND INSTALL_CMD COMMAND ${KO_MAKE_RECURSIVE} -C libdjvu DESTDIR=${STAGING_DIR} install)
+
+set(LIB_SPEC djvulibre VERSION 21)
+if(DARWIN)
+    append_shared_lib_fix_commands(INSTALL_CMD ${LIB_SPEC} ID)
+endif()
+append_shared_lib_install_commands(INSTALL_CMD ${LIB_SPEC})
 
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME

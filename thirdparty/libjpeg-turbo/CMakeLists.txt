@@ -1,9 +1,3 @@
-cmake_minimum_required(VERSION 3.15)
-project(libjpeg-turbo LANGUAGES)
-
-include("koreader_thirdparty_common")
-include("koreader_thirdparty_git")
-
 list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/no_cmake_rpath_shenanigans.patch)
 
 list(APPEND CMAKE_ARGS
@@ -27,6 +21,9 @@ endif()
 list(APPEND BUILD_CMD COMMAND ${KO_MAKE_PROGRAM})
 
 list(APPEND INSTALL_CMD COMMAND ${CMAKE_COMMAND} --install .)
+
+append_shared_lib_install_commands(INSTALL_CMD jpeg VERSION 8)
+append_shared_lib_install_commands(INSTALL_CMD turbojpeg)
 
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME

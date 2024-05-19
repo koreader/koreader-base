@@ -262,9 +262,8 @@ endif
 # NOTE: This is necessary (at least on Android), because some early API levels will not put DT_NEEDED libraries in the global namespace.
 #       Ensuring Lua/C modules have their own DT_NEEDED entry to the shared LuaJIT library works around this quirk (and is otherwise mostly harmless).
 #       Saner APIs behave like Linux, and wouldn't require this hack.
-USE_LUAJIT_LIB=$(or $(DARWIN),$(ANDROID),$(WIN32))
-
-SKIP_LUAJIT_BIN=$(or $(ANDROID),$(MACOS))
+USE_LUAJIT_LIB = $(or $(DARWIN),$(ANDROID),$(WIN32))
+SKIP_LUAJIT_BIN = $(or $(ANDROID),$(MACOS))
 
 RCP := cp -R
 WGET ?= wget --progress=dot:giga
@@ -605,7 +604,7 @@ ifndef DARWIN
 	#       And https://bugs.launchpad.net/ubuntu/+source/eglibc/+bug/1253638/comments/5 for a nice recap.
 	LDFLAGS:=-Wl,-O1 -Wl,--as-needed -Wl,@$(MAKEFILE_DIR)origin.ldflags $(COMPAT_LDFLAGS)
 else
-	LDFLAGS:=
+	LDFLAGS:=-Wl,-rpath,@executable_path/libs,-rpath,@executable_path/../koreader/libs
 endif
 
 # NOTE: Follow the NDK's lead
@@ -627,7 +626,12 @@ endif
 OUTPUT_DIR ?= build/$(MACHINE)
 CMAKE_DIR = $(OUTPUT_DIR)/cmake
 STAGING_DIR = $(OUTPUT_DIR)/staging
-THIRDPARTY_BUILD = $(OUTPUT_DIR)/thirdparty
+
+ifneq ($(USE_NINJA),)
+  BUILD_ENTRYPOINT = $(CMAKE_DIR)/build.ninja
+else
+  BUILD_ENTRYPOINT = $(CMAKE_DIR)/Makefile
+endif
 
 # you can configure an emulation for the (eink) framebuffer here.
 # the application won't use the framebuffer (and the special e-ink ioctls)
@@ -708,268 +712,31 @@ ifeq ($(TARGET), android)
   endif
 endif
 
-LIB_EXT=$(if $(WIN32),.dll,$(if $(DARWIN),.dylib,.so))
+ifneq (,$(DARWIN))
+  LIB_EXT = .dylib
+else ifneq (,$(WIN32))
+  LIB_EXT = .dll
+else
+  LIB_EXT = .so
+endif
 
 # you can probably leave these settings alone:
 
-THIRDPARTY_DIR=thirdparty
+THIRDPARTY_DIR = thirdparty
 
-LUAFILESYSTEM_DIR=luafilesystem
-
-ZLIB_BUILD_DIR=$(THIRDPARTY_BUILD)/zlib
-ZLIB_STATIC=$(STAGING_DIR)/lib/libz.a
-ZLIB=$(OUTPUT_DIR)/libs/$(if $(WIN32),zlib1.dll,$(if $(DARWIN),libz.1.dylib,libz.so.1))
-
-ZSTD_BUILD_DIR=$(THIRDPARTY_BUILD)/zstd
-ZSTD_LIB_EXT=$(if $(WIN32),.dll,$(if $(DARWIN),.1.dylib,.so.1))
-ZSTD_LIB=$(OUTPUT_DIR)/libs/libzstd$(ZSTD_LIB_EXT)
-
-MINIZIP_BUILD_DIR = $(THIRDPARTY_BUILD)/minizip
-MINIZIP_DIR = $(STAGING_DIR)/minizip
-AES_LIB = $(MINIZIP_DIR)/lib/libaes.a
-
-MUPDF_BUILD_DIR=$(THIRDPARTY_BUILD)/mupdf
-MUPDF_LIB=$(OUTPUT_DIR)/libs/libmupdf$(LIB_EXT)
-
-DJVULIBRE_BUILD_DIR=$(THIRDPARTY_BUILD)/djvulibre
-DJVULIBRE_LIB_EXT=$(if $(WIN32),-21.dll,$(if $(DARWIN),.21.dylib,.so.21))
-DJVULIBRE_LIB=$(OUTPUT_DIR)/libs/libdjvulibre$(DJVULIBRE_LIB_EXT)
-
-CRENGINE_BUILD_DIR=$(THIRDPARTY_BUILD)/crengine
-CRENGINE_SRC_DIR=$(abspath $(THIRDPARTY_DIR)/kpvcrlib/crengine)
-CRENGINE_SRC_FILES=$(wildcard $(CRENGINE_SRC_DIR)/crengine/src/*.cpp)
-CRENGINE_SRC_FILES+=$(wildcard $(CRENGINE_SRC_DIR)/crengine/include/*.h)
-CRENGINE_SRC_FILES+=$(wildcard $(CRENGINE_SRC_DIR)/crengine/src/*.h)
-CRENGINE_SRC_FILES+=$(wildcard $(CRENGINE_SRC_DIR)/crengine/src/*_h.*)
-CRENGINE_LIB = $(CRENGINE_BUILD_DIR)/libcrengine.a
-CRENGINE_THIRDPARTY_LIBS = $(addprefix $(CRENGINE_BUILD_DIR)/crengine/thirdparty/, antiword/libantiword.a chmlib/libchmlib.a)
-CRENGINE_NEEDED_LIBS =  $(FREETYPE_LIB) $(FRIBIDI_LIB) $(HARFBUZZ_LIB) \
-			$(JPEG_LIB) $(PNG_LIB) $(LIBUNIBREAK_LIB) \
-			$(LIBWEBP_LIB) $(LIBWEBPDEMUX_LIB) $(LUNASVG_LIB) \
-			$(UTF8PROC_LIB) $(ZLIB) $(ZSTD_LIB)
-CRENGINE_CFLAGS = \
-		-include '$(CRENGINE_BUILD_DIR)/crsetup.h' \
-		'-I$(CRENGINE_SRC_DIR)/crengine/include' \
-		'-I$(STAGING_DIR)/include/freetype2' \
-		'-I$(STAGING_DIR)/include/harfbuzz' \
-		'-I$(STAGING_DIR)/include' \
-
-LUAJIT_BUILD_DIR = $(THIRDPARTY_BUILD)/luajit
-LUAJIT = $(OUTPUT_DIR)/$(if $(WIN32),luajit.exe,luajit)
-LUAJIT_INC = $(STAGING_DIR)/include/luajit-2.1
-LUAJIT_JIT = $(OUTPUT_DIR)/jit
-LUAJIT_LIB = $(if $(USE_LUAJIT_LIB),$(OUTPUT_DIR)/$(if $(WIN32),lua51.dll,libs/libluajit.so))
-LUAJIT_STATIC = $(STAGING_DIR)/lib/libluajit.a
-ifeq ($(USE_LUAJIT_LIB), 1)
-	LUAJIT_LIB_LINK_FLAG=$(LUAJIT_LIB)
-endif
-
-POPEN_NOSHELL_BUILD_DIR=$(THIRDPARTY_BUILD)/popen-noshell
-POPEN_NOSHELL_DIR=$(POPEN_NOSHELL_BUILD_DIR)/source
-POPEN_NOSHELL_LIB=$(POPEN_NOSHELL_DIR)/libpopen_noshell.a
-
-LEPTONICA_BUILD_DIR = $(THIRDPARTY_BUILD)/leptonica
-LEPT_LIB_EXT = $(if $(WIN32),-5.dll,$(if $(DARWIN),.5.dylib,.so.5))
-LEPTONICA_LIB = $(OUTPUT_DIR)/libs/liblept$(LEPT_LIB_EXT)
-
-TESSERACT_BUILD_DIR = $(THIRDPARTY_BUILD)/tesseract
-TESS_LIB_EXT = $(if $(WIN32),-3.dll,$(if $(DARWIN),.3.dylib,.so.3))
-TESSERACT_LIB = $(OUTPUT_DIR)/libs/libtesseract$(TESS_LIB_EXT)
-
-K2PDFOPT_BUILD_DIR=$(THIRDPARTY_BUILD)/libk2pdfopt
-K2PDFOPT_LIB_EXT=$(if $(WIN32),-2.dll,$(if $(DARWIN),.2.dylib,.so.2))
-K2PDFOPT_LIB=$(OUTPUT_DIR)/libs/libk2pdfopt$(K2PDFOPT_LIB_EXT)
-K2PDFOPT_CFLAGS=-I$(STAGING_DIR)/include/k2pdfopt -I$(STAGING_DIR)/include/leptonica
-
-FREETYPE_LIB_EXT=$(if $(WIN32),-6.dll,$(if $(DARWIN),.6.dylib,.so.6))
-FREETYPE_LIB=$(OUTPUT_DIR)/libs/libfreetype$(FREETYPE_LIB_EXT)
-FREETYPE_BUILD_DIR=$(THIRDPARTY_BUILD)/freetype2
-
-HARFBUZZ_LIB_EXT=$(if $(WIN32),-0.dll,$(if $(DARWIN),.0.dylib,.so.0))
-HARFBUZZ_LIB=$(OUTPUT_DIR)/libs/libharfbuzz$(HARFBUZZ_LIB_EXT)
-HARFBUZZ_BUILD_DIR=$(THIRDPARTY_BUILD)/harfbuzz
-
-FRIBIDI_LIB_EXT=$(if $(WIN32),-0.dll,$(if $(DARWIN),.0.dylib,.so.0))
-FRIBIDI_LIB=$(OUTPUT_DIR)/libs/libfribidi$(FRIBIDI_LIB_EXT)
-FRIBIDI_BUILD_DIR=$(THIRDPARTY_BUILD)/fribidi
-
-LIBUNIBREAK_LIB_EXT=$(if $(WIN32),-6.dll,$(if $(DARWIN),.6.dylib,.so.6))
-LIBUNIBREAK_LIB=$(OUTPUT_DIR)/libs/libunibreak$(LIBUNIBREAK_LIB_EXT)
-LIBUNIBREAK_BUILD_DIR=$(THIRDPARTY_BUILD)/libunibreak
-
-UTF8PROC_LIB_EXT=$(if $(WIN32),-3.dll,$(if $(DARWIN),.3.dylib,.so.3))
-UTF8PROC_LIB=$(OUTPUT_DIR)/libs/libutf8proc$(UTF8PROC_LIB_EXT)
-UTF8PROC_BUILD_DIR=$(THIRDPARTY_BUILD)/utf8proc
-
-JPEG_LIB_EXT=$(if $(WIN32),-8.dll,$(if $(DARWIN),.8.dylib,.so.8))
-JPEG_LIB=$(OUTPUT_DIR)/libs/libjpeg$(JPEG_LIB_EXT)
-TURBOJPEG_LIB=$(OUTPUT_DIR)/libs/libturbojpeg$(if $(WIN32),.dll,$(if $(DARWIN),.dylib,.so))
-JPEG_BUILD_DIR=$(THIRDPARTY_BUILD)/libjpeg-turbo
-
-PNG_LIB_EXT=$(if $(WIN32),-16.dll,$(if $(DARWIN),.16.dylib,.so.16))
-PNG_LIB=$(OUTPUT_DIR)/libs/libpng16$(PNG_LIB_EXT)
-PNG_BUILD_DIR=$(THIRDPARTY_BUILD)/libpng
-
-LODEPNG_LIB=$(OUTPUT_DIR)/libs/liblodepng$(LIB_EXT)
-LODEPNG_BUILD_DIR=$(THIRDPARTY_BUILD)/lodepng
-LODEPNG_DIR=$(abspath $(LODEPNG_BUILD_DIR)/build)
-
-GIF_LIB_EXT=$(if $(WIN32),-7.dll,$(if $(DARWIN),.7.dylib,.so.7))
-GIF_LIB=$(OUTPUT_DIR)/libs/libgif$(GIF_LIB_EXT)
-GIF_BUILD_DIR=$(THIRDPARTY_BUILD)/giflib
-GIF_DIR=$(abspath $(GIF_BUILD_DIR)/build)
-
-LIBWEBP_LIB_EXT=$(if $(WIN32),-7.dll,$(if $(DARWIN),.7.dylib,.so.7))
-LIBWEBP_LIB=$(OUTPUT_DIR)/libs/libwebp$(LIBWEBP_LIB_EXT)
-LIBWEBPDEMUX_LIB_EXT=$(if $(WIN32),-2.dll,$(if $(DARWIN),.2.dylib,.so.2))
-LIBWEBPDEMUX_LIB=$(OUTPUT_DIR)/libs/libwebpdemux$(LIBWEBPDEMUX_LIB_EXT)
-LIBSHARPYUV_LIB_EXT=$(if $(WIN32),-0.dll,$(if $(DARWIN),.0.dylib,.so.0))
-LIBSHARPYUV_LIB=$(OUTPUT_DIR)/libs/libsharpyuv$(LIBSHARPYUV_LIB_EXT)
-LIBWEBP_BUILD_DIR=$(THIRDPARTY_BUILD)/libwebp
-
-LUNASVG_LIB_EXT=$(if $(WIN32),.dll,$(if $(DARWIN),.dylib,.so))
-LUNASVG_LIB=$(OUTPUT_DIR)/libs/liblunasvg$(LUNASVG_LIB_EXT)
-LUNASVG_BUILD_DIR=$(THIRDPARTY_BUILD)/lunasvg
-
-SDCV_BUILD_DIR=$(THIRDPARTY_BUILD)/sdcv
-SDCV_DIR=$(abspath $(SDCV_BUILD_DIR)/build)
-
-GLIB_BUILD_DIR=$(THIRDPARTY_BUILD)/glib
-GLIB=$(STAGING_DIR)/lib/libglib-2.0.a
-
-LIBICONV_BUILD_DIR=$(THIRDPARTY_BUILD)/libiconv
-LIBICONV=$(STAGING_DIR)/lib/libiconv.a
-
-GETTEXT_BUILD_DIR=$(THIRDPARTY_BUILD)/gettext
-LIBGETTEXT=$(STAGING_DIR)/lib/libintl.a
-
-SDL2_BUILD_DIR=$(THIRDPARTY_BUILD)/sdl2
-SDL2_DIR=$(abspath $(SDL2_BUILD_DIR)/build)
-SDL2_LIB=$(OUTPUT_DIR)/libs/libSDL2$(LIB_EXT)
-
-OPENSSL_BUILD_DIR=$(THIRDPARTY_BUILD)/openssl
-SSL_LIB=$(OUTPUT_DIR)/libs/libssl$(if $(WIN32),-1.dll,$(if $(DARWIN),.1.1.dylib,.so.1.1))
-CRYPTO_LIB=$(OUTPUT_DIR)/libs/libcrypto$(if $(WIN32),-1.dll,$(if $(DARWIN),.1.1.dylib,.so.1.1))
-
-LUASOCKET_BUILD_DIR=$(THIRDPARTY_BUILD)/luasocket
-LUASEC_BUILD_DIR=$(THIRDPARTY_BUILD)/luasec
-LUASOCKET=$(OUTPUT_DIR)/common/socket
-LUASEC=$(OUTPUT_DIR)/common/ssl
-
-ZMQ_BUILD_DIR=$(THIRDPARTY_BUILD)/libzmq
-ZMQ_LIB_EXT=$(if $(WIN32),.dll,$(if $(DARWIN),.4.dylib,.so.4))
-ZMQ_LIB=$(OUTPUT_DIR)/libs/libzmq$(ZMQ_LIB_EXT)
-
-CZMQ_BUILD_DIR=$(THIRDPARTY_BUILD)/czmq
-CZMQ_LIB_EXT=$(if $(WIN32),.dll,$(if $(DARWIN),.1.dylib,.so.1))
-CZMQ_LIB=$(OUTPUT_DIR)/libs/libczmq$(CZMQ_LIB_EXT)
-
-TAR_BUILD_DIR=$(THIRDPARTY_BUILD)/tar
-
-DROPBEAR_BUILD_DIR=$(THIRDPARTY_BUILD)/dropbear
-DROPBEAR_DIR=$(abspath $(DROPBEAR_BUILD_DIR)/build)
-
-OPENSSH_BUILD_DIR=$(THIRDPARTY_BUILD)/openssh
-OPENSSH_DIR=$(abspath $(OPENSSH_BUILD_DIR)/build)
-
-KOBO_USBMS_BUILD_DIR = $(THIRDPARTY_BUILD)/kobo-usbms
-KOBO_USBMS_DIR = $(abspath $(KOBO_USBMS_BUILD_DIR)/source/$(if $(KODEBUG),Debug,Release))
-
-CURL_BUILD_DIR=$(THIRDPARTY_BUILD)/curl
-# NOTE: We rename cURL on PB because everything is terrible (c.f., #5861)
-CURL_LIB_EXT=$(if $(WIN32),.dll,$(if $(DARWIN),.dylib,$(if $(POCKETBOOK),_ko.so.4,.so.4)))
-CURL_LIB=$(OUTPUT_DIR)/libs/libcurl$(CURL_LIB_EXT)
-
-ZSYNC2_BUILD_DIR=$(THIRDPARTY_BUILD)/zsync2
-ZSYNC2_DIR=$(abspath $(ZSYNC2_BUILD_DIR)/build)
-
-TURBO_BUILD_DIR=$(THIRDPARTY_BUILD)/turbo
-TURBO_DIR=$(abspath $(TURBO_BUILD_DIR)/source)
-TURBO_FFI_WRAP_LIB=$(OUTPUT_DIR)/common/libtffi_wrap$(LIB_EXT)
-
-# Unversioned LR 2 path and binary
-LUAROCKS_BINARY=luarocks
-# Versioned LR 3 path and binary, see koreader-base/pull/1003
+# Unversioned LR 2 binary
+LUAROCKS_BINARY = luarocks
+# Versioned LR 3 binary, see koreader-base/pull/1003
 ifeq ($(LR_GT_3_0),1)
-LUAROCKS_BINARY+=--lua-version=5.1
+LUAROCKS_BINARY += --lua-version=5.1
 endif
 
-LUA_HTMLPARSER_BUILD_DIR = $(THIRDPARTY_BUILD)/lua-htmlparser
-LUA_HTMLPARSER_DIR = $(THIRDPARTY_BUILD)/lua-htmlparser/source
-LUA_HTMLPARSER_MOD = $(OUTPUT_DIR)/common/htmlparser.lua
-
-LPEG_BUILD_DIR = $(THIRDPARTY_BUILD)/lpeg
-LPEG_DIR = $(abspath $(LPEG_BUILD_DIR)/source)
-LPEG_MOD = $(OUTPUT_DIR)/common/lpeg.so
-
-LUAJSON_BUILD_DIR = $(THIRDPARTY_BUILD)/luajson
-LUAJSON_DIR = $(LUAJSON_BUILD_DIR)/source
-LUAJSON_MOD = $(OUTPUT_DIR)/common/json.lua
-
-LUA_RAPIDJSON_BUILD_DIR = $(THIRDPARTY_BUILD)/lua-rapidjson
-LUA_RAPIDJSON_DIR = $(LUA_RAPIDJSON_BUILD_DIR)/build
-LUA_RAPIDJSON_MOD = $(OUTPUT_DIR)/common/rapidjson.so
-
-LUA_SPORE_BUILD_DIR=$(THIRDPARTY_BUILD)/lua-Spore
-LUA_SPORE_DIR=$(abspath $(LUA_SPORE_BUILD_DIR)/source)
-LUA_SPORE_MOD=$(OUTPUT_DIR)/common/Spore.lua
-
-SQLITE_BUILD_DIR=$(THIRDPARTY_BUILD)/sqlite
-SQLITE_DIR=$(abspath $(SQLITE_BUILD_DIR)/build)
-SQLITE_LIB_EXT=$(if $(WIN32),.dll,$(if $(DARWIN),.dylib,.so))
-SQLITE_LIB=$(OUTPUT_DIR)/libs/libsqlite3$(SQLITE_LIB_EXT)
-
-LUA_LJ_SQLITE_DIR=$(abspath $(THIRDPARTY_DIR)/lua-ljsqlite3)
-LUA_LJ_SQLITE_INSTALL_DIR=$(OUTPUT_DIR)/common/lua-ljsqlite3
-LUA_LJ_SQLITE=$(LUA_LJ_SQLITE_INSTALL_DIR)/init.lua
-
-
-# pure LuaJIT module, so no need to separate build dir by MACHINE
-LJ_WPACLIENT_FILES=consts_h.lua poll_h.lua select_h.lua socket_h.lua socket.lua time_h.lua wpaclient.lua wpa_ctrl.lua
-LJ_WPACLIENT_BUILD_DIR=$(THIRDPARTY_BUILD)/lj-wpaclient
-LJ_WPACLIENT_DIR=$(abspath $(LJ_WPACLIENT_BUILD_DIR)/source)
-LJ_WPACLIENT=$(addprefix $(OUTPUT_DIR)/common/lj-wpaclient/, $(LJ_WPACLIENT_FILES))
-
-# Nanosvg headers (that include code)
-NANOSVG_HEADER_FILES=nanosvg.h nanosvgrast.h stb_image_write.h
-NANOSVG_BUILD_DIR=$(THIRDPARTY_BUILD)/nanosvg
-NANOSVG_HEADERS=$(addprefix $(STAGING_DIR)/include/, $(NANOSVG_HEADER_FILES))
-
-# CFLAGS for the Lua/C/C++ modules:
-#
 # Dynamic libraries must be compiled with "-shared" and "-fPIC".
 # (And we enforce PIC everywhere via CFLAGS/CXXFLAGS).
 DYNLIB_LDFLAGS = -shared
 ifdef DARWIN
 	DYNLIB_LDFLAGS += -dynamiclib -undefined dynamic_lookup
 endif
-DYNLIB_CFLAGS=-L$(STAGING_DIR)/lib $(CFLAGS) -I$(STAGING_DIR)/include -I$(LUAJIT_INC) $(DYNLIB_LDFLAGS)
-DYNLIB_CXXFLAGS=-L$(STAGING_DIR)/lib $(CXXFLAGS) -I$(STAGING_DIR)/include -I$(LUAJIT_INC) $(DYNLIB_LDFLAGS)
-ifdef DARWIN
-  DYNLIB_CFLAGS += -install_name '@rpath/$(notdir $@)'
-  DYNLIB_CXXFLAGS += -install_name '@rpath/$(notdir $@)'
-else
-  DYNLIB_CFLAGS += -Wl,-soname,'$(notdir $@)'
-  DYNLIB_CXXFLAGS += -Wl,-soname,'$(notdir $@)'
-endif
-
-# Used by our custom Lua modules, where we want to hide private symbols by default
-SYMVIS_FLAGS+=-fvisibility=hidden
-
-CMAKE_THIRDPARTY_LIBS := kpvcrlib,nanosvg,zstd
-CMAKE_THIRDPARTY_LIBS := $(CMAKE_THIRDPARTY_LIBS),luajit,lpeg,turbo
-CMAKE_THIRDPARTY_LIBS := $(CMAKE_THIRDPARTY_LIBS),czmq,libzmq
-CMAKE_THIRDPARTY_LIBS := $(CMAKE_THIRDPARTY_LIBS),libk2pdfopt,tesseract,leptonica
-CMAKE_THIRDPARTY_LIBS := $(CMAKE_THIRDPARTY_LIBS),lj-wpaclient
-CMAKE_THIRDPARTY_LIBS := $(CMAKE_THIRDPARTY_LIBS),lua-htmlparser,lua-rapidjson,lua-Spore,luasec,luasocket,glib,lodepng,minizip
-CMAKE_THIRDPARTY_LIBS := $(CMAKE_THIRDPARTY_LIBS),djvulibre,mupdf,freetype2,harfbuzz,giflib,libpng,zlib,libwebp,lunasvg
-CMAKE_THIRDPARTY_LIBS := $(CMAKE_THIRDPARTY_LIBS),tar,sdcv,libiconv,gettext,libjpeg-turbo,popen-noshell,sqlite
-CMAKE_THIRDPARTY_LIBS := $(CMAKE_THIRDPARTY_LIBS),openssl,dropbear,openssh
-CMAKE_THIRDPARTY_LIBS := $(CMAKE_THIRDPARTY_LIBS),curl,zsync2
-CMAKE_THIRDPARTY_LIBS := $(CMAKE_THIRDPARTY_LIBS),fbink
-CMAKE_THIRDPARTY_LIBS := $(CMAKE_THIRDPARTY_LIBS),kobo-usbms
-CMAKE_THIRDPARTY_LIBS := $(CMAKE_THIRDPARTY_LIBS),fribidi,libunibreak,utf8proc
-CMAKE_THIRDPARTY_LIBS := $(CMAKE_THIRDPARTY_LIBS),luajson
 
 # CMake "real" toolchain file. {{{
 
@@ -1108,6 +875,7 @@ set(HOSTCC         "$(strip $(HOSTCC))")
 set(HOSTCFLAGS     "$(strip $(HOSTCFLAGS))")
 set(HOSTCXX        "$(strip $(HOSTCXX))")
 set(LIB_EXT        $(LIB_EXT))
+set(VECTO_CFLAGS   "$(VECTO_CFLAGS)")
 
 set(OUTPUT_DIR     $(abspath $(OUTPUT_DIR)))
 set(STAGING_DIR    $(abspath $(STAGING_DIR)))
@@ -1133,6 +901,9 @@ set(RC             "$(strip $(RC))")
 set(STRIP          "$(strip $(STRIP))")
 
 # Miscellaneous.
+set(DO_STRIP           $(DO_STRIP))
+set(USE_LJ_WPACLIENT   $(USE_LJ_WPACLIENT))
+set(USE_SDL            $(SDL))
 set(WANT_SIMD          $(WANT_SIMD))
 
 # Platform flags.
@@ -1150,8 +921,8 @@ set(REMARKABLE     $(REMARKABLE))
 set(SONY_PRSTUX    $(SONY_PRSTUX))
 set(WIN32          $(WIN32))
 
-set(LUAJIT_INC $(abspath $(LUAJIT_INC)))
-set(LUAJIT_LIB $(if $(USE_LUAJIT_LIB),$(abspath $(LUAJIT_LIB))))
+set(SKIP_LUAJIT_BIN $(SKIP_LUAJIT_BIN))
+set(USE_LUAJIT_LIB  $(USE_LUAJIT_LIB))
 
 endef
 

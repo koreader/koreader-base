@@ -1,8 +1,3 @@
-cmake_minimum_required(VERSION 3.15)
-project(libiconv LANGUAGES)
-
-include(koreader_thirdparty_common)
-
 list(APPEND CFG_CMD COMMAND env)
 append_autotools_vars(CFG_CMD)
 list(APPEND CFG_CMD

@@ -1,9 +1,3 @@
-cmake_minimum_required(VERSION 3.15)
-project(luajit LANGUAGES)
-
-include(koreader_thirdparty_common)
-include(koreader_thirdparty_git)
-
 # Build in source tree.
 set(BINARY_DIR ${SOURCE_DIR})
 
@@ -71,22 +65,31 @@ else()
     elseif(WIN32)
         list(APPEND BUILD_ARGS TARGET_SYS=Windows)
     endif()
-    if(DARWIN)
-        list(APPEND BUILD_ARGS TARGET_STRIP=${STRIP})
-    else()
-        list(APPEND BUILD_ARGS "TARGET_STRIP=${STRIP} --strip-unneeded")
-    endif()
+    string(JOIN " " TARGET_STRIP ${STRIP_CMD})
+    list(APPEND BUILD_ARGS TARGET_STRIP=${TARGET_STRIP})
 endif()
 
 if(DARWIN)
-    list(APPEND BUILD_ARGS TARGET_DYLIBPATH=@rpath/libluajit${LIB_EXT})
+    set(DYLIBNAME libluajit${LIB_EXT})
+    list(APPEND BUILD_ARGS TARGET_DYLIBPATH=@rpath/${DYLIBNAME} INSTALL_DYLIBNAME=${DYLIBNAME})
 else()
-    list(APPEND BUILD_ARGS TARGET_SONAME=libluajit${LIB_EXT})
+    set(SONAME libluajit${LIB_EXT})
+    list(APPEND BUILD_ARGS TARGET_SONAME=${SONAME} INSTALL_SONAME=${SONAME})
 endif()
 
 list(APPEND BUILD_CMD COMMAND ${KO_MAKE_RECURSIVE} ${BUILD_ARGS} amalg)
 
 list(APPEND INSTALL_CMD COMMAND ${KO_MAKE_RECURSIVE} ${BUILD_ARGS} install PREFIX=/ DESTDIR=${STAGING_DIR})
+
+if(NOT SKIP_LUAJIT_BIN)
+    append_binary_install_command(INSTALL_CMD ${STAGING_DIR}/bin/luajit)
+endif()
+
+if(USE_LUAJIT_LIB)
+    append_shared_lib_install_commands(INSTALL_CMD luajit)
+endif()
+
+append_tree_install_commands(INSTALL_CMD src/jit jit)
 
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
