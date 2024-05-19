@@ -150,6 +150,12 @@ if(POLICY CMP0135)
 endif()
 # Have `ExternalProject_Add()` create a dedicated target for each step.
 set_property(DIRECTORY PROPERTY EP_STEP_TARGETS download patch configure build install)
+# Don't log steps' output on CI builds.
+if(DEFINED ENV{CI})
+    set(LOG_EXTERNAL_PROJECT_STEPS FALSE)
+else()
+    set(LOG_EXTERNAL_PROJECT_STEPS TRUE)
+endif()
 function(external_project)
     cmake_parse_arguments(
         # Prefix.
@@ -167,12 +173,6 @@ function(external_project)
     endif()
     # Project name.
     list(APPEND PARAMS ${PROJECT_NAME})
-    # Don't log steps' output on CI builds.
-    if(DEFINED ENV{CI})
-        set(LOGGING FALSE)
-    else()
-        set(LOGGING TRUE)
-    endif()
     # Options.
     if(_BUILD_ALWAYS)
         list(APPEND PARAMS BUILD_ALWAYS TRUE)
@@ -188,7 +188,7 @@ function(external_project)
             list(APPEND PARAMS DOWNLOAD_COMMAND ${_DOWNLOAD_COMMAND})
         endif()
     endif()
-    list(APPEND PARAMS LOG_DOWNLOAD ${LOGGING})
+    list(APPEND PARAMS LOG_DOWNLOAD ${LOG_EXTERNAL_PROJECT_STEPS})
     # Source dir.
     list(APPEND PARAMS SOURCE_DIR ${SOURCE_DIR})
     if(DEFINED _SOURCE_SUBDIR)
@@ -217,7 +217,7 @@ function(external_project)
                 if(ARG STREQUAL "")
                     message(FATAL_ERROR "empty argument in ${VAR} command!")
                 endif()
-                if(LOGGING)
+                if(LOG_EXTERNAL_PROJECT_STEPS)
                     string(REPLACE "\\" "\\\\" ARG ${ARG})
                     string(REPLACE "\"" "\\\"" ARG ${ARG})
                     string(REPLACE "\$" "\\\$" ARG ${ARG})
@@ -231,11 +231,11 @@ function(external_project)
         endif()
     endforeach()
     # Patch command.
-    list(APPEND PARAMS LOG_PATCH ${LOGGING})
+    list(APPEND PARAMS LOG_PATCH ${LOG_EXTERNAL_PROJECT_STEPS})
     # Configure command.
     if(DEFINED _CMAKE_ARGS OR DEFINED _CONFIGURE_COMMAND)
         # NOTE: don't try to log an "empty" configure command…
-        list(APPEND PARAMS LOG_CONFIGURE ${LOGGING})
+        list(APPEND PARAMS LOG_CONFIGURE ${LOG_EXTERNAL_PROJECT_STEPS})
     else()
         list(APPEND PARAMS CONFIGURE_COMMAND COMMAND)
     endif()
@@ -254,7 +254,7 @@ function(external_project)
     # Install command.
     if(DEFINED _INSTALL_COMMAND)
         # NOTE: same as above, only work for a non-empty command.
-        list(APPEND PARAMS LOG_INSTALL ${LOGGING})
+        list(APPEND PARAMS LOG_INSTALL ${LOG_EXTERNAL_PROJECT_STEPS})
     else()
         list(APPEND PARAMS INSTALL_COMMAND COMMAND)
     endif()
@@ -303,4 +303,27 @@ function(external_project)
         DEPENDERS build
         DEPENDS ${BUILD_DEPS}
     )
+endfunction()
+function(external_project_step STEP_NAME)
+    cmake_parse_arguments("" "USES_TERMINAL" "" "DEPENDEES" ${ARGN})
+    set(PARAMS ${PROJECT_NAME} ${STEP_NAME})
+    if(_USE_TERMINAL)
+        list(APPEND PARAMS USES_TERMINAL TRUE)
+    else()
+        list(APPEND PARAMS
+            USES_TERMINAL FALSE
+            LOG ${LOG_EXTERNAL_PROJECT_STEPS}
+        )
+    endif()
+    list(APPEND PARAMS
+        DEPENDEES mkdir ${_DEPENDEES}
+        WORKING_DIRECTORY ${BINARY_DIR}
+    )
+    if(CMAKE_VERSION VERSION_GREATER_EQUAL "3.19")
+        list(APPEND PARAMS INDEPENDENT TRUE)
+    endif()
+    list(APPEND PARAMS ${_UNPARSED_ARGUMENTS})
+    # message(STATUS "ExternalProject_Add_Step(${PARAMS})")
+    ExternalProject_Add_Step(${PARAMS})
+    ExternalProject_Add_StepTargets(${PROJECT_NAME} ${STEP_NAME})
 endfunction()
