@@ -333,6 +333,21 @@ bindeps:
 
 # }}}
 
-.PHONY: all bindeps clean distclean dist-clean test
+# Checking libraries for missing dependencies. {{{
+
+# NOTE: the extra `$(filter %/,…)` is to work around some older versions
+# of make (e.g. 4.2.1) returning files too when using `$(wildcard …/*/)`.
+libcheck:
+	@./utils/libcheck.sh $(CC) $(LDFLAGS) -Wl,-rpath-link=$(OUTPUT_DIR)/libs -- '$(if $(USE_LUAJIT_LIB),,1)' $(filter %/,$(filter-out $(OUTPUT_DIR)/thirdparty/,$(wildcard $(OUTPUT_DIR)/*/)))
+
+ifneq (,$(POCKETBOOK))
+libcheck: utils/libcheck/libinkview.so
+utils/libcheck/libinkview.so: utils/libcheck/libinkview.ld
+	$(LD) -shared -o $@ $<
+endif
+
+# }}}
+
+.PHONY: all bindeps clean distclean dist-clean libcheck test
 
 # vim: foldmethod=marker foldlevel=0
