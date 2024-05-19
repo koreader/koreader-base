@@ -213,15 +213,15 @@ static int openInputFD(lua_State* L)
         close(fd);
         return luaL_error(L, "No free slot for new input fd <%d>", fd);
     }
-    // Otherwise, we're golden, and fd_idx is the index of the next free slot in the inputfds array ;).
-    const char* restrict ko_dont_grab_input = getenv("KO_DONT_GRAB_INPUT");
 
-    inputfds[fd_idx] = fd;
+    // Everything looks good, we can do our thing!
+    const char* restrict ko_dont_grab_input = getenv("KO_DONT_GRAB_INPUT");
     if (ko_dont_grab_input == NULL) {
         ioctl(fd, EVIOCGRAB, 1);
     }
 
     // Update our state for the new input slot...
+    inputfds[fd_idx] = fd;
     reorderArray();
     fd_idx++;
     computeNfds();
