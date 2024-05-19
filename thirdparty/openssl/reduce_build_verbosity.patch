@@ -1,0 +1,22 @@
+--- i/Configurations/unix-Makefile.tmpl
++++ w/Configurations/unix-Makefile.tmpl
+@@ -291,7 +291,11 @@
+ HTMLSUFFIX=html
+ 
+ # For "optional" echo messages, to get "real" silence
++ifeq (,$(findstring s,$(firstword -$(MAKEFLAGS))))
+ ECHO = echo
++else
++ECHO = :
++endif
+ 
+ ##### User defined commands and flags ################################
+ 
+@@ -1123,6 +1127,7 @@
+               bin => '$(BIN_CFLAGS) $(BIN_CPPFLAGS)'
+           } -> {$args{intent}};
+       }
++      $cmd = '@$(ECHO) $@; '.$cmd;
+       my $recipe;
+       # extension-specific rules
+       if (grep /\.s$/, @srcs) {
