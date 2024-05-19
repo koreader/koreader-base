@@ -9,12 +9,12 @@
  
  # In-source builds are disabled.
  if (${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_BINARY_DIR})
-@@ -46,16 +46,6 @@ set(VERSION_PLAIN ${VERSION_MAJOR}.${VERSION_MINOR})
+@@ -46,15 +46,8 @@
  
  set(MINIMUM_LEPTONICA_VERSION 1.71)
  
 -if (NOT Leptonica_DIR AND NOT MSVC)
--find_package(PkgConfig REQUIRED)
+ find_package(PkgConfig REQUIRED)
 -pkg_check_modules(Leptonica REQUIRED lept)
 -else()
 -find_package(Leptonica ${MINIMUM_LEPTONICA_VERSION} REQUIRED CONFIG)
@@ -22,11 +22,11 @@
 -
 -find_package(OpenCL QUIET)
 -find_package(PkgConfig)
--
++pkg_check_modules(Leptonica REQUIRED "lept >= ${MINIMUM_LEPTONICA_VERSION}" IMPORTED_TARGET)
+ 
  ###############################################################################
  #
- # compiler and linker
-@@ -84,7 +74,11 @@ endif()
+@@ -84,7 +77,11 @@
  if (UNIX)
      set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --std=c++11")
  
@@ -39,7 +39,7 @@
  endif()
  
  ###############################################################################
-@@ -198,12 +192,12 @@ set(tesseract_src ${tesseract_src}
+@@ -198,12 +195,12 @@
  )
  
  add_library                     (tesseract ${LIBRARY_TYPE} ${tesseract_src} ${tesseract_hdr})
@@ -47,14 +47,15 @@
  if (NOT STATIC)
  target_compile_definitions      (tesseract PUBLIC -DTESS_EXPORTS)
  endif()
- target_link_libraries           (tesseract ${Leptonica_LIBRARIES} ${LIB_Ws2_32} ${LIB_pthread})
+-target_link_libraries           (tesseract ${Leptonica_LIBRARIES} ${LIB_Ws2_32} ${LIB_pthread})
 -set_target_properties           (tesseract PROPERTIES VERSION ${VERSION_MAJOR}.${VERSION_MINOR_0}.${VERSION_MINOR_1})
 -set_target_properties           (tesseract PROPERTIES SOVERSION ${VERSION_MAJOR}.${VERSION_MINOR_0}.${VERSION_MINOR_1})
++target_link_libraries           (tesseract PkgConfig::Leptonica ${LIB_Ws2_32} ${LIB_pthread})
 +set_target_properties           (tesseract PROPERTIES SOVERSION ${VERSION_MAJOR})
  if (WIN32)
  set_target_properties           (tesseract PROPERTIES OUTPUT_NAME tesseract${VERSION_MAJOR}${VERSION_MINOR})
  set_target_properties           (tesseract PROPERTIES DEBUG_OUTPUT_NAME tesseract${VERSION_MAJOR}${VERSION_MINOR}d)
-@@ -226,6 +220,9 @@ set_target_properties           (tesseractmain PROPERTIES OUTPUT_NAME tesseract)
+@@ -226,6 +223,20 @@
  
  ########################################
  
@@ -65,6 +66,17 @@
 +
 +install(TARGETS tesseract)
 +install(FILES ${tesseract_hdr} DESTINATION ${CMAKE_INSTALL_PREFIX}/include/tesseract)
++set(prefix ${CMAKE_INSTALL_PREFIX})
++set(exec_prefix ${CMAKE_INSTALL_PREFIX})
++set(bindir ${CMAKE_INSTALL_BINDIR})
++set(datarootdir \${prefix}/share)
++set(datadir \${datarootdir})
++set(libdir ${CMAKE_INSTALL_LIBDIR})
++set(includedir ${CMAKE_INSTALL_INCLUDEDIR})
++set(PACKAGE_NAME tesseract)
++set(VERSION ${VERSION_PLAIN})
++configure_file(${CMAKE_SOURCE_DIR}/tesseract.pc.in ${CMAKE_BINARY_DIR}/tesseract.pc @ONLY)
++install(FILES ${CMAKE_BINARY_DIR}/tesseract.pc DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig)
 --- i/cmake/Configure.cmake
 +++ w/cmake/Configure.cmake
 @@ -88,12 +88,6 @@ set(include_files_list
