@@ -4,8 +4,6 @@ project(luasec LANGUAGES)
 include(koreader_thirdparty_common)
 include(koreader_thirdparty_git)
 
-assert_var_defined(LUAPATH)
-
 # Build in source tree.
 set(BINARY_DIR ${SOURCE_DIR})
 
@@ -17,6 +15,8 @@ string(JOIN " " LIBS
     ${STAGING_DIR}/lib/libssl${LIB_EXT}
     ${LUAJIT_LIB}
 )
+
+set(LUAPATH "${OUTPUT_DIR}/common")
 
 set(MAKE_CMD
     ${KO_MAKE_RECURSIVE}
