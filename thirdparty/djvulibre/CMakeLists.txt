@@ -10,9 +10,6 @@ assert_var_defined(CXX)
 assert_var_defined(CXXFLAGS)
 assert_var_defined(LDFLAGS)
 
-# Build in source tree.
-set(BINARY_DIR ${SOURCE_DIR})
-
 # Never *ever* call setlocale, for any reason.
 # Most of our target platforms have custom/broken/incomplete locales, don't screw with it.
 # And this runs in our main thread, so this is Very Bad(TM).
@@ -36,7 +33,7 @@ list(APPEND CFG_CMD COMMAND env
     CFLAGS=${CFLAGS}
     CXXFLAGS=${CXXFLAGS}
     LDFLAGS=${LDFLAGS}
-    ./configure --host=${CHOST}
+    ${SOURCE_DIR}/configure --host=${CHOST} --prefix=${INSTALL_DIR}
     --disable-static --enable-shared
     --disable-desktopfiles
     --disable-largefile
@@ -51,6 +48,8 @@ endif()
 
 list(APPEND BUILD_CMD COMMAND ${KO_MAKE_RECURSIVE} -C libdjvu)
 
+list(APPEND INSTALL_CMD COMMAND ${KO_MAKE_RECURSIVE} -C libdjvu install)
+
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
     https://gitlab.com/koreader/djvulibre.git
@@ -63,4 +62,5 @@ external_project(
     PATCH_COMMAND ${PATCH_CMD}
     CONFIGURE_COMMAND ${CFG_CMD}
     BUILD_COMMAND ${BUILD_CMD}
+    INSTALL_COMMAND ${INSTALL_CMD}
 )
