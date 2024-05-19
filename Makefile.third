@@ -642,15 +642,13 @@ $(CURL_LIB): $(THIRDPARTY_DIR)/curl/*.*
 # zsync2
 $(OUTPUT_DIR)/zsync2: $(THIRDPARTY_DIR)/zsync2/*.*
 	$(CMAKE) $(CMAKE_FLAGS) \
-		-DCPPFLAGS='-I$(ZLIB_DIR)/include -I$(OPENSSL_DIR)/include' \
-		-DCFLAGS='$(CFLAGS)' \
-		-DCXXFLAGS='$(CXXFLAGS)' \
-		-DLDFLAGS='$(LDFLAGS) -L$(CURL_DIR)/lib -L$(OPENSSL_DIR) -lssl -lcrypto -pthread' \
-		-DCURL_DIR='$(CURL_DIR)' \
-		-DOPENSSL_DIR='$(OPENSSL_DIR)' \
+		-DCURL_DIR='$(abspath $(CURL_DIR))' \
+		-DCURL_LIB='$(abspath $(CURL_LIB))' \
+		-DOPENSSL_DIR='$(abspath $(OPENSSL_DIR))' \
 		-DCRYPTO_LIB='$(abspath $(CRYPTO_LIB))' \
 		-DSSL_LIB='$(abspath $(SSL_LIB))' \
-		-DCURL_LIB='$(abspath $(CURL_LIB))' \
+		-DZLIB_DIR='$(abspath $(ZLIB_DIR))' \
+		-DZLIB='$(abspath $(ZLIB))' \
 		-S $(THIRDPARTY_DIR)/zsync2 -B $(ZSYNC2_BUILD_DIR)
 	$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS) -C $(ZSYNC2_BUILD_DIR)
 	cp $(ZSYNC2_DIR)/src/zsync2 $(OUTPUT_DIR)/

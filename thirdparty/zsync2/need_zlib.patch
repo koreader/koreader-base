@@ -1,0 +1,28 @@
+diff --git i/src/CMakeLists.txt w/src/CMakeLists.txt
+index 46267e2..b06a2b1 100644
+--- i/src/CMakeLists.txt
++++ w/src/CMakeLists.txt
+@@ -1,6 +1,8 @@
+ set(CMAKE_CXX_STANDARD 17)
+ set(CMAKE_POSITION_INDEPENDENT_CODE true)
+ 
++find_package(ZLIB REQUIRED)
++
+ if(LIBCURL_FOUND)
+     add_definitions(-DHAVE_LIBCURL=1)
+ endif()
+@@ -34,12 +36,14 @@ add_library(libzsync2 ${ZSYNC2_SRCS})
+ # since the target is called libsomething, one doesn't need CMake's additional lib prefix
+ set_target_properties(libzsync2 PROPERTIES PREFIX "")
+ target_link_libraries(libzsync2 PUBLIC ${LIBZSYNC2_DEPS})
++target_link_libraries(libzsync2 PRIVATE ZLIB::ZLIB)
+ target_include_directories(libzsync2 PUBLIC $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>)
+ 
+ # core executable
+ add_executable(zsync2 ${ZSYNC2_SRCS} ${ZSYNC2_HDRS} main.cpp)
+ target_include_directories(zsync2 PRIVATE ${PROJECT_SOURCE_DIR}/include)
+ target_link_libraries(zsync2 PRIVATE ${LIBZSYNC2_DEPS} args)
++target_link_libraries(zsync2 PRIVATE ZLIB::ZLIB)
+ target_compile_definitions(zsync2 PRIVATE -DZSYNC_STANDALONE)
+ 
+ ## zsyncmake2 executable
