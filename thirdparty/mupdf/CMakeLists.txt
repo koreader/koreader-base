@@ -93,6 +93,8 @@ list(APPEND PATCH_CMD COMMAND ${KO_PATCH}
     ${CMAKE_CURRENT_SOURCE_DIR}/free-html-doc-fonts-on-close.patch
     # By default, mupdf compiles to a static library: we want a shared library.
     ${CMAKE_CURRENT_SOURCE_DIR}/shared-libmupdf.patch
+    # Only install development files: headers & library.
+    ${CMAKE_CURRENT_SOURCE_DIR}/minimal_install.patch
 )
 
 string(TOLOWER ${CMAKE_BUILD_TYPE} MUPDF_BUILD_TYPE)
@@ -113,6 +115,8 @@ if(WIN32)
 else()
     set(OS Other)
 endif()
+
+set(MUPDF_LIB libmupdf${LIB_EXT})
 
 string(APPEND XCFLAGS
     " ${CFLAGS}"
@@ -167,7 +171,7 @@ string(APPEND LIBS
     " ${ZLIB}"
 )
 
-list(APPEND BUILD_CMD COMMAND
+set(MAKE_CMD
     env
     -u CFLAGS
     -u LDFLAGS
@@ -195,8 +199,16 @@ list(APPEND BUILD_CMD COMMAND
     # Final shared library.
     LIBS=${LIBS}
     LINK_OPTS=${LINK_OPTS}
-    MUPDF_SHLIB=libmupdf${LIB_EXT}
-    shared
+    MUPDF_SHLIB=${MUPDF_LIB}
+)
+
+list(APPEND BUILD_CMD COMMAND ${MAKE_CMD} shared)
+
+list(APPEND INSTALL_CMD COMMAND ${MAKE_CMD} install
+    DESTDIR=${INSTALL_DIR}
+    INSTALL_APPS=
+    INSTALL_LIBS=${MUPDF_LIB}
+    prefix=/
 )
 
 external_project(
@@ -204,4 +216,5 @@ external_project(
     URL_MD5 0b567ae03d7a94321134dfcde95210cf
     PATCH_COMMAND ${PATCH_CMD}
     BUILD_COMMAND ${BUILD_CMD}
+    INSTALL_COMMAND ${INSTALL_CMD}
 )
