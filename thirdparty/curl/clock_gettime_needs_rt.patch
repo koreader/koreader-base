@@ -1,0 +1,13 @@
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -1369,6 +1369,10 @@
+ 
+ if(NOT WIN32)
+   # Check clock_gettime(CLOCK_MONOTONIC, x) support
++  set(CMAKE_REQUIRED_LIBRARIES -lrt)
+   curl_internal_test(HAVE_CLOCK_GETTIME_MONOTONIC)
++  if(HAVE_CLOCK_GETTIME_MONOTONIC)
++    list(APPEND CURL_LIBS "rt")
++  endif()
+ endif()
+ 
