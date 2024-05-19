@@ -218,7 +218,7 @@ static int openInputFD(lua_State* L)
 
     inputfds[fd_idx] = fd;
     if (ko_dont_grab_input == NULL) {
-        ioctl(inputfds[fd_idx], EVIOCGRAB, 1);
+        ioctl(fd, EVIOCGRAB, 1);
     }
 
     // Update our state for the new input slot...
