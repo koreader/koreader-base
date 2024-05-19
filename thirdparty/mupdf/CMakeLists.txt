@@ -184,6 +184,7 @@ list(APPEND BUILD_CMD COMMAND
     CURL_DIR=nonexisting
     FREETYPE_DIR=nonexisting
     HARFBUZZ_DIR=nonexisting
+    LCMS2_DIR=nonexisting
     LIBJPEG_DIR=nonexisting
     ZLIB_DIR=nonexisting
     # Other.
