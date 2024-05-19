@@ -79,7 +79,7 @@ $(MUPDF_LIB): $(JPEG_LIB) \
 	$(CMAKE) $(CMAKE_FLAGS) \
 		-DMUPDF_LIB='$(abspath $(MUPDF_LIB))' \
 		-DMUPDF_SONAME='$(notdir $(MUPDF_LIB))' \
-		-DAES_LIB='$(AES_LIB)' \
+		-DAES_LIB='$(abspath $(AES_LIB))' \
 		-DFREETYPE_DIR='$(abspath $(FREETYPE_DIR))' \
 		-DFREETYPE_LIB='$(abspath $(FREETYPE_LIB))' \
 		-DHARFBUZZ_DIR='$(abspath $(HARFBUZZ_DIR))' \
