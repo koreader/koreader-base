@@ -4,25 +4,12 @@ project(kobo-usbms LANGUAGES)
 include("koreader_thirdparty_common")
 include("koreader_thirdparty_git")
 
-assert_var_defined(CFLAGS)
-assert_var_defined(LDFLAGS)
-
 # Build in source tree.
 set(BINARY_DIR ${SOURCE_DIR})
 
-list(APPEND BUILD_CMD COMMAND
-    ${KO_MAKE_RECURSIVE}
-    CROSS_TC=${CHOST}
-    AR=${AR}
-    CC=${CC}
-    CFLAGS=${CFLAGS}
-    CXX=${CXX}
-    CXXFLAGS=${CXXFLAGS}
-    LDFLAGS=${LDFLAGS}
-    RANLIB=${RANLIB}
-    STRIP=${STRIP}
-    kobo
-)
+list(APPEND BUILD_CMD COMMAND ${KO_MAKE_RECURSIVE} CROSS_TC=${CHOST})
+append_autotools_vars(BUILD_CMD)
+list(APPEND BUILD_CMD kobo)
 
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME

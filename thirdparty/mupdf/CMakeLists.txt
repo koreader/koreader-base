@@ -5,16 +5,12 @@ include(koreader_thirdparty_common)
 include(koreader_thirdparty_git)
 
 assert_var_defined(AES_LIB)
-assert_var_defined(CFLAGS)
 assert_var_defined(FREETYPE_DIR)
 assert_var_defined(FREETYPE_LIB)
 assert_var_defined(HARFBUZZ_DIR)
 assert_var_defined(HARFBUZZ_LIB)
-assert_var_defined(HOSTCC)
-assert_var_defined(HOSTCFLAGS)
 assert_var_defined(JPEG_DIR)
 assert_var_defined(JPEG_LIB)
-assert_var_defined(LDFLAGS)
 assert_var_defined(LIBWEBPDEMUX_LIB)
 assert_var_defined(LIBWEBP_DIR)
 assert_var_defined(LIBWEBP_LIB)
@@ -105,9 +101,6 @@ string(TOLOWER ${CMAKE_BUILD_TYPE} MUPDF_BUILD_TYPE)
 
 # There's some headers to generate on the host's side first, before we run our actual build (where we enforce CROSSCOMPILE to avoid trying to regen those).
 list(APPEND BUILD_CMD COMMAND
-    env
-    -u CFLAGS
-    -u LDFLAGS
     ${KO_MAKE_RECURSIVE}
     CC=${HOSTCC}
     LIBS= # don't try to link with system libraries when building generator helpers…
