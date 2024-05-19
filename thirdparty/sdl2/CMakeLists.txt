@@ -15,6 +15,7 @@ list(APPEND PATCH_CMD COMMAND ${KO_PATCH}
 list(APPEND CMAKE_ARGS
     -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TCF}
     # Project options.
+    -DSDL2_DISABLE_SDL2MAIN=ON
     -DSDL_AUDIO=OFF
     -DSDL_CMAKE_DEBUG_POSTFIX= # Remove 'd' suffix for the debug build library.
     -DSDL_SHARED=ON
