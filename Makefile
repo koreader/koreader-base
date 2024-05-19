@@ -19,7 +19,7 @@ all: $(CMAKE_KO) $(CMAKE_TCF) $(OUTPUT_DIR)/libs $(if $(ANDROID),,$(LUAJIT)) \
 		$(if $(USE_LUAJIT_LIB),$(LUAJIT_LIB),) \
 		$(LUAJIT_JIT) \
 		libs $(K2PDFOPT_LIB) \
-		$(OUTPUT_DIR)/common $(OUTPUT_DIR)/rocks \
+		$(OUTPUT_DIR)/common \
 		$(LUASOCKET) \
 		$(OUTPUT_DIR)/ffi $(OUTPUT_DIR)/data \
 		$(if $(WIN32),,$(LUASEC)) \
@@ -60,7 +60,6 @@ ifeq ($(DO_STRIP),1)
 		$(if $(or $(KOBO),$(POCKETBOOK),$(REMARKABLE)),$(OUTPUT_DIR)/fbdepth,) \
 		$(if $(or $(CERVANTES),$(KINDLE),$(KOBO),$(POCKETBOOK),$(REMARKABLE)),$(OUTPUT_DIR)/zsync2,) \
 		$(if $(ANDROID),,$(LUAJIT)) \
-		$(OUTPUT_DIR)/rocks/lib/lua/5.1/$(if $(WIN32),*.dll,*.so*) \
 		$(OUTPUT_DIR)/libs/$(if $(WIN32),*.dll,*.so*)" ;\
 	$(STRIP) --strip-unneeded $${STRIP_FILES} ;\
 	touch -r $${STRIP_FILES}  # let all files have the same mtime
@@ -88,9 +87,6 @@ $(OUTPUT_DIR)/libs:
 
 $(OUTPUT_DIR)/common:
 	install -d $(OUTPUT_DIR)/common
-
-$(OUTPUT_DIR)/rocks:
-	install -d $(OUTPUT_DIR)/rocks
 
 $(OUTPUT_DIR)/ffi:
 	$(SYMLINK) $(abspath ffi) $@
