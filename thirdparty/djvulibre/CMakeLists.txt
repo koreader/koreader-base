@@ -8,6 +8,8 @@ include(koreader_thirdparty_git)
 # Most of our target platforms have custom/broken/incomplete locales, don't screw with it.
 # And this runs in our main thread, so this is Very Bad(TM).
 list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/djvulibre-no-locale-mangling.patch)
+# Remove references to (build specific) install directory in binary.
+list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/no_references_to_install_dir.patch)
 
 if(ANDROID)
     list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/android.patch)
