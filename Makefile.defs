@@ -681,7 +681,7 @@ CXXFLAGS := $(strip $(CXXFLAGS))
 LDFLAGS := $(strip $(LDFLAGS))
 
 # NOTE: We generally want SIMD/ASM juicy stuff everywhere
-export WANT_SIMD=1
+WANT_SIMD=1
 # ... but on ARM targets that are not NEON capable, that obviously won't fly...
 ifneq (,$(filter -march=arm%,$(CFLAGS)))
   # We're on ARM.
@@ -1118,6 +1118,9 @@ set(AR             "$(strip $(AR))")
 set(RANLIB         "$(strip $(RANLIB))")
 set(RC             "$(strip $(RC))")
 set(STRIP          "$(strip $(STRIP))")
+
+# Miscellaneous.
+set(WANT_SIMD          $(WANT_SIMD))
 
 # Platform flags.
 set(ANDROID        $(ANDROID))
