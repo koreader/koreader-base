@@ -4,8 +4,6 @@ project(harfbuzz LANGUAGES)
 include("koreader_thirdparty_common")
 include("koreader_thirdparty_git")
 
-assert_var_defined(FREETYPE_DIR)
-
 # Get rid of a bunch of `#line` directives that trip ccache 4.9.1.
 # NOTE: this has also the nice effect of "touching" each file, so
 # the build system does not try to regenerate them (and building
@@ -33,7 +31,6 @@ endif()
 
 list(APPEND CMAKE_ARGS
     -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TCF}
-    -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR}
     # Options.
     -DBUILD_SHARED_LIBS=TRUE
     -DHB_BUILD_SUBSET=FALSE
@@ -42,9 +39,6 @@ list(APPEND CMAKE_ARGS
     -DHB_HAVE_GRAPHITE2=FALSE
     -DHB_HAVE_ICU=FALSE
     -DHB_HAVE_CORETEXT=FALSE
-    # Of course, `FindFreetype` does not honor `FREETYPE_ROOT`.
-    -DFREETYPE_INCLUDE_DIRS=${FREETYPE_DIR}/include/freetype2
-    -DFREETYPE_LIBRARY=-L${FREETYPE_DIR}/lib$<SEMICOLON>freetype
     # Disable Python support.
     -DPYTHONINTERP_FOUND=FALSE
     -DPYTHON_EXECUTABLE=

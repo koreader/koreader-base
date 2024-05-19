@@ -4,9 +4,6 @@ project(tesseract LANGUAGES)
 include(koreader_thirdparty_common)
 include(koreader_thirdparty_git)
 
-assert_var_defined(LEPTONICA_DIR)
-assert_var_defined(LEPTONICA_LIB)
-
 list(APPEND PATCH_CMD COMMAND ${KO_PATCH}
     ${CMAKE_CURRENT_SOURCE_DIR}/k2pdfopt.patch
     ${CMAKE_CURRENT_SOURCE_DIR}/cmake_tweaks.patch
@@ -14,11 +11,10 @@ list(APPEND PATCH_CMD COMMAND ${KO_PATCH}
 
 list(APPEND CMAKE_ARGS
     -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TCF}
-    -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR}
     # Project options.
     -DANDROID=${ANDROID}
-    -DLeptonica_INCLUDE_DIRS=${LEPTONICA_DIR}/include/leptonica
-    -DLeptonica_LIBRARIES=${LEPTONICA_LIB}
+    -DLeptonica_INCLUDE_DIRS=${STAGING_DIR}/include/leptonica
+    -DLeptonica_LIBRARIES=${STAGING_DIR}/lib/liblept${LIB_EXT}
 )
 
 list(APPEND BUILD_CMD COMMAND ${KO_MAKE_PROGRAM})

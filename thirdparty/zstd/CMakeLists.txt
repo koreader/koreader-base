@@ -6,7 +6,6 @@ include("koreader_thirdparty_git")
 
 list(APPEND CMAKE_ARGS
     -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TCF}
-    -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR}
     # Project options.
     -DZSTD_BUILD_PROGRAMS=FALSE
     -DZSTD_BUILD_SHARED=TRUE

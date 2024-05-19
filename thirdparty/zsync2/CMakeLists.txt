@@ -4,10 +4,6 @@ project(zsync2 LANGUAGES)
 include(koreader_thirdparty_common)
 include(koreader_thirdparty_git)
 
-assert_var_defined(CURL_DIR)
-assert_var_defined(OPENSSL_DIR)
-assert_var_defined(ZLIB_DIR)
-
 list(APPEND PATCH_CMD COMMAND ${KO_PATCH}
     # Fix build with old TCs (kindle & pocketbook).
     ${CMAKE_CURRENT_SOURCE_DIR}/fix-old-tc-build.patch
@@ -24,13 +20,7 @@ list(APPEND CMAKE_ARGS
     # Options.
     -DBUILD_CPR_TESTS=FALSE
     -DBUILD_TESTING=FALSE
-    # cURL.
-    -DCURL_ROOT=${CURL_DIR}
     -DUSE_SYSTEM_CURL=TRUE
-    # OpenSSL.
-    -DOpenSSL_ROOT=${OPENSSL_DIR}
-    # ZLIB.
-    -DZLIB_ROOT=${ZLIB_DIR}
 )
 
 list(APPEND BUILD_CMD COMMAND ${KO_MAKE_PROGRAM} zsync2)

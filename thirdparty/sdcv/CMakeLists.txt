@@ -4,15 +4,6 @@ project(sdcv LANGUAGES)
 include("koreader_thirdparty_common")
 include("koreader_thirdparty_git")
 
-assert_var_defined(GETTEXT)
-assert_var_defined(GETTEXT_DIR)
-assert_var_defined(LIBICONV)
-assert_var_defined(LIBICONV_DIR)
-assert_var_defined(GLIB)
-assert_var_defined(GLIB_DIR)
-assert_var_defined(ZLIB)
-assert_var_defined(ZLIB_DIR)
-
 list(APPEND PATCH_CMD COMMAND ${KO_PATCH}
     # Revert 6e36e7730caf07b6cd0bfa265cdf9b5e31e7acad, because it's
     # not helpful in our workflow, and just causes logging noise.
@@ -24,19 +15,15 @@ list(APPEND PATCH_CMD COMMAND ${KO_PATCH}
 # took me an eternity to find $<SEMICOLON>
 # important docs here https://cmake.org/cmake/help/v2.8.11/cmake.html#command:add_custom_command
 string(APPEND GLIB2_INCLUDE_DIRS
-    ${GLIB_DIR}/include/glib-2.0
+    ${STAGING_DIR}/include/glib-2.0
     $<SEMICOLON>
-    ${GLIB_DIR}/lib/glib-2.0/include
+    ${STAGING_DIR}/lib/glib-2.0/include
 )
-string(APPEND GLIB2_LIBRARIES ${GLIB})
+string(APPEND GLIB2_LIBRARIES ${STAGING_DIR}/lib/libglib-2.0.a)
 if(ANDROID OR DARWIN)
-    string(APPEND GLIB2_INCLUDE_DIRS
-        $<SEMICOLON> ${GETTEXT_DIR}/include
-        $<SEMICOLON> ${LIBICONV_DIR}/include
-    )
     string(APPEND GLIB2_LIBRARIES
-        $<SEMICOLON> ${GETTEXT}
-        $<SEMICOLON> ${LIBICONV}
+        $<SEMICOLON> ${STAGING_DIR}/lib/libiconv.a
+        $<SEMICOLON> ${STAGING_DIR}/lib/libintl.a
     )
 endif()
 if(DARWIN)
@@ -53,6 +40,12 @@ else()
     endif()
 endif()
 
+if(ANDROID)
+    set(ZLIB ${STAGING_DIR}/lib/libz.a)
+else()
+    set(ZLIB ${STAGING_DIR}/lib/libz${LIB_EXT})
+endif()
+
 list(APPEND CMAKE_ARGS
     -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TCF}
     # Project options.
@@ -62,10 +55,6 @@ list(APPEND CMAKE_ARGS
     -DGLIB2_INCLUDE_DIRS=${GLIB2_INCLUDE_DIRS}
     -DGLIB2_LIBRARIES=${GLIB2_LIBRARIES}
     # Zlib.
-    -DZLIB_INCLUDE_DIR=${ZLIB_DIR}/include
-    -DZLIB_LIBRARIES=${ZLIB}
-    # I just want to be able to -I and -L and have things work. CMake, CMake...
-    -DZLIB_ROOT=${ZLIB_DIR}
     -DZLIB_LIBRARY_RELEASE=${ZLIB}
 )
 

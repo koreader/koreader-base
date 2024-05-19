@@ -4,9 +4,6 @@ project(glib LANGUAGES)
 include(koreader_thirdparty_common)
 include(koreader_thirdparty_git)
 
-assert_var_defined(GETTEXT_DIR)
-assert_var_defined(LIBICONV_DIR)
-
 list(APPEND PATCH_CMD COMMAND ${KO_PATCH}
     # We only care about `libglib-2.0.a`.
     ${CMAKE_CURRENT_SOURCE_DIR}/glib-libglib-only.patch
@@ -45,8 +42,8 @@ else()
     set(WITH_LIBICONV no)
 endif()
 
-string(APPEND CPPFLAGS " -I${GETTEXT_DIR}/include -I${LIBICONV_DIR}/include")
-string(APPEND LDFLAGS " -L${GETTEXT_DIR}/lib -L${LIBICONV_DIR}/lib")
+string(APPEND CPPFLAGS " -I${STAGING_DIR}/include")
+string(APPEND LDFLAGS " -L${STAGING_DIR}/lib")
 
 list(APPEND CFG_CMD COMMAND env)
 append_autotools_vars(CFG_CMD)
@@ -64,7 +61,7 @@ list(APPEND CFG_CMD
 
 list(APPEND BUILD_CMD COMMAND ${KO_MAKE_RECURSIVE} -C glib)
 
-list(APPEND INSTALL_CMD COMMAND ${KO_MAKE_RECURSIVE} -C glib DESTDIR=${INSTALL_DIR} install)
+list(APPEND INSTALL_CMD COMMAND ${KO_MAKE_RECURSIVE} -C glib DESTDIR=${STAGING_DIR} install)
 
 external_project(
     URL https://download.gnome.org/sources/glib/2.58/glib-2.58.3.tar.xz
