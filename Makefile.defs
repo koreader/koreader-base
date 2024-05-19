@@ -1171,6 +1171,8 @@ set(REMARKABLE     $(REMARKABLE))
 set(SONY_PRSTUX    $(SONY_PRSTUX))
 set(WIN32          $(WIN32))
 
+set(USE_LUAJIT_LIB $(USE_LUAJIT_LIB))
+
 endef
 
 # }}}
