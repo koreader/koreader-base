@@ -8,7 +8,16 @@
  project(ZeroMQ)
  
  option(WITH_OPENPGM "Build with support for OpenPGM" OFF)
-@@ -266,10 +266,6 @@ elseif(CMAKE_SYSTEM_NAME MATCHES "Darwin")
+@@ -125,8 +125,6 @@ check_library_exists(iphlpapi printf "" HAVE_IPHLAPI) # GetAdaptersAddresses
+ check_cxx_symbol_exists(SO_PEERCRED sys/socket.h ZMQ_HAVE_SO_PEERCRED)
+ check_cxx_symbol_exists(LOCAL_PEERCRED sys/socket.h ZMQ_HAVE_LOCAL_PEERCRED)
+ 
+-find_library(RT_LIBRARY rt)
+-
+ find_package(Threads)
+ 
+ 
+@@ -266,10 +264,6 @@ elseif(CMAKE_SYSTEM_NAME MATCHES "Darwin")
    add_definitions(-D_DARWIN_C_SOURCE)
  endif()
  
@@ -19,7 +28,7 @@
  cmake_dependent_option(WITH_DOC "Build Reference Guide documentation(requires DocBook)" ON
                         "PYTHON_FOUND;ASCIIDOC_FOUND" OFF)
  
-@@ -609,6 +605,7 @@ else()
+@@ -609,6 +603,7 @@ else()
      else()
        set_target_properties(libzmq PROPERTIES
                               OUTPUT_NAME "zmq"
@@ -27,3 +36,14 @@
                               PUBLIC_HEADER "${public_headers}")
      endif()
  endif()
+@@ -628,8 +623,8 @@ if(HAVE_IPHLAPI)
+   target_link_libraries(libzmq iphlpapi)
+ endif()
+ 
+-if(RT_LIBRARY)
+-  target_link_libraries(libzmq ${RT_LIBRARY})
++if(HAVE_CLOCK_GETTIME)
++  target_link_libraries(libzmq -lrt)
+ endif()
+ 
+ set(perf-tools local_lat
