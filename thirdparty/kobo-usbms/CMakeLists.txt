@@ -10,7 +10,19 @@ assert_var_defined(LDFLAGS)
 # Build in source tree.
 set(BINARY_DIR ${SOURCE_DIR})
 
-list(APPEND BUILD_CMD COMMAND ${KO_MAKE_RECURSIVE} "CROSS_TC=${CHOST}" "CFLAGS=${CFLAGS}" "LDFLAGS=${LDFLAGS}" kobo)
+list(APPEND BUILD_CMD COMMAND
+    ${KO_MAKE_RECURSIVE}
+    CROSS_TC=${CHOST}
+    AR=${AR}
+    CC=${CC}
+    CFLAGS=${CFLAGS}
+    CXX=${CXX}
+    CXXFLAGS=${CXXFLAGS}
+    LDFLAGS=${LDFLAGS}
+    RANLIB=${RANLIB}
+    STRIP=${STRIP}
+    kobo
+)
 
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
