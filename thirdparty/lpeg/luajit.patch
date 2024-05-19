@@ -1,0 +1,51 @@
+diff -Nuarp lpeg-1.0.2-orig/lptree.c lpeg-1.0.2/lptree.c
+--- lpeg-1.0.2-orig/lptree.c	2019-03-11 15:08:29.000000000 +0100
++++ lpeg-1.0.2/lptree.c	2022-10-17 05:12:24.958098423 +0200
+@@ -21,7 +21,7 @@
+ /* number of siblings for each tree */
+ const byte numsiblings[] = {
+   0, 0, 0,	/* char, set, any */
+-  0, 0,		/* true, false */	
++  0, 0,		/* true, false */
+   1,		/* rep */
+   2, 2,		/* seq, choice */
+   1, 1,		/* not, and */
+@@ -1290,13 +1290,13 @@ static struct luaL_Reg metareg[] = {
+ };
+ 
+ 
+-int luaopen_lpeg (lua_State *L);
+-int luaopen_lpeg (lua_State *L) {
++LUALIB_API int luaopen_lpeg (lua_State *L);
++LUALIB_API int luaopen_lpeg (lua_State *L) {
+   luaL_newmetatable(L, PATTERN_T);
+   lua_pushnumber(L, MAXBACK);  /* initialize maximum backtracking */
+   lua_setfield(L, LUA_REGISTRYINDEX, MAXSTACKIDX);
+-  luaL_setfuncs(L, metareg, 0);
+-  luaL_newlib(L, pattreg);
++  luaL_register(L, NULL, metareg);
++  luaL_register(L, "lpeg", pattreg);
+   lua_pushvalue(L, -1);
+   lua_setfield(L, -3, "__index");
+   return 1;
+diff -Nuarp lpeg-1.0.2-orig/lptypes.h lpeg-1.0.2/lptypes.h
+--- lpeg-1.0.2-orig/lptypes.h	2019-03-11 15:08:29.000000000 +0100
++++ lpeg-1.0.2/lptypes.h	2022-10-17 05:12:24.958098423 +0200
+@@ -33,9 +33,16 @@
+ #define lua_setuservalue	lua_setfenv
+ 
+ #define lua_rawlen		lua_objlen
++#endif
++
++/*
++** compatibility with Lua 5.2
++*/
++#if (LUA_VERSION_NUM == 502)
+ 
+-#define luaL_setfuncs(L,f,n)	luaL_register(L,NULL,f)
+-#define luaL_newlib(L,f)	luaL_register(L,"lpeg",f)
++#undef luaL_register
++#define luaL_register(L,n,f) \
++	{ if ((n) == NULL) luaL_setfuncs(L,f,0); else luaL_newlib(L,f); }
+ 
+ #endif
