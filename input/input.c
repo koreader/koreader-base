@@ -209,6 +209,8 @@ static int openInputFD(lua_State* L)
         return luaL_error(L, "Passed an invalid fd number to input.fdopen");
     }
     if (fd_idx >= ARRAY_SIZE(inputfds)) {
+        // Don't leak that fd on error, in case we're being called in protected mode
+        close(fd);
         return luaL_error(L, "No free slot for new input fd <%d>", fd);
     }
     // Otherwise, we're golden, and fd_idx is the index of the next free slot in the inputfds array ;).
