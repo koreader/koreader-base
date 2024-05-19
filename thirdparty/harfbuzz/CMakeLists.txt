@@ -1,9 +1,3 @@
-cmake_minimum_required(VERSION 3.15)
-project(harfbuzz LANGUAGES)
-
-include("koreader_thirdparty_common")
-include("koreader_thirdparty_git")
-
 # Get rid of a bunch of `#line` directives that trip ccache 4.9.1.
 # NOTE: this has also the nice effect of "touching" each file, so
 # the build system does not try to regenerate them (and building
@@ -47,6 +41,9 @@ list(APPEND CMAKE_ARGS
 list(APPEND BUILD_CMD COMMAND ${KO_MAKE_PROGRAM})
 
 list(APPEND INSTALL_CMD COMMAND ${CMAKE_COMMAND} --install .)
+
+set(LIB_SPEC harfbuzz VERSION 0)
+append_shared_lib_install_commands(INSTALL_CMD ${LIB_SPEC})
 
 external_project(
     URL https://github.com/harfbuzz/harfbuzz/releases/download/8.3.1/harfbuzz-8.3.1.tar.xz

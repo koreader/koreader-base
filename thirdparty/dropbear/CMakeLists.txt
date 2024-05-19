@@ -1,8 +1,3 @@
-cmake_minimum_required(VERSION 3.15)
-project(dropbear LANGUAGES)
-
-include(koreader_thirdparty_common)
-
 list(APPEND PATCH_CMD COMMAND ${KO_PATCH}
     ${CMAKE_CURRENT_SOURCE_DIR}/dropbear-2018.76-kindle-nopasswd-hack.patch
     ${CMAKE_CURRENT_SOURCE_DIR}/dropbear-2018.76-kindle-pubkey-hack.patch
@@ -44,10 +39,13 @@ list(APPEND CFG_CMD
 
 list(APPEND BUILD_CMD COMMAND ${KO_MAKE_RECURSIVE} strip PROGRAMS=dropbear)
 
+append_binary_install_command(INSTALL_CMD dropbear)
+
 external_project(
     URL http://deb.debian.org/debian/pool/main/d/dropbear/dropbear_2018.76.orig.tar.bz2
     URL_MD5 c3912f7fcdcc57c99937e4a79480d2c2
     PATCH_COMMAND ${PATCH_CMD}
     CONFIGURE_COMMAND ${CFG_CMD}
     BUILD_COMMAND ${BUILD_CMD}
+    INSTALL_COMMAND ${INSTALL_CMD}
 )

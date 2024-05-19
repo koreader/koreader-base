@@ -1,9 +1,3 @@
-cmake_minimum_required(VERSION 3.15)
-project(freetype2 LANGUAGES)
-
-include("koreader_thirdparty_common")
-include("koreader_thirdparty_git")
-
 list(APPEND CMAKE_ARGS
     -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TCF}
     # Options.
@@ -19,6 +13,9 @@ list(APPEND CMAKE_ARGS
 list(APPEND BUILD_CMD COMMAND ${KO_MAKE_PROGRAM})
 
 list(APPEND INSTALL_CMD COMMAND ${CMAKE_COMMAND} --install .)
+
+set(LIB_SPEC freetype VERSION 6)
+append_shared_lib_install_commands(INSTALL_CMD ${LIB_SPEC})
 
 external_project(
     URL https://github.com/freetype/freetype/archive/refs/tags/VER-2-13-2.tar.gz

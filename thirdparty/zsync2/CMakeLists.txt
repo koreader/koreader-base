@@ -1,9 +1,3 @@
-cmake_minimum_required(VERSION 3.15)
-project(zsync2 LANGUAGES)
-
-include(koreader_thirdparty_common)
-include(koreader_thirdparty_git)
-
 list(APPEND PATCH_CMD COMMAND ${KO_PATCH}
     # Fix build with old TCs (kindle & pocketbook).
     ${CMAKE_CURRENT_SOURCE_DIR}/fix-old-tc-build.patch
@@ -24,6 +18,8 @@ list(APPEND CMAKE_ARGS
 )
 
 list(APPEND BUILD_CMD COMMAND ${KO_MAKE_PROGRAM} zsync2)
+
+append_binary_install_command(INSTALL_CMD src/zsync2)
 
 # NOTE: We're currently using our own fork instead of upstream's (https://github.com/AppImage/zsync2):
 ## * Enable range requests optimizations on the CLI
@@ -51,4 +47,5 @@ external_project(
     PATCH_COMMAND ${PATCH_CMD}
     CMAKE_ARGS ${CMAKE_ARGS}
     BUILD_COMMAND ${BUILD_CMD}
+    INSTALL_COMMAND ${INSTALL_CMD}
 )
