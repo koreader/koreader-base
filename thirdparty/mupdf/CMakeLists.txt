@@ -1,7 +1,6 @@
 cmake_minimum_required(VERSION 3.5.1)
 project(mupdf LANGUAGES)
 
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/../cmake_modules")
 include("koreader_thirdparty_common")
 include("koreader_thirdparty_git")
 
@@ -28,7 +27,7 @@ assert_var_defined(XCFLAGS)
 # javascript (for form data validation) close to 800 kB
 # NOTE: Don't let CMake split this up.
 set(XCFLAGS "${XCFLAGS} -DFZ_PLOTTERS_CMYK=0 -DFZ_ENABLE_JS=0")
-if(DEFINED ENV{ANDROID} AND "$ENV{CROSS_TC}" MATCHES "^armv7a-.*")
+if(DEFINED ENV{ANDROID} AND CHOST MATCHES "^armv7a-.*")
     set(XCFLAGS "${XCFLAGS} -D_FILE_OFFSET_BITS=32")
 endif()
 set(STATIC_BUILD_CMD ${KO_MAKE_RECURSIVE})
