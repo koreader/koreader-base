@@ -514,13 +514,7 @@ ifdef DARWIN
 endif
 
 $(ZMQ_LIB): $(THIRDPARTY_DIR)/libzmq/*.*
-	$(CMAKE) $(CMAKE_FLAGS) \
-		-DCC='$(CC)' \
-		-DCXX='$(CXX)' \
-		-DCFLAGS='$(CFLAGS)' \
-		-DCXXFLAGS='$(CXXFLAGS)' \
-		-DLDFLAGS='$(LDFLAGS)' \
-		-S $(THIRDPARTY_DIR)/libzmq -B $(ZMQ_BUILD_DIR)
+	$(CMAKE) $(CMAKE_FLAGS) -S $(THIRDPARTY_DIR)/libzmq -B $(ZMQ_BUILD_DIR)
 	$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS) -C $(ZMQ_BUILD_DIR)
 	cp -fL $(ZMQ_DIR)/$(if $(WIN32),bin,lib)/$(notdir $(ZMQ_LIB)) $@
 
