@@ -437,11 +437,11 @@ $(OUTPUT_DIR)/data/KoboUSBMS.tar.gz: $(THIRDPARTY_DIR)/kobo-usbms/*.*
 # common lua library for networking
 $(LUASOCKET): $(THIRDPARTY_DIR)/luasocket/*.*
 	$(CMAKE) $(CMAKE_FLAGS) \
-		-DPLAT='$(if $(WIN32),mingw,$(if $(DARWIN),macosx,linux))' \
-		-DCC='$(CC) $(CFLAGS)' \
-		$(if $(ANDROID),-DMYLDFLAGS='$(LDFLAGS) $(abspath $(LUAJIT_LIB))',) \
-		$(if $(WIN32),-DLUALIB_mingw='$(abspath $(LUAJIT_LIB))',) \
+		-DCC='$(CC)' \
+		-DCFLAGS='$(CFLAGS)' \
+		-DLDFLAGS='$(LDFLAGS)' \
 		-DLUAINC='$(LUAJIT_DIR)/src' \
+		-DLUALIB='$(if $(USE_LUAJIT_LIB),$(abspath $(LUAJIT_LIB)))' \
 		-DLUAPATH='$(abspath $(OUTPUT_DIR)/common)' \
 		-S $(THIRDPARTY_DIR)/luasocket -B $(LUASOCKET_BUILD_DIR)
 	$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS) -C $(LUASOCKET_BUILD_DIR)
