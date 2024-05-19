@@ -752,10 +752,6 @@ AES_LIB=$(MINIZIP_DIR)/libaes.a
 
 MUPDF_BUILD_DIR=$(THIRDPARTY_BUILD)/mupdf
 MUPDF_DIR=$(abspath $(MUPDF_BUILD_DIR)/source)
-MUPDF_LIB_DIR=$(MUPDF_DIR)/build/$(if $(KODEBUG),debug,release)
-MUPDF_LIB_STATIC=$(MUPDF_LIB_DIR)/libmupdf.a
-MUPDF_THIRDPARTY_LIBS=$(MUPDF_LIB_DIR)/libmupdfthird.a \
-			$(AES_LIB)
 MUPDF_LIB=$(OUTPUT_DIR)/libs/libmupdf$(LIB_EXT)
 
 DJVULIBRE_BUILD_DIR=$(THIRDPARTY_BUILD)/djvulibre
