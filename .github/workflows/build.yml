@@ -129,6 +129,10 @@ jobs:
         if: steps.ccache-restore.outputs.cache-hit != 'true'
         run: make
 
+      - name: Dump binaries runtime path & dependencies
+        if: steps.ccache-restore.outputs.cache-hit != 'true'
+        run: make bindeps
+
       # }}}
 
       # Clean / save caches. {{{
