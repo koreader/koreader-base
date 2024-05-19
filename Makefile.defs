@@ -719,10 +719,9 @@ ZSTD_DIR=$(abspath $(STAGING_DIR)/zstd)
 ZSTD_LIB_EXT=$(if $(WIN32),.dll,$(if $(DARWIN),.1.dylib,.so.1))
 ZSTD_LIB=$(OUTPUT_DIR)/libs/libzstd$(ZSTD_LIB_EXT)
 
-MINIZIP_BUILD_DIR=$(THIRDPARTY_BUILD)/minizip
-MINIZIP_DIR=$(abspath $(MINIZIP_BUILD_DIR)/source)
-AES_LIB_DIR=$(MINIZIP_DIR)/aes
-AES_LIB=$(MINIZIP_DIR)/aes/libaes.a
+MINIZIP_BUILD_DIR = $(THIRDPARTY_BUILD)/minizip
+MINIZIP_DIR = $(STAGING_DIR)/minizip
+AES_LIB = $(MINIZIP_DIR)/lib/libaes.a
 
 MUPDF_BUILD_DIR=$(THIRDPARTY_BUILD)/mupdf
 MUPDF_DIR=$(abspath $(MUPDF_BUILD_DIR)/source)
