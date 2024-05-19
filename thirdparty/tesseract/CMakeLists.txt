@@ -13,8 +13,6 @@ list(APPEND CMAKE_ARGS
     -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TCF}
     # Project options.
     -DANDROID=${ANDROID}
-    -DLeptonica_INCLUDE_DIRS=${STAGING_DIR}/include/leptonica
-    -DLeptonica_LIBRARIES=${STAGING_DIR}/lib/liblept${LIB_EXT}
 )
 
 list(APPEND BUILD_CMD COMMAND ${KO_MAKE_PROGRAM})
