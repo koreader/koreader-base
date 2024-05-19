@@ -99,16 +99,10 @@ endif()
 list(APPEND BUILD_CMD COMMAND ${MAKE_CMD} -j1 depend)
 list(APPEND BUILD_CMD COMMAND ${MAKE_CMD} build_libs)
 
-ko_write_gitclone_script(
-    GIT_CLONE_SCRIPT_FILENAME
-    https://github.com/openssl/openssl.git
-    OpenSSL_1_1_1w
-    ${SOURCE_DIR}
-    none
-)
-
 external_project(
-    DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
+    URL https://github.com/openssl/openssl/releases/download/OpenSSL_1_1_1w/openssl-1.1.1w.tar.gz
+    https://www.openssl.org/source/old/1.1.1/openssl-1.1.1w.tar.gz
+    URL_MD5 3f76825f195e52d4b10c70040681a275
     PATCH_COMMAND ${PATCH_CMD}
     CONFIGURE_COMMAND ${CFG_CMD}
     BUILD_COMMAND ${BUILD_CMD}
