@@ -205,7 +205,7 @@ static int openInputFD(lua_State* L)
     int fd = luaL_checkint(L, 1);
     lua_settop(L, 0); // pop arg
 
-    if (fd == -1) {
+    if (fd < 0) {
         return luaL_error(L, "Passed an invalid fd number to input.fdopen");
     }
     if (fd_idx >= ARRAY_SIZE(inputfds)) {
