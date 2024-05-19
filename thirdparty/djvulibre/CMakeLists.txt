@@ -47,12 +47,9 @@ list(APPEND CFG_CMD COMMAND env
 
 if(ANDROID)
     list(APPEND CFG_CMD COMMAND ${ANDROID_LIBTOOL_FIX_CMD})
-    # Technically we don't need tools on any platform but they only cause issues on Android
-    list(APPEND CFG_CMD COMMAND ${ISED} "s|DIST_SUBDIRS = libdjvu.*|DIST_SUBDIRS = libdjvu|g" Makefile)
-    list(APPEND CFG_CMD COMMAND ${ISED} "s|SUBDIRS = libdjvu tools share \\$(am__append_1) \\$(am__append_2)|SUBDIRS = libdjvu share \\$(am__append_1) \\$(am__append_2)|g" Makefile)
 endif()
 
-list(APPEND BUILD_CMD COMMAND ${KO_MAKE_RECURSIVE} SUBDIRS_FIRST=libdjvu)
+list(APPEND BUILD_CMD COMMAND ${KO_MAKE_RECURSIVE} -C libdjvu)
 
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
