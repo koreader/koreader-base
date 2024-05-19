@@ -8,7 +8,6 @@ assert_var_defined(CC)
 assert_var_defined(CXX)
 assert_var_defined(CPPFLAGS)
 assert_var_defined(LDFLAGS)
-assert_var_defined(CHOST)
 
 list(APPEND PATCH_CMD COMMAND ./autogen.sh)
 
@@ -24,7 +23,7 @@ set(CFG_ENV_VAR "CC=${CC}" "CXX=${CXX}" "CPPFLAGS=${CPPFLAGS}" "LDFLAGS=${LDFLAG
 set(CFG_OPTS --prefix=${INSTALL_DIR} --disable-static --enable-shared --host=${CHOST} --disable-libwebpmux)
 list(APPEND CFG_CMD COMMAND env ${CFG_ENV_VAR} ${SOURCE_DIR}/configure ${CFG_OPTS})
 
-if(DEFINED ENV{ANDROID})
+if(ANDROID)
     list(APPEND CFG_CMD COMMAND ${ANDROID_LIBTOOL_FIX_CMD})
 endif()
 

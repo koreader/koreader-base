@@ -21,7 +21,7 @@ set(BINARY_DIR ${SOURCE_DIR})
 set(LUA_RAPIDJSON_ROCKSPEC rapidjson-${LUA_RAPIDJSON_VER}.rockspec)
 
 list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/lua-rapidjson-never-native.patch)
-if(DEFINED ENV{ANDROID})
+if(ANDROID)
     list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/lua-rapidjson-android-link-to-lua.patch)
 endif()
 

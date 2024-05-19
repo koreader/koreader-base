@@ -21,7 +21,7 @@ list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/d7a8a247a4
 # Remove the 7 years-old copy of a CA bundle that turbo doesn't actually use.
 list(APPEND PATCH_CMD COMMAND rm -f ${SOURCE_DIR}/turbo/ca-certificates.crt)
 list(APPEND PATCH_CMD COMMAND ${ISED} "s|CC=|CC:=|" ${SOURCE_DIR}/Makefile)
-if (APPLE AND DEFINED ENV{ANDROID})
+if (APPLE AND ANDROID)
     # makefile of turbo hardcodes the shared library filename on darwin
     list(APPEND PATCH_CMD COMMAND ${ISED} "s|libtffi_wrap.dylib|libtffi_wrap.so|" ${SOURCE_DIR}/Makefile)
 endif()

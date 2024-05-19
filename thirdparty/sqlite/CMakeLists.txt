@@ -7,7 +7,6 @@ assert_var_defined(CC)
 assert_var_defined(CPPFLAGS)
 assert_var_defined(CFLAGS)
 assert_var_defined(LDFLAGS)
-assert_var_defined(CHOST)
 
 list(APPEND CFG_CMD env
     CC=${CC}

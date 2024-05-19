@@ -27,7 +27,7 @@ assert_var_defined(XCFLAGS)
 # javascript (for form data validation) close to 800 kB
 # NOTE: Don't let CMake split this up.
 set(XCFLAGS "${XCFLAGS} -DFZ_PLOTTERS_CMYK=0 -DFZ_ENABLE_JS=0")
-if(DEFINED ENV{ANDROID} AND CHOST MATCHES "^armv7a-.*")
+if(ANDROID AND CHOST MATCHES "^armv7a-.*")
     set(XCFLAGS "${XCFLAGS} -D_FILE_OFFSET_BITS=32")
 endif()
 set(STATIC_BUILD_CMD ${KO_MAKE_RECURSIVE})
@@ -51,7 +51,7 @@ assert_var_defined(HARFBUZZ_LIB)
 assert_var_defined(LIBWEBP_LIB)
 assert_var_defined(LIBWEBPDEMUX_LIB)
 assert_var_defined(MUPDF_LIB)
-if(DEFINED ENV{DARWIN})
+if(DARWIN)
     set(LINK_OPTS "${LINK_OPTS} -Wl,-all_load ${MUPDF_LIB_STATIC}")
     set(LINK_OPTS "${LINK_OPTS} -Wl,-all_load ${MUPDF_THIRDPARTY_LIBS}")
     set(LINK_OPTS "${LINK_OPTS} -dynamiclib -undefined dynamic_lookup")
@@ -64,7 +64,7 @@ endif()
 set(SHARED_BUILD_STR sh -c "${CC} -shared ${CFLAGS} ${LDFLAGS} ${LINK_OPTS} ${AES_LIB} ${ZLIB} ${JPEG_LIB} ${FREETYPE_LIB} ${HARFBUZZ_LIB} ${LIBWEBP_LIB} ${LIBWEBPDEMUX_LIB} -o ${MUPDF_LIB} -lm")
 
 # explictly use envs defined in Makefile.defs
-if(DEFINED ENV{ANDROID})
+if(ANDROID)
     set(SHARED_BUILD_STR "${SHARED_BUILD_STR} -llog")
 endif()
 

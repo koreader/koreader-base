@@ -8,7 +8,6 @@ assert_var_defined(CPPFLAGS)
 assert_var_defined(CFLAGS)
 assert_var_defined(LIBS)
 assert_var_defined(LDFLAGS)
-assert_var_defined(CHOST)
 
 list(APPEND PATCH_CMD COMMAND ${KO_PATCH}
     ${CMAKE_CURRENT_SOURCE_DIR}/dropbear-2018.76-kindle-nopasswd-hack.patch
@@ -19,13 +18,13 @@ list(APPEND PATCH_CMD COMMAND ${KO_PATCH}
     ${CMAKE_CURRENT_SOURCE_DIR}/dropbear-2018.76-upstream-fixes.patch
 )
 # This is pretty much platform-specific... Hard-coded paths and all that...
-if(DEFINED ENV{KOBO})
+if(KOBO)
     list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/dropbear-2018.76-scp-command-hack-kobo.patch)
-elseif(DEFINED ENV{KINDLE})
+elseif(KINDLE)
     list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/dropbear-2018.76-scp-command-hack-kindle.patch)
-elseif(DEFINED ENV{CERVANTES})
+elseif(CERVANTES)
     list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/dropbear-2018.76-scp-command-hack-cervantes.patch)
-elseif(DEFINED ENV{POCKETBOOK})
+elseif(POCKETBOOK)
     list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/dropbear-2018.76-scp-command-hack-pocketbook.patch)
 endif()
 list(APPEND PATCH_CMD COMMAND autoreconf -fi)

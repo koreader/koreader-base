@@ -20,7 +20,7 @@ list(APPEND PATCH_CMD COMMAND mv tesseract_mod/tesscapi.cpp tesscapi.cpp)
 list(APPEND PATCH_CMD COMMAND mv include_mod/tesseract.h tesseract.h)
 list(APPEND PATCH_CMD COMMAND sh -c "printf '#pragma once\\n#include <allheaders.h>' >leptonica.h")
 
-if (DEFINED ENV{DARWIN})
+if (DARWIN)
     #fix build error due to implicit declarations of function being invalid in C99 under macOS/XCode 12
     set(CFLAGS "${CFLAGS} -Wno-error=implicit-function-declaration")
 endif()
@@ -31,6 +31,7 @@ set(CXXFLAGS "${CXXFLAGS} ${CPPFLAGS}")
 
 list(APPEND BUILD_CMD COMMAND
     ${KO_MAKE_RECURSIVE}
+    ANDROID=${ANDROID} DARWIN=${DARWIN}
     CC=${CC}
     CFLAGS=${CFLAGS}
     CXX=${CXX}
