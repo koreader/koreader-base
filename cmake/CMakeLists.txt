@@ -121,7 +121,7 @@ endif()
 declare_project(thirdparty/czmq DEPENDS libzmq ${EXCLUDE_FROM_ALL})
 
 # djvulibre
-declare_project(thirdparty/djvulibre EXCLUDE_FROM_ALL)
+declare_project(thirdparty/djvulibre DEPENDS libjpeg-turbo EXCLUDE_FROM_ALL)
 
 # dropbear
 if(CERVANTES OR KINDLE OR KOBO OR POCKETBOOK)
