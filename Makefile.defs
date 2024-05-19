@@ -26,6 +26,7 @@ endif
 export PARALLEL_JOBS
 export PARALLEL_LOAD
 
+KEEP_GOING := $(findstring k,$(firstword -$(MAKEFLAGS)))
 DRY_RUN := $(findstring n,$(firstword -$(MAKEFLAGS)))
 
 # Use ccache in build system by default. Define USE_NO_CCACHE=1 to force disable it.
@@ -97,6 +98,9 @@ ifneq ($(USE_NINJA),)
   ifneq (,$(PARALLEL_LOAD))
     NINJAFLAGS += -l$(PARALLEL_LOAD)
   endif
+  ifneq (,$(KEEP_GOING))
+    NINJAFLAGS += -k0
+  endif
   ifneq (,$(DRY_RUN))
     NINJAFLAGS += -nv
   endif
@@ -112,6 +116,9 @@ ifneq (,$(or $(VERBOSE),$(V)))
   else
     MAKEFLAGS += --trace
   endif
+endif
+ifneq (,$(KEEP_GOING))
+  MAKEFLAGS += -k
 endif
 ifneq (,$(DRY_RUN))
   MAKEFLAGS += -n
