@@ -4,8 +4,6 @@ project(luasocket LANGUAGES)
 include(koreader_thirdparty_common)
 include(koreader_thirdparty_git)
 
-assert_var_defined(LUAPATH)
-
 # Build in source tree.
 set(BINARY_DIR ${SOURCE_DIR})
 
@@ -34,6 +32,8 @@ else()
 endif()
 
 string(JOIN " " MYLDFLAGS ${LDFLAGS} ${LUAJIT_LIB})
+
+set(LUAPATH "${OUTPUT_DIR}/common")
 
 list(APPEND BUILD_CMD COMMAND
     ${KO_MAKE_RECURSIVE}
