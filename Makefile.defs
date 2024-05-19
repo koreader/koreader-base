@@ -867,7 +867,7 @@ LODEPNG_DIR=$(abspath $(LODEPNG_BUILD_DIR)/source)
 GIF_LIB_EXT=$(if $(WIN32),-7.dll,$(if $(DARWIN),.7.dylib,.so.7))
 GIF_LIB=$(OUTPUT_DIR)/libs/libgif$(GIF_LIB_EXT)
 GIF_BUILD_DIR=$(THIRDPARTY_BUILD)/giflib
-GIF_DIR=$(abspath $(GIF_BUILD_DIR)/install)
+GIF_DIR=$(abspath $(GIF_BUILD_DIR)/build)
 
 LIBWEBP_LIB_EXT=$(if $(WIN32),-7.dll,$(if $(DARWIN),.7.dylib,.so.7))
 LIBWEBP_LIB=$(OUTPUT_DIR)/libs/libwebp$(LIBWEBP_LIB_EXT)
