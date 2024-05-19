@@ -1,9 +1,3 @@
-cmake_minimum_required(VERSION 3.15)
-project(turbo LANGUAGES)
-
-include(koreader_thirdparty_common)
-include(koreader_thirdparty_git)
-
 # Build in source tree.
 set(BINARY_DIR ${SOURCE_DIR})
 
@@ -34,6 +28,10 @@ list(APPEND BUILD_CMD COMMAND
     all
 )
 
+append_binary_install_command(INSTALL_CMD libtffi_wrap${LIB_EXT} DESTINATION common)
+append_install_commands(INSTALL_CMD turbo.lua turbovisor.lua DESTINATION common)
+append_tree_install_commands(INSTALL_CMD turbo common/turbo)
+
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
     https://github.com/kernelsauce/turbo
@@ -45,4 +43,5 @@ external_project(
     DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
     PATCH_COMMAND ${PATCH_CMD}
     BUILD_COMMAND ${BUILD_CMD}
+    INSTALL_COMMAND ${INSTALL_CMD}
 )

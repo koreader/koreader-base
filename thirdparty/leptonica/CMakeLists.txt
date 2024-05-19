@@ -1,9 +1,3 @@
-cmake_minimum_required(VERSION 3.15)
-project(leptonica LANGUAGES)
-
-include(koreader_thirdparty_common)
-include(koreader_thirdparty_git)
-
 # Make sure we use the old fmemopen symbol on ARM Linux when building against
 # glibc >= 2.22 (c.f. base#421 & #2188).
 #
@@ -49,6 +43,8 @@ list(APPEND CMAKE_ARGS
 list(APPEND BUILD_CMD COMMAND ${KO_MAKE_PROGRAM})
 
 list(APPEND INSTALL_CMD COMMAND ${CMAKE_COMMAND} --install .)
+
+append_shared_lib_install_commands(INSTALL_CMD lept VERSION 5)
 
 external_project(
     # NOTE: Needs to match the version used by whatever version of libk2pdfopt we're currently using...

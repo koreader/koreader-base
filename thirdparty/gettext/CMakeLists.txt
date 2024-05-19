@@ -1,8 +1,3 @@
-cmake_minimum_required(VERSION 3.15)
-project(gettext LANGUAGES)
-
-include(koreader_thirdparty_common)
-
 string(APPEND CPPFLAGS " -I${STAGING_DIR}/include")
 string(APPEND LDFLAGS " -L${STAGING_DIR}/lib")
 
@@ -25,6 +20,8 @@ endif()
 list(APPEND BUILD_CMD COMMAND ${KO_MAKE_RECURSIVE} -C intl)
 
 list(APPEND INSTALL_CMD COMMAND ${KO_MAKE_RECURSIVE} -C intl DESTDIR=${STAGING_DIR} install)
+# Get rid of libtool crap…
+list(APPEND INSTALL_CMD COMMAND rm -f ${STAGING_DIR}/lib/libintl.la)
 
 external_project(
     URL http://ftpmirror.gnu.org/gettext/gettext-0.21.tar.xz

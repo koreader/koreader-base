@@ -1,9 +1,3 @@
-cmake_minimum_required(VERSION 3.15)
-project(sdcv LANGUAGES)
-
-include("koreader_thirdparty_common")
-include("koreader_thirdparty_git")
-
 list(APPEND PATCH_CMD COMMAND ${KO_PATCH}
     # Revert 6e36e7730caf07b6cd0bfa265cdf9b5e31e7acad, because it's
     # not helpful in our workflow, and just causes logging noise.
@@ -12,8 +6,6 @@ list(APPEND PATCH_CMD COMMAND ${KO_PATCH}
     ${CMAKE_CURRENT_SOURCE_DIR}/sdcv-locale-hack.patch
 )
 
-# took me an eternity to find $<SEMICOLON>
-# important docs here https://cmake.org/cmake/help/v2.8.11/cmake.html#command:add_custom_command
 string(APPEND GLIB2_INCLUDE_DIRS
     ${STAGING_DIR}/include/glib-2.0
     $<SEMICOLON>
@@ -60,10 +52,13 @@ list(APPEND CMAKE_ARGS
 
 list(APPEND BUILD_CMD COMMAND ${KO_MAKE_PROGRAM})
 
+append_binary_install_command(INSTALL_CMD sdcv)
+
 external_project(
     URL https://github.com/Dushistov/sdcv/archive/refs/tags/v0.5.5.tar.gz
     URL_MD5 265dbfda83a57810595d156877f3e6fd
     CMAKE_ARGS ${CMAKE_ARGS}
     PATCH_COMMAND ${PATCH_CMD}
     BUILD_COMMAND ${BUILD_CMD}
+    INSTALL_COMMAND ${INSTALL_CMD}
 )
