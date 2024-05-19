@@ -367,8 +367,7 @@ end
 calculate page size after applying DrawContext
 --]]
 function page_mt.__index:getSize(draw_context)
-    local bounds = ffi.new("fz_rect[1]")
-    -- local bbox = ffi.new("fz_irect[1]")
+    local bounds = ffi.new("fz_rect")
     local ctm = ffi.new("fz_matrix")
 
     M.fz_scale(ctm, draw_context.zoom, draw_context.zoom)
@@ -389,14 +388,14 @@ function page_mt.__index:getSize(draw_context)
     return bbox[0].x1-bbox[0].x0, bbox[0].y1-bbox[0].y0
     --]]
 
-    return bounds[0].x1 - bounds[0].x0, bounds[0].y1 - bounds[0].y0
+    return bounds.x1 - bounds.x0, bounds.y1 - bounds.y0
 end
 
 --[[
 check which part of the page actually contains content
 --]]
 function page_mt.__index:getUsedBBox()
-    local result = ffi.new("fz_rect[1]")
+    local result = ffi.new("fz_rect")
 
     local dev = W.mupdf_new_bbox_device(context(), result)
     if dev == nil then merror("cannot allocate bbox_device") end
@@ -405,10 +404,10 @@ function page_mt.__index:getUsedBBox()
     M.fz_drop_device(context(), dev)
     if ok == nil then merror("cannot calculate bbox for page") end
 
-    return result[0].x0, result[0].y0, result[0].x1, result[0].y1
+    return result.x0, result.y0, result.x1, result.y1
 end
 
-local C = string.byte
+local B = string.byte
 local function is_unicode_wspace(c)
     return c == 9 or --  TAB
         c == 0x0a or --  HT
@@ -448,7 +447,7 @@ local function is_unicode_bullet(c)
         c == 0x2043 or --  Hyphen bullet
         c == 0x2219 or --  Bullet operator
         c == 149 or --  Ascii bullet
-        c == C'*'
+        c == B'*'
 end
 
 local function skip_starting_bullet(line)
@@ -505,7 +504,7 @@ function page_mt.__index:getPageText()
             local mupdf_line = block.u.t.first_line
             while mupdf_line ~= nil do
                 local line = {}
-                local line_bbox = ffi.new("fz_rect[1]")
+                local line_bbox = ffi.new("fz_rect", M.fz_empty_rect)
 
                 local first_char = skip_starting_bullet( mupdf_line )
                 local ch = first_char
@@ -523,7 +522,7 @@ function page_mt.__index:getPageText()
                     ch = first_char
                     while ch ~= nil do
                         local textlen = 0
-                        local word_bbox = ffi.new("fz_rect[1]")
+                        local word_bbox = ffi.new("fz_rect", M.fz_empty_rect)
                         while ch ~= nil do
                             if is_unicode_wspace(ch.c) then
                                 -- ignore and end word
@@ -548,8 +547,8 @@ function page_mt.__index:getPageText()
                         -- add word to line
                         table.insert(line, {
                             word = ffi.string(textbuf, textlen),
-                            x0 = word_bbox[0].x0, y0 = word_bbox[0].y0,
-                            x1 = word_bbox[0].x1, y1 = word_bbox[0].y1,
+                            x0 = word_bbox.x0, y0 = word_bbox.y0,
+                            x1 = word_bbox.x1, y1 = word_bbox.y1,
                         })
                         size = size + 5 * 8 + textlen
 
@@ -560,8 +559,8 @@ function page_mt.__index:getPageText()
                         ch = ch.next
                     end
 
-                    line.x0, line.y0 = line_bbox[0].x0, line_bbox[0].y0
-                    line.x1, line.y1 = line_bbox[0].x1, line_bbox[0].y1
+                    line.x0, line.y0 = line_bbox.x0, line_bbox.y0
+                    line.x1, line.y1 = line_bbox.x1, line_bbox.y1
                     size = size + 5 * 8
 
                     table.insert(lines, line)
@@ -651,11 +650,7 @@ function page_mt.__index:draw_new(draw_context, width, height, offset_x, offset_
     M.fz_pre_rotate(ctm, draw_context.rotate)
     M.fz_pre_translate(ctm, draw_context.offset_x, draw_context.offset_y)
 
-    local bbox = ffi.new("fz_irect[1]")
-    bbox[0].x0 = offset_x
-    bbox[0].y0 = offset_y
-    bbox[0].x1 = offset_x + width
-    bbox[0].y1 = offset_y + height
+    local bbox = ffi.new("fz_irect", offset_x, offset_y, offset_x + width, offset_y + height)
 
     local bb = BlitBuffer.new(width, height, mupdf.color and BlitBuffer.TYPE_BBRGB32 or BlitBuffer.TYPE_BB8)
 
@@ -999,7 +994,7 @@ end
 local function render_for_kopt(bmp, page, scale, bounds)
     local k2pdfopt = get_k2pdfopt()
 
-    local bbox = ffi.new("fz_irect[1]")
+    local bbox = ffi.new("fz_irect")
     local ctm = ffi.new("fz_matrix")
     M.fz_scale(ctm, scale, scale)
     M.fz_transform_rect(bounds, ctm)
@@ -1025,19 +1020,14 @@ end
 function page_mt.__index:reflow(kopt_context)
     local k2pdfopt = get_k2pdfopt()
 
-    local bounds = ffi.new("fz_rect[1]")
-    bounds[0].x0 = kopt_context.bbox.x0
-    bounds[0].y0 = kopt_context.bbox.y0
-    bounds[0].x1 = kopt_context.bbox.x1
-    bounds[0].y1 = kopt_context.bbox.y1
+    local bounds = ffi.new("fz_rect", kopt_context.bbox.x0, kopt_context.bbox.y0, kopt_context.bbox.x1, kopt_context.bbox.y1)
     -- probe scale
     local zoom = kopt_context.zoom * kopt_context.quality
-    M.fz_transform_rect(bounds, M.fz_identity)
-    local scale = (1.5 * zoom * kopt_context.dev_width) / bounds[0].x1
+    local scale = (1.5 * zoom * kopt_context.dev_width) / bounds.x1
     -- store zoom
     kopt_context.zoom = scale
     -- do real scale
-    mupdf.debug(string.format("reading page:%d,%d,%d,%d scale:%.2f",bounds[0].x0,bounds[0].y0,bounds[0].x1,bounds[0].y1,scale))
+    mupdf.debug(string.format("reading page:%d,%d,%d,%d scale:%.2f",bounds.x0,bounds.y0,bounds.x1,bounds.y1,scale))
     render_for_kopt(kopt_context.src, self, scale, bounds)
 
     if kopt_context.precache ~= 0 then
@@ -1054,11 +1044,7 @@ function page_mt.__index:reflow(kopt_context)
 end
 
 function page_mt.__index:getPagePix(kopt_context)
-    local bounds = ffi.new("fz_rect[1]")
-    bounds[0].x0 = kopt_context.bbox.x0
-    bounds[0].y0 = kopt_context.bbox.y0
-    bounds[0].x1 = kopt_context.bbox.x1
-    bounds[0].y1 = kopt_context.bbox.y1
+    local bounds = ffi.new("fz_rect", kopt_context.bbox.x0, kopt_context.bbox.y0, kopt_context.bbox.x1, kopt_context.bbox.y1)
 
     render_for_kopt(kopt_context.src, self, kopt_context.zoom, bounds)
 
@@ -1070,7 +1056,7 @@ function page_mt.__index:toBmp(bmp, dpi, color)
     local color_save = mupdf.color
     mupdf.color = color and true or false
 
-    local bounds = ffi.new("fz_rect[1]")
+    local bounds = ffi.new("fz_rect")
     M.fz_bound_page(context(), self.page, bounds)
 
     render_for_kopt(bmp, self, dpi/72, bounds)
