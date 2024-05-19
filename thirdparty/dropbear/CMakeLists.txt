@@ -4,10 +4,9 @@ project(dropbear LANGUAGES)
 include(koreader_thirdparty_common)
 
 assert_var_defined(CC)
-assert_var_defined(CPPFLAGS)
 assert_var_defined(CFLAGS)
-assert_var_defined(LIBS)
 assert_var_defined(LDFLAGS)
+assert_var_defined(ZLIB_DIR)
 
 list(APPEND PATCH_CMD COMMAND ${KO_PATCH}
     ${CMAKE_CURRENT_SOURCE_DIR}/dropbear-2018.76-kindle-nopasswd-hack.patch
@@ -18,23 +17,27 @@ list(APPEND PATCH_CMD COMMAND ${KO_PATCH}
     ${CMAKE_CURRENT_SOURCE_DIR}/dropbear-2018.76-upstream-fixes.patch
 )
 # This is pretty much platform-specific... Hard-coded paths and all that...
-if(KOBO)
-    list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/dropbear-2018.76-scp-command-hack-kobo.patch)
-elseif(KINDLE)
-    list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/dropbear-2018.76-scp-command-hack-kindle.patch)
-elseif(CERVANTES)
-    list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/dropbear-2018.76-scp-command-hack-cervantes.patch)
-elseif(POCKETBOOK)
-    list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/dropbear-2018.76-scp-command-hack-pocketbook.patch)
-endif()
+foreach(PLATFORM CERVANTES KINDLE KOBO POCKETBOOK)
+    if(${PLATFORM})
+        string(TOLOWER ${PLATFORM} PLATFORM)
+        list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/dropbear-2018.76-scp-command-hack-${PLATFORM}.patch)
+        break()
+    endif()
+endforeach()
+
 list(APPEND PATCH_CMD COMMAND autoreconf -fi)
+
+if(ANDROID)
+    set(LIBS -static)
+else()
+    set(LIBS)
+endif()
 
 list(APPEND CFG_CMD COMMAND env
     CC=${CC}
-    "CPPFLAGS=${CPPFLAGS} -I${SOURCE_DIR}"
     CFLAGS=${CFLAGS}
-    LIBS=${LIBS}
     LDFLAGS=${LDFLAGS}
+    LIBS=${LIBS}
     ${SOURCE_DIR}/configure --host=${CHOST}
     --disable-harden
     --disable-lastlog
@@ -42,14 +45,13 @@ list(APPEND CFG_CMD COMMAND env
     --enable-shadow
     --enable-syslog
     --enable-zlib
+    --with-zlib=${ZLIB_DIR}
 )
 
 list(APPEND BUILD_CMD COMMAND ${KO_MAKE_RECURSIVE} strip PROGRAMS=dropbear)
 
-set(DROPBEAR_VER 2018.76)
-
 external_project(
-    URL http://deb.debian.org/debian/pool/main/d/dropbear/dropbear_${DROPBEAR_VER}.orig.tar.bz2
+    URL http://deb.debian.org/debian/pool/main/d/dropbear/dropbear_2018.76.orig.tar.bz2
     URL_MD5 c3912f7fcdcc57c99937e4a79480d2c2
     PATCH_COMMAND ${PATCH_CMD}
     CONFIGURE_COMMAND ${CFG_CMD}
