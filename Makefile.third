@@ -59,7 +59,6 @@ endif
 
 $(PNG_LIB): $(ZLIB) $(THIRDPARTY_DIR)/libpng/*.*
 	$(CMAKE) $(CMAKE_FLAGS) \
-		-DZLIB='$(abspath $(ZLIB))' \
 		-DZLIB_DIR='$(abspath $(ZLIB_DIR))' \
 		-S $(THIRDPARTY_DIR)/libpng -B $(PNG_BUILD_DIR)
 	$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS) -C $(PNG_BUILD_DIR)
@@ -188,9 +187,7 @@ $(LEPTONICA_LIB): $(PNG_LIB) $(ZLIB) \
 	$(THIRDPARTY_DIR)/leptonica/*.*
 	$(CMAKE) $(CMAKE_FLAGS) \
 		-DPNG_DIR='$(PNG_DIR)' \
-		-DPNG_LIB='$(abspath $(PNG_LIB))' \
 		-DZLIB_DIR='$(ZLIB_DIR)' \
-		-DZLIB='$(abspath $(ZLIB))' \
 		-S $(THIRDPARTY_DIR)/leptonica -B $(LEPTONICA_BUILD_DIR)
 	$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS) -C $(LEPTONICA_BUILD_DIR)
 	cp -fL $(LEPTONICA_DIR)/lib/$(notdir $(LEPTONICA_LIB)) $(LEPTONICA_LIB)
@@ -404,7 +401,6 @@ $(ZMQ_LIB): $(THIRDPARTY_DIR)/libzmq/*.*
 $(CZMQ_LIB): $(ZMQ_LIB) $(THIRDPARTY_DIR)/czmq/*.*
 	$(CMAKE) $(CMAKE_FLAGS) \
 		-DZMQ_DIR='$(ZMQ_DIR)' \
-		-DZMQ_LIB='$(abspath $(ZMQ_LIB))' \
 		-S $(THIRDPARTY_DIR)/czmq -B $(CZMQ_BUILD_DIR)
 	$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS) -C $(CZMQ_BUILD_DIR)
 	cp -fL $(CZMQ_DIR)/$(if $(WIN32),bin,lib)/$(notdir $(CZMQ_LIB)) $@
@@ -489,7 +485,6 @@ $(CURL_LIB): $(THIRDPARTY_DIR)/curl/*.*
 		-DCRYPTO_LIB='$(abspath $(CRYPTO_LIB))' \
 		-DSSL_LIB='$(abspath $(SSL_LIB))' \
 		-DZLIB_DIR='$(abspath $(ZLIB_DIR))' \
-		-DZLIB='$(abspath $(ZLIB))' \
 		-S $(THIRDPARTY_DIR)/curl -B $(CURL_BUILD_DIR)
 	$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS) -C $(CURL_BUILD_DIR)
 	cp -fL $(CURL_DIR)/lib/$(notdir $(CURL_LIB)) $(OUTPUT_DIR)/libs
@@ -499,12 +494,10 @@ $(CURL_LIB): $(THIRDPARTY_DIR)/curl/*.*
 $(OUTPUT_DIR)/zsync2: $(THIRDPARTY_DIR)/zsync2/*.*
 	$(CMAKE) $(CMAKE_FLAGS) \
 		-DCURL_DIR='$(abspath $(CURL_DIR))' \
-		-DCURL_LIB='$(abspath $(CURL_LIB))' \
 		-DOPENSSL_DIR='$(abspath $(OPENSSL_DIR))' \
 		-DCRYPTO_LIB='$(abspath $(CRYPTO_LIB))' \
 		-DSSL_LIB='$(abspath $(SSL_LIB))' \
 		-DZLIB_DIR='$(abspath $(ZLIB_DIR))' \
-		-DZLIB='$(abspath $(ZLIB))' \
 		-S $(THIRDPARTY_DIR)/zsync2 -B $(ZSYNC2_BUILD_DIR)
 	$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS) -C $(ZSYNC2_BUILD_DIR)
 	cp $(ZSYNC2_DIR)/src/zsync2 $(OUTPUT_DIR)/

@@ -7,8 +7,8 @@ include(koreader_thirdparty_git)
 assert_var_defined(OPENSSL_DIR)
 assert_var_defined(ZLIB_DIR)
 
-string(APPEND CPPFLAGS " -I${OPENSSL_DIR}/include -I${ZLIB_DIR}/include")
-string(APPEND LDFLAGS " -L${OPENSSL_DIR} -L${ZLIB_DIR}/lib")
+string(APPEND CPPFLAGS " -I${OPENSSL_DIR}/include")
+string(APPEND LDFLAGS " -L${OPENSSL_DIR}")
 
 list(APPEND CFG_CMD COMMAND env)
 append_autotools_vars(CFG_CMD)
@@ -21,6 +21,7 @@ list(APPEND CFG_CMD
     --with-ssl-engine
     --without-hardening
     --without-stackprotect
+    --with-zlib=${ZLIB_DIR}
 )
 
 list(APPEND BUILD_CMD COMMAND ${KO_MAKE_RECURSIVE} sftp-server scp)
