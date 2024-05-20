@@ -1351,7 +1351,10 @@ static int getPageMapCurrentPageLabel(lua_State *L) {
     else if (idx >= nb)
         idx = nb - 1;
     lua_pushstring(L, UnicodeToLocal(pagemap->getChild(idx)->getLabel()).c_str());
-    return 1;
+    // Push index and count as we have them, they might be of use to compute "pages left"
+    lua_pushinteger(L, idx+1);
+    lua_pushinteger(L, nb);
+    return 3;
 }
 
 static int getPageMapXPointerPageLabel(lua_State *L) {
@@ -1574,6 +1577,14 @@ static int setHeaderInfo(lua_State *L) {
 
 	doc->text_view->setPageHeaderInfo(info);
 
+	return 0;
+}
+
+static int setPageInfoOverride(lua_State *L) {
+	CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
+	const char *pageinfo = luaL_checkstring(L, 2);
+
+	doc->text_view->setPageInfoOverride(lString32(pageinfo));
 	return 0;
 }
 
@@ -4194,6 +4205,7 @@ static const struct luaL_Reg credocument_meth[] = {
     {"setViewMode", setViewMode},
     {"setViewDimen", setViewDimen},
     {"setHeaderInfo", setHeaderInfo},
+    {"setPageInfoOverride", setPageInfoOverride},
     {"setHeaderFont", setHeaderFont},
     {"setHeaderProgressMarks", setHeaderProgressMarks},
     {"setFontFace", setFontFace},
