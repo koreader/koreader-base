@@ -1,49 +1,43 @@
 diff --git a/include/mupdf/fitz/compressed-buffer.h b/include/mupdf/fitz/compressed-buffer.h
-index 995f56069..b1f79fe06 100644
 --- a/include/mupdf/fitz/compressed-buffer.h
 +++ b/include/mupdf/fitz/compressed-buffer.h
-@@ -15,7 +15,7 @@ fz_stream *fz_open_compressed_buffer(fz_context *ctx, fz_compressed_buffer *);
- fz_stream *fz_open_image_decomp_stream_from_buffer(fz_context *ctx, fz_compressed_buffer *, int *l2factor);
+@@ -125,10 +125,10 @@ fz_stream *fz_open_image_decomp_stream_from_buffer(fz_context *ctx, fz_compresse
  fz_stream *fz_open_image_decomp_stream(fz_context *ctx, fz_stream *, fz_compression_params *, int *l2factor);
  
+ /**
+-	Recognise image format strings in the first 8 bytes from image
++	Recognise image format strings in the first 12 bytes from image
+ 	data.
+ */
 -int fz_recognize_image_format(fz_context *ctx, unsigned char p[8]);
 +int fz_recognize_image_format(fz_context *ctx, unsigned char p[12]);
  
- enum
- {
-@@ -39,6 +39,7 @@ enum
- 	FZ_IMAGE_PNG,
+ /**
+ 	Map from FZ_IMAGE_* value to string.
+@@ -167,6 +167,7 @@ enum
  	FZ_IMAGE_PNM,
  	FZ_IMAGE_TIFF,
+ 	FZ_IMAGE_PSD,
 +	FZ_IMAGE_WEBP,
  };
  
- struct fz_compression_params_s
-diff --git a/include/mupdf/fitz/image.h b/include/mupdf/fitz/image.h
-index 3d6fe4317..b2c10f293 100644
---- a/include/mupdf/fitz/image.h
-+++ b/include/mupdf/fitz/image.h
-@@ -274,6 +274,7 @@ fz_pixmap *fz_load_jxr(fz_context *ctx, const unsigned char *data, size_t size);
- fz_pixmap *fz_load_gif(fz_context *ctx, const unsigned char *data, size_t size);
- fz_pixmap *fz_load_bmp(fz_context *ctx, const unsigned char *data, size_t size);
- fz_pixmap *fz_load_pnm(fz_context *ctx, const unsigned char *data, size_t size);
-+fz_pixmap *fz_load_webp(fz_context *ctx, const unsigned char *data, size_t size);
+ /**
+diff --git a/scripts/wrap/make_cppyy.py b/scripts/wrap/make_cppyy.py
+--- a/scripts/wrap/make_cppyy.py
++++ b/scripts/wrap/make_cppyy.py
+@@ -763,7 +763,7 @@ def make_cppyy(
+                     ''')
  
- void fz_load_jpeg_info(fz_context *ctx, const unsigned char *data, size_t size, int *w, int *h, int *xres, int *yres, fz_colorspace **cspace);
- void fz_load_jpx_info(fz_context *ctx, const unsigned char *data, size_t size, int *w, int *h, int *xres, int *yres, fz_colorspace **cspace);
-@@ -283,6 +284,7 @@ void fz_load_jxr_info(fz_context *ctx, const unsigned char *data, size_t size, i
- void fz_load_gif_info(fz_context *ctx, const unsigned char *data, size_t size, int *w, int *h, int *xres, int *yres, fz_colorspace **cspace);
- void fz_load_bmp_info(fz_context *ctx, const unsigned char *data, size_t size, int *w, int *h, int *xres, int *yres, fz_colorspace **cspace);
- void fz_load_pnm_info(fz_context *ctx, const unsigned char *data, size_t size, int *w, int *h, int *xres, int *yres, fz_colorspace **cspace);
-+void fz_load_webp_info(fz_context *ctx, const unsigned char *data, size_t size, int *w, int *h, int *xres, int *yres, fz_colorspace **cspace);
- 
- int fz_load_tiff_subimage_count(fz_context *ctx, const unsigned char *buf, size_t len);
- fz_pixmap *fz_load_tiff_subimage(fz_context *ctx, const unsigned char *buf, size_t len, int subimage);
+             # Provide an overload for mfz_recognize_image_format(), because
+-            # the default unsigned char p[8] causes problems.
++            # the default unsigned char p[12] causes problems.
+             #
+             cppyy.cppdef(f'''
+                     namespace mupdf
 diff --git a/source/cbz/mucbz.c b/source/cbz/mucbz.c
-index e133a3b53..6fbd80804 100644
 --- a/source/cbz/mucbz.c
 +++ b/source/cbz/mucbz.c
-@@ -27,6 +27,7 @@ static const char *cbz_ext_list[] = {
+@@ -49,6 +49,7 @@ static const char *cbz_ext_list[] = {
  	".tif",
  	".tiff",
  	".wdp",
@@ -51,11 +45,60 @@ index e133a3b53..6fbd80804 100644
  	NULL
  };
  
+diff --git a/source/cbz/muimg.c b/source/cbz/muimg.c
+--- a/source/cbz/muimg.c
++++ b/source/cbz/muimg.c
+@@ -191,7 +191,7 @@ img_open_document(fz_context *ctx, fz_stream *file, fz_stream *accel, fz_archive
+ 		len = fz_buffer_storage(ctx, doc->buffer, &data);
+ 
+ 		fmt = FZ_IMAGE_UNKNOWN;
+-		if (len >= 8)
++		if (len >= 12)
+ 			fmt = fz_recognize_image_format(ctx, data);
+ 		if (fmt == FZ_IMAGE_TIFF)
+ 		{
+@@ -236,16 +236,16 @@ img_open_document(fz_context *ctx, fz_stream *file, fz_stream *accel, fz_archive
+ static int
+ img_recognize_content(fz_context *ctx, fz_stream *stream, fz_archive *dir)
+ {
+-	unsigned char data[8];
++	unsigned char data[12];
+ 	size_t n;
+ 	int fmt;
+ 
+ 	if (stream == NULL)
+ 		return 0;
+ 
+-	n = fz_read(ctx, stream, data, 8);
++	n = fz_read(ctx, stream, data, 12);
+ 
+-	if (n != 8)
++	if (n != 12)
+ 		return 0;
+ 
+ 	fmt = fz_recognize_image_format(ctx, data);
+diff --git a/source/fitz/image-imp.h b/source/fitz/image-imp.h
+--- a/source/fitz/image-imp.h
++++ b/source/fitz/image-imp.h
+@@ -32,6 +32,7 @@ fz_pixmap *fz_load_gif(fz_context *ctx, const unsigned char *data, size_t size);
+ fz_pixmap *fz_load_bmp(fz_context *ctx, const unsigned char *data, size_t size);
+ fz_pixmap *fz_load_pnm(fz_context *ctx, const unsigned char *data, size_t size);
+ fz_pixmap *fz_load_jbig2(fz_context *ctx, const unsigned char *data, size_t size);
++fz_pixmap *fz_load_webp(fz_context *ctx, const unsigned char *data, size_t size);
+ 
+ void fz_load_jpeg_info(fz_context *ctx, const unsigned char *data, size_t size, int *w, int *h, int *xres, int *yres, fz_colorspace **cspace, uint8_t *orientation);
+ void fz_load_jpx_info(fz_context *ctx, const unsigned char *data, size_t size, int *w, int *h, int *xres, int *yres, fz_colorspace **cspace);
+@@ -43,5 +44,6 @@ void fz_load_gif_info(fz_context *ctx, const unsigned char *data, size_t size, i
+ void fz_load_bmp_info(fz_context *ctx, const unsigned char *data, size_t size, int *w, int *h, int *xres, int *yres, fz_colorspace **cspace);
+ void fz_load_pnm_info(fz_context *ctx, const unsigned char *data, size_t size, int *w, int *h, int *xres, int *yres, fz_colorspace **cspace);
+ void fz_load_jbig2_info(fz_context *ctx, const unsigned char *data, size_t size, int *w, int *h, int *xres, int *yres, fz_colorspace **cspace);
++void fz_load_webp_info(fz_context *ctx, const unsigned char *data, size_t size, int *w, int *h, int *xres, int *yres, fz_colorspace **cspace);
+ 
+ #endif
 diff --git a/source/fitz/image.c b/source/fitz/image.c
-index 516997727..4f3a2ff67 100644
 --- a/source/fitz/image.c
 +++ b/source/fitz/image.c
-@@ -493,6 +493,9 @@ compressed_image_get_pixmap(fz_context *ctx, fz_image *image_, fz_irect *subarea
+@@ -794,6 +794,9 @@ compressed_image_get_pixmap(fz_context *ctx, fz_image *image_, fz_irect *subarea
  	case FZ_IMAGE_BMP:
  		tile = fz_load_bmp(ctx, image->buffer->buffer->data, image->buffer->buffer->len);
  		break;
@@ -65,7 +108,7 @@ index 516997727..4f3a2ff67 100644
  	case FZ_IMAGE_TIFF:
  		tile = fz_load_tiff(ctx, image->buffer->buffer->data, image->buffer->buffer->len);
  		break;
-@@ -957,7 +960,7 @@ void fz_set_pixmap_image_tile(fz_context *ctx, fz_pixmap_image *image, fz_pixmap
+@@ -1295,7 +1298,7 @@ fz_lookup_image_type(const char *type)
  }
  
  int
@@ -74,44 +117,45 @@ index 516997727..4f3a2ff67 100644
  {
  	if (p[0] == 'P' && p[1] >= '1' && p[1] <= '7')
  		return FZ_IMAGE_PNM;
-@@ -981,6 +984,9 @@ fz_recognize_image_format(fz_context *ctx, unsigned char p[8])
- 		return FZ_IMAGE_GIF;
- 	if (p[0] == 'B' && p[1] == 'M')
- 		return FZ_IMAGE_BMP;
+@@ -1328,6 +1331,9 @@ fz_recognize_image_format(fz_context *ctx, unsigned char p[8])
+ 		return FZ_IMAGE_JBIG2;
+ 	if (p[0] == '8' && p[1] == 'B' && p[2] == 'P' && p[3] == 'S')
+ 		return FZ_IMAGE_PSD;
 +	if (p[0] == 'R' && p[1] == 'I' && p[2] == 'F' && p[3] == 'F' &&
 +		p[8] == 'W' && p[9] == 'E' && p[10] == 'B' && p[11] == 'P')
 +		return FZ_IMAGE_WEBP;
  	return FZ_IMAGE_UNKNOWN;
  }
  
-@@ -995,7 +1001,7 @@ fz_new_image_from_buffer(fz_context *ctx, fz_buffer *buffer)
- 	fz_image *image = NULL;
- 	int type;
+@@ -1344,7 +1350,7 @@ fz_new_image_from_buffer(fz_context *ctx, fz_buffer *buffer)
+ 	int bpc;
+ 	uint8_t orientation = 0;
  
 -	if (len < 8)
 +	if (len < 12)
- 		fz_throw(ctx, FZ_ERROR_GENERIC, "unknown image file format");
+ 		fz_throw(ctx, FZ_ERROR_FORMAT, "unknown image file format");
  
  	type = fz_recognize_image_format(ctx, buf);
-@@ -1025,6 +1031,9 @@ fz_new_image_from_buffer(fz_context *ctx, fz_buffer *buffer)
- 	case FZ_IMAGE_BMP:
- 		fz_load_bmp_info(ctx, buf, len, &w, &h, &xres, &yres, &cspace);
+@@ -1382,6 +1388,9 @@ fz_new_image_from_buffer(fz_context *ctx, fz_buffer *buffer)
+ 		fz_load_jbig2_info(ctx, buf, len, &w, &h, &xres, &yres, &cspace);
+ 		bpc = 1;
  		break;
 +	case FZ_IMAGE_WEBP:
 +		fz_load_webp_info(ctx, buf, len, &w, &h, &xres, &yres, &cspace);
 +		break;
  	default:
- 		fz_throw(ctx, FZ_ERROR_GENERIC, "unknown image file format");
+ 		fz_throw(ctx, FZ_ERROR_FORMAT, "unknown image file format");
  	}
 diff --git a/source/fitz/load-webp.c b/source/fitz/load-webp.c
 new file mode 100644
-index 000000000..ad625d0f7
 --- /dev/null
 +++ b/source/fitz/load-webp.c
-@@ -0,0 +1,278 @@
+@@ -0,0 +1,280 @@
 +#include "mupdf/fitz.h"
 +
 +#ifdef HAVE_WEBP
++
++#include "pixmap-imp.h"
 +
 +#include <math.h>
 +#include <string.h>
@@ -234,7 +278,7 @@ index 000000000..ad625d0f7
 +
 +static fz_colorspace *extract_icc_profile(fz_context *ctx, WebPData* chunk, fz_colorspace *colorspace)
 +{
-+#ifndef NO_ICC
++#if FZ_ENABLE_ICC
 +	fz_buffer *buf = NULL;
 +
 +	fz_var(buf);
@@ -387,3 +431,15 @@ index 000000000..ad625d0f7
 +}
 +
 +#endif /* HAVE_WEBP */
+diff --git a/source/html/mobi.c b/source/html/mobi.c
+--- a/source/html/mobi.c
++++ b/source/html/mobi.c
+@@ -318,7 +318,7 @@ fz_extract_html_from_mobi(fz_context *ctx, fz_buffer *mobi)
+ 		for (i = extra; i < n; ++i)
+ 		{
+ 			uint32_t size = offsets[i+1] - offsets[i];
+-			if (size > 8)
++			if (size > 12)
+ 			{
+ 				unsigned char *data = mobi->data + offsets[i];
+ 				if (fz_recognize_image_format(ctx, data))

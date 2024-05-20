@@ -73,11 +73,10 @@ describe("mupdf module", function()
     describe("PDF document API", function()
         local doc1, doc2, doc3
         local ffi = require("ffi")
-        local annotation_quadpoints = ffi.new("float[8]", {
-                 70,  930,
-                510,  930,
-                510,  970,
-                 70,  970 })
+        local annotation_quadpoints = ffi.new("fz_quad[1]", {{
+            { 70,  930, 510,  930 },
+            { 510,  970, 70,  970 }
+        }})
         setup(function()
             doc1 = M.openDocument(sample_pdf)
             assert.is_not_nil(doc1)
@@ -179,6 +178,7 @@ describe("mupdf module", function()
             local page
             local dc
             setup(function()
+                doc3:authenticatePassword("test")
                 page = doc3:openPage(2)
                 dc = require("ffi/drawcontext").new()
             end)
@@ -194,7 +194,7 @@ describe("mupdf module", function()
                 assert.equals(math.floor(bbox[1]*1000), 56145)
                 assert.equals(math.floor(bbox[2]*1000), 69233)
                 assert.equals(math.floor(bbox[3]*1000), 144790)
-                assert.equals(math.floor(bbox[4]*1000), 106089)
+                assert.equals(math.floor(bbox[4]*1000), 103669)
             end)
             it("should get page text", function()
                 local text = page:getPageText()
