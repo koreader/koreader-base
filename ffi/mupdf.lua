@@ -41,7 +41,7 @@ local mupdf = {
 }
 -- this cannot get adapted by the cdecl file because it is a
 -- string constant. Must match the actual mupdf API:
-local FZ_VERSION = "1.13.0"
+local FZ_VERSION = "1.24.2"
 
 local document_mt = { __index = {} }
 local page_mt = { __index = {} }
@@ -221,7 +221,7 @@ end
 local function toc_walker(toc, outline, depth)
     while outline ~= nil do
         table.insert(toc, {
-            page = outline.page + 1,
+            page = outline.page.page + 1,
             title = ffi.string(outline.title),
             depth = depth,
         })
@@ -335,7 +335,6 @@ function document_mt.__index:writeDocument(filename)
     opts[0].do_ascii = 0
     opts[0].do_garbage = 0
     opts[0].do_linear = 0
-    opts[0].continue_on_error = 1
     local ok = W.mupdf_pdf_save_document(context(), ffi.cast("pdf_document*", self.doc), filename, opts)
     if ok == nil then merror("could not write document") end
 end
@@ -370,11 +369,11 @@ function page_mt.__index:getSize(draw_context)
     local bounds = ffi.new("fz_rect")
     local ctm = ffi.new("fz_matrix")
 
-    M.fz_scale(ctm, draw_context.zoom, draw_context.zoom)
-    M.fz_pre_rotate(ctm, draw_context.rotate)
+    W.mupdf_fz_scale(ctm, draw_context.zoom, draw_context.zoom)
+    W.mupdf_fz_pre_rotate(ctm, draw_context.rotate)
 
-    M.fz_bound_page(context(), self.page, bounds)
-    M.fz_transform_rect(bounds, ctm)
+    W.mupdf_fz_bound_page(context(), self.page, bounds)
+    W.mupdf_fz_transform_rect(bounds, ctm)
 
     -- NOTE: fz_bound_page returns an internal representation computed @ 72dpi...
     --       It is often superbly mysterious, even for images,
@@ -529,8 +528,10 @@ function page_mt.__index:getPageText()
                                 break
                             end
                             textlen = textlen + M.fz_runetochar(textbuf + textlen, ch.c)
-                            M.fz_union_rect(word_bbox, ch.bbox)
-                            M.fz_union_rect(line_bbox, ch.bbox)
+                            local char_bbox = ffi.new("fz_rect")
+                            W.mupdf_fz_rect_from_quad(char_bbox, ch.quad)
+                            W.mupdf_fz_union_rect(word_bbox, char_bbox)
+                            W.mupdf_fz_union_rect(line_bbox, char_bbox)
                             if ch.c >= 0x4e00 and ch.c <= 0x9FFF or -- CJK Unified Ideographs
                                 ch.c >= 0x2000 and ch.c <= 0x206F or -- General Punctuation
                                 ch.c >= 0x3000 and ch.c <= 0x303F or -- CJK Symbols and Punctuation
@@ -598,11 +599,13 @@ function page_mt.__index:getPageLinks()
             x1 = link.rect.x1, y1 = link.rect.y1,
         }
         local pos = ffi.new("float[2]")
-        local page = M.fz_resolve_link(context(), link.doc, link.uri, pos, pos+1)
-        if page >= 0 then
-            data.page = page -- FIXME page+1?
-        else
+        local location = ffi.new("fz_location")
+        W.mupdf_fz_resolve_link(context(), self.doc.doc, link.uri, pos, pos+1, location)
+        -- `fz_resolve_link` return a location of (-1, -1) for external links.
+        if location.chapter == -1 and location.page == -1 then
             data.uri = ffi.string(link.uri)
+        else
+            data.page = W.mupdf_fz_page_number_from_location(context(), self.doc.doc, location)
         end
         data.pos = {
             x = pos[0], y = pos[1],
@@ -646,9 +649,9 @@ TODO: make this the used interface
 function page_mt.__index:draw_new(draw_context, width, height, offset_x, offset_y)
     local ctm = ffi.new("fz_matrix")
 
-    M.fz_scale(ctm, draw_context.zoom, draw_context.zoom)
-    M.fz_pre_rotate(ctm, draw_context.rotate)
-    M.fz_pre_translate(ctm, draw_context.offset_x, draw_context.offset_y)
+    W.mupdf_fz_scale(ctm, draw_context.zoom, draw_context.zoom)
+    W.mupdf_fz_pre_rotate(ctm, draw_context.rotate)
+    W.mupdf_fz_pre_translate(ctm, draw_context.offset_x, draw_context.offset_y)
 
     local bbox = ffi.new("fz_irect", offset_x, offset_y, offset_x + width, offset_y + height)
 
@@ -681,8 +684,6 @@ mupdf.LINE_THICKNESS = 0.05
 function page_mt.__index:addMarkupAnnotation(points, n, type)
     local color = ffi.new("float[3]")
     local alpha = 1.0
-    local line_height = 0.5
-    local line_thickness = 1.0
     if type == M.PDF_ANNOT_HIGHLIGHT then
         color[0] = 1.0
         color[1] = 1.0
@@ -692,34 +693,30 @@ function page_mt.__index:addMarkupAnnotation(points, n, type)
         color[0] = 0.0
         color[1] = 0.0
         color[2] = 1.0
-        line_thickness = mupdf.LINE_THICKNESS
-        line_height = mupdf.UNDERLINE_HEIGHT
     elseif type == M.PDF_ANNOT_STRIKE_OUT then
         color[0] = 1.0
         color[1] = 0.0
         color[2] = 0.0
-        line_thickness = mupdf.LINE_THICKNESS
-        line_height = mupdf.STRIKE_HEIGHT
     else
         return
     end
-
-    local doc = M.pdf_specifics(context(), self.doc.doc)
-    if doc == nil then merror("could not get pdf_specifics") end
 
     local annot = W.mupdf_pdf_create_annot(context(), ffi.cast("pdf_page*", self.page), type)
     if annot == nil then merror("could not create annotation") end
 
     local ok = W.mupdf_pdf_set_annot_quad_points(context(), annot, n, points)
-    if ok == nil then merror("could not set markup annot quadpoints") end
+    if ok == nil then merror("could not set annotation quadpoints") end
 
-    ok = W.mupdf_pdf_set_markup_appearance(context(), doc, annot, color, alpha, line_thickness, line_height)
-    if ok == nil then merror("could not set markup appearance") end
+    ok = W.mupdf_pdf_set_annot_color(context(), annot, 3, color)
+    if ok == nil then merror("could not set annotation color") end
+
+    ok = W.mupdf_pdf_set_annot_opacity(context(), annot, alpha)
+    if ok == nil then merror("could not set annotation opacity") end
 
     -- Fetch back MuPDF's stored coordinates of all quadpoints, as they may have been modified/rounded
     -- (we need the exact ones that were saved if we want to be able to find them for deletion/update)
     for i = 0, n-1 do
-        W.mupdf_pdf_annot_quad_point(context(), annot, i, points+i*8)
+        W.mupdf_pdf_annot_quad_point(context(), annot, i, points+i)
     end
 end
 
@@ -729,24 +726,25 @@ function page_mt.__index:deleteMarkupAnnotation(annot)
 end
 
 function page_mt.__index:getMarkupAnnotation(points, n)
-    local doc = M.pdf_specifics(context(), self.doc.doc)
-    if doc == nil then merror("could not get pdf_specifics") end
-
     local annot = W.mupdf_pdf_first_annot(context(), ffi.cast("pdf_page*", self.page))
     while annot ~= nil do
         local n2 = W.mupdf_pdf_annot_quad_point_count(context(), annot)
         if n == n2 then
-            local quadpoint = ffi.new("float[?]", 8)
+            local quadpoint = ffi.new("fz_quad[1]")
             local match = true
             for i = 0, n-1 do
                 W.mupdf_pdf_annot_quad_point(context(), annot, i, quadpoint)
-                for k = 0, 7 do
-                    if points[i*8 + k] ~= quadpoint[k] then
-                        match = false
-                        break
-                    end
+                if (points[i].ul.x ~= quadpoint[0].ul.x or
+                    points[i].ul.y ~= quadpoint[0].ul.y or
+                    points[i].ur.x ~= quadpoint[0].ur.x or
+                    points[i].ur.y ~= quadpoint[0].ur.y or
+                    points[i].ll.x ~= quadpoint[0].ll.x or
+                    points[i].ll.y ~= quadpoint[0].ll.y or
+                    points[i].lr.x ~= quadpoint[0].lr.x or
+                    points[i].lr.y ~= quadpoint[0].lr.y) then
+                    match = false
+                    break
                 end
-                if not match then break end
             end
             if match then return annot end
         end
@@ -756,8 +754,6 @@ function page_mt.__index:getMarkupAnnotation(points, n)
 end
 
 function page_mt.__index:updateMarkupAnnotation(annot, contents)
-    local doc = M.pdf_specifics(context(), self.doc.doc)
-    if doc == nil then merror("could not get pdf_specifics") end
     local ok = W.mupdf_pdf_set_annot_contents(context(), annot, contents)
     if ok == nil then merror("could not update markup annot contents") end
 end
@@ -996,9 +992,9 @@ local function render_for_kopt(bmp, page, scale, bounds)
 
     local bbox = ffi.new("fz_irect")
     local ctm = ffi.new("fz_matrix")
-    M.fz_scale(ctm, scale, scale)
-    M.fz_transform_rect(bounds, ctm)
-    M.fz_round_rect(bbox, bounds)
+    W.mupdf_fz_scale(ctm, scale, scale)
+    W.mupdf_fz_transform_rect(bounds, ctm)
+    W.mupdf_fz_round_rect(bbox, bounds)
 
     local colorspace = mupdf.color and M.fz_device_rgb(context())
         or M.fz_device_gray(context())
@@ -1057,7 +1053,7 @@ function page_mt.__index:toBmp(bmp, dpi, color)
     mupdf.color = color and true or false
 
     local bounds = ffi.new("fz_rect")
-    M.fz_bound_page(context(), self.page, bounds)
+    W.mupdf_fz_bound_page(context(), self.page, bounds)
 
     render_for_kopt(bmp, self, dpi/72, bounds)
 

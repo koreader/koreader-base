@@ -1,0 +1,13 @@
+diff --git a/Makefile b/Makefile
+--- a/Makefile
++++ b/Makefile
+@@ -97,7 +97,7 @@
+ $(OUT)/%.exe: %.c
+ 	$(LINK_CMD)
+ 
+-$(OUT)/%.$(SO)$(SO_VERSION):
++$(OUT)/%.$(SO)$(SO_VERSION): $(XLIBS)
+ ifeq ($(SO_VERSION_LINUX),yes)
+ 	$(LINK_CMD) -Wl,-soname,$(notdir $@) $(LIB_LDFLAGS) $(THIRD_LIBS) $(LIBCRYPTO_LIBS)
+ 	ln -sf $(notdir $@) $(patsubst %$(SO_VERSION), %, $@)
+

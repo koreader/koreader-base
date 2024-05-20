@@ -9,13 +9,10 @@ cdecl_const(FZ_STEXT_BLOCK_TEXT)
 
 /* math */
 cdecl_type(fz_point)
-cdecl_struct(fz_point_s)
+cdecl_type(fz_quad)
 cdecl_type(fz_rect)
-cdecl_struct(fz_rect_s)
 cdecl_type(fz_irect)
-cdecl_struct(fz_irect_s)
 cdecl_type(fz_matrix)
-cdecl_struct(fz_matrix_s)
 cdecl_var(fz_identity)
 cdecl_var(fz_empty_rect)
 
@@ -48,8 +45,11 @@ cdecl_func(fz_runetochar)
 
 /* document */
 cdecl_type(fz_stream)
+cdecl_type(fz_location)
 cdecl_type(fz_outline)
-cdecl_struct(fz_outline_s)
+cdecl_struct(fz_outline)
+cdecl_type(fz_cookie)
+cdecl_type(fz_separations)
 cdecl_type(fz_page)
 cdecl_type(fz_document)
 cdecl_type(fz_device)
@@ -66,15 +66,19 @@ cdecl_func(fz_lookup_metadata)
 
 /* page */
 cdecl_func(mupdf_load_page)
-cdecl_func(fz_bound_page)
+cdecl_func(mupdf_fz_bound_page)
 cdecl_func(fz_drop_page)
 
 /* links */
 cdecl_type(fz_link)
-cdecl_struct(fz_link_s)
+cdecl_struct(fz_link)
 cdecl_func(mupdf_load_links)
-cdecl_func(fz_resolve_link)
+cdecl_func(mupdf_fz_resolve_link)
 cdecl_func(fz_drop_link)
+
+/* location */
+cdecl_func(mupdf_fz_page_number_from_location)
+cdecl_func(mupdf_fz_location_from_page_number)
 
 /* outline */
 cdecl_func(mupdf_load_outline)
@@ -86,20 +90,20 @@ cdecl_func(mupdf_open_memory)
 
 /* structured text */
 cdecl_type(fz_stext_char)
-cdecl_struct(fz_stext_char_s)
+cdecl_struct(fz_stext_char)
 
 cdecl_type(fz_stext_line)
-cdecl_struct(fz_stext_line_s)
+cdecl_struct(fz_stext_line)
 
 cdecl_type(fz_stext_block)
-cdecl_struct(fz_stext_block_s)
+cdecl_struct(fz_stext_block)
 cdecl_type(fz_stext_options)
-cdecl_struct(fz_stext_options_s)
 cdecl_type(fz_stext_page)
-cdecl_struct(fz_stext_page_s)
 cdecl_func(mupdf_new_stext_page_from_page)
 cdecl_func(fz_drop_stext_page)
 
+cdecl_type(fz_color_params)
+cdecl_type(fz_default_colorspaces)
 cdecl_func(fz_default_color_params)
 
 /* pixmaps */
@@ -135,12 +139,12 @@ cdecl_type(pdf_page)
 cdecl_type(pdf_document)
 
 /* annotations */
-cdecl_func(pdf_specifics)
 cdecl_func(mupdf_pdf_create_annot)
 cdecl_func(mupdf_pdf_delete_annot)
 cdecl_func(mupdf_pdf_set_annot_quad_points)
 cdecl_func(mupdf_pdf_set_annot_contents)
-cdecl_func(mupdf_pdf_set_markup_appearance)
+cdecl_func(mupdf_pdf_set_annot_color)
+cdecl_func(mupdf_pdf_set_annot_opacity)
 cdecl_func(mupdf_pdf_first_annot)
 cdecl_func(mupdf_pdf_next_annot)
 cdecl_func(mupdf_pdf_annot_quad_point_count)
@@ -148,7 +152,6 @@ cdecl_func(mupdf_pdf_annot_quad_point)
 
 /* saving documents */
 cdecl_type(pdf_write_options)
-cdecl_struct(pdf_write_options_s)
 cdecl_func(mupdf_pdf_save_document)
 
 /* the following is for our own wrapper lib: */
@@ -158,10 +161,11 @@ cdecl_func(mupdf_error_code)
 cdecl_func(mupdf_error_message)
 
 /* geometry */
-cdecl_func(fz_scale)
-cdecl_func(fz_translate)
-cdecl_func(fz_pre_rotate)
-cdecl_func(fz_pre_translate)
-cdecl_func(fz_transform_rect)
-cdecl_func(fz_round_rect)
-cdecl_func(fz_union_rect)
+cdecl_func(mupdf_fz_scale)
+cdecl_func(mupdf_fz_translate)
+cdecl_func(mupdf_fz_pre_rotate)
+cdecl_func(mupdf_fz_pre_translate)
+cdecl_func(mupdf_fz_transform_rect)
+cdecl_func(mupdf_fz_round_rect)
+cdecl_func(mupdf_fz_union_rect)
+cdecl_func(mupdf_fz_rect_from_quad)

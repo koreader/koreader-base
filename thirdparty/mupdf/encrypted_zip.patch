@@ -1,22 +1,20 @@
 diff --git a/include/mupdf/fitz/archive.h b/include/mupdf/fitz/archive.h
-index c204b34f..4854c1ac 100644
 --- a/include/mupdf/fitz/archive.h
 +++ b/include/mupdf/fitz/archive.h
-@@ -180,6 +180,9 @@ fz_archive *fz_open_zip_archive(fz_context *ctx, const char *path);
+@@ -314,6 +314,9 @@ fz_archive *fz_open_zip_archive(fz_context *ctx, const char *path);
  */
  fz_archive *fz_open_zip_archive_with_stream(fz_context *ctx, fz_stream *file);
  
 +int fz_archive_needs_password(fz_context *ctx, fz_archive *zip);
 +int fz_archive_authenticate_password(fz_context *ctx, fz_archive *zip, const char *password);
 +
- typedef struct fz_zip_writer_s fz_zip_writer;
- 
- fz_zip_writer *fz_new_zip_writer(fz_context *ctx, const char *filename);
+ /**
+ 	fz_zip_writer offers methods for creating and writing zip files.
+ 	It can be seen as the reverse of the fz_archive zip
 diff --git a/source/cbz/mucbz.c b/source/cbz/mucbz.c
-index 2d357b6e..861a7902 100644
 --- a/source/cbz/mucbz.c
 +++ b/source/cbz/mucbz.c
-@@ -210,6 +210,20 @@ cbz_load_page(fz_context *ctx, fz_document *doc_, int number)
+@@ -266,6 +266,20 @@ cbz_load_page(fz_context *ctx, fz_document *doc_, int chapter, int number)
  	return (fz_page*)page;
  }
  
@@ -35,9 +33,9 @@ index 2d357b6e..861a7902 100644
 +}
 +
  static int
- cbz_lookup_metadata(fz_context *ctx, fz_document *doc_, const char *key, char *buf, int size)
+ cbz_lookup_metadata(fz_context *ctx, fz_document *doc_, const char *key, char *buf, size_t size)
  {
-@@ -230,6 +244,8 @@ cbz_open_document_with_stream(fz_context *ctx, fz_stream *file)
+@@ -284,6 +298,8 @@ cbz_open_document(fz_context *ctx, fz_stream *file, fz_stream *accel, fz_archive
  	doc->super.count_pages = cbz_count_pages;
  	doc->super.load_page = cbz_load_page;
  	doc->super.lookup_metadata = cbz_lookup_metadata;
@@ -47,10 +45,9 @@ index 2d357b6e..861a7902 100644
  	fz_try(ctx)
  	{
 diff --git a/source/fitz/unzip.c b/source/fitz/unzip.c
-index 4eb90dda..a9dee1c2 100644
 --- a/source/fitz/unzip.c
 +++ b/source/fitz/unzip.c
-@@ -20,6 +20,26 @@
+@@ -43,10 +43,33 @@
  
  #define ZIP_ENCRYPTED_FLAG 0x1
  
@@ -74,20 +71,17 @@ index 4eb90dda..a9dee1c2 100644
 +#define MAC_LENGTH(mode)    (10)
 +#endif
 +
- typedef struct zip_entry_s zip_entry;
- typedef struct fz_zip_archive_s fz_zip_archive;
- 
-@@ -27,6 +47,9 @@ struct zip_entry_s
+ typedef struct
  {
  	char *name;
- 	int offset, csize, usize;
+ 	uint64_t offset, csize, usize;
 +#ifdef HAVE_LIBAES
 +	int crypted;
 +#endif
- };
+ } zip_entry;
  
- struct fz_zip_archive_s
-@@ -35,6 +58,17 @@ struct fz_zip_archive_s
+ typedef struct
+@@ -55,6 +78,17 @@ typedef struct
  
  	int count;
  	zip_entry *entries;
@@ -102,46 +96,29 @@ index 4eb90dda..a9dee1c2 100644
 +	unsigned long aes_version;
 +	fcrypt_ctx aes_ctx;
 +#endif
- };
+ } fz_zip_archive;
  
- static void *zalloc_zip(void *opaque, unsigned int items, unsigned int size)
-@@ -64,6 +98,7 @@ static void read_zip_dir_imp(fz_context *ctx, fz_zip_archive *zip, int start_off
- 	int namesize, metasize, commentsize;
- 	char *name;
- 	size_t n;
-+	int general;
- 
- 	zip->count = 0;
- 
-@@ -136,7 +171,7 @@ static void read_zip_dir_imp(fz_context *ctx, fz_zip_archive *zip, int start_off
- 
- 		(void) fz_read_int16_le(ctx, file); /* version made by */
- 		(void) fz_read_int16_le(ctx, file); /* version to extract */
--		(void) fz_read_int16_le(ctx, file); /* general */
-+		general = fz_read_int16_le(ctx, file); /* general */
- 		(void) fz_read_int16_le(ctx, file); /* method */
- 		(void) fz_read_int16_le(ctx, file); /* last mod file time */
- 		(void) fz_read_int16_le(ctx, file); /* last mod file date */
-@@ -199,6 +234,15 @@ static void read_zip_dir_imp(fz_context *ctx, fz_zip_archive *zip, int start_off
- 		zip->entries[zip->count].csize = csize;
- 		zip->entries[zip->count].usize = usize;
+ static void drop_zip_archive(fz_context *ctx, fz_archive *arch)
+@@ -421,6 +455,15 @@ static void read_zip_dir_imp(fz_context *ctx, fz_zip_archive *zip, int64_t start
+ 			zip->entries[zip->count].name = name;
+ 			name = NULL;
  
 +#ifdef HAVE_LIBAES
-+		if (general & ZIP_ENCRYPTED_FLAG) {
-+			zip->crypted = 1;
-+			zip->entries[zip->count].crypted = 1;
-+		} else {
-+			zip->entries[zip->count].crypted = 0;
-+		}
++			if (gp & ZIP_ENCRYPTED_FLAG) {
++				zip->crypted = 1;
++				zip->entries[zip->count].crypted = 1;
++			} else {
++				zip->entries[zip->count].crypted = 0;
++			}
 +#endif
 +
- 		zip->count++;
+ 			zip->count++;
+ 		}
  	}
- }
-@@ -207,6 +251,12 @@ static int read_zip_entry_header(fz_context *ctx, fz_zip_archive *zip, zip_entry
- {
+@@ -435,6 +478,12 @@ static int read_zip_entry_header(fz_context *ctx, fz_zip_archive *zip, zip_entry
  	fz_stream *file = zip->super.file;
- 	int sig, general, method, namelength, extralength;
+ 	uint32_t sig;
+ 	int general, method, namelength, extralength;
 +	int crc32, modtime;
 +#ifdef HAVE_LIBAES
 +	int i, headerid, datasize, chk;
@@ -151,28 +128,25 @@ index 4eb90dda..a9dee1c2 100644
  
  	fz_seek(ctx, file, ent->offset, 0);
  
-@@ -215,20 +265,75 @@ static int read_zip_entry_header(fz_context *ctx, fz_zip_archive *zip, zip_entry
- 		fz_throw(ctx, FZ_ERROR_GENERIC, "wrong zip local file signature (0x%x)", sig);
+@@ -444,19 +493,75 @@ static int read_zip_entry_header(fz_context *ctx, fz_zip_archive *zip, zip_entry
  
- 	(void) fz_read_int16_le(ctx, file); /* version */
--	general = fz_read_int16_le(ctx, file); /* general */
-+	general = fz_read_uint16_le(ctx, file); /* general */
-+	method = fz_read_uint16_le(ctx, file);
+ 	(void) fz_read_uint16_le(ctx, file); /* version */
+ 	general = fz_read_uint16_le(ctx, file); /* general */
 +#if !defined(HAVE_LIBAES)
  	if (general & ZIP_ENCRYPTED_FLAG)
- 		fz_throw(ctx, FZ_ERROR_GENERIC, "zip content is encrypted");
--
--	method = fz_read_int16_le(ctx, file);
--	(void) fz_read_int16_le(ctx, file); /* file time */
+ 		fz_throw(ctx, FZ_ERROR_FORMAT, "zip content is encrypted");
+ 
 +#endif
+ 	method = fz_read_uint16_le(ctx, file);
+-	(void) fz_read_uint16_le(ctx, file); /* file time */
 +	modtime = fz_read_uint16_le(ctx, file); /* file time */
- 	(void) fz_read_int16_le(ctx, file); /* file date */
--	(void) fz_read_int32_le(ctx, file); /* crc-32 */
+ 	(void) fz_read_uint16_le(ctx, file); /* file date */
+-	(void) fz_read_uint32_le(ctx, file); /* crc-32 */
 +	crc32 = fz_read_uint32_le(ctx, file); /* crc-32 */
- 	(void) fz_read_int32_le(ctx, file); /* csize */
- 	(void) fz_read_int32_le(ctx, file); /* usize */
- 	namelength = fz_read_int16_le(ctx, file);
- 	extralength = fz_read_int16_le(ctx, file);
+ 	(void) fz_read_uint32_le(ctx, file); /* csize */
+ 	(void) fz_read_uint32_le(ctx, file); /* usize */
+ 	namelength = fz_read_uint16_le(ctx, file);
+ 	extralength = fz_read_uint16_le(ctx, file);
  
 +#if !defined(HAVE_LIBAES)
  	fz_seek(ctx, file, namelength + extralength, 1);
@@ -232,8 +206,8 @@ index 4eb90dda..a9dee1c2 100644
  
  	return method;
  }
-@@ -285,6 +390,11 @@ static fz_stream *open_zip_entry(fz_context *ctx, fz_archive *arch, const char *
- 		fz_throw(ctx, FZ_ERROR_GENERIC, "cannot find named zip archive entry");
+@@ -515,6 +620,11 @@ static fz_stream *open_zip_entry(fz_context *ctx, fz_archive *arch, const char *
+ 		return NULL;
  
  	method = read_zip_entry_header(ctx, zip, ent);
 +#ifdef HAVE_LIBAES
@@ -242,10 +216,10 @@ index 4eb90dda..a9dee1c2 100644
 +	}
 +#endif
  	if (method == 0)
- 		return fz_open_null(ctx, file, ent->usize, fz_tell(ctx, file));
+ 		return fz_open_null_filter(ctx, file, ent->usize, fz_tell(ctx, file));
  	if (method == 8)
-@@ -309,6 +419,12 @@ static fz_buffer *read_zip_entry(fz_context *ctx, fz_archive *arch, const char *
- 		fz_throw(ctx, FZ_ERROR_GENERIC, "cannot find named zip archive entry");
+@@ -541,6 +651,12 @@ static fz_buffer *read_zip_entry(fz_context *ctx, fz_archive *arch, const char *
+ 		return NULL;
  
  	method = read_zip_entry_header(ctx, zip, ent);
 +#ifdef HAVE_LIBAES
@@ -257,7 +231,7 @@ index 4eb90dda..a9dee1c2 100644
  	ubuf = fz_new_buffer(ctx, ent->usize + 1); /* +1 because many callers will add a terminating zero */
  
  	if (method == 0)
-@@ -318,6 +434,18 @@ static fz_buffer *read_zip_entry(fz_context *ctx, fz_archive *arch, const char *
+@@ -550,6 +666,18 @@ static fz_buffer *read_zip_entry(fz_context *ctx, fz_archive *arch, const char *
  			ubuf->len = fz_read(ctx, file, ubuf->data, ent->usize);
  			if (ubuf->len < (size_t)ent->usize)
  				fz_warn(ctx, "premature end of data in stored zip archive entry");
@@ -276,9 +250,9 @@ index 4eb90dda..a9dee1c2 100644
  		}
  		fz_catch(ctx)
  		{
-@@ -333,6 +461,19 @@ static fz_buffer *read_zip_entry(fz_context *ctx, fz_archive *arch, const char *
- 		{
- 			fz_read(ctx, file, cbuf, ent->csize);
+@@ -574,6 +702,19 @@ static fz_buffer *read_zip_entry(fz_context *ctx, fz_archive *arch, const char *
+ 			if (z.avail_in < ent->csize)
+ 				fz_warn(ctx, "premature end of compressed data for compressed archive entry");
  
 +#ifdef HAVE_LIBAES
 +			if (ent->crypted) {
@@ -293,11 +267,11 @@ index 4eb90dda..a9dee1c2 100644
 +			}
 +#endif
 +
- 			z.zalloc = zalloc_zip;
- 			z.zfree = zfree_zip;
- 			z.opaque = ctx;
-@@ -379,6 +520,39 @@ static fz_buffer *read_zip_entry(fz_context *ctx, fz_archive *arch, const char *
- 	fz_throw(ctx, FZ_ERROR_GENERIC, "unknown zip method: %d", method);
+ 			code = inflateInit2(&z, -15);
+ 			if (code != Z_OK)
+ 			{
+@@ -612,6 +753,39 @@ static fz_buffer *read_zip_entry(fz_context *ctx, fz_archive *arch, const char *
+ 	fz_throw(ctx, FZ_ERROR_FORMAT, "unknown zip method: %d", method);
  }
  
 +int fz_archive_needs_password(fz_context *ctx, fz_archive *arch)
@@ -336,8 +310,8 @@ index 4eb90dda..a9dee1c2 100644
  static int has_zip_entry(fz_context *ctx, fz_archive *arch, const char *name)
  {
  	fz_zip_archive *zip = (fz_zip_archive *) arch;
-@@ -426,6 +600,12 @@ fz_open_zip_archive_with_stream(fz_context *ctx, fz_stream *file)
- 		fz_throw(ctx, FZ_ERROR_GENERIC, "cannot recognize zip archive");
+@@ -662,6 +836,12 @@ fz_open_zip_archive_with_stream(fz_context *ctx, fz_stream *file)
+ 		fz_throw(ctx, FZ_ERROR_FORMAT, "cannot recognize zip archive");
  
  	zip = fz_new_derived_archive(ctx, file, fz_zip_archive);
 +#ifdef HAVE_LIBAES
