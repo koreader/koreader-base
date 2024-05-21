@@ -473,6 +473,9 @@ function S.waitForEvent(sec, usec)
         elseif button == SDL.SDL_CONTROLLER_BUTTON_B then
             -- send escape
             genEmuEvent(C.EV_KEY, 27, 1)
+        elseif button == SDL.SDL_CONTROLLER_BUTTON_Y then
+            -- send ContextMenu
+            genEmuEvent(C.EV_KEY, 1073741925, 1)
         -- left bumper
         elseif button == SDL.SDL_CONTROLLER_BUTTON_BACK then
             -- send page up
