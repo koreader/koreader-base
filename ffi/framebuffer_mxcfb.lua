@@ -45,6 +45,9 @@ local framebuffer = {
     marker_data = nil,
     update_data = nil,
     submission_data = nil,
+
+    -- CFA post-processing flag
+    CFA_PROCESSING_FLAG = 0,
 }
 
 --[[ refresh list management: --]]
@@ -683,6 +686,11 @@ local function refresh_kobo_mtk(fb, is_flashing, waveform_mode, x, y, w, h, dith
             fb.update_data.dither_mode = C.HWTCON_FLAG_USE_DITHERING_Y8_Y1_S
         else
             fb.update_data.dither_mode = C.HWTCON_FLAG_USE_DITHERING_Y8_Y4_S
+
+            -- Boost saturation for CFA modes
+            if fb:_isKaleidoWaveFormMode(waveform_mode) then
+                fb.update_data.flags = bor(fb.update_data.flags, fb.CFA_PROCESSING_FLAG)
+            end
         end
     else
         fb.update_data.flags = 0
@@ -1024,6 +1032,13 @@ function framebuffer:init()
             if not self.device:hasColorScreen() then
                 self.refreshColorImp = self.refreshPartialImp
                 self.refreshColorTextImp = self.refreshPartialImp
+            else
+                if self:noCFAPostProcess() then
+                    -- Just stomp the flag if the user wants to forgo post-processing
+                    self.CFA_PROCESSING_FLAG = 0 -- Or C.HWTCON_FLAG_CFA_MODE_G1
+                else
+                    self.CFA_PROCESSING_FLAG = C.HWTCON_FLAG_CFA_MODE_G2
+                end
             end
         end
 

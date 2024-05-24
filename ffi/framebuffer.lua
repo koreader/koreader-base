@@ -40,6 +40,8 @@ local fb = {
     wf_level_max = 0, -- Maximum supported value for wf_level.
     -- Whether the user (or a Device cap check) chose to disable MXCFB_WAIT_FOR_UPDATE_* ioctls.
     mxcfb_bypass_wait_for = false,
+    -- Whether the user chose to disable CFA post-processing
+    no_cfa_post_processing = false,
 }
 
 --[[
@@ -555,6 +557,10 @@ end
 
 function fb:getMxcWaitForBypass()
     return self.mxcfb_bypass_wait_for
+end
+
+function fb:noCFAPostProcess()
+    return self.no_cfa_post_processing
 end
 
 function fb:saveCurrentBB()
