@@ -67,6 +67,9 @@ add_library(crengine STATIC
 )
 # Make sure we get full `constexpr` support.
 target_compile_features(crengine PRIVATE cxx_std_17)
+# Enable `-fvisibility=hidden`.
+set_target_properties(crengine PROPERTIES CXX_VISIBILITY_PRESET hidden)
+# Enable `-fvisibility-inlines-hidden`.
 set_target_properties(crengine PROPERTIES VISIBILITY_INLINES_HIDDEN TRUE)
 target_include_directories(crengine PUBLIC ${CRE_DIR}/include)
 target_include_directories(crengine PRIVATE
