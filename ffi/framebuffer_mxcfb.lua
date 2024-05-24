@@ -1031,7 +1031,7 @@ function framebuffer:init()
                 self.refreshColorTextImp = self.refreshPartialImp
             else
                 if self:noCFAPostProcess() then
-                    -- Just stomp the flag if the user wants to forgot post-processing
+                    -- Just stomp the flag if the user wants to forgo post-processing
                     C.HWTCON_FLAG_CFA_MODE_G2 = 0
                 end
             end
