@@ -683,6 +683,11 @@ local function refresh_kobo_mtk(fb, is_flashing, waveform_mode, x, y, w, h, dith
             fb.update_data.dither_mode = C.HWTCON_FLAG_USE_DITHERING_Y8_Y1_S
         else
             fb.update_data.dither_mode = C.HWTCON_FLAG_USE_DITHERING_Y8_Y4_S
+
+            -- Boosts saturation for CFA modes
+            if fb:_isKaleidoWaveFormMode(waveform_mode) then
+                fb.update_data.flags = bor(fb.update_data.flags, C.HWTCON_FLAG_CFA_MODE_G2)
+            end
         end
     else
         fb.update_data.flags = 0
