@@ -1029,6 +1029,11 @@ function framebuffer:init()
             if not self.device:hasColorScreen() then
                 self.refreshColorImp = self.refreshPartialImp
                 self.refreshColorTextImp = self.refreshPartialImp
+            else
+                if self:noCFAPostProcess() then
+                    -- Just stomp the flag if the user wants to forgot post-processing
+                    C.HWTCON_FLAG_CFA_MODE_G2 = 0
+                end
             end
         end
 
