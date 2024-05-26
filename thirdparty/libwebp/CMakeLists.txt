@@ -1,7 +1,7 @@
 list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake_tweaks.patch)
 
 list(APPEND CMAKE_ARGS
-    -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TCF}
+    -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE}
     -DBUILD_SHARED_LIBS=TRUE
     # Project options.
     # Note: we could build libwebpdecoder.so only, which would be smaller and fine

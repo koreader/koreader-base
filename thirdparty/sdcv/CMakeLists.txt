@@ -39,7 +39,7 @@ else()
 endif()
 
 list(APPEND CMAKE_ARGS
-    -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TCF}
+    -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE}
     # Project options.
     -DENABLE_NLS=False
     -DWITH_READLINE=False
