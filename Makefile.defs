@@ -740,9 +740,10 @@ ifdef DARWIN
 	DYNLIB_LDFLAGS += -dynamiclib -undefined dynamic_lookup
 endif
 
-# CMake "real" toolchain file. {{{
+# CMake toolchain file. {{{
 
 CMAKE_TCF = $(CMAKE_DIR)/toolchain.cmake
+CMAKE_FLAGS += -DCMAKE_TOOLCHAIN_FILE='$(abspath $(CMAKE_TCF))'
 
 # CMAKE_SYSTEM_PROCESSOR
 # FIXME: use more fine grained values for ARM targets?
@@ -858,16 +859,12 @@ endef
 
 # }}}
 
-# KOReader "toolchain" file: for forwarding definitions to CMake. {{{
+# KOReader variables: for forwarding definitions to CMake. {{{
 
-CMAKE_KO = $(CMAKE_DIR)/koreader.cmake
-CMAKE_FLAGS += -DCMAKE_TOOLCHAIN_FILE='$(abspath $(CMAKE_KO))'
+CMAKE_KOVARS = $(CMAKE_DIR)/koreader_vars.cmake
+CMAKE_FLAGS += -DCMAKE_KOVARS='$(abspath $(CMAKE_KOVARS))'
 
-define cmake_koreader
-
-set(CMAKE_TCF $(abspath $(CMAKE_TCF)))
-# Ensure the real toolchain is included.
-include($${CMAKE_TCF})
+define cmake_koreader_vars
 
 set(BASE_CFLAGS    "$(strip $(BASE_CFLAGS))")
 set(CCACHE         "$(strip $(CCACHE))")
