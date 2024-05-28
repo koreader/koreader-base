@@ -1044,6 +1044,7 @@ set(CMAKE_STRIP $(STRIP) CACHE FILEPATH "Strip")
 
 # Set path(s) to search for libraries/binaries/headers.
 set(CMAKE_FIND_ROOT_PATH $(abspath $(STAGING_DIR)))
+set(CMAKE_PREFIX_PATH $${CMAKE_FIND_ROOT_PATH})
 
 # Install directories.
 set(CMAKE_INSTALL_PREFIX $(abspath $(STAGING_DIR)) CACHE FILEPATH "install prefix")
