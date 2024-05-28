@@ -8,7 +8,6 @@ assert_var_defined(OPENSSL_DIR)
 assert_var_defined(CRYPTO_LIB)
 assert_var_defined(SSL_LIB)
 assert_var_defined(ZLIB_DIR)
-assert_var_defined(ZLIB)
 
 list(APPEND PATCH_CMD COMMAND ${KO_PATCH}
     # Gentoo patchset
@@ -49,8 +48,7 @@ list(APPEND CMAKE_ARGS
     -DOPENSSL_SSL_LIBRARY=${SSL_LIB}
     # ZLIB.
     -DCURL_ZLIB=TRUE
-    -DZLIB_INCLUDE_DIR=${ZLIB_DIR}/include
-    -DZLIB_LIBRARY=${ZLIB}
+    -DZLIB_ROOT=${ZLIB_DIR}
 )
 
 # Don't use the default build system rule to create the certificates
@@ -62,6 +60,12 @@ list(APPEND BUILD_CMD COMMAND ${KO_MAKE_PROGRAM} lib/all)
 
 list(APPEND INSTALL_CMD COMMAND ${CMAKE_COMMAND} --install .)
 list(APPEND INSTALL_CMD COMMAND ${CMAKE_COMMAND} -E copy ${DOWNLOAD_DIR}/ca-bundle.crt ${INSTALL_DIR}/ca-bundle.crt)
+# Even after installing a patched pkg-config entry, we still need to add a symlink
+# with the canonical library name or the mess that is CMake's FindCURl module will
+# fail to detect our renamed library…
+if(POCKETBOOK)
+    list(APPEND INSTALL_CMD COMMAND ${CMAKE_COMMAND} -E create_symlink libcurl_ko${LIB_EXT} ${INSTALL_DIR}/lib/libcurl${LIB_EXT})
+endif()
 
 external_project(
     URL https://github.com/curl/curl/releases/download/curl-8_5_0/curl-8.5.0.tar.xz

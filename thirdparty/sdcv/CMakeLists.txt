@@ -65,6 +65,7 @@ list(APPEND CMAKE_ARGS
     -DZLIB_INCLUDE_DIR=${ZLIB_DIR}/include
     -DZLIB_LIBRARIES=${ZLIB}
     # I just want to be able to -I and -L and have things work. CMake, CMake...
+    -DZLIB_ROOT=${ZLIB_DIR}
     -DZLIB_LIBRARY_RELEASE=${ZLIB}
 )
 
