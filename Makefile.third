@@ -372,10 +372,9 @@ $(SDL2_LIB): $(THIRDPARTY_DIR)/sdl2/*.*
 $(OUTPUT_DIR)/dropbear: $(ZLIB) $(THIRDPARTY_DIR)/dropbear/*.*
 	$(CMAKE) $(CMAKE_FLAGS) \
 		-DCC='$(CC)' \
-		-DCPPFLAGS='-I$(ZLIB_DIR)/include' \
 		-DCFLAGS='$(CFLAGS)' \
-		-DLIBS='$(if $(ANDROID),-static,)' \
-		-DLDFLAGS='$(LDFLAGS) -L$(ZLIB_DIR)/lib' \
+		-DLDFLAGS='$(LDFLAGS)' \
+		-DZLIB_DIR='$(abspath $(ZLIB_DIR))' \
 		-S $(THIRDPARTY_DIR)/dropbear -B $(DROPBEAR_BUILD_DIR)
 	$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS) -C $(DROPBEAR_BUILD_DIR)
 	cp $(DROPBEAR_DIR)/dropbear $(OUTPUT_DIR)/
