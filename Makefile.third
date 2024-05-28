@@ -71,10 +71,8 @@ endif
 
 $(PNG_LIB): $(ZLIB) $(THIRDPARTY_DIR)/libpng/*.*
 	$(CMAKE) $(CMAKE_FLAGS) \
-		-DCC='$(CC)' \
-		-DCXX='$(CXX)' \
-		-DCPPFLAGS='$(CFLAGS) -I$(ZLIB_DIR)/include' \
-		-DLDFLAGS='$(LDFLAGS) -L$(ZLIB_DIR)/lib' \
+		-DZLIB='$(abspath $(ZLIB))' \
+		-DZLIB_DIR='$(abspath $(ZLIB_DIR))' \
 		-S $(THIRDPARTY_DIR)/libpng -B $(PNG_BUILD_DIR)
 	$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS) -C $(PNG_BUILD_DIR)
 	cp -fL $(PNG_DIR)/lib/$(notdir $(PNG_LIB)) $(PNG_LIB)
