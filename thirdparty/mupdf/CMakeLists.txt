@@ -15,8 +15,6 @@ assert_var_defined(LIBWEBPDEMUX_LIB)
 assert_var_defined(LIBWEBP_DIR)
 assert_var_defined(LIBWEBP_LIB)
 assert_var_defined(MINIZIP_DIR)
-assert_var_defined(MUPDF_LIB)
-assert_var_defined(MUPDF_SONAME)
 assert_var_defined(ZLIB)
 assert_var_defined(ZLIB_DIR)
 
@@ -142,15 +140,15 @@ string(APPEND XCFLAGS
     " -I${ZLIB_DIR}/include"
 )
 
-string(APPEND LINK_OPTS " ${CFLAGS} ${LDFLAGS} -shared")
+string(APPEND LINK_OPTS " ${CFLAGS} ${DYNLIB_LDFLAGS}")
 if(DARWIN)
     string(APPEND LINK_OPTS
-        " -dynamiclib -undefined dynamic_lookup"
+        " -install_name @rpath/libmupdf${LIB_EXT}"
         " -Wl,-force_load build/${MUPDF_BUILD_TYPE}/libmupdf.a"
     )
 else()
     string(APPEND LINK_OPTS
-        " -Wl,-soname=${MUPDF_SONAME}"
+        " -Wl,-soname=libmupdf${LIB_EXT}"
         " -Wl,--whole-archive build/${MUPDF_BUILD_TYPE}/libmupdf.a -Wl,--no-whole-archive"
     )
 endif()
@@ -197,7 +195,7 @@ list(APPEND BUILD_CMD COMMAND
     # Final shared library.
     LIBS=${LIBS}
     LINK_OPTS=${LINK_OPTS}
-    MUPDF_SHLIB=${MUPDF_LIB}
+    MUPDF_SHLIB=libmupdf${LIB_EXT}
     shared
 )
 
