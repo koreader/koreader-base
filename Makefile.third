@@ -31,21 +31,13 @@ ifdef DARWIN
 endif
 
 $(FRIBIDI_LIB): $(THIRDPARTY_DIR)/fribidi/*.*
-	$(CMAKE) $(CMAKE_FLAGS) \
-		-DCC='$(CC)' \
-		-DCFLAGS='$(CFLAGS)' \
-		-DLDFLAGS='$(LDFLAGS)' \
-		-S $(THIRDPARTY_DIR)/fribidi -B $(FRIBIDI_BUILD_DIR)
+	$(CMAKE) $(CMAKE_FLAGS) -S $(THIRDPARTY_DIR)/fribidi -B $(FRIBIDI_BUILD_DIR)
 	$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS) -C $(FRIBIDI_BUILD_DIR)
 	cp -fL $(FRIBIDI_DIR)/lib/$(notdir $(FRIBIDI_LIB)) $(FRIBIDI_LIB)
 	chmod 755 $(FRIBIDI_LIB)
 
 $(LIBUNIBREAK_LIB): $(THIRDPARTY_DIR)/libunibreak/*.*
-	$(CMAKE) $(CMAKE_FLAGS) \
-		-DCC='$(CC)' \
-		-DCFLAGS='$(CFLAGS)' \
-		-DLDFLAGS='$(LDFLAGS)' \
-		-S $(THIRDPARTY_DIR)/libunibreak -B $(LIBUNIBREAK_BUILD_DIR)
+	$(CMAKE) $(CMAKE_FLAGS) -S $(THIRDPARTY_DIR)/libunibreak -B $(LIBUNIBREAK_BUILD_DIR)
 	$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS) -C $(LIBUNIBREAK_BUILD_DIR)
 	cp -fL $(LIBUNIBREAK_DIR)/lib/$(notdir $(LIBUNIBREAK_LIB)) $(LIBUNIBREAK_LIB)
 	chmod 755 $(LIBUNIBREAK_LIB)
@@ -74,13 +66,7 @@ $(PNG_LIB): $(ZLIB) $(THIRDPARTY_DIR)/libpng/*.*
 	cp -fL $(PNG_DIR)/lib/$(notdir $(PNG_LIB)) $(PNG_LIB)
 
 $(AES_LIB): $(THIRDPARTY_DIR)/minizip/*.*
-	$(CMAKE) $(CMAKE_FLAGS) \
-		-DCC='$(CC)' \
-		-DCFLAGS='$(CFLAGS)' \
-		-DLDFLAGS='$(LDFLAGS)' \
-		-DAR='$(AR)' \
-		-DRANLIB='$(RANLIB)' \
-		-S $(THIRDPARTY_DIR)/minizip -B $(MINIZIP_BUILD_DIR)
+	$(CMAKE) $(CMAKE_FLAGS) -S $(THIRDPARTY_DIR)/minizip -B $(MINIZIP_BUILD_DIR)
 	$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS) -C $(MINIZIP_BUILD_DIR)
 
 # by default, mupdf compiles to a static library:
@@ -92,13 +78,6 @@ $(MUPDF_LIB): $(JPEG_LIB) \
 		$(ZLIB) $(AES_LIB) \
 		$(THIRDPARTY_DIR)/mupdf/*.*
 	$(CMAKE) $(CMAKE_FLAGS) \
-		-DHOSTCFLAGS='$(HOSTCFLAGS)' \
-		-DHOSTCC='$(HOSTCC)' \
-		-DCC='$(CC)' \
-		-DCXX='$(CXX)' \
-		-DCFLAGS='$(CFLAGS)' \
-		-DAR='$(AR)' \
-		-DLDFLAGS='$(LDFLAGS)' \
 		-DMUPDF_LIB='$(abspath $(MUPDF_LIB))' \
 		-DMUPDF_SONAME='$(notdir $(MUPDF_LIB))' \
 		-DAES_LIB='$(AES_LIB)' \
@@ -152,13 +131,7 @@ ifdef DARWIN
 endif
 
 $(DJVULIBRE_LIB): $(THIRDPARTY_DIR)/djvulibre/*.*
-	$(CMAKE) $(CMAKE_FLAGS) \
-		-DCC='$(CC)' \
-		-DCXX='$(CXX)' \
-		-DCFLAGS='$(CFLAGS)' \
-		-DCXXFLAGS='$(CXXFLAGS)' \
-		-DLDFLAGS='$(LDFLAGS)' \
-		-S $(THIRDPARTY_DIR)/djvulibre -B $(DJVULIBRE_BUILD_DIR)
+	$(CMAKE) $(CMAKE_FLAGS) -S $(THIRDPARTY_DIR)/djvulibre -B $(DJVULIBRE_BUILD_DIR)
 	$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS) -C $(DJVULIBRE_BUILD_DIR)
 	cp -fL $(DJVULIBRE_DIR)/lib/$(notdir $(DJVULIBRE_LIB)) $(DJVULIBRE_LIB)
 ifdef DARWIN
@@ -190,12 +163,6 @@ $(CRENGINE_LIB) $(CRENGINE_THIRDPARTY_LIBS): $(CRENGINE_SRC_FILES) \
 
 $(LUAJIT) $(LUAJIT_LIB) $(LUAJIT_JIT): $(THIRDPARTY_DIR)/luajit/*.*
 	$(CMAKE) $(CMAKE_FLAGS) \
-		-DCCACHE='$(CCACHE)' \
-		-DCC='$(filter-out $(CCACHE),$(HOSTCC))' \
-		-DCFLAGS='$(CFLAGS)' \
-		-DBASE_CFLAGS='$(BASE_CFLAGS)' \
-		-DHOST_CFLAGS='$(HOSTCFLAGS)' \
-		-DLDFLAGS='$(LDFLAGS)' \
 		-DTARGET_SONAME='$(notdir $(LUAJIT_LIB))' \
 		-S $(THIRDPARTY_DIR)/luajit -B $(LUAJIT_BUILD_DIR)
 	$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS) -C $(LUAJIT_BUILD_DIR)
@@ -214,12 +181,7 @@ ifdef DARWIN
 endif
 
 $(POPEN_NOSHELL_LIB): $(THIRDPARTY_DIR)/popen-noshell/*.*
-	$(CMAKE) $(CMAKE_FLAGS) \
-		-DCC='$(CC)' \
-		-DAR='$(AR)' \
-		-DCFLAGS='$(CFLAGS)' \
-		-DLDFLAGS='$(LDFLAGS)' \
-		-S $(THIRDPARTY_DIR)/popen-noshell -B $(POPEN_NOSHELL_BUILD_DIR)
+	$(CMAKE) $(CMAKE_FLAGS) -S $(THIRDPARTY_DIR)/popen-noshell -B $(POPEN_NOSHELL_BUILD_DIR)
 	$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS) -C $(POPEN_NOSHELL_BUILD_DIR)
 
 $(LEPTONICA_LIB): $(PNG_LIB) $(ZLIB) \
@@ -246,11 +208,6 @@ $(TESSERACT_LIB): $(LEPTONICA_LIB) \
 $(K2PDFOPT_LIB): $(LEPTONICA_LIB) $(TESSERACT_LIB) \
 		$(THIRDPARTY_DIR)/libk2pdfopt/*.*
 	$(CMAKE) $(CMAKE_FLAGS) \
-		-DCC='$(CC)' \
-		-DCXX='$(CXX)' \
-		-DCFLAGS='$(CFLAGS)' \
-		-DCXXFLAGS='$(CXXFLAGS)' \
-		-DLDFLAGS='$(LDFLAGS)' \
 		-DLEPTONICA_DIR='$(abspath $(LEPTONICA_DIR))' \
 		-DLEPTONICA_LIB='$(abspath $(LEPTONICA_LIB))' \
 		-DTESSERACT_DIR='$(abspath $(TESSERACT_DIR))' \
@@ -276,32 +233,18 @@ endif
 
 # libiconv for glib on android
 $(LIBICONV): $(THIRDPARTY_DIR)/libiconv/*.*
-	$(CMAKE) $(CMAKE_FLAGS) \
-		-DCC='$(CC)' \
-		-DLD='$(LD)' \
-		-DAR='$(AR)' \
-		-DRANLIB='$(RANLIB)' \
-		-S $(THIRDPARTY_DIR)/libiconv -B $(LIBICONV_BUILD_DIR)
+	$(CMAKE) $(CMAKE_FLAGS) -S $(THIRDPARTY_DIR)/libiconv -B $(LIBICONV_BUILD_DIR)
 	$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS) -C $(LIBICONV_BUILD_DIR)
 
 # libgettext for glib on android & macOS
 $(LIBGETTEXT): $(LIBICONV) $(THIRDPARTY_DIR)/gettext/*.*
 	$(CMAKE) $(CMAKE_FLAGS) \
-		-DCC='$(CC)' \
-		-DAR='$(AR)' \
-		-DRANLIB='$(RANLIB)' \
-		-DLDFLAGS='$(LDFLAGS)' \
 		-DLIBICONV_DIR='$(LIBICONV_DIR)' \
 		-S $(THIRDPARTY_DIR)/gettext -B $(GETTEXT_BUILD_DIR)
 	$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS) -C $(GETTEXT_BUILD_DIR)
 
 $(GLIB): $(if $(or $(ANDROID),$(DARWIN)),$(LIBICONV) $(LIBGETTEXT)) $(THIRDPARTY_DIR)/glib/*.*
 	$(CMAKE) $(CMAKE_FLAGS) \
-		-DCC='$(CC)' \
-		-DAR='$(AR)' \
-		-DRANLIB='$(RANLIB)' \
-		-DCFLAGS='$(CFLAGS)' \
-		-DLDFLAGS='$(LDFLAGS)' \
 		-DGETTEXT_DIR='$(GETTEXT_DIR)' \
 		-DLIBICONV_DIR='$(LIBICONV_DIR)' \
 		-S $(THIRDPARTY_DIR)/glib -B $(GLIB_BUILD_DIR)
@@ -354,9 +297,6 @@ $(SDL2_LIB): $(THIRDPARTY_DIR)/sdl2/*.*
 
 $(OUTPUT_DIR)/dropbear: $(ZLIB) $(THIRDPARTY_DIR)/dropbear/*.*
 	$(CMAKE) $(CMAKE_FLAGS) \
-		-DCC='$(CC)' \
-		-DCFLAGS='$(CFLAGS)' \
-		-DLDFLAGS='$(LDFLAGS)' \
 		-DZLIB_DIR='$(abspath $(ZLIB_DIR))' \
 		-S $(THIRDPARTY_DIR)/dropbear -B $(DROPBEAR_BUILD_DIR)
 	$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS) -C $(DROPBEAR_BUILD_DIR)
@@ -367,9 +307,6 @@ $(OUTPUT_DIR)/dropbear: $(ZLIB) $(THIRDPARTY_DIR)/dropbear/*.*
 
 $(OUTPUT_DIR)/sftp-server: $(ZLIB) $(SSL_LIB) $(THIRDPARTY_DIR)/openssh/*.*
 	$(CMAKE) $(CMAKE_FLAGS) \
-		-DCC='$(CC)' \
-		-DCFLAGS='$(CFLAGS)' \
-		-DLDFLAGS='$(LDFLAGS)' \
 		-DOPENSSL_DIR='$(abspath $(OPENSSL_DIR))' \
 		-DZLIB_DIR='$(abspath $(ZLIB_DIR))' \
 		-S $(THIRDPARTY_DIR)/openssh -B $(OPENSSH_BUILD_DIR)
@@ -381,11 +318,7 @@ $(OUTPUT_DIR)/sftp-server: $(ZLIB) $(SSL_LIB) $(THIRDPARTY_DIR)/openssh/*.*
 # tar: tar package for zsync
 
 $(OUTPUT_DIR)/tar: $(THIRDPARTY_DIR)/tar/*.*
-	$(CMAKE) $(CMAKE_FLAGS) \
-		-DCC='$(CC)' \
-		-DCFLAGS='$(CFLAGS)' \
-		-DLDFLAGS='$(LDFLAGS)' \
-		-S $(THIRDPARTY_DIR)/tar -B $(TAR_BUILD_DIR)
+	$(CMAKE) $(CMAKE_FLAGS) -S $(THIRDPARTY_DIR)/tar -B $(TAR_BUILD_DIR)
 	$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS) -C $(TAR_BUILD_DIR)
 	cp $(TAR_BUILD_DIR)/build/src/tar $(OUTPUT_DIR)/
 ifdef ANDROID
@@ -399,17 +332,7 @@ endif
 FBTOOL = $(notdir $(@:%.so.1=%))
 
 $(OUTPUT_DIR)/fbdepth $(OUTPUT_DIR)/fbink $(OUTPUT_DIR)/libs/libfbink_input.so.1: $(THIRDPARTY_DIR)/fbink/*.*
-	$(CMAKE) $(CMAKE_FLAGS) \
-		-DAR='$(AR)' \
-		-DCC='$(CC)' \
-		-DCFLAGS='$(CFLAGS)' \
-		-DCXX='$(CXX)' \
-		-DCXXFLAGS='$(CXXFLAGS)' \
-		-DLDFLAGS='$(LDFLAGS)' \
-		-DRANLIB='$(RANLIB)' \
-		-DSTRIP='$(STRIP)' \
-		-DTOOL=$(FBTOOL) \
-		-S $(THIRDPARTY_DIR)/fbink -B $(THIRDPARTY_BUILD)/$(FBTOOL)
+	$(CMAKE) $(CMAKE_FLAGS) -DTOOL=$(FBTOOL) -S $(THIRDPARTY_DIR)/fbink -B $(THIRDPARTY_BUILD)/$(FBTOOL)
 	$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS) -C $(THIRDPARTY_BUILD)/$(FBTOOL)
 	cp $(THIRDPARTY_BUILD)/$(FBTOOL)/source/$(if $(DEBUG),Build,Release)/$(notdir $@) $@
 
@@ -417,16 +340,7 @@ $(OUTPUT_DIR)/fbdepth $(OUTPUT_DIR)/fbink $(OUTPUT_DIR)/libs/libfbink_input.so.1
 # KoboUSBMS: Guess what?
 
 $(KOBO_USBMS_DIR)/KoboUSBMS.tar.gz: $(THIRDPARTY_DIR)/kobo-usbms/*.*
-	$(CMAKE) $(CMAKE_FLAGS) \
-		-DAR='$(AR)' \
-		-DCC='$(CC)' \
-		-DCFLAGS='$(CFLAGS)' \
-		-DCXX='$(CXX)' \
-		-DCXXFLAGS='$(CXXFLAGS)' \
-		-DLDFLAGS='$(LDFLAGS)' \
-		-DRANLIB='$(RANLIB)' \
-		-DSTRIP='$(STRIP)' \
-		-S $(THIRDPARTY_DIR)/kobo-usbms -B $(KOBO_USBMS_BUILD_DIR)
+	$(CMAKE) $(CMAKE_FLAGS) -S $(THIRDPARTY_DIR)/kobo-usbms -B $(KOBO_USBMS_BUILD_DIR)
 	$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS) -C $(KOBO_USBMS_BUILD_DIR)
 
 $(OUTPUT_DIR)/data/KoboUSBMS.tar.gz: $(KOBO_USBMS_DIR)/KoboUSBMS.tar.gz
@@ -436,9 +350,6 @@ $(OUTPUT_DIR)/data/KoboUSBMS.tar.gz: $(KOBO_USBMS_DIR)/KoboUSBMS.tar.gz
 # common lua library for networking
 $(LUASOCKET): $(THIRDPARTY_DIR)/luasocket/*.*
 	$(CMAKE) $(CMAKE_FLAGS) \
-		-DCC='$(CC)' \
-		-DCFLAGS='$(CFLAGS)' \
-		-DLDFLAGS='$(LDFLAGS)' \
 		-DLUAINC='$(LUAJIT_DIR)/src' \
 		-DLUALIB='$(if $(USE_LUAJIT_LIB),$(abspath $(LUAJIT_LIB)))' \
 		-DLUAPATH='$(abspath $(OUTPUT_DIR)/common)' \
@@ -446,17 +357,7 @@ $(LUASOCKET): $(THIRDPARTY_DIR)/luasocket/*.*
 	$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS) -C $(LUASOCKET_BUILD_DIR)
 
 $(OPENSSL_LIB): $(THIRDPARTY_DIR)/openssl/*.*
-	$(CMAKE) $(CMAKE_FLAGS) \
-		-DHOSTCC='$(HOSTCC)' \
-		-DHOSTCXX='$(HOSTCXX)' \
-		-DCC='$(CC)' \
-		-DCFLAGS='$(CFLAGS)' \
-		-DCXX='$(CXX)' \
-		-DCXXFLAGS='$(CXXFLAGS)' \
-		-DLDFLAGS='$(LDFLAGS)' \
-		-DAR='$(AR)' \
-		-DRANLIB='$(RANLIB)' \
-		-S $(THIRDPARTY_DIR)/openssl -B $(OPENSSL_BUILD_DIR)
+	$(CMAKE) $(CMAKE_FLAGS) -S $(THIRDPARTY_DIR)/openssl -B $(OPENSSL_BUILD_DIR)
 	$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS) -C $(OPENSSL_BUILD_DIR)
 
 $(SSL_LIB): $(OPENSSL_LIB)
@@ -477,16 +378,11 @@ endif
 
 $(LUASEC): $(SSL_LIB) $(THIRDPARTY_DIR)/luasec/*.*
 	$(CMAKE) $(CMAKE_FLAGS) \
-		-DAR='$(AR)' \
-		-DCC='$(CC)' \
-		-DCFLAGS='$(CFLAGS)' \
 		-DCRYPTO_LIB='$(abspath $(CRYPTO_LIB))' \
-		-DDYNLIB_LDFLAGS='$(LDFLAGS) $(DYNLIB_CFLAGS)' \
 		-DLUAINC='$(LUA_INCDIR)' \
 		-DLUALIB='$(if $(USE_LUAJIT_LIB),$(abspath $(LUAJIT_LIB)))' \
 		-DLUAPATH='$(abspath $(OUTPUT_DIR)/common)' \
 		-DOPENSSL_DIR='$(abspath $(OPENSSL_DIR))' \
-		-DRANLIB='$(RANLIB)' \
 		-DSSL_LIB='$(abspath $(SSL_LIB))' \
 		-S $(THIRDPARTY_DIR)/luasec -B $(LUASEC_BUILD_DIR)
 	$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS) -C $(LUASEC_BUILD_DIR)
@@ -516,9 +412,6 @@ $(CZMQ_LIB): $(ZMQ_LIB) $(THIRDPARTY_DIR)/czmq/*.*
 
 $(TURBO_FFI_WRAP_LIB): $(SSL_LIB) $(THIRDPARTY_DIR)/turbo/*.*
 	$(CMAKE) $(CMAKE_FLAGS) \
-		-DCC='$(CC)' \
-		-DCFLAGS='$(CFLAGS)' \
-		-DDYNLIB_LDFLAGS='$(LDFLAGS) $(DYNLIB_CFLAGS)' \
 		-DOPENSSL_DIR='$(abspath $(OPENSSL_DIR))' \
 		-DCRYPTO_LIB='$(abspath $(CRYPTO_LIB))' \
 		-DSSL_LIB='$(abspath $(SSL_LIB))' \
@@ -544,9 +437,6 @@ endif
 
 $(LPEG_MOD): $(THIRDPARTY_DIR)/lpeg/*.*
 	$(CMAKE) $(CMAKE_FLAGS) \
-		-DCC='$(CC)' \
-		-DCFLAGS='$(CFLAGS)' \
-		-DDYNLIB_LDFLAGS='$(LDFLAGS) $(DYNLIB_CFLAGS)' \
 		-DLUAINC='$(LUA_INCDIR)' \
 		-DLUALIB='$(if $(USE_LUAJIT_LIB),$(abspath $(LUAJIT_LIB)))' \
 		-S $(THIRDPARTY_DIR)/lpeg -B $(LPEG_BUILD_DIR)
@@ -577,11 +467,7 @@ $(LUA_RAPIDJSON_MOD): $(THIRDPARTY_DIR)/lua-rapidjson/*.*
 	cp $(LUA_RAPIDJSON_DIR)/$(notdir $(LUA_RAPIDJSON_MOD)) $(OUTPUT_DIR)/common/
 
 $(SQLITE_LIB): $(THIRDPARTY_DIR)/sqlite/*.*
-	$(CMAKE) $(CMAKE_FLAGS) \
-		-DCC='$(CC)' \
-		-DCFLAGS='$(CFLAGS)' \
-		-DLDFLAGS='$(LDFLAGS)' \
-		-S $(THIRDPARTY_DIR)/sqlite -B $(SQLITE_BUILD_DIR)
+	$(CMAKE) $(CMAKE_FLAGS) -S $(THIRDPARTY_DIR)/sqlite -B $(SQLITE_BUILD_DIR)
 	$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS) -C $(SQLITE_BUILD_DIR)
 	cp $(SQLITE_DIR)/.libs/$(notdir $(SQLITE_LIB)) $(OUTPUT_DIR)/libs
 

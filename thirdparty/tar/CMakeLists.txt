@@ -3,10 +3,6 @@ project(tar LANGUAGES)
 
 include(koreader_thirdparty_common)
 
-assert_var_defined(CC)
-assert_var_defined(CFLAGS)
-assert_var_defined(LDFLAGS)
-
 # O_PATH may be defined in our ToolChains, but older devices actually run kernels where it's not entirely usable...
 # (Usage in tar via gnulib's https://git.savannah.gnu.org/cgit/gnulib.git/log/lib/fchmodat.c)
 if(NOT EMULATE_READER)
@@ -21,6 +17,8 @@ endif()
 # list(APPEND PATCH_CMD COMMAND touch ABOUT-NLS po/Makevars.template)
 # list(APPEND PATCH_CMD COMMAND env AUTOPOINT=true ./bootstrap --skip-po)
 
+set(CPPFLAGS "-DHAVE_MKFIFO=1")
+
 if(ANDROID)
     set(LIBS -static)
 elseif(DARWIN OR WIN32)
@@ -34,11 +32,8 @@ list(APPEND CFG_CMD COMMAND env)
 if(LEGACY OR POCKETBOOK)
     list(APPEND CFG_CMD ac_cv_func_utimensat=no ac_cv_func_futimens=no)
 endif()
+append_autotools_vars(CFG_CMD)
 list(APPEND CFG_CMD
-    "CC=${CC} -DHAVE_MKFIFO=1"
-    CFLAGS=${CFLAGS}
-    LDFLAGS=${LDFLAGS}
-    LIBS=${LIBS}
     ${SOURCE_DIR}/configure --host=${CHOST}
     --disable-acl
     --disable-gcc-warnings

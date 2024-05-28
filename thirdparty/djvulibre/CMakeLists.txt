@@ -4,12 +4,6 @@ project(djvulibre LANGUAGES)
 include(koreader_thirdparty_common)
 include(koreader_thirdparty_git)
 
-assert_var_defined(CC)
-assert_var_defined(CFLAGS)
-assert_var_defined(CXX)
-assert_var_defined(CXXFLAGS)
-assert_var_defined(LDFLAGS)
-
 # Never *ever* call setlocale, for any reason.
 # Most of our target platforms have custom/broken/incomplete locales, don't screw with it.
 # And this runs in our main thread, so this is Very Bad(TM).
@@ -27,12 +21,9 @@ string(APPEND CFLAGS " -Wno-error")
 # C++17 does not allow 'register' storage class specifier.
 string(APPEND CXXFLAGS " -Wno-register -Wno-error=register")
 
-list(APPEND CFG_CMD COMMAND env
-    CC=${CC}
-    CXX=${CXX}
-    CFLAGS=${CFLAGS}
-    CXXFLAGS=${CXXFLAGS}
-    LDFLAGS=${LDFLAGS}
+list(APPEND CFG_CMD COMMAND env)
+append_autotools_vars(CFG_CMD)
+list(APPEND CFG_CMD
     ${SOURCE_DIR}/configure --host=${CHOST} --prefix=${INSTALL_DIR}
     --disable-static --enable-shared
     --disable-desktopfiles

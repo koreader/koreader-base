@@ -4,16 +4,11 @@ project(luasec LANGUAGES)
 include(koreader_thirdparty_common)
 include(koreader_thirdparty_git)
 
-assert_var_defined(AR)
-assert_var_defined(CC)
-assert_var_defined(CFLAGS)
 assert_var_defined(CRYPTO_LIB)
-assert_var_defined(DYNLIB_LDFLAGS)
 assert_var_defined(LUAINC)
 assert_var_defined(LUALIB)
 assert_var_defined(LUAPATH)
 assert_var_defined(OPENSSL_DIR)
-assert_var_defined(RANLIB)
 assert_var_defined(SSL_LIB)
 
 # Build in source tree.
