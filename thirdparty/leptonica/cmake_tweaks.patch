@@ -1,0 +1,39 @@
+--- i/CMakeLists.txt
++++ w/CMakeLists.txt
+@@ -47,9 +47,9 @@ set(VERSION_PLAIN ${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH})
+ 
+ find_package(GIF)
+ find_package(JPEG)
+-find_package(PNG)
++find_package(PNG REQUIRED)
+ find_package(TIFF)
+-find_package(ZLIB)
++find_package(ZLIB REQUIRED)
+ 
+ find_package(PkgConfig)
+ 
+--- i/src/CMakeLists.txt
++++ w/src/CMakeLists.txt
+@@ -15,8 +15,9 @@ if (MSVC)
+ endif()
+ 
+ add_library                     (leptonica ${LIBRARY_TYPE} ${src} ${hdr})
+-set_target_properties           (leptonica PROPERTIES VERSION   ${VERSION_PLAIN})
+-set_target_properties           (leptonica PROPERTIES SOVERSION 5.1.0)
++set_target_properties           (leptonica PROPERTIES VERSION 5)
++set_target_properties           (leptonica PROPERTIES OUTPUT_NAME lept)
++target_include_directories      (leptonica PRIVATE ${PNG_INCLUDE_DIR} ${ZLIB_INCLUDE_DIR})
+ if (WIN32)
+ set_target_properties           (leptonica PROPERTIES OUTPUT_NAME       leptonica-${VERSION_PLAIN})
+ set_target_properties           (leptonica PROPERTIES DEBUG_OUTPUT_NAME leptonica-${VERSION_PLAIN}d)
+--- i/src/CMakeLists.txt
++++ w/src/CMakeLists.txt
+@@ -63,3 +63,8 @@
+ 
+ ################################################################################
+ 
++install(TARGETS leptonica)
++install(FILES
++    ${hdr} ${CMAKE_CURRENT_BINARY_DIR}/endianness.h
++    DESTINATION ${CMAKE_INSTALL_PREFIX}/include/leptonica
++)

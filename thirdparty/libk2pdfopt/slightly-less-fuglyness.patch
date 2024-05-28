@@ -1,0 +1,69 @@
+--- a/Makefile
++++ b/Makefile
+@@ -80,6 +80,7 @@ K2PDFOPT_LIB= libk2pdfopt$(if $(WIN32),-$(MAJVER).dll,$(if $(DARWIN),.$(MAJVER).
+ ##############################################################################
+ # Target file rules.
+ ##############################################################################
++ifneq (,)
+ $(LEPTONICA_LIB):
+ 	cp -f $(LEPTONICA_MOD)/dewarp2.c $(LEPTONICA_DIR)/src/dewarp2.c
+ 	# leptonica 1.73 and up requires to run autobuild first
+@@ -130,15 +131,18 @@ ifdef WIN32
+ else
+ 	cp -a $(TESSERACT_DIR)/api/.libs/libtesseract$(if $(DARWIN),*.dylib,.so*) ./
+ endif
++endif
+ 
+-tesseract_capi: $(TESSERACT_MOD)/tesscapi.cpp $(TESSERACT_LIB)
++$(TESSERACT_API_O): $(TESSERACT_MOD)/tesscapi.cpp
+ 	$(TARGET_CXX) $(CXXFLAGS) -c $(TESSCAPI_CFLAGS) -o $(TESSERACT_API_O) $<
++
++$(TESSERACT_API_DYNO): $(TESSERACT_MOD)/tesscapi.cpp
+ 	$(TARGET_DYNCXX) $(CXXFLAGS) -c $(TESSCAPI_CFLAGS) -o $(TESSERACT_API_DYNO) $<
+ 
+-$(K2PDFOPT_A): $(K2PDFOPT_O) tesseract_capi
++$(K2PDFOPT_A): $(K2PDFOPT_O) $(TESSERACT_API_O)
+ 	$(AR) rcs $@ $(K2PDFOPT_O) $(TESSERACT_API_O)
+ 
+-$(K2PDFOPT_LIB): $(K2PDFOPT_O) tesseract_capi
++$(K2PDFOPT_LIB): $(K2PDFOPT_O) $(TESSERACT_API_DYNO) $(LEPTONICA_LIB) $(TESSERACT_LIB)
+ 	$(CXX) $(CXXFLAGS) $(TARGET_ASHLDFLAGS) -o $@ \
+ 		$(K2PDFOPT_DYNO) $(TESSERACT_API_DYNO) $(TARGET_ALIBS) \
+ 		$(TESSERACT_LIB) $(LEPTONICA_LIB)
+--- i/tesseract_mod/tesscapi.cpp
++++ w/tesseract_mod/tesscapi.cpp
+@@ -1,4 +1,3 @@
+-#include "config_auto.h"
+ /*
+ ** tesscapi.cpp    willus.com attempt at C wrapper for tesseract.
+ **                 (Butchered from tesseractmain.cpp)
+@@ -21,7 +20,6 @@
+ **
+ */
+ 
+-#include "config_auto.h"
+ /*
+ #include "mfcpch.h"
+ */
+@@ -44,11 +42,6 @@
+ 
+ #include "allheaders.h"
+ #include "baseapi.h"
+-#include "strngs.h"
+-#include "params.h"
+-#include "blobs.h"
+-// For our try/catch block
+-#include <stdexcept>
+ /*
+ #include "notdll.h"
+ */
+@@ -56,6 +49,9 @@
+ /* C Wrappers */
+ #include "tesseract.h"
+ 
++// For our try/catch block
++#include <stdexcept>
++
+ // static tesseract::TessBaseAPI api[4];
+ 
+ /*
