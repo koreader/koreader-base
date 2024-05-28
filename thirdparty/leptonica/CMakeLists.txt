@@ -45,17 +45,11 @@ list(APPEND BUILD_CMD COMMAND ${KO_MAKE_PROGRAM})
 
 list(APPEND INSTALL_CMD COMMAND ${CMAKE_COMMAND} --install .)
 
-# NOTE: Needs to match the version used by whatever version of libk2pdfopt we're currently using...
-#       Probably applies to mupdf & tesseract, too...
-ko_write_gitclone_script(
-    GIT_CLONE_SCRIPT_FILENAME
-    https://github.com/DanBloomberg/leptonica.git
-    1.74.1
-    ${SOURCE_DIR}
-)
-
 external_project(
-    DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
+    # NOTE: Needs to match the version used by whatever version of libk2pdfopt we're currently using...
+    #       Probably applies to mupdf & tesseract, too...
+    URL https://github.com/DanBloomberg/leptonica/archive/refs/tags/1.74.1.tar.gz
+    URL_MD5 b3de9ae35976fd4fc3f6dae5a4368bca
     PATCH_COMMAND ${PATCH_CMD}
     CMAKE_ARGS ${CMAKE_ARGS}
     BUILD_COMMAND ${BUILD_CMD}
