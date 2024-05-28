@@ -1,12 +1,11 @@
 cmake_minimum_required(VERSION 3.7)
 project(tar LANGUAGES)
 
-include("koreader_thirdparty_common")
+include(koreader_thirdparty_common)
 
 assert_var_defined(CC)
 assert_var_defined(CFLAGS)
 assert_var_defined(LDFLAGS)
-assert_var_defined(LIBS)
 
 # O_PATH may be defined in our ToolChains, but older devices actually run kernels where it's not entirely usable...
 # (Usage in tar via gnulib's https://git.savannah.gnu.org/cgit/gnulib.git/log/lib/fchmodat.c)
@@ -22,18 +21,34 @@ endif()
 # list(APPEND PATCH_CMD COMMAND touch ABOUT-NLS po/Makevars.template)
 # list(APPEND PATCH_CMD COMMAND env AUTOPOINT=true ./bootstrap --skip-po)
 
+if(ANDROID)
+    set(LIBS -static)
+elseif(DARWIN OR WIN32)
+    set(LIBS)
+else()
+    set(LIBS -lrt)
+endif()
+
+list(APPEND CFG_CMD COMMAND env)
 # Avoid pulling > GLIBC_2.4 symbols on crappy platforms
 if(LEGACY OR POCKETBOOK)
-    set(CFG_ENV_VAR ac_cv_func_utimensat=no ac_cv_func_futimens=no)
+    list(APPEND CFG_CMD ac_cv_func_utimensat=no ac_cv_func_futimens=no)
 endif()
-
-set(CFG_ENV_VAR ${CFG_ENV_VAR} "CC=${CC} -DHAVE_MKFIFO=1" "CFLAGS=${CFLAGS}" "LDFLAGS=${LDFLAGS}" "LIBS=${LIBS}")
-set(CFG_OPTS --host=${CHOST})
-
+list(APPEND CFG_CMD
+    "CC=${CC} -DHAVE_MKFIFO=1"
+    CFLAGS=${CFLAGS}
+    LDFLAGS=${LDFLAGS}
+    LIBS=${LIBS}
+    ${SOURCE_DIR}/configure --host=${CHOST}
+    --disable-acl
+    --disable-gcc-warnings
+    --disable-nls
+    --without-posix-acls
+    --without-xattrs
+)
 if(LEGACY OR POCKETBOOK)
-    set(CFG_OPTS ${CFG_OPTS} --disable-largefile)
+    list(APPEND CFG_CMD --disable-largefile)
 endif()
-list(APPEND CFG_CMD COMMAND env ${CFG_ENV_VAR} ${SOURCE_DIR}/configure --disable-nls --disable-gcc-warnings --disable-acl --without-xattrs --without-posix-acls ${CFG_OPTS})
 
 if(LEGACY OR POCKETBOOK)
     # Forcibly disable FORTIFY on legacy devices...
