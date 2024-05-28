@@ -1,9 +1,3 @@
-cmake_minimum_required(VERSION 3.15)
-project(glib LANGUAGES)
-
-include(koreader_thirdparty_common)
-include(koreader_thirdparty_git)
-
 list(APPEND PATCH_CMD COMMAND ${KO_PATCH}
     # We only care about `libglib-2.0.a`.
     ${CMAKE_CURRENT_SOURCE_DIR}/glib-libglib-only.patch

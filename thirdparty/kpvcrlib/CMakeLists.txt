@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.15)
-project(kpvcrlib LANGUAGES C CXX)
+project(koreader LANGUAGES C CXX)
 
-include(koreader_thirdparty_common)
+include(koreader_thirdparty_libs)
 
 set(CRE_3RDPARTY_DIR ${CMAKE_CURRENT_SOURCE_DIR}/crengine/thirdparty)
 set(CRE_DIR crengine/crengine)
@@ -67,17 +67,11 @@ add_library(crengine STATIC
 # Make sure we get full `constexpr` support.
 set_target_properties(crengine PROPERTIES CXX_STANDARD 17 CMAKE_CXX_STANDARD_REQUIRED TRUE)
 set_target_properties(crengine PROPERTIES VISIBILITY_INLINES_HIDDEN TRUE)
-target_include_directories(crengine PUBLIC
-    ${CRE_DIR}/include
-    ${STAGING_DIR}/include
-    ${STAGING_DIR}/include/freetype2
-    ${STAGING_DIR}/include/harfbuzz
-)
+target_include_directories(crengine PUBLIC ${CRE_DIR}/include)
 target_include_directories(crengine PRIVATE
     ${CRE_3RDPARTY_DIR}/antiword
     ${CRE_3RDPARTY_DIR}/chmlib/src
-    ${STAGING_DIR}/include/fribidi
-    ${THIRDPARTY_DIR}/srell
+    $<TARGET_PROPERTY:crengine::crengine,INTERFACE_INCLUDE_DIRECTORIES>
 )
 
 configure_file(crsetup.h.cmake crsetup.h)

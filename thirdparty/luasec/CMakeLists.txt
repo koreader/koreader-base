@@ -1,9 +1,3 @@
-cmake_minimum_required(VERSION 3.15)
-project(luasec LANGUAGES)
-
-include(koreader_thirdparty_common)
-include(koreader_thirdparty_git)
-
 # Build in source tree.
 set(BINARY_DIR ${SOURCE_DIR})
 
@@ -16,21 +10,20 @@ string(JOIN " " LIBS
     ${LUAJIT_LIB}
 )
 
-set(LUAPATH "${OUTPUT_DIR}/common")
-
 set(MAKE_CMD
     ${KO_MAKE_RECURSIVE}
     AR=${AR} RANLIB=${RANLIB}
     CC=${CC} CFLAGS=${CFLAGS}
     LDFLAGS=${DYNLIB_LDFLAGS}
     LIBS=${LIBS} EXTRA=${LIBS}
-    LUACPATH=${LUAPATH} LUAPATH=${LUAPATH}
 )
 
 list(APPEND BUILD_CMD COMMAND ${MAKE_CMD} -C src/luasocket)
 list(APPEND BUILD_CMD COMMAND ${MAKE_CMD} -C src ssl.so)
 
-list(APPEND INSTALL_CMD COMMAND ${MAKE_CMD} -C src install)
+append_binary_install_command(INSTALL_CMD src/ssl.so DESTINATION common)
+append_install_commands(INSTALL_CMD src/ssl.lua DESTINATION common)
+append_install_commands(INSTALL_CMD src/https.lua DESTINATION common/ssl)
 
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME

@@ -1,8 +1,3 @@
-cmake_minimum_required(VERSION 3.15)
-project(tar LANGUAGES)
-
-include(koreader_thirdparty_common)
-
 # O_PATH may be defined in our ToolChains, but older devices actually run kernels where it's not entirely usable...
 # (Usage in tar via gnulib's https://git.savannah.gnu.org/cgit/gnulib.git/log/lib/fchmodat.c)
 if(NOT EMULATE_READER)
@@ -52,6 +47,8 @@ endif()
 
 list(APPEND BUILD_CMD COMMAND ${KO_MAKE_RECURSIVE})
 
+append_binary_install_command(INSTALL_CMD src/tar)
+
 external_project(
     URL http://ftpmirror.gnu.org/tar/tar-1.34.tar.gz
     http://ftp.gnu.org/pub/gnu/tar/tar-1.34.tar.gz
@@ -59,4 +56,5 @@ external_project(
     PATCH_COMMAND ${PATCH_CMD}
     CONFIGURE_COMMAND ${CFG_CMD}
     BUILD_COMMAND ${BUILD_CMD}
+    INSTALL_COMMAND ${INSTALL_CMD}
 )

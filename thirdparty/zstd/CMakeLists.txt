@@ -1,9 +1,3 @@
-cmake_minimum_required(VERSION 3.15)
-project(zstd LANGUAGES)
-
-include("koreader_thirdparty_common")
-include("koreader_thirdparty_git")
-
 list(APPEND CMAKE_ARGS
     -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TCF}
     # Project options.
@@ -15,6 +9,8 @@ list(APPEND CMAKE_ARGS
 list(APPEND BUILD_CMD COMMAND ${KO_MAKE_PROGRAM})
 
 list(APPEND INSTALL_CMD COMMAND ${CMAKE_COMMAND} --install .)
+
+append_shared_lib_install_commands(INSTALL_CMD zstd VERSION 1)
 
 external_project(
     URL https://github.com/facebook/zstd/releases/download/v1.5.5/zstd-1.5.5.tar.gz

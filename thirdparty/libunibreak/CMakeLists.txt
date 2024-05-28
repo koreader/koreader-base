@@ -1,9 +1,3 @@
-cmake_minimum_required(VERSION 3.15)
-project(libunibreak LANGUAGES)
-
-include(koreader_thirdparty_common)
-include(koreader_thirdparty_git)
-
 list(APPEND CFG_CMD COMMAND env)
 append_autotools_vars(CFG_CMD)
 list(APPEND CFG_CMD
@@ -19,6 +13,12 @@ endif()
 list(APPEND BUILD_CMD COMMAND ${KO_MAKE_RECURSIVE})
 
 list(APPEND INSTALL_CMD COMMAND ${KO_MAKE_RECURSIVE} install)
+
+set(LIB_SPEC unibreak VERSION 6)
+if(DARWIN)
+    append_shared_lib_fix_commands(INSTALL_CMD ${LIB_SPEC} ID)
+endif()
+append_shared_lib_install_commands(INSTALL_CMD ${LIB_SPEC})
 
 external_project(
     URL https://github.com/adah1972/libunibreak/releases/download/libunibreak_6_1/libunibreak-6.1.tar.gz

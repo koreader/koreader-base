@@ -1,9 +1,3 @@
-cmake_minimum_required(VERSION 3.15)
-project(mupdf LANGUAGES)
-
-include(koreader_thirdparty_common)
-include(koreader_thirdparty_git)
-
 # Build in source tree.
 set(BINARY_DIR ${SOURCE_DIR})
 
@@ -102,7 +96,8 @@ else()
     set(OS Other)
 endif()
 
-set(MUPDF_LIB libmupdf${LIB_EXT})
+set(LIB_SPEC mupdf)
+set_libname(LIB ${LIB_SPEC})
 
 string(APPEND XCFLAGS
     " ${CFLAGS}"
@@ -155,9 +150,6 @@ string(APPEND LIBS
 )
 
 set(MAKE_CMD
-    env
-    -u CFLAGS
-    -u LDFLAGS
     ${KO_MAKE_RECURSIVE}
     # Compilation flags.
     AR=${AR}
@@ -182,7 +174,7 @@ set(MAKE_CMD
     # Final shared library.
     LIBS=${LIBS}
     LINK_OPTS=${LINK_OPTS}
-    MUPDF_SHLIB=${MUPDF_LIB}
+    MUPDF_SHLIB=${LIB}
 )
 
 list(APPEND BUILD_CMD COMMAND ${MAKE_CMD} shared)
@@ -190,9 +182,11 @@ list(APPEND BUILD_CMD COMMAND ${MAKE_CMD} shared)
 list(APPEND INSTALL_CMD COMMAND ${MAKE_CMD} install
     DESTDIR=${STAGING_DIR}
     INSTALL_APPS=
-    INSTALL_LIBS=${MUPDF_LIB}
+    INSTALL_LIBS=${LIB}
     prefix=/
 )
+
+append_shared_lib_install_commands(INSTALL_CMD ${LIB_SPEC})
 
 external_project(
     URL https://mupdf.com/downloads/archive/mupdf-1.13.0-source.tar.xz
