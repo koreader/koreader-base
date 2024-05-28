@@ -531,19 +531,16 @@ ifdef DARWIN
 		$@
 endif
 
-$(LPEG_ROCK): $(THIRDPARTY_DIR)/lpeg/*.*
+$(LPEG_MOD): $(THIRDPARTY_DIR)/lpeg/*.*
 	$(CMAKE) $(CMAKE_FLAGS) \
-		-DOUTPUT_DIR='$(abspath $(OUTPUT_DIR))' \
-		-DLPEG_VER='$(LPEG_VER)' \
 		-DCC='$(CC)' \
 		-DCFLAGS='$(CFLAGS)' \
-		-DLDFLAGS='$(LDFLAGS)' \
-		-DLUAROCKS='$(LUAROCKS_BINARY)' \
-		-DLUA_INCDIR='$(LUA_INCDIR)' \
-		-DLUA_LIBDIR='$(LUA_LIBDIR)' \
-		$(if $(USE_LUAJIT_LIB),-DLUALIB='-lluajit',) \
+		-DDYNLIB_LDFLAGS='$(LDFLAGS) $(DYNLIB_CFLAGS)' \
+		-DLUAINC='$(LUA_INCDIR)' \
+		-DLUALIB='$(if $(USE_LUAJIT_LIB),$(abspath $(LUAJIT_LIB)))' \
 		-S $(THIRDPARTY_DIR)/lpeg -B $(LPEG_BUILD_DIR)
 	$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS) -C $(LPEG_BUILD_DIR)
+	cp $(LPEG_DIR)/{re.lua,$(notdir $(LPEG_MOD))} $(OUTPUT_DIR)/common/
 
 $(LUA_SPORE_MOD): $(THIRDPARTY_DIR)/lua-Spore/*.*
 	$(CMAKE) $(CMAKE_FLAGS) -S $(THIRDPARTY_DIR)/lua-Spore -B $(LUA_SPORE_BUILD_DIR)
