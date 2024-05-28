@@ -4,12 +4,6 @@ project(minizip LANGUAGES)
 include(koreader_thirdparty_common)
 include(koreader_thirdparty_git)
 
-assert_var_defined(AR)
-assert_var_defined(CC)
-assert_var_defined(CFLAGS)
-assert_var_defined(LDFLAGS)
-assert_var_defined(RANLIB)
-
 # Build in source tree.
 set(BINARY_DIR ${SOURCE_DIR})
 
@@ -22,15 +16,8 @@ list(APPEND PATCH_CMD COMMAND ${ISED} "s|\\.\\./libaes.a|libaes.a|" aes/Makefile
 # Fix build error due to implicit declarations of function being invalid in C99 under macOS/XCode 12.
 string(APPEND CFLAGS " -Wno-error=implicit-function-declaration")
 string(APPEND CFLAGS " -DHAVE_AES")
-list(APPEND BUILD_CMD COMMAND
-    ${KO_MAKE_RECURSIVE}
-    AR=${AR}
-    CC=${CC}
-    CFLAGS=${CFLAGS}
-    LDFLAGS=${LDFLAGS}
-    RANLIB=${RANLIB}
-    -C aes
-)
+list(APPEND BUILD_CMD COMMAND ${KO_MAKE_RECURSIVE} -C aes)
+append_autotools_vars(BUILD_CMD)
 
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME

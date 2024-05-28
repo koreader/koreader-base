@@ -16,22 +16,12 @@ if(LEGACY)
     list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/kindle_legacy.patch)
 endif()
 
-assert_var_defined(CC)
-assert_var_defined(AR)
-assert_var_defined(CFLAGS)
-assert_var_defined(LDFLAGS)
-
 if(ANDROID)
     set(CFLAGS "${CFLAGS} --sysroot=$ENV{SYSROOT}")
 endif()
 
-list(APPEND BUILD_CMD COMMAND
-    ${KO_MAKE_RECURSIVE}
-    AR=${AR}
-    CC=${CC}
-    CFLAGS=${CFLAGS}
-    LDFLAGS=${LDFLAGS}
-)
+list(APPEND BUILD_CMD COMMAND ${KO_MAKE_RECURSIVE})
+append_autotools_vars(BUILD_CMD)
 
 # NOTE: we always update lib timestamp to notify Make for a fresh build
 list(APPEND BUILD_CMD COMMAND ${CMAKE_COMMAND} -E touch ${SOURCE_DIR}/libpopen_noshell.a)
