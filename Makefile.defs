@@ -370,6 +370,8 @@ ifdef KODEBUG
 	STRIP:=true
 	# Don't enforce extra CFLAGS in debug builds
 	VECTO_CFLAGS:=
+else
+  BASE_CFLAGS += -DNDEBUG
 endif
 
 # Misc GCC tricks to ensure backward compatibility with the K2,
