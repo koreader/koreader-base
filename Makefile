@@ -326,6 +326,13 @@ cache-key: Makefile
 
 # }}}
 
-.PHONY: all clean distclean dist-clean test
+# Dump binaries runtime path and dependencies. {{{
+
+bindeps:
+	@./utils/bindeps.sh $(filter-out $(STAGING_DIR) $(THIRDPARTY_BUILD),$(wildcard $(OUTPUT_DIR)/*))
+
+# }}}
+
+.PHONY: all bindeps clean distclean dist-clean test
 
 # vim: foldmethod=marker foldlevel=0
