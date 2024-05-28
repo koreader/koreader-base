@@ -320,12 +320,14 @@ ifeq ($(TARGET), android)
 	STRIP:=llvm-strip
 	AR:=llvm-ar
 	LD:=ld
+	NM:=llvm-nm
 	RANLIB:=llvm-ranlib
 	READELF:=llvm-readelf
 else ifdef CHOST
 	STRIP:=$(CHOST)-strip
 	AR:=$(CHOST)-ar
 	LD:=$(CHOST)-ld
+	NM:=$(CHOST)-nm
 	RC:=$(CHOST)-windres
 	RANLIB:=$(CHOST)-ranlib
 	READELF:=$(CHOST)-readelf
@@ -333,6 +335,7 @@ else
 	STRIP:=strip
 	AR:=ar
 	LD:=ld
+	NM:=nm
 	RC:=windres
 	RANLIB:=ranlib
 	READELF:=readelf
@@ -1029,6 +1032,7 @@ set(CMAKE_MODULE_LINKER_FLAGS_INIT $${CMAKE_SHARED_LINKER_FLAGS_INIT})
 # Tools.
 set(CMAKE_AR $(AR) CACHE FILEPATH "Archive")
 set(CMAKE_LD $(LD) CACHE FILEPATH "LD")
+set(CMAKE_NM $(NM) CACHE FILEPATH "NM")
 set(CMAKE_RANLIB $(RANLIB) CACHE FILEPATH "RanLib")
 set(CMAKE_READELF $(READELF) CACHE FILEPATH "ReadELF")
 $(if $(WIN32),set(CMAKE_RC_COMPILER $(RC) CACHE FILEPATH "Resource Compiler"))
@@ -1116,6 +1120,7 @@ set(LD             "$(strip $(LD))")
 set(LDFLAGS        "$(strip $(LDFLAGS))")
 set(DYNLIB_LDFLAGS "$(strip $(LDFLAGS) $(DYNLIB_LDFLAGS))")
 set(AR             "$(strip $(AR))")
+set(NM             "$(strip $(NM))")
 set(RANLIB         "$(strip $(RANLIB))")
 set(RC             "$(strip $(RC))")
 set(STRIP          "$(strip $(STRIP))")
