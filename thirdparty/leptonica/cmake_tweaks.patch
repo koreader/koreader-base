@@ -37,7 +37,7 @@
  set_target_properties           (leptonica PROPERTIES DEBUG_OUTPUT_NAME leptonica-${VERSION_PLAIN}d)
 --- i/src/CMakeLists.txt
 +++ w/src/CMakeLists.txt
-@@ -63,3 +63,8 @@
+@@ -63,3 +63,17 @@
  
  ################################################################################
  
@@ -46,3 +46,12 @@
 +    ${hdr} ${CMAKE_CURRENT_BINARY_DIR}/endianness.h
 +    DESTINATION ${CMAKE_INSTALL_PREFIX}/include/leptonica
 +)
++set(prefix ${CMAKE_INSTALL_PREFIX})
++set(exec_prefix ${CMAKE_INSTALL_PREFIX})
++set(libdir ${CMAKE_INSTALL_LIBDIR})
++set(includedir ${CMAKE_INSTALL_INCLUDEDIR})
++set(LIBPNG_LIBS ${PNG_LIBRARY})
++set(ZLIB_LIBS ${ZLIB_LIBRARY})
++set(VERSION ${VERSION_PLAIN})
++configure_file(${CMAKE_SOURCE_DIR}/lept.pc.in ${CMAKE_BINARY_DIR}/lept.pc @ONLY)
++install(FILES ${CMAKE_BINARY_DIR}/lept.pc DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig)
