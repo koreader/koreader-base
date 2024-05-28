@@ -521,8 +521,11 @@ $(CZMQ_LIB): $(ZMQ_LIB) $(THIRDPARTY_DIR)/czmq/*.*
 $(TURBO_FFI_WRAP_LIB): $(SSL_LIB) $(THIRDPARTY_DIR)/turbo/*.*
 	$(CMAKE) $(CMAKE_FLAGS) \
 		-DCC='$(CC)' \
-		-DCFLAGS='$(CFLAGS) -I$(OPENSSL_DIR)/include' \
-		-DLDFLAGS='$(LDFLAGS) -lcrypto -lssl $(if $(ANDROID)$(WIN32),$(abspath $(LUAJIT_LIB))) -L$(OPENSSL_DIR)' \
+		-DCFLAGS='$(CFLAGS)' \
+		-DDYNLIB_LDFLAGS='$(LDFLAGS) $(DYNLIB_CFLAGS)' \
+		-DOPENSSL_DIR='$(abspath $(OPENSSL_DIR))' \
+		-DCRYPTO_LIB='$(abspath $(CRYPTO_LIB))' \
+		-DSSL_LIB='$(abspath $(SSL_LIB))' \
 		-S $(THIRDPARTY_DIR)/turbo -B $(TURBO_BUILD_DIR)
 	$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS) -C $(TURBO_BUILD_DIR)
 	cp -fL $(TURBO_DIR)/$(notdir $(TURBO_FFI_WRAP_LIB)) $@
