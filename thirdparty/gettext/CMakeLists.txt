@@ -11,7 +11,7 @@ string(APPEND LDFLAGS " -L${LIBICONV_DIR}/lib")
 list(APPEND CFG_CMD COMMAND env)
 append_autotools_vars(CFG_CMD)
 list(APPEND CFG_CMD
-    ${SOURCE_DIR}/gettext-runtime/configure --host=${CHOST} --prefix=${INSTALL_DIR}
+    ${SOURCE_DIR}/gettext-runtime/configure --host=${CHOST} --prefix=/
     --enable-shared=false --enable-static=true
     --disable-java
     --disable-threads
@@ -26,7 +26,7 @@ endif()
 
 list(APPEND BUILD_CMD COMMAND ${KO_MAKE_RECURSIVE} -C intl)
 
-list(APPEND INSTALL_CMD COMMAND ${KO_MAKE_RECURSIVE} -C intl install)
+list(APPEND INSTALL_CMD COMMAND ${KO_MAKE_RECURSIVE} -C intl DESTDIR=${INSTALL_DIR} install)
 
 external_project(
     URL http://ftpmirror.gnu.org/gettext/gettext-0.21.tar.xz
