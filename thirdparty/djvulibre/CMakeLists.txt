@@ -25,7 +25,7 @@ list(APPEND CFG_CMD
     --disable-desktopfiles
     --disable-largefile
     --disable-xmltools
-    --without-jpeg
+    --with-jpeg=${STAGING_DIR}
     --without-tiff
 )
 
