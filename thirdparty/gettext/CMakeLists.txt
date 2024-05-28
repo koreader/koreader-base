@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.7)
+cmake_minimum_required(VERSION 3.15)
 project(gettext LANGUAGES)
 
 include(koreader_thirdparty_common)

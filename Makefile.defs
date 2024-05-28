@@ -1138,7 +1138,7 @@ set(THIRDPARTY_DIR $(abspath $(THIRDPARTY_DIR)))
 set(MAKE $(MAKE))
 set(NINJA $(NINJA))
 
-list(INSERT CMAKE_MODULE_PATH 0 $${THIRDPARTY_DIR}/cmake_modules)
+list(PREPEND CMAKE_MODULE_PATH $${THIRDPARTY_DIR}/cmake_modules)
 
 # Convenience autotools-like variables.
 set(CC             "$(strip $(CC))")
