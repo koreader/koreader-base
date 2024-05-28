@@ -4,6 +4,8 @@ project(libjpeg-turbo LANGUAGES)
 include("koreader_thirdparty_common")
 include("koreader_thirdparty_git")
 
+list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/no_cmake_rpath_shenanigans.patch)
+
 # Make sure the daisy-chain once again picks up our toolchain file...
 list(APPEND CMAKE_ARGS "-DCMAKE_TOOLCHAIN_FILE=${CMAKE_TCF}")
 
@@ -38,6 +40,7 @@ ko_write_gitclone_script(
 
 external_project(
     DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
+    PATCH_COMMAND ${PATCH_CMD}
     CMAKE_ARGS "${CMAKE_ARGS}"
     BUILD_COMMAND ${BUILD_CMD}
     INSTALL_COMMAND ${INSTALL_CMD}

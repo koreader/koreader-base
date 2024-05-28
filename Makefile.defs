@@ -1075,7 +1075,11 @@ set(CMAKE_BUILD_TYPE $(if $(KODEBUG),Debug,Release))
 set(CMAKE_DEBUG_POSTFIX "")
 
 # Disable run time path handling (we have our own).
-set(CMAKE_SKIP_RPATH TRUE)
+# And no, just using `set(CMAKE_SKIP_RPATH TRUE)`
+# does not work: we end up with empty RPATH entries
+# in some cases (e.g. with libwebp).
+set(CMAKE_INSTALL_RPATH "")
+set(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
 
 # C language.
 $(if $(CCACHE),set(CMAKE_C_COMPILER_LAUNCHER $(CCACHE)))
