@@ -15,12 +15,9 @@ list(APPEND INSTALL_CMD COMMAND ${CMAKE_COMMAND} --install .)
 list(APPEND INSTALL_CMD COMMAND mkdir -p ${INSTALL_DIR}/include/contrib/minizip)
 list(APPEND INSTALL_CMD COMMAND cp ${SOURCE_DIR}/contrib/minizip/crypt.h ${INSTALL_DIR}/include/contrib/minizip/)
 
-set(ZLIB_VER "1.3")
-set(ZLIB_MD5 "b49e70aacafacfceb1107943497f5545")
-
 external_project(
-    URL https://github.com/madler/zlib/releases/download/v${ZLIB_VER}/zlib-${ZLIB_VER}.tar.xz
-    URL_MD5 ${ZLIB_MD5}
+    URL https://github.com/madler/zlib/releases/download/v1.3/zlib-1.3.tar.xz
+    URL_MD5 b49e70aacafacfceb1107943497f5545
     CMAKE_ARGS ${CMAKE_ARGS}
     BUILD_COMMAND ${BUILD_CMD}
     INSTALL_COMMAND ${INSTALL_CMD}
