@@ -1,0 +1,44 @@
+--- a/k2pdfoptlib/k2sys.c
++++ b/k2pdfoptlib/k2sys.c
+@@ -103,14 +103,12 @@ void k2sys_enter_to_exit(K2PDFOPT_SETTINGS *k2settings)
+ void k2sys_header(char *s)
+ 
+     {
+-    char date[32];
+     char cap[32];
+     char k2pdfopt_os[64];
+     char k2pdfopt_chip[64];
+     char k2pdfopt_compiler[64];
+     extern char *k2pdfopt_version;
+ 
+-    strcpy(date,__DATE__);
+ #ifdef HAVE_MUPDF_LIB
+     strcpy(cap," (w/MuPDF");
+ #else
+@@ -128,20 +126,18 @@ void k2sys_header(char *s)
+         strcat(cap,")");
+     wsys_system_version(NULL,k2pdfopt_os,k2pdfopt_chip,k2pdfopt_compiler);
+     if (s==NULL)
+-        k2printf(TTEXT_HEADER "k2pdfopt %s" TTEXT_NORMAL "%s (c) %s, GPLv3, http://willus.com\n"
+-            "    Compiled %s with %s for %s on %s.\n\n",
++        k2printf(TTEXT_HEADER "k2pdfopt %s" TTEXT_NORMAL "%s (c), GPLv3, http://willus.com\n"
++            "    Compiled with %s for %s on %s.\n\n",
+            k2pdfopt_version,cap,
+-           &date[strlen(date)-4],
+-           __DATE__,k2pdfopt_compiler,k2pdfopt_os,k2pdfopt_chip);
++           k2pdfopt_compiler,k2pdfopt_os,k2pdfopt_chip);
+     else
+         sprintf(s,"k2pdfopt %s%s\r\n"
+-                  "(c) %s, GPLv3, http://willus.com\r\n"
+-                  "Compiled %s\r\n"
++                  "(c), GPLv3, http://willus.com\r\n"
++                  "Compiled\r\n"
+                   "    with %s\r\n"
+                   "    for %s on %s.",
+            k2pdfopt_version,cap,
+-           &date[strlen(date)-4],
+-           __DATE__,k2pdfopt_compiler,k2pdfopt_os,k2pdfopt_chip);
++           k2pdfopt_compiler,k2pdfopt_os,k2pdfopt_chip);
+     }
+ 
+ 
