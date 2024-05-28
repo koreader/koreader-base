@@ -4,118 +4,53 @@ project(curl LANGUAGES)
 include(koreader_thirdparty_common)
 include(koreader_thirdparty_git)
 
-assert_var_defined(CC)
-assert_var_defined(CFLAGS)
-assert_var_defined(LDFLAGS)
 assert_var_defined(OPENSSL_DIR)
+assert_var_defined(CRYPTO_LIB)
+assert_var_defined(SSL_LIB)
 assert_var_defined(ZLIB_DIR)
+assert_var_defined(ZLIB)
 
-# Gentoo patchset
 list(APPEND PATCH_CMD COMMAND ${KO_PATCH}
-    ${CMAKE_CURRENT_SOURCE_DIR}/curl-respect-cflags-3.patch
-    ${CMAKE_CURRENT_SOURCE_DIR}/curl-8.5.0-ipv6-configure-c99.patch
+    # Gentoo patchset
     ${CMAKE_CURRENT_SOURCE_DIR}/curl-8.5.0-mpd-stream-http-adjust_pollset.patch
+    # Need `-lrt` for `clock_gettime` support.
+    ${CMAKE_CURRENT_SOURCE_DIR}/clock_gettime_needs_rt.patch
 )
 # NOTE: Because InkView is the worst, we rename our own cURL build on PocketBook.... (#5861)
 if(POCKETBOOK)
-    list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/curl-8.5.0-pb-rename.patch)
+    list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/pocketbook_lib_rename.patch)
 endif()
 
-list(APPEND PATCH_CMD COMMAND ${ISED} "/LD_LIBRARY_PATH=/d" ${SOURCE_DIR}/configure.ac)
-list(APPEND PATCH_CMD COMMAND ${ISED} "/CURL_MAC_CFLAGS/d" ${SOURCE_DIR}/configure.ac)
-list(APPEND PATCH_CMD COMMAND autoreconf -v)
-
-# Take a deep breath...
-# TODO: Flip to --with-zstd? We currently only use cURL for zsync2, so, obviously, not necessary right now...
-list(APPEND CFG_CMD COMMAND env
-    CC=${CC}
-    "CPPFLAGS=-I${ZLIB_DIR}/include -I${OPENSSL_DIR}/include"
-    CFLAGS=${CFLAGS}
-    "LDFLAGS=${LDFLAGS} -L${ZLIB_DIR}/lib -L${OPENSSL_DIR}"
-    "LIBS=-lssl -lcrypto -lz -lrt"
-    ${SOURCE_DIR}/configure --host=${CHOST} --prefix=${INSTALL_DIR}
-    --enable-shared=yes --enable-static=no
-    --disable-ares
-    --disable-ech
-    --disable-gopher
-    --disable-ldap
-    --disable-ldaps
-    --disable-ntlm
-    --disable-ntlm-wb
-    --disable-smb
-    --disable-sspi
-    --disable-websockets
-    --enable-alt-svc
-    --enable-aws
-    --enable-basic-auth
-    --enable-bearer-auth
-    --enable-cookies
-    --enable-dateparse
-    --enable-dict
-    --enable-digest-auth
-    --enable-dnsshuffle
-    --enable-doh
-    --enable-file
-    --enable-ftp
-    --enable-hsts
-    --enable-http
-    --enable-http-auth
-    --enable-imap
-    --enable-ipv6
-    --enable-kerberos-auth
-    --enable-largefile
-    --enable-manual
-    --enable-mime
-    --enable-negotiate-auth
-    --enable-netrc
-    --enable-pop3
-    --enable-progress-meter
-    --enable-proxy
-    --enable-pthreads
-    --enable-rt
-    --enable-rtsp
-    --enable-smtp
-    --enable-socketpair
-    --enable-symbol-hiding
-    --enable-telnet
-    --enable-tftp
-    --enable-threaded-resolver
-    --enable-tls-srp
-    --enable-versioned-symbols
-    --with-ca-bundle=./data/ca-bundle.crt
-    --with-ca-fallback
-    --with-ca-path=/etc/ssl/certs
-    --with-default-ssl-backend=openssl
-    --with-ssl
-    --with-zlib
-    --without-amissl
-    --without-bearssl
-    --without-brotli
-    --without-fish-functions-dir
-    --without-gnutls
-    --without-gssapi
-    --without-hyper
-    --without-libgsasl
-    --without-libidn2
-    --without-libpsl
-    --without-librtmp
-    --without-libssh2
-    --without-mbedtls
-    --without-msh3
-    --without-nghttp2
-    --without-nghttp3
-    --without-ngtcp2
-    --without-quiche
-    --without-rustls
-    --without-schannel
-    --without-secure-transport
-    --without-test-caddy
-    --without-test-httpd
-    --without-test-nghttpx
-    --without-winidn
-    --without-wolfssl
-    --without-zsh-functions-dir
-    --without-zstd
+list(APPEND CMAKE_ARGS
+    -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TCF}
+    -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR}
+    # Project options.
+    # TODO: Enable ZSTD support? We currently only use cURL
+    # for zsync2, so, obviously, not necessary right now…
+    -DBUILD_CURL_EXE=FALSE
+    -DBUILD_TESTING=FALSE
+    -DCURL_CA_BUNDLE=./data/ca-bundle.crt
+    -DCURL_CA_FALLBACK=TRUE
+    -DCURL_CA_PATH=/etc/ssl/certs
+    -DCURL_DISABLE_GOPHER=TRUE
+    -DCURL_DISABLE_LDAP=TRUE
+    -DCURL_DISABLE_LDAPS=TRUE
+    -DCURL_DISABLE_NTLM=TRUE
+    -DCURL_DISABLE_SMB=TRUE
+    -DCURL_USE_LIBPSL=FALSE
+    -DCURL_USE_LIBSSH2=FALSE
+    -DENABLE_MANUAL=FALSE
+    -DUSE_LIBIDN2=FALSE
+    # OpenSSL.
+    -DCURL_DEFAULT_SSL_BACKEND=openssl
+    -DCURL_USE_OPENSSL=TRUE
+    -DOPENSSL_INCLUDE_DIR=${OPENSSL_DIR}/include
+    -DOPENSSL_CRYPTO_LIBRARY=${CRYPTO_LIB}
+    -DOPENSSL_SSL_LIBRARY=${SSL_LIB}
+    # ZLIB.
+    -DCURL_ZLIB=TRUE
+    -DZLIB_INCLUDE_DIR=${ZLIB_DIR}/include
+    -DZLIB_LIBRARY=${ZLIB}
 )
 
 # Don't use the default build system rule to create the certificates
@@ -123,16 +58,16 @@ list(APPEND CFG_CMD COMMAND env
 # resulting in regular failures.
 set(CA_BUNDLE_CMD ${CMAKE_CURRENT_LIST_DIR}/fetch-ca-bundle.sh ${DOWNLOAD_DIR}/ca-bundle.crt)
 
-list(APPEND BUILD_CMD COMMAND ${KO_MAKE_RECURSIVE} -C lib)
+list(APPEND BUILD_CMD COMMAND ${KO_MAKE_PROGRAM} lib/all)
 
-list(APPEND INSTALL_CMD COMMAND ${KO_MAKE_RECURSIVE} install)
+list(APPEND INSTALL_CMD COMMAND ${CMAKE_COMMAND} --install .)
 list(APPEND INSTALL_CMD COMMAND ${CMAKE_COMMAND} -E copy ${DOWNLOAD_DIR}/ca-bundle.crt ${INSTALL_DIR}/ca-bundle.crt)
 
 external_project(
     URL https://github.com/curl/curl/releases/download/curl-8_5_0/curl-8.5.0.tar.xz
     URL_MD5 3e9e5c2db494e7dbd4e7024b149021c9
     PATCH_COMMAND ${PATCH_CMD}
-    CONFIGURE_COMMAND ${CFG_CMD}
+    CMAKE_ARGS ${CMAKE_ARGS}
     BUILD_COMMAND ${BUILD_CMD}
     INSTALL_COMMAND ${INSTALL_CMD}
 )
