@@ -115,7 +115,7 @@ $(OUTPUT_DIR)/libs/libkoreader-input.so: input/*.c input/*.h $(if $(or $(KINDLE)
 		-o $@ \
 		input/input.c \
 		$(if $(or $(KINDLE),$(REMARKABLE)),$(POPEN_NOSHELL_LIB),) \
-		$(if $(POCKETBOOK),-linkview,)
+		$(if $(POCKETBOOK),-ldl -linkview -pthread,)
 
 # Would need a bit of patching to be able to use -fvisibility=hidden...
 $(OUTPUT_DIR)/libs/libkoreader-lfs.so: \
