@@ -196,7 +196,7 @@ ifdef DARWIN
 		$(LUNASVG_LIB)
 endif
 
-$(DJVULIBRE_LIB): $(JPEG_LIB) $(THIRDPARTY_DIR)/djvulibre/*.*
+$(DJVULIBRE_LIB): $(THIRDPARTY_DIR)/djvulibre/*.*
 	$(CMAKE) $(CMAKE_FLAGS) \
 		-DCC='$(CC)' \
 		-DCXX='$(CXX)' \
