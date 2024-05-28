@@ -755,12 +755,13 @@ CRENGINE_CFLAGS = \
 		'-I$(HARFBUZZ_DIR)/include/harfbuzz' \
 		'-I$(LIBUNIBREAK_DIR)/include' \
 
-LUAJIT_BUILD_DIR=$(THIRDPARTY_BUILD)/luajit
-LUAJIT_DIR=$(abspath $(LUAJIT_BUILD_DIR)/source)
-LUAJIT=$(OUTPUT_DIR)/$(if $(WIN32),luajit.exe,luajit)
-LUAJIT_JIT=$(OUTPUT_DIR)/jit
-LUAJIT_LIB=$(OUTPUT_DIR)/$(if $(WIN32),lua51.dll,libs/libluajit.so)
-LUAJIT_STATIC=$(LUAJIT_DIR)/src/libluajit.a
+LUAJIT_BUILD_DIR = $(THIRDPARTY_BUILD)/luajit
+LUAJIT_DIR = $(abspath $(STAGING_DIR)/luajit)
+LUAJIT = $(OUTPUT_DIR)/$(if $(WIN32),luajit.exe,luajit)
+LUAJIT_INC = $(LUAJIT_DIR)/include/luajit-2.1
+LUAJIT_JIT = $(OUTPUT_DIR)/jit
+LUAJIT_LIB = $(if $(USE_LUAJIT_LIB),$(OUTPUT_DIR)/$(if $(WIN32),lua51.dll,libs/libluajit.so))
+LUAJIT_STATIC = $(LUAJIT_DIR)/lib/libluajit.a
 ifeq ($(USE_LUAJIT_LIB), 1)
 	LUAJIT_LIB_LINK_FLAG=$(if $(WIN32),-l:lua51.dll,-lluajit)
 endif
@@ -921,8 +922,6 @@ LUAROCKS_BINARY=luarocks
 ifeq ($(LR_GT_3_0),1)
 LUAROCKS_BINARY+=--lua-version=5.1
 endif
-LUA_INCDIR=$(LUAJIT_DIR)/src
-LUA_LIBDIR=$(abspath $(dir $(LUAJIT_LIB)))
 
 LUA_HTMLPARSER_BUILD_DIR = $(THIRDPARTY_BUILD)/lua-htmlparser
 LUA_HTMLPARSER_DIR = $(THIRDPARTY_BUILD)/lua-htmlparser/source
@@ -979,8 +978,8 @@ DYNLIB_LDFLAGS = -shared
 ifdef DARWIN
 	DYNLIB_LDFLAGS += -dynamiclib -undefined dynamic_lookup
 endif
-DYNLIB_CFLAGS=-L$(abspath $(OUTPUT_DIR)/libs) $(CFLAGS) -I$(LUAJIT_DIR)/src $(DYNLIB_LDFLAGS)
-DYNLIB_CXXFLAGS=-L$(abspath $(OUTPUT_DIR)/libs) $(CXXFLAGS) -I$(LUAJIT_DIR)/src $(DYNLIB_LDFLAGS)
+DYNLIB_CFLAGS=-L$(abspath $(OUTPUT_DIR)/libs) $(CFLAGS) -I$(LUAJIT_INC) $(DYNLIB_LDFLAGS)
+DYNLIB_CXXFLAGS=-L$(abspath $(OUTPUT_DIR)/libs) $(CXXFLAGS) -I$(LUAJIT_INC) $(DYNLIB_LDFLAGS)
 ifdef DARWIN
   DYNLIB_CFLAGS += -install_name '@rpath/$(notdir $@)'
   DYNLIB_CXXFLAGS += -install_name '@rpath/$(notdir $@)'
