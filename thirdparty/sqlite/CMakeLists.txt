@@ -1,8 +1,3 @@
-cmake_minimum_required(VERSION 3.15)
-project(sqlite LANGUAGES)
-
-include(koreader_thirdparty_common)
-
 string(APPEND CFLAGS " -fno-fast-math")
 string(APPEND CPPFLAGS " -DNDEBUG -DSQLITE_DEFAULT_MEMSTATUS=0 -DSQLITE_DEFAULT_WAL_SYNCHRONOUS=1 -DSQLITE_LIKE_DOESNT_MATCH_BLOBS -DSQLITE_MAX_EXPR_DEPTH=0 -DSQLITE_OMIT_DECLTYPE -DSQLITE_OMIT_DEPRECATED -DSQLITE_OMIT_PROGRESS_CALLBACK -DSQLITE_OMIT_SHARED_CACHE -DSQLITE_USE_ALLOCA")
 
@@ -12,7 +7,7 @@ list(APPEND CFG_CMD
     # Explicitly disable zlib, because it's only optionally used by the shell & extensions, and we disable both of those.
     # This should hopefully prevent Android from picking it up...
     ac_cv_header_zlib_h=no
-    ${SOURCE_DIR}/configure --host=${CHOST} --prefix=${STAGING_DIR}
+    ${SOURCE_DIR}/configure --host=${CHOST} --prefix=/
     --disable-static --enable-shared
     --disable-dynamic-extensions
     --disable-editline
@@ -22,11 +17,25 @@ list(APPEND CFG_CMD
     --enable-threadsafe
 )
 
-list(APPEND BUILD_CMD COMMAND ${KO_MAKE_RECURSIVE})
+list(APPEND BUILD_CMD COMMAND ${KO_MAKE_RECURSIVE} libsqlite3.la)
+
+list(APPEND INSTALL_CMD COMMAND ${KO_MAKE_RECURSIVE}
+    DESTDIR=${STAGING_DIR}
+    install-includeHEADERS
+    install-libLTLIBRARIES
+    install-pkgconfigDATA
+)
+
+# FIXME: shouldn't the versioned `libsqlite3.so.0` be used?
+if(DARWIN)
+    append_shared_lib_fix_commands(INSTALL_CMD sqlite3 ID)
+endif()
+append_shared_lib_install_commands(INSTALL_CMD sqlite3)
 
 external_project(
     URL https://www.sqlite.org/2024/sqlite-autoconf-3450000.tar.gz
     URL_MD5 d6150f5dc837ae94b7d735f1b611b634
     CONFIGURE_COMMAND ${CFG_CMD}
     BUILD_COMMAND ${BUILD_CMD}
+    INSTALL_COMMAND ${INSTALL_CMD}
 )

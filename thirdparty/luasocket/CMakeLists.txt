@@ -1,9 +1,3 @@
-cmake_minimum_required(VERSION 3.15)
-project(luasocket LANGUAGES)
-
-include(koreader_thirdparty_common)
-include(koreader_thirdparty_git)
-
 # Build in source tree.
 set(BINARY_DIR ${SOURCE_DIR})
 
@@ -33,8 +27,6 @@ endif()
 
 string(JOIN " " MYLDFLAGS ${LDFLAGS} ${LUAJIT_LIB})
 
-set(LUAPATH "${OUTPUT_DIR}/common")
-
 list(APPEND BUILD_CMD COMMAND
     ${KO_MAKE_RECURSIVE}
     "CC=${CC} ${CFLAGS}"
@@ -42,14 +34,22 @@ list(APPEND BUILD_CMD COMMAND
     LUAINC=${LUAJIT_INC}
     MYLDFLAGS=${MYLDFLAGS}
     PLAT=${PLAT}
+    SOCKET_SO=score.so MIME_SO=mcore.so
 )
 
-list(APPEND INSTALL_CMD COMMAND
-    ${KO_MAKE_RECURSIVE}
-    INSTALL_TOP_LDIR=${LUAPATH}
-    INSTALL_TOP_CDIR=${LUAPATH}
-    install
+append_install_commands(
+    INSTALL_CMD
+    src/ltn12.lua src/mime.lua src/socket.lua
+    DESTINATION common
 )
+append_install_commands(
+    INSTALL_CMD
+    src/ftp.lua src/headers.lua src/http.lua
+    src/smtp.lua src/tp.lua src/url.lua
+    DESTINATION common/socket
+)
+append_binary_install_command(INSTALL_CMD src/score.so DESTINATION common/socket)
+append_binary_install_command(INSTALL_CMD src/mcore.so DESTINATION common/mime)
 
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME

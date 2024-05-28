@@ -1,9 +1,3 @@
-cmake_minimum_required(VERSION 3.15)
-project(tesseract LANGUAGES)
-
-include(koreader_thirdparty_common)
-include(koreader_thirdparty_git)
-
 list(APPEND PATCH_CMD COMMAND ${KO_PATCH}
     ${CMAKE_CURRENT_SOURCE_DIR}/k2pdfopt.patch
     ${CMAKE_CURRENT_SOURCE_DIR}/cmake_tweaks.patch
@@ -17,7 +11,9 @@ list(APPEND CMAKE_ARGS
 
 list(APPEND BUILD_CMD COMMAND ${KO_MAKE_PROGRAM})
 
-list(APPEND INSTALL_CMD COMMAND ${CMAKE_COMMAND} --install . --verbose)
+list(APPEND INSTALL_CMD COMMAND ${CMAKE_COMMAND} --install .)
+
+append_shared_lib_install_commands(INSTALL_CMD tesseract VERSION 3)
 
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME

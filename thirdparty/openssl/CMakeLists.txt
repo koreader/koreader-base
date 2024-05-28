@@ -1,12 +1,7 @@
-cmake_minimum_required(VERSION 3.15)
-project(openssl LANGUAGES)
-
-include(koreader_thirdparty_common)
-include(koreader_thirdparty_git)
-
 list(APPEND PATCH_CMD COMMAND ${KO_PATCH}
     ${CMAKE_CURRENT_SOURCE_DIR}/openssl-1.1.0j-parallel_install_fix.patch
     ${CMAKE_CURRENT_SOURCE_DIR}/reduce_build_verbosity.patch
+    ${CMAKE_CURRENT_SOURCE_DIR}/macos_rpath.patch
 )
 
 list(APPEND CFG_ENV_VAR
@@ -96,11 +91,12 @@ set(MAKE_CMD
     SOURCE_DATE_EPOCH=1694383200
 )
 
-# NOTE: Make depend may fail when using ccache, and may fail when // (on some OpenSSL versions, at least)
-list(APPEND BUILD_CMD COMMAND ${MAKE_CMD} -j1 depend)
 list(APPEND BUILD_CMD COMMAND ${MAKE_CMD} build_libs)
 
 list(APPEND INSTALL_CMD COMMAND ${MAKE_CMD} install_dev)
+
+append_shared_lib_install_commands(INSTALL_CMD crypto VERSION 1.1)
+append_shared_lib_install_commands(INSTALL_CMD ssl VERSION 1.1)
 
 external_project(
     URL https://github.com/openssl/openssl/releases/download/OpenSSL_1_1_1w/openssl-1.1.1w.tar.gz

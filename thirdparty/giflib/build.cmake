@@ -9,3 +9,6 @@ set_target_properties(gif PROPERTIES SOVERSION 7)
 if(DEFINED ANDROID_STL)
     target_compile_definitions(gif PRIVATE -DS_IREAD=S_IRUSR -DS_IWRITE=S_IWUSR)
 endif()
+
+install(TARGETS gif)
+install(FILES gif_lib.h TYPE INCLUDE)

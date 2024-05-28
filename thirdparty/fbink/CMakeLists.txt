@@ -1,8 +1,4 @@
-cmake_minimum_required(VERSION 3.15)
-project(${TOOL} LANGUAGES)
-
-include("koreader_thirdparty_common")
-include("koreader_thirdparty_git")
+set(TOOL ${PROJECT_NAME})
 
 # Build in source tree.
 set(BINARY_DIR ${SOURCE_DIR})
@@ -41,6 +37,7 @@ append_autotools_vars(BUILD_CMD)
 
 if(TOOL STREQUAL "fbdepth")
     list(APPEND BUILD_CMD ${FBDEPTH_TARGET})
+    append_binary_install_command(INSTALL_CMD ${CMAKE_BUILD_TYPE}/fbdepth)
 elseif(TOOL STREQUAL "fbink")
     list(APPEND BUILD_CMD
         # Minimal-ish, statically linked build,
@@ -50,8 +47,10 @@ elseif(TOOL STREQUAL "fbink")
         OPENTYPE=1
         ${FBINK_TARGET}
     )
+    append_binary_install_command(INSTALL_CMD ${CMAKE_BUILD_TYPE}/fbink)
 elseif(TOOL STREQUAL "libfbink_input")
     list(APPEND BUILD_CMD ${INPUT_TARGET})
+    append_binary_install_command(INSTALL_CMD ${CMAKE_BUILD_TYPE}/libfbink_input.so.1 DESTINATION libs)
 else()
     message(FATAL_ERROR "TOOL not set or unsupported: '${TOOL}'")
 endif()
@@ -66,4 +65,5 @@ ko_write_gitclone_script(
 external_project(
     DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
     BUILD_COMMAND ${BUILD_CMD}
+    INSTALL_COMMAND ${INSTALL_CMD}
 )

@@ -1,14 +1,10 @@
-cmake_minimum_required(VERSION 3.15)
-project(libk2pdfopt LANGUAGES)
-
-include(koreader_thirdparty_common)
-include(koreader_thirdparty_git)
-
 list(APPEND CMAKE_ARGS -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TCF})
 
 list(APPEND BUILD_CMD COMMAND ${KO_MAKE_PROGRAM})
 
 list(APPEND INSTALL_CMD COMMAND ${CMAKE_COMMAND} --install .)
+
+append_shared_lib_install_commands(INSTALL_CMD k2pdfopt VERSION 2)
 
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME

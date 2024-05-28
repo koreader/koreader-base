@@ -1,9 +1,3 @@
-cmake_minimum_required(VERSION 3.15)
-project(libzmq LANGUAGES)
-
-include("koreader_thirdparty_common")
-include("koreader_thirdparty_git")
-
 list(APPEND PATCH_CMD COMMAND ${KO_PATCH}
     ${CMAKE_CURRENT_SOURCE_DIR}/android.patch
     ${CMAKE_CURRENT_SOURCE_DIR}/cmake_tweaks.patch
@@ -38,6 +32,8 @@ endif()
 list(APPEND BUILD_CMD COMMAND ${KO_MAKE_PROGRAM})
 
 list(APPEND INSTALL_CMD COMMAND ${CMAKE_COMMAND} --install .)
+
+append_shared_lib_install_commands(INSTALL_CMD zmq VERSION 4)
 
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME

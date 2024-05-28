@@ -1,9 +1,3 @@
-cmake_minimum_required(VERSION 3.15)
-project(libwebp LANGUAGES)
-
-include("koreader_thirdparty_common")
-include("koreader_thirdparty_git")
-
 list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake_tweaks.patch)
 
 list(APPEND CMAKE_ARGS
@@ -30,6 +24,10 @@ list(APPEND CMAKE_ARGS
 list(APPEND BUILD_CMD COMMAND ${KO_MAKE_PROGRAM})
 
 list(APPEND INSTALL_CMD COMMAND ${CMAKE_COMMAND} --install .)
+
+append_shared_lib_install_commands(INSTALL_CMD sharpyuv VERSION 0)
+append_shared_lib_install_commands(INSTALL_CMD webpdemux VERSION 2)
+append_shared_lib_install_commands(INSTALL_CMD webp VERSION 7)
 
 external_project(
     URL https://storage.googleapis.com/downloads.webmproject.org/releases/webp/libwebp-1.3.2.tar.gz
