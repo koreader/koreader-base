@@ -4,27 +4,16 @@ project(giflib LANGUAGES)
 include(koreader_thirdparty_common)
 include(koreader_thirdparty_git)
 
-list(APPEND PATCH_CMD ${ISED} "s|\\$srcdir/configure \\$\\*||g" autogen.sh)
-list(APPEND PATCH_CMD COMMAND ./autogen.sh)
+list(APPEND PATCH_CMD COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/build.cmake CMakeLists.txt)
 
-list(APPEND CFG_CMD COMMAND env
-    CC=${CC}
-    CFLAGS=${CFLAGS}
-    LDFLAGS=${LDFLAGS}
-    ac_cv_prog_have_xmlto=no
-    ${SOURCE_DIR}/configure --host=${CHOST} --prefix=${INSTALL_DIR}
-    --disable-static --enable-shared
-)
-
-# use limits.h instead of stdint.h for android build
 if(ANDROID)
-    list(APPEND CFG_CMD COMMAND ${ISED} "s|stdint.h|limits.h|g" lib/openbsd-reallocarray.c)
-    list(APPEND CFG_CMD COMMAND ${ANDROID_LIBTOOL_FIX_CMD})
+    # Use `limits.h` instead of `stdint.h`.
+    list(APPEND PATCH_CMD COMMAND ${ISED} "s|stdint.h|limits.h|g" lib/openbsd-reallocarray.c)
 endif()
 
-list(APPEND BUILD_CMD COMMAND ${KO_MAKE_RECURSIVE})
+list(APPEND CMAKE_ARGS -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TCF})
 
-list(APPEND INSTALL_CMD COMMAND ${KO_MAKE_RECURSIVE} install)
+list(APPEND BUILD_CMD COMMAND ${KO_MAKE_PROGRAM})
 
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
@@ -36,7 +25,6 @@ ko_write_gitclone_script(
 external_project(
     DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
     PATCH_COMMAND ${PATCH_CMD}
-    CONFIGURE_COMMAND ${CFG_CMD}
+    CMAKE_ARGS ${CMAKE_ARGS}
     BUILD_COMMAND ${BUILD_CMD}
-    INSTALL_COMMAND ${INSTALL_CMD}
 )
