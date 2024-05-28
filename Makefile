@@ -123,11 +123,11 @@ $(OUTPUT_DIR)/libs/libkoreader-input.so: input/*.c input/*.h $(if $(or $(KINDLE)
 
 # Would need a bit of patching to be able to use -fvisibility=hidden...
 $(OUTPUT_DIR)/libs/libkoreader-lfs.so: \
-			$(if $(USE_LUAJIT_LIB),$(LUAJIT_LIB),) \
+			$(LUAJIT_LIB) \
 			luafilesystem/src/lfs.c
 	# Avoid precision loss on 32-bit arches (LFS is always built w/ LARGEFILE support, but lua_Integer is always a ptrdiff_t, which is not wide enough).
 	-patch -d luafilesystem -t -N --no-backup-if-mismatch -r - -p1 < patches/lfs-pushnumber-for-wide-types.patch
-	$(CC) $(DYNLIB_CFLAGS) $(LDFLAGS) -o $@ luafilesystem/src/lfs.c $(LUAJIT_LIB_LINK_FLAG)
+	$(CC) $(DYNLIB_CFLAGS) $(LDFLAGS) -o $@ luafilesystem/src/lfs.c $(LUAJIT_LIB)
 	-patch -d luafilesystem -t -R --no-backup-if-mismatch -r - -p1 < patches/lfs-pushnumber-for-wide-types.patch
 ifdef DARWIN
 	install_name_tool -change \
@@ -139,11 +139,11 @@ endif
 # put all the libs to the end of compile command to make ubuntu's tool chain
 # happy
 $(OUTPUT_DIR)/libs/libkoreader-djvu.so: djvu.c \
-			$(if $(USE_LUAJIT_LIB),$(LUAJIT_LIB),) \
+			$(LUAJIT_LIB) \
 			$(DJVULIBRE_LIB) $(K2PDFOPT_LIB)
 	$(CC) -I$(DJVULIBRE_DIR)/include -I$(MUPDF_DIR)/include $(K2PDFOPT_CFLAGS) \
 		$(DYNLIB_CFLAGS) $(SYMVIS_FLAGS) $(LDFLAGS) -o $@ djvu.c \
-		$(DJVULIBRE_LIB_LINK_FLAG) $(K2PDFOPT_LIB_LINK_FLAG) $(LUAJIT_LIB_LINK_FLAG)
+		$(DJVULIBRE_LIB_LINK_FLAG) $(K2PDFOPT_LIB_LINK_FLAG) $(LUAJIT_LIB)
 ifdef DARWIN
 	install_name_tool -change \
 		`otool -L "$@" | grep "libluajit" | awk '{print $$1}'` \
@@ -160,7 +160,7 @@ ifdef DARWIN
 endif
 
 $(OUTPUT_DIR)/libs/libkoreader-cre.so: cre.cpp \
-			$(if $(USE_LUAJIT_LIB),$(LUAJIT_LIB),) \
+			$(LUAJIT_LIB) \
 			$(CRENGINE_LIB) $(CRENGINE_THIRDPARTY_LIBS) $(CRENGINE_NEEDED_LIBS)
 	$(CXX) $(CRENGINE_CFLAGS) $(DYNLIB_CXXFLAGS) \
 		$(SYMVIS_FLAGS) $(LDFLAGS) -o $@ cre.cpp \
@@ -168,7 +168,8 @@ $(OUTPUT_DIR)/libs/libkoreader-cre.so: cre.cpp \
 		$(FRIBIDI_LIB) $(HARFBUZZ_LIB_LINK_FLAG) $(JPEG_LIB_LINK_FLAG) \
 		$(PNG_LIB) $(LIBUNIBREAK_LIB_LINK_FLAG) $(LIBWEBP_LIB) \
 		$(LIBWEBPDEMUX_LIB) $(LUNASVG_LIB) $(UTF8PROC_LIB) $(ZLIB) \
-		$(ZSTD_LIB) $(LUAJIT_LIB_LINK_FLAG)
+		$(ZSTD_LIB) $(LUAJIT_LIB) \
+		$(if $(ANDROID),$(SHARED_STL_LINK_FLAG),)
 ifdef DARWIN
 	install_name_tool -change \
 		`otool -L "$@" | grep "libluajit" | awk '{print $$1}'` \
@@ -177,7 +178,7 @@ ifdef DARWIN
 endif
 
 $(OUTPUT_DIR)/libs/libkoreader-xtext.so: xtext.cpp \
-			$(if $(USE_LUAJIT_LIB),$(LUAJIT_LIB),) \
+			$(LUAJIT_LIB) \
 			$(FREETYPE_LIB) $(HARFBUZZ_LIB) $(FRIBIDI_LIB) $(LIBUNIBREAK_LIB)
 	$(CXX) -I$(FREETYPE_DIR)/include/freetype2 \
 	-I$(HARFBUZZ_DIR)/include/harfbuzz \
@@ -189,7 +190,7 @@ $(OUTPUT_DIR)/libs/libkoreader-xtext.so: xtext.cpp \
 	$(FRIBIDI_LIB_LINK_FLAG) \
 	$(HARFBUZZ_LIB_LINK_FLAG) \
 	$(LIBUNIBREAK_LIB_LINK_FLAG) \
-	$(LUAJIT_LIB_LINK_FLAG)
+	$(LUAJIT_LIB)
 ifdef DARWIN
 	install_name_tool -change \
 		`otool -L "$@" | grep "libluajit" | awk '{print $$1}'` \
@@ -206,10 +207,10 @@ ifdef DARWIN
 endif
 
 $(OUTPUT_DIR)/libs/libkoreader-nnsvg.so: nnsvg.c \
-			$(if $(USE_LUAJIT_LIB),$(LUAJIT_LIB),) \
+			$(LUAJIT_LIB) \
 			$(NANOSVG_HEADERS)
 	$(CC) -I$(NANOSVG_INCLUDE_DIR) \
-	$(DYNLIB_CFLAGS) -Wall $(SYMVIS_FLAGS) $(LDFLAGS) -o $@ nnsvg.c $(LUAJIT_LIB_LINK_FLAG) -lm
+	$(DYNLIB_CFLAGS) -Wall $(SYMVIS_FLAGS) $(LDFLAGS) -o $@ nnsvg.c $(LUAJIT_LIB) -lm
 ifdef DARWIN
 	install_name_tool -change \
 		`otool -L "$@" | grep "libluajit" | awk '{print $$1}'` \
