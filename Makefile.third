@@ -10,19 +10,17 @@ fetchthirdparty:
 $(FREETYPE_LIB): $(THIRDPARTY_DIR)/freetype2/*.*
 	$(CMAKE) $(CMAKE_FLAGS) -S $(THIRDPARTY_DIR)/freetype2 -B $(FREETYPE_BUILD_DIR)
 	$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS) -C $(FREETYPE_BUILD_DIR)
-	cp -fL $(FREETYPE_DIR)/$(if $(WIN32),bin,lib)/$(notdir $(FREETYPE_LIB)) $(FREETYPE_LIB)
+	cp -fL $(STAGING_DIR)/lib/$(notdir $(FREETYPE_LIB)) $(FREETYPE_LIB)
 
 $(HARFBUZZ_LIB): $(FREETYPE_LIB) $(THIRDPARTY_DIR)/harfbuzz/*.*
-	$(CMAKE) $(CMAKE_FLAGS) \
-		-DFREETYPE_DIR='$(FREETYPE_DIR)' \
-		-S $(THIRDPARTY_DIR)/harfbuzz -B $(HARFBUZZ_BUILD_DIR)
+	$(CMAKE) $(CMAKE_FLAGS) -S $(THIRDPARTY_DIR)/harfbuzz -B $(HARFBUZZ_BUILD_DIR)
 	$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS) -C $(HARFBUZZ_BUILD_DIR)
-	cp -fL $(HARFBUZZ_DIR)/lib/$(notdir $(HARFBUZZ_LIB)) $(HARFBUZZ_LIB)
+	cp -fL $(STAGING_DIR)/lib/$(notdir $(HARFBUZZ_LIB)) $(HARFBUZZ_LIB)
 
 $(UTF8PROC_LIB): $(THIRDPARTY_DIR)/utf8proc/*.*
 	$(CMAKE) $(CMAKE_FLAGS) -S $(THIRDPARTY_DIR)/utf8proc -B $(UTF8PROC_BUILD_DIR)
 	$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS) -C $(UTF8PROC_BUILD_DIR)
-	cp -fL $(UTF8PROC_DIR)/lib/$(notdir $(UTF8PROC_LIB)) $(UTF8PROC_LIB)
+	cp -fL $(STAGING_DIR)/lib/$(notdir $(UTF8PROC_LIB)) $(UTF8PROC_LIB)
 	chmod 755 $(UTF8PROC_LIB)
 ifdef DARWIN
 	install_name_tool -id \
@@ -33,21 +31,21 @@ endif
 $(FRIBIDI_LIB): $(THIRDPARTY_DIR)/fribidi/*.*
 	$(CMAKE) $(CMAKE_FLAGS) -S $(THIRDPARTY_DIR)/fribidi -B $(FRIBIDI_BUILD_DIR)
 	$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS) -C $(FRIBIDI_BUILD_DIR)
-	cp -fL $(FRIBIDI_DIR)/lib/$(notdir $(FRIBIDI_LIB)) $(FRIBIDI_LIB)
+	cp -fL $(STAGING_DIR)/lib/$(notdir $(FRIBIDI_LIB)) $(FRIBIDI_LIB)
 	chmod 755 $(FRIBIDI_LIB)
 
 $(LIBUNIBREAK_LIB): $(THIRDPARTY_DIR)/libunibreak/*.*
 	$(CMAKE) $(CMAKE_FLAGS) -S $(THIRDPARTY_DIR)/libunibreak -B $(LIBUNIBREAK_BUILD_DIR)
 	$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS) -C $(LIBUNIBREAK_BUILD_DIR)
-	cp -fL $(LIBUNIBREAK_DIR)/lib/$(notdir $(LIBUNIBREAK_LIB)) $(LIBUNIBREAK_LIB)
+	cp -fL $(STAGING_DIR)/lib/$(notdir $(LIBUNIBREAK_LIB)) $(LIBUNIBREAK_LIB)
 	chmod 755 $(LIBUNIBREAK_LIB)
 
 # libjpeg-turbo and libjpeg
 $(TURBOJPEG_LIB) $(JPEG_LIB): $(THIRDPARTY_DIR)/libjpeg-turbo/*.*
 	$(CMAKE) $(CMAKE_FLAGS) -S $(THIRDPARTY_DIR)/libjpeg-turbo -B $(JPEG_BUILD_DIR)
 	$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS) -C $(JPEG_BUILD_DIR)
-	cp -fL $(JPEG_DIR)/$(if $(WIN32),,lib)/$(notdir $(TURBOJPEG_LIB)) $(TURBOJPEG_LIB)
-	cp -fL $(JPEG_DIR)/$(if $(WIN32),,lib)/$(notdir $(JPEG_LIB)) $(JPEG_LIB)
+	cp -fL $(STAGING_DIR)/lib/$(notdir $(TURBOJPEG_LIB)) $(TURBOJPEG_LIB)
+	cp -fL $(STAGING_DIR)/lib/$(notdir $(JPEG_LIB)) $(JPEG_LIB)
 ifdef DARWIN
 	install_name_tool -id \
 		libs/$(notdir $(JPEG_LIB)) \
@@ -58,11 +56,9 @@ ifdef DARWIN
 endif
 
 $(PNG_LIB): $(ZLIB) $(THIRDPARTY_DIR)/libpng/*.*
-	$(CMAKE) $(CMAKE_FLAGS) \
-		-DZLIB_DIR='$(abspath $(ZLIB_DIR))' \
-		-S $(THIRDPARTY_DIR)/libpng -B $(PNG_BUILD_DIR)
+	$(CMAKE) $(CMAKE_FLAGS) -S $(THIRDPARTY_DIR)/libpng -B $(PNG_BUILD_DIR)
 	$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS) -C $(PNG_BUILD_DIR)
-	cp -fL $(PNG_DIR)/lib/$(notdir $(PNG_LIB)) $(PNG_LIB)
+	cp -fL $(STAGING_DIR)/lib/$(notdir $(PNG_LIB)) $(PNG_LIB)
 
 $(AES_LIB): $(THIRDPARTY_DIR)/minizip/*.*
 	$(CMAKE) $(CMAKE_FLAGS) -S $(THIRDPARTY_DIR)/minizip -B $(MINIZIP_BUILD_DIR)
@@ -76,23 +72,9 @@ $(MUPDF_LIB): $(JPEG_LIB) \
 		$(LIBWEBP_LIB) \
 		$(ZLIB) $(AES_LIB) \
 		$(THIRDPARTY_DIR)/mupdf/*.*
-	$(CMAKE) $(CMAKE_FLAGS) \
-		-DAES_LIB='$(abspath $(AES_LIB))' \
-		-DFREETYPE_DIR='$(abspath $(FREETYPE_DIR))' \
-		-DFREETYPE_LIB='$(abspath $(FREETYPE_LIB))' \
-		-DHARFBUZZ_DIR='$(abspath $(HARFBUZZ_DIR))' \
-		-DHARFBUZZ_LIB='$(abspath $(HARFBUZZ_LIB))' \
-		-DJPEG_DIR='$(abspath $(JPEG_DIR))' \
-		-DJPEG_LIB='$(abspath $(JPEG_LIB))' \
-		-DLIBWEBPDEMUX_LIB='$(abspath $(LIBWEBPDEMUX_LIB))' \
-		-DLIBWEBP_DIR='$(abspath $(LIBWEBP_DIR))' \
-		-DLIBWEBP_LIB='$(abspath $(LIBWEBP_LIB))' \
-		-DMINIZIP_DIR='$(abspath $(MINIZIP_DIR))' \
-		-DZLIB='$(abspath $(ZLIB))' \
-		-DZLIB_DIR='$(abspath $(ZLIB_DIR))' \
-		-S $(THIRDPARTY_DIR)/mupdf -B $(MUPDF_BUILD_DIR)
+	$(CMAKE) $(CMAKE_FLAGS) -S $(THIRDPARTY_DIR)/mupdf -B $(MUPDF_BUILD_DIR)
 	$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS) -C $(MUPDF_BUILD_DIR)
-	cp -fL $(MUPDF_DIR)/lib/$(notdir $(MUPDF_LIB)) $@
+	cp -fL $(STAGING_DIR)/lib/$(notdir $(MUPDF_LIB)) $@
 ifdef DARWIN
 	install_name_tool -change \
 		`otool -L '$(MUPDF_LIB)' | grep '$(notdir $(JPEG_LIB)) ' | awk '{print $$1}'` \
@@ -113,15 +95,15 @@ $(GIF_LIB): $(THIRDPARTY_DIR)/giflib/*.*
 $(LIBWEBP_LIB) $(LIBWEBPDEMUX_LIB) $(LIBSHARPYUV_LIB): $(THIRDPARTY_DIR)/libwebp/*.*
 	$(CMAKE) $(CMAKE_FLAGS) -S $(THIRDPARTY_DIR)/libwebp -B $(LIBWEBP_BUILD_DIR)
 	$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS) -C $(LIBWEBP_BUILD_DIR)
-	cp -fL $(LIBWEBP_DIR)/lib/$(notdir $(LIBWEBP_LIB)) $(LIBWEBP_LIB)
-	cp -fL $(LIBWEBP_DIR)/lib/$(notdir $(LIBWEBPDEMUX_LIB)) $(LIBWEBPDEMUX_LIB)
-	cp -fL $(LIBWEBP_DIR)/lib/$(notdir $(LIBSHARPYUV_LIB)) $(LIBSHARPYUV_LIB)
+	cp -fL $(STAGING_DIR)/lib/$(notdir $(LIBWEBP_LIB)) $(LIBWEBP_LIB)
+	cp -fL $(STAGING_DIR)/lib/$(notdir $(LIBWEBPDEMUX_LIB)) $(LIBWEBPDEMUX_LIB)
+	cp -fL $(STAGING_DIR)/lib/$(notdir $(LIBSHARPYUV_LIB)) $(LIBSHARPYUV_LIB)
 	chmod 755 $(LIBWEBP_LIB) $(LIBWEBPDEMUX_LIB) $(LIBSHARPYUV_LIB)
 
 $(LUNASVG_LIB): $(THIRDPARTY_DIR)/lunasvg/*.*
 	$(CMAKE) $(CMAKE_FLAGS) -S $(THIRDPARTY_DIR)/lunasvg -B $(LUNASVG_BUILD_DIR)
 	$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS) -C $(LUNASVG_BUILD_DIR)
-	cp -fL $(LUNASVG_DIR)/$(if $(WIN32),,lib)/$(notdir $(LUNASVG_LIB)) $(LUNASVG_LIB)
+	cp -fL $(STAGING_DIR)/lib/$(notdir $(LUNASVG_LIB)) $(LUNASVG_LIB)
 ifdef DARWIN
 	install_name_tool -id \
 		libs/$(notdir $(LUNASVG_LIB)) \
@@ -131,7 +113,7 @@ endif
 $(DJVULIBRE_LIB): $(THIRDPARTY_DIR)/djvulibre/*.*
 	$(CMAKE) $(CMAKE_FLAGS) -S $(THIRDPARTY_DIR)/djvulibre -B $(DJVULIBRE_BUILD_DIR)
 	$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS) -C $(DJVULIBRE_BUILD_DIR)
-	cp -fL $(DJVULIBRE_DIR)/lib/$(notdir $(DJVULIBRE_LIB)) $(DJVULIBRE_LIB)
+	cp -fL $(STAGING_DIR)/lib/$(notdir $(DJVULIBRE_LIB)) $(DJVULIBRE_LIB)
 ifdef DARWIN
 	install_name_tool -id \
 		libs/$(notdir $(DJVULIBRE_LIB)) \
@@ -142,20 +124,7 @@ endif
 $(CRENGINE_LIB) $(CRENGINE_THIRDPARTY_LIBS): $(CRENGINE_SRC_FILES) \
 		$(CRENGINE_NEEDED_LIBS) \
 		$(THIRDPARTY_DIR)/kpvcrlib/*.*
-	$(CMAKE) $(CMAKE_FLAGS) \
-		-DJPEGLIB_INCLUDE_DIR='$(JPEG_DIR)/include' \
-		-DPNG_INCLUDE_DIR='$(PNG_DIR)/include' \
-		-DLUNASVG_INCLUDE_DIR='$(LUNASVG_DIR)/include' \
-		-DZLIB_INCLUDE_DIR='$(ZLIB_DIR)/include' \
-		-DFREETYPE_INCLUDE_DIR='$(FREETYPE_DIR)/include/freetype2' \
-		-DHARFBUZZ_INCLUDE_DIR='$(HARFBUZZ_DIR)/include/harfbuzz' \
-		-DFRIBIDI_INCLUDE_DIR='$(FRIBIDI_DIR)/include/fribidi' \
-		-DLIBWEBP_INCLUDE_DIR='$(LIBWEBP_DIR)/include' \
-		-DLIBUNIBREAK_INCLUDE_DIR='$(LIBUNIBREAK_DIR)/include' \
-		-DUTF8PROC_INCLUDE_DIR='$(UTF8PROC_DIR)/include' \
-		-DZSTD_INCLUDE_DIR='$(ZSTD_DIR)/include' \
-		-DSRELL_INCLUDE_DIR='${SRELL_INCLUDE_DIR}' \
-		-S $(THIRDPARTY_DIR)/kpvcrlib -B $(CRENGINE_BUILD_DIR)
+	$(CMAKE) $(CMAKE_FLAGS) -S $(THIRDPARTY_DIR)/kpvcrlib -B $(CRENGINE_BUILD_DIR)
 	$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS) -C $(CRENGINE_BUILD_DIR)
 	touch $(CRENGINE_LIB) $(CRENGINE_THIRDPARTY_LIBS)
 
@@ -177,32 +146,21 @@ $(POPEN_NOSHELL_LIB): $(THIRDPARTY_DIR)/popen-noshell/*.*
 
 $(LEPTONICA_LIB): $(PNG_LIB) $(ZLIB) \
 	$(THIRDPARTY_DIR)/leptonica/*.*
-	$(CMAKE) $(CMAKE_FLAGS) \
-		-DPNG_DIR='$(PNG_DIR)' \
-		-DZLIB_DIR='$(ZLIB_DIR)' \
-		-S $(THIRDPARTY_DIR)/leptonica -B $(LEPTONICA_BUILD_DIR)
+	$(CMAKE) $(CMAKE_FLAGS) -S $(THIRDPARTY_DIR)/leptonica -B $(LEPTONICA_BUILD_DIR)
 	$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS) -C $(LEPTONICA_BUILD_DIR)
-	cp -fL $(LEPTONICA_DIR)/lib/$(notdir $(LEPTONICA_LIB)) $(LEPTONICA_LIB)
+	cp -fL $(STAGING_DIR)/lib/$(notdir $(LEPTONICA_LIB)) $(LEPTONICA_LIB)
 
 $(TESSERACT_LIB): $(LEPTONICA_LIB) \
 	$(THIRDPARTY_DIR)/tesseract/*.*
-	$(CMAKE) $(CMAKE_FLAGS) \
-		-DLEPTONICA_DIR='$(abspath $(LEPTONICA_DIR))' \
-		-DLEPTONICA_LIB='$(abspath $(LEPTONICA_LIB))' \
-		-S $(THIRDPARTY_DIR)/tesseract -B $(TESSERACT_BUILD_DIR)
+	$(CMAKE) $(CMAKE_FLAGS) -S $(THIRDPARTY_DIR)/tesseract -B $(TESSERACT_BUILD_DIR)
 	$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS) -C $(TESSERACT_BUILD_DIR)
-	cp -fL $(TESSERACT_DIR)/lib/$(notdir $(TESSERACT_LIB)) $(TESSERACT_LIB)
+	cp -fL $(STAGING_DIR)/lib/$(notdir $(TESSERACT_LIB)) $(TESSERACT_LIB)
 
 $(K2PDFOPT_LIB): $(LEPTONICA_LIB) $(TESSERACT_LIB) \
 		$(THIRDPARTY_DIR)/libk2pdfopt/*.*
-	$(CMAKE) $(CMAKE_FLAGS) \
-		-DLEPTONICA_DIR='$(abspath $(LEPTONICA_DIR))' \
-		-DLEPTONICA_LIB='$(abspath $(LEPTONICA_LIB))' \
-		-DTESSERACT_DIR='$(abspath $(TESSERACT_DIR))' \
-		-DTESSERACT_LIB='$(abspath $(TESSERACT_LIB))' \
-		-S $(THIRDPARTY_DIR)/libk2pdfopt -B $(K2PDFOPT_BUILD_DIR)
+	$(CMAKE) $(CMAKE_FLAGS) -S $(THIRDPARTY_DIR)/libk2pdfopt -B $(K2PDFOPT_BUILD_DIR)
 	$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS) -C $(K2PDFOPT_BUILD_DIR)
-	cp -fL $(K2PDFOPT_DIR)/lib/$(notdir $(K2PDFOPT_LIB)) $(K2PDFOPT_LIB)
+	cp -fL $(STAGING_DIR)/lib/$(notdir $(K2PDFOPT_LIB)) $(K2PDFOPT_LIB)
 ifdef DARWIN
 	install_name_tool -id \
 		libs/$(notdir $(K2PDFOPT_LIB)) \
@@ -226,45 +184,27 @@ $(LIBICONV): $(THIRDPARTY_DIR)/libiconv/*.*
 
 # libgettext for glib on android & macOS
 $(LIBGETTEXT): $(LIBICONV) $(THIRDPARTY_DIR)/gettext/*.*
-	$(CMAKE) $(CMAKE_FLAGS) \
-		-DLIBICONV_DIR='$(LIBICONV_DIR)' \
-		-S $(THIRDPARTY_DIR)/gettext -B $(GETTEXT_BUILD_DIR)
+	$(CMAKE) $(CMAKE_FLAGS) -S $(THIRDPARTY_DIR)/gettext -B $(GETTEXT_BUILD_DIR)
 	$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS) -C $(GETTEXT_BUILD_DIR)
 
 $(GLIB): $(if $(or $(ANDROID),$(DARWIN)),$(LIBICONV) $(LIBGETTEXT)) $(THIRDPARTY_DIR)/glib/*.*
-	$(CMAKE) $(CMAKE_FLAGS) \
-		-DGETTEXT_DIR='$(GETTEXT_DIR)' \
-		-DLIBICONV_DIR='$(LIBICONV_DIR)' \
-		-S $(THIRDPARTY_DIR)/glib -B $(GLIB_BUILD_DIR)
+	$(CMAKE) $(CMAKE_FLAGS) -S $(THIRDPARTY_DIR)/glib -B $(GLIB_BUILD_DIR)
 	$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS) -C $(GLIB_BUILD_DIR)
 
 $(ZLIB) $(ZLIB_STATIC): $(THIRDPARTY_DIR)/zlib/*.*
 	$(CMAKE) $(CMAKE_FLAGS) -S $(THIRDPARTY_DIR)/zlib -B $(ZLIB_BUILD_DIR)
 	$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS) -C $(ZLIB_BUILD_DIR)
-ifdef WIN32
-	cp -fL $(ZLIB_DIR)/$(notdir $(ZLIB)) $(ZLIB)
-else
-	cp -fL $(ZLIB_DIR)/lib/$(notdir $(ZLIB)) $(ZLIB)
-endif
+	cp -fL $(STAGING_DIR)/lib/$(notdir $(ZLIB)) $(ZLIB)
 
 $(ZSTD_LIB): $(THIRDPARTY_DIR)/zstd/*.*
 	$(CMAKE) $(CMAKE_FLAGS) -S $(THIRDPARTY_DIR)/zstd -B $(ZSTD_BUILD_DIR)
 	$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS) -C $(ZSTD_BUILD_DIR)
-	cp -fL $(ZSTD_DIR)/lib/$(notdir $(ZSTD_LIB)) $(ZSTD_LIB)
+	cp -fL $(STAGING_DIR)/lib/$(notdir $(ZSTD_LIB)) $(ZSTD_LIB)
 
 # ===========================================================================
 # console version of StarDict (sdcv)
 $(OUTPUT_DIR)/sdcv: $(GLIB) $(if $(ANDROID),$(ZLIB_STATIC),$(ZLIB)) $(THIRDPARTY_DIR)/sdcv/*.*
-	$(CMAKE) $(CMAKE_FLAGS) \
-		-DGLIB='$(realpath $(GLIB))' \
-		-DGLIB_DIR='$(GLIB_DIR)' \
-		-DZLIB='$(realpath $(if $(ANDROID),$(ZLIB_STATIC),$(ZLIB)))' \
-		-DZLIB_DIR='$(ZLIB_DIR)' \
-		-DLIBICONV='$(LIBICONV)' \
-		-DLIBICONV_DIR='$(LIBICONV_DIR)' \
-		-DGETTEXT='$(LIBGETTEXT)' \
-		-DGETTEXT_DIR='$(GETTEXT_DIR)' \
-		-S $(THIRDPARTY_DIR)/sdcv -B $(SDCV_BUILD_DIR)
+	$(CMAKE) $(CMAKE_FLAGS) -S $(THIRDPARTY_DIR)/sdcv -B $(SDCV_BUILD_DIR)
 	$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS) -C $(SDCV_BUILD_DIR)
 	cp $(SDCV_DIR)/sdcv $(OUTPUT_DIR)/
 ifdef ANDROID
@@ -284,9 +224,7 @@ $(SDL2_LIB): $(THIRDPARTY_DIR)/sdl2/*.*
 # dropbear
 
 $(OUTPUT_DIR)/dropbear: $(ZLIB) $(THIRDPARTY_DIR)/dropbear/*.*
-	$(CMAKE) $(CMAKE_FLAGS) \
-		-DZLIB_DIR='$(abspath $(ZLIB_DIR))' \
-		-S $(THIRDPARTY_DIR)/dropbear -B $(DROPBEAR_BUILD_DIR)
+	$(CMAKE) $(CMAKE_FLAGS) -S $(THIRDPARTY_DIR)/dropbear -B $(DROPBEAR_BUILD_DIR)
 	$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS) -C $(DROPBEAR_BUILD_DIR)
 	cp $(DROPBEAR_DIR)/dropbear $(OUTPUT_DIR)/
 
@@ -294,10 +232,7 @@ $(OUTPUT_DIR)/dropbear: $(ZLIB) $(THIRDPARTY_DIR)/dropbear/*.*
 # OpenSSH (sftp-server & scp)
 
 $(OUTPUT_DIR)/sftp-server: $(ZLIB) $(SSL_LIB) $(THIRDPARTY_DIR)/openssh/*.*
-	$(CMAKE) $(CMAKE_FLAGS) \
-		-DOPENSSL_DIR='$(abspath $(OPENSSL_DIR))' \
-		-DZLIB_DIR='$(abspath $(ZLIB_DIR))' \
-		-S $(THIRDPARTY_DIR)/openssh -B $(OPENSSH_BUILD_DIR)
+	$(CMAKE) $(CMAKE_FLAGS) -S $(THIRDPARTY_DIR)/openssh -B $(OPENSSH_BUILD_DIR)
 	$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS) -C $(OPENSSH_BUILD_DIR)
 	cp $(OPENSSH_DIR)/sftp-server $(OUTPUT_DIR)/
 	cp $(OPENSSH_DIR)/scp $(OUTPUT_DIR)/
@@ -338,8 +273,6 @@ $(OUTPUT_DIR)/data/KoboUSBMS.tar.gz: $(KOBO_USBMS_DIR)/KoboUSBMS.tar.gz
 # common lua library for networking
 $(LUASOCKET): $(THIRDPARTY_DIR)/luasocket/*.*
 	$(CMAKE) $(CMAKE_FLAGS) \
-		-DLUAINC='$(LUAJIT_INC)' \
-		-DLUALIB='$(abspath $(LUAJIT_LIB))' \
 		-DLUAPATH='$(abspath $(OUTPUT_DIR)/common)' \
 		-S $(THIRDPARTY_DIR)/luasocket -B $(LUASOCKET_BUILD_DIR)
 	$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS) -C $(LUASOCKET_BUILD_DIR)
@@ -347,8 +280,8 @@ $(LUASOCKET): $(THIRDPARTY_DIR)/luasocket/*.*
 $(CRYPTO_LIB) $(SSL_LIB): $(THIRDPARTY_DIR)/openssl/*.*
 	$(CMAKE) $(CMAKE_FLAGS) -S $(THIRDPARTY_DIR)/openssl -B $(OPENSSL_BUILD_DIR)
 	$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS) -C $(OPENSSL_BUILD_DIR)
-	cp -fL $(OPENSSL_DIR)/lib/$(notdir $(SSL_LIB)) $(SSL_LIB)
-	cp -fL $(OPENSSL_DIR)/lib/$(notdir $(CRYPTO_LIB)) $(CRYPTO_LIB)
+	cp -fL $(STAGING_DIR)/lib/$(notdir $(SSL_LIB)) $(SSL_LIB)
+	cp -fL $(STAGING_DIR)/lib/$(notdir $(CRYPTO_LIB)) $(CRYPTO_LIB)
 ifdef DARWIN
 	install_name_tool -id \
 		libs/$(notdir $(SSL_LIB)) \
@@ -364,12 +297,7 @@ endif
 
 $(LUASEC): $(SSL_LIB) $(THIRDPARTY_DIR)/luasec/*.*
 	$(CMAKE) $(CMAKE_FLAGS) \
-		-DCRYPTO_LIB='$(abspath $(CRYPTO_LIB))' \
-		-DLUAINC='$(LUAJIT_INC)' \
-		-DLUALIB='$(abspath $(LUAJIT_LIB))' \
 		-DLUAPATH='$(abspath $(OUTPUT_DIR)/common)' \
-		-DOPENSSL_DIR='$(abspath $(OPENSSL_DIR))' \
-		-DSSL_LIB='$(abspath $(SSL_LIB))' \
 		-S $(THIRDPARTY_DIR)/luasec -B $(LUASEC_BUILD_DIR)
 	$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS) -C $(LUASEC_BUILD_DIR)
 ifdef DARWIN
@@ -386,21 +314,15 @@ endif
 $(ZMQ_LIB): $(THIRDPARTY_DIR)/libzmq/*.*
 	$(CMAKE) $(CMAKE_FLAGS) -S $(THIRDPARTY_DIR)/libzmq -B $(ZMQ_BUILD_DIR)
 	$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS) -C $(ZMQ_BUILD_DIR)
-	cp -fL $(ZMQ_DIR)/$(if $(WIN32),bin,lib)/$(notdir $(ZMQ_LIB)) $@
+	cp -fL $(STAGING_DIR)/lib/$(notdir $(ZMQ_LIB)) $@
 
 $(CZMQ_LIB): $(ZMQ_LIB) $(THIRDPARTY_DIR)/czmq/*.*
-	$(CMAKE) $(CMAKE_FLAGS) \
-		-DZMQ_DIR='$(ZMQ_DIR)' \
-		-S $(THIRDPARTY_DIR)/czmq -B $(CZMQ_BUILD_DIR)
+	$(CMAKE) $(CMAKE_FLAGS) -S $(THIRDPARTY_DIR)/czmq -B $(CZMQ_BUILD_DIR)
 	$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS) -C $(CZMQ_BUILD_DIR)
-	cp -fL $(CZMQ_DIR)/$(if $(WIN32),bin,lib)/$(notdir $(CZMQ_LIB)) $@
+	cp -fL $(STAGING_DIR)/lib/$(notdir $(CZMQ_LIB)) $@
 
 $(TURBO_FFI_WRAP_LIB): $(SSL_LIB) $(THIRDPARTY_DIR)/turbo/*.*
-	$(CMAKE) $(CMAKE_FLAGS) \
-		-DOPENSSL_DIR='$(abspath $(OPENSSL_DIR))' \
-		-DCRYPTO_LIB='$(abspath $(CRYPTO_LIB))' \
-		-DSSL_LIB='$(abspath $(SSL_LIB))' \
-		-S $(THIRDPARTY_DIR)/turbo -B $(TURBO_BUILD_DIR)
+	$(CMAKE) $(CMAKE_FLAGS) -S $(THIRDPARTY_DIR)/turbo -B $(TURBO_BUILD_DIR)
 	$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS) -C $(TURBO_BUILD_DIR)
 	cp -fL $(TURBO_DIR)/$(notdir $(TURBO_FFI_WRAP_LIB)) $@
 	$(RCP) $(TURBO_DIR)/turbo $(OUTPUT_DIR)/common
@@ -421,10 +343,7 @@ ifdef DARWIN
 endif
 
 $(LPEG_MOD): $(THIRDPARTY_DIR)/lpeg/*.*
-	$(CMAKE) $(CMAKE_FLAGS) \
-		-DLUAINC='$(LUAJIT_INC)' \
-		-DLUALIB='$(abspath $(LUAJIT_LIB))' \
-		-S $(THIRDPARTY_DIR)/lpeg -B $(LPEG_BUILD_DIR)
+	$(CMAKE) $(CMAKE_FLAGS) -S $(THIRDPARTY_DIR)/lpeg -B $(LPEG_BUILD_DIR)
 	$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS) -C $(LPEG_BUILD_DIR)
 	cp $(LPEG_DIR)/{re.lua,$(notdir $(LPEG_MOD))} $(OUTPUT_DIR)/common/
 
@@ -444,10 +363,7 @@ $(LUAJSON_MOD): $(THIRDPARTY_DIR)/luajson/*.*
 	$(RCP) $(LUAJSON_DIR)/lua/{json.lua,json} ${OUTPUT_DIR}/common/
 
 $(LUA_RAPIDJSON_MOD): $(THIRDPARTY_DIR)/lua-rapidjson/*.*
-	$(CMAKE) $(CMAKE_FLAGS) \
-		-DLUAINC='$(LUAJIT_INC)' \
-		-DLUALIB='$(abspath $(LUAJIT_LIB))' \
-		-S $(THIRDPARTY_DIR)/lua-rapidjson -B $(LUA_RAPIDJSON_BUILD_DIR)
+	$(CMAKE) $(CMAKE_FLAGS) -S $(THIRDPARTY_DIR)/lua-rapidjson -B $(LUA_RAPIDJSON_BUILD_DIR)
 	$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS) -C $(LUA_RAPIDJSON_BUILD_DIR)
 	cp $(LUA_RAPIDJSON_DIR)/$(notdir $(LUA_RAPIDJSON_MOD)) $(OUTPUT_DIR)/common/
 
@@ -463,28 +379,20 @@ $(LUA_LJ_SQLITE): $(LUA_LJ_SQLITE_DIR)/init.lua
 $(NANOSVG_HEADERS): $(THIRDPARTY_DIR)/nanosvg/*.*
 	$(CMAKE) $(CMAKE_FLAGS) -S $(THIRDPARTY_DIR)/nanosvg -B $(NANOSVG_BUILD_DIR)
 	$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS) -C $(NANOSVG_BUILD_DIR)
-	install -d $(NANOSVG_INCLUDE_DIR)
-	cp -fL $(NANOSVG_DIR)/src/nanosvg.h $(NANOSVG_INCLUDE_DIR)/
-	cp -fL $(NANOSVG_DIR)/src/nanosvgrast.h $(NANOSVG_INCLUDE_DIR)/
-	cp -fL $(THIRDPARTY_DIR)/nanosvg/stb_image_write.h $(NANOSVG_INCLUDE_DIR)/
+	install -d $(STAGING_DIR)/include
+	cp -fL $(NANOSVG_BUILD_DIR)/source/src/{nanosvg.h,nanosvgrast.h} $(STAGING_DIR)/include/
+	cp -fL $(THIRDPARTY_DIR)/nanosvg/stb_image_write.h $(STAGING_DIR)/include/
 
 # cURL
 $(CURL_LIB): $(THIRDPARTY_DIR)/curl/*.*
-	$(CMAKE) $(CMAKE_FLAGS) \
-		-DOPENSSL_DIR='$(abspath $(OPENSSL_DIR))' \
-		-DZLIB_DIR='$(abspath $(ZLIB_DIR))' \
-		-S $(THIRDPARTY_DIR)/curl -B $(CURL_BUILD_DIR)
+	$(CMAKE) $(CMAKE_FLAGS) -S $(THIRDPARTY_DIR)/curl -B $(CURL_BUILD_DIR)
 	$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS) -C $(CURL_BUILD_DIR)
-	cp -fL $(CURL_DIR)/lib/$(notdir $(CURL_LIB)) $(OUTPUT_DIR)/libs
-	cp $(CURL_DIR)/ca-bundle.crt $(OUTPUT_DIR)/data/ca-bundle.crt
+	cp -fL $(STAGING_DIR)/lib/$(notdir $(CURL_LIB)) $(OUTPUT_DIR)/libs
+	cp $(STAGING_DIR)/ca-bundle.crt $(OUTPUT_DIR)/data/ca-bundle.crt
 
 # zsync2
 $(OUTPUT_DIR)/zsync2: $(THIRDPARTY_DIR)/zsync2/*.*
-	$(CMAKE) $(CMAKE_FLAGS) \
-		-DCURL_DIR='$(abspath $(CURL_DIR))' \
-		-DOPENSSL_DIR='$(abspath $(OPENSSL_DIR))' \
-		-DZLIB_DIR='$(abspath $(ZLIB_DIR))' \
-		-S $(THIRDPARTY_DIR)/zsync2 -B $(ZSYNC2_BUILD_DIR)
+	$(CMAKE) $(CMAKE_FLAGS) -S $(THIRDPARTY_DIR)/zsync2 -B $(ZSYNC2_BUILD_DIR)
 	$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS) -C $(ZSYNC2_BUILD_DIR)
 	cp $(ZSYNC2_DIR)/src/zsync2 $(OUTPUT_DIR)/
 

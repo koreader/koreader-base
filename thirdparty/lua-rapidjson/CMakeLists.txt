@@ -4,15 +4,12 @@ project(lua-rapidjson LANGUAGES)
 include("koreader_thirdparty_common")
 include("koreader_thirdparty_git")
 
-assert_var_defined(LUAINC)
-assert_var_defined(LUALIB)
-
 list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake_tweaks.patch)
 
 list(APPEND CMAKE_ARGS
     -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TCF}
-    -DLUA_INCLUDE_DIR=${LUAINC}
-    -DLUA_LIBRARIES=${LUALIB}
+    -DLUA_INCLUDE_DIR=${LUAJIT_INC}
+    -DLUA_LIBRARIES=${LUAJIT_LIB}
 )
 
 list(APPEND BUILD_CMD COMMAND ${KO_MAKE_PROGRAM})

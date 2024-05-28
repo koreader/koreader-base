@@ -3,18 +3,6 @@ project(kpvcrlib LANGUAGES C CXX)
 
 include(koreader_thirdparty_common)
 
-assert_var_defined(FREETYPE_INCLUDE_DIR)
-assert_var_defined(HARFBUZZ_INCLUDE_DIR)
-assert_var_defined(FRIBIDI_INCLUDE_DIR)
-assert_var_defined(LIBUNIBREAK_INCLUDE_DIR)
-assert_var_defined(UTF8PROC_INCLUDE_DIR)
-assert_var_defined(PNG_INCLUDE_DIR)
-assert_var_defined(ZLIB_INCLUDE_DIR)
-assert_var_defined(JPEGLIB_INCLUDE_DIR)
-assert_var_defined(LIBWEBP_INCLUDE_DIR)
-assert_var_defined(LUNASVG_INCLUDE_DIR)
-assert_var_defined(ZSTD_INCLUDE_DIR)
-
 set(CRE_3RDPARTY_DIR ${CMAKE_CURRENT_SOURCE_DIR}/crengine/thirdparty)
 set(CRE_DIR crengine/crengine)
 
@@ -81,22 +69,15 @@ set_target_properties(crengine PROPERTIES CXX_STANDARD 17 CMAKE_CXX_STANDARD_REQ
 set_target_properties(crengine PROPERTIES VISIBILITY_INLINES_HIDDEN TRUE)
 target_include_directories(crengine PUBLIC
     ${CRE_DIR}/include
-    ${FREETYPE_INCLUDE_DIR}
-    ${HARFBUZZ_INCLUDE_DIR}
-    ${LIBUNIBREAK_INCLUDE_DIR}
+    ${STAGING_DIR}/include
+    ${STAGING_DIR}/include/freetype2
+    ${STAGING_DIR}/include/harfbuzz
 )
 target_include_directories(crengine PRIVATE
     ${CRE_3RDPARTY_DIR}/antiword
     ${CRE_3RDPARTY_DIR}/chmlib/src
-    ${FRIBIDI_INCLUDE_DIR}
-    ${JPEGLIB_INCLUDE_DIR}
-    ${LIBWEBP_INCLUDE_DIR}
-    ${LUNASVG_INCLUDE_DIR}
-    ${PNG_INCLUDE_DIR}
-    ${SRELL_INCLUDE_DIR}
-    ${UTF8PROC_INCLUDE_DIR}
-    ${ZLIB_INCLUDE_DIR}
-    ${ZSTD_INCLUDE_DIR}
+    ${STAGING_DIR}/include/fribidi
+    ${THIRDPARTY_DIR}/srell
 )
 
 configure_file(crsetup.h.cmake crsetup.h)
