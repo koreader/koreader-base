@@ -25,7 +25,7 @@ foreach(PLATFORM CERVANTES KINDLE KOBO POCKETBOOK)
     endif()
 endforeach()
 
-list(APPEND PATCH_CMD COMMAND autoreconf -fi)
+list(APPEND PATCH_CMD COMMAND autoreconf -v)
 
 if(ANDROID)
     set(LIBS -static)
