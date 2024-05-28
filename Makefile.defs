@@ -1072,6 +1072,11 @@ set(CMAKE_CXX_FLAGS_INIT "$(strip $(CXXFLAGS))")
 $(if $(CCACHE),set(CMAKE_OBJC_COMPILER_LAUNCHER $(CCACHE)))
 set(CMAKE_OBJC_COMPILER $(REALCC))
 
+# Release only flags: prevent CMake from messing
+# with our custom optimization level and flags.
+set(CMAKE_C_FLAGS_RELEASE "")
+set(CMAKE_CXX_FLAGS_RELEASE "")
+
 # Linker.
 set(CMAKE_EXE_LINKER_FLAGS_INIT "$(strip $(LDFLAGS))")
 set(CMAKE_SHARED_LINKER_FLAGS_INIT "$(strip $(filter-out -shared -dynamiclib,$(LDFLAGS) $(DYNLIB_LDFLAGS)))")
