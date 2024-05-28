@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.15)
 project(koreader-base LANGUAGES C CXX)
 
+include(${CMAKE_KOVARS})
 include(koreader_thirdparty_common)
 include(koreader_thirdparty_git)
 include(koreader_targets)
