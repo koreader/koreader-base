@@ -44,6 +44,7 @@ list(APPEND CFG_CMD COMMAND env
     --disable-ntlm-wb
     --disable-smb
     --disable-sspi
+    --disable-websockets
     --enable-alt-svc
     --enable-aws
     --enable-basic-auth
@@ -111,7 +112,6 @@ list(APPEND CFG_CMD COMMAND env
     --without-test-caddy
     --without-test-httpd
     --without-test-nghttpx
-    --without-websockets
     --without-winidn
     --without-wolfssl
     --without-zsh-functions-dir
