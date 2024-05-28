@@ -4,9 +4,6 @@ project(openssl LANGUAGES)
 include(koreader_thirdparty_common)
 include(koreader_thirdparty_git)
 
-# Build in source tree.
-set(BINARY_DIR ${SOURCE_DIR})
-
 list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/openssl-1.1.0j-parallel_install_fix.patch)
 
 list(APPEND CFG_ENV_VAR
@@ -62,18 +59,18 @@ else()
 endif()
 
 if(DARWIN)
-    list(APPEND CONFIGURE_CMD ./Configure)
+    list(APPEND CONFIGURE_CMD ${SOURCE_DIR}/Configure)
     if (DARWIN_AARCH64)
         list(APPEND CONFIGURE_CMD darwin64-arm64-cc)
     else()
         list(APPEND CONFIGURE_CMD darwin64-x86_64-cc)
     endif()
 elseif(WIN32)
-    list(APPEND CONFIGURE_CMD ./Configure mingw)
+    list(APPEND CONFIGURE_CMD ${SOURCE_DIR}/Configure mingw)
 elseif(EMULATE_READER)
-    list(APPEND CONFIGURE_CMD ./config)
+    list(APPEND CONFIGURE_CMD ${SOURCE_DIR}/config)
 else()
-    list(APPEND CONFIGURE_CMD ./Configure)
+    list(APPEND CONFIGURE_CMD ${SOURCE_DIR}/Configure)
 endif()
 
 set(CFG_OPTS ${CFG_OPTS} ${ASM_OPT} no-idea no-mdc2 no-rc5)
