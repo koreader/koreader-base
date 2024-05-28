@@ -601,6 +601,7 @@ endif
 # this will create a path named build/arm-none-linux-gnueabi or similar
 OUTPUT_DIR ?= build/$(MACHINE)
 CMAKE_DIR = $(OUTPUT_DIR)/cmake
+STAGING_DIR = $(OUTPUT_DIR)/staging
 THIRDPARTY_BUILD = $(OUTPUT_DIR)/thirdparty
 
 # you can configure an emulation for the (eink) framebuffer here.
@@ -1113,6 +1114,7 @@ set(CMAKE_SYSTEM_PROCESSOR $(CMAKE_SYSTEM_PROCESSOR))
 
 # Set path(s) to search for libraries/binaries/headers.
 set(CMAKE_SYSROOT $(abspath $(SYSROOT)))
+set(CMAKE_FIND_ROOT_PATH $(abspath $(STAGING_DIR)))
 # Search for programs in the build host directories.
 set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)
 # For libraries and headers in the target directories.
