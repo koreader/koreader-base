@@ -5,14 +5,13 @@ include(koreader_thirdparty_common)
 include(koreader_thirdparty_git)
 
 assert_var_defined(CURL_DIR)
-assert_var_defined(CURL_LIB)
 assert_var_defined(OPENSSL_DIR)
 assert_var_defined(CRYPTO_LIB)
 assert_var_defined(SSL_LIB)
 assert_var_defined(ZLIB_DIR)
-assert_var_defined(ZLIB)
 
 list(APPEND PATCH_CMD COMMAND ${KO_PATCH}
+    ${CMAKE_CURRENT_SOURCE_DIR}/cmake_tweaks.patch
     # CPR need `-pthread`.
     ${CMAKE_CURRENT_SOURCE_DIR}/cpr_need_pthread.patch
 )
@@ -23,17 +22,14 @@ list(APPEND CMAKE_ARGS
     -DBUILD_CPR_TESTS=FALSE
     -DBUILD_TESTING=FALSE
     # cURL.
-    -DCURL_FOUND=TRUE
-    -DCURL_INCLUDE_DIR=${CURL_DIR}/include
-    -DCURL_LIBRARY=${CURL_LIB}
+    -DCURL_ROOT=${CURL_DIR}
     -DUSE_SYSTEM_CURL=TRUE
     # OpenSSL.
     -DOPENSSL_CRYPTO_LIBRARY=${CRYPTO_LIB}
     -DOPENSSL_INCLUDE_DIR=${OPENSSL_DIR}/include
     -DOPENSSL_SSL_LIBRARY=${SSL_LIB}
     # ZLIB.
-    -DZLIB_INCLUDE_DIR=${ZLIB_DIR}/include
-    -DZLIB_LIBRARY=${ZLIB}
+    -DZLIB_ROOT=${ZLIB_DIR}
 )
 
 list(APPEND BUILD_CMD COMMAND ${KO_MAKE_PROGRAM} zsync2)
