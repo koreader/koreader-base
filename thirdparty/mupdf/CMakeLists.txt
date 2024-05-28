@@ -88,7 +88,7 @@ string(TOLOWER ${CMAKE_BUILD_TYPE} MUPDF_BUILD_TYPE)
 # There's some headers to generate on the host's side first, before we run our actual build (where we enforce CROSSCOMPILE to avoid trying to regen those).
 list(APPEND PATCH_CMD COMMAND
     ${KO_MAKE_RECURSIVE}
-    CC=${HOSTCC}
+    "CC=${CCACHE} ${HOSTCC}"
     LIBS= # don't try to link with system libraries when building generator helpers…
     XCFLAGS=${HOSTCFLAGS}
     build=${MUPDF_BUILD_TYPE}
