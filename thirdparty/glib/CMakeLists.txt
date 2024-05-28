@@ -5,7 +5,6 @@ include("koreader_thirdparty_common")
 include("koreader_thirdparty_git")
 
 assert_var_defined(CC)
-assert_var_defined(CHOST)
 assert_var_defined(CFLAGS)
 assert_var_defined(LDFLAGS)
 assert_var_defined(HOST_OPTS)
@@ -17,7 +16,7 @@ assert_var_defined(WITH_LIBICONV)
 list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/glib-libglib-only.patch)
 
 # Android makes Linux syscalls hard to get to... Fix pilfered from Python.
-if(DEFINED ENV{ANDROID})
+if(ANDROID)
     list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/glib-2.58.2-android-linux-syscalls.patch)
 endif()
 
@@ -27,13 +26,13 @@ list(APPEND PATCH_CMD COMMAND env NOCONFIGURE=1 ./autogen.sh)
 list(APPEND gen_arm_config "glib_cv_stack_grows=no")
 list(APPEND gen_arm_config "glib_cv_uscore=no")
 # In order to support legacy PocketBook 4.x firmware we should get rid of eventfd@GLIBC_2.7 and pipe2@GLIBC_2.9
-if(DEFINED ENV{LEGACY} OR DEFINED ENV{POCKETBOOK})
+if(LEGACY OR POCKETBOOK)
     list(APPEND gen_arm_config "glib_cv_eventfd=no")
     list(APPEND gen_arm_config "ac_cv_func_pipe2=no")
     # As well as mkostemp@GLIBC_2.7
     list(APPEND gen_arm_config "ac_cv_func_mkostemp=no")
 endif()
-if(DEFINED ENV{ANDROID})
+if(ANDROID)
     # disable getpwuid, getgrgid and timegm for > android-12
     list(APPEND gen_arm_config "ac_cv_func_posix_getpwuid_r=no")
     list(APPEND gen_arm_config "ac_cv_func_posix_getgrgid_r=no")

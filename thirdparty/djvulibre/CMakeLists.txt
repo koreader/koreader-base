@@ -9,7 +9,6 @@ assert_var_defined(CFLAGS)
 assert_var_defined(CXX)
 assert_var_defined(CXXFLAGS)
 assert_var_defined(LDFLAGS)
-assert_var_defined(CHOST)
 
 # Build in source tree.
 set(BINARY_DIR ${SOURCE_DIR})
@@ -19,7 +18,7 @@ set(BINARY_DIR ${SOURCE_DIR})
 # And this runs in our main thread, so this is Very Bad(TM).
 list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/djvulibre-no-locale-mangling.patch)
 
-if(DEFINED ENV{ANDROID})
+if(ANDROID)
     list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/android.patch)
 endif()
 
@@ -46,7 +45,7 @@ list(APPEND CFG_CMD COMMAND env
     --without-tiff
 )
 
-if(DEFINED ENV{ANDROID})
+if(ANDROID)
     list(APPEND CFG_CMD COMMAND ${ANDROID_LIBTOOL_FIX_CMD})
     # Technically we don't need tools on any platform but they only cause issues on Android
     list(APPEND CFG_CMD COMMAND ${ISED} "s|DIST_SUBDIRS = libdjvu.*|DIST_SUBDIRS = libdjvu|g" Makefile)

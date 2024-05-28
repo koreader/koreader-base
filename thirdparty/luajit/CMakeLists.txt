@@ -4,8 +4,6 @@ project(luajit LANGUAGES)
 include("koreader_thirdparty_common")
 include("koreader_thirdparty_git")
 
-assert_var_defined(XCOMPILE)
-
 # Build in source tree.
 set(BINARY_DIR ${SOURCE_DIR})
 
@@ -30,7 +28,7 @@ if($ENV{KODEBUG})
     endif()
 endif()
 
-if(NOT XCOMPILE)
+if(EMULATE_READER)
     set(BUILD_ARGS "CC=${CCACHE} ${CC}")
 else()
     assert_var_defined(HOST_CFLAGS)
@@ -66,7 +64,7 @@ else()
         set(BUILD_ARGS ${BUILD_ARGS} "TARGET_SYS=${TARGET_SYS}")
     endif()
     set(BUILD_ARGS ${BUILD_ARGS} "TARGET_AR=$ENV{AR} rcus" "TARGET_RANLIB=$ENV{RANLIB}")
-    if(DEFINED ENV{DARWIN})
+    if(DARWIN)
         set(BUILD_ARGS ${BUILD_ARGS} "TARGET_STRIP=$ENV{STRIP}")
     else()
         set(BUILD_ARGS ${BUILD_ARGS} "TARGET_STRIP=$ENV{STRIP} --strip-unneeded")

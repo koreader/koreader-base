@@ -11,7 +11,7 @@ set(BINARY_DIR ${SOURCE_DIR})
 # simple Makefile for building it as a static lib
 list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/popen_noshell.patch)
 
-if(${LEGACY})
+if(LEGACY)
     # Revert 8d7a98d on legacy devices, pipe2 was introduced in Linux 2.6.27 & glibc 2.9
     list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/kindle_legacy.patch)
 endif()

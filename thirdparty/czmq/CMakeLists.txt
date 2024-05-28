@@ -8,14 +8,13 @@ assert_var_defined(CC)
 assert_var_defined(CFLAGS)
 assert_var_defined(LDFLAGS)
 assert_var_defined(ZMQ_DIR)
-assert_var_defined(CHOST)
 
 # -Wno-error so we can build on glibc 2.24 in spite of readdir_r
 set(CFG_ENV_VAR "CC=${CC}" "LDFLAGS=${LDFLAGS}" "CFLAGS=${CFLAGS} -Wno-error" czmq_have_xmlto=no czmq_have_asciidoc=no)
 set(CFG_OPTS --prefix=${INSTALL_DIR} --with-gnu-ld --with-libzmq=${ZMQ_DIR} --disable-static --enable-shared --host=${CHOST})
 list(APPEND CFG_CMD COMMAND env ${CFG_ENV_VAR} ${SOURCE_DIR}/configure ${CFG_OPTS})
 
-if(DEFINED ENV{ANDROID})
+if(ANDROID)
     list(APPEND CFG_CMD COMMAND ${ANDROID_LIBTOOL_FIX_CMD})
 endif()
 
@@ -24,7 +23,7 @@ list(APPEND CFG_CMD COMMAND ${ISED} "s|^hardcode_libdir_flag_spec=.*|hardcode_li
 list(APPEND CFG_CMD COMMAND ${ISED} "s|^runpath_var=LD_RUN_PATH|runpath_var=DIE_RPATH_DIE|g" libtool)
 
 list(APPEND PATCH_CMD COMMAND ./autogen.sh)
-if(NOT DEFINED ENV{DARWIN})
+if(NOT DARWIN)
     # patch: ignore limited broadcast address
     list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/zbeacon.patch)
     # patch: add _DEFAULT_SOURCE define for glibc starting at version 2.20

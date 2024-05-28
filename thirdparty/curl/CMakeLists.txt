@@ -7,7 +7,6 @@ include(koreader_thirdparty_git)
 assert_var_defined(CC)
 assert_var_defined(CFLAGS)
 assert_var_defined(LDFLAGS)
-assert_var_defined(CHOST)
 assert_var_defined(OPENSSL_DIR)
 assert_var_defined(ZLIB_DIR)
 
@@ -18,7 +17,7 @@ list(APPEND PATCH_CMD COMMAND ${KO_PATCH}
     ${CMAKE_CURRENT_SOURCE_DIR}/curl-8.5.0-mpd-stream-http-adjust_pollset.patch
 )
 # NOTE: Because InkView is the worst, we rename our own cURL build on PocketBook.... (#5861)
-if(DEFINED ENV{POCKETBOOK})
+if(POCKETBOOK)
     list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/curl-8.5.0-pb-rename.patch)
 endif()
 

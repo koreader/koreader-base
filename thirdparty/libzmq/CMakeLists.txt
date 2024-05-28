@@ -23,13 +23,13 @@ list(APPEND CFG_ENV_VAR "CC=${CC}" "CXX=${CXX}" "CFLAGS=${CFLAGS}" "CXXFLAGS=${C
 list(APPEND CFG_ENV_VAR libzmq_have_xmlto=no libzmq_have_asciidoc=no)
 
 list(APPEND CFG_OPTS --prefix=${INSTALL_DIR} --disable-static --enable-shared --without-documentation --host=${CHOST})
-if(DEFINED ENV{LEGACY} OR DEFINED ENV{POCKETBOOK})
+if(LEGACY OR POCKETBOOK)
     list(APPEND CFG_OPTS --disable-eventfd)
 endif()
 
 list(APPEND CFG_CMD COMMAND env ${CFG_ENV_VAR} ${SOURCE_DIR}/configure ${CFG_OPTS})
 
-if(DEFINED ENV{ANDROID})
+if(ANDROID)
     list(APPEND CFG_CMD COMMAND ${ANDROID_LIBTOOL_FIX_CMD})
 endif()
 

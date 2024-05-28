@@ -9,15 +9,14 @@ assert_var_defined(RANLIB)
 assert_var_defined(CPPFLAGS)
 assert_var_defined(LDFLAGS)
 assert_var_defined(LIBICONV_PREFIX)
-assert_var_defined(CHOST_OPTS)
 
 set(CFG_ENV_VAR "CC=${CC}" "AR=${AR}" "RANLIB=${RANLIB}" "CPPFLAGS=${CPPFLAGS}" "LDFLAGS=${LDFLAGS}")
 set(CFG_OPTS --enable-silent-rules --disable-threads --disable-java)
 set(CFG_OPTS ${CFG_OPTS} --prefix=${INSTALL_DIR} --with-libiconv-prefix=${LIBICONV_PREFIX} --with-included-gettext)
-set(CFG_OPTS ${CFG_OPTS} --enable-shared=false --enable-static=true ${CHOST_OPTS})
+set(CFG_OPTS ${CFG_OPTS} --enable-shared=false --enable-static=true --host=${CHOST})
 list(APPEND CFG_CMD COMMAND env ${CFG_ENV_VAR} ${SOURCE_DIR}/gettext-runtime/configure ${CFG_OPTS})
 
-if(DEFINED ENV{ANDROID})
+if(ANDROID)
     # Tools? Where we're going we don't need tools.
     list(APPEND CFG_CMD COMMAND ${ISED} "s/^\\(subdirs\\|SUBDIRS\\)\\( = .*\\) gettext-tools$/\\1\\2/" Makefile)
 endif()
