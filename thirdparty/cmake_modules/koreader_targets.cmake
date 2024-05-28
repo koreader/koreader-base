@@ -126,12 +126,18 @@ declare_koreader_target(
     koreader-lfs TYPE library
     DEPENDS luajit::luajit
     SOURCES lfs.c lfs.h
+    VISIBILITY hidden
 )
 function(setup_koreader_lfs)
+    # Ensure only the right symbols are exported.
     add_custom_command(
         COMMAND
-        ${CMAKE_COMMAND} -E copy ${CMAKE_SOURCE_DIR}/luafilesystem/src/lfs.h lfs.h
+        patch -p1
+        --directory=${CMAKE_SOURCE_DIR}/luafilesystem
+        --input=${CMAKE_SOURCE_DIR}/patches/lfs-visibility.patch
+        --output=${CMAKE_BINARY_DIR}/lfs.h
         OUTPUT lfs.h
+        DEPENDS ${CMAKE_SOURCE_DIR}/patches/lfs-visibility.patch
         MAIN_DEPENDENCY ${CMAKE_SOURCE_DIR}/luafilesystem/src/lfs.h
     )
     # Avoid precision loss on 32-bit arches (LFS is always built w/ LARGEFILE
