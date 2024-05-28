@@ -70,17 +70,9 @@ list(APPEND CMAKE_ARGS
 
 list(APPEND BUILD_CMD COMMAND ${KO_MAKE_PROGRAM})
 
-set(SDCV_GIT_COMMIT v0.5.5)
-
-ko_write_gitclone_script(
-    GIT_CLONE_SCRIPT_FILENAME
-    https://github.com/Dushistov/sdcv.git
-    ${SDCV_GIT_COMMIT}
-    ${SOURCE_DIR}
-)
-
 external_project(
-    DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
+    URL https://github.com/Dushistov/sdcv/archive/refs/tags/v0.5.5.tar.gz
+    URL_MD5 265dbfda83a57810595d156877f3e6fd
     CMAKE_ARGS ${CMAKE_ARGS}
     PATCH_COMMAND ${PATCH_CMD}
     BUILD_COMMAND ${BUILD_CMD}
