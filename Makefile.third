@@ -455,17 +455,17 @@ $(LUASOCKET): $(THIRDPARTY_DIR)/luasocket/*.*
 		-S $(THIRDPARTY_DIR)/luasocket -B $(LUASOCKET_BUILD_DIR)
 	$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS) -C $(LUASOCKET_BUILD_DIR)
 
-# NOTE: We bypass ccache because OpenSSL's build-system is a Jenga tower waiting to fall.
 $(OPENSSL_LIB): $(THIRDPARTY_DIR)/openssl/*.*
 	$(CMAKE) $(CMAKE_FLAGS) \
-		-DREALCC='$(REALCC) $(if $(DARWIN),$(DYNLIB_CFLAGS),$(CFLAGS))' \
-		-DCC='$(CC) $(if $(DARWIN),$(DYNLIB_CFLAGS),$(CFLAGS))' \
+		-DHOSTCC='$(HOSTCC)' \
+		-DHOSTCXX='$(HOSTCXX)' \
+		-DCC='$(CC)' \
 		-DCFLAGS='$(CFLAGS)' \
-		-DSHARED_LDFLAGS='$(LDFLAGS)' \
-		-DLD='$(LD)' \
+		-DCXX='$(CXX)' \
+		-DCXXFLAGS='$(CXXFLAGS)' \
+		-DLDFLAGS='$(LDFLAGS)' \
 		-DAR='$(AR)' \
 		-DRANLIB='$(RANLIB)' \
-		$(if $(ANDROID),-DNDKABI=$(NDKABI),) \
 		-S $(THIRDPARTY_DIR)/openssl -B $(OPENSSL_BUILD_DIR)
 	$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS) -C $(OPENSSL_BUILD_DIR)
 
