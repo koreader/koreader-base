@@ -40,6 +40,14 @@ list(APPEND BUILD_CMD
     TESSERACT_MOD=.
     all)
 
+list(APPEND INSTALL_CMD COMMAND mkdir -p "${INSTALL_DIR}/include/k2pdfopt" "${INSTALL_DIR}/lib")
+list(APPEND INSTALL_CMD COMMAND sh -c "cd \"$1\" && shift && cp \"$@\"" -- ${SOURCE_DIR}
+    context.h koptcrop.h koptimize.h koptocr.h koptreflow.h leptonica.h setting.h
+    tesseract.h k2pdfoptlib/k2pdfopt.h willuslib/willus.h
+    ${INSTALL_DIR}/include/k2pdfopt/
+)
+list(APPEND INSTALL_CMD COMMAND sh -c "cp libk2pdfopt${LIB_EXT}* \"$1\"" -- ${INSTALL_DIR}/lib/)
+
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
     https://github.com/koreader/libk2pdfopt.git
@@ -52,4 +60,5 @@ external_project(
     PATCH_COMMAND ${PATCH_CMD}
     CONFIGURE_COMMAND COMMAND
     BUILD_COMMAND ${BUILD_CMD}
+    INSTALL_COMMAND ${INSTALL_CMD}
 )
