@@ -873,8 +873,7 @@ SDL2_DIR=$(abspath $(SDL2_BUILD_DIR)/build)
 SDL2_LIB=$(OUTPUT_DIR)/libs/libSDL2$(LIB_EXT)
 
 OPENSSL_BUILD_DIR=$(THIRDPARTY_BUILD)/openssl
-OPENSSL_DIR=$(abspath $(OPENSSL_BUILD_DIR)/source)
-OPENSSL_LIB=$(OPENSSL_DIR)/libssl.$(if $(WIN32),a,so)
+OPENSSL_DIR=$(abspath $(STAGING_DIR)/openssl)
 SSL_LIB=$(OUTPUT_DIR)/libs/libssl$(if $(WIN32),-1.dll,$(if $(DARWIN),.1.1.dylib,.so.1.1))
 CRYPTO_LIB=$(OUTPUT_DIR)/libs/libcrypto$(if $(WIN32),-1.dll,$(if $(DARWIN),.1.1.dylib,.so.1.1))
 

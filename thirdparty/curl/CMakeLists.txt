@@ -5,8 +5,6 @@ include(koreader_thirdparty_common)
 include(koreader_thirdparty_git)
 
 assert_var_defined(OPENSSL_DIR)
-assert_var_defined(CRYPTO_LIB)
-assert_var_defined(SSL_LIB)
 assert_var_defined(ZLIB_DIR)
 
 list(APPEND PATCH_CMD COMMAND ${KO_PATCH}
@@ -43,9 +41,7 @@ list(APPEND CMAKE_ARGS
     # OpenSSL.
     -DCURL_DEFAULT_SSL_BACKEND=openssl
     -DCURL_USE_OPENSSL=TRUE
-    -DOPENSSL_INCLUDE_DIR=${OPENSSL_DIR}/include
-    -DOPENSSL_CRYPTO_LIBRARY=${CRYPTO_LIB}
-    -DOPENSSL_SSL_LIBRARY=${SSL_LIB}
+    -DOpenSSL_ROOT=${OPENSSL_DIR}
     # ZLIB.
     -DCURL_ZLIB=TRUE
     -DZLIB_ROOT=${ZLIB_DIR}
