@@ -4,9 +4,13 @@ project(sdl2 LANGUAGES)
 include(koreader_thirdparty_common)
 include(koreader_thirdparty_git)
 
-# remove workarounds for standalone applications and add a couple of actions
-# to be used from the osx main menu.
-list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/cocoa.patch)
+list(APPEND PATCH_CMD COMMAND ${KO_PATCH}
+    # Remove workarounds for standalone applications and add
+    # a couple of actions to be used from the osx main menu.
+    ${CMAKE_CURRENT_SOURCE_DIR}/cocoa.patch
+    # FIXME: koreader should really be using `libSDL2-2.0.so.0` instead.
+    ${CMAKE_CURRENT_SOURCE_DIR}/no_library_versioning.patch
+)
 
 list(APPEND CMAKE_ARGS
     -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TCF}
