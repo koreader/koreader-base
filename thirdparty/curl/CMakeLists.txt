@@ -10,7 +10,7 @@ if(POCKETBOOK)
 endif()
 
 list(APPEND CMAKE_ARGS
-    -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TCF}
+    -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE}
     # Project options.
     # TODO: Enable ZSTD support? We currently only use cURL
     # for zsync2, so, obviously, not necessary right now…
