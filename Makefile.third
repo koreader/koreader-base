@@ -357,13 +357,7 @@ else
 endif
 
 $(ZSTD_LIB): $(THIRDPARTY_DIR)/zstd/*.*
-	$(CMAKE) $(CMAKE_FLAGS) \
-		-DCC='$(CC)' \
-		-DCXX='$(CXX)' \
-		-DAR='$(AR)' \
-		-DCFLAGS='$(CFLAGS)' \
-		-DLDFLAGS='$(LDFLAGS)' \
-		-S $(THIRDPARTY_DIR)/zstd -B $(ZSTD_BUILD_DIR)
+	$(CMAKE) $(CMAKE_FLAGS) -S $(THIRDPARTY_DIR)/zstd -B $(ZSTD_BUILD_DIR)
 	$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS) -C $(ZSTD_BUILD_DIR)
 	cp -fL $(ZSTD_DIR)/lib/$(notdir $(ZSTD_LIB)) $(ZSTD_LIB)
 
