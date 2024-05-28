@@ -69,15 +69,9 @@ list(APPEND BUILD_CMD COMMAND ${KO_MAKE_RECURSIVE} -C glib)
 
 list(APPEND INSTALL_CMD COMMAND ${KO_MAKE_RECURSIVE} -C glib install)
 
-ko_write_gitclone_script(
-    GIT_CLONE_SCRIPT_FILENAME
-    https://github.com/GNOME/glib.git
-    2.58.3
-    ${SOURCE_DIR}
-)
-
 external_project(
-    DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
+    URL https://download.gnome.org/sources/glib/2.58/glib-2.58.3.tar.xz
+    URL_MD5 8058c7bde846dcffe5fa453eca366d73
     PATCH_COMMAND ${PATCH_CMD}
     CONFIGURE_COMMAND ${CFG_CMD}
     BUILD_COMMAND ${BUILD_CMD}
