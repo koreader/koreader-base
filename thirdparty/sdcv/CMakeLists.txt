@@ -13,30 +13,30 @@ assert_var_defined(GLIB_DIR)
 assert_var_defined(ZLIB)
 assert_var_defined(ZLIB_DIR)
 
-# Revert 6e36e7730caf07b6cd0bfa265cdf9b5e31e7acad, because it's not helpful in our workflow, and just causes logging noise.
-list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/sdcv-no-unknown-dict-warning.patch)
-# Force utf8 command line parsing
-list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/sdcv-locale-hack.patch)
-
-# Make sure the daisy-chain once again picks up our toolchain file...
-list(APPEND CMAKE_ARGS -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TCF})
+list(APPEND PATCH_CMD COMMAND ${KO_PATCH}
+    # Revert 6e36e7730caf07b6cd0bfa265cdf9b5e31e7acad, because it's
+    # not helpful in our workflow, and just causes logging noise.
+    ${CMAKE_CURRENT_SOURCE_DIR}/sdcv-no-unknown-dict-warning.patch
+    # Force UTF-8 command line parsing.
+    ${CMAKE_CURRENT_SOURCE_DIR}/sdcv-locale-hack.patch
+)
 
 # took me an eternity to find $<SEMICOLON>
 # important docs here https://cmake.org/cmake/help/v2.8.11/cmake.html#command:add_custom_command
 string(APPEND GLIB2_INCLUDE_DIRS
-    "${GLIB_DIR}/include/glib-2.0"
+    ${GLIB_DIR}/include/glib-2.0
     $<SEMICOLON>
-    "${GLIB_DIR}/lib/glib-2.0/include"
+    ${GLIB_DIR}/lib/glib-2.0/include
 )
-string(APPEND GLIB2_LIBRARIES "${GLIB}")
+string(APPEND GLIB2_LIBRARIES ${GLIB})
 if(DEFINED ENV{ANDROID} OR DEFINED ENV{DARWIN})
     string(APPEND GLIB2_INCLUDE_DIRS
-        $<SEMICOLON> "${GETTEXT_DIR}/include"
-        $<SEMICOLON> "${LIBICONV_DIR}/include"
+        $<SEMICOLON> ${GETTEXT_DIR}/include
+        $<SEMICOLON> ${LIBICONV_DIR}/include
     )
     string(APPEND GLIB2_LIBRARIES
-        $<SEMICOLON> "${GETTEXT}"
-        $<SEMICOLON> "${LIBICONV}"
+        $<SEMICOLON> ${GETTEXT}
+        $<SEMICOLON> ${LIBICONV}
     )
 endif()
 if(DEFINED ENV{DARWIN})
@@ -52,16 +52,21 @@ else()
         string(APPEND GLIB2_LIBRARIES $<SEMICOLON> -lrt)
     endif()
 endif()
-list(APPEND CMAKE_ARGS "-DGLIB2_INCLUDE_DIRS=${GLIB2_INCLUDE_DIRS}")
-list(APPEND CMAKE_ARGS "-DGLIB2_LIBRARIES=${GLIB2_LIBRARIES}")
 
-list(APPEND CMAKE_ARGS "-DENABLE_NLS=False")
-list(APPEND CMAKE_ARGS "-DWITH_READLINE=False")
-
-list(APPEND CMAKE_ARGS "-DZLIB_INCLUDE_DIR=${ZLIB_DIR}/include")
-list(APPEND CMAKE_ARGS "-DZLIB_LIBRARIES=${ZLIB}")
-# I just want to be able to -I and -L and have things work. CMake, CMake...
-list(APPEND CMAKE_ARGS "-DZLIB_LIBRARY_RELEASE=${ZLIB}")
+list(APPEND CMAKE_ARGS
+    -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TCF}
+    # Project options.
+    -DENABLE_NLS=False
+    -DWITH_READLINE=False
+    # GLib.
+    -DGLIB2_INCLUDE_DIRS=${GLIB2_INCLUDE_DIRS}
+    -DGLIB2_LIBRARIES=${GLIB2_LIBRARIES}
+    # Zlib.
+    -DZLIB_INCLUDE_DIR=${ZLIB_DIR}/include
+    -DZLIB_LIBRARIES=${ZLIB}
+    # I just want to be able to -I and -L and have things work. CMake, CMake...
+    -DZLIB_LIBRARY_RELEASE=${ZLIB}
+)
 
 list(APPEND BUILD_CMD COMMAND ${KO_MAKE_PROGRAM})
 
