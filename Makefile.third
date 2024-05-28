@@ -171,7 +171,7 @@ $(DJVULIBRE_LIB): $(THIRDPARTY_DIR)/djvulibre/*.*
 		-DLDFLAGS='$(LDFLAGS)' \
 		-S $(THIRDPARTY_DIR)/djvulibre -B $(DJVULIBRE_BUILD_DIR)
 	$(CMAKE_MAKE_PROGRAM) $(CMAKE_MAKE_PROGRAM_FLAGS) -C $(DJVULIBRE_BUILD_DIR)
-	cp -fL $(DJVULIBRE_DIR)/libdjvu/.libs/$(notdir $(DJVULIBRE_LIB)) $(DJVULIBRE_LIB)
+	cp -fL $(DJVULIBRE_DIR)/lib/$(notdir $(DJVULIBRE_LIB)) $(DJVULIBRE_LIB)
 ifdef DARWIN
 	install_name_tool -id \
 		libs/$(notdir $(DJVULIBRE_LIB)) \
