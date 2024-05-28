@@ -76,7 +76,7 @@ else()
     list(APPEND CONFIGURE_CMD ${SOURCE_DIR}/Configure)
 endif()
 
-set(CFG_OPTS ${CFG_OPTS} ${ASM_OPT} no-idea no-mdc2 no-rc5)
+set(CFG_OPTS ${CFG_OPTS} ${ASM_OPT} no-idea no-mdc2 no-rc5 no-tests)
 list(APPEND CFG_CMD COMMAND
     env ${CFG_ENV_VAR}
     ${CONFIGURE_CMD}
