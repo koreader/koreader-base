@@ -147,18 +147,9 @@ list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/read_large
 # Ensure an HTML document fonts are freed on close.
 list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/free-html-doc-fonts-on-close.patch)
 
-# TODO: ignore shared git submodules built outside of mupdf by ourselves
-# https://git.ghostscript.com/mupdf.git is slow, so we use the official mirror on GitHub
-ko_write_gitclone_script(
-    GIT_CLONE_SCRIPT_FILENAME
-    https://github.com/ArtifexSoftware/mupdf.git
-    tags/1.13.0
-    ${SOURCE_DIR}
-    "thirdparty/jbig2dec thirdparty/mujs thirdparty/openjpeg"
-)
-
 external_project(
-    DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
+    URL https://mupdf.com/downloads/archive/mupdf-1.13.0-source.tar.xz
+    URL_MD5 0b567ae03d7a94321134dfcde95210cf
     PATCH_COMMAND ${PATCH_CMD}
     BUILD_COMMAND ${BUILD_CMD_GENERATE} COMMAND ${STATIC_BUILD_CMD} COMMAND ${SHARED_BUILD_CMD}
 )
