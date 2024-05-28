@@ -638,6 +638,7 @@ ifdef EMULATE_READER
 	READELF:=$(HOSTREADELF)
 	CFLAGS+=$(HOST_ARCH)
 	CXXFLAGS+=$(HOST_ARCH)
+	export PKG_CONFIG_PATH := $(abspath $(STAGING_DIR)/lib/pkgconfig)$(if $(PKG_CONFIG_PATH),:$(PKG_CONFIG_PATH))
 else
 	REALCC:=$(CC)
 	REALCXX:=$(CXX)
@@ -655,8 +656,8 @@ else
 	# NOTE: Let people shoot themselves in the foot with custom pkg-config wrappers?
 	#undefine PKG_CONFIG
 	#unexport PKG_CONFIG
-	export PKG_CONFIG_PATH=""
-	export PKG_CONFIG_LIBDIR=""
+	export PKG_CONFIG_PATH = $(abspath $(STAGING_DIR)/lib/pkgconfig)
+	export PKG_CONFIG_LIBDIR =
 	# We'll want to ship the shared STL lib on non-SDL platforms
 	ifndef SDL
 		ifdef SHARED_STL_LIB
