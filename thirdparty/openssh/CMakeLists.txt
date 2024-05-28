@@ -10,8 +10,6 @@ assert_var_defined(LDFLAGS)
 assert_var_defined(OPENSSL_DIR)
 assert_var_defined(ZLIB_DIR)
 
-list(APPEND PATCH_CMD COMMAND autoreconf -fi)
-
 list(APPEND CFG_CMD COMMAND env
     CC=${CC}
     CFLAGS=${CFLAGS}
@@ -29,16 +27,10 @@ list(APPEND CFG_CMD COMMAND env
 
 list(APPEND BUILD_CMD COMMAND ${KO_MAKE_RECURSIVE} sftp-server scp)
 
-ko_write_gitclone_script(
-    GIT_CLONE_SCRIPT_FILENAME
-    https://github.com/openssh/openssh-portable.git
-    V_9_6_P1
-    ${SOURCE_DIR}
-)
-
 external_project(
-    DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
-    PATCH_COMMAND COMMAND ${PATCH_CMD}
+    URL https://cdn.openbsd.org/pub/OpenBSD/OpenSSH/portable/openssh-9.6p1.tar.gz
+    https://mirror.edgecast.com/pub/OpenBSD/OpenSSH/portable/openssh-9.6p1.tar.gz
+    URL_MD5 5e90def5af3ffb27e149ca6fff12bef3
     CONFIGURE_COMMAND ${CFG_CMD}
     BUILD_COMMAND ${BUILD_CMD}
 )
