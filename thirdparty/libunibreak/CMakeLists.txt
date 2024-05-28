@@ -7,7 +7,7 @@ include(koreader_thirdparty_git)
 list(APPEND CFG_CMD COMMAND env)
 append_autotools_vars(CFG_CMD)
 list(APPEND CFG_CMD
-    ${SOURCE_DIR}/configure --host=${CHOST} --prefix=${INSTALL_DIR}
+    ${SOURCE_DIR}/configure --host=${CHOST} --prefix=${STAGING_DIR}
     --disable-static --enable-shared
     --enable-silent-rules
 )

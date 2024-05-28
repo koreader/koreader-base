@@ -3,8 +3,6 @@ project(dropbear LANGUAGES)
 
 include(koreader_thirdparty_common)
 
-assert_var_defined(ZLIB_DIR)
-
 list(APPEND PATCH_CMD COMMAND ${KO_PATCH}
     ${CMAKE_CURRENT_SOURCE_DIR}/dropbear-2018.76-kindle-nopasswd-hack.patch
     ${CMAKE_CURRENT_SOURCE_DIR}/dropbear-2018.76-kindle-pubkey-hack.patch
@@ -40,7 +38,7 @@ list(APPEND CFG_CMD
     --enable-shadow
     --enable-syslog
     --enable-zlib
-    --with-zlib=${ZLIB_DIR}
+    --with-zlib=${STAGING_DIR}
 )
 
 list(APPEND BUILD_CMD COMMAND ${KO_MAKE_RECURSIVE} strip PROGRAMS=dropbear)

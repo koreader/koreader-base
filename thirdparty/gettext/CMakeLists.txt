@@ -3,10 +3,8 @@ project(gettext LANGUAGES)
 
 include(koreader_thirdparty_common)
 
-assert_var_defined(LIBICONV_DIR)
-
-string(APPEND CPPFLAGS " -I${LIBICONV_DIR}/include")
-string(APPEND LDFLAGS " -L${LIBICONV_DIR}/lib")
+string(APPEND CPPFLAGS " -I${STAGING_DIR}/include")
+string(APPEND LDFLAGS " -L${STAGING_DIR}/lib")
 
 list(APPEND CFG_CMD COMMAND env)
 append_autotools_vars(CFG_CMD)
@@ -26,7 +24,7 @@ endif()
 
 list(APPEND BUILD_CMD COMMAND ${KO_MAKE_RECURSIVE} -C intl)
 
-list(APPEND INSTALL_CMD COMMAND ${KO_MAKE_RECURSIVE} -C intl DESTDIR=${INSTALL_DIR} install)
+list(APPEND INSTALL_CMD COMMAND ${KO_MAKE_RECURSIVE} -C intl DESTDIR=${STAGING_DIR} install)
 
 external_project(
     URL http://ftpmirror.gnu.org/gettext/gettext-0.21.tar.xz
