@@ -1,11 +1,12 @@
 cmake_minimum_required(VERSION 3.5.1)
 project(minizip LANGUAGES)
 
-include("koreader_thirdparty_common")
-include("koreader_thirdparty_git")
+include(koreader_thirdparty_common)
+include(koreader_thirdparty_git)
 
-assert_var_defined(CC)
 assert_var_defined(AR)
+assert_var_defined(CC)
+assert_var_defined(CFLAGS)
 assert_var_defined(LDFLAGS)
 assert_var_defined(RANLIB)
 
@@ -16,11 +17,20 @@ set(BINARY_DIR ${SOURCE_DIR})
 # FIXME: Even then, something in said branch seems to upset MuPDF with our custom patch as-is, so keep using the old code...
 # list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/minizip-libaes-makefile.patch)
 
-list(APPEND PATCH_CMD COMMAND ${ISED} "s|^CC=|#CC=|g" -e "s|^CFLAGS=|#CFLAGS=|g" aes/Makefile)
+list(APPEND PATCH_CMD COMMAND ${ISED} "s|\\.\\./libaes.a|libaes.a|" aes/Makefile)
 
-#fix build error due to implicit declarations of function being invalid in C99 under macOS/XCode 12 
-set(CC "${CC} -Wno-error=implicit-function-declaration")
-list(APPEND BUILD_CMD COMMAND ${KO_MAKE_RECURSIVE} -C aes "CC=${CC}" "LDFLAGS=${LDFLAGS}" "AR=${AR}" "RANLIB=${RANLIB}")
+# Fix build error due to implicit declarations of function being invalid in C99 under macOS/XCode 12.
+string(APPEND CFLAGS " -Wno-error=implicit-function-declaration")
+string(APPEND CFLAGS " -DHAVE_AES")
+list(APPEND BUILD_CMD COMMAND
+    ${KO_MAKE_RECURSIVE}
+    AR=${AR}
+    CC=${CC}
+    CFLAGS=${CFLAGS}
+    LDFLAGS=${LDFLAGS}
+    RANLIB=${RANLIB}
+    -C aes
+)
 
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
