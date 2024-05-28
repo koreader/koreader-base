@@ -4,31 +4,33 @@ project(libwebp LANGUAGES)
 include("koreader_thirdparty_common")
 include("koreader_thirdparty_git")
 
-assert_var_defined(CC)
-assert_var_defined(CXX)
-assert_var_defined(LDFLAGS)
+list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake_tweaks.patch)
 
-list(APPEND PATCH_CMD COMMAND ./autogen.sh)
+list(APPEND CMAKE_ARGS
+    -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TCF}
+    -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR}
+    -DBUILD_SHARED_LIBS=TRUE
+    # Project options.
+    # Note: we could build libwebpdecoder.so only, which would be smaller and fine
+    # decoding single frame webp images. But it fails on animated webp images, not
+    # even rendering the first frame.  We need the regular libraries (`libwebp.so`
+    # and `libwebpdemux.so`) to handle them (but we can left out the encoder,
+    # `libwebpmux.so`).
+    -DWEBP_BUILD_ANIM_UTILS=FALSE
+    -DWEBP_BUILD_CWEBP=FALSE
+    -DWEBP_BUILD_DWEBP=FALSE
+    -DWEBP_BUILD_EXTRAS=FALSE
+    -DWEBP_BUILD_GIF2WEBP=FALSE
+    -DWEBP_BUILD_IMG2WEBP=FALSE
+    -DWEBP_BUILD_LIBWEBPMUX=FALSE
+    -DWEBP_BUILD_VWEBP=FALSE
+    -DWEBP_BUILD_WEBPINFO=FALSE
+    -DWEBP_BUILD_WEBPMUX=FALSE
+)
 
-# No build rpath
-list(APPEND PATCH_CMD COMMAND ${ISED} "s/\\(hardcode_into_libs\\)=.*$/\\1=no/" configure)
+list(APPEND BUILD_CMD COMMAND ${KO_MAKE_PROGRAM})
 
-set(CFG_ENV_VAR "CC=${CC}" "CXX=${CXX}" "CPPFLAGS=${CPPFLAGS}" "LDFLAGS=${LDFLAGS}")
-# Note: with "--disable-libwebpmux --disable-libwebpdemux --enable-libwebpdecoder", we could
-# build libwebpdecoder.so only, which would be smaller and fine decoding single frame webp
-# images. But it fails on animated webp images, not even rendering the first frame.
-# We need the regular libraries (libwebp.so and libwebpdemux.so) to handle them
-# (but we can left out the encoder, libwebpmux.so).
-set(CFG_OPTS --prefix=${INSTALL_DIR} --disable-static --enable-shared --host=${CHOST} --disable-libwebpmux)
-list(APPEND CFG_CMD COMMAND env ${CFG_ENV_VAR} ${SOURCE_DIR}/configure ${CFG_OPTS})
-
-if(ANDROID)
-    list(APPEND CFG_CMD COMMAND ${ANDROID_LIBTOOL_FIX_CMD})
-endif()
-
-list(APPEND BUILD_CMD COMMAND ${KO_MAKE_RECURSIVE})
-
-list(APPEND INSTALL_CMD COMMAND ${KO_MAKE_RECURSIVE} install)
+list(APPEND INSTALL_CMD COMMAND ${CMAKE_COMMAND} --install .)
 
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
@@ -40,7 +42,7 @@ ko_write_gitclone_script(
 external_project(
     DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
     PATCH_COMMAND ${PATCH_CMD}
-    CONFIGURE_COMMAND ${CFG_CMD}
+    CMAKE_ARGS ${CMAKE_ARGS}
     BUILD_COMMAND ${BUILD_CMD}
     INSTALL_COMMAND ${INSTALL_CMD}
 )
