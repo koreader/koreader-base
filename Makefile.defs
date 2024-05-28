@@ -64,18 +64,11 @@ LINUX_ARCH?=native
 LR_VER_NUM := $(shell luarocks --version | grep -Eo '[0-9]+.[0-9]+')
 LR_GT_3_0 := $(shell awk -v LR_VER_NUM=$(LR_VER_NUM) 'BEGIN { print (LR_VER_NUM >= 3.0); }')
 
-# Some CMake flags
-CMAKE_BUILD_TYPE?=Release
-
 # set debug-related variables to cascade down
 ifdef KODEBUG
 	DEBUG:=$(KODEBUG)
 	export DEBUG
-	# will have to be passed as -DCMAKE_BUILD_TYPE to $(CMAKE) invocations
-	CMAKE_BUILD_TYPE:=Debug
 endif
-
-export CMAKE_BUILD_TYPE
 
 # CMAKE:=cmake --no-warn-unused-cli
 CMAKE := cmake
@@ -107,8 +100,6 @@ else
   CMAKE_MAKE_PROGRAM = $(abspath $(THIRDPARTY_DIR)/cmake_modules/komake.sh) $(MAKE)
   CMAKE_MAKE_PROGRAM_FLAGS ?=
 endif
-
-CMAKE_FLAGS += -DMAKE=$(MAKE) -DNINJA=$(NINJA)
 
 ifneq (,$(or $(VERBOSE),$(V)))
   ifeq (4.4,$(firstword $(sort $(MAKE_VERSION) 4.4)))
@@ -609,6 +600,7 @@ endif
 
 # this will create a path named build/arm-none-linux-gnueabi or similar
 OUTPUT_DIR ?= build/$(MACHINE)
+CMAKE_DIR = $(OUTPUT_DIR)/cmake
 THIRDPARTY_BUILD = $(OUTPUT_DIR)/thirdparty
 
 # you can configure an emulation for the (eink) framebuffer here.
@@ -630,13 +622,9 @@ ifdef EMULATE_READER
 	CFLAGS+=$(HOST_ARCH)
 	CXXFLAGS+=$(HOST_ARCH)
 else
-	# Use a CMake toolchain file to avoid all kinds of CMake insanity
-	export CROSS_TC:=$(CHOST)
 	ifndef SYSROOT
 		export SYSROOT:=$(shell $(CC) -print-sysroot)
 	endif
-	export CMAKE_TCF:=-DCMAKE_TOOLCHAIN_FILE=$(CURDIR)/thirdparty/cmake_modules/CMakeCross.cmake
-	CMAKE+=$(CMAKE_TCF)
 	REALCC:=$(CC)
 	REALCXX:=$(CXX)
 	CC:=$(strip $(CCACHE) $(CC))
@@ -1039,7 +1027,124 @@ CMAKE_THIRDPARTY_LIBS := $(CMAKE_THIRDPARTY_LIBS),fbink
 CMAKE_THIRDPARTY_LIBS := $(CMAKE_THIRDPARTY_LIBS),kobo-usbms
 CMAKE_THIRDPARTY_LIBS := $(CMAKE_THIRDPARTY_LIBS),fribidi,libunibreak,utf8proc
 
-# Testing support.
+# CMake "real" toolchain file. {{{
+
+CMAKE_TCF = $(CMAKE_DIR)/toolchain.cmake
+
+# CMAKE_SYSTEM_PROCESSOR
+# FIXME: use more fine grained values for ARM targets?
+# (Cf. https://github.com/taka-no-me/android-cmake)
+ifneq (,$(filter aarch64-%,$(CHOST)))
+  CMAKE_SYSTEM_PROCESSOR = aarch64
+else ifneq (,$(filter arm-% armv7a-%,$(CHOST)))
+  CMAKE_SYSTEM_PROCESSOR = arm
+else ifneq (,$(filter i686-%,$(CHOST)))
+  CMAKE_SYSTEM_PROCESSOR = i686
+else ifneq (,$(filter x86_64-%,$(CHOST)))
+  CMAKE_SYSTEM_PROCESSOR = x86_64
+else ifneq (,$(CHOST))
+  $(warning CMAKE_SYSTEM_PROCESSOR not set! (CHOST is $(CHOST)))
+endif
+
+# Native & cross definitions.
+define cmake_toolchain
+
+cmake_minimum_required(VERSION 3.5.1)
+
+# CMake Cross ToolChain config file. Adapted from Debian's dpkg-cross ;).
+# c.f., https://cmake.org/cmake/help/latest/manual/cmake-toolchains.7.html#cross-compiling-toolchain
+# NOTE: Remember that CMake is a special snowflake that completely *ignores* CPPFLAGS,
+# because of course it does...
+# (https://gitlab.kitware.com/cmake/cmake/issues/12928)
+
+# Build type.
+set(CMAKE_BUILD_TYPE $(if $(KODEBUG),Debug,Release))
+set(CMAKE_DEBUG_POSTFIX "")
+
+# Disable run time path handling (we have our own).
+set(CMAKE_SKIP_RPATH TRUE)
+
+# C language.
+$(if $(CCACHE),set(CMAKE_C_COMPILER_LAUNCHER $(CCACHE)))
+set(CMAKE_C_COMPILER $(REALCC))
+
+# C++ language.
+$(if $(CCACHE),set(CMAKE_CXX_COMPILER_LAUNCHER $(CCACHE)))
+set(CMAKE_CXX_COMPILER $(REALCXX))
+
+# OBJC language (for SDL2 on macOS).
+$(if $(CCACHE),set(CMAKE_OBJC_COMPILER_LAUNCHER $(CCACHE)))
+set(CMAKE_OBJC_COMPILER $(REALCC))
+
+# Linker.
+set(CMAKE_EXE_LINKER_FLAGS_INIT "$(strip $(LDFLAGS))")
+
+# Tools.
+set(CMAKE_AR $(AR) CACHE FILEPATH "Archive")
+set(CMAKE_LD $(LD) CACHE FILEPATH "LD")
+set(CMAKE_RANLIB $(RANLIB) CACHE FILEPATH "RanLib")
+$(if $(WIN32),set(CMAKE_RC_COMPILER $(RC) CACHE FILEPATH "Resource Compiler"))
+set(CMAKE_STRIP $(STRIP) CACHE FILEPATH "Strip")
+
+endef
+
+# Cross-compile only definitions.
+define cmake_cross_toolchain
+
+$(cmake_toolchain)
+
+# OS.
+# NOTE: use Linux for Android too (cf. https://github.com/taka-no-me/android-cmake and
+# https://android.googlesource.com/platform/ndk/+/master/build/cmake/android.toolchain.cmake)
+# In the meantime, I'll be sitting in the corner, crying hysterically.
+set(CMAKE_SYSTEM_NAME $(if $(DARWIN),Darwin,$(if $(WIN32),Windows,Linux)))
+
+# Magical value that inhibits all of CMake's own NDK handling code. (Or shit goes boom.)
+$(if $(ANDROID),set(CMAKE_SYSTEM_VERSION 1))
+$(if $(ANDROID),set(ANDROID_STL c++_shared))
+
+# Target architecture.
+set(CMAKE_SYSTEM_PROCESSOR $(CMAKE_SYSTEM_PROCESSOR))
+
+# Set path(s) to search for libraries/binaries/headers.
+set(CMAKE_SYSROOT $(abspath $(SYSROOT)))
+# Search for programs in the build host directories.
+set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)
+# For libraries and headers in the target directories.
+set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)
+set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
+# As well as for CMake packages too.
+set(CMAKE_FIND_ROOT_PATH_MODE_PACKAGE ONLY)
+
+endef
+
+# }}}
+
+# KOReader "toolchain" file: for forwarding definitions to CMake. {{{
+
+CMAKE_KO = $(CMAKE_DIR)/koreader.cmake
+CMAKE_FLAGS += -DCMAKE_TOOLCHAIN_FILE='$(abspath $(CMAKE_KO))'
+
+define cmake_koreader
+
+set(CMAKE_TCF $(abspath $(CMAKE_TCF)))
+# Ensure the real toolchain is included.
+include($${CMAKE_TCF})
+
+set(CHOST          $(CHOST))
+
+set(THIRDPARTY_DIR $(abspath $(THIRDPARTY_DIR)))
+
+set(MAKE $(MAKE))
+set(NINJA $(NINJA))
+
+list(INSERT CMAKE_MODULE_PATH 0 $${THIRDPARTY_DIR}/cmake_modules)
+
+endef
+
+# }}}
+
+# Testing support. {{{
 
 ifneq (,$(EMULATE_READER))
 
@@ -1058,3 +1163,7 @@ endef
 BUSTED_LUAJIT = $(strip $(busted_fn)); busted
 
 endif
+
+# }}}
+
+# vim: foldmethod=marker foldlevel=0

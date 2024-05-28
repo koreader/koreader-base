@@ -1,7 +1,6 @@
 cmake_minimum_required(VERSION 3.5.1)
 project(openssl LANGUAGES)
 
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/../cmake_modules")
 include("koreader_thirdparty_common")
 include("koreader_thirdparty_git")
 
@@ -27,7 +26,7 @@ else()
 endif()
 
 # If we have a CHOST set, use it
-if (NOT "${CHOST}" STREQUAL "")
+if (CHOST)
     # NOTE: We bypass ccache for the Configure script, in the hope that it'll help the whole makedepend detection.
     #       At least OpenSSL 1.1.x now drops it instead of trying to call a nonexistent binary, so it's less annoying than before.
     set(CFG_ENV_VAR "CROSS_COMPILE=${CHOST}-" "CC=${REALCC}")
@@ -37,21 +36,21 @@ if(DEFINED ENV{ANDROID})
     assert_var_defined(NDKABI)
     set(CFG_OPTS -D__ANDROID_API__=${NDKABI} ${CFG_OPTS})
     # If we're on ARM, make it so
-    if (${CHOST} MATCHES "^armv7a-.*")
+    if (CHOST MATCHES "^armv7a-.*")
         set(CFG_OPTS android-arm ${CFG_OPTS})
-    elseif (${CHOST} MATCHES "^aarch64-.*")
+    elseif (CHOST MATCHES "^aarch64-.*")
         set(CFG_OPTS android-arm64 ${CFG_OPTS})
-    elseif (${CHOST} MATCHES "^x86_64-.*")
+    elseif (CHOST MATCHES "^x86_64-.*")
         set(CFG_OPTS android-x86_64 ${CFG_OPTS})
     else()
         set(CFG_OPTS android-x86 ${CFG_OPTS})
     endif()
 else()
     # If we're on ARM, make it so
-    if (${CHOST} MATCHES "^arm-.*")
+    if (CHOST MATCHES "^arm-.*")
         # Yes, OpenSSL's preset names make no sense.
         set(CFG_OPTS linux-armv4 -DL_ENDIAN ${CFG_OPTS})
-    elseif (${CHOST} MATCHES "^aarch64-.*")
+    elseif (CHOST MATCHES "^aarch64-.*")
         set(CFG_OPTS linux-aarch64 -DL_ENDIAN ${CFG_OPTS})
     endif()
 endif()
