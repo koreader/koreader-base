@@ -4,7 +4,10 @@ project(openssl LANGUAGES)
 include(koreader_thirdparty_common)
 include(koreader_thirdparty_git)
 
-list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/openssl-1.1.0j-parallel_install_fix.patch)
+list(APPEND PATCH_CMD COMMAND ${KO_PATCH}
+    ${CMAKE_CURRENT_SOURCE_DIR}/openssl-1.1.0j-parallel_install_fix.patch
+    ${CMAKE_CURRENT_SOURCE_DIR}/reduce_build_verbosity.patch
+)
 
 list(APPEND CFG_ENV_VAR
     CC=${HOSTCC}
