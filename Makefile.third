@@ -187,7 +187,6 @@ $(POPEN_NOSHELL_LIB): $(THIRDPARTY_DIR)/popen-noshell/*.*
 $(LEPTONICA_LIB): $(PNG_LIB) $(ZLIB) \
 	$(THIRDPARTY_DIR)/leptonica/*.*
 	$(CMAKE) $(CMAKE_FLAGS) \
-		$(if $(ARM_GLIBC_GTE_2_22),-DARM_GLIBC_GTE_2_22=on,) \
 		-DPNG_DIR='$(PNG_DIR)' \
 		-DPNG_LIB='$(abspath $(PNG_LIB))' \
 		-DZLIB_DIR='$(ZLIB_DIR)' \
