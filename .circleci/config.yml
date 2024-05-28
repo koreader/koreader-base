@@ -172,10 +172,14 @@ jobs:
             ccache --zero-stats
             ccache --show-config
       # }}}
-      # Build.
+      # Build. {{{
       - run:
           name: Build
           command: test -d build || source .ci/build_script.sh
+      - run:
+          name: Dump binaries runtime path & dependencies
+          command: make bindeps
+      # }}}
       # Clean / save caches. {{{
       - run:
           name: Clean caches
