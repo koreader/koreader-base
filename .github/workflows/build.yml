@@ -14,13 +14,13 @@ jobs:
 
   macos:
 
-    runs-on: macos-11
+    runs-on: macos-13
 
     env:
       # Bump number to reset all caches.
-      CACHE_EPOCH: '0'
+      CACHE_EPOCH: '1'
       CLICOLOR_FORCE: '1'
-      MACOSX_DEPLOYMENT_TARGET: '11'
+      MACOSX_DEPLOYMENT_TARGET: '10.15'
       MAKEFLAGS: 'OUTPUT_DIR=build'
 
     steps:
@@ -86,24 +86,22 @@ jobs:
           python-version: '3.11'
 
       - name: Install homebrew dependencies
-        if: steps.ccache-restore.outputs.cache-hit != 'true'
-        uses: ./.github/actions/brew_cache
-        with:
-          cache_epoch: '${{ env.CACHE_EPOCH }}'
-          packages: >
-            autoconf
-            automake
-            binutils
-            cmake
-            coreutils
-            gettext
-            gnu-getopt
-            grep
-            libtool
-            make
-            nasm
-            pkg-config
-            wget
+        # Compared to the README, adds p7zip.
+        run: |
+          packages=(
+            nasm binutils coreutils libtool autoconf automake cmake make
+            sdl2 lua@5.1 luarocks gettext pkg-config wget
+            gnu-getopt grep p7zip ninja
+          )
+          # Lua 5.1 is disabled, so we need to work around that:
+          # - fetch all packages
+          brew fetch "${packages[@]}"
+          # - disable auto-updates
+          export HOMEBREW_NO_AUTO_UPDATE=1
+          # - install lua@5.1 from cache
+          brew install "$(brew --cache lua@5.1)"
+          # - and install the rest
+          brew install "${packages[@]}"
 
       - name: Update PATH
         if: steps.ccache-restore.outputs.cache-hit != 'true'
