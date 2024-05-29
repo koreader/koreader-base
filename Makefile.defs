@@ -585,8 +585,8 @@ ifneq (yes,$(firstword $(call hasminstd,$(CXX),c++,__cplusplus,201700)))
 	CXXSTD_FLAGS := -std=gnu++17
 endif
 
-# Improve reproducibility (disabled on pocketbook due to the ancient toolchain).
-ifneq ($(TARGET),pocketbook)
+# Improve reproducibility (disabled on ancient toolchains).
+ifeq (,$(filter kindle-legacy pocketbook,$(TARGET)))
   BASE_CFLAGS += -ffile-prefix-map=$(CURDIR)/=
 endif
 
