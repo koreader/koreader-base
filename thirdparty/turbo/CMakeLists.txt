@@ -12,7 +12,7 @@ list(APPEND PATCH_CMD COMMAND ${KO_PATCH}
 )
 # Remove the 7 years-old copy of a CA bundle that turbo doesn't actually use.
 list(APPEND PATCH_CMD COMMAND rm turbo/ca-certificates.crt)
-if (APPLE AND ANDROID)
+if(APPLE AND ANDROID)
     # Makefile of turbo hardcodes the shared library filename on macOS.
     list(APPEND PATCH_CMD COMMAND ${ISED} "s|libtffi_wrap.dylib|libtffi_wrap.so|" Makefile)
 endif()

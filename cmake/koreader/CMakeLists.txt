@@ -13,6 +13,7 @@ external_project(
     BUILD_COMMAND ${BUILD_CMD}
 )
 
+# lint_cmake: -readability/wonkycase
 function(add_target_build_step NAME)
     cmake_parse_arguments("" "EXCLUDE_FROM_ALL" "" "DEPENDS" ${ARGN})
     set(BUILD_DEPS)
@@ -42,6 +43,7 @@ function(add_target_build_step NAME)
     ExternalProject_Add_StepTargets(koreader ${STEP})
     add_custom_target(${NAME} DEPENDS koreader-${STEP})
 endfunction()
+# lint_cmake: +readability/wonkycase
 
 function(add_targets)
     foreach(NAME IN LISTS KOREADER_TARGETS)
