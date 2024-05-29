@@ -1,6 +1,6 @@
 include_guard(GLOBAL)
 
-if (DARWIN)
+if(DARWIN)
     # Note: can't use `sed -i "" -e`, because cmake "helpfully"
     # filter-out the empty argument during command invocation…
     set(ISED sh -c "sed -i '' -e \"$@\"" --)
@@ -156,6 +156,7 @@ if(DEFINED ENV{CI})
 else()
     set(LOG_EXTERNAL_PROJECT_STEPS TRUE)
 endif()
+# lint_cmake: -readability/wonkycase
 function(external_project)
     cmake_parse_arguments(
         # Prefix.
@@ -327,3 +328,4 @@ function(external_project_step STEP_NAME)
     ExternalProject_Add_Step(${PARAMS})
     ExternalProject_Add_StepTargets(${PROJECT_NAME} ${STEP_NAME})
 endfunction()
+# lint_cmake: +readability/wonkycase
