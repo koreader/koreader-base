@@ -1,0 +1,47 @@
+--- a/CMakeLists.txt	2024-03-02 05:00:57.010523373 +0100
++++ b/CMakeLists.txt	2024-03-02 05:00:58.593881954 +0100
+@@ -3375,30 +3375,6 @@
+       target_compile_options(SDL2 PRIVATE /Q_no-use-libirc)
+     endif()
+   endif()
+-  if(APPLE)
+-    # FIXME: Remove SOVERSION in SDL3
+-    set_target_properties(SDL2 PROPERTIES
+-      MACOSX_RPATH 1
+-      SOVERSION 0
+-      OUTPUT_NAME "SDL2-${LT_RELEASE}")
+-  elseif(UNIX AND NOT ANDROID)
+-    set_target_properties(SDL2 PROPERTIES
+-      VERSION ${LT_VERSION}
+-      SOVERSION ${LT_MAJOR}
+-      OUTPUT_NAME "SDL2-${LT_RELEASE}")
+-  else()
+-    if(WINDOWS OR CYGWIN)
+-      set_target_properties(SDL2 PROPERTIES
+-        DEFINE_SYMBOL DLL_EXPORT)
+-    elseif(OS2)
+-      set_target_properties(SDL2 PROPERTIES
+-        DEFINE_SYMBOL BUILD_SDL)
+-    endif()
+-    set_target_properties(SDL2 PROPERTIES
+-      VERSION ${SDL_VERSION}
+-      SOVERSION ${LT_REVISION}
+-      OUTPUT_NAME "SDL2")
+-  endif()
+   # Note: The clang toolset for Visual Studio does not support /NODEFAULTLIB.
+   if(MSVC AND NOT SDL_LIBC AND NOT MSVC_CLANG AND NOT SDL_CPU_ARM32)
+     # Don't try to link with the default set of libraries.
+@@ -3597,13 +3597,6 @@
+     if(SDL_SHARED)
+       set(SOEXT ${CMAKE_SHARED_LIBRARY_SUFFIX}) # ".so", ".dylib", etc.
+       get_target_property(SONAME SDL2 OUTPUT_NAME)
+-      if(NOT ANDROID AND NOT MINGW AND NOT OS2)
+-          install(CODE "
+-            execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink
+-              \"lib${SONAME}${SOPOSTFIX}${SOEXT}\" \"libSDL2${SOPOSTFIX}${SOEXT}\"
+-              WORKING_DIRECTORY \"${SDL2_BINARY_DIR}\")")
+-          install(FILES ${SDL2_BINARY_DIR}/libSDL2${SOPOSTFIX}${SOEXT} DESTINATION "${CMAKE_INSTALL_LIBDIR}")
+-      endif()
+     endif()
+     install(PROGRAMS ${SDL2_BINARY_DIR}/sdl2-config DESTINATION "${CMAKE_INSTALL_BINDIR}")
+     # TODO: what about the .spec file? Is it only needed for RPM creation?

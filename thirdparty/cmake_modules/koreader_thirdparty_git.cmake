@@ -1,11 +1,11 @@
+include_guard(GLOBAL)
+
 find_package(Git)
 
-function(_ko_write_gitclone_script script_filename git_EXECUTABLE git_repository git_tag git_submodules src_name work_dir build_source_dir gitclone_infofile gitclone_stampfile)
+function(_ko_write_gitclone_script script_filename git_EXECUTABLE git_repository git_tag git_submodules src_name clone_checkout build_source_dir gitclone_infofile gitclone_stampfile)
 
 # Default depth
 set(git_clone_depth 50)
-
-set(clone_checkout "${work_dir}")
 
   file(WRITE ${script_filename}
 "if(\"${git_tag}\" STREQUAL \"\")
@@ -33,8 +33,10 @@ if(NOT run)
   return()
 endif()
 
+file(LOCK \"${clone_checkout}.lock\")
+
 set(should_clone 1)
-if(EXISTS \"${work_dir}\")
+if(EXISTS \"${clone_checkout}\")
   set(should_clone 0)
 endif()
 
@@ -143,6 +145,8 @@ if (NOT \${source_name\} STREQUAL \${destination_name})
     message(FATAL_ERROR \"source / destination basenames don't match: ${clone_checkout} / ${build_source_dir}\")
 endif()
 file(COPY \"${clone_checkout}\" DESTINATION \${destination_dir})
+
+file(LOCK \"${clone_checkout}.lock\" RELEASE)
 
 execute_process(
   COMMAND \"${git_EXECUTABLE}\" -C \"${build_source_dir}\" sparse-checkout disable

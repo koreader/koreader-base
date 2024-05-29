@@ -1,41 +1,33 @@
-cmake_minimum_required(VERSION 3.5.1)
-project(sdl2 LANGUAGES)
+list(APPEND PATCH_CMD COMMAND ${KO_PATCH}
+    # Remove workarounds for standalone applications and add
+    # a couple of actions to be used from the osx main menu.
+    ${CMAKE_CURRENT_SOURCE_DIR}/cocoa.patch
+    # FIXME: koreader should really be using `libSDL2-2.0.so.0` instead.
+    ${CMAKE_CURRENT_SOURCE_DIR}/no_library_versioning.patch
+)
 
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_LIST_DIR}/../cmake_modules")
-include("koreader_thirdparty_common")
-include("koreader_thirdparty_git")
-
-# remove workarounds for standalone applications and add a couple of actions
-# to be used from the osx main menu.
-list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/cocoa.patch)
-
-# Make sure the daisy-chain once again picks up our toolchain file...
-if(DEFINED ENV{CMAKE_TCF})
-    list(APPEND CMAKE_ARGS "$ENV{CMAKE_TCF}")
-endif()
-list(APPEND CMAKE_ARGS "-DCMAKE_SKIP_RPATH=TRUE")
-
-# Project options.
 list(APPEND CMAKE_ARGS
+    -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE}
+    # Project options.
+    -DSDL2_DISABLE_SDL2MAIN=ON
     -DSDL_AUDIO=OFF
-    -DSDL_CMAKE_DEBUG_POSTFIX=
+    -DSDL_CMAKE_DEBUG_POSTFIX= # Remove 'd' suffix for the debug build library.
     -DSDL_SHARED=ON
     -DSDL_STATIC=OFF
     -DSDL_TEST=OFF
 )
-if(DEFINED ENV{DARWIN})
-    list(APPEND CMAKE_ARGS -DCMAKE_OBJC_COMPILER=${REALCC})
-endif()
 
 list(APPEND BUILD_CMD COMMAND ${KO_MAKE_PROGRAM})
 
-set(SDL2_VER "2.28.5")
-set(SDL2_MD5 "a344eb827a03045c9b399e99af4af13d")
+list(APPEND INSTALL_CMD COMMAND ${CMAKE_COMMAND} --install .)
+
+append_shared_lib_install_commands(INSTALL_CMD SDL2)
 
 external_project(
-    URL https://github.com/libsdl-org/SDL/releases/download/release-${SDL2_VER}/SDL2-${SDL2_VER}.tar.gz
-    URL_MD5 ${SDL2_MD5}
+    URL https://github.com/libsdl-org/SDL/releases/download/release-2.28.5/SDL2-2.28.5.tar.gz
+    URL_MD5 a344eb827a03045c9b399e99af4af13d
     PATCH_COMMAND ${PATCH_CMD}
     CMAKE_ARGS ${CMAKE_ARGS}
     BUILD_COMMAND ${BUILD_CMD}
+    INSTALL_COMMAND ${INSTALL_CMD}
 )

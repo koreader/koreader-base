@@ -1,26 +1,18 @@
-cmake_minimum_required(VERSION 3.5.1)
-project(utf8proc LANGUAGES)
-
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/../cmake_modules")
-include("koreader_thirdparty_common")
-include("koreader_thirdparty_git")
-
-assert_var_defined(CC)
-assert_var_defined(LDFLAGS)
-
-# Build in source tree.
-set(BINARY_DIR ${SOURCE_DIR})
-
-list(APPEND BUILD_CMD COMMAND ${KO_MAKE_RECURSIVE})
-
-ko_write_gitclone_script(
-    GIT_CLONE_SCRIPT_FILENAME
-    https://github.com/JuliaStrings/utf8proc.git
-    v2.9.0
-    ${SOURCE_DIR}
+list(APPEND CMAKE_ARGS
+    -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE}
+    -DBUILD_SHARED_LIBS=ON
 )
 
+list(APPEND BUILD_CMD COMMAND ${KO_MAKE_PROGRAM})
+
+list(APPEND INSTALL_CMD COMMAND ${CMAKE_COMMAND} --install .)
+
+append_shared_lib_install_commands(INSTALL_CMD utf8proc VERSION 3)
+
 external_project(
-    DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
+    URL https://github.com/JuliaStrings/utf8proc/releases/download/v2.9.0/utf8proc-2.9.0.tar.gz
+    URL_MD5 a4895a4b0940e91bace9afede4f9c76b
+    CMAKE_ARGS ${CMAKE_ARGS}
     BUILD_COMMAND ${BUILD_CMD}
+    INSTALL_COMMAND ${INSTALL_CMD}
 )

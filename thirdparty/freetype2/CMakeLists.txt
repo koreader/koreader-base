@@ -1,37 +1,26 @@
-cmake_minimum_required(VERSION 3.5.1)
-project(freetype2 LANGUAGES)
-
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_LIST_DIR}/../cmake_modules")
-include("koreader_thirdparty_common")
-include("koreader_thirdparty_git")
-
-assert_var_defined(CXX)
-assert_var_defined(CXXFLAGS)
-assert_var_defined(LDFLAGS)
-
-set(CFG_ENV_VAR "CC=${CC}" "CXX=${CXX}" "CFLAGS=${CFLAGS}" "CXXFLAGS=${CXXFLAGS}" "LDFLAGS=${LDFLAGS}")
-set(CFG_OPTS --prefix=${INSTALL_DIR} --disable-static --enable-shared --with-zlib=no --with-bzip2=no --with-brotli=no --with-png=no --with-harfbuzz=no --host=${CHOST})
-list(APPEND CFG_CMD COMMAND env ${CFG_ENV_VAR} ${SOURCE_DIR}/configure ${CFG_OPTS})
-
-if(DEFINED ENV{ANDROID})
-    list(APPEND CFG_CMD COMMAND ${ANDROID_LIBTOOL_FIX_CMD})
-endif()
-
-list(APPEND BUILD_CMD COMMAND ${KO_MAKE_RECURSIVE})
-
-list(APPEND INSTALL_CMD COMMAND ${KO_MAKE_RECURSIVE} install)
-
-ko_write_gitclone_script(
-    GIT_CLONE_SCRIPT_FILENAME
-    https://gitlab.com/koreader/freetype2.git
-    VER-2-13-2
-    ${SOURCE_DIR}
+list(APPEND CMAKE_ARGS
+    -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE}
+    # Options.
+    -DBUILD_SHARED_LIBS=TRUE
+    -DDISABLE_FORCE_DEBUG_POSTFIX=TRUE
+    -DFT_DISABLE_BROTLI=TRUE
+    -DFT_DISABLE_BZIP2=TRUE
+    -DFT_DISABLE_HARFBUZZ=TRUE
+    -DFT_DISABLE_PNG=TRUE
+    -DFT_DISABLE_ZLIB=TRUE
 )
 
+list(APPEND BUILD_CMD COMMAND ${KO_MAKE_PROGRAM})
+
+list(APPEND INSTALL_CMD COMMAND ${CMAKE_COMMAND} --install .)
+
+set(LIB_SPEC freetype VERSION 6)
+append_shared_lib_install_commands(INSTALL_CMD ${LIB_SPEC})
+
 external_project(
-    DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
-    PATCH_COMMAND ./autogen.sh
-    CONFIGURE_COMMAND ${CFG_CMD}
+    URL https://github.com/freetype/freetype/archive/refs/tags/VER-2-13-2.tar.gz
+    URL_MD5 dcd1af080e43fe0c984c34bf3e7d5e16
+    CMAKE_ARGS ${CMAKE_ARGS}
     BUILD_COMMAND ${BUILD_CMD}
     INSTALL_COMMAND ${INSTALL_CMD}
 )

@@ -1,20 +1,12 @@
-cmake_minimum_required(VERSION 3.5.1)
-project(libunibreak LANGUAGES)
+list(APPEND CFG_CMD COMMAND env)
+append_autotools_vars(CFG_CMD)
+list(APPEND CFG_CMD
+    ${SOURCE_DIR}/configure --host=${CHOST} --prefix=${STAGING_DIR}
+    --disable-static --enable-shared
+    --enable-silent-rules
+)
 
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/../cmake_modules")
-include("koreader_thirdparty_common")
-include("koreader_thirdparty_git")
-
-assert_var_defined(CC)
-assert_var_defined(CFLAGS)
-assert_var_defined(CHOST)
-assert_var_defined(LDFLAGS)
-
-set(CFG_ENV_VAR "CC=${CC}" "CFLAGS=${CFLAGS}" "LDFLAGS=${LDFLAGS}")
-set(CFG_OPTS --prefix=${INSTALL_DIR} --disable-static --enable-shared --host=${CHOST})
-list(APPEND CFG_CMD COMMAND env ${CFG_ENV_VAR} ${SOURCE_DIR}/autogen.sh ${CFG_OPTS})
-
-if(DEFINED ENV{ANDROID})
+if(ANDROID)
     list(APPEND CFG_CMD COMMAND ${ANDROID_LIBTOOL_FIX_CMD})
 endif()
 
@@ -22,15 +14,15 @@ list(APPEND BUILD_CMD COMMAND ${KO_MAKE_RECURSIVE})
 
 list(APPEND INSTALL_CMD COMMAND ${KO_MAKE_RECURSIVE} install)
 
-ko_write_gitclone_script(
-    GIT_CLONE_SCRIPT_FILENAME
-    https://github.com/adah1972/libunibreak.git
-    tags/libunibreak_6_1
-    ${SOURCE_DIR}
-)
+set(LIB_SPEC unibreak VERSION 6)
+if(DARWIN)
+    append_shared_lib_fix_commands(INSTALL_CMD ${LIB_SPEC} ID)
+endif()
+append_shared_lib_install_commands(INSTALL_CMD ${LIB_SPEC})
 
 external_project(
-    DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
+    URL https://github.com/adah1972/libunibreak/releases/download/libunibreak_6_1/libunibreak-6.1.tar.gz
+    URL_MD5 8df410d010e03de1a339a400a920335e
     CONFIGURE_COMMAND ${CFG_CMD}
     BUILD_COMMAND ${BUILD_CMD}
     INSTALL_COMMAND ${INSTALL_CMD}

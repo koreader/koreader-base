@@ -1,38 +1,23 @@
-cmake_minimum_required(VERSION 3.5.1)
-project(giflib LANGUAGES)
+list(APPEND PATCH_CMD COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/build.cmake CMakeLists.txt)
 
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_LIST_DIR}/../cmake_modules")
-include("koreader_thirdparty_common")
-include("koreader_thirdparty_git")
-
-list(APPEND PATCH_CMD ${ISED} "s|\\$srcdir/configure \\$\\*||g" autogen.sh)
-list(APPEND PATCH_CMD COMMAND ./autogen.sh)
-
-set(CFG_ENV_VAR ac_cv_prog_have_xmlto=no "CC=${CC}" "CFLAGS=${CFLAGS}" "LDFLAGS=${LDFLAGS}")
-set(CFG_OPTS --prefix=${INSTALL_DIR} --disable-static --enable-shared --host=${CHOST})
-list(APPEND CFG_CMD COMMAND env ${CFG_ENV_VAR} ${SOURCE_DIR}/configure ${CFG_OPTS})
-
-# use limits.h instead of stdint.h for android build
-if(DEFINED ENV{ANDROID})
-    list(APPEND CFG_CMD COMMAND ${ISED} "s|stdint.h|limits.h|g" ${SOURCE_DIR}/lib/openbsd-reallocarray.c)
-    list(APPEND CFG_CMD COMMAND ${ANDROID_LIBTOOL_FIX_CMD})
+if(ANDROID)
+    # Use `limits.h` instead of `stdint.h`.
+    list(APPEND PATCH_CMD COMMAND ${ISED} "s|stdint.h|limits.h|g" openbsd-reallocarray.c)
 endif()
 
-list(APPEND BUILD_CMD COMMAND ${KO_MAKE_RECURSIVE})
+list(APPEND CMAKE_ARGS -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE})
 
-list(APPEND INSTALL_CMD COMMAND ${KO_MAKE_RECURSIVE} install)
+list(APPEND BUILD_CMD COMMAND ${KO_MAKE_PROGRAM})
 
-ko_write_gitclone_script(
-    GIT_CLONE_SCRIPT_FILENAME
-    https://gitlab.com/koreader/giflib.git
-    5.1.4
-    ${SOURCE_DIR}
-)
+list(APPEND INSTALL_CMD COMMAND ${CMAKE_COMMAND} --install .)
+
+append_shared_lib_install_commands(INSTALL_CMD gif VERSION 7)
 
 external_project(
-    DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
+    URL https://sourceforge.net/projects/giflib/files/giflib-5.2.2.tar.gz
+    URL_MD5 913dd251492134e235ee3c9a91987a4d
     PATCH_COMMAND ${PATCH_CMD}
-    CONFIGURE_COMMAND ${CFG_CMD}
+    CMAKE_ARGS ${CMAKE_ARGS}
     BUILD_COMMAND ${BUILD_CMD}
     INSTALL_COMMAND ${INSTALL_CMD}
 )

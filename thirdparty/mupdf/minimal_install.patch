@@ -1,0 +1,30 @@
+--- i/Makefile
++++ w/Makefile
+@@ -476,7 +476,7 @@
+ extra-apps: $(EXTRA_APPS)
+ extra: extra-libs extra-apps
+ 
+-install: libs apps
++install: libs
+ 	install -d $(DESTDIR)$(incdir)/mupdf
+ 	install -d $(DESTDIR)$(incdir)/mupdf/fitz
+ 	install -d $(DESTDIR)$(incdir)/mupdf/pdf
+@@ -487,18 +487,6 @@
+ 	install -d $(DESTDIR)$(libdir)
+ 	install $(INSTALL_LIBS) $(DESTDIR)$(libdir)
+ 
+-	install -d $(DESTDIR)$(bindir)
+-	install $(INSTALL_APPS) $(DESTDIR)$(bindir)
+-
+-	install -d $(DESTDIR)$(mandir)/man1
+-	install docs/man/*.1 $(DESTDIR)$(mandir)/man1
+-
+-	install -d $(DESTDIR)$(docdir)
+-	install -d $(DESTDIR)$(docdir)/examples
+-	install README COPYING CHANGES $(DESTDIR)$(docdir)
+-	install docs/*.html docs/*.css docs/*.png $(DESTDIR)$(docdir)
+-	install docs/examples/* $(DESTDIR)$(docdir)/examples
+-
+ tarball:
+ 	bash scripts/archive.sh
+ 

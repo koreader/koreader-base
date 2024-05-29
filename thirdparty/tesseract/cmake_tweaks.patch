@@ -1,0 +1,94 @@
+--- i/CMakeLists.txt
++++ w/CMakeLists.txt
+@@ -8,7 +8,7 @@
+ #
+ ###############################################################################
+ 
+-cmake_minimum_required(VERSION 2.8.11)
++cmake_minimum_required(VERSION 3.15)
+ 
+ # In-source builds are disabled.
+ if (${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_BINARY_DIR})
+@@ -46,15 +46,8 @@
+ 
+ set(MINIMUM_LEPTONICA_VERSION 1.71)
+ 
+-if (NOT Leptonica_DIR AND NOT MSVC)
+ find_package(PkgConfig REQUIRED)
+-pkg_check_modules(Leptonica REQUIRED lept)
+-else()
+-find_package(Leptonica ${MINIMUM_LEPTONICA_VERSION} REQUIRED CONFIG)
+-endif()
+-
+-find_package(OpenCL QUIET)
+-find_package(PkgConfig)
++pkg_check_modules(Leptonica REQUIRED "lept >= ${MINIMUM_LEPTONICA_VERSION}" IMPORTED_TARGET)
+ 
+ ###############################################################################
+ #
+@@ -84,7 +77,11 @@
+ if (UNIX)
+     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --std=c++11")
+ 
+-    set(LIB_pthread pthread)
++    if (ANDROID)
++        add_definitions(-DANDROID)
++    else()
++        set(LIB_pthread pthread)
++    endif()
+ endif()
+ 
+ ###############################################################################
+@@ -198,12 +195,12 @@
+ )
+ 
+ add_library                     (tesseract ${LIBRARY_TYPE} ${tesseract_src} ${tesseract_hdr})
++target_compile_options          (tesseract PRIVATE -Wno-deprecated-register)
+ if (NOT STATIC)
+ target_compile_definitions      (tesseract PUBLIC -DTESS_EXPORTS)
+ endif()
+-target_link_libraries           (tesseract ${Leptonica_LIBRARIES} ${LIB_Ws2_32} ${LIB_pthread})
+-set_target_properties           (tesseract PROPERTIES VERSION ${VERSION_MAJOR}.${VERSION_MINOR_0}.${VERSION_MINOR_1})
+-set_target_properties           (tesseract PROPERTIES SOVERSION ${VERSION_MAJOR}.${VERSION_MINOR_0}.${VERSION_MINOR_1})
++target_link_libraries           (tesseract PkgConfig::Leptonica ${LIB_Ws2_32} ${LIB_pthread})
++set_target_properties           (tesseract PROPERTIES SOVERSION ${VERSION_MAJOR})
+ if (WIN32)
+ set_target_properties           (tesseract PROPERTIES OUTPUT_NAME tesseract${VERSION_MAJOR}${VERSION_MINOR})
+ set_target_properties           (tesseract PROPERTIES DEBUG_OUTPUT_NAME tesseract${VERSION_MAJOR}${VERSION_MINOR}d)
+@@ -226,6 +223,20 @@
+ 
+ ########################################
+ 
+-add_subdirectory(training)
++# add_subdirectory(training)
+ 
+ ###############################################################################
++
++install(TARGETS tesseract)
++install(FILES ${tesseract_hdr} DESTINATION ${CMAKE_INSTALL_PREFIX}/include/tesseract)
++set(prefix ${CMAKE_INSTALL_PREFIX})
++set(exec_prefix ${CMAKE_INSTALL_PREFIX})
++set(bindir ${CMAKE_INSTALL_BINDIR})
++set(datarootdir \${prefix}/share)
++set(datadir \${datarootdir})
++set(libdir ${CMAKE_INSTALL_LIBDIR})
++set(includedir ${CMAKE_INSTALL_INCLUDEDIR})
++set(PACKAGE_NAME tesseract)
++set(VERSION ${VERSION_PLAIN})
++configure_file(${CMAKE_SOURCE_DIR}/tesseract.pc.in ${CMAKE_BINARY_DIR}/tesseract.pc @ONLY)
++install(FILES ${CMAKE_BINARY_DIR}/tesseract.pc DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig)
+--- i/cmake/Configure.cmake
++++ w/cmake/Configure.cmake
+@@ -88,12 +88,6 @@ set(include_files_list
+     sys/wait.h
+     tiffio.h
+     unistd.h
+-    
+-    cairo/cairo-version.h
+-    CL/cl.h
+-    OpenCL/cl.h
+-    pango-1.0/pango/pango-features.h
+-    unicode/uchar.h
+ )
+ check_includes(include_files_list)
+ 

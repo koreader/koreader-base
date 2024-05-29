@@ -1,24 +1,12 @@
-cmake_minimum_required(VERSION 3.5.1)
-project(lodepng LANGUAGES)
+list(APPEND PATCH_CMD COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/build.cmake CMakeLists.txt)
 
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_LIST_DIR}/../cmake_modules")
-include("koreader_thirdparty_common")
-include("koreader_thirdparty_git")
+list(APPEND CMAKE_ARGS -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE})
 
-assert_var_defined(CC)
-assert_var_defined(CFLAGS)
-assert_var_defined(LDFLAGS)
-assert_var_defined(SONAME)
-assert_var_defined(OUTPUT_PATH)
+list(APPEND BUILD_CMD COMMAND ${KO_MAKE_PROGRAM})
 
-# Build in source tree.
-set(BINARY_DIR ${SOURCE_DIR})
+list(APPEND INSTALL_CMD COMMAND ${CMAKE_COMMAND} --install .)
 
-if (APPLE)
-    set(BUILD_CMD sh -c "${CC} -shared ${CFLAGS} ${LDFLAGS} lodepng.c -o ${OUTPUT_PATH}/${SONAME}")
-else()
-    set(BUILD_CMD sh -c "${CC} -shared ${CFLAGS} ${LDFLAGS} -Wl,-E -Wl,-soname=${SONAME} lodepng.c -o ${OUTPUT_PATH}/${SONAME}")
-endif()
+append_shared_lib_install_commands(INSTALL_CMD lodepng)
 
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
@@ -29,6 +17,8 @@ ko_write_gitclone_script(
 
 external_project(
     DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
-    PATCH_COMMAND ${CMAKE_COMMAND} -E copy lodepng.cpp lodepng.c
+    PATCH_COMMAND ${PATCH_CMD}
+    CMAKE_ARGS ${CMAKE_ARGS}
     BUILD_COMMAND ${BUILD_CMD}
+    INSTALL_COMMAND ${INSTALL_CMD}
 )

@@ -1,35 +1,28 @@
-cmake_minimum_required(VERSION 3.5.1)
-project(fbink LANGUAGES)
-
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_LIST_DIR}/../cmake_modules")
-include("koreader_thirdparty_common")
-include("koreader_thirdparty_git")
-
-assert_var_defined(CFLAGS)
-assert_var_defined(LDFLAGS)
+set(TOOL ${PROJECT_NAME})
 
 # Build in source tree.
 set(BINARY_DIR ${SOURCE_DIR})
 
 # Choose your own adventure!
-if(DEFINED ENV{LEGACY})
+set(FBDEPTH_TARGET fbdepth)
+if(LEGACY)
     set(FBINK_TARGET legacy)
     set(INPUT_TARGET inputlib KINDLE=1 LEGACY=1)
-elseif(DEFINED ENV{KINDLE})
+elseif(KINDLE)
     set(FBINK_TARGET kindle)
     set(INPUT_TARGET inputlib KINDLE=1)
-elseif(DEFINED ENV{CERVANTES})
+elseif(CERVANTES)
     set(FBINK_TARGET cervantes)
     set(INPUT_TARGET inputlib CERVANTES=1)
-elseif(DEFINED ENV{KOBO})
+elseif(KOBO)
     set(FBINK_TARGET strip KOBO=1)
     set(FBDEPTH_TARGET fbdepth KOBO=1)
     set(INPUT_TARGET inputlib KOBO=1)
-elseif(DEFINED ENV{REMARKABLE})
+elseif(REMARKABLE)
     set(FBINK_TARGET remarkable)
     set(FBDEPTH_TARGET fbdepth REMARKABLE=1)
     set(INPUT_TARGET inputlib REMARKABLE=1)
-elseif(DEFINED ENV{POCKETBOOK})
+elseif(POCKETBOOK)
     set(FBINK_TARGET pocketbook)
     set(FBDEPTH_TARGET fbdepth POCKETBOOK=1)
     set(INPUT_TARGET inputlib POCKETBOOK=1)
@@ -39,41 +32,27 @@ else()
     #set(INPUT_TARGET inputlib LINUX=1)
 endif()
 
-# The input lib can be built standalone, so start with that
-if(INPUT_TARGET)
-    list(APPEND BUILD_CMD COMMAND ${KO_MAKE_RECURSIVE} clean)
-    list(APPEND BUILD_CMD COMMAND ${KO_MAKE_RECURSIVE} "CFLAGS=${CFLAGS}" "LDFLAGS=${LDFLAGS}" ${INPUT_TARGET})
+list(APPEND BUILD_CMD COMMAND ${KO_MAKE_RECURSIVE} CROSS_TC=${CHOST})
+append_autotools_vars(BUILD_CMD)
 
-    # That does mean we need to stash it somewhere a clean won't scrap it, though...
-    if(DEFINED ENV{DEBUG})
-        list(APPEND BUILD_CMD COMMAND ${CMAKE_COMMAND} -E rename ${SOURCE_DIR}/Debug/libfbink_input.so.1.0.0 ${INSTALL_DIR}/libfbink_input.so.1)
-    else()
-        list(APPEND BUILD_CMD COMMAND ${CMAKE_COMMAND} -E rename ${SOURCE_DIR}/Release/libfbink_input.so.1.0.0 ${INSTALL_DIR}/libfbink_input.so.1)
-    endif()
-endif()
-
-# FBDepth can afford to link to a very minimal library, so we need to start from scratch...
-if(FBDEPTH_TARGET)
-    list(APPEND BUILD_CMD COMMAND ${KO_MAKE_RECURSIVE} clean)
-    list(APPEND BUILD_CMD COMMAND ${KO_MAKE_RECURSIVE} "CFLAGS=${CFLAGS}" "LDFLAGS=${LDFLAGS}" ${FBDEPTH_TARGET})
-
-    # That does mean we need to stash the binary somewhere a clean won't scrap it, though...
-    if(DEFINED ENV{DEBUG})
-        list(APPEND BUILD_CMD COMMAND ${CMAKE_COMMAND} -E rename ${SOURCE_DIR}/Debug/fbdepth ${INSTALL_DIR}/fbdepth)
-    else()
-        list(APPEND BUILD_CMD COMMAND ${CMAKE_COMMAND} -E rename ${SOURCE_DIR}/Release/fbdepth ${INSTALL_DIR}/fbdepth)
-    endif()
-endif()
-
-# Minimal-ish, statically linked build, we don't care about image support
-list(APPEND BUILD_CMD COMMAND ${KO_MAKE_RECURSIVE} clean)
-list(APPEND BUILD_CMD COMMAND ${KO_MAKE_RECURSIVE} MINIMAL=1 FONTS=1 OPENTYPE=1 "CFLAGS=${CFLAGS}" "LDFLAGS=${LDFLAGS}" ${FBINK_TARGET})
-
-# We build in-tree...
-if(DEFINED ENV{DEBUG})
-    list(APPEND BUILD_CMD COMMAND ${CMAKE_COMMAND} -E rename ${SOURCE_DIR}/Debug/fbink ${INSTALL_DIR}/fbink)
+if(TOOL STREQUAL "fbdepth")
+    list(APPEND BUILD_CMD ${FBDEPTH_TARGET})
+    append_binary_install_command(INSTALL_CMD ${CMAKE_BUILD_TYPE}/fbdepth)
+elseif(TOOL STREQUAL "fbink")
+    list(APPEND BUILD_CMD
+        # Minimal-ish, statically linked build,
+        # we don't care about image support.
+        FONTS=1
+        MINIMAL=1
+        OPENTYPE=1
+        ${FBINK_TARGET}
+    )
+    append_binary_install_command(INSTALL_CMD ${CMAKE_BUILD_TYPE}/fbink)
+elseif(TOOL STREQUAL "libfbink_input")
+    list(APPEND BUILD_CMD ${INPUT_TARGET})
+    append_binary_install_command(INSTALL_CMD ${CMAKE_BUILD_TYPE}/libfbink_input.so.1 DESTINATION libs)
 else()
-    list(APPEND BUILD_CMD COMMAND ${CMAKE_COMMAND} -E rename ${SOURCE_DIR}/Release/fbink ${INSTALL_DIR}/fbink)
+    message(FATAL_ERROR "TOOL not set or unsupported: '${TOOL}'")
 endif()
 
 ko_write_gitclone_script(
@@ -86,4 +65,5 @@ ko_write_gitclone_script(
 external_project(
     DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
     BUILD_COMMAND ${BUILD_CMD}
+    INSTALL_COMMAND ${INSTALL_CMD}
 )

@@ -1,35 +1,27 @@
-cmake_minimum_required(VERSION 3.5.1)
-project(openssh LANGUAGES)
-
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_LIST_DIR}/../cmake_modules")
-include("koreader_thirdparty_common")
-include("koreader_thirdparty_git")
-
-assert_var_defined(CC)
-assert_var_defined(CPPFLAGS)
-assert_var_defined(CFLAGS)
-assert_var_defined(LDFLAGS)
-assert_var_defined(CHOST)
-
-set(PATCH_CMD sh -c "autoreconf -fi")
-
-set(CFG_ENV_VAR "CC=${CC}" "CPPFLAGS=${CPPFLAGS} -I${SOURCE_DIR}" "CFLAGS=${CFLAGS}" "LIBS=${LIBS}" "LDFLAGS=${LDFLAGS}")
-set(CFG_OPTS --host=${CHOST} --without-hardening --without-stackprotect --disable-etc-default-login --disable-lastlog --with-openssl --with-md5-passwords --with-ssl-engine)
-set(CFG_CMD ${CFG_ENV_VAR} ${SOURCE_DIR}/configure ${CFG_OPTS})
-set(CFG_CMD env ${CFG_CMD})
-
-set(BUILD_CMD ${KO_MAKE_RECURSIVE} sftp-server scp)
-
-ko_write_gitclone_script(
-    GIT_CLONE_SCRIPT_FILENAME
-    https://github.com/openssh/openssh-portable.git
-    V_9_6_P1
-    ${SOURCE_DIR}
+list(APPEND CFG_CMD COMMAND env)
+append_autotools_vars(CFG_CMD)
+list(APPEND CFG_CMD
+    ${SOURCE_DIR}/configure --host=${CHOST}
+    --disable-etc-default-login
+    --disable-lastlog
+    --with-md5-passwords
+    --with-openssl
+    --with-ssl-engine
+    --without-hardening
+    --without-stackprotect
+    --with-ssl-dir=${STAGING_DIR}
+    --with-zlib=${STAGING_DIR}
 )
 
+list(APPEND BUILD_CMD COMMAND ${KO_MAKE_RECURSIVE} sftp-server scp)
+
+append_binary_install_command(INSTALL_CMD scp sftp-server)
+
 external_project(
-    DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
-    PATCH_COMMAND COMMAND ${PATCH_CMD}
+    URL https://cdn.openbsd.org/pub/OpenBSD/OpenSSH/portable/openssh-9.6p1.tar.gz
+    https://mirror.edgecast.com/pub/OpenBSD/OpenSSH/portable/openssh-9.6p1.tar.gz
+    URL_MD5 5e90def5af3ffb27e149ca6fff12bef3
     CONFIGURE_COMMAND ${CFG_CMD}
     BUILD_COMMAND ${BUILD_CMD}
+    INSTALL_COMMAND ${INSTALL_CMD}
 )

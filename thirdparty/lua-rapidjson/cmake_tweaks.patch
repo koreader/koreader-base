@@ -1,0 +1,33 @@
+--- i/CMakeLists.txt
++++ w/CMakeLists.txt
+@@ -24,19 +24,6 @@ if (LUA_RAPIDJSON_VERSION)
+ endif()
+ 
+ if(UNIX)
+-    if(APPLE)
+-        set(PLAT "macosx")
+-        set(LINK_FLAGS "-bundle -undefined dynamic_lookup -all_load")
+-    else(APPLE)
+-        set(PLAT "linux")
+-        set(LINK_FLAGS "-shared")
+-    endif(APPLE)
+-    add_compile_options(-g -Wall -fPIC)
+-    include(CheckCXXCompilerFlag)
+-    CHECK_CXX_COMPILER_FLAG("-march=native" COMPILER_SUPPORTS_ARCH_NATIVE)
+-    if (COMPILER_SUPPORTS_ARCH_NATIVE)
+-        add_compile_options(-march=native)
+-    endif()
+ else(UNIX)
+     if(WIN32)
+         set(PLAT "win32")
+@@ -84,9 +71,7 @@ endif()
+ 
+ source_group(src FILES ${SOURCES})
+ 
+-if (WIN32)
+-    target_link_libraries(lua-rapidjson ${LUA_LIBRARIES})
+-endif()
++target_link_libraries(lua-rapidjson m ${LUA_LIBRARIES})
+ 
+ if (LINK_FLAGS)
+     set_target_properties(lua-rapidjson PROPERTIES

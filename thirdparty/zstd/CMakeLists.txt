@@ -1,34 +1,22 @@
-cmake_minimum_required(VERSION 3.5.1)
-project(zstd LANGUAGES)
-
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_LIST_DIR}/../cmake_modules")
-include("koreader_thirdparty_common")
-include("koreader_thirdparty_git")
-
-assert_var_defined(CC)
-assert_var_defined(CXX)
-assert_var_defined(AR)
-assert_var_defined(CFLAGS)
-assert_var_defined(LDFLAGS)
-
-# Build in source tree.
-set(BINARY_DIR ${SOURCE_DIR})
-
-# This a pure Makefile buildsystem, don't enforce CFLAGS via command line args, the buildsystem needs to be able to modify it.
-set(BUILD_ENV "CFLAGS=${CFLAGS}" "LDFLAGS=${LDFLAGS}")
-
-set(BUILD_CMD env ${BUILD_ENV} ${KO_MAKE_RECURSIVE} V=1 "CC=${CC}" "CXX=${CXX}" "AR=${AR}" lib-release)
-set(INSTALL_CMD env ${BUILD_ENV} ${KO_MAKE_RECURSIVE} -C lib V=1 "CC=${CC}" "CXX=${CXX}" "AR=${AR}" "prefix=${INSTALL_DIR}" install)
-
-ko_write_gitclone_script(
-    GIT_CLONE_SCRIPT_FILENAME
-    https://github.com/facebook/zstd.git
-    tags/v1.5.5
-    ${SOURCE_DIR}
+list(APPEND CMAKE_ARGS
+    -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE}
+    # Project options.
+    -DZSTD_BUILD_PROGRAMS=FALSE
+    -DZSTD_BUILD_SHARED=TRUE
+    -DZSTD_BUILD_STATIC=FALSE
 )
 
+list(APPEND BUILD_CMD COMMAND ${KO_MAKE_PROGRAM})
+
+list(APPEND INSTALL_CMD COMMAND ${CMAKE_COMMAND} --install .)
+
+append_shared_lib_install_commands(INSTALL_CMD zstd VERSION 1)
+
 external_project(
-    DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
-    BUILD_COMMAND COMMAND ${BUILD_CMD}
-    INSTALL_COMMAND COMMAND ${INSTALL_CMD}
+    URL https://github.com/facebook/zstd/releases/download/v1.5.5/zstd-1.5.5.tar.gz
+    URL_MD5 63251602329a106220e0a5ad26ba656f
+    SOURCE_SUBDIR build/cmake
+    CMAKE_ARGS ${CMAKE_ARGS}
+    BUILD_COMMAND ${BUILD_CMD}
+    INSTALL_COMMAND ${INSTALL_CMD}
 )
