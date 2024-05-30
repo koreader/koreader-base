@@ -110,6 +110,9 @@ declare_project(
 set(crengine_CMAKE_BINARY_DIR ${OUTPUT_DIR}/thirdparty/crengine)
 set(crengine_BINARY_DIR ${crengine_CMAKE_BINARY_DIR}/build)
 
+# cpu_features
+declare_project(thirdparty/cpu_features EXCLUDE_FROM_ALL)
+
 # curl
 declare_project(thirdparty/curl DEPENDS openssl zlib EXCLUDE_FROM_ALL)
 
