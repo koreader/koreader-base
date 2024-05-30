@@ -1,10 +1,88 @@
---- a/ccutil/tessdatamanager.cpp
-+++ b/ccutil/tessdatamanager.cpp
-@@ -139,6 +142,7 @@
-   if (fseek(output_file,
-             sizeof(inT32) + sizeof(inT64) * TESSDATA_NUM_ENTRIES, SEEK_SET)) {
-     tprintf("Error seeking %s\n", output_filename);
-+    fclose(output_file);
-     return false;
-   }
+--- a/src/api/baseapi.cpp
++++ b/src/api/baseapi.cpp
+@@ -1584,6 +1584,73 @@
+   return result;
+ }
  
++
++/* willus mod */
++int TessBaseAPI::GetOCRWords(int **x00,int **y00,int **x11,int **y11,int **ybaseline0,
++                             char **utf8words)
++
++    {
++    int iword,nwords,totlen,it8;
++    int *x0,*y0,*x1,*y1,*ybaseline;
++    char *tutf8;
++
++    ResultIterator *res_it = GetIterator();
++    /* Count words */
++    iword=0;
++    totlen=0;
++    while (!res_it->Empty(RIL_BLOCK))
++        {
++        if (res_it->Empty(RIL_WORD))
++            {
++            res_it->Next(RIL_WORD);
++            continue;
++            }
++        iword++;
++        std::string textstr=std::unique_ptr<const char[]>(res_it->GetUTF8Text(RIL_WORD)).get();
++        totlen+=textstr.length()+1;
++        res_it->Next(RIL_WORD);
++        }
++    nwords=iword;
++    x0=(*x00)=(int *)malloc(sizeof(int)*5*nwords);
++    y0=(*y00)=&x0[nwords];
++    x1=(*x11)=&y0[nwords];
++    y1=(*y11)=&x1[nwords];
++    ybaseline=(*ybaseline0)=&y1[nwords];
++    tutf8=(*utf8words)=(char *)malloc(totlen);
++    iword=0;
++    it8=0;
++    res_it->Begin();
++    while (!res_it->Empty(RIL_BLOCK))
++        {
++        int len;
++
++        if (res_it->Empty(RIL_WORD))
++            {
++            res_it->Next(RIL_WORD);
++            continue;
++            }
++        std::string textstr=std::unique_ptr<const char[]>(res_it->GetUTF8Text(RIL_WORD)).get();
++        len=textstr.length();
++        for (int i=0;i<len;i++)
++            tutf8[it8+i]=textstr.at(i);
++        tutf8[it8+len]='\0';
++        it8 += len+1;
++        int left, top, right, bottom;
++        int u1,v1,u2,v2;
++        res_it->BoundingBox(RIL_WORD, &left, &top, &right, &bottom);
++        res_it->Baseline(RIL_WORD, &u1, &v1, &u2, &v2);
++        x0[iword]=left;
++        x1[iword]=right;
++        y0[iword]=top;
++        y1[iword]=bottom;
++        ybaseline[iword]=(v1+v2)/2;
++        iword++;
++        res_it->Next(RIL_WORD);
++        }
++    return(iword);
++    }
++
++
+ /**
+  * Conversion table for non-latin characters.
+  * Maps characters out of the latin set into the latin set.
+--- a/include/tesseract/baseapi.h
++++ b/include/tesseract/baseapi.h
+@@ -539,6 +539,9 @@
+    */
+   char *GetHOCRText(ETEXT_DESC *monitor, int page_number);
+ 
++/* willus mod */
++int GetOCRWords(int **x0,int **y0,int **x1,int **y1,int **ybaseline,char **utf8words);
++
+   /**
+    * Make a HTML-formatted string with hOCR markup from the internal
+    * data structures.

@@ -74,13 +74,13 @@ require("ffi/leptonica_h")
 local Blitbuffer = require("ffi/blitbuffer")
 local leptonica, k2pdfopt
 if ffi.os == "Windows" then
-    leptonica = ffi.load("libs/liblept-5.dll")
+    leptonica = ffi.load("libs/libleptonica-6.dll")
     k2pdfopt = ffi.load("libs/libk2pdfopt-2.dll")
 elseif ffi.os == "OSX" then
-    leptonica = ffi.load("libs/liblept.5.dylib")
+    leptonica = ffi.load("libs/libleptonica.6.dylib")
     k2pdfopt = ffi.load("libs/libk2pdfopt.2.dylib")
 else
-    leptonica = ffi.load("libs/liblept.so.5")
+    leptonica = ffi.load("libs/libleptonica.so.6")
     k2pdfopt = ffi.load("libs/libk2pdfopt.so.2")
 end
 
@@ -377,10 +377,10 @@ function KOPTContext_mt.__index:nativeToReflowPosTransform(xc, yc)
     return rectmap.coords[1].x + rectmap.coords[2].x/2, rectmap.coords[1].y + rectmap.coords[2].y/2
 end
 
-function KOPTContext_mt.__index:getTOCRWord(bmp, x, y, w, h, datadir, lang, ocr_type, allow_spaces, std_proc)
+function KOPTContext_mt.__index:getTOCRWord(bmp, x, y, w, h, datadir, lang, ocr_type, allow_spaces, std_proc, dpi)
     local word = ffi.new("char[256]")
     k2pdfopt.k2pdfopt_tocr_single_word(bmp == "src" and self.src or self.dst,
-        x, y, w, h, word, 255, ffi.cast("char*", datadir), ffi.cast("char*", lang),
+        x, y, w, h, dpi or self.dev_dpi, word, 256, ffi.cast("char*", datadir), ffi.cast("char*", lang),
         ocr_type, allow_spaces, std_proc)
     return ffi.string(word)
 end
@@ -409,7 +409,7 @@ function KOPTContext_mt.__index:findPageBlocks()
             for box in boxaIterBoxes(self.nboxa) do
                 leptonica.boxAdjustSides(box, box, -1, 0, -1, 0)
             end
-            self.rboxa = leptonica.boxaCombineOverlaps(self.nboxa)
+            self.rboxa = leptonica.boxaCombineOverlaps(self.nboxa, nil)
             self.page_width = leptonica.pixGetWidth(pixr)
             self.page_height = leptonica.pixGetHeight(pixr)
             -- uncomment this to show text blocks in situ
@@ -482,7 +482,7 @@ function KOPTContext_mt.__index:getPageBlock(x_rel, y_rel)
         for box in boxaIterBoxes(boxa) do
             leptonica.boxAdjustSides(box, box, -1, 0, -1, 0)
         end
-        local boxatb = _gc_ptr(leptonica.boxaCombineOverlaps(boxa), boxaDestroy)
+        local boxatb = _gc_ptr(leptonica.boxaCombineOverlaps(boxa, nil), boxaDestroy)
         local clipped_box, unclipped_box
         for box_x, box_y, box_w, box_h in boxaIterBoxGeometries(boxatb) do
             if box_x / w <= x_rel and (box_x + box_w) / w >= x_rel then

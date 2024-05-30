@@ -1,57 +1,21 @@
 --- i/CMakeLists.txt
 +++ w/CMakeLists.txt
-@@ -8,7 +8,7 @@
+@@ -8,8 +8,7 @@
  #
- ###############################################################################
+ # ##############################################################################
  
--cmake_minimum_required(VERSION 2.8.11)
+-cmake_minimum_required(VERSION 3.1.3)
+-cmake_policy(SET CMP0054 NEW)
 +cmake_minimum_required(VERSION 3.15)
  
  # In-source builds are disabled.
- if (${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_BINARY_DIR})
-@@ -47,9 +47,9 @@ set(VERSION_PLAIN ${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH})
+ if("${CMAKE_CURRENT_SOURCE_DIR}" STREQUAL "${CMAKE_CURRENT_BINARY_DIR}")
+@@ -43,8 +42,8 @@ project(
+   leptonica
+   LANGUAGES C
+   VERSION 1.84.1)
+-set(CMAKE_C_STANDARD 17)
++set(CMAKE_C_STANDARD 11)
+ set(CMAKE_C_STANDARD_REQUIRED ON)
  
- find_package(GIF)
- find_package(JPEG)
--find_package(PNG)
-+find_package(PNG REQUIRED)
- find_package(TIFF)
--find_package(ZLIB)
-+find_package(ZLIB REQUIRED)
- 
- find_package(PkgConfig)
- 
---- i/src/CMakeLists.txt
-+++ w/src/CMakeLists.txt
-@@ -15,8 +15,9 @@ if (MSVC)
- endif()
- 
- add_library                     (leptonica ${LIBRARY_TYPE} ${src} ${hdr})
--set_target_properties           (leptonica PROPERTIES VERSION   ${VERSION_PLAIN})
--set_target_properties           (leptonica PROPERTIES SOVERSION 5.1.0)
-+set_target_properties           (leptonica PROPERTIES VERSION 5)
-+set_target_properties           (leptonica PROPERTIES OUTPUT_NAME lept)
-+target_include_directories      (leptonica PRIVATE ${PNG_INCLUDE_DIR} ${ZLIB_INCLUDE_DIR})
- if (WIN32)
- set_target_properties           (leptonica PROPERTIES OUTPUT_NAME       leptonica-${VERSION_PLAIN})
- set_target_properties           (leptonica PROPERTIES DEBUG_OUTPUT_NAME leptonica-${VERSION_PLAIN}d)
---- i/src/CMakeLists.txt
-+++ w/src/CMakeLists.txt
-@@ -63,3 +63,17 @@
- 
- ################################################################################
- 
-+install(TARGETS leptonica)
-+install(FILES
-+    ${hdr} ${CMAKE_CURRENT_BINARY_DIR}/endianness.h
-+    DESTINATION ${CMAKE_INSTALL_PREFIX}/include/leptonica
-+)
-+set(prefix ${CMAKE_INSTALL_PREFIX})
-+set(exec_prefix ${CMAKE_INSTALL_PREFIX})
-+set(libdir ${CMAKE_INSTALL_LIBDIR})
-+set(includedir ${CMAKE_INSTALL_INCLUDEDIR})
-+set(LIBPNG_LIBS ${PNG_LIBRARY})
-+set(ZLIB_LIBS ${ZLIB_LIBRARY})
-+set(VERSION ${VERSION_PLAIN})
-+configure_file(${CMAKE_SOURCE_DIR}/lept.pc.in ${CMAKE_BINARY_DIR}/lept.pc @ONLY)
-+install(FILES ${CMAKE_BINARY_DIR}/lept.pc DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig)
+ # Standard installation paths

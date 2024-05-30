@@ -26,31 +26,37 @@ endif()
 list(APPEND PATCH_CMD COMMAND ${KO_PATCH}
     ${CMAKE_CURRENT_SOURCE_DIR}/k2pdfopt.patch
     ${CMAKE_CURRENT_SOURCE_DIR}/cmake_tweaks.patch
-    ${CMAKE_CURRENT_SOURCE_DIR}/fix-uninitialized-memory-access.patch
 )
 
 list(APPEND CMAKE_ARGS
     -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE}
+    -DBUILD_SHARED_LIBS=TRUE
     # Project options.
     -DBUILD_PROG=FALSE
-    -DCMAKE_DISABLE_FIND_PACKAGE_GIF=TRUE
-    -DCMAKE_DISABLE_FIND_PACKAGE_JPEG=TRUE
-    # This takes care of disabling JP2K and WebP support.
-    -DCMAKE_DISABLE_FIND_PACKAGE_PkgConfig=TRUE
-    -DCMAKE_DISABLE_FIND_PACKAGE_TIFF=TRUE
+    -DSTRICT_CONF=TRUE
+    # Yes please.
+    -DENABLE_PNG=TRUE
+    -DENABLE_ZLIB=TRUE
+    # No thank you.
+    -DENABLE_GIF=FALSE
+    -DENABLE_JPEG=FALSE
+    -DENABLE_OPENJPEG=FALSE
+    -DENABLE_TIFF=FALSE
+    -DENABLE_WEBP=FALSE
 )
 
 list(APPEND BUILD_CMD COMMAND ${KO_MAKE_PROGRAM})
 
 list(APPEND INSTALL_CMD COMMAND ${CMAKE_COMMAND} --install .)
+list(APPEND INSTALL_CMD COMMAND ln -snf lept_$<CONFIG>.pc ${STAGING_DIR}/lib/pkgconfig/lept.pc)
 
-append_shared_lib_install_commands(INSTALL_CMD lept VERSION 5)
+append_shared_lib_install_commands(INSTALL_CMD leptonica VERSION 6)
 
 external_project(
     # NOTE: Needs to match the version used by whatever version of libk2pdfopt we're currently using...
     #       Probably applies to mupdf & tesseract, too...
-    URL https://github.com/DanBloomberg/leptonica/archive/refs/tags/1.74.1.tar.gz
-    URL_MD5 b3de9ae35976fd4fc3f6dae5a4368bca
+    URL https://github.com/DanBloomberg/leptonica/archive/refs/tags/1.84.1.tar.gz
+    URL_MD5 58f37c12b1e9473c0c7ac0b1259e6a5c
     PATCH_COMMAND ${PATCH_CMD}
     CMAKE_ARGS ${CMAKE_ARGS}
     BUILD_COMMAND ${BUILD_CMD}

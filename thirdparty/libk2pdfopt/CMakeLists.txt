@@ -1,4 +1,8 @@
-list(APPEND CMAKE_ARGS -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE})
+list(APPEND CMAKE_ARGS
+    -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE}
+    # Project options.
+    -DANDROID=${ANDROID}
+)
 
 list(APPEND BUILD_CMD COMMAND ${KO_MAKE_PROGRAM})
 
@@ -9,7 +13,7 @@ append_shared_lib_install_commands(INSTALL_CMD k2pdfopt VERSION 2)
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
     https://github.com/koreader/libk2pdfopt.git
-    563b93b61947849783355fe201bab47b9e9ff4d6
+    7320a5a5fdf2cb84c5dae1a03c67c206109c14d0
     ${SOURCE_DIR}
 )
 

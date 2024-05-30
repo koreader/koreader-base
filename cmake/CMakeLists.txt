@@ -303,7 +303,11 @@ endif()
 declare_project(thirdparty/tar ${EXCLUDE_FROM_ALL})
 
 # tesseract
-declare_project(thirdparty/tesseract DEPENDS leptonica)
+set(DEPENDS leptonica)
+if(ANDROID)
+    list(APPEND DEPENDS cpu_features)
+endif()
+declare_project(thirdparty/tesseract DEPENDS ${DEPENDS})
 
 # turbo
 declare_project(thirdparty/turbo DEPENDS openssl)

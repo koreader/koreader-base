@@ -16,6 +16,7 @@ cdecl_type(BOX)
 cdecl_type(BOXA)
 cdecl_type(NUMA)
 cdecl_type(PIX)
+cdecl_type(PIXA)
 
 cdecl_const(L_NOCOPY)
 cdecl_const(L_COPY)
