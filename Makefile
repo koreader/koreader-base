@@ -120,17 +120,16 @@ test: all test-data
 
 test-data: $(OUTPUT_DIR)/.busted $(OUTPUT_DIR)/data/tessdata/eng.traineddata $(OUTPUT_DIR)/spec/base $(OUTPUT_DIR)/fonts/droid/DroidSansMono.ttf
 
-TESSDATA_DIST = thirdparty/tesseract/build/downloads/tesseract-ocr-3.02.eng.tar.gz
-TESSDATA_DIST_URL = https://src.fedoraproject.org/repo/pkgs/tesseract/$(notdir $(TESSDATA_DIST))/3562250fe6f4e76229a329166b8ae853/$(notdir $(TESSDATA_DIST))
-TESSDATA_DIST_SHA1 = 989ed4c3a5b246d7353893e466c353099d8b73a1
+TESSDATA_FILE = thirdparty/tesseract/build/downloads/eng.traineddata
+TESSDATA_FILE_URL = https://github.com/tesseract-ocr/tessdata/raw/4.1.0/$(notdir $(TESSDATA_FILE))
+TESSDATA_FILE_SHA1 = 007b522901a665bc2037428602d4d527f5ead7ed
 
-$(OUTPUT_DIR)/data/tessdata/eng.traineddata: $(TESSDATA_DIST) | $(OUTPUT_DIR)/data
-	tar xzf $(TESSDATA_DIST) --strip-components=1 -C $(OUTPUT_DIR)/data
-	touch $@
+$(OUTPUT_DIR)/data/tessdata/eng.traineddata: $(TESSDATA_FILE) | $(OUTPUT_DIR)/data/tessdata/
+	$(SYMLINK) $(abspath $(TESSDATA_FILE)) $@
 
-$(TESSDATA_DIST):
-	mkdir -p $(dir $(TESSDATA_DIST))
-	$(call wget_and_validate,$(TESSDATA_DIST),$(TESSDATA_DIST_URL),$(TESSDATA_DIST_SHA1))
+$(TESSDATA_FILE):
+	mkdir -p $(dir $(TESSDATA_FILE))
+	$(call wget_and_validate,$(TESSDATA_FILE),$(TESSDATA_FILE_URL),$(TESSDATA_FILE_SHA1))
 
 DROID_FONT = thirdparty/fonts/build/downloads/DroidSansMono.ttf
 DROID_FONT_URL = https://github.com/koreader/koreader-fonts/raw/master/droid/$(notdir $(DROID_FONT))
