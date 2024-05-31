@@ -379,7 +379,7 @@ BASE_CFLAGS:=-O2 -ffast-math -pipe -fomit-frame-pointer
 # Used to enforce aggressive optimizations in some components
 VECTO_CFLAGS:=-O3 -ffast-math -pipe -fomit-frame-pointer -frename-registers -fweb -ftree-vectorize -funroll-loops
 # And for an aggressive LTO build
-#BASE_CFLAGS:=$(VECTO_CFLAGS) -flto=8 -fuse-linker-plugin
+#BASE_CFLAGS:=$(VECTO_CFLAGS) -flto$(if $(PARALLEL_JOBS),=$(PARALLEL_JOBS)) -fuse-linker-plugin
 # Use this for debugging:
 ifdef KODEBUG
 	BASE_CFLAGS:=-Og -g -pipe -fno-omit-frame-pointer
