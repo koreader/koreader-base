@@ -251,6 +251,9 @@ declare_project(thirdparty/luasec DEPENDS luajit openssl)
 # luasocket
 declare_project(thirdparty/luasocket DEPENDS luajit)
 
+# lunajson
+declare_project(thirdparty/lunajson)
+
 # lunasvg
 declare_project(thirdparty/lunasvg EXCLUDE_FROM_ALL)
 
