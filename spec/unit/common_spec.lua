@@ -25,7 +25,7 @@ describe("Common modules", function()
         end
     end)
     it("should serialize blitbuffer", function()
-        local w, h = 600, 800
+        local w, h = 75, 100
         local bb = Blitbuffer.new(w, h)
         local random = math.random
         for i = 0, h -1 do

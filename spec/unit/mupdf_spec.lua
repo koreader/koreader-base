@@ -2,7 +2,6 @@ local sample_pdf = "spec/base/unit/data/Alice.pdf"
 local paper_pdf = "spec/base/unit/data/Paper.pdf"
 local password_pdf = "spec/base/unit/data/testdocument.pdf"
 local simple_pdf = "spec/base/unit/data/simple.pdf"
-local tmp_pdf = "/tmp/out.pdf"
 local simple_pdf_compare = "spec/base/unit/data/simple-out.pdf"
 local simple_pdf_annotated_compare = "spec/base/unit/data/simple-out-annotated.pdf"
 local simple_pdf_annotation_deleted_compare = "spec/base/unit/data/simple-out-annotation-deleted.pdf"
@@ -130,6 +129,7 @@ describe("mupdf module", function()
             assert.is_not_nil(page)
             page:addMarkupAnnotation(annotation_quadpoints, 1, ffi.C.PDF_ANNOT_HIGHLIGHT)
             page:close()
+            local tmp_pdf = os.tmpname()
             doc:writeDocument(tmp_pdf)
             doc:close()
             assert.is_equal(
@@ -143,6 +143,7 @@ describe("mupdf module", function()
             assert.is_not_nil(doc)
             local page = doc:openPage(1)
             assert.is_not_nil(page)
+            local tmp_pdf = os.tmpname()
             doc:writeDocument(tmp_pdf)
             page:addMarkupAnnotation(annotation_quadpoints, 1, ffi.C.PDF_ANNOT_HIGHLIGHT)
             local annot = page:getMarkupAnnotation(annotation_quadpoints, 1)
@@ -164,6 +165,7 @@ describe("mupdf module", function()
             local annot = page:getMarkupAnnotation(annotation_quadpoints, 1)
             page:updateMarkupAnnotation(annot, "annotation contents")
             page:close()
+            local tmp_pdf = os.tmpname()
             doc:writeDocument(tmp_pdf)
             doc:close()
             assert.is_equal(
