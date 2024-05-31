@@ -258,7 +258,10 @@ ifdef DARWINHOST
 endif
 
 ifneq ($(CCACHE),)
-	export CCACHE
+  export CCACHE
+  # Rewrite relative paths in the compiler’s
+  # standard error output to absolute paths.
+  export CCACHE_ABSSTDERR = 1
 endif
 
 # NOTE: This is necessary (at least on Android), because some early API levels will not put DT_NEEDED libraries in the global namespace.
