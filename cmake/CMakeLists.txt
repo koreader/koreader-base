@@ -1,6 +1,9 @@
 cmake_minimum_required(VERSION 3.15)
 project(koreader-base LANGUAGES C CXX)
 
+include(CheckFunctionExists)
+include(CheckSymbolExists)
+
 include(${CMAKE_KOVARS})
 include(koreader_thirdparty_common)
 include(koreader_thirdparty_git)
@@ -88,6 +91,18 @@ endmacro()
 
 # }}}.
 
+# Detect if libc provides iconv support.
+check_symbol_exists(iconv iconv.h HAS_ICONV)
+if(HAS_ICONV)
+    check_function_exists(iconv HAS_ICONV)
+endif()
+
+# Detect if libc provides gettext support.
+check_symbol_exists(ngettext libintl.h HAS_GETTEXT)
+if(HAS_GETTEXT)
+    check_function_exists(ngettext HAS_GETTEXT)
+endif()
+
 # THIRDPARTY. {{{
 
 # crengine
@@ -159,10 +174,9 @@ declare_project(thirdparty/freetype2)
 declare_project(thirdparty/fribidi EXCLUDE_FROM_ALL)
 
 # gettext
-if(ANDROID OR DARWIN)
-    set(DEPENDS libiconv)
-else()
-    set(DEPENDS)
+set(DEPENDS)
+if(NOT HAS_ICONV)
+    list(APPEND DEPENDS libiconv)
 endif()
 declare_project(thirdparty/gettext DEPENDS ${DEPENDS} EXCLUDE_FROM_ALL)
 
@@ -171,8 +185,11 @@ declare_project(thirdparty/giflib)
 
 # glib
 set(DEPENDS)
-if(ANDROID OR DARWIN)
-    list(APPEND DEPENDS gettext libiconv)
+if(NOT HAS_GETTEXT)
+    list(APPEND DEPENDS gettext)
+endif()
+if(NOT HAS_ICONV)
+    list(APPEND DEPENDS libiconv)
 endif()
 declare_project(thirdparty/glib DEPENDS ${DEPENDS} EXCLUDE_FROM_ALL)
 
