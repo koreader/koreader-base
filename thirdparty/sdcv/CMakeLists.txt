@@ -12,11 +12,11 @@ string(APPEND GLIB2_INCLUDE_DIRS
     ${STAGING_DIR}/lib/glib-2.0/include
 )
 string(APPEND GLIB2_LIBRARIES ${STAGING_DIR}/lib/libglib-2.0.a)
-if(ANDROID OR DARWIN)
-    string(APPEND GLIB2_LIBRARIES
-        $<SEMICOLON> ${STAGING_DIR}/lib/libiconv.a
-        $<SEMICOLON> ${STAGING_DIR}/lib/libintl.a
-    )
+if(NOT HAS_GETTEXT)
+    string(APPEND GLIB2_LIBRARIES $<SEMICOLON> ${STAGING_DIR}/lib/libintl.a)
+endif()
+if(NOT HAS_ICONV)
+    string(APPEND GLIB2_LIBRARIES $<SEMICOLON> ${STAGING_DIR}/lib/libiconv.a)
 endif()
 if(DARWIN)
     string(APPEND GLIB2_LIBRARIES
