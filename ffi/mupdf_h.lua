@@ -195,7 +195,7 @@ fz_pixmap *fz_new_pixmap(fz_context *, fz_colorspace *, int, int, fz_separations
 fz_pixmap *mupdf_new_pixmap_with_bbox(fz_context *, fz_colorspace *, const fz_irect *, fz_separations *, int);
 fz_pixmap *mupdf_new_pixmap_with_data(fz_context *, fz_colorspace *, int, int, fz_separations *, int, int, unsigned char *);
 fz_pixmap *mupdf_new_pixmap_with_bbox_and_data(fz_context *, fz_colorspace *, const fz_irect *, fz_separations *, int, unsigned char *);
-fz_pixmap *fz_convert_pixmap(fz_context *, const fz_pixmap *, fz_colorspace *, fz_colorspace *, fz_default_colorspaces *, fz_color_params, int);
+fz_pixmap *mupdf_convert_pixmap(fz_context *, const fz_pixmap *, fz_colorspace *, fz_colorspace *, fz_default_colorspaces *, fz_color_params, int);
 void fz_drop_pixmap(fz_context *, fz_pixmap *);
 void fz_clear_pixmap_with_value(fz_context *, fz_pixmap *, int);
 void fz_gamma_pixmap(fz_context *, fz_pixmap *, float);

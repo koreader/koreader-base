@@ -164,6 +164,9 @@ MUPDF_WRAP(mupdf_pdf_set_annot_opacity, void*, NULL,
 MUPDF_WRAP(mupdf_get_pixmap_from_image, fz_pixmap*, NULL,
     ret = fz_get_pixmap_from_image(ctx, image, subarea, trans, w, h),
     fz_image *image, const fz_irect *subarea, fz_matrix *trans, int *w, int *h)
+MUPDF_WRAP(mupdf_convert_pixmap, fz_pixmap*, NULL,
+    ret = fz_convert_pixmap(ctx, pix, ds, prf, default_cs, color_params, keep_alpha),
+    const fz_pixmap *pix, fz_colorspace *ds, fz_colorspace *prf, fz_default_colorspaces *default_cs, fz_color_params color_params, int keep_alpha)
 MUPDF_WRAP(mupdf_new_image_from_buffer, fz_image*, NULL,
     ret = fz_new_image_from_buffer(ctx, buffer),
     fz_buffer *buffer)

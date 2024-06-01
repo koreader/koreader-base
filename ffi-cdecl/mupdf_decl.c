@@ -111,7 +111,7 @@ cdecl_func(fz_new_pixmap) // compat
 cdecl_func(mupdf_new_pixmap_with_bbox)
 cdecl_func(mupdf_new_pixmap_with_data)
 cdecl_func(mupdf_new_pixmap_with_bbox_and_data)
-cdecl_func(fz_convert_pixmap)
+cdecl_func(mupdf_convert_pixmap)
 cdecl_func(fz_drop_pixmap)
 cdecl_func(fz_clear_pixmap_with_value)
 cdecl_func(fz_gamma_pixmap)
