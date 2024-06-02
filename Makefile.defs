@@ -63,10 +63,6 @@ endif
 
 LINUX_ARCH?=native
 
-# Detect LuaRocks 3
-LR_VER_NUM := $(shell luarocks --version | grep -Eo '[0-9]+.[0-9]+')
-LR_GT_3_0 := $(shell awk -v LR_VER_NUM=$(LR_VER_NUM) 'BEGIN { print (LR_VER_NUM >= 3.0); }')
-
 # set debug-related variables to cascade down
 ifdef KODEBUG
 	DEBUG:=$(KODEBUG)
@@ -729,11 +725,12 @@ endif
 
 THIRDPARTY_DIR = thirdparty
 
-# Unversioned LR 2 binary
-LUAROCKS_BINARY = luarocks
-# Versioned LR 3 binary, see koreader-base/pull/1003
-ifeq ($(LR_GT_3_0),1)
-LUAROCKS_BINARY += --lua-version=5.1
+LUAROCKS_BINARY := $(firstword $(shell command -v luarocks luarocks-5.1))
+ifneq (,$(LUAROCKS_BINARY))
+  # Detect versioned LR 3 binary, see koreader-base/pull/1003
+  ifneq (,$(shell $(LUAROCKS_BINARY) --help | grep -Eo -- --lua-version))
+    LUAROCKS_BINARY += --lua-version=5.1
+  endif
 endif
 
 # Dynamic libraries must be compiled with "-shared" and "-fPIC".
