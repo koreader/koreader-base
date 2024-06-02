@@ -1,7 +1,6 @@
-diff --git a/Makefile b/Makefile
---- a/Makefile
-+++ b/Makefile
-@@ -242,6 +242,7 @@
+--- i/Makefile
++++ w/Makefile
+@@ -242,6 +242,7 @@ generated/%.otf.c : %.otf $(HEXDUMP_SH) ; $(QUIET_GEN) $(MKTGTDIR) ; bash $(HEXD
  generated/%.ttf.c : %.ttf $(HEXDUMP_SH) ; $(QUIET_GEN) $(MKTGTDIR) ; bash $(HEXDUMP_SH) > $@ $<
  generated/%.ttc.c : %.ttc $(HEXDUMP_SH) ; $(QUIET_GEN) $(MKTGTDIR) ; bash $(HEXDUMP_SH) > $@ $<
  
@@ -9,7 +8,7 @@ diff --git a/Makefile b/Makefile
  ifeq ($(HAVE_OBJCOPY),yes)
    MUPDF_OBJ += $(FONT_BIN:%=$(OUT)/%.o)
    $(OUT)/%.cff.o : %.cff ; $(OBJCOPY_CMD)
-@@ -253,6 +254,7 @@
+@@ -253,6 +254,7 @@ else
  endif
  
  generate: $(FONT_GEN)
@@ -17,9 +16,8 @@ diff --git a/Makefile b/Makefile
  
  # --- Generated ICC profiles ---
  
-diff --git a/include/mupdf/fitz/font.h b/include/mupdf/fitz/font.h
---- a/include/mupdf/fitz/font.h
-+++ b/include/mupdf/fitz/font.h
+--- i/include/mupdf/fitz/font.h
++++ w/include/mupdf/fitz/font.h
 @@ -812,4 +812,9 @@ fz_buffer *fz_subset_ttf_for_gids(fz_context *ctx, fz_buffer *orig, int *gids, i
   */
  fz_buffer *fz_subset_cff_for_gids(fz_context *ctx, fz_buffer *orig, int *gids, int num_gids, int symbolic, int cidfont);
@@ -30,9 +28,8 @@ diff --git a/include/mupdf/fitz/font.h b/include/mupdf/fitz/font.h
 +void fz_install_external_font_funcs(fz_context *ctx);
 +
  #endif
-diff --git a/source/fitz/font.c b/source/fitz/font.c
---- a/source/fitz/font.c
-+++ b/source/fitz/font.c
+--- i/source/fitz/font.c
++++ w/source/fitz/font.c
 @@ -508,11 +508,8 @@ fz_font *fz_load_system_fallback_font(fz_context *ctx, int script, int language,
  fz_font *fz_load_fallback_font(fz_context *ctx, int script, int language, int serif, int bold, int italic)
  {
@@ -68,9 +65,44 @@ diff --git a/source/fitz/font.c b/source/fitz/font.c
  		}
  	}
  
-diff --git a/source/fitz/noto.c b/source/fitz/noto.c
---- a/source/fitz/noto.c
-+++ b/source/fitz/noto.c
+@@ -908,13 +914,18 @@ find_base14_index(const char *name)
+ fz_font *
+ fz_new_base14_font(fz_context *ctx, const char *name)
+ {
++#ifndef NOBUILTINFONT
+ 	const unsigned char *data;
+ 	int size;
++#else
++	char *filename;
++#endif
+ 	int x = find_base14_index(name);
+ 	if (x >= 0)
+ 	{
+ 		if (ctx->font->base14[x])
+ 			return fz_keep_font(ctx, ctx->font->base14[x]);
++#ifndef NOBUILTINFONT
+ 		data = fz_lookup_base14_font(ctx, name, &size);
+ 		if (data)
+ 		{
+@@ -926,6 +937,16 @@ fz_new_base14_font(fz_context *ctx, const char *name)
+ 			fz_set_font_embedding(ctx, ctx->font->base14[x], 1);
+ 			return fz_keep_font(ctx, ctx->font->base14[x]);
+ 		}
++#else
++		filename = fz_lookup_base14_font_from_file(ctx, name);
++		ctx->font->base14[x] = fz_new_font_from_file(ctx, NULL, filename, 0, 1);
++		free(filename);
++		if (ctx->font->base14[x])
++		{
++			ctx->font->base14[x]->flags.is_serif = (name[0] == 'T'); /* Times-Roman */
++			return fz_keep_font(ctx, ctx->font->base14[x]);
++		}
++#endif
+ 	}
+ 	fz_throw(ctx, FZ_ERROR_ARGUMENT, "cannot find builtin font with name '%s'", name);
+ }
+--- i/source/fitz/noto.c
++++ w/source/fitz/noto.c
 @@ -23,8 +23,12 @@
  #include "mupdf/fitz.h"
  #include "mupdf/ucdn.h"
@@ -277,9 +309,8 @@ diff --git a/source/fitz/noto.c b/source/fitz/noto.c
 +}
 +
 +#endif
-diff --git a/source/html/html-font.c b/source/html/html-font.c
---- a/source/html/html-font.c
-+++ b/source/html/html-font.c
+--- i/source/html/html-font.c
++++ w/source/html/html-font.c
 @@ -23,18 +23,63 @@
  #include "mupdf/fitz.h"
  #include "html-imp.h"
@@ -372,9 +403,8 @@ diff --git a/source/html/html-font.c b/source/html/html-font.c
  		return fz_load_html_default_font(ctx, set, family, is_bold, is_italic);
  
  	return NULL;
-diff --git a/source/pdf/pdf-font.c b/source/pdf/pdf-font.c
---- a/source/pdf/pdf-font.c
-+++ b/source/pdf/pdf-font.c
+--- i/source/pdf/pdf-font.c
++++ w/source/pdf/pdf-font.c
 @@ -93,6 +93,8 @@ static const char *base_font_names[][10] =
  	{ "ZapfDingbats", NULL }
  };
