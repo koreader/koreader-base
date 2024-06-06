@@ -30,77 +30,29 @@
  #endif
 --- i/source/fitz/font.c
 +++ w/source/fitz/font.c
-@@ -508,11 +508,8 @@ fz_font *fz_load_system_fallback_font(fz_context *ctx, int script, int language,
- fz_font *fz_load_fallback_font(fz_context *ctx, int script, int language, int serif, int bold, int italic)
- {
- 	fz_font **fontp;
--	const unsigned char *data;
- 	int ordering = FZ_ADOBE_JAPAN;
- 	int index;
--	int subfont;
--	int size;
+@@ -600,6 +600,7 @@ static fz_font *fz_load_fallback_music_font(fz_context *ctx)
  
- 	if (script < 0 || script >= (int)nelem(ctx->font->fallback))
- 		return NULL;
-@@ -546,6 +543,10 @@ fz_font *fz_load_fallback_font(fz_context *ctx, int script, int language, int se
- 		*fontp = fz_load_system_fallback_font(ctx, script, language, serif, bold, italic);
- 		if (!*fontp)
- 		{
-+#ifndef NOBUILTINFONT
-+			const unsigned char *data;
-+			int subfont;
-+			int size;
- 			data = fz_lookup_noto_font(ctx, script, language, &size, &subfont);
- 			if (data)
- 			{
-@@ -553,6 +554,11 @@ fz_font *fz_load_fallback_font(fz_context *ctx, int script, int language, int se
- 				/* Noto fonts can be embedded. */
- 				fz_set_font_embedding(ctx, *fontp, 1);
- 			}
-+#else
-+			char *filename = get_font_file("freefont/FreeSerif.ttf");
-+			*fontp = fz_new_font_from_file(ctx, NULL, filename, 0, 1);
-+			free(filename);
-+#endif
- 		}
- 	}
- 
-@@ -908,13 +914,18 @@ find_base14_index(const char *name)
- fz_font *
- fz_new_base14_font(fz_context *ctx, const char *name)
+ static fz_font *fz_load_fallback_symbol1_font(fz_context *ctx)
  {
 +#ifndef NOBUILTINFONT
  	const unsigned char *data;
  	int size;
-+#else
-+	char *filename;
-+#endif
- 	int x = find_base14_index(name);
- 	if (x >= 0)
- 	{
- 		if (ctx->font->base14[x])
- 			return fz_keep_font(ctx, ctx->font->base14[x]);
-+#ifndef NOBUILTINFONT
- 		data = fz_lookup_base14_font(ctx, name, &size);
+ 	if (!ctx->font->symbol1)
+@@ -608,6 +609,14 @@ static fz_font *fz_load_fallback_symbol1_font(fz_context *ctx)
  		if (data)
- 		{
-@@ -926,6 +937,16 @@ fz_new_base14_font(fz_context *ctx, const char *name)
- 			fz_set_font_embedding(ctx, ctx->font->base14[x], 1);
- 			return fz_keep_font(ctx, ctx->font->base14[x]);
- 		}
-+#else
-+		filename = fz_lookup_base14_font_from_file(ctx, name);
-+		ctx->font->base14[x] = fz_new_font_from_file(ctx, NULL, filename, 0, 1);
-+		free(filename);
-+		if (ctx->font->base14[x])
-+		{
-+			ctx->font->base14[x]->flags.is_serif = (name[0] == 'T'); /* Times-Roman */
-+			return fz_keep_font(ctx, ctx->font->base14[x]);
-+		}
-+#endif
+ 			ctx->font->symbol1 = fz_new_font_from_memory(ctx, NULL, data, size, 0, 0);
  	}
- 	fz_throw(ctx, FZ_ERROR_ARGUMENT, "cannot find builtin font with name '%s'", name);
++#else
++	if (!ctx->font->symbol1)
++	{
++		char *filename = get_font_file("freefont/FreeSerif.ttf");
++		ctx->font->symbol1 = fz_new_font_from_file(ctx, NULL, filename, 0, 1);
++		free(filename);
++	}
++#endif
+ 	return ctx->font->symbol1;
  }
+ 
 --- i/source/fitz/noto.c
 +++ w/source/fitz/noto.c
 @@ -23,8 +23,12 @@
