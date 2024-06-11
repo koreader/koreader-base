@@ -6,7 +6,7 @@ source "${CI_DIR}/common.sh"
 
 "${CI_DIR}/helper_shellchecks.sh"
 
-echo -e "\n${ANSI_GREEN}Luacheck results"
+echo -e "\n${ANSI_GREEN}Luacheck results${ANSI_RESET}"
 if ! command -v luajit; then
     luacheck --no-color -q ffi spec
 else
