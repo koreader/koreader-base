@@ -146,6 +146,14 @@ else ifeq ($(TARGET), kindlepw2)
 	else
 		CHOST?=arm-linux-gnueabi
 	endif
+else ifeq ($(TARGET), kindlehf)
+	KINDLE=1
+	HAS_KINDLEHF_TC:=$(shell command -v arm-kindlehf-linux-gnueabihf-gcc 2> /dev/null)
+	ifdef HAS_KINDLEHF_TC
+		CHOST?=arm-kindlehf-linux-gnueabihf
+	else
+		CHOST?=arm-linux-gnueabihf
+	endif
 else ifeq ($(TARGET), kindle-legacy)
 	KINDLE=1
 	CHOST?=arm-kindle-linux-gnueabi
@@ -491,6 +499,13 @@ else ifeq ($(TARGET), kindlepw2)
 	ARM_ARCH:=$(ARMV7_A9_ARCH)
 	ARM_ARCH+=-mfloat-abi=softfp
 	ifeq ($(TARGET_MACHINE), arm-linux-gnueabi)
+		COMPAT_CFLAGS:=$(UBUNTU_COMPAT_CFLAGS)
+		COMPAT_CXXFLAGS:=$(UBUNTU_COMPAT_CFLAGS)
+	endif
+else ifeq ($(TARGET), kindlehf)
+	ARM_ARCH:=$(ARMV7_A9_ARCH)
+	ARM_ARCH+=-mfloat-abi=hard
+	ifeq ($(TARGET_MACHINE), arm-linux-gnueabihf)
 		COMPAT_CFLAGS:=$(UBUNTU_COMPAT_CFLAGS)
 		COMPAT_CXXFLAGS:=$(UBUNTU_COMPAT_CFLAGS)
 	endif

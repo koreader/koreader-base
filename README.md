@@ -19,6 +19,7 @@ Follow these steps:
 * automatically fetch thirdparty sources with Makefile:
   * make sure you have `patch`, `wget`, `unzip`, `git` and `svn` installed
   * run `make fetchthirdparty`.
+* run `make TARGET=kindlehf` For kindle models running fw >= 5.16.3 (Paperwhite 4 and later)
 
 * run `make TARGET=kindlepw2` For Kindle models >= Paperwhite 2.
 
