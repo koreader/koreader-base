@@ -136,6 +136,7 @@ set(MAKE_CMD
 list(APPEND BUILD_CMD COMMAND ${MAKE_CMD} libs)
 
 list(APPEND INSTALL_CMD COMMAND ${MAKE_CMD} DESTDIR=${STAGING_DIR} prefix=/ install-libs)
+list(APPEND INSTALL_CMD COMMAND chmod 755 ${STAGING_DIR}/lib/${LIB})
 
 append_shared_lib_install_commands(INSTALL_CMD ${LIB_SPEC})
 
