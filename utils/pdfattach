@@ -13,27 +13,27 @@ progname=$(basename "$0")
 function escape_tex_specialchars() {
     local txt=$1
     local res
-    res=$(echo "$txt" | sed -e "s%_%\\\\_%g" -e "s%&%\\\\&%g")
-    echo "$res"
+    res=$(echo "${txt}" | sed -e "s%_%\\\\_%g" -e "s%&%\\\\&%g")
+    echo "${res}"
 }
 
 function usage() {
-    echo "Usage: $progname -o file.pdf [-a author] file1.djvu [file2.mp3] ..."
+    echo "Usage: ${progname} -o file.pdf [-a author] file1.djvu [file2.mp3] ..."
     exit 1
 }
 
 if (! getopts ":o:" opt); then
-    echo "$progname: Missing options." >&2
+    echo "${progname}: Missing options." >&2
     usage
 fi
 
 if ! type pdflatex >/dev/null 2>&1; then
-    echo "$progname: pdfLaTeX program is required." >&2
+    echo "${progname}: pdfLaTeX program is required." >&2
     exit 1
 fi
 
 if ! kpsewhich attachfile.sty >/dev/null 2>&1; then
-    echo "$progname: attachfile.sty package is required." >&2
+    echo "${progname}: attachfile.sty package is required." >&2
     exit 1
 fi
 
@@ -45,22 +45,22 @@ declare -i infcount=0 outfcount=0 totalsize=0
 declare author=""
 
 while getopts ":o:a:" opt; do
-    case $opt in
-    a)
-        author="$OPTARG"
-        ;;
-    o)
-        outfile=$(readlink -f "$OPTARG")
-        ((outfcount++))
-        ;;
-    \?)
-        echo "$progname: Invalid option: -$OPTARG" >&2
-        usage
-        ;;
-    :)
-        echo "$progname: Option -$OPTARG requires an argument." >&2
-        usage
-        ;;
+    case ${opt} in
+        a)
+            author="${OPTARG}"
+            ;;
+        o)
+            outfile=$(readlink -f "${OPTARG}")
+            ((outfcount++))
+            ;;
+        \?)
+            echo "${progname}: Invalid option: -${OPTARG}" >&2
+            usage
+            ;;
+        :)
+            echo "${progname}: Option -${OPTARG} requires an argument." >&2
+            usage
+            ;;
     esac
 done
 
@@ -69,25 +69,25 @@ shift $((OPTIND - 1))
 numargs=$#
 for ((i = 1; i <= numargs; i++)); do
     fullname=$(readlink -f "$1")
-    if [ ! -r "$fullname" ]; then
-        echo "$progname: cannot access the file \"$fullname\"" >&2
+    if [ ! -r "${fullname}" ]; then
+        echo "${progname}: cannot access the file \"${fullname}\"" >&2
         usage
     fi
-    infiles[$infcount]="$fullname"
-    infiles_texclean[$infcount]=$(escape_tex_specialchars "$(basename "${infiles[$infcount]}")")
-    infilesize[$infcount]=$(stat --print="%s" "$fullname")
-    ((totalsize = totalsize + ${infilesize[$infcount]}))
+    infiles[infcount]="${fullname}"
+    infiles_texclean[infcount]=$(escape_tex_specialchars "$(basename "${infiles[infcount]}")")
+    infilesize[infcount]=$(stat --print="%s" "${fullname}")
+    ((totalsize = totalsize + infilesize[infcount]))
     ((infcount++))
     shift
 done
 
 if ((infcount == 0)); then
-    echo "$progname: No input file(s) specified." >&2
+    echo "${progname}: No input file(s) specified." >&2
     usage
 fi
 
 if ((outfcount != 1)); then
-    echo "$progname: One (and only one) output file must be specified." >&2
+    echo "${progname}: One (and only one) output file must be specified." >&2
     usage
 fi
 
@@ -100,24 +100,26 @@ touch tmp.tex
     echo -E "\\usepackage[margin={1mm},papersize={9cm,12cm}]{geometry}"
     echo -E "\\usepackage{hyperref,attachfile}"
 } >>tmp.tex
-if [ -n "$author" ]; then
-    echo -E "\\AtBeginDocument{\\hypersetup{pdfauthor={$author}}}" >>tmp.tex
+if [ -n "${author}" ]; then
+    echo -E "\\AtBeginDocument{\\hypersetup{pdfauthor={${author}}}}" >>tmp.tex
 fi
+# shellcheck disable=SC2028
 echo -E "\\begin{document}" >>tmp.tex
 echo -eE "\\tolerance=10000\\pagestyle{empty}\\fontsize{7}{13}\\selectfont" >>tmp.tex
 
 # emit the list of all files
 for ((i = 0; i < ${#infiles[*]}; i++)); do
-    echo -eE "\\noindent \\hyperlink{L$i}{$((i + 1))/${infcount}} \\texttt{${infiles_texclean[$i]}} (${infilesize[$i]} bytes)" >>tmp.tex
+    echo -eE "\\noindent \\hyperlink{L${i}}{$((i + 1))/${infcount}} \\texttt{${infiles_texclean[i]}} (${infilesize[i]} bytes)" >>tmp.tex
     echo >>tmp.tex
 done
-echo -eE "\\noindent Total size $totalsize bytes\\newpage" >>tmp.tex
+echo -eE "\\noindent Total size ${totalsize} bytes\\newpage" >>tmp.tex
 
 # now emit all the attachments, one per page
 for ((i = 0; i < ${#infiles[*]}; i++)); do
-    echo -eE "\\noindent\\hypertarget{L$i}$((i + 1))/${infcount}\\\\\\texttt{${infiles_texclean[$i]}} (\\textattachfile[color={0 0 0}]{${infiles[$i]}}{${infilesize[$i]} bytes})\\newpage" >>tmp.tex
+    echo -eE "\\noindent\\hypertarget{L${i}}$((i + 1))/${infcount}\\\\\\texttt{${infiles_texclean[i]}} (\\textattachfile[color={0 0 0}]{${infiles[i]}}{${infilesize[i]} bytes})\\newpage" >>tmp.tex
 done
+# shellcheck disable=SC2028
 echo -E "\\end{document}" >>tmp.tex
-pdflatex -halt-on-error tmp.tex >/dev/null && mv tmp.pdf "$outfile"
+pdflatex -halt-on-error tmp.tex >/dev/null && mv tmp.pdf "${outfile}"
 cd - >/dev/null || exit
 rm -rf "${workdir}"
