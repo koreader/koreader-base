@@ -18,25 +18,25 @@ LIBCHECK_DIR="${0%/*}/libcheck"
 
 os="$(uname -s)"
 case "${os}" in
-Linux)
-    binary_mime_rx='application/x-sharedlib'
-    libcheck() {
-        set -x
-        "${compiler[@]}" \
-            -o /dev/null -shared \
-            -Wl,--fatal-warnings \
-            -Wl,--library-path="${LIBCHECK_DIR}" \
-            -Wl,--no-as-needed \
-            -Wl,--rpath-link="${LIBCHECK_DIR}" \
-            -Wl,--unresolved-symbols=report-all \
-            "$1" ${provide_lua_syms:+-l:libluajit.ld}
-    }
-    find_exe_opts=(-executable)
-    ;;
-*)
-    echo "unsupported operating system: ${os}" 1>&2
-    exit 1
-    ;;
+    Linux)
+        binary_mime_rx='application/x-sharedlib'
+        libcheck() {
+            set -x
+            "${compiler[@]}" \
+                -o /dev/null -shared \
+                -Wl,--fatal-warnings \
+                -Wl,--library-path="${LIBCHECK_DIR}" \
+                -Wl,--no-as-needed \
+                -Wl,--rpath-link="${LIBCHECK_DIR}" \
+                -Wl,--unresolved-symbols=report-all \
+                "$1" ${provide_lua_syms:+-l:libluajit.ld}
+        }
+        find_exe_opts=(-executable)
+        ;;
+    *)
+        echo "unsupported operating system: ${os}" 1>&2
+        exit 1
+        ;;
 esac
 
 compiler=()
