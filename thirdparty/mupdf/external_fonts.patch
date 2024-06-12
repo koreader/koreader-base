@@ -22,7 +22,7 @@
   */
  fz_buffer *fz_subset_cff_for_gids(fz_context *ctx, fz_buffer *orig, int *gids, int num_gids, int symbolic, int cidfont);
  
-+char *get_font_file(char *name);
++char *get_font_file(const char *name);
 +char *fz_lookup_base14_font_from_file(fz_context *ctx, const char *name);
 +char *fz_lookup_cjk_font_from_file(fz_context *ctx, int registry, int serif, int wmode);
 +void fz_install_external_font_funcs(fz_context *ctx);
@@ -30,18 +30,72 @@
  #endif
 --- i/source/fitz/font.c
 +++ w/source/fitz/font.c
-@@ -600,6 +600,7 @@ static fz_font *fz_load_fallback_music_font(fz_context *ctx)
+@@ -572,6 +572,8 @@ fz_font *fz_load_fallback_font(fz_context *ctx, int script, int language, int se
+ 	return *fontp;
+ }
  
- static fz_font *fz_load_fallback_symbol1_font(fz_context *ctx)
++#ifndef NOBUILTINFONT
++
+ static fz_font *fz_load_fallback_math_font(fz_context *ctx)
+ {
+ 	const unsigned char *data;
+@@ -650,6 +652,8 @@ static fz_font *fz_load_fallback_boxes_font(fz_context *ctx)
+ 	return ctx->font->boxes;
+ }
+ 
++#endif
++
+ static const struct ft_error ft_errors[] =
+ {
+ #include FT_ERRORS_H
+@@ -908,13 +912,18 @@ find_base14_index(const char *name)
+ fz_font *
+ fz_new_base14_font(fz_context *ctx, const char *name)
  {
 +#ifndef NOBUILTINFONT
  	const unsigned char *data;
  	int size;
- 	if (!ctx->font->symbol1)
-@@ -608,6 +609,14 @@ static fz_font *fz_load_fallback_symbol1_font(fz_context *ctx)
++#else
++	char *filename;
++#endif
+ 	int x = find_base14_index(name);
+ 	if (x >= 0)
+ 	{
+ 		if (ctx->font->base14[x])
+ 			return fz_keep_font(ctx, ctx->font->base14[x]);
++#ifndef NOBUILTINFONT
+ 		data = fz_lookup_base14_font(ctx, name, &size);
  		if (data)
- 			ctx->font->symbol1 = fz_new_font_from_memory(ctx, NULL, data, size, 0, 0);
+ 		{
+@@ -926,6 +935,16 @@ fz_new_base14_font(fz_context *ctx, const char *name)
+ 			fz_set_font_embedding(ctx, ctx->font->base14[x], 1);
+ 			return fz_keep_font(ctx, ctx->font->base14[x]);
+ 		}
++#else
++		filename = fz_lookup_base14_font_from_file(ctx, name);
++		ctx->font->base14[x] = fz_new_font_from_file(ctx, NULL, filename, 0, 1);
++		free(filename);
++		if (ctx->font->base14[x])
++		{
++			ctx->font->base14[x]->flags.is_serif = (name[0] == 'T'); /* Times-Roman */
++			return fz_keep_font(ctx, ctx->font->base14[x]);
++		}
++#endif
  	}
+ 	fz_throw(ctx, FZ_ERROR_ARGUMENT, "cannot find builtin font with name '%s'", name);
+ }
+@@ -2106,6 +2125,7 @@ fz_encode_character_with_fallback(fz_context *ctx, fz_font *user_font, int unico
+ 	}
+ #endif
+ 
++#ifndef NOBUILTINFONT
+ 	font = fz_load_fallback_math_font(ctx);
+ 	if (font)
+ 	{
+@@ -2147,6 +2167,15 @@ fz_encode_character_with_fallback(fz_context *ctx, fz_font *user_font, int unico
+ 	}
+ 
+ 	font = fz_load_fallback_boxes_font(ctx);
 +#else
 +	if (!ctx->font->symbol1)
 +	{
@@ -49,10 +103,11 @@
 +		ctx->font->symbol1 = fz_new_font_from_file(ctx, NULL, filename, 0, 1);
 +		free(filename);
 +	}
++	font = ctx->font->symbol1;
 +#endif
- 	return ctx->font->symbol1;
- }
- 
+ 	if (font)
+ 	{
+ 		gid = fz_encode_character(ctx, font, unicode);
 --- i/source/fitz/noto.c
 +++ w/source/fitz/noto.c
 @@ -23,8 +23,12 @@
@@ -68,19 +123,7 @@
  /*
  	Base 14 PDF fonts from URW.
  	Noto fonts from Google.
-@@ -314,9 +318,9 @@ fz_lookup_cjk_font_by_language(fz_context *ctx, const char *lang, int *size, int
- }
- 
- const unsigned char *
--fz_lookup_noto_font(fz_context *ctx, int script, int language, int *size, int *subfont)
-+fz_lookup_noto_font(fz_context *ctx, int script, int language, int *len, int *subfont)
- {
--	return search_by_script_lang(size, subfont, script, language);
-+	return search_by_script_lang(len, subfont, script, language);
- }
- 
- const unsigned char *
-@@ -354,3 +358,180 @@ fz_lookup_noto_boxes_font(fz_context *ctx, int *size)
+@@ -354,3 +358,131 @@ fz_lookup_noto_boxes_font(fz_context *ctx, int *size)
  {
  	return search_by_family(size, "Nimbus Boxes", REGULAR);
  }
@@ -88,7 +131,7 @@
 +#else // NOBUILTINFONT
 +
 +char *
-+get_font_file(char *name)
++get_font_file(const char *name)
 +{
 +	char *fontdir;
 +	char *filename;
@@ -106,24 +149,17 @@
 +	return filename;
 +}
 +
-+const unsigned char *
-+fz_lookup_base14_font(fz_context *ctx, const char *name, int *size)
-+{
-+	*size = 0;
-+	return NULL;
-+}
-+
 +char *
 +fz_lookup_base14_font_from_file(fz_context *ctx, const char *name)
 +{
 +	if (!strcmp("Courier", name)) {
 +		return get_font_file("urw/NimbusMono-Regular.cff");
 +	}
-+	if (!strcmp("Courier-Bold", name)) {
-+		return get_font_file("urw/NimbusMono-Bold.cff");
-+	}
 +	if (!strcmp("Courier-Oblique", name)) {
 +		return get_font_file("urw/NimbusMono-Oblique.cff");
++	}
++	if (!strcmp("Courier-Bold", name)) {
++		return get_font_file("urw/NimbusMono-Bold.cff");
 +	}
 +	if (!strcmp("Courier-BoldOblique", name)) {
 +		return get_font_file("urw/NimbusMono-BoldOblique.cff");
@@ -131,11 +167,11 @@
 +	if (!strcmp("Helvetica", name)) {
 +		return get_font_file("urw/NimbusSanL-Reg.cff");
 +	}
-+	if (!strcmp("Helvetica-Bold", name)) {
-+		return get_font_file("urw/NimbusSanL-Bol.cff");
-+	}
 +	if (!strcmp("Helvetica-Oblique", name)) {
 +		return get_font_file("urw/NimbusSanL-RegIta.cff");
++	}
++	if (!strcmp("Helvetica-Bold", name)) {
++		return get_font_file("urw/NimbusSanL-Bol.cff");
 +	}
 +	if (!strcmp("Helvetica-BoldOblique", name)) {
 +		return get_font_file("urw/NimbusSanL-BolIta.cff");
@@ -143,23 +179,23 @@
 +	if (!strcmp("NotoSans", name)) {
 +		return get_font_file("noto/NotoSans-Regular.ttf");
 +	}
++	if (!strcmp("NotoSans-Italic", name)) {
++		return get_font_file("noto/NotoSans-Italic.ttf");
++	}
 +	if (!strcmp("NotoSans-Bold", name)) {
 +		return get_font_file("noto/NotoSans-Bold.ttf");
 +	}
 +	if (!strcmp("NotoSans-BoldItalic", name)) {
 +		return get_font_file("noto/NotoSans-BoldItalic.ttf");
 +	}
-+	if (!strcmp("NotoSans-Italic", name)) {
-+		return get_font_file("noto/NotoSans-Italic.ttf");
-+	}
 +	if (!strcmp("Times-Roman", name)) {
 +		return get_font_file("urw/NimbusRomNo9L-Reg.cff");
 +	}
-+	if (!strcmp("Times-Bold", name)) {
-+		return get_font_file("urw/NimbusRomNo9L-Med.cff");
-+	}
 +	if (!strcmp("Times-Italic", name)) {
 +		return get_font_file("urw/NimbusRomNo9L-RegIta.cff");
++	}
++	if (!strcmp("Times-Bold", name)) {
++		return get_font_file("urw/NimbusRomNo9L-Med.cff");
 +	}
 +	if (!strcmp("Times-BoldItalic", name)) {
 +		return get_font_file("urw/NimbusRomNo9L-MedIta.cff");
@@ -197,48 +233,6 @@
 +fz_lookup_noto_font(fz_context *ctx, int script, int lang, int *len, int *subfont)
 +{
 +	*len = 0;
-+	return NULL;
-+}
-+
-+const unsigned char *
-+fz_lookup_noto_math_font(fz_context *ctx, int *size)
-+{
-+	*size = 0;
-+	return NULL;
-+}
-+
-+const unsigned char *
-+fz_lookup_noto_music_font(fz_context *ctx, int *size)
-+{
-+	*size = 0;
-+	return NULL;
-+}
-+
-+const unsigned char *
-+fz_lookup_noto_symbol1_font(fz_context *ctx, int *size)
-+{
-+	*size = 0;
-+	return NULL;
-+}
-+
-+const unsigned char *
-+fz_lookup_noto_symbol2_font(fz_context *ctx, int *size)
-+{
-+	*size = 0;
-+	return NULL;
-+}
-+
-+const unsigned char *
-+fz_lookup_noto_emoji_font(fz_context *ctx, int *size)
-+{
-+	*size = 0;
-+	return NULL;
-+}
-+
-+const unsigned char *
-+fz_lookup_noto_boxes_font(fz_context *ctx, int *size)
-+{
-+	*size = 0;
 +	return NULL;
 +}
 +
@@ -355,6 +349,25 @@
  		return fz_load_html_default_font(ctx, set, family, is_bold, is_italic);
  
  	return NULL;
+--- i/source/pdf/pdf-font-add.c
++++ w/source/pdf/pdf-font-add.c
+@@ -73,12 +73,16 @@ static int is_postscript(fz_context *ctx, FT_Face face)
+ 
+ static int is_builtin_font(fz_context *ctx, fz_font *font)
+ {
++#ifndef NOBUILTINFONT
+ 	int size;
+ 	unsigned char *data;
+ 	if (!font->buffer)
+ 		return 0;
+ 	fz_buffer_storage(ctx, font->buffer, &data);
+ 	return fz_lookup_base14_font(ctx, pdf_clean_font_name(font->name), &size) == data;
++#else
++	return 0;
++#endif
+ }
+ 
+ static pdf_obj*
 --- i/source/pdf/pdf-font.c
 +++ w/source/pdf/pdf-font.c
 @@ -93,6 +93,8 @@ static const char *base_font_names[][10] =
