@@ -19,6 +19,7 @@
 #ifndef _PDF_H
 #define _PDF_H
 
+#include <math.h>
 #include <mupdf/fitz.h>
 #include <mupdf/pdf.h>
 
@@ -123,8 +124,11 @@ MUPDF_WRAP(mupdf_load_links, fz_link*, NULL,
     ret = fz_load_links(ctx, page),
     fz_page *page)
 MUPDF_WRAP(mupdf_fz_resolve_link, fz_location*, NULL,
-    { *loc = fz_resolve_link(ctx, doc, uri, xp, yp); ret = loc; },
-    fz_document *doc, const char *uri, float *xp, float *yp, fz_location *loc)
+    { *loc = fz_resolve_link(ctx, doc, uri, xp, yp);
+      if (xp && isnan(*xp)) *xp = 0.0;
+      if (yp && isnan(*yp)) *yp = 0.0;
+      ret = loc; },
+      fz_document *doc, const char *uri, float *xp, float *yp, fz_location *loc)
 MUPDF_WRAP(mupdf_fz_page_number_from_location, int, -1,
     ret = fz_page_number_from_location(ctx, doc, *loc),
     fz_document *doc, fz_location *loc)
