@@ -193,10 +193,15 @@ if ffi.os == "Windows" then
     end
 else
     function util.basename(in_path)
-        -- We have no guarantee of getting a GNU implementation of basename;
-        -- POSIX compliant implementations *will* modify input, so, always make a copy.
-        local path = ffi.new("char[?]", #in_path + 1, in_path)
-        return ffi.string(C.basename(path))
+        -- NOTE: While we attempt to prefer the GNU implementation, because it's the only one Android provides,
+        --       we have no guarantee of getting it (e.g., on macOS, or non-glibc Linux systems);
+        --       POSIX compliant implementations *will* modify input, so, always make a copy.
+        -- NOTE: Moreover, the GNU implementation has a few potentially annoying quirks:
+        --       it returns an empty string when path has a trailing slash (as well as for "/").
+        --       So, we'll want to strip trailing slashes, too...
+        local stripped_path = in_path:match(".*[^/]") or "/" -- Ensure basename("/") leads to "/" as per SUSv2
+        local c_path = ffi.new("char[?]", #stripped_path + 1, stripped_path)
+        return ffi.string(C.basename(c_path))
     end
 end
 
