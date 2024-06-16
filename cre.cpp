@@ -4119,6 +4119,20 @@ static int freeImage(lua_State *L) {
     return 0;
 }
 
+static int getBalancedHTML(lua_State *L) {
+    size_t size;
+    const char * data = (const char*)lua_tolstring(L, 1, &size);
+    int wflags = (int)luaL_optint(L, 2, 0);
+    LVStreamRef stream = LVCreateMemoryStream((void*)data, size);
+    lString8 html;
+    if ( getBalancedHTML(stream, html, wflags) ) {
+        lua_pushstring(L, html.c_str());
+        return 1;
+    }
+    return 0;
+}
+
+
 static bool skip_teardown = false;
 
 static int setSkipTearDown(lua_State *L) {
@@ -4149,6 +4163,7 @@ static const struct luaL_Reg cre_func[] = {
     {"getHyphenationForWord", getHyphenationForWord},
     {"softHyphenateText", softHyphenateText},
     {"renderImageData", renderImageData},
+    {"getBalancedHTML", getBalancedHTML},
     {"smoothScaleBlitBuffer", smoothScaleBlitBuffer},
     {"setImageReplacementChar", setImageReplacementChar},
     {"setSkipTearDown", setSkipTearDown},
