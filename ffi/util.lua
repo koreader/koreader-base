@@ -193,9 +193,11 @@ if ffi.os == "Windows" then
     end
 else
     function util.basename(in_path)
-        -- NOTE: While we attempt to prefer the GNU implementation, because it's the only one Android provides,
-        --       we have no guarantee of getting it (e.g., on macOS, or non-glibc Linux systems);
-        --       POSIX compliant implementations *will* modify input, so, always make a copy.
+        -- NOTE: We dlsym the unprefixed symbol, because it's the only one Android provides.
+        --       That just so happens to be the GNU implementation on Linux + glibc,
+        --       but on other platforms, all bets are off as to whether this will pull a GNU-ish or POSIX-y implementation...
+        --       We need to be aware of the distinction, because strictly POSIX compliant implementations *will* modify input,
+        --       so, always make a copy to be safe.
         -- NOTE: Moreover, the GNU implementation has a few potentially annoying quirks:
         --       it returns an empty string when path has a trailing slash (as well as for "/").
         --       So, we'll want to strip trailing slashes, too...
