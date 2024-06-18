@@ -95,7 +95,7 @@ append_tree_install_commands(INSTALL_CMD src/jit jit)
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
     https://github.com/LuaJIT/LuaJIT
-    5790d253972c9d78a0c2aece527eda5b134bbbf7
+    93e87998b24021b94de8d1c8db244444c46fb6e9
     ${SOURCE_DIR}
 )
 
