@@ -18,8 +18,8 @@ append_binary_install_command(INSTALL_CMD lpeg.so DESTINATION common)
 append_install_commands(INSTALL_CMD re.lua DESTINATION common)
 
 external_project(
-    URL http://distcache.FreeBSD.org/ports-distfiles/lpeg-1.0.2.tar.gz
-    URL_MD5 d342571886f1abcb7afe6a83d024d583
+    URL http://distcache.FreeBSD.org/ports-distfiles/lpeg-1.1.0.tar.gz
+    URL_MD5 842a538b403b5639510c9b6fffd2c75b
     PATCH_COMMAND ${PATCH_CMD}
     BUILD_COMMAND ${BUILD_CMD}
     INSTALL_COMMAND ${INSTALL_CMD}
