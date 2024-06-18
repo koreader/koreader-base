@@ -7,7 +7,7 @@ append_tree_install_commands(INSTALL_CMD lua/json common/json)
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
     https://github.com/harningt/luajson.git
-    tags/1.3.4
+    6ecaf9bea8b121a9ffca5a470a2080298557b55d
     ${SOURCE_DIR}
 )
 
