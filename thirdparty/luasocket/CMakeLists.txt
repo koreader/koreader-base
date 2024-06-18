@@ -17,6 +17,11 @@ list(APPEND PATCH_CMD COMMAND sh -c "\"\$@\" src/*" --
 # Don't enforce CFLAGS.
 list(APPEND PATCH_CMD COMMAND ${ISED} "s|-O2 -ggdb3 ||g" src/makefile)
 
+# Make sure socket fds are CLOEXEC on *nix
+list(APPEND PATCH_CMD COMMAND ${KO_PATCH}
+    ${CMAKE_CURRENT_SOURCE_DIR}/luasocket-enforce-cloexec.patch
+)
+
 if(DARWIN)
     set(PLAT macosx)
 elseif(WIN32)
@@ -54,7 +59,7 @@ append_binary_install_command(INSTALL_CMD src/mcore.so DESTINATION common/mime)
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
     https://github.com/lunarmodules/luasocket
-    fa69770e52ba869feb8339d49e7c3c536953fbde
+    e3ca4a767a68d127df548d82669aba3689bd84f4
     ${SOURCE_DIR}
 )
 
