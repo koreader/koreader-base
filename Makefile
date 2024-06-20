@@ -185,6 +185,12 @@ utils/libcheck/libinkview.so: utils/libcheck/libinkview.ld
 	$(LD) -shared -o $@ $<
 endif
 
+ifneq (,$(KINDLE))
+libcheck: utils/libcheck/liblipc.so
+utils/libcheck/liblipc.so: utils/libcheck/liblipc.ld
+	$(LD) -shared -o $@ $<
+endif
+
 # }}}
 
 # vim: foldmethod=marker foldlevel=0
