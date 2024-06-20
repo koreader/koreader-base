@@ -285,6 +285,14 @@ declare_project(thirdparty/mupdf DEPENDS freetype2 harfbuzz libjpeg-turbo libweb
 # nanosvg
 declare_project(thirdparty/nanosvg)
 
+# openlipclua
+if(KINDLE)
+    set(EXCLUDE_FROM_ALL)
+else()
+    set(EXCLUDE_FROM_ALL EXCLUDE_FROM_ALL)
+endif()
+declare_project(thirdparty/openlipclua ${EXCLUDE_FROM_ALL} DEPENDS luajit)
+
 # openssh
 if(CERVANTES OR KINDLE OR KOBO OR POCKETBOOK)
     set(EXCLUDE_FROM_ALL)
