@@ -65,28 +65,6 @@ if(ANDROID AND CHOST MATCHES "^armv7a-.*")
     string(APPEND XCFLAGS " -D_FILE_OFFSET_BITS=32")
 endif()
 
-string(APPEND LIB_LDFLAGS " ${CFLAGS} ${DYNLIB_LDFLAGS}")
-if(DARWIN)
-    string(APPEND LIB_LDFLAGS " -install_name @rpath/libmupdf${LIB_EXT}")
-else()
-    string(APPEND LIB_LDFLAGS " -Wl,-soname=libmupdf${LIB_EXT}")
-endif()
-if(ANDROID)
-    string(APPEND LIB_LDFLAGS " -llog")
-endif()
-
-string(SUBSTRING ${LIB_EXT} 1 -1 LIB_SO)
-
-string(APPEND XLIBS
-    " ${STAGING_DIR}/lib/libaes.a"
-    " ${STAGING_DIR}/lib/libfreetype${LIB_EXT}"
-    " ${STAGING_DIR}/lib/libharfbuzz${LIB_EXT}"
-    " ${STAGING_DIR}/lib/libjpeg${LIB_EXT}"
-    " ${STAGING_DIR}/lib/libwebp${LIB_EXT}"
-    " ${STAGING_DIR}/lib/libwebpdemux${LIB_EXT}"
-    " ${STAGING_DIR}/lib/libz${LIB_EXT}"
-)
-
 set(MAKE_CMD
     ${KO_MAKE_RECURSIVE} -C ${SOURCE_DIR}
     # Compilation flags.
@@ -94,9 +72,7 @@ set(MAKE_CMD
     CC=${CC}
     CXX=${CXX}
     LDFLAGS=
-    LIB_LDFLAGS=${LIB_LDFLAGS}
     XCFLAGS=${XCFLAGS}
-    XLIBS=${XLIBS}
     # Disable some vendored libraries:
     # - curl
     USE_SYSTEM_CURL=yes
@@ -124,23 +100,17 @@ set(MAKE_CMD
     SYS_ZLIB_LIBS=
     ZLIB_CFLAGS=-I${STAGING_DIR}/include
     # Build out of tree.
-    # NOTE: need "shared" somewhere in the path,
-    # or the main makefile will raise an error.
-    OUT=${BINARY_DIR}/shared
-    SO=${LIB_SO}
+    OUT=${BINARY_DIR}
     # Other.
     OS=${OS}
     build=${MUPDF_BUILD_TYPE}
-    shared=yes
+    shared=no
     verbose=no
 )
 
 list(APPEND BUILD_CMD COMMAND ${MAKE_CMD} libs)
 
 list(APPEND INSTALL_CMD COMMAND ${MAKE_CMD} DESTDIR=${STAGING_DIR} prefix=/ install-libs)
-list(APPEND INSTALL_CMD COMMAND chmod 755 ${STAGING_DIR}/lib/${LIB})
-
-append_shared_lib_install_commands(INSTALL_CMD ${LIB_SPEC})
 
 external_project(
     URL https://mupdf.com/downloads/archive/mupdf-1.24.2-source.tar.lz

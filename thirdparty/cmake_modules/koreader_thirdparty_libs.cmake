@@ -90,7 +90,16 @@ get_target_property(LUAJIT_INC luajit::luajit INTERFACE_INCLUDE_DIRECTORIES)
 declare_dependency(lunasvg::lunasvg SHARED lunasvg)
 
 # mupdf
-declare_dependency(mupdf::mupdf SHARED mupdf)
+set(LIBRARIES)
+if(ANDROID)
+    list(APPEND LIBRARIES log)
+endif()
+declare_dependency(
+    mupdf::mupdf
+    SHARED freetype harfbuzz jpeg webp webpdemux z
+    STATIC mupdf mupdf-third aes
+    LIBRARIES ${LIBRARIES}
+)
 
 # nanosvg
 declare_dependency(nanosvg::nanosvg LIBRARIES m)

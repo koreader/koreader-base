@@ -181,6 +181,9 @@ declare_koreader_target(
     SUFFIX .so
     VISIBILITY hidden
 )
+function(setup_wrap_mupdf)
+    target_exports(wrap-mupdf CDECLS mupdf_decl)
+endfunction()
 
 # }}}
 
