@@ -1,0 +1,17 @@
+# Includes.
+*.[ch]
+*.cpp
+*.patch
+/CMakeLists.txt
+/Makefile
+/Makefile.defs
+/cmake
+/luafilesystem
+/origin.ldflags
+/thirdparty/*/*
+
+# Excludes.
+!*.lua
+!/ffi-cdecl/**
+
+# vim: ft=gitignore

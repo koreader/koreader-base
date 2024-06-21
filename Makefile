@@ -148,20 +148,14 @@ endif
 
 # CI helpers. {{{
 
-define cache_key_ignores
-':!*.lua'
-':!*/.*'
-':!/.*'
-':!/COPYING'
-':!/README.md'
-':!/ffi-cdecl/*'
-':!/spec/*'
-':!/toolchain/*'
-':!/utils/*'
+define cache_key_cmd
+git ls-files -z
+--cached --ignored --exclude-from=$(abspath $1)
+| xargs -0 git ls-tree @
 endef
 
-cache-key: Makefile
-	git ls-files -z $(strip $(cache_key_ignores)) | xargs -0 git ls-tree @ | tee $@
+cache-key: Makefile cache-key.base
+	$(strip $(call cache_key_cmd,cache-key.base)) | tee $@
 
 # }}}
 
