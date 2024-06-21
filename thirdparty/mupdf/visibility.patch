@@ -1,0 +1,379 @@
+diff --git a/include/mupdf/fitz/buffer.h b/include/mupdf/fitz/buffer.h
+--- a/include/mupdf/fitz/buffer.h
++++ b/include/mupdf/fitz/buffer.h
+@@ -26,6 +26,8 @@
+ #include "mupdf/fitz/system.h"
+ #include "mupdf/fitz/context.h"
+ 
++FZ_EXPORTS_START
++
+ /**
+ 	fz_buffer is a wrapper around a dynamically allocated array of
+ 	bytes.
+@@ -247,4 +249,6 @@ void fz_md5_buffer(fz_context *ctx, fz_buffer *buffer, unsigned char digest[16])
+ */
+ size_t fz_buffer_extract(fz_context *ctx, fz_buffer *buf, unsigned char **data);
+ 
++FZ_EXPORTS_STOP
++
+ #endif
+diff --git a/include/mupdf/fitz/color.h b/include/mupdf/fitz/color.h
+--- a/include/mupdf/fitz/color.h
++++ b/include/mupdf/fitz/color.h
+@@ -27,6 +27,8 @@
+ #include "mupdf/fitz/context.h"
+ #include "mupdf/fitz/store.h"
+ 
++FZ_EXPORTS_START
++
+ #if FZ_ENABLE_ICC
+ /**
+ 	Opaque type for an ICC Profile.
+@@ -390,6 +392,8 @@ void fz_set_default_rgb(fz_context *ctx, fz_default_colorspaces *default_cs, fz_
+ void fz_set_default_cmyk(fz_context *ctx, fz_default_colorspaces *default_cs, fz_colorspace *cs);
+ void fz_set_default_output_intent(fz_context *ctx, fz_default_colorspaces *default_cs, fz_colorspace *cs);
+ 
++FZ_EXPORTS_STOP
++
+ /* Implementation details: subject to change. */
+ 
+ struct fz_colorspace
+diff --git a/include/mupdf/fitz/context.h b/include/mupdf/fitz/context.h
+--- a/include/mupdf/fitz/context.h
++++ b/include/mupdf/fitz/context.h
+@@ -32,6 +32,8 @@
+ #define FZ_VERBOSE_EXCEPTIONS 0
+ #endif
+ 
++FZ_EXPORTS_START
++
+ typedef struct fz_font_context fz_font_context;
+ typedef struct fz_colorspace_context fz_colorspace_context;
+ typedef struct fz_style_context fz_style_context;
+@@ -763,6 +765,8 @@ int fz_do_try(fz_context *ctx);
+ int fz_do_always(fz_context *ctx);
+ int (fz_do_catch)(fz_context *ctx);
+ 
++FZ_EXPORTS_STOP
++
+ #ifndef FZ_JMPBUF_ALIGN
+ #define FZ_JMPBUF_ALIGN 32
+ #endif
+@@ -835,6 +839,7 @@ struct fz_context
+ 	fz_glyph_cache *glyph_cache;
+ };
+ 
++FZ_FUNCTION
+ fz_context *fz_new_context_imp(const fz_alloc_context *alloc, const fz_locks_context *locks, size_t max_store, const char *version);
+ 
+ /**
+diff --git a/include/mupdf/fitz/device.h b/include/mupdf/fitz/device.h
+--- a/include/mupdf/fitz/device.h
++++ b/include/mupdf/fitz/device.h
+@@ -31,6 +31,8 @@
+ #include "mupdf/fitz/path.h"
+ #include "mupdf/fitz/text.h"
+ 
++FZ_EXPORTS_START
++
+ /**
+ 	The different format handlers (pdf, xps etc) interpret pages to
+ 	a device. These devices can then process the stream of calls
+@@ -651,4 +653,6 @@ fz_draw_options *fz_parse_draw_options(fz_context *ctx, fz_draw_options *options
+ */
+ fz_device *fz_new_draw_device_with_options(fz_context *ctx, const fz_draw_options *options, fz_rect mediabox, fz_pixmap **pixmap);
+ 
++FZ_EXPORTS_STOP
++
+ #endif
+diff --git a/include/mupdf/fitz/document.h b/include/mupdf/fitz/document.h
+--- a/include/mupdf/fitz/document.h
++++ b/include/mupdf/fitz/document.h
+@@ -33,6 +33,8 @@
+ #include "mupdf/fitz/outline.h"
+ #include "mupdf/fitz/separation.h"
+ 
++FZ_EXPORTS_START
++
+ typedef struct fz_document_handler fz_document_handler;
+ typedef struct fz_page fz_page;
+ typedef intptr_t fz_bookmark;
+@@ -973,6 +975,8 @@ void fz_delete_link(fz_context *ctx, fz_page *page, fz_link *link);
+ */
+ void *fz_process_opened_pages(fz_context *ctx, fz_document *doc, fz_process_opened_page_fn *process_openend_page, void *state);
+ 
++FZ_EXPORTS_STOP
++
+ /* Implementation details: subject to change. */
+ 
+ /**
+diff --git a/include/mupdf/fitz/export.h b/include/mupdf/fitz/export.h
+--- a/include/mupdf/fitz/export.h
++++ b/include/mupdf/fitz/export.h
+@@ -45,8 +45,11 @@
+ 		#define FZ_DATA
+ 	#endif
+ #else
+-	#define FZ_FUNCTION
+-	#define FZ_DATA
++	#define FZ_FUNCTION __attribute__ ((visibility("default")))
++	#define FZ_DATA __attribute__ ((visibility("default")))
+ #endif
+ 
++#define FZ_EXPORTS_START _Pragma("GCC visibility push(default)")
++#define FZ_EXPORTS_STOP _Pragma("GCC visibility pop")
++
+ #endif
+diff --git a/include/mupdf/fitz/font.h b/include/mupdf/fitz/font.h
+--- a/include/mupdf/fitz/font.h
++++ b/include/mupdf/fitz/font.h
+@@ -29,6 +29,8 @@
+ #include "mupdf/fitz/buffer.h"
+ #include "mupdf/fitz/color.h"
+ 
++FZ_EXPORTS_START
++
+ /* forward declaration for circular dependency */
+ struct fz_device;
+ 
+@@ -698,6 +700,8 @@ float fz_font_descender(fz_context *ctx, fz_font *font);
+ */
+ void fz_font_digest(fz_context *ctx, fz_font *font, unsigned char digest[16]);
+ 
++FZ_EXPORTS_STOP
++
+ /* Implementation details: subject to change. */
+ 
+ void fz_decouple_type3_font(fz_context *ctx, fz_font *font, void *t3doc);
+@@ -815,6 +819,7 @@ fz_buffer *fz_subset_cff_for_gids(fz_context *ctx, fz_buffer *orig, int *gids, i
+ char *get_font_file(char *name);
+ char *fz_lookup_base14_font_from_file(fz_context *ctx, const char *name);
+ char *fz_lookup_cjk_font_from_file(fz_context *ctx, int registry, int serif, int wmode);
++FZ_FUNCTION
+ void fz_install_external_font_funcs(fz_context *ctx);
+ 
+ #endif
+diff --git a/include/mupdf/fitz/geometry.h b/include/mupdf/fitz/geometry.h
+--- a/include/mupdf/fitz/geometry.h
++++ b/include/mupdf/fitz/geometry.h
+@@ -27,6 +27,8 @@
+ 
+ #include <assert.h>
+ 
++FZ_EXPORTS_START
++
+ /**
+ 	Multiply scaled two integers in the 0..255 range
+ */
+@@ -815,4 +817,6 @@ int fz_is_quad_inside_quad(fz_quad needle, fz_quad haystack);
+ */
+ int fz_is_quad_intersecting_quad(fz_quad a, fz_quad b);
+ 
++FZ_EXPORTS_STOP
++
+ #endif
+diff --git a/include/mupdf/fitz/image.h b/include/mupdf/fitz/image.h
+--- a/include/mupdf/fitz/image.h
++++ b/include/mupdf/fitz/image.h
+@@ -32,6 +32,8 @@
+ #include "mupdf/fitz/stream.h"
+ #include "mupdf/fitz/compressed-buffer.h"
+ 
++FZ_EXPORTS_START
++
+ /**
+ 	Images are storable objects from which we can obtain fz_pixmaps.
+ 	These may be implemented as simple wrappers around a pixmap, or
+@@ -414,6 +416,8 @@ void fz_set_compressed_image_buffer(fz_context *ctx, fz_compressed_image *cimg,
+ fz_pixmap *fz_pixmap_image_tile(fz_context *ctx, fz_pixmap_image *cimg);
+ void fz_set_pixmap_image_tile(fz_context *ctx, fz_pixmap_image *cimg, fz_pixmap *pix);
+ 
++FZ_EXPORTS_STOP
++
+ /* Implementation details: subject to change. */
+ 
+ /**
+diff --git a/include/mupdf/fitz/link.h b/include/mupdf/fitz/link.h
+--- a/include/mupdf/fitz/link.h
++++ b/include/mupdf/fitz/link.h
+@@ -28,6 +28,8 @@
+ #include "mupdf/fitz/geometry.h"
+ #include "mupdf/fitz/types.h"
+ 
++FZ_EXPORTS_START
++
+ typedef struct fz_link fz_link;
+ typedef void (fz_link_set_rect_fn)(fz_context *ctx, fz_link *link, fz_rect rect);
+ typedef void (fz_link_set_uri_fn)(fz_context *ctx, fz_link *link, const char *uri);
+@@ -127,4 +129,6 @@ int fz_is_external_link(fz_context *ctx, const char *uri);
+ void fz_set_link_rect(fz_context *ctx, fz_link *link, fz_rect rect);
+ void fz_set_link_uri(fz_context *ctx, fz_link *link, const char *uri);
+ 
++FZ_EXPORTS_STOP
++
+ #endif
+diff --git a/include/mupdf/fitz/outline.h b/include/mupdf/fitz/outline.h
+--- a/include/mupdf/fitz/outline.h
++++ b/include/mupdf/fitz/outline.h
+@@ -29,6 +29,8 @@
+ #include "mupdf/fitz/link.h"
+ #include "mupdf/fitz/output.h"
+ 
++FZ_EXPORTS_START
++
+ /* Outline */
+ 
+ typedef struct {
+@@ -151,6 +153,7 @@ void fz_drop_outline(fz_context *ctx, fz_outline *outline);
+ fz_outline *
+ fz_load_outline_from_iterator(fz_context *ctx, fz_outline_iterator *iter);
+ 
++FZ_EXPORTS_STOP
+ 
+ /**
+ 	Implementation details.
+diff --git a/include/mupdf/fitz/pixmap.h b/include/mupdf/fitz/pixmap.h
+--- a/include/mupdf/fitz/pixmap.h
++++ b/include/mupdf/fitz/pixmap.h
+@@ -29,6 +29,8 @@
+ #include "mupdf/fitz/store.h"
+ #include "mupdf/fitz/separation.h"
+ 
++FZ_EXPORTS_START
++
+ /**
+ 	Pixmaps represent a set of pixels for a 2 dimensional region of
+ 	a plane. Each pixel has n components per pixel. The components
+@@ -373,6 +375,8 @@ fz_pixmap *fz_convert_pixmap(fz_context *ctx, const fz_pixmap *pix, fz_colorspac
+ */
+ int fz_is_pixmap_monochrome(fz_context *ctx, fz_pixmap *pixmap);
+ 
++FZ_EXPORTS_STOP
++
+ /* Implementation details: subject to change.*/
+ 
+ fz_pixmap *fz_alpha_from_gray(fz_context *ctx, fz_pixmap *gray);
+@@ -484,6 +488,7 @@ fz_pixmap *fz_new_pixmap_from_color_and_mask(fz_context *ctx, fz_pixmap *color,
+  * to fit the clip rectangle. Pass `NULL` to the clip if you want the whole
+  * pixmap scaled.
+  */
++FZ_FUNCTION
+ fz_pixmap *fz_scale_pixmap(fz_context *ctx, fz_pixmap *src, float x, float y, float w, float h, const fz_irect *clip);
+ 
+ /*
+diff --git a/include/mupdf/fitz/stream.h b/include/mupdf/fitz/stream.h
+--- a/include/mupdf/fitz/stream.h
++++ b/include/mupdf/fitz/stream.h
+@@ -27,6 +27,8 @@
+ #include "mupdf/fitz/context.h"
+ #include "mupdf/fitz/buffer.h"
+ 
++FZ_EXPORTS_START
++
+ /**
+ 	Return true if the named file exists and is readable.
+ */
+@@ -622,6 +624,8 @@ static inline int fz_is_eof_bits(fz_context *ctx, fz_stream *stm)
+ 	return fz_is_eof(ctx, stm) && (stm->avail == 0 || stm->bits == EOF);
+ }
+ 
++FZ_EXPORTS_STOP
++
+ /* Implementation details: subject to change. */
+ 
+ /**
+diff --git a/include/mupdf/fitz/string-util.h b/include/mupdf/fitz/string-util.h
+--- a/include/mupdf/fitz/string-util.h
++++ b/include/mupdf/fitz/string-util.h
+@@ -26,6 +26,8 @@
+ #include "mupdf/fitz/system.h"
+ #include "mupdf/fitz/context.h"
+ 
++FZ_EXPORTS_START
++
+ /* The Unicode character used to incoming character whose value is
+  * unknown or unrepresentable. */
+ #define FZ_REPLACEMENT_CHARACTER 0xFFFD
+@@ -278,4 +280,6 @@ const char *fz_parse_page_range(fz_context *ctx, const char *s, int *a, int *b,
+ int fz_tolower(int c);
+ int fz_toupper(int c);
+ 
++FZ_EXPORTS_STOP
++
+ #endif
+diff --git a/include/mupdf/fitz/structured-text.h b/include/mupdf/fitz/structured-text.h
+--- a/include/mupdf/fitz/structured-text.h
++++ b/include/mupdf/fitz/structured-text.h
+@@ -33,6 +33,8 @@
+ #include "mupdf/fitz/device.h"
+ #include "mupdf/fitz/pool.h"
+ 
++FZ_EXPORTS_START
++
+ /**
+ 	Simple text layout (for use with annotation editing primarily).
+ */
+@@ -361,5 +363,6 @@ fz_device *fz_new_ocr_device(fz_context *ctx, fz_device *target, fz_matrix ctm,
+ 
+ fz_document *fz_open_reflowed_document(fz_context *ctx, fz_document *underdoc, const fz_stext_options *opts);
+ 
++FZ_EXPORTS_STOP
+ 
+ #endif
+diff --git a/include/mupdf/fitz/util.h b/include/mupdf/fitz/util.h
+--- a/include/mupdf/fitz/util.h
++++ b/include/mupdf/fitz/util.h
+@@ -34,6 +34,8 @@
+ #include "mupdf/fitz/archive.h"
+ #include "mupdf/fitz/display-list.h"
+ 
++FZ_EXPORTS_START
++
+ /**
+ 	Create a display list.
+ 
+@@ -148,4 +150,6 @@ fz_document *fz_new_xhtml_document_from_document(fz_context *ctx, fz_document *o
+ */
+ fz_buffer *fz_new_buffer_from_page_with_format(fz_context *ctx, fz_page *page, const char *format, const char *options, fz_matrix transform, fz_cookie *cookie);
+ 
++FZ_EXPORTS_STOP
++
+ #endif
+diff --git a/include/mupdf/pdf/annot.h b/include/mupdf/pdf/annot.h
+--- a/include/mupdf/pdf/annot.h
++++ b/include/mupdf/pdf/annot.h
+@@ -29,6 +29,8 @@
+ #include "mupdf/pdf/object.h"
+ #include "mupdf/pdf/page.h"
+ 
++FZ_EXPORTS_START
++
+ typedef struct pdf_annot pdf_annot;
+ 
+ enum pdf_annot_type
+@@ -938,4 +940,6 @@ void pdf_set_annot_hidden_for_editing(fz_context *ctx, pdf_annot *annot, int hid
+  */
+ int pdf_apply_redaction(fz_context *ctx, pdf_annot *annot, pdf_redact_options *opts);
+ 
++FZ_EXPORTS_STOP
++
+ #endif
+diff --git a/include/mupdf/pdf/document.h b/include/mupdf/pdf/document.h
+--- a/include/mupdf/pdf/document.h
++++ b/include/mupdf/pdf/document.h
+@@ -30,6 +30,8 @@
+ #include "mupdf/fitz/xml.h"
+ #include "mupdf/pdf/object.h"
+ 
++FZ_EXPORTS_START
++
+ typedef struct pdf_xref pdf_xref;
+ typedef struct pdf_ocg_descriptor pdf_ocg_descriptor;
+ 
+@@ -819,4 +821,6 @@ fz_structure pdf_structure_type(fz_context *ctx, pdf_obj *role_map, pdf_obj *tag
+ void pdf_run_document_structure(fz_context *ctx, pdf_document *doc, fz_device *dev, fz_cookie *cookie);
+ 
+ 
++FZ_EXPORTS_STOP
++
+ #endif
