@@ -1,6 +1,6 @@
 # Note: ensure our possibly updated `PATH` variable is picked up by
 # `$(shell …)` invocations when using older (<4.4) make versions.
-SHELL = env PATH='$(PATH)' bash
+SHELL = env PATH='$(PATH)' bash -eo pipefail
 
 ifeq (,$(PARALLEL_JOBS))
   PARALLEL_JOBS := $(or $(patsubst -j%,%,$(filter -j%,$(MAKEFLAGS))))
