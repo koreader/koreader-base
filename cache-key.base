@@ -15,4 +15,7 @@
 !*.lua
 !/ffi-cdecl/**
 
+# Exceptions.
+/ffi-cdecl/mupdf_decl.c
+
 # vim: ft=gitignore

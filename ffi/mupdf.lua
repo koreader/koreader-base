@@ -16,15 +16,8 @@ require("ffi/posix_h") -- for malloc
 
 local BlitBuffer = require("ffi/blitbuffer")
 
-local M
-if ffi.os == "Windows" then
-    M = ffi.load("libs/libmupdf.dll")
-elseif ffi.os == "OSX" then
-    M = ffi.load("libs/libmupdf.dylib")
-else
-    M = ffi.load("libs/libmupdf.so")
-end
 local W = ffi.load("libs/libwrap-mupdf.so")
+local M = W
 
 --- @fixme: Don't make cache_size too low, at least not until we bump MµPDF,
 ---         as there's a pernicious issue that corrupts its store cache on overcommit on old versions.
