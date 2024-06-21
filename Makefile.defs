@@ -88,7 +88,7 @@ ifneq (,$(or $(VERBOSE),$(V)))
   else
     MAKEFLAGS += --trace
   endif
-  NINJAFLAGS := -v
+  NINJAFLAGS += -v
 endif
 ifneq (,$(PARALLEL_JOBS))
   NINJAFLAGS += -j$(PARALLEL_JOBS)
