@@ -131,6 +131,31 @@ function(append_tree_install_commands CMD_LIST SRC DST)
     set(${CMD_LIST} ${${CMD_LIST}} ${SRC} ${DST} PARENT_SCOPE)
 endfunction()
 
+function(target_exports TARGET)
+    cmake_parse_arguments("" "" "" "CDECLS" ${ARGN})
+    if(NOT _CDECLS)
+        message(FATAL_ERROR "missing CDECLS argument")
+    endif()
+    set(CDECLS_FILES)
+    foreach(F IN LISTS _CDECLS)
+        set(F ${CMAKE_SOURCE_DIR}/ffi-cdecl/${F}_decl.c)
+        if(NOT EXISTS ${F})
+            message(FATAL_ERROR "no such FFI cdecl file: ${F}")
+        endif()
+        list(APPEND CDECLS_FILES ${F})
+    endforeach()
+    add_custom_command(
+        COMMAND ${CMAKE_SOURCE_DIR}/utils/gen_linker_exports.sh ${LD} ${TARGET}.link_args ${TARGET}.link_exports ${CDECLS_FILES}
+        OUTPUT ${TARGET}.link_args ${TARGET}.link_exports
+        DEPENDS ${CMAKE_SOURCE_DIR}/utils/gen_linker_exports.sh ${CDECLS_FILES}
+        VERBATIM
+    )
+    add_custom_target(${TARGET}-link-deps DEPENDS ${TARGET}.link_args ${TARGET}.link_exports)
+    target_link_options(${TARGET} PRIVATE -Wl,@${TARGET}.link_args)
+    add_dependencies(${TARGET} ${TARGET}-link-deps)
+    set_target_properties(${TARGET} PROPERTIES LINK_DEPENDS "${TARGET}.link_args;${TARGET}.link_exports")
+endfunction()
+
 # Improved external projects support.
 include(ExternalProject)
 # `ExternalProject` step targets fully adopt their steps.
