@@ -3,7 +3,6 @@ list(APPEND PATCH_CMD COMMAND rm -rf
     thirdparty/freeglut
     thirdparty/freetype
     thirdparty/harfbuzz
-    thirdparty/lcms2
     thirdparty/leptonica
     thirdparty/libjpeg
     thirdparty/mujs
@@ -53,7 +52,6 @@ string(APPEND XCFLAGS
     # - CMYK plotter only 100 kB
     # - javascript (for form data validation) close to 800 kB
     " -DNOBUILTINFONT"
-    " -DFZ_ENABLE_ICC=0"
     " -DFZ_ENABLE_JS=0"
     " -DFZ_PLOTTERS_CMYK=0"
     " -DHAVE_LIBAES=1"
@@ -85,9 +83,6 @@ set(MAKE_CMD
     USE_SYSTEM_HARFBUZZ=yes
     SYS_HARFBUZZ_CFLAGS=-I${STAGING_DIR}/include/harfbuzz
     SYS_HARFBUZZ_LIBS=
-    # - lcms2
-    USE_SYSTEM_LCMS2=yes
-    SYS_LCMS2_LIBS=
     # - libjpeg
     USE_SYSTEM_LIBJPEG=yes
     SYS_LIBJPEG_LIBS=
