@@ -30,6 +30,8 @@ list(APPEND PATCH_CMD COMMAND ${KO_PATCH}
     ${CMAKE_CURRENT_SOURCE_DIR}/free-html-doc-fonts-on-close.patch
     # Relink on change(s) to external libraries.
     ${CMAKE_CURRENT_SOURCE_DIR}/relink_on_xlibs_change.patch
+    # Fix symbols visiblity.
+    ${CMAKE_CURRENT_SOURCE_DIR}/visibility.patch
 )
 
 string(TOLOWER ${CMAKE_BUILD_TYPE} MUPDF_BUILD_TYPE)
@@ -44,7 +46,7 @@ set(LIB_SPEC mupdf)
 set_libname(LIB ${LIB_SPEC})
 
 string(APPEND XCFLAGS
-    " ${CFLAGS} -fno-fast-math"
+    " ${CFLAGS} -fno-fast-math -fvisibility=hidden"
     # Disable a couple of things to save a small bit of space:
     # - builtin fonts
     # - color profile support
