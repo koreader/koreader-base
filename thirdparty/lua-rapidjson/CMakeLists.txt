@@ -13,7 +13,7 @@ append_binary_install_command(INSTALL_CMD rapidjson.so DESTINATION common)
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
     https://github.com/NiLuJe/lua-rapidjson
-    504aa9c2436f5523b9efc15f5907605354c14cd8
+    e84973356255bde06a70ce6263a3a0ef5c8f4ad4
     ${SOURCE_DIR}
 )
 
