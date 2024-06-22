@@ -2,6 +2,7 @@ list(APPEND PATCH_CMD COMMAND ${KO_PATCH}
     ${CMAKE_CURRENT_SOURCE_DIR}/k2pdfopt.patch
     ${CMAKE_CURRENT_SOURCE_DIR}/cmake_tweaks.patch
     ${CMAKE_CURRENT_SOURCE_DIR}/fix-old-tc-build.patch
+    ${CMAKE_CURRENT_SOURCE_DIR}/no_debug_fonts.patch
 )
 
 list(APPEND CMAKE_ARGS
