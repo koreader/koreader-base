@@ -7,7 +7,6 @@ list(APPEND PATCH_CMD COMMAND ${KO_PATCH}
 
 list(APPEND CMAKE_ARGS
     -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE}
-    -DBUILD_SHARED_LIBS=TRUE
     # Project options.
     -DANDROID=${ANDROID}
     -DBUILD_TRAINING_TOOLS=FALSE
@@ -21,8 +20,6 @@ list(APPEND CMAKE_ARGS
 list(APPEND BUILD_CMD COMMAND ${KO_MAKE_PROGRAM})
 
 list(APPEND INSTALL_CMD COMMAND ${CMAKE_COMMAND} --install .)
-
-append_shared_lib_install_commands(INSTALL_CMD tesseract VERSION 5)
 
 external_project(
     URL https://github.com/tesseract-ocr/tesseract/archive/refs/tags/5.3.4.tar.gz
