@@ -18,7 +18,7 @@ function framebuffer:init()
     else
         self.bb = BB.new(600, 800)
     end
-    if os.getenv("EMULATE_BW_SCREEN") then
+    if (os.getenv("EMULATE_BW_SCREEN") or "") ~= "" then
         self.device.hasColorScreen = function() return false end
         self.isColorEnabled = function() return false end
     end
