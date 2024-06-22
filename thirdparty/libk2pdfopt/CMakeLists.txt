@@ -13,7 +13,7 @@ append_shared_lib_install_commands(INSTALL_CMD k2pdfopt VERSION 2)
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
     https://github.com/koreader/libk2pdfopt.git
-    7320a5a5fdf2cb84c5dae1a03c67c206109c14d0
+    8f7a37803eab28005c586bdcf9bd4c775278bdae
     ${SOURCE_DIR}
 )
 
