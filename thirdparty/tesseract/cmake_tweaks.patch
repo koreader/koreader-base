@@ -25,6 +25,18 @@
  
    # Check for optional libraries.
    if(DISABLE_TIFF)
+@@ -829,6 +829,11 @@
+     PRIVATE -DTESS_EXPORTS
+     INTERFACE -DTESS_IMPORTS)
+   # generate_export_header          (libtesseract EXPORT_MACRO_NAME TESS_API)
++else()
++    # Enable `-fvisibility=hidden`.
++    set_target_properties(libtesseract PROPERTIES CXX_VISIBILITY_PRESET hidden)
++    # Enable `-fvisibility-inlines-hidden`.
++    set_target_properties(libtesseract PROPERTIES VISIBILITY_INLINES_HIDDEN TRUE)
+ endif()
+ target_link_libraries(libtesseract PRIVATE ${LIB_Ws2_32} ${LIB_pthread})
+ if(OpenMP_CXX_FOUND)
 @@ -846,12 +846,7 @@ if(CURL_FOUND)
    endif()
  endif(CURL_FOUND)
