@@ -21,7 +21,7 @@ list(APPEND CFG_CMD COMMAND env)
 append_autotools_vars(CFG_CMD)
 list(APPEND CFG_CMD
     ${SOURCE_DIR}/configure --host=${CHOST} --prefix=/
-    --disable-static --enable-shared
+    --disable-shared --enable-static
     --disable-desktopfiles
     --disable-largefile
     --disable-xmltools
@@ -36,12 +36,6 @@ endif()
 list(APPEND BUILD_CMD COMMAND ${KO_MAKE_RECURSIVE} -C libdjvu)
 
 list(APPEND INSTALL_CMD COMMAND ${KO_MAKE_RECURSIVE} -C libdjvu DESTDIR=${STAGING_DIR} install)
-
-set(LIB_SPEC djvulibre VERSION 21)
-if(DARWIN)
-    append_shared_lib_fix_commands(INSTALL_CMD ${LIB_SPEC} ID)
-endif()
-append_shared_lib_install_commands(INSTALL_CMD ${LIB_SPEC})
 
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
