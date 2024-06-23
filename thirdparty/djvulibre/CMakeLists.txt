@@ -16,6 +16,9 @@ string(APPEND CFLAGS " -Wno-error")
 # Fix build error when compiling with -std=gnu++17: ISO
 # C++17 does not allow 'register' storage class specifier.
 string(APPEND CXXFLAGS " -Wno-register -Wno-error=register")
+# Fix symbols visibility.
+string(APPEND CFLAGS " -fvisibility=hidden")
+string(APPEND CXXFLAGS " -fvisibility=hidden -fvisibility-inlines-hidden")
 
 list(APPEND CFG_CMD COMMAND env)
 append_autotools_vars(CFG_CMD)
