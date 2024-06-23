@@ -50,7 +50,7 @@ target_compile_options(_crengine__crengine INTERFACE -include ${OUTPUT_DIR}/thir
 target_include_directories(_crengine__crengine INTERFACE ${THIRDPARTY_DIR}/kpvcrlib/crengine/crengine/include)
 
 # djvulibre
-declare_dependency(djvulibre::djvulibre SHARED djvulibre)
+declare_dependency(djvulibre::djvulibre SHARED jpeg STATIC djvulibre LIBRARIES m)
 
 # freetype
 declare_dependency(freetype2::freetype INCLUDES freetype2 SHARED freetype)
