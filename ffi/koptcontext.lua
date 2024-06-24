@@ -228,7 +228,7 @@ function KOPTContext_mt.__index:getPageDim() return self.page_width, self.page_h
 function KOPTContext_mt.__index:getBBox(x0, y0, x1, y1) return self.bbox.x0, self.bbox.y0, self.bbox.x1, self.bbox.y1 end
 
 function KOPTContext_mt.__index:copyDestBMP(src)
-    if src.dst.bpp == 8 or src.dst.bpp == 32 then
+    if src.dst.bpp == 8 or src.dst.bpp == 24 or src.dst.bpp == 32 then
         k2pdfopt.bmp_copy(self.dst, src.dst)
     end
 end
