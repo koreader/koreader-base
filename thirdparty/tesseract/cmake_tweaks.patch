@@ -51,7 +51,7 @@
  
  set_target_properties(
    libtesseract
-@@ -885,6 +885,6 @@
+@@ -885,10 +885,11 @@
  
  if(ANDROID)
 -  add_definitions(-DANDROID)
@@ -59,3 +59,20 @@
    find_package(CpuFeaturesNdkCompat REQUIRED)
    target_include_directories(
      libtesseract
+     PRIVATE "${CpuFeaturesNdkCompat_DIR}/../../../include/ndk_compat")
+   target_link_libraries(libtesseract PRIVATE CpuFeatures::ndk_compat)
++  set(cpu_features_LIBS "-lcpu_features -lndk_compat")
+ endif()
+ 
+ # ##############################################################################
+--- i/tesseract.pc.cmake
++++ w/tesseract.pc.cmake
+@@ -8,6 +8,6 @@
+ URL: https://github.com/tesseract-ocr/tesseract
+ Version: @tesseract_VERSION@
+ Requires.private: lept
+-Libs: -L${libdir} -l@tesseract_OUTPUT_NAME@ @libarchive_LIBS@ @libcurl_LIBS@ @TENSORFLOW_LIBS@
++Libs: -L${libdir} -l@tesseract_OUTPUT_NAME@ @cpu_features_LIBS@ @libarchive_LIBS@ @libcurl_LIBS@ @TENSORFLOW_LIBS@
+ Libs.private:
+ Cflags: -I${includedir}
+
