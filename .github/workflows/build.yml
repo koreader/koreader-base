@@ -60,7 +60,7 @@ jobs:
         with:
           path: /Users/runner/Library/Caches/ccache
           key: ${{ env.CACHE_EPOCH }}-${{ runner.os }}-${{ runner.arch }}-ccache-${{ hashFiles('cache-key') }}
-          restore-keys: ${{ env.CACHE_EPOCH }}-${{ runner.os }}-ccache-
+          restore-keys: ${{ env.CACHE_EPOCH }}-${{ runner.os }}-${{ runner.arch }}-ccache-
 
       - name: Install ccache
         if: steps.ccache-restore.outputs.cache-hit != 'true'
