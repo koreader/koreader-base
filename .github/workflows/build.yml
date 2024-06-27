@@ -92,11 +92,10 @@ jobs:
 
       - name: Install homebrew dependencies
         if: steps.ccache-restore.outputs.cache-hit != 'true'
-        # Compared to the README, adds p7zip.
         run: |
           packages=(
             nasm binutils coreutils libtool autoconf automake cmake make
-            sdl2 gettext pkg-config wget gnu-getopt grep p7zip ninja
+            sdl2 gettext pkg-config wget gnu-getopt grep ninja
           )
           brew install --formula --quiet "${packages[@]}"
 
