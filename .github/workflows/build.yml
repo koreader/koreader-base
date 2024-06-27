@@ -91,6 +91,7 @@ jobs:
           python-version: '3.11'
 
       - name: Install homebrew dependencies
+        if: steps.ccache-restore.outputs.cache-hit != 'true'
         # Compared to the README, adds p7zip.
         run: |
           packages=(
