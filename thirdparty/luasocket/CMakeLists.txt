@@ -18,9 +18,11 @@ list(APPEND PATCH_CMD COMMAND sh -c "\"\$@\" src/*" --
 list(APPEND PATCH_CMD COMMAND ${ISED} "s|-O2 -ggdb3 ||g" src/makefile)
 
 # Make sure socket fds are CLOEXEC on *nix
-list(APPEND PATCH_CMD COMMAND ${KO_PATCH}
-    ${CMAKE_CURRENT_SOURCE_DIR}/luasocket-enforce-cloexec.patch
-)
+if(NOT ANDROID)
+    list(APPEND PATCH_CMD COMMAND ${KO_PATCH}
+        ${CMAKE_CURRENT_SOURCE_DIR}/luasocket-enforce-cloexec.patch
+    )
+endif()
 
 if(DARWIN)
     set(PLAT macosx)
