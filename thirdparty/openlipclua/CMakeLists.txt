@@ -15,7 +15,7 @@ append_binary_install_command(INSTALL_CMD libopenlipclua.so DESTINATION common)
 ko_write_gitclone_script(
     GIT_CLONE_SCRIPT_FILENAME
     https://github.com/notmarek/openlipclua.git
-    93b6b6f4a24bc2e8d10fb41e3239b6d5736fca23
+    b3fda88056a94526f53197948a47a4cdc23f8d16
     ${SOURCE_DIR}
 )
 
