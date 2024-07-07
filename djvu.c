@@ -72,16 +72,6 @@ typedef enum DjvuZoneId {
 	N_ZI
 } DjvuZoneId;
 
-static const char *djvuZoneName[N_ZI] = {
-	"page",
-	"column",
-	"region",
-	"para",
-	"line",
-	"word",
-	"char"
-};
-
 typedef enum DjvuZoneSexpIdx {
 	SI_ZONE_NAME,
 	SI_ZONE_XMIN,
@@ -507,10 +497,7 @@ static int getPageText(lua_State *L) {
 		return luaL_error(L, "cannot get page #%d information", pageno);
 
 	/* start retrieving page text */
-	miniexp_t sexp, se_line, se_word;
-	int i = 1, j = 1, counter_l = 1, counter_w=1,
-		nr_line = 0, nr_word = 0;
-	const char *word = NULL;
+	miniexp_t sexp;
 
 	while ((sexp = ddjvu_document_get_pagetext(doc->doc_ref, pageno-1, "word"))
 				== miniexp_dummy) {
@@ -538,7 +525,7 @@ static int getPagePix(lua_State *L) {
 	KOPTContext *kctx = (KOPTContext*) lua_topointer(L, 2);
 	ddjvu_rect_t prect;
 	ddjvu_rect_t rrect;
-	int px, py, pw, ph, rx, ry, rw, rh, status;
+	int px, py, pw, ph, rx, ry, rw, rh;
 
 	px = 0;
     py = 0;
@@ -623,23 +610,23 @@ static int reflowPage(lua_State *L) {
 	src->bpp = 8*page->doc->pixelsize;
 
 	bmp_alloc(src);
-	if (src->bpp == 8) {
-		int ii;
-		for (ii = 0; ii < 256; ii++)
-		src->red[ii] = src->blue[ii] = src->green[ii] = ii;
-	}
+	if (src->bpp == 8)
+		for (int ii = 0; ii < 256; ii++)
+			src->red[ii] = src->blue[ii] = src->green[ii] = ii;
 
 	ddjvu_format_set_row_order(page->doc->pixelformat, 1);
 
 	status = ddjvu_page_render(page->page_ref, mode, &prect, &rrect, page->doc->pixelformat,
 			bmp_bytewidth(src), (char *) src->data);
+	if (!status)
+		return luaL_error(L, "%s: ddjvu_page_render failed", __func__);
 
 	if (kctx->precache) {
 		pthread_t rf_thread;
 		pthread_attr_t attr;
 		pthread_attr_init(&attr);
 		pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
-		pthread_create(&rf_thread, &attr, (void *(*) (void *))k2pdfopt_reflow_bmp, (void*)kctx);
+		pthread_create(&rf_thread, &attr, (void *)k2pdfopt_reflow_bmp, kctx);
 		pthread_attr_destroy(&attr);
 	} else {
 		k2pdfopt_reflow_bmp(kctx);
@@ -709,7 +696,7 @@ static int drawPage(lua_State *L) {
 	 * So we don't set rotation here.
 	 */
 
-	if (!ddjvu_page_render(page->page_ref, djvu_render_mode, &pagerect, &renderrect, page->doc->pixelformat, bb->w*page->doc->pixelsize, imagebuffer)) {
+	if (!ddjvu_page_render(page->page_ref, djvu_render_mode, &pagerect, &renderrect, page->doc->pixelformat, bb->w*page->doc->pixelsize, (void *)imagebuffer)) {
 		// Clear to white on failure
 		memset(imagebuffer, 0xFF, bbsize);
 	}
