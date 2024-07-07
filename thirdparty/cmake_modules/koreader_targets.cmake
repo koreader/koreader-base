@@ -39,6 +39,7 @@ function(setup_target NAME)
             CXX_VISIBILITY_PRESET ${${NAME}_VISIBILITY}
         )
     endif()
+    target_compile_options(${NAME} PRIVATE -Wall)
     if(CMAKE_BUILD_TYPE STREQUAL "Debug")
         target_compile_definitions(${NAME} PRIVATE DEBUG)
     endif()
@@ -73,7 +74,7 @@ declare_koreader_target(
     VISIBILITY hidden
 )
 function(setup_blitbuffer)
-    target_compile_options(blitbuffer PRIVATE SHELL:${VECTO_CFLAGS})
+    target_compile_options(blitbuffer PRIVATE -Wno-maybe-uninitialized SHELL:${VECTO_CFLAGS})
 endfunction()
 
 # koreade-cre
