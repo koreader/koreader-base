@@ -39,6 +39,7 @@ function(setup_target NAME)
             CXX_VISIBILITY_PRESET ${${NAME}_VISIBILITY}
         )
     endif()
+    target_compile_options(${NAME} PRIVATE -Wall)
     set_target_properties(${NAME} PROPERTIES EXCLUDE_FROM_ALL ${${NAME}_EXCLUDE_FROM_ALL})
     target_sources(${NAME} PRIVATE ${${NAME}_SOURCES})
     # Post-build install command.
@@ -70,7 +71,7 @@ declare_koreader_target(
     VISIBILITY hidden
 )
 function(setup_blitbuffer)
-    target_compile_options(blitbuffer PRIVATE SHELL:${VECTO_CFLAGS})
+    target_compile_options(blitbuffer PRIVATE -Wno-maybe-uninitialized SHELL:${VECTO_CFLAGS})
 endfunction()
 
 # koreade-cre
