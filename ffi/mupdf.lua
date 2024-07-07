@@ -1044,16 +1044,10 @@ function page_mt.__index:getPagePix(kopt_context)
     kopt_context.page_height = kopt_context.src.height
 end
 
-function page_mt.__index:toBmp(bmp, dpi, color)
-    local color_save = mupdf.color
-    mupdf.color = color and true or false
-
+function page_mt.__index:toBmp(bmp, dpi)
     local bounds = ffi.new("fz_rect")
     W.mupdf_fz_bound_page(context(), self.page, bounds)
-
     render_for_kopt(bmp, self, dpi/72, bounds)
-
-    mupdf.color = color_save
 end
 
 return mupdf
