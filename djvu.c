@@ -536,6 +536,7 @@ static int closePage(lua_State *L) {
 static int getPagePix(lua_State *L) {
 	DjvuPage *page = (DjvuPage*) luaL_checkudata(L, 1, "djvupage");
 	KOPTContext *kctx = (KOPTContext*) lua_topointer(L, 2);
+	ddjvu_render_mode_t mode = (int) luaL_checkint(L, 3);
 	ddjvu_rect_t prect;
 	ddjvu_rect_t rrect;
 	int px, py, pw, ph, rx, ry, rw, rh, status;
@@ -575,7 +576,7 @@ static int getPagePix(lua_State *L) {
 	}
 
 	ddjvu_format_set_row_order(page->doc->pixelformat, 1);
-	ddjvu_page_render(page->page_ref, 0, &prect, &rrect, page->doc->pixelformat,
+	ddjvu_page_render(page->page_ref, mode, &prect, &rrect, page->doc->pixelformat,
 		bmp_bytewidth(dst), (char *) dst->data);
 
 	kctx->page_width = dst->width;
