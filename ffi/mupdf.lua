@@ -30,7 +30,6 @@ local M = W
 local mupdf = {
     debug_memory = false,
     cache_size = 32*1024*1024,
-    color = false,
 }
 -- this cannot get adapted by the cdecl file because it is a
 -- string constant. Must match the actual mupdf API:
@@ -209,6 +208,10 @@ function document_mt.__index:layoutDocument(width, height, em)
     self.number_of_pages = nil
 
     W.mupdf_layout_document(context(), self.doc, width, height, em)
+end
+
+function document_mt.__index:setColorRendering(color)
+    self.color = color
 end
 
 local function toc_walker(toc, outline, depth)
@@ -648,15 +651,15 @@ function page_mt.__index:draw_new(draw_context, width, height, offset_x, offset_
 
     local bbox = ffi.new("fz_irect", offset_x, offset_y, offset_x + width, offset_y + height)
 
-    local bb = BlitBuffer.new(width, height, mupdf.color and BlitBuffer.TYPE_BBRGB32 or BlitBuffer.TYPE_BB8)
+    local bb = BlitBuffer.new(width, height, self.doc.color and BlitBuffer.TYPE_BBRGB32 or BlitBuffer.TYPE_BB8)
 
-    local colorspace = mupdf.color and M.fz_device_rgb(context())
+    local colorspace = self.doc.color and M.fz_device_rgb(context())
         or M.fz_device_gray(context())
-    if mupdf.bgr and mupdf.color then
+    if mupdf.bgr and self.doc.color then
         colorspace = M.fz_device_bgr(context())
     end
     local pix = W.mupdf_new_pixmap_with_bbox_and_data(
-        context(), colorspace, bbox, nil, mupdf.color and 1 or 0, ffi.cast("unsigned char*", bb.data))
+        context(), colorspace, bbox, nil, self.doc.color and 1 or 0, ffi.cast("unsigned char*", bb.data))
     if pix == nil then merror("cannot allocate pixmap") end
 
     run_page(self, pix, ctm)
@@ -992,9 +995,9 @@ local function render_for_kopt(bmp, page, scale, bounds)
     W.mupdf_fz_transform_rect(bounds, ctm)
     W.mupdf_fz_round_rect(bbox, bounds)
 
-    local colorspace = mupdf.color and M.fz_device_rgb(context())
+    local colorspace = page.doc.color and M.fz_device_rgb(context())
         or M.fz_device_gray(context())
-    if mupdf.bgr and mupdf.color then
+    if mupdf.bgr and page.doc.color then
         colorspace = M.fz_device_bgr(context())
     end
     local pix = W.mupdf_new_pixmap_with_bbox(context(), colorspace, bbox, nil, 1)
