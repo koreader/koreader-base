@@ -2066,7 +2066,6 @@ static int getTextFromPositions(lua_State *L) {
 	}
 
 	LVDocView *tv = doc->text_view;
-	lvRect margin = tv->getPageMargins();
 
 	lvPoint startpt(x0, y0);
 	lvPoint endpt(x1, y1);
@@ -2122,7 +2121,6 @@ static int getTextFromPositions(lua_State *L) {
 			}
 			ldomNode * node = r.getStart().getNode();
 			lString32 text = node->getText();
-			int textLen = text.length();
 			if (grab_prev) {
 				r.getStart().prevVisibleWordStart();
 			}
@@ -2198,7 +2196,6 @@ static int extendXPointersToSentenceSegment(lua_State *L) {
         includeImages = lua_toboolean(L, 4);
     }
 
-    LVDocView *tv = doc->text_view;
     ldomDocument *dv = doc->dom_doc;
     ldomXPointerEx startp = dv->createXPointer(lString32(pos0));
     ldomXPointerEx endp = dv->createXPointer(lString32(pos1));
@@ -2724,12 +2721,10 @@ static int getPageLinks(lua_State *L) {
 	lua_newtable(L); // all links (actual entries may be less than links.length(), so, no pre-alloc)
 
 	ldomXRangeList links;
-	ldomXRangeList & sel = doc->text_view->getDocument()->getSelections();
 
 	doc->text_view->getCurrentPageLinks( links );
 	int linkCount = links.length();
 	if ( linkCount ) {
-		// sel.clear();
 		lvRect margin = doc->text_view->getPageMargins();
 		int x_offset = margin.left;
 		int y_offset = doc->text_view->GetPos() - doc->text_view->getPageHeaderHeight() - margin.top;
@@ -2814,7 +2809,6 @@ static bool _isLinkToFootnote(CreDocument *doc, const lString32 source_xpointer,
             const int flags, const int maxTextSize, lString32 &reason,
             lString32 &extendedStopReason, ldomXRange &extendedRange)
 {
-    ldomDocument *dv = doc->dom_doc;
     const ldomXPointerEx sourceXP = ldomXPointerEx(doc->dom_doc->createXPointer(source_xpointer));
     const ldomXPointerEx targetXP = ldomXPointerEx(doc->dom_doc->createXPointer(target_xpointer));
     ldomNode *sourceNode = sourceXP.getNode();
@@ -4036,6 +4030,9 @@ static int renderImageData(lua_State *L) {
         idata = (const char*)lua_touserdata(L, 1);
     else if ( lua_isstring(L, 1) ) {
         idata = (const char*)lua_tolstring(L, 1, &size);
+    }
+    else {
+        return luaL_argerror(L, 1, "expected light userdata or string");
     }
     LVStreamRef stream = LVCreateMemoryStream((void*)idata, size);
     LVImageSourceRef img = LVCreateStreamImageSource(stream);
