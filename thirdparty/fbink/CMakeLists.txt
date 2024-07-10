@@ -32,7 +32,7 @@ else()
     #set(INPUT_TARGET inputlib LINUX=1)
 endif()
 
-list(APPEND BUILD_CMD COMMAND ${KO_MAKE_RECURSIVE} CROSS_TC=${CHOST})
+list(APPEND BUILD_CMD COMMAND make CROSS_TC=${CHOST})
 append_autotools_vars(BUILD_CMD)
 
 if(TOOL STREQUAL "fbdepth")
@@ -55,15 +55,9 @@ else()
     message(FATAL_ERROR "TOOL not set or unsupported: '${TOOL}'")
 endif()
 
-ko_write_gitclone_script(
-    GIT_CLONE_SCRIPT_FILENAME
-    https://github.com/NiLuJe/FBInk.git
-    012dd73784969a05095400137b358ef43522aed5
-    ${SOURCE_DIR}
-)
-
 external_project(
-    DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
+    DOWNLOAD GIT 012dd73784969a05095400137b358ef43522aed5
+    https://github.com/NiLuJe/FBInk.git
     BUILD_COMMAND ${BUILD_CMD}
     INSTALL_COMMAND ${INSTALL_CMD}
 )

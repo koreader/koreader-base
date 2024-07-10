@@ -1,4 +1,4 @@
-list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake_tweaks.patch)
+list(APPEND PATCH_FILES cmake_tweaks.patch)
 
 list(APPEND CMAKE_ARGS
     -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE}
@@ -21,7 +21,7 @@ list(APPEND CMAKE_ARGS
     -DWEBP_BUILD_WEBPMUX=FALSE
 )
 
-list(APPEND BUILD_CMD COMMAND ${KO_NINJA_RECURSIVE})
+list(APPEND BUILD_CMD COMMAND ninja)
 
 list(APPEND INSTALL_CMD COMMAND ${CMAKE_COMMAND} --install .)
 
@@ -30,9 +30,9 @@ append_shared_lib_install_commands(INSTALL_CMD webpdemux VERSION 2)
 append_shared_lib_install_commands(INSTALL_CMD webp VERSION 7)
 
 external_project(
-    URL https://storage.googleapis.com/downloads.webmproject.org/releases/webp/libwebp-1.3.2.tar.gz
-    URL_MD5 34869086761c0e2da6361035f7b64771
-    PATCH_COMMAND ${PATCH_CMD}
+    DOWNLOAD URL 34869086761c0e2da6361035f7b64771
+    https://storage.googleapis.com/downloads.webmproject.org/releases/webp/libwebp-1.3.2.tar.gz
+    PATCH_FILES ${PATCH_FILES}
     CMAKE_ARGS ${CMAKE_ARGS}
     BUILD_COMMAND ${BUILD_CMD}
     INSTALL_COMMAND ${INSTALL_CMD}

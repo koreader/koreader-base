@@ -2,7 +2,7 @@
 set(BINARY_DIR ${SOURCE_DIR})
 
 list(APPEND BUILD_CMD
-    ${KO_MAKE_RECURSIVE}
+    make
     CC=${CC}
     CPPFLAGS=${CPPFLAGS}
     CFLAGS=${CFLAGS}
@@ -12,15 +12,9 @@ list(APPEND BUILD_CMD
 
 append_binary_install_command(INSTALL_CMD libopenlipclua.so DESTINATION common)
 
-ko_write_gitclone_script(
-    GIT_CLONE_SCRIPT_FILENAME
-    https://github.com/notmarek/openlipclua.git
-    b3fda88056a94526f53197948a47a4cdc23f8d16
-    ${SOURCE_DIR}
-)
-
 external_project(
-    DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
+    DOWNLOAD GIT b3fda88056a94526f53197948a47a4cdc23f8d16
+    https://github.com/notmarek/openlipclua.git
     BUILD_COMMAND ${BUILD_CMD}
     INSTALL_COMMAND ${INSTALL_CMD}
 )

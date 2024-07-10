@@ -1,6 +1,6 @@
-list(APPEND PATCH_CMD COMMAND ${KO_PATCH}
+list(APPEND PATCH_FILES
     # CPR need `-pthread`.
-    ${CMAKE_CURRENT_SOURCE_DIR}/cpr_need_pthread.patch
+    cpr_need_pthread.patch
 )
 
 list(APPEND CMAKE_ARGS
@@ -11,7 +11,7 @@ list(APPEND CMAKE_ARGS
     -DUSE_SYSTEM_CURL=TRUE
 )
 
-list(APPEND BUILD_CMD COMMAND ${KO_NINJA_RECURSIVE} zsync2)
+list(APPEND BUILD_CMD COMMAND ninja zsync2)
 
 append_binary_install_command(INSTALL_CMD src/zsync2)
 
@@ -29,16 +29,10 @@ append_binary_install_command(INSTALL_CMD src/zsync2)
 ## * Plug memory leaks
 # c.f., https://github.com/NiLuJe/zsync2 for more details.
 
-ko_write_gitclone_script(
-    GIT_CLONE_SCRIPT_FILENAME
-    https://github.com/NiLuJe/zsync2.git
-    d7d6463356fbeb1e97e917d114ff7ea63df2d6df
-    ${SOURCE_DIR}
-)
-
 external_project(
-    DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
-    PATCH_COMMAND ${PATCH_CMD}
+    DOWNLOAD GIT d7d6463356fbeb1e97e917d114ff7ea63df2d6df
+    https://github.com/NiLuJe/zsync2.git
+    PATCH_FILES ${PATCH_FILES}
     CMAKE_ARGS ${CMAKE_ARGS}
     BUILD_COMMAND ${BUILD_CMD}
     INSTALL_COMMAND ${INSTALL_CMD}

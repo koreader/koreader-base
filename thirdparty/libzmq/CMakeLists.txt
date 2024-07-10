@@ -1,6 +1,6 @@
-list(APPEND PATCH_CMD COMMAND ${KO_PATCH}
-    ${CMAKE_CURRENT_SOURCE_DIR}/android.patch
-    ${CMAKE_CURRENT_SOURCE_DIR}/cmake_tweaks.patch
+list(APPEND PATCH_FILES
+    android.patch
+    cmake_tweaks.patch
 )
 
 list(APPEND CMAKE_ARGS
@@ -29,22 +29,16 @@ if(NOT EMULATE_READER)
     )
 endif()
 
-list(APPEND BUILD_CMD COMMAND ${KO_NINJA_RECURSIVE})
+list(APPEND BUILD_CMD COMMAND ninja)
 
 list(APPEND INSTALL_CMD COMMAND ${CMAKE_COMMAND} --install .)
 
 append_shared_lib_install_commands(INSTALL_CMD zmq VERSION 4)
 
-ko_write_gitclone_script(
-    GIT_CLONE_SCRIPT_FILENAME
-    https://github.com/zeromq/libzmq
-    883e95b22e0bffffa72312ea1fec76199afbe458
-    ${SOURCE_DIR}
-)
-
 external_project(
-    DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
-    PATCH_COMMAND ${PATCH_CMD}
+    DOWNLOAD GIT 883e95b22e0bffffa72312ea1fec76199afbe458
+    https://github.com/zeromq/libzmq
+    PATCH_FILES ${PATCH_FILES}
     CMAKE_ARGS ${CMAKE_ARGS}
     BUILD_COMMAND ${BUILD_CMD}
     INSTALL_COMMAND ${INSTALL_CMD}

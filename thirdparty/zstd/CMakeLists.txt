@@ -6,15 +6,15 @@ list(APPEND CMAKE_ARGS
     -DZSTD_BUILD_STATIC=FALSE
 )
 
-list(APPEND BUILD_CMD COMMAND ${KO_NINJA_RECURSIVE})
+list(APPEND BUILD_CMD COMMAND ninja)
 
 list(APPEND INSTALL_CMD COMMAND ${CMAKE_COMMAND} --install .)
 
 append_shared_lib_install_commands(INSTALL_CMD zstd VERSION 1)
 
 external_project(
-    URL https://github.com/facebook/zstd/releases/download/v1.5.5/zstd-1.5.5.tar.gz
-    URL_MD5 63251602329a106220e0a5ad26ba656f
+    DOWNLOAD URL 63251602329a106220e0a5ad26ba656f
+    https://github.com/facebook/zstd/releases/download/v1.5.5/zstd-1.5.5.tar.gz
     SOURCE_SUBDIR build/cmake
     CMAKE_ARGS ${CMAKE_ARGS}
     BUILD_COMMAND ${BUILD_CMD}

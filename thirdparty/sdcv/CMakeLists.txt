@@ -1,4 +1,4 @@
-list(APPEND PATCH_CMD COMMAND ${KO_PATCH}
+list(APPEND PATCH_FILES
     # Revert 6e36e7730caf07b6cd0bfa265cdf9b5e31e7acad, because it's
     # not helpful in our workflow, and just causes logging noise.
     ${CMAKE_CURRENT_SOURCE_DIR}/sdcv-no-unknown-dict-warning.patch
@@ -50,15 +50,15 @@ list(APPEND CMAKE_ARGS
     -DZLIB_LIBRARY_RELEASE=${ZLIB}
 )
 
-list(APPEND BUILD_CMD COMMAND ${KO_NINJA_RECURSIVE})
+list(APPEND BUILD_CMD COMMAND ninja)
 
 append_binary_install_command(INSTALL_CMD sdcv)
 
 external_project(
-    URL https://github.com/Dushistov/sdcv/archive/refs/tags/v0.5.5.tar.gz
-    URL_MD5 265dbfda83a57810595d156877f3e6fd
+    DOWNLOAD URL 265dbfda83a57810595d156877f3e6fd
+    https://github.com/Dushistov/sdcv/archive/refs/tags/v0.5.5.tar.gz
     CMAKE_ARGS ${CMAKE_ARGS}
-    PATCH_COMMAND ${PATCH_CMD}
+    PATCH_FILES ${PATCH_FILES}
     BUILD_COMMAND ${BUILD_CMD}
     INSTALL_COMMAND ${INSTALL_CMD}
 )

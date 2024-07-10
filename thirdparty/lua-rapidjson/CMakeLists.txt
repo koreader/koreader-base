@@ -1,4 +1,4 @@
-list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake_tweaks.patch)
+list(APPEND PATCH_FILES cmake_tweaks.patch)
 
 list(APPEND CMAKE_ARGS
     -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE}
@@ -6,20 +6,14 @@ list(APPEND CMAKE_ARGS
     -DLUA_LIBRARIES=${LUAJIT_LIB}
 )
 
-list(APPEND BUILD_CMD COMMAND ${KO_NINJA_RECURSIVE})
+list(APPEND BUILD_CMD COMMAND ninja)
 
 append_binary_install_command(INSTALL_CMD rapidjson.so DESTINATION common)
 
-ko_write_gitclone_script(
-    GIT_CLONE_SCRIPT_FILENAME
-    https://github.com/NiLuJe/lua-rapidjson
-    e84973356255bde06a70ce6263a3a0ef5c8f4ad4
-    ${SOURCE_DIR}
-)
-
 external_project(
-    DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
-    PATCH_COMMAND ${PATCH_CMD}
+    DOWNLOAD GIT e84973356255bde06a70ce6263a3a0ef5c8f4ad4
+    https://github.com/NiLuJe/lua-rapidjson
+    PATCH_FILES ${PATCH_FILES}
     CMAKE_ARGS ${CMAKE_ARGS}
     BUILD_COMMAND ${BUILD_CMD}
     INSTALL_COMMAND ${INSTALL_CMD}

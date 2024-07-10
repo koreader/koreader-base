@@ -1,7 +1,7 @@
-list(APPEND PATCH_CMD COMMAND ${KO_PATCH}
-    ${CMAKE_CURRENT_SOURCE_DIR}/openssl-1.1.0j-parallel_install_fix.patch
-    ${CMAKE_CURRENT_SOURCE_DIR}/reduce_build_verbosity.patch
-    ${CMAKE_CURRENT_SOURCE_DIR}/macos_rpath.patch
+list(APPEND PATCH_FILES
+    openssl-1.1.0j-parallel_install_fix.patch
+    reduce_build_verbosity.patch
+    macos_rpath.patch
 )
 
 list(APPEND CFG_ENV_VAR
@@ -80,7 +80,7 @@ list(APPEND CFG_CMD COMMAND
 )
 
 set(MAKE_CMD
-    ${KO_MAKE_RECURSIVE}
+    make
     AR=${AR}
     CC=${CC}
     CXX=${CXX}
@@ -99,10 +99,10 @@ append_shared_lib_install_commands(INSTALL_CMD crypto VERSION 1.1)
 append_shared_lib_install_commands(INSTALL_CMD ssl VERSION 1.1)
 
 external_project(
-    URL https://github.com/openssl/openssl/releases/download/OpenSSL_1_1_1w/openssl-1.1.1w.tar.gz
+    DOWNLOAD URL 3f76825f195e52d4b10c70040681a275
+    https://github.com/openssl/openssl/releases/download/OpenSSL_1_1_1w/openssl-1.1.1w.tar.gz
     https://www.openssl.org/source/old/1.1.1/openssl-1.1.1w.tar.gz
-    URL_MD5 3f76825f195e52d4b10c70040681a275
-    PATCH_COMMAND ${PATCH_CMD}
+    PATCH_FILES ${PATCH_FILES}
     CONFIGURE_COMMAND ${CFG_CMD}
     BUILD_COMMAND ${BUILD_CMD}
     INSTALL_COMMAND ${INSTALL_CMD}

@@ -27,22 +27,14 @@ diff --git a/CMakeLists.txt b/CMakeLists.txt
 index 8c03ce6..9933cc2 100755
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
-@@ -12,6 +12,7 @@ add_library(lunasvg)
- 
- add_subdirectory(include)
- add_subdirectory(source)
-+add_subdirectory(xtended)
- add_subdirectory(3rdparty/plutovg)
- 
- if(BUILD_SHARED_LIBS)
-@@ -30,6 +31,7 @@ set(LUNASVG_INCDIR ${CMAKE_INSTALL_PREFIX}/include)
- 
- install(FILES
-     include/lunasvg.h
-+    xtended/xlunasvg.h
-     DESTINATION ${LUNASVG_INCDIR}
+@@ -38,3 +38,7 @@
+     ARCHIVE     DESTINATION    ${LUNASVG_LIBDIR}
+     INCLUDES    DESTINATION    ${LUNASVG_INCDIR}
  )
- 
++
++if(DEFINED XTENDED_DIR)
++    add_subdirectory(${XTENDED_DIR} ${CMAKE_CURRENT_BINARY_DIR}/xtended)
++endif()
 diff --git a/include/lunasvg.h b/include/lunasvg.h
 index 8ba024b..1f3dc46 100644
 --- a/include/lunasvg.h

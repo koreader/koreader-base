@@ -5,13 +5,12 @@ include(CheckFunctionExists)
 include(CheckSymbolExists)
 
 include(${CMAKE_KOVARS})
+include(koreader_external_project)
 include(koreader_thirdparty_common)
-include(koreader_thirdparty_git)
 include(koreader_targets)
 
 add_custom_target(download-all)
 add_custom_target(download)
-add_custom_target(patch)
 
 # HELPERS. {{{
 
@@ -49,17 +48,24 @@ function(declare_project DIR)
     set(PROJECTS ${PROJECTS} ${NAME} PARENT_SCOPE)
 endfunction()
 
-macro(setup_project NAME)
+function(setup_project NAME)
     if(NOT ${NAME} IN_LIST PROJECTS)
         message(FATAL_ERROR "trying to setup undeclared project: ${NAME}")
     endif()
-    if(NOT ${NAME}_SETUP)
-        # Project is not already setup.
-        set(${NAME}_SETUP TRUE)
+    # Is project already setup?
+    if(NOT TARGET ${NAME})
         # Dependencies must be setup first.
+        set(BUILD_DEPENDS)
+        set(CONFIGURE_TRIGGERS)
         foreach(PRJ IN LISTS ${NAME}_DEPENDS)
             setup_project(${PRJ})
-            list(APPEND ${NAME}_BUILD_DEPENDS ${${PRJ}_BYPRODUCTS})
+            get_property(BYPRODUCTS TARGET ${PRJ} PROPERTY BYPRODUCTS)
+            list(APPEND BUILD_DEPENDS ${BYPRODUCTS})
+            get_property(HASH TARGET ${PRJ} PROPERTY HASH)
+            if(NOT HASH STREQUAL "")
+                string(PREPEND HASH ":")
+            endif()
+            list(APPEND CONFIGURE_TRIGGERS "${PRJ}${HASH}")
         endforeach()
         # Setup project variables.
         set(PROJECT_NAME ${NAME})
@@ -68,25 +74,15 @@ macro(setup_project NAME)
         set(BINARY_DIR ${${NAME}_BINARY_DIR})
         # Add project directory.
         add_subdirectory(${${NAME}_CMAKE_SOURCE_DIR} ${${NAME}_CMAKE_BINARY_DIR} ${${NAME}_EXCLUDE_FROM_ALL})
-        get_property(${NAME}_BYPRODUCTS GLOBAL PROPERTY ${NAME}_BYPRODUCTS)
-        # Add dependency to global targets.
-        add_dependencies(download-all ${NAME}-download)
-        if(NOT ${NAME}_EXCLUDE_FROM_ALL)
-            add_dependencies(download ${NAME}-download)
-            add_dependencies(patch ${NAME}-patch)
-        endif()
-        # Dependencies.
+        # Update dependencies.
+        set_property(TARGET ${NAME}-build APPEND PROPERTY DEPENDS "${BUILD_DEPENDS}")
         if(${NAME}_DEPENDS)
-            add_dependencies(${NAME}-configure ${${NAME}_DEPENDS})
-            if(NOT POLICY CMP0114)
-                # Need to cover all the bases…
-                add_dependencies(${NAME}-build ${${NAME}_DEPENDS})
-                add_dependencies(${NAME}-install ${${NAME}_DEPENDS})
-                add_dependencies(${NAME} ${${NAME}_DEPENDS})
-            endif()
+            add_dependencies(${NAME}-deps ${${NAME}_DEPENDS})
         endif()
+        # Update triggers.
+        set_property(TARGET ${NAME}-configure APPEND PROPERTY TRIGGERS "${CONFIGURE_TRIGGERS}")
     endif()
-endmacro()
+endfunction()
 
 # }}}.
 
@@ -365,8 +361,20 @@ declare_project(thirdparty/zsync2 DEPENDS curl openssl zlib ${EXCLUDE_FROM_ALL})
 declare_project(cmake/koreader SOURCE_DIR .)
 
 # And now for the real setup.
+set(DOWNLOAD_PROJECTS)
 foreach(PRJ IN LISTS PROJECTS)
-    setup_project(${PRJ})
+    setup_project(${PRJ} FALSE)
+    if(NOT ${PRJ}_EXCLUDE_FROM_ALL)
+        list(APPEND DOWNLOAD_PROJECTS ${PRJ})
+    endif()
+    add_dependencies(download-all ${PRJ}-download)
 endforeach()
+# We want `download` to download all projects build by default,
+# **including** their dependencies and transitive dependencies.
+while(DOWNLOAD_PROJECTS)
+    list(POP_FRONT DOWNLOAD_PROJECTS PRJ)
+    list(APPEND DOWNLOAD_PROJECTS ${${PRJ}_DEPENDS})
+    add_dependencies(download ${PRJ}-download)
+endwhile()
 
 # vim: foldmethod=marker foldlevel=0

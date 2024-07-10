@@ -20,12 +20,12 @@ if(NOT ANDROID AND NOT DARWIN AND NOT WIN32 AND NOT EMULATE_READER)
         }
         ]==] HAS_FMEMOPEN_2_4)
     if(HAS_FMEMOPEN_2_4)
-        list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/leptonica-1.74.1-fmemopen-arm-compat-symbol.patch)
+        list(APPEND PATCH_FILES leptonica-1.74.1-fmemopen-arm-compat-symbol.patch)
     endif()
 endif()
-list(APPEND PATCH_CMD COMMAND ${KO_PATCH}
-    ${CMAKE_CURRENT_SOURCE_DIR}/k2pdfopt.patch
-    ${CMAKE_CURRENT_SOURCE_DIR}/cmake_tweaks.patch
+list(APPEND PATCH_FILES
+    k2pdfopt.patch
+    cmake_tweaks.patch
 )
 
 list(APPEND CMAKE_ARGS
@@ -45,7 +45,7 @@ list(APPEND CMAKE_ARGS
     -DENABLE_WEBP=FALSE
 )
 
-list(APPEND BUILD_CMD COMMAND ${KO_NINJA_RECURSIVE})
+list(APPEND BUILD_CMD COMMAND ninja)
 
 list(APPEND INSTALL_CMD COMMAND ${CMAKE_COMMAND} --install .)
 list(APPEND INSTALL_CMD COMMAND ln -snf lept_$<CONFIG>.pc ${STAGING_DIR}/lib/pkgconfig/lept.pc)
@@ -55,9 +55,9 @@ append_shared_lib_install_commands(INSTALL_CMD leptonica VERSION 6)
 external_project(
     # NOTE: Needs to match the version used by whatever version of libk2pdfopt we're currently using...
     #       Probably applies to mupdf & tesseract, too...
-    URL https://github.com/DanBloomberg/leptonica/archive/refs/tags/1.84.1.tar.gz
-    URL_MD5 58f37c12b1e9473c0c7ac0b1259e6a5c
-    PATCH_COMMAND ${PATCH_CMD}
+    DOWNLOAD URL 58f37c12b1e9473c0c7ac0b1259e6a5c
+    https://github.com/DanBloomberg/leptonica/archive/refs/tags/1.84.1.tar.gz
+    PATCH_FILES ${PATCH_FILES}
     CMAKE_ARGS ${CMAKE_ARGS}
     BUILD_COMMAND ${BUILD_CMD}
     INSTALL_COMMAND ${INSTALL_CMD}

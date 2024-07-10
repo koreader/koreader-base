@@ -1,8 +1,8 @@
-list(APPEND PATCH_CMD COMMAND ${KO_PATCH}
-    ${CMAKE_CURRENT_SOURCE_DIR}/k2pdfopt.patch
-    ${CMAKE_CURRENT_SOURCE_DIR}/cmake_tweaks.patch
-    ${CMAKE_CURRENT_SOURCE_DIR}/fix-old-tc-build.patch
-    ${CMAKE_CURRENT_SOURCE_DIR}/no_debug_fonts.patch
+list(APPEND PATCH_FILES
+    k2pdfopt.patch
+    cmake_tweaks.patch
+    fix-old-tc-build.patch
+    no_debug_fonts.patch
 )
 
 list(APPEND CMAKE_ARGS
@@ -17,14 +17,14 @@ list(APPEND CMAKE_ARGS
     -DINSTALL_CONFIGS=FALSE
 )
 
-list(APPEND BUILD_CMD COMMAND ${KO_NINJA_RECURSIVE})
+list(APPEND BUILD_CMD COMMAND ninja)
 
 list(APPEND INSTALL_CMD COMMAND ${CMAKE_COMMAND} --install .)
 
 external_project(
-    URL https://github.com/tesseract-ocr/tesseract/archive/refs/tags/5.3.4.tar.gz
-    URL_MD5 53de961804ccbcb83b73122f721d8f83
-    PATCH_COMMAND ${PATCH_CMD}
+    DOWNLOAD URL 53de961804ccbcb83b73122f721d8f83
+    https://github.com/tesseract-ocr/tesseract/archive/refs/tags/5.3.4.tar.gz
+    PATCH_FILES ${PATCH_FILES}
     CMAKE_ARGS ${CMAKE_ARGS}
     BUILD_COMMAND ${BUILD_CMD}
     INSTALL_COMMAND ${INSTALL_CMD}

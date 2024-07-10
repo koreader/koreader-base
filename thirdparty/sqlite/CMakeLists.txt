@@ -17,9 +17,9 @@ list(APPEND CFG_CMD
     --enable-threadsafe
 )
 
-list(APPEND BUILD_CMD COMMAND ${KO_MAKE_RECURSIVE} libsqlite3.la)
+list(APPEND BUILD_CMD COMMAND make libsqlite3.la)
 
-list(APPEND INSTALL_CMD COMMAND ${KO_MAKE_RECURSIVE}
+list(APPEND INSTALL_CMD COMMAND make
     DESTDIR=${STAGING_DIR}
     install-includeHEADERS
     install-libLTLIBRARIES
@@ -33,8 +33,8 @@ endif()
 append_shared_lib_install_commands(INSTALL_CMD sqlite3)
 
 external_project(
-    URL https://www.sqlite.org/2024/sqlite-autoconf-3450000.tar.gz
-    URL_MD5 d6150f5dc837ae94b7d735f1b611b634
+    DOWNLOAD URL d6150f5dc837ae94b7d735f1b611b634
+    https://www.sqlite.org/2024/sqlite-autoconf-3450000.tar.gz
     CONFIGURE_COMMAND ${CFG_CMD}
     BUILD_COMMAND ${BUILD_CMD}
     INSTALL_COMMAND ${INSTALL_CMD}
