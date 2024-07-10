@@ -35,8 +35,6 @@ re: clean
 	$(MAKE) $*-clean
 	$(MAKE) $*
 
-setup: $(BUILD_ENTRYPOINT)
-
 fetchthirdparty:
 	git submodule init
 	git submodule sync
@@ -46,7 +44,7 @@ fetchthirdparty:
 
 # CMake build interface. {{{
 
-$(BUILD_ENTRYPOINT): $(CMAKE_KOVARS) $(CMAKE_TCF)
+setup $(BUILD_ENTRYPOINT): $(CMAKE_KOVARS) $(CMAKE_TCF)
 	$(CMAKE) $(CMAKE_FLAGS) -S cmake -B $(CMAKE_DIR)
 
 define write_file
