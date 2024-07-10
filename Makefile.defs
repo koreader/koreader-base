@@ -4,7 +4,11 @@ endif
 
 # Note: ensure our possibly updated `PATH` variable is picked up by
 # `$(shell …)` invocations when using older (<4.4) make versions.
-SHELL = env PATH='$(PATH)' bash -eo pipefail
+ifeq (,$(filter shell-export,$(.FEATURES)))
+  SHELL = env PATH='$(PATH)' bash -eo pipefail
+else
+  SHELL = bash -eo pipefail
+endif
 
 ifeq (,$(PARALLEL_JOBS))
   PARALLEL_JOBS := $(or $(patsubst -j%,%,$(filter -j%,$(MAKEFLAGS))))
