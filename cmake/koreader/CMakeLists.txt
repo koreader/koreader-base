@@ -1,11 +1,8 @@
 include(koreader_targets)
 
 list(APPEND CMAKE_ARGS -DCMAKE_KOVARS=${CMAKE_KOVARS} -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE})
-if(NOT CMAKE_GENERATOR MATCHES "Ninja")
-    list(APPEND CMAKE_ARGS -DCMAKE_TARGET_MESSAGES:BOOL=OFF)
-endif()
 
-list(APPEND BUILD_CMD COMMAND ${KO_MAKE_PROGRAM})
+list(APPEND BUILD_CMD COMMAND ${KO_NINJA_RECURSIVE})
 
 external_project(
     BUILD_ALWAYS
@@ -32,7 +29,7 @@ function(add_target_build_step NAME)
     endif()
     ExternalProject_Add_Step(koreader ${STEP}
         ALWAYS TRUE
-        COMMAND ${KO_MAKE_PROGRAM} ${NAME}
+        COMMAND ${KO_NINJA_RECURSIVE} ${NAME}
         COMMENT "Performing build step for '${NAME}'"
         DEPENDEES configure
         DEPENDS ${BUILD_DEPS}

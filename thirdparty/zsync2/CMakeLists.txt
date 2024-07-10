@@ -11,7 +11,7 @@ list(APPEND CMAKE_ARGS
     -DUSE_SYSTEM_CURL=TRUE
 )
 
-list(APPEND BUILD_CMD COMMAND ${KO_MAKE_PROGRAM} zsync2)
+list(APPEND BUILD_CMD COMMAND ${KO_NINJA_RECURSIVE} zsync2)
 
 append_binary_install_command(INSTALL_CMD src/zsync2)
 
