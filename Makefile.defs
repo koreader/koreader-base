@@ -294,12 +294,6 @@ endef
 # ln --symbolic --no-dereference --force --relative
 SYMLINK = ln -snf$(if $(DARWINHOST),,r)
 
-# unknown device
-ifdef SBOX_UNAME_MACHINE
-	CC:=gcc
-	CXX:=g++
-endif
-
 # set cross-compiler/host CC and CXX
 ifneq (,$(findstring clang, $(CC)))
 	ifdef CHOST
