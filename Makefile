@@ -49,20 +49,15 @@ fetchthirdparty:
 $(BUILD_ENTRYPOINT): $(CMAKE_KOVARS) $(CMAKE_TCF)
 	$(CMAKE) $(CMAKE_FLAGS) -S cmake -B $(CMAKE_DIR)
 
-define newline
-
-
-endef
-
-define escape
-'$(subst $(newline),' ',$(subst ','"'"',$(call $1)))'
+define write_file
+$(if $(DRY_RUN),: write $1,$(file >$1,$2))
 endef
 
 $(CMAKE_KOVARS): Makefile.defs | $(CMAKE_DIR)/
-	@printf '%s\n' $(call escape,cmake_koreader_vars) >'$@'
+	$(call write_file,$@,$(cmake_koreader_vars))
 
 $(CMAKE_TCF): Makefile.defs | $(CMAKE_DIR)/
-	@printf '%s\n' $(call escape,$(if $(EMULATE_READER),cmake_toolchain,cmake_cross_toolchain)) >'$@'
+	$(call write_file,$@,$(if $(EMULATE_READER),$(cmake_toolchain),$(cmake_cross_toolchain)))
 
 # Forward unknown targets to the CMake build system.
 LEFTOVERS = $(filter-out $(PHONY) cache-key build/%,$(MAKECMDGOALS))
