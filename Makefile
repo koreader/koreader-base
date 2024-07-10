@@ -68,7 +68,7 @@ $(CMAKE_TCF): Makefile.defs | $(CMAKE_DIR)/
 LEFTOVERS = $(filter-out $(PHONY) cache-key build/%,$(MAKECMDGOALS))
 .PHONY: $(LEFTOVERS)
 all $(LEFTOVERS): skeleton $(BUILD_ENTRYPOINT)
-	$(and $(DRY_RUN),$(wildcard $(BUILD_ENTRYPOINT)),+)$(strip $(CMAKE_MAKE_PROGRAM) -C $(CMAKE_DIR) $@)
+	$(and $(DRY_RUN),$(wildcard $(BUILD_ENTRYPOINT)),+)cd $(CMAKE_DIR) && $(strip $(NINJA) $(NINJAFLAGS) $@)
 
 # }}}
 

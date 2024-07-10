@@ -79,16 +79,7 @@ endif
 
 # CMAKE:=cmake --no-warn-unused-cli
 CMAKE := cmake
-
-ifeq ($(NINJA),)
-  NINJA := $(shell command -v ninja)
-endif
-
-ifneq ($(NINJA),)
-  ifeq ($(USE_MAKE),)
-    USE_NINJA := 1
-  endif
-endif
+NINJA := $(or $(NINJA),ninja)
 
 ifneq (,$(or $(VERBOSE),$(V)))
   ifeq (4.4,$(firstword $(sort $(MAKE_VERSION) 4.4)))
@@ -121,16 +112,7 @@ endif
 export NINJA_STATUS
 export NINJAFLAGS
 
-ifneq ($(USE_NINJA),)
-  CMAKE_FLAGS = -G Ninja
-  CMAKE_MAKE_PROGRAM = $(NINJA) $(NINJAFLAGS)
-else
-  CMAKE_FLAGS = -DCMAKE_TARGET_MESSAGES:BOOL=OFF
-  CMAKE_MAKE_PROGRAM = $(abspath $(THIRDPARTY_DIR)/cmake_modules/komake.sh) $(MAKE)
-  ifeq (,$(or $(VERBOSE),$(V)))
-    CMAKE_MAKE_PROGRAM += --no-print-directory
-  endif
-endif
+CMAKE_FLAGS = -G Ninja
 
 # set this to your ARM cross compiler:
 # set CC CXX AR LD RANLIB
@@ -645,11 +627,7 @@ OUTPUT_DIR ?= build/$(MACHINE)
 CMAKE_DIR = $(OUTPUT_DIR)/cmake
 STAGING_DIR = $(OUTPUT_DIR)/staging
 
-ifneq ($(USE_NINJA),)
-  BUILD_ENTRYPOINT = $(CMAKE_DIR)/build.ninja
-else
-  BUILD_ENTRYPOINT = $(CMAKE_DIR)/Makefile
-endif
+BUILD_ENTRYPOINT = $(CMAKE_DIR)/build.ninja
 
 # you can configure an emulation for the (eink) framebuffer here.
 # the application won't use the framebuffer (and the special e-ink ioctls)

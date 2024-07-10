@@ -12,12 +12,6 @@ endif()
 
 set(KO_MAKE_RECURSIVE ${CMAKE_CURRENT_LIST_DIR}/komake.sh ${MAKE})
 set(KO_NINJA_RECURSIVE ${CMAKE_CURRENT_LIST_DIR}/koninja.sh ${NINJA})
-if(CMAKE_GENERATOR MATCHES "Ninja")
-    set(KO_MAKE_PROGRAM ${KO_NINJA_RECURSIVE})
-else()
-    set(KO_MAKE_PROGRAM ${KO_MAKE_RECURSIVE})
-endif()
-
 set(KO_PATCH ${CMAKE_CURRENT_LIST_DIR}/patch-wrapper.sh)
 
 macro(assert_var_defined varName)
@@ -298,9 +292,6 @@ function(external_project)
     endif()
     # By-products.
     set(BYPRODUCTS ${CMAKE_CURRENT_BINARY_DIR}/stamp/${PROJECT_NAME}-done)
-    if(NOT CMAKE_GENERATOR MATCHES "Ninja")
-        list(PREPEND BYPRODUCTS ${PROJECT_NAME})
-    endif()
     set_property(GLOBAL PROPERTY ${PROJECT_NAME}_BYPRODUCTS ${BYPRODUCTS})
     # Show a logged step output on failure.
     list(APPEND PARAMS LOG_OUTPUT_ON_FAILURE TRUE)
@@ -324,7 +315,7 @@ function(external_project)
         DEPENDS ${BUILD_DEPS}
     )
     ExternalProject_Add_StepTargets(${PROJECT_NAME} deps)
-    if(NOT _BUILD_ALWAYS AND (CMAKE_GENERATOR MATCHES "^Ninja" OR CMAKE_VERSION VERSION_GREATER_EQUAL "3.20"))
+    if(NOT _BUILD_ALWAYS)
         set(SOURCE_D ${CMAKE_CURRENT_BINARY_DIR}/source.d)
         list(APPEND BUILD_DEPS ${SOURCE_D})
         add_custom_command(
