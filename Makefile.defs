@@ -10,6 +10,10 @@ else
   SHELL = bash -eo pipefail
 endif
 
+ifeq (,$(V)$(VERBOSE))
+.SILENT:
+endif
+
 ifeq (,$(PARALLEL_JOBS))
   PARALLEL_JOBS := $(or $(patsubst -j%,%,$(filter -j%,$(MAKEFLAGS))))
 endif
