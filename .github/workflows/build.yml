@@ -83,13 +83,6 @@ jobs:
 
       # Install dependencies. {{{
 
-      - name: Setup Python
-        if: steps.ccache-restore.outputs.cache-hit != 'true'
-        uses: actions/setup-python@v5
-        with:
-          # Note: Python 3.12 removal of `distutils` breaks GLib's build.
-          python-version: '3.11'
-
       - name: Install homebrew dependencies
         if: steps.ccache-restore.outputs.cache-hit != 'true'
         run: |
