@@ -48,9 +48,6 @@ else
   CCACHE := $(or $(CCACHE),$(shell command -v ccache))
 endif
 
-UNAME:=$(shell uname -s)
-UNAME_ARCH:=$(shell uname -m)
-
 # Should point at the actual directory in which *this* makefile resides, as opposed to $(CURDIR),
 # which is simply $PWD *at the time of the original make call*, which is not necessarily the same thing.
 # NOTE: Will only behave as long as there aren't any spaces in the paths involved!
@@ -237,9 +234,9 @@ else
   $(error Invalid TARGET: "$(TARGET)")
 endif
 
-ifneq (,$(filter $(UNAME), Darwin))
+ifneq (,$(findstring darwin,$(MAKE_HOST)))
 	DARWINHOST=1
-	ifneq (,$(filter $(UNAME_ARCH), arm64))
+	ifneq (,$(findstring aarch64,$(MAKE_HOST)))
 		DARWIN_AARCH64_HOST=1
 	endif
 	ifdef EMULATE_READER
