@@ -16,7 +16,7 @@ $(info ************ NINJA: $(strip $(NINJA) $(PARALLEL_JOBS:%=-j%) $(PARALLEL_LO
 $(info ************ MAKE: $(strip $(MAKE) $(PARALLEL_JOBS:%=-j%) $(PARALLEL_LOAD:%=-l%)) **********)
 endef
 
-PHONY = all bindeps buildstats clean distclean fetchthirdparty info libcheck %-re re setup skeleton test test-data
+PHONY = all bindeps buildstats clean distclean fetchthirdparty info libcheck %-re re reinstall setup skeleton test test-data uninstall
 
 .PHONY: $(PHONY)
 
@@ -44,6 +44,13 @@ fetchthirdparty:
 	git submodule init
 	git submodule sync
 	git submodule update --jobs 3 $(if $(CI),--depth 1)
+
+reinstall: uninstall
+	$(MAKE)
+
+uninstall:
+	rm -vrf $(filter-out $(CMAKE_DIR) $(OUTPUT_DIR)/thirdparty,$(wildcard $(OUTPUT_DIR)/*))
+	$(MAKE) rm-install-stamps
 
 # }}}
 

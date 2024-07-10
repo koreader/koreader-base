@@ -377,4 +377,12 @@ while(DOWNLOAD_PROJECTS)
     add_dependencies(download ${PRJ}-download)
 endwhile()
 
+# Add `rm-install-stamps` target.
+set(INSTALL_STAMPS)
+foreach(PRJ IN LISTS PROJECTS)
+    get_property(STAMP TARGET ${PRJ}-install PROPERTY STAMP)
+    list(APPEND INSTALL_STAMPS ${STAMP})
+endforeach()
+add_custom_target(rm-install-stamps COMMAND rm -f ${INSTALL_STAMPS})
+
 # vim: foldmethod=marker foldlevel=0
