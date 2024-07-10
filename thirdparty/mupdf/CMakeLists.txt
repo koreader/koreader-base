@@ -1,3 +1,26 @@
+list(APPEND PATCH_FILES
+    # Use external fonts.
+    external_fonts.patch
+    # Add support for encrypted zips.
+    encrypted_zip.patch
+    # Disable potentially crashy ARM ASM (it's 7 years old, and hell to debug).
+    # NOTE: There's also a few ARCH_UNALIGNED_OK checks, but we never did pass that define.
+    #       (FWIW, we *could*, on anything not kindle-legacy).
+    no_arm_asm.patch
+    # Honor CFLAGS.
+    honor_cflags.patch
+    # Support for WebP images (unmerged-yet proposed upstream patch cleaned up of win32 stuff).
+    webp-upstream-697749.patch
+    # Add support for CBZ chapters.
+    mupdf_cbz_chapter_support.patch
+    # Ensure an HTML document fonts are freed on close.
+    free-html-doc-fonts-on-close.patch
+    # Relink on change(s) to external libraries.
+    relink_on_xlibs_change.patch
+    # Fix symbols visiblity.
+    visibility.patch
+)
+
 list(APPEND PATCH_CMD COMMAND rm -rf
     thirdparty/curl
     thirdparty/freeglut
@@ -8,29 +31,6 @@ list(APPEND PATCH_CMD COMMAND rm -rf
     thirdparty/mujs
     thirdparty/tesseract
     thirdparty/zlib
-)
-
-list(APPEND PATCH_CMD COMMAND ${KO_PATCH}
-    # Use external fonts.
-    ${CMAKE_CURRENT_SOURCE_DIR}/external_fonts.patch
-    # Add support for encrypted zips.
-    ${CMAKE_CURRENT_SOURCE_DIR}/encrypted_zip.patch
-    # Disable potentially crashy ARM ASM (it's 7 years old, and hell to debug).
-    # NOTE: There's also a few ARCH_UNALIGNED_OK checks, but we never did pass that define.
-    #       (FWIW, we *could*, on anything not kindle-legacy).
-    ${CMAKE_CURRENT_SOURCE_DIR}/no_arm_asm.patch
-    # Honor CFLAGS.
-    ${CMAKE_CURRENT_SOURCE_DIR}/honor_cflags.patch
-    # Support for WebP images (unmerged-yet proposed upstream patch cleaned up of win32 stuff).
-    ${CMAKE_CURRENT_SOURCE_DIR}/webp-upstream-697749.patch
-    # Add support for CBZ chapters.
-    ${CMAKE_CURRENT_SOURCE_DIR}/mupdf_cbz_chapter_support.patch
-    # Ensure an HTML document fonts are freed on close.
-    ${CMAKE_CURRENT_SOURCE_DIR}/free-html-doc-fonts-on-close.patch
-    # Relink on change(s) to external libraries.
-    ${CMAKE_CURRENT_SOURCE_DIR}/relink_on_xlibs_change.patch
-    # Fix symbols visiblity.
-    ${CMAKE_CURRENT_SOURCE_DIR}/visibility.patch
 )
 
 string(TOLOWER ${CMAKE_BUILD_TYPE} MUPDF_BUILD_TYPE)
@@ -64,7 +64,7 @@ if(ANDROID AND CHOST MATCHES "^armv7a-.*")
 endif()
 
 set(MAKE_CMD
-    ${KO_MAKE_RECURSIVE} -C ${SOURCE_DIR}
+    make -C ${SOURCE_DIR}
     # Compilation flags.
     AR=${AR}
     CC=${CC}
@@ -108,8 +108,9 @@ list(APPEND BUILD_CMD COMMAND ${MAKE_CMD} libs)
 list(APPEND INSTALL_CMD COMMAND ${MAKE_CMD} DESTDIR=${STAGING_DIR} prefix=/ install-libs)
 
 external_project(
-    URL https://mupdf.com/downloads/archive/mupdf-1.24.2-source.tar.lz
-    URL_MD5 d8f835e414202946d1c6c8192dd4315d
+    DOWNLOAD URL d8f835e414202946d1c6c8192dd4315d
+    https://mupdf.com/downloads/archive/mupdf-1.24.2-source.tar.lz
+    PATCH_FILES ${PATCH_FILES}
     PATCH_COMMAND ${PATCH_CMD}
     BUILD_COMMAND ${BUILD_CMD}
     INSTALL_COMMAND ${INSTALL_CMD}

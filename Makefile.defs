@@ -92,6 +92,7 @@ ifneq (,$(or $(VERBOSE),$(V)))
     MAKEFLAGS += --trace
   endif
   NINJAFLAGS += -v
+  export KOVERBOSE=1
 endif
 ifneq (,$(PARALLEL_JOBS))
   NINJAFLAGS += -j$(PARALLEL_JOBS)
@@ -109,6 +110,7 @@ ifneq (,$(DRY_RUN))
 endif
 
 ifneq ($(or $(CLICOLOR_FORCE),$(MAKE_TERMOUT)),)
+  export CLICOLOR_FORCE=1
   NINJA_STATUS := $(shell printf '\33[32;1m▸%%p\33[0m | ')
 else
   NINJA_STATUS := $(empty) %p | $(empty)

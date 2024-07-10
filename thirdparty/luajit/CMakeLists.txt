@@ -1,9 +1,9 @@
 # Build in source tree.
 set(BINARY_DIR ${SOURCE_DIR})
 
-list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/koreader-luajit-makefile-tweaks.patch)
+list(APPEND PATCH_FILES koreader-luajit-makefile-tweaks.patch)
 # Enable table.pack & table.unpack w/o the rest of the -DLUAJIT_ENABLE_LUA52COMPAT baggage...
-list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/koreader-luajit-enable-table_pack.patch)
+list(APPEND PATCH_FILES koreader-luajit-enable-table_pack.patch)
 
 if(CMAKE_BUILD_TYPE STREQUAL Debug)
     # Debugging is a go!
@@ -78,9 +78,9 @@ else()
     list(APPEND BUILD_ARGS TARGET_SONAME=${SONAME} INSTALL_SONAME=${SONAME})
 endif()
 
-list(APPEND BUILD_CMD COMMAND ${KO_MAKE_RECURSIVE} ${BUILD_ARGS} amalg)
+list(APPEND BUILD_CMD COMMAND make ${BUILD_ARGS} amalg)
 
-list(APPEND INSTALL_CMD COMMAND ${KO_MAKE_RECURSIVE} ${BUILD_ARGS} install PREFIX=${STAGING_DIR})
+list(APPEND INSTALL_CMD COMMAND make ${BUILD_ARGS} install PREFIX=${STAGING_DIR})
 
 if(NOT SKIP_LUAJIT_BIN)
     append_binary_install_command(INSTALL_CMD ${STAGING_DIR}/bin/luajit)
@@ -92,15 +92,10 @@ endif()
 
 append_tree_install_commands(INSTALL_CMD src/jit jit)
 
-ko_write_gitclone_script(
-    GIT_CLONE_SCRIPT_FILENAME
-    https://github.com/LuaJIT/LuaJIT
-    93e87998b24021b94de8d1c8db244444c46fb6e9
-    ${SOURCE_DIR}
-)
-
 external_project(
-    DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
+    DOWNLOAD GIT 93e87998b24021b94de8d1c8db244444c46fb6e9
+    https://github.com/LuaJIT/LuaJIT
+    PATCH_FILES ${PATCH_FILES}
     PATCH_COMMAND ${PATCH_CMD}
     BUILD_COMMAND ${BUILD_CMD}
     INSTALL_COMMAND ${INSTALL_CMD}

@@ -13,7 +13,7 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
     list(APPEND CMAKE_ARGS -DFT_ENABLE_ERROR_STRINGS=TRUE)
 endif()
 
-list(APPEND BUILD_CMD COMMAND ${KO_NINJA_RECURSIVE})
+list(APPEND BUILD_CMD COMMAND ninja)
 
 list(APPEND INSTALL_CMD COMMAND ${CMAKE_COMMAND} --install .)
 
@@ -21,8 +21,8 @@ set(LIB_SPEC freetype VERSION 6)
 append_shared_lib_install_commands(INSTALL_CMD ${LIB_SPEC})
 
 external_project(
-    URL https://github.com/freetype/freetype/archive/refs/tags/VER-2-13-2.tar.gz
-    URL_MD5 dcd1af080e43fe0c984c34bf3e7d5e16
+    DOWNLOAD URL dcd1af080e43fe0c984c34bf3e7d5e16
+    https://github.com/freetype/freetype/archive/refs/tags/VER-2-13-2.tar.gz
     CMAKE_ARGS ${CMAKE_ARGS}
     BUILD_COMMAND ${BUILD_CMD}
     INSTALL_COMMAND ${INSTALL_CMD}

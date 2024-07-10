@@ -1,12 +1,12 @@
 # Never *ever* call setlocale, for any reason.
 # Most of our target platforms have custom/broken/incomplete locales, don't screw with it.
 # And this runs in our main thread, so this is Very Bad(TM).
-list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/djvulibre-no-locale-mangling.patch)
+list(APPEND PATCH_FILES djvulibre-no-locale-mangling.patch)
 # Remove references to (build specific) install directory in binary.
-list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/no_references_to_install_dir.patch)
+list(APPEND PATCH_FILES no_references_to_install_dir.patch)
 
 if(ANDROID)
-    list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/android.patch)
+    list(APPEND PATCH_FILES android.patch)
 endif()
 
 list(APPEND PATCH_CMD COMMAND env NOCONFIGURE=1 ./autogen.sh)
@@ -36,19 +36,14 @@ if(ANDROID)
     list(APPEND CFG_CMD COMMAND ${ANDROID_LIBTOOL_FIX_CMD})
 endif()
 
-list(APPEND BUILD_CMD COMMAND ${KO_MAKE_RECURSIVE} -C libdjvu)
+list(APPEND BUILD_CMD COMMAND make -C libdjvu)
 
-list(APPEND INSTALL_CMD COMMAND ${KO_MAKE_RECURSIVE} -C libdjvu DESTDIR=${STAGING_DIR} install)
-
-ko_write_gitclone_script(
-    GIT_CLONE_SCRIPT_FILENAME
-    https://gitlab.com/koreader/djvulibre.git
-    6a1e5ba1c9ef81c205a4b270c3f121a1e106f4fc
-    ${SOURCE_DIR}
-)
+list(APPEND INSTALL_CMD COMMAND make -C libdjvu DESTDIR=${STAGING_DIR} install)
 
 external_project(
-    DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
+    DOWNLOAD GIT 6a1e5ba1c9ef81c205a4b270c3f121a1e106f4fc
+    https://gitlab.com/koreader/djvulibre.git
+    PATCH_FILES ${PATCH_FILES}
     PATCH_COMMAND ${PATCH_CMD}
     CONFIGURE_COMMAND ${CFG_CMD}
     BUILD_COMMAND ${BUILD_CMD}

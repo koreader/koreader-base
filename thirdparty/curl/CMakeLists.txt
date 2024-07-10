@@ -1,12 +1,12 @@
-list(APPEND PATCH_CMD COMMAND ${KO_PATCH}
+list(APPEND PATCH_FILES
     # Gentoo patchset
-    ${CMAKE_CURRENT_SOURCE_DIR}/curl-8.5.0-mpd-stream-http-adjust_pollset.patch
+    curl-8.5.0-mpd-stream-http-adjust_pollset.patch
     # Need `-lrt` for `clock_gettime` support.
-    ${CMAKE_CURRENT_SOURCE_DIR}/clock_gettime_needs_rt.patch
+    clock_gettime_needs_rt.patch
 )
 # NOTE: Because InkView is the worst, we rename our own cURL build on PocketBook.... (#5861)
 if(POCKETBOOK)
-    list(APPEND PATCH_CMD COMMAND ${KO_PATCH} ${CMAKE_CURRENT_SOURCE_DIR}/pocketbook_lib_rename.patch)
+    list(APPEND PATCH_FILES pocketbook_lib_rename.patch)
 endif()
 
 list(APPEND CMAKE_ARGS
@@ -35,7 +35,7 @@ list(APPEND CMAKE_ARGS
     -DCURL_ZLIB=TRUE
 )
 
-list(APPEND BUILD_CMD COMMAND ${KO_NINJA_RECURSIVE} lib/all)
+list(APPEND BUILD_CMD COMMAND ninja lib/all)
 
 list(APPEND INSTALL_CMD COMMAND ${CMAKE_COMMAND} --install .)
 
@@ -56,9 +56,9 @@ if(POCKETBOOK)
 endif()
 
 external_project(
-    URL https://github.com/curl/curl/releases/download/curl-8_5_0/curl-8.5.0.tar.xz
-    URL_MD5 3e9e5c2db494e7dbd4e7024b149021c9
-    PATCH_COMMAND ${PATCH_CMD}
+    DOWNLOAD URL 3e9e5c2db494e7dbd4e7024b149021c9
+    https://github.com/curl/curl/releases/download/curl-8_5_0/curl-8.5.0.tar.xz
+    PATCH_FILES ${PATCH_FILES}
     CMAKE_ARGS ${CMAKE_ARGS}
     BUILD_COMMAND ${BUILD_CMD}
     INSTALL_COMMAND ${INSTALL_CMD}
@@ -68,8 +68,7 @@ external_project(
 # bundle: connections to `hg.mozilla.org` from CIs seem to be flaky,
 # resulting in regular failures.
 external_project_step(
-    ca-bundle-download
-    COMMAND ${CMAKE_CURRENT_LIST_DIR}/fetch-ca-bundle.sh ${DOWNLOAD_DIR}/ca-bundle.crt
+    download-ca-bundle BEFORE download
     COMMENT "Fetching certificates bundles for '${PROJECT_NAME}'"
-    DEPENDERS download
+    COMMAND ${CMAKE_CURRENT_LIST_DIR}/fetch-ca-bundle.sh ${DOWNLOAD_DIR}/ca-bundle.crt
 )

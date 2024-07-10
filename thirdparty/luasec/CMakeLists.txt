@@ -11,7 +11,7 @@ string(JOIN " " LIBS
 )
 
 set(MAKE_CMD
-    ${KO_MAKE_RECURSIVE}
+    make
     AR=${AR} RANLIB=${RANLIB}
     CC=${CC} CFLAGS=${CFLAGS}
     LDFLAGS=${DYNLIB_LDFLAGS}
@@ -25,15 +25,9 @@ append_binary_install_command(INSTALL_CMD src/ssl.so DESTINATION common)
 append_install_commands(INSTALL_CMD src/ssl.lua DESTINATION common)
 append_install_commands(INSTALL_CMD src/https.lua DESTINATION common/ssl)
 
-ko_write_gitclone_script(
-    GIT_CLONE_SCRIPT_FILENAME
-    https://github.com/brunoos/luasec
-    tags/v1.3.2
-    ${SOURCE_DIR}
-)
-
 external_project(
-    DOWNLOAD_COMMAND ${CMAKE_COMMAND} -P ${GIT_CLONE_SCRIPT_FILENAME}
+    DOWNLOAD GIT v1.3.2
+    https://github.com/brunoos/luasec
     PATCH_COMMAND ${PATCH_CMD}
     BUILD_COMMAND ${BUILD_CMD}
     INSTALL_COMMAND ${INSTALL_CMD}

@@ -1,8 +1,8 @@
-list(APPEND PATCH_CMD COMMAND ${KO_PATCH}
+list(APPEND PATCH_FILES
     # We only care about `libglib-2.0.a`.
-    ${CMAKE_CURRENT_SOURCE_DIR}/glib-libglib-only.patch
+    glib-libglib-only.patch
     # Android makes Linux syscalls hard to get to... Fix pilfered from Python.
-    ${CMAKE_CURRENT_SOURCE_DIR}/glib-2.58.2-android-linux-syscalls.patch
+    glib-2.58.2-android-linux-syscalls.patch
 )
 
 list(APPEND PATCH_CMD COMMAND autoreconf -vif)
@@ -53,13 +53,14 @@ list(APPEND CFG_CMD
     --with-threads=posix
 )
 
-list(APPEND BUILD_CMD COMMAND ${KO_MAKE_RECURSIVE} -C glib)
+list(APPEND BUILD_CMD COMMAND make -C glib)
 
-list(APPEND INSTALL_CMD COMMAND ${KO_MAKE_RECURSIVE} -C glib DESTDIR=${STAGING_DIR} install)
+list(APPEND INSTALL_CMD COMMAND make -C glib DESTDIR=${STAGING_DIR} install)
 
 external_project(
-    URL https://download.gnome.org/sources/glib/2.58/glib-2.58.3.tar.xz
-    URL_MD5 8058c7bde846dcffe5fa453eca366d73
+    DOWNLOAD URL 8058c7bde846dcffe5fa453eca366d73
+    https://download.gnome.org/sources/glib/2.58/glib-2.58.3.tar.xz
+    PATCH_FILES ${PATCH_FILES}
     PATCH_COMMAND ${PATCH_CMD}
     CONFIGURE_COMMAND ${CFG_CMD}
     BUILD_COMMAND ${BUILD_CMD}
