@@ -1,3 +1,7 @@
+ifneq (4.1,$(firstword $(sort $(MAKE_VERSION) 4.1)))
+  $(error you're version of make is too old: $(MAKE_VERSION), need at least 4.1)
+endif
+
 # Note: ensure our possibly updated `PATH` variable is picked up by
 # `$(shell …)` invocations when using older (<4.4) make versions.
 SHELL = env PATH='$(PATH)' bash -eo pipefail
