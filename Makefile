@@ -8,13 +8,15 @@ include Makefile.defs
 DO_STRIP := $(if $(or $(EMULATE_READER),$(KODEBUG)),,1)
 DO_STRIP := $(if $(or $(DO_STRIP),$(APPIMAGE),$(LINUX)),1,)
 
+define build_info
 $(info ************ Building for MACHINE: "$(MACHINE)" **********)
 $(info ************ PATH: "$(PATH)" **********)
 $(info ************ CHOST: "$(CHOST)" **********)
 $(info ************ NINJA: $(strip $(NINJA) $(PARALLEL_JOBS:%=-j%) $(PARALLEL_LOAD:%=-l%)) **********)
 $(info ************ MAKE: $(strip $(MAKE) $(PARALLEL_JOBS:%=-j%) $(PARALLEL_LOAD:%=-l%)) **********)
+endef
 
-PHONY = all bindeps buildstats clean distclean fetchthirdparty libcheck %-re re setup skeleton test test-data
+PHONY = all bindeps buildstats clean distclean fetchthirdparty info libcheck %-re re setup skeleton test test-data
 
 .PHONY: $(PHONY)
 
@@ -27,6 +29,9 @@ clean:
 
 distclean:
 	rm -rf build $(wildcard $(THIRDPARTY_DIR)/*/build)
+
+info:
+	$(strip $(build_info))
 
 re: clean
 	$(MAKE) all
@@ -45,6 +50,7 @@ fetchthirdparty:
 # CMake build interface. {{{
 
 setup $(BUILD_ENTRYPOINT): $(CMAKE_KOVARS) $(CMAKE_TCF)
+	$(strip $(build_info))
 	$(CMAKE) $(CMAKE_FLAGS) -S cmake -B $(CMAKE_DIR)
 
 define write_file
