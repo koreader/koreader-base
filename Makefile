@@ -14,7 +14,7 @@ $(info ************ CHOST: "$(CHOST)" **********)
 $(info ************ NINJA: $(strip $(NINJA) $(PARALLEL_JOBS:%=-j%) $(PARALLEL_LOAD:%=-l%)) **********)
 $(info ************ MAKE: $(strip $(MAKE) $(PARALLEL_JOBS:%=-j%) $(PARALLEL_LOAD:%=-l%)) **********)
 
-PHONY = all bindeps clean distclean fetchthirdparty libcheck %-re re setup skeleton test test-data
+PHONY = all bindeps buildstats clean distclean fetchthirdparty libcheck %-re re setup skeleton test test-data
 
 .PHONY: $(PHONY)
 
@@ -156,6 +156,21 @@ cache-key: Makefile cache-key.base
 
 bindeps:
 	@./utils/bindeps.sh $(filter-out $(addprefix $(OUTPUT_DIR)/,cmake staging thirdparty),$(wildcard $(OUTPUT_DIR)/*))
+
+# }}}
+
+# Dump build timings for last ninja invocation. {{{
+
+# Show external project tasks with a duration of 1s or more (descending order).
+define buildstats_jq_script
+  sort_by(-.dur) | .[] | select(.dur >= 1e6) | (.dur*1e-5 | round | ./10), "\n",
+  (.name | sub("(.*[/ ])?(?<p>[^/]*)/stamp/(?<t>[^/]*)$$"; "\(.p) \(.t)")), "\n"
+endef
+
+buildstats: $(CMAKE_DIR)/.ninja_log
+	ninjatracing $< | jq -j '$(strip $(buildstats_jq_script))' | \
+	    xargs -n3 printf '%6.2fs %s %s\n' | \
+	    git column --mode=row
 
 # }}}
 
