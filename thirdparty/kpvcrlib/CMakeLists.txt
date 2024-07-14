@@ -67,6 +67,7 @@ add_library(crengine STATIC
 )
 # Make sure we get full `constexpr` support.
 target_compile_features(crengine PRIVATE cxx_std_17)
+target_compile_options(crengine PRIVATE -ftabstop=4 -Wall)
 # Enable `-fvisibility=hidden`.
 set_target_properties(crengine PROPERTIES CXX_VISIBILITY_PRESET hidden)
 # Enable `-fvisibility-inlines-hidden`.
