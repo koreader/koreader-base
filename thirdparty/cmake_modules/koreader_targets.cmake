@@ -39,6 +39,9 @@ function(setup_target NAME)
             CXX_VISIBILITY_PRESET ${${NAME}_VISIBILITY}
         )
     endif()
+    if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+        target_compile_definitions(${NAME} PRIVATE DEBUG)
+    endif()
     set_target_properties(${NAME} PROPERTIES EXCLUDE_FROM_ALL ${${NAME}_EXCLUDE_FROM_ALL})
     target_sources(${NAME} PRIVATE ${${NAME}_SOURCES})
     # Post-build install command.
