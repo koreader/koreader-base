@@ -107,6 +107,29 @@ int int_from_miniexp_nth(int n, miniexp_t sexp) {
 	return (miniexp_numberp(s) ? miniexp_to_int(s) : ((int)0));
 }
 
+#ifdef DEBUG
+
+static const char *render_mode_str(ddjvu_render_mode_t mode) {
+    switch (mode) {
+    case DDJVU_RENDER_COLOR:
+        return "color";
+    case DDJVU_RENDER_BLACK:
+        return "black";
+    case DDJVU_RENDER_COLORONLY:
+        return "coloronly";
+    case DDJVU_RENDER_MASKONLY:
+        return "maskonly";
+    case DDJVU_RENDER_BACKGROUND:
+        return "background";
+    case DDJVU_RENDER_FOREGROUND:
+        return "foreground";
+    default:
+        return "???";
+    }
+}
+
+#endif
+
 static int handle(lua_State *L, ddjvu_context_t *ctx, int wait)
 {
 	const ddjvu_message_t *msg;
@@ -203,6 +226,9 @@ static int closeDocument(lua_State *L) {
 static int setColorRendering(lua_State *L) {
 	DjvuDocument *doc = (DjvuDocument*) luaL_checkudata(L, 1, "djvudocument");
 	int color = lua_toboolean(L, 2);
+#ifdef DEBUG
+	printf("%s: %s\n", __func__, color ? "color" : "grey");
+#endif
 	if (doc->pixelformat != NULL) {
 		ddjvu_format_release(doc->pixelformat);
 		doc->pixelformat = NULL;
@@ -561,7 +587,11 @@ static int getPagePix(lua_State *L) {
     rrect.y = ry * scale;
     rrect.w = rw * scale;
     rrect.h = rh * scale;
-    printf("rendering page:%d,%d,%d,%d\n",rrect.x,rrect.y,rrect.w,rrect.h);
+#ifdef DEBUG
+    printf("%s: rendering page: %u (%d,%d,%d,%d) [%s:%s]\n", __func__, page->num,
+           rrect.x, rrect.y, rrect.w, rrect.h,
+           page->doc->pixelsize == 3 ? "color" : "grey", render_mode_str(mode));
+#endif
 
 	WILLUSBITMAP *dst = &kctx->src;
 	bmp_init(dst);
@@ -614,7 +644,11 @@ static int reflowPage(lua_State *L) {
 	rrect.y = ry * scale;
 	rrect.w = rw * scale;
 	rrect.h = rh * scale;
-	printf("rendering page:%d,%d,%d,%d\n",rrect.x,rrect.y,rrect.w,rrect.h);
+#ifdef DEBUG
+        printf("%s: rendering page: %u (%d,%d,%d,%d) [%s:%s]\n", __func__, page->num,
+               rrect.x, rrect.y, rrect.w, rrect.h,
+               page->doc->pixelsize == 3 ? "color" : "grey", render_mode_str(mode));
+#endif
 	kctx->zoom = scale;
 
 	WILLUSBITMAP *src = &kctx->src;
