@@ -177,6 +177,10 @@ jobs:
           name: Build
           command: test -d build || source .ci/build_script.sh
       - run:
+          when: always
+          name: Dump build timings
+          command: "! test -d build/cmake || make buildstats"
+      - run:
           name: Dump binaries runtime path & dependencies
           command: make bindeps
       # }}}
