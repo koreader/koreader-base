@@ -33,12 +33,6 @@ executors:
       <<: *EMU_ENV_LST
       KODEBUG: "1"
 
-  emu_gcc_make:
-    <<: *BASE_EXE
-    environment:
-      <<: *EMU_ENV_LST
-      USE_MAKE: "1"
-
   emu_clang_ninja:
     docker:
       - image: koreader/kobase-clang:0.3.4-20.04
@@ -245,16 +239,6 @@ workflows:
           requires:
             - lint
           ccache_maxsize: "512M"
-          always_test: true
-
-      - build_and_test:
-          name: emu_gcc_make
-          executor: emu_gcc_make
-          filters:
-            branches:
-              only: master
-          requires:
-            - lint
           always_test: true
 
       - build_and_test:
