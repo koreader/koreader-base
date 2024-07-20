@@ -14,7 +14,7 @@ shift 3
 linker_version="$("${linker}" -v 2>&1)"
 case "${linker_version}" in
     *PROJECT:ld64-* | *PROJECT:dyld-*)
-        symarg='-u %s\n'
+        symarg='-u _%s\n'
         vsarg='-exported_symbols_list %s\n'
         vsfmt='export'
         ;;
@@ -69,7 +69,7 @@ case "${vsfmt}" in
         ;;
     export)
         {
-            printf '%s\n' "${symbols[@]}"
+            printf '_%s\n' "${symbols[@]}"
         } >"${exports_script}"
         ;;
     version)
