@@ -80,11 +80,25 @@ all $(LEFTOVERS): skeleton $(BUILD_ENTRYPOINT)
 
 # Output skeleton. {{{
 
+CR3GUI_DATADIR = $(THIRDPARTY_DIR)/kpvcrlib/crengine/cr3gui/data
+
+define CR3GUI_DATADIR_EXCLUDES
+%/KoboUSBMS.tar.gz
+%/cr3.ini
+%/cr3skin-format.txt
+%/desktop
+%/devices
+%/manual
+endef
+
 define SKELETON
 $(CMAKE_DIR)/
 $(OUTPUT_DIR)/cache/
 $(OUTPUT_DIR)/clipboard/
+$(OUTPUT_DIR)/data/
 $(OUTPUT_DIR)/data/cr3.css
+$(OUTPUT_DIR)/data/dict
+$(OUTPUT_DIR)/data/tessdata
 $(OUTPUT_DIR)/ffi
 $(OUTPUT_DIR)/fonts/
 $(STAGING_DIR)/
@@ -94,14 +108,18 @@ define SKELETON +=
 $(OUTPUT_DIR)/spec/base
 endef
 endif
+SKELETON += $(addprefix $(OUTPUT_DIR)/data/,$(notdir $(filter-out $(CR3GUI_DATADIR_EXCLUDES),$(wildcard $(CR3GUI_DATADIR)/*))))
 
 skeleton: $(strip $(SKELETON))
 
-$(OUTPUT_DIR)/data: | $(OUTPUT_DIR)/
-	$(SYMLINK) $(THIRDPARTY_DIR)/kpvcrlib/crengine/cr3gui/data $@
-
-$(OUTPUT_DIR)/data/cr3.css: | $(OUTPUT_DIR)/data
+$(OUTPUT_DIR)/data/cr3.css: | $(OUTPUT_DIR)/data/
 	$(SYMLINK) $(THIRDPARTY_DIR)/kpvcrlib/cr3.css $@
+
+$(OUTPUT_DIR)/data/%: $(CR3GUI_DATADIR)/% | $(OUTPUT_DIR)/data/
+	$(SYMLINK) $(CR3GUI_DATADIR)/$* $@
+
+$(CR3GUI_DATADIR)/%:
+	mkdir $@
 
 $(OUTPUT_DIR)/ffi: | $(OUTPUT_DIR)/
 	$(SYMLINK) ffi $@
@@ -130,7 +148,7 @@ TESSDATA_FILE = thirdparty/tesseract/build/downloads/eng.traineddata
 TESSDATA_FILE_URL = https://github.com/tesseract-ocr/tessdata/raw/4.1.0/$(notdir $(TESSDATA_FILE))
 TESSDATA_FILE_SHA1 = 007b522901a665bc2037428602d4d527f5ead7ed
 
-$(OUTPUT_DIR)/data/tessdata/eng.traineddata: $(TESSDATA_FILE) | $(OUTPUT_DIR)/data/tessdata/
+$(OUTPUT_DIR)/data/tessdata/eng.traineddata: $(TESSDATA_FILE) | $(OUTPUT_DIR)/data/tessdata
 	$(SYMLINK) $(TESSDATA_FILE) $@
 
 $(TESSDATA_FILE):
