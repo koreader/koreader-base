@@ -13,7 +13,7 @@ shift 3
 
 linker_version="$("${linker}" -v 2>&1)"
 case "${linker_version}" in
-    *PROJECT:ld64-* | *PROJECT:dyld-*)
+    *PROJECT:ld64-* | *PROJECT:dyld-* | *PROJECT:ld-*)
         symarg='-u _%s\n'
         vsarg='-exported_symbols_list %s\n'
         vsfmt='export'
