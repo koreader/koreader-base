@@ -3462,28 +3462,33 @@ static bool _isLinkToFootnote(CreDocument *doc, const lString32 source_xpointer,
         }
     }
 
-    // Target text must be less than the provided maxTextSize
-    if (flags & 0x8000) {
-        int size = 0;
-        ldomXPointerEx curText;
-        ldomXPointerEx endText;
-        if ( !extendedRange.isNull() ) {
-            curText = extendedRange.getStart();
-            endText = extendedRange.getEnd();
+    // Target text must not be empty - and (if flags & 0x8000) must be less
+    // than the provided maxTextSize
+    int size = 0;
+    int hasContent = false;
+    ldomXPointerEx curText;
+    ldomXPointerEx endText;
+    if ( !extendedRange.isNull() ) {
+        curText = extendedRange.getStart();
+        endText = extendedRange.getEnd();
+    }
+    else {
+        ldomNode * finalNode = targetXP.getFinalNode();
+        if ( finalNode && !finalNode->isNull() )
+            curText = ldomXPointerEx(finalNode, 0);
+        else
+            curText = targetXP;
+        endText = curText; // copy
+        endText.lastInnerTextNode();
+    }
+    // Walk all text nodes till endText
+    while (curText.nextText() && curText.compare(endText) <= 0) {
+        lString32 nodeText = curText.getText();
+        size += nodeText.length();
+        if ( !hasContent ) {
+            hasContent = !(nodeText.trim().empty());
         }
-        else {
-            ldomNode * finalNode = targetXP.getFinalNode();
-            if ( finalNode && !finalNode->isNull() )
-                curText = ldomXPointerEx(finalNode, 0);
-            else
-                curText = targetXP;
-            endText = curText; // copy
-            endText.lastInnerTextNode();
-        }
-        // Walk all text nodes till endText
-        while (curText.nextText() && curText.compare(endText) <= 0) {
-            lString32 nodeText = curText.getText();
-            size += nodeText.length();
+        if (flags & 0x8000) { // Target text must be less than the provided maxTextSize
             if (size > maxTextSize) {
                 reason = "target text is too large";
                 return false;
@@ -3491,7 +3496,14 @@ static bool _isLinkToFootnote(CreDocument *doc, const lString32 source_xpointer,
                 // on the non-extended one?
             }
         }
-        // printf("target size is %d\n", size);
+        else if ( hasContent ) {
+            break; // no need to walk further
+        }
+    }
+    // printf("target size is %d\n", size);
+    if ( !hasContent ) {
+        reason = "target text is empty or only spaces";
+        return false;
     }
 
     if ( likelyFootnote ) {
