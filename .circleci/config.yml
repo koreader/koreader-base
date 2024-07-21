@@ -38,8 +38,7 @@ executors:
       - image: koreader/kobase-clang:0.3.4-20.04
     environment:
       <<: *EMU_ENV_LST
-      CC: "clang"
-      CXX: "clang++"
+      USE_CLANG: "1"
 
   # }}}
 

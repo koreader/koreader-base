@@ -194,8 +194,7 @@ else ifeq ($(TARGET), android)
 	else
 		CHOST?=armv7a-linux-androideabi$(NDKABI)
 	endif
-	CC=clang
-	CXX=clang++
+	USE_CLANG=1
 else ifeq ($(TARGET), win32)
 	CHOST?=x86_64-w64-mingw32
 	WIN32=1
@@ -280,7 +279,7 @@ endef
 SYMLINK = ln -snf$(if $(DARWINHOST),,r)
 
 # set cross-compiler/host CC and CXX
-ifneq (,$(findstring clang, $(CC)))
+ifneq (,$(USE_CLANG))
 	ifdef CHOST
 		CC:=$(CHOST)-clang
 		CXX:=$(CHOST)-clang++
