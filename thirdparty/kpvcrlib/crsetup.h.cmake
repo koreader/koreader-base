@@ -44,11 +44,6 @@
 #define GRAY_BACKBUFFER_BITS                 2
 #define GRAY_INVERSE                         0
 
-/// Skin support.
-// FIXME: to be removed once we stop compiling `crskin.cpp`.
-#define MAX_SKIN_IMAGE_CACHE_ITEM_UNPACKED_SIZE         (80*80*4)
-#define MAX_SKIN_IMAGE_CACHE_ITEM_RAM_COPY_PACKED_SIZE  10000
-
 /// Streams.
 #cmakedefine DISABLE_CLOEXEC                      1
 #cmakedefine HAVE_OFF64_T                         1
