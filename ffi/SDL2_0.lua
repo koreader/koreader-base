@@ -129,6 +129,10 @@ function S.open(w, h, x, y)
         SDL.SDL_SetHint("SDL_VIDEO_X11_NET_WM_BYPASS_COMPOSITOR", "0")
     end
 
+    -- Disable TextInput until we enable it.
+    -- Also see <https://github.com/slouken/SDL/commit/c0f9a3d814a815ec6e2822d7fd2e8648df79f7b9>.
+    S.stopTextInput()
+
     -- set up screen (window)
     local pos_x = tonumber(os.getenv("KOREADER_WINDOW_POS_X")) or x or SDL.SDL_WINDOWPOS_UNDEFINED
     local pos_y = tonumber(os.getenv("KOREADER_WINDOW_POS_Y")) or y or SDL.SDL_WINDOWPOS_UNDEFINED
