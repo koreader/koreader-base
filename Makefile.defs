@@ -276,7 +276,7 @@ define wget_and_validate
 endef
 
 # ln --symbolic --no-dereference --force --relative
-SYMLINK = ln -snf$(if $(DARWINHOST),,r)
+SYMLINK = $(if $(DARWINHOST),gln,ln) -snfr
 
 # set cross-compiler/host CC and CXX
 ifneq (,$(findstring clang, $(CC)))
