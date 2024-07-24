@@ -48,17 +48,14 @@ else
   CCACHE := $(or $(CCACHE),$(shell command -v ccache))
 endif
 
-# Should point at the actual directory in which *this* makefile resides, as opposed to $(CURDIR),
-# which is simply $PWD *at the time of the original make call*, which is not necessarily the same thing.
-# NOTE: Will only behave as long as there aren't any spaces in the paths involved!
-MAKEFILE_DIR:=$(dir $(realpath $(lastword $(MAKEFILE_LIST))))
-TOOLCHAIN_DIR:=$(MAKEFILE_DIR)toolchain
-ANDROID_ARCH?=arm
+
+TOOLCHAIN_DIR = $(abspath $(KOR_BASE)/toolchain)
+ANDROID_ARCH ?= arm
 export ANDROID_HOME := $(or $(ANDROID_HOME),$(ANDROID_SDK_ROOT),$(TOOLCHAIN_DIR)/android-sdk-linux)
 export ANDROID_SDK_ROOT := $(ANDROID_HOME)
 export ANDROID_NDK_HOME := $(or $(ANDROID_NDK_HOME),$(ANDROID_NDK_ROOT),$(TOOLCHAIN_DIR)/android-ndk-r23c)
 export ANDROID_NDK_ROOT := $(ANDROID_NDK_HOME)
-ANDROID_TOOLCHAIN := $(ANDROID_NDK_HOME)/toolchains/llvm/prebuilt/linux-x86_64
+ANDROID_TOOLCHAIN = $(ANDROID_NDK_HOME)/toolchains/llvm/prebuilt/linux-x86_64
 ifeq ($(ANDROID_ARCH), arm64)
 	# 64bit arches require at least ABI 21.
 	export NDKABI?=21
@@ -581,7 +578,7 @@ endif
 
 # Improve reproducibility (disabled on ancient toolchains).
 ifeq (,$(filter kindle-legacy pocketbook,$(TARGET)))
-  BASE_CFLAGS += -ffile-prefix-map=$(CURDIR)/=
+  BASE_CFLAGS += -ffile-prefix-map=$(abspath $(KOR_BASE))/=
 endif
 
 HOSTCFLAGS:=$(HOST_ARCH) $(BASE_CFLAGS) $(QFLAGS)
@@ -598,7 +595,7 @@ ifndef DARWIN
 	#       (Assuming no LD_LIBRARY_PATH are set, since the search order is basically RPATH -> LD_LIBRARY_PATH -> RUNPATH).
 	#       c.f., https://github.com/koreader/koreader-base/pull/1638#issuecomment-1636725691
 	#       And https://bugs.launchpad.net/ubuntu/+source/eglibc/+bug/1253638/comments/5 for a nice recap.
-	LDFLAGS:=-Wl,-O1 -Wl,--as-needed -Wl,@$(MAKEFILE_DIR)origin.ldflags $(COMPAT_LDFLAGS)
+	LDFLAGS:=-Wl,-O1 -Wl,--as-needed -Wl,@$(abspath $(KOR_BASE)/origin.ldflags) $(COMPAT_LDFLAGS)
 else
 	LDFLAGS:=-Wl,-rpath,@executable_path/libs,-rpath,@executable_path/../koreader/libs
 endif
@@ -619,7 +616,7 @@ ifeq ($(TARGET), win32)
 endif
 
 # this will create a path named build/arm-none-linux-gnueabi or similar
-OUTPUT_DIR ?= build/$(MACHINE)
+OUTPUT_DIR ?= $(KOR_BASE)/build/$(MACHINE)
 CMAKE_DIR = $(OUTPUT_DIR)/cmake
 STAGING_DIR = $(OUTPUT_DIR)/staging
 
@@ -714,7 +711,7 @@ endif
 
 # you can probably leave these settings alone:
 
-THIRDPARTY_DIR = thirdparty
+THIRDPARTY_DIR = $(KOR_BASE)/thirdparty
 
 LUAROCKS_BINARY := $(firstword $(shell command -v luarocks luarocks-5.1))
 ifneq (,$(LUAROCKS_BINARY))
@@ -871,7 +868,7 @@ set(HOSTCXX        "$(strip $(HOSTCXX))")
 set(LIB_EXT        $(LIB_EXT))
 set(VECTO_CFLAGS   "$(VECTO_CFLAGS)")
 
-set(BASE_DIR       $(abspath $(CURDIR)))
+set(BASE_DIR       $(abspath $(KOR_BASE)))
 set(OUTPUT_DIR     $(abspath $(OUTPUT_DIR)))
 set(STAGING_DIR    $(abspath $(STAGING_DIR)))
 set(THIRDPARTY_DIR $(abspath $(THIRDPARTY_DIR)))
