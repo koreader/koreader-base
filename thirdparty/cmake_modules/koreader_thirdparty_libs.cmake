@@ -90,7 +90,7 @@ get_target_property(LUAJIT_INC luajit::luajit INTERFACE_INCLUDE_DIRECTORIES)
 declare_dependency(lunasvg::lunasvg SHARED lunasvg)
 
 # mupdf
-set(LIBRARIES)
+set(LIBRARIES m)
 if(ANDROID)
     list(APPEND LIBRARIES log)
 endif()
