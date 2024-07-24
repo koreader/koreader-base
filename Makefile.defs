@@ -746,7 +746,7 @@ else ifneq (,$(filter i686-%,$(CHOST)))
 else ifneq (,$(filter x86_64-%,$(CHOST)))
   CMAKE_SYSTEM_PROCESSOR = x86_64
 else ifneq (,$(CHOST))
-  $(warning CMAKE_SYSTEM_PROCESSOR not set! (CHOST is $(CHOST)))
+  $(error CMAKE_SYSTEM_PROCESSOR not set! (CHOST is $(CHOST)))
 endif
 
 # Native & cross definitions.
