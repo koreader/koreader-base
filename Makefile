@@ -98,13 +98,13 @@ endif
 skeleton: $(strip $(SKELETON))
 
 $(OUTPUT_DIR)/data: | $(OUTPUT_DIR)/
-	$(SYMLINK) $(abspath $(THIRDPARTY_DIR)/kpvcrlib/crengine/cr3gui/data) $@
+	$(SYMLINK) $(THIRDPARTY_DIR)/kpvcrlib/crengine/cr3gui/data $@
 
 $(OUTPUT_DIR)/data/cr3.css: | $(OUTPUT_DIR)/data
-	$(SYMLINK) $(abspath $(THIRDPARTY_DIR)/kpvcrlib/cr3.css) $@
+	$(SYMLINK) $(THIRDPARTY_DIR)/kpvcrlib/cr3.css $@
 
 $(OUTPUT_DIR)/ffi: | $(OUTPUT_DIR)/
-	$(SYMLINK) $(abspath ffi) $@
+	$(SYMLINK) ffi $@
 
 build/%/:
 	mkdir -p $@
@@ -116,10 +116,10 @@ build/%/:
 ifneq (,$(EMULATE_READER))
 
 $(OUTPUT_DIR)/.busted: | $(OUTPUT_DIR)/
-	$(SYMLINK) $(abspath .busted) $@
+	$(SYMLINK) .busted $@
 
 $(OUTPUT_DIR)/spec/base: | $(OUTPUT_DIR)/spec/
-	$(SYMLINK) $(abspath spec) $@
+	$(SYMLINK) spec $@
 
 test: all test-data
 	cd $(OUTPUT_DIR) && $(BUSTED_LUAJIT) ./spec/base/unit
@@ -131,7 +131,7 @@ TESSDATA_FILE_URL = https://github.com/tesseract-ocr/tessdata/raw/4.1.0/$(notdir
 TESSDATA_FILE_SHA1 = 007b522901a665bc2037428602d4d527f5ead7ed
 
 $(OUTPUT_DIR)/data/tessdata/eng.traineddata: $(TESSDATA_FILE) | $(OUTPUT_DIR)/data/tessdata/
-	$(SYMLINK) $(abspath $(TESSDATA_FILE)) $@
+	$(SYMLINK) $(TESSDATA_FILE) $@
 
 $(TESSDATA_FILE):
 	mkdir -p $(dir $(TESSDATA_FILE))
@@ -142,7 +142,7 @@ DROID_FONT_URL = https://github.com/koreader/koreader-fonts/raw/master/droid/$(n
 DROID_FONT_SHA1 = 0b75601f8ef8e111babb6ed11de6573f7178ce44
 
 $(OUTPUT_DIR)/fonts/droid/DroidSansMono.ttf: $(DROID_FONT) | $(OUTPUT_DIR)/fonts/
-	$(SYMLINK) $(abspath $(dir $(DROID_FONT))) $(OUTPUT_DIR)/fonts/droid
+	$(SYMLINK) $(dir $(DROID_FONT)) $(OUTPUT_DIR)/fonts/droid
 
 $(DROID_FONT):
 	mkdir -p $(dir $(DROID_FONT))
