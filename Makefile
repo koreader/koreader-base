@@ -91,21 +91,11 @@ $(BASE_PREFIX)all $(LEFTOVERS): skeleton $(BUILD_ENTRYPOINT)
 
 CR3GUI_DATADIR = $(THIRDPARTY_DIR)/kpvcrlib/crengine/cr3gui/data
 
-define CR3GUI_DATADIR_EXCLUDES
-%/KoboUSBMS.tar.gz
-%/cr3.ini
-%/cr3skin-format.txt
-%/desktop
-%/devices
-%/manual
-endef
-
 define SKELETON
 $(CMAKE_DIR)/
 $(OUTPUT_DIR)/cache/
 $(OUTPUT_DIR)/clipboard/
 $(OUTPUT_DIR)/data/
-$(OUTPUT_DIR)/data/cr3.css
 $(OUTPUT_DIR)/data/dict
 $(OUTPUT_DIR)/data/tessdata
 $(OUTPUT_DIR)/ffi
@@ -117,7 +107,6 @@ define SKELETON +=
 $(OUTPUT_DIR)/spec/base
 endef
 endif
-SKELETON += $(addprefix $(OUTPUT_DIR)/data/,$(notdir $(filter-out $(CR3GUI_DATADIR_EXCLUDES),$(wildcard $(CR3GUI_DATADIR)/*))))
 
 skeleton: $(strip $(SKELETON))
 
