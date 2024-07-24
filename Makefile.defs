@@ -507,12 +507,6 @@ else ifeq ($(TARGET), kindle-legacy)
 	# We're not multi-threaded, so, whatever.
 	# c.f., https://github.com/koreader/koreader/discussions/11246
         COMPAT_CXXFLAGS+=-fno-threadsafe-statics
-	# Avoid pulling stuff from GLIBC_2.7 & 2.9 in glib
-	export glib_cv_eventfd=no
-	export ac_cv_func_pipe2=no
-	# Avoid pulling stuff from GLIBC_2.6 in tar
-	export ac_cv_func_utimensat=no
-	export ac_cv_func_futimens=no
 else ifeq ($(TARGET), android)
 	ifeq ($(ANDROID_ARCH), arm)
 		ARM_ARCH:=$(ANDROID_ARM_ARCH)
