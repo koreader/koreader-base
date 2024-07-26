@@ -114,16 +114,6 @@ function framebuffer:_isKaleidoWaveFormMode(waveform_mode)
     return waveform_mode == self.waveform_color or waveform_mode == self.waveform_color_reagl
 end
 
--- Returns the device-specific nightmode waveform mode
-function framebuffer:_getNightWaveFormMode()
-    return self.waveform_night
-end
-
--- Returns the device-specific flashing nightmode waveform mode
-function framebuffer:_getFlashNightWaveFormMode()
-    return self.waveform_flashnight
-end
-
 -- Returns true if w & h are equal or larger than our visible screen estate (i.e., we asked for a full-screen update)
 function framebuffer:_isFullScreen(w, h)
     -- NOTE: fb:getWidth() & fb:getHeight() return the viewport size, but obey rotation, which means we can't rely on them directly.
@@ -380,14 +370,14 @@ local function mxc_update(fb, ioc_cmd, ioc_data, is_flashing, waveform_mode, x, 
         -- There's nothing much we can do about crappy flashing behavior on some devices, though (c.f., base/#884),
         -- that's in the hands of the EPDC. Kindle PW2+ behave sanely, for instance, even when flashing on AUTO or GC16 ;).
         if fb:_isPartialWaveFormMode(waveform_mode) then
-            waveform_mode = fb:_getNightWaveFormMode()
+            waveform_mode = fb.waveform_night
             ioc_data.waveform_mode = waveform_mode
             -- And handle devices like the KOA2/PW4, where night is a REAGL waveform that needs to be FULL...
             if fb:_isNightREAGL() then
                 ioc_data.update_mode = C.UPDATE_MODE_FULL
             end
         elseif waveform_mode == C.WAVEFORM_MODE_GC16 or is_flashing then
-            waveform_mode = fb:_getFlashNightWaveFormMode()
+            waveform_mode = fb.waveform_flashnight
             ioc_data.waveform_mode = waveform_mode
         end
     end
