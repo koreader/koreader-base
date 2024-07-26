@@ -804,16 +804,6 @@ function framebuffer:refreshA2Imp(x, y, w, h, dither)
     self:mech_refresh(false, self.waveform_a2, x, y, w, h, dither)
 end
 
-function framebuffer:refreshColorImp(x, y, w, h, dither)
-    self.debug("refresh: color", x, y, w, h, dither)
-    self:mech_refresh(false, self.waveform_color, x, y, w, h, dither)
-end
-
-function framebuffer:refreshColorTextImp(x, y, w, h, dither)
-    self.debug("refresh: color text", x, y, w, h, dither)
-    self:mech_refresh(false, self.waveform_color_reagl, x, y, w, h, dither)
-end
-
 function framebuffer:refreshWaitForLastImp()
     if self.mech_wait_update_complete and self.dont_wait_for_marker ~= self.marker then
         self.debug("refresh: waiting for previous update", self.marker)
@@ -1054,12 +1044,8 @@ function framebuffer:init()
                 end
             end
 
-            -- Disable Kaleido refresh imps when it's unsupported
             -- NOTE: Can't use hasKaleidoWfm, it's set *after* we instantiate...
-            if not self.device:hasColorScreen() then
-                self.refreshColorImp = self.refreshPartialImp
-                self.refreshColorTextImp = self.refreshPartialImp
-            else
+            if self.device:hasColorScreen() then
                 if self:noCFAPostProcess() then
                     -- Just stomp the flag if the user wants to forgo post-processing
                     self.CFA_PROCESSING_FLAG = 0 -- Or C.HWTCON_FLAG_CFA_MODE_G1
