@@ -394,6 +394,12 @@ local function mxc_update(fb, ioc_cmd, ioc_data, is_flashing, waveform_mode, x, 
 
     -- Handle promotion to Kaleido waveform modes.
     -- We assume the dither flag is only set on image content, so we rely on that as our main trigger.
+    -- REAGL (via partial) => GLRC16
+    -- GC16  (via full)    => GCC16
+    -- NOTE: That leaves ui & flashui alone, which suits us just fine in order not to affect and slow down the FM,
+    --       while still making manual flashing refreshes via diagonal swipes automatically switch to CFA modes when relevant.
+    --       For instance, anything based on a mosaic view (say, History), will refresh with ui/flashui on its own (so no CFA),
+    --       but since it is a view flagged as `dithered`, a manual refresh *will* use GCC16 ;).
     if dither and fb.device:hasKaleidoWfm() and fb:isColorEnabled() then
         if fb:_isREAGLWaveFormMode(waveform_mode) then
             -- NOTE: If we wanted to be really fancy, we could check if fb is actually grayscale or not
