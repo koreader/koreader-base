@@ -89,6 +89,11 @@ function framebuffer:_isPartialWaveFormMode(waveform_mode)
     return waveform_mode == self.waveform_partial
 end
 
+-- Returns true if waveform_mode arg matches the full waveform mode for the current device
+function framebuffer:_isFullWaveFormMode(waveform_mode)
+    return waveform_mode == self.waveform_full
+end
+
 -- Returns true if waveform_mode arg matches the fast waveform mode for the current device
 function framebuffer:_isFastWaveFormMode(waveform_mode)
     return waveform_mode == self.waveform_fast
@@ -383,6 +388,21 @@ local function mxc_update(fb, ioc_cmd, ioc_data, is_flashing, waveform_mode, x, 
             end
         elseif waveform_mode == C.WAVEFORM_MODE_GC16 or is_flashing then
             waveform_mode = fb:_getFlashNightWaveFormMode()
+            ioc_data.waveform_mode = waveform_mode
+        end
+    end
+
+    -- Handle promotion to Kaleido waveform modes.
+    -- We assume the dither flag is only set on image content, so we rely on that as our main trigger.
+    if dither and fb.device:hasKaleidoWfm() and fb:isColorEnabled() then
+        if fb:_isREAGLWaveFormMode(waveform_mode) then
+            -- NOTE: If we wanted to be really fancy, we could check if fb is actually grayscale or not
+            --       (e.g., lerp/nearest bb to 1x1 and see if r==g==b?).
+            --       It's probably much much simpler to just set the dither flag when ReaderHighlight draws something, though ;).
+            waveform_mode = fb.waveform_color_reagl
+            ioc_data.waveform_mode = waveform_mode
+        elseif fb:_isFullWaveFormMode(waveform_mode) then
+            waveform_mode = fb.waveform_color
             ioc_data.waveform_mode = waveform_mode
         end
     end
@@ -1029,6 +1049,7 @@ function framebuffer:init()
             end
 
             -- Disable Kaleido refresh imps when it's unsupported
+            -- NOTE: Can't use hasKaleidoWfm, it's set *after* we instantiate...
             if not self.device:hasColorScreen() then
                 self.refreshColorImp = self.refreshPartialImp
                 self.refreshColorTextImp = self.refreshPartialImp
