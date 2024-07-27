@@ -118,9 +118,6 @@ jobs:
       ccache_maxsize:
         type: string
         default: "128M"
-      always_test:
-        type: boolean
-        default: false
     executor: << parameters.executor >>
     resource_class: medium
     environment:
@@ -143,14 +140,6 @@ jobs:
           name: Restore build directory
           keys:
             - &CACHE_KEY_BUILD_DIR '<< pipeline.parameters.cache_epoch >>-{{ .Environment.CIRCLE_JOB }}-build-{{ arch }}-{{ checksum "cache-key" }}'
-      # If we already have a build, and nothing
-      # to test, just skip the rest of the job.
-      - unless:
-          condition: << parameters.always_test >>
-          steps:
-              - run:
-                  name: Skip job?
-                  command: if test -d build; then circleci-agent step halt; fi
       - restore_cache:
           name: Restore build cache
           keys:
@@ -230,7 +219,6 @@ workflows:
               only: master
           requires:
             - lint
-          always_test: true
 
       - build_and_test:
           name: emu_gcc_ninja_debug
@@ -238,14 +226,12 @@ workflows:
           requires:
             - lint
           ccache_maxsize: "512M"
-          always_test: true
 
       - build_and_test:
           name: emu_clang_ninja
           executor: emu_clang_ninja
           requires:
             - lint
-          always_test: true
 
       # }}}
 
