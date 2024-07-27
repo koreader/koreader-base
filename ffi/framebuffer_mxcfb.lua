@@ -401,6 +401,11 @@ local function mxc_update(fb, ioc_cmd, ioc_data, is_flashing, waveform_mode, x, 
             waveform_mode = fb.waveform_color
             ioc_data.waveform_mode = waveform_mode
         end
+
+        -- Boost saturation for CFA modes
+        if fb:_isKaleidoWaveFormMode(waveform_mode) then
+            ioc_data.flags = bor(ioc_data.flags, fb.CFA_PROCESSING_FLAG)
+        end
     end
 
     -- Handle promotion to FULL for the specific waveform modes that require it...
@@ -702,11 +707,6 @@ local function refresh_kobo_mtk(fb, is_flashing, waveform_mode, x, y, w, h, dith
             fb.update_data.dither_mode = C.HWTCON_FLAG_USE_DITHERING_Y8_Y1_S
         else
             fb.update_data.dither_mode = C.HWTCON_FLAG_USE_DITHERING_Y8_Y4_S
-
-            -- Boost saturation for CFA modes
-            if fb:_isKaleidoWaveFormMode(waveform_mode) then
-                fb.update_data.flags = bor(fb.update_data.flags, fb.CFA_PROCESSING_FLAG)
-            end
         end
     else
         fb.update_data.flags = 0
