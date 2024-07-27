@@ -358,30 +358,6 @@ local function mxc_update(fb, ioc_cmd, ioc_data, is_flashing, waveform_mode, x, 
     marker = fb:_get_next_marker()
     ioc_data.update_marker = marker
 
-    -- Handle night mode shenanigans
-    if fb.night_mode then
-        -- We're in nightmode!
-        -- If the device can do HW inversion safely, and doesn't already handle setting the flag automatically, do that!
-        if fb.device:canHWInvert() and not fb:getHWNightmode() then
-            ioc_data.flags = bor(ioc_data.flags, C.EPDC_FLAG_ENABLE_INVERSION)
-        end
-
-        -- Enforce a nightmode-specific mode (usually, GC16), to limit ghosting, where appropriate (i.e., partial & flashes).
-        -- There's nothing much we can do about crappy flashing behavior on some devices, though (c.f., base/#884),
-        -- that's in the hands of the EPDC. Kindle PW2+ behave sanely, for instance, even when flashing on AUTO or GC16 ;).
-        if fb:_isPartialWaveFormMode(waveform_mode) then
-            waveform_mode = fb.waveform_night
-            ioc_data.waveform_mode = waveform_mode
-            -- And handle devices like the KOA2/PW4, where night is a REAGL waveform that needs to be FULL...
-            if fb:_isNightREAGL() then
-                ioc_data.update_mode = C.UPDATE_MODE_FULL
-            end
-        elseif waveform_mode == C.WAVEFORM_MODE_GC16 or is_flashing then
-            waveform_mode = fb.waveform_flashnight
-            ioc_data.waveform_mode = waveform_mode
-        end
-    end
-
     -- Handle promotion to Kaleido waveform modes.
     -- We assume the dither flag is only set on image content, so we rely on that as our main trigger.
     -- REAGL (via partial) => GLRC16
@@ -405,6 +381,33 @@ local function mxc_update(fb, ioc_cmd, ioc_data, is_flashing, waveform_mode, x, 
         -- Boost saturation for CFA modes
         if fb:_isKaleidoWaveFormMode(waveform_mode) then
             ioc_data.flags = bor(ioc_data.flags, fb.CFA_PROCESSING_FLAG)
+        end
+    end
+
+    -- Handle night mode shenanigans
+    if fb.night_mode then
+        -- We're in nightmode!
+        -- If the device can do HW inversion safely, and doesn't already handle setting the flag automatically, do that!
+        if fb.device:canHWInvert() and not fb:getHWNightmode() then
+            ioc_data.flags = bor(ioc_data.flags, C.EPDC_FLAG_ENABLE_INVERSION)
+        end
+
+        -- Leave Kaleido waveform modes alone
+        if not fb:_isKaleidoWaveFormMode(waveform_mode) then
+            -- Enforce a nightmode-specific mode (usually, GC16), to limit ghosting, where appropriate (i.e., partial & flashes).
+            -- There's nothing much we can do about crappy flashing behavior on some devices, though (c.f., base/#884),
+            -- that's in the hands of the EPDC. Kindle PW2+ behave sanely, for instance, even when flashing on AUTO or GC16 ;).
+            if fb:_isPartialWaveFormMode(waveform_mode) then
+                waveform_mode = fb.waveform_night
+                ioc_data.waveform_mode = waveform_mode
+                -- And handle devices like the KOA2/PW4, where night is a REAGL waveform that needs to be FULL...
+                if fb:_isNightREAGL() then
+                    ioc_data.update_mode = C.UPDATE_MODE_FULL
+                end
+            elseif waveform_mode == C.WAVEFORM_MODE_GC16 or is_flashing then
+                waveform_mode = fb.waveform_flashnight
+                ioc_data.waveform_mode = waveform_mode
+            end
         end
     end
 
