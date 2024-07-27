@@ -89,6 +89,11 @@ function framebuffer:_isPartialWaveFormMode(waveform_mode)
     return waveform_mode == self.waveform_partial
 end
 
+-- Returns true if waveform_mode arg matches the full waveform mode for the current device
+function framebuffer:_isFullWaveFormMode(waveform_mode)
+    return waveform_mode == self.waveform_full
+end
+
 -- Returns true if waveform_mode arg matches the fast waveform mode for the current device
 function framebuffer:_isFastWaveFormMode(waveform_mode)
     return waveform_mode == self.waveform_fast
@@ -107,16 +112,6 @@ end
 -- Returns true if waveform_mode arg matches a Kaleido-specific waveform mode for the current device
 function framebuffer:_isKaleidoWaveFormMode(waveform_mode)
     return waveform_mode == self.waveform_color or waveform_mode == self.waveform_color_reagl
-end
-
--- Returns the device-specific nightmode waveform mode
-function framebuffer:_getNightWaveFormMode()
-    return self.waveform_night
-end
-
--- Returns the device-specific flashing nightmode waveform mode
-function framebuffer:_getFlashNightWaveFormMode()
-    return self.waveform_flashnight
 end
 
 -- Returns true if w & h are equal or larger than our visible screen estate (i.e., we asked for a full-screen update)
@@ -363,6 +358,32 @@ local function mxc_update(fb, ioc_cmd, ioc_data, is_flashing, waveform_mode, x, 
     marker = fb:_get_next_marker()
     ioc_data.update_marker = marker
 
+    -- Handle promotion to Kaleido waveform modes.
+    -- We assume the dither flag is only set on image content, so we rely on that as our main trigger.
+    -- REAGL (via partial) => GLRC16
+    -- GC16  (via full)    => GCC16
+    -- NOTE: That leaves ui & flashui alone, which suits us just fine in order not to affect and slow down the FM,
+    --       while still making manual flashing refreshes via diagonal swipes automatically switch to CFA modes when relevant.
+    --       For instance, anything based on a mosaic view (say, History), will refresh with ui/flashui on its own (so no CFA),
+    --       but since it is a view flagged as `dithered`, a manual refresh *will* use GCC16 ;).
+    if dither and fb.device:hasKaleidoWfm() and fb:isColorEnabled() then
+        if fb:_isREAGLWaveFormMode(waveform_mode) then
+            -- NOTE: If we wanted to be really fancy, we could check if fb is actually grayscale or not
+            --       (e.g., lerp/nearest bb to 1x1 and see if r==g==b?).
+            --       It's probably much much simpler to just set the dither flag when ReaderHighlight draws something, though ;).
+            waveform_mode = fb.waveform_color_reagl
+            ioc_data.waveform_mode = waveform_mode
+        elseif fb:_isFullWaveFormMode(waveform_mode) then
+            waveform_mode = fb.waveform_color
+            ioc_data.waveform_mode = waveform_mode
+        end
+
+        -- Boost saturation for CFA modes
+        if fb:_isKaleidoWaveFormMode(waveform_mode) then
+            ioc_data.flags = bor(ioc_data.flags, fb.CFA_PROCESSING_FLAG)
+        end
+    end
+
     -- Handle night mode shenanigans
     if fb.night_mode then
         -- We're in nightmode!
@@ -371,19 +392,22 @@ local function mxc_update(fb, ioc_cmd, ioc_data, is_flashing, waveform_mode, x, 
             ioc_data.flags = bor(ioc_data.flags, C.EPDC_FLAG_ENABLE_INVERSION)
         end
 
-        -- Enforce a nightmode-specific mode (usually, GC16), to limit ghosting, where appropriate (i.e., partial & flashes).
-        -- There's nothing much we can do about crappy flashing behavior on some devices, though (c.f., base/#884),
-        -- that's in the hands of the EPDC. Kindle PW2+ behave sanely, for instance, even when flashing on AUTO or GC16 ;).
-        if fb:_isPartialWaveFormMode(waveform_mode) then
-            waveform_mode = fb:_getNightWaveFormMode()
-            ioc_data.waveform_mode = waveform_mode
-            -- And handle devices like the KOA2/PW4, where night is a REAGL waveform that needs to be FULL...
-            if fb:_isNightREAGL() then
-                ioc_data.update_mode = C.UPDATE_MODE_FULL
+        -- Leave Kaleido waveform modes alone
+        if not fb:_isKaleidoWaveFormMode(waveform_mode) then
+            -- Enforce a nightmode-specific mode (usually, GC16), to limit ghosting, where appropriate (i.e., partial & flashes).
+            -- There's nothing much we can do about crappy flashing behavior on some devices, though (c.f., base/#884),
+            -- that's in the hands of the EPDC. Kindle PW2+ behave sanely, for instance, even when flashing on AUTO or GC16 ;).
+            if fb:_isPartialWaveFormMode(waveform_mode) then
+                waveform_mode = fb.waveform_night
+                ioc_data.waveform_mode = waveform_mode
+                -- And handle devices like the KOA2/PW4, where night is a REAGL waveform that needs to be FULL...
+                if fb:_isNightREAGL() then
+                    ioc_data.update_mode = C.UPDATE_MODE_FULL
+                end
+            elseif waveform_mode == C.WAVEFORM_MODE_GC16 or is_flashing then
+                waveform_mode = fb.waveform_flashnight
+                ioc_data.waveform_mode = waveform_mode
             end
-        elseif waveform_mode == C.WAVEFORM_MODE_GC16 or is_flashing then
-            waveform_mode = fb:_getFlashNightWaveFormMode()
-            ioc_data.waveform_mode = waveform_mode
         end
     end
 
@@ -448,6 +472,9 @@ local function mxc_update(fb, ioc_cmd, ioc_data, is_flashing, waveform_mode, x, 
     --       Interestingly enough, lab126 devices are affected the *other* way around:
     --       they tend to optimize *out* the highlight, instead of having trouble dealing with the unhighlight...
     -- In a fun twist, the flickers are gone in night mode -_-".
+    -- NOTE: This doesn't happen when CFA processing is disabled
+    --       (at which point, it starts to look like lab126 MTK, where highlights are often optimized out...),
+    --       so I guess this all comes from the CFA processing :/.
 end
 
 local function refresh_k51(fb, is_flashing, waveform_mode, x, y, w, h)
@@ -686,11 +713,6 @@ local function refresh_kobo_mtk(fb, is_flashing, waveform_mode, x, y, w, h, dith
             fb.update_data.dither_mode = C.HWTCON_FLAG_USE_DITHERING_Y8_Y1_S
         else
             fb.update_data.dither_mode = C.HWTCON_FLAG_USE_DITHERING_Y8_Y4_S
-
-            -- Boost saturation for CFA modes
-            if fb:_isKaleidoWaveFormMode(waveform_mode) then
-                fb.update_data.flags = bor(fb.update_data.flags, fb.CFA_PROCESSING_FLAG)
-            end
         end
     else
         fb.update_data.flags = 0
@@ -776,16 +798,6 @@ end
 function framebuffer:refreshA2Imp(x, y, w, h, dither)
     self.debug("refresh: A2", x, y, w, h, dither)
     self:mech_refresh(false, self.waveform_a2, x, y, w, h, dither)
-end
-
-function framebuffer:refreshColorImp(x, y, w, h, dither)
-    self.debug("refresh: color", x, y, w, h, dither)
-    self:mech_refresh(false, self.waveform_color, x, y, w, h, dither)
-end
-
-function framebuffer:refreshColorTextImp(x, y, w, h, dither)
-    self.debug("refresh: color text", x, y, w, h, dither)
-    self:mech_refresh(false, self.waveform_color_reagl, x, y, w, h, dither)
 end
 
 function framebuffer:refreshWaitForLastImp()
@@ -1028,16 +1040,13 @@ function framebuffer:init()
                 end
             end
 
-            -- Disable Kaleido refresh imps when it's unsupported
-            if not self.device:hasColorScreen() then
-                self.refreshColorImp = self.refreshPartialImp
-                self.refreshColorTextImp = self.refreshPartialImp
-            else
+            -- NOTE: Can't use hasKaleidoWfm, it's set *after* we instantiate...
+            if self.device:hasColorScreen() then
                 if self:noCFAPostProcess() then
                     -- Just stomp the flag if the user wants to forgo post-processing
-                    self.CFA_PROCESSING_FLAG = 0 -- Or C.HWTCON_FLAG_CFA_MODE_G1
+                    self.CFA_PROCESSING_FLAG = 0 -- Or C.HWTCON_FLAG_CFA_EINK_G1
                 else
-                    self.CFA_PROCESSING_FLAG = C.HWTCON_FLAG_CFA_MODE_G2
+                    self.CFA_PROCESSING_FLAG = C.HWTCON_FLAG_CFA_EINK_G2
                 end
             end
         end
