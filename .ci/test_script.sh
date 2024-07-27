@@ -6,8 +6,8 @@ source "${CI_DIR}/common.sh"
 
 exit_code=0
 
-echo -e "${ANSI_GREEN}Libcheck results${ANSI_RESET}"
-make libcheck || exit_code=1
+echo -e "${ANSI_GREEN}Bincheck results${ANSI_RESET}"
+make bincheck || exit_code=1
 
 if [ "${EMULATE_READER}" = "1" ]; then
     echo -e "\n${ANSI_GREEN}Testsuite${ANSI_RESET}"

@@ -175,7 +175,7 @@ jobs:
           command: "! test -d build/cmake || make buildstats"
       - run:
           name: Dump binaries runtime path & dependencies
-          command: make bindeps
+          command: make bininfo
       # }}}
       # Clean / save caches. {{{
       - run:

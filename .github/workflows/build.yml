@@ -40,8 +40,14 @@ jobs:
           xcodebuild -version
           xcode-select -p
 
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
       - name: Install dependencies
         run: |
+          python3 -m pip install --disable-pip-version-check ruamel.yaml
           wget -O ninjatracing.zip https://github.com/nico/ninjatracing/archive/a669e3644cf22b29cbece31dbed2cfbf34e5f48e.zip
           unzip -j ninjatracing.zip '*/ninjatracing'
           install -m755 ninjatracing /usr/local/bin/
@@ -134,10 +140,6 @@ jobs:
         if: contains('failure success', steps.build.conclusion) && !cancelled()
         run: make buildstats
 
-      - name: Dump binaries runtime path & dependencies
-        if: steps.ccache-restore.outputs.cache-hit != 'true'
-        run: make bindeps
-
       # }}}
 
       # Clean / save caches. {{{
@@ -155,6 +157,18 @@ jobs:
         with:
           path: /Users/runner/Library/Caches/ccache
           key: ${{ steps.ccache-restore.outputs.cache-primary-key }}
+
+      # }}}
+
+      # Dump & check binaries. {{{
+
+      - name: Dump binaries runtime path & dependencies
+        if: steps.ccache-restore.outputs.cache-hit != 'true'
+        run: make bininfo
+
+      - name: Checking binaries for missing dependencies
+        if: steps.ccache-restore.outputs.cache-hit != 'true'
+        run: make bincheck
 
       # }}}
 

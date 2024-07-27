@@ -26,8 +26,8 @@ $(info ************ MAKE: $(strip $(MAKE) $(PARALLEL_JOBS:%=-j%) $(PARALLEL_LOAD
 endef
 
 PHONY += $(addprefix $(BASE_PREFIX),all clean distclean fetchthirdparty re reinstall test uninstall)
-PHONY += bindeps buildstats info libcheck %-re setup skeleton test-data
-SOUND += cache-key build/% $(OUTPUT_DIR)/% $(KOR_BASE)/utils/libcheck/%
+PHONY += bininfo bincheck buildstats info %-re setup skeleton test-data
+SOUND += cache-key build/% $(OUTPUT_DIR)/% $(STAGING_DIR)/bincheck/%
 
 # Main rules. {{{
 
@@ -184,10 +184,67 @@ cache-key: $(KOR_BASE)/Makefile $(KOR_BASE)/cache-key.base
 
 # }}}
 
-# Dump binaries runtime path and dependencies. {{{
+# Dump/check binaries runtime path and dependencies. {{{
 
-bindeps:
-	@$(KOR_BASE)/utils/bindeps.sh $(filter-out $(addprefix $(OUTPUT_DIR)/,cmake staging thirdparty),$(wildcard $(OUTPUT_DIR)/*))
+define BINARY_PATHS
+$(filter-out
+  $(addprefix $(OUTPUT_DIR)/,cmake staging thirdparty),
+    $(wildcard $(OUTPUT_DIR)/*))
+endef
+
+bininfo:
+	@$(KOR_BASE)/utils/bininfo.py $(BINARY_PATHS)
+
+ifneq (,$(filter bincheck,$(MAKECMDGOALS)))
+
+BINCHECK_DEPS :=
+BINCHECK_LD_PATH :=
+
+# Preload.
+ifeq (,$(USE_LUAJIT_LIB))
+  # When not using the luajit library, preload
+  # luajit so the LUA API' symbols are available.
+  BINCHECK_DEPS += $(OUTPUT_DIR)/luajit
+  BINCHECK_LD_PATH += $(OUTPUT_DIR)/luajit
+endif
+
+# Stubs for platform libraries.
+ifneq (,$(POCKETBOOK))
+  BINCHECK_DEPS += $(STAGING_DIR)/bincheck/libinkview.so
+endif
+ifneq (,$(KINDLE))
+  BINCHECK_DEPS += $(STAGING_DIR)/bincheck/liblipc.so
+endif
+
+# Library directories.
+BINCHECK_LD_PATH += $(STAGING_DIR)/bincheck $(OUTPUT_DIR)/libs
+
+# Sysroot.
+define sysroot_libdir
+  $(dir $(abspath $(or
+    $(filter /%,$(shell $(CC) -print-file-name=$1)),
+    $(error could not find library directory for `$1`))))
+endef
+ifneq (,$(EMULATE_READER))
+  ifeq (,$(DARWIN))
+    BINCHECK_LD_PATH += $(call sysroot_libdir,libc.so)
+  endif
+else ifneq (,$(ANDROID))
+  BINCHECK_LD_PATH += $(call sysroot_libdir,libc.so)
+  BINCHECK_LD_PATH += $(call sysroot_libdir,libc++_shared.so)
+else
+  BINCHECK_LD_PATH += $(call sysroot_libdir,libc.so.6)
+endif
+
+bincheck: $(BINCHECK_DEPS)
+	$(KOR_BASE)/utils/bincheck.py '$(subst $(empty) $(empty),:,$(strip $(BINCHECK_LD_PATH)))' $(BINARY_PATHS)
+
+endif
+
+$(STAGING_DIR)/bincheck/%.so: $(KOR_BASE)/utils/bincheck/%.c | $(STAGING_DIR)/bincheck/
+	$(CC) $(DYNLIB_LDFLAGS) -o $@ $<
+
+# }}}
 
 # }}}
 
@@ -205,27 +262,5 @@ buildstats: $(CMAKE_DIR)/.ninja_log
 	    git column --mode=row
 
 # }}}
-
-# Checking libraries for missing dependencies. {{{
-
-# NOTE: the extra `$(filter %/,…)` is to work around some older versions
-# of make (e.g. 4.2.1) returning files too when using `$(wildcard …/*/)`.
-libcheck:
-	@$(KOR_BASE)/utils/libcheck.sh $(CC) $(LDFLAGS) -Wl,-rpath-link=$(OUTPUT_DIR)/libs -- '$(if $(USE_LUAJIT_LIB),,1)' $(filter %/,$(filter-out $(OUTPUT_DIR)/thirdparty/,$(wildcard $(OUTPUT_DIR)/*/)))
-
-ifneq (,$(KINDLE))
-libcheck: $(KOR_BASE)/utils/libcheck/liblipc.so
-endif
-
-ifneq (,$(POCKETBOOK))
-libcheck: $(KOR_BASE)/utils/libcheck/libinkview.so
-endif
-
-$(KOR_BASE)/utils/libcheck/%.so: $(KOR_BASE)/utils/libcheck/%.ld
-	$(LD) -shared -o $@ $<
-
-# }}}
-
-.PHONY: $(PHONY)
 
 # vim: foldmethod=marker foldlevel=0
