@@ -14,6 +14,7 @@
 # Excludes.
 !*.lua
 !/ffi-cdecl/**
+!/utils/bincheck/*
 
 # Exceptions.
 /ffi-cdecl/koptcontext_cdecl.c
