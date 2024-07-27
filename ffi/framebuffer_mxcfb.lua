@@ -472,6 +472,9 @@ local function mxc_update(fb, ioc_cmd, ioc_data, is_flashing, waveform_mode, x, 
     --       Interestingly enough, lab126 devices are affected the *other* way around:
     --       they tend to optimize *out* the highlight, instead of having trouble dealing with the unhighlight...
     -- In a fun twist, the flickers are gone in night mode -_-".
+    -- NOTE: This doesn't happen when CFA processing is disabled
+    --       (at which point, it starts to look like lab126 MTK, where highlights are often optimized out...),
+    --       so I guess this all comes from the CFA processing :/.
 end
 
 local function refresh_k51(fb, is_flashing, waveform_mode, x, y, w, h)
