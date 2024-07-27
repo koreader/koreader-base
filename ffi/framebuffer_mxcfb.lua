@@ -1038,9 +1038,9 @@ function framebuffer:init()
             if self.device:hasColorScreen() then
                 if self:noCFAPostProcess() then
                     -- Just stomp the flag if the user wants to forgo post-processing
-                    self.CFA_PROCESSING_FLAG = 0 -- Or C.HWTCON_FLAG_CFA_MODE_G1
+                    self.CFA_PROCESSING_FLAG = 0 -- Or C.HWTCON_FLAG_CFA_EINK_G1
                 else
-                    self.CFA_PROCESSING_FLAG = C.HWTCON_FLAG_CFA_MODE_G2
+                    self.CFA_PROCESSING_FLAG = C.HWTCON_FLAG_CFA_EINK_G2
                 end
             end
         end
