@@ -15,7 +15,7 @@ list(APPEND BUILD_CMD COMMAND make)
 list(APPEND INSTALL_CMD COMMAND make install)
 
 set(LIB_SPEC unibreak VERSION 6)
-if(DARWIN)
+if(APPLE)
     append_shared_lib_fix_commands(INSTALL_CMD ${LIB_SPEC} ID)
 endif()
 append_shared_lib_install_commands(INSTALL_CMD ${LIB_SPEC})

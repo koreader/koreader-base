@@ -7,7 +7,7 @@ endif()
 
 # Crappy macOS command line utilities strike again…
 set(PRINTF_QS "%q")
-if(DARWIN)
+if(APPLE)
     set(PRINTF_QS "'%s'")
 endif()
 set(KOENV ${CMAKE_BINARY_DIR}/koenv.sh)

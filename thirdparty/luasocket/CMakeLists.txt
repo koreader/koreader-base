@@ -22,7 +22,7 @@ list(APPEND PATCH_CMD COMMAND sh -c "\"\$@\" src/*" --
 # Don't enforce CFLAGS.
 list(APPEND PATCH_CMD COMMAND ${ISED} "s|-O2 -ggdb3 ||g" src/makefile)
 
-if(DARWIN)
+if(APPLE)
     set(PLAT macosx)
 elseif(WIN32)
     set(PLAT mingw)

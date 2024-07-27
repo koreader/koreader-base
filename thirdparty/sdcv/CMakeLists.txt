@@ -18,7 +18,7 @@ endif()
 if(NOT HAS_ICONV)
     string(APPEND GLIB2_LIBRARIES $<SEMICOLON> ${STAGING_DIR}/lib/libiconv.a)
 endif()
-if(DARWIN)
+if(APPLE)
     string(APPEND GLIB2_LIBRARIES
         $<SEMICOLON> "-framework CoreFoundation"
         $<SEMICOLON> "-framework CoreServices"
