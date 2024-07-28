@@ -126,7 +126,7 @@ static int handle(lua_State *L, ddjvu_context_t *ctx, int wait)
 	if (!ctx)
 		return -1;
 	if (wait)
-		msg = ddjvu_message_wait(ctx);
+		ddjvu_message_wait(ctx);
 	while ((msg = ddjvu_message_peek(ctx)))
 	{
 	  switch(msg->m_any.tag)
