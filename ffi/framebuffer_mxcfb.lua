@@ -719,6 +719,16 @@ local function refresh_kobo_mtk(fb, is_flashing, waveform_mode, x, y, w, h, dith
         fb.update_data.dither_mode = 0
     end
 
+    --[[
+    -- Disable CFA processing on A2/DU
+    -- NOTE: Well, that leads to... interesting... results when used @ 32bpp...
+    --       The driver seems to have trouble choosing the right working buffer,
+    --       so you get to see a lot of weird crap ;).
+    if waveform_mode == C.HWTCON_WAVEFORM_MODE_A2 or waveform_mode == C.HWTCON_WAVEFORM_MODE_DU then
+        fb.update_data.flags = bor(fb.update_data.flags, C.HWTCON_FLAG_CFA_SKIP)
+    end
+    --]]
+
     return mxc_update(fb, C.HWTCON_SEND_UPDATE, fb.update_data, is_flashing, waveform_mode, x, y, w, h, dither)
 end
 
