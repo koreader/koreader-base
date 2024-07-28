@@ -56,7 +56,7 @@ else()
     set(ASM_OPT no-asm)
 endif()
 
-if(DARWIN)
+if(APPLE)
     list(APPEND CONFIGURE_CMD ${SOURCE_DIR}/Configure)
     if(DARWIN_AARCH64)
         list(APPEND CONFIGURE_CMD darwin64-arm64-cc)

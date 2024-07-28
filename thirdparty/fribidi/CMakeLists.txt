@@ -14,7 +14,7 @@ list(APPEND BUILD_CMD COMMAND make -C lib)
 list(APPEND INSTALL_CMD COMMAND make -C lib install)
 
 set(LIB_SPEC fribidi VERSION 0)
-if(DARWIN)
+if(APPLE)
     append_shared_lib_fix_commands(INSTALL_CMD ${LIB_SPEC} ID)
 endif()
 append_shared_lib_install_commands(INSTALL_CMD ${LIB_SPEC})

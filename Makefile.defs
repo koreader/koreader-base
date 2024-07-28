@@ -175,7 +175,6 @@ else ifeq ($(TARGET), linux)
 	else ifeq ($(LINUX_ARCH), arm64)
 		CHOST?=aarch64-linux-gnu
 	else
-		LINUX=1
 		EMULATE_READER=1
 	endif
 else ifeq ($(TARGET), macos)
@@ -825,6 +824,10 @@ set(CMAKE_INSTALL_BINDIR     $${CMAKE_INSTALL_PREFIX}/bin     CACHE FILEPATH "in
 set(CMAKE_INSTALL_INCLUDEDIR $${CMAKE_INSTALL_PREFIX}/include CACHE FILEPATH "install directory: includes")
 set(CMAKE_INSTALL_LIBDIR     $${CMAKE_INSTALL_PREFIX}/lib     CACHE FILEPATH "install directory: libraries")
 
+set(APPLE $(DARWIN))
+set(LINUX $(if $(DARWIN)$(WIN32),,1))
+set(WIN32 $(WIN32))
+
 endef
 
 # Cross-compile only definitions.
@@ -908,7 +911,6 @@ set(WANT_SIMD          $(WANT_SIMD))
 set(ANDROID        $(ANDROID))
 set(APPIMAGE       $(APPIMAGE))
 set(CERVANTES      $(CERVANTES))
-set(DARWIN         $(DARWIN))
 set(DARWIN_AARCH64 $(DARWIN_AARCH64))
 set(KINDLE         $(KINDLE))
 set(KOBO           $(KOBO))
@@ -917,7 +919,6 @@ set(MACOS          $(MACOS))
 set(POCKETBOOK     $(POCKETBOOK))
 set(REMARKABLE     $(REMARKABLE))
 set(SONY_PRSTUX    $(SONY_PRSTUX))
-set(WIN32          $(WIN32))
 
 set(SKIP_LUAJIT_BIN $(SKIP_LUAJIT_BIN))
 set(USE_LUAJIT_LIB  $(USE_LUAJIT_LIB))

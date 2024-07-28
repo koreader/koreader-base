@@ -1,6 +1,6 @@
 include_guard(GLOBAL)
 
-if(DARWIN)
+if(APPLE)
     # Note: can't use `sed -i "" -e`, because cmake "helpfully"
     # filter-out the empty argument during command invocation…
     set(ISED sh -c "sed -i '' -e \"$@\"" --)
@@ -44,7 +44,7 @@ function(set_libname VAR NAME)
     endif()
     set(NAME lib${NAME} ${_EXT})
     if(DEFINED _VERSION)
-        if(DARWIN)
+        if(APPLE)
             list(INSERT NAME 1 .${_VERSION})
         elseif(WIN32)
             list(INSERT NAME 1 -${_VERSION})
@@ -94,7 +94,7 @@ function(append_shared_lib_install_commands CMD_LIST)
     set(${CMD_LIST} ${${CMD_LIST}} PARENT_SCOPE)
 endfunction()
 
-if(DARWIN)
+if(APPLE)
     function(append_shared_lib_fix_commands CMD_LIST)
         cmake_parse_arguments("" "ID;RPATH" "" "" ${ARGN})
         set_libname(LIB ${_UNPARSED_ARGUMENTS})

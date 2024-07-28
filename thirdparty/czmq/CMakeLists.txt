@@ -1,5 +1,5 @@
 list(APPEND PATCH_FILES cmake_tweaks.patch)
-if(NOT DARWIN)
+if(NOT APPLE)
     # patch: ignore limited broadcast address
     list(APPEND PATCH_FILES zbeacon.patch)
     # patch: add _DEFAULT_SOURCE define for glibc starting at version 2.20

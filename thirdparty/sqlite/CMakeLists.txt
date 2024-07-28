@@ -27,7 +27,7 @@ list(APPEND INSTALL_CMD COMMAND make
 )
 
 # FIXME: shouldn't the versioned `libsqlite3.so.0` be used?
-if(DARWIN)
+if(APPLE)
     append_shared_lib_fix_commands(INSTALL_CMD sqlite3 ID)
 endif()
 append_shared_lib_install_commands(INSTALL_CMD sqlite3)

@@ -4,7 +4,7 @@
 # NOTE: Technically, provided we're targeting ARM, we could probably apply the patch unilaterally,
 # and not only when glibc >= 2.22, but since we now have the code to make the check, keep it,
 # that ensures a vanilla build with sane TCs ;).
-if(NOT ANDROID AND NOT DARWIN AND NOT WIN32 AND NOT EMULATE_READER)
+if(NOT ANDROID AND NOT APPLE AND NOT WIN32 AND NOT EMULATE_READER)
     enable_language(C)
     include(CheckCSourceCompiles)
     check_c_source_compiles([==[

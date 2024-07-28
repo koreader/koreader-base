@@ -16,7 +16,7 @@ set(CPPFLAGS "-DHAVE_MKFIFO=1")
 
 if(ANDROID)
     set(LIBS -static)
-elseif(DARWIN OR WIN32)
+elseif(APPLE OR WIN32)
     set(LIBS)
 else()
     set(LIBS -lrt)

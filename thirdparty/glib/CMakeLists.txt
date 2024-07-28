@@ -30,7 +30,7 @@ endif()
 
 list(APPEND CFG_CMD COMMAND sh -c "printf '%s\\n' \"$@\" >cache.conf" -- ${gen_cache_config})
 
-if(ANDROID OR DARWIN)
+if(ANDROID OR APPLE)
     set(WITH_LIBICONV gnu)
 else()
     set(WITH_LIBICONV no)

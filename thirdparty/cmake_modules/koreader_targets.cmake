@@ -217,7 +217,7 @@ function(setup_Xss)
 endfunction()
 
 # koreader
-if(DARWIN)
+if(APPLE)
     set(EXCLUDE_FROM_ALL)
 else()
     set(EXCLUDE_FROM_ALL EXCLUDE_FROM_ALL)
