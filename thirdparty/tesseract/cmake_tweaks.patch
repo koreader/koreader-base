@@ -25,7 +25,7 @@
  
    # Check for optional libraries.
    if(DISABLE_TIFF)
-@@ -829,6 +829,11 @@
+@@ -827,6 +829,11 @@
      PRIVATE -DTESS_EXPORTS
      INTERFACE -DTESS_IMPORTS)
    # generate_export_header          (libtesseract EXPORT_MACRO_NAME TESS_API)
@@ -37,21 +37,17 @@
  endif()
  target_link_libraries(libtesseract PRIVATE ${LIB_Ws2_32} ${LIB_pthread})
  if(OpenMP_CXX_FOUND)
-@@ -846,12 +846,7 @@ if(CURL_FOUND)
-   endif()
- endif(CURL_FOUND)
- 
--set_target_properties(
--  libtesseract PROPERTIES VERSION
+@@ -851,7 +858,7 @@
+                           ${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH})
+ set_target_properties(
+   libtesseract PROPERTIES SOVERSION
 -                          ${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH})
--set_target_properties(
--  libtesseract PROPERTIES SOVERSION
--                          ${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH})
-+set_target_properties(libtesseract PROPERTIES SOVERSION ${VERSION_MAJOR})
++                          ${VERSION_MAJOR})
  
  set_target_properties(
    libtesseract
-@@ -885,10 +885,11 @@
+@@ -887,12 +894,13 @@
+ endif()
  
  if(ANDROID)
 -  add_definitions(-DANDROID)
