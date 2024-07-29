@@ -26,6 +26,7 @@ list(APPEND INSTALL_CMD COMMAND rm -f ${STAGING_DIR}/lib/libintl.la)
 external_project(
     DOWNLOAD URL 40996bbaf7d1356d3c22e33a8b255b31
     http://ftpmirror.gnu.org/gettext/gettext-0.21.tar.xz
+    https://ftp.wayne.edu/gnu/gettext/gettext-0.21.tar.xz
     http://ftp.gnu.org/pub/gnu/gettext/gettext-0.21.tar.xz
     CONFIGURE_COMMAND ${CFG_CMD}
     BUILD_COMMAND ${BUILD_CMD}

@@ -52,6 +52,7 @@ append_binary_install_command(INSTALL_CMD src/tar)
 external_project(
     DOWNLOAD URL 9d5949e4c2d9665546ac65dafc0e726a
     http://ftpmirror.gnu.org/tar/tar-1.34.tar.gz
+    https://ftp.wayne.edu/gnu/tar/tar-1.34.tar.gz
     http://ftp.gnu.org/pub/gnu/tar/tar-1.34.tar.gz
     PATCH_FILES ${PATCH_FILES}
     CONFIGURE_COMMAND ${CFG_CMD}

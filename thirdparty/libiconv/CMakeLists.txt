@@ -15,6 +15,7 @@ list(APPEND INSTALL_CMD COMMAND rm -f ${STAGING_DIR}/lib/libiconv.la ${STAGING_D
 external_project(
     DOWNLOAD URL ace8b5f2db42f7b3b3057585e80d9808
     http://ftpmirror.gnu.org/libiconv/libiconv-1.15.tar.gz
+    https://ftp.wayne.edu/gnu/libiconv/libiconv-1.15.tar.gz
     http://ftp.gnu.org/pub/gnu/libiconv/libiconv-1.15.tar.gz
     CONFIGURE_COMMAND ${CFG_CMD}
     BUILD_COMMAND ${BUILD_CMD}
