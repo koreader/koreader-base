@@ -30,7 +30,6 @@ add_library(crengine STATIC
     ${CRE_DIR}/qimagescale/qimagescale.cpp
     ${CRE_DIR}/src/chmfmt.cpp
     ${CRE_DIR}/src/cp_stats.cpp
-    ${CRE_DIR}/src/crconcurrent.cpp
     ${CRE_DIR}/src/cri18n.cpp
     ${CRE_DIR}/src/crtxtenc.cpp
     ${CRE_DIR}/src/docxfmt.cpp
