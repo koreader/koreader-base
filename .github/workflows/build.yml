@@ -47,7 +47,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          python3 -m pip install --disable-pip-version-check ruamel.yaml
+          python3 -m pip install --disable-pip-version-check meson ruamel.yaml
           wget -O ninjatracing.zip https://github.com/nico/ninjatracing/archive/a669e3644cf22b29cbece31dbed2cfbf34e5f48e.zip
           unzip -j ninjatracing.zip '*/ninjatracing'
           install -m755 ninjatracing /usr/local/bin/
