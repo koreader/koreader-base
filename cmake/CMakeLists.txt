@@ -204,20 +204,13 @@ declare_project(thirdparty/freetype2)
 # fribidi
 declare_project(thirdparty/fribidi EXCLUDE_FROM_ALL)
 
-# gettext
-set(DEPENDS)
-if(NOT HAS_ICONV)
-    list(APPEND DEPENDS libiconv)
-endif()
-declare_project(thirdparty/gettext DEPENDS ${DEPENDS} EXCLUDE_FROM_ALL)
-
 # giflib
 declare_project(thirdparty/giflib)
 
 # glib
 set(DEPENDS)
 if(NOT HAS_GETTEXT)
-    list(APPEND DEPENDS gettext)
+    list(APPEND DEPENDS proxy-libintl)
 endif()
 if(NOT HAS_ICONV)
     list(APPEND DEPENDS libiconv)
@@ -338,6 +331,9 @@ declare_project(thirdparty/openssl)
 
 # popen-noshell
 declare_project(thirdparty/popen-noshell EXCLUDE_FROM_ALL)
+
+# proxy-libintl
+declare_project(thirdparty/proxy-libintl EXCLUDE_FROM_ALL)
 
 # sdcv
 declare_project(thirdparty/sdcv DEPENDS glib zlib)
