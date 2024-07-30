@@ -9,7 +9,7 @@ append_install_commands(INSTALL_CMD
 )
 
 external_project(
-    DOWNLOAD GIT 2f93beb3071e6ebb57c783bd5b92f83aa5ebb757
+    DOWNLOAD GIT 34eb0d3b3c4e2f1cc847f79de4f553d397423a8e
     https://github.com/koreader/lj-wpaclient.git
     INSTALL_COMMAND ${INSTALL_CMD}
 )
