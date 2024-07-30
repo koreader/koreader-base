@@ -893,6 +893,10 @@ set(RANLIB         "$(strip $(RANLIB))")
 set(RC             "$(strip $(RC))")
 set(STRIP          "$(strip $(STRIP))")
 
+# Meson.
+set(MESON_TOOLCHAINS --native-file=$(abspath $(MESON_HOST_TOOLCHAIN)) $(if $(filter-out $(MESON_HOST_TOOLCHAIN),$(MESON_CROSS_TOOLCHAIN)),--cross-file=$(abspath $(MESON_CROSS_TOOLCHAIN))))
+set(MESON_FILE_ARG $(if $(filter-out $(MESON_HOST_TOOLCHAIN),$(MESON_CROSS_TOOLCHAIN)),--cross-file,--native-file))
+
 # Miscellaneous.
 set(DO_STRIP           $(DO_STRIP))
 set(USE_LJ_WPACLIENT   $(USE_LJ_WPACLIENT))
@@ -916,6 +920,100 @@ set(SKIP_LUAJIT_BIN $(SKIP_LUAJIT_BIN))
 set(USE_LUAJIT_LIB  $(USE_LUAJIT_LIB))
 
 endef
+
+# }}}
+
+# Meson toolchain file(s). {{{
+
+comma:=,
+
+define meson_toolchain
+
+[constants]
+CCACHE = $(if $(CCACHE),'$(CCACHE)','env')
+CPPFLAGS = ['-I$(abspath $(STAGING_DIR)/include)']
+CFLAGS = []
+CXXFLAGS = []
+LDFLAGS = ['-L$(abspath $(STAGING_DIR)/lib)']
+
+[binaries]
+c = [CCACHE, '$(strip $(REALCC))']
+# c_ld
+cpp = [CCACHE, '$(strip $(REALCXX))']
+# cpp_ld
+ar = '$(strip $(AR))'
+nm = '$(strip $(NM))'
+pkgconfig = 'pkg-config'
+pkg-config = 'pkg-config'
+ranlib = '$(strip $(RANLIB))'
+strip = '$(strip $(STRIP))'
+
+[built-in options]
+buildtype = '$(if $(KODEBUG),debug,release)'
+c_args = [$(patsubst %,'%'$(comma),$(CFLAGS))] + CPPFLAGS + CFLAGS
+c_link_args = [$(patsubst %,'%'$(comma),$(LDFLAGS))] + LDFLAGS
+cpp_args = [$(patsubst %,'%'$(comma),$(CXXFLAGS))] + CPPFLAGS + CXXFLAGS
+cpp_link_args = [$(patsubst %,'%'$(comma),$(LDFLAGS))] + LDFLAGS
+
+endef
+
+ifdef EMULATE_READER
+
+MESON_CROSS_TOOLCHAIN = $(CMAKE_DIR)/meson_toolchain.ini
+MESON_HOST_TOOLCHAIN = $(CMAKE_DIR)/meson_toolchain.ini
+
+else
+
+MESON_CROSS_TOOLCHAIN = $(CMAKE_DIR)/meson_cross_toolchain.ini
+MESON_HOST_TOOLCHAIN = $(CMAKE_DIR)/meson_host_toolchain.ini
+
+MESON_CROSS_SYSTEM = $(if $(ANDROID),android,linux)
+ifneq (,$(filter aarch64-%,$(CHOST)))
+  MESON_CROSS_CPU_FAMILY = aarch64
+else ifneq (,$(filter arm-% armv7a-%,$(CHOST)))
+  MESON_CROSS_CPU_FAMILY = arm
+else ifneq (,$(filter i686-%,$(CHOST)))
+  MESON_CROSS_CPU_FAMILY = x86
+else ifneq (,$(filter x86_64-%,$(CHOST)))
+  MESON_CROSS_CPU_FAMILY = x86_64
+else ifneq (,$(CHOST))
+  $(error MESON_CROSS_CPU_FAMILY not set! (CHOST is $(CHOST)))
+endif
+MESON_CROSS_CPU = $(or $(patsubst -march=%,%,$(filter -march=%,$(CFLAGS))),$(MESON_CROSS_CPU_FAMILY))
+MESON_CROSS_ENDIAN = little
+
+define meson_cross_toolchain
+$(meson_toolchain)
+
+[host_machine]
+system = '$(MESON_CROSS_SYSTEM)'
+cpu_family = '$(MESON_CROSS_CPU_FAMILY)'
+cpu = '$(MESON_CROSS_CPU)'
+endian = '$(MESON_CROSS_ENDIAN)'
+endef
+
+define meson_host_toolchain
+
+[constants]
+CCACHE = $(if $(CCACHE),'$(CCACHE)','env')
+
+[binaries]
+c = [CCACHE, '$(strip $(HOSTCC))']
+# c_ld
+cpp = [CCACHE, '$(strip $(HOSTCXX))']
+# cpp_ld
+ar = '$(strip $(HOSTSTRIP))'
+ranlib = '$(strip $(HOSTRANLIB))'
+strip = '$(strip $(HOSTSTRIP))'
+
+[built-in options]
+buildtype = '$(if $(KODEBUG),debug,release)'
+c_args = [$(patsubst %,'%'$(comma),$(HOSTCFLAGS))]
+cpp_args = [$(patsubst %,'%'$(comma),$(HOSTCFLAGS))]
+
+endef
+
+endif
 
 # }}}
 

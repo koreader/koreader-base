@@ -84,11 +84,41 @@ function(setup_project NAME)
     endif()
 endfunction()
 
+function(find_executable VAR NAME BINARY VERSION_ARG)
+    if(DEFINED CACHE{${VAR}})
+        return()
+    endif()
+    find_program(${VAR} ${BINARY} ${ARGN})
+    if(NOT ${VAR})
+        return()
+    endif()
+    execute_process(COMMAND ${${VAR}} ${VERSION_ARG} OUTPUT_VARIABLE VERSION OUTPUT_STRIP_TRAILING_WHITESPACE)
+    string(REGEX MATCH "(^|[ \n])([0-9][.0-9]*)([\n ]|$)" VERSION "${VERSION}")
+    message(STATUS "Found ${NAME}: ${${VAR}} (found version \"${CMAKE_MATCH_2}\")")
+endfunction()
+
 # }}}.
 
 # Git. {{{
 
 find_package(Git REQUIRED)
+
+# }}}
+
+# Meson. {{{
+
+find_executable(MESON Meson meson --version REQUIRED)
+
+set(MESON_SETUP
+    ${MESON} setup ${MESON_TOOLCHAINS}
+    --auto-features=disabled
+    --bindir=
+    --libdir=lib
+    --prefix=${STAGING_DIR}
+    --wrap-mode=nodownload
+)
+
+set(MESON_INSTALL ${MESON} install --no-rebuild)
 
 # }}}
 

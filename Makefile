@@ -65,7 +65,7 @@ $(BASE_PREFIX)uninstall:
 
 # CMake build interface. {{{
 
-setup $(BUILD_ENTRYPOINT): $(CMAKE_KOVARS) $(CMAKE_TCF)
+setup $(BUILD_ENTRYPOINT): $(CMAKE_KOVARS) $(CMAKE_TCF) $(MESON_CROSS_TOOLCHAIN) $(MESON_HOST_TOOLCHAIN)
 	$(strip $(build_info))
 	$(CMAKE) $(CMAKE_FLAGS) -S $(KOR_BASE)/cmake -B $(CMAKE_DIR)
 
@@ -78,6 +78,9 @@ $(CMAKE_KOVARS): $(KOR_BASE)/Makefile.defs | $(CMAKE_DIR)/
 
 $(CMAKE_TCF): $(KOR_BASE)/Makefile.defs | $(CMAKE_DIR)/
 	$(call write_file,$@,$(if $(EMULATE_READER),$(cmake_toolchain),$(cmake_cross_toolchain)))
+
+$(CMAKE_DIR)/meson_%.ini: $(KOR_BASE)/Makefile.defs | $(CMAKE_DIR)/
+	$(call write_file,$@,$(meson_$*))
 
 # Forward unknown targets to the CMake build system.
 LEFTOVERS = $(filter-out $(PHONY) $(SOUND),$(MAKECMDGOALS))
