@@ -1,4 +1,7 @@
-list(APPEND PATCH_FILES soversion.patch)
+list(APPEND PATCH_FILES
+    android.patch
+    no-subset.patch
+)
 
 # Get rid of a bunch of `#line` directives that trip ccache 4.9.1.
 # NOTE: this has also the nice effect of "touching" each file, so
@@ -23,26 +26,25 @@ if(LEGACY OR POCKETBOOK)
     list(APPEND PATCH_CMD COMMAND ${ISED} "/^#define HB_CONFIG_HH\$/{p$<SEMICOLON>s//#define HB_NO_MT/}" src/hb-config.hh)
 endif()
 
-list(APPEND CMAKE_ARGS
-    -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE}
-    # Options.
-    -DBUILD_SHARED_LIBS=TRUE
-    -DHB_BUILD_SUBSET=FALSE
-    -DHB_HAVE_FREETYPE=TRUE
-    -DHB_HAVE_GLIB=FALSE
-    -DHB_HAVE_GRAPHITE2=FALSE
-    -DHB_HAVE_ICU=FALSE
-    -DHB_HAVE_CORETEXT=FALSE
-    # Disable Python support.
-    -DPYTHONINTERP_FOUND=FALSE
-    -DPYTHON_EXECUTABLE=
+list(APPEND CFG_CMD COMMAND
+    ${MESON_SETUP} --default-library=shared
+    -Dfreetype=enabled
+    -Dtests=disabled
+    -Dutilities=disabled
+    ${SOURCE_DIR}
 )
 
 list(APPEND BUILD_CMD COMMAND ninja)
 
-list(APPEND INSTALL_CMD COMMAND ${CMAKE_COMMAND} --install .)
+list(APPEND INSTALL_CMD COMMAND ${MESON_INSTALL})
 
-set(LIB_SPEC harfbuzz VERSION 0)
+set(LIB_SPEC harfbuzz)
+if(NOT ANDROID)
+    list(APPEND LIB_SPEC VERSION 0)
+endif()
+if(APPLE)
+    append_shared_lib_fix_commands(INSTALL_CMD ${LIB_SPEC} ID)
+endif()
 append_shared_lib_install_commands(INSTALL_CMD ${LIB_SPEC})
 
 external_project(
@@ -50,7 +52,7 @@ external_project(
     https://github.com/harfbuzz/harfbuzz/releases/download/8.3.1/harfbuzz-8.3.1.tar.xz
     PATCH_FILES ${PATCH_FILES}
     PATCH_COMMAND ${PATCH_CMD}
-    CMAKE_ARGS ${CMAKE_ARGS}
+    CONFIGURE_COMMAND ${CFG_CMD}
     BUILD_COMMAND ${BUILD_CMD}
     INSTALL_COMMAND ${INSTALL_CMD}
 )
