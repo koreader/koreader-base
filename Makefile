@@ -145,7 +145,7 @@ $(BASE_PREFIX)test: $(BASE_PREFIX)all test-data
 
 test-data: $(OUTPUT_DIR)/.busted $(OUTPUT_DIR)/data/tessdata/eng.traineddata $(OUTPUT_DIR)/spec/base $(OUTPUT_DIR)/fonts/droid/DroidSansMono.ttf
 
-TESSDATA_FILE = thirdparty/tesseract/build/downloads/eng.traineddata
+TESSDATA_FILE = $(THIRDPARTY_DIR)/tesseract/build/downloads/eng.traineddata
 TESSDATA_FILE_URL = https://github.com/tesseract-ocr/tessdata/raw/4.1.0/$(notdir $(TESSDATA_FILE))
 TESSDATA_FILE_SHA1 = 007b522901a665bc2037428602d4d527f5ead7ed
 
@@ -156,7 +156,7 @@ $(TESSDATA_FILE):
 	mkdir -p $(dir $(TESSDATA_FILE))
 	$(call wget_and_validate,$(TESSDATA_FILE),$(TESSDATA_FILE_URL),$(TESSDATA_FILE_SHA1))
 
-DROID_FONT = thirdparty/fonts/build/downloads/DroidSansMono.ttf
+DROID_FONT = $(THIRDPARTY_DIR)/fonts/build/downloads/DroidSansMono.ttf
 DROID_FONT_URL = https://github.com/koreader/koreader-fonts/raw/master/droid/$(notdir $(DROID_FONT))
 DROID_FONT_SHA1 = 0b75601f8ef8e111babb6ed11de6573f7178ce44
 
