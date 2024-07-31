@@ -20,9 +20,8 @@ if(NOT HAS_ICONV)
 endif()
 if(APPLE)
     string(APPEND GLIB2_LIBRARIES
-        $<SEMICOLON> "-framework CoreFoundation"
-        $<SEMICOLON> "-framework CoreServices"
-        $<SEMICOLON> "-framework Security"
+        $<SEMICOLON> "-framework Foundation"
+        $<SEMICOLON> "-framework AppKit"
     )
 else()
     # Need pthread library and rt library on old glibc (for `clock_gettime`).
