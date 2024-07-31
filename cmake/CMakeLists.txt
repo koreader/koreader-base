@@ -86,6 +86,12 @@ endfunction()
 
 # }}}.
 
+# Git. {{{
+
+find_package(Git REQUIRED)
+
+# }}}
+
 # Detect if libc provides iconv support.
 check_symbol_exists(iconv iconv.h HAS_ICONV)
 if(HAS_ICONV)
