@@ -1,19 +1,19 @@
-list(APPEND CFG_CMD COMMAND env)
-append_autotools_vars(CFG_CMD)
-list(APPEND CFG_CMD
-    ${SOURCE_DIR}/configure --host=${CHOST} --prefix=${STAGING_DIR}
-    --disable-static --enable-shared
+list(APPEND CFG_CMD COMMAND
+    ${MESON_SETUP} --default-library=shared
+    -Dbin=false
+    -Ddocs=false
+    -Dtests=false
+    ${SOURCE_DIR}
 )
 
-if(ANDROID)
-    list(APPEND CFG_CMD COMMAND ${ANDROID_LIBTOOL_FIX_CMD})
+list(APPEND BUILD_CMD COMMAND ninja)
+
+list(APPEND INSTALL_CMD COMMAND ${MESON_INSTALL})
+
+set(LIB_SPEC fribidi)
+if(NOT ANDROID)
+    list(APPEND LIB_SPEC VERSION 0)
 endif()
-
-list(APPEND BUILD_CMD COMMAND make -C lib)
-
-list(APPEND INSTALL_CMD COMMAND make -C lib install)
-
-set(LIB_SPEC fribidi VERSION 0)
 if(APPLE)
     append_shared_lib_fix_commands(INSTALL_CMD ${LIB_SPEC} ID)
 endif()
