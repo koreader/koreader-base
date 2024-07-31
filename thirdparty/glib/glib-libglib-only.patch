@@ -1,116 +1,91 @@
- Makefile.am  |  2 +-
- configure.ac | 71 ------------------------------------------------------------
- 2 files changed, 1 insertion(+), 72 deletions(-)
-
-diff --git i/Makefile.am w/Makefile.am
-index a888e6d..fd3a71d 100644
---- i/Makefile.am
-+++ w/Makefile.am
-@@ -6,7 +6,7 @@ include $(top_srcdir)/glib.mk
+--- i/glib/meson.build
++++ w/glib/meson.build
+@@ -287,6 +287,8 @@ pkg.generate(libraries : [libglib, libintl],
+   description : 'C Utility Library',
+ )
  
- ACLOCAL_AMFLAGS = -I m4macros ${ACLOCAL_FLAGS}
++if false
++
+ # On Windows, glib needs a spawn helper for g_spawn* API
+ if host_system == 'windows'
+   if host_machine.cpu_family() == 'x86'
+@@ -330,6 +332,8 @@ configure_file(
+   install_mode: 'rwxr-xr-x'
+ )
  
--SUBDIRS = . m4macros glib gmodule gthread gobject gio po docs tests subprojects
-+SUBDIRS = . glib
- DIST_SUBDIRS = $(SUBDIRS) build
++endif
++
+ install_data('glib_gdb.py', install_dir : join_paths(glib_pkgdatadir, 'gdb'))
  
- bin_SCRIPTS = glib-gettextize
-diff --git i/configure.ac w/configure.ac
-index e18345d..2d6ac82 100644
---- i/configure.ac
-+++ w/configure.ac
-@@ -392,23 +392,6 @@ AS_IF([ test x"$glib_native_win32" = xyes], [
-   fi
- ])
+ gdb_conf = configuration_data()
+@@ -359,4 +363,4 @@ if enable_systemtap
+     install : true)
+ endif
  
--dnl
--dnl zlib support
--dnl
--PKG_CHECK_MODULES([ZLIB], [zlib], [found_zlib=yes], [found_zlib=no])
--AS_IF([test "x$found_zlib" = "xno"], [
--  AC_CHECK_LIB(z, inflate, [AC_CHECK_HEADER(zlib.h, found_zlib=yes)])
--  if test "x$found_zlib" = "xno" ; then
--    AC_MSG_ERROR([*** Working zlib library and headers not found ***])
--  fi
--  ZLIB_LIBS='-lz'
--  AC_SUBST(ZLIB_LIBS)
--])
+-subdir('tests')
++# subdir('tests')
+--- i/meson.build
++++ w/meson.build
+@@ -1747,10 +1747,11 @@ if host_system == 'windows'
+ endif
+ 
+ libm = cc.find_library('m', required : false)
+-libffi_dep = dependency('libffi', version : '>= 3.0.0', fallback : ['libffi', 'ffi_dep'])
++# libffi_dep = dependency('libffi', version : '>= 3.0.0', fallback : ['libffi', 'ffi_dep'])
+ 
+ # Don't use the bundled ZLib sources until we are sure that we can't find it on
+ # the system
++if false
+ libz_dep = dependency('zlib', required : false)
+ if not libz_dep.found()
+   if cc.get_id() != 'msvc'
+@@ -1766,6 +1767,7 @@ endif
+ if not libz_dep.found()
+   libz_dep = subproject('zlib').get_variable('zlib_dep')
+ endif
++endif
+ 
+ # First check in libc, fallback to libintl, and as last chance build
+ # proxy-libintl subproject.
+@@ -1967,14 +1969,14 @@ test_timeout_slow = 120
+ pkg = import('pkgconfig')
+ windows = import('windows')
+ subdir('glib')
+-subdir('gobject')
+-subdir('gthread')
+-subdir('gmodule')
+-subdir('gio')
++# subdir('gobject')
++# subdir('gthread')
++# subdir('gmodule')
++# subdir('gio')
+ if xgettext.found()
+-  subdir('po')
++  # subdir('po')
+ endif
+-subdir('tests')
++# subdir('tests')
+ 
+ # Install glib-gettextize executable, if a UNIX-style shell is found
+ if have_sh
+@@ -1992,10 +1994,6 @@ if have_sh
+     configuration : gettextize_conf)
+ endif
+ 
+-# Install m4 macros that other projects use
+-install_data('m4macros/glib-2.0.m4', 'm4macros/glib-gettext.m4', 'm4macros/gsettings.m4',
+-  install_dir : join_paths(get_option('datadir'), 'aclocal'))
 -
--PKG_CHECK_MODULES(LIBFFI, [libffi >= 3.0.0])
--AC_SUBST(LIBFFI_CFLAGS)
--AC_SUBST(LIBFFI_LIBS)
--
- dnl
- dnl gettext support
- dnl
-@@ -3453,70 +3436,16 @@ AC_SUBST(gio_INCLUDES)
+ if host_system != 'windows'
+   # Install Valgrind suppression file (except on Windows,
+   # as Valgrind is currently not supported on Windows)
+@@ -2027,6 +2025,6 @@ if get_option('man')
+ endif
  
- 
- AC_CONFIG_FILES([
--glib-2.0.pc
--gmodule-2.0.pc
--gmodule-export-2.0.pc
--gmodule-no-export-2.0.pc
--gthread-2.0.pc
--gobject-2.0.pc
--gio-2.0.pc
--gio-unix-2.0.pc
--gio-windows-2.0.pc
--glib-gettextize
- Makefile
- build/Makefile
--build/win32/Makefile
--build/win32/dirent/Makefile
- glib/Makefile
- glib/libcharset/Makefile
- glib/gnulib/Makefile
- glib/pcre/Makefile
- glib/update-pcre/Makefile
- glib/tests/Makefile
--gmodule/Makefile
--gmodule/gmoduleconf.h
--gobject/Makefile
--gobject/glib-genmarshal
--gobject/glib-mkenums
--gobject/tests/Makefile
--gthread/Makefile
--gio/Makefile
--gio/gdbus-2.0/codegen/Makefile
--gio/gdbus-2.0/codegen/config.py
--gio/gnetworking.h
--gio/xdgmime/Makefile
--gio/inotify/Makefile
--gio/kqueue/Makefile
--gio/fam/Makefile
--gio/win32/Makefile
--gio/tests/Makefile
--gio/tests/gdbus-object-manager-example/Makefile
--gio/tests/services/Makefile
--gio/tests/services/org.gtk.GDBus.Examples.ObjectManager.service
--gio/tests/modules/Makefile
--po/Makefile.in
--docs/Makefile
--docs/reference/Makefile
--docs/reference/glib/Makefile
--docs/reference/glib/version.xml
--docs/reference/gobject/Makefile
--docs/reference/gobject/version.xml
--docs/reference/gio/Makefile
--docs/reference/gio/version.xml
--tests/Makefile
--tests/gobject/Makefile
--tests/refcount/Makefile
--m4macros/Makefile
--subprojects/Makefile
- ])
- 
--# We need this command because the configure script will not preserve
--# the same attributes of the template files
--AC_CONFIG_COMMANDS([chmod-scripts],
--[chmod 0755 glib-gettextize
--chmod 0755 gobject/glib-genmarshal
--chmod 0755 gobject/glib-mkenums])
--
- # we want to invoke this macro solely so that the config.status script
- # and automake generated makefiles know about these generated files.
- # They are only needed to distcheck the package
+ gnome = import('gnome')
+-subdir('docs/reference/glib')
+-subdir('docs/reference/gobject')
+-subdir('docs/reference/gio')
++# subdir('docs/reference/glib')
++# subdir('docs/reference/gobject')
++# subdir('docs/reference/gio')
