@@ -215,6 +215,10 @@ def tbdinfo(path):
             for exports in tbd.get('exports', []) + tbd.get('reexports', []):
                 info.provides.update(exports.get('weak-symbols', ()))
                 info.provides.update(exports.get('symbols', ()))
+                info.provides.update('_OBJC_EHTYPE_$_' + s for s in exports.get('objc-eh-types', ()))
+                for klass in exports.get('objc-classes', ()):
+                    info.provides.add('_OBJC_CLASS_$_' + klass)
+                    info.provides.add('_OBJC_METACLASS_$_' + klass)
     return info
 
 def dumpinfo(info):
