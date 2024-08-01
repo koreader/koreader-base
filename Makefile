@@ -113,9 +113,6 @@ endif
 
 skeleton: $(strip $(SKELETON))
 
-$(OUTPUT_DIR)/data/cr3.css: | $(OUTPUT_DIR)/data/
-	$(SYMLINK) $(THIRDPARTY_DIR)/kpvcrlib/cr3.css $@
-
 $(OUTPUT_DIR)/data/%: $(CR3GUI_DATADIR)/% | $(OUTPUT_DIR)/data/
 	$(SYMLINK) $(CR3GUI_DATADIR)/$* $@
 
