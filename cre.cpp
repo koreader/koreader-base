@@ -2035,7 +2035,7 @@ static int getTextFromXPointers(lua_State *L) {
 		}
 		r.setFlags(rangeFlags);
 		tv->selectRange(r);
-		lString32 selText = r.getRangeText('\n', 8192, includeImages?imageReplacementChar:0);
+		lString32 selText = r.getRangeText('\n', includeImages?imageReplacementChar:0);
 		lua_pushstring(L, UnicodeToLocal(selText).c_str());
         return 1;
     }
@@ -2148,7 +2148,7 @@ static int getTextFromPositions(lua_State *L) {
 
 		// If requested, include image placeholders in the text, and gather image nodes
 		LVArray<ldomNode*> imageNodes;
-		lString32 selText = r.getRangeText( '\n', 8192, includeImages?imageReplacementChar:0, &imageNodes);
+		lString32 selText = r.getRangeText( '\n', includeImages?imageReplacementChar:0, &imageNodes);
 
 		lua_pushstring(L, "text");
 		lua_pushstring(L, UnicodeToLocal(selText).c_str());
@@ -2274,7 +2274,7 @@ static int extendXPointersToSentenceSegment(lua_State *L) {
 
     // Return updated text and xpointers
     ldomXRange r(startp, endp);
-    lString32 text = r.getRangeText( '\n', 8192, includeImages?imageReplacementChar:0);
+    lString32 text = r.getRangeText( '\n', includeImages?imageReplacementChar:0);
     lua_createtable(L, 0, 3);
     lua_pushstring(L, "text");
     lua_pushstring(L, UnicodeToLocal(text).c_str());
@@ -3070,7 +3070,7 @@ static bool _isLinkToFootnote(CreDocument *doc, const lString32 source_xpointer,
                     break;
             }
             ldomXRange fullNodeRange(sourceXP, sourceEndXP);
-            sourceText = fullNodeRange.getRangeText( '\n', 8192, 'Z');
+            sourceText = fullNodeRange.getRangeText( '\n', 'Z');
                 // We force-provide some imageReplacement char, so we get a char where
                 // there is an image, which makes sourceText not empty
             if ( sourceText.empty() ) {
@@ -3905,7 +3905,7 @@ static int findAllText(lua_State *L) {
                     if ( !start.isVisibleWordStart() ) {
                         start.prevVisibleWordStart();
                         ldomXRange rp(start, (ldomXPointerEx)word.getStartXPointer());
-                        lString32 prefix = rp.getRangeText('\n', 8192);
+                        lString32 prefix = rp.getRangeText('\n');
                         lua_pushstring(L, "matched_word_prefix");
                         lua_pushstring(L, UnicodeToLocal(prefix).c_str());
                         lua_rawset(L, -3);
@@ -3915,7 +3915,7 @@ static int findAllText(lua_State *L) {
                     if ( !end.isVisibleWordEnd() ) {
                         end.nextVisibleWordEnd();
                         ldomXRange rn((ldomXPointerEx)word.getEndXPointer(), end);
-                        lString32 suffix = rn.getRangeText('\n', 8192);
+                        lString32 suffix = rn.getRangeText('\n');
                         lua_pushstring(L, "matched_word_suffix");
                         lua_pushstring(L, UnicodeToLocal(suffix).c_str());
                         lua_rawset(L, -3);
@@ -3927,7 +3927,7 @@ static int findAllText(lua_State *L) {
                             prev.prevVisibleWordStart();
                         }
                         ldomXRange rp(prev, start);
-                        lString32 prevText = rp.getRangeText('\n', 8192);
+                        lString32 prevText = rp.getRangeText('\n');
                         lua_pushstring(L, "prev_text");
                         lua_pushstring(L, UnicodeToLocal(prevText).c_str());
                         lua_rawset(L, -3);
@@ -3937,7 +3937,7 @@ static int findAllText(lua_State *L) {
                             next.nextVisibleWordEnd();
                         }
                         ldomXRange rn(end, next);
-                        lString32 nextText = rn.getRangeText('\n', 8192);
+                        lString32 nextText = rn.getRangeText('\n');
                         lua_pushstring(L, "next_text");
                         lua_pushstring(L, UnicodeToLocal(nextText).c_str());
                         lua_rawset(L, -3);
