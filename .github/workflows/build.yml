@@ -36,7 +36,7 @@ jobs:
         run: |
           # NOTE: don't forget to bump `CACHE_EPOCH`
           # above when changing the XCode version.
-          sudo xcode-select -s /Applications/Xcode_15.2.app
+          sudo xcode-select -s /Applications/Xcode_${{ matrix.platform == 'arm64' && '15.4' || 15.2 }}.app
           xcodebuild -version
           xcode-select -p
 
