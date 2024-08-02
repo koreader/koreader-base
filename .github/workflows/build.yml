@@ -65,7 +65,6 @@ jobs:
             nasm
             ninja
             pkg-config
-            sdl2
             util-linux
           )
           brew install --formula --quiet "${packages[@]}"
