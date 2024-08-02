@@ -1,6 +1,6 @@
 --- i/meson.build
 +++ w/meson.build
-@@ -416,7 +416,6 @@
+@@ -692,7 +692,6 @@
    'memalign',
    'mmap',
    'newlocale',
@@ -8,7 +8,7 @@
    'poll',
    'prlimit',
    'readlink',
-@@ -596,14 +595,6 @@
+@@ -932,14 +931,6 @@
  endif
  message('Checking whether to use statfs or statvfs .. ' + stat_func_to_use)
  
@@ -23,8 +23,8 @@
  osx_ldflags = []
  glib_have_os_x_9_or_later = false
  glib_have_carbon = false
-@@ -658,16 +649,6 @@
-   glib_conf.set('HAVE_FUTEX', 1)
+@@ -1001,16 +992,6 @@
+   glib_conf.set('HAVE_FUTEX_TIME64', 1)
  endif
  
 -# Check for eventfd(2)
@@ -37,7 +37,6 @@
 -  glib_conf.set('HAVE_EVENTFD', 1)
 -endif
 -
- clock_gettime_test_code = '''
-   #include <time.h>
-   struct timespec t;
-
+ # Check for pidfd_open(2)
+ if cc.links('''#include <sys/syscall.h>
+                #include <sys/wait.h>

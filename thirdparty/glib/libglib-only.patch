@@ -1,0 +1,91 @@
+--- i/glib/meson.build
++++ w/glib/meson.build
+@@ -462,6 +462,8 @@ pkg.generate(libglib,
+ )
+ meson.override_dependency('glib-2.0', libglib_dep)
+ 
++if false
++
+ # On Windows, glib needs a spawn helper for g_spawn* API
+ if host_system == 'windows'
+   if host_machine.cpu_family() == 'x86'
+@@ -499,6 +501,8 @@ else
+   meson.override_find_program('gtester', gtester)
+ endif
+ 
++endif
++
+ report_conf = configuration_data()
+ report_conf.set('GLIB_VERSION', glib_version)
+ report_conf.set('PYTHON', python_name)
+--- i/meson.build
++++ w/meson.build
+@@ -2214,13 +2214,13 @@ else
+ endif
+ 
+ # Import the gvdb sources as a subproject to avoid having the copylib in-tree
+-subproject('gvdb')
+-gvdb_dep = dependency('gvdb')
++# subproject('gvdb')
++# gvdb_dep = dependency('gvdb')
+ 
+ libm = cc.find_library('m', required : false)
+-libffi_dep = dependency('libffi', version : '>= 3.0.0')
++# libffi_dep = dependency('libffi', version : '>= 3.0.0')
+ 
+-libz_dep = dependency('zlib')
++# libz_dep = dependency('zlib')
+ 
+ # First check in libc, fallback to libintl, and as last chance build
+ # proxy-libintl subproject.
+@@ -2422,7 +2422,7 @@ endif
+ 
+ glib_conf.set('HAVE_PROC_SELF_CMDLINE', have_proc_self_cmdline)
+ 
+-python = import('python').find_installation(modules: ['packaging'])
++python = import('python').find_installation()
+ # used for '#!/usr/bin/env <name>'
+ python_name = 'python3'
+ 
+@@ -2570,25 +2570,19 @@ gnome = import('gnome')
+ 
+ subdir('tools')
+ subdir('glib')
+-subdir('gobject')
+-subdir('gthread')
+-subdir('gmodule')
+-subdir('gio')
+-subdir('girepository')
+-subdir('fuzzing')
+-subdir('tests')
++# subdir('gobject')
++# subdir('gthread')
++# subdir('gmodule')
++# subdir('gio')
++# subdir('girepository')
++# subdir('fuzzing')
++# subdir('tests')
+ 
+ # xgettext is optional (on Windows for instance)
+ if find_program('xgettext', required : get_option('nls')).found()
+   subdir('po')
+ endif
+ 
+-# Install m4 macros that other projects use
+-install_data('m4macros/glib-2.0.m4', 'm4macros/glib-gettext.m4', 'm4macros/gsettings.m4',
+-  install_dir : get_option('datadir') / 'aclocal',
+-  install_tag : 'devel',
+-)
+-
+ # Check whether we support overriding the invalid parameter handler on Windows for _get_osfhandle(),
+ # g_fsync() (i.e. _commit()), etc
+ if host_system == 'windows'
+@@ -2614,7 +2608,7 @@ if rst2man.found()
+ endif
+ 
+ gnome = import('gnome')
+-subdir('docs/reference')
++# subdir('docs/reference')
+ 
+ summary({
+   'host cpu' : host_machine.cpu_family(),
