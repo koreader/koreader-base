@@ -329,6 +329,9 @@ declare_project(thirdparty/openssh ${EXCLUDE_FROM_ALL} DEPENDS openssl zlib)
 # openssl
 declare_project(thirdparty/openssl)
 
+# pcre2
+declare_project(thirdparty/pcre2 EXCLUDE_FROM_ALL)
+
 # popen-noshell
 declare_project(thirdparty/popen-noshell EXCLUDE_FROM_ALL)
 
