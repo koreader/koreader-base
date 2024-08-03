@@ -48,8 +48,8 @@ endif()
 append_shared_lib_install_commands(INSTALL_CMD ${LIB_SPEC})
 
 external_project(
-    DOWNLOAD URL fc4c1c0cb2e8a190db5007936f290047
-    https://github.com/harfbuzz/harfbuzz/releases/download/8.3.1/harfbuzz-8.3.1.tar.xz
+    DOWNLOAD URL 0035c129cb1646ab1cff65e5ef7153db
+    https://github.com/harfbuzz/harfbuzz/releases/download/9.0.0/harfbuzz-9.0.0.tar.xz
     PATCH_FILES ${PATCH_FILES}
     PATCH_COMMAND ${PATCH_CMD}
     CONFIGURE_COMMAND ${CFG_CMD}
