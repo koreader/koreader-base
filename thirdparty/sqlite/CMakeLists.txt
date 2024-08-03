@@ -33,8 +33,8 @@ endif()
 append_shared_lib_install_commands(INSTALL_CMD sqlite3)
 
 external_project(
-    DOWNLOAD URL d6150f5dc837ae94b7d735f1b611b634
-    https://www.sqlite.org/2024/sqlite-autoconf-3450000.tar.gz
+    DOWNLOAD URL ff687dfc7483196420a4f16a6f53702d
+    https://www.sqlite.org/2024/sqlite-autoconf-3460000.tar.gz
     CONFIGURE_COMMAND ${CFG_CMD}
     BUILD_COMMAND ${BUILD_CMD}
     INSTALL_COMMAND ${INSTALL_CMD}
