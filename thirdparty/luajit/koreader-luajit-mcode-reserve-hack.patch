@@ -1,0 +1,237 @@
+diff --git a/src/lj_def.h b/src/lj_def.h
+index 0d6c346b..0b245714 100644
+--- a/src/lj_def.h
++++ b/src/lj_def.h
+@@ -39,6 +39,7 @@ typedef int intptr_t;
+ typedef unsigned int uintptr_t;
+ #else
+ #include <stdint.h>
++#include <stdbool.h>
+ #endif
+ 
+ /* Needed everywhere. */
+diff --git a/src/lj_jit.h b/src/lj_jit.h
+index 6902fba3..af3f14b6 100644
+--- a/src/lj_jit.h
++++ b/src/lj_jit.h
+@@ -508,6 +508,7 @@ typedef struct jit_State {
+   BCIns patchins;	/* Instruction for pending re-patch. */
+ 
+   int mcprot;		/* Protection of current mcode area. */
++  MCode *lastmcarea;	/* Base of last unmapped mcode area (i.e., the previous one). */
+   MCode *mcarea;	/* Base of current mcode area. */
+   MCode *mctop;		/* Top of current mcode area. */
+   MCode *mcbot;		/* Bottom of current mcode area. */
+diff --git a/src/lj_mcode.c b/src/lj_mcode.c
+index 8a4851dd..cd5ddca2 100644
+--- a/src/lj_mcode.c
++++ b/src/lj_mcode.c
+@@ -107,9 +107,13 @@ static int mcode_setprot(void *p, size_t sz, DWORD prot)
+ #define MCPROT_CREATE	0
+ #endif
+ 
+-static void *mcode_alloc_at(jit_State *J, uintptr_t hint, size_t sz, int prot)
++static void *mcode_alloc_at(jit_State *J, uintptr_t hint, size_t sz, int prot, bool fixed)
+ {
+-  void *p = mmap((void *)hint, sz, prot|MCPROT_CREATE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
++  int flags = MAP_PRIVATE | MAP_ANONYMOUS;
++  if (fixed) {
++    flags |= MAP_FIXED;
++  }
++  void *p = mmap((void *)hint, sz, prot|MCPROT_CREATE, flags, -1, 0);
+   if (p == MAP_FAILED) {
+     if (!hint) lj_trace_err(J, LJ_TRERR_MCODEAL);
+     p = NULL;
+@@ -220,18 +224,37 @@ static void *mcode_alloc(jit_State *J, size_t sz)
+   uintptr_t target = (uintptr_t)(void *)lj_vm_exit_handler & ~(uintptr_t)0xffff;
+ #endif
+   const uintptr_t range = (1u << (LJ_TARGET_JUMPRANGE-1)) - (1u << 21);
+-  /* First try a contiguous area below the last one. */
+-  uintptr_t hint = J->mcarea ? (uintptr_t)J->mcarea - sz : 0;
++  /* First try a contiguous area below the last one,
++   * then try the same address as the last area we unmapped
++   * (this happens after a flush (either explicit or because the mcarea was filled),
++   * although not in our case, since we patch flushall to clear the region instead of unmapping it now),
++   * and otherwise, use the area we reserved inside the amalgam's address space
++   * (it's currently hard-coded at 1MB, which is twice the default maxmcode). */
++  uintptr_t reserve = 0;
++  bool fixed = false;
++  /* Only use the reserve for the very first alloc */
++  if (!J->mcarea && !J->lastmcarea) {
++    reserve = (uintptr_t) &g_lj_mcarea_reserve;
++    /* We'll only use it once, and we *know* it's there, so use MAP_FIXED */
++    fixed = true;
++  }
++  uintptr_t hint = J->mcarea ? (uintptr_t)J->mcarea - sz : J->lastmcarea ? (uintptr_t)J->lastmcarea : reserve;
+   int i;
+   /* Limit probing iterations, depending on the available pool size. */
+   for (i = 0; i < LJ_TARGET_JUMPRANGE; i++) {
+     if (mcode_validptr(hint)) {
+-      void *p = mcode_alloc_at(J, hint, sz, MCPROT_GEN);
++      void *p = mcode_alloc_at(J, hint, sz, MCPROT_GEN, fixed);
+ 
+       if (mcode_validptr(p) &&
+-	  ((uintptr_t)p + sz - target < range || target - (uintptr_t)p < range))
+-	return p;
+-      if (p) mcode_free(J, p, sz);  /* Free badly placed area. */
++      ((uintptr_t)p + sz - target < range || target - (uintptr_t)p < range)) {
++        return p;
++      }
++      if (p) {
++        /* Free badly placed area. */
++        mcode_free(J, p, sz);
++        /* Ensure the next iteration won't try to use MAP_FIXED */
++        fixed = false;
++      }
+     }
+     /* Next try probing 64K-aligned pseudo-random addresses. */
+     do {
+@@ -250,14 +273,14 @@ static void *mcode_alloc(jit_State *J, size_t sz)
+ {
+ #if defined(__OpenBSD__) || defined(__NetBSD__) || LJ_TARGET_UWP
+   /* Allow better executable memory allocation for OpenBSD W^X mode. */
+-  void *p = mcode_alloc_at(J, 0, sz, MCPROT_RUN);
++  void *p = mcode_alloc_at(J, 0, sz, MCPROT_RUN, false);
+   if (p && mcode_setprot(p, sz, MCPROT_GEN)) {
+     mcode_free(J, p, sz);
+     return NULL;
+   }
+   return p;
+ #else
+-  return mcode_alloc_at(J, 0, sz, MCPROT_GEN);
++  return mcode_alloc_at(J, 0, sz, MCPROT_GEN, false);
+ #endif
+ }
+ 
+@@ -293,10 +316,79 @@ void lj_mcode_free(jit_State *J)
+     size_t sz = ((MCLink *)mc)->size;
+     lj_err_deregister_mcode(mc, sz, (uint8_t *)mc + sizeof(MCLink));
+     mcode_free(J, mc, sz);
++    /* Remember the oldest (i.e., highest address) link as lastmcarea */
++    if (!next) {
++      J->lastmcarea = mc;
++    }
+     mc = next;
+   }
+ }
+ 
++/* Clear all MCode areas. */
++void lj_mcode_clear(jit_State *J)
++{
++  MCode *mc = J->mcarea;
++  /* Keep track of the previous link in the chain */
++  MCode *mcarea = J->mcarea;
++  size_t szallmcarea = 0;
++  size_t szmcarea = 0;
++  while (mc) {
++    MCode *next = ((MCLink *)mc)->next;
++    size_t size = ((MCLink *)mc)->size;
++    /* Reset mcarea to the oldest contiguous link */
++    if ((next && next == (MCode *)((char *)mc + size)) || (!next && mc == (MCode *)((char *)mcarea + szmcarea)) || (!next && mc == mcarea)) {
++      /* ^ next link is contiguous                         ^ last link is contiguous                                ^ single link in the chain */
++      mcarea = mc;
++      szmcarea = size;
++      szallmcarea += size;
++    } else {
++      mcarea = NULL;
++      /* A non-contiguous link anywhere in the chain means we scrap the whole chain, to keep things simple */
++      break;
++    }
++    mc = next;
++  }
++
++  /* If we hit a non-contiguous link, fallback to lj_mcode_free */
++  if (!mcarea) {
++    return lj_mcode_free(J);
++  }
++
++  /* We need to handle lj_err_deregister_mcode in a second pass in order to avoid calling it twice on the same link,
++   * because we can fall back to lj_mcode_free in the middle of the list if we hit a non-contiguous link...
++   * Another approach would be to implement a guard in lj_err_deregister_mcode,
++   * by checking/clearing the uint32_t at (info + ERR_FRAME_JIT_OFS_CODE_SIZE),
++   * but we'd need to fiddle early with mcode_setprot to allow writes,
++   * and that's even more unwieldy than looping twice here,
++   * especially given that we're ultimately aiming for a single link in the list... */
++  mc = J->mcarea;
++  while (mc) {
++    MCode *next = ((MCLink *)mc)->next;
++    size_t size = ((MCLink *)mc)->size;
++    lj_err_deregister_mcode(mc, size, (uint8_t *)mc + sizeof(MCLink));
++    mc = next;
++  }
++
++  /* Ready to recycle the full chain */
++  /* Rewind to the lowest address (as links are allocated high to low, c.f., mcode_alloc) */
++  J->mcarea = (MCode *)((char *)mcarea + szmcarea - szallmcarea);
++  J->szmcarea = szallmcarea;
++  /* We need write access to clear it */
++  if (LJ_UNLIKELY(mcode_setprot(J->mcarea, J->szmcarea, MCPROT_GEN)))
++    mcode_protfail(J);
++  /* Update the protection cache */
++  J->mcprot = MCPROT_GEN;
++  memset(J->mcarea, 0, J->szmcarea);
++  /* Tell the JIT that it once again has the full area available to generate code in, c.f., mcode_allocarea */
++  J->mctop = (MCode *)((char *)J->mcarea + J->szmcarea);
++  J->mcbot = (MCode *)((char *)J->mcarea + sizeof(MCLink));
++  /* Update the MCLink data for the newly coalesced area */
++  ((MCLink *)J->mcarea)->next = NULL;
++  ((MCLink *)J->mcarea)->size = J->szmcarea;
++  J->szallmcarea = J->szmcarea;
++  J->mcbot = (MCode *)lj_err_register_mcode(J->mcarea, J->szmcarea, (uint8_t *)J->mcbot);
++}
++
+ /* -- MCode transactions -------------------------------------------------- */
+ 
+ /* Reserve the remainder of the current MCode area. */
+diff --git a/src/lj_mcode.h b/src/lj_mcode.h
+index b88be93e..4b90e7db 100644
+--- a/src/lj_mcode.h
++++ b/src/lj_mcode.h
+@@ -17,6 +17,7 @@ LJ_FUNC void lj_mcode_sync(void *start, void *end);
+ #include "lj_jit.h"
+ 
+ LJ_FUNC void lj_mcode_free(jit_State *J);
++LJ_FUNC void lj_mcode_clear(jit_State *J);
+ LJ_FUNC MCode *lj_mcode_reserve(jit_State *J, MCode **lim);
+ LJ_FUNC void lj_mcode_commit(jit_State *J, MCode *m);
+ LJ_FUNC void lj_mcode_abort(jit_State *J);
+diff --git a/src/lj_trace.c b/src/lj_trace.c
+index fee78e2e..e99c0c2d 100644
+--- a/src/lj_trace.c
++++ b/src/lj_trace.c
+@@ -300,8 +300,8 @@ int lj_trace_flushall(lua_State *L)
+   J->freetrace = 0;
+   /* Clear penalty cache. */
+   memset(J->penalty, 0, sizeof(J->penalty));
+-  /* Free the whole machine code and invalidate all exit stub groups. */
+-  lj_mcode_free(J);
++  /* Clear the whole machine code and invalidate all exit stub groups. */
++  lj_mcode_clear(J);
+   memset(J->exitstubgroup, 0, sizeof(J->exitstubgroup));
+   lj_vmevent_send(L, TRACE,
+     setstrV(L, L->top++, lj_str_newlit(L, "flush"));
+@@ -646,8 +646,9 @@ static int trace_abort(jit_State *J)
+   L->top--;  /* Remove error object */
+   if (e == LJ_TRERR_DOWNREC)
+     return trace_downrec(J);
+-  else if (e == LJ_TRERR_MCODEAL)
++  else if (e == LJ_TRERR_MCODEAL) {
+     lj_trace_flushall(L);
++  }
+   return 0;
+ }
+ 
+diff --git a/src/ljamalg.c b/src/ljamalg.c
+index f1dce6a3..2e19a1b3 100644
+--- a/src/ljamalg.c
++++ b/src/ljamalg.c
+@@ -18,6 +18,9 @@
+ #include "lua.h"
+ #include "lauxlib.h"
+ 
++/* Android hack: make a page-aligned 1MB hole we can use for the mcode area... */
++unsigned char g_lj_mcarea_reserve[1U<<20U] __attribute__((aligned(4096))) = { 0 };
++
+ #include "lj_assert.c"
+ #include "lj_gc.c"
+ #include "lj_err.c"
