@@ -48,7 +48,7 @@ diff --git a/source/cbz/mucbz.c b/source/cbz/mucbz.c
 diff --git a/source/cbz/muimg.c b/source/cbz/muimg.c
 --- a/source/cbz/muimg.c
 +++ b/source/cbz/muimg.c
-@@ -191,7 +191,7 @@ img_open_document(fz_context *ctx, fz_stream *file, fz_stream *accel, fz_archive
+@@ -191,7 +191,7 @@ img_open_document(fz_context *ctx, const fz_document_handler *handler, fz_stream
  		len = fz_buffer_storage(ctx, doc->buffer, &data);
  
  		fmt = FZ_IMAGE_UNKNOWN;
@@ -57,17 +57,18 @@ diff --git a/source/cbz/muimg.c b/source/cbz/muimg.c
  			fmt = fz_recognize_image_format(ctx, data);
  		if (fmt == FZ_IMAGE_TIFF)
  		{
-@@ -236,16 +236,16 @@ img_open_document(fz_context *ctx, fz_stream *file, fz_stream *accel, fz_archive
+@@ -236,7 +236,7 @@ img_open_document(fz_context *ctx, const fz_document_handler *handler, fz_stream
  static int
- img_recognize_content(fz_context *ctx, fz_stream *stream, fz_archive *dir)
+ img_recognize_content(fz_context *ctx, const fz_document_handler *handler, fz_stream *stream, fz_archive *dir, void **state, fz_document_recognize_state_free_fn **free_state)
  {
 -	unsigned char data[8];
 +	unsigned char data[12];
  	size_t n;
  	int fmt;
  
- 	if (stream == NULL)
- 		return 0;
+@@ -248,9 +248,9 @@ img_recognize_content(fz_context *ctx, const fz_document_handler *handler, fz_st
+ 	if (free_state)
+ 		*free_state = NULL;
  
 -	n = fz_read(ctx, stream, data, 8);
 +	n = fz_read(ctx, stream, data, 12);
