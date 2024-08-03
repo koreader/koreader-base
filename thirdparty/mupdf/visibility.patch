@@ -98,7 +98,7 @@ diff --git a/include/mupdf/fitz/document.h b/include/mupdf/fitz/document.h
  typedef struct fz_document_handler fz_document_handler;
  typedef struct fz_page fz_page;
  typedef intptr_t fz_bookmark;
-@@ -973,6 +975,8 @@ void fz_delete_link(fz_context *ctx, fz_page *page, fz_link *link);
+@@ -1014,6 +1016,8 @@ void fz_delete_link(fz_context *ctx, fz_page *page, fz_link *link);
  */
  void *fz_process_opened_pages(fz_context *ctx, fz_document *doc, fz_process_opened_page_fn *process_openend_page, void *state);
  
@@ -146,7 +146,7 @@ diff --git a/include/mupdf/fitz/font.h b/include/mupdf/fitz/font.h
  
  void fz_decouple_type3_font(fz_context *ctx, fz_font *font, void *t3doc);
 @@ -815,6 +819,7 @@ fz_buffer *fz_subset_cff_for_gids(fz_context *ctx, fz_buffer *orig, int *gids, i
- char *get_font_file(char *name);
+ char *get_font_file(const char *name);
  char *fz_lookup_base14_font_from_file(fz_context *ctx, const char *name);
  char *fz_lookup_cjk_font_from_file(fz_context *ctx, int registry, int serif, int wmode);
 +FZ_FUNCTION
@@ -273,7 +273,7 @@ diff --git a/include/mupdf/fitz/stream.h b/include/mupdf/fitz/stream.h
  /**
  	Return true if the named file exists and is readable.
  */
-@@ -622,6 +624,8 @@ static inline int fz_is_eof_bits(fz_context *ctx, fz_stream *stm)
+@@ -635,6 +637,8 @@ static inline int fz_is_eof_bits(fz_context *ctx, fz_stream *stm)
  	return fz_is_eof(ctx, stm) && (stm->avail == 0 || stm->bits == EOF);
  }
  
@@ -294,7 +294,7 @@ diff --git a/include/mupdf/fitz/string-util.h b/include/mupdf/fitz/string-util.h
  /* The Unicode character used to incoming character whose value is
   * unknown or unrepresentable. */
  #define FZ_REPLACEMENT_CHARACTER 0xFFFD
-@@ -278,4 +280,6 @@ const char *fz_parse_page_range(fz_context *ctx, const char *s, int *a, int *b,
+@@ -283,4 +285,6 @@ const char *fz_parse_page_range(fz_context *ctx, const char *s, int *a, int *b,
  int fz_tolower(int c);
  int fz_toupper(int c);
  
@@ -351,7 +351,7 @@ diff --git a/include/mupdf/pdf/annot.h b/include/mupdf/pdf/annot.h
  typedef struct pdf_annot pdf_annot;
  
  enum pdf_annot_type
-@@ -938,4 +940,6 @@ void pdf_set_annot_hidden_for_editing(fz_context *ctx, pdf_annot *annot, int hid
+@@ -962,4 +964,6 @@ void pdf_set_annot_hidden_for_editing(fz_context *ctx, pdf_annot *annot, int hid
   */
  int pdf_apply_redaction(fz_context *ctx, pdf_annot *annot, pdf_redact_options *opts);
  
@@ -370,7 +370,7 @@ diff --git a/include/mupdf/pdf/document.h b/include/mupdf/pdf/document.h
  typedef struct pdf_xref pdf_xref;
  typedef struct pdf_ocg_descriptor pdf_ocg_descriptor;
  
-@@ -819,4 +821,6 @@ fz_structure pdf_structure_type(fz_context *ctx, pdf_obj *role_map, pdf_obj *tag
+@@ -839,4 +841,6 @@ fz_structure pdf_structure_type(fz_context *ctx, pdf_obj *role_map, pdf_obj *tag
  void pdf_run_document_structure(fz_context *ctx, pdf_document *doc, fz_device *dev, fz_cookie *cookie);
  
  
