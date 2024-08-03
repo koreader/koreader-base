@@ -17,8 +17,8 @@ list(APPEND INSTALL_CMD COMMAND ${CMAKE_COMMAND} --install .)
 append_shared_lib_install_commands(INSTALL_CMD png16 VERSION 16)
 
 external_project(
-    DOWNLOAD URL ea2484c0d6845e937bd03aefe33f15eb
-    https://github.com/pnggroup/libpng/archive/refs/tags/v1.6.41.tar.gz
+    DOWNLOAD URL dabdabca28f211feeba199d93235c703
+    https://github.com/pnggroup/libpng/archive/refs/tags/v1.6.43.tar.gz
     PATCH_FILES ${PATCH_FILES}
     CMAKE_ARGS ${CMAKE_ARGS}
     BUILD_COMMAND ${BUILD_CMD}
