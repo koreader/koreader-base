@@ -8,7 +8,7 @@ list(APPEND CMAKE_ARGS
     -DWITH_JAVA=OFF
     -DWITH_JPEG8=ON
     # Reproducible builds: use release date.
-    -DBUILD=20240124
+    -DBUILD=20240508
 )
 # Make sure we disable ASM if we don't support SIMD.
 if(NOT WANT_SIMD)
@@ -26,7 +26,7 @@ append_shared_lib_install_commands(INSTALL_CMD jpeg VERSION 8)
 append_shared_lib_install_commands(INSTALL_CMD turbojpeg)
 
 external_project(
-    DOWNLOAD GIT 3.0.2
+    DOWNLOAD GIT 3.0.3
     https://github.com/libjpeg-turbo/libjpeg-turbo.git
     PATCH_FILES ${PATCH_FILES}
     CMAKE_ARGS ${CMAKE_ARGS}
