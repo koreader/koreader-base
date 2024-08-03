@@ -15,8 +15,8 @@ append_install_commands(INSTALL_CMD ${SOURCE_DIR}/contrib/minizip/crypt.h DESTIN
 append_shared_lib_install_commands(INSTALL_CMD z VERSION 1)
 
 external_project(
-    DOWNLOAD URL b49e70aacafacfceb1107943497f5545
-    https://github.com/madler/zlib/releases/download/v1.3/zlib-1.3.tar.xz
+    DOWNLOAD URL 5e6af153311327e516690d300527ec9e
+    https://github.com/madler/zlib/releases/download/v1.3.1/zlib-1.3.1.tar.xz
     PATCH_COMMAND ${PATCH_CMD}
     CMAKE_ARGS ${CMAKE_ARGS}
     BUILD_COMMAND ${BUILD_CMD}
