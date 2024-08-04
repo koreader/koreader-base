@@ -19,6 +19,8 @@ list(APPEND PATCH_FILES
     relink_on_xlibs_change.patch
     # Fix symbols visiblity.
     visibility.patch
+    # Expand list of supported CSS color names.
+    css_color_names.patch
 )
 
 list(APPEND PATCH_CMD COMMAND rm -rf
