@@ -1,13 +1,17 @@
 include_guard(GLOBAL)
 
 if(APPLE)
+    set(STRIP_CMD ${CMAKE_STRIP} -x)
+else()
+    set(STRIP_CMD ${CMAKE_STRIP} --strip-unneeded)
+endif()
+
+if(CMAKE_HOST_APPLE)
     # Note: can't use `sed -i "" -e`, because cmake "helpfully"
     # filter-out the empty argument during command invocation…
     set(ISED sh -c "sed -i '' -e \"$@\"" --)
-    set(STRIP_CMD ${CMAKE_STRIP} -x)
 else()
     set(ISED sed -i -e)
-    set(STRIP_CMD ${CMAKE_STRIP} --strip-unneeded)
 endif()
 
 macro(assert_var_defined varName)
