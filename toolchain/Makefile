@@ -31,7 +31,7 @@ $(TOOLCHAIN_DIR)/$(SDK_DIR): $(SDK_TARBALL)
 	cd latest/bin
 	yes | ./sdkmanager --update
 	yes | ./sdkmanager --licenses
-	./sdkmanager 'platform-tools' 'build-tools;30.0.2' 'platforms;android-30'
+	./sdkmanager 'platform-tools' 'build-tools;34.0.0' 'platforms;android-30'
 	./sdkmanager --uninstall 'emulator' # Installed automatically but we don't need it.
 	rm -f $(TOOLCHAIN_DIR)/$(SDK_TARBALL)
 
