@@ -45,7 +45,7 @@ set(LIB_SPEC mupdf)
 set_libname(LIB ${LIB_SPEC})
 
 string(APPEND XCFLAGS
-    " ${CFLAGS} -fno-fast-math -fvisibility=hidden"
+    " ${CFLAGS} -fvisibility=hidden"
     # Disable a couple of things to save a small bit of space:
     # - builtin fonts
     # - color profile support

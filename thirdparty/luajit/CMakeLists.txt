@@ -27,7 +27,6 @@ if(CMAKE_BUILD_TYPE STREQUAL Debug)
 endif()
 
 if(EMULATE_READER)
-    string(APPEND CFLAGS " -fno-fast-math")
     append_autotools_vars(BUILD_ARGS)
 else()
     assert_var_defined(BASE_CFLAGS)
