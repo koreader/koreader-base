@@ -179,6 +179,10 @@ clone_git_repo() { (
             err 'failed to clone repository'
             return 1
         fi
+        # Ensure a parent environment variable does not mess up with our git
+        # commands, and that git will not try to act on a parent repository.
+        # shellcheck disable=SC2030
+        export GIT_DIR="${repo}/.git"
         # Enable sparse checkout.
         git -C "${repo}" sparse-checkout init || :
         # Ensure the requested revision is available.
@@ -224,6 +228,9 @@ checkout_git_repo() { (
     shift 3
     rm -rf "${tree}" || return 1
     (flock -n 9 && cp -a "${repo}" "${tree}") 9>"${repo}.lock" || return 1
+    # Same as above in `checkout_git_repo`.
+    # shellcheck disable=SC2031
+    export GIT_DIR="${tree}/.git"
     # Note: order matters; trying to `checkout --force` without disabling
     # the sparse-checkouts first will for some reason deinit submodules…
     git -C "${tree}" sparse-checkout disable || return 1
