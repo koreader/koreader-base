@@ -50,7 +50,7 @@ def wrap(s, indent=0, width=60):
 
 class BinCheck:
 
-    def __init__(self, darwin=None, ld_path=(), tbd_dir=None):
+    def __init__(self, darwin=None, ld_path=(), tbd_dir=None, glibc_version_max=None):
         if darwin is None:
             darwin = platform.system() == 'Darwin'
         self.darwin = darwin
@@ -66,9 +66,12 @@ class BinCheck:
                     tbd_dir = '/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk'
             self.tbd_dir = tbd_dir
             self.library_info = functools.lru_cache(machoinfo)
+            assert glibc_version_max is None
+            self.glibc_version_max = None
         else:
             self.tbd_dir = None
             self.library_info = functools.lru_cache(elfinfo)
+            self.glibc_version_max = glibc_version_max
 
     def find_library(self, path):
         if self.darwin and path.startswith('@rpath/'):
@@ -119,6 +122,13 @@ class BinCheck:
         if path in self.loaded:
             return self.loaded[path]
         info = self.library_info(path)
+        if self.glibc_version_max is not None and (info.soname or '').startswith('libc.so'):
+            provides = set()
+            for s in info.provides:
+                m = re.search(r'@GLIBC_(\d+\.\d+)$', s)
+                if m is None or tuple(map(int, m.group(1).split('.'))) <= self.glibc_version_max:
+                    provides.add(s)
+            info.provides = provides
         self.loaded[path] = provides = set(info.provides)
         if not path.endswith('.tbd'):
             for exp in info.reexport:
@@ -157,11 +167,18 @@ def main(args, darwin=None, debug=None):
     if debug is None:
         debug = 'pdb' in sys.modules
     assert len(args) >= 2
+    glibc_version_max = None
+    while args and args[0].startswith('-'):
+        opt = args.pop(0)
+        if opt == '--glibc-version-max':
+            glibc_version_max = tuple(map(int, args.pop(0).split('.')))
+        else:
+            raise ValueError(opt)
     ld_path = []
     preload = []
     for path in args.pop(0).split(':'):
         (preload if os.path.isfile(path) else ld_path).append(path)
-    bincheck = BinCheck(ld_path=ld_path, darwin=darwin)
+    bincheck = BinCheck(ld_path=ld_path, darwin=darwin, glibc_version_max=glibc_version_max)
     exit_code = 0
     for binary in sorted(binfind(args, darwin=darwin)):
         traces = StringIO()

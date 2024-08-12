@@ -204,6 +204,7 @@ else ifeq ($(TARGET), pocketbook)
 	else
 		CHOST?=arm-linux-gnueabi
 	endif
+	GLIBC_VERSION_MAX = 2.5
 else ifeq ($(TARGET), remarkable)
 	CHOST?=arm-remarkable-linux-gnueabihf
 	REMARKABLE=1
@@ -484,6 +485,7 @@ else ifeq ($(TARGET), kindlepw2)
 		COMPAT_CFLAGS:=$(UBUNTU_COMPAT_CFLAGS)
 		COMPAT_CXXFLAGS:=$(UBUNTU_COMPAT_CFLAGS)
 	endif
+	GLIBC_VERSION_MAX = 2.18
 else ifeq ($(TARGET), kindlehf)
 	ARM_ARCH:=$(ARMV7_A9_ARCH)
 	ARM_ARCH+=-mfloat-abi=hard
@@ -503,6 +505,7 @@ else ifeq ($(TARGET), kindle-legacy)
 	# We're not multi-threaded, so, whatever.
 	# c.f., https://github.com/koreader/koreader/discussions/11246
         COMPAT_CXXFLAGS+=-fno-threadsafe-statics
+	GLIBC_VERSION_MAX = 2.5
 else ifeq ($(TARGET), android)
 	ifeq ($(ANDROID_ARCH), arm)
 		ARM_ARCH:=$(ANDROID_ARM_ARCH)
