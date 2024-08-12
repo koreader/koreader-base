@@ -22,8 +22,8 @@ endif()
 append_shared_lib_install_commands(INSTALL_CMD ${LIB_SPEC})
 
 external_project(
-    DOWNLOAD URL dcd1af080e43fe0c984c34bf3e7d5e16
-    https://github.com/freetype/freetype/archive/refs/tags/VER-2-13-2.tar.gz
+    DOWNLOAD URL d41d8cd98f00b204e9800998ecf8427e
+    https://github.com/freetype/freetype/archive/refs/tags/VER-2-13-3.tar.gz
     CONFIGURE_COMMAND ${CFG_CMD}
     BUILD_COMMAND ${BUILD_CMD}
     INSTALL_COMMAND ${INSTALL_CMD}
