@@ -68,6 +68,12 @@ executors:
     environment:
       TARGET: "kindle"
 
+  kindle-legacy:
+    docker:
+      - image: koreader/kokindle:0.3.3-20.04
+    environment:
+      TARGET: "kindle-legacy"
+
   kobo:
     docker:
       - image: koreader/kokobo:0.3.3-20.04
@@ -261,6 +267,12 @@ workflows:
       - build_and_test:
           name: kindle
           executor: kindle
+          requires:
+            - emu_gcc_ninja_debug
+
+      - build_and_test:
+          name: kindle-legacy
+          executor: kindle-legacy
           requires:
             - emu_gcc_ninja_debug
 
