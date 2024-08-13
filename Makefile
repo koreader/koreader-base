@@ -237,7 +237,7 @@ else
 endif
 
 bincheck: $(BINCHECK_DEPS)
-	$(KOR_BASE)/utils/bincheck.py '$(subst $(empty) $(empty),:,$(strip $(BINCHECK_LD_PATH)))' $(BINARY_PATHS)
+	$(KOR_BASE)/utils/bincheck.py $(if $(GLIBC_VERSION_MAX),--glibc-version-max $(GLIBC_VERSION_MAX) )'$(subst $(empty) $(empty),:,$(strip $(BINCHECK_LD_PATH)))' $(BINARY_PATHS)
 
 endif
 

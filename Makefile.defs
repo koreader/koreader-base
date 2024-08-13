@@ -136,6 +136,7 @@ else ifeq ($(TARGET), kindlepw2)
 	else
 		CHOST?=arm-linux-gnueabi
 	endif
+	GLIBC_VERSION_MAX = 2.12
 else ifeq ($(TARGET), kindlehf)
 	KINDLE=1
 	HAS_KINDLEHF_TC:=$(shell command -v arm-kindlehf-linux-gnueabihf-gcc 2> /dev/null)
@@ -148,6 +149,7 @@ else ifeq ($(TARGET), kindle-legacy)
 	KINDLE=1
 	CHOST?=arm-kindle-linux-gnueabi
 	LEGACY=1
+	GLIBC_VERSION_MAX = 2.5
 else ifeq ($(TARGET), kobo)
 	KOBO=1
 	HAS_KOBO_TC:=$(shell command -v arm-kobo-linux-gnueabihf-gcc 2> /dev/null)
@@ -157,6 +159,7 @@ else ifeq ($(TARGET), kobo)
 		CHOST?=arm-linux-gnueabihf
 	endif
 	USE_LJ_WPACLIENT=1
+	GLIBC_VERSION_MAX = 2.15
 else ifeq ($(TARGET), ubuntu-touch)
 	CHOST?=arm-linux-gnueabihf
 	SDL=1
@@ -204,6 +207,7 @@ else ifeq ($(TARGET), pocketbook)
 	else
 		CHOST?=arm-linux-gnueabi
 	endif
+	GLIBC_VERSION_MAX = 2.5
 else ifeq ($(TARGET), remarkable)
 	CHOST?=arm-remarkable-linux-gnueabihf
 	REMARKABLE=1
