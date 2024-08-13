@@ -125,7 +125,7 @@ static int openInputDevice(lua_State* L)
     if (!strcmp("fake_events", inputdevice)) {
         // Special case: the power slider for Kindle and USB events for Kobo.
         int pipefd[2U];
-#if defined(KINDLE_LEGACY)
+#if defined(KINDLE_LEGACY) || defined(POCKETBOOK)
         // pipe2 requires Linux 2.6.27 & glibc 2.9...
         if (pipe(pipefd) == -1) {
             return luaL_error(L, "Cannot create fake event generator communication pipe (pipe(): %s)", strerror(errno));
