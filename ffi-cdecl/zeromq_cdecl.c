@@ -4,7 +4,6 @@
 
 #include "ffi-cdecl.h"
 
-cdecl_type(zctx_t)
 cdecl_type(zmsg_t)
 cdecl_type(zhash_t)
 cdecl_type(zsock_t)
@@ -19,13 +18,11 @@ cdecl_const(ZMQ_STREAM)
 cdecl_func(zmq_getsockopt)
 cdecl_func(zmq_send)
 
-cdecl_func(zctx_new)
-cdecl_func(zctx_destroy)
-
-cdecl_func(zsocket_bind)
-cdecl_func(zsocket_connect)
-cdecl_func(zsocket_destroy)
-cdecl_func(zsocket_new)
+cdecl_func(zsock_bind)
+cdecl_func(zsock_connect)
+cdecl_func(zsock_destroy)
+cdecl_func(zsock_new)
+cdecl_func(zsock_resolve)
 
 cdecl_func(zframe_data)
 cdecl_func(zframe_destroy)

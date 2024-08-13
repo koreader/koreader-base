@@ -1,0 +1,10 @@
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -89,6 +89,7 @@
+ if(HAVE_CLOCK_GETTIME)
+     list(APPEND MORE_LIBRARIES -lrt)
+ endif()
++list(APPEND MORE_LIBRARIES -llog)
+ 
+ ########################################################################
+ # ZMQ dependency
