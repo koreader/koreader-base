@@ -1,4 +1,8 @@
 list(APPEND CFG_CMD COMMAND env)
+if(LEGACY OR POCKETBOOK)
+    # Avoid pulling-in `utimensat@@GLIBC_2.6` in `sftp-server`.
+    list(APPEND CFG_CMD ac_cv_func_utimensat=no)
+endif()
 append_autotools_vars(CFG_CMD)
 list(APPEND CFG_CMD
     ${SOURCE_DIR}/configure --host=${CHOST}
