@@ -3,8 +3,9 @@ list(APPEND PATCH_FILES
     libglib-only.patch
 )
 if(LEGACY OR POCKETBOOK)
-    # Avoid pulling-in `eventfd@GLIBC_2.7`, `pipe2@GLIBC_2.9` or `mkostemp@GLIBC_2.7`.
-    list(APPEND PATCH_FILES no_glibc_2.7_or_above_symbols.patch)
+    # Avoid pulling-in `__sched_cpucount@GLIBC_2.6`, `eventfd@GLIBC_2.7`,
+    # `pipe2@GLIBC_2.9` or `mkostemp@GLIBC_2.7`.
+    list(APPEND PATCH_FILES no_glibc_2.6_or_above_symbols.patch)
 endif()
 
 if(ANDROID OR APPLE)
