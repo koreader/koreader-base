@@ -1,7 +1,4 @@
-list(APPEND PATCH_FILES
-    android.patch
-    cmake_tweaks.patch
-)
+list(APPEND PATCH_FILES cmake_tweaks.patch)
 if(LEGACY OR POCKETBOOK)
     list(APPEND PATCH_FILES disable_eventfd.patch)
 endif()
@@ -9,35 +6,28 @@ endif()
 list(APPEND CMAKE_ARGS
     -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE}
     # Project options.
+    -DENABLE_DRAFTS=FALSE
     -DWITH_DOC=FALSE
-    -DWITH_TWEETNACL=TRUE
+    -DWITH_LIBBSD=FALSE
     -DZMQ_BUILD_FRAMEWORK=FALSE
     -DZMQ_BUILD_TESTS=FALSE
+    # Disable some dependencies (which will automatically
+    # disable the corresponding project optional features).
+    -DCMAKE_DISABLE_FIND_PACKAGE_AsciiDoc=TRUE
 )
-if(NOT EMULATE_READER)
-    list(APPEND CMAKE_ARGS
-        -DZMQ_HAVE_SOCK_CLOEXEC_EXITCODE=1
-        -DZMQ_HAVE_SOCK_CLOEXEC_EXITCODE__TRYRUN_OUTPUT=
-        -DZMQ_HAVE_SO_KEEPALIVE_EXITCODE=1
-        -DZMQ_HAVE_SO_KEEPALIVE_EXITCODE__TRYRUN_OUTPUT=
-        -DZMQ_HAVE_TCP_KEEPCNT_EXITCODE=1
-        -DZMQ_HAVE_TCP_KEEPCNT_EXITCODE__TRYRUN_OUTPUT=
-        -DZMQ_HAVE_TCP_KEEPIDLE_EXITCODE=1
-        -DZMQ_HAVE_TCP_KEEPIDLE_EXITCODE__TRYRUN_OUTPUT=
-        -DZMQ_HAVE_TCP_KEEPINTVL_EXITCODE=1
-        -DZMQ_HAVE_TCP_KEEPINTVL_EXITCODE__TRYRUN_OUTPUT=
-    )
+if(LEGACY OR POCKETBOOK)
+    list(APPEND CMAKE_ARGS -DPOLLER=epoll)
 endif()
 
 list(APPEND BUILD_CMD COMMAND ninja)
 
 list(APPEND INSTALL_CMD COMMAND ${CMAKE_COMMAND} --install .)
 
-append_shared_lib_install_commands(INSTALL_CMD zmq VERSION 4)
+append_shared_lib_install_commands(INSTALL_CMD zmq VERSION 5)
 
 external_project(
-    DOWNLOAD GIT 883e95b22e0bffffa72312ea1fec76199afbe458
-    https://github.com/zeromq/libzmq
+    DOWNLOAD URL ae933b1e98411fd7cb8309f9502d2737
+    https://github.com/zeromq/libzmq/releases/download/v4.3.5/zeromq-4.3.5.tar.gz
     PATCH_FILES ${PATCH_FILES}
     CMAKE_ARGS ${CMAKE_ARGS}
     BUILD_COMMAND ${BUILD_CMD}

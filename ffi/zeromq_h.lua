@@ -1,7 +1,6 @@
 local ffi = require("ffi")
 
 ffi.cdef[[
-typedef struct _zctx_t zctx_t;
 typedef struct _zmsg_t zmsg_t;
 typedef struct _zhash_t zhash_t;
 typedef struct _zsock_t zsock_t;
@@ -13,12 +12,11 @@ static const int ZMQ_IDENTITY = 5;
 static const int ZMQ_STREAM = 11;
 int zmq_getsockopt(void *, int, void *, size_t *);
 int zmq_send(void *, const void *, size_t, int);
-zctx_t *zctx_new(void);
-void zctx_destroy(zctx_t **);
-int zsocket_bind(void *, const char *, ...);
-int zsocket_connect(void *, const char *, ...);
-void zsocket_destroy(zctx_t *, void *);
-void *zsocket_new(zctx_t *, int);
+int zsock_bind(zsock_t *, const char *, ...);
+int zsock_connect(zsock_t *, const char *, ...);
+void zsock_destroy(zsock_t **);
+zsock_t *zsock_new(int);
+void *zsock_resolve(void *);
 unsigned char *zframe_data(zframe_t *);
 void zframe_destroy(zframe_t **);
 zframe_t *zframe_recv(void *);
@@ -33,7 +31,7 @@ int zmsg_send(zmsg_t **, void *);
 size_t zmsg_size(zmsg_t *);
 void zstr_free(char **);
 int zstr_send(void *, const char *);
-char *zhash_cursor(zhash_t *);
+const char *zhash_cursor(zhash_t *);
 void zhash_destroy(zhash_t **);
 zhash_t *zhash_unpack(zframe_t *);
 void zpoller_destroy(zpoller_t **);
