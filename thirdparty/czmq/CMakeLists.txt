@@ -3,6 +3,12 @@ if(ANDROID)
     list(APPEND PATCH_FILES android.patch)
 endif()
 
+# Pre-emptively remove `src/platform.h`: this is normaly done by
+# `CMakeLists.txt` at configure time, and wreaks havoc with `build.d`
+# generation. Since the later is done before configuring, a missing
+# `src/platform.h` would endlessly trigger a new czmq build.
+list(APPEND PATCH_CMD COMMAND rm src/platform.h)
+
 list(APPEND CMAKE_ARGS
     -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE}
     # Project options.
@@ -28,6 +34,7 @@ external_project(
     DOWNLOAD URL 471e9ec120fc66a2fe2aae14359e3cfa
     https://github.com/zeromq/czmq/releases/download/v4.2.1/czmq-4.2.1.tar.gz
     PATCH_FILES ${PATCH_FILES}
+    PATCH_COMMAND ${PATCH_CMD}
     CMAKE_ARGS ${CMAKE_ARGS}
     BUILD_COMMAND ${BUILD_CMD}
     INSTALL_COMMAND ${INSTALL_CMD}
