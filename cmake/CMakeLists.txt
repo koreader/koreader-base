@@ -205,6 +205,15 @@ set(fbdepth_CMAKE_SOURCE_DIR ${fbink_CMAKE_SOURCE_DIR})
 declare_project(thirdparty/libfbink_input ${EXCLUDE_FROM_ALL})
 set(libfbink_input_CMAKE_SOURCE_DIR ${fbink_CMAKE_SOURCE_DIR})
 
+# ffi-cdecl
+if(CMAKE_C_COMPILER_ID STREQUAL "GNU")
+    set(DEPENDS)
+    if(EMULATE_READER)
+        list(APPEND DEPENDS luajit)
+    endif()
+    declare_project(thirdparty/ffi-cdecl DEPENDS ${DEPENDS} EXCLUDE_FROM_ALL)
+endif()
+
 # freetype
 declare_project(thirdparty/freetype2)
 
