@@ -11,6 +11,7 @@ list(APPEND BUILD_CMD COMMAND ninja zlib zlibstatic)
 
 list(APPEND INSTALL_CMD COMMAND ${CMAKE_COMMAND} --install .)
 
+append_install_commands(INSTALL_CMD zlib.pc DESTINATION ${STAGING_DIR}/lib/pkgconfig)
 append_install_commands(INSTALL_CMD ${SOURCE_DIR}/contrib/minizip/crypt.h DESTINATION ${STAGING_DIR}/include/contrib/minizip)
 append_shared_lib_install_commands(INSTALL_CMD z VERSION 1)
 
