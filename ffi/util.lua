@@ -659,17 +659,6 @@ function util.ffiLoadCandidates(candidates)
     return lib_loaded, lib
 end
 
---- Returns true if isWindows…
-if ffi.os == "Windows" then
-    function util.isWindows()
-        return true
-    end
-else
-    function util.isWindows()
-        return false
-    end
-end
-
 local isAndroid = nil
 --- Returns true if Android.
 -- For now, we just check if the "android" module can be loaded.
