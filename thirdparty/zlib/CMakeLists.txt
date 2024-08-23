@@ -1,11 +1,15 @@
-list(APPEND CMAKE_ARGS -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE})
-
 # Pre-emptively rename `zconf.h`: this is normaly done
 # by `CMakeLists.txt` at configure time, and wreaks havoc
 # with `build.d` generation. Since the later is done before
 # configuring, a missing `zconf.h` would endlessly trigger
 # a new zlib build.
 list(APPEND PATCH_CMD COMMAND mv zconf.h zconf.h.included)
+
+list(APPEND CMAKE_ARGS
+    -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE}
+    # Project options.
+    -DINSTALL_PKGCONFIG_DIR=${STAGING_DIR}/lib/pkgconfig
+)
 
 list(APPEND BUILD_CMD COMMAND ninja zlib zlibstatic)
 
