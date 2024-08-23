@@ -9,7 +9,7 @@ if(ANDROID)
     # list(APPEND PATCH_FILES koreader-luajit-mcode-debug.patch)
 endif()
 
-if(CMAKE_BUILD_TYPE STREQUAL Debug)
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
     # Debugging is a go!
     list(APPEND PATCH_CMD COMMAND ${ISED} "s|#CCDEBUG= -g|CCDEBUG= -g|" src/Makefile)
     # To-do: make this auto-trigger when Valgrind is installed
