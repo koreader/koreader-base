@@ -40,6 +40,7 @@ local framebuffer = {
     refresh_pixel_size = 1,
     -- Used to enforce an alignment constraint on devices with quirky drivers
     alignment_constraint = nil,
+    dither_alignment_constraint = 8,
 
     -- We recycle ffi cdata
     marker_data = nil,
@@ -279,7 +280,7 @@ local function mxc_update(fb, ioc_cmd, ioc_data, is_flashing, waveform_mode, x, 
     --       (Sidebar: this is probably a kernel issue, the EPDC driver is responsible for the alignment fixup,
     --       c.f., epdc_process_update @ drivers/video/fbdev/mxc/mxc_epdc_v2_fb.c on a Kobo Mk. 7 kernel...).
     -- And regardless of alignment constraints, make sure the rectangle is strictly bounded inside the screen.
-    x, y, w, h = bb:getBoundedRect(x, y, w, h, dither and 8 or fb.alignment_constraint)
+    x, y, w, h = bb:getBoundedRect(x, y, w, h, dither and fb.dither_alignment_constraint or fb.alignment_constraint)
     -- The ioctl operates in the native rotation, so, make sure we rotate the rectangle as needed
     x, y, w, h = bb:getPhysicalRect(x, y, w, h)
 
@@ -1014,7 +1015,8 @@ function framebuffer:init()
             -- so partial refreshes at exact coordinates will sometimes be cut-off one pixel short...
             -- That can obviously lead to leftover stale content visible on screen,
             -- so, just enforce larger refresh regions on our side...
-            self.alignment_constraint = 8
+            self.alignment_constraint = 16
+            self.dither_alignment_constraint = 16
 
             self.waveform_a2 = C.HWTCON_WAVEFORM_MODE_A2
             self.waveform_fast = C.HWTCON_WAVEFORM_MODE_DU
