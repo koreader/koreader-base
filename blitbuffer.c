@@ -186,7 +186,7 @@ static const char*
 })
 
 static inline void BB8_SET_PIXEL_CLAMPED(BlitBuffer * restrict bb, int rotation, unsigned int x, unsigned int y, unsigned int width, unsigned int height, const Color8 * restrict color) {
-    if (likely(x >= 0U && x < width && y >= 0U && y < height)) {
+    if (likely(x < width && y < height)) {
         Color8 * restrict pixel;
         BB_GET_PIXEL(bb, rotation, Color8, x, y, &pixel);
         *pixel = *color;
@@ -194,7 +194,7 @@ static inline void BB8_SET_PIXEL_CLAMPED(BlitBuffer * restrict bb, int rotation,
 }
 
 static inline void BB8A_SET_PIXEL_CLAMPED(BlitBuffer * restrict bb, int rotation, unsigned int x, unsigned int y, unsigned int width, unsigned int height, const Color8A * restrict color) {
-    if (likely(x >= 0U && x < width && y >= 0U && y < height)) {
+    if (likely(x < width && y < height)) {
         Color8A * restrict pixel;
         BB_GET_PIXEL(bb, rotation, Color8A, x, y, &pixel);
         *pixel = *color;
@@ -202,7 +202,7 @@ static inline void BB8A_SET_PIXEL_CLAMPED(BlitBuffer * restrict bb, int rotation
 }
 
 static inline void BBRGB16_SET_PIXEL_CLAMPED(BlitBuffer * restrict bb, int rotation, unsigned int x, unsigned int y, unsigned int width, unsigned int height, const ColorRGB16 * restrict color) {
-    if (likely(x >= 0U && x < width && y >= 0U && y < height)) {
+    if (likely(x < width && y < height)) {
         ColorRGB16 * restrict pixel;
         BB_GET_PIXEL(bb, rotation, ColorRGB16, x, y, &pixel);
         *pixel = *color;
@@ -210,7 +210,7 @@ static inline void BBRGB16_SET_PIXEL_CLAMPED(BlitBuffer * restrict bb, int rotat
 }
 
 static inline void BBRGB24_SET_PIXEL_CLAMPED(BlitBuffer * restrict bb, int rotation, unsigned int x, unsigned int y, unsigned int width, unsigned int height, const ColorRGB24 * restrict color) {
-    if (likely(x >= 0U && x < width && y >= 0U && y < height)) {
+    if (likely(x < width && y < height)) {
         ColorRGB24 * restrict pixel;
         BB_GET_PIXEL(bb, rotation, ColorRGB24, x, y, &pixel);
         *pixel = *color;
@@ -218,7 +218,7 @@ static inline void BBRGB24_SET_PIXEL_CLAMPED(BlitBuffer * restrict bb, int rotat
 }
 
 static inline void BBRGB32_SET_PIXEL_CLAMPED(BlitBuffer * restrict bb, int rotation, unsigned int x, unsigned int y, unsigned int width, unsigned int height, const ColorRGB32 * restrict color) {
-    if (likely(x >= 0U && x < width && y >= 0U && y < height)) {
+    if (likely(x < width && y < height)) {
         ColorRGB32 * restrict pixel;
         BB_GET_PIXEL(bb, rotation, ColorRGB32, x, y, &pixel);
         *pixel = *color;
@@ -226,7 +226,7 @@ static inline void BBRGB32_SET_PIXEL_CLAMPED(BlitBuffer * restrict bb, int rotat
 }
 
 static inline void BB8_BLEND_PIXEL_CLAMPED(BlitBuffer * restrict bb, int rotation, unsigned int x, unsigned int y, unsigned int width, unsigned int height, const Color8A * restrict color) {
-    if (likely(x >= 0U && x < width && y >= 0U && y < height)) {
+    if (likely(x < width && y < height)) {
         Color8 * restrict pixel;
         BB_GET_PIXEL(bb, rotation, Color8, x, y, &pixel);
 
@@ -237,7 +237,7 @@ static inline void BB8_BLEND_PIXEL_CLAMPED(BlitBuffer * restrict bb, int rotatio
     }
 }
 static inline void BB8A_BLEND_PIXEL_CLAMPED(BlitBuffer * restrict bb, int rotation, unsigned int x, unsigned int y, unsigned int width, unsigned int height, const Color8A * restrict color) {
-    if (likely(x >= 0U && x < width && y >= 0U && y < height)) {
+    if (likely(x < width && y < height)) {
         Color8A * restrict pixel;
         BB_GET_PIXEL(bb, rotation, Color8A, x, y, &pixel);
 
@@ -249,7 +249,7 @@ static inline void BB8A_BLEND_PIXEL_CLAMPED(BlitBuffer * restrict bb, int rotati
     }
 }
 static inline void BBRGB16_BLEND_PIXEL_CLAMPED(BlitBuffer * restrict bb, int rotation, unsigned int x, unsigned int y, unsigned int width, unsigned int height, const Color8A * restrict color) {
-    if (likely(x >= 0U && x < width && y >= 0U && y < height)) {
+    if (likely(x < width && y < height)) {
         ColorRGB16 * restrict pixel;
         BB_GET_PIXEL(bb, rotation, ColorRGB16, x, y, &pixel);
 
@@ -264,7 +264,7 @@ static inline void BBRGB16_BLEND_PIXEL_CLAMPED(BlitBuffer * restrict bb, int rot
 }
 
 static inline void BBRGB24_BLEND_PIXEL_CLAMPED(BlitBuffer * restrict bb, int rotation, unsigned int x, unsigned int y, unsigned int width, unsigned int height, const ColorRGB32 * restrict color) {
-    if (likely(x >= 0U && x < width && y >= 0U && y < height)) {
+    if (likely(x < width && y < height)) {
         ColorRGB24 * restrict pixel;
         BB_GET_PIXEL(bb, rotation, ColorRGB24, x, y, &pixel);
 
@@ -278,7 +278,7 @@ static inline void BBRGB24_BLEND_PIXEL_CLAMPED(BlitBuffer * restrict bb, int rot
 }
 
 static inline void BBRGB32_BLEND_PIXEL_CLAMPED(BlitBuffer * restrict bb, int rotation, unsigned int x, unsigned int y, unsigned int width, unsigned int height, const ColorRGB32 * restrict color) {
-    if (likely(x >= 0U && x < width && y >= 0U && y < height)) {
+    if (likely(x < width && y < height)) {
         ColorRGB32 * restrict pixel;
         BB_GET_PIXEL(bb, rotation, ColorRGB32, x, y, &pixel);
 
