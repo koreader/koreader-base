@@ -690,23 +690,28 @@ void BB_blend_RGB32_over_rect(BlitBuffer * restrict bb, unsigned int x, unsigned
     const int bb_rotation = GET_BB_ROTATION(bb);
     const uint8_t alpha = color->alpha;
     const uint8_t ainv = alpha ^ 0xFF;
-    const uint8_t source_y8 = RGB_To_A(color->r, color->g, color->b);
     switch (bb_type) {
         case TYPE_BB8:
-            for (unsigned int j = y; j < y + h; j++) {
-                for (unsigned int i = x; i < x + w; i++) {
-                    Color8 * restrict dstptr;
-                    BB_GET_PIXEL(bb, bb_rotation, Color8, i, j, &dstptr);
-                    dstptr->a = (uint8_t) DIV_255(dstptr->a * ainv + source_y8 * alpha);
+            {
+                const uint8_t source_y8 = RGB_To_A(color->r, color->g, color->b);
+                for (unsigned int j = y; j < y + h; j++) {
+                    for (unsigned int i = x; i < x + w; i++) {
+                        Color8 * restrict dstptr;
+                        BB_GET_PIXEL(bb, bb_rotation, Color8, i, j, &dstptr);
+                        dstptr->a = (uint8_t) DIV_255(dstptr->a * ainv + source_y8 * alpha);
+                    }
                 }
             }
             break;
         case TYPE_BB8A:
-            for (unsigned int j = y; j < y + h; j++) {
-                for (unsigned int i = x; i < x + w; i++) {
-                    Color8A * restrict dstptr;
-                    BB_GET_PIXEL(bb, bb_rotation, Color8A, i, j, &dstptr);
-                    dstptr->a = (uint8_t) DIV_255(dstptr->a * ainv + source_y8 * alpha);
+            {
+                const uint8_t source_y8 = RGB_To_A(color->r, color->g, color->b);
+                for (unsigned int j = y; j < y + h; j++) {
+                    for (unsigned int i = x; i < x + w; i++) {
+                        Color8A * restrict dstptr;
+                        BB_GET_PIXEL(bb, bb_rotation, Color8A, i, j, &dstptr);
+                        dstptr->a = (uint8_t) DIV_255(dstptr->a * ainv + source_y8 * alpha);
+                    }
                 }
             }
             break;
@@ -751,23 +756,28 @@ void BB_blend_RGB32_over_rect(BlitBuffer * restrict bb, unsigned int x, unsigned
 void BB_blend_RGB_multiply_rect(BlitBuffer * restrict bb, unsigned int x, unsigned int y, unsigned int w, unsigned int h, const ColorRGB24 * restrict color) {
     const int bb_type = GET_BB_TYPE(bb);
     const int bb_rotation = GET_BB_ROTATION(bb);
-    const uint8_t source_y8 = RGB_To_A(color->r, color->g, color->b);
     switch (bb_type) {
         case TYPE_BB8:
-            for (unsigned int j = y; j < y + h; j++) {
-                for (unsigned int i = x; i < x + w; i++) {
-                    Color8 * restrict dstptr;
-                    BB_GET_PIXEL(bb, bb_rotation, Color8, i, j, &dstptr);
-                    dstptr->a = (uint8_t) DIV_255(dstptr->a * source_y8);
+            {
+                const uint8_t source_y8 = RGB_To_A(color->r, color->g, color->b);
+                for (unsigned int j = y; j < y + h; j++) {
+                    for (unsigned int i = x; i < x + w; i++) {
+                        Color8 * restrict dstptr;
+                        BB_GET_PIXEL(bb, bb_rotation, Color8, i, j, &dstptr);
+                        dstptr->a = (uint8_t) DIV_255(dstptr->a * source_y8);
+                    }
                 }
             }
             break;
         case TYPE_BB8A:
-            for (unsigned int j = y; j < y + h; j++) {
-                for (unsigned int i = x; i < x + w; i++) {
-                    Color8A * restrict dstptr;
-                    BB_GET_PIXEL(bb, bb_rotation, Color8A, i, j, &dstptr);
-                    dstptr->a = (uint8_t) DIV_255(dstptr->a * source_y8);
+            {
+                const uint8_t source_y8 = RGB_To_A(color->r, color->g, color->b);
+                for (unsigned int j = y; j < y + h; j++) {
+                    for (unsigned int i = x; i < x + w; i++) {
+                        Color8A * restrict dstptr;
+                        BB_GET_PIXEL(bb, bb_rotation, Color8A, i, j, &dstptr);
+                        dstptr->a = (uint8_t) DIV_255(dstptr->a * source_y8);
+                    }
                 }
             }
             break;
@@ -815,23 +825,28 @@ void BB_blend_RGB32_multiply_rect(BlitBuffer * restrict bb, unsigned int x, unsi
     const int bb_rotation = GET_BB_ROTATION(bb);
     const uint8_t alpha = color->alpha;
     const uint8_t ainv = alpha ^ 0xFF;
-    const uint8_t source_y8 = RGB_To_A(color->r, color->g, color->b);
     switch (bb_type) {
         case TYPE_BB8:
-            for (unsigned int j = y; j < y + h; j++) {
-                for (unsigned int i = x; i < x + w; i++) {
-                    Color8 * restrict dstptr;
-                    BB_GET_PIXEL(bb, bb_rotation, Color8, i, j, &dstptr);
-                    dstptr->a = (uint8_t) DIV_255(dstptr->a * ainv + DIV_255(dstptr->a * source_y8) * alpha);
+            {
+                const uint8_t source_y8 = RGB_To_A(color->r, color->g, color->b);
+                for (unsigned int j = y; j < y + h; j++) {
+                    for (unsigned int i = x; i < x + w; i++) {
+                        Color8 * restrict dstptr;
+                        BB_GET_PIXEL(bb, bb_rotation, Color8, i, j, &dstptr);
+                        dstptr->a = (uint8_t) DIV_255(dstptr->a * ainv + DIV_255(dstptr->a * source_y8) * alpha);
+                    }
                 }
             }
             break;
         case TYPE_BB8A:
-            for (unsigned int j = y; j < y + h; j++) {
-                for (unsigned int i = x; i < x + w; i++) {
-                    Color8A * restrict dstptr;
-                    BB_GET_PIXEL(bb, bb_rotation, Color8A, i, j, &dstptr);
-                    dstptr->a = (uint8_t) DIV_255(dstptr->a * ainv + DIV_255(dstptr->a * source_y8) * alpha);
+            {
+                const uint8_t source_y8 = RGB_To_A(color->r, color->g, color->b);
+                for (unsigned int j = y; j < y + h; j++) {
+                    for (unsigned int i = x; i < x + w; i++) {
+                        Color8A * restrict dstptr;
+                        BB_GET_PIXEL(bb, bb_rotation, Color8A, i, j, &dstptr);
+                        dstptr->a = (uint8_t) DIV_255(dstptr->a * ainv + DIV_255(dstptr->a * source_y8) * alpha);
+                    }
                 }
             }
             break;
