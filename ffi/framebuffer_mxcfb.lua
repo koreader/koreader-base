@@ -1014,7 +1014,7 @@ function framebuffer:init()
             -- so partial refreshes at exact coordinates will sometimes be cut-off one pixel short...
             -- That can obviously lead to leftover stale content visible on screen,
             -- so, just enforce larger refresh regions on our side...
-            self.alignment_constraint = 8
+            self.alignment_constraint = 16
 
             self.waveform_a2 = C.HWTCON_WAVEFORM_MODE_A2
             self.waveform_fast = C.HWTCON_WAVEFORM_MODE_DU
