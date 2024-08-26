@@ -3091,7 +3091,7 @@ void BB_paint_rounded_corner_noAA(BlitBuffer * restrict bb, unsigned int off_x, 
         }
 
         // Fill between inner and outer circle.
-        for (unsigned int tmp_y = y; tmp_y > y2; tmp_y--) {
+        for (int tmp_y = y; tmp_y > y2; tmp_y--) {
             if (bb_type == TYPE_BB8) {
                 const Color8 color = { .a = c };
 
