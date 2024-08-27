@@ -2598,6 +2598,7 @@ BB.HIGHLIGHT_COLORS = {
     ["orange"] = "#FF8800",
     ["yellow"] = "#FFFF33",
     ["green"]  = "#00AA66",
+    ["olive"]  = "#88FF77",
     ["cyan"]   = "#00FFEE",
     ["blue"]   = "#0066FF",
     ["purple"] = "#EE00FF",
