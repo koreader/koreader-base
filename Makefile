@@ -141,7 +141,7 @@ $(OUTPUT_DIR)/spec/base: | $(OUTPUT_DIR)/spec/
 	$(SYMLINK) $(KOR_BASE)/spec $@
 
 $(BASE_PREFIX)test: $(BASE_PREFIX)all test-data
-	cd $(OUTPUT_DIR) && $(BUSTED_LUAJIT) ./spec/base/unit
+	cd $(OUTPUT_DIR) && $(BUSTED_LUAJIT) $(BUSTED_OVERRIDES)
 
 test-data: $(OUTPUT_DIR)/.busted $(OUTPUT_DIR)/data/tessdata/eng.traineddata $(OUTPUT_DIR)/spec/base $(OUTPUT_DIR)/fonts/droid/DroidSansMono.ttf
 
