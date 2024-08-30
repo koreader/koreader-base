@@ -1,3 +1,5 @@
+list(APPEND PATCH_FILES fix_meson_bzip2_option.patch)
+
 list(APPEND CFG_CMD COMMAND
     ${MESON_SETUP} --default-library=shared
     -Dmmap=enabled
@@ -24,6 +26,7 @@ append_shared_lib_install_commands(INSTALL_CMD ${LIB_SPEC})
 external_project(
     DOWNLOAD URL 4425315beb50f913ae12d643e4e121e1
     https://github.com/freetype/freetype/archive/refs/tags/VER-2-13-3.tar.gz
+    PATCH_FILES ${PATCH_FILES}
     CONFIGURE_COMMAND ${CFG_CMD}
     BUILD_COMMAND ${BUILD_CMD}
     INSTALL_COMMAND ${INSTALL_CMD}
