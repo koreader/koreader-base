@@ -519,6 +519,7 @@ else ifeq ($(TARGET), android)
 		# NOTE: to be removed when upgrading the minimal supported API level to 24.
 		# (https://android.googlesource.com/platform/bionic/+/master/docs/32-bit-abi.md)
 		export ac_cv_sys_file_offset_bits=32
+		COMPAT_CFLAGS += -U_FILE_OFFSET_BITS -D_FILE_OFFSET_BITS=32
 	endif
 else ifeq ($(TARGET), remarkable)
 	ARM_ARCH:=$(ARMV7_A9_ARCH)
