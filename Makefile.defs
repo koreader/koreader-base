@@ -590,17 +590,20 @@ CFLAGS:=$(BASE_CFLAGS) $(QFLAGS) $(CSTD_FLAGS)
 CXXFLAGS:=$(BASE_CFLAGS) $(QFLAGS) $(CXXSTD_FLAGS)
 
 ifndef DARWIN
-	# To prefer our shipped libraries over the system's,
-	# we set a couple rpath via an include file to make sure it goes through buildsystem indirection unscathed...
-	# NOTE: We enforce DT_RPATH over DT_RUNPATH because DT_RUNPATH is *not* honored for *transitive* dependencies,
-	#       which can lead to hilarious catastrophe if such a dependency pulls a SONAME identical to something we ship,
-	#       because it will *not* load ours, but still let ours be loaded after that...
-	#       (Assuming no LD_LIBRARY_PATH are set, since the search order is basically RPATH -> LD_LIBRARY_PATH -> RUNPATH).
-	#       c.f., https://github.com/koreader/koreader-base/pull/1638#issuecomment-1636725691
-	#       And https://bugs.launchpad.net/ubuntu/+source/eglibc/+bug/1253638/comments/5 for a nice recap.
-	LDFLAGS:=-Wl,-O1 -Wl,--as-needed -Wl,@$(abspath $(KOR_BASE)/origin.ldflags) $(COMPAT_LDFLAGS)
+  LDFLAGS := -Wl,-O1 -Wl,--as-needed $(COMPAT_LDFLAGS)
+  # To prefer our shipped libraries over the system's,
+  # we set a couple rpath via an include file to make sure it goes through buildsystem indirection unscathed...
+  # NOTE: We enforce DT_RPATH over DT_RUNPATH because DT_RUNPATH is *not* honored for *transitive* dependencies,
+  #       which can lead to hilarious catastrophe if such a dependency pulls a SONAME identical to something we ship,
+  #       because it will *not* load ours, but still let ours be loaded after that...
+  #       (Assuming no LD_LIBRARY_PATH are set, since the search order is basically RPATH -> LD_LIBRARY_PATH -> RUNPATH).
+  #       c.f., https://github.com/koreader/koreader-base/pull/1638#issuecomment-1636725691
+  #       And https://bugs.launchpad.net/ubuntu/+source/eglibc/+bug/1253638/comments/5 for a nice recap.
+  ifneq ($(TARGET), android)
+    LDFLAGS += -Wl,@$(abspath $(KOR_BASE)/origin.ldflags)
+  endif
 else
-	LDFLAGS:=-Wl,-rpath,@executable_path/libs,-rpath,@executable_path/../koreader/libs
+  LDFLAGS := -Wl,-rpath,@executable_path/libs,-rpath,@executable_path/../koreader/libs
 endif
 
 # NOTE: Follow the NDK's lead
