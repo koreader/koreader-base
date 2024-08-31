@@ -2607,6 +2607,7 @@ BB.HIGHLIGHT_COLORS = {
 return a Color value given a common color name (nil for unknown colors)
 --]]
 function BB.colorFromName(name)
+    if not name then return nil end
     local color_hash = BB.HIGHLIGHT_COLORS[name:lower()]
     if not color_hash then return nil end
     return BB.colorFromString(color_hash)
