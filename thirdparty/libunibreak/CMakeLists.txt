@@ -6,10 +6,6 @@ list(APPEND CFG_CMD
     --enable-silent-rules
 )
 
-if(ANDROID)
-    list(APPEND CFG_CMD COMMAND ${ANDROID_LIBTOOL_FIX_CMD})
-endif()
-
 list(APPEND BUILD_CMD COMMAND make)
 
 list(APPEND INSTALL_CMD COMMAND make install)

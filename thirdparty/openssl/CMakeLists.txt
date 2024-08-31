@@ -78,6 +78,10 @@ list(APPEND CFG_CMD COMMAND
     --prefix=${STAGING_DIR}
     ${CFG_OPTS}
 )
+if(ANDROID)
+    # Disable versioning of shared objects.
+    list(APPEND CFG_CMD COMMAND ${ISED} "s|^SHLIB_EXT=.*|SHLIB_EXT=${LIB_EXT}|" Makefile)
+endif()
 
 set(MAKE_CMD
     make
