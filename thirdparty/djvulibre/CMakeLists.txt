@@ -32,10 +32,6 @@ list(APPEND CFG_CMD
     --without-tiff
 )
 
-if(ANDROID)
-    list(APPEND CFG_CMD COMMAND ${ANDROID_LIBTOOL_FIX_CMD})
-endif()
-
 list(APPEND BUILD_CMD COMMAND make -C libdjvu)
 
 list(APPEND INSTALL_CMD COMMAND make -C libdjvu DESTDIR=${STAGING_DIR} install)

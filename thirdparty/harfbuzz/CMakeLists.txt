@@ -38,10 +38,7 @@ list(APPEND BUILD_CMD COMMAND ninja)
 
 list(APPEND INSTALL_CMD COMMAND ${MESON_INSTALL})
 
-set(LIB_SPEC harfbuzz)
-if(NOT ANDROID)
-    list(APPEND LIB_SPEC VERSION 0)
-endif()
+set(LIB_SPEC harfbuzz VERSION 0)
 if(APPLE)
     append_shared_lib_fix_commands(INSTALL_CMD ${LIB_SPEC} ID)
 endif()

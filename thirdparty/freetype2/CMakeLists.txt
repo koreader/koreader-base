@@ -14,10 +14,7 @@ list(APPEND BUILD_CMD COMMAND ninja)
 
 list(APPEND INSTALL_CMD COMMAND ${MESON_INSTALL})
 
-set(LIB_SPEC freetype)
-if(NOT ANDROID)
-    list(APPEND LIB_SPEC VERSION 6)
-endif()
+set(LIB_SPEC freetype VERSION 6)
 if(APPLE)
     append_shared_lib_fix_commands(INSTALL_CMD ${LIB_SPEC} ID)
 endif()

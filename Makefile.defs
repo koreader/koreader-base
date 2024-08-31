@@ -843,6 +843,8 @@ set(CMAKE_SYSTEM_NAME $(if $(DARWIN),Darwin,$(if $(WIN32),Windows,Linux)))
 # Magical value that inhibits all of CMake's own NDK handling code. (Or shit goes boom.)
 $(if $(ANDROID),set(CMAKE_SYSTEM_VERSION 1))
 $(if $(ANDROID),set(ANDROID_STL c++_shared))
+# Also disable versioning of shared objects.
+$(if $(ANDROID),set(CMAKE_PLATFORM_NO_VERSIONED_SONAME TRUE))
 
 # Target architecture.
 set(CMAKE_SYSTEM_PROCESSOR $(CMAKE_SYSTEM_PROCESSOR))

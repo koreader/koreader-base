@@ -20,16 +20,6 @@ macro(assert_var_defined varName)
     endif()
 endmacro()
 
-if(ANDROID)
-    set(ANDROID_LIBTOOL_FIX_CMD ${ISED} $<SEMICOLON>
-        -e "s|version_type=none|version_type=linux|"
-        -e "s|need_lib_prefix=no|need_lib_prefix=yes|"
-        -e "s|need_version=no|need_version=yes|"
-        -e "s|library_names_spec=.*|library_names_spec=\"\\\\$libname\\\\$release\\\\$shared_ext\\\\$versuffix \\\\$libname\\\\$release\\\\$shared_ext\\\\$major \\\\$libname\\\\$shared_ext\"|"
-        -e "s|soname_spec=.*|soname_spec=\"\\\\$libname\\\\$release\\\\$shared_ext\\\\$major\"|"
-        libtool)
-endif()
-
 # Append autotools variables ("VAR=value") to `list`.
 function(append_autotools_vars list)
     foreach(var CC CFLAGS CPPFLAGS CXX CXXFLAGS LD LDFLAGS LIBS AR NM RANLIB RC STRIP)
@@ -48,7 +38,9 @@ function(set_libname VAR NAME)
     endif()
     set(NAME lib${NAME} ${_EXT})
     if(DEFINED _VERSION)
-        if(APPLE)
+        if(ANDROID)
+            # No versioning on Android.
+        elseif(APPLE)
             list(INSERT NAME 1 .${_VERSION})
         elseif(WIN32)
             list(INSERT NAME 1 -${_VERSION})
