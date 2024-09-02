@@ -3924,7 +3924,8 @@ static int findAllText(lua_State *L) {
                     if ( nbWordsContext > 0 ) {
                         ldomXPointerEx prev = start;
                         for (int i=0; i<nbWordsContext; i++) {
-                            prev.prevVisibleWordStart();
+                            if ( !prev.prevVisibleWordStart() )
+                                break;
                         }
                         ldomXRange rp(prev, start);
                         lString32 prevText = rp.getRangeText('\n');
@@ -3932,9 +3933,18 @@ static int findAllText(lua_State *L) {
                         lua_pushstring(L, UnicodeToLocal(prevText).c_str());
                         lua_rawset(L, -3);
 
+                        // nextVisibleWordEnd() (used here and above) may end up on the root node
+                        // when at end of document, and we may wrap around to the start of the
+                        // document: we must stop and not consider it.
+                        // (No such issue with prev context, as it won't wrap around to end of document.)
                         ldomXPointerEx next = end;
+                        ldomXPointerEx tmp = end;
                         for (int i=0; i<nbWordsContext; i++) {
-                            next.nextVisibleWordEnd();
+                            if ( i == 0 && end.getNode()->isRoot() ) // reached when dealing with suffix
+                                break;
+                            if ( !tmp.nextVisibleWordEnd() ) // probably reached the root node
+                                break;
+                            next = tmp;
                         }
                         ldomXRange rn(end, next);
                         lString32 nextText = rn.getRangeText('\n');
