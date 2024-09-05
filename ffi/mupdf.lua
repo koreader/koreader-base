@@ -274,15 +274,20 @@ end
 local function getMetadataInfo(doc, info)
     local bufsize = 255
     local buf = ffi.new("char[?]", bufsize)
+    -- `fz_lookup_metadata` return the number of bytes needed
+    -- to store the string, **including** the null terminator.
     local res = M.fz_lookup_metadata(context(), doc, info, buf, bufsize)
     if res > bufsize then
-        bufsize = res + 1
+        -- Buffer was too small.
+        bufsize = res
         buf = ffi.new("char[?]", bufsize)
         res = M.fz_lookup_metadata(context(), doc, info, buf, bufsize)
     end
-    if res > -1 then
-        return ffi.string(buf, res)
+    if res > 1 then
+        -- Note: strip the null terminator.
+        return ffi.string(buf, res - 1)
     end
+    -- Empty string or error (-1).
     return ""
 end
 
