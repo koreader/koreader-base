@@ -373,19 +373,19 @@ function Color8_mt.__index:ditherpmulblend(x, y, color)
 end
 -- Dumb multiply blending with an RGB24 color (will be grayscaled when targeting grayscale BBs)
 function Color4L_mt.__index:mul(color)
-    local value = div255(self:getColor8() * color:getColor8())
+    local value = div255(self:getColor8().a * color:getColor8().a)
     self:set(Color4L(value))
 end
 function Color4U_mt.__index:mul(color)
-local value = div255(self:getColor8() * color:getColor8())
+local value = div255(self:getColor8().a * color:getColor8().a)
     self:set(Color4U(value))
 end
 function Color8_mt.__index:mul(color)
-    local value = div255(self.a * color:getColor8())
+    local value = div255(self.a * color:getColor8().a)
     self:set(Color8(value))
 end
 function Color8A_mt.__index:mul(color)
-    local value = div255(self.a * color:getColor8())
+    local value = div255(self.a * color:getColor8().a)
     self:set(Color8A(value, self:getAlpha()))
 end
 function ColorRGB16_mt.__index:mul(color)
