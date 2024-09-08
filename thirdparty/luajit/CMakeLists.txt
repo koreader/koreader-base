@@ -91,6 +91,9 @@ endif()
 
 if(USE_LUAJIT_LIB)
     append_shared_lib_install_commands(INSTALL_CMD luajit)
+else()
+    # Prevent LUA modules from linking with the LuaJIT library.
+    list(APPEND INSTALL_CMD COMMAND ${ISED} "s|-l\${libname}||" ${STAGING_DIR}/lib/pkgconfig/luajit.pc)
 endif()
 
 append_tree_install_commands(INSTALL_CMD src/jit jit)
