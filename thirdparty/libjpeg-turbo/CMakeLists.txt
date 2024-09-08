@@ -23,7 +23,7 @@ list(APPEND BUILD_CMD COMMAND ninja)
 list(APPEND INSTALL_CMD COMMAND ${CMAKE_COMMAND} --install .)
 
 append_shared_lib_install_commands(INSTALL_CMD jpeg VERSION 8)
-append_shared_lib_install_commands(INSTALL_CMD turbojpeg)
+append_shared_lib_install_commands(INSTALL_CMD turbojpeg VERSION 0.3.0)
 
 external_project(
     DOWNLOAD GIT 3.0.3
