@@ -61,6 +61,29 @@
  endif()
  
  # ##############################################################################
+ # EXECUTABLE tesseract
+ # ##############################################################################
+ 
++if(FALSE)
+ add_executable(tesseract src/tesseract.cpp)
+ target_link_libraries(tesseract libtesseract)
+ if(HAVE_TIFFIO_H AND WIN32)
+@@ -886,6 +895,7 @@
+ if(OPENMP_BUILD AND UNIX)
+   target_link_libraries(tesseract pthread)
+ endif()
++endif()
+ 
+ # ##############################################################################
+ 
+@@ -936,7 +936,6 @@
+   FILES ${CMAKE_CURRENT_BINARY_DIR}/tesseract_$<CONFIG>.pc
+   DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig
+   RENAME tesseract.pc)
+-install(TARGETS tesseract DESTINATION bin)
+ if (MSVC)
+   install(FILES $<TARGET_PDB_FILE:${PROJECT_NAME}> DESTINATION bin OPTIONAL)
+ endif()
 --- i/tesseract.pc.cmake
 +++ w/tesseract.pc.cmake
 @@ -8,6 +8,6 @@
