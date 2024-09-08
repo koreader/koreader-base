@@ -9,7 +9,7 @@
  
  # In-source builds are disabled.
  if("${CMAKE_CURRENT_SOURCE_DIR}" STREQUAL "${CMAKE_CURRENT_BINARY_DIR}")
-@@ -407,6 +407,7 @@
+@@ -406,6 +406,7 @@
    endif(NOT Leptonica_FOUND)
    include_directories(${Leptonica_INCLUDE_DIRS})
  
@@ -17,7 +17,7 @@
    check_leptonica_tiff_support()
    if ((NOT LEPT_TIFF_RESULT EQUAL 0) AND LEPT_TIFF_COMPILE_SUCCESS)
      message(NOTICE "Leptonica was build without TIFF support! Disabling TIFF support...")
-@@ -414,6 +415,7 @@
+@@ -413,6 +414,7 @@
    elseif(NOT ${CMAKE_VERSION} VERSION_LESS "3.25")
      message(STATUS "Leptonica was build with TIFF support.")
    endif()
@@ -25,7 +25,7 @@
  
    # Check for optional libraries.
    if(DISABLE_TIFF)
-@@ -827,6 +829,11 @@
+@@ -808,6 +810,11 @@
      PRIVATE -DTESS_EXPORTS
      INTERFACE -DTESS_IMPORTS)
    # generate_export_header          (libtesseract EXPORT_MACRO_NAME TESS_API)
@@ -37,7 +37,7 @@
  endif()
  target_link_libraries(libtesseract PRIVATE ${LIB_Ws2_32} ${LIB_pthread})
  if(OpenMP_CXX_FOUND)
-@@ -851,7 +858,7 @@
+@@ -829,7 +836,7 @@
                            ${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH})
  set_target_properties(
    libtesseract PROPERTIES SOVERSION
@@ -46,7 +46,7 @@
  
  set_target_properties(
    libtesseract
-@@ -887,12 +894,13 @@
+@@ -865,18 +872,20 @@
  endif()
  
  if(ANDROID)
