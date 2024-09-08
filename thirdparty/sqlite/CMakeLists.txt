@@ -25,11 +25,11 @@ list(APPEND INSTALL_CMD COMMAND make
     install-pkgconfigDATA
 )
 
-# FIXME: shouldn't the versioned `libsqlite3.so.0` be used?
+set(LIB_SPEC sqlite3 VERSION 0)
 if(APPLE)
-    append_shared_lib_fix_commands(INSTALL_CMD sqlite3 ID)
+    append_shared_lib_fix_commands(INSTALL_CMD ${LIB_SPEC} ID)
 endif()
-append_shared_lib_install_commands(INSTALL_CMD sqlite3)
+append_shared_lib_install_commands(INSTALL_CMD ${LIB_SPEC})
 
 external_project(
     DOWNLOAD URL ff687dfc7483196420a4f16a6f53702d
