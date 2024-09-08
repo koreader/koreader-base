@@ -7,16 +7,12 @@ list(APPEND CMAKE_ARGS
     -DENABLE_SHARED=ON
     -DWITH_JAVA=OFF
     -DWITH_JPEG8=ON
+    # Make sure we disable ASM if we don't support SIMD.
+    -DREQUIRE_SIMD=$<BOOL:${WANT_SIMD}>
+    -DWITH_SIMD=$<BOOL:${WANT_SIMD}>
     # Reproducible builds: use release date.
     -DBUILD=20240508
 )
-# Make sure we disable ASM if we don't support SIMD.
-if(NOT WANT_SIMD)
-    list(APPEND CMAKE_ARGS
-        -DREQUIRE_SIMD=OFF
-        -DWITH_SIMD=OFF
-    )
-endif()
 
 list(APPEND BUILD_CMD COMMAND ninja)
 
