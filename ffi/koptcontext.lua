@@ -379,10 +379,10 @@ end
 
 function KOPTContext_mt.__index:getTOCRWord(bmp, x, y, w, h, datadir, lang, ocr_type, allow_spaces, std_proc, dpi)
     local word = ffi.new("char[256]")
-    k2pdfopt.k2pdfopt_tocr_single_word(bmp == "src" and self.src or self.dst,
+    local err = k2pdfopt.k2pdfopt_tocr_single_word(bmp == "src" and self.src or self.dst,
         x, y, w, h, dpi or self.dev_dpi, word, 256, ffi.cast("char*", datadir), ffi.cast("char*", lang),
         ocr_type, allow_spaces, std_proc)
-    return ffi.string(word)
+    return err == 0 and ffi.string(word) or nil
 end
 
 function KOPTContext_mt.__index:getAutoBBox()
