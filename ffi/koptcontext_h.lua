@@ -156,7 +156,7 @@ void wrectmaps_free(WRECTMAPS *);
 int wrectmap_inside(WRECTMAP *, int, int);
 void k2pdfopt_get_reflowed_word_boxes(KOPTContext *, WILLUSBITMAP *, int, int, int, int);
 void k2pdfopt_get_native_word_boxes(KOPTContext *, WILLUSBITMAP *, int, int, int, int);
-void k2pdfopt_tocr_single_word(WILLUSBITMAP *, int, int, int, int, int, char *, int, char *, char *, int, int, int);
+int k2pdfopt_tocr_single_word(WILLUSBITMAP *, int, int, int, int, int, char *, int, char *, char *, int, int, int);
 void k2pdfopt_reflow_bmp(KOPTContext *);
 void k2pdfopt_tocr_end();
 void k2pdfopt_crop_bmp(KOPTContext *);

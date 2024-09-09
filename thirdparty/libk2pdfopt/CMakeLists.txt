@@ -4,6 +4,7 @@ list(APPEND PATCH_CMD COMMAND ${ISED} "\$p" -e "\$s|.*|include(${CMAKE_PATCH_FIL
 
 list(APPEND CMAKE_ARGS
     -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE}
+    -DBUILD_SHARED_LIBS=TRUE
     # Project options.
     -DANDROID=${ANDROID}
 )
@@ -15,7 +16,7 @@ list(APPEND INSTALL_CMD COMMAND ${CMAKE_COMMAND} --install .)
 append_shared_lib_install_commands(INSTALL_CMD k2pdfopt VERSION 2)
 
 external_project(
-    DOWNLOAD GIT 8f7a37803eab28005c586bdcf9bd4c775278bdae
+    DOWNLOAD GIT 6e79f026b044beef0015f3ddedc818a6d4a01f44
     https://github.com/koreader/libk2pdfopt.git
     PATCH_COMMAND ${PATCH_CMD}
     CMAKE_ARGS ${CMAKE_ARGS}
