@@ -1165,6 +1165,7 @@ int AdjustDirectionKeys(int);
 void adjustAreaDefault(unsigned char* data, int scanline, int width, int height);
 void adjustAreaWithVibrance(unsigned char* data, int scanline, int width, int height, float vibrance);
 void adjustAreaWithLabColorsSaturation(unsigned char* data, int scanline, int width, int height, double koef);
+void adjustAreaWithSaturationBrightnessAndDithering(unsigned char* data, int scanline, int width, int height, int * saturation_table, int * value_table, bool dithering);
 char *arc_filename(const char *);
 int base64_decode(const char *, unsigned char *, int);
 int base64_encode(const unsigned char *, int, char *);
