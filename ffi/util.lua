@@ -646,17 +646,14 @@ end
 
 function util.ffiLoadCandidates(candidates)
     local lib_loaded, lib
-
     for _, candidate in ipairs(candidates) do
         lib_loaded, lib = pcall(ffi.load, candidate)
-
         if lib_loaded then
             return lib
         end
     end
-
     -- we failed, lib is the error message
-    return lib_loaded, lib
+    return false, lib
 end
 
 local isAndroid = nil
@@ -673,40 +670,22 @@ function util.isPocketbook()
     return lfs.attributes("/ebrmain/pocketbook")
 end
 
-local haveSDL2 = nil
---- Returns true if SDL2
-function util.haveSDL2()
-    local err
-
-    if haveSDL2 == nil then
-        local candidates
+local libSDL2 = nil
+--- Returns SDL2 library
+function util.loadSDL2()
+    if libSDL2 == nil then
+        local candidates, err
         if ffi.os == "OSX" then
-            candidates = {"libs/libSDL2.dylib", "SDL2", util.KO_DYLD_PREFIX .. "/lib/libSDL2.dylib"}
+            candidates = {"libs/libSDL2-2.0.dylib", util.KO_DYLD_PREFIX .. "/lib/libSDL2-2.0.0.dylib",  "SDL2"}
         else
-            candidates = {"SDL2", "libSDL2-2.0.so", "libSDL2-2.0.so.0"}
+            candidates = {"libs/libSDL2-2.0.so.0", "libSDL2-2.0.so.0", "SDL2"}
         end
-        haveSDL2, err = util.ffiLoadCandidates(candidates)
+        libSDL2, err = util.ffiLoadCandidates(candidates)
+        if not libSDL2 then
+            print("SDL2 not loaded:", err)
+        end
     end
-    if not haveSDL2 then
-        print("SDL2 not loaded:", err)
-    end
-
-    return haveSDL2
-end
-
-local isSDL = nil
---- Returns true if SDL
-function util.isSDL()
-    if isSDL == nil then
-        isSDL = util.haveSDL2()
-    end
-    return isSDL
-end
-
---- Silence the SDL checks (solely for front's frontend/device.lua usage!)
-function util.noSDL()
-    haveSDL2 = false
-    isSDL = false
+    return libSDL2 or nil
 end
 
 --- Division with integer result.
