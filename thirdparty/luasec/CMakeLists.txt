@@ -1,34 +1,19 @@
-# Build in source tree.
-set(BINARY_DIR ${SOURCE_DIR})
+list(APPEND PATCH_FILES visibility.patch)
 
-string(APPEND CFLAGS " -DWITH_LUASOCKET -I. -I${LUAJIT_INC} -I${STAGING_DIR}/include")
+list(APPEND CMAKE_ARGS -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE})
 
-string(JOIN " " LIBS
-    luasocket/libluasocket.a
-    ${STAGING_DIR}/lib/libcrypto${LIB_EXT}
-    ${STAGING_DIR}/lib/libssl${LIB_EXT}
-    ${LUAJIT_LIB}
-)
+list(APPEND BUILD_CMD COMMAND ninja)
 
-set(MAKE_CMD
-    make
-    AR=${AR} RANLIB=${RANLIB}
-    CC=${CC} CFLAGS=${CFLAGS}
-    LDFLAGS=${DYNLIB_LDFLAGS}
-    LIBS=${LIBS} EXTRA=${LIBS}
-)
-
-list(APPEND BUILD_CMD COMMAND ${MAKE_CMD} -C src/luasocket)
-list(APPEND BUILD_CMD COMMAND ${MAKE_CMD} -C src ssl.so)
-
-append_binary_install_command(INSTALL_CMD src/ssl.so DESTINATION common)
-append_install_commands(INSTALL_CMD src/ssl.lua DESTINATION common)
-append_install_commands(INSTALL_CMD src/https.lua DESTINATION common/ssl)
+append_binary_install_command(INSTALL_CMD ssl.so DESTINATION common)
+append_install_commands(INSTALL_CMD ${SOURCE_DIR}/src/ssl.lua DESTINATION common)
+append_install_commands(INSTALL_CMD ${SOURCE_DIR}/src/https.lua DESTINATION common/ssl)
 
 external_project(
     DOWNLOAD GIT v1.3.2
     https://github.com/brunoos/luasec
-    PATCH_COMMAND ${PATCH_CMD}
+    PATCH_OVERLAY overlay
+    PATCH_FILES ${PATCH_FILES}
+    CMAKE_ARGS ${CMAKE_ARGS}
     BUILD_COMMAND ${BUILD_CMD}
     INSTALL_COMMAND ${INSTALL_CMD}
 )

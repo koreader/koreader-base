@@ -306,7 +306,7 @@ declare_project(thirdparty/luajit)
 declare_project(thirdparty/luajson)
 
 # luasec
-declare_project(thirdparty/luasec DEPENDS luajit openssl)
+declare_project(thirdparty/luasec DEPENDS luajit luasocket openssl)
 
 # luasocket
 declare_project(thirdparty/luasocket DEPENDS luajit)
