@@ -1,20 +1,16 @@
-# Build in source tree.
-set(BINARY_DIR ${SOURCE_DIR})
-
-list(APPEND BUILD_CMD
-    make
-    CC=${CC}
-    CPPFLAGS=${CPPFLAGS}
-    CFLAGS=${CFLAGS}
-    LDFLAGS=${LDFLAGS}
-    LUADIR=${LUAJIT_INC}
+list(APPEND CMAKE_ARGS
+    -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE}
+    -DBUILD_SHARED_LIBS=TRUE
 )
+
+list(APPEND BUILD_CMD COMMAND ninja)
 
 append_binary_install_command(INSTALL_CMD libopenlipclua.so DESTINATION common)
 
 external_project(
-    DOWNLOAD GIT b3fda88056a94526f53197948a47a4cdc23f8d16
+    DOWNLOAD GIT 96c2d16696a482664b4e84eb3b6d851f807a44d1
     https://github.com/notmarek/openlipclua.git
+    CMAKE_ARGS ${CMAKE_ARGS}
     BUILD_COMMAND ${BUILD_CMD}
     INSTALL_COMMAND ${INSTALL_CMD}
 )
