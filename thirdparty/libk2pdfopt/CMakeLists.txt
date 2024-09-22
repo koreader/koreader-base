@@ -16,7 +16,7 @@ list(APPEND INSTALL_CMD COMMAND ${CMAKE_COMMAND} --install .)
 append_shared_lib_install_commands(INSTALL_CMD k2pdfopt VERSION 2)
 
 external_project(
-    DOWNLOAD GIT 6e79f026b044beef0015f3ddedc818a6d4a01f44
+    DOWNLOAD GIT 0be83e5d9d04dfa1c8bd7c7230851d251cf9f429
     https://github.com/koreader/libk2pdfopt.git
     PATCH_COMMAND ${PATCH_CMD}
     CMAKE_ARGS ${CMAKE_ARGS}
