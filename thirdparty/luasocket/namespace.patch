@@ -1,0 +1,70 @@
+diff --git a/src/luasocket.c b/src/luasocket.c
+--- a/src/luasocket.c
++++ b/src/luasocket.c
+@@ -96,7 +96,7 @@ static int base_open(lua_State *L) {
+ /*-------------------------------------------------------------------------*\
+ * Initializes all library modules.
+ \*-------------------------------------------------------------------------*/
+-LUASOCKET_API int luaopen_socket_core(lua_State *L) {
++LUASOCKET_API int luaopen_socket_score(lua_State *L) {
+     int i;
+     base_open(L);
+     for (i = 0; mod[i].name; i++) mod[i].func(L);
+diff --git a/src/luasocket.h b/src/luasocket.h
+--- a/src/luasocket.h
++++ b/src/luasocket.h
+@@ -31,6 +31,6 @@
+ /*-------------------------------------------------------------------------*\
+ * Initializes the library.
+ \*-------------------------------------------------------------------------*/
+-LUASOCKET_API int luaopen_socket_core(lua_State *L);
++LUASOCKET_API int luaopen_socket_score(lua_State *L);
+ 
+ #endif /* LUASOCKET_H */
+diff --git a/src/mime.c b/src/mime.c
+--- a/src/mime.c
++++ b/src/mime.c
+@@ -167,7 +167,7 @@ static const UC b64unbase[] = {
+ /*-------------------------------------------------------------------------*\
+ * Initializes module
+ \*-------------------------------------------------------------------------*/
+-LUASOCKET_API int luaopen_mime_core(lua_State *L)
++LUASOCKET_API int luaopen_mime_mcore(lua_State *L)
+ {
+     lua_newtable(L);
+     luaL_setfuncs(L, func, 0);
+diff --git a/src/mime.h b/src/mime.h
+--- a/src/mime.h
++++ b/src/mime.h
+@@ -17,6 +17,6 @@
+ #define MIME_COPYRIGHT  "Copyright (C) 2004-2013 Diego Nehab"
+ #define MIME_AUTHORS    "Diego Nehab"
+ 
+-LUASOCKET_API int luaopen_mime_core(lua_State *L);
++LUASOCKET_API int luaopen_mime_mcore(lua_State *L);
+ 
+ #endif /* MIME_H */
+diff --git a/src/mime.lua b/src/mime.lua
+--- a/src/mime.lua
++++ b/src/mime.lua
+@@ -9,7 +9,7 @@
+ -----------------------------------------------------------------------------
+ local base = _G
+ local ltn12 = require("ltn12")
+-local mime = require("mime.core")
++local mime = require("mime.mcore")
+ local _M = mime
+ 
+ -- encode, decode and wrap algorithm tables
+diff --git a/src/socket.lua b/src/socket.lua
+--- a/src/socket.lua
++++ b/src/socket.lua
+@@ -9,7 +9,7 @@
+ local base = _G
+ local string = require("string")
+ local math = require("math")
+-local socket = require("socket.core")
++local socket = require("socket.score")
+ 
+ local _M = socket
+ 
