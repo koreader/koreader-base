@@ -12,14 +12,7 @@ local C = ffi.C
 require("ffi/posix_h")
 require("ffi/utf8proc_h")
 
-local libutf8proc
-if ffi.os == "Windows" then
-    libutf8proc = ffi.load("libs/libutf8proc-3.dll")
-elseif ffi.os == "OSX" then
-    libutf8proc = ffi.load("libs/libutf8proc.3.dylib")
-else
-    libutf8proc = ffi.load("libs/libutf8proc.so.3")
-end
+local libutf8proc = ffi.loadlib("utf8proc", "3")
 
 local Utf8Proc = {}
 

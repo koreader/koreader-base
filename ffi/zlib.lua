@@ -7,14 +7,7 @@ LuaJIT FFI wrapper for zlib.
 local ffi = require("ffi")
 require("ffi/zlib_h")
 
-local libz
-if ffi.os == "Windows" then
-    libz = ffi.load("libs/libz1.dll")
-elseif ffi.os == "OSX" then
-    libz = ffi.load("libs/libz.1.dylib")
-else
-    libz = ffi.load("libs/libz.so.1")
-end
+local libz = ffi.loadlib("z", 1)
 
 local zlib = {}
 

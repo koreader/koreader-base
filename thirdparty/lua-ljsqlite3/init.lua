@@ -200,15 +200,7 @@ int sqlite3_create_function(
 ]]
 
 -- --------------------------------------------------------------------------------
-local sql
-if ffi.os == "Windows" then
-    sql = ffi.load("libs/sqlite3.dll")
-elseif ffi.os == "OSX" then
-    sql = ffi.load("libs/libsqlite3.0.dylib")
-else
-    sql = ffi.load("libs/libsqlite3.so.0")
-end
-
+local sql = ffi.loadlib("sqlite3", "0")
 local transient = ffi.cast("sqlite3_destructor_type", -1)
 local int64_ct = ffi.typeof("int64_t")
 

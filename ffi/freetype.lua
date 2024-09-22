@@ -12,14 +12,7 @@ local C = ffi.C
 -- the header definitions
 require("ffi/freetype_h")
 
-local ft2
-if ffi.os == "Windows" then
-    ft2 = ffi.load("libs/libfreetype-6.dll")
-elseif ffi.os == "OSX" then
-    ft2 = ffi.load("libs/libfreetype.6.dylib")
-else
-    ft2 = ffi.load("libs/libfreetype.so.6")
-end
+local ft2 = ffi.loadlib("freetype", "6")
 
 local freetypelib = ffi.new("FT_Library[1]")
 assert(ft2.FT_Init_FreeType(freetypelib) == 0, "Couldn't initialize Freetype!")

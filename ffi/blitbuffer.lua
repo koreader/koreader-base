@@ -2676,7 +2676,7 @@ BB.TYPE_TO_BPP = {
 
 BB.has_cblitbuffer = false
 -- Load the C blitter, and default to using it if available
-BB.has_cblitbuffer, cblitbuffer = pcall(ffi.load, "blitbuffer")
+BB.has_cblitbuffer, cblitbuffer = pcall(ffi.loadlib, "blitbuffer")
 if BB.has_cblitbuffer then
     -- If we can, assume we'll want to use it
     use_cblitbuffer = true

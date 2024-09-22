@@ -11,9 +11,9 @@ local BB = require("ffi/blitbuffer")
 
 require("ffi/libwebp_h")
 
--- local libwebp = ffi.load("libs/libwebp." .. (ffi.os == "OSX" and "7.dylib" or "so.7"))
+-- local libwebp = ffi.loadlib("webp", "7")
 -- We only need the stuff provided by libwebpdemux.so (which itself uses libwebp.so)
-local libwebpdemux = ffi.load("libs/libwebpdemux." .. (ffi.os == "OSX" and "2.dylib" or "so.2"))
+local libwebpdemux = ffi.loadlib("webpdemux", "2")
 
 local Webp = {
     webp_decoder = nil,

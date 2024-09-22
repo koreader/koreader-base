@@ -103,13 +103,7 @@ local giflib
 local ensure_giflib_loaded = function()
     if giflib then return end
     require("ffi/giflib_h")
-    if ffi.os == "Windows" then
-        giflib = ffi.load("libs/libgif-7.dll")
-    elseif ffi.os == "OSX" then
-        giflib = ffi.load("libs/libgif.7.dylib")
-    else
-        giflib = ffi.load("libs/libgif.so.7")
-    end
+    giflib = ffi.loadlib("gif", "7")
 end
 
 local GifPage = PicPage:extend{}

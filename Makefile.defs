@@ -1037,6 +1037,7 @@ eval "$$($(LUAROCKS_BINARY) path)";
 export TESSDATA_DIR="$$PWD/data";
 ./luajit -e 'require "busted.runner" {standalone = false}' /dev/null
 --exclude-tags=notest
+--helper=ffi/loadlib.lua
 --output=gtest
 --sort-files
 "$$@";

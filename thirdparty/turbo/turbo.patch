@@ -141,15 +141,19 @@ index 7edb21a..834c12c
 +end
 diff --git a/turbo/util.lua b/turbo/util.lua
 index 18c00bb..c8dfc14 100644
+diff --git a/turbo/util.lua b/turbo/util.lua
 --- a/turbo/util.lua
 +++ b/turbo/util.lua
-@@ -350,6 +350,9 @@ function util.load_libtffi(name)
-         if not have_name then
-             ok, lib = pcall(ffi.load, "/usr/local/lib/libtffi_wrap.so")
-         end
-+        if not ok then
-+            ok, lib = pcall(ffi.load, "common/libtffi_wrap.so")
+@@ -342,6 +342,12 @@ end
+ -- @param name Custom library name or path
+ function util.load_libtffi(name)
+     local have_name = name and true or false
++    if not have_name then
++        local ok, lib = pcall(ffi.loadlib, "tffi_wrap")
++        if ok then
++            return lib
 +        end
-         if not ok then
-             -- Still not OK...
-             error("Could not load " .. name .. " \
++    end
+     name = name or os.getenv("TURBO_LIBTFFI") or "libtffi_wrap"
+     local ok, lib = pcall(ffi.load, name)
+     if not ok then
