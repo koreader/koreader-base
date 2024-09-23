@@ -6,10 +6,15 @@ local lib_search_path
 local lib_basic_format
 local lib_version_format
 
+-- Format library name according to the platform, e.g.:
+-- - Android: `libz.so` (libraries are not versioned)
+-- - Linux: `libz.so.1`
+-- - macOS: `libz.1.dylib`
 local function libname(name, version)
     return string.format(version and lib_version_format or lib_basic_format, name, version)
 end
 
+-- See `ffi.loadlib` for what of arguments are expected.
 local function findlib(...)
     local name, version = ...
     if not name then
@@ -31,6 +36,14 @@ ffi.load = function(lib, global)
     return ffi_load(lib, global)
 end
 
+-- Example usage: `ffi.loadlib("SDL2-2.0", 0, "SDL2-2.0",nil, "SDL2", nil)`,
+-- will search `lib_search_path` for the following candidates on Linux:
+-- 1) `libSDL2-2.0.so.0`
+-- 2) `libSDL2-2.0.so`
+-- 3) `libSDL2.so`
+-- The first one found will be loaded with `ffi.load`, falling back to
+-- the first candidate otherwise (which should be a versioned library
+-- to ensure ABI compatibility).
 ffi.loadlib = function(...)
     local lib = findlib(...) or libname(...)
     return ffi.load(lib)
