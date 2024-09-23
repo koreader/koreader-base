@@ -5,7 +5,7 @@ describe("Low level font interfaces", function()
     it("FreeType and HarfBuzz FFI should work", function()
         assert.has_no.errors(function()
             -- HL wrappers are omitted deliberately - faster bisect in case those fail, but we don't.
-            local ft = ffi.load("libs/libfreetype." .. (ffi.os == "OSX" and "6.dylib" or "so.6"))
+            local ft = ffi.loadlib("freetype", "6")
             require("ffi/freetype_h")
             local hb = require("ffi/harfbuzz")
 

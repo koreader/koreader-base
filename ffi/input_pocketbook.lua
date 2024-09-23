@@ -15,10 +15,10 @@ require("ffi/inkview_h")
 -- emulates those in a semaphore step-locked thread.
 local compat, compat2 = inkview, inkview
 if not pcall(function() local _ = inkview.PrepareForLoop end) then
-    compat = ffi.load("inkview-compat")
+    compat = ffi.loadlib("inkview-compat")
     compat2 = compat
 elseif not pcall(function() local _ = inkview.GetTouchInfoI end) then
-    compat2 = ffi.load("inkview-compat")
+    compat2 = ffi.loadlib("inkview-compat")
 end
 
 local input = {

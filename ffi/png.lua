@@ -9,14 +9,7 @@ Currently, this is a LuaJIT FFI wrapper for lodepng lib.
 local ffi = require("ffi")
 require("ffi/lodepng_h")
 
-local lodepng
-if ffi.os == "Windows" then
-    lodepng = ffi.load("libs/liblodepng.dll")
-elseif ffi.os == "OSX" then
-    lodepng = ffi.load("libs/liblodepng.dylib")
-else
-    lodepng = ffi.load("libs/liblodepng.so")
-end
+local lodepng = ffi.loadlib("lodepng")
 
 local Png = {}
 

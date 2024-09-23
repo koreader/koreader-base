@@ -1,6 +1,6 @@
 local coverage = require("ffi/harfbuzz_coverage")
 local ffi = require("ffi")
-local hb = ffi.load("libs/libharfbuzz." .. (ffi.os == "OSX" and "0.dylib" or "so.0"))
+local hb = ffi.loadlib("harfbuzz", "0")
 local HB = setmetatable({}, {__index = hb})
 
 require("ffi/harfbuzz_h")

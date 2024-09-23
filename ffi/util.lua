@@ -60,27 +60,9 @@ int WideCharToMultiByte(
 );
 ]]
 
-local getlibprefix = function()
-    -- Apple M1 homebrew installs libraries outside of default searchpaths,
-    -- and dyld environment variables are sip-protected on MacOS, cf. https://github.com/Homebrew/brew/issues/13481#issuecomment-1181592842
-    local libprefix = os.getenv("KO_DYLD_PREFIX")
-
-    if not libprefix then
-        local std_out = io.popen("brew --prefix", "r")
-            if std_out then
-                libprefix = std_out:read("*line")
-                std_out:close()
-            end
-    end
-
-    return libprefix
-end
-
 require("ffi/posix_h")
 
 local util = {}
-
-util.KO_DYLD_PREFIX = ffi.os == "OSX" and getlibprefix() or ""
 
 if ffi.os == "Windows" then
     util.gettime = function()
@@ -644,18 +626,6 @@ function util.multiByteToUTF8(str, codepage)
     end
 end
 
-function util.ffiLoadCandidates(candidates)
-    local lib_loaded, lib
-    for _, candidate in ipairs(candidates) do
-        lib_loaded, lib = pcall(ffi.load, candidate)
-        if lib_loaded then
-            return lib
-        end
-    end
-    -- we failed, lib is the error message
-    return false, lib
-end
-
 local isAndroid = nil
 --- Returns true if Android.
 -- For now, we just check if the "android" module can be loaded.
@@ -674,15 +644,15 @@ local libSDL2 = nil
 --- Returns SDL2 library
 function util.loadSDL2()
     if libSDL2 == nil then
-        local candidates, err
-        if ffi.os == "OSX" then
-            candidates = {"libs/libSDL2-2.0.dylib", util.KO_DYLD_PREFIX .. "/lib/libSDL2-2.0.0.dylib",  "SDL2"}
-        else
-            candidates = {"libs/libSDL2-2.0.so.0", "libSDL2-2.0.so.0", "SDL2"}
-        end
-        libSDL2, err = util.ffiLoadCandidates(candidates)
-        if not libSDL2 then
-            print("SDL2 not loaded:", err)
+        local ok
+        ok, libSDL2 = pcall(ffi.loadlib,
+            "SDL2-2.0", 0,
+            "SDL2-2.0", nil,
+            "SDL2", nil
+        )
+        if not ok then
+            print("SDL2 not loaded:", libSDL2)
+            libSDL2 = false
         end
     end
     return libSDL2 or nil

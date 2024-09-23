@@ -10,14 +10,7 @@ local C = ffi.C
 require("ffi/posix_h")
 require("ffi/zstd_h")
 
-local zst
-if ffi.os == "Windows" then
-    zst = ffi.load("libs/libzstd.dll")
-elseif ffi.os == "OSX" then
-    zst = ffi.load("libs/libzstd.1.dylib")
-else
-    zst = ffi.load("libs/libzstd.so.1")
-end
+local zst = ffi.loadlib("zstd", "1")
 
 local zstd = {}
 

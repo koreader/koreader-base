@@ -28,7 +28,7 @@ list(APPEND BUILD_CMD COMMAND
     all
 )
 
-append_binary_install_command(INSTALL_CMD libtffi_wrap${LIB_EXT} DESTINATION common)
+append_binary_install_command(INSTALL_CMD libtffi_wrap${LIB_EXT} DESTINATION libs)
 append_install_commands(INSTALL_CMD turbo.lua turbovisor.lua DESTINATION common)
 append_tree_install_commands(INSTALL_CMD turbo common/turbo)
 

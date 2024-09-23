@@ -1,7 +1,7 @@
 local ffi = require("ffi")
 local KOPTContext = require("ffi/koptcontext")
 local mupdf = require("ffi/mupdf")
-local k2pdfopt = ffi.load("libs/libk2pdfopt.so.2")
+local k2pdfopt = ffi.loadlib("k2pdfopt", "2")
 
 local sample_pdf = "spec/base/unit/data/Alice.pdf"
 local paper_pdf = "spec/base/unit/data/Paper.pdf"
