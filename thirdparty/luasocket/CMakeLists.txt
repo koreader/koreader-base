@@ -13,7 +13,10 @@ if(NOT ANDROID)
     list(APPEND PATCH_FILES enforce-cloexec.patch)
 endif()
 
-list(APPEND CMAKE_ARGS -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE})
+list(APPEND CMAKE_ARGS
+    -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE}
+    -DBUILD_SHARED_LIBS=$<NOT:$<BOOL:${MONOLIBTIC}>>
+)
 
 list(APPEND BUILD_CMD COMMAND ninja)
 
@@ -44,8 +47,12 @@ append_install_commands(INSTALL_CMD DESTINATION ${STAGING_DIR}/include/luasocket
     ${SOURCE_DIR}/src/usocket.h
 )
 append_install_commands(INSTALL_CMD libluasocket.a DESTINATION ${STAGING_DIR}/lib)
-append_binary_install_command(INSTALL_CMD score.so DESTINATION common/socket)
-append_binary_install_command(INSTALL_CMD mcore.so DESTINATION common/mime)
+if(MONOLIBTIC)
+    append_install_commands(INSTALL_CMD mcore.a score.a DESTINATION ${STAGING_DIR}/lib)
+else()
+    append_binary_install_command(INSTALL_CMD score.so DESTINATION common/socket)
+    append_binary_install_command(INSTALL_CMD mcore.so DESTINATION common/mime)
+endif()
 
 external_project(
     DOWNLOAD GIT e3ca4a767a68d127df548d82669aba3689bd84f4

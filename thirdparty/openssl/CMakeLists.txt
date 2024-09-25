@@ -3,6 +3,9 @@ list(APPEND PATCH_FILES
     reduce_build_verbosity.patch
     macos_rpath.patch
 )
+if(MONOLIBTIC)
+    list(APPEND PATCH_FILES fix_libcrypto_pkg-config_entry.patch)
+endif()
 
 list(APPEND CFG_ENV_VAR
     CC=${HOSTCC}
@@ -99,8 +102,15 @@ list(APPEND BUILD_CMD COMMAND ${MAKE_CMD} build_libs)
 
 list(APPEND INSTALL_CMD COMMAND ${MAKE_CMD} install_dev)
 
-append_shared_lib_install_commands(INSTALL_CMD crypto VERSION 1.1)
-append_shared_lib_install_commands(INSTALL_CMD ssl VERSION 1.1)
+if(MONOLIBTIC)
+    list(APPEND INSTALL_CMD COMMAND sh -c "rm -v \"$1\"* \"$2\"*" --
+        ${STAGING_DIR}/lib/libcrypto${LIB_EXT}
+        ${STAGING_DIR}/lib/libssl${LIB_EXT}
+    )
+else()
+    append_shared_lib_install_commands(INSTALL_CMD crypto VERSION 1.1)
+    append_shared_lib_install_commands(INSTALL_CMD ssl VERSION 1.1)
+endif()
 
 external_project(
     DOWNLOAD URL 3f76825f195e52d4b10c70040681a275
