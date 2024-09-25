@@ -5,14 +5,16 @@ endif()
 
 list(APPEND CMAKE_ARGS
     -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE}
-    -DBUILD_SHARED_LIBS=TRUE
+    -DBUILD_SHARED_LIBS=$<NOT:$<BOOL:${MONOLIBTIC}>>
 )
 
 list(APPEND BUILD_CMD COMMAND ninja)
 
 list(APPEND INSTALL_CMD COMMAND ${CMAKE_COMMAND} --install .)
 
-append_shared_lib_install_commands(INSTALL_CMD gif VERSION 7)
+if(NOT MONOLIBTIC)
+    append_shared_lib_install_commands(INSTALL_CMD gif VERSION 7)
+endif()
 
 external_project(
     DOWNLOAD URL 913dd251492134e235ee3c9a91987a4d

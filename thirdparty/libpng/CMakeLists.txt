@@ -6,7 +6,8 @@ list(APPEND CMAKE_ARGS
     -DPNG_DEBUG_POSTFIX=
     -DPNG_FRAMEWORK=FALSE
     -DPNG_TOOLS=FALSE
-    -DPNG_STATIC=FALSE
+    -DPNG_SHARED=$<NOT:$<BOOL:${MONOLIBTIC}>>
+    -DPNG_STATIC=$<BOOL:${MONOLIBTIC}>
     -DPNG_TESTS=FALSE
 )
 
@@ -14,7 +15,9 @@ list(APPEND BUILD_CMD COMMAND ninja)
 
 list(APPEND INSTALL_CMD COMMAND ${CMAKE_COMMAND} --install .)
 
-append_shared_lib_install_commands(INSTALL_CMD png16 VERSION 16)
+if(NOT MONOLIBTIC)
+    append_shared_lib_install_commands(INSTALL_CMD png16 VERSION 16)
+endif()
 
 external_project(
     DOWNLOAD URL dabdabca28f211feeba199d93235c703

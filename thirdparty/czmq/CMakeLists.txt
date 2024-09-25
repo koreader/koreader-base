@@ -12,7 +12,8 @@ list(APPEND PATCH_CMD COMMAND rm src/platform.h)
 list(APPEND CMAKE_ARGS
     -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE}
     # Project options.
-    -DCZMQ_BUILD_STATIC=FALSE
+    -DCZMQ_BUILD_SHARED=$<NOT:$<BOOL:${MONOLIBTIC}>>
+    -DCZMQ_BUILD_STATIC=$<BOOL:${MONOLIBTIC}>
     -DENABLE_DRAFTS=FALSE
     # Disable some dependencies (which will automatically
     # disable the corresponding project optional features).
@@ -24,11 +25,13 @@ list(APPEND CMAKE_ARGS
     -DCMAKE_DISABLE_FIND_PACKAGE_uuid=TRUE
 )
 
-list(APPEND BUILD_CMD COMMAND ninja czmq)
+list(APPEND BUILD_CMD COMMAND ninja)
 
 list(APPEND INSTALL_CMD COMMAND ${CMAKE_COMMAND} --install .)
 
-append_shared_lib_install_commands(INSTALL_CMD czmq VERSION 4)
+if(NOT MONOLIBTIC)
+    append_shared_lib_install_commands(INSTALL_CMD czmq VERSION 4)
+endif()
 
 external_project(
     DOWNLOAD URL 471e9ec120fc66a2fe2aae14359e3cfa

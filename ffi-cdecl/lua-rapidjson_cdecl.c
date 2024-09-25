@@ -1,0 +1,1 @@
+cdecl_func(luaopen_rapidjson)

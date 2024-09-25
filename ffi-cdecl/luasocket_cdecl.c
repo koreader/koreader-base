@@ -1,0 +1,2 @@
+cdecl_func(luaopen_mime_mcore)
+cdecl_func(luaopen_socket_score)

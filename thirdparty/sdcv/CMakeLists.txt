@@ -31,7 +31,7 @@ else()
     endif()
 endif()
 
-if(ANDROID)
+if(ANDROID OR MONOLIBTIC)
     set(ZLIB ${STAGING_DIR}/lib/libz.a)
 else()
     set(ZLIB ${STAGING_DIR}/lib/libz${LIB_EXT})
