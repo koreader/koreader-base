@@ -1,3 +1,21 @@
+--[[--
+Helper for loading native libraries.
+
+**Example:**
+
+    local sdl = ffi.loadlib("SDL2-2.0", 0, "SDL2-2.0", nil, "SDL2", nil)
+
+Will search `lib_search_path` for the following candidates on Linux:
+`libSDL2-2.0.so.0`, `libSDL2-2.0.so`, `libSDL2.so`.
+
+The first one found will be loaded with `ffi.load`, falling back to the
+first candidate otherwise (which should be a versioned library to ensure
+ABI compatibility).
+
+@module ffi.loadlib
+
+--]]
+
 local ffi = require("ffi")
 local android = ffi.os == "Linux" and os.getenv("IS_ANDROID") and require("android")
 local log = android and android.LOGI or print
@@ -6,10 +24,12 @@ local lib_search_path
 local lib_basic_format
 local lib_version_format
 
+-- Format library name with `lib_version_format` (when versioned) or `lib_basic_format`.
 local function libname(name, version)
     return string.format(version and lib_version_format or lib_basic_format, name, version)
 end
 
+-- See `ffi.loadlib` for what arguments are expected.
 local function findlib(...)
     local name, version = ...
     if not name then
@@ -31,6 +51,11 @@ ffi.load = function(lib, global)
     return ffi_load(lib, global)
 end
 
+--[[--
+Load a native library.
+
+@param ... list of candidates (library name, version)
+--]]
 ffi.loadlib = function(...)
     local lib = findlib(...) or libname(...)
     return ffi.load(lib)
@@ -39,7 +64,9 @@ end
 if android then
     -- Note: our libraries are not versioned on Android.
     lib_search_path = android.nativeLibraryDir .. "/?"
+    -- Unversioned: libz.so
     lib_basic_format = "lib%s.so"
+    -- Versioned: libz.so
     lib_version_format = "lib%s.so"
     -- Android need some custom code for KOReader Lua modules loaded
     -- with `require("libs/libkoreader-xxx")`, but actually stored
@@ -54,7 +81,9 @@ if android then
     end)
 elseif ffi.os == "Linux" then
     lib_search_path = "libs/?"
+    -- Unversioned: libz.so
     lib_basic_format = "lib%s.so"
+    -- Versioned: libz.so.1
     lib_version_format = "lib%s.so.%s"
 elseif ffi.os == "OSX" then
     -- Apple M1 homebrew installs libraries outside of default search paths,
@@ -72,7 +101,9 @@ elseif ffi.os == "OSX" then
     if libprefix then
         lib_search_path = lib_search_path .. ";" .. libprefix .. "/lib/?"
     end
+    -- Unversioned: libz.dylib
     lib_basic_format = "lib%s.dylib"
+    -- Versioned: libz.1.dylib
     lib_version_format = "lib%s.%s.dylib"
 end
 
