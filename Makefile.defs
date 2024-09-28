@@ -128,6 +128,7 @@ else ifeq ($(TARGET), kindle)
 		#Use the generic linaro TC for debugging
 		CHOST?=arm-linux-gnueabi
 	endif
+	GLIBC_VERSION_MAX = 2.12
 else ifeq ($(TARGET), kindlepw2)
 	KINDLE=1
 	HAS_KINDLEPW2_TC:=$(shell command -v arm-kindlepw2-linux-gnueabi-gcc 2> /dev/null)
@@ -145,6 +146,7 @@ else ifeq ($(TARGET), kindlehf)
 	else
 		CHOST?=arm-linux-gnueabihf
 	endif
+	GLIBC_VERSION_MAX = 2.20
 else ifeq ($(TARGET), kindle-legacy)
 	KINDLE=1
 	CHOST?=arm-kindle-linux-gnueabi
@@ -160,6 +162,26 @@ else ifeq ($(TARGET), kobo)
 	endif
 	USE_LJ_WPACLIENT=1
 	GLIBC_VERSION_MAX = 2.15
+else ifeq ($(TARGET), kobov4)
+	KOBO=1
+	HAS_KOBOV4_TC:=$(shell command -v arm-kobov4-linux-gnueabihf-gcc 2> /dev/null)
+	ifdef HAS_KOBOV4_TC
+		CHOST?=arm-kobov4-linux-gnueabihf
+	else
+		CHOST?=arm-linux-gnueabihf
+	endif
+	USE_LJ_WPACLIENT=1
+	GLIBC_VERSION_MAX = 2.19
+else ifeq ($(TARGET), kobov5)
+	KOBO=1
+	HAS_KOBOV5_TC:=$(shell command -v arm-kobov5-linux-gnueabihf-gcc 2> /dev/null)
+	ifdef HAS_KOBOV5_TC
+		CHOST?=arm-kobov5-linux-gnueabihf
+	else
+		CHOST?=arm-linux-gnueabihf
+	endif
+	USE_LJ_WPACLIENT=1
+	GLIBC_VERSION_MAX = 2.35
 else ifeq ($(TARGET), ubuntu-touch)
 	CHOST?=arm-linux-gnueabihf
 	SDL=1
@@ -423,10 +445,12 @@ ARMV7_GENERIC_ARCH:=-march=armv7-a -mtune=generic-armv7-a -mfpu=vfpv3 -mthumb
 ARM64_GENERIC_ARCH:=-march=armv8-a
 # Cortex A8 (K4, Kindle Touch, PW1, Kobos since the Touch)
 ARMV7_A8_ARCH:=-march=armv7-a -mtune=cortex-a8 -mfpu=neon -mthumb
-# Cortex A9 (Kindle PW2)
+# Cortex A9 (e.g., Kindle PW2)
 ARMV7_A9_ARCH:=-march=armv7-a -mtune=cortex-a9 -mfpu=neon -mthumb
-# Cortex A7 (Kobo Sage & Elipsa)
+# Cortex A7 (e.g., Kobo Sage & Elipsa)
 ARMV7_A7_ARCH:=-march=armv7-a -mtune=cortex-a7 -mfpu=neon -mthumb
+# Cortex A53 (MTK SoCs on an armv7 software stack)
+ARMV7_A53_ARCH:=-march=armv7-a -mtune=cortex-a53 -mfpu=neon -mthumb
 # Mirror the NDK's armeabi-v7a APP_ABI (cf. #201)
 ifeq ($(ANDROID_ARCH), arm)
 	ANDROID_ARM_ARCH:=-march=armv7-a -mfpu=vfpv3-d16
@@ -453,6 +477,20 @@ endif
 ifeq ($(TARGET), kobo)
 	# NOTE: If we only care about Kobos w/ a Touch screen, we're good.
 	ARM_ARCH:=$(ARMV7_A8_ARCH)
+	ARM_ARCH+=-mfloat-abi=hard
+	ifeq ($(TARGET_MACHINE), arm-linux-gnueabihf)
+		COMPAT_CFLAGS:=$(UBUNTU_COMPAT_CFLAGS)
+		COMPAT_CXXFLAGS:=$(UBUNTU_COMPAT_CFLAGS)
+	endif
+else ifeq ($(TARGET), kobov4)
+	ARM_ARCH:=$(ARMV7_A9_ARCH)
+	ARM_ARCH+=-mfloat-abi=hard
+	ifeq ($(TARGET_MACHINE), arm-linux-gnueabihf)
+		COMPAT_CFLAGS:=$(UBUNTU_COMPAT_CFLAGS)
+		COMPAT_CXXFLAGS:=$(UBUNTU_COMPAT_CFLAGS)
+	endif
+else ifeq ($(TARGET), kobov5)
+	ARM_ARCH:=$(ARMV7_A53_ARCH)
 	ARM_ARCH+=-mfloat-abi=hard
 	ifeq ($(TARGET_MACHINE), arm-linux-gnueabihf)
 		COMPAT_CFLAGS:=$(UBUNTU_COMPAT_CFLAGS)
