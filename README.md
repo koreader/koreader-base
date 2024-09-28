@@ -19,13 +19,17 @@ Follow these steps:
 * automatically fetch thirdparty sources with Makefile:
   * make sure you have `patch`, `wget`, `unzip`, `git` and `svn` installed
   * run `make fetchthirdparty`.
-* run `make TARGET=kindlehf` For kindle models running fw >= 5.16.3 (Paperwhite 4 and later)
+* run `make TARGET=kindlehf` For kindle models running FW >= 5.16.3 (Paperwhite 4 and later)
 
-* run `make TARGET=kindlepw2` For Kindle models >= Paperwhite 2.
+* or run `make TARGET=kindlepw2` For Kindle models >= Paperwhite 2.
 
-* run `make TARGET=kindle` For Kindle models >= Kindle 4 < Paperwhite 2.
+* or run `make TARGET=kindle` For Kindle models >= Kindle 4 < Paperwhite 2.
 
-* run `make TARGET=kindle-legacy` for Kindle DXG/2/3 devices.
+* or run `make TARGET=kindle-legacy` for Kindle DXG/2/3 devices.
+
+* or run `make TARGET=kobov5` for Kobo/Tolino devices runing FW >= 5.x
+
+* or run `make TARGET=kobov4` for Mk.7 & up Kobo devices running FW 4.x
 
 * or run `make TARGET=kobo` for Kobo devices.
 
