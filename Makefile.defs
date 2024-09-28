@@ -425,6 +425,8 @@ ARM64_GENERIC_ARCH:=-march=armv8-a
 ARMV7_A8_ARCH:=-march=armv7-a -mtune=cortex-a8 -mfpu=neon -mthumb
 # Cortex A9 (Kindle PW2)
 ARMV7_A9_ARCH:=-march=armv7-a -mtune=cortex-a9 -mfpu=neon -mthumb
+# Cortex A7 (Kobo Sage & Elipsa)
+ARMV7_A7_ARCH:=-march=armv7-a -mtune=cortex-a7 -mfpu=neon -mthumb
 # Mirror the NDK's armeabi-v7a APP_ABI (cf. #201)
 ifeq ($(ANDROID_ARCH), arm)
 	ANDROID_ARM_ARCH:=-march=armv7-a -mfpu=vfpv3-d16
@@ -489,7 +491,8 @@ else ifeq ($(TARGET), kindlepw2)
 		COMPAT_CXXFLAGS:=$(UBUNTU_COMPAT_CFLAGS)
 	endif
 else ifeq ($(TARGET), kindlehf)
-	ARM_ARCH:=$(ARMV7_A9_ARCH)
+	# We bias towards in-order CPUs (e.g., A53)
+	ARM_ARCH:=$(ARMV7_A7_ARCH)
 	ARM_ARCH+=-mfloat-abi=hard
 	ifeq ($(TARGET_MACHINE), arm-linux-gnueabihf)
 		COMPAT_CFLAGS:=$(UBUNTU_COMPAT_CFLAGS)
