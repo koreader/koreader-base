@@ -17,8 +17,8 @@ endif()
 append_shared_lib_install_commands(INSTALL_CMD ${LIB_SPEC})
 
 external_project(
-    DOWNLOAD URL ccf2b019162b4e5e6569875d0641bc5f
-    https://github.com/fribidi/fribidi/releases/download/v1.0.15/fribidi-1.0.15.tar.xz
+    DOWNLOAD URL 333ad150991097a627755b752b87f9ff
+    https://github.com/fribidi/fribidi/releases/download/v1.0.16/fribidi-1.0.16.tar.xz
     CONFIGURE_COMMAND ${CFG_CMD}
     BUILD_COMMAND ${BUILD_CMD}
     INSTALL_COMMAND ${INSTALL_CMD}
