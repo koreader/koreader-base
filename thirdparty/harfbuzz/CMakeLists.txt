@@ -18,7 +18,7 @@ list(APPEND PATCH_CMD COMMAND ${ISED} "/^#line/d"
     src/hb-buffer-deserialize-text-unicode.hh
 )
 
-# We've apparently hit a weird corner-case w/ XText where GCC/STL atomics *sometimes* horribly blow up on an ARM1136JF-S CPU w/ GCC 7.5...
+# We've apparently hit a weird corner-case w/ XText where GCC/STL atomics *sometimes* horribly blow up on an ARM1136JF-S CPU w/ GCC 7.5 & up...
 # c.f., https://github.com/koreader/koreader/issues/5780 & https://github.com/koreader/koreader/issues/6024
 # NOTE: Our initial approach was to only disable atomics in a very dirty manner, which only helped with the first issue.
 #       This, on the other hand, appears to help with both.
