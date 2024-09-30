@@ -20,6 +20,19 @@
  else(UNIX)
      if(WIN32)
          set(PLAT "win32")
+@@ -69,7 +56,11 @@
+     src/calibre.hpp
+ )
+ 
+-add_library(lua-rapidjson MODULE ${SOURCES})
++if(BUILD_SHARED_LIBS)
++    add_library(lua-rapidjson MODULE ${SOURCES})
++else()
++    add_library(lua-rapidjson STATIC ${SOURCES})
++endif()
+ if(${CMAKE_VERSION} VERSION_LESS "3.1.0")
+     if(CMAKE_COMPILER_IS_GNUCXX)
+         execute_process(COMMAND "${CMAKE_CXX_COMPILER} -dumpversion" OUTPUT_VARIABLE GCC_VERSION)
 @@ -84,9 +71,7 @@ endif()
  
  source_group(src FILES ${SOURCES})

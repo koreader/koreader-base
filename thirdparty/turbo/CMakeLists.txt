@@ -12,12 +12,16 @@ list(APPEND PATCH_CMD COMMAND chmod a-x turbo/platform.lua turbo/socket_ffi.lua 
 
 list(APPEND CMAKE_ARGS
     -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE}
-    -DBUILD_SHARED_LIBS=TRUE
+    -DBUILD_SHARED_LIBS=$<NOT:$<BOOL:${MONOLIBTIC}>>
 )
 
 list(APPEND BUILD_CMD COMMAND ninja)
 
-append_binary_install_command(INSTALL_CMD libtffi_wrap${LIB_EXT} DESTINATION libs)
+if(MONOLIBTIC)
+    append_install_commands(INSTALL_CMD libtffi_wrap.a DESTINATION ${STAGING_DIR}/lib)
+else()
+    append_binary_install_command(INSTALL_CMD libtffi_wrap${LIB_EXT} DESTINATION libs)
+endif()
 append_install_commands(INSTALL_CMD ${SOURCE_DIR}/turbo.lua ${SOURCE_DIR}/turbovisor.lua DESTINATION common)
 append_tree_install_commands(INSTALL_CMD ${SOURCE_DIR}/turbo common/turbo)
 

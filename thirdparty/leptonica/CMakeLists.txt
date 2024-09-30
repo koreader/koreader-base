@@ -30,7 +30,7 @@ list(APPEND PATCH_FILES
 
 list(APPEND CMAKE_ARGS
     -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE}
-    -DBUILD_SHARED_LIBS=TRUE
+    -DBUILD_SHARED_LIBS=$<NOT:$<BOOL:${MONOLIBTIC}>>
     # Project options.
     -DBUILD_PROG=FALSE
     -DSTRICT_CONF=TRUE
@@ -50,7 +50,9 @@ list(APPEND BUILD_CMD COMMAND ninja)
 list(APPEND INSTALL_CMD COMMAND ${CMAKE_COMMAND} --install .)
 list(APPEND INSTALL_CMD COMMAND ln -snf lept_$<CONFIG>.pc ${STAGING_DIR}/lib/pkgconfig/lept.pc)
 
-append_shared_lib_install_commands(INSTALL_CMD leptonica VERSION 6)
+if(NOT MONOLIBTIC)
+    append_shared_lib_install_commands(INSTALL_CMD leptonica VERSION 6)
+endif()
 
 external_project(
     # NOTE: Needs to match the version used by whatever version of libk2pdfopt we're currently using...

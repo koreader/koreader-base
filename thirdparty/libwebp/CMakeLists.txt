@@ -2,7 +2,7 @@ list(APPEND PATCH_FILES cmake_tweaks.patch)
 
 list(APPEND CMAKE_ARGS
     -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE}
-    -DBUILD_SHARED_LIBS=TRUE
+    -DBUILD_SHARED_LIBS=$<NOT:$<BOOL:${MONOLIBTIC}>>
     # Project options.
     # Note: we could build libwebpdecoder.so only, which would be smaller and fine
     # decoding single frame webp images. But it fails on animated webp images, not
@@ -25,9 +25,11 @@ list(APPEND BUILD_CMD COMMAND ninja)
 
 list(APPEND INSTALL_CMD COMMAND ${CMAKE_COMMAND} --install .)
 
-append_shared_lib_install_commands(INSTALL_CMD sharpyuv VERSION 0)
-append_shared_lib_install_commands(INSTALL_CMD webpdemux VERSION 2)
-append_shared_lib_install_commands(INSTALL_CMD webp VERSION 7)
+if(NOT MONOLIBTIC)
+    append_shared_lib_install_commands(INSTALL_CMD sharpyuv VERSION 0)
+    append_shared_lib_install_commands(INSTALL_CMD webpdemux VERSION 2)
+    append_shared_lib_install_commands(INSTALL_CMD webp VERSION 7)
+endif()
 
 external_project(
     DOWNLOAD URL 34869086761c0e2da6361035f7b64771

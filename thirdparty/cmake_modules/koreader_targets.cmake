@@ -21,13 +21,25 @@ function(setup_target NAME)
     elseif(${NAME}_TYPE STREQUAL "library")
         add_library(${NAME} SHARED)
         set(_DESTINATION ${OUTPUT_DIR}/libs)
+    elseif(${NAME}_TYPE STREQUAL "monolibtic")
+        if(MONOLIBTIC)
+            add_library(${NAME} OBJECT)
+        else()
+            add_library(${NAME} SHARED)
+        endif()
+        set(_DESTINATION ${OUTPUT_DIR}/libs)
     else()
         message(FATAL_ERROR "unsupported target '${NAME}' type: ${${NAME}_TYPE}")
+    endif()
+    if(${NAME}_TYPE STREQUAL "monolibtic" AND MONOLIBTIC)
+        set(OBJLIB TRUE)
+    else()
+        set(OBJLIB FALSE)
     endif()
     if(${NAME}_DEPENDS)
         target_link_libraries(${NAME} PRIVATE ${${NAME}_DEPENDS})
     endif()
-    if(${NAME}_SUFFIX)
+    if(${NAME}_SUFFIX AND NOT OBJLIB)
         set_target_properties(${NAME} PROPERTIES SUFFIX ${${NAME}_SUFFIX})
     endif()
     if(${NAME}_VISIBILITY)
@@ -46,9 +58,11 @@ function(setup_target NAME)
     set_target_properties(${NAME} PROPERTIES EXCLUDE_FROM_ALL ${${NAME}_EXCLUDE_FROM_ALL})
     target_sources(${NAME} PRIVATE ${${NAME}_SOURCES})
     # Post-build install command.
-    set(INSTALL_CMD)
-    append_binary_install_command(INSTALL_CMD $<TARGET_FILE_NAME:${NAME}> DESTINATION ${_DESTINATION})
-    add_custom_command(TARGET ${NAME} POST_BUILD VERBATIM ${INSTALL_CMD})
+    if(NOT OBJLIB)
+        set(INSTALL_CMD)
+        append_binary_install_command(INSTALL_CMD $<TARGET_FILE_NAME:${NAME}> DESTINATION ${_DESTINATION})
+        add_custom_command(TARGET ${NAME} POST_BUILD VERBATIM ${INSTALL_CMD})
+    endif()
     # Custom finalization.
     string(REPLACE "-" "_" SETUP setup_${NAME})
     if(COMMAND ${SETUP})
@@ -68,7 +82,7 @@ else()
     set(EXCLUDE_FROM_ALL EXCLUDE_FROM_ALL)
 endif()
 declare_koreader_target(
-    blitbuffer TYPE library
+    blitbuffer TYPE monolibtic
     ${EXCLUDE_FROM_ALL}
     SOURCES blitbuffer.c
     VISIBILITY hidden
@@ -79,7 +93,7 @@ endfunction()
 
 # koreade-cre
 declare_koreader_target(
-    koreader-cre TYPE library
+    koreader-cre TYPE monolibtic
     DEPENDS crengine::crengine luajit::luajit
     SOURCES cre.cpp
     SUFFIX .so
@@ -88,7 +102,7 @@ declare_koreader_target(
 
 # koreader-djvu
 declare_koreader_target(
-    koreader-djvu TYPE library
+    koreader-djvu TYPE monolibtic
     DEPENDS djvulibre::djvulibre libk2pdfopt::k2pdfopt luajit::luajit pthread
     SOURCES djvu.c
     SUFFIX .so
@@ -108,7 +122,7 @@ else()
     set(EXCLUDE_FROM_ALL)
 endif()
 declare_koreader_target(
-    koreader-input TYPE library
+    koreader-input TYPE monolibtic
     DEPENDS ${DEPENDS}
     ${EXCLUDE_FROM_ALL}
     SOURCES input/input.c
@@ -127,7 +141,7 @@ endfunction()
 
 # koreader-lfs
 declare_koreader_target(
-    koreader-lfs TYPE library
+    koreader-lfs TYPE monolibtic
     DEPENDS luajit::luajit
     SOURCES lfs.c lfs.h
     VISIBILITY hidden
@@ -161,7 +175,7 @@ endfunction()
 
 # koreader-nnsvg
 declare_koreader_target(
-    koreader-nnsvg TYPE library
+    koreader-nnsvg TYPE monolibtic
     DEPENDS luajit::luajit nanosvg::nanosvg
     SOURCES nnsvg.c
     SUFFIX .so
@@ -170,7 +184,7 @@ declare_koreader_target(
 
 # koreader-xtext
 declare_koreader_target(
-    koreader-xtext TYPE library
+    koreader-xtext TYPE monolibtic
     DEPENDS freetype2::freetype fribidi::fribidi harfbuzz::harfbuzz luajit::luajit libunibreak::unibreak
     SOURCES xtext.cpp
     SUFFIX .so
@@ -179,14 +193,16 @@ declare_koreader_target(
 
 # wrap-mupdf
 declare_koreader_target(
-    wrap-mupdf TYPE library
+    wrap-mupdf TYPE monolibtic
     DEPENDS mupdf::mupdf
     SOURCES wrap-mupdf.c
     SUFFIX .so
     VISIBILITY hidden
 )
 function(setup_wrap_mupdf)
-    target_exports(wrap-mupdf CDECLS mupdf_decl)
+    if(NOT MONOLIBTIC)
+        target_exports(wrap-mupdf CDECLS wrap-mupdf_cdecl)
+    endif()
 endfunction()
 
 # }}}
@@ -256,6 +272,95 @@ declare_koreader_target(
     ${EXCLUDE_FROM_ALL}
     SOURCES button-listen.c
 )
+
+# }}}
+
+# MONOLIBTIC. {{{
+
+if(MONOLIBTIC)
+
+    set(DEPENDS)
+    foreach(NAME IN LISTS KOREADER_TARGETS)
+        if(${NAME}_TYPE STREQUAL "monolibtic" AND NOT ${NAME}_EXCLUDE_FROM_ALL)
+            list(APPEND DEPENDS ${NAME} ${${NAME}_DEPENDS})
+        endif()
+    endforeach()
+    if(KINDLE)
+        list(APPEND DEPENDS openlipclua::libopenlipclua)
+    endif()
+    declare_koreader_target(
+        koreader-monolibtic TYPE library
+        DEPENDS ${DEPENDS}
+        # We still need to manually add some transitive dependencies because
+        # CMake is shit at handling mutiple level of static libraries.
+        czmq::czmq
+        freetype2::freetype
+        giflib::gif
+        harfbuzz::harfbuzz
+        leptonica::leptonica
+        libjpeg-turbo::turbojpeg
+        libk2pdfopt::k2pdfopt
+        libzmq::zmq
+        lodepng::lodepng
+        lpeg::lpeg
+        lua-rapidjson::rapidjson
+        luasec::ssl
+        luasocket::luasocket
+        luasocket::mcore
+        luasocket::score
+        openssl::crypto
+        openssl::ssl
+        pthread
+        sqlite::sqlite3
+        turbo::tffi_wrap
+        zlib::z
+        zstd::zstd
+        SOURCES monolibtic.cpp
+    )
+
+    function(setup_koreader_monolibtic)
+        if(APPLE)
+            target_link_options(koreader-monolibtic PRIVATE -Wl,-dead_strip,-dead_strip_dylibs)
+        else()
+            # NOTE: we can't close the group started with `-Wl,--start-group` because
+            # there's no way to tell CMake to add the necessary `-Wl,--end-group` at
+            # the end of the line, **after** the libraries. (Proper support is only
+            # available from 3.24 onward).
+            target_link_options(koreader-monolibtic PRIVATE -Wl,-Bsymbolic,--gc-sections,--start-group)
+        endif()
+        set(CDECLS)
+        foreach(NAME IN LISTS KOREADER_TARGETS)
+            if(${NAME}_TYPE STREQUAL "monolibtic" AND NOT ${NAME}_EXCLUDE_FROM_ALL)
+                list(APPEND CDECLS ${NAME}_cdecl)
+            endif()
+        endforeach()
+        if(KINDLE)
+            list(APPEND CDECLS openlipclua_cdecl)
+        endif()
+        target_exports(koreader-monolibtic CDECLS ${CDECLS}
+            crypto_decl
+            freetype2_decl
+            giflib_decl
+            harfbuzz_cdecl
+            koptcontext_cdecl
+            leptonica_cdecl
+            libwebp_decl
+            lodepng_decl
+            lpeg_cdecl
+            lua-rapidjson_cdecl
+            luasec_cdecl
+            luasocket_cdecl
+            sqlite3_cdecl
+            tffi_wrap_cdecl
+            turbojpeg_decl
+            utf8proc_decl
+            zeromq_cdecl
+            zlib_decl
+            zstd_decl
+        )
+    endfunction()
+
+endif()
 
 # }}}
 

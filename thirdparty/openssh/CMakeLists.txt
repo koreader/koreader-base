@@ -1,3 +1,7 @@
+if(NOT APPLE AND MONOLIBTIC)
+    # Need `-pthread` for static OpenSSL's crypto library.
+    string(APPEND LDFLAGS " -pthread")
+endif()
 list(APPEND CFG_CMD COMMAND env)
 if(LEGACY OR POCKETBOOK)
     # Avoid pulling-in `utimensat@@GLIBC_2.6` in `sftp-server`.

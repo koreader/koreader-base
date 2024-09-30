@@ -27,7 +27,7 @@ if(LEGACY OR POCKETBOOK)
 endif()
 
 list(APPEND CFG_CMD COMMAND
-    ${MESON_SETUP} --default-library=shared
+    ${MESON_SETUP} --default-library=$<IF:$<BOOL:${MONOLIBTIC}>,static,shared>
     -Dfreetype=enabled
     -Dtests=disabled
     -Dutilities=disabled
@@ -38,11 +38,13 @@ list(APPEND BUILD_CMD COMMAND ninja)
 
 list(APPEND INSTALL_CMD COMMAND ${MESON_INSTALL})
 
-set(LIB_SPEC harfbuzz VERSION 0)
-if(APPLE)
-    append_shared_lib_fix_commands(INSTALL_CMD ${LIB_SPEC} ID)
+if(NOT MONOLIBTIC)
+    set(LIB_SPEC harfbuzz VERSION 0)
+    if(APPLE)
+        append_shared_lib_fix_commands(INSTALL_CMD ${LIB_SPEC} ID)
+    endif()
+    append_shared_lib_install_commands(INSTALL_CMD ${LIB_SPEC})
 endif()
-append_shared_lib_install_commands(INSTALL_CMD ${LIB_SPEC})
 
 external_project(
     DOWNLOAD URL 295b211a0c6c0e5a07278ceee894ef68
