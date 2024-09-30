@@ -25,6 +25,11 @@ list(APPEND CFG_CMD COMMAND
 list(APPEND BUILD_CMD COMMAND ninja glib/libglib-2.0.a)
 
 list(APPEND INSTALL_CMD COMMAND ${MESON_INSTALL} --tags devel)
+# Don't install the pkg-config entry:
+# - sdcv is the only user, and needs to be manually coaxed into using our GLib anyway.
+# - when building SDL2 for the AppImage, IBus headers include some GObject headers,
+#   which our patched version does not include.
+list(APPEND INSTALL_CMD COMMAND rm -f ${STAGING_DIR}/lib/pkgconfig/glib-2.0.pc)
 
 external_project(
     DOWNLOAD URL 4334211338220a165350d1c4a1597b0e
