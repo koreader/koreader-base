@@ -1,5 +1,5 @@
 list(APPEND CFG_CMD COMMAND
-    ${MESON_SETUP} --default-library=shared
+    ${MESON_SETUP} --default-library=$<IF:$<BOOL:${MONOLIBTIC}>,static,shared>
     -Dbin=false
     -Ddocs=false
     -Dtests=false
@@ -10,11 +10,13 @@ list(APPEND BUILD_CMD COMMAND ninja)
 
 list(APPEND INSTALL_CMD COMMAND ${MESON_INSTALL})
 
-set(LIB_SPEC fribidi VERSION 0)
-if(APPLE)
-    append_shared_lib_fix_commands(INSTALL_CMD ${LIB_SPEC} ID)
+if(NOT MONOLIBTIC)
+    set(LIB_SPEC fribidi VERSION 0)
+    if(APPLE)
+        append_shared_lib_fix_commands(INSTALL_CMD ${LIB_SPEC} ID)
+    endif()
+    append_shared_lib_install_commands(INSTALL_CMD ${LIB_SPEC})
 endif()
-append_shared_lib_install_commands(INSTALL_CMD ${LIB_SPEC})
 
 external_project(
     DOWNLOAD URL 333ad150991097a627755b752b87f9ff

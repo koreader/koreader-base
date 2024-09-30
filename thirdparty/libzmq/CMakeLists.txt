@@ -6,6 +6,8 @@ endif()
 list(APPEND CMAKE_ARGS
     -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE}
     # Project options.
+    -DBUILD_SHARED=$<NOT:$<BOOL:${MONOLIBTIC}>>
+    -DBUILD_STATIC=$<BOOL:${MONOLIBTIC}>
     -DENABLE_DRAFTS=FALSE
     -DWITH_DOC=FALSE
     -DWITH_LIBBSD=FALSE
@@ -23,7 +25,9 @@ list(APPEND BUILD_CMD COMMAND ninja)
 
 list(APPEND INSTALL_CMD COMMAND ${CMAKE_COMMAND} --install .)
 
-append_shared_lib_install_commands(INSTALL_CMD zmq VERSION 5)
+if(NOT MONOLIBTIC)
+    append_shared_lib_install_commands(INSTALL_CMD zmq VERSION 5)
+endif()
 
 external_project(
     DOWNLOAD URL ae933b1e98411fd7cb8309f9502d2737

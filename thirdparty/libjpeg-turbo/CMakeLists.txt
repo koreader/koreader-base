@@ -3,8 +3,8 @@ list(APPEND PATCH_FILES no_cmake_rpath_shenanigans.patch)
 list(APPEND CMAKE_ARGS
     -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE}
     # Project options.
-    -DENABLE_STATIC=OFF
-    -DENABLE_SHARED=ON
+    -DENABLE_SHARED=$<NOT:$<BOOL:${MONOLIBTIC}>>
+    -DENABLE_STATIC=$<BOOL:${MONOLIBTIC}>
     -DWITH_JAVA=OFF
     -DWITH_JPEG8=ON
     # Make sure we disable ASM if we don't support SIMD.
@@ -18,8 +18,10 @@ list(APPEND BUILD_CMD COMMAND ninja)
 
 list(APPEND INSTALL_CMD COMMAND ${CMAKE_COMMAND} --install .)
 
-append_shared_lib_install_commands(INSTALL_CMD jpeg VERSION 8)
-append_shared_lib_install_commands(INSTALL_CMD turbojpeg VERSION 0.3.0)
+if(NOT MONOLIBTIC)
+    append_shared_lib_install_commands(INSTALL_CMD jpeg VERSION 8)
+    append_shared_lib_install_commands(INSTALL_CMD turbojpeg VERSION 0.3.0)
+endif()
 
 external_project(
     DOWNLOAD GIT 3.0.3

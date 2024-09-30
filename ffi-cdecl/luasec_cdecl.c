@@ -1,0 +1,4 @@
+cdecl_func(luaopen_ssl_config)
+cdecl_func(luaopen_ssl_context)
+cdecl_func(luaopen_ssl_core)
+cdecl_func(luaopen_ssl_x509)

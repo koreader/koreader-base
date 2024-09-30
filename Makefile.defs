@@ -778,6 +778,8 @@ ifdef DARWIN
 	DYNLIB_LDFLAGS += -dynamiclib -undefined dynamic_lookup
 endif
 
+MONOLIBTIC ?= $(ANDROID)
+
 # CMake toolchain file. {{{
 
 CMAKE_TCF = $(CMAKE_DIR)/toolchain.cmake
@@ -950,6 +952,7 @@ set(MESON_FILE_ARG $(if $(filter-out $(MESON_HOST_TOOLCHAIN),$(MESON_CROSS_TOOLC
 
 # Miscellaneous.
 set(DO_STRIP           $(DO_STRIP))
+set(MONOLIBTIC         $(MONOLIBTIC))
 set(USE_LJ_WPACLIENT   $(USE_LJ_WPACLIENT))
 set(USE_SDL            $(SDL))
 set(WANT_SIMD          $(WANT_SIMD))

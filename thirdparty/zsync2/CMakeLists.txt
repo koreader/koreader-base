@@ -5,6 +5,7 @@ list(APPEND PATCH_FILES
 
 list(APPEND CMAKE_ARGS
     -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE}
+    -DOPENSSL_USE_STATIC_LIBS=$<BOOL:${MONOLIBTIC}>
     # Options.
     -DBUILD_CPR_TESTS=FALSE
     -DBUILD_TESTING=FALSE
@@ -30,7 +31,7 @@ append_binary_install_command(INSTALL_CMD src/zsync2)
 # c.f., https://github.com/NiLuJe/zsync2 for more details.
 
 external_project(
-    DOWNLOAD GIT d7d6463356fbeb1e97e917d114ff7ea63df2d6df
+    DOWNLOAD GIT e281e1eb4466ff6b3866c25dbe62a3e150fa5bfd
     https://github.com/NiLuJe/zsync2.git
     PATCH_FILES ${PATCH_FILES}
     CMAKE_ARGS ${CMAKE_ARGS}
