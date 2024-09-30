@@ -358,7 +358,7 @@ declare_project(thirdparty/proxy-libintl EXCLUDE_FROM_ALL)
 declare_project(thirdparty/sdcv DEPENDS glib zlib)
 
 # sdl2
-if(MACOS)
+if(APPIMAGE OR MACOS)
     set(EXCLUDE_FROM_ALL)
 else()
     set(EXCLUDE_FROM_ALL EXCLUDE_FROM_ALL)

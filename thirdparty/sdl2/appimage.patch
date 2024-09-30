@@ -1,0 +1,84 @@
+--- i/CMakeLists.txt
++++ w/CMakeLists.txt
+@@ -8,6 +8,13 @@
+ cmake_minimum_required(VERSION 3.15)
+ project(SDL2 C CXX)
+ 
++execute_process(COMMAND pkg-config --variable pc_path pkg-config RESULT_VARIABLE RET OUTPUT_VARIABLE OUT OUTPUT_STRIP_TRAILING_WHITESPACE)
++if(NOT RET EQUAL 0)
++  message(FATAL_ERROR "could not get pkg-config builtin search path")
++endif()
++set(ENV{PKG_CONFIG_LIBDIR} ${OUT})
++set(CMAKE_LIBRARY_ARCHITECTURE x86_64-linux-gnu)
++
+ if(CMAKE_SOURCE_DIR STREQUAL PROJECT_SOURCE_DIR)
+   set(SDL2_SUBPROJECT OFF)
+ else()
+@@ -1588,7 +1595,7 @@
+ 
+     if(PKG_CONFIG_FOUND)
+       if(SDL_DBUS)
+-        pkg_search_module(DBUS dbus-1 dbus)
++        pkg_search_module(DBUS REQUIRED dbus-1 dbus)
+         if(DBUS_FOUND)
+           set(HAVE_DBUS_DBUS_H TRUE)
+           target_include_directories(sdl-build-options INTERFACE "${DBUS_INCLUDE_DIRS}")
+@@ -1599,7 +1606,7 @@
+       endif()
+ 
+       if(SDL_IBUS)
+-        pkg_search_module(IBUS ibus-1.0 ibus)
++        pkg_search_module(IBUS REQUIRED ibus-1.0 ibus)
+         find_path(HAVE_SYS_INOTIFY_H NAMES sys/inotify.h)
+         if(IBUS_FOUND AND HAVE_SYS_INOTIFY_H)
+           set(HAVE_IBUS_IBUS_H TRUE)
+--- i/cmake/sdlchecks.cmake
++++ w/cmake/sdlchecks.cmake
+@@ -427,6 +427,10 @@
+   if(SDL_X11)
+     foreach(_LIB X11 Xext Xcursor Xi Xfixes Xrandr Xrender Xss)
+         FindLibraryAndSONAME("${_LIB}")
++        string(TOUPPER ${_LIB} _ULIB)
++        if(NOT ${_ULIB}_LIB)
++          message(FATAL_ERROR "Library ${_LIB} not found")
++        endif()
+     endforeach()
+ 
+     set(X11_dirs)
+@@ -658,7 +662,7 @@
+ macro(CheckWayland)
+   if(SDL_WAYLAND)
+     set(WAYLAND_FOUND FALSE)
+-    pkg_check_modules(PKG_WAYLAND "wayland-client>=1.18" wayland-egl wayland-cursor egl "xkbcommon>=0.5.0")
++    pkg_check_modules(PKG_WAYLAND REQUIRED "wayland-client>=1.18" wayland-egl wayland-cursor egl "xkbcommon>=0.5.0")
+ 
+     if(PKG_WAYLAND_FOUND)
+       set(WAYLAND_FOUND TRUE)
+@@ -726,7 +730,7 @@
+       endif()
+ 
+       if(SDL_WAYLAND_LIBDECOR)
+-        pkg_check_modules(PKG_LIBDECOR libdecor-0)
++        pkg_check_modules(PKG_LIBDECOR REQUIRED libdecor-0)
+         if(PKG_LIBDECOR_FOUND)
+             set(HAVE_WAYLAND_LIBDECOR TRUE)
+             set(HAVE_LIBDECOR_H 1)
+@@ -858,7 +862,7 @@
+ # - PkgCheckModules
+ macro(CheckEGL)
+   if (SDL_OPENGL OR SDL_OPENGLES)
+-    pkg_check_modules(EGL egl)
++    pkg_check_modules(EGL REQUIRED egl)
+     set(CMAKE_REQUIRED_DEFINITIONS "${CMAKE_REQUIRED_DEFINITIONS} ${EGL_CFLAGS}")
+     check_c_source_compiles("
+         #define EGL_API_FB
+@@ -1361,6 +1365,9 @@
+         set(HAVE_LIBUDEV TRUE)
+       endif()
+     endif()
++    if(NOT HAVE_LIBUDEV)
++      message(FATAL_ERROR "udev library not found")
++    endif()
+   endif()
+ endmacro()
+ 
