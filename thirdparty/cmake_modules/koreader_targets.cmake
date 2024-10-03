@@ -196,7 +196,6 @@ declare_koreader_target(
     wrap-mupdf TYPE monolibtic
     DEPENDS mupdf::mupdf
     SOURCES wrap-mupdf.c
-    SUFFIX .so
     VISIBILITY hidden
 )
 function(setup_wrap_mupdf)
