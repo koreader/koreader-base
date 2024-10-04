@@ -58,11 +58,19 @@ run() {
     "$@"
 }
 
-validate_md5() {
-    [ -r "$1" ] && md5sum -c <<EOF
-$2 $1
-EOF
-}
+validate_md5() { (
+    [ $# -ge 2 ] || return 1
+    file="$1"
+    md5="$2"
+    shift 2
+    [ -r "${file}" ] || return 1
+    calculated="$(md5sum "${file}")"
+    calculated="${calculated%% *}"
+    if [ "${calculated}" != "${md5}" ]; then
+        err "computed checksum did NOT match: ${file}, expected ${md5}, calculated ${calculated}"
+        return 1
+    fi
+); }
 
 download_archive() { (
     [ $# -ge 3 ] || return 1
