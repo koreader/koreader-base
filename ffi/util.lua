@@ -450,6 +450,7 @@ function util.getNonBlockingReadSize(fd_or_luafile)
     local available = ffi.new('int[1]')
     local ok = C.ioctl(fileno, C.FIONREAD, available)
     if ok ~= 0 then -- ioctl failed, not supported
+        print("C.ioctl(…, FIONREAD, …) failed:", ffi.string(C.strerror(ffi.errno())))
         return
     end
     available = tonumber(available[0])
