@@ -289,7 +289,7 @@ USE_LUAJIT_LIB = $(or $(DARWIN),$(ANDROID),$(WIN32))
 SKIP_LUAJIT_BIN = $(or $(ANDROID),$(MACOS))
 
 RCP := cp -R
-WGET ?= wget
+WGET ?= wget --no-verbose
 
 define wget_and_validate
 	$(WGET) -O '$1' '$2' \
