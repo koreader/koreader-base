@@ -35,6 +35,7 @@ class LibraryInfo:
     soname    : str  = None
     needed    : list = dataclasses.field(default_factory=list)
     rpath     : str  = None
+    runpath   : str  = None
     provides  : list = dataclasses.field(default_factory=set)
     unresolved: list = dataclasses.field(default_factory=set)
     upneeded  : list = dataclasses.field(default_factory=list)
@@ -226,6 +227,8 @@ def dumpinfo(info):
         print('  SONAME    :', info.soname)
     if info.rpath is not None:
         print('  RPATH     :', info.rpath)
+    if info.runpath is not None:
+        print('  RUNPATH   :', info.runpath)
     for need in info.needed:
         print('  NEEDED    :', need)
     for export in info.upneeded:
