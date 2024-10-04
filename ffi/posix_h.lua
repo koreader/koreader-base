@@ -156,7 +156,6 @@ int printf(const char *, ...);
 int sprintf(char *, const char *, ...) __attribute__((nothrow));
 int fprintf(FILE *restrict, const char *restrict, ...);
 int fputc(int, FILE *);
-static const int FIONREAD = 21531;
 int fileno(FILE *) __attribute__((nothrow, leaf));
 char *strerror(int) __attribute__((nothrow, leaf));
 int fsync(int);
@@ -449,6 +448,7 @@ static const int CLOCK_MONOTONIC_COARSE = 6;
 static const int CLOCK_MONOTONIC_RAW = 4;
 static const int CLOCK_BOOTTIME = 7;
 static const int CLOCK_TAI = 11;
+static const int FIONREAD = 21531;
 ]]
 elseif ffi.os == "OSX" then
     -- c.f., https://github.com/phracker/MacOSX-SDKs/blob/master/MacOSX10.12.sdk/usr/include/time.h
@@ -478,6 +478,7 @@ static const int CLOCK_MONOTONIC_COARSE = 5;
 static const int CLOCK_MONOTONIC_RAW = 4;
 static const int CLOCK_BOOTTIME = -1;
 static const int CLOCK_TAI = -1;
+static const int FIONREAD = 1074030207;
 ]]
 elseif ffi.os == "BSD" then
     -- OpenBSD
