@@ -134,6 +134,8 @@ $(OUTPUT_DIR)/%/:
 
 ifneq (,$(EMULATE_READER))
 
+download-all: test-data
+
 $(OUTPUT_DIR)/.busted: | $(OUTPUT_DIR)/
 	$(SYMLINK) $(KOR_BASE)/.busted $@
 
