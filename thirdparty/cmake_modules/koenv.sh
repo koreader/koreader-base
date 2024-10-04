@@ -127,11 +127,11 @@ clean_tree() { (
     killlist="$(list_tree "${tree}" | comm -13 "${srclist}" -)"
     [ -n "${killlist}" ] || return 0
     # Remove files.
-    sed -n '/\\$/!p' <<EOF | xargs --delimiter='\n' --no-run-if-empty rm -v || return 1
+    sed -n '/\/$/!p' <<EOF | xargs --delimiter='\n' --no-run-if-empty rm -v || return 1
 ${killlist}
 EOF
     # Remove directories.
-    sed -n '/\\$/p' <<EOF | xargs --delimiter='\n' --no-run-if-empty rmdir -v || return 1
+    sed -n '/\/$/p' <<EOF | xargs --delimiter='\n' --no-run-if-empty rmdir -v || return 1
 ${killlist}
 EOF
 ); }
