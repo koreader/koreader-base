@@ -289,7 +289,7 @@ endif
 #       Ensuring Lua/C modules have their own DT_NEEDED entry to the shared LuaJIT library works around this quirk (and is otherwise mostly harmless).
 #       Saner APIs behave like Linux, and wouldn't require this hack.
 USE_LUAJIT_LIB = $(or $(DARWIN),$(ANDROID),$(WIN32))
-SKIP_LUAJIT_BIN = $(or $(ANDROID),$(MACOS))
+SKIP_LUAJIT_BIN = $(ANDROID)
 
 RCP := cp -R
 WGET ?= wget --no-verbose
