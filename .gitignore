@@ -4,36 +4,14 @@
 *.swp
 *.swo
 cscope.*
-libs-emu
 *.orig
-
-debug-*
-
-lua
-crash.log
-.vimrc
-.kateconfig
-git-rev
-slider_watcher
-*.o
 tags
-*.sdr
 
 /.cproject
 /.project
 
-toolchain/android-ndk-r*
-toolchain/android-sdk-linux
-toolchain/pocketbook-toolchain
-toolchain/android-toolchain*
-fonts
-/data
-history
-screenshots
-cr3cache
-extr
-build
+/toolchain/android-ndk-r*
+/toolchain/android-sdk-linux
+/build
 
-kpvcrlib/build
-thirdparty/*/build
-kodebug-*
+/thirdparty/**/build
