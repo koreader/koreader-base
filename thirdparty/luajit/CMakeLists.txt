@@ -99,7 +99,7 @@ endif()
 append_tree_install_commands(INSTALL_CMD src/jit jit)
 
 external_project(
-    DOWNLOAD GIT 87ae18af97fd4de790bb6c476b212e047689cc93
+    DOWNLOAD GIT 97813fb924edf822455f91a5fbbdfdb349e5984f
     https://github.com/LuaJIT/LuaJIT
     PATCH_FILES ${PATCH_FILES}
     PATCH_COMMAND ${PATCH_CMD}
