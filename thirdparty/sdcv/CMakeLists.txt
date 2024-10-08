@@ -1,9 +1,11 @@
 list(APPEND PATCH_FILES
     # Revert 6e36e7730caf07b6cd0bfa265cdf9b5e31e7acad, because it's
     # not helpful in our workflow, and just causes logging noise.
-    ${CMAKE_CURRENT_SOURCE_DIR}/sdcv-no-unknown-dict-warning.patch
+    sdcv-no-unknown-dict-warning.patch
     # Force UTF-8 command line parsing.
-    ${CMAKE_CURRENT_SOURCE_DIR}/sdcv-locale-hack.patch
+    sdcv-locale-hack.patch
+    # Fix compilation with newer GLib.
+    compat_with_newer_glib.patch
 )
 
 string(APPEND GLIB2_INCLUDE_DIRS

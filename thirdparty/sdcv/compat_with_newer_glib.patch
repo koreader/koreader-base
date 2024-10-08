@@ -1,0 +1,16 @@
+--- i/src/stardict_lib.cpp
++++ w/src/stardict_lib.cpp
+@@ -1047,9 +1047,9 @@
+         }
+         // Upper the first character and lower others.
+         if (!bFound) {
+-            gchar *nextchar = g_utf8_next_char(sWord);
+-            gchar *firstchar = g_utf8_strup(sWord, nextchar - sWord);
+-            nextchar = g_utf8_strdown(nextchar, -1);
++            size_t nextchar_pos = g_utf8_next_char(sWord) - sWord;
++            gchar *firstchar = g_utf8_strup(sWord, nextchar_pos);
++            gchar *nextchar = g_utf8_strdown(sWord + nextchar_pos, -1);
+             casestr = g_strdup_printf("%s%s", firstchar, nextchar);
+             g_free(firstchar);
+             g_free(nextchar);
+
