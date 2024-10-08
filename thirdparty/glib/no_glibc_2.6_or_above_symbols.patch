@@ -1,6 +1,6 @@
 --- i/meson.build
 +++ w/meson.build
-@@ -692,7 +692,6 @@
+@@ -709,7 +709,6 @@ functions = [
    'memalign',
    'mmap',
    'newlocale',
@@ -8,7 +8,7 @@
    'poll',
    'prlimit',
    'readlink',
-@@ -932,14 +931,6 @@
+@@ -945,14 +944,6 @@ else
  endif
  message('Checking whether to use statfs or statvfs .. ' + stat_func_to_use)
  
@@ -23,7 +23,7 @@
  osx_ldflags = []
  glib_have_os_x_9_or_later = false
  glib_have_carbon = false
-@@ -1001,16 +992,6 @@
+@@ -1014,16 +1005,6 @@ if cc.compiles('''#include <linux/futex.h>
    glib_conf.set('HAVE_FUTEX_TIME64', 1)
  endif
  
@@ -37,10 +37,10 @@
 -  glib_conf.set('HAVE_EVENTFD', 1)
 -endif
 -
- # Check for pidfd_open(2)
- if cc.links('''#include <sys/syscall.h>
-                #include <sys/wait.h>
-@@ -2065,9 +2065,6 @@
+ # Check for ppoll(2)
+ if cc.links('''#define _GNU_SOURCE
+                #include <poll.h>
+@@ -2113,9 +2094,6 @@ else
    if cc.has_header_symbol('pthread.h', 'pthread_getname_np', prefix : pthread_prefix)
      glib_conf.set('HAVE_PTHREAD_GETNAME_NP', 1)
    endif
