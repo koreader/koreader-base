@@ -1,0 +1,19 @@
+diff --git a/src/utils.cpp b/src/utils.cpp
+index 33bfeaac..a1fbdf1e 100644
+--- a/src/utils.cpp
++++ b/src/utils.cpp
+@@ -66,7 +66,13 @@ static void __for_each_file(const std::string &dirname, const std::string &suff,
+         while ((filename = g_dir_read_name(dir)) != nullptr) {
+             const std::string fullfilename(dirname + G_DIR_SEPARATOR_S + filename);
+             if (g_file_test(fullfilename.c_str(), G_FILE_TEST_IS_DIR))
+-                __for_each_file(fullfilename, suff, order_list, disable_list, f);
++                {
++                    // Don't walk into "res/" subdirectories, as per Stardict specs, they
++                    // may contain possibly many resource files (image, audio files...)
++                    // that could slow down our walk here.
++                    if (strcmp(filename, "res"))
++                        __for_each_file(fullfilename, suff, order_list, disable_list, f);
++                }
+             else if (g_str_has_suffix(filename, suff.c_str()) && std::find(order_list.begin(), order_list.end(), fullfilename) == order_list.end()) {
+                 const bool disable = std::find(disable_list.begin(),
+                                                disable_list.end(),
