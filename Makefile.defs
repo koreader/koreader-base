@@ -2,6 +2,9 @@ ifneq (4.1,$(firstword $(sort $(MAKE_VERSION) 4.1)))
   $(error your version of make is too old: $(MAKE_VERSION), need at least 4.1)
 endif
 
+# Prevent make from removing targets it considers as intermediate.
+.SECONDARY:
+
 # Note: ensure our possibly updated `PATH` variable is picked up by
 # `$(shell …)` invocations when using older (<4.4) make versions.
 ifeq (,$(filter shell-export,$(.FEATURES)))
