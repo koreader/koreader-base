@@ -1,8 +1,6 @@
-diff --git a/svr-authpubkey.c b/svr-authpubkey.c
-index aa6087c..7395837 100644
---- a/svr-authpubkey.c
-+++ b/svr-authpubkey.c
-@@ -296,7 +296,7 @@ static int checkpubkey(const char* algo, unsigned int algolen,
+--- i/src/svr-authpubkey.c
++++ w/src/svr-authpubkey.c
+@@ -439,10 +439,9 @@ static int checkpubkey(const char* keyalgo, unsigned int keyalgolen,
  		const unsigned char* keyblob, unsigned int keybloblen) {
  
  	FILE * authfile = NULL;
@@ -10,24 +8,27 @@ index aa6087c..7395837 100644
 +	char filename[] = "settings/SSH/authorized_keys";
  	int ret = DROPBEAR_FAILURE;
  	buffer * line = NULL;
- 	unsigned int len;
-@@ -320,15 +320,6 @@ static int checkpubkey(const char* algo, unsigned int algolen,
- 		goto out;
- 	}
- 
--	/* we don't need to check pw and pw_dir for validity, since
--	 * its been done in checkpubkeyperms. */
--	len = strlen(ses.authstate.pw_dir);
--	/* allocate max required pathname storage,
--	 * = path + "/.ssh/authorized_keys" + '\0' = pathlen + 22 */
--	filename = m_malloc(len + 22);
--	snprintf(filename, len + 22, "%s/.ssh/authorized_keys", 
--				ses.authstate.pw_dir);
+-	unsigned int len;
+ 	int line_num;
+ 	uid_t origuid;
+ 	gid_t origgid;
+@@ -462,15 +461,6 @@ static int checkpubkey(const char* keyalgo, unsigned int keyalgolen,
+ 	if (checkpubkeyperms() == DROPBEAR_FAILURE) {
+ 		TRACE(("bad authorized_keys permissions, or file doesn't exist"))
+ 	} else {
+-		/* we don't need to check pw and pw_dir for validity, since
+-		 * its been done in checkpubkeyperms. */
+-		len = strlen(ses.authstate.pw_dir);
+-		/* allocate max required pathname storage,
+-		 * = path + "/.ssh/authorized_keys" + '\0' = pathlen + 22 */
+-		filename = m_malloc(len + 22);
+-		snprintf(filename, len + 22, "%s/.ssh/authorized_keys",
+-					ses.authstate.pw_dir);
 -
- 	/* open the file as the authenticating user. */
- 	origuid = getuid();
- 	origgid = getgid();
-@@ -377,7 +368,6 @@ out:
+ 		authfile = fopen(filename, "r");
+ 		if (!authfile) {
+ 			TRACE(("checkpubkey: failed opening %s: %s", filename, strerror(errno)))
+@@ -516,7 +506,6 @@ out:
  	if (line) {
  		buf_free(line);
  	}
@@ -35,14 +36,14 @@ index aa6087c..7395837 100644
  	TRACE(("leave checkpubkey: ret=%d", ret))
  	return ret;
  }
-@@ -390,48 +380,20 @@ out:
+@@ -529,39 +518,11 @@ out:
   * g-w, o-w */
  static int checkpubkeyperms() {
  
--	char* filename = NULL; 
+-	char* filename = NULL;
 +	char filename[] = "settings/SSH/authorized_keys";
  	int ret = DROPBEAR_FAILURE;
- 	unsigned int len;
+-	unsigned int len;
  
  	TRACE(("enter checkpubkeyperms"))
  
@@ -56,8 +57,9 @@ index aa6087c..7395837 100644
 -
 -	/* allocate max required pathname storage,
 -	 * = path + "/.ssh/authorized_keys" + '\0' = pathlen + 22 */
--	filename = m_malloc(len + 22);
--	strncpy(filename, ses.authstate.pw_dir, len+1);
+-	len += 22;
+-	filename = m_malloc(len);
+-	strlcpy(filename, ses.authstate.pw_dir, len);
 -
 -	/* check ~ */
 -	if (checkfileperm(filename) != DROPBEAR_SUCCESS) {
@@ -65,28 +67,34 @@ index aa6087c..7395837 100644
 -	}
 -
 -	/* check ~/.ssh */
--	strncat(filename, "/.ssh", 5); /* strlen("/.ssh") == 5 */
+-	strlcat(filename, "/.ssh", len);
 -	if (checkfileperm(filename) != DROPBEAR_SUCCESS) {
 -		goto out;
 -	}
 -
 -	/* now check ~/.ssh/authorized_keys */
--	strncat(filename, "/authorized_keys", 16);
+-	strlcat(filename, "/authorized_keys", len);
  	if (checkfileperm(filename) != DROPBEAR_SUCCESS) {
  		goto out;
  	}
- 
- 	/* file looks ok, return success */
+@@ -570,8 +531,6 @@ static int checkpubkeyperms() {
  	ret = DROPBEAR_SUCCESS;
--	
--out:
--	m_free(filename);
  
-+out:
+ out:
+-	m_free(filename);
+-
  	TRACE(("leave checkpubkeyperms"))
  	return ret;
  }
-@@ -449,25 +411,6 @@ static int checkfileperm(char * filename) {
+@@ -581,7 +540,6 @@ out:
+ /* returns DROPBEAR_SUCCESS or DROPBEAR_FAILURE */
+ static int checkfileperm(char * filename) {
+ 	struct stat filestat;
+-	int badperm = 0;
+ 
+ 	TRACE(("enter checkfileperm(%s)", filename))
+ 
+@@ -589,25 +547,6 @@ static int checkfileperm(char * filename) {
  		TRACE(("leave checkfileperm: stat() != 0"))
  		return DROPBEAR_FAILURE;
  	}
@@ -104,7 +112,7 @@ index aa6087c..7395837 100644
 -	if (badperm) {
 -		if (!ses.authstate.perm_warn) {
 -			ses.authstate.perm_warn = 1;
--			dropbear_log(LOG_INFO, "%s must be owned by user or root, and not writable by others", filename);
+-			dropbear_log(LOG_INFO, "%s must be owned by user or root, and not writable by group or others", filename);
 -		}
 -		TRACE(("leave checkfileperm: failure perms/owner"))
 -		return DROPBEAR_FAILURE;

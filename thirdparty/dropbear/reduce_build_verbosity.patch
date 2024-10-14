@@ -1,14 +1,16 @@
 --- i/Makefile.in
 +++ w/Makefile.in
-@@ -125,7 +125,7 @@
- # for simplicity assume all source depends on all headers
- HEADERS=$(wildcard $(srcdir)/*.h *.h) $(OPTION_HEADERS)
- %.o : %.c $(HEADERS)
--	$(CC) -c $(CFLAGS) $(CPPFLAGS) $< -o $@
-+	$(if $V,,@echo "   * ${CC} $@"; )$(CC) -c $(CFLAGS) $(CPPFLAGS) $< -o $@
+@@ -166,7 +166,7 @@
+ 	mkdir -p $@
  
- default_options_guard.h: default_options.h
- 	@echo Creating $@
+ $(OBJ_DIR)/%.o: $(srcdir)/%.c $(HEADERS) | $(OBJ_DIR)
+-	$(CC) $(CFLAGS) $(CPPFLAGS) $< -o $@ -c
++	$(if $V,,@echo "   * ${CC} $@"; )$(CC) $(CFLAGS) $(CPPFLAGS) $< -o $@ -c
+ 
+ fuzz/%.o: $(srcdir)/../fuzz/%.c $(HEADERS)
+ 	$(CC) $(CFLAGS) $(CPPFLAGS) $< -o $@ -c
+--- i/Makefile.in
++++ w/Makefile.in
 --- i/libtomcrypt/Makefile.in
 +++ w/libtomcrypt/Makefile.in
 @@ -243,7 +243,7 @@
@@ -20,3 +22,14 @@
  
  #Create libtomcrypt.a
  $(LIBMAIN_S): $(OBJECTS)
+--- i/libtommath/Makefile.in
++++ w/libtommath/Makefile.in
+@@ -10,8 +10,6 @@
+ CFLAGS += -Wno-deprecated
+ CFLAGS += $(CPPFLAGS)
+ 
+-V = 1
+-
+ ifeq ($V,1)
+ silent=
+ else
