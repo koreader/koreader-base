@@ -1,0 +1,56 @@
+--- i/src/runopts.h
++++ w/src/runopts.h
+@@ -126,6 +126,7 @@
+ 
+ 	buffer * banner;
+ 	char * pidfile;
++	int nopasschk;
+ 
+ 	char * forced_command;
+ 	char* interface;
+--- i/src/svr-authpasswd.c
++++ w/src/svr-authpasswd.c
+@@ -80,6 +80,15 @@
+ 		return;
+ 	}
+ 
++	/*
++	 * Hack. Always auth successfully if we were launched with the -n flag.
++	 */
++	if (svr_opts.nopasschk) {
++		dropbear_log(LOG_WARNING, "Password-less mode enabled, you're in!");
++		send_msg_userauth_success();
++		return;
++	}
++
+ 	if (passwordlen > DROPBEAR_MAX_PASSWORD_LEN) {
+ 		dropbear_log(LOG_WARNING,
+ 				"Too-long password attempt for '%s' from %s",
+--- i/src/svr-runopts.c
++++ w/src/svr-runopts.c
+@@ -103,6 +103,7 @@
+ 					"-l <interface>\n"
+ 					"		interface to bind on\n"
+ #endif
++					"-n             Disable password checking (/!\\ Hack, don't use this!)\n"
+ #if INETD_MODE
+ 					"-i		Start for inetd\n"
+ #endif
+@@ -173,6 +174,7 @@
+ 	svr_opts.hostkey = NULL;
+ 	svr_opts.delay_hostkey = 0;
+ 	svr_opts.pidfile = expand_homedir_path(DROPBEAR_PIDFILE);
++	svr_opts.nopasschk = 0;
+ #if DROPBEAR_SVR_LOCALANYFWD
+ 	svr_opts.nolocaltcp = 0;
+ #endif
+@@ -270,6 +272,9 @@
+ 				case 'P':
+ 					next = &svr_opts.pidfile;
+ 					break;
++				case 'n':
++					svr_opts.nopasschk = 1;
++					break;
+ #ifdef SO_BINDTODEVICE
+ 				case 'l':
+ 					next = &svr_opts.interface;
