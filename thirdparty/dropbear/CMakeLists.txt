@@ -67,8 +67,8 @@ list(APPEND BUILD_CMD COMMAND make strip PROGRAMS=dropbear)
 append_binary_install_command(INSTALL_CMD dropbear)
 
 external_project(
-    DOWNLOAD URL d4b107f6fd103bc2c6ed7226bbae69b2
-    https://github.com/mkj/dropbear/archive/refs/tags/DROPBEAR_2024.85.tar.gz
+    DOWNLOAD URL bb72335b40c90397cb1c182143524800
+    https://github.com/mkj/dropbear/archive/refs/tags/DROPBEAR_2024.86.tar.gz
     PATCH_FILES ${PATCH_FILES}
     CONFIGURE_COMMAND ${CFG_CMD}
     BUILD_DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/localoptions.h
