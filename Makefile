@@ -37,7 +37,7 @@ $(BASE_PREFIX)clean:
 	rm -rf $(OUTPUT_DIR)
 
 $(BASE_PREFIX)distclean:
-	rm -rf $(dir $(filter $(KOR_BASE)/build/%,$(OUTPUT_DIR))) $(wildcard $(THIRDPARTY_DIR)/*/build)
+	rm -rf $(dir $(filter $(KOR_BASE)/build/%,$(OUTPUT_DIR))) $(wildcard $(THIRDPARTY_DIR)/*/build $(THIRDPARTY_DIR)/spec/*/build)
 
 info:
 	$(strip $(build_info))
@@ -190,7 +190,7 @@ cache-key: $(KOR_BASE)/Makefile $(KOR_BASE)/cache-key.base
 
 define BINARY_PATHS
 $(filter-out
-  $(addprefix $(OUTPUT_DIR)/,cmake staging thirdparty),
+  $(addprefix $(OUTPUT_DIR)/,cmake spec staging thirdparty),
     $(wildcard $(OUTPUT_DIR)/*))
 endef
 
