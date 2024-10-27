@@ -14,7 +14,7 @@ endif()
 append_install_commands(INSTALL_CMD ${CMAKE_BUILD_TYPE}/KoboUSBMS.tar.gz DESTINATION data)
 
 external_project(
-    DOWNLOAD GIT 3c14b5421968ecd688715ff258d43197817d29a1
+    DOWNLOAD GIT fd702513541f1614178487c299c55cef4d38fcee
     https://github.com/koreader/KoboUSBMS.git
     BUILD_COMMAND ${BUILD_CMD}
     INSTALL_COMMAND ${INSTALL_CMD}
