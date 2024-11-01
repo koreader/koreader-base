@@ -20,7 +20,7 @@ if(NOT ANDROID AND NOT APPLE AND NOT WIN32 AND NOT EMULATE_READER)
         }
         ]==] HAS_FMEMOPEN_2_4)
     if(HAS_FMEMOPEN_2_4)
-        list(APPEND PATCH_FILES leptonica-1.74.1-fmemopen-arm-compat-symbol.patch)
+        list(APPEND PATCH_FILES fmemopen-arm-compat-symbol.patch)
     endif()
 endif()
 list(APPEND PATCH_FILES
@@ -57,8 +57,8 @@ endif()
 external_project(
     # NOTE: Needs to match the version used by whatever version of libk2pdfopt we're currently using...
     #       Probably applies to mupdf & tesseract, too...
-    DOWNLOAD URL 58f37c12b1e9473c0c7ac0b1259e6a5c
-    https://github.com/DanBloomberg/leptonica/archive/refs/tags/1.84.1.tar.gz
+    DOWNLOAD URL 9450017d7c9269cae1fad59b6cd06a3e
+    https://github.com/DanBloomberg/leptonica/archive/refs/tags/1.85.0.tar.gz
     PATCH_FILES ${PATCH_FILES}
     CMAKE_ARGS ${CMAKE_ARGS}
     BUILD_COMMAND ${BUILD_CMD}
