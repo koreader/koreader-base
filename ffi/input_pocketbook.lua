@@ -143,6 +143,11 @@ local pb_event_map = {
     [C.EVT_UNFOCUS] = "EVT_UNFOCUS",
     [C.EVT_UPDATE] = "EVT_UPDATE",
 }
+local pb_key_events = {
+    [C.EVT_KEYPRESS] = true,
+    [C.EVT_KEYRELEASE] = true,
+    [C.EVT_KEYREPEAT] = true,
+}
 
 -- NOTE: EVT_KEYPRESS_EXT, EVT_KEYRELEASE_EXT, and EVT_KEYREPEAT_EXT
 -- are only declared on SDK >= 6, but reuse the same values as
@@ -159,6 +164,9 @@ if is_sdkv6plus then
     pb_event_map[C.EVT_TOUCHUP] = "EVT_TOUCHUP"
     pb_event_map[C.EVT_USBSTORE_IN] = "EVT_USBSTORE_IN"
     pb_event_map[C.EVT_USBSTORE_OUT] = "EVT_USBSTORE_OUT"
+    pb_key_events[C.EVT_KEYPRESS_EXT] = true
+    pb_key_events[C.EVT_KEYRELEASE_EXT] = true
+    pb_key_events[C.EVT_KEYREPEAT_EXT] = true
 else
     pb_event_map[C.EVT_KEYPRESS_EXT] = "EVT_TOUCHUP"
     pb_event_map[C.EVT_KEYRELEASE_EXT] = "EVT_TOUCHDOWN"
@@ -267,12 +275,24 @@ local function translateEvent(t, par1, par2)
     elseif t == C.EVT_KEYPRESS then
         updateTimestamp()
 
+        genEmuEvent(C.EV_KEY, -par1, 1)
+    elseif is_sdkv6plus and t == C.EVT_KEYPRESS_EXT then
+        updateTimestamp()
+
         genEmuEvent(C.EV_KEY, par1, 1)
     elseif t == C.EVT_KEYREPEAT then
         updateTimestamp()
 
+        genEmuEvent(C.EV_KEY, -par1, 2)
+    elseif is_sdkv6plus and t == C.EVT_KEYREPEAT_EXT then
+        updateTimestamp()
+
         genEmuEvent(C.EV_KEY, par1, 2)
     elseif t == C.EVT_KEYRELEASE then
+        updateTimestamp()
+
+        genEmuEvent(C.EV_KEY, -par1, 0)
+    elseif is_sdkv6plus and t == C.EVT_KEYRELEASE_EXT then
         updateTimestamp()
 
         genEmuEvent(C.EV_KEY, par1, 0)
@@ -447,7 +467,7 @@ local function waitForEventRaw(timeout)
             while rt.mq_receive(poll_fds[0].fd, ffi.cast("char*", hwmsg), hwmsg_len, nil) > 0 do
                 local m = hwmsg[0]
                 -- If there's no raw keymapping, emit this one instead
-                if (m.type == C.EVT_KEYPRESS or m.type == C.EVT_KEYRELEASE or m.type == C.EVT_KEYREPEAT) and not raw_keymap then
+                if pb_key_events[m.type] and not raw_keymap then
                     genEmuEvent(m.type, m.common.par1, m.common.par2)
                 end
             end
