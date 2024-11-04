@@ -158,6 +158,24 @@ local function setContactDown(slot, down)
     return false
 end
 
+local function getMajorSoftwareVersion()
+    -- format is $model.$major.$minor.$build, like "U743g.6.8.4143"
+    local fwVersion = inkview.GetSoftwareVersion()
+    
+    local counter = 0
+    
+    for segment in string.gmatch(, "[^.]+") do
+      if counter == 1 then
+        local major = tonumber(segment) or 0
+        return major
+      end
+      
+      counter = counter + 1
+    end
+
+    return 0
+  end
+
 -- Translate event from inkview EVT_* into emulated linux evdev events
 local function translateEvent(t, par1, par2)
     -- Much like Input does, detail what we catch when debug logging is enabled
@@ -169,6 +187,8 @@ local function translateEvent(t, par1, par2)
         -- Caught something post closeAll? (We're an InkView callback, remember).
         return 0
     end
+
+    local isV6Plus = getMajorSoftwareVersion() >= 6
 
     if t == C.EVT_INIT then
         inkview.SetPanelType(C.PANEL_DISABLED)
@@ -243,15 +263,15 @@ local function translateEvent(t, par1, par2)
             genEmuEvent(C.EV_SYN, C.SYN_REPORT, 0)
             setContactDown(0, false)
         end
-    elseif t == C.EVT_KEYDOWN or t == C.EVT_KEYPRESS_EXT then
+    elseif t == C.EVT_KEYDOWN or (isV6Plus and t == C.EVT_KEYPRESS_EXT) then
         updateTimestamp()
 
         genEmuEvent(C.EV_KEY, par1, 1)
-    elseif t == C.EVT_KEYREPEAT or t == C.EVT_KEYREPEAT_EXT then
+    elseif t == C.EVT_KEYREPEAT or (isV6Plus and t == C.EVT_KEYREPEAT_EXT) then
         updateTimestamp()
 
         genEmuEvent(C.EV_KEY, par1, 2)
-    elseif t == C.EVT_KEYUP or t == C.EVT_KEYRELEASE_EXT then
+    elseif t == C.EVT_KEYUP or (isV6Plus and t == C.EVT_KEYRELEASE_EXT) then
         updateTimestamp()
 
         genEmuEvent(C.EV_KEY, par1, 0)
