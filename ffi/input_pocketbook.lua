@@ -64,6 +64,9 @@ local pb_event_map = {
     [C.EVT_KEYUP] = "EVT_KEYUP",
     [C.EVT_KEYRELEASE] = "EVT_KEYRELEASE",
     [C.EVT_KEYREPEAT] = "EVT_KEYREPEAT",
+    [C.EVT_KEYPRESS_EXT] = "EVT_KEYPRESS_EXT",
+    [C.EVT_KEYRELEASE_EXT] = "EVT_KEYRELEASE_EXT",
+    [C.EVT_KEYREPEAT_EXT] = "EVT_KEYREPEAT_EXT",
     [C.EVT_POINTERUP] = "EVT_POINTERUP",
     [C.EVT_POINTERDOWN] = "EVT_POINTERDOWN",
     [C.EVT_POINTERMOVE] = "EVT_POINTERMOVE",
@@ -240,15 +243,15 @@ local function translateEvent(t, par1, par2)
             genEmuEvent(C.EV_SYN, C.SYN_REPORT, 0)
             setContactDown(0, false)
         end
-    elseif t == C.EVT_KEYDOWN then
+    elseif t == C.EVT_KEYDOWN or t == C.EVT_KEYPRESS_EXT then
         updateTimestamp()
 
         genEmuEvent(C.EV_KEY, par1, 1)
-    elseif t == C.EVT_KEYREPEAT then
+    elseif t == C.EVT_KEYREPEAT or t == C.EVT_KEYREPEAT_EXT then
         updateTimestamp()
 
         genEmuEvent(C.EV_KEY, par1, 2)
-    elseif t == C.EVT_KEYUP then
+    elseif t == C.EVT_KEYUP or t == C.EVT_KEYRELEASE_EXT then
         updateTimestamp()
 
         genEmuEvent(C.EV_KEY, par1, 0)

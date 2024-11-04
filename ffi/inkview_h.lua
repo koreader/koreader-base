@@ -749,9 +749,15 @@ static const int EVT_FOCUS = 36;
 static const int EVT_UNFOCUS = 37;
 static const int EVT_ACTIVATE = 38;
 static const int EVT_MTSYNC = 39;
-static const int EVT_TOUCHUP = 40;
-static const int EVT_TOUCHDOWN = 41;
-static const int EVT_TOUCHMOVE = 42;
+// NB: these constants reflect the current (v6) state of SDK.
+// A breaking change was introduced there.
+static const int EVT_KEYPRESS_EXT = 40;
+static const int EVT_KEYRELEASE_EXT = 41;
+static const int EVT_KEYREPEAT_EXT = 42;
+static const int EVT_TOUCHUP = 47;
+static const int EVT_TOUCHDOWN = 48;
+static const int EVT_TOUCHMOVE = 49;
+// end;
 static const int EVT_QN_MOVE = 51;
 static const int EVT_QN_RELEASE = 52;
 static const int EVT_QN_BORDER = 53;
