@@ -164,7 +164,7 @@ local function getMajorSoftwareVersion()
     
     local counter = 0
     
-    for segment in string.gmatch(, "[^.]+") do
+    for segment in string.gmatch(fwVersion, "[^.]+") do
       if counter == 1 then
         local major = tonumber(segment) or 0
         return major
