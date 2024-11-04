@@ -21,6 +21,9 @@ elseif not pcall(function() local _ = inkview.GetTouchInfoI end) then
     compat2 = ffi.loadlib("inkview-compat")
 end
 
+-- format is $model.$major.$minor.$build, like "U743g.6.8.4143"
+local is_sdkv6plus = (tonumber(ffi.string(inkview.GetSoftwareVersion()):match("([^.]+)[.][^.]+[.][^.]+$")) or 0) >= 6
+
 local input = {
     -- NOP
     fakeTapInput = function() end,
@@ -69,6 +72,23 @@ local pb_event_map = {
     [C.EVT_FOREGROUND] = "EVT_FOREGROUND",
     [C.EVT_BACKGROUND] = "EVT_BACKGROUND",
 }
+local pb_key_events = {
+    [C.EVT_KEYPRESS] = true,
+    [C.EVT_KEYRELEASE] = true,
+    [C.EVT_KEYREPEAT] = true,
+}
+
+-- EVT_KEYPRESS_EXT, EVT_KEYRELEASE_EXT, and EVT_KEYREPEAT_EXT
+-- are only declared on SDK >= 6, but reuse the same values as
+-- EVT_TOUCHUP, EVT_TOUCHDOWN and EVT_TOUCHMOVE on SDK <= 5…
+if is_sdkv6plus then
+    pb_event_map[C.EVT_KEYPRESS_EXT] = "EVT_KEYPRESS_EXT"
+    pb_event_map[C.EVT_KEYRELEASE_EXT] = "EVT_KEYRELEASE_EXT"
+    pb_event_map[C.EVT_KEYREPEAT_EXT] = "EVT_KEYREPEAT_EXT"
+    pb_key_events[C.EVT_KEYPRESS_EXT] = true
+    pb_key_events[C.EVT_KEYRELEASE_EXT] = true
+    pb_key_events[C.EVT_KEYREPEAT_EXT] = true
+end
 
 -- Keep track of all the active contact points.
 -- *hash*, key is a contact *id* (i.e., its slot number),
@@ -172,12 +192,24 @@ local function translateEvent(t, par1, par2)
     elseif t == C.EVT_KEYPRESS then
         updateTimestamp()
 
+        genEmuEvent(C.EV_KEY, -par1, 1)
+    elseif is_sdkv6plus and t == C.EVT_KEYPRESS_EXT then
+        updateTimestamp()
+
         genEmuEvent(C.EV_KEY, par1, 1)
     elseif t == C.EVT_KEYREPEAT then
         updateTimestamp()
 
+        genEmuEvent(C.EV_KEY, -par1, 2)
+    elseif is_sdkv6plus and t == C.EVT_KEYREPEAT_EXT then
+        updateTimestamp()
+
         genEmuEvent(C.EV_KEY, par1, 2)
     elseif t == C.EVT_KEYRELEASE then
+        updateTimestamp()
+
+        genEmuEvent(C.EV_KEY, -par1, 0)
+    elseif is_sdkv6plus and t == C.EVT_KEYRELEASE_EXT then
         updateTimestamp()
 
         genEmuEvent(C.EV_KEY, par1, 0)
