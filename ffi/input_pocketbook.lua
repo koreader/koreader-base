@@ -174,7 +174,9 @@ local function getMajorSoftwareVersion()
     end
 
     return 0
-  end
+end
+
+local isV6Plus = getMajorSoftwareVersion() >= 6
 
 -- Translate event from inkview EVT_* into emulated linux evdev events
 local function translateEvent(t, par1, par2)
@@ -187,8 +189,6 @@ local function translateEvent(t, par1, par2)
         -- Caught something post closeAll? (We're an InkView callback, remember).
         return 0
     end
-
-    local isV6Plus = getMajorSoftwareVersion() >= 6
 
     if t == C.EVT_INIT then
         inkview.SetPanelType(C.PANEL_DISABLED)
