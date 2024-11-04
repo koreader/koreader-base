@@ -161,16 +161,16 @@ end
 local function getMajorSoftwareVersion()
     -- format is $model.$major.$minor.$build, like "U743g.6.8.4143"
     local fwVersion = inkview.GetSoftwareVersion()
-    
+
     local counter = 0
-    
+
     for segment in string.gmatch(fwVersion, "[^.]+") do
-      if counter == 1 then
-        local major = tonumber(segment) or 0
-        return major
-      end
-      
-      counter = counter + 1
+        if counter == 1 then
+            local major = tonumber(segment) or 0
+            return major
+        end
+
+        counter = counter + 1
     end
 
     return 0
