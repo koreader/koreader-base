@@ -160,7 +160,7 @@ end
 
 local function getMajorSoftwareVersion()
     -- format is $model.$major.$minor.$build, like "U743g.6.8.4143"
-    local fwVersion = inkview.GetSoftwareVersion()
+    local fwVersion = ffi.string(inkview.GetSoftwareVersion())
 
     local counter = 0
 
