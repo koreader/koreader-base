@@ -5,6 +5,11 @@ if(POLICY CMP0116)
     cmake_policy(SET CMP0116 NEW)
 endif()
 
+# Stricter `add_custom_command()` (rejects invalid argument(s)).
+if(POLICY CMP0175)
+    cmake_policy(SET CMP0175 NEW)
+endif()
+
 # Crappy macOS command line utilities strike again…
 set(PRINTF_QS "%q")
 if(CMAKE_HOST_APPLE)
@@ -65,8 +70,10 @@ function(external_project_step NAME)
             DEPENDS $<TARGET_PROPERTY:${PROJECT_NAME}-${NAME},DEPENDS>
             VERBATIM
             ${_USES_TERMINAL}
-            WORKING_DIRECTORY ${_WORKING_DIRECTORY}
         )
+        if(DEFINED _WORKING_DIRECTORY)
+            list(APPEND SPEC WORKING_DIRECTORY ${_WORKING_DIRECTORY})
+        endif()
         if(DEFINED _DEPFILE)
             list(APPEND SPEC DEPFILE ${_DEPFILE})
         endif()
