@@ -40,6 +40,7 @@
 	lua_rawset(L, LUA_SETTABLE_STACK_TOP); \
 } while(0)
 
+#define True 1
 
 typedef struct DjvuDocument {
 	ddjvu_context_t *context;
@@ -54,18 +55,6 @@ typedef struct DjvuPage {
 	ddjvu_pageinfo_t info;
 	DjvuDocument *doc;
 } DjvuPage;
-
-
-typedef enum DjvuZoneId {
-	ZI_PAGE,
-	ZI_COLUMN,
-	ZI_REGION,
-	ZI_PARA,
-	ZI_LINE,
-	ZI_WORD,
-	ZI_CHAR,
-	N_ZI
-} DjvuZoneId;
 
 typedef enum DjvuZoneSexpIdx {
 	SI_ZONE_NAME,
@@ -85,7 +74,6 @@ static const char *djvuZoneLuaKey[N_SI_ZONE] = {
 	"y0",
 	NULL
 };
-
 
 int int_from_miniexp_nth(int n, miniexp_t sexp) {
 	miniexp_t s = miniexp_nth(n, sexp);
