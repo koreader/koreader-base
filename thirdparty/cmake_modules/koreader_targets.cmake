@@ -103,7 +103,7 @@ declare_koreader_target(
 # koreader-djvu
 declare_koreader_target(
     koreader-djvu TYPE monolibtic
-    DEPENDS djvulibre::djvulibre libk2pdfopt::k2pdfopt luajit::luajit pthread
+    DEPENDS djvulibre::djvulibre libk2pdfopt::k2pdfopt luajit::luajit
     SOURCES djvu.c
     SUFFIX .so
     VISIBILITY hidden

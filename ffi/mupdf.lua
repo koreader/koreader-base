@@ -965,32 +965,6 @@ local function get_k2pdfopt()
     return cached_k2pdfopt
 end
 
--- lazily load libpthread
-local cached_pthread
-local function get_pthread()
-    if cached_pthread then return cached_pthread end
-
-    local util = require("ffi/util")
-
-    require("ffi/pthread_h")
-
-    local ok
-    if ffi.os == "Windows" then
-        return ffi.load("libwinpthread-1.dll")
-    elseif util.isAndroid() then
-        -- pthread directives are in Bionic library on Android
-        ok, cached_pthread = pcall(ffi.load, "libc.so")
-        if ok then return cached_pthread end
-    else
-        -- Kobo devices strangely have no libpthread.so in LD_LIBRARY_PATH
-        -- so we hardcode the libpthread.so.0 here just for Kobo.
-        for _, libname in ipairs({"pthread", "libpthread.so.0"}) do
-            ok, cached_pthread = pcall(ffi.load, libname)
-            if ok then return cached_pthread end
-        end
-    end
-end
-
 --[[
 the following function is a reimplementation of what can be found
 in libk2pdfopt/willuslib/bmpmupdf.c
@@ -1036,32 +1010,6 @@ local function render_for_kopt(bmp, page, scale, bounds)
     bmpmupdf_pixmap_to_bmp(bmp, pix)
 
     M.fz_drop_pixmap(context(), pix)
-end
-
-function page_mt.__index:reflow(kopt_context)
-    local k2pdfopt = get_k2pdfopt()
-
-    local bounds = ffi.new("fz_rect", kopt_context.bbox.x0, kopt_context.bbox.y0, kopt_context.bbox.x1, kopt_context.bbox.y1)
-    -- probe scale
-    local zoom = kopt_context.zoom * kopt_context.quality
-    local scale = (1.5 * zoom * kopt_context.dev_width) / bounds.x1
-    -- store zoom
-    kopt_context.zoom = scale
-    -- do real scale
-    mupdf.debug(string.format("reading page:%d,%d,%d,%d scale:%.2f",bounds.x0,bounds.y0,bounds.x1,bounds.y1,scale))
-    render_for_kopt(kopt_context.src, self, scale, bounds)
-
-    if kopt_context.precache ~= 0 then
-        local pthread = get_pthread()
-        local rf_thread = ffi.new("pthread_t[1]")
-        local attr = ffi.new("pthread_attr_t[1]")
-        pthread.pthread_attr_init(attr)
-        pthread.pthread_attr_setdetachstate(attr, pthread.PTHREAD_CREATE_DETACHED)
-        pthread.pthread_create(rf_thread, attr, k2pdfopt.k2pdfopt_reflow_bmp, ffi.cast("void*", kopt_context))
-        pthread.pthread_attr_destroy(attr)
-    else
-        k2pdfopt.k2pdfopt_reflow_bmp(kopt_context)
-    end
 end
 
 function page_mt.__index:getPagePix(kopt_context)
