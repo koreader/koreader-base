@@ -28,5 +28,4 @@
 
 DLL_PUBLIC int luaopen_djvu(lua_State *L);
 
-#define True 1
 #endif
