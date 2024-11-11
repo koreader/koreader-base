@@ -16,22 +16,17 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <stdint.h>
-#include <math.h>
-#include <string.h>
 #include <errno.h>
-#include <pthread.h>
-#include <assert.h>
+#include <stdint.h>
+#include <stdlib.h>
+
 #include <libdjvu/miniexp.h>
 #include <libdjvu/ddjvuapi.h>
 
 #include "blitbuffer.h"
+#include "djvu.h"
 #include "drawcontext.h"
 #include "koptcontext.h"
-#include "k2pdfopt.h"
-#include "koptreflow.h"
-#include "koptcrop.h"
-#include "djvu.h"
 
 #define ABS(x) ((x<0)?(-x):(x))
 
@@ -602,74 +597,6 @@ static int getPagePix(lua_State *L) {
 	return 0;
 }
 
-static int reflowPage(lua_State *L) {
-	DjvuPage *page = (DjvuPage*) luaL_checkudata(L, 1, "djvupage");
-	KOPTContext *kctx = (KOPTContext*) lua_topointer(L, 2);
-	ddjvu_render_mode_t mode = (int) luaL_checkint(L, 3);
-	ddjvu_rect_t prect;
-	ddjvu_rect_t rrect;
-
-	int px, py, pw, ph, rx, ry, rw, rh, status;
-
-	px = 0;
-	py = 0;
-	pw = ddjvu_page_get_width(page->page_ref);
-	ph = ddjvu_page_get_height(page->page_ref);
-	prect.x = px;
-	prect.y = py;
-
-	rx = (int)kctx->bbox.x0;
-	ry = (int)kctx->bbox.y0;
-	rw = (int)(kctx->bbox.x1 - kctx->bbox.x0);
-	rh = (int)(kctx->bbox.y1 - kctx->bbox.y0);
-
-	double zoom = kctx->zoom*kctx->quality;
-	float scale = (1.5*zoom*kctx->dev_width) / (double)pw;
-	prect.w = pw * scale;
-	prect.h = ph * scale;
-	rrect.x = rx * scale;
-	rrect.y = ry * scale;
-	rrect.w = rw * scale;
-	rrect.h = rh * scale;
-#ifdef DEBUG
-        printf("%s: rendering page: %u (%d,%d,%d,%d) [%s:%s]\n", __func__, page->num,
-               rrect.x, rrect.y, rrect.w, rrect.h,
-               page->doc->pixelsize == 3 ? "color" : "grey", render_mode_str(mode));
-#endif
-	kctx->zoom = scale;
-
-	WILLUSBITMAP *src = &kctx->src;
-	bmp_init(src);
-	src->width = rrect.w;
-	src->height = rrect.h;
-	src->bpp = 8*page->doc->pixelsize;
-
-	bmp_alloc(src);
-	if (src->bpp == 8)
-		for (int ii = 0; ii < 256; ii++)
-			src->red[ii] = src->blue[ii] = src->green[ii] = ii;
-
-	ddjvu_format_set_row_order(page->doc->pixelformat, 1);
-
-	status = ddjvu_page_render(page->page_ref, mode, &prect, &rrect, page->doc->pixelformat,
-			bmp_bytewidth(src), (char *) src->data);
-	if (!status)
-		return luaL_error(L, "%s: ddjvu_page_render failed", __func__);
-
-	if (kctx->precache) {
-		pthread_t rf_thread;
-		pthread_attr_t attr;
-		pthread_attr_init(&attr);
-		pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
-		pthread_create(&rf_thread, &attr, (void *)k2pdfopt_reflow_bmp, kctx);
-		pthread_attr_destroy(&attr);
-	} else {
-		k2pdfopt_reflow_bmp(kctx);
-	}
-
-	return 0;
-}
-
 static int drawPage(lua_State *L) {
 	DjvuPage *page = (DjvuPage*) luaL_checkudata(L, 1, "djvupage");
 	DrawContext *dc = (DrawContext*) lua_topointer(L, 2);
@@ -781,7 +708,6 @@ static const struct luaL_Reg djvupage_meth[] = {
 	{"getPagePix", getPagePix},
 	{"close", closePage},
 	{"__gc", closePage},
-	{"reflow", reflowPage},
 	{"draw", drawPage},
 	{NULL, NULL}
 };
