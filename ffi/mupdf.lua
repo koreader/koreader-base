@@ -547,12 +547,14 @@ function page_mt.__index:getPageText()
                             ch = ch.next
                         end
                         -- add word to line
-                        table.insert(line, {
-                            word = ffi.string(textbuf, textlen),
-                            x0 = word_bbox.x0, y0 = word_bbox.y0,
-                            x1 = word_bbox.x1, y1 = word_bbox.y1,
-                        })
-                        size = size + 5 * 8 + textlen
+                        if word_bbox.x0 < word_bbox.x1 and word_bbox.y0 < word_bbox.y1 then
+                            table.insert(line, {
+                                word = ffi.string(textbuf, textlen),
+                                x0 = word_bbox.x0, y0 = word_bbox.y0,
+                                x1 = word_bbox.x1, y1 = word_bbox.y1,
+                            })
+                            size = size + 5 * 8 + textlen
+                        end
 
                         if ch == nil then
                             break
@@ -561,11 +563,12 @@ function page_mt.__index:getPageText()
                         ch = ch.next
                     end
 
-                    line.x0, line.y0 = line_bbox.x0, line_bbox.y0
-                    line.x1, line.y1 = line_bbox.x1, line_bbox.y1
-                    size = size + 5 * 8
-
-                    table.insert(lines, line)
+                    if line_bbox.x0 < line_bbox.x1 and line_bbox.y0 < line_bbox.y1 then
+                        line.x0, line.y0 = line_bbox.x0, line_bbox.y0
+                        line.x1, line.y1 = line_bbox.x1, line_bbox.y1
+                        size = size + 5 * 8
+                        table.insert(lines, line)
+                    end
                 end
 
                 mupdf_line = mupdf_line.next
