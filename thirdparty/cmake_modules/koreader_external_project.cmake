@@ -327,3 +327,61 @@ function(external_project)
     )
 
 endfunction()
+
+function(luarocks_external_project URL MD5)
+
+    # Arguments.
+    cmake_parse_arguments(
+        PARSE_ARGV 2
+        # Prefix.
+        ""
+        # Options.
+        ""
+        # One value keywords.
+        "ROCKSPEC;TREE"
+        # Multi-value keywords.
+        ""
+    )
+    if(_UNPARSED_ARGUMENTS)
+        message(FATAL_ERROR "unparsed arguments: ${_UNPARSED_ARGUMENTS}")
+    endif()
+    if(NOT DEFINED _TREE)
+        set(_TREE ${STAGING_DIR})
+    endif()
+
+    # Build command.
+    if(DEFINED _ROCKSPEC)
+        # Build in source tree.
+        set(BINARY_DIR ${SOURCE_DIR})
+    endif()
+    list(APPEND BUILD_CMD COMMAND ${STAGING_DIR}/bin/luarocks --tree ${BINARY_DIR}/dist)
+    if(URL MATCHES [=[/([a-z0-9_-]+)-(([0-9]+)(\.[0-9]+)*-[0-9]+)\.src\.rock$]=])
+        # From source rock (e.g https://luarocks.org/manifests/lunarmodules/say-1.4.1-3.src.rock).
+        set(NAME ${CMAKE_MATCH_1})
+        set(VERSION ${CMAKE_MATCH_2})
+        list(APPEND BUILD_CMD build ${DOWNLOAD_DIR}/${NAME}-${VERSION}.src.rock)
+    else()
+        if(NOT DEFINED _ROCKSPEC)
+            message(FATAL_ERROR "missing ROCKSPEC for luarocks project: ${PROJECT_NAME}")
+        endif()
+        list(APPEND BUILD_CMD make ${_ROCKSPEC})
+    endif()
+    list(APPEND BUILD_CMD --deps-mode none --force-fast --no-doc --no-manifest)
+
+    # Install command.
+    list(APPEND INSTALL_CMD COMMAND mkdir -p ${SPEC_ROCKS_DIR})
+    list(APPEND INSTALL_CMD COMMAND ${CMAKE_COMMAND} -E copy_directory ${BINARY_DIR}/dist ${_TREE})
+
+    # External project.
+    external_project(
+        DOWNLOAD URL ${MD5} ${URL}
+        BUILD_COMMAND ${BUILD_CMD}
+        INSTALL_COMMAND ${INSTALL_CMD}
+    )
+
+endfunction()
+
+function(spec_rock)
+    cmake_parse_arguments(PARSE_ARGV 0 "" "" "" "")
+    luarocks_external_project(${_UNPARSED_ARGUMENTS} TREE ${SPEC_ROCKS_DIR})
+endfunction()
