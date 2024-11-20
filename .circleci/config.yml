@@ -7,7 +7,7 @@ parameters:
     # Bump this to reset all caches.
     cache_epoch:
       type: integer
-      default: 1
+      default: 2
 
 # }}}
 
@@ -46,7 +46,7 @@ executors:
 
   android-arm: &ANDROID_EXE
     docker:
-      - image: koreader/koandroid:0.8.2-20.04
+      - image: koreader/koandroid:0.8.3-20.04
     environment:
       TARGET: "android"
 
@@ -58,31 +58,31 @@ executors:
 
   cervantes:
     docker:
-      - image: koreader/kocervantes:0.3.3-20.04
+      - image: koreader/kocervantes:0.3.4-20.04
     environment:
       TARGET: "cervantes"
 
   kindle:
     docker:
-      - image: koreader/kokindle:0.3.3-20.04
+      - image: koreader/kokindle:0.3.4-20.04
     environment:
       TARGET: "kindle"
 
   kindle-legacy:
     docker:
-      - image: koreader/kokindle:0.3.3-20.04
+      - image: koreader/kokindle:0.3.4-20.04
     environment:
       TARGET: "kindle-legacy"
 
   kobo:
     docker:
-      - image: koreader/kokobo:0.3.3-20.04
+      - image: koreader/kokobo:0.3.4-20.04
     environment:
       TARGET: "kobo"
 
   pocketbook:
     docker:
-      - image: koreader/kopb:0.4.2-20.04
+      - image: koreader/kopb:0.4.3-20.04
     environment:
       TARGET: "pocketbook"
 
