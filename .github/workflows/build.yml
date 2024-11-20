@@ -73,7 +73,6 @@ jobs:
             cmake
             coreutils
             findutils
-            jq
             libtool
             make
             nasm
