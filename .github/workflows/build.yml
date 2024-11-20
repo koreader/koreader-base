@@ -193,4 +193,7 @@ jobs:
 
       # }}}
 
+      - name: Test
+        run: ./utils/fake_tty.py make --assume-old=all test
+
 # vim: foldmethod=marker foldlevel=0
