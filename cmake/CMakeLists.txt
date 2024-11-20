@@ -305,6 +305,9 @@ declare_project(thirdparty/luajit)
 # luajson
 declare_project(thirdparty/luajson)
 
+# luarocks
+declare_project(thirdparty/luarocks DEPENDS luajit EXCLUDE_FROM_ALL)
+
 # luasec
 declare_project(thirdparty/luasec DEPENDS luajit luasocket openssl)
 
@@ -399,6 +402,29 @@ else()
     set(EXCLUDE_FROM_ALL EXCLUDE_FROM_ALL)
 endif()
 declare_project(thirdparty/zsync2 DEPENDS curl openssl zlib ${EXCLUDE_FROM_ALL})
+
+# }}}
+
+# TESTSUITE DEPENDENCIES. {{{
+
+if(EMULATE_READER)
+    add_custom_target(spec-rocks)
+    foreach(PRJ
+            busted
+            dkjson
+            lua-term
+            lua_cliargs
+            luafilesystem
+            luassert
+            luasystem
+            mediator_lua
+            penlight
+            say
+        )
+        declare_project(thirdparty/spec/${PRJ} DEPENDS luarocks)
+        add_dependencies(spec-rocks ${PRJ})
+    endforeach()
+endif()
 
 # }}}
 

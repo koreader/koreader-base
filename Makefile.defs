@@ -670,6 +670,7 @@ endif
 OUTPUT_DIR ?= $(KOR_BASE)/build/$(MACHINE)
 CMAKE_DIR = $(OUTPUT_DIR)/cmake
 STAGING_DIR = $(OUTPUT_DIR)/staging
+SPEC_ROCKS_DIR = $(OUTPUT_DIR)/spec/rocks
 
 BUILD_ENTRYPOINT = $(CMAKE_DIR)/build.ninja
 
@@ -766,13 +767,7 @@ endif
 
 THIRDPARTY_DIR = $(KOR_BASE)/thirdparty
 
-LUAROCKS_BINARY := $(firstword $(shell command -v luarocks luarocks-5.1))
-ifneq (,$(LUAROCKS_BINARY))
-  # Detect versioned LR 3 binary, see koreader-base/pull/1003
-  ifneq (,$(shell $(LUAROCKS_BINARY) --help | grep -Eo -- --lua-version))
-    LUAROCKS_BINARY += --lua-version=5.1
-  endif
-endif
+LUAROCKS_BINARY := $(abspath $(STAGING_DIR)/bin/luarocks)
 
 # Dynamic libraries must be compiled with "-shared" and "-fPIC".
 # (And we enforce PIC everywhere via CFLAGS/CXXFLAGS).
@@ -930,6 +925,7 @@ set(VECTO_CFLAGS   "$(VECTO_CFLAGS)")
 set(BASE_DIR       $(abspath $(KOR_BASE)))
 set(OUTPUT_DIR     $(abspath $(OUTPUT_DIR)))
 set(STAGING_DIR    $(abspath $(STAGING_DIR)))
+set(SPEC_ROCKS_DIR $(abspath $(SPEC_ROCKS_DIR)))
 set(THIRDPARTY_DIR $(abspath $(THIRDPARTY_DIR)))
 
 set(MAKE $(MAKE))
@@ -1082,7 +1078,8 @@ ifneq (,$(EMULATE_READER))
 
 define busted_fn
 busted() {(
-eval "$$($(LUAROCKS_BINARY) path)";
+export LUA_CPATH='./?.so;$(abspath $(SPEC_ROCKS_DIR)/lib/lua/5.1/?.so)';
+export LUA_PATH='./?.lua;$(abspath $(SPEC_ROCKS_DIR)/share/lua/5.1/?.lua);$(abspath $(SPEC_ROCKS_DIR)/share/lua/5.1/?/init.lua)';
 export TESSDATA_DIR="$$PWD/data";
 ./luajit -e 'require "busted.runner" {standalone = false}' /dev/null
 --exclude-tags=notest

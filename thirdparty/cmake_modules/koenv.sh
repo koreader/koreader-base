@@ -99,6 +99,12 @@ extract_archive() { (
     # Of course `cmake -E tar` does not support `--strip-components=n`,
     # so we need to use a temporary directory and move things around…
     rm -rf "${sourcedir}" "${sourcedir}.tmp" || return 1
+    case "${archive}" in
+        *.src.rock)
+            # Luarocks source rock, there's no need to extract it.
+            return 0
+            ;;
+    esac
     mkdir "${sourcedir}.tmp" || return 1
     oldpwd="${PWD}"
     cd "${sourcedir}.tmp"
