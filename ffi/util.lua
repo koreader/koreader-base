@@ -744,4 +744,13 @@ function util.template(str, ...)
     return result
 end
 
+-- Check if `path` is an executable file.
+function util.isExecutable(path)
+    local attributes, err = lfs.attributes(path)
+    if not attributes or err ~= nil then
+        return false, err
+    end
+    return attributes.mode == "file" and C.access(path, C.X_OK + C.R_OK) == 0
+end
+
 return util
