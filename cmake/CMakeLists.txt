@@ -411,9 +411,11 @@ if(EMULATE_READER)
     add_custom_target(spec-rocks)
     foreach(PRJ
             busted
+            cluacov
             dkjson
             lua-term
             lua_cliargs
+            luacov
             luafilesystem
             luassert
             luasystem
