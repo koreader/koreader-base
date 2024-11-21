@@ -160,6 +160,9 @@ cdecl_func(strcmp)
 cdecl_func(strcasecmp)
 
 cdecl_const(F_OK)
+cdecl_const(R_OK)
+cdecl_const(W_OK)
+cdecl_const(W_OK)
 cdecl_func(access)
 
 cdecl_type(FILE)
