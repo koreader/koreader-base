@@ -162,7 +162,10 @@ generate_depfile() { (
     srclist="$3"
     shift 3
     exec 1>"${depfile}" || return 1
-    printf '%s: \\\n' "${target}"
+    # NOTE: to work around cmake bug https://gitlab.kitware.com/cmake/cmake/-/issues/25428
+    # (introduced in 3.23.0, fixed in 3.27.9), do not create a target with no deps (which
+    # would keep triggering unnecessary rebuilds).
+    printf '%s: %s \\\n' "${target}" "${srclist}"
     sed '/\/$/d;/[~()=]/d;s/[[:space:]\\]/\\&/g;s/\$/$$/g;$!{s/$/ \\/;}' "${srclist}"
 ); }
 
