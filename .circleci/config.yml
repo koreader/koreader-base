@@ -62,15 +62,19 @@ executors:
     environment:
       TARGET: "cervantes"
 
-  kindle:
+  kindle: &KINDLE_EXE
     docker:
       - image: koreader/kokindle:0.3.4-20.04
     environment:
       TARGET: "kindle"
 
+  kindlehf:
+    <<: *KINDLE_EXE
+    environment:
+      TARGET: "kindlehf"
+
   kindle-legacy:
-    docker:
-      - image: koreader/kokindle:0.3.4-20.04
+    <<: *KINDLE_EXE
     environment:
       TARGET: "kindle-legacy"
 
@@ -267,6 +271,12 @@ workflows:
       - build_and_test:
           name: kindle
           executor: kindle
+          requires:
+            - emu_gcc_ninja_debug
+
+      - build_and_test:
+          name: kindlehf
+          executor: kindlehf
           requires:
             - emu_gcc_ninja_debug
 
