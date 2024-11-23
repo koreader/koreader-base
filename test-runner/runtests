@@ -1,0 +1,227 @@
+#!/usr/bin/env bash
+# shellcheck disable=SC2317
+
+declare -r RUNTESTS_GETOPT_SHORT='c:f:gj:lo:qt:vw:x'
+declare -r RUNTESTS_GETOPT_LONG='coverage,filter:,gdb,jobs:,list,output:,quiet,tags:,verbose,wrapper:,exitfirst,busted::,meson::'
+declare -r RUNTESTS_HELP="
+OPTIONS:
+
+    --busted[=OPTS]           use busted directly
+    -c, --coverage            do code coverage analysis
+    -f PAT, --filter=PAT      only run test names matching the Lua pattern
+                              (or exclude them when starting with '!')
+    -g, --gdb                 run tests under gdb
+    -l, --list                list available tests
+    --meson[=OPTS]            use the meson runner (default if available)
+    -o FILE, --output=FILE    write a JUnit XML report of all tests run to FILE
+    -j N, --jobs=N            how many parallel processes to use (meson only)
+    -q, --quiet               produce less output to the terminal (meson only)
+    -t TAGS, --tags=TAGS      only run tests with given tags
+                              (or exclude them when starting with '!')
+    -v, --verbose             enable verbose output (meson only)
+    -w CMD, --wrapper=CMD     run tests under specified wrapper
+    -x, --exitfirst           exit instantly on first error or failed test
+"
+
+# If we're being sourced, stop there.
+if return 0 2>/dev/null; then
+    return 0
+fi
+
+set -eo pipefail
+
+if [[ "${BASH_VERSINFO[0]}" -lt 4 ]]; then
+    echo "incompatible bash version: ${BASH_VERSION}, need >=4.0"
+    exit 1
+fi
+
+run() {
+    if [[ "${debug}" -ne 0 ]]; then
+        printf '%s\n' "$(printf '%q ' "$@")" 1>&2
+    fi
+    "$@"
+}
+
+runtests_meson() {
+    local rundir="${kodir}/spec/run"
+    # Build `meson test …` command.
+    local cmd=(
+        meson test
+        -C "${rundir}"
+        --print-errorlogs
+    )
+    case "${wrapper}" in
+        '') ;;
+        gdb) cmd+=(--gdb) ;;
+        *) cmd+=(--wrapper="${wrapper}") ;;
+    esac
+    cmd+=("${meson_args[@]}")
+    case "${suite}" in
+        all) ;;
+        bench) cmd+=(--benchmark) ;;
+        *) cmd+=(--suite="${suite}") ;;
+    esac
+    local arg
+    arg="$(printf '%q ' "${busted_args[@]}")"
+    cmd+=(--test-args="${arg% }" -- "$@")
+    # Do it.
+    run rm -rf "${rundir}"
+    if ! run meson setup --backend=none --prefix="${kodir}" "${rundir}" "${kodir}/spec" >/dev/null; then
+        local log="${rundir}/meson-logs/meson-log.txt"
+        [[ -r "${log}" ]] && cat "${log}" 1>&2
+        exit $?
+    fi
+    local code=0
+    run "${cmd[@]}" || code=$?
+    if [[ -n "${output}" ]]; then
+        run cp "${rundir}/meson-logs/testlog.junit.xml" "${output}"
+    fi
+    return "${code}"
+}
+
+runtests_busted() {
+    local cmd=(
+        env -C "${kodir}"
+        # Don't fail the testsuite on ASAN detected leaks.
+        LSAN_OPTIONS="exitcode=0${LSAN_OPTIONS:+ }${LSAN_OPTIONS}"
+    )
+    case "${wrapper}" in
+        '') ;;
+        gdb) cmd+=(gdb --args) ;;
+        *)
+            # shellcheck disable=SC2206
+            cmd+=(${wrapper})
+            ;;
+    esac
+    cmd+=(./luajit -e 'require "busted.runner" {standalone = false}' /dev/null)
+    if [[ -n "${output}" ]]; then
+        cmd+=(--output=junit -Xoutput="${output}")
+    else
+        cmd+=(--output=gtest)
+    fi
+    if [[ "${suite}" = 'bench' ]]; then
+        cmd+=(--run=all --pattern=_bench)
+    else
+        cmd+=(--run="${suite}")
+    fi
+    cmd+=(
+        --sort-files
+        "${busted_args[@]}"
+        -- "$@"
+    )
+    # Do it.
+    run find -L "${kodir}"/spec/*/unit -name '*.sdr' -exec rm -rf '{}' +
+    run "${cmd[@]}"
+}
+
+kodir="$(cd "$(dirname "$0")/.." && pwd -P)"
+busted_args=(
+    --config-file=spec/config.lua
+    --exclude-tags=notest
+    --helper=ffi/loadlib.lua
+)
+debug=0
+meson_args=()
+output=''
+suite='all'
+use_meson=1
+wrapper=''
+
+which meson >/dev/null 2>&1 || use_meson=0
+
+if ! opt=$(getopt -o "dh${RUNTESTS_GETOPT_SHORT}" --long "debug,help,${RUNTESTS_GETOPT_LONG}" --name "$0" -- "$@"); then
+    printf 1>&2 '\nUSAGE: %s <OPTIONS> <TEST_SUITE> <TEST_NAMES>\n%s\n' "${0##*/}" "${RUNTESTS_HELP}"
+    exit 1
+fi
+
+# echo "opt: $opt"
+eval set -- "${opt}"
+while [[ $# -gt 0 ]]; do
+    PARAM="${1}"
+    # Support using an = assignment with short options (e.g., -f=blah instead of -f blah).
+    VALUE="${2/#=/}"
+    case "${PARAM}" in
+        --)
+            shift
+            break
+            ;;
+        --busted)
+            shift
+            use_meson=0
+            # shellcheck disable=SC2206
+            busted_args+=(${VALUE})
+            ;;
+        -c | --coverage) busted_args+=(--coverage) ;;
+        -d | --debug) debug=1 ;;
+        -f | --filter)
+            shift
+            if [[ "${VALUE}" = \!* ]]; then
+                busted_args+=(--filter-out="${VALUE#!}")
+            else
+                busted_args+=(--filter="${VALUE}")
+            fi
+            ;;
+        -g | --gdb) wrapper='gdb' ;;
+        -h | --help)
+            printf '%s' "${RUNTESTS_HELP}"
+            exit
+            ;;
+        -l | --list)
+            busted_args+=(--list)
+            meson_args+=(--list)
+            ;;
+        --meson)
+            shift
+            use_meson=1
+            # shellcheck disable=SC2206
+            meson_args+=(${VALUE})
+            ;;
+        -o | --output)
+            shift
+            output="$1"
+            if [[ "${output}" = [^/]* ]]; then
+                output="${PWD}/${output}"
+            fi
+            ;;
+        -j | --jobs)
+            shift
+            meson_args+=(--num-processes="${VALUE}")
+            ;;
+        -q | --quiet) meson_args+=(--quiet) ;;
+        -t | --tags)
+            shift
+            if [[ "${VALUE}" = \!* ]]; then
+                busted_args+=(--exclude-tags="${VALUE#!}")
+            else
+                busted_args+=(--tags="${VALUE}")
+            fi
+            ;;
+        -v | --verbose) meson_args+=(--verbose) ;;
+        -w | --wrapper)
+            shift
+            wrapper="${VALUE}"
+            ;;
+        -x | --exitfirst)
+            busted_args+=(--no-keep-going)
+            meson_args+=(--maxfail=1)
+            ;;
+    esac
+    shift
+done
+
+case "$1" in
+    all | base | bench | front)
+        suite="$1"
+        shift
+        ;;
+esac
+
+export TESSDATA_PREFIX="${kodir}/data"
+
+if [[ "${use_meson}" -ne 0 ]]; then
+    runtests_meson "$@"
+else
+    runtests_busted "$@"
+fi
+
+# vim: sw=4

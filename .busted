@@ -1,7 +1,0 @@
-return {
-    default = {
-        verbose = true,
-        ROOT = {"spec/base/unit"},
-        lpath = "spec/base/unit/?.lua",
-    },
-}

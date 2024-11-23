@@ -14,6 +14,7 @@
 # Excludes.
 !*.lua
 !/ffi-cdecl/**
+!/test-runner/**
 !/utils/bincheck/*
 
 # Exceptions.

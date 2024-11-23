@@ -16,7 +16,7 @@ if [ "${EMULATE_READER}" = "1" ]; then
         # install test data
         travis_retry make test-data
         # finally make test
-        travis_retry make --assume-old=all test
+        travis_retry make --assume-old=all test T="-o '${PWD}/test-results.xml'"
     ) || exit_code=1
 else
     if [ "${TARGET}" = "android" ] && [ -f build/luajit ]; then
