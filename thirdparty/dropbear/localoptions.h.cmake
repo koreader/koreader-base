@@ -13,5 +13,6 @@
 #cmakedefine DSS_PRIV_FILENAME   "@DSS_PRIV_FILENAME@"
 #cmakedefine RSA_PRIV_FILENAME   "@RSA_PRIV_FILENAME@"
 #cmakedefine ECDSA_PRIV_FILENAME "@ECDSA_PRIV_FILENAME@"
+#cmakedefine ED25519_PRIV_FILENAME "@ED25519_PRIV_FILENAME@"
 // Extra part of the SSH server identification string.
 #define IDENT_VERSION_PART "_" DROPBEAR_VERSION " (KOReader)"

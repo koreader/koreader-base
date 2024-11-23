@@ -30,6 +30,7 @@ endif()
 set(DSS_PRIV_FILENAME "settings/SSH/dropbear_dss_host_key")
 set(RSA_PRIV_FILENAME "settings/SSH/dropbear_rsa_host_key")
 set(ECDSA_PRIV_FILENAME "settings/SSH/dropbear_ecdsa_host_key")
+set(ED25519_PRIV_FILENAME "settings/SSH/dropbear_ed25519_host_key")
 
 configure_file(localoptions.h.cmake ${CMAKE_CURRENT_BINARY_DIR}/localoptions.h ESCAPE_QUOTES)
 set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/localoptions.h)
