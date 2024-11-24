@@ -105,11 +105,6 @@ $(OUTPUT_DIR)/ffi
 $(OUTPUT_DIR)/fonts/
 $(STAGING_DIR)/
 endef
-ifneq (,$(EMULATE_READER))
-define SKELETON +=
-$(OUTPUT_DIR)/spec/base
-endef
-endif
 
 skeleton: $(strip $(SKELETON))
 
@@ -136,16 +131,36 @@ ifneq (,$(EMULATE_READER))
 
 download-all: test-data
 
-$(OUTPUT_DIR)/.busted: | $(OUTPUT_DIR)/
-	$(SYMLINK) $(KOR_BASE)/.busted $@
-
 $(OUTPUT_DIR)/spec/base: | $(OUTPUT_DIR)/spec/
 	$(SYMLINK) $(KOR_BASE)/spec $@
 
-$(BASE_PREFIX)test: $(BASE_PREFIX)all test-data
-	cd $(OUTPUT_DIR) && $(BUSTED_LUAJIT) $(BUSTED_OVERRIDES)
+$(OUTPUT_DIR)/spec/config.lua: | $(OUTPUT_DIR)/spec/
+	$(SYMLINK) $(KOR_BASE)/test-runner/busted_config.lua $@
 
-test-data: $(OUTPUT_DIR)/.busted $(OUTPUT_DIR)/data/tessdata/eng.traineddata $(OUTPUT_DIR)/spec/base $(OUTPUT_DIR)/fonts/droid/DroidSansMono.ttf
+$(OUTPUT_DIR)/spec/meson.build: | $(OUTPUT_DIR)/spec/
+	$(SYMLINK) $(KOR_BASE)/test-runner/meson.build $@
+
+$(OUTPUT_DIR)/spec/runtests: | $(OUTPUT_DIR)/spec/
+	$(SYMLINK) $(KOR_BASE)/test-runner/runtests $@
+
+$(BASE_PREFIX)test: $(BASE_PREFIX)all test-data
+	$(RUNTESTS) $(OUTPUT_DIR) base $T
+
+define test_data_common
+$(OUTPUT_DIR)/spec/config.lua
+$(OUTPUT_DIR)/spec/meson.build
+$(OUTPUT_DIR)/spec/runtests
+endef
+
+skeleton: $(strip $(test_data_common))
+
+define test_data_base
+$(OUTPUT_DIR)/data/tessdata/eng.traineddata
+$(OUTPUT_DIR)/fonts/droid/DroidSansMono.ttf
+$(OUTPUT_DIR)/spec/base
+endef
+
+test-data: $(strip $(test_data_common) $(test_data_base))
 
 TESSDATA_FILE = $(THIRDPARTY_DIR)/tesseract/build/downloads/eng.traineddata
 TESSDATA_FILE_URL = https://github.com/tesseract-ocr/tessdata/raw/4.1.0/$(notdir $(TESSDATA_FILE))

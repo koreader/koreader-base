@@ -1076,21 +1076,18 @@ endif
 
 ifneq (,$(EMULATE_READER))
 
-define busted_fn
-busted() {(
+define runtests_fn
+runtests() {(
+kodir="$$1";
+shift 1;
 export LUA_CPATH='./?.so;$(abspath $(SPEC_ROCKS_DIR)/lib/lua/5.1/?.so)';
 export LUA_PATH='./?.lua;$(abspath $(SPEC_ROCKS_DIR)/share/lua/5.1/?.lua);$(abspath $(SPEC_ROCKS_DIR)/share/lua/5.1/?/init.lua)';
 export TESSDATA_DIR="$$PWD/data";
-./luajit -e 'require "busted.runner" {standalone = false}' /dev/null
---exclude-tags=notest
---helper=ffi/loadlib.lua
---output=gtest
---sort-files
-"$$@";
+"$$kodir/spec/runtests" $(PARALLEL_JOBS:%=-j%) "$$@";
 )}
 endef
 
-BUSTED_LUAJIT = $(strip $(busted_fn)); busted
+RUNTESTS = $(strip $(runtests_fn)); runtests
 
 endif
 
