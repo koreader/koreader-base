@@ -18,10 +18,12 @@ ifeq (,$(V)$(VERBOSE))
 endif
 
 ifeq (,$(PARALLEL_JOBS))
-  PARALLEL_JOBS := $(or $(patsubst -j%,%,$(filter -j%,$(MAKEFLAGS))))
+empty :=
+space := $(empty) $(empty)
+  PARALLEL_JOBS := $(or $(patsubst -j%,%,$(filter -j%,$(MFLAGS))))
 endif
 ifeq (,$(PARALLEL_LOAD))
-  PARALLEL_LOAD := $(or $(patsubst -l%,%,$(filter -l%,$(MAKEFLAGS))))
+  PARALLEL_LOAD := $(or $(patsubst -l%,%,$(filter -l%,$(MFLAGS))))
 endif
 ifeq (,$(and $(PARALLEL_JOBS),$(PARALLEL_LOAD)))
   CORES := $(shell getconf _NPROCESSORS_ONLN)
