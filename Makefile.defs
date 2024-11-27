@@ -80,8 +80,7 @@ ifdef KODEBUG
 	export DEBUG
 endif
 
-# CMAKE:=cmake --no-warn-unused-cli
-CMAKE := cmake
+CMAKE := cmake -Wdev --warn-uninitialized
 NINJA := $(or $(NINJA),ninja)
 
 ifneq (,$(or $(VERBOSE),$(V)))
