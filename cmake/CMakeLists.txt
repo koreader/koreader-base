@@ -14,6 +14,8 @@ add_custom_target(download)
 
 # HELPERS. {{{
 
+set(PROJECTS)
+
 function(declare_project DIR)
     cmake_parse_arguments("" "EXCLUDE_FROM_ALL" "SOURCE_DIR" "DEPENDS" ${ARGN})
     get_filename_component(NAME ${DIR} NAME)
@@ -35,6 +37,8 @@ function(declare_project DIR)
     set(${NAME}_DEPENDS ${_DEPENDS} PARENT_SCOPE)
     if(_EXCLUDE_FROM_ALL)
         set(${NAME}_EXCLUDE_FROM_ALL EXCLUDE_FROM_ALL PARENT_SCOPE)
+    else()
+        set(${NAME}_EXCLUDE_FROM_ALL PARENT_SCOPE)
     endif()
     # message(WARNING "
     # ${NAME}:
