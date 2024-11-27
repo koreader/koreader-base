@@ -1,0 +1,12 @@
+--- i/src/base/ftcalc.c
++++ w/src/base/ftcalc.c
+@@ -750,7 +750,8 @@
+ 
+     shift = FT_MSB( val ) - 12;
+ 
+-    if ( shift > 0 )
++    if ( shift < 0 )
++        shift = 0;
+     {
+       xx >>= shift;
+       xy >>= shift;
