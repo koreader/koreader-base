@@ -46,6 +46,7 @@ target_link_libraries(
     libpng::png16
     libwebp::webpdemux
     lunasvg::lunasvg
+    md4c::html
     srell::srell
     utf8proc::utf8proc
     zlib::z
@@ -155,7 +156,7 @@ endif()
 declare_dependency(lunasvg::lunasvg MONOLIBTIC lunasvg)
 
 # md4c
-declare_dependency(md4c::html STATIC md4c md4c-html)
+declare_dependency(md4c::html STATIC md4c-html md4c)
 
 # mupdf
 set(LIBRARIES m)

@@ -55,6 +55,7 @@ add_library(crengine STATIC
     ${CRE_DIR}/src/lvtinydom.cpp
     ${CRE_DIR}/src/lvxml.cpp
     ${CRE_DIR}/src/mathml.cpp
+    ${CRE_DIR}/src/mdfmt.cpp
     ${CRE_DIR}/src/odtfmt.cpp
     ${CRE_DIR}/src/odxutil.cpp
     ${CRE_DIR}/src/pdbfmt.cpp

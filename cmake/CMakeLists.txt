@@ -159,6 +159,7 @@ declare_project(
     libunibreak
     libwebp
     lunasvg
+    md4c
     utf8proc
     zlib
     zstd

@@ -20,6 +20,7 @@
 #define CHM_SUPPORT_ENABLED                  1
 #define CR3_ANTIWORD_PATCH                   1
 #define ENABLE_ANTIWORD                      1
+#define USE_MD4C                             1
 
 /// I18N
 #define CR_EMULATE_GETTEXT                   1
