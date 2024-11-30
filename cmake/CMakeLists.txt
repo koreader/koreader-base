@@ -321,6 +321,9 @@ declare_project(thirdparty/luasocket DEPENDS luajit)
 # lunasvg
 declare_project(thirdparty/lunasvg EXCLUDE_FROM_ALL)
 
+# md4c
+declare_project(thirdparty/md4c EXCLUDE_FROM_ALL)
+
 # minizip
 declare_project(thirdparty/minizip EXCLUDE_FROM_ALL)
 
