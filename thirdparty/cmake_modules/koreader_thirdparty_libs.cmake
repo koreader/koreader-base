@@ -154,6 +154,9 @@ endif()
 # lunasvg
 declare_dependency(lunasvg::lunasvg MONOLIBTIC lunasvg)
 
+# md4c
+declare_dependency(md4c::html STATIC md4c md4c-html)
+
 # mupdf
 set(LIBRARIES m)
 if(ANDROID)
