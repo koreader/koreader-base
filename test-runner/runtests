@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # shellcheck disable=SC2317
 
-declare -r RUNTESTS_GETOPT_SHORT='c:f:gj:lo:qt:vw:x'
+declare -r RUNTESTS_GETOPT_SHORT='cf:gj:lo:qt:vw:x'
 declare -r RUNTESTS_GETOPT_LONG='coverage,filter:,gdb,jobs:,list,output:,quiet,tags:,verbose,wrapper:,exitfirst,busted::,meson::'
 declare -r RUNTESTS_HELP="
 OPTIONS:
