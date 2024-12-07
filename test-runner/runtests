@@ -119,6 +119,7 @@ busted_args=(
     --config-file=spec/config.lua
     --exclude-tags=notest
     --helper=ffi/loadlib.lua
+    --lazy
 )
 debug=0
 meson_args=()
