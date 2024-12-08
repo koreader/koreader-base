@@ -21,6 +21,11 @@ cdecl_type(fz_context)
 cdecl_type(fz_font)
 cdecl_func(fz_install_external_font_funcs)
 
+/* archive */
+cdecl_type(fz_archive)
+cdecl_func(mupdf_open_directory)
+cdecl_func(mupdf_drop_archive)
+
 /* buffer */
 cdecl_type(fz_buffer)
 cdecl_func(mupdf_new_buffer_from_shared_data)
@@ -57,7 +62,7 @@ cdecl_type(fz_document)
 cdecl_type(fz_device)
 
 cdecl_func(mupdf_open_document)
-cdecl_func(mupdf_open_document_with_stream)
+cdecl_func(mupdf_open_document_with_stream_and_dir)
 cdecl_func(fz_is_document_reflowable)
 cdecl_func(fz_needs_password)
 cdecl_func(fz_authenticate_password)

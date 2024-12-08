@@ -75,12 +75,18 @@ DLL_PUBLIC fz_rect *mupdf_fz_bound_page(fz_context *ctx, fz_page *page, fz_rect 
 MUPDF_WRAP(mupdf_open_document, fz_document*, NULL,
     ret = fz_open_document(ctx, filename),
     const char* filename)
-MUPDF_WRAP(mupdf_open_document_with_stream, fz_document*, NULL,
-    ret = fz_open_document_with_stream(ctx, magic, stream),
-    const char *magic, fz_stream *stream)
+MUPDF_WRAP(mupdf_open_document_with_stream_and_dir, fz_document*, NULL,
+    ret = fz_open_document_with_stream_and_dir(ctx, magic, stream, archive),
+    const char *magic, fz_stream *stream, fz_archive *archive)
 MUPDF_WRAP(mupdf_open_memory, fz_stream*, NULL,
     ret = fz_open_memory(ctx, data, len),
     const unsigned char *data, size_t len)
+MUPDF_WRAP(mupdf_open_directory, fz_archive*, NULL,
+    ret = fz_open_directory(ctx, path),
+    const char *path)
+MUPDF_WRAP(mupdf_drop_archive, void*, NULL,
+    { fz_drop_archive(ctx, archive); ret = (void*) -1; },
+    fz_archive *archive)
 MUPDF_WRAP(mupdf_drop_stream, void*, NULL,
     { fz_drop_stream(ctx, stm); ret = (void*) -1; },
     fz_stream *stm)

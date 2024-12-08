@@ -94,12 +94,13 @@ typedef struct {
   int errors;
   int incomplete;
 } fz_cookie;
+typedef struct fz_archive fz_archive;
 typedef struct fz_separations fz_separations;
 typedef struct fz_page fz_page;
 typedef struct fz_document fz_document;
 typedef struct fz_device fz_device;
 fz_document *mupdf_open_document(fz_context *, const char *);
-fz_document *mupdf_open_document_with_stream(fz_context *, const char *, fz_stream *);
+fz_document *mupdf_open_document_with_stream_and_dir(fz_context *, const char *, fz_stream *, fz_archive *);
 int fz_is_document_reflowable(fz_context *, fz_document *);
 int fz_needs_password(fz_context *, fz_document *);
 int fz_authenticate_password(fz_context *, fz_document *, const char *);
@@ -127,6 +128,8 @@ int mupdf_fz_page_number_from_location(fz_context *, fz_document *, fz_location 
 void *mupdf_fz_location_from_page_number(fz_context *, fz_document *, fz_location *, int);
 fz_outline *mupdf_load_outline(fz_context *, fz_document *);
 void fz_drop_outline(fz_context *, fz_outline *);
+fz_archive *mupdf_open_directory(fz_context *, const char *);
+void mupdf_drop_archive(fz_context *, fz_archive *);
 void *mupdf_drop_stream(fz_context *, fz_stream *);
 fz_stream *mupdf_open_memory(fz_context *, const unsigned char *, size_t);
 typedef struct fz_stext_char fz_stext_char;
