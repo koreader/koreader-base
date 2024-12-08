@@ -33,6 +33,8 @@ cdecl_type(fz_locks_context)
 cdecl_func(fz_new_context_imp)
 cdecl_func(fz_drop_context)
 cdecl_func(fz_register_document_handlers)
+cdecl_func(fz_set_user_context)
+cdecl_func(fz_user_context)
 
 /* images */
 cdecl_type(fz_image)

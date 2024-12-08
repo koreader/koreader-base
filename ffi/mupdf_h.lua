@@ -62,6 +62,8 @@ typedef struct {
 fz_context *fz_new_context_imp(const fz_alloc_context *, const fz_locks_context *, size_t, const char *);
 void fz_drop_context(fz_context *);
 void fz_register_document_handlers(fz_context *);
+void fz_set_user_context(fz_context *, void *);
+void *fz_user_context(fz_context *);
 typedef struct fz_image fz_image;
 typedef struct fz_pixmap fz_pixmap;
 fz_image *mupdf_new_image_from_buffer(fz_context *, fz_buffer *);
