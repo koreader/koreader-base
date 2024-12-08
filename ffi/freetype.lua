@@ -64,7 +64,7 @@ local function new_size(face)
     local size = ffi.gc(sizept[0], done_size)
     local refcount = ffi.cast("int *", C.malloc(ffi.sizeof("int")))
     size.generic.data = refcount
-    refcount[0] = 1;
+    refcount[0] = 1
     return size
 end
 
@@ -112,10 +112,10 @@ function FTSize_mt.__index:renderGlyphByIndex(index, embolden_half_strength)
     -- provided by Harfbuzz. We need to use FT_Outline_Embolden
     -- and FT_Outline_Translate in a way to not move metrics.
     if embolden_half_strength and glyph.format == ft2.FT_GLYPH_FORMAT_OUTLINE then
-        ft2.FT_Outline_Embolden(glyph.outline, 2*embolden_half_strength);
-        ft2.FT_Outline_Translate(glyph.outline, -embolden_half_strength, -embolden_half_strength);
+        ft2.FT_Outline_Embolden(glyph.outline, 2*embolden_half_strength)
+        ft2.FT_Outline_Translate(glyph.outline, -embolden_half_strength, -embolden_half_strength)
     end
-    ft2.FT_Render_Glyph(glyph, ft2.FT_RENDER_MODE_NORMAL);
+    ft2.FT_Render_Glyph(glyph, ft2.FT_RENDER_MODE_NORMAL)
     local bitmap = glyph.bitmap
     return {
         bb = Blitbuffer.new(bitmap.width, bitmap.rows, Blitbuffer.TYPE_BB8, bitmap.buffer, bitmap.pitch):copy(),
