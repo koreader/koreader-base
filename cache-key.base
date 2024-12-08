@@ -19,6 +19,6 @@
 
 # Exceptions.
 /ffi-cdecl/koptcontext_cdecl.c
-/ffi-cdecl/mupdf_decl.c
+/ffi-cdecl/wrap-mupdf_cdecl.c
 
 # vim: ft=gitignore
