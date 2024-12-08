@@ -134,13 +134,23 @@ function mupdf.openDocument(filename)
     return mupdf_doc
 end
 
-function mupdf.openDocumentFromText(text, magic)
+function mupdf.openDocumentFromText(text, magic, html_resource_directory)
     local ctx = context()
     local stream = W.mupdf_open_memory(ctx, ffi.cast("const unsigned char*", text), #text)
+
+    local archive = nil
+    if html_resource_directory ~= nil then
+        archive = W.mupdf_open_directory(ctx, html_resource_directory)
+    end
+
     local mupdf_doc = {
-        doc = W.mupdf_open_document_with_stream(ctx, magic, stream),
+        doc = W.mupdf_open_document_with_stream_and_dir(ctx, magic, stream, archive),
     }
     W.mupdf_drop_stream(ctx, stream)
+
+    if archive ~= nil then
+        W.mupdf_drop_archive(ctx, archive)
+    end
 
     if mupdf_doc.doc == nil then
         merror(ctx, "MuPDF cannot open document from text")
