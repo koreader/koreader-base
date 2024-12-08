@@ -35,8 +35,8 @@ if(NOT MONOLIBTIC)
 endif()
 
 external_project(
-    DOWNLOAD URL 39b6d6ab799074b535374d0a48246aac
-    https://sqlite.org/2024/sqlite-autoconf-3470100.tar.gz
+    DOWNLOAD URL 6bf0697af5b609e186cc223eca9c2cb1
+    https://sqlite.org/2024/sqlite-autoconf-3470200.tar.gz
     CONFIGURE_COMMAND ${CFG_CMD}
     BUILD_COMMAND ${BUILD_CMD}
     INSTALL_COMMAND ${INSTALL_CMD}
