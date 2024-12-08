@@ -56,11 +56,11 @@ local function keep_context(ctx)
     return ctx
 end
 
-local save_ctx = nil
+local save_ctx = setmetatable({}, {__mode="kv"})
 
 -- provides an fz_context for mupdf
 local function context()
-    local ctx = save_ctx
+    local ctx = save_ctx[1]
     if ctx then return ctx end
 
     ctx = M.fz_new_context_imp(
@@ -82,7 +82,7 @@ local function context()
     M.fz_install_external_font_funcs(ctx)
     M.fz_register_document_handlers(ctx)
 
-    save_ctx = ctx
+    save_ctx[1] = ctx
     return ctx
 end
 
