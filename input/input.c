@@ -58,9 +58,7 @@ int    inputfds[]            = { -1, -1, -1, -1, -1, -1, -1, -1 };
 size_t fd_idx                = 0U;  // index of the *next* fd in inputfds (also, *current* amount of open fds)
 pid_t  fake_ev_generator_pid = -1;
 
-#if defined(POCKETBOOK)
-#    include "input-pocketbook.h"
-#elif defined(KINDLE)
+#if defined(KINDLE)
 #    include "input-kindle.h"
 #elif defined(KOBO)
 #    include "input-kobo.h"
@@ -72,9 +70,8 @@ pid_t  fake_ev_generator_pid = -1;
 #    include "input-cervantes.h"
 #endif
 
-// NOTE: Legacy Kindle systems are too old to support timerfd (and we don't really need it there anyway),
-//       and PocketBook uses a custom polling loop.
-#if !defined(KINDLE_LEGACY) && !defined(POCKETBOOK)
+// NOTE: Legacy Kindle systems are too old to support timerfd (and we don't really need it there anyway).
+#if !defined(KINDLE_LEGACY)
 #    include "timerfd-callbacks.h"
 #endif
 
@@ -111,21 +108,10 @@ static int openInputDevice(lua_State* L)
     // Otherwise, we're golden, and fd_idx is the index of the next free slot in the inputfds array ;).
     const char* restrict ko_dont_grab_input = getenv("KO_DONT_GRAB_INPUT");
 
-#if defined(POCKETBOOK)
-    // NOTE: This is for the deprecated Lua/C PB input implementation (c.f., "input-pocketbook.h").
-    //       The frontend code (e.g., device/input's open wrapper) no longer uses nor supports this,
-    //       as we've unconditionally moved to using the newer Lua/FFI implementation (c.f., ffi/input_pocketbook).
-    int inkview_events = luaL_checkint(L, 2);
-    if (inkview_events == 1) {
-        startInkViewMain(L, fd_idx, inputdevice);
-        return 0;
-    }
-#endif
-
     if (!strcmp("fake_events", inputdevice)) {
         // Special case: the power slider for Kindle and USB events for Kobo.
         int pipefd[2U];
-#if defined(KINDLE_LEGACY) || defined(POCKETBOOK)
+#if defined(KINDLE_LEGACY)
         // pipe2 requires Linux 2.6.27 & glibc 2.9...
         if (pipe(pipefd) == -1) {
             return luaL_error(L, "Cannot create fake event generator communication pipe (pipe(): %s)", strerror(errno));
@@ -570,9 +556,6 @@ static const struct luaL_Reg input_func[] = {
                                                 { "closeAll", closeAllInputDevices },
                                                 { "waitForEvent", waitForInput },
                                                 { "fakeTapInput", fakeTapInput },
-#if defined(POCKETBOOK)
-                                                { "setSuspendState", setSuspendState },
-#endif
 #if defined(WITH_TIMERFD)
                                                 { "setTimer", setTimer },
                                                 { "clearTimer", clearTimer },
