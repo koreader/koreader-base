@@ -1,7 +1,4 @@
-list(APPEND PATCH_FILES
-    # CPR need `-pthread`.
-    cpr_need_pthread.patch
-)
+list(APPEND PATCH_FILES cpr_cmake_tweaks.patch)
 
 list(APPEND CMAKE_ARGS
     -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE}
@@ -9,6 +6,7 @@ list(APPEND CMAKE_ARGS
     # Options.
     -DBUILD_CPR_TESTS=FALSE
     -DBUILD_TESTING=FALSE
+    -DCPR_FORCE_OPENSSL_BACKEND=TRUE
     -DUSE_SYSTEM_CURL=TRUE
 )
 

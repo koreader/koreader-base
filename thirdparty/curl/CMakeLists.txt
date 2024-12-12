@@ -3,14 +3,15 @@ list(APPEND PATCH_FILES
     curl-8.5.0-mpd-stream-http-adjust_pollset.patch
     # Need `-lrt` for `clock_gettime` support.
     clock_gettime_needs_rt.patch
+    # Use `-pthread` flag, not `-lpthread`
+    # to avoid conflicts with OpenSSL.
+    use_-pthread.patch
 )
-# NOTE: Because InkView is the worst, we rename our own cURL build on PocketBook.... (#5861)
-if(POCKETBOOK)
-    list(APPEND PATCH_FILES pocketbook_lib_rename.patch)
-endif()
 
 list(APPEND CMAKE_ARGS
     -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE}
+    # Build a static library, since there's only one user (zsync2).
+    -DBUILD_SHARED_LIBS=FALSE
     # Project options.
     # TODO: Enable ZSTD support? We currently only use cURL
     # for zsync2, so, obviously, not necessary right now…
@@ -40,20 +41,6 @@ list(APPEND BUILD_CMD COMMAND ninja lib/all)
 list(APPEND INSTALL_CMD COMMAND ${CMAKE_COMMAND} --install .)
 
 append_install_commands(INSTALL_CMD ${DOWNLOAD_DIR}/ca-bundle.crt DESTINATION data)
-
-if(POCKETBOOK)
-    set(LIB_NAME curl_ko)
-else()
-    set(LIB_NAME curl)
-endif()
-append_shared_lib_install_commands(INSTALL_CMD ${LIB_NAME} VERSION 4)
-
-# Even after installing a patched pkg-config entry, we still need to add a symlink
-# with the canonical library name or the mess that is CMake's FindCURl module will
-# fail to detect our renamed library…
-if(POCKETBOOK)
-    list(APPEND INSTALL_CMD COMMAND ${CMAKE_COMMAND} -E create_symlink libcurl_ko${LIB_EXT} ${STAGING_DIR}/lib/libcurl${LIB_EXT})
-endif()
 
 external_project(
     DOWNLOAD URL 3e9e5c2db494e7dbd4e7024b149021c9
