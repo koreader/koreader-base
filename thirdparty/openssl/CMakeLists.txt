@@ -1,5 +1,4 @@
 list(APPEND PATCH_FILES
-    openssl-1.1.0j-parallel_install_fix.patch
     reduce_build_verbosity.patch
     macos_rpath.patch
 )
@@ -27,7 +26,23 @@ if(CHOST)
     list(APPEND CFG_ENV_VAR CROSS_COMPILE=${CHOST}-)
 endif()
 
-set(CFG_OPTS shared)
+if(MONOLIBTIC)
+    set(CFG_OPTS no-shared)
+else()
+    set(CFG_OPTS shared)
+endif()
+
+list(APPEND CFG_OPTS
+    no-comp
+    no-default-thread-pool
+    no-hw
+    no-legacy
+    no-quic
+    no-thread-pool
+    no-ui-console
+    no-uplink
+    no-whirlpool
+)
 
 if(ANDROID)
     assert_var_defined(ENV{NDKABI})
@@ -79,12 +94,9 @@ list(APPEND CFG_CMD COMMAND
     env ${CFG_ENV_VAR}
     ${CONFIGURE_CMD}
     --prefix=${STAGING_DIR}
+    --libdir=lib
     ${CFG_OPTS}
 )
-if(ANDROID)
-    # Disable versioning of shared objects.
-    list(APPEND CFG_CMD COMMAND ${ISED} "s|^SHLIB_EXT=.*|SHLIB_EXT=${LIB_EXT}|" Makefile)
-endif()
 
 set(MAKE_CMD
     make
@@ -102,20 +114,14 @@ list(APPEND BUILD_CMD COMMAND ${MAKE_CMD} build_libs)
 
 list(APPEND INSTALL_CMD COMMAND ${MAKE_CMD} install_dev)
 
-if(MONOLIBTIC)
-    list(APPEND INSTALL_CMD COMMAND sh -c "rm -v \"$1\"* \"$2\"*" --
-        ${STAGING_DIR}/lib/libcrypto${LIB_EXT}
-        ${STAGING_DIR}/lib/libssl${LIB_EXT}
-    )
-else()
-    append_shared_lib_install_commands(INSTALL_CMD crypto VERSION 1.1)
-    append_shared_lib_install_commands(INSTALL_CMD ssl VERSION 1.1)
+if(NOT MONOLIBTIC)
+    append_shared_lib_install_commands(INSTALL_CMD crypto VERSION 3)
+    append_shared_lib_install_commands(INSTALL_CMD ssl VERSION 3)
 endif()
 
 external_project(
-    DOWNLOAD URL 3f76825f195e52d4b10c70040681a275
-    https://github.com/openssl/openssl/releases/download/OpenSSL_1_1_1w/openssl-1.1.1w.tar.gz
-    https://www.openssl.org/source/old/1.1.1/openssl-1.1.1w.tar.gz
+    DOWNLOAD URL 34733f7be2d60ecd8bd9ddb796e182af
+    https://github.com/openssl/openssl/releases/download/openssl-3.4.0/openssl-3.4.0.tar.gz
     PATCH_FILES ${PATCH_FILES}
     CONFIGURE_COMMAND ${CFG_CMD}
     BUILD_COMMAND ${BUILD_CMD}
