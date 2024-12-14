@@ -601,7 +601,7 @@ ifdef APPIMAGE
 	HOST_ARCH:=-mtune=generic -march=x86-64
 endif
 
-ifdef LINUX
+ifeq ($(TARGET), linux)
 	HOST_ARCH:=-mtune=generic
 endif
 
