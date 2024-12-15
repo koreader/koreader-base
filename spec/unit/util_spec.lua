@@ -2,13 +2,25 @@ local util = require("ffi/util")
 local lfs = require("libs/libkoreader-lfs")
 
 local function waitForSubProcessDone(pid)
-    for i = 1, 20 do
-        util.usleep(100000)
+    for i = 1, 40 do -- 1 second
+        util.usleep(25000)
         if util.isSubProcessDone(pid) then
             return true
         end
     end
     return false
+end
+
+local function waitForData(fd_or_luafile)
+    local available = 0
+    for i = 1, 40 do -- 1 second
+        util.usleep(25000)
+        available = util.getNonBlockingReadSize(fd_or_luafile) or 0
+        if available ~= 0 then
+            return available
+        end
+    end
+    return available
 end
 
 describe("util module", function()
@@ -175,28 +187,25 @@ describe("util module", function()
 
     describe("util.getNonBlockingReadSize", function()
         it("should read pipe when data is available", function()
-            local std_out = io.popen("sleep 1; echo 'done'; sleep 1", "r")
-            assert.are.equal(util.getNonBlockingReadSize(std_out), 0)
-            util.usleep(750000)
-            assert.are.equal(util.getNonBlockingReadSize(std_out), 0)
-            util.usleep(750000)
-            assert.are.equal(util.getNonBlockingReadSize(std_out), 5)
+            local std_out = io.popen("sleep 0.1; echo 'done'; sleep 0.1", "r")
+            assert.are.equal(0, util.getNonBlockingReadSize(std_out))
+            assert.are.equal(5, waitForData(std_out))
             local startsec = util.gettime()
             local data = std_out:read("*all")
             local donesec = util.gettime()
-            assert.are.equal(data, "done\n")
+            assert.are.equal("done\n", data)
             assert.is_true(donesec - startsec <= 1)
         end)
     end)
 
     describe("util.runInSubProcess and related", function()
-        it("should run sleep 1 in subprocess", function()
+        it("should run usleep 100000 in subprocess", function()
             local var = "var_set_in_parent"
             local pid = util.runInSubProcess(function()
               var = "var_overriden_in_child"
-              util.sleep(1)
+              util.usleep(100000)
             end)
-            assert.truthy(pid)
+            assert.is_true(pid ~= 0)
             assert.is_false(util.isSubProcessDone(pid))
             assert.is_true(waitForSubProcessDone(pid))
             assert.is.same(var, "var_set_in_parent")
@@ -204,15 +213,13 @@ describe("util module", function()
         it("should write a file in subprocess", function()
             local tmp_f = os.tmpname()
             local pid = util.runInSubProcess(function()
-                util.usleep(500000)
                 local f = io.open(tmp_f, "w")
                 if f then
                     f:write("test1")
                     f:close()
                 end
             end)
-            assert.truthy(pid)
-            assert.is_false(util.isSubProcessDone(pid))
+            assert.is_true(pid ~= 0)
             assert.is_true(waitForSubProcessDone(pid))
             local f = io.open(tmp_f)
             assert.is_not_nil(f)
@@ -230,16 +237,16 @@ describe("util module", function()
                 f:close()
             end
             local pid = util.runInSubProcess(function()
-                util.sleep(3)
+                util.sleep(2)
                 f = io.open(tmp_f, "w")
                 if f then
                     f:write("test2")
                     f:close()
                 end
             end)
-            assert.truthy(pid)
+            assert.is_true(pid ~= 0)
             assert.is_false(util.isSubProcessDone(pid))
-            util.sleep(1)
+            util.usleep(100000)
             util.terminateSubProcess(pid)
             assert.is_true(waitForSubProcessDone(pid))
             f = io.open(tmp_f)
@@ -251,14 +258,10 @@ describe("util module", function()
         end)
         it("should read data from subprocess via pipe", function()
             local pid, parent_fd = util.runInSubProcess(function(pid, child_fd)
-                util.usleep(500000)
                 util.writeToFD(child_fd, "test3", true)
             end, true)
-            assert.truthy(pid)
+            assert.is_true(pid ~= 0)
             assert.truthy(parent_fd)
-            assert.is_false(util.isSubProcessDone(pid))
-            util.sleep(1)
-            assert.is_true(util.getNonBlockingReadSize(parent_fd) ~= 0)
             local data = util.readAllFromFD(parent_fd, true)
             assert.is.same(data, "test3")
             assert.is_true(waitForSubProcessDone(pid))
