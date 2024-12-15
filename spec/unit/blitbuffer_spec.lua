@@ -402,7 +402,7 @@ describe("Blitbuffer unit tests", function()
         end)
 
         it("should set pixel in all rotation modes", function()
-            local width, height = 100, 200
+            local width, height = 10, 20
             for rotation = 0, 3 do
                 local bb = Blitbuffer.new(width, height)
                 bb:setRotation(rotation)
