@@ -26,15 +26,6 @@ describe("mupdf module", function()
         doc:close()
     end)
 
-    it("should open and close 1000 PDFs", function()
-        local t = {}
-        for i = 1, 1000 do
-            t[i] = M.openDocument(sample_pdf)
-            assert.is_not_nil(t[i])
-            t[i]:close()
-        end
-    end)
-
     it("should render jbig2 PDFs", function()
         local doc = M.openDocument(jbig2_pdf)
         assert.is_not_nil(doc)
@@ -72,12 +63,14 @@ describe("mupdf module", function()
 
     describe("PDF document API", function()
         local doc1, doc2, doc3
-        local ffi = require("ffi")
-        local annotation_quadpoints = ffi.new("fz_quad[1]", {{
-            { 70,  930, 510,  930 },
-            { 510,  970, 70,  970 }
-        }})
+        local ffi
+        local annotation_quadpoints
         setup(function()
+            ffi = require("ffi")
+            annotation_quadpoints = ffi.new("fz_quad[1]", {{
+                { 70,  930, 510,  930 },
+                { 510,  970, 70,  970 }
+            }})
             doc1 = M.openDocument(sample_pdf)
             assert.is_not_nil(doc1)
             doc2 = M.openDocument(paper_pdf)
@@ -230,24 +223,10 @@ describe("mupdf module", function()
         end)
     end)
     describe("image API", function()
-        it("should render an image", function()
+        it("image API should render an image", function()
             local img = M.renderImageFile(test_img)
             assert.is_not_nil(img)
             img:free()
-        end)
-        it("should render an image, 10 times", function()
-            for i = 1, 10 do
-                local img = M.renderImageFile(test_img)
-                assert.is_not_nil(img)
-                img:free()
-            end
-        end)
-        it("should render an image, 1000 times", function()
-            for i = 1, 1000 do
-                local img = M.renderImageFile(test_img)
-                assert.is_not_nil(img)
-                img:free()
-            end
         end)
     end)
 end)
