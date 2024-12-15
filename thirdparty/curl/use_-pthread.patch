@@ -1,0 +1,10 @@
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -378,6 +378,7 @@
+   if(WIN32)
+     set(USE_THREADS_WIN32 ON)
+   else()
++    set(THREADS_PREFER_PTHREAD_FLAG TRUE)
+     find_package(Threads REQUIRED)
+     set(USE_THREADS_POSIX ${CMAKE_USE_PTHREADS_INIT})
+     set(HAVE_PTHREAD_H ${CMAKE_USE_PTHREADS_INIT})
