@@ -189,16 +189,6 @@ if(MONOLIBTIC)
     declare_dependency(openlipclua::libopenlipclua SHARED lipc STATIC openlipclua)
 endif()
 
-# openssl
-set(CRYPTO_LIBS)
-set(SSL_LIBS)
-if(MONOLIBTIC)
-    list(APPEND CRYPTO_LIBS dl pthread)
-    list(APPEND SSL_LIBS pthread)
-endif()
-declare_dependency(openssl::crypto MONOLIBTIC crypto LIBRARIES ${CRYPTO_LIBS})
-declare_dependency(openssl::ssl MONOLIBTIC ssl LIBRARIES ${SSL_LIBS})
-
 # nanosvg
 declare_dependency(nanosvg::nanosvg LIBRARIES m)
 
