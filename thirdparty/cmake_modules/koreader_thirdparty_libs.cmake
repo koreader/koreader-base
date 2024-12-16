@@ -101,6 +101,20 @@ declare_dependency(libk2pdfopt::k2pdfopt INCLUDES k2pdfopt leptonica MONOLIBTIC 
 # libpng
 declare_dependency(libpng::png16 MONOLIBTIC png16)
 
+# libressl
+set(CRYPTO_LIBS)
+set(SSL_LIBS)
+if(MONOLIBTIC)
+    list(APPEND CRYPTO_LIBS pthread)
+    list(APPEND SSL_LIBS pthread)
+    if(NOT ANDROID)
+        list(APPEND CRYPTO_LIBS rt)
+        list(APPEND SSL_LIBS rt)
+    endif()
+endif()
+declare_dependency(libressl::crypto MONOLIBTIC crypto LIBRARIES ${CRYPTO_LIBS})
+declare_dependency(libressl::ssl MONOLIBTIC ssl LIBRARIES ${SSL_LIBS})
+
 # libunibreak
 declare_dependency(libunibreak::unibreak MONOLIBTIC unibreak)
 
@@ -174,16 +188,6 @@ declare_dependency(
 if(MONOLIBTIC)
     declare_dependency(openlipclua::libopenlipclua SHARED lipc STATIC openlipclua)
 endif()
-
-# openssl
-set(CRYPTO_LIBS)
-set(SSL_LIBS)
-if(MONOLIBTIC)
-    list(APPEND CRYPTO_LIBS dl pthread)
-    list(APPEND SSL_LIBS pthread)
-endif()
-declare_dependency(openssl::crypto MONOLIBTIC crypto LIBRARIES ${CRYPTO_LIBS})
-declare_dependency(openssl::ssl MONOLIBTIC ssl LIBRARIES ${SSL_LIBS})
 
 # nanosvg
 declare_dependency(nanosvg::nanosvg LIBRARIES m)

@@ -297,6 +297,8 @@ if(MONOLIBTIC)
         leptonica::leptonica
         libjpeg-turbo::turbojpeg
         libk2pdfopt::k2pdfopt
+        libressl::crypto
+        libressl::ssl
         libzmq::zmq
         lodepng::lodepng
         lpeg::lpeg
@@ -305,8 +307,6 @@ if(MONOLIBTIC)
         luasocket::luasocket
         luasocket::mcore
         luasocket::score
-        openssl::crypto
-        openssl::ssl
         pthread
         sqlite::sqlite3
         turbo::tffi_wrap

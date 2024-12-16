@@ -1,7 +1,7 @@
 --- i/CMakeLists.txt
 +++ w/CMakeLists.txt
 @@ -8,6 +8,13 @@
- cmake_minimum_required(VERSION 3.15)
+ cmake_minimum_required(VERSION 3.16.3)
  project(SDL2 C CXX)
  
 +execute_process(COMMAND pkg-config --variable pc_path pkg-config RESULT_VARIABLE RET OUTPUT_VARIABLE OUT OUTPUT_STRIP_TRAILING_WHITESPACE)
