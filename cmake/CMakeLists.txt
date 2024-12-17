@@ -348,7 +348,7 @@ if(CERVANTES OR KINDLE OR KOBO OR POCKETBOOK)
 else()
     set(EXCLUDE_FROM_ALL EXCLUDE_FROM_ALL)
 endif()
-declare_project(thirdparty/openssh ${EXCLUDE_FROM_ALL} DEPENDS openssl zlib)
+declare_project(thirdparty/openssh ${EXCLUDE_FROM_ALL})
 
 # openssl
 declare_project(thirdparty/openssl)
