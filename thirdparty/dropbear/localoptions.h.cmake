@@ -5,10 +5,11 @@
 #cmakedefine01 INETD_MODE
 #cmakedefine01 LOG_COMMANDS
 // Paths.
-#cmakedefine DBSCP_PATH       "@DBSCP_PATH@"
-#cmakedefine DEFAULT_PATH     "@DEFAULT_PATH@"
-#cmakedefine DROPBEAR_PIDFILE "@DROPBEAR_PIDFILE@"
-#cmakedefine SFTPSERVER_PATH  "@SFTPSERVER_PATH@"
+#cmakedefine DBSCP_PATH                "@DBSCP_PATH@"
+#cmakedefine DEFAULT_PATH              "@DEFAULT_PATH@"
+#cmakedefine DROPBEAR_PATH_SSH_PROGRAM "@DROPBEAR_PATH_SSH_PROGRAM@"
+#cmakedefine DROPBEAR_PIDFILE          "@DROPBEAR_PIDFILE@"
+#cmakedefine SFTPSERVER_PATH           "@SFTPSERVER_PATH@"
 // Keys.
 #cmakedefine DSS_PRIV_FILENAME   "@DSS_PRIV_FILENAME@"
 #cmakedefine RSA_PRIV_FILENAME   "@RSA_PRIV_FILENAME@"
