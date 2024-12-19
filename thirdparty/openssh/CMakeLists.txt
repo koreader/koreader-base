@@ -13,12 +13,10 @@ list(APPEND CFG_CMD
     --disable-etc-default-login
     --disable-lastlog
     --with-md5-passwords
-    --with-openssl
-    --with-ssl-engine
     --without-hardening
+    --without-openssl
     --without-stackprotect
-    --with-ssl-dir=${STAGING_DIR}
-    --with-zlib=${STAGING_DIR}
+    --without-zlib
 )
 
 list(APPEND BUILD_CMD COMMAND make sftp-server scp)
