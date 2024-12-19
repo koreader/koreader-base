@@ -24,6 +24,7 @@ set(DEFAULT_PATH "/sbin:/usr/sbin:/bin:/usr/bin")
 set(DROPBEAR_PIDFILE "settings/SSH/dropbear.pid")
 if(PLATFORM_KOREADER_DIR)
     set(DBSCP_PATH ${PLATFORM_KOREADER_DIR})
+    set(DROPBEAR_PATH_SSH_PROGRAM "${PLATFORM_KOREADER_DIR}/dbclient")
     set(SFTPSERVER_PATH "${PLATFORM_KOREADER_DIR}/sftp-server")
 endif()
 # Keys.
@@ -63,9 +64,11 @@ list(APPEND CFG_CMD
 )
 list(APPEND CFG_CMD COMMAND ${CMAKE_COMMAND} -E create_symlink ${CMAKE_CURRENT_BINARY_DIR}/localoptions.h localoptions.h)
 
-list(APPEND BUILD_CMD COMMAND make strip PROGRAMS=dropbear)
+set(PROGRAMS dbclient dropbear scp)
 
-append_binary_install_command(INSTALL_CMD dropbear)
+list(APPEND BUILD_CMD make ${PROGRAMS})
+
+append_binary_install_command(INSTALL_CMD ${PROGRAMS})
 
 external_project(
     DOWNLOAD URL bb72335b40c90397cb1c182143524800
