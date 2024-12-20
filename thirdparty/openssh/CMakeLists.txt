@@ -19,9 +19,11 @@ list(APPEND CFG_CMD
     --without-zlib
 )
 
-list(APPEND BUILD_CMD COMMAND make sftp-server scp)
+set(PROGRAMS sftp-server)
 
-append_binary_install_command(INSTALL_CMD scp sftp-server)
+list(APPEND BUILD_CMD COMMAND make ${PROGRAMS})
+
+append_binary_install_command(INSTALL_CMD ${PROGRAMS})
 
 external_project(
     DOWNLOAD URL 5e90def5af3ffb27e149ca6fff12bef3
