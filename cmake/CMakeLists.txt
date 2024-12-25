@@ -172,7 +172,7 @@ set(crengine_BINARY_DIR ${crengine_CMAKE_BINARY_DIR}/build)
 declare_project(thirdparty/cpu_features EXCLUDE_FROM_ALL)
 
 # curl
-declare_project(thirdparty/curl DEPENDS openssl zlib EXCLUDE_FROM_ALL)
+declare_project(thirdparty/curl DEPENDS libressl zlib EXCLUDE_FROM_ALL)
 
 # czmq
 if(NOT WIN32)
@@ -318,7 +318,7 @@ declare_project(thirdparty/luajson)
 declare_project(thirdparty/luarocks DEPENDS luajit EXCLUDE_FROM_ALL)
 
 # luasec
-declare_project(thirdparty/luasec DEPENDS luajit luasocket openssl)
+declare_project(thirdparty/luasec DEPENDS luajit luasocket libressl)
 
 # luasocket
 declare_project(thirdparty/luasocket DEPENDS luajit)
@@ -353,9 +353,6 @@ else()
     set(EXCLUDE_FROM_ALL EXCLUDE_FROM_ALL)
 endif()
 declare_project(thirdparty/openssh ${EXCLUDE_FROM_ALL})
-
-# openssl
-declare_project(thirdparty/openssl)
 
 # pcre2
 declare_project(thirdparty/pcre2 EXCLUDE_FROM_ALL)
@@ -396,7 +393,7 @@ endif()
 declare_project(thirdparty/tesseract DEPENDS ${DEPENDS})
 
 # turbo
-declare_project(thirdparty/turbo DEPENDS openssl)
+declare_project(thirdparty/turbo DEPENDS libressl)
 
 # utf8proc
 declare_project(thirdparty/utf8proc)
@@ -413,7 +410,7 @@ if(CERVANTES OR KINDLE OR KOBO OR POCKETBOOK OR REMARKABLE OR SONY_PRSTUX)
 else()
     set(EXCLUDE_FROM_ALL EXCLUDE_FROM_ALL)
 endif()
-declare_project(thirdparty/zsync2 DEPENDS curl openssl zlib ${EXCLUDE_FROM_ALL})
+declare_project(thirdparty/zsync2 DEPENDS curl libressl zlib ${EXCLUDE_FROM_ALL})
 
 # }}}
 
