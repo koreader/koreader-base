@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.15)
+cmake_minimum_required(VERSION 3.16.3)
 project(koreader-base LANGUAGES C CXX)
 
 include(CheckFunctionExists)
