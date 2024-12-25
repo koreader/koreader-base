@@ -7,7 +7,7 @@ LuaJIT FFI wrapper for libcrypto (OpenSSL).
 local ffi = require("ffi")
 require("ffi/crypto_h")
 
-local libcrypto = ffi.loadlib("crypto", "1.1")
+local libcrypto = ffi.loadlib("crypto", "3")
 local crypto = {}
 
 function crypto.pbkdf2_hmac_sha1(pass, salt, iterations, key_len)

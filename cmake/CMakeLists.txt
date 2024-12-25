@@ -351,6 +351,7 @@ endif()
 declare_project(thirdparty/openssh ${EXCLUDE_FROM_ALL})
 
 # openssl
+# NOTE: `EXCLUDE_FROM_ALL` is not used because `ffi/crypto` needs `libcrypto`.
 declare_project(thirdparty/openssl)
 
 # pcre2
