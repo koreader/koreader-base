@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.15)
+cmake_minimum_required(VERSION 3.16.3)
 project(lodepng LANGUAGES C)
 
 file(WRITE lodepng.c "#include \"lodepng.cpp\"\n")
