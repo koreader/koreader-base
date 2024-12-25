@@ -264,6 +264,10 @@ declare_project(thirdparty/libk2pdfopt DEPENDS leptonica libpng tesseract zlib)
 # libpng
 declare_project(thirdparty/libpng DEPENDS zlib EXCLUDE_FROM_ALL)
 
+# libressl
+# NOTE: `EXCLUDE_FROM_ALL` is not used because `ffi/crypto` needs `libcrypto`.
+declare_project(thirdparty/libressl)
+
 # libunibreak
 declare_project(thirdparty/libunibreak EXCLUDE_FROM_ALL)
 
