@@ -2125,7 +2125,7 @@ public:
         }
 
         lua_pushinteger(m_L, wstart + 1); // Lua indices start at 1
-        lua_pushinteger(m_L, wend + 1);
+        lua_pushinteger(m_L, wend);
         free(breaks);
     }
 };
