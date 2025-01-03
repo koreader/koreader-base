@@ -533,8 +533,9 @@ else ifeq ($(TARGET), kindlepw2)
 		COMPAT_CXXFLAGS:=$(UBUNTU_COMPAT_CFLAGS)
 	endif
 else ifeq ($(TARGET), kindlehf)
-	# We bias towards in-order CPUs (e.g., A53)
-	ARM_ARCH:=$(ARMV7_A7_ARCH)
+	# While we *would* like to bias towards in-order CPUs (e.g., A7/A53), we can't because we have to support the PW4,
+	# which runs on an A9, and that's VFPv3, and not VFPv4 (and that seems to matter, despite us technically always prefering NEON).
+	ARM_ARCH:=$(ARMV7_A9_ARCH)
 	ARM_ARCH+=-mfloat-abi=hard
 	ifeq ($(TARGET_MACHINE), arm-linux-gnueabihf)
 		COMPAT_CFLAGS:=$(UBUNTU_COMPAT_CFLAGS)
