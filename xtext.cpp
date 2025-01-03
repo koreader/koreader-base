@@ -2063,9 +2063,8 @@ public:
         free(s_utf8);
     }
 
-    // Get (as a single UTF-8 string) the segment of m_text, extended to include
-    // the full words that may be cut at boundaries (start, end).
-    void getSelectedWords(int start, int end, int context) {
+    // Get start and end indices of an extended segment of m_text that includes the full words that may be cut at boundaries (start, end).
+    void getSelectedWordIndices(int start, int end, int context) {
         // Not much documentation about libunibreak word breaking,
         // some insight in:
         //  http://www.unicode.org/reports/tr29/tr29-25.html
@@ -2125,20 +2124,8 @@ public:
             wend++;
         }
 
-        // FriBiDi provides a unicode to UTF-8 conversion function, so use it.
-        // Let's be cheap and not count the nb of bytes really needed to store the
-        // UTF-8 encoding of each Unicode codepoint: go allocate for the max (4).
-        // (As we're called to return user selected text, we shouldn't waste
-        // too much - and we'll free it just below.)
-        len = wend - wstart;
-        char * s_utf8 = (char *)malloc(len * 4*sizeof(char) + 1);
-        fribidi_unicode_to_charset(FRIBIDI_CHAR_SET_UTF8, m_text+wstart, len, s_utf8);
-        lua_pushstring(m_L, s_utf8);
-        #if 0
-            printf("getWords: %d>%d #%s#\n", wstart, wend, s_utf8);
-            lua_pushstring(m_L, ""); // prevent a dict lookup
-        #endif
-        free(s_utf8);
+        lua_pushinteger(m_L, wstart + 1); // Lua indices start at 1
+        lua_pushinteger(m_L, wend);
         free(breaks);
     }
 };
@@ -2496,9 +2483,8 @@ static int XText_getText(lua_State *L) {
     return 1;
 }
 
-// Get (as a single UTF-8 string) the segment of m_text, extended to include
-// the full words that may be cut at boundaries (start, end).
-static int XText_getSelectedWords(lua_State *L) {
+// Get start and end indices of an extended segment of m_text that includes the full words that may be cut at boundaries (start, end).
+static int XText_getSelectedWordIndices(lua_State *L) {
     XText * xt = check_XText(L, 1);
     int start = luaL_checkint(L, 2);
     luaL_argcheck(L, start >= 1 && start <= xt->m_length, 2, "index out of range");
@@ -2511,9 +2497,9 @@ static int XText_getSelectedWords(lua_State *L) {
     // to inspect to find cut words' start/end.
     int context = luaL_checkint(L, 4);
     luaL_argcheck(L, context > 0, 3, "context must be strictly positive");
-    xt->getSelectedWords(start, end, context);
-    // getSelectedWords() will have pushed a Lua string onto the stack
-    return 1;
+    xt->getSelectedWordIndices(start, end, context);
+    // getSelectedWordIndices() will have pushed two Lua integers onto the stack
+    return 2;
 }
 
 
@@ -2538,7 +2524,7 @@ static const struct luaL_Reg xtext_meth[] = {
     {"getParaDirection", XText_getParaDirection},
     {"getSegmentFromEnd", XText_getSegmentFromEnd},
     {"getText", XText_getText},
-    {"getSelectedWords", XText_getSelectedWords},
+    {"getSelectedWordIndices", XText_getSelectedWordIndices},
     { "free", XText_free },
     { "__gc", XText_destroy },
     {NULL, NULL}
