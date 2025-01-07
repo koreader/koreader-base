@@ -185,6 +185,9 @@ declare_project(thirdparty/czmq DEPENDS libzmq ${EXCLUDE_FROM_ALL})
 # djvulibre
 declare_project(thirdparty/djvulibre DEPENDS libjpeg-turbo EXCLUDE_FROM_ALL)
 
+# dkjson
+declare_project(thirdparty/dkjson)
+
 # dropbear
 if(CERVANTES OR KINDLE OR KOBO OR POCKETBOOK)
     set(EXCLUDE_FROM_ALL)
@@ -421,7 +424,6 @@ if(EMULATE_READER)
     foreach(PRJ
             busted
             cluacov
-            dkjson
             lua-term
             lua_cliargs
             luacov
