@@ -134,20 +134,18 @@ download-all: test-data
 $(OUTPUT_DIR)/spec/base: | $(OUTPUT_DIR)/spec/
 	$(SYMLINK) $(KOR_BASE)/spec $@
 
-$(OUTPUT_DIR)/spec/config.lua: | $(OUTPUT_DIR)/spec/
-	$(SYMLINK) $(KOR_BASE)/test-runner/busted_config.lua $@
+$(addprefix $(OUTPUT_DIR)/spec/,config.lua helper.lua): | $(OUTPUT_DIR)/spec/
+	$(SYMLINK) $(KOR_BASE)/test-runner/busted_$(notdir $@) $@
 
-$(OUTPUT_DIR)/spec/meson.build: | $(OUTPUT_DIR)/spec/
-	$(SYMLINK) $(KOR_BASE)/test-runner/meson.build $@
-
-$(OUTPUT_DIR)/spec/runtests: | $(OUTPUT_DIR)/spec/
-	$(SYMLINK) $(KOR_BASE)/test-runner/runtests $@
+$(addprefix $(OUTPUT_DIR)/spec/,meson.build runtests): | $(OUTPUT_DIR)/spec/
+	$(SYMLINK) $(KOR_BASE)/test-runner/$(notdir $@) $@
 
 $(BASE_PREFIX)test: $(BASE_PREFIX)all test-data
 	$(RUNTESTS) $(OUTPUT_DIR) base $T
 
 define test_data_common
 $(OUTPUT_DIR)/spec/config.lua
+$(OUTPUT_DIR)/spec/helper.lua
 $(OUTPUT_DIR)/spec/meson.build
 $(OUTPUT_DIR)/spec/runtests
 endef

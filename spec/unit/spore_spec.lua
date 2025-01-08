@@ -1,6 +1,3 @@
-package.path = "common/?.lua;" .. package.path
-package.cpath = "common/?.so;" .. package.cpath
-
 local service = [[
 {
     "base_url" : "http://services.org:9999/restapi/",
