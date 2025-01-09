@@ -4,7 +4,8 @@ local testsuites = {}
 local roots = {}
 local lpaths = {}
 for entry in lfs.dir("spec") do
-    if not string.match(entry, "^[.]") then
+    local attr = lfs.attributes("spec/" .. entry .. "/unit")
+    if attr and attr.mode == "directory" then
         local testroot = "spec/" .. entry .. "/unit"
         local testpath = testroot .. "/?.lua"
         testsuites[entry] = {}

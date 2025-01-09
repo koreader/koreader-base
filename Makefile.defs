@@ -1082,9 +1082,6 @@ define runtests_fn
 runtests() {(
 kodir="$$1";
 shift 1;
-export LUA_CPATH='./?.so;$(abspath $(SPEC_ROCKS_DIR)/lib/lua/5.1/?.so)';
-export LUA_PATH='./?.lua;$(abspath $(SPEC_ROCKS_DIR)/share/lua/5.1/?.lua);$(abspath $(SPEC_ROCKS_DIR)/share/lua/5.1/?/init.lua)';
-export TESSDATA_DIR="$$PWD/data";
 "$$kodir/spec/runtests" $(PARALLEL_JOBS:%=-j%) "$$@";
 )}
 endef
