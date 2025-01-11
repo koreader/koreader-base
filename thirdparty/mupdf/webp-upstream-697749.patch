@@ -1,4 +1,5 @@
 diff --git a/include/mupdf/fitz/compressed-buffer.h b/include/mupdf/fitz/compressed-buffer.h
+index 80458f11..64202fd6 100644
 --- a/include/mupdf/fitz/compressed-buffer.h
 +++ b/include/mupdf/fitz/compressed-buffer.h
 @@ -125,10 +125,10 @@ fz_stream *fz_open_image_decomp_stream_from_buffer(fz_context *ctx, fz_compresse
@@ -23,6 +24,7 @@ diff --git a/include/mupdf/fitz/compressed-buffer.h b/include/mupdf/fitz/compres
  
  /**
 diff --git a/scripts/wrap/make_cppyy.py b/scripts/wrap/make_cppyy.py
+index 89be2fec..91396c33 100644
 --- a/scripts/wrap/make_cppyy.py
 +++ b/scripts/wrap/make_cppyy.py
 @@ -763,7 +763,7 @@ def make_cppyy(
@@ -35,6 +37,7 @@ diff --git a/scripts/wrap/make_cppyy.py b/scripts/wrap/make_cppyy.py
              cppyy.cppdef(f'''
                      namespace mupdf
 diff --git a/source/cbz/mucbz.c b/source/cbz/mucbz.c
+index e2f99530..e877490b 100644
 --- a/source/cbz/mucbz.c
 +++ b/source/cbz/mucbz.c
 @@ -49,6 +49,7 @@ static const char *cbz_ext_list[] = {
@@ -46,6 +49,7 @@ diff --git a/source/cbz/mucbz.c b/source/cbz/mucbz.c
  };
  
 diff --git a/source/cbz/muimg.c b/source/cbz/muimg.c
+index 69d1f990..78c07017 100644
 --- a/source/cbz/muimg.c
 +++ b/source/cbz/muimg.c
 @@ -191,7 +191,7 @@ img_open_document(fz_context *ctx, const fz_document_handler *handler, fz_stream
@@ -79,6 +83,7 @@ diff --git a/source/cbz/muimg.c b/source/cbz/muimg.c
  
  	fmt = fz_recognize_image_format(ctx, data);
 diff --git a/source/fitz/image-imp.h b/source/fitz/image-imp.h
+index 06db2afc..ee6db1c5 100644
 --- a/source/fitz/image-imp.h
 +++ b/source/fitz/image-imp.h
 @@ -32,6 +32,7 @@ fz_pixmap *fz_load_gif(fz_context *ctx, const unsigned char *data, size_t size);
@@ -97,6 +102,7 @@ diff --git a/source/fitz/image-imp.h b/source/fitz/image-imp.h
  
  #endif
 diff --git a/source/fitz/image.c b/source/fitz/image.c
+index e898aa42..915ddf28 100644
 --- a/source/fitz/image.c
 +++ b/source/fitz/image.c
 @@ -794,6 +794,9 @@ compressed_image_get_pixmap(fz_context *ctx, fz_image *image_, fz_irect *subarea
@@ -149,6 +155,7 @@ diff --git a/source/fitz/image.c b/source/fitz/image.c
  	}
 diff --git a/source/fitz/load-webp.c b/source/fitz/load-webp.c
 new file mode 100644
+index 00000000..1ab554da
 --- /dev/null
 +++ b/source/fitz/load-webp.c
 @@ -0,0 +1,280 @@
@@ -433,6 +440,7 @@ new file mode 100644
 +
 +#endif /* HAVE_WEBP */
 diff --git a/source/html/mobi.c b/source/html/mobi.c
+index e0a076d1..e586eddb 100644
 --- a/source/html/mobi.c
 +++ b/source/html/mobi.c
 @@ -318,7 +318,7 @@ fz_extract_html_from_mobi(fz_context *ctx, fz_buffer *mobi)

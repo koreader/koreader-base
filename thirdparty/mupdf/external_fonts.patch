@@ -1,6 +1,8 @@
---- i/Makefile
-+++ w/Makefile
-@@ -242,6 +242,7 @@ generated/%.otf.c : %.otf $(HEXDUMP_SH) ; $(QUIET_GEN) $(MKTGTDIR) ; bash $(HEXD
+diff --git a/Makefile b/Makefile
+index d18e557d..e806b39a 100644
+--- a/Makefile
++++ b/Makefile
+@@ -250,6 +250,7 @@ generated/%.otf.c : %.otf $(HEXDUMP_SH) ; $(QUIET_GEN) $(MKTGTDIR) ; bash $(HEXD
  generated/%.ttf.c : %.ttf $(HEXDUMP_SH) ; $(QUIET_GEN) $(MKTGTDIR) ; bash $(HEXDUMP_SH) > $@ $<
  generated/%.ttc.c : %.ttc $(HEXDUMP_SH) ; $(QUIET_GEN) $(MKTGTDIR) ; bash $(HEXDUMP_SH) > $@ $<
  
@@ -8,7 +10,7 @@
  ifeq ($(HAVE_OBJCOPY),yes)
    MUPDF_OBJ += $(FONT_BIN:%=$(OUT)/%.o)
    $(OUT)/%.cff.o : %.cff ; $(OBJCOPY_CMD)
-@@ -253,6 +254,7 @@ else
+@@ -261,6 +262,7 @@ else
  endif
  
  generate: $(FONT_GEN)
@@ -16,9 +18,11 @@
  
  # --- Generated ICC profiles ---
  
---- i/include/mupdf/fitz/font.h
-+++ w/include/mupdf/fitz/font.h
-@@ -812,4 +812,9 @@ fz_buffer *fz_subset_ttf_for_gids(fz_context *ctx, fz_buffer *orig, int *gids, i
+diff --git a/include/mupdf/fitz/font.h b/include/mupdf/fitz/font.h
+index 7b3d1ccb..6d6b96cc 100644
+--- a/include/mupdf/fitz/font.h
++++ b/include/mupdf/fitz/font.h
+@@ -825,4 +825,9 @@ fz_buffer *fz_subset_ttf_for_gids(fz_context *ctx, fz_buffer *orig, int *gids, i
   */
  fz_buffer *fz_subset_cff_for_gids(fz_context *ctx, fz_buffer *orig, int *gids, int num_gids, int symbolic, int cidfont);
  
@@ -28,9 +32,11 @@
 +void fz_install_external_font_funcs(fz_context *ctx);
 +
  #endif
---- i/source/fitz/font.c
-+++ w/source/fitz/font.c
-@@ -572,6 +572,8 @@ fz_font *fz_load_fallback_font(fz_context *ctx, int script, int language, int se
+diff --git a/source/fitz/font.c b/source/fitz/font.c
+index b9de4396..edb316b2 100644
+--- a/source/fitz/font.c
++++ b/source/fitz/font.c
+@@ -556,6 +556,8 @@ fz_font *fz_load_fallback_font(fz_context *ctx, int script, int language, int se
  	return *fontp;
  }
  
@@ -39,7 +45,7 @@
  static fz_font *fz_load_fallback_math_font(fz_context *ctx)
  {
  	const unsigned char *data;
-@@ -650,6 +652,8 @@ static fz_font *fz_load_fallback_boxes_font(fz_context *ctx)
+@@ -634,6 +636,8 @@ static fz_font *fz_load_fallback_boxes_font(fz_context *ctx)
  	return ctx->font->boxes;
  }
  
@@ -48,7 +54,7 @@
  static const struct ft_error ft_errors[] =
  {
  #include FT_ERRORS_H
-@@ -908,13 +912,18 @@ find_base14_index(const char *name)
+@@ -902,13 +906,18 @@ find_base14_index(const char *name)
  fz_font *
  fz_new_base14_font(fz_context *ctx, const char *name)
  {
@@ -67,7 +73,7 @@
  		data = fz_lookup_base14_font(ctx, name, &size);
  		if (data)
  		{
-@@ -926,6 +935,16 @@ fz_new_base14_font(fz_context *ctx, const char *name)
+@@ -920,6 +929,16 @@ fz_new_base14_font(fz_context *ctx, const char *name)
  			fz_set_font_embedding(ctx, ctx->font->base14[x], 1);
  			return fz_keep_font(ctx, ctx->font->base14[x]);
  		}
@@ -84,7 +90,7 @@
  	}
  	fz_throw(ctx, FZ_ERROR_ARGUMENT, "cannot find builtin font with name '%s'", name);
  }
-@@ -2106,6 +2125,7 @@ fz_encode_character_with_fallback(fz_context *ctx, fz_font *user_font, int unico
+@@ -2100,6 +2119,7 @@ fz_encode_character_with_fallback(fz_context *ctx, fz_font *user_font, int unico
  	}
  #endif
  
@@ -92,7 +98,7 @@
  	font = fz_load_fallback_math_font(ctx);
  	if (font)
  	{
-@@ -2147,6 +2167,15 @@ fz_encode_character_with_fallback(fz_context *ctx, fz_font *user_font, int unico
+@@ -2141,6 +2161,15 @@ fz_encode_character_with_fallback(fz_context *ctx, fz_font *user_font, int unico
  	}
  
  	font = fz_load_fallback_boxes_font(ctx);
@@ -108,8 +114,10 @@
  	if (font)
  	{
  		gid = fz_encode_character(ctx, font, unicode);
---- i/source/fitz/noto.c
-+++ w/source/fitz/noto.c
+diff --git a/source/fitz/noto.c b/source/fitz/noto.c
+index 5c1aebf3..1ce86b54 100644
+--- a/source/fitz/noto.c
++++ b/source/fitz/noto.c
 @@ -23,8 +23,12 @@
  #include "mupdf/fitz.h"
  #include "mupdf/ucdn.h"
@@ -255,8 +263,10 @@
 +}
 +
 +#endif
---- i/source/html/html-font.c
-+++ w/source/html/html-font.c
+diff --git a/source/html/html-font.c b/source/html/html-font.c
+index 87511f9d..0f325748 100644
+--- a/source/html/html-font.c
++++ b/source/html/html-font.c
 @@ -23,18 +23,63 @@
  #include "mupdf/fitz.h"
  #include "html-imp.h"
@@ -349,8 +359,10 @@
  		return fz_load_html_default_font(ctx, set, family, is_bold, is_italic);
  
  	return NULL;
---- i/source/pdf/pdf-font-add.c
-+++ w/source/pdf/pdf-font-add.c
+diff --git a/source/pdf/pdf-font-add.c b/source/pdf/pdf-font-add.c
+index d05d6019..39e98209 100644
+--- a/source/pdf/pdf-font-add.c
++++ b/source/pdf/pdf-font-add.c
 @@ -73,12 +73,16 @@ static int is_postscript(fz_context *ctx, FT_Face face)
  
  static int is_builtin_font(fz_context *ctx, fz_font *font)
@@ -368,8 +380,10 @@
  }
  
  static pdf_obj*
---- i/source/pdf/pdf-font.c
-+++ w/source/pdf/pdf-font.c
+diff --git a/source/pdf/pdf-font.c b/source/pdf/pdf-font.c
+index 7406487a..c2f4d808 100644
+--- a/source/pdf/pdf-font.c
++++ b/source/pdf/pdf-font.c
 @@ -93,6 +93,8 @@ static const char *base_font_names[][10] =
  	{ "ZapfDingbats", NULL }
  };

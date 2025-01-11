@@ -1,7 +1,8 @@
 diff --git a/Makefile b/Makefile
+index e806b39a..571f61aa 100644
 --- a/Makefile
 +++ b/Makefile
-@@ -97,7 +97,7 @@
+@@ -102,7 +102,7 @@ $(OUT)/%.a :
  $(OUT)/%.exe: %.c
  	$(LINK_CMD)
  
@@ -10,4 +11,3 @@ diff --git a/Makefile b/Makefile
  ifeq ($(SO_VERSION_LINUX),yes)
  	$(LINK_CMD) -Wl,-soname,$(notdir $@) $(LIB_LDFLAGS) $(THIRD_LIBS) $(LIBCRYPTO_LIBS)
  	ln -sf $(notdir $@) $(patsubst %$(SO_VERSION), %, $@)
-

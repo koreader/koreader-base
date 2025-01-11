@@ -37,6 +37,9 @@ extern const fz_rect fz_empty_rect;
 typedef struct fz_context fz_context;
 typedef struct fz_font fz_font;
 void fz_install_external_font_funcs(fz_context *);
+typedef struct fz_archive fz_archive;
+fz_archive *mupdf_open_directory(fz_context *, const char *);
+void *mupdf_drop_archive(fz_context *, fz_archive *);
 typedef struct {
   int refs;
   unsigned char *data;
@@ -94,7 +97,6 @@ typedef struct {
   int errors;
   int incomplete;
 } fz_cookie;
-typedef struct fz_archive fz_archive;
 typedef struct fz_separations fz_separations;
 typedef struct fz_page fz_page;
 typedef struct fz_document fz_document;
@@ -128,15 +130,14 @@ int mupdf_fz_page_number_from_location(fz_context *, fz_document *, fz_location 
 void *mupdf_fz_location_from_page_number(fz_context *, fz_document *, fz_location *, int);
 fz_outline *mupdf_load_outline(fz_context *, fz_document *);
 void fz_drop_outline(fz_context *, fz_outline *);
-fz_archive *mupdf_open_directory(fz_context *, const char *);
-void mupdf_drop_archive(fz_context *, fz_archive *);
 void *mupdf_drop_stream(fz_context *, fz_stream *);
 fz_stream *mupdf_open_memory(fz_context *, const unsigned char *, size_t);
 typedef struct fz_stext_char fz_stext_char;
 struct fz_stext_char {
   int c;
-  int bidi;
-  int color;
+  uint16_t bidi;
+  uint16_t flags;
+  uint32_t argb;
   fz_point origin;
   fz_quad quad;
   float size;
@@ -166,6 +167,18 @@ struct fz_stext_block {
       fz_matrix transform;
       fz_image *image;
     } i;
+    struct {
+      struct fz_stext_struct *down;
+      int index;
+    } s;
+    struct {
+      uint8_t stroked;
+      uint32_t argb;
+    } v;
+    struct {
+      struct fz_stext_grid_positions *xs;
+      struct fz_stext_grid_positions *ys;
+    } b;
   } u;
   fz_stext_block *prev;
   fz_stext_block *next;
@@ -179,6 +192,7 @@ typedef struct {
   fz_rect mediabox;
   fz_stext_block *first_block;
   fz_stext_block *last_block;
+  struct fz_stext_struct *last_struct;
 } fz_stext_page;
 fz_stext_page *mupdf_new_stext_page_from_page(fz_context *, fz_page *, const fz_stext_options *);
 void fz_drop_stext_page(fz_context *, fz_stext_page *);

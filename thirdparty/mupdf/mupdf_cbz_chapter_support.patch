@@ -12,10 +12,10 @@ Date:   Sun Nov 13 22:10:06 2022 +0100
     a comic book archive.
 
 diff --git a/source/cbz/mucbz.c b/source/cbz/mucbz.c
-index 0c93aa458..05540ff47 100644
+index e877490b..a096648a 100644
 --- a/source/cbz/mucbz.c
 +++ b/source/cbz/mucbz.c
-@@ -233,6 +233,110 @@ cbz_lookup_metadata(fz_context *ctx, fz_document *doc_, const char *key, char *b
+@@ -290,6 +290,110 @@ cbz_lookup_metadata(fz_context *ctx, fz_document *doc_, const char *key, char *b
  	return -1;
  }
  
@@ -124,9 +124,9 @@ index 0c93aa458..05540ff47 100644
 +}
 +
  static fz_document *
- cbz_open_document_with_stream(fz_context *ctx, fz_stream *file)
+ cbz_open_document(fz_context *ctx, const fz_document_handler *handler, fz_stream *file, fz_stream *accel, fz_archive *dir, void *state)
  {
-@@ -246,6 +349,7 @@ cbz_open_document_with_stream(fz_context *ctx, fz_stream *file)
+@@ -301,6 +405,7 @@ cbz_open_document(fz_context *ctx, const fz_document_handler *handler, fz_stream
  	doc->super.lookup_metadata = cbz_lookup_metadata;
  	doc->super.needs_password = cbz_needs_password;
  	doc->super.authenticate_password = cbz_authenticate_password;

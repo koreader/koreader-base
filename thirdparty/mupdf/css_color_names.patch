@@ -1,6 +1,8 @@
+diff --git a/source/html/css-apply.c b/source/html/css-apply.c
+index 93839ccc..858bd588 100644
 --- a/source/html/css-apply.c
 +++ b/source/html/css-apply.c
-@@ -48,24 +48,307 @@
+@@ -48,24 +48,307 @@ static const char *border_style_kw[] = {
  };
  
  static const char *color_kw[] = {
@@ -308,7 +310,7 @@
  };
  
  static const char *list_style_type_kw[] = {
-@@ -106,7 +387,7 @@
+@@ -159,7 +442,7 @@ keyword_in_list(const char *name, const char **list, int n)
  		else if (c > 0)
  			l = m + 1;
  		else
@@ -317,17 +319,12 @@
  	}
  	return 0;
  }
-@@ -1116,43 +1397,12 @@
+@@ -1237,43 +1520,12 @@ hex_color:
  
  	if (value->type == CSS_KEYWORD)
  	{
 -		if (!strcmp(value->data, "transparent"))
 -			return make_color(0, 0, 0, 0);
-+		int n = keyword_in_list(value->data, color_kw, nelem(color_kw));
-+		if (!n)
-+			goto hex_color; /* last ditch attempt: maybe it's a #XXXXXX color without the # */
-+		if (--n == 141)
-+			return make_color(0, 0, 0, 0); // transparent
 -		if (!strcmp(value->data, "maroon"))
 -			return make_color(0x80, 0x00, 0x00, 255);
 -		if (!strcmp(value->data, "red"))
@@ -363,6 +360,11 @@
 -		if (!strcmp(value->data, "gray"))
 -			return make_color(0x80, 0x80, 0x80, 255);
 -		goto hex_color; /* last ditch attempt: maybe it's a #XXXXXX color without the # */
++		int n = keyword_in_list(value->data, color_kw, nelem(color_kw));
++		if (!n)
++			goto hex_color; /* last ditch attempt: maybe it's a #XXXXXX color without the # */
++		if (--n == 141)
++			return make_color(0, 0, 0, 0); // transparent
 +		return make_color(color_rgb[n][0], color_rgb[n][1], color_rgb[n][2], 255);
  	}
  	return initial;
