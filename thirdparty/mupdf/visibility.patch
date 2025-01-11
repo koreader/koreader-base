@@ -1,4 +1,5 @@
 diff --git a/include/mupdf/fitz/buffer.h b/include/mupdf/fitz/buffer.h
+index 5ac949cf..ec6740b5 100644
 --- a/include/mupdf/fitz/buffer.h
 +++ b/include/mupdf/fitz/buffer.h
 @@ -26,6 +26,8 @@
@@ -18,6 +19,7 @@ diff --git a/include/mupdf/fitz/buffer.h b/include/mupdf/fitz/buffer.h
 +
  #endif
 diff --git a/include/mupdf/fitz/color.h b/include/mupdf/fitz/color.h
+index 0a7e985c..0dcf81e7 100644
 --- a/include/mupdf/fitz/color.h
 +++ b/include/mupdf/fitz/color.h
 @@ -27,6 +27,8 @@
@@ -39,6 +41,7 @@ diff --git a/include/mupdf/fitz/color.h b/include/mupdf/fitz/color.h
  
  struct fz_colorspace
 diff --git a/include/mupdf/fitz/context.h b/include/mupdf/fitz/context.h
+index 304ccbc1..5466777b 100644
 --- a/include/mupdf/fitz/context.h
 +++ b/include/mupdf/fitz/context.h
 @@ -32,6 +32,8 @@
@@ -50,7 +53,7 @@ diff --git a/include/mupdf/fitz/context.h b/include/mupdf/fitz/context.h
  typedef struct fz_font_context fz_font_context;
  typedef struct fz_colorspace_context fz_colorspace_context;
  typedef struct fz_style_context fz_style_context;
-@@ -763,6 +765,8 @@ int fz_do_try(fz_context *ctx);
+@@ -774,6 +776,8 @@ int fz_do_try(fz_context *ctx);
  int fz_do_always(fz_context *ctx);
  int (fz_do_catch)(fz_context *ctx);
  
@@ -59,7 +62,7 @@ diff --git a/include/mupdf/fitz/context.h b/include/mupdf/fitz/context.h
  #ifndef FZ_JMPBUF_ALIGN
  #define FZ_JMPBUF_ALIGN 32
  #endif
-@@ -835,6 +839,7 @@ struct fz_context
+@@ -846,6 +850,7 @@ struct fz_context
  	fz_glyph_cache *glyph_cache;
  };
  
@@ -68,6 +71,7 @@ diff --git a/include/mupdf/fitz/context.h b/include/mupdf/fitz/context.h
  
  /**
 diff --git a/include/mupdf/fitz/device.h b/include/mupdf/fitz/device.h
+index 70497a7d..08f8a562 100644
 --- a/include/mupdf/fitz/device.h
 +++ b/include/mupdf/fitz/device.h
 @@ -31,6 +31,8 @@
@@ -87,18 +91,19 @@ diff --git a/include/mupdf/fitz/device.h b/include/mupdf/fitz/device.h
 +
  #endif
 diff --git a/include/mupdf/fitz/document.h b/include/mupdf/fitz/document.h
+index 3fc4a091..c385f210 100644
 --- a/include/mupdf/fitz/document.h
 +++ b/include/mupdf/fitz/document.h
-@@ -33,6 +33,8 @@
- #include "mupdf/fitz/outline.h"
+@@ -34,6 +34,8 @@
  #include "mupdf/fitz/separation.h"
+ #include "mupdf/fitz/archive.h"
  
 +FZ_EXPORTS_START
 +
  typedef struct fz_document_handler fz_document_handler;
  typedef struct fz_page fz_page;
  typedef intptr_t fz_bookmark;
-@@ -1014,6 +1016,8 @@ void fz_delete_link(fz_context *ctx, fz_page *page, fz_link *link);
+@@ -1007,6 +1009,8 @@ void fz_delete_link(fz_context *ctx, fz_page *page, fz_link *link);
  */
  void *fz_process_opened_pages(fz_context *ctx, fz_document *doc, fz_process_opened_page_fn *process_openend_page, void *state);
  
@@ -108,6 +113,7 @@ diff --git a/include/mupdf/fitz/document.h b/include/mupdf/fitz/document.h
  
  /**
 diff --git a/include/mupdf/fitz/export.h b/include/mupdf/fitz/export.h
+index 853e2d5a..a36eb3f2 100644
 --- a/include/mupdf/fitz/export.h
 +++ b/include/mupdf/fitz/export.h
 @@ -45,8 +45,11 @@
@@ -125,6 +131,7 @@ diff --git a/include/mupdf/fitz/export.h b/include/mupdf/fitz/export.h
 +
  #endif
 diff --git a/include/mupdf/fitz/font.h b/include/mupdf/fitz/font.h
+index 6d6b96cc..b631f688 100644
 --- a/include/mupdf/fitz/font.h
 +++ b/include/mupdf/fitz/font.h
 @@ -29,6 +29,8 @@
@@ -145,7 +152,7 @@ diff --git a/include/mupdf/fitz/font.h b/include/mupdf/fitz/font.h
  /* Implementation details: subject to change. */
  
  void fz_decouple_type3_font(fz_context *ctx, fz_font *font, void *t3doc);
-@@ -815,6 +819,7 @@ fz_buffer *fz_subset_cff_for_gids(fz_context *ctx, fz_buffer *orig, int *gids, i
+@@ -828,6 +832,7 @@ fz_buffer *fz_subset_cff_for_gids(fz_context *ctx, fz_buffer *orig, int *gids, i
  char *get_font_file(const char *name);
  char *fz_lookup_base14_font_from_file(fz_context *ctx, const char *name);
  char *fz_lookup_cjk_font_from_file(fz_context *ctx, int registry, int serif, int wmode);
@@ -154,18 +161,19 @@ diff --git a/include/mupdf/fitz/font.h b/include/mupdf/fitz/font.h
  
  #endif
 diff --git a/include/mupdf/fitz/geometry.h b/include/mupdf/fitz/geometry.h
+index f309d398..a025ea40 100644
 --- a/include/mupdf/fitz/geometry.h
 +++ b/include/mupdf/fitz/geometry.h
-@@ -27,6 +27,8 @@
- 
- #include <assert.h>
+@@ -32,6 +32,8 @@
+ #define M_PI 3.14159265358979323846
+ #endif
  
 +FZ_EXPORTS_START
 +
  /**
  	Multiply scaled two integers in the 0..255 range
  */
-@@ -815,4 +817,6 @@ int fz_is_quad_inside_quad(fz_quad needle, fz_quad haystack);
+@@ -838,4 +840,6 @@ int fz_is_quad_inside_quad(fz_quad needle, fz_quad haystack);
  */
  int fz_is_quad_intersecting_quad(fz_quad a, fz_quad b);
  
@@ -173,6 +181,7 @@ diff --git a/include/mupdf/fitz/geometry.h b/include/mupdf/fitz/geometry.h
 +
  #endif
 diff --git a/include/mupdf/fitz/image.h b/include/mupdf/fitz/image.h
+index eb7563ef..c29dd2f6 100644
 --- a/include/mupdf/fitz/image.h
 +++ b/include/mupdf/fitz/image.h
 @@ -32,6 +32,8 @@
@@ -194,6 +203,7 @@ diff --git a/include/mupdf/fitz/image.h b/include/mupdf/fitz/image.h
  
  /**
 diff --git a/include/mupdf/fitz/link.h b/include/mupdf/fitz/link.h
+index 1a20a22f..53d392fb 100644
 --- a/include/mupdf/fitz/link.h
 +++ b/include/mupdf/fitz/link.h
 @@ -28,6 +28,8 @@
@@ -213,6 +223,7 @@ diff --git a/include/mupdf/fitz/link.h b/include/mupdf/fitz/link.h
 +
  #endif
 diff --git a/include/mupdf/fitz/outline.h b/include/mupdf/fitz/outline.h
+index d9bf83e3..d5b3fc65 100644
 --- a/include/mupdf/fitz/outline.h
 +++ b/include/mupdf/fitz/outline.h
 @@ -29,6 +29,8 @@
@@ -224,7 +235,7 @@ diff --git a/include/mupdf/fitz/outline.h b/include/mupdf/fitz/outline.h
  /* Outline */
  
  typedef struct {
-@@ -151,6 +153,7 @@ void fz_drop_outline(fz_context *ctx, fz_outline *outline);
+@@ -159,6 +161,7 @@ void fz_drop_outline(fz_context *ctx, fz_outline *outline);
  fz_outline *
  fz_load_outline_from_iterator(fz_context *ctx, fz_outline_iterator *iter);
  
@@ -233,6 +244,7 @@ diff --git a/include/mupdf/fitz/outline.h b/include/mupdf/fitz/outline.h
  /**
  	Implementation details.
 diff --git a/include/mupdf/fitz/pixmap.h b/include/mupdf/fitz/pixmap.h
+index 42272076..3d0fa58f 100644
 --- a/include/mupdf/fitz/pixmap.h
 +++ b/include/mupdf/fitz/pixmap.h
 @@ -29,6 +29,8 @@
@@ -253,7 +265,7 @@ diff --git a/include/mupdf/fitz/pixmap.h b/include/mupdf/fitz/pixmap.h
  /* Implementation details: subject to change.*/
  
  fz_pixmap *fz_alpha_from_gray(fz_context *ctx, fz_pixmap *gray);
-@@ -484,6 +488,7 @@ fz_pixmap *fz_new_pixmap_from_color_and_mask(fz_context *ctx, fz_pixmap *color,
+@@ -499,6 +503,7 @@ fz_pixmap *fz_new_pixmap_from_color_and_mask(fz_context *ctx, fz_pixmap *color,
   * to fit the clip rectangle. Pass `NULL` to the clip if you want the whole
   * pixmap scaled.
   */
@@ -262,6 +274,7 @@ diff --git a/include/mupdf/fitz/pixmap.h b/include/mupdf/fitz/pixmap.h
  
  /*
 diff --git a/include/mupdf/fitz/stream.h b/include/mupdf/fitz/stream.h
+index 13d1c779..ae848372 100644
 --- a/include/mupdf/fitz/stream.h
 +++ b/include/mupdf/fitz/stream.h
 @@ -27,6 +27,8 @@
@@ -283,6 +296,7 @@ diff --git a/include/mupdf/fitz/stream.h b/include/mupdf/fitz/stream.h
  
  /**
 diff --git a/include/mupdf/fitz/string-util.h b/include/mupdf/fitz/string-util.h
+index 2c8d78a1..97e1ca4f 100644
 --- a/include/mupdf/fitz/string-util.h
 +++ b/include/mupdf/fitz/string-util.h
 @@ -26,6 +26,8 @@
@@ -302,6 +316,7 @@ diff --git a/include/mupdf/fitz/string-util.h b/include/mupdf/fitz/string-util.h
 +
  #endif
 diff --git a/include/mupdf/fitz/structured-text.h b/include/mupdf/fitz/structured-text.h
+index d9a6aa72..1a3b202d 100644
 --- a/include/mupdf/fitz/structured-text.h
 +++ b/include/mupdf/fitz/structured-text.h
 @@ -33,6 +33,8 @@
@@ -313,7 +328,7 @@ diff --git a/include/mupdf/fitz/structured-text.h b/include/mupdf/fitz/structure
  /**
  	Simple text layout (for use with annotation editing primarily).
  */
-@@ -361,5 +363,6 @@ fz_device *fz_new_ocr_device(fz_context *ctx, fz_device *target, fz_matrix ctm,
+@@ -633,5 +635,6 @@ fz_device *fz_new_ocr_device(fz_context *ctx, fz_device *target, fz_matrix ctm,
  
  fz_document *fz_open_reflowed_document(fz_context *ctx, fz_document *underdoc, const fz_stext_options *opts);
  
@@ -321,6 +336,7 @@ diff --git a/include/mupdf/fitz/structured-text.h b/include/mupdf/fitz/structure
  
  #endif
 diff --git a/include/mupdf/fitz/util.h b/include/mupdf/fitz/util.h
+index 78326f72..84e9d47f 100644
 --- a/include/mupdf/fitz/util.h
 +++ b/include/mupdf/fitz/util.h
 @@ -34,6 +34,8 @@
@@ -332,7 +348,7 @@ diff --git a/include/mupdf/fitz/util.h b/include/mupdf/fitz/util.h
  /**
  	Create a display list.
  
-@@ -148,4 +150,6 @@ fz_document *fz_new_xhtml_document_from_document(fz_context *ctx, fz_document *o
+@@ -156,4 +158,6 @@ fz_document *fz_new_xhtml_document_from_document(fz_context *ctx, fz_document *o
  */
  fz_buffer *fz_new_buffer_from_page_with_format(fz_context *ctx, fz_page *page, const char *format, const char *options, fz_matrix transform, fz_cookie *cookie);
  
@@ -340,6 +356,7 @@ diff --git a/include/mupdf/fitz/util.h b/include/mupdf/fitz/util.h
 +
  #endif
 diff --git a/include/mupdf/pdf/annot.h b/include/mupdf/pdf/annot.h
+index 8d22daf6..b447ff95 100644
 --- a/include/mupdf/pdf/annot.h
 +++ b/include/mupdf/pdf/annot.h
 @@ -29,6 +29,8 @@
@@ -351,7 +368,7 @@ diff --git a/include/mupdf/pdf/annot.h b/include/mupdf/pdf/annot.h
  typedef struct pdf_annot pdf_annot;
  
  enum pdf_annot_type
-@@ -962,4 +964,6 @@ void pdf_set_annot_hidden_for_editing(fz_context *ctx, pdf_annot *annot, int hid
+@@ -1006,4 +1008,6 @@ void pdf_set_annot_hidden_for_editing(fz_context *ctx, pdf_annot *annot, int hid
   */
  int pdf_apply_redaction(fz_context *ctx, pdf_annot *annot, pdf_redact_options *opts);
  
@@ -359,6 +376,7 @@ diff --git a/include/mupdf/pdf/annot.h b/include/mupdf/pdf/annot.h
 +
  #endif
 diff --git a/include/mupdf/pdf/document.h b/include/mupdf/pdf/document.h
+index 655208da..fd5cc8d2 100644
 --- a/include/mupdf/pdf/document.h
 +++ b/include/mupdf/pdf/document.h
 @@ -30,6 +30,8 @@
@@ -370,9 +388,9 @@ diff --git a/include/mupdf/pdf/document.h b/include/mupdf/pdf/document.h
  typedef struct pdf_xref pdf_xref;
  typedef struct pdf_ocg_descriptor pdf_ocg_descriptor;
  
-@@ -839,4 +841,6 @@ fz_structure pdf_structure_type(fz_context *ctx, pdf_obj *role_map, pdf_obj *tag
- void pdf_run_document_structure(fz_context *ctx, pdf_document *doc, fz_device *dev, fz_cookie *cookie);
- 
+@@ -870,4 +872,6 @@ int pdf_count_page_associated_files(fz_context *ctx, pdf_page *page);
+ */
+ pdf_obj *pdf_page_associated_file(fz_context *ctx, pdf_page *page, int idx);
  
 +FZ_EXPORTS_STOP
 +
