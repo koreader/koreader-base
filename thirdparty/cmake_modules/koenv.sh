@@ -130,7 +130,7 @@ clean_tree() { (
     shift 2
     # shellcheck disable=SC2030
     export LANG=C
-    killlist="$(list_tree "${tree}" | comm -13 "${srclist}" -)"
+    killlist="$(list_tree "${tree}" | comm -13 "${srclist}" - | tac)"
     [ -n "${killlist}" ] || return 0
     # Remove files.
     sed -n '/\/$/!p' <<EOF | xargs --delimiter='\n' --no-run-if-empty rm -v || return 1
