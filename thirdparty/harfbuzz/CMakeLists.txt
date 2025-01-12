@@ -26,7 +26,18 @@ list(APPEND CFG_CMD COMMAND
     ${SOURCE_DIR}
 )
 
-set(DEFINES)
+set(DEFINES
+    HB_DISABLE_DEPRECATED
+    HB_NO_BUFFER_MESSAGE
+    HB_NO_BUFFER_SERIALIZE
+    HB_NO_COLOR
+    HB_NO_LAYOUT_COLLECT_GLYPHS
+    HB_NO_LAYOUT_RARELY_USED
+    HB_NO_LAYOUT_UNUSED
+    HB_NO_META
+    HB_NO_PAINT
+    HB_NO_STYLE
+)
 
 # We've apparently hit a weird corner-case w/ XText where GCC/STL atomics *sometimes* horribly blow up on an ARM1136JF-S CPU w/ GCC 7.5 & up...
 # c.f., https://github.com/koreader/koreader/issues/5780 & https://github.com/koreader/koreader/issues/6024
