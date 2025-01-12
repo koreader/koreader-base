@@ -1,7 +1,8 @@
 diff --git a/src/hb.hh b/src/hb.hh
+index fe466fe1..d728bb99 100644
 --- a/src/hb.hh
 +++ b/src/hb.hh
-@@ -487,6 +487,10 @@ static int HB_UNUSED _hb_errno = 0;
+@@ -500,6 +500,10 @@ static int HB_UNUSED _hb_errno = 0;
  #define HB_NO_SETLOCALE 1
  #endif
  
