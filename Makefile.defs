@@ -626,10 +626,8 @@ ifneq (yes,$(firstword $(call hasminstd,$(CXX),c++,__cplusplus,201700)))
 	CXXSTD_FLAGS := -std=gnu++17
 endif
 
-# Improve reproducibility (disabled on ancient toolchains).
-ifeq (,$(filter kindle-legacy pocketbook,$(TARGET)))
-  BASE_CFLAGS += -ffile-prefix-map=$(abspath $(KOR_BASE))/=
-endif
+# Improve reproducibility.
+BASE_CFLAGS += -ffile-prefix-map=$(abspath $(KOR_BASE))/=
 
 HOSTCFLAGS:=$(HOST_ARCH) $(BASE_CFLAGS) $(QFLAGS)
 
