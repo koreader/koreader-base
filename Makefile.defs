@@ -348,6 +348,7 @@ ifeq ($(TARGET), android)
 	AR:=llvm-ar
 	LD:=ld
 	NM:=llvm-nm
+	OBJCOPY:=llvm-objcopy
 	RANLIB:=llvm-ranlib
 	READELF:=llvm-readelf
 else ifdef CHOST
@@ -355,6 +356,7 @@ else ifdef CHOST
 	AR:=$(CHOST)-ar
 	LD:=$(CHOST)-ld
 	NM:=$(CHOST)-nm
+	OBJCOPY:=$(CHOST)-objcopy
 	RC:=$(CHOST)-windres
 	RANLIB:=$(CHOST)-ranlib
 	READELF:=$(CHOST)-readelf
@@ -363,6 +365,7 @@ else
 	AR:=ar
 	LD:=ld
 	NM:=nm
+	OBJCOPY:=objcopy
 	RC:=windres
 	RANLIB:=ranlib
 	READELF:=readelf
@@ -371,6 +374,7 @@ endif
 HOSTSTRIP:=strip
 HOSTAR:=ar
 HOSTLD:=ld
+HOSTOBJCOPY:=objcopy
 HOSTRANLIB:=ranlib
 HOSTREADELF:=readelf
 
@@ -389,7 +393,7 @@ endif
 
 # Base CFLAGS, without arch. We'll need it for luajit, because its
 # Makefiles do some tricky stuff to differentiate HOST/TARGET
-BASE_CFLAGS:=-O2 -pipe -fomit-frame-pointer
+BASE_CFLAGS:=-O2 -g -pipe -fomit-frame-pointer
 # For ricers.
 #BASE_CFLAGS:=-O3 -pipe -fomit-frame-pointer -frename-registers -fweb
 # Used to enforce aggressive optimizations in some components
@@ -399,8 +403,6 @@ VECTO_CFLAGS:=-O3 -pipe -fomit-frame-pointer -frename-registers -fweb -ftree-vec
 # Use this for debugging:
 ifdef KODEBUG
 	BASE_CFLAGS:=-Og -g -pipe -fno-omit-frame-pointer
-	# Prevent runaway buildsystems from screwing with us and stripping stuff behind our backs...
-	STRIP:=true
 	# Don't enforce extra CFLAGS in debug builds
 	VECTO_CFLAGS:=
 else
@@ -689,6 +691,7 @@ ifdef EMULATE_READER
 	STRIP:=$(HOSTSTRIP)
 	AR:=$(HOSTAR)
 	LD:=$(HOSTLD)
+	OBJCOPY:=$(HOSTOBJCOPY)
 	RANLIB:=$(HOSTRANLIB)
 	READELF:=$(HOSTREADELF)
 	CFLAGS+=$(HOST_ARCH)
@@ -851,7 +854,7 @@ set(CMAKE_NM $(NM) CACHE FILEPATH "NM")
 set(CMAKE_RANLIB $(RANLIB) CACHE FILEPATH "RanLib")
 set(CMAKE_READELF $(READELF) CACHE FILEPATH "ReadELF")
 $(if $(WIN32),set(CMAKE_RC_COMPILER $(RC) CACHE FILEPATH "Resource Compiler"))
-set(CMAKE_STRIP $(STRIP) CACHE FILEPATH "Strip")
+set(CMAKE_STRIP true CACHE FILEPATH "Strip")
 
 # Set path(s) to search for libraries/binaries/headers.
 set(CMAKE_FIND_ROOT_PATH $(abspath $(STAGING_DIR)))
@@ -943,6 +946,7 @@ set(LDFLAGS        "$(strip $(LDFLAGS))")
 set(DYNLIB_LDFLAGS "$(strip $(LDFLAGS) $(DYNLIB_LDFLAGS))")
 set(AR             "$(strip $(AR))")
 set(NM             "$(strip $(NM))")
+set(OBJCOPY        "$(strip $(OBJCOPY))")
 set(RANLIB         "$(strip $(RANLIB))")
 set(RC             "$(strip $(RC))")
 set(STRIP          "$(strip $(STRIP))")
@@ -952,7 +956,6 @@ set(MESON_TOOLCHAINS --native-file=$(abspath $(MESON_HOST_TOOLCHAIN)) $(if $(fil
 set(MESON_FILE_ARG $(if $(filter-out $(MESON_HOST_TOOLCHAIN),$(MESON_CROSS_TOOLCHAIN)),--cross-file,--native-file))
 
 # Miscellaneous.
-set(DO_STRIP           $(DO_STRIP))
 set(MONOLIBTIC         $(MONOLIBTIC))
 set(USE_LJ_WPACLIENT   $(USE_LJ_WPACLIENT))
 set(USE_SDL            $(SDL))
@@ -1001,7 +1004,7 @@ nm = '$(strip $(NM))'
 pkgconfig = 'pkg-config'
 pkg-config = 'pkg-config'
 ranlib = '$(strip $(RANLIB))'
-strip = '$(strip $(STRIP))'
+strip = 'true'
 
 [built-in options]
 buildtype = '$(if $(KODEBUG),debug,release)'
@@ -1059,7 +1062,7 @@ cpp = [CCACHE, '$(strip $(HOSTCXX))']
 # cpp_ld
 ar = '$(strip $(HOSTSTRIP))'
 ranlib = '$(strip $(HOSTRANLIB))'
-strip = '$(strip $(HOSTSTRIP))'
+strip = 'true'
 
 [built-in options]
 buildtype = '$(if $(KODEBUG),debug,release)'
