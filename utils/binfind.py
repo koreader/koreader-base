@@ -6,10 +6,14 @@ import sys
 
 
 def iself(path):
+    if path.endswith('.dbg'):
+        return False
     with open(path, 'rb') as fp:
         return fp.read(4) == b'\x7FELF'
 
 def ismacho(path):
+    if path.endswith('.dSYM'):
+        return False
     if path.endswith('.tbd'):
         return True
     with open(path, 'rb') as fp:

@@ -1,11 +1,5 @@
 include_guard(GLOBAL)
 
-if(APPLE)
-    set(STRIP_CMD ${CMAKE_STRIP} -x)
-else()
-    set(STRIP_CMD ${CMAKE_STRIP} --strip-unneeded)
-endif()
-
 if(CMAKE_HOST_APPLE)
     # Note: can't use `sed -i "" -e`, because cmake "helpfully"
     # filter-out the empty argument during command invocation…
@@ -22,12 +16,13 @@ endmacro()
 
 # Append autotools variables ("VAR=value") to `list`.
 function(append_autotools_vars list)
-    foreach(var CC CFLAGS CPPFLAGS CXX CXXFLAGS LD LDFLAGS LIBS AR NM RANLIB RC STRIP)
+    foreach(var CC CFLAGS CPPFLAGS CXX CXXFLAGS LD LDFLAGS LIBS AR NM RANLIB RC)
         if(DEFINED ${var})
             string(STRIP "${${var}}" value)
             list(APPEND ${list} "${var}=${value}")
         endif()
     endforeach()
+    list(APPEND ${list} STRIP=true)
     set(${list} ${${list}} PARENT_SCOPE)
 endfunction()
 
@@ -75,10 +70,12 @@ function(append_binary_install_command CMD_LIST)
     foreach(SRC IN LISTS _UNPARSED_ARGUMENTS)
         get_filename_component(DST ${SRC} NAME)
         set(DST ${_DESTINATION}/${DST})
-        if(DO_STRIP)
-            list(APPEND ${CMD_LIST} COMMAND ${STRIP_CMD} -o ${DST} ${SRC})
+        if(APPLE)
+            list(APPEND ${CMD_LIST} COMMAND dsymutil ${SRC} -o ${DST}.dSYM)
+            list(APPEND ${CMD_LIST} COMMAND ${STRIP} -x ${SRC} -o ${DST})
         else()
-            list(APPEND ${CMD_LIST} COMMAND ${CMAKE_COMMAND} -E copy_if_different ${SRC} ${DST})
+            list(APPEND ${CMD_LIST} COMMAND ${OBJCOPY} --only-keep-debug ${SRC} ${DST}.dbg)
+            list(APPEND ${CMD_LIST} COMMAND ${OBJCOPY} --add-gnu-debuglink=${DST}.dbg --strip-unneeded ${SRC} ${DST})
         endif()
         list(APPEND ${CMD_LIST} COMMAND chmod +x ${DST})
     endforeach()
