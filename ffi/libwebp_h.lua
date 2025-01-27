@@ -38,12 +38,12 @@ struct WebPAnimDecoderOptions {
   uint32_t padding[7];
 };
 typedef struct WebPAnimDecoderOptions WebPAnimDecoderOptions;
-int WebPAnimDecoderOptionsInitInternal(WebPAnimDecoderOptions *, int) __attribute__((visibility("default")));
+int WebPAnimDecoderOptionsInitInternal(WebPAnimDecoderOptions *, int);
 struct WebPAnimDecoder;
 typedef struct WebPAnimDecoder WebPAnimDecoder;
-WebPAnimDecoder *WebPAnimDecoderNewInternal(const WebPData *, const WebPAnimDecoderOptions *, int) __attribute__((visibility("default")));
-int WebPAnimDecoderGetInfo(const WebPAnimDecoder *, WebPAnimInfo *) __attribute__((visibility("default")));
-int WebPAnimDecoderGetNext(WebPAnimDecoder *, uint8_t **, int *) __attribute__((visibility("default")));
-void WebPAnimDecoderReset(WebPAnimDecoder *) __attribute__((visibility("default")));
-void WebPAnimDecoderDelete(WebPAnimDecoder *) __attribute__((visibility("default")));
+WebPAnimDecoder *WebPAnimDecoderNewInternal(const WebPData *, const WebPAnimDecoderOptions *, int);
+int WebPAnimDecoderGetInfo(const WebPAnimDecoder *, WebPAnimInfo *);
+int WebPAnimDecoderGetNext(WebPAnimDecoder *, uint8_t **, int *);
+void WebPAnimDecoderReset(WebPAnimDecoder *);
+void WebPAnimDecoderDelete(WebPAnimDecoder *);
 ]]

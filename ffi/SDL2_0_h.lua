@@ -266,8 +266,8 @@ struct SDL_Keysym {
   Uint32 unused;
 };
 typedef struct SDL_Keysym SDL_Keysym;
-void SDL_StartTextInput(void) __attribute__((visibility("default")));
-void SDL_StopTextInput(void) __attribute__((visibility("default")));
+void SDL_StartTextInput(void);
+void SDL_StopTextInput(void);
 typedef enum {
   SDL_FIRSTEVENT = 0,
   SDL_QUIT = 256,
@@ -780,46 +780,46 @@ struct SDL_Surface {
   int refcount;
 };
 typedef struct SDL_Surface SDL_Surface;
-int SDL_Init(Uint32) __attribute__((visibility("default")));
-Uint32 SDL_WasInit(Uint32) __attribute__((visibility("default")));
-void SDL_SetMainReady(void) __attribute__((visibility("default")));
-void SDL_Quit(void) __attribute__((visibility("default")));
-int SDL_WaitEvent(union SDL_Event *) __attribute__((visibility("default")));
-int SDL_WaitEventTimeout(union SDL_Event *, int) __attribute__((visibility("default")));
-int SDL_PollEvent(union SDL_Event *) __attribute__((visibility("default")));
-Uint32 SDL_GetTicks(void) __attribute__((visibility("default")));
-void SDL_Delay(Uint32) __attribute__((visibility("default")));
-int SDL_GetCurrentDisplayMode(int, SDL_DisplayMode *) __attribute__((visibility("default")));
-void SDL_EnableScreenSaver(void) __attribute__((visibility("default")));
-SDL_Window *SDL_CreateWindow(const char *, int, int, int, int, Uint32) __attribute__((visibility("default")));
-void SDL_GetWindowSize(SDL_Window *, int *, int *) __attribute__((visibility("default")));
-SDL_Renderer *SDL_CreateRenderer(SDL_Window *, int, Uint32) __attribute__((visibility("default")));
-void SDL_DestroyRenderer(SDL_Renderer *) __attribute__((visibility("default")));
-int SDL_CreateWindowAndRenderer(int, int, Uint32, SDL_Window **, SDL_Renderer **) __attribute__((visibility("default")));
-int SDL_GetRendererInfo(SDL_Renderer *, SDL_RendererInfo *) __attribute__((visibility("default")));
-int SDL_GetRendererOutputSize(SDL_Renderer *, int *, int *) __attribute__((visibility("default")));
-int SDL_SetRenderDrawColor(SDL_Renderer *, Uint8, Uint8, Uint8, Uint8) __attribute__((visibility("default")));
-int SDL_RenderClear(SDL_Renderer *) __attribute__((visibility("default")));
-void SDL_RenderPresent(SDL_Renderer *) __attribute__((visibility("default")));
-int SDL_RenderCopy(SDL_Renderer *, SDL_Texture *, const SDL_Rect *, const SDL_Rect *) __attribute__((visibility("default")));
-SDL_Texture *SDL_CreateTexture(SDL_Renderer *, Uint32, int, int, int) __attribute__((visibility("default")));
-int SDL_UpdateTexture(SDL_Texture *, const SDL_Rect *, const void *, int) __attribute__((visibility("default")));
-void SDL_DestroyTexture(SDL_Texture *) __attribute__((visibility("default")));
-void SDL_SetWindowTitle(SDL_Window *, const char *) __attribute__((visibility("default")));
-void SDL_GetWindowPosition(SDL_Window * window, int *x, int *y) __attribute__((visibility("default")));
-void SDL_SetWindowPosition(SDL_Window * window, int x, int y) __attribute__((visibility("default")));
+int SDL_Init(Uint32);
+Uint32 SDL_WasInit(Uint32);
+void SDL_SetMainReady(void);
+void SDL_Quit(void);
+int SDL_WaitEvent(union SDL_Event *);
+int SDL_WaitEventTimeout(union SDL_Event *, int);
+int SDL_PollEvent(union SDL_Event *);
+Uint32 SDL_GetTicks(void);
+void SDL_Delay(Uint32);
+int SDL_GetCurrentDisplayMode(int, SDL_DisplayMode *);
+void SDL_EnableScreenSaver(void);
+SDL_Window *SDL_CreateWindow(const char *, int, int, int, int, Uint32);
+void SDL_GetWindowSize(SDL_Window *, int *, int *);
+SDL_Renderer *SDL_CreateRenderer(SDL_Window *, int, Uint32);
+void SDL_DestroyRenderer(SDL_Renderer *);
+int SDL_CreateWindowAndRenderer(int, int, Uint32, SDL_Window **, SDL_Renderer **);
+int SDL_GetRendererInfo(SDL_Renderer *, SDL_RendererInfo *);
+int SDL_GetRendererOutputSize(SDL_Renderer *, int *, int *);
+int SDL_SetRenderDrawColor(SDL_Renderer *, Uint8, Uint8, Uint8, Uint8);
+int SDL_RenderClear(SDL_Renderer *);
+void SDL_RenderPresent(SDL_Renderer *);
+int SDL_RenderCopy(SDL_Renderer *, SDL_Texture *, const SDL_Rect *, const SDL_Rect *);
+SDL_Texture *SDL_CreateTexture(SDL_Renderer *, Uint32, int, int, int);
+int SDL_UpdateTexture(SDL_Texture *, const SDL_Rect *, const void *, int);
+void SDL_DestroyTexture(SDL_Texture *);
+void SDL_SetWindowTitle(SDL_Window *, const char *);
+void SDL_GetWindowPosition(SDL_Window * window, int *x, int *y);
+void SDL_SetWindowPosition(SDL_Window * window, int x, int y);
 typedef int (*SDL_blit)(struct SDL_Surface *, SDL_Rect *, struct SDL_Surface *, SDL_Rect *);
-SDL_Surface *SDL_CreateRGBSurface(Uint32, int, int, int, Uint32, Uint32, Uint32, Uint32) __attribute__((visibility("default")));
-SDL_Surface *SDL_CreateRGBSurfaceFrom(void *, int, int, int, int, Uint32, Uint32, Uint32, Uint32) __attribute__((visibility("default")));
-SDL_Surface *SDL_CreateRGBSurfaceWithFormatFrom(void *, int, int, int, int, Uint32) __attribute__((visibility("default")));
-void SDL_FreeSurface(SDL_Surface *) __attribute__((visibility("default")));
-int SDL_SetSurfacePalette(SDL_Surface *, SDL_Palette *) __attribute__((visibility("default")));
-int SDL_LockSurface(SDL_Surface *) __attribute__((visibility("default")));
-void SDL_UnlockSurface(SDL_Surface *) __attribute__((visibility("default")));
-void SDL_SetWindowIcon(SDL_Window *, SDL_Surface *) __attribute__((visibility("default")));
-int SDL_SetWindowFullscreen(SDL_Window *, Uint32) __attribute__((visibility("default")));
-char *SDL_GetBasePath(void) __attribute__((visibility("default")));
-char *SDL_GetPrefPath(const char *, const char *) __attribute__((visibility("default")));
+SDL_Surface *SDL_CreateRGBSurface(Uint32, int, int, int, Uint32, Uint32, Uint32, Uint32);
+SDL_Surface *SDL_CreateRGBSurfaceFrom(void *, int, int, int, int, Uint32, Uint32, Uint32, Uint32);
+SDL_Surface *SDL_CreateRGBSurfaceWithFormatFrom(void *, int, int, int, int, Uint32);
+void SDL_FreeSurface(SDL_Surface *);
+int SDL_SetSurfacePalette(SDL_Surface *, SDL_Palette *);
+int SDL_LockSurface(SDL_Surface *);
+void SDL_UnlockSurface(SDL_Surface *);
+void SDL_SetWindowIcon(SDL_Window *, SDL_Surface *);
+int SDL_SetWindowFullscreen(SDL_Window *, Uint32);
+char *SDL_GetBasePath(void);
+char *SDL_GetPrefPath(const char *, const char *);
 typedef enum {
   SDL_POWERSTATE_UNKNOWN = 0,
   SDL_POWERSTATE_ON_BATTERY = 1,
@@ -827,38 +827,38 @@ typedef enum {
   SDL_POWERSTATE_CHARGING = 3,
   SDL_POWERSTATE_CHARGED = 4,
 } SDL_PowerState;
-SDL_PowerState SDL_GetPowerInfo(int *, int *) __attribute__((visibility("default")));
-const char *SDL_GetPlatform(void) __attribute__((visibility("default")));
+SDL_PowerState SDL_GetPowerInfo(int *, int *);
+const char *SDL_GetPlatform(void);
 typedef enum {
   SDL_FALSE = 0,
   SDL_TRUE = 1,
 } SDL_bool;
-SDL_bool SDL_HasClipboardText(void) __attribute__((visibility("default")));
-char *SDL_GetClipboardText(void) __attribute__((visibility("default")));
-int SDL_SetClipboardText(const char *) __attribute__((visibility("default")));
-const char *SDL_GetError(void) __attribute__((visibility("default")));
-SDL_bool SDL_SetHint(const char *, const char *) __attribute__((visibility("default")));
-int SDL_NumJoysticks(void) __attribute__((visibility("default")));
-const char *SDL_JoystickNameForIndex(int) __attribute__((visibility("default")));
-SDL_Joystick *SDL_JoystickOpen(int) __attribute__((visibility("default")));
-const char *SDL_JoystickName(SDL_Joystick *) __attribute__((visibility("default")));
-SDL_JoystickGUID SDL_JoystickGetDeviceGUID(int) __attribute__((visibility("default")));
-SDL_JoystickGUID SDL_JoystickGetGUID(SDL_Joystick *) __attribute__((visibility("default")));
-void SDL_JoystickGetGUIDString(SDL_JoystickGUID, char *, int) __attribute__((visibility("default")));
-SDL_JoystickGUID SDL_JoystickGetGUIDFromString(const char *) __attribute__((visibility("default")));
-SDL_bool SDL_JoystickGetAttached(SDL_Joystick *) __attribute__((visibility("default")));
-SDL_JoystickID SDL_JoystickInstanceID(SDL_Joystick *) __attribute__((visibility("default")));
-int SDL_JoystickNumAxes(SDL_Joystick *) __attribute__((visibility("default")));
-int SDL_JoystickNumBalls(SDL_Joystick *) __attribute__((visibility("default")));
-int SDL_JoystickNumHats(SDL_Joystick *) __attribute__((visibility("default")));
-int SDL_JoystickNumButtons(SDL_Joystick *) __attribute__((visibility("default")));
-void SDL_JoystickUpdate(void) __attribute__((visibility("default")));
-int SDL_JoystickEventState(int) __attribute__((visibility("default")));
-Sint16 SDL_JoystickGetAxis(SDL_Joystick *, int) __attribute__((visibility("default")));
-Uint8 SDL_JoystickGetHat(SDL_Joystick *, int) __attribute__((visibility("default")));
-int SDL_JoystickGetBall(SDL_Joystick *, int, int *, int *) __attribute__((visibility("default")));
-Uint8 SDL_JoystickGetButton(SDL_Joystick *, int) __attribute__((visibility("default")));
-void SDL_JoystickClose(SDL_Joystick *) __attribute__((visibility("default")));
+SDL_bool SDL_HasClipboardText(void);
+char *SDL_GetClipboardText(void);
+int SDL_SetClipboardText(const char *);
+const char *SDL_GetError(void);
+SDL_bool SDL_SetHint(const char *, const char *);
+int SDL_NumJoysticks(void);
+const char *SDL_JoystickNameForIndex(int);
+SDL_Joystick *SDL_JoystickOpen(int);
+const char *SDL_JoystickName(SDL_Joystick *);
+SDL_JoystickGUID SDL_JoystickGetDeviceGUID(int);
+SDL_JoystickGUID SDL_JoystickGetGUID(SDL_Joystick *);
+void SDL_JoystickGetGUIDString(SDL_JoystickGUID, char *, int);
+SDL_JoystickGUID SDL_JoystickGetGUIDFromString(const char *);
+SDL_bool SDL_JoystickGetAttached(SDL_Joystick *);
+SDL_JoystickID SDL_JoystickInstanceID(SDL_Joystick *);
+int SDL_JoystickNumAxes(SDL_Joystick *);
+int SDL_JoystickNumBalls(SDL_Joystick *);
+int SDL_JoystickNumHats(SDL_Joystick *);
+int SDL_JoystickNumButtons(SDL_Joystick *);
+void SDL_JoystickUpdate(void);
+int SDL_JoystickEventState(int);
+Sint16 SDL_JoystickGetAxis(SDL_Joystick *, int);
+Uint8 SDL_JoystickGetHat(SDL_Joystick *, int);
+int SDL_JoystickGetBall(SDL_Joystick *, int, int *, int *);
+Uint8 SDL_JoystickGetButton(SDL_Joystick *, int);
+void SDL_JoystickClose(SDL_Joystick *);
 struct _SDL_GameController;
 typedef struct _SDL_GameController SDL_GameController;
 typedef enum {
@@ -879,18 +879,18 @@ struct SDL_GameControllerButtonBind {
   } value;
 };
 typedef struct SDL_GameControllerButtonBind SDL_GameControllerButtonBind;
-int SDL_GameControllerAddMapping(const char *) __attribute__((visibility("default")));
-char *SDL_GameControllerMappingForGUID(SDL_JoystickGUID) __attribute__((visibility("default")));
-char *SDL_GameControllerMapping(SDL_GameController *) __attribute__((visibility("default")));
-SDL_bool SDL_IsGameController(int) __attribute__((visibility("default")));
-const char *SDL_GameControllerNameForIndex(int) __attribute__((visibility("default")));
-SDL_GameController *SDL_GameControllerOpen(int) __attribute__((visibility("default")));
-const char *SDL_GameControllerName(SDL_GameController *) __attribute__((visibility("default")));
-SDL_bool SDL_GameControllerGetAttached(SDL_GameController *) __attribute__((visibility("default")));
-SDL_Joystick *SDL_GameControllerGetJoystick(SDL_GameController *) __attribute__((visibility("default")));
-int SDL_GameControllerEventState(int) __attribute__((visibility("default")));
-void SDL_GameControllerUpdate(void) __attribute__((visibility("default")));
-int SDL_GameControllerRumble(SDL_GameController *, Uint16, Uint16, Uint32) __attribute__((visibility("default")));
+int SDL_GameControllerAddMapping(const char *);
+char *SDL_GameControllerMappingForGUID(SDL_JoystickGUID);
+char *SDL_GameControllerMapping(SDL_GameController *);
+SDL_bool SDL_IsGameController(int);
+const char *SDL_GameControllerNameForIndex(int);
+SDL_GameController *SDL_GameControllerOpen(int);
+const char *SDL_GameControllerName(SDL_GameController *);
+SDL_bool SDL_GameControllerGetAttached(SDL_GameController *);
+SDL_Joystick *SDL_GameControllerGetJoystick(SDL_GameController *);
+int SDL_GameControllerEventState(int);
+void SDL_GameControllerUpdate(void);
+int SDL_GameControllerRumble(SDL_GameController *, Uint16, Uint16, Uint32);
 typedef enum {
   SDL_CONTROLLER_AXIS_INVALID = -1,
   SDL_CONTROLLER_AXIS_LEFTX = 0,
@@ -901,10 +901,10 @@ typedef enum {
   SDL_CONTROLLER_AXIS_TRIGGERRIGHT = 5,
   SDL_CONTROLLER_AXIS_MAX = 6,
 } SDL_GameControllerAxis;
-SDL_GameControllerAxis SDL_GameControllerGetAxisFromString(const char *) __attribute__((visibility("default")));
-const char *SDL_GameControllerGetStringForAxis(SDL_GameControllerAxis) __attribute__((visibility("default")));
-SDL_GameControllerButtonBind SDL_GameControllerGetBindForAxis(SDL_GameController *, SDL_GameControllerAxis) __attribute__((visibility("default")));
-Sint16 SDL_GameControllerGetAxis(SDL_GameController *, SDL_GameControllerAxis) __attribute__((visibility("default")));
+SDL_GameControllerAxis SDL_GameControllerGetAxisFromString(const char *);
+const char *SDL_GameControllerGetStringForAxis(SDL_GameControllerAxis);
+SDL_GameControllerButtonBind SDL_GameControllerGetBindForAxis(SDL_GameController *, SDL_GameControllerAxis);
+Sint16 SDL_GameControllerGetAxis(SDL_GameController *, SDL_GameControllerAxis);
 typedef enum {
   SDL_CONTROLLER_BUTTON_INVALID = -1,
   SDL_CONTROLLER_BUTTON_A = 0,
@@ -930,11 +930,11 @@ typedef enum {
   SDL_CONTROLLER_BUTTON_TOUCHPAD = 20,
   SDL_CONTROLLER_BUTTON_MAX = 21,
 } SDL_GameControllerButton;
-SDL_GameControllerButton SDL_GameControllerGetButtonFromString(const char *) __attribute__((visibility("default")));
-const char *SDL_GameControllerGetStringForButton(SDL_GameControllerButton) __attribute__((visibility("default")));
-SDL_GameControllerButtonBind SDL_GameControllerGetBindForButton(SDL_GameController *, SDL_GameControllerButton) __attribute__((visibility("default")));
-Uint8 SDL_GameControllerGetButton(SDL_GameController *, SDL_GameControllerButton) __attribute__((visibility("default")));
-void SDL_GameControllerClose(SDL_GameController *) __attribute__((visibility("default")));
+SDL_GameControllerButton SDL_GameControllerGetButtonFromString(const char *);
+const char *SDL_GameControllerGetStringForButton(SDL_GameControllerButton);
+SDL_GameControllerButtonBind SDL_GameControllerGetBindForButton(SDL_GameController *, SDL_GameControllerButton);
+Uint8 SDL_GameControllerGetButton(SDL_GameController *, SDL_GameControllerButton);
+void SDL_GameControllerClose(SDL_GameController *);
 static const int SDL_HAT_CENTERED = 0;
 static const int SDL_HAT_UP = 1;
 static const int SDL_HAT_RIGHT = 2;
@@ -944,10 +944,10 @@ static const int SDL_HAT_RIGHTUP = 3;
 static const int SDL_HAT_RIGHTDOWN = 6;
 static const int SDL_HAT_LEFTUP = 9;
 static const int SDL_HAT_LEFTDOWN = 12;
-int SDL_GetNumTouchDevices(void) __attribute__((visibility("default")));
-SDL_TouchID SDL_GetTouchDevice(int) __attribute__((visibility("default")));
-int SDL_GetNumTouchFingers(SDL_TouchID) __attribute__((visibility("default")));
-SDL_Finger *SDL_GetTouchFinger(SDL_TouchID, int) __attribute__((visibility("default")));
+int SDL_GetNumTouchDevices(void);
+SDL_TouchID SDL_GetTouchDevice(int);
+int SDL_GetNumTouchFingers(SDL_TouchID);
+SDL_Finger *SDL_GetTouchFinger(SDL_TouchID, int);
 static const int SDL_INIT_TIMER = 1;
 static const int SDL_INIT_AUDIO = 16;
 static const int SDL_INIT_VIDEO = 32;
@@ -980,6 +980,6 @@ struct SDL_version {
   Uint8 minor;
   Uint8 patch;
 };
-void SDL_GetVersion(struct SDL_version *) __attribute__((visibility("default")));
-void SDL_free(void *) __attribute__((visibility("default")));
+void SDL_GetVersion(struct SDL_version *);
+void SDL_free(void *);
 ]]
