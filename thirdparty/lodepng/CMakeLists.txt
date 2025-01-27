@@ -12,7 +12,7 @@ if(NOT MONOLIBTIC)
 endif()
 
 external_project(
-    DOWNLOAD GIT d398e0f10d152a5d17fa30463474dc9f56523f9c
+    DOWNLOAD GIT 0b1d9ccfc2093e5d6620cd9a11d03ee6ff6705f5
     https://github.com/lvandeve/lodepng.git
     PATCH_OVERLAY overlay
     CMAKE_ARGS ${CMAKE_ARGS}
