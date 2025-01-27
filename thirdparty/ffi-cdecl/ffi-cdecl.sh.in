@@ -113,6 +113,6 @@ if [[ ${dry_run} -ne 0 ]]; then
     exit
 fi
 
-exec "${cmd[@]}"
+"${cmd[@]}" | sed 's/ __attribute__((visibility("default")));$/;/'
 
 # vim: sw=4
