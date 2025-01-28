@@ -1,4 +1,4 @@
--- Automatically generated with: ./build/x86_64-pc-linux-gnu/staging/bin/ffi-cdecl -DLODEPNG_NO_COMPILE_ANCILLARY_CHUNKS ffi-cdecl/lodepng_decl.c
+-- Automatically generated with: ffi-cdecl -o ffi/lodepng_h.lua ffi-cdecl/lodepng_decl.c
 
 local ffi = require("ffi")
 

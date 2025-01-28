@@ -1,3 +1,5 @@
+-- Automatically generated with: ffi-cdecl -o ffi/linux_fb_h.lua ffi-cdecl/linux_fb_decl.c
+
 local ffi = require("ffi")
 
 ffi.cdef[[

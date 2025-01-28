@@ -1,3 +1,5 @@
+-- Automatically generated with: ffi-cdecl -o ffi/rtc_h.lua ffi-cdecl/rtc_cdecl.c
+
 local ffi = require("ffi")
 
 ffi.cdef[[

@@ -1,22 +1,25 @@
+-- Automatically generated with: ffi-cdecl -o ffi/linux_input_h.lua ffi-cdecl/linux_input_decl.c
+
 local ffi = require("ffi")
 
 ffi.cdef[[
 static const int EVIOCGRAB = 1074021776;
 static const int EVIOCGREP = 2148025603;
 static const int EVIOCSREP = 1074283779;
-static const int EV_SYN = 0;
-static const int EV_KEY = 1;
-static const int EV_REL = 2;
 static const int EV_ABS = 3;
-static const int EV_MSC = 4;
-static const int EV_SW = 5;
-static const int EV_LED = 17;
-static const int EV_SND = 18;
-static const int EV_REP = 20;
 static const int EV_FF = 21;
-static const int EV_PWR = 22;
 static const int EV_FF_STATUS = 23;
+static const int EV_KEY = 1;
+static const int EV_LED = 17;
 static const int EV_MAX = 31;
+static const int EV_MSC = 4;
+static const int EV_PWR = 22;
+static const int EV_REL = 2;
+static const int EV_REP = 20;
+static const int EV_SDL = 83;
+static const int EV_SND = 18;
+static const int EV_SW = 5;
+static const int EV_SYN = 0;
 static const int SYN_REPORT = 0;
 static const int SYN_CONFIG = 1;
 static const int SYN_MT_REPORT = 2;
@@ -53,10 +56,15 @@ static const int ABS_MT_TOOL_Y = 61;
 static const int SW_ROTATE_LOCK = 12;
 static const int SW_MACHINE_COVER = 16;
 static const int MSC_GESTURE = 2;
+static const int MSC_GYRO = 71;
 static const int MSC_RAW = 3;
 static const int REP_DELAY = 0;
 static const int REP_PERIOD = 1;
 static const int REP_CNT = 2;
+static const int DEVICE_ROTATED_UPRIGHT = 0;
+static const int DEVICE_ROTATED_CLOCKWISE = 1;
+static const int DEVICE_ROTATED_UPSIDE_DOWN = 2;
+static const int DEVICE_ROTATED_COUNTER_CLOCKWISE = 3;
 struct input_event {
   struct timeval time;
   short unsigned int type;
@@ -64,6 +72,3 @@ struct input_event {
   int value;
 };
 ]]
-
--- Include our custom stuff, too
-require("ffi/custom_input_h")

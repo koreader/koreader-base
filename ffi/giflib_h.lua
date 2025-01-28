@@ -1,3 +1,5 @@
+-- Automatically generated with: ffi-cdecl -o ffi/giflib_h.lua ffi-cdecl/giflib_decl.c
+
 local ffi = require("ffi")
 
 ffi.cdef[[

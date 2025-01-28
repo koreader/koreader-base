@@ -1,3 +1,5 @@
+-- Automatically generated with: ffi-cdecl -o ffi/turbojpeg_h.lua -d libturbojpeg ffi-cdecl/turbojpeg_decl.c
+
 local ffi = require("ffi")
 
 ffi.cdef[[
@@ -55,6 +57,8 @@ enum TJPARAM {
   TJPARAM_XDENSITY = 20,
   TJPARAM_YDENSITY = 21,
   TJPARAM_DENSITYUNITS = 22,
+  TJPARAM_MAXMEMORY = 23,
+  TJPARAM_MAXPIXELS = 24,
 };
 typedef void *tjhandle;
 tjhandle tj3Init(int);

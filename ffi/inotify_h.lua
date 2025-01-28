@@ -1,3 +1,5 @@
+-- Automatically generated with: ffi-cdecl -o ffi/inotify_h.lua ffi-cdecl/inotify_decl.c
+
 local ffi = require("ffi")
 
 ffi.cdef[[

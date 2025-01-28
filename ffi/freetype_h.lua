@@ -1,3 +1,5 @@
+-- Automatically generated with: ffi-cdecl -o ffi/freetype_h.lua -d freetype2 ffi-cdecl/freetype2_decl.c
+
 local ffi = require("ffi")
 
 ffi.cdef[[

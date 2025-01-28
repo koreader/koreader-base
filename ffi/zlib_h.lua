@@ -1,3 +1,5 @@
+-- Automatically generated with: ffi-cdecl -o ffi/zlib_h.lua -d zlib ffi-cdecl/zlib_decl.c
+
 local ffi = require("ffi")
 
 ffi.cdef[[

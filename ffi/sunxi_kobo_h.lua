@@ -1,3 +1,5 @@
+-- Automatically generated with: ffi-cdecl -o ffi/sunxi_kobo_h.lua ffi-cdecl/sunxi_kobo_decl.c
+
 local ffi = require("ffi")
 
 ffi.cdef[[

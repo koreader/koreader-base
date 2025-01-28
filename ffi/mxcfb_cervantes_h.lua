@@ -1,3 +1,5 @@
+-- Automatically generated with: ffi-cdecl -o ffi/mxcfb_cervantes_h.lua ffi-cdecl/mxcfb_cervantes_decl.c
+
 local ffi = require("ffi")
 
 ffi.cdef[[
