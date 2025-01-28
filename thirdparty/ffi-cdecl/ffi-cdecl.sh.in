@@ -34,7 +34,7 @@ pkg-config() {
 called_with="$(printf '%q ' 'ffi-cdecl' "$@")"
 compiler=''
 dry_run=0
-output='/proc/self/fd/1'
+output='-'
 
 cflags=(
     -fplugin="${PLUGIN}"
@@ -106,7 +106,7 @@ esac
 
 cmd+=("${cflags[@]}")
 
-cmd+=(-fplugin-arg-gcclua-output="${output}" -S -o /dev/null "$1")
+cmd+=(-fplugin-arg-gcclua-output=- -S -o /dev/null "$1")
 
 if [[ ${dry_run} -ne 0 ]]; then
     printf '%q ' "${cmd[@]}"
@@ -114,7 +114,14 @@ if [[ ${dry_run} -ne 0 ]]; then
     exit
 fi
 
+result="$("${cmd[@]}")"
+
+if [[ "${output}" != '-' ]]; then
+    exec >"${output}"
+fi
+
 printf -- '-- Automatically generated with: %s\n\n' "${called_with% }"
-"${cmd[@]}" | sed 's/ __attribute__((visibility("default")));$/;/'
+# shellcheck disable=SC2001
+sed 's/ __attribute__((visibility("default")));$/;/' <<<"${result}"
 
 # vim: sw=4
