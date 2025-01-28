@@ -7,3 +7,12 @@
  
  local gcc = require("gcc")
  local cdecl = require("gcc.cdecl")
+@@ -73,7 +73,7 @@
+     ::continue::
+   end
+ 
+-  local f = assert(io.open(arg.output, "w"))
++  local f = arg.output == '-' and io.stdout or assert(io.open(arg.output, "w"))
+   if arg.output:match(".*%.(.*)") == "py" then
+     f:write([=[
+ """
