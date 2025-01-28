@@ -154,3 +154,16 @@ function(target_exports TARGET)
         include(${FNAME})
     endif()
 endfunction()
+
+# Set ${VAR} to the path ${PATH} relative to ${BASE_DIR}
+# (or ${PATH} unchanged if ${PATH} if not under ${BASE_DIR}).
+function(get_relative_path PATH BASE_DIR VAR)
+    string(FIND "${PATH}" "${BASE_DIR}/" POS)
+    if(POS EQUAL "0")
+        string(LENGTH "${BASE_DIR}/" LEN)
+        string(SUBSTRING "${PATH}" ${LEN} -1 ${VAR})
+    else()
+        set(${VAR} "${PATH}")
+    endif()
+    set(${VAR} "${${VAR}}" PARENT_SCOPE)
+endfunction()
