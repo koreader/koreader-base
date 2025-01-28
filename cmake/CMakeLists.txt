@@ -472,4 +472,142 @@ foreach(PRJ IN LISTS PROJECTS)
 endforeach()
 add_custom_target(rm-install-stamps COMMAND rm -f ${INSTALL_STAMPS})
 
+# FFI cdecls generation. {{{
+
+add_custom_target(ffi)
+
+function(ffi_target NAME OUTPUT INPUT)
+    cmake_parse_arguments("" "EXCLUDE_FROM_ALL" "" "DEPENDS;ARGS" ${ARGN})
+    list(PREPEND _DEPENDS ffi-cdecl)
+    if(TARGET ${NAME})
+        list(PREPEND _DEPENDS ${NAME})
+    endif()
+    if(NOT INPUT MATCHES ".*/.*")
+        set(INPUT ffi-cdecl/${INPUT})
+    endif()
+    get_filename_component(INPUT_PATH ${INPUT} ABSOLUTE BASE_DIR ${BASE_DIR})
+    add_custom_target(
+        ${OUTPUT}
+        BYPRODUCTS ${BASE_DIR}/ffi/${OUTPUT}
+        DEPENDS ${_DEPENDS}
+        COMMAND ${STAGING_DIR}/bin/ffi-cdecl -o ffi/${OUTPUT} ${_ARGS} ${INPUT}
+        COMMENT "Generating 'ffi/${OUTPUT}'"
+        VERBATIM
+        WORKING_DIRECTORY ${BASE_DIR}
+    )
+    if(NOT TARGET ${NAME}-ffi)
+        add_custom_target(${NAME}-ffi)
+        if(NOT ${_EXCLUDE_FROM_ALL} AND NOT ${NAME}_EXCLUDE_FROM_ALL)
+            add_dependencies(ffi ${NAME}-ffi)
+        endif()
+    endif()
+    add_dependencies(${NAME}-ffi ${OUTPUT})
+endfunction()
+
+# cervantes
+if(CERVANTES)
+    set(EXCLUDE_FROM_ALL)
+else()
+    set(EXCLUDE_FROM_ALL EXCLUDE_FROM_ALL)
+endif()
+ffi_target(cervantes mxcfb_cervantes_h.lua mxcfb_cervantes_decl.c ${EXCLUDE_FROM_ALL})
+
+# czmq
+ffi_target(czmq zeromq_h.lua zeromq_cdecl.c ARGS -d libczmq)
+
+# fbdepth / fbink / libfbink_input
+get_relative_path(${libfbink_input_SOURCE_DIR} ${BASE_DIR} FBINK_INPUT_SRC)
+ffi_target(libfbink_input fbink_input_h.lua ${FBINK_INPUT_SRC}/ffi/fbink_input_decl.c ARGS -I ${FBINK_INPUT_SRC})
+
+# freetype
+ffi_target(freetype2 freetype_h.lua freetype2_decl.c ARGS -d freetype2)
+
+# giflib
+ffi_target(giflib giflib_h.lua giflib_decl.c)
+
+# harfbuzz
+ffi_target(harfbuzz harfbuzz_h.lua harfbuzz_cdecl.c ARGS -d harfbuzz)
+
+# kindle
+if(KINDLE)
+    set(EXCLUDE_FROM_ALL)
+else()
+    set(EXCLUDE_FROM_ALL EXCLUDE_FROM_ALL)
+endif()
+ffi_target(kindle mxcfb_kindle_h.lua mxcfb_kindle_decl.c ${EXCLUDE_FROM_ALL})
+
+# kobo
+if(KINDLE)
+    set(EXCLUDE_FROM_ALL)
+else()
+    set(EXCLUDE_FROM_ALL EXCLUDE_FROM_ALL)
+endif()
+foreach(TGT ion mxcfb sunxi)
+    ffi_target(kobo ${TGT}_kobo_h.lua ${TGT}_kobo_decl.c ${EXCLUDE_FROM_ALL})
+endforeach()
+
+# leptonica
+ffi_target(leptonica leptonica_h.lua leptonica_cdecl.c ARGS -d lept)
+
+# libjpeg-turbo
+ffi_target(libjpeg-turbo turbojpeg_h.lua turbojpeg_decl.c ARGS -d libturbojpeg)
+
+# libk2pdfopt
+get_relative_path(${STAGING_DIR}/include/k2pdfopt ${BASE_DIR} K2PDFOPT_INC)
+ffi_target(libk2pdfopt koptcontext_h.lua koptcontext_cdecl.c ARGS -d lept -I ${K2PDFOPT_INC})
+
+# libressl
+ffi_target(libressl crypto_h.lua crypto_decl.c ARGS -d libcrypto)
+
+# libwebp
+ffi_target(libwebp libwebp_h.lua libwebp_decl.c ARGS -d libwebp)
+
+# linux
+if(LINUX AND EMULATE_READER)
+    set(EXCLUDE_FROM_ALL)
+else()
+    set(EXCLUDE_FROM_ALL EXCLUDE_FROM_ALL)
+endif()
+ffi_target(linux einkfb_h.lua einkfb_decl.c ${EXCLUDE_FROM_ALL})
+ffi_target(linux inotify_h.lua inotify_decl.c ${EXCLUDE_FROM_ALL})
+ffi_target(linux linux_fb_h.lua linux_fb_decl.c ${EXCLUDE_FROM_ALL})
+ffi_target(linux linux_input_h.lua linux_input_decl.c ${EXCLUDE_FROM_ALL})
+ffi_target(linux rtc_h.lua rtc_cdecl.c ${EXCLUDE_FROM_ALL})
+
+# lodepng
+ffi_target(lodepng lodepng_h.lua lodepng_decl.c)
+
+# mupdf
+ffi_target(mupdf mupdf_h.lua wrap-mupdf_cdecl.c ARGS -I .)
+
+# pocketbook
+if(POCKETBOOK)
+    set(EXCLUDE_FROM_ALL)
+else()
+    set(EXCLUDE_FROM_ALL EXCLUDE_FROM_ALL)
+endif()
+ffi_target(pocketbook mxcfb_pocketbook_h.lua mxcfb_pb_decl.c ${EXCLUDE_FROM_ALL})
+
+# remarkable
+if(REMARKABLE)
+    set(EXCLUDE_FROM_ALL)
+else()
+    set(EXCLUDE_FROM_ALL EXCLUDE_FROM_ALL)
+endif()
+ffi_target(remarkable mxcfb_remarkable_h.lua mxcfb_remarkable_decl.c ${EXCLUDE_FROM_ALL})
+
+# sdl2
+ffi_target(sdl2 SDL2_0_h.lua SDL2_0_decl.c ARGS -d sdl2)
+
+# utf8proc
+ffi_target(utf8proc utf8proc_h.lua utf8proc_decl.c ARGS -d libutf8proc)
+
+# zlib
+ffi_target(zlib zlib_h.lua zlib_decl.c ARGS -d zlib)
+
+# zstd
+ffi_target(zstd zstd_h.lua zstd_decl.c ARGS -d libzstd)
+
+# }}}
+
 # vim: foldmethod=marker foldlevel=0
