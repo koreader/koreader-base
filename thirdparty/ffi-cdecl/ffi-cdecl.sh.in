@@ -10,7 +10,7 @@ SCRIPT=@SCRIPT@
 
 usage() {
     cat 1>&2 <<-EOF
-usage: $0 [-c compiler] [-d dependency] [-o output.lua] [-n] [-D…|-I…|-U…]* input.c
+usage: ffi-cdecl [-c compiler] [-d dependency] [-o output.lua] [-n] [-D…|-I…|-U…]* input.c
 
     -c compiler    Select compiler: c or c++ (otherwise determined by the input extension)
     -d dependency  Add additional cflags from specified pkg-config dependency
@@ -31,7 +31,7 @@ pkg-config() {
         pkg-config --env-only --cflags "$@"
 }
 
-called_with="$(printf '%q ' "$0" "$@")"
+called_with="$(printf '%q ' 'ffi-cdecl' "$@")"
 compiler=''
 dry_run=0
 output='/proc/self/fd/1'
