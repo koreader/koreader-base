@@ -1,3 +1,5 @@
+-- Automatically generated with: ffi-cdecl -o ffi/libwebp_h.lua -d libwebp ffi-cdecl/libwebp_decl.c
+
 local ffi = require("ffi")
 
 ffi.cdef[[

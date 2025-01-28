@@ -1,3 +1,4 @@
+#define LODEPNG_NO_COMPILE_ANCILLARY_CHUNKS
 #include <lodepng.h>
 
 #include "ffi-cdecl.h"

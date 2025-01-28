@@ -1,4 +1,5 @@
--- cdecl available at https://github.com/NiLuJe/FBInk/blob/master/ffi/fbink_input_decl.c
+-- Automatically generated with: ffi-cdecl -o ffi/fbink_input_h.lua -I build/arm-kindlepw2-linux-gnueabi/thirdparty/libfbink_input/source build/arm-kindlepw2-linux-gnueabi/thirdparty/libfbink_input/source/ffi/fbink_input_decl.c
+
 local ffi = require("ffi")
 
 ffi.cdef[[
@@ -22,6 +23,7 @@ typedef enum {
   INPUT_DPAD = 4194304,
   INPUT_ROTATION_EVENT = 8388608,
   INPUT_SCALED_TABLET = 16777216,
+  INPUT_VOLUME_BUTTONS = 33554432,
 } __attribute__((packed)) INPUT_DEVICE_TYPE_E;
 typedef uint32_t INPUT_DEVICE_TYPE_T;
 typedef enum {

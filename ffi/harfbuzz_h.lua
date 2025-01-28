@@ -1,3 +1,5 @@
+-- Automatically generated with: ffi-cdecl -o ffi/harfbuzz_h.lua -d harfbuzz ffi-cdecl/harfbuzz_cdecl.c
+
 local ffi = require("ffi")
 
 ffi.cdef[[

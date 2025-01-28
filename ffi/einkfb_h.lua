@@ -1,3 +1,5 @@
+-- Automatically generated with: ffi-cdecl -o ffi/einkfb_h.lua ffi-cdecl/einkfb_decl.c
+
 local ffi = require("ffi")
 
 ffi.cdef[[
@@ -21,7 +23,7 @@ struct update_area_t {
   int x2;
   int y2;
   enum fx_type which_fx;
-  unsigned char *buffer;
+  uint8_t *buffer;
 };
 enum orientation_t {
   orientation_portrait = 0,

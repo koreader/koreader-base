@@ -1,3 +1,5 @@
+-- Automatically generated with: ffi-cdecl -o ffi/mupdf_h.lua -I . ffi-cdecl/wrap-mupdf_cdecl.c
+
 local ffi = require("ffi")
 
 ffi.cdef[[

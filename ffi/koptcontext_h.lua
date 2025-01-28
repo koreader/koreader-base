@@ -1,3 +1,5 @@
+-- Automatically generated with: ffi-cdecl -o ffi/koptcontext_h.lua -d lept -I build/x86_64-pc-linux-gnu/staging/include/k2pdfopt ffi-cdecl/koptcontext_cdecl.c
+
 local ffi = require("ffi")
 
 ffi.cdef[[

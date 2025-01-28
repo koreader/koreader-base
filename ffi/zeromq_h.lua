@@ -1,3 +1,5 @@
+-- Automatically generated with: ffi-cdecl -o ffi/zeromq_h.lua -d libczmq ffi-cdecl/zeromq_cdecl.c
+
 local ffi = require("ffi")
 
 ffi.cdef[[

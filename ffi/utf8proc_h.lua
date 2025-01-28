@@ -1,3 +1,5 @@
+-- Automatically generated with: ffi-cdecl -o ffi/utf8proc_h.lua -d libutf8proc ffi-cdecl/utf8proc_decl.c
+
 local ffi = require("ffi")
 
 ffi.cdef[[

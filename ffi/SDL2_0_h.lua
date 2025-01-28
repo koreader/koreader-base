@@ -1,3 +1,5 @@
+-- Automatically generated with: ffi-cdecl -o ffi/SDL2_0_h.lua -d sdl2 ffi-cdecl/SDL2_0_decl.c
+
 local ffi = require("ffi")
 
 ffi.cdef[[
@@ -309,6 +311,8 @@ typedef enum {
   SDL_CONTROLLERTOUCHPADMOTION = 1623,
   SDL_CONTROLLERTOUCHPADUP = 1624,
   SDL_CONTROLLERSENSORUPDATE = 1625,
+  SDL_CONTROLLERUPDATECOMPLETE_RESERVED_FOR_SDL3 = 1626,
+  SDL_CONTROLLERSTEAMHANDLEUPDATED = 1627,
   SDL_FINGERDOWN = 1792,
   SDL_FINGERUP = 1793,
   SDL_FINGERMOTION = 1794,
@@ -806,8 +810,8 @@ SDL_Texture *SDL_CreateTexture(SDL_Renderer *, Uint32, int, int, int);
 int SDL_UpdateTexture(SDL_Texture *, const SDL_Rect *, const void *, int);
 void SDL_DestroyTexture(SDL_Texture *);
 void SDL_SetWindowTitle(SDL_Window *, const char *);
-void SDL_GetWindowPosition(SDL_Window * window, int *x, int *y);
-void SDL_SetWindowPosition(SDL_Window * window, int x, int y);
+void SDL_GetWindowPosition(SDL_Window *, int *, int *);
+void SDL_SetWindowPosition(SDL_Window *, int, int);
 typedef int (*SDL_blit)(struct SDL_Surface *, SDL_Rect *, struct SDL_Surface *, SDL_Rect *);
 SDL_Surface *SDL_CreateRGBSurface(Uint32, int, int, int, Uint32, Uint32, Uint32, Uint32);
 SDL_Surface *SDL_CreateRGBSurfaceFrom(void *, int, int, int, int, Uint32, Uint32, Uint32, Uint32);

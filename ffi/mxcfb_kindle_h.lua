@@ -1,3 +1,5 @@
+-- Automatically generated with: ffi-cdecl -o ffi/mxcfb_kindle_h.lua ffi-cdecl/mxcfb_kindle_decl.c
+
 local ffi = require("ffi")
 
 ffi.cdef[[
