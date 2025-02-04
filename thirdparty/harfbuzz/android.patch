@@ -13,3 +13,19 @@ index fe466fe1..d728bb99 100644
  #ifndef HB_NO_SETLOCALE
  
  #include <locale.h>
+--- a/src/hb-buffer-verify.cc
++++ b/src/hb-buffer-verify.cc
+@@ -46,11 +46,13 @@
+ {
+   va_list ap;
+   va_start (ap, fmt);
++#ifndef HB_NO_BUFFER_MESSAGE
+   if (buffer->messaging ())
+   {
+     buffer->message_impl (font, fmt, ap);
+   }
+   else
++#endif
+   {
+     fprintf (stderr, "harfbuzz ");
+     vfprintf (stderr, fmt, ap);
