@@ -17,7 +17,7 @@ set(CHECKS
 )
 while(CHECKS)
     list(POP_FRONT CHECKS HEADER DEFINE)
-    CHECK_INCLUDE_FILE(${HEADER} ${DEFINE})
+    check_include_file(${HEADER} ${DEFINE})
     if(${DEFINE})
         list(APPEND DEFINITIONS ${DEFINE})
     endif()
