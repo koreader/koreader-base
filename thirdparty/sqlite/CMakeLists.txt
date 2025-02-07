@@ -1,43 +1,21 @@
-string(APPEND CPPFLAGS " -DNDEBUG -DSQLITE_DEFAULT_MEMSTATUS=0 -DSQLITE_DEFAULT_WAL_SYNCHRONOUS=1 -DSQLITE_LIKE_DOESNT_MATCH_BLOBS -DSQLITE_MAX_EXPR_DEPTH=0 -DSQLITE_OMIT_DECLTYPE -DSQLITE_OMIT_DEPRECATED -DSQLITE_OMIT_PROGRESS_CALLBACK -DSQLITE_OMIT_SHARED_CACHE -DSQLITE_USE_ALLOCA")
-
-list(APPEND CFG_CMD env)
-append_autotools_vars(CFG_CMD)
-list(APPEND CFG_CMD
-    # Explicitly disable zlib, because it's only optionally used by the shell & extensions, and we disable both of those.
-    # This should hopefully prevent Android from picking it up...
-    ac_cv_header_zlib_h=no
-    ${SOURCE_DIR}/configure --host=${CHOST} --prefix=/
-    --disable-$<IF:$<BOOL:${MONOLIBTIC}>,shared,static>
-    --disable-dynamic-extensions
-    --disable-editline
-    --disable-readline
-    --disable-static-shell
-    --enable-$<IF:$<BOOL:${MONOLIBTIC}>,static,shared>
-    --enable-silent-rules
-    --enable-threadsafe
+list(APPEND CMAKE_ARGS
+    -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE}
+    -DBUILD_SHARED_LIBS=$<NOT:$<BOOL:${MONOLIBTIC}>>
 )
 
-list(APPEND BUILD_CMD COMMAND make libsqlite3.la)
+list(APPEND BUILD_CMD COMMAND ninja)
 
-list(APPEND INSTALL_CMD COMMAND make
-    DESTDIR=${STAGING_DIR}
-    install-includeHEADERS
-    install-libLTLIBRARIES
-    install-pkgconfigDATA
-)
+list(APPEND INSTALL_CMD COMMAND ${CMAKE_COMMAND} --install .)
 
 if(NOT MONOLIBTIC)
-    set(LIB_SPEC sqlite3 VERSION 0)
-    if(APPLE)
-        append_shared_lib_fix_commands(INSTALL_CMD ${LIB_SPEC} ID)
-    endif()
-    append_shared_lib_install_commands(INSTALL_CMD ${LIB_SPEC})
+    append_shared_lib_install_commands(INSTALL_CMD sqlite3 VERSION 0)
 endif()
 
 external_project(
-    DOWNLOAD URL 6bf0697af5b609e186cc223eca9c2cb1
-    https://sqlite.org/2024/sqlite-autoconf-3470200.tar.gz
-    CONFIGURE_COMMAND ${CFG_CMD}
+    DOWNLOAD URL f4a55c46043c8a9aecf0b07aa4a42f13
+    https://sqlite.org/2024/sqlite-amalgamation-3470200.zip
+    PATCH_OVERLAY overlay
+    CMAKE_ARGS ${CMAKE_ARGS}
     BUILD_COMMAND ${BUILD_CMD}
     INSTALL_COMMAND ${INSTALL_CMD}
 )
