@@ -1,8 +1,6 @@
-diff --git a/src/video/cocoa/SDL_cocoaevents.m b/src/video/cocoa/SDL_cocoaevents.m
-index 4903a8a04..28c4ea325 100644
 --- a/src/video/cocoa/SDL_cocoaevents.m
 +++ b/src/video/cocoa/SDL_cocoaevents.m
-@@ -54,6 +54,18 @@ static SDL_Window *FindSDLWindowForNSWindow(NSWindow *win)
+@@ -55,6 +55,18 @@
      return sdlwindow;
  }
  
@@ -21,7 +19,7 @@ index 4903a8a04..28c4ea325 100644
  @interface SDLApplication : NSApplication
  
  - (void)terminate:(id)sender;
-@@ -65,6 +77,23 @@ static SDL_Window *FindSDLWindowForNSWindow(NSWindow *win)
+@@ -66,6 +78,23 @@
  
  @implementation SDLApplication
  
@@ -45,7 +43,7 @@ index 4903a8a04..28c4ea325 100644
  // Override terminate to handle Quit and System Shutdown smoothly.
  - (void)terminate:(id)sender
  {
-@@ -281,20 +310,7 @@ static void Cocoa_DispatchEvent(NSEvent *theEvent)
+@@ -284,20 +313,7 @@
  
  - (void)applicationDidFinishLaunching:(NSNotification *)notification
  {
@@ -67,7 +65,7 @@ index 4903a8a04..28c4ea325 100644
  
      /* If we call this before NSApp activation, macOS might print a complaint
       * about ApplePersistenceIgnoreState. */
-@@ -471,12 +487,6 @@ Cocoa_RegisterApp(void)
+@@ -490,12 +506,6 @@
              }
          }
          [NSApp finishLaunching];
