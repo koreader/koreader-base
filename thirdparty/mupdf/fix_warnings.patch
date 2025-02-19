@@ -1,0 +1,41 @@
+diff --git a/source/fitz/draw-edgebuffer.c b/source/fitz/draw-edgebuffer.c
+index 1824171c..514affd0 100644
+--- a/source/fitz/draw-edgebuffer.c
++++ b/source/fitz/draw-edgebuffer.c
+@@ -884,6 +884,8 @@ cursor_flush(fz_edgebuffer * FZ_RESTRICT eb)
+ 	}
+ 	else
+ 	{
++		iy2 = 0;
++
+ 		/* Try to merge the end of cursor 0 with the start of cursor 0 */
+ 		if (cr0->saved)
+ 		{
+diff --git a/source/fitz/draw-path.c b/source/fitz/draw-path.c
+index 10e02b4b..f24d3e7d 100644
+--- a/source/fitz/draw-path.c
++++ b/source/fitz/draw-path.c
+@@ -1122,7 +1122,7 @@ fz_dash_lineto(fz_context *ctx, struct sctx *s, float bx, float by, int from_bez
+ 	float total, used, ratio, tail;
+ 	float ax, ay;
+ 	float mx, my;
+-	float old_bx, old_by;
++	float old_bx = 0, old_by = 0;
+ 	int n;
+ 	int dash_cap = s->stroke->dash_cap;
+ 
+diff --git a/source/pdf/pdf-appearance.c b/source/pdf/pdf-appearance.c
+index 122323c2..e6e0d74e 100644
+--- a/source/pdf/pdf-appearance.c
++++ b/source/pdf/pdf-appearance.c
+@@ -917,7 +917,7 @@ pdf_write_polygon_appearance(fz_context *ctx, pdf_annot *annot, fz_buffer *buf,
+ 	struct cloud_list cloud_list;
+ 	float cloud = 0;
+ 	pdf_obj *verts, *le;
+-	fz_point p, first, last;
++	fz_point p, first = {0,0}, last = {0,0};
+ 	int i, n;
+ 	float lw;
+ 	int sc, ic;
+Submodule thirdparty/gumbo-parser 289f3de6..b8b6181f:
+  > Silence clang warnings about casting void* to small integer type.
