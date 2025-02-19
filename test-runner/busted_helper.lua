@@ -1,3 +1,6 @@
+-- Create `$KO_HOME` directory.
+local lfs = require("lfs")
+lfs.mkdir(os.getenv("KO_HOME"))
 -- Preload necessary busted modules and their dependencies (which
 -- are normally dynamically loaded during the testsuite execution).
 require("pl.dir")
