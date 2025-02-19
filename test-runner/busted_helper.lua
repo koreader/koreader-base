@@ -1,6 +1,7 @@
 -- Preload necessary busted modules and their dependencies (which
 -- are normally dynamically loaded during the testsuite execution).
 require("pl.dir")
+require("pl.List")
 require("busted.execute")
 require("busted.modules.files.lua")
 require("busted.modules.test_file_loader")
