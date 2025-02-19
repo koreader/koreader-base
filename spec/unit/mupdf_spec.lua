@@ -121,33 +121,33 @@ describe("mupdf module", function()
             assert.is_not_nil(page)
             page:addMarkupAnnotation(annotation_quadpoints, 1, ffi.C.PDF_ANNOT_HIGHLIGHT)
             page:close()
-            local tmp_pdf = os.tmpname()
-            doc:writeDocument(tmp_pdf)
+            local out_pdf = os.getenv("KO_HOME") .. "/simple-out.pdf"
+            doc:writeDocument(out_pdf)
             doc:close()
             assert.is_equal(
-                md5.sumFile(tmp_pdf),
+                md5.sumFile(out_pdf),
                 md5.sumFile(simple_pdf_compare)
             )
-            os.remove(tmp_pdf)
+            os.remove(out_pdf)
         end)
         it("should open a page, add an annotation, delete it again, and write a new document", function()
             local doc = M.openDocument(simple_pdf)
             assert.is_not_nil(doc)
             local page = doc:openPage(1)
             assert.is_not_nil(page)
-            local tmp_pdf = os.tmpname()
-            doc:writeDocument(tmp_pdf)
+            local out_pdf = os.getenv("KO_HOME") .. "/simple-out-annotation-deleted.pdf"
+            doc:writeDocument(out_pdf)
             page:addMarkupAnnotation(annotation_quadpoints, 1, ffi.C.PDF_ANNOT_HIGHLIGHT)
             local annot = page:getMarkupAnnotation(annotation_quadpoints, 1)
             page:deleteMarkupAnnotation(annot)
             page:close()
-            doc:writeDocument(tmp_pdf)
+            doc:writeDocument(out_pdf)
             doc:close()
             assert.is_equal(
-                md5.sumFile(tmp_pdf),
+                md5.sumFile(out_pdf),
                 md5.sumFile(simple_pdf_annotation_deleted_compare)
             )
-            os.remove(tmp_pdf)
+            os.remove(out_pdf)
         end)
         it("should open a page, add contents to an existing annotation and write a new document", function()
             local doc = M.openDocument(simple_pdf_compare)
@@ -157,14 +157,14 @@ describe("mupdf module", function()
             local annot = page:getMarkupAnnotation(annotation_quadpoints, 1)
             page:updateMarkupAnnotation(annot, "annotation contents")
             page:close()
-            local tmp_pdf = os.tmpname()
-            doc:writeDocument(tmp_pdf)
+            local out_pdf = os.getenv("KO_HOME") .. "/simple-out-annotated.pdf"
+            doc:writeDocument(out_pdf)
             doc:close()
             assert.is_equal(
-                md5.sumFile(tmp_pdf),
+                md5.sumFile(out_pdf),
                 md5.sumFile(simple_pdf_annotated_compare)
             )
-            os.remove(tmp_pdf)
+            os.remove(out_pdf)
         end)
 
         describe("PDF page API", function()
