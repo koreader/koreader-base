@@ -80,8 +80,10 @@ runtests_meson() {
 }
 
 runtests_busted() {
+    local rundir="${kodir}/spec/run"
     local cmd=(
         env -C "${kodir}"
+        KO_HOME="${rundir}"
         # Don't fail the testsuite on ASAN detected leaks.
         LSAN_OPTIONS="exitcode=0${LSAN_OPTIONS:+ }${LSAN_OPTIONS}"
     )
@@ -110,7 +112,7 @@ runtests_busted() {
         -- "$@"
     )
     # Do it.
-    run find -L "${kodir}"/spec/*/unit -name '*.sdr' -exec rm -rf '{}' +
+    run rm -rf "${rundir}"
     run "${cmd[@]}"
 }
 
