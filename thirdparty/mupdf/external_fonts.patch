@@ -19,10 +19,10 @@ index d18e557d..e806b39a 100644
  # --- Generated ICC profiles ---
  
 diff --git a/include/mupdf/fitz/font.h b/include/mupdf/fitz/font.h
-index 7b3d1ccb..6d6b96cc 100644
+index 0892735d..f496ed16 100644
 --- a/include/mupdf/fitz/font.h
 +++ b/include/mupdf/fitz/font.h
-@@ -825,4 +825,9 @@ fz_buffer *fz_subset_ttf_for_gids(fz_context *ctx, fz_buffer *orig, int *gids, i
+@@ -832,4 +832,9 @@ fz_buffer *fz_subset_ttf_for_gids(fz_context *ctx, fz_buffer *orig, int *gids, i
   */
  fz_buffer *fz_subset_cff_for_gids(fz_context *ctx, fz_buffer *orig, int *gids, int num_gids, int symbolic, int cidfont);
  
@@ -115,7 +115,7 @@ index b9de4396..edb316b2 100644
  	{
  		gid = fz_encode_character(ctx, font, unicode);
 diff --git a/source/fitz/noto.c b/source/fitz/noto.c
-index 5c1aebf3..1ce86b54 100644
+index eda1b23a..59af5306 100644
 --- a/source/fitz/noto.c
 +++ b/source/fitz/noto.c
 @@ -23,8 +23,12 @@
@@ -131,9 +131,9 @@ index 5c1aebf3..1ce86b54 100644
  /*
  	Base 14 PDF fonts from URW.
  	Noto fonts from Google.
-@@ -354,3 +358,131 @@ fz_lookup_noto_boxes_font(fz_context *ctx, int *size)
- {
- 	return search_by_family(size, "Nimbus Boxes", REGULAR);
+@@ -540,3 +544,131 @@ fz_lookup_noto_stem_from_script(fz_context *ctx, int script, int language)
+ 	}
+ 	return NULL;
  }
 +
 +#else // NOBUILTINFONT
@@ -381,7 +381,7 @@ index d05d6019..39e98209 100644
  
  static pdf_obj*
 diff --git a/source/pdf/pdf-font.c b/source/pdf/pdf-font.c
-index 7406487a..c2f4d808 100644
+index 66a6d417..6a28bde4 100644
 --- a/source/pdf/pdf-font.c
 +++ b/source/pdf/pdf-font.c
 @@ -93,6 +93,8 @@ static const char *base_font_names[][10] =

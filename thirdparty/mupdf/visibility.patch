@@ -41,7 +41,7 @@ index 0a7e985c..0dcf81e7 100644
  
  struct fz_colorspace
 diff --git a/include/mupdf/fitz/context.h b/include/mupdf/fitz/context.h
-index 304ccbc1..5466777b 100644
+index b98df08b..43909cd9 100644
 --- a/include/mupdf/fitz/context.h
 +++ b/include/mupdf/fitz/context.h
 @@ -32,6 +32,8 @@
@@ -53,7 +53,7 @@ index 304ccbc1..5466777b 100644
  typedef struct fz_font_context fz_font_context;
  typedef struct fz_colorspace_context fz_colorspace_context;
  typedef struct fz_style_context fz_style_context;
-@@ -774,6 +776,8 @@ int fz_do_try(fz_context *ctx);
+@@ -780,6 +782,8 @@ int fz_do_try(fz_context *ctx);
  int fz_do_always(fz_context *ctx);
  int (fz_do_catch)(fz_context *ctx);
  
@@ -62,7 +62,7 @@ index 304ccbc1..5466777b 100644
  #ifndef FZ_JMPBUF_ALIGN
  #define FZ_JMPBUF_ALIGN 32
  #endif
-@@ -846,6 +850,7 @@ struct fz_context
+@@ -852,6 +856,7 @@ struct fz_context
  	fz_glyph_cache *glyph_cache;
  };
  
@@ -131,7 +131,7 @@ index 853e2d5a..a36eb3f2 100644
 +
  #endif
 diff --git a/include/mupdf/fitz/font.h b/include/mupdf/fitz/font.h
-index 6d6b96cc..b631f688 100644
+index f496ed16..a7705025 100644
 --- a/include/mupdf/fitz/font.h
 +++ b/include/mupdf/fitz/font.h
 @@ -29,6 +29,8 @@
@@ -143,7 +143,7 @@ index 6d6b96cc..b631f688 100644
  /* forward declaration for circular dependency */
  struct fz_device;
  
-@@ -698,6 +700,8 @@ float fz_font_descender(fz_context *ctx, fz_font *font);
+@@ -705,6 +707,8 @@ float fz_font_descender(fz_context *ctx, fz_font *font);
  */
  void fz_font_digest(fz_context *ctx, fz_font *font, unsigned char digest[16]);
  
@@ -152,7 +152,7 @@ index 6d6b96cc..b631f688 100644
  /* Implementation details: subject to change. */
  
  void fz_decouple_type3_font(fz_context *ctx, fz_font *font, void *t3doc);
-@@ -828,6 +832,7 @@ fz_buffer *fz_subset_cff_for_gids(fz_context *ctx, fz_buffer *orig, int *gids, i
+@@ -835,6 +839,7 @@ fz_buffer *fz_subset_cff_for_gids(fz_context *ctx, fz_buffer *orig, int *gids, i
  char *get_font_file(const char *name);
  char *fz_lookup_base14_font_from_file(fz_context *ctx, const char *name);
  char *fz_lookup_cjk_font_from_file(fz_context *ctx, int registry, int serif, int wmode);
@@ -161,7 +161,7 @@ index 6d6b96cc..b631f688 100644
  
  #endif
 diff --git a/include/mupdf/fitz/geometry.h b/include/mupdf/fitz/geometry.h
-index f309d398..a025ea40 100644
+index 5aefb4a0..c17580a6 100644
 --- a/include/mupdf/fitz/geometry.h
 +++ b/include/mupdf/fitz/geometry.h
 @@ -32,6 +32,8 @@
@@ -173,7 +173,7 @@ index f309d398..a025ea40 100644
  /**
  	Multiply scaled two integers in the 0..255 range
  */
-@@ -838,4 +840,6 @@ int fz_is_quad_inside_quad(fz_quad needle, fz_quad haystack);
+@@ -846,4 +848,6 @@ int fz_is_quad_inside_quad(fz_quad needle, fz_quad haystack);
  */
  int fz_is_quad_intersecting_quad(fz_quad a, fz_quad b);
  
