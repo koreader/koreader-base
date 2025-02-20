@@ -1,0 +1,38 @@
+--- a/lib/dictBuilder/cover.c
++++ b/lib/dictBuilder/cover.c
+@@ -241,7 +241,7 @@
+   unsigned d;
+ } COVER_ctx_t;
+ 
+-#if !defined(_GNU_SOURCE) && !defined(__APPLE__) && !defined(_MSC_VER)
++#if 1
+ /* C90 only offers qsort() that needs a global context. */
+ static COVER_ctx_t *g_coverCtx = NULL;
+ #endif
+@@ -290,7 +290,7 @@
+  */
+ #if (defined(_WIN32) && defined(_MSC_VER)) || defined(__APPLE__)
+ static int WIN_CDECL COVER_strict_cmp(void* g_coverCtx, const void* lp, const void* rp) {
+-#elif defined(_GNU_SOURCE)
++#elif 0
+ static int COVER_strict_cmp(const void *lp, const void *rp, void *g_coverCtx) {
+ #else /* C90 fallback.*/
+ static int COVER_strict_cmp(const void *lp, const void *rp) {
+@@ -306,7 +306,7 @@
+  */
+ #if (defined(_WIN32) && defined(_MSC_VER)) || defined(__APPLE__)
+ static int WIN_CDECL COVER_strict_cmp8(void* g_coverCtx, const void* lp, const void* rp) {
+-#elif defined(_GNU_SOURCE)
++#elif 0
+ static int COVER_strict_cmp8(const void *lp, const void *rp, void *g_coverCtx) {
+ #else /* C90 fallback.*/
+ static int COVER_strict_cmp8(const void *lp, const void *rp) {
+@@ -328,7 +328,7 @@
+     qsort_r(ctx->suffix, ctx->suffixSize, sizeof(U32),
+             ctx,
+             (ctx->d <= 8 ? &COVER_strict_cmp8 : &COVER_strict_cmp));
+-#elif defined(_GNU_SOURCE)
++#elif 0
+     qsort_r(ctx->suffix, ctx->suffixSize, sizeof(U32),
+             (ctx->d <= 8 ? &COVER_strict_cmp8 : &COVER_strict_cmp),
+             ctx);

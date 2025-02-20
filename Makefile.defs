@@ -960,6 +960,7 @@ set(MONOLIBTIC         $(MONOLIBTIC))
 set(USE_LJ_WPACLIENT   $(USE_LJ_WPACLIENT))
 set(USE_SDL            $(SDL))
 set(WANT_SIMD          $(WANT_SIMD))
+set(GLIBC_VERSION_MAX  $(GLIBC_VERSION_MAX))
 
 # Platform flags.
 set(ANDROID        $(ANDROID))
