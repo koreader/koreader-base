@@ -46,13 +46,16 @@ struct utf8proc_property_struct {
   utf8proc_uint16_t uppercase_seqindex;
   utf8proc_uint16_t lowercase_seqindex;
   utf8proc_uint16_t titlecase_seqindex;
-  utf8proc_uint16_t comb_index;
+  utf8proc_uint16_t comb_index : 10;
+  utf8proc_uint16_t comb_length : 5;
+  utf8proc_uint16_t comb_issecond : 1;
   unsigned int bidi_mirrored : 1;
   unsigned int comp_exclusion : 1;
   unsigned int ignorable : 1;
   unsigned int control_boundary : 1;
   unsigned int charwidth : 2;
-  unsigned int pad : 2;
+  unsigned int ambiguous_width : 1;
+  unsigned int pad : 1;
   unsigned int boundclass : 6;
   unsigned int indic_conjunct_break : 2;
 };
