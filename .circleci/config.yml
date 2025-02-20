@@ -155,7 +155,7 @@ jobs:
       - restore_cache:
           name: Restore build directory
           keys:
-            - &CACHE_KEY_BUILD_DIR '<< pipeline.parameters.cache_epoch >>-{{ .Environment.CIRCLE_JOB }}-build-{{ arch }}-{{ checksum "cache-key" }}'
+            - &CACHE_KEY_BUILD_DIR '<< pipeline.parameters.cache_epoch >>-2-{{ .Environment.CIRCLE_JOB }}-build-{{ arch }}-{{ checksum "cache-key" }}'
       - restore_cache:
           name: Restore build cache
           keys:
