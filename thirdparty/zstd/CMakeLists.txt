@@ -17,8 +17,8 @@ if(NOT MONOLIBTIC)
 endif()
 
 external_project(
-    DOWNLOAD URL 5a473726b3445d0e5d6296afd1ab6854
-    https://github.com/facebook/zstd/releases/download/v1.5.6/zstd-1.5.6.tar.gz
+    DOWNLOAD URL 780fc1896922b1bc52a4e90980cdda48
+    https://github.com/facebook/zstd/releases/download/v1.5.7/zstd-1.5.7.tar.gz
     SOURCE_SUBDIR build/cmake
     CMAKE_ARGS ${CMAKE_ARGS}
     BUILD_COMMAND ${BUILD_CMD}
