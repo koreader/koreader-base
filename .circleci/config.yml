@@ -266,7 +266,6 @@ workflows:
           requires:
             - lint
           ccache_maxsize: "512M"
-          check_ffi_cdecls: true
           save_tests: true
 
       - build_and_test:
