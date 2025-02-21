@@ -12,10 +12,18 @@ list(APPEND BUILD_CMD COMMAND make)
 list(APPEND INSTALL_CMD COMMAND make install)
 
 # Try to use our compilation flags.
+set(LD ${CC})
 set(LIBFLAGS ${DYNLIB_LDFLAGS})
-foreach(VAR CC CFLAGS LIBFLAGS)
+foreach(VAR CC CFLAGS LD LIBFLAGS)
     list(APPEND INSTALL_CMD COMMAND ${STAGING_DIR}/bin/luarocks config -- ${VAR} "${${VAR}}")
 endforeach()
+# Luarocks needs to be told where librt is when building
+# luasystem with clang in our Ubuntu based docker image.
+if(EMULATE_READER AND NOT APPLE)
+    execute_process(COMMAND ${CMAKE_C_COMPILER} -print-file-name=librt.so OUTPUT_VARIABLE RT_LIB OUTPUT_STRIP_TRAILING_WHITESPACE)
+    get_filename_component(RT_LIBDIR ${RT_LIB} DIRECTORY)
+    list(APPEND INSTALL_CMD COMMAND ${STAGING_DIR}/bin/luarocks config -- RT_LIBDIR "${RT_LIBDIR}")
+endif()
 
 external_project(
     DOWNLOAD URL ab95865ced3c123908bd2f1fe6843606
