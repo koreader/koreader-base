@@ -1,3 +1,7 @@
+if(GLIBC_VERSION_MAX VERSION_LESS "2.8")
+    list(APPEND PATCH_FILES no_qsort_r.patch)
+endif()
+
 list(APPEND CMAKE_ARGS
     -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE}
     # Project options.
@@ -17,8 +21,9 @@ if(NOT MONOLIBTIC)
 endif()
 
 external_project(
-    DOWNLOAD URL 5a473726b3445d0e5d6296afd1ab6854
-    https://github.com/facebook/zstd/releases/download/v1.5.6/zstd-1.5.6.tar.gz
+    DOWNLOAD URL 780fc1896922b1bc52a4e90980cdda48
+    https://github.com/facebook/zstd/releases/download/v1.5.7/zstd-1.5.7.tar.gz
+    PATCH_FILES ${PATCH_FILES}
     SOURCE_SUBDIR build/cmake
     CMAKE_ARGS ${CMAKE_ARGS}
     BUILD_COMMAND ${BUILD_CMD}
