@@ -1,4 +1,4 @@
--- Automatically generated with: ffi-cdecl -o ffi/freetype_h.lua -d freetype2 ffi-cdecl/freetype2_decl.c
+-- Automatically generated with ffi-cdecl.
 
 local ffi = require("ffi")
 

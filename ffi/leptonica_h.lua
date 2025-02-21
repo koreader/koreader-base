@@ -1,4 +1,4 @@
--- Automatically generated with: ffi-cdecl -o ffi/leptonica_h.lua -d lept ffi-cdecl/leptonica_cdecl.c
+-- Automatically generated with ffi-cdecl.
 
 local ffi = require("ffi")
 

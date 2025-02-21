@@ -1,4 +1,4 @@
--- Automatically generated with: ffi-cdecl -o ffi/fbink_input_h.lua -I build/arm-kindlepw2-linux-gnueabi/thirdparty/libfbink_input/source build/arm-kindlepw2-linux-gnueabi/thirdparty/libfbink_input/source/ffi/fbink_input_decl.c
+-- Automatically generated with ffi-cdecl.
 
 local ffi = require("ffi")
 

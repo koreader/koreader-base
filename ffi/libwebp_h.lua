@@ -1,4 +1,4 @@
--- Automatically generated with: ffi-cdecl -o ffi/libwebp_h.lua -d libwebp ffi-cdecl/libwebp_decl.c
+-- Automatically generated with ffi-cdecl.
 
 local ffi = require("ffi")
 
