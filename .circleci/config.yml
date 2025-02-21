@@ -35,7 +35,7 @@ executors:
 
   emu_clang_ninja:
     docker:
-      - image: koreader/kobase-clang:0.3.5-20.04
+      - image: koreader/kobase-clang:0.3.4-20.04
     environment:
       <<: *EMU_ENV_LST
       USE_CLANG: "1"
