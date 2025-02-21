@@ -319,7 +319,6 @@ workflows:
           executor: kindle-legacy
           requires:
             - emu_gcc_ninja_debug
-          check_ffi_cdecls: true
 
       - build_and_test:
           name: kobo
