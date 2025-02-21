@@ -340,7 +340,6 @@ workflows:
           executor: sony-prstux
           requires:
             - emu_gcc_ninja_debug
-          check_ffi_cdecls: true
 
       # }}}
 
