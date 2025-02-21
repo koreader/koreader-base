@@ -62,8 +62,8 @@ if(NOT MONOLIBTIC)
 endif()
 
 external_project(
-    DOWNLOAD URL f68c05409f18b4a044d71628548aacd9
-    https://github.com/harfbuzz/harfbuzz/releases/download/10.2.0/harfbuzz-10.2.0.tar.xz
+    DOWNLOAD URL 5c020fc8e60d8a64d149fcd71ff46cc5
+    https://github.com/harfbuzz/harfbuzz/releases/download/10.3.0/harfbuzz-10.3.0.tar.xz
     PATCH_FILES ${PATCH_FILES}
     PATCH_COMMAND ${PATCH_CMD}
     CONFIGURE_COMMAND ${CFG_CMD}
