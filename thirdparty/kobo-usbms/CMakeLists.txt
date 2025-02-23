@@ -3,6 +3,8 @@ set(BINARY_DIR ${SOURCE_DIR})
 
 list(APPEND BUILD_CMD COMMAND make CROSS_TC=${CHOST})
 append_autotools_vars(BUILD_CMD)
+# Make sure the binaries in the `KoboUSBMS.tar.gz` archive are stripped.
+list(APPEND BUILD_CMD "STRIP=${STRIP} --strip-unneeded")
 list(APPEND BUILD_CMD kobo)
 
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
