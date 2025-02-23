@@ -1,4 +1,4 @@
--- Automatically generated with: ffi-cdecl -o ffi/linux_input_h.lua ffi-cdecl/linux_input_decl.c
+-- Automatically generated with ffi-cdecl.
 
 local ffi = require("ffi")
 

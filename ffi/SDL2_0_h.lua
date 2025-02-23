@@ -1,4 +1,4 @@
--- Automatically generated with: ffi-cdecl -o ffi/SDL2_0_h.lua -d sdl2 ffi-cdecl/SDL2_0_decl.c
+-- Automatically generated with ffi-cdecl.
 
 local ffi = require("ffi")
 

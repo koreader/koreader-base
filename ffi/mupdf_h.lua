@@ -1,4 +1,4 @@
--- Automatically generated with: ffi-cdecl -o ffi/mupdf_h.lua -I . ffi-cdecl/wrap-mupdf_cdecl.c
+-- Automatically generated with ffi-cdecl.
 
 local ffi = require("ffi")
 
