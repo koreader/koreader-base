@@ -56,7 +56,7 @@ else()
 endif()
 
 external_project(
-    DOWNLOAD GIT 4404f2e6ae8bfa37c4ab603db0abbe5cd203ce97
+    DOWNLOAD GIT ab4501820bde0fafc1b2c6d74b9c576a49d2eadd
     https://github.com/NiLuJe/FBInk.git
     BUILD_COMMAND ${BUILD_CMD}
     INSTALL_COMMAND ${INSTALL_CMD}
