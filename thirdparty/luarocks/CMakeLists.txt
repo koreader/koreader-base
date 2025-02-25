@@ -20,9 +20,13 @@ endforeach()
 # Luarocks needs to be told where librt is when building
 # luasystem with clang in our Ubuntu based docker image.
 if(EMULATE_READER AND NOT APPLE)
-    execute_process(COMMAND ${CMAKE_C_COMPILER} -print-file-name=librt.so OUTPUT_VARIABLE RT_LIB OUTPUT_STRIP_TRAILING_WHITESPACE)
-    get_filename_component(RT_LIBDIR ${RT_LIB} DIRECTORY)
-    list(APPEND INSTALL_CMD COMMAND ${STAGING_DIR}/bin/luarocks config -- RT_LIBDIR "${RT_LIBDIR}")
+    execute_process(COMMAND ${CMAKE_C_COMPILER} -print-file-name=librt.so.1 OUTPUT_VARIABLE RT_LIB OUTPUT_STRIP_TRAILING_WHITESPACE)
+    # NOTE: `librt.so.1` may not exists (e.g. when using Alpine Linux),
+    # in which case the compiler will just output `librt.so.1` back.
+    if(NOT RT_LIB STREQUAL "librt.so.1")
+        get_filename_component(RT_LIBDIR ${RT_LIB} DIRECTORY)
+        list(APPEND INSTALL_CMD COMMAND ${STAGING_DIR}/bin/luarocks config -- RT_LIBDIR "${RT_LIBDIR}")
+    endif()
 endif()
 
 external_project(
