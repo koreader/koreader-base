@@ -11,7 +11,6 @@ make bincheck || exit_code=1
 
 if [ "${EMULATE_READER}" = "1" ]; then
     echo -e "\n${ANSI_GREEN}Testsuite${ANSI_RESET}"
-    # cp build/luajit "${HOME}/.luarocks/bin/"
     (
         # install test data
         travis_retry make test-data
