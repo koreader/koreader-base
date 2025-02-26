@@ -1,4 +1,4 @@
--- Automatically generated with: ffi-cdecl -o ffi/harfbuzz_h.lua -d harfbuzz ffi-cdecl/harfbuzz_cdecl.c
+-- Automatically generated with ffi-cdecl.
 
 local ffi = require("ffi")
 

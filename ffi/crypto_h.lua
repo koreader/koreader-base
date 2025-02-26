@@ -1,4 +1,4 @@
--- Automatically generated with: ffi-cdecl -o ffi/crypto_h.lua -d libcrypto ffi-cdecl/crypto_decl.c
+-- Automatically generated with ffi-cdecl.
 
 local ffi = require("ffi")
 
