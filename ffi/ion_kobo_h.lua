@@ -1,4 +1,4 @@
--- Automatically generated with: ffi-cdecl -o ffi/ion_kobo_h.lua ffi-cdecl/ion_kobo_decl.c
+-- Automatically generated with ffi-cdecl.
 
 local ffi = require("ffi")
 

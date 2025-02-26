@@ -1,4 +1,4 @@
--- Automatically generated with: ffi-cdecl -o ffi/mxcfb_cervantes_h.lua ffi-cdecl/mxcfb_cervantes_decl.c
+-- Automatically generated with ffi-cdecl.
 
 local ffi = require("ffi")
 

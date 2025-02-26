@@ -1,4 +1,4 @@
--- Automatically generated with: ffi-cdecl -o ffi/linux_fb_h.lua ffi-cdecl/linux_fb_decl.c
+-- Automatically generated with ffi-cdecl.
 
 local ffi = require("ffi")
 

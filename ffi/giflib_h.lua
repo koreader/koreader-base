@@ -1,4 +1,4 @@
--- Automatically generated with: ffi-cdecl -o ffi/giflib_h.lua ffi-cdecl/giflib_decl.c
+-- Automatically generated with ffi-cdecl.
 
 local ffi = require("ffi")
 
