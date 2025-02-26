@@ -128,6 +128,9 @@ jobs:
       ccache_maxsize:
         type: string
         default: "128M"
+      check_ffi_cdecls:
+        type: boolean
+        default: false
       save_tests:
         type: boolean
         default: false
@@ -179,14 +182,12 @@ jobs:
           name: Dump binaries runtime path & dependencies
           command: make bininfo
       # }}}
-      # Clean / save caches. {{{
+      # Clean & save build cache. {{{
       - run:
-          name: Clean caches
+          name: Clean build cache
           when: always
           command: |
             set -x
-            # Trim the build directory.
-            rm -rf build/{cmake,staging,thirdparty}
             ccache --cleanup >/dev/null
             ccache --show-stats --verbose
       - save_cache:
@@ -194,6 +195,20 @@ jobs:
           key: *CACHE_KEY_BUILD_CACHE
           paths:
             - /home/ko/.cache/ccache
+      # }}}
+      # Check FFI cdecls are up-to-date. {{{
+      - when:
+          condition: << parameters.check_ffi_cdecls >>
+          steps:
+            - run:
+                name: Check FFI cdecls are up-to-date
+                command: "! test -d build/cmake || { make ffi && git --no-pager diff --exit-code ffi; }"
+      # }}}
+      # Trim & save build directory. {{{
+      - run:
+          name: Trim build directory
+          when: always
+          command: rm -rf build/{cmake,staging,thirdparty}
       - save_cache:
           name: Save build directory
           key: *CACHE_KEY_BUILD_DIR
@@ -249,6 +264,7 @@ workflows:
           requires:
             - lint
           ccache_maxsize: "512M"
+          check_ffi_cdecls: true
           save_tests: true
 
       - build_and_test:
@@ -282,18 +298,21 @@ workflows:
           executor: cervantes
           requires:
             - emu_gcc_ninja_debug
+          check_ffi_cdecls: true
 
       - build_and_test:
           name: kindle
           executor: kindle
           requires:
             - emu_gcc_ninja_debug
+          check_ffi_cdecls: true
 
       - build_and_test:
           name: kindlehf
           executor: kindlehf
           requires:
             - emu_gcc_ninja_debug
+          check_ffi_cdecls: true
 
       - build_and_test:
           name: kindle-legacy
@@ -306,18 +325,21 @@ workflows:
           executor: kobo
           requires:
             - emu_gcc_ninja_debug
+          check_ffi_cdecls: true
 
       - build_and_test:
           name: pocketbook
           executor: pocketbook
           requires:
             - emu_gcc_ninja_debug
+          check_ffi_cdecls: true
 
       - build_and_test:
           name: sony-prstux
           executor: sony-prstux
           requires:
             - emu_gcc_ninja_debug
+          check_ffi_cdecls: true
 
       # }}}
 
