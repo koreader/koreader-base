@@ -1,4 +1,4 @@
--- Automatically generated with: ffi-cdecl -o ffi/rtc_h.lua ffi-cdecl/rtc_cdecl.c
+-- Automatically generated with ffi-cdecl.
 
 local ffi = require("ffi")
 

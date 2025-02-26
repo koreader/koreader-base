@@ -1,4 +1,4 @@
--- Automatically generated with: ffi-cdecl -o ffi/einkfb_h.lua ffi-cdecl/einkfb_decl.c
+-- Automatically generated with ffi-cdecl.
 
 local ffi = require("ffi")
 

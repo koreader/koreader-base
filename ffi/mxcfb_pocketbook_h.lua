@@ -1,4 +1,4 @@
--- Automatically generated with: ffi-cdecl -o ffi/mxcfb_pocketbook_h.lua ffi-cdecl/mxcfb_pb_decl.c
+-- Automatically generated with ffi-cdecl.
 
 local ffi = require("ffi")
 

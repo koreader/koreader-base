@@ -1,4 +1,4 @@
--- Automatically generated with: ffi-cdecl -o ffi/zlib_h.lua -d zlib ffi-cdecl/zlib_decl.c
+-- Automatically generated with ffi-cdecl.
 
 local ffi = require("ffi")
 

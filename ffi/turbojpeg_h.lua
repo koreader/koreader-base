@@ -1,4 +1,4 @@
--- Automatically generated with: ffi-cdecl -o ffi/turbojpeg_h.lua -d libturbojpeg ffi-cdecl/turbojpeg_decl.c
+-- Automatically generated with ffi-cdecl.
 
 local ffi = require("ffi")
 

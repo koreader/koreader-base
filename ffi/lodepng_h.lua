@@ -1,4 +1,4 @@
--- Automatically generated with: ffi-cdecl -o ffi/lodepng_h.lua ffi-cdecl/lodepng_decl.c
+-- Automatically generated with ffi-cdecl.
 
 local ffi = require("ffi")
 

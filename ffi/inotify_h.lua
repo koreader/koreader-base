@@ -1,4 +1,4 @@
--- Automatically generated with: ffi-cdecl -o ffi/inotify_h.lua ffi-cdecl/inotify_decl.c
+-- Automatically generated with ffi-cdecl.
 
 local ffi = require("ffi")
 
