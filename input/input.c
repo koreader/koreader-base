@@ -35,6 +35,17 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 
+#include <sys/epoll.h>
+#define MAX_EPOLL_EVENTS 64
+
+#define WITH_RTC_INT
+#if defined(WITH_RTC_INT)
+    #ifndef EPOLLWAKEUP
+        #define EPOLLWAKEUP (1u << 29)
+    #endif
+#endif
+
+
 #define CODE_FAKE_IN_SAVER            10000
 #define CODE_FAKE_OUT_SAVER           10001
 #define CODE_FAKE_EXIT_SAVER          10002  // For Kindle's exitingScreenSaver
@@ -53,6 +64,8 @@
 #    define ARRAY_SIZE(x) (sizeof(x) / sizeof(*(x)))
 #endif
 
+#define RTC_PATH             "/dev/rtc0"
+//#define RTC_PATH             "/sys/class/rtc/rtc0/wakealarm"
 int    nfds                  = 0;  // for select()
 int    inputfds[]            = { -1, -1, -1, -1, -1, -1, -1, -1 };
 size_t fd_idx                = 0U;  // index of the *next* fd in inputfds (also, *current* amount of open fds)
@@ -421,7 +434,302 @@ static inline size_t drain_input_queue(lua_State* L, struct input_event* input_q
     return j;
 }
 
-static int waitForInput(lua_State* L)
+void close_epoll_fd(int epoll_fd, int rtcfd)
+{
+    if (close(epoll_fd)) {
+        fprintf(stderr, "ERROR: Failed to close epoll file descriptor\n");
+    }
+    if (rtcfd >= 0) {
+        if (close(rtcfd)) {
+            fprintf(stderr, "ERROR: Failed to close rtc file descriptor %d\n", rtcfd);
+        }
+    }
+}
+
+static int setupAutosleep(int powersave_ms)
+{
+    FILE *fptr;
+//    printf("xxx set up wakelock for %d000000 ns\n", powersave_ms);
+    fptr = fopen("/sys/power/wake_lock", "w");
+    if (!fptr) {
+        perror("open /sys/power/wake_lock");
+        return 1;
+    }
+    int len = fprintf(fptr, "koreader %d000000", powersave_ms); // append 000000 to convert ms to ns
+    if (len <= 0) {
+        perror("error writing wake_lock");
+        return 2;
+    }
+    fclose(fptr);
+
+//    printf("set up autosleep\n");
+    fptr = fopen("/sys/power/autosleep", "w");
+    if (!fptr) {
+        perror("open /sys/power/autosleep");
+        return 3;
+    }
+    len = fprintf(fptr, "standby");
+    if (len <= 0) {
+        perror("error writing standby");
+        return 4;
+    }
+    fclose(fptr);
+    return 0;
+}
+
+static int endAutosleep()
+{
+    FILE *fptr;
+    fptr = fopen("/sys/power/wake_lock", "w");
+    if (!fptr) {
+        perror("open /sys/power/wake_lock");
+        return 1;
+    }
+    int len = fprintf(fptr, "koreader");
+    if (len <= 0) {
+        perror("error writing /sys/power/wake_lock");
+        return 2;
+    }
+    fclose(fptr);
+
+    fptr = fopen("/sys/power/autosleep", "w");
+    if (!fptr) {
+        perror("open /sys/power/autosleep");
+        return 3;
+    }
+    len = fprintf(fptr, "off");
+    if (len <= 0) {
+        perror("error writing standby");
+        return 4;
+    }
+    fclose(fptr);
+    return 0;
+}
+
+static int waitForInputWithEpoll(lua_State* L)
+{
+    lua_Integer sec  = luaL_optinteger(L, 1, -1);  // Fallback to -1 to handle detecting a nil
+    lua_Integer usec = luaL_optinteger(L, 2, 0);
+    lua_Integer powersave_ms = luaL_optinteger(L, 3, 0); // default to no powersave
+    lua_settop(L, 0);  // Pop the function arguments
+
+    int timeout_ms = -1; // block indefinitely
+    // If sec was nil, leave the timeout as NULL (i.e., block).
+    if ( sec == 0 && usec == 0 ) {
+        timeout_ms = 0;
+    } else if (sec != -1) { // not nil in LUA-land
+        timeout_ms = sec * 1000 + (usec/1000 + 1);
+    }
+
+    if (timeout_ms < 0 || timeout_ms < powersave_ms) {
+        powersave_ms = 0;
+    }
+
+    if (powersave_ms > 0 || timeout_ms < 0) { // either we have a valid powersave_ms or no timeout
+        setupAutosleep(powersave_ms);
+    }
+
+    int rtcfd = -1; // for RTC_PATH
+
+    int num;
+    struct epoll_event event;
+    struct epoll_event events[MAX_EPOLL_EVENTS];
+
+    int epoll_fd = epoll_create1(0);
+    if (epoll_fd == -1) {
+        luaL_error(L, "Failed to create epoll file descriptor");
+        return 1;
+    }
+
+    if (powersave_ms > 0 || timeout_ms < 0) { // either we have a valid powersave_ms or no timeout
+        // see https://www.kernel.org/doc/Documentation/rtc.txt
+        rtcfd = open(RTC_PATH, O_RDONLY | O_NONBLOCK);
+        if (rtcfd < 0) {
+            return luaL_error(L, "Cannot open rtc %s", RTC_PATH);
+        }
+        unsigned long dummy = 0;
+        read(rtcfd, &dummy, sizeof(dummy)); // clear anything in there
+
+        // First add rtc interrupt to check if we come from standby
+        if (rtcfd > 0) {
+            event.events = EPOLLIN;
+            event.data.fd = rtcfd;
+
+            if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, rtcfd, &event)) {
+                luaL_error(L, "Failed to add file descriptor to epoll: %d(RTC)\n", rtcfd);
+            }
+        }
+    }
+
+    for (size_t i = 0U; i < fd_idx && inputfds[i] >= 0; i++) {
+        event.events = EPOLLIN;
+        event.data.fd = inputfds[i];
+
+        if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, inputfds[i], &event)) {
+            close(epoll_fd);
+            luaL_error(L, "Failed to add file descriptor to epoll: %d(%d)\n", inputfds[i], i);
+        }
+    }
+
+#if defined(WITH_TIMERFD)
+    for (timerfd_node_t* restrict node = timerfds.head; node != NULL; node = node->next) {
+        event.events = EPOLLIN;
+        event.data.fd = node->fd;
+
+        if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, node->fd, &event)) {
+            close(epoll_fd);
+            luaL_error(L, "Failed to add file descriptor to epoll: %d(timer)\n", node->fd);
+            return 1;
+        }
+    }
+#endif
+
+    num = epoll_wait(epoll_fd, events, MAX_EPOLL_EVENTS, timeout_ms);
+
+    if (powersave_ms > 0 || timeout_ms < 0) { // either proper powersave value or no timeout
+        endAutosleep();
+    }
+
+    if (num == 0) {
+        lua_pushboolean(L, false);
+        lua_pushinteger(L, ETIME);
+        close_epoll_fd(epoll_fd, rtcfd);
+        return 2;  // false, ETIME
+    } else if (num < 0) {
+        // NOTE: The retry on EINTR is handled on the Lua side here.
+        lua_pushboolean(L, false);
+        lua_pushinteger(L, errno);
+        close_epoll_fd(epoll_fd, rtcfd);
+        return 2;  // false, errno
+    }
+
+    for (int n = 0; n < num; ++n) { // filedescriptor is in events[n].diata.fd
+        if ((powersave_ms > 0 || timeout_ms < 0) && events[n].data.fd == rtcfd) {
+            // clear pending rtc interrupt
+            unsigned long dummy = 0;
+            read(rtcfd, &dummy, sizeof(dummy));
+            lua_pushboolean(L, false);
+            lua_pushinteger(L, ETIME);
+            close_epoll_fd(epoll_fd, rtcfd);
+            return 2;  // false, ETIME, node
+        }
+
+        // skip any timers here, as we will do that at the end
+        {
+            bool skip_that_n = false;
+            for (timerfd_node_t* restrict node = timerfds.head; node != NULL; node = node->next) {
+                if (node->fd == events[n].data.fd) {
+                    skip_that_n = true; // yes, we want to skip timers by now.
+                    break;
+                }
+            }
+            if (skip_that_n) {
+                continue;
+            }
+        }
+
+        lua_pushboolean(L, true);
+
+        size_t j        = 0U;  // Index of ev_array's tail
+        size_t ev_count = 0U;  // Amount of buffered events
+        // NOTE: This should be more than enough ;).
+        //       FWIW, this matches libevdev's default on most of our target devices,
+        //       because they generally don't support querying the exact slot count via ABS_MT_SLOT.
+        //       c.f., https://gitlab.freedesktop.org/libevdev/libevdev/-/blob/8d70f449892c6f7659e07bb0f06b8347677bb7d8/libevdev/libevdev.c#L66-101
+        struct input_event  input_queue[256U];  // 4K on 32-bit, 6K on 64-bit
+        struct input_event* queue_pos            = input_queue;
+        size_t              queue_available_size = sizeof(input_queue);
+        for (;;) {
+            ssize_t len = read(events[n].data.fd, queue_pos, queue_available_size);
+
+            if (len < 0) { // error
+                if (errno == EINTR) {
+                    continue;
+                } else if (errno == EAGAIN) {
+                    // Kernel queue drained :)
+                    break;
+                } else if (errno == ENODEV) {
+                    // Device was removed
+                    ioctl(events[n].data.fd, EVIOCGRAB, 0);
+                    lua_settop(L, 0);  // Kick our bogus bool (and potentially the ev_array table) from the stack
+                    lua_pushboolean(L, false);
+                    lua_pushinteger(L, ENODEV);
+                    close_epoll_fd(epoll_fd, rtcfd);
+                    return 2;  // false, ENODEV
+                } else {
+                    lua_settop(L, 0);  // Kick our bogus bool (and potentially the ev_array table) from the stack
+                    lua_pushboolean(L, false);
+                    lua_pushinteger(L, errno);
+                    close_epoll_fd(epoll_fd, rtcfd);
+                    return 2;  // false, errno
+                }
+            } else if (len == 0) {
+                // Should never happen
+                lua_settop(L, 0);
+                lua_pushboolean(L, false);
+                lua_pushinteger(L, EPIPE);
+                close_epoll_fd(epoll_fd, rtcfd);
+                return 2;  // false, EPIPE
+            } else if (len > 0 && len % sizeof(*input_queue) != 0) {
+                // Truncated read?! (not a multiple of struct input_event)
+                lua_settop(L, 0);
+                lua_pushboolean(L, false);
+                lua_pushinteger(L, EINVAL);
+                close_epoll_fd(epoll_fd, rtcfd);
+                return 2;  // false, EINVAL
+            }
+
+            // Okay, the read was sane, len > 0 and full input_event struct have been read,
+            // compute the amount of events we've just read
+            size_t nb_events = len / sizeof(*input_queue);
+
+            ev_count += nb_events;
+
+            if ((size_t) len == queue_available_size) {
+                // If we're out of buffer space in the queue, drain it *now*
+                j = drain_input_queue(L, input_queue, ev_count, j);
+                // Rewind to the start of the queue to recycle the buffer
+                queue_pos            = input_queue;
+                queue_available_size = sizeof(input_queue);
+                ev_count             = 0U;
+            } else {
+                // Otherwise, update our position in the queue buffer
+                queue_pos += nb_events;
+                queue_available_size = queue_available_size - (size_t) len;
+            }
+        }
+        // We've drained the kernel's input queue, now drain our buffer
+        j = drain_input_queue(L, input_queue, ev_count, j);
+        close_epoll_fd(epoll_fd, rtcfd);
+        return 2;  // true, ev_array
+    }
+
+#if defined(WITH_TIMERFD)
+    // We check timers *last*, so that early timer invalidation has a chance to kick in when we're lagging behind input events,
+    // as we will necessarily be at least 650ms late after a flashing refresh, for instance.
+    for (int n = 0; n < num; ++n) { // filedescriptor is in events[n].data.fd; a negative fd
+        for (timerfd_node_t* restrict node = timerfds.head; node != NULL; node = node->next) {
+            if (node->fd == events[n].data.fd) {
+                // It's a single-shot timer, don't even need to read it ;p.
+                // well that's not right for epoll and EPOLLWAKEUP
+                int dummy[8];
+                read(events[n].data.fd, &dummy, 8);
+                lua_pushboolean(L, false);
+                lua_pushinteger(L, ETIME);
+                lua_pushlightuserdata(L, (void*) node);
+                close_epoll_fd(epoll_fd, rtcfd);
+                return 3;  // false, ETIME, node
+            }
+        }
+    }
+#endif
+
+    // unreachable code :)
+    close_epoll_fd(epoll_fd, rtcfd);
+    return 0;
+}
+
+static int waitForInputWithSelect(lua_State* L)
 {
     lua_Integer sec  = luaL_optinteger(L, 1, -1);  // Fallback to -1 to handle detecting a nil
     lua_Integer usec = luaL_optinteger(L, 2, 0);
@@ -554,7 +862,8 @@ static const struct luaL_Reg input_func[] = {
                                                 { "fdopen", openInputFD },
                                                 { "close", closeByFd },
                                                 { "closeAll", closeAllInputDevices },
-                                                { "waitForEvent", waitForInput },
+                                                { "waitForEventWithSelect", waitForInputWithSelect },
+                                                { "waitForEventWithEpoll", waitForInputWithEpoll },
                                                 { "fakeTapInput", fakeTapInput },
 #if defined(WITH_TIMERFD)
                                                 { "setTimer", setTimer },
