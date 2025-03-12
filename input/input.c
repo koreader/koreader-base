@@ -65,7 +65,6 @@
 #endif
 
 #define RTC_PATH             "/dev/rtc0"
-//#define RTC_PATH             "/sys/class/rtc/rtc0/wakealarm"
 int    nfds                  = 0;  // for select()
 int    inputfds[]            = { -1, -1, -1, -1, -1, -1, -1, -1 };
 size_t fd_idx                = 0U;  // index of the *next* fd in inputfds (also, *current* amount of open fds)
@@ -449,7 +448,7 @@ void close_epoll_fd(int epoll_fd, int rtcfd)
 static int setupAutosleep(int powersave_ms)
 {
     FILE *fptr;
-//    printf("xxx set up wakelock for %d000000 ns\n", powersave_ms);
+
     fptr = fopen("/sys/power/wake_lock", "w");
     if (!fptr) {
         perror("open /sys/power/wake_lock");
@@ -462,7 +461,6 @@ static int setupAutosleep(int powersave_ms)
     }
     fclose(fptr);
 
-//    printf("set up autosleep\n");
     fptr = fopen("/sys/power/autosleep", "w");
     if (!fptr) {
         perror("open /sys/power/autosleep");
@@ -480,17 +478,7 @@ static int setupAutosleep(int powersave_ms)
 static int endAutosleep()
 {
     FILE *fptr;
-    fptr = fopen("/sys/power/wake_lock", "w");
-    if (!fptr) {
-        perror("open /sys/power/wake_lock");
-        return 1;
-    }
-    int len = fprintf(fptr, "koreader");
-    if (len <= 0) {
-        perror("error writing /sys/power/wake_lock");
-        return 2;
-    }
-    fclose(fptr);
+    int len;
 
     fptr = fopen("/sys/power/autosleep", "w");
     if (!fptr) {
@@ -499,10 +487,23 @@ static int endAutosleep()
     }
     len = fprintf(fptr, "off");
     if (len <= 0) {
-        perror("error writing standby");
+        perror("error writing autosleep");
         return 4;
     }
     fclose(fptr);
+
+    fptr = fopen("/sys/power/wake_lock", "w");
+    if (!fptr) {
+        perror("open /sys/power/wake_lock");
+        return 1;
+    }
+    len = fprintf(fptr, "koreader");
+    if (len <= 0) {
+        perror("error writing /sys/power/wake_lock");
+        return 2;
+    }
+    fclose(fptr);
+
     return 0;
 }
 
@@ -513,10 +514,10 @@ static int waitForInputWithEpoll(lua_State* L)
     lua_Integer powersave_ms = luaL_optinteger(L, 3, 0); // default to no powersave
     lua_settop(L, 0);  // Pop the function arguments
 
-    int timeout_ms = -1; // block indefinitely
-    // If sec was nil, leave the timeout as NULL (i.e., block).
+    int timeout_ms = -1;  // If sec was nil, leave the timeout as NULL (i.e., block).
+
     if ( sec == 0 && usec == 0 ) {
-        timeout_ms = 0;
+        timeout_ms = 0;  // return immediately
     } else if (sec != -1) { // not nil in LUA-land
         timeout_ms = sec * 1000 + (usec/1000 + 1);
     }
@@ -524,12 +525,6 @@ static int waitForInputWithEpoll(lua_State* L)
     if (timeout_ms < 0 || timeout_ms < powersave_ms) {
         powersave_ms = 0;
     }
-
-    if (powersave_ms > 0 || timeout_ms < 0) { // either we have a valid powersave_ms or no timeout
-        setupAutosleep(powersave_ms);
-    }
-
-    int rtcfd = -1; // for RTC_PATH
 
     int num;
     struct epoll_event event;
@@ -541,7 +536,9 @@ static int waitForInputWithEpoll(lua_State* L)
         return 1;
     }
 
-    if (powersave_ms > 0 || timeout_ms < 0) { // either we have a valid powersave_ms or no timeout
+#if defined(WITH_RTC_INT)
+    int rtcfd = -1; // for RTC_PATH
+    if (powersave_ms > 0) { // we have a valid powersave_ms
         // see https://www.kernel.org/doc/Documentation/rtc.txt
         rtcfd = open(RTC_PATH, O_RDONLY | O_NONBLOCK);
         if (rtcfd < 0) {
@@ -560,6 +557,7 @@ static int waitForInputWithEpoll(lua_State* L)
             }
         }
     }
+#endif
 
     for (size_t i = 0U; i < fd_idx && inputfds[i] >= 0; i++) {
         event.events = EPOLLIN;
@@ -575,7 +573,7 @@ static int waitForInputWithEpoll(lua_State* L)
     for (timerfd_node_t* restrict node = timerfds.head; node != NULL; node = node->next) {
         event.events = EPOLLIN;
         event.data.fd = node->fd;
-
+        printf("xxx input: timerfd=%d\n", node->fd);
         if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, node->fd, &event)) {
             close(epoll_fd);
             luaL_error(L, "Failed to add file descriptor to epoll: %d(timer)\n", node->fd);
@@ -584,18 +582,23 @@ static int waitForInputWithEpoll(lua_State* L)
     }
 #endif
 
+    printf("xxx %d, %d\n", powersave_ms, timeout_ms);
+    if (powersave_ms > 0) { // we have a valid powersave_ms
+        setupAutosleep(powersave_ms);
+    }
+
     num = epoll_wait(epoll_fd, events, MAX_EPOLL_EVENTS, timeout_ms);
 
-    if (powersave_ms > 0 || timeout_ms < 0) { // either proper powersave value or no timeout
+    if (powersave_ms > 0) {
         endAutosleep();
     }
 
-    if (num == 0) {
+    if (num == 0) { // timeout
         lua_pushboolean(L, false);
         lua_pushinteger(L, ETIME);
         close_epoll_fd(epoll_fd, rtcfd);
         return 2;  // false, ETIME
-    } else if (num < 0) {
+    } else if (num < 0) { // failure
         // NOTE: The retry on EINTR is handled on the Lua side here.
         lua_pushboolean(L, false);
         lua_pushinteger(L, errno);
@@ -603,30 +606,37 @@ static int waitForInputWithEpoll(lua_State* L)
         return 2;  // false, errno
     }
 
+#if defined(WITH_TIMERFD)
+    int skipped_timer_n = -1;
+    timerfd_node_t* restrict skipped_timer_node = NULL;
+#endif
+
     for (int n = 0; n < num; ++n) { // filedescriptor is in events[n].diata.fd
-        if ((powersave_ms > 0 || timeout_ms < 0) && events[n].data.fd == rtcfd) {
+#if defined(WITH_RTC_INT)
+        if (events[n].data.fd == rtcfd) {
             // clear pending rtc interrupt
-            unsigned long dummy = 0;
+            int dummy[8];
             read(rtcfd, &dummy, sizeof(dummy));
             lua_pushboolean(L, false);
             lua_pushinteger(L, ETIME);
             close_epoll_fd(epoll_fd, rtcfd);
             return 2;  // false, ETIME, node
         }
+#endif
 
-        // skip any timers here, as we will do that at the end
-        {
-            bool skip_that_n = false;
-            for (timerfd_node_t* restrict node = timerfds.head; node != NULL; node = node->next) {
-                if (node->fd == events[n].data.fd) {
-                    skip_that_n = true; // yes, we want to skip timers by now.
-                    break;
-                }
-            }
-            if (skip_that_n) {
-                continue;
+#if defined(WITH_TIMERFD)
+        // skip any timers here, as we will process them after input events
+        for (timerfd_node_t* restrict node = timerfds.head; node != NULL; node = node->next) {
+            if (node->fd == events[n].data.fd ) {
+                skipped_timer_n = n;
+                skipped_timer_node = node;
+                break; // yes, we want to skip timers by now.
             }
         }
+        if (skipped_timer_n != -1) {
+            continue; // yes, we want to skip timers by now.
+        }
+#endif
 
         lua_pushboolean(L, true);
 
@@ -641,7 +651,6 @@ static int waitForInputWithEpoll(lua_State* L)
         size_t              queue_available_size = sizeof(input_queue);
         for (;;) {
             ssize_t len = read(events[n].data.fd, queue_pos, queue_available_size);
-
             if (len < 0) { // error
                 if (errno == EINTR) {
                     continue;
@@ -707,20 +716,15 @@ static int waitForInputWithEpoll(lua_State* L)
 #if defined(WITH_TIMERFD)
     // We check timers *last*, so that early timer invalidation has a chance to kick in when we're lagging behind input events,
     // as we will necessarily be at least 650ms late after a flashing refresh, for instance.
-    for (int n = 0; n < num; ++n) { // filedescriptor is in events[n].data.fd; a negative fd
-        for (timerfd_node_t* restrict node = timerfds.head; node != NULL; node = node->next) {
-            if (node->fd == events[n].data.fd) {
-                // It's a single-shot timer, don't even need to read it ;p.
-                // well that's not right for epoll and EPOLLWAKEUP
-                int dummy[8];
-                read(events[n].data.fd, &dummy, 8);
-                lua_pushboolean(L, false);
-                lua_pushinteger(L, ETIME);
-                lua_pushlightuserdata(L, (void*) node);
-                close_epoll_fd(epoll_fd, rtcfd);
-                return 3;  // false, ETIME, node
-            }
-        }
+    if (skipped_timer_n != -1) {
+        // Allthough it is a single-shot timer, epoll and EPOLLWAKEUP demand to read it.
+        int dummy[8];
+        read(events[skipped_timer_n].data.fd, &dummy, sizeof(dummy));
+        lua_pushboolean(L, false);
+        lua_pushinteger(L, ETIME);
+        lua_pushlightuserdata(L, (void*) skipped_timer_node);
+        close_epoll_fd(epoll_fd, rtcfd);
+        return 3;  // false, ETIME, node
     }
 #endif
 
