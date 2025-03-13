@@ -530,7 +530,8 @@ static int waitForInputWithEpoll(lua_State* L)
     struct epoll_event event;
     struct epoll_event events[MAX_EPOLL_EVENTS];
 
-    int epoll_fd = epoll_create1(0);
+    // use epoll_create insteat() of epoll_create1() because of kindles old libc
+    int epoll_fd = epoll_create(10);
     if (epoll_fd == -1) {
         luaL_error(L, "Failed to create epoll file descriptor");
         return 1;
