@@ -1,5 +1,11 @@
 --- i/CMakeLists.txt
 +++ w/CMakeLists.txt
+@@ -1,4 +1,4 @@
+-cmake_minimum_required(VERSION 2.8.0 FATAL_ERROR)
++cmake_minimum_required(VERSION 3.16.3 FATAL_ERROR)
+ 
+ project(lua-rapidjson)
+ 
 @@ -24,19 +24,6 @@ if (LUA_RAPIDJSON_VERSION)
  endif()
  
