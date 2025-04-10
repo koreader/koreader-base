@@ -91,7 +91,7 @@ index 70497a7d..08f8a562 100644
 +
  #endif
 diff --git a/include/mupdf/fitz/document.h b/include/mupdf/fitz/document.h
-index 3fc4a091..c385f210 100644
+index 3581e366..4bfc1cb6 100644
 --- a/include/mupdf/fitz/document.h
 +++ b/include/mupdf/fitz/document.h
 @@ -34,6 +34,8 @@
@@ -161,7 +161,7 @@ index f496ed16..a7705025 100644
  
  #endif
 diff --git a/include/mupdf/fitz/geometry.h b/include/mupdf/fitz/geometry.h
-index 5aefb4a0..c17580a6 100644
+index 5ab4aee3..e4c817dc 100644
 --- a/include/mupdf/fitz/geometry.h
 +++ b/include/mupdf/fitz/geometry.h
 @@ -32,6 +32,8 @@
@@ -173,7 +173,7 @@ index 5aefb4a0..c17580a6 100644
  /**
  	Multiply scaled two integers in the 0..255 range
  */
-@@ -846,4 +848,6 @@ int fz_is_quad_inside_quad(fz_quad needle, fz_quad haystack);
+@@ -844,4 +846,6 @@ int fz_is_quad_inside_quad(fz_quad needle, fz_quad haystack);
  */
  int fz_is_quad_intersecting_quad(fz_quad a, fz_quad b);
  
