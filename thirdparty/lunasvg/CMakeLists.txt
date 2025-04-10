@@ -1,4 +1,7 @@
-list(APPEND PATCH_FILES extended.patch)
+list(APPEND PATCH_FILES
+    cmake_tweaks.patch
+    extended.patch
+)
 
 list(APPEND CMAKE_ARGS
     -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE}
