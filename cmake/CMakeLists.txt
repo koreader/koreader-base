@@ -160,6 +160,7 @@ declare_project(
     libwebp
     lunasvg
     md4c
+    nanosvg
     utf8proc
     zlib
     zstd
