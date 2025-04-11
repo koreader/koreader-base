@@ -9,7 +9,7 @@ append_install_commands(
 )
 
 external_project(
-    DOWNLOAD GIT 93ce879dc4c04a3ef1758428ec80083c38610b1f
+    DOWNLOAD GIT ea6a6aca009422bba0dbad4c80df6e6ba0c82183
     https://github.com/memononen/nanosvg.git
     INSTALL_COMMAND ${INSTALL_CMD}
 )
