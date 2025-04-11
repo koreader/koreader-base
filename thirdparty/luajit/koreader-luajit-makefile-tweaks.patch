@@ -1,18 +1,16 @@
 diff --git a/src/Makefile b/src/Makefile
-index 2538503f..d1ea3f63 100644
+index c83abfa0..8810c0a8 100644
 --- a/src/Makefile
 +++ b/src/Makefile
-@@ -211,7 +211,8 @@ TARGET_CC= $(STATIC_CC)
- TARGET_STCC= $(STATIC_CC)
+@@ -211,6 +211,7 @@ TARGET_STCC= $(STATIC_CC)
  TARGET_DYNCC= $(DYNAMIC_CC)
  TARGET_LD= $(CROSS)$(CC)
--TARGET_AR= $(CROSS)ar rcus
-+TARGET_AR= $(CROSS)ar rcus
+ TARGET_AR= $(CROSS)ar rcus
 +TARGET_RANLIB= $(CROSS)ranlib
  TARGET_STRIP= $(CROSS)strip
  
  TARGET_LIBPATH= $(or $(PREFIX),/usr/local)/$(or $(MULTILIB),lib)
-@@ -348,6 +349,7 @@ else
+@@ -353,6 +354,7 @@ else
    endif
    ifeq (Linux,$(TARGET_SYS))
      TARGET_XLIBS+= -ldl
@@ -20,16 +18,16 @@ index 2538503f..d1ea3f63 100644
    endif
    ifeq (GNU/kFreeBSD,$(TARGET_SYS))
      TARGET_XLIBS+= -ldl
-@@ -639,7 +641,7 @@ depend:
+@@ -657,7 +659,7 @@ depend:
  
  $(MINILUA_T): $(MINILUA_O)
  	$(E) "HOSTLINK  $@"
 -	$(Q)$(HOST_CC) $(HOST_ALDFLAGS) -o $@ $(MINILUA_O) $(MINILUA_LIBS) $(HOST_ALIBS)
 +	$(Q)$(HOST_CC) $(HOST_ACFLAGS) $(HOST_ALDFLAGS) -o $@ $(MINILUA_O) $(MINILUA_LIBS) $(HOST_ALIBS)
  
- host/buildvm_arch.h: $(DASM_DASC) $(DASM_DEP) $(DASM_DIR)/*.lua lj_arch.h lua.h luaconf.h
- 	$(E) "DYNASM    $@"
-@@ -649,7 +651,7 @@ host/buildvm.o: $(DASM_DIR)/dasm_*.h
+ luajit.h: $(MINILUA_DEP) $(GIT_DEP) luajit_rolling.h
+ 	$(E) "VERSION   $@"
+@@ -672,7 +674,7 @@ host/buildvm.o: $(DASM_DIR)/dasm_*.h
  
  $(BUILDVM_T): $(BUILDVM_O)
  	$(E) "HOSTLINK  $@"
@@ -38,7 +36,7 @@ index 2538503f..d1ea3f63 100644
  
  $(LJVM_BOUT): $(BUILDVM_T)
  	$(E) "BUILDVM   $@"
-@@ -710,16 +712,17 @@ include Makefile.dep
+@@ -733,16 +735,17 @@ include Makefile.dep
  $(LUAJIT_A): $(LJVMCORE_O)
  	$(E) "AR        $@"
  	$(Q)$(TARGET_AR) $@ $(LJVMCORE_O)

@@ -1,5 +1,5 @@
 diff --git a/src/lj_def.h b/src/lj_def.h
-index 0d6c346b..0b245714 100644
+index a9e23729..1e54ae13 100644
 --- a/src/lj_def.h
 +++ b/src/lj_def.h
 @@ -39,6 +39,7 @@ typedef int intptr_t;
@@ -11,7 +11,7 @@ index 0d6c346b..0b245714 100644
  
  /* Needed everywhere. */
 diff --git a/src/lj_jit.h b/src/lj_jit.h
-index 6902fba3..af3f14b6 100644
+index 102ba0b4..4af66f79 100644
 --- a/src/lj_jit.h
 +++ b/src/lj_jit.h
 @@ -508,6 +508,7 @@ typedef struct jit_State {
@@ -23,18 +23,18 @@ index 6902fba3..af3f14b6 100644
    MCode *mctop;		/* Top of current mcode area. */
    MCode *mcbot;		/* Bottom of current mcode area. */
 diff --git a/src/lj_mcode.c b/src/lj_mcode.c
-index 8a4851dd..cd5ddca2 100644
+index 2b8ac2df..bf6751aa 100644
 --- a/src/lj_mcode.c
 +++ b/src/lj_mcode.c
-@@ -107,9 +107,13 @@ static int mcode_setprot(void *p, size_t sz, DWORD prot)
+@@ -117,9 +117,13 @@ static int mcode_setprot(void *p, size_t sz, DWORD prot)
  #define MCPROT_CREATE	0
  #endif
  
 -static void *mcode_alloc_at(jit_State *J, uintptr_t hint, size_t sz, int prot)
 +static void *mcode_alloc_at(jit_State *J, uintptr_t hint, size_t sz, int prot, bool fixed)
  {
--  void *p = mmap((void *)hint, sz, prot|MCPROT_CREATE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
-+  int flags = MAP_PRIVATE | MAP_ANONYMOUS;
+-  void *p = mmap((void *)hint, sz, prot|MCPROT_CREATE, MAP_PRIVATE|MAP_ANONYMOUS|MCMAP_CREATE, -1, 0);
++  int flags = MAP_PRIVATE|MAP_ANONYMOUS|MCMAP_CREATE;
 +  if (fixed) {
 +    flags |= MAP_FIXED;
 +  }
@@ -42,7 +42,7 @@ index 8a4851dd..cd5ddca2 100644
    if (p == MAP_FAILED) {
      if (!hint) lj_trace_err(J, LJ_TRERR_MCODEAL);
      p = NULL;
-@@ -220,18 +224,37 @@ static void *mcode_alloc(jit_State *J, size_t sz)
+@@ -239,18 +243,37 @@ static void *mcode_alloc(jit_State *J, size_t sz)
    uintptr_t target = (uintptr_t)(void *)lj_vm_exit_handler & ~(uintptr_t)0xffff;
  #endif
    const uintptr_t range = (1u << (LJ_TARGET_JUMPRANGE-1)) - (1u << 21);
@@ -86,7 +86,7 @@ index 8a4851dd..cd5ddca2 100644
      }
      /* Next try probing 64K-aligned pseudo-random addresses. */
      do {
-@@ -250,14 +273,14 @@ static void *mcode_alloc(jit_State *J, size_t sz)
+@@ -269,14 +292,14 @@ static void *mcode_alloc(jit_State *J, size_t sz)
  {
  #if defined(__OpenBSD__) || defined(__NetBSD__) || LJ_TARGET_UWP
    /* Allow better executable memory allocation for OpenBSD W^X mode. */
@@ -103,7 +103,7 @@ index 8a4851dd..cd5ddca2 100644
  #endif
  }
  
-@@ -293,10 +316,79 @@ void lj_mcode_free(jit_State *J)
+@@ -312,10 +335,79 @@ void lj_mcode_free(jit_State *J)
      size_t sz = ((MCLink *)mc)->size;
      lj_err_deregister_mcode(mc, sz, (uint8_t *)mc + sizeof(MCLink));
      mcode_free(J, mc, sz);
@@ -184,7 +184,7 @@ index 8a4851dd..cd5ddca2 100644
  
  /* Reserve the remainder of the current MCode area. */
 diff --git a/src/lj_mcode.h b/src/lj_mcode.h
-index b88be93e..4b90e7db 100644
+index bd8d2573..67e7928a 100644
 --- a/src/lj_mcode.h
 +++ b/src/lj_mcode.h
 @@ -17,6 +17,7 @@ LJ_FUNC void lj_mcode_sync(void *start, void *end);
@@ -196,10 +196,10 @@ index b88be93e..4b90e7db 100644
  LJ_FUNC void lj_mcode_commit(jit_State *J, MCode *m);
  LJ_FUNC void lj_mcode_abort(jit_State *J);
 diff --git a/src/lj_trace.c b/src/lj_trace.c
-index fee78e2e..e99c0c2d 100644
+index 0e948e8d..188c0aa4 100644
 --- a/src/lj_trace.c
 +++ b/src/lj_trace.c
-@@ -300,8 +300,8 @@ int lj_trace_flushall(lua_State *L)
+@@ -293,8 +293,8 @@ int lj_trace_flushall(lua_State *L)
    J->freetrace = 0;
    /* Clear penalty cache. */
    memset(J->penalty, 0, sizeof(J->penalty));
@@ -210,7 +210,7 @@ index fee78e2e..e99c0c2d 100644
    memset(J->exitstubgroup, 0, sizeof(J->exitstubgroup));
    lj_vmevent_send(L, TRACE,
      setstrV(L, L->top++, lj_str_newlit(L, "flush"));
-@@ -646,8 +646,9 @@ static int trace_abort(jit_State *J)
+@@ -639,8 +639,9 @@ static int trace_abort(jit_State *J)
    L->top--;  /* Remove error object */
    if (e == LJ_TRERR_DOWNREC)
      return trace_downrec(J);
@@ -222,7 +222,7 @@ index fee78e2e..e99c0c2d 100644
  }
  
 diff --git a/src/ljamalg.c b/src/ljamalg.c
-index f1dce6a3..2e19a1b3 100644
+index 26601d8c..49b03f24 100644
 --- a/src/ljamalg.c
 +++ b/src/ljamalg.c
 @@ -18,6 +18,9 @@
