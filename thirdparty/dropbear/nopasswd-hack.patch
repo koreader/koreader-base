@@ -1,16 +1,16 @@
 --- i/src/runopts.h
 +++ w/src/runopts.h
-@@ -126,6 +126,7 @@
+@@ -121,6 +121,7 @@ typedef struct svr_runopts {
  
  	buffer * banner;
  	char * pidfile;
 +	int nopasschk;
  
- 	char * forced_command;
- 	char* interface;
+ 	char * authorized_keys_dir;
+ 
 --- i/src/svr-authpasswd.c
 +++ w/src/svr-authpasswd.c
-@@ -80,6 +80,15 @@
+@@ -80,6 +80,15 @@ void svr_auth_password(int valid_user) {
  		return;
  	}
  
@@ -28,7 +28,7 @@
  				"Too-long password attempt for '%s' from %s",
 --- i/src/svr-runopts.c
 +++ w/src/svr-runopts.c
-@@ -103,6 +103,7 @@
+@@ -106,6 +106,7 @@ static void printhelp(const char * progname) {
  					"-l <interface>\n"
  					"		interface to bind on\n"
  #endif
@@ -36,15 +36,15 @@
  #if INETD_MODE
  					"-i		Start for inetd\n"
  #endif
-@@ -173,6 +174,7 @@
- 	svr_opts.hostkey = NULL;
+@@ -177,6 +178,7 @@ void svr_getopts(int argc, char ** argv) {
  	svr_opts.delay_hostkey = 0;
  	svr_opts.pidfile = expand_homedir_path(DROPBEAR_PIDFILE);
+ 	svr_opts.authorized_keys_dir = "~/.ssh";
 +	svr_opts.nopasschk = 0;
  #if DROPBEAR_SVR_LOCALANYFWD
  	svr_opts.nolocaltcp = 0;
  #endif
-@@ -270,6 +272,9 @@
+@@ -279,6 +281,9 @@ void svr_getopts(int argc, char ** argv) {
  				case 'P':
  					next = &svr_opts.pidfile;
  					break;

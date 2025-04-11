@@ -1,6 +1,6 @@
 --- i/Makefile.in
 +++ w/Makefile.in
-@@ -166,7 +166,7 @@
+@@ -168,7 +168,7 @@ $(OBJ_DIR):
  	mkdir -p $@
  
  $(OBJ_DIR)/%.o: $(srcdir)/%.c $(HEADERS) | $(OBJ_DIR)
@@ -9,11 +9,9 @@
  
  fuzz/%.o: $(srcdir)/../fuzz/%.c $(HEADERS)
  	$(CC) $(CFLAGS) $(CPPFLAGS) $< -o $@ -c
---- i/Makefile.in
-+++ w/Makefile.in
 --- i/libtomcrypt/Makefile.in
 +++ w/libtomcrypt/Makefile.in
-@@ -243,7 +243,7 @@
+@@ -243,7 +243,7 @@ $(TOBJECTS): $(HEADERS) tests/tomcrypt_test.h
  #This is necessary for compatibility with BSD make (namely on OpenBSD)
  .SUFFIXES: .o .c
  .c.o:
@@ -24,7 +22,7 @@
  $(LIBMAIN_S): $(OBJECTS)
 --- i/libtommath/Makefile.in
 +++ w/libtommath/Makefile.in
-@@ -10,8 +10,6 @@
+@@ -10,8 +10,6 @@ CFLAGS += -I$(srcdir) -I../libtomcrypt/src/headers/ -I$(srcdir)/../libtomcrypt/s
  CFLAGS += -Wno-deprecated
  CFLAGS += $(CPPFLAGS)
  

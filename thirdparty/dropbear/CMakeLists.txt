@@ -38,6 +38,7 @@ set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS ${CMAKE_CURRENT_B
 
 list(APPEND PATCH_FILES
     dbscp-path.patch
+    fix-static_asserts.patch
     nochdir-hack.patch
     nopasswd-hack.patch
     pubkey-hack.patch
@@ -71,8 +72,8 @@ list(APPEND BUILD_CMD make ${PROGRAMS})
 append_binary_install_command(INSTALL_CMD ${PROGRAMS})
 
 external_project(
-    DOWNLOAD URL bb72335b40c90397cb1c182143524800
-    https://github.com/mkj/dropbear/archive/refs/tags/DROPBEAR_2024.86.tar.gz
+    DOWNLOAD URL f93e71a22e19b57f0bec5a1864690b5f
+    https://github.com/mkj/dropbear/archive/refs/tags/DROPBEAR_2025.87.tar.gz
     PATCH_FILES ${PATCH_FILES}
     CONFIGURE_COMMAND ${CFG_CMD}
     BUILD_DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/localoptions.h

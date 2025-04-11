@@ -17,3 +17,6 @@
 #cmakedefine ED25519_PRIV_FILENAME "@ED25519_PRIV_FILENAME@"
 // Extra part of the SSH server identification string.
 #define IDENT_VERSION_PART "_" DROPBEAR_VERSION " (KOReader)"
+// Disable mlkem769 (post-quantum key exchange): sntrup761 is
+// already available and much lighter in terms of code size.
+#define DROPBEAR_MLKEM768 0
