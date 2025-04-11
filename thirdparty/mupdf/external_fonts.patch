@@ -1,5 +1,5 @@
 diff --git a/Makefile b/Makefile
-index d18e557d..e806b39a 100644
+index 21f7cb46..0ec7fdb1 100644
 --- a/Makefile
 +++ b/Makefile
 @@ -250,6 +250,7 @@ generated/%.otf.c : %.otf $(HEXDUMP_SH) ; $(QUIET_GEN) $(MKTGTDIR) ; bash $(HEXD
@@ -115,7 +115,7 @@ index b9de4396..edb316b2 100644
  	{
  		gid = fz_encode_character(ctx, font, unicode);
 diff --git a/source/fitz/noto.c b/source/fitz/noto.c
-index eda1b23a..59af5306 100644
+index e15cf28d..81da9378 100644
 --- a/source/fitz/noto.c
 +++ b/source/fitz/noto.c
 @@ -23,8 +23,12 @@

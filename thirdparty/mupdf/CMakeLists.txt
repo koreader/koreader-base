@@ -21,8 +21,6 @@ list(APPEND PATCH_FILES
     visibility.patch
     # Expand list of supported CSS color names.
     css_color_names.patch
-    # Fix some compilation warnings.
-    fix_warnings.patch
 )
 
 list(APPEND PATCH_CMD COMMAND rm -rf
@@ -112,8 +110,8 @@ list(APPEND BUILD_CMD COMMAND ${MAKE_CMD} libs)
 list(APPEND INSTALL_CMD COMMAND ${MAKE_CMD} DESTDIR=${STAGING_DIR} prefix=/ install-libs)
 
 external_project(
-    DOWNLOAD URL 11c1c8522ed72bcba9dc6f8a660f675f
-    https://mupdf.com/downloads/archive/mupdf-1.25.4-source.tar.lz
+    DOWNLOAD URL 60b6e4c02c04f8f0b8936519d24eebd7
+    https://mupdf.com/downloads/archive/mupdf-1.25.6-source.tar.lz
     PATCH_FILES ${PATCH_FILES}
     PATCH_COMMAND ${PATCH_CMD}
     BUILD_COMMAND ${BUILD_CMD}
