@@ -1,3 +1,11 @@
+--- i/CMakeLists.txt
++++ w/CMakeLists.txt
+@@ -1,4 +1,4 @@
+-cmake_minimum_required(VERSION 3.2)
++cmake_minimum_required(VERSION 3.16.3)
+ 
+ project(zsync2)
+ 
 --- i/lib/cpr/CMakeLists.txt
 +++ w/lib/cpr/CMakeLists.txt
 @@ -147,13 +147,10 @@ if(CPR_ENABLE_SSL)
