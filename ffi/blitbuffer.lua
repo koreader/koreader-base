@@ -2078,7 +2078,7 @@ function BB_mt.__index:paintBorder(x, y, w, h, bw, c, r, anti_alias)
 end
 
 --[[
-paintBorder varient that uses ColorRGB32 instead of a luminance value,
+paintBorder variant that uses ColorRGB32 instead of a luminance value,
 no support for rounded corners therefore no need for anti aliasing flag
 --]]
 function BB_mt.__index:paintBorderRGB32(x, y, w, h, bw, c)
@@ -2136,7 +2136,7 @@ function BB_mt.__index:paintRoundedRect(x, y, w, h, c, r)
 end
 
 --[[
-paintRoundedRect varient that uses ColorRGB32 instead of a luminance value
+paintRoundedRect variant that uses ColorRGB32 instead of a luminance value
 --]]
 function BB_mt.__index:paintRoundedRectRGB32(x, y, w, h, c, r)
     x, y = ceil(x), ceil(y)
