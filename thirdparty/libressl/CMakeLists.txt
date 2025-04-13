@@ -22,6 +22,7 @@ endif()
 
 external_project(
     DOWNLOAD URL 4775b6b187a93c527eeb95a13e6ebd64
+    https://github.com/libressl/portable/releases/download/v4.0.0/libressl-4.0.0.tar.gz
     https://cdn.openbsd.org/pub/OpenBSD/LibreSSL/libressl-4.0.0.tar.gz
     PATCH_FILES ${PATCH_FILES}
     CMAKE_ARGS ${CMAKE_ARGS}
