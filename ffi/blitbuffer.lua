@@ -2137,6 +2137,7 @@ end
 
 --[[
 paintRoundedRect variant that uses ColorRGB32 instead of a luminance value
+NOTE: Be aware that `paintBorderRGB32` currently does *NOT* support rounded corners, so this implementation is *also* incomplete!
 --]]
 function BB_mt.__index:paintRoundedRectRGB32(x, y, w, h, c, r)
     x, y = ceil(x), ceil(y)
