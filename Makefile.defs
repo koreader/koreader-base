@@ -378,19 +378,6 @@ HOSTOBJCOPY:=objcopy
 HOSTRANLIB:=ranlib
 HOSTREADELF:=readelf
 
-# Path to the shared STL, because we need to ship it on most platforms.
-# We don't want to rely on -static-libstdc++, as it risks breaking the ODR.
-# (Also, it was a pain to deal with because of libtool,
-# c.f., https://www.gnu.org/software/libtool/manual/html_node/Stripped-link-flags.html#Stripped-link-flags).
-ifndef DARWIN
-	# TODO: Detect/support libc++ Clang TCs?
-	ifdef ANDROID
-		SHARED_STL_LIB:=$(shell $(CC) -print-file-name=libc++_shared.so)
-	else
-		SHARED_STL_LIB:=$(shell $(CC) -print-file-name=libstdc++.so.6)
-	endif
-endif
-
 # Base CFLAGS, without arch. We'll need it for luajit, because its
 # Makefiles do some tricky stuff to differentiate HOST/TARGET
 BASE_CFLAGS:=-O2 -g -pipe -fomit-frame-pointer
@@ -718,12 +705,6 @@ else
 	export PKG_CONFIG_PATH :=
 	# Nix the NixOS override, just to be sure.
 	export PKG_CONFIG_PATH_FOR_TARGET :=
-	# We'll want to ship the shared STL lib on non-SDL platforms
-	ifndef SDL
-		ifdef SHARED_STL_LIB
-			SHIP_SHARED_STL:=true
-		endif
-	endif
 endif
 
 # not necessary to use PIC flag for win32 which has relocation table in dll
