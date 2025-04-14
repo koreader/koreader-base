@@ -130,13 +130,8 @@ endif()
 # We don't want to rely on `-static-libstdc++`, as it risks breaking the ODR. (Also, it was a pain to deal with because
 # of libtool, c.f., https://www.gnu.org/software/libtool/manual/html_node/Stripped-link-flags.html#Stripped-link-flags).
 #
-if(NOT (APPLE OR EMULATE_READER OR SDL))
-    # TODO: Detect/support libc++ Clang TCs?
-    if(ANDROID)
-        set(STL_NAME libc++_shared.so)
-    else()
-        set(STL_NAME libstdc++.so.6)
-    endif()
+if(NOT (ANDROID OR APPLE OR EMULATE_READER OR SDL))
+    set(STL_NAME libstdc++.so.6)
     find_compiler_lib_path(STL_PATH ${STL_NAME} REQUIRED)
     append_binary_install_command(CMD_LIST ${STL_PATH} DESTINATION ${OUTPUT_DIR}/libs)
     add_custom_command(
