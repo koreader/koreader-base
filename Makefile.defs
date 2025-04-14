@@ -647,8 +647,6 @@ ifeq ($(TARGET), android)
 		# FIXME: `--Wl,--fix-cortex-a8` still needed?
 		LDFLAGS+=-Wl,--fix-cortex-a8 -march=armv7-a
 	endif
-	# Fix https://github.com/android/ndk/issues/1614
-	LDFLAGS+=$(shell $(CC) -print-libgcc-file-name)
 endif
 
 ifeq ($(TARGET), win32)
