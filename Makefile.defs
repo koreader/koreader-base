@@ -239,7 +239,7 @@ else ifeq ($(TARGET), remarkable)
 	REMARKABLE=1
 	USE_LJ_WPACLIENT=1
 else ifeq ($(TARGET), remarkable-aarch64)
-	CHOST?=aarch64-remarkable-linux
+	CHOST?=aarch64-remarkable-linux-gnu
 	REMARKABLE=1
 	USE_LJ_WPACLIENT=1
 else ifeq ($(TARGET), sony-prstux)
@@ -449,7 +449,7 @@ ARMV7_A7_ARCH:=-march=armv7-a -mtune=cortex-a7 -mfpu=neon -mthumb
 # Cortex A53 (MTK SoCs on an armv7 software stack)
 ARMV7_A53_ARCH:=-march=armv7-a -mtune=cortex-a53 -mfpu=neon -mthumb
 # Cortex A53 (reMarkable Paper Pro)
-ARM64_A53_ARCH:=-mcpu=cortex-a53 -march=armv8-a+crc+crypto
+ARM64_A53_ARCH:=-march=armv8-a+crc+crypto -mtune=cortex-a53
 # Mirror the NDK's armeabi-v7a APP_ABI (cf. #201)
 ifeq ($(ANDROID_ARCH), arm)
 	ANDROID_ARM_ARCH:=-march=armv7-a -mfpu=vfpv3-d16
