@@ -34,6 +34,7 @@ list(APPEND CFG_CMD
     --disable-gcc-warnings
     --disable-nls
     --without-posix-acls
+    --without-selinux
     --without-xattrs
 )
 if(LEGACY OR POCKETBOOK)
