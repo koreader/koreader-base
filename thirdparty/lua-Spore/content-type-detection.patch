@@ -1,123 +1,72 @@
-diff --git a/Makefile b/Makefile
-index 3d8b966..0a9197a 100644
---- a/Makefile
-+++ b/Makefile
-@@ -49,6 +49,7 @@ install:
- 	$(INSTALL) -m 644 -D src/Spore/Middleware/Redirection.lua       $(LIBDIR)/Spore/Middleware/Redirection.lua
- 	$(INSTALL) -m 644 -D src/Spore/Middleware/Runtime.lua           $(LIBDIR)/Spore/Middleware/Runtime.lua
- 	$(INSTALL) -m 644 -D src/Spore/Middleware/UserAgent.lua         $(LIBDIR)/Spore/Middleware/UserAgent.lua
-+	$(INSTALL) -m 644 -D src/Spore/Middleware/Utils.lua             $(LIBDIR)/Spore/Middleware/Utils.lua
- 	$(INSTALL) -m 644 -D src/Spore/Middleware/Auth/AWS.lua          $(LIBDIR)/Spore/Middleware/Auth/AWS.lua
- 	$(INSTALL) -m 644 -D src/Spore/Middleware/Auth/Basic.lua        $(LIBDIR)/Spore/Middleware/Auth/Basic.lua
- 	$(INSTALL) -m 644 -D src/Spore/Middleware/Auth/Bearer.lua       $(LIBDIR)/Spore/Middleware/Auth/Bearer.lua
-diff --git a/rockspec.in b/rockspec.in
-index 6e126dd..b8c1aa0 100644
---- a/rockspec.in
-+++ b/rockspec.in
-@@ -50,6 +50,7 @@ build = {
-         ['Spore.Middleware.Format.JSON']        = 'src/Spore/Middleware/Format/JSON.lua',
-         ['Spore.Middleware.Format.XML']         = 'src/Spore/Middleware/Format/XML.lua',
-         ['Spore.Middleware.Format.YAML']        = 'src/Spore/Middleware/Format/YAML.lua',
-+        ['Spore.Middleware.Utils']              = 'src/Spore/Middleware/Utils.lua',
-         ['Spore.Middleware.Logging']            = 'src/Spore/Middleware/Logging.lua',
-         ['Spore.Middleware.Mock']               = 'src/Spore/Middleware/Mock.lua',
-         ['Spore.Middleware.Parameter.Default']  = 'src/Spore/Middleware/Parameter/Default.lua',
-diff --git a/rockspec/lua-spore-0.4.0-1.rockspec b/rockspec/lua-spore-0.4.0-1.rockspec
-index bbf7474..e40e9a0 100644
---- a/rockspec/lua-spore-0.4.0-1.rockspec
-+++ b/rockspec/lua-spore-0.4.0-1.rockspec
-@@ -52,6 +52,7 @@ build = {
-         ['Spore.Middleware.Format.YAML']        = 'src/Spore/Middleware/Format/YAML.lua',
-         ['Spore.Middleware.Logging']            = 'src/Spore/Middleware/Logging.lua',
-         ['Spore.Middleware.Mock']               = 'src/Spore/Middleware/Mock.lua',
-+        ['Spore.Middleware.Utils']              = 'src/Spore/Middleware/Utils.lua',
-         ['Spore.Middleware.Parameter.Default']  = 'src/Spore/Middleware/Parameter/Default.lua',
-         ['Spore.Middleware.Parameter.Force']    = 'src/Spore/Middleware/Parameter/Force.lua',
-         ['Spore.Middleware.Proxy.Basic']        = 'src/Spore/Middleware/Proxy/Basic.lua',
 diff --git a/src/Spore/Middleware/Format/JSON.lua b/src/Spore/Middleware/Format/JSON.lua
-index 45b8049..5432491 100644
+index 45b8049..876abee 100644
 --- a/src/Spore/Middleware/Format/JSON.lua
 +++ b/src/Spore/Middleware/Format/JSON.lua
-@@ -6,6 +6,7 @@ local decode = require'dkjson'.decode
- local encode = require'dkjson'.encode
- local type = type
- local raises = require'Spore'.raises
-+local startsWith = require'Spore.Middleware.Utils'.startsWith
- 
- local _ENV = nil
+@@ -11,6 +11,7 @@ local _ENV = nil
  local m = {}
-@@ -24,7 +25,7 @@ function m.call (_args, req)
+ 
+ m['content-type'] = 'application/json'
++m['ct-pattern'] = '^' .. m['content-type'] .. '%s*;'
+ 
+ function m.call (_args, req)
+     local spore = req.env.spore
+@@ -22,9 +23,9 @@ function m.call (_args, req)
+     req.headers['accept'] = m['content-type']
+ 
      return  function (res)
-                 local header = res.headers and res.headers['content-type']
+-                local header = res.headers and res.headers['content-type']
++                local header = res.headers and res.headers['content-type'] or ""
                  local body = res.body
 -                if header == m['content-type'] and type(body) == 'string' then
-+                if startsWith(header, m['content-type']) and type(body) == 'string' then
++                if (header == m['content-type'] or header:match(m['ct-pattern'])) and type(body) == 'string' then
                      local r, _, msg = decode(body)
                      if r then
                          res.body = r
 diff --git a/src/Spore/Middleware/Format/XML.lua b/src/Spore/Middleware/Format/XML.lua
-index f48e17d..df7e8ff 100644
+index f48e17d..1374881 100644
 --- a/src/Spore/Middleware/Format/XML.lua
 +++ b/src/Spore/Middleware/Format/XML.lua
-@@ -6,6 +6,7 @@ local type = type
- local raises = require'Spore'.raises
- local dump = require'Spore.XML'.dump
- local parse = require'Spore.XML'.parse
-+local startsWith = require'Spore.Middleware.Utils'.startsWith
- 
- local _ENV = nil
+@@ -11,6 +11,7 @@ local _ENV = nil
  local m = {}
-@@ -24,7 +25,7 @@ function m.call (args, req)
+ 
+ m['content-type'] = 'text/xml'
++m['ct-pattern'] = '^' .. m['content-type'] .. '%s*;'
+ 
+ function m.call (args, req)
+     local spore = req.env.spore
+@@ -22,9 +23,9 @@ function m.call (args, req)
+     req.headers['accept'] = m['content-type']
+ 
      return  function (res)
-                 local header = res.headers and res.headers['content-type']
+-                local header = res.headers and res.headers['content-type']
++                local header = res.headers and res.headers['content-type'] or ""
                  local body = res.body
 -                if header == m['content-type'] and type(body) == 'string' then
-+                if startsWith(header, m['content-type']) and type(body) == 'string' then
++                if (header == m['content-type'] or header:match(m['ct-pattern'])) and type(body) == 'string' then
                      local r, msg = parse(body, args)
                      if r then
                          res.body = r
 diff --git a/src/Spore/Middleware/Format/YAML.lua b/src/Spore/Middleware/Format/YAML.lua
-index 9fc298f..81572ee 100644
+index 9fc298f..5793c55 100644
 --- a/src/Spore/Middleware/Format/YAML.lua
 +++ b/src/Spore/Middleware/Format/YAML.lua
-@@ -7,6 +7,7 @@ local load = require'lyaml'.load
- local pcall = pcall
- local type = type
- local raises = require'Spore'.raises
-+local startsWith = require'Spore.Middleware.Utils'.startsWith
- 
- local _ENV = nil
+@@ -12,6 +12,7 @@ local _ENV = nil
  local m = {}
-@@ -25,7 +26,7 @@ function m.call (_args, req)
+ 
+ m['content-type'] = 'text/x-yaml'
++m['ct-pattern'] = '^' .. m['content-type'] .. '%s*;'
+ 
+ function m.call (_args, req)
+     local spore = req.env.spore
+@@ -23,9 +24,9 @@ function m.call (_args, req)
+     req.headers['accept'] = m['content-type']
+ 
      return  function (res)
-                 local header = res.headers and res.headers['content-type']
+-                local header = res.headers and res.headers['content-type']
++                local header = res.headers and res.headers['content-type'] or ""
                  local body = res.body
 -                if header == m['content-type'] and type(body) == 'string' then
-+                if startsWith(header, m['content-type']) and type(body) == 'string' then
++                if (header == m['content-type'] or header:match(m['ct-pattern'])) and type(body) == 'string' then
                      local r, msg = pcall(function ()
                          res.body = load(body)
                      end)
-diff --git a/src/Spore/Middleware/Utils.lua b/src/Spore/Middleware/Utils.lua
-new file mode 100644
-index 0000000..75950b0
---- /dev/null
-+++ b/src/Spore/Middleware/Utils.lua
-@@ -0,0 +1,18 @@
-+--
-+-- lua-Spore : <https://fperrad.frama.io/lua-Spore/>
-+--
-+
-+local _ENV = nil
-+local m = {}
-+
-+--- Simple startsWith string helper.
-+--
-+-- c.f., <http://lua-users.org/wiki/StringRecipes>.
-+-- @string str source string
-+-- @string start string to match
-+-- @treturn bool true on success
-+function m.startsWith(str, start)
-+    return str:sub(1, #start) == start
-+end
-+
-+return m
