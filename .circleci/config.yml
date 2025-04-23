@@ -7,7 +7,7 @@ parameters:
     # Bump this to reset all caches.
     cache_epoch:
       type: integer
-      default: 4
+      default: 5
 
 # }}}
 
