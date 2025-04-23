@@ -17,7 +17,7 @@ executors:
 
   base: &BASE_EXE
     docker:
-      - image: koreader/kobase:0.3.5-20.04
+      - image: koreader/kobase:0.4.0-22.04
 
   # Emulators. {{{
 
