@@ -26,9 +26,9 @@ list(APPEND BUILD_CMD COMMAND make ${PROGRAMS})
 append_binary_install_command(INSTALL_CMD ${PROGRAMS})
 
 external_project(
-    DOWNLOAD URL 5e90def5af3ffb27e149ca6fff12bef3
-    https://cdn.openbsd.org/pub/OpenBSD/OpenSSH/portable/openssh-9.6p1.tar.gz
-    https://mirror.edgecast.com/pub/OpenBSD/OpenSSH/portable/openssh-9.6p1.tar.gz
+    DOWNLOAD URL 689148621a2eaa734497b12bed1c5202
+    https://cdn.openbsd.org/pub/OpenBSD/OpenSSH/portable/openssh-10.0p1.tar.gz
+    https://mirror.edgecast.com/pub/OpenBSD/OpenSSH/portable/openssh-10.0p1.tar.gz
     CONFIGURE_COMMAND ${CFG_CMD}
     BUILD_COMMAND ${BUILD_CMD}
     INSTALL_COMMAND ${INSTALL_CMD}
