@@ -3,6 +3,7 @@ append_autotools_vars(CFG_CMD)
 list(APPEND CFG_CMD
     ${SOURCE_DIR}/configure --host=${CHOST} --prefix=/
     --enable-shared=false --enable-static=true
+    --disable-nls
     --with-threads=none
 )
 
