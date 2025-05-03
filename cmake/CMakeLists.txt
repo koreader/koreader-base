@@ -114,16 +114,10 @@ set(MESON_INSTALL ${MESON} install --no-rebuild)
 # }}}
 
 # Detect if libc provides iconv support.
-check_symbol_exists(iconv iconv.h HAS_ICONV)
-if(HAS_ICONV)
-    check_function_exists(iconv HAS_ICONV)
-endif()
+check_libc_fn_exists(iconv iconv.h HAS_ICONV)
 
 # Detect if libc provides gettext support.
-check_symbol_exists(ngettext libintl.h HAS_GETTEXT)
-if(HAS_GETTEXT)
-    check_function_exists(ngettext HAS_GETTEXT)
-endif()
+check_libc_fn_exists(ngettext libintl.h HAS_GETTEXT)
 
 # We'll want to ship the shared STL library on some platforms.
 #
