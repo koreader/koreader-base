@@ -1,6 +1,8 @@
 list(APPEND PATCH_FILES
     # We only care about `libglib-2.0.a`.
     libglib-only.patch
+    # We don't need regex support, and removing it gets rid of the pcre2 dependency.
+    no_regex_support.patch
 )
 if(LEGACY OR POCKETBOOK)
     # Avoid pulling-in `__sched_cpucount@GLIBC_2.6`, `eventfd@GLIBC_2.7`,

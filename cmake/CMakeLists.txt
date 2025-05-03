@@ -232,7 +232,7 @@ declare_project(thirdparty/fribidi EXCLUDE_FROM_ALL)
 declare_project(thirdparty/giflib)
 
 # glib
-set(DEPENDS pcre2)
+set(DEPENDS)
 if(NOT HAS_GETTEXT)
     list(APPEND DEPENDS proxy-libintl)
 endif()
