@@ -180,6 +180,14 @@ declare_koreader_target(
     VISIBILITY hidden
 )
 
+# koreader-zlib
+declare_koreader_target(
+    koreader-zlib TYPE monolibtic
+    DEPENDS zlib::z
+    SOURCES zlib.c
+    VISIBILITY hidden
+)
+
 # koreader-xtext
 declare_koreader_target(
     koreader-xtext TYPE monolibtic
@@ -310,7 +318,6 @@ if(MONOLIBTIC)
         pthread
         sqlite::sqlite3
         turbo::tffi_wrap
-        zlib::z
         zstd::zstd
         SOURCES monolibtic.cpp
     )
