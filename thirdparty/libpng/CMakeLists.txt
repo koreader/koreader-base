@@ -25,8 +25,8 @@ if(NOT MONOLIBTIC)
 endif()
 
 external_project(
-    DOWNLOAD URL 6edd0f0f94884a5fdcfefba0d741dbd9
-    https://github.com/pnggroup/libpng/archive/refs/tags/v1.6.47.tar.gz
+    DOWNLOAD URL be6cc9e411c26115db3b9eab1159a1d9
+    https://github.com/pnggroup/libpng/archive/refs/tags/v1.6.48.tar.gz
     PATCH_FILES ${PATCH_FILES}
     CMAKE_ARGS ${CMAKE_ARGS}
     BUILD_COMMAND ${BUILD_CMD}
