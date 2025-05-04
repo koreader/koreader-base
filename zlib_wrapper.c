@@ -1,4 +1,4 @@
-#include "zlib.h"
+#include "zlib_wrapper.h"
 
 // Based on zlib's uncompress2 function.
 // The only difference is the initialization of inflate.

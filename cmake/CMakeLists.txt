@@ -594,7 +594,7 @@ ffi_target(sdl2 SDL2_0_h.lua SDL2_0_decl.c ARGS -d sdl2)
 ffi_target(utf8proc utf8proc_h.lua utf8proc_decl.c ARGS -d libutf8proc)
 
 # zlib
-ffi_target(zlib zlib_h.lua zlib_decl.c ARGS -d zlib)
+ffi_target(zlib zlib_h.lua zlib_decl.c ARGS -I . -d zlib)
 
 # zstd
 ffi_target(zstd zstd_h.lua zstd_decl.c ARGS -d libzstd)

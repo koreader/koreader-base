@@ -1,4 +1,4 @@
-#include <zlib.h>
+#include "zlib_wrapper.h"
 
 #include "ffi-cdecl.h"
 

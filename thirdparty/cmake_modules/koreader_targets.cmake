@@ -184,7 +184,7 @@ declare_koreader_target(
 declare_koreader_target(
     koreader-zlib TYPE monolibtic
     DEPENDS zlib::z
-    SOURCES zlib.c
+    SOURCES zlib_wrapper.c
     VISIBILITY hidden
 )
 
