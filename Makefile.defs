@@ -400,6 +400,10 @@ ifdef KODEBUG
 else
   BASE_CFLAGS += -DNDEBUG
 endif
+ifndef DARWIN
+  # Trim down binary size (when combined with linker `--gc-sections`).
+  BASE_CFLAGS += -fdata-sections -ffunction-sections
+endif
 
 # Misc GCC tricks to ensure backward compatibility with the K2,
 # even when using a fairly recent TC (Linaro/MG).
@@ -456,9 +460,9 @@ ifeq ($(ANDROID_ARCH), arm)
 	ANDROID_ARM_ARCH:=-march=armv7-a -mfpu=vfpv3-d16
 	ANDROID_ARM_ARCH+=-mthumb
 	# NOTE: NDK15c actually uses -fstack-protector-strong
-	ANDROID_ARM_ARCH+=-ffunction-sections -funwind-tables -fstack-protector -no-canonical-prefixes
+	ANDROID_ARM_ARCH+=-funwind-tables -fstack-protector -no-canonical-prefixes
 else ifeq ($(ANDROID_ARCH), arm64)
-	ANDROID_ARM_ARCH:=-ffunction-sections -funwind-tables -fstack-protector -no-canonical-prefixes
+	ANDROID_ARM_ARCH:=-funwind-tables -fstack-protector -no-canonical-prefixes
 endif
 
 TARGET_MACHINE := $(shell $(CC) -dumpmachine)
@@ -633,7 +637,7 @@ CFLAGS:=$(BASE_CFLAGS) $(QFLAGS) $(CSTD_FLAGS)
 CXXFLAGS:=$(BASE_CFLAGS) $(QFLAGS) $(CXXSTD_FLAGS)
 
 ifndef DARWIN
-  LDFLAGS := -Wl,-O1 -Wl,--as-needed $(COMPAT_LDFLAGS)
+  LDFLAGS := -Wl,-O1,--as-needed,--gc-sections $(COMPAT_LDFLAGS)
   # To prefer our shipped libraries over the system's,
   # we set a couple rpath via an include file to make sure it goes through buildsystem indirection unscathed...
   # NOTE: We enforce DT_RPATH over DT_RUNPATH because DT_RUNPATH is *not* honored for *transitive* dependencies,
