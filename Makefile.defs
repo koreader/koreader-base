@@ -264,16 +264,17 @@ else
 endif
 
 ifneq (,$(findstring darwin,$(MAKE_HOST)))
-	DARWINHOST=1
-	ifneq (,$(findstring aarch64,$(MAKE_HOST)))
-		DARWIN_AARCH64_HOST=1
-	endif
-	ifdef EMULATE_READER
-		DARWIN=1
-		ifdef DARWIN_AARCH64_HOST
-			DARWIN_AARCH64=1
-		endif
-	endif
+  DARWINHOST=1
+  ifneq (,$(findstring aarch64,$(MAKE_HOST)))
+    DARWIN_AARCH64_HOST=1
+  endif
+  ifdef EMULATE_READER
+    DARWIN=1
+    ifdef DARWIN_AARCH64_HOST
+      DARWIN_AARCH64=1
+    endif
+    export MACOSX_DEPLOYMENT_TARGET := $(or $(MACOSX_DEPLOYMENT_TARGET),$(shell sw_vers -productVersion))
+  endif
 endif
 
 # ccache still has tons of problems when cross-compiling Android port on Darwin
