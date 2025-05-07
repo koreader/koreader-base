@@ -323,7 +323,7 @@ if(MONOLIBTIC)
             # there's no way to tell CMake to add the necessary `-Wl,--end-group` at
             # the end of the line, **after** the libraries. (Proper support is only
             # available from 3.24 onward).
-            target_link_options(koreader-monolibtic PRIVATE -Wl,-Bsymbolic,--gc-sections,--start-group)
+            target_link_options(koreader-monolibtic PRIVATE -Wl,-Bsymbolic,--start-group)
         endif()
         set(CDECLS)
         foreach(NAME IN LISTS KOREADER_TARGETS)
