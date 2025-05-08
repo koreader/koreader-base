@@ -1,6 +1,7 @@
 list(APPEND PATCH_FILES
     android.patch
     no-subset.patch
+    no-paint.patch
 )
 
 # Get rid of a bunch of `#line` directives that trip ccache 4.9.1.
@@ -62,8 +63,8 @@ if(NOT MONOLIBTIC)
 endif()
 
 external_project(
-    DOWNLOAD URL 5de828e8e05c3f69d98c3c34eb6faa5c
-    https://github.com/harfbuzz/harfbuzz/releases/download/11.0.1/harfbuzz-11.0.1.tar.xz
+    DOWNLOAD URL b92cdc582fb23f4c224f77fa74c23ccc
+    https://github.com/harfbuzz/harfbuzz/releases/download/11.2.0/harfbuzz-11.2.0.tar.xz
     PATCH_FILES ${PATCH_FILES}
     PATCH_COMMAND ${PATCH_CMD}
     CONFIGURE_COMMAND ${CFG_CMD}
