@@ -260,6 +260,9 @@ declare_project(thirdparty/kobo-usbms ${EXCLUDE_FROM_ALL})
 # leptonica
 declare_project(thirdparty/leptonica DEPENDS libpng)
 
+# libarchive
+declare_project(thirdparty/libarchive DEPENDS zlib zstd)
+
 # libiconv
 declare_project(thirdparty/libiconv EXCLUDE_FROM_ALL)
 
