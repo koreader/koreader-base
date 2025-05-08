@@ -1,4 +1,4 @@
-#include <zlib.h>
+#include "zlib_wrapper.h"
 
 #include "ffi-cdecl.h"
 
@@ -6,4 +6,4 @@ cdecl_func(compressBound)
 cdecl_func(compress2)
 cdecl_func(crc32)
 cdecl_func(uncompress)
-
+cdecl_func(uncompress_raw)

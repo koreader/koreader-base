@@ -14,7 +14,7 @@ local ffi = require "ffi"
 require "ffi/zlib_h"
 
 -- We only need to wrap 2 zlib functions to make a zip file
-local _zlib = ffi.loadlib("z", 1)
+local _zlib = ffi.loadlib("koreader-zlib", 1)
 local function zlibCompress(data)
     local n = _zlib.compressBound(#data)
     local buf = ffi.new("uint8_t[?]", n)
