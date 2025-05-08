@@ -1,0 +1,75 @@
+diff --git a/src/Spore/Middleware/Format/JSON.lua b/src/Spore/Middleware/Format/JSON.lua
+index 45b8049..e6fa3d2 100644
+--- a/src/Spore/Middleware/Format/JSON.lua
++++ b/src/Spore/Middleware/Format/JSON.lua
+@@ -11,6 +11,7 @@ local _ENV = nil
+ local m = {}
+ 
+ m['content-type'] = 'application/json'
++m['ct-pattern'] = '^' .. m['content-type'] .. '%s*;'
+ 
+ function m.call (_args, req)
+     local spore = req.env.spore
+@@ -22,9 +23,10 @@ function m.call (_args, req)
+     req.headers['accept'] = m['content-type']
+ 
+     return  function (res)
+-                local header = res.headers and res.headers['content-type']
++                local header = res.headers and res.headers['content-type'] or ""
++                header = header:lower()
+                 local body = res.body
+-                if header == m['content-type'] and type(body) == 'string' then
++                if (header == m['content-type'] or header:match(m['ct-pattern'])) and type(body) == 'string' then
+                     local r, _, msg = decode(body)
+                     if r then
+                         res.body = r
+diff --git a/src/Spore/Middleware/Format/XML.lua b/src/Spore/Middleware/Format/XML.lua
+index f48e17d..c0d5a6e 100644
+--- a/src/Spore/Middleware/Format/XML.lua
++++ b/src/Spore/Middleware/Format/XML.lua
+@@ -11,6 +11,7 @@ local _ENV = nil
+ local m = {}
+ 
+ m['content-type'] = 'text/xml'
++m['ct-pattern'] = '^' .. m['content-type'] .. '%s*;'
+ 
+ function m.call (args, req)
+     local spore = req.env.spore
+@@ -22,9 +23,10 @@ function m.call (args, req)
+     req.headers['accept'] = m['content-type']
+ 
+     return  function (res)
+-                local header = res.headers and res.headers['content-type']
++                local header = res.headers and res.headers['content-type'] or ""
++                header = header:lower()
+                 local body = res.body
+-                if header == m['content-type'] and type(body) == 'string' then
++                if (header == m['content-type'] or header:match(m['ct-pattern'])) and type(body) == 'string' then
+                     local r, msg = parse(body, args)
+                     if r then
+                         res.body = r
+diff --git a/src/Spore/Middleware/Format/YAML.lua b/src/Spore/Middleware/Format/YAML.lua
+index 9fc298f..d8c41b7 100644
+--- a/src/Spore/Middleware/Format/YAML.lua
++++ b/src/Spore/Middleware/Format/YAML.lua
+@@ -12,6 +12,7 @@ local _ENV = nil
+ local m = {}
+ 
+ m['content-type'] = 'text/x-yaml'
++m['ct-pattern'] = '^' .. m['content-type'] .. '%s*;'
+ 
+ function m.call (_args, req)
+     local spore = req.env.spore
+@@ -23,9 +24,10 @@ function m.call (_args, req)
+     req.headers['accept'] = m['content-type']
+ 
+     return  function (res)
+-                local header = res.headers and res.headers['content-type']
++                local header = res.headers and res.headers['content-type'] or ""
++                header = header:lower()
+                 local body = res.body
+-                if header == m['content-type'] and type(body) == 'string' then
++                if (header == m['content-type'] or header:match(m['ct-pattern'])) and type(body) == 'string' then
+                     local r, msg = pcall(function ()
+                         res.body = load(body)
+                     end)
