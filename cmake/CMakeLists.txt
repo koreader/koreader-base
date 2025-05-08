@@ -344,7 +344,7 @@ declare_project(thirdparty/md4c EXCLUDE_FROM_ALL)
 declare_project(thirdparty/minizip EXCLUDE_FROM_ALL)
 
 # mupdf
-declare_project(thirdparty/mupdf DEPENDS freetype2 harfbuzz libjpeg-turbo libwebp minizip zlib)
+declare_project(thirdparty/mupdf DEPENDS freetype2 harfbuzz libarchive libjpeg-turbo libwebp minizip zlib)
 
 # nanosvg
 declare_project(thirdparty/nanosvg)
