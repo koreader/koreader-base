@@ -1,0 +1,11 @@
+--- i/libarchive/archive_read_disk_posix.c
++++ w/libarchive/archive_read_disk_posix.c
+@@ -1825,7 +1825,7 @@
+ 		/* pathconf(_PC_REX_*) operations are not supported. */
+ #if defined(HAVE_STATVFS)
+ 		set_statvfs_transfer_size(t->current_filesystem, &svfs);
+-#else
++#elif defined(HAVE_STRUCT_STATFS)
+ 		set_statfs_transfer_size(t->current_filesystem, &sfs);
+ #endif
+ 	}

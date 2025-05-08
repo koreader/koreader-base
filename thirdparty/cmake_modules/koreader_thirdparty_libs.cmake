@@ -81,6 +81,9 @@ declare_dependency(giflib::gif MONOLIBTIC gif)
 # harfbuzz
 declare_dependency(harfbuzz::harfbuzz INCLUDES freetype2 harfbuzz MONOLIBTIC harfbuzz)
 
+# libarchive
+declare_dependency(libarchive::libarchive MONOLIBTIC archive)
+
 # leptonica
 declare_dependency(leptonica::leptonica INCLUDES leptonica MONOLIBTIC leptonica)
 
