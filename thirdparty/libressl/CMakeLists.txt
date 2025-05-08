@@ -1,6 +1,7 @@
-list(APPEND PATCH_FILES
-    cmake_tweaks.patch
-)
+list(APPEND PATCH_FILES cmake_tweaks.patch)
+if(ANDROID)
+    list(APPEND PATCH_FILES android.patch)
+endif()
 
 list(APPEND CMAKE_ARGS
     -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE}
