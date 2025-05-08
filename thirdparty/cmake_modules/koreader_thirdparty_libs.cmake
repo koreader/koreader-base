@@ -182,7 +182,7 @@ if(ANDROID)
 endif()
 declare_dependency(
     mupdf::mupdf
-    MONOLIBTIC freetype harfbuzz jpeg webp webpdemux z
+    MONOLIBTIC archive freetype harfbuzz jpeg webp webpdemux z
     STATIC mupdf mupdf-third aes
     LIBRARIES ${LIBRARIES}
 )
