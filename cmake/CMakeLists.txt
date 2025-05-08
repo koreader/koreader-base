@@ -554,6 +554,9 @@ endforeach()
 # leptonica
 ffi_target(leptonica leptonica_h.lua leptonica_cdecl.c ARGS -d lept)
 
+# libarchive
+ffi_target(libarchive libarchive_h.lua libarchive_cdecl.c ARGS -d libarchive)
+
 # libjpeg-turbo
 ffi_target(libjpeg-turbo turbojpeg_h.lua turbojpeg_decl.c ARGS -d libturbojpeg)
 
