@@ -1,0 +1,10 @@
+--- i/CMakeLists.txt
++++ w/CMakeLists.txt
+@@ -82,7 +82,6 @@
+ 	add_definitions(-D_BSD_SOURCE)
+ 	add_definitions(-D_POSIX_SOURCE)
+ 	add_definitions(-D_GNU_SOURCE)
+-	set(PLATFORM_LIBS ${PLATFORM_LIBS} pthread)
+ endif()
+ 
+ if(CMAKE_SYSTEM_NAME MATCHES "FreeBSD")
