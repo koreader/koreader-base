@@ -290,6 +290,7 @@ if(MONOLIBTIC)
         DEPENDS ${DEPENDS}
         # We still need to manually add some transitive dependencies because
         # CMake is shit at handling mutiple level of static libraries.
+        libarchive::libarchive
         czmq::czmq
         freetype2::freetype
         giflib::gif

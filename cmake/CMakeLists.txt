@@ -260,6 +260,9 @@ declare_project(thirdparty/kobo-usbms ${EXCLUDE_FROM_ALL})
 # leptonica
 declare_project(thirdparty/leptonica DEPENDS libpng)
 
+# libarchive
+declare_project(thirdparty/libarchive DEPENDS zlib zstd)
+
 # libiconv
 declare_project(thirdparty/libiconv EXCLUDE_FROM_ALL)
 
@@ -341,7 +344,7 @@ declare_project(thirdparty/md4c EXCLUDE_FROM_ALL)
 declare_project(thirdparty/minizip EXCLUDE_FROM_ALL)
 
 # mupdf
-declare_project(thirdparty/mupdf DEPENDS freetype2 harfbuzz libjpeg-turbo libwebp minizip zlib)
+declare_project(thirdparty/mupdf DEPENDS freetype2 harfbuzz libarchive libjpeg-turbo libwebp minizip zlib)
 
 # nanosvg
 declare_project(thirdparty/nanosvg)
@@ -550,6 +553,9 @@ endforeach()
 
 # leptonica
 ffi_target(leptonica leptonica_h.lua leptonica_cdecl.c ARGS -d lept)
+
+# libarchive
+ffi_target(libarchive libarchive_h.lua libarchive_cdecl.c ARGS -d libarchive)
 
 # libjpeg-turbo
 ffi_target(libjpeg-turbo turbojpeg_h.lua turbojpeg_decl.c ARGS -d libturbojpeg)

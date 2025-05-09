@@ -57,6 +57,7 @@ string(APPEND XCFLAGS
     " -DFZ_ENABLE_JS=0"
     " -DFZ_PLOTTERS_CMYK=0"
     " -DHAVE_LIBAES=1"
+    " -DHAVE_LIBARCHIVE=1"
     " -DHAVE_WEBP=1"
 )
 if(ANDROID AND CHOST MATCHES "^armv7a-.*")
@@ -85,6 +86,10 @@ set(MAKE_CMD
     USE_SYSTEM_HARFBUZZ=yes
     SYS_HARFBUZZ_CFLAGS=-I${STAGING_DIR}/include/harfbuzz
     SYS_HARFBUZZ_LIBS=
+    # - libarchive
+    USE_SYSTEM_LIBARCHIVE=yes
+    SYS_LIBARCHIVE_CFLAGS=-I${STAGING_DIR}/include
+    SYS_LIBARCHIVE_LIBS=
     # - libjpeg
     USE_SYSTEM_LIBJPEG=yes
     SYS_LIBJPEG_LIBS=
