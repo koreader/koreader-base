@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.16.3)
+cmake_minimum_required(VERSION 3.17.5)
 project(lpeg LANGUAGES C)
 
 find_package(PkgConfig REQUIRED)
