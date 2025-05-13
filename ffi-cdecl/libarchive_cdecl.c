@@ -35,12 +35,12 @@ cdecl_func(archive_entry_set_perm)
 cdecl_func(archive_entry_set_size)
 
 cdecl_func(archive_error_string)
+cdecl_func(archive_free)
 
 cdecl_func(archive_write_add_filter_none)
 cdecl_func(archive_write_add_filter_compress)
 cdecl_func(archive_write_close)
 cdecl_func(archive_write_data)
-cdecl_func(archive_write_free)
 cdecl_func(archive_write_header)
 cdecl_func(archive_write_new)
 cdecl_func(archive_write_open_filename)
