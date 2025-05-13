@@ -19,7 +19,7 @@ end
 --- Complete the writing of the zipfile.
 function ZipWriter:close()
     libarchive.archive_write_close(self.archive)
-    libarchive.archive_write_free(self.archive)
+    libarchive.archive_free(self.archive)
     self.archive = nil
     return true
 end
@@ -32,7 +32,7 @@ function ZipWriter:open(zipfilepath)
     if libarchive.archive_write_open_filename(self.archive, zipfilepath) ~= libarchive.ARCHIVE_OK then
         local err = ffi.string(libarchive.archive_error_string(self.archive))
         print("archive_write_open_filename failed:", err)
-        libarchive.archive_write_free(self.archive)
+        libarchive.archive_free(self.archive)
         self.archive = nil
         return false
     end
