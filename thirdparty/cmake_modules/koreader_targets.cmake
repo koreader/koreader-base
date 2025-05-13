@@ -342,6 +342,7 @@ if(MONOLIBTIC)
             harfbuzz_cdecl
             koptcontext_cdecl
             leptonica_cdecl
+            libarchive_cdecl
             libwebp_decl
             lodepng_decl
             lpeg_cdecl

@@ -23,6 +23,7 @@ local log = android and android.LOGI or print
 local monolibtic = {
     path = (android and android.nativeLibraryDir or "libs") .. "/libkoreader-monolibtic." .. (ffi.os == "OSX" and "dylib" or "so"),
     redirects = {
+        ["archive"]    = true,
         ["blitbuffer"] = true,
         ["czmq"]       = true,
         ["freetype"]   = true,
