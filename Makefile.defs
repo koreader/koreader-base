@@ -970,6 +970,8 @@ set(SONY_PRSTUX    $(SONY_PRSTUX))
 set(SKIP_LUAJIT_BIN $(SKIP_LUAJIT_BIN))
 set(USE_LUAJIT_LIB  $(USE_LUAJIT_LIB))
 
+set(ANDROID_LAUNCHER_DIR "$(abspath $(or $(ANDROID_LAUNCHER_DIR),../platform/android/luajit-launcher))")
+
 endef
 
 # }}}

@@ -135,8 +135,12 @@ check_libc_fn_exists(ngettext libintl.h HAS_GETTEXT)
 # We don't want to rely on `-static-libstdc++`, as it risks breaking the ODR. (Also, it was a pain to deal with because
 # of libtool, c.f., https://www.gnu.org/software/libtool/manual/html_node/Stripped-link-flags.html#Stripped-link-flags).
 #
-if(NOT (ANDROID OR APPLE OR EMULATE_READER OR SDL))
-    set(STL_NAME libstdc++.so.6)
+if(NOT (APPLE OR EMULATE_READER OR SDL))
+    if(ANDROID)
+        set(STL_NAME libc++_shared.so)
+    else()
+        set(STL_NAME libstdc++.so.6)
+    endif()
     find_compiler_lib_path(STL_PATH ${STL_NAME} REQUIRED)
     append_binary_install_command(CMD_LIST ${STL_PATH} DESTINATION ${OUTPUT_DIR}/libs)
     add_custom_command(
@@ -150,6 +154,20 @@ if(NOT (ANDROID OR APPLE OR EMULATE_READER OR SDL))
 endif()
 
 # THIRDPARTY. {{{
+
+# android-luajit-launcher
+if(IS_DIRECTORY "${ANDROID_LAUNCHER_DIR}")
+    if(ANDROID)
+        set(EXCLUDE_FROM_ALL)
+    else()
+        set(EXCLUDE_FROM_ALL EXCLUDE_FROM_ALL)
+    endif()
+    declare_project(
+        thirdparty/android-luajit-launcher
+        DEPENDS libarchive luajit ${EXCLUDE_FROM_ALL}
+        SOURCE_DIR ${ANDROID_LAUNCHER_DIR}
+    )
+endif()
 
 # crengine
 declare_project(
@@ -261,7 +279,11 @@ declare_project(thirdparty/kobo-usbms ${EXCLUDE_FROM_ALL})
 declare_project(thirdparty/leptonica DEPENDS libpng)
 
 # libarchive
-declare_project(thirdparty/libarchive DEPENDS zlib zstd)
+set(DEPENDS zlib zstd)
+if(ANDROID)
+    list(APPEND DEPENDS xz)
+endif()
+declare_project(thirdparty/libarchive DEPENDS ${DEPENDS})
 
 # libiconv
 declare_project(thirdparty/libiconv EXCLUDE_FROM_ALL)
