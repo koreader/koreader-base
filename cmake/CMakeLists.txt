@@ -408,6 +408,9 @@ declare_project(thirdparty/turbo DEPENDS libressl)
 # utf8proc
 declare_project(thirdparty/utf8proc)
 
+# xz
+declare_project(thirdparty/xz EXCLUDE_FROM_ALL)
+
 # zlib
 declare_project(thirdparty/zlib)
 
