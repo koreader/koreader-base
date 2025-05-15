@@ -30,6 +30,9 @@ function(declare_dependency NAME)
     add_library(${NAME} ALIAS ${TGT})
 endfunction()
 
+# android-luajit-launcher
+declare_dependency(android-luajit-launcher::7z MONOLIBTIC 7z LIBRARIES android log)
+
 # crengine
 declare_dependency(crengine::crengine)
 target_link_libraries(
@@ -176,15 +179,19 @@ declare_dependency(lunasvg::lunasvg MONOLIBTIC lunasvg)
 declare_dependency(md4c::html STATIC md4c-html md4c)
 
 # mupdf
-set(LIBRARIES m)
+set(SYS_LIBS m)
 if(ANDROID)
-    list(APPEND LIBRARIES log)
+    list(APPEND SYS_LIBS log)
+endif()
+set(MONO_LIBS archive freetype harfbuzz jpeg webp webpdemux z)
+if(ANDROID)
+    list(APPEND MONO_LIBS lzma)
 endif()
 declare_dependency(
     mupdf::mupdf
-    MONOLIBTIC archive freetype harfbuzz jpeg webp webpdemux z
+    MONOLIBTIC ${MONO_LIBS}
     STATIC mupdf mupdf-third aes
-    LIBRARIES ${LIBRARIES}
+    LIBRARIES ${SYS_LIBS}
 )
 
 # openlipclua
