@@ -15,7 +15,6 @@
 
 #include "ffi-cdecl.h"
 
-cdecl_const(AE_IFMT)
 cdecl_const(AE_IFREG)
 cdecl_const(AE_IFLNK)
 cdecl_const(AE_IFSOCK)
@@ -30,6 +29,7 @@ cdecl_const(ARCHIVE_EOF)
 cdecl_const(ARCHIVE_EXTRACT_SECURE_NODOTDOT)
 cdecl_const(ARCHIVE_EXTRACT_SECURE_SYMLINKS)
 
+cdecl_func(archive_entry_filetype)
 cdecl_func(archive_entry_free)
 cdecl_func(archive_entry_new)
 cdecl_func(archive_entry_pathname)

@@ -3,7 +3,6 @@
 local ffi = require("ffi")
 
 ffi.cdef[[
-static const int AE_IFMT = 61440;
 static const int AE_IFREG = 32768;
 static const int AE_IFLNK = 40960;
 static const int AE_IFSOCK = 49152;
@@ -15,6 +14,7 @@ static const int ARCHIVE_OK = 0;
 static const int ARCHIVE_EOF = 1;
 static const int ARCHIVE_EXTRACT_SECURE_NODOTDOT = 512;
 static const int ARCHIVE_EXTRACT_SECURE_SYMLINKS = 256;
+unsigned int archive_entry_filetype(struct archive_entry *);
 void archive_entry_free(struct archive_entry *);
 struct archive_entry *archive_entry_new(void);
 const char *archive_entry_pathname(struct archive_entry *);
