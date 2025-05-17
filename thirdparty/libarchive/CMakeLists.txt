@@ -26,6 +26,8 @@ list(APPEND CMAKE_ARGS
     -DENABLE_UNZIP=FALSE
     -DENABLE_WERROR=FALSE
     -DENABLE_XATTR=FALSE
+    # Prevent md library fallback because OpenSSL is not used.
+    -DLIBMD_FOUND=FALSE
 )
 # Avoid pulling > GLIBC_2.4 symbols on crappy platforms.
 if(LEGACY OR POCKETBOOK)
