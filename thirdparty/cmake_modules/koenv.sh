@@ -178,7 +178,7 @@ clone_git_repo() { (
     clone_depth=50
     mkdir -p "${repo%/*}"
     (
-        flock -n 9
+        flock 9
         # Try the clone 3 times in case there is an odd git clone issue.
         error=1
         for timeout in 0 2 4; do
@@ -244,7 +244,7 @@ checkout_git_repo() { (
     revision="$3"
     shift 3
     rm -rf "${tree}" || return 1
-    (flock -n 9 && cp -a "${repo}" "${tree}") 9>"${repo}.lock" || return 1
+    (flock 9 && cp -a "${repo}" "${tree}") 9>"${repo}.lock" || return 1
     # Same as above in `checkout_git_repo`.
     # shellcheck disable=SC2031
     export GIT_DIR="${tree}/.git"
