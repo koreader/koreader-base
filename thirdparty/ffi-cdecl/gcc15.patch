@@ -1,0 +1,96 @@
+--- c/Makefile
++++ i/Makefile
+@@ -26,6 +26,7 @@ UNPATCH = git -C $1 reset --hard && git -C $1 clean -fxdq
+ .patched:
+ 	$(call UNPATCH,gcc-lua)
+ 	$(call UNPATCH,gcc-lua-cdecl)
++	$(call APPLY_PATCH,gcc-lua,gcc-lua-gcc15.patch)
+ 	$(call APPLY_PATCH,gcc-lua,gcc-lua-prefer-luajit.patch)
+ 	$(call APPLY_PATCH,gcc-lua-cdecl,gcc-lua-cdecl-do-not-mangle-c99-types.patch)
+ 	touch $@
+--- /dev/null
++++ i/gcc-lua-gcc15.patch
+@@ -0,0 +1,83 @@
++From 8832888aee53baf0ba386c3a9cfd130703604ca4 Mon Sep 17 00:00:00 2001
++From: Benoit Pierre <benoit.pierre@gmail.com>
++Date: Thu, 1 May 2025 13:53:53 +0200
++Subject: [PATCH] fix compilation with GCC 15
++MIME-Version: 1.0
++Content-Type: text/plain; charset=UTF-8
++Content-Transfer-Encoding: 8bit
++
++```
++gcclua.c:547:5: error: attempt to use poisoned ‘DOUBLE_TYPE_SIZE’
++  547 | #if DOUBLE_TYPE_SIZE == 64
++      |     ^
++In file included from /usr/lib/gcc/x86_64-pc-linux-gnu/15.1.1/plugin/include/gcc-plugin.h:28,
++                 from gcclua.c:7:
++/usr/lib/gcc/x86_64-pc-linux-gnu/15.1.1/plugin/include/system.h:996:47: note: poisoned here
++  996 |         STARTING_FRAME_OFFSET FLOAT_TYPE_SIZE DOUBLE_TYPE_SIZE          \
++      |                                               ^~~~~~~~~~~~~~~~
++```
++
++Cf. https://gcc.gnu.org/git/?p=gcc.git;a=commit;h=55947b32c38a40777aedbd105bd94b43a42c2a10
++
++It seems to me that we actually want to ensure that both the host and target double
++size are 64 bits. Accordingly, the 2 checks are implemented using:
++- a compile time check based on `__SIZEOF_DOUBLE__` for the host double size
++- a compile time check based on `DOUBLE_TYPE_SIZE` for target double on GCC < 15, or a
++  runtime check based on the `default_mode_for_floating_type` target hook on GCC >= 15
++---
++ gcc/gcclua.c | 21 +++++++++++++++++----
++ 1 file changed, 17 insertions(+), 4 deletions(-)
++
++diff --git a/gcc/gcclua.c b/gcc/gcclua.c
++index 4603ea4..1bac531 100644
++--- a/gcc/gcclua.c
+++++ b/gcc/gcclua.c
++@@ -27,6 +27,10 @@
++ #include "stringpool.h"
++ #include "stor-layout.h"
++ #endif
+++#if GCCPLUGIN_VERSION >= 15000
+++#include "target.h"
+++#include "targhooks.h"
+++#endif
++ #ifdef __cplusplus
++ extern "C" {
++ #endif
++@@ -544,21 +548,30 @@ static int gcclua_tree_get_purpose(lua_State *L)
++ static int gcclua_tree_get_real_cst(lua_State *L)
++ {
++   const tree *t;
++-#if DOUBLE_TYPE_SIZE == 64
++   long buf[2];
+++#if __SIZEOF_DOUBLE__ != 8
+++#error unsupported __SIZEOF_DOUBLE__
+++#endif
++   union {
++     uint32_t i[2];
++     double d;
++   } u;
+++#if GCCPLUGIN_VERSION < 15000
+++#if DOUBLE_TYPE_SIZE != 64
+++#error unsupported DOUBLE_TYPE_SIZE
+++#endif
+++#else
+++  int target_double_bitsize;
+++  target_double_bitsize = GET_MODE_PRECISION(default_mode_for_floating_type(TI_DOUBLE_TYPE)).to_constant();
+++  if (target_double_bitsize != 64)
+++      error("unsupported target double size: %d", target_double_bitsize);
+++#endif
++   luaL_checktype(L, 1, LUA_TUSERDATA);
++   t = (const tree *)lua_touserdata(L, 1);
++   REAL_VALUE_TO_TARGET_DOUBLE(TREE_REAL_CST(*t), buf);
++   u.i[0] = (buf[0] & 0xffffffff);
++   u.i[1] = (buf[1] & 0xffffffff);
++   lua_pushnumber(L, u.d);
++-#else
++-#error unsupported DOUBLE_TYPE_SIZE
++-#endif
++   return 1;
++ }
++ 
++-- 
++2.49.0
++

@@ -1,7 +1,10 @@
 # Build in source tree.
 set(BINARY_DIR ${SOURCE_DIR})
 
-list(APPEND PATCH_FILES ffi-cdecl.patch)
+list(APPEND PATCH_FILES
+    ffi-cdecl.patch
+    gcc15.patch
+)
 
 list(APPEND PATCH_CMD COMMAND ${MAKE_CMD} patch)
 
