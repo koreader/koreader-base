@@ -214,8 +214,10 @@ else()
     set(EXCLUDE_FROM_ALL EXCLUDE_FROM_ALL)
 endif()
 declare_project(thirdparty/fbink ${EXCLUDE_FROM_ALL})
+set(fbdepth_DOWNLOAD_DIR ${fbink_DOWNLOAD_DIR})
 set(fbdepth_CMAKE_SOURCE_DIR ${fbink_CMAKE_SOURCE_DIR})
 declare_project(thirdparty/libfbink_input ${EXCLUDE_FROM_ALL})
+set(libfbink_input_DOWNLOAD_DIR ${fbink_DOWNLOAD_DIR})
 set(libfbink_input_CMAKE_SOURCE_DIR ${fbink_CMAKE_SOURCE_DIR})
 
 # ffi-cdecl
