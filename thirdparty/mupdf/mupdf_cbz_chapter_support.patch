@@ -12,7 +12,7 @@ Date:   Sun Nov 13 22:10:06 2022 +0100
     a comic book archive.
 
 diff --git a/source/cbz/mucbz.c b/source/cbz/mucbz.c
-index e877490b..a096648a 100644
+index e877490bb..a096648ac 100644
 --- a/source/cbz/mucbz.c
 +++ b/source/cbz/mucbz.c
 @@ -290,6 +290,110 @@ cbz_lookup_metadata(fz_context *ctx, fz_document *doc_, const char *key, char *b

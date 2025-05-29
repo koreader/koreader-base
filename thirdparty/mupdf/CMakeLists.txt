@@ -23,7 +23,9 @@ list(APPEND PATCH_FILES
     css_color_names.patch
 )
 
+# Remove unnecessary vendored thirdparty libraries.
 list(APPEND PATCH_CMD COMMAND rm -rf
+    thirdparty/brotli
     thirdparty/curl
     thirdparty/freeglut
     thirdparty/freetype
@@ -32,7 +34,9 @@ list(APPEND PATCH_CMD COMMAND rm -rf
     thirdparty/libjpeg
     thirdparty/mujs
     thirdparty/tesseract
+    thirdparty/zint
     thirdparty/zlib
+    thirdparty/zxing-cpp
 )
 
 string(TOLOWER ${CMAKE_BUILD_TYPE} MUPDF_BUILD_TYPE)
@@ -50,11 +54,8 @@ string(APPEND XCFLAGS
     " ${CFLAGS} -fvisibility=hidden"
     # Disable a couple of things to save a small bit of space:
     # - builtin fonts
-    # - color profile support
     # - CMYK plotter only 100 kB
-    # - javascript (for form data validation) close to 800 kB
     " -DNOBUILTINFONT"
-    " -DFZ_ENABLE_JS=0"
     " -DFZ_PLOTTERS_CMYK=0"
     " -DHAVE_LIBAES=1"
     " -DHAVE_LIBARCHIVE=1"
@@ -74,6 +75,12 @@ set(MAKE_CMD
     CXX=${CXX}
     LDFLAGS=
     XCFLAGS=${XCFLAGS}
+    USE_ARGUMENT_FILE=no
+    # Disable some features.
+    barcode=no
+    brotli=no
+    mujs=no
+    tesseract=no
     # Disable some vendored libraries:
     # - curl
     USE_SYSTEM_CURL=yes
@@ -93,9 +100,6 @@ set(MAKE_CMD
     # - libjpeg
     USE_SYSTEM_LIBJPEG=yes
     SYS_LIBJPEG_LIBS=
-    # - mujs
-    MUJS_CFLAGS=
-    MUJS_SRC=
     # - zlib
     USE_SYSTEM_ZLIB=yes
     SYS_ZLIB_CFLAGS=-I${STAGING_DIR}/include
@@ -115,8 +119,8 @@ list(APPEND BUILD_CMD COMMAND ${MAKE_CMD} libs)
 list(APPEND INSTALL_CMD COMMAND ${MAKE_CMD} DESTDIR=${STAGING_DIR} prefix=/ install-libs)
 
 external_project(
-    DOWNLOAD URL 60b6e4c02c04f8f0b8936519d24eebd7
-    https://mupdf.com/downloads/archive/mupdf-1.25.6-source.tar.lz
+    DOWNLOAD URL 3e87fea17e09878a692f759af19a9dad
+    https://mupdf.com/downloads/archive/mupdf-1.26.2-source.tar.lz
     PATCH_FILES ${PATCH_FILES}
     PATCH_COMMAND ${PATCH_CMD}
     BUILD_COMMAND ${BUILD_CMD}
