@@ -1,5 +1,5 @@
 diff --git a/include/mupdf/fitz/archive.h b/include/mupdf/fitz/archive.h
-index b169a88e..e5fd4207 100644
+index b169a88e8..e5fd42076 100644
 --- a/include/mupdf/fitz/archive.h
 +++ b/include/mupdf/fitz/archive.h
 @@ -314,6 +314,9 @@ fz_archive *fz_open_zip_archive(fz_context *ctx, const char *path);
@@ -13,7 +13,7 @@ index b169a88e..e5fd4207 100644
  	fz_zip_writer offers methods for creating and writing zip files.
  	It can be seen as the reverse of the fz_archive zip
 diff --git a/source/cbz/mucbz.c b/source/cbz/mucbz.c
-index 6d1b1b24..e2f99530 100644
+index 6d1b1b242..e2f99530a 100644
 --- a/source/cbz/mucbz.c
 +++ b/source/cbz/mucbz.c
 @@ -266,6 +266,20 @@ cbz_load_page(fz_context *ctx, fz_document *doc_, int chapter, int number)
@@ -47,7 +47,7 @@ index 6d1b1b24..e2f99530 100644
  	fz_try(ctx)
  	{
 diff --git a/source/fitz/unzip.c b/source/fitz/unzip.c
-index 4b138ccc..a79db423 100644
+index 35d14fb1c..4b416ada4 100644
 --- a/source/fitz/unzip.c
 +++ b/source/fitz/unzip.c
 @@ -43,10 +43,33 @@
@@ -244,7 +244,7 @@ index 4b138ccc..a79db423 100644
 +				if (zip->aes_encryption_mode) {
 +					fcrypt_decrypt(ubuf->data, ent->usize, &zip->aes_ctx);
 +				} else {
-+					int i;
++					unsigned i;
 +					for(i = 0; i < ent->usize; ++i)
 +						ubuf->data[i] = zdecode(zip->keys, zip->pcrc_32_tab, ubuf->data[i]);
 +				}
@@ -262,7 +262,7 @@ index 4b138ccc..a79db423 100644
 +				if (zip->aes_encryption_mode) {
 +					fcrypt_decrypt(cbuf, ent->csize, &zip->aes_ctx);
 +				} else {
-+					int i;
++					unsigned i;
 +					for(i = 0; i < ent->csize; ++i) {
 +						cbuf[i] = zdecode(zip->keys, zip->pcrc_32_tab, cbuf[i]);
 +					}

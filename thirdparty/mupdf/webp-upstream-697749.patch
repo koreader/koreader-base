@@ -1,8 +1,8 @@
 diff --git a/include/mupdf/fitz/compressed-buffer.h b/include/mupdf/fitz/compressed-buffer.h
-index 80458f11..64202fd6 100644
+index 326d524dd..296079618 100644
 --- a/include/mupdf/fitz/compressed-buffer.h
 +++ b/include/mupdf/fitz/compressed-buffer.h
-@@ -125,10 +125,10 @@ fz_stream *fz_open_image_decomp_stream_from_buffer(fz_context *ctx, fz_compresse
+@@ -133,10 +133,10 @@ fz_stream *fz_open_image_decomp_stream_from_buffer(fz_context *ctx, fz_compresse
  fz_stream *fz_open_image_decomp_stream(fz_context *ctx, fz_stream *, fz_compression_params *, int *l2factor);
  
  /**
@@ -15,7 +15,7 @@ index 80458f11..64202fd6 100644
  
  /**
  	Map from FZ_IMAGE_* value to string.
-@@ -167,6 +167,7 @@ enum
+@@ -176,6 +176,7 @@ enum
  	FZ_IMAGE_PNM,
  	FZ_IMAGE_TIFF,
  	FZ_IMAGE_PSD,
@@ -24,7 +24,7 @@ index 80458f11..64202fd6 100644
  
  /**
 diff --git a/scripts/wrap/make_cppyy.py b/scripts/wrap/make_cppyy.py
-index 89be2fec..91396c33 100644
+index a37456d81..69604a377 100644
 --- a/scripts/wrap/make_cppyy.py
 +++ b/scripts/wrap/make_cppyy.py
 @@ -763,7 +763,7 @@ def make_cppyy(
@@ -37,7 +37,7 @@ index 89be2fec..91396c33 100644
              cppyy.cppdef(f'''
                      namespace mupdf
 diff --git a/source/cbz/mucbz.c b/source/cbz/mucbz.c
-index e2f99530..e877490b 100644
+index e2f99530a..e877490bb 100644
 --- a/source/cbz/mucbz.c
 +++ b/source/cbz/mucbz.c
 @@ -49,6 +49,7 @@ static const char *cbz_ext_list[] = {
@@ -49,7 +49,7 @@ index e2f99530..e877490b 100644
  };
  
 diff --git a/source/cbz/muimg.c b/source/cbz/muimg.c
-index 69d1f990..78c07017 100644
+index 69d1f990f..78c07017d 100644
 --- a/source/cbz/muimg.c
 +++ b/source/cbz/muimg.c
 @@ -191,7 +191,7 @@ img_open_document(fz_context *ctx, const fz_document_handler *handler, fz_stream
@@ -83,7 +83,7 @@ index 69d1f990..78c07017 100644
  
  	fmt = fz_recognize_image_format(ctx, data);
 diff --git a/source/fitz/image-imp.h b/source/fitz/image-imp.h
-index 06db2afc..ee6db1c5 100644
+index 06db2afc7..ee6db1c54 100644
 --- a/source/fitz/image-imp.h
 +++ b/source/fitz/image-imp.h
 @@ -32,6 +32,7 @@ fz_pixmap *fz_load_gif(fz_context *ctx, const unsigned char *data, size_t size);
@@ -102,7 +102,7 @@ index 06db2afc..ee6db1c5 100644
  
  #endif
 diff --git a/source/fitz/image.c b/source/fitz/image.c
-index e898aa42..915ddf28 100644
+index c5531c097..cb720bfd9 100644
 --- a/source/fitz/image.c
 +++ b/source/fitz/image.c
 @@ -794,6 +794,9 @@ compressed_image_get_pixmap(fz_context *ctx, fz_image *image_, fz_irect *subarea
@@ -115,7 +115,7 @@ index e898aa42..915ddf28 100644
  	case FZ_IMAGE_TIFF:
  		tile = fz_load_tiff(ctx, image->buffer->buffer->data, image->buffer->buffer->len);
  		break;
-@@ -1295,7 +1298,7 @@ fz_lookup_image_type(const char *type)
+@@ -1299,7 +1302,7 @@ fz_lookup_image_type(const char *type)
  }
  
  int
@@ -124,7 +124,7 @@ index e898aa42..915ddf28 100644
  {
  	if (p[0] == 'P' && p[1] >= '1' && p[1] <= '7')
  		return FZ_IMAGE_PNM;
-@@ -1328,6 +1331,9 @@ fz_recognize_image_format(fz_context *ctx, unsigned char p[8])
+@@ -1332,6 +1335,9 @@ fz_recognize_image_format(fz_context *ctx, unsigned char p[8])
  		return FZ_IMAGE_JBIG2;
  	if (p[0] == '8' && p[1] == 'B' && p[2] == 'P' && p[3] == 'S')
  		return FZ_IMAGE_PSD;
@@ -134,7 +134,7 @@ index e898aa42..915ddf28 100644
  	return FZ_IMAGE_UNKNOWN;
  }
  
-@@ -1344,7 +1350,7 @@ fz_new_image_from_buffer(fz_context *ctx, fz_buffer *buffer)
+@@ -1348,7 +1354,7 @@ fz_new_image_from_buffer(fz_context *ctx, fz_buffer *buffer)
  	int bpc;
  	uint8_t orientation = 0;
  
@@ -143,7 +143,7 @@ index e898aa42..915ddf28 100644
  		fz_throw(ctx, FZ_ERROR_FORMAT, "unknown image file format");
  
  	type = fz_recognize_image_format(ctx, buf);
-@@ -1382,6 +1388,9 @@ fz_new_image_from_buffer(fz_context *ctx, fz_buffer *buffer)
+@@ -1386,6 +1392,9 @@ fz_new_image_from_buffer(fz_context *ctx, fz_buffer *buffer)
  		fz_load_jbig2_info(ctx, buf, len, &w, &h, &xres, &yres, &cspace);
  		bpc = 1;
  		break;
@@ -155,7 +155,7 @@ index e898aa42..915ddf28 100644
  	}
 diff --git a/source/fitz/load-webp.c b/source/fitz/load-webp.c
 new file mode 100644
-index 00000000..1ab554da
+index 000000000..1ab554dae
 --- /dev/null
 +++ b/source/fitz/load-webp.c
 @@ -0,0 +1,280 @@
@@ -440,10 +440,10 @@ index 00000000..1ab554da
 +
 +#endif /* HAVE_WEBP */
 diff --git a/source/html/mobi.c b/source/html/mobi.c
-index e0a076d1..e586eddb 100644
+index 4edb1f4aa..23b9e24dd 100644
 --- a/source/html/mobi.c
 +++ b/source/html/mobi.c
-@@ -318,7 +318,7 @@ fz_extract_html_from_mobi(fz_context *ctx, fz_buffer *mobi)
+@@ -317,7 +317,7 @@ fz_extract_html_from_mobi(fz_context *ctx, fz_buffer *mobi)
  		for (i = extra; i < n; ++i)
  		{
  			uint32_t size = offsets[i+1] - offsets[i];

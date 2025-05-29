@@ -90,7 +90,11 @@ struct fz_outline {
   float y;
   struct fz_outline *next;
   struct fz_outline *down;
-  int is_open;
+  unsigned int is_open : 1;
+  unsigned int flags : 7;
+  unsigned char r;
+  unsigned char g;
+  unsigned char b;
 };
 typedef struct {
   int abort;
@@ -111,7 +115,7 @@ int fz_authenticate_password(fz_context *, fz_document *, const char *);
 void fz_drop_document(fz_context *, fz_document *);
 int mupdf_count_pages(fz_context *, fz_document *);
 void *mupdf_layout_document(fz_context *, fz_document *, float, float, float);
-int fz_lookup_metadata(fz_context *, fz_document *, const char *, char *, int);
+int fz_lookup_metadata(fz_context *, fz_document *, const char *, char *, size_t);
 fz_page *mupdf_load_page(fz_context *, fz_document *, int);
 fz_rect *mupdf_fz_bound_page(fz_context *, fz_page *, fz_rect *);
 void fz_drop_page(fz_context *, fz_page *);
@@ -164,6 +168,7 @@ struct fz_stext_block {
     struct {
       fz_stext_line *first_line;
       fz_stext_line *last_line;
+      int flags;
     } t;
     struct {
       fz_matrix transform;
@@ -174,7 +179,7 @@ struct fz_stext_block {
       int index;
     } s;
     struct {
-      uint8_t stroked;
+      uint32_t flags;
       uint32_t argb;
     } v;
     struct {
@@ -188,6 +193,7 @@ struct fz_stext_block {
 typedef struct {
   int flags;
   float scale;
+  fz_rect clip;
 } fz_stext_options;
 typedef struct {
   struct fz_pool *pool;
@@ -299,6 +305,7 @@ typedef struct {
   int do_preserve_metadata;
   int do_use_objstms;
   int compression_effort;
+  int do_labels;
 } pdf_write_options;
 void *mupdf_pdf_save_document(fz_context *, pdf_document *, const char *, pdf_write_options *);
 fz_alloc_context *mupdf_get_my_alloc_context();

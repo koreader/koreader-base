@@ -1,8 +1,8 @@
 diff --git a/Makefile b/Makefile
-index 21f7cb46..0ec7fdb1 100644
+index 7b04ff5cd..d247334bd 100644
 --- a/Makefile
 +++ b/Makefile
-@@ -250,6 +250,7 @@ generated/%.otf.c : %.otf $(HEXDUMP_SH) ; $(QUIET_GEN) $(MKTGTDIR) ; bash $(HEXD
+@@ -239,6 +239,7 @@ generated/%.otf.c : %.otf $(HEXDUMP_SH) ; $(QUIET_GEN) $(MKTGTDIR) ; bash $(HEXD
  generated/%.ttf.c : %.ttf $(HEXDUMP_SH) ; $(QUIET_GEN) $(MKTGTDIR) ; bash $(HEXDUMP_SH) > $@ $<
  generated/%.ttc.c : %.ttc $(HEXDUMP_SH) ; $(QUIET_GEN) $(MKTGTDIR) ; bash $(HEXDUMP_SH) > $@ $<
  
@@ -10,7 +10,7 @@ index 21f7cb46..0ec7fdb1 100644
  ifeq ($(HAVE_OBJCOPY),yes)
    MUPDF_OBJ += $(FONT_BIN:%=$(OUT)/%.o)
    $(OUT)/%.cff.o : %.cff ; $(OBJCOPY_CMD)
-@@ -261,6 +262,7 @@ else
+@@ -250,6 +251,7 @@ else
  endif
  
  generate: $(FONT_GEN)
@@ -19,10 +19,10 @@ index 21f7cb46..0ec7fdb1 100644
  # --- Generated ICC profiles ---
  
 diff --git a/include/mupdf/fitz/font.h b/include/mupdf/fitz/font.h
-index 0892735d..f496ed16 100644
+index 313a5d474..55ff86185 100644
 --- a/include/mupdf/fitz/font.h
 +++ b/include/mupdf/fitz/font.h
-@@ -832,4 +832,9 @@ fz_buffer *fz_subset_ttf_for_gids(fz_context *ctx, fz_buffer *orig, int *gids, i
+@@ -855,4 +855,9 @@ fz_buffer *fz_subset_ttf_for_gids(fz_context *ctx, fz_buffer *orig, int *gids, i
   */
  fz_buffer *fz_subset_cff_for_gids(fz_context *ctx, fz_buffer *orig, int *gids, int num_gids, int symbolic, int cidfont);
  
@@ -33,7 +33,7 @@ index 0892735d..f496ed16 100644
 +
  #endif
 diff --git a/source/fitz/font.c b/source/fitz/font.c
-index b9de4396..edb316b2 100644
+index 88ac44d39..10fab7f8e 100644
 --- a/source/fitz/font.c
 +++ b/source/fitz/font.c
 @@ -556,6 +556,8 @@ fz_font *fz_load_fallback_font(fz_context *ctx, int script, int language, int se
@@ -54,7 +54,7 @@ index b9de4396..edb316b2 100644
  static const struct ft_error ft_errors[] =
  {
  #include FT_ERRORS_H
-@@ -902,13 +906,18 @@ find_base14_index(const char *name)
+@@ -909,13 +913,18 @@ find_base14_index(const char *name)
  fz_font *
  fz_new_base14_font(fz_context *ctx, const char *name)
  {
@@ -73,7 +73,7 @@ index b9de4396..edb316b2 100644
  		data = fz_lookup_base14_font(ctx, name, &size);
  		if (data)
  		{
-@@ -920,6 +929,16 @@ fz_new_base14_font(fz_context *ctx, const char *name)
+@@ -927,6 +936,16 @@ fz_new_base14_font(fz_context *ctx, const char *name)
  			fz_set_font_embedding(ctx, ctx->font->base14[x], 1);
  			return fz_keep_font(ctx, ctx->font->base14[x]);
  		}
@@ -90,7 +90,7 @@ index b9de4396..edb316b2 100644
  	}
  	fz_throw(ctx, FZ_ERROR_ARGUMENT, "cannot find builtin font with name '%s'", name);
  }
-@@ -2100,6 +2119,7 @@ fz_encode_character_with_fallback(fz_context *ctx, fz_font *user_font, int unico
+@@ -2108,6 +2127,7 @@ fz_encode_character_with_fallback(fz_context *ctx, fz_font *user_font, int unico
  	}
  #endif
  
@@ -98,7 +98,7 @@ index b9de4396..edb316b2 100644
  	font = fz_load_fallback_math_font(ctx);
  	if (font)
  	{
-@@ -2141,6 +2161,15 @@ fz_encode_character_with_fallback(fz_context *ctx, fz_font *user_font, int unico
+@@ -2149,6 +2169,15 @@ fz_encode_character_with_fallback(fz_context *ctx, fz_font *user_font, int unico
  	}
  
  	font = fz_load_fallback_boxes_font(ctx);
@@ -115,7 +115,7 @@ index b9de4396..edb316b2 100644
  	{
  		gid = fz_encode_character(ctx, font, unicode);
 diff --git a/source/fitz/noto.c b/source/fitz/noto.c
-index e15cf28d..81da9378 100644
+index 9b359df85..3e883a9b8 100644
 --- a/source/fitz/noto.c
 +++ b/source/fitz/noto.c
 @@ -23,8 +23,12 @@
@@ -131,9 +131,9 @@ index e15cf28d..81da9378 100644
  /*
  	Base 14 PDF fonts from URW.
  	Noto fonts from Google.
-@@ -540,3 +544,131 @@ fz_lookup_noto_stem_from_script(fz_context *ctx, int script, int language)
+@@ -555,3 +559,131 @@ fz_lookup_script_name(fz_context *ctx, int script, int language)
+ 	default: return fz_lookup_noto_stem_from_script(ctx, script, language);
  	}
- 	return NULL;
  }
 +
 +#else // NOBUILTINFONT
@@ -264,7 +264,7 @@ index e15cf28d..81da9378 100644
 +
 +#endif
 diff --git a/source/html/html-font.c b/source/html/html-font.c
-index 87511f9d..0f325748 100644
+index e41035dac..58319b369 100644
 --- a/source/html/html-font.c
 +++ b/source/html/html-font.c
 @@ -23,18 +23,63 @@
@@ -350,7 +350,7 @@ index 87511f9d..0f325748 100644
  	}
  	return set->fonts[idx];
  }
-@@ -128,7 +185,7 @@ fz_load_html_font(fz_context *ctx, fz_html_font_set *set,
+@@ -149,7 +206,7 @@ fz_load_html_font(fz_context *ctx, fz_html_font_set *set,
  		return best_font;
  
  	// Handle the "default" font aliases.
@@ -360,7 +360,7 @@ index 87511f9d..0f325748 100644
  
  	return NULL;
 diff --git a/source/pdf/pdf-font-add.c b/source/pdf/pdf-font-add.c
-index d05d6019..39e98209 100644
+index a6d7d2a68..588a73618 100644
 --- a/source/pdf/pdf-font-add.c
 +++ b/source/pdf/pdf-font-add.c
 @@ -73,12 +73,16 @@ static int is_postscript(fz_context *ctx, FT_Face face)
@@ -381,7 +381,7 @@ index d05d6019..39e98209 100644
  
  static pdf_obj*
 diff --git a/source/pdf/pdf-font.c b/source/pdf/pdf-font.c
-index 66a6d417..6a28bde4 100644
+index c1724fc94..f4d55284b 100644
 --- a/source/pdf/pdf-font.c
 +++ b/source/pdf/pdf-font.c
 @@ -93,6 +93,8 @@ static const char *base_font_names[][10] =

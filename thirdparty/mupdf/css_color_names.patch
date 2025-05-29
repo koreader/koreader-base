@@ -1,5 +1,5 @@
 diff --git a/source/html/css-apply.c b/source/html/css-apply.c
-index 93839ccc..858bd588 100644
+index 1d860f937..160d126f5 100644
 --- a/source/html/css-apply.c
 +++ b/source/html/css-apply.c
 @@ -48,24 +48,307 @@ static const char *border_style_kw[] = {
