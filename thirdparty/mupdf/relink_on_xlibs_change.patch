@@ -1,13 +1,13 @@
 diff --git a/Makefile b/Makefile
-index 0ec7fdb1..af4737da 100644
+index d247334bd..11c2918ea 100644
 --- a/Makefile
 +++ b/Makefile
-@@ -102,7 +102,7 @@ $(OUT)/%.a :
- $(OUT)/%.exe: %.c
- 	$(LINK_CMD)
+@@ -293,7 +293,7 @@ generate: source/html/css-properties.h
+ # --- Library ---
  
--$(OUT)/%.$(SO)$(SO_VERSION):
-+$(OUT)/%.$(SO)$(SO_VERSION): $(XLIBS)
- ifeq ($(SO_VERSION_LINUX),yes)
- 	$(LINK_CMD) -Wl,-soname,$(notdir $@) $(LIB_LDFLAGS) $(THIRD_LIBS) $(LIBCRYPTO_LIBS)
- 	ln -sf $(notdir $@) $(patsubst %$(SO_VERSION), %, $@)
+ ifeq ($(shared),yes)
+-  $(OUT)/libmupdf.$(SO)$(SO_VERSION): $(MUPDF_OBJ) $(THIRD_OBJ)
++  $(OUT)/libmupdf.$(SO)$(SO_VERSION): $(MUPDF_OBJ) $(THIRD_OBJ) $(XLIBS)
+ 	$(LINK_SO_CMD) $(THIRD_LIBS) $(LIBCRYPTO_LIBS)
+   ifeq ($(OS),OpenBSD)
+     # should never create symlink

@@ -1,5 +1,5 @@
 diff --git a/source/html/html-doc.c b/source/html/html-doc.c
-index 46e0860e..24b10dfb 100644
+index 4bfa1f325..5c0ea1637 100644
 --- a/source/html/html-doc.c
 +++ b/source/html/html-doc.c
 @@ -49,6 +49,11 @@ static void
