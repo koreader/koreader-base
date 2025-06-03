@@ -1,8 +1,8 @@
 diff --git a/Makerules b/Makerules
-index 006fed6f..00245b5d 100644
+index ba4df2189..bd4d6c217 100644
 --- a/Makerules
 +++ b/Makerules
-@@ -111,10 +111,10 @@ else
+@@ -148,10 +148,10 @@ else
  endif
  
  ifeq ($(build),debug)

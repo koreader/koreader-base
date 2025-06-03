@@ -1,8 +1,8 @@
 diff --git a/include/mupdf/fitz/system.h b/include/mupdf/fitz/system.h
-index c5c32469..07e2254b 100644
+index 3f2c13ccc..65fb15609 100644
 --- a/include/mupdf/fitz/system.h
 +++ b/include/mupdf/fitz/system.h
-@@ -77,11 +77,13 @@ typedef unsigned __int64 uint64_t;
+@@ -84,11 +84,13 @@ typedef unsigned __int64 uint64_t;
  */
  
  /* ARCH_ARM is only used for 32bit ARM stuff. */
