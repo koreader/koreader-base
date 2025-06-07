@@ -41,8 +41,8 @@ list(APPEND INSTALL_CMD COMMAND ${CMAKE_COMMAND} --install .)
 append_shared_lib_install_commands(INSTALL_CMD SDL2-2.0 VERSION 0)
 
 external_project(
-    DOWNLOAD URL 4decfd2da9ea8534df73ce26f17f2c95
-    https://github.com/libsdl-org/SDL/releases/download/release-2.32.4/SDL2-2.32.4.tar.gz
+    DOWNLOAD URL 7df28be966308a4a51aac87f4e0cf16a
+    https://github.com/libsdl-org/SDL/releases/download/release-2.32.8/SDL2-2.32.8.tar.gz
     PATCH_FILES ${PATCH_FILES}
     CMAKE_ARGS ${CMAKE_ARGS}
     BUILD_COMMAND ${BUILD_CMD}
