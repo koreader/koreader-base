@@ -11,8 +11,8 @@ list(APPEND BUILD_CMD COMMAND ninja)
 list(APPEND INSTALL_CMD COMMAND ${CMAKE_COMMAND} --install .)
 
 external_project(
-    DOWNLOAD URL 383ee74871f1e85e625a32c7e72e7777
-    https://github.com/google/cpu_features/archive/refs/tags/v0.9.0.tar.gz
+    DOWNLOAD URL 32f6f561c24dce66ed4bc0384b22c026
+    https://github.com/google/cpu_features/archive/refs/tags/v0.10.1.tar.gz
     CMAKE_ARGS ${CMAKE_ARGS}
     BUILD_COMMAND ${BUILD_CMD}
     INSTALL_COMMAND ${INSTALL_CMD}
