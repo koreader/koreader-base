@@ -1,6 +1,7 @@
 list(APPEND PATCH_FILES
     no_cmake_rpath_shenanigans.patch
     no_tests.patch
+    no_progs.patch
 )
 
 list(APPEND CMAKE_ARGS
