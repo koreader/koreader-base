@@ -2,6 +2,7 @@ list(APPEND PATCH_FILES
     no_cmake_rpath_shenanigans.patch
     no_tests.patch
     no_progs.patch
+    no_12_or_16_bits_precision.patch
 )
 
 list(APPEND CMAKE_ARGS

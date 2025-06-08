@@ -1,0 +1,362 @@
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -667,6 +667,7 @@ if(WITH_JAVA)
+ endif()
+ 
+ if(ENABLE_SHARED)
++  if(0)
+   # Compile a separate version of these source files with 12-bit and 16-bit
+   # data precision.
+   add_library(jpeg12 OBJECT ${JPEG12_SOURCES})
+@@ -675,10 +676,12 @@ if(ENABLE_SHARED)
+   add_library(jpeg16 OBJECT ${JPEG16_SOURCES})
+   set_property(TARGET jpeg16 PROPERTY COMPILE_FLAGS "-DBITS_IN_JSAMPLE=16")
+   set_target_properties(jpeg16 PROPERTIES POSITION_INDEPENDENT_CODE 1)
++  endif()
+   add_subdirectory(sharedlib)
+ endif()
+ 
+ if(ENABLE_STATIC)
++  if(0)
+   # Compile a separate version of these source files with 12-bit and 16-bit
+   # data precision.
+   add_library(jpeg12-static OBJECT ${JPEG12_SOURCES})
+@@ -687,9 +690,9 @@ if(ENABLE_STATIC)
+   add_library(jpeg16-static OBJECT ${JPEG16_SOURCES})
+   set_property(TARGET jpeg16-static PROPERTY COMPILE_FLAGS
+     "-DBITS_IN_JSAMPLE=16")
++  endif()
+   add_library(jpeg-static STATIC ${JPEG_SOURCES} ${SIMD_TARGET_OBJECTS}
+-    ${SIMD_OBJS} $<TARGET_OBJECTS:jpeg12-static>
+-    $<TARGET_OBJECTS:jpeg16-static>)
++    )
+   if(NOT MSVC_LIKE)
+     set_target_properties(jpeg-static PROPERTIES OUTPUT_NAME jpeg)
+   endif()
+@@ -699,8 +702,8 @@ if(WITH_TURBOJPEG)
+   if(ENABLE_SHARED)
+     set(TURBOJPEG_SOURCES ${JPEG_SOURCES} ${SIMD_TARGET_OBJECTS} ${SIMD_OBJS}
+       src/turbojpeg.c src/transupp.c src/jdatadst-tj.c src/jdatasrc-tj.c
+-      src/rdbmp.c src/rdppm.c src/wrbmp.c src/wrppm.c $<TARGET_OBJECTS:jpeg12>
+-      $<TARGET_OBJECTS:jpeg16>)
++      src/rdbmp.c src/rdppm.c src/wrbmp.c src/wrppm.c
++      )
+     set(TJMAPFILE ${CMAKE_CURRENT_SOURCE_DIR}/src/turbojpeg-mapfile)
+     if(WITH_JAVA)
+       set(TURBOJPEG_SOURCES ${TURBOJPEG_SOURCES} java/turbojpeg-jni.c)
+@@ -713,6 +716,7 @@ if(WITH_TURBOJPEG)
+       set(TURBOJPEG_SOURCES ${TURBOJPEG_SOURCES}
+         ${CMAKE_BINARY_DIR}/win/turbojpeg.rc)
+     endif()
++    if(0)
+     add_library(turbojpeg12 OBJECT src/rdppm.c src/wrppm.c)
+     set_property(TARGET turbojpeg12 PROPERTY COMPILE_FLAGS
+       "-DBITS_IN_JSAMPLE=12 -DPPM_SUPPORTED")
+@@ -721,8 +725,9 @@ if(WITH_TURBOJPEG)
+     set_property(TARGET turbojpeg16 PROPERTY COMPILE_FLAGS
+       "-DBITS_IN_JSAMPLE=16 -DPPM_SUPPORTED")
+     set_target_properties(turbojpeg16 PROPERTIES POSITION_INDEPENDENT_CODE 1)
++    endif()
+     add_library(turbojpeg SHARED ${TURBOJPEG_SOURCES}
+-      $<TARGET_OBJECTS:turbojpeg12> $<TARGET_OBJECTS:turbojpeg16>)
++      )
+     set_property(TARGET turbojpeg PROPERTY COMPILE_FLAGS
+       "-DBMP_SUPPORTED -DPPM_SUPPORTED")
+     if(WIN32)
+@@ -780,9 +785,7 @@ if(WITH_TURBOJPEG)
+     add_library(turbojpeg-static STATIC ${JPEG_SOURCES} ${SIMD_TARGET_OBJECTS}
+       ${SIMD_OBJS} src/turbojpeg.c src/transupp.c src/jdatadst-tj.c
+       src/jdatasrc-tj.c src/rdbmp.c src/rdppm.c src/wrbmp.c src/wrppm.c
+-      $<TARGET_OBJECTS:jpeg12-static> $<TARGET_OBJECTS:jpeg16-static>
+-      $<TARGET_OBJECTS:turbojpeg12-static>
+-      $<TARGET_OBJECTS:turbojpeg16-static>)
++      )
+     set_property(TARGET turbojpeg-static PROPERTY COMPILE_FLAGS
+       "-DBMP_SUPPORTED -DPPM_SUPPORTED")
+     if(NOT MSVC_LIKE)
+--- a/sharedlib/CMakeLists.txt
++++ b/sharedlib/CMakeLists.txt
+@@ -49,7 +49,7 @@ if(MSVC_LIKE)
+   set(JPEG_SRCS ${JPEG_SRCS} ${CMAKE_BINARY_DIR}/win/jpeg.rc)
+ endif()
+ add_library(jpeg SHARED ${JPEG_SRCS} ${DEFFILE} ${SIMD_TARGET_OBJECTS}
+-  ${SIMD_OBJS} $<TARGET_OBJECTS:jpeg12> $<TARGET_OBJECTS:jpeg16>)
++  ${SIMD_OBJS})
+ 
+ set_target_properties(jpeg PROPERTIES SOVERSION ${SO_MAJOR_VERSION}
+   VERSION ${SO_MAJOR_VERSION}.${SO_AGE}.${SO_MINOR_VERSION})
+--- a/src/jcinit.c
++++ b/src/jcinit.c
+@@ -38,12 +38,15 @@ jinit_compress_master(j_compress_ptr cinfo)
+   /* Initialize master control (includes parameter checking/processing) */
+   jinit_c_master_control(cinfo, FALSE /* full compression */);
+ 
++  if (cinfo->data_precision > 8)
++      ERREXIT1(cinfo, JERR_BAD_PRECISION, cinfo->data_precision);
+   /* Preprocessing */
+   if (!cinfo->raw_data_in) {
+     if (cinfo->data_precision <= 8) {
+       jinit_color_converter(cinfo);
+       jinit_downsampler(cinfo);
+       jinit_c_prep_controller(cinfo, FALSE /* never need full buffer here */);
++#if 0
+     } else if (cinfo->data_precision <= 12) {
+       j12init_color_converter(cinfo);
+       j12init_downsampler(cinfo);
+@@ -57,6 +60,7 @@ jinit_compress_master(j_compress_ptr cinfo)
+                                 FALSE /* never need full buffer here */);
+ #else
+       ERREXIT1(cinfo, JERR_BAD_PRECISION, cinfo->data_precision);
++#endif
+ #endif
+     }
+   }
+@@ -66,10 +70,12 @@ jinit_compress_master(j_compress_ptr cinfo)
+     /* Prediction, sample differencing, and point transform */
+     if (cinfo->data_precision <= 8)
+       jinit_lossless_compressor(cinfo);
++#if 0
+     else if (cinfo->data_precision <= 12)
+       j12init_lossless_compressor(cinfo);
+     else
+       j16init_lossless_compressor(cinfo);
++#endif
+     /* Entropy encoding: either Huffman or arithmetic coding. */
+     if (cinfo->arith_code) {
+       ERREXIT(cinfo, JERR_ARITH_NOTIMPL);
+@@ -81,12 +87,14 @@ jinit_compress_master(j_compress_ptr cinfo)
+     if (cinfo->data_precision <= 8)
+       jinit_c_diff_controller(cinfo, (boolean)(cinfo->num_scans > 1 ||
+                                                cinfo->optimize_coding));
++#if 0
+     else if (cinfo->data_precision <= 12)
+       j12init_c_diff_controller(cinfo, (boolean)(cinfo->num_scans > 1 ||
+                                                  cinfo->optimize_coding));
+     else
+       j16init_c_diff_controller(cinfo, (boolean)(cinfo->num_scans > 1 ||
+                                                  cinfo->optimize_coding));
++#endif
+ #else
+     ERREXIT(cinfo, JERR_NOT_COMPILED);
+ #endif
+@@ -94,10 +102,12 @@ jinit_compress_master(j_compress_ptr cinfo)
+     /* Forward DCT */
+     if (cinfo->data_precision == 8)
+       jinit_forward_dct(cinfo);
++#if 0
+     else if (cinfo->data_precision == 12)
+       j12init_forward_dct(cinfo);
+     else
+       ERREXIT1(cinfo, JERR_BAD_PRECISION, cinfo->data_precision);
++#endif
+     /* Entropy encoding: either Huffman or arithmetic coding. */
+     if (cinfo->arith_code) {
+ #ifdef C_ARITH_CODING_SUPPORTED
+@@ -116,17 +126,20 @@ jinit_compress_master(j_compress_ptr cinfo)
+         jinit_huff_encoder(cinfo);
+     }
+ 
++#if 0
+     /* Need a full-image coefficient buffer in any multi-pass mode. */
+     if (cinfo->data_precision == 12)
+       j12init_c_coef_controller(cinfo, (boolean)(cinfo->num_scans > 1 ||
+                                                  cinfo->optimize_coding));
+     else
++#endif
+       jinit_c_coef_controller(cinfo, (boolean)(cinfo->num_scans > 1 ||
+                                                cinfo->optimize_coding));
+   }
+ 
+   if (cinfo->data_precision <= 8)
+     jinit_c_main_controller(cinfo, FALSE /* never need full buffer here */);
++#if 0
+   else if (cinfo->data_precision <= 12)
+     j12init_c_main_controller(cinfo, FALSE /* never need full buffer here */);
+   else
+@@ -134,6 +147,7 @@ jinit_compress_master(j_compress_ptr cinfo)
+     j16init_c_main_controller(cinfo, FALSE /* never need full buffer here */);
+ #else
+     ERREXIT1(cinfo, JERR_BAD_PRECISION, cinfo->data_precision);
++#endif
+ #endif
+ 
+   jinit_marker_writer(cinfo);
+ src/jdmaster.c  | 23 +++++++++++++++++++++++
+ src/jdtrans.c   |  4 ++++
+ src/turbojpeg.c |  2 ++
+ 3 files changed, 29 insertions(+)
+
+--- a/src/jdmaster.c
++++ b/src/jdmaster.c
+@@ -574,9 +574,11 @@ master_selection(j_decompress_ptr cinfo)
+ #ifdef QUANT_1PASS_SUPPORTED
+       if (cinfo->data_precision == 8)
+         jinit_1pass_quantizer(cinfo);
++#if 0
+       else if (cinfo->data_precision == 12)
+         j12init_1pass_quantizer(cinfo);
+       else
++#endif
+         ERREXIT1(cinfo, JERR_BAD_PRECISION, cinfo->data_precision);
+       master->quantizer_1pass = cinfo->cquantize;
+ #else
+@@ -589,9 +591,11 @@ master_selection(j_decompress_ptr cinfo)
+ #ifdef QUANT_2PASS_SUPPORTED
+       if (cinfo->data_precision == 8)
+         jinit_2pass_quantizer(cinfo);
++#if 0
+       else if (cinfo->data_precision == 12)
+         j12init_2pass_quantizer(cinfo);
+       else
++#endif
+         ERREXIT1(cinfo, JERR_BAD_PRECISION, cinfo->data_precision);
+       master->quantizer_2pass = cinfo->cquantize;
+ #else
+@@ -603,14 +607,19 @@ master_selection(j_decompress_ptr cinfo)
+      */
+   }
+ 
++  if (cinfo->data_precision > 8)
++      ERREXIT1(cinfo, JERR_BAD_PRECISION, cinfo->data_precision);
++
+   /* Post-processing: in particular, color conversion first */
+   if (!cinfo->raw_data_out) {
+     if (master->using_merged_upsample) {
+ #ifdef UPSAMPLE_MERGING_SUPPORTED
+       if (cinfo->data_precision == 8)
+         jinit_merged_upsampler(cinfo); /* does color conversion too */
++#if 0
+       else if (cinfo->data_precision == 12)
+         j12init_merged_upsampler(cinfo); /* does color conversion too */
++#endif
+       else
+         ERREXIT1(cinfo, JERR_BAD_PRECISION, cinfo->data_precision);
+ #else
+@@ -620,6 +629,7 @@ master_selection(j_decompress_ptr cinfo)
+       if (cinfo->data_precision <= 8) {
+         jinit_color_deconverter(cinfo);
+         jinit_upsampler(cinfo);
++#if 0
+       } else if (cinfo->data_precision <= 12) {
+         j12init_color_deconverter(cinfo);
+         j12init_upsampler(cinfo);
+@@ -629,11 +639,13 @@ master_selection(j_decompress_ptr cinfo)
+         j16init_upsampler(cinfo);
+ #else
+         ERREXIT1(cinfo, JERR_BAD_PRECISION, cinfo->data_precision);
++#endif
+ #endif
+       }
+     }
+     if (cinfo->data_precision <= 8)
+       jinit_d_post_controller(cinfo, cinfo->enable_2pass_quant);
++#if 0
+     else if (cinfo->data_precision <= 12)
+       j12init_d_post_controller(cinfo, cinfo->enable_2pass_quant);
+     else
+@@ -641,6 +653,7 @@ master_selection(j_decompress_ptr cinfo)
+       j16init_d_post_controller(cinfo, cinfo->enable_2pass_quant);
+ #else
+       ERREXIT1(cinfo, JERR_BAD_PRECISION, cinfo->data_precision);
++#endif
+ #endif
+   }
+ 
+@@ -651,10 +664,12 @@ master_selection(j_decompress_ptr cinfo)
+      */
+     if (cinfo->data_precision <= 8)
+       jinit_lossless_decompressor(cinfo);
++#if 0
+     else if (cinfo->data_precision <= 12)
+       j12init_lossless_decompressor(cinfo);
+     else
+       j16init_lossless_decompressor(cinfo);
++#endif
+     /* Entropy decoding: either Huffman or arithmetic coding. */
+     if (cinfo->arith_code) {
+       ERREXIT(cinfo, JERR_ARITH_NOTIMPL);
+@@ -667,10 +682,12 @@ master_selection(j_decompress_ptr cinfo)
+                    cinfo->buffered_image;
+     if (cinfo->data_precision <= 8)
+       jinit_d_diff_controller(cinfo, use_c_buffer);
++#if 0
+     else if (cinfo->data_precision <= 12)
+       j12init_d_diff_controller(cinfo, use_c_buffer);
+     else
+       j16init_d_diff_controller(cinfo, use_c_buffer);
++#endif
+ #else
+     ERREXIT(cinfo, JERR_NOT_COMPILED);
+ #endif
+@@ -678,8 +695,10 @@ master_selection(j_decompress_ptr cinfo)
+     /* Inverse DCT */
+     if (cinfo->data_precision == 8)
+       jinit_inverse_dct(cinfo);
++#if 0
+     else if (cinfo->data_precision == 12)
+       j12init_inverse_dct(cinfo);
++#endif
+     else
+       ERREXIT1(cinfo, JERR_BAD_PRECISION, cinfo->data_precision);
+     /* Entropy decoding: either Huffman or arithmetic coding. */
+@@ -703,15 +722,18 @@ master_selection(j_decompress_ptr cinfo)
+     /* Initialize principal buffer controllers. */
+     use_c_buffer = cinfo->inputctl->has_multiple_scans ||
+                    cinfo->buffered_image;
++#if 0
+     if (cinfo->data_precision == 12)
+       j12init_d_coef_controller(cinfo, use_c_buffer);
+     else
++#endif
+       jinit_d_coef_controller(cinfo, use_c_buffer);
+   }
+ 
+   if (!cinfo->raw_data_out) {
+     if (cinfo->data_precision <= 8)
+       jinit_d_main_controller(cinfo, FALSE /* never need full buffer here */);
++#if 0
+     else if (cinfo->data_precision <= 12)
+       j12init_d_main_controller(cinfo,
+                                 FALSE /* never need full buffer here */);
+@@ -721,6 +743,7 @@ master_selection(j_decompress_ptr cinfo)
+                                 FALSE /* never need full buffer here */);
+ #else
+       ERREXIT1(cinfo, JERR_BAD_PRECISION, cinfo->data_precision);
++#endif
+ #endif
+   }
+ 
+--- a/src/jdtrans.c
++++ b/src/jdtrans.c
+@@ -129,10 +129,14 @@ transdecode_master_selection(j_decompress_ptr cinfo)
+       jinit_huff_decoder(cinfo);
+   }
+ 
++  if (cinfo->data_precision > 8)
++      ERREXIT1(cinfo, JERR_BAD_PRECISION, cinfo->data_precision);
++#if 0
+   /* Always get a full-image coefficient buffer. */
+   if (cinfo->data_precision == 12)
+     j12init_d_coef_controller(cinfo, TRUE);
+   else
++#endif
+     jinit_d_coef_controller(cinfo, TRUE);
+ 
+   /* We can now tell the memory manager to allocate virtual arrays. */
+--- a/src/turbojpeg.c
++++ b/src/turbojpeg.c
+@@ -1197,12 +1197,14 @@ bailout:
+ #define BITS_IN_JSAMPLE  8
+ #include "turbojpeg-mp.c"
+ #undef BITS_IN_JSAMPLE
++#if 0
+ #define BITS_IN_JSAMPLE  12
+ #include "turbojpeg-mp.c"
+ #undef BITS_IN_JSAMPLE
+ #define BITS_IN_JSAMPLE  16
+ #include "turbojpeg-mp.c"
+ #undef BITS_IN_JSAMPLE
++#endif
+ 
+ /* TurboJPEG 1.2+ */
+ DLLEXPORT int tjCompress2(tjhandle handle, const unsigned char *srcBuf,
