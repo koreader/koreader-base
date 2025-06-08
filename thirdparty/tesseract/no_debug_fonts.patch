@@ -1,6 +1,6 @@
---- i/src/ccstruct/debugpixa.h
-+++ w/src/ccstruct/debugpixa.h
-@@ -14,7 +14,7 @@
+--- a/src/ccstruct/debugpixa.h
++++ b/src/ccstruct/debugpixa.h
+@@ -14,7 +14,7 @@ public:
    // TODO(rays) add another constructor with size control.
    DebugPixa() {
      pixa_ = pixaCreate(0);
