@@ -20,11 +20,11 @@ list(APPEND INSTALL_CMD COMMAND ${CMAKE_COMMAND} --install .)
 
 if(NOT MONOLIBTIC)
     append_shared_lib_install_commands(INSTALL_CMD jpeg VERSION 8)
-    append_shared_lib_install_commands(INSTALL_CMD turbojpeg VERSION 0.3.0)
+    append_shared_lib_install_commands(INSTALL_CMD turbojpeg VERSION 0.4.0)
 endif()
 
 external_project(
-    DOWNLOAD GIT 3.0.4
+    DOWNLOAD GIT 3.1.1
     https://github.com/libjpeg-turbo/libjpeg-turbo.git
     PATCH_FILES ${PATCH_FILES}
     CMAKE_ARGS ${CMAKE_ARGS}

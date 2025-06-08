@@ -16,10 +16,7 @@ require("ffi/turbojpeg_h")
 -- The turbojpeg library symbols are versioned, so it should always be
 -- backward compatible: the major & patch numbers are always 0, and when
 -- a new API version is made available, the minor number is incremented.
-local ok, turbojpeg = pcall(ffi.loadlib, "turbojpeg", "0.3.0")
-if not ok then
-    turbojpeg = ffi.load("turbojpeg")
-end
+local turbojpeg = ffi.loadlib("turbojpeg", "0.4.0", "turbojpeg", "0.3.0", "turbojpeg")
 
 local Jpeg = {}
 
