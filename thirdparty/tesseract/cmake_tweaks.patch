@@ -1,5 +1,5 @@
---- i/CMakeLists.txt
-+++ w/CMakeLists.txt
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
 @@ -8,7 +8,7 @@
  #
  # ##############################################################################
@@ -9,7 +9,7 @@
  
  # In-source builds are disabled.
  if("${CMAKE_CURRENT_SOURCE_DIR}" STREQUAL "${CMAKE_CURRENT_BINARY_DIR}")
-@@ -406,6 +406,7 @@
+@@ -413,6 +413,7 @@ else()
    endif(NOT Leptonica_FOUND)
    include_directories(${Leptonica_INCLUDE_DIRS})
  
@@ -17,7 +17,7 @@
    check_leptonica_tiff_support()
    if ((NOT LEPT_TIFF_RESULT EQUAL 0) AND LEPT_TIFF_COMPILE_SUCCESS)
      message(NOTICE "Leptonica was build without TIFF support! Disabling TIFF support...")
-@@ -413,6 +414,7 @@
+@@ -420,6 +421,7 @@ else()
    elseif(NOT ${CMAKE_VERSION} VERSION_LESS "3.25")
      message(STATUS "Leptonica was build with TIFF support.")
    endif()
@@ -25,7 +25,7 @@
  
    # Check for optional libraries.
    if(DISABLE_TIFF)
-@@ -808,6 +810,11 @@
+@@ -814,6 +816,11 @@ if(BUILD_SHARED_LIBS)
      PRIVATE -DTESS_EXPORTS
      INTERFACE -DTESS_IMPORTS)
    # generate_export_header          (libtesseract EXPORT_MACRO_NAME TESS_API)
@@ -37,7 +37,7 @@
  endif()
  target_link_libraries(libtesseract PRIVATE ${LIB_Ws2_32} ${LIB_pthread})
  if(OpenMP_CXX_FOUND)
-@@ -865,18 +872,20 @@
+@@ -871,18 +878,20 @@ if(WIN32
  endif()
  
  if(ANDROID)
@@ -59,7 +59,7 @@
  add_executable(tesseract src/tesseract.cpp)
  target_link_libraries(tesseract libtesseract)
  if(HAVE_TIFFIO_H AND WIN32)
-@@ -886,6 +895,7 @@
+@@ -892,6 +901,7 @@ endif()
  if(OPENMP_BUILD AND UNIX)
    target_link_libraries(tesseract pthread)
  endif()
@@ -67,7 +67,7 @@
  
  # ##############################################################################
  
-@@ -936,7 +936,6 @@
+@@ -934,7 +944,6 @@ install(
    FILES ${CMAKE_CURRENT_BINARY_DIR}/tesseract_$<CONFIG>.pc
    DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig
    RENAME tesseract.pc)
@@ -75,9 +75,9 @@
  if (MSVC)
    install(FILES $<TARGET_PDB_FILE:${PROJECT_NAME}> DESTINATION bin OPTIONAL)
  endif()
---- i/tesseract.pc.cmake
-+++ w/tesseract.pc.cmake
-@@ -8,6 +8,6 @@
+--- a/tesseract.pc.cmake
++++ b/tesseract.pc.cmake
+@@ -8,6 +8,6 @@ Description: An OCR Engine that was developed at HP Labs (1985-1995) and Google
  URL: https://github.com/tesseract-ocr/tesseract
  Version: @tesseract_VERSION@
  Requires.private: lept
@@ -85,4 +85,3 @@
 +Libs: -L${libdir} -l@tesseract_OUTPUT_NAME@ @cpu_features_LIBS@ @libarchive_LIBS@ @libcurl_LIBS@
  Libs.private:
  Cflags: -I${includedir}
-
