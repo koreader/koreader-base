@@ -59,6 +59,7 @@ enum TJPARAM {
   TJPARAM_DENSITYUNITS = 22,
   TJPARAM_MAXMEMORY = 23,
   TJPARAM_MAXPIXELS = 24,
+  TJPARAM_SAVEMARKERS = 25,
 };
 typedef void *tjhandle;
 tjhandle tj3Init(int);
