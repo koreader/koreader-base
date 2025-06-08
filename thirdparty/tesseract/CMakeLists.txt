@@ -1,7 +1,6 @@
 list(APPEND PATCH_FILES
     k2pdfopt.patch
     cmake_tweaks.patch
-    fix-old-tc-build.patch
     no_debug_fonts.patch
 )
 
