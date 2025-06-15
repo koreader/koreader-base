@@ -66,7 +66,10 @@ endif()
 declare_dependency(czmq::czmq MONOLIBTIC czmq zmq LIBRARIES ${LIBRARIES})
 
 # djvulibre
-set(LIBRARIES m pthread stdc++)
+set(LIBRARIES m pthread)
+if(NOT (ANDROID AND MONOLIBTIC))
+    list(APPEND LIBRARIES stdc++)
+endif()
 if(APPLE)
     list(APPEND LIBRARIES "-framework CoreFoundation")
 endif()
