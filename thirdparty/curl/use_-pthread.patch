@@ -8,3 +8,14 @@
      find_package(Threads REQUIRED)
      set(USE_THREADS_POSIX ${CMAKE_USE_PTHREADS_INIT})
      set(HAVE_PTHREAD_H ${CMAKE_USE_PTHREADS_INIT})
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -1683,7 +1683,7 @@
+   endforeach()
+   if(BUILD_SHARED_LIBS)
+     set(ENABLE_SHARED         "yes")
+-    set(LIBCURL_NO_SHARED     "")
++    set(LIBCURL_NO_SHARED     "-pthread")
+     set(CPPFLAG_CURL_STATICLIB "")
+   else()
+     set(ENABLE_SHARED         "no")
