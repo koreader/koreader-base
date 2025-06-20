@@ -209,6 +209,7 @@ else ifeq ($(TARGET), macos)
 	EMULATE_READER=1
 else ifeq ($(TARGET), android)
 	ANDROID=1
+	MONOLIBTIC?=1
 	export PATH:=$(ANDROID_TOOLCHAIN)/bin:$(PATH)
 	ifeq ($(ANDROID_ARCH), x86)
 		CHOST?=i686-linux-android$(NDKABI)
@@ -649,6 +650,10 @@ ifndef DARWIN
   ifneq ($(TARGET), android)
     LDFLAGS += -Wl,@$(abspath $(KOR_BASE)/origin.ldflags)
   endif
+  # In monolibtic mode on Android, we can statically link the STL.
+  ifeq ($(TARGET), android)
+    LDFLAGS += $(if $(MONOLIBTIC),-static-libstdc++)
+  endif
 else
   LDFLAGS := -Wl,-rpath,@executable_path/libs,-rpath,@executable_path/../koreader/libs
 endif
@@ -770,8 +775,6 @@ DYNLIB_LDFLAGS = -shared
 ifdef DARWIN
 	DYNLIB_LDFLAGS += -dynamiclib -undefined dynamic_lookup
 endif
-
-MONOLIBTIC ?= $(ANDROID)
 
 # CMake toolchain file. {{{
 
