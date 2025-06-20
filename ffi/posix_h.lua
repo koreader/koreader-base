@@ -113,6 +113,8 @@ void *memset(void *, int, size_t);
 void *memchr(const void *, int, size_t);
 void *memrchr(const void *, int, size_t);
 void *memmem(const void *, size_t, const void *, size_t);
+size_t strlen(const char *);
+size_t strnlen(const char *, size_t);
 char *strdup(const char *);
 char *strndup(const char *, size_t);
 int strcoll(const char *, const char *);
