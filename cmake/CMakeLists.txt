@@ -11,6 +11,8 @@ include(koreader_targets)
 
 add_custom_target(download-all)
 add_custom_target(download)
+add_custom_target(prepare-all)
+add_custom_target(prepare)
 
 # HELPERS. {{{
 
@@ -480,20 +482,22 @@ endif()
 declare_project(cmake/koreader SOURCE_DIR .)
 
 # And now for the real setup.
-set(DOWNLOAD_PROJECTS)
+set(BUILD_PROJECTS)
 foreach(PRJ IN LISTS PROJECTS)
     setup_project(${PRJ} FALSE)
     if(NOT ${PRJ}_EXCLUDE_FROM_ALL)
-        list(APPEND DOWNLOAD_PROJECTS ${PRJ})
+        list(APPEND BUILD_PROJECTS ${PRJ})
     endif()
     add_dependencies(download-all ${PRJ}-download)
+    add_dependencies(prepare-all ${PRJ}-prepare)
 endforeach()
-# We want `download` to download all projects build by default,
-# **including** their dependencies and transitive dependencies.
-while(DOWNLOAD_PROJECTS)
-    list(POP_FRONT DOWNLOAD_PROJECTS PRJ)
-    list(APPEND DOWNLOAD_PROJECTS ${${PRJ}_DEPENDS})
+# We want `download` & `prepare` to download / prepare all projects built
+# by default, **including** their dependencies and transitive dependencies.
+while(BUILD_PROJECTS)
+    list(POP_FRONT BUILD_PROJECTS PRJ)
+    list(APPEND BUILD_PROJECTS ${${PRJ}_DEPENDS})
     add_dependencies(download ${PRJ}-download)
+    add_dependencies(prepare ${PRJ}-prepare)
 endwhile()
 
 # Add `rm-install-stamps` target.
