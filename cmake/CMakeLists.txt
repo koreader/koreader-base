@@ -114,7 +114,7 @@ find_executable(MESON Meson meson --version REQUIRED)
 set(MESON_SETUP
     ${MESON} setup ${MESON_TOOLCHAINS}
     --auto-features=disabled
-    --bindir=
+    --bindir=bin
     --libdir=lib
     --prefix=${STAGING_DIR}
     --wrap-mode=nodownload
