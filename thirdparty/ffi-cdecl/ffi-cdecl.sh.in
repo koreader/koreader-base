@@ -15,6 +15,7 @@ usage: ffi-cdecl [-c compiler] [-d dependency] [-o output.lua] [-n] [-D…|-I…
     -c compiler    Select compiler: c or c++ (otherwise determined by the input extension)
     -d dependency  Add additional cflags from specified pkg-config dependency
     -o output      Set output file (instead of stdout)
+    -f flags       Extra flags forwarded to the compiler
 
     -D/-I/-U       Those flags are forwarded to the compiler
 
@@ -42,7 +43,7 @@ cflags=(
     -I"${PREFIX}/include"
 )
 
-while getopts 'c:d:o:D:I:U:h:n' opt; do
+while getopts 'c:d:f:o:D:I:U:h:n' opt; do
     case "${opt}" in
         c)
             case "${OPTARG}" in
@@ -56,6 +57,10 @@ while getopts 'c:d:o:D:I:U:h:n' opt; do
             ;;
         d)
             read -ra a < <(pkg-config --cflags "${OPTARG}")
+            cflags+=("${a[@]}")
+            ;;
+        f)
+            declare -a "a=(${OPTARG})"
             cflags+=("${a[@]}")
             ;;
         n)
