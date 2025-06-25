@@ -186,6 +186,7 @@ declare_project(
     md4c
     nanosvg
     utf8proc
+    xxhash
     zlib
     zstd
     SOURCE_DIR thirdparty/kpvcrlib
@@ -431,6 +432,9 @@ declare_project(thirdparty/turbo DEPENDS libressl)
 
 # utf8proc
 declare_project(thirdparty/utf8proc)
+
+# xxhash
+declare_project(thirdparty/xxhash)
 
 # xz
 declare_project(thirdparty/xz EXCLUDE_FROM_ALL)
