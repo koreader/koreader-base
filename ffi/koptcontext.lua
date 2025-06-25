@@ -191,6 +191,8 @@ function KOPTContext_mt.__index:setMargin(margin) self.margin = margin end
 function KOPTContext_mt.__index:setZoom(zoom) self.zoom = zoom end
 function KOPTContext_mt.__index:setQuality(quality) self.quality = quality end
 function KOPTContext_mt.__index:setContrast(contrast) self.contrast = contrast end
+function KOPTContext_mt.__index:setBlackHex(black_hex) self.black_hex = black_hex end
+function KOPTContext_mt.__index:setWhiteHex(white_hex) self.white_hex = white_hex end
 function KOPTContext_mt.__index:setDefectSize(defect_size) self.defect_size = defect_size end
 function KOPTContext_mt.__index:setLineSpacing(line_spacing) self.line_spacing = line_spacing end
 function KOPTContext_mt.__index:setWordSpacing(word_spacing) self.word_spacing = word_spacing end
@@ -614,6 +616,8 @@ function KOPTContext.new()
     kc.read_max_width = 3000
     kc.read_max_height = 4000
     kc.writing_direction = 0
+	kc.black_hex = 0x000000
+	kc.white_hex = 0xFFFFFF
     -- number values
     kc.zoom = 1.0
     kc.margin = 0.06
@@ -684,6 +688,8 @@ function KOPTContext.totable(kc)
     context.read_max_width = kc.read_max_width
     context.read_max_height = kc.read_max_height
     context.writing_direction = kc.writing_direction
+	context.black_hex = kc.black_hex
+	context.white_hex = kc.white_hex
     -- number values
     context.zoom = kc.zoom
     context.margin = kc.margin
@@ -754,6 +760,8 @@ function KOPTContext.fromtable(context)
     kc.read_max_width = context.read_max_width
     kc.read_max_height = context.read_max_height
     kc.writing_direction = context.writing_direction
+	kc.black_hex = context.black_hex
+	kc.white_hex = context.white_hex
     -- number values
     kc.zoom = context.zoom
     kc.margin = context.margin
