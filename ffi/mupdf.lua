@@ -689,7 +689,7 @@ function page_mt.__index:draw_new(draw_context, width, height, offset_x, offset_
         M.fz_gamma_pixmap(self.ctx, pix, draw_context.gamma)
     end
 
-	M.fz_tint_pixmap(self.ctx, pix, draw_context.black_hex, draw_context.white_hex)
+    M.fz_tint_pixmap(self.ctx, pix, draw_context.black_hex, draw_context.white_hex)
     M.fz_drop_pixmap(self.ctx, pix)
 
     return bb
