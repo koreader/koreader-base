@@ -647,6 +647,32 @@ local function run_page(page, pixmap, ctm)
     M.fz_drop_device(page.ctx, dev)
     if ok == nil then merror(page.ctx, "could not run page") end
 end
+
+local function apply_white_threshold(bytes_per_pixel, samples, pixel_count, white_threshold)
+    local strength_coeff = 4
+    if bytes_per_pixel == 4 then
+        for i = 0, pixel_count - 1 do
+            local idx = i * bytes_per_pixel
+            local r, g, b = samples[idx], samples[idx + 1], samples[idx + 2]
+            local brightness = 0.299 * r + 0.587 * g + 0.114 * b
+            local strength = math.min(strength_coeff * (brightness - white_threshold) / (255 - white_threshold), 1.0)
+            if brightness > white_threshold then
+                samples[idx]     = r + (255 - r) * strength
+                samples[idx + 1] = g + (255 - g) * strength
+                samples[idx + 2] = b + (255 - b) * strength
+            end
+        end
+    else
+        for i = 0, pixel_count - 1 do
+            local brightness = samples[i]
+            if brightness > white_threshold then
+                local strength = math.min(strength_coeff * (brightness - white_threshold) / (255 - white_threshold), 1.0)
+                samples[i] = brightness + (255 - brightness) * strength
+            end
+        end
+    end
+end
+
 --[[
 render page to blitbuffer
 
@@ -679,11 +705,13 @@ function page_mt.__index:draw_new(draw_context, width, height, offset_x, offset_
     if mupdf.bgr and self.doc.color then
         colorspace = M.fz_device_bgr(self.ctx)
     end
+    local samples = ffi.cast("unsigned char*", bb.data)
     local pix = W.mupdf_new_pixmap_with_bbox_and_data(
-        self.ctx, colorspace, bbox, nil, self.doc.color and 1 or 0, ffi.cast("unsigned char*", bb.data))
+        self.ctx, colorspace, bbox, nil, self.doc.color and 1 or 0, samples)
     if pix == nil then merror(self.ctx, "cannot allocate pixmap") end
 
     run_page(self, pix, ctm)
+    apply_white_threshold(self.doc.color and 4 or 1, samples, width * height, draw_context.white_threshold)
 
     if draw_context.gamma >= 0.0 then
         M.fz_gamma_pixmap(self.ctx, pix, draw_context.gamma)
