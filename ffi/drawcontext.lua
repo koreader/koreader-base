@@ -11,8 +11,7 @@ typedef struct DrawContext {
 	int rotate;
 	double zoom;
 	double gamma;
-	int black_hex;
-	int white_hex;
+	unsigned char white_threshold;
 	int offset_x;
 	int offset_y;
 } DrawContext;
@@ -32,15 +31,13 @@ end
 function DC_mt.__index:getOffset() return self.offset_x, self.offset_y end
 function DC_mt.__index:setGamma(gamma) self.gamma = gamma end
 function DC_mt.__index:getGamma() return self.gamma end
-function DC_mt.__index:setBlackHex(black_hex) self.black_hex = black_hex end
-function DC_mt.__index:getBlackHex() return self.black_hex end
-function DC_mt.__index:setWhiteHex(white_hex) self.white_hex = white_hex end
-function DC_mt.__index:getWhiteHex() return self.white_hex end
+function DC_mt.__index:setWhiteThreshold(white_threshold) self.white_threshold = white_threshold end
+function DC_mt.__index:getWhiteThreshold() return self.white_threshold end
 
 local dctype = ffi.metatype("DrawContext", DC_mt)
 
-function DC.new(rotate, zoom, x, y, gamma, black_hex, white_hex)
-	return dctype(rotate or 0, zoom or 1.0, gamma or -1.0, x or 0, y or 0, black_hex or 0x000000, white_hex or 0xFFFFFF)
+function DC.new(rotate, zoom, x, y, gamma, white_threshold)
+	return dctype(rotate or 0, zoom or 1.0, gamma or -1.0, x or 0, y or 0, white_threshold or 255)
 end
 
 return DC

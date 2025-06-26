@@ -226,7 +226,6 @@ fz_pixmap *mupdf_convert_pixmap(fz_context *, const fz_pixmap *, fz_colorspace *
 void fz_drop_pixmap(fz_context *, fz_pixmap *);
 void fz_clear_pixmap_with_value(fz_context *, fz_pixmap *, int);
 void fz_gamma_pixmap(fz_context *, fz_pixmap *, float);
-void fz_tint_pixmap(fz_context *, fz_pixmap *, int, int);
 fz_pixmap *fz_scale_pixmap(fz_context *, fz_pixmap *, float, float, float, float, const fz_irect *);
 int fz_pixmap_width(fz_context *, const fz_pixmap *);
 int fz_pixmap_height(fz_context *, const fz_pixmap *);
