@@ -22,7 +22,7 @@ typedef struct DrawContext {
 	int rotate;
 	double zoom;
 	double gamma;
-	int white_threshold;
+	unsigned char white_threshold;
 	int offset_x;
 	int offset_y;
 } DrawContext;

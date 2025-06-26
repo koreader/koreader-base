@@ -655,8 +655,8 @@ local function apply_white_threshold(bytes_per_pixel, samples, pixel_count, whit
             local idx = i * bytes_per_pixel
             local r, g, b = samples[idx], samples[idx + 1], samples[idx + 2]
             local brightness = 0.299 * r + 0.587 * g + 0.114 * b
-            local strength = math.min(strength_coeff * (brightness - white_threshold) / (255 - white_threshold), 1.0)
             if brightness > white_threshold then
+                local strength = math.min(strength_coeff * (brightness - white_threshold) / (255 - white_threshold), 1.0)
                 samples[idx]     = math.max(255, r + (255 - r) * strength)
                 samples[idx + 1] = math.max(255, g + (255 - g) * strength)
                 samples[idx + 2] = math.max(255, b + (255 - b) * strength)
