@@ -649,7 +649,7 @@ local function run_page(page, pixmap, ctm)
 end
 
 local function apply_white_threshold(bytes_per_pixel, samples, pixel_count, white_threshold)
-    local strength_coeff = 4
+    local strength_coeff = 0.2
     if bytes_per_pixel == 4 then
         for i = 0, pixel_count - 1 do
             local idx = i * bytes_per_pixel
@@ -711,8 +711,10 @@ function page_mt.__index:draw_new(draw_context, width, height, offset_x, offset_
     if pix == nil then merror(self.ctx, "cannot allocate pixmap") end
 
     run_page(self, pix, ctm)
-    apply_white_threshold(self.doc.color and 4 or 1, samples, width * height, draw_context.white_threshold)
 
+    if draw_context.white_threshold < 255 then
+        apply_white_threshold(self.doc.color and 4 or 1, samples, width * height, draw_context.white_threshold)
+    end
     if draw_context.gamma >= 0.0 then
         M.fz_gamma_pixmap(self.ctx, pix, draw_context.gamma)
     end
