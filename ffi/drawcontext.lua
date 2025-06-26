@@ -37,7 +37,7 @@ function DC_mt.__index:getWhiteThreshold() return self.white_threshold end
 local dctype = ffi.metatype("DrawContext", DC_mt)
 
 function DC.new(rotate, zoom, x, y, gamma, white_threshold)
-	return dctype(rotate or 0, zoom or 1.0, gamma or -1.0, x or 0, y or 0, white_threshold or 255)
+	return dctype(rotate or 0, zoom or 1.0, gamma or -1.0, white_threshold or 255, x or 0, y or 0)
 end
 
 return DC
