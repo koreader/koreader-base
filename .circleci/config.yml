@@ -25,6 +25,7 @@ executors:
     <<: *BASE_EXE
     environment: &EMU_ENV_LST
       EMULATE_READER: "1"
+      KODEBUG: ""
       CC: "gcc"
 
   emu_gcc_ninja_debug:
@@ -38,6 +39,7 @@ executors:
       - image: koreader/kobase-clang:0.4.1-22.04
     environment:
       <<: *EMU_ENV_LST
+      KODEBUG: ""
       USE_CLANG: "1"
 
   # }}}

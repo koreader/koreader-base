@@ -253,6 +253,7 @@ else ifeq ($(TARGET), cervantes)
 else ifndef TARGET
 	# if TARGET is not defined we will build an emulator on current machine
 	EMULATE_READER=1
+	KODEBUG ?= 1
 	SDL=1
 else
   $(error Invalid TARGET: "$(TARGET)")
