@@ -34,6 +34,9 @@ endif()
 
 list(APPEND BUILD_CMD COMMAND make CROSS_TC=${CHOST})
 append_autotools_vars(BUILD_CMD)
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    list(APPEND BUILD_CMD DEBUG=1)
+endif()
 
 if(TOOL STREQUAL "fbdepth")
     list(APPEND BUILD_CMD ${FBDEPTH_TARGET})

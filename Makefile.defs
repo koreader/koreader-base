@@ -74,12 +74,6 @@ endif
 
 LINUX_ARCH?=native
 
-# set debug-related variables to cascade down
-ifdef KODEBUG
-	DEBUG:=$(KODEBUG)
-	export DEBUG
-endif
-
 CMAKE := cmake -Wdev --warn-uninitialized
 NINJA := $(or $(NINJA),ninja)
 
