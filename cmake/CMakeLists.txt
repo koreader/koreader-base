@@ -617,7 +617,7 @@ ffi_target(linux rtc_h.lua rtc_cdecl.c ${EXCLUDE_FROM_ALL})
 ffi_target(lodepng lodepng_h.lua lodepng_decl.c)
 
 # mupdf
-ffi_target(mupdf mupdf_h.lua wrap-mupdf_cdecl.c ARGS -I .)
+ffi_target(mupdf mupdf_h.lua wrap-mupdf_cdecl.c ARGS -I . -f -std=gnu11)
 
 # pocketbook
 if(POCKETBOOK)
