@@ -89,6 +89,7 @@ declare_dependency(harfbuzz::harfbuzz INCLUDES freetype2 harfbuzz MONOLIBTIC har
 
 # libarchive
 declare_dependency(libarchive::libarchive MONOLIBTIC archive)
+declare_dependency(libarchive::libarchive_static STATIC archive)
 
 # leptonica
 declare_dependency(leptonica::leptonica INCLUDES leptonica MONOLIBTIC leptonica)
@@ -233,8 +234,13 @@ endif()
 # utf8proc
 declare_dependency(utf8proc::utf8proc MONOLIBTIC utf8proc)
 
+# xz
+declare_dependency(xz::lzma_static STATIC lzma)
+
 # zlib
 declare_dependency(zlib::z MONOLIBTIC z)
+declare_dependency(zlib::z_static STATIC z)
 
 # zstd
 declare_dependency(zstd::zstd MONOLIBTIC zstd)
+declare_dependency(zstd::zstd_static STATIC zstd)
