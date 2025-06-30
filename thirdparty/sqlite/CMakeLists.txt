@@ -12,8 +12,8 @@ if(NOT MONOLIBTIC)
 endif()
 
 external_project(
-    DOWNLOAD URL 9689640cf60aaa90cd105bfb5ca0d38c
-    https://sqlite.org/2025/sqlite-amalgamation-3500100.zip
+    DOWNLOAD URL 7fec108df759eec20eddfc3d5b48ebba
+    https://sqlite.org/2025/sqlite-amalgamation-3500200.zip
     PATCH_OVERLAY overlay
     CMAKE_ARGS ${CMAKE_ARGS}
     BUILD_COMMAND ${BUILD_CMD}
