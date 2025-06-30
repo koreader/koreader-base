@@ -74,12 +74,6 @@ endif
 
 LINUX_ARCH?=native
 
-# set debug-related variables to cascade down
-ifdef KODEBUG
-	DEBUG:=$(KODEBUG)
-	export DEBUG
-endif
-
 CMAKE := cmake -Wdev --warn-uninitialized
 NINJA := $(or $(NINJA),ninja)
 
@@ -259,6 +253,7 @@ else ifeq ($(TARGET), cervantes)
 else ifndef TARGET
 	# if TARGET is not defined we will build an emulator on current machine
 	EMULATE_READER=1
+	KODEBUG ?= 1
 	SDL=1
 else
   $(error Invalid TARGET: "$(TARGET)")
