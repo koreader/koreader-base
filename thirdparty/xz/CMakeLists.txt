@@ -13,7 +13,7 @@ list(JOIN FILTERS $<SEMICOLON> FILTERS)
 
 list(APPEND CMAKE_ARGS
     -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE}
-    -DBUILD_SHARED_LIBS=$<NOT:$<BOOL:${MONOLIBTIC}>>
+    -DBUILD_SHARED_LIBS=FALSE
     # Project options.
     -DXZ_DOC=FALSE
     # We can't disable the encoder completely,
@@ -41,10 +41,6 @@ list(APPEND CMAKE_ARGS
 list(APPEND BUILD_CMD COMMAND ninja)
 
 list(APPEND INSTALL_CMD COMMAND ${CMAKE_COMMAND} --install .)
-
-if(NOT MONOLIBTIC)
-    append_shared_lib_install_commands(INSTALL_CMD lzma VERSION 5)
-endif()
 
 external_project(
     DOWNLOAD URL cf5e1feb023d22c6bdaa30e84ef3abe3
