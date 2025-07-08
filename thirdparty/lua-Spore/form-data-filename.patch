@@ -1,0 +1,28 @@
+From 912b0235b61c77b019dec42a27c349c761b06517 Mon Sep 17 00:00:00 2001
+From: Jacopo <jacopo.degattis@gmail.com>
+Date: Sun, 6 Jul 2025 17:20:28 +0200
+Subject: [PATCH] fix: _form_data function to properly set filename
+
+---
+ src/Spore/Request.lua | 5 +++--
+ 1 file changed, 3 insertions(+), 2 deletions(-)
+
+diff --git a/src/Spore/Request.lua b/src/Spore/Request.lua
+index eb983fb..44b4635 100644
+--- a/src/Spore/Request.lua
++++ b/src/Spore/Request.lua
+@@ -121,8 +121,9 @@ local function _form_data (data, debug_)
+     local p = {}
+     for k, v in pairs(data) do
+         if sub(v, 1, 1) == '@' then
+-            local fname = sub(v, 2)
+-            local content = slurp(fname, debug_)
++            local fullpath = sub(v, 2)
++            local fname = fullpath:match("([^/\\]+)$")
++            local content = slurp(fullpath, debug_)
+             p[#p+1] = 'content-disposition: form-data; name="' .. k .. '"; filename="' .. fname ..'"\r\n'
+                    .. 'content-type: application/octet-stream\r\n\r\n'
+                    .. content
+-- 
+2.39.5 (Apple Git-154)
+
