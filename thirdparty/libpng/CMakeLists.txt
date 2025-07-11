@@ -1,5 +1,3 @@
-list(APPEND PATCH_FILES math_library.patch)
-
 list(APPEND CMAKE_ARGS
     -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE}
     # Project options.
@@ -25,9 +23,8 @@ if(NOT MONOLIBTIC)
 endif()
 
 external_project(
-    DOWNLOAD URL be6cc9e411c26115db3b9eab1159a1d9
-    https://github.com/pnggroup/libpng/archive/refs/tags/v1.6.48.tar.gz
-    PATCH_FILES ${PATCH_FILES}
+    DOWNLOAD URL 4a6433f54317b8f0d4cb749c09d4eff2
+    https://github.com/pnggroup/libpng/archive/refs/tags/v1.6.50.tar.gz
     CMAKE_ARGS ${CMAKE_ARGS}
     BUILD_COMMAND ${BUILD_CMD}
     INSTALL_COMMAND ${INSTALL_CMD}
