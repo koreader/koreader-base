@@ -52,6 +52,7 @@ target_link_libraries(
     md4c::html
     srell::srell
     utf8proc::utf8proc
+    xxhash::xxhash
     zlib::z
     zstd::zstd
 )
