@@ -1,0 +1,22 @@
+--- a/src/deep.h
++++ b/src/deep.h
+@@ -18,7 +18,7 @@
+ #if (defined PLATFORM_WIN32) || (defined PLATFORM_POCKETPC)
+ #define LANES_API __declspec(dllexport)
+ #else
+-#define LANES_API
++#define LANES_API __attribute__ ((visibility("default")))
+ #endif // (defined PLATFORM_WIN32) || (defined PLATFORM_POCKETPC)
+ #endif // LANES_API
+ 
+--- a/src/lanes.h
++++ b/src/lanes.h
+@@ -7,7 +7,7 @@
+ #if (defined PLATFORM_WIN32) || (defined PLATFORM_POCKETPC)
+ #define LANES_API __declspec(dllexport)
+ #else
+-#define LANES_API
++#define LANES_API __attribute__ ((visibility("default")))
+ #endif // (defined PLATFORM_WIN32) || (defined PLATFORM_POCKETPC)
+ 
+ #define LANES_VERSION_MAJOR 3

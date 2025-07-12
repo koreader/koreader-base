@@ -279,6 +279,9 @@ else()
 endif()
 declare_project(thirdparty/kobo-usbms ${EXCLUDE_FROM_ALL})
 
+# lanes
+declare_project(thirdparty/lanes DEPENDS luajit)
+
 # leptonica
 declare_project(thirdparty/leptonica DEPENDS libpng)
 
