@@ -45,6 +45,7 @@ local monolibtic = {
         ["webp"]       = true,
         ["webpdemux"]  = true,
         ["wrap-mupdf"] = true,
+        ["xxhash"]     = true,
         ["z"]          = true,
         ["zmq"]        = true,
         ["zstd"]       = true,
