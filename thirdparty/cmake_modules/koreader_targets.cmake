@@ -283,6 +283,94 @@ declare_koreader_target(
     SOURCES unpack.c
 )
 
+# zipsync
+declare_koreader_target(
+    zipsync TYPE executable
+    DEPENDS luajit::luajit_static
+    EXCLUDE_FROM_ALL
+    SOURCES zipsync/zipsync.c
+)
+function(setup_zipsync)
+    if(EMULATE_READER)
+        set(LUAJIT_EXE ${STAGING_DIR}/bin/luajit)
+        set(LUAJIT_JIT_OPTS)
+        set(LUA_FFI_POSIX_TYPES posix_types_x64_h)
+    else()
+        find_program(
+            LUAJIT_EXE luajit REQUIRED
+            PATHS /usr/local/bin /usr/bin
+            NO_DEFAULT_PATH NO_PACKAGE_ROOT_PATH NO_CMAKE_PATH
+            NO_CMAKE_ENVIRONMENT_PATH NO_SYSTEM_ENVIRONMENT_PATH
+            NO_CMAKE_SYSTEM_PATH NO_CMAKE_INSTALL_PREFIX NO_CMAKE_FIND_ROOT_PATH
+        )
+    endif()
+    set(LUAJIT_JIT_OPTS -d -o Linux)
+    if(CMAKE_SYSTEM_PROCESSOR STREQUAL "aarch64")
+        list(APPEND LUAJIT_JIT_OPTS -X -a arm64)
+    elseif(CMAKE_SYSTEM_PROCESSOR STREQUAL "arm")
+        list(APPEND LUAJIT_JIT_OPTS -W -a arm)
+    elseif(CMAKE_SYSTEM_PROCESSOR STREQUAL "i686")
+        list(APPEND LUAJIT_JIT_OPTS -W -a x86)
+    elseif(CMAKE_SYSTEM_PROCESSOR STREQUAL "x86_64")
+        list(APPEND LUAJIT_JIT_OPTS -X -a x64)
+    endif()
+    set(LUA_MODULES_NAMES)
+    set(LUA_MODULES_OBJS)
+    foreach(NAME
+            # cdecls
+            ffi/posix_types_64b_h
+            ffi/posix_types_def_h
+            ffi/posix_types_x64_h
+            ffi/posix_types_x86_h
+            ffi/posix_h
+            ffi/libarchive_h
+            ffi/xxhash_h
+            ffi/zstd_h
+            # others
+            ffi/loadlib
+            ffi/archiver
+            ffi/downloader
+            ffi/hashoir
+            ffi/util
+            ffi/zstd
+            ffi/zipsync
+            zipsync
+        )
+        string(REPLACE "/" "_" ID ${NAME})
+        set(OBJ ${CMAKE_CURRENT_BINARY_DIR}/lua_${ID}.o)
+        set(SRC ${NAME}.lua)
+        if(NAME STREQUAL "zipsync")
+            set(SRC ${CMAKE_CURRENT_SOURCE_DIR}/zipsync/${SRC})
+        endif()
+        add_custom_command(
+            COMMAND ${LUAJIT_EXE} -b ${LUAJIT_JIT_OPTS} -n ${ID} ${SRC} ${OBJ}
+            DEPENDS ${SRC}
+            OUTPUT ${OBJ}
+            WORKING_DIRECTORY ${OUTPUT_DIR}
+            VERBATIM
+        )
+        list(APPEND LUA_MODULES_NAMES ${NAME})
+        list(APPEND LUA_MODULES_OBJS ${OBJ})
+    endforeach()
+    list(JOIN LUA_MODULES_NAMES " " LUA_MODULES_NAMES)
+    set_target_properties(zipsync PROPERTIES ENABLE_EXPORTS TRUE)
+    target_compile_definitions(zipsync PRIVATE "LUA_MODULES=\"${LUA_MODULES_NAMES}\"")
+    target_compile_options(zipsync BEFORE PRIVATE -std=gnu11)
+    target_sources(zipsync PRIVATE ${LUA_MODULES_OBJS})
+    set(ZIPSYNC_SCRIPT ${OUTPUT_DIR}/zipsync.lua)
+    add_custom_command(
+        COMMAND ln -snfr ${CMAKE_CURRENT_SOURCE_DIR}/zipsync/zipsync.lua ${ZIPSYNC_SCRIPT}
+        OUTPUT ${ZIPSYNC_SCRIPT}
+        VERBATIM
+    )
+    if(ANDROID OR APPLE OR EMULATE_READER)
+        set(ALL)
+    else()
+        set(ALL ALL)
+    endif()
+    add_custom_target(zipsync-script ${ALL} DEPENDS ${ZIPSYNC_SCRIPT})
+endfunction()
+
 # }}}
 
 # MONOLIBTIC. {{{
