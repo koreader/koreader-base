@@ -87,6 +87,11 @@ declare_dependency(giflib::gif MONOLIBTIC gif)
 # harfbuzz
 declare_dependency(harfbuzz::harfbuzz INCLUDES freetype2 harfbuzz MONOLIBTIC harfbuzz)
 
+# lanes
+if(MONOLIBTIC)
+    declare_dependency(lanes::core LIBRARIES ${STAGING_DIR}/lib/lanes/core.a)
+endif()
+
 # libarchive
 declare_dependency(libarchive::libarchive MONOLIBTIC archive)
 
