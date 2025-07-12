@@ -182,18 +182,19 @@ declare_dependency(lunasvg::lunasvg MONOLIBTIC lunasvg)
 declare_dependency(md4c::html STATIC md4c-html md4c)
 
 # mupdf
+set(STATIC_LIBS mupdf mupdf-third aes)
 set(SYS_LIBS m)
 if(ANDROID)
     list(APPEND SYS_LIBS log)
 endif()
 set(MONO_LIBS archive freetype harfbuzz jpeg webp webpdemux z)
 if(ANDROID)
-    list(APPEND MONO_LIBS lzma)
+    list(APPEND STATIC_LIBS lzma)
 endif()
 declare_dependency(
     mupdf::mupdf
     MONOLIBTIC ${MONO_LIBS}
-    STATIC mupdf mupdf-third aes
+    STATIC ${STATIC_LIBS}
     LIBRARIES ${SYS_LIBS}
 )
 
