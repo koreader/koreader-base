@@ -68,6 +68,12 @@ int execv(const char *, char *const *);
 int execvp(const char *, char *const *);
 ssize_t write(int, const void *, size_t);
 ssize_t read(int, void *, size_t);
+struct iovec {
+    void   *iov_base;
+    size_t  iov_len;
+};
+ssize_t readv(int, const struct iovec *, int);
+ssize_t writev(int, const struct iovec *, int);
 int kill(int, int);
 static const int WNOHANG = 1;
 int waitpid(int, int *, int);
