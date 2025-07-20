@@ -245,6 +245,93 @@ function(setup_osx_loader)
     set_target_properties(osx_loader PROPERTIES OUTPUT_NAME koreader)
 endfunction()
 
+# kotasync
+declare_koreader_target(
+    kotasync TYPE executable
+    DEPENDS luajit::luajit_static
+    EXCLUDE_FROM_ALL
+    SOURCES kotasync/kotasync.c
+)
+function(setup_kotasync)
+    if(EMULATE_READER)
+        set(LUAJIT_EXE ${STAGING_DIR}/bin/luajit)
+        set(LUAJIT_JIT_OPTS)
+        set(LUA_FFI_POSIX_TYPES posix_types_x64_h)
+    else()
+        find_program(
+            LUAJIT_EXE luajit REQUIRED
+            PATHS /usr/local/bin /usr/bin
+            NO_DEFAULT_PATH NO_PACKAGE_ROOT_PATH NO_CMAKE_PATH
+            NO_CMAKE_ENVIRONMENT_PATH NO_SYSTEM_ENVIRONMENT_PATH
+            NO_CMAKE_SYSTEM_PATH NO_CMAKE_INSTALL_PREFIX NO_CMAKE_FIND_ROOT_PATH
+        )
+    endif()
+    set(LUAJIT_JIT_OPTS -d -g -o Linux)
+    if(CMAKE_SYSTEM_PROCESSOR STREQUAL "aarch64")
+        list(APPEND LUAJIT_JIT_OPTS -X -a arm64)
+    elseif(CMAKE_SYSTEM_PROCESSOR STREQUAL "arm")
+        list(APPEND LUAJIT_JIT_OPTS -W -a arm)
+    elseif(CMAKE_SYSTEM_PROCESSOR STREQUAL "i686")
+        list(APPEND LUAJIT_JIT_OPTS -W -a x86)
+    elseif(CMAKE_SYSTEM_PROCESSOR STREQUAL "x86_64")
+        list(APPEND LUAJIT_JIT_OPTS -X -a x64)
+    endif()
+    set(LUA_MODULES_NAMES)
+    set(LUA_MODULES_OBJS)
+    foreach(NAME
+            # cdecls
+            ffi/posix_types_64b_h
+            ffi/posix_types_def_h
+            ffi/posix_types_x64_h
+            ffi/posix_types_x86_h
+            ffi/posix_h
+            ffi/xxhash_h
+            ffi/xz_h
+            ffi/zstd_h
+            # others
+            ffi/loadlib
+            ffi/downloader
+            ffi/hashoir
+            ffi/util
+            ffi/zstd
+            ffi/kotasync
+            kotasync
+        )
+        string(REPLACE "/" "_" ID ${NAME})
+        set(OBJ ${CMAKE_CURRENT_BINARY_DIR}/lua_${ID}.o)
+        set(SRC ${NAME}.lua)
+        if(NAME STREQUAL "kotasync")
+            set(SRC ${CMAKE_CURRENT_SOURCE_DIR}/kotasync/${SRC})
+        endif()
+        add_custom_command(
+            COMMAND ${LUAJIT_EXE} -b ${LUAJIT_JIT_OPTS} -n ${ID} ${SRC} ${OBJ}
+            DEPENDS ${SRC}
+            OUTPUT ${OBJ}
+            WORKING_DIRECTORY ${OUTPUT_DIR}
+            VERBATIM
+        )
+        list(APPEND LUA_MODULES_NAMES ${NAME})
+        list(APPEND LUA_MODULES_OBJS ${OBJ})
+    endforeach()
+    list(JOIN LUA_MODULES_NAMES " " LUA_MODULES_NAMES)
+    set_target_properties(kotasync PROPERTIES ENABLE_EXPORTS TRUE)
+    target_compile_definitions(kotasync PRIVATE "LUA_MODULES=\"${LUA_MODULES_NAMES}\"")
+    target_compile_options(kotasync BEFORE PRIVATE -std=gnu11)
+    target_sources(kotasync PRIVATE ${LUA_MODULES_OBJS})
+    set(KOTASYNC_SCRIPT ${OUTPUT_DIR}/kotasync.lua)
+    add_custom_command(
+        COMMAND ln -snfr ${CMAKE_CURRENT_SOURCE_DIR}/kotasync/kotasync.lua ${KOTASYNC_SCRIPT}
+        OUTPUT ${KOTASYNC_SCRIPT}
+        VERBATIM
+    )
+    if(ANDROID OR APPLE OR EMULATE_READER)
+        set(ALL)
+    else()
+        set(ALL ALL)
+    endif()
+    add_custom_target(kotasync-script ${ALL} DEPENDS ${KOTASYNC_SCRIPT})
+endfunction()
+
 # inkview-compat
 if(POCKETBOOK)
     set(EXCLUDE_FROM_ALL)
