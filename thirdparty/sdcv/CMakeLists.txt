@@ -6,6 +6,8 @@ list(APPEND PATCH_FILES
     sdcv-locale-hack.patch
     # Fix compilation with newer GLib.
     compat_with_newer_glib.patch
+    # Don't walk into "res/" subdirectories.
+    sdcv-ignore-res.patch
 )
 
 string(APPEND GLIB2_INCLUDE_DIRS
