@@ -1,0 +1,13 @@
+--- a/src/utils.cpp
++++ b/src/utils.cpp
+@@ -64,6 +64,10 @@
+         const gchar *filename;
+ 
+         while ((filename = g_dir_read_name(dir)) != nullptr) {
++            if (filename[0] == '.') {
++                // Ignore hidden entries.
++                continue;
++            }
+             const std::string fullfilename(dirname + G_DIR_SEPARATOR_S + filename);
+             if (g_file_test(fullfilename.c_str(), G_FILE_TEST_IS_DIR))
+                 __for_each_file(fullfilename, suff, order_list, disable_list, f);
