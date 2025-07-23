@@ -1,4 +1,8 @@
-list(APPEND PATCH_FILES cmake_tweaks.patch)
+list(APPEND PATCH_FILES
+    cmake_tweaks.patch
+    # Fix 2 bugs in prefix handling.
+    fix_prefix_handling.patch
+)
 if(ANDROID)
     list(APPEND PATCH_FILES android.patch)
 endif()

@@ -201,6 +201,7 @@ else ifeq ($(TARGET), macos)
 	SDL=1
 	MACOS=1
 	EMULATE_READER=1
+	USE_CLANG=1
 else ifeq ($(TARGET), android)
 	ANDROID=1
 	MONOLIBTIC?=1
@@ -270,6 +271,7 @@ ifneq (,$(findstring darwin,$(MAKE_HOST)))
       DARWIN_AARCH64=1
     endif
     export MACOSX_DEPLOYMENT_TARGET := $(or $(MACOSX_DEPLOYMENT_TARGET),$(shell sw_vers -productVersion))
+    USE_CLANG=1
   endif
 endif
 

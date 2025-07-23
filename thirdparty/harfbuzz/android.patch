@@ -1,8 +1,8 @@
 diff --git a/src/hb.hh b/src/hb.hh
-index fe466fe1..d728bb99 100644
+index 47b710e67..5ddaa031f 100644
 --- a/src/hb.hh
 +++ b/src/hb.hh
-@@ -500,6 +500,10 @@ static int HB_UNUSED _hb_errno = 0;
+@@ -481,6 +481,10 @@ static int HB_UNUSED _hb_errno = 0;
  #define HB_NO_SETLOCALE 1
  #endif
  
@@ -13,9 +13,11 @@ index fe466fe1..d728bb99 100644
  #ifndef HB_NO_SETLOCALE
  
  #include <locale.h>
+diff --git a/src/hb-buffer-verify.cc b/src/hb-buffer-verify.cc
+index 76f821637..57a619c6b 100644
 --- a/src/hb-buffer-verify.cc
 +++ b/src/hb-buffer-verify.cc
-@@ -46,11 +46,13 @@
+@@ -46,11 +46,13 @@ buffer_verify_error (hb_buffer_t *buffer,
  {
    va_list ap;
    va_start (ap, fmt);

@@ -6,6 +6,8 @@ list(APPEND PATCH_FILES
     sdcv-locale-hack.patch
     # Fix compilation with newer GLib.
     compat_with_newer_glib.patch
+    # Ignore hidden filesystem entries.
+    ignore_hidden.patch
 )
 
 string(APPEND GLIB2_INCLUDE_DIRS

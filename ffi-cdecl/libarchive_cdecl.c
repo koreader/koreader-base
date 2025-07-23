@@ -1,19 +1,10 @@
-// FIXME: ffi-cdecl is not doing the right thing when using:
-//
-// typedef int64_t la_int64_t;
-// typedef ssize_t la_ssize_t;
-//
-#include <sys/types.h>
-#include <stdint.h>
-#define __LA_INT64_T_DEFINED
-#define la_int64_t int64_t
-#define __LA_SSIZE_T_DEFINED
-#define la_ssize_t ssize_t
-
 #include <archive.h>
 #include <archive_entry.h>
 
 #include "ffi-cdecl.h"
+
+cdecl_c99_type(la_int64_t, int64_t)
+cdecl_c99_type(la_ssize_t, ssize_t)
 
 cdecl_const(AE_IFREG)
 cdecl_const(AE_IFLNK)
