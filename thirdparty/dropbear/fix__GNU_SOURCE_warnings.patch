@@ -1,0 +1,36 @@
+--- a/src/config.h.in
++++ b/src/config.h.in
+@@ -447,7 +447,9 @@
+ #undef _FILE_OFFSET_BITS
+ 
+ /* Use GNU extensions if glibc */
++#ifndef _GNU_SOURCE
+ #undef _GNU_SOURCE
++#endif
+ 
+ /* Define for large files, on AIX-style hosts. */
+ #undef _LARGE_FILES
+--- a/src/dbutil.c
++++ b/src/dbutil.c
+@@ -51,7 +51,9 @@
+ #include "config.h"
+ 
+ #ifdef __linux__
++#ifndef _GNU_SOURCE
+ #define _GNU_SOURCE
++#endif
+ /* To call clock_gettime() directly */
+ #include <sys/syscall.h>
+ #endif /* __linux */
+--- a/src/scpmisc.c
++++ b/src/scpmisc.c
+@@ -43,7 +43,9 @@
+ 
+ /*RCSID("OpenBSD: xmalloc.c,v 1.16 2001/07/23 18:21:46 stevesk Exp ");*/
+ 
++#ifndef _GNU_SOURCE
+ #define _GNU_SOURCE
++#endif
+ #include "includes.h"
+ #include "scpmisc.h"
+ 
