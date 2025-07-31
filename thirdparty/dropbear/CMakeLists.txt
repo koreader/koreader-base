@@ -42,6 +42,7 @@ list(APPEND PATCH_FILES
     nopasswd-hack.patch
     pubkey-hack.patch
     reduce_build_verbosity.patch
+    fix__GNU_SOURCE_warnings.patch
 )
 
 if(ANDROID)
