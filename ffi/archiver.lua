@@ -113,6 +113,31 @@ function Reader:seek(key)
     end
 end
 
+function Reader:extractIterator(key)
+    self.err = nil
+    local entry = self:seek(key)
+    if not entry or entry.mode ~= "file" then
+        return
+    end
+    -- We can't consume the data twice: tweak the index
+    -- to trigger a reset in case of subsequent attempt.
+    self.index = self.index + 0.1
+    local buff = ffi.new("const void *[1]")
+    local size = ffi.new("size_t [1]")
+    local offs = ffi.new("int64_t [1]")
+    return function()
+        local ok = libarchive.archive_read_data_block(self.archive, buff, size, offs)
+        if ok == libarchive.ARCHIVE_EOF then
+            return
+        end
+        if ok ~= libarchive.ARCHIVE_OK then
+            self.err = archive_error_string(self.archive)
+            return
+        end
+        return buff[0], size[0], offs[0]
+    end
+end
+
 function Reader:extractToMemory(key)
     self.err = nil
     local entry = self:seek(key)
