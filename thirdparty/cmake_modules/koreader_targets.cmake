@@ -298,6 +298,7 @@ if(MONOLIBTIC)
         freetype2::freetype
         giflib::gif
         harfbuzz::harfbuzz
+        lanes::core
         leptonica::leptonica
         libjpeg-turbo::turbojpeg
         libk2pdfopt::k2pdfopt
@@ -347,6 +348,7 @@ if(MONOLIBTIC)
             giflib_decl
             harfbuzz_cdecl
             koptcontext_cdecl
+            lanes_cdecl
             leptonica_cdecl
             libarchive_cdecl
             libwebp_decl
