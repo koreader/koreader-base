@@ -1,0 +1,20 @@
+--- a/src/macros_and_utils.h
++++ b/src/macros_and_utils.h
+@@ -82,6 +82,7 @@
+ 
+ #define ASSERT_L(c) _ASSERT_L(L,c)
+ 
++__attribute__ ((always_inline))
+ inline void STACK_GROW(lua_State * L, int n_)
+ {
+     if (!lua_checkstack(L, n_))
+--- a/src/lanes_private.h
++++ b/src/lanes_private.h
+@@ -79,6 +79,7 @@
+ // 'Lane' are malloc/free'd and the handle only carries a pointer.
+ // This is not deep userdata since the handle's not portable among lanes.
+ //
++__attribute__ ((always_inline))
+ inline Lane* lua_toLane(lua_State* L, int i_)
+ {
+     return *(Lane**)(luaL_checkudata(L, i_, "Lane"));
