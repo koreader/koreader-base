@@ -179,7 +179,6 @@ end
 function KOPTContext_mt.__index:setTrim(trim) self.trim = trim end
 function KOPTContext_mt.__index:setWrap(wrap) self.wrap = wrap end
 function KOPTContext_mt.__index:setWhite(white) self.white = white end
-
 function KOPTContext_mt.__index:setPaintWhite(paint_white) self.paint_white = paint_white end
 function KOPTContext_mt.__index:setIndent(indent) self.indent = indent end
 function KOPTContext_mt.__index:setRotate(rotate) self.rotate = rotate end
