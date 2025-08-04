@@ -179,6 +179,8 @@ end
 function KOPTContext_mt.__index:setTrim(trim) self.trim = trim end
 function KOPTContext_mt.__index:setWrap(wrap) self.wrap = wrap end
 function KOPTContext_mt.__index:setWhite(white) self.white = white end
+
+function KOPTContext_mt.__index:setPaintWhite(paint_white) self.paint_white = paint_white end
 function KOPTContext_mt.__index:setIndent(indent) self.indent = indent end
 function KOPTContext_mt.__index:setRotate(rotate) self.rotate = rotate end
 function KOPTContext_mt.__index:setColumns(columns) self.columns = columns end
@@ -599,6 +601,7 @@ function KOPTContext.new()
     kc.trim = 1
     kc.wrap = 1
     kc.white = -1
+    kc.paint_white = 0
     kc.indent = 1
     kc.rotate = 0
     kc.columns = 2
@@ -669,6 +672,7 @@ function KOPTContext.totable(kc)
     context.trim = kc.trim
     context.wrap = kc.wrap
     context.white = kc.white
+    context.paint_white = kc.paint_white
     context.indent = kc.indent
     context.rotate = kc.rotate
     context.columns = kc.columns
@@ -739,6 +743,7 @@ function KOPTContext.fromtable(context)
     kc.trim = context.trim
     kc.wrap = context.wrap
     kc.white = context.white
+    kc.paint_white = context.paint_white
     kc.indent = context.indent
     kc.rotate = context.rotate
     kc.columns = context.columns
