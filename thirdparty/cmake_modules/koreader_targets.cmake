@@ -314,6 +314,7 @@ if(MONOLIBTIC)
         pthread
         sqlite::sqlite3
         turbo::tffi_wrap
+        xxhash::xxhash
         zlib::z
         zstd::zstd
         SOURCES monolibtic.cpp
@@ -359,6 +360,7 @@ if(MONOLIBTIC)
             tffi_wrap_cdecl
             turbojpeg_decl
             utf8proc_decl
+            xxhash_cdecl
             zeromq_cdecl
             zlib_decl
             zstd_decl
