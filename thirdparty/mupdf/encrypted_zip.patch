@@ -47,7 +47,7 @@ index 6d1b1b242..e2f99530a 100644
  	fz_try(ctx)
  	{
 diff --git a/source/fitz/unzip.c b/source/fitz/unzip.c
-index 35d14fb1c..4b416ada4 100644
+index 35d14fb1c..249ab0174 100644
 --- a/source/fitz/unzip.c
 +++ b/source/fitz/unzip.c
 @@ -43,10 +43,33 @@

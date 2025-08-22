@@ -102,10 +102,10 @@ index 06db2afc7..ee6db1c54 100644
  
  #endif
 diff --git a/source/fitz/image.c b/source/fitz/image.c
-index c5531c097..cb720bfd9 100644
+index 35ea4b571..3b1d01781 100644
 --- a/source/fitz/image.c
 +++ b/source/fitz/image.c
-@@ -794,6 +794,9 @@ compressed_image_get_pixmap(fz_context *ctx, fz_image *image_, fz_irect *subarea
+@@ -811,6 +811,9 @@ compressed_image_get_pixmap(fz_context *ctx, fz_image *image_, fz_irect *subarea
  	case FZ_IMAGE_BMP:
  		tile = fz_load_bmp(ctx, image->buffer->buffer->data, image->buffer->buffer->len);
  		break;
@@ -115,7 +115,7 @@ index c5531c097..cb720bfd9 100644
  	case FZ_IMAGE_TIFF:
  		tile = fz_load_tiff(ctx, image->buffer->buffer->data, image->buffer->buffer->len);
  		break;
-@@ -1299,7 +1302,7 @@ fz_lookup_image_type(const char *type)
+@@ -1316,7 +1319,7 @@ fz_lookup_image_type(const char *type)
  }
  
  int
@@ -124,7 +124,7 @@ index c5531c097..cb720bfd9 100644
  {
  	if (p[0] == 'P' && p[1] >= '1' && p[1] <= '7')
  		return FZ_IMAGE_PNM;
-@@ -1332,6 +1335,9 @@ fz_recognize_image_format(fz_context *ctx, unsigned char p[8])
+@@ -1349,6 +1352,9 @@ fz_recognize_image_format(fz_context *ctx, unsigned char p[8])
  		return FZ_IMAGE_JBIG2;
  	if (p[0] == '8' && p[1] == 'B' && p[2] == 'P' && p[3] == 'S')
  		return FZ_IMAGE_PSD;
@@ -134,7 +134,7 @@ index c5531c097..cb720bfd9 100644
  	return FZ_IMAGE_UNKNOWN;
  }
  
-@@ -1348,7 +1354,7 @@ fz_new_image_from_buffer(fz_context *ctx, fz_buffer *buffer)
+@@ -1365,7 +1371,7 @@ fz_new_image_from_buffer(fz_context *ctx, fz_buffer *buffer)
  	int bpc;
  	uint8_t orientation = 0;
  
@@ -143,7 +143,7 @@ index c5531c097..cb720bfd9 100644
  		fz_throw(ctx, FZ_ERROR_FORMAT, "unknown image file format");
  
  	type = fz_recognize_image_format(ctx, buf);
-@@ -1386,6 +1392,9 @@ fz_new_image_from_buffer(fz_context *ctx, fz_buffer *buffer)
+@@ -1403,6 +1409,9 @@ fz_new_image_from_buffer(fz_context *ctx, fz_buffer *buffer)
  		fz_load_jbig2_info(ctx, buf, len, &w, &h, &xres, &yres, &cspace);
  		bpc = 1;
  		break;

@@ -1,5 +1,5 @@
 diff --git a/Makefile b/Makefile
-index 1e760280f..10732a6a7 100644
+index ac5f9fc9d..13253ac0b 100644
 --- a/Makefile
 +++ b/Makefile
 @@ -299,7 +299,7 @@ generate: source/html/css-properties.h
