@@ -41,7 +41,7 @@ index 3cf4d9325..75fe11362 100644
  
  struct fz_colorspace
 diff --git a/include/mupdf/fitz/context.h b/include/mupdf/fitz/context.h
-index 64245a719..d097441c8 100644
+index 592f0d1db..ef4befe7c 100644
 --- a/include/mupdf/fitz/context.h
 +++ b/include/mupdf/fitz/context.h
 @@ -32,6 +32,8 @@
@@ -62,7 +62,7 @@ index 64245a719..d097441c8 100644
  #ifndef FZ_JMPBUF_ALIGN
  #define FZ_JMPBUF_ALIGN 32
  #endif
-@@ -890,6 +894,7 @@ struct fz_context
+@@ -893,6 +897,7 @@ struct fz_context
  	fz_glyph_cache *glyph_cache;
  };
  
@@ -71,7 +71,7 @@ index 64245a719..d097441c8 100644
  
  /**
 diff --git a/include/mupdf/fitz/device.h b/include/mupdf/fitz/device.h
-index e2d05cf32..9bb4278df 100644
+index eb60b694f..06dcb20dd 100644
 --- a/include/mupdf/fitz/device.h
 +++ b/include/mupdf/fitz/device.h
 @@ -31,6 +31,8 @@
@@ -83,7 +83,7 @@ index e2d05cf32..9bb4278df 100644
  /**
  	The different format handlers (pdf, xps etc) interpret pages to
  	a device. These devices can then process the stream of calls
-@@ -648,4 +650,6 @@ fz_draw_options *fz_parse_draw_options(fz_context *ctx, fz_draw_options *options
+@@ -649,4 +651,6 @@ fz_draw_options *fz_parse_draw_options(fz_context *ctx, fz_draw_options *options
  */
  fz_device *fz_new_draw_device_with_options(fz_context *ctx, const fz_draw_options *options, fz_rect mediabox, fz_pixmap **pixmap);
  
@@ -91,7 +91,7 @@ index e2d05cf32..9bb4278df 100644
 +
  #endif
 diff --git a/include/mupdf/fitz/document.h b/include/mupdf/fitz/document.h
-index 58034afa8..46c78d42a 100644
+index e34c5e255..5660e0b42 100644
 --- a/include/mupdf/fitz/document.h
 +++ b/include/mupdf/fitz/document.h
 @@ -34,6 +34,8 @@
@@ -181,7 +181,7 @@ index d280a0404..4d6f2c215 100644
 +
  #endif
 diff --git a/include/mupdf/fitz/image.h b/include/mupdf/fitz/image.h
-index e3e501cee..c61464b1a 100644
+index 30083a072..6d5305683 100644
 --- a/include/mupdf/fitz/image.h
 +++ b/include/mupdf/fitz/image.h
 @@ -32,6 +32,8 @@
@@ -193,7 +193,7 @@ index e3e501cee..c61464b1a 100644
  /**
  	Images are storable objects from which we can obtain fz_pixmaps.
  	These may be implemented as simple wrappers around a pixmap, or
-@@ -416,6 +418,8 @@ void fz_set_compressed_image_buffer(fz_context *ctx, fz_compressed_image *cimg,
+@@ -422,6 +424,8 @@ void fz_set_compressed_image_buffer(fz_context *ctx, fz_compressed_image *cimg,
  fz_pixmap *fz_pixmap_image_tile(fz_context *ctx, fz_pixmap_image *cimg);
  void fz_set_pixmap_image_tile(fz_context *ctx, fz_pixmap_image *cimg, fz_pixmap *pix);
  
