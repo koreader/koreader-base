@@ -58,6 +58,8 @@ ssize_t mq_receive(int, char *, size_t, unsigned int *);
 int mq_close(int);
 int close(int);
 off_t lseek(int, off_t, int);
+int ftruncate(int, off_t);
+int posix_fallocate(int, off_t, off_t);
 int fcntl(int, int, ...);
 int execl(const char *, const char *, ...);
 int execlp(const char *, const char *, ...);
