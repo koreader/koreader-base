@@ -52,6 +52,7 @@ target_link_libraries(
     md4c::html
     srell::srell
     utf8proc::utf8proc
+    xxhash::xxhash
     zlib::z
     zstd::zstd
 )
@@ -89,6 +90,7 @@ declare_dependency(harfbuzz::harfbuzz INCLUDES freetype2 harfbuzz MONOLIBTIC har
 
 # libarchive
 declare_dependency(libarchive::libarchive MONOLIBTIC archive)
+declare_dependency(libarchive::libarchive_static STATIC archive)
 
 # leptonica
 declare_dependency(leptonica::leptonica INCLUDES leptonica MONOLIBTIC leptonica)
@@ -162,6 +164,7 @@ else()
     set(LUAJIT_LIB)
 endif()
 get_target_property(LUAJIT_INC luajit::luajit INTERFACE_INCLUDE_DIRECTORIES)
+declare_dependency(luajit::luajit_static INCLUDES luajit-2.1 STATIC luajit-5.1 LIBRARIES dl m)
 
 # luasec
 if(MONOLIBTIC)
@@ -188,7 +191,7 @@ if(ANDROID)
     list(APPEND SYS_LIBS log)
 endif()
 set(MONO_LIBS archive freetype harfbuzz jpeg webp webpdemux z)
-if(ANDROID)
+if(NOT (APPLE OR EMULATE_READER))
     list(APPEND STATIC_LIBS lzma)
 endif()
 declare_dependency(
@@ -234,8 +237,16 @@ endif()
 # utf8proc
 declare_dependency(utf8proc::utf8proc MONOLIBTIC utf8proc)
 
+# xxhash
+declare_dependency(xxhash::xxhash MONOLIBTIC xxhash)
+
+# xz
+declare_dependency(xz::lzma_static STATIC lzma)
+
 # zlib
 declare_dependency(zlib::z MONOLIBTIC z)
+declare_dependency(zlib::z_static STATIC z)
 
 # zstd
 declare_dependency(zstd::zstd MONOLIBTIC zstd)
+declare_dependency(zstd::zstd_static STATIC zstd)
