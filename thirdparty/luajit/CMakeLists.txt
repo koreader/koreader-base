@@ -8,6 +8,10 @@ if(ANDROID)
     list(APPEND PATCH_FILES koreader-luajit-mcode-reserve-hack.patch)
     # list(APPEND PATCH_FILES koreader-luajit-mcode-debug.patch)
 endif()
+if(APPLE AND CMAKE_SYSTEM_PROCESSOR STREQUAL "x86_64")
+    # Fix https://github.com/LuaJIT/LuaJIT/pull/1355 regression.
+    list(APPEND PATCH_FILES revert-eec7a80.patch)
+endif()
 
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
     # Debugging is a go!
