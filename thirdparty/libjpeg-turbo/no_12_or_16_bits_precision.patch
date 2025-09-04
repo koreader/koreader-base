@@ -1,90 +1,25 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index b9ef19d..39c6905 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
-@@ -667,6 +667,7 @@ if(WITH_JAVA)
- endif()
+@@ -668,6 +668,7 @@ set(JPEG_SOURCES src/jcapimin.c
+   src/wrapper/jquant1-8.c src/wrapper/jquant1-12.c
+   src/wrapper/jquant2-8.c src/wrapper/jquant2-12.c
+   src/wrapper/jutils-8.c src/wrapper/jutils-12.c src/wrapper/jutils-16.c)
++list(FILTER JPEG_SOURCES EXCLUDE REGEX [[-1[26]\.c$]])
  
- if(ENABLE_SHARED)
-+  if(0)
-   # Compile a separate version of these source files with 12-bit and 16-bit
-   # data precision.
-   add_library(jpeg12 OBJECT ${JPEG12_SOURCES})
-@@ -675,10 +676,12 @@ if(ENABLE_SHARED)
-   add_library(jpeg16 OBJECT ${JPEG16_SOURCES})
-   set_property(TARGET jpeg16 PROPERTY COMPILE_FLAGS "-DBITS_IN_JSAMPLE=16")
-   set_target_properties(jpeg16 PROPERTIES POSITION_INDEPENDENT_CODE 1)
-+  endif()
-   add_subdirectory(sharedlib)
- endif()
- 
- if(ENABLE_STATIC)
-+  if(0)
-   # Compile a separate version of these source files with 12-bit and 16-bit
-   # data precision.
-   add_library(jpeg12-static OBJECT ${JPEG12_SOURCES})
-@@ -687,9 +690,9 @@ if(ENABLE_STATIC)
-   add_library(jpeg16-static OBJECT ${JPEG16_SOURCES})
-   set_property(TARGET jpeg16-static PROPERTY COMPILE_FLAGS
-     "-DBITS_IN_JSAMPLE=16")
-+  endif()
-   add_library(jpeg-static STATIC ${JPEG_SOURCES} ${SIMD_TARGET_OBJECTS}
--    ${SIMD_OBJS} $<TARGET_OBJECTS:jpeg12-static>
--    $<TARGET_OBJECTS:jpeg16-static>)
-+    )
-   if(NOT MSVC_LIKE)
-     set_target_properties(jpeg-static PROPERTIES OUTPUT_NAME jpeg)
-   endif()
-@@ -699,8 +702,8 @@ if(WITH_TURBOJPEG)
+ if(WITH_ARITH_ENC OR WITH_ARITH_DEC)
+   set(JPEG_SOURCES ${JPEG_SOURCES} src/jaricom.c)
+@@ -726,6 +727,7 @@ if(WITH_TURBOJPEG)
+     src/wrapper/rdppm-8.c src/wrapper/rdppm-12.c src/wrapper/rdppm-16.c
+     src/wrbmp.c
+     src/wrapper/wrppm-8.c src/wrapper/wrppm-12.c src/wrapper/wrppm-16.c)
++  list(FILTER TURBOJPEG_SOURCES EXCLUDE REGEX [[-1[26]\.c$]])
    if(ENABLE_SHARED)
-     set(TURBOJPEG_SOURCES ${JPEG_SOURCES} ${SIMD_TARGET_OBJECTS} ${SIMD_OBJS}
-       src/turbojpeg.c src/transupp.c src/jdatadst-tj.c src/jdatasrc-tj.c
--      src/rdbmp.c src/rdppm.c src/wrbmp.c src/wrppm.c $<TARGET_OBJECTS:jpeg12>
--      $<TARGET_OBJECTS:jpeg16>)
-+      src/rdbmp.c src/rdppm.c src/wrbmp.c src/wrppm.c
-+      )
      set(TJMAPFILE ${CMAKE_CURRENT_SOURCE_DIR}/src/turbojpeg-mapfile)
      if(WITH_JAVA)
-       set(TURBOJPEG_SOURCES ${TURBOJPEG_SOURCES} java/turbojpeg-jni.c)
-@@ -713,6 +716,7 @@ if(WITH_TURBOJPEG)
-       set(TURBOJPEG_SOURCES ${TURBOJPEG_SOURCES}
-         ${CMAKE_BINARY_DIR}/win/turbojpeg.rc)
-     endif()
-+    if(0)
-     add_library(turbojpeg12 OBJECT src/rdppm.c src/wrppm.c)
-     set_property(TARGET turbojpeg12 PROPERTY COMPILE_FLAGS
-       "-DBITS_IN_JSAMPLE=12 -DPPM_SUPPORTED")
-@@ -721,8 +725,9 @@ if(WITH_TURBOJPEG)
-     set_property(TARGET turbojpeg16 PROPERTY COMPILE_FLAGS
-       "-DBITS_IN_JSAMPLE=16 -DPPM_SUPPORTED")
-     set_target_properties(turbojpeg16 PROPERTIES POSITION_INDEPENDENT_CODE 1)
-+    endif()
-     add_library(turbojpeg SHARED ${TURBOJPEG_SOURCES}
--      $<TARGET_OBJECTS:turbojpeg12> $<TARGET_OBJECTS:turbojpeg16>)
-+      )
-     set_property(TARGET turbojpeg PROPERTY COMPILE_FLAGS
-       "-DBMP_SUPPORTED -DPPM_SUPPORTED")
-     if(WIN32)
-@@ -780,9 +785,7 @@ if(WITH_TURBOJPEG)
-     add_library(turbojpeg-static STATIC ${JPEG_SOURCES} ${SIMD_TARGET_OBJECTS}
-       ${SIMD_OBJS} src/turbojpeg.c src/transupp.c src/jdatadst-tj.c
-       src/jdatasrc-tj.c src/rdbmp.c src/rdppm.c src/wrbmp.c src/wrppm.c
--      $<TARGET_OBJECTS:jpeg12-static> $<TARGET_OBJECTS:jpeg16-static>
--      $<TARGET_OBJECTS:turbojpeg12-static>
--      $<TARGET_OBJECTS:turbojpeg16-static>)
-+      )
-     set_property(TARGET turbojpeg-static PROPERTY COMPILE_FLAGS
-       "-DBMP_SUPPORTED -DPPM_SUPPORTED")
-     if(NOT MSVC_LIKE)
---- a/sharedlib/CMakeLists.txt
-+++ b/sharedlib/CMakeLists.txt
-@@ -49,7 +49,7 @@ if(MSVC_LIKE)
-   set(JPEG_SRCS ${JPEG_SRCS} ${CMAKE_BINARY_DIR}/win/jpeg.rc)
- endif()
- add_library(jpeg SHARED ${JPEG_SRCS} ${DEFFILE} ${SIMD_TARGET_OBJECTS}
--  ${SIMD_OBJS} $<TARGET_OBJECTS:jpeg12> $<TARGET_OBJECTS:jpeg16>)
-+  ${SIMD_OBJS})
- 
- set_target_properties(jpeg PROPERTIES SOVERSION ${SO_MAJOR_VERSION}
-   VERSION ${SO_MAJOR_VERSION}.${SO_AGE}.${SO_MINOR_VERSION})
+diff --git a/src/jcinit.c b/src/jcinit.c
+index 09ff6b3..2e8f58d 100644
 --- a/src/jcinit.c
 +++ b/src/jcinit.c
 @@ -38,12 +38,15 @@ jinit_compress_master(j_compress_ptr cinfo)
@@ -181,11 +116,8 @@
  #endif
  
    jinit_marker_writer(cinfo);
- src/jdmaster.c  | 23 +++++++++++++++++++++++
- src/jdtrans.c   |  4 ++++
- src/turbojpeg.c |  2 ++
- 3 files changed, 29 insertions(+)
-
+diff --git a/src/jdmaster.c b/src/jdmaster.c
+index 4085c22..de08f7b 100644
 --- a/src/jdmaster.c
 +++ b/src/jdmaster.c
 @@ -574,9 +574,11 @@ master_selection(j_decompress_ptr cinfo)
@@ -326,6 +258,8 @@
  #endif
    }
  
+diff --git a/src/jdtrans.c b/src/jdtrans.c
+index 719813f..f7869cf 100644
 --- a/src/jdtrans.c
 +++ b/src/jdtrans.c
 @@ -129,10 +129,14 @@ transdecode_master_selection(j_decompress_ptr cinfo)
@@ -343,6 +277,8 @@
      jinit_d_coef_controller(cinfo, TRUE);
  
    /* We can now tell the memory manager to allocate virtual arrays. */
+diff --git a/src/turbojpeg.c b/src/turbojpeg.c
+index 389aea5..4d80661 100644
 --- a/src/turbojpeg.c
 +++ b/src/turbojpeg.c
 @@ -1197,12 +1197,14 @@ bailout:

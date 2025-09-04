@@ -1,7 +1,5 @@
 list(APPEND PATCH_FILES
     no_cmake_rpath_shenanigans.patch
-    no_tests.patch
-    no_progs.patch
     no_12_or_16_bits_precision.patch
 )
 
@@ -12,6 +10,8 @@ list(APPEND CMAKE_ARGS
     -DENABLE_STATIC=$<BOOL:${MONOLIBTIC}>
     -DWITH_JAVA=OFF
     -DWITH_JPEG8=ON
+    -DWITH_TESTS=OFF
+    -DWITH_TOOLS=OFF
     # Make sure we disable ASM if we don't support SIMD.
     -DREQUIRE_SIMD=$<BOOL:${WANT_SIMD}>
     -DWITH_SIMD=$<BOOL:${WANT_SIMD}>
@@ -29,7 +29,7 @@ if(NOT MONOLIBTIC)
 endif()
 
 external_project(
-    DOWNLOAD GIT 3.1.1
+    DOWNLOAD GIT 3.1.2
     https://github.com/libjpeg-turbo/libjpeg-turbo.git
     PATCH_FILES ${PATCH_FILES}
     CMAKE_ARGS ${CMAKE_ARGS}
