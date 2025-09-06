@@ -137,40 +137,6 @@ function(setup_koreader_input)
     endforeach()
 endfunction()
 
-# koreader-lfs
-declare_koreader_target(
-    koreader-lfs TYPE monolibtic
-    DEPENDS luajit::luajit
-    SOURCES lfs.c lfs.h
-    VISIBILITY hidden
-)
-function(setup_koreader_lfs)
-    # Ensure only the right symbols are exported.
-    add_custom_command(
-        COMMAND
-        patch -p1
-        --directory=${CMAKE_SOURCE_DIR}/luafilesystem
-        --input=${CMAKE_SOURCE_DIR}/patches/lfs-visibility.patch
-        --output=${CMAKE_BINARY_DIR}/lfs.h
-        OUTPUT lfs.h
-        DEPENDS ${CMAKE_SOURCE_DIR}/patches/lfs-visibility.patch
-        MAIN_DEPENDENCY ${CMAKE_SOURCE_DIR}/luafilesystem/src/lfs.h
-    )
-    # Avoid precision loss on 32-bit arches (LFS is always built w/ LARGEFILE
-    # support, but lua_Integer is always a ptrdiff_t, which is not wide enough).
-    add_custom_command(
-        COMMAND
-        patch -p1
-        --directory=${CMAKE_SOURCE_DIR}/luafilesystem
-        --input=${CMAKE_SOURCE_DIR}/patches/lfs-pushnumber-for-wide-types.patch
-        --output=${CMAKE_BINARY_DIR}/lfs.c
-        OUTPUT lfs.c
-        DEPENDS ${CMAKE_SOURCE_DIR}/patches/lfs-pushnumber-for-wide-types.patch
-        MAIN_DEPENDENCY ${CMAKE_SOURCE_DIR}/luafilesystem/src/lfs.c
-    )
-    set_target_properties(koreader-lfs PROPERTIES SUFFIX .so)
-endfunction()
-
 # koreader-nnsvg
 declare_koreader_target(
     koreader-nnsvg TYPE monolibtic
