@@ -129,7 +129,7 @@ jobs:
         type: executor
       ccache_maxsize:
         type: string
-        default: "128M"
+        default: "256M"
       check_ffi_cdecls:
         type: boolean
         default: false
