@@ -279,6 +279,9 @@ else()
 endif()
 declare_project(thirdparty/kobo-usbms ${EXCLUDE_FROM_ALL})
 
+# koreader-lfs
+declare_project(thirdparty/koreader-lfs DEPENDS luajit)
+
 # leptonica
 declare_project(thirdparty/leptonica DEPENDS libpng)
 
@@ -475,7 +478,7 @@ endif()
 
 # }}}
 
-# Koreader executables and libs.
+# Koreader executables and libs (except koreader-lfs, see above).
 # NOTE: thirdparty dependencies are manually handled later
 # for finer control (see `cmake/koreader/CMakeLists.txt`
 # and `thirdparty/cmake_modules/koreader_targets.cmake`).
