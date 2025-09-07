@@ -1,6 +1,8 @@
---- i/src/base/ftcalc.c
-+++ w/src/base/ftcalc.c
-@@ -750,7 +750,8 @@
+diff --git a/src/base/ftcalc.c b/src/base/ftcalc.c
+index 7d6e12e2..f7c99126 100644
+--- a/src/base/ftcalc.c
++++ b/src/base/ftcalc.c
+@@ -737,7 +737,8 @@
  
      shift = FT_MSB( val ) - 12;
  
