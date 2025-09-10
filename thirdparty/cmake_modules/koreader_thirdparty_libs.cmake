@@ -87,6 +87,9 @@ declare_dependency(giflib::gif MONOLIBTIC gif)
 # harfbuzz
 declare_dependency(harfbuzz::harfbuzz INCLUDES freetype2 harfbuzz MONOLIBTIC harfbuzz)
 
+# koreader-lfs
+declare_dependency(koreader-lfs::koreader-lfs MONOLIBTIC koreader-lfs)
+
 # libarchive
 declare_dependency(libarchive::libarchive MONOLIBTIC archive)
 

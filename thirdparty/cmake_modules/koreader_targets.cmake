@@ -264,6 +264,7 @@ if(MONOLIBTIC)
         freetype2::freetype
         giflib::gif
         harfbuzz::harfbuzz
+        koreader-lfs::koreader-lfs
         leptonica::leptonica
         libjpeg-turbo::turbojpeg
         libk2pdfopt::k2pdfopt
@@ -313,6 +314,7 @@ if(MONOLIBTIC)
             giflib_decl
             harfbuzz_cdecl
             koptcontext_cdecl
+            koreader-lfs_cdecl
             leptonica_cdecl
             libarchive_cdecl
             libwebp_decl
