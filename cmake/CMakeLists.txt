@@ -527,7 +527,6 @@ function(ffi_target NAME OUTPUT INPUT)
     get_filename_component(INPUT_PATH ${INPUT} ABSOLUTE BASE_DIR ${BASE_DIR})
     add_custom_target(
         ${OUTPUT}
-        BYPRODUCTS ${BASE_DIR}/ffi/${OUTPUT}
         DEPENDS ${_DEPENDS}
         COMMAND ${STAGING_DIR}/bin/ffi-cdecl -o ffi/${OUTPUT} ${_ARGS} ${INPUT}
         COMMENT "Generating 'ffi/${OUTPUT}'"
