@@ -398,7 +398,13 @@ ifdef KODEBUG
 else
   BASE_CFLAGS += -DNDEBUG
 endif
-ifndef DARWIN
+ifdef DARWIN
+  # Work around Apple clang bug: `/usr/local/include` is inserted
+  # at the start of the system include path list, above any other
+  # entries, including `-isystem …` options passed on the command
+  # line (cf. https://stackoverflow.com/a/66377265).
+  BASE_CFLAGS += -idirafter /usr/local/include
+else
   # Trim down binary size (when combined with linker `--gc-sections`).
   BASE_CFLAGS += -fdata-sections -ffunction-sections
 endif
