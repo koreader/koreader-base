@@ -604,8 +604,10 @@ endif
 
 HOST_ARCH:=-march=native
 ifdef APPIMAGE
-	# We want to run the AppImage on any 64-bit CPU
-	HOST_ARCH:=-mtune=generic -march=x86-64
+  ifneq (,$(filter x86_64-%,$(TARGET_MACHINE)))
+    # We want to run the AppImage on any 64-bit CPU
+    HOST_ARCH:=-mtune=generic -march=x86-64
+  endif
 endif
 
 ifeq ($(TARGET), linux)
