@@ -29,8 +29,6 @@ if(APPIMAGE)
         -DSDL_DIRECTFB=OFF
         -DSDL_KMSDRM=OFF
         -DSDL_RPI=OFF
-        # No libdecor-0-dev package in Ubuntu Focal.
-        -DSDL_WAYLAND_LIBDECOR=OFF
     )
 endif()
 
