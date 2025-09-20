@@ -2,7 +2,7 @@ diff --git a/CMakeLists.txt b/CMakeLists.txt
 index 50f2f242a..36da88a33 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
-@@ -8,6 +8,13 @@ set(CMAKE_POLICY_DEFAULT_CMP0091 NEW)
+@@ -8,6 +8,16 @@ set(CMAKE_POLICY_DEFAULT_CMP0091 NEW)
  cmake_minimum_required(VERSION 3.17.5)
  project(SDL2 C)
  
@@ -11,7 +11,10 @@ index 50f2f242a..36da88a33 100644
 +  message(FATAL_ERROR "could not get pkg-config builtin search path")
 +endif()
 +set(ENV{PKG_CONFIG_LIBDIR} ${OUT})
-+set(CMAKE_LIBRARY_ARCHITECTURE x86_64-linux-gnu)
++execute_process(COMMAND ${CMAKE_C_COMPILER} -dumpmachine RESULT_VARIABLE RET OUTPUT_VARIABLE CMAKE_LIBRARY_ARCHITECTURE OUTPUT_STRIP_TRAILING_WHITESPACE)
++if(NOT RET EQUAL 0)
++  message(FATAL_ERROR "could not get compiler target machine")
++endif()
 +
  if(CMAKE_SOURCE_DIR STREQUAL PROJECT_SOURCE_DIR)
    set(SDL2_SUBPROJECT OFF)
