@@ -602,25 +602,27 @@ else
 	ARM_ARCH:=
 endif
 
-HOST_ARCH:=-march=native
+HOST_ARCH = -march=native
+
 ifdef APPIMAGE
+  HOST_ARCH = -mtune=generic
   ifneq (,$(filter x86_64-%,$(TARGET_MACHINE)))
     # We want to run the AppImage on any 64-bit CPU
-    HOST_ARCH:=-mtune=generic -march=x86-64
+    HOST_ARCH += -march=x86-64
   endif
 endif
 
 ifeq ($(TARGET), linux)
-	HOST_ARCH:=-mtune=generic
+  HOST_ARCH = -mtune=generic
 endif
 
 ifdef MACOS
-	HOST_ARCH:=-mtune=generic
+  HOST_ARCH = -mtune=generic
 endif
 
 ifdef DARWIN_AARCH64_HOST
-# At the moment of writing, apple-m1 is the lowest common denominator for Apple silicon chips. Should work for M2 as well
-	HOST_ARCH:=-mcpu=apple-m1
+  # At the moment of writing, the Apple M1 is the lowest common denominator.
+  HOST_ARCH = -mcpu=apple-m1
 endif
 
 # Some of our deps require C11 & C++17 (`if constexpr (…)`) support.
