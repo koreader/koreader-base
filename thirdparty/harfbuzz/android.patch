@@ -1,3 +1,21 @@
+diff --git a/src/hb-buffer-verify.cc b/src/hb-buffer-verify.cc
+index e1ccd5b94..e62b8fb9f 100644
+--- a/src/hb-buffer-verify.cc
++++ b/src/hb-buffer-verify.cc
+@@ -46,11 +46,13 @@ buffer_verify_error (hb_buffer_t *buffer,
+ {
+   va_list ap;
+   va_start (ap, fmt);
++#ifndef HB_NO_BUFFER_MESSAGE
+   if (buffer->messaging ())
+   {
+     buffer->message_impl (font, fmt, ap);
+   }
+   else
++#endif
+   {
+     fprintf (stderr, "harfbuzz ");
+     vfprintf (stderr, fmt, ap);
 diff --git a/src/hb.hh b/src/hb.hh
 index ba18e36b9..aabbb6e97 100644
 --- a/src/hb.hh
