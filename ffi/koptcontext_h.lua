@@ -110,6 +110,7 @@ struct KOPTContext {
   int trim;
   int wrap;
   int white;
+  int paint_white;
   int indent;
   int rotate;
   int columns;
