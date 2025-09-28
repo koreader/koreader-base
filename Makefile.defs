@@ -605,10 +605,18 @@ endif
 HOST_ARCH = -march=native
 
 ifdef APPIMAGE
-  HOST_ARCH = -mtune=generic
-  ifneq (,$(filter x86_64-%,$(TARGET_MACHINE)))
+  ifneq (,$(filter aarch64-%,$(TARGET_MACHINE)))
+    APPIMAGE_ARCH = aarch64
+    HOST_ARCH = $(ARM64_GENERIC_ARCH)
+  else ifneq (,$(filter arm-%-gnueabihf,$(TARGET_MACHINE)))
+    APPIMAGE_ARCH = armhf
+    HOST_ARCH = $(ARMV7_GENERIC_ARCH) -mfloat-abi=hard
+  else ifneq (,$(filter x86_64-%,$(TARGET_MACHINE)))
+    APPIMAGE_ARCH = x86_64
     # We want to run the AppImage on any 64-bit CPU
-    HOST_ARCH += -march=x86-64
+    HOST_ARCH = -mtune=generic -march=x86-64
+  else
+    $(error unsupported AppImage architecture: $(TARGET_MACHINE))
   endif
 endif
 
