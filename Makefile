@@ -64,7 +64,7 @@ $(BASE_PREFIX)uninstall:
 
 setup $(BUILD_ENTRYPOINT): $(CMAKE_KOVARS) $(CMAKE_TCF) $(MESON_CROSS_TOOLCHAIN) $(MESON_HOST_TOOLCHAIN)
 	$(strip $(build_info))
-	$(CMAKE) $(CMAKE_FLAGS) -S $(KOR_BASE)/cmake -B $(CMAKE_DIR)
+	$(if $(CCACHE),env CCACHE_DISABLE=1 )$(CMAKE) $(CMAKE_FLAGS) -S $(KOR_BASE)/cmake -B $(CMAKE_DIR)
 
 define write_file
 $(if $(DRY_RUN),: write $1,$(file >$1,$2))
