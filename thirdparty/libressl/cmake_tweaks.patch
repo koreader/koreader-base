@@ -6,7 +6,7 @@
  if(MSVC)
  	cmake_policy(SET CMP0091 NEW)
  endif()
-@@ -516,8 +516,8 @@
+@@ -532,8 +532,8 @@
  		# Create pkgconfig files.
  		set(prefix      ${CMAKE_INSTALL_PREFIX})
  		set(exec_prefix \${prefix})
