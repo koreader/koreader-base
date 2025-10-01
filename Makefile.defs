@@ -383,18 +383,29 @@ HOSTREADELF:=readelf
 
 # Base CFLAGS, without arch. We'll need it for luajit, because its
 # Makefiles do some tricky stuff to differentiate HOST/TARGET
-BASE_CFLAGS:=-O2 -g -pipe -fomit-frame-pointer
-# For ricers.
-#BASE_CFLAGS:=-O3 -pipe -fomit-frame-pointer -frename-registers -fweb
-# Used to enforce aggressive optimizations in some components
-VECTO_CFLAGS:=-O3 -pipe -fomit-frame-pointer -frename-registers -fweb -ftree-vectorize -funroll-loops
+BASE_CFLAGS = -O2 -g -pipe -fomit-frame-pointer
+ifneq (,$(USE_CLANG))
+  # For ricers.
+  # BASE_CFLAGS = -O3 -pipe -fomit-frame-pointer
+  # Used to enforce aggressive optimizations in some components
+  VECTO_CFLAGS = -O3 -pipe -fomit-frame-pointer -ftree-vectorize -funroll-loops
+  # LTO build
+  LTO_FLAGS = -flto=thin $(if $(PARALLEL_JOBS),-flto-jobs=$(PARALLEL_JOBS)) -Qunused-arguments
+else
+  # For ricers.
+  # BASE_CFLAGS = -O3 -pipe -fomit-frame-pointer -frename-registers -fweb
+  # Used to enforce aggressive optimizations in some components
+  VECTO_CFLAGS = -O3 -pipe -fomit-frame-pointer -frename-registers -fweb -ftree-vectorize -funroll-loops
+  # LTO build
+  LTO_FLAGS = -flto$(if $(PARALLEL_JOBS),=$(PARALLEL_JOBS)) -fuse-linker-plugin
+endif
 # And for an aggressive LTO build
-#BASE_CFLAGS:=$(VECTO_CFLAGS) -flto$(if $(PARALLEL_JOBS),=$(PARALLEL_JOBS)) -fuse-linker-plugin
+# BASE_CFLAGS = $(VECTO_CFLAGS) $(LTO_FLAGS)
 # Use this for debugging:
 ifdef KODEBUG
-	BASE_CFLAGS:=-Og -g -pipe -fno-omit-frame-pointer
-	# Don't enforce extra CFLAGS in debug builds
-	VECTO_CFLAGS:=
+  BASE_CFLAGS = -Og -g -pipe -fno-omit-frame-pointer
+  # Don't enforce extra CFLAGS in debug builds
+  VECTO_CFLAGS =
 else
   BASE_CFLAGS += -DNDEBUG
 endif
