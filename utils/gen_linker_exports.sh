@@ -43,7 +43,7 @@ if [[ ${debug} -eq 1 ]]; then
     echo "vsfmt: ${vsfmt}"
 fi
 
-out="$(sed -E -n -e 's,^[[:space:]]*cdecl_(func|var)\(([^)]+)\)[[:space:]]*(/[/*].*)?$,\2,p' "$@" | sort -u)"
+out="$(sed -E -n -e 's,^[[:space:]]*cdecl_(func|var)\(([^)]+)\)[[:space:]]*;?[[:space:]]*(/[/*].*)?$,\2,p' "$@" | sort -u)"
 read -r -d '' -a symbols <<<"${out}" || true
 
 if [[ ${debug} -eq 1 ]]; then
