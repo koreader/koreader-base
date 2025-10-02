@@ -1,8 +1,8 @@
 diff --git a/src/meson.build b/src/meson.build
-index 111364a51..f60d40022 100644
+index 44c858c04..068b31a18 100644
 --- a/src/meson.build
 +++ b/src/meson.build
-@@ -672,7 +672,7 @@ defs_list += [harfbuzz_subset_def]
+@@ -673,7 +673,7 @@ defs_list += [harfbuzz_subset_def]
  
  libharfbuzz_subset = library('harfbuzz-subset', hb_subset_sources,
    include_directories: incconfig,
@@ -11,7 +11,7 @@ index 111364a51..f60d40022 100644
    link_with: [libharfbuzz],
    cpp_args: cpp_args + extra_hb_cpp_args,
    soversion: hb_so_version,
-@@ -683,7 +683,7 @@ libharfbuzz_subset = library('harfbuzz-subset', hb_subset_sources,
+@@ -684,7 +684,7 @@ libharfbuzz_subset = library('harfbuzz-subset', hb_subset_sources,
  )
  
  custom_target('harfbuzz-subset.cc',
