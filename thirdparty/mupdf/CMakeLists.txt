@@ -119,8 +119,8 @@ list(APPEND BUILD_CMD COMMAND ${MAKE_CMD} libs)
 list(APPEND INSTALL_CMD COMMAND ${MAKE_CMD} DESTDIR=${STAGING_DIR} prefix=/ install-libs)
 
 external_project(
-    DOWNLOAD URL 3ca2eb786616345538ed9af23ad8da17
-    https://mupdf.com/downloads/archive/mupdf-1.26.8-source.tar.lz
+    DOWNLOAD URL 25c5f8bcf419ad1466b8fbb31f59dd5b
+    https://mupdf.com/downloads/archive/mupdf-1.26.10-source.tar.lz
     PATCH_FILES ${PATCH_FILES}
     PATCH_COMMAND ${PATCH_CMD}
     BUILD_COMMAND ${BUILD_CMD}
