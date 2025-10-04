@@ -1227,6 +1227,36 @@ static int isPageMapSynthetic(lua_State *L) {
     return 1;
 }
 
+static int buildSyntheticPageMap(lua_State *L) {
+    CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
+    int chars_per_synthetic_page = luaL_checkint(L, 2);
+    if (doc->dom_doc) {
+        doc->dom_doc->buildSyntheticPageMap(chars_per_synthetic_page);
+    }
+    return 0;
+}
+
+static int getSyntheticPageMapCharsPerPage(lua_State *L) {
+    CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
+    LVPageMap * pagemap = doc->text_view->getPageMap();
+    lua_pushinteger(L, pagemap->isSynthetic());
+    return 1;
+}
+
+static int hasPageMapDocumentProvided(lua_State *L) {
+    CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
+    LVPageMap * pagemap = doc->text_view->getPageMap();
+    lua_pushboolean(L, pagemap->hasDocumentProvided());
+    return 1;
+}
+
+static int isPageMapDocumentProvided(lua_State *L) {
+    CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
+    LVPageMap * pagemap = doc->text_view->getPageMap();
+    lua_pushboolean(L, pagemap->isDocumentProvided());
+    return 1;
+}
+
 static int hasPageMap(lua_State *L) {
     CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
 
@@ -4311,6 +4341,10 @@ static const struct luaL_Reg credocument_meth[] = {
     {"getPageMapVisiblePageLabels", getPageMapVisiblePageLabels},
     {"buildSyntheticPageMapIfNoneDocumentProvided", buildSyntheticPageMapIfNoneDocumentProvided},
     {"isPageMapSynthetic", isPageMapSynthetic},
+    {"buildSyntheticPageMap", buildSyntheticPageMap},
+    {"getSyntheticPageMapCharsPerPage", getSyntheticPageMapCharsPerPage},
+    {"hasPageMapDocumentProvided", hasPageMapDocumentProvided},
+    {"isPageMapDocumentProvided", isPageMapDocumentProvided},
     {"hasNonLinearFlows", hasNonLinearFlows},
     {"checkRegex", checkRegex},
     {"getAndClearRegexSearchError", getAndClearRegexSearchError},
