@@ -65,6 +65,12 @@ list(APPEND CFG_CMD
 )
 list(APPEND CFG_CMD COMMAND ${CMAKE_COMMAND} -E create_symlink ${CMAKE_CURRENT_BINARY_DIR}/localoptions.h localoptions.h)
 
+if(KINDLE)
+    # Some kindles don't have `libcrypt.so.1`, so link the static version.
+    find_compiler_lib_path(LIBCRYPT libcrypt.a)
+    list(APPEND CFG_CMD COMMAND ${ISED} "/^dropbear:/{n$<SEMICOLON>s| -lcrypt | ${LIBCRYPT} |}" Makefile)
+endif()
+
 set(PROGRAMS dbclient dropbear scp)
 
 list(APPEND BUILD_CMD make ${PROGRAMS})
