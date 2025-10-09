@@ -22,14 +22,17 @@ jobs:
             platform: 'x86-64'
             xcode_version: '15.2'
             deployment_target: '10.15'
+            jobs: 4
           - image: '14'
             platform: 'ARM64'
             xcode_version: '15.4'
             deployment_target: '11.0'
+            jobs: 3
           - image: '15'
             platform: 'ARM64'
             xcode_version: '16.0'
             deployment_target: '14.6.1'
+            jobs: 3
 
     name: "macOS ${{ matrix.image }} ${{ matrix.platform }} 🔨${{ matrix.xcode_version }} 🎯${{ matrix.deployment_target }}"
 
@@ -41,7 +44,7 @@ jobs:
       CLICOLOR_FORCE: '1'
       KODEBUG: ""
       MACOSX_DEPLOYMENT_TARGET: ${{ matrix.deployment_target }}
-      MAKEFLAGS: 'OUTPUT_DIR=build'
+      MAKEFLAGS: OUTPUT_DIR=build PARALLEL_LOAD= PARALLEL_JOBS=${{ matrix.jobs }}
 
     steps:
 
