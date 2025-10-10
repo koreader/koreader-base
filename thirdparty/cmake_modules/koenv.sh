@@ -258,10 +258,7 @@ checkout_git_repo() { (
 make() { (
     set +u
     unset MAKEOVERRIDES
-    MAKEFLAGS="${MAKEFLAGS%% -- *}"
-    export MAKEFLAGS
-    # shellcheck disable=2086
-    exec '@MAKE@' ${PARALLEL_JOBS:+-j}${PARALLEL_JOBS} ${PARALLEL_LOAD:+-l}${PARALLEL_LOAD} "$@"
+    exec '@MAKE@' "$@"
 ); }
 
 ninja() { (

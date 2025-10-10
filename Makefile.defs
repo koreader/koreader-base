@@ -1,4 +1,8 @@
-ifneq (4.1,$(firstword $(sort $(MAKE_VERSION) 4.1)))
+padded_version = $(subst $(empty) $(empty),0,$(shell printf '.%2s' $(subst .,$(empty) $(empty),$1)))
+at_least_version = $(filter $(call padded_version,$2),$(firstword $(sort $(call padded_version,$1) $(call padded_version,$2))))
+
+USING_MAKE_4_4_OR_BETTER := $(call at_least_version,$(MAKE_VERSION),4.4)
+ifeq (,$(or $(USING_MAKE_4_4_OR_BETTER),$(call at_least_version,$(MAKE_VERSION),4.1)))
   $(error your version of make is too old: $(MAKE_VERSION), need at least 4.1)
 endif
 
@@ -17,42 +21,12 @@ ifeq (,$(V)$(VERBOSE))
 .SILENT:
 endif
 
-ifeq (,$(PARALLEL_JOBS))
-empty :=
-space := $(empty) $(empty)
-  PARALLEL_JOBS := $(or $(patsubst -j%,%,$(filter -j%,$(MFLAGS))))
-endif
-ifeq (,$(PARALLEL_LOAD))
-  PARALLEL_LOAD := $(or $(patsubst -l%,%,$(filter -l%,$(MFLAGS))))
-endif
-ifeq (,$(and $(PARALLEL_JOBS),$(PARALLEL_LOAD)))
-  CORES := $(shell getconf _NPROCESSORS_ONLN)
-  ALLOCATED_CORES := $(CORES)
-  # Detect when running under cgroups, so we don't try
-  # to run with `make/ninja -j36 …` on some CI workers.
-  ifneq (,$(wildcard /sys/fs/cgroup/cpu/cpu.shares))
-    ALLOCATED_CORES := $(shell echo $$(($$(cat /sys/fs/cgroup/cpu/cpu.shares) / 1024)))
-  endif
-  ifeq (,$(PARALLEL_JOBS))
-    PARALLEL_JOBS := $(if $(CI),$(shell echo $$(($(ALLOCATED_CORES) + ($(ALLOCATED_CORES) + 1) / 2))),$(ALLOCATED_CORES))
-  endif
-  ifeq (,$(PARALLEL_LOAD))
-    PARALLEL_LOAD := $(CORES)
-  endif
-endif
-export PARALLEL_JOBS
-export PARALLEL_LOAD
-
-KEEP_GOING := $(findstring k,$(firstword -$(MAKEFLAGS)))
-DRY_RUN := $(findstring n,$(firstword -$(MAKEFLAGS)))
-
 # Use ccache in build system by default. Define USE_NO_CCACHE=1 to force disable it.
 ifeq ($(USE_NO_CCACHE), 1)
   CCACHE :=
 else
   CCACHE := $(or $(CCACHE),$(shell command -v ccache))
 endif
-
 
 TOOLCHAIN_DIR = $(abspath $(KOR_BASE)/toolchain)
 ANDROID_ARCH ?= arm
@@ -77,38 +51,60 @@ LINUX_ARCH?=native
 CMAKE := cmake -Wdev --warn-uninitialized
 NINJA := $(or $(NINJA),ninja)
 
-ifneq (,$(or $(VERBOSE),$(V)))
-  ifeq (4.4,$(firstword $(sort $(MAKE_VERSION) 4.4)))
-    MAKEFLAGS += --debug=print
-  else
-    MAKEFLAGS += --trace
-  endif
-  NINJAFLAGS += -v
-  export KOVERBOSE=1
-endif
-ifneq (,$(PARALLEL_JOBS))
-  NINJAFLAGS += -j$(PARALLEL_JOBS)
-endif
-ifneq (,$(PARALLEL_LOAD))
-  NINJAFLAGS += -l$(PARALLEL_LOAD)
-endif
-ifneq (,$(KEEP_GOING))
-  MAKEFLAGS += -k
-  NINJAFLAGS += -k0
-endif
-ifneq (,$(DRY_RUN))
-  MAKEFLAGS += -n
-  NINJAFLAGS += -nv
-endif
+NINJA_VERSION := $(shell $(NINJA) --version)
+USING_NINJA_1_13_OR_BETTER := $(call at_least_version,$(NINJA_VERSION),1.13.0)
 
-ifneq ($(or $(CLICOLOR_FORCE),$(MAKE_TERMOUT)),)
-  export CLICOLOR_FORCE=1
-  NINJA_STATUS := $(shell printf '\33[32;1m▸%%p\33[0m | ')
-else
-  NINJA_STATUS := $(empty) %p | $(empty)
+# Make / ninja flags.
+KEEP_GOING := $(findstring k,$(firstword -$(MAKEFLAGS)))
+DRY_RUN := $(findstring n,$(firstword -$(MAKEFLAGS)))
+ifeq (0,$(MAKELEVEL))
+  ifeq (,$(PARALLEL_JOBS))
+    space := $(empty) $(empty)
+    PARALLEL_JOBS := $(or $(patsubst -j%,%,$(filter -j%,$(MFLAGS))))
+  endif
+  ifeq (,$(PARALLEL_LOAD))
+    PARALLEL_LOAD := $(or $(patsubst -l%,%,$(filter -l%,$(MFLAGS))))
+  endif
+  ifeq (,$(PARALLEL_JOBS))
+    CORES := $(shell getconf _NPROCESSORS_ONLN)
+    ALLOCATED_CORES := $(CORES)
+    # Detect when running under cgroups, so we don't try
+    # to run with `make/ninja -j36 …` on some CI workers.
+    ifneq (,$(wildcard /sys/fs/cgroup/cpu/cpu.shares))
+      ALLOCATED_CORES := $(shell echo $$(($$(cat /sys/fs/cgroup/cpu/cpu.shares) / 1024)))
+    endif
+    PARALLEL_JOBS := $(ALLOCATED_CORES)
+  endif
+  ifneq (,$(or $(VERBOSE),$(V)))
+    MAKEFLAGS += $(if $(USING_MAKE_4_4_OR_BETTER),--debug=print,--trace)
+    NINJAFLAGS += -v
+    export KOVERBOSE=1
+  endif
+  ifneq (,$(PARALLEL_JOBS))
+    MAKEFLAGS += -j$(PARALLEL_JOBS)
+    NINJAFLAGS += $(if $(and $(USING_MAKE_4_4_OR_BETTER),$(USING_NINJA_1_13_OR_BETTER)),,-j$(PARALLEL_JOBS))
+  endif
+  ifneq (,$(PARALLEL_LOAD))
+    MAKEFLAGS += -l$(PARALLEL_LOAD)
+    NINJAFLAGS += -l$(PARALLEL_LOAD)
+  endif
+  ifneq (,$(KEEP_GOING))
+    MAKEFLAGS += -k
+    NINJAFLAGS += -k0
+  endif
+  ifneq (,$(DRY_RUN))
+    MAKEFLAGS += -n
+    NINJAFLAGS += -nv
+  endif
+  ifneq ($(or $(CLICOLOR_FORCE),$(MAKE_TERMOUT)),)
+    export CLICOLOR_FORCE=1
+    NINJA_STATUS := $(shell printf '\33[32;1m▸%%p\33[0m | ')
+  else
+    NINJA_STATUS := $(empty) %p | $(empty)
+  endif
+  export NINJA_STATUS
+  export NINJAFLAGS
 endif
-export NINJA_STATUS
-export NINJAFLAGS
 
 CMAKE_FLAGS = -G Ninja
 
