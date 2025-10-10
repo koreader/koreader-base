@@ -44,7 +44,7 @@ jobs:
       CLICOLOR_FORCE: '1'
       KODEBUG: ""
       MACOSX_DEPLOYMENT_TARGET: ${{ matrix.deployment_target }}
-      MAKEFLAGS: OUTPUT_DIR=build PARALLEL_LOAD= PARALLEL_JOBS=${{ matrix.jobs }}
+      MAKEFLAGS: OUTPUT_DIR=build PARALLEL_JOBS=${{ matrix.jobs }}
 
     steps:
 

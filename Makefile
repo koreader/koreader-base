@@ -18,8 +18,8 @@ define build_info
 $(info ************ Building for MACHINE: "$(MACHINE)" **********)
 $(info ************ PATH: "$(PATH)" **********)
 $(info ************ CHOST: "$(CHOST)" **********)
-$(info ************ NINJA: $(strip $(NINJA) $(PARALLEL_JOBS:%=-j%) $(PARALLEL_LOAD:%=-l%)) **********)
-$(info ************ MAKE: $(strip $(MAKE) $(PARALLEL_JOBS:%=-j%) $(PARALLEL_LOAD:%=-l%)) **********)
+$(info ************ NINJA: $(strip $(NINJA) $(NINJAFLAGS)) ($(NINJA_VERSION)) **********)
+$(info ************ MAKE: $(strip $(MAKE) $(MFLAGS)) ($(MAKE_VERSION)) **********)
 endef
 
 PHONY += $(addprefix $(BASE_PREFIX),all clean distclean fetchthirdparty re reinstall test uninstall)
@@ -83,7 +83,7 @@ $(CMAKE_DIR)/meson_%.ini: $(KOR_BASE)/Makefile.defs | $(CMAKE_DIR)/
 LEFTOVERS = $(filter-out $(PHONY) $(SOUND),$(MAKECMDGOALS))
 .PHONY: $(LEFTOVERS)
 $(BASE_PREFIX)all $(LEFTOVERS): skeleton $(BUILD_ENTRYPOINT)
-	$(and $(DRY_RUN),$(wildcard $(BUILD_ENTRYPOINT)),+)cd $(CMAKE_DIR) && $(strip $(NINJA) $(NINJAFLAGS) $(patsubst $(BASE_PREFIX)all,all,$@))
+	$(if $(wildcard $(BUILD_ENTRYPOINT)),+)cd $(CMAKE_DIR) && $(strip $(NINJA) $(NINJAFLAGS) $(patsubst $(BASE_PREFIX)all,all,$@))
 
 # }}}
 
