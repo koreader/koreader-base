@@ -257,7 +257,11 @@ checkout_git_repo() { (
 
 make() { (
     set +u
+    # Strip outer make overrides to avoid messing-up a thirdparty
+    # project build (e.g. fbink `INSTALL_DIR` makefile variable).
     unset MAKEOVERRIDES
+    MAKEFLAGS="${MAKEFLAGS%% -- *}"
+    export MAKEFLAGS
     exec '@MAKE@' "$@"
 ); }
 
