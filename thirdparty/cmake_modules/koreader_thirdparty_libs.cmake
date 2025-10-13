@@ -76,7 +76,7 @@ endif()
 declare_dependency(djvulibre::djvulibre MONOLIBTIC jpeg STATIC djvulibre LIBRARIES ${LIBRARIES})
 
 # freetype
-declare_dependency(freetype2::freetype INCLUDES freetype2 MONOLIBTIC freetype)
+declare_dependency(freetype2::freetype INCLUDES freetype2 MONOLIBTIC freetype STATIC brotlicommon brotlidec)
 
 # fribidi
 declare_dependency(fribidi::fribidi INCLUDES fribidi MONOLIBTIC fribidi)
