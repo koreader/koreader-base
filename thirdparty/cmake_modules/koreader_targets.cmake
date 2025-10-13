@@ -236,6 +236,19 @@ declare_koreader_target(
     SOURCES button-listen.c
 )
 
+# unpack
+if(NOT (ANDROID OR APPLE OR EMULATE_READER))
+    set(EXCLUDE_FROM_ALL)
+else()
+    set(EXCLUDE_FROM_ALL EXCLUDE_FROM_ALL)
+endif()
+declare_koreader_target(
+    unpack TYPE executable
+    DEPENDS libarchive::libarchive_static xz::lzma_static zlib::z_static zstd::zstd_static m
+    ${EXCLUDE_FROM_ALL}
+    SOURCES unpack.c
+)
+
 # }}}
 
 # MONOLIBTIC. {{{
