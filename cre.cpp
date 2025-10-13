@@ -3939,6 +3939,9 @@ static int findAllText(lua_State *L) {
                         lua_pushstring(L, "matched_word_prefix");
                         lua_pushstring(L, UnicodeToLocal(prefix).c_str());
                         lua_rawset(L, -3);
+                        lua_pushstring(L, "matched_word_prefix_start");
+                        lua_pushstring(L, UnicodeToLocal(start.toString()).c_str());
+                        lua_rawset(L, -3);
                     }
 
                     ldomXPointerEx end = word.getEndXPointer();
@@ -3948,6 +3951,9 @@ static int findAllText(lua_State *L) {
                         lString32 suffix = rn.getRangeText('\n');
                         lua_pushstring(L, "matched_word_suffix");
                         lua_pushstring(L, UnicodeToLocal(suffix).c_str());
+                        lua_rawset(L, -3);
+                        lua_pushstring(L, "matched_word_suffix_end");
+                        lua_pushstring(L, UnicodeToLocal(end.toString()).c_str());
                         lua_rawset(L, -3);
                     }
 
