@@ -171,6 +171,9 @@ if(IS_DIRECTORY "${ANDROID_LAUNCHER_DIR}")
     )
 endif()
 
+# brotli
+declare_project(thirdparty/brotli EXCLUDE_FROM_ALL)
+
 # crengine
 declare_project(
     cmake/crengine
