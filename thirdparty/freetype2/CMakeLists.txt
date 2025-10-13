@@ -8,7 +8,7 @@ list(APPEND CFG_CMD COMMAND
     -Derror_strings=$<IF:$<STREQUAL:${CMAKE_BUILD_TYPE},Debug>,true,false>
     -Dharfbuzz=disabled
     -Dmmap=enabled
-    -Dzlib=disabled
+    -Dzlib=system
     ${SOURCE_DIR}
 )
 

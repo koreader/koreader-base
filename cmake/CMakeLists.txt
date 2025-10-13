@@ -250,7 +250,7 @@ if(CMAKE_C_COMPILER_ID STREQUAL "GNU")
 endif()
 
 # freetype
-declare_project(thirdparty/freetype2)
+declare_project(thirdparty/freetype2 DEPENDS zlib)
 
 # fribidi
 declare_project(thirdparty/fribidi EXCLUDE_FROM_ALL)
