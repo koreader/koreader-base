@@ -94,8 +94,8 @@ runtests_busted() {
         '') ;;
         gdb) cmd+=(gdb --args) ;;
         *)
-            # shellcheck disable=SC2206
-            cmd+=(${wrapper})
+            declare -a a="(${wrapper})"
+            cmd+=("${a[@]}")
             ;;
     esac
     cmd+=(./luajit -e 'require "busted.runner" {standalone = false}' /dev/null)
