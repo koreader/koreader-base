@@ -1,3 +1,4 @@
+list(APPEND PATCH_FILES ignore_locale_and_use_utf8.patch)
 if(ANDROID)
     list(APPEND PATCH_FILES android.patch)
     list(APPEND PATCH_CMD COMMAND mv contrib/android/include/android_lf.h libarchive/)
