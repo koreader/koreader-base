@@ -4078,6 +4078,7 @@ static int getImageDataFromPosition(lua_State *L) {
                 lua_pushinteger(L, size);
                 return 2;
             }
+            free(buffer);
         }
     }
     return 0;
