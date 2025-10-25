@@ -11,7 +11,7 @@ index e9fc25b4..ba0d70cb 100644
        lj_err_caller(L, LJ_ERR_NOGCMM);
      o = index2adr(L, idx);  /* Stack may have been reallocated. */
 diff --git a/src/lj_asm.c b/src/lj_asm.c
-index fec43512..2ad8020f 100644
+index e7f3ec1c..c4614166 100644
 --- a/src/lj_asm.c
 +++ b/src/lj_asm.c
 @@ -148,6 +148,7 @@ static LJ_AINLINE void checkmclim(ASMState *as)
