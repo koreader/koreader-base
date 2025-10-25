@@ -29,14 +29,14 @@ function Jpeg.openDocument(filename, color)
     return Jpeg.openDocumentFromMem(data, color)
 end
 
-function Jpeg.openDocumentFromMem(data, color)
+function Jpeg.openDocumentFromMem(data, color, size)
     local handle = turbojpeg.tj3Init(turbojpeg.TJINIT_DECOMPRESS)
     assert(handle, "no TurboJPEG API decompressor handle")
     -- Gotta go fast!
     turbojpeg.tj3Set(handle, turbojpeg.TJPARAM_FASTUPSAMPLE, 1)
     turbojpeg.tj3Set(handle, turbojpeg.TJPARAM_FASTDCT, 1)
 
-    if turbojpeg.tj3DecompressHeader(handle, ffi.cast("const unsigned char*", data), #data) < 0 then
+    if turbojpeg.tj3DecompressHeader(handle, ffi.cast("const unsigned char*", data), size or #data) < 0 then
         turbojpeg.tj3Destroy(handle)
         error("reading JPEG header")
     end
@@ -61,7 +61,7 @@ function Jpeg.openDocumentFromMem(data, color)
         format = turbojpeg.TJPF_GRAY
     end
 
-    if turbojpeg.tj3Decompress8(handle, ffi.cast("unsigned char*", data), #data,
+    if turbojpeg.tj3Decompress8(handle, ffi.cast("unsigned char*", data), size or #data,
                                 ffi.cast("unsigned char*", image_bb.data), image_bb.stride, format) < 0 then
         turbojpeg.tj3Destroy(handle)
         error("decoding JPEG file")
