@@ -129,7 +129,7 @@ clean_tree() { (
     srclist="$2"
     shift 2
     # shellcheck disable=SC2030
-    export LANG=C
+    export LC_ALL=C
     killlist="$(list_tree "${tree}" | comm -13 "${srclist}" - | tac)"
     [ -n "${killlist}" ] || return 0
     # Remove files.
@@ -151,7 +151,7 @@ list_tree() { (
         shift
     fi
     # shellcheck disable=SC2031
-    export LANG=C
+    export LC_ALL=C
     find "${tree}" -type d \( -name '.git' -prune -o -printf '%p/\n' \) -o -printf '%p\n' | sort
 ); }
 
