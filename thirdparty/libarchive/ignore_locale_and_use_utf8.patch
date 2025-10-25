@@ -1,0 +1,20 @@
+--- a/libarchive/archive_string.c
++++ b/libarchive/archive_string.c
+@@ -445,6 +445,7 @@
+ default_iconv_charset(const char *charset) {
+ 	if (charset != NULL && charset[0] != '\0')
+ 		return charset;
++#if 0
+ #if HAVE_LOCALE_CHARSET && !defined(__APPLE__)
+ 	/* locale_charset() is broken on Mac OS */
+ 	return locale_charset();
+@@ -453,6 +454,9 @@
+ #else
+ 	return "";
+ #endif
++#else
++	return "UTF-8";
++#endif
+ }
+ 
+ #if defined(_WIN32) && !defined(__CYGWIN__)
