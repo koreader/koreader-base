@@ -360,9 +360,9 @@ function Pic.openJPGDocument(filename)
     return doc
 end
 
-function Pic.openJPGDocumentFromMem(data)
+function Pic.openJPGDocumentFromData(data, size)
     local Jpeg = require("ffi/jpeg")
-    local image, w, h, components = Jpeg.openDocumentFromMem(data, Pic.color)
+    local image, w, h, components = Jpeg.openDocumentFromMem(data, Pic.color, size)
 
     local doc = PicDocument:new{width=w, height=h}
     doc.image_bb = image
