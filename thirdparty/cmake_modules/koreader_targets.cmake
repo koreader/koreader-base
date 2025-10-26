@@ -281,6 +281,7 @@ if(MONOLIBTIC)
         pthread
         sqlite::sqlite3
         turbo::tffi_wrap
+        xxhash::xxhash
         zlib::z
         zstd::zstd
         SOURCES monolibtic.cpp
