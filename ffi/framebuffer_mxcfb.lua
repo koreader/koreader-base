@@ -1152,6 +1152,26 @@ function framebuffer:init()
         self.waveform_flashnight = self.waveform_night
         self.night_is_reagl = false
 
+        self.wf_level_max = 3
+        local level = self:getWaveformLevel()
+        -- The best quality but much slower refresh.
+        if level == 0 then
+            self.waveform_fast = C.WAVEFORM_MODE_GC16
+            self.waveform_partial = C.WAVEFORM_MODE_GC16
+        -- Good quality for contents while still having decently fast "fast" refresh mode without losing any color.
+        elseif level == 1 then
+            self.waveform_fast = C.WAVEFORM_MODE_GL16
+            self.waveform_partial = C.WAVEFORM_MODE_GC16
+        -- Level 2 was the setting before levels were introduced, fast refresh mode loses color on color-enabled devices.
+        elseif level == 2 then
+            self.waveform_fast = C.WAVEFORM_MODE_DU
+            self.waveform_partial = C.WAVEFORM_MODE_GL16
+        -- Fastest refresh, but more ghosting and artifacts, and color is lost on color-enabled devices.
+        elseif level == 3 then
+            self.waveform_fast = C.WAVEFORM_MODE_DU
+            self.waveform_partial = C.WAVEFORM_MODE_DU
+        end
+
         -- Keep our data structures around
         self.update_data = ffi.new("struct mxcfb_update_data")
         -- NOTE: We update temp at runtime on rM
