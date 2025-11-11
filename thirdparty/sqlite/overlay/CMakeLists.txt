@@ -50,6 +50,7 @@ target_compile_definitions(sqlite3 PRIVATE
     SQLITE_ENABLE_FTS5
     SQLITE_LIKE_DOESNT_MATCH_BLOBS
     SQLITE_MAX_EXPR_DEPTH=0
+    SQLITE_OMIT_COMPLETE
     SQLITE_OMIT_DECLTYPE
     SQLITE_OMIT_DEPRECATED
     SQLITE_OMIT_DESERIALIZE
@@ -57,10 +58,18 @@ target_compile_definitions(sqlite3 PRIVATE
     SQLITE_OMIT_LOAD_EXTENSION=1
     SQLITE_OMIT_PROGRESS_CALLBACK
     SQLITE_OMIT_SHARED_CACHE
+    SQLITE_OMIT_TCL_VARIABLE
+    SQLITE_OMIT_TRACE
     SQLITE_OMIT_UTF16
     SQLITE_THREADSAFE=1
     SQLITE_USE_ALLOCA
 )
+if(NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
+    target_compile_definitions(sqlite3 PRIVATE
+        ${DEFINITIONS}
+        SQLITE_OMIT_EXPLAIN
+    )
+endif()
 target_sources(sqlite3 PRIVATE sqlite3.c)
 target_link_libraries(sqlite3 m Threads::Threads)
 
