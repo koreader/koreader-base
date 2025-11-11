@@ -52,6 +52,7 @@ target_link_libraries(
     md4c::html
     srell::srell
     utf8proc::utf8proc
+    xxhash::xxhash
     zlib::z
     zstd::zstd
 )
@@ -236,6 +237,9 @@ endif()
 
 # utf8proc
 declare_dependency(utf8proc::utf8proc MONOLIBTIC utf8proc)
+
+# xxhash
+declare_dependency(xxhash::xxhash MONOLIBTIC xxhash)
 
 # zlib
 declare_dependency(zlib::z MONOLIBTIC z)
