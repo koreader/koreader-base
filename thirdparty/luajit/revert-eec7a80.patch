@@ -1,8 +1,8 @@
-diff --git c/src/Makefile i/src/Makefile
-index c83abfa..4a56d1e 100644
---- c/src/Makefile
-+++ i/src/Makefile
-@@ -302,9 +302,6 @@ endif
+diff --git a/src/Makefile b/src/Makefile
+index 3af8aaf4..d5537fc6 100644
+--- a/src/Makefile
++++ b/src/Makefile
+@@ -303,9 +303,6 @@ endif
  ifneq (,$(INSTALL_LJLIBD))
    TARGET_XCFLAGS+= -DLUA_LJDIR=\"$(INSTALL_LJLIBD)\"
  endif
