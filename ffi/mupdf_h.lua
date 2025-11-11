@@ -163,6 +163,7 @@ struct fz_stext_line {
 typedef struct fz_stext_block fz_stext_block;
 struct fz_stext_block {
   int type;
+  int id;
   fz_rect bbox;
   union {
     struct {
@@ -196,11 +197,13 @@ typedef struct {
   fz_rect clip;
 } fz_stext_options;
 typedef struct {
+  int refs;
   struct fz_pool *pool;
   fz_rect mediabox;
   fz_stext_block *first_block;
   fz_stext_block *last_block;
   struct fz_stext_struct *last_struct;
+  struct fz_pool_array *id_list;
 } fz_stext_page;
 fz_stext_page *mupdf_new_stext_page_from_page(fz_context *, fz_page *, const fz_stext_options *);
 void fz_drop_stext_page(fz_context *, fz_stext_page *);

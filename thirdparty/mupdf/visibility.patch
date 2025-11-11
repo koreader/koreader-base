@@ -161,7 +161,7 @@ index 55ff86185..a29181f82 100644
  
  #endif
 diff --git a/include/mupdf/fitz/geometry.h b/include/mupdf/fitz/geometry.h
-index d280a0404..4d6f2c215 100644
+index 2d0d11e55..fd11a2785 100644
 --- a/include/mupdf/fitz/geometry.h
 +++ b/include/mupdf/fitz/geometry.h
 @@ -32,6 +32,8 @@
@@ -173,7 +173,7 @@ index d280a0404..4d6f2c215 100644
  /**
  	Multiply scaled two integers in the 0..255 range
  */
-@@ -874,4 +876,6 @@ int fz_is_quad_inside_quad(fz_quad needle, fz_quad haystack);
+@@ -882,4 +884,6 @@ int fz_is_quad_inside_quad(fz_quad needle, fz_quad haystack);
  */
  int fz_is_quad_intersecting_quad(fz_quad a, fz_quad b);
  
@@ -316,7 +316,7 @@ index f46331dd9..64a41c173 100644
 +
  #endif
 diff --git a/include/mupdf/fitz/structured-text.h b/include/mupdf/fitz/structured-text.h
-index c45badca4..d471af2a8 100644
+index 77cbaaec5..abcf0247f 100644
 --- a/include/mupdf/fitz/structured-text.h
 +++ b/include/mupdf/fitz/structured-text.h
 @@ -33,6 +33,8 @@
@@ -328,12 +328,12 @@ index c45badca4..d471af2a8 100644
  /**
  	Simple text layout (for use with annotation editing primarily).
  */
-@@ -732,5 +734,6 @@ fz_device *fz_new_ocr_device(fz_context *ctx, fz_device *target, fz_matrix ctm,
- 
- fz_document *fz_open_reflowed_document(fz_context *ctx, fz_document *underdoc, const fz_stext_options *opts);
+@@ -921,4 +923,6 @@ fz_classify_stext_rect(fz_context *ctx, fz_stext_page *page, fz_structure classi
+ int
+ fz_stext_remove_page_fill(fz_context *ctx, fz_stext_page *page);
  
 +FZ_EXPORTS_STOP
- 
++
  #endif
 diff --git a/include/mupdf/fitz/util.h b/include/mupdf/fitz/util.h
 index 78326f724..84e9d47fe 100644
