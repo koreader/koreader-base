@@ -1,5 +1,5 @@
 diff --git a/src/Makefile b/src/Makefile
-index d23e0db2..923b7b98 100644
+index e657af13..3af8aaf4 100644
 --- a/src/Makefile
 +++ b/src/Makefile
 @@ -211,6 +211,7 @@ TARGET_STCC= $(STATIC_CC)
@@ -18,7 +18,7 @@ index d23e0db2..923b7b98 100644
    endif
    ifeq (GNU/kFreeBSD,$(TARGET_SYS))
      TARGET_XLIBS+= -ldl
-@@ -664,7 +666,7 @@ depend:
+@@ -668,7 +670,7 @@ depend:
  
  $(MINILUA_T): $(MINILUA_O)
  	$(E) "HOSTLINK  $@"
@@ -27,7 +27,7 @@ index d23e0db2..923b7b98 100644
  
  luajit.h: $(MINILUA_DEP) $(GIT_DEP) luajit_rolling.h
  	$(E) "VERSION   $@"
-@@ -679,7 +681,7 @@ host/buildvm.o: $(DASM_DIR)/dasm_*.h
+@@ -683,7 +685,7 @@ host/buildvm.o: $(DASM_DIR)/dasm_*.h
  
  $(BUILDVM_T): $(BUILDVM_O)
  	$(E) "HOSTLINK  $@"
@@ -36,7 +36,7 @@ index d23e0db2..923b7b98 100644
  
  $(LJVM_BOUT): $(BUILDVM_T)
  	$(E) "BUILDVM   $@"
-@@ -740,16 +742,17 @@ include Makefile.dep
+@@ -744,16 +746,17 @@ include Makefile.dep
  $(LUAJIT_A): $(LJVMCORE_O)
  	$(E) "AR        $@"
  	$(Q)$(TARGET_AR) $@ $(LJVMCORE_O)
