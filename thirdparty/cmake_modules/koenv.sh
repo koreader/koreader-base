@@ -83,7 +83,7 @@ download_archive() { (
     for timeout in 0 2 4; do
         sleep ${timeout}
         for url in "$@"; do
-            if curl --fail --location --connect-timeout 10 --create-dirs --max-time 30 --retry 3 --output "${dest}" "${url}" && validate_md5 "${dest}" "${md5}"; then
+            if curl --fail --location --connect-timeout 15 --create-dirs --max-time 120 --output "${dest}" "${url}" && validate_md5 "${dest}" "${md5}"; then
                 return 0
             fi
         done
