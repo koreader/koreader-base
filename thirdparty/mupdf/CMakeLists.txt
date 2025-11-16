@@ -120,6 +120,7 @@ list(APPEND INSTALL_CMD COMMAND ${MAKE_CMD} DESTDIR=${STAGING_DIR} prefix=/ inst
 
 external_project(
     DOWNLOAD URL fbc0a62661f5d28ebfaa367c5301d170
+    https://github.com/ArtifexSoftware/mupdf-downloads/releases/download/1.26.11/mupdf-1.26.11-source.tar.lz
     https://mupdf.com/downloads/archive/mupdf-1.26.11-source.tar.lz
     PATCH_FILES ${PATCH_FILES}
     PATCH_COMMAND ${PATCH_CMD}
