@@ -373,6 +373,8 @@ function(luarocks_external_project URL MD5)
     if(_SOURCE_SUBDIR)
         list(APPEND BUILD_CMD COMMAND cd ${_SOURCE_SUBDIR})
     endif()
+    # First things first: go back to a pristine source tree…
+    list(APPEND BUILD_CMD COMMAND clean_tree ${SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR}/source.list)
     list(APPEND BUILD_CMD COMMAND
         ${STAGING_DIR}/bin/luarocks
         --tree ${BINARY_DIR}/dist make ${_ROCKSPEC}
