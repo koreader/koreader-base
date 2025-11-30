@@ -4,10 +4,6 @@ set(BINARY_DIR ${SOURCE_DIR})
 list(APPEND PATCH_FILES koreader-luajit-makefile-tweaks.patch)
 # Enable table.pack & table.unpack w/o the rest of the -DLUAJIT_ENABLE_LUA52COMPAT baggage...
 list(APPEND PATCH_FILES koreader-luajit-enable-table_pack.patch)
-if(APPLE AND CMAKE_SYSTEM_PROCESSOR STREQUAL "x86_64")
-    # Fix https://github.com/LuaJIT/LuaJIT/pull/1355 regression.
-    list(APPEND PATCH_FILES revert-eec7a80.patch)
-endif()
 
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
     # Debugging is a go!
@@ -99,7 +95,7 @@ endif()
 append_tree_install_commands(INSTALL_CMD src/jit jit)
 
 external_project(
-    DOWNLOAD GIT 5c8cee3dffdb3bc6239ecdf48ce9afeb0fb68250
+    DOWNLOAD GIT b973c6243d4aab73e5c3df0d7264258b0672fa7e
     https://github.com/LuaJIT/LuaJIT
     PATCH_FILES ${PATCH_FILES}
     PATCH_COMMAND ${PATCH_CMD}
