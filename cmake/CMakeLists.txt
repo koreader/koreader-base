@@ -137,7 +137,7 @@ check_libc_fn_exists(ngettext libintl.h HAS_GETTEXT)
 # We don't want to rely on `-static-libstdc++`, as it risks breaking the ODR. (Also, it was a pain to deal with because
 # of libtool, c.f., https://www.gnu.org/software/libtool/manual/html_node/Stripped-link-flags.html#Stripped-link-flags).
 #
-if(NOT ((ANDROID AND MONOLIBTIC) OR APPLE OR EMULATE_READER OR SDL))
+if(NOT ((ANDROID AND MONOLIBTIC) OR APPLE OR EMULATE_READER OR USE_SDL))
     if(ANDROID)
         set(STL_NAME libc++_shared.so)
     else()
