@@ -598,6 +598,7 @@ else ifeq ($(TARGET), arm-generic)
 	ARM_ARCH:=$(ARMV6_GENERIC_ARCH)
 	ARM_ARCH+=-mfloat-abi=softfp
 else ifeq ($(TARGET), linux)
+	MONOLIBTIC = 1
 	ifeq ($(LINUX_ARCH), arm)
 		ARM_ARCH:=$(ARMV7_GENERIC_ARCH)
 		ARM_ARCH+=-mfloat-abi=hard
