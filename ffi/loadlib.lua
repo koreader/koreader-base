@@ -25,6 +25,7 @@ local monolibtic = {
     redirects = {
         ["archive"]    = true,
         ["blitbuffer"] = true,
+        ["crypto"]     = true,
         ["czmq"]       = true,
         ["freetype"]   = true,
         ["fribidi"]    = true,
