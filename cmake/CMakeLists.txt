@@ -291,7 +291,7 @@ declare_project(thirdparty/leptonica DEPENDS libpng)
 
 # libarchive
 set(DEPENDS zlib zstd)
-if(ANDROID)
+if(NOT (APPLE OR EMULATE_READER))
     list(APPEND DEPENDS xz)
 endif()
 declare_project(thirdparty/libarchive DEPENDS ${DEPENDS})

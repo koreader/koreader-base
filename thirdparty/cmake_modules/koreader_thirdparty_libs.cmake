@@ -192,7 +192,7 @@ if(ANDROID)
     list(APPEND SYS_LIBS log)
 endif()
 set(MONO_LIBS archive freetype harfbuzz jpeg webp webpdemux z)
-if(ANDROID)
+if(NOT (APPLE OR EMULATE_READER))
     list(APPEND STATIC_LIBS lzma)
 endif()
 declare_dependency(

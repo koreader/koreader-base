@@ -254,6 +254,9 @@ if(MONOLIBTIC)
     if(KINDLE)
         list(APPEND DEPENDS openlipclua::libopenlipclua)
     endif()
+    if(NOT (APPLE OR EMULATE_READER))
+        list(APPEND DEPENDS xz::lzma_static)
+    endif()
     declare_koreader_target(
         koreader-monolibtic TYPE library
         DEPENDS ${DEPENDS}
