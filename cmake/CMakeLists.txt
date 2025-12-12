@@ -418,14 +418,6 @@ declare_project(thirdparty/sdl2 ${EXCLUDE_FROM_ALL})
 # sqlite
 declare_project(thirdparty/sqlite)
 
-# tar
-if(NOT (ANDROID OR APPLE OR EMULATE_READER OR WIN32))
-    set(EXCLUDE_FROM_ALL)
-else()
-    set(EXCLUDE_FROM_ALL EXCLUDE_FROM_ALL)
-endif()
-declare_project(thirdparty/tar ${EXCLUDE_FROM_ALL})
-
 # tesseract
 set(DEPENDS leptonica)
 if(ANDROID)
