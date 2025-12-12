@@ -653,6 +653,9 @@ ffi_target(utf8proc utf8proc_h.lua utf8proc_decl.c ARGS -d libutf8proc)
 # xxhash
 ffi_target(xxhash xxhash_h.lua xxhash_cdecl.c)
 
+# xz
+ffi_target(xz xz_h.lua xz_cdecl.c)
+
 # zlib
 ffi_target(zlib zlib_h.lua zlib_decl.c ARGS -d zlib)
 
