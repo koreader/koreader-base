@@ -443,14 +443,6 @@ declare_project(thirdparty/zlib)
 # zstd
 declare_project(thirdparty/zstd)
 
-# zsync2
-if(CERVANTES OR KINDLE OR KOBO OR POCKETBOOK OR REMARKABLE OR SONY_PRSTUX)
-    set(EXCLUDE_FROM_ALL)
-else()
-    set(EXCLUDE_FROM_ALL EXCLUDE_FROM_ALL)
-endif()
-declare_project(thirdparty/zsync2 DEPENDS curl libressl zlib ${EXCLUDE_FROM_ALL})
-
 # }}}
 
 # TESTSUITE DEPENDENCIES. {{{
