@@ -78,8 +78,8 @@ list(APPEND BUILD_CMD make ${PROGRAMS})
 append_binary_install_command(INSTALL_CMD ${PROGRAMS})
 
 external_project(
-    DOWNLOAD URL 327e7deca6ce7c18b1f259dbf40021bd
-    https://github.com/mkj/dropbear/archive/refs/tags/DROPBEAR_2025.88.tar.gz
+    DOWNLOAD URL 43169508301ac5918b62b83ffc947dee
+    https://github.com/mkj/dropbear/archive/refs/tags/DROPBEAR_2025.89.tar.gz
     PATCH_FILES ${PATCH_FILES}
     CONFIGURE_COMMAND ${CFG_CMD}
     BUILD_DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/localoptions.h

@@ -1,6 +1,8 @@
---- i/src/runopts.h
-+++ w/src/runopts.h
-@@ -121,6 +121,7 @@ typedef struct svr_runopts {
+diff --git a/src/runopts.h b/src/runopts.h
+index c8072b3..a25539b 100644
+--- a/src/runopts.h
++++ b/src/runopts.h
+@@ -122,6 +122,7 @@ typedef struct svr_runopts {
  
  	buffer * banner;
  	char * pidfile;
@@ -8,8 +10,10 @@
  
  	char * authorized_keys_dir;
  
---- i/src/svr-authpasswd.c
-+++ w/src/svr-authpasswd.c
+diff --git a/src/svr-authpasswd.c b/src/svr-authpasswd.c
+index 899a8ab..410d53d 100644
+--- a/src/svr-authpasswd.c
++++ b/src/svr-authpasswd.c
 @@ -80,6 +80,15 @@ void svr_auth_password(int valid_user) {
  		return;
  	}
@@ -26,8 +30,10 @@
  	if (passwordlen > DROPBEAR_MAX_PASSWORD_LEN) {
  		dropbear_log(LOG_WARNING,
  				"Too-long password attempt for '%s' from %s",
---- i/src/svr-runopts.c
-+++ w/src/svr-runopts.c
+diff --git a/src/svr-runopts.c b/src/svr-runopts.c
+index 8034c50..5fc5aab 100644
+--- a/src/svr-runopts.c
++++ b/src/svr-runopts.c
 @@ -106,6 +106,7 @@ static void printhelp(const char * progname) {
  					"-l <interface>\n"
  					"		interface to bind on\n"
@@ -44,7 +50,7 @@
  #if DROPBEAR_SVR_LOCALANYFWD
  	svr_opts.nolocaltcp = 0;
  #endif
-@@ -279,6 +281,9 @@ void svr_getopts(int argc, char ** argv) {
+@@ -285,6 +287,9 @@ void svr_getopts(int argc, char ** argv) {
  				case 'P':
  					next = &svr_opts.pidfile;
  					break;
