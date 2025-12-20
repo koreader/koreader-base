@@ -30,8 +30,8 @@ if(EMULATE_READER AND NOT APPLE)
 endif()
 
 external_project(
-    DOWNLOAD URL ab95865ced3c123908bd2f1fe6843606
-    https://github.com/luarocks/luarocks/archive/refs/tags/v3.11.1.tar.gz
+    DOWNLOAD URL 56d10945997f2eab5922f24195550a1d
+    https://github.com/luarocks/luarocks/archive/refs/tags/v3.12.2.tar.gz
     CONFIGURE_COMMAND ${CFG_CMD}
     BUILD_COMMAND ${BUILD_CMD}
     INSTALL_COMMAND ${INSTALL_CMD}
