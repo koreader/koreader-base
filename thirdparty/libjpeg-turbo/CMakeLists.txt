@@ -29,7 +29,7 @@ if(NOT MONOLIBTIC)
 endif()
 
 external_project(
-    DOWNLOAD GIT 3.1.2
+    DOWNLOAD GIT 3.1.3
     https://github.com/libjpeg-turbo/libjpeg-turbo.git
     PATCH_FILES ${PATCH_FILES}
     CMAKE_ARGS ${CMAKE_ARGS}
