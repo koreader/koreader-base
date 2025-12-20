@@ -1,8 +1,8 @@
 diff --git a/CMakeLists.txt b/CMakeLists.txt
-index b9ef19d..39c6905 100644
+index b7e1276..451e6c0 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
-@@ -668,6 +668,7 @@ set(JPEG_SOURCES src/jcapimin.c
+@@ -667,6 +667,7 @@ set(JPEG_SOURCES src/jcapimin.c
    src/wrapper/jquant1-8.c src/wrapper/jquant1-12.c
    src/wrapper/jquant2-8.c src/wrapper/jquant2-12.c
    src/wrapper/jutils-8.c src/wrapper/jutils-12.c src/wrapper/jutils-16.c)
@@ -10,7 +10,7 @@ index b9ef19d..39c6905 100644
  
  if(WITH_ARITH_ENC OR WITH_ARITH_DEC)
    set(JPEG_SOURCES ${JPEG_SOURCES} src/jaricom.c)
-@@ -726,6 +727,7 @@ if(WITH_TURBOJPEG)
+@@ -725,6 +726,7 @@ if(WITH_TURBOJPEG)
      src/wrapper/rdppm-8.c src/wrapper/rdppm-12.c src/wrapper/rdppm-16.c
      src/wrbmp.c
      src/wrapper/wrppm-8.c src/wrapper/wrppm-12.c src/wrapper/wrppm-16.c)
@@ -278,10 +278,10 @@ index 719813f..f7869cf 100644
  
    /* We can now tell the memory manager to allocate virtual arrays. */
 diff --git a/src/turbojpeg.c b/src/turbojpeg.c
-index 389aea5..4d80661 100644
+index 45fc0f9..3cbb34a 100644
 --- a/src/turbojpeg.c
 +++ b/src/turbojpeg.c
-@@ -1197,12 +1197,14 @@ bailout:
+@@ -1193,12 +1193,14 @@ bailout:
  #define BITS_IN_JSAMPLE  8
  #include "turbojpeg-mp.c"
  #undef BITS_IN_JSAMPLE
