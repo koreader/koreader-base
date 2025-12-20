@@ -45,8 +45,8 @@ list(APPEND BUILD_CMD COMMAND ninja)
 list(APPEND INSTALL_CMD COMMAND ${CMAKE_COMMAND} --install .)
 
 external_project(
-    DOWNLOAD URL cf5e1feb023d22c6bdaa30e84ef3abe3
-    https://github.com/tukaani-project/xz/releases/download/v5.8.1/xz-5.8.1.tar.xz
+    DOWNLOAD URL 87c8bb8addf7189d3a51f6a5f03163fc
+    https://github.com/tukaani-project/xz/releases/download/v5.8.2/xz-5.8.2.tar.xz
     PATCH_FILES ${PATCH_FILES}
     PATCH_COMMAND ${PATCH_CMD}
     CMAKE_ARGS ${CMAKE_ARGS}
