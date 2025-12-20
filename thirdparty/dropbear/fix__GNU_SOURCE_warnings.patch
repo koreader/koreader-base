@@ -1,6 +1,8 @@
+diff --git a/src/config.h.in b/src/config.h.in
+index 589786e..dd79699 100644
 --- a/src/config.h.in
 +++ b/src/config.h.in
-@@ -447,7 +447,9 @@
+@@ -450,7 +450,9 @@
  #undef _FILE_OFFSET_BITS
  
  /* Use GNU extensions if glibc */
@@ -10,6 +12,8 @@
  
  /* Define for large files, on AIX-style hosts. */
  #undef _LARGE_FILES
+diff --git a/src/dbutil.c b/src/dbutil.c
+index a70025e..81031c6 100644
 --- a/src/dbutil.c
 +++ b/src/dbutil.c
 @@ -51,7 +51,9 @@
@@ -22,6 +26,8 @@
  /* To call clock_gettime() directly */
  #include <sys/syscall.h>
  #endif /* __linux */
+diff --git a/src/scpmisc.c b/src/scpmisc.c
+index c2f053e..bd117b8 100644
 --- a/src/scpmisc.c
 +++ b/src/scpmisc.c
 @@ -43,7 +43,9 @@
