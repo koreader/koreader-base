@@ -1,3 +1,5 @@
+list(APPEND PATCH_FILES cmake_tweaks.patch)
+
 # We don't care about tests.
 list(APPEND PATCH_CMD COMMAND rm -rf tests)
 
@@ -45,6 +47,7 @@ list(APPEND INSTALL_CMD COMMAND ${CMAKE_COMMAND} --install .)
 external_project(
     DOWNLOAD URL cf5e1feb023d22c6bdaa30e84ef3abe3
     https://github.com/tukaani-project/xz/releases/download/v5.8.1/xz-5.8.1.tar.xz
+    PATCH_FILES ${PATCH_FILES}
     PATCH_COMMAND ${PATCH_CMD}
     CMAKE_ARGS ${CMAKE_ARGS}
     BUILD_COMMAND ${BUILD_CMD}

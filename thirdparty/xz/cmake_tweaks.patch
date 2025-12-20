@@ -1,0 +1,29 @@
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -77,7 +77,7 @@
+ #
+ #############################################################################
+ 
+-cmake_minimum_required(VERSION 3.20...3.31 FATAL_ERROR)
++cmake_minimum_required(VERSION 3.17.5 FATAL_ERROR)
+ 
+ include(CMakePushCheckState)
+ include(CheckIncludeFile)
+@@ -1629,8 +1629,6 @@
+ # paths will be used.
+ set(prefix "${CMAKE_INSTALL_PREFIX}")
+ set(exec_prefix "\${prefix}")
+-cmake_path(APPEND libdir "\${exec_prefix}" "${CMAKE_INSTALL_LIBDIR}")
+-cmake_path(APPEND includedir "\${prefix}" "${CMAKE_INSTALL_INCLUDEDIR}")
+ 
+ # Threads::Threads is linked in only when using POSIX threads.
+ # Use an empty value if using Windows threads or if threading is disabled.
+@@ -2323,7 +2321,7 @@
+ 
+ set(ENABLE_SCRIPTS OFF)
+ 
+-if(UNIX)
++if(FALSE)
+     # NOTE: These depend on the xz tool and decoder support.
+     option(XZ_TOOL_SCRIPTS "Install the scripts \
+ xzdiff, xzgrep, xzmore, xzless, and their symlinks" ON)
