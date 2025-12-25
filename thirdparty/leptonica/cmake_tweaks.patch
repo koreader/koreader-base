@@ -1,10 +1,12 @@
---- i/CMakeLists.txt
-+++ w/CMakeLists.txt
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 7b995500..f1d3a7a4 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
 @@ -8,8 +8,7 @@
  #
  # ##############################################################################
  
--cmake_minimum_required(VERSION 3.5)
+-cmake_minimum_required(VERSION 3.10)
 -cmake_policy(SET CMP0054 NEW)
 +cmake_minimum_required(VERSION 3.17.5)
  

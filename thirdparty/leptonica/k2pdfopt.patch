@@ -1,6 +1,8 @@
+diff --git a/src/allheaders.h b/src/allheaders.h
+index 1e67878f..e0462b26 100644
 --- a/src/allheaders.h
 +++ b/src/allheaders.h
-@@ -673,6 +673,10 @@
+@@ -677,6 +677,10 @@ LEPT_DLL extern L_DEWARPA * dewarpaReadMem ( const l_uint8 *data, size_t size );
  LEPT_DLL extern l_ok dewarpaWrite ( const char *filename, L_DEWARPA *dewa );
  LEPT_DLL extern l_ok dewarpaWriteStream ( FILE *fp, L_DEWARPA *dewa );
  LEPT_DLL extern l_ok dewarpaWriteMem ( l_uint8 **pdata, size_t *psize, L_DEWARPA *dewa );
@@ -11,9 +13,11 @@
  LEPT_DLL extern l_ok dewarpBuildPageModel ( L_DEWARP *dew, const char *debugfile );
  LEPT_DLL extern l_ok dewarpFindVertDisparity ( L_DEWARP *dew, PTAA *ptaa, l_int32 rotflag );
  LEPT_DLL extern l_ok dewarpFindHorizDisparity ( L_DEWARP *dew, PTAA *ptaa );
+diff --git a/src/dewarp2.c b/src/dewarp2.c
+index efa1209b..341590a7 100644
 --- a/src/dewarp2.c
 +++ b/src/dewarp2.c
-@@ -152,9 +152,17 @@
+@@ -152,9 +152,17 @@ static const l_float32   AllowedWidthFract = 0.05f;  /* no bigger */
   *          longest textlines.
   * </pre>
   */
@@ -33,7 +37,7 @@
  {
  l_int32  linecount, ntop, nbot, ytop, ybot, ret;
  PIX     *pixs, *pix1, *pix2, *pix3;
-@@ -232,7 +240,8 @@
+@@ -232,7 +240,8 @@ PTAA    *ptaa1, *ptaa2;
          /* Get the sampled vertical disparity from the textline centers.
           * The disparity array will push pixels vertically so that each
           * textline is flat and centered at the y-position of the mid-point. */
@@ -43,7 +47,7 @@
          L_WARNING("vertical disparity not built\n", __func__);
          ptaaDestroy(&ptaa2);
          return 1;
-@@ -297,13 +306,25 @@
+@@ -297,13 +306,25 @@ PTAA    *ptaa1, *ptaa2;
   *          a pdf.  Non-pix debug output goes to /tmp.
   * </pre>
   */
@@ -70,7 +74,7 @@
  l_float32  *famidys;
  NUMA       *nax, *nafit, *nacurve0, *nacurve1, *nacurves;
  NUMA       *namidy, *namidys, *namidysi;
-@@ -311,9 +332,20 @@
+@@ -311,9 +332,20 @@ PIX        *pix1, *pix2, *pixcirc, *pixdb;
  PTA        *pta, *ptad, *ptacirc;
  PTAA       *ptaa0, *ptaa1, *ptaa2, *ptaa3, *ptaa4, *ptaa5, *ptaat;
  FPIX       *fpix;
@@ -91,7 +95,7 @@
      dew->vsuccess = 0;
      if (!ptaa)
          return ERROR_INT("ptaa not defined", __func__, 1);
-@@ -336,12 +368,32 @@
+@@ -336,12 +368,32 @@ FPIX       *fpix;
      pixdb = (rotflag) ? pixRotateOrth(dew->pixs, 1) : pixClone(dew->pixs);
      for (i = 0; i < nlines; i++) {  /* for each line */
          pta = ptaaGetPta(ptaa, i, L_CLONE);
@@ -127,7 +131,7 @@
               ptaAddPt(ptad, x, y);
          }
          ptaaAddPta(ptaa0, ptad, L_INSERT);
-@@ -355,7 +407,13 @@
+@@ -355,7 +407,13 @@ FPIX       *fpix;
          for (i = 0; i < nlines; i++) {
              pta = ptaaGetPta(ptaa, i, L_CLONE);
              ptaGetArrays(pta, &nax, NULL);
@@ -142,7 +146,7 @@
              ptad = ptaCreateFromNuma(nax, nafit);
              ptaaAddPta(ptaat, ptad, L_INSERT);
              ptaDestroy(&pta);
-@@ -499,11 +557,24 @@
+@@ -499,11 +557,24 @@ FPIX       *fpix;
      ptaa5 = ptaaCreate(nx);  /* uniformly sampled across full height of image */
      for (j = 0; j < nx; j++) {  /* for each column */
          pta = ptaaGetPta(ptaa4, j, L_CLONE);
@@ -169,7 +173,7 @@
               ptaAddPt(ptad, y, val);
          }
          ptaaAddPta(ptaa5, ptad, L_INSERT);
-@@ -1706,11 +1777,21 @@
+@@ -1706,11 +1777,21 @@ FPIX      *fpix;
   *          See notes there.
   * </pre>
   */
@@ -191,7 +195,7 @@
  char     buf[64];
  l_int32  i, j, bx, by, ret, nlines;
  BOXA    *boxa;
-@@ -1797,6 +1878,8 @@
+@@ -1797,6 +1878,8 @@ PTAA    *ptaa1, *ptaa2;
  
              /* Remove all lines that are not at least 0.75 times the length
               * of the longest line. */
@@ -200,7 +204,7 @@
          ptaa2 = dewarpRemoveShortLines(pix, ptaa1, 0.75, DEBUG_SHORT_LINES);
          if (debugfile) {
              pix1 = pixConvertTo32(pix);
-@@ -1806,6 +1889,8 @@
+@@ -1806,6 +1889,8 @@ PTAA    *ptaa1, *ptaa2;
              pixDestroy(&pix1);
              pixDestroy(&pix2);
          }
@@ -209,7 +213,7 @@
          ptaaDestroy(&ptaa1);
          nlines = ptaaGetCount(ptaa2);
          if (nlines < dew->minlines) {
-@@ -1819,7 +1904,8 @@
+@@ -1819,7 +1904,8 @@ PTAA    *ptaa1, *ptaa2;
               * centers.  The disparity array will push pixels vertically
               * so that each line is flat and centered at the y-position
               * of the mid-point. */
