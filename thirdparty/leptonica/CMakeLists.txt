@@ -1,3 +1,8 @@
+list(APPEND PATCH_FILES
+    cmake_tweaks.patch
+    no_messing_with_debug_flags.patch
+    k2pdfopt.patch
+)
 # Make sure we use the old fmemopen symbol on ARM Linux when building against
 # glibc >= 2.22 (c.f. base#421 & #2188).
 #
@@ -23,10 +28,6 @@ if(NOT ANDROID AND NOT APPLE AND NOT WIN32 AND NOT EMULATE_READER)
         list(APPEND PATCH_FILES fmemopen-arm-compat-symbol.patch)
     endif()
 endif()
-list(APPEND PATCH_FILES
-    k2pdfopt.patch
-    cmake_tweaks.patch
-)
 
 list(APPEND CMAKE_ARGS
     -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE}
@@ -48,7 +49,6 @@ list(APPEND CMAKE_ARGS
 list(APPEND BUILD_CMD COMMAND ninja)
 
 list(APPEND INSTALL_CMD COMMAND ${CMAKE_COMMAND} --install .)
-list(APPEND INSTALL_CMD COMMAND ln -snf lept_$<CONFIG>.pc ${STAGING_DIR}/lib/pkgconfig/lept.pc)
 
 if(NOT MONOLIBTIC)
     append_shared_lib_install_commands(INSTALL_CMD leptonica VERSION 6)
@@ -57,8 +57,8 @@ endif()
 external_project(
     # NOTE: Needs to match the version used by whatever version of libk2pdfopt we're currently using...
     #       Probably applies to mupdf & tesseract, too...
-    DOWNLOAD URL 9450017d7c9269cae1fad59b6cd06a3e
-    https://github.com/DanBloomberg/leptonica/archive/refs/tags/1.85.0.tar.gz
+    DOWNLOAD URL d523d2c883b71850a46af2517d8915bf
+    https://github.com/DanBloomberg/leptonica/releases/download/1.87.0/leptonica-1.87.0.tar.gz
     PATCH_FILES ${PATCH_FILES}
     CMAKE_ARGS ${CMAKE_ARGS}
     BUILD_COMMAND ${BUILD_CMD}

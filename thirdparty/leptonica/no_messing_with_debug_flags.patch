@@ -1,0 +1,13 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 61eeadd1..6e14cb77 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -232,7 +232,7 @@ if(MSVC)
+     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /MP")
+   endif()
+ else()
+-  if(CMAKE_BUILD_TYPE MATCHES "[Dd][Ee][Bb][Uu][Gg]")
++  if(FALSE AND CMAKE_BUILD_TYPE MATCHES "[Dd][Ee][Bb][Uu][Gg]")
+     set(debug_flags -Wall -Wextra -Werror=format-security -pedantic -Og -g3)
+     list(APPEND debug_flags
+          "-fdebug-prefix-map=${CMAKE_SOURCE_DIR}=${CMAKE_BINARY_DIR}")
