@@ -15,7 +15,7 @@ list(JOIN FILTERS $<SEMICOLON> FILTERS)
 
 list(APPEND CMAKE_ARGS
     -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE}
-    -DBUILD_SHARED_LIBS=FALSE
+    -DBUILD_SHARED_LIBS=$<IF:$<BOOL:${KOTASYNC}>,TRUE,FALSE>
     # Project options.
     -DXZ_DOC=FALSE
     # We can't disable the encoder completely,
@@ -43,6 +43,10 @@ list(APPEND CMAKE_ARGS
 list(APPEND BUILD_CMD COMMAND ninja)
 
 list(APPEND INSTALL_CMD COMMAND ${CMAKE_COMMAND} --install .)
+
+if(KOTASYNC)
+    append_shared_lib_install_commands(INSTALL_CMD lzma VERSION 5)
+endif()
 
 external_project(
     DOWNLOAD URL 87c8bb8addf7189d3a51f6a5f03163fc
