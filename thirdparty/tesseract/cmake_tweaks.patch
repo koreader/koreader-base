@@ -1,15 +1,17 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index d6ad09d1..34d3a1dc 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
-@@ -8,7 +8,7 @@
- #
+@@ -9,7 +9,7 @@
  # ##############################################################################
  
--cmake_minimum_required(VERSION 3.10 FATAL_ERROR)
+ # Require CMake 3.18 for modern features like precompiled headers, unity builds, and better target management
+-cmake_minimum_required(VERSION 3.18 FATAL_ERROR)
 +cmake_minimum_required(VERSION 3.17.5 FATAL_ERROR)
  
  # In-source builds are disabled.
  if("${CMAKE_CURRENT_SOURCE_DIR}" STREQUAL "${CMAKE_CURRENT_BINARY_DIR}")
-@@ -413,6 +413,7 @@ else()
+@@ -465,6 +465,7 @@ else()
    endif(NOT Leptonica_FOUND)
    include_directories(${Leptonica_INCLUDE_DIRS})
  
@@ -17,7 +19,7 @@
    check_leptonica_tiff_support()
    if ((NOT LEPT_TIFF_RESULT EQUAL 0) AND LEPT_TIFF_COMPILE_SUCCESS)
      message(NOTICE "Leptonica was build without TIFF support! Disabling TIFF support...")
-@@ -420,6 +421,7 @@ else()
+@@ -472,6 +473,7 @@ else()
    elseif(NOT ${CMAKE_VERSION} VERSION_LESS "3.25")
      message(STATUS "Leptonica was build with TIFF support.")
    endif()
@@ -25,7 +27,7 @@
  
    # Check for optional libraries.
    if(DISABLE_TIFF)
-@@ -814,6 +816,11 @@ if(BUILD_SHARED_LIBS)
+@@ -904,6 +906,11 @@ if(BUILD_SHARED_LIBS)
      PRIVATE -DTESS_EXPORTS
      INTERFACE -DTESS_IMPORTS)
    # generate_export_header          (libtesseract EXPORT_MACRO_NAME TESS_API)
@@ -37,7 +39,7 @@
  endif()
  target_link_libraries(libtesseract PRIVATE ${LIB_Ws2_32} ${LIB_pthread})
  if(OpenMP_CXX_FOUND)
-@@ -871,18 +878,20 @@ if(WIN32
+@@ -961,18 +968,20 @@ if(WIN32
  endif()
  
  if(ANDROID)
@@ -59,7 +61,7 @@
  add_executable(tesseract src/tesseract.cpp)
  target_link_libraries(tesseract libtesseract)
  if(HAVE_TIFFIO_H AND WIN32)
-@@ -892,6 +901,7 @@ endif()
+@@ -982,6 +991,7 @@ endif()
  if(OPENMP_BUILD AND UNIX)
    target_link_libraries(tesseract pthread)
  endif()
@@ -67,7 +69,7 @@
  
  # ##############################################################################
  
-@@ -934,7 +944,6 @@ install(
+@@ -1024,7 +1034,6 @@ install(
    FILES ${CMAKE_CURRENT_BINARY_DIR}/tesseract_$<CONFIG>.pc
    DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig
    RENAME tesseract.pc)
@@ -75,6 +77,8 @@
  if (MSVC)
    install(FILES $<TARGET_PDB_FILE:${PROJECT_NAME}> DESTINATION bin OPTIONAL)
  endif()
+diff --git a/tesseract.pc.cmake b/tesseract.pc.cmake
+index dd801aeb..2190e450 100644
 --- a/tesseract.pc.cmake
 +++ b/tesseract.pc.cmake
 @@ -8,6 +8,6 @@ Description: An OCR Engine that was developed at HP Labs (1985-1995) and Google
