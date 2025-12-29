@@ -1,3 +1,19 @@
+diff --git a/include/tesseract/baseapi.h b/include/tesseract/baseapi.h
+index 9475fb27..e8360b82 100644
+--- a/include/tesseract/baseapi.h
++++ b/include/tesseract/baseapi.h
+@@ -535,6 +535,9 @@ public:
+    */
+   char *GetHOCRText(ETEXT_DESC *monitor, int page_number);
+ 
++/* willus mod */
++int GetOCRWords(int **x0,int **y0,int **x1,int **y1,int **ybaseline,char **utf8words);
++
+   /**
+    * Make a HTML-formatted string with hOCR markup from the internal
+    * data structures.
+diff --git a/src/api/baseapi.cpp b/src/api/baseapi.cpp
+index 37020fa9..a3bba28e 100644
 --- a/src/api/baseapi.cpp
 +++ b/src/api/baseapi.cpp
 @@ -1525,6 +1525,73 @@ char *TessBaseAPI::GetBoxText(int page_number) {
@@ -74,15 +90,3 @@
  /**
   * Conversion table for non-latin characters.
   * Maps characters out of the latin set into the latin set.
---- a/include/tesseract/baseapi.h
-+++ b/include/tesseract/baseapi.h
-@@ -535,6 +535,9 @@ public:
-    */
-   char *GetHOCRText(ETEXT_DESC *monitor, int page_number);
- 
-+/* willus mod */
-+int GetOCRWords(int **x0,int **y0,int **x1,int **y1,int **ybaseline,char **utf8words);
-+
-   /**
-    * Make a HTML-formatted string with hOCR markup from the internal
-    * data structures.
