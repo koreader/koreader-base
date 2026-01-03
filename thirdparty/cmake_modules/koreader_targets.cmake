@@ -328,6 +328,7 @@ if(MONOLIBTIC)
             tffi_wrap_cdecl
             turbojpeg_decl
             utf8proc_decl
+            xxhash_cdecl
             zeromq_cdecl
             zlib_decl
             zstd_decl
