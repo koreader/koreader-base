@@ -973,6 +973,7 @@ set(MESON_TOOLCHAINS --native-file=$(abspath $(MESON_HOST_TOOLCHAIN)) $(if $(fil
 set(MESON_FILE_ARG $(if $(filter-out $(MESON_HOST_TOOLCHAIN),$(MESON_CROSS_TOOLCHAIN)),--cross-file,--native-file))
 
 # Miscellaneous.
+set(KOTASYNC           $(KOTASYNC))
 set(MONOLIBTIC         $(MONOLIBTIC))
 set(USE_LJ_WPACLIENT   $(USE_LJ_WPACLIENT))
 set(USE_SDL            $(SDL))

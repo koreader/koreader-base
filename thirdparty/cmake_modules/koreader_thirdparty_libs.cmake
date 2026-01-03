@@ -167,6 +167,7 @@ else()
     set(LUAJIT_LIB)
 endif()
 get_target_property(LUAJIT_INC luajit::luajit INTERFACE_INCLUDE_DIRECTORIES)
+declare_dependency(luajit::luajit_static INCLUDES luajit-2.1 STATIC luajit-5.1 LIBRARIES dl m)
 
 # luasec
 if(MONOLIBTIC)
