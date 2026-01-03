@@ -325,6 +325,9 @@ if(MONOLIBTIC)
         if(KINDLE)
             list(APPEND CDECLS openlipclua_cdecl)
         endif()
+        if(NOT (APPLE OR EMULATE_READER))
+            list(APPEND CDECLS xz_cdecl)
+        endif()
         target_exports(koreader-monolibtic CDECLS ${CDECLS}
             crypto_decl
             freetype2_decl
