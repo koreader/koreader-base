@@ -224,6 +224,7 @@ int NetDisconnect();
 int NetMgrPing(void);
 int OpenBook(const char *, const char *, int);
 void OpenScreen();
+int PageSnapshot();
 void PartialUpdate(int, int, int, int);
 void PartialUpdateHQ(int, int, int, int);
 void PowerOff();
