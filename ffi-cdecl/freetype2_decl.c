@@ -1,7 +1,3 @@
-#include <ft2build.h>
-
-#include "ffi-cdecl.h"
-
 #include <freetype/freetype.h>
 #include <freetype/ftmodapi.h>
 #include <freetype/ftoutln.h>
@@ -11,6 +7,8 @@
 #include <freetype/ttnameid.h>
 #include <freetype/tttables.h>
 #include <freetype/tttags.h>
+
+#include "ffi-cdecl.h"
 
 // Constants.
 cdecl_const(FT_FACE_FLAG_EXTERNAL_STREAM)

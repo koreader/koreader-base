@@ -1,3 +1,5 @@
+-- Automatically generated with ffi-cdecl.
+
 local ffi = require("ffi")
 
 ffi.cdef[[
