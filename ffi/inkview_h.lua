@@ -237,6 +237,7 @@ void SetPanelType(int);
 int SetSubtaskInfo(int, int, const char *, const char *);
 void WaitForUpdateComplete();
 int WiFiPower(int);
+int PageSnapshot();
 void adjustAreaDefault(unsigned char *, int, int, int);
 void hw_close();
 int hw_get_keylock();
