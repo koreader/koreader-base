@@ -1,9 +1,13 @@
-// Needs inkview.h encompassing full 4.x-6.x API
-// https://github.com/ezdiy/pocketbook-sdk5/blob/master/arm-obreey-linux-gnueabi/sysroot/usr/local/include/inkview.h
-// ~/ffi-cdecl/ffi-cdecl arm-buildroot-linux-musleabihf-gcc inkview_decl.c inkview_h.lua && sed -i 's/char data\[\];/char data[0];/' inkview_h.lua
+// Needs inkview.h and inkinternal.h encompassing full 4.x-6.x API:
+// wget -P SDK-6.5 https://raw.githubusercontent.com/pocketbook/SDK_6.3.0/refs/heads/6.5/SDK-B288/usr/arm-obreey-linux-gnueabi/sysroot/usr/local/include/{hwconfig.h,inkinternal.h,inkview.h}
+// make TARGET=pocketbook freetype2 ffi-cdecl
+// ./build/arm-pocketbook-linux-gnueabi/staging/bin/ffi-cdecl -d freetype2 -I SDK-6.5 -o ffi/inkview_h.lua -f -std=gnu11 ffi-cdecl/inkview_decl.c
+
+#include <freetype/freetype.h>
 
 #include "inkview.h"
 #include "inkinternal.h"
+
 #include "ffi-cdecl.h"
 
 cdecl_const(MSG_REBOOT)
