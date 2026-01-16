@@ -20,7 +20,7 @@ else()
 endif()
 
 external_project(
-    DOWNLOAD GIT ff2cbc21f1a2fd34d30c0840ff2abb0121d46131
+    DOWNLOAD GIT v1_9_0
     https://github.com/lunarmodules/luafilesystem
     PATCH_OVERLAY overlay
     PATCH_FILES ${PATCH_FILES}
