@@ -1,4 +1,4 @@
 spec_rock(
-    https://luarocks.org/manifests/tieske/penlight-1.14.0-2.src.rock
-    ab64b4b635e2514db64b4eabfd9d2220
+    https://luarocks.org/manifests/tieske/penlight-1.15.0-1.src.rock
+    b5e677e6d65b5ecbd79b6212592d4c1c
 )
