@@ -1,5 +1,5 @@
 diff --git a/src/Makefile b/src/Makefile
-index 969bf289..d5537fc6 100644
+index bac0341e..71f839f5 100644
 --- a/src/Makefile
 +++ b/src/Makefile
 @@ -211,6 +211,7 @@ TARGET_STCC= $(STATIC_CC)

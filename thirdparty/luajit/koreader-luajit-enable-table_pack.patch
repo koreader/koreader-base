@@ -1,5 +1,5 @@
 diff --git a/src/lib_table.c b/src/lib_table.c
-index d159360b..a3f146ce 100644
+index f6f82d31..a9353864 100644
 --- a/src/lib_table.c
 +++ b/src/lib_table.c
 @@ -267,7 +267,6 @@ LJLIB_CF(table_sort)
