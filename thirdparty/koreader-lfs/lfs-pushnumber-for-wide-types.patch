@@ -1,5 +1,5 @@
 diff --git a/src/lfs.c b/src/lfs.c
-index e5e5ee4..150396e 100644
+index 6fda53f..0a64972 100644
 --- a/src/lfs.c
 +++ b/src/lfs.c
 @@ -29,6 +29,7 @@
