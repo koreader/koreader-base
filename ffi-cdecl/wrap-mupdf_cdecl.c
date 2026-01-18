@@ -111,7 +111,7 @@ cdecl_func(fz_drop_stext_page)
 
 cdecl_type(fz_color_params)
 cdecl_type(fz_default_colorspaces)
-cdecl_const(fz_default_color_params)
+cdecl_var(fz_default_color_params)
 
 /* pixmaps */
 cdecl_func(fz_new_pixmap) // compat
