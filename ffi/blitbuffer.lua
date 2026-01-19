@@ -1985,7 +1985,8 @@ function BB_mt.__index:paintRoundedCorner(off_x, off_y, w, h, bw, r, c, anti_ali
         return
     end
 
-    if self:canUseCbb() then
+    if ffi.istype(Color8, c) and self:canUseCbb() then
+        -- @todo RGB32 support in cblitbuffer.BB_paint_rounded_corner
         cblitbuffer.BB_paint_rounded_corner(ffi.cast(P_BlitBuffer, self),
             off_x, off_y, w, h, bw, r, c:getColor8().a, anti_alias or 0)
     else
@@ -2078,16 +2079,25 @@ function BB_mt.__index:paintBorder(x, y, w, h, bw, c, r, anti_alias)
 end
 
 --[[
-paintBorder variant that uses ColorRGB32 instead of a luminance value,
-no support for rounded corners therefore no need for anti aliasing flag
+paintBorder variant that uses ColorRGB32 instead of a luminance value
 --]]
-function BB_mt.__index:paintBorderRGB32(x, y, w, h, bw, c)
+function BB_mt.__index:paintBorderRGB32(x, y, w, h, bw, c, r, anti_alias)
     x, y = ceil(x), ceil(y)
     h, w = ceil(h), ceil(w)
-    self:paintRectRGB32(x, y, w, bw, c)
-    self:paintRectRGB32(x, y+h-bw, w, bw, c)
-    self:paintRectRGB32(x, y+bw, bw, h - 2*bw, c)
-    self:paintRectRGB32(x+w-bw, y+bw, bw, h - 2*bw, c)
+    if not r or r == 0 then
+        self:paintRectRGB32(x, y, w, bw, c)
+        self:paintRectRGB32(x, y+h-bw, w, bw, c)
+        self:paintRectRGB32(x, y+bw, bw, h-2*bw, c)
+        self:paintRectRGB32(x+w-bw, y+bw, bw, h-2*bw, c)
+    else
+        if h < 2*r then r = floor(h/2) end
+        if w < 2*r then r = floor(w/2) end
+        self:paintRoundedCorner(x, y, w, h, bw, r, c, anti_alias or 0)
+        self:paintRectRGB32(r+x, y, w-2*r, bw, c)
+        self:paintRectRGB32(r+x, y+h-bw, w-2*r, bw, c)
+        self:paintRectRGB32(x, r+y, bw, h-2*r, c)
+        self:paintRectRGB32(x+w-bw, r+y, bw, h-2*r, c)
+    end
 end
 
 --[[
@@ -2137,7 +2147,6 @@ end
 
 --[[
 paintRoundedRect variant that uses ColorRGB32 instead of a luminance value
-NOTE: Be aware that `paintBorderRGB32` currently does *NOT* support rounded corners, so this implementation is *also* incomplete!
 --]]
 function BB_mt.__index:paintRoundedRectRGB32(x, y, w, h, c, r)
     x, y = ceil(x), ceil(y)
@@ -2147,7 +2156,7 @@ function BB_mt.__index:paintRoundedRectRGB32(x, y, w, h, c, r)
     else
         if h < 2*r then r = floor(h/2) end
         if w < 2*r then r = floor(w/2) end
-        self:paintBorderRGB32(x, y, w, h, r, c)
+        self:paintBorderRGB32(x, y, w, h, r, c, r)
         self:paintRectRGB32(x+r, y+r, w-2*r, h-2*r, c)
     end
 end
