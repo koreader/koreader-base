@@ -460,6 +460,62 @@ function KOPTContext_mt.__index:getPanelFromPage(pos)
     end
 end
 
+--[[--
+Get all panels from page.
+
+Returns an array of panel bounding boxes, each with {x, y, w, h}.
+Panels are detected using connected component analysis on the page image.
+
+@treturn table array of panel rectangles, or nil if no panels found
+--]]
+function KOPTContext_mt.__index:getAllPanelsFromPage()
+    if self.src.data then
+        local pixs = bitmap2pix(self.src, 0, 0, self.src.width, self.src.height)
+        local pixg
+        if leptonica.pixGetDepth(pixs) == 32 then
+            pixg = leptonica.pixConvertRGBToGrayFast(pixs)
+        else
+            pixg = leptonica.pixClone(pixs)
+        end
+        pixg = _gc_ptr(pixg, pixDestroy)
+
+        -- leptonica's threshold gets pixels lighter than X, we want to get
+        -- pixels darker than X, to do that we invert the image, threshold it,
+        -- and invert the result back. Math: ~(~img < X) <=> img > X
+        local pix_inverted = _gc_ptr(leptonica.pixInvert(nil, pixg), pixDestroy)
+        local pix_thresholded = _gc_ptr(leptonica.pixThresholdToBinary(pix_inverted, 50), pixDestroy)
+        leptonica.pixInvert(pix_thresholded, pix_thresholded)
+
+        -- find connected components (in our case panels)
+        local bb = _gc_ptr(leptonica.pixConnCompBB(pix_thresholded, 8), boxaDestroy)
+
+        local img_w = leptonica.pixGetWidth(pixs)
+        local img_h = leptonica.pixGetHeight(pixs)
+        local panels = {}
+
+        for box in boxaIterBoxes(bb) do
+            local pix_tmp = _gc_ptr(leptonica.pixClipRectangle(pixs, box, nil), pixDestroy)
+            local w = leptonica.pixGetWidth(pix_tmp)
+            local h = leptonica.pixGetHeight(pix_tmp)
+            -- check if it's panel or part of the panel, if it's part of the panel skip
+            if w >= img_w / 8 and h >= img_h / 8 then
+                local box_x, box_y, box_w, box_h = boxGetGeometry(box)
+                table.insert(panels, {
+                    x = box_x,
+                    y = box_y,
+                    w = box_w,
+                    h = box_h,
+                })
+            end
+        end
+
+        if #panels > 0 then
+            return panels
+        end
+    end
+    return nil
+end
+
 --[[
 -- get page block in location x, y both of which in range [0, 1] relative to page
 -- width and height respectively
