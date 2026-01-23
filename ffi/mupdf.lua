@@ -647,6 +647,29 @@ local function run_page(page, pixmap, ctm)
     M.fz_drop_device(page.ctx, dev)
     if ok == nil then merror(page.ctx, "could not run page") end
 end
+
+local function apply_white_threshold(bytes_per_pixel, samples, pixel_count, white_threshold)
+    if bytes_per_pixel == 4 then
+        for i = 0, pixel_count - 1 do
+            local idx = i * bytes_per_pixel
+            local r, g, b = samples[idx], samples[idx + 1], samples[idx + 2]
+            local brightness = 0.299 * r + 0.587 * g + 0.114 * b
+            if brightness > white_threshold then
+                samples[idx]     = 255
+                samples[idx + 1] = 255
+                samples[idx + 2] = 255
+            end
+        end
+    else
+        for i = 0, pixel_count - 1 do
+            local brightness = samples[i]
+            if brightness > white_threshold then
+                samples[i] = 255
+            end
+        end
+    end
+end
+
 --[[
 render page to blitbuffer
 
@@ -679,12 +702,16 @@ function page_mt.__index:draw_new(draw_context, width, height, offset_x, offset_
     if mupdf.bgr and self.doc.color then
         colorspace = M.fz_device_bgr(self.ctx)
     end
+    local samples = ffi.cast("unsigned char*", bb.data)
     local pix = W.mupdf_new_pixmap_with_bbox_and_data(
-        self.ctx, colorspace, bbox, nil, self.doc.color and 1 or 0, ffi.cast("unsigned char*", bb.data))
+        self.ctx, colorspace, bbox, nil, self.doc.color and 1 or 0, samples)
     if pix == nil then merror(self.ctx, "cannot allocate pixmap") end
 
     run_page(self, pix, ctm)
 
+    if draw_context.white_threshold < 255 then
+        apply_white_threshold(self.doc.color and 4 or 1, samples, width * height, draw_context.white_threshold)
+    end
     if draw_context.gamma >= 0.0 then
         M.fz_gamma_pixmap(self.ctx, pix, draw_context.gamma)
     end
