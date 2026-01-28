@@ -211,6 +211,7 @@ char *GetDeviceModel();
 int GetFrontlightColor(void);
 int GetFrontlightEnabled();
 int GetFrontlightState(void);
+int GetGSensorOrientation();
 int GetSleepmode();
 char *GetSoftwareVersion();
 icanvas *GetTaskFramebuffer(int);
