@@ -33,6 +33,19 @@ local input = {
     is_ffi = true,
 }
 
+--- Translate InkView orientation value to KOReader's DEVICE_ROTATED_* constants.
+function input.translateInkViewOrientation(inkview_orientation)
+    if inkview_orientation == 0 then
+        return C.DEVICE_ROTATED_UPRIGHT
+    elseif inkview_orientation == 2 then
+        return C.DEVICE_ROTATED_CLOCKWISE
+    elseif inkview_orientation == 3 then
+        return C.DEVICE_ROTATED_UPSIDE_DOWN
+    elseif inkview_orientation == 1 then
+        return C.DEVICE_ROTATED_COUNTER_CLOCKWISE
+    end
+end
+
 local ts
 -- Create new 'ts' with current timestamp.
 -- The value is then shared by all events received/emulated at the same point in time.
@@ -308,19 +321,8 @@ local function translateEvent(t, par1, par2)
         updateTimestamp()
 
         -- Translate those to our own EV_MSC:MSC_GYRO proto
-        if par1 == 0 then
-            -- i.e., UR
-            genEmuEvent(C.EV_MSC, C.MSC_GYRO, C.DEVICE_ROTATED_UPRIGHT)
-        elseif par1 == 2 then
-            -- i.e., CW
-            genEmuEvent(C.EV_MSC, C.MSC_GYRO, C.DEVICE_ROTATED_CLOCKWISE)
-        elseif par1 == 3 then
-            -- i.e., UD
-            genEmuEvent(C.EV_MSC, C.MSC_GYRO, C.DEVICE_ROTATED_UPSIDE_DOWN)
-        elseif par1 == 1 then
-            -- i.e., CCW
-            genEmuEvent(C.EV_MSC, C.MSC_GYRO, C.DEVICE_ROTATED_COUNTER_CLOCKWISE)
-        end
+        local gyro_value = input.translateInkViewOrientation(par1)
+        genEmuEvent(C.EV_MSC, C.MSC_GYRO, gyro_value)
     end
     return 0
 end
