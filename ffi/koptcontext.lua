@@ -82,6 +82,13 @@ local KOPTContext_mt = {__index={}}
 
 local __VERSION__ = "1.0.1"
 
+-- Panel detection constants
+local THRESHOLD_WHITE_BG = 225   -- Binary threshold for white/light backgrounds
+local THRESHOLD_DARK_BG = 30    -- Binary threshold for dark backgrounds (before invert)
+local MIN_PANEL_RATIO = 10       -- Minimum panel size: 1/10th of page dimension
+local FULL_PAGE_RATIO = 0.95     -- Panel covering 95%+ of page is considered full-page
+local MIN_COVERAGE_RATIO = 0.70  -- 70% coverage needed to replace full-page panel
+
 local function _gc_ptr(p, destructor)
     return p and ffi.gc(p, destructor)
 end
@@ -424,38 +431,41 @@ function KOPTContext_mt.__index:getPanelFromPage(pos)
         end
         pixg = _gc_ptr(pixg, pixDestroy)
 
-        -- leptonica's threshold gets pixels lighter than X, we want to get
-        -- pixels darker than X, to do that we invert the image, threshold it,
-        -- and invert the result back. Math: ~(~img < X) <=> img > X
-        local pix_inverted = _gc_ptr(leptonica.pixInvert(nil, pixg), pixDestroy)
-        local pix_thresholded = _gc_ptr(leptonica.pixThresholdToBinary(pix_inverted, 50), pixDestroy)
-        leptonica.pixInvert(pix_thresholded, pix_thresholded)
-
-        -- find connected components (in our case panels)
-        local bb = _gc_ptr(leptonica.pixConnCompBB(pix_thresholded, 8), boxaDestroy)
-
         local img_w = leptonica.pixGetWidth(pixs)
         local img_h = leptonica.pixGetHeight(pixs)
+        local min_w, min_h = img_w / MIN_PANEL_RATIO, img_h / MIN_PANEL_RATIO
         local res
 
-        for box in boxaIterBoxes(bb) do
-            local pix_tmp = _gc_ptr(leptonica.pixClipRectangle(pixs, box, nil), pixDestroy)
-            local w = leptonica.pixGetWidth(pix_tmp)
-            local h = leptonica.pixGetHeight(pix_tmp)
-            -- check if it's panel or part of the panel, if it's part of the panel skip
-            if w >= img_w / 8 and h >= img_h / 8 then
-                local box_x, box_y, box_w, box_h = boxGetGeometry(box)
+        -- First pass: white background
+        local pix_thresholded = _gc_ptr(leptonica.pixThresholdToBinary(pixg, THRESHOLD_WHITE_BG), pixDestroy)
+        local bb = _gc_ptr(leptonica.pixConnCompBB(pix_thresholded, 8), boxaDestroy)
+
+        for box_x, box_y, box_w, box_h in boxaIterBoxGeometries(bb) do
+            if box_w >= min_w and box_h >= min_h then
                 if isInRect(box_x, box_y, box_w, box_h, pos.x, pos.y) then
-                    res = {
-                        x = box_x,
-                        y = box_y,
-                        w = box_w,
-                        h = box_h,
-                    }
-                    break -- we found panel, exit the loop and clean up memory
+                    res = { x = box_x, y = box_y, w = box_w, h = box_h }
+                    break
                 end
             end
         end
+
+        -- Second pass: dark background (inverted)
+        -- Needed if no result or result covers full page
+        if not res or (res.w >= img_w * FULL_PAGE_RATIO and res.h >= img_h * FULL_PAGE_RATIO) then
+            local pix_thresholded2 = _gc_ptr(leptonica.pixThresholdToBinary(pixg, THRESHOLD_DARK_BG), pixDestroy)
+            local pix_inverted = _gc_ptr(leptonica.pixInvert(nil, pix_thresholded2), pixDestroy)
+            bb = _gc_ptr(leptonica.pixConnCompBB(pix_inverted, 8), boxaDestroy)
+
+            for box_x, box_y, box_w, box_h in boxaIterBoxGeometries(bb) do
+                if box_w >= min_w and box_h >= min_h then
+                    if isInRect(box_x, box_y, box_w, box_h, pos.x, pos.y) then
+                        res = { x = box_x, y = box_y, w = box_w, h = box_h }
+                        break
+                    end
+                end
+            end
+        end
+
         return res
     end
 end
@@ -479,33 +489,42 @@ function KOPTContext_mt.__index:getAllPanelsFromPage()
         end
         pixg = _gc_ptr(pixg, pixDestroy)
 
-        -- leptonica's threshold gets pixels lighter than X, we want to get
-        -- pixels darker than X, to do that we invert the image, threshold it,
-        -- and invert the result back. Math: ~(~img < X) <=> img > X
-        local pix_inverted = _gc_ptr(leptonica.pixInvert(nil, pixg), pixDestroy)
-        local pix_thresholded = _gc_ptr(leptonica.pixThresholdToBinary(pix_inverted, 50), pixDestroy)
-        leptonica.pixInvert(pix_thresholded, pix_thresholded)
-
-        -- find connected components (in our case panels)
-        local bb = _gc_ptr(leptonica.pixConnCompBB(pix_thresholded, 8), boxaDestroy)
-
         local img_w = leptonica.pixGetWidth(pixs)
         local img_h = leptonica.pixGetHeight(pixs)
+        local min_w, min_h = img_w / MIN_PANEL_RATIO, img_h / MIN_PANEL_RATIO
         local panels = {}
 
-        for box in boxaIterBoxes(bb) do
-            local pix_tmp = _gc_ptr(leptonica.pixClipRectangle(pixs, box, nil), pixDestroy)
-            local w = leptonica.pixGetWidth(pix_tmp)
-            local h = leptonica.pixGetHeight(pix_tmp)
-            -- check if it's panel or part of the panel, if it's part of the panel skip
-            if w >= img_w / 8 and h >= img_h / 8 then
-                local box_x, box_y, box_w, box_h = boxGetGeometry(box)
-                table.insert(panels, {
-                    x = box_x,
-                    y = box_y,
-                    w = box_w,
-                    h = box_h,
-                })
+        -- First pass: white background
+        local pix_thresholded = _gc_ptr(leptonica.pixThresholdToBinary(pixg, THRESHOLD_WHITE_BG), pixDestroy)
+        local bb = _gc_ptr(leptonica.pixConnCompBB(pix_thresholded, 8), boxaDestroy)
+
+        for box_x, box_y, box_w, box_h in boxaIterBoxGeometries(bb) do
+            if box_w >= min_w and box_h >= min_h then
+                panels[#panels + 1] = { x = box_x, y = box_y, w = box_w, h = box_h }
+            end
+        end
+
+        -- Second pass: dark background (inverted)
+        -- Needed if no panels found or only a full-page panel was detected
+        local is_full_page = #panels == 1 and panels[1].w >= img_w * FULL_PAGE_RATIO and panels[1].h >= img_h * FULL_PAGE_RATIO
+        if #panels == 0 or is_full_page then
+            local pix_thresholded2 = _gc_ptr(leptonica.pixThresholdToBinary(pixg, THRESHOLD_DARK_BG), pixDestroy)
+            local pix_inverted = _gc_ptr(leptonica.pixInvert(nil, pix_thresholded2), pixDestroy)
+            bb = _gc_ptr(leptonica.pixConnCompBB(pix_inverted, 8), boxaDestroy)
+
+            local total_new_area = 0
+            local new_panel_count = 0
+            for box_x, box_y, box_w, box_h in boxaIterBoxGeometries(bb) do
+                if box_w >= min_w and box_h >= min_h then
+                    panels[#panels + 1] = { x = box_x, y = box_y, w = box_w, h = box_h }
+                    total_new_area = total_new_area + box_w * box_h
+                    new_panel_count = new_panel_count + 1
+                end
+            end
+
+            -- If we found real panels covering enough of the page, remove the full-page panel
+            if is_full_page and new_panel_count > 0 and total_new_area > img_w * img_h * MIN_COVERAGE_RATIO then
+                table.remove(panels, 1)
             end
         end
 
