@@ -1,32 +1,36 @@
 diff --git i/src/Spore/Middleware/Format/JSON.lua w/src/Spore/Middleware/Format/JSON.lua
-index 225b25e..064e040 100644
+index 225b25e..ace3ac5 100644
 --- i/src/Spore/Middleware/Format/JSON.lua
 +++ w/src/Spore/Middleware/Format/JSON.lua
-@@ -6,12 +6,23 @@ local decode = require'dkjson'.decode
+@@ -6,6 +6,7 @@ local decode = require'dkjson'.decode
  local encode = require'dkjson'.encode
  local type = type
  local find = string.find
 +local match = string.match
  local raises = require'Spore'.raises
-
+ 
  local _ENV = nil
- local m = {}
-
+@@ -13,6 +14,19 @@ local m = {}
+ 
  m['content-type'] = 'application/json'
-+
+ 
 +local has_json_mime_type = function(header)
-+    if find(header, m['content-type'], 1, true) then
-+        return true
-+    end
-+    if string.match(header, "application/[%w%p]-json") then
-+        return true
++    -- if find(header, m['content-type'], 1, true) then
++        -- return true
++    -- end
++    --
++    for part in string.gmatch(header, '[^;]+') do
++        if match(part, "^%s*application/[%w.]-%+json%s*$") then
++            return true
++        end
 +    end
 +    return false
 +end
-
++
  function m.call (_args, req)
      local spore = req.env.spore
-@@ -25,7 +36,7 @@ function m.call (_args, req)
+     local payload = spore.payload
+@@ -25,7 +39,7 @@ function m.call (_args, req)
      return  function (res)
                  local header = res.headers and res.headers['content-type']
                  local body = res.body
