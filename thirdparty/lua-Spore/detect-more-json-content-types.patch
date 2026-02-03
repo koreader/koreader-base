@@ -1,0 +1,37 @@
+diff --git i/src/Spore/Middleware/Format/JSON.lua w/src/Spore/Middleware/Format/JSON.lua
+index 225b25e..064e040 100644
+--- i/src/Spore/Middleware/Format/JSON.lua
++++ w/src/Spore/Middleware/Format/JSON.lua
+@@ -6,12 +6,23 @@ local decode = require'dkjson'.decode
+ local encode = require'dkjson'.encode
+ local type = type
+ local find = string.find
++local match = string.match
+ local raises = require'Spore'.raises
+
+ local _ENV = nil
+ local m = {}
+
+ m['content-type'] = 'application/json'
++
++local has_json_mime_type = function(header)
++    if find(header, m['content-type'], 1, true) then
++        return true
++    end
++    if string.match(header, "application/[%w%p]-json") then
++        return true
++    end
++    return false
++end
+
+ function m.call (_args, req)
+     local spore = req.env.spore
+@@ -25,7 +36,7 @@ function m.call (_args, req)
+     return  function (res)
+                 local header = res.headers and res.headers['content-type']
+                 local body = res.body
+-                if header and find(header, m['content-type'], 1, true) and type(body) == 'string' then
++                if header and has_json_mime_type(header) and type(body) == 'string' then
+                     local r, _, msg = decode(body)
+                     if r then
+                         res.body = r
