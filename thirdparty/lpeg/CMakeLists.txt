@@ -15,8 +15,8 @@ endif()
 append_install_commands(INSTALL_CMD ${SOURCE_DIR}/re.lua DESTINATION common)
 
 external_project(
-    DOWNLOAD URL 842a538b403b5639510c9b6fffd2c75b
-    http://distcache.FreeBSD.org/ports-distfiles/lpeg-1.1.0.tar.gz
+    DOWNLOAD URL c9914cc6036d4afa2f49e5c659a214a5
+    https://github.com/roberto-ieru/LPeg/archive/refs/tags/v1.1.0.tar.gz
     PATCH_OVERLAY overlay
     PATCH_FILES ${PATCH_FILES}
     CMAKE_ARGS ${CMAKE_ARGS}
