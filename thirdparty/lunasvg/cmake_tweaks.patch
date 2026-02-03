@@ -1,8 +1,10 @@
---- i/CMakeLists.txt
-+++ w/CMakeLists.txt
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index bed8895..732a8fa 100755
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
 @@ -1,4 +1,4 @@
 -cmake_minimum_required(VERSION 3.3)
 +cmake_minimum_required(VERSION 3.17.5)
  
- project(lunasvg VERSION 2.3.8 LANGUAGES CXX C)
+ project(lunasvg VERSION 2.3.9 LANGUAGES CXX C)
  

@@ -19,7 +19,7 @@ if(NOT MONOLIBTIC)
 endif()
 
 external_project(
-    DOWNLOAD GIT 59d6f6ba835c1b7c7a0f9d4ea540ec3981777885
+    DOWNLOAD GIT v2.3.9
     https://github.com/sammycage/lunasvg.git
     PATCH_FILES ${PATCH_FILES}
     CMAKE_ARGS ${CMAKE_ARGS}
