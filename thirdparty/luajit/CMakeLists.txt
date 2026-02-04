@@ -24,7 +24,7 @@ endif()
 
 if(EMULATE_READER)
     append_autotools_vars(BUILD_ARGS)
-    list(APPEND BUILD_ARGS TARGET_STRIP=true)
+    list(APPEND BUILD_ARGS PREFIX=/usr TARGET_STRIP=true)
 else()
     assert_var_defined(BASE_CFLAGS)
     assert_var_defined(HOSTCC)
@@ -55,6 +55,7 @@ else()
         "HOST_CC=${CCACHE} ${HOST_CC}"
         HOST_CFLAGS=${HOSTCFLAGS}
         HOST_LDFLAGS=
+        PREFIX=/usr
         "TARGET_AR=${AR} rcus"
         "TARGET_CFLAGS=${CFLAGS} -DLUAJIT_SECURITY_STRHASH=0 -DLUAJIT_SECURITY_STRID=0"
         TARGET_LDFLAGS=${LDFLAGS}
