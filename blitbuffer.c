@@ -1717,7 +1717,7 @@ void BB_add_blit_from(BlitBuffer * restrict dst, const BlitBuffer * restrict src
         // NOP
         return;
     } else if (alpha == 0xFF) {
-        return BB_blit_to(src, dst, dest_x, dest_y, offs_x, offs_x, w, h);
+        return BB_blit_to(src, dst, dest_x, dest_y, offs_x, offs_y, w, h);
     }
 
     const int dbb_type = GET_BB_TYPE(dst);
