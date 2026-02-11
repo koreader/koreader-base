@@ -20,6 +20,9 @@ local input = {
 
 local inputQueue = {}
 
+-- SDL event codes we may want to reuse
+local SDL_TEXTINPUT = 771
+
 local function genInputTimeval(ts)
     local timev = { sec = 0, usec = 0 }
     if ts then
@@ -49,6 +52,16 @@ local function genEmuEvent(evtype, code, value, timev, ts)
         type = tonumber(evtype),
         code = tonumber(code),
         value = tonumber(value),
+        time = timev or genInputTimeval(ts),
+    }
+    table.insert(inputQueue, ev)
+end
+
+local function genEmuTextEvent(text, timev, ts)
+    local ev = {
+        type = C.EV_SDL,
+        code = SDL_TEXTINPUT,
+        value = tostring(text),
         time = timev or genInputTimeval(ts),
     }
     table.insert(inputQueue, ev)
@@ -259,6 +272,7 @@ function input.waitForEvent(sec, usec)
     -- NOTE: We don't use callbacks, so pollOnce is good enough for us, no need to resort to pollAll :).
     local poll_state = android.lib.ALooper_pollOnce(timeout, fd, events, ffi.cast("void**", source))
     if poll_state >= 0 then
+        android.LOGI("pollOnce returned, fd:" .. tostring(fd[0]) .. ", events: " .. tostring(events[0]) .. ", source: " .. tostring(source[0]))
         -- NOTE: Since we actually want to process this in Lua-land (i.e., here), and not in C-land,
         --       we do *NOT* make use of the weird delayed callback mechanism afforded by the android_poll_source struct
         --       we pass as the data pointer to ALooper in the glue code when registering a polling source.
@@ -295,12 +309,22 @@ function input.waitForEvent(sec, usec)
             local message = ffi.new("unsigned char [4]")
             -- Similarly, read will return -1 (EAGAIN) when we've drained the pipe
             while C.read(fd[0], message, 4) == 4 do
+                android.LOGI("Received user message" .. tostring(message[0]))
                 if message[0] == C.AEVENT_POWER_CONNECTED then
                     commandHandler(C.AEVENT_POWER_CONNECTED, 0)
                 elseif message[0] == C.AEVENT_POWER_DISCONNECTED then
                     commandHandler(C.AEVENT_POWER_DISCONNECTED, 0)
                 elseif message[0] == C.AEVENT_DOWNLOAD_COMPLETE then
                     commandHandler(C.AEVENT_DOWNLOAD_COMPLETE, 0)
+                elseif message[0] == C.AEVENT_TEXT_INPUT then
+                    -- Dequeue any text committed via the IME bridge in MainActivity
+                    local text = android.dequeueCommittedText()
+android.LOGI("Dequeued committed text: " .. tostring(text))
+                    if text and #text > 0 then
+                        -- Forward as a UI TextInput event
+                        -- genEmuEvent(C.EV_SDL, SDL_TEXTINPUT, text)
+                        genEmuTextEvent(text)
+                    end
                 end
             end
         end
