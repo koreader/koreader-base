@@ -16,7 +16,7 @@ index 225b25e..d3419b5 100644
  
 +local has_json_mime_type = function(header)
 +    local mime_type = match(header, '[^;]+')
-+    return match(mime_type, "^%s*application/[%w.]-%+json%s*$")
++    return match(mime_type, "^%s*application/[%w.]-%+?json%s*$")
 +end
 +
  function m.call (_args, req)
