@@ -570,6 +570,12 @@ static int softHyphenateText(lua_State *L) {
     return 1;
 }
 
+static int requestRender(lua_State *L) {
+    CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
+    doc->text_view->requestRender();
+    return 0;
+}
+
 static int getIntProperty(lua_State *L) {
     CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
     const char *propName = luaL_checkstring(L, 2);
@@ -4231,6 +4237,7 @@ static const struct luaL_Reg cre_func[] = {
 static const struct luaL_Reg credocument_meth[] = {
     {"loadDocument", loadDocument},
     {"renderDocument", renderDocument},
+    {"requestRender", requestRender},
     /*--- get methods ---*/
     {"getIntProperty", getIntProperty},
     {"getStringProperty", getStringProperty},
