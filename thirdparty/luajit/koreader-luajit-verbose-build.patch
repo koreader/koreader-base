@@ -1,8 +1,8 @@
 diff --git a/src/Makefile b/src/Makefile
-index 9bc109d8..1a38d2fe 100644
+index 71f839f5..35e90945 100644
 --- a/src/Makefile
 +++ b/src/Makefile
-@@ -597,10 +597,10 @@ endif
+@@ -624,10 +624,10 @@ endif
  endif
  endif
  
