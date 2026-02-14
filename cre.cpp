@@ -2079,148 +2079,219 @@ static int getTextFromXPointers(lua_State *L) {
 }
 
 static int getTextFromPositions(lua_State *L) {
-	CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
-	int x0 = luaL_checkint(L, 2);
-	int y0 = luaL_checkint(L, 3);
-	int x1 = luaL_checkint(L, 4);
-	int y1 = luaL_checkint(L, 5);
-	// Default to have crengine do native highlight of selected text
-	// (segmented by line, for better results)
-	bool drawSelection = true;
-	if (lua_isboolean(L, 6)) {
-		drawSelection = lua_toboolean(L, 6);
-	}
-	bool drawSegmentedSelection = true;
-	if (lua_isboolean(L, 7)) {
-		drawSegmentedSelection = lua_toboolean(L, 7);
-	}
-	// If includeImages, the drawn segments will include areas with images,
-	// and the text will have imageReplacementChar as images placeholders.
-	bool includeImages = false;
-	if (lua_isboolean(L, 8)) {
-		includeImages = lua_toboolean(L, 8);
-	}
+    CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
+    int x0 = luaL_checkint(L, 2);
+    int y0 = luaL_checkint(L, 3);
+    int x1 = luaL_checkint(L, 4);
+    int y1 = luaL_checkint(L, 5);
+    // Default to have crengine do native highlight of selected text
+    // (segmented by line, for better results)
+    bool drawSelection = true;
+    if (lua_isboolean(L, 6)) {
+        drawSelection = lua_toboolean(L, 6);
+    }
+    bool drawSegmentedSelection = true;
+    if (lua_isboolean(L, 7)) {
+        drawSegmentedSelection = lua_toboolean(L, 7);
+    }
+    // If includeImages, the drawn segments will include areas with images,
+    // and the text will have imageReplacementChar as images placeholders.
+    bool includeImages = false;
+    if (lua_isboolean(L, 8)) {
+        includeImages = lua_toboolean(L, 8);
+    }
 
-	LVDocView *tv = doc->text_view;
+    LVDocView *tv = doc->text_view;
 
-	lvPoint startpt(x0, y0);
-	lvPoint endpt(x1, y1);
-	ldomXPointer startp = tv->getNodeByPoint(startpt, false, true);
-	ldomXPointer endp = tv->getNodeByPoint(endpt, false, true);
-	if (!startp.isNull() && !endp.isNull()) {
-		lua_createtable(L, 0, 3); // new text boxes
-		ldomXRange r(startp, endp);
-		if (r.getStart().isNull() || r.getEnd().isNull())
-			return 0;
-		r.sort();
+    lvPoint startpt(x0, y0);
+    lvPoint endpt(x1, y1);
+    ldomXPointer startp = tv->getNodeByPoint(startpt, false, true);
+    ldomXPointer endp = tv->getNodeByPoint(endpt, false, true);
+    if (startp.isNull() || endp.isNull()) {
+        return 0;
+    }
 
-		// When panning, only extend to include the whole word when we are
-		// actually holding inside a word. This allows selecting punctuation,
-		// quotes or parens at start or end of selection to have them
-		// included in the highlight.
-		bool not_panning = r.getStart() == r.getEnd();
-		if ( (not_panning || r.getStart().isVisibleWordChar()) && !r.getStart().isVisibleWordStart())
-			r.getStart().prevVisibleWordStart();
-		if ( (not_panning || r.getEnd().isVisibleWordChar()) && !r.getEnd().isVisibleWordEnd())
-			r.getEnd().nextVisibleWordEnd();
-		if (r.isNull())
-			return 0;
+    ldomXRange r(startp, endp);
+    r.sort();
+    bool swapped = r.getStart().compare(startp) < 0;
+    bool not_panning = r.getStart() == r.getEnd();
 
-		// A xpointer references a char in a text node; a char has a width, and getNodeByPoint()
-		// has a trick of returning a xpointer to this char when the point is in the left half of
-		// the glyph, or to the next char when the point is in the right half of the glyph, which
-		// feels clumsy but has the effect that it doesn't need to know nor care about whether the
-		// point references the start or the end of the selection.
-		// This is usually hidden by the above code that extends the selection to start and end
-		// of words. But with CJK chars, where each char is a word, this behaviour is noticable.
-		// It's usually OK with multiple chars selection, even if one needs to go over the further
-		// 2nd half of the glyph to have it included in the selection.
-		// But it is less OK with an initial long-press on a glyph, where we get a 50% chance of
-		// having the next char selected. Try to handle this case better.
-		// It turns out this also happens when some CJK/symbol char is near a multi-alpha word,
-		// so, when grabbing prev or next below, we use prevVisibleWordStart()/nextVisibleWordEnd()
-		// instead of just moving offset by -1/1.
-		if (r.getStart() == r.getEnd()) { // for single CJK character
-			bool grab_prev = false;
-			lvRect glyph_pt;
-			if ( tv->getCursorRect(r.getStart(), glyph_pt) ) {
-				// If the glyph left edge is after both start and end pt x, it's not the right one.
-				grab_prev = glyph_pt.left > startpt.x && glyph_pt.left > endpt.x;
-				if (!grab_prev) {
-					// If line wrapping, next char might start the next line, so also
-					// check y: if the glyph top is below our start and end pt, it is
-					// on the next line, and it's not the right one.
-					grab_prev = glyph_pt.top > startpt.y && glyph_pt.top > endpt.y;
-				}
-				// printf("startpt %d/%d, endpt %d/%d, vs. glyphpt %d/%d => grab_prev=%d\n",
-				//     startpt.x, startpt.y, endpt.x, endpt.y,  glyph_pt.left, glyph_pt.top, grab_prev);
-			}
-			ldomNode * node = r.getStart().getNode();
-			lString32 text = node->getText();
-			if (grab_prev) {
-				r.getStart().prevVisibleWordStart();
-			}
-			else {
-				r.getEnd().nextVisibleWordEnd();
-			}
-		}
+    // printf(" before step1 start %s\n", UnicodeToLocal(r.getStart().toString()).c_str());
+    // printf(" before step1 end   %s\n", UnicodeToLocal(r.getEnd().toString()).c_str());
 
-		int rangeFlags = 0;
-		if (drawSelection) { // have crengine do native highlight of selection
-			rangeFlags = drawSegmentedSelection ? 0x11 : 0x01;
-			if (includeImages)
-				rangeFlags |= 0x100;
-		}
-		r.setFlags(rangeFlags);
-		tv->selectRange(r);
+    // A xpointer references a char in a text node: it points to the start of its glyph.
+    // The 'end' of a selection, being the end of the last glyph, must have its xpointer
+    // reference the start of the next glyph (not included in the selection).
+    // Also, when our selection point is in the right margin (for LTR text), the xpointer
+    // may point to the start of the first glyph on the line below.
+    // We try to do the right thing with these facts here (mainly from trials and errors,
+    // don't fully trust our explanations...), which should be fine for plain LTR and
+    // plain RTL text. With BiDi text, things may get odd (but so it is in Firefox).
+    //
+    // Step 1: adjust each xpointer to point to the start of the correct glyph
+    // (we will move 'end' one char forward later so it's corretly the end of the
+    // selection - so we may move it back here and later forward to its original char.)
+    lvRect glyph_rect;
+    if (not_panning) {
+        // Starting the selection, we have a single point.
+        lvPoint refpt = swapped ? endpt : startpt;
+        if ( tv->windowToDocPoint(refpt, true) ) { // pullInPageArea=true
+            if ( r.getStart().getRectEx(glyph_rect) ) {
+                if ( refpt.y < glyph_rect.top ) {
+                    // We got a glyph in the line below, most probably at start of line:
+                    // move 'start' to start of previous char, which must be at the end
+                    // of previous line (the line we have our point on).
+                    r.getStart().prevVisibleChar(true); // thisBlockOnly=true
+                    // If not part of an hyphenated word, the xpointer is now either the
+                    // space on which the wrap happened, a punctuation, or a CJK char.
+                    // (The end may get back to point to that char, below.)
+                }
+            }
+        }
+        r.getEnd() = r.getStart();
+    }
+    else {
+        // Panning: we have a start point and an end point.
+        // It looks like there is nothing special to do about 'start'.
+        // But for 'end', we have a few cases to handle: normally, we'll get the start
+        // of the char we are on, but in some cases (when in the left or right margin,
+        // or in-between words), we may get the start of next char glyph, in which case
+        // we want to rewind one char. In all cases, we'll then move our 'end' one char
+        // forward (as it is expected for the end of selection, to be on the next char
+        // (or on the end of a text node), not included in the selection).
+        lvPoint refpt = swapped ? startpt : endpt;
+        // It's actually easier to work with tv->docToWindowPoint(glyphpt) and compare
+        // x/y in the window coordinate system (than with tv->windowToDocPoint(refpt, true)
+        // and work in the document coordinate system, with pullInPageArea=true which may
+        // prevent doing x/glyph comparisons when in the margins and there are hanging
+        // punctuations in that margin.)
+        int rectCtx;
+        if ( r.getEnd().getRectEx(glyph_rect, false, &rectCtx) ) {
+            lvPoint glyphpt = glyph_rect.topLeft();
+            if ( tv->docToWindowPoint(glyphpt) ) {
+                if ( refpt.y < glyphpt.y ) {
+                    // Glyph in the line below, move to previous char (as above)
+                    r.getEnd().prevVisibleChar(false); // thisBlockOnly=false
+                }
+                else if ( refpt.x < glyphpt.x ) {
+                    // Our pt is on the left of glyph: we may be in the left margin.
+                    // Also helps when end is on the blank between words caused by text
+                    // justification, where we get the start of next word.
+                    r.getEnd().prevVisibleChar(false); // thisBlockOnly=false
+                }
+                else if ( (rectCtx & RECT_CTX_IN_RTL_PARA) && (refpt.x >= glyphpt.x + glyph_rect.width()) ) {
+                    // In a RTL para and our pt is on the right of glyph: we may be
+                    // in the right margin.
+                    r.getEnd().prevVisibleChar(false); // thisBlockOnly=false
+                }
+            }
+            // For reference (and futur tests if we tweak all this), some issues noticed
+            // that seem fixed with the above:
+            // - if starting in the right margin and panning below, we may grab a punctuation
+            //   at the end of this line
+            // - with end if in the left margin and line start with ' or ( it is included
+            // - with end if in the left margin and prev line ends with . or , it is included
+            // - with end if in right margin on RTL text: first word is part of selection
+        }
+    }
+    // Advance 'end' so it points to the start of next glyph (but not if
+    // it is the end of a text node, which is fine as 'end').
+    if (r.getEnd().getChar() != 0 ) { // (=0 when end of text node)
+        r.getEnd().setOffset(r.getEnd().getOffset()+1);
+    }
+    // printf("  after step1 start %s\n", UnicodeToLocal(r.getStart().toString()).c_str());
+    // printf("  after step1 end   %s\n", UnicodeToLocal(r.getEnd().toString()).c_str());
 
-		/* We don't need these:
-		int page = tv->getBookmarkPage(startp);
-		int pages = tv->getPageCount();
-		lString32 titleText;
-		lString32 posText;
-		tv->getBookmarkPosText(startp, titleText, posText);
-		*/
+    // Step 2: grab complete words on each side
+    if ( not_panning ) {
+        // Not panning: select the whole word (if any)
+        if ( !r.getStart().isVisibleWordStart() ) {
+            // Start (included in the selection) is not the start of a word: grab
+            // until start of this word (or the previous word if on a space)
+            r.getStart().prevVisibleWordStart(true);
+        }
+        if ( r.getEnd().isVisibleWordChar() && !r.getEnd().isVisibleWordStart() ) {
+            // End (start of next glyph not included in the selection) is a word char,
+            // we may want to extend until the end of that word, but not if it is itself
+            // the start of a new word (ie. a CJK Char starts the word it is itself: we
+            // don't want to extend to include it as it's not part of our selection).
+            r.getEnd().nextVisibleWordEnd(true);
+        }
+    }
+    else {
+        // Panning: only extend to include the whole word when we are
+        // actually holding inside a word. This allows selecting punctuation,
+        // quotes or parens at start or end of selection to have them
+        // included in the selection.
+        if ( r.getStart().isVisibleWordChar() && !r.getStart().isVisibleWordStart()) {
+            r.getStart().prevVisibleWordStart(true);
+        }
+        if ( r.getEnd().isVisibleWordChar() && !r.getEnd().isVisibleWordStart()) {
+            // As above (don't grab next CJK)
+            r.getEnd().nextVisibleWordEnd(true);
+        }
+    }
+    // printf("  after step2 start %s\n", UnicodeToLocal(r.getStart().toString()).c_str());
+    // printf("  after step2 end   %s\n", UnicodeToLocal(r.getEnd().toString()).c_str());
 
-		// If requested, include image placeholders in the text, and gather image nodes
-		LVArray<ldomNode*> imageNodes;
-		lString32 selText = r.getRangeText( '\n', includeImages?imageReplacementChar:0, &imageNodes);
+    if (r.isNull())
+        return 0;
 
-		lua_pushstring(L, "text");
-		lua_pushstring(L, UnicodeToLocal(selText).c_str());
-		lua_rawset(L, -3);
-		lua_pushstring(L, "pos0");
-		lua_pushstring(L, UnicodeToLocal(r.getStart().toString()).c_str());
-		lua_rawset(L, -3);
-		lua_pushstring(L, "pos1");
-		lua_pushstring(L, UnicodeToLocal(r.getEnd().toString()).c_str());
-		lua_rawset(L, -3);
-		/* We don't need these:
-		lua_pushstring(L, "title");
-		lua_pushstring(L, UnicodeToLocal(titleText).c_str());
-		lua_rawset(L, -3);
-		lua_pushstring(L, "context");
-		lua_pushstring(L, UnicodeToLocal(posText).c_str());
-		lua_rawset(L, -3);
-		lua_pushstring(L, "percent");
-		lua_pushnumber(L, 1.0*page/(pages-1));
-		lua_rawset(L, -3);
-		*/
+    int rangeFlags = 0;
+    if (drawSelection) { // have crengine do native highlight of selection
+        rangeFlags = drawSegmentedSelection ? 0x11 : 0x01;
+        if (includeImages)
+            rangeFlags |= 0x100;
+    }
+    r.setFlags(rangeFlags);
+    tv->selectRange(r);
 
-		// If we got image nodes, return a list of their xpointers
-		if ( imageNodes.length() > 0 ) {
-			lua_pushstring(L, "images");
-			lua_createtable(L, imageNodes.length(), 0);
-			for (int i = 0; i < imageNodes.length(); i++) {
-				ldomNode * node = imageNodes[i];
-				lua_pushstring(L, UnicodeToLocal(ldomXPointerEx(node, 0).toString()).c_str());
-				lua_rawseti(L, -2, i+1);
-			}
-			lua_rawset(L, -3);
-		}
-		return 1;
-	}
-    return 0;
+    /* We don't need these:
+    int page = tv->getBookmarkPage(startp);
+    int pages = tv->getPageCount();
+    lString32 titleText;
+    lString32 posText;
+    tv->getBookmarkPosText(startp, titleText, posText);
+    */
+
+    // If requested, include image placeholders in the text, and gather image nodes
+    LVArray<ldomNode*> imageNodes;
+    lString32 selText = r.getRangeText( '\n', includeImages?imageReplacementChar:0, &imageNodes);
+
+    lua_createtable(L, 0, 3);
+    lua_pushstring(L, "text");
+    lua_pushstring(L, UnicodeToLocal(selText).c_str());
+    lua_rawset(L, -3);
+    lua_pushstring(L, "pos0");
+    lua_pushstring(L, UnicodeToLocal(r.getStart().toString()).c_str());
+    lua_rawset(L, -3);
+    lua_pushstring(L, "pos1");
+    lua_pushstring(L, UnicodeToLocal(r.getEnd().toString()).c_str());
+    lua_rawset(L, -3);
+    /* We don't need these:
+    lua_pushstring(L, "title");
+    lua_pushstring(L, UnicodeToLocal(titleText).c_str());
+    lua_rawset(L, -3);
+    lua_pushstring(L, "context");
+    lua_pushstring(L, UnicodeToLocal(posText).c_str());
+    lua_rawset(L, -3);
+    lua_pushstring(L, "percent");
+    lua_pushnumber(L, 1.0*page/(pages-1));
+    lua_rawset(L, -3);
+    */
+
+    // If we got image nodes, return a list of their xpointers
+    if ( imageNodes.length() > 0 ) {
+        lua_pushstring(L, "images");
+        lua_createtable(L, imageNodes.length(), 0);
+        for (int i = 0; i < imageNodes.length(); i++) {
+            ldomNode * node = imageNodes[i];
+            lua_pushstring(L, UnicodeToLocal(ldomXPointerEx(node, 0).toString()).c_str());
+            lua_rawseti(L, -2, i+1);
+        }
+        lua_rawset(L, -3);
+    }
+    return 1;
 }
 
 static int extendXPointersToSentenceSegment(lua_State *L) {
