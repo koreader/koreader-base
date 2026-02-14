@@ -1,0 +1,74 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index f4962607e..093d1da56 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -1944,7 +1944,7 @@ elseif(UNIX AND NOT APPLE AND NOT RISCOS AND NOT HAIKU)
+ 
+     if(PKG_CONFIG_FOUND)
+       if(SDL_DBUS)
+-        pkg_search_module(DBUS dbus-1 dbus)
++        pkg_search_module(DBUS REQUIRED dbus-1 dbus)
+         if(DBUS_FOUND)
+           set(HAVE_DBUS_DBUS_H TRUE)
+           sdl_include_directories(PRIVATE SYSTEM ${DBUS_INCLUDE_DIRS})
+@@ -1955,7 +1955,7 @@ elseif(UNIX AND NOT APPLE AND NOT RISCOS AND NOT HAIKU)
+       endif()
+ 
+       if(SDL_IBUS)
+-        pkg_search_module(IBUS ibus-1.0 ibus)
++        pkg_search_module(IBUS REQUIRED ibus-1.0 ibus)
+         find_path(HAVE_SYS_INOTIFY_H NAMES sys/inotify.h)
+         if(IBUS_FOUND AND HAVE_SYS_INOTIFY_H)
+           set(HAVE_IBUS_IBUS_H TRUE)
+diff --git a/cmake/sdlchecks.cmake b/cmake/sdlchecks.cmake
+index b60a87153..85c28279b 100644
+--- a/cmake/sdlchecks.cmake
++++ b/cmake/sdlchecks.cmake
+@@ -288,6 +288,10 @@ macro(CheckX11)
+     foreach(_LIB X11 Xext Xcursor Xi Xfixes Xrandr Xrender Xss Xtst)
+       get_filename_component(_libdir "${X11_${_LIB}_LIB}" DIRECTORY)
+       FindLibraryAndSONAME("${_LIB}" LIBDIRS ${_libdir})
++      string(TOUPPER ${_LIB} _ULIB)
++      if(NOT ${_ULIB}_LIB)
++        message(FATAL_ERROR "Library ${_LIB} not found")
++      endif()
+     endforeach()
+ 
+     find_path(X11_INCLUDEDIR
+@@ -645,7 +649,7 @@ macro(CheckWayland)
+     set(WAYLAND_PKG_CONFIG_SPEC "wayland-client>=1.18" wayland-egl wayland-cursor egl "xkbcommon>=0.5.0")
+     set(PC_WAYLAND_FOUND FALSE)
+     if(PKG_CONFIG_FOUND)
+-      pkg_check_modules(PC_WAYLAND IMPORTED_TARGET ${WAYLAND_PKG_CONFIG_SPEC})
++      pkg_check_modules(PC_WAYLAND REQUIRED IMPORTED_TARGET ${WAYLAND_PKG_CONFIG_SPEC})
+     endif()
+     find_program(WAYLAND_SCANNER NAMES wayland-scanner)
+ 
+@@ -721,7 +725,7 @@ macro(CheckWayland)
+ 
+       if(SDL_WAYLAND_LIBDECOR)
+         set(LibDecor_PKG_CONFIG_SPEC libdecor-0)
+-        pkg_check_modules(PC_LIBDECOR IMPORTED_TARGET ${LibDecor_PKG_CONFIG_SPEC})
++        pkg_check_modules(PC_LIBDECOR REQUIRED IMPORTED_TARGET ${LibDecor_PKG_CONFIG_SPEC})
+         if(PC_LIBDECOR_FOUND)
+ 
+           # Libdecor doesn't provide internal version defines, so generate them here.
+@@ -859,7 +863,7 @@ endmacro()
+ macro(CheckEGL)
+   if(SDL_OPENGL OR SDL_OPENGLES)
+     cmake_push_check_state()
+-    find_package(OpenGL MODULE)
++    find_package(OpenGL REQUIRED MODULE)
+     list(APPEND CMAKE_REQUIRED_INCLUDES ${OPENGL_EGL_INCLUDE_DIRS})
+     list(APPEND CMAKE_REQUIRED_INCLUDES "${SDL3_SOURCE_DIR}/src/video/khronos")
+     check_c_source_compiles("
+@@ -1407,6 +1411,9 @@ macro(CheckLibUDev)
+         set(HAVE_LIBUDEV TRUE)
+       endif()
+     endif()
++    if(NOT HAVE_LIBUDEV)
++      message(FATAL_ERROR "udev library not found")
++    endif()
+   endif()
+ endmacro()
+ 

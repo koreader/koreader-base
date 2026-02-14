@@ -1,5 +1,5 @@
 -- load common SDL input/video library
-local SDL = require("ffi/SDL2_0")
+local SDL = require("ffi/SDL3")
 local BB = require("ffi/blitbuffer")
 local util = require("ffi/util")
 local ffi = require("ffi")
@@ -37,7 +37,7 @@ function framebuffer:resize(w, h)
     SDL.win_w = w or tonumber(output_w[0])
     SDL.win_h = h or tonumber(output_h[0])
 
-    if SDL.SDL.SDL_GetRendererOutputSize(SDL.renderer, output_w, output_h) == 0 then
+    if SDL.SDL.SDL_GetCurrentRenderOutputSize(SDL.renderer, output_w, output_h) == 0 then
         -- This is a workaround to obtain a simulacrum of real pixels in scenarios that marketing likes to refer to as "HiDPI".
         -- The utterly deranged idea is to render things at 2x or 3x, so it can subsequently be scaled down in order to assure everything will always be at least a little bit blurry unless you happen to use exactly 2x or 3x, instead of the traditional methods of just rendering at the desired DPI that have worked perfectly fine in Windows and X11 for decades.
         -- Contrary to claims by the blind that macOS is sharp, it's not.
@@ -129,7 +129,7 @@ function framebuffer:_render(bb, x, y, w, h)
     end
 
     SDL.SDL.SDL_RenderClear(SDL.renderer)
-    SDL.SDL.SDL_RenderCopy(SDL.renderer, SDL.texture, nil, nil)
+    SDL.SDL.SDL_RenderTexture(SDL.renderer, SDL.texture, nil, nil)
     SDL.SDL.SDL_RenderPresent(SDL.renderer)
 end
 
