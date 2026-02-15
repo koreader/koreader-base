@@ -224,27 +224,27 @@ end
 -- For the moment we pretend there can only be one touchscreen/trackpad/whatever at a time.
 -- It's probably close enough to the truth unless you run into a tester.
 local function getFingerSlot(event)
-    if not pointers[tonumber(event.tfinger.fingerId)] then
+    if not pointers[tonumber(event.tfinger.fingerID)] then
         local num_touch_fingers = ffi.new("int[1]")
-        local fingers = SDL.SDL_GetTouchFingers(event.tfinger.touchId, num_touch_fingers)
+        local fingers = SDL.SDL_GetTouchFingers(event.tfinger.touchID, num_touch_fingers)
         if fingers ~= nil then
-            fingers = ffi.gc(fingers, SDL.SDL_Free)
+            fingers = ffi.gc(fingers, SDL.SDL_free)
             for i=0,num_touch_fingers[0]-1 do
-                if fingers[i].id == event.tfinger.fingerId then
-                    pointers[tonumber(event.tfinger.fingerId)] = { slot = i }
+                if fingers[i].id == event.tfinger.fingerID then
+                    pointers[tonumber(event.tfinger.fingerID)] = { slot = i }
                 end
             end
         else
-            pointers[tonumber(event.tfinger.fingerId)] = { slot = 0 }
+            pointers[tonumber(event.tfinger.fingerID)] = { slot = 0 }
         end
     end
-    return pointers[tonumber(event.tfinger.fingerId)].slot
+    return pointers[tonumber(event.tfinger.fingerID)].slot
 end
 
 local function genTouchDownEvent(event, slot, x, y)
     local is_finger = event.type == SDL.SDL_EVENT_FINGER_DOWN
     genEmuEvent(C.EV_ABS, C.ABS_MT_SLOT, slot)
-    genEmuEvent(C.EV_ABS, C.ABS_MT_TRACKING_ID, is_finger and tonumber(event.tfinger.fingerId) or slot)
+    genEmuEvent(C.EV_ABS, C.ABS_MT_TRACKING_ID, is_finger and tonumber(event.tfinger.fingerID) or slot)
     genEmuEvent(C.EV_ABS, C.ABS_MT_POSITION_X, x)
     genEmuEvent(C.EV_ABS, C.ABS_MT_POSITION_Y, y)
     genEmuEvent(C.EV_SYN, C.SYN_REPORT, 0)
@@ -379,7 +379,7 @@ function S.waitForEvent(sec, usec)
         local y = is_finger and event.tfinger.y * S.h or event.button.y * scale_y
         genTouchUpEvent(event, slot, x, y)
         if is_finger then
-            pointers[tonumber(event.tfinger.fingerId)] = nil
+            pointers[tonumber(event.tfinger.fingerID)] = nil
         else
             pointers[slot] = nil
         end
@@ -407,10 +407,10 @@ function S.waitForEvent(sec, usec)
     elseif event.type == SDL.SDL_EVENT_MOUSE_WHEEL then
         genEmuEvent(C.EV_SDL, SDL.SDL_EVENT_MOUSE_WHEEL, event.wheel)
     elseif event.type == SDL.SDL_EVENT_DROP_FILE then
-        local dropped_file_path = ffi.string(event.drop.file)
+        local dropped_file_path = ffi.string(event.drop.data)
         genEmuEvent(C.EV_SDL, SDL.SDL_EVENT_DROP_FILE, dropped_file_path)
     elseif event.type == SDL.SDL_EVENT_DROP_TEXT then
-        local dropped_text = ffi.string(event.drop.file)
+        local dropped_text = ffi.string(event.drop.data)
         genEmuEvent(C.EV_SDL, SDL.SDL_EVENT_DROP_TEXT, dropped_text)
     elseif event.type == SDL.SDL_EVENT_WINDOW_EXPOSED then
         -- The next buffer might always contain garbage, and on X11 without
