@@ -105,13 +105,12 @@ function S.open(w, h, x, y)
         S.win_h = tonumber(os.getenv("EMULATE_READER_H")) or h or 800
     end
 
-    -- Disable to work around an SDL issue in 2.0.22.
-    -- See <https://github.com/libsdl-org/SDL/issues/5652> and <https://github.com/koreader/koreader/issues/9091>.
-    SDL.SDL_SetHint("SDL_HINT_TOUCH_MOUSE_EVENTS", "0")
+    -- Enable VSYNC.
+    SDL.SDL_SetHint("SDL_RENDER_VSYNC", "1")
 
     -- Enable screensaver and X11 composition.
     SDL.SDL_EnableScreenSaver()
-    SDL.SDL_SetHint("SDL_HINT_VIDEO_X11_NET_WM_BYPASS_COMPOSITOR", "0")
+    SDL.SDL_SetHint("SDL_VIDEO_X11_NET_WM_BYPASS_COMPOSITOR", "0")
 
     -- set up screen (window)
     local pos_x = tonumber(os.getenv("KOREADER_WINDOW_POS_X")) or x or SDL.SDL_WINDOWPOS_UNDEFINED
