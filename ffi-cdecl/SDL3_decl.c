@@ -37,6 +37,7 @@ cdecl_const(SDL_WINDOW_RESIZABLE)
 cdecl_const(SDL_WINDOW_HIGH_PIXEL_DENSITY)
 
 cdecl_enum(SDL_EventType)
+cdecl_enum(SDL_GamepadButton)
 cdecl_enum(SDL_MouseWheelDirection)
 cdecl_enum(SDL_PenAxis)
 cdecl_enum(SDL_PixelFormat)
