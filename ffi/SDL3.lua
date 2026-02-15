@@ -441,7 +441,7 @@ function S.waitForEvent(sec, usec)
         handleJoyAxisMotionEvent(event)
     --- Buttons (such as A, B, X, Y) ---
     elseif event.type == SDL.SDL_EVENT_JOYSTICK_BUTTON_DOWN then
-        local button = event.cbutton.button
+        local button = event.gbutton.button
 
         if button == SDL.SDL_GAMEPAD_BUTTON_SOUTH then
             -- send enter
