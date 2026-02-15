@@ -1,5 +1,5 @@
 -- load common SDL input/video library
-local SDL = require("ffi/SDL2_0")
+local SDL = require("ffi/SDL3")
 
 return {
     open = SDL.open,

@@ -641,22 +641,18 @@ function util.isPocketbook()
     return lfs.attributes("/ebrmain/pocketbook")
 end
 
-local libSDL2 = nil
---- Returns SDL2 library
-function util.loadSDL2()
-    if libSDL2 == nil then
+local libSDL3 = nil
+--- Returns SDL3 library
+function util.loadSDL3()
+    if libSDL3 == nil then
         local ok
-        ok, libSDL2 = pcall(ffi.loadlib,
-            "SDL2-2.0", 0,
-            "SDL2-2.0", nil,
-            "SDL2", nil
-        )
+        ok, libSDL3 = pcall(ffi.loadlib, "SDL3", 0)
         if not ok then
-            print("SDL2 not loaded:", libSDL2)
-            libSDL2 = false
+            print("SDL3 not loaded:", libSDL3)
+            libSDL3 = false
         end
     end
-    return libSDL2 or nil
+    return libSDL3 or nil
 end
 
 --- Division with integer result.

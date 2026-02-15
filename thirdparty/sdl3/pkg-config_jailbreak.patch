@@ -1,0 +1,21 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index bd0d5d27e..f4962607e 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -7,6 +7,16 @@ endif()
+ # See docs/release_checklist.md
+ project(SDL3 LANGUAGES C VERSION "3.4.0")
+ 
++execute_process(COMMAND pkg-config --variable pc_path pkg-config RESULT_VARIABLE RET OUTPUT_VARIABLE OUT OUTPUT_STRIP_TRAILING_WHITESPACE)
++if(NOT RET EQUAL 0)
++  message(FATAL_ERROR "could not get pkg-config builtin search path")
++endif()
++set(ENV{PKG_CONFIG_LIBDIR} ${OUT})
++execute_process(COMMAND ${CMAKE_C_COMPILER} -dumpmachine RESULT_VARIABLE RET OUTPUT_VARIABLE CMAKE_LIBRARY_ARCHITECTURE OUTPUT_STRIP_TRAILING_WHITESPACE)
++if(NOT RET EQUAL 0)
++  message(FATAL_ERROR "could not get compiler target machine")
++endif()
++
+ if(CMAKE_SOURCE_DIR STREQUAL PROJECT_SOURCE_DIR)
+   set(SDL3_MAINPROJECT ON)
+ else()

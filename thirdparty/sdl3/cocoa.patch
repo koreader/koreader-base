@@ -1,8 +1,8 @@
 diff --git a/src/video/cocoa/SDL_cocoaevents.m b/src/video/cocoa/SDL_cocoaevents.m
-index 39c5c4f38..b27306629 100644
+index 431d491d5..a31d7974b 100644
 --- a/src/video/cocoa/SDL_cocoaevents.m
 +++ b/src/video/cocoa/SDL_cocoaevents.m
-@@ -55,6 +55,18 @@ static SDL_Window *FindSDLWindowForNSWindow(NSWindow *win)
+@@ -41,6 +41,18 @@ static SDL_Window *FindSDLWindowForNSWindow(NSWindow *win)
      return sdlwindow;
  }
  
@@ -18,12 +18,12 @@ index 39c5c4f38..b27306629 100644
 +    }
 +}
 +
- @interface SDLApplication : NSApplication
+ @interface SDL3Application : NSApplication
  
  - (void)terminate:(id)sender;
-@@ -66,6 +78,23 @@ static SDL_Window *FindSDLWindowForNSWindow(NSWindow *win)
+@@ -52,6 +64,23 @@ static SDL_Window *FindSDLWindowForNSWindow(NSWindow *win)
  
- @implementation SDLApplication
+ @implementation SDL3Application
  
 +/* KOReader specific actions */
 +- (IBAction) openWeb: (NSMenuItem*) sender {
@@ -45,10 +45,10 @@ index 39c5c4f38..b27306629 100644
  // Override terminate to handle Quit and System Shutdown smoothly.
  - (void)terminate:(id)sender
  {
-@@ -284,30 +313,7 @@ static void Cocoa_DispatchEvent(NSEvent *theEvent)
+@@ -309,30 +338,7 @@ static void Cocoa_DispatchEvent(NSEvent *theEvent)
+         return;
+     }
  
- - (void)applicationDidFinishLaunching:(NSNotification *)notification
- {
 -    /* The menu bar of SDL apps which don't have the typical .app bundle
 -     * structure fails to work the first time a window is created (until it's
 -     * de-focused and re-focused), if this call is in Cocoa_RegisterApp instead
@@ -59,34 +59,34 @@ index 39c5c4f38..b27306629 100644
 -       hidden dock if you're moving the mouse during launch, so change the default
 -       behaviour there.  https://github.com/libsdl-org/SDL/issues/10340
 -       (13.6 still needs it, presumably 13.7 does, too.) */
--    SDL_bool background_app_default = SDL_FALSE;
+-    bool background_app_default = false;
 -    if (@available(macOS 14.0, *)) {
--        background_app_default = SDL_TRUE;  /* by default, don't explicitly activate the dock and then us again to force to foreground */
+-        background_app_default = true;  /* by default, don't explicitly activate the dock and then us again to force to foreground */
 -    }
 -
 -    if (!SDL_GetHintBoolean(SDL_HINT_MAC_BACKGROUND_APP, background_app_default)) {
--        /* Get more aggressive for Catalina: activate the Dock first so we definitely reset all activation state. */
+-        // Get more aggressive for Catalina: activate the Dock first so we definitely reset all activation state.
 -        for (NSRunningApplication *i in [NSRunningApplication runningApplicationsWithBundleIdentifier:@"com.apple.dock"]) {
 -            [i activateWithOptions:NSApplicationActivateIgnoringOtherApps];
 -            break;
 -        }
--        SDL_Delay(300);  /* !!! FIXME: this isn't right. */
+-        SDL_Delay(300); // !!! FIXME: this isn't right.
 -        [NSApp activateIgnoringOtherApps:YES];
 -    }
 +    [NSApp activateIgnoringOtherApps:YES];
  
      /* If we call this before NSApp activation, macOS might print a complaint
       * about ApplePersistenceIgnoreState. */
-@@ -500,12 +506,6 @@ void Cocoa_RegisterApp(void)
+@@ -536,12 +542,6 @@ void Cocoa_RegisterApp(void)
+                 }
              }
+             [NSApp finishLaunching];
+-            if ([NSApp delegate]) {
+-                /* The SDL app delegate calls this in didFinishLaunching if it's
+-                 * attached to the NSApp, otherwise we need to call it manually.
+-                 */
+-                [SDL3Application registerUserDefaults];
+-            }
          }
-         [NSApp finishLaunching];
--        if ([NSApp delegate]) {
--            /* The SDL app delegate calls this in didFinishLaunching if it's
--             * attached to the NSApp, otherwise we need to call it manually.
--             */
--            [SDLApplication registerUserDefaults];
--        }
-     }
-     if (NSApp && !appDelegate) {
-         appDelegate = [[SDLAppDelegate alloc] init];
+         if (NSApp && !appDelegate) {
+             appDelegate = [[SDL3AppDelegate alloc] init];
