@@ -1,14 +1,7 @@
-# Pre-emptively rename `zconf.h`: this is normaly done
-# by `CMakeLists.txt` at configure time, and wreaks havoc
-# with `build.d` generation. Since the later is done before
-# configuring, a missing `zconf.h` would endlessly trigger
-# a new zlib build.
-list(APPEND PATCH_CMD COMMAND mv zconf.h zconf.h.included)
-
 list(APPEND CMAKE_ARGS
     -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE}
     # Project options.
-    -DINSTALL_PKGCONFIG_DIR=${STAGING_DIR}/lib/pkgconfig
+    -DZLIB_BUILD_TESTING=FALSE
 )
 
 list(APPEND BUILD_CMD COMMAND ninja zlib zlibstatic)
@@ -26,9 +19,8 @@ else()
 endif()
 
 external_project(
-    DOWNLOAD URL 5e6af153311327e516690d300527ec9e
-    https://github.com/madler/zlib/releases/download/v1.3.1/zlib-1.3.1.tar.xz
-    PATCH_COMMAND ${PATCH_CMD}
+    DOWNLOAD URL be8a129ec5d60c5084911fd7ea16d84e
+    https://github.com/madler/zlib/releases/download/v1.3.2/zlib-1.3.2.tar.xz
     CMAKE_ARGS ${CMAKE_ARGS}
     BUILD_COMMAND ${BUILD_CMD}
     INSTALL_COMMAND ${INSTALL_CMD}
