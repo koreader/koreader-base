@@ -882,11 +882,9 @@ set(CMAKE_FIND_FRAMEWORK LAST)
 
 # Install directories.
 set(CMAKE_INSTALL_PREFIX $(abspath $(STAGING_DIR)) CACHE FILEPATH "install prefix")
-# NOTE: can't use a relative paths (as recommended in the documentation)
-# because libjpeg-turbo only configures successfully with absolute paths.
-set(CMAKE_INSTALL_BINDIR     $${CMAKE_INSTALL_PREFIX}/bin     CACHE FILEPATH "install directory: binaries")
-set(CMAKE_INSTALL_INCLUDEDIR $${CMAKE_INSTALL_PREFIX}/include CACHE FILEPATH "install directory: includes")
-set(CMAKE_INSTALL_LIBDIR     $${CMAKE_INSTALL_PREFIX}/lib     CACHE FILEPATH "install directory: libraries")
+set(CMAKE_INSTALL_BINDIR     bin     CACHE FILEPATH "install directory: binaries")
+set(CMAKE_INSTALL_INCLUDEDIR include CACHE FILEPATH "install directory: includes")
+set(CMAKE_INSTALL_LIBDIR     lib     CACHE FILEPATH "install directory: libraries")
 
 set(APPLE $(DARWIN))
 set(LINUX $(if $(DARWIN)$(WIN32),,1))
