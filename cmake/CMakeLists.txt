@@ -379,6 +379,9 @@ declare_project(thirdparty/minizip EXCLUDE_FROM_ALL)
 # mupdf
 declare_project(thirdparty/mupdf DEPENDS freetype2 harfbuzz libarchive libjpeg-turbo libwebp minizip zlib)
 
+# mupdf
+declare_project(thirdparty/Lualanes)
+
 # nanosvg
 declare_project(thirdparty/nanosvg)
 
