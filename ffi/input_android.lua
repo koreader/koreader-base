@@ -23,6 +23,8 @@ local inputQueue = {}
 -- SDL event codes we may want to reuse
 local SDL_TEXTEDITING = 770
 local SDL_TEXTINPUT = 771
+local SDL_IME_DELETE = 16385
+local SDL_IME_SELECTION = 16386
 
 local function genInputTimeval(ts)
     local timev = { sec = 0, usec = 0 }
@@ -52,7 +54,7 @@ local function genEmuEvent(evtype, code, value, timev, ts)
     local ev = {
         type = tonumber(evtype),
         code = tonumber(code),
-        value = tonumber(value),
+        value = tonumber(value) or value,
         time = timev or genInputTimeval(ts),
     }
     table.insert(inputQueue, ev)
@@ -341,6 +343,20 @@ android.LOGI("Dequeued committed text: " .. tostring(text))
 android.LOGI("Dequeued IME composition: " .. tostring(payload))
                     if payload and #payload > 0 then
                         genEmuEditingEvent(payload)
+                    end
+                elseif message[0] == C.AEVENT_IME_DELETE then
+                    -- Dequeue IME deleteSurroundingText request (format: "<before>\t<after>")
+                    local payload = android.dequeueImeDelete()
+android.LOGI("Dequeued IME delete: " .. tostring(payload))
+                    if payload and #payload > 0 then
+                        genEmuEvent(C.EV_SDL, SDL_IME_DELETE, payload)
+                    end
+                elseif message[0] == C.AEVENT_IME_SELECTION then
+                    -- Dequeue IME setSelection request (format: "<start>\t<end>")
+                    local payload = android.dequeueImeSelection()
+android.LOGI("Dequeued IME selection: " .. tostring(payload))
+                    if payload and #payload > 0 then
+                        genEmuEvent(C.EV_SDL, SDL_IME_SELECTION, payload)
                     end
                 end
             end
