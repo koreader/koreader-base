@@ -21,6 +21,7 @@ local input = {
 local inputQueue = {}
 
 -- SDL event codes we may want to reuse
+local SDL_TEXTEDITING = 770
 local SDL_TEXTINPUT = 771
 
 local function genInputTimeval(ts)
@@ -62,6 +63,16 @@ local function genEmuTextEvent(text, timev, ts)
         type = C.EV_SDL,
         code = SDL_TEXTINPUT,
         value = tostring(text),
+        time = timev or genInputTimeval(ts),
+    }
+    table.insert(inputQueue, ev)
+end
+
+local function genEmuEditingEvent(payload, timev, ts)
+    local ev = {
+        type = C.EV_SDL,
+        code = SDL_TEXTEDITING,
+        value = tostring(payload),
         time = timev or genInputTimeval(ts),
     }
     table.insert(inputQueue, ev)
@@ -322,8 +333,14 @@ function input.waitForEvent(sec, usec)
 android.LOGI("Dequeued committed text: " .. tostring(text))
                     if text and #text > 0 then
                         -- Forward as a UI TextInput event
-                        -- genEmuEvent(C.EV_SDL, SDL_TEXTINPUT, text)
                         genEmuTextEvent(text)
+                    end
+                elseif message[0] == C.AEVENT_IME_COMPOSITION then
+                    -- Dequeue composing/preedit payload emitted by MainActivity
+                    local payload = android.dequeueComposingText()
+android.LOGI("Dequeued IME composition: " .. tostring(payload))
+                    if payload and #payload > 0 then
+                        genEmuEditingEvent(payload)
                     end
                 end
             end
