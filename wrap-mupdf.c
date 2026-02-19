@@ -154,7 +154,6 @@ int mupdf_get_cache_size() {
 int mupdf_error_code(fz_context *ctx) {
     return ctx->error.errcode;
 }
-
 char* mupdf_error_message(fz_context *ctx) {
     return ctx->error.message;
 }
