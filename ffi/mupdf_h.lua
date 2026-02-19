@@ -206,7 +206,7 @@ typedef struct {
   struct fz_pool_array *id_list;
 } fz_stext_page;
 fz_stext_page *mupdf_new_stext_page_from_page(fz_context *, fz_page *, const fz_stext_options *);
-int mupdf_search_stext_page(fz_context *ctx, fz_stext_page *text, const char *needle, int *hit_mark, fz_quad *hit_bbox, int hit_max);
+int mupdf_search_stext_page(fz_context *, fz_stext_page *, const char *, int *, fz_quad *, int);
 void fz_drop_stext_page(fz_context *, fz_stext_page *);
 typedef struct {
   uint8_t ri;
