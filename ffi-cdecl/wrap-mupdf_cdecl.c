@@ -107,6 +107,7 @@ cdecl_struct(fz_stext_block)
 cdecl_type(fz_stext_options)
 cdecl_type(fz_stext_page)
 cdecl_func(mupdf_new_stext_page_from_page)
+cdecl_func(mupdf_search_stext_page);
 cdecl_func(fz_drop_stext_page)
 
 cdecl_type(fz_color_params)
