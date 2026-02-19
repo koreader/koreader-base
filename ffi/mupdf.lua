@@ -612,9 +612,9 @@ function page_mt.__index:searchPageText(needle, hit_max)
 
     -- Allocations
     local hits = ffi.new("fz_quad[?]", hit_max)
-    local hit_mark = ffi.new("int[?]", hit_max) -- allocate the hit_mark array
+    -- local hit_mark = ffi.new("int[?]", hit_max) -- allocate the hit_mark array
 
-    local count = W.mupdf_fz_search_stext_page(ctx, text_page, needle, hit_mark, hits, hit_max)
+    local count = W.mupdf_fz_search_stext_page(ctx, text_page, needle, nil, hits, hit_max)
 
     M.fz_drop_stext_page(ctx, text_page)
 
