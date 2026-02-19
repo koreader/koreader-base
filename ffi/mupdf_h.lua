@@ -206,6 +206,7 @@ typedef struct {
   struct fz_pool_array *id_list;
 } fz_stext_page;
 fz_stext_page *mupdf_new_stext_page_from_page(fz_context *, fz_page *, const fz_stext_options *);
+int mupdf_fz_search_stext_page(fz_context *ctx, fz_stext_page *text, const char *needle, int *hit_mark, fz_quad *hit_bbox, int hit_max);
 void fz_drop_stext_page(fz_context *, fz_stext_page *);
 typedef struct {
   uint8_t ri;
@@ -314,7 +315,6 @@ void *mupdf_pdf_save_document(fz_context *, pdf_document *, const char *, pdf_wr
 fz_alloc_context *mupdf_get_my_alloc_context();
 int mupdf_get_cache_size();
 int mupdf_error_code(fz_context *);
-int mupdf_fz_search_stext_page(fz_context *ctx, fz_stext_page *text, const char *needle, int *hit_mark, fz_quad *hit_bbox, int hit_max);
 char *mupdf_error_message(fz_context *);
 fz_matrix *mupdf_fz_scale(fz_matrix *, float, float);
 fz_matrix *mupdf_fz_translate(fz_matrix *, float, float);

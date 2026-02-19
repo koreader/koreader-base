@@ -106,6 +106,9 @@ MUPDF_WRAP(mupdf_load_page, fz_page*, NULL,
 MUPDF_WRAP(mupdf_new_stext_page_from_page, fz_stext_page*, NULL,
     ret = fz_new_stext_page_from_page(ctx, page, options),
     fz_page *page, const fz_stext_options *options)
+MUPDF_WRAP(mupdf_search_stext_page, int, -1,
+    ret = fz_search_stext_page(ctx, text, needle, hit_mark, hit_bbox, hit_max),
+    fz_stext_page *text, const char *needle, int *hit_mark, fz_quad *hit_bbox, int hit_max)
 MUPDF_WRAP(mupdf_new_bbox_device, fz_device*, NULL,
     ret = fz_new_bbox_device(ctx, rectp),
     fz_rect *rectp)

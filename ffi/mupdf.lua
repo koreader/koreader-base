@@ -601,8 +601,9 @@ end
 
 --[[
 Get a list of matches for the given text on the page, with their coordinates.
+Note: this searches only on the current page, not the whole document.
 --]]
-function page_mt.__index:search(needle, hit_max)
+function page_mt.__index:searchPageText(needle, hit_max)
     if not hit_max then hit_max = 256 end
     local ctx = self.ctx
 
