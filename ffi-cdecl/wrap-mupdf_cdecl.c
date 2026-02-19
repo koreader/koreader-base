@@ -76,6 +76,8 @@ cdecl_func(mupdf_load_page)
 cdecl_func(mupdf_fz_bound_page)
 cdecl_func(fz_drop_page)
 
+cdecl_func(mupdf_fz_search_stext_page);
+
 /* links */
 cdecl_type(fz_link)
 cdecl_struct(fz_link)

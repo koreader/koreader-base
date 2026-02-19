@@ -600,6 +600,39 @@ function page_mt.__index:getPageText()
 end
 
 --[[
+Get a list of matches for the given text on the page, with their coordinates.
+--]]
+function page_mt.__index:search(needle, hit_max)
+    if not hit_max then hit_max = 256 end
+    local ctx = self.ctx
+
+    local text_page = W.mupdf_new_stext_page_from_page(ctx, self.page, nil)
+    if text_page == nil then return nil end
+
+    -- Allocations
+    local hits = ffi.new("fz_quad[?]", hit_max)
+    local hit_mark = ffi.new("int[?]", hit_max) -- allocate the hit_mark array
+
+    local count = W.mupdf_fz_search_stext_page(ctx, text_page, needle, hit_mark, hits, hit_max)
+
+    M.fz_drop_stext_page(ctx, text_page)
+
+    if count <= 0 then return nil end
+
+    local results = {}
+    for i = 0, count - 1 do
+        table.insert(results, {
+            ul_x = hits[i].ul.x, ul_y = hits[i].ul.y,
+            ur_x = hits[i].ur.x, ur_y = hits[i].ur.y,
+            ll_x = hits[i].ll.x, ll_y = hits[i].ll.y,
+            lr_x = hits[i].lr.x, lr_y = hits[i].lr.y,
+        })
+    end
+
+    return results
+end
+
+--[[
 Get a list of the Hyperlinks on a page
 --]]
 function page_mt.__index:getPageLinks()
