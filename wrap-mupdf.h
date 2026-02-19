@@ -31,7 +31,6 @@ DLL_PUBLIC fz_alloc_context* mupdf_get_my_alloc_context();
 DLL_PUBLIC int mupdf_get_cache_size();
 DLL_PUBLIC int mupdf_error_code(fz_context *ctx);
 DLL_PUBLIC char* mupdf_error_message(fz_context *ctx);
-DLL_PUBLIC int mupdf_fz_search_stext_page(fz_context *ctx, fz_stext_page *text, const char *needle, int *hit_mark, fz_quad *hit_bbox, int hit_max);
 
 DLL_PUBLIC fz_matrix *mupdf_fz_scale(fz_matrix *m, float sx, float sy);
 DLL_PUBLIC fz_matrix *mupdf_fz_translate(fz_matrix *m, float tx, float ty);
