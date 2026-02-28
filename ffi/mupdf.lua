@@ -830,6 +830,28 @@ function page_mt.__index:updateMarkupAnnotation(annot, contents)
     if ok == nil then merror(self.ctx, "could not update markup annot contents") end
 end
 
+function page_mt.__index:getMarkupAnnotationBoxesFromPage()
+    local boxes = {}
+    local annot = W.mupdf_pdf_first_annot(self.ctx, ffi.cast("pdf_page*", self.page))
+    while annot ~= nil do
+        local annot_boxes = {}
+        local quadpoint = ffi.new("fz_quad[1]")
+        local point_count = W.mupdf_pdf_annot_quad_point_count(self.ctx, annot)
+        for i = 0, point_count - 1 do
+            W.mupdf_pdf_annot_quad_point(self.ctx, annot, i, quadpoint)
+            table.insert(annot_boxes, {
+                h = quadpoint[0].ll.y - quadpoint[0].ul.y + 1,
+                w = quadpoint[0].ur.x - quadpoint[0].ul.x + 1,
+                x = quadpoint[0].ul.x,
+                y = quadpoint[0].ul.y,
+            })
+        end
+        table.insert(boxes, annot_boxes)
+        annot = W.mupdf_pdf_next_annot(self.ctx, annot)
+    end
+    return next(boxes) and boxes
+end
+
 -- image loading via MuPDF:
 
 --[[--
