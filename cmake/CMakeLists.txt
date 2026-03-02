@@ -408,7 +408,7 @@ declare_project(thirdparty/proxy-libintl EXCLUDE_FROM_ALL)
 declare_project(thirdparty/sdcv DEPENDS glib zlib)
 
 # sdl3
-if(APPIMAGE OR APPLE)
+if(USE_SDL STREQUAL "builtin")
     set(EXCLUDE_FROM_ALL)
 elseif(EMULATE_READER)
     find_compiler_lib_path(SDL3_LIB libSDL3.so.0)
