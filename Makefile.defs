@@ -178,14 +178,14 @@ else ifeq ($(TARGET), kobov5)
 	GLIBC_VERSION_MAX = 2.35
 else ifeq ($(TARGET), ubuntu-touch)
 	CHOST?=arm-linux-gnueabihf
-	SDL=1
+	SDL=yes
 	UBUNTUTOUCH=1
 else ifeq ($(TARGET), appimage)
 	EMULATE_READER=1
-	SDL=1
+	SDL=builtin
 	APPIMAGE=1
 else ifeq ($(TARGET), linux)
-	SDL=1
+	SDL=builtin
 	ifeq ($(LINUX_ARCH), arm)
 		CHOST?=arm-linux-gnueabihf
 	else ifeq ($(LINUX_ARCH), arm64)
@@ -194,7 +194,7 @@ else ifeq ($(TARGET), linux)
 		EMULATE_READER=1
 	endif
 else ifeq ($(TARGET), macos)
-	SDL=1
+	SDL=builtin
 	MACOS=1
 	EMULATE_READER=1
 	USE_CLANG=1
@@ -215,7 +215,7 @@ else ifeq ($(TARGET), android)
 else ifeq ($(TARGET), win32)
 	CHOST?=x86_64-w64-mingw32
 	WIN32=1
-	SDL=1
+	SDL=builtin
 else ifeq ($(TARGET), pocketbook)
 	CHOST?=arm-pocketbook-linux-gnueabi
 	POCKETBOOK=1
@@ -251,7 +251,7 @@ else ifndef TARGET
 	# if TARGET is not defined we will build an emulator on current machine
 	EMULATE_READER=1
 	KODEBUG ?= 1
-	SDL=1
+	SDL=yes
 else
   $(error Invalid TARGET: "$(TARGET)")
 endif
