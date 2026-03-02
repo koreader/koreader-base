@@ -3,18 +3,16 @@ list(APPEND CMAKE_ARGS
     # Project options.
     -DZLIB_BUILD_TESTING=FALSE
 )
+if(MONOLIBTIC)
+    list(APPEND CMAKE_ARGS -DBUILD_SHARED_LIBS=FALSE)
+endif()
 
-list(APPEND BUILD_CMD COMMAND ninja zlib zlibstatic)
+list(APPEND BUILD_CMD COMMAND ninja)
 
 list(APPEND INSTALL_CMD COMMAND ${CMAKE_COMMAND} --install .)
 
 append_install_commands(INSTALL_CMD ${SOURCE_DIR}/contrib/minizip/crypt.h DESTINATION ${STAGING_DIR}/include/contrib/minizip)
-if(MONOLIBTIC)
-    # The CMake build system does not support building & installing only
-    # a static / shared library, so we have to manually cleanup after the
-    # install step.
-    list(APPEND INSTALL_CMD COMMAND sh -c "rm -v \"$1\"*" -- ${STAGING_DIR}/lib/libz${LIB_EXT})
-else()
+if(NOT MONOLIBTIC)
     append_shared_lib_install_commands(INSTALL_CMD z VERSION 1)
 endif()
 
