@@ -852,6 +852,37 @@ function page_mt.__index:getMarkupAnnotationBoxesFromPage()
     return next(boxes) and boxes
 end
 
+function page_mt.__index:getEmbeddedAnnotations()
+    local annotations = {}
+    local annot = W.mupdf_pdf_first_annot(self.ctx, ffi.cast("pdf_page*", self.page))
+    while annot ~= nil do
+        local annot_type = W.mupdf_pdf_annot_type(self.ctx, annot)
+        -- markup annotations: highlight=8, underline=9, squiggly=10, strikeout=11
+        if annot_type >= 8 and annot_type <= 11 then
+            local annot_boxes = {}
+            local quadpoint = ffi.new("fz_quad[1]")
+            local point_count = W.mupdf_pdf_annot_quad_point_count(self.ctx, annot)
+            for i = 0, point_count - 1 do
+                W.mupdf_pdf_annot_quad_point(self.ctx, annot, i, quadpoint)
+                table.insert(annot_boxes, {
+                    h = quadpoint[0].ll.y - quadpoint[0].ul.y + 1,
+                    w = quadpoint[0].ur.x - quadpoint[0].ul.x + 1,
+                    x = quadpoint[0].ul.x,
+                    y = quadpoint[0].ul.y,
+                })
+            end
+            local contents = W.mupdf_pdf_annot_contents(self.ctx, annot)
+            table.insert(annotations, {
+                boxes = annot_boxes,
+                type = annot_type,
+                contents = contents ~= nil and ffi.string(contents) or nil,
+            })
+        end
+        annot = W.mupdf_pdf_next_annot(self.ctx, annot)
+    end
+    return next(annotations) and annotations
+end
+
 -- image loading via MuPDF:
 
 --[[--

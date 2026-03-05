@@ -157,6 +157,8 @@ cdecl_func(mupdf_pdf_first_annot)
 cdecl_func(mupdf_pdf_next_annot)
 cdecl_func(mupdf_pdf_annot_quad_point_count)
 cdecl_func(mupdf_pdf_annot_quad_point)
+cdecl_func(mupdf_pdf_annot_type)
+cdecl_func(mupdf_pdf_annot_contents)
 
 /* saving documents */
 cdecl_type(pdf_write_options)

@@ -168,6 +168,12 @@ MUPDF_WRAP(mupdf_pdf_annot_quad_point_count, int, -1,
 MUPDF_WRAP(mupdf_pdf_annot_quad_point, void*, NULL,
     { *qv = pdf_annot_quad_point(ctx, annot, i); ret = (void*) -1; },
      pdf_annot *annot, int i, fz_quad *qv)
+MUPDF_WRAP(mupdf_pdf_annot_type, int, -1,
+     ret = pdf_annot_type(ctx, annot),
+     pdf_annot *annot)
+MUPDF_WRAP(mupdf_pdf_annot_contents, const char*, NULL,
+     ret = pdf_annot_contents(ctx, annot),
+     pdf_annot *annot)
 MUPDF_WRAP(mupdf_pdf_set_annot_color, void*, NULL,
     { pdf_set_annot_color(ctx, annot, n, color); ret = (void*) -1; },
     pdf_annot *annot, int n, const float color[4])

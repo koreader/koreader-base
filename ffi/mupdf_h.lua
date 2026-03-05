@@ -287,6 +287,8 @@ pdf_annot *mupdf_pdf_first_annot(fz_context *, pdf_page *);
 pdf_annot *mupdf_pdf_next_annot(fz_context *, pdf_annot *);
 int mupdf_pdf_annot_quad_point_count(fz_context *, pdf_annot *);
 void *mupdf_pdf_annot_quad_point(fz_context *, pdf_annot *, int, fz_quad *);
+int mupdf_pdf_annot_type(fz_context *, pdf_annot *);
+const char *mupdf_pdf_annot_contents(fz_context *, pdf_annot *);
 typedef struct {
   int do_incremental;
   int do_pretty;
