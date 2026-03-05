@@ -147,6 +147,8 @@ cdecl_type(pdf_page)
 cdecl_type(pdf_document)
 
 /* annotations */
+cdecl_func(mupdf_pdf_annot_type)
+cdecl_func(mupdf_pdf_annot_contents)
 cdecl_func(mupdf_pdf_create_annot)
 cdecl_func(mupdf_pdf_delete_annot)
 cdecl_func(mupdf_pdf_set_annot_quad_points)

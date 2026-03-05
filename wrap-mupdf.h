@@ -144,6 +144,12 @@ MUPDF_WRAP(mupdf_fz_page_number_from_location, int, -1,
 MUPDF_WRAP(mupdf_fz_location_from_page_number, void *, NULL,
     { *location = fz_location_from_page_number(ctx, doc, number); ret = (void*) -1; },
     fz_document *doc, fz_location *location, int number)
+MUPDF_WRAP(mupdf_pdf_annot_type, int, -1,
+     ret = pdf_annot_type(ctx, annot),
+     pdf_annot *annot)
+MUPDF_WRAP(mupdf_pdf_annot_contents, const char*, NULL,
+     ret = pdf_annot_contents(ctx, annot),
+     pdf_annot *annot)
 MUPDF_WRAP(mupdf_pdf_create_annot, pdf_annot*, NULL,
     ret = pdf_create_annot(ctx, page, type),
     pdf_page *page, enum pdf_annot_type type)
