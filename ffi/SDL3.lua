@@ -105,6 +105,9 @@ function S.open(w, h, x, y)
         S.win_h = tonumber(os.getenv("EMULATE_READER_H")) or h or 800
     end
 
+    -- Allow clicks that focus the window to pass through as input events (macOS).
+    SDL.SDL_SetHint("SDL_MOUSE_FOCUS_CLICKTHROUGH", "1")
+
     -- Enable VSYNC.
     SDL.SDL_SetHint("SDL_RENDER_VSYNC", "1")
 
