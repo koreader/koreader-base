@@ -4,7 +4,7 @@ list(APPEND PATCH_FILES
     # We don't need regex support, and removing it gets rid of the pcre2 dependency.
     no_regex_support.patch
 )
-if(LEGACY OR POCKETBOOK)
+if(GLIBC_VERSION_MAX AND GLIBC_VERSION_MAX VERSION_LESS "2.6")
     # Avoid pulling-in `__sched_cpucount@GLIBC_2.6`, `eventfd@GLIBC_2.7`,
     # `pipe2@GLIBC_2.9` or `mkostemp@GLIBC_2.7`.
     list(APPEND PATCH_FILES no_glibc_2.6_or_above_symbols.patch)

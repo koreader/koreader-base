@@ -30,8 +30,8 @@ list(APPEND CMAKE_ARGS
     # Prevent md library fallback because OpenSSL is not used.
     -DLIBMD_FOUND=FALSE
 )
-# Avoid pulling > GLIBC_2.4 symbols on crappy platforms.
-if(LEGACY OR POCKETBOOK)
+if(GLIBC_VERSION_MAX AND GLIBC_VERSION_MAX VERSION_LESS "2.6")
+    # Avoid pulling-in `futimens@@GLIBC_2.6` and `utimensat@@GLIBC_2.6`.
     list(APPEND CMAKE_ARGS
         -DHAVE_FUTIMENS=FALSE
         -DHAVE_UTIMENSAT=FALSE
