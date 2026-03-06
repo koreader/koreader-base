@@ -49,6 +49,9 @@ endif
 LINUX_ARCH?=native
 
 CMAKE := cmake -Wdev --warn-uninitialized
+CMAKE_VERSION := $(word 3,$(shell cmake --version))
+USING_CMAKE_3_24_OR_BETTER := $(call at_least_version,$(CMAKE_VERSION),3.24.0)
+
 NINJA := $(or $(NINJA),ninja)
 
 NINJA_VERSION := $(shell $(NINJA) --version)
@@ -106,7 +109,7 @@ ifeq (0,$(MAKELEVEL))
   export NINJAFLAGS
 endif
 
-CMAKE_FLAGS = -G Ninja
+CMAKE_FLAGS = $(if $(USING_CMAKE_3_24_OR_BETTER),--fresh) -G Ninja
 
 # set this to your ARM cross compiler:
 # set CC CXX AR LD RANLIB
