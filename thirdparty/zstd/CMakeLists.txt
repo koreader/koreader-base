@@ -1,4 +1,5 @@
 if(GLIBC_VERSION_MAX AND GLIBC_VERSION_MAX VERSION_LESS "2.8")
+    # Avoid pulling-in `qsort_r@@GLIBC_2.8`.
     list(APPEND PATCH_FILES no_qsort_r.patch)
 endif()
 
