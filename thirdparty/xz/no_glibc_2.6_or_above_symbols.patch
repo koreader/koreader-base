@@ -1,0 +1,21 @@
+--- a/cmake/tuklib_cpucores.cmake
++++ b/cmake/tuklib_cpucores.cmake
+@@ -38,12 +38,12 @@
+             }
+         "
+         TUKLIB_CPUCORES_SCHED_GETAFFINITY)
+-    if(TUKLIB_CPUCORES_SCHED_GETAFFINITY)
+-        set(TUKLIB_CPUCORES_DEFINITIONS
+-            "TUKLIB_CPUCORES_SCHED_GETAFFINITY"
+-            CACHE INTERNAL "")
+-        return()
+-    endif()
++    # if(TUKLIB_CPUCORES_SCHED_GETAFFINITY)
++    #     set(TUKLIB_CPUCORES_DEFINITIONS
++    #         "TUKLIB_CPUCORES_SCHED_GETAFFINITY"
++    #         CACHE INTERNAL "")
++    #     return()
++    # endif()
+ 
+     # FreeBSD has both cpuset and sysctl. Look for cpuset first because
+     # it's a better approach.

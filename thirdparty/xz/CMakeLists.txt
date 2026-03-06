@@ -1,4 +1,8 @@
 list(APPEND PATCH_FILES cmake_tweaks.patch)
+if(GLIBC_VERSION_MAX AND GLIBC_VERSION_MAX VERSION_LESS "2.6")
+    # Avoid pulling-in `__sched_cpucount@GLIBC_2.6`.
+    list(APPEND PATCH_FILES no_glibc_2.6_or_above_symbols.patch)
+endif()
 
 # We don't care about tests.
 list(APPEND PATCH_CMD COMMAND rm -rf tests)
