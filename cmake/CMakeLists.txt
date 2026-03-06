@@ -411,13 +411,32 @@ declare_project(thirdparty/sdcv DEPENDS glib zlib)
 if(USE_SDL STREQUAL "builtin")
     set(EXCLUDE_FROM_ALL)
 elseif(EMULATE_READER)
-    find_compiler_lib_path(SDL3_LIB libSDL3.so.0)
-    if(SDL3_LIB)
+    # We need a recent enough version for accumulated whole scroll "ticks" in mouse wheel events.
+    set(SDL3_MIN_VER 3.2.12)
+    set(SDL3_SONAME libSDL3.so.0)
+    find_compiler_lib_path(SDL3_LIB ${SDL3_SONAME})
+    if(SDL3_LIB AND NOT DEFINED CACHE{SDL3_VER})
+        string(REGEX MATCH [[([^.]+)\.([^.]+)\.([^.]+)]] _ ${SDL3_MIN_VER})
+        math(EXPR SDL3_MIN_INT_VER "${CMAKE_MATCH_1} * 1000000 + ${CMAKE_MATCH_2} * 1000 + ${CMAKE_MATCH_3}")
+        try_run(RUN_RET COMP_RET
+            ${CMAKE_CURRENT_BINARY_DIR}
+            SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/sdl_get_version.c
+            COMPILE_DEFINITIONS -DSDL3_MIN_INT_VER=${SDL3_MIN_INT_VER}
+            LINK_LIBRARIES ${SDL3_LIB}
+            RUN_OUTPUT_VARIABLE RUN_OUT
+            COMPILE_OUTPUT_VARIABLE COMP_OUT
+        )
+        if(NOT COMP_RET OR NOT RUN_RET EQUAL 0)
+            message(FATAL_ERROR "failed to determine ${SDL3_SONAME} version:\nCOMPILATION [${COMP_RET}]:\n${COMP_OUT}\nEXECUTION [${RUN_RET}]:\n${RUN_OUT}")
+        endif()
+        message(STATUS "Found ${SDL3_SONAME} version: ${RUN_OUT} (>= ${SDL3_MIN_VER} needed)")
+        set(SDL3_VER ${RUN_OUT} CACHE INTERNAL "${SDL3_SONAME} version")
+    endif()
+    if(SDL3_LIB AND SDL3_VER VERSION_GREATER_EQUAL SDL3_MIN_VER)
         set(EXCLUDE_FROM_ALL EXCLUDE_FROM_ALL)
     else()
         set(EXCLUDE_FROM_ALL)
     endif()
-    set(ENV{PKG_CONFIG_LIBDIR})
 else()
     set(EXCLUDE_FROM_ALL EXCLUDE_FROM_ALL)
 endif()
