@@ -1,7 +1,7 @@
 local ffi = require("ffi")
 local C = ffi.C
 local rt = ffi.load("librt.so")
-local inkview = ffi.load("inkview")
+local inkview = require("ffi/inkview")
 local util = require("ffi/util")
 
 local bit = require("bit")
@@ -9,20 +9,13 @@ local band = bit.band
 
 require("ffi/posix_h")
 require("ffi/linux_input_h")
-require("ffi/inkview_h")
 
--- InkView 4.x doesn't have the polling APIs, so inkview-compat.c
+-- Older InkView versions don't have the polling APIs, so inkview-compat.c
 -- emulates those in a semaphore step-locked thread.
-local compat, compat2 = inkview, inkview
-if not pcall(function() local _ = inkview.PrepareForLoop end) then
+local compat = inkview
+if C.POCKETBOOK_VERSION < 514 then
     compat = ffi.loadlib("inkview-compat")
-    compat2 = compat
-elseif not pcall(function() local _ = inkview.GetTouchInfoI end) then
-    compat2 = ffi.loadlib("inkview-compat")
 end
-
--- format is $model.$major.$minor.$build, like "U743g.6.8.4143"
-local is_sdkv6plus = (tonumber(ffi.string(inkview.GetSoftwareVersion()):match("([^.]+)[.][^.]+[.][^.]+$")) or 0) >= 6
 
 local input = {
     -- NOP
@@ -71,9 +64,6 @@ local DEBUG
 local logger
 local pb_event_map = {
     [C.EVT_ACTIVATE] = "EVT_ACTIVATE",
-    [C.EVT_ASYNC_TASK_FINISHED] = "EVT_ASYNC_TASK_FINISHED",
-    [C.EVT_AUDIO_CHANGED] = "EVT_AUDIO_CHANGED",
-    [C.EVT_AVRCP_COMMAND] = "EVT_AVRCP_COMMAND",
     [C.EVT_BACKGROUND] = "EVT_BACKGROUND",
     [C.EVT_BT_RXCOMPLETE] = "EVT_BT_RXCOMPLETE",
     [C.EVT_BT_TXCOMPLETE] = "EVT_BT_TXCOMPLETE",
@@ -81,13 +71,10 @@ local pb_event_map = {
     [C.EVT_CONFIGCHANGED] = "EVT_CONFIGCHANGED",
     [C.EVT_CONTROL_PANEL_ABOUT_TO_OPEN] = "EVT_CONTROL_PANEL_ABOUT_TO_OPEN",
     [C.EVT_DIC_CLOSED] = "EVT_DIC_CLOSED",
-    [C.EVT_DUMP_BITMAPS_DEBUG_INFO] = "EVT_DUMP_BITMAPS_DEBUG_INFO",
     [C.EVT_EXIT] = "EVT_EXIT",
     [C.EVT_EXT_KB] = "EVT_EXT_KB",
     [C.EVT_FOCUS] = "EVT_FOCUS",
     [C.EVT_FOREGROUND] = "EVT_FOREGROUND",
-    [C.EVT_FRAME_ACTIVATED] = "EVT_FRAME_ACTIVATED",
-    [C.EVT_FRAME_DEACTIVATED] = "EVT_FRAME_DEACTIVATED",
     [C.EVT_FSCHANGED] = "EVT_FSCHANGED",
     [C.EVT_FSINCOMING] = "EVT_FSINCOMING",
     [C.EVT_GLOBALACTION] = "EVT_GLOBALACTION",
@@ -123,7 +110,6 @@ local pb_event_map = {
     [C.EVT_PANEL_TASKLIST] = "EVT_PANEL_TASKLIST",
     [C.EVT_PANEL_TEXT] = "EVT_PANEL_TEXT",
     [C.EVT_PANEL_USBDRIVE] = "EVT_PANEL_USBDRIVE",
-    [C.EVT_POINTERCANCEL] = "EVT_POINTERCANCEL",
     [C.EVT_POINTERDOWN] = "EVT_POINTERDOWN",
     [C.EVT_POINTERDRAG] = "EVT_POINTERDRAG",
     [C.EVT_POINTERHOLD] = "EVT_POINTERHOLD",
@@ -135,7 +121,6 @@ local pb_event_map = {
     [C.EVT_QN_BORDER] = "EVT_QN_BORDER",
     [C.EVT_QN_MOVE] = "EVT_QN_MOVE",
     [C.EVT_QN_RELEASE] = "EVT_QN_RELEASE",
-    [C.EVT_READ_PROGRESS_CHANGED] = "EVT_READ_PROGRESS_CHANGED",
     [C.EVT_REPAINT] = "EVT_REPAINT",
     [C.EVT_SAVESTATE] = "EVT_SAVESTATE",
     [C.EVT_SCANPROGRESS] = "EVT_SCANPROGRESS",
@@ -147,14 +132,14 @@ local pb_event_map = {
     [C.EVT_SNAPSHOT] = "EVT_SNAPSHOT",
     [C.EVT_STARTSCAN] = "EVT_STARTSCAN",
     [C.EVT_STOPSCAN] = "EVT_STOPSCAN",
-    [C.EVT_STOP_PLAYING] = "EVT_STOP_PLAYING",
     [C.EVT_SUBTASKCLOSE] = "EVT_SUBTASKCLOSE",
     [C.EVT_SYNTH_ENDED] = "EVT_SYNTH_ENDED",
-    [C.EVT_SYNTH_POSITION] = "EVT_SYNTH_POSITION",
     [C.EVT_TAB] = "EVT_TAB",
     [C.EVT_TEXTCLEAR] = "EVT_TEXTCLEAR",
+    [C.EVT_TOUCHDOWN] = "EVT_TOUCHDOWN",
+    [C.EVT_TOUCHMOVE] = "EVT_TOUCHMOVE",
+    [C.EVT_TOUCHUP] = "EVT_TOUCHUP",
     [C.EVT_UNFOCUS] = "EVT_UNFOCUS",
-    [C.EVT_UPDATE] = "EVT_UPDATE",
 }
 local pb_key_events = {
     [C.EVT_KEYPRESS] = true,
@@ -162,28 +147,38 @@ local pb_key_events = {
     [C.EVT_KEYREPEAT] = true,
 }
 
--- NOTE: EVT_KEYPRESS_EXT, EVT_KEYRELEASE_EXT, and EVT_KEYREPEAT_EXT
--- are only declared on SDK >= 6, but reuse the same values as
--- EVT_TOUCHUP, EVT_TOUCHDOWN and EVT_TOUCHMOVE on SDK <= 5…
-if is_sdkv6plus then
+if C.POCKETBOOK_VERSION >= 508 then
+    pb_event_map[C.EVT_FRAME_ACTIVATED] = "EVT_FRAME_ACTIVATED"
+    pb_event_map[C.EVT_FRAME_DEACTIVATED] = "EVT_FRAME_DEACTIVATED"
+    pb_event_map[C.EVT_POINTERCANCEL] = "EVT_POINTERCANCEL"
+end
+
+if C.POCKETBOOK_VERSION >= 511 then
+    pb_event_map[C.EVT_READ_PROGRESS_CHANGED] = "EVT_READ_PROGRESS_CHANGED"
+end
+
+if C.POCKETBOOK_VERSION >= 519 then
+    pb_event_map[C.EVT_ASYNC_TASK_FINISHED] = "EVT_ASYNC_TASK_FINISHED"
+    pb_event_map[C.EVT_AUDIO_CHANGED] = "EVT_AUDIO_CHANGED"
+    pb_event_map[C.EVT_AVRCP_COMMAND] = "EVT_AVRCP_COMMAND"
+    pb_event_map[C.EVT_DUMP_BITMAPS_DEBUG_INFO] = "EVT_DUMP_BITMAPS_DEBUG_INFO"
+    pb_event_map[C.EVT_STOP_PLAYING] = "EVT_STOP_PLAYING"
+    pb_event_map[C.EVT_SYNTH_POSITION] = "EVT_SYNTH_POSITION"
+    pb_event_map[C.EVT_UPDATE] = "EVT_UPDATE"
+end
+
+if C.POCKETBOOK_VERSION >= 605 then
     pb_event_map[C.EVT_CUSTOM] = "EVT_CUSTOM"
     pb_event_map[C.EVT_KEYPRESS_EXT] = "EVT_KEYPRESS_EXT"
     pb_event_map[C.EVT_KEYRELEASE_EXT] = "EVT_KEYRELEASE_EXT"
     pb_event_map[C.EVT_KEYREPEAT_EXT] = "EVT_KEYREPEAT_EXT"
     pb_event_map[C.EVT_PACKAGE_JOB_CHANGED] = "EVT_PACKAGE_JOB_CHANGED"
     pb_event_map[C.EVT_POINTERCHANGED] = "EVT_POINTERCHANGED"
-    pb_event_map[C.EVT_TOUCHDOWN] = "EVT_TOUCHDOWN"
-    pb_event_map[C.EVT_TOUCHMOVE] = "EVT_TOUCHMOVE"
-    pb_event_map[C.EVT_TOUCHUP] = "EVT_TOUCHUP"
     pb_event_map[C.EVT_USBSTORE_IN] = "EVT_USBSTORE_IN"
     pb_event_map[C.EVT_USBSTORE_OUT] = "EVT_USBSTORE_OUT"
     pb_key_events[C.EVT_KEYPRESS_EXT] = true
     pb_key_events[C.EVT_KEYRELEASE_EXT] = true
     pb_key_events[C.EVT_KEYREPEAT_EXT] = true
-else
-    pb_event_map[C.EVT_KEYPRESS_EXT] = "EVT_TOUCHUP"
-    pb_event_map[C.EVT_KEYRELEASE_EXT] = "EVT_TOUCHDOWN"
-    pb_event_map[C.EVT_KEYREPEAT_EXT] = "EVT_TOUCHMOVE"
 end
 
 -- Keep track of all the active contact points.
@@ -233,7 +228,7 @@ local function translateEvent(t, par1, par2)
             -- NOTE: Never query slot 0, we rely on the POINTER* events for it instead,
             --       as we don't need an extra function call to get at the coordinates with those.
             -- par1 is the index to the base pointer for the current frame, as InkView seems to be keeping a number of past frames in memory...
-            local mtp = compat2.GetTouchInfoI(par1)
+            local mtp = compat.GetTouchInfoI(par1)
             for i = 1, par2 - 1 do
                 -- NOTE: We're making a very shaky assumption that the index here roughly translates to a *stable* slot number,
                 --       and as such that POINTER events are always at 0, which is why we're skipping it...
@@ -289,7 +284,7 @@ local function translateEvent(t, par1, par2)
         updateTimestamp()
 
         genEmuEvent(C.EV_KEY, -par1, 1)
-    elseif is_sdkv6plus and t == C.EVT_KEYPRESS_EXT then
+    elseif C.POCKETBOOK_VERSION >= 605 and t == C.EVT_KEYPRESS_EXT then
         updateTimestamp()
 
         genEmuEvent(C.EV_KEY, par1, 1)
@@ -297,7 +292,7 @@ local function translateEvent(t, par1, par2)
         updateTimestamp()
 
         genEmuEvent(C.EV_KEY, -par1, 2)
-    elseif is_sdkv6plus and t == C.EVT_KEYREPEAT_EXT then
+    elseif C.POCKETBOOK_VERSION >= 605 and t == C.EVT_KEYREPEAT_EXT then
         updateTimestamp()
 
         genEmuEvent(C.EV_KEY, par1, 2)
@@ -305,7 +300,7 @@ local function translateEvent(t, par1, par2)
         updateTimestamp()
 
         genEmuEvent(C.EV_KEY, -par1, 0)
-    elseif is_sdkv6plus and t == C.EVT_KEYRELEASE_EXT then
+    elseif C.POCKETBOOK_VERSION >= 605 and t == C.EVT_KEYRELEASE_EXT then
         updateTimestamp()
 
         genEmuEvent(C.EV_KEY, par1, 0)
@@ -389,7 +384,7 @@ end
 
 local evmsg = ffi.new("struct input_event[1]")
 local evmsg_len = ffi.sizeof(evmsg)
-local hwmsg = ffi.new("struct hw_event_s[1]")
+local hwmsg = ffi.new("hw_event[1]")
 local hwmsg_len = ffi.sizeof(hwmsg)
 
 local function convertEvent(msg)
