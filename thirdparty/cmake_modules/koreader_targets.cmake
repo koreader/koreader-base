@@ -180,21 +180,6 @@ declare_koreader_target(
     SOURCES extr.c
 )
 
-# libXss
-if(APPIMAGE)
-    set(EXCLUDE_FROM_ALL)
-else()
-    set(EXCLUDE_FROM_ALL EXCLUDE_FROM_ALL)
-endif()
-declare_koreader_target(
-    Xss TYPE library
-    ${EXCLUDE_FROM_ALL}
-    SOURCES libxss-dummy.c
-)
-function(setup_Xss)
-    set_target_properties(Xss PROPERTIES SOVERSION 1)
-endfunction()
-
 # koreader
 if(APPLE)
     set(EXCLUDE_FROM_ALL)
