@@ -212,9 +212,10 @@ local function genEmuEvent(evtype, code, value)
     table.insert(inputQueue, ev)
 end
 
--- Keep track of active pointers so we can feed ABS_MT_SLOT 0 and 1 to the frontend for multitouch to work.
--- down, a boolean denoting whether the pointer is currently down for tracking mouse button status.
+-- Keep track of mouse buttons and touch contacts separately, so we can feed ABS_MT_SLOT 0 and 1 to the frontend for multitouch to work.
+-- Mouse buttons are keyed by slot, while touch contacts are keyed by fingerID.
 local pointers = {}
+local finger_pointers = {}
 local function setPointerDownState(slot, down)
     if not pointers[slot] then
         pointers[slot] = { down = down }
@@ -223,24 +224,20 @@ local function setPointerDownState(slot, down)
     end
 end
 
--- For the moment we pretend there can only be one touchscreen/trackpad/whatever at a time.
--- It's probably close enough to the truth unless you run into a tester.
 local function getFingerSlot(event)
-    if not pointers[tonumber(event.tfinger.fingerID)] then
-        local num_touch_fingers = ffi.new("int[1]")
-        local fingers = SDL.SDL_GetTouchFingers(event.tfinger.touchID, num_touch_fingers)
-        if fingers ~= nil then
-            fingers = ffi.gc(fingers, SDL.SDL_free)
-            for i=0,num_touch_fingers[0]-1 do
-                if fingers[i].id == event.tfinger.fingerID then
-                    pointers[tonumber(event.tfinger.fingerID)] = { slot = i }
-                end
-            end
-        else
-            pointers[tonumber(event.tfinger.fingerID)] = { slot = 0 }
+    local finger_id = tonumber(event.tfinger.fingerID)
+    if not finger_pointers[finger_id] then
+        local used_slots = {}
+        for _, pointer in pairs(finger_pointers) do
+            used_slots[pointer.slot] = true
         end
+        local slot = 0
+        while used_slots[slot] do
+            slot = slot + 1
+        end
+        finger_pointers[finger_id] = { slot = slot }
     end
-    return pointers[tonumber(event.tfinger.fingerID)].slot
+    return finger_pointers[finger_id].slot
 end
 
 local function genTouchDownEvent(event, slot, x, y)
@@ -381,7 +378,7 @@ function S.waitForEvent(sec, usec)
         local y = is_finger and event.tfinger.y * S.h or event.button.y * scale_y
         genTouchUpEvent(event, slot, x, y)
         if is_finger then
-            pointers[tonumber(event.tfinger.fingerID)] = nil
+            finger_pointers[tonumber(event.tfinger.fingerID)] = nil
         else
             pointers[slot] = nil
         end
