@@ -8,7 +8,7 @@ if(EMULATE_READER)
     # Allow pkg-config config access to system packages.
     list(APPEND PATCH_FILES pkg-config_jailbreak.patch)
 endif()
-if(APPIMAGE)
+if(USE_SDL STREQUAL "builtin")
     # Fail if required features / subsystems can't be enabled.
     list(APPEND PATCH_FILES ensure_deps.patch)
 endif()
@@ -34,7 +34,7 @@ list(APPEND CMAKE_ARGS
     -DSDL_SENSOR=OFF
     -DSDL_TRAY=OFF
 )
-if(APPIMAGE)
+if(USE_SDL STREQUAL "builtin")
     list(APPEND CMAKE_ARGS
         # Miscellaneous video features/subsystems we don't care about.
         -DSDL_KMSDRM=OFF

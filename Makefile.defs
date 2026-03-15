@@ -6,6 +6,16 @@ ifeq (,$(or $(USING_MAKE_4_4_OR_BETTER),$(call at_least_version,$(MAKE_VERSION),
   $(error your version of make is too old: $(MAKE_VERSION), need at least 4.1)
 endif
 
+# What are we running on?
+CURRENT_OS := $(shell uname -s)
+ifeq ($(CURRENT_OS), Darwin)
+  CURRENT_OS := darwin
+else ifeq ($(CURRENT_OS), Linux)
+  CURRENT_OS := linux
+else
+  $(warning unsupported operating system: $(CURRENT_OS))
+endif
+
 # Prevent make from removing targets it considers as intermediate.
 .SECONDARY:
 
@@ -34,7 +44,7 @@ export ANDROID_HOME := $(or $(ANDROID_HOME),$(ANDROID_SDK_ROOT),$(TOOLCHAIN_DIR)
 export ANDROID_SDK_ROOT := $(ANDROID_HOME)
 export ANDROID_NDK_HOME := $(or $(ANDROID_NDK_HOME),$(ANDROID_NDK_ROOT),$(TOOLCHAIN_DIR)/android-ndk-r23c)
 export ANDROID_NDK_ROOT := $(ANDROID_NDK_HOME)
-ANDROID_TOOLCHAIN = $(ANDROID_NDK_HOME)/toolchains/llvm/prebuilt/linux-x86_64
+ANDROID_TOOLCHAIN = $(ANDROID_NDK_HOME)/toolchains/llvm/prebuilt/$(CURRENT_OS)-x86_64
 ifeq ($(ANDROID_ARCH), arm64)
 	# 64bit arches require at least ABI 21.
 	export NDKABI?=21
@@ -45,8 +55,6 @@ else
 	# Android 4.3 (Jelly Bean MR2); our minimal supported version.
 	export NDKABI?=18
 endif
-
-LINUX_ARCH?=native
 
 CMAKE := cmake -Wdev --warn-uninitialized
 CMAKE_VERSION := $(word 3,$(shell cmake --version))
@@ -183,24 +191,13 @@ else ifeq ($(TARGET), ubuntu-touch)
 	CHOST?=arm-linux-gnueabihf
 	SDL=yes
 	UBUNTUTOUCH=1
-else ifeq ($(TARGET), appimage)
-	EMULATE_READER=1
-	SDL=builtin
-	APPIMAGE=1
 else ifeq ($(TARGET), linux)
 	SDL=builtin
-	ifeq ($(LINUX_ARCH), arm)
-		CHOST?=arm-linux-gnueabihf
-	else ifeq ($(LINUX_ARCH), arm64)
-		CHOST?=aarch64-linux-gnu
-	else
-		EMULATE_READER=1
-	endif
+	EMULATE_READER=1
 else ifeq ($(TARGET), macos)
 	SDL=builtin
-	MACOS=1
 	EMULATE_READER=1
-	USE_CLANG=1
+	DARWIN = 1
 else ifeq ($(TARGET), android)
 	ANDROID=1
 	MONOLIBTIC?=1
@@ -255,30 +252,16 @@ else ifndef TARGET
 	EMULATE_READER=1
 	KODEBUG ?= 1
 	SDL=yes
+	ifeq ($(CURRENT_OS), darwin)
+		DARWIN = 1
+	endif
 else
   $(error Invalid TARGET: "$(TARGET)")
 endif
 
-ifneq (,$(findstring darwin,$(MAKE_HOST)))
-  DARWINHOST=1
-  ifneq (,$(findstring aarch64,$(MAKE_HOST)))
-    DARWIN_AARCH64_HOST=1
-  endif
-  ifdef EMULATE_READER
-    DARWIN=1
-    ifdef DARWIN_AARCH64_HOST
-      DARWIN_AARCH64=1
-    endif
-    export MACOSX_DEPLOYMENT_TARGET := $(or $(MACOSX_DEPLOYMENT_TARGET),$(shell sw_vers -productVersion))
-    USE_CLANG=1
-  endif
-endif
-
-# ccache still has tons of problems when cross-compiling Android port on Darwin
-ifdef DARWINHOST
-	ifdef ANDROID
-		CCACHE=
-	endif
+ifdef DARWIN
+  USE_CLANG = 1
+  export MACOSX_DEPLOYMENT_TARGET := $(or $(MACOSX_DEPLOYMENT_TARGET),$(shell sw_vers -productVersion))
 endif
 
 ifneq ($(CCACHE),)
@@ -304,7 +287,12 @@ define wget_and_validate
 endef
 
 # ln --symbolic --no-dereference --force --relative
-SYMLINK = $(if $(DARWINHOST),gln,ln) -snfr
+ifeq ($(CURRENT_OS), darwin)
+  SYMLINK = gln
+else
+  SYMLINK = ln
+endif
+SYMLINK += -snfr
 
 # set cross-compiler/host CC and CXX
 ifneq (,$(USE_CLANG))
@@ -494,36 +482,36 @@ endif
 # Use target-specific CFLAGS
 ifeq ($(TARGET), kobo)
 	# NOTE: If we only care about Kobos w/ a Touch screen, we're good.
-	ARM_ARCH:=$(ARMV7_A8_ARCH)
-	ARM_ARCH+=-mfloat-abi=hard
+	TARGET_CFLAGS:=$(ARMV7_A8_ARCH)
+	TARGET_CFLAGS+=-mfloat-abi=hard
 	ifeq ($(TARGET_MACHINE), arm-linux-gnueabihf)
 		COMPAT_CFLAGS:=$(UBUNTU_COMPAT_CFLAGS)
 		COMPAT_CXXFLAGS:=$(UBUNTU_COMPAT_CFLAGS)
 	endif
 else ifeq ($(TARGET), kobov4)
-	ARM_ARCH:=$(ARMV7_A9_ARCH)
-	ARM_ARCH+=-mfloat-abi=hard
+	TARGET_CFLAGS:=$(ARMV7_A9_ARCH)
+	TARGET_CFLAGS+=-mfloat-abi=hard
 	ifeq ($(TARGET_MACHINE), arm-linux-gnueabihf)
 		COMPAT_CFLAGS:=$(UBUNTU_COMPAT_CFLAGS)
 		COMPAT_CXXFLAGS:=$(UBUNTU_COMPAT_CFLAGS)
 	endif
 else ifeq ($(TARGET), kobov5)
-	ARM_ARCH:=$(ARMV7_A53_ARCH)
-	ARM_ARCH+=-mfloat-abi=hard
+	TARGET_CFLAGS:=$(ARMV7_A53_ARCH)
+	TARGET_CFLAGS+=-mfloat-abi=hard
 	ifeq ($(TARGET_MACHINE), arm-linux-gnueabihf)
 		COMPAT_CFLAGS:=$(UBUNTU_COMPAT_CFLAGS)
 		COMPAT_CXXFLAGS:=$(UBUNTU_COMPAT_CFLAGS)
 	endif
 else ifeq ($(TARGET), ubuntu-touch)
-	ARM_ARCH:=$(ARMV7_A8_ARCH)
-	ARM_ARCH+=-mfloat-abi=hard
+	TARGET_CFLAGS:=$(ARMV7_A8_ARCH)
+	TARGET_CFLAGS+=-mfloat-abi=hard
 	COMPAT_CFLAGS:=$(UBUNTU_COMPAT_CFLAGS)
 	COMPAT_CXXFLAGS:=$(UBUNTU_COMPAT_CFLAGS)
 else ifeq ($(TARGET), pocketbook)
 	# NOTE: The TC itself is built in ARM mode (otherwise glibc 2.9 fails to build).
 	#       We prefer Thumb mode for our own binaries, though, much like on every other i.MX device ;).
-	ARM_ARCH:=$(ARMV7_A8_ARCH)
-	ARM_ARCH+=-mfloat-abi=softfp
+	TARGET_CFLAGS:=$(ARMV7_A8_ARCH)
+	TARGET_CFLAGS+=-mfloat-abi=softfp
 	# NOTE: Because of course everything is terrible, newer FW (5.19+) use GCC 6.3.0's libstdc++,
 	#       so, ideally, we shouldn't be using this on those newer devices...
 	COMPAT_CFLAGS:=$(STLABI_COMPAT_CFLAGS) $(PB_COMPAT_CFLAGS)
@@ -533,15 +521,15 @@ else ifeq ($(TARGET), pocketbook)
 		COMPAT_CXXFLAGS+=$(UBUNTU_COMPAT_CFLAGS)
 	endif
 else ifeq ($(TARGET), kindle)
-	ARM_ARCH:=$(ARMV7_A8_ARCH)
-	ARM_ARCH+=-mfloat-abi=softfp
+	TARGET_CFLAGS:=$(ARMV7_A8_ARCH)
+	TARGET_CFLAGS+=-mfloat-abi=softfp
 	ifeq ($(TARGET_MACHINE), arm-linux-gnueabi)
 		COMPAT_CFLAGS:=$(UBUNTU_COMPAT_CFLAGS)
 		COMPAT_CXXFLAGS:=$(UBUNTU_COMPAT_CFLAGS)
 	endif
 else ifeq ($(TARGET), kindlepw2)
-	ARM_ARCH:=$(ARMV7_A9_ARCH)
-	ARM_ARCH+=-mfloat-abi=softfp
+	TARGET_CFLAGS:=$(ARMV7_A9_ARCH)
+	TARGET_CFLAGS+=-mfloat-abi=softfp
 	ifeq ($(TARGET_MACHINE), arm-linux-gnueabi)
 		COMPAT_CFLAGS:=$(UBUNTU_COMPAT_CFLAGS)
 		COMPAT_CXXFLAGS:=$(UBUNTU_COMPAT_CFLAGS)
@@ -549,15 +537,15 @@ else ifeq ($(TARGET), kindlepw2)
 else ifeq ($(TARGET), kindlehf)
 	# While we *would* like to bias towards in-order CPUs (e.g., A7/A53), we can't because we have to support the PW4,
 	# which runs on an A9, and that's VFPv3, and not VFPv4 (and that seems to matter, despite us technically always prefering NEON).
-	ARM_ARCH:=$(ARMV7_A9_ARCH)
-	ARM_ARCH+=-mfloat-abi=hard
+	TARGET_CFLAGS:=$(ARMV7_A9_ARCH)
+	TARGET_CFLAGS+=-mfloat-abi=hard
 	ifeq ($(TARGET_MACHINE), arm-linux-gnueabihf)
 		COMPAT_CFLAGS:=$(UBUNTU_COMPAT_CFLAGS)
 		COMPAT_CXXFLAGS:=$(UBUNTU_COMPAT_CFLAGS)
 	endif
 else ifeq ($(TARGET), kindle-legacy)
-	ARM_ARCH:=$(ARMV6_1136_ARCH)
-	ARM_ARCH+=-mfloat-abi=softfp
+	TARGET_CFLAGS:=$(ARMV6_1136_ARCH)
+	TARGET_CFLAGS+=-mfloat-abi=softfp
 	ifeq ($(TARGET_MACHINE), arm-linux-gnueabi)
 		COMPAT_CFLAGS:=$(MG2K12_COMPAT_CFLAGS)
 		COMPAT_CXXFLAGS:=$(MG2K12_COMPAT_CXXFLAGS)
@@ -569,10 +557,10 @@ else ifeq ($(TARGET), kindle-legacy)
         COMPAT_CXXFLAGS+=-fno-threadsafe-statics
 else ifeq ($(TARGET), android)
 	ifeq ($(ANDROID_ARCH), arm)
-		ARM_ARCH:=$(ANDROID_ARM_ARCH)
-		ARM_ARCH+=-mfloat-abi=softfp
+		TARGET_CFLAGS:=$(ANDROID_ARM_ARCH)
+		TARGET_CFLAGS+=-mfloat-abi=softfp
 	else ifeq ($(ANDROID_ARCH), arm64)
-		ARM_ARCH:=$(ANDROID_ARM_ARCH)
+		TARGET_CFLAGS:=$(ANDROID_ARM_ARCH)
 	else ifeq ($(ANDROID_ARCH), x86)
 	endif
 	ifneq (,$(filter arm x86,$(ANDROID_ARCH)))
@@ -582,66 +570,47 @@ else ifeq ($(TARGET), android)
 		COMPAT_CFLAGS += -U_FILE_OFFSET_BITS -D_FILE_OFFSET_BITS=32
 	endif
 else ifeq ($(TARGET), remarkable)
-	ARM_ARCH:=$(ARMV7_A9_ARCH)
-	ARM_ARCH+=-mfloat-abi=hard
+	TARGET_CFLAGS:=$(ARMV7_A9_ARCH)
+	TARGET_CFLAGS+=-mfloat-abi=hard
 else ifeq ($(TARGET), remarkable-aarch64)
-	ARM_ARCH:=$(ARM64_A53_ARCH)
+	TARGET_CFLAGS:=$(ARM64_A53_ARCH)
 else ifeq ($(TARGET), sony-prstux)
-	ARM_ARCH:=$(ARMV7_A8_ARCH)
-	ARM_ARCH+=-mfloat-abi=hard
+	TARGET_CFLAGS:=$(ARMV7_A8_ARCH)
+	TARGET_CFLAGS+=-mfloat-abi=hard
 else ifeq ($(TARGET), cervantes)
-	ARM_ARCH:=$(ARMV7_GENERIC_ARCH)
-	ARM_ARCH+=-mfloat-abi=softfp
+	TARGET_CFLAGS:=$(ARMV7_GENERIC_ARCH)
+	TARGET_CFLAGS+=-mfloat-abi=softfp
 	ifeq ($(TARGET_MACHINE), arm-linux-gnueabi)
 		COMPAT_CFLAGS:=$(UBUNTU_COMPAT_CFLAGS)
 		COMPAT_CXXFLAGS:=$(UBUNTU_COMPAT_CFLAGS)
 	endif
 else ifeq ($(TARGET), arm-generic)
 	# Defaults to generic crap
-	ARM_ARCH:=$(ARMV6_GENERIC_ARCH)
-	ARM_ARCH+=-mfloat-abi=softfp
+	TARGET_CFLAGS:=$(ARMV6_GENERIC_ARCH)
+	TARGET_CFLAGS+=-mfloat-abi=softfp
 else ifeq ($(TARGET), linux)
-	MONOLIBTIC = 1
-	ifeq ($(LINUX_ARCH), arm)
-		ARM_ARCH:=$(ARMV7_GENERIC_ARCH)
-		ARM_ARCH+=-mfloat-abi=hard
-	else ifeq ($(LINUX_ARCH), arm64)
-		ARM_ARCH:=$(ARM64_GENERIC_ARCH)
-	endif
-else
-	# else, we are compiling emulator on x86
-	ARM_ARCH:=
-endif
-
-HOST_ARCH = -march=native
-
-ifdef APPIMAGE
-  ifneq (,$(filter aarch64-%,$(TARGET_MACHINE)))
-    APPIMAGE_ARCH = aarch64
-    HOST_ARCH = $(ARM64_GENERIC_ARCH)
-  else ifneq (,$(filter arm-%-gnueabihf,$(TARGET_MACHINE)))
-    APPIMAGE_ARCH = armhf
-    HOST_ARCH = $(ARMV7_GENERIC_ARCH) -mfloat-abi=hard
+  ifneq (,$(filter arm-%-gnueabihf,$(TARGET_MACHINE)))
+    TARGET_CFLAGS = $(ARMV7_GENERIC_ARCH) -mfloat-abi=hard
+    LINUX_ARCH = armhf
+  else ifneq (,$(filter aarch64-%,$(TARGET_MACHINE)))
+    TARGET_CFLAGS = $(ARM64_GENERIC_ARCH)
+    LINUX_ARCH = arm64
   else ifneq (,$(filter x86_64-%,$(TARGET_MACHINE)))
-    APPIMAGE_ARCH = x86_64
-    # We want to run the AppImage on any 64-bit CPU
-    HOST_ARCH = -mtune=generic -march=x86-64
+    # We want to run the build on any 64-bit CPU.
+    TARGET_CFLAGS = -march=x86-64 -mtune=generic
+    LINUX_ARCH = x86_64
   else
-    $(error unsupported AppImage architecture: $(TARGET_MACHINE))
+    LINUX_ARCH = $(word 1,$(subst -, ,$(TARGET_MACHINE)))
   endif
-endif
-
-ifeq ($(TARGET), linux)
-  HOST_ARCH = -mtune=generic
-endif
-
-ifdef MACOS
-  HOST_ARCH = -mtune=generic
-endif
-
-ifdef DARWIN_AARCH64_HOST
-  # At the moment of writing, the Apple M1 is the lowest common denominator.
-  HOST_ARCH = -mcpu=apple-m1
+else ifeq ($(TARGET), macos)
+  ifneq (,$(filter arm64-,$(TARGET_MACHINE)))
+    # At the moment of writing, the Apple M1 is the lowest common denominator.
+    TARGET_CFLAGS = -mcpu=apple-m1
+  else
+    TARGET_CFLAGS = -mtune=generic
+  endif
+else ifdef EMULATE_READER
+  TARGET_CFLAGS = -march=native
 endif
 
 # Some of our deps require C11 & C++17 (`if constexpr (…)`) support.
@@ -658,10 +627,9 @@ endif
 # Improve reproducibility.
 BASE_CFLAGS += -ffile-prefix-map=$(abspath $(KOR_BASE))/=
 
-HOSTCFLAGS:=$(HOST_ARCH) $(BASE_CFLAGS) $(QFLAGS)
-
 CFLAGS:=$(BASE_CFLAGS) $(QFLAGS) $(CSTD_FLAGS)
 CXXFLAGS:=$(BASE_CFLAGS) $(QFLAGS) $(CXXSTD_FLAGS)
+HOSTCFLAGS:=$(BASE_CFLAGS) $(QFLAGS)
 
 ifndef DARWIN
   LDFLAGS := -Wl,-O1,--as-needed,--gc-sections $(COMPAT_LDFLAGS)
@@ -723,16 +691,16 @@ ifdef EMULATE_READER
 	OBJCOPY:=$(HOSTOBJCOPY)
 	RANLIB:=$(HOSTRANLIB)
 	READELF:=$(HOSTREADELF)
-	CFLAGS+=$(HOST_ARCH)
-	CXXFLAGS+=$(HOST_ARCH)
+	CFLAGS+=$(TARGET_CFLAGS)
+	CXXFLAGS+=$(TARGET_CFLAGS)
 	export PKG_CONFIG_LIBDIR := $(abspath $(STAGING_DIR)/lib/pkgconfig)$(if $(PKG_CONFIG_LIBDIR),:$(PKG_CONFIG_LIBDIR))
 else
 	REALCC:=$(CC)
 	REALCXX:=$(CXX)
 	CC:=$(strip $(CCACHE) $(CC))
 	CXX:=$(strip $(CCACHE) $(CXX))
-	CFLAGS+=$(ARM_ARCH) $(COMPAT_CFLAGS)
-	CXXFLAGS+=$(ARM_ARCH) $(COMPAT_CXXFLAGS)
+	CFLAGS+=$(TARGET_CFLAGS) $(COMPAT_CFLAGS)
+	CXXFLAGS+=$(TARGET_CFLAGS) $(COMPAT_CXXFLAGS)
 	# Make sure we always have mmap() support.
 	# This is critical for FreeType, since the usage of platform-specific code depends on this,
 	# and without it, we don't get CLOEXEC handling, which is problematic on Kobos, where we spawn stuff that might
@@ -781,9 +749,9 @@ ifeq ($(TARGET), android)
   endif
 endif
 
-ifneq (,$(DARWIN))
+ifdef DARWIN
   LIB_EXT = .dylib
-else ifneq (,$(WIN32))
+else ifdef WIN32
   LIB_EXT = .dll
 else
   LIB_EXT = .so
@@ -799,7 +767,7 @@ LUAROCKS_BINARY := $(abspath $(STAGING_DIR)/bin/luarocks)
 # (And we enforce PIC everywhere via CFLAGS/CXXFLAGS).
 DYNLIB_LDFLAGS = -shared
 ifdef DARWIN
-	DYNLIB_LDFLAGS += -dynamiclib -undefined dynamic_lookup
+  DYNLIB_LDFLAGS += -dynamiclib -undefined dynamic_lookup
 endif
 
 # CMake toolchain file. {{{
@@ -987,12 +955,10 @@ set(GLIBC_VERSION_MAX  $(GLIBC_VERSION_MAX))
 
 # Platform flags.
 set(ANDROID        $(ANDROID))
-set(APPIMAGE       $(APPIMAGE))
 set(CERVANTES      $(CERVANTES))
 set(KINDLE         $(KINDLE))
 set(KOBO           $(KOBO))
 set(LEGACY         $(LEGACY))
-set(MACOS          $(MACOS))
 set(POCKETBOOK     $(POCKETBOOK))
 set(REMARKABLE     $(REMARKABLE))
 set(SONY_PRSTUX    $(SONY_PRSTUX))
