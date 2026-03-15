@@ -807,21 +807,6 @@ endif
 CMAKE_TCF = $(CMAKE_DIR)/toolchain.cmake
 CMAKE_FLAGS += -DCMAKE_TOOLCHAIN_FILE='$(abspath $(CMAKE_TCF))'
 
-# CMAKE_SYSTEM_PROCESSOR
-# FIXME: use more fine grained values for ARM targets?
-# (Cf. https://github.com/taka-no-me/android-cmake)
-ifneq (,$(filter aarch64-%,$(CHOST)))
-  CMAKE_SYSTEM_PROCESSOR = aarch64
-else ifneq (,$(filter arm-% armv7a-%,$(CHOST)))
-  CMAKE_SYSTEM_PROCESSOR = arm
-else ifneq (,$(filter i686-%,$(CHOST)))
-  CMAKE_SYSTEM_PROCESSOR = i686
-else ifneq (,$(filter x86_64-%,$(CHOST)))
-  CMAKE_SYSTEM_PROCESSOR = x86_64
-else ifneq (,$(CHOST))
-  $(error CMAKE_SYSTEM_PROCESSOR not set! (CHOST is $(CHOST)))
-endif
-
 # Native & cross definitions.
 define cmake_toolchain
 
@@ -896,6 +881,24 @@ set(WIN32 $(WIN32))
 endef
 
 # Cross-compile only definitions.
+
+ifndef EMULATE_READER
+
+# CMAKE_SYSTEM_PROCESSOR
+# FIXME: use more fine grained values for ARM targets?
+# (Cf. https://github.com/taka-no-me/android-cmake)
+ifneq (,$(filter aarch64-%,$(TARGET_MACHINE)))
+  CMAKE_SYSTEM_PROCESSOR = aarch64
+else ifneq (,$(filter arm-% armv7a-%,$(TARGET_MACHINE)))
+  CMAKE_SYSTEM_PROCESSOR = arm
+else ifneq (,$(filter i686-%,$(TARGET_MACHINE)))
+  CMAKE_SYSTEM_PROCESSOR = i686
+else ifneq (,$(filter x86_64-%,$(TARGET_MACHINE)))
+  CMAKE_SYSTEM_PROCESSOR = x86_64
+else
+  $(error CMAKE_SYSTEM_PROCESSOR not set! (TARGET_MACHINE is $(TARGET_MACHINE)))
+endif
+
 define cmake_cross_toolchain
 
 $(cmake_toolchain)
@@ -923,6 +926,8 @@ set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
 set(CMAKE_FIND_ROOT_PATH_MODE_PACKAGE ONLY)
 
 endef
+
+endif
 
 # }}}
 
@@ -1046,16 +1051,16 @@ MESON_CROSS_TOOLCHAIN = $(CMAKE_DIR)/meson_cross_toolchain.ini
 MESON_HOST_TOOLCHAIN = $(CMAKE_DIR)/meson_host_toolchain.ini
 
 MESON_CROSS_SYSTEM = $(if $(ANDROID),android,linux)
-ifneq (,$(filter aarch64-%,$(CHOST)))
+ifneq (,$(filter aarch64-%,$(TARGET_MACHINE)))
   MESON_CROSS_CPU_FAMILY = aarch64
-else ifneq (,$(filter arm-% armv7a-%,$(CHOST)))
+else ifneq (,$(filter arm-% armv7a-%,$(TARGET_MACHINE)))
   MESON_CROSS_CPU_FAMILY = arm
-else ifneq (,$(filter i686-%,$(CHOST)))
+else ifneq (,$(filter i686-%,$(TARGET_MACHINE)))
   MESON_CROSS_CPU_FAMILY = x86
-else ifneq (,$(filter x86_64-%,$(CHOST)))
+else ifneq (,$(filter x86_64-%,$(TARGET_MACHINE)))
   MESON_CROSS_CPU_FAMILY = x86_64
-else ifneq (,$(CHOST))
-  $(error MESON_CROSS_CPU_FAMILY not set! (CHOST is $(CHOST)))
+else
+  $(error MESON_CROSS_CPU_FAMILY not set! (TARGET_MACHINE is $(TARGET_MACHINE)))
 endif
 MESON_CROSS_CPU = $(or $(patsubst -march=%,%,$(filter -march=%,$(CFLAGS))),$(MESON_CROSS_CPU_FAMILY))
 MESON_CROSS_ENDIAN = little
