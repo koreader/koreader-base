@@ -2,7 +2,6 @@ local ffi = require("ffi")
 local BB = require("ffi/blitbuffer")
 local inkview = ffi.load("inkview")
 
-require("ffi/inkview_h")
 require("ffi/linux_fb_h")
 
 local framebuffer = {
