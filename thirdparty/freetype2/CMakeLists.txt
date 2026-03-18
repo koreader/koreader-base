@@ -26,8 +26,8 @@ if(NOT MONOLIBTIC)
 endif()
 
 external_project(
-    DOWNLOAD URL 813676dfd2a03716e149208d99586006
-    https://github.com/freetype/freetype/archive/refs/tags/VER-2-14-1.tar.gz
+    DOWNLOAD URL 5d6095456a8245a487f4e4f3e4a07a84
+    https://github.com/freetype/freetype/archive/refs/tags/VER-2-14-2.tar.gz
     PATCH_FILES ${PATCH_FILES}
     CONFIGURE_COMMAND ${CFG_CMD}
     BUILD_COMMAND ${BUILD_CMD}
