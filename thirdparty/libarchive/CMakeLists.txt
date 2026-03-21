@@ -1,4 +1,7 @@
 list(APPEND PATCH_FILES ignore_locale_and_use_utf8.patch)
+# Patch the API to avoid using `mode_t`: its size is different
+# on macOS (a typedef to `__darwin_mode_t`, which is 16bits).
+list(APPEND PATCH_FILES avoid_mode_t.patch)
 if(ANDROID)
     list(APPEND PATCH_FILES android.patch)
     list(APPEND PATCH_CMD COMMAND mv contrib/android/include/android_lf.h libarchive/)
