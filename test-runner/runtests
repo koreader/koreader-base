@@ -134,7 +134,7 @@ suite='all'
 use_meson=1
 wrapper=''
 
-which meson >/dev/null 2>&1 || use_meson=0
+type -P meson >/dev/null || use_meson=0
 
 if ! opt=$(getopt -o "dh${RUNTESTS_GETOPT_SHORT}" --long "debug,help,${RUNTESTS_GETOPT_LONG}" --name "$0" -- "$@"); then
     printf 1>&2 '\nUSAGE: %s <OPTIONS> <TEST_SUITE> <TEST_NAMES>\n%s\n' "${0##*/}" "${RUNTESTS_HELP}"
