@@ -275,6 +275,15 @@ declare_project(thirdparty/glib DEPENDS ${DEPENDS} EXCLUDE_FROM_ALL)
 # harfbuzz
 declare_project(thirdparty/harfbuzz DEPENDS freetype2)
 
+# inkview
+if(POCKETBOOK)
+    set(EXCLUDE_FROM_ALL)
+else()
+    set(EXCLUDE_FROM_ALL EXCLUDE_FROM_ALL)
+endif()
+declare_project(thirdparty/inkview ${EXCLUDE_FROM_ALL})
+set(INKVIEW_DIR ${inkview_SOURCE_DIR})
+
 # kobo-usbms
 if(KOBO)
     set(EXCLUDE_FROM_ALL)
@@ -555,6 +564,9 @@ add_custom_target(ffi)
 
 function(ffi_target NAME OUTPUT INPUT)
     cmake_parse_arguments("" "EXCLUDE_FROM_ALL" "" "DEPENDS;ARGS" ${ARGN})
+    if(NOT OUTPUT MATCHES [[/]])
+        set(OUTPUT ffi/${OUTPUT})
+    endif()
     list(PREPEND _DEPENDS ffi-cdecl)
     if(TARGET ${NAME})
         list(PREPEND _DEPENDS ${NAME})
@@ -563,11 +575,12 @@ function(ffi_target NAME OUTPUT INPUT)
         set(INPUT ffi-cdecl/${INPUT})
     endif()
     get_filename_component(INPUT_PATH ${INPUT} ABSOLUTE BASE_DIR ${BASE_DIR})
+    get_filename_component(TGT ${OUTPUT} NAME)
     add_custom_target(
-        ${OUTPUT}
+        ${TGT}
         DEPENDS ${_DEPENDS}
-        COMMAND ${STAGING_DIR}/bin/ffi-cdecl -o ffi/${OUTPUT} ${_ARGS} ${INPUT}
-        COMMENT "Generating 'ffi/${OUTPUT}'"
+        COMMAND ${STAGING_DIR}/bin/ffi-cdecl -o ${OUTPUT} ${_ARGS} ${INPUT}
+        COMMENT "Generating 'ffi/${TGT}'"
         VERBATIM
         WORKING_DIRECTORY ${BASE_DIR}
     )
@@ -577,7 +590,7 @@ function(ffi_target NAME OUTPUT INPUT)
             add_dependencies(ffi ${NAME}-ffi)
         endif()
     endif()
-    add_dependencies(${NAME}-ffi ${OUTPUT})
+    add_dependencies(${NAME}-ffi ${TGT})
 endfunction()
 
 # cervantes
@@ -603,6 +616,30 @@ ffi_target(giflib giflib_h.lua giflib_decl.c)
 
 # harfbuzz
 ffi_target(harfbuzz harfbuzz_h.lua harfbuzz_cdecl.c ARGS -d harfbuzz)
+
+# inkview
+if(POCKETBOOK)
+    set(EXCLUDE_FROM_ALL)
+else()
+    set(EXCLUDE_FROM_ALL EXCLUDE_FROM_ALL)
+endif()
+set(VERSIONS 505 507 508 509 511 512 514 515 517 519 605 608 610 611)
+add_custom_target(
+    inkview-ffi
+    COMMAND ./utils/gen_inkview_h.sh ffi/inkview_h.lua ${CMAKE_CURRENT_BINARY_DIR} ${VERSIONS}
+    COMMENT "Generating 'ffi/inkview_h.lua'"
+    VERBATIM
+    WORKING_DIRECTORY ${BASE_DIR}
+)
+if(NOT EXCLUDE_FROM_ALL)
+    add_dependencies(ffi inkview-ffi)
+endif()
+foreach(V IN LISTS VERSIONS)
+    ffi_target(inkview ${CMAKE_CURRENT_BINARY_DIR}/inkview_h_${V}.lua inkview_decl.c ${EXCLUDE_FROM_ALL}
+        DEPENDS freetype2
+        ARGS -D POCKETBOOK_VERSION=${V} -I ${INKVIEW_DIR}/${V} -d freetype2 -f -Wno-deprecated-declarations
+    )
+endforeach()
 
 # kindle
 if(KINDLE)
