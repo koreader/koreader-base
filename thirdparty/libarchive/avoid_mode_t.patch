@@ -1,0 +1,35 @@
+diff --git a/libarchive/archive_entry.c b/libarchive/archive_entry.c
+index dc74430f..90cf5cc8 100644
+--- a/libarchive/archive_entry.c
++++ b/libarchive/archive_entry.c
+@@ -1239,7 +1239,7 @@ _archive_entry_copy_link_l(struct archive_entry *entry,
+ }
+ 
+ void
+-archive_entry_set_mode(struct archive_entry *entry, mode_t m)
++archive_entry_set_mode(struct archive_entry *entry, __LA_MODE_T m)
+ {
+ 	entry->stat_valid = 0;
+ 	entry->acl.mode = m;
+@@ -1314,7 +1314,7 @@ _archive_entry_copy_pathname_l(struct archive_entry *entry,
+ }
+ 
+ void
+-archive_entry_set_perm(struct archive_entry *entry, mode_t p)
++archive_entry_set_perm(struct archive_entry *entry, __LA_MODE_T p)
+ {
+ 	entry->stat_valid = 0;
+ 	entry->acl.mode &= AE_IFMT;
+diff --git a/libarchive/archive_entry.h b/libarchive/archive_entry.h
+index f7f1c522..ebd82582 100644
+--- a/libarchive/archive_entry.h
++++ b/libarchive/archive_entry.h
+@@ -93,7 +93,7 @@ typedef ssize_t la_ssize_t;
+ #endif
+ 
+ /* Get a suitable definition for mode_t */
+-#if ARCHIVE_VERSION_NUMBER >= 3999000
++#if 1 //ARCHIVE_VERSION_NUMBER >= 3999000
+ /* Switch to plain 'int' for libarchive 4.0.  It's less broken than 'mode_t' */
+ # define	__LA_MODE_T	int
+ #elif defined(_WIN32) && !defined(__CYGWIN__) && !defined(__BORLANDC__) && !defined(__WATCOMC__)
