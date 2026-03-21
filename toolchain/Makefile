@@ -55,7 +55,7 @@ $(TOOLCHAIN_DIR)/$(NDK_DIR): $(NDK_TARBALL)
 	rm -vrf $(NDK_DIR)/toolchains/renderscript
 	rm -vrf $(NDK_DIR)/toolchains/llvm/prebuilt/linux-x86_64/bin/*1[67]-clang*
 	rm -vrf $(NDK_DIR)/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/lib/*/1[67]
-	if which hardlink; then
+	if type -P hardlink; then
 	  hardlink $(NDK_DIR)
 	fi
 	rm -f $(NDK_TARBALL)
