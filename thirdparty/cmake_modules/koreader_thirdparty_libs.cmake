@@ -88,6 +88,11 @@ declare_dependency(giflib::gif MONOLIBTIC gif)
 # harfbuzz
 declare_dependency(harfbuzz::harfbuzz INCLUDES freetype2 harfbuzz MONOLIBTIC harfbuzz)
 
+# inkview
+declare_dependency(inkview::inkview_517)
+target_include_directories(_inkview__inkview_517 INTERFACE ${INKVIEW_DIR}/517)
+target_link_libraries(_inkview__inkview_517 INTERFACE ${INKVIEW_DIR}/517/libinkview.so)
+
 # koreader-lfs
 declare_dependency(koreader-lfs::koreader-lfs MONOLIBTIC koreader-lfs)
 
