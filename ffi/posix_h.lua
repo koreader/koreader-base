@@ -440,6 +440,7 @@ struct iphdr {
 int inet_aton(const char *, struct in_addr *);
 uint32_t htonl(uint32_t);
 uint16_t htons(uint16_t);
+void _exit(int status);
 ]]
 
 -- clock_gettime & friends require librt on old glibc (< 2.17) versions...
