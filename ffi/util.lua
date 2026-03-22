@@ -335,8 +335,7 @@ function util.runInSubProcess(func, with_pipe, double_fork)
             pid = C.fork()
             if pid ~= 0 then
                 -- Parent side of the outer fork, we don't need it anymore, so just exit.
-                -- NOTE: Technically ought to be _exit, not exit.
-                os.exit((pid < 0) and 1 or 0)
+                C._exit((pid < 0) and 1 or 0)
             end
             -- pid == 0 -> inner child :)
         end
@@ -378,7 +377,7 @@ function util.runInSubProcess(func, with_pipe, double_fork)
         if not ok then
             print("error in subprocess:", err)
         end
-        os.exit(0)
+        C._exit(0)
     end
     -- parent/main process
     if pid < 0 then -- on failure, fork() returns -1
