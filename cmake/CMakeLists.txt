@@ -626,7 +626,7 @@ endif()
 set(VERSIONS 505 507 508 509 511 512 514 515 517 519 605 608 610 611)
 add_custom_target(
     inkview-ffi
-    COMMAND ./utils/gen_inkview_h.sh ffi/inkview_h.lua ${CMAKE_CURRENT_BINARY_DIR} ${VERSIONS}
+    COMMAND ./utils/gen_inkview_h.py ffi/inkview_h.lua ${CMAKE_CURRENT_BINARY_DIR} ${VERSIONS}
     COMMENT "Generating 'ffi/inkview_h.lua'"
     VERBATIM
     WORKING_DIRECTORY ${BASE_DIR}
