@@ -1,7 +1,7 @@
 local ffi = require "ffi"
 local inkview = ffi.load("inkview")
 
-ffi.cdefs[[
+ffi.cdef[[
 char *GetSoftwareVersion();
 ]]
 
@@ -13,7 +13,7 @@ if not version_major or not version_minor then
 end
 local pocketbook_version = version_major * 100 + version_minor
 
-ffi.cdefs('static const int POCKETBOOK_VERSION = ' .. pocketbook_version .. ';')
+ffi.cdef('static const int POCKETBOOK_VERSION = ' .. pocketbook_version .. ';')
 
 require("ffi/posix_h")
 require("ffi/inkview_h")
