@@ -170,24 +170,31 @@ endfunction()
 
 function(find_compiler_lib_path VAR LIB)
     cmake_parse_arguments("" "REQUIRED" "" "" ${ARGN})
-    if(_UNPARSED_ARGUMENTS)
-        message(FATAL_ERROR "unparsed arguments: ${_UNPARSED_ARGUMENTS}")
-    endif()
     if(DEFINED CACHE{${VAR}})
         return()
     endif()
-    unset(LIB_PATH CACHE)
-    execute_process(COMMAND ${CMAKE_C_COMPILER} -print-file-name=${LIB} OUTPUT_VARIABLE LIB_PATH OUTPUT_STRIP_TRAILING_WHITESPACE)
-    if(NOT IS_ABSOLUTE "${LIB_PATH}" OR NOT EXISTS "${LIB_PATH}")
-        set(LIB_PATH NOTFOUND)
-    endif()
-    if(LIB_PATH)
-        # Simplify path (collapse `/dir/../` part).
-        get_filename_component(LIB_PATH ${LIB_PATH} ABSOLUTE)
+    if(DEFINED CACHE{COMPILER_LIBRARIES_SEARCH_PATHS})
+        set(SEARCH_PATHS ${COMPILER_LIBRARIES_SEARCH_PATHS})
     else()
-        # Last ditch effort: the cmake way (mainly for macOS, in case the library is provided by homebrew).
-        find_library(LIB_PATH NAMES ${LIB})
+        execute_process(COMMAND ${CMAKE_C_COMPILER} -print-search-dirs RESULT_VARIABLE RET OUTPUT_VARIABLE OUT)
+        if(NOT RET EQUAL 0 OR NOT OUT MATCHES "\nlibraries: =([^\n]+)\n")
+          message(FATAL_ERROR "could not find compiler search paths for libraries")
+        endif()
+        string(REPLACE ":" ";" SEARCH_PATHS ${CMAKE_MATCH_1})
+        set(COMPILER_LIBRARIES_SEARCH_PATHS ${SEARCH_PATHS} CACHE INTERNAL "compiler search paths for libraries")
     endif()
+    if(DEFINED _UNPARSED_ARGUMENTS)
+        set(SEARCH_PATHS ${_UNPARSED_ARGUMENTS} ${SEARCH_PATHS})
+    endif()
+    unset(LIB_PATH CACHE)
+    find_library(
+        LIB_PATH
+        NAMES ${LIB}
+        PATHS ${SEARCH_PATHS}
+        NO_DEFAULT_PATH NO_PACKAGE_ROOT_PATH NO_CMAKE_PATH
+        NO_CMAKE_ENVIRONMENT_PATH NO_SYSTEM_ENVIRONMENT_PATH
+        NO_CMAKE_SYSTEM_PATH NO_CMAKE_INSTALL_PREFIX NO_CMAKE_FIND_ROOT_PATH
+    )
     if(NOT LIB_PATH AND _REQUIRED)
         message(FATAL_ERROR "Could not find ${LIB} full path!")
     endif()
