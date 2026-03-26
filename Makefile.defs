@@ -261,6 +261,7 @@ endif
 
 ifdef DARWIN
   USE_CLANG = 1
+  BREW_PREFIX := $(shell brew --prefix)
   export MACOSX_DEPLOYMENT_TARGET := $(or $(MACOSX_DEPLOYMENT_TARGET),$(shell sw_vers -productVersion))
 endif
 
@@ -967,6 +968,8 @@ set(SKIP_LUAJIT_BIN $(SKIP_LUAJIT_BIN))
 set(USE_LUAJIT_LIB  $(USE_LUAJIT_LIB))
 
 set(ANDROID_LAUNCHER_DIR "$(abspath $(or $(ANDROID_LAUNCHER_DIR),../platform/android/luajit-launcher))")
+
+$(if $(BREW_PREFIX),set(BREW_PREFIX "$(BREW_PREFIX)"))
 
 endef
 
