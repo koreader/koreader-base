@@ -427,15 +427,21 @@ elseif(EMULATE_READER)
     else()
         set(SDL3_SONAME libSDL3.so.0)
     endif()
-    find_compiler_lib_path(SDL3_LIB ${SDL3_SONAME})
+    set(EXTRA_SEARCH_PATHS)
+    if(${CMAKE_SYSTEM_NAME} STREQUAL Darwin AND DEFINED BREW_PREFIX)
+        set(EXTRA_SEARCH_PATHS ${BREW_PREFIX}/lib)
+    elseif(NOT ${CMAKE_SYSTEM_NAME} STREQUAL Darwin AND DEFINED ENV{LD_LIBRARY_PATH})
+        string(REPLACE ":" ";" EXTRA_SEARCH_PATHS $ENV{LD_LIBRARY_PATH})
+    endif()
+    find_compiler_lib_path(SDL3_LIB ${SDL3_SONAME} ${EXTRA_SEARCH_PATHS})
     if(SDL3_LIB AND NOT DEFINED CACHE{SDL3_VER})
         string(REGEX MATCH [[([^.]+)\.([^.]+)\.([^.]+)]] _ ${SDL3_MIN_VER})
         math(EXPR SDL3_MIN_INT_VER "${CMAKE_MATCH_1} * 1000000 + ${CMAKE_MATCH_2} * 1000 + ${CMAKE_MATCH_3}")
         try_run(RUN_RET COMP_RET
             ${CMAKE_CURRENT_BINARY_DIR}
-            SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/sdl_get_version.c
-            COMPILE_DEFINITIONS -DSDL3_MIN_INT_VER=${SDL3_MIN_INT_VER}
-            LINK_LIBRARIES ${SDL3_LIB}
+            ${CMAKE_CURRENT_SOURCE_DIR}/sdl_get_version.c
+            ARGS ${SDL3_LIB}
+            LINK_LIBRARIES dl
             RUN_OUTPUT_VARIABLE RUN_OUT
             COMPILE_OUTPUT_VARIABLE COMP_OUT
         )
