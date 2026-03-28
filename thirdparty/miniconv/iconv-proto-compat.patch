@@ -1,0 +1,14 @@
+diff --git a/miniconv.h b/miniconv.h
+--- a/miniconv.h
++++ b/miniconv.h
+@@ -38,8 +38,8 @@ miniconv_t miniconv_open2(const char *toenc, const char *fromenc, int *error);
+ 	@return Returns the number of non-reversible transformations that
+ 	occurred, or (size_t) -1 on failure. */
+ MINICONV_PUBLIC
+-size_t miniconv(miniconv_t cd, const char **inbuf, size_t *inbytesleft,
+-	char **outbuf, size_t *outbytesleft);
++size_t miniconv(miniconv_t cd, const char **restrict inbuf, size_t *restrict inbytesleft,
++	char **restrict outbuf, size_t *restrict outbytesleft);
+ 	
+ /** Converts as many characters as possible from inbuf and writes the
+ 	converted characters in to outbuf, updating inbytesleft and outbytesleft
