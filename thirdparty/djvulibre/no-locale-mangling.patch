@@ -1,5 +1,5 @@
 diff --git a/libdjvu/GString.cpp b/libdjvu/GString.cpp
-index b17ed2a..5f844bd 100644
+index 488aedd..0785b93 100644
 --- a/libdjvu/GString.cpp
 +++ b/libdjvu/GString.cpp
 @@ -88,14 +88,7 @@
@@ -31,7 +31,7 @@ index b17ed2a..5f844bd 100644
  {
  public:
 diff --git a/libdjvu/ddjvuapi.cpp b/libdjvu/ddjvuapi.cpp
-index c6cecfe..c0fef7d 100644
+index f9ab454..a70ee57 100644
 --- a/libdjvu/ddjvuapi.cpp
 +++ b/libdjvu/ddjvuapi.cpp
 @@ -358,12 +358,6 @@ ddjvu_context_create(const char *programname)
@@ -48,7 +48,7 @@ index c6cecfe..c0fef7d 100644
          djvu_programname(programname);
        DjVuMessage::use_language();
 diff --git a/tools/common.h b/tools/common.h
-index e28fb58..873fbb7 100644
+index e28fb58..98b1eec 100644
 --- a/tools/common.h
 +++ b/tools/common.h
 @@ -76,8 +76,6 @@
