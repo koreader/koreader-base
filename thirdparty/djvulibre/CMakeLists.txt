@@ -1,7 +1,7 @@
 # Never *ever* call setlocale, for any reason.
 # Most of our target platforms have custom/broken/incomplete locales, don't screw with it.
 # And this runs in our main thread, so this is Very Bad(TM).
-list(APPEND PATCH_FILES djvulibre-no-locale-mangling.patch)
+list(APPEND PATCH_FILES no-locale-mangling.patch)
 # Remove references to (build specific) install directory in binary.
 list(APPEND PATCH_FILES no_references_to_install_dir.patch)
 
@@ -37,7 +37,7 @@ list(APPEND BUILD_CMD COMMAND make -C libdjvu)
 list(APPEND INSTALL_CMD COMMAND make -C libdjvu DESTDIR=${STAGING_DIR} install)
 
 external_project(
-    DOWNLOAD GIT 6a1e5ba1c9ef81c205a4b270c3f121a1e106f4fc
+    DOWNLOAD GIT fd7b8db8fffba96fd1f053797704355f2bfd7849
     https://gitlab.com/koreader/djvulibre.git
     PATCH_FILES ${PATCH_FILES}
     PATCH_COMMAND ${PATCH_CMD}
