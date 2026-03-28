@@ -1,6 +1,7 @@
 list(APPEND PATCH_FILES
     no_cmake_rpath_shenanigans.patch
     no_12_or_16_bits_precision.patch
+    hwcap_neon.patch
 )
 
 list(APPEND CMAKE_ARGS
@@ -29,8 +30,8 @@ if(NOT MONOLIBTIC)
 endif()
 
 external_project(
-    DOWNLOAD GIT 3.1.3
-    https://github.com/libjpeg-turbo/libjpeg-turbo.git
+    DOWNLOAD URL 997f868afac9f358a098617d16f36167
+    https://github.com/libjpeg-turbo/libjpeg-turbo/releases/download/3.1.4.1/libjpeg-turbo-3.1.4.1.tar.gz
     PATCH_FILES ${PATCH_FILES}
     CMAKE_ARGS ${CMAKE_ARGS}
     BUILD_COMMAND ${BUILD_CMD}

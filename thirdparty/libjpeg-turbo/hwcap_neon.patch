@@ -1,0 +1,16 @@
+diff --git a/simd/arm/aarch32/jsimd.c b/simd/arm/aarch32/jsimd.c
+index c97cdae..a4d0389 100644
+--- a/simd/arm/aarch32/jsimd.c
++++ b/simd/arm/aarch32/jsimd.c
+@@ -125,7 +125,11 @@ init_simd(void)
+   simd_support |= JSIMD_NEON;
+ #elif defined(HAVE_GETAUXVAL)
+   cpufeatures = getauxval(AT_HWCAP);
++#if defined(HWCAP_ARM_NEON)
+   if (cpufeatures & HWCAP_ARM_NEON)
++#else
++  if (cpufeatures & HWCAP_NEON)
++#endif
+     simd_support |= JSIMD_NEON;
+ #elif defined(__linux__) || defined(ANDROID) || defined(__ANDROID__)
+   /* We still have a chance to use Neon regardless of globally used
