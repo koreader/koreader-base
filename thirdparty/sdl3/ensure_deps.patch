@@ -1,5 +1,5 @@
 diff --git a/CMakeLists.txt b/CMakeLists.txt
-index f4962607e..093d1da56 100644
+index 6f3716a2a..482083323 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
 @@ -1944,7 +1944,7 @@ elseif(UNIX AND NOT APPLE AND NOT RISCOS AND NOT HAIKU)
@@ -21,7 +21,7 @@ index f4962607e..093d1da56 100644
          if(IBUS_FOUND AND HAVE_SYS_INOTIFY_H)
            set(HAVE_IBUS_IBUS_H TRUE)
 diff --git a/cmake/sdlchecks.cmake b/cmake/sdlchecks.cmake
-index b60a87153..85c28279b 100644
+index bb8a97d65..547953b06 100644
 --- a/cmake/sdlchecks.cmake
 +++ b/cmake/sdlchecks.cmake
 @@ -288,6 +288,10 @@ macro(CheckX11)
@@ -62,7 +62,7 @@ index b60a87153..85c28279b 100644
      list(APPEND CMAKE_REQUIRED_INCLUDES ${OPENGL_EGL_INCLUDE_DIRS})
      list(APPEND CMAKE_REQUIRED_INCLUDES "${SDL3_SOURCE_DIR}/src/video/khronos")
      check_c_source_compiles("
-@@ -1407,6 +1411,9 @@ macro(CheckLibUDev)
+@@ -1410,6 +1414,9 @@ macro(CheckLibUDev)
          set(HAVE_LIBUDEV TRUE)
        endif()
      endif()
