@@ -1,5 +1,5 @@
 diff --git a/src/video/cocoa/SDL_cocoaevents.m b/src/video/cocoa/SDL_cocoaevents.m
-index 431d491d5..a31d7974b 100644
+index 681c1a53a..836b14ff6 100644
 --- a/src/video/cocoa/SDL_cocoaevents.m
 +++ b/src/video/cocoa/SDL_cocoaevents.m
 @@ -41,6 +41,18 @@ static SDL_Window *FindSDLWindowForNSWindow(NSWindow *win)

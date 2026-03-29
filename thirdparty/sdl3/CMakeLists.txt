@@ -49,8 +49,8 @@ list(APPEND INSTALL_CMD COMMAND ${CMAKE_COMMAND} --install .)
 append_shared_lib_install_commands(INSTALL_CMD SDL3 VERSION 0)
 
 external_project(
-    DOWNLOAD URL 25cc9aade08c60e883b7accd87eb4600
-    https://github.com/libsdl-org/SDL/releases/download/release-3.4.0/SDL3-3.4.0.tar.gz
+    DOWNLOAD URL b488ea1ede947c06855588314effe905
+    https://github.com/libsdl-org/SDL/releases/download/release-3.4.2/SDL3-3.4.2.tar.gz
     PATCH_FILES ${PATCH_FILES}
     CMAKE_ARGS ${CMAKE_ARGS}
     BUILD_COMMAND ${BUILD_CMD}
