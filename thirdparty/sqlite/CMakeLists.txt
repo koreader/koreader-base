@@ -14,6 +14,8 @@ endif()
 external_project(
     DOWNLOAD URL afe57fc17ef32ecc297034deaf70ef3a
     https://www.sqlite.org/2026/sqlite-amalgamation-3510300.zip
+    https://www2.sqlite.org/2026/sqlite-amalgamation-3510300.zip
+    https://www3.sqlite.org/2026/sqlite-amalgamation-3510300.zip
     PATCH_OVERLAY overlay
     CMAKE_ARGS ${CMAKE_ARGS}
     BUILD_COMMAND ${BUILD_CMD}
