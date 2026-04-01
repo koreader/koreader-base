@@ -3,6 +3,8 @@ ffi = require("ffi")
 require "ffi/posix_h"
 ffi.cdef "static const int POCKETBOOK_VERSION = %u;"
 require "ffi/inkview_h"
+local mtp = ffi.new("iv_mtinfo *")
+mtp = mtp + 1
 ']]):gsub("\n", " ")
 
 describe("ffi/inkview_h module", function()

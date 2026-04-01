@@ -414,6 +414,19 @@ typedef enum {
 ]]
 end
 
+if 605 <= target_version and target_version <= 608 then
+ffi.cdef[[
+struct iv_mtinfo_s {
+  bool active;
+  int x;
+  int y;
+  int pressure;
+  enum input_dev_e devtype;
+  long long int timems;
+};
+]]
+end
+
 if 605 <= target_version and target_version <= 611 then
 ffi.cdef[[
 typedef enum {
@@ -423,6 +436,21 @@ typedef enum {
   PANEL_NO_FB_OFFSET = 8,
   PANEL_NO_SELF_UPDATE = 16,
 } PANEL_FLAGS;
+]]
+end
+
+if target_version == 610 then
+ffi.cdef[[
+struct iv_mtinfo_s {
+  bool active;
+  int x;
+  int y;
+  int pressure;
+  int tilt_x;
+  int tilt_y;
+  enum input_dev_e devtype;
+  long long int timems;
+};
 ]]
 end
 

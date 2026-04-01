@@ -230,7 +230,7 @@ cdecl_struct(icanvas_s)
 cdecl_type(icanvas)
 
 cdecl_type(iv_handler)
-#if (POCKETBOOK_VERSION < 600)
+#if (POCKETBOOK_VERSION <= 610)
 cdecl_struct(iv_mtinfo_s)
 #endif
 cdecl_type(iv_mtinfo)
