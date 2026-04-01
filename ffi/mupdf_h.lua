@@ -51,6 +51,7 @@ typedef struct {
   int shared;
 } fz_buffer;
 fz_buffer *mupdf_new_buffer_from_shared_data(fz_context *, const unsigned char *, size_t);
+fz_buffer *mupdf_new_buffer_from_story_text(fz_context *, const unsigned char *, size_t, const char *, float);
 void *mupdf_drop_buffer(fz_context *, fz_buffer *);
 typedef struct {
   void *user;
