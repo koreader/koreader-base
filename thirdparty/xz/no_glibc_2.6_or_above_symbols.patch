@@ -1,6 +1,8 @@
+diff --git a/cmake/tuklib_cpucores.cmake b/cmake/tuklib_cpucores.cmake
+index 19ae7aa2..3ea81b78 100644
 --- a/cmake/tuklib_cpucores.cmake
 +++ b/cmake/tuklib_cpucores.cmake
-@@ -38,12 +38,12 @@
+@@ -38,12 +38,12 @@ function(tuklib_cpucores_internal_check)
              }
          "
          TUKLIB_CPUCORES_SCHED_GETAFFINITY)
