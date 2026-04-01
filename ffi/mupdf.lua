@@ -165,6 +165,20 @@ function mupdf.openDocumentFromText(text, magic, html_resource_directory)
     return mupdf_doc
 end
 
+function mupdf.getBalancedHTML(text, user_css, em)
+    local ctx = context()
+    local output = W.mupdf_new_buffer_from_story_text(ctx, ffi.cast("const unsigned char*", text), #text, user_css, em or 12)
+    if output == nil then
+        return nil, string.format("MuPDF story balancing failed: %s (%d)",
+            ffi.string(W.mupdf_error_message(ctx)),
+            W.mupdf_error_code(ctx))
+    end
+
+    local balanced_html = ffi.string(output.data, output.len)
+    W.mupdf_drop_buffer(ctx, output)
+    return balanced_html
+end
+
 -- Document functions:
 
 --[[
