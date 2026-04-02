@@ -231,6 +231,13 @@ describe("mupdf module", function()
             assert.equals([[<article><p>Keep me</p></article>]], reduced)
         end)
 
+        it("should support descendant allowlist selectors", function()
+            local html = [[<html><body><section><article><p>Keep me</p></article></section><article><p>Drop me</p></article></body></html>]]
+            local reduced = M.reduceHTML(html, { "html article" }, {})
+
+            assert.equals([[<article><p>Keep me</p></article>]], reduced)
+        end)
+
         it("should remove denylisted descendants from the selected subtree", function()
             local html = [[<html><body><article><p>Lead</p><div class="youtube-wrap">Drop me</div><p>Tail</p></article></body></html>]]
             local reduced = M.reduceHTML(html, { "article" }, { "div.youtube-wrap" })

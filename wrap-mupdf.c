@@ -24,6 +24,84 @@
 #include <string.h>
 #include "wrap-mupdf.h"
 
+typedef struct fz_css_s fz_css;
+typedef struct fz_css_value_s fz_css_value;
+
+enum {
+    PRO_BACKGROUND_COLOR,
+    PRO_BORDER_BOTTOM_COLOR,
+    PRO_BORDER_BOTTOM_STYLE,
+    PRO_BORDER_BOTTOM_WIDTH,
+    PRO_BORDER_LEFT_COLOR,
+    PRO_BORDER_LEFT_STYLE,
+    PRO_BORDER_LEFT_WIDTH,
+    PRO_BORDER_RIGHT_COLOR,
+    PRO_BORDER_RIGHT_STYLE,
+    PRO_BORDER_RIGHT_WIDTH,
+    PRO_BORDER_TOP_COLOR,
+    PRO_BORDER_TOP_STYLE,
+    PRO_BORDER_TOP_WIDTH,
+    PRO_BORDER_SPACING,
+    PRO_COLOR,
+    PRO_DIRECTION,
+    PRO_DISPLAY,
+    PRO_FONT,
+    PRO_FONT_FAMILY,
+    PRO_FONT_SIZE,
+    PRO_FONT_STYLE,
+    PRO_FONT_VARIANT,
+    PRO_FONT_WEIGHT,
+    PRO_HEIGHT,
+    PRO_LEADING,
+    PRO_LETTER_SPACING,
+    PRO_LINE_HEIGHT,
+    PRO_LIST_STYLE_IMAGE,
+    PRO_LIST_STYLE_POSITION,
+    PRO_LIST_STYLE_TYPE,
+    PRO_MARGIN_BOTTOM,
+    PRO_MARGIN_LEFT,
+    PRO_MARGIN_RIGHT,
+    PRO_MARGIN_TOP,
+    PRO_ORPHANS,
+    PRO_OVERFLOW_WRAP,
+    PRO_PADDING_BOTTOM,
+    PRO_PADDING_LEFT,
+    PRO_PADDING_RIGHT,
+    PRO_PADDING_TOP,
+    PRO_PAGE_BREAK_AFTER,
+    PRO_PAGE_BREAK_BEFORE,
+    PRO_QUOTES,
+    PRO_SRC,
+    PRO_TEXT_ALIGN,
+    PRO_TEXT_DECORATION,
+    PRO_TEXT_FILL_COLOR,
+    PRO_TEXT_INDENT,
+    PRO_TEXT_TRANSFORM,
+    PRO_TEXT_STROKE_WIDTH,
+    PRO_TEXT_STROKE_COLOR,
+    PRO_VERTICAL_ALIGN,
+    PRO_VISIBILITY,
+    PRO_WHITE_SPACE,
+    PRO_WIDOWS,
+    PRO_WIDTH,
+    PRO_WORD_SPACING,
+    NUM_PROPERTIES,
+};
+
+typedef struct fz_css_match_s {
+    struct fz_css_match_s *up;
+    short spec[NUM_PROPERTIES];
+    fz_css_value *value[NUM_PROPERTIES];
+} fz_css_match;
+
+enum { DIS_NONE, DIS_BLOCK, DIS_INLINE, DIS_LIST_ITEM, DIS_INLINE_BLOCK, DIS_TABLE, DIS_TABLE_GROUP, DIS_TABLE_ROW, DIS_TABLE_CELL };
+
+fz_css *fz_new_css(fz_context *ctx);
+void fz_parse_css(fz_context *ctx, fz_css *css, const char *source, const char *file);
+void fz_drop_css(fz_context *ctx, fz_css *css);
+void fz_match_css(fz_context *ctx, fz_css_match *match, fz_css_match *up, fz_css *css, fz_xml *node);
+int fz_get_css_match_display(fz_css_match *match);
+
 static double LOG_TRESHOLD_PERC = 0.05; // 5%
 
 enum {
@@ -159,127 +237,67 @@ char* mupdf_error_message(fz_context *ctx) {
 }
 
 typedef struct story_selector {
-    const char *tag;
-    size_t tag_len;
-    const char *id;
-    size_t id_len;
-    const char *klass;
-    size_t class_len;
+    fz_css **rules;
+    int count;
 } story_selector;
+static fz_css *build_selector_rule(fz_context *ctx, const char *selector) {
+    const char suffix[] = " { display: none; }";
+    size_t selector_len;
+    size_t rule_len;
+    char *rule_source;
+    fz_css *css;
 
-static int selector_text_equals(const char *value, const char *needle, size_t needle_len) {
-    return value != NULL && strlen(value) == needle_len && strncmp(value, needle, needle_len) == 0;
-}
-
-static int class_list_contains(const char *class_attr, const char *klass, size_t klass_len) {
-    const char *cursor = class_attr;
-
-    if (class_attr == NULL) {
-        return 0;
+    if (selector == NULL || selector[0] == '\0') {
+        return NULL;
     }
 
-    while (*cursor != '\0') {
-        const char *token_start;
-        const char *token_end;
-
-        while (*cursor == ' ' || *cursor == '\t' || *cursor == '\r' || *cursor == '\n' || *cursor == '\f') {
-            cursor++;
-        }
-        if (*cursor == '\0') {
-            break;
-        }
-
-        token_start = cursor;
-        while (*cursor != '\0' && *cursor != ' ' && *cursor != '\t' && *cursor != '\r' && *cursor != '\n' && *cursor != '\f') {
-            cursor++;
-        }
-        token_end = cursor;
-        if ((size_t)(token_end - token_start) == klass_len && strncmp(token_start, klass, klass_len) == 0) {
-            return 1;
-        }
+    selector_len = strlen(selector);
+    rule_len = selector_len + sizeof(suffix);
+    rule_source = malloc(rule_len);
+    if (rule_source == NULL) {
+        return NULL;
     }
 
-    return 0;
+    memcpy(rule_source, selector, selector_len);
+    memcpy(rule_source + selector_len, suffix, sizeof(suffix));
+
+    css = fz_new_css(ctx);
+    if (css == NULL) {
+        free(rule_source);
+        return NULL;
+    }
+
+    fz_try(ctx) {
+        fz_parse_css(ctx, css, rule_source, "<koreader-selector>");
+    }
+    fz_always(ctx) {
+        free(rule_source);
+    }
+    fz_catch(ctx) {
+        fz_drop_css(ctx, css);
+        fz_rethrow(ctx);
+    }
+
+    return css;
 }
 
-static int parse_story_selector(const char *selector, story_selector *parsed) {
-    const char *hash = NULL;
-    const char *dot = NULL;
-    const char *cursor = selector;
-    const char *tag_end = NULL;
+static int parse_story_selector(fz_context *ctx, const char **selectors, int selector_count, story_selector *parsed) {
+    int index;
 
     memset(parsed, 0, sizeof(*parsed));
-    if (selector == NULL || selector[0] == '\0') {
+    if (selector_count <= 0) {
+        return 1;
+    }
+
+    parsed->rules = calloc((size_t)selector_count, sizeof(*parsed->rules));
+    if (parsed->rules == NULL) {
         return 0;
     }
+    parsed->count = selector_count;
 
-    while (*cursor != '\0') {
-        if (*cursor == ' ' || *cursor == '\t' || *cursor == '\r' || *cursor == '\n' || *cursor == '\f' ||
-            *cursor == '[' || *cursor == ':' || *cursor == '>' || *cursor == '+' || *cursor == '~' || *cursor == ',') {
-            return 0;
-        }
-        if (*cursor == '#') {
-            if (hash != NULL || dot != NULL) {
-                return 0;
-            }
-            hash = cursor;
-        } else if (*cursor == '.') {
-            if (dot != NULL || hash != NULL) {
-                return 0;
-            }
-            dot = cursor;
-        }
-        cursor++;
-    }
-
-    tag_end = hash != NULL ? hash : (dot != NULL ? dot : cursor);
-    if (tag_end > selector) {
-        parsed->tag = selector;
-        parsed->tag_len = (size_t)(tag_end - selector);
-    }
-
-    if (hash != NULL) {
-        parsed->id = hash + 1;
-        parsed->id_len = strlen(parsed->id);
-        if (parsed->id_len == 0) {
-            return 0;
-        }
-    }
-
-    if (dot != NULL) {
-        parsed->klass = dot + 1;
-        parsed->class_len = strlen(parsed->klass);
-        if (parsed->class_len == 0) {
-            return 0;
-        }
-    }
-
-    return parsed->tag_len != 0 || parsed->id_len != 0 || parsed->class_len != 0;
-}
-
-static int node_matches_selector(fz_context *ctx, fz_xml *node, const story_selector *selector) {
-    char *tag = fz_xml_tag(node);
-    const char *id_attr;
-    const char *class_attr;
-
-    if (tag == NULL) {
-        return 0;
-    }
-
-    if (selector->tag_len != 0 && !selector_text_equals(tag, selector->tag, selector->tag_len)) {
-        return 0;
-    }
-
-    if (selector->id_len != 0) {
-        id_attr = fz_dom_attribute(ctx, node, "id");
-        if (!selector_text_equals(id_attr, selector->id, selector->id_len)) {
-            return 0;
-        }
-    }
-
-    if (selector->class_len != 0) {
-        class_attr = fz_dom_attribute(ctx, node, "class");
-        if (!class_list_contains(class_attr, selector->klass, selector->class_len)) {
+    for (index = 0; index < selector_count; index++) {
+        parsed->rules[index] = build_selector_rule(ctx, selectors[index]);
+        if (parsed->rules[index] == NULL) {
             return 0;
         }
     }
@@ -287,11 +305,46 @@ static int node_matches_selector(fz_context *ctx, fz_xml *node, const story_sele
     return 1;
 }
 
+static void free_story_selector(fz_context *ctx, story_selector *selector) {
+    int index;
+
+    if (selector->rules != NULL) {
+        for (index = 0; index < selector->count; index++) {
+            if (selector->rules[index] != NULL) {
+                fz_drop_css(ctx, selector->rules[index]);
+            }
+        }
+        free(selector->rules);
+    }
+    selector->rules = NULL;
+    selector->count = 0;
+}
+
+static int node_matches_selector(fz_context *ctx, fz_xml *node, fz_css *css) {
+    fz_css_match match;
+    int matched = 0;
+    int use_document_css = fz_use_document_css(ctx);
+
+    fz_try(ctx) {
+        fz_set_use_document_css(ctx, 0);
+        fz_match_css(ctx, &match, NULL, css, node);
+        matched = fz_get_css_match_display(&match) == DIS_NONE;
+    }
+    fz_always(ctx) {
+        fz_set_use_document_css(ctx, use_document_css);
+    }
+    fz_catch(ctx) {
+        fz_rethrow(ctx);
+    }
+
+    return matched;
+}
+
 static int node_matches_any_selector(fz_context *ctx, fz_xml *node, const story_selector *selectors, int selector_count) {
     int index;
 
     for (index = 0; index < selector_count; index++) {
-        if (node_matches_selector(ctx, node, &selectors[index])) {
+        if (selectors[index].count > 0 && node_matches_selector(ctx, node, selectors[index].rules[0])) {
             return 1;
         }
     }
@@ -307,7 +360,7 @@ static fz_xml *find_first_matching_node(fz_context *ctx, fz_xml *node, const sto
         return NULL;
     }
 
-    if (node_matches_selector(ctx, node, selector)) {
+    if (selector->count > 0 && node_matches_selector(ctx, node, selector->rules[0])) {
         return node;
     }
 
@@ -411,6 +464,7 @@ fz_buffer* mupdf_new_buffer_from_filtered_story_text(fz_context *ctx, const unsi
     fz_xml *doc = NULL;
     fz_xml *body = NULL;
     fz_xml *selected = NULL;
+    fz_xml *selected_clone = NULL;
     story_selector *parsed_wanted = NULL;
     story_selector *parsed_unwanted = NULL;
     int index;
@@ -422,7 +476,7 @@ fz_buffer* mupdf_new_buffer_from_filtered_story_text(fz_context *ctx, const unsi
                 fz_throw(ctx, FZ_ERROR_SYSTEM, "Failed to allocate wanted selector storage");
             }
             for (index = 0; index < wanted_count; index++) {
-                if (!parse_story_selector(wanted_selectors[index], &parsed_wanted[index])) {
+                if (!parse_story_selector(ctx, &wanted_selectors[index], 1, &parsed_wanted[index])) {
                     fz_throw(ctx, FZ_ERROR_GENERIC, "Unsupported wanted selector: %s", wanted_selectors[index]);
                 }
             }
@@ -434,7 +488,7 @@ fz_buffer* mupdf_new_buffer_from_filtered_story_text(fz_context *ctx, const unsi
                 fz_throw(ctx, FZ_ERROR_SYSTEM, "Failed to allocate unwanted selector storage");
             }
             for (index = 0; index < unwanted_count; index++) {
-                if (!parse_story_selector(unwanted_selectors[index], &parsed_unwanted[index])) {
+                if (!parse_story_selector(ctx, &unwanted_selectors[index], 1, &parsed_unwanted[index])) {
                     fz_throw(ctx, FZ_ERROR_GENERIC, "Unsupported unwanted selector: %s", unwanted_selectors[index]);
                 }
             }
@@ -461,14 +515,28 @@ fz_buffer* mupdf_new_buffer_from_filtered_story_text(fz_context *ctx, const unsi
 
         output = fz_new_buffer(ctx, len + 256);
         out = fz_new_output_with_buffer(ctx, output);
-        fz_write_xml(ctx, selected, out, 0);
+        selected_clone = fz_dom_clone(ctx, selected);
+        if (selected_clone == NULL) {
+            fz_throw(ctx, FZ_ERROR_GENERIC, "MuPDF story did not clone selected XML node");
+        }
+        fz_write_xml(ctx, selected_clone, out, 0);
         fz_close_output(ctx, out);
         fz_drop_output(ctx, out);
         out = NULL;
     }
     fz_always(ctx) {
-        free(parsed_wanted);
-        free(parsed_unwanted);
+        if (parsed_wanted != NULL) {
+            for (index = 0; index < wanted_count; index++) {
+                free_story_selector(ctx, &parsed_wanted[index]);
+            }
+            free(parsed_wanted);
+        }
+        if (parsed_unwanted != NULL) {
+            for (index = 0; index < unwanted_count; index++) {
+                free_story_selector(ctx, &parsed_unwanted[index]);
+            }
+            free(parsed_unwanted);
+        }
         if (out != NULL) {
             fz_drop_output(ctx, out);
         }
