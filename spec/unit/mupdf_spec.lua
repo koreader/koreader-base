@@ -245,6 +245,21 @@ describe("mupdf module", function()
             assert.equals([[<article><p>Lead</p><p>Tail</p></article>]], reduced)
         end)
 
+        it("should remove denylisted elements even if they match an allowlist selector", function()
+            local html = [[<html><body><article><p>Lead</p><div class="youtube-wrap">Drop me</div><p>Tail</p></article></body></html>]]
+            local reduced = M.reduceHTML(html, { "article", "div.youtube-wrap" }, { "div.youtube-wrap" })
+
+            assert.equals([[<article><p>Lead</p><p>Tail</p></article>]], reduced)
+        end)
+
+        it("should remove complex denylisted selectors", function()
+            local html = [[<html><body><article><p>Lead</p><div class="youtube-wrap"><span>Drop me</span></div><p>Tail</p></article></body></html>]]
+            local reduced = M.reduceHTML(html, { "article" }, { "div.youtube-wrap span" })
+
+            assert.equals([[<article><p>Lead</p><div class="youtube-wrap"/><p>Tail</p></article>]], reduced)
+            assert.equals([[<article><p>Lead</p><div class="youtube-wrap"/></article>]], M.reduceHTML(html, { "article" }, { "div.youtube-wrap span, div.youtube-wrap+p" }))
+        end)
+
         it("should support compound allowlist selectors", function()
             local html = [[<html><body><article class="teaser"><p>Teaser</p></article><article class="story"><p>Story body</p></article></body></html>]]
             local reduced = M.reduceHTML(html, { "article.story" }, {})
