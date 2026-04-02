@@ -222,6 +222,45 @@ describe("mupdf module", function()
             end)
         end)
     end)
+
+    describe("HTML reduction API", function()
+        it("should select the first matching allowlisted subtree", function()
+            local html = [[<html><body><nav>Ignore me</nav><article><p>Keep me</p></article><article>Drop me because I'm second</article></body></html>]]
+            local reduced = M.reduceHTML(html, { "article" }, {})
+
+            assert.equals([[<article><p>Keep me</p></article>]], reduced)
+        end)
+
+        it("should remove denylisted descendants from the selected subtree", function()
+            local html = [[<html><body><article><p>Lead</p><div class="youtube-wrap">Drop me</div><p>Tail</p></article></body></html>]]
+            local reduced = M.reduceHTML(html, { "article" }, { "div.youtube-wrap" })
+
+            assert.equals([[<article><p>Lead</p><p>Tail</p></article>]], reduced)
+        end)
+
+        it("should support compound allowlist selectors", function()
+            local html = [[<html><body><article class="teaser"><p>Teaser</p></article><article class="story"><p>Story body</p></article></body></html>]]
+            local reduced = M.reduceHTML(html, { "article.story" }, {})
+
+            assert.equals([[<article class="story"><p>Story body</p></article>]], reduced)
+        end)
+
+        it("should decode multiline UTF-8 content without leaving hex entities behind", function()
+            local html = [[<html><body><article>
+                <p>
+                    Keep 🦀
+                </p>
+            </article></body></html>]]
+            local reduced = M.reduceHTML(html, { "article" }, {})
+
+            assert.equals([[<article>
+                <p>
+                    Keep 🦀
+                </p>
+            </article>]], reduced)
+        end)
+    end)
+
     describe("image API", function()
         it("should render an image", function()
             local img = M.renderImageFile(test_img)

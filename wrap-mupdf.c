@@ -158,6 +158,207 @@ char* mupdf_error_message(fz_context *ctx) {
     return ctx->error.message;
 }
 
+typedef struct story_selector {
+    const char *tag;
+    size_t tag_len;
+    const char *id;
+    size_t id_len;
+    const char *klass;
+    size_t class_len;
+} story_selector;
+
+static int selector_text_equals(const char *value, const char *needle, size_t needle_len) {
+    return value != NULL && strlen(value) == needle_len && strncmp(value, needle, needle_len) == 0;
+}
+
+static int class_list_contains(const char *class_attr, const char *klass, size_t klass_len) {
+    const char *cursor = class_attr;
+
+    if (class_attr == NULL) {
+        return 0;
+    }
+
+    while (*cursor != '\0') {
+        const char *token_start;
+        const char *token_end;
+
+        while (*cursor == ' ' || *cursor == '\t' || *cursor == '\r' || *cursor == '\n' || *cursor == '\f') {
+            cursor++;
+        }
+        if (*cursor == '\0') {
+            break;
+        }
+
+        token_start = cursor;
+        while (*cursor != '\0' && *cursor != ' ' && *cursor != '\t' && *cursor != '\r' && *cursor != '\n' && *cursor != '\f') {
+            cursor++;
+        }
+        token_end = cursor;
+        if ((size_t)(token_end - token_start) == klass_len && strncmp(token_start, klass, klass_len) == 0) {
+            return 1;
+        }
+    }
+
+    return 0;
+}
+
+static int parse_story_selector(const char *selector, story_selector *parsed) {
+    const char *hash = NULL;
+    const char *dot = NULL;
+    const char *cursor = selector;
+    const char *tag_end = NULL;
+
+    memset(parsed, 0, sizeof(*parsed));
+    if (selector == NULL || selector[0] == '\0') {
+        return 0;
+    }
+
+    while (*cursor != '\0') {
+        if (*cursor == ' ' || *cursor == '\t' || *cursor == '\r' || *cursor == '\n' || *cursor == '\f' ||
+            *cursor == '[' || *cursor == ':' || *cursor == '>' || *cursor == '+' || *cursor == '~' || *cursor == ',') {
+            return 0;
+        }
+        if (*cursor == '#') {
+            if (hash != NULL || dot != NULL) {
+                return 0;
+            }
+            hash = cursor;
+        } else if (*cursor == '.') {
+            if (dot != NULL || hash != NULL) {
+                return 0;
+            }
+            dot = cursor;
+        }
+        cursor++;
+    }
+
+    tag_end = hash != NULL ? hash : (dot != NULL ? dot : cursor);
+    if (tag_end > selector) {
+        parsed->tag = selector;
+        parsed->tag_len = (size_t)(tag_end - selector);
+    }
+
+    if (hash != NULL) {
+        parsed->id = hash + 1;
+        parsed->id_len = strlen(parsed->id);
+        if (parsed->id_len == 0) {
+            return 0;
+        }
+    }
+
+    if (dot != NULL) {
+        parsed->klass = dot + 1;
+        parsed->class_len = strlen(parsed->klass);
+        if (parsed->class_len == 0) {
+            return 0;
+        }
+    }
+
+    return parsed->tag_len != 0 || parsed->id_len != 0 || parsed->class_len != 0;
+}
+
+static int node_matches_selector(fz_context *ctx, fz_xml *node, const story_selector *selector) {
+    char *tag = fz_xml_tag(node);
+    const char *id_attr;
+    const char *class_attr;
+
+    if (tag == NULL) {
+        return 0;
+    }
+
+    if (selector->tag_len != 0 && !selector_text_equals(tag, selector->tag, selector->tag_len)) {
+        return 0;
+    }
+
+    if (selector->id_len != 0) {
+        id_attr = fz_dom_attribute(ctx, node, "id");
+        if (!selector_text_equals(id_attr, selector->id, selector->id_len)) {
+            return 0;
+        }
+    }
+
+    if (selector->class_len != 0) {
+        class_attr = fz_dom_attribute(ctx, node, "class");
+        if (!class_list_contains(class_attr, selector->klass, selector->class_len)) {
+            return 0;
+        }
+    }
+
+    return 1;
+}
+
+static int node_matches_any_selector(fz_context *ctx, fz_xml *node, const story_selector *selectors, int selector_count) {
+    int index;
+
+    for (index = 0; index < selector_count; index++) {
+        if (node_matches_selector(ctx, node, &selectors[index])) {
+            return 1;
+        }
+    }
+
+    return 0;
+}
+
+static fz_xml *find_first_matching_node(fz_context *ctx, fz_xml *node, const story_selector *selector) {
+    fz_xml *child;
+    fz_xml *match;
+
+    if (node == NULL) {
+        return NULL;
+    }
+
+    if (node_matches_selector(ctx, node, selector)) {
+        return node;
+    }
+
+    for (child = fz_dom_first_child(ctx, node); child != NULL; child = fz_dom_next(ctx, child)) {
+        match = find_first_matching_node(ctx, child, selector);
+        if (match != NULL) {
+            return match;
+        }
+    }
+
+    return NULL;
+}
+
+static fz_xml *select_story_root(fz_context *ctx, fz_xml *search_root, const story_selector *selectors, int selector_count) {
+    int index;
+    fz_xml *match;
+
+    if (search_root == NULL || selector_count == 0) {
+        return search_root;
+    }
+
+    for (index = 0; index < selector_count; index++) {
+        match = find_first_matching_node(ctx, search_root, &selectors[index]);
+        if (match != NULL) {
+            return match;
+        }
+    }
+
+    return search_root;
+}
+
+static void cleanup_story_subtree(fz_context *ctx, fz_xml *node, const story_selector *unwanted_selectors, int unwanted_count) {
+    fz_xml *child;
+    fz_xml *next;
+
+    if (node == NULL) {
+        return;
+    }
+
+    child = fz_dom_first_child(ctx, node);
+    while (child != NULL) {
+        next = fz_dom_next(ctx, child);
+        if (node_matches_any_selector(ctx, child, unwanted_selectors, unwanted_count)) {
+            fz_dom_remove(ctx, child);
+        } else {
+            cleanup_story_subtree(ctx, child, unwanted_selectors, unwanted_count);
+        }
+        child = next;
+    }
+}
+
 fz_buffer* mupdf_new_buffer_from_story_text(fz_context *ctx, const unsigned char *data, size_t len, const char *user_css, float em) {
     fz_buffer *input = NULL;
     fz_buffer *output = NULL;
@@ -182,6 +383,92 @@ fz_buffer* mupdf_new_buffer_from_story_text(fz_context *ctx, const unsigned char
         out = NULL;
     }
     fz_always(ctx) {
+        if (out != NULL) {
+            fz_drop_output(ctx, out);
+        }
+        if (story != NULL) {
+            fz_drop_story(ctx, story);
+        }
+        if (input != NULL) {
+            fz_drop_buffer(ctx, input);
+        }
+    }
+    fz_catch(ctx) {
+        if (output != NULL) {
+            fz_drop_buffer(ctx, output);
+            output = NULL;
+        }
+    }
+
+    return output;
+}
+
+fz_buffer* mupdf_new_buffer_from_filtered_story_text(fz_context *ctx, const unsigned char *data, size_t len, const char **wanted_selectors, int wanted_count, const char **unwanted_selectors, int unwanted_count, const char *user_css, float em) {
+    fz_buffer *input = NULL;
+    fz_buffer *output = NULL;
+    fz_output *out = NULL;
+    fz_story *story = NULL;
+    fz_xml *doc = NULL;
+    fz_xml *body = NULL;
+    fz_xml *selected = NULL;
+    story_selector *parsed_wanted = NULL;
+    story_selector *parsed_unwanted = NULL;
+    int index;
+
+    fz_try(ctx) {
+        if (wanted_count > 0) {
+            parsed_wanted = calloc((size_t)wanted_count, sizeof(*parsed_wanted));
+            if (parsed_wanted == NULL) {
+                fz_throw(ctx, FZ_ERROR_SYSTEM, "Failed to allocate wanted selector storage");
+            }
+            for (index = 0; index < wanted_count; index++) {
+                if (!parse_story_selector(wanted_selectors[index], &parsed_wanted[index])) {
+                    fz_throw(ctx, FZ_ERROR_GENERIC, "Unsupported wanted selector: %s", wanted_selectors[index]);
+                }
+            }
+        }
+
+        if (unwanted_count > 0) {
+            parsed_unwanted = calloc((size_t)unwanted_count, sizeof(*parsed_unwanted));
+            if (parsed_unwanted == NULL) {
+                fz_throw(ctx, FZ_ERROR_SYSTEM, "Failed to allocate unwanted selector storage");
+            }
+            for (index = 0; index < unwanted_count; index++) {
+                if (!parse_story_selector(unwanted_selectors[index], &parsed_unwanted[index])) {
+                    fz_throw(ctx, FZ_ERROR_GENERIC, "Unsupported unwanted selector: %s", unwanted_selectors[index]);
+                }
+            }
+        }
+
+        input = fz_new_buffer(ctx, len);
+        fz_append_data(ctx, input, data, len);
+        story = fz_new_story(ctx, input, user_css, em, NULL);
+        doc = fz_story_document(ctx, story);
+        if (doc == NULL) {
+            fz_throw(ctx, FZ_ERROR_GENERIC, "MuPDF story did not produce an XML document");
+        }
+
+        body = fz_dom_body(ctx, doc);
+        if (body == NULL) {
+            body = fz_dom_document_element(ctx, doc);
+        }
+        if (body == NULL) {
+            body = doc;
+        }
+
+        selected = select_story_root(ctx, body, parsed_wanted, wanted_count);
+        cleanup_story_subtree(ctx, selected, parsed_unwanted, unwanted_count);
+
+        output = fz_new_buffer(ctx, len + 256);
+        out = fz_new_output_with_buffer(ctx, output);
+        fz_write_xml(ctx, selected, out, 0);
+        fz_close_output(ctx, out);
+        fz_drop_output(ctx, out);
+        out = NULL;
+    }
+    fz_always(ctx) {
+        free(parsed_wanted);
+        free(parsed_unwanted);
         if (out != NULL) {
             fz_drop_output(ctx, out);
         }

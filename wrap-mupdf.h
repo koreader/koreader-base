@@ -32,6 +32,7 @@ DLL_PUBLIC int mupdf_get_cache_size();
 DLL_PUBLIC int mupdf_error_code(fz_context *ctx);
 DLL_PUBLIC char* mupdf_error_message(fz_context *ctx);
 DLL_PUBLIC fz_buffer* mupdf_new_buffer_from_story_text(fz_context *ctx, const unsigned char *data, size_t len, const char *user_css, float em);
+DLL_PUBLIC fz_buffer* mupdf_new_buffer_from_filtered_story_text(fz_context *ctx, const unsigned char *data, size_t len, const char **wanted_selectors, int wanted_count, const char **unwanted_selectors, int unwanted_count, const char *user_css, float em);
 
 DLL_PUBLIC fz_matrix *mupdf_fz_scale(fz_matrix *m, float sx, float sy);
 DLL_PUBLIC fz_matrix *mupdf_fz_translate(fz_matrix *m, float tx, float ty);

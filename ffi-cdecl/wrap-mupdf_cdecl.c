@@ -30,6 +30,7 @@ cdecl_func(mupdf_drop_archive)
 cdecl_type(fz_buffer)
 cdecl_func(mupdf_new_buffer_from_shared_data)
 cdecl_func(mupdf_new_buffer_from_story_text)
+cdecl_func(mupdf_new_buffer_from_filtered_story_text)
 cdecl_func(mupdf_drop_buffer)
 
 /* context */

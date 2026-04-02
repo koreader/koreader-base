@@ -239,6 +239,34 @@ local function is_valid_utf8_bytes(bytes)
     return true
 end
 
+local function utf8_from_codepoint(codepoint)
+    if not codepoint or codepoint < 0 or codepoint > 0x10FFFF or (codepoint >= 0xD800 and codepoint <= 0xDFFF) then
+        return nil
+    end
+
+    if codepoint <= 0x7F then
+        return string.char(codepoint)
+    elseif codepoint <= 0x7FF then
+        return string.char(
+            0xC0 + math.floor(codepoint / 0x40),
+            0x80 + (codepoint % 0x40)
+        )
+    elseif codepoint <= 0xFFFF then
+        return string.char(
+            0xE0 + math.floor(codepoint / 0x1000),
+            0x80 + (math.floor(codepoint / 0x40) % 0x40),
+            0x80 + (codepoint % 0x40)
+        )
+    else
+        return string.char(
+            0xF0 + math.floor(codepoint / 0x40000),
+            0x80 + (math.floor(codepoint / 0x1000) % 0x40),
+            0x80 + (math.floor(codepoint / 0x40) % 0x40),
+            0x80 + (codepoint % 0x40)
+        )
+    end
+end
+
 local function decode_story_hex_entities(text)
     text = text:gsub("&#x0([9AaDd]);", function(hex)
         local value = tonumber("0" .. hex, 16)
@@ -279,14 +307,41 @@ local function decode_story_hex_entities(text)
             else
                 parts[#parts + 1] = text:sub(start_pos, cursor - 1)
             end
-        else
+        elseif cursor > start_pos then
             parts[#parts + 1] = text:sub(start_pos, cursor - 1)
+        else
+            local entity_start, entity_end, hex = text:find("&#x([%x]+);", start_pos)
+            local decoded = entity_start == start_pos and utf8_from_codepoint(tonumber(hex, 16)) or nil
+            if decoded then
+                parts[#parts + 1] = decoded
+                cursor = entity_end + 1
+            else
+                parts[#parts + 1] = text:sub(start_pos, start_pos)
+                cursor = start_pos + 1
+            end
         end
 
         index = cursor
     end
 
     return table.concat(parts)
+end
+
+local function normalize_story_xml(text)
+    return decode_story_hex_entities(text):gsub("^%s*<%?xml.-%?>%s*", "")
+end
+
+local function marshal_selector_array(selectors)
+    if type(selectors) ~= "table" or #selectors == 0 then
+        return nil, 0
+    end
+
+    local array = ffi.new("const char *[?]", #selectors)
+    for index, selector in ipairs(selectors) do
+        array[index - 1] = selector
+    end
+
+    return array, #selectors
 end
 
 function mupdf.getBalancedHTML(text, user_css, em)
@@ -298,9 +353,36 @@ function mupdf.getBalancedHTML(text, user_css, em)
             W.mupdf_error_code(ctx))
     end
 
-    local balanced_html = decode_story_hex_entities(ffi.string(output.data, output.len))
+    local balanced_html = normalize_story_xml(ffi.string(output.data, output.len))
     W.mupdf_drop_buffer(ctx, output)
     return balanced_html
+end
+
+function mupdf.reduceHTML(text, wanted_selectors, unwanted_selectors, user_css, em)
+    local ctx = context()
+    local wanted_array, wanted_count = marshal_selector_array(wanted_selectors)
+    local unwanted_array, unwanted_count = marshal_selector_array(unwanted_selectors)
+    local output = W.mupdf_new_buffer_from_filtered_story_text(
+        ctx,
+        ffi.cast("const unsigned char*", text),
+        #text,
+        wanted_array,
+        wanted_count,
+        unwanted_array,
+        unwanted_count,
+        user_css,
+        em or 12
+    )
+
+    if output == nil then
+        return nil, string.format("MuPDF story reduction failed: %s (%d)",
+            ffi.string(W.mupdf_error_message(ctx)),
+            W.mupdf_error_code(ctx))
+    end
+
+    local reduced_html = normalize_story_xml(ffi.string(output.data, output.len))
+    W.mupdf_drop_buffer(ctx, output)
+    return reduced_html
 end
 
 -- Document functions:
