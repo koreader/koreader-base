@@ -19,6 +19,8 @@ list(APPEND PATCH_FILES
     relink_on_xlibs_change.patch
     # Fix symbols visiblity.
     visibility.patch
+    # Expose the CSS selector matching API used by the MuPDF wrapper.
+    public_css_api.patch
     # Expand list of supported CSS color names.
     css_color_names.patch
 )
