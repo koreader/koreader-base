@@ -6,8 +6,6 @@ list(APPEND PATCH_FILES
     gcc15.patch
 )
 
-list(APPEND PATCH_CMD COMMAND ${MAKE_CMD} patch)
-
 set(MAKE_CMD make CROSSCC=${CC} CROSSCXX=${CXX} HOSTCC=${HOSTCC})
 if(EMULATE_READER)
     # Native compiler, use our own luajit.
@@ -45,6 +43,8 @@ else()
     endif()
 endif()
 list(APPEND MAKE_CMD LUAMOD= LUACFLAGS=${LUACFLAGS} LUALIBS=${LUALIBS})
+
+list(APPEND PATCH_CMD COMMAND ${MAKE_CMD} patch)
 
 list(APPEND BUILD_CMD COMMAND ${MAKE_CMD})
 
