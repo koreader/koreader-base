@@ -40,6 +40,9 @@ else()
     endif()
 endif()
 list(APPEND MAKE_CMD LUAMOD= LUACFLAGS=${LUACFLAGS} LUALIBS=${LUALIBS})
+if(APPLE)
+    list(APPEND MAKE_CMD "CPPFLAGS=-I${BREW_PREFIX}/include -DENABLE_BUILD_WITH_CXX" "INSTALL_L=install -m 644")
+endif()
 
 list(APPEND PATCH_CMD COMMAND ${MAKE_CMD} patch)
 
