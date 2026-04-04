@@ -10,7 +10,7 @@ set(MAKE_CMD make CROSSCC=${CC} CROSSCXX=${CXX} HOSTCC=${HOSTCC})
 if(EMULATE_READER)
     # Native compiler, use our own luajit.
     set(LUACFLAGS "-I${STAGING_DIR}/include/luajit-2.1")
-    set(LUALIBS "-L${STAGING_DIR}/lib -lluajit -Wl,-rpath,'$$ORIGIN/../..'")
+    set(LUALIBS "${STAGING_DIR}/lib/libluajit-5.1.a -ldl -lm")
 else()
     # We're building for a cross-compiler, let's hope Lua is installed
     # in the standard locations (as pkg-config can't be used since
