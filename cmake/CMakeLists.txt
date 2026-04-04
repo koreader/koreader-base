@@ -652,7 +652,7 @@ foreach(V IN LISTS VERSIONS)
 endforeach()
 
 # kindle
-if(KINDLE)
+if(KINDLE AND NOT LEGACY)
     set(EXCLUDE_FROM_ALL)
 else()
     set(EXCLUDE_FROM_ALL EXCLUDE_FROM_ALL)
