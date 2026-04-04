@@ -1,10 +1,7 @@
 # Build in source tree.
 set(BINARY_DIR ${SOURCE_DIR})
 
-list(APPEND PATCH_FILES
-    ffi-cdecl.patch
-    gcc15.patch
-)
+list(APPEND PATCH_FILES ffi-cdecl.patch)
 
 set(MAKE_CMD make CROSSCC=${CC} CROSSCXX=${CXX} HOSTCC=${HOSTCC})
 if(EMULATE_READER)
@@ -79,7 +76,7 @@ list(APPEND INSTALL_CMD COMMAND
 list(APPEND INSTALL_CMD COMMAND chmod +x ${STAGING_DIR}/bin/ffi-cdecl)
 
 external_project(
-    DOWNLOAD GIT ea45fb34782a29738334e250e820c825d75e5087
+    DOWNLOAD GIT 712ab4cda30fb19498f18b01340c2d8862e03694
     https://github.com/koreader/ffi-cdecl.git
     PATCH_FILES ${PATCH_FILES}
     PATCH_COMMAND ${PATCH_CMD}
