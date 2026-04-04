@@ -105,7 +105,7 @@ endif()
 
 # Git. {{{
 
-find_package(Git REQUIRED)
+find_executable(GIT Git git --version REQUIRED)
 
 # }}}
 
