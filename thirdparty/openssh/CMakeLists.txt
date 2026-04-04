@@ -12,7 +12,6 @@ list(APPEND CFG_CMD
     ${SOURCE_DIR}/configure --host=${CHOST}
     --disable-etc-default-login
     --disable-lastlog
-    --with-md5-passwords
     --without-hardening
     --without-openssl
     --without-stackprotect
