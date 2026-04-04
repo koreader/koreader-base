@@ -566,6 +566,8 @@ add_custom_target(rm-install-stamps COMMAND rm -f ${INSTALL_STAMPS})
 
 # FFI cdecls generation. {{{
 
+if(TARGET ffi-cdecl)
+
 add_custom_target(ffi-deps)
 add_custom_target(ffi DEPENDS ffi-deps)
 
@@ -731,6 +733,8 @@ ffi_target(zlib zlib_h.lua zlib_decl.c ARGS -d zlib)
 
 # zstd
 ffi_target(zstd zstd_h.lua zstd_decl.c ARGS -d libzstd)
+
+endif()
 
 # }}}
 
