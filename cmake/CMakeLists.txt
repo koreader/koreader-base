@@ -660,7 +660,7 @@ endif()
 ffi_target(kindle mxcfb_kindle_h.lua mxcfb_kindle_decl.c ${EXCLUDE_FROM_ALL})
 
 # kobo
-if(KINDLE)
+if(KOBO)
     set(EXCLUDE_FROM_ALL)
 else()
     set(EXCLUDE_FROM_ALL EXCLUDE_FROM_ALL)
