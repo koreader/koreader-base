@@ -1,5 +1,3 @@
-find_package(Git REQUIRED)
-
 # Transform paths in depfiles to be absolute.
 if(POLICY CMP0116)
     cmake_policy(SET CMP0116 NEW)
