@@ -566,7 +566,8 @@ add_custom_target(rm-install-stamps COMMAND rm -f ${INSTALL_STAMPS})
 
 # FFI cdecls generation. {{{
 
-add_custom_target(ffi)
+add_custom_target(ffi-deps)
+add_custom_target(ffi DEPENDS ffi-deps)
 
 function(ffi_target NAME OUTPUT INPUT)
     cmake_parse_arguments("" "EXCLUDE_FROM_ALL" "" "DEPENDS;ARGS" ${ARGN})
@@ -593,6 +594,7 @@ function(ffi_target NAME OUTPUT INPUT)
     if(NOT TARGET ${NAME}-ffi)
         add_custom_target(${NAME}-ffi)
         if(NOT ${_EXCLUDE_FROM_ALL} AND NOT ${NAME}_EXCLUDE_FROM_ALL)
+            add_dependencies(ffi-deps ${_DEPENDS})
             add_dependencies(ffi ${NAME}-ffi)
         endif()
     endif()
