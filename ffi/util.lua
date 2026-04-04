@@ -314,15 +314,19 @@ end
 --                       as waitpid will return -1 w/ an ECHILD errno.
 -- NOTE: Assumes the target platform is POSIX compliant.
 function util.runInSubProcess(func, with_pipe, double_fork)
-    local parent_read_fd, child_write_fd
+    local parent_read_fd, parent_write_fd
+    local child_read_fd, child_write_fd
     if with_pipe then
         local pipe = ffi.new('int[2]', {-1, -1})
         if C.pipe(pipe) ~= 0 then -- failed creating pipe !
             return false, "failed creating pipe: "..posix.strerror()
         end
         parent_read_fd, child_write_fd = pipe[0], pipe[1]
-        if parent_read_fd == -1 or child_write_fd == -1 then
-            return false, "failed getting pipe read or write fd: "..posix.strerror()
+        if with_pipe == 'bidi' then
+            if C.pipe(pipe) ~= 0 then -- failed creating pipe !
+                return false, "failed creating pipe: "..posix.strerror()
+            end
+            parent_write_fd, child_read_fd = pipe[1], pipe[0]
         end
     end
     local pid = C.fork()
@@ -350,9 +354,12 @@ function util.runInSubProcess(func, with_pipe, double_fork)
             -- util.isSubProcessDone() returning false until all the child's
             -- children are done.
             C.setpgid(0, 0)
+            -- close our duplicate parent fds
             if parent_read_fd then
-                -- close our duplicate of parent fd
                 C.close(parent_read_fd)
+            end
+            if parent_write_fd then
+                C.close(parent_write_fd)
             end
 
             -- As the name imply, this is a non-interactive background task.
@@ -371,7 +378,7 @@ function util.runInSubProcess(func, with_pipe, double_fork)
             -- to communicate with parent process.
             -- We pass child_write_fd (if with_pipe) so 'func' can write to it
             pid = C.getpid()
-            func(pid, child_write_fd)
+            func(pid, child_write_fd, child_read_fd)
         end, debug.traceback)
         if not ok then
             print("error in subprocess:", err)
@@ -391,11 +398,14 @@ function util.runInSubProcess(func, with_pipe, double_fork)
             return false, "double fork failed: "..posix.strerror()
         end
     end
+    -- close our duplicate child fds
+    if child_read_fd then
+        C.close(child_read_fd)
+    end
     if child_write_fd then
-        -- close our duplicate of child fd
         C.close(child_write_fd)
     end
-    return pid, parent_read_fd
+    return pid, parent_read_fd, parent_write_fd
 end
 
 --- Collect subprocess so it does not become a zombie.
