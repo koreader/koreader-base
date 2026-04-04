@@ -73,7 +73,7 @@ list(APPEND INSTALL_CMD COMMAND
     -e "s,@CC@,${CMAKE_C_COMPILER},"
     -e "s,@CXX@,${CMAKE_CXX_COMPILER},"
     -e "s,@PREFIX@,${STAGING_DIR},"
-    -e "s,@PLUGIN@,${STAGING_DIR}/lib/gcc/plugin/gcclua${LIB_EXT},"
+    -e "s,@PLUGIN@,${STAGING_DIR}/lib/gcc/plugin/gcclua.so,"
     -e "s,@SCRIPT@,${INSTALL_LUADIR}/ffi-cdecl.lua,"
 )
 list(APPEND INSTALL_CMD COMMAND chmod +x ${STAGING_DIR}/bin/ffi-cdecl)
