@@ -26,6 +26,7 @@ local SDL_TEXTINPUT = 771
 local SDL_IME_DELETE = 16385
 local SDL_IME_SELECTION = 16386
 local SDL_IME_COMPOSITION_REGION = 16387
+local SDL_IME_STATE = 16388
 
 local function genInputTimeval(ts)
     local timev = { sec = 0, usec = 0 }
@@ -365,6 +366,12 @@ android.LOGI("Dequeued IME selection: " .. tostring(payload))
 android.LOGI("Dequeued IME composition region: " .. tostring(payload))
                     if payload and #payload > 0 then
                         genEmuEvent(C.EV_SDL, SDL_IME_COMPOSITION_REGION, payload)
+                    end
+                elseif message[0] == C.AEVENT_IME_STATE then
+                    local payload = android.dequeueTextInputState()
+android.LOGI("Dequeued IME state: " .. tostring(payload))
+                    if payload and #payload > 0 then
+                        genEmuEvent(C.EV_SDL, SDL_IME_STATE, payload)
                     end
                 end
             end
