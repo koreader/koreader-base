@@ -83,6 +83,7 @@ external_project(
     https://github.com/koreader/ffi-cdecl.git
     PATCH_FILES ${PATCH_FILES}
     PATCH_COMMAND ${PATCH_CMD}
+    BUILD_DEPENDS ffi-cdecl.sh.in
     BUILD_COMMAND ${BUILD_CMD}
     INSTALL_COMMAND ${INSTALL_CMD}
 )
