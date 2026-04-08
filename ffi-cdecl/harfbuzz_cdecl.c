@@ -6,7 +6,7 @@
 #include "ffi-cdecl.h"
 
 // The few bits we actually rely on for ffi/harfbuzz.lua
-cdecl_c99_type(hb_codepoint_t, uint32_t)
+cdecl_type(hb_codepoint_t)
 cdecl_union(_hb_var_int_t)
 cdecl_type(hb_var_int_t)
 
