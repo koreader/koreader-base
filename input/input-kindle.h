@@ -33,7 +33,7 @@ static void slider_handler(int sig)
         kill(pclose_arg.pid, SIGINT);
     }
     /* Also kill the uevent listener child */
-    if(ue_child_pid != 0) {
+    if (ue_child_pid != 0) {
         kill(ue_child_pid, SIGTERM);
     }
 }
@@ -67,7 +67,7 @@ static void sendEvent(int fd, struct input_event* ev)
 // c.f., input-kobo.h for the Kobo equivalent (which also handles USB OTG).
 static void ueventInputListener(int pipefd_w)
 {
-    // Die when our parent (the lipc process) exits
+    // Die when our parent (the lipc process) exits.
     prctl(PR_SET_PDEATHSIG, SIGTERM);
 
     struct uevent_listener listener = { 0 };
@@ -92,24 +92,25 @@ static void ueventInputListener(int pipefd_w)
         // /devices/platform/soc for USB OTG) because UHID devices live under
         // /devices/virtual/, and built-in devices are static so won't generate
         // add/remove uevents.
-        if (uev.subsystem && UE_STR_EQ(uev.subsystem, "input") &&
-            uev.devname && UE_STR_EQ(uev.devname, "input/event")) {
-            switch (uev.action) {
-                case UEVENT_ACTION_ADD:
-                    ev.code  = CODE_FAKE_USB_DEVICE_PLUGGED_IN;
-                    ev.value = strtol_d(uev.devname + sizeof("input/event") - 1U);
-                    sendEvent(pipefd_w, &ev);
-                    ev.value = 1;
-                    break;
-                case UEVENT_ACTION_REMOVE:
-                    ev.code  = CODE_FAKE_USB_DEVICE_PLUGGED_OUT;
-                    ev.value = strtol_d(uev.devname + sizeof("input/event") - 1U);
-                    sendEvent(pipefd_w, &ev);
-                    ev.value = 1;
-                    break;
-                default:
-                    break;
-            }
+        if (!(uev.subsystem && UE_STR_EQ(uev.subsystem, "input") &&
+            uev.devname && UE_STR_EQ(uev.devname, "input/event")))
+            continue;
+
+        switch (uev.action) {
+            case UEVENT_ACTION_ADD:
+                ev.code  = CODE_FAKE_USB_DEVICE_PLUGGED_IN;
+                ev.value = strtol_d(uev.devname + sizeof("input/event") - 1U);
+                sendEvent(pipefd_w, &ev);
+                ev.value = 1;
+                break;
+            case UEVENT_ACTION_REMOVE:
+                ev.code  = CODE_FAKE_USB_DEVICE_PLUGGED_OUT;
+                ev.value = strtol_d(uev.devname + sizeof("input/event") - 1U);
+                sendEvent(pipefd_w, &ev);
+                ev.value = 1;
+                break;
+            default:
+                break;
         }
     }
 }
@@ -201,7 +202,7 @@ static void generateFakeEvent(int pipefd[2]) {
         }
     }
 
-    /* Clean up the uevent listener child */
+    /* Clean up the uevent listener child. */
     if (ue_child_pid > 0) {
         kill(ue_child_pid, SIGTERM);
         waitpid(ue_child_pid, NULL, 0);
