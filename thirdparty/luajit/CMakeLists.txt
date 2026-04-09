@@ -37,7 +37,7 @@ else()
 
     # Add -m32 when cross compile on 64 bit host for 32bit target,
     # (Per: http://luajit.org/install.html#cross).
-    execute_process(
+    ensure_execute_process(
         COMMAND ${HOSTCC} -dumpmachine
         OUTPUT_VARIABLE HOST_CC_MACHINE
     )
