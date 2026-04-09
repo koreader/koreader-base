@@ -45,26 +45,22 @@ jobs:
 
       # Install dependencies. {{{
 
-      - name: XCode version
-        run: |
-          sudo xcode-select -s /Applications/Xcode_${{ matrix.xcode_version }}.app
-          xcodebuild -version
-          xcode-select -p
-
       - name: Setup Python
         uses: actions/setup-python@v6
         with:
-          python-version: '3.12'
+          python-version: '3.14'
 
-      - name: Install dependencies
+      - name: Setup build environment
         run: |
           set -x
+          # python packages
           python3 -m pip install --disable-pip-version-check meson ruamel.yaml
-          wget -O ninjatracing.zip https://github.com/cradleapps/ninjatracing/archive/084212eaf68f25c70579958a2ed67fb4ec2a9ca4.zip
+          # ninjatracing
+          wget -O ninjatracing.zip https://github.com/nico/ninjatracing/archive/084212eaf68f25c70579958a2ed67fb4ec2a9ca4.zip
           unzip -j ninjatracing.zip '*/ninjatracing'
           install -m755 ninjatracing /usr/local/bin/
           rm ninjatracing*
-          # Install brew packages.
+          # brew packages
           packages=(
             autoconf
             automake
@@ -72,6 +68,8 @@ jobs:
             binutils
             coreutils
             findutils
+            gcc
+            gmp
             libtool
             make
             nasm
@@ -88,14 +86,21 @@ jobs:
           # from attempting (and failing) to upgrade them.
           brew uninstall gradle maven
           brew install --formula --overwrite --quiet "${packages[@]}"
-
-      - name: Update PATH
-        run: >
-          printf '%s\n'
-          "$(brew --prefix)/opt/findutils/libexec/gnubin"
-          "$(brew --prefix)/opt/make/libexec/gnubin"
-          "$(brew --prefix)/opt/util-linux/bin"
-          | tee "${GITHUB_PATH}"
+          brew_paths=(
+            "$(brew --prefix)/opt/findutils/libexec/gnubin"
+            "$(brew --prefix)/opt/make/libexec/gnubin"
+            "$(brew --prefix)/opt/util-linux/bin"
+          )
+          printf '%s\n' "${brew_paths[@]}" | tee -a "${GITHUB_PATH}"
+          # gcc
+          ln -vsf "$(brew --prefix)"/bin/gcc{-15,}
+          ln -vsf "$(brew --prefix)"/bin/g++{-15,}
+          "$(brew --prefix)"/bin/gcc --version
+          "$(brew --prefix)"/bin/g++ --version
+          # xcode
+          sudo xcode-select -s /Applications/Xcode_${{ matrix.xcode_version }}.app
+          xcodebuild -version
+          xcode-select -p
 
       # }}}
 
@@ -121,7 +126,15 @@ jobs:
         id: build-restore
         uses: actions/cache/restore@v5
         with:
-          path: build
+          # NOTE:
+          # - we need to use `build/*` to work around https://github.com/actions/toolkit#713
+          # - the same `path` must be used when restoring and saving (or the mismatch will
+          #   result in failures to restore)
+          path: &BUILD_PATHS |
+            build/*
+            !build/cmake
+            !build/staging
+            !build/thirdparty
           key: ${{ env.CACHE_KEY }}-build-${{ hashFiles('cache-key') }}
 
       # Restore / setup build cache. {{{
@@ -130,7 +143,7 @@ jobs:
         id: ccache-restore
         uses: actions/cache/restore@v5
         with:
-          path: /Users/runner/Library/Caches/ccache
+          path: &CCACHE_DIR /Users/runner/Library/Caches/ccache
           key: ${{ env.CACHE_KEY }}-ccache-${{ hashFiles('cache-key') }}
           restore-keys: ${{ env.CACHE_KEY }}-ccache-
           # When not building, do a lookup so the cache
@@ -169,14 +182,12 @@ jobs:
 
       # }}}
 
-      # Clean / save build cache. {{{
+      # Clean & save build cache. {{{
 
-      - name: Clean caches
+      - name: Clean build cache
         if: contains('failure success', steps.build.conclusion) && !cancelled()
         run: |
           set -x
-          # Trim the build directory.
-          rm -rf build/{cmake,staging,thirdparty}
           ccache --cleanup >/dev/null
           ccache --show-stats --verbose
 
@@ -184,8 +195,20 @@ jobs:
         uses: actions/cache/save@v5
         if: steps.build-restore.outputs.cache-hit != 'true' && steps.ccache-restore.outputs.cache-hit != 'true'
         with:
-          path: /Users/runner/Library/Caches/ccache
+          path: *CCACHE_DIR
           key: ${{ steps.ccache-restore.outputs.cache-primary-key }}
+
+      # }}}
+
+      # Check FFI cdecls are up-to-date. {{{
+
+      - name: Check FFI cdecls are up-to-date
+        id: ffi
+        if: steps.build-restore.outputs.cache-hit != 'true'
+        run: |
+          set -x
+          make ffi
+          git --no-pager diff --color=always --exit-code ffi
 
       # }}}
 
@@ -203,7 +226,7 @@ jobs:
         uses: actions/cache/save@v5
         if: steps.build-restore.outputs.cache-hit != 'true'
         with:
-          path: build
+          path: *BUILD_PATHS
           key: ${{ steps.build-restore.outputs.cache-primary-key }}
 
       - name: Test
