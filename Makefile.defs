@@ -611,7 +611,14 @@ else ifeq ($(TARGET), macos)
     TARGET_CFLAGS = -mtune=generic
   endif
 else ifdef EMULATE_READER
-  TARGET_CFLAGS = -march=native
+  ifdef CI
+    # Don't use `-march=native` on CI: different runner hardware
+    # will result in build cache misses and possibly crashes when
+    # running the testsuite with a restored build directory.
+    TARGET_CFLAGS = -mtune=generic
+  else
+    TARGET_CFLAGS = -march=native
+  endif
 endif
 
 # Some of our deps require C11 & C++17 (`if constexpr (…)`) support.
