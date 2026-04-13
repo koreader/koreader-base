@@ -600,4 +600,36 @@ function S.getVersion()
     return string.format("%d.%d.%d", getSDLVersion())
 end
 
+-- On Linux, fork() can hang if SDL3's gamepad/joystick subsystem background
+-- thread is mid-malloc when fork() is called: glibc's atfork prepare handler
+-- blocks waiting for all malloc arenas, and on schedulers like CachyOS's
+-- BORE/LAVD the SDL thread may not release the arena for seconds, making the
+-- KOReader window appear completely unresponsive (GNOME "Not Responding").
+-- Fix: stop the gamepad subsystem (and its thread) just before fork(), then
+-- restart it in the parent once fork() has returned.
+if ffi.os == "Linux" then
+    local gamepad_was_init = false
+    util.addRunBeforeForkFunc("sdl_gamepad_quiesce", function()
+        gamepad_was_init = SDL.SDL_WasInit(SDL.SDL_INIT_GAMEPAD) ~= 0
+        if gamepad_was_init then
+            -- Explicitly close the open gamepad handle before shutting down the
+            -- subsystem, so the ffi.gc finalizer doesn't later call SDL_CloseGamepad
+            -- on a stale pointer (after the subsystem restarts in the parent).
+            if S.controller ~= nil then
+                local ctrl = ffi.gc(S.controller, nil)  -- disarm GC finalizer
+                SDL.SDL_CloseGamepad(ctrl)
+                S.controller = nil
+            end
+            SDL.SDL_QuitSubSystem(SDL.SDL_INIT_GAMEPAD)
+        end
+    end)
+    util.addRunAfterForkParentFunc("sdl_gamepad_restore", function()
+        if gamepad_was_init then
+            gamepad_was_init = false
+            SDL.SDL_InitSubSystem(SDL.SDL_INIT_GAMEPAD)
+            openGameController()
+        end
+    end)
+end
+
 return S
