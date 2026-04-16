@@ -11,7 +11,6 @@ list(APPEND BUILD_CMD COMMAND ninja)
 
 list(APPEND INSTALL_CMD COMMAND ${CMAKE_COMMAND} --install .)
 
-append_install_commands(INSTALL_CMD ${SOURCE_DIR}/contrib/minizip/crypt.h DESTINATION ${STAGING_DIR}/include/contrib/minizip)
 if(NOT MONOLIBTIC)
     append_shared_lib_install_commands(INSTALL_CMD z VERSION 1)
 endif()
