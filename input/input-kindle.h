@@ -20,7 +20,10 @@
 #define _KO_INPUT_KINDLE_H
 
 #include "popen_noshell.h"
+#include "libue.h"
+
 static struct popen_noshell_pass_to_pclose pclose_arg;
+static pid_t ue_child_pid = 0;
 
 static void slider_handler(int sig)
 {
@@ -28,6 +31,10 @@ static void slider_handler(int sig)
     if(pclose_arg.pid != 0) {
         /* Be a little more gracious, lipc seems to handle SIGINT properly */
         kill(pclose_arg.pid, SIGINT);
+    }
+    /* Also kill the uevent listener child */
+    if (ue_child_pid != 0) {
+        kill(ue_child_pid, SIGTERM);
     }
 }
 
@@ -53,6 +60,61 @@ static void sendEvent(int fd, struct input_event* ev)
     }
 }
 
+// Watch for input device hotplug via netlink uevents.
+// Used to detect UHID devices created by kindle-hid-passthrough (or any other
+// userspace HID driver). Runs in a forked child, writes to the same pipe as
+// the lipc-wait-event loop.
+// c.f., input-kobo.h for the Kobo equivalent (which also handles USB OTG).
+static void ueventInputListener(int pipefd_w)
+{
+    // Die when our parent (the lipc process) exits.
+    prctl(PR_SET_PDEATHSIG, SIGTERM);
+
+    struct uevent_listener listener = { 0 };
+    int re = ue_init_listener(&listener);
+    if (re < 0) {
+        fprintf(stderr, "[ko-input]: Failed to initialize uevent listener (%d), input hotplug disabled\n", re);
+        return;
+    }
+
+    fprintf(stderr, "[ko-input]: uevent listener ready for input device hotplug\n");
+
+    struct input_event ev = { 0 };
+    ev.type               = EV_KEY;
+    ev.value              = 1;
+
+    struct uevent uev;
+    while ((re = ue_wait_for_event(&listener, &uev)) == 0) {
+        // Match any input subsystem event with an evdev device node.
+        // On Kindle, dynamically created input devices (e.g., UHID keyboards
+        // from kindle-hid-passthrough) appear under /devices/virtual/input/.
+        // We intentionally don't filter on devpath (unlike Kobo which gates on
+        // /devices/platform/soc for USB OTG) because UHID devices live under
+        // /devices/virtual/, and built-in devices are static so won't generate
+        // add/remove uevents.
+        if (!(uev.subsystem && UE_STR_EQ(uev.subsystem, "input") &&
+            uev.devname && UE_STR_EQ(uev.devname, "input/event")))
+            continue;
+
+        switch (uev.action) {
+            case UEVENT_ACTION_ADD:
+                ev.code  = CODE_FAKE_USB_DEVICE_PLUGGED_IN;
+                ev.value = strtol_d(uev.devname + sizeof("input/event") - 1U);
+                sendEvent(pipefd_w, &ev);
+                ev.value = 1;
+                break;
+            case UEVENT_ACTION_REMOVE:
+                ev.code  = CODE_FAKE_USB_DEVICE_PLUGGED_OUT;
+                ev.value = strtol_d(uev.devname + sizeof("input/event") - 1U);
+                sendEvent(pipefd_w, &ev);
+                ev.value = 1;
+                break;
+            default:
+                break;
+        }
+    }
+}
+
 static void generateFakeEvent(int pipefd[2]) {
     /* We send a SIGTERM to this child on exit, trap it to kill lipc properly. */
     signal(SIGTERM, slider_handler);
@@ -64,6 +126,19 @@ static void generateFakeEvent(int pipefd[2]) {
     struct input_event ev = { 0 };
     ev.type               = EV_KEY;
     ev.value              = 1;
+
+    /* Fork a child to listen for input device hotplug uevents.
+     * This allows KOReader to detect UHID keyboards created by
+     * kindle-hid-passthrough after startup. The child writes to the
+     * same pipe, so the parent's event loop picks up the fake events. */
+    ue_child_pid = fork();
+    if (ue_child_pid == 0) {
+        ueventInputListener(pipefd[1]);
+        _exit(EXIT_SUCCESS);
+    } else if (ue_child_pid < 0) {
+        fprintf(stderr, "[ko-input]: Failed to fork uevent listener: %s\n", strerror(errno));
+        ue_child_pid = 0;
+    }
 
     /* listen power slider events (listen for ever for multiple events) */
     char *argv[] = {
@@ -125,6 +200,12 @@ static void generateFakeEvent(int pipefd[2]) {
         } else {
             fprintf(stderr, "[ko-input]: Unrecognized powerd event: `%.*s`.\n", (int) (sizeof(std_out) - 1U), std_out);
         }
+    }
+
+    /* Clean up the uevent listener child. */
+    if (ue_child_pid > 0) {
+        kill(ue_child_pid, SIGTERM);
+        waitpid(ue_child_pid, NULL, 0);
     }
 
     int status = pclose_noshell(&pclose_arg);
