@@ -1,0 +1,13 @@
+diff --git a/simd/CMakeLists.txt b/simd/CMakeLists.txt
+index 9c163ad..a09471e 100644
+--- a/simd/CMakeLists.txt
++++ b/simd/CMakeLists.txt
+@@ -567,8 +567,3 @@ else()
+ simd_fail("SIMD extensions not available for this CPU (${CMAKE_SYSTEM_PROCESSOR})")
+ 
+ endif() # CPU_TYPE
+-
+-if(WITH_SIMD AND ENABLE_STATIC)
+-  add_executable(simdcoverage simdcoverage.c)
+-  target_link_libraries(simdcoverage jpeg-static)
+-endif()
