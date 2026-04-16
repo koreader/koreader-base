@@ -1,0 +1,41 @@
+diff --git a/src/eastasianwidthdata.c b/src/eastasianwidthdata.c
+index 7915446..b2a301c 100644
+--- a/src/eastasianwidthdata.c
++++ b/src/eastasianwidthdata.c
+@@ -7,6 +7,8 @@
+ 
+ #include "eastasianwidthdef.h"
+ 
++#if 0
++
+ static const struct EastAsianWidthProperties eaw_prop[] = {
+     {0x0020, 0x007E, EAW_Na},
+     {0x00A1, 0x00A1, EAW_A},
+@@ -325,6 +327,8 @@ static const struct EastAsianWidthProperties eaw_prop[] = {
+     {0x100000, 0x10FFFD, EAW_A},
+ };
+ 
++#endif
++
+ bool ub_is_op_east_asian(utf32_t ch) {
+     return false
+         || (ch >= 0x2329 && ch <= 0x2768)
+diff --git a/src/eastasianwidthdef.c b/src/eastasianwidthdef.c
+index 60df5e2..49ae65f 100644
+--- a/src/eastasianwidthdef.c
++++ b/src/eastasianwidthdef.c
+@@ -25,6 +25,8 @@
+ #include "eastasianwidthdata.c"
+ #include "unibreakdef.h"
+ 
++#if 0
++
+ /**
+  * Gets the East Asian Width class of a character.
+  *
+@@ -42,3 +44,5 @@ enum EastAsianWidthClass ub_get_char_eaw_class(utf32_t ch)
+     }
+     return EAW_N;
+ }
++
++#endif
