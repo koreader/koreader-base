@@ -12,7 +12,7 @@ list(APPEND BUILD_CMD COMMAND make)
 list(APPEND INSTALL_CMD COMMAND make install)
 
 if(NOT MONOLIBTIC)
-    set(LIB_SPEC unibreak VERSION 6)
+    set(LIB_SPEC unibreak VERSION 7)
     if(APPLE)
         append_shared_lib_fix_commands(INSTALL_CMD ${LIB_SPEC} ID)
     endif()
@@ -20,8 +20,8 @@ if(NOT MONOLIBTIC)
 endif()
 
 external_project(
-    DOWNLOAD URL 8df410d010e03de1a339a400a920335e
-    https://github.com/adah1972/libunibreak/releases/download/libunibreak_6_1/libunibreak-6.1.tar.gz
+    DOWNLOAD URL ccc11ff950ef7aefa815035f3a20de57
+    https://github.com/adah1972/libunibreak/releases/download/libunibreak_7_0/libunibreak-7.0.tar.gz
     CONFIGURE_COMMAND ${CFG_CMD}
     BUILD_COMMAND ${BUILD_CMD}
     INSTALL_COMMAND ${INSTALL_CMD}
