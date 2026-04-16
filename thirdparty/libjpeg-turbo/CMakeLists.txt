@@ -1,6 +1,7 @@
 list(APPEND PATCH_FILES
     no_cmake_rpath_shenanigans.patch
     no_12_or_16_bits_precision.patch
+    no_simdcoverage_exe.patch
     hwcap_neon.patch
 )
 
