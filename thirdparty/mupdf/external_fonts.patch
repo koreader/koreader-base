@@ -1,8 +1,8 @@
 diff --git a/Makefile b/Makefile
-index d5cab8a11..ac5f9fc9d 100644
+index 811ade939..9c1578b39 100644
 --- a/Makefile
 +++ b/Makefile
-@@ -245,6 +245,7 @@ generated/%.otf.c : %.otf $(HEXDUMP_SH) ; $(QUIET_GEN) $(MKTGTDIR) ; bash $(HEXD
+@@ -249,6 +249,7 @@ generated/%.otf.c : %.otf $(HEXDUMP_SH) ; $(QUIET_GEN) $(MKTGTDIR) ; bash $(HEXD
  generated/%.ttf.c : %.ttf $(HEXDUMP_SH) ; $(QUIET_GEN) $(MKTGTDIR) ; bash $(HEXDUMP_SH) > $@ $<
  generated/%.ttc.c : %.ttc $(HEXDUMP_SH) ; $(QUIET_GEN) $(MKTGTDIR) ; bash $(HEXDUMP_SH) > $@ $<
  
@@ -10,19 +10,19 @@ index d5cab8a11..ac5f9fc9d 100644
  ifeq ($(HAVE_OBJCOPY),yes)
    MUPDF_OBJ += $(FONT_BIN:%=$(OUT)/%.o)
    $(OUT)/%.cff.o : %.cff ; $(OBJCOPY_CMD)
-@@ -256,6 +257,7 @@ else
+@@ -260,6 +261,7 @@ else
  endif
  
  generate: $(FONT_GEN)
 +endif
  
- # --- Generated ICC profiles ---
+ # --- Generated hyphenation patterns ---
  
 diff --git a/include/mupdf/fitz/font.h b/include/mupdf/fitz/font.h
-index 313a5d474..55ff86185 100644
+index c60fb7ef6..b01e53760 100644
 --- a/include/mupdf/fitz/font.h
 +++ b/include/mupdf/fitz/font.h
-@@ -855,4 +855,9 @@ fz_buffer *fz_subset_ttf_for_gids(fz_context *ctx, fz_buffer *orig, int *gids, i
+@@ -856,4 +856,9 @@ fz_buffer *fz_subset_ttf_for_gids(fz_context *ctx, fz_buffer *orig, int *gids, i
   */
  fz_buffer *fz_subset_cff_for_gids(fz_context *ctx, fz_buffer *orig, int *gids, int num_gids, int symbolic, int cidfont);
  
@@ -33,10 +33,10 @@ index 313a5d474..55ff86185 100644
 +
  #endif
 diff --git a/source/fitz/font.c b/source/fitz/font.c
-index a8a209f14..35b3f1664 100644
+index 6c04e70ea..e09dfd096 100644
 --- a/source/fitz/font.c
 +++ b/source/fitz/font.c
-@@ -556,6 +556,8 @@ fz_font *fz_load_fallback_font(fz_context *ctx, int script, int language, int se
+@@ -562,6 +562,8 @@ fz_font *fz_load_fallback_font(fz_context *ctx, int script, int language, int se
  	return *fontp;
  }
  
@@ -45,7 +45,7 @@ index a8a209f14..35b3f1664 100644
  static fz_font *fz_load_fallback_math_font(fz_context *ctx)
  {
  	const unsigned char *data;
-@@ -634,6 +636,8 @@ static fz_font *fz_load_fallback_boxes_font(fz_context *ctx)
+@@ -640,6 +642,8 @@ static fz_font *fz_load_fallback_boxes_font(fz_context *ctx)
  	return ctx->font->boxes;
  }
  
@@ -54,7 +54,7 @@ index a8a209f14..35b3f1664 100644
  static const struct ft_error ft_errors[] =
  {
  #include FT_ERRORS_H
-@@ -909,13 +913,18 @@ find_base14_index(const char *name)
+@@ -918,13 +922,18 @@ find_base14_index(const char *name)
  fz_font *
  fz_new_base14_font(fz_context *ctx, const char *name)
  {
@@ -73,7 +73,7 @@ index a8a209f14..35b3f1664 100644
  		data = fz_lookup_base14_font(ctx, name, &size);
  		if (data)
  		{
-@@ -927,6 +936,16 @@ fz_new_base14_font(fz_context *ctx, const char *name)
+@@ -936,6 +945,16 @@ fz_new_base14_font(fz_context *ctx, const char *name)
  			fz_set_font_embedding(ctx, ctx->font->base14[x], 1);
  			return fz_keep_font(ctx, ctx->font->base14[x]);
  		}
@@ -90,7 +90,7 @@ index a8a209f14..35b3f1664 100644
  	}
  	fz_throw(ctx, FZ_ERROR_ARGUMENT, "cannot find builtin font with name '%s'", name);
  }
-@@ -2114,6 +2133,7 @@ fz_encode_character_with_fallback(fz_context *ctx, fz_font *user_font, int unico
+@@ -2155,6 +2174,7 @@ fz_encode_character_with_fallback(fz_context *ctx, fz_font *user_font, int unico
  	}
  #endif
  
@@ -98,7 +98,7 @@ index a8a209f14..35b3f1664 100644
  	font = fz_load_fallback_math_font(ctx);
  	if (font)
  	{
-@@ -2155,6 +2175,15 @@ fz_encode_character_with_fallback(fz_context *ctx, fz_font *user_font, int unico
+@@ -2196,6 +2216,15 @@ fz_encode_character_with_fallback(fz_context *ctx, fz_font *user_font, int unico
  	}
  
  	font = fz_load_fallback_boxes_font(ctx);
@@ -381,7 +381,7 @@ index a6d7d2a68..588a73618 100644
  
  static pdf_obj*
 diff --git a/source/pdf/pdf-font.c b/source/pdf/pdf-font.c
-index 2f5ea15f9..91be24c4a 100644
+index 4375e56fa..d43e5fc8b 100644
 --- a/source/pdf/pdf-font.c
 +++ b/source/pdf/pdf-font.c
 @@ -93,6 +93,8 @@ static const char *base_font_names[][10] =
@@ -441,7 +441,7 @@ index 2f5ea15f9..91be24c4a 100644
  static int is_dynalab(char *name)
  {
  	if (strstr(name, "HuaTian"))
-@@ -367,6 +410,7 @@ pdf_load_builtin_font(fz_context *ctx, pdf_font_desc *fontdesc, const char *font
+@@ -384,6 +427,7 @@ pdf_load_builtin_font(fz_context *ctx, pdf_font_desc *fontdesc, const char *font
  	fontdesc->font = fz_load_system_font(ctx, fontname, 0, 0, !has_descriptor);
  	if (!fontdesc->font)
  	{
@@ -449,7 +449,7 @@ index 2f5ea15f9..91be24c4a 100644
  		const unsigned char *data;
  		int len;
  
-@@ -375,6 +419,15 @@ pdf_load_builtin_font(fz_context *ctx, pdf_font_desc *fontdesc, const char *font
+@@ -392,6 +436,15 @@ pdf_load_builtin_font(fz_context *ctx, pdf_font_desc *fontdesc, const char *font
  			fz_throw(ctx, FZ_ERROR_SYNTAX, "cannot find builtin font: '%s'", fontname);
  
  		fontdesc->font = fz_new_font_from_memory(ctx, fontname, data, len, 0, 1);
@@ -465,7 +465,7 @@ index 2f5ea15f9..91be24c4a 100644
  		fontdesc->font->flags.is_serif = !!strstr(clean_name, "Times");
  	}
  
-@@ -392,6 +445,7 @@ pdf_load_substitute_font(fz_context *ctx, pdf_font_desc *fontdesc, const char *f
+@@ -409,6 +462,7 @@ pdf_load_substitute_font(fz_context *ctx, pdf_font_desc *fontdesc, const char *f
  	fontdesc->font = fz_load_system_font(ctx, fontname, bold, italic, 0);
  	if (!fontdesc->font)
  	{
@@ -473,7 +473,7 @@ index 2f5ea15f9..91be24c4a 100644
  		const unsigned char *data;
  		int len;
  
-@@ -400,6 +454,17 @@ pdf_load_substitute_font(fz_context *ctx, pdf_font_desc *fontdesc, const char *f
+@@ -417,6 +471,17 @@ pdf_load_substitute_font(fz_context *ctx, pdf_font_desc *fontdesc, const char *f
  			fz_throw(ctx, FZ_ERROR_SYNTAX, "cannot find substitute font");
  
  		fontdesc->font = fz_new_font_from_memory(ctx, fontname, data, len, 0, 1);
@@ -491,7 +491,7 @@ index 2f5ea15f9..91be24c4a 100644
  		fontdesc->font->flags.fake_bold = bold && !fontdesc->font->flags.is_bold;
  		fontdesc->font->flags.fake_italic = italic && !fontdesc->font->flags.is_italic;
  
-@@ -419,6 +484,7 @@ pdf_load_substitute_cjk_font(fz_context *ctx, pdf_font_desc *fontdesc, const cha
+@@ -436,6 +501,7 @@ pdf_load_substitute_cjk_font(fz_context *ctx, pdf_font_desc *fontdesc, const cha
  	fontdesc->font = fz_load_system_cjk_font(ctx, fontname, ros, serif);
  	if (!fontdesc->font)
  	{
@@ -499,7 +499,7 @@ index 2f5ea15f9..91be24c4a 100644
  		const unsigned char *data;
  		int size;
  		int subfont;
-@@ -429,6 +495,14 @@ pdf_load_substitute_cjk_font(fz_context *ctx, pdf_font_desc *fontdesc, const cha
+@@ -446,6 +512,14 @@ pdf_load_substitute_cjk_font(fz_context *ctx, pdf_font_desc *fontdesc, const cha
  
  		/* A glyph bbox cache is too big for CJK fonts. */
  		fontdesc->font = fz_new_font_from_memory(ctx, fontname, data, size, subfont, 0);

@@ -19,8 +19,6 @@ list(APPEND PATCH_FILES
     relink_on_xlibs_change.patch
     # Fix symbols visiblity.
     visibility.patch
-    # Expand list of supported CSS color names.
-    css_color_names.patch
 )
 
 # Remove unnecessary vendored thirdparty libraries.
@@ -32,7 +30,9 @@ list(APPEND PATCH_CMD COMMAND rm -rf
     thirdparty/harfbuzz
     thirdparty/leptonica
     thirdparty/libjpeg
-    thirdparty/mujs
+    # NOTE: We need to keep the mujs source around even though support is
+    # disabled because `regexp.c` is directly included by `fitz/regexp.c`.
+    # thirdparty/mujs
     thirdparty/tesseract
     thirdparty/zint
     thirdparty/zlib
@@ -119,9 +119,9 @@ list(APPEND BUILD_CMD COMMAND ${MAKE_CMD} libs)
 list(APPEND INSTALL_CMD COMMAND ${MAKE_CMD} DESTDIR=${STAGING_DIR} prefix=/ install-libs)
 
 external_project(
-    DOWNLOAD URL f5a19249a6ca3e04e62fc64d60ded8e2
-    https://github.com/ArtifexSoftware/mupdf-downloads/releases/download/1.26.12/mupdf-1.26.12-source.tar.lz
-    https://mupdf.com/downloads/archive/mupdf-1.26.12-source.tar.lz
+    DOWNLOAD URL 17169f89d135a9cb0de147690f982c88
+    https://github.com/ArtifexSoftware/mupdf-downloads/releases/download/1.27.2/mupdf-1.27.2-source.tar.lz
+    https://mupdf.com/downloads/archive/mupdf-1.27.2-source.tar.lz
     PATCH_FILES ${PATCH_FILES}
     PATCH_COMMAND ${PATCH_CMD}
     BUILD_COMMAND ${BUILD_CMD}

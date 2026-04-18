@@ -152,7 +152,8 @@ struct fz_stext_char {
 };
 typedef struct fz_stext_line fz_stext_line;
 struct fz_stext_line {
-  int wmode;
+  uint8_t wmode;
+  uint8_t flags;
   fz_point dir;
   fz_rect bbox;
   fz_stext_char *first_char;
@@ -186,6 +187,13 @@ struct fz_stext_block {
     struct {
       struct fz_stext_grid_positions *xs;
       struct fz_stext_grid_positions *ys;
+      struct {
+        int w;
+        int h;
+        struct {
+          unsigned int flags;
+        } info[];
+      } *info;
     } b;
   } u;
   fz_stext_block *prev;

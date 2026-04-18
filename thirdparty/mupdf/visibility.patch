@@ -1,5 +1,5 @@
 diff --git a/include/mupdf/fitz/buffer.h b/include/mupdf/fitz/buffer.h
-index 5ac949cf4..ec6740b51 100644
+index 2a52aad3e..07cf95ac9 100644
 --- a/include/mupdf/fitz/buffer.h
 +++ b/include/mupdf/fitz/buffer.h
 @@ -26,6 +26,8 @@
@@ -11,7 +11,7 @@ index 5ac949cf4..ec6740b51 100644
  /**
  	fz_buffer is a wrapper around a dynamically allocated array of
  	bytes.
-@@ -247,4 +249,6 @@ void fz_md5_buffer(fz_context *ctx, fz_buffer *buffer, unsigned char digest[16])
+@@ -252,4 +254,6 @@ void fz_md5_buffer(fz_context *ctx, fz_buffer *buffer, unsigned char digest[16])
  */
  size_t fz_buffer_extract(fz_context *ctx, fz_buffer *buf, unsigned char **data);
  
@@ -19,7 +19,7 @@ index 5ac949cf4..ec6740b51 100644
 +
  #endif
 diff --git a/include/mupdf/fitz/color.h b/include/mupdf/fitz/color.h
-index 3cf4d9325..75fe11362 100644
+index 556096e5c..ab7952dc4 100644
 --- a/include/mupdf/fitz/color.h
 +++ b/include/mupdf/fitz/color.h
 @@ -27,6 +27,8 @@
@@ -31,7 +31,7 @@ index 3cf4d9325..75fe11362 100644
  #if FZ_ENABLE_ICC
  /**
  	Opaque type for an ICC Profile.
-@@ -396,6 +398,8 @@ void fz_set_default_rgb(fz_context *ctx, fz_default_colorspaces *default_cs, fz_
+@@ -404,6 +406,8 @@ void fz_set_default_rgb(fz_context *ctx, fz_default_colorspaces *default_cs, fz_
  void fz_set_default_cmyk(fz_context *ctx, fz_default_colorspaces *default_cs, fz_colorspace *cs);
  void fz_set_default_output_intent(fz_context *ctx, fz_default_colorspaces *default_cs, fz_colorspace *cs);
  
@@ -41,7 +41,7 @@ index 3cf4d9325..75fe11362 100644
  
  struct fz_colorspace
 diff --git a/include/mupdf/fitz/context.h b/include/mupdf/fitz/context.h
-index 592f0d1db..ef4befe7c 100644
+index cce5674de..c51bbe401 100644
 --- a/include/mupdf/fitz/context.h
 +++ b/include/mupdf/fitz/context.h
 @@ -32,6 +32,8 @@
@@ -51,9 +51,9 @@ index 592f0d1db..ef4befe7c 100644
 +FZ_EXPORTS_START
 +
  typedef struct fz_font_context fz_font_context;
+ typedef struct fz_hyph_context fz_hyph_context;
  typedef struct fz_colorspace_context fz_colorspace_context;
- typedef struct fz_style_context fz_style_context;
-@@ -790,6 +792,8 @@ int fz_do_try(fz_context *ctx);
+@@ -791,6 +793,8 @@ int fz_do_try(fz_context *ctx);
  int fz_do_always(fz_context *ctx);
  int (fz_do_catch)(fz_context *ctx);
  
@@ -62,7 +62,7 @@ index 592f0d1db..ef4befe7c 100644
  #ifndef FZ_JMPBUF_ALIGN
  #define FZ_JMPBUF_ALIGN 32
  #endif
-@@ -893,6 +897,7 @@ struct fz_context
+@@ -895,6 +899,7 @@ struct fz_context
  	fz_glyph_cache *glyph_cache;
  };
  
@@ -131,7 +131,7 @@ index 853e2d5a4..a36eb3f24 100644
 +
  #endif
 diff --git a/include/mupdf/fitz/font.h b/include/mupdf/fitz/font.h
-index 55ff86185..a29181f82 100644
+index b01e53760..673475c82 100644
 --- a/include/mupdf/fitz/font.h
 +++ b/include/mupdf/fitz/font.h
 @@ -29,6 +29,8 @@
@@ -152,7 +152,7 @@ index 55ff86185..a29181f82 100644
  /* Implementation details: subject to change. */
  
  void fz_decouple_type3_font(fz_context *ctx, fz_font *font, void *t3doc);
-@@ -858,6 +862,7 @@ fz_buffer *fz_subset_cff_for_gids(fz_context *ctx, fz_buffer *orig, int *gids, i
+@@ -859,6 +863,7 @@ fz_buffer *fz_subset_cff_for_gids(fz_context *ctx, fz_buffer *orig, int *gids, i
  char *get_font_file(const char *name);
  char *fz_lookup_base14_font_from_file(fz_context *ctx, const char *name);
  char *fz_lookup_cjk_font_from_file(fz_context *ctx, int registry, int serif, int wmode);
@@ -181,7 +181,7 @@ index 2d0d11e55..fd11a2785 100644
 +
  #endif
 diff --git a/include/mupdf/fitz/image.h b/include/mupdf/fitz/image.h
-index 30083a072..6d5305683 100644
+index b2acb1c6b..ad3017e4e 100644
 --- a/include/mupdf/fitz/image.h
 +++ b/include/mupdf/fitz/image.h
 @@ -32,6 +32,8 @@
@@ -193,7 +193,7 @@ index 30083a072..6d5305683 100644
  /**
  	Images are storable objects from which we can obtain fz_pixmaps.
  	These may be implemented as simple wrappers around a pixmap, or
-@@ -422,6 +424,8 @@ void fz_set_compressed_image_buffer(fz_context *ctx, fz_compressed_image *cimg,
+@@ -429,6 +431,8 @@ void fz_set_compressed_image_buffer(fz_context *ctx, fz_compressed_image *cimg,
  fz_pixmap *fz_pixmap_image_tile(fz_context *ctx, fz_pixmap_image *cimg);
  void fz_set_pixmap_image_tile(fz_context *ctx, fz_pixmap_image *cimg, fz_pixmap *pix);
  
@@ -223,7 +223,7 @@ index 1a20a22f5..53d392fbe 100644
 +
  #endif
 diff --git a/include/mupdf/fitz/outline.h b/include/mupdf/fitz/outline.h
-index c508e8f51..679f81407 100644
+index 3ab76ad43..1afd9e2aa 100644
 --- a/include/mupdf/fitz/outline.h
 +++ b/include/mupdf/fitz/outline.h
 @@ -29,6 +29,8 @@
@@ -235,7 +235,7 @@ index c508e8f51..679f81407 100644
  /* Outline */
  
  typedef struct {
-@@ -177,6 +179,7 @@ void fz_drop_outline(fz_context *ctx, fz_outline *outline);
+@@ -184,6 +186,7 @@ void fz_drop_outline(fz_context *ctx, fz_outline *outline);
  fz_outline *
  fz_load_outline_from_iterator(fz_context *ctx, fz_outline_iterator *iter);
  
@@ -244,7 +244,7 @@ index c508e8f51..679f81407 100644
  /**
  	Implementation details.
 diff --git a/include/mupdf/fitz/pixmap.h b/include/mupdf/fitz/pixmap.h
-index 0fb82774c..ff272d062 100644
+index 02b5bbbfb..cf02945e7 100644
 --- a/include/mupdf/fitz/pixmap.h
 +++ b/include/mupdf/fitz/pixmap.h
 @@ -29,6 +29,8 @@
@@ -265,7 +265,7 @@ index 0fb82774c..ff272d062 100644
  /* Implementation details: subject to change.*/
  
  fz_pixmap *fz_alpha_from_gray(fz_context *ctx, fz_pixmap *gray);
-@@ -499,6 +503,7 @@ fz_pixmap *fz_new_pixmap_from_color_and_mask(fz_context *ctx, fz_pixmap *color,
+@@ -500,6 +504,7 @@ fz_pixmap *fz_new_pixmap_from_color_and_mask(fz_context *ctx, fz_pixmap *color,
   * to fit the clip rectangle. Pass `NULL` to the clip if you want the whole
   * pixmap scaled.
   */
@@ -316,7 +316,7 @@ index f46331dd9..64a41c173 100644
 +
  #endif
 diff --git a/include/mupdf/fitz/structured-text.h b/include/mupdf/fitz/structured-text.h
-index 77cbaaec5..abcf0247f 100644
+index 16b58f083..a9a3b17ae 100644
 --- a/include/mupdf/fitz/structured-text.h
 +++ b/include/mupdf/fitz/structured-text.h
 @@ -33,6 +33,8 @@
@@ -328,15 +328,15 @@ index 77cbaaec5..abcf0247f 100644
  /**
  	Simple text layout (for use with annotation editing primarily).
  */
-@@ -921,4 +923,6 @@ fz_classify_stext_rect(fz_context *ctx, fz_stext_page *page, fz_structure classi
- int
- fz_stext_remove_page_fill(fz_context *ctx, fz_stext_page *page);
+@@ -1243,4 +1245,6 @@ fz_flotilla_size(fz_context *ctx, fz_flotilla *flot);
+ fz_rect
+ fz_flotilla_raft_area(fz_context *ctx, fz_flotilla *flot, int i);
  
 +FZ_EXPORTS_STOP
 +
  #endif
 diff --git a/include/mupdf/fitz/util.h b/include/mupdf/fitz/util.h
-index 78326f724..84e9d47fe 100644
+index 8045a60ce..b601dec4c 100644
 --- a/include/mupdf/fitz/util.h
 +++ b/include/mupdf/fitz/util.h
 @@ -34,6 +34,8 @@
@@ -348,7 +348,7 @@ index 78326f724..84e9d47fe 100644
  /**
  	Create a display list.
  
-@@ -156,4 +158,6 @@ fz_document *fz_new_xhtml_document_from_document(fz_context *ctx, fz_document *o
+@@ -204,4 +206,6 @@ fz_document *fz_new_xhtml_document_from_document(fz_context *ctx, fz_document *o
  */
  fz_buffer *fz_new_buffer_from_page_with_format(fz_context *ctx, fz_page *page, const char *format, const char *options, fz_matrix transform, fz_cookie *cookie);
  
@@ -356,7 +356,7 @@ index 78326f724..84e9d47fe 100644
 +
  #endif
 diff --git a/include/mupdf/pdf/annot.h b/include/mupdf/pdf/annot.h
-index e159cc7b0..bc8a79788 100644
+index a9c06d953..d3c6a9900 100644
 --- a/include/mupdf/pdf/annot.h
 +++ b/include/mupdf/pdf/annot.h
 @@ -29,6 +29,8 @@
@@ -368,7 +368,7 @@ index e159cc7b0..bc8a79788 100644
  typedef struct pdf_annot pdf_annot;
  
  enum pdf_annot_type
-@@ -1012,4 +1014,6 @@ void pdf_set_annot_hidden_for_editing(fz_context *ctx, pdf_annot *annot, int hid
+@@ -1025,4 +1027,6 @@ void pdf_set_annot_hidden_for_editing(fz_context *ctx, pdf_annot *annot, int hid
   */
  int pdf_apply_redaction(fz_context *ctx, pdf_annot *annot, pdf_redact_options *opts);
  
@@ -376,7 +376,7 @@ index e159cc7b0..bc8a79788 100644
 +
  #endif
 diff --git a/include/mupdf/pdf/document.h b/include/mupdf/pdf/document.h
-index 04a5e1806..6fe04ee6f 100644
+index 4e7b90c89..08dde5055 100644
 --- a/include/mupdf/pdf/document.h
 +++ b/include/mupdf/pdf/document.h
 @@ -30,6 +30,8 @@
@@ -388,7 +388,7 @@ index 04a5e1806..6fe04ee6f 100644
  typedef struct pdf_xref pdf_xref;
  typedef struct pdf_ocg_descriptor pdf_ocg_descriptor;
  
-@@ -899,4 +901,6 @@ void pdf_drop_object_labels(fz_context *ctx, pdf_object_labels *g);
+@@ -937,4 +939,6 @@ void pdf_drop_object_labels(fz_context *ctx, pdf_object_labels *g);
  typedef void (pdf_label_object_fn)(fz_context *ctx, void *arg, const char *label);
  void pdf_label_object(fz_context *ctx, pdf_object_labels *g, int num, pdf_label_object_fn *callback, void *arg);
  
