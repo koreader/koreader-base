@@ -55,7 +55,9 @@ string(APPEND XCFLAGS
     # Disable a couple of things to save a small bit of space:
     # - builtin fonts
     # - CMYK plotter only 100 kB
+    # - hyphenation (~700 kB)
     " -DNOBUILTINFONT"
+    " -DFZ_ENABLE_HYPHEN=0"
     " -DFZ_PLOTTERS_CMYK=0"
     " -DHAVE_LIBAES=1"
     " -DHAVE_LIBARCHIVE=1"
