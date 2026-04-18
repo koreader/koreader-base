@@ -1,8 +1,8 @@
 diff --git a/include/mupdf/fitz/archive.h b/include/mupdf/fitz/archive.h
-index b169a88e8..e5fd42076 100644
+index b135b5f23..29d3d16b8 100644
 --- a/include/mupdf/fitz/archive.h
 +++ b/include/mupdf/fitz/archive.h
-@@ -314,6 +314,9 @@ fz_archive *fz_open_zip_archive(fz_context *ctx, const char *path);
+@@ -315,6 +315,9 @@ fz_archive *fz_open_zip_archive(fz_context *ctx, const char *path);
  */
  fz_archive *fz_open_zip_archive_with_stream(fz_context *ctx, fz_stream *file);
  
@@ -10,8 +10,8 @@ index b169a88e8..e5fd42076 100644
 +int fz_archive_authenticate_password(fz_context *ctx, fz_archive *zip, const char *password);
 +
  /**
- 	fz_zip_writer offers methods for creating and writing zip files.
- 	It can be seen as the reverse of the fz_archive zip
+ 	Open a zip archive from static data.
+ */
 diff --git a/source/cbz/mucbz.c b/source/cbz/mucbz.c
 index 6d1b1b242..e2f99530a 100644
 --- a/source/cbz/mucbz.c
@@ -47,7 +47,7 @@ index 6d1b1b242..e2f99530a 100644
  	fz_try(ctx)
  	{
 diff --git a/source/fitz/unzip.c b/source/fitz/unzip.c
-index 35d14fb1c..249ab0174 100644
+index 62507d316..6949c383d 100644
 --- a/source/fitz/unzip.c
 +++ b/source/fitz/unzip.c
 @@ -43,10 +43,27 @@

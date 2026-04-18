@@ -1,8 +1,8 @@
 diff --git a/Makefile b/Makefile
-index ac5f9fc9d..13253ac0b 100644
+index 9c1578b39..95ebf8ad5 100644
 --- a/Makefile
 +++ b/Makefile
-@@ -299,7 +299,7 @@ generate: source/html/css-properties.h
+@@ -330,7 +330,7 @@ generate: source/html/css-properties.h
  # --- Library ---
  
  ifeq ($(shared),yes)
