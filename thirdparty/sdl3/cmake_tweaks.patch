@@ -1,5 +1,5 @@
 diff --git a/CMakeLists.txt b/CMakeLists.txt
-index 7f4bef4fc..44f0b9a42 100644
+index b01acc3bc..fb7847def 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
 @@ -1,4 +1,4 @@
@@ -8,7 +8,7 @@ index 7f4bef4fc..44f0b9a42 100644
  
  if(NOT DEFINED CMAKE_BUILD_TYPE)
    set(cmake_build_type_undefined 1)
-@@ -4001,9 +4001,6 @@ if(SDL_SHARED)
+@@ -4012,9 +4012,6 @@ if(SDL_SHARED)
    set_property(TARGET SDL3-shared PROPERTY INTERFACE_SDL_VERSION "SDL${SDL3_VERSION_MAJOR}")
    set_property(TARGET SDL3-shared APPEND PROPERTY EXPORT_PROPERTIES "SDL_FULL_VERSION")
    set_property(TARGET SDL3-shared PROPERTY SDL_FULL_VERSION "${PROJECT_VERSION}")
