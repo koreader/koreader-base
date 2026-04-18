@@ -1,8 +1,8 @@
 diff --git a/CMakeLists.txt b/CMakeLists.txt
-index 6f3716a2a..482083323 100644
+index ca31fe0cc..3109f1366 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
-@@ -1944,7 +1944,7 @@ elseif(UNIX AND NOT APPLE AND NOT RISCOS AND NOT HAIKU)
+@@ -1953,7 +1953,7 @@ elseif(UNIX AND NOT APPLE AND NOT RISCOS AND NOT HAIKU)
  
      if(PKG_CONFIG_FOUND)
        if(SDL_DBUS)
@@ -11,7 +11,7 @@ index 6f3716a2a..482083323 100644
          if(DBUS_FOUND)
            set(HAVE_DBUS_DBUS_H TRUE)
            sdl_include_directories(PRIVATE SYSTEM ${DBUS_INCLUDE_DIRS})
-@@ -1955,7 +1955,7 @@ elseif(UNIX AND NOT APPLE AND NOT RISCOS AND NOT HAIKU)
+@@ -1964,7 +1964,7 @@ elseif(UNIX AND NOT APPLE AND NOT RISCOS AND NOT HAIKU)
        endif()
  
        if(SDL_IBUS)
