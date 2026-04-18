@@ -50,19 +50,13 @@ diff --git a/source/fitz/unzip.c b/source/fitz/unzip.c
 index 35d14fb1c..249ab0174 100644
 --- a/source/fitz/unzip.c
 +++ b/source/fitz/unzip.c
-@@ -43,10 +43,33 @@
+@@ -43,10 +43,27 @@
  
  #define ZIP_ENCRYPTED_FLAG 0x1
  
 +#ifdef HAVE_LIBAES
-+/*
-+ * Note that the original crypt.h in minizip uses unsigned long pointer to
-+ * pcrc_32_tab it will cause problem on x86_64 machine. While the crypt.h
-+ * in zlib-1.2.8 contrib minizip uses z_crc_t pointer which is determined
-+ * to unsigned int pointer on 64 bit machine.
-+ */
-+#include "contrib/minizip/crypt.h"  // from zlib-1.2.8
-+#include "aes/fileenc.h"            // from minizip-g0b46a2b
++#include "contrib/minizip/crypt.h"
++#include "aes/fileenc.h"
 +#define AES_METHOD          (99)
 +#define AES_PWVERIFYSIZE    (2)
 +#define AES_MAXSALTLENGTH   (16)
@@ -92,8 +86,8 @@ index 35d14fb1c..249ab0174 100644
 +#ifdef HAVE_LIBAES
 +	int crypted;
 +	char password[128];
-+	unsigned long keys[3];     /* keys defining the pseudo-random sequence */
-+	const z_crc_t *pcrc_32_tab;
++	uint32_t keys[3];     /* keys defining the pseudo-random sequence */
++	const uint32_t *pcrc_32_tab;
 +	unsigned long aes_encryption_mode;
 +	unsigned long aes_compression_method;
 +	unsigned long aes_version;
@@ -118,15 +112,16 @@ index 35d14fb1c..249ab0174 100644
  			zip->count++;
  		}
  	}
-@@ -435,6 +478,12 @@ static int read_zip_entry_header(fz_context *ctx, fz_zip_archive *zip, zip_entry
+@@ -435,6 +478,13 @@ static int read_zip_entry_header(fz_context *ctx, fz_zip_archive *zip, zip_entry
  	fz_stream *file = zip->super.file;
  	uint32_t sig;
  	int general, method, namelength, extralength;
-+	int crc32, modtime;
++	uint32_t crc32;
++	uint16_t modtime;
 +#ifdef HAVE_LIBAES
 +	int i, headerid, datasize, chk;
 +	unsigned char source[12];
-+	unsigned char crcbyte;
++	uint8_t crcbyte;
 +#endif
  
  	fz_seek(ctx, file, ent->offset, 0);
@@ -187,7 +182,7 @@ index 35d14fb1c..249ab0174 100644
 +			}
 +		} else {
 +			fz_seek(ctx, file, extralength, 1);
-+			zip->pcrc_32_tab = (const z_crc_t*)get_crc_table();
++			zip->pcrc_32_tab = (const uint32_t*)get_crc_table();
 +			init_keys(zip->password, zip->keys, zip->pcrc_32_tab);
 +			fz_read(ctx, file, source, 12);
 +			for (i = 0; i < 12; i++) {
