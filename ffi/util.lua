@@ -298,6 +298,30 @@ function util.removeRunInSubProcessAfterForkFunc(id)
     _run_in_subprocess_after_fork_funcs[id] = nil
 end
 
+-- Frontend can register functions to be run in the parent just before fork().
+-- Useful for stopping background threads (e.g. SDL gamepad thread) that may
+-- hold internal locks, which would cause fork()'s glibc atfork prepare handler
+-- to block indefinitely on systems with scheduling-intensive schedulers
+-- (e.g. CachyOS BORE/LAVD).
+local _run_before_fork_funcs = {}
+function util.addRunBeforeForkFunc(id, func)
+    _run_before_fork_funcs[id] = func
+end
+function util.removeRunBeforeForkFunc(id)
+    _run_before_fork_funcs[id] = nil
+end
+
+-- Frontend can register functions to be run in the parent just after fork()
+-- returns, regardless of success or failure.  Used to re-initialize subsystems
+-- that were stopped by a before-fork hook.
+local _run_after_fork_parent_funcs = {}
+function util.addRunAfterForkParentFunc(id, func)
+    _run_after_fork_parent_funcs[id] = func
+end
+function util.removeRunAfterForkParentFunc(id)
+    _run_after_fork_parent_funcs[id] = nil
+end
+
 --- Run lua code (func) in a forked subprocess
 --
 -- With with_pipe=true, sets up a pipe for communication
@@ -326,7 +350,21 @@ function util.runInSubProcess(func, with_pipe, double_fork)
             return false, "failed getting pipe read or write fd: "..ffi.string(C.strerror(ffi.errno()))
         end
     end
+    -- Run before-fork hooks in the parent.  Callers (e.g. the SDL backend) use
+    -- this to stop subsystem threads that may hold glibc malloc arena locks.
+    -- If such a thread is mid-malloc when fork() is called, glibc's atfork
+    -- prepare handler will block waiting for the lock, freezing the UI.
+    for _, f in pairs(_run_before_fork_funcs) do
+        f()
+    end
     local pid = C.fork()
+    -- Run after-fork-parent hooks immediately, before any error checking, so
+    -- that subsystems stopped above are always restarted.
+    if pid ~= 0 then
+        for _, f in pairs(_run_after_fork_parent_funcs) do
+            f()
+        end
+    end
     if pid == 0 then -- child process
         for _, f in pairs(_run_in_subprocess_after_fork_funcs) do
             f()
