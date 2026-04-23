@@ -652,6 +652,11 @@ ifndef DARWIN
   ifneq ($(TARGET), android)
     LDFLAGS += -Wl,@$(abspath $(KOR_BASE)/origin.ldflags)
   endif
+  # No code we build should need an executable stack, so disable
+  # it explicitly to avoid issues on some systems (e.g. Gentoo).
+  ifndef ANDROID
+    LDFLAGS += -Wl,-z,noexecstack
+  endif
   # In monolibtic mode on Android, we can statically link the STL.
   ifeq ($(TARGET), android)
     LDFLAGS += $(if $(MONOLIBTIC),-static-libstdc++)
