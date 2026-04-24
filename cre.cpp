@@ -2698,6 +2698,52 @@ static int getWordBoxesFromPositions(lua_State *L) {
 	return 1;
 }
 
+static int getNearestWordFromPosition(lua_State *L) {
+    CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
+    int x = luaL_checkint(L, 2);
+    int y = luaL_checkint(L, 3);
+    int direction = (int)luaL_optint(L, 4, DIR_ANY);
+
+    LVDocView *tv = doc->text_view;
+    // ldomDocument *dv = doc->dom_doc;
+
+    lvPoint pt(x, y);
+    if ( !tv->windowToDocPoint(pt, true) ) { // pullInPageArea=true
+        return 0;
+    }
+
+    ldomWordExList words;
+    LVRef<ldomXRange> range = tv->getPageDocumentRange();
+    if (!range.isNull()) {
+        words.addRangeWords(*range, true);
+        if (tv->getVisiblePageCount() > 1) { // _docview->isPageMode() &&
+            // process second page
+            int pageNumber = tv->getCurPage(true);
+            range = tv->getPageDocumentRange(pageNumber + 1);
+            if (!range.isNull())
+                words.addRangeWords(*range, true);
+        }
+    }
+    printf("x/y %d / %d\n", x, y);
+    printf("got %d words in page\n", words.length() );
+    ldomWordEx * word = words.findNearestWord(pt.x, pt.y, (MoveDirection)direction);
+    if (word) {
+        lua_createtable(L, 0, 3);
+        lua_pushstring(L, "text");
+        lua_pushstring(L, UnicodeToLocal(word->getText()).c_str());
+        lua_rawset(L, -3);
+        lua_pushstring(L, "pos0");
+        lua_pushstring(L, UnicodeToLocal(word->getRange().getStart().toString()).c_str());
+        lua_rawset(L, -3);
+        lua_pushstring(L, "pos1");
+        lua_pushstring(L, UnicodeToLocal(word->getRange().getEnd().toString()).c_str());
+        lua_rawset(L, -3);
+        return 1;
+    }
+
+    return 0;
+}
+
 static int getDocumentFileContent(lua_State *L) {
     CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
     const char* internalFilePath = luaL_checkstring(L, 2);
@@ -4402,6 +4448,7 @@ static const struct luaL_Reg credocument_meth[] = {
     {"extendXPointersToSentenceSegment", extendXPointersToSentenceSegment},
     {"getWordBoxesFromPositions", getWordBoxesFromPositions},
     {"getImageDataFromPosition", getImageDataFromPosition},
+    {"getNearestWordFromPosition", getNearestWordFromPosition},
     {"getDocumentFileContent", getDocumentFileContent},
     {"getTextFromXPointer", getTextFromXPointer},
     {"getHTMLFromXPointer", getHTMLFromXPointer},
