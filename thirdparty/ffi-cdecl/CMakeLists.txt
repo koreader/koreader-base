@@ -1,8 +1,6 @@
 # Build in source tree.
 set(BINARY_DIR ${SOURCE_DIR})
 
-list(APPEND PATCH_FILES ffi-cdecl.patch)
-
 set(MAKE_CMD make CROSSCC=${CC} CROSSCXX=${CXX} HOSTCC=${HOSTCC})
 if(EMULATE_READER)
     # Native compiler, use our own luajit.
@@ -79,9 +77,8 @@ list(APPEND INSTALL_CMD COMMAND
 list(APPEND INSTALL_CMD COMMAND chmod +x ${STAGING_DIR}/bin/ffi-cdecl)
 
 external_project(
-    DOWNLOAD GIT 712ab4cda30fb19498f18b01340c2d8862e03694
+    DOWNLOAD GIT 9c9d46a61cac1a5073c07cc5163b97e75d5b8a7e
     https://github.com/koreader/ffi-cdecl.git
-    PATCH_FILES ${PATCH_FILES}
     PATCH_COMMAND ${PATCH_CMD}
     BUILD_DEPENDS ffi-cdecl.sh.in
     BUILD_COMMAND ${BUILD_CMD}
