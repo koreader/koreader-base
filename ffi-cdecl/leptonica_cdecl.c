@@ -1,4 +1,5 @@
 // CPPFLAGS="-I/var/tmp/niluje/leptonica/src"
+#define __STDC_NO_ATOMICS__
 #include <allheaders.h>
 
 #include "ffi-cdecl.h"

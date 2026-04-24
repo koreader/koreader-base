@@ -1,3 +1,4 @@
+#define __STDC_NO_ATOMICS__
 #define K2PDFOPT_EXPORT
 #define WILLUS_EXPORT
 

@@ -245,13 +245,11 @@ set(libfbink_input_DOWNLOAD_DIR ${fbink_DOWNLOAD_DIR})
 set(libfbink_input_CMAKE_SOURCE_DIR ${fbink_CMAKE_SOURCE_DIR})
 
 # ffi-cdecl
-if(CMAKE_C_COMPILER_ID STREQUAL "GNU")
-    set(DEPENDS)
-    if(EMULATE_READER)
-        list(APPEND DEPENDS luajit)
-    endif()
-    declare_project(thirdparty/ffi-cdecl DEPENDS ${DEPENDS} EXCLUDE_FROM_ALL)
+set(DEPENDS)
+if(EMULATE_READER)
+    list(APPEND DEPENDS luajit)
 endif()
+declare_project(thirdparty/ffi-cdecl DEPENDS ${DEPENDS} EXCLUDE_FROM_ALL)
 
 # freetype
 declare_project(thirdparty/freetype2 DEPENDS brotli zlib)
@@ -567,8 +565,6 @@ add_custom_target(rm-install-stamps COMMAND rm -f ${INSTALL_STAMPS})
 
 # FFI cdecls generation. {{{
 
-if(TARGET ffi-cdecl)
-
 add_custom_target(ffi-deps)
 add_custom_target(ffi DEPENDS ffi-deps)
 
@@ -705,7 +701,7 @@ ffi_target(linux rtc_h.lua rtc_cdecl.c ${EXCLUDE_FROM_ALL})
 ffi_target(lodepng lodepng_h.lua lodepng_decl.c)
 
 # mupdf
-ffi_target(mupdf mupdf_h.lua wrap-mupdf_cdecl.c ARGS -I . -f -std=gnu11)
+ffi_target(mupdf mupdf_h.lua wrap-mupdf_cdecl.c ARGS -I .)
 
 # pocketbook
 if(POCKETBOOK)
@@ -734,8 +730,6 @@ ffi_target(zlib zlib_h.lua zlib_decl.c ARGS -d zlib)
 
 # zstd
 ffi_target(zstd zstd_h.lua zstd_decl.c ARGS -d libzstd)
-
-endif()
 
 # }}}
 
