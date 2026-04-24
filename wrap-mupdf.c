@@ -158,6 +158,50 @@ char* mupdf_error_message(fz_context *ctx) {
     return ctx->error.message;
 }
 
+fz_buffer* mupdf_new_buffer_from_story_text(fz_context *ctx, const unsigned char *data, size_t len, const char *user_css, float em) {
+    fz_buffer *input = NULL;
+    fz_buffer *output = NULL;
+    fz_output *out = NULL;
+    fz_story *story = NULL;
+    fz_xml *doc = NULL;
+
+    fz_try(ctx) {
+        input = fz_new_buffer(ctx, len);
+        fz_append_data(ctx, input, data, len);
+        story = fz_new_story(ctx, input, user_css, em, NULL);
+        doc = fz_story_document(ctx, story);
+        if (doc == NULL) {
+            fz_throw(ctx, FZ_ERROR_GENERIC, "MuPDF story did not produce an XML document");
+        }
+
+        output = fz_new_buffer(ctx, len + 256);
+        out = fz_new_output_with_buffer(ctx, output);
+        fz_write_xml(ctx, doc, out, 0);
+        fz_close_output(ctx, out);
+        fz_drop_output(ctx, out);
+        out = NULL;
+    }
+    fz_always(ctx) {
+        if (out != NULL) {
+            fz_drop_output(ctx, out);
+        }
+        if (story != NULL) {
+            fz_drop_story(ctx, story);
+        }
+        if (input != NULL) {
+            fz_drop_buffer(ctx, input);
+        }
+    }
+    fz_catch(ctx) {
+        if (output != NULL) {
+            fz_drop_buffer(ctx, output);
+            output = NULL;
+        }
+    }
+
+    return output;
+}
+
 fz_matrix *mupdf_fz_scale(fz_matrix *m, float sx, float sy) {
     *m = fz_scale(sx, sy);
     return m;
