@@ -80,7 +80,7 @@ $(CMAKE_DIR)/meson_%.ini: $(KOR_BASE)/Makefile.defs | $(CMAKE_DIR)/
 	$(call write_file,$@,$(meson_$*))
 
 # Forward unknown targets to the CMake build system.
-LEFTOVERS = $(filter-out $(PHONY) $(SOUND),$(MAKECMDGOALS))
+LEFTOVERS = $(filter-out $(PHONY) $(SOUND),$(MAKECMDGOALS) $(NINJA_GOALS))
 .PHONY: $(LEFTOVERS)
 $(BASE_PREFIX)all $(LEFTOVERS): skeleton $(BUILD_ENTRYPOINT)
 	$(if $(wildcard $(BUILD_ENTRYPOINT)),+)cd $(CMAKE_DIR) && $(strip $(NINJA) $(NINJAFLAGS) $(patsubst $(BASE_PREFIX)all,all,$@))

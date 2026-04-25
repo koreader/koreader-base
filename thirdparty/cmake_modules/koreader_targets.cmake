@@ -221,6 +221,19 @@ declare_koreader_target(
     SOURCES button-listen.c
 )
 
+# unpack
+if(NOT (ANDROID OR APPLE OR EMULATE_READER))
+    set(EXCLUDE_FROM_ALL)
+else()
+    set(EXCLUDE_FROM_ALL EXCLUDE_FROM_ALL)
+endif()
+declare_koreader_target(
+    unpack TYPE executable
+    DEPENDS libarchive::libarchive_static xz::lzma_static zlib::z_static zstd::zstd_static m
+    ${EXCLUDE_FROM_ALL}
+    SOURCES unpack.c
+)
+
 # }}}
 
 # MONOLIBTIC. {{{
@@ -238,6 +251,9 @@ if(MONOLIBTIC)
     endif()
     if(KINDLE)
         list(APPEND DEPENDS openlipclua::libopenlipclua)
+    endif()
+    if(NOT (APPLE OR EMULATE_READER))
+        list(APPEND DEPENDS xz::lzma_static)
     endif()
     declare_koreader_target(
         koreader-monolibtic TYPE library
@@ -294,6 +310,9 @@ if(MONOLIBTIC)
         if(KINDLE)
             list(APPEND CDECLS openlipclua_cdecl)
         endif()
+        if(NOT (APPLE OR EMULATE_READER))
+            list(APPEND CDECLS xz_cdecl)
+        endif()
         target_exports(koreader-monolibtic CDECLS ${CDECLS}
             crypto_decl
             freetype2_decl
@@ -313,6 +332,7 @@ if(MONOLIBTIC)
             tffi_wrap_cdecl
             turbojpeg_decl
             utf8proc_decl
+            xxhash_cdecl
             zeromq_cdecl
             zlib_decl
             zstd_decl
