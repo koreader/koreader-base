@@ -906,8 +906,8 @@ void BB_saturate_rect(BlitBuffer * restrict bb, unsigned int x, unsigned int y, 
     const int bb_rotation = GET_BB_ROTATION(bb);
     unsigned int rx, ry, rw, rh;
 
-    if (saturation != saturation) {
-        saturation = 1.0;
+    if (saturation == 1.0 || w == 0 || h == 0) {
+        return;
     }
 
     switch (bb_rotation) {
@@ -941,10 +941,6 @@ void BB_saturate_rect(BlitBuffer * restrict bb, unsigned int x, unsigned int y, 
         saturation = 0.0;
     } else if (saturation >= 2.0) {
         saturation = 2.0;
-    }
-
-    if (saturation == 1.0 || w == 0 || h == 0) {
-        return;
     }
 
     switch (bb_type) {

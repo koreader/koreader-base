@@ -1660,16 +1660,13 @@ end
 
 function BB_mt.__index:adjustSaturation(saturation)
     saturation = tonumber(saturation) or 1.0
-    if saturation ~= saturation then
-        saturation = 1.0
+    if saturation == 1.0 then
+        return
     end
     if saturation < 0.0 then
         saturation = 0.0
     elseif saturation > 2.0 then
         saturation = 2.0
-    end
-    if saturation == 1.0 then
-        return
     end
 
     local bbtype = self:getType()
