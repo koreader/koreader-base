@@ -14,8 +14,8 @@ describe("Blitbuffer unit tests", function()
 
         it("should desaturate and saturate color pixels", function()
             local bb = Blitbuffer.new(1, 1, Blitbuffer.TYPE_BBRGB32)
-            bb:setPixel(0, 0, Blitbuffer.ColorRGB32(0xE0, 0x40, 0x20, 0x7F))
-            local original = bb:getPixel(0, 0)
+            local original = Blitbuffer.ColorRGB32(0xE0, 0x40, 0x20, 0x7F)
+            bb:setPixel(0, 0, original)
             local original_spread = math.max(original.r, original.g, original.b) - math.min(original.r, original.g, original.b)
 
             bb:adjustSaturation(0.2)
