@@ -38,6 +38,59 @@ describe("Blitbuffer unit tests", function()
             bb:adjustSaturation(0.2)
             assert.are.equal(0xAA, bb:getPixel(0, 0).a)
         end)
+
+        it("should work correctly on rotated buffers", function()
+            local width, height = 4, 8
+            local original_color = Blitbuffer.ColorRGB32(0xE0, 0x40, 0x20, 0xFF)
+            local original_spread = math.max(original_color.r, original_color.g, original_color.b)
+                                  - math.min(original_color.r, original_color.g, original_color.b)
+
+            for rotation = 0, 3 do
+                local bb = Blitbuffer.new(width, height, Blitbuffer.TYPE_BBRGB32)
+                bb:setRotation(rotation)
+
+                local w = rotation % 2 == 1 and height or width
+                local h = rotation % 2 == 1 and width or height
+
+                for y = 0, h - 1 do
+                    for x = 0, w - 1 do
+                        bb:setPixel(x, y, original_color)
+                    end
+                end
+
+                bb:adjustSaturation(0.2)
+
+                for y = 0, h - 1 do
+                    for x = 0, w - 1 do
+                        local px = bb:getPixel(x, y)
+                        local spread = math.max(px.r, px.g, px.b)
+                                     - math.min(px.r, px.g, px.b)
+                        assert.is_true(spread < original_spread,
+                            string.format("rotation=%d pixel(%d,%d) spread %d not < %d",
+                                          rotation, x, y, spread, original_spread))
+                    end
+                end
+
+                for y = 0, h - 1 do
+                    for x = 0, w - 1 do
+                        bb:setPixel(x, y, original_color)
+                    end
+                end
+
+                bb:adjustSaturation(2.0)
+
+                for y = 0, h - 1 do
+                    for x = 0, w - 1 do
+                        local px = bb:getPixel(x, y)
+                        local spread = math.max(px.r, px.g, px.b)
+                                     - math.min(px.r, px.g, px.b)
+                        assert.is_true(spread > original_spread,
+                            string.format("rotation=%d pixel(%d,%d) spread %d not > %d",
+                                          rotation, x, y, spread, original_spread))
+                    end
+                end
+            end
+        end)
     end)
 
     describe("Color conversion", function()
