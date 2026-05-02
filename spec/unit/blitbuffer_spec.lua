@@ -3,6 +3,43 @@ require("ffi_wrapper")
 local Blitbuffer = require("ffi/blitbuffer")
 
 describe("Blitbuffer unit tests", function()
+    describe("Saturation transform", function()
+        it("should preserve neutral saturation exactly", function()
+            local bb = Blitbuffer.new(1, 1, Blitbuffer.TYPE_BBRGB24)
+            bb:setPixel(0, 0, Blitbuffer.ColorRGB24(0x80, 0x40, 0x20))
+            local original = bb:getPixel(0, 0)
+            bb:adjustSaturation(1.0)
+            assert.are.same(original, bb:getPixel(0, 0))
+        end)
+
+        it("should desaturate and saturate color pixels", function()
+            local bb = Blitbuffer.new(1, 1, Blitbuffer.TYPE_BBRGB32)
+            bb:setPixel(0, 0, Blitbuffer.ColorRGB32(0xE0, 0x40, 0x20, 0x7F))
+            local original = bb:getPixel(0, 0)
+            local original_spread = math.max(original.r, original.g, original.b) - math.min(original.r, original.g, original.b)
+
+            bb:adjustSaturation(0.2)
+            local desaturated = bb:getPixel(0, 0)
+            local desaturated_spread = math.max(desaturated.r, desaturated.g, desaturated.b) - math.min(desaturated.r, desaturated.g, desaturated.b)
+            assert.is_true(desaturated_spread < original_spread)
+            assert.are.equal(original.alpha, desaturated.alpha)
+
+            bb:setPixel(0, 0, original)
+            bb:adjustSaturation(2.0)
+            local saturated = bb:getPixel(0, 0)
+            local saturated_spread = math.max(saturated.r, saturated.g, saturated.b) - math.min(saturated.r, saturated.g, saturated.b)
+            assert.is_true(saturated_spread > original_spread)
+            assert.are.equal(original.alpha, saturated.alpha)
+        end)
+
+        it("should ignore grayscale buffers", function()
+            local bb = Blitbuffer.new(1, 1, Blitbuffer.TYPE_BB8)
+            bb:fill(Blitbuffer.Color8(0xAA))
+            bb:adjustSaturation(0.2)
+            assert.are.equal(0xAA, bb:getPixel(0, 0).a)
+        end)
+    end)
+
     describe("Color conversion", function()
         -- 0xFF = 0b11111111
         -- 0xAA = 0b10101010
