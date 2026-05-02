@@ -904,37 +904,9 @@ void BB_blend_RGB32_multiply_rect(BlitBuffer * restrict bb, unsigned int x, unsi
 void BB_saturate_rect(BlitBuffer * restrict bb, unsigned int x, unsigned int y, unsigned int w, unsigned int h, double saturation) {
     const int bb_type = GET_BB_TYPE(bb);
     const int bb_rotation = GET_BB_ROTATION(bb);
-    unsigned int rx, ry, rw, rh;
 
     if (saturation == 1.0 || w == 0 || h == 0) {
         return;
-    }
-
-    switch (bb_rotation) {
-        case 0:
-            rx = x;
-            ry = y;
-            rw = w;
-            rh = h;
-            break;
-        case 1:
-            rx = bb->w - (y + h);
-            ry = x;
-            rw = h;
-            rh = w;
-            break;
-        case 2:
-            rx = bb->w - (x + w);
-            ry = bb->h - (y + h);
-            rw = w;
-            rh = h;
-            break;
-        case 3:
-            rx = y;
-            ry = bb->h - (x + w);
-            rw = h;
-            rh = w;
-            break;
     }
 
     if (saturation <= 0.0) {
@@ -948,8 +920,8 @@ void BB_saturate_rect(BlitBuffer * restrict bb, unsigned int x, unsigned int y, 
         case TYPE_BB8A:
             return;
         case TYPE_BBRGB16:
-            for (unsigned int j = ry; j < ry + rh; j++) {
-                for (unsigned int i = rx; i < rx + rw; i++) {
+            for (unsigned int j = y; j < y + h; j++) {
+                for (unsigned int i = x; i < x + w; i++) {
                     ColorRGB16 * restrict dstptr;
                     BB_GET_PIXEL(bb, bb_rotation, ColorRGB16, i, j, &dstptr);
                     const uint8_t r = ColorRGB16_GetR(dstptr->v);
@@ -964,8 +936,8 @@ void BB_saturate_rect(BlitBuffer * restrict bb, unsigned int x, unsigned int y, 
             }
             break;
         case TYPE_BBRGB24:
-            for (unsigned int j = ry; j < ry + rh; j++) {
-                for (unsigned int i = rx; i < rx + rw; i++) {
+            for (unsigned int j = y; j < y + h; j++) {
+                for (unsigned int i = x; i < x + w; i++) {
                     ColorRGB24 * restrict dstptr;
                     BB_GET_PIXEL(bb, bb_rotation, ColorRGB24, i, j, &dstptr);
                     const uint8_t gray = (uint8_t) RGB_To_A(dstptr->r, dstptr->g, dstptr->b);
@@ -976,8 +948,8 @@ void BB_saturate_rect(BlitBuffer * restrict bb, unsigned int x, unsigned int y, 
             }
             break;
         case TYPE_BBRGB32:
-            for (unsigned int j = ry; j < ry + rh; j++) {
-                for (unsigned int i = rx; i < rx + rw; i++) {
+            for (unsigned int j = y; j < y + h; j++) {
+                for (unsigned int i = x; i < x + w; i++) {
                     ColorRGB32 * restrict dstptr;
                     BB_GET_PIXEL(bb, bb_rotation, ColorRGB32, i, j, &dstptr);
                     const uint8_t gray = (uint8_t) RGB_To_A(dstptr->r, dstptr->g, dstptr->b);
