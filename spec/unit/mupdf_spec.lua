@@ -70,6 +70,7 @@ describe("mupdf module", function()
             annotation_quadpoints = ffi.new("fz_quad[1]", {{
                 { 70,  930, 510,  930 },
                 { 510,  970, 70,  970 }
+
             }})
             doc1 = M.openDocument(sample_pdf)
             assert.is_not_nil(doc1)
@@ -222,11 +223,21 @@ describe("mupdf module", function()
             end)
         end)
     end)
+
     describe("image API", function()
         it("should render an image", function()
             local img = M.renderImageFile(test_img)
             assert.is_not_nil(img)
             img:free()
         end)
+    end)
+
+    it("should adjust saturation", function()
+        local img = M.renderImageFile(test_img)
+        local original = img:getPixel(50, 50):getColorRGB24()
+        img:adjustSaturation(1.6)
+        local saturated = img:getPixel(50, 50):getColorRGB24()
+        assert.True(original ~= saturated)
+        img:free()
     end)
 end)
