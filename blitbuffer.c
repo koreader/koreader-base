@@ -909,11 +909,7 @@ void BB_saturate_rect(BlitBuffer * restrict bb, unsigned int x, unsigned int y, 
         return;
     }
 
-    if (saturation <= 0.0) {
-        saturation = 0.0;
-    } else if (saturation >= 2.0) {
-        saturation = 2.0;
-    }
+    saturation = MAX(0.0, MIN(saturation, 2.0));
 
     switch (bb_type) {
         case TYPE_BB8:
