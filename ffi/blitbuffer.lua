@@ -1659,15 +1659,11 @@ function BB4_mt.__index:invertRect(x, y, w, h)
 end
 
 function BB_mt.__index:adjustSaturation(saturation)
-    saturation = tonumber(saturation) or 1.0
+    saturation = saturation or 1.0
     if saturation == 1.0 then
         return
     end
-    if saturation < 0.0 then
-        saturation = 0.0
-    elseif saturation > 2.0 then
-        saturation = 2.0
-    end
+    saturation = math.max(0.0, math.min(saturation, 2.0))
 
     local bbtype = self:getType()
     if bbtype == TYPE_BB8 or bbtype == TYPE_BB8A or bbtype == TYPE_BB4 then
