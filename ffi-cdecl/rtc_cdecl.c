@@ -14,6 +14,7 @@ cdecl_const(RTC_WKALM_SET)
 cdecl_const(RTC_WKALM_RD)
 cdecl_const(RTC_RD_TIME)
 
+cdecl_type(__time_t)
 cdecl_type(time_t)
 cdecl_struct(tm)
 cdecl_func(time)

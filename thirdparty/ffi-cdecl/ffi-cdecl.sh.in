@@ -125,7 +125,6 @@ if [[ "${output}" != '-' ]]; then
 fi
 
 printf -- '-- Automatically generated with ffi-cdecl.\n\n'
-# shellcheck disable=SC2001
-sed 's/ __attribute__((visibility("default")));$/;/' <<<"${result}"
+printf '%s\n' "${result}"
 
 # vim: sw=4

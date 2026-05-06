@@ -3,14 +3,14 @@
 
 #include "ffi-cdecl.h"
 
-cdecl_c99_type(Uint64, uint64_t)
-cdecl_c99_type(Sint64, int64_t)
-cdecl_c99_type(Uint32, uint32_t)
-cdecl_c99_type(Sint32, int32_t)
-cdecl_c99_type(Uint16, uint16_t)
-cdecl_c99_type(Sint16, int16_t)
-cdecl_c99_type(Uint8, uint8_t)
-cdecl_c99_type(Sint8, int8_t)
+cdecl_type(Uint64)
+cdecl_type(Sint64)
+cdecl_type(Uint32)
+cdecl_type(Sint32)
+cdecl_type(Uint16)
+cdecl_type(Sint16)
+cdecl_type(Uint8)
+cdecl_type(Sint8)
 
 cdecl_const(SDL_BUTTON_LEFT)
 cdecl_const(SDL_BUTTON_RIGHT)
@@ -75,6 +75,7 @@ cdecl_type(SDL_Texture)
 cdecl_type(SDL_TextureAccess)
 cdecl_type(SDL_TouchID)
 cdecl_type(SDL_Window)
+cdecl_type(SDL_WindowFlags)
 cdecl_type(SDL_WindowID)
 
 cdecl_struct(SDL_Finger)

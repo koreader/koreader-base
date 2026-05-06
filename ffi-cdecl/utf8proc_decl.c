@@ -2,9 +2,9 @@
 
 #include "ffi-cdecl.h"
 
-cdecl_c99_type(utf8proc_uint8_t, uint8_t);
-cdecl_c99_type(utf8proc_int32_t, int32_t);
-cdecl_c99_type(utf8proc_ssize_t, ssize_t);
+cdecl_type(utf8proc_uint8_t);
+cdecl_type(utf8proc_int32_t);
+cdecl_type(utf8proc_ssize_t);
 
 cdecl_func(utf8proc_encode_char);
 cdecl_func(utf8proc_iterate);
