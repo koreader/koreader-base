@@ -223,10 +223,15 @@ local pen_button_state = {
     [C.BTN_STYLUS] = false,
     [C.BTN_STYLUS2] = false,
 }
+local pen_tool_state = {
+    [C.BTN_TOOL_PEN] = false,
+    [C.BTN_TOOL_RUBBER] = false,
+}
 
 local SDL_TOUCH_MOUSEID = 0xFFFFFFFF -- ((SDL_MouseID)-1), generated as signed -1 in our cdefs.
 local SDL_PEN_MOUSEID = 0xFFFFFFFE -- ((SDL_MouseID)-2), not generated in our cdefs.
 local SDL_PEN_SLOT = 4
+local TOOL_TYPE_FINGER = 0
 local TOOL_TYPE_PEN = 1
 local TOOL_TYPE_ERASER = 2
 local SDL_PEN_INPUT_DOWN = bit.lshift(1, 0)
@@ -273,12 +278,39 @@ local function syncPenButtons(pen_state)
     setPenButtonState(C.BTN_STYLUS2, hasPenFlag(pen_state, SDL_PEN_INPUT_BUTTON_2))
 end
 
-local function genPenToolEvent(tool, down)
-    genEmuEvent(C.EV_KEY, tool == TOOL_TYPE_ERASER and C.BTN_TOOL_RUBBER or C.BTN_TOOL_PEN, down and 1 or 0)
+local function getPenToolKey(tool)
+    return tool == TOOL_TYPE_ERASER and C.BTN_TOOL_RUBBER or C.BTN_TOOL_PEN
+end
+
+local function setPenToolState(tool, down)
+    down = not not down
+    local code = getPenToolKey(tool)
+    if down then
+        for active_code, active in pairs(pen_tool_state) do
+            if active_code ~= code and active then
+                pen_tool_state[active_code] = false
+                genEmuEvent(C.EV_KEY, active_code, 0)
+            end
+        end
+    end
+    if pen_tool_state[code] == down then
+        return
+    end
+    pen_tool_state[code] = down
+    genEmuEvent(C.EV_KEY, code, down and 1 or 0)
+end
+
+local function clearPenToolState()
+    for code, active in pairs(pen_tool_state) do
+        if active then
+            pen_tool_state[code] = false
+            genEmuEvent(C.EV_KEY, code, 0)
+        end
+    end
 end
 
 local function genPenDownEvent(slot, tracking_id, tool, x, y)
-    genPenToolEvent(tool, true)
+    setPenToolState(tool, true)
     genEmuEvent(C.EV_ABS, C.ABS_MT_SLOT, slot)
     genEmuEvent(C.EV_ABS, C.ABS_MT_TOOL_TYPE, tool)
     genEmuEvent(C.EV_ABS, C.ABS_MT_TRACKING_ID, tracking_id)
@@ -294,7 +326,6 @@ local function genPenUpEvent(slot, tool, x, y)
     genEmuEvent(C.EV_ABS, C.ABS_MT_POSITION_X, x)
     genEmuEvent(C.EV_ABS, C.ABS_MT_POSITION_Y, y)
     genEmuEvent(C.EV_SYN, C.SYN_REPORT, 0)
-    genPenToolEvent(tool, false)
 end
 
 local function genPenMoveEvent(slot, tool, x, y)
@@ -305,24 +336,76 @@ local function genPenMoveEvent(slot, tool, x, y)
     genEmuEvent(C.EV_SYN, C.SYN_REPORT, 0)
 end
 
+local function genPenHoverEvent(slot, tool, x, y)
+    genEmuEvent(C.EV_ABS, C.ABS_MT_SLOT, slot)
+    genEmuEvent(C.EV_ABS, C.ABS_MT_TOOL_TYPE, tool)
+    genEmuEvent(C.EV_ABS, C.ABS_MT_TRACKING_ID, -1)
+    genEmuEvent(C.EV_ABS, C.ABS_MT_POSITION_X, x)
+    genEmuEvent(C.EV_ABS, C.ABS_MT_POSITION_Y, y)
+    genEmuEvent(C.EV_SYN, C.SYN_REPORT, 0)
+end
+
 local function getPenTrackingID(pen_id)
     return pen_id ~= 0 and pen_id or SDL_PEN_SLOT
+end
+
+local function getPenPointer(pen_id)
+    if not pen_pointers[pen_id] then
+        pen_pointers[pen_id] = {
+            down = false,
+            tracking_id = getPenTrackingID(pen_id),
+            tool = TOOL_TYPE_PEN,
+        }
+    end
+    return pen_pointers[pen_id]
+end
+
+local function beginPenProximity(pen_id, tool, explicit)
+    local pointer = getPenPointer(pen_id)
+    pointer.in_proximity = true
+    pointer.explicit_proximity = pointer.explicit_proximity or explicit
+    pointer.tool = tool or pointer.tool or TOOL_TYPE_PEN
+    setPenToolState(pointer.tool, true)
+    return pointer
+end
+
+local function endImplicitPenProximity(pen_id)
+    local pointer = pen_pointers[pen_id]
+    if pointer and not pointer.down and not pointer.explicit_proximity then
+        pen_pointers[pen_id] = nil
+        clearPenToolState()
+    end
+end
+
+local function endPenProximity(pen_id)
+    local pointer = pen_pointers[pen_id]
+    if pointer and pointer.down then
+        genPenUpEvent(SDL_PEN_SLOT, pointer.tool or TOOL_TYPE_PEN, pointer.x or 0, pointer.y or 0)
+    end
+    if pointer and pointer.x and pointer.y then
+        genPenHoverEvent(SDL_PEN_SLOT, TOOL_TYPE_FINGER, pointer.x, pointer.y)
+    end
+    pen_pointers[pen_id] = nil
+    clearPenToolState()
+end
+
+local function updatePenHover(pen_id, tool, x, y)
+    local pointer = beginPenProximity(pen_id, tool, false)
+    pointer.tool = tool
+    pointer.x = x
+    pointer.y = y
+    genPenHoverEvent(SDL_PEN_SLOT, tool, x, y)
 end
 
 local function updatePenContact(pen_id, pen_state, tool, x, y)
     local pointer = pen_pointers[pen_id]
     local is_down = hasPenFlag(pen_state, SDL_PEN_INPUT_DOWN) or (pointer and pointer.down)
     if not is_down then
+        updatePenHover(pen_id, tool, x, y)
         return
     end
 
-    if not pointer then
-        pointer = {
-            down = false,
-            tracking_id = getPenTrackingID(pen_id),
-        }
-        pen_pointers[pen_id] = pointer
-    end
+    pointer = beginPenProximity(pen_id, tool, false)
 
     if pointer.down then
         genPenMoveEvent(SDL_PEN_SLOT, tool, x, y)
@@ -501,7 +584,9 @@ function S.waitForEvent(sec, usec)
     elseif event.type == SDL.SDL_EVENT_TEXT_INPUT then
         genEmuEvent(C.EV_SDL, SDL.SDL_EVENT_TEXT_INPUT, ffi.string(event.text.text))
     elseif event.type == SDL.SDL_EVENT_PEN_PROXIMITY_IN then
+        local pen_id = tonumber(event.pproximity.which)
         suppressMousePointersAfterPenEvent()
+        beginPenProximity(pen_id, TOOL_TYPE_PEN, true)
     elseif event.type == SDL.SDL_EVENT_PEN_DOWN then
         local pen_id = tonumber(event.ptouch.which)
         local pen_state = bit.bor(tonumber(event.ptouch.pen_state) or 0, event.ptouch.down and SDL_PEN_INPUT_DOWN or 0)
@@ -520,6 +605,7 @@ function S.waitForEvent(sec, usec)
         suppressMousePointersAfterPenEvent()
         syncPenButtons(pen_state)
         endPenContact(pen_id, tool, x, y)
+        endImplicitPenProximity(pen_id)
     elseif event.type == SDL.SDL_EVENT_PEN_MOTION then
         local pen_id = tonumber(event.pmotion.which)
         local pen_state = tonumber(event.pmotion.pen_state) or 0
@@ -536,6 +622,11 @@ function S.waitForEvent(sec, usec)
         updatePenContact(pen_id, pen_state, tool, event.paxis.x * scale_x, event.paxis.y * scale_y)
     elseif event.type == SDL.SDL_EVENT_PEN_BUTTON_DOWN
         or event.type == SDL.SDL_EVENT_PEN_BUTTON_UP then
+        local pen_id = tonumber(event.pbutton.which)
+        local pen_state = tonumber(event.pbutton.pen_state) or 0
+        local tool = getPenTool(false, pen_state)
+        local x = event.pbutton.x * scale_x
+        local y = event.pbutton.y * scale_y
         local button_code
         suppressMousePointersAfterPenEvent()
         if event.pbutton.button == 1 then
@@ -544,14 +635,11 @@ function S.waitForEvent(sec, usec)
             button_code = C.BTN_STYLUS2
         end
         setPenButtonState(button_code, event.type == SDL.SDL_EVENT_PEN_BUTTON_DOWN)
+        updatePenContact(pen_id, pen_state, tool, x, y)
     elseif event.type == SDL.SDL_EVENT_PEN_PROXIMITY_OUT then
         local pen_id = tonumber(event.pproximity.which)
-        local pointer = pen_pointers[pen_id]
-        if pointer and pointer.down then
-            endPenContact(pen_id, pointer.tool, pointer.x, pointer.y)
-        end
-        pen_pointers[pen_id] = nil
         suppressMousePointersAfterPenEvent()
+        endPenProximity(pen_id)
         syncPenButtons(0)
     elseif event.type == SDL.SDL_EVENT_MOUSE_MOTION and shouldHandleMousePointer(event.motion.which)
         or event.type == SDL.SDL_EVENT_FINGER_MOTION then
