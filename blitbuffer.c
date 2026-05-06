@@ -3060,7 +3060,6 @@ void BB_paint_rounded_corner_noAA(BlitBuffer * restrict bb, unsigned int off_x, 
     // r2 ... radius of inner circle; might be zero
     const unsigned int r2 = r - bw;
 
-    int x2 = 0;
     int y2 = r2;
 
     int f2 = 1 - r2;
@@ -3085,7 +3084,6 @@ void BB_paint_rounded_corner_noAA(BlitBuffer * restrict bb, unsigned int off_x, 
                 ddF2_y += 2;
                 f2 += ddF2_y;
             }
-            ++x2;
             ddF2_x += 2;
             f2 += ddF2_x + 1;
         }
