@@ -217,7 +217,12 @@ end
 local pointers = {}
 local finger_pointers = {}
 local pen_pointers = {}
-local pen_button_state = {}
+local suppress_mouse_until_sec = 0
+local suppress_mouse_until_usec = 0
+local pen_button_state = {
+    [C.BTN_STYLUS] = false,
+    [C.BTN_STYLUS2] = false,
+}
 
 local SDL_TOUCH_MOUSEID = 0xFFFFFFFF -- ((SDL_MouseID)-1), generated as signed -1 in our cdefs.
 local SDL_PEN_MOUSEID = 0xFFFFFFFE -- ((SDL_MouseID)-2), not generated in our cdefs.
@@ -234,6 +239,15 @@ local function isMousePointer(which)
     return pointer_id ~= SDL_TOUCH_MOUSEID and pointer_id ~= SDL_PEN_MOUSEID
 end
 
+local function shouldHandleMousePointer(which)
+    if not isMousePointer(which) then
+        return false
+    end
+    local now_sec, now_usec = util.gettime()
+    return now_sec > suppress_mouse_until_sec
+        or (now_sec == suppress_mouse_until_sec and now_usec >= suppress_mouse_until_usec)
+end
+
 local function hasPenFlag(pen_state, flag)
     return bit.band(tonumber(pen_state) or 0, flag) ~= 0
 end
@@ -246,6 +260,7 @@ local function getPenTool(eraser, pen_state)
 end
 
 local function setPenButtonState(code, down)
+    down = not not down
     if not code or pen_button_state[code] == down then
         return
     end
@@ -334,11 +349,13 @@ local function endPenContact(pen_id, tool, x, y)
     pointer.y = y or pointer.y
 end
 
-local function setPointerDownState(slot, down)
+local function setPointerDownState(slot, down, x, y)
     if not pointers[slot] then
-        pointers[slot] = { down = down }
+        pointers[slot] = { down = down, x = x, y = y }
     else
         pointers[slot].down = down
+        pointers[slot].x = x or pointers[slot].x
+        pointers[slot].y = y or pointers[slot].y
     end
 end
 
@@ -373,6 +390,27 @@ local function genTouchUpEvent(event, slot, x, y)
     genEmuEvent(C.EV_ABS, C.ABS_MT_POSITION_X, x)
     genEmuEvent(C.EV_ABS, C.ABS_MT_POSITION_Y, y)
     genEmuEvent(C.EV_SYN, C.SYN_REPORT, 0)
+end
+
+local function releaseMousePointers()
+    for slot, pointer in pairs(pointers) do
+        if pointer.down then
+            genTouchUpEvent(nil, slot, pointer.x or 0, pointer.y or 0)
+        end
+    end
+    pointers = {}
+end
+
+local function suppressMousePointersAfterPenEvent()
+    local sec, usec = util.gettime()
+    usec = usec + 350000
+    if usec >= 1000000 then
+        sec = sec + 1
+        usec = usec - 1000000
+    end
+    suppress_mouse_until_sec = sec
+    suppress_mouse_until_usec = usec
+    releaseMousePointers()
 end
 
 local function genTouchMoveEvent(event, slot, x, y)
@@ -462,12 +500,15 @@ function S.waitForEvent(sec, usec)
         genEmuEvent(C.EV_KEY, event.key.key, 0)
     elseif event.type == SDL.SDL_EVENT_TEXT_INPUT then
         genEmuEvent(C.EV_SDL, SDL.SDL_EVENT_TEXT_INPUT, ffi.string(event.text.text))
+    elseif event.type == SDL.SDL_EVENT_PEN_PROXIMITY_IN then
+        suppressMousePointersAfterPenEvent()
     elseif event.type == SDL.SDL_EVENT_PEN_DOWN then
         local pen_id = tonumber(event.ptouch.which)
         local pen_state = bit.bor(tonumber(event.ptouch.pen_state) or 0, event.ptouch.down and SDL_PEN_INPUT_DOWN or 0)
         local tool = getPenTool(event.ptouch.eraser, pen_state)
         local x = event.ptouch.x * scale_x
         local y = event.ptouch.y * scale_y
+        suppressMousePointersAfterPenEvent()
         syncPenButtons(pen_state)
         updatePenContact(pen_id, pen_state, tool, x, y)
     elseif event.type == SDL.SDL_EVENT_PEN_UP then
@@ -476,23 +517,27 @@ function S.waitForEvent(sec, usec)
         local tool = getPenTool(event.ptouch.eraser, pen_state)
         local x = event.ptouch.x * scale_x
         local y = event.ptouch.y * scale_y
+        suppressMousePointersAfterPenEvent()
         syncPenButtons(pen_state)
         endPenContact(pen_id, tool, x, y)
     elseif event.type == SDL.SDL_EVENT_PEN_MOTION then
         local pen_id = tonumber(event.pmotion.which)
         local pen_state = tonumber(event.pmotion.pen_state) or 0
         local tool = getPenTool(false, pen_state)
+        suppressMousePointersAfterPenEvent()
         syncPenButtons(pen_state)
         updatePenContact(pen_id, pen_state, tool, event.pmotion.x * scale_x, event.pmotion.y * scale_y)
     elseif event.type == SDL.SDL_EVENT_PEN_AXIS then
         local pen_id = tonumber(event.paxis.which)
         local pen_state = tonumber(event.paxis.pen_state) or 0
         local tool = getPenTool(false, pen_state)
+        suppressMousePointersAfterPenEvent()
         syncPenButtons(pen_state)
         updatePenContact(pen_id, pen_state, tool, event.paxis.x * scale_x, event.paxis.y * scale_y)
     elseif event.type == SDL.SDL_EVENT_PEN_BUTTON_DOWN
         or event.type == SDL.SDL_EVENT_PEN_BUTTON_UP then
         local button_code
+        suppressMousePointersAfterPenEvent()
         if event.pbutton.button == 1 then
             button_code = C.BTN_STYLUS
         elseif event.pbutton.button == 2 then
@@ -506,8 +551,9 @@ function S.waitForEvent(sec, usec)
             endPenContact(pen_id, pointer.tool, pointer.x, pointer.y)
         end
         pen_pointers[pen_id] = nil
+        suppressMousePointersAfterPenEvent()
         syncPenButtons(0)
-    elseif event.type == SDL.SDL_EVENT_MOUSE_MOTION and isMousePointer(event.motion.which)
+    elseif event.type == SDL.SDL_EVENT_MOUSE_MOTION and shouldHandleMousePointer(event.motion.which)
         or event.type == SDL.SDL_EVENT_FINGER_MOTION then
         local is_finger = event.type == SDL.SDL_EVENT_FINGER_MOTION
         local slot
@@ -518,14 +564,20 @@ function S.waitForEvent(sec, usec)
         else
             if pointers[0] and pointers[0].down then
                 slot = 0 -- left mouse button down
-                genTouchMoveEvent(event, slot, event.motion.x * scale_x, event.motion.y * scale_y)
+                local x = event.motion.x * scale_x
+                local y = event.motion.y * scale_y
+                setPointerDownState(slot, true, x, y)
+                genTouchMoveEvent(event, slot, x, y)
             end
             if pointers[1] and pointers[1].down then
                 slot = 1 -- right mouse button down
-                genTouchMoveEvent(event, slot, event.motion.x * scale_x, event.motion.y * scale_y)
+                local x = event.motion.x * scale_x
+                local y = event.motion.y * scale_y
+                setPointerDownState(slot, true, x, y)
+                genTouchMoveEvent(event, slot, x, y)
             end
         end
-    elseif event.type == SDL.SDL_EVENT_MOUSE_BUTTON_UP and isMousePointer(event.button.which)
+    elseif event.type == SDL.SDL_EVENT_MOUSE_BUTTON_UP and shouldHandleMousePointer(event.button.which)
         or event.type == SDL.SDL_EVENT_FINGER_UP then
         local is_finger = event.type == SDL.SDL_EVENT_FINGER_UP
         local slot
@@ -536,6 +588,9 @@ function S.waitForEvent(sec, usec)
         else -- SDL_BUTTON_LEFT
             slot = 0
         end
+        if not is_finger and not (pointers[slot] and pointers[slot].down) then
+            return false, C.EINTR
+        end
 
         local x = is_finger and event.tfinger.x * S.w or event.button.x * scale_x
         local y = is_finger and event.tfinger.y * S.h or event.button.y * scale_y
@@ -545,7 +600,7 @@ function S.waitForEvent(sec, usec)
         else
             pointers[slot] = nil
         end
-    elseif event.type == SDL.SDL_EVENT_MOUSE_BUTTON_DOWN and isMousePointer(event.button.which)
+    elseif event.type == SDL.SDL_EVENT_MOUSE_BUTTON_DOWN and shouldHandleMousePointer(event.button.which)
         or event.type == SDL.SDL_EVENT_FINGER_DOWN then
         local is_finger = event.type == SDL.SDL_EVENT_FINGER_DOWN
         if not is_finger and not (event.button.button == SDL.SDL_BUTTON_LEFT or event.button.button == SDL.SDL_BUTTON_RIGHT) then
@@ -564,7 +619,9 @@ function S.waitForEvent(sec, usec)
         end
         local x = is_finger and event.tfinger.x * S.w or event.button.x * scale_x
         local y = is_finger and event.tfinger.y * S.h or event.button.y * scale_y
-        setPointerDownState(slot, true)
+        if not is_finger then
+            setPointerDownState(slot, true, x, y)
+        end
         genTouchDownEvent(event, slot, x, y)
     elseif event.type == SDL.SDL_EVENT_MOUSE_WHEEL then
         genEmuEvent(C.EV_SDL, SDL.SDL_EVENT_MOUSE_WHEEL, event.wheel)
