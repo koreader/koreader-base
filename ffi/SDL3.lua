@@ -1,5 +1,5 @@
 --[[--
-Module for interfacing SDL 2.0 video/input facilities
+Module for interfacing SDL 3.0 video/input facilities
 
 This module is intended to provide input/output facilities on a
 typical desktop (rather than a dedicated e-ink reader, for which
