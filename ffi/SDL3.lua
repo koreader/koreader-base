@@ -265,7 +265,6 @@ local function getPenTool(eraser, pen_state)
 end
 
 local function setPenButtonState(code, down)
-    down = not not down
     if not code or pen_button_state[code] == down then
         return
     end
@@ -283,7 +282,6 @@ local function getPenToolKey(tool)
 end
 
 local function setPenToolState(tool, down)
-    down = not not down
     local code = getPenToolKey(tool)
     if down then
         for active_code, active in pairs(pen_tool_state) do
