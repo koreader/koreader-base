@@ -36,7 +36,7 @@ executors:
 
   emu_clang_ninja:
     docker:
-      - image: koreader/kobase-clang:0.4.6-22.04
+      - image: benoitpierre/kobase-clang:0.4.7-22.04
     environment:
       <<: *EMU_ENV_LST
       KODEBUG: ""
@@ -48,7 +48,7 @@ executors:
 
   android-arm: &ANDROID_EXE
     docker:
-      - image: koreader/koandroid:0.9.6-22.04
+      - image: benoitpierre/koandroid:0.9.7-22.04
     environment:
       TARGET: "android"
 
