@@ -1,8 +1,6 @@
 -- Automatically generated with ffi-cdecl.
 
-local ffi = require("ffi")
-
-ffi.cdef[[
+require("ffi").cdef[[
 enum fx_type {
   fx_mask = 11,
   fx_buf_is_mask = 14,
@@ -17,38 +15,35 @@ enum fx_type {
   fx_buffer_display_partial = 100,
   fx_buffer_display_full = 101,
 };
+typedef enum fx_type fx_type;
 struct update_area_t {
-  int x1;
-  int y1;
-  int x2;
-  int y2;
-  enum fx_type which_fx;
+  int x1, y1, x2, y2;
+  fx_type which_fx;
   uint8_t *buffer;
 };
 enum orientation_t {
-  orientation_portrait = 0,
-  orientation_portrait_upside_down = 1,
-  orientation_landscape = 2,
-  orientation_landscape_upside_down = 3,
+  orientation_portrait,
+  orientation_portrait_upside_down,
+  orientation_landscape,
+  orientation_landscape_upside_down,
 };
+typedef enum orientation_t orientation_t;
 enum einkfb_events_t {
   einkfb_event_update_display = 0,
-  einkfb_event_update_display_area = 1,
-  einkfb_event_blank_display = 2,
-  einkfb_event_rotate_display = 3,
+  einkfb_event_update_display_area,
+  einkfb_event_blank_display,
+  einkfb_event_rotate_display,
   einkfb_event_null = -1,
 };
+typedef enum einkfb_events_t einkfb_events_t;
 struct einkfb_event_t {
-  enum einkfb_events_t event;
-  enum fx_type update_mode;
-  int x1;
-  int y1;
-  int x2;
-  int y2;
-  enum orientation_t orientation;
+  einkfb_events_t event;
+  fx_type update_mode;
+  int x1, y1, x2, y2;
+  orientation_t orientation;
 };
-static const int FBIO_EINK_UPDATE_DISPLAY = 18139;
-static const int FBIO_EINK_UPDATE_DISPLAY_AREA = 18141;
-static const int FBIO_EINK_SET_DISPLAY_ORIENTATION = 18160;
-static const int FBIO_EINK_GET_DISPLAY_ORIENTATION = 18161;
+static const unsigned FBIO_EINK_UPDATE_DISPLAY = 18139;
+static const unsigned FBIO_EINK_UPDATE_DISPLAY_AREA = 18141;
+static const unsigned FBIO_EINK_SET_DISPLAY_ORIENTATION = 18160;
+static const unsigned FBIO_EINK_GET_DISPLAY_ORIENTATION = 18161;
 ]]

@@ -1,7 +1,5 @@
 #include <utf8proc.h>
 
-#include "ffi-cdecl.h"
-
 cdecl_type(utf8proc_uint8_t);
 cdecl_type(utf8proc_int32_t);
 cdecl_type(utf8proc_ssize_t);

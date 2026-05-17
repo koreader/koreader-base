@@ -1,7 +1,5 @@
 #include <gif_lib.h>
 
-#include "ffi-cdecl.h"
-
 cdecl_const(GIF_OK)
 cdecl_const(GIF_ERROR)
 

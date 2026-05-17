@@ -1,7 +1,5 @@
 #include <turbojpeg.h>
 
-#include "ffi-cdecl.h"
-
 cdecl_enum(TJINIT)
 cdecl_enum(TJSAMP)
 cdecl_enum(TJPF)

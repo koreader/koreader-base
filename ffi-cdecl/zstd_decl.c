@@ -1,7 +1,5 @@
 #include <zstd.h>
 
-#include "ffi-cdecl.h"
-
 cdecl_const(ZSTD_CLEVEL_DEFAULT)
 
 cdecl_func(ZSTD_compress)

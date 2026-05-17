@@ -6,10 +6,10 @@
 #include "koptocr.h"
 #include "koptreflow.h"
 
-#include "ffi-cdecl.h"
-
 cdecl_type(BBox)
 cdecl_type(BOXA)
+cdecl_type(K2PAGEBREAKMARK)
+cdecl_type(K2PAGEBREAKMARKS)
 cdecl_type(NUMA)
 cdecl_type(PIX)
 cdecl_type(POINT2D)

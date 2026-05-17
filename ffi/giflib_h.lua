@@ -1,17 +1,13 @@
 -- Automatically generated with ffi-cdecl.
 
-local ffi = require("ffi")
-
-ffi.cdef[[
-static const int GIF_OK = 1;
-static const int GIF_ERROR = 0;
+require("ffi").cdef[[
+static const unsigned GIF_OK = 1;
+static const unsigned GIF_ERROR = 0;
 typedef int GifWord;
 typedef unsigned char GifByteType;
 typedef struct GifColorType GifColorType;
 struct GifColorType {
-  GifByteType Red;
-  GifByteType Green;
-  GifByteType Blue;
+  GifByteType Red, Green, Blue;
 };
 typedef struct ColorMapObject ColorMapObject;
 struct ColorMapObject {
@@ -22,10 +18,7 @@ struct ColorMapObject {
 };
 typedef struct GifImageDesc GifImageDesc;
 struct GifImageDesc {
-  GifWord Left;
-  GifWord Top;
-  GifWord Width;
-  GifWord Height;
+  GifWord Left, Top, Width, Height;
   bool Interlace;
   ColorMapObject *ColorMap;
 };
@@ -51,8 +44,7 @@ struct SavedImage {
 };
 typedef struct GifFileType GifFileType;
 struct GifFileType {
-  GifWord SWidth;
-  GifWord SHeight;
+  GifWord SWidth, SHeight;
   GifWord SColorResolution;
   GifWord SBackGroundColor;
   GifByteType AspectByte;
@@ -66,17 +58,17 @@ struct GifFileType {
   void *UserData;
   void *Private;
 };
-GifFileType *DGifOpenFileName(const char *, int *);
-GifFileType *DGifOpenFileHandle(int, int *);
-int DGifCloseFile(GifFileType *, int *);
-int DGifSlurp(GifFileType *);
-const char *GifErrorString(int);
-int DGifSavedExtensionToGCB(GifFileType *, int, GraphicsControlBlock *);
-static const int DISPOSAL_UNSPECIFIED = 0;
-static const int DISPOSE_DO_NOT = 1;
-static const int DISPOSE_BACKGROUND = 2;
-static const int DISPOSE_PREVIOUS = 3;
+GifFileType *DGifOpenFileName(const char *GifFileName, int *Error);
+GifFileType *DGifOpenFileHandle(int GifFileHandle, int *Error);
+int DGifCloseFile(GifFileType *GifFile, int *ErrorCode);
+int DGifSlurp(GifFileType *GifFile);
+const char *GifErrorString(int ErrorCode);
+int DGifSavedExtensionToGCB(GifFileType *GifFile, int ImageIndex, GraphicsControlBlock *GCB);
+static const unsigned DISPOSAL_UNSPECIFIED = 0;
+static const unsigned DISPOSE_DO_NOT = 1;
+static const unsigned DISPOSE_BACKGROUND = 2;
+static const unsigned DISPOSE_PREVIOUS = 3;
 static const int NO_TRANSPARENT_COLOR = -1;
 typedef int (*InputFunc)(GifFileType *, GifByteType *, int);
-GifFileType *DGifOpen(void *, InputFunc, int *);
+GifFileType *DGifOpen(void *userPtr, InputFunc readFunc, int *Error);
 ]]

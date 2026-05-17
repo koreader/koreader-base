@@ -38,8 +38,6 @@
 #include <netinet/ip_icmp.h>
 #include <errno.h>
 
-#include "ffi-cdecl.h"
-
 cdecl_const(EPERM)
 cdecl_const(EINTR)
 cdecl_const(EAGAIN)

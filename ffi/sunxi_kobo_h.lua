@@ -1,8 +1,6 @@
 -- Automatically generated with ffi-cdecl.
 
-local ffi = require("ffi")
-
-ffi.cdef[[
+require("ffi").cdef[[
 struct area_info {
   unsigned int x_top;
   unsigned int y_top;
@@ -10,139 +8,139 @@ struct area_info {
   unsigned int y_bottom;
 };
 enum eink_update_mode {
-  EINK_INIT_MODE = 1,
-  EINK_DU_MODE = 2,
-  EINK_GC16_MODE = 4,
-  EINK_GC4_MODE = 8,
-  EINK_A2_MODE = 16,
-  EINK_GL16_MODE = 32,
-  EINK_GLR16_MODE = 64,
-  EINK_GLD16_MODE = 128,
-  EINK_GU16_MODE = 132,
-  EINK_GCK16_MODE = 144,
-  EINK_GLK16_MODE = 148,
-  EINK_CLEAR_MODE = 136,
-  EINK_GC4L_MODE = 140,
-  EINK_GCC16_MODE = 160,
-  EINK_PARTIAL_MODE = 1024,
-  EINK_AUTO_MODE = 32768,
-  EINK_NEGATIVE_MODE = 65536,
-  EINK_REGAL_MODE = 524288,
-  EINK_GAMMA_CORRECT = 2097152,
-  EINK_MONOCHROME = 4194304,
-  EINK_DITHERING_Y1 = 25165824,
-  EINK_DITHERING_Y4 = 41943040,
-  EINK_DITHERING_SIMPLE = 75497472,
-  EINK_DITHERING_NTX_Y1 = 142606336,
-  EINK_NO_MERGE = 2147483648,
+  EINK_INIT_MODE = 0b00000000000000000000000000000001,
+  EINK_DU_MODE = 0b00000000000000000000000000000010,
+  EINK_GC16_MODE = 0b00000000000000000000000000000100,
+  EINK_GC4_MODE = 0b00000000000000000000000000001000,
+  EINK_A2_MODE = 0b00000000000000000000000000010000,
+  EINK_GL16_MODE = 0b00000000000000000000000000100000,
+  EINK_GLR16_MODE = 0b00000000000000000000000001000000,
+  EINK_GLD16_MODE = 0b00000000000000000000000010000000,
+  EINK_GU16_MODE = 0b00000000000000000000000010000100,
+  EINK_GCK16_MODE = 0b00000000000000000000000010010000,
+  EINK_GLK16_MODE = 0b00000000000000000000000010010100,
+  EINK_CLEAR_MODE = 0b00000000000000000000000010001000,
+  EINK_GC4L_MODE = 0b00000000000000000000000010001100,
+  EINK_GCC16_MODE = 0b00000000000000000000000010100000,
+  EINK_PARTIAL_MODE = 0b00000000000000000000010000000000,
+  EINK_AUTO_MODE = 0b00000000000000001000000000000000,
+  EINK_NEGATIVE_MODE = 0b00000000000000010000000000000000,
+  EINK_REGAL_MODE = 0b00000000000010000000000000000000,
+  EINK_GAMMA_CORRECT = 0b00000000001000000000000000000000,
+  EINK_MONOCHROME = 0b00000000010000000000000000000000,
+  EINK_DITHERING_Y1 = 0b00000001100000000000000000000000,
+  EINK_DITHERING_Y4 = 0b00000010100000000000000000000000,
+  EINK_DITHERING_SIMPLE = 0b00000100100000000000000000000000,
+  EINK_DITHERING_NTX_Y1 = 0b00001000100000000000000000000000,
+  EINK_NO_MERGE = 0b10000000000000000000000000000000,
 };
 struct disp_rectsz {
   unsigned int width;
   unsigned int height;
 };
 enum disp_pixel_format {
-  DISP_FORMAT_ARGB_8888 = 0,
-  DISP_FORMAT_ABGR_8888 = 1,
-  DISP_FORMAT_RGBA_8888 = 2,
-  DISP_FORMAT_BGRA_8888 = 3,
-  DISP_FORMAT_XRGB_8888 = 4,
-  DISP_FORMAT_XBGR_8888 = 5,
-  DISP_FORMAT_RGBX_8888 = 6,
-  DISP_FORMAT_BGRX_8888 = 7,
-  DISP_FORMAT_RGB_888 = 8,
-  DISP_FORMAT_BGR_888 = 9,
-  DISP_FORMAT_RGB_565 = 10,
-  DISP_FORMAT_BGR_565 = 11,
-  DISP_FORMAT_ARGB_4444 = 12,
-  DISP_FORMAT_ABGR_4444 = 13,
-  DISP_FORMAT_RGBA_4444 = 14,
-  DISP_FORMAT_BGRA_4444 = 15,
-  DISP_FORMAT_ARGB_1555 = 16,
-  DISP_FORMAT_ABGR_1555 = 17,
-  DISP_FORMAT_RGBA_5551 = 18,
-  DISP_FORMAT_BGRA_5551 = 19,
-  DISP_FORMAT_A2R10G10B10 = 20,
-  DISP_FORMAT_A2B10G10R10 = 21,
-  DISP_FORMAT_R10G10B10A2 = 22,
-  DISP_FORMAT_B10G10R10A2 = 23,
-  DISP_FORMAT_YUV444_I_AYUV = 64,
-  DISP_FORMAT_YUV444_I_VUYA = 65,
-  DISP_FORMAT_YUV422_I_YVYU = 66,
-  DISP_FORMAT_YUV422_I_YUYV = 67,
-  DISP_FORMAT_YUV422_I_UYVY = 68,
-  DISP_FORMAT_YUV422_I_VYUY = 69,
-  DISP_FORMAT_YUV444_P = 70,
-  DISP_FORMAT_YUV422_P = 71,
-  DISP_FORMAT_YUV420_P = 72,
-  DISP_FORMAT_YUV411_P = 73,
-  DISP_FORMAT_YUV422_SP_UVUV = 74,
-  DISP_FORMAT_YUV422_SP_VUVU = 75,
-  DISP_FORMAT_YUV420_SP_UVUV = 76,
-  DISP_FORMAT_YUV420_SP_VUVU = 77,
-  DISP_FORMAT_YUV411_SP_UVUV = 78,
-  DISP_FORMAT_YUV411_SP_VUVU = 79,
-  DISP_FORMAT_8BIT_GRAY = 80,
-  DISP_FORMAT_YUV444_I_AYUV_10BIT = 81,
-  DISP_FORMAT_YUV444_I_VUYA_10BIT = 82,
-  DISP_FORMAT_YUV422_I_YVYU_10BIT = 83,
-  DISP_FORMAT_YUV422_I_YUYV_10BIT = 84,
-  DISP_FORMAT_YUV422_I_UYVY_10BIT = 85,
-  DISP_FORMAT_YUV422_I_VYUY_10BIT = 86,
-  DISP_FORMAT_YUV444_P_10BIT = 87,
-  DISP_FORMAT_YUV422_P_10BIT = 88,
-  DISP_FORMAT_YUV420_P_10BIT = 89,
-  DISP_FORMAT_YUV411_P_10BIT = 90,
-  DISP_FORMAT_YUV422_SP_UVUV_10BIT = 91,
-  DISP_FORMAT_YUV422_SP_VUVU_10BIT = 92,
-  DISP_FORMAT_YUV420_SP_UVUV_10BIT = 93,
-  DISP_FORMAT_YUV420_SP_VUVU_10BIT = 94,
-  DISP_FORMAT_YUV411_SP_UVUV_10BIT = 95,
-  DISP_FORMAT_YUV411_SP_VUVU_10BIT = 96,
-  DISP_FORMAT_MAX = 97,
+  DISP_FORMAT_ARGB_8888 = 0x00,
+  DISP_FORMAT_ABGR_8888 = 0x01,
+  DISP_FORMAT_RGBA_8888 = 0x02,
+  DISP_FORMAT_BGRA_8888 = 0x03,
+  DISP_FORMAT_XRGB_8888 = 0x04,
+  DISP_FORMAT_XBGR_8888 = 0x05,
+  DISP_FORMAT_RGBX_8888 = 0x06,
+  DISP_FORMAT_BGRX_8888 = 0x07,
+  DISP_FORMAT_RGB_888 = 0x08,
+  DISP_FORMAT_BGR_888 = 0x09,
+  DISP_FORMAT_RGB_565 = 0x0a,
+  DISP_FORMAT_BGR_565 = 0x0b,
+  DISP_FORMAT_ARGB_4444 = 0x0c,
+  DISP_FORMAT_ABGR_4444 = 0x0d,
+  DISP_FORMAT_RGBA_4444 = 0x0e,
+  DISP_FORMAT_BGRA_4444 = 0x0f,
+  DISP_FORMAT_ARGB_1555 = 0x10,
+  DISP_FORMAT_ABGR_1555 = 0x11,
+  DISP_FORMAT_RGBA_5551 = 0x12,
+  DISP_FORMAT_BGRA_5551 = 0x13,
+  DISP_FORMAT_A2R10G10B10 = 0x14,
+  DISP_FORMAT_A2B10G10R10 = 0x15,
+  DISP_FORMAT_R10G10B10A2 = 0x16,
+  DISP_FORMAT_B10G10R10A2 = 0x17,
+  DISP_FORMAT_YUV444_I_AYUV = 0x40,
+  DISP_FORMAT_YUV444_I_VUYA = 0x41,
+  DISP_FORMAT_YUV422_I_YVYU = 0x42,
+  DISP_FORMAT_YUV422_I_YUYV = 0x43,
+  DISP_FORMAT_YUV422_I_UYVY = 0x44,
+  DISP_FORMAT_YUV422_I_VYUY = 0x45,
+  DISP_FORMAT_YUV444_P = 0x46,
+  DISP_FORMAT_YUV422_P = 0x47,
+  DISP_FORMAT_YUV420_P = 0x48,
+  DISP_FORMAT_YUV411_P = 0x49,
+  DISP_FORMAT_YUV422_SP_UVUV = 0x4a,
+  DISP_FORMAT_YUV422_SP_VUVU = 0x4b,
+  DISP_FORMAT_YUV420_SP_UVUV = 0x4c,
+  DISP_FORMAT_YUV420_SP_VUVU = 0x4d,
+  DISP_FORMAT_YUV411_SP_UVUV = 0x4e,
+  DISP_FORMAT_YUV411_SP_VUVU = 0x4f,
+  DISP_FORMAT_8BIT_GRAY = 0x50,
+  DISP_FORMAT_YUV444_I_AYUV_10BIT = 0x51,
+  DISP_FORMAT_YUV444_I_VUYA_10BIT = 0x52,
+  DISP_FORMAT_YUV422_I_YVYU_10BIT = 0x53,
+  DISP_FORMAT_YUV422_I_YUYV_10BIT = 0x54,
+  DISP_FORMAT_YUV422_I_UYVY_10BIT = 0x55,
+  DISP_FORMAT_YUV422_I_VYUY_10BIT = 0x56,
+  DISP_FORMAT_YUV444_P_10BIT = 0x57,
+  DISP_FORMAT_YUV422_P_10BIT = 0x58,
+  DISP_FORMAT_YUV420_P_10BIT = 0x59,
+  DISP_FORMAT_YUV411_P_10BIT = 0x5a,
+  DISP_FORMAT_YUV422_SP_UVUV_10BIT = 0x5b,
+  DISP_FORMAT_YUV422_SP_VUVU_10BIT = 0x5c,
+  DISP_FORMAT_YUV420_SP_UVUV_10BIT = 0x5d,
+  DISP_FORMAT_YUV420_SP_VUVU_10BIT = 0x5e,
+  DISP_FORMAT_YUV411_SP_UVUV_10BIT = 0x5f,
+  DISP_FORMAT_YUV411_SP_VUVU_10BIT = 0x60,
+  DISP_FORMAT_MAX,
 };
 enum disp_color_space {
-  DISP_UNDEF = 0,
-  DISP_UNDEF_F = 1,
-  DISP_GBR = 256,
-  DISP_BT709 = 257,
-  DISP_FCC = 258,
-  DISP_BT470BG = 259,
-  DISP_BT601 = 260,
-  DISP_SMPTE240M = 261,
-  DISP_YCGCO = 262,
-  DISP_BT2020NC = 263,
-  DISP_BT2020C = 264,
-  DISP_GBR_F = 512,
-  DISP_BT709_F = 513,
-  DISP_FCC_F = 514,
-  DISP_BT470BG_F = 515,
-  DISP_BT601_F = 516,
-  DISP_SMPTE240M_F = 517,
-  DISP_YCGCO_F = 518,
-  DISP_BT2020NC_F = 519,
-  DISP_BT2020C_F = 520,
-  DISP_RESERVED = 768,
-  DISP_RESERVED_F = 769,
+  DISP_UNDEF = 0x00,
+  DISP_UNDEF_F = 0x01,
+  DISP_GBR = 0x100,
+  DISP_BT709 = 0x101,
+  DISP_FCC = 0x102,
+  DISP_BT470BG = 0x103,
+  DISP_BT601 = 0x104,
+  DISP_SMPTE240M = 0x105,
+  DISP_YCGCO = 0x106,
+  DISP_BT2020NC = 0x107,
+  DISP_BT2020C = 0x108,
+  DISP_GBR_F = 0x200,
+  DISP_BT709_F = 0x201,
+  DISP_FCC_F = 0x202,
+  DISP_BT470BG_F = 0x203,
+  DISP_BT601_F = 0x204,
+  DISP_SMPTE240M_F = 0x205,
+  DISP_YCGCO_F = 0x206,
+  DISP_BT2020NC_F = 0x207,
+  DISP_BT2020C_F = 0x208,
+  DISP_RESERVED = 0x300,
+  DISP_RESERVED_F = 0x301,
 };
 struct disp_rect64 {
-  long long int x;
-  long long int y;
-  long long int width;
-  long long int height;
+  long long x;
+  long long y;
+  long long width;
+  long long height;
 };
 enum disp_buffer_flags {
   DISP_BF_NORMAL = 0,
-  DISP_BF_STEREO_TB = 1,
-  DISP_BF_STEREO_FP = 2,
-  DISP_BF_STEREO_SSH = 4,
-  DISP_BF_STEREO_SSF = 8,
-  DISP_BF_STEREO_LI = 16,
-  DISP_BF_STEREO_2D_DEPTH = 32,
+  DISP_BF_STEREO_TB = 1 << 0,
+  DISP_BF_STEREO_FP = 1 << 1,
+  DISP_BF_STEREO_SSH = 1 << 2,
+  DISP_BF_STEREO_SSF = 1 << 3,
+  DISP_BF_STEREO_LI = 1 << 4,
+  DISP_BF_STEREO_2D_DEPTH = 1 << 5,
 };
 enum disp_scan_flags {
   DISP_SCAN_PROGRESSIVE = 0,
-  DISP_SCAN_INTERLACED_ODD_FLD_FIRST = 1,
-  DISP_SCAN_INTERLACED_EVEN_FLD_FIRST = 2,
+  DISP_SCAN_INTERLACED_ODD_FLD_FIRST = 1 << 0,
+  DISP_SCAN_INTERLACED_EVEN_FLD_FIRST = 1 << 1,
 };
 enum disp_layer_mode {
   LAYER_MODE_BUFFER = 0,
@@ -155,42 +153,42 @@ struct disp_rect {
   unsigned int height;
 };
 enum disp_3d_out_mode {
-  DISP_3D_OUT_MODE_CI_1 = 5,
-  DISP_3D_OUT_MODE_CI_2 = 6,
-  DISP_3D_OUT_MODE_CI_3 = 7,
-  DISP_3D_OUT_MODE_CI_4 = 8,
-  DISP_3D_OUT_MODE_LIRGB = 9,
-  DISP_3D_OUT_MODE_TB = 0,
-  DISP_3D_OUT_MODE_FP = 1,
-  DISP_3D_OUT_MODE_SSF = 2,
-  DISP_3D_OUT_MODE_SSH = 3,
-  DISP_3D_OUT_MODE_LI = 4,
-  DISP_3D_OUT_MODE_FA = 10,
+  DISP_3D_OUT_MODE_CI_1 = 0x5,
+  DISP_3D_OUT_MODE_CI_2 = 0x6,
+  DISP_3D_OUT_MODE_CI_3 = 0x7,
+  DISP_3D_OUT_MODE_CI_4 = 0x8,
+  DISP_3D_OUT_MODE_LIRGB = 0x9,
+  DISP_3D_OUT_MODE_TB = 0x0,
+  DISP_3D_OUT_MODE_FP = 0x1,
+  DISP_3D_OUT_MODE_SSF = 0x2,
+  DISP_3D_OUT_MODE_SSH = 0x3,
+  DISP_3D_OUT_MODE_LI = 0x4,
+  DISP_3D_OUT_MODE_FA = 0xa,
 };
 enum disp_eotf {
-  DISP_EOTF_RESERVED = 0,
-  DISP_EOTF_BT709 = 1,
-  DISP_EOTF_UNDEF = 2,
-  DISP_EOTF_GAMMA22 = 4,
-  DISP_EOTF_GAMMA28 = 5,
-  DISP_EOTF_BT601 = 6,
-  DISP_EOTF_SMPTE240M = 7,
-  DISP_EOTF_LINEAR = 8,
-  DISP_EOTF_LOG100 = 9,
-  DISP_EOTF_LOG100S10 = 10,
-  DISP_EOTF_IEC61966_2_4 = 11,
-  DISP_EOTF_BT1361 = 12,
-  DISP_EOTF_IEC61966_2_1 = 13,
-  DISP_EOTF_BT2020_0 = 14,
-  DISP_EOTF_BT2020_1 = 15,
-  DISP_EOTF_SMPTE2084 = 16,
-  DISP_EOTF_SMPTE428_1 = 17,
-  DISP_EOTF_ARIB_STD_B67 = 18,
+  DISP_EOTF_RESERVED = 0x000,
+  DISP_EOTF_BT709 = 0x001,
+  DISP_EOTF_UNDEF = 0x002,
+  DISP_EOTF_GAMMA22 = 0x004,
+  DISP_EOTF_GAMMA28 = 0x005,
+  DISP_EOTF_BT601 = 0x006,
+  DISP_EOTF_SMPTE240M = 0x007,
+  DISP_EOTF_LINEAR = 0x008,
+  DISP_EOTF_LOG100 = 0x009,
+  DISP_EOTF_LOG100S10 = 0x00a,
+  DISP_EOTF_IEC61966_2_4 = 0x00b,
+  DISP_EOTF_BT1361 = 0x00c,
+  DISP_EOTF_IEC61966_2_1 = 0X00d,
+  DISP_EOTF_BT2020_0 = 0x00e,
+  DISP_EOTF_BT2020_1 = 0x00f,
+  DISP_EOTF_SMPTE2084 = 0x010,
+  DISP_EOTF_SMPTE428_1 = 0x011,
+  DISP_EOTF_ARIB_STD_B67 = 0x012,
 };
 enum disp_atw_mode {
-  NORMAL_MODE = 0,
-  LEFT_RIGHT_MODE = 1,
-  UP_DOWN_MODE = 2,
+  NORMAL_MODE,
+  LEFT_RIGHT_MODE,
+  UP_DOWN_MODE,
 };
 struct disp_atw_info {
   bool used;
@@ -239,29 +237,29 @@ struct disp_layer_config2 {
   unsigned int channel;
   unsigned int layer_id;
 };
-static const int DISP_EINK_UPDATE2 = 1030;
-static const int DISP_EINK_WAIT_BEFORE_LCD_INT_COMPLETE = 16402;
-static const int DISP_EINK_SET_UPDATE_CONTROL = 16403;
-static const int DISP_EINK_WAIT_FRAME_SYNC_COMPLETE = 16404;
-static const int DISP_EINK_SET_NTX_HANDWRITE_ONOFF = 16405;
-static const int DISP_EINK_SET_WAIT_MODE_ONOFF = 16406;
+static const unsigned DISP_EINK_UPDATE2 = 1030;
+static const unsigned DISP_EINK_WAIT_BEFORE_LCD_INT_COMPLETE = 16402;
+static const unsigned DISP_EINK_SET_UPDATE_CONTROL = 16403;
+static const unsigned DISP_EINK_WAIT_FRAME_SYNC_COMPLETE = 16404;
+static const unsigned DISP_EINK_SET_NTX_HANDWRITE_ONOFF = 16405;
+static const unsigned DISP_EINK_SET_WAIT_MODE_ONOFF = 16406;
 typedef struct {
-  long unsigned int u0;
-  long unsigned int u1;
-  long unsigned int u2;
-  long unsigned int u3;
-  long unsigned int u4;
-  long unsigned int u5;
-  long unsigned int u6;
+  unsigned long int u0;
+  unsigned long int u1;
+  unsigned long int u2;
+  unsigned long int u3;
+  unsigned long int u4;
+  unsigned long int u5;
+  unsigned long int u6;
 } sunxi_disp_raw_ioctl;
 typedef struct {
   struct area_info *area;
-  long unsigned int layer_num;
-  long unsigned int update_mode;
+  unsigned long int layer_num;
+  unsigned long int update_mode;
   struct disp_layer_config2 *lyr_cfg2;
   unsigned int *frame_id;
   uint32_t *rotate;
-  long unsigned int cfa_use;
+  unsigned long int cfa_use;
 } sunxi_disp_eink_update2;
 typedef struct {
   bool enable;
@@ -276,7 +274,7 @@ typedef struct {
   bool enable;
 } sunxi_disp_eink_set_wait_mode_onoff;
 struct disp_fb_info {
-  long long unsigned int addr[3];
+  unsigned long long addr[3];
   struct disp_rectsz size[3];
   unsigned int align[3];
   enum disp_pixel_format format;
@@ -309,21 +307,21 @@ struct disp_layer_config {
 };
 typedef struct {
   struct area_info *area;
-  long unsigned int layer_num;
-  long unsigned int update_mode;
+  unsigned long int layer_num;
+  unsigned long int update_mode;
   struct disp_layer_config *lyr_cfg;
-  long unsigned int u4;
-  long unsigned int rotate;
-  long unsigned int cfa_use;
+  unsigned long int u4;
+  unsigned long int rotate;
+  unsigned long int cfa_use;
 } sunxi_disp_eink_update;
 typedef struct {
-  long unsigned int temp;
+  unsigned long int temp;
 } sunxi_disp_eink_set_temp;
 typedef struct {
-  long unsigned int skip;
+  unsigned long int skip;
 } sunxi_disp_eink_overlap_skip;
 typedef struct {
-  long unsigned int count;
+  unsigned long int count;
 } sunxi_disp_eink_set_gc_count;
 struct cfa_enable {
   bool bg_enable;
@@ -335,12 +333,12 @@ typedef struct {
 typedef struct {
   int screen_id;
   struct disp_layer_config2 *lyr_cfg2;
-  long unsigned int layer_num;
+  unsigned long int layer_num;
 } sunxi_disp_layer_get_config2;
 typedef struct {
   int screen_id;
   struct disp_layer_config *lyr_cfg;
-  long unsigned int layer_num;
+  unsigned long int layer_num;
 } sunxi_disp_layer_get_config;
 typedef struct {
   int screen_id;

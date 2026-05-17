@@ -1,8 +1,6 @@
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_main.h>
 
-#include "ffi-cdecl.h"
-
 cdecl_type(Uint64)
 cdecl_type(Sint64)
 cdecl_type(Uint32)
@@ -54,6 +52,7 @@ cdecl_type(SDL_FRect)
 cdecl_type(SDL_Finger)
 cdecl_type(SDL_FingerID)
 cdecl_type(SDL_Gamepad)
+cdecl_type(SDL_InitFlags)
 cdecl_type(SDL_JoystickID)
 cdecl_type(SDL_KeyboardID)
 cdecl_type(SDL_Keycode)

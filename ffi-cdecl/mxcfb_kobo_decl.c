@@ -3,8 +3,6 @@
 #include "include/mxcfb-kobo.h"
 #include "include/mtk-kobo.h"
 
-#include "ffi-cdecl.h"
-
 cdecl_const(UPDATE_MODE_PARTIAL)
 cdecl_const(UPDATE_MODE_FULL)
 

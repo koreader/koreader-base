@@ -3,7 +3,6 @@
 #include <harfbuzz/hb.h>
 #include <harfbuzz/hb-ft.h>
 #include <harfbuzz/hb-ot.h>
-#include "ffi-cdecl.h"
 
 // The few bits we actually rely on for ffi/harfbuzz.lua
 cdecl_type(hb_codepoint_t)
