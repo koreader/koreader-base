@@ -1,7 +1,5 @@
 #include <sys/inotify.h>
 
-#include "ffi-cdecl.h"
-
 cdecl_const(IN_ACCESS)
 cdecl_const(IN_ATTRIB)
 cdecl_const(IN_CLOSE_WRITE)

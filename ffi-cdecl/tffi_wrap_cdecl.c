@@ -1,8 +1,6 @@
 #include "http-parser/http_parser.h"
 #include "turbo_ffi_wrap.h"
 
-#include "ffi-cdecl.h"
-
 cdecl_func(http_body_is_final)
 cdecl_func(http_errno_description)
 cdecl_func(http_errno_name)

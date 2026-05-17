@@ -3,8 +3,6 @@
 #include <time.h>
 #include <sys/time.h>
 
-#include "ffi-cdecl.h"
-
 cdecl_struct(rtc_time)
 cdecl_struct(rtc_wkalrm)
 

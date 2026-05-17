@@ -32,7 +32,7 @@ else()
     #set(INPUT_TARGET inputlib LINUX=1)
 endif()
 
-list(APPEND PATCH_FILES cdecl_c99_type_begone.patch)
+list(APPEND PATCH_FILES cdecl_c99_type_begone.patch new_ffi-cdecl.patch)
 
 list(APPEND BUILD_CMD COMMAND make CROSS_TC=${CHOST})
 append_autotools_vars(BUILD_CMD)

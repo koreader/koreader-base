@@ -1,8 +1,6 @@
 #include <tree_sitter/api.h>
 #include <tree_sitter/tree-sitter-c.h>
 
-#include "ffi-cdecl.h"
-
 cdecl_enum(TSQueryError);
 cdecl_type(TSQueryError);
 
