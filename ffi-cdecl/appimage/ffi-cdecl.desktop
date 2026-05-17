@@ -1,0 +1,8 @@
+[Desktop Entry]
+Version=1.5
+Type=Application
+NoDisplay=true
+Name=ffi-cdecl
+Icon=ffi-cdecl
+Exec=ffi-cdecl
+Categories=Development
