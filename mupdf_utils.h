@@ -10,6 +10,6 @@ typedef struct fz_page fz_page;
 
 	dev: Default draw device
 */
-fz_device *fz_new_isolated_smask_device(fz_context *ctx, fz_device *dev);
+fz_device* fz_new_isolated_smask_device(fz_context* ctx, fz_device* dev);
 
 #endif
