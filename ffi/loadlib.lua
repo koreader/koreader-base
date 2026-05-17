@@ -18,7 +18,7 @@ ABI compatibility).
 
 local ffi = require("ffi")
 local android = ffi.os == "Linux" and os.getenv("IS_ANDROID") and require("android")
-local log = android and android.LOGI or print
+local log = ffi.log or android and android.LOGI or print
 
 local monolibtic = {
     path = (android and android.nativeLibraryDir or "libs") .. "/libkoreader-monolibtic." .. (ffi.os == "OSX" and "dylib" or "so"),
