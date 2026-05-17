@@ -478,6 +478,9 @@ declare_project(thirdparty/tesseract DEPENDS ${DEPENDS})
 # tree-sitter
 declare_project(thirdparty/tree-sitter EXCLUDE_FROM_ALL)
 
+# tree-sitter-c
+declare_project(thirdparty/tree-sitter-c EXCLUDE_FROM_ALL)
+
 # turbo
 declare_project(thirdparty/turbo DEPENDS libressl)
 
