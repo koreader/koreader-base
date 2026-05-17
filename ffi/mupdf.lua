@@ -675,10 +675,24 @@ local function run_page(page, pixmap, ctm)
 
     local dev = W.mupdf_new_draw_device(page.ctx, nil, pixmap)
     if dev == nil then merror(page.ctx, "cannot create draw device") end
+    
+    local isolate_smask = true
+    local ok = nil
+    if isolate_smask then
+        local smask_dev = W.mupdf_new_isolated_smask_device(page.ctx, dev)
+        if smask_dev ~= nil then
+            ok = W.mupdf_run_page(page.ctx, page.page, smask_dev, ctm, nil)
+            M.fz_close_device(page.ctx, smask_dev)
+            M.fz_drop_device(page.ctx, smask_dev)
+        end
+    end
+    if ok == nil then
+        ok = W.mupdf_run_page(page.ctx, page.page, dev, ctm, nil)
+    end
 
-    local ok = W.mupdf_run_page(page.ctx, page.page, dev, ctm, nil)
     M.fz_close_device(page.ctx, dev)
     M.fz_drop_device(page.ctx, dev)
+
     if ok == nil then merror(page.ctx, "could not run page") end
 end
 --[[

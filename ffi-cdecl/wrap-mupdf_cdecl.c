@@ -136,6 +136,7 @@ cdecl_func(fz_device_bgr)
 /* device, rendering */
 cdecl_func(mupdf_new_draw_device)
 cdecl_func(mupdf_new_bbox_device)
+cdecl_func(mupdf_new_isolated_smask_device)
 cdecl_func(mupdf_run_page)
 cdecl_func(fz_close_device)
 cdecl_func(fz_drop_device)
