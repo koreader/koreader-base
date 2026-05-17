@@ -103,6 +103,41 @@ if(APPLE)
     message(STATUS "OSX deployment target: ${CMAKE_OSX_DEPLOYMENT_TARGET}")
 endif()
 
+set(COMPILER_LIB_EXTRA_SEARCH_PATHS)
+if(${CMAKE_SYSTEM_NAME} STREQUAL Darwin AND DEFINED BREW_PREFIX)
+    set(COMPILER_LIB_EXTRA_SEARCH_PATHS ${BREW_PREFIX}/lib)
+elseif(NOT ${CMAKE_SYSTEM_NAME} STREQUAL Darwin AND DEFINED ENV{LD_LIBRARY_PATH})
+    string(REPLACE ":" ";" COMPILER_LIB_EXTRA_SEARCH_PATHS $ENV{LD_LIBRARY_PATH})
+endif()
+
+# ffi-cdecl. {{{
+
+set(FFI_CDECL_DEPS)
+find_executable(FFI_CDECL ffi-cdecl ffi-cdecl -v)
+if(NOT FFI_CDECL)
+    if(EMULATE_READER)
+        set(LUAJIT ${OUTPUT_DIR}/luajit)
+        list(APPEND FFI_CDECL_DEPS luajit)
+        set_libname(TREE_SITTER_SONAME tree-sitter VERSION 0.26)
+        find_compiler_lib_path(TREE_SITTER_LIB ${TREE_SITTER_SONAME} ${COMPILER_LIB_EXTRA_SEARCH_PATHS})
+        if(NOT TREE_SITTER_LIB AND EMULATE_READER)
+            list(APPEND FFI_CDECL_DEPS tree-sitter)
+        endif()
+        set_libname(TREE_SITTER_C_SONAME tree-sitter-c VERSION 15.0)
+        find_compiler_lib_path(TREE_SITTER_C_LIB ${TREE_SITTER_C_SONAME} ${COMPILER_LIB_EXTRA_SEARCH_PATHS})
+        if(NOT TREE_SITTER_C_LIB AND EMULATE_READER)
+            list(APPEND FFI_CDECL_DEPS tree-sitter-c)
+        endif()
+    else()
+        find_executable(LUAJIT LuaJIT luajit -v)
+    endif()
+    if(LUAJIT)
+        set(FFI_CDECL env LUA_PATH=${OUTPUT_DIR}/?.lua$<SEMICOLON>${OUTPUT_DIR}/?/init.lua LUA_CPATH=${OUTPUT_DIR}/?.so ${LUAJIT} ./ffi-cdecl/ffi-cdecl.lua)
+    endif()
+endif()
+
+# }}}
+
 # Git. {{{
 
 find_executable(GIT Git git --version REQUIRED)
@@ -243,15 +278,6 @@ set(fbdepth_CMAKE_SOURCE_DIR ${fbink_CMAKE_SOURCE_DIR})
 declare_project(thirdparty/libfbink_input ${EXCLUDE_FROM_ALL})
 set(libfbink_input_DOWNLOAD_DIR ${fbink_DOWNLOAD_DIR})
 set(libfbink_input_CMAKE_SOURCE_DIR ${fbink_CMAKE_SOURCE_DIR})
-
-# ffi-cdecl
-if(CMAKE_C_COMPILER_ID STREQUAL "GNU")
-    set(DEPENDS)
-    if(EMULATE_READER)
-        list(APPEND DEPENDS luajit)
-    endif()
-    declare_project(thirdparty/ffi-cdecl DEPENDS ${DEPENDS} EXCLUDE_FROM_ALL)
-endif()
 
 # freetype
 declare_project(thirdparty/freetype2 DEPENDS brotli zlib)
@@ -423,13 +449,7 @@ elseif(EMULATE_READER)
     # We need a recent enough version for accumulated whole scroll "ticks" in mouse wheel events.
     set(SDL3_MIN_VER 3.2.12)
     set_libname(SDL3_SONAME SDL3 VERSION 0)
-    set(EXTRA_SEARCH_PATHS)
-    if(${CMAKE_SYSTEM_NAME} STREQUAL Darwin AND DEFINED BREW_PREFIX)
-        set(EXTRA_SEARCH_PATHS ${BREW_PREFIX}/lib)
-    elseif(NOT ${CMAKE_SYSTEM_NAME} STREQUAL Darwin AND DEFINED ENV{LD_LIBRARY_PATH})
-        string(REPLACE ":" ";" EXTRA_SEARCH_PATHS $ENV{LD_LIBRARY_PATH})
-    endif()
-    find_compiler_lib_path(SDL3_LIB ${SDL3_SONAME} ${EXTRA_SEARCH_PATHS})
+    find_compiler_lib_path(SDL3_LIB ${SDL3_SONAME} ${COMPILER_LIB_EXTRA_SEARCH_PATHS})
     if(SDL3_LIB AND NOT DEFINED CACHE{SDL3_VER})
         string(REGEX MATCH [[([^.]+)\.([^.]+)\.([^.]+)]] _ ${SDL3_MIN_VER})
         math(EXPR SDL3_MIN_INT_VER "${CMAKE_MATCH_1} * 1000000 + ${CMAKE_MATCH_2} * 1000 + ${CMAKE_MATCH_3}")
@@ -569,7 +589,7 @@ add_custom_target(rm-install-stamps COMMAND rm -f ${INSTALL_STAMPS})
 
 # FFI cdecls generation. {{{
 
-if(TARGET ffi-cdecl)
+if(FFI_CDECL)
 
 add_custom_target(ffi-deps)
 add_custom_target(ffi DEPENDS ffi-deps)
@@ -579,7 +599,7 @@ function(ffi_target NAME OUTPUT INPUT)
     if(NOT OUTPUT MATCHES [[/]])
         set(OUTPUT ffi/${OUTPUT})
     endif()
-    list(PREPEND _DEPENDS ffi-cdecl)
+    list(PREPEND _DEPENDS ${FFI_CDECL_DEPS})
     if(TARGET ${NAME})
         list(PREPEND _DEPENDS ${NAME})
     endif()
@@ -588,10 +608,25 @@ function(ffi_target NAME OUTPUT INPUT)
     endif()
     get_filename_component(INPUT_PATH ${INPUT} ABSOLUTE BASE_DIR ${BASE_DIR})
     get_filename_component(TGT ${OUTPUT} NAME)
+    set(FFI_CDECL_FLAGS
+        -c ${CMAKE_C_COMPILER}
+        -f -std=gnu11
+        -p --env-only
+        -I ${STAGING_DIR}/include
+    )
+    if(APPLE)
+        # See note in Makefile.defs.
+        list(APPEND FFI_CDECL_FLAGS -f -idirafter,/usr/local/include)
+    endif()
     add_custom_target(
         ${TGT}
         DEPENDS ${_DEPENDS}
-        COMMAND ${STAGING_DIR}/bin/ffi-cdecl -o ${OUTPUT} ${_ARGS} ${INPUT}
+        # NOTE: old versions of pkgconf (like the one provided by Ubuntu Jammy)
+        # don't correctly handle `--env-only --with-path=…` (ignoring that last
+        # option).
+        COMMAND env PKG_CONFIG_PATH=${STAGING_DIR}/lib/pkgconfig
+                ${FFI_CDECL} ${FFI_CDECL_FLAGS} -o ${OUTPUT}
+                ${_ARGS} ${INPUT}
         COMMENT "Generating 'ffi/${TGT}'"
         VERBATIM
         WORKING_DIRECTORY ${BASE_DIR}
@@ -599,7 +634,9 @@ function(ffi_target NAME OUTPUT INPUT)
     if(NOT TARGET ${NAME}-ffi)
         add_custom_target(${NAME}-ffi)
         if(NOT ${_EXCLUDE_FROM_ALL} AND (NOT NAME IN_LIST PROJECTS OR ${NAME}_BUILT_BY_DEFAULT))
-            add_dependencies(ffi-deps ${_DEPENDS})
+            if(_DEPENDS)
+                add_dependencies(ffi-deps ${_DEPENDS})
+            endif()
             add_dependencies(ffi ${NAME}-ffi)
         endif()
     endif()
@@ -615,7 +652,13 @@ endif()
 ffi_target(cervantes mxcfb_cervantes_h.lua mxcfb_cervantes_decl.c ${EXCLUDE_FROM_ALL})
 
 # czmq
-ffi_target(czmq zeromq_h.lua zeromq_cdecl.c ARGS -d libczmq)
+if(APPLE)
+    # Generating FFI cdecls for czmq currently fails on macOS…
+    set(EXCLUDE_FROM_ALL EXCLUDE_FROM_ALL)
+else()
+    set(EXCLUDE_FROM_ALL)
+endif()
+ffi_target(czmq zeromq_h.lua zeromq_cdecl.c ARGS -d libczmq ${EXCLUDE_FROM_ALL})
 
 # fbdepth / fbink / libfbink_input
 get_relative_path(${libfbink_input_SOURCE_DIR} ${BASE_DIR} FBINK_INPUT_SRC)
@@ -676,7 +719,7 @@ endforeach()
 ffi_target(leptonica leptonica_h.lua leptonica_cdecl.c ARGS -d lept)
 
 # libarchive
-ffi_target(libarchive libarchive_h.lua libarchive_cdecl.c ARGS -d libarchive)
+ffi_target(libarchive libarchive_h.lua libarchive_cdecl.c ARGS -d libarchive -r ffi/posix_h)
 
 # libjpeg-turbo
 ffi_target(libjpeg-turbo turbojpeg_h.lua turbojpeg_decl.c ARGS -d libturbojpeg)
@@ -700,14 +743,14 @@ endif()
 ffi_target(linux einkfb_h.lua einkfb_decl.c ${EXCLUDE_FROM_ALL})
 ffi_target(linux inotify_h.lua inotify_decl.c ${EXCLUDE_FROM_ALL})
 ffi_target(linux linux_fb_h.lua linux_fb_decl.c ${EXCLUDE_FROM_ALL})
-ffi_target(linux linux_input_h.lua linux_input_decl.c ${EXCLUDE_FROM_ALL})
+ffi_target(linux linux_input_h.lua linux_input_decl.c ${EXCLUDE_FROM_ALL} ARGS -r ffi/posix_h)
 ffi_target(linux rtc_h.lua rtc_cdecl.c ${EXCLUDE_FROM_ALL})
 
 # lodepng
 ffi_target(lodepng lodepng_h.lua lodepng_decl.c)
 
 # mupdf
-ffi_target(mupdf mupdf_h.lua wrap-mupdf_cdecl.c ARGS -I . -f -std=gnu11)
+ffi_target(mupdf mupdf_h.lua wrap-mupdf_cdecl.c ARGS -I .)
 
 # pocketbook
 if(POCKETBOOK)
