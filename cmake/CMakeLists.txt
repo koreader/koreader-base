@@ -475,6 +475,9 @@ if(ANDROID)
 endif()
 declare_project(thirdparty/tesseract DEPENDS ${DEPENDS})
 
+# tree-sitter
+declare_project(thirdparty/tree-sitter EXCLUDE_FROM_ALL)
+
 # turbo
 declare_project(thirdparty/turbo DEPENDS libressl)
 
