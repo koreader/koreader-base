@@ -728,6 +728,9 @@ ffi_target(remarkable mxcfb_remarkable_h.lua mxcfb_remarkable_decl.c ${EXCLUDE_F
 # sdl3
 ffi_target(sdl3 SDL3_h.lua SDL3_decl.c ARGS -d sdl3)
 
+# tree-sitter
+ffi_target(tree-sitter tree_sitter_h.lua tree_sitter_cdecl.c DEPENDS tree-sitter-c EXCLUDE_FROM_ALL)
+
 # utf8proc
 ffi_target(utf8proc utf8proc_h.lua utf8proc_decl.c ARGS -d libutf8proc)
 
