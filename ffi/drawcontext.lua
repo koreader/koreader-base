@@ -36,8 +36,8 @@ function DC_mt.__index:getIsolateSMask() return self.isolate_smask end
 
 local dctype = ffi.metatype("DrawContext", DC_mt)
 
-function DC.new(rotate, zoom, x, y, gamma)
-	return dctype(rotate or 0, zoom or 1.0, gamma or -1.0, x or 0, y or 0, false)
+function DC.new(rotate, zoom, x, y, gamma, isolate_smask)
+	return dctype(rotate or 0, zoom or 1.0, gamma or -1.0, x or 0, y or 0, isolate_smask or 0)
 end
 
 return DC
