@@ -3,7 +3,8 @@
 
 #include <linux/ioctl.h>
 
-#include "ffi-cdecl.h"
+cdecl_type(__u16)
+cdecl_type(__u32)
 
 cdecl_const(FBIOGET_FSCREENINFO)
 cdecl_const(FBIOGET_VSCREENINFO)

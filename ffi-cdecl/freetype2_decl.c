@@ -8,8 +8,6 @@
 #include <freetype/tttables.h>
 #include <freetype/tttags.h>
 
-#include "ffi-cdecl.h"
-
 // Constants.
 cdecl_const(FT_FACE_FLAG_EXTERNAL_STREAM)
 cdecl_const(FT_FACE_FLAG_FAST_GLYPHS)
@@ -51,16 +49,20 @@ cdecl_const(FT_STYLE_FLAG_BOLD)
 cdecl_const(FT_STYLE_FLAG_ITALIC)
 
 // Basic types.
-cdecl_type(FT_String)
 cdecl_type(FT_Byte)
-cdecl_type(FT_UShort)
-cdecl_type(FT_Short)
-cdecl_type(FT_Int)
-cdecl_type(FT_UInt)
-cdecl_type(FT_Long)
-cdecl_type(FT_ULong)
+cdecl_type(FT_Char)
 cdecl_type(FT_Error)
+cdecl_type(FT_Fixed)
+cdecl_type(FT_Int)
+cdecl_type(FT_Int32)
+cdecl_type(FT_Long)
 cdecl_type(FT_Pos)
+cdecl_type(FT_Short)
+cdecl_type(FT_String)
+cdecl_type(FT_UInt)
+cdecl_type(FT_UInt32)
+cdecl_type(FT_ULong)
+cdecl_type(FT_UShort)
 
 // Enums.
 cdecl_type(FT_Encoding)
@@ -71,6 +73,9 @@ cdecl_type(FT_Render_Mode)
 cdecl_enum(FT_Render_Mode_)
 cdecl_type(FT_Sfnt_Tag)
 cdecl_enum(FT_Sfnt_Tag_)
+
+// Function pointers.
+cdecl_type(FT_Generic_Finalizer)
 
 // Opaque (pointer) types.
 cdecl_type(FT_BBox)
@@ -86,6 +91,7 @@ cdecl_type(FT_Glyph_Metrics)
 cdecl_type(FT_Library)
 cdecl_type(FT_List)
 cdecl_type(FT_ListNode)
+cdecl_type(FT_ListRec)
 cdecl_type(FT_Memory)
 cdecl_type(FT_Outline)
 cdecl_type(FT_Size)

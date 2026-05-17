@@ -1,9 +1,7 @@
 -- Automatically generated with ffi-cdecl.
 
-local ffi = require("ffi")
-
-ffi.cdef[[
-static const int WEBP_DEMUX_ABI_VERSION = 263;
+require("ffi").cdef[[
+static const unsigned WEBP_DEMUX_ABI_VERSION = 263;
 enum WEBP_CSP_MODE {
   MODE_RGB = 0,
   MODE_RGBA = 1,
@@ -20,6 +18,7 @@ enum WEBP_CSP_MODE {
   MODE_YUVA = 12,
   MODE_LAST = 13,
 };
+typedef enum WEBP_CSP_MODE WEBP_CSP_MODE;
 struct WebPData {
   const uint8_t *bytes;
   size_t size;
@@ -35,17 +34,16 @@ struct WebPAnimInfo {
 };
 typedef struct WebPAnimInfo WebPAnimInfo;
 struct WebPAnimDecoderOptions {
-  enum WEBP_CSP_MODE color_mode;
+  WEBP_CSP_MODE color_mode;
   int use_threads;
   uint32_t padding[7];
 };
 typedef struct WebPAnimDecoderOptions WebPAnimDecoderOptions;
 int WebPAnimDecoderOptionsInitInternal(WebPAnimDecoderOptions *, int);
-struct WebPAnimDecoder;
 typedef struct WebPAnimDecoder WebPAnimDecoder;
 WebPAnimDecoder *WebPAnimDecoderNewInternal(const WebPData *, const WebPAnimDecoderOptions *, int);
-int WebPAnimDecoderGetInfo(const WebPAnimDecoder *, WebPAnimInfo *);
-int WebPAnimDecoderGetNext(WebPAnimDecoder *, uint8_t **, int *);
-void WebPAnimDecoderReset(WebPAnimDecoder *);
-void WebPAnimDecoderDelete(WebPAnimDecoder *);
+int WebPAnimDecoderGetInfo(const WebPAnimDecoder *dec, WebPAnimInfo *info);
+int WebPAnimDecoderGetNext(WebPAnimDecoder *dec, uint8_t **buf, int *timestamp);
+void WebPAnimDecoderReset(WebPAnimDecoder *dec);
+void WebPAnimDecoderDelete(WebPAnimDecoder *dec);
 ]]

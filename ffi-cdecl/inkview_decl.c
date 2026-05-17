@@ -8,8 +8,6 @@
 #include "inkview.h"
 #include "inkinternal.h"
 
-#include "ffi-cdecl.h"
-
 cdecl_const(MSG_REBOOT)
 
 cdecl_const(EVT_ACTIVATE)
@@ -229,9 +227,14 @@ cdecl_type(hw_event)
 cdecl_struct(icanvas_s)
 cdecl_type(icanvas)
 
+cdecl_type(iconfig)
+
 cdecl_type(iv_handler)
 #if (POCKETBOOK_VERSION <= 610)
 cdecl_struct(iv_mtinfo_s)
+#endif
+#if (POCKETBOOK_VERSION >= 611)
+cdecl_type(iv_pointer)
 #endif
 cdecl_type(iv_mtinfo)
 

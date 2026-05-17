@@ -1,9 +1,7 @@
-// CPPFLAGS="-I/var/tmp/niluje/libzmq/include -I/var/tmp/niluje/czmq/include"
-#include <zmq.h>
+#define _GNU_SOURCE
 #include <czmq.h>
 
-#include "ffi-cdecl.h"
-
+cdecl_type(byte)
 cdecl_type(zmsg_t)
 cdecl_type(zhash_t)
 cdecl_type(zsock_t)

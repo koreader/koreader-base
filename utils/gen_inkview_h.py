@@ -9,7 +9,7 @@ import textwrap
 
 def extract_cdefs(file):
     line_iter = iter(file.read_text(encoding='utf-8').split('\n'))
-    while next(line_iter) != 'ffi.cdef[[':
+    while next(line_iter) != 'require("ffi").cdef[[':
         pass
     cdef_list = []
     while True:

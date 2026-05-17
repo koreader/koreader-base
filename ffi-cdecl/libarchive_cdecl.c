@@ -1,8 +1,6 @@
 #include <archive.h>
 #include <archive_entry.h>
 
-#include "ffi-cdecl.h"
-
 cdecl_type(la_int64_t)
 cdecl_type(la_ssize_t)
 

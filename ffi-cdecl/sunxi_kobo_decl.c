@@ -2,8 +2,6 @@
 // specialized sunxi disp/eink headers
 #include "include/sunxi-kobo.h"
 
-#include "ffi-cdecl.h"
-
 cdecl_struct(area_info)
 cdecl_enum(eink_update_mode)
 cdecl_struct(disp_rectsz)

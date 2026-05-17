@@ -1,8 +1,6 @@
 -- Automatically generated with ffi-cdecl.
 
-local ffi = require("ffi")
-
-ffi.cdef[[
+require("ffi").cdef[[
 typedef uint32_t hb_codepoint_t;
 union _hb_var_int_t {
   uint32_t u32;
@@ -23,32 +21,32 @@ struct hb_ot_name_entry_t {
 };
 typedef struct hb_ot_name_entry_t hb_ot_name_entry_t;
 typedef struct hb_set_t hb_set_t;
-const hb_ot_name_entry_t *hb_ot_name_list_names(hb_face_t *, unsigned int *);
-const char *hb_language_to_string(hb_language_t);
-unsigned int hb_ot_name_get_utf8(hb_face_t *, hb_ot_name_id_t, hb_language_t, unsigned int *, char *);
+const hb_ot_name_entry_t *hb_ot_name_list_names(hb_face_t *face, unsigned int *num_entries);
+const char *hb_language_to_string(hb_language_t language);
+unsigned int hb_ot_name_get_utf8(hb_face_t *face, hb_ot_name_id_t name_id, hb_language_t language, unsigned int *text_size, char *text);
 hb_set_t *hb_set_create(void);
-void hb_face_collect_unicodes(hb_face_t *, hb_set_t *);
-void hb_set_set(hb_set_t *, const hb_set_t *);
-void hb_set_intersect(hb_set_t *, const hb_set_t *);
-unsigned int hb_set_get_population(const hb_set_t *);
-void hb_set_destroy(hb_set_t *);
-void hb_face_destroy(hb_face_t *);
-void hb_set_add_range(hb_set_t *, hb_codepoint_t, hb_codepoint_t);
+void hb_face_collect_unicodes(hb_face_t *face, hb_set_t *out);
+void hb_set_set(hb_set_t *set, const hb_set_t *other);
+void hb_set_intersect(hb_set_t *set, const hb_set_t *other);
+unsigned int hb_set_get_population(const hb_set_t *set);
+void hb_set_destroy(hb_set_t *set);
+void hb_face_destroy(hb_face_t *face);
+void hb_set_add_range(hb_set_t *set, hb_codepoint_t first, hb_codepoint_t last);
 typedef struct hb_blob_t hb_blob_t;
 typedef enum {
-  HB_MEMORY_MODE_DUPLICATE = 0,
-  HB_MEMORY_MODE_READONLY = 1,
-  HB_MEMORY_MODE_WRITABLE = 2,
-  HB_MEMORY_MODE_READONLY_MAY_MAKE_WRITABLE = 3,
+  HB_MEMORY_MODE_DUPLICATE,
+  HB_MEMORY_MODE_READONLY,
+  HB_MEMORY_MODE_WRITABLE,
+  HB_MEMORY_MODE_READONLY_MAY_MAKE_WRITABLE,
 } hb_memory_mode_t;
-typedef void (*hb_destroy_func_t)(void *);
-static const int HB_OT_NAME_ID_FONT_FAMILY = 1;
-static const int HB_OT_NAME_ID_FONT_SUBFAMILY = 2;
-static const int HB_OT_NAME_ID_FULL_NAME = 4;
+typedef void (*hb_destroy_func_t)(void *user_data);
+static const unsigned HB_OT_NAME_ID_FONT_FAMILY = 1;
+static const unsigned HB_OT_NAME_ID_FONT_SUBFAMILY = 2;
+static const unsigned HB_OT_NAME_ID_FULL_NAME = 4;
 typedef struct FT_FaceRec_ *FT_Face;
-hb_blob_t *hb_blob_create(const char *, unsigned int, hb_memory_mode_t, void *, hb_destroy_func_t);
-hb_face_t *hb_face_create(hb_blob_t *, unsigned int);
-void hb_blob_destroy(hb_blob_t *);
-unsigned int hb_face_get_glyph_count(const hb_face_t *);
-hb_face_t *hb_ft_face_create_referenced(FT_Face);
+hb_blob_t *hb_blob_create(const char *data, unsigned int length, hb_memory_mode_t mode, void *user_data, hb_destroy_func_t destroy);
+hb_face_t *hb_face_create(hb_blob_t *blob, unsigned int index);
+void hb_blob_destroy(hb_blob_t *blob);
+unsigned int hb_face_get_glyph_count(const hb_face_t *face);
+hb_face_t *hb_ft_face_create_referenced(FT_Face ft_face);
 ]]
