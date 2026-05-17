@@ -730,7 +730,7 @@ function page_mt.__index:draw_new(draw_context, width, height, offset_x, offset_
         self.ctx, colorspace, bbox, nil, self.doc.color and 1 or 0, ffi.cast("unsigned char*", bb.data))
     if pix == nil then merror(self.ctx, "cannot allocate pixmap") end
 
-    run_page(self, pix, ctm, draw_context.isolate_smask)
+    run_page(self, pix, ctm, draw_context.isolate_smask == 1)
 
     if draw_context.gamma >= 0.0 then
         M.fz_gamma_pixmap(self.ctx, pix, draw_context.gamma)
