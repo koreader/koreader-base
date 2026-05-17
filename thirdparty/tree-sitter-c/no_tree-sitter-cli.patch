@@ -1,0 +1,18 @@
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -17,6 +17,7 @@
+ 
+ find_program(TREE_SITTER_CLI tree-sitter DOC "Tree-sitter CLI")
+ 
++if(TREE_SITTER_CLI)
+ add_custom_command(OUTPUT "${CMAKE_CURRENT_SOURCE_DIR}/src/grammar.json"
+                           "${CMAKE_CURRENT_SOURCE_DIR}/src/node-types.json"
+                    DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/grammar.js"
+@@ -33,6 +34,7 @@
+                             --abi=${TREE_SITTER_ABI_VERSION}
+                    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+                    COMMENT "Generating parser.c")
++endif()
+ 
+ add_library(tree-sitter-c src/parser.c)
+ if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/src/scanner.c)
