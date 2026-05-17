@@ -22,7 +22,6 @@
 #include <math.h>
 #include <mupdf/fitz.h>
 #include <mupdf/pdf.h>
-#include "mupdf_utils.h"
 
 // Symbol visibility
 #define DLL_PUBLIC __attribute__((visibility("default")))
