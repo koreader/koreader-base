@@ -1,0 +1,12 @@
+#!/bin/sh
+
+if [ -z "${APPDIR}" ]; then
+    APPDIR="$(dirname "$(realpath "$0")")"
+fi
+
+export LUA_PATH="${APPDIR}/ffi-cdecl/?.lua"
+export LUA_CPATH="${APPDIR}/ffi-cdecl/?.so"
+
+exec "${APPDIR}/ffi-cdecl/luajit" -l ffi-cdecl ffi-cdecl "$@"
+
+# vim: sw=4
