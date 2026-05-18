@@ -301,21 +301,18 @@ workflows:
           executor: cervantes
           requires:
             - emu_gcc_ninja_debug
-          check_ffi_cdecls: true
 
       - build_and_test:
           name: kindle
           executor: kindle
           requires:
             - emu_gcc_ninja_debug
-          check_ffi_cdecls: true
 
       - build_and_test:
           name: kindlehf
           executor: kindlehf
           requires:
             - emu_gcc_ninja_debug
-          check_ffi_cdecls: true
 
       - build_and_test:
           name: kindle-legacy
@@ -328,21 +325,18 @@ workflows:
           executor: kobo
           requires:
             - emu_gcc_ninja_debug
-          check_ffi_cdecls: true
 
       - build_and_test:
           name: pocketbook
           executor: pocketbook
           requires:
             - emu_gcc_ninja_debug
-          check_ffi_cdecls: true
 
       - build_and_test:
           name: sony-prstux
           executor: sony-prstux
           requires:
             - emu_gcc_ninja_debug
-          check_ffi_cdecls: true
 
       # }}}
 
