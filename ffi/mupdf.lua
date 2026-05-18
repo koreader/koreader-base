@@ -692,7 +692,7 @@ local function run_page(page, pixmap, ctm, isolate_smask)
     M.fz_close_device(page.ctx, dev)
     M.fz_drop_device(page.ctx, dev)
 
-    if not ok then merror(page.ctx, "could not run page") end
+    if ok == nil then merror(page.ctx, "could not run page") end
 end
 --[[
 render page to blitbuffer
