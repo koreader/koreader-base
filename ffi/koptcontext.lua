@@ -178,7 +178,8 @@ function KOPTContext_mt.__index:setBBox(x0, y0, x1, y1)
 end
 function KOPTContext_mt.__index:setTrim(trim) self.trim = trim end
 function KOPTContext_mt.__index:setWrap(wrap) self.wrap = wrap end
-function KOPTContext_mt.__index:setWhite(white) self.white = white end
+function KOPTContext_mt.__index:setWhiteThreshold(white_threshold) self.white_threshold = white_threshold end
+function KOPTContext_mt.__index:setPaintWhiteThreshold(paint_white_threshold) self.paint_white_threshold = paint_white_threshold end
 function KOPTContext_mt.__index:setIndent(indent) self.indent = indent end
 function KOPTContext_mt.__index:setRotate(rotate) self.rotate = rotate end
 function KOPTContext_mt.__index:setColumns(columns) self.columns = columns end
@@ -598,7 +599,8 @@ function KOPTContext.new()
     -- integer values
     kc.trim = 1
     kc.wrap = 1
-    kc.white = -1
+    kc.white_threshold = -1
+    kc.paint_white_threshold = 0
     kc.indent = 1
     kc.rotate = 0
     kc.columns = 2
@@ -668,7 +670,8 @@ function KOPTContext.totable(kc)
     -- integer values
     context.trim = kc.trim
     context.wrap = kc.wrap
-    context.white = kc.white
+    context.white_threshold = kc.white_threshold
+    context.paint_white_threshold = kc.paint_white_threshold
     context.indent = kc.indent
     context.rotate = kc.rotate
     context.columns = kc.columns
@@ -738,7 +741,8 @@ function KOPTContext.fromtable(context)
     -- integer values
     kc.trim = context.trim
     kc.wrap = context.wrap
-    kc.white = context.white
+    kc.white_threshold = context.white_threshold
+    kc.paint_white_threshold = context.paint_white_threshold
     kc.indent = context.indent
     kc.rotate = context.rotate
     kc.columns = context.columns
