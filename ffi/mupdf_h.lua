@@ -248,6 +248,7 @@ fz_colorspace *fz_device_rgb(fz_context *);
 fz_colorspace *fz_device_bgr(fz_context *);
 fz_device *mupdf_new_draw_device(fz_context *, const fz_matrix *, fz_pixmap *);
 fz_device *mupdf_new_bbox_device(fz_context *, fz_rect *);
+fz_device *mupdf_new_isolated_smask_device(fz_context *, fz_device *);
 void *mupdf_run_page(fz_context *, fz_page *, fz_device *, const fz_matrix *, fz_cookie *);
 void fz_close_device(fz_context *, fz_device *);
 void fz_drop_device(fz_context *, fz_device *);

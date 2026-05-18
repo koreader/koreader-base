@@ -670,15 +670,28 @@ function page_mt.__index:getPageLinks()
     return links
 end
 
-local function run_page(page, pixmap, ctm)
+local function run_page(page, pixmap, ctm, isolate_smask)
     M.fz_clear_pixmap_with_value(page.ctx, pixmap, 0xff)
 
     local dev = W.mupdf_new_draw_device(page.ctx, nil, pixmap)
     if dev == nil then merror(page.ctx, "cannot create draw device") end
 
-    local ok = W.mupdf_run_page(page.ctx, page.page, dev, ctm, nil)
+    local ok = false
+    if isolate_smask then
+        local smask_dev = W.mupdf_new_isolated_smask_device(page.ctx, dev)
+        if smask_dev then
+            ok = W.mupdf_run_page(page.ctx, page.page, smask_dev, ctm, nil)
+            M.fz_close_device(page.ctx, smask_dev)
+            M.fz_drop_device(page.ctx, smask_dev)
+        end
+    end
+    if not ok then
+        ok = W.mupdf_run_page(page.ctx, page.page, dev, ctm, nil)
+    end
+
     M.fz_close_device(page.ctx, dev)
     M.fz_drop_device(page.ctx, dev)
+
     if ok == nil then merror(page.ctx, "could not run page") end
 end
 --[[
@@ -717,7 +730,7 @@ function page_mt.__index:draw_new(draw_context, width, height, offset_x, offset_
         self.ctx, colorspace, bbox, nil, self.doc.color and 1 or 0, ffi.cast("unsigned char*", bb.data))
     if pix == nil then merror(self.ctx, "cannot allocate pixmap") end
 
-    run_page(self, pix, ctm)
+    run_page(self, pix, ctm, draw_context.isolate_smask == 1)
 
     if draw_context.gamma >= 0.0 then
         M.fz_gamma_pixmap(self.ctx, pix, draw_context.gamma)
@@ -1087,7 +1100,7 @@ local function render_for_kopt(bmp, page, scale, bounds)
     local pix = W.mupdf_new_pixmap_with_bbox(page.ctx, colorspace, bbox, nil, 1)
     if pix == nil then merror(page.ctx, "could not allocate pixmap") end
 
-    run_page(page, pix, ctm)
+    run_page(page, pix, ctm, false)
 
     k2pdfopt.bmp_init(bmp)
 
