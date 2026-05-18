@@ -740,6 +740,39 @@ function page_mt.__index:draw_new(draw_context, width, height, offset_x, offset_
 
     return bb
 end
+--[[
+Get image positions on a page.
+
+Returns a table of {x0, y0, x1, y1} rectangles in page coordinates,
+one for each image rendered on the page.
+--]]
+function page_mt.__index:getImagePositions(draw_context)
+    local ctm = ffi.new("fz_matrix")
+    W.mupdf_fz_scale(ctm, draw_context.zoom, draw_context.zoom)
+    W.mupdf_fz_pre_rotate(ctm, draw_context.rotate)
+    W.mupdf_fz_pre_translate(ctm, draw_context.offset_x, draw_context.offset_y)
+
+    local ip_dev = W.mupdf_new_image_position_device(self.ctx)
+    if ip_dev == nil then merror(self.ctx, "cannot create image position device") end
+
+    W.mupdf_run_page(self.ctx, self.page, ip_dev, ctm, nil)
+
+    local count = W.mupdf_image_position_count(ip_dev)
+    local positions = {}
+    local rect = ffi.new("fz_rect")
+    for i = 0, count - 1 do
+        W.mupdf_image_position_get(ip_dev, i, rect)
+        table.insert(positions, {
+            x0 = rect.x0, y0 = rect.y0,
+            x1 = rect.x1, y1 = rect.y1,
+        })
+    end
+
+    M.fz_close_device(self.ctx, ip_dev)
+    M.fz_drop_device(self.ctx, ip_dev)
+
+    return positions
+end
 
 mupdf.STRIKE_HEIGHT = 0.375
 mupdf.UNDERLINE_HEIGHT = 0

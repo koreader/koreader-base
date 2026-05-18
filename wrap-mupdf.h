@@ -42,6 +42,9 @@ DLL_PUBLIC fz_rect *mupdf_fz_union_rect(fz_rect *a, const fz_rect *b);
 DLL_PUBLIC fz_rect *mupdf_fz_rect_from_quad(fz_rect *r, const fz_quad *q);
 DLL_PUBLIC fz_rect *mupdf_fz_bound_page(fz_context *ctx, fz_page *page, fz_rect *r);
 
+DLL_PUBLIC int mupdf_image_position_count(fz_device *dev);
+DLL_PUBLIC void mupdf_image_position_get(fz_device *dev, int index, fz_rect *rect);
+
 // this will turn the wrappers defined below into their declarations
 #define MUPDF_WRAP(wrapper_name, ret_type, failure_value, call, ...) \
     DLL_PUBLIC ret_type wrapper_name(fz_context *ctx, ##__VA_ARGS__);
@@ -67,6 +70,10 @@ DLL_PUBLIC fz_rect *mupdf_fz_bound_page(fz_context *ctx, fz_page *page, fz_rect 
         fz_catch(ctx) { ret = failure_value; } \
         return ret; \
     }
+
+extern fz_device *mupdf_new_image_position_device(fz_context *ctx) {
+    return fz_new_image_position_device(ctx);
+}
 
 #endif
 
@@ -117,6 +124,9 @@ MUPDF_WRAP(mupdf_new_draw_device, fz_device*, NULL,
 MUPDF_WRAP(mupdf_new_isolated_smask_device, fz_device*, NULL,
     ret = fz_new_isolated_smask_device(ctx, dev),
     fz_device *dev)
+DLL_PUBLIC fz_device *mupdf_new_image_position_device(fz_context *ctx);
+DLL_PUBLIC int mupdf_image_position_count(fz_device *dev);
+DLL_PUBLIC void mupdf_image_position_get(fz_device *dev, int index, fz_rect *rect);
 MUPDF_WRAP(mupdf_run_page, void*, NULL,
     { fz_run_page(ctx, page, dev, *transform, cookie); ret = (void*) -1; },
     fz_page *page, fz_device *dev, const fz_matrix *transform, fz_cookie *cookie)

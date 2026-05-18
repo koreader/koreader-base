@@ -226,6 +226,56 @@ fz_device *fz_new_isolated_smask_device(fz_context* ctx, fz_device* dev)
     return (fz_device*)smask_dev;
 }
 
+/* ============================================================
+ * Image Position Tracker Device
+ *
+ * Records the bounding box of every image rendered on a page.
+ * Only overrides fill_image; all other callbacks are left NULL
+ * (MuPDF safely skips NULL callbacks).
+ * ============================================================ */
+
+#define MAX_IMAGE_POSITIONS 256
+
+typedef struct {
+    fz_device super;
+    fz_rect positions[MAX_IMAGE_POSITIONS];
+    int count;
+} image_position_device;
+
+static void ip_fill_image(fz_context* ctx, fz_device* dev, fz_image* img, fz_matrix ctm, float alpha, fz_color_params color_params)
+{
+    image_position_device* ipdev = (image_position_device*)dev;
+    if (ipdev->count < MAX_IMAGE_POSITIONS) {
+        fz_rect img_rect = { 0, 0, img->w, img->h };
+        ipdev->positions[ipdev->count] = fz_transform_rect(img_rect, ctm);
+        ipdev->count++;
+    }
+}
+
+fz_device *fz_new_image_position_device(fz_context* ctx)
+{
+    image_position_device* ipdev = fz_new_derived_device(ctx, image_position_device);
+    ipdev->count = 0;
+    ipdev->super.fill_image = ip_fill_image;
+    return (fz_device*)ipdev;
+}
+
+int mupdf_image_position_count(fz_device* dev)
+{
+    image_position_device* ipdev = (image_position_device*)dev;
+    return ipdev->count;
+}
+
+void mupdf_image_position_get(fz_device* dev, int index, fz_rect* rect)
+{
+    image_position_device* ipdev = (image_position_device*)dev;
+    if (index >= 0 && index < ipdev->count) {
+        *rect = ipdev->positions[index];
+    } else {
+        *rect = fz_empty_rect;
+    }
+}
+
 /* wrappers for functions that throw exceptions mupdf-style (setjmp/longjmp) */
 
 #define MUPDF_DO_WRAP
