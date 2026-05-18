@@ -203,7 +203,6 @@ fz_rect *mupdf_fz_bound_page(fz_context *ctx, fz_page *page, fz_rect *r) {
     return r;
 }
 
-
 typedef struct
 {
     fz_device super;
