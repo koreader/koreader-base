@@ -1,5 +1,6 @@
 .DS_*
 ._*
+*.AppImage
 *.gz
 *.swp
 *.swo
