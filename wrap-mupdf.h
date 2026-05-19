@@ -115,10 +115,10 @@ MUPDF_WRAP(mupdf_new_draw_device, fz_device*, NULL,
     ret = fz_new_draw_device(ctx, transform ? *transform : fz_identity, dest),
     const fz_matrix *transform, fz_pixmap *dest)
 MUPDF_WRAP(mupdf_new_isolated_smask_device, fz_device*, NULL,
-    ret = fz_new_isolated_smask_device(ctx, dev),
+    ret = mupdf_fz_new_isolated_smask_device(ctx, dev),
     fz_device *dev)
 MUPDF_WRAP(mupdf_page_has_smask, int, 0,
-    ret = fz_page_has_smask(ctx, page),
+    ret = mupdf_fz_page_has_smask(ctx, page),
     fz_page *page)
 MUPDF_WRAP(mupdf_run_page, void*, NULL,
     { fz_run_page(ctx, page, dev, *transform, cookie); ret = (void*) -1; },
