@@ -60,6 +60,27 @@ $(BASE_PREFIX)uninstall:
 
 # }}}
 
+# AppImage helpers. {{{
+
+ifeq ($(TARGET), linux)
+
+mkappimage $(MKAPPIMAGE):
+	mkdir -p $(dir $(MKAPPIMAGE))
+	$(WGET) -O $(MKAPPIMAGE).part "$$($(strip $(MKAPPIMAGE_URL)))"
+	# Zero-out AppImage magic bytes from the ELF header extended ABI version so
+	# binfmt+qemu can be used (e.g. when executed from `docker run --platform …`).
+	# Cf. https://github.com/AppImage/AppImageKit/issues/1056.
+	printf '\0\0\0' | dd conv=notrunc obs=1 seek=8 of=$(MKAPPIMAGE).part
+	chmod +x ./$(MKAPPIMAGE).part
+	mv $(MKAPPIMAGE).part $(MKAPPIMAGE)
+
+PHONY += mkappimage
+SOUND += $(MKAPPIMAGE)
+
+endif
+
+# }}}
+
 # CMake build interface. {{{
 
 setup $(BUILD_ENTRYPOINT): $(CMAKE_KOVARS) $(CMAKE_TCF) $(MESON_CROSS_TOOLCHAIN) $(MESON_HOST_TOOLCHAIN)

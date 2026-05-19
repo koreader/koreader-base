@@ -783,6 +783,39 @@ ifdef DARWIN
   DYNLIB_LDFLAGS += -dynamiclib -undefined dynamic_lookup
 endif
 
+# AppImage variables. {{{
+
+ifeq ($(TARGET), linux)
+
+APPDIR = $(OUTPUT_DIR)/AppDir
+
+APPIMAGE_ARCH_arm64 = aarch64
+APPIMAGE_ARCH = $(or $(APPIMAGE_ARCH_$(LINUX_ARCH)),$(LINUX_ARCH))
+
+MKAPPIMAGE = $(THIRDPARTY_DIR)/appimage/build/mkappimage-$(APPIMAGE_ARCH).AppImage
+define MKAPPIMAGE_URL
+$(WGET) -O - https://api.github.com/repos/probonopd/go-appimage/releases | jq -r '.[]
+ | select(.tag_name == "continuous")
+ | .assets[]
+ | select(.name | test("^mkappimage-.*-$(APPIMAGE_ARCH).AppImage$$"))
+ | .browser_download_url
+'
+endef
+
+define appimage_install
+$(foreach f, $2,
+  $(strip install -Dvt $(dir $(APPDIR)/$(and $1,$1/)$f) $(or $3,$(OUTPUT_DIR))/$f)
+)
+endef
+
+define appimage_generate
+ARCH='$(APPIMAGE_ARCH)' VERSION='$2' $(MKAPPIMAGE) --appimage-extract-and-run $(APPDIR) $1-$2-$(APPIMAGE_ARCH).AppImage
+endef
+
+endif
+
+ # }}}
+
 # CMake toolchain file. {{{
 
 CMAKE_TCF = $(CMAKE_DIR)/toolchain.cmake
