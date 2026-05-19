@@ -41,7 +41,6 @@ DLL_PUBLIC fz_irect *mupdf_fz_round_rect(fz_irect *ir, const fz_rect *r);
 DLL_PUBLIC fz_rect *mupdf_fz_union_rect(fz_rect *a, const fz_rect *b);
 DLL_PUBLIC fz_rect *mupdf_fz_rect_from_quad(fz_rect *r, const fz_quad *q);
 DLL_PUBLIC fz_rect *mupdf_fz_bound_page(fz_context *ctx, fz_page *page, fz_rect *r);
-DLL_PUBLIC int mupdf_page_has_smask(fz_context *ctx, fz_page *page);
 
 // this will turn the wrappers defined below into their declarations
 #define MUPDF_WRAP(wrapper_name, ret_type, failure_value, call, ...) \
@@ -118,6 +117,9 @@ MUPDF_WRAP(mupdf_new_draw_device, fz_device*, NULL,
 MUPDF_WRAP(mupdf_new_isolated_smask_device, fz_device*, NULL,
     ret = fz_new_isolated_smask_device(ctx, dev),
     fz_device *dev)
+MUPDF_WRAP(mupdf_page_has_smask, int, 0,
+    ret = fz_page_has_smask(ctx, page),
+    fz_page *page)
 MUPDF_WRAP(mupdf_run_page, void*, NULL,
     { fz_run_page(ctx, page, dev, *transform, cookie); ret = (void*) -1; },
     fz_page *page, fz_device *dev, const fz_matrix *transform, fz_cookie *cookie)

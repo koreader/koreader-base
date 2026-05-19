@@ -203,7 +203,7 @@ fz_rect *mupdf_fz_bound_page(fz_context *ctx, fz_page *page, fz_rect *r) {
     return r;
 }
 
-int mupdf_page_has_smask(fz_context* ctx, fz_page* p)
+int fz_page_has_smask(fz_context* ctx, fz_page* p)
 {
     /* Other document types (EPUB, XPS, etc.) don't use smasks. */
     pdf_page* page = pdf_page_from_fz_page(ctx, p);
