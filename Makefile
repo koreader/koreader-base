@@ -258,8 +258,6 @@ $(STAGING_DIR)/bincheck/%.so: $(KOR_BASE)/utils/bincheck/%.c | $(STAGING_DIR)/bi
 
 # }}}
 
-# }}}
-
 # Dump build timings for last ninja invocation. {{{
 
 # Show external project tasks with a duration of 1s or more (descending order).
