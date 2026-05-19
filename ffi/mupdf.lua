@@ -677,7 +677,7 @@ local function run_page(page, pixmap, ctm, isolate_smask)
     if dev == nil then merror(page.ctx, "cannot create draw device") end
 
     local ok
-    if isolate_smask then
+    if isolate_smask and W.mupdf_page_has_smask(page.ctx, page.page) ~= 0 then
         local smask_dev = W.mupdf_new_isolated_smask_device(page.ctx, dev)
         if smask_dev then
             ok = W.mupdf_run_page(page.ctx, page.page, smask_dev, ctm, nil)

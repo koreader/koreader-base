@@ -41,6 +41,7 @@ DLL_PUBLIC fz_irect *mupdf_fz_round_rect(fz_irect *ir, const fz_rect *r);
 DLL_PUBLIC fz_rect *mupdf_fz_union_rect(fz_rect *a, const fz_rect *b);
 DLL_PUBLIC fz_rect *mupdf_fz_rect_from_quad(fz_rect *r, const fz_quad *q);
 DLL_PUBLIC fz_rect *mupdf_fz_bound_page(fz_context *ctx, fz_page *page, fz_rect *r);
+DLL_PUBLIC int mupdf_page_has_smask(fz_context *ctx, fz_page *page);
 
 // this will turn the wrappers defined below into their declarations
 #define MUPDF_WRAP(wrapper_name, ret_type, failure_value, call, ...) \

@@ -203,6 +203,29 @@ fz_rect *mupdf_fz_bound_page(fz_context *ctx, fz_page *page, fz_rect *r) {
     return r;
 }
 
+int mupdf_page_has_smask(fz_context* ctx, fz_page* p)
+{
+    /* Other document types (EPUB, XPS, etc.) don't use smasks. */
+    pdf_page* page = pdf_page_from_fz_page(ctx, p);
+    if (!page) {
+        return 0;
+    }
+
+    pdf_obj* resources = pdf_page_resources(ctx, page);
+    pdf_obj* xobj = pdf_dict_get(ctx, resources, PDF_NAME(XObject));
+    if (!xobj) {
+        return 0;
+    }
+    const int n = pdf_dict_len(ctx, xobj);
+    for (int i = 0; i < n; i++) {
+        pdf_obj* val = pdf_dict_get_val(ctx, xobj, i);
+        if (pdf_dict_get(ctx, val, PDF_NAME(SMask))) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
 typedef struct
 {
     fz_device super;
