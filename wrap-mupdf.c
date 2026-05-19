@@ -386,6 +386,7 @@ fz_buffer* mupdf_new_buffer_from_filtered_story_text(fz_context *ctx, const unsi
     fz_story *story = NULL;
     fz_xml *doc = NULL;
     fz_xml *body = NULL;
+    fz_xml *document_root = NULL;
     fz_xml *selected = NULL;
     fz_xml *selected_clone = NULL;
     story_selector *parsed_wanted = NULL;
@@ -425,15 +426,20 @@ fz_buffer* mupdf_new_buffer_from_filtered_story_text(fz_context *ctx, const unsi
             fz_throw(ctx, FZ_ERROR_GENERIC, "MuPDF story did not produce an XML document");
         }
 
+        document_root = fz_dom_document_element(ctx, doc);
         body = fz_dom_body(ctx, doc);
         if (body == NULL) {
-            body = fz_dom_document_element(ctx, doc);
+            body = document_root;
         }
         if (body == NULL) {
             body = doc;
         }
 
         selected = select_story_root(ctx, body, parsed_wanted, wanted_count);
+        if (wanted_count > 0 && selected == body && !node_matches_any_selector(ctx, body, parsed_wanted, wanted_count)
+            && document_root != NULL && document_root != body) {
+            selected = select_story_root(ctx, document_root, parsed_wanted, wanted_count);
+        }
         cleanup_story_subtree(ctx, selected, parsed_unwanted, unwanted_count);
 
         output = fz_new_buffer(ctx, len + 256);

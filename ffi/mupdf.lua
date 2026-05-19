@@ -331,6 +331,79 @@ local function normalize_story_xml(text)
     return decode_story_hex_entities(text):gsub("^%s*<%?xml.-%?>%s*", "")
 end
 
+local function find_first_body_content_tag(text)
+    local tags = {
+        "<main", "<article", "<section", "<div", "<header", "<footer", "<nav", "<aside",
+        "<dialog", "<figure", "<table", "<ul", "<ol", "<p", "<h1", "<h2", "<h3", "<h4", "<h5", "<h6",
+    }
+    local first_index = nil
+
+    for _, tag in ipairs(tags) do
+        local index = text:find(tag, 1, true)
+        if index and (not first_index or index < first_index) then
+            first_index = index
+        end
+    end
+
+    return first_index
+end
+
+local function strip_script_elements(text)
+    text = text:gsub("<script[^>]*/>", "")
+    text = text:gsub("<script[^>]->.-</script>", "")
+    return text
+end
+
+local function escape_bare_ampersands(value)
+    local parts = {}
+    local index = 1
+
+    while true do
+        local ampersand = value:find("&", index, true)
+        if not ampersand then
+            parts[#parts + 1] = value:sub(index)
+            break
+        end
+
+        parts[#parts + 1] = value:sub(index, ampersand - 1)
+
+        local remainder = value:sub(ampersand + 1)
+        local entity = remainder:match("^(#x[%x]+;)")
+            or remainder:match("^(#%d+;)")
+            or remainder:match("^([%a][%w]+;)")
+
+        if entity then
+            parts[#parts + 1] = "&" .. entity
+            index = ampersand + #entity + 1
+        else
+            parts[#parts + 1] = "&amp;"
+            index = ampersand + 1
+        end
+    end
+
+    return table.concat(parts)
+end
+
+local function normalize_selector_input_html(text)
+    local function sanitize_attribute(name, quote)
+        local pattern = "(" .. name .. "%s*=%s*" .. quote .. ")([^" .. quote .. "]*)(" .. quote .. ")"
+        text = text:gsub(pattern, function(prefix, value, suffix)
+            return prefix .. escape_bare_ampersands(value) .. suffix
+        end)
+    end
+
+    sanitize_attribute("class", '"')
+    sanitize_attribute("class", "'")
+    sanitize_attribute("id", '"')
+    sanitize_attribute("id", "'")
+
+    return text
+end
+
+local function normalize_story_input_html(text)
+    return normalize_selector_input_html(strip_script_elements(text))
+end
+
 local function marshal_selector_array(selectors)
     if type(selectors) ~= "table" or #selectors == 0 then
         return nil, 0
@@ -346,26 +419,30 @@ end
 
 function mupdf.getBalancedHTML(text, user_css, em)
     local ctx = context()
-    local output = W.mupdf_new_buffer_from_story_text(ctx, ffi.cast("const unsigned char*", text), #text, user_css, em or 12)
+    local normalized_text = normalize_story_input_html(text)
+    local output = W.mupdf_new_buffer_from_story_text(ctx, ffi.cast("const unsigned char*", normalized_text), #normalized_text, user_css, em or 12)
     if output == nil then
         return nil, string.format("MuPDF story balancing failed: %s (%d)",
             ffi.string(W.mupdf_error_message(ctx)),
             W.mupdf_error_code(ctx))
     end
 
-    local balanced_html = normalize_story_xml(ffi.string(output.data, output.len))
+    -- local balanced_html = repair_empty_body_html(normalize_story_xml(ffi.string(output.data, output.len)))
+    local balanced_html = (normalize_story_xml(ffi.string(output.data, output.len)))
     W.mupdf_drop_buffer(ctx, output)
     return balanced_html
 end
 
 function mupdf.reduceHTML(text, wanted_selectors, unwanted_selectors, user_css, em)
     local ctx = context()
+    local balanced_html = mupdf.getBalancedHTML(text, user_css, em)
+    local normalized_text = normalize_story_input_html(balanced_html or text)
     local wanted_array, wanted_count = marshal_selector_array(wanted_selectors)
     local unwanted_array, unwanted_count = marshal_selector_array(unwanted_selectors)
     local output = W.mupdf_new_buffer_from_filtered_story_text(
         ctx,
-        ffi.cast("const unsigned char*", text),
-        #text,
+        ffi.cast("const unsigned char*", normalized_text),
+        #normalized_text,
         wanted_array,
         wanted_count,
         unwanted_array,

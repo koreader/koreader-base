@@ -10,6 +10,18 @@ local jbig2_pdf = "spec/base/unit/data/2col.jbig2.pdf"
 local aes_encrypted_zip = "spec/base/unit/data/encrypted-aes.zip"
 local none_encrypted_zip = "spec/base/unit/data/encrypted-none.zip"
 local plain_encrypted_zip = "spec/base/unit/data/encrypted-plain.zip"
+local saved_html_repro = "/tmp/input_html1775149667.html"
+
+local function read_text_file(path)
+    local file = io.open(path, "rb")
+    if not file then
+        return nil
+    end
+
+    local data = file:read("*a")
+    file:close()
+    return data
+end
 
 describe("mupdf module", function()
     local M
@@ -267,6 +279,20 @@ describe("mupdf module", function()
             assert.equals([[<article class="story"><p>Story body</p></article>]], reduced)
         end)
 
+        it("should match class selectors on elements with utility classes containing bare ampersands", function()
+            local html = [[<html><body><div class="blog-content [&_h1]:mr-0! prose"><p>Keep me</p></div></body></html>]]
+            local reduced = M.reduceHTML(html, { ".blog-content" }, {})
+
+            assert.equals([[<div class="blog-content [&amp;_h1]:mr-0! prose"><p>Keep me</p></div>]], reduced)
+        end)
+
+        it("should match class selectors on real-world utility-heavy class lists", function()
+            local html = [[<html><body><div class="blog-content copiable-code-container [&_h1]:mr-0! prose mx-auto mb-8 lg:prose-lg 2xl:prose-lg prose-h1:mb-3 lg:px-8"><p>Keep me</p></div></body></html>]]
+            local reduced = M.reduceHTML(html, { ".blog-content" }, {})
+
+            assert(reduced:match("blog%-content"), "expected reduced HTML to preserve .blog-content, got:\n" .. tostring(reduced))
+        end)
+
         it("should decode multiline UTF-8 content without leaving hex entities behind", function()
             local html = [[<html><body><article>
                 <p>
@@ -281,6 +307,21 @@ describe("mupdf module", function()
                 </p>
             </article>]], reduced)
         end)
+
+        if read_text_file(saved_html_repro) then
+            it("should reduce the saved blog-content repro without keeping blocked subtree", function()
+                local html = assert(read_text_file(saved_html_repro), "missing local repro input: " .. saved_html_repro)
+                local balanced = assert(M.getBalancedHTML(html), "expected balanced HTML for " .. saved_html_repro)
+                local allowlisted_only = M.reduceHTML(html, { ".blog-content" }, {})
+                local reduced = M.reduceHTML(html, { ".blog-content" }, { ".not-prose" })
+
+                assert(balanced:match("blog%-content"), "expected balanced HTML to preserve .blog-content, got:\n" .. balanced)
+                assert(allowlisted_only and allowlisted_only:match("blog%-content"), "expected allowlist-only reduction to preserve .blog-content, got:\n" .. tostring(allowlisted_only))
+                assert(reduced and reduced ~= "", "expected non-empty reduced HTML for " .. saved_html_repro)
+                assert(reduced:match("blog%-content"), "expected selected subtree to preserve .blog-content, got:\n" .. reduced)
+                assert(not reduced:match("not%-prose"), "expected denylisted .not-prose subtree to be removed, got:\n" .. reduced)
+            end)
+        end
     end)
 
     describe("image API", function()
