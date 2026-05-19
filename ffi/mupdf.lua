@@ -165,6 +165,144 @@ function mupdf.openDocumentFromText(text, magic, html_resource_directory)
     return mupdf_doc
 end
 
+local function is_valid_utf8_bytes(bytes)
+    local index = 1
+    local length = #bytes
+
+    while index <= length do
+        local first = bytes:byte(index)
+        if first < 0x80 then
+            index = index + 1
+        elseif first >= 0xC2 and first <= 0xDF then
+            local second = bytes:byte(index + 1)
+            if not second or second < 0x80 or second > 0xBF then
+                return false
+            end
+            index = index + 2
+        elseif first == 0xE0 then
+            local second = bytes:byte(index + 1)
+            local third = bytes:byte(index + 2)
+            if not second or not third or second < 0xA0 or second > 0xBF or third < 0x80 or third > 0xBF then
+                return false
+            end
+            index = index + 3
+        elseif first >= 0xE1 and first <= 0xEC then
+            local second = bytes:byte(index + 1)
+            local third = bytes:byte(index + 2)
+            if not second or not third or second < 0x80 or second > 0xBF or third < 0x80 or third > 0xBF then
+                return false
+            end
+            index = index + 3
+        elseif first == 0xED then
+            local second = bytes:byte(index + 1)
+            local third = bytes:byte(index + 2)
+            if not second or not third or second < 0x80 or second > 0x9F or third < 0x80 or third > 0xBF then
+                return false
+            end
+            index = index + 3
+        elseif first >= 0xEE and first <= 0xEF then
+            local second = bytes:byte(index + 1)
+            local third = bytes:byte(index + 2)
+            if not second or not third or second < 0x80 or second > 0xBF or third < 0x80 or third > 0xBF then
+                return false
+            end
+            index = index + 3
+        elseif first == 0xF0 then
+            local second = bytes:byte(index + 1)
+            local third = bytes:byte(index + 2)
+            local fourth = bytes:byte(index + 3)
+            if not second or not third or not fourth or second < 0x90 or second > 0xBF or third < 0x80 or third > 0xBF or fourth < 0x80 or fourth > 0xBF then
+                return false
+            end
+            index = index + 4
+        elseif first >= 0xF1 and first <= 0xF3 then
+            local second = bytes:byte(index + 1)
+            local third = bytes:byte(index + 2)
+            local fourth = bytes:byte(index + 3)
+            if not second or not third or not fourth or second < 0x80 or second > 0xBF or third < 0x80 or third > 0xBF or fourth < 0x80 or fourth > 0xBF then
+                return false
+            end
+            index = index + 4
+        elseif first == 0xF4 then
+            local second = bytes:byte(index + 1)
+            local third = bytes:byte(index + 2)
+            local fourth = bytes:byte(index + 3)
+            if not second or not third or not fourth or second < 0x80 or second > 0x8F or third < 0x80 or third > 0xBF or fourth < 0x80 or fourth > 0xBF then
+                return false
+            end
+            index = index + 4
+        else
+            return false
+        end
+    end
+
+    return true
+end
+
+local function decode_story_hex_entities(text)
+    text = text:gsub("&#x0([9AaDd]);", function(hex)
+        local value = tonumber("0" .. hex, 16)
+        return value and string.char(value) or ""
+    end)
+
+    local parts = {}
+    local index = 1
+
+    while true do
+        local start_pos = text:find("&#x[%x][%x];", index)
+        if not start_pos then
+            parts[#parts + 1] = text:sub(index)
+            break
+        end
+
+        parts[#parts + 1] = text:sub(index, start_pos - 1)
+
+        local cursor = start_pos
+        local bytes = {}
+        while true do
+            local entity_start, entity_end, hex = text:find("&#x([%x][%x]);", cursor)
+            if entity_start ~= cursor then
+                break
+            end
+            local value = tonumber(hex, 16)
+            if not value then
+                break
+            end
+            bytes[#bytes + 1] = string.char(value)
+            cursor = entity_end + 1
+        end
+
+        if #bytes >= 2 then
+            local candidate = table.concat(bytes)
+            if is_valid_utf8_bytes(candidate) then
+                parts[#parts + 1] = candidate
+            else
+                parts[#parts + 1] = text:sub(start_pos, cursor - 1)
+            end
+        else
+            parts[#parts + 1] = text:sub(start_pos, cursor - 1)
+        end
+
+        index = cursor
+    end
+
+    return table.concat(parts)
+end
+
+function mupdf.getBalancedHTML(text, user_css, em)
+    local ctx = context()
+    local output = W.mupdf_new_buffer_from_story_text(ctx, ffi.cast("const unsigned char*", text), #text, user_css, em or 12)
+    if output == nil then
+        return nil, string.format("MuPDF story balancing failed: %s (%d)",
+            ffi.string(W.mupdf_error_message(ctx)),
+            W.mupdf_error_code(ctx))
+    end
+
+    local balanced_html = decode_story_hex_entities(ffi.string(output.data, output.len))
+    W.mupdf_drop_buffer(ctx, output)
+    return balanced_html
+end
+
 -- Document functions:
 
 --[[
