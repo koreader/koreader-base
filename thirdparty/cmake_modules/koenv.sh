@@ -106,7 +106,13 @@ extract_archive() { (
     case "${archive}" in
         # Luarocks source rock, no root dir.
         *.src.rock) root='' ;;
-        *) root="$(echo *)" ;;
+        *)
+            root="$(echo *)"
+            if ! [ -e "${root}" ]; then
+                # Multiple entries: no root.
+                root=''
+            fi
+            ;;
     esac
     cd "${oldpwd}"
     mv "${sourcedir}.tmp/${root}" "${sourcedir}"
