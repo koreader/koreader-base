@@ -218,7 +218,7 @@ static void smask_fill_image(fz_context* ctx, fz_device* dev, fz_image* img, fz_
     }
 }
 
-fz_device *mupdf_fz_new_isolated_smask_device(fz_context* ctx, fz_device* dev)
+fz_device *new_isolated_smask_device(fz_context* ctx, fz_device* dev)
 {
     isolated_smask_device* smask_dev = fz_new_derived_device(ctx, isolated_smask_device);
     smask_dev->default_device = dev;
@@ -226,7 +226,7 @@ fz_device *mupdf_fz_new_isolated_smask_device(fz_context* ctx, fz_device* dev)
     return (fz_device*)smask_dev;
 }
 
-int mupdf_fz_page_has_smask(fz_context* ctx, fz_page* p)
+int page_has_smask(fz_context* ctx, fz_page* p)
 {
     /* Other document types (EPUB, XPS, etc.) don't use smasks. */
     pdf_page* page = pdf_page_from_fz_page(ctx, p);
