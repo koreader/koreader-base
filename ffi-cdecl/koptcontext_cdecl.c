@@ -8,9 +8,6 @@
 
 #include "ffi-cdecl.h"
 
-// FIXME: only declared in `koptocr.c`…
-PIX* bitmap2pix(WILLUSBITMAP *src, int x, int y, int w, int h);
-
 cdecl_type(BBox)
 cdecl_type(BOXA)
 cdecl_type(NUMA)
