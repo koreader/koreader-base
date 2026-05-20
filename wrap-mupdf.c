@@ -218,12 +218,35 @@ static void smask_fill_image(fz_context* ctx, fz_device* dev, fz_image* img, fz_
     }
 }
 
-fz_device *fz_new_isolated_smask_device(fz_context* ctx, fz_device* dev)
+fz_device *new_isolated_smask_device(fz_context* ctx, fz_device* dev)
 {
     isolated_smask_device* smask_dev = fz_new_derived_device(ctx, isolated_smask_device);
     smask_dev->default_device = dev;
     smask_dev->super.fill_image = smask_fill_image;
     return (fz_device*)smask_dev;
+}
+
+int page_has_smask(fz_context* ctx, fz_page* p)
+{
+    /* Other document types (EPUB, XPS, etc.) don't use smasks. */
+    pdf_page* page = pdf_page_from_fz_page(ctx, p);
+    if (!page) {
+        return 0;
+    }
+
+    pdf_obj* resources = pdf_page_resources(ctx, page);
+    pdf_obj* xobj = pdf_dict_get(ctx, resources, PDF_NAME(XObject));
+    if (!xobj) {
+        return 0;
+    }
+    const int n = pdf_dict_len(ctx, xobj);
+    for (int i = 0; i < n; i++) {
+        pdf_obj* val = pdf_dict_get_val(ctx, xobj, i);
+        if (pdf_dict_get(ctx, val, PDF_NAME(SMask))) {
+            return 1;
+        }
+    }
+    return 0;
 }
 
 /* wrappers for functions that throw exceptions mupdf-style (setjmp/longjmp) */
