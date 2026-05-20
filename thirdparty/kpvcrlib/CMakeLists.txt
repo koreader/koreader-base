@@ -60,6 +60,7 @@ add_library(crengine STATIC
     ${CRE_DIR}/src/odxutil.cpp
     ${CRE_DIR}/src/pdbfmt.cpp
     ${CRE_DIR}/src/props.cpp
+    ${CRE_DIR}/src/renderutil.cpp
     ${CRE_DIR}/src/rtfimp.cpp
     ${CRE_DIR}/src/textlang.cpp
     ${CRE_DIR}/src/txtselector.cpp
