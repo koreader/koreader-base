@@ -281,7 +281,7 @@ USE_LUAJIT_LIB = $(or $(DARWIN),$(ANDROID),$(WIN32))
 SKIP_LUAJIT_BIN = $(ANDROID)
 
 RCP := cp -R
-WGET ?= wget --no-verbose
+WGET ?= wget --no-verbose --progress=dot:giga --show-progress
 
 define wget_and_validate
 	$(WGET) -O '$1' '$2' \
@@ -971,6 +971,7 @@ set(THIRDPARTY_DIR $(abspath $(THIRDPARTY_DIR)))
 
 set(MAKE $(MAKE))
 set(NINJA $(NINJA))
+set(WGET $(WGET))
 
 list(PREPEND CMAKE_MODULE_PATH $${THIRDPARTY_DIR}/cmake_modules)
 

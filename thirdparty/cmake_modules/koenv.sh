@@ -80,10 +80,11 @@ download_archive() { (
     if validate_md5 "${dest}" "${md5}"; then
         return 0
     fi
+    mkdir -p "${dest%/*}"
     for timeout in 0 2 4; do
         sleep ${timeout}
         for url in "$@"; do
-            if curl --fail --location --connect-timeout 15 --create-dirs --max-time 120 --output "${dest}" "${url}" && validate_md5 "${dest}" "${md5}"; then
+            if @WGET_COMMAND@ --connect-timeout=15 --dns-timeout=10 --read-timeout=10 --tries=1 --output-document="${dest}" "${url}" && validate_md5 "${dest}" "${md5}"; then
                 return 0
             fi
         done
