@@ -39,22 +39,11 @@ else
 endif
 
 TOOLCHAIN_DIR = $(abspath $(KOR_BASE)/toolchain)
-ANDROID_ARCH ?= arm
 export ANDROID_HOME := $(or $(ANDROID_HOME),$(ANDROID_SDK_ROOT),$(TOOLCHAIN_DIR)/android-sdk-linux)
 export ANDROID_SDK_ROOT := $(ANDROID_HOME)
 export ANDROID_NDK_HOME := $(or $(ANDROID_NDK_HOME),$(ANDROID_NDK_ROOT),$(TOOLCHAIN_DIR)/android-ndk-r23c)
 export ANDROID_NDK_ROOT := $(ANDROID_NDK_HOME)
 ANDROID_TOOLCHAIN = $(ANDROID_NDK_HOME)/toolchains/llvm/prebuilt/$(CURRENT_OS)-x86_64
-ifeq ($(ANDROID_ARCH), arm64)
-	# 64bit arches require at least ABI 21.
-	export NDKABI?=21
-else ifeq ($(ANDROID_ARCH), x86_64)
-	# Ditto.
-	export NDKABI?=21
-else
-	# Android 4.3 (Jelly Bean MR2); our minimal supported version.
-	export NDKABI?=18
-endif
 
 CMAKE := cmake -Wdev --warn-uninitialized
 CMAKE_VERSION := $(word 3,$(shell cmake --version))
@@ -198,20 +187,33 @@ else ifeq ($(TARGET), macos)
 	SDL=builtin
 	EMULATE_READER=1
 	DARWIN = 1
-else ifeq ($(TARGET), android)
-	ANDROID=1
-	MONOLIBTIC?=1
-	export PATH:=$(ANDROID_TOOLCHAIN)/bin:$(PATH)
-	ifeq ($(ANDROID_ARCH), x86)
-		CHOST?=i686-linux-android$(NDKABI)
-	else ifeq ($(ANDROID_ARCH), x86_64)
-		CHOST?=x86_64-linux-android$(NDKABI)
-	else ifeq ($(ANDROID_ARCH), arm64)
-		CHOST?=aarch64-linux-android$(NDKABI)
-	else
-		CHOST?=armv7a-linux-androideabi$(NDKABI)
-	endif
-	USE_CLANG=1
+else ifneq (,$(filter android android-arm android-arm64 android-x86 android-x86_64,$(TARGET)))
+  ANDROID=1
+  MONOLIBTIC?=1
+  export PATH:=$(ANDROID_TOOLCHAIN)/bin:$(PATH)
+  ifneq ($(TARGET), android)
+    export ANDROID_ARCH := $(TARGET:android-%=%)
+    override TARGET := android
+  endif
+  ifneq (,$(filter arm64 x86_64,$(ANDROID_ARCH)))
+    # 64bit arches require at least ABI 21.
+    export NDKABI?=21
+  else
+    # Android 4.3 (Jelly Bean MR2); our minimal supported version.
+    export NDKABI?=18
+  endif
+  ifeq ($(ANDROID_ARCH), arm)
+    CHOST?=armv7a-linux-androideabi$(NDKABI)
+  else ifeq ($(ANDROID_ARCH), arm64)
+    CHOST?=aarch64-linux-android$(NDKABI)
+  else ifeq ($(ANDROID_ARCH), x86)
+    CHOST?=i686-linux-android$(NDKABI)
+  else ifeq ($(ANDROID_ARCH), x86_64)
+    CHOST?=x86_64-linux-android$(NDKABI)
+  else
+    $(error unsupported android architecture: $(ANDROID_ARCH))
+  endif
+  USE_CLANG=1
 else ifeq ($(TARGET), win32)
 	CHOST?=x86_64-w64-mingw32
 	WIN32=1
@@ -334,7 +336,7 @@ else
 endif
 
 # set cross-compiler/host AR LD RANLIB
-ifeq ($(TARGET), android)
+ifdef ANDROID
 	STRIP:=llvm-strip
 	AR:=llvm-ar
 	LD:=ld
@@ -556,13 +558,12 @@ else ifeq ($(TARGET), kindle-legacy)
 	# We're not multi-threaded, so, whatever.
 	# c.f., https://github.com/koreader/koreader/discussions/11246
         COMPAT_CXXFLAGS+=-fno-threadsafe-statics
-else ifeq ($(TARGET), android)
+else ifdef ANDROID
 	ifeq ($(ANDROID_ARCH), arm)
 		TARGET_CFLAGS:=$(ANDROID_ARM_ARCH)
 		TARGET_CFLAGS+=-mfloat-abi=softfp
 	else ifeq ($(ANDROID_ARCH), arm64)
 		TARGET_CFLAGS:=$(ANDROID_ARM_ARCH)
-	else ifeq ($(ANDROID_ARCH), x86)
 	endif
 	ifneq (,$(filter arm x86,$(ANDROID_ARCH)))
 		# NOTE: to be removed when upgrading the minimal supported API level to 24.
@@ -649,7 +650,7 @@ ifndef DARWIN
   #       (Assuming no LD_LIBRARY_PATH are set, since the search order is basically RPATH -> LD_LIBRARY_PATH -> RUNPATH).
   #       c.f., https://github.com/koreader/koreader-base/pull/1638#issuecomment-1636725691
   #       And https://bugs.launchpad.net/ubuntu/+source/eglibc/+bug/1253638/comments/5 for a nice recap.
-  ifneq ($(TARGET), android)
+  ifndef ANDROID
     LDFLAGS += -Wl,@$(abspath $(KOR_BASE)/origin.ldflags)
   endif
   # No code we build should need an executable stack, so disable
@@ -658,7 +659,7 @@ ifndef DARWIN
     LDFLAGS += -Wl,-z,noexecstack
   endif
   # In monolibtic mode on Android, we can statically link the STL.
-  ifeq ($(TARGET), android)
+  ifdef ANDROID
     LDFLAGS += $(if $(MONOLIBTIC),-static-libstdc++)
   endif
 else
@@ -666,7 +667,7 @@ else
 endif
 
 # NOTE: Follow the NDK's lead
-ifeq ($(TARGET), android)
+ifdef ANDROID
 	LDFLAGS+=-no-canonical-prefixes
 	ifeq ($(ANDROID_ARCH), arm)
 		# FIXME: `--Wl,--fix-cortex-a8` still needed?
@@ -756,7 +757,7 @@ ifneq (,$(filter -march=arm%,$(CFLAGS)))
   endif
 endif
 # ... ditto on Android x86, because the TC is old as hell, and that upsets libjpeg-turbo...
-ifeq ($(TARGET), android)
+ifdef ANDROID
   ifeq ($(ANDROID_ARCH), x86)
     WANT_SIMD=
   endif
