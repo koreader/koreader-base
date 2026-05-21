@@ -43,7 +43,7 @@ local function popen(cmd, input, lines)
         cmd = cmd.." <"..shell_escape(stdin)
     end
     -- print("executing: ", cmd)
-    local ret, err = os.execute(cmd)
+    local ret = os.execute(cmd)
     if stdin then
         os.remove(stdin)
     end
