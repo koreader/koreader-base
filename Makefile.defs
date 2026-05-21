@@ -783,7 +783,7 @@ ifdef DARWIN
   DYNLIB_LDFLAGS += -dynamiclib -undefined dynamic_lookup
 endif
 
-# AppImage variables. {{{
+# AppImage helpers. {{{
 
 ifeq ($(TARGET), linux)
 
@@ -814,7 +814,7 @@ endef
 
 endif
 
- # }}}
+# }}}
 
 # CMake toolchain file. {{{
 
