@@ -174,6 +174,9 @@ endif()
 # brotli
 declare_project(thirdparty/brotli EXCLUDE_FROM_ALL)
 
+# certifi
+declare_project(thirdparty/certifi)
+
 # crengine
 declare_project(
     cmake/crengine
