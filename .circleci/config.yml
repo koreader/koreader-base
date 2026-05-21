@@ -50,13 +50,12 @@ executors:
     docker:
       - image: koreader/koandroid:0.9.6-22.04
     environment:
-      TARGET: "android"
+      TARGET: "android-arm"
 
   android-x86:
     <<: *ANDROID_EXE
     environment:
-      TARGET: "android"
-      ANDROID_ARCH: "x86"
+      TARGET: "android-x86"
 
   cervantes:
     docker:
