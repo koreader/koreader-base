@@ -870,12 +870,6 @@ function S.getPlatform()
     return ffi.string(SDL.SDL_GetPlatform())
 end
 
-function S.getPrefPath(organization, appname)
-    if not organization then organization = "dummy" end
-    if not appname then appname = "application" end
-    return toluastring(SDL.SDL_GetPrefPath(organization, appname))
-end
-
 function S.getPowerInfo()
     local batt = false
     local plugged = false

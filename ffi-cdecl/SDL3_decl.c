@@ -197,7 +197,6 @@ cdecl_func(SDL_SetWindowFullscreen)
 cdecl_func(SDL_SyncWindow)
 
 cdecl_func(SDL_GetBasePath)
-cdecl_func(SDL_GetPrefPath)
 cdecl_func(SDL_GetPowerInfo)
 cdecl_func(SDL_GetPlatform)
 

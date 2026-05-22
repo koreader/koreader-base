@@ -1060,7 +1060,6 @@ void SDL_DestroySurface(SDL_Surface *surface);
 bool SDL_SetWindowFullscreen(SDL_Window *window, bool fullscreen);
 bool SDL_SyncWindow(SDL_Window *window);
 const char *SDL_GetBasePath(void);
-char *SDL_GetPrefPath(const char *org, const char *app);
 SDL_PowerState SDL_GetPowerInfo(int *seconds, int *percent);
 const char *SDL_GetPlatform(void);
 bool SDL_HasClipboardText(void);
