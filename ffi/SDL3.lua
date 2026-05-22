@@ -93,6 +93,8 @@ function S.open(w, h, x, y)
         error("Cannot initialize SDL: " .. ffi.string(SDL.SDL_GetError()))
     end
 
+    print(string.format("Started SDL in %s using %s video driver", ffi.string(SDL.SDL_GetBasePath()), ffi.string(SDL.SDL_GetCurrentVideoDriver())))
+
     local full_screen = os.getenv("SDL_FULLSCREEN")
     if full_screen then
         local mode = SDL.SDL_GetCurrentDisplayMode(SDL.SDL_GetPrimaryDisplay())
@@ -866,10 +868,6 @@ end
 
 function S.getPlatform()
     return ffi.string(SDL.SDL_GetPlatform())
-end
-
-function S.getBasePath()
-    return ffi.string(SDL.SDL_GetBasePath())
 end
 
 function S.getPrefPath(organization, appname)
