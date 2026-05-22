@@ -1025,6 +1025,7 @@ void SDL_DestroyRenderer(SDL_Renderer *renderer);
 void SDL_DestroyTexture(SDL_Texture *texture);
 bool SDL_EnableScreenSaver(void);
 bool SDL_GetCurrentRenderOutputSize(SDL_Renderer *renderer, int *w, int *h);
+const char *SDL_GetCurrentVideoDriver(void);
 bool SDL_GetWindowSize(SDL_Window *window, int *w, int *h);
 bool SDL_Init(SDL_InitFlags flags);
 bool SDL_InitSubSystem(SDL_InitFlags flags);
