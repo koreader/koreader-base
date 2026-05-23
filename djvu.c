@@ -651,6 +651,10 @@ static int drawPage(lua_State *L) {
 		memset(imagebuffer, 0xFF, bbsize);
 	}
 
+	if (page->doc->pixelsize == 3 && dc->saturation != 1.0) {
+		BB_saturate_rect(bb, 0, 0, bb->w, bb->h, dc->saturation);
+	}
+
 	return 0;
 }
 

@@ -3,6 +3,96 @@ require("ffi_wrapper")
 local Blitbuffer = require("ffi/blitbuffer")
 
 describe("Blitbuffer unit tests", function()
+    describe("Saturation transform", function()
+        it("should preserve neutral saturation exactly", function()
+            local bb = Blitbuffer.new(1, 1, Blitbuffer.TYPE_BBRGB24)
+            bb:setPixel(0, 0, Blitbuffer.ColorRGB24(0x80, 0x40, 0x20))
+            local original = bb:getPixel(0, 0)
+            bb:adjustSaturation(1.0)
+            assert.are.same(original, bb:getPixel(0, 0))
+        end)
+
+        it("should desaturate and saturate color pixels", function()
+            local bb = Blitbuffer.new(1, 1, Blitbuffer.TYPE_BBRGB32)
+            local original = Blitbuffer.ColorRGB32(0xE0, 0x40, 0x20, 0x7F)
+            bb:setPixel(0, 0, original)
+            local original_spread = math.max(original.r, original.g, original.b) - math.min(original.r, original.g, original.b)
+
+            bb:adjustSaturation(0.2)
+            local desaturated = bb:getPixel(0, 0)
+            local desaturated_spread = math.max(desaturated.r, desaturated.g, desaturated.b) - math.min(desaturated.r, desaturated.g, desaturated.b)
+            assert.is_true(desaturated_spread < original_spread)
+            assert.are.equal(original.alpha, desaturated.alpha)
+
+            bb:setPixel(0, 0, original)
+            bb:adjustSaturation(2.0)
+            local saturated = bb:getPixel(0, 0)
+            local saturated_spread = math.max(saturated.r, saturated.g, saturated.b) - math.min(saturated.r, saturated.g, saturated.b)
+            assert.is_true(saturated_spread > original_spread)
+            assert.are.equal(original.alpha, saturated.alpha)
+        end)
+
+        it("should ignore grayscale buffers", function()
+            local bb = Blitbuffer.new(1, 1, Blitbuffer.TYPE_BB8)
+            bb:fill(Blitbuffer.Color8(0xAA))
+            bb:adjustSaturation(0.2)
+            assert.are.equal(0xAA, bb:getPixel(0, 0).a)
+        end)
+
+        it("should work correctly on rotated buffers", function()
+            local width, height = 4, 8
+            local original_color = Blitbuffer.ColorRGB32(0xE0, 0x40, 0x20, 0xFF)
+            local original_spread = math.max(original_color.r, original_color.g, original_color.b)
+                                  - math.min(original_color.r, original_color.g, original_color.b)
+
+            for rotation = 0, 3 do
+                local bb = Blitbuffer.new(width, height, Blitbuffer.TYPE_BBRGB32)
+                bb:setRotation(rotation)
+
+                local w = rotation % 2 == 1 and height or width
+                local h = rotation % 2 == 1 and width or height
+
+                for y = 0, h - 1 do
+                    for x = 0, w - 1 do
+                        bb:setPixel(x, y, original_color)
+                    end
+                end
+
+                bb:adjustSaturation(0.2)
+
+                for y = 0, h - 1 do
+                    for x = 0, w - 1 do
+                        local px = bb:getPixel(x, y)
+                        local spread = math.max(px.r, px.g, px.b)
+                                     - math.min(px.r, px.g, px.b)
+                        assert.is_true(spread < original_spread,
+                            string.format("rotation=%d pixel(%d,%d) spread %d not < %d",
+                                          rotation, x, y, spread, original_spread))
+                    end
+                end
+
+                for y = 0, h - 1 do
+                    for x = 0, w - 1 do
+                        bb:setPixel(x, y, original_color)
+                    end
+                end
+
+                bb:adjustSaturation(2.0)
+
+                for y = 0, h - 1 do
+                    for x = 0, w - 1 do
+                        local px = bb:getPixel(x, y)
+                        local spread = math.max(px.r, px.g, px.b)
+                                     - math.min(px.r, px.g, px.b)
+                        assert.is_true(spread > original_spread,
+                            string.format("rotation=%d pixel(%d,%d) spread %d not > %d",
+                                          rotation, x, y, spread, original_spread))
+                    end
+                end
+            end
+        end)
+    end)
+
     describe("Color conversion", function()
         -- 0xFF = 0b11111111
         -- 0xAA = 0b10101010

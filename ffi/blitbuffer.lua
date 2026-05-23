@@ -124,6 +124,7 @@ void BB_blend_rect(BlitBuffer * restrict bb, unsigned int x, unsigned int y, uns
 void BB_blend_RGB32_over_rect(BlitBuffer * restrict bb, unsigned int x, unsigned int y, unsigned int w, unsigned int h, const ColorRGB32 * restrict color);
 void BB_blend_RGB_multiply_rect(BlitBuffer * restrict bb, unsigned int x, unsigned int y, unsigned int w, unsigned int h, const ColorRGB24 * restrict color);
 void BB_blend_RGB32_multiply_rect(BlitBuffer * restrict bb, unsigned int x, unsigned int y, unsigned int w, unsigned int h, const ColorRGB32 * restrict color);
+void BB_saturate_rect(BlitBuffer * restrict bb, unsigned int x, unsigned int y, unsigned int w, unsigned int h, double saturation);
 void BB_invert_rect(BlitBuffer * restrict bb, unsigned int x, unsigned int y, unsigned int w, unsigned int h);
 void BB_hatch_rect(BlitBuffer * restrict bb, unsigned int x, unsigned int y, unsigned int w, unsigned int h, unsigned int stripe_width, const Color8 * restrict color, uint8_t alpha);
 void BB_blit_to(const BlitBuffer * restrict source, BlitBuffer * restrict dest, unsigned int dest_x, unsigned int dest_y,
@@ -1655,6 +1656,39 @@ end
 -- No fast paths for BB4
 function BB4_mt.__index:invertRect(x, y, w, h)
     self:invertblitFrom(self, x, y, x, y, w, h)
+end
+
+function BB_mt.__index:adjustSaturation(saturation)
+    saturation = saturation or 1.0
+    if saturation == 1.0 then
+        return
+    end
+    saturation = math.max(0.0, math.min(saturation, 2.0))
+
+    local bbtype = self:getType()
+    if bbtype == TYPE_BB8 or bbtype == TYPE_BB8A or bbtype == TYPE_BB4 then
+        return
+    end
+
+    if self:canUseCbb() then
+        cblitbuffer.BB_saturate_rect(ffi.cast(P_BlitBuffer, self), 0, 0, self:getWidth(), self:getHeight(), saturation)
+        return
+    end
+
+    -- TODO: optimize this function
+    for y = 0, self:getHeight() - 1 do
+        for x = 0, self:getWidth() - 1 do
+            local color = self:getPixel(x, y):getColorRGB32()
+            local gray = rshift(4898 * color.r + 9618 * color.g + 1869 * color.b, 14)
+            local r = gray + (color.r - gray) * saturation
+            local g = gray + (color.g - gray) * saturation
+            local b = gray + (color.b - gray) * saturation
+            if r < 0 then r = 0 elseif r > 255 then r = 255 end
+            if g < 0 then g = 0 elseif g > 255 then g = 255 end
+            if b < 0 then b = 0 elseif b > 255 then b = 255 end
+            self:setPixel(x, y, ColorRGB32(r + 0.5, g + 0.5, b + 0.5, color.alpha))
+        end
+    end
 end
 
 --[[

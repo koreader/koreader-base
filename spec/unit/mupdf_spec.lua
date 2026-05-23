@@ -7,6 +7,7 @@ local simple_pdf_annotated_compare = "spec/base/unit/data/simple-out-annotated.p
 local simple_pdf_annotation_deleted_compare = "spec/base/unit/data/simple-out-annotation-deleted.pdf"
 local test_img = "spec/base/unit/data/sample.jpg"
 local jbig2_pdf = "spec/base/unit/data/2col.jbig2.pdf"
+local saturation_test_pdf = "spec/base/unit/data/saturation.pdf"
 local aes_encrypted_zip = "spec/base/unit/data/encrypted-aes.zip"
 local none_encrypted_zip = "spec/base/unit/data/encrypted-none.zip"
 local plain_encrypted_zip = "spec/base/unit/data/encrypted-plain.zip"
@@ -222,11 +223,29 @@ describe("mupdf module", function()
             end)
         end)
     end)
+
     describe("image API", function()
         it("should render an image", function()
             local img = M.renderImageFile(test_img)
             assert.is_not_nil(img)
             img:free()
         end)
+    end)
+
+    it("should adjust saturation", function()
+        local BB = require("ffi/blitbuffer")
+        local doc = M.openDocument(saturation_test_pdf)
+        assert.is_not_nil(doc)
+        doc:setColorRendering(true)
+        local page = doc:openPage(1)
+        local dc = require("ffi/drawcontext").new()
+        local bb = BB.new(800, 600, BB.TYPE_BBRGB24)
+        page:draw(dc, bb, 0, 0)
+        local original = bb:getPixel(50, 50):getColorRGB24()
+        dc:setSaturation(1.6)
+        page:draw(dc, bb, 0, 0)
+        local saturated = bb:getPixel(50, 50):getColorRGB24()
+        assert.True(original ~= saturated)
+        doc:close()
     end)
 end)

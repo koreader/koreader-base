@@ -736,6 +736,10 @@ function page_mt.__index:draw_new(draw_context, width, height, offset_x, offset_
         M.fz_gamma_pixmap(self.ctx, pix, draw_context.gamma)
     end
 
+    if draw_context.saturation ~= 1.0 then
+        bb:adjustSaturation(draw_context.saturation)
+    end
+
     M.fz_drop_pixmap(self.ctx, pix)
 
     return bb

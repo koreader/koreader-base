@@ -137,6 +137,7 @@ DLL_PUBLIC void BB_blend_rect(BlitBuffer * restrict bb, unsigned int x, unsigned
 DLL_PUBLIC void BB_blend_RGB32_over_rect(BlitBuffer * restrict bb, unsigned int x, unsigned int y, unsigned int w, unsigned int h, const ColorRGB32 * restrict color);
 DLL_PUBLIC void BB_blend_RGB_multiply_rect(BlitBuffer * restrict bb, unsigned int x, unsigned int y, unsigned int w, unsigned int h, const ColorRGB24 * restrict color);
 DLL_PUBLIC void BB_blend_RGB32_multiply_rect(BlitBuffer * restrict bb, unsigned int x, unsigned int y, unsigned int w, unsigned int h, const ColorRGB32 * restrict color);
+DLL_PUBLIC void BB_saturate_rect(BlitBuffer * restrict bb, unsigned int x, unsigned int y, unsigned int w, unsigned int h, double saturation);
 DLL_PUBLIC void BB_invert_rect(BlitBuffer * restrict bb, unsigned int x, unsigned int y, unsigned int w, unsigned int h);
 DLL_PUBLIC void BB_hatch_rect(BlitBuffer * restrict bb, unsigned int x, unsigned int y, unsigned int w, unsigned int h, unsigned int stripe_width, const Color8 * restrict color, uint8_t alpha);
 DLL_PUBLIC void BB_blit_to_BB8(const BlitBuffer * restrict src, BlitBuffer * restrict dst,

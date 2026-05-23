@@ -292,6 +292,17 @@ static inline void BBRGB32_BLEND_PIXEL_CLAMPED(BlitBuffer * restrict bb, int rot
     }
 }
 
+static inline uint8_t saturate_channel(uint8_t channel, uint8_t gray, double saturation) {
+    double value = (double)gray + (((double)channel - (double)gray) * saturation);
+    if (value <= 0.0) {
+        return 0;
+    }
+    if (value >= 255.0) {
+        return 255;
+    }
+    return (uint8_t)(value + 0.5);
+}
+
 static inline unsigned int BB_GET_WIDTH(BlitBuffer * restrict bb) {
     if ((GET_BB_ROTATION(bb) & 1U) == 0U) {
         return bb->w;
@@ -884,6 +895,63 @@ void BB_blend_RGB32_multiply_rect(BlitBuffer * restrict bb, unsigned int x, unsi
                     dstptr->r = (uint8_t) DIV_255(dstptr->r * ainv + DIV_255(dstptr->r * color->r) * alpha);
                     dstptr->g = (uint8_t) DIV_255(dstptr->g * ainv + DIV_255(dstptr->g * color->g) * alpha);
                     dstptr->b = (uint8_t) DIV_255(dstptr->b * ainv + DIV_255(dstptr->b * color->b) * alpha);
+                }
+            }
+            break;
+    }
+}
+
+void BB_saturate_rect(BlitBuffer * restrict bb, unsigned int x, unsigned int y, unsigned int w, unsigned int h, double saturation) {
+    const int bb_type = GET_BB_TYPE(bb);
+    const int bb_rotation = GET_BB_ROTATION(bb);
+
+    if (saturation == 1.0 || w == 0 || h == 0) {
+        return;
+    }
+
+    saturation = MAX(0.0, MIN(saturation, 2.0));
+
+    switch (bb_type) {
+        case TYPE_BB8:
+        case TYPE_BB8A:
+            return;
+        case TYPE_BBRGB16:
+            for (unsigned int j = y; j < y + h; j++) {
+                for (unsigned int i = x; i < x + w; i++) {
+                    ColorRGB16 * restrict dstptr;
+                    BB_GET_PIXEL(bb, bb_rotation, ColorRGB16, i, j, &dstptr);
+                    const uint8_t r = ColorRGB16_GetR(dstptr->v);
+                    const uint8_t g = ColorRGB16_GetG(dstptr->v);
+                    const uint8_t b = ColorRGB16_GetB(dstptr->v);
+                    const uint8_t gray = (uint8_t) RGB_To_A(r, g, b);
+                    const uint8_t sr = saturate_channel(r, gray, saturation);
+                    const uint8_t sg = saturate_channel(g, gray, saturation);
+                    const uint8_t sb = saturate_channel(b, gray, saturation);
+                    dstptr->v = (uint16_t) RGB_To_RGB16(sr, sg, sb);
+                }
+            }
+            break;
+        case TYPE_BBRGB24:
+            for (unsigned int j = y; j < y + h; j++) {
+                for (unsigned int i = x; i < x + w; i++) {
+                    ColorRGB24 * restrict dstptr;
+                    BB_GET_PIXEL(bb, bb_rotation, ColorRGB24, i, j, &dstptr);
+                    const uint8_t gray = (uint8_t) RGB_To_A(dstptr->r, dstptr->g, dstptr->b);
+                    dstptr->r = saturate_channel(dstptr->r, gray, saturation);
+                    dstptr->g = saturate_channel(dstptr->g, gray, saturation);
+                    dstptr->b = saturate_channel(dstptr->b, gray, saturation);
+                }
+            }
+            break;
+        case TYPE_BBRGB32:
+            for (unsigned int j = y; j < y + h; j++) {
+                for (unsigned int i = x; i < x + w; i++) {
+                    ColorRGB32 * restrict dstptr;
+                    BB_GET_PIXEL(bb, bb_rotation, ColorRGB32, i, j, &dstptr);
+                    const uint8_t gray = (uint8_t) RGB_To_A(dstptr->r, dstptr->g, dstptr->b);
+                    dstptr->r = saturate_channel(dstptr->r, gray, saturation);
+                    dstptr->g = saturate_channel(dstptr->g, gray, saturation);
+                    dstptr->b = saturate_channel(dstptr->b, gray, saturation);
                 }
             }
             break;
