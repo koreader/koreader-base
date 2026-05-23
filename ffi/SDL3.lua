@@ -87,6 +87,12 @@ function S.open(w, h, x, y)
 
     SDL.SDL_SetMainReady()
 
+    if os.getenv("XDG_CURRENT_DESKTOP") == "Lomiri" then
+        -- Prefer X11 over Wayland on Ubuntu Touch.
+        -- Cf. https://github.com/koreader/koreader/issues/4960#issuecomment-4519022077
+        SDL.SDL_SetHint("SDL_VIDEO_DRIVER", "x11")
+    end
+
     if SDL.SDL_Init(bit.bor(SDL.SDL_INIT_VIDEO,
                             SDL.SDL_INIT_EVENTS,
                             SDL.SDL_INIT_GAMEPAD)) == 0 then
