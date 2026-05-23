@@ -43,8 +43,6 @@ Follow these steps:
 
 * or run `make TARGET=generic-arm` for generic ARM devices.
 
-* or run `make TARGET=ubuntu-touch` for Ubuntu Touch.
-
 * or run `make TARGET=appimage` for the desktop AppImage.
 
 * or run `make TARGET=debian`, `debian-armel` or `debian-armhf` for a Debian package.
