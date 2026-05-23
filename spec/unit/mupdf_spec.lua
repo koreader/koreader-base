@@ -71,7 +71,6 @@ describe("mupdf module", function()
             annotation_quadpoints = ffi.new("fz_quad[1]", {{
                 { 70,  930, 510,  930 },
                 { 510,  970, 70,  970 }
-
             }})
             doc1 = M.openDocument(sample_pdf)
             assert.is_not_nil(doc1)
