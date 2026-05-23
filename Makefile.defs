@@ -176,10 +176,6 @@ else ifeq ($(TARGET), kobov5)
 	endif
 	USE_LJ_WPACLIENT=1
 	GLIBC_VERSION_MAX = 2.35
-else ifeq ($(TARGET), ubuntu-touch)
-	CHOST?=arm-linux-gnueabihf
-	SDL=yes
-	UBUNTUTOUCH=1
 else ifeq ($(TARGET), linux)
 	SDL=builtin
 	EMULATE_READER=1
@@ -505,11 +501,6 @@ else ifeq ($(TARGET), kobov5)
 		COMPAT_CFLAGS:=$(UBUNTU_COMPAT_CFLAGS)
 		COMPAT_CXXFLAGS:=$(UBUNTU_COMPAT_CFLAGS)
 	endif
-else ifeq ($(TARGET), ubuntu-touch)
-	TARGET_CFLAGS:=$(ARMV7_A8_ARCH)
-	TARGET_CFLAGS+=-mfloat-abi=hard
-	COMPAT_CFLAGS:=$(UBUNTU_COMPAT_CFLAGS)
-	COMPAT_CXXFLAGS:=$(UBUNTU_COMPAT_CFLAGS)
 else ifeq ($(TARGET), pocketbook)
 	# NOTE: The TC itself is built in ARM mode (otherwise glibc 2.9 fails to build).
 	#       We prefer Thumb mode for our own binaries, though, much like on every other i.MX device ;).
