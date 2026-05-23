@@ -1675,6 +1675,7 @@ function BB_mt.__index:adjustSaturation(saturation)
         return
     end
 
+    -- TODO: optimize this function
     for y = 0, self:getHeight() - 1 do
         for x = 0, self:getWidth() - 1 do
             local color = self:getPixel(x, y):getColorRGB32()
