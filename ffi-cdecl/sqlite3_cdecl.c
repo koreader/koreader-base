@@ -1,8 +1,10 @@
-#include "sqlite3.h"
-#include "ffi-cdecl.h"
+#include <sqlite3.h>
+
+cdecl_type(sqlite_int64)
 
 cdecl_type(sqlite3)
 cdecl_type(sqlite3_context)
+cdecl_type(sqlite3_int64)
 cdecl_type(sqlite3_stmt)
 cdecl_type(sqlite3_value)
 

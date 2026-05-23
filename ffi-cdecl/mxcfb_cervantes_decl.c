@@ -1,7 +1,8 @@
 #include <linux/fb.h>
 #include <linux/ioctl.h>
 #include "include/mxcfb-cervantes.h"
-#include "ffi-cdecl.h"
+
+cdecl_type(__u32)
 
 cdecl_const(UPDATE_MODE_PARTIAL)
 cdecl_const(UPDATE_MODE_FULL)

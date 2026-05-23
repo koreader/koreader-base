@@ -6,8 +6,6 @@
 #include "include/mxcfb-kindle.h"
 #include "include/mtk-kindle.h"
 
-#include "ffi-cdecl.h"
-
 cdecl_const(UPDATE_MODE_PARTIAL)
 cdecl_const(UPDATE_MODE_FULL)
 

@@ -1,4 +1,3 @@
-// CPPFLAGS="-I/home/niluje/MPLAYER/koreader-base/ffi-cdecl -m32" ./ffi-cdecl x86_64-pc-linux-gnu-gcc /home/niluje/MPLAYER/koreader-base/ffi-cdecl/mxcfb_pb_decl.c /home/niluje/MPLAYER/koreader-base/ffi/mxcfb_pocketbook_h.lua
 // standard Linux framebuffer headers
 #include <linux/fb.h>
 
@@ -6,7 +5,7 @@
 // specialized eink framebuffer headers
 #include "include/mxcfb-pb.h"
 
-#include "ffi-cdecl.h"
+cdecl_type(__u32)
 
 cdecl_const(UPDATE_MODE_PARTIAL)
 cdecl_const(UPDATE_MODE_FULL)

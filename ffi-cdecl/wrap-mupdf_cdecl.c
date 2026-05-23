@@ -3,8 +3,6 @@
 
 #include "wrap-mupdf.h"
 
-#include "ffi-cdecl.h"
-
 cdecl_const(FZ_STEXT_BLOCK_TEXT)
 
 /* math */
@@ -78,6 +76,9 @@ cdecl_func(fz_drop_page)
 
 /* links */
 cdecl_type(fz_link)
+cdecl_type(fz_link_drop_link_fn)
+cdecl_type(fz_link_set_rect_fn)
+cdecl_type(fz_link_set_uri_fn)
 cdecl_struct(fz_link)
 cdecl_func(mupdf_load_links)
 cdecl_func(mupdf_fz_resolve_link)
@@ -98,6 +99,11 @@ cdecl_func(mupdf_open_memory)
 /* structured text */
 cdecl_type(fz_stext_char)
 cdecl_struct(fz_stext_char)
+cdecl_type(fz_pool)
+cdecl_type(fz_pool_array)
+cdecl_type(fz_stext_grid_info)
+cdecl_type(fz_stext_grid_positions)
+cdecl_type(fz_stext_struct)
 
 cdecl_type(fz_stext_line)
 cdecl_struct(fz_stext_line)
@@ -136,6 +142,8 @@ cdecl_func(fz_device_bgr)
 /* device, rendering */
 cdecl_func(mupdf_new_draw_device)
 cdecl_func(mupdf_new_bbox_device)
+cdecl_func(mupdf_new_isolated_smask_device)
+cdecl_func(mupdf_page_has_smask)
 cdecl_func(mupdf_run_page)
 cdecl_func(fz_close_device)
 cdecl_func(fz_drop_device)

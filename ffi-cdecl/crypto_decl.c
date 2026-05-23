@@ -1,8 +1,10 @@
 #include <openssl/evp.h>
 
-#include "ffi-cdecl.h"
+cdecl_type(ENGINE);
+cdecl_type(EVP_CIPHER);
+cdecl_type(EVP_CIPHER_CTX);
 
-cdecl_func(PKCS5_PBKDF2_HMAC_SHA1)
+cdecl_func(PKCS5_PBKDF2_HMAC_SHA1);
 cdecl_func(EVP_CIPHER_CTX_new);
 cdecl_func(EVP_CIPHER_CTX_free);
 cdecl_func(EVP_CIPHER_CTX_set_padding);

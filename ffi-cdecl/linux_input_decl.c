@@ -1,9 +1,8 @@
 // NOTE: This ones needs a recent kernel, the ones from eInk devices TCs are too old for some of the stuff we need for Android.
 //       i.e., CPPFLAGS="-I/usr/include" ./ffi-cdecl ...
+#define __signed__ signed
 #include <linux/fb.h>
 #include <linux/input.h>
-
-#include "ffi-cdecl.h"
 
 /*
 ** Custom values we use for ev.type, ev.code & ev.value in Input and Device HAL implementations
@@ -90,5 +89,8 @@ cdecl_const(DEVICE_ROTATED_UPRIGHT)
 cdecl_const(DEVICE_ROTATED_CLOCKWISE)
 cdecl_const(DEVICE_ROTATED_UPSIDE_DOWN)
 cdecl_const(DEVICE_ROTATED_COUNTER_CLOCKWISE)
+
+cdecl_type(__u16)
+cdecl_type(__s32)
 
 cdecl_struct(input_event)

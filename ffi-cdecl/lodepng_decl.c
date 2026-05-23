@@ -1,8 +1,6 @@
 #define LODEPNG_NO_COMPILE_ANCILLARY_CHUNKS
 #include <lodepng.h>
 
-#include "ffi-cdecl.h"
-
 cdecl_enum(LodePNGColorType)
 cdecl_type(LodePNGColorType)
 cdecl_type(LodePNGDecompressSettings)

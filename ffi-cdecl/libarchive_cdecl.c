@@ -1,10 +1,8 @@
 #include <archive.h>
 #include <archive_entry.h>
 
-#include "ffi-cdecl.h"
-
-cdecl_c99_type(la_int64_t, int64_t)
-cdecl_c99_type(la_ssize_t, ssize_t)
+cdecl_type(la_int64_t)
+cdecl_type(la_ssize_t)
 
 cdecl_const(AE_IFREG)
 cdecl_const(AE_IFLNK)

@@ -1,8 +1,8 @@
 diff --git a/src/svr-authpubkey.c b/src/svr-authpubkey.c
-index 94ae728..14b0d6d 100644
+index b0e67ba..d58f0ad 100644
 --- a/src/svr-authpubkey.c
 +++ b/src/svr-authpubkey.c
-@@ -554,23 +554,7 @@ static int checkpubkeyperms() {
+@@ -577,23 +577,7 @@ static int checkpubkeyperms() {
  
  	TRACE(("enter checkpubkeyperms"))
  
@@ -27,7 +27,7 @@ index 94ae728..14b0d6d 100644
  	m_free(path);
  
  	TRACE(("leave checkpubkeyperms"))
-@@ -582,7 +566,6 @@ static int checkpubkeyperms() {
+@@ -605,7 +589,6 @@ static int checkpubkeyperms() {
  /* returns DROPBEAR_SUCCESS or DROPBEAR_FAILURE */
  static int checkfileperm(char * filename) {
  	struct stat filestat;
@@ -35,7 +35,7 @@ index 94ae728..14b0d6d 100644
  
  	TRACE(("enter checkfileperm(%s)", filename))
  
-@@ -590,25 +573,6 @@ static int checkfileperm(char * filename) {
+@@ -613,25 +596,6 @@ static int checkfileperm(char * filename) {
  		TRACE(("leave checkfileperm: stat() != 0"))
  		return DROPBEAR_FAILURE;
  	}
@@ -62,10 +62,10 @@ index 94ae728..14b0d6d 100644
  	TRACE(("leave checkfileperm: success"))
  	return DROPBEAR_SUCCESS;
 diff --git a/src/svr-runopts.c b/src/svr-runopts.c
-index 5fc5aab..7f64ed0 100644
+index 465d467..90bfb9e 100644
 --- a/src/svr-runopts.c
 +++ b/src/svr-runopts.c
-@@ -177,7 +177,7 @@ void svr_getopts(int argc, char ** argv) {
+@@ -184,7 +184,7 @@ void svr_getopts(int argc, char ** argv) {
  	svr_opts.hostkey = NULL;
  	svr_opts.delay_hostkey = 0;
  	svr_opts.pidfile = expand_homedir_path(DROPBEAR_PIDFILE);

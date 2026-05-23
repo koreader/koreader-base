@@ -60,6 +60,27 @@ $(BASE_PREFIX)uninstall:
 
 # }}}
 
+# AppImage helpers. {{{
+
+ifeq ($(TARGET), linux)
+
+mkappimage $(MKAPPIMAGE):
+	mkdir -p $(dir $(MKAPPIMAGE))
+	$(WGET) -O $(MKAPPIMAGE).part "$$($(strip $(MKAPPIMAGE_URL)))"
+	# Zero-out AppImage magic bytes from the ELF header extended ABI version so
+	# binfmt+qemu can be used (e.g. when executed from `docker run --platform …`).
+	# Cf. https://github.com/AppImage/AppImageKit/issues/1056.
+	printf '\0\0\0' | dd conv=notrunc obs=1 seek=8 of=$(MKAPPIMAGE).part
+	chmod +x ./$(MKAPPIMAGE).part
+	mv $(MKAPPIMAGE).part $(MKAPPIMAGE)
+
+PHONY += mkappimage
+SOUND += $(MKAPPIMAGE)
+
+endif
+
+# }}}
+
 # CMake build interface. {{{
 
 setup $(BUILD_ENTRYPOINT): $(CMAKE_KOVARS) $(CMAKE_TCF) $(MESON_CROSS_TOOLCHAIN) $(MESON_HOST_TOOLCHAIN)
@@ -80,7 +101,7 @@ $(CMAKE_DIR)/meson_%.ini: $(KOR_BASE)/Makefile.defs | $(CMAKE_DIR)/
 	$(call write_file,$@,$(meson_$*))
 
 # Forward unknown targets to the CMake build system.
-LEFTOVERS = $(filter-out $(PHONY) $(SOUND),$(MAKECMDGOALS))
+LEFTOVERS = $(filter-out $(PHONY) $(SOUND),$(MAKECMDGOALS) $(NINJA_GOALS))
 .PHONY: $(LEFTOVERS)
 $(BASE_PREFIX)all $(LEFTOVERS): skeleton $(BUILD_ENTRYPOINT)
 	$(if $(wildcard $(BUILD_ENTRYPOINT)),+)cd $(CMAKE_DIR) && $(strip $(NINJA) $(NINJAFLAGS) $(patsubst $(BASE_PREFIX)all,all,$@))
@@ -255,8 +276,6 @@ endif
 
 $(STAGING_DIR)/bincheck/%.so: $(KOR_BASE)/utils/bincheck/%.c | $(STAGING_DIR)/bincheck/
 	$(CC) $(DYNLIB_LDFLAGS) -o $@ $<
-
-# }}}
 
 # }}}
 

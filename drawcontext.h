@@ -25,6 +25,7 @@ typedef struct DrawContext {
 	double saturation;
 	int offset_x;
 	int offset_y;
+    int isolate_smask;
 } DrawContext;
 
 #endif

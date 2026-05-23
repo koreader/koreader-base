@@ -5,8 +5,6 @@
 // specialized eink framebuffer headers
 #include "include/mxcfb-sony.h"
 
-#include "ffi-cdecl.h"
-
 cdecl_const(UPDATE_MODE_PARTIAL)
 cdecl_const(UPDATE_MODE_FULL)
 

@@ -1,5 +1,4 @@
 #include "blitbuffer.h"
-#include "ffi-cdecl.h"
 
 /* cdecl_type(Color4L) */
 /* cdecl_struct(Color4L) */

@@ -9,39 +9,21 @@ if(ANDROID)
     list(APPEND PATCH_FILES android.patch)
 endif()
 
-list(APPEND PATCH_CMD COMMAND env NOCONFIGURE=1 ./autogen.sh)
-
-# fix build error due to -Werror under Fedora 26 (and potentially other systems)
-string(APPEND CFLAGS " -Wno-error")
-# Fix build error when compiling with -std=gnu++17: ISO
-# C++17 does not allow 'register' storage class specifier.
-string(APPEND CXXFLAGS " -Wno-register -Wno-error=register")
-# Fix symbols visibility.
-string(APPEND CFLAGS " -fvisibility=hidden")
-string(APPEND CXXFLAGS " -fvisibility=hidden -fvisibility-inlines-hidden")
-
-list(APPEND CFG_CMD COMMAND env)
-append_autotools_vars(CFG_CMD)
-list(APPEND CFG_CMD
-    ${SOURCE_DIR}/configure --host=${CHOST} --prefix=/
-    --disable-shared --enable-static
-    --disable-desktopfiles
-    --disable-largefile
-    --disable-xmltools
-    --with-jpeg=${STAGING_DIR}
-    --without-tiff
+list(APPEND CMAKE_ARGS
+    -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE}
+    -DBUILD_SHARED_LIBS=FALSE
 )
 
-list(APPEND BUILD_CMD COMMAND make -C libdjvu)
+list(APPEND BUILD_CMD COMMAND ninja)
 
-list(APPEND INSTALL_CMD COMMAND make -C libdjvu DESTDIR=${STAGING_DIR} install)
+list(APPEND INSTALL_CMD COMMAND ${CMAKE_COMMAND} --install .)
 
 external_project(
-    DOWNLOAD GIT fd7b8db8fffba96fd1f053797704355f2bfd7849
+    DOWNLOAD GIT release.3.5.30
     https://gitlab.com/koreader/djvulibre.git
+    PATCH_OVERLAY overlay
     PATCH_FILES ${PATCH_FILES}
-    PATCH_COMMAND ${PATCH_CMD}
-    CONFIGURE_COMMAND ${CFG_CMD}
+    CMAKE_ARGS ${CMAKE_ARGS}
     BUILD_COMMAND ${BUILD_CMD}
     INSTALL_COMMAND ${INSTALL_CMD}
 )

@@ -71,8 +71,6 @@ list(APPEND BUILD_CMD COMMAND ninja lib/all)
 
 list(APPEND INSTALL_CMD COMMAND ${CMAKE_COMMAND} --install .)
 
-append_install_commands(INSTALL_CMD ${DOWNLOAD_DIR}/ca-bundle.crt DESTINATION data)
-
 external_project(
     DOWNLOAD URL cba9ea54bccefed639a529b1b5b17405
     https://github.com/curl/curl/releases/download/curl-8_14_1/curl-8.14.1.tar.xz
@@ -80,13 +78,4 @@ external_project(
     CMAKE_ARGS ${CMAKE_ARGS}
     BUILD_COMMAND ${BUILD_CMD}
     INSTALL_COMMAND ${INSTALL_CMD}
-)
-
-# Don't use the default build system rule to create the certificates
-# bundle: connections to `hg.mozilla.org` from CIs seem to be flaky,
-# resulting in regular failures.
-external_project_step(
-    download-ca-bundle BEFORE download
-    COMMENT "Fetching certificates bundles for '${PROJECT_NAME}'"
-    COMMAND ${CMAKE_CURRENT_LIST_DIR}/fetch-ca-bundle.sh ${DOWNLOAD_DIR}/ca-bundle.crt
 )

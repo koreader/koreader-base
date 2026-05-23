@@ -20,7 +20,7 @@ if(NOT MONOLIBTIC)
 endif()
 
 external_project(
-    DOWNLOAD GIT 59ced371378312d8f332d9a35f5b4a3c33b18954
+    DOWNLOAD GIT 1fcffeb1e61ec43265d23e2ac77d9a901f8c45d2
     https://github.com/koreader/libk2pdfopt.git
     PATCH_COMMAND ${PATCH_CMD}
     CMAKE_ARGS ${CMAKE_ARGS}

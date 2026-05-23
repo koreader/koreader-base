@@ -1,8 +1,6 @@
 // CPPFLAGS="-I/var/tmp/niluje/leptonica/src"
 #include <allheaders.h>
 
-#include "ffi-cdecl.h"
-
 cdecl_type(l_int8)
 cdecl_type(l_uint8)
 cdecl_type(l_int16)
@@ -11,6 +9,7 @@ cdecl_type(l_int32)
 cdecl_type(l_uint32)
 cdecl_type(l_float32)
 cdecl_type(l_float64)
+cdecl_type(l_ok)
 
 cdecl_type(BOX)
 cdecl_type(BOXA)

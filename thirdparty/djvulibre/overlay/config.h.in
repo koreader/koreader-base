@@ -1,0 +1,152 @@
+#ifndef CONFIG_H
+#define CONFIG_H
+
+/* version string */
+#cmakedefine DJVULIBRE_VERSION "${PACKAGE_VERSION}"
+
+/* Define to 1 if you have the <cpuid.h> header file. */
+#cmakedefine HAVE_CPUID_H
+
+/* Define to 1 if you have the <dirent.h> header file, and it defines 'DIR'.
+   */
+#cmakedefine HAVE_DIRENT_H
+
+/* define if the compiler supports exceptions */
+#cmakedefine HAVE_EXCEPTIONS 1
+
+/* define if the compiler supports keyword __thread */
+#cmakedefine01 HAVE_GCCTLS
+
+/* Define to 1 if you have the 'getpwuid' function. */
+#cmakedefine01 HAVE_GETPWUID
+
+/* Define to 1 if you have the iconv function. */
+#cmakedefine HAVE_ICONV
+
+/* Define to 1 if you have the <iconv.h> header file. */
+#cmakedefine HAVE_ICONV_H
+
+/* define if the compiler supports intel atomic builtins */
+#cmakedefine HAVE_INTEL_ATOMIC_BUILTINS
+
+/* Define to 1 if you have the <inttypes.h> header file. */
+#cmakedefine01 HAVE_INTTYPES_H
+
+/* Define to 1 if the system has the type 'long long int'. */
+#cmakedefine HAVE_LONG_LONG_INT
+
+/* Define to 1 if the system has the type 'mbstate_t'. */
+#cmakedefine HAVE_MBSTATE_T
+
+/* define if the compiler supports member templates */
+#cmakedefine HAVE_MEMBER_TEMPLATES
+
+/* Define to 1 if you have the 'mkstemp' function. */
+#cmakedefine01 HAVE_MKSTEMP
+
+/* Define to 1 if you have a working 'mmap' system call. */
+#cmakedefine HAVE_MMAP
+
+/* define if the compiler implements namespaces */
+#cmakedefine HAVE_NAMESPACES
+
+/* Define to 1 if you have the <ndir.h> header file, and it defines 'DIR'. */
+#cmakedefine HAVE_NDIR_H
+
+/* Define to 1 if you have the <new.h> header file. */
+#cmakedefine HAVE_NEW_H
+
+/* Define if pthreads are available */
+#cmakedefine01 HAVE_PTHREAD
+
+/* Define to 1 if you have the 'snprintf' function. */
+#cmakedefine01 HAVE_SNPRINTF
+
+/* define if the compiler comes with standard includes */
+#cmakedefine HAVE_STDINCLUDES
+
+/* Define to 1 if you have the <stdint.h> header file. */
+#cmakedefine01 HAVE_STDINT_H
+
+/* Define to 1 if you have the 'strerror' function. */
+#cmakedefine HAVE_STRERROR
+
+/* Define to 1 if you have the <sys/dir.h> header file, and it defines 'DIR'.
+   */
+#cmakedefine HAVE_SYS_DIR_H
+
+/* Define to 1 if you have the <sys/mman.h> header file. */
+#cmakedefine HAVE_SYS_MMAN_H
+
+/* Define to 1 if you have the <sys/ndir.h> header file, and it defines 'DIR'.
+   */
+#cmakedefine HAVE_SYS_NDIR_H
+
+/* define if the compiler recognizes typename */
+#cmakedefine HAVE_TYPENAME
+
+/* Define to 1 if you have the 'vsnprintf' function. */
+#cmakedefine HAVE_VSNPRINTF
+
+/* Define to 1 if you have the <wchar.h> header file. */
+#cmakedefine01 HAVE_WCHAR_H
+
+/* Define to 1 if the system has the type 'wchar_t'. */
+#cmakedefine HAVE_WCHAR_T
+
+/* Define to 1 if you have the 'wcrtomb' function. */
+#cmakedefine HAVE_WCRTOMB
+
+/* Define to 1 if you can safely include both <sys/time.h> and <time.h>. This
+   macro is obsolete. */
+#cmakedefine01 TIME_WITH_SYS_TIME
+
+/* - Miscellaneous */
+#define AUTOCONF 1
+#if defined(__CYGWIN32__) || !defined(_WIN32)
+# define UNIX 1
+#endif
+
+/* - WCHAR etc.*/
+#if ! defined(HAVE_WCHAR_T)
+#define HAS_WCHAR 0
+#define HAS_WCTYPE 0
+#define HAS_MBSTATE 0
+#else
+#define HAS_WCHAR 1
+#if defined(HAVE_WCTYPE_H) && defined(HAVE_ISWSPACE)
+#define HAS_WCTYPE 1
+#endif
+#if defined(HAVE_MBSTATE_T) && defined(HAVE_WCRTOMB)
+#define HAS_MBSTATE 1
+#endif
+#endif
+#if defined(HAVE_ICONV_H) && defined(HAVE_ICONV)
+#define HAS_ICONV 1
+#else
+#define HAS_ICONV 0
+#endif
+
+/* - I18N MESSAGES HELL */
+#define HAS_CTRL_C_IN_ERR_MSG 1
+
+/* - CONTAINERS */
+#ifndef HAVE_MEMBER_TEMPLATES
+#define GCONTAINER_NO_MEMBER_TEMPLATES 1
+#endif
+#ifndef HAVE_TYPENAME
+#define GCONTAINER_NO_TYPENAME 1
+#endif
+
+/* - JPEG */
+#define NEED_JPEG_DECODER 1
+
+/* - MMAP */
+#if defined(HAVE_MMAP) && defined(HAVE_SYS_MMAN_H)
+#define HAS_MEMMAP 1
+#else
+#define HAS_MEMMAP 0
+#endif
+
+/* config.h: end */
+#endif
