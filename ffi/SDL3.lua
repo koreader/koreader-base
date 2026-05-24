@@ -509,59 +509,6 @@ local function genTouchMoveEvent(event, slot, x, y)
     genEmuEvent(C.EV_SYN, C.SYN_REPORT, 0)
 end
 
-local last_joystick_event_secs = 0
-local last_joystick_event_usecs = 0
-
-local function handleJoyAxisMotionEvent(event)
-    local axis_ev = event.jaxis
-    local value = axis_ev.value
-
-    local neutral_max_val = 5000
-    local min_time_since_last_ev = 0.3
-
-    -- ignore random neutral fluctuations
-    if (value > -neutral_max_val) and (value < neutral_max_val) then return end
-
-    local current_ev_s, current_ev_us = util.gettime()
-
-    local since_last_ev = current_ev_s-last_joystick_event_secs + (current_ev_us-last_joystick_event_usecs)/1000000
-
-    local axis = axis_ev.axis
-
-    if since_last_ev <= min_time_since_last_ev then return end
-
-    -- left stick 0/1
-    if axis == 0 then
-        if value < -neutral_max_val then
-            -- send left
-            genEmuEvent(C.EV_KEY, 1073741904, 1)
-        else
-            -- send right
-            genEmuEvent(C.EV_KEY, 1073741903, 1)
-        end
-    elseif axis == 1 then
-        if value < -neutral_max_val then
-            -- send up
-            genEmuEvent(C.EV_KEY, 1073741906, 1)
-        else
-            -- send down
-            genEmuEvent(C.EV_KEY, 1073741905, 1)
-        end
-    -- right stick 3/4
-    elseif axis == 4 then
-        if value < -neutral_max_val then
-            -- send page up
-            genEmuEvent(C.EV_KEY, 1073741899, 1)
-        else
-            -- send page down
-            genEmuEvent(C.EV_KEY, 1073741902, 1)
-        end
-    -- left trigger 2
-    -- right trigger 5
-    end
-
-    last_joystick_event_secs, last_joystick_event_usecs = util.gettime()
-end
 
 function S.waitForEvent(sec, usec)
     local event = ffi.new("union SDL_Event")
@@ -751,64 +698,25 @@ function S.waitForEvent(sec, usec)
         openGameController()
     --- Sticks & triggers ---
     elseif event.type == SDL.SDL_EVENT_JOYSTICK_AXIS_MOTION then
-        handleJoyAxisMotionEvent(event)
+        genEmuEvent(C.EV_SDL, event.type, {
+            which = tonumber(event.jaxis.which),
+            axis = event.jaxis.axis,
+            value = event.jaxis.value,
+        })
     --- Buttons (such as A, B, X, Y) ---
-    elseif event.type == SDL.SDL_EVENT_JOYSTICK_BUTTON_DOWN then
-        local button = event.gbutton.button
-
-        if button == SDL.SDL_GAMEPAD_BUTTON_SOUTH then
-            -- send enter
-            genEmuEvent(C.EV_KEY, 13, 1)
-            -- send end (bound to press)
-            genEmuEvent(C.EV_KEY, 1073741901, 1)
-        elseif button == SDL.SDL_GAMEPAD_BUTTON_EAST then
-            -- send escape
-            genEmuEvent(C.EV_KEY, 27, 1)
-        elseif button == SDL.SDL_GAMEPAD_BUTTON_NORTH then
-            -- send ContextMenu
-            genEmuEvent(C.EV_KEY, 1073741925, 1)
-        -- left bumper
-        elseif button == SDL.SDL_GAMEPAD_BUTTON_BACK then
-            -- send page up
-            genEmuEvent(C.EV_KEY, 1073741899, 1)
-        -- right bumper
-        elseif button == SDL.SDL_GAMEPAD_BUTTON_GUIDE then
-            -- send page down
-            genEmuEvent(C.EV_KEY, 1073741902, 1)
-        -- On the Xbox One controller, start = start but leftstick = menu button
-        elseif button == SDL.SDL_GAMEPAD_BUTTON_START or button == SDL.SDL_GAMEPAD_BUTTON_LEFT_STICK then
-            -- send F1 (bound to menu in front at the time of writing)
-            genEmuEvent(C.EV_KEY, 1073741882, 1)
-        elseif button == SDL.SDL_GAMEPAD_BUTTON_DPAD_UP then
-            -- send up
-            genEmuEvent(C.EV_KEY, 1073741906, 1)
-        elseif button == SDL.SDL_GAMEPAD_BUTTON_DPAD_DOWN then
-            -- send down
-            genEmuEvent(C.EV_KEY, 1073741905, 1)
-        elseif button == SDL.SDL_GAMEPAD_BUTTON_DPAD_LEFT then
-            -- send left
-            genEmuEvent(C.EV_KEY, 1073741904, 1)
-        elseif button == SDL.SDL_GAMEPAD_BUTTON_DPAD_RIGHT then
-            -- send right
-            genEmuEvent(C.EV_KEY, 1073741903, 1)
-        end
+    elseif event.type == SDL.SDL_EVENT_JOYSTICK_BUTTON_DOWN or event.type == SDL.SDL_EVENT_JOYSTICK_BUTTON_UP then
+        genEmuEvent(C.EV_SDL, event.type, {
+            which = tonumber(event.jbutton.which),
+            button = event.jbutton.button,
+            state = event.jbutton.down,
+        })
     --- D-pad ---
     elseif event.type == SDL.SDL_EVENT_JOYSTICK_HAT_MOTION then
-        local hat_position = event.jhat.value
-
-        if hat_position == SDL.SDL_HAT_UP then
-            -- send up
-            genEmuEvent(C.EV_KEY, 1073741906, 1)
-        elseif hat_position == SDL.SDL_HAT_DOWN then
-            -- send down
-            genEmuEvent(C.EV_KEY, 1073741905, 1)
-        elseif hat_position == SDL.SDL_HAT_LEFT then
-            -- send left
-            genEmuEvent(C.EV_KEY, 1073741904, 1)
-        elseif hat_position == SDL.SDL_HAT_RIGHT then
-            -- send right
-            genEmuEvent(C.EV_KEY, 1073741903, 1)
-        end
+        genEmuEvent(C.EV_SDL, event.type, {
+            which = tonumber(event.jhat.which),
+            hat = event.jhat.hat,
+            value = event.jhat.value,
+        })
     elseif event.type == SDL.SDL_EVENT_QUIT then
         -- NOTE: Generated on SIGTERM, among other things. (Not SIGINT, because LuaJIT already installs a handler for that).
         -- send Alt + F4
