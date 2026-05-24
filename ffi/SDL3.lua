@@ -697,25 +697,18 @@ function S.waitForEvent(sec, usec)
             or event.type == SDL.SDL_EVENT_GAMEPAD_REMAPPED then
         openGameController()
     --- Sticks & triggers ---
-    elseif event.type == SDL.SDL_EVENT_JOYSTICK_AXIS_MOTION then
+    elseif event.type == SDL.SDL_EVENT_GAMEPAD_AXIS_MOTION then
         genEmuEvent(C.EV_SDL, event.type, {
-            which = tonumber(event.jaxis.which),
-            axis = event.jaxis.axis,
-            value = event.jaxis.value,
+            which = tonumber(event.gaxis.which),
+            axis = event.gaxis.axis,
+            value = event.gaxis.value,
         })
     --- Buttons (such as A, B, X, Y) ---
-    elseif event.type == SDL.SDL_EVENT_JOYSTICK_BUTTON_DOWN or event.type == SDL.SDL_EVENT_JOYSTICK_BUTTON_UP then
+    elseif event.type == SDL.SDL_EVENT_GAMEPAD_BUTTON_DOWN or event.type == SDL.SDL_EVENT_GAMEPAD_BUTTON_UP then
         genEmuEvent(C.EV_SDL, event.type, {
-            which = tonumber(event.jbutton.which),
-            button = event.jbutton.button,
-            state = event.jbutton.down,
-        })
-    --- D-pad ---
-    elseif event.type == SDL.SDL_EVENT_JOYSTICK_HAT_MOTION then
-        genEmuEvent(C.EV_SDL, event.type, {
-            which = tonumber(event.jhat.which),
-            hat = event.jhat.hat,
-            value = event.jhat.value,
+            which = tonumber(event.gbutton.which),
+            button = event.gbutton.button,
+            state = event.gbutton.down,
         })
     elseif event.type == SDL.SDL_EVENT_QUIT then
         -- NOTE: Generated on SIGTERM, among other things. (Not SIGINT, because LuaJIT already installs a handler for that).
