@@ -1,0 +1,100 @@
+local ffi = require("ffi")
+
+ffi.cdef[[
+typedef int FBKey;
+
+struct InitMessageContents {
+    FBKey framebufferKey;
+    uint8_t framebufferType;
+};
+
+struct CustomInitMessageContents {
+    FBKey framebufferKey;
+    uint8_t framebufferType;
+    uint16_t width;
+    uint16_t height;
+};
+
+struct UpdateRegionMessageContents {
+    int type;
+    int x, y, w, h;
+};
+
+struct ClientMessage {
+    uint8_t type;
+    union {
+        struct InitMessageContents init;
+        struct UpdateRegionMessageContents update;
+        struct CustomInitMessageContents customInit;
+        int refreshMode;
+    };
+};
+
+struct InitMessageResponseContents {
+    int shmKeyDefined;
+    size_t shmSize;
+};
+
+struct UserInputContents {
+    int inputType;
+    int devId;
+    int x, y, d;
+};
+
+struct ServerMessage {
+    uint8_t type;
+    union {
+        struct InitMessageResponseContents init;
+        struct UserInputContents userInput;
+    };
+};
+
+struct sockaddr_un {
+    unsigned short sun_family;
+    char sun_path[108];
+};
+
+int socket(int domain, int type, int protocol);
+int connect(int sockfd, const struct sockaddr *addr, uint32_t addrlen);
+ssize_t send(int sockfd, const void *buf, size_t len, int flags);
+int shm_open(const char *name, int oflag, uint32_t mode);
+]]
+
+local M = {}
+
+-- Model detection logic
+local is_rmpp = false
+local is_rmppm = false
+local is_rm2 = false
+local is_rm1 = false
+
+local f = io.open("/sys/devices/soc0/machine", "r")
+if f then
+    local machine = f:read("*all"):upper()
+    f:close()
+    if machine:find("FERRARI") then
+        is_rmpp = true
+    elseif machine:find("CHIAPPA") then
+        is_rmppm = true
+    elseif machine:find("2.0") then
+        is_rm2 = true
+    else
+        is_rm1 = true
+    end
+end
+
+M.is_rmpp = is_rmpp
+M.is_rmppm = is_rmppm
+M.is_rm2 = is_rm2
+M.is_rm1 = is_rm1
+
+-- Constants for ClientMessage types
+M.MESSAGE_INITIALIZE = 0
+M.MESSAGE_UPDATE = 1
+M.MESSAGE_CUSTOM_INITIALIZE = 2
+M.MESSAGE_TERMINATE = 3
+M.MESSAGE_USERINPUT = 4
+M.MESSAGE_SET_REFRESH_MODE = 5
+M.MESSAGE_REQUEST_FULL_REFRESH = 6
+
+return M
