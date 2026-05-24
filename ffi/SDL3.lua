@@ -791,6 +791,14 @@ function S.waitForEvent(sec, usec)
         elseif button == SDL.SDL_GAMEPAD_BUTTON_DPAD_RIGHT then
             -- send right
             genEmuEvent(C.EV_KEY, 1073741903, 1)
+        elseif button == SDL.SDL_GAMEPAD_BUTTON_LEFT_PADDLE1 then
+            genEmuEvent(C.EV_KEY, 1073741895, 1) -- ScrollLock
+        elseif button == SDL.SDL_GAMEPAD_BUTTON_RIGHT_PADDLE1 then
+            genEmuEvent(C.EV_KEY, 1073741896, 1) -- Pause
+        elseif button == SDL.SDL_GAMEPAD_BUTTON_LEFT_PADDLE2 then
+            genEmuEvent(C.EV_KEY, 1073741897, 1) -- Insert
+        elseif button == SDL.SDL_GAMEPAD_BUTTON_RIGHT_PADDLE2 then
+            genEmuEvent(C.EV_KEY, 1073741898, 1) -- Home
         end
     --- D-pad ---
     elseif event.type == SDL.SDL_EVENT_JOYSTICK_HAT_MOTION then
