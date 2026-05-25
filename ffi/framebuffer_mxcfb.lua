@@ -1077,7 +1077,7 @@ function framebuffer:init()
             -- TEMP_USE_AMBIENT, not that there was ever any other choice on Kobo...
             self.update_data.temp = C.TEMP_USE_AMBIENT
         elseif self.mech_refresh == refresh_kobo_mk7 then
-            self.update_data = ffi.new("struct mxcfb_update_data_v2")
+            self.update_data = ffi.new("struct mxcfb_update_data")
             -- TEMP_USE_AMBIENT, not that there was ever any other choice on Kobo...
             self.update_data.temp = C.TEMP_USE_AMBIENT
         elseif self.mech_refresh == refresh_kobo_mtk then
