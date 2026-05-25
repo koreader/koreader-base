@@ -10,9 +10,39 @@ local input = {
     is_ffi = true,
 }
 
+-- GestureDetector expects multitouch slots to be specifically 0 and 1.
+-- Since the QTFB server propagates arbitrary Qt touch point IDs (devId) which can be
+-- non-sequential or start at 1, we dynamically map incoming devIds to stable sequential
+-- slot indices starting at 0 to ensure multitouch gestures (e.g. pinch-to-zoom) are correctly detected.
+local slotMap = {}
+
+local function get_assigned_slot(devId, is_press)
+    if is_press then
+        local assigned = 0
+        while true do
+            local busy = false
+            for _, v in pairs(slotMap) do
+                if v == assigned then
+                    busy = true
+                    break
+                end
+            end
+            if not busy then
+                break
+            end
+            assigned = assigned + 1
+        end
+        slotMap[devId] = assigned
+        return assigned
+    else
+        return slotMap[devId] or 0
+    end
+end
+
 local function translate_input(msg)
     local Device = require("device")
     local inputType = msg.userInput.inputType
+    local devId = msg.userInput.devId
     local x = msg.userInput.x
     local y = msg.userInput.y
     local d = msg.userInput.d
@@ -80,18 +110,24 @@ local function translate_input(msg)
     end
 
     if inputType == 0x10 then -- INPUT_TOUCH_PRESS
-        emit(3, 47, 1) -- EV_ABS=3, ABS_MT_SLOT=47, value=1
-        emit(3, 57, 50) -- ABS_MT_TRACKING_ID=57, value=50
+        local assignedSlot = get_assigned_slot(devId, true)
+        emit(3, 47, assignedSlot) -- EV_ABS=3, ABS_MT_SLOT=47, value=assignedSlot
+        emit(3, 57, assignedSlot) -- ABS_MT_TRACKING_ID=57, value=assignedSlot
         emit(3, 58, 100) -- ABS_MT_PRESSURE=58, value=100
         emit(3, 53, xTranslate) -- ABS_MT_POSITION_X=53
         emit(3, 54, yTranslate) -- ABS_MT_POSITION_Y=54
         emit(1, 330, 1) -- EV_KEY=1, BTN_TOUCH=330, value=1
         emit(0, 0, 0) -- EV_SYN=0, SYN_REPORT=0, value=0
     elseif inputType == 0x11 then -- INPUT_TOUCH_RELEASE
+        local assignedSlot = slotMap[devId] or 0
+        slotMap[devId] = nil
+        emit(3, 47, assignedSlot) -- EV_ABS=3, ABS_MT_SLOT=47, value=assignedSlot
         emit(3, 57, -1) -- ABS_MT_TRACKING_ID=57, value=-1
         emit(1, 330, 0) -- EV_KEY=1, BTN_TOUCH=330, value=0
         emit(0, 0, 0) -- EV_SYN=0, SYN_REPORT=0, value=0
     elseif inputType == 0x12 then -- INPUT_TOUCH_UPDATE
+        local assignedSlot = get_assigned_slot(devId, false)
+        emit(3, 47, assignedSlot) -- EV_ABS=3, ABS_MT_SLOT=47, value=assignedSlot
         emit(3, 53, xTranslate)
         emit(3, 54, yTranslate)
         emit(0, 0, 0)
@@ -152,7 +188,7 @@ function input.waitForEvent(sec, usec)
     local Device = require("device")
     local sock = Device.screen.sock
     if not sock or sock == -1 then
-        return false, 110 -- ETIMEDOUT = 110
+        return false, C.ETIME
     end
 
     local pollfd = ffi.new("struct pollfd[1]")
@@ -173,7 +209,7 @@ function input.waitForEvent(sec, usec)
         end
     end
 
-    return false, 110 -- ETIMEDOUT = 110
+    return false, C.ETIME
 end
 
 return input
