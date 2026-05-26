@@ -23,7 +23,7 @@ function framebuffer:init()
     local key_str = os.getenv("QTFB_KEY")
     local key = key_str and tonumber(key_str) or 245209899 -- QTFB_DEFAULT_FRAMEBUFFER
 
-    local shmType = 0
+    local shmType = 0 -- FBFMT_RM2FB as default
     local width = 1404
     local height = 1872
 
@@ -35,10 +35,6 @@ function framebuffer:init()
         shmType = 6 -- FBFMT_RMPPM_RGB565
         width = 954
         height = 1696
-    else
-        shmType = 0 -- FBFMT_RM2FB
-        width = 1404
-        height = 1872
     end
 
     -- Create and connect UNIX domain socket

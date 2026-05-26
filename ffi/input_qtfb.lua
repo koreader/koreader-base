@@ -54,7 +54,7 @@ local function translate_input(msg)
     -- Width/height from the connection
     local fb_w = Device.screen:getScreenWidth()
     local fb_h = Device.screen:getScreenHeight()
-    
+
     -- Convert QTFB's already converted input back to raw form, since input handling code is shared with non-QTFB implmentation
     if qtfb.is_rmpp then
         if bit.band(inputType, 0xF0) == 0x10 then -- INPUT_TOUCH
