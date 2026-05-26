@@ -1,5 +1,3 @@
-local ffi = require("ffi")
-
 require("ffi/qtfb_h")
 
 local M = {}
