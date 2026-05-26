@@ -85,11 +85,10 @@ function framebuffer:init()
         error("Failed to shm_open shared memory: " .. shmName .. " (errno: " .. ffi.errno() .. ")")
     end
 
-    local memory = C.mmap(nil, shmSize, 3, 1, shmFD, 0) -- PROT_READ|PROT_WRITE = 3, MAP_SHARED = 1
+    local memory = C.mmap(nil, shmSize, bit.bor(C.PROT_READ, C.PROT_WRITE), C.MAP_SHARED, shmFD, 0)
     C.close(shmFD) -- Safe to close fd after mapping
 
-    local MAP_FAILED = ffi.cast("void *", -1)
-    if memory == MAP_FAILED then
+    if ffi.cast('intptr_t', memory) == C.MAP_FAILED then
         C.close(self.sock)
         self.sock = -1
         error("Failed to mmap() shared memory (errno: " .. ffi.errno() .. ")")
@@ -105,27 +104,27 @@ function framebuffer:init()
     self.bb:fill(BB.COLOR_WHITE)
 
     self.wf_level_max = 3
-    self.waveform_full = 3      -- REFRESH_MODE_CONTENT
-    self.waveform_ui = 4        -- REFRESH_MODE_UI
-    self.waveform_a2 = 2        -- REFRESH_MODE_ANIMATE
+    self.waveform_full = qtfb.REFRESH_MODE_CONTENT
+    self.waveform_ui = qtfb.REFRESH_MODE_UI
+    self.waveform_a2 = qtfb.REFRESH_MODE_ANIMATE
 
     local level = self:getWaveformLevel()
     -- Best quality but much slower refresh.
     if level == 0 then
-        self.waveform_fast = 3      -- REFRESH_MODE_CONTENT
-        self.waveform_partial = 3   -- REFRESH_MODE_CONTENT
+        self.waveform_fast = qtfb.REFRESH_MODE_CONTENT
+        self.waveform_partial = qtfb.REFRESH_MODE_CONTENT
     -- Good quality for contents while still having decently fast "fast" refresh mode without losing any color.
     elseif level == 1 then
-        self.waveform_fast = 4      -- REFRESH_MODE_UI
-        self.waveform_partial = 3   -- REFRESH_MODE_CONTENT
+        self.waveform_fast = qtfb.REFRESH_MODE_UI
+        self.waveform_partial = qtfb.REFRESH_MODE_CONTENT
     -- Level 2: fast refresh mode loses color on color-enabled devices.
     elseif level == 2 then
-        self.waveform_fast = 1      -- REFRESH_MODE_FAST
-        self.waveform_partial = 4   -- REFRESH_MODE_UI
+        self.waveform_fast = qtfb.REFRESH_MODE_FAST
+        self.waveform_partial = qtfb.REFRESH_MODE_UI
     -- Fastest refresh, but more ghosting and artifacts, and color is lost on color-enabled devices.
     elseif level == 3 then
-        self.waveform_fast = 1      -- REFRESH_MODE_FAST
-        self.waveform_partial = 1   -- REFRESH_MODE_FAST
+        self.waveform_fast = qtfb.REFRESH_MODE_FAST
+        self.waveform_partial = qtfb.REFRESH_MODE_FAST
     end
 
     -- Call parent init method

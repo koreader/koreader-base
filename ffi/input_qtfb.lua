@@ -103,62 +103,62 @@ local function translate_input(msg)
 
     if inputType == 0x10 then -- INPUT_TOUCH_PRESS
         local assignedSlot = get_assigned_slot(devId)
-        emit(3, 47, assignedSlot) -- EV_ABS=3, ABS_MT_SLOT=47, value=assignedSlot
-        emit(3, 57, assignedSlot) -- ABS_MT_TRACKING_ID=57, value=assignedSlot
-        emit(3, 58, 100) -- ABS_MT_PRESSURE=58, value=100
-        emit(3, 53, xTranslate) -- ABS_MT_POSITION_X=53
-        emit(3, 54, yTranslate) -- ABS_MT_POSITION_Y=54
-        emit(1, 330, 1) -- EV_KEY=1, BTN_TOUCH=330, value=1
-        emit(0, 0, 0) -- EV_SYN=0, SYN_REPORT=0, value=0
+        emit(C.EV_ABS, C.ABS_MT_SLOT, assignedSlot)
+        emit(C.EV_ABS, C.ABS_MT_TRACKING_ID, assignedSlot)
+        emit(C.EV_ABS, C.ABS_MT_PRESSURE, 100)
+        emit(C.EV_ABS, C.ABS_MT_POSITION_X, xTranslate)
+        emit(C.EV_ABS, C.ABS_MT_POSITION_Y, yTranslate)
+        emit(C.EV_KEY, C.BTN_TOUCH, 1)
+        emit(C.EV_SYN, C.SYN_REPORT, 0)
     elseif inputType == 0x11 then -- INPUT_TOUCH_RELEASE
         local assignedSlot = slotMap[devId] and slotMap[devId].slot or 0
         slotMap[devId] = nil
-        emit(3, 47, assignedSlot) -- EV_ABS=3, ABS_MT_SLOT=47, value=assignedSlot
-        emit(3, 57, -1) -- ABS_MT_TRACKING_ID=57, value=-1
-        emit(1, 330, 0) -- EV_KEY=1, BTN_TOUCH=330, value=0
-        emit(0, 0, 0) -- EV_SYN=0, SYN_REPORT=0, value=0
+        emit(C.EV_ABS, C.ABS_MT_SLOT, assignedSlot)
+        emit(C.EV_ABS, C.ABS_MT_TRACKING_ID, -1)
+        emit(C.EV_KEY, C.BTN_TOUCH, 0)
+        emit(C.EV_SYN, C.SYN_REPORT, 0)
     elseif inputType == 0x12 then -- INPUT_TOUCH_UPDATE
         local assignedSlot = get_assigned_slot(devId)
-        emit(3, 47, assignedSlot) -- EV_ABS=3, ABS_MT_SLOT=47, value=assignedSlot
-        emit(3, 53, xTranslate)
-        emit(3, 54, yTranslate)
-        emit(0, 0, 0)
+        emit(C.EV_ABS, C.ABS_MT_SLOT, assignedSlot)
+        emit(C.EV_ABS, C.ABS_MT_POSITION_X, xTranslate)
+        emit(C.EV_ABS, C.ABS_MT_POSITION_Y, yTranslate)
+        emit(C.EV_SYN, C.SYN_REPORT, 0)
     elseif inputType == 0x20 then -- INPUT_PEN_PRESS
-        emit(1, 320, 1) -- BTN_TOOL_PEN=320, value=1
-        emit(1, 330, 1) -- BTN_TOUCH=330, value=1
-        emit(3, 0, xTranslate) -- ABS_X=0
-        emit(3, 1, yTranslate) -- ABS_Y=1
-        emit(3, 24, dTranslate) -- ABS_PRESSURE=24
-        emit(0, 0, 0)
+        emit(C.EV_KEY, C.BTN_TOOL_PEN, 1)
+        emit(C.EV_KEY, C.BTN_TOUCH, 1)
+        emit(C.EV_ABS, C.ABS_X, xTranslate)
+        emit(C.EV_ABS, C.ABS_Y, yTranslate)
+        emit(C.EV_ABS, C.ABS_PRESSURE, dTranslate)
+        emit(C.EV_SYN, C.SYN_REPORT, 0)
     elseif inputType == 0x21 then -- INPUT_PEN_RELEASE
-        emit(1, 320, 1)
-        emit(1, 330, 0)
-        emit(3, 0, xTranslate)
-        emit(3, 1, yTranslate)
-        emit(3, 24, dTranslate)
-        emit(0, 0, 0)
+        emit(C.EV_KEY, C.BTN_TOOL_PEN, 1)
+        emit(C.EV_KEY, C.BTN_TOUCH, 0)
+        emit(C.EV_ABS, C.ABS_X, xTranslate)
+        emit(C.EV_ABS, C.ABS_Y, yTranslate)
+        emit(C.EV_ABS, C.ABS_PRESSURE, dTranslate)
+        emit(C.EV_SYN, C.SYN_REPORT, 0)
     elseif inputType == 0x22 then -- INPUT_PEN_UPDATE
-        emit(1, 320, 1)
-        emit(3, 0, xTranslate)
-        emit(3, 1, yTranslate)
-        emit(3, 24, dTranslate)
-        emit(0, 0, 0)
+        emit(C.EV_KEY, C.BTN_TOOL_PEN, 1)
+        emit(C.EV_ABS, C.ABS_X, xTranslate)
+        emit(C.EV_ABS, C.ABS_Y, yTranslate)
+        emit(C.EV_ABS, C.ABS_PRESSURE, dTranslate)
+        emit(C.EV_SYN, C.SYN_REPORT, 0)
     elseif inputType == 0x30 then -- INPUT_BTN_PRESS
         local key = 0
         if x == 0 then key = 105 -- KEY_LEFT
         elseif x == 1 then key = 102 -- KEY_HOME
         elseif x == 2 then key = 106 -- KEY_RIGHT
         end
-        emit(1, key, 1)
-        emit(0, 0, 0)
+        emit(C.EV_KEY, key, 1)
+        emit(C.EV_SYN, C.SYN_REPORT, 0)
     elseif inputType == 0x31 then -- INPUT_BTN_RELEASE
         local key = 0
         if x == 0 then key = 105
         elseif x == 1 then key = 102
         elseif x == 2 then key = 106
         end
-        emit(1, key, 0)
-        emit(0, 0, 0)
+        emit(C.EV_KEY, key, 0)
+        emit(C.EV_SYN, C.SYN_REPORT, 0)
     end
 
     return events
@@ -185,7 +185,7 @@ function input.waitForEvent(sec, usec)
 
     local pollfd = ffi.new("struct pollfd[1]")
     pollfd[0].fd = sock
-    pollfd[0].events = 1 -- POLLIN = 1
+    pollfd[0].events = C.POLLIN
 
     local timeout_ms = sec and math.floor(sec * 1000 + usec / 1000) or -1
     local res = C.poll(pollfd, 1, timeout_ms)
