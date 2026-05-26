@@ -40,7 +40,7 @@ function DC_mt.__index:getSaturation() return self.saturation end
 local dctype = ffi.metatype("DrawContext", DC_mt)
 
 function DC.new(rotate, zoom, x, y, gamma, isolate_smask, saturation)
-	return dctype(rotate or 0, zoom or 1.0, gamma or -1.0, x or 0, y or 0, isolate_smask or 0, saturation or 1.0)
+	return dctype(rotate or 0, zoom or 1.0, gamma or -1.0, saturation or 1.0, x or 0, y or 0, isolate_smask or 0)
 end
 
 return DC
