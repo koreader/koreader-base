@@ -38,12 +38,10 @@ function framebuffer:init()
     end
 
     -- Create and connect UNIX domain socket
-    local sock = C.socket(1, 5, 0) -- AF_UNIX=1, SOCK_SEQPACKET=5
+    local sock = C.socket(C.AF_UNIX, C.SOCK_SEQPACKET, 0)
     assert(sock >= 0, "Failed to create UNIX socket")
 
-    local addr = ffi.new("struct sockaddr_un")
-    addr.sun_family = 1 -- AF_UNIX
-    ffi.copy(addr.sun_path, "/tmp/qtfb.sock")
+    local addr = ffi.new("struct sockaddr_un", C.AF_UNIX, "/tmp/qtfb.sock")
 
     local res = C.connect(sock, ffi.cast("const struct sockaddr *", addr), ffi.sizeof(addr))
     if res ~= 0 then

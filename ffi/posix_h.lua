@@ -11,6 +11,34 @@ else
     require("ffi/posix_types_def_h")
 end
 
+if ffi.os == "OSX" then
+    ffi.cdef[[
+typedef uint8_t sa_family_t;
+struct sockaddr {
+  uint8_t         sa_len;
+  sa_family_t     sa_family;
+  char            sa_data[14];
+};
+struct sockaddr_un {
+  unsigned char   sun_len;
+  sa_family_t     sun_family;
+  char            sun_path[104];
+};
+]]
+else
+    ffi.cdef[[
+typedef unsigned short sa_family_t;
+struct sockaddr {
+  short unsigned int sa_family;
+  char sa_data[14];
+};
+struct sockaddr_un {
+  sa_family_t sun_family;
+  char sun_path[108];
+};
+]]
+end
+
 ffi.cdef[[
 static const int EPERM = 1;
 static const int EINTR = 4;
@@ -204,10 +232,6 @@ typedef struct {
 int sched_getaffinity(int, size_t, cpu_set_t *);
 int sched_setaffinity(int, size_t, const cpu_set_t *);
 int sched_yield(void);
-struct sockaddr {
-  short unsigned int sa_family;
-  char sa_data[14];
-};
 struct ifaddrs {
   struct ifaddrs *ifa_next;
   char *ifa_name;
@@ -224,6 +248,7 @@ static const int NI_MAXHOST = 1025;
 int getifaddrs(struct ifaddrs **);
 static const int AF_INET = 2;
 static const int AF_INET6 = 10;
+static const int AF_UNIX = 1;
 int getnameinfo(const struct sockaddr *restrict, unsigned int, char *restrict, unsigned int, char *restrict, unsigned int, int);
 struct in_addr {
   unsigned int s_addr;
@@ -255,6 +280,7 @@ int socket(int, int, int);
 static const int PF_INET = 2;
 static const int SOCK_DGRAM = 2;
 static const int SOCK_RAW = 3;
+static const int SOCK_SEQPACKET = 5;
 static const int SOCK_NONBLOCK = 2048;
 static const int SOCK_CLOEXEC = 524288;
 static const int IPPROTO_IP = 0;
@@ -422,6 +448,8 @@ struct icmp {
 static const int ICMP_MINLEN = 8;
 static const int ICMP_ECHO = 8;
 static const int ICMP_ECHOREPLY = 0;
+int connect(int, const struct sockaddr *, socklen_t);
+ssize_t send(int, const void *, size_t, int);
 ssize_t sendto(int, const void *, size_t, int, const struct sockaddr *, unsigned int);
 ssize_t recv(int, void *, size_t, int);
 struct iphdr {
@@ -441,6 +469,7 @@ int inet_aton(const char *, struct in_addr *);
 uint32_t htonl(uint32_t);
 uint16_t htons(uint16_t);
 void _exit(int status);
+int shm_open(const char *, int, mode_t);
 ]]
 
 -- clock_gettime & friends require librt on old glibc (< 2.17) versions...
