@@ -16,27 +16,19 @@ local input = {
 -- slot indices starting at 0 to ensure multitouch gestures (e.g. pinch-to-zoom) are correctly detected.
 local slotMap = {}
 
-local function get_assigned_slot(devId, is_press)
-    if is_press then
-        local assigned = 0
-        while true do
-            local busy = false
-            for _, v in pairs(slotMap) do
-                if v == assigned then
-                    busy = true
-                    break
-                end
-            end
-            if not busy then
-                break
-            end
-            assigned = assigned + 1
+local function get_assigned_slot(devId)
+    if not slotMap[devId] then
+        local used_slots = {}
+        for _, pointer in pairs(slotMap) do
+            used_slots[pointer.slot] = true
         end
-        slotMap[devId] = assigned
-        return assigned
-    else
-        return slotMap[devId] or 0
+        local slot = 0
+        while used_slots[slot] do
+            slot = slot + 1
+        end
+        slotMap[devId] = { slot = slot }
     end
+    return slotMap[devId].slot
 end
 
 local function translate_input(msg)
