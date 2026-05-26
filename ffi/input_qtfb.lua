@@ -102,7 +102,7 @@ local function translate_input(msg)
     end
 
     if inputType == 0x10 then -- INPUT_TOUCH_PRESS
-        local assignedSlot = get_assigned_slot(devId, true)
+        local assignedSlot = get_assigned_slot(devId)
         emit(3, 47, assignedSlot) -- EV_ABS=3, ABS_MT_SLOT=47, value=assignedSlot
         emit(3, 57, assignedSlot) -- ABS_MT_TRACKING_ID=57, value=assignedSlot
         emit(3, 58, 100) -- ABS_MT_PRESSURE=58, value=100
@@ -111,14 +111,14 @@ local function translate_input(msg)
         emit(1, 330, 1) -- EV_KEY=1, BTN_TOUCH=330, value=1
         emit(0, 0, 0) -- EV_SYN=0, SYN_REPORT=0, value=0
     elseif inputType == 0x11 then -- INPUT_TOUCH_RELEASE
-        local assignedSlot = slotMap[devId] or 0
+        local assignedSlot = slotMap[devId] and slotMap[devId].slot or 0
         slotMap[devId] = nil
         emit(3, 47, assignedSlot) -- EV_ABS=3, ABS_MT_SLOT=47, value=assignedSlot
         emit(3, 57, -1) -- ABS_MT_TRACKING_ID=57, value=-1
         emit(1, 330, 0) -- EV_KEY=1, BTN_TOUCH=330, value=0
         emit(0, 0, 0) -- EV_SYN=0, SYN_REPORT=0, value=0
     elseif inputType == 0x12 then -- INPUT_TOUCH_UPDATE
-        local assignedSlot = get_assigned_slot(devId, false)
+        local assignedSlot = get_assigned_slot(devId)
         emit(3, 47, assignedSlot) -- EV_ABS=3, ABS_MT_SLOT=47, value=assignedSlot
         emit(3, 53, xTranslate)
         emit(3, 54, yTranslate)
