@@ -296,6 +296,40 @@ function WebpDocument:close()
     self.webp:close()
 end
 
+--[[
+AVIF handling (an animated AVIF will make a document with multiple pages)
+]]
+local AvifPage = PicPage:extend{}
+function AvifPage:close()
+    if self.image_bb ~= nil then
+        self.image_bb:free()
+        self.image_bb = nil
+    end
+end
+
+local AvifDocument = PicDocument:extend{
+    avif = nil, -- ffi/avif instance
+}
+function AvifDocument:getPages()
+    return self.avif.nb_frames
+end
+function AvifDocument:getOriginalPageSize(number)
+    return self.avif.width, self.avif.height, self.avif.components
+end
+function AvifDocument:openPage(number)
+    local bb = self.avif:getFrameImage(number)
+    local page = AvifPage:new{
+        width = self.avif.width,
+        height = self.avif.height,
+        image_bb = bb,
+        doc = self,
+    }
+    return page
+end
+function AvifDocument:close()
+    self.avif:close()
+end
+
 function Pic.openWebPDocument(filename)
     local WebP = require("ffi/webp")
     local webp = WebP.fromFile(filename)
@@ -306,6 +340,18 @@ function Pic.openWebPDocumentFromData(data, size)
     local WebP = require("ffi/webp")
     local webp = WebP.fromData(data, size)
     return WebpDocument:new{ webp = webp }
+end
+
+function Pic.openAVIFDocument(filename)
+    local Avif = require("ffi/avif")
+    local avif = Avif.fromFile(filename)
+    return AvifDocument:new{ avif = avif }
+end
+
+function Pic.openAVIFDocumentFromData(data, size)
+    local Avif = require("ffi/avif")
+    local avif = Avif.fromData(data, size)
+    return AvifDocument:new{ avif = avif }
 end
 
 --[[
@@ -384,6 +430,8 @@ function Pic.openDocument(filename)
         return Pic.openGIFDocument(filename)
     elseif extension == "webp" then
         return Pic.openWebPDocument(filename)
+    elseif extension == "avif" then
+        return Pic.openAVIFDocument(filename)
     else
         error("Unsupported image format")
     end

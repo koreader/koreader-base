@@ -737,6 +737,9 @@ ffi_target(libressl crypto_h.lua crypto_decl.c ARGS -d libcrypto)
 # libwebp
 ffi_target(libwebp libwebp_h.lua libwebp_decl.c ARGS -d libwebp)
 
+# libavif
+ffi_target(libavif libavif_h.lua libavif_decl.c ARGS -d libavif)
+
 # linux
 if(LINUX AND EMULATE_READER)
     set(EXCLUDE_FROM_ALL)
