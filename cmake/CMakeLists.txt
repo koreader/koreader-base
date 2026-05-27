@@ -352,6 +352,7 @@ declare_project(thirdparty/libunibreak EXCLUDE_FROM_ALL)
 
 # libwebp
 declare_project(thirdparty/libwebp)
+declare_project(thirdparty/libavif)
 
 # libzmq
 if(NOT WIN32)
