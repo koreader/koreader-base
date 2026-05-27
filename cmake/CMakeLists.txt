@@ -352,7 +352,8 @@ declare_project(thirdparty/libunibreak EXCLUDE_FROM_ALL)
 
 # libwebp
 declare_project(thirdparty/libwebp)
-declare_project(thirdparty/libavif)
+declare_project(thirdparty/dav1d)
+declare_project(thirdparty/libavif DEPENDS dav1d)
 
 # libzmq
 if(NOT WIN32)
