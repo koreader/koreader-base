@@ -66,6 +66,15 @@ local function translate_input(msg)
             yTranslate = math.floor((y * 11960) / fb_h)
             dTranslate = math.floor((d * 255) / 100)
         end
+    elseif qtfb.is_rmppure then
+        if bit.band(inputType, 0xF0) == 0x10 then
+            xTranslate = math.floor((x * 1776) / fb_w)
+            yTranslate = math.floor((y * 2400) / fb_h)
+        elseif bit.band(inputType, 0xF0) == 0x20 then
+            xTranslate = math.floor((x * 9620) / fb_w)
+            yTranslate = math.floor((y * 13000) / fb_h)
+            dTranslate = math.floor((d * 255) / 100)
+        end
     elseif qtfb.is_rm1 then
         if bit.band(inputType, 0xF0) == 0x10 then
             xTranslate = 767 - math.floor((x * 767) / fb_w)

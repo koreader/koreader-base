@@ -5,9 +5,16 @@ local M = {}
 -- Model detection logic
 local is_rmpp = false
 local is_rmppm = false
+local is_rmppure = false
 local is_rm2 = false
 local is_rm1 = false
 
+-- NOTE: model identifiers:
+-- reMarkable 1: reMarkable 1.0 or reMarkable Prototype 1
+-- reMarkable 2: reMarkable 2.0
+-- reMarkable Paper Pro: reMarkable Ferrari
+-- reMarkable Paper Pro Move: reMarkable Chiappa
+-- reMarkable Paper Pure: reMarkable Tatsu
 local f = io.open("/sys/devices/soc0/machine", "r")
 if f then
     local machine = f:read("*all"):upper()
@@ -16,6 +23,8 @@ if f then
         is_rmpp = true
     elseif machine:find("CHIAPPA") then
         is_rmppm = true
+    elseif machine:find("TATSU") then
+        is_rmppure = true
     elseif machine:find("2.0") then
         is_rm2 = true
     else
@@ -25,6 +34,7 @@ end
 
 M.is_rmpp = is_rmpp
 M.is_rmppm = is_rmppm
+M.is_rmppure = is_rmppure
 M.is_rm2 = is_rm2
 M.is_rm1 = is_rm1
 
