@@ -3,7 +3,7 @@ list(APPEND BUILD_CMD COMMAND ninja)
 list(APPEND INSTALL_CMD COMMAND ${MESON_INSTALL})
 
 external_project(
-    DOWNLOAD GIT 1.5.3 https://code.videolan.org/videolan/dav1d.git
+    DOWNLOAD URL e22d5377b91936ef0b43662364c8973e https://code.videolan.org/videolan/dav1d/-/archive/1.5.3/dav1d-1.5.3.tar.gz
     CONFIGURE_COMMAND ${CONFIGURE_CMD}
     BUILD_COMMAND ${BUILD_CMD}
     INSTALL_COMMAND ${INSTALL_CMD}

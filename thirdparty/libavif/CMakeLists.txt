@@ -10,7 +10,7 @@ list(APPEND BUILD_CMD COMMAND ninja)
 list(APPEND INSTALL_CMD COMMAND ${CMAKE_COMMAND} --install .)
 
 external_project(
-    DOWNLOAD URL https://github.com/AOMediaCodec/libavif/archive/refs/tags/v1.4.2.tar.gz
+    DOWNLOAD URL 10007cf6a4d1cb7304146161e5ebf4da https://github.com/AOMediaCodec/libavif/archive/refs/tags/v1.4.2.tar.gz
     CMAKE_ARGS ${CMAKE_ARGS}
     BUILD_COMMAND ${BUILD_CMD}
     INSTALL_COMMAND ${INSTALL_CMD}
