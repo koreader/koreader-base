@@ -867,8 +867,8 @@ void BB_blend_RGB32_multiply_rect(BlitBuffer * restrict bb, unsigned int x, unsi
                     ColorRGB16 * restrict dstptr;
                     BB_GET_PIXEL(bb, bb_rotation, ColorRGB16, i, j, &dstptr);
                     const uint8_t dr = ColorRGB16_GetR(dstptr->v);
-                    const uint8_t dg = ColorRGB16_GetR(dstptr->v);
-                    const uint8_t db = ColorRGB16_GetR(dstptr->v);
+                    const uint8_t dg = ColorRGB16_GetG(dstptr->v);
+                    const uint8_t db = ColorRGB16_GetB(dstptr->v);
                     const uint8_t r = (uint8_t) DIV_255(dr * ainv + DIV_255(dr * color->r) * alpha);
                     const uint8_t g = (uint8_t) DIV_255(dg * ainv + DIV_255(dg * color->g) * alpha);
                     const uint8_t b = (uint8_t) DIV_255(db * ainv + DIV_255(db * color->b) * alpha);
