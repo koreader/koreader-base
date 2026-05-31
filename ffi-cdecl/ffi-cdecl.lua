@@ -343,13 +343,41 @@ end
 
 Formatter.format_named.pointer_declarator = Formatter.format_named.abstract_pointer_declarator
 
-function Formatter.format_named:type_identifier(node)
+local TYPE_ALIASES = {
+    -- bool
+    ["_Bool"] = "bool",
+    -- short
+    ["short int"] = "short",
+    ["signed short"] = "short",
+    ["signed short int"] = "short",
+    -- unsigned short
+    ["unsigned short int"] = "unsigned short",
+    -- int
+    ["signed int"] = "int",
+    -- unsigned
+    ["unsigned int"] = "unsigned",
+    -- long
+    ["long int"] = "long",
+    ["signed long"] = "long",
+    ["signed long int"] = "long",
+    -- unsigned long
+    ["unsigned long int"] = "unsigned long",
+    -- long long
+    ["long long int"] = "long long",
+    ["signed long long"] = "long long",
+    ["signed long long int"] = "long long",
+    -- unsigned long long
+    ["unsigned long long int"] = "unsigned long long",
+}
+
+function Formatter.format_named:primitive_type(node)
     local text = self.parser:node_text(node)
-    if text == "_Bool" then
-        text = "bool"
-    end
+    text = TYPE_ALIASES[text] or text
     table.insert(self.output, text)
 end
+
+Formatter.format_named.sized_type_specifier = Formatter.format_named.primitive_type
+Formatter.format_named.type_identifier = Formatter.format_named.primitive_type
 
 function Formatter.format_unnamed:extern(node)
 end
