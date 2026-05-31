@@ -533,7 +533,7 @@ void iv_setup_gsensor();
 void iv_setup_touchpanel();
 void iv_sleepmode(int on);
 void iv_update_orientation(int isexternal);
-iv_mtinfo *GetTouchInfoI(unsigned int index);
+iv_mtinfo *GetTouchInfoI(unsigned index);
 ]]
 
 if 508 <= target_version and target_version <= 611 then

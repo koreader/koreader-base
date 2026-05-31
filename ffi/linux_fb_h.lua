@@ -2,7 +2,7 @@
 
 require("ffi").cdef[[
 typedef unsigned short __u16;
-typedef unsigned int __u32;
+typedef unsigned __u32;
 static const unsigned FBIOGET_FSCREENINFO = 17922;
 static const unsigned FBIOGET_VSCREENINFO = 17920;
 static const unsigned FBIOPUT_VSCREENINFO = 17921;

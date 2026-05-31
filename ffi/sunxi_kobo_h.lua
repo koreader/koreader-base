@@ -2,10 +2,10 @@
 
 require("ffi").cdef[[
 struct area_info {
-  unsigned int x_top;
-  unsigned int y_top;
-  unsigned int x_bottom;
-  unsigned int y_bottom;
+  unsigned x_top;
+  unsigned y_top;
+  unsigned x_bottom;
+  unsigned y_bottom;
 };
 enum eink_update_mode {
   EINK_INIT_MODE = 0b00000000000000000000000000000001,
@@ -35,8 +35,8 @@ enum eink_update_mode {
   EINK_NO_MERGE = 0b10000000000000000000000000000000,
 };
 struct disp_rectsz {
-  unsigned int width;
-  unsigned int height;
+  unsigned width;
+  unsigned height;
 };
 enum disp_pixel_format {
   DISP_FORMAT_ARGB_8888 = 0x00,
@@ -149,8 +149,8 @@ enum disp_layer_mode {
 struct disp_rect {
   int x;
   int y;
-  unsigned int width;
-  unsigned int height;
+  unsigned width;
+  unsigned height;
 };
 enum disp_3d_out_mode {
   DISP_3D_OUT_MODE_CI_1 = 0x5,
@@ -193,15 +193,15 @@ enum disp_atw_mode {
 struct disp_atw_info {
   bool used;
   enum disp_atw_mode mode;
-  unsigned int b_row;
-  unsigned int b_col;
+  unsigned b_row;
+  unsigned b_col;
   int cof_fd;
 };
 struct disp_fb_info2 {
   int fd;
   int y8_fd;
   struct disp_rectsz size[3];
-  unsigned int align[3];
+  unsigned align[3];
   enum disp_pixel_format format;
   enum disp_color_space color_space;
   int trd_right_fd;
@@ -211,10 +211,10 @@ struct disp_fb_info2 {
   enum disp_scan_flags scan;
   enum disp_eotf eotf;
   int depth;
-  unsigned int fbd_en;
+  unsigned fbd_en;
   int metadata_fd;
-  unsigned int metadata_size;
-  unsigned int metadata_flag;
+  unsigned metadata_size;
+  unsigned metadata_flag;
 };
 struct disp_layer_info2 {
   enum disp_layer_mode mode;
@@ -225,17 +225,17 @@ struct disp_layer_info2 {
   bool b_trd_out;
   enum disp_3d_out_mode out_trd_mode;
   union {
-    unsigned int color;
+    unsigned color;
     struct disp_fb_info2 fb;
   };
-  unsigned int id;
+  unsigned id;
   struct disp_atw_info atw;
 };
 struct disp_layer_config2 {
   struct disp_layer_info2 info;
   bool enable;
-  unsigned int channel;
-  unsigned int layer_id;
+  unsigned channel;
+  unsigned layer_id;
 };
 static const unsigned DISP_EINK_UPDATE2 = 1030;
 static const unsigned DISP_EINK_WAIT_BEFORE_LCD_INT_COMPLETE = 16402;
@@ -244,22 +244,22 @@ static const unsigned DISP_EINK_WAIT_FRAME_SYNC_COMPLETE = 16404;
 static const unsigned DISP_EINK_SET_NTX_HANDWRITE_ONOFF = 16405;
 static const unsigned DISP_EINK_SET_WAIT_MODE_ONOFF = 16406;
 typedef struct {
-  unsigned long int u0;
-  unsigned long int u1;
-  unsigned long int u2;
-  unsigned long int u3;
-  unsigned long int u4;
-  unsigned long int u5;
-  unsigned long int u6;
+  unsigned long u0;
+  unsigned long u1;
+  unsigned long u2;
+  unsigned long u3;
+  unsigned long u4;
+  unsigned long u5;
+  unsigned long u6;
 } sunxi_disp_raw_ioctl;
 typedef struct {
   struct area_info *area;
-  unsigned long int layer_num;
-  unsigned long int update_mode;
+  unsigned long layer_num;
+  unsigned long update_mode;
   struct disp_layer_config2 *lyr_cfg2;
-  unsigned int *frame_id;
+  unsigned *frame_id;
   uint32_t *rotate;
-  unsigned long int cfa_use;
+  unsigned long cfa_use;
 } sunxi_disp_eink_update2;
 typedef struct {
   bool enable;
@@ -276,10 +276,10 @@ typedef struct {
 struct disp_fb_info {
   unsigned long long addr[3];
   struct disp_rectsz size[3];
-  unsigned int align[3];
+  unsigned align[3];
   enum disp_pixel_format format;
   enum disp_color_space color_space;
-  unsigned int trd_right_addr[3];
+  unsigned trd_right_addr[3];
   bool pre_multiply;
   struct disp_rect64 crop;
   enum disp_buffer_flags flags;
@@ -294,34 +294,34 @@ struct disp_layer_info {
   bool b_trd_out;
   enum disp_3d_out_mode out_trd_mode;
   union {
-    unsigned int color;
+    unsigned color;
     struct disp_fb_info fb;
   };
-  unsigned int id;
+  unsigned id;
 };
 struct disp_layer_config {
   struct disp_layer_info info;
   bool enable;
-  unsigned int channel;
-  unsigned int layer_id;
+  unsigned channel;
+  unsigned layer_id;
 };
 typedef struct {
   struct area_info *area;
-  unsigned long int layer_num;
-  unsigned long int update_mode;
+  unsigned long layer_num;
+  unsigned long update_mode;
   struct disp_layer_config *lyr_cfg;
-  unsigned long int u4;
-  unsigned long int rotate;
-  unsigned long int cfa_use;
+  unsigned long u4;
+  unsigned long rotate;
+  unsigned long cfa_use;
 } sunxi_disp_eink_update;
 typedef struct {
-  unsigned long int temp;
+  unsigned long temp;
 } sunxi_disp_eink_set_temp;
 typedef struct {
-  unsigned long int skip;
+  unsigned long skip;
 } sunxi_disp_eink_overlap_skip;
 typedef struct {
-  unsigned long int count;
+  unsigned long count;
 } sunxi_disp_eink_set_gc_count;
 struct cfa_enable {
   bool bg_enable;
@@ -333,12 +333,12 @@ typedef struct {
 typedef struct {
   int screen_id;
   struct disp_layer_config2 *lyr_cfg2;
-  unsigned long int layer_num;
+  unsigned long layer_num;
 } sunxi_disp_layer_get_config2;
 typedef struct {
   int screen_id;
   struct disp_layer_config *lyr_cfg;
-  unsigned long int layer_num;
+  unsigned long layer_num;
 } sunxi_disp_layer_get_config;
 typedef struct {
   int screen_id;

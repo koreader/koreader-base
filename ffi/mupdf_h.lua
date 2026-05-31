@@ -73,11 +73,11 @@ struct fz_outline {
   float x, y;
   struct fz_outline *next;
   struct fz_outline *down;
-  unsigned int is_open:1;
-  unsigned int flags:7;
-  unsigned int r:8;
-  unsigned int g:8;
-  unsigned int b:8;
+  unsigned is_open:1;
+  unsigned flags:7;
+  unsigned r:8;
+  unsigned g:8;
+  unsigned b:8;
 };
 typedef struct {
   int abort;
@@ -142,7 +142,7 @@ typedef struct {
   int w;
   int h;
   struct {
-    unsigned int flags;
+    unsigned flags;
   } info[];
 } fz_stext_grid_info;
 typedef struct fz_stext_grid_positions fz_stext_grid_positions;

@@ -5,7 +5,7 @@ typedef unsigned char Byte;
 typedef Byte Bytef;
 typedef unsigned long uLong;
 typedef uLong uLongf;
-typedef unsigned int uInt;
+typedef unsigned uInt;
 uLong compressBound(uLong sourceLen);
 int compress2(Bytef *dest, uLongf *destLen, const Bytef *source, uLong sourceLen, int level);
 uLong crc32(uLong crc, const Bytef *buf, uInt len);

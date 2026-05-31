@@ -54,7 +54,7 @@ struct mxcfb_update_data_v1_ntx {
   uint32_t update_mode;
   uint32_t update_marker;
   int temp;
-  unsigned int flags;
+  unsigned flags;
   struct mxcfb_alt_buffer_data_ntx alt_buffer_data;
 };
 struct mxcfb_alt_buffer_data {
@@ -69,7 +69,7 @@ struct mxcfb_update_data_v1 {
   uint32_t update_mode;
   uint32_t update_marker;
   int temp;
-  unsigned int flags;
+  unsigned flags;
   struct mxcfb_alt_buffer_data alt_buffer_data;
 };
 struct mxcfb_update_data {
@@ -78,7 +78,7 @@ struct mxcfb_update_data {
   uint32_t update_mode;
   uint32_t update_marker;
   int temp;
-  unsigned int flags;
+  unsigned flags;
   int dither_mode;
   int quant_bit;
   struct mxcfb_alt_buffer_data alt_buffer_data;
@@ -148,7 +148,7 @@ struct hwtcon_update_data {
   uint32_t waveform_mode;
   uint32_t update_mode;
   uint32_t update_marker;
-  unsigned int flags;
+  unsigned flags;
   int dither_mode;
 };
 static const unsigned HWTCON_SET_TEMPERATURE = 1074021932;
