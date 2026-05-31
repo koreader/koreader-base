@@ -13,7 +13,7 @@ union _hb_var_int_t {
 typedef union _hb_var_int_t hb_var_int_t;
 typedef struct hb_face_t hb_face_t;
 typedef const struct hb_language_impl_t *hb_language_t;
-typedef unsigned int hb_ot_name_id_t;
+typedef unsigned hb_ot_name_id_t;
 struct hb_ot_name_entry_t {
   hb_ot_name_id_t name_id;
   hb_var_int_t var;
@@ -21,14 +21,14 @@ struct hb_ot_name_entry_t {
 };
 typedef struct hb_ot_name_entry_t hb_ot_name_entry_t;
 typedef struct hb_set_t hb_set_t;
-const hb_ot_name_entry_t *hb_ot_name_list_names(hb_face_t *face, unsigned int *num_entries);
+const hb_ot_name_entry_t *hb_ot_name_list_names(hb_face_t *face, unsigned *num_entries);
 const char *hb_language_to_string(hb_language_t language);
-unsigned int hb_ot_name_get_utf8(hb_face_t *face, hb_ot_name_id_t name_id, hb_language_t language, unsigned int *text_size, char *text);
+unsigned hb_ot_name_get_utf8(hb_face_t *face, hb_ot_name_id_t name_id, hb_language_t language, unsigned *text_size, char *text);
 hb_set_t *hb_set_create(void);
 void hb_face_collect_unicodes(hb_face_t *face, hb_set_t *out);
 void hb_set_set(hb_set_t *set, const hb_set_t *other);
 void hb_set_intersect(hb_set_t *set, const hb_set_t *other);
-unsigned int hb_set_get_population(const hb_set_t *set);
+unsigned hb_set_get_population(const hb_set_t *set);
 void hb_set_destroy(hb_set_t *set);
 void hb_face_destroy(hb_face_t *face);
 void hb_set_add_range(hb_set_t *set, hb_codepoint_t first, hb_codepoint_t last);
@@ -44,9 +44,9 @@ static const unsigned HB_OT_NAME_ID_FONT_FAMILY = 1;
 static const unsigned HB_OT_NAME_ID_FONT_SUBFAMILY = 2;
 static const unsigned HB_OT_NAME_ID_FULL_NAME = 4;
 typedef struct FT_FaceRec_ *FT_Face;
-hb_blob_t *hb_blob_create(const char *data, unsigned int length, hb_memory_mode_t mode, void *user_data, hb_destroy_func_t destroy);
-hb_face_t *hb_face_create(hb_blob_t *blob, unsigned int index);
+hb_blob_t *hb_blob_create(const char *data, unsigned length, hb_memory_mode_t mode, void *user_data, hb_destroy_func_t destroy);
+hb_face_t *hb_face_create(hb_blob_t *blob, unsigned index);
 void hb_blob_destroy(hb_blob_t *blob);
-unsigned int hb_face_get_glyph_count(const hb_face_t *face);
+unsigned hb_face_get_glyph_count(const hb_face_t *face);
 hb_face_t *hb_ft_face_create_referenced(FT_Face ft_face);
 ]]

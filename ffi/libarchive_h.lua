@@ -26,7 +26,7 @@ int archive_entry_filetype(struct archive_entry *);
 void archive_entry_free(struct archive_entry *);
 struct archive_entry *archive_entry_new(void);
 const char *archive_entry_pathname(struct archive_entry *);
-void archive_entry_set_filetype(struct archive_entry *, unsigned int);
+void archive_entry_set_filetype(struct archive_entry *, unsigned);
 void archive_entry_set_gid(struct archive_entry *, la_int64_t);
 void archive_entry_set_mtime(struct archive_entry *, time_t, long);
 void archive_entry_set_pathname(struct archive_entry *, const char *);

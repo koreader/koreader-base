@@ -1,7 +1,7 @@
 -- Automatically generated with ffi-cdecl.
 
 require("ffi").cdef[[
-typedef unsigned int __u32;
+typedef unsigned __u32;
 static const unsigned UPDATE_MODE_PARTIAL = 0;
 static const unsigned UPDATE_MODE_FULL = 1;
 static const unsigned TEMP_USE_AMBIENT = 4096;
@@ -42,7 +42,7 @@ struct mxcfb_update_data {
   __u32 update_mode;
   __u32 update_marker;
   int temp;
-  unsigned int flags;
+  unsigned flags;
   struct mxcfb_alt_buffer_data alt_buffer_data;
 };
 static const unsigned MXCFB_SEND_UPDATE = 1078216238;

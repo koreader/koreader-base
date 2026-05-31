@@ -22,7 +22,7 @@ static const unsigned RTC_AIE_OFF = 28674;
 static const unsigned RTC_WKALM_SET = 1076391951;
 static const unsigned RTC_WKALM_RD = 2150133776;
 static const unsigned RTC_RD_TIME = 2149871625;
-typedef long int __time_t;
+typedef long __time_t;
 typedef __time_t time_t;
 struct tm {
   int tm_sec;
@@ -34,7 +34,7 @@ struct tm {
   int tm_wday;
   int tm_yday;
   int tm_isdst;
-  long int tm_gmtoff;
+  long tm_gmtoff;
   const char *tm_zone;
 };
 time_t time(time_t *__timer);

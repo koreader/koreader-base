@@ -6,7 +6,7 @@ typedef unsigned char l_uint8;
 typedef short l_int16;
 typedef unsigned short l_uint16;
 typedef int l_int32;
-typedef unsigned int l_uint32;
+typedef unsigned l_uint32;
 typedef float l_float32;
 typedef double l_float64;
 typedef int l_ok;

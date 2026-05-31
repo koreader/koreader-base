@@ -23,8 +23,8 @@ typedef int ion_user_handle_t;
 struct ion_allocation_data {
   size_t len;
   size_t align;
-  unsigned int heap_id_mask;
-  unsigned int flags;
+  unsigned heap_id_mask;
+  unsigned flags;
   ion_user_handle_t handle;
 };
 struct ion_fd_data {

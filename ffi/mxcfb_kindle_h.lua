@@ -77,7 +77,7 @@ struct mxcfb_update_data {
   uint32_t hist_bw_waveform_mode;
   uint32_t hist_gray_waveform_mode;
   int temp;
-  unsigned int flags;
+  unsigned flags;
   struct mxcfb_alt_buffer_data alt_buffer_data;
 };
 struct mxcfb_update_data_zelda {
@@ -86,7 +86,7 @@ struct mxcfb_update_data_zelda {
   uint32_t update_mode;
   uint32_t update_marker;
   int temp;
-  unsigned int flags;
+  unsigned flags;
   int dither_mode;
   int quant_bit;
   struct mxcfb_alt_buffer_data alt_buffer_data;
@@ -101,7 +101,7 @@ struct mxcfb_update_data_rex {
   uint32_t update_mode;
   uint32_t update_marker;
   int temp;
-  unsigned int flags;
+  unsigned flags;
   int dither_mode;
   int quant_bit;
   struct mxcfb_alt_buffer_data alt_buffer_data;
@@ -168,7 +168,7 @@ struct mxcfb_update_data_mtk {
   uint32_t update_mode;
   uint32_t update_marker;
   int temp;
-  unsigned int flags;
+  unsigned flags;
   int dither_mode;
   int quant_bit;
   struct mxcfb_alt_buffer_data alt_buffer_data;

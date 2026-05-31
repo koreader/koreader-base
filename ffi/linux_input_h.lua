@@ -66,7 +66,7 @@ static const unsigned DEVICE_ROTATED_CLOCKWISE = 1;
 static const unsigned DEVICE_ROTATED_UPSIDE_DOWN = 2;
 static const unsigned DEVICE_ROTATED_COUNTER_CLOCKWISE = 3;
 typedef unsigned short __u16;
-typedef signed int __s32;
+typedef int __s32;
 struct input_event {
   struct timeval time;
   __u16 type;
