@@ -352,7 +352,6 @@ function Formatter.format_named:type_identifier(node)
 end
 
 function Formatter.format_unnamed:extern(node)
-    return false
 end
 
 function Formatter:format(node)
