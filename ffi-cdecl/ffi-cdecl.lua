@@ -251,7 +251,7 @@ function Formatter:new(parser)
         cdecl
         fastcall
         mode
-        packed
+        packed __packed__
         stdcall
         thiscall
         vector_size
