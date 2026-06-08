@@ -16,6 +16,18 @@ local full, partial, full_ui, partial_ui, fast, delay_page, delay_ui, delay_fast
 
 local framebuffer = {}
 
+-- Android ActivityInfo SCREEN_ORIENTATION_* to framebuffer DEVICE_ROTATED_* mapping
+-- c.f., https://developer.android.com/reference/android/content/pm/ActivityInfo
+local ANDROID_ORIENTATION_TO_ROTATION = {
+    [0]  = 1, -- ASCREEN_ORIENTATION_LANDSCAPE         → DEVICE_ROTATED_CLOCKWISE
+    [1]  = 0, -- ASCREEN_ORIENTATION_PORTRAIT          → DEVICE_ROTATED_UPRIGHT
+    [6]  = 1, -- ASCREEN_ORIENTATION_SENSOR_LANDSCAPE  → DEVICE_ROTATED_CLOCKWISE
+    [7]  = 0, -- ASCREEN_ORIENTATION_SENSOR_PORTRAIT   → DEVICE_ROTATED_UPRIGHT
+    [8]  = 3, -- ASCREEN_ORIENTATION_REVERSE_LANDSCAPE → DEVICE_ROTATED_COUNTER_CLOCKWISE
+    [9]  = 2, -- ASCREEN_ORIENTATION_REVERSE_PORTRAIT  → DEVICE_ROTATED_UPSIDE_DOWN
+    [10] = 0, -- ASCREEN_ORIENTATION_FULL_SENSOR       → default to UPRIGHT
+}
+
 -- update a region of the screen
 function framebuffer:_updatePartial(mode, delay, x, y, w, h)
     local bb = self.full_bb or self.bb
@@ -69,7 +81,15 @@ end
 
 function framebuffer:getRotationMode()
     if android.hasNativeRotation() then
-        return android.orientation.get()
+        local ao = android.orientation.get()
+        local mapped = ANDROID_ORIENTATION_TO_ROTATION[ao]
+        if mapped ~= nil then
+            return mapped
+        else
+            -- For UNSPECIFIED(-1), USER(2), BEHIND(3), SENSOR(4), NOSENSOR(5)
+            -- fall back to cached value
+            return self.cur_rotation_mode
+        end
     else
         return self.cur_rotation_mode
     end
@@ -84,6 +104,7 @@ function framebuffer:setRotationMode(mode)
         elseif mode == 3 then key = "REVERSE_LANDSCAPE" end
         if key then
             android.orientation.set(C["ASCREEN_ORIENTATION_" .. key])
+            self.cur_rotation_mode = mode
         end
     else
         framebuffer.parent.setRotationMode(self, mode)
