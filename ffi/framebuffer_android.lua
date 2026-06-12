@@ -79,6 +79,19 @@ function framebuffer:getRotationMode()
     end
 end
 
+-- Android handles display rotation natively: the window buffer is already
+-- rotated by SurfaceFlinger, and touch events arrive in display coordinates.
+-- The BB is never rotated (setRotationMode only calls android.orientation.set),
+-- so touch coordinates must not be transformed. Return 0 (UR) to skip the
+-- translation in GestureDetector:adjustGesCoordinate / input:adjustTouchTranslate.
+function framebuffer:getTouchRotation()
+    if android.hasNativeRotation() then
+        return 0
+    else
+        return framebuffer.parent.getTouchRotation(self)
+    end
+end
+
 function framebuffer:setRotationMode(mode)
     if android.hasNativeRotation() then
         local key
