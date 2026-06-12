@@ -83,13 +83,9 @@ function framebuffer:getRotationMode()
     if android.hasNativeRotation() then
         local ao = android.orientation.get()
         local mapped = ANDROID_ORIENTATION_TO_ROTATION[ao]
-        if mapped ~= nil then
-            return mapped
-        else
-            -- For UNSPECIFIED(-1), USER(2), BEHIND(3), SENSOR(4), NOSENSOR(5)
-            -- fall back to cached value
-            return self.cur_rotation_mode
-        end
+        -- For UNSPECIFIED(-1), USER(2), BEHIND(3), SENSOR(4), NOSENSOR(5)
+        -- fall back to cached value
+        return mapped or self.cur_rotation_mode
     else
         return self.cur_rotation_mode
     end
