@@ -802,21 +802,24 @@ local function _main(parser, ffi_cdecl_dir)
     --     print("node sexp:", parser:node_sexp(node))
     -- end
 
+    local output = buffer:new()
+    output:put("-- Automatically generated with ffi-cdecl.\n\n")
+    if #requires > 0 then
+        for __, r in ipairs(requires) do
+            output:putf("require \"%s\"\n", r)
+        end
+        output:put("\n")
+    end
+    output:put("require(\"ffi\").cdef[[\n")
+    output:put(Formatter:new(parser)())
+    output:put("]]\n")
+
     if output_file == "-" then
         output_file = io.stdout
     else
         output_file = io.open(output_file, "w+")
     end
-    output_file:write("-- Automatically generated with ffi-cdecl.\n\n")
-    if #requires > 0 then
-        for __, r in ipairs(requires) do
-            output_file:write(string.format("require \"%s\"\n", r))
-        end
-        output_file:write("\n")
-    end
-    output_file:write("require(\"ffi\").cdef[[\n")
-    output_file:write(Formatter:new(parser)())
-    output_file:write("]]\n")
+    output_file:write(output)
     if output_file ~= io.stdout then
         output_file:close()
     end
