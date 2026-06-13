@@ -378,7 +378,22 @@ end
 Formatter.format_named.sized_type_specifier = Formatter.format_named.primitive_type
 Formatter.format_named.type_identifier = Formatter.format_named.primitive_type
 
+local SUPPORTED_TYPE_QUALIFIERS = {
+    ["const"] = true,
+    ["volatile"] = true,
+}
+
+function Formatter.format_named:type_qualifier(node)
+    local text = self.parser:node_text(node)
+    if SUPPORTED_TYPE_QUALIFIERS[text] then
+        table.insert(self.output, text)
+    end
+end
+
 function Formatter.format_unnamed:extern(node)
+end
+
+function Formatter.format_named:ms_restrict_modifier(node)
 end
 
 function Formatter:format(node)
