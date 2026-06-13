@@ -406,6 +406,24 @@ function Formatter.format_named:declaration(node)
     end
 end
 
+function Formatter.format_named:sizeof_expression(node)
+    local value = ts.ts_node_child_by_field_id(node, self.f_value)
+    local identifier
+    if not ts.ts_node_is_null(value) then
+        value = self.parser:node_text(value)
+        identifier = value:match("^[(]%s*([%w_]+)%s*[)]$")
+    else
+        local type_ = ts.ts_node_child_by_field_id(node, self.f_type)
+        assert(not ts.ts_node_is_null(type_))
+        identifier = self.parser:node_text(type_)
+    end
+    identifier = identifier and TYPE_ALIASES[identifier] or identifier
+    if identifier then
+        value = "(" .. identifier .. ")"
+    end
+    table.insert(self.output, "sizeof " .. value)
+end
+
 function Formatter.format_named:storage_class_specifier(node)
     local text = self.parser:node_text(node)
     if text == "static" and self.in_function_declarator == 0 then
