@@ -636,6 +636,7 @@ local function _main(parser, ffi_cdecl_dir)
     end
 
     local c_declaration = parser:language_symbol_for_name("declaration",  true)
+    local c_function_definition = parser:language_symbol_for_name("function_definition", true)
     local c_primitive_type = parser:language_symbol_for_name("primitive_type", true)
     local c_type_identifier = parser:language_symbol_for_name("type_identifier", true)
     local c_enum_or_struct_or_union = {
@@ -643,6 +644,7 @@ local function _main(parser, ffi_cdecl_dir)
         [parser:language_symbol_for_name("struct_specifier", true)] = "struct",
         [parser:language_symbol_for_name("union_specifier", true)] = "union",
     }
+    local f_body = parser:language_field_id_for_name("body")
 
     -- cdecl_const
     if next(cdecl_by_kind.const) then
@@ -719,10 +721,20 @@ local function _main(parser, ffi_cdecl_dir)
             local id = parser:node_text(m.captures[1].node)
             if cdecl_by_kind.func[id] then
                 local node = m.captures[0].node
+                local sym
                 -- Walk up to the parent declaration.
                 repeat node = ts.ts_node_parent(node)
-                until ts.ts_node_symbol(node) == c_declaration
+                    assert(not ts.ts_node_is_null(node))
+                    sym = ts.ts_node_symbol(node)
+                until sym == c_declaration or sym == c_function_definition
                 local cdef = parser:node_text(node)
+                if sym == c_function_definition then
+                    -- Function definition (e.g. inline), turn it into a definition.
+                    node = ts.ts_node_child_by_field_id(node, f_body)
+                    local s = ts.ts_node_start_byte(node)
+                    local e = ts.ts_node_end_byte(node)
+                    cdef = cdef:sub(1, #cdef - e + s - 1) .. ";"
+                end
                 set_cdecl('func', id, cdef)
             end
         end
