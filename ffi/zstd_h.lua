@@ -2,12 +2,12 @@
 
 require("ffi").cdef[[
 static const unsigned ZSTD_CLEVEL_DEFAULT = 3;
-size_t ZSTD_compress(void *dst, size_t dstCapacity, const void *src, size_t srcSize, int compressionLevel);
-size_t ZSTD_decompress(void *dst, size_t dstCapacity, const void *src, size_t compressedSize);
-unsigned long long ZSTD_getFrameContentSize(const void *src, size_t srcSize);
-size_t ZSTD_compressBound(size_t srcSize);
-unsigned ZSTD_isError(size_t result);
-const char *ZSTD_getErrorName(size_t result);
+size_t ZSTD_compress(void *, size_t, const void *, size_t, int);
+size_t ZSTD_decompress(void *, size_t, const void *, size_t);
+unsigned long long ZSTD_getFrameContentSize(const void *, size_t);
+size_t ZSTD_compressBound(size_t);
+unsigned ZSTD_isError(size_t);
+const char *ZSTD_getErrorName(size_t);
 typedef struct ZSTD_DCtx_s ZSTD_DCtx;
 typedef enum {
   ZSTD_reset_session_only = 1,
@@ -15,7 +15,7 @@ typedef enum {
   ZSTD_reset_session_and_parameters = 3,
 } ZSTD_ResetDirective;
 ZSTD_DCtx *ZSTD_createDCtx(void);
-size_t ZSTD_freeDCtx(ZSTD_DCtx *dctx);
-size_t ZSTD_decompressDCtx(ZSTD_DCtx *dctx, void *dst, size_t dstCapacity, const void *src, size_t srcSize);
-size_t ZSTD_DCtx_reset(ZSTD_DCtx *dctx, ZSTD_ResetDirective reset);
+size_t ZSTD_freeDCtx(ZSTD_DCtx *);
+size_t ZSTD_decompressDCtx(ZSTD_DCtx *, void *, size_t, const void *, size_t);
+size_t ZSTD_DCtx_reset(ZSTD_DCtx *, ZSTD_ResetDirective);
 ]]

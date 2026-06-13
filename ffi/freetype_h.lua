@@ -106,7 +106,7 @@ enum FT_Sfnt_Tag_ {
   FT_SFNT_PCLT,
   FT_SFNT_MAX,
 };
-typedef void (*FT_Generic_Finalizer)(void *object);
+typedef void (*FT_Generic_Finalizer)(void *);
 typedef struct FT_BBox_ FT_BBox;
 typedef struct FT_Bitmap_ FT_Bitmap;
 typedef struct FT_Bitmap_Size_ FT_Bitmap_Size;
@@ -295,25 +295,25 @@ struct TT_OS2_ {
   FT_UShort usLowerOpticalPointSize;
   FT_UShort usUpperOpticalPointSize;
 };
-FT_Error FT_Done_Library(FT_Library library);
-FT_Error FT_Init_FreeType(FT_Library *alibrary);
-FT_Error FT_Reference_Library(FT_Library library);
-FT_Error FT_Done_Face(FT_Face face);
-FT_Error FT_New_Face(FT_Library library, const char *filepathname, FT_Long face_index, FT_Face *aface);
-FT_Error FT_Reference_Face(FT_Face face);
-FT_Error FT_Set_Pixel_Sizes(FT_Face face, FT_UInt pixel_width, FT_UInt pixel_height);
-FT_Error FT_Activate_Size(FT_Size size);
-FT_Error FT_Done_Size(FT_Size size);
-FT_Error FT_New_Size(FT_Face face, FT_Size *size);
-FT_UInt FT_Get_Char_Index(FT_Face face, FT_ULong charcode);
-FT_Error FT_Load_Char(FT_Face face, FT_ULong char_code, FT_Int32 load_flags);
-FT_Error FT_Get_Kerning(FT_Face face, FT_UInt left_glyph, FT_UInt right_glyph, FT_UInt kern_mode, FT_Vector *akerning);
-void FT_GlyphSlot_Embolden(FT_GlyphSlot slot);
-void FT_GlyphSlot_Oblique(FT_GlyphSlot slot);
-FT_Error FT_Load_Glyph(FT_Face face, FT_UInt glyph_index, FT_Int32 load_flags);
-FT_Error FT_Render_Glyph(FT_GlyphSlot slot, FT_Render_Mode render_mode);
-FT_Long FT_MulFix(FT_Long a, FT_Long b);
-FT_Error FT_Outline_Embolden(FT_Outline *outline, FT_Pos strength);
-void FT_Outline_Translate(const FT_Outline *outline, FT_Pos xOffset, FT_Pos yOffset);
-void *FT_Get_Sfnt_Table(FT_Face face, FT_Sfnt_Tag tag);
+FT_Error FT_Done_Library(FT_Library);
+FT_Error FT_Init_FreeType(FT_Library *);
+FT_Error FT_Reference_Library(FT_Library);
+FT_Error FT_Done_Face(FT_Face);
+FT_Error FT_New_Face(FT_Library, const char *, FT_Long, FT_Face *);
+FT_Error FT_Reference_Face(FT_Face);
+FT_Error FT_Set_Pixel_Sizes(FT_Face, FT_UInt, FT_UInt);
+FT_Error FT_Activate_Size(FT_Size);
+FT_Error FT_Done_Size(FT_Size);
+FT_Error FT_New_Size(FT_Face, FT_Size *);
+FT_UInt FT_Get_Char_Index(FT_Face, FT_ULong);
+FT_Error FT_Load_Char(FT_Face, FT_ULong, FT_Int32);
+FT_Error FT_Get_Kerning(FT_Face, FT_UInt, FT_UInt, FT_UInt, FT_Vector *);
+void FT_GlyphSlot_Embolden(FT_GlyphSlot);
+void FT_GlyphSlot_Oblique(FT_GlyphSlot);
+FT_Error FT_Load_Glyph(FT_Face, FT_UInt, FT_Int32);
+FT_Error FT_Render_Glyph(FT_GlyphSlot, FT_Render_Mode);
+FT_Long FT_MulFix(FT_Long, FT_Long);
+FT_Error FT_Outline_Embolden(FT_Outline *, FT_Pos);
+void FT_Outline_Translate(const FT_Outline *, FT_Pos, FT_Pos);
+void *FT_Get_Sfnt_Table(FT_Face, FT_Sfnt_Tag);
 ]]

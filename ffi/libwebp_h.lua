@@ -42,8 +42,8 @@ typedef struct WebPAnimDecoderOptions WebPAnimDecoderOptions;
 int WebPAnimDecoderOptionsInitInternal(WebPAnimDecoderOptions *, int);
 typedef struct WebPAnimDecoder WebPAnimDecoder;
 WebPAnimDecoder *WebPAnimDecoderNewInternal(const WebPData *, const WebPAnimDecoderOptions *, int);
-int WebPAnimDecoderGetInfo(const WebPAnimDecoder *dec, WebPAnimInfo *info);
-int WebPAnimDecoderGetNext(WebPAnimDecoder *dec, uint8_t **buf, int *timestamp);
-void WebPAnimDecoderReset(WebPAnimDecoder *dec);
-void WebPAnimDecoderDelete(WebPAnimDecoder *dec);
+int WebPAnimDecoderGetInfo(const WebPAnimDecoder *, WebPAnimInfo *);
+int WebPAnimDecoderGetNext(WebPAnimDecoder *, uint8_t **, int *);
+void WebPAnimDecoderReset(WebPAnimDecoder *);
+void WebPAnimDecoderDelete(WebPAnimDecoder *);
 ]]
