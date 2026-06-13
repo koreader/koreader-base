@@ -208,6 +208,7 @@ function Formatter:new(parser)
     self.__index = self
     o.parser = parser
     o.format_by_id = {}
+    o.in_function_declarator = 0
     o.in_parameter_list = 0
     o.output = {}
     for k, v in pairs(o.format_named) do
@@ -215,13 +216,9 @@ function Formatter:new(parser)
         o.format_by_id[sym] = v
         o["c_"..k] = sym
     end
-    for k, v in pairs(o.format_unnamed) do
-        local sym = parser:language_symbol_for_name(k, false)
-        o.format_by_id[sym] = v
-        o["c_"..k] = sym
-    end
     for name, is_named in pairs{
         call_expression = true,
+        function_declarator = true,
         identifier = true,
     } do
         o["c_"..name] = parser:language_symbol_for_name(name, is_named)
@@ -250,7 +247,6 @@ function Formatter:new(parser)
 end
 
 Formatter.format_named = {}
-Formatter.format_unnamed = {}
 
 function Formatter.format_named:abstract_pointer_declarator(node)
     if self.output[#self.output]:match("[%w_]$") then
@@ -397,6 +393,26 @@ function Formatter.format_named:primitive_type(node)
 end
 
 Formatter.format_named.sized_type_specifier = Formatter.format_named.primitive_type
+
+function Formatter.format_named:declaration(node)
+    local declarator  =ts.ts_node_child_by_field_id(node, self.f_declarator)
+    local is_function_declarator = ts.ts_node_symbol(declarator) == self.c_function_declarator
+    if is_function_declarator then
+        self.in_function_declarator = self.in_function_declarator + 1
+    end
+    self:children(node)
+    if is_function_declarator then
+        self.in_function_declarator = self.in_function_declarator - 1
+    end
+end
+
+function Formatter.format_named:storage_class_specifier(node)
+    local text = self.parser:node_text(node)
+    if text == "static" and self.in_function_declarator == 0 then
+        table.insert(self.output, text)
+    end
+end
+
 Formatter.format_named.type_identifier = Formatter.format_named.primitive_type
 
 local SUPPORTED_TYPE_QUALIFIERS = {
@@ -409,9 +425,6 @@ function Formatter.format_named:type_qualifier(node)
     if SUPPORTED_TYPE_QUALIFIERS[text] then
         table.insert(self.output, text)
     end
-end
-
-function Formatter.format_unnamed:extern(node)
 end
 
 function Formatter:format(node)
