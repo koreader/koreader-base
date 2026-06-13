@@ -12,7 +12,7 @@
 
 #define cdecl_type_replace(Old, New)  _Static_assert(__builtin_types_compatible_p(Old, New), #Old " != " #New); union _cdecl_token_concat2(cdecl_type_replace_, __COUNTER__) { Old __old; New __new; };
 
-#define cdecl_out(...)  const char *_cdecl_token_concat2(cdecl_out_, __COUNTER__) = # __VA_ARGS__;
+#define cdecl_out(Id, ...)  const char *_cdecl_token_concat2(cdecl_out_, Id) = # __VA_ARGS__;
 
 // Miscellaneous helpers.
 #define cdecl_offsetof(I, T, M)  enum { OFFSETOF_##I = offsetof(T, M) }; cdecl_const(OFFSETOF_##I);

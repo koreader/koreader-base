@@ -518,6 +518,7 @@ output options:
 
   -o FILE      output file (optional, fallback to stdout)
   -r MODULE    extra require to add to the generated output (e.g. `-r ffi/posix_h`)
+  -M           add comment markers identifying each declaration
 
 pkg-config options:
 
@@ -535,6 +536,7 @@ local function _main(parser, ffi_cdecl_dir)
     local pkgflags = {}
     local requires = {}
     local warn_only = false
+    local add_markers = false
 
     while #arg > 0 do
         local a = table.remove(arg, 1)
@@ -557,6 +559,8 @@ local function _main(parser, ffi_cdecl_dir)
         elseif a == "-h" then
             io.stdout:write(help)
             return 0
+        elseif a == "-M" then
+            add_markers = true
         elseif a == "-o" then
             -- Output file.
             output_file = table.remove(arg, 1)
@@ -899,8 +903,18 @@ local function _main(parser, ffi_cdecl_dir)
             else
                 error(msg)
             end
-        end
-        if cdef ~= true then
+        else
+            if add_markers then
+                local tag
+                if kind == "type" then
+                    tag = {kind, TYPE_ALIASES[id] or id}
+                elseif kind == "out" then
+                    tag = {id}
+                else
+                    tag = {kind, id}
+                end
+                cdef_block:put(string.format("// cdecl_%s\n", table.concat(tag, "_")))
+            end
             cdef_block:put(cdef)
             cdef_block:put("\n")
         end
