@@ -1,6 +1,6 @@
 #!/usr/bin/env luajit
 
-local VERSION = "1.0.0"
+local VERSION = "2.0.0"
 
 local buffer = require("string.buffer")
 local ffi = require("ffi")
