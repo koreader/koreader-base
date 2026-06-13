@@ -623,6 +623,32 @@ local function _main(parser, ffi_cdecl_dir)
         end
     end
 
+    for m in parser:run_query([[
+        (union_specifier
+            name: (type_identifier) @name
+            body: (field_declaration_list
+                (field_declaration
+                    type: (_)
+                    declarator: (field_identifier)
+                ) @old
+                (field_declaration
+                    type: (_)
+                    declarator: (_)
+                ) @new
+            )
+        ) @match
+    ]]) do
+        if parser:node_text(m.captures[1].node):match("^cdecl_type_replace_%d+$") then
+            local old = parser:node_text(m.captures[2].node):gsub(" __old;$", "")
+            local new = parser:node_text(m.captures[3].node):gsub(" __new;$", "")
+            TYPE_ALIASES[old] = new
+        end
+    end
+
+    -- for k, v in pairs(TYPE_ALIASES) do
+    --     print(k, "→", v)
+    -- end
+
     -- for kind, list in pairs(cdecl_by_kind) do
     --     if next(list) then
     --         print("\ncdecl_"..kind)
