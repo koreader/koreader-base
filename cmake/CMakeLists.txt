@@ -628,8 +628,8 @@ function(ffi_target NAME OUTPUT INPUT)
         # don't correctly handle `--env-only --with-path=…` (ignoring that last
         # option).
         COMMAND env PKG_CONFIG_PATH=${STAGING_DIR}/lib/pkgconfig
-                ${FFI_CDECL} ${FFI_CDECL_FLAGS} -o ${OUTPUT}
-                ${_ARGS} ${INPUT}
+                ${FFI_CDECL} ${FFI_CDECL_FLAGS}
+                ${_ARGS} ${INPUT} -o ${OUTPUT}
         COMMENT "Generating 'ffi/${TGT}'"
         VERBATIM
         WORKING_DIRECTORY ${BASE_DIR}
