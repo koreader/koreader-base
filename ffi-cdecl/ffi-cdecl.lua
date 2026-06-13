@@ -245,19 +245,6 @@ function Formatter:new(parser)
     } do
         o["c_"..name] = parser:language_symbol_for_name(text)
     end
-    self.supported_attributes = {}
-    for a in ([[
-        aligned
-        cdecl
-        fastcall
-        mode
-        packed __packed__
-        stdcall
-        thiscall
-        vector_size
-    ]]):gmatch("[^%s]+") do
-       self.supported_attributes[a] = true
-    end
     return o
 end
 
@@ -279,6 +266,18 @@ function Formatter.format_named:assignment_expression(node)
     self:format(ts.ts_node_child_by_field_id(node, self.f_right))
 end
 
+local SUPPORTED_ATTRIBUTES = {
+    ["__packed__"] = true,
+    ["aligned"] = true,
+    ["cdecl"] = true,
+    ["fastcall"] = true,
+    ["mode"] = true,
+    ["packed"] = true,
+    ["stdcall"] = true,
+    ["thiscall"] = true,
+    ["vector_size"] = true,
+}
+
 function Formatter.format_named:attribute_specifier(node)
     local start = #self.output
     local attrs = ts.ts_node_named_child(node, 0)
@@ -290,7 +289,7 @@ function Formatter.format_named:attribute_specifier(node)
         elseif sym == self.c_identifier then
             id = self.parser:node_text(n)
         end
-        if id and self.supported_attributes[id] then
+        if id and SUPPORTED_ATTRIBUTES[id] then
             if #self.output == start then
                 table.insert(self.output, " __attribute__((")
             else
