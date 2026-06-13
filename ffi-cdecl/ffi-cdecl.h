@@ -6,3 +6,7 @@
 #define cdecl_type(Id)    _cdecl(Id, type)
 #define cdecl_union(Id)   _cdecl(Id, union)
 #define cdecl_var(Id)     _cdecl(Id, var)
+
+// Miscellaneous helpers.
+#define cdecl_offsetof(I, T, M)  enum { OFFSETOF_##I = offsetof(T, M) }; cdecl_const(OFFSETOF_##I);
+#define cdecl_sizeof(I, T)       enum { SIZEOF_##I = sizeof (T) }; cdecl_const(SIZEOF_##I);
