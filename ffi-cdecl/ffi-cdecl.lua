@@ -306,6 +306,11 @@ end
 
 Formatter.format_named.binary_expression = Formatter.format_named.assignment_expression
 
+function Formatter.format_named:comment(node)
+    local text = self.parser:node_text(node)
+    table.insert(self.output, text.."\n")
+end
+
 function Formatter.format_named:enumerator(node)
     self:format(ts.ts_node_child_by_field_id(node, self.f_name))
     local value = ts.ts_node_child_by_field_id(node, self.f_value)
@@ -457,7 +462,7 @@ function Formatter:__call()
         buf:put(token)
         prev_token = token
     end
-    return (buf:get():gsub("%s+\n", "\n"))
+    return (buf:get():gsub("%s+\n", "\n"):gsub("//\n", "\n"))
 end
 
 -- }}}
@@ -569,7 +574,7 @@ local function _main(parser, ffi_cdecl_dir)
 
     local cdecl_list = {}
     local cdecl_by_kind = {}
-    for t in ("const enum func struct type union var"):gmatch("%S+") do
+    for t in ("const enum func out struct type union var"):gmatch("%S+") do
         cdecl_by_kind[t] = {}
     end
 
@@ -581,15 +586,27 @@ local function _main(parser, ffi_cdecl_dir)
                 declarator: [
                     (identifier) @name
                     (array_declarator declarator: (identifier) @name)
+                    (pointer_declarator declarator: (identifier) @name)
                 ]
-                value: (_)
+                value: (_) @value
             )
         ) @match
     ]]) do
         local kind, id = parser:node_text(m.captures[3].node):match("^cdecl_([^_]+)_(.+)$")
         if kind then
             table.insert(cdecl_list, {kind, id})
-            cdecl_by_kind[kind][id] = true
+            if kind == "out" then
+                local text = parser:node_text(m.captures[4].node)
+                assert(text:match("^\".*\"$"), text)
+                text = text:sub(2, #text - 1)
+                text = text:gsub("\\(.)", "%1")
+                if text == "" then
+                    text = "//"
+                end
+                cdecl_by_kind[kind][id] = text
+            else
+                cdecl_by_kind[kind][id] = true
+            end
         end
     end
 

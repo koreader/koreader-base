@@ -7,6 +7,11 @@
 #define cdecl_union(Id)   _cdecl(Id, union)
 #define cdecl_var(Id)     _cdecl(Id, var)
 
+#define _cdecl_token_concat1(A, B)  A ## B
+#define _cdecl_token_concat2(A, B)  _cdecl_token_concat1(A, B)
+
+#define cdecl_out(...)  const char *_cdecl_token_concat2(cdecl_out_, __COUNTER__) = # __VA_ARGS__;
+
 // Miscellaneous helpers.
 #define cdecl_offsetof(I, T, M)  enum { OFFSETOF_##I = offsetof(T, M) }; cdecl_const(OFFSETOF_##I);
 #define cdecl_sizeof(I, T)       enum { SIZEOF_##I = sizeof (T) }; cdecl_const(SIZEOF_##I);
