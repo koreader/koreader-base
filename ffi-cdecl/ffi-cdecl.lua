@@ -208,6 +208,7 @@ function Formatter:new(parser)
     self.__index = self
     o.parser = parser
     o.format_by_id = {}
+    o.in_parameter_list = 0
     o.output = {}
     for k, v in pairs(o.format_named) do
         local sym = parser:language_symbol_for_name(k, true)
@@ -327,10 +328,25 @@ function Formatter.format_named:enumerator_list(node)
     end
 end
 
+function Formatter.format_named:identifier(node)
+    if self.in_parameter_list == 0 then
+        table.insert(self.output, self.parser:node_text(node))
+    end
+end
+
 function Formatter.format_named:init_declarator(node)
     self:format(ts.ts_node_child_by_field_id(node, self.f_declarator))
     table.insert(self.output, " = ")
     self:format(ts.ts_node_child_by_field_id(node, self.f_value))
+end
+
+function Formatter.format_named:ms_restrict_modifier(node)
+end
+
+function Formatter.format_named:parameter_list(node)
+    self.in_parameter_list = self.in_parameter_list + 1
+    self:children(node)
+    self.in_parameter_list = self.in_parameter_list - 1
 end
 
 function Formatter.format_named:parenthesized_declarator(node)
@@ -391,9 +407,6 @@ function Formatter.format_named:type_qualifier(node)
 end
 
 function Formatter.format_unnamed:extern(node)
-end
-
-function Formatter.format_named:ms_restrict_modifier(node)
 end
 
 function Formatter:format(node)
