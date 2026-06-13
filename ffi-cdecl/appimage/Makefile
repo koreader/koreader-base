@@ -2,7 +2,7 @@ KODEBUG ?=
 KOR_BASE ?= ../..
 
 TARGET = linux
-VERSION = 1.0.0
+VERSION = 2.0.0
 
 include $(KOR_BASE)/Makefile.defs
 
