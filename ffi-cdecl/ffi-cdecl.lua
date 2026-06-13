@@ -442,6 +442,7 @@ general options:
 
   -h, --help   show this help message and exit
   -v           show version
+  -W           warn instead of erroring out on missing / redefined cdecl
 
 compiler options:
 
@@ -470,6 +471,7 @@ local function _main(parser, ffi_cdecl_dir)
     local cppflags = {}
     local pkgflags = {}
     local requires = {}
+    local warn_only = false
 
     while #arg > 0 do
         local a = table.remove(arg, 1)
@@ -503,6 +505,8 @@ local function _main(parser, ffi_cdecl_dir)
         elseif a == "-v" then
             print("ffi-cdecl version "..VERSION)
             return 0
+        elseif a == "-W" then
+            warn_only = true
         elseif not input_file then
             input_file = a
         else
@@ -576,7 +580,13 @@ local function _main(parser, ffi_cdecl_dir)
     local set_cdecl = function (kind, id, cdef)
         local old = cdecl_by_kind[kind][id]
         if old ~= true and old ~= cdef then
-            error(string.format("redefining %s (%s), from:\n%s\nto:\n%s\n", id, kind, old, cdef))
+            local msg = string.format("redefining %s (%s), from:\n%s\nto:\n%s\n", id, kind, old, cdef)
+            if warn_only then
+                io.stderr:write(msg)
+                cdef = old.."\n"..cdef
+            else
+                error(msg)
+            end
         end
         cdecl_by_kind[kind][id] = cdef
     end
@@ -770,7 +780,12 @@ local function _main(parser, ffi_cdecl_dir)
         local kind, id = unpack(v)
         local cdef = cdecl_by_kind[kind][id]
         if cdef == true then
-            error("missing cdef for "..id.." ("..kind..")")
+            local msg = "missing cdef for "..id.." ("..kind..")\n"
+            if warn_only then
+                io.stderr:write(msg)
+            else
+                error(msg)
+            end
         end
         if cdef ~= true then
             cdef_block:put(cdef)
