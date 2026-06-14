@@ -40,6 +40,7 @@ local monolibtic = {
         ["png16"]      = true,
         ["sharpyuv"]   = true,
         ["sqlite3"]    = true,
+        ["ssl"]        = true,
         ["tffi_wrap"]  = true,
         ["turbojpeg"]  = true,
         ["unibreak"]   = true,
