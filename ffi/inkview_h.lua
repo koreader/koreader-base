@@ -369,7 +369,7 @@ end
 ffi.cdef[[
 typedef struct icanvas_s icanvas;
 typedef struct iconfig_s iconfig;
-typedef int (*iv_handler)(int type, int par1, int par2);
+typedef int (*iv_handler)(int, int, int);
 ]]
 
 if 505 <= target_version and target_version <= 519 then
@@ -470,7 +470,7 @@ end
 
 ffi.cdef[[
 void ClearOnExit();
-void DynamicUpdate(int x, int y, int w, int h);
+void DynamicUpdate(int, int, int, int);
 void FullUpdate();
 void FullUpdateHQ();
 int GetBatteryPower();
@@ -481,59 +481,49 @@ int GetFrontlightState(void);
 iconfig *GetGlobalConfig();
 int GetSleepmode();
 char *GetSoftwareVersion();
-icanvas *GetTaskFramebuffer(int task);
-int GoSleep(int ms, int deep);
+icanvas *GetTaskFramebuffer(int);
+int GoSleep(int, int);
 int IsCharging();
 int IsTaskActive();
 int MultitaskingSupported();
-int NetConnect(const char *name);
+int NetConnect(const char *);
 int NetDisconnect();
-int OpenBook(const char *path, const char *parameters, int flags);
+int OpenBook(const char *, const char *, int);
 void OpenScreen();
 int PageSnapshot();
-void PartialUpdate(int x, int y, int w, int h);
-void PartialUpdateHQ(int x, int y, int w, int h);
+void PartialUpdate(int, int, int, int);
+void PartialUpdateHQ(int, int, int, int);
 void PowerOff();
-]]
-
-if 505 <= target_version and target_version <= 512 then
-ffi.cdef[[ void PrepareForLoop(iv_handler); ]]
-end
-
-if 514 <= target_version and target_version <= 611 then
-ffi.cdef[[ void PrepareForLoop(iv_handler hproc); ]]
-end
-
-ffi.cdef[[
+void PrepareForLoop(iv_handler);
 void ProcessEventLoop();
 int QueryGSensor();
 int QueryNetwork();
-const char *ReadString(iconfig *cfg, const char *name, const char *deflt);
-int SendGlobalRequest(int param);
-void SetFrontlightState(int flstate);
-void SetPanelType(int type);
+const char *ReadString(iconfig *, const char *, const char *);
+int SendGlobalRequest(int);
+void SetFrontlightState(int);
+void SetPanelType(int);
 ]]
 
 if 505 <= target_version and target_version <= 508 then
-ffi.cdef[[ int SetSubtaskInfo(int task, int subtask, char *name, char *book); ]]
+ffi.cdef[[ int SetSubtaskInfo(int, int, char *, char *); ]]
 end
 
 if 509 <= target_version and target_version <= 611 then
-ffi.cdef[[ int SetSubtaskInfo(int task, int subtask, const char *name, const char *book); ]]
+ffi.cdef[[ int SetSubtaskInfo(int, int, const char *, const char *); ]]
 end
 
 ffi.cdef[[
 void WaitForUpdateComplete();
-int WiFiPower(int status);
+int WiFiPower(int);
 void hw_close();
 int hw_get_keylock();
 int hw_init();
-long iv_ipc_request(long type, long attr, unsigned char *data, int inlen, int outlen);
+long iv_ipc_request(long, long, unsigned char *, int, int);
 void iv_setup_gsensor();
 void iv_setup_touchpanel();
-void iv_sleepmode(int on);
-void iv_update_orientation(int isexternal);
-iv_mtinfo *GetTouchInfoI(unsigned index);
+void iv_sleepmode(int);
+void iv_update_orientation(int);
+iv_mtinfo *GetTouchInfoI(unsigned);
 ]]
 
 if 508 <= target_version and target_version <= 611 then
@@ -545,11 +535,11 @@ ffi.cdef[[
 int GetFrontlightColor(void);
 int GetFrontlightEnabled();
 int GetGSensorOrientation();
-void SetFrontlightColor(int color);
-void SetFrontlightEnabled(int enabled);
+void SetFrontlightColor(int);
+void SetFrontlightEnabled(int);
 ]]
 end
 
 if 605 <= target_version and target_version <= 611 then
-ffi.cdef[[ void adjustAreaDefault(unsigned char *data, int scanline, int width, int height); ]]
+ffi.cdef[[ void adjustAreaDefault(unsigned char *, int, int, int); ]]
 end

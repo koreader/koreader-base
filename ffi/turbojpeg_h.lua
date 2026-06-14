@@ -60,13 +60,13 @@ enum TJPARAM {
   TJPARAM_SAVEMARKERS,
 };
 typedef void *tjhandle;
-tjhandle tj3Init(int initType);
-int tj3Set(tjhandle handle, int param, int value);
-int tj3Get(tjhandle handle, int param);
-int tj3Compress8(tjhandle handle, const unsigned char *srcBuf, int width, int pitch, int height, int pixelFormat, unsigned char **jpegBuf, size_t *jpegSize);
-int tj3DecompressHeader(tjhandle handle, const unsigned char *jpegBuf, size_t jpegSize);
-int tj3Decompress8(tjhandle handle, const unsigned char *jpegBuf, size_t jpegSize, unsigned char *dstBuf, int pitch, int pixelFormat);
-void tj3Destroy(tjhandle handle);
-int tj3SaveImage8(tjhandle handle, const char *filename, const unsigned char *buffer, int width, int pitch, int height, int pixelFormat);
-void tj3Free(void *buffer);
+tjhandle tj3Init(int);
+int tj3Set(tjhandle, int, int);
+int tj3Get(tjhandle, int);
+int tj3Compress8(tjhandle, const unsigned char *, int, int, int, int, unsigned char **, size_t *);
+int tj3DecompressHeader(tjhandle, const unsigned char *, size_t);
+int tj3Decompress8(tjhandle, const unsigned char *, size_t, unsigned char *, int, int);
+void tj3Destroy(tjhandle);
+int tj3SaveImage8(tjhandle, const char *, const unsigned char *, int, int, int, int);
+void tj3Free(void *);
 ]]

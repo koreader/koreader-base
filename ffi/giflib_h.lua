@@ -58,17 +58,17 @@ struct GifFileType {
   void *UserData;
   void *Private;
 };
-GifFileType *DGifOpenFileName(const char *GifFileName, int *Error);
-GifFileType *DGifOpenFileHandle(int GifFileHandle, int *Error);
-int DGifCloseFile(GifFileType *GifFile, int *ErrorCode);
-int DGifSlurp(GifFileType *GifFile);
-const char *GifErrorString(int ErrorCode);
-int DGifSavedExtensionToGCB(GifFileType *GifFile, int ImageIndex, GraphicsControlBlock *GCB);
+GifFileType *DGifOpenFileName(const char *, int *);
+GifFileType *DGifOpenFileHandle(int, int *);
+int DGifCloseFile(GifFileType *, int *);
+int DGifSlurp(GifFileType *);
+const char *GifErrorString(int);
+int DGifSavedExtensionToGCB(GifFileType *, int, GraphicsControlBlock *);
 static const unsigned DISPOSAL_UNSPECIFIED = 0;
 static const unsigned DISPOSE_DO_NOT = 1;
 static const unsigned DISPOSE_BACKGROUND = 2;
 static const unsigned DISPOSE_PREVIOUS = 3;
 static const int NO_TRANSPARENT_COLOR = -1;
 typedef int (*InputFunc)(GifFileType *, GifByteType *, int);
-GifFileType *DGifOpen(void *userPtr, InputFunc readFunc, int *Error);
+GifFileType *DGifOpen(void *, InputFunc, int *);
 ]]

@@ -28,9 +28,9 @@ static const unsigned IN_UNMOUNT = 8192;
 static const unsigned IN_NONBLOCK = 2048;
 static const unsigned IN_CLOEXEC = 524288;
 int inotify_init(void);
-int inotify_init1(int __flags);
-int inotify_add_watch(int __fd, const char *__name, uint32_t __mask);
-int inotify_rm_watch(int __fd, int __wd);
+int inotify_init1(int);
+int inotify_add_watch(int, const char *, uint32_t);
+int inotify_rm_watch(int, int);
 struct inotify_event {
   int wd;
   uint32_t mask;

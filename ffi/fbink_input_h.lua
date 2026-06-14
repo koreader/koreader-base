@@ -40,6 +40,6 @@ typedef struct {
   char name[256];
   char path[4096];
 } FBInkInputDevice;
-FBInkInputDevice *fbink_input_scan(INPUT_DEVICE_TYPE_T match_types, INPUT_DEVICE_TYPE_T exclude_types, INPUT_SETTINGS_TYPE_T settings, size_t *dev_count);
-FBInkInputDevice *fbink_input_check(const char *filepath, INPUT_DEVICE_TYPE_T match_types, INPUT_DEVICE_TYPE_T exclude_types, INPUT_SETTINGS_TYPE_T settings);
+FBInkInputDevice *fbink_input_scan(INPUT_DEVICE_TYPE_T, INPUT_DEVICE_TYPE_T, INPUT_SETTINGS_TYPE_T, size_t *);
+FBInkInputDevice *fbink_input_check(const char *, INPUT_DEVICE_TYPE_T, INPUT_DEVICE_TYPE_T, INPUT_SETTINGS_TYPE_T);
 ]]

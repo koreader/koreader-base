@@ -37,13 +37,13 @@ struct tm {
   long tm_gmtoff;
   const char *tm_zone;
 };
-time_t time(time_t *__timer);
-struct tm *gmtime(const time_t *__timer);
-struct tm *gmtime_r(const time_t *__restrict __timer, struct tm *__restrict __tp);
-struct tm *localtime(const time_t *__timer);
-struct tm *localtime_r(const time_t *__restrict __timer, struct tm *__restrict __tp);
-time_t timegm(struct tm *__tp);
-time_t mktime(struct tm *__tp);
-int settimeofday(const struct timeval *__tv, const struct timezone *__tz);
+time_t time(time_t *);
+struct tm *gmtime(const time_t *);
+struct tm *gmtime_r(const time_t *, struct tm *);
+struct tm *localtime(const time_t *);
+struct tm *localtime_r(const time_t *, struct tm *);
+time_t timegm(struct tm *);
+time_t mktime(struct tm *);
+int settimeofday(const struct timeval *, const struct timezone *);
 void tzset(void);
 ]]
