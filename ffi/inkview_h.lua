@@ -1,4 +1,4 @@
--- Automatically generated with ./utils/gen_inkview_h.py.
+-- Automatically generated with ./utils/gen_merged_cdecl_h.py.
 
 local ffi = require("ffi")
 local C = ffi.C
@@ -75,9 +75,7 @@ static const unsigned EVT_QN_RELEASE = 52;
 
 if target_version == 505 then
 ffi.cdef[[ static const unsigned EVT_REPAINT = 23; ]]
-end
-
-if 507 <= target_version and target_version <= 611 then
+elseif 507 <= target_version and target_version <= 611 then
 ffi.cdef[[ static const unsigned EVT_REPAINT = 43; ]]
 end
 
@@ -104,9 +102,7 @@ static const unsigned EVT_TOUCHDOWN = 41;
 static const unsigned EVT_TOUCHMOVE = 42;
 static const unsigned EVT_TOUCHUP = 40;
 ]]
-end
-
-if 605 <= target_version and target_version <= 611 then
+elseif 605 <= target_version and target_version <= 611 then
 ffi.cdef[[
 static const unsigned EVT_TOUCHDOWN = 48;
 static const unsigned EVT_TOUCHMOVE = 49;
@@ -149,6 +145,10 @@ end
 
 if target_version == 605 then
 ffi.cdef[[ static const unsigned EVT_CUSTOM = 267; ]]
+elseif target_version == 608 then
+ffi.cdef[[ static const unsigned EVT_CUSTOM = 269; ]]
+elseif 610 <= target_version and target_version <= 611 then
+ffi.cdef[[ static const unsigned EVT_CUSTOM = 1024; ]]
 end
 
 if 605 <= target_version and target_version <= 611 then
@@ -161,14 +161,6 @@ static const unsigned EVT_POINTERCHANGED = 46;
 static const unsigned EVT_USBSTORE_IN = 163;
 static const unsigned EVT_USBSTORE_OUT = 164;
 ]]
-end
-
-if target_version == 608 then
-ffi.cdef[[ static const unsigned EVT_CUSTOM = 269; ]]
-end
-
-if 610 <= target_version and target_version <= 611 then
-ffi.cdef[[ static const unsigned EVT_CUSTOM = 1024; ]]
 end
 
 ffi.cdef[[
@@ -231,9 +223,7 @@ enum input_dev_e {
   MAX_INPUT_DEV,
 };
 ]]
-end
-
-if 605 <= target_version and target_version <= 611 then
+elseif 605 <= target_version and target_version <= 611 then
 ffi.cdef[[
 enum input_dev_e {
   DEV_UNKNOWN = 0,
@@ -276,9 +266,7 @@ struct hw_event_data_pointer_s {
   enum input_dev_e devtype;
 };
 ]]
-end
-
-if target_version == 610 then
+elseif target_version == 610 then
 ffi.cdef[[
 struct hw_event_data_pointer_s {
   int id;
@@ -290,9 +278,7 @@ struct hw_event_data_pointer_s {
   enum input_dev_e devtype;
 };
 ]]
-end
-
-if target_version == 611 then
+elseif target_version == 611 then
 ffi.cdef[[
 struct hw_event_data_pointer_s {
   int id;
@@ -320,9 +306,7 @@ struct hw_event_s {
   struct timeval time;
 };
 ]]
-end
-
-if target_version == 611 then
+elseif target_version == 611 then
 ffi.cdef[[
 struct hw_event_s {
   int type;
@@ -350,9 +334,7 @@ struct icanvas_s {
   unsigned char *addr;
 };
 ]]
-end
-
-if 608 <= target_version and target_version <= 611 then
+elseif 608 <= target_version and target_version <= 611 then
 ffi.cdef[[
 struct icanvas_s {
   int width;
@@ -372,85 +354,6 @@ typedef struct iconfig_s iconfig;
 typedef int (*iv_handler)(int, int, int);
 ]]
 
-if 505 <= target_version and target_version <= 519 then
-ffi.cdef[[
-struct iv_mtinfo_s {
-  int active;
-  int x;
-  int y;
-  int pressure;
-  enum input_dev_e devtype;
-  int rsv_2;
-  long long timems;
-};
-]]
-end
-
-if 505 <= target_version and target_version <= 610 then
-ffi.cdef[[ typedef struct iv_mtinfo_s iv_mtinfo; ]]
-end
-
-if 505 <= target_version and target_version <= 517 then
-ffi.cdef[[
-typedef enum {
-  PANEL_DISABLED = 0,
-  PANEL_ENABLED = 1 << 1,
-  PANEL_EVENT_NO_HANDLING = 1 << 2,
-} PANEL_FLAGS;
-]]
-end
-
-if target_version == 519 then
-ffi.cdef[[
-typedef enum {
-  PANEL_DISABLED = 0,
-  PANEL_ENABLED = 1 << 1,
-  PANEL_EVENT_NO_HANDLING = 1 << 2,
-  PANEL_NO_FB_OFFSET = 1 << 3,
-} PANEL_FLAGS;
-]]
-end
-
-if 605 <= target_version and target_version <= 608 then
-ffi.cdef[[
-struct iv_mtinfo_s {
-  bool active;
-  int x;
-  int y;
-  int pressure;
-  enum input_dev_e devtype;
-  long long timems;
-};
-]]
-end
-
-if 605 <= target_version and target_version <= 611 then
-ffi.cdef[[
-typedef enum {
-  PANEL_DISABLED = 0,
-  PANEL_ENABLED = 1 << 1,
-  PANEL_EVENT_NO_HANDLING = 1 << 2,
-  PANEL_NO_FB_OFFSET = 1 << 3,
-  PANEL_NO_SELF_UPDATE = 1 << 4,
-} PANEL_FLAGS;
-]]
-end
-
-if target_version == 610 then
-ffi.cdef[[
-struct iv_mtinfo_s {
-  bool active;
-  int x;
-  int y;
-  int pressure;
-  int tilt_x;
-  int tilt_y;
-  enum input_dev_e devtype;
-  long long timems;
-};
-]]
-end
-
 if target_version == 611 then
 ffi.cdef[[
 typedef struct {
@@ -464,7 +367,79 @@ typedef struct {
   uint32_t tools;
   long long timems;
 } iv_pointer;
-typedef iv_pointer iv_mtinfo;
+]]
+end
+
+if 505 <= target_version and target_version <= 519 then
+ffi.cdef[[
+struct iv_mtinfo_s {
+  int active;
+  int x;
+  int y;
+  int pressure;
+  enum input_dev_e devtype;
+  int rsv_2;
+  long long timems;
+};
+]]
+elseif 605 <= target_version and target_version <= 608 then
+ffi.cdef[[
+struct iv_mtinfo_s {
+  bool active;
+  int x;
+  int y;
+  int pressure;
+  enum input_dev_e devtype;
+  long long timems;
+};
+]]
+elseif target_version == 610 then
+ffi.cdef[[
+struct iv_mtinfo_s {
+  bool active;
+  int x;
+  int y;
+  int pressure;
+  int tilt_x;
+  int tilt_y;
+  enum input_dev_e devtype;
+  long long timems;
+};
+]]
+end
+
+if 505 <= target_version and target_version <= 610 then
+ffi.cdef[[ typedef struct iv_mtinfo_s iv_mtinfo; ]]
+elseif target_version == 611 then
+ffi.cdef[[ typedef iv_pointer iv_mtinfo; ]]
+end
+
+if 505 <= target_version and target_version <= 517 then
+ffi.cdef[[
+typedef enum {
+  PANEL_DISABLED = 0,
+  PANEL_ENABLED = 1 << 1,
+  PANEL_EVENT_NO_HANDLING = 1 << 2,
+} PANEL_FLAGS;
+]]
+elseif target_version == 519 then
+ffi.cdef[[
+typedef enum {
+  PANEL_DISABLED = 0,
+  PANEL_ENABLED = 1 << 1,
+  PANEL_EVENT_NO_HANDLING = 1 << 2,
+  PANEL_NO_FB_OFFSET = 1 << 3,
+} PANEL_FLAGS;
+]]
+elseif 605 <= target_version and target_version <= 611 then
+ffi.cdef[[
+typedef enum {
+  PANEL_DISABLED = 0,
+  PANEL_ENABLED = 1 << 1,
+  PANEL_EVENT_NO_HANDLING = 1 << 2,
+  PANEL_NO_FB_OFFSET = 1 << 3,
+  PANEL_NO_SELF_UPDATE = 1 << 4,
+} PANEL_FLAGS;
 ]]
 end
 
@@ -506,9 +481,7 @@ void SetPanelType(int);
 
 if 505 <= target_version and target_version <= 508 then
 ffi.cdef[[ int SetSubtaskInfo(int, int, char *, char *); ]]
-end
-
-if 509 <= target_version and target_version <= 611 then
+elseif 509 <= target_version and target_version <= 611 then
 ffi.cdef[[ int SetSubtaskInfo(int, int, const char *, const char *); ]]
 end
 
