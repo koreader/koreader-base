@@ -15,13 +15,13 @@ local zst = ffi.loadlib("zstd", "1")
 local zstd = {}
 
 -- c.f., https://github.com/facebook/zstd/tree/dev/examples
-function zstd.zstd_compress(ptr, size)
+function zstd.zstd_compress(ptr, size, level)
     --print("zstd_compress:", ptr, size)
     local n = zst.ZSTD_compressBound(size)
     local cbuff = C.calloc(n, 1)
     assert(cbuff ~= nil, "Failed to allocate ZSTD compression buffer (" .. tonumber(n) .. " bytes)")
     -- NOTE: We should be quite all right with the default (3), which will most likely trounce zlib's 9 in every respect...
-    local clen = zst.ZSTD_compress(cbuff, n, ptr, size, zst.ZSTD_CLEVEL_DEFAULT)
+    local clen = zst.ZSTD_compress(cbuff, n, ptr, size, level or zst.ZSTD_CLEVEL_DEFAULT)
     if zst.ZSTD_isError(clen) ~= 0 then
         C.free(cbuff)
         error(ffi.string(zst.ZSTD_getErrorName(clen)))
