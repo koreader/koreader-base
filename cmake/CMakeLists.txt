@@ -747,6 +747,8 @@ ffi_target(linux einkfb_h.lua einkfb_decl.c ${EXCLUDE_FROM_ALL})
 ffi_target(linux inotify_h.lua inotify_decl.c ${EXCLUDE_FROM_ALL})
 ffi_target(linux linux_fb_h.lua linux_fb_decl.c ${EXCLUDE_FROM_ALL})
 ffi_target(linux linux_input_h.lua linux_input_decl.c ${EXCLUDE_FROM_ALL} ARGS -r ffi/posix_h)
+ffi_target(linux netlink_h.lua netlink_cdecl.c ${EXCLUDE_FROM_ALL} ARGS -r ffi/posix_h)
+ffi_target(linux nl80211_h.lua nl80211_cdecl.c ${EXCLUDE_FROM_ALL})
 ffi_target(linux rtc_h.lua rtc_cdecl.c ${EXCLUDE_FROM_ALL})
 
 # lodepng
