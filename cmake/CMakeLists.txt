@@ -685,7 +685,7 @@ endif()
 set(VERSIONS 505 507 508 509 511 512 514 515 517 519 605 608 610 611)
 add_custom_target(
     inkview-ffi
-    COMMAND ./utils/gen_inkview_h.py ffi/inkview_h.lua ${CMAKE_CURRENT_BINARY_DIR} ${VERSIONS}
+    COMMAND ./utils/gen_merged_cdecl_h.py ffi/inkview_h.lua ffi-cdecl/inkview_h_.lua target_version ${CMAKE_CURRENT_BINARY_DIR} ${VERSIONS}
     COMMENT "Generating 'ffi/inkview_h.lua'"
     VERBATIM
     WORKING_DIRECTORY ${BASE_DIR}
@@ -696,7 +696,7 @@ endif()
 foreach(V IN LISTS VERSIONS)
     ffi_target(inkview ${CMAKE_CURRENT_BINARY_DIR}/inkview_h_${V}.lua inkview_decl.c ${EXCLUDE_FROM_ALL}
         DEPENDS freetype2
-        ARGS -D POCKETBOOK_VERSION=${V} -I ${INKVIEW_DIR}/${V} -d freetype2 -f -Wno-deprecated-declarations
+        ARGS -D POCKETBOOK_VERSION=${V} -I ${INKVIEW_DIR}/${V} -d freetype2 -f -Wno-deprecated-declarations -M
     )
 endforeach()
 
