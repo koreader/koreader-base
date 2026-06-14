@@ -781,6 +781,9 @@ ffi_target(tree-sitter tree_sitter_h.lua tree_sitter_cdecl.c DEPENDS tree-sitter
 # utf8proc
 ffi_target(utf8proc utf8proc_h.lua utf8proc_decl.c ARGS -d libutf8proc)
 
+# xxhash
+ffi_target(xxhash xxhash_h.lua xxhash_cdecl.c)
+
 # zlib
 ffi_target(zlib zlib_h.lua zlib_decl.c ARGS -d zlib)
 
