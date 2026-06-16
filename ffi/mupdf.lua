@@ -1087,7 +1087,7 @@ local function bmpmupdf_pixmap_to_bmp(bmp, pixmap)
     end
 end
 
-local function render_for_kopt(bmp, page, scale, bounds)
+local function render_for_kopt(bmp, page, scale, bounds, isolate_smask)
     local k2pdfopt = get_k2pdfopt()
 
     local bbox = ffi.new("fz_irect")
@@ -1104,7 +1104,7 @@ local function render_for_kopt(bmp, page, scale, bounds)
     local pix = W.mupdf_new_pixmap_with_bbox(page.ctx, colorspace, bbox, nil, 1)
     if pix == nil then merror(page.ctx, "could not allocate pixmap") end
 
-    run_page(page, pix, ctm, false)
+    run_page(page, pix, ctm, isolate_smask)
 
     k2pdfopt.bmp_init(bmp)
 
@@ -1116,7 +1116,7 @@ end
 function page_mt.__index:getPagePix(kopt_context)
     local bounds = ffi.new("fz_rect", kopt_context.bbox.x0, kopt_context.bbox.y0, kopt_context.bbox.x1, kopt_context.bbox.y1)
 
-    render_for_kopt(kopt_context.src, self, kopt_context.zoom, bounds)
+    render_for_kopt(kopt_context.src, self, kopt_context.zoom, bounds, kopt_context.isolate_smask == 1)
 
     kopt_context.page_width = kopt_context.src.width
     kopt_context.page_height = kopt_context.src.height
@@ -1125,7 +1125,7 @@ end
 function page_mt.__index:toBmp(bmp, dpi)
     local bounds = ffi.new("fz_rect")
     W.mupdf_fz_bound_page(self.ctx, self.page, bounds)
-    render_for_kopt(bmp, self, dpi/72, bounds)
+    render_for_kopt(bmp, self, dpi/72, bounds, false)
 end
 
 return mupdf
