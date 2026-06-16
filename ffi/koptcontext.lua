@@ -188,7 +188,6 @@ function KOPTContext_mt.__index:setDeviceDPI(dpi) self.dev_dpi = dpi end
 function KOPTContext_mt.__index:setStraighten(straighten) self.straighten = straighten end
 function KOPTContext_mt.__index:setJustification(justification) self.justification = justification end
 function KOPTContext_mt.__index:setWritingDirection(direction) self.writing_direction = direction end
-function KOPTContext_mt.__index:setIsolateSMask(isolate_smask) self.isolate_smask = isolate_smask end
 function KOPTContext_mt.__index:setMargin(margin) self.margin = margin end
 function KOPTContext_mt.__index:setZoom(zoom) self.zoom = zoom end
 function KOPTContext_mt.__index:setQuality(quality) self.quality = quality end
@@ -617,7 +616,6 @@ function KOPTContext.new()
     kc.read_max_width = 3000
     kc.read_max_height = 4000
     kc.writing_direction = 0
-    kc.isolate_smask = 0
     -- number values
     kc.zoom = 1.0
     kc.margin = 0.06
@@ -689,7 +687,6 @@ function KOPTContext.totable(kc)
     context.read_max_width = kc.read_max_width
     context.read_max_height = kc.read_max_height
     context.writing_direction = kc.writing_direction
-    context.isolate_smask = kc.isolate_smask
     -- number values
     context.zoom = kc.zoom
     context.margin = kc.margin
@@ -761,7 +758,6 @@ function KOPTContext.fromtable(context)
     kc.read_max_width = context.read_max_width
     kc.read_max_height = context.read_max_height
     kc.writing_direction = context.writing_direction
-    kc.isolate_smask = context.isolate_smask
     -- number values
     kc.zoom = context.zoom
     kc.margin = context.margin

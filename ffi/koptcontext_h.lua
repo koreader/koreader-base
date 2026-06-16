@@ -116,7 +116,6 @@ struct KOPTContext {
   int read_max_width;
   int read_max_height;
   int writing_direction;
-  int isolate_smask;
   double zoom;
   double margin;
   double quality;

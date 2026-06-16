@@ -1113,10 +1113,10 @@ local function render_for_kopt(bmp, page, scale, bounds, isolate_smask)
     M.fz_drop_pixmap(page.ctx, pix)
 end
 
-function page_mt.__index:getPagePix(kopt_context)
+function page_mt.__index:getPagePix(kopt_context, options)
     local bounds = ffi.new("fz_rect", kopt_context.bbox.x0, kopt_context.bbox.y0, kopt_context.bbox.x1, kopt_context.bbox.y1)
 
-    render_for_kopt(kopt_context.src, self, kopt_context.zoom, bounds, kopt_context.isolate_smask == 1)
+    render_for_kopt(kopt_context.src, self, kopt_context.zoom, bounds, options.isolate_smask == 1)
 
     kopt_context.page_width = kopt_context.src.width
     kopt_context.page_height = kopt_context.src.height
