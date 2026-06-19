@@ -14,7 +14,7 @@ typedef struct DrawContext {
 	double saturation;
 	int offset_x;
 	int offset_y;
-	bool background_cleanup;
+	int background_cleanup;
 } DrawContext;
 ]]
 
@@ -40,7 +40,7 @@ function DC_mt.__index:getSaturation() return self.saturation end
 local dctype = ffi.metatype("DrawContext", DC_mt)
 
 function DC.new(rotate, zoom, x, y, gamma, background_cleanup, saturation)
-	return dctype(rotate or 0, zoom or 1.0, gamma or -1.0, saturation or 1.0, x or 0, y or 0, background_cleanup or false)
+	return dctype(rotate or 0, zoom or 1.0, gamma or -1.0, saturation or 1.0, x or 0, y or 0, background_cleanup or 0)
 end
 
 return DC

@@ -14,8 +14,6 @@ local ffi = require("ffi")
 require("ffi/mupdf_h")
 require("ffi/posix_h") -- for malloc
 
-local logger = require("logger")
-
 local BlitBuffer = require("ffi/blitbuffer")
 
 local C = ffi.C
@@ -732,7 +730,7 @@ function page_mt.__index:draw_new(draw_context, width, height, offset_x, offset_
         self.ctx, colorspace, bbox, nil, self.doc.color and 1 or 0, ffi.cast("unsigned char*", bb.data))
     if pix == nil then merror(self.ctx, "cannot allocate pixmap") end
 
-    run_page(self, pix, ctm, draw_context.background_cleanup)
+    run_page(self, pix, ctm, draw_context.background_cleanup ~= 0)
 
     if draw_context.gamma >= 0.0 then
         M.fz_gamma_pixmap(self.ctx, pix, draw_context.gamma)
@@ -1118,7 +1116,6 @@ end
 function page_mt.__index:getPagePix(kopt_context, render_mode, background_cleanup)
     local bounds = ffi.new("fz_rect", kopt_context.bbox.x0, kopt_context.bbox.y0, kopt_context.bbox.x1, kopt_context.bbox.y1)
 
-    logger.dbg("background_cleanup: ", background_cleanup)
     render_for_kopt(kopt_context.src, self, kopt_context.zoom, bounds, background_cleanup ~= 0)
 
     kopt_context.page_width = kopt_context.src.width
