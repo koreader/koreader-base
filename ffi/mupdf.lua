@@ -1116,7 +1116,7 @@ end
 function page_mt.__index:getPagePix(kopt_context, render_mode, background_cleanup)
     local bounds = ffi.new("fz_rect", kopt_context.bbox.x0, kopt_context.bbox.y0, kopt_context.bbox.x1, kopt_context.bbox.y1)
 
-    render_for_kopt(kopt_context.src, self, kopt_context.zoom, bounds, background_cleanup ~= 0)
+    render_for_kopt(kopt_context.src, self, kopt_context.zoom, bounds, background_cleanup ~= nil and background_cleanup ~= 0)
 
     kopt_context.page_width = kopt_context.src.width
     kopt_context.page_height = kopt_context.src.height
