@@ -3792,6 +3792,10 @@ static int drawCurrentPage(lua_State *L) {
 	if (lua_isboolean(L, 6)) {
 		dithering = lua_toboolean(L, 6);
 	}
+	bool invert_colors = invert_images;
+	if (lua_isboolean(L, 7)) {
+		invert_colors = lua_toboolean(L, 7);
+	}
 
 	int w = bb->w;
 	int h = bb->h;
@@ -3806,6 +3810,7 @@ static int drawCurrentPage(lua_State *L) {
 		 * Blitbuffer.TYPE_BBRGB32, see CreDocument:drawCurrentView */
 		LVColorDrawBuf drawBuf(w, h, bb->data, 32);
 		drawBuf.setInvertImages(invert_images);
+		drawBuf.setInvertColors(invert_colors);
 		drawBuf.setSmoothScalingImages(smooth_scaling);
 		doc->text_view->Draw(drawBuf, false);
 		drawn_images_count = drawBuf.getDrawnImagesCount();
