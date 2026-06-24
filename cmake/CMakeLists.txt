@@ -747,7 +747,7 @@ ffi_target(linux einkfb_h.lua einkfb_decl.c ${EXCLUDE_FROM_ALL})
 ffi_target(linux inotify_h.lua inotify_decl.c ${EXCLUDE_FROM_ALL})
 ffi_target(linux linux_fb_h.lua linux_fb_decl.c ${EXCLUDE_FROM_ALL})
 ffi_target(linux linux_input_h.lua linux_input_decl.c ${EXCLUDE_FROM_ALL} ARGS -r ffi/posix_h)
-ffi_target(linux rtc_h.lua rtc_cdecl.c ${EXCLUDE_FROM_ALL})
+ffi_target(linux rtc_h.lua rtc_cdecl.c ${EXCLUDE_FROM_ALL} ARGS -r ffi/posix_h)
 
 # lodepng
 ffi_target(lodepng lodepng_h.lua lodepng_decl.c)
@@ -762,6 +762,40 @@ else()
     set(EXCLUDE_FROM_ALL EXCLUDE_FROM_ALL)
 endif()
 ffi_target(pocketbook mxcfb_pocketbook_h.lua mxcfb_pb_decl.c ${EXCLUDE_FROM_ALL})
+
+# posix
+set(VERSIONS
+    android_arm android_arm64 android_x86 android_x64
+    linux_arm linux_arm64 linux_x64
+    macos
+)
+add_custom_target(
+    posix-ffi
+    COMMAND ./utils/gen_merged_cdecl_h.py ffi/posix_h.lua ffi-cdecl/posix_h_.lua platform ffi-cdecl ${VERSIONS}
+    COMMENT "Generating 'ffi/posix_h.lua'"
+    VERBATIM
+    WORKING_DIRECTORY ${BASE_DIR}
+)
+if(CMAKE_SYSTEM_PROCESSOR STREQUAL "aarch64" OR CMAKE_SYSTEM_PROCESSOR STREQUAL "arm64")
+    set(LUAJIT_ARCH "arm64")
+elseif(CMAKE_SYSTEM_PROCESSOR STREQUAL "arm")
+    set(LUAJIT_ARCH "arm")
+elseif(CMAKE_SYSTEM_PROCESSOR STREQUAL "i686")
+    set(LUAJIT_ARCH "x86")
+elseif(CMAKE_SYSTEM_PROCESSOR STREQUAL "x86_64")
+    set(LUAJIT_ARCH "x64")
+else()
+    message(FATAL_ERROR "unsupported CMAKE_SYSTEM_PROCESSOR value: ${CMAKE_SYSTEM_PROCESSOR}")
+endif()
+if(ANDROID)
+    set(POSIX_PLATFORM android_${LUAJIT_ARCH})
+elseif(APPLE)
+    set(POSIX_PLATFORM macos)
+else()
+    set(POSIX_PLATFORM linux_${LUAJIT_ARCH})
+endif()
+set(POSIX_PLATFORM ffi-cdecl/posix_h_${POSIX_PLATFORM}.lua)
+ffi_target(posix ${POSIX_PLATFORM} posix_cdecl.c ARGS -M -W EXCLUDE_FROM_ALL)
 
 # remarkable
 if(REMARKABLE)
