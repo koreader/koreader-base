@@ -139,6 +139,8 @@ struct statvfs {
   unsigned long f_flag;
   unsigned long f_namemax;
 };
+// cdecl_const_IFT_ETHER
+static const unsigned IFT_ETHER = 6;
 // cdecl_const_AF_INET
 static const unsigned AF_INET = 2;
 // cdecl_const_AF_INET6

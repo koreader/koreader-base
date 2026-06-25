@@ -138,6 +138,8 @@ struct statvfs {
 static const unsigned AF_INET = 2;
 // cdecl_const_AF_INET6
 static const unsigned AF_INET6 = 10;
+// cdecl_const_AF_PACKET
+static const unsigned AF_PACKET = 17;
 // cdecl_const_AF_UNIX
 static const unsigned AF_UNIX = 1;
 // cdecl_const_NI_MAXHOST
@@ -178,6 +180,16 @@ struct in6_addr {
 struct sockaddr {
   sa_family_t sa_family;
   char sa_data[14];
+};
+// cdecl_struct_sockaddr_ll
+struct sockaddr_ll {
+  unsigned short sll_family;
+  uint16_t sll_protocol;
+  int sll_ifindex;
+  unsigned short sll_hatype;
+  unsigned char sll_pkttype;
+  unsigned char sll_halen;
+  unsigned char sll_addr[8];
 };
 // cdecl_struct_sockaddr_in
 struct sockaddr_in {

@@ -295,6 +295,10 @@ struct statvfs {
 ]]
 end
 
+if --[[ macos ]] platform == 0x80 then
+ffi.cdef[[ static const unsigned IFT_ETHER = 6; ]]
+end
+
 ffi.cdef[[ static const unsigned AF_INET = 2; ]]
 
 if --[[ android_arm|android_arm64|android_x64|android_x86|linux_arm|linux_arm64|linux_x64 ]] bit.band(platform, 0x7f) ~= 0 then
@@ -305,6 +309,10 @@ end
 
 if --[[ macos ]] platform == 0x80 then
 ffi.cdef[[ static const unsigned AF_LINK = 18; ]]
+end
+
+if --[[ android_arm|android_arm64|android_x64|android_x86|linux_arm|linux_arm64|linux_x64 ]] bit.band(platform, 0x7f) ~= 0 then
+ffi.cdef[[ static const unsigned AF_PACKET = 17; ]]
 end
 
 ffi.cdef[[
@@ -426,6 +434,32 @@ struct sockaddr_dl {
   unsigned char sdl_alen;
   unsigned char sdl_slen;
   char sdl_data[12];
+};
+]]
+end
+
+if --[[ android_arm|android_arm64|android_x64|android_x86 ]] bit.band(platform, 0xf) ~= 0 then
+ffi.cdef[[
+struct sockaddr_ll {
+  unsigned short sll_family;
+  uint16_t sll_protocol;
+  int sll_ifindex;
+  unsigned short sll_hatype;
+  unsigned char sll_pkttype;
+  unsigned char sll_halen;
+  unsigned char sll_addr[8];
+};
+]]
+elseif --[[ linux_arm|linux_arm64|linux_x64 ]] bit.band(platform, 0x70) ~= 0 then
+ffi.cdef[[
+struct sockaddr_ll {
+  unsigned short sll_family;
+  unsigned short sll_protocol;
+  int sll_ifindex;
+  unsigned short sll_hatype;
+  unsigned char sll_pkttype;
+  unsigned char sll_halen;
+  unsigned char sll_addr[8];
 };
 ]]
 end
@@ -652,9 +686,7 @@ end
 
 if --[[ linux_arm|linux_arm64|linux_x64 ]] bit.band(platform, 0x70) ~= 0 then
 ffi.cdef[[
-static const unsigned SIOCGIFHWADDR = 35111;
 static const unsigned SIOCGIWESSID = 35611;
-static const unsigned SIOCGIWNAME = 35585;
 static const unsigned IW_ENCODE_INDEX = 255;
 static const unsigned IW_ESSID_MAX_SIZE = 32;
 struct iw_freq {
