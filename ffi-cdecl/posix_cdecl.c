@@ -43,11 +43,15 @@
 #include <net/if.h>
 #if defined(__APPLE__)
 # include <net/if_dl.h>
+# include <net/if_types.h>
 #endif
 #include <net/route.h>
 #include <netdb.h>
 #include <netinet/ip.h>
 #include <netinet/ip_icmp.h>
+#if defined(__linux__)
+# include <netpacket/packet.h>
+#endif
 #include <poll.h>
 #include <pthread.h>
 #if defined(__linux__)
@@ -285,10 +289,17 @@ cdecl_type(__fsfilcnt_t);
 
 cdecl_struct(statvfs);
 
+#if defined(__APPLE__)
+cdecl_const(IFT_ETHER);
+#endif
+
 cdecl_const(AF_INET);
 cdecl_const(AF_INET6);
 #if defined(__APPLE__)
 cdecl_const(AF_LINK);
+#endif
+#if defined(__linux__)
+cdecl_const(AF_PACKET);
 #endif
 cdecl_const(AF_UNIX);
 
@@ -339,6 +350,9 @@ cdecl_struct(sockaddr);
 #if defined(__APPLE__)
 cdecl_struct(sockaddr_dl);
 #endif
+#if defined(__linux__)
+cdecl_struct(sockaddr_ll);
+#endif
 cdecl_struct(sockaddr_in);
 cdecl_struct(sockaddr_in6);
 cdecl_struct(sockaddr_un);
@@ -357,9 +371,7 @@ cdecl_struct(ifreq);
 
 #if defined(__linux__) && !defined(__ANDROID__)
 
-cdecl_const(SIOCGIFHWADDR);
 cdecl_const(SIOCGIWESSID);
-cdecl_const(SIOCGIWNAME);
 
 cdecl_const(IW_ENCODE_INDEX);
 cdecl_const(IW_ESSID_MAX_SIZE);
