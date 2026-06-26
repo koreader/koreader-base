@@ -8,6 +8,8 @@ require("ffi/posix_h")
 -- Load the client/protocol library
 local libblight = ffi.loadlib("blight_protocol", "3", "blight_protocol")
 
+local contenttype = (blight.is_rmpp or blight.is_rmppm) and C.Color or C.Monochrome
+
 local framebuffer = {
     bus = nil,
     fd = -1,
@@ -109,7 +111,6 @@ local function blight_update(fb, x, y, w, h, waveform, update_mode)
     x, y, w, h = fb.bb:getBoundedRect(x, y, w, h)
     x, y, w, h = fb.bb:getPhysicalRect(x, y, w, h)
 
-    local contenttype = (blight.is_rmpp or blight.is_rmppm) and C.Color or C.Monochrome
     libblight.blight_surface_repaint(fb.fd, fb.surface_id, x, y, w, h, waveform, contenttype, update_mode)
 end
 
