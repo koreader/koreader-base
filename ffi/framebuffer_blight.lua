@@ -46,6 +46,7 @@ function framebuffer:init()
     local fd = libblight.blight_service_open(self.bus)
     assert(fd >= 0, "Failed to open Blight service socket")
     self.fd = fd
+    framebuffer.fd = self.fd
 
     -- Start background connection thread
     self.thread = libblight.blight_start_connection_thread(self.fd)
@@ -65,6 +66,7 @@ function framebuffer:init()
     -- Add surface
     self.surface_id = libblight.blight_add_surface(self.bus, self.buf)
     assert(self.surface_id > 0, "Failed to add Blight surface")
+    framebuffer.surface_id = self.surface_id
 
     -- Focus and Raise surface
     libblight.blight_focus(self.fd)

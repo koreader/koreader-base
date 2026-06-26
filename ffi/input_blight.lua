@@ -69,6 +69,8 @@ function input.closeAll()
     return true
 end
 
+local last_time_sec, last_time_usec = util.gettime()
+
 function input.waitForEvent(sec, usec)
     local active_devices = {}
     local active_paths = {}
@@ -82,11 +84,24 @@ function input.waitForEvent(sec, usec)
         return false, C.ETIME
     end
 
+    -- Check if we were suspended/resumed since the last waitForEvent call
+    local now_sec, now_usec = util.gettime()
+    if last_time_sec then
+        local elapsed = (now_sec - last_time_sec) + (now_usec - last_time_usec) / 1000000
+        if elapsed > 0.2 then
+            local framebuffer = require("ffi/framebuffer_blight")
+            if framebuffer.fd and framebuffer.fd >= 0 and framebuffer.surface_id > 0 then
+                libblight.blight_focus(framebuffer.fd)
+                libblight.blight_raise(framebuffer.fd, framebuffer.surface_id)
+            end
+        end
+    end
+    last_time_sec, last_time_usec = now_sec, now_usec
+
     local deadline_sec, deadline_usec
     if sec then
-        local start_sec, start_usec = util.gettime()
-        deadline_usec = start_usec + usec
-        deadline_sec = start_sec + sec + math.floor(deadline_usec / 1000000)
+        deadline_usec = now_usec + usec
+        deadline_sec = now_sec + sec + math.floor(deadline_usec / 1000000)
         deadline_usec = deadline_usec % 1000000
     end
 
@@ -118,13 +133,26 @@ function input.waitForEvent(sec, usec)
         end
 
         if deadline_sec then
-            local now_sec, now_usec = util.gettime()
+            now_sec, now_usec = util.gettime()
             if now_sec > deadline_sec or (now_sec == deadline_sec and now_usec >= deadline_usec) then
+                last_time_sec, last_time_usec = now_sec, now_usec
                 return false, C.ETIME
             end
         end
 
         C.usleep(2000)
+
+        -- Check if we were suspended/resumed during usleep
+        now_sec, now_usec = util.gettime()
+        local elapsed = (now_sec - last_time_sec) + (now_usec - last_time_usec) / 1000000
+        if elapsed > 0.2 then
+            local framebuffer = require("ffi/framebuffer_blight")
+            if framebuffer.fd and framebuffer.fd >= 0 and framebuffer.surface_id > 0 then
+                libblight.blight_focus(framebuffer.fd)
+                libblight.blight_raise(framebuffer.fd, framebuffer.surface_id)
+            end
+        end
+        last_time_sec, last_time_usec = now_sec, now_usec
     end
 end
 
