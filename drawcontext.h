@@ -17,6 +17,7 @@
 */
 #ifndef _DRAWCONTEXT_H
 #define _DRAWCONTEXT_H
+#include <stdbool.h>
 
 typedef struct DrawContext {
 	int rotate;
@@ -25,7 +26,7 @@ typedef struct DrawContext {
 	double saturation;
 	int offset_x;
 	int offset_y;
-    int isolate_smask;
+    bool background_cleanup;
 } DrawContext;
 
 #endif
