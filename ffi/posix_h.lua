@@ -15,6 +15,14 @@ if not platform then
     error("unsupported platform: " .. platform_str)
 end
 
+-- clock_gettime & friends require librt on old glibc (< 2.17) versions...
+if ffi.os == "Linux" then
+    -- Load it in the global namespace to make it easier on callers...
+    -- NOTE: There's no librt.so symlink, so, specify the SOVER, but not the full path,
+    --       in order to let the dynamic loader figure it out on its own (e.g.,  multilib).
+    pcall(ffi.load, "rt.so.1", true)
+end
+
 if --[[ android_arm|android_arm64|android_x64|android_x86|linux_arm|linux_arm64|linux_x64 ]] bit.band(platform, 0x7f) ~= 0 then
 ffi.cdef[[ static const unsigned EAGAIN = 11; ]]
 elseif --[[ macos ]] platform == 0x80 then
