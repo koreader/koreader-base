@@ -88,7 +88,7 @@ function input.waitForEvent(sec, usec)
     local now_sec, now_usec = util.gettime()
     if last_time_sec then
         local elapsed = (now_sec - last_time_sec) + (now_usec - last_time_usec) / 1000000
-        if elapsed > 0.2 then
+        if elapsed > 5 then
             local framebuffer = require("ffi/framebuffer_blight")
             if framebuffer.fd and framebuffer.fd >= 0 and framebuffer.surface_id > 0 then
                 libblight.blight_focus(framebuffer.fd)
@@ -145,7 +145,7 @@ function input.waitForEvent(sec, usec)
         -- Check if we were suspended/resumed during usleep
         now_sec, now_usec = util.gettime()
         local elapsed = (now_sec - last_time_sec) + (now_usec - last_time_usec) / 1000000
-        if elapsed > 0.2 then
+        if elapsed > 5 then
             local framebuffer = require("ffi/framebuffer_blight")
             if framebuffer.fd and framebuffer.fd >= 0 and framebuffer.surface_id > 0 then
                 libblight.blight_focus(framebuffer.fd)
