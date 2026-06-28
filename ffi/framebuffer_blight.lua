@@ -29,9 +29,6 @@ function framebuffer:init()
     elseif blight.is_rmppm then
         width = 954
         height = 1696
-    elseif blight.is_rmppure then
-        width = 1776
-        height = 2400
     end
 
     -- Connect to DBus
