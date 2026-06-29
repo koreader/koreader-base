@@ -238,9 +238,6 @@ set(crengine_BINARY_DIR ${crengine_CMAKE_BINARY_DIR}/build)
 # cpu_features
 declare_project(thirdparty/cpu_features EXCLUDE_FROM_ALL)
 
-# curl
-declare_project(thirdparty/curl DEPENDS libressl zlib EXCLUDE_FROM_ALL)
-
 # czmq
 if(NOT WIN32)
     set(EXCLUDE_FROM_ALL)
@@ -329,7 +326,7 @@ declare_project(thirdparty/leptonica DEPENDS libpng)
 
 # libarchive
 set(DEPENDS zlib zstd)
-if(ANDROID)
+if(NOT (APPLE OR EMULATE_READER))
     list(APPEND DEPENDS xz)
 endif()
 declare_project(thirdparty/libarchive DEPENDS ${DEPENDS})
@@ -483,14 +480,6 @@ declare_project(thirdparty/sdl3 ${EXCLUDE_FROM_ALL})
 # sqlite
 declare_project(thirdparty/sqlite)
 
-# tar
-if(NOT (ANDROID OR APPLE OR EMULATE_READER OR WIN32))
-    set(EXCLUDE_FROM_ALL)
-else()
-    set(EXCLUDE_FROM_ALL EXCLUDE_FROM_ALL)
-endif()
-declare_project(thirdparty/tar ${EXCLUDE_FROM_ALL})
-
 # tesseract
 set(DEPENDS leptonica)
 if(ANDROID)
@@ -521,14 +510,6 @@ declare_project(thirdparty/zlib)
 
 # zstd
 declare_project(thirdparty/zstd)
-
-# zsync2
-if(CERVANTES OR KINDLE OR KOBO OR POCKETBOOK OR REMARKABLE OR SONY_PRSTUX)
-    set(EXCLUDE_FROM_ALL)
-else()
-    set(EXCLUDE_FROM_ALL EXCLUDE_FROM_ALL)
-endif()
-declare_project(thirdparty/zsync2 DEPENDS curl libressl zlib ${EXCLUDE_FROM_ALL})
 
 # }}}
 
