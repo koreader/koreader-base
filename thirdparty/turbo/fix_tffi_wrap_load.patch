@@ -1,0 +1,17 @@
+diff --git a/turbo/util.lua b/turbo/util.lua
+index d9d5468..c4bee1a 100644
+--- a/turbo/util.lua
++++ b/turbo/util.lua
+@@ -342,6 +342,12 @@ end
+ -- @param name Custom library name or path
+ function util.load_libtffi(name)
+     local have_name = name and true or false
++    if not have_name then
++        local ok, lib = pcall(ffi.loadlib, "tffi_wrap")
++        if ok then
++            return lib
++        end
++    end
+     name = name or os.getenv("TURBO_LIBTFFI") or "libtffi_wrap"
+     local ok, lib = pcall(ffi.load, name)
+     if not ok then

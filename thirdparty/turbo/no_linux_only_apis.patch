@@ -1,0 +1,42 @@
+diff --git a/turbo.lua b/turbo.lua
+index 1a39557..0d2dc8d 100644
+--- a/turbo.lua
++++ b/turbo.lua
+@@ -110,13 +110,6 @@ turbo.coctx =           require "turbo.coctx"
+ turbo.socket =          require "turbo.socket_ffi"
+ turbo.sockutil =        require "turbo.sockutil"
+ turbo.hash =            require "turbo.hash"
+-if turbo.platform.__LINUX__ then
+-    turbo.inotify =         require "turbo.inotify"
+-    turbo.fs =              require "turbo.fs"
+-    turbo.signal =          require "turbo.signal"
+-    turbo.syscall =         require "turbo.syscall"
+-    turbo.thread =          require "turbo.thread"
+-end
+ turbo.structs =         {}
+ turbo.structs.deque =   require "turbo.structs.deque"
+ turbo.structs.buffer =  require "turbo.structs.buffer"
+diff --git a/turbo/ioloop.lua b/turbo/ioloop.lua
+index 5956f07..c4a2fa4 100644
+--- a/turbo/ioloop.lua
++++ b/turbo/ioloop.lua
+@@ -23,7 +23,6 @@
+ 
+ local log = require "turbo.log"
+ local util = require "turbo.util"
+-local signal = require "turbo.signal"
+ local socket = require "turbo.socket_ffi"
+ local coctx = require "turbo.coctx"
+ local platform = require "turbo.platform"
+diff --git a/turbo/iostream.lua b/turbo/iostream.lua
+index c587180..78abf33 100644
+--- a/turbo/iostream.lua
++++ b/turbo/iostream.lua
+@@ -29,7 +29,6 @@ local buffer =      require "turbo.structs.buffer"
+ local socket =      require "turbo.socket_ffi"
+ local sockutils =   require "turbo.sockutil"
+ local util =        require "turbo.util"
+-local signal =      require "turbo.signal"
+ -- __Global value__ _G.TURBO_SSL allows the user to enable the SSL module.
+ local crypto =      require "turbo.crypto"
+ local platform =    require "turbo.platform"

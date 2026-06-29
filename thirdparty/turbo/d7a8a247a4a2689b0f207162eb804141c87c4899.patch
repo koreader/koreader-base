@@ -1,15 +1,5 @@
-From d7a8a247a4a2689b0f207162eb804141c87c4899 Mon Sep 17 00:00:00 2001
-From: John Abrahamsen <jhnabrhmsn@gmail.com>
-Date: Thu, 15 Jun 2023 21:58:50 +0200
-Subject: [PATCH] Fix bug, where memory would/could be free'd while being used
- in  HTTP parser.
-
----
- turbo/httputil.lua | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
-
 diff --git a/turbo/httputil.lua b/turbo/httputil.lua
-index 4f86508c..cf7f326c 100644
+index 4f86508..cf7f326 100644
 --- a/turbo/httputil.lua
 +++ b/turbo/httputil.lua
 @@ -136,8 +136,8 @@ function httputil.HTTPParser:parse_url(url)

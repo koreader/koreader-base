@@ -1,0 +1,12 @@
+diff --git a/turbo.lua b/turbo.lua
+index 543cce4..c8d32d5 100644
+--- a/turbo.lua
++++ b/turbo.lua
+@@ -107,7 +107,6 @@ turbo.iostream =        require "turbo.iostream"
+ turbo.iosimple =		require "turbo.iosimple"
+ turbo.crypto =          require "turbo.crypto"
+ turbo.async =           require "turbo.async"
+-turbo.web =             require "turbo.web"
+ turbo.util =            require "turbo.util"
+ turbo.coctx =           require "turbo.coctx"
+ turbo.websocket =       require "turbo.websocket"
