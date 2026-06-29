@@ -1,0 +1,152 @@
+diff --git a/turbo/cdef.lua b/turbo/cdef.lua
+index 62895de..15de5e6 100644
+--- a/turbo/cdef.lua
++++ b/turbo/cdef.lua
+@@ -17,9 +17,11 @@
+ local ffi = require "ffi"
+ local platform = require "turbo.platform"
+ 
+-local S = pcall(require, "syscall")
++local P = pcall(require, "ffi/posix_h")
++local S = P or pcall(require, "syscall")
+ 
+ --- ******* stdlib UNIX *******
++if not P then
+ ffi.cdef [[
+     typedef int pid_t;
+ 
+@@ -43,6 +45,7 @@ ffi.cdef [[
+     int fcntl(int fd, int cmd, int opt);
+     unsigned int sleep(unsigned int seconds);
+ ]]
++end
+ if platform.__WINDOWS__ then
+     -- Windows version of UNIX strncasecmp.
+     ffi.cdef[[
+@@ -94,6 +97,7 @@ if not S then
+     ]]
+ end
+ 
++if not P then
+ ffi.cdef [[
+     typedef int socklen_t;
+ 
+@@ -182,6 +186,9 @@ end
+         const char *gai_strerror(int ecode);
+         int __res_init(void);
+     ]]
++else
++    ffi.cdef[[ int __res_init(void); ]]
++end
+ 
+ 
+     --- ******* Signals *******
+@@ -220,6 +227,7 @@ end
+            };
+         ]]
+     end
++    if not P then
+     ffi.cdef(string.format([[
+         typedef void(*sighandler_t)(int);
+         sighandler_t signal(int signum, sighandler_t handler);
+@@ -236,6 +244,7 @@ end
+         int sigprocmask(int how, const sigset_t *set, sigset_t *oldset);
+         int signalfd(int fd, const sigset_t *mask, int flags);
+     ]], (1024 / (8 *ffi.sizeof("unsigned long")))))
++    end
+ 
+ 
+     --- ******* Time *******
+@@ -253,6 +262,7 @@ end
+             };
+         ]]
+     end
++    if not P then
+     ffi.cdef([[
+         typedef long suseconds_t;
+         typedef long time_t;
+@@ -286,6 +296,7 @@ end
+         struct tm *gmtime(const time_t *timer);
+         int gettimeofday(struct timeval *tv, timezone_ptr_t tz);
+     ]])
++    end
+ 
+ if platform.__UNIX__ then
+ 
+@@ -299,6 +310,7 @@ if platform.__UNIX__ then
+             };
+         ]]
+     end
++    if not P then
+     ffi.cdef[[
+         typedef unsigned int clockid_t;
+         enum clock_ids{
+@@ -308,6 +320,7 @@ if platform.__UNIX__ then
+ 
+         int clock_gettime(clockid_t clk_id, struct timespec *tp);
+     ]]
++    end
+ end
+ 
+ 
+@@ -338,6 +351,7 @@ if platform.__LINUX__ then
+             ]]
+         end
+     end
++    if not P then
+     ffi.cdef[[
+         typedef struct epoll_event epoll_event;
+ 
+@@ -353,6 +367,7 @@ if platform.__LINUX__ then
+             int maxevents,
+             int timeout);
+     ]]
++    end
+ 
+ 
+     --- ******* Inotify *******
+@@ -367,6 +382,7 @@ if platform.__LINUX__ then
+             };
+         ]]
+     end
++    if not P then
+     ffi.cdef [[
+         int inotify_init(void);
+         int inotify_add_watch(int fd, const char *name, unsigned int mask);
+@@ -393,6 +409,7 @@ if platform.__LINUX__ then
+         int close(int fd);
+         int fstat(int fd, struct stat *buf);
+     ]]
++    end
+ 
+     -- stat structure is architecture dependent in Linux
+     if not S then
+@@ -538,6 +555,7 @@ if platform.__LINUX__ then
+ 
+ 
+     -- ****** Glob ******
++    if not P then
+     ffi.cdef[[
+         typedef struct {
+             long unsigned int gl_pathc;
+@@ -557,6 +575,7 @@ if platform.__LINUX__ then
+             glob_t *pglob);
+         void globfree(glob_t *pglob);
+     ]]
++    end
+ end
+ 
+ if platform.__DARWIN__ then
+@@ -591,10 +610,12 @@ if platform.__DARWIN__ then
+     end
+ 
+     --- ******* File system *******
++    if not P then
+     ffi.cdef[[
+         int syscall(int number, ...);
+         int fstat(int fd, struct stat *buf);
+     ]]
++    end
+ end
+ 
+ if _G.TURBO_SSL then
