@@ -352,6 +352,8 @@ declare_project(thirdparty/libunibreak EXCLUDE_FROM_ALL)
 
 # libwebp
 declare_project(thirdparty/libwebp)
+declare_project(thirdparty/dav1d)
+declare_project(thirdparty/libavif DEPENDS dav1d)
 
 # libzmq
 if(NOT WIN32)
@@ -736,6 +738,9 @@ ffi_target(libressl crypto_h.lua crypto_decl.c ARGS -d libcrypto)
 
 # libwebp
 ffi_target(libwebp libwebp_h.lua libwebp_decl.c ARGS -d libwebp)
+
+# libavif
+ffi_target(libavif libavif_h.lua libavif_decl.c ARGS -d libavif)
 
 # linux
 if(LINUX AND EMULATE_READER)
