@@ -11,7 +11,7 @@ index 7965db6..fc1f607 100644
 +    if (*ps != SOCKET_INVALID) {
 +        // Enforce CLOEXEC
 +        int flags = fcntl(*ps, F_GETFD, 0);
-+        flags |= O_CLOEXEC;
++        flags |= FD_CLOEXEC;
 +        fcntl(*ps, F_SETFD, flags);
 +        return IO_DONE;
 +    } else {
