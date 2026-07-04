@@ -373,9 +373,9 @@ static int fakeTapInput(lua_State* L)
     return 0;
 }
 
-static inline void set_event_table(lua_State* L, const struct input_event* input)
+static inline void set_event_table(lua_State* L, const struct input_event* input, int fd)
 {
-    lua_createtable(L, 0, 4);  // ev = {} (pre-allocated for its four fields)
+    lua_createtable(L, 0, 5);  // ev = {} (pre-allocated for its five fields)
     lua_pushstring(L, "type");
     lua_pushinteger(L, input->type);  // uint16_t
     // NOTE: rawset does t[k] = v, with v @ -1, k @ -2 and t at the specified index, here, that's ev @ -3.
@@ -387,6 +387,9 @@ static inline void set_event_table(lua_State* L, const struct input_event* input
     lua_pushstring(L, "value");
     lua_pushinteger(L, input->value);  // int32_t
     lua_rawset(L, -3);                 // ev.value = input.value
+    lua_pushstring(L, "fd");
+    lua_pushinteger(L, fd);  // fd the event was read from, so the frontend can tell devices apart
+    lua_rawset(L, -3);       // ev.fd = fd
 
     lua_pushstring(L, "time");
     // NOTE: This is TimeVal-like, but it doesn't feature its metatable!
@@ -401,7 +404,7 @@ static inline void set_event_table(lua_State* L, const struct input_event* input
     lua_rawset(L, -3);                        // ev.time = time
 }
 
-static inline size_t drain_input_queue(lua_State* L, struct input_event* input_queue, size_t ev_count, size_t j)
+static inline size_t drain_input_queue(lua_State* L, struct input_event* input_queue, size_t ev_count, size_t j, int fd)
 {
     if (lua_gettop(L) == 1) {
         // Only a single element in the stack? (that would be our `true` bool)?
@@ -414,7 +417,7 @@ static inline size_t drain_input_queue(lua_State* L, struct input_event* input_q
 
     // Iterate over every input event in the queue buffer
     for (const struct input_event* event = input_queue; event < input_queue + ev_count; event++) {
-        set_event_table(L, event);  // Pushed a new ev table all filled up at the top of the stack (that's -1)
+        set_event_table(L, event, fd);  // Pushed a new ev table all filled up at the top of the stack (that's -1)
         // NOTE: Here, rawseti basically inserts -1 in -2 @ [j]. We ensure that j always points at the tail.
         lua_rawseti(L, -2, ++j);  // table.insert(ev_array, ev) [, j]
     }
@@ -515,7 +518,7 @@ static int waitForInput(lua_State* L)
 
                 if ((size_t) len == queue_available_size) {
                     // If we're out of buffer space in the queue, drain it *now*
-                    j = drain_input_queue(L, input_queue, ev_count, j);
+                    j = drain_input_queue(L, input_queue, ev_count, j, inputfds[i]);
                     // Rewind to the start of the queue to recycle the buffer
                     queue_pos            = input_queue;
                     queue_available_size = sizeof(input_queue);
@@ -527,7 +530,7 @@ static int waitForInput(lua_State* L)
                 }
             }
             // We've drained the kernel's input queue, now drain our buffer
-            j = drain_input_queue(L, input_queue, ev_count, j);
+            j = drain_input_queue(L, input_queue, ev_count, j, inputfds[i]);
             return 2;  // true, ev_array
         }
     }
