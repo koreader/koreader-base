@@ -31,7 +31,7 @@ index 488aedd..0785b93 100644
  {
  public:
 diff --git a/libdjvu/ddjvuapi.cpp b/libdjvu/ddjvuapi.cpp
-index f9ab454..a70ee57 100644
+index 535373e..a45de34 100644
 --- a/libdjvu/ddjvuapi.cpp
 +++ b/libdjvu/ddjvuapi.cpp
 @@ -358,12 +358,6 @@ ddjvu_context_create(const char *programname)
