@@ -2,7 +2,7 @@ list(APPEND PATCH_FILES
     no_cmake_rpath_shenanigans.patch
     no_12_or_16_bits_precision.patch
     no_simdcoverage_exe.patch
-    hwcap_neon.patch
+    no_other_image_formats.patch
 )
 
 list(APPEND CMAKE_ARGS
@@ -27,12 +27,12 @@ list(APPEND INSTALL_CMD COMMAND ${CMAKE_COMMAND} --install .)
 
 if(NOT MONOLIBTIC)
     append_shared_lib_install_commands(INSTALL_CMD jpeg VERSION 8)
-    append_shared_lib_install_commands(INSTALL_CMD turbojpeg VERSION 0.4.0)
+    append_shared_lib_install_commands(INSTALL_CMD turbojpeg VERSION 0.5.0)
 endif()
 
 external_project(
-    DOWNLOAD URL 997f868afac9f358a098617d16f36167
-    https://github.com/libjpeg-turbo/libjpeg-turbo/releases/download/3.1.4.1/libjpeg-turbo-3.1.4.1.tar.gz
+    DOWNLOAD URL a80f9f1c735b57d3cdd66daed1ba6bb4
+    https://github.com/libjpeg-turbo/libjpeg-turbo/releases/download/3.2.0/libjpeg-turbo-3.2.0.tar.gz
     PATCH_FILES ${PATCH_FILES}
     CMAKE_ARGS ${CMAKE_ARGS}
     BUILD_COMMAND ${BUILD_CMD}
