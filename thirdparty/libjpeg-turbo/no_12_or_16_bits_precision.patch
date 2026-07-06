@@ -1,23 +1,23 @@
 diff --git a/CMakeLists.txt b/CMakeLists.txt
-index 7d2b1ea..cd83156 100644
+index aa691b5..672d93a 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
-@@ -675,6 +675,7 @@ set(JPEG_SOURCES src/jcapimin.c
-   src/wrapper/jquant1-8.c src/wrapper/jquant1-12.c
-   src/wrapper/jquant2-8.c src/wrapper/jquant2-12.c
-   src/wrapper/jutils-8.c src/wrapper/jutils-12.c src/wrapper/jutils-16.c)
+@@ -687,6 +687,7 @@ set(JPEG_SOURCES src/jcapimin.c
+ if(WITH_PROFILE)
+   set(JPEG_SOURCES ${JPEG_SOURCES} src/tjutil.c)
+ endif()
 +list(FILTER JPEG_SOURCES EXCLUDE REGEX [[-1[26]\.c$]])
  
  if(WITH_ARITH_ENC OR WITH_ARITH_DEC)
    set(JPEG_SOURCES ${JPEG_SOURCES} src/jaricom.c)
-@@ -733,6 +734,7 @@ if(WITH_TURBOJPEG)
-     src/wrapper/rdppm-8.c src/wrapper/rdppm-12.c src/wrapper/rdppm-16.c
+@@ -777,6 +778,7 @@ if(WITH_TURBOJPEG)
      src/wrbmp.c
+     src/wrapper/wrpng-8.c src/wrapper/wrpng-12.c src/wrapper/wrpng-16.c
      src/wrapper/wrppm-8.c src/wrapper/wrppm-12.c src/wrapper/wrppm-16.c)
 +  list(FILTER TURBOJPEG_SOURCES EXCLUDE REGEX [[-1[26]\.c$]])
    if(ENABLE_SHARED)
      set(TJMAPFILE ${CMAKE_CURRENT_SOURCE_DIR}/src/turbojpeg-mapfile)
-     if(WITH_JAVA)
+     if(MSVC_LIKE)
 diff --git a/src/jcinit.c b/src/jcinit.c
 index 01fd409..bcef353 100644
 --- a/src/jcinit.c
@@ -118,10 +118,10 @@ index 01fd409..bcef353 100644
  
    jinit_marker_writer(cinfo);
 diff --git a/src/jdmaster.c b/src/jdmaster.c
-index 54a4c41..122fd1f 100644
+index ac6183b..cd67035 100644
 --- a/src/jdmaster.c
 +++ b/src/jdmaster.c
-@@ -574,9 +574,11 @@ master_selection(j_decompress_ptr cinfo)
+@@ -588,9 +588,11 @@ master_selection(j_decompress_ptr cinfo)
  #ifdef QUANT_1PASS_SUPPORTED
        if (cinfo->data_precision == 8)
          jinit_1pass_quantizer(cinfo);
@@ -133,7 +133,7 @@ index 54a4c41..122fd1f 100644
          ERREXIT1(cinfo, JERR_BAD_PRECISION, cinfo->data_precision);
        master->quantizer_1pass = cinfo->cquantize;
  #else
-@@ -589,9 +591,11 @@ master_selection(j_decompress_ptr cinfo)
+@@ -603,9 +605,11 @@ master_selection(j_decompress_ptr cinfo)
  #ifdef QUANT_2PASS_SUPPORTED
        if (cinfo->data_precision == 8)
          jinit_2pass_quantizer(cinfo);
@@ -145,7 +145,7 @@ index 54a4c41..122fd1f 100644
          ERREXIT1(cinfo, JERR_BAD_PRECISION, cinfo->data_precision);
        master->quantizer_2pass = cinfo->cquantize;
  #else
-@@ -603,14 +607,19 @@ master_selection(j_decompress_ptr cinfo)
+@@ -617,14 +621,19 @@ master_selection(j_decompress_ptr cinfo)
       */
    }
  
@@ -165,7 +165,7 @@ index 54a4c41..122fd1f 100644
        else
          ERREXIT1(cinfo, JERR_BAD_PRECISION, cinfo->data_precision);
  #else
-@@ -620,6 +629,7 @@ master_selection(j_decompress_ptr cinfo)
+@@ -634,6 +643,7 @@ master_selection(j_decompress_ptr cinfo)
        if (cinfo->data_precision <= 8) {
          jinit_color_deconverter(cinfo);
          jinit_upsampler(cinfo);
@@ -173,7 +173,7 @@ index 54a4c41..122fd1f 100644
        } else if (cinfo->data_precision <= 12) {
          j12init_color_deconverter(cinfo);
          j12init_upsampler(cinfo);
-@@ -629,11 +639,13 @@ master_selection(j_decompress_ptr cinfo)
+@@ -643,11 +653,13 @@ master_selection(j_decompress_ptr cinfo)
          j16init_upsampler(cinfo);
  #else
          ERREXIT1(cinfo, JERR_BAD_PRECISION, cinfo->data_precision);
@@ -187,7 +187,7 @@ index 54a4c41..122fd1f 100644
      else if (cinfo->data_precision <= 12)
        j12init_d_post_controller(cinfo, cinfo->enable_2pass_quant);
      else
-@@ -641,6 +653,7 @@ master_selection(j_decompress_ptr cinfo)
+@@ -655,6 +667,7 @@ master_selection(j_decompress_ptr cinfo)
        j16init_d_post_controller(cinfo, cinfo->enable_2pass_quant);
  #else
        ERREXIT1(cinfo, JERR_BAD_PRECISION, cinfo->data_precision);
@@ -195,7 +195,7 @@ index 54a4c41..122fd1f 100644
  #endif
    }
  
-@@ -651,10 +664,12 @@ master_selection(j_decompress_ptr cinfo)
+@@ -665,10 +678,12 @@ master_selection(j_decompress_ptr cinfo)
       */
      if (cinfo->data_precision <= 8)
        jinit_lossless_decompressor(cinfo);
@@ -208,7 +208,7 @@ index 54a4c41..122fd1f 100644
      /* Entropy decoding: either Huffman or arithmetic coding. */
      if (cinfo->arith_code) {
        ERREXIT(cinfo, JERR_ARITH_NOTIMPL);
-@@ -667,10 +682,12 @@ master_selection(j_decompress_ptr cinfo)
+@@ -681,10 +696,12 @@ master_selection(j_decompress_ptr cinfo)
                     cinfo->buffered_image;
      if (cinfo->data_precision <= 8)
        jinit_d_diff_controller(cinfo, use_c_buffer);
@@ -221,7 +221,7 @@ index 54a4c41..122fd1f 100644
  #else
      ERREXIT(cinfo, JERR_NOT_COMPILED);
  #endif
-@@ -680,8 +697,10 @@ master_selection(j_decompress_ptr cinfo)
+@@ -694,8 +711,10 @@ master_selection(j_decompress_ptr cinfo)
      /* Inverse DCT */
      if (cinfo->data_precision == 8)
        jinit_inverse_dct(cinfo);
@@ -232,7 +232,7 @@ index 54a4c41..122fd1f 100644
      else
        ERREXIT1(cinfo, JERR_BAD_PRECISION, cinfo->data_precision);
      /* Entropy decoding: either Huffman or arithmetic coding. */
-@@ -705,9 +724,11 @@ master_selection(j_decompress_ptr cinfo)
+@@ -719,9 +738,11 @@ master_selection(j_decompress_ptr cinfo)
      /* Initialize principal buffer controllers. */
      use_c_buffer = cinfo->inputctl->has_multiple_scans ||
                     cinfo->buffered_image;
@@ -244,7 +244,7 @@ index 54a4c41..122fd1f 100644
        jinit_d_coef_controller(cinfo, use_c_buffer);
  #else
      ERREXIT(cinfo, JERR_NOT_COMPILED);
-@@ -717,6 +738,7 @@ master_selection(j_decompress_ptr cinfo)
+@@ -731,6 +752,7 @@ master_selection(j_decompress_ptr cinfo)
    if (!cinfo->raw_data_out) {
      if (cinfo->data_precision <= 8)
        jinit_d_main_controller(cinfo, FALSE /* never need full buffer here */);
@@ -252,7 +252,7 @@ index 54a4c41..122fd1f 100644
      else if (cinfo->data_precision <= 12)
        j12init_d_main_controller(cinfo,
                                  FALSE /* never need full buffer here */);
-@@ -726,6 +748,7 @@ master_selection(j_decompress_ptr cinfo)
+@@ -740,6 +762,7 @@ master_selection(j_decompress_ptr cinfo)
                                  FALSE /* never need full buffer here */);
  #else
        ERREXIT1(cinfo, JERR_BAD_PRECISION, cinfo->data_precision);
@@ -280,10 +280,10 @@ index 719813f..f7869cf 100644
  
    /* We can now tell the memory manager to allocate virtual arrays. */
 diff --git a/src/turbojpeg.c b/src/turbojpeg.c
-index dc0e9d6..8b4cfbb 100644
+index a508561..855b6b2 100644
 --- a/src/turbojpeg.c
 +++ b/src/turbojpeg.c
-@@ -1220,12 +1220,14 @@ bailout:
+@@ -1255,12 +1255,14 @@ bailout:
  #define BITS_IN_JSAMPLE  8
  #include "turbojpeg-mp.c"
  #undef BITS_IN_JSAMPLE

@@ -1,0 +1,165 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 672d93a..3aa7814 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -725,6 +725,7 @@ if(WITH_JNA)
+   add_subdirectory(jna)
+ endif()
+ 
++if(FALSE)
+ if(WITH_TURBOJPEG OR WITH_TOOLS OR WITH_TESTS)
+   option(WITH_SYSTEM_SPNG
+     "Build ${CMAKE_PROJECT_NAME} against the system-supplied libspng implementation rather than the implementation in the ${CMAKE_PROJECT_NAME} source tree"
+@@ -755,6 +756,7 @@ if(WITH_TURBOJPEG OR WITH_TOOLS OR WITH_TESTS)
+     unset(ZLIB_LIBRARY)
+   endif()
+ endif()
++endif()
+ 
+ if(ENABLE_SHARED)
+   add_subdirectory(sharedlib)
+@@ -794,8 +796,6 @@ if(WITH_TURBOJPEG)
+     if(NOT WITH_SYSTEM_SPNG AND ZLIB_LIBRARY)
+       target_link_libraries(turbojpeg ${ZLIB_LIBRARY})
+     endif()
+-    set_property(TARGET turbojpeg PROPERTY COMPILE_FLAGS
+-      "-DBMP_SUPPORTED -DPNG_SUPPORTED -DSPNG_STATIC -DPPM_SUPPORTED")
+     if(WIN32)
+       set_target_properties(turbojpeg PROPERTIES DEFINE_SYMBOL DLLDEFINE)
+     endif()
+@@ -851,8 +851,6 @@ if(WITH_TURBOJPEG)
+     if(NOT WITH_SYSTEM_SPNG AND ZLIB_LIBRARY)
+       target_link_libraries(turbojpeg-static ${ZLIB_LIBRARY})
+     endif()
+-    set_property(TARGET turbojpeg-static PROPERTY COMPILE_FLAGS
+-      "-DBMP_SUPPORTED -DPNG_SUPPORTED -DSPNG_STATIC -DPPM_SUPPORTED")
+     if(NOT MSVC_LIKE)
+       set_target_properties(turbojpeg-static PROPERTIES OUTPUT_NAME turbojpeg)
+     endif()
+diff --git a/sharedlib/CMakeLists.txt b/sharedlib/CMakeLists.txt
+index 62e8ffc..e551052 100644
+--- a/sharedlib/CMakeLists.txt
++++ b/sharedlib/CMakeLists.txt
+@@ -30,6 +30,7 @@ if(WITH_SIMD AND (MSVC_IDE OR XCODE))
+   set_source_files_properties(${SIMD_OBJS} PROPERTIES GENERATED 1)
+ endif()
+ 
++if(FALSE)
+ if(WITH_TURBOJPEG OR WITH_TOOLS OR WITH_TESTS)
+   if(WITH_SYSTEM_SPNG)
+     unset(SPNG_SOURCES)
+@@ -43,6 +44,7 @@ if(WITH_TURBOJPEG OR WITH_TOOLS OR WITH_TESTS)
+     set(ZLIB_SOURCES $<TARGET_OBJECTS:zlib>)
+   endif()
+ endif()
++endif()
+ 
+ if(WIN32)
+   set(DEFFILE ../win/jpeg${SO_MAJOR_VERSION}.def)
+diff --git a/src/rdbmp.c b/src/rdbmp.c
+index 6205c19..4af8fb7 100644
+--- a/src/rdbmp.c
++++ b/src/rdbmp.c
+@@ -681,4 +681,12 @@ jinit_read_bmp(j_compress_ptr cinfo, boolean use_inversion_array)
+   return (cjpeg_source_ptr)source;
+ }
+ 
++#else
++
++GLOBAL(cjpeg_source_ptr)
++jinit_read_bmp(j_compress_ptr cinfo, boolean use_inversion_array)
++{
++  ERREXIT(cinfo, JERR_UNKNOWN_FORMAT);
++}
++
+ #endif /* BMP_SUPPORTED */
+diff --git a/src/rdpng.c b/src/rdpng.c
+index 08a0e63..aabe744 100644
+--- a/src/rdpng.c
++++ b/src/rdpng.c
+@@ -724,5 +724,13 @@ _jinit_read_png(j_compress_ptr cinfo)
+   return (cjpeg_source_ptr)source;
+ }
+ 
++#else
++
++GLOBAL(cjpeg_source_ptr)
++_jinit_read_png(j_compress_ptr cinfo)
++{
++  ERREXIT(cinfo, JERR_UNKNOWN_FORMAT);
++}
++
+ #endif /* defined(PNG_SUPPORTED) &&
+           (BITS_IN_JSAMPLE != 16 || defined(C_LOSSLESS_SUPPORTED)) */
+diff --git a/src/rdppm.c b/src/rdppm.c
+index 51f08c0..fdcac90 100644
+--- a/src/rdppm.c
++++ b/src/rdppm.c
+@@ -945,5 +945,13 @@ _jinit_read_ppm(j_compress_ptr cinfo)
+   return (cjpeg_source_ptr)source;
+ }
+ 
++#else
++
++GLOBAL(cjpeg_source_ptr)
++_jinit_read_ppm(j_compress_ptr cinfo)
++{
++  ERREXIT(cinfo, JERR_UNKNOWN_FORMAT);
++}
++
+ #endif /* defined(PPM_SUPPORTED) &&
+           (BITS_IN_JSAMPLE != 16 || defined(C_LOSSLESS_SUPPORTED)) */
+diff --git a/src/wrbmp.c b/src/wrbmp.c
+index ae6020a..ed16fcf 100644
+--- a/src/wrbmp.c
++++ b/src/wrbmp.c
+@@ -567,4 +567,13 @@ jinit_write_bmp(j_decompress_ptr cinfo, boolean is_os2,
+   return (djpeg_dest_ptr)dest;
+ }
+ 
++#else
++
++GLOBAL(djpeg_dest_ptr)
++jinit_write_bmp(j_decompress_ptr cinfo, boolean is_os2,
++                boolean use_inversion_array)
++{
++  ERREXIT(cinfo, JERR_UNSUPPORTED_FORMAT);
++}
++
+ #endif /* BMP_SUPPORTED */
+diff --git a/src/wrpng.c b/src/wrpng.c
+index 93dc80b..6e3c69a 100644
+--- a/src/wrpng.c
++++ b/src/wrpng.c
+@@ -542,5 +542,13 @@ _jinit_write_png(j_decompress_ptr cinfo)
+   return (djpeg_dest_ptr)dest;
+ }
+ 
++#else
++
++GLOBAL(djpeg_dest_ptr)
++_jinit_write_png(j_decompress_ptr cinfo)
++{
++  ERREXIT(cinfo, JERR_UNSUPPORTED_FORMAT);
++}
++
+ #endif /* defined(PNG_SUPPORTED) &&
+           (BITS_IN_JSAMPLE != 16 || defined(D_LOSSLESS_SUPPORTED)) */
+diff --git a/src/wrppm.c b/src/wrppm.c
+index dce648b..9017a44 100644
+--- a/src/wrppm.c
++++ b/src/wrppm.c
+@@ -389,5 +389,13 @@ _jinit_write_ppm(j_decompress_ptr cinfo)
+   return (djpeg_dest_ptr)dest;
+ }
+ 
++#else
++
++GLOBAL(djpeg_dest_ptr)
++_jinit_write_ppm(j_decompress_ptr cinfo)
++{
++  ERREXIT(cinfo, JERR_UNSUPPORTED_FORMAT);
++}
++
+ #endif /* defined(PPM_SUPPORTED) &&
+           (BITS_IN_JSAMPLE != 16 || defined(D_LOSSLESS_SUPPORTED)) */

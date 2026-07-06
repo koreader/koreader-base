@@ -16,7 +16,13 @@ require("ffi/turbojpeg_h")
 -- The turbojpeg library symbols are versioned, so it should always be
 -- backward compatible: the major & patch numbers are always 0, and when
 -- a new API version is made available, the minor number is incremented.
-local turbojpeg = ffi.loadlib("turbojpeg", "0.4.0", "turbojpeg", "0.3.0", "turbojpeg")
+local turbojpeg = ffi.loadlib("turbojpeg", "0.5.0", "turbojpeg", "0.4.0", "turbojpeg", "0.3.0", "turbojpeg")
+
+-- Starting with 3.2.0, `tj3Init(…)` is a macro for `tj3InitVersion(…, TURBOJPEG_VERSION_NUMBER)`
+-- (to automatically disable API-incompatible features when code was compiled for an older version).
+local tj3Init = pcall(function() return turbojpeg.tj3Init ~= nil end) and turbojpeg.tj3Init or function(t)
+    return turbojpeg.tj3InitVersion(t, turbojpeg.TURBOJPEG_VERSION_NUMBER)
+end
 
 local Jpeg = {}
 
@@ -30,7 +36,7 @@ function Jpeg.openDocument(filename, color)
 end
 
 function Jpeg.openDocumentFromMem(data, color, size)
-    local handle = turbojpeg.tj3Init(turbojpeg.TJINIT_DECOMPRESS)
+    local handle = tj3Init(turbojpeg.TJINIT_DECOMPRESS)
     assert(handle, "no TurboJPEG API decompressor handle")
     -- Gotta go fast!
     turbojpeg.tj3Set(handle, turbojpeg.TJPARAM_FASTUPSAMPLE, 1)
@@ -72,7 +78,7 @@ function Jpeg.openDocumentFromMem(data, color, size)
 end
 
 function Jpeg.encodeToFile(filename, source_ptr, w, stride, h, quality, color_type, subsample)
-    local handle = turbojpeg.tj3Init(turbojpeg.TJINIT_COMPRESS)
+    local handle = tj3Init(turbojpeg.TJINIT_COMPRESS)
     assert(handle, "no TurboJPEG API compressor handle")
 
     turbojpeg.tj3Set(handle, turbojpeg.TJPARAM_SUBSAMP, subsample or turbojpeg.TJSAMP_420)
@@ -116,7 +122,7 @@ function Jpeg.convertToGray(source_ptr, stride, h)
 end
 
 function Jpeg.writeBMP(filename, source_ptr, w, stride, h, grayscale)
-    local handle = turbojpeg.tj3Init(turbojpeg.TJINIT_COMPRESS)
+    local handle = tj3Init(turbojpeg.TJINIT_COMPRESS)
     assert(handle, "no TurboJPEG API compressor handle")
 
     local pixel_format
