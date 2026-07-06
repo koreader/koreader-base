@@ -1,5 +1,5 @@
 diff --git a/CMakeLists.txt b/CMakeLists.txt
-index 27ae1fae7..8b3231a76 100644
+index 6b5fd5740..02fbe6453 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
 @@ -1952,7 +1952,7 @@ elseif(UNIX AND NOT APPLE AND NOT RISCOS AND NOT HAIKU)
@@ -21,7 +21,7 @@ index 27ae1fae7..8b3231a76 100644
          if(IBUS_FOUND AND HAVE_SYS_INOTIFY_H)
            set(HAVE_IBUS_IBUS_H TRUE)
 diff --git a/cmake/sdlchecks.cmake b/cmake/sdlchecks.cmake
-index bb8a97d65..547953b06 100644
+index 8c837c49a..c55ed0113 100644
 --- a/cmake/sdlchecks.cmake
 +++ b/cmake/sdlchecks.cmake
 @@ -288,6 +288,10 @@ macro(CheckX11)
@@ -53,7 +53,7 @@ index bb8a97d65..547953b06 100644
          if(PC_LIBDECOR_FOUND)
  
            # Libdecor doesn't provide internal version defines, so generate them here.
-@@ -859,7 +863,7 @@ endmacro()
+@@ -861,7 +865,7 @@ endmacro()
  macro(CheckEGL)
    if(SDL_OPENGL OR SDL_OPENGLES)
      cmake_push_check_state()
@@ -62,7 +62,7 @@ index bb8a97d65..547953b06 100644
      list(APPEND CMAKE_REQUIRED_INCLUDES ${OPENGL_EGL_INCLUDE_DIRS})
      list(APPEND CMAKE_REQUIRED_INCLUDES "${SDL3_SOURCE_DIR}/src/video/khronos")
      check_c_source_compiles("
-@@ -1410,6 +1414,9 @@ macro(CheckLibUDev)
+@@ -1412,6 +1416,9 @@ macro(CheckLibUDev)
          set(HAVE_LIBUDEV TRUE)
        endif()
      endif()
