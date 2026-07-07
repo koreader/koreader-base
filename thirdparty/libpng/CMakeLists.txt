@@ -9,9 +9,8 @@ list(APPEND CMAKE_ARGS
     -DPNG_TESTS=FALSE
     -DPNG_TOOLS=FALSE
 )
-# Rely on `-mfpu=neon` ifdefs for enabling NEON on 32bits ARM.
-if(CMAKE_SYSTEM_PROCESSOR STREQUAL "arm")
-    list(APPEND CMAKE_ARGS -DPNG_ARM_NEON=on)
+if(CMAKE_SYSTEM_PROCESSOR MATCHES "^(arm|aarch)")
+    list(APPEND CMAKE_ARGS -DPNG_ARM_NEON=$<IF:$<BOOL:${WANT_SIMD}>,on,off>)
 endif()
 
 list(APPEND BUILD_CMD COMMAND ninja)
