@@ -1,4 +1,7 @@
-padded_version = $(subst $(empty) $(empty),0,$(shell printf '.%2s' $(subst .,$(empty) $(empty),$1)))
+comma := ,
+space := $(empty) $(empty)
+
+padded_version = $(subst $(space),0,$(shell printf '.%2s' $(subst .,$(space),$1)))
 at_least_version = $(filter $(call padded_version,$2),$(firstword $(sort $(call padded_version,$1) $(call padded_version,$2))))
 
 USING_MAKE_4_4_OR_BETTER := $(call at_least_version,$(MAKE_VERSION),4.4)
@@ -59,7 +62,6 @@ KEEP_GOING := $(findstring k,$(firstword -$(MAKEFLAGS)))
 DRY_RUN := $(findstring n,$(firstword -$(MAKEFLAGS)))
 ifeq (0,$(MAKELEVEL))
   ifeq (,$(PARALLEL_JOBS))
-    space := $(empty) $(empty)
     PARALLEL_JOBS := $(or $(patsubst -j%,%,$(filter -j%,$(MFLAGS))))
   endif
   ifeq (,$(PARALLEL_LOAD))
@@ -1014,8 +1016,6 @@ endef
 # }}}
 
 # Meson toolchain file(s). {{{
-
-comma:=,
 
 define meson_toolchain
 
