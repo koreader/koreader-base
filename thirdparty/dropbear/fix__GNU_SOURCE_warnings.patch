@@ -13,7 +13,7 @@ index 589786e..dd79699 100644
  /* Define for large files, on AIX-style hosts. */
  #undef _LARGE_FILES
 diff --git a/src/dbutil.c b/src/dbutil.c
-index a70025e..81031c6 100644
+index 8626f20..4e4243c 100644
 --- a/src/dbutil.c
 +++ b/src/dbutil.c
 @@ -51,7 +51,9 @@
