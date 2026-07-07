@@ -7,25 +7,14 @@ endif()
 # We don't care about tests.
 list(APPEND PATCH_CMD COMMAND rm -rf tests)
 
-set(FILTERS lzma1 lzma2 delta)
-# if(CMAKE_SYSTEM_PROCESSOR STREQUAL "aarch64")
-#     list(APPEND FILTERS arm64)
-# elseif(CMAKE_SYSTEM_PROCESSOR STREQUAL "arm")
-#     list(APPEND FILTERS arm armthumb)
-# elseif(CMAKE_SYSTEM_PROCESSOR STREQUAL "i686" OR CMAKE_SYSTEM_PROCESSOR STREQUAL "x86_64")
-#     list(APPEND FILTERS x86)
-# endif()
-list(JOIN FILTERS $<SEMICOLON> FILTERS)
-
 list(APPEND CMAKE_ARGS
     -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE}
     -DBUILD_SHARED_LIBS=FALSE
     # Project options.
     -DXZ_DOC=FALSE
-    # We can't disable the encoder completely,
-    # or libarchive' setup will fail to enable
-    # LZMA support.
-    -DXZ_ENCODERS=${FILTERS}
+    # We can't disable encoder support completely, or
+    # libarchive' setup will fail to enable LZMA support.
+    -DXZ_ENCODERS=lzma1$<SEMICOLON>lzma2$<SEMICOLON>delta
     -DXZ_MICROLZMA_ENCODER=FALSE
     # Reduce decoder support to the bare minimum
     # needed for use by android-luajit-launcher.
