@@ -31,10 +31,10 @@ index 899a8ab..410d53d 100644
  		dropbear_log(LOG_WARNING,
  				"Too-long password attempt for '%s' from %s",
 diff --git a/src/svr-runopts.c b/src/svr-runopts.c
-index b5fa462..465d467 100644
+index 74eb0c4..8990264 100644
 --- a/src/svr-runopts.c
 +++ b/src/svr-runopts.c
-@@ -108,6 +108,7 @@ static void printhelp(const char * progname) {
+@@ -110,6 +110,7 @@ static void printhelp(const char * progname) {
  					"-l <interface>\n"
  					"		interface to bind on\n"
  #endif
@@ -42,7 +42,7 @@ index b5fa462..465d467 100644
  #if INETD_MODE
  					"-i		Start for inetd\n"
  #endif
-@@ -184,6 +185,7 @@ void svr_getopts(int argc, char ** argv) {
+@@ -186,6 +187,7 @@ void svr_getopts(int argc, char ** argv) {
  	svr_opts.delay_hostkey = 0;
  	svr_opts.pidfile = expand_homedir_path(DROPBEAR_PIDFILE);
  	svr_opts.authorized_keys_dir = "~/.ssh";
@@ -50,7 +50,7 @@ index b5fa462..465d467 100644
  #if DROPBEAR_SVR_LOCALANYFWD
  	svr_opts.nolocaltcp = 0;
  #endif
-@@ -297,6 +299,9 @@ void svr_getopts(int argc, char ** argv) {
+@@ -299,6 +301,9 @@ void svr_getopts(int argc, char ** argv) {
  				case 'P':
  					next = &svr_opts.pidfile;
  					break;

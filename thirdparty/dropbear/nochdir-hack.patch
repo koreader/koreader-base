@@ -1,5 +1,5 @@
 diff --git a/src/svr-main.c b/src/svr-main.c
-index 6373e59..eb3a5bc 100644
+index 40969ff..19d05db 100644
 --- a/src/svr-main.c
 +++ b/src/svr-main.c
 @@ -185,7 +185,7 @@ static void main_noinetd(int argc, char ** argv, const char* multipath) {
