@@ -8,6 +8,10 @@ list(APPEND PATCH_FILES
     compat_with_newer_glib.patch
     # Ignore hidden filesystem entries.
     ignore_hidden.patch
+    # Cache the .syn offset table in a .syn.oft file (like the .idx
+    # .oft cache) instead of rescanning the whole .syn file on every
+    # launch. Upstream PR: https://github.com/Dushistov/sdcv/pull/129.
+    sdcv-syn-oft-cache.patch
 )
 
 string(APPEND GLIB2_INCLUDE_DIRS
