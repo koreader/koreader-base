@@ -805,6 +805,7 @@ else()
 endif()
 ffi_target(remarkable mxcfb_remarkable_h.lua mxcfb_remarkable_decl.c ${EXCLUDE_FROM_ALL})
 ffi_target(remarkable qtfb_h.lua qtfb_cdecl.c ${EXCLUDE_FROM_ALL})
+ffi_target(remarkable blight_h.lua blight_cdecl.c ${EXCLUDE_FROM_ALL})
 
 # sdl3
 ffi_target(sdl3 SDL3_h.lua SDL3_decl.c ARGS -d sdl3)
