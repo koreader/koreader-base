@@ -310,6 +310,14 @@ char *ptsname(int);
 char *basename(const char *);
 // cdecl_func_dirname
 char *dirname(const char *);
+// cdecl_const_F_SETFD
+static const unsigned F_SETFD = 2;
+// cdecl_const_F_GETFL
+static const unsigned F_GETFL = 3;
+// cdecl_const_F_SETFL
+static const unsigned F_SETFL = 4;
+// cdecl_const_FD_CLOEXEC
+static const unsigned FD_CLOEXEC = 1;
 // cdecl_func_fcntl
 int fcntl(int, int, ...);
 // cdecl_func_open
