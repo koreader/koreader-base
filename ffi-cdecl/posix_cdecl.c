@@ -462,6 +462,12 @@ cdecl_func(ptsname);
 cdecl_func(basename);
 cdecl_func(dirname);
 
+cdecl_const(F_SETFD);
+cdecl_const(F_GETFL);
+cdecl_const(F_SETFL);
+
+cdecl_const(FD_CLOEXEC);
+
 cdecl_func(fcntl);
 cdecl_func(open);
 

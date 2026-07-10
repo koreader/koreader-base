@@ -915,6 +915,10 @@ char *dirname(char *);
 end
 
 ffi.cdef[[
+static const unsigned F_SETFD = 2;
+static const unsigned F_GETFL = 3;
+static const unsigned F_SETFL = 4;
+static const unsigned FD_CLOEXEC = 1;
 int fcntl(int, int, ...);
 int open(const char *, int, ...);
 ]]
