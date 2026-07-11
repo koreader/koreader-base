@@ -281,6 +281,9 @@ bool mupdf_pdf_set_annot_quad_points(fz_context *, pdf_annot *, int, const fz_qu
 bool mupdf_pdf_set_annot_contents(fz_context *, pdf_annot *, const char *);
 bool mupdf_pdf_set_annot_color(fz_context *, pdf_annot *, int, const float[4]);
 bool mupdf_pdf_set_annot_opacity(fz_context *, pdf_annot *, float);
+bool mupdf_pdf_set_annot_ink_list(fz_context *, pdf_annot *, int, const int *, const fz_point *);
+bool mupdf_pdf_set_annot_border_width(fz_context *, pdf_annot *, float);
+bool mupdf_pdf_update_annot(fz_context *, pdf_annot *);
 pdf_annot *mupdf_pdf_first_annot(fz_context *, pdf_page *);
 pdf_annot *mupdf_pdf_next_annot(fz_context *, pdf_annot *);
 int mupdf_pdf_annot_quad_point_count(fz_context *, pdf_annot *);

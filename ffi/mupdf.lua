@@ -812,6 +812,60 @@ function page_mt.__index:addMarkupAnnotation(points, n, type, bb_color)
     end
 end
 
+-- Add an ink annotation (/Subtype /Ink) built from one or more freehand strokes.
+--   strokes : array of strokes; each stroke is an array of { x=, y= } points in
+--             native page coordinates (same convention as quad points above).
+--   bb_color: { r, g, b } components 0-255.
+--   width   : ink border (line) width in points.
+--   opacity : 0..1.
+function page_mt.__index:addInkAnnotation(strokes, bb_color, width, opacity)
+    local n = #strokes
+    if n == 0 then return end
+
+    -- counts[i] = number of points in stroke i; vertices = flattened fz_point[].
+    local counts = ffi.new("int[?]", n)
+    local total = 0
+    for i = 1, n do
+        counts[i-1] = #strokes[i]
+        total = total + #strokes[i]
+    end
+    if total == 0 then return end
+
+    local vertices = ffi.new("fz_point[?]", total)
+    local k = 0
+    for i = 1, n do
+        for j = 1, #strokes[i] do
+            vertices[k].x = strokes[i][j].x
+            vertices[k].y = strokes[i][j].y
+            k = k + 1
+        end
+    end
+
+    local annot = W.mupdf_pdf_create_annot(self.ctx, ffi.cast("pdf_page*", self.page), M.PDF_ANNOT_INK)
+    if annot == nil then merror(self.ctx, "could not create ink annotation") end
+
+    local ok = W.mupdf_pdf_set_annot_ink_list(self.ctx, annot, n, counts, vertices)
+    if not ok then merror(self.ctx, "could not set ink list") end
+
+    local color = ffi.new("float[3]")
+    color[0] = bb_color.r / 255
+    color[1] = bb_color.g / 255
+    color[2] = bb_color.b / 255
+    ok = W.mupdf_pdf_set_annot_color(self.ctx, annot, 3, color)
+    if not ok then merror(self.ctx, "could not set ink annotation color") end
+
+    ok = W.mupdf_pdf_set_annot_border_width(self.ctx, annot, width or 1.0)
+    if not ok then merror(self.ctx, "could not set ink annotation border width") end
+
+    ok = W.mupdf_pdf_set_annot_opacity(self.ctx, annot, opacity or 1.0)
+    if not ok then merror(self.ctx, "could not set ink annotation opacity") end
+
+    -- Synthesize the /Rect and /AP appearance stream, without which the
+    -- annotation is invisible in desktop PDF viewers (Preview, Acrobat, ...).
+    ok = W.mupdf_pdf_update_annot(self.ctx, annot)
+    if not ok then merror(self.ctx, "could not update ink annotation") end
+end
+
 function page_mt.__index:deleteMarkupAnnotation(annot)
     local ok = W.mupdf_pdf_delete_annot(self.ctx, ffi.cast("pdf_page*", self.page), annot)
     if not ok then merror(self.ctx, "could not delete markup annotation") end
