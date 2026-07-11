@@ -194,6 +194,15 @@ MUPDF_WRAP_BOOL(mupdf_pdf_set_annot_color,
 MUPDF_WRAP_BOOL(mupdf_pdf_set_annot_opacity,
     pdf_set_annot_opacity(ctx, annot, opacity),
     pdf_annot *annot, float opacity)
+MUPDF_WRAP_BOOL(mupdf_pdf_set_annot_ink_list,
+    pdf_set_annot_ink_list(ctx, annot, n, count, v),
+    pdf_annot *annot, int n, const int *count, const fz_point *v)
+MUPDF_WRAP_BOOL(mupdf_pdf_set_annot_border_width,
+    pdf_set_annot_border_width(ctx, annot, width),
+    pdf_annot *annot, float width)
+MUPDF_WRAP_BOOL(mupdf_pdf_update_annot,
+    pdf_update_annot(ctx, annot),
+    pdf_annot *annot)
 MUPDF_WRAP(mupdf_get_pixmap_from_image, fz_pixmap*, NULL,
     ret = fz_get_pixmap_from_image(ctx, image, subarea, trans, w, h),
     fz_image *image, const fz_irect *subarea, fz_matrix *trans, int *w, int *h)
