@@ -858,9 +858,9 @@ function page_mt.__index:addInkAnnotation(strokes, bb_color, width, opacity)
     if ok == nil then merror(self.ctx, "could not set ink annotation opacity") end
 end
 
-function page_mt.__index:deleteMarkupAnnotation(annot)
+function page_mt.__index:deleteAnnotation(annot)
     local ok = W.mupdf_pdf_delete_annot(self.ctx, ffi.cast("pdf_page*", self.page), annot)
-    if ok == nil then merror(self.ctx, "could not delete markup annotation") end
+    if ok == nil then merror(self.ctx, "could not delete annotation") end
 end
 
 function page_mt.__index:getMarkupAnnotation(points, n)
