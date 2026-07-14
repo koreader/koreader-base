@@ -203,6 +203,16 @@ fz_rect *mupdf_fz_bound_page(fz_context *ctx, fz_page *page, fz_rect *r) {
     return r;
 }
 
+static void smask_close_device(fz_context *ctx, fz_device *dev)
+{
+    fz_close_device(ctx, dev->passthrough);
+}
+
+static void smask_drop_device(fz_context *ctx, fz_device *dev)
+{
+    fz_drop_device(ctx, dev->passthrough);
+}
+
 static void smask_fill_image(fz_context* ctx, fz_device* dev, fz_image* img, fz_matrix ctm, float alpha, fz_color_params color_params)
 {
     if (img->mask) {
@@ -214,7 +224,9 @@ static void smask_fill_image(fz_context* ctx, fz_device* dev, fz_image* img, fz_
 fz_device *new_isolated_smask_device(fz_context* ctx, fz_device* dev)
 {
     fz_device *smask_dev = fz_new_derived_device(ctx, fz_device);
-    smask_dev->passthrough = dev;
+    smask_dev->passthrough = fz_keep_device(ctx, dev);
+    smask_dev->close_device = smask_close_device;
+    smask_dev->drop_device = smask_drop_device;
     smask_dev->fill_image = smask_fill_image;
     return smask_dev;
 }
