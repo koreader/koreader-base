@@ -86,7 +86,6 @@ cdecl_func(fz_drop_link)
 
 /* location */
 cdecl_func(mupdf_fz_page_number_from_location)
-cdecl_func(mupdf_fz_location_from_page_number)
 
 /* outline */
 cdecl_func(mupdf_load_outline)
