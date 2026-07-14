@@ -26,7 +26,7 @@ typedef struct fz_font fz_font;
 void fz_install_external_font_funcs(fz_context *);
 typedef struct fz_archive fz_archive;
 fz_archive *mupdf_open_directory(fz_context *, const char *);
-void *mupdf_drop_archive(fz_context *, fz_archive *);
+void fz_drop_archive(fz_context *, fz_archive *);
 typedef struct {
   int refs;
   unsigned char *data;
@@ -35,7 +35,7 @@ typedef struct {
   int shared;
 } fz_buffer;
 fz_buffer *mupdf_new_buffer_from_shared_data(fz_context *, const unsigned char *, size_t);
-void *mupdf_drop_buffer(fz_context *, fz_buffer *);
+void fz_drop_buffer(fz_context *, fz_buffer *);
 typedef struct {
   void *user;
   void *(*malloc)(void *, size_t);
@@ -121,7 +121,7 @@ void fz_drop_link(fz_context *, fz_link *);
 int mupdf_fz_page_number_from_location(fz_context *, fz_document *, fz_location *);
 fz_outline *mupdf_load_outline(fz_context *, fz_document *);
 void fz_drop_outline(fz_context *, fz_outline *);
-void *mupdf_drop_stream(fz_context *, fz_stream *);
+void fz_drop_stream(fz_context *, fz_stream *);
 fz_stream *mupdf_open_memory(fz_context *, const unsigned char *, size_t);
 typedef struct fz_stext_char fz_stext_char;
 struct fz_stext_char {

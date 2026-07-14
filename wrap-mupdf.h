@@ -84,12 +84,6 @@ MUPDF_WRAP(mupdf_open_memory, fz_stream*, NULL,
 MUPDF_WRAP(mupdf_open_directory, fz_archive*, NULL,
     ret = fz_open_directory(ctx, path),
     const char *path)
-MUPDF_WRAP(mupdf_drop_archive, void*, NULL,
-    { fz_drop_archive(ctx, archive); ret = (void*) -1; },
-    fz_archive *archive)
-MUPDF_WRAP(mupdf_drop_stream, void*, NULL,
-    { fz_drop_stream(ctx, stm); ret = (void*) -1; },
-    fz_stream *stm)
 MUPDF_WRAP(mupdf_count_pages, int, -1,
     ret = fz_count_pages(ctx, doc),
     fz_document *doc)
@@ -195,7 +189,4 @@ MUPDF_WRAP(mupdf_new_image_from_buffer, fz_image*, NULL,
 MUPDF_WRAP(mupdf_new_buffer_from_shared_data, fz_buffer*, NULL,
     ret = fz_new_buffer_from_shared_data(ctx, data, size),
     const unsigned char *data, size_t size)
-MUPDF_WRAP(mupdf_drop_buffer, void*, NULL,
-    { fz_drop_buffer(ctx, buf); ret = (void*) -1; },
-    fz_buffer *buf)
 

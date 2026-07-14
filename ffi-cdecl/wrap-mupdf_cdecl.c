@@ -22,12 +22,12 @@ cdecl_func(fz_install_external_font_funcs)
 /* archive */
 cdecl_type(fz_archive)
 cdecl_func(mupdf_open_directory)
-cdecl_func(mupdf_drop_archive)
+cdecl_func(fz_drop_archive)
 
 /* buffer */
 cdecl_type(fz_buffer)
 cdecl_func(mupdf_new_buffer_from_shared_data)
-cdecl_func(mupdf_drop_buffer)
+cdecl_func(fz_drop_buffer)
 
 /* context */
 cdecl_type(fz_alloc_context)
@@ -92,7 +92,7 @@ cdecl_func(mupdf_load_outline)
 cdecl_func(fz_drop_outline)
 
 /* stream */
-cdecl_func(mupdf_drop_stream)
+cdecl_func(fz_drop_stream)
 cdecl_func(mupdf_open_memory)
 
 /* structured text */

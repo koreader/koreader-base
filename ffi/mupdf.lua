@@ -146,10 +146,10 @@ function mupdf.openDocumentFromText(text, magic, html_resource_directory)
     local mupdf_doc = {
         doc = W.mupdf_open_document_with_stream_and_dir(ctx, magic, stream, archive),
     }
-    W.mupdf_drop_stream(ctx, stream)
+    M.fz_drop_stream(ctx, stream)
 
     if archive ~= nil then
-        W.mupdf_drop_archive(ctx, archive)
+        M.fz_drop_archive(ctx, archive)
     end
 
     if mupdf_doc.doc == nil then
@@ -891,7 +891,7 @@ function mupdf.renderImage(data, size, width, height)
     local buffer = W.mupdf_new_buffer_from_shared_data(ctx,
                      ffi.cast("unsigned char*", data), size)
     local image = W.mupdf_new_image_from_buffer(ctx, buffer)
-    W.mupdf_drop_buffer(ctx, buffer)
+    M.fz_drop_buffer(ctx, buffer)
     if image == nil then merror(ctx, "could not load image data") end
     local pixmap = W.mupdf_get_pixmap_from_image(ctx,
                     image, nil, nil, nil, nil)
