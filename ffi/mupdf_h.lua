@@ -119,7 +119,6 @@ fz_link *mupdf_load_links(fz_context *, fz_page *);
 fz_location *mupdf_fz_resolve_link(fz_context *, fz_document *, const char *, float *, float *, fz_location *);
 void fz_drop_link(fz_context *, fz_link *);
 int mupdf_fz_page_number_from_location(fz_context *, fz_document *, fz_location *);
-void *mupdf_fz_location_from_page_number(fz_context *, fz_document *, fz_location *, int);
 fz_outline *mupdf_load_outline(fz_context *, fz_document *);
 void fz_drop_outline(fz_context *, fz_outline *);
 void *mupdf_drop_stream(fz_context *, fz_stream *);
