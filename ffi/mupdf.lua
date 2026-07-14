@@ -413,7 +413,7 @@ function page_mt.__index:getUsedBBox()
     local dev = W.mupdf_new_bbox_device(self.ctx, result)
     if dev == nil then merror(self.ctx, "cannot allocate bbox_device") end
     local ok = W.mupdf_run_page(self.ctx, self.page, dev, M.fz_identity, nil)
-    M.fz_close_device(self.ctx, dev)
+               and W.mupdf_close_device(self.ctx, dev)
     M.fz_drop_device(self.ctx, dev)
     if not ok then merror(self.ctx, "cannot calculate bbox for page") end
 
@@ -691,8 +691,8 @@ local function run_page(page, pixmap, ctm, background_cleanup)
     end
 
     local ok = W.mupdf_run_page(page.ctx, page.page, dev, ctm, nil)
+               and W.mupdf_close_device(page.ctx, dev)
 
-    M.fz_close_device(page.ctx, dev)
     M.fz_drop_device(page.ctx, dev)
 
     if not ok then merror(page.ctx, "could not run page") end

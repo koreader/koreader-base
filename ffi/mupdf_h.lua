@@ -237,7 +237,7 @@ fz_device *mupdf_new_bbox_device(fz_context *, fz_rect *);
 fz_device *mupdf_new_isolated_smask_device(fz_context *, fz_device *);
 int mupdf_page_has_smask(fz_context *, fz_page *);
 bool mupdf_run_page(fz_context *, fz_page *, fz_device *, const fz_matrix *, fz_cookie *);
-void fz_close_device(fz_context *, fz_device *);
+bool mupdf_close_device(fz_context *, fz_device *);
 void fz_drop_device(fz_context *, fz_device *);
 enum pdf_annot_type {
   PDF_ANNOT_TEXT,

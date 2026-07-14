@@ -131,6 +131,9 @@ MUPDF_WRAP(mupdf_page_has_smask, int, 0,
 MUPDF_WRAP_BOOL(mupdf_run_page,
     fz_run_page(ctx, page, dev, *transform, cookie),
     fz_page *page, fz_device *dev, const fz_matrix *transform, fz_cookie *cookie)
+MUPDF_WRAP_BOOL(mupdf_close_device,
+    fz_close_device(ctx, dev),
+    fz_device *dev)
 MUPDF_WRAP_BOOL(mupdf_pdf_save_document,
     pdf_save_document(ctx, doc, filename, opts),
     pdf_document *doc, const char *filename, pdf_write_options *opts)
