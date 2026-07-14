@@ -357,7 +357,7 @@ function document_mt.__index:writeDocument(filename)
     opts[0].do_garbage = 0
     opts[0].do_linear = 0
     local ok = W.mupdf_pdf_save_document(self.ctx, ffi.cast("pdf_document*", self.doc), filename, opts)
-    if ok == nil then merror(self.ctx, "could not write document") end
+    if not ok then merror(self.ctx, "could not write document") end
 end
 
 
@@ -415,7 +415,7 @@ function page_mt.__index:getUsedBBox()
     local ok = W.mupdf_run_page(self.ctx, self.page, dev, M.fz_identity, nil)
     M.fz_close_device(self.ctx, dev)
     M.fz_drop_device(self.ctx, dev)
-    if ok == nil then merror(self.ctx, "cannot calculate bbox for page") end
+    if not ok then merror(self.ctx, "cannot calculate bbox for page") end
 
     return result.x0, result.y0, result.x1, result.y1
 end
@@ -695,7 +695,7 @@ local function run_page(page, pixmap, ctm, background_cleanup)
     M.fz_close_device(page.ctx, dev)
     M.fz_drop_device(page.ctx, dev)
 
-    if ok == nil then merror(page.ctx, "could not run page") end
+    if not ok then merror(page.ctx, "could not run page") end
 end
 --[[
 render page to blitbuffer
@@ -797,13 +797,13 @@ function page_mt.__index:addMarkupAnnotation(points, n, type, bb_color)
     if annot == nil then merror(self.ctx, "could not create annotation") end
 
     local ok = W.mupdf_pdf_set_annot_quad_points(self.ctx, annot, n, points)
-    if ok == nil then merror(self.ctx, "could not set annotation quadpoints") end
+    if not ok then merror(self.ctx, "could not set annotation quadpoints") end
 
     ok = W.mupdf_pdf_set_annot_color(self.ctx, annot, 3, color)
-    if ok == nil then merror(self.ctx, "could not set annotation color") end
+    if not ok then merror(self.ctx, "could not set annotation color") end
 
     ok = W.mupdf_pdf_set_annot_opacity(self.ctx, annot, alpha)
-    if ok == nil then merror(self.ctx, "could not set annotation opacity") end
+    if not ok then merror(self.ctx, "could not set annotation opacity") end
 
     -- Fetch back MuPDF's stored coordinates of all quadpoints, as they may have been modified/rounded
     -- (we need the exact ones that were saved if we want to be able to find them for deletion/update)
@@ -814,7 +814,7 @@ end
 
 function page_mt.__index:deleteMarkupAnnotation(annot)
     local ok = W.mupdf_pdf_delete_annot(self.ctx, ffi.cast("pdf_page*", self.page), annot)
-    if ok == nil then merror(self.ctx, "could not delete markup annotation") end
+    if not ok then merror(self.ctx, "could not delete markup annotation") end
 end
 
 function page_mt.__index:getMarkupAnnotation(points, n)
@@ -847,7 +847,7 @@ end
 
 function page_mt.__index:updateMarkupAnnotation(annot, contents)
     local ok = W.mupdf_pdf_set_annot_contents(self.ctx, annot, contents)
-    if ok == nil then merror(self.ctx, "could not update markup annot contents") end
+    if not ok then merror(self.ctx, "could not update markup annot contents") end
 end
 
 function page_mt.__index:getEmbeddedAnnotations()

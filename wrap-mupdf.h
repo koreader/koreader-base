@@ -20,6 +20,8 @@
 #define _PDF_H
 
 #include <math.h>
+#include <stdbool.h>
+
 #include <mupdf/fitz.h>
 #include <mupdf/pdf.h>
 
@@ -46,15 +48,19 @@ DLL_PUBLIC fz_rect *mupdf_fz_bound_page(fz_context *ctx, fz_page *page, fz_rect 
 #define MUPDF_WRAP(wrapper_name, ret_type, failure_value, call, ...) \
     DLL_PUBLIC ret_type wrapper_name(fz_context *ctx, ##__VA_ARGS__);
 
+// specialized wrapper for functions that don't return a value: return true on success.
+#define MUPDF_WRAP_BOOL(wrapper_name, call, ...) \
+    DLL_PUBLIC bool wrapper_name(fz_context *ctx, ##__VA_ARGS__);
+
 #else // _PDF_H
 // this will silence the wrappers
 #define MUPDF_WRAP(...)
 #endif
 
 #else // MUPDF_DO_WRAP
-#ifdef MUPDF_WRAP
+
 #undef MUPDF_WRAP
-#endif
+#undef MUPDF_WRAP_BOOL
 
 // this will create actual implementations of the wrappers
 // note that we must not return from within fz_try/fz_catch blocks,
@@ -66,6 +72,14 @@ DLL_PUBLIC fz_rect *mupdf_fz_bound_page(fz_context *ctx, fz_page *page, fz_rect 
         fz_try(ctx) { call; } \
         fz_catch(ctx) { ret = failure_value; } \
         return ret; \
+    }
+
+// specialized implementation for functions that don't return a value: return true on success.
+#define MUPDF_WRAP_BOOL(wrapper_name, call, ...) \
+    extern bool wrapper_name(fz_context *ctx, ##__VA_ARGS__) { \
+        fz_try(ctx) { call; } \
+        fz_catch(ctx) { return false; } \
+        return true; \
     }
 
 #endif
@@ -87,8 +101,8 @@ MUPDF_WRAP(mupdf_open_directory, fz_archive*, NULL,
 MUPDF_WRAP(mupdf_count_pages, int, -1,
     ret = fz_count_pages(ctx, doc),
     fz_document *doc)
-MUPDF_WRAP(mupdf_layout_document, void*, NULL,
-    { fz_layout_document(ctx, doc, w, h, em); ret = (void*) -1; },
+MUPDF_WRAP_BOOL(mupdf_layout_document,
+    fz_layout_document(ctx, doc, w, h, em),
     fz_document *doc, float w, float h, float em)
 MUPDF_WRAP(mupdf_load_outline, fz_outline*, NULL,
     ret = fz_load_outline(ctx, doc),
@@ -114,11 +128,11 @@ MUPDF_WRAP(mupdf_new_isolated_smask_device, fz_device*, NULL,
 MUPDF_WRAP(mupdf_page_has_smask, int, 0,
     ret = page_has_smask(ctx, page),
     fz_page *page)
-MUPDF_WRAP(mupdf_run_page, void*, NULL,
-    { fz_run_page(ctx, page, dev, *transform, cookie); ret = (void*) -1; },
+MUPDF_WRAP_BOOL(mupdf_run_page,
+    fz_run_page(ctx, page, dev, *transform, cookie),
     fz_page *page, fz_device *dev, const fz_matrix *transform, fz_cookie *cookie)
-MUPDF_WRAP(mupdf_pdf_save_document, void*, NULL,
-    { pdf_save_document(ctx, doc, filename, opts); ret = (void*) -1; },
+MUPDF_WRAP_BOOL(mupdf_pdf_save_document,
+    pdf_save_document(ctx, doc, filename, opts),
     pdf_document *doc, const char *filename, pdf_write_options *opts)
 MUPDF_WRAP(mupdf_new_pixmap_with_bbox, fz_pixmap*, NULL,
     ret = fz_new_pixmap_with_bbox(ctx, cs, *bbox, seps, alpha),
@@ -150,15 +164,15 @@ MUPDF_WRAP(mupdf_pdf_annot_contents, const char*, NULL,
 MUPDF_WRAP(mupdf_pdf_create_annot, pdf_annot*, NULL,
     ret = pdf_create_annot(ctx, page, type),
     pdf_page *page, enum pdf_annot_type type)
-MUPDF_WRAP(mupdf_pdf_delete_annot, void*, NULL,
-    { pdf_delete_annot(ctx, page, annot); ret = (void*) -1; },
+MUPDF_WRAP_BOOL(mupdf_pdf_delete_annot,
+    pdf_delete_annot(ctx, page, annot),
     pdf_page *page, pdf_annot *annot)
-MUPDF_WRAP(mupdf_pdf_set_annot_quad_points, void*, NULL,
-    { pdf_set_annot_quad_points(ctx, annot, n, qv); ret = (void*) -1; },
-     pdf_annot *annot, int n, const fz_quad *qv)
-MUPDF_WRAP(mupdf_pdf_set_annot_contents, void*, NULL,
-    { pdf_set_annot_contents(ctx, annot, text); ret = (void*) -1; },
-     pdf_annot *annot, const char *text)
+MUPDF_WRAP_BOOL(mupdf_pdf_set_annot_quad_points,
+    pdf_set_annot_quad_points(ctx, annot, n, qv),
+    pdf_annot *annot, int n, const fz_quad *qv)
+MUPDF_WRAP_BOOL(mupdf_pdf_set_annot_contents,
+    pdf_set_annot_contents(ctx, annot, text),
+    pdf_annot *annot, const char *text)
 MUPDF_WRAP(mupdf_pdf_first_annot, pdf_annot*, NULL,
      ret = pdf_first_annot(ctx, page),
      pdf_page *page)
@@ -168,14 +182,14 @@ MUPDF_WRAP(mupdf_pdf_next_annot, pdf_annot*, NULL,
 MUPDF_WRAP(mupdf_pdf_annot_quad_point_count, int, -1,
      ret = pdf_annot_quad_point_count(ctx, annot),
      pdf_annot *annot)
-MUPDF_WRAP(mupdf_pdf_annot_quad_point, void*, NULL,
-    { *qv = pdf_annot_quad_point(ctx, annot, i); ret = (void*) -1; },
-     pdf_annot *annot, int i, fz_quad *qv)
-MUPDF_WRAP(mupdf_pdf_set_annot_color, void*, NULL,
-    { pdf_set_annot_color(ctx, annot, n, color); ret = (void*) -1; },
+MUPDF_WRAP_BOOL(mupdf_pdf_annot_quad_point,
+    *qv = pdf_annot_quad_point(ctx, annot, i),
+    pdf_annot *annot, int i, fz_quad *qv)
+MUPDF_WRAP_BOOL(mupdf_pdf_set_annot_color,
+    pdf_set_annot_color(ctx, annot, n, color),
     pdf_annot *annot, int n, const float color[4])
-MUPDF_WRAP(mupdf_pdf_set_annot_opacity, void*, NULL,
-    { pdf_set_annot_opacity(ctx, annot, opacity); ret = (void*) -1; },
+MUPDF_WRAP_BOOL(mupdf_pdf_set_annot_opacity,
+    pdf_set_annot_opacity(ctx, annot, opacity),
     pdf_annot *annot, float opacity)
 MUPDF_WRAP(mupdf_get_pixmap_from_image, fz_pixmap*, NULL,
     ret = fz_get_pixmap_from_image(ctx, image, subarea, trans, w, h),
