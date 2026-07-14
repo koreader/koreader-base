@@ -213,8 +213,8 @@ static void smask_fill_image(fz_context* ctx, fz_device* dev, fz_image* img, fz_
 {
     if (img->mask) {
         isolated_smask_device* smask_dev = (isolated_smask_device*)dev;
-        float black[1] = { 0.f };
-        fz_fill_image_mask(ctx, smask_dev->default_device, img->mask, ctm, fz_device_gray(ctx), black, alpha, color_params);
+        float black = 0.f;
+        fz_fill_image_mask(ctx, smask_dev->default_device, img->mask, ctm, fz_device_gray(ctx), &black, alpha, color_params);
     }
 }
 
