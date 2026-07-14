@@ -103,7 +103,7 @@ extract_archive() { (
     mkdir "${sourcedir}.tmp" || return 1
     oldpwd="${PWD}"
     cd "${sourcedir}.tmp"
-    '@CMAKE_COMMAND@' -E tar xf "${archive}"
+    '@CMAKE_COMMAND@' -E tar xf "${archive}" || return 1
     case "${archive}" in
         # Luarocks source rock, no root dir.
         *.src.rock) root='' ;;
