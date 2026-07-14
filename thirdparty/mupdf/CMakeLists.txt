@@ -19,6 +19,8 @@ list(APPEND PATCH_FILES
     relink_on_xlibs_change.patch
     # Fix symbols visiblity.
     visibility.patch
+    # Backport addition of `passthrough` member to `fz_device` (from b20077eb2).
+    passthrough_device.patch
 )
 
 # Remove unnecessary vendored thirdparty libraries.

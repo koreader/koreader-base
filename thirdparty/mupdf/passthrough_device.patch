@@ -1,0 +1,14 @@
+diff --git a/include/mupdf/fitz/device.h b/include/mupdf/fitz/device.h
+index eb60b694f..e25ead872 100644
+--- a/include/mupdf/fitz/device.h
++++ b/include/mupdf/fitz/device.h
+@@ -339,6 +339,9 @@
+ 	int container_len;
+ 	int container_cap;
+ 	fz_device_container_stack *container;
++
++	/* For simplicity, every device has a passthrough entry, but not every device uses it. */
++	fz_device *passthrough;
+ };
+ 
+ /**
