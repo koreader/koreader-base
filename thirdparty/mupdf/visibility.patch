@@ -1,3 +1,15 @@
+diff --git a/include/mupdf/fitz/archive.h b/include/mupdf/fitz/archive.h
+index 29d3d16b8..090eec181 100644
+--- a/include/mupdf/fitz/archive.h
++++ b/include/mupdf/fitz/archive.h
+@@ -100,6 +100,7 @@ int fz_is_directory(fz_context *ctx, const char *path);
+ 	When the last reference is dropped, this closes and releases
+ 	any memory or filehandles associated with the archive.
+ */
++FZ_FUNCTION
+ void fz_drop_archive(fz_context *ctx, fz_archive *arch);
+ 
+ /**
 diff --git a/include/mupdf/fitz/buffer.h b/include/mupdf/fitz/buffer.h
 index 2a52aad3e..07cf95ac9 100644
 --- a/include/mupdf/fitz/buffer.h
