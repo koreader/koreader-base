@@ -173,6 +173,8 @@ skeleton: $(strip $(test_data_common))
 define test_data_base
 $(OUTPUT_DIR)/data/tessdata/eng.traineddata
 $(OUTPUT_DIR)/fonts/droid/DroidSansMono.ttf
+$(OUTPUT_DIR)/fonts/urw/NimbusRomNo9L-Med.cff
+$(OUTPUT_DIR)/fonts/urw/NimbusRomNo9L-Reg.cff
 $(OUTPUT_DIR)/spec/base
 endef
 
@@ -189,16 +191,18 @@ $(TESSDATA_FILE):
 	mkdir -p $(dir $(TESSDATA_FILE))
 	$(call wget_and_validate,$(TESSDATA_FILE),$(TESSDATA_FILE_URL),$(TESSDATA_FILE_SHA1))
 
-DROID_FONT = $(THIRDPARTY_DIR)/fonts/build/downloads/DroidSansMono.ttf
-DROID_FONT_URL = https://github.com/koreader/koreader-fonts/raw/master/droid/$(notdir $(DROID_FONT))
-DROID_FONT_SHA1 = 0b75601f8ef8e111babb6ed11de6573f7178ce44
+FONT_SHA1_droid/DroidSansMono.ttf   = 0b75601f8ef8e111babb6ed11de6573f7178ce44
+FONT_SHA1_urw/NimbusRomNo9L-Med.cff = 8c93500267bb1c6444012ba3b7ab807dc24255b4
+FONT_SHA1_urw/NimbusRomNo9L-Reg.cff = eac7ba4fa32b41eb0312ccd91f7723d98864eb55
 
-$(OUTPUT_DIR)/fonts/droid/DroidSansMono.ttf: $(DROID_FONT) | $(OUTPUT_DIR)/fonts/
-	$(SYMLINK) $(dir $(DROID_FONT)) $(OUTPUT_DIR)/fonts/droid
+FONT_BASE_URL = https://github.com/koreader/koreader-fonts/raw/046976988aa33639d60d6ffd25c7a0ff50b72ac0
 
-$(DROID_FONT):
-	mkdir -p $(dir $(DROID_FONT))
-	$(call wget_and_validate,$(DROID_FONT),$(DROID_FONT_URL),$(DROID_FONT_SHA1))
+$(OUTPUT_DIR)/fonts/%: $(THIRDPARTY_DIR)/fonts/build/downloads/% | $(OUTPUT_DIR)/fonts/
+	$(SYMLINK) $(patsubst %/,%,$(dir $<) $(dir $@))
+
+$(THIRDPARTY_DIR)/fonts/build/downloads/%:
+	mkdir -p $(dir $@)
+	$(call wget_and_validate,$@,$(FONT_BASE_URL)/$*,$(FONT_SHA1_$*))
 
 endif
 

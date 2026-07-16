@@ -248,4 +248,19 @@ describe("mupdf module", function()
         assert.True(original ~= saturated)
         doc:close()
     end)
+
+    it("should open document from text", function()
+        local doc = M.openDocumentFromText([[
+        <html>
+          <head>
+            <title>Testing</title>
+          </head>
+          <body>
+            <h1>Header</h1>
+            <p>Lorem ipsum.</p>
+          <hr>
+          </body>
+        </html>]], "html", "spec/base/unit/data")
+        doc:close()
+    end)
 end)
