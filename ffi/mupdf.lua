@@ -676,18 +676,18 @@ local function run_page(page, pixmap, ctm, background_cleanup)
     local dev = W.mupdf_new_draw_device(page.ctx, nil, pixmap)
     if dev == nil then merror(page.ctx, "cannot create draw device") end
 
-    if background_cleanup and W.mupdf_page_has_smask(page.ctx, page.page) ~= 0 then
-        local smask_dev = W.mupdf_new_isolated_smask_device(page.ctx, dev)
-        -- If `mupdf_new_isolated_smask_device` was successful,
+    if background_cleanup and W.mupdf_page_has_transparency_mask(page.ctx, page.page) ~= 0 then
+        local transparency_mask_dev = W.mupdf_new_transparency_mask_device(page.ctx, dev)
+        -- If `mupdf_new_transparency_mask_device` was successful,
         -- `fz_keep_device(dev)` has been called and `dev`'s
         -- reference count is now 2. And if an error occurred,
         -- the count is still 1 and we need to drop the device
         -- to free it.
         M.fz_drop_device(page.ctx, dev)
-        if smask_dev == nil then
-            merror(page.ctx, "cannot create isolated smask device")
+        if transparency_mask_dev == nil then
+            merror(page.ctx, "cannot create transparency mask device")
         end
-        dev = smask_dev
+        dev = transparency_mask_dev
     end
 
     local ok = W.mupdf_run_page(page.ctx, page.page, dev, ctm, nil)
