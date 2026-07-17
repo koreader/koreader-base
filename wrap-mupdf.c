@@ -244,11 +244,19 @@ int page_has_smask(fz_context* ctx, fz_page* p)
     if (!xobj) {
         return 0;
     }
+
+    static pdf_obj* const mask_keys[] = {
+        PDF_NAME(SMask),
+        PDF_NAME(Mask)
+    };
+    const int num_keys = sizeof(mask_keys) / sizeof(mask_keys[0]);
+
     const int n = pdf_dict_len(ctx, xobj);
     for (int i = 0; i < n; i++) {
         pdf_obj* val = pdf_dict_get_val(ctx, xobj, i);
-        if (pdf_dict_get(ctx, val, PDF_NAME(SMask))) {
-            return 1;
+        for (int k = 0; k < num_keys; k++) {
+            if (pdf_dict_get(ctx, val, mask_keys[k]))
+                return 1;
         }
     }
     return 0;
