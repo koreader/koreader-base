@@ -223,12 +223,12 @@ static void transparency_mask_fill_image(fz_context* ctx, fz_device* dev, fz_ima
 
 fz_device *new_transparency_mask_device(fz_context* ctx, fz_device* dev)
 {
-    fz_device *smask_dev = fz_new_derived_device(ctx, fz_device);
-    smask_dev->passthrough = fz_keep_device(ctx, dev);
-    smask_dev->close_device = transparency_mask_close_device;
-    smask_dev->drop_device = transparency_mask_drop_device;
-    smask_dev->fill_image = transparency_mask_fill_image;
-    return smask_dev;
+    fz_device *transparency_mask_dev = fz_new_derived_device(ctx, fz_device);
+    transparency_mask_dev->passthrough = fz_keep_device(ctx, dev);
+    transparency_mask_dev->close_device = transparency_mask_close_device;
+    transparency_mask_dev->drop_device = transparency_mask_drop_device;
+    transparency_mask_dev->fill_image = transparency_mask_fill_image;
+    return transparency_mask_dev;
 }
 
 int page_has_transparency_mask(fz_context* ctx, fz_page* p)
