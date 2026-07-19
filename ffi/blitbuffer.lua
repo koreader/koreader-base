@@ -2492,28 +2492,38 @@ end
 local Jpeg -- lazy load ffi/jpeg
 
 function BB_mt.__index:getBufferData()
-    local w, h = self:getWidth(), self:getHeight()
-    local bbdump, source_ptr, stride
-    if self:getType() == TYPE_BBRGB24 then
-        source_ptr = ffi.cast(uint8pt, self.data)
-        stride = self.stride
+    local n
+    local bbdump
+    local bbtype = self:getType()
+    if bbtype == TYPE_BBRGB32 then
+        bbdump = self
+        n = 4
+    elseif bbtype == TYPE_BBRGB24 then
+        bbdump = self
+        n = 3
     else
-        bbdump = BB.new(w, h, TYPE_BBRGB24, nil)
+        bbdump = BB.new(self.w, self.h, TYPE_BBRGB24, nil)
         bbdump:blitFrom(self)
-        source_ptr = ffi.cast(uint8pt, bbdump.data)
-        stride = bbdump.stride
+        n = 3
     end
-    return bbdump, source_ptr, w, stride, h
+    return bbdump, n
 end
 
 function BB_mt.__index:writeBMP(filename, grayscale)
     if not Jpeg then Jpeg = require("ffi/jpeg") end
 
-    local bbdump, source_ptr, w, stride, h = self:getBufferData()
+    local bbdump, n
+    if grayscale then
+        bbdump = BB.new(self.w, self.h, TYPE_BB8)
+        bbdump:blitFrom(self)
+        n = 1
+    else
+        bbdump, n = self:getBufferData()
+   end
 
-    Jpeg.writeBMP(filename, source_ptr, w, stride, h, grayscale)
+    Jpeg.writeBMP(filename, ffi.cast(uint8pt, bbdump.data), bbdump.w, bbdump.h, n, bbdump.stride)
 
-    if bbdump then
+    if bbdump ~= self then
         bbdump:free()
     end
 end
@@ -2521,11 +2531,11 @@ end
 function BB_mt.__index:writeJPG(filename, quality)
     if not Jpeg then Jpeg = require("ffi/jpeg") end
 
-    local bbdump, source_ptr, w, stride, h = self:getBufferData()
+    local bbdump, n = self:getBufferData()
 
-    Jpeg.encodeToFile(filename, source_ptr, w, stride, h, quality) -- Colortype default, subsample default
+    Jpeg.encodeToFile(filename, ffi.cast(uint8pt, bbdump.data), bbdump.w, bbdump.h, n, quality, bbdump.stride)
 
-    if bbdump then
+    if bbdump ~= self then
         bbdump:free()
     end
 end
