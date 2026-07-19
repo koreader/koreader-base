@@ -122,11 +122,11 @@ MUPDF_WRAP(mupdf_new_bbox_device, fz_device*, NULL,
 MUPDF_WRAP(mupdf_new_draw_device, fz_device*, NULL,
     ret = fz_new_draw_device(ctx, transform ? *transform : fz_identity, dest),
     const fz_matrix *transform, fz_pixmap *dest)
-MUPDF_WRAP(mupdf_new_isolated_smask_device, fz_device*, NULL,
-    ret = new_isolated_smask_device(ctx, dev),
+MUPDF_WRAP(mupdf_new_transparency_mask_device, fz_device*, NULL,
+    ret = new_transparency_mask_device(ctx, dev),
     fz_device *dev)
-MUPDF_WRAP(mupdf_page_has_smask, int, 0,
-    ret = page_has_smask(ctx, page),
+MUPDF_WRAP(mupdf_page_has_transparency_mask, int, 0,
+    ret = page_has_transparency_mask(ctx, page),
     fz_page *page)
 MUPDF_WRAP_BOOL(mupdf_run_page,
     fz_run_page(ctx, page, dev, *transform, cookie),

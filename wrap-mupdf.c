@@ -203,17 +203,17 @@ fz_rect *mupdf_fz_bound_page(fz_context *ctx, fz_page *page, fz_rect *r) {
     return r;
 }
 
-static void smask_close_device(fz_context *ctx, fz_device *dev)
+static void transparency_mask_close_device(fz_context *ctx, fz_device *dev)
 {
     fz_close_device(ctx, dev->passthrough);
 }
 
-static void smask_drop_device(fz_context *ctx, fz_device *dev)
+static void transparency_mask_drop_device(fz_context *ctx, fz_device *dev)
 {
     fz_drop_device(ctx, dev->passthrough);
 }
 
-static void smask_fill_image(fz_context* ctx, fz_device* dev, fz_image* img, fz_matrix ctm, float alpha, fz_color_params color_params)
+static void transparency_mask_fill_image(fz_context* ctx, fz_device* dev, fz_image* img, fz_matrix ctm, float alpha, fz_color_params color_params)
 {
     if (img->mask) {
         float black = 0.f;
@@ -221,17 +221,17 @@ static void smask_fill_image(fz_context* ctx, fz_device* dev, fz_image* img, fz_
     }
 }
 
-fz_device *new_isolated_smask_device(fz_context* ctx, fz_device* dev)
+fz_device *new_transparency_mask_device(fz_context* ctx, fz_device* dev)
 {
-    fz_device *smask_dev = fz_new_derived_device(ctx, fz_device);
-    smask_dev->passthrough = fz_keep_device(ctx, dev);
-    smask_dev->close_device = smask_close_device;
-    smask_dev->drop_device = smask_drop_device;
-    smask_dev->fill_image = smask_fill_image;
-    return smask_dev;
+    fz_device *transparency_mask_dev = fz_new_derived_device(ctx, fz_device);
+    transparency_mask_dev->passthrough = fz_keep_device(ctx, dev);
+    transparency_mask_dev->close_device = transparency_mask_close_device;
+    transparency_mask_dev->drop_device = transparency_mask_drop_device;
+    transparency_mask_dev->fill_image = transparency_mask_fill_image;
+    return transparency_mask_dev;
 }
 
-int page_has_smask(fz_context* ctx, fz_page* p)
+int page_has_transparency_mask(fz_context* ctx, fz_page* p)
 {
     /* Other document types (EPUB, XPS, etc.) don't use smasks. */
     pdf_page* page = pdf_page_from_fz_page(ctx, p);
@@ -244,11 +244,19 @@ int page_has_smask(fz_context* ctx, fz_page* p)
     if (!xobj) {
         return 0;
     }
+
+    static pdf_obj* const mask_keys[] = {
+        PDF_NAME(SMask),
+        PDF_NAME(Mask)
+    };
+    const int num_keys = sizeof(mask_keys) / sizeof(mask_keys[0]);
+
     const int n = pdf_dict_len(ctx, xobj);
     for (int i = 0; i < n; i++) {
         pdf_obj* val = pdf_dict_get_val(ctx, xobj, i);
-        if (pdf_dict_get(ctx, val, PDF_NAME(SMask))) {
-            return 1;
+        for (int k = 0; k < num_keys; k++) {
+            if (pdf_dict_get(ctx, val, mask_keys[k]))
+                return 1;
         }
     }
     return 0;
