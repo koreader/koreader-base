@@ -1,47 +1,61 @@
 local ffi = require("ffi")
 require("ffi_wrapper")
-local BB = require("ffi/blitbuffer")
 local Png = require("ffi/png")
+local C = ffi.C
+
+require "ffi/posix_h"
+
+
+local function readfile(fname)
+    local fp = io.open(fname, "rb")
+    local data = fp:read("*a")
+    fp:close()
+    return data
+end
 
 describe("Png module", function()
-    it("should write bitmap to png file", function()
-        local re, ok
-        local fn = os.tmpname()
-        local w, h = 40, 60
-        local bb = BB.new(w, h, BB.TYPE_BBRGB32)
-        bb:setPixel(0, 0, BB.ColorRGB32(128, 128, 128, 0))
-        bb:setPixel(20, 30, BB.ColorRGB32(10, 128, 205, 50))
-        bb:setPixel(40, 10, BB.ColorRGB32(120, 28, 25, 255))
 
-        local cdata = ffi.C.malloc(w * h * 4)
-        local mem = ffi.cast("unsigned char*", cdata)
-        for x = 0, w-1 do
-            for y = 0, h-1 do
-                local c = bb:getPixel(x, y):getColorRGB32()
-                local offset = 4 * w * y + 4 * x
-                mem[offset] = c.r
-                mem[offset + 1] = c.g
-                mem[offset + 2] = c.b
-                mem[offset + 3] = c.alpha
+    local ko_w, ko_h = 16, 16
+    local ko_samples = {
+        [1] = "gray",
+        [2] = "graya",
+        [3] = "rgb",
+        [4] = "rgba",
+    }
+
+    for n, format in pairs(ko_samples) do
+
+        local sample = "spec/base/unit/data/ko."..format
+
+        it("should load "..format.." bitmap from png file", function()
+            local ok, re = Png.decodeFromFile(sample..".png", n)
+            if not ok then
+                print(re)
             end
-        end
+            assert.is_true(ok)
+            assert.are.same({ko_w, ko_h, n}, {re.width, re.height, re.ncomp})
+            assert.are.equal(0, C.memcmp(re.data, readfile(sample), re.width * re.height * re.ncomp))
+        end)
 
-        ok = Png.encodeToFile(fn, mem, w, h, 4)
-        ffi.C.free(cdata)
-        assert.are.same(ok, true)
+        it("should write "..format.." bitmap to png file", function()
+            local data = readfile(sample)
+            assert(#data == ko_w * ko_h * n)
+            local fn = os.tmpname()
+            local ok, err = Png.encodeToFile(fn, data, ko_w, ko_h, n)
+            if not ok then
+                print(err)
+            end
+            assert.is_true(ok)
+            local re
+            ok, re = Png.decodeFromFile(fn, n)
+            if not ok then
+                print(re)
+            end
+            assert.is_true(ok)
+            assert.are.same({ko_w, ko_h, n}, {re.width, re.height, re.ncomp})
+            assert.are.equal(0, C.memcmp(re.data, data, re.width * re.height * re.ncomp))
+            os.remove(fn)
+        end)
+    end
 
-        ok, re = Png.decodeFromFile(fn, 4)
-        assert.are.same(ok, true)
-        local bb2 = BB.new(re.width, re.height, BB.TYPE_BBRGB32, re.data)
-        bb2:setAllocated(1)
-        local c = bb2:getPixel(0, 0)
-        assert.are.same({0x80, 0x80, 0x80, 0}, {c.r, c.g, c.b, c.alpha})
-        c = bb2:getPixel(20, 20)
-        assert.are.same({0, 0, 0, 0}, {c.r, c.g, c.b, c.alpha})
-        c = bb2:getPixel(20, 30)
-        assert.are.same({10, 128, 205, 50}, {c.r, c.g, c.b, c.alpha})
-        c = bb2:getPixel(40, 10)
-        assert.are.same({120, 28, 25, 255}, {c.r, c.g, c.b, c.alpha})
-        os.remove(fn)
-    end)
 end)
