@@ -67,6 +67,7 @@ tjhandle tj3Init(int);
 tjhandle tj3InitVersion(int, int);
 int tj3Set(tjhandle, int, int);
 int tj3Get(tjhandle, int);
+char *tj3GetErrorStr(tjhandle);
 int tj3Compress8(tjhandle, const unsigned char *, int, int, int, int, unsigned char **, size_t *);
 int tj3DecompressHeader(tjhandle, const unsigned char *, size_t);
 int tj3Decompress8(tjhandle, const unsigned char *, size_t, unsigned char *, int, int);

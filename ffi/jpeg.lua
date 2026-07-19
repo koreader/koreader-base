@@ -74,9 +74,18 @@ function Jpeg.openDocumentFromMem(data, color, size)
     return image_bb, width, height, components
 end
 
-function Jpeg.encodeToFile(filename, source_ptr, w, stride, h, quality, color_type, subsample)
+function Jpeg.encodeToFile(filename, source_ptr, w, h, n, quality, stride, subsample)
     local handle = tj3Init(turbojpeg.TJINIT_COMPRESS)
     assert(handle, "no TurboJPEG API compressor handle")
+
+    local color_type
+    if n == 3 then
+        color_type = turbojpeg.TJPF_RGB
+    elseif n == 4 then
+        color_type = turbojpeg.TJPF_RGBA
+    else
+        return false, "unsupported input format"
+    end
 
     turbojpeg.tj3Set(handle, turbojpeg.TJPARAM_SUBSAMP, subsample or turbojpeg.TJSAMP_420)
     turbojpeg.tj3Set(handle, turbojpeg.TJPARAM_QUALITY, quality or 75)
@@ -84,62 +93,61 @@ function Jpeg.encodeToFile(filename, source_ptr, w, stride, h, quality, color_ty
     local jpeg_size = ffi.new("size_t [1]")
     local jpeg_image = ffi.new("unsigned char* [1]")
 
-    if turbojpeg.tj3Compress8(handle, source_ptr, w, stride, h, color_type or turbojpeg.TJPF_RGB, jpeg_image, jpeg_size) == 0 then
+    local ok, err = turbojpeg.tj3Compress8(handle, source_ptr, w, stride or w * n, h, color_type, jpeg_image, jpeg_size) == 0
+    if ok then
         local fhandle = C.open(filename, bit.bor(C.O_WRONLY, C.O_CREAT, C.O_TRUNC, C.O_CLOEXEC), ffi.cast("int", bit.bor(C.S_IRUSR, C.S_IWUSR, C.S_IRGRP, C.S_IROTH)))
         if fhandle >= 0 then
             C.write(fhandle, jpeg_image[0], jpeg_size[0])
             C.close(fhandle)
+        else
+            ok = false
+            err = ffi.string(C.strerror(ffi.errno()))
         end
+    else
+        err = ffi.string(turbojpeg.tj3GetErrorStr(handle))
     end
 
     turbojpeg.tj3Destroy(handle)
     -- Handles NULL pointers sanely
     turbojpeg.tj3Free(jpeg_image[0])
+
+    return ok, err
 end
 
--- convert rgb to grayscale
--- gray = 0.299 R + 0.587 G + 0.114 B
--- https://www.dynamsoft.com/blog/insights/image-processing/image-processing-101-color-space-conversion/
-function Jpeg.convertToGray(source_ptr, stride, h)
-    for y = 0, h - 1 do
-        local offs = y * stride
-        local offs_8bit = offs
-        for _ = 0, tonumber(stride), 3 do
-            local r = .299 * source_ptr[offs]
-            offs = offs + 1
-            local g = .587 * source_ptr[offs]
-            offs = offs + 1
-            local b = .114 * source_ptr[offs]
-            offs = offs + 1
-            source_ptr[offs_8bit] = math.floor(r + g + b + 0.5)
-            offs_8bit = offs_8bit + 1
-        end
-    end
-end
-
-function Jpeg.writeBMP(filename, source_ptr, w, stride, h, grayscale)
+function Jpeg.writeBMP(filename, source_ptr, w, h, n, stride)
     local handle = tj3Init(turbojpeg.TJINIT_COMPRESS)
     assert(handle, "no TurboJPEG API compressor handle")
 
-    local pixel_format
-    if grayscale then
-        pixel_format = turbojpeg.TJPF_GRAY
-        Jpeg.convertToGray(source_ptr, stride, h)
+    local color_type
+    if n == 1 then
+        color_type = turbojpeg.TJPF_GRAY
+    elseif n == 3 then
+        color_type = turbojpeg.TJPF_RGB
+    elseif n == 4 then
+        color_type = turbojpeg.TJPF_RGBA
     else
-        pixel_format = turbojpeg.TJPF_RGB
+        return false, "unsupported input format"
     end
 
     -- if file extension is not ".bmp" tjSaveImage uses netpbm format!
+    local ret
     if filename:sub(-#".bmp") == ".bmp" then
-        turbojpeg.tj3SaveImage8(handle, filename, source_ptr, w, stride, h, pixel_format)
+        ret = turbojpeg.tj3SaveImage8(handle, filename, source_ptr, w, stride or w * n, h, color_type)
     else
         os.remove(filename)
         local tmp_filename = filename .. ".tmp.bmp"
-        turbojpeg.tj3SaveImage8(handle, tmp_filename, source_ptr, w, stride, h, pixel_format)
+        ret = turbojpeg.tj3SaveImage8(handle, tmp_filename, source_ptr, w, stride or w * n, h, color_type)
         os.rename(tmp_filename, filename)
     end
 
+    local ok, err = ret == 0
+    if not ok then
+        err = ffi.string(turbojpeg.tj3GetErrorStr(handle))
+    end
+
     turbojpeg.tj3Destroy(handle)
+
+    return ok, err
 end
 
 return Jpeg
