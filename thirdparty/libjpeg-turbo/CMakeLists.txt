@@ -2,7 +2,7 @@ list(APPEND PATCH_FILES
     no_cmake_rpath_shenanigans.patch
     no_12_or_16_bits_precision.patch
     no_simdcoverage_exe.patch
-    no_other_image_formats.patch
+    no_other_image_formats_except_bmp.patch
 )
 
 list(APPEND CMAKE_ARGS
