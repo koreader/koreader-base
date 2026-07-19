@@ -38,9 +38,6 @@ end
 function Jpeg.openDocumentFromMem(data, color, size)
     local handle = tj3Init(turbojpeg.TJINIT_DECOMPRESS)
     assert(handle, "no TurboJPEG API decompressor handle")
-    -- Gotta go fast!
-    turbojpeg.tj3Set(handle, turbojpeg.TJPARAM_FASTUPSAMPLE, 1)
-    turbojpeg.tj3Set(handle, turbojpeg.TJPARAM_FASTDCT, 1)
 
     if turbojpeg.tj3DecompressHeader(handle, ffi.cast("const unsigned char*", data), size or #data) < 0 then
         turbojpeg.tj3Destroy(handle)
@@ -83,7 +80,6 @@ function Jpeg.encodeToFile(filename, source_ptr, w, stride, h, quality, color_ty
 
     turbojpeg.tj3Set(handle, turbojpeg.TJPARAM_SUBSAMP, subsample or turbojpeg.TJSAMP_420)
     turbojpeg.tj3Set(handle, turbojpeg.TJPARAM_QUALITY, quality or 75)
-    turbojpeg.tj3Set(handle, turbojpeg.TJPARAM_FASTDCT, 1)
 
     local jpeg_size = ffi.new("size_t [1]")
     local jpeg_image = ffi.new("unsigned char* [1]")
