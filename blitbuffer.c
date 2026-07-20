@@ -3363,12 +3363,12 @@ void BB_paint_rounded_corner_AA(BlitBuffer * restrict bb, unsigned int off_x, un
 
     int o_diam = 2*r; // outer diameter
     int odd_diam = o_diam&1; // odd diameter
-    int a2 = 2*r-2*bw;
-    int dx = 4*(o_diam-1)*o_diam*o_diam;
-    int dy = 4*(odd_diam-1)*o_diam*o_diam;                // error increment
+    double a2 = 2.0*r-2.0*bw;
+    double dx = 4.0*(o_diam-1)*o_diam*o_diam;
+    double dy = 4.0*(odd_diam-1)*o_diam*o_diam;            // error increment
     int i = o_diam+a2;
-    int err = odd_diam*o_diam*o_diam;
-    int dx2, dy2, e2, ed;
+    double err = odd_diam*o_diam*o_diam;
+    double dx2, dy2, e2, ed;
 
     if ((bw-1)*(2*o_diam-bw) > o_diam*o_diam) {
         a2 = 0;
@@ -3390,9 +3390,8 @@ void BB_paint_rounded_corner_AA(BlitBuffer * restrict bb, unsigned int off_x, un
     e2 = dx2*e2;
     y0 += (o_diam+1)>>1;
     y1 = y0-odd_diam;                              // starting pixel
-    int a1;
-    a1 = 8*o_diam*o_diam;
-    a2 = 8*a2*a2;
+    double a1 = 8.0*o_diam*o_diam;
+    a2 = 8.0*a2*a2;
 
     do {
         for (;;) {
@@ -3400,12 +3399,12 @@ void BB_paint_rounded_corner_AA(BlitBuffer * restrict bb, unsigned int off_x, un
                 i = x0;
                 break;
             }
-            i = MIN(dx,dy);
+            double i = MIN(dx,dy);
             ed = MAX(dx,dy);
 
-            ed += 2*ed*i*i/(4*ed*ed+i*i+1)+1;// approx ed=sqrt(dx*dx+dy*dy)
+            ed += 2.0*ed*i*i/(4.0*ed*ed+i*i+1.0)+1.0; // approx ed=sqrt(dx*dx+dy*dy)
 
-            i = 255*err/ed;                             // outside anti-aliasing
+            i = 255.0*err/ed;                            // outside anti-aliasing
             if (bb_type == TYPE_BB8) {
                 const Color8A color = { .a = c, .alpha = 255-i };
                 BB8_SET_ALL_QUADRANTS(x0, y0, x1, y1);
@@ -3451,12 +3450,12 @@ void BB_paint_rounded_corner_AA(BlitBuffer * restrict bb, unsigned int off_x, un
             }
         }
         while (e2 > 0 && x0+x1 >= 2*bw) {               // inside anti-aliasing
-            i = MIN(dx2,dy2);
+            double i = MIN(dx2,dy2);
             ed = MAX(dx2,dy2);
 
-            ed += 2*ed*i*i/(4*ed*ed+i*i);                 // approximation
+            ed += 2.0*ed*i*i/(4.0*ed*ed+i*i); // approximation
 
-            i = 255-255*e2/ed;             // get intensity value by pixel error
+            i = 255.0-255.0*e2/ed;          // get intensity value by pixel error
             if (bb_type == TYPE_BB8) {
                 const Color8A color = { .a = c, .alpha = 255-i };
                 BB8_SET_ALL_QUADRANTS(bw, y0, x0+x1-bw, y1);
@@ -3496,7 +3495,7 @@ void BB_paint_rounded_corner_AA(BlitBuffer * restrict bb, unsigned int off_x, un
             err -= dy;
         }
         for (; y0-y1 <= o_diam; err += dy += a1) { // too early stop of flat ellipses
-            i = 255*4*err/a1;  // -> finish tip of ellipse
+            i = 255.0*4.0*err/a1;  // -> finish tip of ellipse
             if (bb_type == TYPE_BB8) {
                 const Color8A color = { .a = c, .alpha = 255-i };
                 BB8_SET_ALL_QUADRANTS(x0, y0, x1, y1);

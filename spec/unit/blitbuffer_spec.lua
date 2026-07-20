@@ -377,6 +377,15 @@ describe("Blitbuffer unit tests", function()
             assert.are.equals(bb:getPixel(test_x, test_y)['a'], new_c['a'])
         end)
 
+        it("should paint a large anti-aliased rounded corner", function()
+            local bb = Blitbuffer.new(256, 256, Blitbuffer.TYPE_BB8)
+            bb:fill(Blitbuffer.Color8(0xFF))
+
+            bb:paintRoundedCorner(31, 31, 137, 137, 4, 68, Blitbuffer.Color8(0), true)
+
+            assert.are.equal(0, bb:getPixel(31, 99).a)
+        end)
+
         it("should do color comparison correctly", function()
             assert.True(Blitbuffer.Color4(122) == Blitbuffer.Color4(122))
             assert.True(Blitbuffer.Color4L(122) == Blitbuffer.Color4L(122))
