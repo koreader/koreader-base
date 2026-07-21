@@ -17,7 +17,6 @@ end
 local function _adjustAreaColours(fb)
     if fb.device.hasColorScreen() then
         fb.debug("adjusting image color saturation")
-
         inkview.adjustAreaDefault(fb.data, fb._finfo.line_length, fb._vinfo.width, fb._vinfo.height)
     end
 end
@@ -27,12 +26,14 @@ local function _updatePartial(fb, x, y, w, h, dither)
 
     fb.debug("refresh: inkview partial", x, y, w, h, dither)
 
-    if dither then
-        _adjustAreaColours(fb)
-    end
-
     if fb.device.hasColorScreen() then
+        -- inkview.adjustAreaDefault updates buffer in-place, with additional refreshes mangling content.
+        -- We need to restore the original buffer to make sure it won't be adjusted twice.
+        fb.saveCurrentBB()
+        _adjustAreaColours(fb)
+        
         inkview.PartialUpdateHQ(x, y, w, h)
+        fb.restoreFromSavedBB()
     else
         inkview.PartialUpdate(x, y, w, h)
     end
@@ -41,12 +42,12 @@ end
 local function _updateFull(fb, x, y, w, h, dither)
     fb.debug("refresh: inkview full", x, y, w, h, dither)
 
-    if dither then
-        _adjustAreaColours(fb)
-    end
-
     if fb.device.hasColorScreen() then
+        fb.saveCurrentBB()
+        _adjustAreaColours(fb)
+        
         inkview.FullUpdateHQ()
+        fb.restoreFromSavedBB()
     else
         inkview.FullUpdate()
     end
@@ -57,11 +58,16 @@ local function _updateFast(fb, x, y, w, h, dither)
 
     fb.debug("refresh: inkview fast", x, y, w, h, dither)
 
-    if dither then
+    if fb.device.hasColorScreen() then
+        fb.saveCurrentBB()
         _adjustAreaColours(fb)
     end
 
     inkview.DynamicUpdate(x, y, w, h)
+
+    if fb.device.hasColorScreen() then
+        fb.restoreFromSavedBB()
+    end
 end
 
 function framebuffer:init()
