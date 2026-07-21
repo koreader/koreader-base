@@ -1960,7 +1960,7 @@ function BB_mt.__index:paintCircle(center_x, center_y, r, c, w)
     local r2 = r - w
     local x2 = 0
     local y2 = r2
-    local delta2 = 5/4 - r
+    local delta2 = 5/4 - r2
 
     -- draw two axles
     for tmp_y = r, r2+1, -1 do
