@@ -986,19 +986,15 @@ function mupdf.renderImage(data, size, width, height)
     local bb
     if mupdf.bgr and ncomp >= 3 then
         local bgr_pixmap = W.mupdf_convert_pixmap(ctx, pixmap, M.fz_device_bgr(ctx), nil, nil, M.fz_default_color_params, (ncomp == 4 and 1 or 0))
-        if pixmap == nil then
+        M.fz_drop_pixmap(ctx, pixmap)
+        if bgr_pixmap == nil then
             merror(ctx, "could not convert pixmap to BGR")
         end
-        M.fz_drop_pixmap(ctx, pixmap)
-
-        local p = M.fz_pixmap_samples(ctx, bgr_pixmap)
-        bb = BlitBuffer.new(p_width, p_height, bbtype, p):copy()
-        M.fz_drop_pixmap(ctx, bgr_pixmap)
-    else
-        local p = M.fz_pixmap_samples(ctx, pixmap)
-        bb = BlitBuffer.new(p_width, p_height, bbtype, p):copy()
-        M.fz_drop_pixmap(ctx, pixmap)
+        pixmap = bgr_pixmap
     end
+    local p = M.fz_pixmap_samples(ctx, pixmap)
+    bb = BlitBuffer.new(p_width, p_height, bbtype, p):copy()
+    M.fz_drop_pixmap(ctx, pixmap)
     return bb
 end
 
