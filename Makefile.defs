@@ -820,6 +820,8 @@ define cmake_toolchain
 
 cmake_minimum_required(VERSION 3.17.5)
 
+set(CMAKE_COLOR_DIAGNOSTICS TRUE)
+
 # CMake Cross ToolChain config file. Adapted from Debian's dpkg-cross ;).
 # c.f., https://cmake.org/cmake/help/latest/manual/cmake-toolchains.7.html#cross-compiling-toolchain
 # NOTE: Remember that CMake is a special snowflake that completely *ignores* CPPFLAGS,
