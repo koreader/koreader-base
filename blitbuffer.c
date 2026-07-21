@@ -3399,10 +3399,10 @@ void BB_paint_rounded_corner_AA(BlitBuffer * restrict bb, unsigned int off_x, un
                 i = x0;
                 break;
             }
-            double i = MIN(dx,dy);
+            double di = MIN(dx,dy);
             ed = MAX(dx,dy);
 
-            ed += 2.0*ed*i*i/(4.0*ed*ed+i*i+1.0)+1.0; // approx ed=sqrt(dx*dx+dy*dy)
+            ed += 2.0*ed*di*di/(4.0*ed*ed+di*di+1.0)+1.0; // approx ed=sqrt(dx*dx+dy*dy)
 
             i = 255.0*err/ed;                            // outside anti-aliasing
             if (bb_type == TYPE_BB8) {
@@ -3450,10 +3450,10 @@ void BB_paint_rounded_corner_AA(BlitBuffer * restrict bb, unsigned int off_x, un
             }
         }
         while (e2 > 0 && x0+x1 >= 2*bw) {               // inside anti-aliasing
-            double i = MIN(dx2,dy2);
+            double di = MIN(dx2,dy2);
             ed = MAX(dx2,dy2);
 
-            ed += 2.0*ed*i*i/(4.0*ed*ed+i*i); // approximation
+            ed += 2.0*ed*di*di/(4.0*ed*ed+di*di); // approximation
 
             i = 255.0-255.0*e2/ed;          // get intensity value by pixel error
             if (bb_type == TYPE_BB8) {
