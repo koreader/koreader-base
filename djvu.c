@@ -167,6 +167,10 @@ static int openDocument(lua_State *L) {
 		doc->pixelformat = ddjvu_format_create(DDJVU_FORMAT_GREY8, 0, NULL);
 	}
 	if (! doc->pixelformat) {
+		ddjvu_document_release(doc->doc_ref);
+		doc->doc_ref = NULL;
+		ddjvu_context_release(doc->context);
+		doc->context = NULL;
 		return luaL_error(L, "cannot create DjVu pixelformat for <%s>", filename);
 	}
 	ddjvu_format_set_row_order(doc->pixelformat, 1);
@@ -213,6 +217,9 @@ static int setColorRendering(lua_State *L) {
 	else {
 		doc->pixelsize = 1;
 		doc->pixelformat = ddjvu_format_create(DDJVU_FORMAT_GREY8, 0, NULL);
+	}
+	if (! doc->pixelformat) {
+		return luaL_error(L, "cannot create DjVu pixelformat");
 	}
 	ddjvu_format_set_row_order(doc->pixelformat, 1);
 	ddjvu_format_set_y_direction(doc->pixelformat, 1);
