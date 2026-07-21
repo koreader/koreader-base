@@ -30,13 +30,20 @@ function posix.open(path, flags, mode)
     return fd
 end
 
-function posix.read(fd, ptr, len)
+function posix.read(fd, ptr, len, deny_short)
+    if not deny_short then
+        local ret = C.read(fd, ptr, len)
+        if ret ~= len then
+            error("read: "..(ret < 0 and strerror() or string.format("short read, %u/%u", ret, len)))
+        end
+        return ret
+    end
     ptr = ffi.cast("uint8_t *", ptr)
     local count = 0
     while count < len do
         local ret = C.read(fd, ptr + count, len - count)
         if ret == 0 then
-            error("read: "..string.format("short read, %u/%u", count, len))
+            break
         end
         if ret < 0 then
             if ffi.errno() ~= C.EINTR then
@@ -46,18 +53,25 @@ function posix.read(fd, ptr, len)
             count = count + ret
         end
     end
-    return len
+    return count
 end
 
 posix.strerror = strerror
 
-function posix.write(fd, ptr, len)
+function posix.write(fd, ptr, len, deny_short)
+    if not deny_short then
+        local ret = C.write(fd, ptr, len)
+        if ret ~= len then
+            error("write: "..(ret < 0 and strerror() or string.format("short write, %u/%u", ret, len)))
+        end
+        return ret
+    end
     ptr = ffi.cast("uint8_t *", ptr)
     local count = 0
     while count < len do
         local ret = C.write(fd, ptr + count, len - count)
         if ret == 0 then
-            error("write: "..string.format("short write, %u/%u", count, len))
+            break
         end
         if ret < 0 then
             if ffi.errno() ~= C.EINTR then
@@ -67,7 +81,7 @@ function posix.write(fd, ptr, len)
             count = count + ret
         end
     end
-    return len
+    return count
 end
 
 return posix
