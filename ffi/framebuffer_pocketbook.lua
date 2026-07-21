@@ -22,8 +22,7 @@ local function _adjustAreaColours(fb)
     end
 end
 
-local function _updatePartial(fb, x, y, w, h, dither, hq)
-    -- Use "hq" argument to trigger high quality refresh for color Pocketbook devices.
+local function _updatePartial(fb, x, y, w, h, dither)
     x, y, w, h = _getPhysicalRect(fb, x, y, w, h)
 
     fb.debug("refresh: inkview partial", x, y, w, h, dither)
@@ -32,7 +31,7 @@ local function _updatePartial(fb, x, y, w, h, dither, hq)
         _adjustAreaColours(fb)
     end
 
-    if fb.device.hasColorScreen() and hq then
+    if fb.device.hasColorScreen() then
         inkview.PartialUpdateHQ(x, y, w, h)
     else
         inkview.PartialUpdate(x, y, w, h)
@@ -127,19 +126,19 @@ end
 --[[ framebuffer API ]]--
 
 function framebuffer:refreshPartialImp(x, y, w, h, dither)
-    _updatePartial(self, x, y, w, h, dither, false)
+    _updatePartial(self, x, y, w, h, dither)
 end
 
 function framebuffer:refreshFlashPartialImp(x, y, w, h, dither)
-    _updatePartial(self, x, y, w, h, dither, true)
+    _updatePartial(self, x, y, w, h, dither)
 end
 
 function framebuffer:refreshUIImp(x, y, w, h, dither)
-    _updatePartial(self, x, y, w, h, dither, false)
+    _updatePartial(self, x, y, w, h, dither)
 end
 
 function framebuffer:refreshFlashUIImp(x, y, w, h, dither)
-    _updatePartial(self, x, y, w, h, dither, true)
+    _updatePartial(self, x, y, w, h, dither)
 end
 
 function framebuffer:refreshFullImp(x, y, w, h, dither)
