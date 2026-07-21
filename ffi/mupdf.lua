@@ -805,6 +805,10 @@ function page_mt.__index:addMarkupAnnotation(points, n, type, bb_color)
     ok = W.mupdf_pdf_set_annot_opacity(self.ctx, annot, alpha)
     if not ok then merror(self.ctx, "could not set annotation opacity") end
 
+    -- Synthesize /Rect and /AP appearance stream, needed for visibility in desktop PDF viewers
+    ok = W.mupdf_pdf_update_annot(self.ctx, annot)
+    if not ok then merror(self.ctx, "could not update markup annotation") end
+
     -- Fetch back MuPDF's stored coordinates of all quadpoints, as they may have been modified/rounded
     -- (we need the exact ones that were saved if we want to be able to find them for deletion/update)
     for i = 0, n-1 do
