@@ -57,7 +57,7 @@ static int nnsvg_new(lua_State *L) {
     if ( is_svg_data ) {
         // nsvgParse modifies its input in place, so we need a mutable copy
         char *copy = strndup(input, len);
-        *udata = nsvgParse(copy, "px", dpi);
+        *udata = copy ? nsvgParse(copy, "px", dpi) : NULL;
         free(copy);
     }
     else {
