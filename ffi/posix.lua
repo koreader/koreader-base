@@ -31,35 +31,43 @@ function posix.open(path, flags, mode)
 end
 
 function posix.read(fd, ptr, len)
-    local total = 0
-    while total < len do
-        local ret = C.read(fd, ptr + total, len - total)
-        if ret < 0 then
-            error("read: "..strerror())
-        end
+    ptr = ffi.cast("uint8_t *", ptr)
+    local count = 0
+    while count < len do
+        local ret = C.read(fd, ptr + count, len - count)
         if ret == 0 then
-            break
+            error("read: "..string.format("short read, %u/%u", count, len))
         end
-        total = total + ret
+        if ret < 0 then
+            if ffi.errno() ~= C.EINTR then
+                error("read: "..strerror())
+            end
+        else
+            count = count + ret
+        end
     end
-    return total
+    return len
 end
 
 posix.strerror = strerror
 
 function posix.write(fd, ptr, len)
-    local total = 0
-    while total < len do
-        local ret = C.write(fd, ptr + total, len - total)
-        if ret < 0 then
-            error("write: "..strerror())
-        end
+    ptr = ffi.cast("uint8_t *", ptr)
+    local count = 0
+    while count < len do
+        local ret = C.write(fd, ptr + count, len - count)
         if ret == 0 then
-            break
+            error("write: "..string.format("short write, %u/%u", count, len))
         end
-        total = total + ret
+        if ret < 0 then
+            if ffi.errno() ~= C.EINTR then
+                error("write: "..strerror())
+            end
+        else
+            count = count + ret
+        end
     end
-    return total
+    return len
 end
 
 return posix
