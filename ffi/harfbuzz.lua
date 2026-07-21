@@ -48,7 +48,8 @@ local coverage_thresholds = {
 
 -- Get script and language coverage
 function hb_face_t:getCoverage()
-    local set, tmp = hb.hb_set_create(), hb.hb_set_create()
+    local set = ffi.gc(hb.hb_set_create(), hb.hb_set_destroy)
+    local tmp = ffi.gc(hb.hb_set_create(), hb.hb_set_destroy)
     local scripts = {}
     local langs = {}
 
@@ -69,7 +70,7 @@ function hb_face_t:getCoverage()
     end
 
     for lang_id, tab in pairs(coverage.langs) do
-        local found
+        local found = 1
         local hit, total = intersect(tab)
         -- for languages, consider predefined threshold by glyph count
         for i=1, #coverage_thresholds, 2 do
@@ -77,13 +78,11 @@ function hb_face_t:getCoverage()
                 found = i+1
             end
         end
-        if hit*100/total >= coverage_thresholds[found] then
+        if total > 0 and hit*100/total >= coverage_thresholds[found] then
             langs[lang_id] = hit/total
         end
     end
 
-    hb.hb_set_destroy(set)
-    hb.hb_set_destroy(tmp)
     return scripts, langs
 end
 
