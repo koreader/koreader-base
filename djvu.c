@@ -214,6 +214,9 @@ static int setColorRendering(lua_State *L) {
 		doc->pixelsize = 1;
 		doc->pixelformat = ddjvu_format_create(DDJVU_FORMAT_GREY8, 0, NULL);
 	}
+	if (! doc->pixelformat) {
+		return luaL_error(L, "cannot create DjVu pixelformat");
+	}
 	ddjvu_format_set_row_order(doc->pixelformat, 1);
 	ddjvu_format_set_y_direction(doc->pixelformat, 1);
 	return 0;
