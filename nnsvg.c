@@ -6,6 +6,8 @@
 #include <lualib.h>
 
 #include <stdbool.h>
+#include <stdlib.h>
+#include <string.h>
 
 #include "nnsvg.h"
 #include "blitbuffer.h"
@@ -53,7 +55,10 @@ static int nnsvg_new(lua_State *L) {
     // Get an instantiated NSVGimage struct from the parsed input
     // and store its address in our userdata
     if ( is_svg_data ) {
-        *udata = nsvgParse((char*)input, "px", dpi);
+        // nsvgParse modifies its input in place, so we need a mutable copy
+        char *copy = strndup(input, len);
+        *udata = copy ? nsvgParse(copy, "px", dpi) : NULL;
+        free(copy);
     }
     else {
         *udata = nsvgParseFromFile(input, "px", dpi);
