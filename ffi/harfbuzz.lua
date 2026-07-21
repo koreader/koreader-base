@@ -64,7 +64,7 @@ function hb_face_t:getCoverage()
     for script_id, tab in ipairs(coverage.scripts) do
         local hit, total = intersect(tab)
         -- for scripts, we do only rough majority hit
-        if 2*hit > total then
+        if total > 0 and 2*hit > total then
             scripts[script_id] = hit / total
         end
     end
