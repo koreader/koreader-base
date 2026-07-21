@@ -805,6 +805,10 @@ function page_mt.__index:addMarkupAnnotation(points, n, type, bb_color)
     ok = W.mupdf_pdf_set_annot_opacity(self.ctx, annot, alpha)
     if not ok then merror(self.ctx, "could not set annotation opacity") end
 
+    -- Synthesize /Rect and /AP appearance stream, needed for visibility in desktop PDF viewers
+    ok = W.mupdf_pdf_update_annot(self.ctx, annot)
+    if not ok then merror(self.ctx, "could not update markup annotation") end
+
     -- Fetch back MuPDF's stored coordinates of all quadpoints, as they may have been modified/rounded
     -- (we need the exact ones that were saved if we want to be able to find them for deletion/update)
     for i = 0, n-1 do
@@ -986,7 +990,8 @@ function mupdf.renderImage(data, size, width, height)
     local bb
     if mupdf.bgr and ncomp >= 3 then
         local bgr_pixmap = W.mupdf_convert_pixmap(ctx, pixmap, M.fz_device_bgr(ctx), nil, nil, M.fz_default_color_params, (ncomp == 4 and 1 or 0))
-        if pixmap == nil then
+        if bgr_pixmap == nil then
+            M.fz_drop_pixmap(ctx, pixmap)
             merror(ctx, "could not convert pixmap to BGR")
         end
         M.fz_drop_pixmap(ctx, pixmap)
