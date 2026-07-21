@@ -31,21 +31,35 @@ function posix.open(path, flags, mode)
 end
 
 function posix.read(fd, ptr, len)
-    local ret = C.read(fd, ptr, len)
-    if ret ~= len then
-        error("read: "..(ret < 0 and strerror() or string.format("short read, %u/%u", ret, len)))
+    local total = 0
+    while total < len do
+        local ret = C.read(fd, ptr + total, len - total)
+        if ret < 0 then
+            error("read: "..strerror())
+        end
+        if ret == 0 then
+            break
+        end
+        total = total + ret
     end
-    return ret
+    return total
 end
 
 posix.strerror = strerror
 
 function posix.write(fd, ptr, len)
-    local ret = C.write(fd, ptr, len)
-    if ret ~= len then
-        error("write: "..(ret < 0 and strerror() or string.format("short write, %u/%u", ret, len)))
+    local total = 0
+    while total < len do
+        local ret = C.write(fd, ptr + total, len - total)
+        if ret < 0 then
+            error("write: "..strerror())
+        end
+        if ret == 0 then
+            break
+        end
+        total = total + ret
     end
-    return ret
+    return total
 end
 
 return posix
