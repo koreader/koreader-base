@@ -35,7 +35,7 @@ local function _updatePartial(fb, x, y, w, h, dither, hq)
             fb:saveCurrentBB()
             _adjustAreaColours(fb)
         end
-        if hq then        
+        if hq then
             inkview.PartialUpdateHQ(x, y, w, h)
         else
             inkview.PartialUpdate(x, y, w, h)
@@ -65,7 +65,7 @@ local function _updateFull(fb, x, y, w, h, dither)
 
         return
     end
-    
+
     inkview.FullUpdate()
 end
 
