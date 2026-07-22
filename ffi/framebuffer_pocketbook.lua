@@ -72,7 +72,7 @@ end
 local function _updateFast(fb, x, y, w, h, dither)
     x, y, w, h = _getPhysicalRect(fb, x, y, w, h)
 
-    fb.debug("refresh: inkview fast", x, y, w, h, dither)        
+    fb.debug("refresh: inkview fast", x, y, w, h, dither)
 
     if fb.device.hasColorScreen() and dither then
         fb:saveCurrentBB()
