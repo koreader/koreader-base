@@ -17,16 +17,18 @@ end
 local function _adjustAreaColours(fb)
     if fb.device.hasColorScreen() then
         fb.debug("adjusting image color saturation")
+
         inkview.adjustAreaDefault(fb.data, fb._finfo.line_length, fb._vinfo.width, fb._vinfo.height)
     end
 end
 
-local function _updatePartial(fb, x, y, w, h, dither)
+local function _updatePartial(fb, x, y, w, h, dither, hq)
+    -- Use "hq" argument to trigger high quality refresh for color Pocketbook devices.
     x, y, w, h = _getPhysicalRect(fb, x, y, w, h)
 
     fb.debug("refresh: inkview partial", x, y, w, h, dither)
 
-    if fb.device.hasColorScreen() then
+    if fb.device.hasColorScreen() and hq then
         -- inkview.adjustAreaDefault updates buffer in-place, with additional refreshes mangling content.
         -- We need to restore the original buffer to make sure it won't be adjusted twice.
         fb:saveCurrentBB()
@@ -132,19 +134,19 @@ end
 --[[ framebuffer API ]]--
 
 function framebuffer:refreshPartialImp(x, y, w, h, dither)
-    _updatePartial(self, x, y, w, h, dither)
+    _updatePartial(self, x, y, w, h, dither, false)
 end
 
 function framebuffer:refreshFlashPartialImp(x, y, w, h, dither)
-    _updatePartial(self, x, y, w, h, dither)
+    _updatePartial(self, x, y, w, h, dither, true)
 end
 
 function framebuffer:refreshUIImp(x, y, w, h, dither)
-    _updatePartial(self, x, y, w, h, dither)
+    _updatePartial(self, x, y, w, h, dither, false)
 end
 
 function framebuffer:refreshFlashUIImp(x, y, w, h, dither)
-    _updatePartial(self, x, y, w, h, dither)
+    _updatePartial(self, x, y, w, h, dither, true)
 end
 
 function framebuffer:refreshFullImp(x, y, w, h, dither)
