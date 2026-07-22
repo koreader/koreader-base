@@ -26,31 +26,47 @@ local function _updatePartial(fb, x, y, w, h, dither, hq)
     -- Use "hq" argument to trigger high quality refresh for color Pocketbook devices.
     x, y, w, h = _getPhysicalRect(fb, x, y, w, h)
 
-    fb.debug("refresh: inkview partial", x, y, w, h, dither)
+    fb.debug("refresh: inkview partial", x, y, w, h, dither, hq)
 
-    if dither then
-        _adjustAreaColours(fb)
+    if fb.device.hasColorScreen() then
+        if dither then
+            -- inkview.adjustAreaDefault updates buffer in-place, with additional refreshes mangling content.
+            -- We need to restore the original buffer to make sure it won't be adjusted twice.
+            fb:saveCurrentBB()
+            _adjustAreaColours(fb)
+        end
+        if hq then
+            inkview.PartialUpdateHQ(x, y, w, h)
+        else
+            inkview.PartialUpdate(x, y, w, h)
+        end
+        if dither then
+            fb:restoreFromSavedBB()
+        end
+
+        return
     end
 
-    if fb.device.hasColorScreen() and hq then
-        inkview.PartialUpdateHQ(x, y, w, h)
-    else
-        inkview.PartialUpdate(x, y, w, h)
-    end
+    inkview.PartialUpdate(x, y, w, h)
 end
 
 local function _updateFull(fb, x, y, w, h, dither)
     fb.debug("refresh: inkview full", x, y, w, h, dither)
 
-    if dither then
-        _adjustAreaColours(fb)
+    if fb.device.hasColorScreen() then
+        if dither then
+            fb:saveCurrentBB()
+            _adjustAreaColours(fb)
+        end
+        inkview.FullUpdateHQ()
+        if dither then
+            fb:restoreFromSavedBB()
+        end
+
+        return
     end
 
-    if fb.device.hasColorScreen() then
-        inkview.FullUpdateHQ()
-    else
-        inkview.FullUpdate()
-    end
+    inkview.FullUpdate()
 end
 
 local function _updateFast(fb, x, y, w, h, dither)
@@ -58,11 +74,16 @@ local function _updateFast(fb, x, y, w, h, dither)
 
     fb.debug("refresh: inkview fast", x, y, w, h, dither)
 
-    if dither then
+    if fb.device.hasColorScreen() and dither then
+        fb:saveCurrentBB()
         _adjustAreaColours(fb)
     end
 
     inkview.DynamicUpdate(x, y, w, h)
+
+    if fb.device.hasColorScreen() and dither then
+        fb:restoreFromSavedBB()
+    end
 end
 
 function framebuffer:init()
