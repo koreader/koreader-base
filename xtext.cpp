@@ -620,10 +620,14 @@ public:
                     hb_feature_t f;
                     if ( hb_feature_from_string(feature, len, &f) ) {
                         hb_data->hb_features_nb++;
-                        hb_data->hb_features = (hb_feature_t*)realloc( hb_data->hb_features,
+                        hb_feature_t *tmp = (hb_feature_t*)realloc( hb_data->hb_features,
                                                     hb_data->hb_features_nb * sizeof(hb_feature_t) );
-                        if ( hb_data->hb_features )
+                        if ( tmp ) {
+                            hb_data->hb_features = tmp;
                             hb_data->hb_features[hb_data->hb_features_nb-1] = f;
+                        } else {
+                            hb_data->hb_features_nb--;
+                        }
                     }
                 }
                 lua_pop(m_L, 1); // remove fetched value, but keep key for next iteration
