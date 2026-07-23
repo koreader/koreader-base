@@ -24,6 +24,9 @@
 // So that the main input code knows it's built w/ timerfd support
 #define WITH_TIMERFD 1
 
+// Forward declaration: defined in input.c, needed by setTimer/clearTimer
+static void computeNfds(void);
+
 // Unlike the main input module, the way in which we open/close timerfds is much more dynamic.
 // As such, we're using a doubly linked list to keep track of it.
 
@@ -154,9 +157,7 @@ static int setTimer(lua_State* L)
     node->fd = fd;
 
     // Need to update select's nfds, too...
-    if (fd >= nfds) {
-        nfds = fd + 1;
-    }
+    computeNfds();
 
     // Success!
     lua_pushlightuserdata(L, (void*) node);
@@ -171,15 +172,8 @@ static int clearTimer(lua_State* L)
 
     timerfd_list_delete_node(&timerfds, expired_node);
 
-    // Re-compute nfds...
-    // NOTE: Assumes that we've got at least one fd open, which should always hold true.
-    // NOTE: Also assumes that the top fd in the array is the one with the highest fd number, which openInputDevice makes sure of.
-    nfds = inputfds[fd_idx - 1U] + 1;
-    for (timerfd_node_t* restrict node = timerfds.head; node != NULL; node = node->next) {
-        if (node->fd >= nfds) {
-            nfds = node->fd + 1;
-        }
-    }
+    // Re-compute nfds after removing the timer
+    computeNfds();
 
     // Success!
     lua_pushboolean(L, true);

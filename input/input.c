@@ -79,25 +79,22 @@ static void computeNfds(void) {
     // Compute select's nfds argument.
     // That's not the actual number of fds in the set, like poll(),
     // but the highest fd number in the set + 1 (c.f., select(2)).
-    // The fd_idx must be set to the actual number before calling this.
-    if (fd_idx == 0U) {
-        nfds = 0;
-    } else if (inputfds[fd_idx - 1U] >= nfds) {
-        nfds = inputfds[fd_idx - 1U] + 1;
-    }
-}
-
-// NOTE: Make sure the top member has the highest fd number, for clearTimer's sake when it recomputes nfds
-static void reorderArray(void) {
-    if (fd_idx > 0) {
-        int prev_fd   = inputfds[fd_idx - 1];
-        int opened_fd = inputfds[fd_idx];
-        if (opened_fd < prev_fd) {
-            inputfds[fd_idx - 1] = opened_fd;
-            inputfds[fd_idx]     = prev_fd;
+    // Scan all input fds and timer fds to find the true maximum.
+    nfds = 0;
+    for (size_t i = 0U; i < fd_idx; i++) {
+        if (inputfds[i] >= nfds) {
+            nfds = inputfds[i] + 1;
         }
     }
+#if defined(WITH_TIMERFD)
+    for (timerfd_node_t* restrict node = timerfds.head; node != NULL; node = node->next) {
+        if (node->fd >= nfds) {
+            nfds = node->fd + 1;
+        }
+    }
+#endif
 }
+
 
 static int openInputDevice(lua_State* L)
 {
@@ -172,9 +169,6 @@ static int openInputDevice(lua_State* L)
         }
     }
 
-    // Reorder the array to match clearTimer's expectations
-    reorderArray();
-
     // We're done w/ inputdevice, pop it
     lua_settop(L, 0);
     // Pass the fd to Lua, front makes use of it to track what was open'ed,
@@ -208,7 +202,6 @@ static int openInputFD(lua_State* L)
 
     // Update our state for the new input slot...
     inputfds[fd_idx] = fd;
-    reorderArray();
     fd_idx++;
     computeNfds();
 
