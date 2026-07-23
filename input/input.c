@@ -132,6 +132,8 @@ static int openInputDevice(lua_State* L)
 
         pid_t childpid;
         if ((childpid = fork()) == -1) {
+            close(pipefd[0]);
+            close(pipefd[1]);
             return luaL_error(L, "Cannot fork() fake event generator: %s", strerror(errno));
         }
         if (childpid == 0) {
