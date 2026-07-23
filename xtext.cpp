@@ -2425,6 +2425,7 @@ static int XText_shapeLine(lua_State *L) {
     start--; // Lua to C index
     int end = luaL_checkint(L, 3);
     luaL_argcheck(L, end >= 1 && end <= xt->m_length, 3, "index out of range");
+    luaL_argcheck(L, end >= start, 3, "end must be >= start");
     // end--; // Lua to C index, but we don't as end is excluded in our C code,
               // but it is expected to be included in the Lua call
     int idx_to_substitute_with_ellipsis = -1;
@@ -2488,6 +2489,7 @@ static int XText_getText(lua_State *L) {
     start--; // Lua to C index
     int end = luaL_checkint(L, 3);
     luaL_argcheck(L, end >= 1 && end <= xt->m_length, 3, "index out of range");
+    luaL_argcheck(L, end >= start, 3, "end must be >= start");
     // end--; // Lua to C index, but we don't as end is excluded in our C code,
               // but it is expected to be included in the Lua call
     xt->getText(start, end);
