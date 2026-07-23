@@ -2061,7 +2061,11 @@ public:
         // Let's be cheap and not count the nb of bytes really needed to store the
         // UTF-8 encoding of each Unicode codepoint: go allocate for the max (4).
         int len = end - start;
-        char * s_utf8 = (char *)malloc(len * 4*sizeof(char) + 1);
+        char * s_utf8 = (char *)malloc((size_t)len * 4 + 1);
+        if (!s_utf8) {
+            lua_pushstring(m_L, "");
+            return;
+        }
         fribidi_unicode_to_charset(FRIBIDI_CHAR_SET_UTF8, m_text+start, len, s_utf8);
         lua_pushstring(m_L, s_utf8);
         free(s_utf8);
