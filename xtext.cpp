@@ -2170,6 +2170,7 @@ static int xtext_setDefaultParaDirection(lua_State *L) {
 // of the main one).
 static int xtext_setDefaultLang(lua_State *L) {
     const char * lang = luaL_checkstring(L, 1);
+    delete[] default_lang;
     default_lang = new char[strlen(lang)+1];
     strcpy(default_lang, lang);
     default_lang_hb_language = hb_language_from_string(default_lang, -1);
