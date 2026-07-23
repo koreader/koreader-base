@@ -2295,13 +2295,12 @@ static int xtext_hb_font_data_destroy(lua_State *L) {
     FT_Library ft_lib = (FT_Library)ft_face->generic.data;
     int *refcount = (int *)hb_data->ft_size->generic.data;
     assert(*refcount > 0);
+    hb_font_destroy(hb_data->hb_font);  // Release HB's reference to face BEFORE FT_Done_Face
     if (!--*refcount) {
         free(refcount);
         FT_Done_Size(hb_data->ft_size);
         FT_Done_Face(ft_face);
-        FT_Done_Library(ft_lib);
     }
-    hb_font_destroy(hb_data->hb_font);
     FT_Done_Library(ft_lib);
     hb_buffer_destroy(hb_data->hb_buffer);
     if ( hb_data->hb_features )
