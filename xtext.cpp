@@ -366,10 +366,14 @@ public:
         // ZERO_WIDTH_JOINER before the ELLIPSIS (which might be needed with Arabic)
         size_t size = m_length + 1;
         m_charinfo = (xtext_charinfo_t *)calloc(size, sizeof(*m_charinfo)); // set all flags to 0
+        if ( !m_charinfo ) return;
         if ( m_has_rtl ) {
             m_bidi_ctypes = (FriBidiCharType *)malloc(size * sizeof(*m_bidi_ctypes));
+            if ( !m_bidi_ctypes ) { free(m_charinfo); m_charinfo = NULL; return; }
             m_bidi_btypes = (FriBidiBracketType *)malloc(size * sizeof(*m_bidi_btypes));
+            if ( !m_bidi_btypes ) { free(m_charinfo); m_charinfo = NULL; free(m_bidi_ctypes); m_bidi_ctypes = NULL; return; }
             m_bidi_levels = (FriBidiLevel *)malloc(size * sizeof(*m_bidi_levels));
+            if ( !m_bidi_levels ) { free(m_charinfo); m_charinfo = NULL; free(m_bidi_ctypes); m_bidi_ctypes = NULL; free(m_bidi_btypes); m_bidi_btypes = NULL; return; }
         }
     }
     void deallocate() {
