@@ -538,7 +538,7 @@ public:
     // This must be a method of our XText object, as it uses the uservalue that has
     // been associated with the userdata that is wrapping this XText instance.
     xtext_hb_font_data * getHbFontData(int num) {
-        if ( num > MAX_FONT_NUM )
+        if ( num >= MAX_FONT_NUM )
             return NULL;
         // This uses the stack for C <-> Lua interaction, but we should put this
         // stack back in its original state, as it may carry additional arguments
@@ -828,7 +828,7 @@ public:
     // - we don't use cumulative widths: we store individual char widths (to store them in 16 bits
     //   in m_charinfo, instead of needing a full 32 bits int for each char)
     int measureSegment(int font_num, int start, int end, int hints) {
-        if ( font_num > MAX_FONT_NUM )
+        if ( font_num >= MAX_FONT_NUM )
             return NOT_MEASURED;
 
         #ifdef DEBUG_MEASURE_TEXT
@@ -1734,7 +1734,7 @@ public:
     // Based on crengine/src/lvfntman.cpp drawTextString() with _kerningMode == KERNING_MODE_HARFBUZZ
     // and crengine/src/lvtextfm.cpp addLine()
     void shapeSegment(int font_num, int start, int end, int hints, int & nb_glyphs) {
-        if ( font_num > MAX_FONT_NUM )
+        if ( font_num >= MAX_FONT_NUM )
             return;
             // No need to add a tofu char to s_shape_result: font_num
             // should have been checked before calling us, and if
