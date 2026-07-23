@@ -639,8 +639,13 @@ static int drawPage(lua_State *L) {
 	 */
 	renderrect.x = MAX(-dc->offset_x, 0);
 	renderrect.y = MAX(-dc->offset_y, 0);
-	renderrect.w = MIN(pagerect.w - renderrect.x, bb->w);
-	renderrect.h = MIN(pagerect.h - renderrect.y, bb->h);
+	if (renderrect.x >= pagerect.w || renderrect.y >= pagerect.h) {
+		renderrect.w = 0;
+		renderrect.h = 0;
+	} else {
+		renderrect.w = MIN(pagerect.w - renderrect.x, bb->w);
+		renderrect.h = MIN(pagerect.h - renderrect.y, bb->h);
+	}
 
 	/*printf("--renderrect--- (%d, %d), w:%d, h:%d\n", renderrect.x, renderrect.y, renderrect.w, renderrect.h);*/
 
