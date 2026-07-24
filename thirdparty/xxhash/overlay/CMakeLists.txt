@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.17.5)
-project(xxhash LANGUAGES C)
+project(xxhash LANGUAGES C VERSION 0.8.3)
 
 add_library(xxhash)
 set_target_properties(xxhash PROPERTIES SOVERSION 0)
@@ -8,5 +8,18 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
     target_compile_definitions(xxhash PRIVATE XXH_NO_INLINE_HINTS)
 endif()
 
+include(GNUInstallDirs)
+
+function(generate_pkgconfig_file)
+    set(PREFIX ${CMAKE_INSTALL_PREFIX})
+    set(EXECPREFIX ${CMAKE_INSTALL_FULL_LIBEXECDIR})
+    set(INCLUDEDIR ${CMAKE_INSTALL_FULL_INCLUDEDIR})
+    set(LIBDIR ${CMAKE_INSTALL_FULL_LIBDIR})
+    set(VERSION ${PROJECT_VERSION})
+    configure_file(libxxhash.pc.in libxxhash.pc @ONLY)
+endfunction()
+generate_pkgconfig_file()
+
 install(TARGETS xxhash)
-install(FILES xxh3.h xxhash.h DESTINATION ${CMAKE_INSTALL_PREFIX}/include)
+install(FILES xxh3.h xxhash.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/libxxhash.pc DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig)
