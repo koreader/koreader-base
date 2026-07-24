@@ -1,6 +1,7 @@
 list(APPEND PATCH_FILES
     cmake_tweaks.patch
     extended.patch
+    pkgconfig.patch
 )
 
 list(APPEND CMAKE_ARGS

@@ -1,0 +1,27 @@
+--- i/CMakeLists.txt
++++ w/CMakeLists.txt
+@@ -42,3 +42,24 @@
+ if(DEFINED XTENDED_DIR)
+     add_subdirectory(${XTENDED_DIR} ${CMAKE_CURRENT_BINARY_DIR}/xtended)
+ endif()
++
++include(GNUInstallDirs)
++
++function(generate_pkgconfig_file)
++    string(CONFIGURE [[
++prefix=@CMAKE_INSTALL_PREFIX@
++includedir=@CMAKE_INSTALL_FULL_INCLUDEDIR@
++libdir=@CMAKE_INSTALL_FULL_LIBDIR@
++
++Name: LunaSVG
++Description: SVG rendering and manipulation library
++Version: @PROJECT_VERSION@
++
++Cflags: -I${includedir}
++Libs: -L${libdir} -llunasvg
++]] pkgconfig_string @ONLY)
++    file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/lunasvg.pc ${pkgconfig_string})
++endfunction()
++generate_pkgconfig_file()
++
++install(FILES ${CMAKE_CURRENT_BINARY_DIR}/lunasvg.pc DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig)
