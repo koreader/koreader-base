@@ -226,6 +226,7 @@ declare_project(
     lunasvg
     md4c
     nanosvg
+    srell
     utf8proc
     xxhash
     zlib
@@ -482,6 +483,12 @@ declare_project(thirdparty/sdl3 ${EXCLUDE_FROM_ALL})
 
 # sqlite
 declare_project(thirdparty/sqlite)
+
+# srell
+declare_project(
+    thirdparty/srell
+    SOURCE_DIR thirdparty/srell
+)
 
 # tar
 if(NOT (ANDROID OR APPLE OR EMULATE_READER OR WIN32))

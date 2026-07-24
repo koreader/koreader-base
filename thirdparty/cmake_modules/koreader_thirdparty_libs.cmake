@@ -231,9 +231,7 @@ target_link_libraries(pthread INTERFACE Threads::Threads)
 declare_dependency(sqlite::sqlite3 MONOLIBTIC sqlite3)
 
 # srell
-add_library(srell INTERFACE)
-target_include_directories(srell INTERFACE ${THIRDPARTY_DIR}/srell)
-add_library(srell::srell ALIAS srell)
+declare_dependency(srell::srell)
 
 # turbo
 if(MONOLIBTIC)
