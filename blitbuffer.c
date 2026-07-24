@@ -656,6 +656,7 @@ void BB_blend_rect(BlitBuffer * restrict bb, unsigned int x, unsigned int y, uns
                     Color8A * restrict dstptr;
                     BB_GET_PIXEL(bb, bb_rotation, Color8A, i, j, &dstptr);
                     dstptr->a = (uint8_t) DIV_255(dstptr->a * ainv + color->a * alpha);
+                    dstptr->alpha = 0xff;
                 }
             }
             break;
@@ -1105,7 +1106,7 @@ void BB_invert_rect(BlitBuffer * restrict bb, unsigned int x, unsigned int y, un
 }
 
 void BB_hatch_rect(BlitBuffer * restrict bb, unsigned int x, unsigned int y, unsigned int w, unsigned int h, unsigned int stripe_width, const Color8 * restrict color, uint8_t alpha) {
-    if (alpha == 0) { // NOP
+    if (alpha == 0 || stripe_width == 0) { // NOP
         return;
     }
     const uint8_t ainv = alpha ^ 0xFF;
