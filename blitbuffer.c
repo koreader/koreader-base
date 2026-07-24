@@ -3079,9 +3079,9 @@ void BB_color_blit_from_RGB32(BlitBuffer * restrict dst, const BlitBuffer * rest
 }
 
 // Information about those three algorithms can be found on http://members.chello.at/~easyfilter/ (Zingl Alois)
-void BB_paint_rounded_corner_noAA(BlitBuffer * restrict bb, unsigned int off_x, unsigned int off_y, unsigned int w, unsigned int h, int bw, int r, uint8_t c);
-void BB_paint_rounded_corner_AA(BlitBuffer * restrict bb, unsigned int off_x, unsigned int off_y, unsigned int w, unsigned int h, int bw, int r, uint8_t c);
-void BB_paint_rounded_corner_AA_1px(BlitBuffer * restrict bb, unsigned int off_x, unsigned int off_y, unsigned int w, unsigned int h, int r, uint8_t c);
+void BB_paint_rounded_corner_noAA(BlitBuffer * restrict bb, unsigned int off_x, unsigned int off_y, unsigned int w, unsigned int h, unsigned int bw, unsigned int r, uint8_t c);
+void BB_paint_rounded_corner_AA(BlitBuffer * restrict bb, unsigned int off_x, unsigned int off_y, unsigned int w, unsigned int h, unsigned int bw, unsigned int r, uint8_t c);
+void BB_paint_rounded_corner_AA_1px(BlitBuffer * restrict bb, unsigned int off_x, unsigned int off_y, unsigned int w, unsigned int h, unsigned int r, uint8_t c);
 
 void BB_paint_rounded_corner(BlitBuffer * restrict bb, unsigned int off_x, unsigned int off_y, unsigned int w, unsigned int h, unsigned int bw, unsigned int r, uint8_t c, int anti_aliasing) {
     /*
@@ -3107,7 +3107,7 @@ void BB_paint_rounded_corner(BlitBuffer * restrict bb, unsigned int off_x, unsig
     }
 }
 
-void BB_paint_rounded_corner_noAA(BlitBuffer * restrict bb, unsigned int off_x, unsigned int off_y, unsigned int w, unsigned int h, int bw, int r, uint8_t c) {
+void BB_paint_rounded_corner_noAA(BlitBuffer * restrict bb, unsigned int off_x, unsigned int off_y, unsigned int w, unsigned int h, unsigned int bw, unsigned int r, uint8_t c) {
 
     const int bb_type = GET_BB_TYPE(bb);
     const int bb_rotation = GET_BB_ROTATION(bb);
@@ -3269,7 +3269,7 @@ void BB_paint_rounded_corner_noAA(BlitBuffer * restrict bb, unsigned int off_x, 
     setPixelAA_BBRGB32(off_x+r+x0,    off_y+h-r-1+y0); \
     setPixelAA_BBRGB32(off_x+w-r-1+x1,off_y+h-r-1+y0);
 
-void BB_paint_rounded_corner_AA_1px(BlitBuffer * restrict bb, unsigned int off_x, unsigned int off_y, unsigned int w, unsigned int h, int r, uint8_t c) { // draw a black anti-aliased circle with thickness 1
+void BB_paint_rounded_corner_AA_1px(BlitBuffer * restrict bb, unsigned int off_x, unsigned int off_y, unsigned int w, unsigned int h, unsigned int r, uint8_t c) { // draw a black anti-aliased circle with thickness 1
     const int bb_type = GET_BB_TYPE(bb);
     const int bb_rotation = GET_BB_ROTATION(bb);
     const unsigned int bb_width = BB_GET_WIDTH(bb);
@@ -3349,7 +3349,7 @@ void BB_paint_rounded_corner_AA_1px(BlitBuffer * restrict bb, unsigned int off_x
     } while (x < 0);
 }
 
-void BB_paint_rounded_corner_AA(BlitBuffer * restrict bb, unsigned int off_x, unsigned int off_y, unsigned int w, unsigned int h, int bw, int r, uint8_t c )
+void BB_paint_rounded_corner_AA(BlitBuffer * restrict bb, unsigned int off_x, unsigned int off_y, unsigned int w, unsigned int h, unsigned int bw, unsigned int r, uint8_t c )
 {        // draw a black anti-aliased circle with width bw
     const int bb_type = GET_BB_TYPE(bb);
     const int bb_rotation = GET_BB_ROTATION(bb);
@@ -3363,12 +3363,13 @@ void BB_paint_rounded_corner_AA(BlitBuffer * restrict bb, unsigned int off_x, un
 
     int o_diam = 2*r; // outer diameter
     int odd_diam = o_diam&1; // odd diameter
-    double a2 = 2.0*r-2.0*bw;
-    double dx = 4.0*(o_diam-1)*o_diam*o_diam;
-    double dy = 4.0*(odd_diam-1)*o_diam*o_diam;            // error increment
-    int i = o_diam+a2;
-    double err = odd_diam*o_diam*o_diam;
-    double dx2, dy2, e2, ed;
+    long long a2 = 2LL*r-2LL*bw;
+    long long dx = 4LL*(o_diam-1)*o_diam*o_diam;
+    long long dy = 4LL*(odd_diam-1)*o_diam*o_diam;          // error increment
+    int i = (int)(o_diam+a2);
+    long long err = (long long)odd_diam*o_diam*o_diam;
+    long long dx2, dy2, e2;
+    double ed;
 
     if ((bw-1)*(2*o_diam-bw) > o_diam*o_diam) {
         a2 = 0;
@@ -3384,14 +3385,14 @@ void BB_paint_rounded_corner_AA(BlitBuffer * restrict bb, unsigned int off_x, un
     if (a2 <= 0)
         bw = o_diam;                                     // filled ellipse
     e2 = bw;
-    bw = x0+bw-e2;
+    bw = x0+bw-(int)e2;
     dx2 = 4*(a2+2*e2-1)*a2*a2;
     dy2 = 4*(odd_diam-1)*a2*a2;
     e2 = dx2*e2;
     y0 += (o_diam+1)>>1;
     y1 = y0-odd_diam;                              // starting pixel
-    double a1 = 8.0*o_diam*o_diam;
-    a2 = 8.0*a2*a2;
+    long long a1 = 8LL*o_diam*o_diam;
+    a2 = 8LL*a2*a2;
 
     do {
         for (;;) {
@@ -3399,26 +3400,26 @@ void BB_paint_rounded_corner_AA(BlitBuffer * restrict bb, unsigned int off_x, un
                 i = x0;
                 break;
             }
-            double i = MIN(dx,dy);
+            double di = MIN(dx,dy);
             ed = MAX(dx,dy);
 
-            ed += 2.0*ed*i*i/(4.0*ed*ed+i*i+1.0)+1.0; // approx ed=sqrt(dx*dx+dy*dy)
+            ed += 2.0*ed*di*di/(4.0*ed*ed+di*di+1.0)+1.0; // approx ed=sqrt(dx*dx+dy*dy)
 
-            i = 255.0*err/ed;                            // outside anti-aliasing
+            di = 255.0*(double)err/ed;                    // outside anti-aliasing
             if (bb_type == TYPE_BB8) {
-                const Color8A color = { .a = c, .alpha = 255-i };
+                const Color8A color = { .a = c, .alpha = (uint8_t)(255-di) };
                 BB8_SET_ALL_QUADRANTS(x0, y0, x1, y1);
             } else if (bb_type == TYPE_BB8A) {
-                const Color8A color = { .a = c, .alpha = 255-i };
+                const Color8A color = { .a = c, .alpha = (uint8_t)(255-di) };
                 BB8A_SET_ALL_QUADRANTS(x0, y0, x1, y1);
             } else if (bb_type == TYPE_BBRGB16) {
-                const Color8A color = { .a = c, .alpha = 255-i };
+                const Color8A color = { .a = c, .alpha = (uint8_t)(255-di) };
                 BBRGB16_SET_ALL_QUADRANTS(x0, y0, x1, y1);
             } else if (bb_type == TYPE_BBRGB24) {
-                const ColorRGB32 color = { .r = c, .g = c, .b = c, .alpha = 255-i };
+                const ColorRGB32 color = { .r = c, .g = c, .b = c, .alpha = (uint8_t)(255-di) };
                 BBRGB24_SET_ALL_QUADRANTS(x0, y0, x1, y1);
             } else if (bb_type == TYPE_BBRGB32) {
-                const ColorRGB32 color = { .r = c, .g = c, .b = c, .alpha = 255-i };
+                const ColorRGB32 color = { .r = c, .g = c, .b = c, .alpha = (uint8_t)(255-di) };
                 BBRGB32_SET_ALL_QUADRANTS(x0, y0, x1, y1);
             }
 
@@ -3450,26 +3451,26 @@ void BB_paint_rounded_corner_AA(BlitBuffer * restrict bb, unsigned int off_x, un
             }
         }
         while (e2 > 0 && x0+x1 >= 2*bw) {               // inside anti-aliasing
-            double i = MIN(dx2,dy2);
+            double di = MIN(dx2,dy2);
             ed = MAX(dx2,dy2);
 
-            ed += 2.0*ed*i*i/(4.0*ed*ed+i*i); // approximation
+            ed += 2.0*ed*di*di/(4.0*ed*ed+di*di); // approximation
 
-            i = 255.0-255.0*e2/ed;          // get intensity value by pixel error
+            di = 255.0-255.0*(double)e2/ed;     // get intensity value by pixel error
             if (bb_type == TYPE_BB8) {
-                const Color8A color = { .a = c, .alpha = 255-i };
+                const Color8A color = { .a = c, .alpha = (uint8_t)(255-di) };
                 BB8_SET_ALL_QUADRANTS(bw, y0, x0+x1-bw, y1);
             } else if (bb_type == TYPE_BB8A) {
-                const Color8A color = { .a = c, .alpha = 255-i };
+                const Color8A color = { .a = c, .alpha = (uint8_t)(255-di) };
                 BB8A_SET_ALL_QUADRANTS(bw, y0, x0+x1-bw, y1);
             } else if (bb_type == TYPE_BBRGB16) {
-                const Color8A color = { .a = c, .alpha = 255-i };
+                const Color8A color = { .a = c, .alpha = (uint8_t)(255-di) };
                 BBRGB16_SET_ALL_QUADRANTS(bw, y0, x0+x1-bw, y1);
             } else if (bb_type == TYPE_BBRGB24) {
-                const ColorRGB32 color = { .r = c, .g = c, .b = c, .alpha = 255-i };
+                const ColorRGB32 color = { .r = c, .g = c, .b = c, .alpha = (uint8_t)(255-di) };
                 BBRGB24_SET_ALL_QUADRANTS(bw, y0, x0+x1-bw, y1);
             } else if (bb_type == TYPE_BBRGB32) {
-                const ColorRGB32 color = { .r = c, .g = c, .b = c, .alpha = 255-i };
+                const ColorRGB32 color = { .r = c, .g = c, .b = c, .alpha = (uint8_t)(255-di) };
                 BBRGB32_SET_ALL_QUADRANTS(bw, y0, x0+x1-bw, y1);
             }
             if (e2+dy2+a2 < dx2)
@@ -3495,7 +3496,7 @@ void BB_paint_rounded_corner_AA(BlitBuffer * restrict bb, unsigned int off_x, un
             err -= dy;
         }
         for (; y0-y1 <= o_diam; err += dy += a1) { // too early stop of flat ellipses
-            i = 255.0*4.0*err/a1;  // -> finish tip of ellipse
+            i = (int)(255.0*4.0*(double)err/(double)a1);  // -> finish tip of ellipse
             if (bb_type == TYPE_BB8) {
                 const Color8A color = { .a = c, .alpha = 255-i };
                 BB8_SET_ALL_QUADRANTS(x0, y0, x1, y1);
