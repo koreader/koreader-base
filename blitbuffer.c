@@ -1255,7 +1255,7 @@ void BB_blit_to_BB8(const BlitBuffer * restrict src, BlitBuffer * restrict dst,
             // (i.e., setPixel, no rota, no invert).
             // The cbb codepath ensures setPixel & no invert, so we only check for rotation.
             if (sbb_rotation == 0 && dbb_rotation == 0) {
-                if (offs_x == 0 && dest_x == 0 && w == src->w && w == dst->w && src->stride == dst->stride) {
+                if (offs_x == 0 && dest_x == 0 && w == src->w && w == dst->w && src->stride == dst->stride && src->stride == w) {
                     // Single step for contiguous scanlines (on both sides)
                     //fprintf(stdout, "%s: full copy blit from BB8 to BB8\n", __FUNCTION__);
                     // BB8 is 1 byte per pixel
@@ -1708,13 +1708,13 @@ void BB_blit_to_BB32(const BlitBuffer * restrict src, BlitBuffer * restrict dst,
             // (i.e., setPixel, no rota, no invert).
             // The cbb codepath ensures setPixel & no invert, so we only check for rotation.
             if (sbb_rotation == 0 && dbb_rotation == 0) {
-                if (offs_x == 0 && dest_x == 0 && w == src->w && w == dst->w && src->stride == dst->stride) {
+                if (offs_x == 0 && dest_x == 0 && w == src->w && w == dst->w && src->stride == dst->stride && src->stride == (w << 2U)) {
                     // Single step for contiguous scanlines (on both sides)
                     //fprintf(stdout, "%s: full copy blit from BBRGB32 to BBRGB32\n", __FUNCTION__);
                     // BBRGB32 is 4 bytes per pixel
                     const uint8_t * restrict srcp = src->data + src->stride*offs_y;
                     uint8_t * restrict dstp = dst->data + dst->stride*dest_y;
-                    memcpy(dstp, srcp, (w << 2U)*h);
+                    memcpy(dstp, srcp, src->stride*h);
                 } else {
                     // Scanline per scanline copy
                     //fprintf(stdout, "%s: scanline copy blit from BBRGB32 to BBRGB32\n", __FUNCTION__);
