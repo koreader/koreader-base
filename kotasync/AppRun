@@ -1,0 +1,13 @@
+#!/bin/sh
+
+if [ -z "${APPDIR}" ]; then
+    APPDIR="$(dirname "$(realpath "$0")")"
+fi
+
+export LUA_PATH="${APPDIR}/kotasync/?.lua;${APPDIR}/kotasync/common/?.lua"
+export LUA_CPATH="${APPDIR}/kotasync/?.so;${APPDIR}/kotasync/common/?.so"
+export KOTASYNC_USE_XZ_LIB=1
+
+exec "${APPDIR}/kotasync/luajit" -l kotasync kotasync "$@"
+
+# vim: sw=4
