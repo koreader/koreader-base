@@ -463,44 +463,20 @@ class LVContainerTransform : public LVContainer
 
 public:
     LVContainerTransform(lua_State * L, int transform_ref, LVContainerRef container) :
-        _L(L),
-        _transform_ref(transform_ref),
-        _container(container)
-    {
-    }
+        _L(L), _transform_ref(transform_ref), _container(container) { }
 
-    virtual ~LVContainerTransform()
-    {
+    virtual ~LVContainerTransform() {
         if (_transform_ref != LUA_NOREF) {
             luaL_unref(_L, LUA_REGISTRYINDEX, _transform_ref);
             _transform_ref = LUA_NOREF;
         }
     }
 
-    virtual LVContainer * GetParentContainer()
-    {
-        return _container->GetParentContainer();
-    }
-
-    virtual lverror_t GetSize(lvsize_t * pSize)
-    {
-        return _container->GetSize(pSize);
-    }
-
-    virtual const LVContainerItemInfo * GetObjectInfo(int index)
-    {
-        return _container->GetObjectInfo(index);
-    }
-
-    virtual const LVContainerItemInfo * GetObjectInfo(lString32 name)
-    {
-        return _container->GetObjectInfo(name);
-    }
-
-    virtual int GetObjectCount() const
-    {
-        return _container->GetObjectCount();
-    }
+    virtual LVContainer * GetParentContainer() { return _container->GetParentContainer(); }
+    virtual lverror_t GetSize(lvsize_t * pSize) { return _container->GetSize(pSize); }
+    virtual const LVContainerItemInfo * GetObjectInfo(int index) { return _container->GetObjectInfo(index); }
+    virtual const LVContainerItemInfo * GetObjectInfo(lString32 name) { return _container->GetObjectInfo(name); }
+    virtual int GetObjectCount() const { return _container->GetObjectCount(); }
 
     virtual LVStreamRef OpenStream(const lChar32 * fname, lvopen_mode_t mode)
     {
@@ -516,15 +492,8 @@ public:
         return _container->OpenStream(fname, mode);
     }
 
-    virtual const lChar32 * GetName()
-    {
-        return _container->GetName();
-    }
-
-    virtual void SetName(const lChar32 * name)
-    {
-        _container->SetName(name);
-    }
+    virtual const lChar32 * GetName() { return _container->GetName(); }
+    virtual void SetName(const lChar32 * name) { _container->SetName(name); }
 };
 
 static int setCallback(lua_State *L) {
