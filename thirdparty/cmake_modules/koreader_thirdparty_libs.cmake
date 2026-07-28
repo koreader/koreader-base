@@ -39,8 +39,6 @@ target_link_libraries(
     _crengine__crengine
     INTERFACE
     ${OUTPUT_DIR}/thirdparty/crengine/build/libcrengine.a
-    ${OUTPUT_DIR}/thirdparty/crengine/build/crengine/thirdparty/antiword/libantiword.a
-    ${OUTPUT_DIR}/thirdparty/crengine/build/crengine/thirdparty/chmlib/libchmlib.a
     freetype2::freetype
     harfbuzz::harfbuzz
     libunibreak::unibreak
@@ -56,8 +54,7 @@ target_link_libraries(
     zlib::z
     zstd::zstd
 )
-target_compile_options(_crengine__crengine INTERFACE -include ${OUTPUT_DIR}/thirdparty/crengine/build/crsetup.h)
-target_include_directories(_crengine__crengine INTERFACE ${THIRDPARTY_DIR}/kpvcrlib/crengine/crengine/include)
+target_include_directories(_crengine__crengine INTERFACE ${OUTPUT_DIR}/thirdparty/crengine/build ${THIRDPARTY_DIR}/kpvcrlib/crengine/crengine/include)
 
 # czmq
 set(LIBRARIES)

@@ -1,4 +1,5 @@
-include(koreader_targets)
+# For some reason we need to include this again…
+include(${CMAKE_KOVARS})
 
 list(APPEND CMAKE_ARGS
     -DCMAKE_KOVARS=${CMAKE_KOVARS}
