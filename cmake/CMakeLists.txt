@@ -231,7 +231,7 @@ declare_project(
     xxhash
     zlib
     zstd
-    SOURCE_DIR thirdparty/kpvcrlib
+    SOURCE_DIR thirdparty/kpvcrlib/crengine
 )
 set(crengine_CMAKE_BINARY_DIR ${OUTPUT_DIR}/thirdparty/crengine)
 set(crengine_BINARY_DIR ${crengine_CMAKE_BINARY_DIR}/build)
