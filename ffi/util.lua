@@ -105,11 +105,21 @@ function util.getDuration(from_timestamp)
     return util.getTimestamp() - from_timestamp
 end
 
-local statvfs = ffi.new("struct statvfs")
+-- bionic only got statvfs in API 19, and NDKABI is still 18 on 32-bit Android.
+local has_statvfs = pcall(function() return C.statvfs ~= nil end)
+
+--- Size, free space and available space of the filesystem holding path, in bytes.
+-- Available is what df reports in that column: free space less the blocks kept
+-- back for root. Returns nil plus a message if the filesystem cannot be queried.
 function util.df(path)
-    C.statvfs(path, statvfs)
-    return tonumber(statvfs.f_blocks * statvfs.f_bsize),
-        tonumber(statvfs.f_bfree * statvfs.f_bsize)
+    if not has_statvfs then return nil, "statvfs is not available" end
+    local statvfs = ffi.new("struct statvfs")
+    if C.statvfs(path, statvfs) ~= 0 then return nil, "statvfs: " .. posix.strerror() end
+    -- The block counts are in f_frsize units, which is not always f_bsize.
+    local frsize = tonumber(statvfs.f_frsize)
+    return tonumber(statvfs.f_blocks) * frsize,
+        tonumber(statvfs.f_bfree) * frsize,
+        tonumber(statvfs.f_bavail) * frsize
 end
 
 --- Wrapper for C.strcoll.
