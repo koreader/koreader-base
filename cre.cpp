@@ -417,6 +417,85 @@ typedef struct CreDocument {
 	ldomDocument *dom_doc;
 } CreDocument;
 
+class LVContainerTransform : public LVContainer
+{
+    lua_State * _L;
+    int _transform_ref;
+    LVContainerRef _container;
+
+    LVStreamRef openTransformedEntry(lString32 path)
+    {
+        int top = lua_gettop(_L);
+        lua_rawgeti(_L, LUA_REGISTRYINDEX, _transform_ref);
+        lua_getfield(_L, -1, "transformEntry");
+        if (lua_isnil(_L, -1)) {
+            lua_settop(_L, top);
+            return LVStreamRef();
+        }
+
+        lua_insert(_L, -2);
+        lString8 path8 = UnicodeToUtf8(path);
+        lua_pushstring(_L, path8.c_str());
+        if (lua_pcall(_L, 2, 1, 0) != 0) {
+            CRLog::error("LVContainerTransform: transformEntry failed: %s", lua_tostring(_L, -1));
+            lua_settop(_L, top);
+            return LVStreamRef();
+        }
+        if (lua_isnil(_L, -1)) {
+            lua_settop(_L, top);
+            return LVStreamRef();
+        }
+
+        size_t data_size = 0;
+        const char * data = lua_tolstring(_L, -1, &data_size);
+        if (!data) {
+            CRLog::error("LVContainerTransform: transformEntry() must return nil or a byte string");
+            lua_settop(_L, top);
+            return LVStreamRef();
+        }
+
+        LVStreamRef stream = LVCreateMemoryStream((void*)data, (int)data_size, true);
+        if (!stream.isNull())
+            stream->SetName(path.c_str());
+        lua_settop(_L, top);
+        return stream;
+    }
+
+public:
+    LVContainerTransform(lua_State * L, int transform_ref, LVContainerRef container) :
+        _L(L), _transform_ref(transform_ref), _container(container) { }
+
+    virtual ~LVContainerTransform() {
+        if (_transform_ref != LUA_NOREF) {
+            luaL_unref(_L, LUA_REGISTRYINDEX, _transform_ref);
+            _transform_ref = LUA_NOREF;
+        }
+    }
+
+    virtual LVContainer * GetParentContainer() { return _container->GetParentContainer(); }
+    virtual lverror_t GetSize(lvsize_t * pSize) { return _container->GetSize(pSize); }
+    virtual const LVContainerItemInfo * GetObjectInfo(int index) { return _container->GetObjectInfo(index); }
+    virtual const LVContainerItemInfo * GetObjectInfo(lString32 name) { return _container->GetObjectInfo(name); }
+    virtual int GetObjectCount() const { return _container->GetObjectCount(); }
+
+    virtual LVStreamRef OpenStream(const lChar32 * fname, lvopen_mode_t mode)
+    {
+        if (!fname)
+            return LVStreamRef();
+
+        if (mode == LVOM_READ) {
+            LVStreamRef transformed = openTransformedEntry(lString32(fname));
+            if (!transformed.isNull())
+                return transformed;
+        }
+
+        return _container->OpenStream(fname, mode);
+    }
+
+    virtual const lChar32 * GetName() { return _container->GetName(); }
+    virtual void SetName(const lChar32 * name) { _container->SetName(name); }
+};
+
 static int setCallback(lua_State *L) {
     CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
     if ( cre_callback_forwarder == NULL ) {
@@ -696,6 +775,41 @@ static int loadDocument(lua_State *L) {
 	}
 
 	doc->text_view->LoadDocument(file_name, only_metadata);
+	doc->dom_doc = doc->text_view->getDocument();
+
+	bool loaded = false;
+	if (doc->dom_doc) { loaded = true ;}
+	lua_pushboolean(L, loaded);
+	return 1;
+}
+
+static int loadEpubWithEntryTransform(lua_State *L) {
+	CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
+	const char *file_name = luaL_checkstring(L, 2);
+	luaL_checktype(L, 3, LUA_TTABLE);
+	bool only_metadata = false;
+	if (lua_isboolean(L, 4)) {
+		only_metadata = lua_toboolean(L, 4);
+	}
+
+	lString32 file_name32 = LocalToUnicode(lString8(file_name));
+	LVStreamRef stream = LVOpenFileStream(file_name32.c_str(), LVOM_READ);
+	if (stream.isNull()) {
+		lua_pushboolean(L, false);
+		return 1;
+	}
+
+	LVContainerRef archive = LVOpenArchieve(stream);
+	if (archive.isNull()) {
+		lua_pushboolean(L, false);
+		return 1;
+	}
+
+	lua_pushvalue(L, 3);
+	int transform_ref = luaL_ref(L, LUA_REGISTRYINDEX);
+	LVContainerRef container(new LVContainerTransform(L, transform_ref, archive));
+
+	doc->text_view->LoadEpubDocument(container, file_name32.c_str(), only_metadata);
 	doc->dom_doc = doc->text_view->getDocument();
 
 	bool loaded = false;
@@ -4360,6 +4474,7 @@ static const struct luaL_Reg cre_func[] = {
 
 static const struct luaL_Reg credocument_meth[] = {
     {"loadDocument", loadDocument},
+    {"loadEpubWithEntryTransform", loadEpubWithEntryTransform},
     {"renderDocument", renderDocument},
     {"requestRender", requestRender},
     /*--- get methods ---*/
