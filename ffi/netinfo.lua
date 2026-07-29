@@ -123,10 +123,12 @@ if ffi.os == "Linux" then -- {{{
 function NetInfo:_iface_ssid_ioctl(iface)
     local sd = self.sd
     if not sd then
-        sd = C.socket(C.AF_INET, bit.bor(C.SOCK_DGRAM, C.SOCK_CLOEXEC), C.IPPROTO_IP)
+        -- SOCK_CLOEXEC in socket() needs Linux 2.6.27; older kernels fail with EINVAL.
+        sd = C.socket(C.AF_INET, C.SOCK_DGRAM, C.IPPROTO_IP)
         if sd < 0 then
             error(string.format("socket(AF_INET) failed: %s", posix.strerror()))
         end
+        C.fcntl(sd, C.F_SETFD, ffi.cast("int", C.FD_CLOEXEC))
         self.sd = sd
     end
     local essid = ffi.new("char[?]", C.IW_ESSID_MAX_SIZE + 1)
