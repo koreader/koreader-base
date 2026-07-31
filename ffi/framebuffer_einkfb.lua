@@ -26,7 +26,9 @@ function framebuffer:refreshPartialImp(x, y, w, h)
 end
 
 function framebuffer:refreshFullImp(x, y, w, h)
-    einkfb_update(self, C.fx_update_full, x, y, w, h)
+    -- The driver skips an update whose pixels all match what is already on screen, dropping
+    -- explicit full refreshes on an unchanged screen; fx_update_slow is exempt from that check.
+    einkfb_update(self, C.fx_update_slow, x, y, w, h)
 end
 
 return require("ffi/framebuffer_linux"):extend(framebuffer)
