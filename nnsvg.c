@@ -74,6 +74,9 @@ NSVGimage * check_NSVGimage(lua_State * L, int n) {
     // This checks that the thing at n on the stack is a correct nnSVGImage
     // wrapping userdata (tagged with the "luaL_nnSVGImage" metatable).
     NSVGimage * image = *(NSVGimage **)luaL_checkudata(L, n, NNSVG_METATABLE_NAME);
+    if (!image) {
+        luaL_error(L, "attempt to use a freed NSVGimage");
+    }
     return image;
 }
 
