@@ -163,6 +163,24 @@ describe("util module", function()
         end)
     end)
 
+    describe("util.df", function()
+        it("should report a filesystem's size, free and available space", function()
+            local total, free, available = util.df(".")
+            assert.is_number(total)
+            assert.is_true(total > 0)
+            -- Free space cannot exceed the filesystem, and what is available to
+            -- an unprivileged user cannot exceed what is free.
+            assert.is_true(free <= total)
+            assert.is_true(available <= free)
+        end)
+
+        it("should error out on a non-existent path", function()
+            local ok, err = util.df("/tmp/123/abc/567/foobar")
+            assert.is_nil(ok)
+            assert.is_not_nil(err)
+        end)
+    end)
+
     describe("util.purgeDir", function()
         it("should error out on non-exists directory", function()
             local ok, err = util.purgeDir('/tmp/123/abc/567/foobar')
