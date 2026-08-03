@@ -348,6 +348,12 @@ function TarXz:reorder(older_tar_xz_or_manifest_path)
 end
 
 function TarXz:rewrite(entries)
+    -- Stat the original file so we can copy its permissions over.
+    local stat = ffi.new("struct stat")
+    local ret = C.stat(self.filename, stat)
+    if ret ~= 0 then
+        error("stat: "..posix.strerror())
+    end
     local directory = self.filename:match("^(.+)/[^/]+$") or "./"
     local template_suffix = ".tar.xz.part"
     local template = directory.."/XXXXXX"..template_suffix
@@ -356,10 +362,14 @@ function TarXz:rewrite(entries)
     if fd < 0 then
         error("mkstemps: "..posix.strerror())
     end
+    -- Fix permissions (`mkstemps` defaults to 0600).
+    ret = C.fchmod(fd, bit.band(stat.st_mode, 0x1ff))
+    if ret ~= 0 then
+        error("fchmod: "..posix.strerror())
+    end
     template = ffi.string(template)
     self.tmpfd = fd
     local stream_buf = ffi.new("uint8_t[?]", xz.LZMA_STREAM_HEADER_SIZE)
-    local ret
     -- First: the header.
     ret = xz.lzma_stream_header_encode(self.header_stream_flags, stream_buf)
     assert(ret == xz.LZMA_OK, ret)
