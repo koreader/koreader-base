@@ -24,58 +24,48 @@ end
 
 function Downloader:fetch(url, callback, ranges, etag)
     assert(not (ranges and etag))
-    self.status_code = nil
-    self.etag = nil
-    local ok
     local sink = function(s)
         return s and callback(ffi.cast("uint8_t *", s), #s)
     end
-    local body, status_code, resp_headers, status_line
+    local abort
+    local response_headers = function(status_code, resp_headers, status_line)
+        if ranges then
+            abort = status_code ~= 206
+        else
+            abort = status_code ~= 200 and status_code ~= 304
+        end
+        return abort
+    end
+    local ok, status_code, resp_headers, status_line
     if ranges then
         ranges = merge_ranges(ranges)
-        local range_support_checked = false
         local ranges_index = 1
         repeat
-            body, status_code, resp_headers, status_line = http.request{
+            ok, status_code, resp_headers, status_line = http.request{
                 url = url,
                 headers = { ["Range"] = string.format("bytes=%u-%u", ranges[ranges_index][1], ranges[ranges_index][2]) },
+                response_headers = response_headers,
                 sink = sink,
             }
-            if not body then
-                self.err = status_code
-                return false
-            end
-            ok = status_code == 206
-            if not ok then
-                self.err = status_line
-                return false
-            end
-            if not range_support_checked then
-                if resp_headers["accept-ranges"] ~= "bytes" and not (resp_headers["content-range"] or ""):match("^bytes ") then
-                    self.err = "server does not support range requests!"
-                    return false
-                end
-                range_support_checked = true
-            end
+            ok = ok and not abort
             ranges_index = ranges_index + 1
-        until ranges_index > #ranges
+        until abort or not ok or ranges_index > #ranges
+        if not ok and status_code == 200 then
+            status_line = "server does not support range requests!"
+        end
     else
-        body, status_code, resp_headers, status_line = http.request{
+        ok, status_code, resp_headers, status_line = http.request{
             url = url,
             headers = etag and { ["If-None-Match"] = etag },
+            response_headers = response_headers,
             sink = sink,
         }
-        if not body then
-            self.err = status_code
-            return false
-        end
-        self.etag = resp_headers['etag']
-        ok = status_code == 200 or status_code == 304
-        if not ok then
-            self.err = status_line
-        end
+        ok = ok and not abort
     end
+    self.headers = resp_headers
+    self.etag = resp_headers['etag']
     self.status_code = status_code
+    self.err = not ok and (status_line or status_code) or nil
     return ok
 end
 
