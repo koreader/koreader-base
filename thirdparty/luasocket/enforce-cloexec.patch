@@ -1,8 +1,8 @@
 diff --git a/src/usocket.c b/src/usocket.c
-index 7965db6..fc1f607 100644
+index 23b3422..c0bceae 100644
 --- a/src/usocket.c
 +++ b/src/usocket.c
-@@ -122,8 +122,15 @@ int socket_select(t_socket n, fd_set *rfds, fd_set *wfds, fd_set *efds,
+@@ -114,8 +114,15 @@ int socket_select(t_socket n, fd_set *rfds, fd_set *wfds, fd_set *efds,
  \*-------------------------------------------------------------------------*/
  int socket_create(p_socket ps, int domain, int type, int protocol) {
      *ps = socket(domain, type, protocol);

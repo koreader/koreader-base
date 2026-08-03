@@ -1,4 +1,5 @@
 diff --git a/src/luasocket.c b/src/luasocket.c
+index 0fd99f7..835c633 100644
 --- a/src/luasocket.c
 +++ b/src/luasocket.c
 @@ -96,7 +96,7 @@ static int base_open(lua_State *L) {
@@ -11,6 +12,7 @@ diff --git a/src/luasocket.c b/src/luasocket.c
      base_open(L);
      for (i = 0; mod[i].name; i++) mod[i].func(L);
 diff --git a/src/luasocket.h b/src/luasocket.h
+index 1e3d358..d38558d 100644
 --- a/src/luasocket.h
 +++ b/src/luasocket.h
 @@ -31,6 +31,6 @@
@@ -22,6 +24,7 @@ diff --git a/src/luasocket.h b/src/luasocket.h
  
  #endif /* LUASOCKET_H */
 diff --git a/src/mime.c b/src/mime.c
+index 05602f5..5d9a501 100644
 --- a/src/mime.c
 +++ b/src/mime.c
 @@ -167,7 +167,7 @@ static const UC b64unbase[] = {
@@ -34,6 +37,7 @@ diff --git a/src/mime.c b/src/mime.c
      lua_newtable(L);
      luaL_setfuncs(L, func, 0);
 diff --git a/src/mime.h b/src/mime.h
+index 4d938f4..1fc55c3 100644
 --- a/src/mime.h
 +++ b/src/mime.h
 @@ -17,6 +17,6 @@
@@ -45,6 +49,7 @@ diff --git a/src/mime.h b/src/mime.h
  
  #endif /* MIME_H */
 diff --git a/src/mime.lua b/src/mime.lua
+index 93539de..d23b2d1 100644
 --- a/src/mime.lua
 +++ b/src/mime.lua
 @@ -9,7 +9,7 @@
@@ -57,6 +62,7 @@ diff --git a/src/mime.lua b/src/mime.lua
  
  -- encode, decode and wrap algorithm tables
 diff --git a/src/socket.lua b/src/socket.lua
+index d1c0b16..ea7c8ef 100644
 --- a/src/socket.lua
 +++ b/src/socket.lua
 @@ -9,7 +9,7 @@

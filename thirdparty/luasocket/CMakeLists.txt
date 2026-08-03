@@ -55,7 +55,7 @@ else()
 endif()
 
 external_project(
-    DOWNLOAD GIT e3ca4a767a68d127df548d82669aba3689bd84f4
+    DOWNLOAD GIT a3bcaed18cb6d69e6e2ae711c93dbe99c7a220bb
     https://github.com/lunarmodules/luasocket
     PATCH_OVERLAY overlay
     PATCH_FILES ${PATCH_FILES}
