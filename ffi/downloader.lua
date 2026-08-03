@@ -45,17 +45,17 @@ function Downloader:fetch(url, callback, ranges, etag)
                 self.err = status_code
                 return false
             end
-            if not range_support_checked then
-                if resp_headers["accept-ranges"] ~= "bytes" then
-                    self.err = "server does not support range requests!"
-                    return false
-                end
-                range_support_checked = true
-            end
             ok = status_code == 206
             if not ok then
                 self.err = status_line
                 return false
+            end
+            if not range_support_checked then
+                if resp_headers["accept-ranges"] ~= "bytes" and not (resp_headers["content-range"] or ""):match("^bytes ") then
+                    self.err = "server does not support range requests!"
+                    return false
+                end
+                range_support_checked = true
             end
             ranges_index = ranges_index + 1
         until ranges_index > #ranges
