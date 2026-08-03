@@ -1,4 +1,5 @@
 diff --git a/src/compat.h b/src/compat.h
+index fa2d7d7..0399a76 100644
 --- a/src/compat.h
 +++ b/src/compat.h
 @@ -1,3 +1,4 @@

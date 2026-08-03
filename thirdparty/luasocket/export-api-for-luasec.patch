@@ -1,4 +1,5 @@
 diff --git a/src/usocket.c b/src/usocket.c
+index 7965db6..23b3422 100644
 --- a/src/usocket.c
 +++ b/src/usocket.c
 @@ -18,11 +18,7 @@
@@ -25,6 +26,7 @@ diff --git a/src/usocket.c b/src/usocket.c
      int ret;
      fd_set rfds, wfds, *rp, *wp;
 diff --git a/src/usocket.h b/src/usocket.h
+index 45f2f99..b1f8cbb 100644
 --- a/src/usocket.h
 +++ b/src/usocket.h
 @@ -56,4 +56,15 @@ typedef struct sockaddr_storage t_sockaddr_storage;
@@ -44,6 +46,7 @@ diff --git a/src/usocket.h b/src/usocket.h
 +
  #endif /* USOCKET_H */
 diff --git a/src/wsocket.c b/src/wsocket.c
+index d3af9d4..b56f751 100644
 --- a/src/wsocket.c
 +++ b/src/wsocket.c
 @@ -42,11 +42,6 @@ int socket_close(void) {
@@ -59,6 +62,7 @@ diff --git a/src/wsocket.c b/src/wsocket.c
      int ret;
      fd_set rfds, wfds, efds, *rp = NULL, *wp = NULL, *ep = NULL;
 diff --git a/src/wsocket.h b/src/wsocket.h
+index 3986640..c5a4b1c 100644
 --- a/src/wsocket.h
 +++ b/src/wsocket.h
 @@ -16,6 +16,11 @@ typedef SOCKADDR_STORAGE t_sockaddr_storage;
