@@ -124,11 +124,15 @@ function NetInfo:_iface_ssid_ioctl(iface)
     local sd = self.sd
     if not sd then
         -- SOCK_CLOEXEC in socket() needs Linux 2.6.27; older kernels fail with EINVAL.
+        -- It also sets the flag atomically, which the fcntl below cannot: another
+        -- thread forking and exec'ing in between leaks the descriptor (c.f. open(2)).
         sd = C.socket(C.AF_INET, C.SOCK_DGRAM, C.IPPROTO_IP)
         if sd < 0 then
             error(string.format("socket(AF_INET) failed: %s", posix.strerror()))
         end
-        C.fcntl(sd, C.F_SETFD, ffi.cast("int", C.FD_CLOEXEC))
+        if C.fcntl(sd, C.F_SETFD, ffi.cast("int", C.FD_CLOEXEC)) == -1 then
+            io.stderr:write("fcntl(F_SETFD, FD_CLOEXEC) failed: " .. posix.strerror())
+        end
         self.sd = sd
     end
     local essid = ffi.new("char[?]", C.IW_ESSID_MAX_SIZE + 1)
