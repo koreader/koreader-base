@@ -167,6 +167,16 @@ elseif --[[ macos ]] platform == 0x80 then
 ffi.cdef[[ typedef int32_t blksize_t; ]]
 end
 
+if --[[ linux_arm ]] platform == 0x10 then
+ffi.cdef[[ typedef unsigned long long dev_t; ]]
+elseif --[[ linux_arm64|linux_x64 ]] bit.band(platform, 0x60) ~= 0 then
+ffi.cdef[[ typedef unsigned long dev_t; ]]
+end
+
+if --[[ linux_arm|linux_arm64|linux_x64 ]] bit.band(platform, 0x70) ~= 0 then
+ffi.cdef[[ typedef unsigned gid_t; ]]
+end
+
 if --[[ android_arm|android_arm64|android_x64|android_x86|macos ]] bit.band(platform, 0x8f) ~= 0 then
 ffi.cdef[[ typedef uint32_t id_t; ]]
 elseif --[[ linux_arm|linux_arm64|linux_x64 ]] bit.band(platform, 0x70) ~= 0 then
@@ -177,12 +187,22 @@ if --[[ macos ]] platform == 0x80 then
 ffi.cdef[[ typedef uint64_t __darwin_ino64_t; ]]
 end
 
+if --[[ linux_arm|linux_arm64|linux_x64 ]] bit.band(platform, 0x70) ~= 0 then
+ffi.cdef[[ typedef unsigned long ino_t; ]]
+end
+
 if --[[ android_arm|android_x86 ]] bit.band(platform, 0x9) ~= 0 then
 ffi.cdef[[ typedef unsigned short mode_t; ]]
 elseif --[[ android_arm64|android_x64|linux_arm|linux_arm64|linux_x64 ]] bit.band(platform, 0x76) ~= 0 then
 ffi.cdef[[ typedef unsigned mode_t; ]]
 elseif --[[ macos ]] platform == 0x80 then
 ffi.cdef[[ typedef uint16_t mode_t; ]]
+end
+
+if --[[ linux_arm|linux_arm64 ]] bit.band(platform, 0x30) ~= 0 then
+ffi.cdef[[ typedef unsigned nlink_t; ]]
+elseif --[[ linux_x64 ]] platform == 0x40 then
+ffi.cdef[[ typedef unsigned long nlink_t; ]]
 end
 
 if --[[ android_arm|android_arm64|android_x64|android_x86|linux_arm|linux_arm64|linux_x64 ]] bit.band(platform, 0x7f) ~= 0 then
@@ -1011,6 +1031,144 @@ end
 ffi.cdef[[
 int inet_aton(const char *, struct in_addr *);
 int statvfs(const char *, struct statvfs *);
+]]
+
+if --[[ android_arm|android_x86 ]] bit.band(platform, 0x9) ~= 0 then
+ffi.cdef[[
+struct stat {
+  unsigned long long st_dev;
+  unsigned char __pad0[4];
+  unsigned long __st_ino;
+  unsigned st_mode;
+  nlink_t st_nlink;
+  uid_t st_uid;
+  gid_t st_gid;
+  unsigned long long st_rdev;
+  unsigned char __pad3[4];
+  long long st_size;
+  unsigned long st_blksize;
+  unsigned long long st_blocks;
+  struct timespec st_atim;
+  struct timespec st_mtim;
+  struct timespec st_ctim;
+  unsigned long long st_ino;
+};
+]]
+elseif --[[ android_arm64 ]] platform == 0x2 then
+ffi.cdef[[
+struct stat {
+  dev_t st_dev;
+  ino_t st_ino;
+  mode_t st_mode;
+  nlink_t st_nlink;
+  uid_t st_uid;
+  gid_t st_gid;
+  dev_t st_rdev;
+  unsigned long __pad1;
+  off_t st_size;
+  int st_blksize;
+  int __pad2;
+  long st_blocks;
+  struct timespec st_atim;
+  struct timespec st_mtim;
+  struct timespec st_ctim;
+  unsigned __unused4;
+  unsigned __unused5;
+};
+]]
+elseif --[[ android_x64 ]] platform == 0x4 then
+ffi.cdef[[
+struct stat {
+  dev_t st_dev;
+  ino_t st_ino;
+  unsigned long st_nlink;
+  mode_t st_mode;
+  uid_t st_uid;
+  gid_t st_gid;
+  unsigned __pad0;
+  dev_t st_rdev;
+  off_t st_size;
+  long st_blksize;
+  long st_blocks;
+  struct timespec st_atim;
+  struct timespec st_mtim;
+  struct timespec st_ctim;
+  long __pad3[3];
+};
+]]
+elseif --[[ linux_arm ]] platform == 0x10 then
+ffi.cdef[[
+struct stat {
+  dev_t st_dev;
+  unsigned short __pad1;
+  ino_t st_ino;
+  mode_t st_mode;
+  nlink_t st_nlink;
+  uid_t st_uid;
+  gid_t st_gid;
+  dev_t st_rdev;
+  unsigned short __pad2;
+  off_t st_size;
+  blksize_t st_blksize;
+  blkcnt_t st_blocks;
+  struct timespec st_atim;
+  struct timespec st_mtim;
+  struct timespec st_ctim;
+  unsigned long __unused4;
+  unsigned long __unused5;
+};
+]]
+elseif --[[ linux_arm64 ]] platform == 0x20 then
+ffi.cdef[[
+struct stat {
+  dev_t st_dev;
+  ino_t st_ino;
+  mode_t st_mode;
+  nlink_t st_nlink;
+  uid_t st_uid;
+  gid_t st_gid;
+  dev_t st_rdev;
+  dev_t __pad1;
+  off_t st_size;
+  blksize_t st_blksize;
+  int __pad2;
+  blkcnt_t st_blocks;
+  struct timespec st_atim;
+  struct timespec st_mtim;
+  struct timespec st_ctim;
+  int __glibc_reserved[2];
+};
+]]
+elseif --[[ linux_x64 ]] platform == 0x40 then
+ffi.cdef[[
+struct stat {
+  dev_t st_dev;
+  ino_t st_ino;
+  nlink_t st_nlink;
+  mode_t st_mode;
+  uid_t st_uid;
+  gid_t st_gid;
+  int __pad0;
+  dev_t st_rdev;
+  off_t st_size;
+  blksize_t st_blksize;
+  blkcnt_t st_blocks;
+  struct timespec st_atim;
+  struct timespec st_mtim;
+  struct timespec st_ctim;
+  long __glibc_reserved[3];
+};
+]]
+end
+
+if --[[ android_arm|android_arm64|android_x64|android_x86|linux_arm|linux_arm64|linux_x64 ]] bit.band(platform, 0x7f) ~= 0 then
+ffi.cdef[[
+int fchmod(int, mode_t);
+int stat(const char *, struct stat *);
+]]
+end
+
+ffi.cdef[[
 static const unsigned WNOHANG = 1;
 pid_t waitpid(pid_t, int *, int);
 ]]

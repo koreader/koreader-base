@@ -111,8 +111,8 @@ typedef int64_t blkcnt_t;
 typedef int32_t blksize_t;
 // cdecl_type_id_t
 typedef uint32_t id_t;
-// cdecl_type___darwin_ino64_t
-typedef uint64_t __darwin_ino64_t;
+// cdecl_type_ino64_t
+typedef uint64_t ino64_t;
 // cdecl_type_mode_t
 typedef uint16_t mode_t;
 // cdecl_type_off_t
@@ -484,6 +484,31 @@ int getnameinfo(const struct sockaddr *, socklen_t, char *, socklen_t, char *, s
 int inet_aton(const char *, struct in_addr *);
 // cdecl_func_statvfs
 int statvfs(const char *, struct statvfs *);
+// cdecl_struct_stat
+struct stat {
+  dev_t st_dev;
+  mode_t st_mode;
+  nlink_t st_nlink;
+  ino64_t st_ino;
+  uid_t st_uid;
+  gid_t st_gid;
+  dev_t st_rdev;
+  struct timespec st_atimespec;
+  struct timespec st_mtimespec;
+  struct timespec st_ctimespec;
+  struct timespec st_birthtimespec;
+  off_t st_size;
+  blkcnt_t st_blocks;
+  blksize_t st_blksize;
+  uint32_t st_flags;
+  uint32_t st_gen;
+  int32_t st_lspare;
+  int64_t st_qspare[2];
+};
+// cdecl_func_fchmod
+int fchmod(int, mode_t);
+// cdecl_func_stat
+int stat(const char *, struct stat *);
 // cdecl_const_WNOHANG
 static const unsigned WNOHANG = 1;
 // cdecl_func_waitpid
