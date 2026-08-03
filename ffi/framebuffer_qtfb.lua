@@ -5,13 +5,6 @@ local qtfb = require("ffi/qtfb")
 
 require("ffi/posix_h")
 
--- Fallback/explicit loading of librt for shm_open
-local rt
-local ok = pcall(function() rt = ffi.load("rt") end)
-if not ok or not rt then
-    rt = C
-end
-
 local framebuffer = {
     sock = -1,
     data = nil,
@@ -78,7 +71,7 @@ function framebuffer:init()
 
     -- Open and map shared memory
     local shmName = string.format("/qtfb_%d", shmKey)
-    local shmFD = rt.shm_open(shmName, 2, 0) -- O_RDWR = 2
+    local shmFD = C.shm_open(shmName, 2, 0) -- O_RDWR = 2
     if shmFD < 0 then
         C.close(self.sock)
         self.sock = -1

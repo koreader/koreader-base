@@ -1,6 +1,5 @@
 local ffi = require("ffi")
 local C = ffi.C
-local rt = ffi.load("librt.so")
 local inkview = require("ffi/inkview")
 local util = require("ffi/util")
 
@@ -340,7 +339,7 @@ function input:open()
         -- Open the monitor queue. We could technically live without it on older firmwares
         -- that don't have it, but I'm not sure how events are meant to be consumed on there
         -- to prevent stall, so for the time being we bail when we don't see it.
-        local hwinput = rt.mq_open("/hwevent", C.O_RDONLY+C.O_NONBLOCK)
+        local hwinput = C.mq_open("/hwevent", C.O_RDONLY+C.O_NONBLOCK)
         assert(hwinput >= 0, "No /hwevent, probably too old firmware")
         poll_fds[0].fd = hwinput
         poll_fds[0].events = C.POLLIN
@@ -461,7 +460,7 @@ local function waitForEventRaw(timeout)
         -- monitor would spam queued events to whaetever else gets focus after us.
         if band(poll_fds[0].revents, C.POLLIN) ~= 0 then
             updateTimestamp() -- single 'ts' copy for genEmuEvent inside the loop
-            while rt.mq_receive(poll_fds[0].fd, ffi.cast("char*", hwmsg), hwmsg_len, nil) > 0 do
+            while C.mq_receive(poll_fds[0].fd, ffi.cast("char*", hwmsg), hwmsg_len, nil) > 0 do
                 local m = hwmsg[0]
                 -- If there's no raw keymapping, emit this one instead
                 if pb_key_events[m.type] and not raw_keymap then
@@ -518,7 +517,7 @@ end
 function input.closeAll()
     eventq = nil
     if poll_fds ~= nil then
-        rt.mq_close(poll_fds[0].fd)
+        C.mq_close(poll_fds[0].fd)
         for i=1, poll_fds_count-1 do
             C.close(poll_fds[i].fd)
         end
