@@ -1,5 +1,5 @@
 diff --git a/src/svr-chansession.c b/src/svr-chansession.c
-index a2ea1fc..fb1a726 100644
+index a2ea1fcf..fb1a7260 100644
 --- a/src/svr-chansession.c
 +++ b/src/svr-chansession.c
 @@ -692,6 +692,17 @@ static int sessioncommand(struct Channel *channel, struct ChanSess *chansess,
