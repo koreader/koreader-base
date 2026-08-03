@@ -351,7 +351,7 @@ function TarXz:rewrite(entries)
     local directory = self.filename:match("^(.+)/[^/]+$") or "./"
     local template_suffix = ".tar.xz.part"
     local template = directory.."/XXXXXX"..template_suffix
-    template = ffi.new("char[?]", #template, template)
+    template = ffi.new("char[?]", #template + 1, template)
     local fd = C.mkstemps(template, #template_suffix)
     if fd < 0 then
         error("mkstemps: "..posix.strerror())
