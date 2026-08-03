@@ -3,7 +3,7 @@ KOR_BASE ?= ..
 
 TARGET = linux
 KOTASYNC = 1
-VERSION = 1.0.0
+VERSION = 1.1.0
 
 include $(KOR_BASE)/Makefile.defs
 
@@ -59,7 +59,7 @@ appdir: $(NINJA_GOALS)
 	$(call appimage_install,kotasync,kotasync.lua,.)
 
 appimage: appdir $(MKAPPIMAGE)
-	$(call appimage_generate,kotasync,1.0.0)
+	$(call appimage_generate,kotasync,$(VERSION))
 
 PHONY = all appdir appimage clean
 
