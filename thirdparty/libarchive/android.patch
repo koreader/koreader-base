@@ -1,8 +1,8 @@
 diff --git a/libarchive/archive_read_disk_posix.c b/libarchive/archive_read_disk_posix.c
-index 47c1d334..f6664745 100644
+index a3c9e583..85e405e7 100644
 --- a/libarchive/archive_read_disk_posix.c
 +++ b/libarchive/archive_read_disk_posix.c
-@@ -1792,7 +1792,7 @@ setup_current_filesystem(struct archive_read_disk *a)
+@@ -1796,7 +1796,7 @@ setup_current_filesystem(struct archive_read_disk *a)
  		/* pathconf(_PC_REX_*) operations are not supported. */
  #if defined(HAVE_STATVFS)
  		set_statvfs_transfer_size(t->current_filesystem, &svfs);
