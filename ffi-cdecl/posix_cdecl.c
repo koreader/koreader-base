@@ -243,6 +243,7 @@ cdecl_type(__uid_t);
 cdecl_type_replace(__darwin_blkcnt_t, blkcnt_t);
 cdecl_type_replace(__darwin_blksize_t, blksize_t);
 cdecl_type_replace(__darwin_id_t, id_t);
+cdecl_type_replace(__darwin_ino64_t, ino64_t);
 cdecl_type_replace(__darwin_mode_t, mode_t);
 cdecl_type_replace(__darwin_off_t, off_t);
 cdecl_type_replace(__darwin_pid_t, pid_t);
@@ -258,15 +259,23 @@ cdecl_type(__darwin_uid_t);
 #elif defined(__linux__)
 cdecl_type_replace(__blkcnt_t, blkcnt_t);
 cdecl_type_replace(__blksize_t, blksize_t);
+cdecl_type_replace(__dev_t, dev_t);
+cdecl_type_replace(__gid_t, gid_t);
 cdecl_type_replace(__id_t, id_t);
+cdecl_type_replace(__ino_t, ino_t);
 cdecl_type_replace(__mode_t, mode_t);
+cdecl_type_replace(__nlink_t, nlink_t);
 cdecl_type_replace(__off_t, off_t);
 cdecl_type_replace(__pid_t, pid_t);
 cdecl_type_replace(__uid_t, uid_t);
 cdecl_type(__blkcnt_t);
 cdecl_type(__blksize_t);
+cdecl_type(__dev_t);
+cdecl_type(__gid_t);
 cdecl_type(__id_t);
+cdecl_type(__ino_t);
 cdecl_type(__mode_t);
+cdecl_type(__nlink_t);
 cdecl_type(__off_t);
 cdecl_type(__pid_t);
 cdecl_type(__uid_t);
@@ -575,6 +584,10 @@ cdecl_func(getnameinfo);
 cdecl_func(inet_aton);
 
 cdecl_func(statvfs);
+
+cdecl_struct(stat);
+cdecl_func(fchmod);
+cdecl_func(stat);
 
 cdecl_const(WNOHANG);
 

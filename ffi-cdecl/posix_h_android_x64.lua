@@ -448,6 +448,28 @@ int getnameinfo(const struct sockaddr *, socklen_t, char *, size_t, char *, size
 int inet_aton(const char *, struct in_addr *);
 // cdecl_func_statvfs
 int statvfs(const char *, struct statvfs *);
+// cdecl_struct_stat
+struct stat {
+  dev_t st_dev;
+  ino_t st_ino;
+  unsigned long st_nlink;
+  mode_t st_mode;
+  uid_t st_uid;
+  gid_t st_gid;
+  unsigned __pad0;
+  dev_t st_rdev;
+  off_t st_size;
+  long st_blksize;
+  long st_blocks;
+  struct timespec st_atim;
+  struct timespec st_mtim;
+  struct timespec st_ctim;
+  long __pad3[3];
+};
+// cdecl_func_fchmod
+int fchmod(int, mode_t);
+// cdecl_func_stat
+int stat(const char *, struct stat *);
 // cdecl_const_WNOHANG
 static const unsigned WNOHANG = 1;
 // cdecl_func_waitpid

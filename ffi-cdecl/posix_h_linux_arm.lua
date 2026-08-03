@@ -109,10 +109,18 @@ struct timespec {
 typedef long blkcnt_t;
 // cdecl_type_blksize_t
 typedef long blksize_t;
+// cdecl_type_dev_t
+typedef unsigned long long dev_t;
+// cdecl_type_gid_t
+typedef unsigned gid_t;
 // cdecl_type_id_t
 typedef unsigned id_t;
+// cdecl_type_ino_t
+typedef unsigned long ino_t;
 // cdecl_type_mode_t
 typedef unsigned mode_t;
+// cdecl_type_nlink_t
+typedef unsigned nlink_t;
 // cdecl_type_off_t
 typedef long off_t;
 // cdecl_type_pid_t
@@ -546,6 +554,30 @@ int getnameinfo(const struct sockaddr *, socklen_t, char *, socklen_t, char *, s
 int inet_aton(const char *, struct in_addr *);
 // cdecl_func_statvfs
 int statvfs(const char *, struct statvfs *);
+// cdecl_struct_stat
+struct stat {
+  dev_t st_dev;
+  unsigned short __pad1;
+  ino_t st_ino;
+  mode_t st_mode;
+  nlink_t st_nlink;
+  uid_t st_uid;
+  gid_t st_gid;
+  dev_t st_rdev;
+  unsigned short __pad2;
+  off_t st_size;
+  blksize_t st_blksize;
+  blkcnt_t st_blocks;
+  struct timespec st_atim;
+  struct timespec st_mtim;
+  struct timespec st_ctim;
+  unsigned long __unused4;
+  unsigned long __unused5;
+};
+// cdecl_func_fchmod
+int fchmod(int, mode_t);
+// cdecl_func_stat
+int stat(const char *, struct stat *);
 // cdecl_const_WNOHANG
 static const unsigned WNOHANG = 1;
 // cdecl_func_waitpid
