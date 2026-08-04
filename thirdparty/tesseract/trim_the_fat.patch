@@ -1,0 +1,373 @@
+diff --git a/src/api/baseapi.cpp b/src/api/baseapi.cpp
+index 1329549e..d0c965df 100644
+--- a/src/api/baseapi.cpp
++++ b/src/api/baseapi.cpp
+@@ -118,6 +118,7 @@ static const char *kOldVarsFile = "failed_vars.txt";
+ static const char *kInputFile = "noname.tif";
+ static const char kUnknownFontName[] = "UnknownFont";
+ 
++#if 0
+ static STRING_VAR(classify_font_name, kUnknownFontName,
+                   "Default font name to be used in training");
+ 
+@@ -145,6 +146,7 @@ static void ExtractFontName(std::string_view filename, std::string* fontname) {
+   }
+ }
+ #endif
++#endif
+ 
+ /* Add all available languages recursively.
+  */
+@@ -774,6 +776,7 @@ int TessBaseAPI::Recognize(ETEXT_DESC *monitor) {
+ 
+   tesseract_->SetBlackAndWhitelist();
+   recognition_done_ = true;
++#if 0
+ #ifndef DISABLED_LEGACY_ENGINE
+   if (tesseract_->tessedit_resegment_from_line_boxes) {
+     page_res_ = tesseract_->ApplyBoxes(input_file_.c_str(), true, block_list_);
+@@ -781,6 +784,7 @@ int TessBaseAPI::Recognize(ETEXT_DESC *monitor) {
+     page_res_ = tesseract_->ApplyBoxes(input_file_.c_str(), false, block_list_);
+   } else
+ #endif // ndef DISABLED_LEGACY_ENGINE
++#endif
+   {
+     page_res_ =
+         new PAGE_RES(tesseract_->AnyLSTMLang(), block_list_, &tesseract_->prev_word_best_choice_);
+@@ -790,6 +794,7 @@ int TessBaseAPI::Recognize(ETEXT_DESC *monitor) {
+     return -1;
+   }
+ 
++#if 0
+   if (tesseract_->tessedit_train_line_recognizer) {
+     if (!tesseract_->TrainLineRecognizer(input_file_.c_str(), output_file_, block_list_)) {
+       return -1;
+@@ -803,8 +808,10 @@ int TessBaseAPI::Recognize(ETEXT_DESC *monitor) {
+     return 0;
+   }
+ #endif // ndef DISABLED_LEGACY_ENGINE
++#endif
+ 
+   int result = 0;
++#if 0
+   if (tesseract_->interactive_display_mode) {
+ #ifndef GRAPHICS_DISABLED
+     tesseract_->pgeditor_main(rect_width_, rect_height_, page_res_);
+@@ -814,7 +821,10 @@ int TessBaseAPI::Recognize(ETEXT_DESC *monitor) {
+     delete page_res_;
+     page_res_ = nullptr;
+     return -1;
+-#ifndef DISABLED_LEGACY_ENGINE
++#else
++    if (0) {
++#endif
++#if 0
+   } else if (tesseract_->tessedit_train_from_boxes) {
+     std::string fontname;
+     ExtractFontName(output_file_, &fontname);
+@@ -1001,10 +1011,12 @@ bool TessBaseAPI::ProcessPages(const char *filename, const char *retry_config, i
+   bool result = ProcessPagesInternal(filename, retry_config, timeout_millisec, renderer);
+ #ifndef DISABLED_LEGACY_ENGINE
+   if (result) {
++#if 0
+     if (tesseract_->tessedit_train_from_boxes && !tesseract_->WriteTRFile(output_file_.c_str())) {
+       tprintf("Write of TR file failed: %s\n", output_file_.c_str());
+       return false;
+     }
++#endif
+   }
+ #endif // ndef DISABLED_LEGACY_ENGINE
+   return result;
+diff --git a/src/ccmain/paragraphs.cpp b/src/ccmain/paragraphs.cpp
+index 12866ebc..25234a96 100644
+--- a/src/ccmain/paragraphs.cpp
++++ b/src/ccmain/paragraphs.cpp
+@@ -137,6 +137,8 @@ static std::string RtlEmbed(const std::string &word, bool rtlify) {
+   return word;
+ }
+ 
++#if 0
++
+ // Print the current thoughts of the paragraph detector.
+ static void PrintDetectorState(const ParagraphTheory &theory,
+                                const std::vector<RowScratchRegisters> &rows) {
+@@ -186,6 +188,10 @@ static void DebugDump(bool should_print, const char *phase, const ParagraphTheor
+   PrintDetectorState(theory, rows);
+ }
+ 
++#else
++# define DebugDump(...)
++#endif
++
+ // Print out the text for rows[row_start, row_end)
+ static void PrintRowRange(const std::vector<RowScratchRegisters> &rows, int row_start,
+                           int row_end) {
+diff --git a/src/ccmain/recogtraining.cpp b/src/ccmain/recogtraining.cpp
+index 02c60a6d..6fe2bc7a 100644
+--- a/src/ccmain/recogtraining.cpp
++++ b/src/ccmain/recogtraining.cpp
+@@ -34,12 +34,14 @@ const int16_t kMaxBoxEdgeDiff = 2;
+ // Sets flags necessary for recognition in the training mode.
+ // Opens and returns the pointer to the output file.
+ FILE *Tesseract::init_recog_training(const char *filename) {
++#if 0
+   if (tessedit_ambigs_training) {
+     tessedit_tess_adaption_mode.set_value(0); // turn off adaption
+     tessedit_enable_doc_dict.set_value(false); // turn off document dictionary
+     // Explore all segmentations.
+     getDict().stopper_no_acceptable_choices.set_value(true);
+   }
++#endif
+ 
+   std::string output_fname = filename;
+   const char *lastdot = strrchr(output_fname.c_str(), '.');
+diff --git a/src/ccmain/tessedit.cpp b/src/ccmain/tessedit.cpp
+index 7ec89bd9..52fb467e 100644
+--- a/src/ccmain/tessedit.cpp
++++ b/src/ccmain/tessedit.cpp
+@@ -215,7 +215,7 @@ bool Tesseract::init_tesseract_lang_data(const std::string &language, OcrEngineM
+   unichar_ambigs.InitUnicharAmbigs(unicharset, use_ambigs_for_adaption);
+   unichar_ambigs.LoadUniversal(encoder_unicharset, &unicharset);
+ 
+-  if (!tessedit_ambigs_training && mgr->GetComponent(TESSDATA_AMBIGS, &fp)) {
++  if (/*!tessedit_ambigs_training && */mgr->GetComponent(TESSDATA_AMBIGS, &fp)) {
+     unichar_ambigs.LoadUnicharAmbigs(encoder_unicharset, &fp, ambigs_debug_level,
+                                      use_ambigs_for_adaption, &unicharset);
+   }
+diff --git a/src/ccmain/tesseractclass.cpp b/src/ccmain/tesseractclass.cpp
+index ce896a84..79791e87 100644
+--- a/src/ccmain/tesseractclass.cpp
++++ b/src/ccmain/tesseractclass.cpp
+@@ -51,6 +51,7 @@
+ namespace tesseract {
+ 
+ Tesseract::Tesseract()
++#if 0
+     : BOOL_MEMBER(tessedit_resegment_from_boxes, false,
+                   "Take segmentation and labeling from box file", this->params())
+     , BOOL_MEMBER(tessedit_resegment_from_line_boxes, false,
+@@ -62,6 +63,9 @@ Tesseract::Tesseract()
+     , BOOL_MEMBER(tessedit_train_line_recognizer, false,
+                   "Break input into lines and remap boxes if present", this->params())
+     , BOOL_MEMBER(tessedit_dump_pageseg_images, false,
++#else
++    : BOOL_MEMBER(tessedit_dump_pageseg_images, false,
++#endif
+                   "Dump intermediate images made during page segmentation", this->params())
+     // TODO: remove deprecated tessedit_do_invert in release 6.
+     , BOOL_MEMBER(tessedit_do_invert, true,
+@@ -126,8 +130,10 @@ Tesseract::Tesseract()
+     , STRING_MEMBER(tessedit_char_whitelist, "", "Whitelist of chars to recognize", this->params())
+     , STRING_MEMBER(tessedit_char_unblacklist, "",
+                     "List of chars to override tessedit_char_blacklist", this->params())
++#if 0
+     , BOOL_MEMBER(tessedit_ambigs_training, false, "Perform training for ambiguities",
+                   this->params())
++#endif
+     , INT_MEMBER(pageseg_devanagari_split_strategy, tesseract::ShiroRekhaSplitter::NO_SPLIT,
+                  "Whether to use the top-line splitting process for Devanagari "
+                  "documents while performing page-segmentation.",
+@@ -389,7 +395,9 @@ Tesseract::Tesseract()
+     , INT_MEMBER(tessedit_page_number, -1, "-1 -> All pages, else specific page to process",
+                  this->params())
+     , BOOL_MEMBER(tessedit_write_images, false, "Capture the image from the IPE", this->params())
++#if 0
+     , BOOL_MEMBER(interactive_display_mode, false, "Run interactively?", this->params())
++#endif
+     , STRING_MEMBER(file_type, ".tif", "Filename extension", this->params())
+     , BOOL_MEMBER(tessedit_override_permuter, true, "According to dict_word", this->params())
+     , STRING_MEMBER(tessedit_load_sublangs, "", "List of languages to load with this one",
+diff --git a/src/ccmain/tesseractclass.h b/src/ccmain/tesseractclass.h
+index 9a8875c3..8014aab7 100644
+--- a/src/ccmain/tesseractclass.h
++++ b/src/ccmain/tesseractclass.h
+@@ -742,11 +742,13 @@ public:
+   float ComputeCompatibleXheight(WERD_RES *word_res, float *baseline_shift);
+   //// Data members ///////////////////////////////////////////////////////
+   // TODO(ocr-team): Find and remove obsolete parameters.
++#if 0
+   BOOL_VAR_H(tessedit_resegment_from_boxes);
+   BOOL_VAR_H(tessedit_resegment_from_line_boxes);
+   BOOL_VAR_H(tessedit_train_from_boxes);
+   BOOL_VAR_H(tessedit_make_boxes_from_boxes);
+   BOOL_VAR_H(tessedit_train_line_recognizer);
++#endif
+   BOOL_VAR_H(tessedit_dump_pageseg_images);
+   // TODO: remove deprecated tessedit_do_invert in release 6.
+   BOOL_VAR_H(tessedit_do_invert);
+@@ -763,7 +765,9 @@ public:
+   STRING_VAR_H(tessedit_char_blacklist);
+   STRING_VAR_H(tessedit_char_whitelist);
+   STRING_VAR_H(tessedit_char_unblacklist);
++#if 0
+   BOOL_VAR_H(tessedit_ambigs_training);
++#endif
+   INT_VAR_H(pageseg_devanagari_split_strategy);
+   INT_VAR_H(ocr_devanagari_split_strategy);
+   STRING_VAR_H(tessedit_write_params_to_file);
+@@ -932,7 +936,9 @@ public:
+   BOOL_VAR_H(tessedit_create_boxfile);
+   INT_VAR_H(tessedit_page_number);
+   BOOL_VAR_H(tessedit_write_images);
++#if 0
+   BOOL_VAR_H(interactive_display_mode);
++#endif
+   STRING_VAR_H(file_type);
+   BOOL_VAR_H(tessedit_override_permuter);
+   STRING_VAR_H(tessedit_load_sublangs);
+diff --git a/src/classify/adaptmatch.cpp b/src/classify/adaptmatch.cpp
+index 09e9d311..1c468269 100644
+--- a/src/classify/adaptmatch.cpp
++++ b/src/classify/adaptmatch.cpp
+@@ -2091,6 +2091,8 @@ void Classify::ShowBestMatchFor(int shape_id, const INT_FEATURE_STRUCT *features
+ 
+ #endif // !GRAPHICS_DISABLED
+ 
++#if 0
++
+ // Returns a string for the classifier class_id: either the corresponding
+ // unicharset debug_str or the shape_table_ debug str.
+ std::string Classify::ClassIDToDebugStr(const INT_TEMPLATES_STRUCT *templates, int class_id,
+@@ -2105,6 +2107,8 @@ std::string Classify::ClassIDToDebugStr(const INT_TEMPLATES_STRUCT *templates, i
+   return class_string;
+ }
+ 
++#endif
++
+ // Converts a classifier class_id index to a shape_table_ index
+ int Classify::ClassAndConfigIDToFontOrShapeID(int class_id, int int_result_config) const {
+   int font_set_id = PreTrainedTemplates->Class[class_id]->font_set_id;
+diff --git a/src/classify/classify.h b/src/classify/classify.h
+index 1a511c28..4b51ef3c 100644
+--- a/src/classify/classify.h
++++ b/src/classify/classify.h
+@@ -209,10 +209,12 @@ public:
+   void RemoveBadMatches(ADAPT_RESULTS *Results);
+   void SetAdaptiveThreshold(float Threshold);
+   void ShowBestMatchFor(int shape_id, const INT_FEATURE_STRUCT *features, int num_features);
++#if 0
+   // Returns a string for the classifier class_id: either the corresponding
+   // unicharset debug_str or the shape_table_ debug str.
+   std::string ClassIDToDebugStr(const INT_TEMPLATES_STRUCT *templates, int class_id,
+                                 int config_id) const;
++#endif
+   // Converts a classifier class_id index with a config ID to:
+   // shape_table_ present: a shape_table_ index OR
+   // No shape_table_: a font ID.
+diff --git a/src/classify/intmatcher.cpp b/src/classify/intmatcher.cpp
+index d4b81c56..69d9e759 100644
+--- a/src/classify/intmatcher.cpp
++++ b/src/classify/intmatcher.cpp
+@@ -314,6 +314,8 @@ for (int bit = 0; bit < BITS_PER_WERD/NUM_BITS_PER_CLASS; bit++) {
+     }
+   }
+ 
++#if 0
++
+   /** Prints debug info on the class pruner matches for the pruned classes only.
+    */
+   void DebugMatch(const Classify &classify, const INT_TEMPLATES_STRUCT *int_templates,
+@@ -364,6 +366,8 @@ for (int bit = 0; bit < BITS_PER_WERD/NUM_BITS_PER_CLASS; bit++) {
+     }
+   }
+ 
++#endif
++
+   /// Copies the pruned, sorted classes into the output results and returns
+   /// the number of classes.
+   int SetupResults(std::vector<CP_RESULT_STRUCT> *results) const {
+@@ -448,6 +452,7 @@ int Classify::PruneClasses(const INT_TEMPLATES_STRUCT *int_templates, int num_fe
+   pruner.PruneAndSort(classify_class_pruner_threshold, keep_this, shape_table_ == nullptr,
+                       unicharset);
+ 
++#if 0
+   if (classify_debug_level > 2) {
+     pruner.DebugMatch(*this, int_templates, features);
+   }
+@@ -455,6 +460,7 @@ int Classify::PruneClasses(const INT_TEMPLATES_STRUCT *int_templates, int num_fe
+     pruner.SummarizeResult(*this, int_templates, expected_num_features,
+                            classify_class_pruner_multiplier, normalization_factors);
+   }
++#endif
+   // Convert to the expected output format.
+   return pruner.SetupResults(results);
+ }
+diff --git a/src/classify/shapeclassifier.cpp b/src/classify/shapeclassifier.cpp
+index 5e03eaf6..c1aac090 100644
+--- a/src/classify/shapeclassifier.cpp
++++ b/src/classify/shapeclassifier.cpp
+@@ -167,6 +167,8 @@ int ShapeClassifier::DisplayClassifyAs(const TrainingSample &/*sample*/,
+   return index;
+ }
+ 
++#if 0
++
+ // Prints debug information on the results.
+ void ShapeClassifier::UnicharPrintResults(const char *context,
+                                           const std::vector<UnicharRating> &results) const {
+@@ -198,6 +200,8 @@ void ShapeClassifier::PrintResults(const char *context,
+   }
+ }
+ 
++#endif
++
+ // Removes any result that has all its unichars covered by a better choice,
+ // regardless of font.
+ void ShapeClassifier::FilterDuplicateUnichars(std::vector<ShapeRating> *results) const {
+diff --git a/src/classify/shapeclassifier.h b/src/classify/shapeclassifier.h
+index 1412765b..2fc7d5a4 100644
+--- a/src/classify/shapeclassifier.h
++++ b/src/classify/shapeclassifier.h
+@@ -101,11 +101,13 @@ public:
+   virtual int DisplayClassifyAs(const TrainingSample &sample, Image page_pix, UNICHAR_ID unichar_id,
+                                 int index);
+ 
++#if 0
+   // Prints debug information on the results. context is some introductory/title
+   // message.
+   virtual void UnicharPrintResults(const char *context,
+                                    const std::vector<UnicharRating> &results) const;
+   virtual void PrintResults(const char *context, const std::vector<ShapeRating> &results) const;
++#endif
+ 
+ protected:
+   // Removes any result that has all its unichars covered by a better choice,
+diff --git a/src/classify/shapetable.cpp b/src/classify/shapetable.cpp
+index cf3ec60b..0cc42015 100644
+--- a/src/classify/shapetable.cpp
++++ b/src/classify/shapetable.cpp
+@@ -292,6 +292,8 @@ void ShapeTable::ReMapClassIds(const std::vector<int> &unicharset_map) {
+   }
+ }
+ 
++#if 0
++
+ // Returns a string listing the classes/fonts in a shape.
+ std::string ShapeTable::DebugStr(unsigned shape_id) const {
+   if (shape_id >= shape_table_.size()) {
+@@ -350,6 +352,8 @@ std::string ShapeTable::SummaryStr() const {
+   return result;
+ }
+ 
++#endif
++
+ // Adds a new shape starting with the given unichar_id and font_id.
+ // Returns the assigned index.
+ unsigned ShapeTable::AddShape(int unichar_id, int font_id) {
+diff --git a/src/classify/shapetable.h b/src/classify/shapetable.h
+index 8497b786..4499045a 100644
+--- a/src/classify/shapetable.h
++++ b/src/classify/shapetable.h
+@@ -263,10 +263,12 @@ public:
+   // Re-indexes the class_ids in the shapetable according to the given map.
+   // Useful in conjunction with set_unicharset.
+   void ReMapClassIds(const std::vector<int> &unicharset_map);
++#if 0
+   // Returns a string listing the classes/fonts in a shape.
+   std::string DebugStr(unsigned shape_id) const;
+   // Returns a debug string summarizing the table.
+   std::string SummaryStr() const;
++#endif
+ 
+   // Adds a new shape starting with the given unichar_id and font_id.
+   // Returns the assigned index.

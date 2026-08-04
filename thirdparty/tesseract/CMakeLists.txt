@@ -2,6 +2,7 @@ list(APPEND PATCH_FILES
     cmake_tweaks.patch
     k2pdfopt.patch
     no_debug_fonts.patch
+    trim_the_fat.patch
 )
 
 list(APPEND CMAKE_ARGS
