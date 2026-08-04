@@ -1,13 +1,13 @@
 diff --git a/src/ccstruct/debugpixa.h b/src/ccstruct/debugpixa.h
-index 1cd3405c..b4b1c013 100644
+index bc0f9122..956b0313 100644
 --- a/src/ccstruct/debugpixa.h
 +++ b/src/ccstruct/debugpixa.h
-@@ -14,7 +14,7 @@ public:
+@@ -12,7 +12,7 @@ public:
    // TODO(rays) add another constructor with size control.
    DebugPixa() {
      pixa_ = pixaCreate(0);
 -#ifdef TESSERACT_DISABLE_DEBUG_FONTS
 +#if 1//def TESSERACT_DISABLE_DEBUG_FONTS
-     fonts_ = NULL;
+     fonts_ = nullptr;
  #else
      fonts_ = bmfCreate(nullptr, 14);
