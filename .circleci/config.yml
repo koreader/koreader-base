@@ -59,13 +59,13 @@ executors:
 
   cervantes:
     docker:
-      - image: koreader/kocervantes:2.0.0-22.04
+      - image: koreader/kocervantes:2.1.0-22.04
     environment:
       TARGET: "cervantes"
 
   kindle: &KINDLE_EXE
     docker:
-      - image: koreader/kokindle:2.0.0-22.04
+      - image: koreader/kokindle:2.1.0-22.04
     environment:
       TARGET: "kindle"
 
@@ -81,13 +81,13 @@ executors:
 
   kobo:
     docker:
-      - image: koreader/kokobo:2.0.0-22.04
+      - image: koreader/kokobo:2.1.0-22.04
     environment:
       TARGET: "kobo"
 
   pocketbook:
     docker:
-      - image: koreader/kopb:2.0.0-22.04
+      - image: koreader/kopb:2.1.0-22.04
     environment:
       TARGET: "pocketbook"
 
