@@ -1,5 +1,5 @@
 diff --git a/src/config.h.in b/src/config.h.in
-index 589786e..dd79699 100644
+index 589786e7..dd796990 100644
 --- a/src/config.h.in
 +++ b/src/config.h.in
 @@ -450,7 +450,9 @@
@@ -13,7 +13,7 @@ index 589786e..dd79699 100644
  /* Define for large files, on AIX-style hosts. */
  #undef _LARGE_FILES
 diff --git a/src/dbutil.c b/src/dbutil.c
-index 8626f20..4e4243c 100644
+index a3414131..0cbcd199 100644
 --- a/src/dbutil.c
 +++ b/src/dbutil.c
 @@ -51,7 +51,9 @@
@@ -27,7 +27,7 @@ index 8626f20..4e4243c 100644
  #include <sys/syscall.h>
  #endif /* __linux */
 diff --git a/src/scpmisc.c b/src/scpmisc.c
-index c2f053e..bd117b8 100644
+index c2f053e1..bd117b84 100644
 --- a/src/scpmisc.c
 +++ b/src/scpmisc.c
 @@ -43,7 +43,9 @@

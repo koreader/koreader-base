@@ -1,5 +1,5 @@
 diff --git a/src/svr-authpubkey.c b/src/svr-authpubkey.c
-index 3191c2e..407b095 100644
+index 938b52da..86560df5 100644
 --- a/src/svr-authpubkey.c
 +++ b/src/svr-authpubkey.c
 @@ -581,23 +581,7 @@ static int checkpubkeyperms() {
@@ -62,10 +62,10 @@ index 3191c2e..407b095 100644
  	TRACE(("leave checkfileperm: success"))
  	return DROPBEAR_SUCCESS;
 diff --git a/src/svr-runopts.c b/src/svr-runopts.c
-index 8990264..737504f 100644
+index e286682f..3c0abeb2 100644
 --- a/src/svr-runopts.c
 +++ b/src/svr-runopts.c
-@@ -186,7 +186,7 @@ void svr_getopts(int argc, char ** argv) {
+@@ -184,7 +184,7 @@ void svr_getopts(int argc, char ** argv) {
  	svr_opts.hostkey = NULL;
  	svr_opts.delay_hostkey = 0;
  	svr_opts.pidfile = expand_homedir_path(DROPBEAR_PIDFILE);

@@ -1,5 +1,5 @@
 diff --git a/Makefile.in b/Makefile.in
-index a26f011..b72b5b1 100644
+index 8f178ee2..571c02fb 100644
 --- a/Makefile.in
 +++ b/Makefile.in
 @@ -168,7 +168,7 @@ $(OBJ_DIR):
@@ -12,7 +12,7 @@ index a26f011..b72b5b1 100644
  fuzz/%.o: $(srcdir)/../fuzz/%.c $(HEADERS)
  	$(CC) $(CFLAGS) $(CPPFLAGS) $< -o $@ -c
 diff --git a/libtomcrypt/Makefile.in b/libtomcrypt/Makefile.in
-index ec135c5..cb77a07 100644
+index ec135c5d..cb77a07b 100644
 --- a/libtomcrypt/Makefile.in
 +++ b/libtomcrypt/Makefile.in
 @@ -243,7 +243,7 @@ $(TOBJECTS): $(HEADERS) tests/tomcrypt_test.h
@@ -25,7 +25,7 @@ index ec135c5..cb77a07 100644
  #Create libtomcrypt.a
  $(LIBMAIN_S): $(OBJECTS)
 diff --git a/libtommath/Makefile.in b/libtommath/Makefile.in
-index 3cacdd8..7b9c1d4 100644
+index 3cacdd83..7b9c1d49 100644
 --- a/libtommath/Makefile.in
 +++ b/libtommath/Makefile.in
 @@ -10,8 +10,6 @@ CFLAGS += -I$(srcdir) -I../libtomcrypt/src/headers/ -I$(srcdir)/../libtomcrypt/s

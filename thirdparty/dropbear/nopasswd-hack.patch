@@ -1,5 +1,5 @@
 diff --git a/src/runopts.h b/src/runopts.h
-index 166ad4a..d62378b 100644
+index 166ad4a7..d62378b3 100644
 --- a/src/runopts.h
 +++ b/src/runopts.h
 @@ -123,6 +123,7 @@ typedef struct svr_runopts {
@@ -11,7 +11,7 @@ index 166ad4a..d62378b 100644
  	char * authorized_keys_dir;
  
 diff --git a/src/svr-authpasswd.c b/src/svr-authpasswd.c
-index 899a8ab..410d53d 100644
+index 899a8abb..410d53da 100644
 --- a/src/svr-authpasswd.c
 +++ b/src/svr-authpasswd.c
 @@ -80,6 +80,15 @@ void svr_auth_password(int valid_user) {
@@ -31,10 +31,10 @@ index 899a8ab..410d53d 100644
  		dropbear_log(LOG_WARNING,
  				"Too-long password attempt for '%s' from %s",
 diff --git a/src/svr-runopts.c b/src/svr-runopts.c
-index 74eb0c4..8990264 100644
+index 2baec6bd..e286682f 100644
 --- a/src/svr-runopts.c
 +++ b/src/svr-runopts.c
-@@ -110,6 +110,7 @@ static void printhelp(const char * progname) {
+@@ -108,6 +108,7 @@ static void printhelp(const char * progname) {
  					"-l <interface>\n"
  					"		interface to bind on\n"
  #endif
@@ -42,7 +42,7 @@ index 74eb0c4..8990264 100644
  #if INETD_MODE
  					"-i		Start for inetd\n"
  #endif
-@@ -186,6 +187,7 @@ void svr_getopts(int argc, char ** argv) {
+@@ -184,6 +185,7 @@ void svr_getopts(int argc, char ** argv) {
  	svr_opts.delay_hostkey = 0;
  	svr_opts.pidfile = expand_homedir_path(DROPBEAR_PIDFILE);
  	svr_opts.authorized_keys_dir = "~/.ssh";
@@ -50,7 +50,7 @@ index 74eb0c4..8990264 100644
  #if DROPBEAR_SVR_LOCALANYFWD
  	svr_opts.nolocaltcp = 0;
  #endif
-@@ -299,6 +301,9 @@ void svr_getopts(int argc, char ** argv) {
+@@ -297,6 +299,9 @@ void svr_getopts(int argc, char ** argv) {
  				case 'P':
  					next = &svr_opts.pidfile;
  					break;
