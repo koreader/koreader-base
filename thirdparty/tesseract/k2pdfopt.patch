@@ -13,10 +13,10 @@ index 9475fb27..e8360b82 100644
     * Make a HTML-formatted string with hOCR markup from the internal
     * data structures.
 diff --git a/src/api/baseapi.cpp b/src/api/baseapi.cpp
-index 37020fa9..a3bba28e 100644
+index 0c162837..1329549e 100644
 --- a/src/api/baseapi.cpp
 +++ b/src/api/baseapi.cpp
-@@ -1525,6 +1525,73 @@ char *TessBaseAPI::GetBoxText(int page_number) {
+@@ -1529,6 +1529,73 @@ char *TessBaseAPI::GetBoxText(int page_number) {
    return result;
  }
  
