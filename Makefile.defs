@@ -226,6 +226,10 @@ else ifeq ($(TARGET), pocketbook)
 		CHOST?=arm-linux-gnueabi
 	endif
 	GLIBC_VERSION_MAX = 2.5
+else ifeq ($(TARGET), pocketbookhf)
+	CHOST?=arm-pocketbookhf-linux-gnueabihf
+	POCKETBOOK=1
+	GLIBC_VERSION_MAX = 2.41
 else ifeq ($(TARGET), remarkable)
 	CHOST?=arm-remarkable-linux-gnueabihf
 	REMARKABLE=1
@@ -516,6 +520,8 @@ else ifeq ($(TARGET), pocketbook)
 		COMPAT_CFLAGS+=$(UBUNTU_COMPAT_CFLAGS)
 		COMPAT_CXXFLAGS+=$(UBUNTU_COMPAT_CFLAGS)
 	endif
+else ifeq ($(TARGET), pocketbookhf)
+	TARGET_CFLAGS:=-march=armv8.2-a -mfloat-abi=hard -mthumb -mcpu=cortex-a55
 else ifeq ($(TARGET), kindle)
 	TARGET_CFLAGS:=$(ARMV7_A8_ARCH)
 	TARGET_CFLAGS+=-mfloat-abi=softfp
