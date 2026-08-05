@@ -109,12 +109,18 @@ struct timespec {
 typedef int64_t blkcnt_t;
 // cdecl_type_blksize_t
 typedef int32_t blksize_t;
+// cdecl_type_dev_t
+typedef int32_t dev_t;
+// cdecl_type_gid_t
+typedef uint32_t gid_t;
 // cdecl_type_id_t
 typedef uint32_t id_t;
 // cdecl_type_ino64_t
 typedef uint64_t ino64_t;
 // cdecl_type_mode_t
 typedef uint16_t mode_t;
+// cdecl_type_nlink_t
+typedef uint16_t nlink_t;
 // cdecl_type_off_t
 typedef int64_t off_t;
 // cdecl_type_pid_t

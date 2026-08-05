@@ -105,14 +105,22 @@ struct timespec {
   time_t tv_sec;
   long tv_nsec;
 };
+// cdecl_type_dev_t
+typedef uint64_t dev_t;
 // cdecl_type_id_t
 typedef uint32_t id_t;
+// cdecl_type_gid_t
+typedef uint32_t gid_t;
+// cdecl_type_ino_t
+typedef unsigned long ino_t;
 // cdecl_type_mode_t
 typedef unsigned mode_t;
 // cdecl_type_off_t
 typedef long off_t;
 // cdecl_type_pid_t
 typedef int pid_t;
+// cdecl_type_nlink_t
+typedef uint32_t nlink_t;
 // cdecl_type_uid_t
 typedef uint32_t uid_t;
 // cdecl_type_fsblkcnt_t
