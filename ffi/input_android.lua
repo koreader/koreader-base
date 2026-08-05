@@ -179,14 +179,16 @@ local function keyEventHandler(key_event)
             return 0 -- event not consumed
         end
     elseif code == C.AKEYCODE_MEDIA_PLAY_PAUSE
-    or code == C.AKEYCODE_MEDIA_PLAY
-    or code == C.AKEYCODE_MEDIA_PAUSE
-    or code == C.AKEYCODE_MEDIA_STOP
-    or code == C.AKEYCODE_MEDIA_NEXT
-    or code == C.AKEYCODE_MEDIA_PREVIOUS
-    or code == C.AKEYCODE_MEDIA_REWIND
-    or code == C.AKEYCODE_MEDIA_FAST_FORWARD
-    or code == C.AKEYCODE_HEADSETHOOK then
+        or code == C.AKEYCODE_MEDIA_PLAY
+        or code == C.AKEYCODE_MEDIA_PAUSE
+        or code == C.AKEYCODE_MEDIA_STOP
+        or code == C.AKEYCODE_MEDIA_NEXT
+        or code == C.AKEYCODE_MEDIA_PREVIOUS
+        or code == C.AKEYCODE_MEDIA_REWIND
+        or code == C.AKEYCODE_MEDIA_FAST_FORWARD
+        or code == C.AKEYCODE_HEADSETHOOK
+        or code == C.AKEYCODE_POWER -- Normally third-party apps can't intercept the power button, but the Tolino Shine 3 (firmware 16.2.0) delivers it anyway.
+    then
         return 0 -- event not consumed
     elseif code == C.AKEYCODE_MUTE
     or code == C.AKEYCODE_VOLUME_MUTE then
