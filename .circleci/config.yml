@@ -85,11 +85,16 @@ executors:
     environment:
       TARGET: "kobo"
 
-  pocketbook:
+  pocketbook: &POCKETBOOK_EXE
     docker:
       - image: koreader/kopb:2.1.0-22.04
     environment:
       TARGET: "pocketbook"
+
+  pocketbookhf:
+    <<: *POCKETBOOK_EXE
+    environment:
+      TARGET: "pocketbookhf"
 
   sony-prstux:
     docker:
@@ -321,6 +326,12 @@ workflows:
       - build_and_test:
           name: pocketbook
           executor: pocketbook
+          requires:
+            - emu_gcc_ninja_debug
+
+      - build_and_test:
+          name: pocketbookhf
+          executor: pocketbookhf
           requires:
             - emu_gcc_ninja_debug
 
