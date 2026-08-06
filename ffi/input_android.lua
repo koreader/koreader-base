@@ -99,7 +99,6 @@ local function genTouchUpEvent(event, slot, index)
 end
 
 local function genTouchMoveEvent(event, timev, slot, index, x, y)
-    -- NOTE: May return a float for events w/ subpixel precision.
     genEmuEvent(C.EV_ABS, C.ABS_MT_SLOT, slot, timev)
     genEmuEvent(C.EV_ABS, C.ABS_MT_TOOL_TYPE, getToolType(event, index), timev)
     genEmuEvent(C.EV_ABS, C.ABS_MT_POSITION_X, x, timev)
@@ -110,6 +109,7 @@ local function genTouchMoveFrame(event, timev, pointer_count, history_index)
     for i = 0, pointer_count - 1 do
         local slot = android.lib.AMotionEvent_getPointerId(event, i)
         if pointers[slot] then
+            -- NOTE: May return a float for events w/ subpixel precision.
             local x = history_index and android.lib.AMotionEvent_getHistoricalX(event, i, history_index)
                           or android.lib.AMotionEvent_getX(event, i)
             local y = history_index and android.lib.AMotionEvent_getHistoricalY(event, i, history_index)
