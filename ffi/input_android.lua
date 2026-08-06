@@ -171,7 +171,7 @@ local function motionEventHandler(motion_event)
         -- This effectively gives us the size of the current MotionEvent array...
         local pointer_count = tonumber(android.lib.AMotionEvent_getPointerCount(motion_event))
 
-        -- Useful for continuous events like drawing
+        -- Useful for frequent events like drawing
         local history = tonumber(android.lib.AMotionEvent_getHistorySize(motion_event))
         for h = 0, history - 1 do
             local htimev = genInputTimeval(android.lib.AMotionEvent_getHistoricalEventTime(motion_event, h))
