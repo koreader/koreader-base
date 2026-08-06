@@ -14,6 +14,8 @@ endif()
 external_project(
     DOWNLOAD URL a70e90ff780e9ebee9cb84b82bbd46a7
     https://sourceforge.net/projects/giflib/files/giflib-6.x/giflib-6.1.3.tar.gz
+    https://ftp.osuosl.org/pub/blfs/conglomeration/giflib/giflib-6.1.3.tar.gz
+    https://ftp2.osuosl.org/pub/blfs/conglomeration/giflib/giflib-6.1.3.tar.gz
     PATCH_OVERLAY overlay
     PATCH_COMMAND ${PATCH_CMD}
     CMAKE_ARGS ${CMAKE_ARGS}
