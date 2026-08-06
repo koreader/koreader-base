@@ -64,11 +64,22 @@ local function setPointerDown(slot, down)
     end
 end
 
+local TOOL_TYPE_MAP = {
+    [android.lib.AMOTION_EVENT_TOOL_TYPE_STYLUS]  = 1, -- TOOL_TYPE_PEN
+    [android.lib.AMOTION_EVENT_TOOL_TYPE_ERASER] = 2, -- TOOL_TYPE_ERASER
+}
+
+local function getToolType(event, index)
+    local tool = android.lib.AMotionEvent_getToolType(event, index)
+    return TOOL_TYPE_MAP[tool] or 0 -- TOOL_TYPE_FINGER
+end
+
 local function genTouchDownEvent(event, slot, index)
     local x = android.lib.AMotionEvent_getX(event, index)
     local y = android.lib.AMotionEvent_getY(event, index)
     local timev = genInputTimeval(android.lib.AMotionEvent_getEventTime(event))
     genEmuEvent(C.EV_ABS, C.ABS_MT_SLOT, slot, timev)
+    genEmuEvent(C.EV_ABS, C.ABS_MT_TOOL_TYPE, getToolType(event, index), timev)
     genEmuEvent(C.EV_ABS, C.ABS_MT_TRACKING_ID, slot, timev)
     genEmuEvent(C.EV_ABS, C.ABS_MT_POSITION_X, x, timev)
     genEmuEvent(C.EV_ABS, C.ABS_MT_POSITION_Y, y, timev)
@@ -80,6 +91,7 @@ local function genTouchUpEvent(event, slot, index)
     local y = android.lib.AMotionEvent_getY(event, index)
     local timev = genInputTimeval(android.lib.AMotionEvent_getEventTime(event))
     genEmuEvent(C.EV_ABS, C.ABS_MT_SLOT, slot, timev)
+    genEmuEvent(C.EV_ABS, C.ABS_MT_TOOL_TYPE, getToolType(event, index), timev)
     genEmuEvent(C.EV_ABS, C.ABS_MT_TRACKING_ID, -1, timev)
     genEmuEvent(C.EV_ABS, C.ABS_MT_POSITION_X, x, timev)
     genEmuEvent(C.EV_ABS, C.ABS_MT_POSITION_Y, y, timev)
@@ -91,6 +103,7 @@ local function genTouchMoveEvent(event, timev, slot, index)
     local x = android.lib.AMotionEvent_getX(event, index)
     local y = android.lib.AMotionEvent_getY(event, index)
     genEmuEvent(C.EV_ABS, C.ABS_MT_SLOT, slot, timev)
+    genEmuEvent(C.EV_ABS, C.ABS_MT_TOOL_TYPE, getToolType(event, index), timev)
     genEmuEvent(C.EV_ABS, C.ABS_MT_POSITION_X, x, timev)
     genEmuEvent(C.EV_ABS, C.ABS_MT_POSITION_Y, y, timev)
 end
@@ -149,15 +162,34 @@ local function motionEventHandler(motion_event)
 
         -- This effectively gives us the size of the current MotionEvent array...
         local pointer_count = tonumber(android.lib.AMotionEvent_getPointerCount(motion_event))
+        -- Collect the pointers that are still in contact, as (slot, pointer_index) pairs.
+        local active = {}
         for i = 0, pointer_count - 1 do
             -- So, loop through the array, and if that pointer is still down, move it
             local slot = android.lib.AMotionEvent_getPointerId(motion_event, i)
             if pointers[slot] then
-                genTouchMoveEvent(motion_event, timev, slot, i)
+                active[#active + 1] = { slot = slot, index = i }
             end
         end
 
-        -- Bundle everything in a single input frame
+        -- Useful for continious events like drawing
+        local history = tonumber(android.lib.AMotionEvent_getHistorySize(motion_event))
+        for h = 0, history - 1 do
+            local htimev = genInputTimeval(android.lib.AMotionEvent_getHistoricalEventTime(motion_event, h))
+            for __, ptr in ipairs(active) do
+                genEmuEvent(C.EV_ABS, C.ABS_MT_SLOT, ptr.slot, htimev)
+                genEmuEvent(C.EV_ABS, C.ABS_MT_TOOL_TYPE, getToolType(motion_event, ptr.index), htimev)
+                genEmuEvent(C.EV_ABS, C.ABS_MT_POSITION_X,
+                    android.lib.AMotionEvent_getHistoricalX(motion_event, ptr.index, h), htimev)
+                genEmuEvent(C.EV_ABS, C.ABS_MT_POSITION_Y,
+                    android.lib.AMotionEvent_getHistoricalY(motion_event, ptr.index, h), htimev)
+            end
+            genEndTouchEvent(motion_event, htimev)
+        end
+
+        for __, ptr in ipairs(active) do
+            genTouchMoveEvent(motion_event, timev, ptr.slot, ptr.index)
+        end
         genEndTouchEvent(motion_event, timev)
     elseif flags == C.AMOTION_EVENT_ACTION_CANCEL then
         -- Invalidate the pointers, and push a custom event to notify front to do the same.
