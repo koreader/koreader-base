@@ -98,10 +98,8 @@ local function genTouchUpEvent(event, slot, index)
     genEmuEvent(C.EV_SYN, C.SYN_REPORT, 0, timev)
 end
 
-local function genTouchMoveEvent(event, timev, slot, index)
+local function genTouchMoveEvent(event, timev, slot, index, x, y)
     -- NOTE: May return a float for events w/ subpixel precision.
-    local x = android.lib.AMotionEvent_getX(event, index)
-    local y = android.lib.AMotionEvent_getY(event, index)
     genEmuEvent(C.EV_ABS, C.ABS_MT_SLOT, slot, timev)
     genEmuEvent(C.EV_ABS, C.ABS_MT_TOOL_TYPE, getToolType(event, index), timev)
     genEmuEvent(C.EV_ABS, C.ABS_MT_POSITION_X, x, timev)
@@ -172,23 +170,22 @@ local function motionEventHandler(motion_event)
             end
         end
 
-        -- Useful for continious events like drawing
+        -- Useful for continuous events like drawing
         local history = tonumber(android.lib.AMotionEvent_getHistorySize(motion_event))
         for h = 0, history - 1 do
             local htimev = genInputTimeval(android.lib.AMotionEvent_getHistoricalEventTime(motion_event, h))
             for __, ptr in ipairs(active) do
-                genEmuEvent(C.EV_ABS, C.ABS_MT_SLOT, ptr.slot, htimev)
-                genEmuEvent(C.EV_ABS, C.ABS_MT_TOOL_TYPE, getToolType(motion_event, ptr.index), htimev)
-                genEmuEvent(C.EV_ABS, C.ABS_MT_POSITION_X,
-                    android.lib.AMotionEvent_getHistoricalX(motion_event, ptr.index, h), htimev)
-                genEmuEvent(C.EV_ABS, C.ABS_MT_POSITION_Y,
-                    android.lib.AMotionEvent_getHistoricalY(motion_event, ptr.index, h), htimev)
+                genTouchMoveEvent(motion_event, htimev, ptr.slot, ptr.index,
+                    android.lib.AMotionEvent_getHistoricalX(motion_event, ptr.index, h),
+                    android.lib.AMotionEvent_getHistoricalY(motion_event, ptr.index, h))
             end
             genEndTouchEvent(motion_event, htimev)
         end
 
         for __, ptr in ipairs(active) do
-            genTouchMoveEvent(motion_event, timev, ptr.slot, ptr.index)
+            genTouchMoveEvent(motion_event, timev, ptr.slot, ptr.index,
+                android.lib.AMotionEvent_getX(motion_event, ptr.index),
+                android.lib.AMotionEvent_getY(motion_event, ptr.index))
         end
         genEndTouchEvent(motion_event, timev)
     elseif flags == C.AMOTION_EVENT_ACTION_CANCEL then
