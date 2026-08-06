@@ -2102,6 +2102,13 @@ static int getTextFromPositions(lua_State *L) {
     if (lua_isboolean(L, 8)) {
         includeImages = lua_toboolean(L, 8);
     }
+    // By default, we extend the selection to include the full words at start
+    // and end. Allow frontend to disable it (which might be welcome with
+    // languages like Thai that don't use spaces to separate words).
+    bool grabWords = true;
+    if (lua_isboolean(L, 9)) {
+        grabWords = lua_toboolean(L, 9);
+    }
 
     LVDocView *tv = doc->text_view;
 
@@ -2205,7 +2212,10 @@ static int getTextFromPositions(lua_State *L) {
     // printf("  after step1 end   %s\n", UnicodeToLocal(r.getEnd().toString()).c_str());
 
     // Step 2: grab complete words on each side
-    if ( not_panning ) {
+    if ( !grabWords ) {
+        // Explicitely disabled
+    }
+    else if ( not_panning ) {
         // Not panning: select the whole word (if any)
         if ( !r.getStart().isVisibleWordStart() ) {
             // Start (included in the selection) is not the start of a word: grab
@@ -2743,6 +2753,23 @@ static int getNearestWordFromPosition(lua_State *L) {
         return 1;
     }
 
+    return 0;
+}
+
+static int getLangTagForTextFromPosition(lua_State *L) {
+    CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
+    int x = luaL_checkint(L, 2);
+    int y = luaL_checkint(L, 3);
+
+    lvPoint pt(x, y);
+    ldomXPointer p = doc->text_view->getNodeByPoint(pt, true, true);
+    if ( p.isNull() )
+        return 0;
+    TextLangCfg * lang_cfg = TextLangMan::getTextLangCfg(p.getNode());
+    if ( lang_cfg ) {
+        lua_pushstring(L, UnicodeToLocal(lang_cfg->getLangTag()).c_str());
+        return 1;
+    }
     return 0;
 }
 
@@ -4459,6 +4486,7 @@ static const struct luaL_Reg credocument_meth[] = {
     {"getWordBoxesFromPositions", getWordBoxesFromPositions},
     {"getImageDataFromPosition", getImageDataFromPosition},
     {"getNearestWordFromPosition", getNearestWordFromPosition},
+    {"getLangTagForTextFromPosition", getLangTagForTextFromPosition},
     {"getDocumentFileContent", getDocumentFileContent},
     {"getTextFromXPointer", getTextFromXPointer},
     {"getHTMLFromXPointer", getHTMLFromXPointer},
