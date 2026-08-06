@@ -106,6 +106,19 @@ local function genTouchMoveEvent(event, timev, slot, index, x, y)
     genEmuEvent(C.EV_ABS, C.ABS_MT_POSITION_Y, y, timev)
 end
 
+local function genTouchMoveFrame(event, timev, pointer_count, history_index)
+    for i = 0, pointer_count - 1 do
+        local slot = android.lib.AMotionEvent_getPointerId(event, i)
+        if pointers[slot] then
+            local x = history_index and android.lib.AMotionEvent_getHistoricalX(event, i, history_index)
+                          or android.lib.AMotionEvent_getX(event, i)
+            local y = history_index and android.lib.AMotionEvent_getHistoricalY(event, i, history_index)
+                          or android.lib.AMotionEvent_getY(event, i)
+            genTouchMoveEvent(event, timev, slot, i, x, y)
+        end
+    end
+end
+
 local function genEndTouchEvent(event, timev)
     genEmuEvent(C.EV_SYN, C.SYN_REPORT, 0, timev)
 end
@@ -155,38 +168,20 @@ local function motionEventHandler(motion_event)
         setPointerDown(slot, false)
         genTouchUpEvent(motion_event, slot, pointer_index)
     elseif flags == C.AMOTION_EVENT_ACTION_MOVE then
-        -- There may be multiple pointers involved, only request the ts once
-        local timev = genInputTimeval(android.lib.AMotionEvent_getEventTime(motion_event))
-
         -- This effectively gives us the size of the current MotionEvent array...
         local pointer_count = tonumber(android.lib.AMotionEvent_getPointerCount(motion_event))
-        -- Collect the pointers that are still in contact, as (slot, pointer_index) pairs.
-        local active = {}
-        for i = 0, pointer_count - 1 do
-            -- So, loop through the array, and if that pointer is still down, move it
-            local slot = android.lib.AMotionEvent_getPointerId(motion_event, i)
-            if pointers[slot] then
-                active[#active + 1] = { slot = slot, index = i }
-            end
-        end
 
         -- Useful for continuous events like drawing
         local history = tonumber(android.lib.AMotionEvent_getHistorySize(motion_event))
         for h = 0, history - 1 do
             local htimev = genInputTimeval(android.lib.AMotionEvent_getHistoricalEventTime(motion_event, h))
-            for __, ptr in ipairs(active) do
-                genTouchMoveEvent(motion_event, htimev, ptr.slot, ptr.index,
-                    android.lib.AMotionEvent_getHistoricalX(motion_event, ptr.index, h),
-                    android.lib.AMotionEvent_getHistoricalY(motion_event, ptr.index, h))
-            end
+            genTouchMoveFrame(motion_event, htimev, pointer_count, h)
             genEndTouchEvent(motion_event, htimev)
         end
 
-        for __, ptr in ipairs(active) do
-            genTouchMoveEvent(motion_event, timev, ptr.slot, ptr.index,
-                android.lib.AMotionEvent_getX(motion_event, ptr.index),
-                android.lib.AMotionEvent_getY(motion_event, ptr.index))
-        end
+        -- There may be multiple pointers involved, only request the ts once
+        local timev = genInputTimeval(android.lib.AMotionEvent_getEventTime(motion_event))
+        genTouchMoveFrame(motion_event, timev, pointer_count)
         genEndTouchEvent(motion_event, timev)
     elseif flags == C.AMOTION_EVENT_ACTION_CANCEL then
         -- Invalidate the pointers, and push a custom event to notify front to do the same.
