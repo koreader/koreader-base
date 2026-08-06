@@ -1953,7 +1953,10 @@ static int getLinkFromPosition(lua_State *L) {
 	int y = luaL_checkint(L, 3);
 
 	lvPoint pt(x, y);
-	ldomXPointer p = doc->text_view->getNodeByPoint(pt, true);
+	// Providing forTextSelection=true gives more chances of success to
+	// the link coherenrency checks done by frontend (eg. with negative
+	// text indent and the link rect being outside of its paragraph rect).
+	ldomXPointer p = doc->text_view->getNodeByPoint(pt, true, true);
 	ldomXPointer a_p;
 	lString32 href = p.getHRef(a_p);
 	lua_pushstring(L, UnicodeToLocal(href).c_str());
