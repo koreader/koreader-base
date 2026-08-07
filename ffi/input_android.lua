@@ -64,11 +64,22 @@ local function setPointerDown(slot, down)
     end
 end
 
+local TOOL_TYPE_MAP = {
+    [android.lib.AMOTION_EVENT_TOOL_TYPE_STYLUS]  = 1, -- TOOL_TYPE_PEN
+    [android.lib.AMOTION_EVENT_TOOL_TYPE_ERASER] = 2, -- TOOL_TYPE_ERASER
+}
+
+local function getToolType(event, index)
+    local tool = android.lib.AMotionEvent_getToolType(event, index)
+    return TOOL_TYPE_MAP[tool] or 0 -- TOOL_TYPE_FINGER
+end
+
 local function genTouchDownEvent(event, slot, index)
     local x = android.lib.AMotionEvent_getX(event, index)
     local y = android.lib.AMotionEvent_getY(event, index)
     local timev = genInputTimeval(android.lib.AMotionEvent_getEventTime(event))
     genEmuEvent(C.EV_ABS, C.ABS_MT_SLOT, slot, timev)
+    genEmuEvent(C.EV_ABS, C.ABS_MT_TOOL_TYPE, getToolType(event, index), timev)
     genEmuEvent(C.EV_ABS, C.ABS_MT_TRACKING_ID, slot, timev)
     genEmuEvent(C.EV_ABS, C.ABS_MT_POSITION_X, x, timev)
     genEmuEvent(C.EV_ABS, C.ABS_MT_POSITION_Y, y, timev)
@@ -86,13 +97,24 @@ local function genTouchUpEvent(event, slot, index)
     genEmuEvent(C.EV_SYN, C.SYN_REPORT, 0, timev)
 end
 
-local function genTouchMoveEvent(event, timev, slot, index)
-    -- NOTE: May return a float for events w/ subpixel precision.
-    local x = android.lib.AMotionEvent_getX(event, index)
-    local y = android.lib.AMotionEvent_getY(event, index)
+local function genTouchMoveEvent(event, timev, slot, index, x, y)
     genEmuEvent(C.EV_ABS, C.ABS_MT_SLOT, slot, timev)
     genEmuEvent(C.EV_ABS, C.ABS_MT_POSITION_X, x, timev)
     genEmuEvent(C.EV_ABS, C.ABS_MT_POSITION_Y, y, timev)
+end
+
+local function genTouchMoveFrame(event, timev, pointer_count, history_index)
+    for i = 0, pointer_count - 1 do
+        local slot = android.lib.AMotionEvent_getPointerId(event, i)
+        if pointers[slot] then
+            -- NOTE: May return a float for events w/ subpixel precision.
+            local x = history_index and android.lib.AMotionEvent_getHistoricalX(event, i, history_index)
+                          or android.lib.AMotionEvent_getX(event, i)
+            local y = history_index and android.lib.AMotionEvent_getHistoricalY(event, i, history_index)
+                          or android.lib.AMotionEvent_getY(event, i)
+            genTouchMoveEvent(event, timev, slot, i, x, y)
+        end
+    end
 end
 
 local function genEndTouchEvent(event, timev)
@@ -144,20 +166,20 @@ local function motionEventHandler(motion_event)
         setPointerDown(slot, false)
         genTouchUpEvent(motion_event, slot, pointer_index)
     elseif flags == C.AMOTION_EVENT_ACTION_MOVE then
-        -- There may be multiple pointers involved, only request the ts once
-        local timev = genInputTimeval(android.lib.AMotionEvent_getEventTime(motion_event))
-
         -- This effectively gives us the size of the current MotionEvent array...
         local pointer_count = tonumber(android.lib.AMotionEvent_getPointerCount(motion_event))
-        for i = 0, pointer_count - 1 do
-            -- So, loop through the array, and if that pointer is still down, move it
-            local slot = android.lib.AMotionEvent_getPointerId(motion_event, i)
-            if pointers[slot] then
-                genTouchMoveEvent(motion_event, timev, slot, i)
-            end
+
+        -- Useful for frequent events like drawing
+        local history = tonumber(android.lib.AMotionEvent_getHistorySize(motion_event))
+        for h = 0, history - 1 do
+            local htimev = genInputTimeval(android.lib.AMotionEvent_getHistoricalEventTime(motion_event, h))
+            genTouchMoveFrame(motion_event, htimev, pointer_count, h)
+            genEndTouchEvent(motion_event, htimev)
         end
 
-        -- Bundle everything in a single input frame
+        -- There may be multiple pointers involved, only request the ts once
+        local timev = genInputTimeval(android.lib.AMotionEvent_getEventTime(motion_event))
+        genTouchMoveFrame(motion_event, timev, pointer_count)
         genEndTouchEvent(motion_event, timev)
     elseif flags == C.AMOTION_EVENT_ACTION_CANCEL then
         -- Invalidate the pointers, and push a custom event to notify front to do the same.
