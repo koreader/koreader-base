@@ -91,7 +91,6 @@ local function genTouchUpEvent(event, slot, index)
     local y = android.lib.AMotionEvent_getY(event, index)
     local timev = genInputTimeval(android.lib.AMotionEvent_getEventTime(event))
     genEmuEvent(C.EV_ABS, C.ABS_MT_SLOT, slot, timev)
-    genEmuEvent(C.EV_ABS, C.ABS_MT_TOOL_TYPE, getToolType(event, index), timev)
     genEmuEvent(C.EV_ABS, C.ABS_MT_TRACKING_ID, -1, timev)
     genEmuEvent(C.EV_ABS, C.ABS_MT_POSITION_X, x, timev)
     genEmuEvent(C.EV_ABS, C.ABS_MT_POSITION_Y, y, timev)
@@ -100,7 +99,6 @@ end
 
 local function genTouchMoveEvent(event, timev, slot, index, x, y)
     genEmuEvent(C.EV_ABS, C.ABS_MT_SLOT, slot, timev)
-    genEmuEvent(C.EV_ABS, C.ABS_MT_TOOL_TYPE, getToolType(event, index), timev)
     genEmuEvent(C.EV_ABS, C.ABS_MT_POSITION_X, x, timev)
     genEmuEvent(C.EV_ABS, C.ABS_MT_POSITION_Y, y, timev)
 end
