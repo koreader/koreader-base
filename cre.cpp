@@ -1951,12 +1951,16 @@ static int getLinkFromPosition(lua_State *L) {
 	CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
 	int x = luaL_checkint(L, 2);
 	int y = luaL_checkint(L, 3);
+	// Providing forTextSelection=true may give more chances of success to
+	// the link coherency checks done by frontend (eg. with negative text
+	// indent and the link rect being outside of its paragraph rect).
+	bool forTextSelection = false;
+	if (lua_isboolean(L, 4)) {
+		forTextSelection = lua_toboolean(L, 4);
+	}
 
 	lvPoint pt(x, y);
-	// Providing forTextSelection=true gives more chances of success to
-	// the link coherenrency checks done by frontend (eg. with negative
-	// text indent and the link rect being outside of its paragraph rect).
-	ldomXPointer p = doc->text_view->getNodeByPoint(pt, true, true);
+	ldomXPointer p = doc->text_view->getNodeByPoint(pt, true, forTextSelection);
 	ldomXPointer a_p;
 	lString32 href = p.getHRef(a_p);
 	lua_pushstring(L, UnicodeToLocal(href).c_str());
