@@ -86,52 +86,53 @@ void LayoutImage::render(RenderState& state) const
     double scale_x = std::sqrt(newState.transform.m00*newState.transform.m00 + newState.transform.m10*newState.transform.m10);
     double scale_y = std::sqrt(newState.transform.m01*newState.transform.m01 + newState.transform.m11*newState.transform.m11);
 
-    auto image = Canvas::create(0, 0, width*scale_x, height*scale_y);
-    double original_aspect_ratio;
+    double original_aspect_ratio = 0;
+    double image_width = width;
+    double image_height = height;
+    int original_width;
+    int original_height;
+    if ( external_context->get_image_size_helper
+            && external_context->get_image_size_helper(external_context, href.c_str(), original_width, original_height)
+            && original_width > 0 && original_height > 0
+            && preserveAspectRatio.align() != Align::None ) {
+        original_aspect_ratio = (double)original_width / (double)original_height;
+        if ( preserveAspectRatio.scale() == MeetOrSlice::Slice ) {
+            // Use the source rectangle that covers the viewport so the helper
+            // renders at the final resolution of the non-clipped dimension.
+            if ( width / height > original_aspect_ratio ) {
+                image_height = width / original_aspect_ratio;
+            }
+            else {
+                image_width = original_aspect_ratio * height;
+            }
+        }
+        else {
+            // For "meet", use the source rectangle that fits in the viewport.
+            if ( width / height > original_aspect_ratio ) {
+                image_width = original_aspect_ratio * height;
+            }
+            else {
+                image_height = width / original_aspect_ratio;
+            }
+        }
+    }
+
+    auto image = Canvas::create(0, 0, image_width*scale_x, image_height*scale_y);
     bool drawn = external_context->draw_image_helper(external_context, href.c_str(),
                     image->data(), image->width(), image->height(), original_aspect_ratio);
     if (!drawn) // href not found or image invalid
         return;
 
     Path path;
-    path.rect(x, y, width, height, 0, 0); // path to be filled by the texture
-    Transform transform(1/scale_x, 0, 0, 1/scale_y, x, y); // transform to be applied to the texture
-
-    // Start of attempt at handling preserveAspectRatio
-    // (If it ends up bad, just comment out all this to get as preserveAspectRatio="none".)
-    //
-    // Not super sure of all that, but with a bit of random shuffling and luck, this seems to work.
-    // It should not mess with the good scaling when preserveAspectRatio is "none" or has "slice";
-    // but when it has "meet" and the width=/height= attributes do not follow the original image
-    // aspect ratio, some downscaling by LunaSVG will happen, with possible scaling artifacts.
-    double w = width;
-    double h = height;
-    if ( w / h > original_aspect_ratio ) {
-        double new_h = w / original_aspect_ratio;
-        scale_y *= h / new_h;
-        h = new_h;
-    }
-    else {
-        double new_w = original_aspect_ratio * h;
-        scale_x *= w / new_w;
-        w = new_w;
-    }
-    auto viewTransform = preserveAspectRatio.getMatrix(width, height, Rect{0, 0, w, h});
-    transform = Transform(1/scale_x, 0, 0, 1/scale_y, 0, 0);
-    transform = transform * viewTransform;
-    transform = transform * transform.translated(x, y);
-    // printf("sizes: : %g %g %g %g (orig a/r %g\n", width, height, w, h, width/height, original_aspect_ratio);
-    // printf("viewTransform %g %g %g %g %g %g\n", viewTransform.m00, viewTransform.m10,
-    //             viewTransform.m01, viewTransform.m11, viewTransform.m02, viewTransform.m12);
-    //
-    // Note: if preserveAspectRatio has "slice" and we would have "overflow: visible", we might
-    // only need to extend the 'path' below to the overflow region. But Firefox does seem to
-    // always enforce the default of "overflow: hidden", so let's not bother.
-    //
-    // End of attempt at handling preserveAspectRatio
+    // The image viewport clips the excess painted by preserveAspectRatio="slice".
+    path.rect(x, y, width, height, 0, 0);
+    auto viewTransform = preserveAspectRatio.getMatrix(width, height, Rect{0, 0, image_width, image_height});
+    Transform textureTransform(1/scale_x, 0, 0, 1/scale_y, 0, 0);
+    textureTransform = textureTransform * viewTransform;
+    textureTransform = textureTransform * Transform::translated(x, y);
 
     newState.beginGroup(state, info); // this ensures upper transforms and clipping
-    newState.canvas->setTexture(image.get(), TextureType::Plain, transform);
+    newState.canvas->setTexture(image.get(), TextureType::Plain, textureTransform);
     newState.canvas->fill(path, newState.transform, WindRule::NonZero, BlendMode::Src_Over, 1.0);
     newState.endGroup(state, info);
 }

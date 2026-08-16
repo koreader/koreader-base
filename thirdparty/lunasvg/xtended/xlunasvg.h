@@ -28,6 +28,10 @@ typedef void (*external_text_to_paths_func_t)( external_context_t * xcontext, co
 typedef bool (*external_draw_image_func_t)( external_context_t * xcontext, const char * url,
                                 const unsigned char * bitmap, int width, int height, double & original_aspect_ratio) ;
 
+// Prototype of external helper function called to get an image's intrinsic dimensions
+typedef bool (*external_get_image_size_func_t)( external_context_t * xcontext, const char * url,
+                                int & width, int & height) ;
+
 // External context struct that can be provided to loadFromData() to get text and image support,
 // and give additional context about the SVG image and its target document/page/canvas.
 struct external_context_t {
@@ -39,6 +43,9 @@ struct external_context_t {
 
     // Helper function to decode an image (url, "data:image...") and draw it onto the provided bitmap
     external_draw_image_func_t draw_image_helper = nullptr;
+
+    // Helper function to get an image's intrinsic dimensions without rendering it
+    external_get_image_size_func_t get_image_size_helper = nullptr;
 
     // Allow overridding SVG original size, so external engine does not need to rescale it and can get the best quality
     int target_width = -1;
