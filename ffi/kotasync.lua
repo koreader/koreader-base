@@ -241,13 +241,13 @@ function TarXz:open(filename, manifest)
         block.filters = ffi.new("lzma_filter[?]", xz.LZMA_FILTERS_MAX + 1)
         ret = xz.lzma_block_header_decode(block, nil, comp_buf)
         assert(ret == xz.LZMA_OK, ret)
-        assert(block.uncompressed_size == index_iter.block.uncompressed_size)
+        assert(block.uncompressed_size == index_iter.block.uncompressed_size or block.uncompressed_size == xz.LZMA_VLI_UNKNOWN)
         ret = xz.lzma_block_compressed_size(block, index_iter.block.unpadded_size)
         assert(ret == xz.LZMA_OK)
         assert(xz.lzma_block_unpadded_size(block) == index_iter.block.unpadded_size)
         assert(xz.lzma_block_total_size(block) == index_iter.block.total_size)
         -- Decompress block.
-        local uncomp_size = block.uncompressed_size
+        local uncomp_size = index_iter.block.uncompressed_size
         local uncomp_buf = ffi.new("uint8_t[?]", uncomp_size)
         local in_pos = ffi.new("size_t[1]", block.header_size)
         local out_pos = ffi.new("size_t[1]", 0)
