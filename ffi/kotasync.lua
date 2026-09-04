@@ -238,8 +238,7 @@ function TarXz:open(filename, manifest)
         local block = ffi.new("lzma_block")
         block.header_size = xz_block_header_size_decode(comp_buf)
         block.check = header_stream_flags.check
-        local filters = ffi.new("lzma_filter[?]", xz.LZMA_FILTERS_MAX + 1)
-        block.filters = filters
+        block.filters = ffi.new("lzma_filter[?]", xz.LZMA_FILTERS_MAX + 1)
         ret = xz.lzma_block_header_decode(block, nil, comp_buf)
         assert(ret == xz.LZMA_OK, ret)
         assert(block.uncompressed_size == index_iter.block.uncompressed_size)
