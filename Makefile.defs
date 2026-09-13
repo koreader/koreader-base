@@ -375,7 +375,7 @@ HOSTREADELF:=readelf
 
 # Base CFLAGS, without arch. We'll need it for luajit, because its
 # Makefiles do some tricky stuff to differentiate HOST/TARGET
-BASE_CFLAGS = -O2 -g -pipe -fomit-frame-pointer
+BASE_CFLAGS = -O2 $(if $(CI),,-g) -pipe -fomit-frame-pointer
 ifneq (,$(USE_CLANG))
   # For ricers.
   # BASE_CFLAGS = -O3 -pipe -fomit-frame-pointer
@@ -395,7 +395,7 @@ endif
 # BASE_CFLAGS = $(VECTO_CFLAGS) $(LTO_FLAGS)
 # Use this for debugging:
 ifdef KODEBUG
-  BASE_CFLAGS = -Og -g -pipe -fno-omit-frame-pointer
+  BASE_CFLAGS = $(if $(CI),-O2,-Og -g) -pipe -fno-omit-frame-pointer
   # Don't enforce extra CFLAGS in debug builds
   VECTO_CFLAGS =
 else
@@ -987,6 +987,7 @@ set(USE_LJ_WPACLIENT   $(USE_LJ_WPACLIENT))
 set(USE_SDL            $(SDL))
 set(WANT_SIMD          $(WANT_SIMD))
 set(GLIBC_VERSION_MAX  $(GLIBC_VERSION_MAX))
+set(KEEP_DEBUG         $(and $(filter -Og -g,$(BASE_CFLAGS)),1))
 
 # Platform flags.
 set(ANDROID        $(ANDROID))
