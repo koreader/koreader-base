@@ -569,11 +569,15 @@ function fb:shot(filename)
     if self.device:hasBGRFrameBuffer() then
         bgr = true
     end
+    local ok, err
     if self.night_mode then
-        self.bb:copy():invert():writePNG(filename, bgr)
+        local inverted = self.bb:copy():invert()
+        ok, err = inverted:writePNG(filename, bgr)
+        inverted:free()
     else
-        self.bb:writePNG(filename, bgr)
+        ok, err = self.bb:writePNG(filename, bgr)
     end
+    return ok, err
 end
 
 -- Clear the screen to white
