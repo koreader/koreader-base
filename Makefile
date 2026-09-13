@@ -23,10 +23,12 @@ $(info ************ MAKE: $(strip $(MAKE) $(MFLAGS)) ($(MAKE_VERSION)) *********
 endef
 
 PHONY += $(addprefix $(BASE_PREFIX),all clean distclean fetchthirdparty re reinstall test uninstall)
-PHONY += bininfo bincheck buildstats info %-re setup skeleton test-data
+PHONY += base bininfo bincheck buildstats info %-re setup skeleton test-data
 SOUND += cache-key build/% $(OUTPUT_DIR)/% $(STAGING_DIR)/bincheck/%
 
 # Main rules. {{{
+
+base: $(BASE_PREFIX)all
 
 $(BASE_PREFIX)all: $(BUILD_ENTRYPOINT)
 
