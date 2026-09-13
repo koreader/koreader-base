@@ -750,7 +750,7 @@ WANT_SIMD=1
 # ... but on ARM targets that are not NEON capable, that obviously won't fly...
 ifneq (,$(filter -march=arm%,$(CFLAGS)))
   # We're on ARM.
-  ifeq (,$(filter -march=armv8-a -mfpu=neon,$(CFLAGS)))
+  ifeq (,$(filter -march=armv8.2% -march=armv8-a% -mfpu=neon,$(CFLAGS)))
     # We don't support NEON.
     WANT_SIMD=
   endif
