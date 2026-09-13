@@ -3,6 +3,7 @@ list(APPEND PATCH_FILES
     k2pdfopt.patch
     no_debug_fonts.patch
     trim_the_fat.patch
+    simd_kill_switch.patch
 )
 
 list(APPEND CMAKE_ARGS
@@ -16,6 +17,7 @@ list(APPEND CMAKE_ARGS
     -DENABLE_CCACHE=FALSE
     -DENABLE_NINJA_POOL=FALSE
     -DENABLE_PRECOMPILED_HEADERS=FALSE
+    -DENABLE_SIMD=${WANT_SIMD}
     -DGRAPHICS_DISABLED=TRUE
     -DINSTALL_CONFIGS=FALSE
 )
