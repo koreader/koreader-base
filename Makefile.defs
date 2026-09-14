@@ -251,6 +251,11 @@ else ifeq ($(TARGET), cervantes)
 		CHOST?=arm-linux-gnueabi
 	endif
 	USE_LJ_WPACLIENT=1
+else ifeq ($(TARGET), bookeen)
+	CHOST?=arm-bookeen-linux-gnueabi
+	BOOKEEN=1
+	GLIBC_VERSION_MAX = 2.11
+	USE_LJ_WPACLIENT=1
 else ifndef TARGET
 	# if TARGET is not defined we will build an emulator on current machine
 	EMULATE_READER=1
@@ -585,6 +590,13 @@ else ifeq ($(TARGET), cervantes)
 		COMPAT_CFLAGS:=$(UBUNTU_COMPAT_CFLAGS)
 		COMPAT_CXXFLAGS:=$(UBUNTU_COMPAT_CFLAGS)
 	endif
+else ifeq ($(TARGET), bookeen)
+	TARGET_CFLAGS:=$(ARMV7_A8_ARCH)
+	TARGET_CFLAGS+=-mfloat-abi=softfp
+	# The device is glibc 2.11, i.e. predates _DEFAULT_SOURCE: nothing enables
+	# __USE_XOPEN_EXTENDED by default, so e.g. getpgid (willuslib/wsys.c) isn't
+	# even declared. No CXX counterpart: g++ already defines _GNU_SOURCE itself.
+	COMPAT_CFLAGS:=-D_GNU_SOURCE
 else ifeq ($(TARGET), arm-generic)
 	# Defaults to generic crap
 	TARGET_CFLAGS:=$(ARMV6_GENERIC_ARCH)
@@ -990,6 +1002,7 @@ set(GLIBC_VERSION_MAX  $(GLIBC_VERSION_MAX))
 
 # Platform flags.
 set(ANDROID        $(ANDROID))
+set(BOOKEEN        $(BOOKEEN))
 set(CERVANTES      $(CERVANTES))
 set(KINDLE         $(KINDLE))
 set(KOBO           $(KOBO))

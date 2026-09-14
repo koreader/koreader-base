@@ -634,6 +634,14 @@ function(ffi_target NAME OUTPUT INPUT)
     add_dependencies(${NAME}-ffi ${TGT})
 endfunction()
 
+# bookeen
+if(BOOKEEN)
+    set(EXCLUDE_FROM_ALL)
+else()
+    set(EXCLUDE_FROM_ALL EXCLUDE_FROM_ALL)
+endif()
+ffi_target(bookeen mxcfb_bookeen_h.lua mxcfb_bookeen_decl.c ${EXCLUDE_FROM_ALL})
+
 # cervantes
 if(CERVANTES)
     set(EXCLUDE_FROM_ALL)

@@ -49,6 +49,9 @@ local framebuffer = {
 
     -- CFA post-processing flag
     CFA_PROCESSING_FLAG = 0,
+
+    -- Bookeen readers use a separate device for controlling the display
+    disp_fd = nil,
 }
 
 --[[ refresh list management: --]]
@@ -231,6 +234,46 @@ local function cervantes_mxc_wait_for_update_complete(fb, marker)
     fb.marker_data[0] = marker
 
     return C.ioctl(fb.fd, C.MXCFB_WAIT_FOR_UPDATE_COMPLETE, fb.marker_data)
+end
+
+
+-- NOTE: This is a *poll*, not a blocking wait: DISP_CMD_EINK_GET_UPDATE_STATUS simply
+--       returns disp_eink.update_status, which the vendor driver sets to 1 in
+--       eink_refresh_pwr_ctrl and back to 0 once the panel is off again
+--       (disp_eink.c:1658/1679). There is no marker or collision mechanism at all, so
+--       there is nothing to wait *for* -- we can only wait for the panel to go idle.
+--
+--       Two hard requirements follow, both learned the hard way (typing froze the UI):
+--
+--       1. It MUST be bounded. The status flag is only cleared by the refresh thread
+--          via down(power_off_sem); if that thread is wedged, or if the update we are
+--          waiting on was rejected before it ever reached the queue (-EAGAIN out of
+--          eink_dequeueBuffer when all NUM_BUFFER_SLOTS == 4 slots are busy), the flag
+--          never clears and this loop spins forever -- taking the whole single-threaded
+--          Lua main loop with it. The device looks frozen because it *is* frozen.
+--       2. usleep(10) is far too tight. A GC16 flash on this panel is ~450-800ms, so 10us
+--          means ~50k-80k ioctl syscalls per flash, each one taking disp_ioctl's
+--          copy_from_user of 8 longs. That is pure contention with the very refresh
+--          thread we are waiting on, on a single-core A8 whose cpufreq was just pinned
+--          by Disp_eink_update. Poll on a sane interval instead.
+local BOOKEEN_WAIT_INTERVAL_US = 10 * 1000       -- 10ms, i.e. one jiffy at HZ=100
+local BOOKEEN_WAIT_TIMEOUT_US  = 2 * 1000 * 1000 -- 2s, ~2.5x the slowest GC16 flash
+local function bookeen_mxc_wait_for_update_complete(fb)
+    local upd = ffi.new("struct mxcfb_update_data_bookeen[1]")
+    upd[0].u0 = 0
+    local waited = 0
+    while C.ioctl(fb.disp_fd, C.DISP_CMD_EINK_GET_UPDATE_STATUS, upd) ~= 0 do
+        if waited >= BOOKEEN_WAIT_TIMEOUT_US then
+            -- Bail out rather than hang. A stale busy flag is survivable: the next
+            -- refresh will simply be composited against a slightly stale panel.
+            fb.debug("DISP_CMD_EINK_GET_UPDATE_STATUS still busy after",
+                     BOOKEEN_WAIT_TIMEOUT_US / 1000, "ms; giving up on this wait")
+            return -1
+        end
+        C.usleep(BOOKEEN_WAIT_INTERVAL_US)
+        waited = waited + BOOKEEN_WAIT_INTERVAL_US
+    end
+    return 0
 end
 
 -- Kindle's MXCFB_WAIT_FOR_UPDATE_COMPLETE == 0xc008462f
@@ -774,6 +817,101 @@ local function refresh_cervantes(fb, is_flashing, waveform_mode, x, y, w, h)
 end
 
 
+local function refresh_bookeen(fb, is_flashing, waveform_mode, x, y, w, h)
+    local bb = fb.full_bb or fb.bb
+    -- Make sure the rectangle is strictly bounded inside the screen, then rotate it into
+    -- the native rotation the ioctl operates in (c.f., mxc_update).
+    x, y, w, h = bb:getBoundedRect(x, y, w, h, fb.alignment_constraint)
+    x, y, w, h = bb:getPhysicalRect(x, y, w, h)
+
+    if w <= 1 or h <= 1 then
+        return
+    end
+
+    local mode = waveform_mode or C.EINK_GC16_MODE
+
+    -- The update_region we pass is *ignored* unless EINK_RECTANGLE_MODE is set: the
+    -- driver only copies our coordinates into the queue slot inside
+    -- `if (mode & EINK_RECTANGLE_MODE)` (disp_eink.c:1965), and otherwise overwrites
+    -- the slot rect with the whole panel (x 0..EINK_PANEL_H, y 0..EINK_PANEL_W).
+    -- Every waveindex composer then walks that rect, so without this flag *every*
+    -- refresh is a full-panel composite no matter how small the dirty region --
+    -- 480k pixels of work to invert one keyboard key.
+    --
+    -- It also breaks partial refresh outright for A2, which is the one composer that
+    -- iterates the rect directly instead of masking a full-frame walk
+    -- (eink_a2_update_waveindex, disp_eink.c:1198 vs eink_gc16_update_waveindex's
+    -- masked full walk at 1236): with the default rect it touches every pixel and
+    -- copies new->old for all of them.
+    --
+    -- Worse, that default rect is *transposed* -- a vendor bug. EINK_PANEL_W/H are
+    -- runtime globals assigned from the panel's width/height (disp_eink.c:2377-2378),
+    -- and every composer strides `offset = row * EINK_PANEL_W + col`, i.e. W is the
+    -- stride and H the row count (see eink_set_8bit_dithering's explicit
+    -- `y<EINK_PANEL_H //600` / `x<EINK_PANEL_W //800` at 2072). But the default
+    -- assignment sets x_end = EINK_PANEL_H and y_end = EINK_PANEL_W (1979/1981),
+    -- swapping them. On an 800x600 panel the A2 composer then walks to offset
+    -- 799*800+599 = 639799 in a frame_width*frame_height == 480000 byte vmalloc'd
+    -- buffer: a 156 KB overrun of wav_form_index and wav_last_frame on every
+    -- rect-less A2 update. Passing our own rect avoids that path entirely.
+    --
+    -- Our x/y are already in the driver's convention: getPhysicalRect returns
+    -- native-orientation coordinates, and the struct's coordinate words land in
+    -- coordinate[0..3] == x_start/x_end/y_start/y_end exactly as eink_dequeueBuffer
+    -- reads them (disp_ioctl copies 8 longs; the struct is 8 words, so the layout
+    -- lines up word-for-word).
+    mode = bor(mode, C.EINK_RECTANGLE_MODE)
+
+    local refarea = ffi.new("struct mxcfb_update_data_bookeen[1]")
+    refarea[0].u0 = 0
+    refarea[0].u1 = fb.fd
+    refarea[0].u2 = mode
+    refarea[0].update_region.x_start = x;
+    refarea[0].update_region.x_end   = x + w;
+    refarea[0].update_region.y_start = y;
+    refarea[0].update_region.y_end   = y + h;
+
+    local rv = C.ioctl(fb.disp_fd, C.DISP_CMD_EINK_UPDATE, refarea)
+    if rv < 0 then
+        local err = ffi.errno()
+        -- -EAGAIN means eink_dequeueBuffer found no free slot (all NUM_BUFFER_SLOTS == 4
+        -- are busy) and *silently dropped* this update: no queue entry, no waveform
+        -- compose, and crucially update_status untouched. Two consequences:
+        --
+        --   * We must not fall through to the wait below on any other error either, since
+        --     there is no update of ours to wait for and the flag may already be 0 (or
+        --     stuck at 1 from someone else's work).
+        --   * A dropped update is a *lost* refresh, not a deferred one. The driver never
+        --     retries and KOReader's own bookkeeping assumes the ioctl took effect, so the
+        --     panel keeps whatever was there -- e.g. a keyboard key left inverted. That is
+        --     the visible half of the freeze even once the hang itself is fixed.
+        --
+        -- So wait for the panel to drain (bounded) and try once more. One retry is enough:
+        -- a slot is freed by eink_FreeBuffer at the end of every eink_refresh_pwr_ctrl
+        -- pass, so by the time update_status reads 0 the queue cannot still be full.
+        if err == C.EAGAIN then
+            fb.debug("DISP_CMD_EINK_UPDATE: all 4 driver slots busy, draining then retrying")
+            if bookeen_mxc_wait_for_update_complete(fb) == 0 then
+                rv = C.ioctl(fb.disp_fd, C.DISP_CMD_EINK_UPDATE, refarea)
+            end
+            if rv < 0 then
+                fb.debug("DISP_CMD_EINK_UPDATE retry failed:",
+                         ffi.string(C.strerror(ffi.errno())), "- dropping this refresh")
+                return
+            end
+        else
+            fb.debug("DISP_CMD_EINK_UPDATE ioctl failed:", ffi.string(C.strerror(err)))
+            return
+        end
+    end
+
+    if is_flashing then
+        bookeen_mxc_wait_for_update_complete(fb)
+    end
+
+    return
+end
+
 --[[ framebuffer API ]]--
 
 function framebuffer:refreshPartialImp(x, y, w, h, dither)
@@ -1219,6 +1357,49 @@ function framebuffer:init()
         self.update_data = ffi.new("struct mxcfb_update_data")
         self.update_data.temp = C.TEMP_USE_AMBIENT
         self.marker_data = ffi.new("uint32_t[1]")
+    elseif self.device:isBookeen() then
+        require("ffi/mxcfb_bookeen_h")
+
+        self.disp_fd = C.open("/dev/disp", C.O_RDWR)
+        assert(self.disp_fd ~= -1, "cannot open display!")
+
+        self.mech_refresh = refresh_bookeen
+        self.mech_wait_update_complete = bookeen_mxc_wait_for_update_complete
+
+        -- NOTE: refreshA2Imp postdates this port; without this, A2 updates would fall back
+        --       to a full GC16 flash in refresh_bookeen.
+        --
+        -- We deliberately do *not* use EINK_A2_MODE here, even though it exists and the
+        -- panel has an A2 waveform. The vendor driver auto-promotes it: when an
+        -- EINK_A2_MODE (or EINK_SHORT_DU_MODE) update finishes and the slot queue has
+        -- gone empty, eink_refresh_wav_form_1 arms internal_update_sem
+        -- (disp_eink.c:1713) and internal_update_thread then msleep(300) and issues an
+        -- unsolicited *full-screen EINK_GC16_MODE* flash behind our back
+        -- (disp_eink.c:1783). The virtual keyboard is the only thing in KOReader that
+        -- ever asks for "a2" (virtualkeyboard.lua:375), and it asks twice per keystroke
+        -- via VirtualKey:invert -- so every single key tap queued a ~450-800ms
+        -- full-panel GC16 flash ~300ms later, while onTapSelect's forceRePaint kept
+        -- pushing more updates into a 4-slot queue. That is the freeze.
+        --
+        -- DU is the right primitive for key highlights anyway: it is the driver's fast
+        -- mono mode, it is not subject to the auto-flush, and under
+        -- AWF_WAVEFORM_SUPPORTED (which this BSP sets, disp_eink.h:7) A2 does not even
+        -- get its own composer -- disp_eink.c:1546 routes it through
+        -- eink_gc16_update_waveform_awf exactly like DU does.
+        self.waveform_a2 = bor(C.EINK_DU_MODE, C.EINK_LOCAL_MODE)
+        self.waveform_fast = C.EINK_DU_MODE
+        self.waveform_ui = bor(C.EINK_GC16_MODE, C.EINK_LOCAL_MODE)
+        self.waveform_flashui = C.EINK_GC16_MODE
+        self.waveform_full = C.EINK_GC16_MODE
+        self.waveform_partial = bor(C.EINK_GC16_MODE, C.EINK_LOCAL_MODE)
+        self.waveform_night = C.EINK_GC16_MODE
+        self.waveform_flashnight = self.waveform_night
+        self.night_is_reagl = false
+
+        -- NOTE: Unlike every other mxcfb target, we do *not* allocate update_data/marker_data here:
+        --       mxcfb_bookeen_h defines neither struct. refresh_bookeen builds its own
+        --       `struct mxcfb_update_data_bookeen`, and the vendor driver has no marker/collision
+        --       mechanism at all (bookeen_mxc_wait_for_update_complete just polls).
     else
         error("unknown device type")
     end
