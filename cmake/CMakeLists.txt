@@ -173,16 +173,17 @@ check_libc_fn_exists(ngettext libintl.h HAS_GETTEXT)
 # of libtool, c.f., https://www.gnu.org/software/libtool/manual/html_node/Stripped-link-flags.html#Stripped-link-flags).
 #
 if(NOT ((ANDROID AND MONOLIBTIC) OR APPLE OR EMULATE_READER OR USE_SDL))
+    set(STL_INSTALL_CMD)
     if(ANDROID)
         set(STL_NAME libc++_shared.so)
     else()
         set(STL_NAME libstdc++.so.6)
     endif()
     find_compiler_lib_path(STL_PATH ${STL_NAME} REQUIRED)
-    append_binary_install_command(CMD_LIST ${STL_PATH} DESTINATION ${OUTPUT_DIR}/libs)
+    append_binary_install_command(STL_INSTALL_CMD ${STL_PATH} DESTINATION ${OUTPUT_DIR}/libs)
     add_custom_command(
         OUTPUT ${OUTPUT_DIR}/libs/${STL_NAME}
-        COMMAND ${CMD_LIST}
+        COMMAND ${STL_INSTALL_CMD}
         COMMENT "Installing '${STL_NAME}'"
         DEPENDS ${STL_PATH}
         VERBATIM
