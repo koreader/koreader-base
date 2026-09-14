@@ -96,12 +96,6 @@ executors:
     environment:
       TARGET: "pocketbookhf"
 
-  sony-prstux:
-    docker:
-      - image: koreader/kodeb:2.0.0-22.04
-    environment:
-      TARGET: "sony-prstux"
-
   # }}}
 
 # }}}
@@ -332,12 +326,6 @@ workflows:
       - build_and_test:
           name: pocketbookhf
           executor: pocketbookhf
-          requires:
-            - emu_gcc_ninja_debug
-
-      - build_and_test:
-          name: sony-prstux
-          executor: sony-prstux
           requires:
             - emu_gcc_ninja_debug
 

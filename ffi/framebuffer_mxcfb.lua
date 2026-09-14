@@ -217,14 +217,6 @@ local function remarkable_mxc_wait_for_update_complete(fb, marker)
     return C.ioctl(fb.fd, C.MXCFB_WAIT_FOR_UPDATE_COMPLETE, fb.marker_data)
 end
 
--- Sony PRS MXCFB_WAIT_FOR_UPDATE_COMPLETE
-local function sony_prstux_mxc_wait_for_update_complete(fb, marker)
-    -- Wait for a specific update to be completed
-    fb.marker_data[0] = marker
-
-    return C.ioctl(fb.fd, C.MXCFB_WAIT_FOR_UPDATE_COMPLETE, fb.marker_data)
-end
-
 -- BQ Cervantes MXCFB_WAIT_FOR_UPDATE_COMPLETE == 0x4004462f
 local function cervantes_mxc_wait_for_update_complete(fb, marker)
     -- Wait for a specific update to be completed
@@ -760,10 +752,6 @@ local function refresh_remarkable(fb, is_flashing, waveform_mode, x, y, w, h)
     return mxc_update(fb, C.MXCFB_SEND_UPDATE, fb.update_data, is_flashing, waveform_mode, x, y, w, h)
 end
 
-local function refresh_sony_prstux(fb, is_flashing, waveform_mode, x, y, w, h)
-    return mxc_update(fb, C.MXCFB_SEND_UPDATE, fb.update_data, is_flashing, waveform_mode, x, y, w, h)
-end
-
 local function refresh_cervantes(fb, is_flashing, waveform_mode, x, y, w, h)
     if waveform_mode == C.WAVEFORM_MODE_DU then
         fb.update_data.flags = C.EPDC_FLAG_FORCE_MONOCHROME
@@ -1179,26 +1167,6 @@ function framebuffer:init()
         -- NOTE: 0 seems to be a fairly safe assumption for "we don't care about collisions".
         --       On a slightly related note, the EPDC_FLAG_TEST_COLLISION flag is for dry-run collision tests, never set it.
         self.marker_data.collision_test = 0
-    elseif self.device:isSonyPRSTUX() then
-        require("ffi/mxcfb_sony_h")
-
-        self.mech_refresh = refresh_sony_prstux
-        self.mech_wait_update_complete = sony_prstux_mxc_wait_for_update_complete
-
-        self.waveform_a2 = C.WAVEFORM_MODE_A2
-        self.waveform_fast = C.WAVEFORM_MODE_DU
-        self.waveform_ui = C.WAVEFORM_MODE_AUTO
-        self.waveform_flashui = self.waveform_ui
-        self.waveform_full = C.WAVEFORM_MODE_GC16
-        self.waveform_partial = C.WAVEFORM_MODE_AUTO
-        self.waveform_night = C.WAVEFORM_MODE_GC16
-        self.waveform_flashnight = self.waveform_night
-        self.night_is_reagl = false
-
-        -- Keep our data structures around, and setup constants
-        self.update_data = ffi.new("struct mxcfb_update_data")
-        self.update_data.temp = C.TEMP_USE_AMBIENT
-        self.marker_data = ffi.new("uint32_t[1]")
     elseif self.device:isCervantes() then
         require("ffi/mxcfb_cervantes_h")
 
