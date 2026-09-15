@@ -1,0 +1,30 @@
+set(MAKE_CMD
+    make -C ${SOURCE_DIR}
+)
+
+set(LUA_INCLUDE_DIR "${STAGING_DIR}/include/luajit-2.1/")
+set(MODIFIED_CFLAGS "${CFLAGS} -I${LUA_INCLUDE_DIR}")
+
+
+list(APPEND BUILD_CMD ${MAKE_CMD}
+    CROSS_COMPILE=${CROSS_COMPILE}
+    CC=${CC}
+    CXX=${CXX}
+    AR=${AR}
+    RANLIB=${RANLIB}
+    CFLAGS=${MODIFIED_CFLAGS}
+    LDFLAGS=${LDFLAGS}
+    LUA_PATH= LUA_CPATH= ${PROGRAM})
+list(APPEND INSTALL_CMD COMMAND ${MAKE_CMD} DESTDIR=${STAGING_DIR} LUA_LIBDIR=${STAGING_DIR}/../common/ LUA_SHAREDIR=${STAGING_DIR}/../common/ prefix=/ install)
+
+# list(APPEND PATCH_FILES tmp.patch)
+
+external_project(
+    DOWNLOAD GIT v3.17.1
+    https://github.com/LuaLanes/lanes.git
+    PATCH_FILES ${PATCH_FILES}
+    PATCH_COMMAND ${PATCH_CMD}
+    # CMAKE_ARGS ${CMAKE_ARGS}
+    BUILD_COMMAND ${BUILD_CMD}
+    INSTALL_COMMAND ${INSTALL_CMD}
+)
