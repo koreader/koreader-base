@@ -2,6 +2,7 @@ local ffi = require("ffi")
 local android = require("android")
 local BB = require("ffi/blitbuffer")
 local C = ffi.C
+local logger = require("logger")
 
 --[[ configuration for devices with an electric paper display controller ]]--
 
@@ -69,9 +70,25 @@ end
 
 function framebuffer:getRotationMode()
     if android.hasNativeRotation() then
-        return android.orientation.get()
+        local ao = android.orientation.get()
+        logger.dbg("AROT_DIAG framebuffer_android:getRotationMode ->", ao)
+        return ao
     else
+        logger.dbg("AROT_DIAG framebuffer_android:getRotationMode ->", self.cur_rotation_mode, "(cached)")
         return self.cur_rotation_mode
+    end
+end
+
+-- Android handles display rotation natively: the window buffer is already
+-- rotated by SurfaceFlinger, and touch events arrive in display coordinates.
+-- The BB is never rotated (setRotationMode only calls android.orientation.set),
+-- so touch coordinates must not be transformed. Return 0 (UR) to skip the
+-- translation in GestureDetector:adjustGesCoordinate / input:adjustTouchTranslate.
+function framebuffer:getTouchRotation()
+    if android.hasNativeRotation() then
+        return 0
+    else
+        return framebuffer.parent.getTouchRotation(self)
     end
 end
 
@@ -83,7 +100,10 @@ function framebuffer:setRotationMode(mode)
         elseif mode == 2 then key = "REVERSE_PORTRAIT"
         elseif mode == 3 then key = "REVERSE_LANDSCAPE" end
         if key then
-            android.orientation.set(C["ASCREEN_ORIENTATION_" .. key])
+            local ao = C["ASCREEN_ORIENTATION_" .. key]
+            logger.dbg("AROT_DIAG framebuffer_android:setRotationMode mode=", mode, "key=", key, "ao=", ao)
+            android.orientation.set(ao)
+            self.cur_rotation_mode = mode
         end
     else
         framebuffer.parent.setRotationMode(self, mode)
