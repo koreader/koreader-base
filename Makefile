@@ -273,6 +273,7 @@ else ifneq (,$(ANDROID))
   BINCHECK_LD_PATH += $(call sysroot_libdir,libc++_shared.so)
 else
   BINCHECK_LD_PATH += $(call sysroot_libdir,libc.so.6)
+  BINCHECK_LD_PATH += $(call sysroot_libdir,libcrypt.so)
 endif
 
 bincheck: $(BINCHECK_DEPS)
