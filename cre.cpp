@@ -2589,6 +2589,89 @@ static int getPrevVisibleChar(lua_State *L){
     return 0;
 }
 
+/*
+ * Returns the visible words of the current page, in reading order.
+ *
+ * Each word is:
+ *     { text = <utf8 word text>,
+ *       chars = { { char = <utf8 char>, x0, y0, x1, y1 }, ... } }
+ *
+ * "chars" gives each laid-out character of the word together with its on-screen
+ * rectangle (page/window coordinates), so callers can style or hit-test
+ * individual glyphs of an already-rendered page.
+ *
+ * Purely additive and read-only: built from the page's existing text layout
+ * (LVDocView::getPageDocumentRange + ldomXRange::getRangeWords + per-offset
+ * getRectEx). Characters not on the current page are skipped. Words/chars that
+ * crengine reports split across a line break are returned as separate words.
+ */
+static int getVisibleWords(lua_State *L) {
+	CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
+	LVDocView *tv = doc->text_view;
+	if (!tv)
+		return 0;
+
+	LVRef<ldomXRange> prange = tv->getPageDocumentRange();
+	if (prange.isNull())
+		return 0;
+	ldomXRange r(*prange);
+	if (r.isNull())
+		return 0;
+	r.sort();
+
+	LVArray<ldomWord> words;
+	r.getRangeWords(words);
+
+	lua_createtable(L, 0, words.length());
+	int widx = 1;
+	for (int i = 0; i < words.length(); i++) {
+		ldomWord word = words[i];
+		lvRect wordRect;
+		if (!ldomXRange(word).getRectEx(wordRect))
+			continue;
+		if (!docToWindowRect(tv, wordRect))
+			continue; // not on the current page
+
+		lua_createtable(L, 0, 2);      // word entry
+		lua_pushstring(L, "chars");
+		lua_createtable(L, 0, 8);      // chars array
+		lString32 wtext;
+		int cidx = 1;
+		for (int j = word.getStart(); j < word.getEnd(); j++) {
+			ldomXPointer p(word.getNode(), j);
+			if (p.isNull())
+				continue;
+			lvRect charRect;
+			if (!p.getRectEx(charRect))
+				continue;
+			if (!docToWindowRect(tv, charRect))
+				continue;
+			lChar32 c = p.getChar();
+			if (c == 0) // end of text node
+				continue;
+			lString32 cs;
+			cs.append(1, c);
+			wtext.append(1, c);
+
+			lua_createtable(L, 0, 5);
+			lua_pushstring(L, "char");
+			lua_pushstring(L, UnicodeToLocal(cs).c_str());
+			lua_rawset(L, -3);
+			lua_pushstring(L, "x0"); lua_pushinteger(L, charRect.left);   lua_rawset(L, -3);
+			lua_pushstring(L, "y0"); lua_pushinteger(L, charRect.top);    lua_rawset(L, -3);
+			lua_pushstring(L, "x1"); lua_pushinteger(L, charRect.right);  lua_rawset(L, -3);
+			lua_pushstring(L, "y1"); lua_pushinteger(L, charRect.bottom); lua_rawset(L, -3);
+			lua_rawseti(L, -2, cidx++);
+		}
+		lua_rawset(L, -3);             // word["chars"] = chars
+		lua_pushstring(L, "text");
+		lua_pushstring(L, UnicodeToLocal(wtext).c_str());
+		lua_rawset(L, -3);             // word["text"] = wtext
+		lua_rawseti(L, -2, widx++);    // result[widx] = word
+	}
+	return 1;
+}
+
 static int getWordBoxesFromPositions(lua_State *L) {
 	CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
 	const char* pos0 = luaL_checkstring(L, 2);
@@ -4526,7 +4609,8 @@ static const struct luaL_Reg credocument_meth[] = {
     {"saveDefaults", saveDefaults},
     {"close", closeDocument},
     {"__gc", closeDocument},
-    {NULL, NULL}
+    	{"getVisibleWords", getVisibleWords},
+{NULL, NULL}
 };
 
 static const struct luaL_Reg creimage_meth[] = {
