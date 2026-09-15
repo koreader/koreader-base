@@ -238,10 +238,6 @@ else ifeq ($(TARGET), remarkable-aarch64)
 	CHOST?=aarch64-remarkable-linux-gnu
 	REMARKABLE=1
 	USE_LJ_WPACLIENT=1
-else ifeq ($(TARGET), sony-prstux)
-	CHOST?=arm-linux-gnueabihf
-	SONY_PRSTUX=1
-	USE_LJ_WPACLIENT=1
 else ifeq ($(TARGET), cervantes)
 	CERVANTES=1
 	HAS_CERVANTES_TC:=$(shell command -v arm-cervantes-linux-gnueabi-gcc 2> /dev/null)
@@ -575,9 +571,6 @@ else ifeq ($(TARGET), remarkable)
 	TARGET_CFLAGS+=-mfloat-abi=hard
 else ifeq ($(TARGET), remarkable-aarch64)
 	TARGET_CFLAGS:=$(ARM64_A53_ARCH)
-else ifeq ($(TARGET), sony-prstux)
-	TARGET_CFLAGS:=$(ARMV7_A8_ARCH)
-	TARGET_CFLAGS+=-mfloat-abi=hard
 else ifeq ($(TARGET), cervantes)
 	TARGET_CFLAGS:=$(ARMV7_GENERIC_ARCH)
 	TARGET_CFLAGS+=-mfloat-abi=softfp
@@ -997,7 +990,6 @@ set(KOBO           $(KOBO))
 set(LEGACY         $(LEGACY))
 set(POCKETBOOK     $(POCKETBOOK))
 set(REMARKABLE     $(REMARKABLE))
-set(SONY_PRSTUX    $(SONY_PRSTUX))
 
 set(SKIP_LUAJIT_BIN $(SKIP_LUAJIT_BIN))
 set(USE_LUAJIT_LIB  $(USE_LUAJIT_LIB))
