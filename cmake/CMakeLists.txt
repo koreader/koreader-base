@@ -821,4 +821,46 @@ endif()
 
 # }}}
 
+# Summary {{{
+
+set(SUMMARY "\n")
+
+function(summary_section NAME ENV_VARS)
+    string(APPEND SUMMARY "\n${NAME}:\n\n")
+    foreach(VAR IN LISTS ARGN)
+        set(HEADER "${VAR}                    ")
+        string(SUBSTRING "${HEADER}" 0 20 HEADER)
+        set(VAL "")
+        if(ENV_VARS)
+            if(DEFINED ENV{${VAR}})
+                set(VAL "$ENV{${VAR}}")
+            endif()
+        elseif(DEFINED ${VAR})
+            set(VAL "${${VAR}}")
+        endif()
+        string(APPEND SUMMARY "    ${HEADER}: ${VAL}\n")
+    endforeach()
+    set(SUMMARY ${SUMMARY} PARENT_SCOPE)
+endfunction()
+
+summary_section("Target machine" FALSE CHOST CC CFLAGS CXX CXXFLAGS LD LDFLAGS DYNLIB_LDFLAGS AR NM OBJCOPY RANLIB RC STRIP LIB_EXT VECTO_CFLAGS)
+summary_section("Build machine"  FALSE HOSTCFLAGS HOSTCXX)
+summary_section("Miscellaneous"  FALSE KOTASYNC MONOLIBTIC USE_LJ_WPACLIENT USE_SDL WANT_SIMD GLIBC_VERSION_MAX KEEP_DEBUG)
+summary_section("CI"             TRUE  CI GITHUB_ACTIONS)
+summary_section("OS"             FALSE ANDROID APPLE LINUX)
+summary_section("Platform"       FALSE EMULATE_READER CERVANTES KINDLE KOBO LEGACY POCKETBOOK REMARKABLE)
+summary_section("Luajit"         FALSE SKIP_LUAJIT_BIN USE_LUAJIT_LIB)
+if(ANDROID)
+    summary_section("Android"    TRUE ANDROID_ARCH NDKABI ANDROID_HOME ANDROID_SDK_ROOT ANDROID_NDK_HOME ANDROID_NDK_ROOT)
+elseif(APPLE)
+    summary_section("macOS"      TRUE MACOSX_DEPLOYMENT_TARGET)
+endif()
+
+if(NOT DEFINED CACHE{SUMMARY_SHOWN})
+    message(STATUS "${SUMMARY}")
+    set(SUMMARY_SHOWN TRUE CACHE INTERNAL "summary shown")
+endif()
+
+# }}
+
 # vim: foldmethod=marker foldlevel=0
