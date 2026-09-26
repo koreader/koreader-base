@@ -167,6 +167,10 @@ local function free_xz_index(i)
     xz.lzma_index_end(i, nil)
 end
 
+local function free_xz_filters(f)
+    xz.lzma_filters_free(f, nil)
+end
+
 -- }}}
 
 -- TAR.XZ {{{
@@ -242,9 +246,10 @@ function TarXz:open(filename, manifest)
         posix.read(fd, comp_buf, comp_size, true)
         -- Decode block header.
         local block = ffi.new("lzma_block")
+        local filters = ffi.gc(ffi.new("lzma_filter[?]", xz.LZMA_FILTERS_MAX + 1), free_xz_filters)
         block.header_size = xz_block_header_size_decode(comp_buf)
         block.check = header_stream_flags.check
-        block.filters = ffi.new("lzma_filter[?]", xz.LZMA_FILTERS_MAX + 1)
+        block.filters = filters
         ret = xz.lzma_block_header_decode(block, nil, comp_buf)
         xz_return_check(ret, "lzma_block_header_decode")
         assert(block.uncompressed_size == index_iter.block.uncompressed_size or block.uncompressed_size == xz.LZMA_VLI_UNKNOWN)
