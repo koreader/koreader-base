@@ -50,6 +50,7 @@ typedef struct {
   lzma_vli id;
   void *options;
 } lzma_filter;
+void lzma_filters_free(lzma_filter *, const lzma_allocator *);
 typedef struct {
   uint32_t version;
   lzma_vli backward_size;

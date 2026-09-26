@@ -26,6 +26,7 @@ cdecl_func(lzma_check_size);
 /// filter {{{
 
 cdecl_type(lzma_filter);
+cdecl_func(lzma_filters_free);
 
 /// }}}
 
