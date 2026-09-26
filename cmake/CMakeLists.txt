@@ -441,6 +441,9 @@ declare_project(thirdparty/popen-noshell EXCLUDE_FROM_ALL)
 # proxy-libintl
 declare_project(thirdparty/proxy-libintl EXCLUDE_FROM_ALL)
 
+# rsync
+declare_project(thirdparty/rsync EXCLUDE_FROM_ALL DEPENDS libressl xxhash zlib zstd)
+
 # sdcv
 declare_project(thirdparty/sdcv DEPENDS glib zlib)
 
