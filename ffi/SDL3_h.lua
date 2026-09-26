@@ -888,6 +888,7 @@ struct SDL_PenProximityEvent {
   Uint64 timestamp;
   SDL_WindowID windowID;
   SDL_PenID which;
+  SDL_PenInputFlags pen_state;
 };
 typedef struct SDL_PenProximityEvent SDL_PenProximityEvent;
 struct SDL_PenTouchEvent {
