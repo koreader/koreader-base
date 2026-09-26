@@ -148,6 +148,12 @@ else
     xz = ffi.loadlib("archive", "13")
 end
 
+local function xz_return_check(ret, func)
+    if ret ~= xz.LZMA_OK then
+        error(string.format("%s: %u", func, tonumber(ret)), 2)
+    end
+end
+
 local function xz_block_header_size_decode(ptr)
     return (ptr[0] + 1) * 4
 end
@@ -197,7 +203,7 @@ function TarXz:open(filename, manifest)
     posix.read(fd, stream_buf, xz.LZMA_STREAM_HEADER_SIZE, true)
     local header_stream_flags = ffi.new("lzma_stream_flags")
     ret = xz.lzma_stream_header_decode(header_stream_flags, stream_buf)
-    assert(ret == xz.LZMA_OK, ret)
+    xz_return_check(ret, "lzma_stream_header_decode")
     assert(header_stream_flags.version == 0)
     local check_size = xz.lzma_check_size(header_stream_flags.check)
     assert(check_size > 0)
@@ -206,10 +212,10 @@ function TarXz:open(filename, manifest)
     posix.read(fd, stream_buf, xz.LZMA_STREAM_HEADER_SIZE, true)
     local footer_stream_flags = ffi.new("lzma_stream_flags")
     ret = xz.lzma_stream_footer_decode(footer_stream_flags, stream_buf)
-    assert(ret == xz.LZMA_OK, ret)
+    xz_return_check(ret, "lzma_stream_footer_decode")
     -- Check header & footer match.
     ret = xz.lzma_stream_flags_compare(header_stream_flags, footer_stream_flags)
-    assert(ret == xz.LZMA_OK, ret)
+    xz_return_check(ret, "lzma_stream_flags_compare")
     -- Decode index.
     posix.lseek(fd, -(footer_stream_flags.backward_size + xz.LZMA_STREAM_HEADER_SIZE), C.SEEK_END)
     local index_buf = ffi.gc(ffi.cast("uint8_t *", C.malloc(footer_stream_flags.backward_size)), C.free)
@@ -218,7 +224,7 @@ function TarXz:open(filename, manifest)
     local memlimit = ffi.new("uint64_t[1]", XZ_INDEX_MEMLIMIT)
     local pos = ffi.new("size_t[1]")
     ret = xz.lzma_index_buffer_decode(index, memlimit, nil, index_buf, pos, footer_stream_flags.backward_size)
-    assert(ret == xz.LZMA_OK, ret)
+    xz_return_check(ret, "lzma_index_buffer_decode")
     index = ffi.gc(index[0], free_xz_index)
     assert(xz.lzma_index_stream_count(index) == 1)
     -- Iterate over blocks.
@@ -240,10 +246,10 @@ function TarXz:open(filename, manifest)
         block.check = header_stream_flags.check
         block.filters = ffi.new("lzma_filter[?]", xz.LZMA_FILTERS_MAX + 1)
         ret = xz.lzma_block_header_decode(block, nil, comp_buf)
-        assert(ret == xz.LZMA_OK, ret)
+        xz_return_check(ret, "lzma_block_header_decode")
         assert(block.uncompressed_size == index_iter.block.uncompressed_size or block.uncompressed_size == xz.LZMA_VLI_UNKNOWN)
         ret = xz.lzma_block_compressed_size(block, index_iter.block.unpadded_size)
-        assert(ret == xz.LZMA_OK)
+        xz_return_check(ret, "lzma_block_compressed_size")
         assert(xz.lzma_block_unpadded_size(block) == index_iter.block.unpadded_size)
         assert(xz.lzma_block_total_size(block) == index_iter.block.total_size)
         -- Decompress block.
@@ -252,7 +258,7 @@ function TarXz:open(filename, manifest)
         local in_pos = ffi.new("size_t[1]", block.header_size)
         local out_pos = ffi.new("size_t[1]", 0)
         ret = xz.lzma_block_buffer_decode(block, nil, comp_buf, in_pos, comp_size, uncomp_buf, out_pos, uncomp_size)
-        assert(ret == xz.LZMA_OK, ret)
+        xz_return_check(ret, "lzma_block_buffer_decode")
         -- Check TAR header.
         local ustar_header = ffi.cast("struct ustar_header *", uncomp_buf)
         if ustar_header.path[0] == 0 then
@@ -371,7 +377,7 @@ function TarXz:rewrite(entries)
     local stream_buf = ffi.new("uint8_t[?]", xz.LZMA_STREAM_HEADER_SIZE)
     -- First: the header.
     ret = xz.lzma_stream_header_encode(self.header_stream_flags, stream_buf)
-    assert(ret == xz.LZMA_OK, ret)
+    xz_return_check(ret, "lzma_stream_header_encode")
     posix.write(fd, stream_buf, C.LZMA_STREAM_HEADER_SIZE, true)
     -- Second: the blocks.
     local offset = C.LZMA_STREAM_HEADER_SIZE
@@ -394,24 +400,24 @@ function TarXz:rewrite(entries)
     assert(index ~= nil)
     for i, e in ipairs(entries) do
         ret = xz.lzma_index_append(index, nil, e.xz_size, tar_size(e.size))
-        assert(ret == xz.LZMA_OK, ret)
+        xz_return_check(ret, "lzma_index_append")
     end
     assert(xz.lzma_index_block_count(index) == #entries)
     local index_size = xz.lzma_index_size(index)
     local index_buf = ffi.new("uint8_t[?]", index_size)
     local pos = ffi.new("size_t[1]")
     ret = xz.lzma_index_buffer_encode(index, index_buf, pos, index_size)
-    assert(ret == xz.LZMA_OK, ret)
+    xz_return_check(ret, "lzma_index_buffer_encode")
     posix.write(fd, index_buf, index_size, true)
     -- Finally: the footer.
     self.footer_stream_flags.backward_size = index_size
     ret = xz.lzma_stream_footer_encode(self.footer_stream_flags, stream_buf)
-    assert(ret == xz.LZMA_OK, ret)
+    xz_return_check(ret, "lzma_stream_footer_encode")
     posix.write(fd, stream_buf, C.LZMA_STREAM_HEADER_SIZE, true)
     -- Rename temporary file and update internal state.
     local ok, err = os.rename(template, self.filename)
     if not ok then
-        error(err)
+        error("rename: "..err)
     end
     self.entries = entries
     self.by_path = by_path
@@ -553,7 +559,7 @@ function Updater:download_update(progress_cb)
     local header_stream_flags = ffi.new("lzma_stream_flags")
     header_stream_flags.check = self.manifest.xz_check
     ret = xz.lzma_stream_header_encode(header_stream_flags, stream_buf)
-    assert(ret == xz.LZMA_OK, ret)
+    xz_return_check(ret, "lzma_stream_header_encode")
     posix.write(fd, stream_buf, C.LZMA_STREAM_HEADER_SIZE, true)
     local missing = self.missing_files
     local offset = xz.LZMA_STREAM_HEADER_SIZE
@@ -616,20 +622,20 @@ function Updater:download_update(progress_cb)
     local index = ffi.gc(xz.lzma_index_init(nil), free_xz_index)
     for i, e in ipairs(missing) do
         ret = xz.lzma_index_append(index, nil, e.xz_size, tar_size(e.size))
-        assert(ret == xz.LZMA_OK, ret)
+        xz_return_check(ret, "lzma_index_append")
     end
     local index_size = xz.lzma_index_size(index)
     local index_buf = ffi.new("uint8_t[?]", index_size)
     local pos = ffi.new("size_t[1]")
     ret = xz.lzma_index_buffer_encode(index, index_buf, pos, index_size)
-    assert(ret == xz.LZMA_OK, ret)
+    xz_return_check(ret, "lzma_index_buffer_encode")
     posix.write(fd, index_buf, index_size, true)
     -- Write footer.
     local footer_stream_flags = ffi.new("lzma_stream_flags")
     footer_stream_flags.backward_size = index_size
     footer_stream_flags.check = self.manifest.xz_check
     ret = xz.lzma_stream_footer_encode(footer_stream_flags, stream_buf)
-    assert(ret == xz.LZMA_OK, ret)
+    xz_return_check(ret, "lzma_stream_footer_encode")
     posix.write(fd, stream_buf, C.LZMA_STREAM_HEADER_SIZE, true)
     -- Finalize.
     ret = C.ftruncate(fd, posix.lseek(fd, 0, C.SEEK_CUR))
