@@ -3,7 +3,7 @@ KOR_BASE ?= ..
 
 TARGET = linux
 KOTASYNC = 1
-VERSION = 1.2.0
+VERSION = 1.3.0
 
 include $(KOR_BASE)/Makefile.defs
 
