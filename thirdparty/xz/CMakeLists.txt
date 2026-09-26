@@ -44,8 +44,8 @@ if(KOTASYNC)
 endif()
 
 external_project(
-    DOWNLOAD URL a02753f34e5546d20213b87f876a0933
-    https://github.com/tukaani-project/xz/releases/download/v5.8.3/xz-5.8.3.tar.xz
+    DOWNLOAD URL 8b2f092ad33e560bc04ffdbe3101daa7
+    https://github.com/tukaani-project/xz/releases/download/v5.8.4/xz-5.8.4.tar.xz
     PATCH_FILES ${PATCH_FILES}
     PATCH_COMMAND ${PATCH_CMD}
     CMAKE_ARGS ${CMAKE_ARGS}
