@@ -34,11 +34,20 @@ struct UserInputContents {
   int devId;
   int x, y, d;
 };
+struct DeviceStateChangedContents {
+    int reason;
+    union {
+        struct {
+            int rotation;
+        } rotation;
+    };
+};
 struct ServerMessage {
   uint8_t type;
   union {
     struct InitMessageResponseContents init;
     struct UserInputContents userInput;
+    struct DeviceStateChangedContents deviceStateChanged;
   };
 };
 ]]
