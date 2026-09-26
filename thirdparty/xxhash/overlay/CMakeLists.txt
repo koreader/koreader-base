@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.17.5)
-project(xxhash LANGUAGES C VERSION 0.8.3)
+project(xxhash LANGUAGES C VERSION 0.8.4)
 
 set(DEFAULT ${BUILD_SHARED_LIBS})
 option(BUILD_SHARED "build a shared library" ${DEFAULT})
