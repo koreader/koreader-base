@@ -1038,6 +1038,44 @@ static int getPageXPointer(lua_State *L) {
 	return 1;
 }
 
+static int getEPubCFI(lua_State *L) {
+	CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
+
+	ldomEPubCFI cfi(doc->text_view->getBookmark());
+	lua_pushstring(L, UnicodeToLocal(cfi.toString()).c_str());
+
+	return 1;
+}
+
+static int getPageEPubCFI(lua_State *L) {
+	CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
+	int pageno = luaL_checkint(L, 2);
+	bool internal = false;
+	if (lua_isboolean(L, 3)) {
+		internal = lua_toboolean(L, 3);
+	}
+	ldomEPubCFI cfi(doc->text_view->getPageBookmark(pageno - 1, true, internal));
+	lua_pushstring(L, UnicodeToLocal(cfi.toString()).c_str());
+
+	return 1;
+}
+
+static int getEPubCFIFromXPointer(lua_State *L) {
+	CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
+	const char *xpointer_str = luaL_checkstring(L, 2);
+
+	ldomXPointer xp = doc->dom_doc->createXPointer(lString32(xpointer_str));
+	if ( xp.isNull() ) { // Not found in document
+		lua_pushnil(L);
+		return 1;
+	}
+
+	ldomEPubCFI cfi(xp);
+	lua_pushstring(L, UnicodeToLocal(cfi.toString()).c_str());
+
+	return 1;
+}
+
 static int getFullHeight(lua_State *L) {
 	CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
 
@@ -4417,6 +4455,9 @@ static const struct luaL_Reg credocument_meth[] = {
     {"getCurrentPercent", getCurrentPercent},
     {"getXPointer", getXPointer},
     {"getPageXPointer", getPageXPointer},
+    {"getEPubCFI", getEPubCFI},
+    {"getPageEPubCFI", getPageEPubCFI},
+    {"getEPubCFIFromXPointer", getEPubCFIFromXPointer},
     {"getPageOffsetX", getPageOffsetX},
     {"getPageStartY", getPageStartY},
     {"getPageHeight", getPageHeight},
