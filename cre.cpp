@@ -1066,8 +1066,7 @@ static int getEPubCFIFromXPointer(lua_State *L) {
 
 	ldomXPointer xp = doc->dom_doc->createXPointer(lString32(xpointer_str));
 	if ( xp.isNull() ) { // Not found in document
-		lua_pushnil(L);
-		return 1;
+		return 0;
 	}
 
 	ldomEPubCFI cfi(xp);
