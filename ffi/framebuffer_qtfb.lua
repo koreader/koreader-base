@@ -12,24 +12,9 @@ local framebuffer = {
     cur_refresh_mode = -1,
 }
 
-function framebuffer:init()
-    local key_str = os.getenv("QTFB_KEY")
-    local key = key_str and tonumber(key_str) or 245209899 -- QTFB_DEFAULT_FRAMEBUFFER
-
-    local shmType = 0 -- FBFMT_RM2FB as default
-    local width = 1404
-    local height = 1872
-
-    if qtfb.is_rmpp then
-        shmType = 3 -- FBFMT_RMPP_RGB565
-        width = 1620
-        height = 2160
-    elseif qtfb.is_rmppm then
-        shmType = 6 -- FBFMT_RMPPM_RGB565
-        width = 954
-        height = 1696
-    end
-
+-- Connects to the QTFB server and asks for a framebuffer
+-- Returns the socket and the server's reply, or nil if the server refused
+local function qtfb_connect(key, shmType)
     -- Create and connect UNIX domain socket
     local sock = C.socket(C.AF_UNIX, C.SOCK_SEQPACKET, 0)
     assert(sock >= 0, "Failed to create UNIX socket")
@@ -42,32 +27,76 @@ function framebuffer:init()
         error("Failed to connect to QTFB socket at /tmp/qtfb.sock (errno: " .. ffi.errno() .. ")")
     end
 
-    self.sock = sock
-
     -- Send MESSAGE_INITIALIZE (0)
     local initMsg = ffi.new("struct ClientMessage")
     initMsg.type = qtfb.MESSAGE_INITIALIZE
     initMsg.init.framebufferKey = key
     initMsg.init.framebufferType = shmType
 
-    local bytes_sent = C.send(self.sock, initMsg, ffi.sizeof(initMsg), 0)
+    local bytes_sent = C.send(sock, initMsg, ffi.sizeof(initMsg), 0)
     if bytes_sent < 0 then
-        C.close(self.sock)
-        self.sock = -1
+        C.close(sock)
         error("Failed to send init message to QTFB server")
     end
 
     -- Recv server confirmation response
     local respMsg = ffi.new("struct ServerMessage")
-    local bytes_recvd = C.recv(self.sock, respMsg, ffi.sizeof(respMsg), 0)
-    if bytes_recvd < ffi.sizeof(respMsg) then
-        C.close(self.sock)
-        self.sock = -1
+    local bytes_recvd = C.recv(sock, respMsg, ffi.sizeof(respMsg), 0)
+    if bytes_recvd == 0 then
+        -- Orderly close without a reply: that is how AppLoad refuses us.
+        C.close(sock)
+        return nil
+    elseif bytes_recvd < ffi.sizeof(respMsg) then
+        C.close(sock)
         error("Failed to receive init message response from QTFB server")
     end
 
+    return sock, respMsg
+end
+
+function framebuffer:init()
+    local key_str = os.getenv("QTFB_KEY")
+    local key = key_str and tonumber(key_str) or 245209899 -- QTFB_DEFAULT_FRAMEBUFFER
+
+    local width = 1404
+    local height = 1872
+
+    if qtfb.is_rmpp then
+        width = 1620
+        height = 2160
+    elseif qtfb.is_rmppm then
+        width = 954
+        height = 1696
+    end
+
+    local shmType = qtfb.fb_format
+    local sock, respMsg = qtfb_connect(key, shmType)
+    if not sock and qtfb.fb_format_fallback then
+        -- Something still holds our key in the old format
+        -- (e.g. qtfb_keep_alive still holds after an in-app update).
+        -- We retry in the fallback format. Only a full exit & relaunch can switch formats.
+        io.write("QTFB: format ", shmType, " refused, falling back to ",
+                 qtfb.fb_format_fallback,
+                 " (fully exit and relaunch KOReader to switch)\n")
+        shmType = qtfb.fb_format_fallback
+        sock, respMsg = qtfb_connect(key, shmType)
+    end
+    if not sock then
+        error("QTFB server refused framebuffer format " .. shmType)
+    end
+    self.sock = sock
+
     local shmKey = respMsg.init.shmKeyDefined
     local shmSize = respMsg.init.shmSize
+
+    local is_rgba = shmType == qtfb.FBFMT_RMPP_RGBA8888 or shmType == qtfb.FBFMT_RMPPM_RGBA8888
+    local bb_type = is_rgba and BB.TYPE_BBRGB32 or BB.TYPE_BBRGB16
+    local stride = width * (is_rgba and 4 or 2)
+    if shmSize < stride * height then
+        C.close(self.sock)
+        self.sock = -1
+        error("QTFB shared memory is smaller than " .. stride * height)
+    end
 
     -- Open and map shared memory
     local shmName = string.format("/qtfb_%d", shmKey)
@@ -90,10 +119,9 @@ function framebuffer:init()
     self.data = memory
     self.fb_size = shmSize
 
-    -- Initialize blitbuffer (forcing 16-bit RGB565)
-    local stride = width * 2 -- 2 bytes per pixel for RGB565
+    -- Initialize blitbuffer
     local stride_pixels = width
-    self.bb = BB.new(width, height, BB.TYPE_BBRGB16, self.data, stride, stride_pixels)
+    self.bb = BB.new(width, height, bb_type, self.data, stride, stride_pixels)
     self.bb:fill(BB.COLOR_WHITE)
 
     self.wf_level_max = 3
