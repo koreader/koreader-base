@@ -1,5 +1,5 @@
 diff --git a/turbo.lua b/turbo.lua
-index c8d32d5..a294738 100644
+index 1cba847..2273e25 100644
 --- a/turbo.lua
 +++ b/turbo.lua
 @@ -109,7 +109,6 @@ turbo.crypto =          require "turbo.crypto"

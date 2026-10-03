@@ -1,8 +1,8 @@
 diff --git a/turbo/ioloop.lua b/turbo/ioloop.lua
-index 69ad635..5956f07 100644
+index 75bf793..221e15d 100644
 --- a/turbo/ioloop.lua
 +++ b/turbo/ioloop.lua
-@@ -250,89 +250,6 @@ function ioloop.IOLoop:clear_interval(ref)
+@@ -252,89 +252,6 @@ function ioloop.IOLoop:clear_interval(ref)
      end
  end
  

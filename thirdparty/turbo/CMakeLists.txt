@@ -1,6 +1,4 @@
 list(APPEND PATCH_FILES
-    # Backport upstream fixes.
-    d7a8a247a4a2689b0f207162eb804141c87c4899.patch
     # Make sure turbo use our SSL library.
     fix_ssl_load.patch
     # Make sure turbo find its libtffi_wrap library.
@@ -51,7 +49,7 @@ append_install_commands(INSTALL_CMD ${SOURCE_DIR}/turbo.lua DESTINATION common)
 append_tree_install_commands(INSTALL_CMD ${SOURCE_DIR}/turbo common/turbo)
 
 external_project(
-    DOWNLOAD GIT v2.1.3
+    DOWNLOAD GIT v2.1.5
     https://github.com/kernelsauce/turbo
     PATCH_OVERLAY overlay
     PATCH_FILES ${PATCH_FILES}

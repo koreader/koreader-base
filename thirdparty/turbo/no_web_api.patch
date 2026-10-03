@@ -1,5 +1,5 @@
 diff --git a/turbo.lua b/turbo.lua
-index 543cce4..c8d32d5 100644
+index 20ea685..1cba847 100644
 --- a/turbo.lua
 +++ b/turbo.lua
 @@ -107,7 +107,6 @@ turbo.iostream =        require "turbo.iostream"
