@@ -188,6 +188,9 @@ cdecl_type(__kernel_clockid_t);
 // On macOS, `clockid_t` is an enum.
 _Static_assert(__builtin_types_compatible_p(unsigned, clockid_t), "unsigned != clockid_t");
 cdecl_out(type_clockid_t, typedef unsigned clockid_t;);
+#elif defined(__linux__) && !defined(__GLIBC__)
+// Not glibc (musl): no internal `__*_t` aliases.
+cdecl_type(clockid_t);
 #elif defined(__linux__)
 cdecl_type_replace(__clockid_t, clockid_t);
 cdecl_type(__clockid_t);
@@ -212,6 +215,11 @@ cdecl_type_replace(__darwin_useconds_t, useconds_t);
 cdecl_type(__darwin_suseconds_t);
 cdecl_type(__darwin_time_t);
 cdecl_type(__darwin_useconds_t);
+#elif defined(__linux__) && !defined(__GLIBC__)
+// Not glibc (musl): no internal `__*_t` aliases.
+cdecl_type(suseconds_t);
+cdecl_type(time_t);
+cdecl_type(useconds_t);
 #elif defined(__linux__)
 cdecl_type_replace(__suseconds_t, suseconds_t);
 cdecl_type_replace(__time_t, time_t);
@@ -268,6 +276,19 @@ cdecl_type(nlink_t);
 cdecl_type(__darwin_off_t);
 cdecl_type(__darwin_pid_t);
 cdecl_type(__darwin_uid_t);
+#elif defined(__linux__) && !defined(__GLIBC__)
+// Not glibc (musl): no internal `__*_t` aliases.
+cdecl_type(blkcnt_t);
+cdecl_type(blksize_t);
+cdecl_type(dev_t);
+cdecl_type(gid_t);
+cdecl_type(id_t);
+cdecl_type(ino_t);
+cdecl_type(mode_t);
+cdecl_type(nlink_t);
+cdecl_type(off_t);
+cdecl_type(pid_t);
+cdecl_type(uid_t);
 #elif defined(__linux__)
 cdecl_type_replace(__blkcnt_t, blkcnt_t);
 cdecl_type_replace(__blksize_t, blksize_t);
@@ -301,6 +322,10 @@ cdecl_type_replace(__darwin_fsblkcnt_t, fsblkcnt_t);
 cdecl_type_replace(__darwin_fsfilcnt_t, fsfilcnt_t);
 cdecl_type(__darwin_fsblkcnt_t);
 cdecl_type(__darwin_fsfilcnt_t);
+#elif defined(__linux__) && !defined(__GLIBC__)
+// Not glibc (musl): no internal `__*_t` aliases.
+cdecl_type(fsblkcnt_t);
+cdecl_type(fsfilcnt_t);
 #elif defined(__linux__)
 cdecl_type_replace(__fsblkcnt_t, fsblkcnt_t);
 cdecl_type_replace(__fsfilcnt_t, fsfilcnt_t);
@@ -340,6 +365,9 @@ cdecl_const(SOCK_SEQPACKET);
 #if defined(__ANDROID__)
 #elif defined(__APPLE__)
 cdecl_type(caddr_t);
+#elif defined(__linux__) && !defined(__GLIBC__)
+// Not glibc (musl): no internal `__*_t` aliases.
+cdecl_type(caddr_t);
 #elif defined(__linux__)
 cdecl_type_replace(__caddr_t, caddr_t);
 cdecl_type(__caddr_t);
@@ -360,6 +388,9 @@ cdecl_type(sa_family_t);
 #if defined(__APPLE__)
 cdecl_type_replace(__darwin_socklen_t, socklen_t);
 cdecl_type(__darwin_socklen_t);
+#elif defined(__linux__) && !defined(__GLIBC__)
+// Not glibc (musl): no internal `__*_t` aliases.
+cdecl_type(socklen_t);
 #elif defined(__linux__)
 cdecl_type_replace(__socklen_t, socklen_t);
 cdecl_type(__socklen_t);
@@ -519,7 +550,7 @@ cdecl_func(fread);
 cdecl_func(fwrite);
 cdecl_func(sprintf);
 
-#if !defined(__APPLE__)
+#if defined(__ANDROID__) || defined(__GLIBC__)
 # if !defined(__ANDROID__)
 cdecl_type_replace(__off_t, off_t);
 # endif
@@ -627,7 +658,7 @@ cdecl_func(time);
 cdecl_func(timegm);
 
 cdecl_struct(timezone);
-#if defined(__linux__) && defined(__arm__) && !defined(__ANDROID__)
+#if defined(__GLIBC__) && defined(__arm__)
 cdecl_type_replace(__timezone_ptr_t, struct timezone *);
 #endif
 
@@ -638,7 +669,7 @@ cdecl_const(PRIO_PROCESS);
 cdecl_const(PRIO_PGRP);
 cdecl_const(PRIO_USER);
 
-#if defined(__linux__) && !defined(__ANDROID__)
+#if defined(__GLIBC__)
 cdecl_type_replace(__priority_which_t, int);
 #endif
 
