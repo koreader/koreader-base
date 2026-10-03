@@ -12,6 +12,14 @@ list(APPEND PATCH_FILES
     # .oft cache) instead of rescanning the whole .syn file on every
     # launch. Upstream PR: https://github.com/Dushistov/sdcv/pull/129.
     sdcv-syn-oft-cache.patch
+    # Follow-up to the above: read the .oft offset tables out of their
+    # mapping instead of copying them into a vector on every launch,
+    # which costs one anonymous page per 1024 offsets for the ~20 a
+    # binary search actually reads. Bumps the cache format to 0.3 (the
+    # header is padded so the table is aligned); a 0.2 cache is
+    # rejected and rebuilt once. Part of the same upstream PR:
+    # https://github.com/Dushistov/sdcv/pull/129.
+    sdcv-mmap-offset-table.patch
 )
 
 string(APPEND GLIB2_INCLUDE_DIRS
