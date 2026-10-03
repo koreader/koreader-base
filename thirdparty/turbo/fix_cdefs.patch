@@ -1,5 +1,5 @@
 diff --git a/turbo/cdef.lua b/turbo/cdef.lua
-index 62895de..15de5e6 100644
+index 0ff0cd3..1deb054 100644
 --- a/turbo/cdef.lua
 +++ b/turbo/cdef.lua
 @@ -17,9 +17,11 @@
@@ -23,7 +23,7 @@ index 62895de..15de5e6 100644
  if platform.__WINDOWS__ then
      -- Windows version of UNIX strncasecmp.
      ffi.cdef[[
-@@ -94,6 +97,7 @@ if not S then
+@@ -102,6 +105,7 @@ if not S then
      ]]
  end
  
@@ -31,7 +31,7 @@ index 62895de..15de5e6 100644
  ffi.cdef [[
      typedef int socklen_t;
  
-@@ -182,6 +186,9 @@ end
+@@ -190,6 +194,9 @@ end
          const char *gai_strerror(int ecode);
          int __res_init(void);
      ]]
@@ -41,7 +41,7 @@ index 62895de..15de5e6 100644
  
  
      --- ******* Signals *******
-@@ -220,6 +227,7 @@ end
+@@ -228,6 +235,7 @@ end
             };
          ]]
      end
@@ -49,7 +49,7 @@ index 62895de..15de5e6 100644
      ffi.cdef(string.format([[
          typedef void(*sighandler_t)(int);
          sighandler_t signal(int signum, sighandler_t handler);
-@@ -236,6 +244,7 @@ end
+@@ -244,6 +252,7 @@ end
          int sigprocmask(int how, const sigset_t *set, sigset_t *oldset);
          int signalfd(int fd, const sigset_t *mask, int flags);
      ]], (1024 / (8 *ffi.sizeof("unsigned long")))))
@@ -57,7 +57,7 @@ index 62895de..15de5e6 100644
  
  
      --- ******* Time *******
-@@ -253,6 +262,7 @@ end
+@@ -261,6 +270,7 @@ end
              };
          ]]
      end
@@ -65,7 +65,7 @@ index 62895de..15de5e6 100644
      ffi.cdef([[
          typedef long suseconds_t;
          typedef long time_t;
-@@ -286,6 +296,7 @@ end
+@@ -294,6 +304,7 @@ end
          struct tm *gmtime(const time_t *timer);
          int gettimeofday(struct timeval *tv, timezone_ptr_t tz);
      ]])
@@ -73,7 +73,7 @@ index 62895de..15de5e6 100644
  
  if platform.__UNIX__ then
  
-@@ -299,6 +310,7 @@ if platform.__UNIX__ then
+@@ -307,6 +318,7 @@ if platform.__UNIX__ then
              };
          ]]
      end
@@ -81,7 +81,7 @@ index 62895de..15de5e6 100644
      ffi.cdef[[
          typedef unsigned int clockid_t;
          enum clock_ids{
-@@ -308,6 +320,7 @@ if platform.__UNIX__ then
+@@ -316,6 +328,7 @@ if platform.__UNIX__ then
  
          int clock_gettime(clockid_t clk_id, struct timespec *tp);
      ]]
@@ -89,7 +89,7 @@ index 62895de..15de5e6 100644
  end
  
  
-@@ -338,6 +351,7 @@ if platform.__LINUX__ then
+@@ -350,6 +363,7 @@ if platform.__LINUX__ then
              ]]
          end
      end
@@ -97,7 +97,7 @@ index 62895de..15de5e6 100644
      ffi.cdef[[
          typedef struct epoll_event epoll_event;
  
-@@ -353,6 +367,7 @@ if platform.__LINUX__ then
+@@ -365,6 +379,7 @@ if platform.__LINUX__ then
              int maxevents,
              int timeout);
      ]]
@@ -105,7 +105,7 @@ index 62895de..15de5e6 100644
  
  
      --- ******* Inotify *******
-@@ -367,6 +382,7 @@ if platform.__LINUX__ then
+@@ -379,6 +394,7 @@ if platform.__LINUX__ then
              };
          ]]
      end
@@ -113,7 +113,7 @@ index 62895de..15de5e6 100644
      ffi.cdef [[
          int inotify_init(void);
          int inotify_add_watch(int fd, const char *name, unsigned int mask);
-@@ -393,6 +409,7 @@ if platform.__LINUX__ then
+@@ -405,6 +421,7 @@ if platform.__LINUX__ then
          int close(int fd);
          int fstat(int fd, struct stat *buf);
      ]]
@@ -121,7 +121,7 @@ index 62895de..15de5e6 100644
  
      -- stat structure is architecture dependent in Linux
      if not S then
-@@ -538,6 +555,7 @@ if platform.__LINUX__ then
+@@ -577,6 +594,7 @@ if platform.__LINUX__ then
  
  
      -- ****** Glob ******
@@ -129,7 +129,7 @@ index 62895de..15de5e6 100644
      ffi.cdef[[
          typedef struct {
              long unsigned int gl_pathc;
-@@ -557,6 +575,7 @@ if platform.__LINUX__ then
+@@ -596,6 +614,7 @@ if platform.__LINUX__ then
              glob_t *pglob);
          void globfree(glob_t *pglob);
      ]]
@@ -137,7 +137,7 @@ index 62895de..15de5e6 100644
  end
  
  if platform.__DARWIN__ then
-@@ -591,10 +610,12 @@ if platform.__DARWIN__ then
+@@ -630,10 +649,12 @@ if platform.__DARWIN__ then
      end
  
      --- ******* File system *******

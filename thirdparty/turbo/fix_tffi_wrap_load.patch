@@ -1,8 +1,8 @@
 diff --git a/turbo/util.lua b/turbo/util.lua
-index d9d5468..c4bee1a 100644
+index 8df8796..746d097 100644
 --- a/turbo/util.lua
 +++ b/turbo/util.lua
-@@ -342,6 +342,12 @@ end
+@@ -380,6 +380,12 @@ end
  -- @param name Custom library name or path
  function util.load_libtffi(name)
      local have_name = name and true or false
