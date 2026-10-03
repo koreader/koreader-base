@@ -758,7 +758,7 @@ ffi_target(pocketbook mxcfb_pocketbook_h.lua mxcfb_pb_decl.c ${EXCLUDE_FROM_ALL}
 # posix
 set(VERSIONS
     android_arm android_arm64 android_x86 android_x64
-    linux_arm linux_arm64 linux_x64
+    linux_arm linux_arm_musl linux_arm64 linux_x64
     macos
 )
 add_custom_target(
