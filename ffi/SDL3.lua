@@ -99,9 +99,9 @@ function S.open(w, h, x, y)
         SDL.SDL_SetHint("SDL_VIDEO_DRIVER", "x11")
     end
 
-    if SDL.SDL_Init(bit.bor(SDL.SDL_INIT_VIDEO,
-                            SDL.SDL_INIT_EVENTS,
-                            SDL.SDL_INIT_GAMEPAD)) == 0 then
+    if not SDL.SDL_Init(bit.bor(SDL.SDL_INIT_VIDEO,
+                                SDL.SDL_INIT_EVENTS,
+                                SDL.SDL_INIT_GAMEPAD)) then
         error("Cannot initialize SDL: " .. ffi.string(SDL.SDL_GetError()))
     end
 
