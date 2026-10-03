@@ -57,6 +57,12 @@ executors:
     environment:
       TARGET: "android-x86"
 
+  bookeen:
+    docker:
+      - image: koreader/kobookeen:5.0.0-22.04
+    environment:
+      TARGET: "bookeen"
+      
   cervantes:
     docker:
       - image: koreader/kocervantes:2.1.0-22.04
