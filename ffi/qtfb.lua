@@ -61,4 +61,36 @@ M.ROTATION_0 = 0
 M.ROTATION_L90 = 1
 M.ROTATION_R90 = 2
 M.ROTATION_180 = 3
+
+-- Framebuffer formats the QTFB server knows.
+-- NOTE: Keep in sync with FBFMT_* in rm-appload's src/qtfb/common.h
+M.FBFMT_RM2FB = 0
+M.FBFMT_RMPP_RGB888 = 1
+M.FBFMT_RMPP_RGBA8888 = 2
+M.FBFMT_RMPP_RGB565 = 3
+M.FBFMT_RMPPM_RGB888 = 4
+M.FBFMT_RMPPM_RGBA8888 = 5
+M.FBFMT_RMPPM_RGB565 = 6
+M.FBFMT_RMPPURE_RGB888 = 7
+M.FBFMT_RMPPURE_RGBA8888 = 8
+M.FBFMT_RMPPURE_RGB565 = 9
+
+-- Setting the correct framebuffer format for the device.
+-- We set it in a common place so KOReader and qtfb_keep_alive always have the same values.
+-- Color panels must use RGBA8888 because RGB565 tints the grays and causes dithering.
+-- fb_format_fallback is used for when qtfb_keep_alive still holds the old format after
+-- an in-app update.
+if is_rmpp then
+    M.fb_format = M.FBFMT_RMPP_RGBA8888
+    M.fb_format_fallback = M.FBFMT_RMPP_RGB565
+elseif is_rmppm then
+    M.fb_format = M.FBFMT_RMPPM_RGBA8888
+    M.fb_format_fallback = M.FBFMT_RMPPM_RGB565
+elseif is_rmppure then
+    M.fb_format = M.FBFMT_RMPPURE_RGB565
+    M.fb_format_fallback = M.FBFMT_RM2FB
+else
+    M.fb_format = M.FBFMT_RM2FB
+end
+
 return M
