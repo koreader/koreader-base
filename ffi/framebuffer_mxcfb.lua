@@ -586,6 +586,11 @@ local function refresh_mtk(fb, is_flashing, waveform_mode, x, y, w, h, dither)
         fb.update_data.hist_gray_waveform_mode = C.MTK_WAVEFORM_MODE_GC16 -- NOTE: GC16_FAST points to GC16
     end
 
+    -- On color panels, dithering partial updates causes artifacts.
+    if dither and fb.device:hasColorScreen() and not is_flashing and not fb:_isREAGLWaveFormMode(waveform_mode) then
+        dither = nil
+    end
+
     -- Enable the appropriate flag when requesting an any->2bit update, provided we're not dithering.
     -- NOTE: See FBInk note about DITHER + MONOCHROME
     if waveform_mode == C.MTK_WAVEFORM_MODE_DU and not dither then
