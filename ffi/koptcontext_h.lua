@@ -34,9 +34,9 @@ typedef struct {
   int n, na;
 } WRECTMAPS;
 typedef struct {
-  int red[256];
-  int green[256];
-  int blue[256];
+  unsigned char red[256];
+  unsigned char green[256];
+  unsigned char blue[256];
   unsigned char *data;
   int width;
   int height;

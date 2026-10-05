@@ -1,6 +1,3 @@
-#define K2PDFOPT_EXPORT
-#define WILLUS_EXPORT
-
 #include "koptcrop.h"
 #include "koptimize.h"
 #include "koptocr.h"

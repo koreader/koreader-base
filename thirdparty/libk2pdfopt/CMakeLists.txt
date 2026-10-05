@@ -9,6 +9,7 @@ list(APPEND CMAKE_ARGS
     -DBUILD_SHARED_LIBS=$<NOT:$<BOOL:${MONOLIBTIC}>>
     # Project options.
     -DANDROID=${ANDROID}
+    -DLEPTONICA_PATCH=FALSE
 )
 
 list(APPEND BUILD_CMD COMMAND ninja)
@@ -20,7 +21,7 @@ if(NOT MONOLIBTIC)
 endif()
 
 external_project(
-    DOWNLOAD GIT 1fcffeb1e61ec43265d23e2ac77d9a901f8c45d2
+    DOWNLOAD GIT 64aa9ccfcd55921c596458cb8a7197339d5f32c3
     https://github.com/koreader/libk2pdfopt.git
     PATCH_COMMAND ${PATCH_CMD}
     CMAKE_ARGS ${CMAKE_ARGS}
