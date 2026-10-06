@@ -4,14 +4,8 @@ list(APPEND PATCH_FILES
     sdcv-no-unknown-dict-warning.patch
     # Force UTF-8 command line parsing.
     sdcv-locale-hack.patch
-    # Fix compilation with newer GLib.
-    compat_with_newer_glib.patch
     # Ignore hidden filesystem entries.
     ignore_hidden.patch
-    # Cache the .syn offset table in a .syn.oft file (like the .idx
-    # .oft cache) instead of rescanning the whole .syn file on every
-    # launch. Upstream PR: https://github.com/Dushistov/sdcv/pull/129.
-    sdcv-syn-oft-cache.patch
 )
 
 string(APPEND GLIB2_INCLUDE_DIRS
@@ -62,8 +56,8 @@ list(APPEND BUILD_CMD COMMAND ninja)
 append_binary_install_command(INSTALL_CMD sdcv)
 
 external_project(
-    DOWNLOAD URL 265dbfda83a57810595d156877f3e6fd
-    https://github.com/Dushistov/sdcv/archive/refs/tags/v0.5.5.tar.gz
+    DOWNLOAD URL 25c6a5918f5714df7bbcc705f0e4c23f
+    https://github.com/Dushistov/sdcv/archive/v0.5.5-24-ga4ab0d4.tar.gz
     CMAKE_ARGS ${CMAKE_ARGS}
     PATCH_FILES ${PATCH_FILES}
     BUILD_COMMAND ${BUILD_CMD}
