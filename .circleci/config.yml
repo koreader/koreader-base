@@ -17,7 +17,7 @@ executors:
 
   base: &BASE_EXE
     docker:
-      - image: koreader/kobase:2.0.0-22.04
+      - image: koreader/kobase:5.0.0-22.04
 
   # Emulators. {{{
 
@@ -36,7 +36,7 @@ executors:
 
   emu_clang_ninja:
     docker:
-      - image: koreader/kobase-clang:2.0.0-22.04
+      - image: koreader/kobase-clang:5.0.0-22.04
     environment:
       <<: *EMU_ENV_LST
       KODEBUG: ""
@@ -48,7 +48,7 @@ executors:
 
   android-arm: &ANDROID_EXE
     docker:
-      - image: koreader/koandroid:2.0.0-22.04
+      - image: koreader/koandroid:5.0.0-22.04
     environment:
       TARGET: "android-arm"
 
@@ -59,13 +59,13 @@ executors:
 
   cervantes:
     docker:
-      - image: koreader/kocervantes:2.1.0-22.04
+      - image: koreader/kocervantes:5.0.0-22.04
     environment:
       TARGET: "cervantes"
 
   kindle: &KINDLE_EXE
     docker:
-      - image: koreader/kokindle:2.1.0-22.04
+      - image: koreader/kokindle:5.0.0-22.04
     environment:
       TARGET: "kindle"
 
@@ -81,13 +81,13 @@ executors:
 
   kobo:
     docker:
-      - image: koreader/kokobo:2.1.0-22.04
+      - image: koreader/kokobo:5.0.0-22.04
     environment:
       TARGET: "kobo"
 
   pocketbook: &POCKETBOOK_EXE
     docker:
-      - image: koreader/kopb:2.1.0-22.04
+      - image: koreader/kopb:5.0.0-22.04
     environment:
       TARGET: "pocketbook"
 
