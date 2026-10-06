@@ -66,6 +66,8 @@ pid_t  fake_ev_generator_pid = -1;
 #    include "input-remarkable.h"
 #elif defined(CERVANTES)
 #    include "input-cervantes.h"
+#elif defined(BOOKEEN)
+#    include "input-bookeen.h"
 #endif
 
 // NOTE: Legacy Kindle systems are too old to support timerfd (and we don't really need it there anyway).
