@@ -1,8 +1,8 @@
 diff --git a/src/sdcv.cpp b/src/sdcv.cpp
-index 3a10e3c..46db492 100644
+index b995636..032d424 100644
 --- a/src/sdcv.cpp
 +++ b/src/sdcv.cpp
-@@ -190,8 +190,6 @@ try {
+@@ -193,8 +193,6 @@ try {
              auto it = bookname_to_ifo.find(*p);
              if (it != bookname_to_ifo.end()) {
                  order_list.push_back(it->second);
@@ -11,7 +11,7 @@ index 3a10e3c..46db492 100644
              }
          }
      } else {
-@@ -207,8 +205,6 @@ try {
+@@ -210,8 +208,6 @@ try {
                  auto it = bookname_to_ifo.find(line);
                  if (it != bookname_to_ifo.end()) {
                      order_list.push_back(it->second);

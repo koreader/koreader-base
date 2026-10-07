@@ -1,6 +1,8 @@
+diff --git a/src/utils.cpp b/src/utils.cpp
+index 33bfeaa..1c8b3ec 100644
 --- a/src/utils.cpp
 +++ b/src/utils.cpp
-@@ -64,6 +64,10 @@
+@@ -64,6 +64,10 @@ static void __for_each_file(const std::string &dirname, const std::string &suff,
          const gchar *filename;
  
          while ((filename = g_dir_read_name(dir)) != nullptr) {
