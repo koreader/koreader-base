@@ -65,7 +65,7 @@ function Downloader:fetch(url, callback, ranges, etag)
     if not resp_headers then
         ok = false
         if type(status_code) == "number" then
-            -- LuaSocket returns no headers for HTTP/0.9 and HTTP 408 responses.
+            -- LuaSocket's HTTP/0.9 fallback and HTTP 408 path omit headers.
             status_line = status_line or (status_code == 200 and "no HTTP response headers" or "HTTP "..status_code)
         end
     end

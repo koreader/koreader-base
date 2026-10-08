@@ -35,7 +35,7 @@ describe("Downloader", function()
         end
     end)
 
-    it("should reject HTTP/0.9 responses without response headers", function()
+    it("should reject LuaSocket's headerless success return", function()
         respond(1, 200)
         assert.is_false(downloader:fetch("http://example.com/manifest"))
         assert.is_equal("no HTTP response headers", downloader.err)
