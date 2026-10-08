@@ -62,10 +62,14 @@ function Downloader:fetch(url, callback, ranges, etag)
         }
         ok = ok and not abort
     end
+    if ok and not resp_headers then -- HTTP/0.9 response.
+        ok = false
+        status_line = status_line or "no HTTP response headers"
+    end
     self.headers = resp_headers
-    self.etag = resp_headers['etag']
+    self.etag = resp_headers and resp_headers['etag']
     self.status_code = status_code
-    self.err = not ok and (status_line or status_code) or nil
+    self.err = not ok and (status_line or status_code or "no HTTP response") or nil
     return ok
 end
 
