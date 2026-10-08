@@ -1,5 +1,3 @@
-require("ffi_wrapper")
-
 local http = require("socket.http")
 local Downloader = require("ffi/downloader")
 
@@ -50,6 +48,45 @@ describe("Downloader", function()
         respond(1, 200)
         assert.is_false(downloader:fetch("http://example.com/update", nil, {{0, 9}}))
         assert.is_equal("no HTTP response headers", downloader.err)
+    end)
+
+    it("should preserve HTTP errors returned without response headers", function()
+        respond(1, 408)
+        assert.is_false(downloader:fetch("http://example.com/manifest"))
+        assert.is_equal("HTTP 408", downloader.err)
+        assert.is_equal(408, downloader.status_code)
+    end)
+
+    it("should stop at the first range response without headers", function()
+        local requests = 0
+        request.invokes(function(req)
+            requests = requests + 1
+            if requests == 1 then
+                return 1, 200
+            end
+            req.response_headers(206, {}, "HTTP/1.1 206 Partial Content")
+            return 1, 206, {}, "HTTP/1.1 206 Partial Content"
+        end)
+        assert.is_false(downloader:fetch("http://example.com/update", nil, {{0, 9}, {20, 29}}))
+        assert.is_equal("no HTTP response headers", downloader.err)
+        assert.is_equal(1, requests)
+    end)
+
+    it("should preserve a connection error after a successful range request", function()
+        local requests = 0
+        request.invokes(function(req)
+            requests = requests + 1
+            if requests == 1 then
+                req.response_headers(206, {}, "HTTP/1.1 206 Partial Content")
+                return 1, 206, {}, "HTTP/1.1 206 Partial Content"
+            end
+            return nil, "timeout"
+        end)
+        assert.is_falsy(downloader:fetch("http://example.com/update", nil, {{0, 9}, {20, 29}, {40, 49}}))
+        assert.is_equal("timeout", downloader.err)
+        assert.is_equal(2, requests)
+        assert.is_nil(downloader.headers)
+        assert.is_nil(downloader.etag)
     end)
 
     it("should provide an error when the request returns no diagnostic", function()

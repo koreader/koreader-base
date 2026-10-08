@@ -47,10 +47,10 @@ function Downloader:fetch(url, callback, ranges, etag)
                 response_headers = response_headers,
                 sink = sink,
             }
-            ok = ok and not abort
+            ok = ok and resp_headers and not abort
             ranges_index = ranges_index + 1
         until abort or not ok or ranges_index > #ranges
-        if not ok and status_code == 200 then
+        if not ok and status_code == 200 and resp_headers then
             status_line = "server does not support range requests!"
         end
     else
@@ -62,9 +62,12 @@ function Downloader:fetch(url, callback, ranges, etag)
         }
         ok = ok and not abort
     end
-    if ok and not resp_headers then -- HTTP/0.9 response.
+    if not resp_headers then
         ok = false
-        status_line = status_line or "no HTTP response headers"
+        if type(status_code) == "number" then
+            -- LuaSocket returns no headers for HTTP/0.9 and HTTP 408 responses.
+            status_line = status_line or (status_code == 200 and "no HTTP response headers" or "HTTP "..status_code)
+        end
     end
     self.headers = resp_headers
     self.etag = resp_headers and resp_headers['etag']
