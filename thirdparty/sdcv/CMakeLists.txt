@@ -6,6 +6,9 @@ list(APPEND PATCH_FILES
     sdcv-locale-hack.patch
     # Ignore hidden filesystem entries.
     ignore_hidden.patch
+    # Don't stat every entry nor scan dictionaries' res/ folders:
+    # https://github.com/Dushistov/sdcv/pull/135
+    skip_res_dirs.patch
 )
 
 string(APPEND GLIB2_INCLUDE_DIRS
