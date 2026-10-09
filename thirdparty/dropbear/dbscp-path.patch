@@ -2,7 +2,7 @@ diff --git a/src/svr-chansession.c b/src/svr-chansession.c
 index a2ea1fcf..fb1a7260 100644
 --- a/src/svr-chansession.c
 +++ b/src/svr-chansession.c
-@@ -692,6 +692,17 @@ static int sessioncommand(struct Channel *channel, struct ChanSess *chansess,
+@@ -692,6 +692,19 @@ static int sessioncommand(struct Channel *channel, struct ChanSess *chansess,
  				TRACE(("leave sessioncommand, command too long %d", cmdlen))
  				return DROPBEAR_FAILURE;
  			}
@@ -10,8 +10,10 @@ index a2ea1fcf..fb1a7260 100644
 +#ifdef DBSCP_PATH
 +			// HACK. This is terrible. Truly, truly awful.
 +			if (strncmp(chansess->cmd, "scp", 3) == 0) {
-+				char* mangled_cmd = m_malloc(cmdlen + sizeof(DBSCP_PATH));
-+				snprintf(mangled_cmd, cmdlen + sizeof(DBSCP_PATH) + 1, "%s/%s", DBSCP_PATH, chansess->cmd);
++				/* DBSCP_PATH + "/" + cmd + NUL; sizeof() already counts one byte for the "/" */
++				size_t mangled_len = sizeof(DBSCP_PATH) + cmdlen + 1;
++				char* mangled_cmd = m_malloc(mangled_len);
++				snprintf(mangled_cmd, mangled_len, "%s/%s", DBSCP_PATH, chansess->cmd);
 +				m_free(chansess->cmd);
 +				chansess->cmd = m_strdup(mangled_cmd);
 +				m_free(mangled_cmd);
