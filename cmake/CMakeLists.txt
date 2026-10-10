@@ -170,16 +170,16 @@ check_libc_fn_exists(ngettext libintl.h HAS_GETTEXT)
 # Determine C library type
 if(NOT DEFINED CACHE{LIBC_TYPE})
     if(ANDROID)
-        set(LIBC_TYPE bionic CACHE INTERNAL "libc type")
+        set(LIBC_TYPE Bionic CACHE INTERNAL "libc type")
     elseif(APPLE)
-        set(LIBC_TYPE other CACHE INTERNAL "libc type")
+        set(LIBC_TYPE macOS CACHE INTERNAL "libc type")
     else()
         execute_process(COMMAND ${CMAKE_C_COMPILER} -E -P ${CMAKE_CURRENT_SOURCE_DIR}/libc_type_check.c RESULT_VARIABLE RET OUTPUT_VARIABLE OUT OUTPUT_STRIP_TRAILING_WHITESPACE)
         if(NOT RET EQUAL 0 OR NOT OUT MATCHES "(^|\n)libc_type=([A-Za-z]+)$")
             message(FATAL_ERROR "could not determine libc type")
         endif()
         set(LIBC_TYPE ${CMAKE_MATCH_2} CACHE INTERNAL "libc type")
-        if(NOT LIBC_TYPE STREQUAL "GNU")
+        if(NOT LIBC_TYPE STREQUAL "GNU" AND NOT LIBC_TYPE STREQUAL "musl")
             message(FATAL_ERROR "unsupported libc type: ${LIBC_TYPE}")
         endif()
     endif()
@@ -785,7 +785,8 @@ ffi_target(pocketbook mxcfb_pocketbook_h.lua mxcfb_pb_decl.c ${EXCLUDE_FROM_ALL}
 # posix
 set(VERSIONS
     android_arm android_arm64 android_x86 android_x64
-    linux_arm linux_arm64 linux_x64
+    linux_gnu_arm linux_gnu_arm64 linux_gnu_x64
+    linux_musl_arm linux_musl_arm64 linux_musl_x64
     macos
 )
 add_custom_target(
@@ -811,10 +812,11 @@ if(ANDROID)
 elseif(APPLE)
     set(POSIX_PLATFORM macos)
 else()
-    set(POSIX_PLATFORM linux_${LUAJIT_ARCH})
+    string(TOLOWER linux_${LIBC_TYPE}_${LUAJIT_ARCH} POSIX_PLATFORM)
 endif()
 set(POSIX_PLATFORM ffi-cdecl/posix_h_${POSIX_PLATFORM}.lua)
-ffi_target(posix ${POSIX_PLATFORM} posix_cdecl.c ARGS -M -W EXCLUDE_FROM_ALL)
+string(TOUPPER LIBC_${LIBC_TYPE} POSIX_LIBC_FLAG)
+ffi_target(posix ${POSIX_PLATFORM} posix_cdecl.c ARGS -M -W -D ${POSIX_LIBC_FLAG} EXCLUDE_FROM_ALL)
 
 # remarkable
 if(REMARKABLE)

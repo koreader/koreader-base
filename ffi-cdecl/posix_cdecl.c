@@ -1,15 +1,15 @@
 /* #define __APPLE__ */
 /* #undef __linux__ */
 
-#if defined(__ANDROID__)
+#if defined(LIBC_BIONIC)
 # define __asm__(...)
 // Avoid duplicate `ioctl` prototypes.
 # define BIONIC_IOCTL_NO_SIGNEDNESS_OVERLOAD
 // `basename(…)` if macro for `__posix_basename(…)`.
 # define __posix_basename  basename
-#elif defined(__APPLE__)
+#elif defined(LIBC_MACOS)
 # define __asm(...)
-#elif defined(__linux__)
+#else
 # define _BSD_SOURCE
 # define _DEFAULT_SOURCE
 # define _XOPEN_SOURCE  800
@@ -37,11 +37,11 @@
 #include <fcntl.h>
 #include <ifaddrs.h>
 #include <limits.h>
-#if !defined(__ANDROID__) && !defined(__APPLE__)
+#if !defined(LIBC_BIONIC) && !defined(LIBC_MACOS)
 # include <mqueue.h>
 #endif
 #include <net/if.h>
-#if defined(__APPLE__)
+#if defined(LIBC_MACOS)
 # include <net/if_dl.h>
 # include <net/if_types.h>
 #endif
@@ -49,12 +49,12 @@
 #include <netdb.h>
 #include <netinet/ip.h>
 #include <netinet/ip_icmp.h>
-#if defined(__linux__)
+#if !defined(LIBC_MACOS)
 # include <netpacket/packet.h>
 #endif
 #include <poll.h>
 #include <pthread.h>
-#if defined(__linux__)
+#if !defined(LIBC_MACOS)
 # include <sched.h>
 #endif
 #include <signal.h>
@@ -67,7 +67,7 @@
 #include <time.h>
 #include <unistd.h>
 
-#if defined(__linux__)
+#if !defined(LIBC_MACOS)
 // Avoid conflicts with <net/if.h>.
 # define ifconf  linux_ifconf
 # define ifmap   linux_ifmap
@@ -80,7 +80,7 @@
 # undef ifreq
 #endif
 
-#if defined(__ANDROID__)
+#if defined(LIBC_BIONIC)
 cdecl_type_replace(__be16, uint16_t);
 cdecl_type_replace(__be32, uint32_t);
 cdecl_type_replace(__u8, uint8_t);
@@ -88,7 +88,7 @@ cdecl_type_replace(__u16, uint16_t);
 cdecl_type_replace(__u32, uint32_t);
 cdecl_type_replace(__kernel_long_t, long);
 cdecl_type_replace(__kernel_ulong_t, unsigned long);
-#elif defined(__APPLE__)
+#elif defined(LIBC_MACOS)
 cdecl_type_replace(__int8_t, int8_t);
 cdecl_type_replace(__int16_t, int16_t);
 cdecl_type_replace(__int32_t, int32_t);
@@ -104,7 +104,7 @@ cdecl_type_replace(u_long, unsigned long);
 cdecl_type_replace(u_int8_t, uint8_t);
 cdecl_type_replace(u_int16_t, uint16_t);
 cdecl_type_replace(u_int32_t, uint32_t);
-#elif defined(__linux__)
+#else
 cdecl_type_replace(__s8, int8_t);
 cdecl_type_replace(__s16, int16_t);
 cdecl_type_replace(__s32, int32_t);
@@ -164,12 +164,12 @@ cdecl_const(SEEK_SET);
 
 cdecl_const(PATH_MAX);
 
-#if defined(__ANDROID__)
-#elif defined(__APPLE__)
+#if defined(LIBC_BIONIC)
+#elif defined(LIBC_MACOS)
 # define CLOCK_BOOTTIME          -1 // not available
 # define CLOCK_MONOTONIC_COARSE  CLOCK_MONOTONIC_RAW_APPROX
 # define CLOCK_REALTIME_COARSE   -1 // not available
-#elif defined(__linux__)
+#else
 # if !defined(CLOCK_BOOTTIME)
 #  define CLOCK_BOOTTIME  7
 # endif
@@ -181,21 +181,23 @@ cdecl_const(CLOCK_MONOTONIC_COARSE);
 cdecl_const(CLOCK_REALTIME);
 cdecl_const(CLOCK_REALTIME_COARSE);
 
-#if defined(__ANDROID__)
+#if defined(LIBC_BIONIC)
 cdecl_type_replace(__kernel_clockid_t, clockid_t);
 cdecl_type(__kernel_clockid_t);
-#elif defined(__APPLE__)
+#elif defined(LIBC_MACOS)
 // On macOS, `clockid_t` is an enum.
 _Static_assert(__builtin_types_compatible_p(unsigned, clockid_t), "unsigned != clockid_t");
 cdecl_out(type_clockid_t, typedef unsigned clockid_t;);
-#elif defined(__linux__)
+#elif defined(LIBC_MUSL)
+cdecl_type(clockid_t);
+#else
 cdecl_type_replace(__clockid_t, clockid_t);
 cdecl_type(__clockid_t);
 #endif
 
 cdecl_const(FIONREAD);
 
-#if defined(__ANDROID__)
+#if defined(LIBC_BIONIC)
 _Static_assert(__builtin_types_compatible_p(__kernel_old_time_t, __kernel_time_t), "__kernel_old_time_t != __kernel_time_t");
 cdecl_type_replace(__kernel_old_time_t, time_t);
 cdecl_type_replace(__kernel_suseconds_t, suseconds_t);
@@ -205,14 +207,18 @@ cdecl_type_replace(__useconds_t, useconds_t);
 cdecl_type(__kernel_suseconds_t);
 cdecl_type(__kernel_time_t);
 cdecl_type(__useconds_t);
-#elif defined(__APPLE__)
+#elif defined(LIBC_MACOS)
 cdecl_type_replace(__darwin_suseconds_t, suseconds_t);
 cdecl_type_replace(__darwin_time_t, time_t);
 cdecl_type_replace(__darwin_useconds_t, useconds_t);
 cdecl_type(__darwin_suseconds_t);
 cdecl_type(__darwin_time_t);
 cdecl_type(__darwin_useconds_t);
-#elif defined(__linux__)
+#elif defined(LIBC_MUSL)
+cdecl_type(suseconds_t);
+cdecl_type(time_t);
+cdecl_type(useconds_t);
+#else
 cdecl_type_replace(__suseconds_t, suseconds_t);
 cdecl_type_replace(__time_t, time_t);
 cdecl_type_replace(__useconds_t, useconds_t);
@@ -224,7 +230,7 @@ cdecl_type(__useconds_t);
 cdecl_struct(timeval);
 cdecl_struct(timespec);
 
-#if defined(__ANDROID__)
+#if defined(LIBC_BIONIC)
 cdecl_type_replace(__id_t, id_t);
 cdecl_type_replace(__gid_t, gid_t);
 cdecl_type_replace(__kernel_gid32_t, uint32_t);
@@ -246,7 +252,7 @@ cdecl_type(__kernel_off_t);
 cdecl_type(__kernel_pid_t);
 cdecl_type(__nlink_t);
 cdecl_type(__uid_t);
-#elif defined(__APPLE__)
+#elif defined(LIBC_MACOS)
 cdecl_type_replace(__darwin_blkcnt_t, blkcnt_t);
 cdecl_type_replace(__darwin_blksize_t, blksize_t);
 cdecl_type_replace(__darwin_dev_t, dev_t);
@@ -268,7 +274,19 @@ cdecl_type(nlink_t);
 cdecl_type(__darwin_off_t);
 cdecl_type(__darwin_pid_t);
 cdecl_type(__darwin_uid_t);
-#elif defined(__linux__)
+#elif defined(LIBC_MUSL)
+cdecl_type(blkcnt_t);
+cdecl_type(blksize_t);
+cdecl_type(dev_t);
+cdecl_type(gid_t);
+cdecl_type(id_t);
+cdecl_type(ino_t);
+cdecl_type(mode_t);
+cdecl_type(nlink_t);
+cdecl_type(off_t);
+cdecl_type(pid_t);
+cdecl_type(uid_t);
+#else
 cdecl_type_replace(__blkcnt_t, blkcnt_t);
 cdecl_type_replace(__blksize_t, blksize_t);
 cdecl_type_replace(__dev_t, dev_t);
@@ -293,15 +311,18 @@ cdecl_type(__pid_t);
 cdecl_type(__uid_t);
 #endif
 
-#if defined(__ANDROID__)
+#if defined(LIBC_BIONIC)
 cdecl_type(fsblkcnt_t);
 cdecl_type(fsfilcnt_t);
-#elif defined(__APPLE__)
+#elif defined(LIBC_MACOS)
 cdecl_type_replace(__darwin_fsblkcnt_t, fsblkcnt_t);
 cdecl_type_replace(__darwin_fsfilcnt_t, fsfilcnt_t);
 cdecl_type(__darwin_fsblkcnt_t);
 cdecl_type(__darwin_fsfilcnt_t);
-#elif defined(__linux__)
+#elif defined(LIBC_MUSL)
+cdecl_type(fsblkcnt_t);
+cdecl_type(fsfilcnt_t);
+#else
 cdecl_type_replace(__fsblkcnt_t, fsblkcnt_t);
 cdecl_type_replace(__fsfilcnt_t, fsfilcnt_t);
 cdecl_type(__fsblkcnt_t);
@@ -310,16 +331,15 @@ cdecl_type(__fsfilcnt_t);
 
 cdecl_struct(statvfs);
 
-#if defined(__APPLE__)
+#if defined(LIBC_MACOS)
 cdecl_const(IFT_ETHER);
 #endif
 
 cdecl_const(AF_INET);
 cdecl_const(AF_INET6);
-#if defined(__APPLE__)
+#if defined(LIBC_MACOS)
 cdecl_const(AF_LINK);
-#endif
-#if defined(__linux__)
+#else
 cdecl_const(AF_PACKET);
 #endif
 cdecl_const(AF_UNIX);
@@ -327,7 +347,7 @@ cdecl_const(AF_UNIX);
 cdecl_const(NI_MAXHOST);
 cdecl_const(NI_NUMERICHOST);
 
-#if defined(__APPLE__)
+#if defined(LIBC_MACOS)
 # define SOCK_CLOEXEC   0 // not available
 # define SOCK_NONBLOCK  0 // not available
 #endif
@@ -337,10 +357,12 @@ cdecl_const(SOCK_NONBLOCK);
 cdecl_const(SOCK_RAW);
 cdecl_const(SOCK_SEQPACKET);
 
-#if defined(__ANDROID__)
-#elif defined(__APPLE__)
+#if defined(LIBC_BIONIC)
+#elif defined(LIBC_MACOS)
 cdecl_type(caddr_t);
-#elif defined(__linux__)
+#elif defined(LIBC_MUSL)
+cdecl_type(caddr_t);
+#else
 cdecl_type_replace(__caddr_t, caddr_t);
 cdecl_type(__caddr_t);
 #endif
@@ -348,19 +370,21 @@ cdecl_type(__caddr_t);
 cdecl_type(in_addr_t);
 cdecl_type(in_port_t);
 
-#if defined(__ANDROID__)
+#if defined(LIBC_BIONIC)
 cdecl_type_replace(__kernel_sa_family_t, sa_family_t);
 cdecl_type(__kernel_sa_family_t);
-#elif defined(__APPLE__)
+#elif defined(LIBC_MACOS)
 cdecl_type(sa_family_t);
-#elif defined(__linux__)
+#else
 cdecl_type(sa_family_t);
 #endif
 
-#if defined(__APPLE__)
+#if defined(LIBC_MACOS)
 cdecl_type_replace(__darwin_socklen_t, socklen_t);
 cdecl_type(__darwin_socklen_t);
-#elif defined(__linux__)
+#elif defined(LIBC_MUSL)
+cdecl_type(socklen_t);
+#else
 cdecl_type_replace(__socklen_t, socklen_t);
 cdecl_type(__socklen_t);
 #endif
@@ -368,10 +392,9 @@ cdecl_type(__socklen_t);
 cdecl_struct(in_addr);
 cdecl_struct(in6_addr);
 cdecl_struct(sockaddr);
-#if defined(__APPLE__)
+#if defined(LIBC_MACOS)
 cdecl_struct(sockaddr_dl);
-#endif
-#if defined(__linux__)
+#else
 cdecl_struct(sockaddr_ll);
 #endif
 cdecl_struct(sockaddr_in);
@@ -380,8 +403,8 @@ cdecl_struct(sockaddr_un);
 cdecl_struct(sockaddr_storage);
 
 cdecl_struct(ifaddrs);
-#if !defined(__ANDROID__)
-# if defined(__APPLE__)
+#if !defined(LIBC_BIONIC)
+# if defined(LIBC_MACOS)
 cdecl_struct(ifdevmtu);
 cdecl_struct(ifkpi);
 # else
@@ -390,7 +413,7 @@ cdecl_struct(ifmap);
 cdecl_struct(ifreq);
 #endif
 
-#if defined(__linux__) && !defined(__ANDROID__)
+#if !defined(LIBC_BIONIC) && !defined(LIBC_MACOS)
 
 cdecl_const(SIOCGIWESSID);
 
@@ -408,7 +431,7 @@ cdecl_struct(iwreq);
 
 cdecl_type(nfds_t);
 
-#if !defined(__ANDROID__) && !defined(__APPLE__)
+#if !defined(LIBC_BIONIC) && !defined(LIBC_MACOS)
 
 cdecl_type(mqd_t);
 
@@ -420,16 +443,16 @@ cdecl_func(mq_receive);
 
 cdecl_const(PTHREAD_CREATE_DETACHED);
 
-#if defined(__ANDROID__)
+#if defined(LIBC_BIONIC)
 cdecl_type(pthread_attr_t);
 cdecl_type(pthread_t);
-#elif defined(__APPLE__)
+#elif defined(LIBC_MACOS)
 cdecl_type_replace(__darwin_pthread_attr_t, pthread_attr_t);
 cdecl_type_replace(__darwin_pthread_t, pthread_t);
 cdecl_struct(_opaque_pthread_attr_t);
 cdecl_type(__darwin_pthread_attr_t);
 cdecl_type(__darwin_pthread_t);
-#elif defined(__linux__)
+#else
 # if defined(__have_pthread_attr_t)
 cdecl_union(pthread_attr_t);
 # endif
@@ -442,7 +465,7 @@ cdecl_func(pthread_attr_init);
 cdecl_func(pthread_attr_setdetachstate);
 cdecl_func(pthread_create);
 
-#if defined(__linux__)
+#if !defined(LIBC_MACOS)
 
 cdecl_const(SCHED_BATCH);
 
@@ -452,7 +475,7 @@ cdecl_func(sched_setscheduler);
 
 #endif
 
-#if defined(__linux__) && !defined(__ANDROID__)
+#if !defined(LIBC_BIONIC) && !defined(LIBC_MACOS)
 
 cdecl_func(shm_open);
 
@@ -492,15 +515,16 @@ cdecl_const(FD_CLOEXEC);
 cdecl_func(fcntl);
 cdecl_func(open);
 
-#if defined(__ANDROID__)
+#if defined(LIBC_BIONIC)
 # if __ANDROID_API__ >= 21
 #  define HAVE_POSIX_FALLOCATE  1
+# else
+#  define HAVE_POSIX_FALLOCATE  0
 # endif
-#elif defined(__linux__)
-# define HAVE_POSIX_FALLOCATE  1
-#endif
-#if !defined(HAVE_POSIX_FALLOCATE)
-# define HAVE_POSIX_FALLOCATE  0
+#elif defined(LIBC_MACOS)
+# define HAVE_POSIX_FALLOCATE   0
+#else
+# define HAVE_POSIX_FALLOCATE   1
 #endif
 cdecl_const(HAVE_POSIX_FALLOCATE);
 #if HAVE_POSIX_FALLOCATE
@@ -519,10 +543,10 @@ cdecl_func(fread);
 cdecl_func(fwrite);
 cdecl_func(sprintf);
 
-#if !defined(__APPLE__)
-# if !defined(__ANDROID__)
+# if defined(LIBC_GNU)
 cdecl_type_replace(__off_t, off_t);
 # endif
+#if defined(LIBC_BIONIC) || defined(LIBC_GNU)
 cdecl_type_replace(__pid_t, pid_t);
 cdecl_type_replace(__uid_t, uid_t);
 cdecl_type_replace(__useconds_t, useconds_t);
@@ -535,7 +559,7 @@ cdecl_func(dup2);
 cdecl_func(execl);
 cdecl_func(execlp);
 cdecl_func(execvp);
-#if defined(__APPLE__)
+#if defined(LIBC_MACOS)
 // Available, even if not declared anywhere…
 cdecl_out(func_fdatasync, int fdatasync(int););
 #else
@@ -627,7 +651,7 @@ cdecl_func(time);
 cdecl_func(timegm);
 
 cdecl_struct(timezone);
-#if defined(__linux__) && defined(__arm__) && !defined(__ANDROID__)
+#if defined(LIBC_GNU) && defined(__arm__)
 cdecl_type_replace(__timezone_ptr_t, struct timezone *);
 #endif
 
@@ -638,7 +662,7 @@ cdecl_const(PRIO_PROCESS);
 cdecl_const(PRIO_PGRP);
 cdecl_const(PRIO_USER);
 
-#if defined(__linux__) && !defined(__ANDROID__)
+#if defined(LIBC_GNU)
 cdecl_type_replace(__priority_which_t, int);
 #endif
 
@@ -649,7 +673,7 @@ cdecl_const(TCIFLUSH);
 cdecl_func(tcdrain);
 cdecl_func(tcflush);
 
-#if defined(__ANDROID__) && __ANDROID_API__ < 21 || defined(__APPLE__)
+#if defined(LIBC_BIONIC) && __ANDROID_API__ < 21 || defined(LIBC_MACOS)
 # undef htonl
 # undef htons
 # undef ntohl
@@ -665,7 +689,7 @@ cdecl_func(htons);
 cdecl_func(ntohl);
 cdecl_func(ntohs);
 
-#if defined(__ANDROID__) && __ANDROID_API__ < 24
+#if defined(LIBC_BIONIC) && __ANDROID_API__ < 24
 void freeifaddrs(struct ifaddrs *);
 int getifaddrs(struct ifaddrs **);
 #endif
