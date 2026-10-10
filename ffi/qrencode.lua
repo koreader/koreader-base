@@ -27,98 +27,86 @@
 -- (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 -- SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+local max, min = math.max, math.min
+local floor, abs = math.floor, math.abs
+local byte, sub = string.byte, string.sub
+local match = string.match
 
---- Overall workflow
---- ================
---- The steps to generate the qrcode, assuming we already have the codeword:
----
---- 1. Determine version, ec level and mode (=encoding) for codeword
---- 1. Encode data
---- 1. Arrange data and calculate error correction code
---- 1. Generate 8 matrices with different masks and calculate the penalty
---- 1. Return qrcode with least penalty
----
---- Each step is of course more or less complex and needs further description
+local bit = require("bit")
+local band, bor, bxor, lshift, rshift, bnot = bit.band, bit.bor, bit.bxor, bit.lshift, bit.rshift, bit.bnot
+local ffi = require("ffi")
 
+--- Helper functions & Persistent Module Caches
+--- =========================================
 
+-- FFI-backed persistent caches for maximum L1 cache density.
+local MAX_QR_LEN = 31329
+local MAX_PADDING = 4
+local MAX_PADDED_SIZE = 177 + 2 * MAX_PADDING
+local MAX_STRIDE = floor((MAX_PADDED_SIZE + 31) / 32)
+local MAX_BB_LEN = MAX_PADDED_SIZE * MAX_STRIDE
 
---- Helper functions
---- ================
----
---- We start with some helper functions
+-- Standard int8_t UI arrays
+local base_matrix = ffi.new("int8_t[?]", MAX_QR_LEN + 1)
+local best_matrix = ffi.new("int8_t[?]", MAX_QR_LEN + 1)
+local raw_bit     = ffi.new("int8_t[?]", MAX_QR_LEN + 1)
 
-local max,min=math.max,math.min
-local floor,abs=math.floor,math.abs
-local byte,sub,rep=string.byte,string.sub,string.rep
-local gsub,match,format=string.gsub,string.match,string.format
-local concat = table.concat
+-- uint32_t Bitboards for the Penalty Pipeline
+local bb_base    = ffi.new("uint32_t[?]", MAX_BB_LEN)
+local bb_scratch = ffi.new("uint32_t[?]", MAX_BB_LEN)
 
+-- Encoding and EC block caches
+local bw_buf             = ffi.new("uint8_t[?]", 4001)
+local arranged_data      = ffi.new("uint8_t[?]", 4001)
+local ec_blocks_cache    = ffi.new("uint8_t[?]", 4001)
+local mp_int             = ffi.new("int32_t[?]", 256)
+local block_data_offsets = ffi.new("int32_t[?]", 201)
+local block_data_lens    = ffi.new("int32_t[?]", 201)
+local block_ec_offsets   = ffi.new("int32_t[?]", 201)
+local block_ec_lens      = ffi.new("int32_t[?]", 201)
 
-local xor_lookup = {}
-do
-	-- Build a fast xor helper that stays compatible across Lua versions.
-	-- We precompute a 256x256 lookup table once at load time using a portable
-	-- arithmetic xor; the hot path is then a constant-time table lookup without
-	-- requiring native bitwise operators or external bit libraries.
-	-- Slow but portable xor used only while populating the lookup table if no native op exists.
-	local function slow_xor(a,b)
-		local result = 0
-		local bitval = 1
-		while a > 0 or b > 0 do
-			if (a % 2) ~= (b % 2) then
-				result = result + bitval
-			end
-			a = floor(a / 2)
-			b = floor(b / 2)
-			bitval = bitval * 2
-		end
-		return result
-	end
+local function set_cell(matrix, size, x, y, val)
+	matrix[(y - 1) * size + x] = val
+end
 
-	-- Always build a 256x256 table once at load time; avoids any reliance on bitwise operators.
-	for i=0,255 do
-		local row = {}
-		for j=0,255 do
-			row[j] = slow_xor(i,j)
-		end
-		xor_lookup[i] = row
+local function set_bb_bit(bb, stride, x, y, val)
+	x, y = x - 1, y - 1
+	local w = y * stride + floor(x / 32)
+	if val == 1 then
+		bb[w] = bor(bb[w], lshift(1, x % 32))
+	else
+		bb[w] = band(bb[w], bnot(lshift(1, x % 32)))
 	end
 end
 
-local decToHexTable={
-	["0"]="0000",["1"]="0001",["2"]="0010",["3"]="0011",
-	["4"]="0100",["5"]="0101",["6"]="0110",["7"]="0111",
-	["8"]="1000",["9"]="1001",["a"]="1010",["b"]="1011",
-	["c"]="1100",["d"]="1101",["e"]="1110",["f"]="1111",
-}
-local function decToHex(d) return decToHexTable[d] end
--- Return the binary representation of the number x with the width of `digits`.
-local function binary(x,digits)
-	local s = format("%x",x) -- dec to hex
-	s = gsub(s,"(.)",decToHex) -- hex to bin
-	s = gsub(s,"^0+","") -- remove leading 0s
-	return rep("0",digits - #s) .. s
+-- Persistent BitWriter
+local bw = { buf = bw_buf, len = 0, acc = 0, bits = 0 }
+function bw:reset()
+	self.len, self.acc, self.bits = 0, 0, 0
 end
 
--- A small helper function for add_typeinfo_to_matrix() and add_version_information()
--- Add a 2 (black by default) / -2 (blank by default) to the matrix at position x,y
--- depending on the bitstring (size 1!) where "0"=blank and "1"=black.
-local function fill_matrix_position(matrix,bitstr,x,y)
-	matrix[x][y] = bitstr == "1" and 2 or -2
+function bw:write(val, len)
+	self.acc = bor(lshift(self.acc, len), val)
+	self.bits = self.bits + len
+	while self.bits >= 8 do
+		self.bits = self.bits - 8
+		self.len = self.len + 1
+		self.buf[self.len] = band(rshift(self.acc, self.bits), 0xFF)
+	end
 end
 
+function bw:flush()
+	if self.bits > 0 then
+		self.len = self.len + 1
+		self.buf[self.len] = band(lshift(self.acc, 8 - self.bits), 0xFF)
+		self.bits = 0
+	end
+end
 
 
 --- Step 1: Determine version, ec level and mode for codeword
 --- =========================================================
----
---- First we need to find out the version (= size) of the QR code. This depends on
---- the input data (the mode to be used), the requested error correction level
---- (normally we use the maximum level that fits into the minimal size).
 
--- Return the mode for the given string `str`.
--- See table 2 of the spec. We only support mode 1, 2 and 4.
--- That is: numeric, alaphnumeric and binary.
 local function get_mode(str)
 	if match(str,"^[0-9]+$") then
 		return 1
@@ -127,26 +115,8 @@ local function get_mode(str)
 	else
 		return 4
 	end
-	assert(false,"never reached") -- luacheck: ignore
-	return nil
 end
 
---- Capacity of QR codes
---- --------------------
---- The capacity is calculated as follow: \\(\text{Number of data bits} = \text{number of codewords} * 8\\).
---- The number of data bits is now reduced by 4 (the mode indicator) and the length string,
---- that varies between 8 and 16, depending on the version and the mode (see method `get_length()`). The
---- remaining capacity is multiplied by the amount of data per bit string (numeric: 3, alphanumeric: 2, other: 1)
---- and divided by the length of the bit string (numeric: 10, alphanumeric: 11, binary: 8, kanji: 13).
---- Then the floor function is applied to the result:
---- $$\Big\lfloor \frac{( \text{#data bits} - 4 - \text{length string}) * \text{data per bit string}}{\text{length of the bit string}} \Big\rfloor$$
----
---- There is one problem remaining. The length string depends on the version,
---- and the version depends on the length string. But we take this into account when calculating the
---- the capacity, so this is not really a problem here.
-
--- The capacity (number of codewords) of each version (1-40) for error correction levels 1-4 (LMQH).
--- The higher the ec level, the lower the capacity of the version. Taken from spec, tables 7-11.
 local capacity = {
 	{  19,   16,   13,    9},{  34,   28,   22,   16},{  55,   44,   34,   26},{  80,   64,   48,   36},
 	{ 108,   86,   62,   46},{ 136,  108,   76,   60},{ 156,  124,   88,   66},{ 194,  154,  110,   86},
@@ -160,31 +130,23 @@ local capacity = {
 	{2566, 1992, 1426, 1096},{2702, 2102, 1502, 1142},{2812, 2216, 1582, 1222},{2956, 2334, 1666, 1276},
 }
 
---- Return the smallest version for this codeword. If `requested_ec_level` is supplied,
---- then the ec level (LMQH - 1,2,3,4) must be at least the requested level.
--- mode = 1,2,4,8
 local function get_version_eclevel(len,mode,requested_ec_level)
 	local local_mode = mode
-	if mode == 4 then
-		local_mode = 3
-	elseif mode == 8 then
-		local_mode = 4
-	end
-	assert( local_mode <= 4 )
+	if mode == 4 then local_mode = 3 elseif mode == 8 then local_mode = 4 end
+	assert(local_mode <= 4)
 
 	local bits, digits, modebits, c
 	local tab = { {10,9,8,8},{12,11,16,10},{14,13,16,12} }
-	local minversion = 99 -- placeholder, must be replaced by a lower value
+	local minversion = 99
 	local maxec_level = requested_ec_level or 1
-	local minlv,maxlv = 1, 4
+	local minlv, maxlv = 1, 4
 	if requested_ec_level and requested_ec_level >= 1 and requested_ec_level <= 4 then
 		minlv = requested_ec_level
 		maxlv = requested_ec_level
 	end
-	for ec_level=minlv,maxlv do
-		for version=1,#capacity do
-			bits = capacity[version][ec_level] * 8
-			bits = bits - 4 -- the mode indicator
+	for ec_level = minlv, maxlv do
+		for version = 1, #capacity do
+			bits = capacity[version][ec_level] * 8 - 4
 			if version < 10 then
 				digits = tab[1][local_mode]
 			elseif version < 27 then
@@ -202,6 +164,7 @@ local function get_version_eclevel(len,mode,requested_ec_level)
 			else
 				c = floor(modebits * 1 / 13)
 			end
+
 			if c >= len then
 				if version <= minversion then
 					minversion = version
@@ -211,20 +174,17 @@ local function get_version_eclevel(len,mode,requested_ec_level)
 			end
 		end
 	end
-	assert(minversion<=40,"Data too long to encode in QR code")
+	assert(minversion<=40, "Data too long to encode in QR code")
 	return minversion, maxec_level
 end
 
--- Return a bit string of 0s and 1s that includes the length of the code string.
--- The modes are numeric = 1, alphanumeric = 2, binary = 4, and japanese = 8
-local function get_length(str,version,mode)
+local function write_length(str_len, version, mode)
 	local i = mode
 	if mode == 4 then
 		i = 3
 	elseif mode == 8 then
 		i = 4
 	end
-	assert( i <= 4 )
 	local tab = { {10,9,8,8},{12,11,16,10},{14,13,16,12} }
 	local digits
 	if version < 10 then
@@ -233,147 +193,82 @@ local function get_length(str,version,mode)
 		digits = tab[2][i]
 	elseif version <= 40 then
 		digits = tab[3][i]
-	else
-		assert(false, "get_length, version > 40 not supported")
 	end
-	local len = binary(#str,digits)
-	return len
+	bw:write(str_len, digits)
 end
-
---- If the `requested_ec_level` or the `mode` are provided, this will be used if possible.
---- The mode depends on the characters used in the string `str`. It seems to be
---- possible to split the QR code to handle multiple modes, but we don't do that.
-local function get_version_eclevel_mode_bistringlength(str,requested_ec_level,mode)
-	local local_mode
-	if mode then
-		assert(false,"not implemented")
-		-- check if the mode is OK for the string
-		local_mode = mode
-	else
-		local_mode = get_mode(str)
-	end
-	local version, ec_level
-	version, ec_level = get_version_eclevel(#str,local_mode,requested_ec_level)
-	local length_string = get_length(str,version,local_mode)
-	return version,ec_level,binary(local_mode,4),local_mode,length_string
-end
-
 
 
 --- Step 2: Encode data
 --- ===================
----
---- There are several ways to encode the data. We currently support only numeric, alphanumeric and binary.
---- We already chose the encoding (a.k.a. mode) in the first step, so we need to apply the mode to the
---- codeword.
----
---- **Numeric**: take three digits and encode them in 10 bits
---- **Alphanumeric**: take two characters and encode them in 11 bits
---- **Binary**: take one octet and encode it in 8 bits
 
 local asciitbl = {
-	    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  -- 0x01-0x0f
-	-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,  -- 0x10-0x1f
-	36, -1, -1, -1, 37, 38, -1, -1, -1, -1, 39, 40, -1, 41, 42, 43,  -- 0x20-0x2f
-	 0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 44, -1, -1, -1, -1, -1,  -- 0x30-0x3f
-	-1, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24,  -- 0x40-0x4f
-	25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, -1, -1, -1, -1, -1,  -- 0x50-0x5f
-  }
+	    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+	-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+	36, -1, -1, -1, 37, 38, -1, -1, -1, -1, 39, 40, -1, 41, 42, 43,
+	 0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 44, -1, -1, -1, -1, -1,
+	-1, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24,
+	25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, -1, -1, -1, -1, -1,
+}
 
--- Return a binary representation of the numeric string `str`. This must contain only digits 0-9.
-local function encode_string_numeric(str)
-	local encodebuffer = {}
-	for i = 1, #str, 3 do
-		local a = sub(str,i,i+2)
-		-- #a is 1, 2, or 3, so bits are 4, 7, or 10
-		encodebuffer[#encodebuffer+1]=binary(tonumber(a), #a * 3 + 1)
-	end
-	return table.concat(encodebuffer)
-end
-
--- Return a binary representation of the alphanumeric string `str`. This must contain only
--- digits 0-9, uppercase letters A-Z, space and the following chars: $%*./:+-.
-local function encode_string_ascii(str)
-	local encodebuffer = {}
-	local int
-	local b1, b2
-	for i = 1, #str, 2 do
-		local a = sub(str,i,i+1)
-		if #a == 2 then
-			b1 = asciitbl[byte(sub(a,1,1))]
-			b2 = asciitbl[byte(sub(a,2,2))]
-			int = b1 * 45 + b2
-			encodebuffer[#encodebuffer+1] = binary(int,11)
-		else
-			int = asciitbl[byte(a)]
-			encodebuffer[#encodebuffer+1] = binary(int,6)
+local function encode_data(str, mode)
+	local str_len = #str
+	if mode == 1 then
+		local i = 1
+		while i <= str_len do
+			local rem = str_len - i + 1
+			if rem >= 3 then
+				local v = (byte(str, i) - 48) * 100 + (byte(str, i+1) - 48) * 10 + (byte(str, i+2) - 48)
+				bw:write(v, 10)
+				i = i + 3
+			elseif rem == 2 then
+				local v = (byte(str, i) - 48) * 10 + (byte(str, i+1) - 48)
+				bw:write(v, 7)
+				i = i + 2
+			else
+				local v = byte(str, i) - 48
+				bw:write(v, 4)
+				i = i + 1
+			end
+		end
+	elseif mode == 2 then
+		local i = 1
+		while i <= str_len do
+			local rem = str_len - i + 1
+			if rem >= 2 then
+				local v = asciitbl[byte(str, i)] * 45 + asciitbl[byte(str, i+1)]
+				bw:write(v, 11)
+				i = i + 2
+			else
+				bw:write(asciitbl[byte(str, i)], 6)
+				i = i + 1
+			end
+		end
+	elseif mode == 4 then
+		for i = 1, str_len do
+			bw:write(byte(str, i), 8)
 		end
 	end
-	return table.concat(encodebuffer)
 end
 
--- Return a bitstring representing string str in binary mode.
--- We don't handle UTF-8 in any special way because we assume the
--- scanner recognizes UTF-8 and displays it correctly.
-local function encode_string_binary(str)
-	local encodebuffer = {}
-	for i = 1, #str do
-		encodebuffer[i] = binary(byte(str,i),8)
-	end
-	return table.concat(encodebuffer)
-end
-
--- Return a bitstring representing string str in the given mode.
-local function encode_data(str,mode)
-	if mode == 1 then
-		return encode_string_numeric(str)
-	elseif mode == 2 then
-		return encode_string_ascii(str)
-	elseif mode == 4 then
-		return encode_string_binary(str)
-	else
-		assert(false,"not implemented yet")
-	end
-end
-
--- Encoding the codeword is not enough. We need to make sure that
--- the length of the binary string is equal to the number of codewords of the version.
-local function add_pad_data(version,ec_level,data)
+local function add_pad_data(version, ec_level)
 	local cpty = capacity[version][ec_level] * 8
-	local buffer = {data}
-	local buffer_len = #data
-	local count_to_pad = min(4,cpty - buffer_len)
+	local current_bits = bw.len * 8 + bw.bits
+	local count_to_pad = min(4, cpty - current_bits)
 	if count_to_pad > 0 then
-		buffer[#buffer + 1] = rep("0",count_to_pad)
-		buffer_len = buffer_len + count_to_pad
+		bw:write(0, count_to_pad)
 	end
-	if buffer_len % 8 ~= 0 then
-		local missing = 8 - buffer_len % 8
-		buffer[#buffer + 1] = rep("0",missing)
-		buffer_len = buffer_len + missing
+	bw:flush()
+	local remaining_bytes = floor(cpty / 8) - bw.len
+	for i = 1, remaining_bytes do
+		bw.len = bw.len + 1
+		bw.buf[bw.len] = i % 2 == 1 and 236 or 17
 	end
-	-- add "11101100" and "00010001" until enough data
-	local remaining_bytes = (cpty - buffer_len) / 8 -- decimal doesn't matter
-	for i=1,remaining_bytes do
-		buffer[#buffer + 1] = i % 2 == 1 and "11101100" or "00010001"
-	end
-	return concat(buffer)
 end
-
 
 
 --- Step 3: Organize data and calculate error correction code
 --- =========================================================
---- The data in the qrcode is not encoded linearly. For example code 5-H has four blocks, the first two blocks
---- contain 11 codewords and 22 error correction codes each, the second block contain 12 codewords and 22 ec codes each.
---- We just take the table from the spec and don't calculate the blocks ourself. The table `ecblocks` contains this info.
----
---- During the phase of splitting the data into codewords, we do the calculation for error correction codes. This step involves
---- polynomial division. Find a math book from school and follow the code here :)
 
---- ### Reed Solomon error correction
---- Now this is the slightly ugly part of the error correction. We start with log/antilog tables
--- https://codyplanteen.com/assets/rs/gf256_log_antilog.pdf
 local alpha_int = {
 	[0] = 1,
 	  2,   4,   8,  16,  32,  64, 128,  29,  58, 116, 232, 205, 135,  19,  38,  76,
@@ -414,8 +309,6 @@ local int_alpha = {
 	174, 213, 233, 230, 231, 173, 232, 116, 214, 244, 234, 168,  80,  88, 175
 }
 
--- We only need the polynomial generators for block sizes 7, 10, 13, 15, 16, 17, 18, 20, 22, 24, 26, 28, and 30. Version
--- 2 of the qr codes don't need larger ones (as opposed to version 1). The table has the format x^1*ɑ^21 + x^2*a^102 ...
 local generator_polynomial = {
 	 [7] = { 21, 102, 238, 149, 146, 229,  87,   0},
 	[10] = { 45,  32,  94,  64,  70, 118,  61,  46,  67, 251,   0 },
@@ -429,104 +322,93 @@ local generator_polynomial = {
 	[24] = { 21, 227,  96,  87, 232, 117,   0, 111, 218, 228, 226, 192, 152, 169, 180, 159, 126, 251, 117, 211,  48, 135, 121, 229,   0},
 	[26] = { 70, 218, 145, 153, 227,  48, 102,  13, 142, 245,  21, 161,  53, 165,  28, 111, 201, 145,  17, 118, 182, 103,   2, 158, 125, 173,   0},
 	[28] = {123,   9,  37, 242, 119, 212, 195,  42,  87, 245,  43,  21, 201, 232,  27, 205, 147, 195, 190, 110, 180, 108, 234, 224, 104, 200, 223, 168,   0},
-	[30] = {180, 192,  40, 238, 216, 251,  37, 156, 130, 224, 193, 226, 173,  42, 125, 222,  96, 239,  86, 110,  48,  50, 182, 179,  31, 216, 152, 145, 173, 41, 0}}
+	[30] = {180, 192,  40, 238, 216, 251,  37, 156, 130, 224, 193, 226, 173,  42, 125, 222,  96, 239,  86, 110,  48,  50, 182, 179,  31, 216, 152, 145, 173, 41, 0}
+}
 
-
--- Turn a binary string of length 8*x into a table size x of numbers.
-local function convert_bitstring_to_bytes(data)
-	local msg = {}
-	for i=1, #data / 8 do
-		msg[i] = tonumber(sub(data,(i - 1) * 8 + 1,i * 8),2)
-	end
-	return msg
-end
-
--- Return a table that has 0's in the first entries and then the alpha
--- representation of the generator polynomial
-local function get_generator_polynomial_adjusted(num_ec_codewords,highest_exponent)
-	local gp_alpha = {[0]=0}
-	for i=0,highest_exponent - num_ec_codewords - 1 do
-		gp_alpha[i] = 0
-	end
-	local gp = generator_polynomial[num_ec_codewords]
-	for i=1,num_ec_codewords + 1 do
-		gp_alpha[highest_exponent - num_ec_codewords + i - 1] = gp[i]
-	end
-	return gp_alpha
-end
-
--- That's the heart of the error correction calculation.
-local function calculate_error_correction(data,num_ec_codewords)
-	local mp
-	if type(data)=="string" then
-		mp = convert_bitstring_to_bytes(data)
-	elseif type(data)=="table" then
-		mp = data
-	else
-		assert(false,format("Unknown type for data: %s",type(data)))
-	end
-	local len_message = #mp
-
+--[=[
+local function calculate_error_correction(data, data_offset, len_message, num_ec_codewords, out_array, out_offset)
 	local highest_exponent = len_message + num_ec_codewords - 1
-	local gp_alpha
-	local mp_int = {}
-	-- create message shifted to left (highest exponent)
-	for i=1,len_message do
-		mp_int[highest_exponent - i + 1] = mp[i]
+	for i = 1, len_message do
+		mp_int[highest_exponent - i + 1] = data[data_offset + i - 1]
 	end
-	for i=1,highest_exponent - len_message do
+	for i = 1, highest_exponent - len_message do
 		mp_int[i] = 0
 	end
 	mp_int[0] = 0
 
+	local gp = generator_polynomial[num_ec_codewords]
+
 	while highest_exponent >= num_ec_codewords do
-		gp_alpha = get_generator_polynomial_adjusted(num_ec_codewords,highest_exponent)
-
-		-- Multiply generator polynomial by first coefficient of the above polynomial
-
-		-- take the highest exponent from the message polynom (alpha) and add
-		-- it to the generator polynom
 		local exp = int_alpha[mp_int[highest_exponent]]
-		for i=highest_exponent,highest_exponent - num_ec_codewords,-1 do
-			if exp ~= 256 then
-				gp_alpha[i] = (gp_alpha[i] + exp) % 255
-			else
-				gp_alpha[i] = 256
+		if exp ~= 256 then
+            -- Reverted to induction-variable arithmetic to prevent LuaJIT trace desync on large EC blocks
+            for j = highest_exponent, highest_exponent - num_ec_codewords, -1 do
+                local gp_val = gp[j - highest_exponent + num_ec_codewords + 1]
+                local combined = (gp_val + exp) % 255
+                mp_int[j] = bxor(alpha_int[combined], mp_int[j])
 			end
 		end
-		for i=highest_exponent - num_ec_codewords - 1,0,-1 do
-			gp_alpha[i] = 256
-		end
-
-		for i=highest_exponent,0,-1 do
-			mp_int[i] = xor_lookup[alpha_int[gp_alpha[i]]][mp_int[i]]
-		end
-		-- remove leading 0's
-		for i=highest_exponent,num_ec_codewords,-1 do
-			if mp_int[i]==0 then
-				highest_exponent=i-1
-			else
-				break
+		for i = highest_exponent, num_ec_codewords, -1 do
+			if mp_int[i] == 0 then
+				highest_exponent = i - 1
+            else
+                break
 			end
 		end
-
-		if highest_exponent<num_ec_codewords then break end
+		if highest_exponent < num_ec_codewords then break end
 	end
-	local ret = {}
 
-	-- reverse data
-	for i=highest_exponent,0,-1 do
-		ret[#ret + 1] = mp_int[i]
+	for i = 1, num_ec_codewords do
+		out_array[out_offset + i - 1] = mp_int[num_ec_codewords - i]
 	end
-	return ret
+end
+]=]
+-- This is mathematically the same function as above, but LuaJIT fares better here,
+-- it uses more computations but it is more predictable thus, faster performance
+local function calculate_error_correction(data, data_offset, len_message, num_ec_codewords, out_array, out_offset)
+    -- Clear the shift register (mp_int[0] is x^0, mp_int[num_ec_codewords - 1] is x^(n-1))
+    for i = 0, num_ec_codewords - 1 do
+        mp_int[i] = 0
+    end
+
+    local gp = generator_polynomial[num_ec_codewords]
+    -- Process every single data byte (strict shift register, no skipping zeros)
+    for i = 0, len_message - 1 do
+        local data_byte = data[data_offset + i]
+        -- The MSB of the remainder is at the top of the register
+        local msb = mp_int[num_ec_codewords - 1]
+        local feedback = bxor(msb, data_byte)
+
+        -- Shift the register left (multiply by x)
+        for j = num_ec_codewords - 1, 1, -1 do
+            mp_int[j] = mp_int[j - 1]
+        end
+        mp_int[0] = 0
+
+        -- Subtract (XOR) the generator polynomial if feedback is non-zero
+        if feedback ~= 0 then
+            local exp = int_alpha[feedback]
+            for j = 0, num_ec_codewords - 1 do
+                -- gp[j+1] holds the exponent for x^j
+                local gp_val = gp[j + 1]
+                local combined = gp_val + exp
+
+                -- Explicit Galois wrap to match C bounds
+                if combined >= 255 then
+                    combined = combined - 255
+                end
+
+                mp_int[j] = bxor(mp_int[j], alpha_int[combined])
+            end
+        end
+    end
+    -- Flush the final remainder to the output buffer
+    -- out_array[0] gets the MSB (x^(n-1)), out_array[n-1] gets the LSB (x^0)
+    for i = 0, num_ec_codewords - 1 do
+        out_array[out_offset + i] = mp_int[num_ec_codewords - 1 - i]
+    end
 end
 
---- #### Arranging the data
---- Now we arrange the data into smaller chunks. This table is taken from the spec.
--- ecblocks has 40 entries, one for each version. Each version entry has 4 entries, for each LMQH
--- ec level. Each entry has two or four fields, the odd files are the number of repetitions for the
--- following block info. The first entry of the block is the total number of codewords in the block,
--- the second entry is the number of data codewords. The third is not important.
 local ecblocks = {
 	{{  1,{ 26, 19, 2}                 },   {  1,{26,16, 4}},                  {  1,{26,13, 6}},                  {  1, {26, 9, 8}               }},
 	{{  1,{ 44, 34, 4}                 },   {  1,{44,28, 8}},                  {  1,{44,22,11}},                  {  1, {44,16,14}               }},
@@ -570,260 +452,108 @@ local ecblocks = {
 	{{ 19,{148,118,15},  6,{149,119,15}},   { 18,{75,47,14}, 31,{76,48,14}},   { 34,{54,24,15}, 34,{55,25,15}},   { 20, {45,15,15}, 61,{46,16,15}}}
 }
 
--- The bits that must be 0 if the version does fill the complete matrix.
--- Example: for version 1, no bits need to be added after arranging the data, for version 2 we need to add 7 bits at the end.
-local remainder = {0, 7, 7, 7, 7, 7, 0, 0, 0, 0, 0, 0, 0, 3, 3, 3, 3, 3, 3, 3, 4, 4, 4, 4, 4, 4, 4, 3, 3, 3, 3, 3, 3, 3, 0, 0, 0, 0, 0, 0}
-
--- This is the formula for table 1 in the spec:
--- function get_capacity_remainder( version )
--- 	local len = version * 4 + 17
--- 	local size = len^2
--- 	local function_pattern_modules = 192 + 2 * len - 32 -- Position Adjustment pattern + timing pattern
--- 	local count_alignment_pattern = #alignment_pattern[version]
--- 	if count_alignment_pattern > 0 then
--- 		-- add 25 for each alignment pattern
--- 		function_pattern_modules = function_pattern_modules + 25 * ( count_alignment_pattern^2 - 3 )
--- 		-- but subtract the timing pattern occupied by the alignment pattern on the top and left
--- 		function_pattern_modules = function_pattern_modules - ( count_alignment_pattern - 2) * 10
--- 	end
--- 	size = size - function_pattern_modules
--- 	if version > 6 then
--- 		size = size - 67
--- 	else
--- 		size = size - 31
--- 	end
--- 	return math.floor(size/8),math.fmod(size,8)
--- end
-
---- Example: Version 5-H has four data and four error correction blocks. The table above lists
---- `2, {33,11,11},  2,{34,12,11}` for entry [5][4]. This means we take two blocks with 11 codewords
---- and two blocks with 12 codewords, and two blocks with 33 - 11 = 22 ec codes and another
---- two blocks with 34 - 12 = 22 ec codes.
----	     Block 1: D1  D2  D3  ... D11
----	     Block 2: D12 D13 D14 ... D22
----	     Block 3: D23 D24 D25 ... D33 D34
----	     Block 4: D35 D36 D37 ... D45 D46
---- Then we place the data like this in the matrix: D1, D12, D23, D35, D2, D13, D24, D36 ... D45, D34, D46.  The same goes
---- with error correction codes.
-
--- The given data can be a string of 0's and 1' (with #string mod 8 == 0).
--- Alternatively the data can be a table of codewords. The number of codewords
--- must match the capacity of the qr code.
-local function arrange_codewords_and_calculate_ec(version,ec_level,data)
-	if type(data)=="table" then
-		local tmp = {}
-		for i=1,#data do
-			tmp[i] = binary(data[i],8)
-		end
-		data = concat(tmp)
-	end
-	-- If the size of the data is not enough for the codeword, we add 0's and two special bytes until finished.
+local function arrange_codewords_and_calculate_ec(version, ec_level, data)
 	local blocks = ecblocks[version][ec_level]
-	local size_datablock_bytes, size_ecblock_bytes
-	local datablocks = {}
-	local final_ecblocks = {}
-	local pos = 0
-	for i=1,#blocks/2 do
-		size_datablock_bytes = blocks[2*i][2]
-		size_ecblock_bytes   = blocks[2*i][1] - size_datablock_bytes
-		for _=1,blocks[2*i - 1] do
-			datablocks[#datablocks + 1] = sub(data, pos * 8 + 1,( pos + size_datablock_bytes)*8)
-			local tmp_tab = calculate_error_correction(datablocks[#datablocks],size_ecblock_bytes)
-			local tmp_str = {}
-			for x=1,#tmp_tab do
-				tmp_str[#tmp_str + 1] = binary(tmp_tab[x],8)
+	local num_blocks
+	local data_pos = 1
+	local ec_pos = 1
+	local max_data_len = 0
+	local max_ec_len = 0
+
+	local block_idx = 1
+	for i = 1, #blocks / 2 do
+		local count = blocks[2*i - 1]
+		local size_datablock = blocks[2*i][2]
+		local size_ecblock = blocks[2*i][1] - size_datablock
+
+		max_data_len = max(max_data_len, size_datablock)
+		max_ec_len = max(max_ec_len, size_ecblock)
+
+		for _ = 1, count do
+			block_data_offsets[block_idx] = data_pos
+			block_data_lens[block_idx] = size_datablock
+
+			block_ec_offsets[block_idx] = ec_pos
+			block_ec_lens[block_idx] = size_ecblock
+
+			calculate_error_correction(data, data_pos, size_datablock, size_ecblock, ec_blocks_cache, ec_pos)
+
+			data_pos = data_pos + size_datablock
+			ec_pos = ec_pos + size_ecblock
+			block_idx = block_idx + 1
+		end
+	end
+	num_blocks = block_idx - 1
+
+	local out_len = 0
+	for p = 1, max_data_len do
+		for b = 1, num_blocks do
+			if p <= block_data_lens[b] then
+				out_len = out_len + 1
+				arranged_data[out_len] = data[block_data_offsets[b] + p - 1]
 			end
-			final_ecblocks[#final_ecblocks + 1] = concat(tmp_str)
-			pos = pos + size_datablock_bytes
 		end
 	end
 
-	-- Weave the data blocks. When there are multiple block sizes, the final data stream looks like:
-	-- b1's 1st byte, b2's 1st byte, (b3's 1st byte, ...)
-	-- b1's 2nd byte, b2's 2nd byte, (b3's 2nd byte, ...)
-	-- b1's 3rd byte, ...
-	local arranged_data = {}
-	local maxBlockLen = 0
-	for i = 1, #datablocks do maxBlockLen = max(maxBlockLen, #datablocks[i]) end
-	for p = 1, maxBlockLen, 8 do
-		for i = 1, #datablocks do
-			arranged_data[#arranged_data + 1] = sub(datablocks[i], p, p + 7)
+	for p = 1, max_ec_len do
+		for b = 1, num_blocks do
+			if p <= block_ec_lens[b] then
+				out_len = out_len + 1
+				arranged_data[out_len] = ec_blocks_cache[block_ec_offsets[b] + p - 1]
+			end
 		end
 	end
 
-	-- Same for EC blocks
-	maxBlockLen = 0
-	for i = 1, #final_ecblocks do maxBlockLen = max(maxBlockLen, #final_ecblocks[i]) end
-	for p = 1, maxBlockLen, 8 do
-		for i = 1, #final_ecblocks do
-			arranged_data[#arranged_data + 1] = sub(final_ecblocks[i], p, p + 7)
-		end
-	end
-	return concat(arranged_data)
+	return out_len
 end
 
 
+--- Step 4: Generate matrices via scratchpad and calculate penalty
+--- ===============================================================
 
---- Step 4: Generate 8 matrices with different masks and calculate the penalty
---- ==========================================================================
----
---- Prepare matrix
---- --------------
---- The first step is to prepare an _empty_ matrix for a given size/mask. The matrix has a
---- few predefined areas that must be black or blank. We encode the matrix with a two
---- dimensional field where the numbers determine which pixel is blank or not.
----
---- The following code is used for our matrix:
----	     0 = not in use yet,
----	    -2 = blank by mandatory pattern,
----	     2 = black by mandatory pattern,
----	    -1 = blank by data,
----	     1 = black by data
----
---- To prepare the _empty_, we add positioning, alingment and timing patters.
-
---- ### Positioning patterns ###
-local function add_position_detection_patterns(tab_x)
-	local size = #tab_x
-	-- allocate quite zone in the matrix area
-	for i=1,8 do
-		for j=1,8 do
-			tab_x[i][j] = -2
-			tab_x[size - 8 + i][j] = -2
-			tab_x[i][size - 8 + j] = -2
-		end
-	end
-	-- draw the detection pattern (outer)
-	for i=1,7 do
-		-- top left
-		tab_x[1][i]=2
-		tab_x[7][i]=2
-		tab_x[i][1]=2
-		tab_x[i][7]=2
-
-		-- top right
-		tab_x[size][i]=2
-		tab_x[size - 6][i]=2
-		tab_x[size - i + 1][1]=2
-		tab_x[size - i + 1][7]=2
-
-		-- bottom left
-		tab_x[1][size - i + 1]=2
-		tab_x[7][size - i + 1]=2
-		tab_x[i][size - 6]=2
-		tab_x[i][size]=2
-	end
-	-- draw the detection pattern (inner)
-	for i=1,3 do
-		for j=1,3 do
-			-- top left
-			tab_x[2+j][i+2]=2
-			-- top right
-			tab_x[size - j - 1][i+2]=2
-			-- bottom left
-			tab_x[2 + j][size - i - 1]=2
-		end
-	end
-end
-
---- ### Timing patterns ###
--- The timing patterns (two) are the dashed lines between two adjacent positioning patterns on row/column 7.
-local function add_timing_pattern(tab_x)
-	local line,col=7,9
-	for i=col,#tab_x-8 do
-		tab_x[i][line] = i%2==0 and -2 or 2
-		tab_x[line][i] = i%2==0 and -2 or 2
-	end
-end
-
---- ### Alignment patterns ###
---- The alignment patterns must be added to the matrix for versions > 1. The amount and positions depend on the versions and are
---- given by the spec. Beware: the patterns must not be placed where we have the positioning patterns
---- (that is: top left, top right and bottom left.)
-
--- For each version, where should we place the alignment patterns? See table E.1 of the spec
 local alignment_pattern = {
-	{},{6,18},{6,22},{6,26},{6,30},{6,34}, -- 1-6
-	{6,22,38},{6,24,42},{6,26,46},{6,28,50},{6,30,54},{6,32,58},{6,34,62}, -- 7-13
-	{6,26,46,66},{6,26,48,70},{6,26,50,74},{6,30,54,78},{6,30,56,82},{6,30,58,86},{6,34,62,90}, -- 14-20
-	{6,28,50,72,94},{6,26,50,74,98},{6,30,54,78,102},{6,28,54,80,106},{6,32,58,84,110},{6,30,58,86,114},{6,34,62,90,118}, -- 21-27
-	{6,26,50,74,98 ,122},{6,30,54,78,102,126},{6,26,52,78,104,130},{6,30,56,82,108,134},{6,34,60,86,112,138},{6,30,58,86,114,142},{6,34,62,90,118,146}, -- 28-34
-	{6,30,54,78,102,126,150}, {6,24,50,76,102,128,154},{6,28,54,80,106,132,158},{6,32,58,84,110,136,162},{6,26,54,82,110,138,166},{6,30,58,86,114,142,170} -- 35 - 40
+	{},{6,18},{6,22},{6,26},{6,30},{6,34},
+	{6,22,38},{6,24,42},{6,26,46},{6,28,50},{6,30,54},{6,32,58},{6,34,62},
+	{6,26,46,66},{6,26,48,70},{6,26,50,74},{6,30,54,78},{6,30,56,82},{6,30,58,86},{6,34,62,90},
+	{6,28,50,72,94},{6,26,50,74,98},{6,30,54,78,102},{6,28,54,80,106},{6,32,58,84,110},{6,30,58,86,114},{6,34,62,90,118},
+	{6,26,50,74,98 ,122},{6,30,54,78,102,126},{6,26,52,78,104,130},{6,30,56,82,108,134},{6,34,60,86,112,138},{6,30,58,86,114,142},{6,34,62,90,118,146},
+	{6,30,54,78,102,126,150}, {6,24,50,76,102,128,154},{6,28,54,80,106,132,158},{6,32,58,84,110,136,162},{6,26,54,82,110,138,166},{6,30,58,86,114,142,170}
 }
 
---- The alignment pattern has size 5x5 and looks like this:
----     XXXXX
----     X   X
----     X X X
----     X   X
----     XXXXX
-local function add_alignment_pattern(tab_x)
-	local version = (#tab_x - 17) / 4
-	local ap = alignment_pattern[version]
-	local pos_x, pos_y
-	for x=1,#ap do
-		for y=1,#ap do
-			-- we must not put an alignment pattern on top of the positioning pattern
-			if not (x == 1 and y == 1 or x == #ap and y == 1 or x == 1 and y == #ap ) then
-				pos_x,pos_y=ap[x]+1,ap[y]+1
-				for dy=-2,2 do
-					for dx=-2,2 do
-						-- form the pattern with checking chebyshev distance instead of hardcoding
-						tab_x[pos_x+dx][pos_y+dy]=max(abs(dx),abs(dy))%2==0 and 2 or -2
-					end
-				end
-			end
-		end
-	end
-end
-
---- ### Type information ###
---- Let's not forget the type information that is in column 9 next to the left positioning patterns and on row 9 below
---- the top positioning patterns. This type information is not fixed, it depends on the mask and the error correction.
-
--- The first index is ec level (LMQH,1-4), the second is the mask (0-7). This bitstring of length 15 is to be used
--- as mandatory pattern in the qrcode. Mask -1 is for debugging purpose only and is the 'noop' mask.
 local typeinfo = {
-	{ [-1]= "111111111111111", [0] = "111011111000100", "111001011110011", "111110110101010", "111100010011101", "110011000101111", "110001100011000", "110110001000001", "110100101110110" },
-	{ [-1]= "111111111111111", [0] = "101010000010010", "101000100100101", "101111001111100", "101101101001011", "100010111111001", "100000011001110", "100111110010111", "100101010100000" },
-	{ [-1]= "111111111111111", [0] = "011010101011111", "011000001101000", "011111100110001", "011101000000110", "010010010110100", "010000110000011", "010111011011010", "010101111101101" },
-	{ [-1]= "111111111111111", [0] = "001011010001001", "001001110111110", "001110011100111", "001100111010000", "000011101100010", "000001001010101", "000110100001100", "000100000111011" }
+	{ [0] = "111011111000100", "111001011110011", "111110110101010", "111100010011101", "110011000101111", "110001100011000", "110110001000001", "110100101110110" },
+	{ [0] = "101010000010010", "101000100100101", "101111001111100", "101101101001011", "100010111111001", "100000011001110", "100111110010111", "100101010100000" },
+	{ [0] = "011010101011111", "011000001101000", "011111100110001", "011101000000110", "010010010110100", "010000110000011", "010111011011010", "010101111101101" },
+	{ [0] = "001011010001001", "001001110111110", "001110011100111", "001100111010000", "000011101100010", "000001001010101", "000110100001100", "000100000111011" }
 }
 
--- The typeinfo is a mixture of mask and ec level information and is
--- added twice to the qr code, one horizontal, one vertical.
-local function add_typeinfo_to_matrix(matrix,ec_level,mask)
+local function add_typeinfo_to_matrix(matrix, size, ec_level, mask)
 	local ec_mask_type = typeinfo[ec_level][mask]
-
-	local bit
-	-- vertical from bottom to top
-	for i=1,7 do
-		bit = sub(ec_mask_type,i,i)
-		fill_matrix_position(matrix,bit,9,#matrix - i + 1)
+	local bit_val
+	for i = 1, 7 do
+		bit_val = sub(ec_mask_type, i, i) == "1" and 2 or -2
+		set_cell(matrix, size, 9, size - i + 1, bit_val)
 	end
-	for i=8,9 do
-		bit = sub(ec_mask_type,i,i)
-		fill_matrix_position(matrix,bit,9,17-i)
+	for i = 8, 9 do
+		bit_val = sub(ec_mask_type, i, i) == "1" and 2 or -2
+		set_cell(matrix, size, 9, 17 - i, bit_val)
 	end
-	for i=10,15 do
-		bit = sub(ec_mask_type,i,i)
-		fill_matrix_position(matrix,bit,9,16 - i)
+	for i = 10, 15 do
+		bit_val = sub(ec_mask_type, i, i) == "1" and 2 or -2
+		set_cell(matrix, size, 9, 16 - i, bit_val)
 	end
-	-- horizontal, left to right
-	for i=1,6 do
-		bit = sub(ec_mask_type,i,i)
-		fill_matrix_position(matrix,bit,i,9)
+	for i = 1, 6 do
+		bit_val = sub(ec_mask_type, i, i) == "1" and 2 or -2
+		set_cell(matrix, size, i, 9, bit_val)
 	end
-	bit = sub(ec_mask_type,7,7)
-	fill_matrix_position(matrix,bit,8,9)
-	for i=8,15 do
-		bit = sub(ec_mask_type,i,i)
-		fill_matrix_position(matrix,bit,#matrix - 15 + i,9)
+	bit_val = sub(ec_mask_type, 7, 7) == "1" and 2 or -2
+	set_cell(matrix, size, 8, 9, bit_val)
+	for i = 8, 15 do
+		bit_val = sub(ec_mask_type, i, i) == "1" and 2 or -2
+		set_cell(matrix, size, size - 15 + i, 9, bit_val)
 	end
 end
 
--- Bits for version information 7-40
--- The reversed strings from https://www.thonky.com/qr-code-tutorial/format-version-tables
 local version_information = {
 	"001010010011111000", "001111011010000100", "100110010101100100", "110010110010010100",
 	"011011111101110100", "010001101110001100", "111000100001101100", "101100000110011100", "000101001001111100",
@@ -834,72 +564,85 @@ local version_information = {
 	"110100001101001001", "011101000010101001", "001001100101011001", "100000101010111001", "100101100011000101",
 }
 
--- Versions 7 and above need two bitfields with version information added to the code
-local function add_version_information(matrix,version)
+local function add_version_information(matrix, version, size)
 	if version < 7 then return end
-	local size = #matrix
 	local bitstring = version_information[version - 6]
-	local x,y, bit
-	local start_x, start_y
-	-- first top right
-	start_x = size - 10
-	start_y = 1
-	for i=1,#bitstring do
-		bit = sub(bitstring,i,i)
+	local x, y, bit_val
+	local start_x = size - 10
+	local start_y = 1
+	for i = 1, #bitstring do
+		bit_val = sub(bitstring, i, i) == "1" and 2 or -2
 		x = start_x + (i - 1) % 3
 		y = start_y + floor((i - 1) / 3)
-		fill_matrix_position(matrix,bit,x,y)
+		set_cell(matrix, size, x, y, bit_val)
 	end
-
-	-- now bottom left
 	start_x = 1
 	start_y = size - 10
-	for i=1,#bitstring do
-		bit = sub(bitstring,i,i)
+	for i = 1, #bitstring do
+		bit_val = sub(bitstring, i, i) == "1" and 2 or -2
 		x = start_x + floor((i - 1) / 3)
 		y = start_y + (i - 1) % 3
-		fill_matrix_position(matrix,bit,x,y)
+		set_cell(matrix, size, x, y, bit_val)
 	end
 end
 
---- Now it's time to use the methods above to create a prefilled matrix for the given mask
-local function prepare_matrix_with_mask(version,ec_level,mask)
+local function generate_base_matrix(version)
 	local size = version * 4 + 17
-	local tab_x = {}
+	local len = size * size
 
-	for i=1,size do
-		tab_x[i]={}
-		for j=1,size do
-			tab_x[i][j] = 0
+	ffi.fill(base_matrix, len + 1, 0)
+
+	for i = 1, 8 do
+		for j = 1, 8 do
+			set_cell(base_matrix, size, i, j, -2)
+			set_cell(base_matrix, size, size - 8 + i, j, -2)
+			set_cell(base_matrix, size, i, size - 8 + j, -2)
 		end
 	end
-	add_position_detection_patterns(tab_x)
-	add_timing_pattern(tab_x)
-	add_version_information(tab_x,version)
 
-	-- black pixel above lower left position detection pattern
-	tab_x[9][size - 7] = 2
-	add_alignment_pattern(tab_x)
-	add_typeinfo_to_matrix(tab_x,ec_level, mask)
-	return tab_x
+	for i = 1, 7 do
+		set_cell(base_matrix, size, 1, i, 2); set_cell(base_matrix, size, 7, i, 2)
+		set_cell(base_matrix, size, i, 1, 2); set_cell(base_matrix, size, i, 7, 2)
+		set_cell(base_matrix, size, size, i, 2); set_cell(base_matrix, size, size - 6, i, 2)
+		set_cell(base_matrix, size, size - i + 1, 1, 2); set_cell(base_matrix, size, size - i + 1, 7, 2)
+		set_cell(base_matrix, size, 1, size - i + 1, 2); set_cell(base_matrix, size, 7, size - i + 1, 2)
+		set_cell(base_matrix, size, i, size - 6, 2); set_cell(base_matrix, size, i, size, 2)
+	end
+
+	for i = 1, 3 do
+		for j = 1, 3 do
+			set_cell(base_matrix, size, 2 + j, i + 2, 2)
+			set_cell(base_matrix, size, size - j - 1, i + 2, 2)
+			set_cell(base_matrix, size, 2 + j, size - i - 1, 2)
+		end
+	end
+
+	for i = 9, size - 8 do
+		set_cell(base_matrix, size, i, 7, i % 2 == 0 and -2 or 2)
+		set_cell(base_matrix, size, 7, i, i % 2 == 0 and -2 or 2)
+	end
+
+	add_version_information(base_matrix, version, size)
+	set_cell(base_matrix, size, 9, size - 7, 2)
+
+	local ap = alignment_pattern[version]
+	for x = 1, #ap do
+		for y = 1, #ap do
+			if not (x == 1 and y == 1 or x == #ap and y == 1 or x == 1 and y == #ap) then
+				local pos_x, pos_y = ap[x] + 1, ap[y] + 1
+				for dy = -2, 2 do
+					for dx = -2, 2 do
+						set_cell(base_matrix, size, pos_x + dx, pos_y + dy, max(abs(dx), abs(dy)) % 2 == 0 and 2 or -2)
+					end
+				end
+			end
+		end
+	end
+
+	return size
 end
 
---- Finally we come to the place where we need to put the calculated data (remember step 3?) into the qr code.
---- We do this for each mask. BTW speaking of mask, this is what we find in the spec:
----	     Mask Pattern Reference   Condition
----	     000                      (y + x) mod 2 = 0
----	     001                      y mod 2 = 0
----	     010                      x mod 3 = 0
----	     011                      (y + x) mod 3 = 0
----	     100                      ((y div 2) + (x div 3)) mod 2 = 0
----	     101                      (y x) mod 2 + (y x) mod 3 = 0
----	     110                      ((y x) mod 2 + (y x) mod 3) mod 2 = 0
----	     111                      ((y x) mod 3 + (y+x) mod 2) mod 2 = 0
-
--- Mask functions, i & j are 0-based, so input should be (x-1,y-1)
--- true means 'invert this bit'
-local maskFunc={
-	[-1]=function(_,_) return false end, -- test purpose only, no mask applied
+local maskFunc = {
 	[0]=function(x,y) return (y+x)%2==0 end,
 	function(_,y) return y%2==0 end,
 	function(x,_) return x%3==0 end,
@@ -910,240 +653,469 @@ local maskFunc={
 	function(x,y) return ((y*x)%3+y+x)%2==0 end,
 }
 
--- Receive 0 (blank) or 1 (black) from data,
--- Return -1 (blank) or 1 (black) depending on the value, mask, and position.
--- Parameter mask is 0-7 (-1 for 'no mask'). x and y are 1-based coordinates,
--- 1,1 = upper left. value must be 0 or 1.
-local function get_pixel_with_mask(mask,x,y,dataBit)
-	local invert = maskFunc[mask](x-1,y-1)
-	return (dataBit==0)==invert and 1 or -1
-	--       This^ == is used as boolean XNOR:
-	--  data    F  T <- invert?
-	--   0   F -1  1
-	--   1   T  1 -1
+local function popcount32(x)
+	x = x - band(rshift(x, 1), 0x55555555)
+	x = band(x, 0x33333333) + band(rshift(x, 2), 0x33333333)
+	x = band(x + rshift(x, 4), 0x0F0F0F0F)
+
+    -- Cascade the byte sums:
+    -- Byte 0 gets Byte 0 + Byte 1, Byte 2 gets Byte 2 + Byte 3
+    x = x + rshift(x, 8)
+    -- Byte 0 gets (Byte 0 + Byte 1) + (Byte 2 + Byte 3)
+    x = x + rshift(x, 16)
+
+    -- The maximum possible popcount is 32, which fits in 6 bits.
+    -- A single mask strips away the junk data in the upper bytes.
+    return band(x, 0x3F)
 end
 
--- Add the data string (0's and 1's) to the matrix for the given mask.
-local function add_data_to_matrix(matrix,data,mask)
-	local size = #matrix
-	-- Fill data into matrix
-	local ptr=1             -- data pointer
-	local x,y=size,size     -- writing position, starts from bottom right
-	local x_dir,y_dir=-1,-1 -- state of movement, notice that Y step once each two X steps
-	while true do
-		-- 0 means available data cell to write data
-		if matrix[x][y]==0 then
-			matrix[x][y] = get_pixel_with_mask(mask,x,y,byte(data,ptr)-48) -- '0' = 48, '1' = 49
-			ptr = ptr + 1
-			if ptr > #data or x < 0 then return matrix end -- all data written, finish
+-- SWAR penalty scratch: c_bb holds per-word "differs from left" bits,
+-- T_base/T_scratch are transposed boards for the vertical pass.
+local c_bb      = ffi.new("uint32_t[?]", MAX_BB_LEN)
+local T_base    = ffi.new("uint32_t[?]", MAX_BB_LEN)
+local T_scratch = ffi.new("uint32_t[?]", MAX_BB_LEN)
+local tr_buf    = ffi.new("uint32_t[?]", 32)
+
+local sz_cache = {}
+
+local function make_mask(min_b, max_b)
+	local mask = 0
+	if min_b <= max_b then
+		min_b = max(0, min_b)
+		max_b = min(31, max_b)
+		for i = min_b, max_b do
+			mask = bor(mask, lshift(1, i))
+		end
+	end
+	return mask
+end
+
+local function get_size_masks(size, stride, padding)
+	local key = size * 100 + padding
+	local e = sz_cache[key]
+	if e then return e end
+	e = { v5 = {}, m3A = {}, m3B = {} }
+	local end_idx = padding + size - 1
+	for w = 0, stride - 1 do
+		local w_off = w * 32
+		-- v5 (P1): Run of 5 must be entirely inside the symbol
+		e.v5[w] = make_mask(padding - w_off, end_idx - 4 - w_off)
+
+		-- m3A (P3 TA): 11-bit pattern 00001011101. 1s are at offsets +4 to +10.
+		-- The 1s must be inside, meaning start bit 'b' can overhang into the left padding by up to 4.
+		e.m3A[w] = make_mask(padding - 4 - w_off, end_idx - 10 - w_off)
+
+		-- m3B (P3 TB): 11-bit pattern 10111010000. 1s are at offsets +0 to +6.
+		e.m3B[w] = make_mask(padding - w_off, end_idx - 6 - w_off)
+	end
+	sz_cache[key] = e
+	return e
+end
+
+local p2_mask_cache = {}
+local function get_p2_masks(size, stride, padding)
+	local e = p2_mask_cache[size]
+	if e then return e end
+	e = {}
+	for w = 0, stride - 1 do
+		local start_bit = padding - w * 32
+		local end_bit = padding + size - 2 - w * 32
+		e[w] = make_mask(start_bit, end_bit)
+	end
+	p2_mask_cache[size] = e
+	return e
+end
+
+local function transpose32()
+	local a, b, t
+	for k = 0, 15 do
+		a, b = tr_buf[k], tr_buf[k + 16]
+		t = band(bxor(rshift(a, 16), b), 0x0000FFFF)
+		tr_buf[k + 16] = bxor(b, t)
+		tr_buf[k] = bxor(a, lshift(t, 16))
+	end
+	for base = 0, 16, 16 do
+		for r = 0, 7 do
+			local k = base + r
+			a, b = tr_buf[k], tr_buf[k + 8]
+			t = band(bxor(rshift(a, 8), b), 0x00FF00FF)
+			tr_buf[k + 8] = bxor(b, t)
+			tr_buf[k] = bxor(a, lshift(t, 8))
+		end
+	end
+	for base = 0, 24, 8 do
+		for r = 0, 3 do
+			local k = base + r
+			a, b = tr_buf[k], tr_buf[k + 4]
+			t = band(bxor(rshift(a, 4), b), 0x0F0F0F0F)
+			tr_buf[k + 4] = bxor(b, t)
+			tr_buf[k] = bxor(a, lshift(t, 4))
+		end
+	end
+	for base = 0, 28, 4 do
+		for r = 0, 1 do
+			local k = base + r
+			a, b = tr_buf[k], tr_buf[k + 2]
+			t = band(bxor(rshift(a, 2), b), 0x33333333)
+			tr_buf[k + 2] = bxor(b, t)
+			tr_buf[k] = bxor(a, lshift(t, 2))
+		end
+	end
+	for base = 0, 30, 2 do
+		a, b = tr_buf[base], tr_buf[base + 1]
+		t = band(bxor(rshift(a, 1), b), 0x55555555)
+		tr_buf[base + 1] = bxor(b, t)
+		tr_buf[base] = bxor(a, lshift(t, 1))
+	end
+end
+
+local function transpose_bb(src, dst, size, stride)
+	for bx = 0, stride - 1 do
+		for by = 0, stride - 1 do
+			local navail = size - by * 32
+			if navail > 32 then navail = 32 end
+			for r = 0, 31 do
+				tr_buf[r] = r < navail and src[(by * 32 + r) * stride + bx] or 0
+			end
+			transpose32()
+			for c = 0, 31 do
+				local row = bx * 32 + c
+				if row < size then dst[row * stride + by] = tr_buf[c] end
+			end
+		end
+	end
+end
+
+local function scan_p1p3(bb, size, stride, padding, sm)
+	local v5, m3A, m3B = sm.v5, sm.m3A, sm.m3B
+	local w_end = stride - 1
+	local p1, p3 = 0, 0
+
+	for y = padding, padding + size - 1 do
+		local off = y * stride
+		local prev31 = 0
+		for w = 0, w_end do
+			local b = bb[off + w]
+			if w == 0 then
+				c_bb[off + w] = bor(bxor(b, lshift(b, 1)), 1)
+			else
+				c_bb[off + w] = bxor(b, bor(lshift(b, 1), prev31))
+			end
+			prev31 = rshift(b, 31)
 		end
 
-		-- Move to next cell (won't write into unavailable cell so it's fine to move 1 step each time)
-		-- switch left/right
-		x = x + x_dir
-		-- if just stepped right, it means current 2 bits were finished
-		if x_dir == 1 then
-			-- so we step up/down for next 2 bits
-			y = y + y_dir
+		c_bb[off] = bor(c_bb[off], lshift(1, padding))
 
-			-- when we went outside the matrix, move 2 cells left and turn back
-			if not matrix[y] then -- square, so matrix[y] will be nil if y is out of range, no matter [x][y] or [y][x]
+		for w = 0, w_end do
+			local c = c_bb[off + w]
+			local z1 = bor(bor(rshift(c, 1), rshift(c, 2)), bor(rshift(c, 3), rshift(c, 4)))
+			if w < w_end then
+				local cx = c_bb[off + w + 1]
+				z1 = bor(z1, lshift(cx, 28), lshift(cx, 29), lshift(cx, 30), lshift(cx, 31))
+			end
+			local A = band(v5[w], bxor(z1, -1))
+			p1 = p1 + popcount32(A) + 2 * popcount32(band(A, c))
+
+			local b = bb[off + w]
+			local bnext = w < w_end and bb[off + w + 1] or 0
+			local s0 = b
+			local s1 = bor(rshift(b, 1), lshift(bnext, 31))
+			local s2 = bor(rshift(b, 2), lshift(bnext, 30))
+			local s3 = bor(rshift(b, 3), lshift(bnext, 29))
+			local s4 = bor(rshift(b, 4), lshift(bnext, 28))
+			local s5 = bor(rshift(b, 5), lshift(bnext, 27))
+			local s6 = bor(rshift(b, 6), lshift(bnext, 26))
+			local s7 = bor(rshift(b, 7), lshift(bnext, 25))
+			local s8 = bor(rshift(b, 8), lshift(bnext, 24))
+			local s9 = bor(rshift(b, 9), lshift(bnext, 23))
+			local s10 = bor(rshift(b, 10), lshift(bnext, 22))
+
+			local TA = band(band(band(s4, s6), band(s7, s8)), s10)
+			local NA = bor(bor(bor(s0, s1), bor(s2, s3)), bor(s5, s9))
+
+			local TB = band(band(band(s0, s2), band(s3, s4)), s6)
+			local NB = bor(bor(bor(s1, s5), bor(s7, s8)), bor(s9, s10))
+
+			p3 = p3 + 40 * popcount32(band(band(TA, bxor(NA, -1)), m3A[w]))
+			p3 = p3 + 40 * popcount32(band(band(TB, bxor(NB, -1)), m3B[w]))
+
+			local s11 = bor(rshift(b, 11), lshift(bnext, 21))
+			local s12 = bor(rshift(b, 12), lshift(bnext, 20))
+			local s13 = bor(rshift(b, 13), lshift(bnext, 19))
+			local s14 = bor(rshift(b, 14), lshift(bnext, 18))
+			local ND = bor(bor(NA, s11), bor(bor(s12, s13), s14))
+
+			p3 = p3 - 40 * popcount32(band(band(TA, bxor(ND, -1)), m3A[w]))
+		end
+	end
+	return p1, p3
+end
+
+local function compute_penalty_components(bb, tbb, padded_size, size, stride, padding)
+	local sm = get_size_masks(size, stride, padding)
+	local p1, p3 = scan_p1p3(bb, size, stride, padding, sm)
+	local p1v, p3v = scan_p1p3(tbb, size, stride, padding, sm)
+	p1 = p1 + p1v
+	p3 = p3 + p3v
+
+	local p2, dark = 0, 0
+	local w_end = stride - 1
+	local p2m = get_p2_masks(size, stride, padding)
+
+	for y = padding, padding + size - 1 do
+		local offA = y * stride
+		for w = 0, w_end do
+			dark = dark + popcount32(bb[offA + w])
+		end
+
+		if y < padding + size - 1 then
+			local offB = offA + stride
+			for w = 0, w_end do
+				local a = bb[offA + w]
+				local b2 = bb[offB + w]
+				local d = bor(bor(bxor(a, rshift(a, 1)), bxor(a, b2)), bxor(b2, rshift(b2, 1)))
+
+				p2 = p2 + popcount32(band(bnot(d), p2m[w])) * 3
+
+				local cross_bit = w * 32 + 31
+				if cross_bit >= padding and cross_bit <= padding + size - 2 then
+					local a31 = band(rshift(a, 31), 1)
+					local b31 = band(rshift(b2, 31), 1)
+					if a31 == b31 and a31 == band(bb[offA + w + 1], 1) and b31 == band(bb[offB + w + 1], 1) then
+						p2 = p2 + 3
+					end
+				end
+			end
+		end
+	end
+
+	local percent = dark / (size * size) * 100
+	local p4 = floor(abs(50 - percent) / 5) * 10
+	return p1, p2, p3, p4
+end
+
+local function add_typeinfo_both(bb, tbb, size, stride, ec_level, mask, padding)
+	local ec_mask_type = typeinfo[ec_level][mask]
+	local bit_val
+	for i = 1, 7 do
+		bit_val = sub(ec_mask_type, i, i) == "1" and 1 or 0
+		set_bb_bit(bb, stride, padding + 9, padding + size - i + 1, bit_val)
+		set_bb_bit(tbb, stride, padding + size - i + 1, padding + 9, bit_val)
+	end
+	for i = 8, 9 do
+		bit_val = sub(ec_mask_type, i, i) == "1" and 1 or 0
+		set_bb_bit(bb, stride, padding + 9, padding + 17 - i, bit_val)
+		set_bb_bit(tbb, stride, padding + 17 - i, padding + 9, bit_val)
+	end
+	for i = 10, 15 do
+		bit_val = sub(ec_mask_type, i, i) == "1" and 1 or 0
+		set_bb_bit(bb, stride, padding + 9, padding + 16 - i, bit_val)
+		set_bb_bit(tbb, stride, padding + 16 - i, padding + 9, bit_val)
+	end
+	for i = 1, 6 do
+		bit_val = sub(ec_mask_type, i, i) == "1" and 1 or 0
+		set_bb_bit(bb, stride, padding + i, padding + 9, bit_val)
+		set_bb_bit(tbb, stride, padding + 9, padding + i, bit_val)
+	end
+	bit_val = sub(ec_mask_type, 7, 7) == "1" and 1 or 0
+	set_bb_bit(bb, stride, padding + 8, padding + 9, bit_val)
+	set_bb_bit(tbb, stride, padding + 9, padding + 8, bit_val)
+	for i = 8, 15 do
+		bit_val = sub(ec_mask_type, i, i) == "1" and 1 or 0
+		set_bb_bit(bb, stride, padding + size - 15 + i, padding + 9, bit_val)
+		set_bb_bit(tbb, stride, padding + 9, padding + size - 15 + i, bit_val)
+	end
+end
+
+local static_cache = {}
+
+local function build_static(version, size, stride, padding, total_words)
+	local n_cells = size * size
+	local entry = {
+		count = 0,
+		free = ffi.new("int32_t[?]", n_cells + 1),
+		x = ffi.new("int16_t[?]", n_cells + 1),
+		y = ffi.new("int16_t[?]", n_cells + 1),
+		masks = {},
+		t_masks = {},
+		fixed = {},
+	}
+	for m = 0, 7 do entry.masks[m] = ffi.new("uint32_t[?]", total_words) end
+	local count = 0
+	local x, y = size, size
+	local x_dir, y_dir = -1, -1
+	while x >= 1 do
+		local idx = (y - 1) * size + x
+		if base_matrix[idx] == 0 then
+			count = count + 1
+			entry.free[count] = idx
+			entry.x[count] = x - 1
+			entry.y[count] = y - 1
+		end
+		x = x + x_dir
+		if x_dir == 1 then
+			y = y + y_dir
+			if y < 1 or y > size then
 				x = x - 2
 				if x == 7 then x = 6 end -- jump over timing pattern
 				y = y_dir == -1 and 1 or size
 				y_dir = -y_dir
 			end
 		end
-		-- prepare next left/right
 		x_dir = -x_dir
 	end
+	entry.count = count
+	for m = 0, 7 do
+		local func = maskFunc[m]
+		local mb = entry.masks[m]
+		for k = 1, count do
+			if func(entry.x[k], entry.y[k]) then
+				set_bb_bit(mb, stride, entry.x[k] + 1 + padding, entry.y[k] + 1 + padding, 1)
+			end
+		end
+	end
+	local padded_size = size + 2 * padding
+	for m = 0, 7 do
+		transpose_bb(entry.masks[m], T_base, padded_size, stride)
+		local tb = ffi.new("uint32_t[?]", total_words)
+		ffi.copy(tb, T_base, total_words * 4)
+		entry.t_masks[m] = tb
+	end
+	static_cache[version] = entry
+	return entry
 end
 
---- The total penalty of the matrix is the sum of four steps. The following steps are taken into account:
----
---- 1. Adjacent modules in row/column in same color
---- 1. Block of modules in same color
---- 1. 1:1:3:1:1 ratio (dark:light:dark:light:dark) pattern in row/column
---- 1. Proportion of dark modules in entire symbol
----
---- This all is done to avoid bad patterns in the code that prevent the scanner from
---- reading the code.
--- Return the penalty for the given matrix
-local function calculate_penalty(matrix)
-	local penalty1, penalty2, penalty3 = 0,0,0
-	local size = #matrix
-	-- this is for penalty 4
-	local number_of_dark_cells = 0
+-- Shared setup: encodes `str`, builds the base (unmasked) bitboards, and
+-- returns everything the mask search needs.
+local function prepare_boards(str, ec_level, mode_enc)
+	local mode_num = mode_enc or get_mode(str)
+	local version, ec = get_version_eclevel(#str, mode_num, ec_level)
 
-	-- 1: Adjacent modules in row/column in same color
-	-- --------------------------------------------
-	-- No. of modules = (5+i)  -> 3 + i
-	local last_bit_blank -- < 0:  blank, > 0: black
-	local is_blank
-	local number_of_consecutive_bits
-	-- first: vertical
-	for x=1,size do
-		number_of_consecutive_bits = 0
-		last_bit_blank = nil
-		for y = 1,size do
-			if matrix[x][y] > 0 then
-				-- small optimization: this is for penalty 4
-				number_of_dark_cells = number_of_dark_cells + 1
-				is_blank = false
-			else
-				is_blank = true
-			end
-			if last_bit_blank == is_blank then
-				number_of_consecutive_bits = number_of_consecutive_bits + 1
-			else
-				if number_of_consecutive_bits >= 5 then
-					penalty1 = penalty1 + number_of_consecutive_bits - 2
+	bw:reset()
+	bw:write(mode_num, 4)
+	write_length(#str, version, mode_num)
+	encode_data(str, mode_num)
+	add_pad_data(version, ec)
+
+	local total_arranged_bytes = arrange_codewords_and_calculate_ec(version, ec, bw.buf)
+	local size = generate_base_matrix(version)
+
+	add_typeinfo_to_matrix(base_matrix, size, ec, 0)
+
+	local padding = 4
+	local padded_size = size + 2 * padding
+	local stride = floor((padded_size + 31) / 32)
+	local total_words = padded_size * stride
+
+	local entry = static_cache[version] or build_static(version, size, stride, padding, total_words)
+	local count = entry.count
+
+	local fixed_dark = entry.fixed[ec]
+	if not fixed_dark then
+		fixed_dark = ffi.new("uint32_t[?]", total_words)
+		for yi = 1, size do
+			local rowbase = (yi - 1) * size
+			for xi = 1, size do
+				if base_matrix[rowbase + xi] == 2 then
+					set_bb_bit(fixed_dark, stride, xi + padding, yi + padding, 1)
 				end
-				number_of_consecutive_bits = 1
 			end
-			last_bit_blank = is_blank
 		end
-		if number_of_consecutive_bits >= 5 then
-			penalty1 = penalty1 + number_of_consecutive_bits - 2
-		end
+		entry.fixed[ec] = fixed_dark
 	end
-	-- now horizontal
-	for y=1,size do
-		number_of_consecutive_bits = 0
-		last_bit_blank = nil
-		for x = 1,size do
-			is_blank = matrix[x][y] < 0
-			if last_bit_blank == is_blank then
-				number_of_consecutive_bits = number_of_consecutive_bits + 1
-			else
-				if number_of_consecutive_bits >= 5 then
-					penalty1 = penalty1 + number_of_consecutive_bits - 2
-				end
-				number_of_consecutive_bits = 1
-			end
-			last_bit_blank = is_blank
-		end
-		if number_of_consecutive_bits >= 5 then
-			penalty1 = penalty1 + number_of_consecutive_bits - 2
-		end
-	end
-	for x=1,size do
-		for y=1,size do
-			-- 2: Block of modules in same color
-			-- -----------------------------------
-			-- Blocksize = m × n  -> 3 × (m-1) × (n-1)
-			if (y < size - 1) and (x < size - 1) and (
-				(matrix[x][y] < 0 and matrix[x+1][y] < 0 and matrix[x][y+1] < 0 and matrix[x+1][y+1] < 0) or
-				(matrix[x][y] > 0 and matrix[x+1][y] > 0 and matrix[x][y+1] > 0 and matrix[x+1][y+1] > 0)
-			) then penalty2 = penalty2 + 3 end
 
-			-- 3: 1:1:3:1:1 ratio (dark:light:dark:light:dark) pattern in row/column
-			-- ------------------------------------------------------------------
-			-- Gives 40 points each
-			--
-			-- I have no idea why we need the extra 0000 on left or right side. The spec doesn't mention it,
-			-- other sources do mention it. This is heavily inspired by zxing.
-			if (y + 6 < size and
-				matrix[x][y] > 0 and
-				matrix[x][y +  1] < 0 and
-				matrix[x][y +  2] > 0 and
-				matrix[x][y +  3] > 0 and
-				matrix[x][y +  4] > 0 and
-				matrix[x][y +  5] < 0 and
-				matrix[x][y +  6] > 0 and
-				((y + 10 < size and
-					matrix[x][y +  7] < 0 and
-					matrix[x][y +  8] < 0 and
-					matrix[x][y +  9] < 0 and
-					matrix[x][y + 10] < 0) or
-				 (y - 4 >= 1 and
-					matrix[x][y -  1] < 0 and
-					matrix[x][y -  2] < 0 and
-					matrix[x][y -  3] < 0 and
-					matrix[x][y -  4] < 0))) then penalty3 = penalty3 + 40 end
-			if (x + 6 <= size and
-				matrix[x][y] > 0 and
-				matrix[x +  1][y] < 0 and
-				matrix[x +  2][y] > 0 and
-				matrix[x +  3][y] > 0 and
-				matrix[x +  4][y] > 0 and
-				matrix[x +  5][y] < 0 and
-				matrix[x +  6][y] > 0 and
-				((x + 10 <= size and
-					matrix[x +  7][y] < 0 and
-					matrix[x +  8][y] < 0 and
-					matrix[x +  9][y] < 0 and
-					matrix[x + 10][y] < 0) or
-				 (x - 4 >= 1 and
-					matrix[x -  1][y] < 0 and
-					matrix[x -  2][y] < 0 and
-					matrix[x -  3][y] < 0 and
-					matrix[x -  4][y] < 0))) then penalty3 = penalty3 + 40 end
+	ffi.copy(bb_base, fixed_dark, total_words * 4)
+
+	local total_bits = total_arranged_bytes * 8
+	for k = 1, count do
+		local data_bit = 0
+		if k <= total_bits then
+			local bi = k - 1
+			data_bit = band(rshift(arranged_data[floor(bi / 8) + 1], 7 - bi % 8), 1)
+		end
+		raw_bit[k] = data_bit
+		if data_bit == 1 then
+			local xx, yy = entry.x[k] + padding, entry.y[k] + padding
+			local wi = yy * stride + floor(xx / 32)
+			bb_base[wi] = bor(bb_base[wi], lshift(1, xx % 32))
 		end
 	end
-	-- 4: Proportion of dark modules in entire symbol
-	-- ----------------------------------------------
-	-- 50 ± (5 × k)% to 50 ± (5 × (k + 1))% -> 10 × k
-	local dark_ratio = number_of_dark_cells / (size * size)
-	local penalty4 = floor(abs(dark_ratio * 100 - 50)) * 2
-	return penalty1 + penalty2 + penalty3 + penalty4
+
+	transpose_bb(bb_base, T_base, padded_size, stride)
+
+	return version, ec, size, padded_size, stride, total_words, entry, padding, total_arranged_bytes
 end
 
--- Create a matrix for the given parameters and calculate the penalty score.
--- Return both (matrix and penalty)
-local function get_matrix_and_penalty(version,ec_level,data,mask)
-	local tab = prepare_matrix_with_mask(version,ec_level,mask)
-	add_data_to_matrix(tab,data,mask)
-	local penalty = calculate_penalty(tab)
-	return tab, penalty
-end
+local function search_masks(size, padded_size, stride, total_words, ec, entry, padding, is_debug)
+	local components = is_debug and {} or nil
+	local min_penalty, best_mask = nil, 0
+	for mask = 0, 7 do
+		local mb = entry.masks[mask]
+		local tb = entry.t_masks[mask]
+		for i = 0, total_words - 1 do
+			bb_scratch[i] = bxor(bb_base[i], mb[i])
+			T_scratch[i] = bxor(T_base[i], tb[i])
+		end
+		add_typeinfo_both(bb_scratch, T_scratch, size, stride, ec, mask, padding)
 
--- Return the matrix with the smallest penalty. To to this
--- we try out the matrix for all 8 masks and determine the
--- penalty (score) each.
-local function get_matrix_with_lowest_penalty(version,ec_level,data)
-	local tab, penalty
-	local tab_min_penalty, min_penalty
+		local p1, p2, p3, p4 = compute_penalty_components(bb_scratch, T_scratch, padded_size, size, stride, padding)
 
-	-- try masks 0-7
-	tab_min_penalty, min_penalty = get_matrix_and_penalty(version,ec_level,data,0)
-	for i=1,7 do
-		tab, penalty = get_matrix_and_penalty(version,ec_level,data,i)
-		if penalty < min_penalty then
-			tab_min_penalty = tab
+		if is_debug then
+			components[mask] = { p1 = p1, p2 = p2, p3 = p3, p4 = p4 }
+		end
+
+		local penalty = p1 + p2 + p3 + p4
+		if not min_penalty or penalty < min_penalty then
 			min_penalty = penalty
+			best_mask = mask
 		end
 	end
-	return tab_min_penalty
+	return best_mask, components
 end
 
---- The main function. We connect everything together. Remember from above:
----
---- 1. Determine version, ec level and mode (=encoding) for codeword
---- 1. Encode data
---- 1. Arrange data and calculate error correction code
---- 1. Generate 8 matrices with different masks and calculate the penalty
---- 1. Return qrcode with least penalty
+local function qrcode(str, ec_level, mode_enc)
+	local _, ec, size, padded_size, stride, total_words, entry, padding = prepare_boards(str, ec_level, mode_enc)
 
--- Return
---     on success: true, number matrix (only has ±1&±2. positive means black, ±2 means mandatory, in case if you didn't read comments above)
---     on failed: false, error message string
--- If ec_level or mode is given, use the ones for generating the qrcode. (mode option is not implemented yet, but it will be determined automatically)
-local function qrcode(str,ec_level,mode_enc)
-	local arranged_data, version, data_raw, mode, len_bitstring
-	version, ec_level, data_raw, mode, len_bitstring = get_version_eclevel_mode_bistringlength(str,ec_level,mode_enc)
-	data_raw = data_raw .. len_bitstring
-	data_raw = data_raw .. encode_data(str,mode)
-	data_raw = add_pad_data(version,ec_level,data_raw)
-	arranged_data = arrange_codewords_and_calculate_ec(version,ec_level,data_raw)
-	if #arranged_data % 8 ~= 0 then
-		return false, format("Arranged data %% 8 != 0: data length = %d, mod 8 = %d",#arranged_data, #arranged_data % 8)
+	local best_mask = search_masks(size, padded_size, stride, total_words, ec, entry, padding, false)
+
+	local len = size * size
+	ffi.copy(best_matrix, base_matrix, len + 1)
+	add_typeinfo_to_matrix(best_matrix, size, ec, best_mask)
+
+	local func = maskFunc[best_mask]
+	for k = 1, entry.count do
+		local data_bit = raw_bit[k]
+		if func(entry.x[k], entry.y[k]) then
+			data_bit = bxor(data_bit, 1)
+		end
+		best_matrix[entry.free[k]] = data_bit == 1 and 1 or -1
 	end
-	arranged_data = arranged_data .. rep("0",remainder[version])
-	local tab = get_matrix_with_lowest_penalty(version,ec_level,arranged_data)
-	return true, tab
+
+	return true, best_matrix, size
+end
+
+-- Test-facing only: exposes the per-mask components qrcode() computes
+-- internally but normally discards, by calling the exact same two
+-- functions qrcode() calls.
+local function debug_mask_penalties(str, ec_level, mode_enc)
+	local version, ec, size, padded_size, stride, total_words, entry, padding, total_arranged_bytes = prepare_boards(str, ec_level, mode_enc)
+	local best_mask, components = search_masks(size, padded_size, stride, total_words, ec, entry, padding, true)
+
+	local codewords = {}
+	for i = 1, total_arranged_bytes do
+		codewords[i] = arranged_data[i]
+	end
+
+	return {
+		version = version,
+		ec = ec,
+		components = components,
+		best_mask = best_mask,
+		codewords = codewords,
+	}
 end
 
 return {
-    qrcode = qrcode
+	qrcode = qrcode,
+	_debug_mask_penalties = debug_mask_penalties,
 }
