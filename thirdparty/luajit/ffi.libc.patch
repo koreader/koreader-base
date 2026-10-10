@@ -1,0 +1,32 @@
+diff --git a/src/Makefile b/src/Makefile
+index e456628d..1c7527c0 100644
+--- a/src/Makefile
++++ b/src/Makefile
+@@ -225,6 +225,7 @@ TARGET_DYNXLDOPTS=
+ 
+ TARGET_LFSFLAGS= -D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE
+ TARGET_XCFLAGS= $(TARGET_LFSFLAGS) -U_FORTIFY_SOURCE
++TARGET_XCFLAGS+= -DLJ_LIBC_NAME=\"$(LJ_LIBC_NAME)\"
+ TARGET_XLDFLAGS=
+ TARGET_XLIBS= -lm
+ TARGET_TCFLAGS= $(CCOPTIONS) $(TARGET_XCFLAGS) $(TARGET_FLAGS) $(TARGET_CFLAGS)
+diff --git a/src/lib_ffi.c b/src/lib_ffi.c
+index 7b83ef25..b9eb0bfd 100644
+--- a/src/lib_ffi.c
++++ b/src/lib_ffi.c
+@@ -768,6 +768,7 @@ LJLIB_CF(ffi_abi)	LJLIB_REC(.)
+   return 1;
+ }
+ 
++LJLIB_PUSH(top-8) LJLIB_SET(libc)
+ LJLIB_PUSH(top-7) LJLIB_SET(!)  /* Store reference to miscmap table. */
+ 
+ LJLIB_CF(ffi_metatype)
+@@ -840,6 +841,7 @@ static void ffi_register_module(lua_State *L)
+ LUALIB_API int luaopen_ffi(lua_State *L)
+ {
+   CTState *cts = lj_ctype_init(L);
++  lua_pushliteral(L, LJ_LIBC_NAME);
+   settabV(L, L->top++, (cts->miscmap = lj_tab_new(L, 0, 1)));
+   LJ_LIB_REG(L, NULL, ffi_meta);
+   /* NOBARRIER: basemt is a GC root. */
