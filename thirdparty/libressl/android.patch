@@ -1,6 +1,8 @@
---- i/CMakeLists.txt
-+++ w/CMakeLists.txt
-@@ -98,7 +98,6 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 354224c..5264751 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -101,7 +101,6 @@ if(CMAKE_SYSTEM_NAME MATCHES "Linux")
  	add_definitions(-D_BSD_SOURCE)
  	add_definitions(-D_POSIX_SOURCE)
  	add_definitions(-D_GNU_SOURCE)
