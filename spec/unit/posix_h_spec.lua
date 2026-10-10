@@ -8,9 +8,12 @@ describe("generated", function()
         android_arm64
         android_x64
         android_x86
-        linux_arm
-        linux_arm64
-        linux_x64
+        linux_gnu_arm
+        linux_gnu_arm64
+        linux_gnu_x64
+        linux_musl_arm
+        linux_musl_arm64
+        linux_musl_x64
         macos
         ]], "[^%s]+") do
         local file = string.format("%s/posix_h_%s.lua", ffi_cdecl_dir, variant)
