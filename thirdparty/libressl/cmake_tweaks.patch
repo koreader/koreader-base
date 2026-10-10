@@ -1,5 +1,7 @@
---- i/CMakeLists.txt
-+++ w/CMakeLists.txt
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 16c01dc..354224c 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
 @@ -13,7 +13,7 @@
  # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
