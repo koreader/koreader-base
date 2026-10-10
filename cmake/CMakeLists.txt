@@ -167,6 +167,25 @@ check_libc_fn_exists(iconv iconv.h HAS_ICONV)
 # Detect if libc provides gettext support.
 check_libc_fn_exists(ngettext libintl.h HAS_GETTEXT)
 
+# Determine C library type
+if(NOT DEFINED CACHE{LIBC_TYPE})
+    if(ANDROID)
+        set(LIBC_TYPE bionic CACHE INTERNAL "libc type")
+    elseif(APPLE)
+        set(LIBC_TYPE other CACHE INTERNAL "libc type")
+    else()
+        execute_process(COMMAND ${CMAKE_C_COMPILER} -E -P ${CMAKE_CURRENT_SOURCE_DIR}/libc_type_check.c RESULT_VARIABLE RET OUTPUT_VARIABLE OUT OUTPUT_STRIP_TRAILING_WHITESPACE)
+        if(NOT RET EQUAL 0 OR NOT OUT MATCHES "(^|\n)libc_type=([A-Za-z]+)$")
+            message(FATAL_ERROR "could not determine libc type")
+        endif()
+        set(LIBC_TYPE ${CMAKE_MATCH_2} CACHE INTERNAL "libc type")
+        if(NOT LIBC_TYPE STREQUAL "GNU")
+            message(FATAL_ERROR "unsupported libc type: ${LIBC_TYPE}")
+        endif()
+    endif()
+    message(STATUS "Found libc type: ${LIBC_TYPE}")
+endif()
+
 # We'll want to ship the shared STL library on some platforms.
 #
 # We don't want to rely on `-static-libstdc++`, as it risks breaking the ODR. (Also, it was a pain to deal with because
