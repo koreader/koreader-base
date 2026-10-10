@@ -4,6 +4,8 @@ set(BINARY_DIR ${SOURCE_DIR})
 list(APPEND PATCH_FILES koreader-luajit-makefile-tweaks.patch)
 # Enable table.pack & table.unpack w/o the rest of the -DLUAJIT_ENABLE_LUA52COMPAT baggage...
 list(APPEND PATCH_FILES koreader-luajit-enable-table_pack.patch)
+# Add libc flavor through `ffi.libc`.
+list(APPEND PATCH_FILES ffi.libc.patch)
 
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
     # Debugging is a go!
@@ -76,6 +78,8 @@ else()
     set(SONAME libluajit${LIB_EXT})
     list(APPEND BUILD_ARGS TARGET_SONAME=${SONAME} INSTALL_SONAME=${SONAME})
 endif()
+
+list(APPEND BUILD_ARGS LJ_LIBC_NAME=${LIBC_TYPE})
 
 list(APPEND BUILD_CMD COMMAND make ${BUILD_ARGS} amalg)
 
