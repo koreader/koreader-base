@@ -795,7 +795,7 @@ APPIMAGE_ARCH = $(or $(APPIMAGE_ARCH_$(LINUX_ARCH)),$(LINUX_ARCH))
 
 MKAPPIMAGE = $(THIRDPARTY_DIR)/appimage/build/mkappimage-$(APPIMAGE_ARCH).AppImage
 define MKAPPIMAGE_URL
-$(WGET) -O - https://api.github.com/repos/probonopd/go-appimage/releases | jq -r '.[]
+$(WGET) -O - $(if $(GH_TOKEN),--header='authorization: Bearer $(GH_TOKEN)') https://api.github.com/repos/probonopd/go-appimage/releases | jq -r '.[]
  | select(.tag_name == "continuous")
  | .assets[]
  | select(.name | test("^mkappimage-.*-$(APPIMAGE_ARCH).AppImage$$"))
