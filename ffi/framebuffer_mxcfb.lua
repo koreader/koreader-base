@@ -1061,6 +1061,16 @@ function framebuffer:init()
             self.waveform_fast = C.MTK_WAVEFORM_MODE_DU
             self.waveform_ui = C.WAVEFORM_MODE_AUTO
             self.waveform_flashui = self.waveform_ui
+            -- NOTE: AUTO is a poor fit for UI refreshes on color panels: there, the driver picks from
+            --       color_day_mode_wf_mode_table, which only contains DU (only for pure black & white content) and GC16,
+            --       so anything antialiased ends up as GC16_PARTIAL, i.e., a flash of every changed pixel.
+            --       (The B&W day_mode_wf_mode_table has GL16 in the row where the color table has GC16.)
+            --       Request the non-flashing GL16 explicitly instead. flashui keeps using AUTO.
+            -- NOTE: GL16 (like DU) isn't loaded when the driver itself is in night mode
+            --       (GRAYSCALE_8BIT_INVERTED/GRAYSCALE_COLOR_NIGHTMODE), which we never switch it to at 32bpp.
+            if self.device:hasColorScreen() then
+                self.waveform_ui = C.MTK_WAVEFORM_MODE_GL16
+            end
             self.waveform_reagl = C.MTK_WAVEFORM_MODE_GLR16
             self.waveform_partial = self.waveform_reagl
             -- NOTE: We switch to nightmode globally, via the grayscale vinfo fb flag,
