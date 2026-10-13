@@ -4,6 +4,7 @@
  * ----
  *
  * This is <linux/hwtcon_ioctl_cmd.h>, last updated from the PW5 kernel for FW 5.14.1.1
+ * Kaleido bits (SKIP_CFA, GCC16, GLRC16, GCCK16 & GLRCK16) from the Colorsoft (5.15) & Scribe Colorsoft (6.6) kernels for FW 5.19.6
  *
  * NOTE: Upstream kernels available here: https://www.amazon.com/gp/help/customer/display.html?nodeId=200203720
  *
@@ -60,6 +61,9 @@
 #define MTK_EPDC_FLAG_USE_DITHERING_Y4 0x4000
 #define MTK_EPDC_FLAG_USE_REGAL        0x8000
 #define MTK_EPDC_FLAG_ENABLE_SWIPE     0x10000
+#define MTK_EPDC_FLAG_SKIP_CFA         0x10
+// 0x20000 is EPDC_FLAG_COLOR_NON_REGAL on the Colorsoft, but EPDC_FLAG_STYLUS_UPDATE on the Scribe Colorsoft,
+// and the Colorsoft driver doesn't actually use it, so, leave it alone.
 
 /* temperature use sensor. */
 /*
@@ -110,6 +114,11 @@ enum MTK_WAVEFORM_MODE_ENUM
 	MTK_WAVEFORM_MODE_GCK16_PARTIAL = 11,
 	MTK_WAVEFORM_MODE_DUNM          = 12,
 	MTK_WAVEFORM_MODE_P2SW          = 13,
+	// New with Kaleido panels (Colorsoft).
+	MTK_WAVEFORM_MODE_GCC16         = 14,
+	MTK_WAVEFORM_MODE_GLRC16        = 15,   // REAGL
+	MTK_WAVEFORM_MODE_GCCK16        = 16,
+	MTK_WAVEFORM_MODE_GLRCK16       = 17,   // REAGL
 	// Matches MXCFB
 	MTK_WAVEFORM_MODE_AUTO          = 257,
 };

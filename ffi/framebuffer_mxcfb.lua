@@ -643,7 +643,18 @@ local function refresh_mtk(fb, is_flashing, waveform_mode, x, y, w, h, dither)
     end
 
     -- Did we request HW dithering?
-    if dither and fb.device:canHWDither() then
+    -- NOTE: Not on color panels with color rendering enabled, where it destroys color:
+    --       * On the Scribe Colorsoft (Linux 6.6), the MDP normally maps colors onto the color filter in hardware
+    --         (RDMA1 -> EINK COLOR -> WROT1, then the CFA driver dithers that to 4-bit in software),
+    --         but a dithering request reroutes it through RDMA1 -> DITHER0 -> WROT1 instead,
+    --         which skips the color engine entirely, so the panel only ever gets luminance: everything turns gray,
+    --         whatever the waveform mode.
+    --       * On the Colorsoft (Linux 5.15), the software CFA mapping runs first and already dithers to 4-bit,
+    --         and MDP Y4 dithering then drops the per-pixel color-info bit it stores in the low bits,
+    --         which the CFA waveform modes (GCC16/GLRC16) need.
+    --       In both cases, the CFA pipeline already dithers on its own, so we lose nothing by skipping it.
+    --       We keep passing the dither hint to mxc_update, though, as that's what triggers the switch to CFA waveform modes.
+    if dither and fb.device:canHWDither() and not (fb.device:hasColorScreen() and fb:isColorEnabled()) then
         fb.update_data.flags = bor(fb.update_data.flags, C.MTK_EPDC_FLAG_USE_DITHERING_Y4)
     end
 
@@ -1042,6 +1053,12 @@ function framebuffer:init()
             self.waveform_flashnight = C.MTK_WAVEFORM_MODE_GCK16
             self.setSwipeAnimations = self._MTK_SetSwipeAnimations
             self.setSwipeDirection = self._MTK_SetSwipeDirection
+
+            -- Kaleido panels (Colorsoft, Scribe Colorsoft)
+            if self.device:hasColorScreen() then
+                self.waveform_color = C.MTK_WAVEFORM_MODE_GCC16
+                self.waveform_color_reagl = C.MTK_WAVEFORM_MODE_GLRC16
+            end
         end
 
         -- Keep our data structures around, and setup constants
