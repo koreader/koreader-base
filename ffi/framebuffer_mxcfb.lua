@@ -643,7 +643,19 @@ local function refresh_mtk(fb, is_flashing, waveform_mode, x, y, w, h, dither)
     end
 
     -- Did we request HW dithering?
-    if dither and fb.device:canHWDither() then
+    -- NOTE: Not on color panels with color rendering enabled: there, the CFA pipeline already dithers on its own,
+    --       so HW dithering is redundant at best, and removes color at worst:
+    --       * On the Scribe Colorsoft (Linux 6.6), the MDP normally maps colors onto the color filter in hardware
+    --         (RDMA1 -> EINK COLOR -> WROT1, then the CFA driver dithers that to 4-bit in software),
+    --         but a dithering request (on a non-inverted update) reroutes it through RDMA1 -> DITHER0 -> WROT1 instead,
+    --         which skips the color engine entirely, so the panel only ever gets luminance: everything turns gray,
+    --         whatever the waveform mode.
+    --       * On the Colorsoft (Linux 5.15), the software CFA mapping runs *before* the MDP, and already dithers to 4-bit
+    --         (with a per-pixel color-info bit in the low bits). MDP Y4 dithering would just dither that output again
+    --         for GCC16 (folding the color-info bit into the value it dithers), and its output is discarded for GLRC16,
+    --         whose CFA REAGL pass (hwtcon_mdp_regal_handle) re-reads the undithered CFA output.
+    --       We keep passing the dither hint to mxc_update, though, as that's what triggers the switch to CFA waveform modes.
+    if dither and fb.device:canHWDither() and not (fb.device:hasColorScreen() and fb:isColorEnabled()) then
         fb.update_data.flags = bor(fb.update_data.flags, C.MTK_EPDC_FLAG_USE_DITHERING_Y4)
     end
 
@@ -1042,6 +1054,21 @@ function framebuffer:init()
             self.waveform_flashnight = C.MTK_WAVEFORM_MODE_GCK16
             self.setSwipeAnimations = self._MTK_SetSwipeAnimations
             self.setSwipeDirection = self._MTK_SetSwipeDirection
+
+            -- Kaleido panels (Colorsoft, Scribe Colorsoft)
+            -- NOTE: The driver runs its CFA processing on every update made from an RGB framebuffer
+            --       (unless EPDC_FLAG_SKIP_CFA is set), but it will only ever use the CFA waveform modes when explicitly asked to:
+            --       AUTO never picks them, and it doesn't detect color content by itself
+            --       (that code is compiled out on the Colorsoft, and never called on the Scribe Colorsoft).
+            --       It even complains in the kernel log when it gets GLR16 with CFA enabled ("GLRC16 should be used for color content").
+            --       As on Kobo, these are only ever used *conditionally* (c.f., the dither flag in mxc_update).
+            --       Unlike on Kobo, there's no extra CFA post-processing flag to set, so CFA_PROCESSING_FLAG stays at 0.
+            -- NOTE: Older B&W MTK kernels may not know about these modes at all
+            --       (the PW5 FW 5.14 headers this file is based on don't define them).
+            if self.device:hasColorScreen() then
+                self.waveform_color = C.MTK_WAVEFORM_MODE_GCC16
+                self.waveform_color_reagl = C.MTK_WAVEFORM_MODE_GLRC16
+            end
         end
 
         -- Keep our data structures around, and setup constants
