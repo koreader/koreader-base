@@ -374,6 +374,12 @@ struct mxcfb_panel_info
 #define MXCFB_GET_MATERIAL_TYPE _IOR(HWTCON_IOCTL_MAGIC_NUMBER, 0x3A, uint32_t)
 */
 
+/* Wait until the specified request has completed MDP processing,
+ * i.e., until the driver is done reading the framebuffer for it.
+ * New with the Colorsoft (5.15) & Scribe Colorsoft (6.6) kernels for FW 5.19.x.
+ */
+#define MXCFB_WAIT_FOR_MDP_COMPLETION_MTK _IOW(HWTCON_IOCTL_MAGIC_NUMBER, 0x4D, uint32_t)
+
 /* Set the front light control data for night mode.
  * For each screen update in night mode,
  * the front light needs to be set to the "start"
