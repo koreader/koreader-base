@@ -17,6 +17,7 @@ local framebuffer = {
     mech_poweron = nil,
     mech_wait_update_complete = nil,
     mech_wait_update_submission = nil,
+    mech_wait_update_mdp = nil,
     wait_for_submission_before = false,
     wait_for_submission_after = false,
     waveform_a2 = nil,
@@ -46,6 +47,7 @@ local framebuffer = {
     marker_data = nil,
     update_data = nil,
     submission_data = nil,
+    mdp_data = nil,
 
     -- CFA post-processing flag
     CFA_PROCESSING_FLAG = 0,
@@ -282,6 +284,14 @@ local function kindle_mxc_wait_for_update_submission(fb, marker)
     fb.submission_data[0] = marker
 
     return C.ioctl(fb.fd, C.MXCFB_WAIT_FOR_UPDATE_SUBMISSION, fb.submission_data)
+end
+
+-- Kindle MTK's MXCFB_WAIT_FOR_MDP_COMPLETION == 0x4004464D
+local function kindle_mtk_wait_for_mdp_completion(fb, marker)
+    -- Wait until the driver is done reading the framebuffer for a specific update
+    fb.mdp_data[0] = marker
+
+    return C.ioctl(fb.fd, C.MXCFB_WAIT_FOR_MDP_COMPLETION_MTK, fb.mdp_data)
 end
 
 -- Kobo's HWTCON_WAIT_FOR_UPDATE_SUBMISSION
@@ -670,7 +680,18 @@ local function refresh_mtk(fb, is_flashing, waveform_mode, x, y, w, h, dither)
         fb.swipe_animations = false
     end
 
-    return mxc_update(fb, C.MXCFB_SEND_UPDATE_MTK, fb.update_data, is_flashing, waveform_mode, x, y, w, h, dither)
+    local ret = mxc_update(fb, C.MXCFB_SEND_UPDATE_MTK, fb.update_data, is_flashing, waveform_mode, x, y, w, h, dither)
+
+    -- Highlights are reverted right after being refreshed (c.f., UIManager:yieldToEPDC),
+    -- so make sure the driver is done reading the framebuffer before we let anyone touch it again.
+    if fb.mech_wait_update_mdp and (waveform_mode == fb.waveform_fast or waveform_mode == fb.waveform_a2) then
+        if fb:mech_wait_update_mdp(fb.marker) == -1 then
+            local err = ffi.errno()
+            fb.debug("MXCFB_WAIT_FOR_MDP_COMPLETION ioctl failed:", ffi.string(C.strerror(err)))
+        end
+    end
+
+    return ret
 end
 
 -- Enable swipe animations. They will be reset at the next refresh.
@@ -1098,6 +1119,15 @@ function framebuffer:init()
         end
         if self.mech_wait_update_submission == kindle_mxc_wait_for_update_submission then
             self.submission_data = ffi.new("uint32_t[1]")
+        end
+        -- NOTE: On color panels, the driver only reads the framebuffer a while after an update was submitted,
+        --       in its own thread, with extra work around that read (cache maintenance, CFA color mapping)
+        --       The 1 ms UIManager:yieldToEPDC isn't nearly enough, so the driver either reads the already reverted highlight,
+        --       or a mix of both (striped, half-inverted icons).
+        --       The driver has an ioctl to wait for exactly that, which we use after fast & A2 updates (c.f., refresh_mtk).
+        if self.device:isMTK() and self.device:hasColorScreen() then
+            self.mech_wait_update_mdp = kindle_mtk_wait_for_mdp_completion
+            self.mdp_data = ffi.new("uint32_t[1]")
         end
     elseif self.device:isKobo() then
         require("ffi/mxcfb_kobo_h")
