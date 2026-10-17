@@ -61,7 +61,6 @@ local function err(code, msg)
 end
 
 -- Codes -----------------------------------------------------------------------
-local sqlconstants = {} -- SQLITE_* and OPEN_* declarations.
 local codes = {
   [0] = "OK", "ERROR", "INTERNAL", "PERM", "ABORT", "BUSY", "LOCKED", "NOMEM",
   "READONLY", "INTERRUPT", "IOERR", "CORRUPT", "NOTFOUND", "FULL", "CANTOPEN",
@@ -69,140 +68,17 @@ local codes = {
   "NOLFS", "AUTH", "FORMAT", "RANGE", "NOTADB", [100] = "ROW", [101] = "DONE"
 } -- From 0 to 26.
 
-do
-  local types = { "INTEGER", "FLOAT", "TEXT", "BLOB", "NULL" } -- From 1 to 5.
-
-  local opens = {
-    READONLY =        0x00000001,
-    READWRITE =       0x00000002,
-    CREATE =          0x00000004,
-    DELETEONCLOSE =   0x00000008,
-    EXCLUSIVE =       0x00000010,
-    AUTOPROXY =       0x00000020,
-    URI =             0x00000040,
-    MAIN_DB =         0x00000100,
-    TEMP_DB =         0x00000200,
-    TRANSIENT_DB =    0x00000400,
-    MAIN_JOURNAL =    0x00000800,
-    TEMP_JOURNAL =    0x00001000,
-    SUBJOURNAL =      0x00002000,
-    MASTER_JOURNAL =  0x00004000,
-    NOMUTEX =         0x00008000,
-    FULLMUTEX =       0x00010000,
-    SHAREDCACHE =     0x00020000,
-    PRIVATECACHE =    0x00040000,
-    WAL =             0x00080000,
-  }
-
-  local t = sqlconstants
-  local pre = "static const int32_t SQLITE_"
-  for i=0,26    do t[#t+1] = pre..codes[i].." = "..i..";\n" end
-  for i=100,101 do t[#t+1] = pre..codes[i].." = "..i..";\n" end
-  for i=1,5     do t[#t+1] = pre..types[i].." = "..i..";\n" end
-  pre = pre.."OPEN_"
-  for k,v in pairs(opens) do t[#t+1] = pre..k.." = "..bit.tobit(v)..";\n" end
-end
-
 -- Cdef ------------------------------------------------------------------------
--- SQLITE_*, OPEN_*
+require "ffi/sqlite3_h"
 
-ffi.cdef(table.concat(sqlconstants))
-sqlconstants = nil
-
--- sqlite3*, ljsqlite3_*
-ffi.cdef[[
-// Typedefs.
-typedef struct sqlite3 sqlite3;
-typedef struct sqlite3_stmt sqlite3_stmt;
-typedef void (*sqlite3_destructor_type)(void*);
-typedef struct sqlite3_context sqlite3_context;
-typedef struct Mem sqlite3_value;
-typedef int (*ljsqlite3_cbsql3exec)(void*, int total, char** data, char** cols);
-
-// Get informative error message.
-const char *sqlite3_errmsg(sqlite3*);
-
-// Connection.
-int sqlite3_open_v2(const char *filename, sqlite3 **ppDb, int flags,
-  const char *zVfs);
-int sqlite3_close(sqlite3*);
-int sqlite3_close_v2(sqlite3*);
-int sqlite3_busy_timeout(sqlite3*, int ms);
-
-// exec
-int sqlite3_exec(sqlite3 *conn, const char *sql, ljsqlite3_cbsql3exec, void *, char **errmsg);
-
-// Statement.
-int sqlite3_prepare_v2(sqlite3 *conn, const char *zSql, int nByte,
-  sqlite3_stmt **ppStmt, const char **pzTail);
-int sqlite3_step(sqlite3_stmt*);
-int sqlite3_reset(sqlite3_stmt *pStmt);
-int sqlite3_finalize(sqlite3_stmt *pStmt);
-
-// Extra functions for SELECT.
-int sqlite3_column_count(sqlite3_stmt *pStmt);
-const char *sqlite3_column_name(sqlite3_stmt*, int N);
-int sqlite3_column_type(sqlite3_stmt*, int iCol);
-
-// Get value from SELECT.
-int64_t sqlite3_column_int64(sqlite3_stmt*, int iCol);
-double sqlite3_column_double(sqlite3_stmt*, int iCol);
-int sqlite3_column_bytes(sqlite3_stmt*, int iCol);
-const unsigned char *sqlite3_column_text(sqlite3_stmt*, int iCol);
-const void *sqlite3_column_blob(sqlite3_stmt*, int iCol);
-
-// Set value in bind.
-int sqlite3_bind_int64(sqlite3_stmt*, int, int64_t);
-int sqlite3_bind_double(sqlite3_stmt*, int, double);
-int sqlite3_bind_null(sqlite3_stmt*, int);
-int sqlite3_bind_text(sqlite3_stmt*, int, const char*, int n, void(*)(void*));
-int sqlite3_bind_blob(sqlite3_stmt*, int, const void*, int n, void(*)(void*));
-
-int sqlite3_bind_parameter_index(sqlite3_stmt *stmt, const char *name);
-
-// Clear bindings.
-int sqlite3_clear_bindings(sqlite3_stmt*);
-
-// Get value in callbacks.
-int sqlite3_value_type(sqlite3_value*);
-int64_t sqlite3_value_int64(sqlite3_value*);
-double sqlite3_value_double(sqlite3_value*);
-int sqlite3_value_bytes(sqlite3_value*);
-const unsigned char *sqlite3_value_text(sqlite3_value*); //Not used.
-const void *sqlite3_value_blob(sqlite3_value*);
-
-// Set value in callbacks.
-void sqlite3_result_error(sqlite3_context*, const char*, int);
-void sqlite3_result_int64(sqlite3_context*, int64_t);
-void sqlite3_result_double(sqlite3_context*, double);
-void sqlite3_result_null(sqlite3_context*);
-void sqlite3_result_text(sqlite3_context*, const char*, int, void(*)(void*));
-void sqlite3_result_blob(sqlite3_context*, const void*, int, void(*)(void*));
-
-// Persistency of data in callbacks (here just a pointer for tagging).
-void *sqlite3_aggregate_context(sqlite3_context*, int nBytes);
-
-// Typedefs for callbacks.
-typedef void (*ljsqlite3_cbstep)(sqlite3_context*,int,sqlite3_value**);
-typedef void (*ljsqlite3_cbfinal)(sqlite3_context*);
-
-// Register callbacks.
-int sqlite3_create_function(
-  sqlite3 *conn,
-  const char *zFunctionName,
-  int nArg,
-  int eTextRep,
-  void *pApp,
-  void (*xFunc)(sqlite3_context*,int,sqlite3_value**),
-  void (*xStep)(sqlite3_context*,int,sqlite3_value**),
-  void (*xFinal)(sqlite3_context*)
-);
-]]
 
 -- --------------------------------------------------------------------------------
 local sql = ffi.loadlib("sqlite3", "0")
-local transient = ffi.cast("sqlite3_destructor_type", -1)
+local transient = ffi.cast("void(*)(void *)", -1)
 local int64_ct = ffi.typeof("int64_t")
+local ljsqlite3_cbfinal = ffi.typeof("void (*)(sqlite3_context *)")
+local ljsqlite3_cbsql3exec = ffi.typeof("int (*)(void *, int, char **, char **)")
+local ljsqlite3_cbstep = ffi.typeof("void (*)(sqlite3_context *,int, sqlite3_value **)")
 
 local blob_mt = {} -- For tagging only.
 
@@ -482,7 +358,7 @@ local function scalarcb(name, f)
       set_value(context, result)
     end
   end
-  return ffi.cast("ljsqlite3_cbstep", sqlf)
+  return ffi.cast(ljsqlite3_cbstep, sqlf)
 end
 
 -- Return the state for aggregate case (created via initstate()). We use the ptr
@@ -514,7 +390,7 @@ local function stepcb(name, f, initstate)
       sql.sqlite3_result_error(context, msg, #msg)
     end
   end
-  return ffi.cast("ljsqlite3_cbstep", sqlf)
+  return ffi.cast(ljsqlite3_cbstep, sqlf)
 end
 
 -- Return manually casted callback that sqlite expects, finalizer for aggregate.
@@ -531,7 +407,7 @@ local function finalcb(name, f, initstate)
       set_value(context, result)
     end
   end
-  return ffi.cast("ljsqlite3_cbfinal", sqlf)
+  return ffi.cast(ljsqlite3_cbfinal, sqlf)
 end
 
 function conn_mt:setscalar(name, f) T_open(self)
