@@ -17,6 +17,7 @@ local framebuffer = {
     mech_poweron = nil,
     mech_wait_update_complete = nil,
     mech_wait_update_submission = nil,
+    mech_wait_update_mdp = nil,
     wait_for_submission_before = false,
     wait_for_submission_after = false,
     waveform_a2 = nil,
@@ -46,6 +47,7 @@ local framebuffer = {
     marker_data = nil,
     update_data = nil,
     submission_data = nil,
+    mdp_data = nil,
 
     -- CFA post-processing flag
     CFA_PROCESSING_FLAG = 0,
@@ -282,6 +284,14 @@ local function kindle_mxc_wait_for_update_submission(fb, marker)
     fb.submission_data[0] = marker
 
     return C.ioctl(fb.fd, C.MXCFB_WAIT_FOR_UPDATE_SUBMISSION, fb.submission_data)
+end
+
+-- Kindle MTK's MXCFB_WAIT_FOR_MDP_COMPLETION == 0x4004464D
+local function kindle_mtk_wait_for_mdp_completion(fb, marker)
+    -- Wait until the driver is done reading the framebuffer for a specific update
+    fb.mdp_data[0] = marker
+
+    return C.ioctl(fb.fd, C.MXCFB_WAIT_FOR_MDP_COMPLETION_MTK, fb.mdp_data)
 end
 
 -- Kobo's HWTCON_WAIT_FOR_UPDATE_SUBMISSION
@@ -618,7 +628,19 @@ local function refresh_rex(fb, is_flashing, waveform_mode, x, y, w, h, dither)
     return mxc_update(fb, C.MXCFB_SEND_UPDATE_REX, fb.update_data, is_flashing, waveform_mode, x, y, w, h, dither)
 end
 
+-- Large dithered UI refreshes on Kindle color panels use the CFA waveform modes (c.f., refresh_mtk),
+-- large meaning at least this fraction of the screen.
+local KINDLE_CFA_UI_MIN_AREA = 0.25
+
 local function refresh_mtk(fb, is_flashing, waveform_mode, x, y, w, h, dither)
+    -- On color panels, send large dithered ui refreshes as REAGL, and large dithered flashui refreshes as full,
+    -- so that mxc_update promotes them to GLRC16 & GCC16, like dithered page turns (e.g., a page of covers in the FM).
+    if dither and fb.waveform_color_reagl and fb.device:hasKaleidoWfm() and fb:isColorEnabled()
+      and (waveform_mode == fb.waveform_ui or waveform_mode == fb.waveform_flashui)
+      and w * h >= KINDLE_CFA_UI_MIN_AREA * fb:getWidth() * fb:getHeight() then
+        waveform_mode = is_flashing and fb.waveform_full or fb.waveform_reagl
+    end
+
     -- Actually unused by the driver...
     if waveform_mode == C.MTK_WAVEFORM_MODE_GLR16 or waveform_mode == C.MTK_WAVEFORM_MODE_GLD16 then
         -- If we're requesting MTK_WAVEFORM_MODE_GLR16, it's REAGL all around!
@@ -643,7 +665,19 @@ local function refresh_mtk(fb, is_flashing, waveform_mode, x, y, w, h, dither)
     end
 
     -- Did we request HW dithering?
-    if dither and fb.device:canHWDither() then
+    -- NOTE: Not on color panels with color rendering enabled: there, the CFA pipeline already dithers on its own,
+    --       so HW dithering is redundant at best, and removes color at worst:
+    --       * On the Scribe Colorsoft (Linux 6.6), the MDP normally maps colors onto the color filter in hardware
+    --         (RDMA1 -> EINK COLOR -> WROT1, then the CFA driver dithers that to 4-bit in software),
+    --         but a dithering request (on a non-inverted update) reroutes it through RDMA1 -> DITHER0 -> WROT1 instead,
+    --         which skips the color engine entirely, so the panel only ever gets luminance: everything turns gray,
+    --         whatever the waveform mode.
+    --       * On the Colorsoft (Linux 5.15), the software CFA mapping runs *before* the MDP, and already dithers to 4-bit
+    --         (with a per-pixel color-info bit in the low bits). MDP Y4 dithering would just dither that output again
+    --         for GCC16 (folding the color-info bit into the value it dithers), and its output is discarded for GLRC16,
+    --         whose CFA REAGL pass (hwtcon_mdp_regal_handle) re-reads the undithered CFA output.
+    --       We keep passing the dither hint to mxc_update, though, as that's what triggers the switch to CFA waveform modes.
+    if dither and fb.device:canHWDither() and not (fb.device:hasColorScreen() and fb:isColorEnabled()) then
         fb.update_data.flags = bor(fb.update_data.flags, C.MTK_EPDC_FLAG_USE_DITHERING_Y4)
     end
 
@@ -658,7 +692,18 @@ local function refresh_mtk(fb, is_flashing, waveform_mode, x, y, w, h, dither)
         fb.swipe_animations = false
     end
 
-    return mxc_update(fb, C.MXCFB_SEND_UPDATE_MTK, fb.update_data, is_flashing, waveform_mode, x, y, w, h, dither)
+    local ret = mxc_update(fb, C.MXCFB_SEND_UPDATE_MTK, fb.update_data, is_flashing, waveform_mode, x, y, w, h, dither)
+
+    -- Highlights are reverted right after being refreshed (c.f., UIManager:yieldToEPDC),
+    -- so make sure the driver is done reading the framebuffer before we let anyone touch it again.
+    if fb.mech_wait_update_mdp and (waveform_mode == fb.waveform_fast or waveform_mode == fb.waveform_a2) then
+        if fb:mech_wait_update_mdp(fb.marker) == -1 then
+            local err = ffi.errno()
+            fb.debug("MXCFB_WAIT_FOR_MDP_COMPLETION ioctl failed:", ffi.string(C.strerror(err)))
+        end
+    end
+
+    return ret
 end
 
 -- Enable swipe animations. They will be reset at the next refresh.
@@ -1028,6 +1073,16 @@ function framebuffer:init()
             self.waveform_fast = C.MTK_WAVEFORM_MODE_DU
             self.waveform_ui = C.WAVEFORM_MODE_AUTO
             self.waveform_flashui = self.waveform_ui
+            -- NOTE: AUTO is a poor fit for UI refreshes on color panels: there, the driver picks from
+            --       color_day_mode_wf_mode_table, which only contains DU (only for pure black & white content) and GC16,
+            --       so anything antialiased ends up as GC16_PARTIAL, i.e., a flash of every changed pixel.
+            --       (The B&W day_mode_wf_mode_table has GL16 in the row where the color table has GC16.)
+            --       Request the non-flashing GL16 explicitly instead. flashui keeps using AUTO.
+            -- NOTE: GL16 (like DU) isn't loaded when the driver itself is in night mode
+            --       (GRAYSCALE_8BIT_INVERTED/GRAYSCALE_COLOR_NIGHTMODE), which we never switch it to at 32bpp.
+            if self.device:hasColorScreen() then
+                self.waveform_ui = C.MTK_WAVEFORM_MODE_GL16
+            end
             self.waveform_reagl = C.MTK_WAVEFORM_MODE_GLR16
             self.waveform_partial = self.waveform_reagl
             -- NOTE: We switch to nightmode globally, via the grayscale vinfo fb flag,
@@ -1042,6 +1097,21 @@ function framebuffer:init()
             self.waveform_flashnight = C.MTK_WAVEFORM_MODE_GCK16
             self.setSwipeAnimations = self._MTK_SetSwipeAnimations
             self.setSwipeDirection = self._MTK_SetSwipeDirection
+
+            -- Kaleido panels (Colorsoft, Scribe Colorsoft)
+            -- NOTE: The driver runs its CFA processing on every update made from an RGB framebuffer
+            --       (unless EPDC_FLAG_SKIP_CFA is set), but it will only ever use the CFA waveform modes when explicitly asked to:
+            --       AUTO never picks them, and it doesn't detect color content by itself
+            --       (that code is compiled out on the Colorsoft, and never called on the Scribe Colorsoft).
+            --       It even complains in the kernel log when it gets GLR16 with CFA enabled ("GLRC16 should be used for color content").
+            --       As on Kobo, these are only ever used *conditionally* (c.f., the dither flag in mxc_update).
+            --       Unlike on Kobo, there's no extra CFA post-processing flag to set, so CFA_PROCESSING_FLAG stays at 0.
+            -- NOTE: Older B&W MTK kernels may not know about these modes at all
+            --       (the PW5 FW 5.14 headers this file is based on don't define them).
+            if self.device:hasColorScreen() then
+                self.waveform_color = C.MTK_WAVEFORM_MODE_GCC16
+                self.waveform_color_reagl = C.MTK_WAVEFORM_MODE_GLRC16
+            end
         end
 
         -- Keep our data structures around, and setup constants
@@ -1071,6 +1141,15 @@ function framebuffer:init()
         end
         if self.mech_wait_update_submission == kindle_mxc_wait_for_update_submission then
             self.submission_data = ffi.new("uint32_t[1]")
+        end
+        -- NOTE: On color panels, the driver only reads the framebuffer a while after an update was submitted,
+        --       in its own thread, with extra work around that read (cache maintenance, CFA color mapping)
+        --       The 1 ms UIManager:yieldToEPDC isn't nearly enough, so the driver either reads the already reverted highlight,
+        --       or a mix of both (striped, half-inverted icons).
+        --       The driver has an ioctl to wait for exactly that, which we use after fast & A2 updates (c.f., refresh_mtk).
+        if self.device:isMTK() and self.device:hasColorScreen() then
+            self.mech_wait_update_mdp = kindle_mtk_wait_for_mdp_completion
+            self.mdp_data = ffi.new("uint32_t[1]")
         end
     elseif self.device:isKobo() then
         require("ffi/mxcfb_kobo_h")

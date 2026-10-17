@@ -4,6 +4,7 @@
  * ----
  *
  * This is <linux/hwtcon_ioctl_cmd.h>, last updated from the PW5 kernel for FW 5.14.1.1
+ * Kaleido bits (SKIP_CFA, GCC16, GLRC16, GCCK16 & GLRCK16) from the Colorsoft (5.15) & Scribe Colorsoft (6.6) kernels for FW 5.19.6
  *
  * NOTE: Upstream kernels available here: https://www.amazon.com/gp/help/customer/display.html?nodeId=200203720
  *
@@ -60,6 +61,13 @@
 #define MTK_EPDC_FLAG_USE_DITHERING_Y4 0x4000
 #define MTK_EPDC_FLAG_USE_REGAL        0x8000
 #define MTK_EPDC_FLAG_ENABLE_SWIPE     0x10000
+// New with Kaleido panels (Colorsoft, Scribe Colorsoft).
+// NOTE: On RGB framebuffers, the driver runs its CFA processing on every update unless this is set
+//       (Colorsoft: the whole software CFA mapping; Scribe Colorsoft: the software dithering & color-info step,
+//       the MDP's color engine still runs).
+#define MTK_EPDC_FLAG_SKIP_CFA         0x10
+// NOTE: 0x20000 is EPDC_FLAG_COLOR_NON_REGAL on the Colorsoft, but EPDC_FLAG_STYLUS_UPDATE on the Scribe Colorsoft,
+//       and the Colorsoft driver doesn't actually use it, so, leave it alone.
 
 /* temperature use sensor. */
 /*
@@ -110,6 +118,14 @@ enum MTK_WAVEFORM_MODE_ENUM
 	MTK_WAVEFORM_MODE_GCK16_PARTIAL = 11,
 	MTK_WAVEFORM_MODE_DUNM          = 12,
 	MTK_WAVEFORM_MODE_P2SW          = 13,
+	// New with Kaleido panels (Colorsoft, Scribe Colorsoft).
+	// NOTE: The driver only ever uses those when explicitly requested (AUTO never picks them),
+	//       it swaps them for their K variants by itself when nightmode is enabled via the grayscale fb flag,
+	//       and (in the FW 5.19.6 drivers) it falls back to their grayscale counterparts on B&W panels.
+	MTK_WAVEFORM_MODE_GCC16         = 14,
+	MTK_WAVEFORM_MODE_GLRC16        = 15,   // REAGL
+	MTK_WAVEFORM_MODE_GCCK16        = 16,
+	MTK_WAVEFORM_MODE_GLRCK16       = 17,   // REAGL
 	// Matches MXCFB
 	MTK_WAVEFORM_MODE_AUTO          = 257,
 };
@@ -364,6 +380,13 @@ struct mxcfb_panel_info
 /*
 #define MXCFB_GET_MATERIAL_TYPE _IOR(HWTCON_IOCTL_MAGIC_NUMBER, 0x3A, uint32_t)
 */
+
+/* Wait until the specified request has completed MDP processing,
+ * i.e., until the driver is done reading the framebuffer for it.
+ * Present in the Colorsoft (5.15) & Scribe Colorsoft (6.6) kernels for FW 5.19.6,
+ * not in the PW5 FW 5.14 headers this file is based on.
+ */
+#define MXCFB_WAIT_FOR_MDP_COMPLETION_MTK _IOW(HWTCON_IOCTL_MAGIC_NUMBER, 0x4D, uint32_t)
 
 /* Set the front light control data for night mode.
  * For each screen update in night mode,

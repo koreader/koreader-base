@@ -130,6 +130,7 @@ static const unsigned MXCFB_SET_NIGHTMODE = 2147763786;
 static const unsigned MTK_EPDC_FLAG_USE_DITHERING_Y4 = 16384;
 static const unsigned MTK_EPDC_FLAG_USE_REGAL = 32768;
 static const unsigned MTK_EPDC_FLAG_ENABLE_SWIPE = 65536;
+static const unsigned MTK_EPDC_FLAG_SKIP_CFA = 16;
 static const unsigned MTK_WAVEFORM_MODE_INIT = 0;
 static const unsigned MTK_WAVEFORM_MODE_DU = 1;
 static const unsigned MTK_WAVEFORM_MODE_GC16 = 2;
@@ -151,6 +152,10 @@ static const unsigned MTK_WAVEFORM_MODE_GC16_PARTIAL = 10;
 static const unsigned MTK_WAVEFORM_MODE_GCK16_PARTIAL = 11;
 static const unsigned MTK_WAVEFORM_MODE_DUNM = 12;
 static const unsigned MTK_WAVEFORM_MODE_P2SW = 13;
+static const unsigned MTK_WAVEFORM_MODE_GCC16 = 14;
+static const unsigned MTK_WAVEFORM_MODE_GLRC16 = 15;
+static const unsigned MTK_WAVEFORM_MODE_GCCK16 = 16;
+static const unsigned MTK_WAVEFORM_MODE_GLRCK16 = 17;
 enum MTK_SWIPE_DIRECTION_ENUM {
   MTK_SWIPE_DOWN = 0,
   MTK_SWIPE_UP = 1,
@@ -201,4 +206,5 @@ static const unsigned MXCFB_SET_HALFTONE_MTK = 1076119115;
 static const unsigned MXCFB_WAIT_FOR_ANY_UPDATE_COMPLETE_MTK = 3221505591;
 static const unsigned MXCFB_SET_UPDATE_FLAGS_MTK = 1074021947;
 static const unsigned MXCFB_GET_UPDATE_FLAGS_MTK = 3221505596;
+static const unsigned MXCFB_WAIT_FOR_MDP_COMPLETION_MTK = 1074021965;
 ]]
