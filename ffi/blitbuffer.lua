@@ -740,6 +740,31 @@ else
     end
 end
 
+-- Exactly one of the pair is inverted (SW nightmode): a C copy then a C invert matches the Lua fallback.
+function BB_mt.__index:canUseCbbInverted(other)
+    if not use_cblitbuffer or self:getInverse() == other:getInverse() then
+        return false
+    end
+    local bbtype = self:getType()
+    return bbtype == other:getType() and (bbtype == TYPE_BB8 or bbtype == TYPE_BBRGB32)
+end
+
+-- Like BB_invert_rect, but also correct on padded rows and viewports, where a full-width rect isn't one contiguous block.
+function BB_mt.__index:invertRectCbb(x, y, w, h)
+    local px, py, pw, ph = self:getPhysicalRect(x, y, w, h)
+    local packed = self.pixel_stride == self.w and self.stride == self.w * self:getBytesPerPixel()
+    if px == 0 and pw == self.w and pw > 1 and not packed then
+        -- Two narrower rects, so BB_invert_rect goes row by row instead of in one run.
+        local rotation = self:getRotation()
+        self:setRotation(0)
+        cblitbuffer.BB_invert_rect(ffi.cast(P_BlitBuffer, self), 0, py, pw - 1, ph)
+        cblitbuffer.BB_invert_rect(ffi.cast(P_BlitBuffer, self), pw - 1, py, 1, ph)
+        self:setRotation(rotation)
+    else
+        cblitbuffer.BB_invert_rect(ffi.cast(P_BlitBuffer, self), x, y, w, h)
+    end
+end
+
 -- Bits per pixel
 function BB4_mt.__index:getBpp() return 4 end
 function BB8_mt.__index:getBpp() return 8 end
@@ -1292,6 +1317,11 @@ function BB_mt.__index:blitFrom(source, dest_x, dest_y, offs_x, offs_y, width, h
         cblitbuffer.BB_blit_to(ffi.cast(P_BlitBuffer_ROData, source),
             ffi.cast(P_BlitBuffer, self),
             dest_x, dest_y, offs_x, offs_y, width, height)
+    elseif setter == self.setPixel and self:canUseCbbInverted(source) then
+        cblitbuffer.BB_blit_to(ffi.cast(P_BlitBuffer_ROData, source),
+            ffi.cast(P_BlitBuffer, self),
+            dest_x, dest_y, offs_x, offs_y, width, height)
+        self:invertRectCbb(dest_x, dest_y, width, height)
     else
         source[self.blitfunc](source, self, dest_x, dest_y, offs_x, offs_y, width, height, setter, set_param)
     end
