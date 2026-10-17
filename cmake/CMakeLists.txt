@@ -831,6 +831,9 @@ ffi_target(remarkable blight_h.lua blight_cdecl.c ${EXCLUDE_FROM_ALL})
 # sdl3
 ffi_target(sdl3 SDL3_h.lua SDL3_decl.c ARGS -d sdl3)
 
+# sqlite
+ffi_target(sqlite sqlite3_h.lua sqlite3_cdecl.c)
+
 # tree-sitter
 ffi_target(tree-sitter tree_sitter_h.lua tree_sitter_cdecl.c DEPENDS tree-sitter-c EXCLUDE_FROM_ALL)
 
