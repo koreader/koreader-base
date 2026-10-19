@@ -1275,6 +1275,32 @@ function BB8_mt.__index:blitTo8(dest, dest_x, dest_y, offs_x, offs_y, width, hei
         end
     end
 end
+function BBRGB24_mt.__index:blitToRGB24(dest, dest_x, dest_y, offs_x, offs_y, width, height, setter, set_param)
+    -- We can only do fast copy for simple blitting with no processing (setPixel, no rota, no invert)
+    if setter ~= self.setPixel or self:getRotation() ~= 0 or dest:getRotation() ~= 0 or (self:getInverse() ~= dest:getInverse()) then
+        return self:blitDefault(dest, dest_x, dest_y, offs_x, offs_y, width, height, setter, set_param)
+    end
+
+    -- Perform block copies only in the simple case of the blit width being equal to width of both buffers of same stride.
+    if offs_x == 0 and dest_x == 0 and width == self.w and width == dest.w and dest.stride == self.stride then
+        -- Single step for contiguous scanlines (on both sides)
+        -- BBRGB24 is 3 bytes per pixel
+        local srcp = ffi.cast(uint8pt_rodata, self.data) + self.stride*offs_y
+        local dstp = ffi.cast(uint8pt, dest.data) + dest.stride*dest_y
+        ffi.copy(dstp, srcp, width*3*height)
+    else
+        -- Scanline per scanline copy
+        local o_y = offs_y
+        local row_bytes = width * 3
+        for y = dest_y, dest_y+height-1 do
+            -- BBRGB24 is 3 bytes per pixel
+            local srcp = ffi.cast(uint8pt_rodata, self.data) + self.stride*o_y + offs_x*3
+            local dstp = ffi.cast(uint8pt, dest.data) + dest.stride*y + dest_x*3
+            ffi.copy(dstp, srcp, row_bytes)
+            o_y = o_y + 1
+        end
+    end
+end
 function BBRGB32_mt.__index:blitToRGB32(dest, dest_x, dest_y, offs_x, offs_y, width, height, setter, set_param)
     -- We can only do fast copy for simple blitting with no processing (setPixel, no rota, no invert)
     if setter ~= self.setPixel or self:getRotation() ~= 0 or dest:getRotation() ~= 0 or (self:getInverse() ~= dest:getInverse()) then
