@@ -613,9 +613,7 @@ local function refresh_mtk(fb, is_flashing, waveform_mode, x, y, w, h, dither)
         -- Being as one genneraly will only want animations on a larger area, and I am too
         -- lazy to test for direction, disable animations when w or h is less than steps.
         -- Do not animate flashing refreshes: they must clean the panel.
-        if not is_flashing
-            and w >= fb.update_data.swipe_data.steps
-            and h >= fb.update_data.swipe_data.steps then
+        if not is_flashing and w >= fb.update_data.swipe_data.steps and h >= fb.update_data.swipe_data.steps then
             fb.update_data.flags = bor(fb.update_data.flags, C.MTK_EPDC_FLAG_ENABLE_SWIPE)
         end
         fb.swipe_animations = false
