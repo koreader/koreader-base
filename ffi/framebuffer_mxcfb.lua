@@ -628,17 +628,19 @@ local function refresh_rex(fb, is_flashing, waveform_mode, x, y, w, h, dither)
     return mxc_update(fb, C.MXCFB_SEND_UPDATE_REX, fb.update_data, is_flashing, waveform_mode, x, y, w, h, dither)
 end
 
--- Large dithered UI refreshes on Kindle color panels use the CFA waveform modes (c.f., refresh_mtk),
+-- Large dithered flashui refreshes on Kindle color panels use the CFA waveform modes (c.f., refresh_mtk),
 -- large meaning at least this fraction of the screen.
 local KINDLE_CFA_UI_MIN_AREA = 0.25
 
 local function refresh_mtk(fb, is_flashing, waveform_mode, x, y, w, h, dither)
-    -- On color panels, send large dithered ui refreshes as REAGL, and large dithered flashui refreshes as full,
-    -- so that mxc_update promotes them to GLRC16 & GCC16, like dithered page turns (e.g., a page of covers in the FM).
-    if dither and fb.waveform_color_reagl and fb.device:hasKaleidoWfm() and fb:isColorEnabled()
-      and (waveform_mode == fb.waveform_ui or waveform_mode == fb.waveform_flashui)
+    -- On color panels, send large dithered flashui refreshes as full, so that mxc_update promotes them to GCC16,
+    -- like dithered full refreshes (e.g., a page of covers in the FM, with "Flash when displaying covers").
+    -- NOTE: Non-flashing ui refreshes are left alone: as REAGL, they'd become GLRC16 *full* updates,
+    --       which visibly blink on every repaint (e.g., while selecting text on a page with a color highlight).
+    if dither and is_flashing and fb.waveform_color and fb.device:hasKaleidoWfm() and fb:isColorEnabled()
+      and waveform_mode == fb.waveform_flashui
       and w * h >= KINDLE_CFA_UI_MIN_AREA * fb:getWidth() * fb:getHeight() then
-        waveform_mode = is_flashing and fb.waveform_full or fb.waveform_reagl
+        waveform_mode = fb.waveform_full
     end
 
     -- Actually unused by the driver...
