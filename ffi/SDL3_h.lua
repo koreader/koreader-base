@@ -198,6 +198,12 @@ enum SDL_PenAxis {
   SDL_PEN_AXIS_TANGENTIAL_PRESSURE,
   SDL_PEN_AXIS_COUNT,
 };
+enum SDL_PenDeviceType {
+  SDL_PEN_DEVICE_TYPE_INVALID = -1,
+  SDL_PEN_DEVICE_TYPE_UNKNOWN,
+  SDL_PEN_DEVICE_TYPE_DIRECT,
+  SDL_PEN_DEVICE_TYPE_INDIRECT,
+};
 enum SDL_PixelFormat {
   SDL_PIXELFORMAT_UNKNOWN = 0,
   SDL_PIXELFORMAT_INDEX1LSB = 0x11100100u,
@@ -441,6 +447,7 @@ enum SDL_Scancode {
   SDL_SCANCODE_CLEARAGAIN = 162,
   SDL_SCANCODE_CRSEL = 163,
   SDL_SCANCODE_EXSEL = 164,
+  SDL_SCANCODE_FRONT = 165,
   SDL_SCANCODE_KP_00 = 176,
   SDL_SCANCODE_KP_000 = 177,
   SDL_SCANCODE_THOUSANDSSEPARATOR = 178,
@@ -555,6 +562,7 @@ typedef Uint32 SDL_MouseButtonFlags;
 typedef Uint32 SDL_MouseID;
 typedef enum SDL_MouseWheelDirection SDL_MouseWheelDirection;
 typedef enum SDL_PenAxis SDL_PenAxis;
+typedef enum SDL_PenDeviceType SDL_PenDeviceType;
 typedef Uint32 SDL_PenID;
 typedef Uint32 SDL_PenInputFlags;
 typedef enum SDL_PixelFormat SDL_PixelFormat;
@@ -889,6 +897,7 @@ struct SDL_PenProximityEvent {
   SDL_WindowID windowID;
   SDL_PenID which;
   SDL_PenInputFlags pen_state;
+  SDL_PenDeviceType device_type;
 };
 typedef struct SDL_PenProximityEvent SDL_PenProximityEvent;
 struct SDL_PenTouchEvent {
@@ -902,6 +911,7 @@ struct SDL_PenTouchEvent {
   float y;
   bool eraser;
   bool down;
+  SDL_PenDeviceType device_type;
 };
 typedef struct SDL_PenTouchEvent SDL_PenTouchEvent;
 struct SDL_PenMotionEvent {
@@ -913,6 +923,7 @@ struct SDL_PenMotionEvent {
   SDL_PenInputFlags pen_state;
   float x;
   float y;
+  SDL_PenDeviceType device_type;
 };
 typedef struct SDL_PenMotionEvent SDL_PenMotionEvent;
 struct SDL_PenButtonEvent {
@@ -926,6 +937,7 @@ struct SDL_PenButtonEvent {
   float y;
   Uint8 button;
   bool down;
+  SDL_PenDeviceType device_type;
 };
 typedef struct SDL_PenButtonEvent SDL_PenButtonEvent;
 struct SDL_PenAxisEvent {
@@ -939,6 +951,7 @@ struct SDL_PenAxisEvent {
   float y;
   SDL_PenAxis axis;
   float value;
+  SDL_PenDeviceType device_type;
 };
 typedef struct SDL_PenAxisEvent SDL_PenAxisEvent;
 struct SDL_PinchFingerEvent {
