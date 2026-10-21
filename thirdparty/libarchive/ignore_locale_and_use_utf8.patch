@@ -1,5 +1,5 @@
 diff --git a/libarchive/archive_string.c b/libarchive/archive_string.c
-index 87e21c8d..0f71f3b8 100644
+index 474dff81..bd8ac797 100644
 --- a/libarchive/archive_string.c
 +++ b/libarchive/archive_string.c
 @@ -445,6 +445,7 @@ static const char *
@@ -7,7 +7,7 @@ index 87e21c8d..0f71f3b8 100644
  	if (charset != NULL && charset[0] != '\0')
  		return charset;
 +#if 0
- #if HAVE_LOCALE_CHARSET && !defined(__APPLE__)
+ #if HAVE_LOCALE_CHARSET && HAVE_LOCALCHARSET_H && !defined(__APPLE__)
  	/* locale_charset() is broken on Mac OS */
  	return locale_charset();
 @@ -455,6 +456,9 @@ default_iconv_charset(const char *charset) {
