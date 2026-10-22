@@ -1,5 +1,5 @@
 diff --git a/libarchive/archive_entry.h b/libarchive/archive_entry.h
-index 9c859a44..26a3dfb5 100644
+index 50e10a1e..100f014c 100644
 --- a/libarchive/archive_entry.h
 +++ b/libarchive/archive_entry.h
 @@ -93,7 +93,7 @@ typedef ssize_t la_ssize_t;
