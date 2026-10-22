@@ -1,8 +1,3 @@
-list(APPEND PATCH_FILES
-    # Work around GCC 12 ARM NEON bug (https://gcc.gnu.org/bugzilla/show_bug.cgi?id=117811).
-    ftcalc_gcc12_arm_neon_fix.patch
-)
-
 list(APPEND CFG_CMD COMMAND
     ${MESON_SETUP} --default-library=$<IF:$<BOOL:${MONOLIBTIC}>,static,shared>
     -Derror_strings=$<IF:$<STREQUAL:${CMAKE_BUILD_TYPE},Debug>,true,false>
@@ -26,9 +21,8 @@ if(NOT MONOLIBTIC)
 endif()
 
 external_project(
-    DOWNLOAD URL 0f816defb4d1d7dd274df0937431916f
-    https://github.com/freetype/freetype/archive/refs/tags/VER-2-14-3.tar.gz
-    PATCH_FILES ${PATCH_FILES}
+    DOWNLOAD URL a327f211fb238360c1e0ce3859e3a8e8
+    https://github.com/freetype/freetype/archive/refs/tags/VER-2-15-0.tar.gz
     CONFIGURE_COMMAND ${CFG_CMD}
     BUILD_COMMAND ${BUILD_CMD}
     INSTALL_COMMAND ${INSTALL_CMD}
