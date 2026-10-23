@@ -23,7 +23,6 @@ luajit
 libs/libtree-sitter.so.*[0-9]
 libs/libtree-sitter-c.so.*[0-9]
 ffi/loadlib.lua
-ffi/posix_h.lua
 ffi/tree_sitter_h.lua
 endef
 
