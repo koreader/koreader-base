@@ -834,6 +834,22 @@ set(CMAKE_COLOR_DIAGNOSTICS TRUE)
 # NOTE: Remember that CMake is a special snowflake that completely *ignores* CPPFLAGS,
 # because of course it does...
 # (https://gitlab.kitware.com/cmake/cmake/issues/12928)
+# NOTE: We'll define `CMAKE_SYSTEM_PROCESSOR` ourselves (and `CMAKE_SYSTEM_NAME` too,
+# or CMake overwrite our value) to avoid cmake faulty `uname -m` based auto-detection
+# when not cross-compiling (which breaks when running under Docker with `--platform=…`,
+# or when using `gcc -m32`).
+
+# OS.
+# NOTE: use Linux for Android too (cf. https://github.com/taka-no-me/android-cmake and
+# https://android.googlesource.com/platform/ndk/+/master/build/cmake/android.toolchain.cmake)
+# In the meantime, I'll be sitting in the corner, crying hysterically.
+set(CMAKE_SYSTEM_NAME $(if $(DARWIN),Darwin,$(if $(WIN32),Windows,Linux)))
+
+# Target architecture.
+set(CMAKE_SYSTEM_PROCESSOR $(word 1,$(subst -,$(space),$(TARGET_MACHINE))))
+
+# Tell CMake we're not cross-compiling, or `try_run(…)` calls will fail.
+set(CMAKE_CROSSCOMPILING FALSE)
 
 # Build type.
 set(CMAKE_BUILD_TYPE $(if $(KODEBUG),Debug,Release))
@@ -905,19 +921,13 @@ define cmake_cross_toolchain
 
 $(cmake_toolchain)
 
-# OS.
-# NOTE: use Linux for Android too (cf. https://github.com/taka-no-me/android-cmake and
-# https://android.googlesource.com/platform/ndk/+/master/build/cmake/android.toolchain.cmake)
-# In the meantime, I'll be sitting in the corner, crying hysterically.
-set(CMAKE_SYSTEM_NAME $(if $(DARWIN),Darwin,$(if $(WIN32),Windows,Linux)))
+# Override native toolchain value.
+set(CMAKE_CROSSCOMPILING TRUE)
 
 # Magical value that inhibits all of CMake's own NDK handling code. (Or shit goes boom.)
 $(if $(ANDROID),set(CMAKE_SYSTEM_VERSION 1))
 # Also disable versioning of shared objects.
 $(if $(ANDROID),set(CMAKE_PLATFORM_NO_VERSIONED_SONAME TRUE))
-
-# Target architecture.
-set(CMAKE_SYSTEM_PROCESSOR $(word 1,$(subst -,$(space),$(TARGET_MACHINE))))
 
 # Search for programs in the build host directories.
 set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)
