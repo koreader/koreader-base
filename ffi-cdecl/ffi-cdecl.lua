@@ -574,7 +574,7 @@ local function _main(parser, ffi_cdecl_dir)
             return 0
         elseif a == "-W" then
             warn_only = true
-        elseif not input_file then
+        elseif not a:match("^-") and not input_file then
             input_file = a
         else
             io.stderr:write(string.format("ERROR: invalid argument “%s”\n", a))
