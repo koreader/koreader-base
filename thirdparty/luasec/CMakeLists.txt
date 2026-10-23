@@ -1,4 +1,12 @@
-list(APPEND PATCH_FILES visibility.patch)
+list(APPEND PATCH_FILES
+    visibility.patch
+    # Prefer our CA bundle.
+    ca_bundle.patch
+    # Check SSL certificate matches hostname.
+    check_hostname.patch
+    # Enable SSL verification by default.
+    default_verify.patch
+)
 
 list(APPEND CMAKE_ARGS
     -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE}
