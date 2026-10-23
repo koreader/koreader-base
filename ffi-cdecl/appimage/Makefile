@@ -2,6 +2,7 @@ KODEBUG ?=
 KOR_BASE ?= ../..
 
 TARGET = linux
+FFI_CDECL = 1
 VERSION := $(shell sed -nE 's/^local VERSION = "(.*)"$$/\1/p' $(KOR_BASE)/ffi-cdecl/ffi-cdecl.lua)
 
 include $(KOR_BASE)/Makefile.defs
