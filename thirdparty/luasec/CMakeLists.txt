@@ -16,8 +16,8 @@ append_install_commands(INSTALL_CMD ${SOURCE_DIR}/src/ssl.lua DESTINATION common
 append_install_commands(INSTALL_CMD ${SOURCE_DIR}/src/https.lua DESTINATION common/ssl)
 
 external_project(
-    DOWNLOAD GIT v1.3.2
-    https://github.com/brunoos/luasec
+    DOWNLOAD GIT bf4770833c0f1b3a45f116f2f29168d67d0ce7a0 # v1.3.2-15-gbf47708
+    https://github.com/lunarmodules/luasec
     PATCH_OVERLAY overlay
     PATCH_FILES ${PATCH_FILES}
     CMAKE_ARGS ${CMAKE_ARGS}
