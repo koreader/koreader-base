@@ -113,24 +113,30 @@ endif()
 # ffi-cdecl. {{{
 
 set(FFI_CDECL_DEPS)
-find_executable(FFI_CDECL ffi-cdecl ffi-cdecl -v)
 if(NOT FFI_CDECL)
+    find_executable(FFI_CDECL_CMD ffi-cdecl ffi-cdecl -v)
+endif()
+if(NOT FFI_CDECL_CMD)
     if(EMULATE_READER)
         set(LUAJIT ${OUTPUT_DIR}/luajit)
         list(APPEND FFI_CDECL_DEPS luajit)
-        foreach(VERSION 0.27 0.26)
-            set_libname(TREE_SITTER_SONAME tree-sitter VERSION ${VERSION})
-            find_compiler_lib_path(TREE_SITTER_LIB_${VERSION} ${TREE_SITTER_SONAME} ${COMPILER_LIB_EXTRA_SEARCH_PATHS})
-            if(TREE_SITTER_LIB_${VERSION})
-                set(TREE_SITTER_LIB ${TREE_SITTER_LIB_${VERSION}})
-                break()
-            endif()
-        endforeach()
+        if(NOT FFI_CDECL)
+            foreach(VERSION 0.27 0.26)
+                set_libname(TREE_SITTER_SONAME tree-sitter VERSION ${VERSION})
+                find_compiler_lib_path(TREE_SITTER_LIB_${VERSION} ${TREE_SITTER_SONAME} ${COMPILER_LIB_EXTRA_SEARCH_PATHS})
+                if(TREE_SITTER_LIB_${VERSION})
+                    set(TREE_SITTER_LIB ${TREE_SITTER_LIB_${VERSION}})
+                    break()
+                endif()
+            endforeach()
+        endif()
         if(NOT TREE_SITTER_LIB)
             list(APPEND FFI_CDECL_DEPS tree-sitter)
         endif()
-        set_libname(TREE_SITTER_C_SONAME tree-sitter-c VERSION 15.0)
-        find_compiler_lib_path(TREE_SITTER_C_LIB ${TREE_SITTER_C_SONAME} ${COMPILER_LIB_EXTRA_SEARCH_PATHS})
+        if(NOT FFI_CDECL)
+            set_libname(TREE_SITTER_C_SONAME tree-sitter-c VERSION 15.0)
+            find_compiler_lib_path(TREE_SITTER_C_LIB ${TREE_SITTER_C_SONAME} ${COMPILER_LIB_EXTRA_SEARCH_PATHS})
+        endif()
         if(NOT TREE_SITTER_C_LIB)
             list(APPEND FFI_CDECL_DEPS tree-sitter-c)
         endif()
@@ -138,7 +144,7 @@ if(NOT FFI_CDECL)
         find_executable(LUAJIT LuaJIT luajit -v)
     endif()
     if(LUAJIT)
-        set(FFI_CDECL env LUA_PATH=${OUTPUT_DIR}/?.lua$<SEMICOLON>${OUTPUT_DIR}/?/init.lua LUA_CPATH=${OUTPUT_DIR}/?.so ${LUAJIT} ./ffi-cdecl/ffi-cdecl.lua)
+        set(FFI_CDECL_CMD env LUA_PATH=${OUTPUT_DIR}/?.lua$<SEMICOLON>${OUTPUT_DIR}/?/init.lua LUA_CPATH=${OUTPUT_DIR}/?.so ${LUAJIT} ./ffi-cdecl/ffi-cdecl.lua)
     endif()
 endif()
 
@@ -609,7 +615,7 @@ add_custom_target(rm-install-stamps COMMAND rm -f ${INSTALL_STAMPS})
 
 # FFI cdecls generation. {{{
 
-if(FFI_CDECL)
+if(FFI_CDECL_CMD)
 
 add_custom_target(ffi-deps)
 add_custom_target(ffi DEPENDS ffi-deps)
@@ -645,7 +651,7 @@ function(ffi_target NAME OUTPUT INPUT)
         # don't correctly handle `--env-only --with-path=…` (ignoring that last
         # option).
         COMMAND env PKG_CONFIG_PATH=${STAGING_DIR}/lib/pkgconfig
-                ${FFI_CDECL} ${FFI_CDECL_FLAGS}
+                ${FFI_CDECL_CMD} ${FFI_CDECL_FLAGS}
                 ${_ARGS} ${INPUT} -o ${OUTPUT}
         COMMENT "Generating 'ffi/${TGT}'"
         VERBATIM
@@ -886,7 +892,7 @@ endfunction()
 
 summary_section("Target machine" FALSE CHOST CC CFLAGS CXX CXXFLAGS LD LDFLAGS DYNLIB_LDFLAGS AR NM OBJCOPY RANLIB RC STRIP LIB_EXT VECTO_CFLAGS)
 summary_section("Build machine"  FALSE HOSTCFLAGS HOSTCXX)
-summary_section("Miscellaneous"  FALSE KOTASYNC MONOLIBTIC USE_LJ_WPACLIENT USE_SDL WANT_SIMD GLIBC_VERSION_MAX KEEP_DEBUG)
+summary_section("Miscellaneous"  FALSE FFI_CDECL KOTASYNC MONOLIBTIC USE_LJ_WPACLIENT USE_SDL WANT_SIMD GLIBC_VERSION_MAX KEEP_DEBUG)
 summary_section("CI"             TRUE  CI GITHUB_ACTIONS)
 summary_section("OS"             FALSE ANDROID APPLE LINUX)
 summary_section("Platform"       FALSE EMULATE_READER CERVANTES KINDLE KOBO LEGACY POCKETBOOK REMARKABLE)
