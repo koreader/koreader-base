@@ -11,7 +11,7 @@ require "ffi/loadlib"
 require "ffi/posix_h"
 require "ffi/tree_sitter_h"
 
-local ts = ffi.loadlib("tree-sitter", "0.26")
+local ts = ffi.loadlib("tree-sitter", "0.27", "tree-sitter", "0.26")
 local ts_c = ffi.loadlib("tree-sitter-c", "15.0")
 
 -- Helpers. {{{
