@@ -113,8 +113,27 @@ Load a native library.
 @param ... list of candidates (library name, version)
 --]]
 ffi.loadlib = function(...)
-    local lib = findlib(...) or libname(...)
-    return ffi.load(lib)
+    local lib = findlib(...)
+    if lib then
+        return ffi.load(lib)
+    end
+    -- Fallback to trying to `ffi.load` each candidate.
+    local errlist = {}
+    local n = 1
+    while true do
+        local name, version = select(n, ...)
+        if not name then
+            break
+        end
+        name = libname(name, version)
+        local ok, err = pcall(ffi.load, name)
+        if ok then
+            return err
+        end
+        table.insert(errlist, err)
+        n = n + 2
+    end
+    error(table.concat(errlist, ", "))
 end
 
 if android then
