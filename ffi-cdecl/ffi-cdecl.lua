@@ -7,8 +7,14 @@ local ffi = require("ffi")
 
 ffi.log = function() end
 
+-- NOTE: don't rely on `ffi/posix_h`, so we can update it
+-- with ffi-cdecl when adding support for a new platform
+-- (when executing ffi-cdecl on that new platform).
+ffi.cdef[[
+void free(void *);
+]]
+
 require "ffi/loadlib"
-require "ffi/posix_h"
 require "ffi/tree_sitter_h"
 
 local ts = ffi.loadlib("tree-sitter", "0.27", "tree-sitter", "0.26")
