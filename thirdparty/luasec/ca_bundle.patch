@@ -1,0 +1,12 @@
+diff --git a/src/ssl.lua b/src/ssl.lua
+index 4c6f424..f25cbea 100644
+--- a/src/ssl.lua
++++ b/src/ssl.lua
+@@ -77,6 +77,7 @@ local find_system_ca do
+ 
+    -- Known CA bundle locations to probe, in order.
+    local ca_bundle_paths = {
++      "data/ca-bundle.crt",
+       "/etc/ssl/certs/ca-certificates.crt",                 -- Debian / Ubuntu / Gentoo
+       "/etc/pki/tls/certs/ca-bundle.crt",                   -- Fedora / RHEL 6
+       "/etc/ssl/ca-bundle.pem",                             -- OpenSUSE
