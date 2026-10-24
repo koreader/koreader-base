@@ -12,7 +12,7 @@ external_project(
     # FIXME: Even then, something in said branch seems to upset MuPDF
     # with our custom patch as-is, so keep using the current code...
     DOWNLOAD GIT aa4758baea16e9dc03583340e62b370ea1140df9
-    https://github.com/nmoinvaz/minizip
+    https://github.com/zlib-ng/minizip-ng
     PATCH_OVERLAY overlay
     CMAKE_ARGS ${CMAKE_ARGS}
     BUILD_COMMAND ${BUILD_CMD}
