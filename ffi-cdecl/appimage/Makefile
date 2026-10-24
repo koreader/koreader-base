@@ -33,7 +33,7 @@ appdir: $(NINJA_GOALS)
 	$(call appimage_install,ffi-cdecl,ffi-cdecl.h ffi-cdecl.lua,..)
 
 appimage: appdir $(MKAPPIMAGE)
-	ARCH='$(APPIMAGE_ARCH)' VERSION='$(VERSION)' $(MKAPPIMAGE) --appimage-extract-and-run $(APPDIR) ffi-cdecl-$(VERSION)-$(APPIMAGE_ARCH).AppImage
+	$(call appimage_generate,ffi-cdecl,$(VERSION))
 
 PHONY = all appdir appimage clean re
 
