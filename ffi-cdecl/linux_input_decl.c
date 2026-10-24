@@ -73,11 +73,17 @@ cdecl_const(ABS_MT_BLOB_ID)
 cdecl_const(ABS_MT_TRACKING_ID)
 cdecl_const(ABS_MT_PRESSURE)
 cdecl_const(ABS_MT_DISTANCE)
+#ifdef ABS_MT_TOOL_X
 cdecl_const(ABS_MT_TOOL_X)
+#endif
+#ifdef ABS_MT_TOOL_Y
 cdecl_const(ABS_MT_TOOL_Y)
+#endif
 
 cdecl_const(SW_ROTATE_LOCK)
+#ifdef SW_MACHINE_COVER
 cdecl_const(SW_MACHINE_COVER)
+#endif
 
 cdecl_const(MSC_GESTURE)
 cdecl_const(MSC_GYRO)
