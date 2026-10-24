@@ -1048,9 +1048,9 @@ strip = 'true'
 [built-in options]
 buildtype = '$(if $(KODEBUG),debug,release)'
 c_args = [$(patsubst %,'%'$(comma),$(CFLAGS))] + CPPFLAGS + CFLAGS
-c_link_args = [$(patsubst %,'%'$(comma),$(LDFLAGS))] + LDFLAGS
+c_link_args = c_args + [$(patsubst %,'%'$(comma),$(LDFLAGS))] + LDFLAGS
 cpp_args = [$(patsubst %,'%'$(comma),$(CXXFLAGS))] + CPPFLAGS + CXXFLAGS
-cpp_link_args = [$(patsubst %,'%'$(comma),$(LDFLAGS))] + LDFLAGS
+cpp_link_args = cpp_args + [$(patsubst %,'%'$(comma),$(LDFLAGS))] + LDFLAGS
 
 endef
 
