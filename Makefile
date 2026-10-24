@@ -251,22 +251,7 @@ endif
 BINCHECK_LD_PATH += $(STAGING_DIR)/bincheck $(OUTPUT_DIR)/libs
 
 # Sysroot.
-define sysroot_libdir
-  $(dir $(abspath $(or
-    $(filter /%,$(shell $(CC) -print-file-name=$1)),
-    $(error could not find library directory for `$1`))))
-endef
-ifneq (,$(EMULATE_READER))
-  ifeq (,$(DARWIN))
-    BINCHECK_LD_PATH += $(call sysroot_libdir,libc.so)
-  endif
-else ifneq (,$(ANDROID))
-  BINCHECK_LD_PATH += $(call sysroot_libdir,libc.so)
-  BINCHECK_LD_PATH += $(call sysroot_libdir,libc++_shared.so)
-else
-  BINCHECK_LD_PATH += $(call sysroot_libdir,libc.so.6)
-  BINCHECK_LD_PATH += $(call sysroot_libdir,libcrypt.so)
-endif
+BINCHECK_LD_PATH += $(shell $(CC) -print-search-dirs | sed -n '/^libraries: =/{s///;s/:/ /gp}')
 
 bincheck: $(BINCHECK_DEPS)
 	$(KOR_BASE)/utils/bincheck.py $(if $(GLIBC_VERSION_MAX),--glibc-version-max $(GLIBC_VERSION_MAX) )'$(subst $(empty) $(empty),:,$(strip $(BINCHECK_LD_PATH)))' $(BINARY_PATHS)
