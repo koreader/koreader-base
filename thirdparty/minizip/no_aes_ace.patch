@@ -1,0 +1,13 @@
+diff --git a/aes/aesopt.h b/aes/aesopt.h
+index fd8db2e..7c1e087 100644
+--- a/aes/aesopt.h
++++ b/aes/aesopt.h
+@@ -184,7 +184,7 @@ Issue Date: 20/12/2007
+     order (which later checks below ensure).
+ */
+ 
+-#if 1 && defined( VIA_ACE_POSSIBLE ) && !defined( USE_VIA_ACE_IF_PRESENT )
++#if 0 && defined( VIA_ACE_POSSIBLE ) && !defined( USE_VIA_ACE_IF_PRESENT )
+ #  define USE_VIA_ACE_IF_PRESENT
+ #endif
+ 
