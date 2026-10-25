@@ -57,7 +57,7 @@ ifeq ($(TARGET), linux)
 
 mkappimage $(MKAPPIMAGE):
 	mkdir -p $(dir $(MKAPPIMAGE))
-	$(WGET) -O $(MKAPPIMAGE).part "$$($(strip $(MKAPPIMAGE_URL)))"
+	url="$$($(strip $(MKAPPIMAGE_URL)))" && $(WGET) -O $(MKAPPIMAGE).part "$${url}"
 	# Zero-out AppImage magic bytes from the ELF header extended ABI version so
 	# binfmt+qemu can be used (e.g. when executed from `docker run --platform …`).
 	# Cf. https://github.com/AppImage/AppImageKit/issues/1056.
