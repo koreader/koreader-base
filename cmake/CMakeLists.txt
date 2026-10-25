@@ -640,6 +640,9 @@ function(ffi_target NAME OUTPUT INPUT)
         -p --env-only
         -I ${STAGING_DIR}/include
     )
+    if(USE_M32)
+        list(APPEND FFI_CDECL_FLAGS -f -m32)
+    endif()
     if(APPLE)
         # See note in Makefile.defs.
         list(APPEND FFI_CDECL_FLAGS -f -idirafter,/usr/local/include)
@@ -775,7 +778,6 @@ else()
     set(EXCLUDE_FROM_ALL EXCLUDE_FROM_ALL)
 endif()
 ffi_target(linux einkfb_h.lua einkfb_decl.c ${EXCLUDE_FROM_ALL})
-ffi_target(linux inotify_h.lua inotify_decl.c ${EXCLUDE_FROM_ALL})
 ffi_target(linux linux_fb_h.lua linux_fb_decl.c ${EXCLUDE_FROM_ALL})
 ffi_target(linux linux_input_h.lua linux_input_decl.c ${EXCLUDE_FROM_ALL} ARGS -r ffi/posix_h)
 ffi_target(linux rtc_h.lua rtc_cdecl.c ${EXCLUDE_FROM_ALL} ARGS -r ffi/posix_h)
@@ -797,8 +799,8 @@ ffi_target(pocketbook mxcfb_pocketbook_h.lua mxcfb_pb_decl.c ${EXCLUDE_FROM_ALL}
 # posix
 set(VERSIONS
     android_arm android_arm64 android_x86 android_x64
-    linux_gnu_arm linux_gnu_arm64 linux_gnu_x64
-    linux_musl_arm linux_musl_arm64 linux_musl_x64
+    linux_gnu_arm linux_gnu_arm64 linux_gnu_x86 linux_gnu_x64
+    linux_musl_arm linux_musl_arm64 linux_musl_x86 linux_musl_x64
     macos
 )
 add_custom_target(

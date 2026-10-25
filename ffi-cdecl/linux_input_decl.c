@@ -3,6 +3,8 @@
 #define __signed__ signed
 #include <linux/fb.h>
 #include <linux/input.h>
+#include <stddef.h>
+#include <stdint.h>
 
 /*
 ** Custom values we use for ev.type, ev.code & ev.value in Input and Device HAL implementations
@@ -71,11 +73,17 @@ cdecl_const(ABS_MT_BLOB_ID)
 cdecl_const(ABS_MT_TRACKING_ID)
 cdecl_const(ABS_MT_PRESSURE)
 cdecl_const(ABS_MT_DISTANCE)
+#ifdef ABS_MT_TOOL_X
 cdecl_const(ABS_MT_TOOL_X)
+#endif
+#ifdef ABS_MT_TOOL_Y
 cdecl_const(ABS_MT_TOOL_Y)
+#endif
 
 cdecl_const(SW_ROTATE_LOCK)
+#ifdef SW_MACHINE_COVER
 cdecl_const(SW_MACHINE_COVER)
+#endif
 
 cdecl_const(MSC_GESTURE)
 cdecl_const(MSC_GYRO)
@@ -90,7 +98,74 @@ cdecl_const(DEVICE_ROTATED_CLOCKWISE)
 cdecl_const(DEVICE_ROTATED_UPSIDE_DOWN)
 cdecl_const(DEVICE_ROTATED_COUNTER_CLOCKWISE)
 
-cdecl_type(__u16)
-cdecl_type(__s32)
+cdecl_type_replace(__u16, uint16_t);
+cdecl_type_replace(__s32, int32_t);
 
-cdecl_struct(input_event)
+// NOTE: we can't use the raw definition for `struct input_event`:
+// when using musl, `time_t` is 64bits even on 32bits (e.g. ARMhf & x86),
+// making the layout of `struct input_event` when using `struct timeval`
+// incompatible with the kernel ABI.
+
+#ifdef DEBUG_INPUT_EVENT_CDECL
+cdecl_struct(input_event);
+#endif
+
+#if (__BITS_PER_LONG != 32 || !defined(__USE_TIME_BITS64)) && !defined(__KERNEL__)
+# ifdef DEBUG_INPUT_EVENT_CDECL
+#  warning input_event is using timeval
+# endif
+# ifndef input_event_sec
+#  define input_event_sec time.tv_sec
+# endif
+# ifndef input_event_usec
+#  define input_event_usec time.tv_usec
+# endif
+#else
+# ifdef DEBUG_INPUT_EVENT_CDECL
+#  warning input_event is not using timeval
+# endif
+#endif
+
+#ifdef DEBUG_INPUT_EVENT_CDECL
+cdecl_offsetof(real_input_event_sec, struct input_event, input_event_sec);
+cdecl_offsetof(real_input_event_usec, struct input_event, input_event_usec);
+cdecl_offsetof(real_input_event_type, struct input_event, type);
+cdecl_offsetof(real_input_event_code, struct input_event, code);
+cdecl_offsetof(real_input_event_value, struct input_event, value);
+cdecl_sizeof(real_input_event, struct input_event);
+#endif
+
+cdecl_out(struct_input_event, struct input_event {
+    struct {
+        long tv_sec;
+        long tv_usec;
+    } time;
+    uint16_t type;
+    uint16_t code;
+    int32_t value;
+};);
+
+enum {
+    OFFSETOF_input_event_sec = 0,
+    OFFSETOF_input_event_usec = OFFSETOF_input_event_sec + sizeof (long),
+    OFFSETOF_input_event_type = OFFSETOF_input_event_usec + sizeof (long),
+    OFFSETOF_input_event_code = OFFSETOF_input_event_type + sizeof (__u16),
+    OFFSETOF_input_event_value = OFFSETOF_input_event_code + sizeof (__u16),
+    SIZEOF_input_event = OFFSETOF_input_event_value + sizeof (__s32),
+};
+
+#ifdef DEBUG_INPUT_EVENT_CDECL
+cdecl_const(OFFSETOF_input_event_sec);
+cdecl_const(OFFSETOF_input_event_usec);
+cdecl_const(OFFSETOF_input_event_type);
+cdecl_const(OFFSETOF_input_event_code);
+cdecl_const(OFFSETOF_input_event_value);
+cdecl_const(SIZEOF_input_event);
+#else
+_Static_assert(offsetof (struct input_event, input_event_sec) == OFFSETOF_input_event_sec);
+_Static_assert(offsetof (struct input_event, input_event_usec) == OFFSETOF_input_event_usec);
+_Static_assert(offsetof (struct input_event, type) == OFFSETOF_input_event_type);
+_Static_assert(offsetof (struct input_event, code) == OFFSETOF_input_event_code);
+_Static_assert(offsetof (struct input_event, value) == OFFSETOF_input_event_value);
+_Static_assert(sizeof (struct input_event) == SIZEOF_input_event);
+#endif

@@ -412,6 +412,9 @@ else
   # Trim down binary size (when combined with linker `--gc-sections`).
   BASE_CFLAGS += -fdata-sections -ffunction-sections
 endif
+ifneq (,$(and $(EMULATE_READER),$(USE_M32)))
+  BASE_CFLAGS := -m32 $(BASE_CFLAGS)
+endif
 
 # Misc GCC tricks to ensure backward compatibility with the K2,
 # even when using a fairly recent TC (Linaro/MG).
@@ -473,11 +476,15 @@ else ifeq ($(ANDROID_ARCH), arm64)
 	ANDROID_ARM_ARCH:=-funwind-tables -fstack-protector -no-canonical-prefixes
 endif
 
-TARGET_MACHINE := $(shell $(CC) -dumpmachine)
+TARGET_MACHINE := $(shell $(CC) $(and $(EMULATE_READER),$(USE_M32),-m32) -dumpmachine)
 ifeq (,$(TARGET_MACHINE))
   ifneq (,$(filter-out distclean fetch%,$(or $(MAKECMDGOALS),all)))
     $(error failed to retrieve target machine)
   endif
+else ifneq (,$(and $(EMULATE_READER),$(USE_M32),$(filter gcc,$(CC)),$(filter x86_64-%,$(TARGET_MACHINE))))
+  # On x86_64, `gcc -m32 -dumpmachine` still returns `x86_64-pc-linux-gnu-debug`
+  # (unlike clang, which correctly change its output to `i386-pc-linux-gnu`).
+  TARGET_MACHINE := i386-pc-linux-gnu
 endif
 ifdef KODEBUG
   MACHINE = $(TARGET_MACHINE)-debug
@@ -1004,6 +1011,7 @@ set(USE_SDL            $(SDL))
 set(WANT_SIMD          $(WANT_SIMD))
 set(GLIBC_VERSION_MAX  $(GLIBC_VERSION_MAX))
 set(KEEP_DEBUG         $(and $(filter -g%,$(BASE_CFLAGS)),1))
+set(USE_M32            $(and $(EMULATE_READER),$(USE_M32)))
 
 # Platform flags.
 set(ANDROID        $(ANDROID))
@@ -1052,9 +1060,9 @@ strip = 'true'
 [built-in options]
 buildtype = '$(if $(KODEBUG),debug,release)'
 c_args = [$(patsubst %,'%'$(comma),$(CFLAGS))] + CPPFLAGS + CFLAGS
-c_link_args = [$(patsubst %,'%'$(comma),$(LDFLAGS))] + LDFLAGS
+c_link_args = c_args + [$(patsubst %,'%'$(comma),$(LDFLAGS))] + LDFLAGS
 cpp_args = [$(patsubst %,'%'$(comma),$(CXXFLAGS))] + CPPFLAGS + CXXFLAGS
-cpp_link_args = [$(patsubst %,'%'$(comma),$(LDFLAGS))] + LDFLAGS
+cpp_link_args = cpp_args + [$(patsubst %,'%'$(comma),$(LDFLAGS))] + LDFLAGS
 
 endef
 
