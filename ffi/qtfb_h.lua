@@ -35,12 +35,12 @@ struct UserInputContents {
   int x, y, d;
 };
 struct DeviceStateChangedContents {
-    int reason;
-    union {
-        struct {
-            int rotation;
-        } rotation;
-    };
+  int reason;
+  union {
+    struct {
+      int rotation;
+    } rotation;
+  };
 };
 struct ServerMessage {
   uint8_t type;
