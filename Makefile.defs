@@ -655,18 +655,10 @@ BUILD_ENTRYPOINT = $(CMAKE_DIR)/build.ninja
 
 ifdef EMULATE_READER
 	# Regular
-	REALCC:=$(HOSTCC)
-	REALCXX:=$(HOSTCXX)
-	HOSTCC:=$(strip $(CCACHE) $(HOSTCC))
-	HOSTCXX:=$(strip $(CCACHE) $(HOSTCXX))
 	CFLAGS+=$(TARGET_CFLAGS)
 	CXXFLAGS+=$(TARGET_CFLAGS)
 	export PKG_CONFIG_LIBDIR := $(abspath $(STAGING_DIR)/lib/pkgconfig)$(if $(PKG_CONFIG_LIBDIR),:$(PKG_CONFIG_LIBDIR))
 else
-	REALCC:=$(CC)
-	REALCXX:=$(CXX)
-	CC:=$(strip $(CCACHE) $(CC))
-	CXX:=$(strip $(CCACHE) $(CXX))
 	CFLAGS+=$(TARGET_CFLAGS) $(COMPAT_CFLAGS)
 	CXXFLAGS+=$(TARGET_CFLAGS) $(COMPAT_CXXFLAGS)
 	# Make sure we always have mmap() support.
@@ -822,18 +814,18 @@ set(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
 
 # C language.
 $(if $(CCACHE),set(CMAKE_C_COMPILER_LAUNCHER $(CCACHE)))
-set(CMAKE_C_COMPILER $(REALCC))
+set(CMAKE_C_COMPILER $(CC))
 set(CMAKE_C_FLAGS_INIT "$(strip $(CFLAGS))")
 
 # C++ language.
 $(if $(CCACHE),set(CMAKE_CXX_COMPILER_LAUNCHER $(CCACHE)))
-set(CMAKE_CXX_COMPILER $(REALCXX))
+set(CMAKE_CXX_COMPILER $(CXX))
 set(CMAKE_CXX_FLAGS_INIT "$(strip $(CXXFLAGS))")
 
 # OBJC language (for SDL3 on macOS).
 $(if $(CCACHE),set(CMAKE_OBJC_COMPILER_LAUNCHER $(CCACHE)))
 # NOTE: this needs to be an absolute path, or CMake >=3.21 blows a gasket…
-set(CMAKE_OBJC_COMPILER $(REALCC))
+set(CMAKE_OBJC_COMPILER $(CC))
 
 # Release only flags: prevent CMake from messing
 # with our custom optimization level and flags.
@@ -912,7 +904,7 @@ set(BASE_CFLAGS    "$(strip $(BASE_CFLAGS))")
 set(CCACHE         "$(strip $(CCACHE))")
 set(CHOST          $(CHOST))
 set(EMULATE_READER $(EMULATE_READER))
-set(HOSTCC         "$(strip $(HOSTCC))")
+set(HOSTCC         "$(strip $(CCACHE) $(HOSTCC))")
 set(HOSTCFLAGS     "$(strip $(HOSTCFLAGS))")
 set(HOSTCXX        "$(strip $(HOSTCXX))")
 set(LIB_EXT        $(LIB_EXT))
@@ -931,9 +923,9 @@ set(WGET $(WGET))
 list(PREPEND CMAKE_MODULE_PATH $${THIRDPARTY_DIR}/cmake_modules)
 
 # Convenience autotools-like variables.
-set(CC             "$(strip $(CC))")
+set(CC             "$(strip $(CCACHE) $(CC))")
 set(CFLAGS         "$(strip $(CFLAGS))")
-set(CXX            "$(strip $(CXX))")
+set(CXX            "$(strip $(CCACHE) $(CXX))")
 set(CXXFLAGS       "$(strip $(CXXFLAGS))")
 set(LD             "$(strip $(LD))")
 set(LDFLAGS        "$(strip $(LDFLAGS))")
@@ -991,9 +983,9 @@ CXXFLAGS = []
 LDFLAGS = ['-L$(abspath $(STAGING_DIR)/lib)']
 
 [binaries]
-c = [CCACHE, '$(strip $(REALCC))']
+c = [CCACHE, '$(strip $(CC))']
 # c_ld
-cpp = [CCACHE, '$(strip $(REALCXX))']
+cpp = [CCACHE, '$(strip $(CXX))']
 # cpp_ld
 ar = '$(strip $(AR))'
 nm = '$(strip $(NM))'
