@@ -116,7 +116,6 @@ jobs:
     executor: base
     resource_class: small
     environment:
-      BASH_ENV: "~/.bashrc"
       PARALLEL_JOBS: "1"
     steps:
       - checkout
@@ -141,7 +140,6 @@ jobs:
     executor: << parameters.executor >>
     resource_class: medium
     environment:
-      BASH_ENV: "~/.bashrc"
       CCACHE_MAXSIZE: << parameters.ccache_maxsize >>
       CLICOLOR_FORCE: "1"
       MAKEFLAGS: "PARALLEL_JOBS=3 OUTPUT_DIR=build"
