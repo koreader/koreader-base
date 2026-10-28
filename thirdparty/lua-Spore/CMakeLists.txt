@@ -8,7 +8,7 @@ append_tree_install_commands(INSTALL_CMD src/Spore common/Spore)
 
 external_project(
     DOWNLOAD GIT 0.4.2
-    https://framagit.org/fperrad/lua-Spore
+    https://gitlab.com/koreader/lua-Spore.git
     PATCH_FILES ${PATCH_FILES}
     INSTALL_COMMAND ${INSTALL_CMD}
 )
