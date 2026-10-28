@@ -41,7 +41,7 @@ else()
     # Add -m32 when cross compile on 64 bit host for 32bit target,
     # (Per: http://luajit.org/install.html#cross).
     execute_process(
-        COMMAND ${HOSTCC} -dumpmachine
+        COMMAND sh -c "${HOSTCC} -dumpmachine"
         OUTPUT_VARIABLE HOST_CC_MACHINE
     )
     if((HOST_CC_MACHINE MATCHES "^.+64-.+$") AND (NOT CMAKE_SYSTEM_PROCESSOR MATCHES ".+64$"))
@@ -56,7 +56,7 @@ else()
         CFLAGS=${BASE_CFLAGS}
         DYNAMIC_CC=${CC}
         LDFLAGS=
-        "HOST_CC=${CCACHE} ${HOST_CC}"
+        HOST_CC=${HOST_CC}
         HOST_CFLAGS=${HOSTCFLAGS}
         HOST_LDFLAGS=
         "TARGET_AR=${AR} rcus"
