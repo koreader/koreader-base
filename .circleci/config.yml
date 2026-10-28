@@ -153,7 +153,7 @@ jobs:
       # Restore / setup caches. {{{
       - run:
           name: Generate cache key
-          command: make TARGET= cache-key
+          command: make cache-key
       - restore_cache:
           name: Restore build directory
           keys:
