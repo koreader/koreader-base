@@ -1843,7 +1843,7 @@ function BB_mt.__index:invertRect(x, y, w, h)
                 -- Honor bpp because of BBRGB24...
                 for j = y, y+h-1 do
                     local p = ffi.cast(uint8pt, self.data) + self.stride*j + bpp*x
-                    for i = 0, bpp*(w-1) do
+                    for i = 0, bpp*w - 1 do
                         p[0] = bxor(p[0], 0xFF)
                         p = p+1
                     end
