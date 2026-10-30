@@ -28,15 +28,23 @@ end
 -- Upright, regular, text-size values for registered variation axes.
 -- A variable font's default instance may be at an axis end (e.g. Light or Black),
 -- so these are set explicitly. Other axes keep the font's default.
+-- Build a FreeType axis tag from its 4-char name (FT_MAKE_TAG: "wght" -> 0x77676874).
+local function ft_tag(s)
+    local a, b, c, d = s:byte(1, 4)
+    return bit.bor(bit.lshift(a, 24), bit.lshift(b, 16), bit.lshift(c, 8), d)
+end
+
 local PINNED_AXES = {
-    [0x77676874] = 400, -- wght
-    [0x77647468] = 100, -- wdth
-    [0x6974616C] = 0,   -- ital
-    [0x736C6E74] = 0,   -- slnt
-    [0x6F70737A] = 12,  -- opsz
+    [ft_tag("wght")] = 400, -- weight: Regular
+    [ft_tag("wdth")] = 100, -- width: Normal (percent)
+    [ft_tag("ital")] = 0,   -- italic: off
+    [ft_tag("slnt")] = 0,   -- slant: upright (degrees)
+    [ft_tag("opsz")] = 12,  -- optical size: text (points)
 }
 
 local function pin_variation_axes(face)
+    -- "Multiple masters" is FreeType's name for variable fonts
+    -- Static fonts have no axes, so there is nothing to pin.
     if bit.band(face.face_flags, C.FT_FACE_FLAG_MULTIPLE_MASTERS) == 0 then
         return
     end
