@@ -746,7 +746,7 @@ function BB_mt.__index:canUseCbbInverted(other)
         return false
     end
     local bbtype = self:getType()
-    return bbtype == other:getType() and (bbtype == TYPE_BB8 or bbtype == TYPE_BBRGB32)
+    return bbtype == other:getType() and (bbtype == TYPE_BB8 or bbtype == TYPE_BBRGB24 or bbtype == TYPE_BBRGB32)
 end
 
 -- Like BB_invert_rect, but also correct on padded rows and viewports, where a full-width rect isn't one contiguous block.
@@ -1275,9 +1275,107 @@ function BB8_mt.__index:blitTo8(dest, dest_x, dest_y, offs_x, offs_y, width, hei
         end
     end
 end
+function BB8_mt.__index:blitToRGB24(dest, dest_x, dest_y, offs_x, offs_y, width, height, setter, set_param)
+    if self:getRotation() ~= 0 or dest:getRotation() ~= 0 then
+        return self:blitDefault(dest, dest_x, dest_y, offs_x, offs_y, width, height, setter, set_param)
+    end
+
+    if setter == dest.setPixel then
+        local inv = self:getInverse() ~= dest:getInverse()
+        local o_y = offs_y
+        for y = dest_y, dest_y+height-1 do
+            local srcp = ffi.cast(uint8pt_rodata, self.data) + self.stride*o_y + offs_x
+            local dstp = ffi.cast(P_ColorRGB24, ffi.cast(uint8pt, dest.data) + dest.stride*y) + dest_x
+            if inv then
+                for i = 0, width-1 do
+                    local v = bxor(srcp[i], 0xFF)
+                    dstp[i].r = v
+                    dstp[i].g = v
+                    dstp[i].b = v
+                end
+            else
+                for i = 0, width-1 do
+                    local v = srcp[i]
+                    dstp[i].r = v
+                    dstp[i].g = v
+                    dstp[i].b = v
+                end
+            end
+            o_y = o_y + 1
+        end
+    elseif (setter == dest.setPixelColorize or setter == dest.setPixelColorizeRGB32) and self:getInverse() == 0 then
+        -- NOTE: colorblitFrom/colorblitFromRGB32 already pre-inverts set_param when dest:getInverse() == 1.
+        local cr, cg, cb = set_param:getR(), set_param:getG(), set_param:getB()
+        local o_y = offs_y
+        for y = dest_y, dest_y+height-1 do
+            local srcp = ffi.cast(uint8pt_rodata, self.data) + self.stride*o_y + offs_x
+            local dstp = ffi.cast(P_ColorRGB24, ffi.cast(uint8pt, dest.data) + dest.stride*y) + dest_x
+            for i = 0, width-1 do
+                local alpha = srcp[i]
+                if alpha == 0xFF then
+                    dstp[i].r = cr
+                    dstp[i].g = cg
+                    dstp[i].b = cb
+                elseif alpha ~= 0 then
+                    local ainv = bxor(alpha, 0xFF)
+                    dstp[i].r = div255(dstp[i].r * ainv + cr * alpha)
+                    dstp[i].g = div255(dstp[i].g * ainv + cg * alpha)
+                    dstp[i].b = div255(dstp[i].b * ainv + cb * alpha)
+                end
+            end
+            o_y = o_y + 1
+        end
+    else
+        return self:blitDefault(dest, dest_x, dest_y, offs_x, offs_y, width, height, setter, set_param)
+    end
+end
+function BB8A_mt.__index:blitToRGB24(dest, dest_x, dest_y, offs_x, offs_y, width, height, setter, set_param)
+    if self:getRotation() ~= 0 or dest:getRotation() ~= 0 or self:getInverse() ~= 0 or dest:getInverse() ~= 0 then
+        return self:blitDefault(dest, dest_x, dest_y, offs_x, offs_y, width, height, setter, set_param)
+    end
+
+    if setter == dest.setPixel then
+        local o_y = offs_y
+        for y = dest_y, dest_y+height-1 do
+            local srcp = ffi.cast(P_Color8A, ffi.cast(uint8pt_rodata, self.data) + self.stride*o_y) + offs_x
+            local dstp = ffi.cast(P_ColorRGB24, ffi.cast(uint8pt, dest.data) + dest.stride*y) + dest_x
+            for i = 0, width-1 do
+                local v = srcp[i].a
+                dstp[i].r = v
+                dstp[i].g = v
+                dstp[i].b = v
+            end
+            o_y = o_y + 1
+        end
+    elseif setter == dest.setPixelBlend then
+        local o_y = offs_y
+        for y = dest_y, dest_y+height-1 do
+            local srcp = ffi.cast(P_Color8A, ffi.cast(uint8pt_rodata, self.data) + self.stride*o_y) + offs_x
+            local dstp = ffi.cast(P_ColorRGB24, ffi.cast(uint8pt, dest.data) + dest.stride*y) + dest_x
+            for i = 0, width-1 do
+                local c = srcp[i]
+                local alpha = c.alpha
+                if alpha == 0xFF then
+                    dstp[i].r = c.a
+                    dstp[i].g = c.a
+                    dstp[i].b = c.a
+                elseif alpha ~= 0 then
+                    local ainv = bxor(alpha, 0xFF)
+                    local sa = c.a * alpha
+                    dstp[i].r = div255(dstp[i].r * ainv + sa)
+                    dstp[i].g = div255(dstp[i].g * ainv + sa)
+                    dstp[i].b = div255(dstp[i].b * ainv + sa)
+                end
+            end
+            o_y = o_y + 1
+        end
+    else
+        return self:blitDefault(dest, dest_x, dest_y, offs_x, offs_y, width, height, setter, set_param)
+    end
+end
 function BBRGB24_mt.__index:blitToRGB24(dest, dest_x, dest_y, offs_x, offs_y, width, height, setter, set_param)
-    -- We can only do fast copy for simple blitting with no processing (setPixel, no rota, no invert)
-    if setter ~= self.setPixel or self:getRotation() ~= 0 or dest:getRotation() ~= 0 or (self:getInverse() ~= dest:getInverse()) then
+    -- We can only do fast copy for simple blitting with no rotation
+    if setter ~= self.setPixel or self:getRotation() ~= 0 or dest:getRotation() ~= 0 then
         return self:blitDefault(dest, dest_x, dest_y, offs_x, offs_y, width, height, setter, set_param)
     end
 
@@ -1299,6 +1397,53 @@ function BBRGB24_mt.__index:blitToRGB24(dest, dest_x, dest_y, offs_x, offs_y, wi
             ffi.copy(dstp, srcp, row_bytes)
             o_y = o_y + 1
         end
+    end
+
+    if self:getInverse() ~= dest:getInverse() then
+        dest:invertRect(dest_x, dest_y, width, height)
+    end
+end
+function BBRGB32_mt.__index:blitToRGB24(dest, dest_x, dest_y, offs_x, offs_y, width, height, setter, set_param)
+    if self:getRotation() ~= 0 or dest:getRotation() ~= 0 or self:getInverse() ~= 0 or dest:getInverse() ~= 0 then
+        return self:blitDefault(dest, dest_x, dest_y, offs_x, offs_y, width, height, setter, set_param)
+    end
+
+    if setter == dest.setPixel then
+        local o_y = offs_y
+        for y = dest_y, dest_y+height-1 do
+            local srcp = ffi.cast(P_ColorRGB32, ffi.cast(uint8pt_rodata, self.data) + self.stride*o_y) + offs_x
+            local dstp = ffi.cast(P_ColorRGB24, ffi.cast(uint8pt, dest.data) + dest.stride*y) + dest_x
+            for i = 0, width-1 do
+                local c = srcp[i]
+                dstp[i].r = c.r
+                dstp[i].g = c.g
+                dstp[i].b = c.b
+            end
+            o_y = o_y + 1
+        end
+    elseif setter == dest.setPixelBlend then
+        local o_y = offs_y
+        for y = dest_y, dest_y+height-1 do
+            local srcp = ffi.cast(P_ColorRGB32, ffi.cast(uint8pt_rodata, self.data) + self.stride*o_y) + offs_x
+            local dstp = ffi.cast(P_ColorRGB24, ffi.cast(uint8pt, dest.data) + dest.stride*y) + dest_x
+            for i = 0, width-1 do
+                local c = srcp[i]
+                local alpha = c.alpha
+                if alpha == 0xFF then
+                    dstp[i].r = c.r
+                    dstp[i].g = c.g
+                    dstp[i].b = c.b
+                elseif alpha ~= 0 then
+                    local ainv = bxor(alpha, 0xFF)
+                    dstp[i].r = div255(dstp[i].r * ainv + c.r * alpha)
+                    dstp[i].g = div255(dstp[i].g * ainv + c.g * alpha)
+                    dstp[i].b = div255(dstp[i].b * ainv + c.b * alpha)
+                end
+            end
+            o_y = o_y + 1
+        end
+    else
+        return self:blitDefault(dest, dest_x, dest_y, offs_x, offs_y, width, height, setter, set_param)
     end
 end
 function BBRGB32_mt.__index:blitToRGB32(dest, dest_x, dest_y, offs_x, offs_y, width, height, setter, set_param)
@@ -1636,7 +1781,7 @@ function BB_mt.__index:invertRect(x, y, w, h)
 
         -- We check against the BB's unrotated coordinates (i.e., self.w and not self:getWidth()),
         -- as our memory region has a fixed layout, too!
-        if x == 0 and w == self.w then
+        if x == 0 and w == self.w and self.pixel_stride == w and self.stride == w * bpp then
             -- Single step for contiguous scanlines
             --print("Full invertRect")
             if bbtype == TYPE_BBRGB32 then
@@ -1663,7 +1808,7 @@ function BB_mt.__index:invertRect(x, y, w, h)
             else
                 -- Should only be BBRGB24 & BB8 left
                 local p = ffi.cast(uint8pt, self.data) + self.stride*y
-                for i = 1, self.stride*h do
+                for i = 1, w*bpp*h do
                     p[0] = bxor(p[0], 0xFF)
                     p = p+1
                 end
@@ -1699,7 +1844,7 @@ function BB_mt.__index:invertRect(x, y, w, h)
                 -- Honor bpp because of BBRGB24...
                 for j = y, y+h-1 do
                     local p = ffi.cast(uint8pt, self.data) + self.stride*j + bpp*x
-                    for i = 0, bpp*(w-1) do
+                    for i = 0, bpp*w - 1 do
                         p[0] = bxor(p[0], 0xFF)
                         p = p+1
                     end
@@ -1892,7 +2037,7 @@ function BB_mt.__index:paintRectRGB32(x, y, w, h, color, setter)
     else
         -- We can only do fast filling when there's no complex processing involved (i.e., simple setPixel only)
         local bbtype = self:getType()
-        if setter == self.setPixel and bbtype ~= TYPE_BBRGB24 then
+        if setter == self.setPixel then
             -- Handle rotation...
             x, y, w, h = self:getPhysicalRect(x, y, w, h)
 
@@ -1909,6 +2054,33 @@ function BB_mt.__index:paintRectRGB32(x, y, w, h, color, setter)
                     for i = 1, self.pixel_stride*h do
                         p[0] = src
                         p = p+1
+                    end
+                elseif bbtype == TYPE_BBRGB24 then
+                    local src = c:getColorRGB24()
+                    if src.r == src.g and src.g == src.b then
+                        if self.stride == w * 3 then
+                            local p = ffi.cast(uint8pt, self.data) + self.stride*y
+                            ffi.fill(p, self.stride*h, src.r)
+                        else
+                            for j = y, y+h-1 do
+                                local p = ffi.cast(uint8pt, self.data) + self.stride*j
+                                ffi.fill(p, w*3, src.r)
+                            end
+                        end
+                    elseif self.stride == w * 3 then
+                        local p = ffi.cast(P_ColorRGB24, ffi.cast(uint8pt, self.data) + self.stride*y)
+                        for i = 1, w*h do
+                            p[0] = src
+                            p = p+1
+                        end
+                    else
+                        for j = y, y+h-1 do
+                            local p = ffi.cast(P_ColorRGB24, ffi.cast(uint8pt, self.data) + self.stride*j)
+                            for i = 0, w-1 do
+                                p[0] = src
+                                p = p+1
+                            end
+                        end
                     end
                 elseif bbtype == TYPE_BBRGB16 then
                     local src = c:getColorRGB16()
@@ -1939,6 +2111,22 @@ function BB_mt.__index:paintRectRGB32(x, y, w, h, color, setter)
                         for i = 0, w-1 do
                             p[0] = src
                             p = p+1
+                        end
+                    end
+                elseif bbtype == TYPE_BBRGB24 then
+                    local src = c:getColorRGB24()
+                    if src.r == src.g and src.g == src.b then
+                        for j = y, y+h-1 do
+                            local p = ffi.cast(uint8pt, self.data) + self.stride*j + x*3
+                            ffi.fill(p, w*3, src.r)
+                        end
+                    else
+                        for j = y, y+h-1 do
+                            local p = ffi.cast(P_ColorRGB24, ffi.cast(uint8pt, self.data) + self.stride*j) + x
+                            for i = 0, w-1 do
+                                p[0] = src
+                                p = p+1
+                            end
                         end
                     end
                 elseif bbtype == TYPE_BBRGB16 then
