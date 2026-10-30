@@ -1808,7 +1808,7 @@ function BB_mt.__index:invertRect(x, y, w, h)
             else
                 -- Should only be BBRGB24 & BB8 left
                 local p = ffi.cast(uint8pt, self.data) + self.stride*y
-                for i = 1, self.stride*h do
+                for i = 1, w*bpp*h do
                     p[0] = bxor(p[0], 0xFF)
                     p = p+1
                 end
