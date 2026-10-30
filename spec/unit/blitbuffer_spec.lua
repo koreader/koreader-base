@@ -577,6 +577,110 @@ describe("Blitbuffer unit tests", function()
             assert.are.equal(0x00, dst:getPixel(4, 1).a)
             assert.are.equal(0x00, dst:getPixel(0, 3).a)
         end)
+        it("should invert BBRGB24 pixels in both directions (full and partial width)", function()
+            local orig_cbb = Blitbuffer:getUseCBB()
+            for _, use_cbb in ipairs({ orig_cbb, false }) do
+                Blitbuffer:setUseCBB(use_cbb)
+                for _, invert_src in ipairs({ false, true }) do
+                    -- Full-width blit
+                    local src = Blitbuffer.new(4, 4, Blitbuffer.TYPE_BBRGB24)
+                    src:setPixel(1, 2, Blitbuffer.ColorRGB24(0x10, 0x20, 0x30))
+                    src:setPixel(3, 2, Blitbuffer.ColorRGB24(0x40, 0x50, 0x60))
+                    local dst = Blitbuffer.new(4, 4, Blitbuffer.TYPE_BBRGB24)
+                    if invert_src then
+                        src:setInverse(1)
+                    else
+                        dst:setInverse(1)
+                    end
+                    dst:blitFrom(src)
+                    dst:setInverse(0)
+                    local c1 = dst:getPixel(1, 2)
+                    local c2 = dst:getPixel(3, 2)
+                    local c0 = dst:getPixel(0, 0)
+                    assert.are.same({0xEF, 0xDF, 0xCF}, {c1.r, c1.g, c1.b})
+                    assert.are.same({0xBF, 0xAF, 0x9F}, {c2.r, c2.g, c2.b})
+                    assert.are.same({0xFF, 0xFF, 0xFF}, {c0.r, c0.g, c0.b})
+
+                    -- Partial-width blit (checks all 3 bytes of the right-edge pixel)
+                    local p_src = Blitbuffer.new(4, 4, Blitbuffer.TYPE_BBRGB24)
+                    p_src:setPixel(1, 0, Blitbuffer.ColorRGB24(0x11, 0x22, 0x33))
+                    local p_dst = Blitbuffer.new(4, 4, Blitbuffer.TYPE_BBRGB24)
+                    if invert_src then
+                        p_src:setInverse(1)
+                    else
+                        p_dst:setInverse(1)
+                    end
+                    p_dst:blitFrom(p_src, 1, 1, 0, 0, 2, 2)
+                    p_dst:setInverse(0)
+                    local edge = p_dst:getPixel(2, 1)
+                    local inside = p_dst:getPixel(1, 1)
+                    local outside = p_dst:getPixel(3, 1)
+                    assert.are.same({0xEE, 0xDD, 0xCC}, {edge.r, edge.g, edge.b})
+                    assert.are.same({0xFF, 0xFF, 0xFF}, {inside.r, inside.g, inside.b})
+                    assert.are.same({0x00, 0x00, 0x00}, {outside.r, outside.g, outside.b})
+                end
+            end
+            Blitbuffer:setUseCBB(orig_cbb)
+        end)
+
+        it("should invert every BBRGB24 pixel of a padded destination", function()
+            local orig_cbb = Blitbuffer:getUseCBB()
+            for _, use_cbb in ipairs({ orig_cbb, false }) do
+                Blitbuffer:setUseCBB(use_cbb)
+                for _, invert_src in ipairs({ false, true }) do
+                    local src = Blitbuffer.new(4, 2, Blitbuffer.TYPE_BBRGB24)
+                    local dst = Blitbuffer.new(4, 2, Blitbuffer.TYPE_BBRGB24, nil, 15, 5)
+                    if invert_src then
+                        src:setInverse(1)
+                    else
+                        dst:setInverse(1)
+                    end
+                    dst:blitFrom(src)
+                    dst:setInverse(0)
+                    for y = 0, 1 do
+                        for x = 0, 3 do
+                            local c = dst:getPixel(x, y)
+                            assert.are.same({0xFF, 0xFF, 0xFF}, {c.r, c.g, c.b})
+                        end
+                    end
+                end
+            end
+            Blitbuffer:setUseCBB(orig_cbb)
+        end)
+
+        it("should stay within a full-width BBRGB24 viewport", function()
+            local orig_cbb = Blitbuffer:getUseCBB()
+            for _, use_cbb in ipairs({ orig_cbb, false }) do
+                Blitbuffer:setUseCBB(use_cbb)
+                for _, invert_src in ipairs({ false, true }) do
+                    local src = Blitbuffer.new(4, 2, Blitbuffer.TYPE_BBRGB24)
+                    local dst = Blitbuffer.new(6, 4, Blitbuffer.TYPE_BBRGB24)
+                    local viewport = dst:viewport(0, 1, 4, 2)
+                    if invert_src then
+                        src:setInverse(1)
+                    else
+                        viewport:setInverse(1)
+                    end
+                    viewport:blitFrom(src)
+                    local inside = dst:getPixel(3, 2)
+                    local right_outside = dst:getPixel(4, 1)
+                    local bottom_outside = dst:getPixel(0, 3)
+                    assert.are.same({0xFF, 0xFF, 0xFF}, {inside.r, inside.g, inside.b})
+                    assert.are.same({0x00, 0x00, 0x00}, {right_outside.r, right_outside.g, right_outside.b})
+                    assert.are.same({0x00, 0x00, 0x00}, {bottom_outside.r, bottom_outside.g, bottom_outside.b})
+                end
+
+                -- Also verify gray paintRectRGB32 on a narrower viewport does not overrun stride
+                local dst = Blitbuffer.new(6, 4, Blitbuffer.TYPE_BBRGB24)
+                local viewport = dst:viewport(0, 1, 4, 2)
+                viewport:paintRectRGB32(0, 0, 4, 2, Blitbuffer.ColorRGB32(0x77, 0x77, 0x77, 0xFF))
+                local inside_gray = dst:getPixel(3, 2)
+                local outside_gray = dst:getPixel(4, 1)
+                assert.are.same({0x77, 0x77, 0x77}, {inside_gray.r, inside_gray.g, inside_gray.b})
+                assert.are.same({0x00, 0x00, 0x00}, {outside_gray.r, outside_gray.g, outside_gray.b})
+            end
+            Blitbuffer:setUseCBB(orig_cbb)
+        end)
     end)
 end)
 
