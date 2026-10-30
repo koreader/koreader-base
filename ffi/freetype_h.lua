@@ -131,6 +131,9 @@ typedef struct FT_StreamRec_ *FT_Stream;
 typedef struct FT_SubGlyphRec_ *FT_SubGlyph;
 typedef struct FT_Vector_ FT_Vector;
 typedef struct TT_OS2_ TT_OS2;
+typedef struct FT_Var_Axis_ FT_Var_Axis;
+typedef struct FT_Var_Named_Style_ FT_Var_Named_Style;
+typedef struct FT_MM_Var_ FT_MM_Var;
 struct FT_BBox_ {
   FT_Pos xMin, yMin;
   FT_Pos xMax, yMax;
@@ -295,6 +298,26 @@ struct TT_OS2_ {
   FT_UShort usLowerOpticalPointSize;
   FT_UShort usUpperOpticalPointSize;
 };
+struct FT_Var_Axis_ {
+  FT_String *name;
+  FT_Fixed minimum;
+  FT_Fixed def;
+  FT_Fixed maximum;
+  FT_ULong tag;
+  FT_UInt strid;
+};
+struct FT_Var_Named_Style_ {
+  FT_Fixed *coords;
+  FT_UInt strid;
+  FT_UInt psid;
+};
+struct FT_MM_Var_ {
+  FT_UInt num_axis;
+  FT_UInt num_designs;
+  FT_UInt num_namedstyles;
+  FT_Var_Axis *axis;
+  FT_Var_Named_Style *namedstyle;
+};
 FT_Error FT_Done_Library(FT_Library);
 FT_Error FT_Init_FreeType(FT_Library *);
 FT_Error FT_Reference_Library(FT_Library);
@@ -316,4 +339,7 @@ FT_Long FT_MulFix(FT_Long, FT_Long);
 FT_Error FT_Outline_Embolden(FT_Outline *, FT_Pos);
 void FT_Outline_Translate(const FT_Outline *, FT_Pos, FT_Pos);
 void *FT_Get_Sfnt_Table(FT_Face, FT_Sfnt_Tag);
+FT_Error FT_Get_MM_Var(FT_Face, FT_MM_Var **);
+FT_Error FT_Done_MM_Var(FT_Library, FT_MM_Var *);
+FT_Error FT_Set_Var_Design_Coordinates(FT_Face, FT_UInt, FT_Fixed *);
 ]]

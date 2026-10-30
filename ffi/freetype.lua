@@ -25,6 +25,46 @@ local function done_face(face)
     ft2.FT_Done_Library(lib)
 end
 
+-- Upright, regular, text-size values for registered variation axes.
+-- A variable font's default instance may be at an axis end (e.g. Light or Black),
+-- so these are set explicitly. Other axes keep the font's default.
+local PINNED_AXES = {
+    [0x77676874] = 400, -- wght
+    [0x77647468] = 100, -- wdth
+    [0x6974616C] = 0,   -- ital
+    [0x736C6E74] = 0,   -- slnt
+    [0x6F70737A] = 12,  -- opsz
+}
+
+local function pin_variation_axes(face)
+    if bit.band(face.face_flags, C.FT_FACE_FLAG_MULTIPLE_MASTERS) == 0 then
+        return
+    end
+    local mmvarpt = ffi.new("FT_MM_Var*[1]")
+    if ft2.FT_Get_MM_Var(face, mmvarpt) ~= 0 then
+        return
+    end
+    local mmvar = mmvarpt[0]
+    local num_axis = mmvar.num_axis
+    local coords = ffi.new("FT_Fixed[?]", num_axis)
+    for i = 0, num_axis - 1 do
+        local axis = mmvar.axis[i]
+        local value = PINNED_AXES[tonumber(axis.tag)]
+        if value then
+            -- FT_Fixed is 16.16; clamp to the face's own range.
+            local v = value * 65536
+            local min, max = tonumber(axis.minimum), tonumber(axis.maximum)
+            if v < min then v = min end
+            if v > max then v = max end
+            coords[i] = v
+        else
+            coords[i] = axis.def
+        end
+    end
+    ft2.FT_Set_Var_Design_Coordinates(face, num_axis, coords)
+    ft2.FT_Done_MM_Var(freetypelib, mmvar)
+end
+
 local function new_face(filename, faceindex)
     local facept = ffi.new("FT_Face[1]")
     local err = ft2.FT_New_Face(freetypelib, filename, faceindex, facept)
@@ -32,6 +72,10 @@ local function new_face(filename, faceindex)
         error("Failed to load font '"..filename.."', freetype error code: "..err)
     end
     local face = ffi.gc(facept[0], done_face)
+    -- faceindex -1 only probes the face count.
+    if faceindex >= 0 then
+        pin_variation_axes(face)
+    end
     ft2.FT_Reference_Library(freetypelib)
     face.generic.data = freetypelib
     return face

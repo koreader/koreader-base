@@ -1,4 +1,5 @@
 #include <freetype/freetype.h>
+#include <freetype/ftmm.h>
 #include <freetype/ftmodapi.h>
 #include <freetype/ftoutln.h>
 #include <freetype/ftsizes.h>
@@ -101,6 +102,9 @@ cdecl_type(FT_Slot_Internal)
 cdecl_type(FT_Stream)
 cdecl_type(FT_SubGlyph)
 cdecl_type(FT_Vector)
+cdecl_type(FT_Var_Axis)
+cdecl_type(FT_Var_Named_Style)
+cdecl_type(FT_MM_Var)
 cdecl_type(TT_OS2)
 
 cdecl_struct(FT_BBox_)
@@ -116,6 +120,9 @@ cdecl_struct(FT_Size_Metrics_)
 cdecl_struct(FT_SizeRec_)
 cdecl_struct(FT_FaceRec_)
 cdecl_struct(TT_OS2_)
+cdecl_struct(FT_Var_Axis_)
+cdecl_struct(FT_Var_Named_Style_)
+cdecl_struct(FT_MM_Var_)
 
 cdecl_func(FT_Done_Library)
 cdecl_func(FT_Init_FreeType)
@@ -146,3 +153,7 @@ cdecl_func(FT_Outline_Embolden)
 cdecl_func(FT_Outline_Translate)
 
 cdecl_func(FT_Get_Sfnt_Table)
+
+cdecl_func(FT_Get_MM_Var)
+cdecl_func(FT_Done_MM_Var)
+cdecl_func(FT_Set_Var_Design_Coordinates)
