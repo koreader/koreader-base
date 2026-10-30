@@ -1304,6 +1304,7 @@ function BB8_mt.__index:blitToRGB24(dest, dest_x, dest_y, offs_x, offs_y, width,
             o_y = o_y + 1
         end
     elseif (setter == dest.setPixelColorize or setter == dest.setPixelColorizeRGB32) and self:getInverse() == 0 then
+        -- NOTE: colorblitFrom/colorblitFromRGB32 already pre-inverts set_param when dest:getInverse() == 1.
         local cr, cg, cb = set_param:getR(), set_param:getG(), set_param:getB()
         local o_y = offs_y
         for y = dest_y, dest_y+height-1 do
@@ -1780,7 +1781,7 @@ function BB_mt.__index:invertRect(x, y, w, h)
 
         -- We check against the BB's unrotated coordinates (i.e., self.w and not self:getWidth()),
         -- as our memory region has a fixed layout, too!
-        if x == 0 and w == self.w then
+        if x == 0 and w == self.w and self.pixel_stride == w and self.stride == w * bpp then
             -- Single step for contiguous scanlines
             --print("Full invertRect")
             if bbtype == TYPE_BBRGB32 then
@@ -2057,8 +2058,15 @@ function BB_mt.__index:paintRectRGB32(x, y, w, h, color, setter)
                 elseif bbtype == TYPE_BBRGB24 then
                     local src = c:getColorRGB24()
                     if src.r == src.g and src.g == src.b then
-                        local p = ffi.cast(uint8pt, self.data) + self.stride*y
-                        ffi.fill(p, self.stride*h, src.r)
+                        if self.stride == w * 3 then
+                            local p = ffi.cast(uint8pt, self.data) + self.stride*y
+                            ffi.fill(p, self.stride*h, src.r)
+                        else
+                            for j = y, y+h-1 do
+                                local p = ffi.cast(uint8pt, self.data) + self.stride*j
+                                ffi.fill(p, w*3, src.r)
+                            end
+                        end
                     elseif self.stride == w * 3 then
                         local p = ffi.cast(P_ColorRGB24, ffi.cast(uint8pt, self.data) + self.stride*y)
                         for i = 1, w*h do
