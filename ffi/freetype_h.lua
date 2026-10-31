@@ -130,10 +130,10 @@ typedef struct FT_Slot_InternalRec_ *FT_Slot_Internal;
 typedef struct FT_StreamRec_ *FT_Stream;
 typedef struct FT_SubGlyphRec_ *FT_SubGlyph;
 typedef struct FT_Vector_ FT_Vector;
-typedef struct TT_OS2_ TT_OS2;
 typedef struct FT_Var_Axis_ FT_Var_Axis;
 typedef struct FT_Var_Named_Style_ FT_Var_Named_Style;
 typedef struct FT_MM_Var_ FT_MM_Var;
+typedef struct TT_OS2_ TT_OS2;
 struct FT_BBox_ {
   FT_Pos xMin, yMin;
   FT_Pos xMax, yMax;
