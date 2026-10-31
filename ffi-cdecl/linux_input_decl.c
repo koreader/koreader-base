@@ -3,6 +3,7 @@
 #define __signed__ signed
 #include <linux/fb.h>
 #include <linux/input.h>
+#include <stdint.h>
 
 /*
 ** Custom values we use for ev.type, ev.code & ev.value in Input and Device HAL implementations
@@ -90,7 +91,7 @@ cdecl_const(DEVICE_ROTATED_CLOCKWISE)
 cdecl_const(DEVICE_ROTATED_UPSIDE_DOWN)
 cdecl_const(DEVICE_ROTATED_COUNTER_CLOCKWISE)
 
-cdecl_type(__u16)
-cdecl_type(__s32)
+cdecl_type_replace(__u16, uint16_t);
+cdecl_type_replace(__s32, int32_t);
 
 cdecl_struct(input_event)
