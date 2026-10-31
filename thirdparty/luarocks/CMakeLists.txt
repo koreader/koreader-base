@@ -12,7 +12,7 @@ list(APPEND BUILD_CMD COMMAND make)
 list(APPEND INSTALL_CMD COMMAND make install)
 
 # Try to use our compilation flags.
-set(LD ${CC})
+set(LD "${CC} ${CFLAGS} ${LDFLAGS}")
 set(LIBFLAGS ${DYNLIB_LDFLAGS})
 foreach(VAR CC CFLAGS LD LIBFLAGS)
     list(APPEND INSTALL_CMD COMMAND ${STAGING_DIR}/bin/luarocks config -- ${VAR} "${${VAR}}")
