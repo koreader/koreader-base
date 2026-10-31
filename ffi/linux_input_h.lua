@@ -66,7 +66,10 @@ static const unsigned DEVICE_ROTATED_CLOCKWISE = 1;
 static const unsigned DEVICE_ROTATED_UPSIDE_DOWN = 2;
 static const unsigned DEVICE_ROTATED_COUNTER_CLOCKWISE = 3;
 struct input_event {
-  struct timeval time;
+  struct {
+    long tv_sec;
+    long tv_usec;
+  } time;
   uint16_t type;
   uint16_t code;
   int32_t value;
