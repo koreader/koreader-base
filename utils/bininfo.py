@@ -53,6 +53,7 @@ class LibraryInfo:
 
 def elfinfo(library, readelf=None, full=False):
     cmd = [
+        'env', 'LC_ALL=C',
         readelf or which('readelf', 'llvm-readelf'),
         '--dyn-syms',
         '--dynamic',
