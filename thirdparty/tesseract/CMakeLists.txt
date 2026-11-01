@@ -3,6 +3,7 @@ list(APPEND PATCH_FILES
     no_debug_fonts.patch
     trim_the_fat.patch
     simd_kill_switch.patch
+    fix_valgrind_uninitialized_warning.patch
 )
 
 list(APPEND CMAKE_ARGS
