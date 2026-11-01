@@ -27,8 +27,8 @@ list(APPEND BUILD_CMD COMMAND ninja)
 list(APPEND INSTALL_CMD COMMAND ${CMAKE_COMMAND} --install .)
 
 external_project(
-    DOWNLOAD URL 561b6b104238fffa1d00362ac72ea397
-    https://github.com/tesseract-ocr/tesseract/archive/refs/tags/5.5.3.tar.gz
+    DOWNLOAD URL ad5c5e9ecca2a6c7f71c31b2b400d92b
+    https://github.com/tesseract-ocr/tesseract/archive/refs/tags/5.5.4.tar.gz
     PATCH_FILES ${PATCH_FILES}
     CMAKE_ARGS ${CMAKE_ARGS}
     BUILD_COMMAND ${BUILD_CMD}
