@@ -640,6 +640,9 @@ function(ffi_target NAME OUTPUT INPUT)
         -p --env-only
         -I ${STAGING_DIR}/include
     )
+    if(USE_M32)
+        list(APPEND FFI_CDECL_FLAGS -f -m32)
+    endif()
     if(APPLE)
         # See note in Makefile.defs.
         list(APPEND FFI_CDECL_FLAGS -f -idirafter,/usr/local/include)
