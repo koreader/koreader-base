@@ -1,10 +1,13 @@
 #!/usr/bin/env python3
 
+import ast
+import collections
 import dataclasses
 import itertools
 import functools
 import os
 import platform
+import re
 import shutil
 import subprocess
 import sys
@@ -30,26 +33,42 @@ def which(*names):
     raise FileNotFoundError(names[0])
 
 
+class Symbol(collections.namedtuple('Symbol', 'name value kind bind size')):
+
+    def __str__(self):
+        return '{1:016x} {4:>6d} {2:6} {3:6} {0}'.format(*self)
+
 @dataclasses.dataclass
 class LibraryInfo:
     soname    : str  = None
     needed    : list = dataclasses.field(default_factory=list)
     rpath     : str  = None
     runpath   : str  = None
-    provides  : list = dataclasses.field(default_factory=set)
-    unresolved: list = dataclasses.field(default_factory=set)
+    provides  : dict = dataclasses.field(default_factory=dict)
+    unresolved: dict = dataclasses.field(default_factory=dict)
     upneeded  : list = dataclasses.field(default_factory=list)
     reexport  : list = dataclasses.field(default_factory=list)
+    symbols   : dict = dataclasses.field(default_factory=dict)
 
 
-def elfinfo(library, readelf=None):
-    output = iter(subprocess.check_output((
+def elfinfo(library, readelf=None, full=False):
+    cmd = [
         readelf or which('readelf', 'llvm-readelf'),
-        '--dyn-syms', '--dynamic', '--wide', library,
-    )).decode().strip().splitlines())
-    def skip_until(prefix):
+        '--dyn-syms',
+        '--dynamic',
+        '--wide',
+    ]
+    if full:
+        cmd.extend((
+            '--process-links',
+            '--syms',
+        ))
+    cmd.append(library)
+    output = iter(subprocess.check_output(cmd).decode().strip().splitlines())
+    def skip_until(pattern):
+        rx = re.compile(pattern)
         for line in output:
-            if line.startswith(prefix):
+            if rx.search(line):
                 return
     # Dynamic section at offset 0x4b7b60 contains 33 entries:
     #   Tag        Type                         Name/Value
@@ -59,9 +78,8 @@ def elfinfo(library, readelf=None):
     # 0x000000000000000c (INIT)               0x4b000
     # 0x000000000000000d (FINI)               0x29e154
     # 0x0000000000000019 (INIT_ARRAY)         0x4a5e10
-    skip_until('Dynamic section ')
-    # Skip headers.
-    next(output)
+    skip_until(r'^Dynamic section ')
+    next(output) # Skip headers.
     info = LibraryInfo()
     for line in itertools.takewhile(bool, output): # stop at first empty line
         fields = line.split(None, 2)
@@ -80,35 +98,49 @@ def elfinfo(library, readelf=None):
         else:
             assert getattr(info, kind) is None, (kind, info)
             setattr(info, kind, value)
+    # Helper to parse .dynsym / .symtab dump:
+    def parse_symbols():
+        for line in itertools.takewhile(bool, output): # stop at first empty line
+            fields = line.split()
+            assert 7 <= len(fields) <= 9, fields
+            if len(fields) == 7:
+                continue
+            value, size, kind, bind, _vis, ndx, name = fields[1:8]
+            sym = Symbol(name, int(value, 16), kind, bind, ast.literal_eval(size))
+            info.symbols[sym.name] = sym
+            if bind == 'LOCAL':
+                continue
+            if ndx == 'UND':
+                if bind == 'WEAK':
+                    continue
+                info.unresolved[sym.name] = sym
+            else:
+                info.provides[sym.name] = sym
     # Symbol table '.dynsym' contains 282 entries:
     #    Num:    Value          Size Type    Bind   Vis      Ndx Name
     #      0: 0000000000000000     0 NOTYPE  LOCAL  DEFAULT  UND
     #      1: 0000000000000000     0 FUNC    GLOBAL DEFAULT  UND log10@GLIBC_2.2.5 (2)
     #      4: 0000000000000000     0 FUNC    GLOBAL DEFAULT  UND FT_Set_Transform
-    skip_until('Symbol table \'.dynsym\'')
-    # Skip headers.
-    next(output)
-    for line in itertools.takewhile(bool, output): # stop at first empty line
-        fields = line.split()
-        assert 7 <= len(fields) <= 9, fields
-        if len(fields) == 7:
-            continue
-        bind, _, ndx, name = fields[4:8]
-        if bind == 'LOCAL':
-            continue
-        if ndx == 'UND':
-            if bind == 'WEAK':
-                continue
-            info.unresolved.add(name)
-        else:
-            info.provides.add(name)
+    skip_until(r'^Symbol table \'\.dynsym\'')
+    next(output) # Skip headers.
+    parse_symbols()
+    # Symbol table '.symtab' contains 5916 entries:
+    #    Num:    Value          Size Type    Bind   Vis      Ndx Name
+    #      0: 0000000000000000     0 NOTYPE  LOCAL  DEFAULT  UND
+    #      1: 0000000000000000     0 FILE    LOCAL  DEFAULT  ABS parser.c
+    #      2: 00000000001b1230    68 FUNC    LOCAL  DEFAULT   11 tag_in
+    if full:
+        skip_until(r'(^Symbol table \'\.symtab\'|symbol section \'.symtab\' contains)')
+        next(output, None) # Skip headers (optional, if no `.symtab` section).
+        parse_symbols()
     # Handle versioned default symbols.
-    for name, version in  tuple(
-        s.split('@@', 1) for s in info.provides if '@@' in s
+    for def_name, (name, version) in  tuple(
+        (s, s.split('@@', 1)) for s in info.provides if '@@' in s
     ):
-        for sym in (name, name + '@' + version):
-            assert sym not in info.provides, sym
-            info.provides.add(sym)
+        for real_name in (name, name + '@' + version):
+            # The info might already have been provided by the `.symtab` section.
+            if real_name not in info.provides:
+                info.provides[real_name] = info.provides[def_name]._replace(name=real_name)
     return info
 
 def machoinfo(library, nm=None, otool=None):
@@ -189,14 +221,15 @@ def machoinfo(library, nm=None, otool=None):
             getattr(info, key).append(val)
     for line in subprocess.check_output((
         nm or which('llvm-nm', 'nm'),
-        '-P', library,
+        '-P', '-S', library,
     )).decode().strip().splitlines():
         fields = line.split()
-        sym, kind = fields[:2]
+        name, kind, value = fields[:3]
+        sym = Symbol(name, int(value, 16), kind, None, fields[3] if len(fields) >= 4 else 0)
         if kind == 'U':
-            info.unresolved.add(sym)
+            info.unresolved[sym.name] = sym
         elif kind in 'ABCDIST':
-            info.provides.add(sym)
+            info.provides[sym.name] = sym
     return info
 
 def tbdinfo(path):
@@ -205,6 +238,7 @@ def tbdinfo(path):
     yaml = YAML(typ='safe')
     yaml.Constructor.add_constructor('!tapi-tbd', yaml.Constructor.construct_mapping)
     info = LibraryInfo()
+    provides = set()
     # FIXME: honor `targets`.
     with open(path, 'rb') as fp:
         for n, tbd in enumerate(yaml.load_all(fp)):
@@ -214,12 +248,13 @@ def tbdinfo(path):
                 else:
                     info.reexport.append(tbd['install-name'])
             for exports in tbd.get('exports', []) + tbd.get('reexports', []):
-                info.provides.update(exports.get('weak-symbols', ()))
-                info.provides.update(exports.get('symbols', ()))
-                info.provides.update('_OBJC_EHTYPE_$_' + s for s in exports.get('objc-eh-types', ()))
+                provides.update(exports.get('weak-symbols', ()))
+                provides.update(exports.get('symbols', ()))
+                provides.update('_OBJC_EHTYPE_$_' + s for s in exports.get('objc-eh-types', ()))
                 for klass in exports.get('objc-classes', ()):
-                    info.provides.add('_OBJC_CLASS_$_' + klass)
-                    info.provides.add('_OBJC_METACLASS_$_' + klass)
+                    provides.add('_OBJC_CLASS_$_' + klass)
+                    provides.add('_OBJC_METACLASS_$_' + klass)
+    info.provides.update((s, Symbol(s, None, None, None, None)) for s in provides)
     return info
 
 def dumpinfo(info):

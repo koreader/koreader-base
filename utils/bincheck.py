@@ -133,7 +133,7 @@ class BinCheck:
         if not path.endswith('.tbd'):
             for exp in info.reexport:
                 provides.update(self.load_library(exp))
-        unresolved = info.unresolved - self.preloaded
+        unresolved = set(info.unresolved) - self.preloaded
         for need in info.needed:
             unresolved -= self.load_library(need)
         for need in info.upneeded:
