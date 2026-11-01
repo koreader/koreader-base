@@ -1,0 +1,12 @@
+diff --git a/src/classify/clusttool.cpp b/src/classify/clusttool.cpp
+index e11c9374..2585bc27 100644
+--- a/src/classify/clusttool.cpp
++++ b/src/classify/clusttool.cpp
+@@ -181,6 +181,7 @@ PROTOTYPE *ReadPrototype(TFile *fp, uint16_t N) {
+   auto Proto = new PROTOTYPE;
+   Proto->Cluster = nullptr;
+   Proto->Significant = (sig_token[0] == 's');
++  Proto->Merged = 0;
+ 
+   switch (shape_token[0]) {
+     case 's':
