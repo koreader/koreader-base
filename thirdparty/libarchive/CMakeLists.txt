@@ -52,8 +52,8 @@ if(NOT MONOLIBTIC)
 endif()
 
 external_project(
-    DOWNLOAD URL 7ca38379cb296edf27fe950b9c092a6e
-    https://github.com/libarchive/libarchive/releases/download/v3.8.10/libarchive-3.8.10.tar.xz
+    DOWNLOAD URL 06cd808c8b79ec02fa580e305eede08f
+    https://github.com/libarchive/libarchive/releases/download/v3.8.11/libarchive-3.8.11.tar.xz
     CMAKE_ARGS ${CMAKE_ARGS}
     PATCH_FILES ${PATCH_FILES}
     PATCH_COMMAND ${PATCH_CMD}
