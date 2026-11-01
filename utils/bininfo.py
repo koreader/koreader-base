@@ -70,6 +70,10 @@ def elfinfo(library, readelf=None, full=False):
         for line in output:
             if rx.search(line):
                 return
+        raise EOFError(f'parsing readelf output: {library}')
+    def skip_line():
+        if next(output, None) is None:
+            raise EOFError(f'parsing readelf output: {library}')
     # Dynamic section at offset 0x4b7b60 contains 33 entries:
     #   Tag        Type                         Name/Value
     # 0x0000000000000001 (NEEDED)             Shared library: [libfreetype.so.6]
@@ -79,7 +83,7 @@ def elfinfo(library, readelf=None, full=False):
     # 0x000000000000000d (FINI)               0x29e154
     # 0x0000000000000019 (INIT_ARRAY)         0x4a5e10
     skip_until(r'^Dynamic section ')
-    next(output) # Skip headers.
+    skip_line() # Skip headers.
     info = LibraryInfo()
     for line in itertools.takewhile(bool, output): # stop at first empty line
         fields = line.split(None, 2)
@@ -122,7 +126,7 @@ def elfinfo(library, readelf=None, full=False):
     #      1: 0000000000000000     0 FUNC    GLOBAL DEFAULT  UND log10@GLIBC_2.2.5 (2)
     #      4: 0000000000000000     0 FUNC    GLOBAL DEFAULT  UND FT_Set_Transform
     skip_until(r'^Symbol table \'\.dynsym\'')
-    next(output) # Skip headers.
+    skip_line() # Skip headers.
     parse_symbols()
     # Symbol table '.symtab' contains 5916 entries:
     #    Num:    Value          Size Type    Bind   Vis      Ndx Name
