@@ -752,14 +752,29 @@ end
 -- Like BB_invert_rect, but also correct on padded rows and viewports, where a full-width rect isn't one contiguous block.
 function BB_mt.__index:invertRectCbb(x, y, w, h)
     local px, py, pw, ph = self:getPhysicalRect(x, y, w, h)
-    local packed = self.pixel_stride == self.w and self.stride == self.w * self:getBytesPerPixel()
-    if px == 0 and pw == self.w and pw > 1 and not packed then
-        -- Two narrower rects, so BB_invert_rect goes row by row instead of in one run.
-        local rotation = self:getRotation()
-        self:setRotation(0)
-        cblitbuffer.BB_invert_rect(ffi.cast(P_BlitBuffer, self), 0, py, pw - 1, ph)
-        cblitbuffer.BB_invert_rect(ffi.cast(P_BlitBuffer, self), pw - 1, py, 1, ph)
-        self:setRotation(rotation)
+    local bpp = self:getBytesPerPixel()
+    local packed = self.pixel_stride == self.w and self.stride == self.w * bpp
+    if px == 0 and pw == self.w and not packed then
+        if pw > 1 then
+            -- Two narrower rects, so BB_invert_rect goes row by row instead of in one run.
+            local rotation = self:getRotation()
+            self:setRotation(0)
+            cblitbuffer.BB_invert_rect(ffi.cast(P_BlitBuffer, self), 0, py, pw - 1, ph)
+            cblitbuffer.BB_invert_rect(ffi.cast(P_BlitBuffer, self), pw - 1, py, 1, ph)
+            self:setRotation(rotation)
+        elseif self:getType() == TYPE_BBRGB32 then
+            for j = py, py + ph - 1 do
+                local p = ffi.cast(uint32pt, ffi.cast(uint8pt, self.data) + self.stride * j)
+                p[0] = bxor(p[0], 0x00FFFFFF)
+            end
+        else
+            for j = py, py + ph - 1 do
+                local p = ffi.cast(uint8pt, self.data) + self.stride * j
+                for i = 0, bpp - 1 do
+                    p[i] = bxor(p[i], 0xFF)
+                end
+            end
+        end
     else
         cblitbuffer.BB_invert_rect(ffi.cast(P_BlitBuffer, self), x, y, w, h)
     end
@@ -1379,17 +1394,17 @@ function BBRGB24_mt.__index:blitToRGB24(dest, dest_x, dest_y, offs_x, offs_y, wi
         return self:blitDefault(dest, dest_x, dest_y, offs_x, offs_y, width, height, setter, set_param)
     end
 
-    -- Perform block copies only in the simple case of the blit width being equal to width of both buffers of same stride.
-    if offs_x == 0 and dest_x == 0 and width == self.w and width == dest.w and dest.stride == self.stride then
+    local row_bytes = width * 3
+    -- Perform block copies only in the simple case of the blit width being equal to width of both buffers of same tightly-packed stride.
+    if offs_x == 0 and dest_x == 0 and width == self.w and width == dest.w and dest.stride == self.stride and self.stride == row_bytes then
         -- Single step for contiguous scanlines (on both sides)
         -- BBRGB24 is 3 bytes per pixel
         local srcp = ffi.cast(uint8pt_rodata, self.data) + self.stride*offs_y
         local dstp = ffi.cast(uint8pt, dest.data) + dest.stride*dest_y
-        ffi.copy(dstp, srcp, width*3*height)
+        ffi.copy(dstp, srcp, row_bytes*height)
     else
         -- Scanline per scanline copy
         local o_y = offs_y
-        local row_bytes = width * 3
         for y = dest_y, dest_y+height-1 do
             -- BBRGB24 is 3 bytes per pixel
             local srcp = ffi.cast(uint8pt_rodata, self.data) + self.stride*o_y + offs_x*3
