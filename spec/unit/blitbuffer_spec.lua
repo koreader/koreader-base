@@ -628,19 +628,22 @@ describe("Blitbuffer unit tests", function()
             for _, use_cbb in ipairs({ orig_cbb, false }) do
                 Blitbuffer:setUseCBB(use_cbb)
                 for _, invert_src in ipairs({ false, true }) do
-                    local src = Blitbuffer.new(4, 2, Blitbuffer.TYPE_BBRGB24)
-                    local dst = Blitbuffer.new(4, 2, Blitbuffer.TYPE_BBRGB24, nil, 15, 5)
-                    if invert_src then
-                        src:setInverse(1)
-                    else
-                        dst:setInverse(1)
-                    end
-                    dst:blitFrom(src)
-                    dst:setInverse(0)
-                    for y = 0, 1 do
-                        for x = 0, 3 do
-                            local c = dst:getPixel(x, y)
-                            assert.are.same({0xFF, 0xFF, 0xFF}, {c.r, c.g, c.b})
+                    for _, padded_src in ipairs({ false, true }) do
+                        local src = padded_src and Blitbuffer.new(4, 2, Blitbuffer.TYPE_BBRGB24, nil, 15, 5)
+                            or Blitbuffer.new(4, 2, Blitbuffer.TYPE_BBRGB24)
+                        local dst = Blitbuffer.new(4, 2, Blitbuffer.TYPE_BBRGB24, nil, 15, 5)
+                        if invert_src then
+                            src:setInverse(1)
+                        else
+                            dst:setInverse(1)
+                        end
+                        dst:blitFrom(src)
+                        dst:setInverse(0)
+                        for y = 0, 1 do
+                            for x = 0, 3 do
+                                local c = dst:getPixel(x, y)
+                                assert.are.same({0xFF, 0xFF, 0xFF}, {c.r, c.g, c.b})
+                            end
                         end
                     end
                 end
@@ -648,7 +651,7 @@ describe("Blitbuffer unit tests", function()
             Blitbuffer:setUseCBB(orig_cbb)
         end)
 
-        it("should stay within a full-width BBRGB24 viewport", function()
+        it("should stay within a full-width BBRGB24 viewport (including 1px wide)", function()
             local orig_cbb = Blitbuffer:getUseCBB()
             for _, use_cbb in ipairs({ orig_cbb, false }) do
                 Blitbuffer:setUseCBB(use_cbb)
@@ -668,6 +671,25 @@ describe("Blitbuffer unit tests", function()
                     assert.are.same({0xFF, 0xFF, 0xFF}, {inside.r, inside.g, inside.b})
                     assert.are.same({0x00, 0x00, 0x00}, {right_outside.r, right_outside.g, right_outside.b})
                     assert.are.same({0x00, 0x00, 0x00}, {bottom_outside.r, bottom_outside.g, bottom_outside.b})
+
+                    -- 1x2 viewport at the bottom-right corner (5, 2) of a 6x4 parent
+                    local src_1px = Blitbuffer.new(1, 2, Blitbuffer.TYPE_BBRGB24)
+                    local dst_1px = Blitbuffer.new(6, 4, Blitbuffer.TYPE_BBRGB24)
+                    local vp_1px = dst_1px:viewport(5, 2, 1, 2)
+                    if invert_src then
+                        src_1px:setInverse(1)
+                    else
+                        vp_1px:setInverse(1)
+                    end
+                    vp_1px:blitFrom(src_1px)
+                    local in_top = dst_1px:getPixel(5, 2)
+                    local in_bot = dst_1px:getPixel(5, 3)
+                    local neighbor_left = dst_1px:getPixel(4, 2)
+                    local neighbor_next_row = dst_1px:getPixel(0, 3)
+                    assert.are.same({0xFF, 0xFF, 0xFF}, {in_top.r, in_top.g, in_top.b})
+                    assert.are.same({0xFF, 0xFF, 0xFF}, {in_bot.r, in_bot.g, in_bot.b})
+                    assert.are.same({0x00, 0x00, 0x00}, {neighbor_left.r, neighbor_left.g, neighbor_left.b})
+                    assert.are.same({0x00, 0x00, 0x00}, {neighbor_next_row.r, neighbor_next_row.g, neighbor_next_row.b})
                 end
 
                 -- Also verify gray paintRectRGB32 on a narrower viewport does not overrun stride
