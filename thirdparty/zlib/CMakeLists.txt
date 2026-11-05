@@ -1,3 +1,5 @@
+list(APPEND PATCH_FILES fix_visibility_check.patch)
+
 list(APPEND CMAKE_ARGS
     -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE}
     # Project options.
@@ -18,6 +20,7 @@ endif()
 external_project(
     DOWNLOAD URL be8a129ec5d60c5084911fd7ea16d84e
     https://github.com/madler/zlib/releases/download/v1.3.2/zlib-1.3.2.tar.xz
+    PATCH_FILES ${PATCH_FILES}
     CMAKE_ARGS ${CMAKE_ARGS}
     BUILD_COMMAND ${BUILD_CMD}
     INSTALL_COMMAND ${INSTALL_CMD}
