@@ -640,6 +640,9 @@ function(ffi_target NAME OUTPUT INPUT)
         -p --env-only
         -I ${STAGING_DIR}/include
     )
+    if(USE_M32)
+        list(APPEND FFI_CDECL_FLAGS -f -m32)
+    endif()
     if(APPLE)
         # See note in Makefile.defs.
         list(APPEND FFI_CDECL_FLAGS -f -idirafter,/usr/local/include)
@@ -796,8 +799,8 @@ ffi_target(pocketbook mxcfb_pocketbook_h.lua mxcfb_pb_decl.c ${EXCLUDE_FROM_ALL}
 # posix
 set(VERSIONS
     android_arm android_arm64 android_x86 android_x64
-    linux_gnu_arm linux_gnu_arm64 linux_gnu_x64
-    linux_musl_arm linux_musl_arm64 linux_musl_x64
+    linux_gnu_arm linux_gnu_arm64 linux_gnu_x86 linux_gnu_x64
+    linux_musl_arm linux_musl_arm64 linux_musl_x86 linux_musl_x64
     macos
 )
 add_custom_target(
