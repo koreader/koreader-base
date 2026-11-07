@@ -18,8 +18,8 @@ if(NOT MONOLIBTIC)
 endif()
 
 external_project(
-    DOWNLOAD URL be8a129ec5d60c5084911fd7ea16d84e
-    https://github.com/madler/zlib/releases/download/v1.3.2/zlib-1.3.2.tar.xz
+    DOWNLOAD URL ae8baba210d81247293bca36babcb429
+    https://github.com/madler/zlib/releases/download/v1.4/zlib-1.4.tar.xz
     PATCH_FILES ${PATCH_FILES}
     CMAKE_ARGS ${CMAKE_ARGS}
     BUILD_COMMAND ${BUILD_CMD}
