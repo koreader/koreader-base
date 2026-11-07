@@ -28,8 +28,8 @@ list(APPEND INSTALL_CMD COMMAND make install)
 append_binary_install_command(INSTALL_CMD rsync)
 
 external_project(
-    DOWNLOAD URL 9b996a86c297a1e9cef0f92725dc825e
-    https://github.com/RsyncProject/rsync/releases/download/v3.5.1/rsync-3.5.1.tar.gz
+    DOWNLOAD URL 5402db5b3778b6cfef496bed612845d7
+    https://github.com/RsyncProject/rsync/releases/download/v3.5.2/rsync-3.5.2.tar.gz
     PATCH_FILES ${PATCH_FILES}
     CONFIGURE_COMMAND ${CFG_CMD}
     BUILD_COMMAND ${BUILD_CMD}
