@@ -20,6 +20,13 @@ list(APPEND CMAKE_ARGS
 if(LEGACY OR POCKETBOOK)
     list(APPEND CMAKE_ARGS -DPOLLER=epoll)
 endif()
+if(LEGACY)
+    # The legacy Kindle kernels (2.6.26) predate "Clear the exclusive monitor when
+    # returning from an exception" (200b812d00), so the inline LDREX/STREX
+    # atomics std::atomic compiles to on ARMv6 are unreliable across threads.
+    # Use mutexes instead: glibc's go through the kernel's cmpxchg helper.
+    list(APPEND CMAKE_ARGS -DZMQ_FORCE_MUTEXES=ON)
+endif()
 
 list(APPEND BUILD_CMD COMMAND ninja)
 
