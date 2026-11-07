@@ -1,10 +1,10 @@
 diff --git a/CMakeLists.txt b/CMakeLists.txt
-index 80b7fde35..9c453b5ef 100644
+index 0caf8a604..3e18fb441 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
 @@ -7,6 +7,16 @@ endif()
  # See docs/release_checklist.md
- project(SDL3 LANGUAGES C VERSION "3.4.18")
+ project(SDL3 LANGUAGES C VERSION "3.4.20")
  
 +execute_process(COMMAND pkg-config --variable pc_path pkg-config RESULT_VARIABLE RET OUTPUT_VARIABLE OUT OUTPUT_STRIP_TRAILING_WHITESPACE)
 +if(NOT RET EQUAL 0)
