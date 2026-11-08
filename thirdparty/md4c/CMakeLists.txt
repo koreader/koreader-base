@@ -11,8 +11,8 @@ list(APPEND BUILD_CMD COMMAND ninja)
 list(APPEND INSTALL_CMD COMMAND ${CMAKE_COMMAND} --install .)
 
 external_project(
-    DOWNLOAD URL 04b54eb032d324be3d9307bda1125320
-    https://github.com/mity/md4c/archive/refs/tags/release-0.5.3.tar.gz
+    DOWNLOAD URL 772ec5cb73185df15d3df89cf5d942eb
+    https://github.com/mity/md4c/archive/refs/tags/v0.6.0.tar.gz
     PATCH_FILES ${PATCH_FILES}
     CMAKE_ARGS ${CMAKE_ARGS}
     BUILD_COMMAND ${BUILD_CMD}
