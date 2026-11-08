@@ -13,10 +13,10 @@ index b135b5f23..29d3d16b8 100644
  	Open a zip archive from static data.
  */
 diff --git a/source/cbz/mucbz.c b/source/cbz/mucbz.c
-index 6d1b1b242..e2f99530a 100644
+index c295f6903..e3ff62462 100644
 --- a/source/cbz/mucbz.c
 +++ b/source/cbz/mucbz.c
-@@ -266,6 +266,20 @@ cbz_load_page(fz_context *ctx, fz_document *doc_, int chapter, int number)
+@@ -267,6 +267,20 @@ cbz_load_page(fz_context *ctx, fz_document *doc_, int chapter, int number)
  	return (fz_page*)page;
  }
  
@@ -37,7 +37,7 @@ index 6d1b1b242..e2f99530a 100644
  static int
  cbz_lookup_metadata(fz_context *ctx, fz_document *doc_, const char *key, char *buf, size_t size)
  {
-@@ -284,6 +298,8 @@ cbz_open_document(fz_context *ctx, const fz_document_handler *handler, fz_stream
+@@ -285,6 +299,8 @@ cbz_open_document(fz_context *ctx, const fz_document_handler *handler, fz_stream
  	doc->super.count_pages = cbz_count_pages;
  	doc->super.load_page = cbz_load_page;
  	doc->super.lookup_metadata = cbz_lookup_metadata;
@@ -47,7 +47,7 @@ index 6d1b1b242..e2f99530a 100644
  	fz_try(ctx)
  	{
 diff --git a/source/fitz/unzip.c b/source/fitz/unzip.c
-index 62507d316..6949c383d 100644
+index c92f7664a..6dc5d64fa 100644
 --- a/source/fitz/unzip.c
 +++ b/source/fitz/unzip.c
 @@ -43,10 +43,27 @@
@@ -78,7 +78,7 @@ index 62507d316..6949c383d 100644
  } zip_entry;
  
  typedef struct
-@@ -55,6 +78,17 @@ typedef struct
+@@ -55,6 +72,17 @@ typedef struct
  
  	int count;
  	zip_entry *entries;
@@ -96,7 +96,7 @@ index 62507d316..6949c383d 100644
  } fz_zip_archive;
  
  static void drop_zip_archive(fz_context *ctx, fz_archive *arch)
-@@ -421,6 +455,15 @@ static void read_zip_dir_imp(fz_context *ctx, fz_zip_archive *zip, int64_t start
+@@ -423,6 +451,15 @@ static void read_zip_dir_imp(fz_context *ctx, fz_zip_archive *zip, int64_t start
  			zip->entries[zip->count].name = name;
  			name = NULL;
  
@@ -112,7 +112,7 @@ index 62507d316..6949c383d 100644
  			zip->count++;
  		}
  	}
-@@ -435,6 +478,13 @@ static int read_zip_entry_header(fz_context *ctx, fz_zip_archive *zip, zip_entry
+@@ -437,6 +474,13 @@ static int read_zip_entry_header(fz_context *ctx, fz_zip_archive *zip, zip_entry
  	fz_stream *file = zip->super.file;
  	uint32_t sig;
  	int general, method, namelength, extralength;
@@ -126,7 +126,7 @@ index 62507d316..6949c383d 100644
  
  	fz_seek(ctx, file, ent->offset, 0);
  
-@@ -444,19 +493,75 @@ static int read_zip_entry_header(fz_context *ctx, fz_zip_archive *zip, zip_entry
+@@ -446,19 +490,75 @@ static int read_zip_entry_header(fz_context *ctx, fz_zip_archive *zip, zip_entry
  
  	(void) fz_read_uint16_le(ctx, file); /* version */
  	general = fz_read_uint16_le(ctx, file); /* general */
@@ -204,7 +204,7 @@ index 62507d316..6949c383d 100644
  
  	return method;
  }
-@@ -515,6 +620,11 @@ static fz_stream *open_zip_entry(fz_context *ctx, fz_archive *arch, const char *
+@@ -517,6 +617,11 @@ static fz_stream *open_zip_entry(fz_context *ctx, fz_archive *arch, const char *
  		return NULL;
  
  	method = read_zip_entry_header(ctx, zip, ent);
@@ -216,7 +216,7 @@ index 62507d316..6949c383d 100644
  	if (method == 0)
  		return fz_open_null_filter(ctx, file, ent->usize, fz_tell(ctx, file));
  	if (method == 8)
-@@ -541,6 +651,12 @@ static fz_buffer *read_zip_entry(fz_context *ctx, fz_archive *arch, const char *
+@@ -543,6 +648,12 @@ static fz_buffer *read_zip_entry(fz_context *ctx, fz_archive *arch, const char *
  		return NULL;
  
  	method = read_zip_entry_header(ctx, zip, ent);
@@ -229,7 +229,7 @@ index 62507d316..6949c383d 100644
  	ubuf = fz_new_buffer(ctx, ent->usize + 1); /* +1 because many callers will add a terminating zero */
  
  	if (method == 0)
-@@ -550,6 +666,18 @@ static fz_buffer *read_zip_entry(fz_context *ctx, fz_archive *arch, const char *
+@@ -552,6 +663,18 @@ static fz_buffer *read_zip_entry(fz_context *ctx, fz_archive *arch, const char *
  			ubuf->len = fz_read(ctx, file, ubuf->data, ent->usize);
  			if (ubuf->len < (size_t)ent->usize)
  				fz_warn(ctx, "premature end of data in stored zip archive entry");
@@ -248,7 +248,7 @@ index 62507d316..6949c383d 100644
  		}
  		fz_catch(ctx)
  		{
-@@ -574,6 +702,19 @@ static fz_buffer *read_zip_entry(fz_context *ctx, fz_archive *arch, const char *
+@@ -576,6 +699,19 @@ static fz_buffer *read_zip_entry(fz_context *ctx, fz_archive *arch, const char *
  			if (z.avail_in < ent->csize)
  				fz_warn(ctx, "premature end of compressed data for compressed archive entry");
  
@@ -268,7 +268,7 @@ index 62507d316..6949c383d 100644
  			code = inflateInit2(&z, -15);
  			if (code != Z_OK)
  			{
-@@ -612,6 +753,39 @@ static fz_buffer *read_zip_entry(fz_context *ctx, fz_archive *arch, const char *
+@@ -614,6 +750,39 @@ static fz_buffer *read_zip_entry(fz_context *ctx, fz_archive *arch, const char *
  	fz_throw(ctx, FZ_ERROR_FORMAT, "unknown zip method: %d", method);
  }
  
@@ -308,7 +308,7 @@ index 62507d316..6949c383d 100644
  static int has_zip_entry(fz_context *ctx, fz_archive *arch, const char *name)
  {
  	fz_zip_archive *zip = (fz_zip_archive *) arch;
-@@ -662,6 +836,12 @@ fz_open_zip_archive_with_stream(fz_context *ctx, fz_stream *file)
+@@ -664,6 +833,12 @@ fz_open_zip_archive_with_stream(fz_context *ctx, fz_stream *file)
  		fz_throw(ctx, FZ_ERROR_FORMAT, "cannot recognize zip archive");
  
  	zip = fz_new_derived_archive(ctx, file, fz_zip_archive);

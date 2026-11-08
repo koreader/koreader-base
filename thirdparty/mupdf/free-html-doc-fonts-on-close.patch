@@ -1,8 +1,8 @@
 diff --git a/source/html/html-doc.c b/source/html/html-doc.c
-index 4bfa1f325..5c0ea1637 100644
+index 58365a475..e4c611182 100644
 --- a/source/html/html-doc.c
 +++ b/source/html/html-doc.c
-@@ -49,6 +49,11 @@ static void
+@@ -51,6 +51,11 @@ static void
  htdoc_drop_document(fz_context *ctx, fz_document *doc_)
  {
  	html_document *doc = (html_document*)doc_;

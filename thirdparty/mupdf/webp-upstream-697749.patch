@@ -37,7 +37,7 @@ index a37456d81..69604a377 100644
              cppyy.cppdef(f'''
                      namespace mupdf
 diff --git a/source/cbz/mucbz.c b/source/cbz/mucbz.c
-index e2f99530a..e877490bb 100644
+index e3ff62462..2c3a05fc7 100644
 --- a/source/cbz/mucbz.c
 +++ b/source/cbz/mucbz.c
 @@ -49,6 +49,7 @@ static const char *cbz_ext_list[] = {
@@ -103,10 +103,10 @@ index 960ab9bbf..999ddbc1f 100644
  /*
   * The defcs parameter is used as a default colorspace if the image doesn't
 diff --git a/source/fitz/image.c b/source/fitz/image.c
-index f5e908c05..543f47642 100644
+index 386247512..0939eb1a5 100644
 --- a/source/fitz/image.c
 +++ b/source/fitz/image.c
-@@ -811,6 +811,9 @@ compressed_image_get_pixmap(fz_context *ctx, fz_image *image_, fz_irect *subarea
+@@ -830,6 +830,9 @@ compressed_image_get_pixmap(fz_context *ctx, fz_image *image_, fz_irect *subarea
  	case FZ_IMAGE_BMP:
  		tile = fz_load_bmp(ctx, image->buffer->buffer->data, image->buffer->buffer->len);
  		break;
@@ -116,7 +116,7 @@ index f5e908c05..543f47642 100644
  	case FZ_IMAGE_TIFF:
  		tile = fz_load_tiff(ctx, image->buffer->buffer->data, image->buffer->buffer->len);
  		break;
-@@ -1376,7 +1379,7 @@ fz_lookup_image_type(const char *type)
+@@ -1458,7 +1461,7 @@ fz_lookup_image_type(const char *type)
  }
  
  int
@@ -125,7 +125,7 @@ index f5e908c05..543f47642 100644
  {
  	if (p[0] == 'P' && p[1] >= '1' && p[1] <= '7')
  		return FZ_IMAGE_PNM;
-@@ -1409,6 +1412,9 @@ fz_recognize_image_format(fz_context *ctx, unsigned char p[8])
+@@ -1491,6 +1494,9 @@ fz_recognize_image_format(fz_context *ctx, unsigned char p[8])
  		return FZ_IMAGE_JBIG2;
  	if (p[0] == '8' && p[1] == 'B' && p[2] == 'P' && p[3] == 'S')
  		return FZ_IMAGE_PSD;
@@ -135,7 +135,7 @@ index f5e908c05..543f47642 100644
  	return FZ_IMAGE_UNKNOWN;
  }
  
-@@ -1425,7 +1431,7 @@ fz_new_image_from_buffer(fz_context *ctx, fz_buffer *buffer)
+@@ -1507,7 +1513,7 @@ fz_new_image_from_buffer(fz_context *ctx, fz_buffer *buffer)
  	int bpc;
  	uint8_t orientation = 0;
  
@@ -144,7 +144,7 @@ index f5e908c05..543f47642 100644
  		fz_throw(ctx, FZ_ERROR_FORMAT, "unknown image file format");
  
  	type = fz_recognize_image_format(ctx, buf);
-@@ -1463,6 +1469,9 @@ fz_new_image_from_buffer(fz_context *ctx, fz_buffer *buffer)
+@@ -1545,6 +1551,9 @@ fz_new_image_from_buffer(fz_context *ctx, fz_buffer *buffer)
  		fz_load_jbig2_info(ctx, buf, len, &w, &h, &xres, &yres, &cspace);
  		bpc = 1;
  		break;

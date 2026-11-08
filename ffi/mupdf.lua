@@ -34,7 +34,7 @@ local mupdf = {
 }
 -- this cannot get adapted by the cdecl file because it is a
 -- string constant. Must match the actual mupdf API:
-local FZ_VERSION = "1.27.2"
+local FZ_VERSION = "1.28.6"
 
 local document_mt = { __index = {} }
 local page_mt = { __index = {} }
@@ -351,11 +351,12 @@ end
 write the document to a new file
 --]]
 function document_mt.__index:writeDocument(filename)
-    local opts = ffi.new("pdf_write_options[1]")
-    opts[0].do_incremental = (filename == self.filename ) and 1 or 0
-    opts[0].do_ascii = 0
-    opts[0].do_garbage = 0
-    opts[0].do_linear = 0
+    local opts = ffi.new("pdf_write_options")
+    opts.do_incremental = (filename == self.filename ) and 1 or 0
+    opts.do_ascii = 0
+    opts.do_garbage = 0
+    opts.do_linear = 0
+    opts.reproducible = 1
     local ok = W.mupdf_pdf_save_document(self.ctx, ffi.cast("pdf_document*", self.doc), filename, opts)
     if not ok then merror(self.ctx, "could not write document") end
 end

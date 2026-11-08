@@ -155,6 +155,9 @@ struct fz_stext_line {
   fz_stext_char *first_char, *last_char;
   fz_stext_line *prev, *next;
 };
+typedef struct {
+  int vertically_collapse_bordered_cells;
+} fz_table_hunt_options;
 typedef struct fz_stext_block fz_stext_block;
 struct fz_stext_block {
   int type;
@@ -189,6 +192,7 @@ typedef struct {
   int flags;
   float scale;
   fz_rect clip;
+  fz_table_hunt_options table_hunt_options;
 } fz_stext_options;
 typedef struct {
   int refs;
@@ -311,6 +315,7 @@ typedef struct {
   int do_use_objstms;
   int compression_effort;
   int do_labels;
+  int reproducible;
 } pdf_write_options;
 bool mupdf_pdf_save_document(fz_context *, pdf_document *, const char *, pdf_write_options *);
 fz_alloc_context *mupdf_get_my_alloc_context();

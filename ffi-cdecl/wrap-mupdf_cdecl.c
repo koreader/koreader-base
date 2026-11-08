@@ -107,6 +107,7 @@ cdecl_type(fz_stext_struct)
 cdecl_type(fz_stext_line)
 cdecl_struct(fz_stext_line)
 
+cdecl_type(fz_table_hunt_options)
 cdecl_type(fz_stext_block)
 cdecl_struct(fz_stext_block)
 cdecl_type(fz_stext_options)
