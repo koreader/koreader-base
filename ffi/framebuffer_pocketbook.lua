@@ -24,16 +24,16 @@ local function _hasColorInPhysicalRect(bb, px, py, pw, ph)
     if bpp == 3 or bpp == 4 then
         local base = ffi.cast(uint8pt_rodata, bb.data)
         local stride = tonumber(bb.stride)
-        local offset_x = px * bpp
-        for y = py, py + ph - 1 do
-            local p = base + y * stride + offset_x
-            for _ = 1, pw do
-                local r = p[0]
-                if r ~= p[1] or r ~= p[2] then
+        local row_start = py * stride + px * bpp
+        local row_span = (pw - 1) * bpp
+        for _ = 1, ph do
+            for idx = row_start, row_start + row_span, bpp do
+                local r = base[idx]
+                if r ~= base[idx + 1] or r ~= base[idx + 2] then
                     return true
                 end
-                p = p + bpp
             end
+            row_start = row_start + stride
         end
     end
     return false
