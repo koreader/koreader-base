@@ -58,8 +58,12 @@ string(APPEND XCFLAGS
     # - builtin fonts
     # - CMYK plotter only 100 kB
     # - hyphenation (~700 kB)
+    # - miscellaneous output formats: DOCX, OCR, ODT
     " -DNOBUILTINFONT"
+    " -DFZ_ENABLE_DOCX_OUTPUT=0"
     " -DFZ_ENABLE_HYPHEN=0"
+    " -DFZ_ENABLE_OCR_OUTPUT=0"
+    " -DFZ_ENABLE_ODT_OUTPUT=0"
     " -DFZ_PLOTTERS_CMYK=0"
     " -DHAVE_LIBAES=1"
     " -DHAVE_LIBARCHIVE=1"
