@@ -1,0 +1,23 @@
+diff --git a/source/fitz/random.c b/source/fitz/random.c
+index ad92c6369..74dbffbca 100644
+--- a/source/fitz/random.c
++++ b/source/fitz/random.c
+@@ -31,6 +31,8 @@
+ #include <stdlib.h> // for srandom(), random(), arc4random_buf()
+ #ifdef __APPLE__
+ #include <sys/random.h> // for getentropy()
++#elif defined(__ANDROID__) && (__ANDROID_API__ >= 28)
++#include <sys/random.h> // for getentropy()
+ #else
+ #include <unistd.h> // for getentropy()
+ #endif
+@@ -96,7 +98,9 @@ void fz_memrnd(fz_context *ctx, unsigned char *data, int len)
+ 		// arc4random_buf that sources from /dev/urandom.
+ 		arc4random_buf(entropy, sizeof entropy);
+ #else
++#if defined(__ANDROID__) || defined(__APPLE__) || (__GLIBC__ > 2 || (__GLIBC__ == 2 && __GLIBC_MINOR__ >= 25))
+ 		if (getentropy(entropy, sizeof entropy) < 0)
++#endif
+ 			getentropy_fallback(entropy, sizeof entropy);
+ #endif /* EMSCRIPTEN */
+ 
