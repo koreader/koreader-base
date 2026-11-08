@@ -1,0 +1,102 @@
+diff --git a/src/https.lua b/src/https.lua
+index 122aa6c..9b0d8a6 100644
+--- a/src/https.lua
++++ b/src/https.lua
+@@ -80,6 +80,16 @@ end
+ -- Return a function which performs the SSL/TLS connection.
+ local function tcp(params)
+    params = params or {}
++   local proxy = params.proxy or http.PROXY
++   local proxy_authorization
++   for name, value in pairs(params.headers or {}) do
++      if name:lower() == "proxy-authorization" then
++         proxy_authorization = value
++      end
++   end
++   if proxy then
++      proxy = url.parse(proxy) or {}
++   end
+    -- Default settings
+    for k, v in pairs(cfg) do 
+       params[k] = params[k] or v
+@@ -98,13 +108,57 @@ local function tcp(params)
+    return function ()
+       local conn = {}
+       conn.sock = try(socket.tcp())
++      function conn:close()
++         return self.sock:close()
++      end
++      local try = socket.newtry(function() conn:close() end)
+       local st = getmetatable(conn.sock).__index.settimeout
+       function conn:settimeout(...)
+          return st(self.sock, _M.TIMEOUT)
+       end
+       -- Replace TCP's connection function
+       function conn:connect(host, port)
+-         try(self.sock:connect(host, port))
++         if proxy then
++            try(proxy.scheme == "http" and proxy.host, "unsupported HTTPS proxy")
++            try(not host:find("[%c%s]"), "invalid CONNECT host")
++            local authority = host:find(":", 1, true) and ("[" .. host .. "]") or host
++            authority = authority .. ":" .. tostring(port)
++            try(not authority:find("[%c%s]"), "invalid CONNECT authority")
++            try(self.sock:connect(proxy.host, proxy.port or 3128))
++            local auth = ""
++            if proxy.user then
++               local mime = require("mime")
++               auth = "Proxy-Authorization: Basic " .. mime.b64(
++                  url.unescape(proxy.user) .. ":" .. url.unescape(proxy.password or "")) .. "\r\n"
++            end
++            if proxy_authorization then
++               try(not proxy_authorization:find("[%c]"), "invalid proxy authorization")
++               auth = "Proxy-Authorization: " .. proxy_authorization .. "\r\n"
++            end
++            try(self.sock:send("CONNECT " .. authority .. " HTTP/1.1\r\nHost: " ..
++               authority .. "\r\n" .. auth .. "\r\n"))
++            -- Bound the entire response, including a single unterminated line.
++            -- Read exactly through the blank line before handing the fd to TLS.
++            local remaining = 65536
++            local function receiveline()
++               local line = {}
++               while true do
++                  try(remaining > 0, "proxy CONNECT headers too large")
++                  local ch = try(self.sock:receive(1))
++                  remaining = remaining - 1
++                  if ch == "\n" then
++                     return table.concat(line):gsub("\r$", "")
++                  end
++                  line[#line + 1] = ch
++               end
++            end
++            local status = receiveline()
++            local code = tonumber(status:match("^HTTP/%d%.%d (%d%d%d)%f[%D]"))
++            try(code and code >= 200 and code < 300, "proxy CONNECT failed")
++            while receiveline() ~= "" do end
++         else
++            try(self.sock:connect(host, port))
++         end
+          self.sock = try(ssl.wrap(self.sock, params))
+          self.sock:sni(host)
+          self.sock:settimeout(_M.TIMEOUT)
+@@ -122,8 +176,8 @@ end
+ --------------------------------------------------------------------
+ 
+ -- Make a HTTP request over secure connection.  This function receives
+---  the same parameters of LuaSocket's HTTP module (except 'proxy' and
+---  'redirect') plus LuaSec parameters.
++--  the same parameters of LuaSocket's HTTP module (except 'redirect')
++--  plus LuaSec parameters. HTTP proxies are supported through CONNECT.
+ --
+ -- @param url mandatory (string or table)
+ -- @param body optional (string)
+@@ -137,9 +191,7 @@ local function request(url, body)
+   else
+     url.url = default_https_port(url.url)
+   end
+-  if http.PROXY or url.proxy then
+-    return nil, "proxy not supported"
+-  elseif url.redirect then
++  if url.redirect then
+     return nil, "redirect not supported"
+   elseif url.create then
+     return nil, "create function not permitted"
