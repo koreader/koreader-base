@@ -63,7 +63,20 @@ local function _adjustAreaColours(fb)
     end
 end
 
+local function _canRefresh(fb)
+    if inkview.IsTaskActive() == 0 or inkview.hw_get_keylock() ~= 0 then
+        fb.panel_has_color = true
+        fb.debug("refresh: skipping inkview update (inactive or keylocked)")
+        return false
+    end
+    return true
+end
+
 local function _updatePartial(fb, x, y, w, h, dither)
+    if not _canRefresh(fb) then
+        return
+    end
+
     x, y, w, h = _getPhysicalRect(fb, x, y, w, h)
 
     fb.debug("refresh: inkview partial", x, y, w, h, dither)
@@ -90,6 +103,10 @@ local function _updatePartial(fb, x, y, w, h, dither)
 end
 
 local function _updateFull(fb, x, y, w, h, dither)
+    if not _canRefresh(fb) then
+        return
+    end
+
     fb.debug("refresh: inkview full", x, y, w, h, dither)
 
     if fb.device.hasColorScreen() then
@@ -113,6 +130,10 @@ local function _updateFull(fb, x, y, w, h, dither)
 end
 
 local function _updateFast(fb, x, y, w, h, dither)
+    if not _canRefresh(fb) then
+        return
+    end
+
     x, y, w, h = _getPhysicalRect(fb, x, y, w, h)
 
     fb.debug("refresh: inkview fast", x, y, w, h, dither)
@@ -223,9 +244,11 @@ end
 
 function framebuffer:refreshWaitForLastImp()
     if self.mech_wait_update_complete and self.dont_wait_for_marker ~= self.marker then
-        self.debug("refresh: inkview waiting for previous update", self.marker)
-        -- self:mech_wait_update_complete(self.marker)
-        inkview.WaitForUpdateComplete()
+        if _canRefresh(self) then
+            self.debug("refresh: inkview waiting for previous update", self.marker)
+            -- self:mech_wait_update_complete(self.marker)
+            inkview.WaitForUpdateComplete()
+        end
         self.dont_wait_for_marker = self.marker
     end
 end
