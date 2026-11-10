@@ -65,7 +65,6 @@ end
 
 local function _canRefresh(fb)
     if inkview.IsTaskActive() == 0 or inkview.hw_get_keylock() ~= 0 then
-        fb.panel_has_color = true
         fb.debug("refresh: skipping inkview update (inactive or keylocked)")
         return false
     end
