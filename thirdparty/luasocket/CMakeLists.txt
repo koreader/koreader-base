@@ -9,6 +9,8 @@ list(APPEND PATCH_FILES
     export-api-for-luasec.patch
     # Add support for headers callback to HTTP requests.
     http_headers_callback.patch
+    # Keep HTTPS requests origin-form and let LuaSec establish CONNECT tunnels.
+    https_proxy.patch
 )
 if(NOT ANDROID)
     # Make sure socket fds are CLOEXEC on *nix.
