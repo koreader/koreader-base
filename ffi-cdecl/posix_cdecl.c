@@ -111,6 +111,9 @@ cdecl_type_replace(__s32, int32_t);
 cdecl_type_replace(__u8, uint8_t);
 cdecl_type_replace(__u16, uint16_t);
 cdecl_type_replace(__u32, uint32_t);
+#ifndef LIBC_MUSL
+cdecl_type_replace(__uint64_t, uint64_t);
+#endif
 # if defined(__SYSCALL_SLONG_TYPE)
 cdecl_type_replace(__syscall_slong_t, long);
 # endif
