@@ -117,23 +117,7 @@ local function _updateFast(fb, x, y, w, h, dither)
 
     fb.debug("refresh: inkview fast", x, y, w, h, dither)
 
-    if fb.device.hasColorScreen() then
-        local _, rect_has_color = _shouldUseColorRefresh(fb, x, y, w, h)
-        dither = rect_has_color
-    else
-        dither = false
-    end
-
-    if dither then
-        fb:saveCurrentBB()
-        _adjustAreaColours(fb)
-    end
-
     inkview.DynamicUpdate(x, y, w, h)
-
-    if dither then
-        fb:restoreFromSavedBB()
-    end
 end
 
 function framebuffer:init()
