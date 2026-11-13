@@ -1,0 +1,13 @@
+diff --git a/source/html/css-apply.c b/source/html/css-apply.c
+index 1500f8e..d02425b 100644
+--- a/source/html/css-apply.c
++++ b/source/html/css-apply.c
+@@ -1191,7 +1191,7 @@ fz_add_css_font_face(fz_context *ctx, fz_html_font_set *set, fz_archive *zip, co
+ 		{
+ 			buf = fz_read_archive_entry(ctx, zip, path);
+ 		}
+-		else if (!tainted)
++		else if (!tainted || (strncmp(src, "fonts/", 6) == 0 && strstr(src, "../") == NULL))
+ 		{
+ 			stm = fz_try_open_file(ctx, src);
+ 			if (stm == NULL)
