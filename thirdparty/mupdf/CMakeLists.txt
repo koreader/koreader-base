@@ -21,6 +21,8 @@ list(APPEND PATCH_FILES
     visibility.patch
     # Fix build when getentropy is not available (glibc < 2.25).
     fix_build_without_getentropy.patch
+    # Set SVG default font size
+    svg_font_size.patch
 )
 
 # Remove unnecessary vendored thirdparty libraries.
