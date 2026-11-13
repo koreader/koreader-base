@@ -1,0 +1,51 @@
+diff --git a/include/mupdf/fitz/context.h b/include/mupdf/fitz/context.h
+index e2553b7..f9e7611 100644
+--- a/include/mupdf/fitz/context.h
++++ b/include/mupdf/fitz/context.h
+@@ -926,6 +926,7 @@ struct fz_context
+ 	fz_colorspace_context *colorspace;
+ 	fz_store *store;
+ 	fz_glyph_cache *glyph_cache;
++	float layout_em;
+ };
+ 
+ fz_context *fz_new_context_imp(const fz_alloc_context *alloc, const fz_locks_context *locks, size_t max_store, const char *version);
+diff --git a/source/fitz/document.c b/source/fitz/document.c
+index 200016f..9042a60 100644
+--- a/source/fitz/document.c
++++ b/source/fitz/document.c
+@@ -830,6 +830,7 @@ fz_layout_document(fz_context *ctx, fz_document *doc, float w, float h, float em
+ 			doc->layout_h = h;
+ 			doc->layout_em = em;
+ 			doc->did_layout = FZ_LAYOUT_NEEDS_UPDATE;
++			ctx->layout_em = em;
+ 		}
+ 	}
+ }
+diff --git a/source/svg/svg-run.c b/source/svg/svg-run.c
+index 2819829..8259e00 100644
+--- a/source/svg/svg-run.c
++++ b/source/svg/svg-run.c
+@@ -1784,11 +1784,11 @@ svg_parse_document_bounds(fz_context *ctx, svg_document *doc, fz_xml *root)
+ 	{
+ 		doc->width = DEF_WIDTH;
+ 		if (w_att)
+-			doc->width = svg_parse_length(w_att, doc->width, DEF_FONTSIZE);
++			doc->width = svg_parse_length(w_att, doc->width, ctx->layout_em);
+ 
+ 		doc->height = DEF_HEIGHT;
+ 		if (h_att)
+-			doc->height = svg_parse_length(h_att, doc->height, DEF_FONTSIZE);
++			doc->height = svg_parse_length(h_att, doc->height, ctx->layout_em);
+ 	}
+ }
+ 
+@@ -1811,7 +1811,7 @@ svg_run_document(fz_context *ctx, svg_document *doc, fz_xml *root, fz_device *de
+ 	state.viewbox_h = DEF_HEIGHT;
+ 	state.viewbox_size = sqrtf(DEF_WIDTH*DEF_WIDTH + DEF_HEIGHT*DEF_HEIGHT) / sqrtf(2);
+ 
+-	state.fontsize = DEF_FONTSIZE;
++	state.fontsize = ctx->layout_em;
+ 
+ 	state.opacity = 1;
+ 
