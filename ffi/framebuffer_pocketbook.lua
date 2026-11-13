@@ -7,38 +7,56 @@ require("ffi/linux_fb_h")
 local uint8pt_rodata = ffi.typeof("const uint8_t*")
 
 local framebuffer = {
+    -- Assume the screen may hold color content from the OS launcher on startup
+    -- so the initial refresh uses an HQ waveform to clear potential color ghosting.
     panel_has_color = true,
 }
 
+-- Clamp logical coordinates to buffer bounds and map them from KOReader's
+-- software rotation/viewport space into physical screen coordinates for inkview.
 local function _getPhysicalRect(fb, x, y, w, h)
     local bb = fb.full_bb or fb.bb
     x, y, w, h = bb:getBoundedRect(x, y, w, h)
     return bb:getPhysicalRect(x, y, w, h)
 end
 
+-- Detect non-grayscale pixels using a staggered 2x2 grid (every 2nd scanline,
+-- alternating horizontal start by 1px). Cuts memory reads by 4x while still
+-- catching any >=2x2 color block (matching Kaleido's 2x2 CFA cell) and 1px vertical/diagonal strokes.
 local function _hasColorInPhysicalRect(bb, px, py, pw, ph)
     if not bb or pw <= 0 or ph <= 0 then
         return false
     end
     local bpp = bb:getBytesPerPixel()
+    -- In both RGB24 (3bpp) and RGB32 (4bpp), the first 3 bytes are color channels;
+    -- grayscale pixels always have identical R, G, and B values.
     if bpp == 3 or bpp == 4 then
         local base = ffi.cast(uint8pt_rodata, bb.data)
+        -- Convert FFI size_t cdata to a Lua number so LuaJIT compiles unboxed loop arithmetic.
         local stride = tonumber(bb.stride)
         local row_start = py * stride + px * bpp
         local row_span = (pw - 1) * bpp
-        for _ = 1, ph do
-            for idx = row_start, row_start + row_span, bpp do
+        local step_x = bpp * 2
+        local step_y = stride * 2
+        local toggle = pw > 1 and bpp or 0
+        local shift = 0
+        for _ = 1, ph, 2 do
+            for idx = row_start + shift, row_start + row_span, step_x do
                 local r = base[idx]
                 if r ~= base[idx + 1] or r ~= base[idx + 2] then
                     return true
                 end
             end
-            row_start = row_start + stride
+            shift = toggle - shift
+            row_start = row_start + step_y
         end
     end
     return false
 end
 
+-- Decide whether an HQ color refresh is needed and whether the new region itself contains color.
+-- Switching from color to B&W still requires one HQ refresh (`use_color = true`) to clear CFA ghosting,
+-- whereas saturation adjustment only applies when `rect_has_color` is true.
 local function _shouldUseColorRefresh(fb, px, py, pw, ph)
     local bb = fb.full_bb or fb.bb
     local rect_has_color = _hasColorInPhysicalRect(bb, px, py, pw, ph)
@@ -46,6 +64,8 @@ local function _shouldUseColorRefresh(fb, px, py, pw, ph)
 
     local use_color = fb.panel_has_color or rect_has_color
 
+    -- Only page-sized refreshes may clear `panel_has_color`; small B&W UI updates
+    -- (menus, clock, popups) leave color content visible elsewhere on the page.
     if is_page_sized then
         fb.panel_has_color = rect_has_color
     elseif rect_has_color then
@@ -71,6 +91,7 @@ local function _updatePartial(fb, x, y, w, h, dither)
     if fb.device.hasColorScreen() then
         local use_color, rect_has_color = _shouldUseColorRefresh(fb, x, y, w, h)
         if use_color then
+            -- Boost saturation only when new color pixels are present; skip on B&W cleanup refreshes.
             dither = rect_has_color
             if dither then
                 -- inkview.adjustAreaDefault updates buffer in-place, with additional refreshes mangling content.
