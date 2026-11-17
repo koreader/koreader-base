@@ -25,6 +25,54 @@ local function done_face(face)
     ft2.FT_Done_Library(lib)
 end
 
+-- Upright, regular, text-size values for registered variation axes.
+-- A variable font's default instance may be at an axis end (e.g. Light or Black),
+-- so these are set explicitly. Other axes keep the font's default.
+-- Build a FreeType axis tag from its 4-char name (FT_MAKE_TAG: "wght" -> 0x77676874).
+local function ft_tag(s)
+    local a, b, c, d = s:byte(1, 4)
+    return bit.bor(bit.lshift(a, 24), bit.lshift(b, 16), bit.lshift(c, 8), d)
+end
+
+local PINNED_AXES = {
+    [ft_tag("wght")] = 400, -- weight: Regular
+    [ft_tag("wdth")] = 100, -- width: Normal (percent)
+    [ft_tag("ital")] = 0,   -- italic: off
+    [ft_tag("slnt")] = 0,   -- slant: upright (degrees)
+    [ft_tag("opsz")] = 12,  -- optical size: text (points)
+}
+
+local function pin_variation_axes(face)
+    -- "Multiple masters" is FreeType's name for variable fonts
+    -- Static fonts have no axes, so there is nothing to pin.
+    if bit.band(face.face_flags, C.FT_FACE_FLAG_MULTIPLE_MASTERS) == 0 then
+        return
+    end
+    local mmvarpt = ffi.new("FT_MM_Var*[1]")
+    if ft2.FT_Get_MM_Var(face, mmvarpt) ~= 0 then
+        return
+    end
+    local mmvar = mmvarpt[0]
+    local num_axis = mmvar.num_axis
+    local coords = ffi.new("FT_Fixed[?]", num_axis)
+    for i = 0, num_axis - 1 do
+        local axis = mmvar.axis[i]
+        local value = PINNED_AXES[tonumber(axis.tag)]
+        if value then
+            -- FT_Fixed is 16.16; clamp to the face's own range.
+            local v = value * 65536
+            local min, max = tonumber(axis.minimum), tonumber(axis.maximum)
+            if v < min then v = min end
+            if v > max then v = max end
+            coords[i] = v
+        else
+            coords[i] = axis.def
+        end
+    end
+    ft2.FT_Set_Var_Design_Coordinates(face, num_axis, coords)
+    ft2.FT_Done_MM_Var(freetypelib, mmvar)
+end
+
 local function new_face(filename, faceindex)
     local facept = ffi.new("FT_Face[1]")
     local err = ft2.FT_New_Face(freetypelib, filename, faceindex, facept)
@@ -32,6 +80,10 @@ local function new_face(filename, faceindex)
         error("Failed to load font '"..filename.."', freetype error code: "..err)
     end
     local face = ffi.gc(facept[0], done_face)
+    -- faceindex -1 only probes the face count.
+    if faceindex >= 0 then
+        pin_variation_axes(face)
+    end
     ft2.FT_Reference_Library(freetypelib)
     face.generic.data = freetypelib
     return face
