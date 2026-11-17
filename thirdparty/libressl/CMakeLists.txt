@@ -26,10 +26,10 @@ if(NOT MONOLIBTIC)
 endif()
 
 external_project(
-    DOWNLOAD URL ed2f4274ed8f2733ab257f0fe97aedaf
-    https://github.com/libressl/portable/releases/download/v4.4.0/libressl-4.4.0.tar.gz
-    https://cloudflare.cdn.openbsd.org/pub/OpenBSD/LibreSSL/libressl-4.4.0.tar.gz
-    https://cdn.openbsd.org/pub/OpenBSD/LibreSSL/libressl-4.4.0.tar.gz
+    DOWNLOAD URL 3629219a07c899a9bcaf49e7c4e28329
+    https://github.com/libressl/portable/releases/download/v4.4.1/libressl-4.4.1.tar.gz
+    https://cloudflare.cdn.openbsd.org/pub/OpenBSD/LibreSSL/libressl-4.4.1.tar.gz
+    https://cdn.openbsd.org/pub/OpenBSD/LibreSSL/libressl-4.4.1.tar.gz
     PATCH_FILES ${PATCH_FILES}
     CMAKE_ARGS ${CMAKE_ARGS}
     BUILD_COMMAND ${BUILD_CMD}
