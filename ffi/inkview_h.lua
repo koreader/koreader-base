@@ -4,7 +4,7 @@ local ffi = require("ffi")
 local C = ffi.C
 
 local target_version
-for __, version in ipairs{ 505, 507, 508, 509, 511, 512, 514, 515, 517, 519, 605, 608, 610, 611 } do
+for __, version in ipairs{ 505, 507, 508, 509, 511, 512, 514, 515, 517, 519, 605, 607, 608, 610, 611, 612 } do
     if C.POCKETBOOK_VERSION >= version then
         target_version = version
     end
@@ -75,7 +75,7 @@ static const unsigned EVT_QN_RELEASE = 52;
 
 if target_version == 505 then
 ffi.cdef[[ static const unsigned EVT_REPAINT = 23; ]]
-elseif 507 <= target_version and target_version <= 611 then
+elseif 507 <= target_version and target_version <= 612 then
 ffi.cdef[[ static const unsigned EVT_REPAINT = 43; ]]
 end
 
@@ -102,7 +102,7 @@ static const unsigned EVT_TOUCHDOWN = 41;
 static const unsigned EVT_TOUCHMOVE = 42;
 static const unsigned EVT_TOUCHUP = 40;
 ]]
-elseif 605 <= target_version and target_version <= 611 then
+elseif 605 <= target_version and target_version <= 612 then
 ffi.cdef[[
 static const unsigned EVT_TOUCHDOWN = 48;
 static const unsigned EVT_TOUCHMOVE = 49;
@@ -119,7 +119,7 @@ static const unsigned EVT_NET_FOUND_NEW_FW = 260;
 static const unsigned EVT_POSTPONE_TIMED_POWEROFF = 217;
 ]]
 
-if 507 <= target_version and target_version <= 611 then
+if 507 <= target_version and target_version <= 612 then
 ffi.cdef[[
 static const unsigned EVT_FRAME_ACTIVATED = 218;
 static const unsigned EVT_FRAME_DEACTIVATED = 219;
@@ -127,11 +127,11 @@ static const unsigned EVT_POINTERCANCEL = 45;
 ]]
 end
 
-if 511 <= target_version and target_version <= 611 then
+if 511 <= target_version and target_version <= 612 then
 ffi.cdef[[ static const unsigned EVT_READ_PROGRESS_CHANGED = 220; ]]
 end
 
-if 519 <= target_version and target_version <= 611 then
+if 519 <= target_version and target_version <= 612 then
 ffi.cdef[[
 static const unsigned EVT_ASYNC_TASK_FINISHED = 262;
 static const unsigned EVT_AUDIO_CHANGED = 265;
@@ -145,13 +145,15 @@ end
 
 if target_version == 605 then
 ffi.cdef[[ static const unsigned EVT_CUSTOM = 267; ]]
+elseif target_version == 607 then
+ffi.cdef[[ static const unsigned EVT_CUSTOM = 268; ]]
 elseif target_version == 608 then
 ffi.cdef[[ static const unsigned EVT_CUSTOM = 269; ]]
-elseif 610 <= target_version and target_version <= 611 then
+elseif 610 <= target_version and target_version <= 612 then
 ffi.cdef[[ static const unsigned EVT_CUSTOM = 1024; ]]
 end
 
-if 605 <= target_version and target_version <= 611 then
+if 605 <= target_version and target_version <= 612 then
 ffi.cdef[[
 static const unsigned EVT_KEYPRESS_EXT = 40;
 static const unsigned EVT_KEYRELEASE_EXT = 41;
@@ -200,11 +202,11 @@ static const unsigned IV_KEY_ZOOMIN = 7;
 static const unsigned IV_KEY_ZOOMOUT = 6;
 ]]
 
-if 519 <= target_version and target_version <= 611 then
+if 519 <= target_version and target_version <= 612 then
 ffi.cdef[[ static const unsigned IV_KEY_MENU_POWER = 4; ]]
 end
 
-if 605 <= target_version and target_version <= 611 then
+if 605 <= target_version and target_version <= 612 then
 ffi.cdef[[ static const unsigned IV_KEY_MAX = 32; ]]
 end
 
@@ -223,7 +225,7 @@ enum input_dev_e {
   MAX_INPUT_DEV,
 };
 ]]
-elseif 605 <= target_version and target_version <= 611 then
+elseif 605 <= target_version and target_version <= 612 then
 ffi.cdef[[
 enum input_dev_e {
   DEV_UNKNOWN = 0,
@@ -237,7 +239,7 @@ enum input_dev_e {
 ]]
 end
 
-if target_version == 611 then
+if 611 <= target_version and target_version <= 612 then
 ffi.cdef[[
 typedef struct {
   int active;
@@ -278,7 +280,7 @@ struct hw_event_data_pointer_s {
   enum input_dev_e devtype;
 };
 ]]
-elseif target_version == 611 then
+elseif 611 <= target_version and target_version <= 612 then
 ffi.cdef[[
 struct hw_event_data_pointer_s {
   int id;
@@ -306,7 +308,7 @@ struct hw_event_s {
   struct timeval time;
 };
 ]]
-elseif target_version == 611 then
+elseif 611 <= target_version and target_version <= 612 then
 ffi.cdef[[
 struct hw_event_s {
   int type;
@@ -334,7 +336,7 @@ struct icanvas_s {
   unsigned char *addr;
 };
 ]]
-elseif 608 <= target_version and target_version <= 611 then
+elseif 607 <= target_version and target_version <= 612 then
 ffi.cdef[[
 struct icanvas_s {
   int width;
@@ -354,7 +356,7 @@ typedef struct iconfig_s iconfig;
 typedef int (*iv_handler)(int, int, int);
 ]]
 
-if target_version == 611 then
+if 611 <= target_version and target_version <= 612 then
 ffi.cdef[[
 typedef struct {
   bool active;
@@ -410,7 +412,7 @@ end
 
 if 505 <= target_version and target_version <= 610 then
 ffi.cdef[[ typedef struct iv_mtinfo_s iv_mtinfo; ]]
-elseif target_version == 611 then
+elseif 611 <= target_version and target_version <= 612 then
 ffi.cdef[[ typedef iv_pointer iv_mtinfo; ]]
 end
 
@@ -431,7 +433,7 @@ typedef enum {
   PANEL_NO_FB_OFFSET = 1 << 3,
 } PANEL_FLAGS;
 ]]
-elseif 605 <= target_version and target_version <= 611 then
+elseif 605 <= target_version and target_version <= 612 then
 ffi.cdef[[
 typedef enum {
   PANEL_DISABLED = 0,
@@ -481,7 +483,7 @@ void SetPanelType(int);
 
 if 505 <= target_version and target_version <= 508 then
 ffi.cdef[[ int SetSubtaskInfo(int, int, char *, char *); ]]
-elseif 509 <= target_version and target_version <= 611 then
+elseif 509 <= target_version and target_version <= 612 then
 ffi.cdef[[ int SetSubtaskInfo(int, int, const char *, const char *); ]]
 end
 
@@ -499,11 +501,11 @@ void iv_update_orientation(int);
 iv_mtinfo *GetTouchInfoI(unsigned);
 ]]
 
-if 508 <= target_version and target_version <= 611 then
+if 508 <= target_version and target_version <= 612 then
 ffi.cdef[[ int NetMgrPing(void); ]]
 end
 
-if 519 <= target_version and target_version <= 611 then
+if 519 <= target_version and target_version <= 612 then
 ffi.cdef[[
 int GetFrontlightColor(void);
 int GetFrontlightEnabled();
@@ -513,6 +515,6 @@ void SetFrontlightEnabled(int);
 ]]
 end
 
-if 605 <= target_version and target_version <= 611 then
+if 605 <= target_version and target_version <= 612 then
 ffi.cdef[[ void adjustAreaDefault(unsigned char *, int, int, int); ]]
 end

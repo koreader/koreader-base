@@ -204,7 +204,7 @@ else()
 endif()
 declare_koreader_target(
     inkview-compat TYPE library
-    DEPENDS inkview::inkview_517 pthread
+    DEPENDS inkview::inkview_517 freetype2::freetype pthread zlib::z
     ${EXCLUDE_FROM_ALL}
     SOURCES input/inkview-compat.c
 )
