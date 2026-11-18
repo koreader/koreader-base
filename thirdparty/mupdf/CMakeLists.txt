@@ -23,6 +23,8 @@ list(APPEND PATCH_FILES
     fix_build_without_getentropy.patch
     # Set SVG default font size
     svg_font_size.patch
+    # Open font files from @font-face css rules
+    font_face.patch
 )
 
 # Remove unnecessary vendored thirdparty libraries.
