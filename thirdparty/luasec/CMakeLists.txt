@@ -6,6 +6,8 @@ list(APPEND PATCH_FILES
     check_hostname.patch
     # Enable SSL verification by default.
     default_verify.patch
+    # Tunnel HTTPS through HTTP proxies without bypassing our TLS policy.
+    https_proxy.patch
 )
 
 list(APPEND CMAKE_ARGS
