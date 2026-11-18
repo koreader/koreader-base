@@ -713,7 +713,7 @@ if(POCKETBOOK)
 else()
     set(EXCLUDE_FROM_ALL EXCLUDE_FROM_ALL)
 endif()
-set(VERSIONS 505 507 508 509 511 512 514 515 517 519 605 608 610 611)
+set(VERSIONS 505 507 508 509 511 512 514 515 517 519 605 607 608 610 611 612)
 add_custom_target(
     inkview-ffi
     COMMAND ./utils/gen_merged_cdecl_h.py ffi/inkview_h.lua ffi-cdecl/inkview_h_.lua target_version ${CMAKE_CURRENT_BINARY_DIR} ${VERSIONS}
@@ -726,8 +726,8 @@ if(NOT EXCLUDE_FROM_ALL)
 endif()
 foreach(V IN LISTS VERSIONS)
     ffi_target(inkview ${CMAKE_CURRENT_BINARY_DIR}/inkview_h_${V}.lua inkview_decl.c ${EXCLUDE_FROM_ALL}
-        DEPENDS freetype2
-        ARGS -D POCKETBOOK_VERSION=${V} -I ${INKVIEW_DIR}/${V} -d freetype2 -f -Wno-deprecated-declarations -M
+        DEPENDS freetype2 zlib
+        ARGS -D POCKETBOOK_VERSION=${V} -I ${INKVIEW_DIR}/${V} -d freetype2 -d zlib -f -Wno-deprecated-declarations -M
     )
 endforeach()
 
