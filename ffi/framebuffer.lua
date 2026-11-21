@@ -7,6 +7,7 @@ This will be extended by implementations of this API.
 --]]
 
 local Blitbuffer = require("ffi/blitbuffer")
+local logger = require("logger")
 
 local fb = {
     device = nil, -- points to a device object
@@ -454,7 +455,9 @@ end
 function fb:setRotationMode(mode)
     -- This, on the other hand, is responsible for the internal *buffer* rotation,
     -- as such, it's inverted compared to the DEVICE_ROTATED_ constants; i.e., it's in 90° CCW steps).
-    self.bb:rotateAbsolute(-90 * (mode - self.native_rotation_mode - self.blitbuffer_rotation_mode))
+    local bb_rot = -90 * (mode - self.native_rotation_mode - self.blitbuffer_rotation_mode)
+    logger.dbg("AROT_DIAG base_fb:setRotationMode mode=", mode, "native=", self.native_rotation_mode, "bb_rot=", self.blitbuffer_rotation_mode, "computed=", bb_rot)
+    self.bb:rotateAbsolute(bb_rot)
     if self.viewport then
         self.full_bb:setRotation(self.bb:getRotation())
     end
