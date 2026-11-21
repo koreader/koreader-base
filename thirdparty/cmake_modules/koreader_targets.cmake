@@ -156,10 +156,16 @@ declare_koreader_target(
 )
 
 # wrap-mupdf
+set(WRAP_MUPDF_DEPENDS mupdf::mupdf pthread)
+if(NOT APPLE AND NOT ANDROID)
+    # mupdf_worker.c runs a pthread worker; glibc < 2.17 keeps
+    # clock_gettime in librt (bionic & macOS have it in libc).
+    list(APPEND WRAP_MUPDF_DEPENDS rt)
+endif()
 declare_koreader_target(
     wrap-mupdf TYPE monolibtic
-    DEPENDS mupdf::mupdf
-    SOURCES wrap-mupdf.c
+    DEPENDS ${WRAP_MUPDF_DEPENDS}
+    SOURCES wrap-mupdf.c mupdf_worker.c
     VISIBILITY hidden
 )
 function(setup_wrap_mupdf)

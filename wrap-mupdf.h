@@ -31,6 +31,7 @@
 
 DLL_PUBLIC fz_alloc_context* mupdf_get_my_alloc_context();
 DLL_PUBLIC int mupdf_get_cache_size();
+DLL_PUBLIC fz_context *mupdf_new_context(const fz_alloc_context *alloc, int max_store, const char *version);
 DLL_PUBLIC int mupdf_error_code(fz_context *ctx);
 DLL_PUBLIC char* mupdf_error_message(fz_context *ctx);
 
@@ -43,6 +44,18 @@ DLL_PUBLIC fz_irect *mupdf_fz_round_rect(fz_irect *ir, const fz_rect *r);
 DLL_PUBLIC fz_rect *mupdf_fz_union_rect(fz_rect *a, const fz_rect *b);
 DLL_PUBLIC fz_rect *mupdf_fz_rect_from_quad(fz_rect *r, const fz_quad *q);
 DLL_PUBLIC fz_rect *mupdf_fz_bound_page(fz_context *ctx, fz_page *page, fz_rect *r);
+
+// Display list release wrapper (fz_drop_display_list is hidden by the
+// MuPDF visibility whitelist, so we re-export a thin wrapper).
+DLL_PUBLIC void mupdf_drop_display_list(fz_context *ctx, fz_display_list *list);
+
+// Background rasterization worker (mupdf_worker.c)
+DLL_PUBLIC int mupdf_worker_init(fz_context *main_ctx);
+DLL_PUBLIC int mupdf_worker_submit(fz_display_list *list, const fz_matrix *ctm, const fz_rect *scissor, const fz_irect *bbox, unsigned char *bb_data, int stride, int colorspace, int alpha, int transparency_mask, float gamma, float saturation);
+DLL_PUBLIC int mupdf_worker_status(void);
+DLL_PUBLIC int mupdf_worker_wait(int timeout_ms);
+DLL_PUBLIC void mupdf_worker_abort(void);
+DLL_PUBLIC void mupdf_worker_shutdown(void);
 
 // this will turn the wrappers defined below into their declarations
 #define MUPDF_WRAP(wrapper_name, ret_type, failure_value, call, ...) \
@@ -131,6 +144,9 @@ MUPDF_WRAP(mupdf_page_has_transparency_mask, int, 0,
 MUPDF_WRAP_BOOL(mupdf_run_page,
     fz_run_page(ctx, page, dev, *transform, cookie),
     fz_page *page, fz_device *dev, const fz_matrix *transform, fz_cookie *cookie)
+MUPDF_WRAP(mupdf_new_display_list_from_page, fz_display_list*, NULL,
+    ret = fz_new_display_list_from_page(ctx, page),
+    fz_page *page)
 MUPDF_WRAP_BOOL(mupdf_close_device,
     fz_close_device(ctx, dev),
     fz_device *dev)
@@ -215,4 +231,3 @@ MUPDF_WRAP(mupdf_new_image_from_buffer, fz_image*, NULL,
 MUPDF_WRAP(mupdf_new_buffer_from_shared_data, fz_buffer*, NULL,
     ret = fz_new_buffer_from_shared_data(ctx, data, size),
     const unsigned char *data, size_t size)
-
