@@ -45,7 +45,6 @@
 #include <pthread.h>
 #include <stdint.h>
 #include <stdio.h>
-#include <time.h>
 
 #include <mupdf/fitz.h>
 
@@ -92,8 +91,6 @@ typedef struct {
     pthread_mutex_t mutex;
     pthread_cond_t cond_start;
     pthread_cond_t cond_done;
-    clockid_t wait_clock;
-    int cond_done_initialized;
     int shutdown;
     int initialized;
 } MuPdfWorker;
@@ -102,7 +99,6 @@ static MuPdfWorker g_worker = {
     .mutex = PTHREAD_MUTEX_INITIALIZER,
     .cond_start = PTHREAD_COND_INITIALIZER,
     .cond_done = PTHREAD_COND_INITIALIZER,
-    .wait_clock = CLOCK_REALTIME,
 };
 
 /*
@@ -325,26 +321,6 @@ WORKER_PUBLIC int mupdf_worker_init(fz_context *main_ctx)
         return 0;
     }
 
-#if !defined(__APPLE__) && defined(CLOCK_MONOTONIC)
-    if (!g_worker.cond_done_initialized) {
-        pthread_condattr_t attr;
-        if (pthread_condattr_init(&attr) == 0) {
-#if defined(__BIONIC__) && defined(__ANDROID_API__) && __ANDROID_API__ < 21
-            /* No pthread_condattr_setclock() before Android 5.0; cond_done
-             * keeps its CLOCK_REALTIME default. The workerWait deadline loop
-             * below already tolerates wall-clock jumps in that mode. */
-#else
-            if (pthread_condattr_setclock(&attr, CLOCK_MONOTONIC) == 0
-                    && pthread_cond_init(&g_worker.cond_done, &attr) == 0) {
-                g_worker.wait_clock = CLOCK_MONOTONIC;
-                g_worker.cond_done_initialized = 1;
-            }
-#endif
-            pthread_condattr_destroy(&attr);
-        }
-    }
-#endif
-
     /* main_ctx was created with real pthread locks in mupdf_new_context(),
      * so fz_clone_context() is safe here. */
     g_worker.main_ctx = main_ctx;
@@ -415,29 +391,12 @@ WORKER_PUBLIC void mupdf_worker_abort(void)
     pthread_mutex_unlock(&g_worker.mutex);
 }
 
-/*
-    Wait for the in-flight job to leave WORKER_RUNNING.
-    timeout_ms < 0 waits indefinitely; otherwise performs a bounded wait
-    in milliseconds. Returns the resulting state.
-*/
-WORKER_PUBLIC int mupdf_worker_wait(int timeout_ms)
+/* Wait for the in-flight job to leave WORKER_RUNNING and return its state. */
+WORKER_PUBLIC int mupdf_worker_wait(void)
 {
     pthread_mutex_lock(&g_worker.mutex);
-    if (g_worker.job.state == WORKER_RUNNING) {
-        if (timeout_ms < 0) {
-            while (g_worker.job.state == WORKER_RUNNING) {
-                pthread_cond_wait(&g_worker.cond_done, &g_worker.mutex);
-            }
-        } else {
-            struct timespec ts;
-            clock_gettime(g_worker.wait_clock, &ts);
-            ts.tv_nsec += (long)timeout_ms * 1000000L;
-            while (ts.tv_nsec >= 1000000000L) {
-                ts.tv_sec += 1;
-                ts.tv_nsec -= 1000000000L;
-            }
-            pthread_cond_timedwait(&g_worker.cond_done, &g_worker.mutex, &ts);
-        }
+    while (g_worker.job.state == WORKER_RUNNING) {
+        pthread_cond_wait(&g_worker.cond_done, &g_worker.mutex);
     }
     int state = g_worker.job.state;
     pthread_mutex_unlock(&g_worker.mutex);

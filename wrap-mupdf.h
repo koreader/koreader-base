@@ -53,7 +53,7 @@ DLL_PUBLIC void mupdf_drop_display_list(fz_context *ctx, fz_display_list *list);
 DLL_PUBLIC int mupdf_worker_init(fz_context *main_ctx);
 DLL_PUBLIC int mupdf_worker_submit(fz_display_list *list, const fz_matrix *ctm, const fz_rect *scissor, const fz_irect *bbox, unsigned char *bb_data, int stride, int colorspace, int alpha, int transparency_mask, float gamma, float saturation);
 DLL_PUBLIC int mupdf_worker_status(void);
-DLL_PUBLIC int mupdf_worker_wait(int timeout_ms);
+DLL_PUBLIC int mupdf_worker_wait(void);
 DLL_PUBLIC void mupdf_worker_abort(void);
 DLL_PUBLIC void mupdf_worker_shutdown(void);
 

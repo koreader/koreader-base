@@ -66,7 +66,7 @@ local worker_pinned_ctx = nil
 local function ensure_worker_idle()
     if worker_pinned_ctx and W.mupdf_worker_status() == mupdf.WORKER_RUNNING then
         W.mupdf_worker_abort()
-        W.mupdf_worker_wait(-1)
+        W.mupdf_worker_wait()
     end
 end
 

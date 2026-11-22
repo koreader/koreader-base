@@ -250,7 +250,7 @@ void mupdf_drop_display_list(fz_context *, fz_display_list *);
 int mupdf_worker_init(fz_context *);
 int mupdf_worker_submit(fz_display_list *, const fz_matrix *, const fz_rect *, const fz_irect *, unsigned char *, int, int, int, int, float, float);
 int mupdf_worker_status(void);
-int mupdf_worker_wait(int);
+int mupdf_worker_wait(void);
 void mupdf_worker_abort(void);
 void mupdf_worker_shutdown(void);
 enum pdf_annot_type {
