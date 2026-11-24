@@ -45,6 +45,9 @@
 #include <pthread.h>
 #include <stdint.h>
 #include <stdio.h>
+#ifdef __linux__
+#include <sys/resource.h>
+#endif
 
 #include <mupdf/fitz.h>
 
@@ -272,6 +275,12 @@ static void worker_render_job(fz_context *ctx, WorkerJob *job, fz_cookie *cookie
 static void *worker_thread_func(void *arg)
 {
     MuPdfWorker *w = (MuPdfWorker *)arg;
+
+#ifdef __linux__
+    /* Yield CPU to the UI thread on single-core e-ink devices. On Linux/NPTL,
+     * PRIO_PROCESS with who=0 applies to the calling thread only. */
+    setpriority(PRIO_PROCESS, 0, 10);
+#endif
 
     while (1) {
         pthread_mutex_lock(&w->mutex);
