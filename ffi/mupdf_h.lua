@@ -48,6 +48,7 @@ typedef struct {
   void (*lock)(void *, int);
   void (*unlock)(void *, int);
 } fz_locks_context;
+fz_context *mupdf_new_context(const fz_alloc_context *, int, const char *);
 fz_context *fz_new_context_imp(const fz_alloc_context *, const fz_locks_context *, size_t, const char *);
 void fz_drop_context(fz_context *);
 void fz_register_document_handlers(fz_context *);
@@ -243,6 +244,15 @@ int mupdf_page_has_transparency_mask(fz_context *, fz_page *);
 bool mupdf_run_page(fz_context *, fz_page *, fz_device *, const fz_matrix *, fz_cookie *);
 bool mupdf_close_device(fz_context *, fz_device *);
 void fz_drop_device(fz_context *, fz_device *);
+typedef struct fz_display_list fz_display_list;
+fz_display_list *mupdf_new_display_list_from_page(fz_context *, fz_page *);
+void mupdf_drop_display_list(fz_context *, fz_display_list *);
+int mupdf_worker_init(fz_context *);
+int mupdf_worker_submit(fz_display_list *, const fz_matrix *, const fz_rect *, const fz_irect *, unsigned char *, int, int, int, int, float, float);
+int mupdf_worker_status(void);
+int mupdf_worker_wait(void);
+void mupdf_worker_abort(void);
+void mupdf_worker_shutdown(void);
 enum pdf_annot_type {
   PDF_ANNOT_TEXT,
   PDF_ANNOT_LINK,

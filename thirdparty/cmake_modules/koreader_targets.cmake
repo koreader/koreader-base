@@ -158,8 +158,8 @@ declare_koreader_target(
 # wrap-mupdf
 declare_koreader_target(
     wrap-mupdf TYPE monolibtic
-    DEPENDS mupdf::mupdf
-    SOURCES wrap-mupdf.c
+    DEPENDS mupdf::mupdf pthread
+    SOURCES wrap-mupdf.c mupdf_worker.c
     VISIBILITY hidden
 )
 function(setup_wrap_mupdf)

@@ -23,6 +23,7 @@
 #include <stddef.h>
 #include <string.h>
 #include <stdint.h>
+#include <pthread.h>
 #include "wrap-mupdf.h"
 
 static double LOG_TRESHOLD_PERC = 0.05; // 5%
@@ -155,6 +156,47 @@ int mupdf_get_cache_size() {
     return msize;
 }
 
+/*
+    Client-provided locks for the shared MuPDF context, so that the root
+    context is created thread-safe from the start (and can therefore be
+    cloned by the background rasterization worker, c.f., mupdf_worker.c).
+    The mutexes are initialized once and live for the whole process so the
+    worker's cloned context shares this exact fz_locks_context.
+*/
+static pthread_mutex_t mupdf_ctx_locks[FZ_LOCK_MAX];
+static int mupdf_ctx_locks_initialized = 0;
+
+static void mupdf_ctx_lock(void *user, int lock)
+{
+    (void)user;
+    pthread_mutex_lock(&mupdf_ctx_locks[lock]);
+}
+
+static void mupdf_ctx_unlock(void *user, int lock)
+{
+    (void)user;
+    pthread_mutex_unlock(&mupdf_ctx_locks[lock]);
+}
+
+static const fz_locks_context mupdf_ctx_locks_context = {
+    .user = NULL,
+    .lock = mupdf_ctx_lock,
+    .unlock = mupdf_ctx_unlock,
+};
+
+/* Creates the root fz_context with real pthread locks instead of the
+ * single-threaded fz_locks_default fallback MuPDF substitutes for NULL. */
+fz_context *mupdf_new_context(const fz_alloc_context *alloc, int max_store, const char *version) {
+    if (!mupdf_ctx_locks_initialized) {
+        for (int i = 0; i < FZ_LOCK_MAX; i++) {
+            pthread_mutex_init(&mupdf_ctx_locks[i], NULL);
+        }
+        mupdf_ctx_locks_initialized = 1;
+    }
+    return fz_new_context_imp(alloc, &mupdf_ctx_locks_context, max_store, version);
+}
+
+
 int mupdf_error_code(fz_context *ctx) {
     return ctx->error.errcode;
 }
@@ -205,6 +247,10 @@ fz_rect *mupdf_fz_rect_from_quad(fz_rect *r, const fz_quad *q) {
 fz_rect *mupdf_fz_bound_page(fz_context *ctx, fz_page *page, fz_rect *r) {
     *r = fz_bound_page(ctx, page);
     return r;
+}
+
+void mupdf_drop_display_list(fz_context *ctx, fz_display_list *list) {
+    fz_drop_display_list(ctx, list);
 }
 
 static void transparency_mask_close_device(fz_context *ctx, fz_device *dev)

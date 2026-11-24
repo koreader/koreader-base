@@ -58,14 +58,27 @@ end
 
 local save_ctx = setmetatable({}, {__mode="kv"})
 
+-- Strong reference to the root fz_context held while the background worker is initialized.
+local worker_pinned_ctx = nil
+
+-- Abort and wait for any running background rasterization job before main-thread
+-- document operations that touch pdf_document streams.
+local function ensure_worker_idle()
+    if worker_pinned_ctx and W.mupdf_worker_status() == mupdf.WORKER_RUNNING then
+        W.mupdf_worker_abort()
+        W.mupdf_worker_wait()
+    end
+end
+
 -- provides an fz_context for mupdf
 local function context()
     local ctx = save_ctx[1]
     if ctx then return ctx end
 
-    ctx = M.fz_new_context_imp(
+    -- Create the root context with real pthread locks (instead of MuPDF's single-threaded
+    -- fz_locks_default fallback) so it can be cloned safely by mupdf_worker.c.
+    ctx = W.mupdf_new_context(
         mupdf.debug_memory and W.mupdf_get_my_alloc_context() or nil,
-        nil,
         mupdf.cache_size, FZ_VERSION)
 
     if ctx == nil then
@@ -222,6 +235,7 @@ function document_mt.__index:isDocumentReflowable()
 end
 
 function document_mt.__index:layoutDocument(width, height, em)
+    ensure_worker_idle()
     -- Reset the cache.
     self.number_of_pages = nil
 
@@ -258,6 +272,7 @@ Returns a table like this:
 Returns an empty table when there is no ToC
 --]]
 function document_mt.__index:getToc()
+    ensure_worker_idle()
     local toc = {}
     local outline = W.mupdf_load_outline(self.ctx, self.doc)
     if outline ~= nil then
@@ -271,6 +286,7 @@ end
 open a page, return page object
 --]]
 function document_mt.__index:openPage(number)
+    ensure_worker_idle()
     local ctx = self.ctx
     local mupdf_page = {
         page = W.mupdf_load_page(ctx, self.doc, number-1),
@@ -351,6 +367,7 @@ end
 write the document to a new file
 --]]
 function document_mt.__index:writeDocument(filename)
+    ensure_worker_idle()
     local opts = ffi.new("pdf_write_options")
     opts.do_incremental = (filename == self.filename ) and 1 or 0
     opts.do_ascii = 0
@@ -1185,5 +1202,74 @@ function page_mt.__index:toBmp(bmp, dpi)
     W.mupdf_fz_bound_page(self.ctx, self.page, bounds)
     render_for_kopt(bmp, self, dpi/72, bounds, false)
 end
+
+-- Background rasterization worker (mupdf_worker.c)
+mupdf.WORKER_IDLE = 0
+mupdf.WORKER_RUNNING = 1
+mupdf.WORKER_DONE = 2
+mupdf.WORKER_ERROR = 3
+mupdf.WORKER_ABORTED = 4
+
+mupdf.WORKER_CS_GRAY = 0
+mupdf.WORKER_CS_RGB = 1
+mupdf.WORKER_CS_BGR = 2
+
+--- Initialize the background rasterization worker.
+-- @treturn int 0 on success
+function mupdf.workerInit()
+    local ctx = context()
+    local ret = W.mupdf_worker_init(ctx)
+    if ret == 0 and not worker_pinned_ctx then
+        -- Pin the root context so LuaJIT GC cannot collect save_ctx[1] between
+        -- documents while g_worker remains initialized.
+        worker_pinned_ctx = keep_context(ctx)
+    end
+    return ret
+end
+
+--- Shut down the worker thread and release the pinned root context.
+function mupdf.workerShutdown()
+    W.mupdf_worker_shutdown()
+    if worker_pinned_ctx then
+        local ctx = worker_pinned_ctx
+        worker_pinned_ctx = nil
+        drop_context(ctx)
+    end
+end
+
+--- Record an immutable display list of the page (main thread only).
+-- @tparam table page MuPDF page wrapper
+-- @treturn cdata fz_display_list*
+function mupdf.newDisplayListFromPage(page)
+    local dlist = W.mupdf_new_display_list_from_page(page.ctx, page.page)
+    if dlist == nil then
+        merror(page.ctx, "cannot create display list")
+    end
+    return dlist
+end
+
+--- Compute the raster matrix for a page area, matching draw_new().
+-- @tparam number zoom
+-- @tparam number rotation
+-- @tparam number offset_x
+-- @tparam number offset_y
+-- @treturn cdata fz_matrix
+function mupdf.makeCTM(zoom, rotation, offset_x, offset_y)
+    local ctm = ffi.new("fz_matrix")
+    W.mupdf_fz_scale(ctm, zoom, zoom)
+    W.mupdf_fz_pre_rotate(ctm, rotation)
+    W.mupdf_fz_pre_translate(ctm, offset_x, offset_y)
+    return ctm
+end
+
+function mupdf.dropDisplayList(dlist)
+    W.mupdf_drop_display_list(context(), dlist)
+end
+
+mupdf.workerSubmit = W.mupdf_worker_submit
+mupdf.workerStatus = W.mupdf_worker_status
+mupdf.workerWait = W.mupdf_worker_wait
+mupdf.workerAbort = W.mupdf_worker_abort
+mupdf.pageHasTransparencyMask = W.mupdf_page_has_transparency_mask
 
 return mupdf
