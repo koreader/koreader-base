@@ -790,6 +790,21 @@ static int getDocumentFormat(lua_State *L) {
     return 1;
 }
 
+// Book-level fixed-layout (EPUB3 pre-paginated) mode:
+//   0 = reflowable, 1 = fully fixed-layout, 2 = mixed (see DOC_FIXED_LAYOUT_* in lvtinydom.h)
+static int getFixedLayoutMode(lua_State *L) {
+	CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
+	lua_pushinteger(L, doc->text_view->getDocProps()->getIntDef(DOC_PROP_FIXED_LAYOUT, 0));
+	return 1;
+}
+
+static int getPageProgressionDirection(lua_State *L) {
+	CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
+	lString32 ppd = doc->text_view->getDocProps()->getStringDef(DOC_PROP_PAGE_PROGRESSION_DIRECTION, "");
+	lua_pushstring(L, UnicodeToLocal(ppd).c_str());
+	return 1;
+}
+
 static int getDocumentProps(lua_State *L) {
 	CreDocument *doc = (CreDocument*) luaL_checkudata(L, 1, "credocument");
 
@@ -1741,9 +1756,12 @@ static int gotoPage(lua_State *L) {
 		internal = lua_toboolean(L, 3);
 	}
 
-	doc->text_view->goToPage(pageno-1, internal, true, false); // regulateTwoPages=false
-	// In 2-pages mode, we will ensure from frontend the first page displayed
-	// is an even one: we don't need crengine to ensure that.
+	// For a fixed-layout book, crengine aligns the view to a two-page SPREAD
+	// (honouring page-spread-left/right/center and a lone cover), so we let it
+	// regulate. For a reflowable book, the frontend still ensures the first of
+	// the two visible pages is an even one, so we don't regulate here.
+	bool fxl = doc->text_view->getDocProps()->getIntDef(DOC_PROP_FIXED_LAYOUT, 0) == DOC_FIXED_LAYOUT_ALL;
+	doc->text_view->goToPage(pageno-1, internal, true, fxl);
 
 	return 0;
 }
@@ -4455,6 +4473,8 @@ static const struct luaL_Reg credocument_meth[] = {
     {"getStringProperty", getStringProperty},
     {"getDocumentFormat", getDocumentFormat},
     {"getDocumentProps", getDocumentProps},
+    {"getFixedLayoutMode", getFixedLayoutMode},
+    {"getPageProgressionDirection", getPageProgressionDirection},
     {"setAltDocumentProp", setAltDocumentProp},
     {"getDocumentRenderingHash", getDocumentRenderingHash},
     {"canBePartiallyRerendered", canBePartiallyRerendered},
